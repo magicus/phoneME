@@ -1,0 +1,234 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+
+           
+ 
+
+ <style type="text/css"> 
+<!-- /* <![CDATA[ */
+@import "/branding/css/tigris.css";
+@import "/inst.css"; 
+ 
+
+ /* ]]> */
+ --> 
+
+ </style>
+ <link rel="stylesheet" type="text/css" href="how-to2_files/print.html" media="print">
+ <script src="how-to2_files/tigris.html" type="text/javascript"></script>
+ <!-- ------- ORIGINAL CODE --------------------------- -->
+ <!--<head>
+ <style type="text/css"> 
+ /* <![CDATA[ */
+ @import "/branding/css/tigris.css";
+ @import "/branding/css/inst.css";
+ /* ]]> */
+ </style>
+ <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
+ <script src="/branding/scripts/tigris.js" type="text/javascript"></script> -->
+
+
+  
+                                                     <title>Handbook: Use Cases and Project Information</title>
+ <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+ <meta http-equiv="Content-Style-Type" content="text/css" />
+ <meta name="version" content="3.5.1.19.8" />
+ <style type="text/css">
+<!--
+a:link {
+	text-decoration: none;
+}
+a:visited {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+a:active {
+	text-decoration: none;
+}
+-->
+</style></head>
+ 
+ 
+<body  class="composite">
+  
+<table border="0" cellspacing="0" cellpadding="4" width="100%" id="main">
+<tr>
+ <td id="midcol">
+ 
+ 
+<!-- 
+ ===============================================================================
+    IGNORE EVERYTHING ABOVE THIS AREA.  *   START EDITING BELOW 
+ ===============================================================================
+ -->
+ 
+ 
+ 
+<!--BEGIN * PAGE TITLE -->
+<div id="projecthome" class="app"> 
+<h1><font color="#E76F00">Use Cases and Project Information </font></h1>
+<!--END * PAGE TITLE -->
+ 
+ 
+<!--BEGIN * EXPLANATORY TEXT PARAGRAPH[S] -->
+<p>Use cases showing sample contribution scenarios and information on specific projects is covered in the following sections. 
+<!--END * EXPLANATORY TEXT PARAGRAPH[S] -->
+
+
+
+<!--*** ------------------------------- BEGIN NEW SECTION ---------------------------------- *** -->
+
+<!--BEGIN SECTION HEADER * -->
+<a name="AnchorTop"></a><h2>Contents</h2>
+<!--END SECTION HEADER * -->
+
+
+<!--BEGIN * BODY TEXT -->
+<ol>
+ <li><a href="#usecases">Contribution Use Cases </a> </li>
+ <li><a href="#build">Building and Testing </a><a href="#ref1"></a></li>
+ <li><a href="#tracking">Issue Tracking and Change Management</a></li>
+ <li><a href="#config">Configuration Management</a> </li>
+ <li><a href="#release">Release Process and Release Management</a> </li>
+</ol>
+<p>&nbsp;</p>
+<!--END * BODY TEXT -->
+<!--*** -------------------------------- END OF SECTION ------------------------------------ *** -->
+
+
+
+<!--*** ------------------------------- BEGIN NEW SECTION ---------------------------------- *** -->
+<!--BEGIN * SECTION SUB-HEAD -->
+<hr size="1" noshade>
+<h2><a name="usecases" id="usecases">Contribution Use Cases </a></h2>
+<!--END * SECTION SUB-HEAD -->
+  
+
+<!--BEGIN * BODY TEXT -->
+<p>This section describes the high-level flow of two sample contributions through the development and contribution process. Concepts of the development process are explained in the <a href="/content/develop.html">Development Process</a>. A detailed understanding of these concepts is not necessary for understanding the use cases, which are intended to give you a feel for how the process work.</p>
+<h4>Use Case A: Simple Contribution</h4>
+<p>This example demonstrates the simplest possibly case, which is a one-line change to a comment in a single source file. The change is obviously trivial and requires no testing other than to ensure that the required configurations build.</p>
+<p>The following steps describe the contribution for this use case: </p>
+<ol>
+  <li>
+    <p>The contributor finds a committer involved in the appropriate module with whom to work.  </p>
+  </li>
+  <li>
+    <p>Because the change is localized and trivial, the committer and the contributor agree that none of the first three phases of the development process apply and therefore can be skipped.</p>
+  </li>
+  <li>
+    <p>In Phase 4, <a href="/content/develop.html#phase4">Implement and Test</a>, the contributor implements the code change. No unit tests or regression tests are necessary. No documentation is affected.</p>
+  </li>
+  <li>
+    <p>In Phase 5, <a href="/content/develop.html#phase5">Integration and System Test</a>, the contributor successfully builds the required configurations. No integration or system tests are necessary.</p>
+  </li>
+  <li>
+    <p>In Phase 6, <a href="/content/develop.html#phase6">Implementation and Documentation Review</a>, the contributor creates a change package, completes the <a href="/content/develop.html#precommitcheck">pre-commit checklist</a>, and submits the code change as a contribution through Issue Tracker. </p>
+  </li>
+  <li>
+    <p>The committer receives the contribution. Because the code is trivial and
+      the committer has signed the <a href="https://mobileandembedded.dev.java.net/contributor.html">Sun
+      Contributor Agreement</a>,
+      there are no actions to be taken in the <a href="/content/develop.html.html#reviewflow">committer
+      review flow</a>. </p>
+  </li>
+  <li>
+    <p>The committer performs a simplified <a href="/content/code_review.html#coderev">code review</a>, completing the <a href="/content/code_review.html#revoutput">code review output template</a> and closing the review as Accepted As Is. </p>
+  </li>
+  <li>    The committer commits the change package. </li>
+  </ol>
+<h4>Use Case B: Contribution with New Functionality</h4>
+<p>This example demonstrates a more complex, but typical, contribution that exercises most of the steps in the process. In this use case, the contribution is an idea to create new functionality that combines and builds on existing features of two project modules.</p>
+<p>The following steps describe the contribution for this use case:</p>
+<ol>
+  <li>
+    <p>In Phase 1, <a href="/content/develop.html#phase1">Idea and Concept</a>, the contributor discusses the idea on the appropriate forum or mailing list and creates a new RFE.  </p>
+  </li>
+  <li>
+    <p>In Phase 2, <a href="/content/develop.html#phase2">Planning and Review</a>, the contributor starts planning the functionality and finds a committer with whom to work. The contributor creates a planning document that is reviewed by the committer and other interested members. The contributor and committer agree that the other steps in the phase can be skipped.</p>
+  </li>
+  <li>
+    <p>In Phase 3, <a href="/content/develop.html#phase3">Design and Review</a>, the contributor creates a design document that is reviewed by the committer and other interested members. The contributor and committer agree that additional cross-functional testing is needed for the new functionality, so the contributor creates a test plan that details three new test cases. None of the other steps of the phase is required.  </p>
+  </li>
+  <li>
+    <p>In Phase 4, <a href="/content/develop.html#phase4">Implement and Test</a>, the contributor develops the code and runs unit tests that pass. The new tests that are described in the test plan are also developed and executed by the contributor. The committer advises the contributor that there are required regression and integration tests, so the contributor also runs those tests. Finally, the contributor writes the necessary documentation. </p>
+  </li>
+  <li>
+    <p>In Phase 5, <a href="/content/develop.html#phase5">Integration and System Test</a>, the contributor ensures that his or her repository is up to date and successfully builds all required configurations. The committer advises the contributor on the required integration and system tests, which the contributor also runs. </p>
+  </li>
+  <li>
+    <p>In Phase 6, <a href="/content/develop.html#phase6">Implementation and Documentation Review</a>, the contributor creates a change package, completes the <a href="/content/develop.html#precommitcheck">pre-commit checklist</a>, and submits the code as a contribution through Issue Tracker. </p>
+  </li>
+  <li>
+    <p>The committer receives the contribution and sets the CR to Review. The
+      committer has signed the <a href="https://mobileandembedded.dev.java.net/contributor.html">Sun
+      Contributor Agreement</a>, but the committer
+      review flow indicates that stakeholders are to be consulted to ensure that
+      everyone who is affected is okay with the new code. The committer discussed
+      the change during planning in Phase 2, so there are no objections from
+      any of the stakeholders. </p>
+  </li>
+  <li>
+    <p>The committer performs a full <a href="/content/code_review.html#coderev">code review</a> and completes the <a href="/content/code_review.html#revoutput">code review output template</a>. Due to the early involvement of the committer and QA experts, only minor issues are found and the review is closed as Accepted With Minor Modifications.</p>
+  </li>
+  <li>
+    <p>The contributor updates the code or documentation according to the review results and creates a new change package.</p>
+  </li>
+  <li>
+    <p>The committer commits the change package and updates the CR to Committed.  </p>
+  </li>
+</ol>
+<!--END * BODY TEXT -->
+
+
+<!--BEGIN * SECTION SUB-HEAD -->
+<p> 
+<hr size="1" noshade>
+<h2><a name="build" id="build">Building and Testing </a></h2>
+<!--END * SECTION SUB-HEAD -->
+
+
+<!--BEGIN * BODY TEXT -->
+<p>Building code from repositories and testing the code is specific to each project. See the <a href="/cldc_midp_getting_started.html">phoneME&#8482; Feature Getting Started Guide</a> and
+  the <a href="/cdc_dev_quick_start.html">phoneME Advanced Getting Started Guide</a> for
+  more information.
+
+<!--END * BODY TEXT -->
+    
+
+<!--BEGIN * SECTION SUB-HEAD -->
+<p> 
+<hr size="1" noshade>
+<h2><a name="tracking" id="tracking">Issue Tracking and Change Management </a></h2>
+<!--END * SECTION SUB-HEAD -->
+  
+
+<!--BEGIN * BODY TEXT -->
+<p>Information on creating and tracking issues and the issue or change management work flow is available <a href="/issue_tracker.html">here</a>. </p>
+<!--END * BODY TEXT -->
+<!--BEGIN * SECTION SUB-HEAD -->
+<p> 
+<hr size="1" noshade>
+<h2><a name="config" id="config">Configuration Management</a></h2>
+<p>Configuration management, including revisions and integration, is specific to each project. See <a href="http://">?? &lt;links to docs for each project?&gt;</a> for more information. </p>
+<!--END * SECTION SUB-HEAD -->
+<!--BEGIN * SECTION SUB-HEAD -->
+<p> 
+<hr size="1" noshade>
+<h2><a name="release" id="release">Release Process and Release Management</a></h2>
+<p>The process of creating and managing releases is specific to each project. See <a href="http://">?? &lt;link to docs for each project?&gt;</a> for project documentation. </p>
+<!--END * SECTION SUB-HEAD -->
+<!--*** -------------------------------- END OF SECTION ------------------------------------ *** -->
+ 
+  
+
+
+
+
+
+
+
+</p>
+</body></html>
