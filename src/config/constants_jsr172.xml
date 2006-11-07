@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "configuration.dtd">
+<!--
+
+  Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+-->
+<configuration>
+<constants>
+<constant_class Package="com.sun.j2mews.xml.rpc" Name="Constants" Scope="public">
+  <constant Type="int"
+            Name="MAX_REDIRECT_ATTEMPTS"
+            Value="10"
+            Comment="Maximal number of 'Object moved' http responses that we will handle"/>
+</constant_class>
+</constants>
+</configuration>
