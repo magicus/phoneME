@@ -1,0 +1,560 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+
+           
+ 
+
+ <style type="text/css"> 
+<!-- /* <![CDATA[ */
+@import "/branding/css/tigris.css";
+@import "/inst.css"; 
+ 
+
+ /* ]]> */
+ --> 
+
+ </style>
+ <link rel="stylesheet" type="text/css" href="how-to2_files/print.html" media="print">
+ <script src="how-to2_files/tigris.html" type="text/javascript"></script>
+ <!-- ------- ORIGINAL CODE --------------------------- -->
+ <!--<head>
+ <style type="text/css"> 
+ /* <![CDATA[ */
+ @import "/branding/css/tigris.css";
+ @import "/branding/css/inst.css";
+ /* ]]> */
+ </style>
+ <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
+ <script src="/branding/scripts/tigris.js" type="text/javascript"></script> -->
+
+
+  
+                                                     <title>Getting Started: Build Host Environment</title>
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+ <meta http-equiv="Content-Style-Type" content="text/css" />
+ <meta name="version" content="3.5.1.19.8" />
+ <style type="text/css">
+<!--
+a:link {
+	text-decoration: none;
+}
+a:visited {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+a:active {
+	text-decoration: none;
+}
+-->
+</style></head>
+ 
+ 
+<body  class="composite">
+  
+<table border="0" cellspacing="0" cellpadding="4" width="100%" id="main">
+<tr>
+ <td id="midcol">
+ 
+ 
+<!-- 
+ ===============================================================================
+    IGNORE EVERYTHING ABOVE THIS AREA.  *   START EDITING BELOW 
+ ===============================================================================
+ -->
+ 
+ 
+ 
+<!--BEGIN * PAGE TITLE -->
+<div id="projecthome" class="app"> 
+<h1><font color="#E76F00">CDC Build System: Host Environment</font></h1>
+<!--END * PAGE TITLE -->
+<p>
+Once you have downloaded the source code
+for <i>phoneME Advanced</i>, version MR1,
+you can use the build system included with it
+to build different executable versions of a CDC Java runtime environment.
+These different versions can include different peformance features,
+API options or run on different target platforms.
+<p>
+The following sections show how to
+setup the CDC build system on a Linux/x86 host platform,
+and then build different versions of the CDC Java runtime environment 
+that will also run on a Linux/x86 platform.
+A later section describes how to build
+different versions of the CDC Java runtime environment
+that will also run on alternate devices like advanced phones.
+<p>
+    <ul>
+    <p>
+    <li><a href="pmAdv-buildhost.html#Setup">Build System Setup</a>
+      <ul>
+        <li><a href="pmAdv-buildhost.html#SetupLinuxPackages">Install the Linux Build Tool Packages</a>
+        <li><a href="pmAdv-buildhost.html#SetupJavaTools">Install the Java Build Tools</a>
+      </ul>
+    <p>
+    <li><a href="pmAdv-buildhost.html#Simple">A Simple Example Build: CDC</a>
+      <ul>
+        <li><a href="pmAdv-buildhost.html#SimpleBuild">Build the Executable</a>
+        <li><a href="pmAdv-buildhost.html#SimpleTest">Test the Executable</a>
+      </ul>
+    <p>
+    <li><a href="pmAdv-buildhost.html#SimpleFP">Building Foundation Profile</a>
+    <p>
+    <li><a href="pmAdv-buildhost.html#BuildOptions">More Build Options</a>
+    <p>
+    <li><a href="pmAdv-buildhost.html#PBP">Building Personal Basis Profile</a>
+      <ul>
+        <li><a href="pmAdv-buildhost.html#PBPSetup">Setup the Build System</a>
+        <li><a href="pmAdv-buildhost.html#PBPBuild">Build the Executable</a>
+        <li><a href="pmAdv-buildhost.html#PBPTest">Test the Executable</a>
+      </ul>
+    <p>
+    <li><a href="pmAdv-buildhost.html#PP">Building Personal Profile</a>
+      <ul>
+        <li><a href="pmAdv-buildhost.html#PPSetup">Setup the Build System</a>
+        <li><a href="pmAdv-buildhost.html#PPBuild">Build the Executable</a>
+        <li><a href="pmAdv-buildhost.html#PPTest">Test the Executable</a>
+      </ul>
+    </ul>
+<p>
+This guide only covers the basic build procedures and build options.
+See the
+<a href="http://java.sun.com/javame/reference/docs/cdc_build_system.pdf">
+<i>CDC Build System Guide</i></a>
+for more information about build options,
+build system organization and tool setup issues.
+<p>
+See <a href="pmAdv-buildtarget.html.html">CDC Build System: Target Devices</a>
+for information on how to build executable versions
+of the CDC Java runtime environment for various embedded target devices.
+
+<hr size="1" noshade>
+<a name="Setup"><h2>Build System Setup</h2></a>
+<p>
+<a name="SetupLinuxPackages"><h3>Install the Linux Build Tool Packages</h3></a>
+<p>
+The CDC build system included with the source code
+for the <i>phoneME Advanced</i>, version MR1
+can run on many different Linux distributions.
+To run the CDC build system,
+you will need certain Linux developer tools like a C/C++ compiler
+as well as the Java developer tools included in the
+<a href="http://java.sun.com/j2se/1.4.2/download.html">Java SE SDK</a>.
+<p>
+A reasonable guideline is that a recent, common Linux distribution
+should include the tools needed by the CDC build system.
+However some user-oriented Linux distributions
+like <a href="http://www.ubuntu.com">Ubuntu</a> and
+<a href="http://www.opensuse.org">openSUSE</a>
+may not include the necessary tools by default.
+So the tables below provides guidelines for acquiring the necessary tools.
+<p>
+<b>Note:</b>
+Linux distributions have a mechanism for deploying pre-built software
+called a <a href="http://en.wikipedia.org/wiki/Package_management_system">
+package management system</a>.
+There are two main Linux package management systems:
+<p>
+<ul>
+<li>
+<a href="http://packages.debian.org">
+Debian Package Management System</a> used by
+<a href="http://www.ubuntu.com">Ubuntu</a>
+and
+<a href="http://www.debian.org">Debian</a>.
+<p>
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0" bgcolor="#333366" width="30%">
+  <tbody>
+    <tr>
+      <td>
+      <table width="100%" border="0" cellspacing="1" cellpadding="3">
+        <tbody> 
+        <tr> 
+          <th><font color="#ffffff" size="-1"><b>Debian Package</b></font></th>
+          <th><font color="#ffffff" size="-1"><b>Version</b></font></th>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top"> 
+          <td><tt>binutils-static</tt></td>
+          <td>2.16</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top"> 
+          <td><tt>bison</tt></td>
+          <td>2.1</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top">
+          <td><tt>flex</tt></td>
+          <td>2.5.31</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top">
+          <td><tt>g++-4.0</tt></td>
+          <td>4.0.3</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top">
+          <td><tt>make</tt></td>
+          <td>3.8</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top">
+          <td><tt>subversion</tt></td>
+          <td>1.3.1</td>
+        </tr>
+        </tbody> 
+      </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</blockquote>
+<p>
+<li>
+<a href="http://www.rpm.org">
+Red Hat Package Management System</a> used by
+<a href="http://www.opensuse.org">openSUSE</a>
+and
+<a href="http://fedora.redhat.com">Fedora</a>.
+<p>
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0" bgcolor="#333366" width="30%">
+  <tbody>
+    <tr>
+      <td>
+      <table width="100%" border="0" cellspacing="1" cellpadding="3">
+        <tbody>
+        <tr>
+          <th><font color="#ffffff" size="-1"><b>RPM Package</b></font></th>
+          <th><font color="#ffffff" size="-1"><b>Version</b></font></th>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top">
+          <td><tt>binutils-static</tt></td>
+          <td>2.16</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top">
+          <td><tt>bison</tt></td>
+          <td>2.1</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top">
+          <td><tt>flex</tt></td>
+          <td>2.5.31</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top">
+          <td><tt>g++-4.1</tt></td>
+          <td>4.1</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top">
+          <td><tt>make</tt></td>
+          <td>3.8</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top">
+          <td><tt>subversion</tt></td>
+          <td>1.3.0</td>
+        </tr>
+        </tbody>
+      </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</blockquote>
+</ul>
+<p>
+Note that the source code and build system for this release
+have been tested with earlier versions of <tt>gcc</tt> as well,
+in particular 3.3.x and 3.4.x.
+
+<a name="SetupJavaTools"><h3>Install the Java Build Tools</h3></a>
+<p>
+Download and install the
+<a href="http://java.sun.com/j2se/1.4.2/download.html">Java SE SDK</a>,
+version 1.4.2.
+The examples below are based on installing the Java developer tools
+in <tt>/usr/java/j2sdk</tt>.
+<p>
+Note that many Linux distributions include alternate implementations
+of these Java developer tools.
+We have only tested and run the CDC build system
+with the Java developer tools provided by Sun.
+
+<hr size="1" noshade>
+<a name="Simple"><h2>A Simple Example Build: CDC</h2></a>
+<p>
+Once you've set up the CDC build system
+by installing the necessary build tools
+and specifying their location in the <tt>GNUmakefile</tt>,
+then you can perform a simple build process
+to validate the build system.
+<p>
+The simplest build target is CDC without any profile.
+This is a "headless" implementation
+that we'll use to run a basic <tt>HelloWorld</tt> application.
+
+<a name="SimpleBuild"><h3>Build the Executable</h3></a>
+<p>
+The CDC build system is launched with a single <tt>make</tt> command.
+<p>
+<blockquote>
+<pre>
+% make
+</pre>
+</blockquote>
+<p>
+The build system will display a log of the build process.
+If the build is successful, it will display something like:
+<p>
+<blockquote>
+<pre>
+...
+make[1]: Entering directory `/home/user/phoneme-advanced-mr1/build/linux-x86-generic'
+make[1]: Nothing to be done for `tools'.
+make[1]: Leaving directory `/home/user/phoneme-advanced-mr1/build/linux-x86-generic'
+</pre>
+</blockquote>
+<p>
+If the build fails at some point,
+your build tools are probably misconfigured or not compatible.
+The first step is to look at the definitions of variables:
+<p>
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0" bgcolor="#333366" width="60%">
+  <tbody>
+    <tr>
+      <td>
+      <table width="100%" border="0" cellspacing="1" cellpadding="3">
+        <tbody>
+        <tr>
+          <th><font color="#ffffff" size="-1"><b>Variable</b></font></th>
+          <th><font color="#ffffff" size="-1"><b>Description</b></font></th>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top">
+          <td><tt>CVM_HOST_TOOLS_PREFIX</tt></td>
+          <td>Location of the host build tools.</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top">
+          <td><tt>CVM_JAVA_TOOLS_PREFIX</tt></td>
+          <td>Location of the Java build tools.</td>
+        </tr>
+        </tbody>
+      </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</blockquote>
+
+<a name="SimpleTest"><h3>Test the Executable</h3></a>
+<p>
+When the build process completes successfully
+it generates an executable CDC Java runtime environment.
+The component files of the CDC Java runtime environment
+are located in the target build directory.
+The most basic runtime files
+are in the <tt>bin</tt> and <tt>lib</tt> directories
+and a set of demo programs are in <tt>testclasses.zip</tt>.
+<p>
+Here is the command-line for running a simple test application.
+<p>
+<blockquote>
+<pre>
+% bin/cvm -cp testclasses.zip HelloWorld
+</pre>
+</blockquote>
+
+<hr size="1" noshade>
+<a name="SimpleFP"><h2>Building Foundation Profile</h2></a>
+<p>
+Foundation Profile (FP)
+is a more complete API specification for headless devices.
+The steps described above can be easily modified
+to build an executable for FP.
+All you have to do is add 
+<tt>J2ME_CLASSLIB=foundation</tt> build option
+to the build options in the <tt>GNUmakefile</tt>.
+
+<hr size="1" noshade>
+<a name="BuildOptions"><h2>More Build Options</h2></a>
+<p>
+The CDC build system includes many build options and targets:
+<p>
+<ul>
+<li>
+<b>API choices.</b>
+The Java ME platform has a configurable API architecture
+which allows designers to select standardized APIs
+that are appropriate for a given target device.
+The CDC white paper describes these API choices in more detail.
+For now, it's important to understand that these choices
+are made available through the build system as build options.
+For example,
+the choice between which Java ME profile to use
+is controlled by the <tt>J2ME_CLASSLIB</tt> build option.
+<p>
+<li>
+<b>Testing features.</b>
+Some build options are intended
+only for development and testing purposes.
+These include <tt>CVM_TRACE</tt> for tracing VM events
+and <tt>CVM_JVMDI</tt> for enabling Java debugging.
+<p>
+<li>
+<b>Performance features.</b>
+And finally, some build options are intended for performance.
+For example,
+<tt>CVM_PRELOAD_LIB</tt>
+uses <tt>JavaCodeCompact</tt> to preload the Java class library
+so that it can execute out of ROM.
+And <tt>CVM_JIT</tt> builds an executable with a JIT.
+</ul>
+<p>
+The
+<a href="http://java.sun.com/javame/reference/docs/cdc_build_system.pdf">
+<i>CDC Build System Guide</i></a>
+provides tables that describe each build option.
+
+<hr size="1" noshade>
+<a name="PBP"><h2>Building Personal Basis Profile</h2></a>
+<p>
+The CDC build system has many <b>build options</b>
+for building versions of the CDC Java runtime environment
+with additional API capabilities.
+For example,
+Personal Basis Profile (PBP) is an API specification
+for providing GUI capabilities.
+While PBP is not itself a GUI framework,
+it provides an infrastructure for implementing
+lightweight GUI widget toolkits like Swing
+and support for the xlet application model.
+<p>
+This build example will show how to build the CDC Java runtime environment
+with a PBP implementation based on the
+<a href="http://www.trolltech.com/products/qt">Qt</a>
+GUI framework.
+
+<a name="PBPSetup"><h3>Setup the Build System</h3></a>
+<p>
+The build system requirements for PBP are the same as the
+<a href="pmAdv-buildhost.html#SetupLinuxPackages">base requirements</a>
+described earlier with the addition of the
+<a href="http://www.trolltech.com/products/qt">Qt3</a>
+development libraries.
+<p>
+<blockquote>
+<table>
+<tr>
+<td>
+<table border="0" cellspacing="0" cellpadding="0" bgcolor="#333366" width="40%">
+  <tbody>
+    <tr>
+      <td>
+      <table width="100%" border="0" cellspacing="1" cellpadding="3">
+        <tbody> 
+        <tr> 
+          <th><font color="#ffffff" size="-1"><b>Debian<br>Package</b></font></th>
+          <th><font color="#ffffff" size="-1"><b>Version</b></font></th>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top"> 
+          <td><tt>libqt3-compat-headers</tt></td>
+          <td>3.3.6</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top"> 
+          <td><tt>libqt3-mt-dev</tt></td>
+          <td>3.3.6</td>
+        </tr>
+        </tbody> 
+      </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</td>
+<td>
+&nbsp;&nbsp;&nbsp;&nbsp;
+</td>
+<td>
+<table border="0" cellspacing="0" cellpadding="0" bgcolor="#333366" width="40%">
+  <tbody>
+    <tr>
+      <td>
+      <table width="100%" border="0" cellspacing="1" cellpadding="3">
+        <tbody> 
+        <tr> 
+          <th><font color="#ffffff" size="-1"><b>RPM<br>Package</b></font></th>
+          <th><font color="#ffffff" size="-1"><b>Version</b></font></th>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top"> 
+          <td><tt>qt3</tt></td>
+          <td>3.3.5</td>
+        </tr>
+        <tr bgcolor="#ffffff" valign="top"> 
+          <td><tt>qt3-dev</tt></td>
+          <td>3.3.5</td>
+        </tr>
+        </tbody> 
+      </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</td>
+</tr>
+</table>
+</blockquote>
+
+<a name="PBPBuild"><h3>Build the Executable</h3></a>
+<p>
+Building PBP requires a few additional build options.
+You can put these <tt>make</tt> variables
+on the <tt>make</tt> command-line
+or add them to the <tt>GNUmakefile</tt>.
+<p>
+<blockquote>
+<pre>
+J2ME_CLASSLIB=basis
+</pre>
+</blockquote>
+
+<a name="PBPTest"><h3>Test the Executable</h3></a>
+<p>
+Here is the command-line for running a PBP test application.
+<p>
+<blockquote>
+<pre>
+% bin/cvm -cp democlasses.jar basis.DemoFrame
+</pre>
+</blockquote>
+
+<hr size="1" noshade>
+<a name="PP"><h2>Building Personal Profile</h2></a>
+<p>
+Personal Profile (PP) is also an API specification
+for providing GUI capabilities.
+In fact,
+it's a superset of PBP which adds support for AWT and applets.
+
+<a name="PPSetup"><h3>Setup the Build System</h3></a>
+<p>
+The build system requirements for PP are the same as the
+<a href="pmAdv-buildhost.html#PBPSetup">build system requirements for PBP</a>
+described earlier.
+
+<a name="PPBuild"><h3>Build the Executable</h3></a>
+<p>
+Building PP requires a few additional build options.
+You can put these on the <tt>make</tt> command-line
+or add them to the <tt>GNUmakefile</tt>.
+<p>
+<blockquote>
+<pre>
+J2ME_CLASSLIB=personal
+</pre>
+</blockquote>
+
+<a name="PPTest"><h3>Test the Executable</h3></a>
+<p>
+Here is the command-line for running a PP test application.
+<p>
+<blockquote>
+<pre>
+% bin/cvm -cp democlasses.jar personal.DemoFrame
+</pre>
+</blockquote>

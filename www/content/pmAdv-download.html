@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+
+           
+ 
+
+ <style type="text/css"> 
+<!-- /* <![CDATA[ */
+@import "/branding/css/tigris.css";
+@import "/inst.css"; 
+ 
+
+ /* ]]> */
+ --> 
+
+ </style>
+ <link rel="stylesheet" type="text/css" href="how-to2_files/print.html" media="print">
+ <script src="how-to2_files/tigris.html" type="text/javascript"></script>
+ <!-- ------- ORIGINAL CODE --------------------------- -->
+ <!--<head>
+ <style type="text/css"> 
+ /* <![CDATA[ */
+ @import "/branding/css/tigris.css";
+ @import "/branding/css/inst.css";
+ /* ]]> */
+ </style>
+ <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
+ <script src="/branding/scripts/tigris.js" type="text/javascript"></script> -->
+
+
+  
+                                                     <title>Getting Started: Downloading Code</title>
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+ <meta http-equiv="Content-Style-Type" content="text/css" />
+ <meta name="version" content="3.5.1.19.8" />
+ <style type="text/css">
+<!--
+a:link {
+	text-decoration: none;
+}
+a:visited {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+a:active {
+	text-decoration: none;
+}
+-->
+</style></head>
+ 
+ 
+<body  class="composite">
+  
+<table border="0" cellspacing="0" cellpadding="4" width="100%" id="main">
+<tr>
+ <td id="midcol">
+ 
+ 
+<!-- 
+ ===============================================================================
+    IGNORE EVERYTHING ABOVE THIS AREA.  *   START EDITING BELOW 
+ ===============================================================================
+ -->
+ 
+ 
+ 
+<!--BEGIN * PAGE TITLE -->
+<div id="projecthome" class="app"> 
+<h1><font color="#E76F00">Downloading the Project Source Code</font></h1>
+<!--END * PAGE TITLE -->
+
+<p>
+You can start with the <i>phoneME Advanced</i> technology
+by downloading the project source code from its
+<a href="http://subversion.tigris.org">Subversion</a> repository.
+
+<hr size="1" noshade>
+<a name="Checkout"><h2>Checkout the Source Code</h2></a>
+<p>
+Start by checking out the full project source code repository.
+<p>
+<blockquote>
+<pre>
+% mkdir phoneme-advanced-mr1
+% cd phoneme-advanced-mr1
+% svn checkout <i>URL</i> .
+</pre>
+</blockquote>
+<p>
+The specific URL can be found at the
+<a href="https://phoneme.dev.java.net/downloads_page.html">
+phoneME community download page</a>.
+
+<hr size="1" noshade>
+<a name="Browse"><h2>Browse the Source Code</h2></a>
+<p>
+Once you've downloaded the project source code,
+you may want to explore and see how it's structured.
+There are two main directory hierarchies:
+<p>
+<ul>
+<li>
+<tt>build</tt> contains the CDC build system which is a set of makefiles
+and scripts for building the CDC Java runtime environment
+with different build options and for different platforms.
+<p>
+<li>
+<tt>src</tt> contains the source code hierarchy including platform-independent source code and target-specific source code.
+</ul>
+<p>
+See the
+<a href="http://java.sun.com/javame/reference/docs/cdc_build_system.pdf">
+<i>CDC Build System Guide</i></a>
+for more information about the structure of the CDC build system,
+and the
+<a href="http://java.sun.com/javame/reference/docs/cdc_porting_guide.pdf">
+<i>CDC Porting Guide</i></a>
+for more information about the structure of the source code hierarchy.
+
+<hr size="1" noshade>
+<a name="Update"><h2>Update the Source Code</h2></a>
+<p>
+You can update your copy of the project source code repository
+to keep it in sync with the latest changes on the community site.
+<p>
+<blockquote>
+<pre>
+% cd phoneme-advanced-mr1
+% svn update
+</pre>
+</blockquote>
