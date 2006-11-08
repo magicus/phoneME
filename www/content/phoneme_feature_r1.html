@@ -37,43 +37,76 @@
  <!--BEGIN * EXPLANATORY TEXT PARAGRAPH[S] -->
 <p>
 <h3>Release Description</h3>
-        <p> PhoneME-feature-MR1 is an implementation of the Java&#8482; Platform, 
-          Micro Edition (Java ME platform) based on the Connected Limited Device 
-          Configuration (CLDC), HotSpot&#8482; Implementation, version 1.1.3. 
-          The release includes an implementation of the MIDP 2.0.1 specification, 
-          which is extended to support multitasking. The multitasking is layered 
-          on a single OS process with each MIDlet running in its own logical virtual 
-          machine that is independent of the other MIDlets. 
+        <p>PhoneME-feature-MR1 is an implementation of the Java™ Platform, Micro Edition (Java ME platform) based on the Connected Limited Device Configuration (CLDC), HotSpot™ Implementation, version 1.1.3.  This release is also based on Sun Java Wireless Client (SJWC) version 1.1.3.  The release includes implementations of CLDC 1.1 and MIDP 2.0 and has been extended to support multitasking – the ability to run multiple MIDlets simultaneously.
         <P>
 <h3>Feature List</h3>
 <p>
-<UL> 
-	<LI>The following subset of MSA 248 optional packages:
-		<UL>
-			<LI>JSR 75 (PIM and File management)</LI>
-			<LI>JSR 82</LI>
-			<LI>JSR 135</LI>
-			<LI>JSR 172</LI>
-			<LI>JSR 177</LI>
-			<LI>JSR 184</LI>
-			<LI>JSR 205</LI>
-			<LI>JSR 226</LI>
-		</UL>
-	</LI>
-	<LI>
-		Multitasking capabilities supporting both multiple and simultaneous MIDlets
-	</LI>
-</UL>
+
+<p>The following features are part of phoneME Feature MR1: </p>
+      <ul>
+        <li>
+          <p>High performance implementation of  	the Java ME platform stack 
+        </li>
+        <li>
+          <p>Modular architecture which  	supports multiple implementations per functional area (storage,  	networking, user interface, etc.) 
+        </li>
+        <li>
+          <p>Subsystem, directory, and library  	portability 
+        </li>
+        <li>
+          <p>Multitasking capabilities and  	support for multiple, simultaneous applications (MIDlets) 
+        </li>
+        <li>
+          <p>Native Application Management API 
+        </li>
+        <li>
+          <p>Native Resource Management API 
+        </li>
+        <li>
+          <p>Implements CLDC 1.1 (JSR 139) and  	MIDP 2.0 (JSR 118) 
+        </li>
+        <li>
+          <p>Implements the following optional  	JSR APIs: 
+          <ul>
+            <li>
+              <p>Personal Information and File  		Management (JSR 75) 
+            </li>
+       
+        <li>
+          <p>Bluetooth and OBEX (JSR 82) 
+        </li>
+        <li>
+          <p>Wireless Messaging 2.0 (JSR 205) 
+        </li>
+        <li>
+          <p>Scalable 2d Vector Graphics (JSR  	226) 
+        </li>
+        <li>
+          <p>J2ME™ Web Services support (JSR  	172) 
+        </li>
+        <li>
+          <p>Security and Trust Services API  	support (JSR 177) 
+        </li>
+		   </ul>
+        </li>
+      </ul>
+<P>
 <H3>Platforms Supported</H3>
 <P>
-The supported platforms are Linux/ARM and Windows/i386.
-<P>
-The platform configurations are:
-<P>
-<UL>
-<LI>TI P2SAMPLE64-V6 with Linux/ARM</LI>
-<LI>Windows/i386 (in Emulation mode)</LI>
-</UL>
+  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+  <HTML>
+  <!--  		@page { size: 8.5in 11in; margin: 0.79in }  		P { margin-bottom: 0.08in }  	-->
+  <BODY DIR="LTR">
+<p>The supported platforms are Linux/ARM and Windows/i386. </p>
+<p>The platform configurations are: </p>
+<ul>
+  <li>
+    Support for Texas  	Instruments P2SAMPLE64-V6 platform 
+  </li>
+  <li>
+    Windows/i386 (in Emulation mode)
+  </li>
+</ul>
 <P>
 <H3>Getting Started</H3>
         <P> To build and use PhoneME-feature-MR1, see <A HREF="/content/phoneme_feature_guide.pdf">Quick 
@@ -83,14 +116,17 @@ To download and contribute to the platform, see the <A HREF="http://mobileandemb
 <P>
 To access the code repository and nightly builds, see <A HREF="/downloads_page.html">downloads page.</A>
 <P>
-<H3>Product Documentation</H3>
-        <P> The commercial offering from Sun for PhoneME-feature-MR1 is <A HREF="http://java.sun.com/products/jtwi/">Sun 
-          Java Wireless Client V1.1.3 (SJWC)</A>. Documentation for SJWC1.1.3 
-          is available <A HREF="http://java.sun.com/javame/reference/apis.jsp">here.</A> 
+<H3>Additional Documentation</H3>
+        <P>
+          <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+          <HTML>
+          <!--  		@page { size: 8.5in 11in; margin: 0.79in }  		P { margin-bottom: 0.08in }  	-->
+          <BODY DIR="LTR">
+        <p>Documentation for Sun’s commercial product offering that  includes the implentation from phoneME Feature is available.  Please  note that Sun’s commercial product (CLDC v1.1.3 and Sun Java  Wireless Client v1.1.3) include additional components that could not  be made available in open source at this time due to legal  limitations.  Therefore, the commercial documentation provides a lot  of additional detail that will be useful and applies to phoneME  Feature MR1, but it also includes references to components that are  not present in the open source.   See the &lt;A HREF=&quot;http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/index.html&quot;&gt;SJWC 1.1.3 Documentation.&lt;/A&gt;</p>
         <P>
  <H3>Platform Twikis</H3>
 <P>
-See the <A HREF="">twiki pages</A> for engineering notes, tech topics and white papers. 
+See the <A HREF="http://wiki.java.net/bin/view/MobileandEmbedded/phoneMEfeature">twiki pages</A> for engineering notes, tech topics and white papers. 
 <!--END * BODY TEXT -->
 <!--*** -------------------------------- END OF SECTION ------------------------------------ *** -->
 </div>
