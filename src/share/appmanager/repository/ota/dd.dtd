@@ -1,0 +1,82 @@
+<!--
+ Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
+ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ 
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License version 2 only,
+ as published by the Free Software Foundation.
+ 
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ version 2 for more details (a copy is included at /legal/license.txt).
+ 
+ You should have received a copy of the GNU General Public License version
+ 2 along with this work; if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ 
+ Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
+ CA 95054 or visit www.sun.com if you need additional information or have
+ any questions.
+-->
+
+<!--
+ @(#)dd.dtd	1.3 05/10/20
+-->
+
+<!--
+  @(#)dtd.dd       1.0 05/09/13
+  -->
+<!ELEMENT media (name, ddx:version?, ddx:dependencies?, ddx:display?,
+    type, vendor, objectURI?, installNotifyURI?, size, iconURI?,
+    ddx:security?, description?, nextURL?, infoURL?, ddx:object)>
+
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT ddx:version (#PCDATA)>
+<!ELEMENT ddx:dependencies (#PCDATA)>
+<!ELEMENT ddx:display (#PCDATA)>
+<!ELEMENT type (#PCDATA)>
+<!ELEMENT vendor (#PCDATA)>
+<!ELEMENT objectURI (#PCDATA)>
+<!ELEMENT installNotifyURI (#PCDATA)>
+<!ELEMENT size (#PCDATA)>
+<!ELEMENT iconURI (#PCDATA)>
+<!ELEMENT ddx:security (#PCDATA)>
+<!ELEMENT description (#PCDATA)>
+<!ELEMENT nextURL (#PCDATA)>
+<!ELEMENT infoURL (#PCDATA)>
+
+<!ATTLIST media xmlns CDATA #IMPLIED>
+<!ATTLIST media xmlns:ddx CDATA #IMPLIED>
+
+<!ELEMENT ddx:object (ddx:application*, ddx:xlet*, ddx:daemon?, ddx:player?,
+    ddx:data?, ddx:library?, ddx:property*, ddx:mime?, action?)>
+
+<!ELEMENT ddx:application EMPTY>
+<!ELEMENT ddx:xlet EMPTY>
+<!ELEMENT ddx:daemon EMPTY>
+<!ELEMENT ddx:player EMPTY>
+<!ELEMENT ddx:data EMPTY>
+<!ELEMENT ddx:library EMPTY>
+<!ELEMENT ddx:property EMPTY>
+<!ELEMENT ddx:mime EMPTY>
+<!ELEMENT action EMPTY>
+
+<!ATTLIST ddx:application classname CDATA #REQUIRED>
+<!ATTLIST ddx:application classpath CDATA #IMPLIED>
+<!ATTLIST ddx:application icon CDATA #REQUIRED>
+<!ATTLIST ddx:application name CDATA #REQUIRED>
+
+<!ATTLIST ddx:xlet classname CDATA #REQUIRED>
+<!ATTLIST ddx:xlet classpath CDATA #IMPLIED>
+<!ATTLIST ddx:xlet name CDATA #REQUIRED>
+<!ATTLIST ddx:xlet icon CDATA #REQUIRED>
+
+
+<!ATTLIST ddx:data mimeType CDATA #REQUIRED>
+<!ATTLIST ddx:data name CDATA #REQUIRED>
+
+<!ATTLIST ddx:library type CDATA #REQUIRED>
+
+<!ATTLIST ddx:property name CDATA #REQUIRED>
+<!ATTLIST ddx:property value CDATA #REQUIRED>

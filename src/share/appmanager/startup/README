@@ -1,0 +1,124 @@
+#
+# Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+# 
+# Sun Microsystems, Inc. has intellectual property rights relating to technology
+# embodied in the product that is described in this document. In particular, and
+# without limitation, these intellectual property rights may include one or more
+# of the U.S. patents listed at http://www.sun.com/patents and one or more
+# additional patents or pending patent applications in the U.S. and in other
+# countries.
+# U.S. Government Rights - Commercial software. Government users are subject to
+# the Sun Microsystems, Inc. standard license agreement and applicable provisions
+# of the FAR and its supplements.
+# 
+# Use is subject to license terms.
+# 
+# This distribution may include materials developed by third parties.Sun, Sun
+# Microsystems, phoneME and Java are trademarks or registered trademarks of Sun
+# Microsystems, Inc. in the U.S. and other countries.
+# 
+# 
+# Copyright 2006 Sun Microsystems, Inc. Tous droits réservés.
+# 
+# Sun Microsystems, Inc. détient les droits de propriété intellectuels relatifs à
+# la technologie incorporée dans le produit qui est décrit dans ce document. En
+# particulier, et ce sans limitation, ces droits de propriété intellectuelle
+# peuvent inclure un ou plus des brevets américains listés à l'adresse
+# http://www.sun.com/patents et un ou les brevets supplémentaires ou les
+# applications de brevet en attente aux Etats - Unis et dans les autres pays.
+# 
+# L'utilisation est soumise aux termes du contrat de licence.
+# 
+# Cette distribution peut comprendre des composants développés par des tierces
+# parties.
+# 
+# Sun, Sun Microsystems, phoneME et Java sont des marques de fabrique ou des
+# marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
+# 
+
+HOW TO COMPILE
+--------------
+
+To compile appmanager, use the build flag J2ME_PLATFORM=appmanager which will automatically set J2ME_CLASSLIB=personal and CVM_MTASK=true in your build.  Please look at the sample build script 'makecdcams' for further detais.
+
+How to use:
+  makecdcams <buildflavor> <buildtype> <PRESENTATION_MODES=xxx> <clean>
+
+     buildflavors can be linux-x86-suse, linux-arm-zaurus, etc.
+     buildtype can be personal, basis, appmanager
+
+Example of commands:
+  makecdcams - (defaults to linux-x86-suse, appmanager build)
+  makecdcams linux-arm-zaurus basis
+  makecdcams linux-x86-suse appmanager PRESENTATION_MODES=all
+  makecdcams linux-x86-suse appmanager PRESENTATION_MODES=AwtPDA
+
+Use the target 'appmanager_install' to create a gzip tarfile, Ex.
+  makecdcams linux-x86-suse appmanager PRESENTATION_MODES=AwtPDA appmanager_install
+
+APPMANAGER SETUP ON THE ZAURUS
+------------------------------
+
+(Steps 1 - 5 are one-time-only steps.)
+
+1. If you wish to have the server run upon bootup of the zaurus, replace /home/QtPalmtp/qpe.sh with the version in this directory.  It will do so only if the file /mnt/card/failsafe-mode is found, meaning that as a failsafe measure it will only start if your SD card is plugged in with this file in it.
+
+2. Install an application icon to run the appmanager by doing the following:
+  a) rlogin to the device as root to install cdcams.  For example, use a command similar to 'rlogin warrior-14 -l root'.
+
+  b) If your warrior does not contain the following directory, create it:
+         /home/QtPalmtop/apps/Java
+    
+     Create a .directory file in this directory and put this inside of the file:
+************* Start Here *************
+[Desktop Entry]
+Name=Java
+Icon=28x283DJavaIconB
+*************  End Here  *************
+     Note: Change Icon value 28x283DJavaIconB in the appmanager.desktop file to the name of the icon you will use.  It will be the name of the file minus the entention.
+
+  c) Place the appmanager.desktop file in the /home/QtPalmtop/apps/Java directory.  Make sure it has the following permissions:
+         # ls -l appmanager.desktop
+-rwxr-xr-x    1 root     root          192 Jan 25 07:34 appmanager.desktop
+
+  d) Place your icon file in the /home/QtPalmtop/pics and /home/QtPalmtop/pics144 directories.
+
+3. Place the runappmanager file in /home/QtPalmtop/bin directory.  Make sure it has execute permission set.
+
+4. It is highly advisable, but not necessary, to use a swap file on your SD card when running.  To do this, create a /mnt/card/swap directory which creates the 'swap' directory on your SD card.  Run the following script while in the /mnt/card/swap directory to create and turn on a 40 meg swap file.
+----------
+#!/bin/sh
+
+dd if=/dev/zero of=swapfile bs=1024 count=40960
+mkswap swapfile 
+swapon swapfile
+----------
+
+5. Create the directory /mnt/card/cdcams, which creates the 'cdcams' directory on your SD card.  Give this directory all permissions.  For example, use the command 'chmod a+rwx /mnt/card/noble'.  You may instead want to install cdcams in internal flash.  To do so, create /home/cdcams and place the installation in there.  Don't forget to update the runappmanager script with the location. 
+
+6. Place your build's appmanager.tar.gz in /mnt/card/cdcams or where ever the installation is located.  Extract this tar file by typing "tar zxf appmanager.tar.gz".
+
+7. Start the cdcams demo by tapping on the appmanager icon.
+
+ZAURUS SETTINGS
+---------------
+
+* Zaurus SL-C860, ROM Version 1.41 JP, w/ 64 Meg ramdisk, and an SD card.
+
+* When running the appmanager demo, I make sure I have approx. 40 megs of free runtime memory.  Make sure you have around this number by going into Settings->System Info.
+
+* Application files, i.e. the stuff in appmanager.tar.gz, is placed on my SD Card.  Running the appmanager from mounted drives on other machines is not recommended at all if you are trying to test performance.  In fact, I don't recommend ever running anything mounted as everything will run about 5 times slower, but for testing purposes there are some situations where it still might be best to run mounted.  You can also try installing cdcams in internal flash off of /home.
+
+* 40 Meg. swap file on SD card 
+
+* For the fastest performance, use a ROMized build with the jit options specified in the runappmanager scripts.
+
+       2. Games/TicTacToe
+       3. Graphics/DrawTest
+       4. Utils/Zcalc
+  And, I describe how the appmanager activates the new app and deactivates the old.
+
+4).  Then, go into System/Taskbar.  Select "DrawTest" and then Goto to switch to the DrawTest app. Then I like to show how to kill an app.   Hit Taskbar again and Javanoid is already highlighted, so simply select "Kill".  After killing an app, the appmanager takes you to the last app you were running, which should be DrawTest.
+
+5)  Then, if you're demo'ing in our building, you can show the downloading of apps.  Select "AppStore" and it should take you to a screen listing all of the available downloadable apps.  Select "TumblingDuke"... it then takes you to a screen with more information on that app.  We could put more info that is currently on that screen if we want to in the future.  Then, select the "Download Now" button.  It will bring up a window asking you which menu do you want to place that app in.  Select "Graphics".  Then select "Save And Run".  This will download and immediately run TumblingDuke.  After you select "Save And Run", you should see the progress bar, but it downloads so fast that you'll only see it for an instant. 
+
