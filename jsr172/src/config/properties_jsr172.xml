@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "configuration.dtd">
+<!--
+  
+  Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+-->
+<!-- System-independent JSR 172 properties required by the specification -->
+<configuration>
+<properties>
+<!-- SYSTEM PROPERTIES -->
+<!-- Visible from System.getProperty() -->
+
+  <property Key="xml.jaxp.subset.version"
+      Value="1.0"
+      Scope="system"
+      Comment="Version of JAXP Subset APIs supported by the device."/>
+
+  <property Key="xml.rpc.subset.version"
+      Value="1.0"
+      Scope="system"
+      Comment="Version of JAX-RPC Subset APIs supported by the device."/>
+
+<!-- INTERNAL PROPERTIES -->
+<!-- Visible from Configuration.getProperty() -->
+</properties>
+</configuration>
