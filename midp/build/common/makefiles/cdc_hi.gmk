@@ -1,0 +1,204 @@
+#
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+
+ifndef _CDC_GMK_
+_CDC_GMK_	=
+
+include $(CDC_DIST_DIR)/cvm-defines.mk
+EXTRA_CFLAGS	+= $(CVM_DEFINES)
+
+#----------------------------------------------------------------------
+# CDC_DIST_DIR --
+#
+# This variable points to the CDC-HI binary distribution directory
+# from which we obtain the VM library, CDC class library, and other
+# build tools supplied by the VM.
+#
+#----------------------------------------------------------------------
+define cdc_dist_dir_help
+	echo 'ERROR: CDC_DIST_DIR points to invalid directory:'; \
+	echo '=========================================================='; \
+	echo 'Setting CDC_DIST_DIR:'; \
+	echo ''; \
+	echo 'If you build the CDC-HI VM yourself, you need to specify'; \
+	echo 'CDC_DIST_DIR as something like:'; \
+	echo '    CDC_DIST_DIR=$${CDC_DIR}/build/linux-x86-redhat'; \
+	echo '=========================================================='
+endef
+
+
+CDC_CLASSES_ZIP     = $(CDC_DIST_DIR)/btclasses.zip
+PROFILE_CLASSES_ZIP = $(CDC_DIST_DIR)/lib/foundation.jar
+CDCTEST_CLASSES_ZIP = $(CDC_DIST_DIR)/testclasses.zip
+
+# CDC HI exported include directory
+#
+CDC_TARGET_CPU_i386 = x86
+CDC_TARGET_CPU_arm  = arm
+CDC_TARGET_CPU      = ${CDC_TARGET_CPU_${TARGET_CPU}}
+
+VM_INCLUDES += -I$(CDC_DIST_DIR)/include -I$(CDC_DIR)/src \
+               -I$(CDC_DIR)/src/share -I$(CDC_DIR)/src/share/javavm/export \
+               -I$(CDC_DIR)/src/$(TARGET_OS) -I$(CDC_DIST_DIR) \
+               -I$(CDC_DIR)/src/$(TARGET_OS)-$(CDC_TARGET_CPU) \
+               -I$(CDC_DIR)/src/$(CDC_TARGET_CPU)
+
+VM_BOOTCLASSPATH = $(CDC_CLASSES_ZIP)$(PATHSEP)${PROFILE_CLASSES_ZIP}
+
+BTCLASSES     = ${CDC_DIST_DIR}/btclasses
+BTCLASSES_ZIP = ${CDC_DIST_DIR}/btclasses.zip
+
+# A way to add MIDP classes to be romized by CVM:
+# in LF build directory:    make newrom
+# in CDC build dir:         make
+#
+newrom:
+	@cd $(MIDP_OUTPUT_DIR)/classes; jar uvf ${BTCLASSES_ZIP} .
+	@cd ${BTCLASSES}/../foundation_classes/; \
+		jar uvf ${BTCLASSES_ZIP} java/util/Timer* 
+	@ls -l ${BTCLASSES_ZIP}
+
+oldrom:
+	@echo restoring CVM original btclasses.zip
+	@cd ${BTCLASSES}; jar cvf ${BTCLASSES_ZIP} .
+	@ls -l ${BTCLASSES_ZIP}
+
+# The CDC build cannot compile the following files yet. Let's create dummy
+# .o files for now.
+cdc_dummies:
+	@mkdir -p $(GENERATED_DIR)
+	@for i in jvmconfig.h ROMStructs.h dummy.c; do \
+	    if test ! -f $(GENERATED_DIR)/$$i; then \
+		echo "creating dummy $$i"; \
+		echo '// empty' > $(GENERATED_DIR)/$$i; \
+	    fi; \
+	 done	
+	@for i in \
+		anc_fb_audio \
+		anc_fb_indicator \
+		anc_fb_vibrate \
+		commandLineUtil \
+		conv \
+		datagramProtocol \
+		defaultGenConv \
+		defaultLocale \
+		exitInternal \
+		fbapp_export \
+		fileInstallerShared \
+		findMidlet \
+		gcf_export \
+		gxapi_font_kni \
+		gxapi_graphics_kni \
+		gxapi_image_kni \
+		gxj_font_bitmap \
+		gxj_graphics_asm \
+		gxj_graphics \
+		gxj_imagedatafactory_kni \
+		gxj_image_decode \
+		gxj_image \
+		gxj_png_decode \
+		gxj_putpixel \
+		gxj_text \
+		gxutl_graphics_util \
+		gxutl_image_util \
+		jadParser \
+		jar \
+		JarReader \
+		lcdui_audio \
+		lcdui_display \
+		lcdui_game \
+		lcdui_indicators \
+		lcdui_input \
+		lcdui_vibrate \
+		lfj_cskin \
+		lfj_export \
+		lfjport_fb_export \
+		localeMethod \
+		LocalizedStringsBase \
+		manifestParser \
+		MD2 \
+		MD5 \
+		messagedigest \
+		midletsuiteimpl_kni \
+		midp_alarm_timer_md \
+		midpDataHash \
+		midpEvents \
+		midpEventUtil \
+		midp_file_cache \
+		midp_foreground_id \
+		midpInflate \
+		midpInit \
+		midpintern_suite_storage_common \
+		midpintern_suite_storage \
+		midpJar \
+		midp_logging_kni \
+		midp_logging \
+		midp_master_mode_events \
+		midpMidletAppImageGenerator \
+		midpMIDletProxyList \
+		midpMidletSuiteLoader \
+		midpMidletSuiteVerifier \
+		midp_msgQueue_md \
+		midpNativeThread_md \
+		midp_ota_notifier_db \
+		midp_ota_notifier_kni \
+		midp_platform_request_md \
+		midpport_suite_storage_common \
+		midpport_suite_storage \
+		midp_properties_static \
+		midp_push_registry_kni \
+		midp_push_registry_md \
+		midpResourceLimit \
+		midp_run \
+		midpServices \
+		midp_suite_storage_locks \
+		midp_suite_storage \
+		midp_suite_store_kni \
+		midp_thread \
+		midpUtilKni \
+		nativeFunctionTable \
+		properties_kni \
+		RandomAccessStream \
+		recordStoreFile \
+		recordStoreUtil \
+		rms \
+		ROMImage \
+		runMidlet \
+		serverSocketProtocol \
+		SHA \
+		socket_notify_export \
+		socketProtocol \
+		storageFile \
+		; do \
+	    if test ! -f $(OBJ_DIR)/$$i.o; then \
+		echo "creating dummy $$i.o"; \
+		$(CC) $(CFLAGS) -c $(CC_OUTPUT)$(OBJ_DIR)/$$i.o \
+			$(GENERATED_DIR)/dummy.c; \
+	    fi; \
+	 done
+
+# ifndef _CDC_GMK_
+endif
