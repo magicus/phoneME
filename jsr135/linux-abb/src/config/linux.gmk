@@ -1,0 +1,86 @@
+#
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+# 
+# This source file is specific for Qt-based configurations.
+#
+######################################################################
+#
+# Module's PLATFORM Component Configuration file
+#
+######################################################################
+
+EXTRA_CFLAGS += -c -O2 -Wall
+ifeq ($(TARGET_CPU), i386)
+    EXTRA_CFLAGS += -DSVR4 -DX86 -D_X86 -Di386 -DCLDC -DMIDP
+endif
+ifeq ($(TARGET_CPU), arm)
+    EXTRA_CFLAGS += -DSVR4 -DZAURUS -DCLDC -DMIDP
+endif
+EXTRA_CFLAGS += -DMMAPI_USE_SOFTWARE_MIXER -DMMAPI_WRITE_TO_AUDIO_DEVICE
+
+
+ifeq ($(JSR_234_INCLUDE_THIRD_PARTY_CODE), true)
+ifeq ($(JSR_234_USE_QSOUND), true)
+
+ifeq ($(TARGET_CPU), i386)
+    AUDIO_DRIVER = oss.cpp
+endif
+ifeq ($(TARGET_CPU), arm)
+    AUDIO_DRIVER = netaudio-linux.c
+endif
+
+MODULE_JSR_234_NATIVE_FILES += \
+    qsoundaudioout-$(AUDIO_DRIVER) \
+    RingBuffer-linux.c
+
+QSOUND_LIB_DIR = $(JSR_234_DIR)/src/native
+
+LIBS += $(QSOUND_LIB_DIR)/libmQ_JSR-234.a
+
+MIDP_DEPS += copy_soundbank
+
+copy_soundbank: $(LIBDIR)
+	@cp -f $(JSR_234_DIR)/src/native/soundbank.dls $(LIBDIR) $(LOG)
+
+endif # ifeq ($(JSR_234_USE_QSOUND), true)
+endif # ifeq ($(JSR_234_INCLUDE_THIRD_PARTY_CODE), true)
+
+#
+# Remove "-Werror" from $(CFLAGS) for native 234 files
+#
+$(OBJ_DIR)/%.o: $(JSR_234_DIR)/src/native/%.c
+	@echo " ... $@" $(LOG)
+	@echo +++ $(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG_ONLY)
+	@$(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
+
+$(OBJ_DIR)/%.o: $(JSR_234_DIR)/src/native/jpeg/%.c
+	@echo " ... $@" $(LOG)
+	@echo +++ $(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG_ONLY)
+	@$(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
+
+$(OBJ_DIR)/%.o: $(JSR_234_DIR)/src/native/png/%.c
+	@echo " ... $@" $(LOG)
+	@echo +++ $(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG_ONLY)
+	@$(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
+
