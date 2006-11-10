@@ -72,7 +72,7 @@ a:active {
 <!--END * PAGE TITLE -->
 <p>
 Once you have downloaded the source code
-for <i>phoneME Advanced</i>, version MR1,
+for <i>phoneME Advanced</i> MR1,
 you can use the build system included with it
 to build different executable versions of a CDC Java runtime environment.
 These different versions can include different peformance features,
@@ -136,7 +136,7 @@ of the CDC Java runtime environment for various embedded target devices.
 <a name="SetupLinuxPackages"><h3>Install the Linux Build Tool Packages</h3></a>
 <p>
 The CDC build system included with the source code
-for the <i>phoneME Advanced</i>, version MR1
+for the <i>phoneME Advanced</i> MR1
 can run on many different Linux distributions.
 To run the CDC build system,
 you will need certain Linux developer tools like a C/C++ compiler
@@ -382,7 +382,10 @@ The CDC build system includes many build options and targets:
 The Java ME platform has a configurable API architecture
 which allows designers to select standardized APIs
 that are appropriate for a given target device.
-The CDC white paper describes these API choices in more detail.
+The
+<a href="http://java.sun.com/products/cdc/wp/cdc-whitepaper.pdf">
+CDC white paper</a>
+describes these API choices in more detail.
 For now, it's important to understand that these choices
 are made available through the build system as build options.
 For example,
@@ -510,8 +513,17 @@ or add them to the <tt>GNUmakefile</tt>.
 <blockquote>
 <pre>
 J2ME_CLASSLIB=basis
+QT_TARGET_DIR=/usr/share/qt3/lib
+X11_LIB_DIR=/usr/X11R6/lib
 </pre>
 </blockquote>
+<p>
+<tt>QT_TARGET_DIR</tt>
+refers to the location of the
+<a href="http://www.trolltech.com/products/qt">Qt3</a>
+development libraries.
+<tt>X11_LIB_DIR</tt>
+refers to the location of the X11 libraries.
 
 <a name="PBPTest"><h3>Test the Executable</h3></a>
 <p>

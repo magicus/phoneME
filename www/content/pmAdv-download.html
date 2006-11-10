@@ -73,25 +73,48 @@ a:active {
 
 <p>
 You can start with the <i>phoneME Advanced</i> technology
-by downloading the project source code from its
-<a href="http://subversion.tigris.org">Subversion</a> repository.
-
-<hr size="1" noshade>
-<a name="Checkout"><h2>Checkout the Source Code</h2></a>
+by downloading the project source code.
+There are two ways to download source code:
 <p>
-Start by checking out the full project source code repository.
+<ul>
+<li>
+Download the <tt>zip</tt> archive from the 
+<a href="https://phoneme.dev.java.net/downloads_page.html">
+phoneME Project Downloads</a> page.
+<p>
+<li>
+Checkout the project source code from the
+<a href="https://phoneme.dev.java.net/source/browse/phoneme/components/cdc/">
+Subversion repository</a>.
+</ul>
+
+<a name="Download"><h3>Download the Source Code Archive</h3></a>
+<p>
+Start by downloading the the <tt>zip</tt> archive from the 
+<a href="https://phoneme.dev.java.net/downloads_page.html">
+phoneME Project Downloads</a> page.
+Then create a directory and unpack the archive:
 <p>
 <blockquote>
 <pre>
 % mkdir phoneme-advanced-mr1
 % cd phoneme-advanced-mr1
-% svn checkout <i>URL</i> .
+% unzip phoneme_advanced-mr1-rel-src-b06-10_nov_2006.zip
 </pre>
 </blockquote>
+
+<a name="Checkout"><h3>Checkout the Source Code Repository</h3></a>
 <p>
-The specific URL can be found at the
-<a href="https://phoneme.dev.java.net/downloads_page.html">
-phoneME community download page</a>.
+Start by checking out the full project source code repository
+with a <a href="http://subversion.tigris.org">Subversion</a> client.
+<p>
+<blockquote>
+<pre>
+% mkdir phoneme-advanced-mr1
+% cd phoneme-advanced-mr1
+% svn checkout https://phoneme.dev.java.net/source/browse/phoneme/components/cdc/ .
+</pre>
+</blockquote>
 
 <hr size="1" noshade>
 <a name="Browse"><h2>Browse the Source Code</h2></a>

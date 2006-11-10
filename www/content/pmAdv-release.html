@@ -69,7 +69,7 @@ a:active {
  
 <!--BEGIN * PAGE TITLE -->
 <div id="projecthome" class="app"> 
-<h1><font color="#E76F00"><i>phoneME Advanced</i> Release Notes, Version MR1</font></h1>
+<h1><font color="#E76F00"><i>phoneME Advanced</i> MR1 Release Notes</font></h1>
 <!--END * PAGE TITLE -->
 
 <p>
@@ -80,26 +80,114 @@ phoneME Advanced software is an optimized Java ME stack with full support for CD
 <p>
 <ul>
 <li>
-Connected Device Configuration Application Management System (CDC AMS) version 1.0
+Connected Device Configuration Application Management System (CDC AMS), version 1.0
 <p>
 <li>
-Connected Device Configuration version 1.1
+Connected Device Configuration, version 1.1.1
 <p>
 <li>
-Foundation Profile version 1.1
+Foundation Profile, version 1.1.1
 <p>
 <li>
-Personal Basis Profile version 1.1
+Personal Basis Profile, version 1.1.1
 <p>
 <li>
-Personal Profile version 1.1 
+Personal Profile, version 1.1.1
 </ul>
 <p>
-In addition, phoneME Advanced provides the first implementation of the CDC application management system, CDC AMS.
+In addition, phoneME Advanced MR1 provides the first implementation of the CDC application management system, CDC AMS.
 <p>
 This stable release (MR1) is an open source software release that provides a reference
 for developers who wish to port phoneME Advanced to resource-constrained devices.
 The only changes anticipated for this stable release are bug fixes, if any.
+
+<p>
+<hr size="1" noshade>
+<h2>Binary Archives</h2>
+<p>
+As a convenience,
+phoneME Advanced MR1 provides prebuilt binary Zip archives in the 
+<a href="https://phoneme.dev.java.net/downloads_page.html">
+phoneME Project Downloads</a> page.
+The distribution archive actually contains two sub-archives,
+each of which contains an executable CDC Java runtime environment for Linux/x86.
+<p>
+<blockquote>
+<pre>
+% mkdir phoneme-advanced-mr1
+% cd phoneme-advanced-mr1
+% unzip phoneme_advanced-mr1-rel-bin-b06-linux-10_nov_2006.zip
+Archive:  phoneme_advanced-mr1-rel-bin-b06-linux-10_nov_2006.zip
+ extracting: phoneme_advanced-mr1-pbp-rel-bin-b06-linux-10_nov_2006.zip
+ extracting: phoneme_advanced-mr1-pp-rel-bin-b06-linux-10_nov_2006.zip
+</pre>
+</blockquote>
+<p>
+Then unpack one of these archives:
+<p>
+<blockquote>
+<pre>
+% mkdir PBP
+% mv phoneme_advanced-mr1-pbp-rel-bin-b06-linux-10_nov_2006.zip PBP
+% cd PBP
+% unzip phoneme_advanced-mr1-pbp-rel-bin-b06-linux-10_nov_2006.zip PBP
+</pre>
+</blockquote>
+<p>
+See
+<a href="pmAdv-buildhost.html">CDC Build System: Host Environment</a>
+and the 
+<a href="http://java.sun.com/javame/reference/docs/cdc_runtime_guide.pdf">
+<i>CDC Runtime Guide</i></a>,
+for information how to use the CDC Java runtime environment.
+
+<hr size="1" noshade>
+<h2>Known Issues</h2>
+<p>
+<ul>
+<li>
+<b><tt>make clean</tt> doesn't always clean everything from the build system.</b>
+Any options specified during build should also be specified with the <tt>make clean</tt> command.
+For CDC AMS builds, clean the build system with the following:
+<p>
+<blockquote>
+<pre>
+<tt>% make J2ME_PLATFORM=appmanager clean</tt>.
+</pre>
+</blockquote>
+<p>
+<p>
+<li>
+<b>The font path may need to be explicitly set on openSUSE 10.1 systems.</b>
+To check the font path on the openSUSE 10.1 system, use the following command:
+<p>
+<blockquote>
+<pre>
+% xset q
+</pre>
+</blockquote>
+<p>
+To able to display correctly on an openSUSE 10.1 system
+the font path should at least contain the following:
+<p>
+<blockquote>
+<pre>
+/usr/X11R6/lib/X11/fonts/misc:unscaled
+/usr/X11R6/lib/X11/fonts/75dpi
+/usr/X11R6/lib/X11/fonts/uni
+/usr/X11R6/lib/X11/fonts/truetype/
+</pre>
+</blockquote>
+<p>
+To set the font path
+<p>
+<blockquote>
+<pre>
+% xset +fp <Path>
+</pre>
+</blockquote>
+<p>
+</ul>
 
 <hr size="1" noshade>
 <h2>Bugs</h2>
