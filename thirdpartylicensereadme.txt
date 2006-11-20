@@ -1,41 +1,46 @@
 DO NOT TRANSLATE OR LOCALIZE.
 
 
-%% Sun implementations of the following third party Java Specification Requests may be 
-included in this software: JSR 75, JSR 82, JSR 120, JSR 135, JSR 205, JSR 226; Use of 
-such implementations is subject to following: 
+%% Sun implementations of the following third party Java Specification
+Requests may be included in this software: JSR 75, JSR 82, JSR 120,
+JSR 135, JSR 205, JSR 226; Use of such implementations is subject to
+following:
 
-Special Notice for Implementations of Third Party JSRs: Sun is required to notify licensees 
-that, for any Java Specification Request for which Sun is not the Specification Lead, no 
-license grants (if any are applicable) are made by the relevant Specification Lead unless 
-such implementation (i) fully implements the 
-JSR specification(s) including all its required 
-interfaces and functionality; (ii) does not modify, subset, superset or otherwise extend the 
-licensor name space, or include any public or protected packages, classes, Java interfaces, 
-fields or methods within the licensor name space other than those required/authorized by the 
-specification or specifications being implemented; and (iii) passes the applicable third party 
-TCK(s) (including satisfying the requirements of the applicable TCK Users Guide) for such 
-specification(s)). 
+Special Notice for Implementations of Third Party JSRs: Sun is
+required to notify licensees that, for any Java Specification Request
+for which Sun is not the Specification Lead, no license grants (if any
+are applicable) are made by the relevant Specification Lead unless
+such implementation (i) fully implements the JSR specification(s)
+including all its required interfaces and functionality; (ii) does not
+modify, subset, superset or otherwise extend the licensor name space,
+or include any public or protected packages, classes, Java interfaces,
+fields or methods within the licensor name space other than those
+required/authorized by the specification or specifications being
+implemented; and (iii) passes the applicable third party TCK(s)
+(including satisfying the requirements of the applicable TCK Users
+Guide) for such specification(s)).
 
 
 
-%% This notice is provided with respect to SAX 2.0, which may be included with this software: 
+%% This notice is provided with respect to SAX 2.0, which may be
+included with this software:
 
 There is not a license - it is in the public domain
 
 Copyright Disclaimers 
-This page includes statements to that effect by David Megginson, who would have
-been able to claim copyright for the original work. 
+This page includes statements to that effect by David Megginson, who
+would have been able to claim copyright for the original work.
 
 SAX 1.0 
 Version 1.0 of the Simple API for XML (SAX), created collectively by the
 membership of the XML-DEV mailing list, is hereby released into the public
 domain.
 
-No one owns SAX: you may use it freely in both commercial and non-commercial
-applications, bundle it with your software distribution, include it on a CD-ROM,
-list the source code in a book, mirror the documentation at your own web site,
-or use it in any other way you see fit.
+No one owns SAX: you may use it freely in both commercial and
+non-commercial applications, bundle it with your software
+distribution, include it on a CD-ROM, list the source code in a book,
+mirror the documentation at your own web site, or use it in any other
+way you see fit.
 
 SAX 2.0 
 I hereby abandon any property rights to SAX 2.0 (the Simple API for XML), and
@@ -48,26 +53,34 @@ WARRANTY or guarantee of fitness for any purpose.
 
 
 
-%% This notice is provided with respect to MinML2ME, which may be included with this software: 
+%% This notice is provided with respect to MinML2ME, which may be
+included with this software:
 
 Copyright (c) 2000, 2001 John Wilson (tug@wilson.co.uk).
 All rights reserved.
-Redistribution and use in source and binary forms, with or without modification, are permitted 
-provided that the following conditions are met:
 
-Redistributions of source code must retain the above copyright notice, this list of conditions 
-and the following disclaimer.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
 
-Redistributions in binary form must reproduce the above copyright notice, this list of conditions 
-and the following disclaimer in the documentation and/or other materials provided with the distribution.
+Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
 
-THIS SOFTWARE IS PROVIDED BY JOHN WILSON ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, 
-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL JOHN WILSON BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
-OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
-IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY JOHN WILSON ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL JOHN WILSON BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE
 
 
 
@@ -122,73 +135,93 @@ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY O
 
 
 
-%% This notice is provided with respect to the Independent JPEG Group's software (libjpeg), 
-which may be included with this software: 
+%% This notice is provided with respect to the Independent JPEG
+Group's software (libjpeg), which may be included with this software:
 
 In plain English:
 
 1. We don't promise that this software works.  (But if you find any bugs,
    please let us know!)
 2. You can use this software for whatever you want.  You don't have to pay us.
-3. You may not pretend that you wrote this software.  If you use it in a program, 
-   you must acknowledge somewhere in your documentation that you've used the IJG code.
+
+3. You may not pretend that you wrote this software.  If you use it in
+   a program, you must acknowledge somewhere in your documentation
+   that you've used the IJG code.
 
 In legalese:
 
-The authors make NO WARRANTY or representation, either express or implied, with respect to 
-this software, its quality, accuracy, merchantability, or fitness for a particular purpose.  
-This software is provided "AS IS", and you, its user, assume the entire risk as to its quality 
-and accuracy.
+The authors make NO WARRANTY or representation, either express or
+implied, with respect to this software, its quality, accuracy,
+merchantability, or fitness for a particular purpose.  This software
+is provided "AS IS", and you, its user, assume the entire risk as to
+its quality and accuracy.
 
 This software is copyright (C) 1991-1998, Thomas G. Lane.
 All Rights Reserved except as specified below.
 
-Permission is hereby granted to use, copy, modify, and distribute this software (or portions thereof) 
-for any purpose, without fee, subject to these conditions:
+Permission is hereby granted to use, copy, modify, and distribute this
+software (or portions thereof) for any purpose, without fee, subject
+to these conditions:
 
-(1) If any part of the source code for this software is distributed, then this
-README file must be included, with this copyright and no-warranty notice unaltered; and any additions, 
-deletions, or changes to the original files must be clearly indicated in accompanying documentation.
+(1) If any part of the source code for this software is distributed,
+then this README file must be included, with this copyright and
+no-warranty notice unaltered; and any additions, deletions, or changes
+to the original files must be clearly indicated in accompanying
+documentation.
 
-(2) If only executable code is distributed, then the accompanying documentation must state that "this 
-software is based in part on the work of the Independent JPEG Group".
+(2) If only executable code is distributed, then the accompanying
+documentation must state that "this software is based in part on the
+work of the Independent JPEG Group".
 
-(3) Permission for use of this software is granted only if the user accepts full responsibility for 
-any undesirable consequences; the authors accept NO LIABILITY for damages of any kind.
+(3) Permission for use of this software is granted only if the user
+accepts full responsibility for any undesirable consequences; the
+authors accept NO LIABILITY for damages of any kind.
 
-These conditions apply to any software derived from or based on the IJG code, not just to the unmodified 
-library.  If you use our work, you ought to acknowledge us.
+These conditions apply to any software derived from or based on the
+IJG code, not just to the unmodified library.  If you use our work,
+you ought to acknowledge us.
 
-Permission is NOT granted for the use of any IJG author's name or company name in advertising or publicity 
-relating to this software or products derived from it.  This software may be referred to only as 
+Permission is NOT granted for the use of any IJG author's name or
+company name in advertising or publicity relating to this software or
+products derived from it.  This software may be referred to only as
 "the Independent JPEG Group's software".
 
-We specifically permit and encourage the use of this software as the basis of commercial products, 
-provided that all warranty or liability claims are assumed by the product vendor.
+We specifically permit and encourage the use of this software as the
+basis of commercial products, provided that all warranty or liability
+claims are assumed by the product vendor.
 
-ansi2knr.c is included in this distribution by permission of L. Peter Deutsch, sole proprietor of 
-its copyright holder, Aladdin Enterprises of Menlo Park, CA. ansi2knr.c is NOT covered by the above 
-copyright and conditions, but instead by the usual distribution terms of the Free Software Foundation; 
-principally, that you must include source code if you redistribute it.  (See the file ansi2knr.c for 
-full details.)  However, since ansi2knr.c is not needed as part of any program generated from the 
-IJG code, this does not limit you more than the foregoing paragraphs do.
+ansi2knr.c is included in this distribution by permission of L. Peter
+Deutsch, sole proprietor of its copyright holder, Aladdin Enterprises
+of Menlo Park, CA. ansi2knr.c is NOT covered by the above copyright
+and conditions, but instead by the usual distribution terms of the
+Free Software Foundation; principally, that you must include source
+code if you redistribute it.  (See the file ansi2knr.c for full
+details.)  However, since ansi2knr.c is not needed as part of any
+program generated from the IJG code, this does not limit you more than
+the foregoing paragraphs do.
 
-The Unix configuration script "configure" was produced with GNU Autoconf. It is copyright by the Free 
-Software Foundation but is freely distributable. The same holds for its supporting scripts 
-(config.guess, config.sub, ltconfig, ltmain.sh).  Another support script, install-sh, is copyright 
-by M.I.T. but is also freely distributable.
+The Unix configuration script "configure" was produced with GNU
+Autoconf. It is copyright by the Free Software Foundation but is
+freely distributable. The same holds for its supporting scripts
+(config.guess, config.sub, ltconfig, ltmain.sh).  Another support
+script, install-sh, is copyright by M.I.T. but is also freely
+distributable.
 
-It appears that the arithmetic coding option of the JPEG spec is covered by patents owned by IBM, 
-AT&T, and Mitsubishi.  Hence arithmetic coding cannot legally be used without obtaining one or more 
-licenses.  For this reason, support for arithmetic coding has been removed from the free JPEG software. 
-(Since arithmetic coding provides only a marginal gain over the unpatented Huffman mode, it is 
-unlikely that very many implementations will support it.) So far as we are aware, there are no patent 
-restrictions on the remaining code.
+It appears that the arithmetic coding option of the JPEG spec is
+covered by patents owned by IBM, AT&T, and Mitsubishi.  Hence
+arithmetic coding cannot legally be used without obtaining one or more
+licenses.  For this reason, support for arithmetic coding has been
+removed from the free JPEG software.  (Since arithmetic coding
+provides only a marginal gain over the unpatented Huffman mode, it is
+unlikely that very many implementations will support it.) So far as we
+are aware, there are no patent restrictions on the remaining code.
 
-The IJG distribution formerly included code to read and write GIF files. To avoid entanglement with 
-the Unisys LZW patent, GIF reading support has been removed altogether, and the GIF writer has been 
-simplified to produce "uncompressed GIFs".  This technique does not use the LZW algorithm; the resulting 
-GIF files are larger than usual, but are readable by all standard GIF decoders.
+The IJG distribution formerly included code to read and write GIF
+files. To avoid entanglement with the Unisys LZW patent, GIF reading
+support has been removed altogether, and the GIF writer has been
+simplified to produce "uncompressed GIFs".  This technique does not
+use the LZW algorithm; the resulting GIF files are larger than usual,
+but are readable by all standard GIF decoders.
 
 We are required to state that
     "The Graphics Interchange Format(c) is the Copyright property of
@@ -197,11 +230,12 @@ We are required to state that
 
 
 
-%% This notice is provided with respect to Open SSL KSSL v 1.1 (crypto components only) and 
-OpenSSL v0.9.7b, which may be included with this software: 
+%% This notice is provided with respect to Open SSL KSSL v 1.1 (crypto
+components only) and OpenSSL v0.9.7b, which may be included with this
+software:
 
-This program is released under the GPL with the additional exemption that compiling, linking, 
-and/or using OpenSSL is allowed. 
+This program is released under the GPL with the additional exemption
+that compiling, linking, and/or using OpenSSL is allowed.
 
 
 LICENSE ISSUES
@@ -311,8 +345,7 @@ LICENSE ISSUES
  * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an 
 acknowledgement:
- *    "This product includes software written by Tim Hudson 
-(tjh@cryptsoft.com)"
+ *   "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
  *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -333,51 +366,58 @@ acknowledgement:
 */
 
 
-%% This notice is provided with respect to Bitstream Vera Fonts, which may be included 
-with this software:   
+%% This notice is provided with respect to Bitstream Vera Fonts, which
+may be included with this software:
 
-Copyright (c) 2003 by Bitstream, Inc. All Rights Reserved. Bitstream Vera is a
-trademark of Bitstream, Inc.
+Copyright (c) 2003 by Bitstream, Inc. All Rights Reserved. Bitstream
+Vera is a trademark of Bitstream, Inc.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-the fonts accompanying this license (“Fonts”) and associated documentation files
-(the “Font Software”), to reproduce and distribute the Font Software, including
-without limitation the rights to use, copy, merge, publish, distribute, and/or
-sell copies of the Font Software, and to permit persons to whom the Font
-Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the fonts accompanying this license ("Fonts") and associated
+documentation files (the "Font Software"), to reproduce and distribute
+the Font Software, including without limitation the rights to use,
+copy, merge, publish, distribute, and/or sell copies of the Font
+Software, and to permit persons to whom the Font Software is furnished
+to do so, subject to the following conditions:
 
-The above copyright and trademark notices and this permission notice shall be
-included in all copies of one or more of the Font Software typefaces.
+The above copyright and trademark notices and this permission notice
+shall be included in all copies of one or more of the Font Software
+typefaces.
 
-The Font Software may be modified, altered, or added to, and in particular the
-designs of glyphs or characters in the Fonts may be modified and additional
-glyphs or characters may be added to the Fonts, only if the fonts are renamed to
-names not containing either the words “Bitstream” or the word “Vera”.
+The Font Software may be modified, altered, or added to, and in
+particular the designs of glyphs or characters in the Fonts may be
+modified and additional glyphs or characters may be added to the
+Fonts, only if the fonts are renamed to names not containing either
+the words "Bitstream" or the word "Vera".
 
-This License becomes null and void to the extent applicable to Fonts or Font
-Software that has been modified and is distributed under the “Bitstream Vera” names.
+This License becomes null and void to the extent applicable to Fonts
+or Font Software that has been modified and is distributed under the
+"Bitstream Vera" names.
 
-The Font Software may be sold as part of a larger software package but no copy
-of one or more of the Font Software typefaces may be sold by itself.
+The Font Software may be sold as part of a larger software package but
+no copy of one or more of the Font Software typefaces may be sold by
+itself.
 
-THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF COPYRIGHT, PATENT, TRADEMARK, OR
-OTHER RIGHT. IN NO EVENT SHALL BITSTREAM OR THE GNOME FOUNDATION BE LIABLE FOR
-ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING ANY GENERAL, SPECIAL, INDIRECT,
-INCIDENTAL, OR CONSEQUENTIAL DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR
-FROM OTHER DEALINGS IN THE FONT SOFTWARE.
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL
+BITSTREAM OR THE GNOME FOUNDATION BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF THE USE OR INABILITY TO USE THE FONT
+SOFTWARE OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.
 
-Except as contained in this notice, the names of Gnome, the Gnome Foundation,
-and Bitstream Inc., shall not be used in advertising or otherwise to promote the
-sale, use or other dealings in this Font Software without prior written
-authorization from the Gnome Foundation or Bitstream Inc., respectively. For
-further information, contact: fonts at gnome dot org.
+Except as contained in this notice, the names of Gnome, the Gnome
+Foundation, and Bitstream Inc., shall not be used in advertising or
+otherwise to promote the sale, use or other dealings in this Font
+Software without prior written authorization from the Gnome Foundation
+or Bitstream Inc., respectively. For further information, contact:
+fonts at gnome dot org.
 
 
-%% This notice is provided with respect to zlib 1.1.3, which may be included with 
-this software:   
+%% This notice is provided with respect to zlib 1.1.3, which may be
+included with this software:
 
 Acknowledgments:
 
@@ -420,7 +460,8 @@ in the file ChangeLog history information documenting your changes.
 
 
 
-%% This notice is provided with respect to Cryptix v. 3.2.0, which may be included with this software: 
+%% This notice is provided with respect to Cryptix v. 3.2.0, which may
+be included with this software:
 
 Cryptix General License
 
@@ -453,8 +494,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-%% This notice is provided with respect to ImageButton.java, Border.java, which may be included 
-with this software: 
+%% This notice is provided with respect to ImageButton.java,
+Border.java, which may be included with this software:
 
 
 Copyright(c) 1997 DTAI, Incorporated (http://www.dtai.com)
