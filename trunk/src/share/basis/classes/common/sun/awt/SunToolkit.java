@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)SunToolkit.java	1.34 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ *
  */
 
 package sun.awt;
@@ -28,7 +33,6 @@ import java.io.*;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
-import java.util.WeakHashMap;
 import sun.awt.image.ByteArrayImageSource;
 import sun.awt.image.FileImageSource;
 import sun.awt.image.URLImageSource;
@@ -91,7 +95,7 @@ public abstract class SunToolkit extends Toolkit {
 
     // mapping of Components to AppContexts, WeakHashMap<Component,AppContext>
     private static final Map appContextMap =
-        Collections.synchronizedMap(new WeakHashMap());
+        Collections.synchronizedMap(new IdentityWeakHashMap());
 
     /*
      * Fetch the AppContext associated with the given target.
@@ -269,6 +273,20 @@ public abstract class SunToolkit extends Toolkit {
     public boolean enableInputMethodsForTextComponent() {
         return false;
     }
+
+    /**
+     *  Show the specified window in a multi-vm environment
+     */
+    public void activate(Window window) {
+        return;
+    }
+
+    /**
+     *  Hide the specified window in a multi-vm environment
+     */
+    public void deactivate(Window window) {
+        return;
+    }    
 }
 
 /*

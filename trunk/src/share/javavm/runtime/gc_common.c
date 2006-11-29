@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)gc_common.c	1.163 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/defs.h"
@@ -149,13 +154,21 @@ CVMgcParseXgcOptions(CVMExecEnv* ee, const char* xgcOpts)
 CVMBool 
 CVMgcInitHeap(CVMOptions *options)
 {
-    CVMUint32 minHeapSize, maxHeapSize;
+    CVMUint32 startHeapSize, minHeapSize, maxHeapSize;
 
-    if (!parseOption(options->minHeapSizeStr, &minHeapSize, 
-		     CVM_DEFAULT_MIN_HEAP_SIZE_IN_BYTES)) {
+    if (!parseOption(options->startHeapSizeStr, &startHeapSize,
+		     CVM_DEFAULT_START_HEAP_SIZE_IN_BYTES)) {
 	CVMconsolePrintf("Cannot start VM "
 			 "(error parsing heap size command "
 			 "line option -Xms)\n");
+	return CVM_FALSE;
+    }
+
+    if (!parseOption(options->minHeapSizeStr, &minHeapSize,
+		     CVM_DEFAULT_MIN_HEAP_SIZE_IN_BYTES)) {
+	CVMconsolePrintf("Cannot start VM "
+			 "(error parsing heap size command "
+			 "line option -Xmn)\n");
 	return CVM_FALSE;
     }
 
@@ -195,28 +208,13 @@ CVMgcInitHeap(CVMOptions *options)
     }
 #endif
 
-    /* Handle the cases where only one of the min and max sizes were
-       specified: */
-    if (options->minHeapSizeStr == NULL && options->maxHeapSizeStr != NULL) {
-        /* The min size is not specified but the max is.  Set both the min and
-           the max size to the specified max size: */
-        minHeapSize = maxHeapSize;
-
-    } else if (options->minHeapSizeStr != NULL &&
-               options->maxHeapSizeStr == NULL) {
-        /* The max size is not specified but the min is.  Set both the min and
-           the max size to the specified min size.  This is compatible with
-           the behavior of earlier implementations that only take the -Xms
-           option: */
-        maxHeapSize = minHeapSize;
-    }
-
     /* Let's round these up to nice double-word multiples, before
        passing them on */
     /*
      * CVMalignDoubleWordUp returns a CVMAddr.
      * Just cast it to CVMUint32
      */
+    startHeapSize = (CVMUint32)CVMalignDoubleWordUp(startHeapSize);
     minHeapSize = (CVMUint32)CVMalignDoubleWordUp(minHeapSize);
     maxHeapSize = (CVMUint32)CVMalignDoubleWordUp(maxHeapSize);
     if (minHeapSize > maxHeapSize) {
@@ -225,11 +223,27 @@ CVMgcInitHeap(CVMOptions *options)
 			minHeapSize, maxHeapSize, minHeapSize));
 	maxHeapSize = minHeapSize;
     }
+    if (minHeapSize > startHeapSize) {
+	CVMdebugPrintf(("WARNING: Minimum heap size %d is larger than "
+			"start size %d, setting both to %d\n",
+			minHeapSize, startHeapSize, minHeapSize));
+	startHeapSize = minHeapSize;
+    }
+    if (startHeapSize > maxHeapSize) {
+	CVMdebugPrintf(("WARNING: Start heap size %d is larger than "
+			"maximum size %d, setting both to %d\n",
+			startHeapSize, maxHeapSize, startHeapSize));
+	maxHeapSize = startHeapSize;
+    }
 
    /* stash away the max heap size */
     CVMglobals.maxHeapSize = maxHeapSize;
 
-    return CVMgcimplInitHeap(&CVMglobals.gc, minHeapSize, maxHeapSize);
+    return CVMgcimplInitHeap(&CVMglobals.gc, startHeapSize,
+			     minHeapSize, maxHeapSize,
+			     (options->startHeapSizeStr == NULL),
+			     (options->minHeapSizeStr == NULL),
+			     (options->maxHeapSizeStr == NULL));
 }
 
 /*

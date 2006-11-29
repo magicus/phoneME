@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jit.h	1.52 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -90,6 +95,13 @@
  */
 #undef CVMCPU_HAS_VOLATILE_GC_REG
 
+/*
+ * #define CVMJIT_SIMPLE_SYNC_METHODS if the platform supports mapping
+ * some synchronized library methods to versions that synchronize
+ * much faster and can be inlined.
+ */
+#undef CVMJIT_SIMPLE_SYNC_METHODS
+
 /*******************************************************************
  * Intrinsics handling. The following are used for code generation
  * of specially-recognized methods for which we want to provide a 
@@ -112,6 +124,13 @@
  *                    negated and omitted from the build where possible.
  */
 #undef CVMJIT_INTRINSICS
+
+/* 
+ * CVMJIT_INTRINSICS_HAVE_PLATFORM_SPECIFIC_REG_ARGS:
+ * define this value if the target port wishes to implement support for
+ * CVMJITINTRINSIC_REG_ARGS.
+ */
+#undef CVMJIT_INTRINSICS_HAVE_PLATFORM_SPECIFIC_REG_ARGS
 
 /*
  * CVMCPU_MAX_ARG_REGS: define this value to be the maximum number registers
@@ -277,6 +296,16 @@
 /* NOTE: by default patch-based is enabled unless explicitly #undef'd */
 #define CVMJIT_PATCH_BASED_GC_CHECKS
 
+/*
+ * IAI-20:
+ * For inlined virtual method invocation, use class guard test to 
+ * replace the original method guard test; move method guard test
+ * into out-of-line block to guard those failed in class guard test.
+ *
+ * By default this is enabled.
+ */
+#define IAI_VIRTUAL_INLINE_CB_TEST
+
 #ifndef _ASM
 
 /******************************************************************
@@ -311,6 +340,43 @@ CVMJITallocCodeCache(CVMSize *size);
 void
 CVMJITfreeCodeCache(void *start);
 
+/******************************************************************
+ * JIT AOT API's. Only need to be implemented if CVM_AOT is 
+ * #define'd.
+ */
+
+/* Purpose: Find AOT code from the persistent storage. Initialize
+ *          following AOT related global variables:
+ *              jgs->codeCacheAOTStart
+ *              jgs->codeCacheAOTEnd
+ *              jgs->codeCacheAOTCodeExist
+ *          The return value is the size of the AOT code.
+ */
+extern CVMInt32
+CVMfindAOTCodeCache();
+
+/* 
+ * The compiled code below the codeCacheDecompileStart will be saved
+ * into persistent storage if there is no previouse saved AOT code, 
+ * and will be reloaded next time.
+ * On linux, for example we write the AOT code size as the first word.
+ * The saved code cache looks like the following:
+ *
+ *  ------------------------------------------------------
+ *  |size|                                               |
+ *  |-----                                               |
+ *  |                                                    |
+ *  |                 compiled code                      |
+ *  .                                                    .
+ *  .                                                    .
+ *  .                                                    .
+ *  |                                                    |
+ *  ------------------------------------------------------
+ */
+extern void
+CVMJITcodeCachePersist();
+
+
 /******************************************************************/
 
 /*
@@ -322,7 +388,10 @@ CVMJITcompileGenerateCode(CVMJITCompilationContext* con);
 
 /*
  * Flush I & D caches for given range after writing compiled code.
- * Must be defined by the target.
+ * Must be defined by the target. NOTE: when flushing after patching
+ * a single instruction, "begin" must be the actual address of the
+ * patched instruction. No rounding (such as to the cache line
+ * boundary) should be done.
  */
 extern void
 CVMJITflushCache(void* begin, void* end);
@@ -378,6 +447,11 @@ CVMJITenableRendezvousCalls(CVMExecEnv* ee);
 extern void
 CVMJITdisableRendezvousCalls(CVMExecEnv* ee);
 
+extern void
+CVMJITenableRendezvousCallsTrapbased(CVMExecEnv* ee);
+
+extern void
+CVMJITdisableRendezvousCallsTrapbased(CVMExecEnv* ee);
 
 /******************************************************************
  * Runtime routines supplied by the target:
@@ -467,6 +541,22 @@ CVMJITemitLoadConstantAddress(CVMJITCompilationContext* con,
 extern void
 CVMJITemitWord(CVMJITCompilationContext *con, CVMInt32 const32);
 
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+
+/*
+ * Patch CPU specific branch bits.
+ * 
+ * This is used for the patched method invocations implementation.
+ * The implementation of this method will patch the actual
+ * bits of the branch instruction at instr_addr, so that
+ * the branch will now point to the new offset from instr_addr.
+ */
+
+extern void 
+CVMCPUpatchBranchInstruction(int offset, CVMUint8* instr_addr);
+
+#endif
+
 /*
  * More porting layer constants are defined in ccm.h. See details there.
  */
@@ -485,12 +575,5 @@ CVMJITemitWord(CVMJITCompilationContext *con, CVMInt32 const32);
 #define CVMJITintrinsicsList CVMJITdefaultIntrinsicsList
 #endif
 #endif /* CVMJIT_INTRINSICS */
-
-/*
- * Sanity checks.
- */
-#if defined(CVMJIT_PATCH_BASED_GC_CHECKS) && defined(CVMJIT_TRAP_BASED_GC_CHECKS)
-#error "Only one of CVMJIT_PATCH_BASED_GC_CHECKS and CVMJIT_TRAP_BASED_GC_CHECKS should be #defined"
-#endif
 
 #endif /* _INCLUDED_PORTING_JIT_JIT_H */

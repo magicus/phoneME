@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)Component.java	1.243 04/08/26
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -1686,7 +1691,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
      */
     public VolatileImage createVolatileImage(int width, int height,
         ImageCapabilities caps) throws AWTException {
-        // TODO: check caps
+        // TODO : check caps
         return createVolatileImage(width, height);
     }
     /**
@@ -1956,7 +1961,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
 //            // Handling of the PAINT and UPDATE events is now done in the
 //            // peer's handleEvent() method so the background can be cleared
 //            // selectively for non-native components on Windows only.
-//            // - Fred.Ecks@Eng.sun.com, 1-8-98
 //
 //        case FocusEvent.FOCUS_GAINED:
 //            if ((parent != null) && (!(this instanceof Window))) {
@@ -2168,7 +2172,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
 
     boolean areInputMethodsEnabled() {
         // in 1.1.x, we assume input method support is required for all
-        // components that handle key events. There's no way to tell
+        // components that handle key events. It's not possible to tell
         // whether they're really interested in character input or just
         // in keystrokes.
         //return (eventMask & AWTEvent.KEY_EVENT_MASK) != 0 || keyListener != null;
@@ -2193,7 +2197,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
         return null;
     } // getWindowForObject()
 
-    // TODO: remove when filtering is handled at lower level
+    // NOTE: remove when filtering is handled at lower level
     boolean eventEnabled(AWTEvent e) {
         int type = e.id;
         switch (type) {

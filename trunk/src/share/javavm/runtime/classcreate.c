@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)classcreate.c	1.194 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/defs.h"
@@ -38,6 +43,9 @@
 #include "javavm/include/packages.h"
 #include "javavm/include/verify.h"
 #include "javavm/export/jvm.h"
+#ifdef CVM_SPLIT_VERIFY
+#include "javavm/include/split_verify.h"
+#endif
 #ifdef CVM_JVMDI
 #include "javavm/include/jvmdi_impl.h"
 #endif
@@ -662,6 +670,7 @@ struct CICcontext {
     CVMUint8* jmdSpaceLimit;
     CVMUint8* clinitJmdSpaceLimit;
 #endif
+    CVMBool   needsVerify;
  
     /*
      * "size" keeps track of counts of certains items in the class file. 
@@ -704,6 +713,13 @@ CVMreadCode(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock* mb,
 static CVMCheckedExceptions*
 CVMreadCheckedExceptions(CICcontext *context, CVMMethodBlock* mb, 
 			 CVMCheckedExceptions* checkedExceptions);
+
+#ifdef CVM_SPLIT_VERIFY
+/* Read in CLDC-style StackMap attribute */
+static CVMsplitVerifyStackMaps*
+CVMreadStackMaps(CVMExecEnv* ee, CICcontext* context, CVMUint32 length,
+	     CVMUint32 codeLength, CVMUint32 maxLocals, CVMUint32 maxStack);
+#endif
 
 /* used to compare LineNumberTable entries during sorting. */
 #ifdef CVM_DEBUG_CLASSINFO
@@ -826,6 +842,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	    CVMthrowNoClassDefFoundError(ee, "%s", buf);
             goto doCleanup;
 	}
+	context->needsVerify = !(CVMBool)measure_only;
     }
 
     /* Setup for handling failures. */
@@ -1915,7 +1932,7 @@ CVMreadCode(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock* mb,
     }
 
     attributeCount = get2bytes(context);
-#ifndef CVM_DEBUG_CLASSINFO
+#if !defined(CVM_DEBUG_CLASSINFO) && !defined(CVM_SPLIT_VERIFY)
     for (i = 0; i < attributeCount; i++) {
 	get2bytes(context); /* skip the cp index */
 	getNbytes(context, get4bytes(context), NULL);
@@ -1923,6 +1940,7 @@ CVMreadCode(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock* mb,
 #else
     {
 	CVMConstantPool* utf8Cp = context->utf8Cp;
+#ifdef CVM_DEBUG_CLASSINFO
 	CVMUint16 tableLength ;
 	CVMLineNumberEntry*    ln;
 	CVMLocalVariableEntry* lv;
@@ -1954,10 +1972,29 @@ CVMreadCode(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock* mb,
 	ln = CVMjmdLineNumberTable(jmd);
 	lv = CVMjmdLocalVariableTable(jmd);
 	rewindToMark(context);
+#endif
+
+	/* 
+	 * Read in split verifier tables, line number tables
+	 * and local variable tables.
+	 */
 	for (i = 0; i < attributeCount; i++) {
 	    CVMUint16 cpIdx = get2bytes(context);
 	    CVMUtf8*  attrName = CVMcpGetUtf8(utf8Cp, cpIdx);
 	    CVMUint32 attrLength = get4bytes(context);
+#ifdef CVM_SPLIT_VERIFY
+	    if (context->needsVerify && !strcmp(attrName, "StackMap")){
+		CVMBool ok;
+		ok = CVMsplitVerifyAddMaps(ee, context->cb, mb,
+		    CVMreadStackMaps(ee, context, attrLength, codeLength,
+			maxLocals, maxStack));
+		if (!ok){
+		    CVMexceptionHandler(ee, context);
+		}
+		continue;
+	    }
+#endif
+#ifdef CVM_DEBUG_CLASSINFO
 	    if (!strcmp(attrName, "LineNumberTable")) {
 		tableLength = get2bytes(context);
 		if (tableLength > 0) {
@@ -1967,7 +2004,9 @@ CVMreadCode(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock* mb,
 			ln->lineNumber = get2bytes(context);
 		    }
 		}
-	    } else if (!strcmp(attrName, "LocalVariableTable")) {
+		continue;
+	    } 
+	    if (!strcmp(attrName, "LocalVariableTable")) {
 		tableLength = get2bytes(context);
 		if (tableLength > 0) {
 		    CVMUint16 j;
@@ -1993,13 +2032,16 @@ CVMreadCode(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock* mb,
 			lv->typeID = CVMtypeidGetTypePart(varTypeID);
 		    }
 		}
-	    } else {
-		getNbytes(context, attrLength, NULL);
+		continue;
 	    }
+#endif
+	    /* none of the above */
+	    getNbytes(context, attrLength, NULL);
 	}
 	CVMassert((void*)ln <= (void*)CVMjmdLocalVariableTable(jmd));
 
 
+#ifdef CVM_DEBUG_CLASSINFO
 	/* The VM Spec doesn't seem to require line number tables are 
 	 * ordered. The CVMpc2lineno function in interpreter.c relies
 	 * on the entries being ordered.
@@ -2008,8 +2050,9 @@ CVMreadCode(CVMExecEnv* ee, CICcontext* context, CVMMethodBlock* mb,
 		  CVMjmdLineNumberTableLength(jmd),
 		  sizeof(CVMLineNumberEntry),
 		  CVMlineNumberCompare);
-    }
 #endif /* CVM_DEBUG_CLASSINFO */
+    }
+#endif /* CVM_DEBUG_CLASSINFO || CVM_SPLIT_VERIFY */
 
     /*
      * Finish off initialization of the code for this mb
@@ -2285,15 +2328,6 @@ CVMclassFree(CVMExecEnv* ee, CVMClassBlock* cb)
 	free((char*)(gcMap & ~CVM_GCMAP_LONGGCMAP_FLAG));
     }
 
-#ifdef CVM_JIT
-    /*
-     * Decompile methods. We can't do this in CVMclassFreeJavaMethods(),
-     * because some tracing that decompiling causes requires that the
-     * typeid's have not been freed yet.
-     */
-    CVMclassFreeCompiledMethods(ee, cb);
-#endif
-
     /* Free the Class global root. */
     CVMassert(CVMID_icellIsNull(CVMcbJavaInstance(cb)));
     CVMID_freeClassGlobalRoot(ee, CVMcbJavaInstance(cb));
@@ -2501,14 +2535,17 @@ CVMclassDoClassUnloadingPass1(CVMExecEnv* ee,
     /*
      * Update all live class loader roots
      */
-    CVMstackScanRoots(ee, &CVMglobals.classLoaderGlobalRoots,
-		      transitiveScanner, transitiveScannerData, gcOpts);
+    if (gcOpts->isUpdatingObjectPointers) {
+        CVMstackScanRoots(ee, &CVMglobals.classLoaderGlobalRoots,
+		          transitiveScanner, transitiveScannerData, gcOpts);
+    }
 }
 
 void
 CVMclassDoClassUnloadingPass2(CVMExecEnv* ee) 
 {
     CVMClassBlock* cb;
+    CVMClassBlock* firstCb;
     CVMClassLoaderICell* loader;
 
     /* 
@@ -2530,11 +2567,32 @@ CVMclassDoClassUnloadingPass2(CVMExecEnv* ee)
      * Do the same for the freeClassLoaderList.
      */
     CVMD_gcUnsafeExec(ee, {
-        cb = CVMglobals.freeClassList;
+        firstCb = CVMglobals.freeClassList;
 	CVMglobals.freeClassList = NULL;
 	loader = CVMglobals.freeClassLoaderList;
 	CVMglobals.freeClassLoaderList = NULL;
     });
+
+#ifdef CVM_JIT
+    /*
+     * Decompile methods. We can't do this in CVMclassFreeJavaMethods(),
+     * because some tracing that decompiling causes requires that the
+     * typeid's have not been freed yet. Also, we can't do this in 
+     * CVMclassFree() because we need to decompile all the methods
+     * in this group, before any memory for the classes is freed.
+     * This is because the CVMcmdCallees() array for a class may
+     * contain references to an mb in another class that is getting
+     * unloaded, and it will be deferenced during decompilation after
+     * the memory for the mb has been freed.
+     */
+    cb = firstCb;
+    while (cb != NULL) {
+	CVMtraceClassUnloading((
+            "CLU: Freeing compiled methods for (cb=0x%x) %C\n", cb, cb));
+	CVMclassFreeCompiledMethods(ee, cb);
+	cb = CVMcbFreeClassLink(cb);
+    }
+#endif
 
     /*
      * Free all the classes that were put on the freeClassList by
@@ -2543,9 +2601,11 @@ CVMclassDoClassUnloadingPass2(CVMExecEnv* ee)
      * by CVMclassFreeUnusedClassLoaderRoots(). Note that gc will release
      * all locks before calling us for pass #2.
      */
+    cb = firstCb;
     while (cb != NULL) {
 	CVMClassBlock* currCb = cb;
-	CVMtraceClassUnloading(("CLU: Freeing class %C (cb=0x%x)\n", cb, cb));
+	CVMtraceClassUnloading(("CLU: Freeing class (cb=0x%x) %C\n", cb, cb));
+	/* must get next cb before freeing this cb */
 	cb = CVMcbFreeClassLink(cb);
 	CVMclassFree(ee, currCb);
     }
@@ -2569,6 +2629,154 @@ CVMclassDoClassUnloadingPass2(CVMExecEnv* ee)
     }
 }
 
+#ifdef CVM_SPLIT_VERIFY
+/*
+ * Array to map external, classfile-defined representation
+ * into the internal one used by the verifier.
+ */
+static const fullinfo_type tagMap[] = {
+    ITEM_Bogus, 	/* TOP is Really Bogus */
+    ITEM_Integer,
+    ITEM_Float,
+    (fullinfo_type)(-1), /* DOUBLE is not translated by this table */
+    (fullinfo_type)(-1), /* LONG is not translated by this table */
+    NULL_FULLINFO,
+    ITEM_InitObject,
+    (fullinfo_type)(-1), /* OBJECT is not translated by this table */
+    (fullinfo_type)(-1)  /* UNINIT_OBJECT is not translated by this table */
+};
+#ifdef CVM_DEBUG
+static const char* tagNames[] = {
+    "ITEM_Bogus",
+    "ITEM_Integer",
+    "ITEM_Float",
+    "ITEM_DoubleXX",
+    "ITEM_LongXX",
+    "NULL_FULLINFO",
+    "ITEM_InitObject",
+    "ITEM_ObjectXX",
+    "ITEM_UninitObjectXX"
+};
+#endif
+
+/*
+ * We know it is safe to do all this, as the format verifier has
+ * already been run. Thus all checks are in the form of assertions.
+ */
+static CVMsplitVerifyMapElement*
+CVMreadMapElements(
+    CVMExecEnv* ee,
+    CICcontext* context,
+    int nElements,
+    int codeLength,
+    CVMsplitVerifyMapElement* elementp)
+{
+    CVMClassTypeID objtype;
+    CVMsplitVerifyMapElement v = ITEM_Bogus;
+#ifdef CVM_DEBUG_ASSERTS
+    int cpLength = CVMcbConstantPoolCount(context->cb);
+#endif
+    while (nElements-- > 0 ){
+	CVMUint32 tag = get1byte(context);
+	CVMUint32 offset;
+	switch (tag){
+	case JVM_STACKMAP_LONG:
+	    *elementp++ = ITEM_Long;
+	    v = ITEM_Long_2;
+	    break; /* code below will write second word */
+	case JVM_STACKMAP_DOUBLE:
+	    *elementp++ = ITEM_Double;
+	    v = ITEM_Double_2;
+	    break; /* code below will write second word */
+	case JVM_STACKMAP_OBJECT:
+	    offset = get2bytes(context);
+	    CVMassert(offset < cpLength &&
+		CVMcpTypeIs(context->cp, offset, ClassTypeID));
+	    objtype = CVMcpGetClassTypeID(context->cp, offset);
+	    v = VERIFY_MAKE_OBJECT(objtype);
+	    break;
+	case JVM_STACKMAP_UNINIT_OBJECT:
+	    offset = get2bytes(context);
+	    CVMassert(offset < codeLength);
+	    v = VERIFY_MAKE_UNINIT(offset);
+	    break;
+	default:
+	    CVMassert(tag < sizeof(tagMap)/sizeof(tagMap[0]));
+	    v = tagMap[tag];
+	    break;
+	}
+	CVMassert(v != (fullinfo_type)(-1));
+	*elementp++ = v;
+    }
+    return elementp;
+}
+
+/* Read in CLDC-style StackMap attribute */
+/*
+ * The code in verifyformat has already ensured that the offsets and
+ * constant pool references we're reading in make sense.
+ */
+static CVMsplitVerifyStackMaps*
+CVMreadStackMaps(CVMExecEnv* ee, CICcontext* context, CVMUint32 length,
+		 CVMUint32 codeLength, CVMUint32 maxLocals, CVMUint32 maxStack)
+{
+    CVMsplitVerifyStackMaps*	maps = NULL;
+    CVMsplitVerifyMap*		entry;
+    CVMUint32		  	nEntries;
+    CVMUint32		  	bytesPerMap;
+#ifdef CVM_DEBUG_ASSERTS
+    const CVMUint8*	  	startOffset = context->ptr;
+#endif
+    /*
+     * These asserts are here to remind us that the format of these
+     * things changes for big methods.
+     */
+    CVMassert(codeLength <= 65535);
+    CVMassert(maxLocals  <= 65535);
+    CVMassert(maxStack   <= 65535);
+
+    nEntries = get2bytes(context);
+    bytesPerMap = sizeof(CVMsplitVerifyMap) + 
+	      (sizeof(CVMsplitVerifyMapElement) * 
+	      (maxLocals + maxStack - 1));
+    /* Note: the below is slightly overgenerous, since it doesn't account
+     * for the trivial CVMsplitVerifyMap built into the 
+     * CVMsplitVerifyStackMaps
+     */
+    maps = (CVMsplitVerifyStackMaps*)calloc(1, 
+	    sizeof(struct CVMsplitVerifyStackMaps) + 
+	    bytesPerMap * nEntries);
+    if (maps == NULL){
+	CVMoutOfMemoryHandler(ee, context);
+    }
+    maps->nEntries = nEntries;
+    maps->entrySize = bytesPerMap;
+    entry = &(maps->maps[0]);
+    while (nEntries-- > 0){
+	int nLocalElements;
+	int nStackElements;
+	CVMsplitVerifyMapElement *t1, *t2;
+	entry->pc = get2bytes(context);
+	nLocalElements = get2bytes(context);
+	CVMassert(nLocalElements <= maxLocals);
+	t1 = CVMreadMapElements(ee, context, nLocalElements, codeLength,
+			    &(entry->mapElements[0]));
+	entry->nLocals = t1 - &(entry->mapElements[0]);
+	CVMassert(entry->nLocals <= maxLocals);
+	entry->sp = nStackElements = get2bytes(context);
+	CVMassert(nStackElements <= maxStack);
+	t2 = CVMreadMapElements(ee, context, nStackElements, codeLength, 
+			    t1);
+	entry->sp = t2 - t1;
+	CVMassert(entry->sp <= maxStack);
+	entry = (CVMsplitVerifyMap*)((char*)entry + bytesPerMap);
+	CVMassert(context->ptr <= startOffset + length);
+    }
+    CVMassert(context->ptr == startOffset + length);
+    return maps;
+}
+
+#endif
 #endif /* CVM_CLASSLOADING */
 
 /*

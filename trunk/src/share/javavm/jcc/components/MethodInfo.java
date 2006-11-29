@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)MethodInfo.java	1.49 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package components;
@@ -1633,4 +1638,70 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
         return super.name.string+super.type.string;
     }
 
+    /*
+     * Ietrate through code and create the array class for anewarray opcode
+     * and friends.
+     */
+    public void collectArrayForAnewarray(ConstantObject constantPool[], String clname) {
+	if ( code == null ) return; // no code.
+	int	ncode  = code.length;
+	int	opcode;
+	int     index;
+	for( int i = 0; i < ncode; /*nothing*/){
+            switch (opcode = (int)code[i]&0xff) {
+            case opc_tableswitch:
+		i = (i + 4) & ~3;
+		int low = getInt( i+4);
+		int high = getInt( i+8);
+		i += (high - low + 1) * 4 + 12;
+		break;
+	    case opc_lookupswitch:
+		i = (i + 4) & ~3;
+		int pairs = getInt(i+4);
+		i += pairs * 8 + 8;
+		break;
+            case opc_wide:
+		switch ((int)code[i+1]&0xff) {
+		case opc_aload: case opc_iload: case opc_fload:
+		case opc_lload: case opc_dload: case opc_istore:
+		case opc_astore: case opc_fstore: case opc_lstore:
+		case opc_dstore: case opc_ret:
+		    i += 4;
+		    break;
+		case opc_iinc:
+		    i += 6;
+		    break;
+		default:
+		    throw new DataFormatException( parent.className + "." +
+			name.string + ": unknown wide " +
+			"instruction: " + code[i+1] );
+		}
+		break;
+	    case opc_anewarray:
+	    case opc_multianewarray:
+	    case opc_anewarray_quick:
+     	    case opc_multianewarray_quick:
+                int dimensions;
+                if (opcode == opc_anewarray || opcode == opc_anewarray_quick) {
+                    dimensions = 1;
+                } else {
+                    dimensions = shortAt(code, i+2);
+                }
+                index = shortAt(code, i+1);
+                ConstantObject co = constantPool[index];
+                if (co instanceof ClassConstant) {
+                    ClassConstant cc = (ClassConstant)co;
+                    String cname= "L"+cc.name.string+";";
+                    for (int di = 0; di < dimensions; di++) {
+                        cname = "["+ cname;
+                    }
+                    vm.ArrayClassInfo.collectArrayClass(cname, false, false, clname);
+                }
+                
+	    default: 
+                i += opcLengths[opcode];
+       		break;
+	    }
+	}
+    }
 }

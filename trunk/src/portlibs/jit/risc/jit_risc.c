@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jit_risc.c	1.43 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -95,22 +100,33 @@ void CVMJITdoEndOfCodegenRuleAction(CVMJITCompilationContext *con)
  */
 
 #ifdef CVMJIT_PATCH_BASED_GC_CHECKS
-
 static void
 csPatchHelper(CVMExecEnv* ee);
+#endif
 
 void
 CVMJITenableRendezvousCalls(CVMExecEnv* ee)
 {
+#ifdef CVMJIT_TRAP_BASED_GC_CHECKS
+    CVMJITenableRendezvousCallsTrapbased(ee);
+#endif
+#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
     csPatchHelper(ee);
+#endif
 }
 
 void
 CVMJITdisableRendezvousCalls(CVMExecEnv* ee)
 {
+#ifdef CVMJIT_TRAP_BASED_GC_CHECKS
+   CVMJITdisableRendezvousCallsTrapbased(ee);
+#endif
+#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
     csPatchHelper(ee);
+#endif
 }
 
+#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
 static void
 csPatchHelper(CVMExecEnv* ee)
 {
@@ -237,6 +253,24 @@ CVMJITcompileGenerateCode(CVMJITCompilationContext* con)
     con->cgstackInit = (struct CVMJITStackElement*)
 	((char*)(con->compilationStateStack) + maxStateMachineAllocation);
     con->cgstackLimit = con->cgstackInit + maxStructNumber;
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+    /*
+     * Allocate space for callee table (table of mb's that we will
+     * make direct method calls to. con->numCallees is the most slots
+     * we will need and was computed by the front end. Some calls may
+     * use a duplicate mb, in which case we'll need fewer slots. After
+     * we have generated the code, this table will be copied into the
+     * code buffer after the stackmaps, so no space will be wasted.
+     */
+    if (con->numCallees != 0) {
+	con->callees = (CVMMethodBlock**)
+	    CVMJITmemNew(con, JIT_ALLOC_CGEN_OTHER,
+			 (con->numCallees + 1) * sizeof(CVMAddr));
+    } else {
+	con->callees = NULL;
+    }
+#endif
 
     /*
      * Initialize subsystems
@@ -396,9 +430,17 @@ CVMJITcompileGenerateCode(CVMJITCompilationContext* con)
      */
     con->intToCompOffset = prec.intToCompOffset;
 
+#ifdef CVM_DEBUG_ASSERTS
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+    if (!CVMglobals.jit.isPrecompiling)
+        /* AOT/warmup compilation use Trap based GC */
+#endif
 #ifdef CVMJIT_PATCH_BASED_GC_CHECKS
-    /* Check for the consistency of the gc check count */
-    CVMassert(con->gcCheckPcsIndex == con->gcCheckPcsSize);
+    {
+        /* Check for the consistency of the gc check count */
+        CVMassert(con->gcCheckPcsIndex == con->gcCheckPcsSize);
+    }
+#endif
 #endif
     
     if (!success) {
@@ -453,22 +495,30 @@ allocateCodeBuffer(CVMJITCompilationContext* con)
     }
 
 #ifdef CVMJIT_PATCH_BASED_GC_CHECKS
-    /* Reserve space for patch lists */
-    if (con->gcCheckPcsSize > 0) {
-	CVMUint32 memSize;
-	/* room for everything but the pcEntries list */ 
-	memSize  = CVMoffsetof(CVMCompiledGCCheckPCs, pcEntries);
-	/* room for the pcEntries list */ 
-	memSize +=  con->gcCheckPcsSize * sizeof(CVMUint16);
-	/* room for the patchedInstructions list */ 
-	memSize +=  sizeof(CVMCPUInstruction);
-	memSize &= ~(sizeof(CVMCPUInstruction)-1);
-	memSize +=  con->gcCheckPcsSize * sizeof(CVMCPUInstruction);
-	gcCheckPcsSize = memSize;
-	gcCheckPcsSize = CVMalignWordUp(gcCheckPcsSize);
-	extraSpace += gcCheckPcsSize;
-    } else {
-	gcCheckPcsSize = 0;
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+    if (CVMglobals.jit.isPrecompiling) {
+        /* AOT/warmup compilation use trap based GC */
+        gcCheckPcsSize = 0;
+    } else
+#endif
+    {
+        /* Reserve space for patch lists */
+        if (con->gcCheckPcsSize > 0) {
+	    CVMUint32 memSize;
+	    /* room for everything but the pcEntries list */ 
+	    memSize  = CVMoffsetof(CVMCompiledGCCheckPCs, pcEntries);
+	    /* room for the pcEntries list */ 
+  	    memSize +=  con->gcCheckPcsSize * sizeof(CVMUint16);
+	    /* room for the patchedInstructions list */ 
+	    memSize +=  sizeof(CVMCPUInstruction);
+	    memSize &= ~(sizeof(CVMCPUInstruction)-1);
+	    memSize +=  con->gcCheckPcsSize * sizeof(CVMCPUInstruction);
+	    gcCheckPcsSize = memSize;
+	    gcCheckPcsSize = CVMalignWordUp(gcCheckPcsSize);
+	    extraSpace += gcCheckPcsSize;
+        } else {
+	    gcCheckPcsSize = 0;
+        }
     }
 #endif
 
@@ -485,11 +535,14 @@ allocateCodeBuffer(CVMJITCompilationContext* con)
 
     /* memory layout:
 	cbuf size
-	extra size
-	extra
+	pcMaps
+	inliningInfo
+	gcCheckPCs
 	cmd
 	code
-	stackmaps */
+	stackmaps
+        callees
+    */
 
     if (con->mapPcNodeCount != 0) {
 	CVMtraceJITCodegenExec({
@@ -523,20 +576,28 @@ allocateCodeBuffer(CVMJITCompilationContext* con)
     con->inliningInfoIdx = 0;
 
 #ifdef CVMJIT_PATCH_BASED_GC_CHECKS
-    /* Reserve space for patch lists */
-    if (con->gcCheckPcsSize > 0) {
-	/* allocate... */ 
-	CVMtraceJITCodegenExec({
-	    CVMconsolePrintf("GC CHECK PCS ADDRESS = 0x%x\n",
-			     CVMJITcbufGetPhysicalPC(con));
-	});
-	con->gcCheckPcs = (void *)CVMJITcbufGetPhysicalPC(con);
-	con->gcCheckPcs->noEntries = con->gcCheckPcsSize;
-	space -= gcCheckPcsSize;
-	CVMJITcbufGetPhysicalPC(con) += gcCheckPcsSize;
-	CVMassert(CVMJITcbufGetPhysicalPC(con) < con->codeBufEnd);
-    } else {
-	con->gcCheckPcs = NULL;
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+    if (CVMglobals.jit.isPrecompiling) {
+        /* AOT compilation use trap based GC */ 
+        con->gcCheckPcs = NULL;
+    } else
+#endif
+    {
+        /* Reserve space for patch lists */
+        if (con->gcCheckPcsSize > 0) {
+	    /* allocate... */ 
+	    CVMtraceJITCodegenExec({
+	        CVMconsolePrintf("GC CHECK PCS ADDRESS = 0x%x\n",
+			         CVMJITcbufGetPhysicalPC(con));
+ 	    });
+	    con->gcCheckPcs = (void *)CVMJITcbufGetPhysicalPC(con);
+	    con->gcCheckPcs->noEntries = con->gcCheckPcsSize;
+	    space -= gcCheckPcsSize;
+	    CVMJITcbufGetPhysicalPC(con) += gcCheckPcsSize;
+	    CVMassert(CVMJITcbufGetPhysicalPC(con) < con->codeBufEnd);
+        } else {
+	   con->gcCheckPcs = NULL;
+        }
     }
 #endif
 

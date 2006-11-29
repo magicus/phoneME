@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)CVMWriter.java	1.152	06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 package runtime;
 import consts.Const;
@@ -2291,7 +2296,13 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 		String next;
 		next = (ctype.next == null ) ? "TYPEID_NOENTRY" : ("SCALARTYPE_NO("+ctype.next.typeNo+")");
 		// int nameHash = CVMDataType.computeHash(ctype.classInPackage);
-		auxOut.println("	INIT_CLASSTYPE( "+next+", PKG_NO("+ctype.pkg.entryNo+"), \""+ctype.classInPackage+"\"),");
+		int nameLength = ctype.classInPackage.length();
+		if (nameLength > 255 )
+		    nameLength = 255;
+		auxOut.println("	INIT_CLASSTYPE( "+next+
+		    ", PKG_NO("+ctype.pkg.entryNo+
+		    "), \""+ctype.classInPackage+"\", "+
+		    nameLength+"),");
 	    } else {
 		CVMArrayDataType atype = (CVMArrayDataType) o;
 		String next;

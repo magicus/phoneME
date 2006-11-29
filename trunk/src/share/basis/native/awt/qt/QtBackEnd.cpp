@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)QtBackEnd.cpp	1.15 06/10/25
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
 #include <stdlib.h>
@@ -39,6 +43,7 @@
 #include "QtBackEnd.h"
 #include "QtScreenFactory.h"
 
+/* temporarily for now...FIXME */
 extern void dispatchMouseButtonEvent(MouseButtonEvent *qte);
 extern void dispatchMouseMoveEvent(MouseMoveEvent *qte);
 extern void dispatchKeyEvent(KeyboardEvent *qte);
@@ -216,11 +221,26 @@ QtScreen::showWindow() {
 
 char **
 QtScreen::getArgs(int *argc) {
+    int count;
     // Use the "-sync" flag to force Xlib calls to be synchronous, which
     // would aid in debugging Xlib async errors.
 
-	static char *argv[] = {"cvm",NULL};
-	*argc = 1;
+    static char *argv[] = {"cvm", "-qws", NULL};
+
+    count = 1;
+
+#ifdef QWS
+#ifndef QTOPIA
+    // If environment varible QWS_CLIENT is not defined,
+    // assume we are running as the server (in the qt-embedded sense).
+    if (getenv("QWS_CLIENT") == NULL) {
+        count++;
+    }
+#endif /* QTOPIA */
+#endif /* QWS */
+
+     *argc = count; 
+
     return (char **)&argv;
 }
 

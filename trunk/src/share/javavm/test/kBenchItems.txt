@@ -1,4 +1,6 @@
 #
+# @(#)kBenchItems.txt	1.8 06/10/25
+#
 # Copyright 2006 Sun Microsystems, Inc. All rights reserved
 #
 # many of the classes of kBench

@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)QtGraphics.cc	1.32 06/10/25
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 #include "sun_awt_qt_QtGraphics.h"
 #include "QtGraphics.h"
@@ -441,7 +445,7 @@ QtGraphics::setColor(QColor* newColor)
 	this->color = newColor;
 
     //6179738 : This was removed as part of fixing this bug, which 
-    //          caused setLineProperties() to crash when accessing QPen
+    //          caused setLineProperties() to fail when accessing QPen
     //          so putting the code back.
     this->updateColor();
     //6179738
@@ -1000,11 +1004,11 @@ QtGraphics::fillRoundRect(int x, int y, int width, int height,
      *
      * Use arcRadiusWidth/Height * 2 instead of arcWidth/Height to account for
      * the odd/even-ness of the respective arcWidth/Height.
-     * Also notice the -1 when drawing the 1st, 3rd, and 4th quadrants.
-     * This is for Qt 2.3.1 only, without which the pies seem to overshoot
+     * Also notice the -1 temp. fix when drawing the 1st, 3rd, and 4th quadrants.
+     * This is Qt 2.3.1 only change, without which the pies seem to overshoot
      * a little bit either x-wise and/or y-wise.
      *
-     * We'll need to revisist this if/when using newer versions of Qt.
+     * We'll need to revisist this temporary fix if/when using newer versions of Qt.
      */
 
     painter->drawPie (x, y,

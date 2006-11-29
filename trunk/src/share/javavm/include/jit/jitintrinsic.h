@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitintrinsic.h	1.13 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_JITINTRINSIC_H
@@ -212,6 +217,15 @@
             void(*)(void).  If any other arguments need to be passed, the
             helper will need to be glue code which sets up the additional
             arguments.
+       CVMJITINTRINSIC_REG_ARGS: The call will use a target specific
+            convention that passes all arguments in registers.  The selection
+	    and assignment of registers for each arg is defined by platform
+	    specific code for the target i.e. the scheme may (and is likely
+	    to) vary from platform to platform.  However, given a specific
+	    platform, the register assignment scheme is fixed for the
+	    platform.  Hence, if 2 intrinsic methods uses this convention on
+	    a given target, both will expected to apply the same register
+	    assignment scheme for their args.
 
         To use an emitter, this field must point to a
         CVMJITIntrinsicEmitterVtbl struct as follows:
@@ -252,30 +266,31 @@ enum {
     CVMJITINTRINSIC_OPERATOR_ARGS               = (1U << 0),
     CVMJITINTRINSIC_C_ARGS                      = (1U << 1),
     CVMJITINTRINSIC_JAVA_ARGS                   = (1U << 2),
+    CVMJITINTRINSIC_REG_ARGS			= (1U << 3),
 
     /* Indicates if method is static or not: */
     CVMJITINTRINSIC_IS_NOT_STATIC               = 0,
-    CVMJITINTRINSIC_IS_STATIC                   = (1U << 3),
+    CVMJITINTRINSIC_IS_STATIC                   = (1U << 4),
 
     /* Spill requirements: determines what type of spill is needed: */
     CVMJITINTRINSIC_SPILLS_NOT_NEEDED           = 0,
-    CVMJITINTRINSIC_NEED_MINOR_SPILL            = (1U << 4),
-    CVMJITINTRINSIC_NEED_MAJOR_SPILL            = (1U << 5),
+    CVMJITINTRINSIC_NEED_MINOR_SPILL            = (1U << 5),
+    CVMJITINTRINSIC_NEED_MAJOR_SPILL            = (1U << 6),
 
     /* Stackmap requirements: determines what type of stackmap is needed: */
     CVMJITINTRINSIC_STACKMAP_NOT_NEEDED         = 0,
-    CVMJITINTRINSIC_NEED_STACKMAP               = (1U << 6),
-    CVMJITINTRINSIC_NEED_EXTENDED_STACKMAP      = (1U << 7),
+    CVMJITINTRINSIC_NEED_STACKMAP               = (1U << 7),
+    CVMJITINTRINSIC_NEED_EXTENDED_STACKMAP      = (1U << 8),
 
     /* Constant pool dump allowance: determines if a constant pool dumps is
        allowed: */
     CVMJITINTRINSIC_NO_CP_DUMP                  = 0,
-    CVMJITINTRINSIC_CP_DUMP_OK                  = (1U << 8),
+    CVMJITINTRINSIC_CP_DUMP_OK                  = (1U << 9),
 
     /* Miscellaneous options: */
-    CVMJITINTRINSIC_ADD_CCEE_ARG                = (1U << 9),
-    CVMJITINTRINSIC_NEED_TO_KILL_CACHED_REFS    = (1U << 10),
-    CVMJITINTRINSIC_FLUSH_JAVA_STACK_FRAME      = (1U << 11)
+    CVMJITINTRINSIC_ADD_CCEE_ARG                = (1U << 10),
+    CVMJITINTRINSIC_NEED_TO_KILL_CACHED_REFS    = (1U << 11),
+    CVMJITINTRINSIC_FLUSH_JAVA_STACK_FRAME      = (1U << 12)
 };
 
 typedef struct CVMJITIntrinsicEmitterVtbl CVMJITIntrinsicEmitterVtbl;

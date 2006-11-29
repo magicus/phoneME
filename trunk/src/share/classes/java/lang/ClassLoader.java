@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ClassLoader.java	1.163 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 package java.lang;
 
@@ -136,7 +141,7 @@ import sun.misc.CVM;
  *     }
  * </pre></blockquote>
  *
- * @version  1.159, 07/27/05
+ * @version  1.163, 10/10/06
  * @see      #resolveClass(Class)
  * @since    1.0
  */
@@ -324,14 +329,18 @@ public abstract class ClassLoader {
 		    c = parent.loadClass(name, false);
 		} else {
 		    check();
-		    c = loadBootstrapClass(name);
+		    c = loadBootstrapClassOrNull(name);
 		}
-		/* this is an initiating loader, so add to the loader cache */
-		c.addToLoaderCache(this);
 	    } catch (ClassNotFoundException e) {
+		c = null;
+	    }
+	    if (c == null){
 	        // If still not found, then invoke findClass in order
 	        // to find the class.
 	        c = findClass(name);
+	    } else {
+		/* this is an initiating loader, so add to the loader cache */
+		c.addToLoaderCache(this);
 	    }
 	}
 	if (resolve) {
@@ -759,21 +768,35 @@ public abstract class ClassLoader {
 	check();
 	ClassLoader system = getSystemClassLoader();
 	if (system == null) {
-            if(!checkName(name))
-		throw new ClassNotFoundException(name);
 	    return loadBootstrapClass(name);
 	}
 	return system.loadClass(name);
     }
 
 
+    /**
+     * Returns a bootstrap Class, or throws a ClassNotFoundException
+     */
     static Class loadBootstrapClass(String name) 
+	throws ClassNotFoundException {
+	Class c = loadBootstrapClassOrNull(name);
+	if (c == null)
+                throw new ClassNotFoundException(name);
+	return c;
+    }
+
+    /*
+     * Returns a Class or null if class not found.
+     * Can throw ClassNotFoundException for various other 
+     * faux pas
+     */
+    private static Class loadBootstrapClassOrNull(String name) 
 	throws ClassNotFoundException {
         if (!checkName(name))
                 throw new ClassNotFoundException(name);
 	synchronized(ClassLoader.class) {
 	    Class c = loadBootstrapClass0(name);
-	    if (!c.superClassesLoaded()) {
+	    if (c != null && !c.superClassesLoaded()) {
 		c.loadSuperClasses();
 	    }	
 	    return c;
@@ -1392,7 +1415,7 @@ public abstract class ClassLoader {
      * the VM when it loads the library, and used by the VM to pass the correct
      * version of JNI to the native methods.  </p>
      *
-     * @version  1.159 07/27/05
+     * @version  1.163 10/10/06
      * @see      ClassLoader
      * @since    1.2
      */
@@ -1558,7 +1581,7 @@ public abstract class ClassLoader {
 	 * for jni libraries that they build in. They can also specify
 	 * a list of properties by using java.library.builtins.
 	 *
-	 * %comment - c020
+	 * %comment - c
 	 */
 	boolean libraryFound = false;
 	// System.err.println("Trying java.library.builtin." + name);

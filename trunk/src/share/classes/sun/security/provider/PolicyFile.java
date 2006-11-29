@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)PolicyFile.java	1.13 06/10/11
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
  
 
@@ -394,10 +399,10 @@ public class PolicyFile extends java.security.Policy {
 		= new InputStreamReader(getInputStream(policy)); 
 	    pp.read(isr);
 	    isr.close();
-	    Enumeration enum = pp.grantElements();
-	    while (enum.hasMoreElements()) {
+	    Enumeration enum_ = pp.grantElements();
+	    while (enum_.hasMoreElements()) {
 		PolicyParser.GrantEntry ge =
-		    (PolicyParser.GrantEntry) enum.nextElement();
+		    (PolicyParser.GrantEntry) enum_.nextElement();
 		addGrantEntry(ge, null);
 	    }
 	    success = true;
@@ -486,10 +491,10 @@ public class PolicyFile extends java.security.Policy {
 
 	    PolicyEntry entry = new PolicyEntry(codesource);
 
-	    Enumeration enum = ge.permissionElements();
-	    while (enum.hasMoreElements()) {
+	    Enumeration enum_ = ge.permissionElements();
+	    while (enum_.hasMoreElements()) {
 		PolicyParser.PermissionEntry pe =
-		    (PolicyParser.PermissionEntry) enum.nextElement();
+		    (PolicyParser.PermissionEntry) enum_.nextElement();
 		try { 
 		    Permission perm = getInstance(pe.permission,
 							 pe.name,
@@ -578,7 +583,7 @@ public class PolicyFile extends java.security.Policy {
 	       NoSuchMethodException,
 	       InvocationTargetException
     {
-	// We might want to keep a hash of created factories...
+	//we might want to keep a hash of created factories...
 	Class pc = Class.forName(type);
 	Constructor c = pc.getConstructor(PARAMS);
 	return (Permission) c.newInstance(new Object[] { name, actions });
@@ -856,8 +861,8 @@ public class PolicyFile extends java.security.Policy {
 	/**
 	 * Given a Permission and a CodeSource, create a policy entry.
 	 * 
-	 * Decide if/how to add validity fields and "purpose" fields to
-	 * policy entries 
+	 * TODO: Decide if/how to add validity fields and "purpose" fields to
+	 *       policy entries 
 	 * 
 	 * @param cs the CodeSource, which encapsulates the URL and the public
 	 *        key

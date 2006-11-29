@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)Attributes.java	1.47 03/06/24
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package java.util.jar;
@@ -284,7 +289,7 @@ public class Attributes implements Map, Cloneable {
 
     /*
      * Writes the current attributes to the specified data output stream.
-     * Need to handle UTF8 values and break up lines longer than 72 bytes
+     * TODO: Need to handle UTF8 values and break up lines longer than 72 bytes
      */
      void write(DataOutputStream os) throws IOException {
 	Iterator it = entrySet().iterator();
@@ -313,7 +318,7 @@ public class Attributes implements Map, Cloneable {
      * make sure to write out the MANIFEST_VERSION or SIGNATURE_VERSION
      * attributes first.
      *
-     * Need to handle UTF8 values and break up lines longer than 72 bytes
+     * TODO: Need to handle UTF8 values and break up lines longer than 72 bytes
      */
     void writeMain(DataOutputStream out) throws IOException 
     {
@@ -357,7 +362,7 @@ public class Attributes implements Map, Cloneable {
 
     /*
      * Reads attributes from the specified input stream.
-     * Need to handle UTF8 values.
+     * TODO: Need to handle UTF8 values.
      */
     void read(Manifest.FastInputStream is, byte[] lbuf) throws IOException {
 	String name = null, value = null;

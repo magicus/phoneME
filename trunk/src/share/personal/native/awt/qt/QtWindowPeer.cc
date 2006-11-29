@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)QtWindowPeer.cc	1.34 06/10/25
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 #include <qt.h>
 
@@ -61,9 +65,11 @@ QtWindowPeer::QtWindowPeer(JNIEnv *env,
     if (qwsInit == JNI_FALSE) {
         int qwsX = 0 , qwsY = 0 ;
 #ifdef QWS
+#ifdef QTOPIA
         QPoint origin = ((QpFrame *)windowFrame)->getOriginWithDecoration();
         qwsX = origin.x();
         qwsY = origin.y();
+#endif /* QTOPIA */
 #endif /* QWS */
 
         env->CallStaticVoidMethod(QtCachedIDs.QtWindowPeerClass,
@@ -83,8 +89,7 @@ QtWindowPeer::QtWindowPeer(JNIEnv *env,
     // If the warning string is null, then we don't need to display a warning string.
     if (warningString != NULL) {
         QString *qStr = awt_convertToQString(env, warningString);
-        //QString *qStr = new QString("My Java Applet Window");
-        ((QpFrame *)windowFrame)->createWarningLabel(*qStr);
+        ((QpWidget *)windowFrame)->createWarningLabel(*qStr);
     }
     //6233632
 }
@@ -102,7 +107,11 @@ static jint guessedRight = 3;
 
 #ifdef QWS
 
+#ifdef QT_KEYPAD_MODE
+static jint guessedTop = 24;
+#else
 static jint guessedTop = 34;
+#endif
 static jint guessedLeft = 4;
 static jint guessedBottom = 4;
 static jint guessedRight = 4;
@@ -113,10 +122,16 @@ static jint guessedRight = 4;
 // window.  It reduces the flicker seen when doing the resize dance.
 // See also QtWindowPeer.show()/restoreBounds().
 void
-QtWindowPeer::guessBorders(JNIEnv *env, jobject thisObj)
+QtWindowPeer::guessBorders(JNIEnv *env, jobject thisObj, bool isUndecorated)
 {
+    if ( isUndecorated ) {
+        env->CallVoidMethod(thisObj, QtCachedIDs.QtWindowPeer_setInsetsMID,
+    			0, 0, 0, 0);
+    }
+    else {
     env->CallVoidMethod(thisObj, QtCachedIDs.QtWindowPeer_setInsetsMID,
     			guessedTop, guessedLeft, guessedBottom, guessedRight);
+    }
 
 // This variable is used only for Q_WS_X11.
 #ifdef Q_WS_X11
@@ -175,6 +190,7 @@ QtWindowPeer::eventFilter(QObject *obj, QEvent *evt)
             break;
 #else
             /*
+             * this is the case when qt version is 2.3.2
              * See also windowStateChanged().
              */
         case QEvent::ShowNormal :
@@ -196,10 +212,12 @@ QtWindowPeer::eventFilter(QObject *obj, QEvent *evt)
     return done;
 }
 
-//find out if this is necessary at all
 void
 QtWindowPeer::resize(QResizeEvent *evt) 
 {
+   //6393054
+   QpWidget *widget = (QpWidget *) this->getWidget();
+   widget->resizeWarningLabel();
 }
 
 void
@@ -389,9 +407,9 @@ QtWindowPeer::windowStateChanged(QObject *obj, QEvent *evt)
     }
 #else
     /*
-     * In qt-3.3, ShowNormal and ShowMinimized events are obsolete.  
-     * The while loop below is not such a good idea and causes 
-     * qt-3.3 in an endless loop.
+     * This is the case with qt-2.3.2.  In qt-3.3, ShowNormal and
+     * ShowMinimized events are obsolete.  The while loop below is not such a
+     * good idea and causes qt-3.3 in an endless loop.
      */
     if (evt->type() == QEvent::ShowNormal) {
         while (((QWidget *) obj)->isMinimized()) {}
@@ -749,6 +767,9 @@ Java_sun_awt_qt_QtWindowPeer_create (JNIEnv *env, jobject thisObj,
         env->ThrowNew (QtCachedIDs.OutOfMemoryErrorClass, NULL);
         return;
     }
+    
+    //6393054
+    window->guessBorders(env, thisObj, TRUE);
 }
 
 JNIEXPORT void JNICALL
@@ -795,7 +816,7 @@ Java_sun_awt_qt_QtWindowPeer_toBack (JNIEnv *env, jobject thisObj)
     window->getWidget()->lower();
 }
 
-//6233632
+//6233632, 6393054
 JNIEXPORT jint JNICALL
 Java_sun_awt_qt_QtWindowPeer_warningLabelHeight (JNIEnv *env, 
                                               jobject thisObj)
@@ -803,10 +824,10 @@ Java_sun_awt_qt_QtWindowPeer_warningLabelHeight (JNIEnv *env,
     QtDisposer::Trigger guard(env);
     
     QtComponentPeer *component = QtComponentPeer::getPeerFromJNI (env, thisObj);
-    QpFrame *qpFrame = (QpFrame*)component->getWidget();
-    return qpFrame->warningLabelHeight();
+    QpWidget *qpWidget = (QpFrame*)component->getWidget();
+    return qpWidget->warningLabelHeight();
 }
-//6233632
+//6233632, 6393054
 
 JNIEXPORT void JNICALL
 Java_sun_awt_qt_QtWindowPeer_setResizable (JNIEnv *env, 
@@ -916,3 +937,32 @@ Java_sun_awt_qt_QtWindowPeer_wrapInSequenced(JNIEnv *env, jobject thisObj,
     return QtComponentPeer::wrapInSequenced(awtevent);
 }
 
+#ifdef PERSONAL_APPMANAGER
+#include "sun_mtask_xlet_XletFrame.h"
+
+JNIEXPORT void JNICALL
+Java_sun_mtask_xlet_XletFrame_synthesizeFocusIn (JNIEnv *env, jobject thisObj)
+{
+    QtDisposer::Trigger guard(env);
+
+#ifdef QWS
+#ifndef QT_KEYPAD_MODE
+
+    jobject peer = env->GetObjectField (thisObj, QtCachedIDs.java_awt_Component_peerFID);
+
+    if (peer == NULL) {
+        return;
+    }
+
+    QtWindowPeer *window = (QtWindowPeer *)QtComponentPeer::getPeerFromJNI (env, peer);
+	
+    if (window == NULL || window->getWidget() == NULL) {
+        return;
+    }
+	
+    window->handleFocusIn(env);
+
+#endif //QT_KEYPAD_MODE
+#endif //QWS
+}
+#endif  // #ifdef PERSONAL_APPMANAGER

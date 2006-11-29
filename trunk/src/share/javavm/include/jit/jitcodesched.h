@@ -1,25 +1,28 @@
 /*
- * Portions Copyright 2000-2006 Sun Microsystems, Inc. All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License version 2 for more details (a copy is included at
- * /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public
- * License version 2 along with this work; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitcodesched.h	1.7 06/10/10
+ *
+ * Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -120,12 +123,15 @@ struct CVMJITCSContext{
 #define CVMJITCS_GETSTATIC_INSTRUCTION    (1 << 13)
 #define CVMJITCS_PUTSTATIC_INSTRUCTION    (1 << 14)
 #define CVMJITCS_EXCEPTION_INSTRUCTION    (1 << 15)
+#define CVMJITCS_ARRAYINDEXOUTOF_INSTRUCTION (1 << 16)
 
 #define CVMJITCS_TEMP_LOCAL_NUM 3
 
 #define CVMJITcsClearInstructionFlags(con) \
            (CVMJITcsContext(con)->instructionFlags &= CVMJITCS_EMIT_INPLACE)
 
+#define CVMJITcsIsArrayIndexOutofBoundsBranch(con)\
+    (CVMJITcsContext(con)->instructionFlags & CVMJITCS_ARRAYINDEXOUTOF_INSTRUCTION)
 #define CVMJITcsIsEmitInPlace(con) \
     (CVMJITcsContext(con)->instructionFlags & CVMJITCS_EMIT_INPLACE)
 #define CVMJITcsIsEmitPatchInstruction(con) \
@@ -167,6 +173,25 @@ struct CVMJITCSContext{
 	CVMJITcsContext(con)->instructionFlags |= CVMJITCS_EMIT_INPLACE; \
     }
 
+#define CVMJITcsSetEmitInPlaceWithBufSizeAdjust(con, flag, size)	\
+    {									\
+	CVMJITcsContext(con)->emitInPlaceCount ++;			\
+	CVMassert(CVMJITcsContext(con)->emitInPlaceCount > 0);		\
+	CVMJITcsContext(con)->instructionFlags |= CVMJITCS_EMIT_INPLACE; \
+        if (flag) {\
+            {\
+                CVMUint32 _i = 0;\
+                for (_i = 0; _i < size; _i += sizeof(CVMCPUInstruction)) {\
+                    CVMJITcbufEmitPC(con, ((CVMUint32)CVMJITcbufGetLogicalPC(con) + _i),\
+                          CVMJITcsContext(con)->nop);\
+                }\
+            }\
+            CVMJITcbufGetLogicalPC(con) += size;\
+            CVMJITcbufGetPhysicalPC(con) =\
+                CVMJITcbufLogicalToPhysical(con, CVMJITcbufGetLogicalPC(con));\
+        }\
+    }
+
 #define CVMJITcsClearEmitPatchInstruction(con) \
     (CVMJITcsContext(con)->instructionFlags &= ~CVMJITCS_EMIT_PATCH)
 #define CVMJITcsClearEmitInsertInstruction(con) \
@@ -202,6 +227,8 @@ struct CVMJITCSContext{
     (CVMJITcsContext(con)->instructionFlags |= CVMJITCS_GETARRAY_INSTRUCTION)
 #define CVMJITcsSetExceptionInstruction(con) \
     (CVMJITcsContext(con)->instructionFlags |= CVMJITCS_EXCEPTION_INSTRUCTION)
+#define CVMJITcsSetArrayIndexOutofBoundsBranch(con)\
+    (CVMJITcsContext(con)->instructionFlags |= CVMJITCS_ARRAYINDEXOUTOF_INSTRUCTION)
 
 #define CVMJITcsBranchPC(con) \
     (CVMJITcsContext(con)->branchPC)
@@ -363,10 +390,12 @@ CVMJITcsCommitMethod(CVMJITCompilationContext* con);
 #define CVMJITcsSetPutStaticFieldInstruction(con) do {} while(0);
 #define CVMJITcsSetGetStaticFieldInstruction(con) do {} while(0);
 #define CVMJITcsSetExceptionInstruction(con) do{} while(0);
+#define CVMJITcsSetArrayIndexOutofBoundsBranch(con) do{} while(0);
 
 #define CVMJITcsSetEmitPatchInstruction(con) do {} while(0);
 #define CVMJITcsSetEmitInsertInstruction(con) do {} while(0);
 #define CVMJITcsSetEmitInPlace(con) do {} while(0);
+#define CVMJITcsSetEmitInPlaceWithBufSizeAdjust(con) do {} while(0);
 
 #define CVMJITcsTestBaseRegister(con, reg) CVM_FALSE
 

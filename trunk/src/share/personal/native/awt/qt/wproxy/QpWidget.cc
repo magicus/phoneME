@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ *  @(#)QpWidget.cc	1.5 04/12/20
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 #include "QpWidget.h"
 #include "QpWidgetFactory.h"
@@ -98,9 +102,51 @@ QpWidget::QpWidget(QpWidget *parent, char *name, int flags) {
                                                                 name,
                                                                 flags);
     this->setQWidget(widget);
+    warningStringLabel = NULL;   //6233632, 6393054
 }
 
 QpWidget::~QpWidget(void) {
+}
+
+/*
+  6233632, 6393054
+*/
+void
+QpWidget::createWarningLabel(QString warningString) {
+    QT_METHOD_ARGS_ALLOC(qtMethodParam, argp);
+    argp->param = (void *)&warningString;
+    invokeAndWait(QpWidget::CreateWarningLabel,argp);
+    QT_METHOD_ARGS_FREE(argp);
+}
+                                                                                                                            
+/*
+  6233632, 6393054
+*/
+void
+QpWidget::resizeWarningLabel(void) {
+    //if (statusBar != NULL) {
+    if (warningStringLabel != NULL) {
+        QT_METHOD_ARGS_ALLOC(qtMethodParam, argp);
+        invokeAndWait(QpWidget::ResizeWarningLabel,argp);
+        QT_METHOD_ARGS_FREE(argp);
+    }
+}
+
+/*
+  6233632, 6393054
+*/
+int
+QpWidget::warningLabelHeight(void) {
+    //if (statusBar == NULL) {
+    if (warningStringLabel == NULL) {
+        return 0;
+    } else {
+        QT_METHOD_ARGS_ALLOC(qtMethodReturnValue, argp);
+        invokeAndWait(QpWidget::WarningLabelHeight, argp);
+        int rv = (int)argp->rvalue;
+        QT_METHOD_ARGS_FREE(argp);
+        return rv;
+    }
 }
 
 void 
@@ -637,6 +683,18 @@ QpWidget::execute(int methodId, void *args) {
         a->out.rvalue = execIsA((const char *)a->in.name);
         }
         break ;
+   case QpWidget::CreateWarningLabel:{
+        QString *warningString = (QString *)((qtMethodParam *)args)->param;
+        execCreateWarningLabel(*warningString);
+        }
+        break;
+    case QpWidget::ResizeWarningLabel:   //6233632, 6393054
+        execResizeWarningLabel();
+        break;
+    case QpWidget::WarningLabelHeight:
+        ((qtMethodReturnValue *)args)->rvalue = (void *)execWarningLabelHeight();
+        break;
+
     default :
         break;
     }
@@ -675,6 +733,10 @@ QpWidget::execInsertWidgetAt(QpWidget *widget, int index) {
         QWidget *prevWidget = (QWidget *) childIt.current();
         compWidget->reparent(thisWidget, 0, pt, TRUE);
         compWidget->stackUnder(prevWidget);
+    }
+    
+    if (warningStringLabel != NULL) {
+        warningStringLabel->raise();
     }
 }
 
@@ -833,6 +895,10 @@ QpWidget::execHeightForWidth(int w) {
 void
 QpWidget::execRaise(){
     getQWidget()->raise();
+    
+    if (warningStringLabel != NULL) {
+        warningStringLabel->raise();
+    }
 }
 
 void
@@ -913,4 +979,50 @@ QpWidget::execIsEnabled() {
 bool
 QpWidget::execIsA(const char *name) {
     return getQWidget()->isA(name);
+}
+
+/*
+  6233632, 6393054
+*/
+void
+QpWidget::execCreateWarningLabel(QString warningString) {
+    QWidget *widget = (QWidget *)this->getQWidget();
+
+    // Create the warning label
+    warningStringLabel = new QLabel(warningString, widget, 0, Qt::WStyle_StaysOnTop);
+    warningStringLabel->setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum));
+    warningStringLabel->setAlignment(Qt::AlignHCenter);
+                                                                                                                            
+    // Set the color to slightly darker then the widget.
+    QColor color = widget->backgroundColor();
+    QColor darkColor = color.dark(125);
+    warningStringLabel->setBackgroundColor(darkColor);
+    warningStringLabel->setGeometry(0,
+                                    widget->height() - warningStringLabel->height(),
+                                    widget->width(),
+                                    warningStringLabel->height());
+    warningStringLabel->raise();
+}
+
+
+/*
+  6233632, 6393054
+*/
+void
+QpWidget::execResizeWarningLabel(void) {
+printf("resize");
+    QWidget *widget = (QWidget *)this->getQWidget();
+    warningStringLabel->setGeometry(0,
+                                    widget->height() - warningStringLabel->height(),
+                                    widget->width(),
+                                    warningStringLabel->height());
+    warningStringLabel->raise();
+}
+                                                                                                                            
+/*
+  6233632, 6393054
+*/
+int
+QpWidget::execWarningLabelHeight(void) {
+    return warningStringLabel->height();
 }

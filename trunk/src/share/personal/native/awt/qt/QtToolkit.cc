@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)QtToolkit.cc	1.37 06/10/25
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
 #include <qt.h>
@@ -35,6 +39,7 @@
 #include "KeyCodes.h"
 #include "awt.h"
 #include "QtComponentPeer.h"
+#include "QtWindowPeer.h"
 #include "QtApplication.h"
 #include <qptrdict.h>
 #include "QtEvent.h"
@@ -101,6 +106,16 @@ class QtToolkitEventHandler : public QObject
 QtComponentPeer *QtToolkitEventHandler::lastMousePressPeer = NULL;
 QPoint *QtToolkitEventHandler::lastMousePressPoint = NULL;
 
+#ifdef QT_KEYPAD_MODE
+static jclass toolkitClass = NULL;
+static jmethodID gotoHomeScreenEDT = NULL;
+static jmethodID gotoNextAppEDT = NULL;
+
+// If PASS_ARROW_KEYS is defined, QtToolkit should not
+// interpret arrow keys as possible focus transfer gestures and
+// should let the Java layer handle the keys.
+static bool passArrowKeys = false;
+#endif /* QT_KEYPAD_MODE */
 
 /*
  * Class:     sun_awt_qt_QtToolkit
@@ -110,6 +125,18 @@ QPoint *QtToolkitEventHandler::lastMousePressPoint = NULL;
 JNIEXPORT void JNICALL
 Java_sun_awt_qt_QtToolkit_initIDs (JNIEnv *env, jclass cls)
 {
+#ifdef QT_KEYPAD_MODE
+    /* Caches the toolkitClass and two CDCAms lifecycle methods. */
+    toolkitClass = (jclass) env->NewGlobalRef(cls);
+
+    gotoHomeScreenEDT = env->GetStaticMethodID(cls,
+                                               "gotoHomeScreenEDT",
+                                               "()V");
+    gotoNextAppEDT = env->GetStaticMethodID(cls,
+                                            "gotoNextAppEDT",
+                                            "()V");
+#endif /* QT_KEYPAD_MODE */
+
 #ifdef QWS
     /* Need to remember QtToolkit class, since we need it at the end of
      * initialization. (Note :- "cls" gets overwritten in this method
@@ -403,6 +430,28 @@ Java_sun_awt_qt_QtToolkit_initIDs (JNIEnv *env, jclass cls)
         }
     }
 #endif /* QWS */
+    //6440627.  Initialize the pmutex here.
+    QtDisposer::init();
+}
+
+JNIEXPORT void JNICALL
+Java_sun_awt_qt_QtToolkit_synthesizeFocusIn (JNIEnv *env, jobject thisObj, jobject windowPeer)
+{
+    QtDisposer::Trigger guard(env);
+
+#ifdef QWS
+#ifndef QT_KEYPAD_MODE
+
+    QtWindowPeer *window = (QtWindowPeer *)QtComponentPeer::getPeerFromJNI (env, windowPeer);
+	
+    if (window == NULL || window->getWidget() == NULL) {
+        return;
+    }
+	
+    window->handleFocusIn(env);
+
+#endif //QT_KEYPAD_MODE
+#endif //QWS
 }
 
 JNIEXPORT jint JNICALL
@@ -527,12 +576,31 @@ Java_sun_awt_qt_QtToolkit_createNativeApp (JNIEnv *env, jobject thisObj)
     static int argc = 1;
 
     /*
-     * We need to create an array of size 2 because the QApplication assigns a
+     * We need to create an array of size 3 because the QApplication assigns a
      * NULL pointer to the argv[argc] position after it processes and removes
      * all the Qt command line options from the argv vector.  This is a Qt bug
      * to write past the end of the argv vector.
      */
-    static char *argv[2] = { "cvm", NULL };
+    static char *argv[3] = { "cvm", "-qws", NULL };
+
+#ifdef QWS
+#ifndef QTOPIA
+    // If environment varible QWS_CLIENT is not defined,
+    // assume we are running as the server (in the qt-embedded sense).
+    if (getenv("QWS_CLIENT") == NULL) {
+        argc++;
+    }
+#endif /* QTOPIA */
+#endif /* QWS */
+
+#ifdef QT_KEYPAD_MODE
+    if (getenv("PASS_ARROW_KEYS") != NULL && strcmp("false", getenv("PASS_ARROW_KEYS"))) {
+        // The environment variable must be defined and not equal to "false".
+        passArrowKeys = true;
+    } else {
+        passArrowKeys = false;
+    }
+#endif /* QT_KEYPAD_MODE */
 
     /*
      * Retrieve the appName system property, if any.
@@ -592,7 +660,9 @@ Java_sun_awt_qt_QtToolkit_runNative (JNIEnv *env, jobject thisObj)
        the Java event queue for processing by the event dispatch thread. */
     QtToolkitEventHandler evtHandler;    
 
-    QtDisposer::init();
+    //6440627. Qt peer can be accessed before toolkit thread reaches here
+    //         Initialize QtDisposer at static initializer instead.
+    //QtDisposer::init();
 
     /* Run the qt event dispatching loop. */
 #ifdef QT_THREAD_SUPPORT
@@ -713,6 +783,47 @@ QtEventObject *CloneEvent(QObject *source,QEvent *e)
 static
 QtEventObject *CloneKeyEvent(QObject *source, QKeyEvent *e)
 {
+#ifdef QT_KEYPAD_MODE
+    // OMAP Keypad modification:
+    // Workaround KEYPAD driver where only key presses are generated
+    // and ascii is always 0.
+    jint javaCode;
+    jint unicode = 0;
+    jint modifiers = 0;
+
+    QChar qc;
+    QString qs;
+    bool transform = false;
+    if (Qt::Key_0 <= e->key() && e->key() <= Qt::Key_9) {
+        javaCode = awt_qt_getJavaKeyCode (e->key(), FALSE);
+        unicode = awt_qt_getUnicodeChar (javaCode, modifiers);
+        qc = QChar(unicode);
+        qs = QString(qc);
+        transform = true;
+    }
+    /*
+    if (e->key() == Qt::Key_Asterisk) {
+        qs = QString("*");
+        qc = qs.at(0);
+        transform = true;
+    }
+    if (e->key() == Qt::Key_NumberSign) {
+        qs = QString("#");
+        qc = qs.at(0);
+        transform = true;
+    }
+    */
+
+    QKeyEvent *cke = new QKeyEvent(e->type(),
+                                   e->key(),
+                                   (transform ? qc.latin1() : e->ascii()),
+                                   //(transform ? qc.unicode() : e->ascii()),
+                                   e->state(),
+                                   (transform ? qs : e->text()),
+                                   e->isAutoRepeat(),
+                                   e->count());
+
+#else
     QKeyEvent *cke = new QKeyEvent(e->type(), 
                                    e->key(), 
                                    e->ascii(),
@@ -720,18 +831,216 @@ QtEventObject *CloneKeyEvent(QObject *source, QKeyEvent *e)
                                    e->text(),
                                    e->isAutoRepeat(), 
                                    e->count());
+#endif /* QT_KEYPAD_MODE */
+
     QT_RETURN_NEW_EVENT_OBJECT(source, cke);
 }
+
+/*
+void DebugQEvent(QObject* obj, QEvent* event)
+{
+    QEvent::Type type = event->type();
+
+    // Ignore timer event.
+    if (type == QEvent::Timer) return;
+
+    printf("DebugQEvent:\n");
+    printf("======================================================================\n");
+    printf("event source (object className=%s)->\n", obj->className());
+    obj->dumpObjectTree();
+
+    printf("event type (%d)->\n", type);
+    QKeyEvent* keyEvent;
+    //QMouseEvent* mouseEvent;
+    switch (type) {
+    case QEvent::KeyPress:
+        keyEvent = (QKeyEvent*) event;
+        printf("QEvent::KeyPress, key=0x%x, ascii=%d, text=\"%s\", count=%d (%s)\n",
+               keyEvent->key(), keyEvent->ascii(), (const char*)keyEvent->text(), keyEvent->count(),
+               (keyEvent->isAutoRepeat() ? "autorepeat" : "non-autorepeat"));
+        break;
+    case QEvent::KeyRelease:
+        keyEvent = (QKeyEvent*) event;
+        printf("QEvent::KeyRelease, key=0x%x, ascii=%d, text=\"%s\", count=%d (%s)\n",
+               keyEvent->key(), keyEvent->ascii(), (const char*)keyEvent->text(), keyEvent->count(),
+               (keyEvent->isAutoRepeat() ? "autorepeat" : "non-autorepeat"));
+        break;
+    default:
+        break;
+    }
+    printf("======================================================================\n");
+}
+*/
+
+#ifdef QT_KEYPAD_MODE
+static QEvent*
+NEW_TAB_EVENT(bool shiftOn)
+{
+    return
+        new QKeyEvent(QEvent::KeyPress,
+                      shiftOn ? Qt::Key_Backtab : Qt::Key_Tab,
+                      '\t',
+                      shiftOn ? Qt::ShiftButton : Qt::NoButton);
+}
+
+static bool
+AMS_EVENT_FILTER(QObject* obj, QEvent* evt, JNIEnv* env)
+{
+    if (!obj->inherits("QWidget")) return false;
+
+    QKeyEvent* ke;
+    bool focusPrev = false;
+    bool focusNext = false;
+    bool returnVal = false;
+    if (evt && evt->type() == QEvent::KeyPress) {
+        ke = (QKeyEvent*) evt;
+        // Possible AMS events.
+        switch (ke->key()) {
+        case Qt::Key_Home:
+            // Key_Home is pressed.
+            if (gotoHomeScreenEDT && toolkitClass) {
+                env->CallStaticVoidMethod(toolkitClass,
+                                          gotoHomeScreenEDT);
+            }
+            returnVal = true;
+            break;
+        case Qt::Key_NumberSign:
+            // Key_NumberSign is pressed.
+            // Emulates the gotoNextApp button press.
+            if (gotoNextAppEDT && toolkitClass) {
+                env->CallStaticVoidMethod(toolkitClass,
+                                          gotoNextAppEDT);
+            }
+            returnVal = true;
+            break;
+        case Qt::Key_Context1:
+            // Key_Context1 is pressed.
+            if (obj->inherits("QMultiLineEdit")) {
+                // while in the text area....
+                focusPrev = true;
+                returnVal = true;
+            }
+            break;
+        case Qt::Key_Context2:
+            // Key_Context2 is pressed.
+            if (obj->inherits("QMultiLineEdit")) {
+                // while in the text area....
+                focusNext = true;
+                returnVal = true;
+            }
+            // Commented out the calling of gotoNextAppEDT.
+            // For the time being and without modifying the personal spec,
+            // we are mapping Key_Context1/2 to VK_F1/F2 for
+            // the application to manage.
+            /*
+            if (gotoNextAppEDT && toolkitClass) {
+                env->CallStaticVoidMethod(toolkitClass,
+                                          gotoNextAppEDT);
+            }
+            returnVal = true;
+            */
+            break;
+        case Qt::Key_Left:
+            // Key_Left is pressed.
+            if (passArrowKeys) {
+                break;
+            }
+
+            if (obj->inherits("QListBox")
+                /* || obj->inherits("QComboBox") */
+                || (obj->inherits("QScrollBar")
+                    && ((QScrollBar*)obj)->orientation() == QScrollBar::Vertical)
+                )
+            {
+                // Transforming to Shift+Tab....
+                focusPrev = true;
+                returnVal = true;
+            }
+            break;
+        case Qt::Key_Right:
+            // Key_Right is pressed.
+            if (passArrowKeys) {
+                break;
+            }
+
+            if (obj->inherits("QListBox")
+                /* || obj->inherits("QComboBox") */
+                || (obj->inherits("QScrollBar")
+                    && ((QScrollBar*)obj)->orientation() == QScrollBar::Vertical)
+                )
+            {
+                // Transforming to Tab....
+                focusNext = true;
+                returnVal = true;
+            }
+            break;
+        case Qt::Key_Up:
+            // Key_Up is pressed.
+            if (passArrowKeys) {
+                break;
+            }
+
+            if (obj->inherits("QListBox")
+                /* || obj->inherits("QComboBox") */ // For java.awt.Choice, Up and Down initiates focus traversal.
+                || obj->inherits("QMultiLineEdit")
+                )
+            {
+                // QListBox or QMultiLineEdit, pass the event through....
+                break;
+            }
+            if (!obj->inherits("QScrollBar") || ((QScrollBar*)obj)->orientation() == QScrollBar::Horizontal) {
+                // Transforming to Shift+Tab....
+                focusPrev = true;
+                returnVal = true;
+            }
+            break;
+        case Qt::Key_Down:
+            // Key_Down is pressed.
+            if (passArrowKeys) {
+                break;
+            }
+
+            if (obj->inherits("QListBox")
+                /* || obj->inherits("QComboBox") */ // For java.awt.Choice, Up and Down initiates focus traversal.
+                || obj->inherits("QMultiLineEdit")
+                )
+            {
+                // QListBox or QComboBox or QMultiLineEdit, pass the event through....
+                break;
+            }
+            if (!obj->inherits("QScrollBar") || ((QScrollBar*)obj)->orientation() == QScrollBar::Horizontal) {
+                // Transforming to Tab....
+                focusNext = true;
+                returnVal = true;
+            }
+            break;
+        default:
+            // Nothing to do with AMS.
+            break;
+        }
+        if (focusPrev || focusNext) {
+            QApplication::postEvent(obj, NEW_TAB_EVENT(focusPrev));
+        }
+    }
+    return returnVal;
+}
+#endif /* QT_KEYPAD_MODE */
 
 bool
 QtToolkitEventHandler::eventFilter(QObject *obj, QEvent *event)
 {
+    //DebugQEvent(obj, event);
+
     JNIEnv *env;
     bool returnVal = FALSE; // allow Qt to process the event.
 
     if (JVM->AttachCurrentThread((void **) &env, NULL) != 0) {
         return FALSE;
     }
+
+#ifdef QT_KEYPAD_MODE
+    if (AMS_EVENT_FILTER(obj, event, env)) return TRUE;
+#endif /* QT_KEYPAD_MODE */
 
     QtDisposer::Trigger guard(env);
 
@@ -1193,6 +1502,27 @@ QtToolkitEventHandler::postKeyEvent (JNIEnv *env,
     // 6228825: KEY_TYPED events are not properly generated for Buttons on zaurus.
     jboolean keyPressed = (event->type() == QEvent::KeyPress);
 
+#ifdef QT_KEYPAD_MODE
+    // OMAP Keypad modification:
+    // Synthetically generating a key release event because
+    // the OMAP Keypad driver currently only generates key press
+    // events.
+    QKeyEvent* ske = NULL;
+    QObject* ssrc = NULL;
+    if (keyPressed) {
+        // Synthesizing a QEvent::KeyRelease QEvent....
+        ske = new QKeyEvent(QEvent::KeyRelease,
+                            event->key(),
+                            event->ascii(),
+                            event->state(),
+                            event->text(),
+                            event->isAutoRepeat(),
+                            event->count());
+        ssrc = eventObj->source;
+    }
+    // OMAP Keypad modification.
+#endif /* QT_KEYPAD_MODE */
+
     env->CallVoidMethod (thisObj, QtCachedIDs.QtComponentPeer_postKeyEventMID,
                          (keyPressed
                           ? java_awt_event_KeyEvent_KEY_PRESSED
@@ -1217,4 +1547,33 @@ QtToolkitEventHandler::postKeyEvent (JNIEnv *env,
                              unicode,
                              (jint) NULL);
     }
+
+#ifdef QT_KEYPAD_MODE
+    // OMAP Keypad modification:
+    // Synthetically generating a key release event because
+    // the OMAP Keypad driver currently only generates key press
+    // events.
+    if (keyPressed && ske) {
+
+        QtEventObject *synEvent = new QtEventObject();
+        if ( synEvent != NULL ) {
+            synEvent->event  = ske;
+            synEvent->source = ssrc;
+        }
+        else {
+            return;
+        }
+
+        // Posting synthetic key release event to the Java layer....
+        env->CallVoidMethod (thisObj, QtCachedIDs.QtComponentPeer_postKeyEventMID,
+                             java_awt_event_KeyEvent_KEY_RELEASED,
+                             QtToolkitEventHandler::getCurrentTime(),
+                             modifiers,
+                             javaCode,
+                             unicode,
+                             (jint) synEvent);
+    }
+    // OMAP Keypad modification.
+#endif /* QT_KEYPAD_MODE */
+
 }

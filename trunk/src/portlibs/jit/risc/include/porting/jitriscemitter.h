@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitriscemitter.h	1.81 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_JITRISCEMITTER_H
@@ -565,6 +570,35 @@ CVMCPUemitCompareRegister(CVMJITCompilationContext* con,
 extern void
 CVMCPUemitNop(CVMJITCompilationContext* con);
 
+#ifdef CVMJIT_SIMPLE_SYNC_METHODS
+#if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_MICROLOCK && \
+    CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK
+/*
+ * Purpose: Emits an atomic swap operation. The value to swap in is in
+ *          destReg, which is also where the swapped out value will be placed.
+ */
+extern void
+CVMCPUemitAtomicSwap(CVMJITCompilationContext* con,
+		     int destReg, int addressReg);
+#elif CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
+/*
+ * Purpose: Does an atomic compare-and-swap operation of newValReg into
+ *          the address addressReg+addressOffset if the current value in
+ *          the address is oldValReg. oldValReg and newValReg may
+ *          be clobbered.
+ * Return:  The int returned is the logical PC of the instruction that
+ *          branches if the atomic compare-and-swap fails. It will be
+ *          patched by the caller to branch to the proper failure address.
+ */
+extern int
+CVMCPUemitAtomicCompareAndSwap(CVMJITCompilationContext* con,
+			       int addressReg, int addressOffset,
+			       int oldValReg, int newValReg);
+#else
+#error Unsupported locking type for CVMJIT_SIMPLE_SYNC_METHODS
+#endif
+#endif /* CVMJIT_SIMPLE_SYNC_METHODS */
+
 /* Purpose: Emits code to computes the following expression and stores the
             result in the specified destReg:
 
@@ -960,20 +994,25 @@ CVMCPUCCallnewContext(CVMJITCompilationContext *con);
             altered by the call being made. */
 extern CVMJITRegsRequiredType
 CVMCPUCCALLgetRequired(CVMJITCompilationContext *con,
-                       CVMJITRegsRequiredType argsRequired);
+                       CVMJITRegsRequiredType argsRequired,
+		       CVMJITIRNode *intrinsicNode,
+		       CVMJITIntrinsic *irec,
+		       CVMBool useRegArgs);
 
 /* Purpose: Performs initialization in preparation for pinning arguments to
             registers or to overflow to the native stack. */
 extern void
 CVMCPUCCALLinitArgs(CVMJITCompilationContext *con,
                     CVMCPUCallContext *callContext,
-                    CVMJITIntrinsic *irec, CVMBool forTargetting);
+                    CVMJITIntrinsic *irec, CVMBool forTargetting,
+		    CVMBool useRegArgs);
 
 /* Purpose: Gets the register targets for the specified argument. */
 extern CVMRMregset
 CVMCPUCCALLgetArgTarget(CVMJITCompilationContext *con,
                         CVMCPUCallContext *callContext,
-                        int argType, int argNo, int argWordIndex);
+                        int argType, int argNo, int argWordIndex,
+			CVMBool useRegArgs);
 
 /* Purpose: Pins an arguments to the appropriate register or store it into the
             appropriate stack location. */
@@ -981,19 +1020,21 @@ extern CVMRMResource *
 CVMCPUCCALLpinArg(CVMJITCompilationContext *con,
                   CVMCPUCallContext *callContext, CVMRMResource *arg,
                   int argType, int argNo, int argWordIndex,
-                  CVMRMregset *outgoingRegs);
+                  CVMRMregset *outgoingRegs, CVMBool useRegArgs);
 
 /* Purpose: Relinquish a previously pinned arguments. */
 extern void
 CVMCPUCCALLrelinquishArg(CVMJITCompilationContext *con,
                          CVMCPUCallContext *callContext, CVMRMResource *arg,
-                         int argType, int argNo, int argWordIndex);
+                         int argType, int argNo, int argWordIndex,
+			 CVMBool useRegArgs);
 
 /* Purpose: Releases any resources allocated in CVMCPUCCALLinitArgs(). */
 extern void
 CVMCPUCCALLdestroyArgs(CVMJITCompilationContext *con,
                        CVMCPUCallContext *callContext,
-                       CVMJITIntrinsic *irec, CVMBool forTargetting);
+                       CVMJITIntrinsic *irec, CVMBool forTargetting,
+		       CVMBool useRegArgs);
 
 #if !defined(CVMCPU_HAVE_PLATFORM_SPECIFIC_C_CALL_CONVENTION) && \
     !defined(CVMCPU_ALLOW_C_ARGS_BEYOND_MAX_ARG_REGS)
@@ -1003,27 +1044,30 @@ CVMCPUCCALLdestroyArgs(CVMJITCompilationContext *con,
 
 /* Purpose: Gets the registers required by a C call.  These register could be
             altered by the call being made. */
-#define CVMCPUCCALLgetRequired(con, argsRequired) \
-    (CVMCPU_AVOID_C_CALL | argsRequired)
+#define CVMCPUCCALLgetRequired(con, argsRequired, \
+			       intrinsicNode, irec, useRegArgs) \
+    ((void)&(useRegArgs), (CVMCPU_AVOID_C_CALL | argsRequired))
 
 /* Purpose: Performs initialization in preparation for pinning arguments to
             registers or to overflow to the native stack. */
-#define CVMCPUCCALLinitArgs(con, callContext, irec, forTargetting) \
-     ((void)callContext)
+#define CVMCPUCCALLinitArgs(con, callContext, irec, forTargetting, \
+			    useRegArgs) \
+    ((void)(callContext), (void)&(useRegArgs))
 
 /* Purpose: Gets the register targets for the specified argument. */
 #define CVMCPUCCALLgetArgTarget(con, callContext, \
-                                argType, argNo, argWordIndex) \
-    (1U << (CVMCPU_ARG1_REG + argWordIndex))
+                                argType, argNo, argWordIndex, useRegArgs) \
+    ((void)&(useRegArgs), (1U << (CVMCPU_ARG1_REG + argWordIndex)))
 
 /* Purpose: Relinquish a previously pinned arguments. */
-#define CVMCPUCCALLrelinquishArg(con, callContext, \
-                                 arg, argType, argNo, argWordIndex) \
-    CVMRMrelinquishResource(CVMRM_INT_REGS(con), arg);
+#define CVMCPUCCALLrelinquishArg(con, callContext, arg, argType, argNo, \
+				 argWordIndex, useRegArgs) \
+    ((void)&(useRegArgs), CVMRMrelinquishResource(CVMRM_INT_REGS(con), arg))
 
 /* Purpose: Releases any resources allocated in CVMCPUCCALLinitArgs(). */
-#define CVMCPUCCALLdestroyArgs(con, callContext, irec, forTargetting) \
-    ((void)callContext)
+#define CVMCPUCCALLdestroyArgs(con, callContext, irec, forTargetting, \
+			       useRegArgs) \
+    ((void)(callContext), (void)&(useRegArgs))
 
 #endif /* !CVMCPU_HAVE_PLATFORM_SPECIFIC_C_CALL_CONVENTION &&
           !CVMCPU_ALLOW_C_ARGS_BEYOND_MAX_ARG_REGS */

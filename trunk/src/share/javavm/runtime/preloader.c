@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)preloader.c	1.112 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/defs.h"
@@ -114,7 +119,7 @@ CVMpreloaderLookupFromType(CVMClassTypeID typeID)
      * array. Choose the appropriate partition of the ROMClasses array
      * and binary search for it.
      */
-    if ( CVMtypeidArrayDepth(typeID) == 1 ){
+    if ( CVMtypeidGetArrayDepth(typeID) == 1 ){
 	lowest = CVM_firstROMVectorClass;
 	highbound= CVM_lastROMVectorClass+1;
     } else {
@@ -326,17 +331,23 @@ CVMpreloaderInit()
      */
     {
 	int i;
+	CVMClassBlock* classcb =
+	    CVM_OBJHDR_CLASS_INIT(CVMsystemClass(java_lang_Class));
 	
 	for (i = 0; i < CVM_nTotalROMClasses; ++i) {
 	    const CVMClassBlock* cb = CVM_ROMClassblocks[i];
 	    struct java_lang_Class ** cbInstanceICell = 
 		(struct java_lang_Class **)CVMcbJavaInstance(cb);
 	    struct java_lang_Class * cbInstance = *cbInstanceICell;
-	    
-	    cbInstance->hdr.clas =
-		CVM_OBJHDR_CLASS_INIT(CVMsystemClass(java_lang_Class));
-	    cbInstance->hdr.various32 = 
-		CVM_OBJHDR_VARIOUS_INIT(0);
+	    CVMInt32 hash;
+	    int shift = i & 0x1f;
+
+	    hash = ((CVMAddr)cbInstance >> 4) ^ ((CVMAddr)cb >> 5);
+	    hash = (((CVMUint32)hash >> shift) |
+		    ((CVMUint32)hash << (32 - shift)));
+
+	    cbInstance->hdr.clas = classcb;
+	    cbInstance->hdr.various32 = CVM_OBJHDR_VARIOUS_INIT(hash);
 	    cbInstance->classBlockPointer = (CVMClassBlock*)cb;
 	    cbInstance->classLoader = NULL;
 	}
@@ -352,16 +363,25 @@ CVMpreloaderInit()
 	CVMUint32 offset = 0;
 	CVMUint32 strLen;
 	CVMUint32 numInstances;
+	CVMClassBlock *cb =
+	    CVM_OBJHDR_CLASS_INIT(CVMsystemClass(java_lang_String));
 	
 	for (i = 0; i < CVM_nROMStringsCompressedEntries * 2; i += 2) {
 	    numInstances = CVM_ROMStringsMaster[i];
 	    strLen       = CVM_ROMStringsMaster[i + 1];
 	    
 	    for (j = 0; j < numInstances; j++, offset += strLen, strPtr++) {
+	        CVMInt32 hash;
+		int shift = i & 0x1f;
 		strPtr->hdr.clas = 
 		    CVM_OBJHDR_CLASS_INIT(CVMsystemClass(java_lang_String));
-		strPtr->hdr.various32 = 
-		    CVM_OBJHDR_VARIOUS_INIT(0);
+		hash = ((CVMAddr)strPtr >> 2) ^
+		       ((CVMAddr)cb << ((offset + strLen) & 0x1f));
+		hash = ((CVMUint32)hash << shift) |
+		       ((CVMUint32)hash >> (32 - shift));
+
+		strPtr->hdr.clas = cb;
+		strPtr->hdr.various32 = CVM_OBJHDR_VARIOUS_INIT(hash);
 		strPtr->value = (CVMArrayOfChar*)CVM_ROMStringsMasterDataPtr;
 		strPtr->offset = offset;
 		strPtr->count  = strLen;
@@ -496,6 +516,78 @@ CVMpreloaderInit()
     CVMpreloaderVerifyGCMaps();
 #endif
 
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+    /*
+     * Iterate over all methods and detect override state. This is needed
+     * so we can treat invokervirtual as invokenonvirtual if a method
+     * is not overridden. If it is later overridden then the override flag
+     * is set and we patch the invokenonvirtual locations to do an
+     * invokevirtual.
+     */
+    {
+    	int i, j;
+	CVMExecEnv *ee = CVMgetEE();
+
+    	for (i = 0; i < CVM_nROMClasses; ++i) {
+	    const CVMClassBlock* cb 	= CVM_ROMClassblocks[i];
+	    CVMClassBlock* scb 		= CVMcbSuperclass(cb);
+
+	    if (scb == NULL || cb == NULL || CVMcbIs(cb, INTERFACE) 
+		|| CVMcbMethodTablePtr(scb) == NULL) {
+		continue;
+	    }
+
+	    for (j = 0; j < CVMcbMethodTableCount(scb); ++j) {
+	    	CVMMethodBlock *mb = NULL;
+	    	CVMMethodBlock *smb = NULL;
+
+	    	smb = CVMcbMethodTableSlot(scb, j);
+	    	if (smb == NULL) {
+		    continue;
+		}
+
+	    	/* If method is already overridden, continue. */
+            	if (CVMmbCompileFlags(smb) & CVMJIT_IS_OVERRIDDEN) {
+	    	    continue;
+	    	}
+
+	    	if (CVMmbIs(smb, ABSTRACT)) {
+		    continue;
+		}
+
+	    	if (CVMcbMethodTablePtr(cb) == NULL) {
+		    continue;
+		}
+
+		mb = CVMcbMethodTableSlot(cb, j);
+	    	if (mb == NULL) {
+		    continue;
+		}
+
+      	    	if (CVMmbIsMiranda(smb)) {
+      		    if (CVMmbNameAndTypeID(mb) != 
+      		    	CVMmbNameAndTypeID(CVMmbMirandaInterfaceMb(smb))) {
+      		    	continue;
+      		    }
+      	    	} else {
+      		    if (CVMmbNameAndTypeID(mb) != CVMmbNameAndTypeID(smb)) {
+      		    	continue;
+      		    }
+      	        }
+
+	    	if (!CVMmbIs(smb, PUBLIC) && !CVMmbIs(smb, PROTECTED) &&
+		    !CVMisSameClassPackage(ee, CVMmbClassBlock(smb),
+					   (CVMClassBlock*)cb)) {
+		    continue;
+	    	}
+
+	    	if (smb != mb) {
+	            CVMmbCompileFlags(smb) |= CVMJIT_IS_OVERRIDDEN;
+	    	} 
+	    }
+    	}
+    }
+#endif //CVM_JIT_PATCHED_METHOD_INVOCATIONS
 }
 
 CVMBool

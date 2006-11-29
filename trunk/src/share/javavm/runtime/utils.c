@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)utils.c	1.158 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/porting/doubleword.h"
@@ -197,11 +202,7 @@ CVMrandomInit()
  */
 #ifdef CVM_TRACE_ENABLED
 
-CVMInt32
-CVMcheckDebugFlags(CVMInt32 flags)
-{
-    return CVMglobals.debugFlags & flags;
-}
+/* NOTE: CVMcheckDebugFlags() is a macro and is defined in utils.h. */
 
 CVMInt32
 CVMsetDebugFlags(CVMInt32 flags)
@@ -343,7 +344,7 @@ CVMprintThreadName(JNIEnv* env, CVMObjectICell* threadICell)
     jobject nameString;
     const char* name;
 
-    /* Kind of hacky -- mixes local roots and JNI */
+    /* mixes local roots and JNI */
     CVMID_localrootBegin(ee) {
 	CVMID_localrootDeclare(CVMObjectICell, nameICell);
 
@@ -1342,7 +1343,7 @@ CVMgcUnsafeJavaUnwrap(CVMExecEnv* ee, CVMObject* obj,
 
     objectClassBlock = CVMobjectGetClass(obj);
 
-    /* %comment r008 */
+    /* %comment rt008 */
 
     if (objectClassBlock == CVMsystemClass(java_lang_Boolean)) {
 	CVMD_fieldReadInt(obj, CVMoffsetOfjava_lang_Boolean_value, v->z);
@@ -1378,7 +1379,7 @@ CVMgcUnsafeJavaUnwrap(CVMExecEnv* ee, CVMObject* obj,
     }
     return CVM_TRUE;
 
-    /* %comment r009 */
+    /* %comment rt009 */
 
 }
 
@@ -1761,7 +1762,6 @@ CVMprocessSubOptions(const CVMSubOptionData* knownSubOptions,
 	    *(CVMInt32*)knownSubOptions[i].valuePtr = value;
 	    break;
 	}
-#ifdef CVM_JIT_PROFILE
 	case CVM_STRING_OPTION: {
 	    /* Don't worry about strdup failures. We will quickly fail
 	     * on some other allocation later on if stdrup can't succeed.
@@ -1771,7 +1771,6 @@ CVMprocessSubOptions(const CVMSubOptionData* knownSubOptions,
 	    }
 	    break;
 	}
-#endif
 	case CVM_MULTI_STRING_OPTION: {
 	    CVMInt32 value;
 	    if (valueString == NULL) {
@@ -1907,7 +1906,6 @@ CVMprintSubOptionValues(const CVMSubOptionData* knownSubOptions)
 	    CVMconsolePrintf("%d%%\n", value);
 	    break;
 	}
-#ifdef CVM_JIT_PROFILE
 	case CVM_STRING_OPTION: {
 	    const char* value = *(const char**)knownSubOptions[i].valuePtr;
 	    if (value == NULL) {
@@ -1916,7 +1914,6 @@ CVMprintSubOptionValues(const CVMSubOptionData* knownSubOptions)
 	    CVMconsolePrintf("%s\n", value);
 	    break;
 	}
-#endif
 	case CVM_MULTI_STRING_OPTION: {
 	    CVMInt32 value = *(CVMInt32*)knownSubOptions[i].valuePtr;
 	    const char* valueString =
@@ -1983,12 +1980,10 @@ CVMprintSubOptionsUsageString(const CVMSubOptionData* knownSubOptions)
 			     knownSubOptions[i].data.intData.maxValue);
 	    break;
 	}
-#ifdef CVM_JIT_PROFILE
 	case CVM_STRING_OPTION: {
 	    CVMconsolePrintf(knownSubOptions[i].data.strData.helpSyntax);
 	    break;
 	}
-#endif
 	case CVM_MULTI_STRING_OPTION: {
 	    int k;
 	    int limit = knownSubOptions[i].data.multiStrData.numPossibleValues;

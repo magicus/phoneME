@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)typeid.h	1.52 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -120,15 +125,19 @@ typedef CVMTypeIDPart CVMTypeIDTypePart;
 	(((t)&CVMtypeidArrayMask)==CVMtypeidBigArray)
 
 #define CVMtypeidIsArray( t ) (((t)&CVMtypeidArrayMask) != 0 )
-#define CVMtypeidArrayDepth( t ) \
-    (CVMtypeidIsBigArray(t)? CVMtypeidGetArrayDepth(t) \
+#define CVMtypeidGetArrayDepth( t ) \
+    (CVMtypeidIsBigArray(t)? CVMtypeidGetArrayDepthX(t) \
 		    : (((t)&CVMtypeidArrayMask)>>CVMtypeidArrayShift))
-#define CVMtypeidArrayBasetype( t )  \
-    (CVMtypeidIsBigArray(t)? CVMtypeidGetArrayBasetype(t) \
+#define CVMtypeidGetArrayBasetype( t )  \
+    (CVMtypeidIsBigArray(t)? CVMtypeidGetArrayBasetypeX(t) \
 		    : ((t)&CVMtypeidBasetypeMask))
 
-extern int 		CVMtypeidGetArrayDepth( CVMClassTypeID );
-extern CVMClassTypeID	CVMtypeidGetArrayBasetype( CVMClassTypeID );
+extern int 		CVMtypeidGetArrayDepthX( CVMClassTypeID );
+extern CVMClassTypeID	CVMtypeidGetArrayBasetypeX( CVMClassTypeID );
+
+#define CVMtypeidEncodeBasicPrimitiveArrayType(primitiveBaseType) \
+    (CVMassert(CVMtypeidIsPrimitive(primitiveBaseType)), \
+     ((1 << CVMtypeidArrayShift) | (primitiveBaseType)))
 
 /* 
  * Extracts the name part of a typeid. Expects an argument of type CVMTypeID

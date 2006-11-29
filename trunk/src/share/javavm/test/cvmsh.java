@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)cvmsh.java	1.6 06/10/10
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
 import java.io.*;
@@ -35,49 +39,54 @@ import sun.misc.VMInspector;
 
 public class cvmsh
 {
-    static void doHelp() {
-	final String[] helpMsg = {
-	    "Commands:",
-	    "  help                            - prints this list",
-	    "  gc                              - request a full GC cycle",
-	    "  memstat                         - prints VM heap memory usage",
-	    "  quit                            - exits this shell",
-	    "  enableGC                        - enables the GC",
-	    "  disableGC                       - disables the GC",
-            "  keepObjectsAlive true|false     - forces the GC to keep all objs alive (or not)",
-            "",
-            "  Dumpers:",
-            "  ========",
-	    "  print <objAddr>                 - print object as string",
-	    "  dumpObject <objAddr>            - dump the specified object",
-	    "  dumpClassBlock <cbAddr>         - dump the specified class",
-	    "  dumpObjectReferences <objAddr>  - dump all references to the obj",
-	    "  dumpClassReferences <classname> - dump all references to instances of the class",
-	    "  dumpClassBlocks <classname>     - dump all CBs of specified name",
-	    "  dumpHeap [simple|verbose|stats] - dump heap contents or info",
-	    "      - does a simple(default), verbose, or stats dump.",
-	    "",
-            "  Capturing and Comparing Heap states:",
-            "  ====================================",
-	    "  captureHeapState [<comment>]    - capture the current heap state",
-	    "  releaseHeapState <id>           - release the specified heap state",
-	    "  releaseAllHeapStates            - release all heap states",
-            "  listHeapStates                  - list captured heap states",
-	    "  dumpHeapState <id> [obj|class]  - dump the specified heap state",
-	    "      - sort by obj or obj's class or none if unspecified.",
-	    "  compareHeapState <id1> <id2>    - compares the objs in the heap states",
-	    "",
-            "  Misc utilities:",
-            "  ===============",
-	    "  time <command>                  - computes time to execute specified command",
-	    "  run <class> [args ...]          - runs the specified app synchronously",
-	    "  bg <class> [args ...]           - runs the specified app in a new thread",
-        };
-	for (int i = 0; i < helpMsg.length; i++) {
-	    System.out.println(helpMsg[i]);
+    static final String[] helpMsg = {
+	"Commands:",
+	"  help                            - prints this list",
+	"  gc                              - request a full GC cycle",
+	"  memstat                         - prints VM heap memory usage",
+	"  quit                            - exits this shell",
+	"  enableGC                        - enables the GC",
+	"  disableGC                       - disables the GC",
+	"  keepObjectsAlive true|false     - forces the GC to keep all objs alive (or not)",
+	"",
+	"  Dumpers:",
+	"  ========",
+	"  print <objAddr>                 - print object as string",
+	"  dumpObject <objAddr>            - dump the specified object",
+	"  dumpClassBlock <cbAddr>         - dump the specified class",
+	"  dumpObjectReferences <objAddr>  - dump all references to the obj",
+	"  dumpClassReferences <classname> - dump all references to instances of the class",
+	"  dumpClassBlocks <classname>     - dump all CBs of specified name",
+	"  dumpHeap [simple|verbose|stats] - dump heap contents or info",
+	"      - does a simple(default), verbose, or stats dump.",
+	"",
+	"  Capturing and Comparing Heap states:",
+	"  ====================================",
+	"  captureHeapState [<comment>]    - capture the current heap state",
+	"  releaseHeapState <id>           - release the specified heap state",
+	"  releaseAllHeapStates            - release all heap states",
+	"  listHeapStates                  - list captured heap states",
+	"  dumpHeapState <id> [obj|class]  - dump the specified heap state",
+	"      - sort by obj or obj's class or none if unspecified.",
+	"  compareHeapState <id1> <id2>    - compares the objs in the heap states",
+	"",
+	"  Misc utilities:",
+	"  ===============",
+	"  time <command>                  - computes time to execute specified command",
+	"  run <class> [args ...]          - runs the specified app synchronously",
+	"  bg <class> [args ...]           - runs the specified app in a new thread",
+    };
+
+    void doHelp() {
+	printHelp(helpMsg);
+    }
+
+    void printHelp(String[] msg) {
+	for (int i = 0; i < msg.length; i++) {
+	    System.out.println(msg[i]);
 	}
     }
-    static void doGC() {
+    void doGC() {
 	if (VMInspector.gcIsDisabled()) {
 	    System.out.println("ERROR: GC is currently disabled.  " +
 			       "Re-enable GC before invoking gc.");
@@ -86,12 +95,13 @@ public class cvmsh
 	java.lang.Runtime.getRuntime().gc();
 	doMemstat();
     }
-    static void doMemstat() {
+    void doMemstat() {
 	Runtime r = java.lang.Runtime.getRuntime();
         System.out.println("free memory = " + r.freeMemory());
         System.out.println("total memory = " + r.totalMemory());
     }
-    static void keepObjectsAlive(CmdStream cmd) {
+
+    void keepObjectsAlive(CmdStream cmd) {
 	String token = getToken(cmd);
 	try {
             boolean keepAlive = getBoolean(token);
@@ -102,7 +112,7 @@ public class cvmsh
         }
     }
 
-    private static Object getObject(String token) {
+    Object getObject(String token) {
         Object obj = null;
 	try {
 	    long addr = getLong(token);
@@ -120,7 +130,7 @@ public class cvmsh
 	}
         return obj;
     }
-    private static long getAddr(String token) {
+    long getAddr(String token) {
         long addr = 0L;
 	try {
 	    addr = getLong(token);
@@ -130,7 +140,7 @@ public class cvmsh
         return addr;
     }
 
-    static void print(CmdStream cmd) {
+    void print(CmdStream cmd) {
 	String token = getToken(cmd);
         Object obj = getObject(token);
         if (obj != null) {
@@ -144,28 +154,28 @@ public class cvmsh
             }
         }
     }
-    static void dumpObject(CmdStream cmd) {
+    void dumpObject(CmdStream cmd) {
 	String token = getToken(cmd);
         long addr = getAddr(token);
         if (addr != 0L) {
             VMInspector.dumpObject(addr);
 	}
     }
-    static void dumpClassBlock(CmdStream cmd) {
+    void dumpClassBlock(CmdStream cmd) {
 	String token = getToken(cmd);
         long addr = getAddr(token);
         if (addr != 0L) {
 	    VMInspector.dumpClassBlock(addr);
 	}
     }
-    static void dumpObjectReferences(CmdStream cmd) {
+    void dumpObjectReferences(CmdStream cmd) {
 	String token = getToken(cmd);
         long addr = getAddr(token);
         if (addr != 0L) {
 	    VMInspector.dumpObjectReferences(addr);
 	}
     }
-    static void dumpClassReferences(CmdStream cmd) {
+    void dumpClassReferences(CmdStream cmd) {
 	String token = getToken(cmd);
 	if (token != "") {
             VMInspector.dumpClassReferences(token);
@@ -173,7 +183,7 @@ public class cvmsh
 	    System.out.println("ERROR: Classname not specified");
 	}
     }
-    static void dumpClassBlocks(CmdStream cmd) {
+    void dumpClassBlocks(CmdStream cmd) {
 	String token = getToken(cmd);
 	if (token != "") {
             VMInspector.dumpClassBlocks(token);
@@ -181,7 +191,7 @@ public class cvmsh
 	    System.out.println("ERROR: Classname not specified");
 	}
     }
-    static void dumpHeap(CmdStream cmd) {
+    void dumpHeap(CmdStream cmd) {
 	String token = getToken(cmd);
 	if (token.equals("")) {
             VMInspector.dumpHeapSimple();
@@ -196,14 +206,14 @@ public class cvmsh
 	}
     }
 
-    static void captureHeapState(CmdStream cmd) {
+    void captureHeapState(CmdStream cmd) {
 	String name = cmd.input;
 	if (name.equals("")) {
 	    name = null;
 	}
 	VMInspector.captureHeapState(name);
     }
-    static void releaseHeapState(CmdStream cmd) {
+    void releaseHeapState(CmdStream cmd) {
 	String token = getToken(cmd);
 	try {
 	    int id = getInt(token);
@@ -212,7 +222,7 @@ public class cvmsh
 	    System.out.println("ERROR: Invalid ID format: " + token);
 	}
     }
-    static void dumpHeapState(CmdStream cmd) {
+    void dumpHeapState(CmdStream cmd) {
 	String idToken = getToken(cmd);
 	String sortKeyToken = getToken(cmd);
 	try {
@@ -228,7 +238,7 @@ public class cvmsh
 	    System.out.println("ERROR: Invalid ID format: " + idToken);
 	}
     }
-    static void compareHeapState(CmdStream cmd) {
+    void compareHeapState(CmdStream cmd) {
 	String token1 = getToken(cmd);
 	String token2 = getToken(cmd);
 	String currentToken = token1;
@@ -242,21 +252,23 @@ public class cvmsh
 	}
     }
 
-    static class BackgroundThread extends Thread {
+    class BackgroundThread extends Thread {
 	String className;
 	String[] args;
+	cvmsh shell;
 
-	BackgroundThread(String className, String[] args) {
+	BackgroundThread(cvmsh shell, String className, String[] args) {
 	    this.className = className;
 	    this.args = args;
+	    this.shell = shell;
 	}
 
 	public void run() {
-	    cvmsh.run(className, args, false);
+	    shell.run(className, args, false);
 	}
     }
 
-    static void run(String className, String[] args, boolean background) {
+    void run(String className, String[] args, boolean background) {
 	if (!background) {
 	    try {
 		Class cls = Class.forName(className);
@@ -271,7 +283,7 @@ public class cvmsh
 	    }
 	} else {
 	    try {
-		BackgroundThread t = new BackgroundThread(className, args);
+		BackgroundThread t = new BackgroundThread(this, className, args);
 		t.start();
 	    } catch (Exception e) {
 		e.printStackTrace();
@@ -279,13 +291,13 @@ public class cvmsh
 	}
     }
 
-    static class CmdStream {
+    class CmdStream {
 	CmdStream(String inputString) {
 	    input = inputString;
 	}
 	String input;
     }
-    static String getToken(CmdStream cmd) {
+    String getToken(CmdStream cmd) {
 	String input = cmd.input;
 	String token;
 	int index;
@@ -306,7 +318,7 @@ public class cvmsh
 	cmd.input = input;
 	return token;
     }
-    static String[] getArgs(CmdStream cmd) {
+    String[] getArgs(CmdStream cmd) {
 	String[] args = new String[0];
 	Vector argsVec = new Vector();
 	String token;
@@ -320,7 +332,7 @@ public class cvmsh
         return args;
     }
 
-    private static int getInt(String token) throws NumberFormatException {
+    static int getInt(String token) throws NumberFormatException {
         int result;
 	int radix = 10;
         if (token.startsWith("0x")) {
@@ -332,7 +344,7 @@ public class cvmsh
         result = Integer.parseInt(token, radix);
 	return result;
     }
-    private static long getLong(String token) throws NumberFormatException {
+    static long getLong(String token) throws NumberFormatException {
         long result;
 	int radix = 10;
         if (token.startsWith("0x")) {
@@ -344,7 +356,7 @@ public class cvmsh
         result = Long.parseLong(token, radix);
 	return result;
     }
-    private static boolean getBoolean(String token)
+    static boolean getBoolean(String token)
         throws IllegalArgumentException {
         boolean result = false;
 	if (token.toLowerCase().equals("true")) {
@@ -357,9 +369,13 @@ public class cvmsh
         return result;
     }
 
-    static boolean processCmd(CmdStream cmd) {
+    boolean processCmd(CmdStream cmd) {
 	String token;
 	token = getToken(cmd);
+	return processToken(token, cmd);
+    }
+
+    boolean processToken(String token, CmdStream cmd) {
 	if (token.equals("quit")) {
 	    return true;
 	} else if (token.equals("help")) {
@@ -427,7 +443,7 @@ public class cvmsh
 	return false;
     }
 
-    public static void main(String[] args) {
+    public void runShell(String[] args) {
         InputStreamReader in = new InputStreamReader(System.in);
         int numberOfChars;
 	char[] buf = new char[1000];
@@ -450,5 +466,11 @@ public class cvmsh
 	} catch (Throwable e) {
 	    System.err.println("ERROR: " + e);
 	}
+    }
+
+
+    public static void main(String[] args) {
+	cvmsh sh = new cvmsh();
+	sh.runShell(args);
     }
 }

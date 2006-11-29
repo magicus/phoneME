@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitirblock.h	1.52 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_JITIRBLOCK_H
@@ -124,6 +129,21 @@ struct CVMJITIRBlock {
     CVMMethodBlock *targetMb; /* out-of-line invoke */
     CVMBool	   doNullCheck; /* inline prologue */
 
+    CVMJITIRNode **initialLocals;
+    CVMUint32 numInitialLocals;
+
+    /* A set of registers that the block is only allowed to
+     * allocate from when register sandboxing is in effect.
+     * A sandboxRegSet value of 0 means that there are no sandbox
+     * registers specified i.e. register sandboxing is not in effect,
+     * and there will be no restrictions on register allocation other
+     * than normal register allocation rules.
+     * Otherwise, only registers within the specified sandboxRegSet
+     * may be allocated to new resources that aren't already
+     * previously occupying registers.
+     */ 
+    CVMRMregset sandboxRegSet;
+
 #ifdef CVM_JIT_REGISTER_LOCALS
 #define CVMJIT_MAX_INCOMING_LOCALS 6
 #define CVMJIT_MAX_SUCCESSOR_BLOCKS 4  /* best if multiple of 4 */
@@ -165,6 +185,16 @@ struct CVMJITIRBlock {
     CVMUint8       successorBlocksCount; /* index into successorBlocks[] */
     CVMUint8       assignNodesCount; /* index into assignNodes[] */
 #endif /* CVM_JIT_REGISTER_LOCALS */
+   
+/* IAI - 20 */
+#ifdef IAI_VIRTUAL_INLINE_CB_TEST
+    CVMInt32	   mtIndex;
+    CVMInt32	   oolReturnAddress;
+    /* default value for mtIndex and outOfLine */
+#define CVMJIT_IAI_VIRTUAL_INLINE_CB_TEST_DEFAULT  -1
+    CVMMethodBlock* candidateMb;
+#endif
+/* IAI - 20 */
 };
 
 /*

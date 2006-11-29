@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)verifycode.c	1.165 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
  
 /*-
@@ -43,6 +48,7 @@
 
 #include "jni.h"
 #include "jvm.h"
+#include "javavm/include/verify_impl.h"
 #include "javavm/include/verify.h"
 #include "javavm/include/globals.h"
 
@@ -223,34 +229,6 @@ typedef CVMOpcode opcode_type;
 #endif
 
 /*
- * The tags for data object types, on the stack and in the "registers".
- * They are often augmented with additional, specific, type information.
- * The result is a fullinfo_type. See the MAKE_FULLINFO macro below.
- */
-enum {
-    ITEM_Bogus,
-    ITEM_Void,			/* only as a function return value */
-    ITEM_Integer,
-    ITEM_Float,
-    ITEM_Double,
-    ITEM_Double_2,		/* 2nd word of double in register */
-    ITEM_Long,
-    ITEM_Long_2,		/* 2nd word of long in register */
-    ITEM_Array,
-    ITEM_Object,		/* Extra info field gives name. */
-    ITEM_NewObject,		/* Like object, but uninitialized. */
-    ITEM_InitObject,		/* "this" is init method, before call 
-				    to super() */
-    ITEM_ReturnAddress,		/* Extra info gives instr # of start pc */
-    /* The following three are only used within array types. 
-     * Normally, we use ITEM_Integer, instead. */
-    ITEM_Byte,
-    ITEM_Short,
-    ITEM_Char
-};
-
-
-/*
  * an analyzed instruction's stack size and register count are initially unknown.
  */
 #define UNKNOWN_STACK_SIZE -1
@@ -275,36 +253,7 @@ enum {
 #define	IS_BIT_SET(flags, i) (flags[(i)/BITS_PER_INT] & \
 			               ((unsigned)1 << ((i) % BITS_PER_INT)))
 
-/*
- * fullinfo_type is a 32-bit quantity into which several fields are
- * packed.  in addition to the ITEM_ tag, above, we can pack an array
- * depth (indirection) and another 11-bit field.  
- *
- * For ITEM_Object (and NewObject and InitObject I suspect) this is the
- * index of the object type.  (Thus for arrays of these, the extra
- * information is that of the underlying base type.)
- *
- * For ITEM_ReturnAddress it is the instruction number of the first
- * PC of the current subroutine.  (Remember that we enforce
- * one-entry-per-ret.)
- */
-
-typedef unsigned long fullinfo_type;
 typedef unsigned int *bitvector;
-
-#define GET_ITEM_TYPE(thing) ((thing) & 0x1F)
-#define GET_INDIRECTION(thing) (((thing) & 0xFFFF) >> 5)
-#define GET_EXTRA_INFO(thing) ((thing) >> 16)
-#define WITH_ZERO_INDIRECTION(thing) ((thing) & ~(0xFFE0))
-#define WITH_ZERO_EXTRA_INFO(thing) ((thing) & 0xFFFF)
-
-#define MAKE_FULLINFO(type, indirect, extra) \
-     ((type) + ((indirect) << 5) + ((extra) << 16))
-
-#define MAKE_Object_ARRAY(indirect) \
-       (context->object_info + ((indirect) << 5))
-
-#define NULL_FULLINFO MAKE_FULLINFO(ITEM_Object, 0, 0)
 
 /* opc_invokespecial calls to <init> need to be treated special */
 #define opc_invokeinit ((CVMOpcode)0x100)
@@ -387,6 +336,8 @@ struct context_type {
     fullinfo_type return_type;	/* function return type */
     fullinfo_type swap_table[4]; /* used for passing information */
     int bitmask_size;		/* words needed to hold bitmap of arguments */
+    CVMBool	method_has_jsr;
+    CVMBool	method_has_switch;
 
     /* these fields are per field */
     CVMFieldBlock *fb;
@@ -972,6 +923,8 @@ verify_method(context_type *context, CVMClassBlock *cb, CVMMethodBlock* mb)
 	 != 0)) {
 	CCerror(context, "Inconsistent access bits.");
     } 
+    context->method_has_jsr = CVM_FALSE;
+    context->method_has_switch = CVM_FALSE;
 
     /* Run through the code.  Mark the start of each instruction, and give
      * the instruction a number */
@@ -1042,6 +995,29 @@ verify_method(context_type *context, CVMClassBlock *cb, CVMMethodBlock* mb)
 	}
     }
 
+    /*
+     * Set flags in the jmd based on what we found.
+     * This helps avoid yet another re-parsing of the bytecodes
+     */
+    {
+	CVMJavaMethodDescriptor* jmd = CVMmbJmd(mb);
+	if (context->method_has_switch){
+#ifdef CVM_TRACE
+	    if (verify_verbose) {
+		CVMconsolePrintf("Switch found: requires alignment\n");
+	    }
+#endif
+	    CVMjmdFlags(jmd) |= CVM_JMD_NEEDS_ALIGNMENT;
+	}
+	if (context->method_has_jsr){
+#ifdef CVM_TRACE
+	    if (verify_verbose) {
+		CVMconsolePrintf("Jsr found: may require disambiguation\n");
+	    }
+#endif
+	    CVMjmdFlags(jmd) |= CVM_JMD_MAY_NEED_REWRITE;
+	}
+    }
     context->code = 0;
     context->mb = 0;
 }
@@ -1081,6 +1057,7 @@ verify_opcode_operands(context_type *context, int inumber, int offset)
     case opc_jsr:
 	/* instruction of ret statement */
 	this_idata->operand2.i = UNKNOWN_RET_INSTRUCTION;
+	context->method_has_jsr = CVM_TRUE;
 	/* FALLTHROUGH */
     case opc_ifeq: case opc_ifne: case opc_iflt: 
     case opc_ifge: case opc_ifgt: case opc_ifle:
@@ -1101,6 +1078,7 @@ verify_opcode_operands(context_type *context, int inumber, int offset)
     case opc_jsr_w:
 	/* instruction of ret statement */
 	this_idata->operand2.i = UNKNOWN_RET_INSTRUCTION;
+	context->method_has_jsr = CVM_TRUE;
 	/* FALLTHROUGH */
     case opc_goto_w: {
 	/* Set the ->operand to be the instruction number of the target. */
@@ -1123,6 +1101,7 @@ verify_opcode_operands(context_type *context, int inumber, int offset)
 	int keys;
 	int k, delta;
         unsigned char* bptr = (unsigned char*) (code + offset + 1);
+	context->method_has_switch = CVM_TRUE;
         for (; bptr < (unsigned char*)lpc; bptr++) {
 	    if (*bptr != 0) {
                 CCerror(context, "Non zero padding bytes in switch");
@@ -3468,8 +3447,8 @@ signature_to_fieldtype(context_type *context,
     int array_depth = 0;
     
     if (CVMtypeidIsArray(fieldID)) {
-	array_depth = CVMtypeidArrayDepth(fieldID);
-	fieldID = CVMtypeidArrayBasetype(fieldID);
+	array_depth = CVMtypeidGetArrayDepth(fieldID);
+	fieldID = CVMtypeidGetArrayBasetype(fieldID);
     }
 
     if (!CVMtypeidIsPrimitive(fieldID)) {
@@ -3673,6 +3652,7 @@ merge_fullinfo_types(context_type *context,
 	 * Moreover, the types are not identical.
 	 * The result must either be Object, or an array of some object type.
 	 */
+        fullinfo_type value_base, target_base;
 	int dimen_value = GET_INDIRECTION(value);
 	int dimen_target = GET_INDIRECTION(target);
 
@@ -3704,10 +3684,10 @@ merge_fullinfo_types(context_type *context,
 	    target = MAKE_Object_ARRAY(dimen_target);
 	}
 	/* Both are now objects or arrays of some sort of object type */
+        value_base = WITH_ZERO_INDIRECTION(value);
+	target_base = WITH_ZERO_INDIRECTION(target);
 	if (dimen_value == dimen_target) { 
             /* Arrays of the same dimension.  Merge their base types. */
-	    fullinfo_type value_base = WITH_ZERO_INDIRECTION(value);
-	    fullinfo_type target_base = WITH_ZERO_INDIRECTION(target);
             fullinfo_type  result_base;
 
 #ifdef CVM_CSTACKANALYSIS
@@ -3736,11 +3716,23 @@ merge_fullinfo_types(context_type *context,
 	    return MAKE_FULLINFO(ITEM_Object, dimen_value,
 				 GET_EXTRA_INFO(result_base));
 	} else { 
-            /* Arrays of different sizes.  Return Object, with a dimension
-             * of the smaller of the two.
-             */
-	    int dimen = dimen_value < dimen_target ? dimen_value : dimen_target;
-	    return MAKE_Object_ARRAY(dimen);
+            /* Arrays of different sizes. If the smaller dimension array's base
+             * type is java/lang/Cloneable or java/io/Serializable, return it.
+             * Otherwise return java/lang/Object with a dimension of the smaller
+             * of the two */
+            if (dimen_value < dimen_target) {
+                if (value_base == context->cloneable_info ||
+                    value_base == context ->serializable_info) {
+                    return value;
+                }
+                return MAKE_Object_ARRAY(dimen_value);
+            } else {
+                if (target_base == context->cloneable_info ||
+                    target_base == context->serializable_info) {
+                    return target;
+                }
+                return MAKE_Object_ARRAY(dimen_target);
+            }
 	}
     } else {
 	/* Both are non-array objects. Neither is java/lang/Object or NULL */

@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)constantpool.c	1.52 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifdef CVM_CLASSLOADING
@@ -188,7 +193,7 @@ CVMprivate_cpResolveEntryWithoutClassLoading(CVMExecEnv* ee,
 	 * loaded, but haven't been referenced by the application yet.
 	 */
 	if (currLoader != NULL) {
-	    CVMID_icellSameObject(ee, currLoader, CVMglobals.systemClassLoader,
+	    CVMID_icellSameObject(ee, currLoader, CVMsystemClassLoader(ee),
 				  isSystemClassLoader);
 	}
 
@@ -199,7 +204,7 @@ CVMprivate_cpResolveEntryWithoutClassLoading(CVMExecEnv* ee,
 	if (currLoader == NULL || isSystemClassLoader ||
 	    CVMtypeidIsPrimitive(classID) || 
 	    (CVMtypeidIsArray(classID) &&
-	     CVMtypeidIsPrimitive(CVMtypeidArrayBasetype(classID)))) {
+	     CVMtypeidIsPrimitive(CVMtypeidGetArrayBasetype(classID)))) {
 	    cb = CVMpreloaderLookupFromType(classID);
 	} 
 	if (cb == NULL) {
@@ -534,7 +539,7 @@ CVMprivate_cpResolveEntryFromClass(CVMExecEnv* ee,
 	if (cpType == CVM_CONSTANT_Fieldref) {
 	    /* Constant pool entries for static fields may be changed
 	     * to point directly to the static data by the quickening code.
-	     * Comment cjp08/26/99 in quicken.c explains why. For now it
+	     * Comment c08/26/99 in quicken.c explains why. For now it
 	     * must be set to the fb.
 	     */
 	    CVMcpSetFb(cp, cpIndex, resolvedFb);
@@ -574,6 +579,41 @@ CVMcpFindFieldInClass(CVMExecEnv* ee,
     return NULL;
 }
 
+/* Search fieldCb's direct superinterfaces for the field recursively */
+static CVMFieldBlock*
+CVMcpFindFieldInSuperInterfaces(CVMExecEnv* ee,
+                                CVMClassBlock* fieldCb,
+                                CVMFieldTypeID fieldTypeID)
+{
+    CVMFieldBlock* fb;
+    CVMClassBlock* targetCb;
+    int i;
+
+    /* C stack redzone check */
+    if (!CVMCstackCheckSize(CVMgetEE(),
+            CVM_REDZONE_CVMcpFindFieldInSuperInterfaces,
+            "CVMcpFindFieldInSuperInterfaces", CVM_FALSE)) {
+        return NULL;
+    }
+
+    /* Search direct superinterfaces */
+    for (i = 0; i < CVMcbImplementsCount(fieldCb); i++) {
+        targetCb = CVMcbInterfacecb(fieldCb, i);
+        fb = CVMcpFindFieldInClass(ee, targetCb, fieldTypeID);
+        if (fb != NULL) {
+            return fb;
+        } else {
+	    /* Search superinterface's superface */
+            fb = CVMcpFindFieldInSuperInterfaces(
+                            ee, targetCb, fieldTypeID);
+            if (fb != NULL) {
+                return fb;
+            }
+        }
+    }
+    return NULL;
+}
+
 /*
  * Returns the CVMFieldBlock specified by the nameAndType cp index
  * and fieldCb pair.
@@ -593,10 +633,9 @@ CVMcpResolveFieldref(CVMExecEnv* ee,
      * Field resolution order is according to the 2nd edition 
      * of VM spedification (5.4.3.2, p.167).
      */
- 
-    if (fieldCb != NULL) {
-        int i;
- 
+
+resolveFieldref_loop: 
+    if (targetCb != NULL) { 
         /* 1. Search the field's class or interface first. */
         fb = CVMcpFindFieldInClass(ee, targetCb, fieldTypeID);
         if (fb != NULL) {
@@ -607,26 +646,18 @@ CVMcpResolveFieldref(CVMExecEnv* ee,
          * 2. Otherwise, field lookup is applied recursively to the 
          * direct superinterfaces of the specified class or interface. 
          */
-        for (i = 0; i < CVMcbInterfaceCount(fieldCb); i++) {
-            targetCb = CVMcbInterfacecb(fieldCb, i);
-            fb = CVMcpFindFieldInClass(ee, targetCb, fieldTypeID);
-            if (fb != NULL) {
-                goto field_found;
-            }
+        fb = CVMcpFindFieldInSuperInterfaces(
+                                ee, targetCb, fieldTypeID);
+        if (fb != NULL) {
+            goto field_found;
         }
 
         /* 
          * 3. Otherwise, field lookup is applied recursively to the
          * superclasses of the specified class. 
          */
-        targetCb = CVMcbSuperclass(fieldCb);
-        while (targetCb != NULL) {
-            fb = CVMcpFindFieldInClass(ee, targetCb, fieldTypeID);
-            if (fb != NULL) {
-                goto field_found;
-            }
-           targetCb = CVMcbSuperclass(targetCb);
-        }
+        targetCb = CVMcbSuperclass(targetCb);
+        goto resolveFieldref_loop;
     }
 
     /*

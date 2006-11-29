@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitcodebuffer.c	1.102 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -67,7 +72,7 @@ struct CVMJITFreeBuf{
 
 typedef struct {
     CVMUint32      size;
-    CVMCompiledMethodDescriptor *cmd;
+    CVMUint32      cmdOffset;
 } CVMJITAllocedBuf;
 
 static void
@@ -124,7 +129,7 @@ CVMJITcbufInitialize(CVMJITCompilationContext* con)
 }
 
 #define CVMJITcbufSetCmd0(cbuf, _cmd)	\
-    ((CVMJITAllocedBuf *)(cbuf))->cmd = (_cmd);
+    ((CVMJITAllocedBuf *)(cbuf))->cmdOffset = (CVMUint32)(_cmd) - (CVMUint32)cbuf;
 
 void 
 CVMJITcbufSetCmd(CVMUint8 *cbuf, CVMCompiledMethodDescriptor *cmd)
@@ -202,11 +207,11 @@ CVMJITcbufAllocate(CVMJITCompilationContext* con, CVMSize extraSpace)
     }
 
     /* Skip size header */
-    con->curPhysicalPC = (CVMUint8 *)&((CVMJITAllocedBuf *)cbuf)->cmd;
+    con->curPhysicalPC = (CVMUint8 *)&((CVMJITAllocedBuf *)cbuf)->cmdOffset;
 
     /* CMD pointer */
     CVMJITcbufSetCmd0(cbuf, 0);
-    con->curPhysicalPC += sizeof ((CVMJITAllocedBuf *)cbuf)->cmd;
+    con->curPhysicalPC += sizeof ((CVMJITAllocedBuf *)cbuf)->cmdOffset;
 
     CVMtraceJITCodegenExec({
         CVMconsolePrintf("NUM BARRIER BYTES = %d\n",
@@ -292,9 +297,14 @@ void
 CVMJITmarkCodeBuffer()
 {
     /* Locking? */
-    CVMassert(CVMglobals.jit.codeCacheFirstFreeBuf != NULL);
-    CVMJITsetCodeCacheDecompileStart(
-        (CVMUint8*)CVMglobals.jit.codeCacheFirstFreeBuf);
+#ifdef CVM_AOT
+    if (!CVMglobals.jit.codeCacheAOTCodeExist)
+#endif
+    {
+        CVMassert(CVMglobals.jit.codeCacheFirstFreeBuf != NULL);
+        CVMJITsetCodeCacheDecompileStart(
+            (CVMUint8*)CVMglobals.jit.codeCacheFirstFreeBuf);
+    }
 
 #ifdef CVM_USE_MEM_MGR
     {
@@ -302,6 +312,14 @@ CVMJITmarkCodeBuffer()
 	CVMmemRegisterCodeCache();
     }
 #endif /* CVM_USE_MEM_MGR */
+
+#ifdef CVM_AOT
+    /* We are done AOT compilation. All methods compiled after this
+     * point will not saved as AOT code.
+     */
+    CVMJITcodeCachePersist(&CVMglobals.jit);
+    CVMglobals.jit.isPrecompiling = CVM_FALSE;
+#endif
 }
 
 /*
@@ -505,7 +523,7 @@ CVMJITcodeCacheCopyCCMCode(CVMExecEnv* ee)
 	    } while (entries[i++].helperName != NULL);
 	}
 #endif
-#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
+#if defined(CVMJIT_PATCH_BASED_GC_CHECKS) && CVMCPU_NUM_CCM_PATCH_POINTS > 0
 	/*
 	 * Massage the ccmGcPatchPoints table so it points to the
 	 * code in the code cache rather than in ccmcodecachecopy_cpu.o.
@@ -609,6 +627,12 @@ CVMJITcodeCacheInit(CVMExecEnv* ee, CVMJITGlobalState *jgs)
      */
     jgs->codeCacheLowestForcedUtilization = jgs->codeCacheSize;
 
+#ifdef CVM_AOT
+    /* Find AOT codecache */
+    CVMfindAOTCodeCache(jgs);
+#endif
+
+    /* Allocate the dynamic part */
     /*
      *  Allocate the code cache and add it to the free list.
      */
@@ -643,6 +667,16 @@ CVMJITcodeCacheInit(CVMExecEnv* ee, CVMJITGlobalState *jgs)
     CVMJITcbufSetUncommitedBufSize(jgs->codeCacheStart, jgs->codeCacheSize);
     CVMJITcbufFree(jgs->codeCacheStart, CVM_FALSE);
 
+#ifdef CVM_AOT
+    /* If no AOT code exist, we will compile a list of methods and
+     * save the compiled code as AOT code. */
+    jgs->isPrecompiling = !(jgs->codeCacheAOTCodeExist);
+#endif
+#ifdef CVM_MTASK
+    /* Server does the warmup compilation. */
+    jgs->isPrecompiling = (CVMglobals.isServer && CVMglobals.clientId <= 0);
+#endif
+
 #ifdef CVM_JIT_PROFILE
     jgs->profile_fd = -1;
 #endif
@@ -658,7 +692,7 @@ CVMJITcodeCacheInit(CVMExecEnv* ee, CVMJITGlobalState *jgs)
 static CVMCompiledMethodDescriptor *
 cbuf2cmd(CVMUint8 *cbuf) {
     CVMCompiledMethodDescriptor *cmd =
-	((CVMJITAllocedBuf *)cbuf)->cmd;
+	(CVMCompiledMethodDescriptor *)(((CVMJITAllocedBuf *)cbuf)->cmdOffset + cbuf);
     CVMassert(CVMJITcbufIsCommitted(cbuf));
     CVMassert(cmd->magic == CVMJIT_CMD_MAGIC);
     return cmd;
@@ -669,10 +703,51 @@ CVMJITcbufCmd(CVMUint8 *cbuf) {
     return cbuf2cmd(cbuf);
 }
 
+#ifdef CVM_AOT
+/*
+ * Iterate through codecache and find all precompiled methods. 
+ * Also set up various codecache values
+ */
+CVMBool
+CVMJITinitializeAOTCode()
+{
+    CVMJITGlobalState *jgs = &CVMglobals.jit;
+    if (jgs->codeCacheAOTCodeExist == CVM_TRUE) {
+        CVMUint8* cbuf = jgs->codeCacheAOTStart;
+
+        while (cbuf < jgs->codeCacheAOTEnd) {
+            CVMUint32 bufSize = CVMJITcbufSize(cbuf);
+            if (CVMJITcbufIsCommitted(cbuf)) {
+                CVMCompiledMethodDescriptor *cmd = cbuf2cmd(cbuf);
+                CVMMethodBlock* mb = CVMcmdMb(cmd);
+
+                /* 
+                 * So we found a pre-compiled method. Now fix the mb's
+                 * jitInvokerX and startPCX, so they point to the start
+                 * of the compiled code. Setting the mb's startPCX also
+                 * make the method being marked as compiled.
+                 */
+	        CVMmbJitInvoker(mb) = (void*)(cmd + 1);
+                CVMmbStartPC(mb) = (CVMUint8*)(cmd + 1);
+                if (jgs->codeCacheAOTGeneratedCodeStart == 0) {
+		    jgs->codeCacheAOTGeneratedCodeStart = cbuf;
+                }
+#ifdef CVM_DEBUG
+                CVMconsolePrintf("Found pre-compiled method %C.%M, startPC=0x%x\n", 
+                                 CVMmbClassBlock(mb), mb, CVMmbStartPC(mb));
+#endif
+            }
+            cbuf += bufSize;
+        }
+    }
+    return jgs->codeCacheAOTCodeExist;
+}
+#endif
+
 void
 CVMJITcodeCacheDestroy(CVMJITGlobalState *jgs)
 {
-	CVMUint8* cbuf = jgs->codeCacheStart;
+   CVMUint8* cbuf = jgs->codeCacheStart;
 
 #ifdef CVM_DEBUG
    CVMJITcodeCacheVerify(CVM_FALSE);
@@ -725,7 +800,12 @@ preventMethodFromDecompiling(CVMMethodBlock* mb)
 {
     CVMCompiledMethodDescriptor* cmd = CVMmbCmd(mb);
     /* make sure method survives for 2 aging processes after this one */
-    if (CVMcmdEntryCount(cmd) < 8) {
+    if (CVMcmdEntryCount(cmd) < 8 
+#ifdef CVM_AOT
+        && !((CVMUint8*)cmd >= CVMglobals.jit.codeCacheAOTStart &&
+             (CVMUint8*)cmd < CVMglobals.jit.codeCacheAOTEnd)
+#endif
+        ) {
 	CVMcmdEntryCount(cmd) = 8;
     }
 }
@@ -1197,7 +1277,7 @@ dumpEntry(void* data, int methodSampleCount, CVMBool isccm,
     if (isccm) {
 	/* samples were in ccm copy part of the code cache */
 	CVMformatString(buf, sizeof(buf),
-			"       %5.2f%% %5.2f%% %s\n",
+			"        %5.2f%% %5.2f%% %s\n",
 			samplePercentOfTotalTime,
 			samplePercentOfCodeCacheTime,
 			(char*)data);
@@ -1205,7 +1285,7 @@ dumpEntry(void* data, int methodSampleCount, CVMBool isccm,
 	if (data == NULL) {
 	    /* samples were in a now free part of the code cache */
 	    CVMformatString(buf, sizeof(buf),
-			    "       %5.2f%% %5.2f%% free_buffer\n",
+			    "        %5.2f%% %5.2f%% free_buffer\n",
 			    samplePercentOfTotalTime,
 			    samplePercentOfCodeCacheTime);
 	} else {
@@ -1226,14 +1306,15 @@ dumpEntry(void* data, int methodSampleCount, CVMBool isccm,
 	    }
 	    
 	    CVMformatString(buf, sizeof(buf),
-			    "%5.2f%% %5.2f%% %5.2f%% %C.%M\n",
+			    "%c%5.2f%% %5.2f%% %5.2f%% %C.%M\n",
+			    CVMmbIs(mb, SYNCHRONIZED) ? '*' : ' ',
 			    inlineSavingsEstimate, 
 			    samplePercentOfTotalTime,
 			    samplePercentOfCodeCacheTime,
 			    CVMmbClassBlock(mb), mb);
-	    /* ignore savings less than .25% */
-	    if (inlineSavingsEstimate < 0.25) {
-		strncpy(buf, "          ", 6);
+	    /* ignore savings less than .25% if not synchronized */
+	    if (!CVMmbIs(mb, SYNCHRONIZED) && inlineSavingsEstimate < 0.25) {
+		strncpy(buf, "              ", 8);
 	    }
 	    buf[sizeof(buf)-2] = '\n';
 	    buf[sizeof(buf)-1] = '\0';
@@ -1294,14 +1375,15 @@ CVMJITcodeCacheDumpProfileData()
 		    totalSampleCount, percentOfTimeInCodeCache * 100);
     CVMioWrite(jgs->profile_fd, buf, strlen(buf));
     CVMformatString(buf, sizeof(buf),
+		    "'*' indicates method is synchronized.\n"
 		    "column #1: estimated savings if method is inlined "
-		    "(empty if < .25%%)\n"
+		    "(empty if < .25%% and not synchronized)\n"
 		    "column #2: %% of program time spent in method\n"
 		    "column #3: %% of code cache time spent in method\n\n");
     CVMioWrite(jgs->profile_fd, buf, strlen(buf));
     CVMformatString(buf, sizeof(buf),
-		    "  <1>    <2>    <3>\n"
-		    "-----------------------\n");
+		    "*  <1>    <2>    <3>\n"
+		    "------------------------\n");
     CVMioWrite(jgs->profile_fd, buf, strlen(buf));
 
     /* find out how many samples taken in each part of the code cache */
@@ -1455,7 +1537,12 @@ CVMBool
 CVMJITcodeCacheInCompiledMethod(CVMUint8* pc)
 {
     return ((pc >= CVMglobals.jit.codeCacheGeneratedCodeStart) && 
-	    (pc < CVMglobals.jit.codeCacheEnd));
+	    (pc < CVMglobals.jit.codeCacheEnd))
+#ifdef CVM_AOT
+           || ((pc >= CVMglobals.jit.codeCacheAOTGeneratedCodeStart) && 
+               (pc < CVMglobals.jit.codeCacheAOTEnd))
+#endif
+            ;
 }
 
 CVMBool
@@ -1463,7 +1550,12 @@ CVMJITcodeCacheInCCM(CVMUint8* pc)
 {
 #ifdef CVM_JIT_COPY_CCMCODE_TO_CODECACHE
     return ((pc >= CVMglobals.jit.codeCacheStart) &&
-	    (pc < CVMglobals.jit.codeCacheGeneratedCodeStart));
+	    (pc < CVMglobals.jit.codeCacheGeneratedCodeStart))
+#ifdef CVM_AOT
+           || ((pc >= CVMglobals.jit.codeCacheAOTStart) && 
+               (pc < CVMglobals.jit.codeCacheAOTGeneratedCodeStart))
+#endif
+           ;
 #else
     return ((pc >= (CVMUint8*)&CVMCCMcodeCacheCopyStart) &&
 	    (pc < (CVMUint8*)&CVMCCMcodeCacheCopyEnd));
@@ -1534,7 +1626,7 @@ CVMJITcodeCacheFindCompiledMethod(CVMUint8* pc, CVMBool doPrint)
 {
     CVMJITGlobalState* jgs = &CVMglobals.jit;
     CVMUint8* cbuf     = jgs->codeCacheStart;
-    CVMMethodBlock* mb = NULL;
+    CVMMethodBlock* mb;
     CVMExecEnv* ee     = CVMgetEE();
 
     /* make sure the pc is in the code cache */
@@ -1598,6 +1690,8 @@ CVMJITcodeCacheFindCompiledMethod(CVMUint8* pc, CVMBool doPrint)
 	}
 	cbuf += bufSize;
     }
+
+    mb = NULL;  /* not found */
 
  done_searching:
     /* release the jit lock */

@@ -1,32 +1,35 @@
-# Portions Copyright 2000-2006 Sun Microsystems, Inc. All Rights Reserved.
+#
+# @(#)defs.mk	1.59 06/10/24
+#
+# Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License version 2 only, as
-# published by the Free Software Foundation.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-# Public License version 2 for more details (a copy is included at
-# /legal/license.txt).
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
 # 
-# You should have received a copy of the GNU General Public
-# License version 2 along with this work; if not, write to the Free
-# Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
 # 
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 or visit www.sun.com if you need additional information or have
-# any questions.
-
-#
-# Copyright 2005 Intel Corporation. All rights reserved.  
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
 #
 
 #
 # defs for linux-arm target
 #
+
+# WARNING: code scheduling does not appear to be working, so don't
+# set CVM_JIT_CODE_SCHED=true.
 
 # enable/disable all IAI optimizations
 CVM_IAI_OPT_ALL ?= true
@@ -34,6 +37,8 @@ CVM_FLAGS	+= CVM_IAI_OPT_ALL
 CVM_IAI_OPT_ALL_CLEANUP_ACTION	= $(CVM_DEFAULT_CLEANUP_ACTION)
 ifeq ($(CVM_IAI_OPT_ALL), true)
 CVM_DEFINES += -DCVM_IAI_OPT_ALL
+else
+override CVM_JIT_CODE_SCHED = false
 endif
 
 # enable/disable code scheduling
@@ -42,6 +47,7 @@ override CVM_JIT_CODE_SCHED = false
 else
 CVM_JIT_CODE_SCHED ?= false
 endif
+
 CVM_JIT_CODE_SCHED_CLEANUP_ACTION = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_FLAGS	+= CVM_JIT_CODE_SCHED
 ifeq ($(CVM_JIT_CODE_SCHED), true)
@@ -57,13 +63,16 @@ SO_CFLAGS       += -fpic
 ASM_ARCH_FLAGS  += -traditional
 
 CVM_TARGETOBJS_SPEED += \
-	sync_arch.o \
 	arm_float_cpu.o
 
 CVM_TARGETOBJS_OTHER += \
 	invokeNative_arm.o \
-	atomic_arm.o \
-	memory_asm_cpu.o \
+	atomic_arm.o
+
+ifneq ($(CVM_JIT), true)
+CVM_TARGETOBJS_OTHER += \
+	memory_asm_cpu.o
+endif
 
 # segvhandler_arch only needed for the JIT and MEM_MGR
 ifeq ($(findstring true,$(CVM_JIT)$(CVM_USE_MEM_MGR)), true)
@@ -95,7 +104,6 @@ endif
 ifeq ($(CVM_JIT), true)
 
 CVM_TARGETOBJS_SPACE += \
-	jit_arch.o \
 
 CVM_TARGETOBJS_OTHER += \
 	flushcache_arch.o

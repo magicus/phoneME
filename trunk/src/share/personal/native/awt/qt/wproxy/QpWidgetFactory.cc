@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ *  @(#)QpWidgetFactory.cc	1.13 06/10/25
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 #include "QpWidgetFactory.h"
 #include <stdio.h>
@@ -276,6 +280,29 @@ QpWidgetFactory::createFileDialog(QpWidget *parent, char *name, int flags){
     return rv;
 }
 
+#ifdef QT_KEYPAD_MODE
+class NoCloseOnBackQFrame : public QFrame {
+public:
+    NoCloseOnBackQFrame(QWidget *parent, const char *name, WFlags f)
+        : QFrame(parent, name, f)
+    {}
+    ~NoCloseOnBackQFrame(void) {}
+
+protected:
+    void keyPressEvent(QKeyEvent* k) {
+        if (this->isTopLevel() && !k->isAccepted() &&
+            (k->key() == Key_Back || k->key() == Key_No) &&
+            !this->testWFlags(WStyle_Dialog|WStyle_Customize|WType_Popup|WType_Desktop)) {
+		// Accepts the key so the top level widget won't be closed
+                // by the Qt library.
+		k->accept();
+                return;
+        }
+        QFrame::keyPressEvent(k);
+    }
+};
+#endif
+
 void
 QpWidgetFactory::execute(int methodId, void *args) {
     QP_METHOD_ID_DECLARE(QpWidgetFactory, mid);
@@ -287,7 +314,11 @@ QpWidgetFactory::execute(int methodId, void *args) {
 
     switch ( mid ) {
     case CreateFrame:
+#ifdef QT_KEYPAD_MODE
+        a->out.rvalue = new NoCloseOnBackQFrame(parent, a->in.name, a->in.flags);
+#else
         a->out.rvalue = new QFrame(parent, a->in.name, a->in.flags);
+#endif
         a->out.rvalue->setFocusPolicy(QWidget::ClickFocus);
         break ;
     case CreateMenuBar:

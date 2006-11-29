@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * %W% %E%
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package com.sun.cdc.io.j2me.socket;
@@ -31,6 +36,7 @@ import com.sun.cdc.io.*;
 /**
  * GenericStreamConnection to the J2SE socket API.
  *
+ * @author  Nik Shaylor
  * @version 1.0 10/08/99
  */
 
@@ -48,6 +54,14 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
     public void open(String name, int mode, boolean timeouts) throws IOException {
         throw new RuntimeException("Should not be called");
     }
+
+    /*
+     * throws SecurityException if MIDP permission check fails 
+     * nothing to do for CDC
+    */
+    protected void checkMIDPPermission(String host, int port) {
+        return;
+    }    
 
     /**
      * Open the connection
@@ -100,7 +114,8 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
 
             /* Get the port number */
             port = Integer.parseInt(name.substring(colon+1));
-
+            
+            checkMIDPPermission(nameOrIP, port);
             /* Open the socket */
             socket = new Socket(nameOrIP, port);
             opens++;
@@ -258,7 +273,7 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
      * <P>The host address(IP number) that can be used to connect to this
      * end of the socket connection from an external system.
      * Since IP addresses may be dynamically assigned, a remote application
-     * will need to be robust in the face of IP number reasssignment.</P>
+     * will need to be robust in the face of IP number reassignment.</P>
      * <P> The local hostname (if available) can be accessed from
      * <code> System.getProperty("microedition.hostname")</code>
      * </P>

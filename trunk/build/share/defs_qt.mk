@@ -1,3 +1,5 @@
+#  @(#)defs_qt.mk	1.15 06/10/19
+#
 #
 # Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
@@ -24,6 +26,7 @@
 # Variables that can be set before including defs_qt.mk:
 #
 #   QTEMBEDDED             - true is using qte. default is false
+#   QT_KEYPAD_MODE         - true if running qte on a keypad. default is false
 #   QTOPIA                 - true if using qtopia. default is $(QTEMBEDDED)
 #   QT_NEED_THREAD_SUPPORT - true if using qt thread support (qt-mt).
 #                            default is !$(QTEMBEDDED)
@@ -209,10 +212,15 @@ ifneq ($(QTEMBEDDED), true)
 endif # QTEMBEDDED
 
 # Add all QT related libraries to AWT_LIB_LIBS
-AWT_LIB_LIBS ?= $(QT_LIB_LIBS) -L$(QT_TARGET_LIB_DIR) -l$(QTLIB)
+AWT_LIB_LIBS ?= $(QT_LIB_LIBS) -L$(QT_TARGET_LIB_DIR) -l$(QTLIB) -lstdc++
 
 # stuff related to running on Qtopia
 ifeq ($(QTOPIA), true)
 CVM_DEFINES += -DQTOPIA
 AWT_LIB_LIBS += -lqpe
+endif
+
+# running qte on a keypad
+ifeq ($(QT_KEYPAD_MODE), true)
+CVM_DEFINES += -DQT_KEYPAD_MODE
 endif

@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jvmdi.c	1.140 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -48,7 +53,7 @@
 
 #include "javavm/include/jvmdi_impl.h"
 
-/* %comment: k001 */
+/* %comment: kbr001 */
 
 
 /* (This is unused in CVM -- only used in unimplemented GetBytecodes) */
@@ -180,7 +185,7 @@ initializeJVMDI()
     CVMExecEnv *ee = CVMgetEE();
     CVMBool haveFailure = CVM_FALSE;
 
-    /* %comment: k003 */
+    /* %comment: kbr003 */
     if (CVMglobals.jvmdiStatics.jvmdiInitialized) {
 	return JVMDI_ERROR_NONE;
     }
@@ -404,11 +409,11 @@ reportException(CVMExecEnv* ee, CVMUint8 *pc,
     CVMframeIterate(frame, &iter);
 
     while (CVMframeIterateNextSpecial(&iter, CVM_FALSE)) {
-	/* %comment: k004 */
+	/* %comment: kbr004 */
 	/* skip transition frames, which can't catch exceptions */
         if (CVMframeIterateCanHaveJavaCatchClause(&iter)) {
 	    CVMMethodBlock* cmb = frame->mb;
-	    /* %comment: k005 */
+	    /* %comment: kbr005 */
 	    if (cmb != NULL) {
 		CVMUint8* pc = CVMframeIterateGetJavaPc(&iter);
 		CVMUint8* cpc =
@@ -433,7 +438,7 @@ reportException(CVMExecEnv* ee, CVMUint8 *pc,
     CVMglobals.jvmdiStatics.eventHook(env, &event);
 }
 
-/* %comment: k006 */
+/* %comment: kbr006 */
 void
 CVMjvmdiNotifyDebuggerOfException(CVMExecEnv* ee, CVMUint8 *pc, CVMObjectICell* object)
 {
@@ -741,7 +746,7 @@ CVMjvmdiNotifyDebuggerOfFieldAccess(CVMExecEnv* ee, CVMObjectICell* obj,
          * empty frames.
          */
 
-	/* %comment: k007 */
+	/* %comment: kbr007 */
 
         frame = CVMgetCallerFrame(frame, 0);
         if (frame == NULL || (mb = frame->mb) == NULL) {
@@ -810,7 +815,7 @@ CVMjvmdiNotifyDebuggerOfFieldModification(CVMExecEnv* ee, CVMObjectICell* obj,
          * empty frames.
          */
 
-	/* %comment: k007 */
+	/* %comment: kbr007 */
 
         frame = CVMgetCallerFrame(frame, 0);
         if (frame == NULL || (mb = frame->mb) == NULL) {
@@ -956,7 +961,7 @@ CVMjvmdiNotifyDebuggerOfFramePop(CVMExecEnv* ee)
     CVMFrame* frame = CVMeeGetCurrentFrame(ee);
     CVMFrame* framePrev;
 
-    /* %comment: k008 */
+    /* %comment: kbr008 */
 
     if (frame == NULL) {
 	return;
@@ -1271,9 +1276,9 @@ jvmdi_GetAllThreads(jint *threadsCountPtr, jthread **threadsPtr)
             if (!CVMID_icellIsNull(CVMcurrentThreadICell(currentEE))) {
                 tempPtr[i] = CVMID_getGlobalRoot(ee);
                 if (tempPtr[i] == NULL) {
-                    /* %comment: k010 */
+                    /* %comment: kbr010 */
                     rc = JVMDI_ERROR_OUT_OF_MEMORY;
-                    break; /* %comment: k011 */
+                    break; /* %comment: kbr011 */
                 }
                 CVMID_icellAssign(ee, tempPtr[i],
                                   CVMcurrentThreadICell(currentEE));
@@ -1299,7 +1304,7 @@ static jvmdiError JNICALL
 jvmdi_GetThreadStatus(jthread threadObj,
                       jint *threadStatusPtr, jint *suspendStatusPtr)
 {
-    /* %comment: k029 */
+    /* %comment: kbr029 */
     CVMExecEnv* ee = CVMgetEE();
     CVMExecEnv* targetEE;
     /* NOTE: (kbr) Added this lock. This used to be a SYSTHREAD call,
@@ -1307,7 +1312,7 @@ jvmdi_GetThreadStatus(jthread threadObj,
        lock, because the thread might exit after you get a handle to
        its EE. (Must file bug) */
     CVM_THREAD_LOCK(ee);
-    /* %comment: k035 */
+    /* %comment: kbr035 */
     targetEE = jthreadToExecEnv(ee, threadObj);
     if (targetEE == NULL) {
 	*threadStatusPtr = JVMDI_THREAD_STATUS_ZOMBIE;
@@ -1470,7 +1475,7 @@ jvmdi_ResumeThread(jthread threadObj)
  */
 static jvmdiError JNICALL
 jvmdi_StopThread(jthread thread, jobject exception) {
-    /* %comment: k031 */
+    /* %comment: kbr031 */
 
     return JVMDI_ERROR_NONE;
 
@@ -1495,7 +1500,7 @@ jvmdi_InterruptThread(jthread thread) {
     return JVMDI_ERROR_NONE;
 }  
 
-/* %comment: k033 */
+/* %comment: kbr033 */
 
 
 static jfieldID 
@@ -1567,7 +1572,7 @@ setBytesCharsUTF(jint uniLen, jchar *uniChars, char *utfBytes)
 static jvmdiError JNICALL
 jvmdi_GetThreadInfo(jthread thread, JVMDI_thread_info *infoPtr) 
 {
-    /* %comment: k034 */
+    /* %comment: kbr034 */
 
     static jfieldID nameID = 0;
     static jfieldID priorityID;
@@ -1674,7 +1679,7 @@ ownedMonitorCountHelper(monitor_t *monitor, void *arg)
 static void 
 ownedMonitorHelper(monitor_t *monitor, void *arg) 
 {
-    /* %comment: k032 */
+    /* %comment: kbr032 */
     MonitorEnumArg *monArg = arg;
     monArg->error = JVMDI_ERROR_NONE;
 
@@ -2025,7 +2030,7 @@ static jvmdiError JNICALL
 jvmdi_GetThreadGroupChildren(jthreadGroup group, 
                              jint *threadCountPtr, jthread **threadsPtr,
                              jint *groupCountPtr, jthreadGroup **groupsPtr) {
-    /* %comment: k034 */
+    /* %comment: kbr034 */
 
     static jfieldID nthreadsID = 0;
     static jfieldID threadsID;
@@ -2167,7 +2172,7 @@ jvmdi_GetCurrentFrame(jthread thread, jframeID *framePtr)
 	return JVMDI_ERROR_INVALID_THREAD;
     }
     NOT_NULL(framePtr);
-    /* TODO: check for not suspended */
+    /* TO DO: check for not suspended */
     frame = CVMeeGetCurrentFrame(thread_ee);
 
     frame = CVMgetCallerFrameSpecial(frame, 0, CVM_FALSE);
@@ -2395,7 +2400,7 @@ jvmdi_GetLocalObject(jframeID frame, jint slot,
 	    /* NOTE: at this point, "obj" could contain a null direct
                object. We must not allow these to "escape" to the rest
                of the system. */
-	    /* %comment: k012 */
+	    /* %comment: kbr012 */
 	    if (!CVMID_icellIsNull(obj)) {
 		*valuePtr = (*env)->NewGlobalRef(env, obj);
 		if (*valuePtr == NULL) {
@@ -2998,7 +3003,7 @@ static void set_single_step_thread(CVMExecEnv* ee,
     CVMID_fieldWriteInt(ee, threadICell,
 			CVMoffsetOfjava_lang_Thread_single_step,
 			shouldStepInt);
-    /* %comment: k013 */
+    /* %comment: kbr013 */
 
     if (wasStepping != shouldStep) {
         if (shouldStep) {
@@ -3110,7 +3115,7 @@ jvmdi_Allocate(jlong size, jbyte** memPtr)
     if (alloc_hook != NULL) {
       return alloc_hook(size, memPtr);
     }
-    /* %comment: k014 */
+    /* %comment: kbr014 */
     intSize = CVMlong2Int(size);
     mem = (jbyte *)malloc(intSize);
     if (mem == NULL) {
@@ -3309,7 +3314,7 @@ jvmdi_GetClassMethods(jclass clazz,
         return JVMDI_ERROR_CLASS_NOT_PREPARED;
     }
 
-    /* %comment: k015 */
+    /* %comment: kbr015 */
     methods_count = CVMcbMethodCount(cb);
     *methodCountPtr = methods_count;
     sz = CVMint2Long(methods_count*sizeof(jmethodID));
@@ -3379,7 +3384,7 @@ jvmdi_GetImplementedInterfaces(jclass clazz,
 {
     jint interfaces_count;
     int i;
-    /* %comment: k016 */
+    /* %comment: kbr016 */
     jclass *imps;
     jint state;
     CVMClassBlock* cb;   
@@ -3755,7 +3760,7 @@ jvmdi_GetFieldModifiers(jclass clazz, jfieldID field,
     
     DEBUG_ENABLED();
     NOT_NULL(modifiersPtr);
-    /* %comment: k017 */
+    /* %comment: kbr017 */
     *modifiersPtr = CVMfbAccessFlags(fb);
     return JVMDI_ERROR_NONE;
 }
@@ -3861,7 +3866,7 @@ jvmdi_GetMethodModifiers(jclass clazz, jmethodID method,
     DEBUG_ENABLED();
     NOT_NULL(modifiersPtr);
 
-    /* %comment: k018 */
+    /* %comment: kbr018 */
     modifiers = 0;
     if (CVMmbIs(mb, PUBLIC))
 	modifiers |= java_lang_reflect_Modifier_PUBLIC;
@@ -3988,7 +3993,7 @@ jvmdi_GetLineNumberTable(jclass clazz, jmethodID method,
 	return JVMDI_ERROR_ABSENT_INFORMATION;
     }
 
-    /* %comment: k025 */
+    /* %comment: kbr025 */
 
     if (CVMmbJmd(mb) == NULL) {
 	sz = CVMint2Long(sizeof(JVMDI_line_number_entry));
@@ -4028,7 +4033,7 @@ jvmdi_GetLineNumberTable(jclass clazz, jmethodID method,
  * JVMDI_ERROR_NULL_POINTER, JVMDI_ERROR_ABSENT_INFORMATION
  *
  */
-/* %comment: k019 */
+/* %comment: kbr019 */
 static jvmdiError JNICALL
 jvmdi_GetMethodLocation(jclass clazz, jmethodID method,
                         jlocation *startLocationPtr, 
@@ -4113,7 +4118,7 @@ jvmdi_GetLocalVariableTable(jclass clazz, jmethodID method,
     tbl = *tablePtr;
     for (i = 0; i < length; ++i) {
 	char* nameAndTypeTmp;
-	jbyte* buf;
+	char* buf;
 
         tbl[i].start_location = CVMint2Long(vmtbl[i].startpc);
         tbl[i].length = (jint)(vmtbl[i].length);
@@ -4417,7 +4422,7 @@ jvmdi_RunDebugThread(jthread thread,
     /* NOTE: These are unused in CVM */
     node->startFunction = proc;
     node->startFunctionArg = arg;
-    /* %comment: k021 */
+    /* %comment: kbr021 */
     CVMID_fieldWriteInt(ee, (CVMObjectICell*) thread,
 			CVMoffsetOfjava_lang_Thread_daemon,
 			1);

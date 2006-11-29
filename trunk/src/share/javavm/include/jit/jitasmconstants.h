@@ -1,29 +1,44 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitasmconstants.h	1.76 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_ASMCONSTANTS_H
 #define _INCLUDED_ASMCONSTANTS_H
 
 #include "javavm/include/porting/jit/jit.h"
+
+/* NOTE: For each of these constants and offsets, please make sure to add a
+   corresponding assert in CVMJITassertMiscJITAssumptions() in jitcompile.c.
+   This will help to reduce the chance of JIT implementation bugs being
+   introduced due invalid assumptions about constants or offsets that have
+   changed without the JIT code's knowledge.
+*/
+
+#define OFFSET_CVMClassBlock_classNameX				4
+#define OFFSET_CVMClassBlock_superClassCb			8
 
 #define OFFSET_CVMClassBlock_interfacesX			16
 #define OFFSET_CVMClassBlock_arrayInfoX				12
@@ -40,10 +55,23 @@
 
 #define OFFSET_CVMArrayInfo_elementCb				12
 
+/* Offsets and constants for CVMTypeID */
+#define CONSTANT_CVMtypeidArrayShift				14
+#define CONSTANT_CVMtypeidArrayMask				0xc000
+#define CONSTANT_CVM_TYPEID_INT_ARRAY				0x4003
+#define CONSTANT_CVM_TYPEID_SHORT_ARRAY				0x4004
+#define CONSTANT_CVM_TYPEID_CHAR_ARRAY				0x4005
+#define CONSTANT_CVM_TYPEID_LONG_ARRAY				0x4006
+#define CONSTANT_CVM_TYPEID_BYTE_ARRAY				0x4007
+#define CONSTANT_CVM_TYPEID_FLOAT_ARRAY				0x4008
+#define CONSTANT_CVM_TYPEID_DOUBLE_ARRAY			0x4009
+#define CONSTANT_CVM_TYPEID_BOOLEAN_ARRAY			0x400a
+
 /* Offsets and constants for CVMMethodBlock: */
 #ifdef CVM_METHODBLOCK_HAS_CB
 #define OFFSET_CVMMethodBlock_jitInvokerX			0
 #define OFFSET_CVMMethodBlock_cbX				12
+#define OFFSET_CVMMethodBlock_methodTableIndexX			20
 #define OFFSET_CVMMethodBlock_argsSizeX				22
 #define OFFSET_CVMMethodBlock_invokerIdxX                       23
 #define OFFSET_CVMMethodBlock_accessFlagsX			24
@@ -52,6 +80,7 @@
 #define CONSTANT_CVMMethodBlock_size                            32
 #else
 #define OFFSET_CVMMethodBlock_jitInvokerX			0
+#define OFFSET_CVMMethodBlock_methodTableIndexX                 16
 #define OFFSET_CVMMethodBlock_argsSizeX                         18
 #define OFFSET_CVMMethodBlock_invokerIdxX                       19
 #define OFFSET_CVMMethodBlock_accessFlagsX                      20
@@ -144,6 +173,7 @@
 /* Offsets and constants for fastlocking: */
 #define CONSTANT_CVM_OBJECT_NO_HASH                             0
 #define CONSTANT_CVM_SYNC_BITS                                  2
+#define CONSTANT_CVM_HASH_BITS                                  24
 #define CONSTANT_CVM_HASH_MASK                                  ((1<<24)-1)
 #define OFFSET_CVMObjMonitor_bits                               0
 
@@ -193,17 +223,31 @@
 #else
 #define CONSTANT_CMD_SIZE_ADJUST0 0
 #endif
+
 #ifdef CVM_DEBUG_ASSERTS
-#define CONSTANT_CMD_SIZE_ADJUST1 (2+CONSTANT_CMD_SIZE_ADJUST0)
+#define CONSTANT_CMD_SIZE_ADJUST1 2
 #else
-#define CONSTANT_CMD_SIZE_ADJUST1 CONSTANT_CMD_SIZE_ADJUST0
-#endif
-#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
-#define CONSTANT_CMD_SIZE_ADJUST (2+CONSTANT_CMD_SIZE_ADJUST1)
-#else
-#define CONSTANT_CMD_SIZE_ADJUST CONSTANT_CMD_SIZE_ADJUST1
+#define CONSTANT_CMD_SIZE_ADJUST1 0
 #endif
 
+#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
+#define CONSTANT_CMD_SIZE_ADJUST2 2
+#else
+#define CONSTANT_CMD_SIZE_ADJUST2 0
+#endif
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+#define CONSTANT_CMD_SIZE_ADJUST3 2
+#else
+#define CONSTANT_CMD_SIZE_ADJUST3 0
+#endif
+
+#define CONSTANT_CMD_SIZE_ADJUST (		\
+    CONSTANT_CMD_SIZE_ADJUST0 +			\
+    CONSTANT_CMD_SIZE_ADJUST1 +			\
+    CONSTANT_CMD_SIZE_ADJUST2 +			\
+    CONSTANT_CMD_SIZE_ADJUST3)
+	
 #define CONSTANT_CMD_SIZE0	(20 + CONSTANT_CMD_SIZE_ADJUST)
 /* align to word boundary */
 #define CONSTANT_CMD_SIZE	((CONSTANT_CMD_SIZE0 + 3) & ~3)
@@ -227,6 +271,20 @@
 #define OFFSET_java_lang_String_count   16
 
 /* Offset and constants for Array classes: */
+#define OFFSET_ARRAY_LENGTH		8
 #define OFFSET_ARRAY_ELEMENTS           12
+
+/* Offset and constants for GC: */
+#if (CVM_GCCHOICE == CVM_GC_GENERATIONAL) && !defined(CVM_SEGMENTED_HEAP)
+
+#define CONSTANT_CARD_DIRTY_BYTE	1
+#ifdef CVM_64
+#define CONSTANT_CVM_GENGC_CARD_SHIFT	10
+#else
+#define CONSTANT_CVM_GENGC_CARD_SHIFT	9
+#endif
+#define CONSTANT_NUM_BYTES_PER_CARD	(1 << CONSTANT_CVM_GENGC_CARD_SHIFT)
+
+#endif
 
 #endif /* _INCLUDED_ASMCONSTANTS_H */

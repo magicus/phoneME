@@ -1,10 +1,9 @@
+# 
+# @(#)deltaBlueItems.txt	1.6 06/10/25
 #
-# Copyright 2006 Sun Microsystems, Inc. All rights reserved
+#  Copyright 2006 Sun Microsystems, Inc. All rights reserved
 #
 
-#
-# The elements required to run deltablue
-#
 java.util.Vector.elementAt(I)
 COM.sun.labs.kanban.DeltaBlue.BinaryConstraint
 COM.sun.labs.kanban.DeltaBlue.Constraint

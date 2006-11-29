@@ -1,23 +1,27 @@
-// Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
-// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 //
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License version 2 only,
-// as published by the Free Software Foundation.
+// Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
 //
-// This program is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-// version 2 for more details (a copy is included at /legal/license.txt).
-//
-// You should have received a copy of the GNU General Public License version
-// 2 along with this work; if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
-//
-// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-// CA 95054 or visit www.sun.com if you need additional information or have
-// any questions.
-
+// @(#)jitgrammarrules.jcs	1.24 06/10/10
 //
 // converting CVM IR subset to StrongARM assembler
 //
@@ -317,3 +321,61 @@ reg32: AND32 reg32 ICONST_32 : 9 : : : : {
 	pushALURhsConstant(con, constValue);
 	wordBinaryOp(con, opcode, $$, GET_REGISTER_GOALS);
     };
+
+//
+// Support for ARM MLA instruction
+//
+
+%{
+static void
+multAddOp(
+    CVMJITCompilationContext* con,
+    CVMJITIRNodePtr thisNode,
+    CVMBool swapAB, /* if true, swap fregA and fregB */
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* regB = popResource(con);
+    CVMRMResource* regC = popResource(con);
+    CVMRMResource* regA = popResource(con);
+    CVMRMResource* regD;
+
+    if (swapAB) {
+	CVMRMResource* tmp = regB;
+	regB = regA;
+	regA = tmp;
+    }
+
+    /* avoid regD target when pinning regA, regB, and regC */
+    CVMRMpinResource(CVMRM_INT_REGS(con), regA, CVMRM_ANY_SET, target);
+    CVMRMpinResource(CVMRM_INT_REGS(con), regC, CVMRM_ANY_SET, target);
+    CVMRMpinResource(CVMRM_INT_REGS(con), regB, CVMRM_ANY_SET, target);
+    regD = CVMRMgetResource(CVMRM_INT_REGS(con), target, avoid, 1);
+
+    CVMCPUemitMul(con, CVMARM_MLA_OPCODE,
+		  CVMRMgetRegisterNumber(regD),
+		  CVMRMgetRegisterNumber(regA),
+		  CVMRMgetRegisterNumber(regC),
+		  CVMRMgetRegisterNumber(regB));
+
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), regA);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), regC);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), regB);
+    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), regD, thisNode);
+    pushResource(con, regD);
+}
+
+%}
+// d = a*c+b -> mla d,a,c,b 
+reg32: IADD32 IMUL32 reg32 reg32 reg32 : 41 :
+    BINARY_BINARY_reg_reg_reg_SYNTHESIS(con, $$) :
+    BINARY_BINARY_reg_reg_reg_INHERITANCE(con, $$) : : {
+        multAddOp(con, $$, CVM_FALSE, GET_REGISTER_GOALS);
+    };
+// d = b+a*c -> mla d,a,c,b
+reg32: IADD32 reg32 IMUL32 reg32 reg32 : 42 :
+    BINARY_reg_BINARY_reg_reg_SYNTHESIS(con, $$); : 
+    BINARY_reg_BINARY_reg_reg_INHERITANCE(con, $$); : : {
+        multAddOp(con, $$, CVM_TRUE,  GET_REGISTER_GOALS);
+    };
+

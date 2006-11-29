@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ArrayClassInfo.java	1.28 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package vm;
@@ -163,5 +168,48 @@ class ArrayClassInfo extends ClassInfo {
 
     protected String createGenericNativeName() { 
         return /*NOI18N*/"fakeArray" + arrayClassNumber;
+    }
+
+    public  static boolean
+	collectArrayClass(String cname, boolean altNametable, boolean verbose, String refClass)
+    {
+	// cname is the name of an array class
+	// make sure it doesn't exist ( it won't if it came from a 
+	// class constant ), and instantiate it. For CVM, do the same with
+	// any sub-array types.
+	//
+	// make sure the base type (if a class) already exists:
+	// under CVM, it cannot correctly represent an array
+	// of an unresolved base class.
+
+	boolean good = true;
+	int lastBracket = cname.lastIndexOf('[');
+	if ( lastBracket < cname.length()-2 ){
+	    // it is a [[[[[Lsomething;
+	    // isolate the something and see if its defined.
+	    String baseClass = cname.substring( lastBracket+2, cname.length()-1 );
+	    if ( ClassTable.lookupClass(baseClass, altNametable) == null ){
+		// base class not defined. punt this.
+		if ( verbose == true ){
+		    System.out.println(Localizer.getString("javacodecompact.array_class_not_instantiated", cname, baseClass ) );
+                }
+		return good;
+	    }
+	}
+	do {
+	    if ( ClassTable.lookupClass(cname, altNametable) != null ){
+		continue; // this one exists. But subclasses may not, so keep going.
+	    }
+	    try {
+		ClassInfo newArray = new ArrayClassInfo(verbose, cname);
+		newArray.altNametable = altNametable;
+		ClassTable.enterClass(newArray);
+	    } catch ( DataFormatException e ){
+		e.printStackTrace();
+		good = false;
+		break; // out of do...while
+	    }
+	} while ( (cname = cname.substring(1) ).charAt(0) == Const.SIGC_ARRAY );
+	return good;
     }
 }

@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)FloatingDecimal.java	1.35 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package java.lang;
@@ -87,7 +92,6 @@ class FloatingDecimal{
 	//
 	// the strategy is to shift until we get a non-zero sign bit
 	// then shift until we have no bits left, counting the difference.
-	// we do byte shifting right now.
 	//
 	if ( v == 0L ) return 0;
 
@@ -272,7 +276,7 @@ class FloatingDecimal{
 	    // don't worry, the right thing will happen.
 	    return (float) dval;
 	}
-	lbits += (long)roundDir;
+	lbits += (long)roundDir; 
 	return (float)Double.longBitsToDouble( lbits );
     }
 
@@ -648,7 +652,7 @@ class FloatingDecimal{
 	/*
 	 * For exact powers of two, the next smallest number
 	 * is only half as far away as we think (because the meaning of
-	 * ULP changes at power-of-two bounds) for this reason, we do this.
+	 * ULP changes at power-of-two bounds).
 	 */
 	if ( nFractBits == 1 )
 	    M2 -= 1;
@@ -664,7 +668,7 @@ class FloatingDecimal{
 	/*
 	 * Construct, Scale, iterate.
 	 * Some day, we'll write a stopping test that takes
-	 * account of the assymetry of the spacing of floating-point
+	 * account of the asymmetry of the spacing of floating-point
 	 * numbers below perfect powers of 2
 	 * 26 Sept 96 is not that day.
 	 * So we use a symmetric test.
@@ -685,7 +689,7 @@ class FloatingDecimal{
 	 * more accurate!
 	 *
 	 * Some day, we'll write a stopping test that takes
-	 * account of the assymetry of the spacing of floating-point
+	 * account of the asymmetry of the spacing of floating-point
 	 * numbers below perfect powers of 2
 	 * 26 Sept 96 is not that day.
 	 * So we use a symmetric test.
@@ -719,7 +723,7 @@ class FloatingDecimal{
 		    digits[ndigit++] = (char)('0' + q);
 		}
 		/*
-		 * Java spec states that we always have at least
+		 * Java spec sez that we always have at least
 		 * one digit after the . in either F- or E-form output.
 		 * Thus we will need more than one digit if we're using
 		 * E-form
@@ -737,7 +741,7 @@ class FloatingDecimal{
 			low  = (b <  m );
 			high = (b+m > tens );
 		    } else {
-			// m might overflow!
+			// might overflow!
 			// in this case, it is certainly > b,
 			// which won't
 			// and b+m > tens, too, since that has overflowed
@@ -774,7 +778,7 @@ class FloatingDecimal{
 		    digits[ndigit++] = (char)('0' + q);
 		}
 		/*
-		 * Java spec states that we always have at least
+		 * Java spec sez that we always have at least
 		 * one digit after the . in either F- or E-form output.
 		 * Thus we will need more than one digit if we're using
 		 * E-form
@@ -840,7 +844,7 @@ class FloatingDecimal{
 		digits[ndigit++] = (char)('0' + q);
 	    }
 	    /*
-	     * Java spec states that we always have at least
+	     * Java spec sez that we always have at least
 	     * one digit after the . in either F- or E-form output.
 	     * Thus we will need more than one digit if we're using
 	     * E-form
@@ -886,7 +890,6 @@ class FloatingDecimal{
 
     public String
     toString(){
-	// A simple version
 	StringBuffer result = new StringBuffer( nDigits+8 );
 	if ( isNegative ){ result.append( '-' ); }
 	if ( isExceptional ){
@@ -1115,7 +1118,8 @@ class FloatingDecimal{
 	     * zeros, nor point
 	     */
 	    /*
-	     * If we saw no non-zero digits, then the answer is zero!
+	     * If we saw no non-zero digits, then the
+	     * answer is zero!
 	     * Unfortunately, we feel honor-bound to keep parsing!
 	     */
 	    if ( nDigits == 0 ){
@@ -1258,7 +1262,6 @@ class FloatingDecimal{
 	    /*
 	     * convert the lead kDigits to a long integer.
 	     */
-	    // start to do it using int
 	    int iValue = (int)digits[0]-(int)'0';
 	    int iDigits = Math.min( kDigits, intDecimalDigits );
 	    for ( int i=1; i < iDigits; i++ ){
@@ -1930,7 +1933,7 @@ class FDBigInt {
 	int target = nWords+wordcount;
 	int src    = nWords-1;
 	if ( bitcount == 0 ){
-	    // since an anticount of 32 won't go!
+	    // Since an anticount of 32 won't go!
 	    System.arraycopy( s, 0, t, wordcount, nWords );
 	    target = wordcount-1;
 	} else {

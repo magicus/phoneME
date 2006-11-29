@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)net_util_md.c	1.14 06/10/13
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include <errno.h>
@@ -172,7 +177,7 @@ jint  IPv6_supported()
     fd = JVM_Socket(AF_INET6, SOCK_STREAM, 0) ;
     if (fd < 0) {
 	/* 
-	 *  We really cant tell since it may be an unrelated error 
+	 *  TODO: We really cant tell since it may be an unrelated error 
 	 *  for now we will assume that AF_INET6 is not available 
 	 */
 	return JNI_FALSE;
@@ -237,7 +242,7 @@ jint  IPv6_supported()
         dlsym(RTLD_DEFAULT, "getnameinfo");
 
     if (freeaddrinfo_ptr == NULL || getnameinfo_ptr == NULL) {
-        /* Wee need all 3 of them */
+        /* We need all 3 of them */
         getaddrinfo_ptr = NULL;
     }
 
@@ -781,6 +786,7 @@ NET_GetSockOpt(int fd, int level, int opt, void *result,
 	       int *len) 
 {
     int rv;
+    socklen_t optlen = *len;
 
 #ifdef AF_INET6
     if ((level == IPPROTO_IP) && (opt == IP_TOS)) {
@@ -797,7 +803,8 @@ NET_GetSockOpt(int fd, int level, int opt, void *result,
     }
 #endif
 
-    rv = getsockopt(fd, level, opt, result, len);
+    rv = getsockopt(fd, level, opt, result, &optlen);
+    *len = optlen;
     if (rv < 0) {
 	return rv;
     }

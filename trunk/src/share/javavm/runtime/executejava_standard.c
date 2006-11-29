@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)executejava_standard.c	1.44 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/defs.h"
@@ -606,7 +611,7 @@ CVMdumpStats()
  */
 #undef CHECK_PENDING_REQUESTS
 #ifdef CVM_REMOTE_EXCEPTIONS_SUPPORTED
-/* %comment h001 */
+/* %comment hideya001 */
 #define CHECK_PENDING_REQUESTS(ee) \
 	(CVMD_gcSafeCheckRequest(ee) || CVMremoteExceptionOccurred(ee))
 #else
@@ -1342,7 +1347,7 @@ CVMwideHelper(CVMExecEnv* ee, CVMSlotVal32* locals, CVMFrame* frame)
 	    break;
 	}
         case opc_ret:
-	    /* %comment h002 */
+	    /* %comment hideya002 */
 	    if (CHECK_PENDING_REQUESTS(ee)) {
 		needRequestCheck = CVM_TRUE;
 	    }
@@ -1507,6 +1512,10 @@ CVMgcUnsafeExecuteJavaMethod(CVMExecEnv* volatile ee, /* see note above */
     }
 
     CVMassert(CVMD_isgcUnsafe(ee));
+#if CVM_DEBUG
+    /* We better not be holding a microlock */
+    CVMassert(ee->microLock == 0);
+#endif
 
     /* The initialframe is always a transition frame. Its topOfStack
      * always points just after the arguments. 
@@ -2332,7 +2341,7 @@ new_transition:
 	    TRACE(("\t%s %#x (skip=%d)\n",CVMopnames[pc[0]],
 		   pc + skip, skip));
             JVMPI_TRACE_INSTRUCTION();
-	    /* %comment h002 */
+	    /* %comment hideya002 */
             HANDLE_JIT_OSR_IF_NECESSARY(skip, 0);
 	    UPDATE_PC_AND_TOS_AND_CONTINUE_WITH_BACKWARDS_CHECK(skip, 0);
 	}
@@ -2351,7 +2360,7 @@ new_transition:
 
         CASE_ND(opc_ret) {
             JVMPI_TRACE_INSTRUCTION();
-	    /* %comment h002 */
+	    /* %comment hideya002 */
 	    if (CHECK_PENDING_REQUESTS(ee)) {
 		goto handle_pending_request;
 	    }
@@ -2716,6 +2725,7 @@ new_transition:
 		 * to do is exit. The caller is responsible for cleaning
 		 * up the transiton frame.
 		 */
+                TRACE_METHOD_RETURN(frame);
 		goto finish;
 	    } else {
 		goto opc_exittransition_overflow;
@@ -3347,7 +3357,7 @@ new_transition:
 #endif /* CVM_JVMPI */
 
 #ifdef CVM_JVMDI
-		/* %comment k001 */
+		/* %comment kbr001 */
 		/* Decache all curently uncached interpreter state */
 		if (CVMjvmdiThreadEventsEnabled(ee)) {
 		    DECACHE_PC();
@@ -3374,7 +3384,7 @@ new_transition:
 	    } else if (invokerIdx < CVM_INVOKE_JNI_METHOD) {
 
 		/*
-		 * It's an CNI method. See cjp07/13/99 in interpreter.h for
+		 * It's an CNI method. See c07/13/99 in interpreter.h for
 		 * details on how CNI methods work.
 		 */
 		CNIResultCode ret;
@@ -3609,6 +3619,7 @@ new_transition:
 	     * if the method returns a ref.
 	     */
 	    if (frame == initialframe) {
+                TRACE_METHOD_RETURN(frame);
 		goto finish;
 	    }
 
@@ -3701,7 +3712,7 @@ new_transition:
 	     * Class.runStaticInitializers, or by an CNI method that
 	     * returned CNI_NEW_TRANSITION_FRAME. Method.invoke[BCI...]
 	     * is currently the only method that causes this type of
-	     * transition frame to be setup. See cjp07/13/99 to see why
+	     * transition frame to be setup. See cni.h to see why
 	     * CNI methods may want to setup a transtion frame and
 	     * return CNI_NEW_TRANSITION_FRAME.
 	     */
@@ -4033,7 +4044,7 @@ handle_jit_osr:
 	    DECACHE_PC();
 	    DECACHE_TOS();
 	    if (CVMwideHelper(ee, locals, frame)) {
-		/* %comment h002 */
+		/* %comment hideya002 */
 		if (CHECK_PENDING_REQUESTS(ee)) {
 		    goto handle_pending_request;
 		}

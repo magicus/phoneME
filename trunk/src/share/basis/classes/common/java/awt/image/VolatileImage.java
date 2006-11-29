@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)VolatileImage.java	1.5 %E
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
 package java.awt.image;
@@ -179,13 +183,13 @@ public abstract class VolatileImage extends Image
      * @see #getSnapshot()
      */
     public ImageProducer getSource() {
-	// TODO: Make sure this functionality is in line with the
+	// NOTE: Make sure this functionality is in line with the
 	// spec.  In particular, we are returning the Source for a 
 	// static image (the snapshot), not a changing image (the 
 	// VolatileImage).  So if the user expects the Source to be
 	// up-to-date with the current contents of the VolatileImage,
 	// they will be disappointed...
-	// TODO: This assumes that getSnapshot() returns something
+	// NOTE: This assumes that getSnapshot() returns something
 	// valid and not the default null object returned by this class
 	// (so it assumes that the actual VolatileImage object is 
 	// subclassed off something that does the right thing 
@@ -193,7 +197,7 @@ public abstract class VolatileImage extends Image
 	return getSnapshot().getSource();
     }
 
-    // TODO: if we want any decent performance for getScaledInstance(),
+    // NOTE: if we want any decent performance for getScaledInstance(),
     // we should override the Image implementation of it...
 
     /**

@@ -1,23 +1,27 @@
-// Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
-// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 //
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License version 2 only,
-// as published by the Free Software Foundation.
+// Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
 //
-// This program is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-// version 2 for more details (a copy is included at /legal/license.txt).
-//
-// You should have received a copy of the GNU General Public License version
-// 2 along with this work; if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
-//
-// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-// CA 95054 or visit www.sun.com if you need additional information or have
-// any questions.
-
+// @(#)jitfloatgrammarrules.jcs	1.28 06/10/10
 //
 //
 // Optional floating-point grammar rules for
@@ -80,8 +84,9 @@ freg64: ICONST_64 : 50 : : : : {
 	CVMRMResource* dest = CVMRMgetResource(CVMRM_FP_REGS(con),
 					       GET_FLOAT_REGISTER_GOALS, 2);
 	int destregno = CVMRMgetRegisterNumber(dest);
-        CVMCPUemitLoadLongConstantFP(con, destregno,
-				     &CVMJITirnodeGetConstant64($$)->j);
+	CVMJavaVal64 v64;
+	CVMmemCopy64(v64.v, CVMJITirnodeGetConstant64($$)->j.v);
+        CVMCPUemitLoadLongConstantFP(con, destregno, &v64);
 	CVMRMoccupyAndUnpinResource(CVMRM_FP_REGS(con), dest, $$);
 	pushResource(con, dest);
     };
@@ -314,11 +319,20 @@ param64: freg64 : 22 : : : : {
 //
 root:	ASSIGN LOCAL32 freg32 : 11 : : ASSIGN_INHERITANCE(con, $$) : : {
 	CVMRMResource* rhs = popResource(con);
-	CVMJITLocal*   lhs = CVMJITirnodeGetLocal(
-		CVMJITirnodeGetLeftSubtree($$));
-	CVMRMpinResource(CVMRM_FP_REGS(con), rhs,
-			 CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
-	CVMRMstoreJavaLocal(CVMRM_FP_REGS(con), rhs, 1, CVM_FALSE, lhs->localNo);
+	CVMJITIRNode*  localNode = CVMJITirnodeGetLeftSubtree($$);
+	CVMJITIRNode*  rhsNode = CVMJITirnodeGetRightSubtree($$);
+	CVMJITLocal*   lhs = CVMJITirnodeGetLocal(localNode);
+	int target;
+
+	if (rhsNode->decorationType == CVMJIT_REGHINT_DECORATION) {
+	    target = 1U << rhsNode->decorationData.regHint;
+	} else {
+	    target = CVMRM_FP_ANY_SET;
+	}
+
+	CVMRMpinResource(CVMRM_FP_REGS(con), rhs, target, CVMRM_EMPTY_SET);
+	CVMRMstoreJavaLocal(CVMRM_FP_REGS(con), rhs, 1,
+			    CVM_FALSE, lhs->localNo);
 	CVMRMrelinquishResource(CVMRM_FP_REGS(con), rhs);
     };
 
@@ -376,11 +390,20 @@ root: ASSIGN arrayIndex freg32 : 21 : : : : {
 
 root:	ASSIGN LOCAL64 freg64 : 11 : : ASSIGN_INHERITANCE(con, $$) : : {
 	CVMRMResource* rhs = popResource(con);
-	CVMJITLocal*   lhs = CVMJITirnodeGetLocal(
-		CVMJITirnodeGetLeftSubtree($$));
-	CVMRMpinResource(CVMRM_FP_REGS(con), rhs,
-			 CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
-	CVMRMstoreJavaLocal(CVMRM_FP_REGS(con), rhs, 2, CVM_FALSE, lhs->localNo);
+	CVMJITIRNode*  localNode = CVMJITirnodeGetLeftSubtree($$);
+	CVMJITIRNode*  rhsNode = CVMJITirnodeGetRightSubtree($$);
+	CVMJITLocal*   lhs = CVMJITirnodeGetLocal(localNode);
+	int target;
+
+	if (rhsNode->decorationType == CVMJIT_REGHINT_DECORATION) {
+	    target = 1U << rhsNode->decorationData.regHint;
+	} else {
+	    target = CVMRM_FP_ANY_SET;
+	}
+
+	CVMRMpinResource(CVMRM_FP_REGS(con), rhs, target, CVMRM_EMPTY_SET);
+	CVMRMstoreJavaLocal(CVMRM_FP_REGS(con), rhs, 2,
+			    CVM_FALSE, lhs->localNo);
 	CVMRMrelinquishResource(CVMRM_FP_REGS(con), rhs);
     };
 
@@ -521,14 +544,14 @@ root: finvoke64_result: 0 : : : : {
 root: FDEFINE freg32 : 10 : DEFINE_SYNTHESIS(con, $$) : : : {
         CVMRMResource* src = popResource(con);
 	if (!CVMRMstoreDefinedValue(con, $$, src, 1)) {
-	    return -2;
+	    return -2;  /*  fail */
 	}
     };
 
 root: DDEFINE freg64 : 10 : DEFINE_SYNTHESIS(con, $$) : : : {
         CVMRMResource* src = popResource(con);
 	if (!CVMRMstoreDefinedValue(con, $$, src, 2)) {
-	    return -2;
+	    return -2;  /*  fail */
 	}
     };
 
@@ -556,6 +579,8 @@ floatBinaryOp(
     int lhsRegNo = CVMRMgetRegisterNumberUnpinned(lhs);
     CVMJITRMContext* rc = CVMRM_FP_REGS(con);
 
+    CVMRMpinResource(rc, rhs, ~target, target);
+
     /* If the dest node has a regHint and the register number is the same as
      * the register the lhs is already loaded into, then reuse the lhs
      * register as the dest register. This is common when locals are
@@ -572,12 +597,12 @@ floatBinaryOp(
 	dest = CVMRMgetResourceSpecific(rc, lhsRegNo, size);
 	CVMassert(lhsRegNo == CVMRMgetRegisterNumber(dest));
     } else {
+	/* Pin early so following CVMRMgetResource does not cause spill */
+	CVMRMpinResource(rc, lhs, ~target, target);
 	dest = CVMRMgetResource(rc, target, avoid, size);
-	CVMRMpinResource(rc, lhs, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
 	lhsRegNo = CVMRMgetRegisterNumber(lhs);
     }
 
-    CVMRMpinResource(rc, rhs, CVMRM_FP_ANY_SET, CVMRM_EMPTY_SET);
     CVMCPUemitBinaryFP(con, opcode,
 		       CVMRMgetRegisterNumber(dest), lhsRegNo,
 		       CVMRMgetRegisterNumber(rhs));

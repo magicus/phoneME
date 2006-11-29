@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ObjectOutputStream.java	1.112 02/01/03
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package java.io;
@@ -26,6 +31,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
 import sun.misc.SoftCache;
+import sun.misc.CVM;
 
 /**
  * An ObjectOutputStream writes primitive data types and graphs of Java objects
@@ -125,6 +131,7 @@ import sun.misc.SoftCache;
  * block-data record.
  *
  * @author      Mike Warres
+ * @author	Roger Riggs
  * @version     1.105, 08/09/01
  * @see java.io.DataOutput
  * @see java.io.ObjectInputStream
@@ -2155,11 +2162,15 @@ public class ObjectOutputStream
 	private void growEntries() {
 	    int newLength = (next.length << 1) + 1;
 	    int[] newNext = new int[newLength];
-	    System.arraycopy(next, 0, newNext, 0, size);
+/* IAI - 15 */
+	    CVM.copyIntArray(next, 0, newNext, 0, size);
+/* IAI - 15 */
 	    next = newNext;
 
 	    Object[] newObjs = new Object[newLength];
-	    System.arraycopy(objs, 0, newObjs, 0, size);
+/* IAI - 15 */
+	    CVM.copyObjectArray(objs, 0, newObjs, 0, size);
+/* IAI - 15 */
 	    objs = newObjs;
 	}
 
@@ -2230,7 +2241,9 @@ public class ObjectOutputStream
 	 */
 	private void grow() {
 	    Object[] newReps = new Object[(reps.length << 1) + 1];
-	    System.arraycopy(reps, 0, newReps, 0, reps.length);
+/* IAI - 15 */
+	    CVM.copyObjectArray(reps, 0, newReps, 0, reps.length);
+/* IAI - 15 */
 	    reps = newReps;
 	}
     }

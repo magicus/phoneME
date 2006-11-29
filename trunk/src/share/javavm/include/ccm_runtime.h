@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ccm_runtime.h	1.49 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_CCM_RUNTIME_H
@@ -488,6 +493,18 @@ CVMCCMruntimeMonitorExit(CVMCCExecEnv *ccee, CVMExecEnv *ee, CVMObject *obj);
 void
 CVMCCMruntimeGCRendezvous(CVMCCExecEnv *ccee, CVMExecEnv *ee);
 
+#if defined(CVMJIT_SIMPLE_SYNC_METHODS) && \
+    (CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS)
+/* 
+ * Simple Sync helper function for unlocking in Simple Sync methods when
+ * there is contention for the lock after locking. It is only needed for
+ * CVM_FASTLOCK_ATOMICOPS since once locked, CVM_FASTLOCK_MICROLOCK
+ * will never allow for contention of Simple Sync methods.
+ */
+extern void
+CVMCCMruntimeSimpleSyncUnlock(CVMExecEnv *ee, CVMObject* obj);
+#endif /* CVMJIT_SIMPLE_SYNC_METHODS */
+
 #ifdef CVM_CCM_COLLECT_STATS
 
 /*============================================================================
@@ -562,6 +579,10 @@ typedef enum CVMCCMStatsTag {
     CVMCCM_STATS_CVMCCMruntimeMonitorEnter,
     CVMCCM_STATS_CVMCCMruntimeMonitorExit,
     CVMCCM_STATS_CVMCCMruntimeGCRendezvous,
+#if defined(CVMJIT_SIMPLE_SYNC_METHODS) && \
+    (CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS)
+    CVMCCM_STATS_CVMCCMruntimeSimpleSyncUnlock,
+#endif
 
     /* NOTE: CVMCCM_STATS_NUM_TAGS must be last in this enum list. */
     CVMCCM_STATS_NUM_TAGS                      /* Number of stats tags */

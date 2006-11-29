@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)hprof_thread.c	1.28 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "hprof.h"
@@ -307,7 +312,7 @@ static hprof_thread_local_t *hprof_alloc_thread_local_info(void)
 	    sizeof(hprof_method_time_t) * HPROF_STACK_LIMIT);
 	info->stack_top = info->stack;
 	info->stack_limit = HPROF_STACK_LIMIT;
-	sprintf(lockname, "_hprof_thread_local_lock-%d\n", lock_serial_number);
+	sprintf(lockname, "_hprof_thread_local_lock-%d", lock_serial_number++);
 	info->table_lock = CALL(RawMonitorCreate)(lockname);
 	info->frames_array_limit = HPROF_FRAMES_ARRAY_LIMIT;
 	info->frames_array = HPROF_CALLOC(ALLOC_TYPE_JMETHODID,
@@ -378,6 +383,7 @@ static void hprof_free_thread_local_info(JNIEnv *env_id)
         hprof_free(info->mon);
     }
 
+    CALL(SetThreadLocalStorage)(env_id,NULL);
     hprof_free(info);
 }
 

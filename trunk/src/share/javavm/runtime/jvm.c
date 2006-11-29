@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jvm.c	1.285 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /* Implement jvm.h functions here, unless they more suitably belong
@@ -882,7 +887,7 @@ JVM_Halt(jint code)		/* Called from java.lang.Shutdown */
     if (CVMLVMinMainLVM(ee)) {
 	CVMexit(code);
     } else {
-	CVMLVMhalt(CVMgetEE());
+	CVMLVMcontextHalt(ee);
     }
 #else /* %end lvm */
     CVMexit(code);
@@ -2201,7 +2206,7 @@ JVM_SuspendThread(JNIEnv *env, jobject thread)
 	
 	CVMlocksForThreadSuspendRelease(ee);
     } else {
-	/* %comment: r034 */
+	/* %comment: rt034 */
 	ee->threadState = CVM_THREAD_SUSPENDED;
 	CVMthreadSuspend(&ee->threadInfo);
     }
@@ -2367,7 +2372,7 @@ JVM_Interrupt(JNIEnv *env, jobject thread)
 			eetopVal);
     targetEE = (CVMExecEnv *)CVMlong2VoidPtr(eetopVal);
 
-    /* %comment: r035 */
+    /* %comment: rt035 */
     if (targetEE != NULL) {
 	if (!targetEE->interruptsMasked) {
 	    CVMthreadInterruptWait(CVMexecEnv2threadID(targetEE));

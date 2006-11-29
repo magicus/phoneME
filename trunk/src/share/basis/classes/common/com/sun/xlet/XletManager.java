@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)XletManager.java	1.21 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ *
  */
 
 package com.sun.xlet;
@@ -83,7 +88,7 @@ public class XletManager implements XletLifecycleHandler {
        xletClass = xletClassLoader.loadClass(mainClass);
          
        if (!(Xlet.class).isAssignableFrom(xletClass)) {
-          throw new IllegalArgumentException(
+          throw new ClassCastException(
              "Attempt to run a non-Xlet class: " + mainClass);
        }
 
@@ -132,14 +137,8 @@ public class XletManager implements XletLifecycleHandler {
        //       XletClassLoader to have a reference of xletManager to get TG.
        createAppContext(threadGroup);
 
-       if (theFrame == null) { 
-          // This is the first xlet loaded to this vm instance. 
-          // Create a toplevel Frame for all xlets to use.
+       if (theFrame == null) { // Grab the Frame before xlet gets it's chance.
           theFrame = new ToplevelFrame("Xlet Frame", this); 
-       } else {
-          // More than one xlet - make it FlowLayout
-          if (theFrame.getLayout() instanceof BorderLayout)
-             theFrame.setLayout(new FlowLayout());
        }
 
        // Install a SecurityManager on this xlet if nothing is set.
@@ -201,12 +200,7 @@ public class XletManager implements XletLifecycleHandler {
     }
 
     public Container getContainer() {
-        XletContainer c = new XletContainer();
-        theFrame.add(c);
-        theFrame.validate();
-        theFrame.setVisible(true);
-        c.setVisible(false);
-        return c;
+        return theFrame.getXletContainer();
     }
 
     public void postInitXlet() {

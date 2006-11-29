@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)system_md.c	1.13 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/porting/system.h"
@@ -38,16 +43,13 @@ CVMsystemPanic( const char * msg )
 }
 
 #ifdef CVM_JIT_PROFILE
-
 #include <unistd.h>
 #include <sys/param.h>
 #include <sys/time.h>
-#include <dlfcn.h>
 #include "javavm/include/porting/vm-defs.h"
 
 CVMBool __profiling_enabled = CVM_FALSE;
-struct itimerval prof_timer;
-
+extern struct itimerval prof_timer;
 
 int
 CVMJITprofil(u_short *buf, size_t bufsiz, size_t offset, u_int scale)
@@ -56,7 +58,7 @@ CVMJITprofil(u_short *buf, size_t bufsiz, size_t offset, u_int scale)
     if (buf == NULL) {
 	__profiling_enabled = CVM_FALSE;
     } else {
- 	getitimer(ITIMER_PROF, &prof_timer);
+        getitimer(ITIMER_PROF, &prof_timer);
 	__profiling_enabled = CVM_TRUE;
     }
     return s;

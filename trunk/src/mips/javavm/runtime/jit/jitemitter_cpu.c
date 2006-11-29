@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitemitter_cpu.c	1.66 06/10/13
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 /*
  * MIPS-specific bits.
@@ -159,8 +164,12 @@
 #define MIPS_LHU_OPCODE   (0x25 << 26) /* Load unsigned 16 bit value. */
 #define MIPS_LH_OPCODE    (0x21 << 26) /* Load signed 16 bit value. */
 #define MIPS_SH_OPCODE    (0x29 << 26) /* Store 16 bit value. */
+#define MIPS_LBU_OPCODE   (0x24 << 26) /* Load signed 8 bit value. */
 #define MIPS_LB_OPCODE    (0x20 << 26) /* Load signed 8 bit value. */
 #define MIPS_SB_OPCODE    (0x28 << 26) /* Store 8 bit value. */
+
+#define MIPS_LL_OPCODE    (0x30 << 26) /* Load Linked 32 bit value */
+#define MIPS_SC_OPCODE    (0x38 << 26) /* Store Conditional 32 bit value */
 
 #define MIPS_LUI_OPCODE   (0x0f << 26) /* Load Upper Immediate. */
 
@@ -462,6 +471,13 @@ CVMMIPSemitBranchOnCompare32(CVMJITCompilationContext* con,
     CVMBool rhsIsConst, CVMBool link,
     CVMJITFixupElement** fixupList);
 
+static void
+CVMMIPSemitBranch0(CVMJITCompilationContext* con,
+                  int logicalPC, int opcode,
+                  int srcRegID, CVMInt32 rhsRegID,
+                  CVMJITFixupElement** fixupList,
+                  CVMBool nopInDelaySlot);
+
 static void 
 CVMMIPSemitBranchToTarget(CVMJITCompilationContext* con,
                           int logicalPC, int opcode,
@@ -533,6 +549,7 @@ static const char *getMemOpcodeName(CVMUint32 mipsOpcode)
         case MIPS_LH_OPCODE:   name = "lh"; break;	
         case MIPS_SH_OPCODE:   name = "sh"; break;
 
+        case MIPS_LBU_OPCODE:  name = "lbu"; break;
         case MIPS_LB_OPCODE:   name = "lb"; break;
         case MIPS_SB_OPCODE:   name = "sb"; break;
 #ifdef CVM_JIT_USE_FP_HARDWARE
@@ -1113,10 +1130,7 @@ CVMMIPSemitJump(CVMJITCompilationContext* con,
     targetRegion = physicalPC & regionMask;
     
     if (targetRegion == currRegion) {
-        if ((physicalPC & 0x3) != 0) {
-            CVMJITerror(con, CANNOT_COMPILE,
-                        "Target address is not aligned");
-        }
+        CVMassert((physicalPC & 0x3) == 0);
 
         /* target address is in the current 256 MB-aligned region */
         offset = (physicalPC & ~regionMask) >> 2;
@@ -1136,7 +1150,6 @@ CVMMIPSemitJump(CVMJITCompilationContext* con,
         }
     } else {
         /* Target is not within the current 256 region. */
-
         CVMCPUemitLoadConstant(con, CVMMIPS_t7, physicalPC);
         CVMMIPSemitJumpRegister(con, CVMMIPS_t7, link,
                                 delaySlot /* fill delay slot */);
@@ -1227,32 +1240,51 @@ CVMCPUemitRegisterBranch(CVMJITCompilationContext* con, int regno)
 void
 CVMCPUemitTableSwitchBranch(CVMJITCompilationContext* con, int keyReg)
 {
-#undef NUM_TABLESWITCH_INSTRUCTIONS
-#ifdef CVMCPU_HAS_CP_REG
-#define NUM_TABLESWITCH_INSTRUCTIONS 5
-#else
-#define NUM_TABLESWITCH_INSTRUCTIONS 6
-#endif
-    CVMUint32 tablePC = (CVMUint32)CVMJITcbufGetPhysicalPC(con) +
-	NUM_TABLESWITCH_INSTRUCTIONS * CVMCPU_INSTRUCTION_SIZE;
-    CVMRMResource *tmpResource1, *tmpResource2;
-    CVMUint32 tmpReg1, tmpReg2;
-
-    /* This is implemented as:
+    /* This is implemented as (not PC relative):
      *
      *     lw    reg2, =tablePC
      *     sll   reg1, key, 3
      *     add   reg1, reg1, reg2
      *     jr    reg1
      *     nop
-     * tablePC:
+     *   tablePC:
+     *
+     * or when CVM_AOT is enabled (PC relative):
+     *
+     *     # We need to do 'sll' first in case 'key' is in 'ra'. This
+     *     # is based on the fact that 'key' will be discarded after
+     *     # CVMCPUemitTableSwitchBranch() returns (in TABLESWITCH
+     *     # rule). If that changes, the follow won't work because
+     *     # 'bal' will trash the 'key' if it's in 'ra' register.
+     *     sll   reg1, key, 3
+     *     bal   nextLabel      # skip the delay slot. ra is 'nextLabel'
+     *     add   reg1, reg1, 12 # distance from 'nextLabel' to tablePC
+     *   nextLabel:
+     *     add   reg1, reg1, ra # ra is 'nextLabel'
+     *     jr    reg1
+     *     nop
+     *   tablePC:
      */
+#undef NUM_TABLESWITCH_INSTRUCTIONS
+#ifdef CVMCPU_HAS_CP_REG
+#define NUM_TABLESWITCH_INSTRUCTIONS 5
+#else
+#define NUM_TABLESWITCH_INSTRUCTIONS 6
+#endif
+    /* Avoid CVMMIPS_lr for tmpResource1 because CVMMIPS_lr is used as
+     * tmpReg2 if CVM_AOT is enabled.
+     */
+    CVMRMResource *tmpResource1 = CVMRMgetResourceStrict(CVMRM_INT_REGS(con),
+                      (CVMRM_ANY_SET & ~(1U << CVMMIPS_lr)),
+                      (1U << CVMMIPS_lr), 1);
+    CVMUint32 tmpReg1 = CVMRMgetRegisterNumber(tmpResource1);
+    CVMUint32 tmpReg2; /* tmpReg2 is 'ra' if CVM_AOT is enabled */
 
-    tmpResource1 = CVMRMgetResource(CVMRM_INT_REGS(con),
-				    CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
-    tmpResource2 = CVMRMgetResource(CVMRM_INT_REGS(con),
+#ifndef CVM_AOT
+    CVMUint32 tablePC = (CVMUint32)CVMJITcbufGetPhysicalPC(con) +
+        NUM_TABLESWITCH_INSTRUCTIONS * CVMCPU_INSTRUCTION_SIZE;
+    CVMRMResource *tmpResource2 = CVMRMgetResource(CVMRM_INT_REGS(con),
                                     CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
-    tmpReg1 = CVMRMgetRegisterNumber(tmpResource1);
     tmpReg2 = CVMRMgetRegisterNumber(tmpResource2);
 
     /* get the address of the table: */
@@ -1263,11 +1295,27 @@ CVMCPUemitTableSwitchBranch(CVMJITCompilationContext* con, int keyReg)
      * instructions, and we need to know the number ahread of time. */
     CVMMIPSemitMakeConstant32(con, tmpReg2, tablePC);
 #endif
+#endif
 
     /* shift the key by 3, because every table element branch has a nop as
        the branch delay slot */
     CVMCPUemitShiftByConstant(con, CVMCPU_SLL_OPCODE, 
                               tmpReg1, keyReg, 3);
+
+#ifdef CVM_AOT
+    /* emit the bal instruction, 'ra' register will have pc+8 
+     * after the branch. */
+    CVMMIPSemitBranch0(con, 
+        CVMJITcbufGetLogicalPC(con) + 2*CVMCPU_INSTRUCTION_SIZE, 
+        MIPS_BGEZAL_OPCODE, CVMMIPS_zero, CVMCPU_INVALID_REG,
+        NULL, CVM_FALSE);
+    tmpReg2 = CVMMIPS_lr;
+    /* branch target address += 3*CVMCPU_INSTRUCTION_SIZE */
+    CVMCPUemitBinaryALUConstant(con, CVMCPU_ADD_OPCODE,
+                                tmpReg1, tmpReg1,
+                                3*CVMCPU_INSTRUCTION_SIZE,
+                                CVMJIT_NOSETCC);
+#endif
 
     /* compute the address to branch to: */
     CVMCPUemitBinaryALURegister(con, CVMCPU_ADD_OPCODE,
@@ -1279,15 +1327,42 @@ CVMCPUemitTableSwitchBranch(CVMJITCompilationContext* con, int keyReg)
                             CVM_TRUE /* fill delay slot */);
 
     CVMRMrelinquishResource(CVMRM_INT_REGS(con), tmpResource1);
+#ifndef CVM_AOT
     CVMRMrelinquishResource(CVMRM_INT_REGS(con), tmpResource2);
+#endif
 }
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+
+/*
+ * Patch branch instruction at location "instrAddr" to branch to offset
+ * "offset" from "instrAddr".
+ */
+void 
+CVMCPUpatchBranchInstruction(int offset, CVMUint8* instrAddr)
+{
+    CVMCPUInstruction branch;
+    /* NOTE: This code isn't working yet. Extra work needs to be done
+       to support patched method invocations for MIPS since it is possible
+       that the new target address will not reachable with a jal.
+    */
+    CVMassert(CVM_FALSE); /* this code is not supported yet */
+    /* There better already be an unconditional jal at this address */
+    CVMassert((*(CVMUint32*)instrAddr & ~0x03ffffff) == MIPS_JAL_OPCODE);
+    branch = CVMPPCgetBranchInstruction(CVMCPU_COND_AL, offset) |
+	PPC_BRANCH_LINK_BIT;
+    *((CVMCPUInstruction*)instrAddr) = branch;
+}
+
+#endif
 
 /* Helper that emits branch to reachable target */
 static void
 CVMMIPSemitBranch0(CVMJITCompilationContext* con,
                   int logicalPC, int opcode,
                   int srcRegID, CVMInt32 rhsRegID,
-                  CVMJITFixupElement** fixupList)
+                  CVMJITFixupElement** fixupList,
+                  CVMBool nopInDelaySlot)
 {
     CVMInt32 realoffset;
     
@@ -1349,7 +1424,11 @@ CVMMIPSemitBranch0(CVMJITCompilationContext* con,
 
     CVMtraceJITCodegenExec({
         printPC(con);
-        if (opcode == MIPS_BEQ_OPCODE || opcode == MIPS_BNE_OPCODE) {
+	if (srcRegID == CVMMIPS_zero && rhsRegID == CVMMIPS_zero &&
+	    (opcode == MIPS_BEQ_OPCODE || opcode == MIPS_BGEZAL_OPCODE)) {
+            CVMconsolePrintf("	b	PC=0x%8x",
+			     CVMJITcbufLogicalToPhysical(con, logicalPC));
+	} else if (opcode == MIPS_BEQ_OPCODE || opcode == MIPS_BNE_OPCODE) {
             CVMconsolePrintf("	%s	%s, %s, PC=0x%8x",
                 getBranchOpcodeName(opcode),
                 regName(srcRegID), regName(rhsRegID),
@@ -1372,7 +1451,9 @@ CVMMIPSemitBranch0(CVMJITCompilationContext* con,
     CVMJITdumpCodegenComments(con);
 
     /* nop in branch delay slot */
-    CVMCPUemitNop(con);
+    if (nopInDelaySlot) {
+        CVMCPUemitNop(con);
+    }
 }
 
 /*
@@ -1410,8 +1491,16 @@ CVMMIPSemitBranchToTarget(CVMJITCompilationContext* con,
 
     if (reachable) {
         CVMMIPSemitBranch0(con, logicalPC, opcode, srcRegID,
-                           rhsRegID, fixupList);
-    } else {
+                           rhsRegID, fixupList, CVM_TRUE);
+    } else if (srcRegID == CVMMIPS_zero && rhsRegID == CVMMIPS_zero &&
+	       (opcode == MIPS_BEQ_OPCODE || opcode == MIPS_BGEZAL_OPCODE)) {
+	/* This is an unreachable unconditional banch, so do a jump */
+        CVMMIPSemitJump(con, logicalPC, link, CVM_TRUE /* fill delay slot */);
+    } else  {
+	/* This is an unreachable conditional branch, so emit a short
+	 * conditional branch around and unconditional jump, using the
+	 * opposite condition for the conditional branch.
+	 */
         int oppositeCondBranch = getOppositeCondBranch(opcode);
 	CVMInt32 startPC = CVMJITcbufGetLogicalPC(con);
 	CVMInt32 endPC;
@@ -1420,7 +1509,7 @@ CVMMIPSemitBranchToTarget(CVMJITCompilationContext* con,
 	CVMJITpopCodegenComment(con, comment);
 	CVMJITaddCodegenComment((con, "goto .skip"));
         CVMMIPSemitBranch0(con, 0, oppositeCondBranch,
-                           srcRegID, rhsRegID, NULL);
+                           srcRegID, rhsRegID, NULL, CVM_TRUE);
 	CVMJITpushCodegenComment(con, comment);
         CVMMIPSemitJump(con, logicalPC, link, CVM_TRUE /* fill delay slot */);
 
@@ -1428,7 +1517,7 @@ CVMMIPSemitBranchToTarget(CVMJITCompilationContext* con,
 	CVMJITcbufPushFixup(con, startPC);
  	CVMJITaddCodegenComment((con, "goto .skip"));
 	CVMMIPSemitBranch0(con, endPC, oppositeCondBranch,
-			   srcRegID, rhsRegID, NULL);
+			   srcRegID, rhsRegID, NULL, CVM_TRUE);
 	CVMJITcbufPop(con);
 	CVMtraceJITCodegen(("\t\t.skip\n"));				    \
     }
@@ -1473,7 +1562,7 @@ CVMMIPSemitBranchOnCompare64(CVMJITCompilationContext* con,
         */
         fixupPC = CVMJITcbufGetLogicalPC(con);
         CVMMIPSemitBranch0(con, 0, MIPS_BNE_OPCODE,
-                           hi_lhs, hi_rhs, NULL);
+                           hi_lhs, hi_rhs, NULL, CVM_TRUE);
         CVMMIPSemitBranchToTarget(con, logicalPC, MIPS_BEQ_OPCODE,
                            low_lhs, low_rhs, link, fixupList);
         CVMJITfixupAddress(con, fixupPC, CVMJITcbufGetLogicalPC(con),
@@ -1546,7 +1635,7 @@ CVMMIPSemitBranchOnCompare64(CVMJITCompilationContext* con,
                                   fixupList);
         fixupPC = CVMJITcbufGetLogicalPC(con);
         CVMMIPSemitBranch0(con, 0, MIPS_BNE_OPCODE, 
-                           hi_lhs, hi_rhs, NULL);
+                           hi_lhs, hi_rhs, NULL, CVM_TRUE);
         CVMMIPSemitSLT(con, MIPS_SLTU_OPCODE, CVMMIPS_t7, low_lhs, low_rhs);
         CVMMIPSemitBranchToTarget(con, logicalPC, MIPS_BNE_OPCODE,
                                   CVMMIPS_t7, CVMMIPS_zero, link,
@@ -1598,7 +1687,7 @@ CVMMIPSemitBranchOnCompare64(CVMJITCompilationContext* con,
          fixupPC = CVMJITcbufGetLogicalPC(con);
          CVMMIPSemitBranch0(con, 0, MIPS_BNE_OPCODE, 
                             CVMMIPS_t7, CVMMIPS_zero, 
-                            NULL);
+                            NULL, CVM_TRUE);
          CVMMIPSemitBranchToTarget(con, logicalPC, MIPS_BNE_OPCODE,
                                    hi_lhs, hi_rhs, link, fixupList);
          CVMMIPSemitSLT(con, MIPS_SLTU_OPCODE, CVMMIPS_t7, low_lhs, low_rhs);
@@ -1628,6 +1717,12 @@ CVMMIPSemitBranchOnCompare32(CVMJITCompilationContext* con,
     int branchOpcode;
     CVMUint32 sltOpcode;
     int tmp;
+    CVMCodegenComment* comment;
+
+    /* We may need to load a constant or do a compare before the branch, so
+     * save away any pushed comment.
+     */
+    CVMJITpopCodegenComment(con, comment);
 
     if (rhsIsConst && 
         !CVMCPUalurhsIsEncodableAsImmediate(CVMCPU_CMP_OPCODE, cmpRhsConst)) {
@@ -1656,6 +1751,8 @@ CVMMIPSemitBranchOnCompare32(CVMJITCompilationContext* con,
         }
         rhsIsConst = CVM_FALSE;
     }
+
+    CVMJITpushCodegenComment(con, comment);
 
     switch (cmpCondCode) {
     case CVMCPU_COND_EQ: /* equal */
@@ -1799,7 +1896,7 @@ CVMMIPSemitBranch(CVMJITCompilationContext* con, int logicalPC,
         if (reachable) {
             CVMMIPSemitBranch0(con, logicalPC,
                 (link ? MIPS_BGEZAL_OPCODE : MIPS_BEQ_OPCODE),
-                CVMMIPS_zero, CVMMIPS_zero, fixupList);
+                CVMMIPS_zero, CVMMIPS_zero, fixupList, CVM_TRUE);
         } else {
             CVMMIPSemitJump(con, logicalPC, link,
             CVM_TRUE /* fill delay slot */);
@@ -1957,7 +2054,7 @@ CVMMIPSemitDivOrRem(CVMJITCompilationContext* con,
     /* shortcut around compare for 0x80000000 % -1 */
     CVMJITaddCodegenComment((con, "goto doDiv"));
     CVMMIPSemitBranch0(con, doDivLogicalPC, MIPS_BGTZ_OPCODE,
-                       rhsRegID, CVMCPU_INVALID_REG, NULL);
+                       rhsRegID, CVMCPU_INVALID_REG, NULL, CVM_TRUE);
 
     /* compare for 0x80000000 / -1 */
     CVMJITaddCodegenComment((con, "0x80000000 / -1 check:"));
@@ -1965,12 +2062,12 @@ CVMMIPSemitDivOrRem(CVMJITCompilationContext* con,
                                 -1, CVMJIT_NOSETCC);
     CVMJITaddCodegenComment((con, "goto doDiv"));
     CVMMIPSemitBranch0(con, doDivLogicalPC, MIPS_BNE_OPCODE, 
-                      destRegID, CVMMIPS_zero, NULL);
+                      destRegID, CVMMIPS_zero, NULL, CVM_TRUE);
     CVMMIPSemitLUI(con, destRegID, 0x8000);
     CVMJITaddCodegenComment((con, "goto divDone"));
     CVMMIPSemitBranch0(con, divDoneLogicalPC,
 		      MIPS_BEQ_OPCODE, destRegID, lhsRegID,
-                      NULL);
+                      NULL, CVM_TRUE);
 
     /* emit the divw instruction */
     CVMtraceJITCodegen(("\t\t.doDiv\n"));
@@ -2090,10 +2187,16 @@ CVMCPUemitBinaryALU(CVMJITCompilationContext* con,
                             destRegID << MIPS_R_RD_SHIFT | mipsOpcode);
 	    CVMtraceJITCodegenExec({
 	        printPC(con);
-	        CVMconsolePrintf("	%s	%s, %s, %s",
-			         getALUOpcodeName(mipsOpcode),
-			         regName(destRegID), regName(lhsRegID),
-			         regName(rhsRegID));
+		if (opcode == CVMCPU_ADD_OPCODE && lhsRegID == CVMMIPS_zero) {
+		    /* this is really a "move register" instruction */
+		    CVMconsolePrintf("	move	%s, %s",
+				     regName(destRegID), regName(rhsRegID));
+		} else {
+		    CVMconsolePrintf("	%s	%s, %s, %s",
+				     getALUOpcodeName(mipsOpcode),
+				     regName(destRegID), regName(lhsRegID),
+				     regName(rhsRegID));
+		}
 	    });
         }
     } else { /* CVMMIPS_ALURHS_CONSTANT */
@@ -2333,7 +2436,7 @@ CVMMIPSemitMul(CVMJITCompilationContext* con, int opcode,
         (moveFromHI ? MIPS_MFHI_OPCODE : MIPS_MFLO_OPCODE));
     CVMtraceJITCodegenExec({
         printPC(con);
-        CVMconsolePrintf("	%s	%s\n",
+        CVMconsolePrintf("	%s	%s",
 			 (moveFromHI ? "mfhi" : "mflo"),
                          regName(destreg));
     });
@@ -2497,6 +2600,7 @@ CVMMIPSemitMFHI(CVMJITCompilationContext *con, int destRegID)
         printPC(con);
         CVMconsolePrintf("	mfhi	%s", regName(destRegID));
     });
+    CVMJITdumpCodegenComments(con);
 }
 
 /* Purpose: Emits instructions to do the specified 64 bit ALU operation. */
@@ -2812,6 +2916,9 @@ CVMMIPSemitPrimitiveMemoryReference(CVMJITCompilationContext* con,
     int newbaseReg = CVMMIPS_t7;
 
     switch (opcode) {
+        case CVMCPU_LDR8U_OPCODE:
+            CVMJITstatsRecordInc(con, CVMJIT_STATS_MEMREAD);
+            mipsOpcode = MIPS_LBU_OPCODE; break;
         case CVMCPU_LDR8_OPCODE:
             CVMJITstatsRecordInc(con, CVMJIT_STATS_MEMREAD);
             mipsOpcode = MIPS_LB_OPCODE; break;
@@ -2934,7 +3041,8 @@ CVMMIPSemitPrimitiveMemoryReference(CVMJITCompilationContext* con,
 #endif
     {
 	CVMtraceJITCodegenExec({
-	    if (opcode == CVMCPU_LDR8_OPCODE ||
+	    if (opcode == CVMCPU_LDR8U_OPCODE ||
+		opcode == CVMCPU_LDR8_OPCODE ||
 		opcode == CVMCPU_STR8_OPCODE ||
 		opcode == CVMCPU_LDR16U_OPCODE ||
 		opcode == CVMCPU_LDR16_OPCODE ||
@@ -3210,10 +3318,17 @@ CVMCPUemitComputeAddressOfArrayElement(CVMJITCompilationContext *con,
 {
     /* emit shift instruction first. Use destRegID to temporarily
      * store the shift value. */
-    CVMCPUemitShiftByConstant(con, shiftOpcode, destRegID,
-                              indexRegID, shiftAmount);
-    CVMCPUemitBinaryALURegister(con, opcode, destRegID, baseRegID, destRegID,
-				CVMJIT_NOSETCC);
+    if (shiftAmount != 0) {
+	CVMCPUemitShiftByConstant(con, shiftOpcode, destRegID,
+				  indexRegID, shiftAmount);
+	CVMCPUemitBinaryALURegister(con, opcode,
+				    destRegID, baseRegID, destRegID,
+				    CVMJIT_NOSETCC);
+    } else {
+	CVMCPUemitBinaryALURegister(con, opcode,
+				    destRegID, baseRegID, indexRegID,
+				    CVMJIT_NOSETCC);
+    }
 }
 
 /* Purpose: Emits instructions for implementing the following arithmetic
@@ -3267,6 +3382,156 @@ CVMCPUemitMaskOfTopNBits(CVMJITCompilationContext *con, int destRegID,
     }
     CVMJITdumpCodegenComments(con);
 }
+
+#ifdef CVMJIT_SIMPLE_SYNC_METHODS
+#if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_MICROLOCK && \
+    CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK
+
+/*
+ * Purpose: Emits an atomic swap operation. The value to swap in is in
+ *          destReg, which is also where the swapped out value will be placed.
+ */
+extern void
+CVMCPUemitAtomicSwap(CVMJITCompilationContext* con,
+		     int destReg, int addressReg)
+{
+    int retryLogicalPC;
+
+    CVMtraceJITCodegen(("\t\t"));
+    CVMJITdumpCodegenComments(con);
+
+    /* top of retry loop in case CAS operation is interrupted. */
+    CVMtraceJITCodegen(("\t\tretry:\n"));
+    retryLogicalPC = CVMJITcbufGetLogicalPC(con);
+
+    /* SC will clobber destReg, but we still need it in case SC
+     * fails and we have to retry. Use t7 as the scratch register to
+     * save contents of newValReg.
+     */
+    CVMJITaddCodegenComment((con, "copy new word since sc will trash it"));
+    CVMCPUemitMoveRegister(con, CVMCPU_MOV_OPCODE,
+			   CVMMIPS_t7, destReg, CVMJIT_NOSETCC);
+
+
+    /* emit LL instruction */
+    emitInstruction(con, MIPS_LL_OPCODE | destReg << MIPS_R_RT_SHIFT |
+		    addressReg << MIPS_RS_SHIFT | 0);
+    CVMJITaddCodegenComment((con, "fetch word from address"));
+    CVMtraceJITCodegenExec({
+	printPC(con);
+	CVMconsolePrintf("	ll	%s, (%s)",
+			 regName(destReg), regName(addressReg));
+    });
+    CVMJITdumpCodegenComments(con);
+
+    /* emit SC instruction */
+    emitInstruction(con, MIPS_SC_OPCODE | CVMMIPS_t7 << MIPS_R_RT_SHIFT |
+		    addressReg << MIPS_RS_SHIFT | 0);
+    CVMJITaddCodegenComment((con, "conditionally store new word in address"));
+    CVMtraceJITCodegenExec({
+	printPC(con);
+	CVMconsolePrintf("	sc	%s, (%s)",
+			 regName(CVMMIPS_t7), regName(addressReg));
+    });
+    CVMJITdumpCodegenComments(con);
+
+    /* Retry if reservation was lost and atomic operation failed */
+    CVMJITaddCodegenComment((con, "br retry if reservation was lost"));
+    CVMMIPSemitBranch0(con, retryLogicalPC,
+		       MIPS_BEQ_OPCODE, CVMMIPS_t7, CVMMIPS_zero,
+		       NULL, CVM_TRUE /* include nop */);
+
+    CVMJITprintCodegenComment(("End of Atomic Swap"));
+}
+
+#elif CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
+
+/*
+ * Purpose: Does an atomic compare-and-swap operation of newValReg into
+ *          the address addressReg+addressOffset if the current value in
+ *          the address is oldValReg. oldValReg and newValReg may
+ *          be clobbered.
+ * Return:  The int returned is the logical PC of the instruction that
+ *          branches if the atomic compare-and-swap fails. It will be
+ *          patched by the caller to branch to the proper failure address.
+ */
+int
+CVMCPUemitAtomicCompareAndSwap(CVMJITCompilationContext* con,
+			       int addressReg, int addressOffset,
+			       int oldValReg, int newValReg)
+{
+    int branchLogicalPC; /* pc of branch when CAS fails */
+    int retryLogicalPC;  /* pc to retry of SC fails */
+#ifdef CVM_TRACE_JIT
+    const char* branchLabel = CVMJITgetSymbolName(con);
+#endif
+
+    /* Resource for loading value stored at address */
+    CVMRMResource* actualVal = CVMRMgetResource(
+        CVMRM_INT_REGS(con), CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+    int actualValReg = CVMRMgetRegisterNumber(actualVal);
+
+    /* top of retry loop in case CAS operation is interrupted. */
+    CVMtraceJITCodegen(("\t\tretry:\n"));
+    retryLogicalPC = CVMJITcbufGetLogicalPC(con);
+
+    /* emit LL instruction */
+    emitInstruction(con, MIPS_LL_OPCODE | actualValReg << MIPS_R_RT_SHIFT |
+		    addressReg << MIPS_RS_SHIFT | addressOffset);
+    CVMJITaddCodegenComment((con, "fetch word from address"));
+    CVMtraceJITCodegenExec({
+	printPC(con);
+	CVMconsolePrintf("	ll	%s, %d(%s)",
+			 regName(actualValReg), addressOffset, 
+			 regName(addressReg));
+    });
+    CVMJITdumpCodegenComments(con);
+   
+    /* Branch to failure address if expected word not loaded. The proper
+     * branch address will be patched in by the caller. */
+    branchLogicalPC = CVMJITcbufGetLogicalPC(con);
+    CVMJITaddCodegenComment((con, "br %s if word not as expected",
+			     branchLabel));
+    CVMMIPSemitBranch0(con, CVMJITcbufGetLogicalPC(con),
+		       MIPS_BNE_OPCODE, actualValReg, oldValReg,
+		       NULL, CVM_FALSE /* no nop */);
+
+    /* SC will clobber newValReg, but we still need it in case SC
+     * fails and we have to retry. Use t7 as the scratch register to
+     * save contents of newValReg.  This will be done in the delay
+     * slot of the previous branch.
+     */
+    CVMJITaddCodegenComment((con, "copy new word since sc will trash it"));
+    CVMCPUemitMoveRegister(con, CVMCPU_MOV_OPCODE,
+			   CVMMIPS_t7, newValReg, CVMJIT_NOSETCC);
+
+
+    /* emit SC instruction */
+    emitInstruction(con, MIPS_SC_OPCODE | CVMMIPS_t7 << MIPS_R_RT_SHIFT |
+		    addressReg << MIPS_RS_SHIFT | addressOffset);
+    CVMJITaddCodegenComment((con, "conditionally store new word in address"));
+    CVMtraceJITCodegenExec({
+	printPC(con);
+	CVMconsolePrintf("	sc	%s, %d(%s)",
+			 regName(CVMMIPS_t7), addressOffset, 
+			 regName(addressReg));
+    });
+    CVMJITdumpCodegenComments(con);
+
+    /* Retry if reservation was lost and atomic operation failed */
+    CVMJITaddCodegenComment((con, "br retry if reservation was lost"));
+    CVMMIPSemitBranch0(con, retryLogicalPC,
+		       MIPS_BEQ_OPCODE, CVMMIPS_t7, CVMMIPS_zero,
+		       NULL, CVM_TRUE /* include nop */);
+
+    CVMJITprintCodegenComment(("End of CAS"));
+
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), actualVal);
+    return branchLogicalPC;
+}
+
+#endif /* CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS */
+#endif /* CVMJIT_SIMPLE_SYNC_METHODS */
 
 /*
  * Emit code to do a gc rendezvous.

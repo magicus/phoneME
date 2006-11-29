@@ -1,27 +1,33 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)Hashtable.java	1.90 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package java.util;
 import java.io.*;
+import sun.misc.CVM;
 
 /**
  * This class implements a hashtable, which maps keys to values. Any 
@@ -222,6 +228,16 @@ public class Hashtable extends Dictionary implements Map, Cloneable,
 	return count;
     }
 
+    private int sizeSimpleSync() {
+ 	if (CVM.simpleLockGrab(this)) {
+	    int result = count;
+	    CVM.simpleLockRelease(this);
+	    return result;
+	} else {
+	    return size();
+	}
+    }
+
     /**
      * Tests if this hashtable maps no keys to values.
      *
@@ -231,6 +247,17 @@ public class Hashtable extends Dictionary implements Map, Cloneable,
     public synchronized boolean isEmpty() {
 	return count == 0;
     }
+
+    private boolean isEmptySimpleSync() {
+ 	if (CVM.simpleLockGrab(this)) {
+	    boolean result = count == 0;
+	    CVM.simpleLockRelease(this);
+	    return result;
+	} else {
+	    return isEmpty();
+	}
+    }
+
 
     /**
      * Returns an enumeration of the keys in this hashtable.

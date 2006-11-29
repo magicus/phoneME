@@ -1,23 +1,27 @@
 #
-# Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
-# 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2 only,
-# as published by the Free Software Foundation.
-# 
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# version 2 for more details (a copy is included at /legal/license.txt).
-# 
-# You should have received a copy of the GNU General Public License version
-# 2 along with this work; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
-# 
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 or visit www.sun.com if you need additional information or have
-# any questions.
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+#   
+# This program is free software; you can redistribute it and/or  
+# modify it under the terms of the GNU General Public License version  
+# 2 only, as published by the Free Software Foundation.   
+#   
+# This program is distributed in the hope that it will be useful, but  
+# WITHOUT ANY WARRANTY; without even the implied warranty of  
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+# General Public License version 2 for more details (a copy is  
+# included at /legal/license.txt).   
+#   
+# You should have received a copy of the GNU General Public License  
+# version 2 along with this work; if not, write to the Free Software  
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+# 02110-1301 USA   
+#   
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+# Clara, CA 95054 or visit www.sun.com if you need additional  
+# information or have any questions. 
+#
+# @(#)defs_cdc.mk	1.66 06/10/10
 #
 
 CVM_BUILDTIME_CLASSES += \
@@ -344,7 +348,6 @@ CVM_BUILDTIME_CLASSES += \
    sun.io.CharToByteISO8859_1 \
    sun.io.ByteToCharISO8859_1 \
    sun.io.CharToByteUTF8 \
-   sun.io.ByteToCharUTF8 \
    sun.io.ByteToCharASCII \
    sun.io.CharToByteASCII \
    sun.io.CharToByteUTF16 \
@@ -396,6 +399,7 @@ CVM_BUILDTIME_CLASSES += \
 endif
 # %end lvm
 
+# These need to be romized to keep PMVM happy
 ifeq ($(CVM_MTASK), true)
 CVM_BUILDTIME_CLASSES += \
    sun.io.ByteToCharUTF8 \
@@ -404,11 +408,18 @@ CVM_BUILDTIME_CLASSES += \
    sun.net.www.protocol.jar.JarURLConnection \
    sun.net.www.protocol.jar.JarFileFactory \
    sun.net.www.protocol.jar.URLJarFile
+endif
 
+ifeq ($(CVM_MTASK), true)
 CLASSLIB_CLASSES += \
    sun.mtask.Warmup \
    sun.mtask.AppModelManager \
    sun.mtask.Listener
+endif
+
+ifeq ($(CVM_AOT), true)
+CLASSLIB_CLASSES += \
+   sun.mtask.Warmup
 endif
 
 CVM_POLICY_SRC  ?= $(CVM_TOP)/src/share/lib/security/java.policy
@@ -424,7 +435,6 @@ CVM_BUILDTIME_CLASSES += \
 # Classes to be loaded at runtime.
 #
 CLASSLIB_CLASSES += \
-   java.io.ExpiringCache \
    java.net.BindException \
    java.net.DatagramPacket \
    java.net.DatagramSocket \

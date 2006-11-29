@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitriscemitter_cpu.h	1.97 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_ARM_JITRISCEMITTER_CPU_H
@@ -345,6 +350,15 @@ CVMARMgetBranchInstruction(CVMCPUCondCode condCode, int offset, CVMBool link);
  * convention support functions required by the RISC emitter porting layer.
  **************************************************************/
 
+/* Purpose: Gets the registers required by a C call.  These register could be
+            altered by the call being made. */
+extern CVMJITRegsRequiredType
+CVMARMCCALLgetRequired(CVMJITCompilationContext *con,
+                       CVMJITRegsRequiredType argsRequired,
+		       CVMJITIRNode *intrinsicNode,
+		       CVMJITIntrinsic *irec,
+		       CVMBool useRegArgs);
+
 /* Purpose: Dynamically instantiates an instance of the CVMCPUCallContext. */
 #define CVMCPUCCallnewContext(con) \
     ((CVMCPUCallContext *)CVMJITmemNew(con, JIT_ALLOC_CGEN_OTHER, \
@@ -352,18 +366,28 @@ CVMARMgetBranchInstruction(CVMCPUCondCode condCode, int offset, CVMBool link);
 
 /* Purpose: Gets the registers required by a C call.  These register could be
             altered by the call being made. */
-#define CVMCPUCCALLgetRequired(con, argsRequired) \
-    (CVMCPU_AVOID_C_CALL | argsRequired)
+#define CVMCPUCCALLgetRequired(con, argsRequired, node, irec, useRegArgs) \
+    useRegArgs? /* IAI-22 */ \
+        CVMARMCCALLgetRequired(con, argsRequired, node, irec, useRegArgs): \
+        (CVMCPU_AVOID_C_CALL | argsRequired)
 
 #define CVMARMCCALLargSize(argType) \
     (((argType == CVM_TYPEID_LONG) || (argType == CVM_TYPEID_DOUBLE)) ? 2 : 1)
 
 /* Purpose: Performs initialization in preparation for pinning arguments to
             registers or to overflow to the native stack. */
-#define CVMCPUCCALLinitArgs(con, callContext, irec, forTargetting) {   \
+#define CVMCPUCCALLinitArgs(con, callContext, irec, forTargetting,     \
+                            useRegArgs) {                              \
     int numberOfArgsWords = (irec)->numberOfArgsWords;                 \
     (callContext)->reservedRes = NULL;                                 \
-    if (!(forTargetting) && numberOfArgsWords > CVMCPU_MAX_ARG_REGS) { \
+    /* NOTE: We assume that if the intrinsic is using RegArgs, then    \
+       we are guaranteed that there are enough registers to use as     \
+       args.  This is because CVMJITINTRINSIC_REG_ARGS will only be    \
+       declared for target specific intrinsics.  Common code cannot    \
+       use this calling convention because it has no knowledge of the  \
+       convention implementation details, and hence can't use it. */   \
+    if (!(forTargetting) && !(useRegArgs) &&                           \
+        (numberOfArgsWords > CVMCPU_MAX_ARG_REGS)) {                   \
         int stackWords = numberOfArgsWords - CVMCPU_MAX_ARG_REGS;      \
 	stackWords = (stackWords + 1) & ~1; /* align for AAPCS */      \
         stackWords *= 4;                                               \
@@ -373,16 +397,19 @@ CVMARMgetBranchInstruction(CVMCPUCondCode condCode, int offset, CVMBool link);
 }
 
 /* Purpose: Gets the register targets for the specified argument. */
-#define CVMCPUCCALLgetArgTarget(con, callContext, \
-                                argType, argNo, argWordIndex) \
+#define CVMCPUCCALLgetArgTarget(con, callContext, argType, argNo, \
+                                argWordIndex, useRegArgs) \
     ((argWordIndex + CVMARMCCALLargSize(argType) <= CVMCPU_MAX_ARG_REGS) ? \
       (1U << (CVMCPU_ARG1_REG + argWordIndex)) :                           \
-      CVMRM_ANY_SET)
+      useRegArgs ? /* IAI-22 */                                            \
+        (1U << (CVMARM_v3 + argWordIndex - CVMCPU_MAX_ARG_REGS)) :       \
+        CVMRM_ANY_SET)
 
 /* Purpose: Relinquish a previously pinned arguments. */
 #define CVMCPUCCALLrelinquishArg(con, callContext, arg, argType, argNo, \
-                                 argWordIndex)                          \
-    if (argWordIndex + CVMARMCCALLargSize(argType) <= CVMCPU_MAX_ARG_REGS) { \
+                                 argWordIndex, useRegArgs)              \
+    if ((useRegArgs) /* IAI-22 */ ||                                    \
+        argWordIndex + CVMARMCCALLargSize(argType) <= CVMCPU_MAX_ARG_REGS) { \
         CVMRMrelinquishResource(CVMRM_INT_REGS(con), arg);              \
     } else if ((callContext)->reservedRes != NULL) {                    \
         CVMRMrelinquishResource(CVMRM_INT_REGS(con),			\
@@ -391,10 +418,12 @@ CVMARMgetBranchInstruction(CVMCPUCondCode condCode, int offset, CVMBool link);
     }
 
 /* Purpose: Releases any resources allocated in CVMCPUCCALLinitArgs(). */
-#define CVMCPUCCALLdestroyArgs(con, callContext, irec, forTargetting) { \
+#define CVMCPUCCALLdestroyArgs(con, callContext, irec, forTargetting,  \
+                               useRegArgs) {                           \
     int numberOfArgsWords = (irec)->numberOfArgsWords;                 \
     ((void)callContext);                                               \
-    if (!(forTargetting) && numberOfArgsWords > CVMCPU_MAX_ARG_REGS) { \
+    if (!(forTargetting) && !(useRegArgs) &&                           \
+        (numberOfArgsWords > CVMCPU_MAX_ARG_REGS)) {                   \
         int stackWords = numberOfArgsWords - CVMCPU_MAX_ARG_REGS;      \
 	stackWords = (stackWords + 1) & ~1; /* align for AAPCS */      \
         stackWords *= 4;                                               \

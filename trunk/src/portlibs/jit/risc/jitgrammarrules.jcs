@@ -1,24 +1,28 @@
-// Portions Copyright 2000-2006 Sun Microsystems, Inc. All Rights Reserved.
-// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 //
-// This program is free software; you can redistribute it and/or modify it
-// under the terms of the GNU General Public License version 2 only, as
-// published by the Free Software Foundation.
+// @(#)jitgrammarrules.jcs	1.348 06/10/13
 //
-// This program is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-// Public License version 2 for more details (a copy is included at
-// /legal/license.txt).
+// Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
 //
-// You should have received a copy of the GNU General Public
-// License version 2 along with this work; if not, write to the Free
-// Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-// 02110-1301 USA
-//
-// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-// CA 95054 or visit www.sun.com if you need additional information or have
-// any questions.
 
 //
 // Copyright 2005 Intel Corporation. All rights reserved.
@@ -110,6 +114,12 @@
 %unary  GET_ITBL
 %binary FETCH_MB_FROM_VTABLE
 %binary FETCH_MB_FROM_ITABLE
+
+// #ifdef IAI_VIRTUAL_INLINE_CB_TEST
+%unary  FETCH_VCB
+%binary FETCH_MB_FROM_VTABLE_OUTOFLINE
+%binary MB_TEST_OUTOFLINE
+// #endif
 
 //
 // memory accesses
@@ -333,7 +343,7 @@ static void setStaticField(CVMJITCompilationContext *con,
     CVMRMResource *src = popResource(con); /* Right Hand Side first. */
     CVMRMResource *staticField = popResource(con); /* lhs next.*/
 
-    /* %comment lamm024 */
+    /* %comment l024 */
 
     CVMRMpinResource(CVMRM_INT_REGS(con), staticField,
 		     CVMRM_ANY_SET, CVMRM_EMPTY_SET);
@@ -414,8 +424,9 @@ static void doIntShift(CVMJITCompilationContext *con, int shiftOp,
 	dest = CVMRMgetResourceSpecific(rc, lhsRegNo, 1);
 	CVMassert(lhsRegNo == CVMRMgetRegisterNumber(dest));
     } else {
+	/* avoid dest target when pinning lhs */
+	CVMRMpinResource(rc, lhs, ~target, target);
 	dest = CVMRMgetResource(rc, target, avoid, 1);
-	CVMRMpinResource(rc, lhs, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
 	lhsRegNo = CVMRMgetRegisterNumber(lhs);
     }
 
@@ -521,26 +532,6 @@ wordBinaryOp(
     int lhsRegNo = CVMRMgetRegisterNumberUnpinned(lhs);
     CVMJITRMContext* rc = CVMRM_INT_REGS(con);
 
-    /* If the dest node has a regHint and the register number is the same as
-     * the register the lhs is already loaded into, then reuse the lhs
-     * register as the dest register. This is common when locals are
-     * incremented.
-     */
-    if (thisNode->decorationType == CVMJIT_REGHINT_DECORATION &&
-	lhsRegNo != -1 &&
-	(1U << lhsRegNo) == target &&
-	CVMRMgetRefCount(rc, lhs) == 1)
-    {
-	/* relinquish first so dirty resources are not spilled */
-	CVMRMrelinquishResource(rc, lhs);
-	lhs = NULL;
-	dest = CVMRMgetResourceSpecific(rc, lhsRegNo, 1);
-	CVMassert(lhsRegNo == CVMRMgetRegisterNumber(dest));
-    } else {
-	dest = CVMRMgetResource(rc, target, avoid, 1);
-	CVMRMpinResource(rc, lhs, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
-	lhsRegNo = CVMRMgetRegisterNumber(lhs);
-    }
 #ifdef IAI_IMPROVED_CONSTANT_ENCODING
     /*
      * If rhs is a constant that is not encodable, but the negative of the
@@ -567,8 +558,31 @@ wordBinaryOp(
     }
 #endif
 
-    CVMCPUalurhsPinResource(rc, opcode, rhs,
-			    CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+    /* avoid dest target when pinning rhs */
+    CVMCPUalurhsPinResource(rc, opcode, rhs, ~target, target);
+
+    /* If the dest node has a regHint and the register number is the same as
+     * the register the lhs is already loaded into, then reuse the lhs
+     * register as the dest register. This is common when locals are
+     * incremented.
+     */
+    if (thisNode->decorationType == CVMJIT_REGHINT_DECORATION &&
+	lhsRegNo != -1 &&
+	(1U << lhsRegNo) == target &&
+	CVMRMgetRefCount(rc, lhs) == 1)
+    {
+	/* relinquish first so dirty resources are not spilled */
+	CVMRMrelinquishResource(rc, lhs);
+	lhs = NULL;
+	dest = CVMRMgetResourceSpecific(rc, lhsRegNo, 1);
+	CVMassert(lhsRegNo == CVMRMgetRegisterNumber(dest));
+    } else {
+	/* avoid dest target when pinning lhs */
+	CVMRMpinResource(rc, lhs, ~target, target);
+	dest = CVMRMgetResource(rc, target, avoid, 1);
+	lhsRegNo = CVMRMgetRegisterNumber(lhs);
+    }
+
     CVMCPUemitBinaryALU(con, opcode, CVMRMgetRegisterNumber(dest),
 			lhsRegNo, CVMCPUalurhsGetToken(con, rhs),
 			CVMJIT_NOSETCC);
@@ -1037,7 +1051,7 @@ static void getStaticField(CVMJITCompilationContext *con,
     CVMRMResource *staticField = popResource(con);
     CVMRMResource *dest = CVMRMgetResource(rc, target, avoid, fieldSize);
 
-    /* %comment lamm026 */ 
+    /* %comment l026 */ 
 
     CVMRMpinResource(CVMRM_INT_REGS(con), staticField,
 		     CVMRM_ANY_SET, CVMRM_EMPTY_SET);
@@ -1412,6 +1426,19 @@ reg32: CLASS_BLOCK : 20 : : : : {
 	pushResource(con, src);
     };
 
+// This handles IDENT32 over a BOUNDS_CHECK with a constant index
+%dag iconst32Index: IDENT32 iconst32Index : 0 :
+    IDENT_SYNTHESIS(con, $$); : IDENT_INHERITANCE(con, $$); : : {
+	CVMInt32 idx;
+	if (!CVMJIT_DID_SEMANTIC_ACTION($$)){
+	    idx = popIConst32(con);
+	    CVMJITirnodeGetIdentOp($$)->backendData = idx;
+	} else {
+	    idx = CVMJITirnodeGetIdentOp($$)->backendData;
+	}
+	pushIConst32(con, idx);
+    };
+
 %dag arrayIndex: IDENT32 arrayIndex : 0 :
     IDENT_SYNTHESIS(con, $$); : IDENT_INHERITANCE(con, $$); : : {
 	ScaledIndexInfo* src;
@@ -1430,6 +1457,10 @@ reg32: CLASS_BLOCK : 20 : : : : {
 	CVMconsolePrintf("IDENT32 ID %d, resource 0x%x\n",
 	    $$->nodeID, src);
 	*/
+	
+#ifdef IAI_CS_EXCEPTION_ENHANCEMENT2
+        src->isIDENTITYOutofBoundsCheck = CVM_TRUE;
+#endif
 	pushScaledIndexInfo(con, src);
     };
 
@@ -1497,6 +1528,42 @@ CVMJITRISCintrinsicDefaultGetArgTarget(CVMJITCompilationContext *con,
     return CVMRM_ANY_SET;
 }
 
+#ifdef CVMJIT_SIMPLE_SYNC_METHODS
+CVMJITRegsRequiredType
+CVMJITRISCintrinsicSimpleLockReleaseGetRequired(
+    CVMJITCompilationContext *con,
+    CVMJITIRNode *intrinsicNode,
+    CVMJITRegsRequiredType argsRequiredSet)
+{
+#if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
+    /* During the release, we may call CVMCCMruntimeSimpleSyncUnlock,
+     * which requires ARG1 and ARG2
+     */
+    return argsRequiredSet | ARG1 | ARG2 | CVMCPU_AVOID_C_CALL;
+#else
+    return argsRequiredSet;
+#endif
+}
+
+
+CVMRMregset
+CVMJITRISCintrinsicSimpleLockReleaseGetArgTarget(
+    CVMJITCompilationContext *con,
+    int typeTag, CVMUint16 argNumber,
+    CVMUint16 argWordIndex)
+{
+    CVMassert(argNumber == 0);
+#if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
+    /* During the release, we may call CVMCCMruntimeSimpleSyncUnlock,
+     * which requires "this" to be in ARG2
+     */
+    return ARG2;
+#else
+    return CVMRM_ANY_SET;
+#endif
+}
+#endif /* CVMJIT_SIMPLE_SYNC_METHODS */
+
 /* intrinsic emitter for Thread.currentThread(). */
 static void
 java_lang_Thread_currentThread_EmitOperator(CVMJITCompilationContext *con,
@@ -1557,6 +1624,656 @@ iabsEmitOperator(CVMJITCompilationContext *con, CVMJITIRNode *intrinsicNode)
     pushResource(con, dest);
 }
 
+#ifdef CVMJIT_SIMPLE_SYNC_METHODS
+#if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_MICROLOCK && \
+    CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK
+
+/*
+ * Intrinsic emitter for spinlock microlock version of CVM.simpleLockGrab().
+ *
+ * Grabs CVMglobals.objGlobalMicroLock using atomic swap. If it fails,
+ * returns FALSE. If successful, checks if the object is already locked.
+ * If locked, releases CVMglobals.objGlobalMicroLock and returns FALSE.
+ * Otherwise returns TRUE.
+ */
+
+static void
+simpleLockGrabEmitter(
+    CVMJITCompilationContext * con,
+    CVMJITIRNode *intrinsicNode)
+{
+    CVMRMResource* obj = popResource(con);
+    CVMRMResource* objHdr;
+    CVMRMResource* dest;
+    CVMRMResource* microLock;
+    int objRegID, objHdrRegID, destRegID, microLockRegID;
+    int fixupPC1, fixupPC2; /* To patch the conditional branches */
+
+    struct CVMJITCompileExpression_rule_computation_state *goal_top =
+	(struct CVMJITCompileExpression_rule_computation_state *)
+        (con->goal_top);
+
+    dest = CVMRMgetResource(CVMRM_INT_REGS(con), GET_REGISTER_GOALS, 1);
+    objHdr = CVMRMgetResource(CVMRM_INT_REGS(con),
+			      CVMRM_ANY_SET, CVMRM_SAFE_SET, 1);
+    CVMRMpinResource(CVMRM_INT_REGS(con), obj, CVMRM_ANY_SET, CVMRM_SAFE_SET);
+
+    objRegID    = CVMRMgetRegisterNumber(obj);
+    objHdrRegID = CVMRMgetRegisterNumber(objHdr);
+    destRegID   = CVMRMgetRegisterNumber(dest);
+
+    /* load microlock address into microLockRegID */
+    CVMJITsetSymbolName((con, "&CVMglobals.objGlobalMicroLock"));
+    microLock = CVMRMgetResourceForConstant32(
+        CVMRM_INT_REGS(con), CVMRM_ANY_SET, CVMRM_SAFE_SET,
+	(CVMUint32)&CVMglobals.objGlobalMicroLock);
+    microLockRegID = CVMRMgetRegisterNumber(microLock);
+    /* preload the address to help caching */
+    CVMJITaddCodegenComment((con, "tmp = CVMglobals.objGlobalMicroLock"));
+    CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_LDR32_OPCODE,
+				       destRegID, microLockRegID, 0);
+    /* Get microlock LOCKED flag */
+    CVMJITaddCodegenComment((con, "CVM_MICROLOCK_LOCKED"));
+    CVMCPUemitLoadConstant(con, destRegID, CVM_MICROLOCK_LOCKED);
+    /* atomic swap LOCKED into the microlock */
+    CVMJITaddCodegenComment((con,
+	"swp(CVMglobals.objGlobalMicroLock, CVM_MICROLOCK_LOCKED)"));
+    CVMCPUemitAtomicSwap(con, destRegID, microLockRegID);
+    /* check if microlock is already locked */
+    CVMJITaddCodegenComment((con, "check if microlock is locked"));
+    CVMCPUemitCompareConstant(con, CVMCPU_CMP_OPCODE, CVMCPU_COND_EQ,
+			      destRegID, CVM_MICROLOCK_LOCKED);
+    /* branch if microlock already locked */
+    CVMJITaddCodegenComment((con, "br failed if microlock is locked"));
+    CVMCPUemitBranch(con, 0, CVMCPU_COND_EQ);
+#ifdef CVMCPU_HAS_DELAY_SLOT
+    fixupPC1 = CVMJITcbufGetLogicalPC(con) - 2 * CVMCPU_INSTRUCTION_SIZE;
+#else
+    fixupPC1 = CVMJITcbufGetLogicalPC(con) - 1 * CVMCPU_INSTRUCTION_SIZE;
+#endif
+
+#ifdef IAI_CODE_SCHEDULER_SCORE_BOARD
+    fixupPC1 = CVMJITcbufGetLogicalInstructionPC(con);
+#endif
+    /* load the object header */
+    CVMJITaddCodegenComment((con, "get obj.hdr.various32"));
+    CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_LDR32_OPCODE,
+				       objHdrRegID, objRegID,
+				       CVMoffsetof(CVMObjectHeader,various32));
+    /* assume not locked and set intrinsic result */
+    CVMJITaddCodegenComment((con, "assume not locked: result = true"));
+    CVMCPUemitLoadConstant(con, destRegID, CVM_TRUE);
+    /* get sync bits from object header */
+    CVMJITaddCodegenComment((con, "get obj sync bits"));
+    CVMCPUemitBinaryALUConstant(con, CVMCPU_AND_OPCODE,
+				objHdrRegID, objHdrRegID,
+				CVM_SYNC_MASK, CVMJIT_NOSETCC);
+    /* check if object is unlocked */
+    CVMJITaddCodegenComment((con, "check if obj unlocked"));
+    CVMCPUemitCompareConstant(con, CVMCPU_CMP_OPCODE, CVMCPU_COND_EQ,
+			      objHdrRegID, CVM_LOCKSTATE_UNLOCKED);
+    /* branch if object not locked */
+    CVMJITaddCodegenComment((con, "br done if object is not locked"));
+    CVMCPUemitBranch(con, 0, CVMCPU_COND_EQ);
+#ifdef CVMCPU_HAS_DELAY_SLOT
+    fixupPC2 = CVMJITcbufGetLogicalPC(con) - 2 * CVMCPU_INSTRUCTION_SIZE;
+#else
+    fixupPC2 = CVMJITcbufGetLogicalPC(con) - 1 * CVMCPU_INSTRUCTION_SIZE;
+#endif
+
+#ifdef IAI_CODE_SCHEDULER_SCORE_BOARD
+    fixupPC2 = CVMJITcbufGetLogicalInstructionPC(con);
+#endif
+    /* Object is locked. Release microlock */
+    CVMJITaddCodegenComment((con, "CVM_MICROLOCK_UNLOCKED"));
+    CVMCPUemitLoadConstant(con, destRegID, CVM_MICROLOCK_UNLOCKED);
+    CVMJITaddCodegenComment((con,
+	"CVMglobals.objGlobalMicroLock = CVM_MICROLOCK_UNLOCKED"));
+    CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+				       destRegID, microLockRegID, 0);
+    /* Failure target. Make instrinsic return false. */
+    CVMtraceJITCodegen(("\t\tfailed:\n"));
+    CVMJITfixupAddress(con, fixupPC1, CVMJITcbufGetLogicalPC(con),
+		       CVMJIT_COND_BRANCH_ADDRESS_MODE);
+    CVMCPUemitLoadConstant(con, destRegID, CVM_FALSE);
+    /* "done" target. No change is made instrinc result. */
+    CVMtraceJITCodegen(("\t\tdone:\n"));
+    CVMJITfixupAddress(con, fixupPC2, CVMJITcbufGetLogicalPC(con),
+		       CVMJIT_COND_BRANCH_ADDRESS_MODE);
+
+#ifdef CVM_DEBUG
+    /* For Debug builds, we do the following:
+     *
+     * 1. Set the ee's microlock depth to 0 or 1 based on success.
+     * 2. Set CVMglobals.jit.currentSimpleSyncMB to the Simple Sync
+     *    mb we are currently generating code for.
+     *
+     * (1) is done so C code will assert if the microlock gets out
+     * of balance. Note we don't assert in here in the generated code
+     * because it is too ugly.
+     *
+     * (2) is done in case there is ever a problem, we can find out
+     * the last Simple Sync method called by looking in CVMglobals.
+     * It is disabled with #if 0 by default.
+     */
+    {
+	/* 1. Set the ee's microlock depth to 0 or 1 based on success. */
+	int eeReg;
+#ifndef CVMCPU_EE_REG
+	CVMRMResource *eeRes =
+	    CVMRMgetResource(CVMRM_INT_REGS(con),
+			     CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+	eeReg = CVMRMgetRegisterNumber(eeRes);
+	/* Get the ee: */
+	CVMJITaddCodegenComment((con, "eeReg = ccee->ee"));
+	CVMCPUemitCCEEReferenceImmediate(con, CVMCPU_LDR32_OPCODE, eeReg,
+					 CVMoffsetof(CVMCCExecEnv, eeX));
+#else
+	eeReg = CVMCPU_EE_REG;
+#endif
+	/* Set the ee's microlock depth. We just set it to the result
+	 * of this intrinsic, which will be 0 or 1. */
+	CVMJITaddCodegenComment((con, "ee->microLock = <result>"));
+	CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+            destRegID, eeReg, offsetof(CVMExecEnv, microLock));
+#ifndef CVMCPU_EE_REG
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), eeRes);
+#endif
+    }
+    /* 
+     * The following debugging code is disabled for now, but can be enabled
+     * if Simple Sync methods are suspected of causing problems, like a
+     * deadlock or assert.
+     */
+#if 0
+    {
+	/* Store the mb of the currently executing Simple Sync method into
+	 * CVMglobals.jit.currentSimpleSyncMB. */
+	CVMRMResource* currentSimpleSyncMBRes;
+	CVMRMResource* simpleSyncMBRes;
+	CVMJITMethodContext* mc = con->inliningStack[con->inliningDepth-1].mc;
+	/* load CVMglobals.jit.currentSimpleSyncMB address into a register */
+	CVMJITsetSymbolName((con, "&CVMglobals.jit.currentSimpleSyncMB"));
+	currentSimpleSyncMBRes = CVMRMgetResourceForConstant32(
+            CVMRM_INT_REGS(con), CVMRM_ANY_SET, CVMRM_SAFE_SET,
+	    (CVMUint32)&CVMglobals.jit.currentSimpleSyncMB);
+	/* load the Simple Sync mb address into a register */
+        CVMJITsetSymbolName((con, "mb %C.%M", mc->cb, mc->mb));
+	simpleSyncMBRes = CVMRMgetResourceForConstant32(
+            CVMRM_INT_REGS(con), CVMRM_ANY_SET, CVMRM_SAFE_SET,
+	    (CVMUint32)mc->mb);
+	/* Store the Simple Sync mb into CVMglobals.jit.currentSimpleSyncMB. */
+	CVMJITaddCodegenComment((con,
+				 "CVMglobals.jit.currentSimpleSyncMB = %C.%M",
+				 mc->cb, mc->mb));
+	CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+	    CVMRMgetRegisterNumber(simpleSyncMBRes),
+	    CVMRMgetRegisterNumber(currentSimpleSyncMBRes), 0);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), currentSimpleSyncMBRes);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), simpleSyncMBRes);
+    }
+    {
+	/* Store the mb of the currently executing method into
+	 * CVMglobals.jit.currentMB. */
+	CVMRMResource* currentMBRes;
+	CVMRMResource* mbRes;
+	/* load CVMglobals.jit.currentMB address into a register */
+	CVMJITsetSymbolName((con, "&CVMglobals.jit.currentMB"));
+	currentMBRes = CVMRMgetResourceForConstant32(
+            CVMRM_INT_REGS(con), CVMRM_ANY_SET, CVMRM_SAFE_SET,
+	    (CVMUint32)&CVMglobals.jit.currentMB);
+	/* load the current mb address into a register */
+        CVMJITsetSymbolName((con, "mb %C.%M",
+			     CVMmbClassBlock(con->mb), con->mb));
+	mbRes = CVMRMgetResourceForConstant32(
+            CVMRM_INT_REGS(con), CVMRM_ANY_SET, CVMRM_SAFE_SET,
+	    (CVMUint32)con->mb);
+	/* Store the Simple Sync mb into CVMglobals.jit.currentMB. */
+	CVMJITaddCodegenComment((con,
+				 "CVMglobals.jit.currentMB = %C.%M",
+				 CVMmbClassBlock(con->mb), con->mb));
+	CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+	    CVMRMgetRegisterNumber(mbRes),
+	    CVMRMgetRegisterNumber(currentMBRes), 0);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), currentMBRes);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), mbRes);
+    }
+#endif /* 0 */
+#endif /* CVM_DEBUG */
+
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), obj);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), objHdr);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), microLock);
+    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, intrinsicNode);
+    pushResource(con, dest);
+}
+
+/*
+ * Intrinsic emitter for microlock version of CVM.simpleLockRelease().
+ *
+ * Stores CVM_MICROLOCK_UNLOCKED into CVMglobals.objGlobalMicroLock.
+ */
+static void
+simpleLockReleaseEmitter(
+    CVMJITCompilationContext * con,
+    CVMJITIRNode *intrinsicNode)
+{
+    CVMRMResource* tmp;
+    CVMRMResource* microLock;
+    int tmpRegID, microLockRegID;
+
+    popResource(con); /* pop the "this" argument, which we don't use */
+    tmp = CVMRMgetResource(CVMRM_INT_REGS(con),
+			   CVMRM_ANY_SET, CVMRM_SAFE_SET, 1);
+
+    tmpRegID = CVMRMgetRegisterNumber(tmp);
+
+    /* get CVM_MICROLOCK_UNLOCKED value */
+    CVMJITaddCodegenComment((con, "CVM_MICROLOCK_UNLOCKED"));
+    CVMCPUemitLoadConstant(con, tmpRegID, CVM_MICROLOCK_UNLOCKED);
+
+#ifdef CVM_DEBUG
+    /* Set the ee's microlock depth to 0, which is the same as
+     * CVM_MICROLOCK_UNLOCKED. */
+    {
+	int eeReg;
+#ifndef CVMCPU_EE_REG
+	CVMRMResource *eeRes =
+	    CVMRMgetResource(CVMRM_INT_REGS(con),
+			     CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+	eeReg = CVMRMgetRegisterNumber(eeRes);
+	/* Get the ee: */
+	CVMJITaddCodegenComment((con, "eeReg = ccee->ee"));
+	CVMCPUemitCCEEReferenceImmediate(con, CVMCPU_LDR32_OPCODE, eeReg,
+					 CVMoffsetof(CVMCCExecEnv, eeX));
+#else
+	eeReg = CVMCPU_EE_REG;
+#endif
+	CVMassert(CVM_MICROLOCK_UNLOCKED == 0);
+	CVMJITaddCodegenComment((con, "ee->microLock = 0"));
+	CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+					   tmpRegID, eeReg,
+					   offsetof(CVMExecEnv, microLock));
+#ifndef CVMCPU_EE_REG
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), eeRes);
+#endif
+    }
+#endif /* CVM_DEBUG */
+
+    /* load microlock address into microLockRegID */
+    CVMJITsetSymbolName((con, "&CVMglobals.objGlobalMicroLock"));
+    microLock = CVMRMgetResourceForConstant32(CVMRM_INT_REGS(con),
+				  CVMRM_ANY_SET, CVMRM_SAFE_SET,
+				  (CVMUint32)&CVMglobals.objGlobalMicroLock);
+    microLockRegID = CVMRMgetRegisterNumber(microLock);
+    /* release the microlock */
+    CVMJITaddCodegenComment((con,
+	"CVMglobals.objGlobalMicroLock = CVM_MICROLOCK_UNLOCKED"));
+    CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+				       tmpRegID, microLockRegID, 0);
+
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), tmp);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), microLock);
+}
+
+#elif CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
+
+/*
+ * Intrinsic emitter for fastlock CAS version of CVM.simpleLockGrab().
+ *
+ * Attempts to lock the object using the reserved 
+ * ee->simpleSyncReservedOwnedMonitor. If the object is already locked,
+ * returns FALSE. Otherwise returns TRUE.
+ */
+
+static void
+simpleLockGrabEmitter(
+    CVMJITCompilationContext * con,
+    CVMJITIRNode *intrinsicNode)
+{
+    CVMRMResource* obj = popResource(con);
+    CVMRMResource* objHdr;
+    CVMRMResource* lockRec;
+    CVMRMResource* dest;
+    int objRegID, objHdrRegID, lockRecRegID, destRegID, eeRegID;
+    int fixupPC1, fixupPC2; /* To patch the conditional branches */
+#ifndef CVMCPU_EE_REG
+    CVMRMResource *eeRes;
+#endif
+
+    struct CVMJITCompileExpression_rule_computation_state *goal_top =
+	(struct CVMJITCompileExpression_rule_computation_state *)
+        (con->goal_top);
+
+    if (CVMRMisConstant(obj) && CVMRMgetConstant(obj) == 0) {
+	/* We know the object is a null, so an NPE would be thrown before
+	 * code generated here is executed. Therefore we don't need to
+	 * generate anything. We'll stuff the obj resource into the
+	 * intrinisic node just to keep JCS happy.
+	 */
+	CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), obj, intrinsicNode);
+	pushResource(con, obj);
+	return;
+    }
+
+#ifndef CVMCPU_EE_REG
+    eeRes = CVMRMgetResource(
+        CVMRM_INT_REGS(con), CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+#endif
+
+    /* get all our resources ready */
+    dest = CVMRMgetResource(CVMRM_INT_REGS(con), GET_REGISTER_GOALS, 1);
+    CVMRMpinResource(CVMRM_INT_REGS(con), obj, CVMRM_ANY_SET, CVMRM_SAFE_SET);
+    objHdr = CVMRMgetResource(CVMRM_INT_REGS(con),
+			      CVMRM_ANY_SET, CVMRM_SAFE_SET, 1);
+    lockRec = CVMRMgetResource(CVMRM_INT_REGS(con),
+			      CVMRM_ANY_SET, CVMRM_SAFE_SET, 1);
+
+    /* ... and get all the register numbers */
+    objRegID    = CVMRMgetRegisterNumber(obj);
+    objHdrRegID = CVMRMgetRegisterNumber(objHdr);
+    lockRecRegID = CVMRMgetRegisterNumber(lockRec);
+    destRegID   = CVMRMgetRegisterNumber(dest);
+
+#ifdef CVM_DEBUG
+    CVMJITprintCodegenComment(("DEBUG-ONLY CODE"));
+    {
+	/* Store the mb of the currently executing Simple Sync method into
+	 * ee->currentSimpleSyncMB. */
+	CVMRMResource* simpleSyncMBRes;
+	CVMJITMethodContext* mc = con->inliningStack[con->inliningDepth-1].mc;
+	/* load the Simple Sync mb address into a register */
+        CVMJITsetSymbolName((con, "mb %C.%M", mc->cb, mc->mb));
+	simpleSyncMBRes = CVMRMgetResourceForConstant32(
+            CVMRM_INT_REGS(con), CVMRM_ANY_SET, CVMRM_SAFE_SET,
+	    (CVMUint32)mc->mb);
+	/* Get the ee: */
+#ifndef CVMCPU_EE_REG
+	eeRegID = CVMRMgetRegisterNumber(eeRes);
+	CVMJITaddCodegenComment((con, "eeReg = ccee->ee"));
+	CVMCPUemitCCEEReferenceImmediate(con, CVMCPU_LDR32_OPCODE, eeRegID,
+					 CVMoffsetof(CVMCCExecEnv, eeX));
+#else
+	eeRegID = CVMCPU_EE_REG;
+#endif
+	/* Store the Simple Sync mb into ee->currentSimpleSyncMB. */
+	CVMJITaddCodegenComment((con,
+				 "ee->currentSimpleSyncMB = %C.%M",
+				 mc->cb, mc->mb));
+	CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+	    CVMRMgetRegisterNumber(simpleSyncMBRes), eeRegID,
+	     CVMoffsetof(CVMExecEnv,currentSimpleSyncMB));
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), simpleSyncMBRes);
+    }
+    {
+	/* Store the mb of the currently executing method into
+	 * ee->currentMB. */
+	CVMRMResource* mbRes;
+	/* load the current mb address into a register */
+        CVMJITsetSymbolName((con, "mb %C.%M",
+			     CVMmbClassBlock(con->mb), con->mb));
+	mbRes = CVMRMgetResourceForConstant32(
+            CVMRM_INT_REGS(con), CVMRM_ANY_SET, CVMRM_SAFE_SET,
+	    (CVMUint32)con->mb);
+	/* Store the Simple Sync mb into ee->currentMB. */
+	CVMJITaddCodegenComment((con,
+				 "ee->currentMB = %C.%M",
+				 CVMmbClassBlock(con->mb), con->mb));
+	CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+	    CVMRMgetRegisterNumber(mbRes), 
+            eeRegID, CVMoffsetof(CVMExecEnv,currentMB));
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), mbRes);
+    }
+    CVMJITprintCodegenComment(("END OF DEBUG-ONLY CODE"));
+#endif /* CVM_DEBUG */
+
+    /* load the object header */
+    CVMJITaddCodegenComment((con, "get obj.hdr.various32"));
+    CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_LDR32_OPCODE,
+				       objHdrRegID, objRegID,
+				       CVMoffsetof(CVMObjectHeader,various32));
+    /* assume object locked and set intrinsic result */
+    CVMJITaddCodegenComment((con, "assume locked: result = false"));
+    CVMCPUemitLoadConstant(con, destRegID, CVM_FALSE);
+    /* get sync bits from object header, borrow lockRecRegID for now */
+    CVMJITaddCodegenComment((con, "get obj sync bits"));
+    CVMCPUemitBinaryALUConstant(con, CVMCPU_AND_OPCODE,
+				lockRecRegID, objHdrRegID,
+				CVM_SYNC_MASK, CVMJIT_NOSETCC);
+    /* check if object is unlocked */
+    CVMJITaddCodegenComment((con, "check if obj unlocked"));
+    CVMCPUemitCompareConstant(con, CVMCPU_CMP_OPCODE, CVMCPU_COND_EQ,
+			      lockRecRegID, CVM_LOCKSTATE_UNLOCKED);
+    /* branch if object is locked */
+    CVMJITaddCodegenComment((con,"br simpleLockGrabDone if object is locked"));
+    CVMCPUemitBranch(con, 0, CVMCPU_COND_NE);
+#ifdef CVMCPU_HAS_DELAY_SLOT
+    fixupPC1 = CVMJITcbufGetLogicalPC(con) - 2 * CVMCPU_INSTRUCTION_SIZE;
+#else
+    fixupPC1 = CVMJITcbufGetLogicalPC(con) - 1 * CVMCPU_INSTRUCTION_SIZE;
+#endif
+
+#ifdef IAI_CODE_SCHEDULER_SCORE_BOARD
+    fixupPC1 = CVMJITcbufGetLogicalInstructionPC(con);
+#endif
+    /* Get the ee: */
+#ifndef CVMCPU_EE_REG
+    eeRegID = CVMRMgetRegisterNumber(eeRes);
+    CVMJITaddCodegenComment((con, "eeReg = ccee->ee"));
+    CVMCPUemitCCEEReferenceImmediate(con, CVMCPU_LDR32_OPCODE, eeRegID,
+				     CVMoffsetof(CVMCCExecEnv, eeX));
+#else
+    eeRegID = CVMCPU_EE_REG;
+#endif
+    /* Store the object pointer into the lock record */
+    CVMJITaddCodegenComment((con,
+	"ee->simpleSyncReservedOwnedMonitor.object = obj"));
+    CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+        objRegID, eeRegID,
+	offsetof(CVMExecEnv, simpleSyncReservedOwnedMonitor.object));
+    /* Store the object header word into the lock record */
+    CVMJITaddCodegenComment((con,
+       "ee->simpleSyncReservedOwnedMonitor.u.fast.bits = obj->hdr.various32"));
+    CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+        objHdrRegID, eeRegID,
+	offsetof(CVMExecEnv, simpleSyncReservedOwnedMonitor.u.fast.bits));
+    /* compute address of lock record */
+    CVMJITaddCodegenComment((con, "compute address of lock record fast.bits"));
+    CVMCPUemitBinaryALUConstant(con, CVMCPU_ADD_OPCODE,
+	lockRecRegID, eeRegID,
+	offsetof(CVMExecEnv, simpleSyncReservedOwnedMonitor),
+	CVMJIT_NOSETCC);
+    /* CAS the lock record pointer into the object header. The PC of the
+     * failure branch is returned by CVMCPUemitAtomicCompareAndSwap. */
+    CVMJITprintCodegenComment((
+	"CAS the lock record pointer into the object header"));
+    CVMJITsetSymbolName((con, "simpleLockGrabDone"));/* name of branch label */
+    fixupPC2 = CVMCPUemitAtomicCompareAndSwap(con,
+	objRegID, CVMoffsetof(CVMObjectHeader,various32),
+        objHdrRegID, lockRecRegID);
+    /* Success if we fall through to here. Return true. */
+    CVMJITaddCodegenComment((con, "success: result = true"));
+    CVMCPUemitLoadConstant(con, destRegID, CVM_TRUE);
+    /* "done" target for failure branches. */
+    CVMtraceJITCodegen(("\t\tsimpleLockGrabDone:\n"));
+    CVMJITfixupAddress(con, fixupPC1, CVMJITcbufGetLogicalPC(con),
+		       CVMJIT_COND_BRANCH_ADDRESS_MODE);
+    CVMJITfixupAddress(con, fixupPC2, CVMJITcbufGetLogicalPC(con),
+		       CVMJIT_COND_BRANCH_ADDRESS_MODE);
+
+#ifndef CVMCPU_EE_REG
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), eeRes);
+#endif
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), obj);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), objHdr);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), lockRec);
+    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, intrinsicNode);
+    pushResource(con, dest);
+}
+
+/*
+ * Intrinsic emitter for fastlock CAS version of  CVM.simpleLockRelease().
+ *
+ * Attempts to unlock the object by swapping in the old bits, expecting
+ * the reserved ee->simpleSyncReservedOwnedMonitor pointer to be swapped
+ * out. If the atomic CAS of these values failed, then in if defers
+ * to the CVMCCMruntimeSimpleSyncUnlock() helper.
+ */
+static void
+simpleLockReleaseEmitter(
+    CVMJITCompilationContext * con,
+    CVMJITIRNode *intrinsicNode)
+{
+    CVMRMResource* obj = popResource(con);
+    CVMRMResource* objHdr;
+    CVMRMResource* lockRec;
+    CVMRMResource* eeRes;
+    int objRegID, objHdrRegID, lockRecRegID, eeRegID;
+    int fixupPC1, fixupPC2; /* To patch the conditional branches */
+
+    if (CVMRMisConstant(obj) && CVMRMgetConstant(obj) == 0) {
+	/* We know the object is a null, so an NPE would be thrown before
+	 * code generated here is executed. Therefore we don't need to
+	 * generate anything.
+	 */
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), obj);
+	return;
+    }
+
+    /* Make sure obj is in ARG2 in case we call C helper */
+    if (CVMRMgetRegisterNumberUnpinned(obj) != CVMCPU_ARG2_REG) {
+	CVMJITprintCodegenComment(("ARG2 = obj"));
+    }
+    CVMRMpinResourceSpecific(CVMRM_INT_REGS(con), obj, CVMCPU_ARG2_REG);
+    objRegID = CVMRMgetRegisterNumber(obj);
+    CVMassert(objRegID == CVMCPU_ARG2_REG);
+
+    /* Be sure to spill ARG1. We will load it with the ee later if needed.
+     * ARG2 since it already contains obj. */
+    CVMRMmajorSpill(con, ARG2, CVMRM_SAFE_SET);
+
+    eeRes = CVMRMgetResourceSpecific(CVMRM_INT_REGS(con), CVMCPU_ARG1_REG, 1);
+    objHdr = CVMRMgetResource(CVMRM_INT_REGS(con),
+			      CVMRM_ANY_SET, CVMRM_SAFE_SET, 1);
+    lockRec = CVMRMgetResource(CVMRM_INT_REGS(con),
+			      CVMRM_ANY_SET, CVMRM_SAFE_SET, 1);
+
+    objHdrRegID = CVMRMgetRegisterNumber(objHdr);
+    lockRecRegID = CVMRMgetRegisterNumber(lockRec);
+
+#ifndef CVMCPU_EE_REG
+    /* Get the ee: */
+    eeRegID = CVMRMgetRegisterNumber(eeRes);
+    CVMassert(eeRegID == CVMCPU_ARG1_REG);
+    CVMJITaddCodegenComment((con, "eeReg = ccee->ee"));
+    CVMCPUemitCCEEReferenceImmediate(con, CVMCPU_LDR32_OPCODE, eeRegID,
+				     CVMoffsetof(CVMCCExecEnv, eeX));
+#else
+    eeRegID = CVMCPU_EE_REG;
+#endif
+
+    /* load the object header */
+    CVMJITaddCodegenComment((con, "get obj.hdr.various32"));
+    CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_LDR32_OPCODE,
+				       objHdrRegID, objRegID,
+				       CVMoffsetof(CVMObjectHeader,various32));
+    /* compute address of lock record */
+    CVMJITaddCodegenComment((con, "compute address of lock record fast.bits"));
+    CVMCPUemitBinaryALUConstant(con, CVMCPU_ADD_OPCODE,
+	lockRecRegID, eeRegID,
+	offsetof(CVMExecEnv, simpleSyncReservedOwnedMonitor),
+	CVMJIT_NOSETCC);
+    /* Note the lock state bits for "locked" must be 0 in order for the
+     * CAS below to work without first checking the lock state bits. */
+    CVMassert(CVM_LOCKSTATE_LOCKED == 0);
+    /* get old object header word from lock record. Note, it will have been
+     * overwritten if inflated. */
+    CVMJITaddCodegenComment((con,
+	"ee->simpleSyncReservedOwnedMonitor.u.fast.bits"));
+    CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_LDR32_OPCODE,
+        objHdrRegID, eeRegID,
+	offsetof(CVMExecEnv, simpleSyncReservedOwnedMonitor.u.fast.bits));
+    /* CAS the old header word back into the object header, requiring
+       that the swapped out word be the unmodified lock record pointer */
+    CVMJITprintCodegenComment((
+	"CAS the old header word back into the object header, requiring"));
+    CVMJITprintCodegenComment((
+	"that the swapped out word be the unmodified lock record pointer"));
+    CVMJITsetSymbolName((con, "simpleLockReleaseFailed")); /* branch label */
+    fixupPC2 = CVMCPUemitAtomicCompareAndSwap(con,
+	objRegID, CVMoffsetof(CVMObjectHeader,various32),
+	lockRecRegID, objHdrRegID);
+    /* If we get here, then success. br simpleLockReleaseDone. */
+    CVMJITaddCodegenComment((con, "br simpleLockReleaseDone"));
+    CVMCPUemitBranch(con, 0, CVMCPU_COND_AL);
+#ifdef CVMCPU_HAS_DELAY_SLOT
+    fixupPC1 = CVMJITcbufGetLogicalPC(con) - 2 * CVMCPU_INSTRUCTION_SIZE;
+#else
+    fixupPC1 = CVMJITcbufGetLogicalPC(con) - 1 * CVMCPU_INSTRUCTION_SIZE;
+#endif
+
+#ifdef IAI_CODE_SCHEDULER_SCORE_BOARD
+    fixupPC1 = CVMJITcbufGetLogicalInstructionPC(con);
+#endif
+    /* failed: target for failed CAS */
+    CVMtraceJITCodegen(("\t\tsimpleLockReleaseFailed:\n"));
+    CVMJITfixupAddress(con, fixupPC2, CVMJITcbufGetLogicalPC(con),
+		       CVMJIT_COND_BRANCH_ADDRESS_MODE);
+
+    /* Setup arguments for C helper that will do unlock */
+#ifdef CVMCPU_EE_REG
+    CVMJITaddCodegenComment((con, "ARG1 = ee"));
+    CVMCPUemitMoveRegister(con, CVMCPU_MOV_OPCODE,
+			   CVMCPU_ARG1_REG, CVMCPU_EE_REG, CVMJIT_NOSETCC);
+#else
+    CVMJITprintCodegenComment(("ee already in ARG1"));
+#endif
+    CVMJITprintCodegenComment(("obj already in ARG2"));
+
+    /* Call C helper to do unlock */
+    CVMJITaddCodegenComment((con, "call CVMCCMruntimeSimpleSyncUnlockGlue"));
+    CVMJITsetSymbolName((con, "CVMCCMruntimeSimpleSyncUnlockGlue"));
+    CVMJITstatsRecordInc(con, CVMJIT_STATS_CVMCCMruntimeSimpleSyncUnlock);
+    CVMCPUemitAbsoluteCall(con, (void*)CVMCCMruntimeSimpleSyncUnlockGlue,
+                           CVMJIT_NOCPDUMP, CVMJIT_NOCPBRANCH);
+    CVMJITcsBeginBlock(con);
+    CVMJITcaptureStackmap(con, 0);
+
+    /* "simpleLockReleaseDone" target for branches. */
+    CVMtraceJITCodegen(("\t\tsimpleLockReleaseDone:\n"));
+    CVMJITfixupAddress(con, fixupPC1, CVMJITcbufGetLogicalPC(con),
+		       CVMJIT_COND_BRANCH_ADDRESS_MODE);
+#ifdef CVM_DEBUG
+    /* NULL out object pointer in the lock record */
+    CVMJITprintCodegenComment(("DEBUG-ONLY CODE"));
+#ifndef CVMCPU_EE_REG
+    /* Get the ee. It could have been clobbered by the call to
+       CVMCCMruntimeSimpleSyncUnlockGlue */
+    CVMJITaddCodegenComment((con, "eeReg = ccee->ee"));
+    CVMCPUemitCCEEReferenceImmediate(con, CVMCPU_LDR32_OPCODE, eeRegID,
+				     CVMoffsetof(CVMCCExecEnv, eeX));
+#endif
+    CVMCPUemitLoadConstant(con, objHdrRegID, 0);
+    CVMJITaddCodegenComment((con,
+	"ee->simpleSyncReservedOwnedMonitor.object = NULL"));
+    CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_STR32_OPCODE,
+        objHdrRegID, eeRegID,
+	offsetof(CVMExecEnv, simpleSyncReservedOwnedMonitor.object));
+    CVMJITprintCodegenComment(("END OF DEBUG-ONLY CODE"));
+#endif
+
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), obj);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), lockRec); 
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), objHdr);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), eeRes);
+}
+
+#else
+#error Unsupported locking type for CVMJIT_SIMPLE_SYNC_METHODS
+#endif
+#endif /* CVMJIT_SIMPLE_SYNC_METHODS */
+
+
 static void
 doIntMinMax(
     CVMJITCompilationContext * con,
@@ -1577,7 +2294,15 @@ doIntMinMax(
         cclhs = CVMCPU_COND_GE;
         ccrhs = CVMCPU_COND_LT;
     }
-    /* REDUCE INSTRUCTION COUNT BY LOOKING AT REF COUNTS? */
+    /* TODO: Reduce instruction count by looking at refcounts. If either
+     * the lhs or rhs have a refcount of 1 (and are not a local that we
+     * want to keep in a register), then we can save a move by resuing
+     * it as the dest register. For example:
+     *    cmp    lhs, rhs
+     *    movle  lhs, rhs
+     * And then lhs is repurposed as the "dest" resource. Note, if we
+     * reuse rhs, then we need to reverse the compare and reverse the mov.
+     */
     dest = CVMRMgetResource(CVMRM_INT_REGS(con), target, avoid, 1);
     CVMRMpinResource(CVMRM_INT_REGS(con), rhs, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
     CVMRMpinResource(CVMRM_INT_REGS(con), lhs, CVMRM_ANY_SET, CVMRM_EMPTY_SET);
@@ -1651,6 +2376,22 @@ const CVMJITIntrinsicEmitterVtbl CVMJITRISCintrinsicIMinEmitter =
     CVMJITRISCintrinsicDefaultGetArgTarget,
     iminEmitOperator,
 };
+
+#ifdef CVMJIT_SIMPLE_SYNC_METHODS
+const CVMJITIntrinsicEmitterVtbl CVMJITRISCintrinsicSimpleLockGrabEmitter =
+{
+    CVMJITRISCintrinsicDefaultGetRequired,
+    CVMJITRISCintrinsicDefaultGetArgTarget,
+    simpleLockGrabEmitter,
+};
+
+const CVMJITIntrinsicEmitterVtbl CVMJITRISCintrinsicSimpleLockReleaseEmitter =
+{
+    CVMJITRISCintrinsicSimpleLockReleaseGetRequired,
+    CVMJITRISCintrinsicSimpleLockReleaseGetArgTarget,
+    simpleLockReleaseEmitter,
+};
+#endif /* CVMJIT_SIMPLE_SYNC_METHODS */
 
 #endif /* CVMJIT_INTRINSICS */
 
@@ -2611,8 +3352,9 @@ reg64: ICONST_64 : 40 : : : : {
 	CVMRMResource* dest = CVMRMgetResource(CVMRM_INT_REGS(con),
 					       GET_REGISTER_GOALS, 2);
 	int destregno = CVMRMgetRegisterNumber(dest);
-        CVMCPUemitLoadLongConstant(con, destregno,
-                                   &CVMJITirnodeGetConstant64($$)->j);
+	CVMJavaVal64 v64;
+	CVMmemCopy64(v64.v, CVMJITirnodeGetConstant64($$)->j.v);
+        CVMCPUemitLoadLongConstant(con, destregno, &v64);
 	CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, $$);
 	pushResource(con, dest);
     };
@@ -2725,6 +3467,10 @@ struct ScaledIndexInfo {
     int baseRegID;
     CVMRMResource *slotAddrReg;
     int slotAddrOffset;
+    
+#ifdef IAI_CS_EXCEPTION_ENHANCEMENT2
+    CVMBool isIDENTITYOutofBoundsCheck;
+#endif
 };
 
 const ArrayElemInfo typeidToArrayElemInfo[] = {
@@ -2752,6 +3498,14 @@ const ArrayElemInfo typeidToArrayElemInfo[] = {
     {-1, -1, CVM_FALSE, 0, 0 CVM_FLDST_NONE},
     /* CVM_TYPEID_OBJ */       
     {2, 1, CVM_TRUE, CVMCPU_LDR32_OPCODE, CVMCPU_STR32_OPCODE CVM_FLDST_NONE},
+    /* CVMJIT_TYPEID_32BITS */      
+    {-1, -1, CVM_FALSE, 0, 0 CVM_FLDST_NONE},   /* No arrays of this type */
+    /* CVMJIT_TYPEID_64BITS */   
+    {-1, -1, CVM_FALSE, 0, 0 CVM_FLDST_NONE},   /* No arrays of this type */
+    /* CVMJIT_TYPEID_ADDRESS */      
+    {-1, -1, CVM_FALSE, 0, 0 CVM_FLDST_NONE},   /* No arrays of this type */
+    /* CVMJIT_TYPEID_UBYTE */       
+    {0, 1, CVM_FALSE, CVMCPU_LDR8U_OPCODE, CVMCPU_STR8_OPCODE CVM_FLDST_NONE},
 };
 
 
@@ -2777,6 +3531,11 @@ newScaledIndexInfo(CVMJITCompilationContext *con, CVMRMResource *indexReg,
     sinfo->slotAddrReg = NULL;
     sinfo->slotAddrOffset = 0;
 #endif
+
+#ifdef IAI_CS_EXCEPTION_ENHANCEMENT2
+    sinfo->isIDENTITYOutofBoundsCheck = CVM_FALSE;
+#endif
+    
     return sinfo;
 }
 
@@ -3010,7 +3769,7 @@ static void
 indexedLoad(
     CVMJITCompilationContext* con,
     CVMJITRMContext* rc,
-    CVMJITIRNodePtr thisNode,
+    CVMJITIRNodePtr fetchNode,
     CVMRMregset target,
     CVMRMregset avoid)
 {
@@ -3023,8 +3782,12 @@ indexedLoad(
     int size;
     int shiftAmount;
     int opcode;
+#ifdef IAI_CS_EXCEPTION_ENHANCEMENT2
+    CVMJITIRNode* outOfBoundsCheckNode = NULL;
+#endif
 
-    indexNode = CVMJITirnodeGetLeftSubtree(thisNode);
+    CVMassert(CVMJITirnodeIsFetch(fetchNode));
+    indexNode = CVMJITirnodeGetLeftSubtree(fetchNode);
     
     /* Make sure we are getting the correct tree shape */
     CVMassert(CVMJITirnodeIsIndex(indexNode));
@@ -3046,8 +3809,9 @@ indexedLoad(
     sinfo->shiftAmount = shiftAmount;
     
     CVMJITprintCodegenComment((
-        "Do load(arrayObj, index) (elem type=%c):",
-	CVMbasicTypeSignatures[CVMterseTypeBasicTypes[typeId]]));
+        "Do load(arrayObj, index) (elem type=%d,%c):", typeId,
+	typeId == CVMJIT_TYPEID_UBYTE ?
+	   'b' : CVMbasicTypeSignatures[CVMterseTypeBasicTypes[typeId]]));
 
     dest = CVMRMgetResource(rc, target, avoid, size);
     CVMRMpinResource(CVMRM_INT_REGS(con), arrayObj,
@@ -3055,10 +3819,49 @@ indexedLoad(
 
     setupScaledIndex(con, opcode, arrayObj, sinfo, CVM_FALSE);
     CVMJITcsSetGetArrayInstruction(con);
+
+/* IAI - 12 */
+#if defined(IAI_CS_EXCEPTION_ENHANCEMENT) && !defined(IAI_CS_EXCEPTION_ENHANCEMENT2) 
+    CVMJITcsSetExceptionInstruction(con);
+#endif
+/* IAI - 12 */
+
+#ifdef IAI_CS_EXCEPTION_ENHANCEMENT2
+    indexNode = CVMJITirnodeValueOf(indexNode);
+    if(CVMJITirnodeIsBinaryNode(indexNode)) {
+        outOfBoundsCheckNode = CVMJITirnodeValueOf(
+              CVMJITirnodeGetRightSubtree(indexNode));
+    }
+    
+    /*
+     * The following code deals with the case which the bounds-check sharing 
+     * between different node.
+     * From the code scheduling point of view, the more formal way is to emit all the
+     * array fetch/store instruction in conditional style.
+     * There are two possible solution,
+     * 1) Share the resource directly
+     * 2) Setup the dependency rule between array fetch/store and bounds check instructions
+     */
+    if(outOfBoundsCheckNode && CVMJITirnodeIsBoundsCheckNode(outOfBoundsCheckNode)
+               && !sinfo->isIDENTITYOutofBoundsCheck) {
+         CVMJITprintCodegenComment(("Schedule conditinal load"));
+         CVMCPUemitMemoryReferenceImmediateConditional(con, opcode, 
+         CVMRMgetRegisterNumber(dest),
+         getScaledIndexBaseRegID(sinfo), 
+         sinfo->slotAddrOffset, CVMCPU_COND_HI);
+    } else {
+         CVMCPUemitMemoryReferenceImmediate(con, opcode, 
+         CVMRMgetRegisterNumber(dest),
+         getScaledIndexBaseRegID(sinfo), 
+         sinfo->slotAddrOffset);
+    }
+#else
     CVMCPUemitMemoryReferenceImmediate(con, opcode, 
-				       CVMRMgetRegisterNumber(dest),
-				       getScaledIndexBaseRegID(sinfo), 
-				       sinfo->slotAddrOffset);
+                                       CVMRMgetRegisterNumber(dest),
+                                       getScaledIndexBaseRegID(sinfo), 
+                                       sinfo->slotAddrOffset);
+#endif
+
     
     /* We should not have set arrayObj in this sinfo instance. arrayObj
        is relinquished separately below */
@@ -3066,7 +3869,7 @@ indexedLoad(
     
     relinquishScaledIndex(con, sinfo);
 
-    CVMRMoccupyAndUnpinResource(rc, dest, thisNode);
+    CVMRMoccupyAndUnpinResource(rc, dest, fetchNode);
     CVMRMrelinquishResource(CVMRM_INT_REGS(con), arrayObj);
     pushResource(con, dest);
 }
@@ -3146,7 +3949,7 @@ indexedAddr(
 static void 
 fetchArraySlot(CVMJITCompilationContext *con,
 	       CVMJITRMContext* rc,
-	       CVMJITIRNodePtr thisNode,
+	       CVMJITIRNodePtr fetchNode,
 	       CVMRMregset target, CVMRMregset avoid)
 {
     CVMRMResource *dest;
@@ -3154,6 +3957,12 @@ fetchArraySlot(CVMJITCompilationContext *con,
     CVMRMResource *arraySlot = sinfo->slotAddrReg;
     const ArrayElemInfo* elemInfo = sinfo->elemInfo;
     int opcode;
+#ifdef IAI_CS_EXCEPTION_ENHANCEMENT2
+    CVMJITIRNode* indexNode;
+    CVMJITIRNode* outOfBoundsCheckNode = NULL;
+#endif
+
+    CVMassert(CVMJITirnodeIsFetch(fetchNode));
     
 #ifdef CVM_JIT_USE_FP_HARDWARE
     opcode = (rc == CVMRM_INT_REGS(con)) ? elemInfo->loadOpcode
@@ -3168,12 +3977,43 @@ fetchArraySlot(CVMJITCompilationContext *con,
 		     CVMRM_ANY_SET, CVMRM_EMPTY_SET);
 
     CVMJITcsSetGetArrayInstruction(con);
+
+/* IAI - 12 */
+#if defined(IAI_CS_EXCEPTION_ENHANCEMENT) && !defined(IAI_CS_EXCEPTION_ENHANCEMENT2) 
+    CVMJITcsSetExceptionInstruction(con);
+#endif
+/* IAI - 12 */
+
+#ifdef IAI_CS_EXCEPTION_ENHANCEMENT2
+    indexNode = CVMJITirnodeValueOf(CVMJITirnodeGetLeftSubtree(
+                    CVMJITirnodeValueOf(fetchNode)));
+
+    if(CVMJITirnodeIsBinaryNode(indexNode)) {
+        outOfBoundsCheckNode = CVMJITirnodeValueOf(
+                    CVMJITirnodeGetRightSubtree(indexNode));
+    }
+    
+    if(outOfBoundsCheckNode && outOfBoundsCheckNode->tag == BOUNDS_CHECK 
+               && !sinfo->isIDENTITYOutofBoundsCheck) {
+        CVMJITprintCodegenComment(("Schedule conditinal load"));
+        CVMCPUemitMemoryReferenceImmediateConditional(con, opcode,
+  				       CVMRMgetRegisterNumber(dest), 
+  				       CVMRMgetRegisterNumber(arraySlot),
+  				       sinfo->slotAddrOffset, CVMCPU_COND_HI);
+    } else {
+        CVMCPUemitMemoryReferenceImmediate(con, opcode,
+   				       CVMRMgetRegisterNumber(dest), 
+   				       CVMRMgetRegisterNumber(arraySlot),
+   				       sinfo->slotAddrOffset);
+    }
+#else
     CVMCPUemitMemoryReferenceImmediate(con, opcode,
 				       CVMRMgetRegisterNumber(dest), 
 				       CVMRMgetRegisterNumber(arraySlot),
 				       sinfo->slotAddrOffset);
+#endif				       
 
-    CVMRMoccupyAndUnpinResource(rc, dest, thisNode);
+    CVMRMoccupyAndUnpinResource(rc, dest, fetchNode);
     relinquishScaledIndex(con, sinfo);
     pushResource(con, dest);
 }
@@ -3193,7 +4033,7 @@ arraySubscript: iconst32Index : 0 : : : :{
         pushScaledIndexInfoImmediate(con, index);
     };
 
-// Purpose: value64 = FETCH64(INDEX(arrayObject, arraySubscript))
+// Purpose: value32 = FETCH(INDEX(arrayObject, arraySubscript))
 arrayIndex: INDEX reg32 arraySubscript : 20 : : : : {
         indexedAddr(con, $$, GET_REGISTER_GOALS);
     };
@@ -3301,8 +4141,8 @@ emitMarkCardTable(CVMJITCompilationContext *con,
 
     CVMCodegenComment *comment;
     CVMRMResource* cardtableReg;
-    CVMRMResource* zeroReg;
-    int            zeroRegID;
+    CVMRMResource* markReg;
+    int            markRegID;
 #ifdef CVM_SEGMENTED_HEAP
     /* t0 and t1 will eventually become cardTable and zero registers */
     CVMRMResource* t0;
@@ -3375,39 +4215,49 @@ emitMarkCardTable(CVMJITCompilationContext *con,
        GC_SEGMENT_CTV_OFFSET);
     cardtableReg = t1;
 
-    /* Now we can re-use t0. Let's use it as 0 */
-    zeroReg = t0;
-#ifdef CVMCPU_HAS_ZERO_REG
-    zeroRegID = CVMCPU_ZERO_REG;
-#else
-    zeroRegID = CVMRMgetRegisterNumber(zeroReg);
-    CVMCPUemitLoadConstant(con, zeroRegID, 0);
-#endif
+    /* Now we can re-use t0 to store the CARD_DIRTY_BYTE mark value: */
+    markReg = t0;
+    markRegID = CVMRMgetRegisterNumber(markReg);
+    CVMCPUemitLoadConstant(con, markRegID, (CVMInt32)CARD_DIRTY_BYTE);
     CVMJITcsClearEmitInPlace(con);
 #else /* !CVM_SEGMENTED_HEAP case below */
 
     /* Easy to compute for the non-segmented case */
-    CVMJITsetSymbolName((con, "cardTableVirtualBase"));
-    cardtableReg =
-        CVMRMgetResourceForConstant32(CVMRM_INT_REGS(con),
-	    CVMRM_ANY_SET, CVMRM_EMPTY_SET,
-            (CVMInt32)CVMglobals.gc.cardTableVirtualBase);
-    /* Make sure we get these constants right: */
-    CVMassert(CVMRMgetRegisterNumber(cardtableReg) != -1);
-
-#ifdef CVMCPU_HAS_ZERO_REG
-    zeroReg = NULL; /* so we don't attempt to relinquish it later */
-    zeroRegID = CVMCPU_ZERO_REG;
-#else
-    CVMJITsetSymbolName((con, "zero"));
-    zeroReg =
-        CVMRMgetResourceForConstant32(CVMRM_INT_REGS(con), CVMRM_ANY_SET,
-				      CVMRM_EMPTY_SET, (CVMInt32)0);
-    zeroRegID = CVMRMgetRegisterNumber(zeroReg);
+#if defined(CVM_AOT)
+    if (CVMglobals.jit.isPrecompiling) {
+        /*
+         * We can't use the cardTableVirtualBase
+         * as a constant since the cardtable is dynamically
+         * allocated. Emit code to access the cardTableVirtualBase
+         * indirectly.
+         */
+        cardtableReg = CVMRMgetResource(CVMRM_INT_REGS(con),
+                                    CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+        CVMCPUemitLoadConstant(con, CVMRMgetRegisterNumber(cardtableReg),
+            (CVMInt32)(&CVMglobals.gc.cardTableVirtualBase));
+        CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_LDR32_OPCODE,
+            CVMRMgetRegisterNumber(cardtableReg),
+            CVMRMgetRegisterNumber(cardtableReg), 0);
+    } else
 #endif
-#endif
+   {
+       CVMJITsetSymbolName((con, "cardTableVirtualBase"));
+        cardtableReg =
+            CVMRMgetResourceForConstant32(CVMRM_INT_REGS(con),
+	        CVMRM_ANY_SET, CVMRM_EMPTY_SET,
+                (CVMInt32)CVMglobals.gc.cardTableVirtualBase);
+        /* Make sure we get these constants right: */
+        CVMassert(CVMRMgetRegisterNumber(cardtableReg) != -1);
+    }
 
-    CVMassert(zeroRegID != -1);
+    CVMJITsetSymbolName((con, "CARD_DIRTY_BYTE"));
+    markReg = CVMRMgetResourceForConstant32(CVMRM_INT_REGS(con),
+	          CVMRM_ANY_SET, CVMRM_EMPTY_SET, (CVMInt32)CARD_DIRTY_BYTE);
+    markRegID = CVMRMgetRegisterNumber(markReg);
+
+#endif /* !CVM_SEGMENTED_HEAP */
+
+    CVMassert(markRegID != -1);
 
     /* Now we are ready to write into card table, as well as
        perform the actual write: */
@@ -3415,7 +4265,7 @@ emitMarkCardTable(CVMJITCompilationContext *con,
     /* Do card table write: */
     CVMJITaddCodegenComment((con, "mark card table"));
     CVMCPUemitArrayElementReference(con, CVMCPU_STR8_OPCODE,
-        zeroRegID, CVMRMgetRegisterNumber(cardtableReg),
+        markRegID, CVMRMgetRegisterNumber(cardtableReg),
         destAddrReg, CVMCPU_SRL_OPCODE, CVM_GENGC_CARD_SHIFT);
 
 #ifdef CVM_SEGMENTED_HEAP
@@ -3425,9 +4275,7 @@ emitMarkCardTable(CVMJITCompilationContext *con,
     con->inConditionalCode = CVM_FALSE;
 #endif
 
-    if (zeroReg != NULL) {
-	CVMRMrelinquishResource(CVMRM_INT_REGS(con), zeroReg);
-    }
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), markReg);
     
     CVMRMrelinquishResource(CVMRM_INT_REGS(con), cardtableReg);
 
@@ -3920,9 +4768,9 @@ invokeMethod(CVMJITCompilationContext *con, CVMJITRMContext* rc,
      * To preserve some registers, we would need to save and restore them to
      * the Java stack (caller or callee frame) on transitions.
      */
-    CVMRMregset safeSet = CVMRM_EMPTY_SET;
     CVMRMResource *mbptr = popResource(con);
     CVMUint16 numberOfArgs = CVMJITirnodeGetBinaryOp(invokeNode)->data;
+    CVMBool emittedDirectInvoke = CVM_FALSE;
 
 #ifndef CVMCPU_HAS_POSTINCREMENT_STORE
     /* Make JSP point just past the last argument */
@@ -3934,30 +4782,148 @@ invokeMethod(CVMJITCompilationContext *con, CVMJITRMContext* rc,
     mbptr = CVMRMpinResourceSpecific(CVMRM_INT_REGS(con), mbptr,
 				     CVMCPU_ARG1_REG);
 
-    /* NOTE: Possible improvements:
-     * - detect calls to compiled methods and call directly
-     *   (watch out for decompilation!)
+    /* TODO: Possible improvements:
      * - factor target capacity into caller capacity and
      *   avoid stack overflow check.
      */
     if (CVMRMisConstant(mbptr)) {
-	CVMMethodBlock* target = (CVMMethodBlock *)mbptr->constant;
-	if (CVMmbIs(target, NATIVE)) {
-	    int invokerIdx = CVMmbInvokerIdx(target);
-	    if ((invokerIdx >= CVM_INVOKE_JNI_METHOD) &&
-		(invokerIdx < CVM_INVOKE_ABSTRACT_METHOD)) {
-		/* JNI */
+	CVMMethodBlock* targetMb = (CVMMethodBlock *)mbptr->constant;
+	int invokerIdx = CVMmbInvokerIdx(targetMb);
+	if (CVMmbIs(targetMb, NATIVE) && 
+	    invokerIdx != CVM_INVOKE_LAZY_JNI_METHOD)
+	{
+	    /* It's CNI or JNI invoke, so call it directly. */
+	    CVMRMregset safeSet;
+	    int logicalPC;
+
+	    CVMassert(
+	        CVMmbJitInvoker(targetMb) == (void*)CVMCCMinvokeCNIMethod ||
+		CVMmbJitInvoker(targetMb) == (void*)CVMCCMinvokeJNIMethod);
+
+	    if (invokerIdx == CVM_INVOKE_JNI_METHOD ||
+		invokerIdx == CVM_INVOKE_JNI_SYNC_METHOD)
+	    {
+		/* JNI - NV registers are preserved */
 		safeSet = CVMRM_SAFE_SET;
-	    } 
+	    } else {
+		CVMassert(invokerIdx == CVM_INVOKE_CNI_METHOD);
+		safeSet = CVMRM_EMPTY_SET;
+	    }
+
+	    CVMRMmajorSpill(con, ARG1, safeSet);
+	    emittedDirectInvoke = CVM_TRUE;
+
+	    if(CVMmbJitInvoker(targetMb) == (void*)CVMCCMinvokeCNIMethod) {
+		CVMJITaddCodegenComment((con, 
+			"call CVMCCMinvokeCNIMethod() for %C.%M", 
+			 CVMmbClassBlock(targetMb), targetMb));
+	    } else {
+		CVMJITaddCodegenComment((con, 
+			"call CVMCCMinvokeJNIMethod() for %C.%M", 
+			 CVMmbClassBlock(targetMb), targetMb));
+	    }
+	    
+	    logicalPC = CVMJITcbufGetLogicalPC(con);
+	    CVMCPUemitAbsoluteCall(con, CVMmbJitInvoker(targetMb), 
+				   CVMJIT_NOCPDUMP, CVMJIT_NOCPBRANCH);
+	    CVMJITcsSetEmitInPlace(con);
+	    CVMJITcsClearEmitInPlace(con);
+	    CVMJITcsBeginBlock(con);
 	} 
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+	else if (invokerIdx != CVM_INVOKE_LAZY_JNI_METHOD) {
+	    int flags = CVMJITirnodeGetBinaryNodeFlag(invokeNode);
+	    CVMBool isVirtual = (flags & CVMJITBINOP_VIRTUAL_INVOKE) != 0; 
+
+	    /* CVMRMmajorSpill must be done before setting up patch record
+	     * because it will record the logical PC.
+	     */
+	    CVMRMmajorSpill(con, ARG1, CVMRM_EMPTY_SET);
+	    if (CVMJITPMIaddPatchRecord(con->mb, targetMb,
+					CVMJITcbufGetPhysicalPC(con),
+					isVirtual))
+	    {
+		/*
+		 * Patch record was successfully added, so make this a direct
+		 * method call.
+		 */
+#ifdef CVM_DEBUG_ASSERTS
+		int logicalPC = CVMJITcbufGetLogicalPC(con);
+#endif
+		/*
+		 * Now we need to add targetMb to the "callee list" of the
+		 * method we are compiling. This is needed so the targetMb
+		 * has an entry for this patchable call, and it needs to be
+		 * removed when we are decompiled by calling
+		 * CVMJITpatchTableRemovePatchRecords.
+		 *
+		 * We keep a count of the number of unique targetMbs (callees)
+		 * for this method.
+		 *
+		 * WARNING: this must be done before emitting any code.
+		 * Otherwise if compilation fails while emitting code,
+		 * this callee will never get registered properly.
+		 */
+		{
+		    CVMUint32 numCallees = (CVMUint32)con->callees[0];
+		    CVMUint32 idx;
+		    CVMBool found = CVM_FALSE;
+		    /* Search list for this method or an empty slot. */
+		    for (idx = 1; idx <= numCallees; idx++) {
+			CVMMethodBlock* mb = 
+			    (CVMMethodBlock*)con->callees[idx]; 
+			if (mb == targetMb) {
+			    found = CVM_TRUE;
+			    break;
+			}
+		    }
+		    if (!found) {
+			/* This is a unique callee. Add to the "callee list" */
+			numCallees++;
+			CVMtraceJITPatchedInvokes((
+			    "PMI: callee(%d) slot used 0x%x %C.%M\n",
+			    numCallees,
+			    targetMb, CVMmbClassBlock(targetMb), targetMb));
+			CVMassert(numCallees <= con->numCallees);
+			con->callees[0] = (CVMMethodBlock*)numCallees;
+			con->callees[numCallees] = targetMb;
+		    }
+		}
+
+		/* Do the direct method call, either to the compiled method
+		   or to CVMCCMletInterpreterDoInvoke. */
+		emittedDirectInvoke = CVM_TRUE;
+		CVMJITcsSetEmitInPlace(con);
+		if (CVMmbIsCompiled(targetMb)) {
+		    int targetOffset = CVMmbStartPC(targetMb) 
+			- CVMJITcbufLogicalToPhysical(con, 0);
+		    CVMJITaddCodegenComment((con,
+		        "patchable invoke to compiled %C.%M",
+		         CVMmbClassBlock(targetMb), targetMb));
+		    CVMCPUemitBranchLink(con, targetOffset);
+		} else {
+		    CVMJITaddCodegenComment((con, 
+		        "patchable invoke to interpreted (%C.%M)",
+		        CVMmbClassBlock(targetMb), targetMb));
+		    CVMCPUemitAbsoluteCall(con, 
+					   (void*)CVMCCMletInterpreterDoInvoke,
+					   CVMJIT_NOCPDUMP, CVMJIT_NOCPBRANCH);
+		}
+		CVMassert(CVMJITcbufGetLogicalPC(con) ==
+			  logicalPC + CVMCPU_INSTRUCTION_SIZE);
+		CVMJITcsClearEmitInPlace(con);
+		CVMJITcsBeginBlock(con);
+	    }
+        }
+#endif /* CVM_JIT_PATCHED_METHOD_INVOCATIONS */
     }
 
-    CVMRMmajorSpill(con, ARG1, safeSet);
-    
-    /*
-     * emit indirect call to caller
-     */
-    CVMCPUemitInvokeMethod(con);
+    if (!emittedDirectInvoke) {
+	/* emit indirect call to caller */
+    	CVMRMmajorSpill(con, ARG1, CVMRM_EMPTY_SET);
+    	CVMCPUemitInvokeMethod(con);
+    }
 
     CVMJITcaptureStackmap(con, numberOfArgs);
     CVMSMpopParameters(con, numberOfArgs);
@@ -4025,7 +4991,8 @@ static CVMRMregset
 pinIntrinsicArgs(CVMJITCompilationContext *con,
                  CVMCPUCallContext *callContext,
                  CVMJITIRNodePtr intrinsicNode,
-                 CVMJITIntrinsic *irec)
+                 CVMJITIntrinsic *irec,
+		 CVMBool useRegArgs)
 {
     CVMRMregset outgoingRegs = CVMRM_EMPTY_SET;
     int numberOfArgs = irec->numberOfArgs;
@@ -4046,7 +5013,7 @@ pinIntrinsicArgs(CVMJITCompilationContext *con,
                         CVMJITgetTypeTag(iargNode),
                         CVMJIT_IARG_ARG_NUMBER(iargNode),
                         CVMJIT_IARG_WORD_INDEX(iargNode),
-                        &outgoingRegs);
+                        &outgoingRegs, useRegArgs);
             sp[i].u.r = arg;
             iargNode = CVMJITirnodeGetRightSubtree(iargNode);
         }
@@ -4059,7 +5026,8 @@ static void
 relinquishIntrinsicArgs(CVMJITCompilationContext *con,
                         CVMCPUCallContext *callContext,
                         CVMJITIRNodePtr intrinsicNode,
-                        CVMJITIntrinsic *irec)
+                        CVMJITIntrinsic *irec,
+			CVMBool useRegArgs)
 {
     int numberOfArgs = irec->numberOfArgs;
 
@@ -4073,7 +5041,7 @@ relinquishIntrinsicArgs(CVMJITCompilationContext *con,
             CVMRMResource *arg = sp[i].u.r;
             CVMCPUCCALLrelinquishArg(con, callContext, arg,
                 CVMJITgetTypeTag(iargNode), CVMJIT_IARG_ARG_NUMBER(iargNode),
-                CVMJIT_IARG_WORD_INDEX(iargNode));
+                CVMJIT_IARG_WORD_INDEX(iargNode), useRegArgs);
             iargNode = CVMJITirnodeGetRightSubtree(iargNode);
         }
         CVMassert(iargNode->tag == CVMJIT_ENCODE_NULL_IARG);
@@ -4103,17 +5071,21 @@ invokeIntrinsicMethod(CVMJITCompilationContext *con,
         emitter = (const CVMJITIntrinsicEmitterVtbl *)
                       config->emitterOrCCMRuntimeHelper;
         emitter->emitOperator(con, intrinsicNode);
+	CVMJITprintCodegenComment(("End INTRINSIC %C.%M:",
+				   CVMmbClassBlock(irec->mb), irec->mb));
 
     } else {
         int rtnType = CVMJITgetTypeTag(intrinsicNode);
         CVMBool okToDumpCP, okToBranchAroundCP;
         CVMRMResource *dest = NULL;
         CVMBool useJavaStack;
+        CVMBool useRegArgs;
         CVMRMregset outgoingRegSet = 0;
         CVMCPUCallContext callContext;
         CVMRMResource *cceeRes = NULL;
 
         useJavaStack = ((properties & CVMJITINTRINSIC_JAVA_ARGS) != 0);
+        useRegArgs = GET_REG_ARGS(properties);
 
         /* Flush the Java frame pointer to the Java stack if neccesary.  Do
            this before we pin any arguments because they can adjust the stack
@@ -4158,16 +5130,28 @@ invokeIntrinsicMethod(CVMJITCompilationContext *con,
         if (useJavaStack) {
             outgoingRegSet |= CVMRM_EMPTY_SET;
         } else {
-            CVMCPUCCALLinitArgs(con, &callContext, irec, CVM_FALSE);
+            CVMCPUCCALLinitArgs(con, &callContext, irec, CVM_FALSE,
+				useRegArgs);
             outgoingRegSet |= pinIntrinsicArgs(con, &callContext,
-                                               intrinsicNode, irec);
+                                  intrinsicNode, irec, useRegArgs);
         }
 
         /* Do spills if necessary: */
         if ((properties & CVMJITINTRINSIC_NEED_MINOR_SPILL) != 0) {
             CVMRMminorSpill(con, outgoingRegSet);
         } else if ((properties & CVMJITINTRINSIC_NEED_MAJOR_SPILL) != 0) {
-            CVMRMmajorSpill(con, outgoingRegSet, CVMRM_SAFE_SET);
+	    /* NOTE: We need to remove the outgoing registers from the
+	       safeSet because the intrinsic may alter those registers
+	       without preserving them.  An example of this is in
+	       intrinsics that does special hardware instructions that
+	       may make use of the non-volatile registers, or assembly
+	       functions that uses CVMJITINTRINSIC_REG_ARGS calling
+	       conventions that may pass some arguments in non-volatile
+	       registers.  For those cases, those outgoing non-volatile
+	       registers are essentially treated like they are volatile.
+	    */
+	    CVMRMregset safeSet = CVMRM_SAFE_SET & ~outgoingRegSet;
+            CVMRMmajorSpill(con, outgoingRegSet, safeSet);
         }
 
         okToDumpCP = ((properties & CVMJITINTRINSIC_CP_DUMP_OK) != 0);
@@ -4223,8 +5207,10 @@ invokeIntrinsicMethod(CVMJITCompilationContext *con,
                 CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con),
 					    dest, intrinsicNode);
             }
-            relinquishIntrinsicArgs(con, &callContext, intrinsicNode, irec);
-            CVMCPUCCALLdestroyArgs(con, &callContext, irec, CVM_FALSE);
+            relinquishIntrinsicArgs(con, &callContext, intrinsicNode,
+				    irec, useRegArgs);
+            CVMCPUCCALLdestroyArgs(con, &callContext, irec, CVM_FALSE,
+				   useRegArgs);
             /* NOTE: We cannot must not push the dest resource until after
                      we relinquish the iargs.  This is because we're relying
                      on the stack to still hold the pointers to the iarg
@@ -4496,8 +5482,128 @@ reg32: FETCH_MB_FROM_VTABLE GET_VTBL reg32 voffMemSpec : 30 :
             CVMJITcsClearEmitInPlace(con);
 	    CVMJITcbufPop(con);
 	}
+
 	CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, $$);
 	pushResource(con, dest);
+    };
+
+// Purpose: MB_TEST_OUTOFLINE(objMB, candidateMB)
+root: MB_TEST_OUTOFLINE reg32 aluRhs : 30 : : : : {
+#ifdef IAI_VIRTUAL_INLINE_CB_TEST
+    CVMCPUALURhs* candidateMB = popALURhs(con);
+    CVMRMResource* mb = popResource(con);
+
+    CVMRMpinResource(CVMRM_INT_REGS(con), mb,
+		     CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+    CVMCPUalurhsPinResource(CVMRM_INT_REGS(con),
+                            CVMCPU_CMP_OPCODE, candidateMB,
+                            CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+
+    /* cmp mb, candidateMB */
+    CVMCPUemitCompare(con, CVMCPU_CMP_OPCODE, CVMCPU_COND_NE,
+                      CVMRMgetRegisterNumber(mb),
+                      CVMCPUalurhsGetToken(con, candidateMB));
+
+    /* branch back to the inlined method if the MB test pass */
+    CVMCPUemitBranch(con,
+        con->currentCompilationBlock->oolReturnAddress, CVMCPU_COND_EQ);
+
+    CVMCPUalurhsRelinquishResource(CVMRM_INT_REGS(con), candidateMB);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), mb);
+
+    /* No longer need to restrict register usage within the block
+     * after this point.
+     */
+    CVMRMremoveRegSandboxRestriction(CVMRM_INT_REGS(con),
+                                     con->currentCompilationBlock);
+
+    CVMJITcsBeginBlock(con);	
+#endif
+    };
+
+// Purpose: cb = FETCH_VCB(object)
+reg32: FETCH_VCB reg32 : 30 :
+    SET_AVOID_METHOD_CALL($$); : : : {
+#ifdef IAI_VIRTUAL_INLINE_CB_TEST
+  	CVMRMResource* objPtr = popResource(con);
+	CVMRMResource* dest;
+
+        CVMJITprintCodegenComment(("Fetch vcb:"));
+        CVMRMpinResource(CVMRM_INT_REGS(con), objPtr,
+			 CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	dest =	CVMRMgetResource(CVMRM_INT_REGS(con),
+                                 GET_REGISTER_GOALS, 1);
+
+	/* LDR rv, [robj] */
+        CVMJITaddCodegenComment((con, "Get object.cb"));
+        CVMJITcsSetExceptionInstruction(con);
+        CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_LDR32_OPCODE,
+                                           CVMRMgetRegisterNumber(dest),
+                                           CVMRMgetRegisterNumber(objPtr),
+                                           OBJECT_CB_OFFSET);
+
+ 	/* Mask off special bits from the class pointer */
+	/* BIC rv, rv, #3 */
+        CVMCPUemitBinaryALUConstant(con, CVMCPU_BIC_OPCODE,
+				    CVMRMgetRegisterNumber(dest),
+				    CVMRMgetRegisterNumber(dest), 0x3,
+				    CVMJIT_NOSETCC);
+
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), objPtr);
+	CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, $$);
+	pushResource(con, dest);
+#endif
+    };
+
+// FETCH_MB_FROM_VTABLE_OUTOFLINE(cb, methodOffset)
+reg32: FETCH_MB_FROM_VTABLE_OUTOFLINE reg32 voffMemSpec : 30 :
+    SET_AVOID_METHOD_CALL($$); : : : {
+#ifdef IAI_VIRTUAL_INLINE_CB_TEST
+        CVMCPUMemSpec *vtblIndex = popMemSpec(con);
+        CVMRMResource* cb;
+        CVMRMResource* dest;
+#ifdef CVM_DEBUG_ASSERTS	
+        CVMAddr fixupAddress  = popAddress(con);
+#else
+        popAddress(con);
+#endif
+        /* The incoming CB should not be trashed because
+         * it comes from phi, which is not part of the reserved
+         * registers.
+         */
+        cb = popResource(con);
+
+        CVMJITprintCodegenComment(("Fetch mb from vtable for outofline:"));
+        CVMRMpinResource(CVMRM_INT_REGS(con), cb,
+                         CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+        dest = CVMRMgetResource(CVMRM_INT_REGS(con),
+                                CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+
+	/* Now find the vtable pointer in the classblock */
+	/* LDR rVTBL, [rCB + CB_VTBL_OFF] */
+        CVMJITaddCodegenComment((con, "Get cb.vtbl"));
+        CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_LDR32_OPCODE,
+                                           CVMRMgetRegisterNumber(dest),
+                                           CVMRMgetRegisterNumber(cb),
+                                           CB_VTBL_OFFSET);
+
+        /* LDR rDest, [rVTBL + vtblIndex*4] */
+        CVMJITaddCodegenComment((con, "method = cb.vtbl[methodIdx]"));
+        CVMCPUmemspecPinResource(CVMRM_INT_REGS(con), vtblIndex, 
+			         CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+
+        CVMCPUemitMemoryReference(con, CVMCPU_LDR32_OPCODE,
+                                  CVMRMgetRegisterNumber(dest), 
+                                  CVMRMgetRegisterNumber(dest),
+                                  CVMCPUmemspecGetToken(con, vtblIndex));
+
+        CVMCPUmemspecRelinquishResource(CVMRM_INT_REGS(con), vtblIndex);
+	CVMassert(fixupAddress == 0);
+
+        CVMRMrelinquishResource(CVMRM_INT_REGS(con), cb);
+	CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, $$);
+	pushResource(con, dest);
+#endif 
     };
 
 // Purpose: mb = FETCH_MB_FROM_ITABLE(GET_ITBL(object), methodBlock)
@@ -4649,6 +5755,9 @@ compare32cc(CVMJITCompilationContext *con,
     CVMJITConditionalBranch* branch = CVMJITirnodeGetCondBranchOp(thisNode);
     CVMJITIRBlock* target = branch->target;
     CVMCPUCondCode condCode = mapCondCode(branch->condition);
+#ifdef IAI_VIRTUAL_INLINE_CB_TEST
+    CVMRMregSandboxResources* sandboxRes = NULL;
+#endif
 
 #ifndef CVMCPU_HAS_COMPARE
     /* pin before calling CVMCPUemitCompare() */
@@ -4669,7 +5778,27 @@ compare32cc(CVMJITCompilationContext *con,
     CVMRMpinAllIncomingLocals(con, target, CVM_FALSE);
 #endif
 
+#ifdef IAI_VIRTUAL_INLINE_CB_TEST
+    if(target->mtIndex != CVMJIT_IAI_VIRTUAL_INLINE_CB_TEST_DEFAULT) {
+        /* reserve registers for outofline MB test */
+        sandboxRes = CVMRMgetRegSandboxResources(
+            CVMRM_INT_REGS(con), target,
+            CVMRM_ANY_SET, CVMRM_EMPTY_SET,
+            CVMCPU_VIRTUAL_INLINE_OUTOFLINE_MB_TEST_REG_NUM);
+    }
+#endif
+
     branchToBlock(con, condCode, target);
+
+#ifdef IAI_VIRTUAL_INLINE_CB_TEST
+    if(target->mtIndex != CVMJIT_IAI_VIRTUAL_INLINE_CB_TEST_DEFAULT) {
+        CVMJITcsBeginBlock(con);
+	target->oolReturnAddress = CVMJITcbufGetLogicalPC(con);
+        /* relinquish the sandbox resources */
+        CVMRMrelinquishRegSandboxResources(CVMRM_INT_REGS(con),
+                                           sandboxRes);
+    }
+#endif
 
 #ifndef CVMCPU_HAS_COMPARE
     /* no longer need resource used in CVMCPUemitCompare() */
@@ -5076,301 +6205,322 @@ CVMJITcheckGC(CVMJITCompilationContext* con, CVMJITIRBlock *b)
     CVMJITcsClearEmitInPlace(con);
 
     return;
-#endif /* !CVMJIT_TRAP_BASED_GC_CHECKS && !CVMJIT_PATCH_BASED_GC_CHECKS */
+#else /* !CVMJIT_TRAP_BASED_GC_CHECKS && !CVMJIT_PATCH_BASED_GC_CHECKS */
 
-#ifdef CVMJIT_TRAP_BASED_GC_CHECKS
+#if defined(CVM_AOT) || defined(CVM_MTASK)
     /*
-      Just generate an instruction that will cause a trap (crash) when
-      a gc is requested. There a 3 cases to worry about:
-
-      (1) Trap-based Incoming Locals:
-      ---------------------------
-      bk->loadLocalsLogicalAddress:
-      gc_return:
-        <stackmap>
-        load incoming locals
-      bk->gcLogicalAddress:
-        ldr  rGC,offset(gc_return)(rGC)
-      bk->logicalAddress:
-      
-      -Trap redirects execution to CVMCCMruntimeGCRendezvousGlue, and sets LR
-       to gc_return. The offset to gc_return is encoded in the ldr trap
-       instruction.
-      
-      (2) Trap-based Incoming Phis:
-      -------------------------
-      do_gc:
-        spill phis
-        CVMCCMruntimeGCRendezvousGlue
-        <stackmap>
-        load phis
-      bk->gcLogicalAddress:
-        ldr  rGC,-offset(do_gc)(rGC)
-      bk->logicalAddress:
-    
-      -Trap redirects execution to do_gc based on offset embedded in the
-       trap instruction. Note that the offset is negative to indicate
-       that execution needs to resume at the offset rather than just
-       setting LR to the offset.
-     
-      (3) Trap-based Normal:
-      ------------------
-        <stackmap>
-      bk->gcLogicalAddress:
-        ldr  rGC,0(rGC)
-      bk->logicalAddress:
-
-      -Trap redirects execution to CVMCCMruntimeGCRendezvousGlue, and sets LR
-       to the trap instruction. The offset of 0 is encoded the ldr trap
-       instruction, so the trap handler knows to set LR to be the same
-       as the trap instruction.
-    */
-
-    CVMBool spilledPhis;
-    CVMInt32 gcLogicalAddress;
-
-    /* this is where we branch to when a gc is needed (do_gc label) */
-    gcLogicalAddress = CVMJITcbufGetLogicalPC(con);
-    CVMJITcsSetEmitInPlace(con);
-
-    /* spill phis */
-    spilledPhis = CVMRMspillPhis(con, CVMRM_SAFE_SET);
-
-    /* We only need an inlined unconditional gcRendezvous if there are
-     * incoming phis.
+     * If either AOT or MTASK is enabled, use trap based GC for
+     * precompiled/AOT code to avoid patching for the read only
+     * code. For dynamic compiled code use patch based GC for
+     * performance purpose.
      */
-    if (spilledPhis) {
-	/* unconditional gc  */
-	CVMJITaddCodegenComment((con, "CVMCCMruntimeGCRendezvousGlue"));
-	CVMCPUemitAbsoluteCall(con, CVMCCMruntimeGCRendezvousGlue,
-			       CVMJIT_NOCPDUMP, CVMJIT_NOCPBRANCH);
-    }
+    if (CVMglobals.jit.isPrecompiling)
+#endif
+#ifdef CVMJIT_TRAP_BASED_GC_CHECKS
+    {
+        /*
+          Just generate an instruction that will cause a trap (crash) when
+          a gc is requested. There a 3 cases to worry about:
 
-    if (CVMJITcbufGetLogicalPC(con) == 
-	CVMJITgetPreviousStackmapLogicalPC(con)) {
-	/* 6314307: If the previous block ended with a method call, then this
-	 * current pc already has a stackmap that includes the
-	 * arguments to that call. When we generate a 2nd stackmap for
-	 * this pc below, it won't end up getting used. If this
-	 * gcCheck results in a gc, then non-existent stack items will
-	 * be scanned. We need to force an extra instruction before
-	 * the gcCheck instruction so the 2nd stackmap will be found.
-	 */
-	CVMCPUemitNop(con);
-	/* we don't want GC to return to the nop or it will use the
-	   wrong stackmap */
-	CVMassert(gcLogicalAddress ==
-		  CVMJITcbufGetLogicalPC(con) - CVMCPU_INSTRUCTION_SIZE);
-	gcLogicalAddress += CVMCPU_INSTRUCTION_SIZE;
-    }
-
-    /* Get a stackmap. This is a GC point */
-    CVMJITcaptureStackmap(con, 0);
-
-    /* reload phis */
-    if (spilledPhis) {
-	CVMRMreloadPhis(con, CVMRM_SAFE_SET);
-    }
+          (1) Trap-based Incoming Locals:
+          ---------------------------
+          bk->loadLocalsLogicalAddress:
+          gc_return:
+            <stackmap>
+            load incoming locals
+          bk->gcLogicalAddress:
+            ldr  rGC,offset(gc_return)(rGC)
+          bk->logicalAddress:
+      
+          -Trap redirects execution to CVMCCMruntimeGCRendezvousGlue,
+           and sets LR to gc_return. The offset to gc_return is encoded
+           in the ldr trap instruction.
+      
+          (2) Trap-based Incoming Phis:
+          -------------------------
+          do_gc:
+            spill phis
+            CVMCCMruntimeGCRendezvousGlue
+            <stackmap>
+            load phis
+          bk->gcLogicalAddress:
+            ldr  rGC,-offset(do_gc)(rGC)
+          bk->logicalAddress:
     
-    /* load incoming locals if necessary */
-    loadIncomingLocals(con, b, spilledPhis);
+          -Trap redirects execution to do_gc based on offset embedded in the
+           trap instruction. Note that the offset is negative to indicate
+           that execution needs to resume at the offset rather than just
+           setting LR to the offset.
+     
+          (3) Trap-based Normal:
+          ------------------
+            <stackmap>
+          bk->gcLogicalAddress:
+            ldr  rGC,0(rGC)
+          bk->logicalAddress:
+
+          -Trap redirects execution to CVMCCMruntimeGCRendezvousGlue, 
+           and sets LR to the trap instruction. The offset of 0 is 
+           encoded the ldr trap instruction, so the trap handler knows 
+           to set LR to be the same as the trap instruction.
+        */
+
+        CVMBool spilledPhis;
+        CVMInt32 gcLogicalAddress;
+
+        /*this is where we branch to when a gc is needed (do_gc label)*/
+        gcLogicalAddress = CVMJITcbufGetLogicalPC(con);
+        CVMJITcsSetEmitInPlace(con);
+
+        /* spill phis */
+        spilledPhis = CVMRMspillPhis(con, CVMRM_SAFE_SET);
+
+        /* We only need an inlined unconditional gcRendezvous if there are
+         * incoming phis.
+         */
+        if (spilledPhis) {
+  	    /* unconditional gc  */
+	    CVMJITaddCodegenComment((con, "CVMCCMruntimeGCRendezvousGlue"));
+	    CVMCPUemitAbsoluteCall(con, CVMCCMruntimeGCRendezvousGlue,
+			           CVMJIT_NOCPDUMP, CVMJIT_NOCPBRANCH);
+        }
+
+        if (CVMJITcbufGetLogicalPC(con) == 
+	    CVMJITgetPreviousStackmapLogicalPC(con)) {
+	    /* 6314307: If the previous block ended with a method call, then
+             * this current pc already has a stackmap that includes the
+	     * arguments to that call. When we generate a 2nd stackmap for
+	     * this pc below, it won't end up getting used. If this
+	     * gcCheck results in a gc, then non-existent stack items will
+	     * be scanned. We need to force an extra instruction before
+	     * the gcCheck instruction so the 2nd stackmap will be found.
+	     */
+	    CVMCPUemitNop(con);
+	    /* we don't want GC to return to the nop or it will use the
+	       wrong stackmap */
+  	    CVMassert(gcLogicalAddress ==
+		      CVMJITcbufGetLogicalPC(con) - CVMCPU_INSTRUCTION_SIZE);
+	    gcLogicalAddress += CVMCPU_INSTRUCTION_SIZE;
+        }
+
+        /* Get a stackmap. This is a GC point */
+        CVMJITcaptureStackmap(con, 0);
+
+        /* reload phis */
+        if (spilledPhis) {
+	    CVMRMreloadPhis(con, CVMRM_SAFE_SET);
+        }
+    
+        /* load incoming locals if necessary */
+        loadIncomingLocals(con, b, spilledPhis);
 
 #ifdef CVMCPU_HAS_VOLATILE_GC_REG
-    /* rGC is not setup in an NV register. Get it from the ccee. Note
-     * that it is normally setup before the backwards branch, which will
-     * branch after this code. This one is in case we GC, in which case
-     * rGC will be trashed before we re-enter the block.
-     */
-    CVMJITaddCodegenComment((con, "rGC = ccee->gcTrapAddr"));
-    CVMCPUemitCCEEReferenceImmediate(con,
+        /* rGC is not setup in an NV register. Get it from the ccee. Note
+         * that it is normally setup before the backwards branch, which will
+         * branch after this code. This one is in case we GC, in which case
+         * rGC will be trashed before we re-enter the block.
+         */
+        CVMJITaddCodegenComment((con, "rGC = ccee->gcTrapAddr"));
+        CVMCPUemitCCEEReferenceImmediate(con,
 				     CVMCPU_LDR32_OPCODE, CVMCPU_GC_REG,
 				     offsetof(CVMCCExecEnv, gcTrapAddr));
 #endif
 
-    /* This is where branches to the block will branch to. Note that we branch
-     * after the rGC setup above. In order to reduce load latency issues, we
-     * require that rGC be setup before doing the branch.
-     */
-    CVMtraceJITCodegen(("\tL%d:\t%d:\t@ entry point for branches\n",
+        /* This is where branches to the block will branch to. Note that 
+         * we branch after the rGC setup above. In order to reduce load 
+         * latency issues, we require that rGC be setup before doing the 
+         * branch.
+         */
+        CVMtraceJITCodegen(("\tL%d:\t%d:\t@ entry point for branches\n",
 			b->blockID, CVMJITcbufGetLogicalPC(con)));
-    b->gcLogicalAddress = CVMJITcbufGetLogicalPC(con);
+        b->gcLogicalAddress = CVMJITcbufGetLogicalPC(con);
 
-    {
-	/* Emit the instruction that will trap when a gc is
-	 * requested. Note that the offset is the distance to the
-	 * instructions above to handle the actual gcRendezvous. The SEGV
-	 * handler will use this value to redirect execution to the above
-	 * code.
-	 */
-	int gcOffset = b->gcLogicalAddress - gcLogicalAddress;
-	CVMassert(gcOffset <=
-		  sizeof(void*) * CVMJIT_MAX_GCTRAPADDR_WORD_OFFSET);
-	if (spilledPhis) {
-	    gcOffset = -gcOffset;  /* encode that there are incoming phis */
-	}
-	CVMJITaddCodegenComment((con, "gc trap instruction"));
-	CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_LDR32_OPCODE,
+        {
+	    /* Emit the instruction that will trap when a gc is
+	     * requested. Note that the offset is the distance to the
+	     * instructions above to handle the actual gcRendezvous. The SEGV
+	     * handler will use this value to redirect execution to the above
+	     * code.
+	     */
+	    int gcOffset = b->gcLogicalAddress - gcLogicalAddress;
+	    CVMassert(gcOffset <=
+		      sizeof(void*) * CVMJIT_MAX_GCTRAPADDR_WORD_OFFSET);
+	    if (spilledPhis) {
+                /* encode that there are incoming phis */
+	        gcOffset = -gcOffset;
+	    }
+	    CVMJITaddCodegenComment((con, "gc trap instruction"));
+	    CVMCPUemitMemoryReferenceImmediate(con, CVMCPU_LDR32_OPCODE,
 					   CVMCPU_GC_REG, CVMCPU_GC_REG,
 					   gcOffset);
+            CVMassert((*((CVMCPUInstruction*)CVMJITcbufGetPhysicalPC(con)-1) &
+                CVMCPU_GCTRAP_INSTRUCTION_MASK) == CVMCPU_GCTRAP_INSTRUCTION);
+        }
+
+        b->logicalAddress = CVMJITcbufGetLogicalPC(con);
+
+        CVMJITcsClearEmitInPlace(con);
+        return;
     }
-
-    /* save away the trap instruction so segv handler knows what to look for */
-    CVMglobals.jit.gcTrapInstr =
-	*((CVMCPUInstruction*)CVMJITcbufGetPhysicalPC(con) - 1);
-
-    b->logicalAddress = CVMJITcbufGetLogicalPC(con);
-
-    CVMJITcsClearEmitInPlace(con);
-    return;
 #endif /* CVMJIT_TRAP_BASED_GC_CHECKS */
 
-#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
-    /*
-     * Generate a call to do the rendezvous, but also patch over the call
-     * so normally it is not made until a gc is requested. This way there
-     * is no overhead involved at the gc checkpoint.
-     */
-    int spilled;
-
-    CVMJITcsSetEmitInPlace(con);
-#ifndef CVMCPU_HAS_POSTINCREMENT_STORE
-    CVMassert(con->SMjspOffset == 0);
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+    else
 #endif
 
-    /*
-      There are 3 forms of backwards branch targets we worry about:
+#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
+    {
+        /*
+         * Generate a call to do the rendezvous, but also patch over the call
+         * so normally it is not made until a gc is requested. This way there
+         * is no overhead involved at the gc checkpoint.
+         */
+        int spilled;
 
-      (1) Patch-based Incoming Locals:
-      -------------------------------
-      do_gc:
-          gcRendezvous    <-- patched until a GC is needed
-      bk->loadLocalsLogicalAddress:
+        CVMJITcsSetEmitInPlace(con);
+#ifndef CVMCPU_HAS_POSTINCREMENT_STORE
+        CVMassert(con->SMjspOffset == 0);
+#endif
+
+        /*
+          There are 3 forms of backwards branch targets we worry about:
+
+          (1) Patch-based Incoming Locals:
+          -------------------------------
+          do_gc:
+              gcRendezvous    <-- patched until a GC is needed
+          bk->loadLocalsLogicalAddress:
           load incoming locals
-      bk->logicalAddress:
+          bk->logicalAddress:
       
-      (2) Patch-based Incoming Phis:
-      ------------------------------
-      do_gc:
-          spill phis
-          gcRendezvous    <-- patched until a GC is needed
-          load phis
-      bk->logicalAddress:
+          (2) Patch-based Incoming Phis:
+          ------------------------------
+          do_gc:
+              spill phis
+              gcRendezvous    <-- patched until a GC is needed
+              load phis
+          bk->logicalAddress:
       
-      (3) Patch-based Normal:
-      -----------------------
-      do_gc:
-          gcRendezvous    <-- patched until a GC is needed
-      bk->logicalAddress:
+          (3) Patch-based Normal:
+          -----------------------
+          do_gc:
+              gcRendezvous    <-- patched until a GC is needed
+          bk->logicalAddress:
       
-      When patching gcRendezvous, we do 1 of two things:
-      -If there is no delay slot, gcRendezvous is patched by rewinding and
-       overwriting it with whatever instruction would naturally come next.
-      -If there is delay slot, gcRendezvous is patched with a nop.
+          When patching gcRendezvous, we do 1 of two things:
+          -If there is no delay slot, gcRendezvous is patched by rewinding
+           and overwriting it with whatever instruction would naturally
+           come next.
+          -If there is delay slot, gcRendezvous is patched with a nop.
       
-      -All branches to the block are to bk->logicalAddress, thus avoiding
-       any gcRendezvous overhead.
-      -When doing a fallthrough, an explicit branch to bk->logicalAddress is
-       used, unless there is no phis or incoming locals, in which case a 
-       fallthrough is allowed.
+          -All branches to the block are to bk->logicalAddress, thus avoiding
+           any gcRendezvous overhead.
+          -When doing a fallthrough, an explicit branch to bk->logicalAddress
+           is used, unless there is no phis or incoming locals, in which case
+           a fallthrough is allowed.
       
-      -If there are incoming locals, the first MAP_PC node in the block is
-       remapped to bk->loadLocalsLogicalAddress for OSR. There is no OSR when
-       there are incoming phis, and no remapping is needed in the normal case.
-     */
+          -If there are incoming locals, the first MAP_PC node in the block
+           is remapped to bk->loadLocalsLogicalAddress for OSR. There is no 
+           OSR when there are incoming phis, and no remapping is needed in 
+           the normal case.
+         */
 
-    CVMtraceJITCodegen(("\tL%d:\t%d:\t@ Patchable GC Check point\n",
-			 b->blockID, CVMJITcbufGetLogicalPC(con)));
+        CVMtraceJITCodegen(("\tL%d:\t%d:\t@ Patchable GC Check point\n",
+		 	     b->blockID, CVMJITcbufGetLogicalPC(con)));
 
-    /* this is where we branch to when a gc is needed (do_gc label) */
-    b->gcLogicalAddress = CVMJITcbufGetLogicalPC(con);
+        /* this is where we branch to when a gc is needed (do_gc label) */
+        b->gcLogicalAddress = CVMJITcbufGetLogicalPC(con);
 
-    spilled = CVMRMspillPhisCount(con, CVMRM_SAFE_SET);
+        spilled = CVMRMspillPhisCount(con, CVMRM_SAFE_SET);
 
-    /*
-     * Need to spill phis before doing a gc and reload them after the gc
-     * in case either they are ref phis or are in volatile registers.
-     * See case (2) above.
-     */
-    if (spilled > 0) {
-	CVMJITprintCodegenComment(("******* PHI spill %C.%M\n",
-				   CVMmbClassBlock(con->mb), con->mb));
-	CVMRMspillPhis(con, CVMRM_SAFE_SET);
-    }
+        /*
+         * Need to spill phis before doing a gc and reload them after the gc
+         * in case either they are ref phis or are in volatile registers.
+         * See case (2) above.
+         */
+        if (spilled > 0) {
+	    CVMJITprintCodegenComment(("******* PHI spill %C.%M\n",
+				       CVMmbClassBlock(con->mb), con->mb));
+	    CVMRMspillPhis(con, CVMRM_SAFE_SET);
+        }
 
-    if (CVMJITcbufGetLogicalPC(con) == 
-	CVMJITgetPreviousStackmapLogicalPC(con)) {
-	/* If the previous block ended with a method call, then this
-	 * current pc already has a stackmap that includes the
-	 * arguments to that call. When we generate a 2nd stackmap for
-	 * this pc below, it won't end up getting used. If this
-	 * gcCheck results in a gc, then non-existent stack items will
-	 * be scanned. We need to force an extra instruction before
-	 * the gcCheck instruction so the 2nd stackmap will be found.
-	 */
-	/*
-	 * NOTE: We could do better here. Currently we don't always
-	 * flush JSP when making method calls, so the stackmap is our
-	 * only indicator of how much we need to scan. If we always
-	 * flush JSP, then the scanner can just use the previous
-	 * stackmap and stop scanning when topOfStack is reached. This
-	 * is a fix that was made in 1.0, and also allows us to
-	 * remove another fix involving exception handling when
-	 * TOS isn't flushed. See bug #4732902.  
-	 */
-	CVMCPUemitNop(con);
-    }
+        if (CVMJITcbufGetLogicalPC(con) == 
+	    CVMJITgetPreviousStackmapLogicalPC(con)) {
+	    /* If the previous block ended with a method call, then this
+	     * current pc already has a stackmap that includes the
+	     * arguments to that call. When we generate a 2nd stackmap for
+	     * this pc below, it won't end up getting used. If this
+	     * gcCheck results in a gc, then non-existent stack items will
+	     * be scanned. We need to force an extra instruction before
+	     * the gcCheck instruction so the 2nd stackmap will be found.
+	     */
+   	    /*
+	     * NOTE: We could do better here. Currently we don't always
+	     * flush JSP when making method calls, so the stackmap is our
+	     * only indicator of how much we need to scan. If we always
+	     * flush JSP, then the scanner can just use the previous
+	     * stackmap and stop scanning when topOfStack is reached. This
+	     * is a fix that was made in 1.0, and also allows us to
+	     * remove another fix involving exception handling when
+	     * TOS isn't flushed. See bug #4732902.  
+	    */
+	    CVMCPUemitNop(con);
+        }
 
-    /* 1. Emit the gc rendezvous instruction. Tell the emitter that
-     *    we are going to rewind the code buffer. */
-    CVMCPUemitGcCheck(con, CVM_TRUE);
-    /* 2. rewind to just before the rendezvous instruction */
-    CVMJITcbufRewind(con, sizeof(CVMCPUInstruction));
-    /* 3. save away the gc rendezvous instruction. */
-    patchInstruction(con);
+        /* 1. Emit the gc rendezvous instruction. Tell the emitter that
+         *    we are going to rewind the code buffer. */
+        CVMCPUemitGcCheck(con, CVM_TRUE);
+        /* 2. rewind to just before the rendezvous instruction */
+        CVMJITcbufRewind(con, sizeof(CVMCPUInstruction));
+        /* 3. save away the gc rendezvous instruction. */
+        patchInstruction(con);
 
 #ifdef CVMCPU_NUM_NOPS_FOR_GC_PATCH
-    {
-        int i;
-        /* We only patch one instruction, which is the branch or call to
-         * CVMCCMruntimeGCRendezvousGlue. For platforms like Sparc that have
-         * a delay slot after a call(or branch), we put nop's at the patch
-         * location and also one instruction after patch, so when GC is patched
-         * we can guarantee that the delay slot does not contain any unexpected
-         * instruction. On platforms that require multiple instructions
-	 * to do the call (like powerpc when we don't copy to the code cache)
-	 * we also need to generate a nop so we don't attempt to return
-	 * to the call instruction, but instead return to the instruction
-	 * after it. Otherwise if it gets repatched before we return, we
-	 * executed the call instruction without executing the code to
-	 * setup the call properly.
-         */
-        for (i = 0; i < CVMCPU_NUM_NOPS_FOR_GC_PATCH; i++) {
-            CVMCPUemitNop(con);
+        {
+            int i;
+            /* We only patch one instruction, which is the branch or call to
+             * CVMCCMruntimeGCRendezvousGlue. For platforms like Sparc that
+             * have a delay slot after a call(or branch), we put nop's at
+             * the patch location and also one instruction after patch, so
+             * when GC is patched we can guarantee that the delay slot does 
+             * not contain any unexpected instruction. On platforms that 
+             * require multiple instructions to do the call (like powerpc 
+             * when we don't copy to the code cache) we also need to 
+             * generate a nop so we don't attempt to return to the call 
+             * instruction, but instead return to the instruction after it.
+             * Otherwise if it gets repatched before we return, we executed
+             * the call instruction without executing the code to setup the
+             * call properly.
+             */
+            for (i = 0; i < CVMCPU_NUM_NOPS_FOR_GC_PATCH; i++) {
+                CVMCPUemitNop(con);
+            }
         }
-    }
 #endif
 
-    /* Get a stackmap. This is a GC point */
-    CVMJITcaptureStackmap(con, 0);
+        /* Get a stackmap. This is a GC point */
+        CVMJITcaptureStackmap(con, 0);
 
-    /* reload the spilled phis. See case (2) above. */
-    if (spilled > 0) {
-	CVMRMreloadPhis(con, CVMRM_SAFE_SET);
+        /* reload the spilled phis. See case (2) above. */
+        if (spilled > 0) {
+	    CVMRMreloadPhis(con, CVMRM_SAFE_SET);
+        }
+
+        /* load incoming locals if necessary */
+        loadIncomingLocals(con, b, spilled > 0);
+
+        /*
+         * This is where branches to the block will branch to. Note that
+         * we are smart here and make branches to this block branch after
+         * the loading of locals, since the locals will already be loaded
+         */
+        CVMtraceJITCodegen(("\tL%d:\t%d:\t@ entry point for branches\n",
+		 	    b->blockID, CVMJITcbufGetLogicalPC(con)));
+        b->logicalAddress = CVMJITcbufGetLogicalPC(con);
+        CVMJITcsClearEmitInPlace(con);
     }
-
-    /* load incoming locals if necessary */
-    loadIncomingLocals(con, b, spilled > 0);
-
-    /*
-     * This is where branches to the block will branch to. Note that
-     * we are smart here and make branches to this block branch after
-     * the loading of locals, since the locals will already be loaded
-     */
-    CVMtraceJITCodegen(("\tL%d:\t%d:\t@ entry point for branches\n",
-			b->blockID, CVMJITcbufGetLogicalPC(con)));
-    b->logicalAddress = CVMJITcbufGetLogicalPC(con);
-    CVMJITcsClearEmitInPlace(con);
 #endif /* CVMJIT_PATCH_BASED_GC_CHECKS */
+#endif /* !CVMJIT_TRAP_BASED_GC_CHECKS && !CVMJIT_PATCH_BASED_GC_CHECKS */
 }
 
 static void
@@ -5397,119 +6547,148 @@ branchToBlock(
 	}
     }
 
-
-#ifndef CVMJIT_PATCH_BASED_GC_CHECKS
+#if !defined(CVMJIT_PATCH_BASED_GC_CHECKS) && !defined(CVMJIT_TRAP_BASED_GC_CHECKS)
     if (CVMJITirblockIsBackwardBranchTarget(target)) {
 	targetAddress = target->gcLogicalAddress;
-#if defined(CVMJIT_TRAP_BASED_GC_CHECKS) && defined(CVMCPU_HAS_VOLATILE_GC_REG)
-	/* rGC is not setup in an NV register. Get it from the ccee: */
-	CVMJITaddCodegenComment((con, "rGC = ccee->gcTrapAddr"));
-	CVMCPUemitCCEEReferenceImmediate(con,
-					 CVMCPU_LDR32_OPCODE, CVMCPU_GC_REG,
-					 offsetof(CVMCCExecEnv, gcTrapAddr));
-#endif
     }
     CVMJITaddCodegenComment((con, "branch to block L%d", target->blockID));
     CVMCPUemitBranchNeedFixup(con, targetAddress, condcode, fixupList);
-#else /* CVMJIT_PATCH_BASED_GC_CHECKS */
-    /* 
-     * We need to do a patchable branch to backwards branch targets so we
-     * don't execute gcRendezvous code everytime.
-     */
-    if (CVMJITirblockIsBackwardBranchTarget(target))
-    {
-        CVMCPUInstruction* patchedInstructions = (CVMCPUInstruction*)
-            (((CVMUint32)&con->gcCheckPcs->pcEntries[con->gcCheckPcsSize]
-              + sizeof(CVMCPUInstruction) - 1)
-              & ~(sizeof(CVMCPUInstruction)-1));
+#else /* !CVMJIT_TRAP_BASED_GC_CHECKS && !CVMJIT_PATCH_BASED_GC_CHECKS */
 
-        CVMassert(con->gcCheckPcsIndex < con->gcCheckPcsSize);
-	CVMJITaddCodegenComment((con, "branch to block L%d", target->blockID));
-
-        if (!(target->flags & CVMJITIRBLOCK_ADDRESS_FIXED)) {
-            /* This must be a forward branch. */
-            CVMCPUemitBranchNeedFixup(con, targetAddress,
-                                      condcode, fixupList);
-            patchedInstructions[con->gcCheckPcsIndex] = 0;
-            con->gcCheckPcs->pcEntries[con->gcCheckPcsIndex++] = 0;
-        } else {
-            int rewindOffset = 0;
-	    int branchPC = CVMJITcbufGetLogicalPC(con);
-	    int patchPC = 0;
-
-	    CVMassert(target->gcLogicalAddress != 0);
-	    CVMassert(target->gcLogicalAddress <= targetAddress);
-
-            /* No need to patch the backwards branch if 
-             * (targetAddress == target->gcLogicalAddress)
-             */
-            if (targetAddress != target->gcLogicalAddress) {
-                CVMJITprintCodegenComment(("Patchable backwards branch:")); 
-	        /* first emit branch to instructions that will gc */
-                CVMCPUemitBranch(con, target->gcLogicalAddress, condcode);
-
-#ifdef CVMCPU_HAS_DELAY_SLOT
-	        /* NOTE: This is not going to work for SH4. The
-	           CVMCCMruntimeGCRendezvousGlue() call is going to take more
-		   than two instruction, including the nop in the delay slot.
-	           We need an HPI #define for the number of instructions. Also,
-	           the patchInstruction() call below needs to be done for each
-	           instruction used in the branch, instead of assuming there is
-	           just one.
-	        */
-	        patchPC = CVMJITcbufGetLogicalPC(con) -
-		    2 * CVMCPU_INSTRUCTION_SIZE;
-#else
-	        patchPC = CVMJITcbufGetLogicalPC(con) -
-		    1 * CVMCPU_INSTRUCTION_SIZE;
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+    /* Compiling AOT/warmup code, use trap based GC */
+    if (CVMglobals.jit.isPrecompiling)
 #endif
+#ifdef CVMJIT_TRAP_BASED_GC_CHECKS
+    {
+        if (CVMJITirblockIsBackwardBranchTarget(target)) {
+	    targetAddress = target->gcLogicalAddress;
+#ifdef CVMCPU_HAS_VOLATILE_GC_REG
+	    /* rGC is not setup in an NV register. Get it from the ccee: */
+	    CVMJITaddCodegenComment((con, "rGC = ccee->gcTrapAddr"));
+	    CVMCPUemitCCEEReferenceImmediate(con,
+					 CVMCPU_LDR32_OPCODE, CVMCPU_GC_REG,
+					 offsetof(CVMCCExecEnv, gcTrapAddr));
+#endif
+        }
+        CVMJITaddCodegenComment(
+            (con, "branch to block L%d", target->blockID));
+        CVMCPUemitBranchNeedFixup(con, targetAddress, condcode, fixupList);
+    }
+#endif
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+    else
+#endif
+#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
+    {
+        /* 
+         * We need to do a patchable branch to backwards branch targets so we
+         * don't execute gcRendezvous code everytime.
+         */
+        if (CVMJITirblockIsBackwardBranchTarget(target))
+        {
+            CVMCPUInstruction* patchedInstructions = (CVMCPUInstruction*)
+                (((CVMUint32)&con->gcCheckPcs->pcEntries[con->gcCheckPcsSize]
+                  + sizeof(CVMCPUInstruction) - 1)
+                  & ~(sizeof(CVMCPUInstruction)-1));
 
-                /* If the platform has branch delay slot (such as SPARC 'call'
-                 * instruction), space is reserved for the GC check patching
-                 * instruction at the beginning of a backward branch target
-                 * (see checkGC()).
-                 *
-                 * Normally, the reserved space is skipped when branching to
-                 * the target for performance reason. When GC is requested,
-                 * the branch instruction will be patched to the beginning
-                 * of the target, so that GCRendezvous can be invoked.
-                 */
-	        /* NOTE: This is not going to work for SH4. The two backwards
-	          branches we emit (one above and then the 2nd a bit further
-		  down) might take a different number of instructions, given
-		  the SH4's limited conditional branch range (256 bytes). The
-		  2nd might be in range and the 1st not (since it is a bit
-		  further away). The fix is to count the number of instructions
-		  the first branch took, and if the 2nd takes fewer, fill it
-		  out with nops.
-	        */
-                rewindOffset = CVMJITcbufGetLogicalPC(con) - patchPC;
-                CVMJITcbufRewind(con, rewindOffset);
-                /* save away the branch instruction. */
-	        patchInstruction(con);
-                /* reemit branch */
-	        CVMJITcbufRewind(con, patchPC - branchPC);
-            } else {
-                /* no patch for this backwards branch. */
+            CVMassert(con->gcCheckPcsIndex < con->gcCheckPcsSize);
+	    CVMJITaddCodegenComment(
+                (con, "branch to block L%d", target->blockID));
+
+            if (!(target->flags & CVMJITIRBLOCK_ADDRESS_FIXED)) {
+                /* This must be a forward branch. */
+                CVMCPUemitBranchNeedFixup(con, targetAddress,
+                                          condcode, fixupList);
                 patchedInstructions[con->gcCheckPcsIndex] = 0;
                 con->gcCheckPcs->pcEntries[con->gcCheckPcsIndex++] = 0;
+            } else {
+                int rewindOffset = 0;
+	        int branchPC = CVMJITcbufGetLogicalPC(con);
+	        int patchPC = 0;
+
+	        CVMassert(target->gcLogicalAddress != 0);
+	        CVMassert(target->gcLogicalAddress <= targetAddress);
+
+                /* No need to patch the backwards branch if 
+                 * (targetAddress == target->gcLogicalAddress)
+                 */
+                if (targetAddress != target->gcLogicalAddress) {
+                    CVMJITprintCodegenComment(
+                        ("Patchable backwards branch:")); 
+	            /* first emit branch to instructions that will gc */
+                    CVMCPUemitBranch(con, 
+                         target->gcLogicalAddress, condcode);
+
+#ifdef CVMCPU_HAS_DELAY_SLOT
+	            /* NOTE: This is not going to work for SH4. The
+	               CVMCCMruntimeGCRendezvousGlue() call is going to take
+                       more than two instruction, including the nop in the 
+                       delay slot. We need an HPI #define for the number 
+                       of instructions. Also, the patchInstruction() call 
+                       below needs to be done for each instruction used in 
+                       the branch, instead of assuming there is just one.
+	            */
+	            patchPC = CVMJITcbufGetLogicalPC(con) -
+		        2 * CVMCPU_INSTRUCTION_SIZE;
+#else
+	            patchPC = CVMJITcbufGetLogicalPC(con) -
+		        1 * CVMCPU_INSTRUCTION_SIZE;
+#endif
+
+                    /* If the platform has branch delay slot (such as SPARC
+                     * 'call' instruction), space is reserved for the GC 
+                     * check patching instruction at the beginning of a 
+                     * backward branch target (see checkGC()).
+                     *
+                     * Normally, the reserved space is skipped when branching
+                     * to the target for performance reason. When GC is 
+                     * requested, the branch instruction will be patched to 
+                     * the beginning of the target, so that GCRendezvous 
+                     * can be invoked.
+                     */
+	            /* NOTE: This is not going to work for SH4. The two 
+                       backwards branches we emit (one above and then the 
+                       2nd a bit further down) might take a different 
+                       number of instructions, given the SH4's limited 
+                       conditional branch range (256 bytes). The 2nd might 
+                       be in range and the 1st not (since it is a bit
+		       further away). The fix is to count the number of 
+                       instructions the first branch took, and if the 2nd 
+                       takes fewer, fill it out with nops.
+	            */
+                    rewindOffset = CVMJITcbufGetLogicalPC(con) - patchPC;
+                    CVMJITcbufRewind(con, rewindOffset);
+                    /* save away the branch instruction. */
+	            patchInstruction(con);
+                    /* reemit branch */
+	            CVMJITcbufRewind(con, patchPC - branchPC);
+                } else {
+                    /* no patch for this backwards branch. */
+                    patchedInstructions[con->gcCheckPcsIndex] = 0;
+                    con->gcCheckPcs->pcEntries[con->gcCheckPcsIndex++] = 0;
+                }
+	        /* now emit branch to normal block entry which won't gc */
+	        CVMJITaddCodegenComment((con, "branch to block L%d, skip GC",
+				         target->blockID));
+                CVMCPUemitBranch(con, targetAddress, condcode);
+                if (targetAddress != target->gcLogicalAddress) {
+	            if (CVMJITcbufGetLogicalPC(con) - patchPC !=
+                                                        rewindOffset) {
+		        CVMJITerror(con, CANNOT_COMPILE,
+                            "CVMJIT: Inconsistent backwards branch instructions");
+	            }
+                }
             }
-	    /* now emit branch to normal block entry which won't gc */
-	    CVMJITaddCodegenComment((con, "branch to block L%d, skip GC",
-				     target->blockID));
-            CVMCPUemitBranch(con, targetAddress, condcode);
-            if (targetAddress != target->gcLogicalAddress) {
-	        if (CVMJITcbufGetLogicalPC(con) - patchPC != rewindOffset) {
-		    CVMJITerror(con, CANNOT_COMPILE,
-                        "CVMJIT: Inconsistent backwards branch instructions");
-	        }
-            }
-        }
-     } else {
-	CVMJITaddCodegenComment((con, "branch to block L%d", target->blockID));
-	CVMCPUemitBranchNeedFixup(con, targetAddress, condcode, fixupList);
+         } else {
+	    CVMJITaddCodegenComment(
+                (con, "branch to block L%d", target->blockID));
+	    CVMCPUemitBranchNeedFixup(con, targetAddress,
+                                      condcode, fixupList);
+         }
      }
 #endif /* CVMJIT_PATCH_BASED_GC_CHECKS */
+#endif /* !CVMJIT_TRAP_BASED_GC_CHECKS && !CVMJIT_PATCH_BASED_GC_CHECKS */
      CVMJITcsClearEmitInPlace(con);
 }
 
@@ -5540,8 +6719,7 @@ root:	TABLESWITCH reg32 : 40 : : : : {
         CVMJITprintCodegenComment(("tableswitch"));
 	CVMRMsynchronizeJavaLocals(con);
 
-#ifdef CVMCPU_HAS_ZERO_REG
-        if (key == (CVMRM_INT_REGS(con))->preallocatedResourceForConstantZero){
+    if (CVMRMisConstant(key) && CVMRMgetConstant(key) == 0) {
             /* We know the key is a constant 0. So this can be simplified. */
             if (low <= 0 && high >= 0) {
                 CVMJITIRBlock *target = ts->tableList[0-low];
@@ -5549,9 +6727,7 @@ root:	TABLESWITCH reg32 : 40 : : : : {
             } else {
                 branchToBlock(con, CVMCPU_COND_AL, ts->defaultTarget);
             }
-        } else
-#endif
-        {
+        } else {
 	    /*
 	     * After pinning the key resource, we are going to modify
 	     * the register it gets pinned to. This causes problems because
@@ -5757,8 +6933,8 @@ root:	LOOKUPSWITCH reg32 : 40 : : : : {
 	}
 #endif
 
-#ifdef CVMCPU_HAS_ZERO_REG
-        if (key == (CVMRM_INT_REGS(con))->preallocatedResourceForConstantZero){
+	if (CVMRMisConstant(key) && CVMRMgetConstant(key) == 0) {
+            /* We know the key is a constant 0. So this can be simplified. */
             int i;
             for (i = 0; i < ls->nPairs; i++) {
                 if (ls->lookupList[i].matchValue == 0) {
@@ -5770,39 +6946,39 @@ root:	LOOKUPSWITCH reg32 : 40 : : : : {
             branchToBlock(con, CVMCPU_COND_AL, ls->defaultTarget);
             goto done;
         }
-#endif
-	    /*
-	     * After pinning the key resource, we are going to modify
-	     * the register it gets pinned to. This causes problems because
-	     * the resource may be associated with a local or constant
-	     * that will be used later. It could also be a DEFINE node,
-	     * which means its refcount > 1. This is handled below.
+
+	/*
+	 * After pinning the key resource, we are going to modify
+	 * the register it gets pinned to. This causes problems because
+	 * the resource may be associated with a local or constant
+	 * that will be used later. It could also be a DEFINE node,
+	 * which means its refcount > 1. This is handled below.
+	 */
+	CVMRMpinResource(CVMRM_INT_REGS(con), key,
+			 CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	if (CVMRMgetRefCount(CVMRM_INT_REGS(con), key) > 1) {
+	    /* If there is more than one reference to this resource,
+	     * then make a clone and use the clone as the key. This
+	     * way we can change it without affecting the other
+	     * references.
 	     */
-            CVMRMpinResource(CVMRM_INT_REGS(con), key,
-			     CVMRM_ANY_SET, CVMRM_EMPTY_SET);
-	    if (CVMRMgetRefCount(CVMRM_INT_REGS(con), key) > 1) {
-		/* If there is more than one reference to this resource,
-		 * then make a clone and use the clone as the key. This
-		 * way we can change it without affecting the other
-		 * references.
-		 */
-		CVMRMResource* clone =
-		    CVMRMcloneResourceStrict(CVMRM_INT_REGS(con), key,
-					     CVMRM_ANY_SET, CVMRM_EMPTY_SET);
-		CVMRMunpinResource(CVMRM_INT_REGS(con), key);
-		key = clone;
-		keyreg = CVMRMgetRegisterNumber(key);
-	    } else {
-		/* The refcount is 1, but there may be a cached local
-		 * or constant referencing this resource. We must
-		 * relinquish it and then grab it again to force any
-		 * cached referenced to be decached.
-		 */
-		keyreg = CVMRMgetRegisterNumber(key);
-		CVMRMrelinquishResource(CVMRM_INT_REGS(con), key);
-		key =
-		    CVMRMgetResourceSpecific(CVMRM_INT_REGS(con), keyreg, 1);
-	    }
+	    CVMRMResource* clone =
+		CVMRMcloneResourceStrict(CVMRM_INT_REGS(con), key,
+					 CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+	    CVMRMunpinResource(CVMRM_INT_REGS(con), key);
+	    key = clone;
+	    keyreg = CVMRMgetRegisterNumber(key);
+	} else {
+	    /* The refcount is 1, but there may be a cached local
+	     * or constant referencing this resource. We must
+	     * relinquish it and then grab it again to force any
+	     * cached referenced to be decached.
+	     */
+	    keyreg = CVMRMgetRegisterNumber(key);
+	    CVMRMrelinquishResource(CVMRM_INT_REGS(con), key);
+	    key =
+		CVMRMgetResourceSpecific(CVMRM_INT_REGS(con), keyreg, 1);
+	}
 	
 	/*
 	 * We may need a scratch register for loading large constant
@@ -6016,10 +7192,28 @@ emitBoundsCheck(CVMJITCompilationContext *con, CVMJITIRNodePtr thisNode,
     /* trap if array bounds check failed */
     CVMRMsynchronizeJavaLocals(con);
     CVMJITaddCodegenComment((con,trapCheckComments[CVMJITIR_ARRAY_INDEX_OOB]));
+
+
+/* IAI - 12 */
+#if defined(IAI_CS_EXCEPTION_ENHANCEMENT) && !defined(IAI_CS_EXCEPTION_ENHANCEMENT2) 
+    CVMJITcsSetExceptionInstruction(con);
+#endif
+/* IAI - 12 */
+
+
+#ifdef IAI_CS_EXCEPTION_ENHANCEMENT2
+    CVMJITcsSetArrayIndexOutofBoundsBranch(con);
+#endif
+
     CVMCPUemitAbsoluteCallConditional(con,
         (void*)CVMCCMruntimeThrowArrayIndexOutOfBoundsExceptionGlue,
         CVMJIT_CPDUMPOK, CVMJIT_CPBRANCHOK, CVMCPU_COND_LS);
+
+/* IAI - 12 */
+#ifndef IAI_CS_EXCEPTION_ENHANCEMENT
     CVMJITcsBeginBlock(con);
+#endif
+/* IAI - 12 */
 
     /* push the arrayIndex resource on the stack */
     if (isConstIndex) {
@@ -6089,11 +7283,15 @@ root:   RET reg32 : 10 : : : : {
 
 root:	GOTO	: 10 : : : : {
         CVMJITIRBlock* target = CVMJITirnodeGetBranchOp($$)->branchLabel;
+
 	CVMRMsynchronizeJavaLocals(con);
 	CVMRMpinAllIncomingLocals(con, target, CVM_FALSE);
+
 	branchToBlock(con, CVMCPU_COND_AL, target);
+
 	CVMRMunpinAllIncomingLocals(con, target);
 	CVMJITcsBeginBlock(con);
+
 	CVMJITdumpRuntimeConstantPool(con, CVM_FALSE);
     };
 
@@ -6786,6 +7984,137 @@ effect: MAP_PC : 0 : : : : {
 	    con->inliningDepth, javaPc, compiledPc));
     };
 
+%{
+#ifdef CVMJIT_COUNT_VIRTUAL_INLINE_STATS
+ /* Count and report the hits and misses for each invocation of an
+    inlined virtual invoke.
+ */
+typedef struct CVMMethodInfoStat CVMMethodInfoStat;
+struct CVMMethodInfoStat {
+    CVMMethodInfoStat *next;
+    CVMMethodBlock *mb;
+    CVMUint32 hit;
+    CVMUint32 miss;
+};
+
+CVMMethodInfoStat *virtualInlineHitMissList = NULL;
+
+static CVMMethodInfoStat*
+findMethodInfo(CVMMethodBlock *mb)
+{
+    CVMMethodInfoStat *info = virtualInlineHitMissList;
+    while (info != NULL) {
+        if (info->mb == mb) {
+            return info;
+        }
+        info = info->next;
+    }
+    return NULL;
+}
+
+static void
+insertMethodInfo(CVMMethodBlock *mb, CVMBool isHit)
+{
+    CVMMethodInfoStat *info = calloc(1, sizeof(CVMMethodInfoStat));
+    info->mb = mb;
+    if (isHit) {
+        info->hit++;
+    } else {
+        info->miss++;
+    }
+    info->next = virtualInlineHitMissList;
+    virtualInlineHitMissList = info;
+}
+
+
+static void
+reportVirtualInlineHitMiss(CVMMethodBlock *mb, CVMBool isHit)
+{
+    CVMExecEnv *ee = CVMgetEE();
+    CVMMethodInfoStat *info;
+
+    /*
+    CVMconsolePrintf("Virt/Interf INLINE: %s %C.%M\n",
+                     (isHit ? "Hit " : "Miss"),
+                     CVMmbClassBlock(mb), mb);
+    */
+    CVMsysMicroLock(ee, CVM_CODE_MICROLOCK);
+    info = findMethodInfo(mb);
+    if (info != NULL) {
+        if (isHit) {
+            info->hit++;
+        } else {
+            info->miss++;
+        }
+    } else {
+        insertMethodInfo(mb, isHit);
+    }
+    CVMsysMicroUnlock(ee, CVM_CODE_MICROLOCK);
+}
+
+void CVMJITprintVirtualInlineHitMiss()
+{
+    CVMExecEnv *ee = CVMgetEE();
+    CVMMethodInfoStat *info;
+
+    CVMsysMicroLock(ee, CVM_CODE_MICROLOCK);
+    info = virtualInlineHitMissList;
+    CVMconsolePrintf("Virtual/Interface Inline Hit Miss stats:\n");
+    while (info != NULL) {
+	CVMUint32 hit = info->hit;
+        CVMUint32 miss = info->miss;
+        CVMUint32 total = hit + miss;
+        CVMconsolePrintf("   h %d (%2.2f%%): m %d (%2.2f%%): %C.%M\n",
+			hit, (float)hit/(float)total * 100.0,
+			miss, (float)miss/(float)total * 100.0,
+ 			CVMmbClassBlock(info->mb), info->mb);
+        info = info->next;
+    }
+    CVMconsolePrintf("END of stats\n");
+    CVMsysMicroUnlock(ee, CVM_CODE_MICROLOCK);
+}
+
+#endif /* CVMJIT_COUNT_VIRTUAL_INLINE_STATS */
+%}
+
 root: OUTOFLINEINVOKE : 0 : : : : {
     printInliningInfo($$, "Out-of-line invocation");
+#ifdef CVMJIT_COUNT_VIRTUAL_INLINE_STATS
+    {
+        CVMJITIRNode*    mbNode;
+        CVMInt32 constant;
+        CVMMethodBlock *mb;
+        CVMBool isHit;
+        CVMRMResource *mbRes;
+        CVMRMResource *isHitRes;
+
+        mbNode = CVMJITirnodeGetLeftSubtree($$);
+        constant = CVMJITirnodeGetConstantAddr(mbNode)->vAddr;
+        mb = (CVMMethodBlock *)(constant & ~0x1);
+        isHit = (CVMBool)(constant & 0x1);
+
+        CVMconsolePrintf("INLINING %s %C.%M in %C.%M\n",
+			 isHit?"Hit ":"Miss", CVMmbClassBlock(mb), mb,
+                         CVMmbClassBlock(con->mb), con->mb);
+
+        mbRes =
+	    CVMRMbindResourceForConstant32(CVMRM_INT_REGS(con), (CVMInt32)mb);
+        isHitRes =
+	    CVMRMbindResourceForConstant32(CVMRM_INT_REGS(con), isHit);
+        mbRes = CVMRMpinResourceSpecific(CVMRM_INT_REGS(con),
+					 mbRes, CVMCPU_ARG1_REG);
+        isHitRes = CVMRMpinResourceSpecific(CVMRM_INT_REGS(con),
+					    isHitRes, CVMCPU_ARG2_REG);
+
+        /* Spill the outgoing registers if necessary: */
+        CVMRMminorSpill(con, ARG1|ARG2);
+
+        CVMCPUemitAbsoluteCall(con, (void*)reportVirtualInlineHitMiss,
+                               CVMJIT_NOCPDUMP, CVMJIT_NOCPBRANCH);
+
+        CVMRMrelinquishResource(CVMRM_INT_REGS(con), mbRes);
+        CVMRMrelinquishResource(CVMRM_INT_REGS(con), isHitRes);
+    }
+#endif /* CVMJIT_COUNT_VIRTUAL_INLINE_STATS */
 };
+

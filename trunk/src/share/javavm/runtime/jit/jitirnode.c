@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitirnode.c	1.102 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/defs.h"
@@ -38,6 +43,10 @@
 #include "javavm/include/porting/jit/jit.h"
 
 #include "javavm/include/clib.h"
+
+static void
+CVMJITirnodeSetTreeHasBeenEmitted(CVMJITCompilationContext *con,
+    CVMJITIRNode *node);
 
 /*
  * CVMJITIRNode interface APIs
@@ -67,24 +76,19 @@ cloneExpressionNode(
 					node->type_node.local.localNo);
 	break;
     case CVMJIT_UNARY_NODE << CVMJIT_SHIFT_NODETAG:
-	/* may cause the operand's refcount to be overincremented */
-        node->type_node.unOp.operand->refCount--;
 	newNode = CVMJITirnodeNewUnaryOp(con, node->tag,
 					 node->type_node.unOp.operand);
 	newNode->type_node.unOp.flags = node->type_node.unOp.flags;
 	break;
 
     case CVMJIT_BINARY_NODE << CVMJIT_SHIFT_NODETAG:
-	/* may cause the operand's refcount to be overincremented */
-        node->type_node.binOp.lhs->refCount--;
-        node->type_node.binOp.rhs->refCount--;
 	newNode = CVMJITirnodeNewBinaryOp(con, node->tag,
 			 node->type_node.binOp.lhs, node->type_node.binOp.rhs);
 	newNode->type_node.binOp.flags = node->type_node.binOp.flags;
 	newNode->type_node.binOp.data = node->type_node.binOp.data;
         newNode->type_node.binOp.data2 = node->type_node.binOp.data2;
 	break;
-    case CVMJIT_PHI_NODE << CVMJIT_SHIFT_NODETAG:
+    case CVMJIT_PHI0_NODE << CVMJIT_SHIFT_NODETAG:
 	if (CVMJITgetOpcode(node) == (CVMJIT_USED << CVMJIT_SHIFT_OPCODE)){
 	    newNode = CVMJITirnodeNewUsedOp(con, node->tag,
 			  node->type_node.usedOp.spillLocation, 
@@ -117,23 +121,18 @@ cloneExpressionNode(
 	       referencing the clone, increment reference count on node
 	       (setting clone's ref count to 1), and return src_node
 */
-static CVMJITIRNode *
+static void
 CVMJITidentity(
     CVMJITCompilationContext *con,
     CVMJITIRNode *node)
 {
     CVMJITIRNode *cloneNode = NULL;
 
-    /* First, check the reference count */
-    /* check reference count */
-    if (node->refCount == 0){
-	return node;
-    /* then, check if the node is already an IDENTITY node: */
-    } else if (CVMJITirnodeIsIdentity(node)) {
-	return node;
+    CVMassert(CVMJITirnodeGetRefCount(node) == 2);
+    CVMassert(!CVMJITirnodeIsIdentity(node));
     /* Next, check if the node is a constant node: */
-    } else if (CVMJITnodeTagIs(node, CONSTANT)) {
-	return node;
+    if (CVMJITnodeTagIs(node, CONSTANT)) {
+	return;
     /* Else, create a new IDENTITY node in the place of the specified node: */
     } else {
 	CVMJITUnaryOp* unOpNode = &node->type_node.unOp;
@@ -144,20 +143,12 @@ CVMJITidentity(
 	unOpNode->operand = cloneNode;
 	unOpNode->flags   = 0;
 
-	/*
-	   Clear inheritable attributes for identity node and set as
-	   evaluated.  We assume that any attributes that would
-	   force early evaluation have already been handled by the
-	   first parent.  Preserve "parent throws" because it has
-	   meaining for the current parent.
-        */
-        node->flags       &= CVMJITIRNODE_PARENT_THROWS_EXCEPTIONS;
-        CVMJITirnodeSetHasBeenEvaluated(node);
+	/* treat as a leaf */
+	CVMJITirnodeSetcurRootCnt(node, 1);
 
-	CVMJITirnodeSetcurRootCnt(node, cloneNode->curRootCnt + 1);
-	CVMJITirnodeSetRefCount(node, 1);
+	CVMassert(CVMJITirnodeGetRefCount(node) == 2);
 	CVMJITirnodeSetRefCount(cloneNode, 1);
-	return node;
+	return;
     }
 }
 
@@ -192,63 +183,6 @@ CVMJITidentityGetDecoration(
 	return (CVMJITIdentityDecoration*)CVMJITidentDecoration(expr);
     } else {
 	return NULL;
-    }
-}
-
-
-static void
-copyExpressionNode(CVMJITCompilationContext* con, CVMJITIRNode* destNode,
-                   CVMJITIRNode* srcNode)
-{
-    CVMUint32 size = 0;
-    CVMUint32 nodeSize;
-
-    switch (CVMJITgetNodeTag(srcNode) >> CVMJIT_SHIFT_NODETAG) {
-    case CVMJIT_NULL_NODE:    size = sizeof(CVMJITNull); break;
-    case CVMJIT_LOCAL_NODE:   size = sizeof(CVMJITLocal); break;
-    case CVMJIT_UNARY_NODE:   size = sizeof(CVMJITUnaryOp); break;
-    case CVMJIT_BINARY_NODE:  size = sizeof(CVMJITBinaryOp); break;
-    case CVMJIT_PHI_NODE:
-        if (CVMJITgetOpcode(srcNode) == (CVMJIT_USED << CVMJIT_SHIFT_OPCODE)){
-            size = sizeof(CVMJITUsedOp); break;
-            break;
-        }
-    default:
-#ifdef CVM_DEBUG
-        CVMconsolePrintf(">>copyExpressionNode: don't know about...\n");
-	CVMtraceJITBCTOIRExec({
-	    CVMJITirdumpIRNodeAlways(con, srcNode, 0, "   ");
-	    CVMconsolePrintf("\n");
-	});
-#endif
-        CVMassert(CVM_FALSE);
-    }
-
-    /* Compute the allocation like CVMJITirnodeCreate does: */
-    if (size < sizeof(CVMJITIdentOp)) {
-        size = sizeof(CVMJITIdentOp);
-    }
-    nodeSize = CVMJIT_IRNODE_SIZE + size;
-    memcpy(destNode, srcNode, nodeSize);
-}
-
-/* Purpose: Undo the conversion to an identity node i.e. revert to the
-            referenced node. */
-static void
-CVMJITundoIdentity(CVMJITCompilationContext *con, CVMJITIRNode *node)
-{
-    CVMassert(node->refCount == 1);
-
-    /* If the node is not an identity node, then there's nothing to do: */
-    if (!CVMJITirnodeIsIdentity(node)) {
-        /* In this case, the node must be a constant node: */
-        CVMassert(CVMJITnodeTagIs(node, CONSTANT));
-        return;
-
-    /* Else, revert the IDENTITY node to the original node: */
-    } else {
-        CVMJITUnaryOp* unOpNode = &node->type_node.unOp;
-        copyExpressionNode(con, node, unOpNode->operand);
     }
 }
 
@@ -356,7 +290,7 @@ CVMJITirnodeNewRoot(CVMJITCompilationContext* con,
                                     sizeof(CVMJITIRRoot));
     root->next = NULL;
     root->prev = NULL;
-    root->expr = CVMJITidentity(con, expr);
+    root->expr = expr;
 
     /* Make sure that operands on the operand stack have all been evaluated
        before inserting a root node: */
@@ -371,7 +305,6 @@ CVMJITirnodeNewRoot(CVMJITCompilationContext* con,
         CVMJITirnodeOperandStackSideEffectsAreFullyEvaluated(con));
 
     CVMJITirlistAppend(con, CVMJITirblockGetRootList(curbk), (void*)root);
-    CVMJITirnodeAddRefCount(expr);
     CVMJITstatsRecordInc(con, CVMJIT_STATS_NUMBER_OF_ROOT_NODES);
 
     if (curbk->lastOpenRange->firstRoot == NULL) {
@@ -382,6 +315,9 @@ CVMJITirnodeNewRoot(CVMJITCompilationContext* con,
     if (expr->curRootCnt > con->saveRootCnt) {
 	con->saveRootCnt = expr->curRootCnt;
     }
+
+    CVMassert(!CVMJITirnodeHasBeenEmitted(expr));
+    CVMJITirnodeSetTreeHasBeenEmitted(con, expr);
 
     return root;
 }
@@ -491,10 +427,8 @@ CVMJITirnodeNewUnaryOp(CVMJITCompilationContext* con, CVMUint16 tag,
 {
     CVMJITIRNode* node = CVMJITirnodeCreate(con, sizeof(CVMJITUnaryOp), tag);
     CVMJITUnaryOp* unOpNode = &node->type_node.unOp;
-    operand = CVMJITidentity(con, operand);
     unOpNode->operand = operand;
     CVMJITirnodeSetcurRootCnt(node, operand->curRootCnt + node->curRootCnt);
-    CVMJITirnodeAddRefCount(operand);
     CVMJITirnodeInheritSideEffects(node, operand);
     CVMJITirnodeResolveParentThrowsExceptions(node, operand);
     return node;
@@ -510,10 +444,6 @@ CVMJITirnodeNewBinaryOp(CVMJITCompilationContext* con, CVMUint16 tag,
 {
     CVMJITIRNode* node = CVMJITirnodeCreate(con, sizeof(CVMJITBinaryOp), tag);
     CVMJITBinaryOp* binOpNode = &node->type_node.binOp;
-    lhs = CVMJITidentity(con, lhs);
-    CVMJITirnodeAddRefCount(lhs);
-    rhs = CVMJITidentity(con, rhs);
-    CVMJITirnodeAddRefCount(rhs);
     binOpNode->lhs = lhs;
     binOpNode->rhs = rhs;
     CVMJITirnodeSetcurRootCnt(node, MAX(lhs->curRootCnt, rhs->curRootCnt) +
@@ -547,10 +477,6 @@ CVMJITirnodeNewCondBranchOp(CVMJITCompilationContext* con,
 					    sizeof(CVMJITConditionalBranch),
 					    CVMJIT_ENCODE_BCOND(typeTag));
     CVMJITConditionalBranch* condBranchOpNode = &node->type_node.condBranchOp;
-    lhs = CVMJITidentity(con, lhs);
-    CVMJITirnodeAddRefCount(lhs);
-    rhs = CVMJITidentity(con, rhs);
-    CVMJITirnodeAddRefCount(rhs);
     condBranchOpNode->lhs = lhs;
     condBranchOpNode->rhs = rhs;
     condBranchOpNode->target = target;
@@ -610,11 +536,10 @@ CVMJITirnodeNewDefineOp(CVMJITCompilationContext* con, CVMUint16 tag,
 					    sizeof(CVMJITDefineOp), 
 					    tag);
     CVMJITDefineOp* defineOp = &node->type_node.defineOp;
-    defineOp->operand = CVMJITidentity(con, operand);
+    defineOp->operand = operand;
     defineOp->usedNode = usedNode;
 
     CVMJITirnodeSetcurRootCnt(node, node->curRootCnt + operand->curRootCnt);
-    CVMJITirnodeAddRefCount(operand);
 
     CVMJITirnodeSetHasUndefinedSideEffect(node);
     CVMJITirnodeResolveParentThrowsExceptions(node, operand);
@@ -647,11 +572,9 @@ CVMJITirnodeNewLookupSwitchOp(CVMJITCompilationContext* con,
 			     CVMJIT_ENCODE_LOOKUPSWITCH);
     CVMJITLookupSwitch* lswitchOpNode = &node->type_node.lswitchOp;
     lswitchOpNode->defaultTarget = defaultTarget;
-    key = CVMJITidentity(con, key);
     lswitchOpNode->key = key;
     lswitchOpNode->nPairs = nPairs;
     CVMJITirnodeSetcurRootCnt(node, key->curRootCnt + node->curRootCnt);
-    CVMJITirnodeAddRefCount(key);
     CVMJITirnodeSetHasUndefinedSideEffect(node);
     CVMJITirnodeResolveParentThrowsExceptions(node, key);
     return node; 
@@ -671,10 +594,8 @@ CVMJITirnodeNewTableSwitchOp(CVMJITCompilationContext* con,
     tswitchOpNode->low = low;
     tswitchOpNode->high = high;
     tswitchOpNode->nElements = high - low + 1;
-    key = CVMJITidentity(con, key);
     tswitchOpNode->key = key;
     CVMJITirnodeSetcurRootCnt(node, key->curRootCnt + node->curRootCnt);
-    CVMJITirnodeAddRefCount(key);
     CVMJITirnodeSetHasUndefinedSideEffect(node);
     CVMJITirnodeResolveParentThrowsExceptions(node, key);
     return node;
@@ -703,14 +624,8 @@ CVMJITirnodeSetLeftSubtree(CVMJITCompilationContext* con,
         rootCntAdjust = oldOp->curRootCnt;
     }
     CVMJITirnodeSetcurRootCnt(node, node->curRootCnt - rootCntAdjust);
-    CVMJITirnodeDeleteRefCount(oldOp);
-    if (oldOp->refCount == 1) {
-        CVMJITundoIdentity(con, oldOp);
-    }
 
     /* Attach the new operand: */
-    operand = CVMJITidentity(con, operand);
-    CVMJITirnodeAddRefCount(operand);
     unOpNode->operand = operand;
     if (CVMJITnodeTagIs(node, BINARY)) {
         CVMJITBinaryOp *binOpNode = &node->type_node.binOp;
@@ -743,14 +658,8 @@ CVMJITirnodeSetRightSubtree(CVMJITCompilationContext* con,
     /* Detach the old operand: */
     rootCntAdjust = MAX(lhs->curRootCnt, rhs->curRootCnt);
     CVMJITirnodeSetcurRootCnt(node, node->curRootCnt - rootCntAdjust);
-    CVMJITirnodeDeleteRefCount(rhs);
-    if (rhs->refCount == 1) {
-        CVMJITundoIdentity(con, rhs);
-    }
 
     /* Attach the new operand: */
-    operand = CVMJITidentity(con, operand);
-    CVMJITirnodeAddRefCount(operand);
     binOpNode->rhs = operand;
     CVMJITirnodeSetcurRootCnt(node,
         MAX(lhs->curRootCnt, operand->curRootCnt) + node->curRootCnt);
@@ -772,13 +681,100 @@ CVMJITirnodeDeleteBinaryOp(CVMJITCompilationContext *con, CVMJITIRNode *node)
     rhs = binOpNode->rhs;
     CVMassert(lhs != NULL);
     CVMassert(rhs != NULL);
+}
 
-    CVMJITirnodeDeleteRefCount(lhs);
-    if (lhs->refCount == 1) {
-        CVMJITundoIdentity(con, lhs);
+/* This is an arbitrary limit. */
+#define CVM_MAX_BINARY_TREE_DEPTH 64
+
+static void
+CVMJITirnodeSetTreeHasBeenEmitted(CVMJITCompilationContext *con,
+    CVMJITIRNode *node)
+{
+    CVMJITIRNode *stk0[CVM_MAX_BINARY_TREE_DEPTH];
+    int dstk0[CVM_MAX_BINARY_TREE_DEPTH];
+    CVMJITIRNode **stk = stk0;
+    int *dstk = dstk0;
+    int idx = 0;
+    int max_depth = CVM_MAX_BINARY_TREE_DEPTH;
+    int depth = 1;
+    int max = 0;
+    CVMJITIRNode *n = node;
+    CVMJITIRNode *p = NULL;
+
+    /* We only care about binary nodes, while curRootCnt gives the tree
+       depth, which can only be larger, but it's close enough. */
+    if (node->curRootCnt > CVM_MAX_BINARY_TREE_DEPTH) {
+	max_depth = node->curRootCnt;
+	stk = (CVMJITIRNode **)CVMJITmemNew(con,
+	    JIT_ALLOC_IRGEN_OTHER,
+	    max_depth * sizeof(CVMJITIRNode *));
+	dstk = (int *)CVMJITmemNew(con,
+	    JIT_ALLOC_IRGEN_OTHER,
+	    max_depth * sizeof(int));
     }
-    CVMJITirnodeDeleteRefCount(rhs);
-    if (rhs->refCount == 1) {
-        CVMJITundoIdentity(con, rhs);
-    }
+
+    CVMassert(CVMJITirnodeGetRefCount(node) == 0);
+
+    do {
+	CVMJITIRNodeTag tag;
+
+#ifdef CVM_DEBUG_ASSERTS
+	if (CVMJITirnodeHasBeenEmitted(n)) {
+	    if (CVMJITirnodeIsIdentity(n)) {
+		CVMassert(CVMJITirnodeGetRefCount(n) > 1);
+	    } else if (!CVMJITnodeTagIs(n, CONSTANT)) {
+		CVMassert(CVMJITirnodeGetRefCount(n) == 1);
+	    }
+	}
+#endif
+
+	CVMJITirnodeAddRefCount(n);
+	if (CVMJITirnodeGetRefCount(n) == 2 && !CVMJITnodeTagIs(n, CONSTANT)) {
+	    CVMJITidentity(con, n);
+	}
+
+	if (CVMJITirnodeIsIdentity(n)) {
+	    CVMassert(CVMJITirnodeHasBeenEmitted(n));
+	    goto leaf;
+	}
+
+	/*
+	   Clear inheritable attributes for emitted nodes and set as
+	   evaluated.  We assume that any attributes that would
+	   force early evaluation have now been handled by the
+	   root.  Preserve "parent throws" because it has
+	   meaning for future parents.
+        */
+        n->flags &= CVMJITIRNODE_PARENT_THROWS_EXCEPTIONS;
+
+        CVMJITirnodeSetHasBeenEmitted(n);
+        CVMJITirnodeSetHasBeenEvaluated(n);
+
+	tag = CVMJITgetNodeTag(n) >> CVMJIT_SHIFT_NODETAG;
+	if (tag >= CVMJIT_BINARY_NODE) {
+	    CVMassert(idx < max_depth);
+	    dstk[idx] = depth;
+	    stk[idx++] = n;
+	    p = n;
+	    n = CVMJITirnodeGetLeftSubtree(n);
+	    ++depth;
+	} else if (tag >= CVMJIT_UNARY_NODE) {
+	    p = n;
+	    n = CVMJITirnodeGetLeftSubtree(n);
+	    ++depth;
+	} else {
+leaf:
+	    if (depth > max) {
+		max = depth;
+	    }
+	    if (idx > 0) {
+		p = stk[--idx];
+		n = CVMJITirnodeGetRightSubtree(p);
+		depth = dstk[idx] + 1;
+	    } else {
+		break;
+	    }
+	}
+    } while (n != NULL);
+    node->curRootCnt = max;
 }

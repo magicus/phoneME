@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)objects.h	1.92 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -34,6 +39,9 @@
 #include "javavm/include/signature.h"
 #include "javavm/include/basictypes.h"
 #include "javavm/include/sync.h"
+#ifdef CVM_JIT
+#include "javavm/include/porting/jit/jit.h"
+#endif
 
 #ifndef CVM_GC_SPECIFIC_WORDS
 #define CVM_GC_SPECIFIC_WORDS
@@ -141,9 +149,9 @@ enum {
 #define CVM_OBJECT_DEFAULT_VARIOUS_WORD \
      (((CVM_OBJECT_NO_HASH) << CVM_SYNC_BITS) | CVM_LOCKSTATE_UNLOCKED)
 
-/* For use only during GC. Is the hash state and lock state
-   of the current class word "trivial" (GC bits don't matter here). */
-#define CVMobjectTrivialClassWord(word)			\
+/* For use only during GC. Is the hash state and lock state of the current
+   header word "trivial" (GC bits don't matter here). */
+#define CVMobjectTrivialHeaderWord(word)			\
     (((word) & ((1 << (CVM_SYNC_BITS + CVM_HASH_BITS)) - 1))	\
     == CVM_OBJECT_DEFAULT_VARIOUS_WORD)
 
@@ -194,7 +202,7 @@ CVMobjectGetHashNoSet(CVMExecEnv *ee, CVMObject* directObj);
 /*
  * Use of the GC bits. The only operation supported for now:
  * increment and get value.  
- * %comment r002
+ * %comment rt002
  */
 #define CVMobjGcBitsPlusPlusCompare(obj, limit)			\
     (CVMobjMonitorState(obj) == CVM_LOCKSTATE_UNLOCKED ?	\
@@ -610,6 +618,8 @@ extern CVMBool CVMgcSafeObjectNotifyAll(CVMExecEnv *ee, CVMObjectICell *o);
 extern CVMBool CVMgcSafeObjectWait(CVMExecEnv *ee, CVMObjectICell *o,
 				   CVMInt64 millis);
 
+/* CVMMicroLock APIs for object locking */
+
 extern void CVMobjectMicroLock(CVMExecEnv *ee, CVMObject *obj);
 extern void CVMobjectMicroUnlock(CVMExecEnv *ee, CVMObject *obj);
 
@@ -618,20 +628,23 @@ extern void CVMobjectMicroUnlock(CVMExecEnv *ee, CVMObject *obj);
 #define CVMobjectMicroUnlock(ee, obj)   CVMobjectMicroUnlockImpl(obj)
 #endif
 
-#if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SCHEDLOCK
-#define CVMobjectMicroLockImpl(obj) \
-    (CVMschedLock(), (void) (obj))
-#define CVMobjectMicroUnlockImpl(obj) \
-    (CVMschedUnlock(), (void) (obj))
-
-#else /* CVM_MICROLOCK_TYPE == CVM_MICROLOCK_DEFAULT */
 #define CVMobjectMicroLockImpl(obj) \
     CVMmicrolockLock(&CVMglobals.objGlobalMicroLock)
 
 #define CVMobjectMicroUnlockImpl(obj) \
     CVMmicrolockUnlock(&CVMglobals.objGlobalMicroLock)
-#endif /* CVM_MICROLOCK_TYPE */
 
+#if defined(CVMJIT_SIMPLE_SYNC_METHODS) && \
+    (CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS)
+/* 
+ * Simple Sync helper function for unlocking in Simple Sync methods when
+ * there is contention for the lock after locking. It is only needed for
+ * CVM_FASTLOCK_ATOMICOPS since once locked, CVM_FASTLOCK_MICROLOCK
+ * will never allow for contention of Simple Sync methods.
+ */
+extern void
+CVMsimpleSyncUnlock(CVMExecEnv *ee, CVMObject* obj);
+#endif /* CVMJIT_SIMPLE_SYNC_METHODS */
 
 /*
  * Array declarations. They look exactly like objects, (they can be

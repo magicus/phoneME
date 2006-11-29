@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitemitter_cpu.c	1.263 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 /*
  * ARM-specific bits.
@@ -42,6 +47,7 @@
 #include "portlibs/jit/risc/include/export/jitregman.h"
 #include "javavm/include/jit/jitconstantpool.h"
 #include "javavm/include/jit/jitcodebuffer.h"
+#include "javavm/include/jit/jitintrinsic.h"
 #include "javavm/include/jit/jitpcmap.h"
 #include "javavm/include/jit/jitfixup.h"
 #include "javavm/include/porting/endianness.h"
@@ -238,57 +244,6 @@ CVMCPUalurhsRelinquishResource(CVMJITRMContext* con,
        free(ap); */
 }
 
-/**************************************************************
- * CPU MemSpec and associated types - The following are implementations
- * of the functions for the MemSpec abstraction required by the RISC
- * emitter porting layer.
- **************************************************************/
-
-/* MemSpec private definitions: =========================================== */
-
-/*
- * These are the address-mode computation bits used for modes 2 and 3.
- * the P, U, and W bits (pre/post index, offset add/subtract, and write back)
- * are common and are ORed directly into the instruction. The imm/reg offset
- * indicator bit has to be steered based on opcode. And of course the
- * representation of an immediate value is opcode dependent as well.
- *
- * Be careful of the U bit: for an immediate offset it is NOT the same
- * as a sign bit. Default needs to be U bit set.
- * 
- * Be careful of the P bit: for the usual operations, you want to
- * preindex. Failing to do so will compute the wrong address AND
- * cause the base register to be updated. Default needs to be P bit set.
- */
-#define ARM_LOADSTORE_PREINDEX	0x01000000	/* P bit */
-#define ARM_LOADSTORE_ADDOFFSET	0x00800000	/* U bit */
-#define ARM_LOADSTORE_WRITEBACK 0x00200000	/* W bit */ 
-#define ARM_LOADSTORE_IMMEDIATE_OFFSET 0
-#define ARM_LOADSTORE_REGISTER_OFFSET (1 << 25)
-#define ARM_LOADSTORE_MODE3_IMMEDIATE_OFFSET (1 << 22)
-
-/* The common combinations: reg+reg addressing, reg+imm addressing */
-#define ARM_MEMSPEC_IMMEDIATE_OFFSET \
-    (ARM_LOADSTORE_PREINDEX | ARM_LOADSTORE_ADDOFFSET | \
-    ARM_LOADSTORE_IMMEDIATE_OFFSET)
-
-#define ARM_MEMSPEC_REG_OFFSET \
-    (ARM_LOADSTORE_PREINDEX | ARM_LOADSTORE_ADDOFFSET | \
-    ARM_LOADSTORE_REGISTER_OFFSET)
-
-/*
- * How to use the load/store word instructions to access a stack:
- * These assume that stack grows + and that the stack pointer is
- * addressing the EMPTY cell after the top. Thus post-increment and
- * pre-decrement are what you want.
- */
-#define ARM_MEMSPEC_POSTINCREMENT_IMMEDIATE_OFFSET \
-	(ARM_LOADSTORE_IMMEDIATE_OFFSET | ARM_LOADSTORE_ADDOFFSET)
-
-#define ARM_MEMSPEC_PREDECREMENT_IMMEDIATE_OFFSET \
-	(ARM_LOADSTORE_PREINDEX | ARM_LOADSTORE_IMMEDIATE_OFFSET | \
-	ARM_LOADSTORE_WRITEBACK)
-
 /* MemSpec constructors and query APIs: =================================== */
 
 /* Purpose: Constructs a CVMCPUMemSpec immediate operand. */
@@ -411,7 +366,6 @@ CVMCPUmemspecRelinquishResource(CVMJITRMContext *con,
 #define ARM_SBC_OPCODE (0x0c << 20) /* needed for SUB64 codegen comments */
 #define ARM_RSB_OPCODE CVMARM_RSB_OPCODE
 #define ARM_RSC_OPCODE (0x0e << 20)
-#define ARM_MLA_OPCODE 0x00200090
 #define ARM_UMULL_OPCODE 0x00800090  /* reg32hi,reg32lo = reg32 * reg32.*/
 
 /* Flow control opcodes: */
@@ -443,10 +397,11 @@ static const char *getOpcodeName(CVMInt32 opcode)
     switch(opcode) {
     case CVMCPU_LDR32_OPCODE:   name = "ldr"; break;
     case CVMCPU_STR32_OPCODE:   name = "str"; break;
-    case CVMCPU_LDR16U_OPCODE:  name = "ldr"; break;
-    case CVMCPU_LDR16_OPCODE:   name = "ldr"; break;
-    case CVMCPU_STR16_OPCODE:   name = "str"; break;
-    case CVMCPU_LDR8_OPCODE:    name = "ldr"; break;
+    case CVMCPU_LDR16U_OPCODE:  name = "ldrh"; break;
+    case CVMCPU_LDR16_OPCODE:   name = "ldrsh"; break;
+    case CVMCPU_STR16_OPCODE:   name = "strh"; break;
+    case CVMCPU_LDR8U_OPCODE:   name = "ldrb"; break;
+    case CVMCPU_LDR8_OPCODE:    name = "ldrsb"; break;
     case CVMCPU_STR8_OPCODE:    name = "strb"; break;
 
     case CVMCPU_ADD_OPCODE:     name = "add"; break;
@@ -956,6 +911,25 @@ CVMCPUemitPopFrame(CVMJITCompilationContext* con, int resultSize)
     }
 }
 
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+
+/*
+ * Patch branch instruction at location "instrAddr" to branch to offset
+ * "offset" from "instrAddr".
+ */
+void 
+CVMCPUpatchBranchInstruction(int offset, CVMUint8* instrAddr)
+{
+    CVMCPUInstruction branch;
+    /* There better already be an unconditional bl at this address */
+    CVMassert((*(CVMUint32*)instrAddr & 0xff000000) ==
+	      (ARM_BL_OPCODE | ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL)));
+    branch = CVMARMgetBranchInstruction(CVMCPU_COND_AL, offset, CVM_TRUE);
+    *((CVMCPUInstruction*)instrAddr) = branch;
+}
+
+#endif
+
 /*
  * Make a PC-relative branch or branch-and-link instruction
  */
@@ -981,7 +955,12 @@ CVMARMemitBranch(CVMJITCompilationContext* con,
 
     CVMJITcsSetStatusInstruction(con, condCode);
     CVMJITcsSetBranchInstruction(con);
+#ifdef IAI_CS_EXCEPTION_ENHANCEMENT2
+    CVMJITcsSetEmitInPlaceWithBufSizeAdjust(con, \
+        CVMJITcsIsArrayIndexOutofBoundsBranch(con), sizeof(CVMCPUInstruction));
+#else
     CVMJITcsSetEmitInPlace(con);
+#endif
 
     if (fixupList != NULL) {
         CVMJITfixupAddElement(con, fixupList,
@@ -1143,9 +1122,9 @@ CVMCPUemitBinaryALU64(CVMJITCompilationContext *con,
     if (opcode == CVMCPU_MUL64_OPCODE) {
         CVMCPUemitMul(con, ARM_UMULL_OPCODE, HIREG(destRegID),
                       LOREG(lhsRegID), LOREG(rhsRegID), LOREG(destRegID));
-        CVMCPUemitMul(con, ARM_MLA_OPCODE, HIREG(destRegID),
+        CVMCPUemitMul(con, CVMARM_MLA_OPCODE, HIREG(destRegID),
                       HIREG(lhsRegID), LOREG(rhsRegID), HIREG(destRegID));
-        CVMCPUemitMul(con, ARM_MLA_OPCODE, HIREG(destRegID),
+        CVMCPUemitMul(con, CVMARM_MLA_OPCODE, HIREG(destRegID),
                       LOREG(lhsRegID), HIREG(rhsRegID), HIREG(destRegID));
     } else {
         int lowOpcode = ((opcode >> 16) & 0xff) << 20;
@@ -1265,7 +1244,7 @@ CVMCPUemitMul(
     CVMRMResource* extraregRes = NULL;
 
     CVMassert(opcode == CVMCPU_MULL_OPCODE || opcode == CVMCPU_MULH_OPCODE ||
-	      opcode == ARM_UMULL_OPCODE || opcode == ARM_MLA_OPCODE);
+	      opcode == ARM_UMULL_OPCODE || opcode == CVMARM_MLA_OPCODE);
 
 
     if (opcode == CVMCPU_MULH_OPCODE) {
@@ -1280,7 +1259,7 @@ CVMCPUemitMul(
     if (extrareg == CVMCPU_INVALID_REG) {
 	CVMassert(opcode == CVMCPU_MULL_OPCODE);
 	extrareg = 0;  /* extrareg must be 0 for mul */
-    } else if (opcode == ARM_MLA_OPCODE) {
+    } else if (opcode == CVMARM_MLA_OPCODE) {
         CVMJITcsPushSourceRegister(con, extrareg);
     } else { 
         CVMJITcsSetDestRegister2(con, extrareg);
@@ -1303,7 +1282,7 @@ CVMCPUemitMul(
 	    CVMconsolePrintf("	mul	%s, %s, %s",
                 regNames[destreg], regNames[lhsreg], regNames[rhsreg]);
 	    goto doneTracingMul;
-        case ARM_MLA_OPCODE:
+        case CVMARM_MLA_OPCODE:
 	    CVMconsolePrintf("	mla	%s, %s, %s, %s",
 			 regNames[destreg], regNames[lhsreg],
 			 regNames[rhsreg], regNames[extrareg]);
@@ -2181,30 +2160,21 @@ CVMARMemitMemoryReferenceConditional(CVMJITCompilationContext* con,
 #endif /* IAI_CODE_SCHEDULER_SCORE_BOARD */
 
     CVMtraceJITCodegenExec({
-        const char* opcodename = NULL;
-	const char* datatype   = NULL;
-        char badcode[20];
         CVMBool isMode2 = CVM_FALSE;
 
         switch (opcode){
         case CVMCPU_LDR32_OPCODE:
         case CVMCPU_STR32_OPCODE:
-        case CVMCPU_STR8_OPCODE: isMode2 = CVM_TRUE; break;
-        case CVMCPU_LDR16U_OPCODE: datatype = "h"; break;
-        case CVMCPU_LDR16_OPCODE:  datatype = "sh"; break;
-        case CVMCPU_STR16_OPCODE:  datatype = "h"; break;
-        case CVMCPU_LDR8_OPCODE:   datatype = "sb"; break;
-        default:
-            sprintf(badcode, "Unknown(%08x)", opcode);
-            opcodename = badcode;
-            break;
+        case CVMCPU_STR8_OPCODE:
+	    isMode2 = CVM_TRUE;
+	    break;
         }
         printPC(con);
         if (isMode2) {
             dumpMode2Instruction(con, instruction, condCode);
         } else {
-            CVMconsolePrintf("	%s%s%s	%s, [%s",
-                getOpcodeName(opcode), conditions[condCode], datatype,
+            CVMconsolePrintf("	%s%s	%s, [%s",
+                getOpcodeName(opcode), conditions[condCode],
                 regNames[destreg], regNames[basereg]);
             /* not all are valid for all opcodes, but we're not checking that
                here */
@@ -2289,6 +2259,33 @@ CVMCPUemitShiftAndAdd(CVMJITCompilationContext *con,
     CVMCPUemitBinaryALU(con, CVMCPU_ADD_OPCODE, destRegID, addRegID, rhs,
 			CVMJIT_NOSETCC);
 }
+
+#ifdef CVMJIT_SIMPLE_SYNC_METHODS
+#if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_MICROLOCK && \
+    CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK
+
+/*
+ * Purpose: Emits an atomic swap operation. The value to swap in is in
+ *          destReg,  which is also where the swapped out value will be placed.
+ */
+extern void
+CVMCPUemitAtomicSwap(CVMJITCompilationContext* con,
+		     int destReg, int addressReg)
+{
+    emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
+		    (CVMUint32)CVMARM_SWP_OPCODE |
+		    addressReg << 16 | destReg << 12 | destReg);
+
+    CVMtraceJITCodegenExec({
+        printPC(con);
+	CVMconsolePrintf("\tswp\t%s, %s, [%s]",
+			 regNames[destReg], regNames[destReg],
+			 regNames[addressReg]);
+	});
+    CVMJITdumpCodegenComments(con);
+}
+#endif
+#endif /* CVMJIT_SIMPLE_SYNC_METHODS */
 
 /* glue routine that calls CVMCCMruntimeGCRendezvous. No lr adjustment. */
 extern void
@@ -2503,20 +2500,71 @@ CVMJITemitLoadConstantAddress(CVMJITCompilationContext* con,
  * convention support functions required by the RISC emitter porting layer.
  **************************************************************/
 
+/* Purpose: Gets the registers required by a C call.  These register could be
+            altered by the call being made. */
+extern CVMJITRegsRequiredType
+CVMARMCCALLgetRequired(CVMJITCompilationContext *con,
+                       CVMJITRegsRequiredType argsRequired,
+		       CVMJITIRNode *intrinsicNode,
+		       CVMJITIntrinsic *irec,
+		       CVMBool useRegArgs)
+{
+    CVMJITRegsRequiredType result = CVMCPU_AVOID_C_CALL | argsRequired;
+    int numberOfArgs = irec->numberOfArgs;
+
+    CVMassert(useRegArgs);
+    if (numberOfArgs != 0) {
+        int i;
+        CVMJITIRNode *iargNode = CVMJITirnodeGetLeftSubtree(intrinsicNode);
+        for (i = 0; i < numberOfArgs; i++) {
+            int regno;
+	    int	argType = CVMJITgetTypeTag(iargNode);
+	    int argWordIndex = CVMJIT_IARG_WORD_INDEX(iargNode);
+	    int argSize = CVMARMCCALLargSize(argType);
+
+	    if (argWordIndex + argSize <= CVMCPU_MAX_ARG_REGS) {
+	        regno = CVMCPU_ARG1_REG + argWordIndex;
+	    } else {
+	        /* IAI-22 */
+	        regno = (CVMARM_v3 + argWordIndex - CVMCPU_MAX_ARG_REGS);
+		/* Make sure that we are not allocating registers so high
+		   that we overflow into the stack pointer and other non-
+		   allocatable regs. */
+		CVMassert(regno + argSize - 1 < CVMARM_sp);
+	    }
+	    result |= (1U << regno);
+	    iargNode = CVMJITirnodeGetRightSubtree(iargNode);
+	}
+	CVMassert(iargNode->tag == CVMJIT_ENCODE_NULL_IARG);
+    }
+    return result;
+}
+
 /* Purpose: Pins an arguments to the appropriate register or store it into the
             appropriate stack location. */
 CVMRMResource *
 CVMCPUCCALLpinArg(CVMJITCompilationContext *con,
                   CVMCPUCallContext *callContext, CVMRMResource *arg,
                   int argType, int argNo, int argWordIndex,
-                  CVMRMregset *outgoingRegs)
+                  CVMRMregset *outgoingRegs, CVMBool useRegArgs)
 {
     int argSize = CVMARMCCALLargSize(argType);
 
-    if (argWordIndex + argSize <= CVMCPU_MAX_ARG_REGS) {
-        int regno = CVMCPU_ARG1_REG + argWordIndex;
+    if (useRegArgs || argWordIndex + argSize <= CVMCPU_MAX_ARG_REGS) {
+        int regno;
+        if (argWordIndex + argSize <= CVMCPU_MAX_ARG_REGS) {
+            regno = CVMCPU_ARG1_REG + argWordIndex;
+	} else {
+	    /* IAI-22 */
+	    CVMassert(useRegArgs == CVM_TRUE);
+	    regno = (CVMARM_v3 + argWordIndex - CVMCPU_MAX_ARG_REGS);
+	    /* Make sure that we are not allocating registers so high that we
+	       overflow into the stack pointer and other non-allocatable
+	       regs. */
+	    CVMassert(regno + argSize - 1 < CVMARM_sp);
+	}
         arg = CVMRMpinResourceSpecific(CVMRM_INT_REGS(con), arg, regno);
-        CVMassert(regno + arg->size <= CVMCPU_MAX_ARG_REGS);
+        CVMassert(regno + arg->size <= CVMCPU_MAX_ARG_REGS || useRegArgs);
         *outgoingRegs |= arg->rmask;
     } else {
         int stackIndex = (argWordIndex - CVMCPU_MAX_ARG_REGS) * 4;

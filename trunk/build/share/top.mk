@@ -1,22 +1,27 @@
-# Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
-# 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2 only,
-# as published by the Free Software Foundation.
-# 
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# version 2 for more details (a copy is included at /legal/license.txt).
-# 
-# You should have received a copy of the GNU General Public License version
-# 2 along with this work; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
-# 
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 or visit www.sun.com if you need additional information or have
-# any questions.
+# @(#)top.mk	1.37 06/10/20
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+#   
+# This program is free software; you can redistribute it and/or  
+# modify it under the terms of the GNU General Public License version  
+# 2 only, as published by the Free Software Foundation.   
+#   
+# This program is distributed in the hope that it will be useful, but  
+# WITHOUT ANY WARRANTY; without even the implied warranty of  
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+# General Public License version 2 for more details (a copy is  
+# included at /legal/license.txt).   
+#   
+# You should have received a copy of the GNU General Public License  
+# version 2 along with this work; if not, write to the Free Software  
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+# 02110-1301 USA   
+#   
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+# Clara, CA 95054 or visit www.sun.com if you need additional  
+# information or have any questions. 
+#
 
 #
 # Topmost makefile shared by all targets
@@ -148,7 +153,7 @@
 # CVM_INCLUDE_COMMCONNECTION default: false
 #     Include GCF CommProtocol support. This feature is not supported
 #     on all platforms.
-#
+
 #####################################################################
 # Definitions of limited options. The default values of these options
 # are supported. Alternate values should be considered experimental.
@@ -159,6 +164,10 @@
 #
 # CVM_GPROF default: false
 #     Enable gprof profiling support.
+#
+# CVM_GPROF_NO_CALLGRAPH: true
+#     When gprof is enabled, this option can be used to control if
+#     call graph is generated in the gprof output.
 #
 # CVM_CCM_COLLECT_STATS default: false
 #     Build a VM which collect statistics on the runtime activity of
@@ -258,13 +267,17 @@
 # CVM_GCOV default: false
 #     Enable gcov code coverage support.
 #
+# CVM_JIT_PATCHED_METHOD_INVOCATIONS default: false
+#     Support for the dynamic patching of calls to methods within 
+#     compiled methods.
+#
 # Options for locating target tools such as gcc. See defs.mk file
 # for more details:
 #
 # CVM_TOOLS_DIR default:
 #   /usr/tools
 # CVM_HOST default:
-#   "i686-redhat-linux" on RedHat Linux hosts
+#   "i686-SuSE-linux" on SuSE Linux hosts
 # CVM_TARGET_TOOLS_DIR default:
 #  $(CVM_TOOLS_DIR)/$(CVM_HOST)/gnu/bin
 # CVM_TARGET_TOOLS_PREFIX default:
@@ -275,12 +288,17 @@
 # details. 
 #
 # JDK_VERSION default:
-#   jdk1.3.1
+#   jdk1.4.2
 # JDK_HOME default:
 #   $(CVM_TOOLS_DIR)/$(CVM_HOST)/java/$(JDK_VERSION)
 # CVM_JAVA_TOOLS_PREFIX default:
 #   $(JDK_HOME)/bin/
 #
+# speed up makefile by not using implicit suffixes
+.SUFFIXES:
+
+# So JSR makefiles know this is a CVM build
+CVM_BUILD = true
 
 #
 # Define our platform by setting TARGET_OS, TARGET_CPU_FAMILY, and
@@ -324,24 +342,45 @@ ifeq ($(CVM_REBUILD),true)
 -include $(CVM_BUILD_FLAGS_FILE)
 endif
 
+# Need to initialize J2ME_CLASSLIB before "all" rule below"
+ifeq ($(CVM_INCLUDE_MIDP),true)
+ifeq ($(J2ME_CLASSLIB), cdc)
+override J2ME_CLASSLIB	= foundation
+else
+J2ME_CLASSLIB		?= foundation
+endif
+else
+J2ME_CLASSLIB		?= cdc
+endif
+
+# need setup "all" rule before pulling in any JSR makefiles with rules
+all:: printconfig $(J2ME_CLASSLIB) tools
+
 # Include TARGET top.mk
 include ../$(TARGET_OS)/top.mk
 
 # Include all defs makefiles.
 include  ../share/defs.mk
+-include ../share/defs_midp.mk
+-include ../share/defs_jump.mk
 include ../share/defs_$(J2ME_CLASSLIB).mk
 ifneq ($(OPT_PKGS_DEFS_FILES),)
-include $(patsubst %,../share/%,$(OPT_PKGS_DEFS_FILES))
+include $(OPT_PKGS_DEFS_FILES)
 endif
+
+-include ../share/top_op.mk
+
 # Include all rule makefiles. Since variables in rules are expanded
 # eagerly, they must be included after defs makefiles.
 include  ../share/rules.mk
+-include ../share/rules_midp.mk
+-include ../share/rules_jump.mk
 include ../share/rules_$(J2ME_CLASSLIB).mk
 ifneq ($(J2ME_PLATFORM),)
 include ../share/rules_$(J2ME_PLATFORM).mk
 endif
 ifneq ($(OPT_PKGS_RULES_FILES),)
-include $(patsubst %,../share/%,$(OPT_PKGS_RULES_FILES))
+include $(OPT_PKGS_RULES_FILES)
 endif
 
 ifeq ($(CVM_TOOLS_BUILD),true)
@@ -357,4 +396,3 @@ ifeq ($(CVM_TOOLS_BUILD),true)
 -include  ../$(TARGET_OS)/cvmc.mk
 -include  ../share/cvmc.mk
 endif
-

@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)classlink.c	1.110 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifdef CVM_CLASSLOADING
@@ -38,6 +43,9 @@
 #endif
 #ifdef CVM_JIT
 #include "javavm/include/ccm_runtime.h"
+#endif
+#ifdef CVM_SPLIT_VERIFY
+#include "javavm/include/split_verify.h"
 #endif
 
 static CVMBool
@@ -111,7 +119,7 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb)
 		return CVM_FALSE;
 	    }
 	    if (!CVMcbCheckRuntimeFlag(superCb, LINKED)) {
-		/* %comment c008 */
+		/* %comment c */
 		if (!CVMclassLink(ee, superCb)) {
 		    return CVM_FALSE; /* exception already thrown */
 		}
@@ -156,7 +164,7 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb)
 	CVMBool hasStaticsOrClinit = CVM_FALSE;
 	for (i = 0; i < CVMcbImplementsCount(cb); i++) {
 	    if (!CVMcbCheckRuntimeFlag(CVMcbInterfacecb(cb, i), LINKED)) {
-		/* %comment c008 */
+		/* %comment c */
 		if (!CVMclassLink(ee, CVMcbInterfacecb(cb, i))) {
 		    success = CVM_FALSE; /* exception already thrown */
 		    goto unlock;
@@ -175,8 +183,16 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb)
 
     /* Verify the class if necessary. */
     if (CVM_NEED_VERIFY(CVMcbClassLoader(cb) != NULL)) {
-        if (!CVMclassVerify(ee, cb)) {
-	    success = CVM_FALSE;
+#ifdef CVM_SPLIT_VERIFY
+	if (CVMsplitVerifyClassHasMaps(ee, cb)){
+	    success = (CVMsplitVerifyClass(ee, cb) == 0);
+	}else{
+	    success = CVMclassVerify(ee, cb);
+	}
+#else
+	success = CVMclassVerify(ee, cb);
+#endif
+        if (!success) {
 	    goto unlock;
 	}
     }
@@ -201,20 +217,6 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb)
 #endif
 
  unlock:
-    if (success) {
-        if (!CVMcbHasStaticsOrClinit(cb)) {
-	    /*
-	     * This is an optimization to prevent attempts to run the static
-	     * intializer on this class, since it doesn't have one and neither
-	     * do its parents.
-	     *
-	     * WARNING: It is not safe to do this until after the LINKED flag
-	     * has been set.
-	     */
-            CVMcbSetInitializationDoneFlag(ee, cb);
-        }
-    }
-
     if (!CVMgcSafeObjectUnlock(ee, CVMcbJavaInstance(cb))) {
 	CVMassert(CVM_FALSE); /* should never happen */
     }
@@ -638,26 +640,36 @@ CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb)
 		CVMjmdCapacity(jmd) += (2 - CVMjmdMaxLocals(jmd));
 		CVMjmdMaxLocals(jmd) = 2;
 	    }
-	    /* Create stackmap */
-	    switch (CVMstackmapDisambiguate(ee, mb, CVM_FALSE)) {
-	        case CVM_MAP_SUCCESS:
-		    break;
-	        case CVM_MAP_OUT_OF_MEMORY:
-		    CVMthrowOutOfMemoryError(ee, NULL);
-		    goto fail;
-	        case CVM_MAP_EXCEEDED_LIMITS:
-		    CVMthrowInternalError(
-                        ee, "Exceeded limits while disambiguating %C.%M",
-			cb, mb);
-		    goto fail;
-	        case CVM_MAP_CANNOT_MAP:
-		    CVMthrowInternalError(
-                        ee, "Cannot disambiguate %C.%M",
-			cb, mb);
-		    goto fail;
-	        default:
-		    CVMassert(CVM_FALSE);
-	    	    goto fail;
+	    if (!CVMcbCheckRuntimeFlag(cb, VERIFIED) ||
+		(CVMjmdFlags(jmd) & CVM_JMD_MAY_NEED_REWRITE))
+	    {
+		/* 
+		 * Either this method has never been inspected by a
+		 * verifier, or the verifier found a jsr. In either
+		 * case, there may be ambiguities that require
+		 * bytecode rewriting to avoid. 
+		 */
+		switch (CVMstackmapDisambiguate(ee, mb,
+			(CVMjmdFlags(jmd) & CVM_JMD_MAY_NEED_REWRITE))) {
+		    case CVM_MAP_SUCCESS:
+			break;
+		    case CVM_MAP_OUT_OF_MEMORY:
+			CVMthrowOutOfMemoryError(ee, NULL);
+			goto fail;
+		    case CVM_MAP_EXCEEDED_LIMITS:
+			CVMthrowInternalError(
+			    ee, "Exceeded limits while disambiguating %C.%M",
+			    cb, mb);
+			goto fail;
+		    case CVM_MAP_CANNOT_MAP:
+			CVMthrowInternalError(
+			    ee, "Cannot disambiguate %C.%M",
+			    cb, mb);
+			goto fail;
+		    default:
+			CVMassert(CVM_FALSE);
+			goto fail;
+		}
 	    }
 
 	    /*
@@ -761,6 +773,33 @@ CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb)
 	    CVMmbMethodTableIndex(mb) = CVMmbMethodTableIndex(smb);
 	    isOverride = CVM_TRUE;
 	    tmpMethodTable[superMethodIdx] = mb;
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+	    /* Grab the jitLock before patching. */
+	    CVMsysMutexLock(ee, &CVMglobals.jitLock);
+
+	    /* This must be done after grabbing the jitLock because
+	       there is a special check in CVMJITPMIpatchCall() that
+	       will prevent the patch from being made if the
+	       OVERRIDDEN flag is set when patching for transitions
+	       between compiled and decompiled. If we did this outside
+	       of the jitLock and then another thread ran before the
+	       patch below was applied, and that thread attempts to
+	       patch from compiled to decompiled, then the patch would
+	       not be applied and there would temporarily be direct
+	       method calls to a decompiled method, meaning it would
+	       branch to an invalid area of the code cache..
+	    */
+	    CVMmbCompileFlags(smb) |= CVMJIT_IS_OVERRIDDEN;
+
+	    /* Since this method was not previously overridden, there may
+	       be direct method calls to them. Patch them so they instead
+	       do a true virtual invoke. */
+	    CVMJITPMIpatchCallsToMethod(smb, CVMJITPMI_PATCHSTATE_OVERRIDDEN);
+
+	    /* Release the jitLock after patching. */
+	    CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
+#endif
 	} 
 
 	if (!isOverride) { 
@@ -791,7 +830,7 @@ CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb)
     } else {
         CVMassert(tmpMethodTable != NULL);
 	/* Allocate the methodtable with the actual length. */
-	/* %comment c010 */
+	/* %comment c */
 	CVMcbMethodTablePtr(cb) = (CVMMethodBlock**)
 	    calloc(nextMethodTableIdx, sizeof(CVMMethodBlock*));
 	if (CVMcbMethodTablePtr(cb) == NULL) {
@@ -877,7 +916,7 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
      * mcount: number of interface methods in interfaces this class 
      *         declares it implements.
      */
-    /* %comment c011 */
+    /* %comment c */
     icount = superInterfaceCount + (isInterface ? 1 : 0);
     mcount = 0;
     for (i = 0; i < implementsCount; i++) {

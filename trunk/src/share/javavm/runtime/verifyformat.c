@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)verifyformat.c	1.64 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/porting/ansi/setjmp.h"
@@ -138,6 +143,10 @@ static void ParseCode(CFcontext *, utf_str *mb_name, unsigned long args_size);
 static void ParseLineTable(CFcontext *, unsigned long code_length);
 static void ParseExceptions(CFcontext *);
 static void ParseLocalVars(CFcontext *, unsigned long code_length);
+#ifdef CVM_SPLIT_VERIFY
+static void ParseStackMap(CFcontext *, CVMUint32 codeLength, 
+			    CVMUint32 maxLocals, CVMUint32 maxStack);
+#endif
 
 static void CFerror(CFcontext *context, char *fmt, ...);
 static void CNerror(CFcontext *context, char *name);
@@ -480,9 +489,8 @@ CVMverifyClassFormat(const char *class_name,
 	    }
 	}
 	if ((hasSeenCodeAttribute == 0) && 
-		(mb_access & (JVM_ACC_NATIVE | JVM_ACC_ABSTRACT)) == 0 &&
-                !context->in_clinit){
-	    /* no code, not abstract, not native, not <clinit>. This is wrong. */
+		(mb_access & (JVM_ACC_NATIVE | JVM_ACC_ABSTRACT)) == 0){
+	    /* no code, not abstract, not native. This is wrong. */
 	    CFerror(context, "Non-native non-abstract method missing code");
 	}
 	context->in_clinit = JNI_FALSE;
@@ -809,6 +817,10 @@ static void ParseCode(CFcontext *context, utf_str *mb_name,
 	    ParseLineTable(context, code_length);
 	} else if (utfcmp(attr_name, "LocalVariableTable") == 0) {
 	    ParseLocalVars(context, code_length);
+#ifdef CVM_SPLIT_VERIFY
+	} else if (utfcmp(attr_name, "StackMap") == 0) {
+	    ParseStackMap(context, code_length, nlocals, maxstack);
+#endif
 	} else {
 	    unsigned long length = get4bytes(context);
 	    skipNbytes(context, length);
@@ -818,6 +830,111 @@ static void ParseCode(CFcontext *context, utf_str *mb_name,
     if (context->ptr != end_ptr) 
 	CFerror(context, "Code segment has wrong length");
 }
+
+#ifdef CVM_SPLIT_VERIFY
+
+static void
+ParseMapElements(
+    CFcontext* context,
+    int nElements,
+    int codeLength,
+    int maxSlot)
+{
+    int nSlot = 0;
+    while (nElements-- > 0 ){
+	CVMUint32 tag = get1byte(context);
+	CVMUint32 offset;
+	switch (tag){
+	case JVM_STACKMAP_DOUBLE:
+	case JVM_STACKMAP_LONG:
+	    /* these take 2 slots, so there's an extra increment of nSlot */
+	    /* otherwise, there is not further info here */
+	    nSlot += 1;
+	    break;
+	case JVM_STACKMAP_TOP:
+	case JVM_STACKMAP_INT:
+	case JVM_STACKMAP_FLOAT:
+	case JVM_STACKMAP_NULL:
+	case JVM_STACKMAP_UNINIT_THIS:
+	    break; /* these have no further info */
+
+	case JVM_STACKMAP_OBJECT:
+	    /* Make sure the referenced constant pool entry
+	     * corresponds to an object type.
+	     */
+	    offset = get2bytes(context);
+	    if (offset == 0 || offset > context->size->constants ){
+		CFerror(context, "Stackmap entry entry references"
+			" outside constant pool");
+	    }
+	    if (context->type_table[offset] != JVM_CONSTANT_Class){
+		CFerror(context, "Stackmap entry entry references"
+			" wrong constant pool type");
+	    }
+	    break;
+	case JVM_STACKMAP_UNINIT_OBJECT:
+	    offset = get2bytes(context);
+	    if (offset >= codeLength){
+		CFerror(context, "Stackmap entry entry references"
+			" beyond code length");
+	    }
+	    break;
+	default:
+	    CFerror(context, "illegal stackmap entry");
+	}
+	nSlot += 1;
+    }
+    if (nSlot > maxSlot){
+	CFerror(context, "Stackmap entries for too many stack slots");
+    }
+}
+
+static void
+ParseStackMap(CFcontext *context, CVMUint32 codeLength, 
+    CVMUint32 maxLocals, CVMUint32 maxStack)
+{
+    CVMUint32		  	nEntries;
+    CVMInt32			lastPC = -1;
+    CVMUint32			length = get4bytes(context);
+    const unsigned char *	endPtr = context->ptr  + length;
+    /*
+     * These asserts are here to remind us that the format of these
+     * things changes for big methods.
+     */
+    CVMassert(codeLength <= 65535);
+    CVMassert(maxLocals  <= 65535);
+    CVMassert(maxStack   <= 65535);
+
+    nEntries = get2bytes(context);
+    while (nEntries-- > 0){
+	int nLocalElements;
+	int nStackElements;
+	int thisPC;
+	thisPC = get2bytes(context);
+	if (thisPC <= lastPC){
+	    CFerror(context, "Stackmap entry out of order");
+	}
+	if (thisPC >= codeLength){
+	    CFerror(context, "Stackmap entry PC out of range");
+	}
+	lastPC = thisPC;
+
+	nLocalElements = get2bytes(context);
+	ParseMapElements(context, nLocalElements, codeLength, maxLocals);
+
+	nStackElements = get2bytes(context);
+	ParseMapElements(context, nStackElements, codeLength, maxStack);
+
+	if (context->ptr > endPtr){
+	    CFerror(context, "Stackmap info too long");
+	}
+    }
+    if (context->ptr != endPtr){
+	CFerror(context, "Stackmap info too short");
+    }
+}
+#endif
+
 
 static void
 ParseLineTable(CFcontext *context, unsigned long code_length)

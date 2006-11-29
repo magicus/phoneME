@@ -1,25 +1,27 @@
 /*
- * Portions Copyright 2000-2006 Sun Microsystems, Inc. All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License version 2 for more details (a copy is included at
- * /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public
- * License version 2 along with this work; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * %W% %E%
+ *
+ * Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
  */
 
 /*
@@ -80,6 +82,7 @@ ENTRY1 ( CVMCCMruntimeNewGlue )
 #ifdef IAI_CACHE_GLOBAL_VARIABLES_IN_WMMX
         textrmuw a2, W_CVMGLOBALS, #0
 #else
+	IMPORT(CVMglobals)
 	ldr	a2, =CVMglobals
 #endif
         add	LOCK, a2, #OFFSET_CVMGlobalState_fastHeapLock
@@ -111,7 +114,24 @@ ENTRY1 ( CVMCCMruntimeNewGlue )
 	/* get instance size from class */
 	ldrh	a3, [v2, #OFFSET_CVMClassBlock_instanceSizeX]  /* instance size*/
 #endif
-	adds	a3, v1, a3     /* a3 <- allocNext (allocPtr v1 + size a3) */
+	adds a3, v1, a3     /* a3 <- allocNext (allocPtr v1 + size a3) */
+
+/* IAI - 19*/
+#ifdef IAI_PRELOAD_NEW_OBJECT	
+       /* preload the memory to be allocated for the next object 
+        * in the next NewGlue call 
+        */
+	pld  [a3]
+	pld  [a3, #32]
+	pld  [a3, #64]
+
+	pld  [a3, #96]	
+	pld  [a3, #128]	
+	pld  [a3, #160]	
+
+	pld  [v2]
+#endif  /* IAI_PRELOAD_NEW_OBJECT */   
+
 	/* Check for overflow */
 	bvs	GOUNLOCKANDSLOW
 	cmp	a3, a4         /* Is a3 <= a4 (within range?) */
@@ -184,6 +204,7 @@ LABEL(GOSLOW)
 	mov	a3, v2          /* cb */
 	CALL_VM_FUNCTION(CVMthrowOutOfMemoryError)
 	mov	a1, sp
+	IMPORT(CVMJITexitNative)
 	ldr     pc, =CVMJITexitNative
 LABEL(RETURNOBJ)
 	/* Restore JSP/JFP and return to compiled code */
@@ -287,6 +308,35 @@ ENTRY1 ( CVMCCMruntimeNewArrayGlue )
 	str  	ip, [a1]    /* and the new allocPtr is committed */
 
 	/* v1 is the allocation point now */
+
+/* IAI - 19*/
+#ifdef IAI_PRELOAD_NEW_OBJECT	
+       /* preload the memory to be allocated for the next object 
+        * in the next NewGlue call
+        */
+	cmp a3, #64
+
+	/* current allocated array is small size, 
+	 * so the memory to be allocated is already in cache by
+         * preload in last NewGlue call
+	 */
+	blt SMALL_ARRAY_PLD     
+
+	/* large size array allocation, 
+	 *  the memory beyond 64 bytes is not in the cache, so preload it
+	 */
+	pld [v1, #96]          
+	pld [v1, #128]
+LABEL(SMALL_ARRAY_PLD)       
+	pld  [ip]	
+	pld  [ip, #32]
+	pld  [ip, #64]
+
+ 	pld  [ip, #96]	
+	pld  [ip, #128]	
+ 	pld  [ip, #160]	
+
+#endif	/* IAI_PRELOAD_NEW_OBJECT */
 
 #ifdef CVM_FASTALLOC_STATS
 	/* Count fast locks */
@@ -470,6 +520,36 @@ ENTRY1 ( CVMCCMruntimeANewArrayGlue )
 	str  	ip, [a1]    /* and the new allocPtr is committed */
 
 	/* v1 is the allocation point now */
+
+/* IAI - 19*/
+#ifdef IAI_PRELOAD_NEW_OBJECT	
+       /* preload the memory to be allocated for the next object 
+        * in the next NewGlue call */
+	cmp a3, #64
+
+	/* current allocated array is small size, 
+	 * so the memory to be allocated is already in cache by 
+         * preload in last NewGlue call
+	 */
+	blt SMALL_AARRAY_PLD
+
+	/* large size array allocation, 
+	 * the memory beyond 64 bytes is not in the cache, so preload it
+	 */
+	pld [v1, #96]
+	pld [v1, #128]
+	
+LABEL(SMALL_AARRAY_PLD)       
+	pld  [ip]
+	pld  [ip, #32]
+	pld  [ip, #64]
+
+
+ 	pld  [ip, #96]	
+ 	pld  [ip, #128]	
+ 	pld  [ip, #160]	
+       
+#endif	/* IAI_PRELOAD_NEW_OBJECT */
 
 #ifdef CVM_FASTALLOC_STATS
 	/* Count fast locks */

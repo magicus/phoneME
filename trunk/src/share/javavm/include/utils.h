@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)utils.h	1.96 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 
@@ -62,6 +67,7 @@ CVMdumpException(CVMExecEnv* ee);
 
 extern CVMInt32
 CVMcheckDebugFlags(CVMInt32 flags);
+#define CVMcheckDebugFlags(flags)  (CVMglobals.debugFlags & (flags))
 
 extern CVMInt32
 CVMsetDebugFlags(CVMInt32 flags);
@@ -402,9 +408,7 @@ typedef enum {
     CVM_INTEGER_OPTION,
     CVM_BOOLEAN_OPTION,
     CVM_PERCENT_OPTION,
-#ifdef CVM_JIT_PROFILE
     CVM_STRING_OPTION,
-#endif
     CVM_MULTI_STRING_OPTION,
     CVM_ENUM_OPTION
 } CVMSubOptionKindEnum;
@@ -425,14 +429,12 @@ typedef struct {
 	    CVMAddr   maxValue;
 	    int       defaultValue;
 	} intData;
-#ifdef CVM_JIT_PROFILE
 	/* String value options */
 	struct {
 	    int   ignored1;
 	    const char* helpSyntax;
 	    int   ignored2;
 	} strData;
-#endif
 	/* Multi String valued options */
 	struct {
 	    int numPossibleValues;

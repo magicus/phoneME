@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)Window.java	1.48 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ *
  */
 package java.awt;
 
@@ -378,7 +383,7 @@ public class Window extends Container {
         Toolkit.getEventQueue().postEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSED));
         //SunToolkit.postEvent(appContext, new WindowEvent(this, WindowEvent.WINDOW_CLOSED));
 
-        /* Commenting the IM cleanup currently as Window.dispose() 
+        /* IM cleanup currently as Window.dispose() 
            is not called for 
         *if (inputContext != null) {
         *   InputContext toDispose = inputContext;
@@ -742,7 +747,7 @@ public class Window extends Container {
         SunToolkit.postEvent(appContext, new MouseEvent (this, id, System.currentTimeMillis(), modifiers, x, y, 0, false));
     }
 
-    private void postKeyEvent(int id, int modifiers, 
+    void postKeyEvent(int id, int modifiers, 
                               int keyCode, char keyChar) {
     
         long when = System.currentTimeMillis();
@@ -907,7 +912,6 @@ public class Window extends Container {
         windowFocusListener = AWTEventMulticaster.add(windowFocusListener, l);
     }
 
-// TODO:
 //    public synchronized WindowFocusListener[] getWindowFocusListeners() {
 //        return (WindowFocusListener[])(getListeners(WindowFocusListener.class));
 //    }

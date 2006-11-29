@@ -1,4 +1,6 @@
 #
+# @(#)readme.txt	1.9 06/10/25 
+#
 # Copyright 2006 Sun Microsystems, Inc. All rights reserved.
 # 
 # Sun Microsystems, Inc. has intellectual property rights relating to technology
@@ -34,7 +36,7 @@
 # 
 # Sun, Sun Microsystems, phoneME et Java sont des marques de fabrique ou des
 # marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
-# 
+#
 
 This version of the JPDA has been modified from the standard
 distribution in the following ways:

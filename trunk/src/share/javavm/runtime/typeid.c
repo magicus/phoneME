@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)typeid.c	1.114 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/defs.h"
@@ -119,7 +124,7 @@ static int getSignatureInfo( struct methodTypeTableEntry *mp, CVMUint32 **formp,
  * We allocate segments bigger and bigger as we go.
  * Initial RAM allocation is modest.
  */
-#define INITIAL_SEGMENT_SIZE	40
+#define INITIAL_SEGMENT_SIZE	1000
 
 #define ASSERT_LOCKED CVMassert(CVMreentrantMutexIAmOwner( (CVMgetEE()),  CVMsysMutexGetReentrantMutex(&CVMglobals.typeidLock)))
 
@@ -588,49 +593,51 @@ unlinkEntry(
 
 static void *
 findFreeTableEntry(
-    struct genericTableSegment *thisSeg,
+    struct genericTableSegment *initialSeg,
     size_t entrySize,
     CVMUint32 *tableAllocationCount,
     CVMFieldTypeID * newIndex
 ){
-    struct genericTableSegment** nextp = &thisSeg;
+    struct genericTableSegment*  nextSeg = initialSeg;
+    struct genericTableSegment*  thisSeg;
+    /*struct genericTableSegment** nextp;*/
     struct genericTableEntry *   thisEntry;
     struct genericTableEntry *	 endEntry;
-    int				 nextIndex = thisSeg->firstIndex;
     size_t			 allocationSize;
     size_t			 newIndexVal;
 
     ASSERT_LOCKED;
-    while ( (thisSeg = * nextp) != NULL ){
+    do{
+	thisSeg = nextSeg;
 #ifdef NO_RECYCLE
 	if ( thisSeg->nextFree >= 0 ) goto findFreeInSegment;
 #else
 	if ( thisSeg->nFree > 0 ) goto findFreeInSegment;
 #endif
-	nextIndex += thisSeg->nInSegment;
-	nextp= thisSeg->next;
-    }
-    /* no free. allocate new. */
+    }while( (nextSeg = *(thisSeg->next)) != NULL );
+    /* no free entries. allocate new. */
     allocationSize = sizeof(struct genericTableHeader)
 		+ *tableAllocationCount * entrySize
 		+ sizeof(struct genericTableSegment*);
-    thisSeg = (struct genericTableSegment*)malloc( allocationSize );
-    if ( thisSeg == NULL ){
+    nextSeg = (struct genericTableSegment*)malloc(allocationSize);
+    if ( nextSeg == NULL ){
 	/* malloc failure. Return appropriately null values. */
 	/* Must return TYPEID_NOENTRY here -- not CVM_TYPEID_ERROR */
 	*newIndex = TYPEID_NOENTRY;
 	unlockThrowOutOfMemoryError();
 	return NULL;
     }
-    thisSeg->firstIndex = nextIndex;
-    thisSeg->nInSegment = thisSeg->nFree = *tableAllocationCount;
-    thisSeg->nextFree = 0;
+    *(thisSeg->next) = nextSeg;
+    nextSeg->firstIndex = thisSeg->firstIndex + thisSeg->nInSegment;
+    nextSeg->nInSegment = nextSeg->nFree = *tableAllocationCount;
+    nextSeg->nextFree = 0;
+    thisSeg = nextSeg;
     /* new next-pointer cell follows the segment immediately */
-    thisSeg->next = (struct genericTableSegment**) ( ((char*)thisSeg)+allocationSize- sizeof(struct genericTableSegment*) );
+    thisSeg->next = (struct genericTableSegment**) 
+	(((char*)thisSeg)+allocationSize- sizeof(struct genericTableSegment*));
     *(thisSeg->next) = NULL;
 
     *tableAllocationCount = (*tableAllocationCount*3)/2;
-    *nextp = thisSeg;
 
 findFreeInSegment:
     if ( thisSeg->nextFree >= 0 ){
@@ -1678,7 +1685,7 @@ decrefScalarTypeEntry( CVMTypeIDTypePart typeCookie ){
 extern struct pkg * const CVMnullPackage;
 
 static struct pkg *
-lookupPkg( CVMExecEnv *ee, const char * pkgname, int namelength, CVMBool doInsertion ){
+lookupPkg(const char * pkgname, int namelength, CVMBool doInsertion){
     unsigned nameHash;
     struct pkg ** hashbucket;
     struct pkg *  pkgp;
@@ -1792,7 +1799,7 @@ deletePackage( struct pkg *pkgp ){
 
 
 int
-CVMtypeidGetArrayDepth( CVMClassTypeID t ){
+CVMtypeidGetArrayDepthX( CVMClassTypeID t ){
     struct scalarTableEntry* ep;
     t &= CVMtypeidTypeMask;
     if ( !isTableEntry(t) ){
@@ -1809,7 +1816,7 @@ CVMtypeidGetArrayDepth( CVMClassTypeID t ){
 }
 
 CVMClassTypeID
-CVMtypeidGetArrayBasetype( CVMClassTypeID t ){
+CVMtypeidGetArrayBasetypeX( CVMClassTypeID t ){
     struct scalarTableEntry* ep;
     t &= CVMtypeidTypeMask;
     if ( !isTableEntry(t) ){
@@ -1833,7 +1840,6 @@ CVMtypeidGetArrayBasetype( CVMClassTypeID t ){
  */
 static struct scalarTableEntry *
 lookupClass(
-    CVMExecEnv *    ee,
     const char *    classname,
     int             namelength,
     struct pkg *    pkgp,
@@ -1845,7 +1851,16 @@ lookupClass(
     struct scalarTableEntry *	classp = NULL;
     CVMFieldTypeID		classIndex;
     char			firstchar = classname[0];
+    char			lChar;
     const char *		thisname;
+    int				l = namelength;
+    int				lm1;
+
+    if (l > 255 ){
+	l = 255;
+    }
+    lm1 = l - 1;
+    lChar = classname[lm1];
 
     /* DEBUG printf( "looking for class %s in package %s\n",
 	classname, pkgp->pkgname ); */
@@ -1863,7 +1878,9 @@ lookupClass(
 	 */
 	CVMassert((classp->refCount != 0) && (thisname != NULL));
 	/* DEBUG printf("... compare to %s\n",thisname); */
-	if ( thisname[0] != firstchar )
+	if (classp->nameLength != l)
+	    continue;
+	if ((thisname[0] != firstchar) || (thisname[lm1] != lChar))
 	    continue;
 	if ( strncmp( classname, thisname, namelength) != 0 )
 	    continue;
@@ -1918,6 +1935,7 @@ lookupClass(
 		classp->nextIndex = *hashbucket;
 		classp->value.className.package = pkgp;
 		classp->refCount = 1;
+		classp->nameLength = l;
 		*hashbucket       = classIndex;
 		conditionalIncRef( pkgp );
 		CVMtraceTypeID(("Typeid: New class (%d ) %s/%s\n",
@@ -1942,7 +1960,6 @@ lookupClass(
 
 static struct scalarTableEntry *
 referenceClassName(
-    CVMExecEnv * ee,
     const char * classname,
     int namelength,
     CVMBool doInsertion,
@@ -1952,23 +1969,44 @@ referenceClassName(
      * Parse into class part and package part.
      * Package part may be null!
      */
+    const char*		pkgEnd;
+    const char*		classInPkg;
     int 		pkgLength;
+    int			classInPkgLength;
     struct pkg *	pkgp;
     struct scalarTableEntry *
 			classp;
 
-    for( pkgLength = namelength-1; pkgLength >0; pkgLength--){
-	if ( classname[pkgLength] == '/' ){
+
+    /* The following is equivalent to ... 
+     * pkgEnd = (char*)memrchr(classname, '/', namelength);
+     */
+    for (pkgEnd = classname + namelength - 1; *pkgEnd != '/'; pkgEnd --){
+	if (pkgEnd == classname){
+	    pkgEnd = NULL;
 	    break;
 	}
     }
-    pkgp = lookupPkg( ee, classname, pkgLength, doInsertion );
-    if ( pkgp == NULL ) return NULL;
-    /* Careful: if pkgLength==0, then classname+0 is the name
-     * of the class. else classname+pkgLength+1 is the name of the class.
+    /*
+     * if the test clause of the "for" was false, then *pkgEnd == '/'
+     * otherwise pkgEnd == NULL
      */
-    if ( pkgLength > 0 ) pkgLength++;
-    classp = lookupClass(ee, classname+pkgLength, namelength-pkgLength,
+    CVMassert((pkgEnd == NULL) || (*pkgEnd == '/'));
+
+    if (pkgEnd == NULL ){
+	/* no separation, so the class name starts right at the beginning */
+	pkgLength = 0;
+	classInPkg = classname;
+	classInPkgLength = namelength;
+    } else {
+	/* found a separating / */
+	pkgLength =  pkgEnd - classname;
+	classInPkg = pkgEnd + 1;
+	classInPkgLength = namelength - pkgLength - 1;
+    }
+    pkgp = lookupPkg(classname, pkgLength, doInsertion);
+    if ( pkgp == NULL ) return NULL;
+    classp = lookupClass(classInPkg, classInPkgLength,
 			 pkgp, doInsertion, classCookie);
     if (classp == NULL){
 	/*
@@ -1991,7 +2029,6 @@ referenceClassName(
 
 static struct scalarTableEntry *
 lookupArray(
-    CVMExecEnv     * ee,
     CVMFieldTypeID basetype,
     struct scalarTableEntry *baseEntry,
     int depth,
@@ -2158,7 +2195,7 @@ referenceFieldSignature( CVMExecEnv * ee, const char * sig, int sigLength, CVMBo
     case CVM_SIGNATURE_CLASS:
 	sig += 1; /* skip the L */
 	sigLength -= 2; /* discount the ; */
-	baseEntry = referenceClassName( ee, sig, sigLength, doInsertion, &basetype);
+	baseEntry = referenceClassName( sig, sigLength, doInsertion, &basetype);
 
 	if ( baseEntry== NULL ){
 	    goto returnSig; /* error! */
@@ -2181,7 +2218,7 @@ referenceFieldSignature( CVMExecEnv * ee, const char * sig, int sigLength, CVMBo
 	 * referenceClassName (called above) also incremented it.
 	 * Adjust downward. I promise it will never go below 1.
 	 */
-	if ( (thisEntry = lookupArray( ee, basetype, baseEntry, depth, basePackage,
+	if ( (thisEntry = lookupArray( basetype, baseEntry, depth, basePackage,
 		doInsertion, &thisCookie ) ) != NULL
 	){
 	    thisCookie = CVMtypeidBigArray|thisCookie;
@@ -2222,9 +2259,9 @@ CVMtypeidIncrementArrayDepth(
     struct scalarTableEntry * baseEntry;
     struct scalarTableEntry * arrayEntry;
     struct pkg *	      basePackage;
-    CVMClassTypeID	      newDepth = CVMtypeidArrayDepth( base ) + depthIncrement;
+    CVMClassTypeID	      newDepth = CVMtypeidGetArrayDepth( base ) + depthIncrement;
 
-    base = CVMtypeidArrayBasetype(base);
+    base = CVMtypeidGetArrayBasetype(base);
     if ( newDepth <= CVMtypeidMaxSmallArray ){
 	if ( isTableEntry( base ) ){
 	    base = CVMtypeidCloneClassID( ee, base );
@@ -2244,7 +2281,7 @@ CVMtypeidIncrementArrayDepth(
      * depth, of this base type has never been seen before.
      */
     CVMsysMutexLock(ee, &CVMglobals.typeidLock );
-    arrayEntry = lookupArray( ee, base, baseEntry, newDepth, basePackage,
+    arrayEntry = lookupArray( base, baseEntry, newDepth, basePackage,
 	CVM_TRUE, &arrayretval );
     if ( arrayEntry == NULL ){
 	arrayretval =  CVM_TYPEID_ERROR;
@@ -2270,7 +2307,7 @@ CVMtypeidLookupClassID(
 	ep = referenceFieldSignature( ee, name, nameLength, CVM_FALSE, &retval );
     } else {
 	/* It is a simple name */
-	ep = referenceClassName( ee, name, nameLength, CVM_FALSE, &retval );
+	ep = referenceClassName( name, nameLength, CVM_FALSE, &retval );
 	if ( ep == NULL ){
 	    retval = CVM_TYPEID_ERROR;
 	}
@@ -2296,7 +2333,7 @@ CVMtypeidNewClassID(
 	ep = referenceFieldSignature( ee, name, nameLength, CVM_TRUE, &retval );
     } else {
 	/* It is a simple name */
-	ep = referenceClassName( ee, name, nameLength, CVM_TRUE, &retval );
+	ep = referenceClassName( name, nameLength, CVM_TRUE, &retval );
 	if ( ep == NULL ){
 	    retval = CVM_TYPEID_ERROR;
 	}

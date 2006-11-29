@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)KeyCodes.cc	1.9 06/10/25
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 /* Maps to/from KeyEvent key codes to Qt key codes. */
 
@@ -29,7 +33,19 @@
 #include <qnamespace.h>
 #include <qstring.h>
 
-#define SIZEOF_KEYMAP   134
+#ifdef QT_KEYPAD_MODE
+// These are the extra mappings for QT_KEYPAD_MODE
+// (see also QtToolkit.cc's QtToolkitEventHandler::postKeyEvent()):
+//////////////////////////////////////////////////////////////////////////////
+// { Java_awt_event_KeyEvent_VK_ENTER,			Qt::Key_Select },   //
+// { java_awt_event_KeyEvent_VK_F1,			Qt::Key_Context1 }, //
+// { java_awt_event_KeyEvent_VK_F2,			Qt::Key_Context2 }, //
+// { Java_awt_event_KeyEvent_VK_F4,			Qt::Key_Hangup },   //
+//////////////////////////////////////////////////////////////////////////////
+#define SIZEOF_KEYMAP   139
+#else
+#define SIZEOF_KEYMAP   135
+#endif
 
 typedef struct {
   jint javaKey;
@@ -43,6 +59,9 @@ const static keyMapType keyCodesMap[SIZEOF_KEYMAP] =
 {
   { java_awt_event_KeyEvent_VK_ENTER,		        Qt::Key_Return },
   { java_awt_event_KeyEvent_VK_ENTER,		        Qt::Key_Enter },
+#ifdef QT_KEYPAD_MODE
+  { java_awt_event_KeyEvent_VK_ENTER,		        Qt::Key_Select },
+#endif
   { java_awt_event_KeyEvent_VK_BACK_SPACE,	        Qt::Key_Backspace },
   { java_awt_event_KeyEvent_VK_TAB,			Qt::Key_Tab },
   { java_awt_event_KeyEvent_VK_TAB,			Qt::Key_BackTab },
@@ -143,6 +162,7 @@ const static keyMapType keyCodesMap[SIZEOF_KEYMAP] =
   { java_awt_event_KeyEvent_VK_NUMPAD7,		        Qt::Key_7 },
   { java_awt_event_KeyEvent_VK_NUMPAD8,		        Qt::Key_8 },
   { java_awt_event_KeyEvent_VK_NUMPAD9,		        Qt::Key_9 },
+  { java_awt_event_KeyEvent_VK_NUMBER_SIGN,	        Qt::Key_NumberSign },
   { java_awt_event_KeyEvent_VK_MULTIPLY,	        Qt::Key_Asterisk },
   { java_awt_event_KeyEvent_VK_ADD,			Qt::Key_Plus },
   { java_awt_event_KeyEvent_VK_SEPARATER,	        0 },
@@ -153,6 +173,11 @@ const static keyMapType keyCodesMap[SIZEOF_KEYMAP] =
   { java_awt_event_KeyEvent_VK_F2,			Qt::Key_F2 },
   { java_awt_event_KeyEvent_VK_F3,			Qt::Key_F3 },
   { java_awt_event_KeyEvent_VK_F4,			Qt::Key_F4 },
+#ifdef QT_KEYPAD_MODE
+  { java_awt_event_KeyEvent_VK_F1,		        Qt::Key_Context1 },
+  { java_awt_event_KeyEvent_VK_F2,		        Qt::Key_Context2 },
+  { java_awt_event_KeyEvent_VK_F4,		        Qt::Key_Hangup },
+#endif
   { java_awt_event_KeyEvent_VK_F5,			Qt::Key_F5 },
   { java_awt_event_KeyEvent_VK_F6,			Qt::Key_F6 },
   { java_awt_event_KeyEvent_VK_F7,			Qt::Key_F7 },

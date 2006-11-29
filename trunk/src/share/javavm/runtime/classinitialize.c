@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)classinitialize.c	1.50 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/interpreter.h"
@@ -125,13 +130,24 @@ CVMprivateClassInit(CVMExecEnv* ee, CVMClassBlock* cb, CVMMethodBlock **p_mb)
 	CVMMethodBlock* mb = CVMglobals.java_lang_Class_runStaticInitializers;
 
 #ifdef CVM_CLASSLOADING
-	    /*
-	     * Link the class hierarchy.
-	     */
-	    if (!CVMclassLink(ee, cb)) {
-		return -1;
-	    }
+	/*
+	 * Link the class hierarchy.
+	 */
+	if (!CVMclassLink(ee, cb)) {
+	    return -1;
+	}
 #endif
+
+	if (!CVMcbHasStaticsOrClinit(cb)) {
+	    /* If this class doesn't have a static initializer, then we're done.
+	     *
+	     * WARNING: It is not safe to do this until after the LINKED flag
+	     * has been set.  But the LINKED flag should be set by now.
+	     */
+	    CVMassert(CVMcbCheckRuntimeFlag(cb, LINKED));
+	    CVMcbSetInitializationDoneFlag(ee, cb);
+	    return 0;
+	}
 
 	if (p_mb != NULL) {
             CVMBool success = CVM_TRUE;

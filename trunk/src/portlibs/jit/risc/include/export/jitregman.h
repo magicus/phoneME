@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitregman.h	1.84 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_JITREGMAN_H
@@ -250,6 +255,8 @@ struct CVMRMResource {
 #define CVMRMgetSize(rp) \
     ((rp)->size)
 
+#define CVMRMgetConstant(rp) \
+    ((rp)->constant)
 
 extern CVMRMResource *
 CVMRMgetResource(
@@ -527,5 +534,47 @@ CVMRMunpinAllIncomingLocals(CVMJITCompilationContext* con, CVMJITIRBlock* b);
 #define CVMRMpinAllIncomingLocals(con,b,x)
 #define CVMRMunpinAllIncomingLocals(con,b)
 #endif
+
+/*******************************************************
+ * Following are register sandbox related
+ * *****************************************************/
+
+typedef struct
+{
+    int num;
+    CVMRMResource* res[CVMCPU_MAX_INTERESTING_REG -
+                       CVMCPU_MIN_INTERESTING_REG];
+}CVMRMregSandboxResources;
+
+
+/*
+ * Get register sandbox for the target block 'b'. The number of
+ * registers in the sandbox is specified by 'numOfRegs'. The
+ * register numbers are stored in the target block. The sandbox
+ * will take effect when enter the target block, and only the
+ * registers in the sandbox are allowed to be allocated before
+ * sandbox is removed. When the sandbox is in effect, the registers
+ * occupied by any 'USED' values can also be accessed. However
+ * cautions need to be taken to prevent 'USED' registers being
+ * trashed.
+ */
+CVMRMregSandboxResources*
+CVMRMgetRegSandboxResources(CVMJITRMContext* con,
+                            CVMJITIRBlock* b,
+                            CVMRMregset target,
+                            CVMRMregset avoid,
+                            int numOfRegs);
+
+
+/* Relinquish the resources associated with the sandbox registers. */
+void
+CVMRMrelinquishRegSandboxResources(CVMJITRMContext* con,
+                                   CVMRMregSandboxResources *sandboxRes);
+
+/* Remove the register sandbox restriction applied to the block. Once
+ * the sandbox is removed, the normal register usage rules resume.
+ */
+void
+CVMRMremoveRegSandboxRestriction(CVMJITRMContext* con, CVMJITIRBlock* b);
 
 #endif /* _INCLUDED_JITREGMAN_H */

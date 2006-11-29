@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)AppletPanel.java	1.69 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ *
  */
 
 package sun.applet;
@@ -305,14 +310,14 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                     // until the loader thread terminates.
                     // (one way or another).
                     if (loaderThread == null) {
-                        // TODO: do we want a name?
+                        // NOTE: do we want a name?
                         //System.out.println("------------------- loading applet");
                         setLoaderThread(new Thread(this));
                         loaderThread.start();
                         // we get to go to sleep while this runs
                         loaderThread.join();
                         setLoaderThread(null);
-                    } else {// TODO: issue an error -- this case should never
+                    } else {// NOTE: issue an error -- this case should never
                         // occur.
                     }
                     break;
@@ -491,7 +496,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
         // Create a class loader
         loader = getClassLoader(getCodeBase());
         // Load the archives if present.
-        // TODO - this probably should be done in a separate thread,
+        // NOTE - this probably should be done in a separate thread,
         // or at least the additional archives (epll).
 
         String code = getCode();
@@ -581,7 +586,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
             try {
                 status = APPLET_DISPOSE; // APPLET_ERROR?
                 applet = null;
-                // TODO: This may not be exactly the right thing: the
+                // FIXME: This may not be exactly the right thing: the
                 // status is set by the stop button and not necessarily
                 // here.
                 showAppletStatus("death");
@@ -617,7 +622,6 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
      * Request that the loading of the applet be stopped.
      */
     protected synchronized void stopLoading() {
-        // TODO: fill in the body
         if (loaderThread != null) {
             //System.out.println("Interrupting applet loader thread: " + loaderThread);
             loaderThread.interrupt();
@@ -797,7 +801,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
             );
         if (perms == null)
             perms = new Permissions();
-            // This is needed to be able to create the classloader itself!
+        //NOTE: this is needed to be able to create the classloader itself!
 
         perms.add(new RuntimePermission("createClassLoader"));
         Permission p;

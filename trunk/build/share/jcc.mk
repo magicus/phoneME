@@ -1,25 +1,32 @@
-# Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
-# 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2 only,
-# as published by the Free Software Foundation.
-# 
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# version 2 for more details (a copy is included at /legal/license.txt).
-# 
-# You should have received a copy of the GNU General Public License version
-# 2 along with this work; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
-# 
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 or visit www.sun.com if you need additional information or have
-# any questions.
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+#   
+# This program is free software; you can redistribute it and/or  
+# modify it under the terms of the GNU General Public License version  
+# 2 only, as published by the Free Software Foundation.   
+#   
+# This program is distributed in the hope that it will be useful, but  
+# WITHOUT ANY WARRANTY; without even the implied warranty of  
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+# General Public License version 2 for more details (a copy is  
+# included at /legal/license.txt).   
+#   
+# You should have received a copy of the GNU General Public License  
+# version 2 along with this work; if not, write to the Free Software  
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+# 02110-1301 USA   
+#   
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+# Clara, CA 95054 or visit www.sun.com if you need additional  
+# information or have any questions. 
+#
+# @(#)jcc.mk	1.115 06/10/24
+#
 
 #
 # Makefile for building JavaCodeCompact(tm) and romjava.c
+#
 
 ####################
 # Exported variables
@@ -182,10 +189,10 @@ $(CVM_ROMJAVA_LIST): $(CVM_JCC_INPUT) $(CVM_JCC_DEPEND)
 
 ROMJAVA_AR_CMD	?= \
 	echo Linking $@ ; \
-	echo $(call AR_CREATE,$@) $${namelist} ; \
-	$(call AR_CREATE,$@) $${namelist} ; \
-	echo $(call AR_UPDATE,$@) ; \
-	$(call AR_UPDATE,$@)
+	echo $(call TARGET_AR_CREATE,$@) $${namelist} ; \
+	$(call TARGET_AR_CREATE,$@) $${namelist} ; \
+	echo $(call TARGET_AR_UPDATE,$@) ; \
+	$(call TARGET_AR_UPDATE,$@)
 
 $(CVM_OBJDIR)/$(CVM_ROMJAVA_O): $(CVM_ROMJAVA_LIST) \
 	$(CVM_TOP)/src/share/javavm/include/defs.h \

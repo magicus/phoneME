@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)gen_edenspill.c	1.33 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -775,7 +780,7 @@ addToTodo(CVMGenEdenSpillGeneration* thisGen, CVMObject* ref)
     CVMAddr originalWord = *headerAddr;
     CVMAddr next = (CVMAddr)thisGen->todoList;
 
-    if (!CVMobjectTrivialClassWord(originalWord)) {
+    if (!CVMobjectTrivialHeaderWord(originalWord)) {
         /* Preserve the old header word with the new address
            of object, but only if it is non-trivial. */
         preserveHeaderWord(thisGen, ref, originalWord);
@@ -804,11 +809,11 @@ restorePreservedHeaderWords(CVMGenEdenSpillGeneration* thisGen)
 	 * Make sure that the object we are looking at now has the default
 	 * various word set up for now
 	 */
-	CVMassert(CVMobjectTrivialClassWord(CVMobjectVariousWord(movedRef)));
+	CVMassert(CVMobjectTrivialHeaderWord(CVMobjectVariousWord(movedRef)));
 	/*
 	 * And also, that we did not evacuate this word for nothing
 	 */
-	CVMassert(!CVMobjectTrivialClassWord(item->originalWord));
+	CVMassert(!CVMobjectTrivialHeaderWord(item->originalWord));
 	CVMobjectVariousWord(movedRef) = item->originalWord;
 	CVMtraceGcScan(("GC[MC,%d]: "
 			"Restoring header %x for obj 0x%x at i=%d\n",
@@ -936,7 +941,7 @@ sweep(CVMGenEdenSpillGeneration* thisGen,
 		    CVMtraceGcScan(("GC[MC,%d]: obj 0x%x -> 0x%x\n",
                                     thisGen->gen.generationNo, curr,
                                     forwardingAddress));
-		    if (!CVMobjectTrivialClassWord(originalWord)) {
+		    if (!CVMobjectTrivialHeaderWord(originalWord)) {
 			/* Preserve the old header word with the new address
 			   of object, but only if it is non-trivial. */
 			preserveHeaderWord(thisGen, 
@@ -1180,7 +1185,7 @@ followRoots(CVMGenEdenSpillGeneration* thisGen, TransitiveScanData* tsd)
             CVMGenPreservedItem* item = &thisGen->preservedItems[idx];
             CVMassert(idx >= 0);
             CVMassert(item->movedRef == ref);
-            CVMassert(!CVMobjectTrivialClassWord(item->originalWord));
+            CVMassert(!CVMobjectTrivialHeaderWord(item->originalWord));
             *headerAddr = item->originalWord;
             CVMtraceGcScan(("GC[MC,%d]: "
                             "Restoring header %x for obj 0x%x at i=%d\n",

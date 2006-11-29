@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)preloader.h	1.74 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -188,8 +193,18 @@ CVM_CLASSBLOCK_DECL(java_lang_ref_Reference);
 CVM_CLASSBLOCK_DECL(java_util_jar_JarFile);
 CVM_CLASSBLOCK_DECL(java_util_ResourceBundle);
 
+/* classes known to JIT for simple synchronization */
+#ifdef CVM_JIT
+CVM_CLASSBLOCK_DECL(java_lang_StringBuffer);
+CVM_CLASSBLOCK_DECL(java_util_Hashtable);
+CVM_CLASSBLOCK_DECL(java_util_Random);
+CVM_CLASSBLOCK_DECL(java_util_Stack);
+CVM_CLASSBLOCK_DECL(java_util_Vector);
+CVM_CLASSBLOCK_DECL(java_util_Vector_1);
+#endif
+
 #ifdef CVM_LVM /* %begin lvm */
-CVM_CLASSBLOCK_DECL(sun_misc_LogicalVMImpl);
+CVM_CLASSBLOCK_DECL(sun_misc_Isolate);
 #endif /* %end lvm */
 
 /*
@@ -263,6 +278,10 @@ CVM_CLASSBLOCK_DECL(java_lang_reflect_Constructor_AccessException);
 CVM_CLASSBLOCK_DECL(sun_io_ConversionBufferFullException);
 CVM_CLASSBLOCK_DECL(sun_io_UnknownCharacterException);
 CVM_CLASSBLOCK_DECL(sun_io_MalformedInputException);
+
+#ifdef CVM_AOT
+CVM_CLASSBLOCK_DECL(sun_mtask_Warmup);
+#endif
 
 /*
  * Arrays of basic types
