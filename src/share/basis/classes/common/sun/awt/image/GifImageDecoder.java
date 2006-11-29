@@ -1,26 +1,30 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)GifImageDecoder.java	1.55 06/10/24
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
-/*
+/*-
  *	Reads GIF images from an InputStream and reports the
  *	image data to an InputStreamImageSource object.
  */
@@ -944,14 +948,16 @@ class GifFrame {
 		} else {
 		    tpix = (byte) model.getTransparentPixel();
 		}
-		byte[] rasline = new byte[width];
+
+		int rassize = width * height; 
+		byte[] rasfill = new byte[rassize];
 		if (tpix != 0) {
-		    for (int i = 0; i < width; i++) {
-			rasline[i] = tpix;
+		    for (int i = 0; i < rassize; i++) {
+			rasfill[i] = tpix;
 		    }
 		}
-//		setPixels(x, y, width, height, model, rasline, 0, 0);
-		setPixels(x, y, width, height, model, rasline, 0, width);
+//		setPixels(x, y, width, height, model, rasfill, 0, 0);
+		setPixels(x, y, width, height, model, rasfill, 0, width);
 		break;
 	    case DISPOSAL_SAVE:
 		decoder.saved_model = model;

@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)QtGraphics.java	1.9 06/10/10
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
 package java.awt;
@@ -31,7 +35,7 @@ import java.text.AttributedCharacterIterator;
 import java.awt.font.TextAttribute;
 
 /**
- * QtGraphics is an object that encapsulates a graphics context for drawing with CVE.
+ * QtGraphics is an object that encapsulates a graphics context for drawing with Qt.
  *
  * @version 1.12, 11/27/01
  */
@@ -231,7 +235,8 @@ final class QtGraphics extends Graphics2D implements ConstrainableGraphics {
 		graphicsConfiguration = image.gc;
 
         // 5104620
-        // If the image.font is null, use the default font.
+        // If the image.font is null, use the default font. Fixes the 
+        // crash in the native code
 		setFont(((image.font == null) ? DEFAULT_FONT : image.font));
 
         // 6205694,6205693,6206487,6206315
@@ -264,7 +269,7 @@ final class QtGraphics extends Graphics2D implements ConstrainableGraphics {
 	}
 
 	/**
-	 * Create a new CVEGraphics Object based on this one.
+	 * Create a new QtGraphics Object based on this one.
 	 */
 	public Graphics create() {
 		return new QtGraphics(this);
@@ -329,6 +334,7 @@ final class QtGraphics extends Graphics2D implements ConstrainableGraphics {
 
 	public void setStroke(Stroke stroke)
 	{
+		/* Don't know about this case !!! FIXME!!! */
 		if(stroke == null) {
 			this.stroke = null;
 			return;

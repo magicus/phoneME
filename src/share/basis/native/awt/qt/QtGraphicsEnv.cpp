@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)QtGraphicsEnv.cpp	1.9 06/10/25
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
 #include "QtBackEnd.h"
@@ -105,12 +109,9 @@ Java_java_awt_QtGraphicsEnvironment_init (JNIEnv * env, jclass cls)
 	GET_CLASS (IndexColorModel, "java/awt/image/IndexColorModel");
 	GET_METHOD_ID (IndexColorModel_constructor, "<init>", "(II[B[B[B)V");
 
-/* AGUI does not support the private constructor and peer delegation model */
-#ifndef J2ME_CLASSLIB_BASIS_AGUI
 	GET_CLASS (java_awt_image_BufferedImage, "java/awt/image/BufferedImage");
 	GET_METHOD_ID (java_awt_image_BufferedImage_constructor, "<init>", "(Lsun/awt/image/BufferedImagePeer;)V");
 	GET_FIELD_ID (java_awt_image_BufferedImage_peerFID, "peer", "Lsun/awt/image/BufferedImagePeer;");
-#endif /* J2ME_CLASSLIB_BASIS_AGUI */
 
 	FIND_CLASS ("java/awt/Window");
 	GET_METHOD_ID (Window_postMouseButtonEventMID, "postMouseButtonEvent", "(IIIII)V");

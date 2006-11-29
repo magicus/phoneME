@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)globals.c	1.199 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/defs.h"
@@ -47,6 +52,7 @@
 #include "javavm/include/gc/gc_impl.h"
 
 #include "javavm/include/clib.h"
+#include "javavm/include/porting/memory.h"
 
 #ifdef CVM_JVMDI
 #include "javavm/include/jvmdi_jni.h"
@@ -80,6 +86,16 @@ CVMTargetGlobalState * const CVMtargetGlobals = &CVMglobals.target;
 #ifdef CVMJIT_TRAP_BASED_GC_CHECKS
 /* Pointer to CVMglobals.jit.gcTrapAddr so asm code can easily locate it */
 void** const CVMgcTrapAddrPtr = (void**)&CVMglobals.jit.gcTrapAddr;
+#endif
+
+#ifdef CVM_AOT
+/* Pointer to CVMglobals.jit.codeCacheAOTStart */
+void** const CVMJITcodeCacheAOTStart = 
+        (void**)&CVMglobals.jit.codeCacheAOTStart;
+
+/* Pointer to CVMglobals.jit.codeCacheAOTEnd */
+void** const CVMJITcodeCacheAOTEnd = 
+        (void**)&CVMglobals.jit.codeCacheAOTEnd;
 #endif
 
 /*
@@ -454,6 +470,17 @@ static const CVMGlobalMethodBlockEntry globalMethodBlocks[] = {
         /* NOTE: java.lang.Thread has a static initializer.  The clinit
                  will be done explicitly in JNI_CreateJavaVM(). */
     },
+
+#ifdef CVM_AOT
+    /* sun.mtask.Warmup.runit() */
+    {
+        CVM_TRUE, /* static */
+        CVMsystemClass(sun_mtask_Warmup),
+        "runit", "(Ljava/lang/String;Ljava/lang/String;)V",
+        &CVMglobals.sun_mtask_Warmup_runit,
+    },
+#endif
+
 #ifdef CVM_JVMPI
     /* java.lang.Thread.initDaemonThread() */
     {
@@ -571,7 +598,6 @@ CVMdestroyGlobalSysMutexes(int n)
     }
 }
 
-#if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_DEFAULT
 static void
 CVMdestroyMicroLocks(CVMMicroLock *locks, int n)
 {
@@ -580,7 +606,6 @@ CVMdestroyMicroLocks(CVMMicroLock *locks, int n)
 	CVMmicrolockDestroy(&locks[i]);
     }
 }
-#endif
 
 static void
 CVMdestroyCstates(int n)
@@ -696,6 +721,12 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
      */
     CVMtraceMisc(("Initializing global state\n"));
 
+#if CVM_USE_MMAP_APIS
+    if (!CVMmemInit()) {
+	goto out_of_memory;
+    }
+#endif
+
     CVMinitJNIStatics();
     
     gs->exit_procs = NULL;
@@ -776,7 +807,7 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     /* Logical VM global variables initialization (phase 1) 
      * Do this before invoking CVMinitExecEnv().
      * Phase 2 is taken place after initializing the main Logical VM */
-    if (!CVMLVMglobalsInitPhase1(&gs->lvmGlobals)) {
+    if (!CVMLVMglobalsInitPhase1(&gs->lvm)) {
 	goto out_of_memory;
     }
 #endif /* %end lvm */
@@ -867,7 +898,6 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     CVMfreelistFrameInit((CVMFreelistFrame*)gs->classTable.currentFrame,
                          CVM_FALSE);
 
-#if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_DEFAULT
     {
 	int i;
 
@@ -882,7 +912,6 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
 	    goto out_of_memory;
 	}
     }
-#endif
 
 #ifdef CVM_CCM_COLLECT_STATS
     CVMglobals.ccmStats.okToCollectStats = CVM_TRUE;
@@ -1137,7 +1166,7 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
 #ifdef CVM_LVM /* %begin lvm */
     /* Logical VM global variables deinitialization.
      * Do this where 'ee' is still valid. */
-    CVMLVMglobalsDestroy(ee, &gs->lvmGlobals);
+    CVMLVMglobalsDestroy(ee, &gs->lvm);
 #endif /* %end lvm */
 
 #ifdef CVM_JVMPI
@@ -1191,10 +1220,8 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
 
     CVMdestroyCstates(CVM_NUM_CONSISTENT_STATES);
 
-#if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_DEFAULT
     CVMdestroyMicroLocks(gs->sysMicroLock, CVM_NUM_SYS_MICROLOCKS);
     CVMmicrolockDestroy(&gs->objGlobalMicroLock);
-#endif
 
     CVMdestroyVMTargetGlobalState();
 
@@ -1203,7 +1230,10 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
     CVMdestroyJNIJavaVM(&gs->javaVM);
 
 #if defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION)
-    CVMsuspendCheckerDestroy();
+    if (CVMglobals.suspendCheckerInitialized) {
+	CVMsuspendCheckerDestroy();
+	CVMglobals.suspendCheckerInitialized = CVM_FALSE;
+    }
 #endif
 
     CVMdetachExecEnv(ee);

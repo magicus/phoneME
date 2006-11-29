@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)URLClassLoader.java	1.81 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package java.net;
@@ -198,9 +203,17 @@ public class URLClassLoader extends SecureClassLoader {
     protected Class findClass(final String name)
 	 throws ClassNotFoundException
     {
+	Class retValue = null;
 	try {
-	    return (Class)
+	    retValue = (Class)
 		AccessController.doPrivileged(new PrivilegedExceptionAction() {
+		    /*
+		     * Formerly, this method would throw an exception if
+		     * resource res == null. This would be wrapped in
+		     * a PrivilegedActionException then unwrapped in 
+		     * the body of findClass (as it still can be).
+		     * Fewer exceptions need to be allocated if we return null.
+		     */
 		    public Object run() throws ClassNotFoundException {
 			String path = name.replace('.', '/').concat(".class");
 			Resource res = ucp.getResource(path, false);
@@ -210,14 +223,17 @@ public class URLClassLoader extends SecureClassLoader {
 			    } catch (IOException e) {
 				throw new ClassNotFoundException(name, e);
 			    }
-			} else {
-			    throw new ClassNotFoundException(name);
 			}
+			return null;
 		    }
 		}, acc);
 	} catch (java.security.PrivilegedActionException pae) {
 	    throw (ClassNotFoundException) pae.getException();
 	}
+	if (retValue == null){
+	    throw new ClassNotFoundException(name);
+	}
+	return retValue;
     }
 
     /*

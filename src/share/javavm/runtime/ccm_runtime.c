@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ccm_runtime.c	1.74 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/defs.h"
@@ -615,6 +620,12 @@ void CVMCCMruntimeCheckCast(CVMCCExecEnv *ccee,
         for the needs of JITed code. */
 
     CVMExecEnv *ee = CVMcceeGetEE(ccee);
+
+#if CVM_DEBUG
+    /* We better not be holding a microlock */
+    CVMassert(ee->microLock == 0);
+#endif
+
     CVMCCMstatsInc(ee, CVMCCM_STATS_CVMCCMruntimeCheckCast);
     if (!CVMisAssignable(ee, objCb, castCb)) {
         /* CVMisAssignable() may have thrown StackOverflowError */
@@ -634,8 +645,17 @@ void CVMCCMruntimeCheckCast(CVMCCExecEnv *ccee,
     */
     /* Only write back the objCb for methods above codeCacheDecompileStart */
     if ((CVMUint8*)cachedCbPtr > CVMglobals.jit.codeCacheDecompileStart) {
-        *cachedCbPtr = objCb;
+	*cachedCbPtr = objCb;
     }
+
+#if 0
+    /* Do a dumpstack so we know who is failing a lot */
+    if (!((CVMUint8*)cachedCbPtr > CVMglobals.jit.codeCacheDecompileStart)) {
+	CVMMethodBlock* mb = ee->interpreterStack.currentFrame->mb;
+	CVMconsolePrintf("--> %C.%M\n", CVMmbClassBlock(mb), mb);
+	CVMdumpStack(&ee->interpreterStack,0,0,0);
+    }
+#endif
 }
 #endif
 
@@ -652,6 +672,10 @@ void CVMCCMruntimeCheckArrayAssignable(CVMCCExecEnv *ccee,
 {
     /* NOTE: The content of this function is based on the implementation of
        aastore in the interpreter loop */
+#if CVM_DEBUG
+    /* We better not be holding a microlock */
+    CVMassert(ee->microLock == 0);
+#endif
 
     CVMCCMstatsInc(ee, CVMCCM_STATS_CVMCCMruntimeCheckArrayAssignable);
     /* We have checked for equality inline. Verify that */
@@ -682,6 +706,11 @@ CVMJavaInt CVMCCMruntimeInstanceOf(CVMCCExecEnv *ccee,
     CVMExecEnv *ee = CVMcceeGetEE(ccee);
     CVMJavaInt success;
 
+#if CVM_DEBUG
+    /* We better not be holding a microlock */
+    CVMassert(ee->microLock == 0);
+#endif
+
     CVMCCMstatsInc(ee, CVMCCM_STATS_CVMCCMruntimeInstanceOf);
     success = CVMisAssignable(ee, objCb, instanceofCb);
     /* CVMgcUnsafeIsInstanceOf() may have thrown StackOverflowError */
@@ -701,6 +730,16 @@ CVMJavaInt CVMCCMruntimeInstanceOf(CVMCCExecEnv *ccee,
         (CVMUint8*)cachedCbPtr > CVMglobals.jit.codeCacheDecompileStart) {
 	*cachedCbPtr = objCb;
     }
+#if 0
+    /* Do a dumpstack so we know who is failing a lot */
+    if (success &&
+	!((CVMUint8*)cachedCbPtr > CVMglobals.jit.codeCacheDecompileStart)
+    {
+	CVMMethodBlock* mb = ee->interpreterStack.currentFrame->mb;
+	CVMconsolePrintf("--> %C.%M\n", CVMmbClassBlock(mb), mb);
+	CVMdumpStack(&ee->interpreterStack,0,0,0);
+    }
+#endif
     return success;
 }
 #endif
@@ -806,6 +845,10 @@ CVMCCMruntimeNew(CVMCCExecEnv *ccee, CVMClassBlock *newCb)
     CVMExecEnv *ee = CVMcceeGetEE(ccee);
 
     CVMassert(CVMD_isgcUnsafe(ee));
+#if CVM_DEBUG
+    /* We better not be holding a microlock */
+    CVMassert(ee->microLock == 0);
+#endif
 
     CVMCCMstatsInc(ee, CVMCCM_STATS_CVMCCMruntimeNew);
 
@@ -832,6 +875,10 @@ CVMCCMruntimeNewArray(CVMCCExecEnv *ccee, CVMJavaInt length,
     CVMBasicType typeCode = CVMarrayBaseType(arrCB); 
 
     CVMassert(CVMD_isgcUnsafe(ee));
+#if CVM_DEBUG
+    /* We better not be holding a microlock */
+    CVMassert(ee->microLock == 0);
+#endif
 
     CVMCCMstatsInc(ee, CVMCCM_STATS_CVMCCMruntimeNewArray);
 
@@ -869,6 +916,10 @@ CVMCCMruntimeANewArray(CVMCCExecEnv *ccee, CVMJavaInt length,
     CVMObject *arrObj;
 
     CVMassert(CVMD_isgcUnsafe(ee));
+#if CVM_DEBUG
+    /* We better not be holding a microlock */
+    CVMassert(ee->microLock == 0);
+#endif
 
     CVMCCMstatsInc(ee, CVMCCM_STATS_CVMCCMruntimeANewArray);
 
@@ -909,6 +960,10 @@ CVMCCMruntimeMultiANewArray(CVMCCExecEnv *ccee, CVMJavaInt nDimensions,
     CVMObjectICell *resultCell;
 
     CVMassert(CVMD_isgcUnsafe(ee));
+#if CVM_DEBUG
+    /* We better not be holding a microlock */
+    CVMassert(ee->microLock == 0);
+#endif
 
     CVMCCMstatsInc(ee, CVMCCM_STATS_CVMCCMruntimeMultiANewArray);
 
@@ -1613,6 +1668,23 @@ CVMCCMruntimeMonitorExit(CVMCCExecEnv *ccee, CVMExecEnv *ee, CVMObject *obj)
 }
 #endif
 
+#if defined(CVMJIT_SIMPLE_SYNC_METHODS) && \
+    (CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS)
+/* 
+ * Simple Sync helper function for unlocking in Simple Sync methods
+ * when there is contention on the lock. It is only needed for
+ * CVM_FASTLOCK_ATOMICOPS since CVM_FASTLOCK_MICROLOCK will never
+ * allow for contention on the unlock in Simple Sync methods.
+ */
+extern void
+CVMCCMruntimeSimpleSyncUnlock(CVMExecEnv *ee, CVMObject* obj)
+{
+    CVMCCMstatsInc(ee, CVMCCM_STATS_CVMCCMruntimeSimpleSyncUnlock);
+    CVMCCMruntimeLazyFixups(ee);
+    CVMsimpleSyncUnlock(ee, obj);
+}
+#endif /* CVMJIT_SIMPLE_SYNC_METHODS */
+
 #ifndef CVMCCM_HAVE_PLATFORM_SPECIFIC_GC_RENDEZVOUS
 /* Purpose: Rendezvous with GC thread. */
 /* Type: STATE_FLUSHED THROWS_NONE */
@@ -1716,6 +1788,10 @@ static const char *const tagNames[] = {
     "Calls to ...MonitorEnter         ",
     "Calls to CVMCCMruntimeMonitorExit",
     "Calls to ...GCRendezvous         ",
+#if defined(CVMJIT_SIMPLE_SYNC_METHODS) && \
+    (CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS)
+    "Calls to ...SimpleSyncUnlock     ",
+#endif
 };
 
 /* Purpose: Records the top N categories based on their values. */

@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)stackmaps.c	1.110 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/defs.h"
@@ -598,7 +603,7 @@ CVMstackmapAddJsrCall(CVMStackmapContext* con,
  * 2) Set successors of basic blocks
  * 3) Do fast mappings of exception edges and return tables to basic blocks.
  *
- * %comment r010
+ * %comment rt010
  */
 static void
 CVMstackmapFindBasicBlocks(CVMStackmapContext* con)
@@ -1572,15 +1577,6 @@ CVMstackmapLocalDStore(CVMStackmapContext* con,
     return topOfStack;
 }
 
-#ifdef CVM_DEBUG_ASSERTS
-static CVMBool
-CVMstackmapVarContainsVal(CVMCellTypeState varCTS)
-{
-    return (varCTS == CVMctsVal) ||
-	(CVMctsIsVal(varCTS) && CVMctsIsUninit(varCTS));
-}
-#endif
-
 static CVMInt32
 CVMstackmapLocalLoad(CVMStackmapContext* con,
 		     CVMUint32 varNo, CVMInt32 topOfStack,
@@ -1650,8 +1646,11 @@ CVMstackmapLocalDLoad(CVMStackmapContext* con,
 		      CVMCellTypeState* stack, CVMCellTypeState* vars)
 {
     CVMassert(topOfStack - 1 < con->maxStack);
-    CVMassert(CVMstackmapVarContainsVal(vars[varNo]));
-    CVMassert(CVMstackmapVarContainsVal(vars[varNo + 1]));
+    /*
+     * We don't care if we encounter a conflict here. We are only
+     * worried about using a conflict as a ref, which is handled in
+     * CVMstackmapLocalALoad().
+     */
     stack[topOfStack++] = CVMctsVal;
     stack[topOfStack++] = CVMctsVal;
     return topOfStack;
@@ -2500,7 +2499,7 @@ CVMstackmapMerge(CVMCellTypeState cts1, CVMCellTypeState cts2)
     CVMCellTypeState result;
     if (CVMctsIsPC(cts1) && CVMctsIsPC(cts2)) {
 	if (CVMctsGetPC(cts1) != CVMctsGetPC(cts2)) {
-	    /* %comment r011 */
+	    /* %comment rt011 */
 	    result = cts2;
 	} else {
 	    result = cts2;
@@ -3586,7 +3585,7 @@ static CVMBool isJsrTarget(CVMStackmapContext* con, CVMUint8* pc)
 }
 
 /*
- * %comment r012
+ * %comment rt012
  */
 static CVMBool thisPChasAddrAtTOS( CVMStackmapContext *con, CVMUint8* pc ){
     if (isJsrTarget(con, pc)) {

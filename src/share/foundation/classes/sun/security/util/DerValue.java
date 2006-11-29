@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)DerValue.java	1.60 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package sun.security.util;
@@ -44,7 +49,7 @@ import java.util.Date;
  * and RFC 2459, section 4.1.2.4., we assume that this kind of string will
  * contain ISO-8859-1 characters only.
  *
- * @version 1.57, 03/12/05
+ * @version 1.60, 10/10/06
  *
  * @author David Brownell
  * @author Amit Kapoor
@@ -241,7 +246,7 @@ public class DerValue {
      * package private
      */
     DerValue(DerInputBuffer in) throws IOException {
-	// Must also parse BER-encoded constructed
+	// TODO: must also parse BER-encoded constructed
 	// values such as sequences, sets...
 
 	tag = (byte)in.read();
@@ -398,7 +403,7 @@ public class DerValue {
     throws IOException {
 	out.write(tag);
 	out.putLength(length);
-        // Excess copies ... DerInputBuffer.write(OutStream)
+        // excess copies ... DerInputBuffer.write(OutStream)
         if (length > 0) {
             byte[] value = new byte[length];
 	    synchronized (buffer) {

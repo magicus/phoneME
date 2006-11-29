@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitirnode.h	1.125 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_JITIRNODE_H
@@ -103,9 +108,6 @@
 typedef enum CVMJITIROpcodeTag {
     CVMJITOP_INVALID = 0,
     
-    /* CVMJITRoot */
-    CVMJIT_ROOT,
-
     /****************************************************************
      * Constants - opcodes starting with CVMJIT_CONST are all opcodes
      * for CVMJITConstant32 or CVMJITConstant64 nodes.
@@ -215,6 +217,11 @@ typedef enum CVMJITIROpcodeTag {
     CVMJIT_CHECKCAST,
     CVMJIT_INSTANCEOF,
     CVMJIT_FETCH_MB_FROM_VTABLE,
+/* IAI - 20 */
+    CVMJIT_FETCH_VCB,	
+    CVMJIT_FETCH_MB_FROM_VTABLE_OUTOFLINE,
+    CVMJIT_MB_TEST_OUTOFLINE,
+/* IAI - 20 */
     CVMJIT_FETCH_MB_FROM_INTERFACETABLE,
     CVMJIT_PARAMETER,
     CVMJIT_IARG,
@@ -285,19 +292,22 @@ typedef enum CVMJITIROpcodeTag {
  */
 
 typedef enum CVMJITIRNodeTag {
-    CVMJIT_ROOT_NODE,
+    /* these are sorted based on number of children */
     CVMJIT_CONSTANT_NODE,
     CVMJIT_NULL_NODE,
     CVMJIT_LOCAL_NODE,
-    CVMJIT_UNARY_NODE,
-    CVMJIT_BINARY_NODE,
-    CVMJIT_BRANCH_NODE,
-    CVMJIT_CONDBRANCH_NODE,
-    CVMJIT_LOOKUPSWITCH_NODE,
-    CVMJIT_TABLESWITCH_NODE,
-    CVMJIT_PHI_NODE,          /* DEFINE and USED */
     CVMJIT_PHI_LIST_NODE,     /* LOAD_PHIS, RELEASE_PHIS */
     CVMJIT_MAP_PC_NODE,
+    CVMJIT_BRANCH_NODE,
+    CVMJIT_PHI0_NODE,
+    /* unary nodes start here */
+    CVMJIT_UNARY_NODE,
+    CVMJIT_PHI1_NODE,
+    CVMJIT_LOOKUPSWITCH_NODE,
+    CVMJIT_TABLESWITCH_NODE,
+    /* binary nodes start here */
+    CVMJIT_BINARY_NODE,
+    CVMJIT_CONDBRANCH_NODE,
 
     /* NOTE: CVMJIT_TOTAL_IR_NODE_TAGS must always be at end of this enum list.
        It is used to ensure that the number of types of IROpcodeTags don't
@@ -328,6 +338,8 @@ typedef enum CVMJITCondition {
  */
 #define CVMJITBINOP_READ                          0x10 /* Used for reading */
 #define CVMJITBINOP_WRITE                         0x20 /* Used for writing */
+/* This is a virtual invoke converted to a non-virtual invoke */
+#define CVMJITBINOP_VIRTUAL_INVOKE		  0x40
 
 /*
  * in CVMJITUnaryOp node, save flag for checkinit of class needs
@@ -372,8 +384,11 @@ typedef union {
     CVMJavaVal32*     staticAddress;/* CVMJIT_CONST_STATIC_FIELD_ADDRESS */
 } CVMJITConstantAddr;
 
+/* CVMJIT_CONST_JAVA_NUMERIC64 */
 typedef struct {
-    CVMJavaVal64        j;          /* CVMJIT_CONST_JAVA_NUMERIC64 */
+    struct {
+	CVMAddr v[2];
+    } j;
 } CVMJITConstant64;
 
 typedef struct {
@@ -412,6 +427,7 @@ typedef struct {
 typedef struct {
     CVMJITUnaryOp  uOp;
     CVMJITIdentityDecoration* identDec;
+    CVMInt32 backendData;
 } CVMJITIdentOp;
 
 #define CVMJITidentDecoration(p)  (p)->type_node.identOp.identDec
@@ -630,7 +646,9 @@ struct CVMJITIRNode {
     CVMUint16  curRootCnt; /* number of nodes built in current node */
 			   /* also used by code gen for state tag */
     CVMUint16  flags;      /* See CVMJITIRNodeFlags enum list below. */
-    CVMJITRegsRequiredType regsRequired; /* codegen synthesized attribute */
+
+    CVMJITRegsRequiredType regsRequired:8; /* codegen synthesized attribute */
+
     /*
      * Nodes can be decorated with some extra information so the backend can
      * do a better job of register allocation. For example, we like to pass
@@ -639,7 +657,9 @@ struct CVMJITIRNode {
      * solution is to have the creation of the DEFINE node store the stackIdx
      * in the value node so the backend knows which register to put it in.
      */
-    CVMJITIRNodeDecorationType decorationType;
+
+    CVMJITIRNodeDecorationType decorationType:8;
+
     union {
         /* regHint for expr, reg to be used as phi or outgoing local */
 	CVMInt16  regHint;
@@ -653,6 +673,7 @@ struct CVMJITIRNode {
 	CVMUint16 successorBlocksIdx;
 #endif
     } decorationData ;
+    /* This field MUST BE LAST */
     CVMJITIRSubclassNode type_node;
 };
 
@@ -664,7 +685,8 @@ enum CVMJITIRNodeFlags {
     CVMJITIRNODE_IS_INITIAL_LOCAL           = (1 << 1), /* bit 1 */
     CVMJITIRNODE_HAS_UNDEFINED_SIDE_EFFECT  = (1 << 2), /* bit 2 */
     CVMJITIRNODE_THROWS_EXCEPTIONS          = (1 << 3), /* bit 3 */
-    CVMJITIRNODE_PARENT_THROWS_EXCEPTIONS   = (1 << 4)  /* bit 4 */
+    CVMJITIRNODE_PARENT_THROWS_EXCEPTIONS   = (1 << 4), /* bit 4 */
+    CVMJITIRNODE_HAS_BEEN_EMITTED	    = (1 << 5)  /* bit 5 */
 };
 
 /* NOTE: A node is considered to have side effects if it has an undefined
@@ -815,6 +837,10 @@ CVMJITirnodeAssertIsGenericSubNode(CVMJITIRNode* node);
 #define CVMJITirnodeGetLocal(node) 	\
     (CVMassert(CVMJITirnodeIsLocalNode(node)), \
      &((node)->type_node.local))
+
+#define CVMJITirnodeGetIdentOp(node)   \
+    (CVMassert(CVMJITirnodeIsIdentity(node)), \
+     &((node)->type_node.identOp))
 
 #define CVMJITirnodeGetUnaryOp(node)   \
     (CVMassert(CVMJITirnodeIsUnaryNode(node)), \
@@ -990,10 +1016,10 @@ CVMJITirnodeDeleteBinaryOp(CVMJITCompilationContext *con, CVMJITIRNode *node);
     CVMJIT_TYPE_ENCODE(CVMJIT_FETCH, CVMJIT_UNARY_NODE, typeTag)
 
 #define CVMJIT_ENCODE_USED(typeTag) \
-    CVMJIT_TYPE_ENCODE(CVMJIT_USED, CVMJIT_PHI_NODE, typeTag)
+    CVMJIT_TYPE_ENCODE(CVMJIT_USED, CVMJIT_PHI0_NODE, typeTag)
 
 #define CVMJIT_ENCODE_DEFINE(typeTag) \
-    CVMJIT_TYPE_ENCODE(CVMJIT_DEFINE, CVMJIT_PHI_NODE, typeTag)
+    CVMJIT_TYPE_ENCODE(CVMJIT_DEFINE, CVMJIT_PHI1_NODE, typeTag)
 
 #define CVMJIT_ENCODE_LOAD_PHIS \
     CVMJIT_TYPE_ENCODE(CVMJIT_LOAD_PHIS, \
@@ -1047,7 +1073,7 @@ CVMJITirnodeDeleteBinaryOp(CVMJITCompilationContext *con, CVMJITIRNode *node);
 
 #define CVMJIT_ENCODE_BOUNDS_CHECK				\
     CVMJIT_TYPE_ENCODE(CVMJIT_BOUNDS_CHECK, CVMJIT_BINARY_NODE,	\
-		       CVM_TYPEID_NONE)
+		       CVM_TYPEID_INT)
 
 #define CVMJIT_ENCODE_NEW_OBJECT \
     CVMJIT_TYPE_ENCODE(CVMJIT_NEW_OBJECT, CVMJIT_UNARY_NODE, CVM_TYPEID_OBJ)
@@ -1097,11 +1123,22 @@ CVMJITirnodeDeleteBinaryOp(CVMJITCompilationContext *con, CVMJITIRNode *node);
 #define CVMJIT_ENCODE_GET_VTBL \
     CVMJIT_TYPE_ENCODE(CVMJIT_GET_VTBL, CVMJIT_UNARY_NODE, CVM_TYPEID_NONE)
 
-# define CVMJIT_ENCODE_FETCH_MB_FROM_VTABLE			\
+#define CVMJIT_ENCODE_FETCH_MB_FROM_VTABLE			\
     CVMJIT_TYPE_ENCODE(CVMJIT_FETCH_MB_FROM_VTABLE,		\
 		       CVMJIT_BINARY_NODE, CVMJIT_TYPEID_ADDRESS)
+/* IAI - 20 */
+#define CVMJIT_ENCODE_FETCH_VCB					\
+    CVMJIT_TYPE_ENCODE(CVMJIT_FETCH_VCB,			\
+		       CVMJIT_UNARY_NODE, CVMJIT_TYPEID_ADDRESS)
+#define CVMJIT_ENCODE_FETCH_MB_FROM_VTABLE_OUTOFLINE			\
+    CVMJIT_TYPE_ENCODE(CVMJIT_FETCH_MB_FROM_VTABLE_OUTOFLINE,		\
+		       CVMJIT_BINARY_NODE, CVMJIT_TYPEID_ADDRESS)
+#define CVMJIT_ENCODE_MB_TEST_OUTOFLINE					\
+    CVMJIT_TYPE_ENCODE(CVMJIT_MB_TEST_OUTOFLINE, CVMJIT_BINARY_NODE,	\
+    			CVMJIT_TYPEID_ADDRESS)
+/* IAI - 20 */
 
-# define CVMJIT_ENCODE_FETCH_MB_FROM_INTERFACETABLE		\
+#define CVMJIT_ENCODE_FETCH_MB_FROM_INTERFACETABLE		\
     CVMJIT_TYPE_ENCODE(CVMJIT_FETCH_MB_FROM_INTERFACETABLE,	\
 		       CVMJIT_BINARY_NODE, CVMJIT_TYPEID_ADDRESS)
 
@@ -1121,8 +1158,6 @@ CVMJITirnodeDeleteBinaryOp(CVMJITCompilationContext *con, CVMJITIRNode *node);
 /*
  * Check IR node tag macros
  */
-#define CVMJITirnodeIsRootNode(node) \
-    (CVMJITnodeTagIs(node, ROOT))
 
 #define CVMJITirnodeIsConstant32Node(node)	\
     (CVMJITnodeTagIs(node, CONSTANT) && 	\
@@ -1188,6 +1223,9 @@ CVMJITirnodeDeleteBinaryOp(CVMJITCompilationContext *con, CVMJITIRNode *node);
 #define CVMJITirnodeIsAssign(node) \
     (CVMJITopcodeTagIs(node, ASSIGN))
 
+#define CVMJITirnodeIsFetch(node) \
+    (CVMJITopcodeTagIs(node, FETCH))
+
 #define CVMJITirnodeIsIndex(node) \
     (CVMJITopcodeTagIs(node, INDEX))
 
@@ -1211,6 +1249,11 @@ CVMJITirnodeDeleteBinaryOp(CVMJITCompilationContext *con, CVMJITIRNode *node);
     (((node)->flags & CVMJITIRNODE_HAS_BEEN_EVALUATED) != 0)
 #define CVMJITirnodeSetHasBeenEvaluated(node) \
     ((node)->flags |= CVMJITIRNODE_HAS_BEEN_EVALUATED)
+
+#define CVMJITirnodeHasBeenEmitted(node) \
+    (((node)->flags & CVMJITIRNODE_HAS_BEEN_EMITTED) != 0)
+#define CVMJITirnodeSetHasBeenEmitted(node) \
+    ((node)->flags |= CVMJITIRNODE_HAS_BEEN_EMITTED)
 
 #define CVMJITirnodeIsInitialLocal(node) \
     (((node)->flags & CVMJITIRNODE_IS_INITIAL_LOCAL) != 0)

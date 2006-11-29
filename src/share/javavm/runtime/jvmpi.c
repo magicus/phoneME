@@ -1,25 +1,27 @@
 /*
- * Portions Copyright 2000-2006 Sun Microsystems, Inc. All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License version 2 for more details (a copy is included at
- * /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public
- * License version 2 along with this work; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jvmpi.c	1.33 06/10/10
+ *
+ * Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
  */
 
 /*
@@ -243,7 +245,7 @@ CVMjvmpiPostThreadStartEvent2(CVMExecEnv *ee, CVMObject *threadObj,
 
 /* Purpose: Calls the NotifyEvent() in the JVMPI_Interface. */
 #define CVMjvmpiNotifyEvent(/* JVMPI_Event * */event) { \
-    CVMjvmpiInterface()->NotifyEvent(event);            \
+    CVMjvmpiInterface()->NotifyEvent(event);        \
 }
 
 /* Purpose: Checks to see if GC is disabled. */
@@ -1438,7 +1440,9 @@ static jsize CVMdumperComputeObjectDumpSize(CVMDumper *self, CVMObject *obj)
 static void CVMdumperDumpThreadInfo(CVMDumper *self, CVMExecEnv *threadEE)
 {
     CVMThreadICell *threadICell = CVMcurrentThreadICell(threadEE);
-    if ((threadICell != NULL) && !CVMID_icellIsNull(threadICell)) {
+    if ((threadICell != NULL) && !CVMID_icellIsNull(threadICell)
+	&& !threadEE->hasPostedExitEvents)
+    {
         CVMdumperDumpThreadTrace(self, threadEE);
     }
 }
@@ -1498,8 +1502,16 @@ static void CVMdumperDumpMonitor(CVMDumper *self, CVMProfiledMonitor *pm)
                 ...
             */
             mon = CVMcastProfiledMonitor2ObjMonitor(pm);
-            CVMdumperWriteU1(self, JVMPI_MONITOR_JAVA);
-            CVMdumperWriteID(self, (void *) CVMobjMonitorDirectObject(mon));
+	    if (mon->state == CVM_OBJMON_FREE){
+		/* This is an unused monitor.
+		 * It has no object and no owner.
+		 * Skip it altogether.
+		 */
+		return;
+	    }
+	    CVMassert(CVMobjMonitorDirectObject(mon) != NULL);
+	    CVMdumperWriteU1(self, JVMPI_MONITOR_JAVA);
+	    CVMdumperWriteID(self, (void *) CVMobjMonitorDirectObject(mon));
             break;
         }
         case CVM_LOCKTYPE_NAMED_SYSMONITOR: {
@@ -1919,9 +1931,13 @@ static jint CVMjvmpi_RequestEvent(jint event_type, void *arg)
         CVMjvmpiPostObjectAllocEvent2(ee, (CVMObject *)arg, CVM_TRUE);
         break;
     case JVMPI_EVENT_THREAD_START:
-        CVMassert(!CVMgcIsGCThread(ee));
         CVMassert(CVMjvmpiGCIsDisabled());
         if (CVMgcIsGCThread(ee)) {
+	    /*
+	     * This can happen when, for example, hprof
+	     * is assessing the states of all monitors during
+	     * shutdown.
+	     */
             result = JVMPI_FAIL;
         } else {
             CVMObject *threadObj = (CVMObject *)arg;
@@ -2502,6 +2518,15 @@ CVMjvmpiPostClassLoadEvent2(CVMExecEnv *ee, const CVMClassBlock *cb,
     CVMassert(CVMD_isgcSafe(ee));
     CVMassert(!CVMgcIsGCThread(ee));
 
+    if (!isRequestedEvent && ee->hasPostedExitEvents){
+	/* this thread is dead. we really don't want to
+	 * post more events for it. Nothing bad happened,
+	 * so we return success, but we don't actually post
+	 * anything.
+	 */
+	return JVMPI_SUCCESS;
+    }
+
     /* Compute the number of static and instance fields: */
     for (i = num_fields; --i >= 0; ) {
         const CVMFieldBlock *fb = CVMcbFieldSlot(cb, i);
@@ -2678,6 +2703,7 @@ void CVMjvmpiPostClassLoadHookEvent(CVMUint8 **buffer, CVMInt32 *bufferLength,
 
     CVMassert(!CVMgcIsGCThread(ee));
     CVMassert(CVMD_isgcSafe(ee));
+    CVMassert(!ee->hasPostedExitEvents);
 
     /* Fill event info and notify the profiler: */
     event.event_type = JVMPI_EVENT_CLASS_LOAD_HOOK;
@@ -2998,8 +3024,9 @@ CVMjvmpiPostInstructionStartEventInternal(CVMExecEnv *ee, CVMUint8 *pc,
     CVMassert(CVMD_isgcUnsafe(ee));
     frame = CVMeeGetCurrentFrame(ee);
     CVMassert(frame != NULL);
-    if (CVMframeIsTransition(frame)) {
+    if (CVMframeIsTransition(frame) || ee->hasPostedExitEvents) {
         return; /* Transition frames are supposed to be invisible. */
+	/* and so are threads that have exited */
     }
     mb = frame->mb;
     if (!mb) {
@@ -3199,6 +3226,9 @@ void CVMjvmpiPostMethodEntryEvent(CVMExecEnv *ee, CVMObjectICell *objICell)
     CVMassert(CVMD_isgcUnsafe(ee));
 
     /* Post the event for JVMPI_EVENT_METHOD_ENTRY if necessary: */
+    if (ee->hasPostedExitEvents){
+	return;
+    }
     if (CVMjvmpiEventInfoIsEnabled(JVMPI_EVENT_METHOD_ENTRY)) {
         event.event_type = JVMPI_EVENT_METHOD_ENTRY;
         event.env_id = env;
@@ -3240,6 +3270,9 @@ void CVMjvmpiPostMethodExitEvent(CVMExecEnv *ee)
     CVMassert(!CVMgcIsGCThread(ee));
     CVMassert(CVMD_isgcUnsafe(ee));
 
+    if (ee->hasPostedExitEvents){
+	return;
+    }
     /* Fill event info and notify the profiler: */
     event.event_type = JVMPI_EVENT_METHOD_EXIT;
     event.env_id = CVMexecEnv2JniEnv(ee);

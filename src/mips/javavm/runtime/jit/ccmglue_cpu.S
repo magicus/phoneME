@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ccmglue_cpu.S	1.33 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -30,6 +35,7 @@
 #include "javavm/include/jit/jitasmmacros_cpu.h"
 #include "javavm/include/jit/jitasmconstants.h"
 #include "javavm/include/porting/jit/jit.h"
+#include "javavm/include/sync.h"
 
 /*
  * Make a pc-relative branch instruction. Used for patching and instruction
@@ -65,6 +71,16 @@
 	addiu	a0, sp, OFFSET_CStack_CCEE ;				\
 	BRANCH_TO_VM_FUNCTION(HELPER)
 
+/* call CVMCCMruntimeSimpleSyncUnlock */
+#if defined(CVMJIT_SIMPLE_SYNC_METHODS) && \
+    (CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS)
+ENTRY ( CVMCCMruntimeSimpleSyncUnlockGlue )
+        sw	ra, OFFSET_CVMCompiledFrame_PC(JFP)
+        sw	JFP, OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame(EE)
+	BRANCH_TO_VM_FUNCTION(CVMCCMruntimeSimpleSyncUnlock)
+SET_SIZE ( CVMCCMruntimeSimpleSyncUnlockGlue )
+#endif
+	
 /* do a gc rendezvous */
 ENTRY ( CVMCCMruntimeGCRendezvousGlue )
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeGCRendezvous)
@@ -216,6 +232,22 @@ ENTRY ( CVMCCMruntimeRunClassInitializerGlue )
 	 * a branch around the call to the helper. The lw may be the
 	 * first instruction of a block, which means we may also try to
 	 * patch it when doing a gc-rendezvous. */
+#ifdef CVM_AOT
+	/* Don't patch AOT code */
+	LA	(a1, CVMJITcodeCacheAOTEnd)
+	lw	a1, 0(a1)
+	lw	a1, 0(a1)
+	sltu	a1, ra, a1
+	beq	a1, zero, doPatch
+	LA	(a1, CVMJITcodeCacheAOTStart)
+	lw	a1, 0(a1)
+	lw	a1, 0(a1)
+	sltu	a1, ra, a1
+	bne	a1, zero, doPatch
+	jr	ra
+#endif
+
+doPatch:
 	/* get the patch, a nop instruction */
 	sw	zero, -8(ra)	/* apply the patch */
 	/* flush the patched instruction */
@@ -506,7 +538,10 @@ ENTRY ( CVMCCMruntimeMonitorEnterGlue )
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
 #endif
 
-        /* Do fastTryLock(): */
+#if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
+       /* CAS version of monitorenter: */
+       /* Do fastTryLock(): */
+
 
 #define OBJ		a2
 #define OBITS		a3
@@ -624,6 +659,163 @@ _monenterRecordNotAvailable:
 #undef EXPECTED_CNT
 #undef NEW_COUNT
 #undef OLD_COUNT
+
+#elif (CVM_FASTLOCK_TYPE != CVM_FASTLOCK_MICROLOCK) || \
+      (CVM_MICROLOCK_TYPE != CVM_MICROLOCK_SWAP_SPINLOCK)
+	/* TODO: if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SCHEDLOCK, then
+	 * use CVMschedLock for locking. For now, just defer to C */
+	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
+#else
+        /* CVM_MICROLOCK_SWAP_SPINLOCK version of monitorenter: */
+        /* TODO: The following code can be optimized a little more by doing
+           some more selective register usage and instruction scheduling (like
+	   making use of delay slots).  Since the risk of doing this is high
+	   and the gains are small, this is left as an advanced exercise for
+	   later. */
+
+        /* Do fastTryLock(): */
+
+        /*
+           a0 = &microlock
+           a1 = lockrec
+           a2 = obj
+           a3 = obits
+	   v0 = scratch
+	   v1 = scratch
+	   jp = scratch
+
+           NOTE: By design, MICROLOCK is assigned to a0 so that it will be in
+	   the appropriate arg register if we need to call
+	   CVMmicrolockLockImpl() in _monenterSlowAcquireMicrolock.
+        */
+
+#define MICROLOCK   a0
+#define OBITS       a1
+#define OBJ         a2
+#define LOCKREC     a3
+
+        /* ld      MICROLOCK, CVMobjGlobalMicroLockPtr */
+	LA	(MICROLOCK, CVMobjGlobalMicroLockPtr)
+
+        /* Make sure that the object is not NULL */
+        beq	OBJ, zero, ccmRuntimeThrowNullPointerExceptionGlue
+
+	/* Get address of object microlock */
+	lw	MICROLOCK, 0(MICROLOCK)
+
+        /* Acquire the microlock: */
+0:	
+        li	jp, CVM_MICROLOCK_LOCKED 
+	/* Atomically swap CVM_MICROLOCK_LOCKED into MICROLOCK */
+	ll	v1, 0(MICROLOCK)
+	sc	jp, 0(MICROLOCK)
+	beq	jp, zero, 0b /* retry */
+
+	/* Branch if the microlock was already acquired by another thread. */
+        bne	v1, CVM_MICROLOCK_UNLOCKED, _monenterSlowAcquireMicrolock
+
+        /* The microlock has been acquired: */
+_monenterLockObj:
+        lw	OBITS, OFFSET_CVMObjectHeader_various32(OBJ) /* Get obits */
+        andi	v0, OBITS, 0x3
+        bne	v0, CONSTANT_CVM_LOCKSTATE_UNLOCKED, _monenterObjAlreadyLocked
+
+        /* If we get here, then the object has not been locked yet. */
+        /* lockrec = ee->objLocksFreeOwned: */
+        lw	LOCKREC, OFFSET_CVMExecEnv_objLocksFreeOwned(EE)
+        beq	LOCKREC, zero, _monenterRecordNotAvailable
+
+        /* lockrec->u.fast.bits = obits: */
+        sw	OBITS, OFFSET_CVMOwnedMonitor_u_fast_bits(LOCKREC)
+
+#ifdef CVM_DEBUG
+        /* lockrec->state = CONSTANT_CVM_OWNEDMON_OWNED: */
+        li	v0, CONSTANT_CVM_OWNEDMON_OWNED
+        sw	v0, OFFSET_CVMOwnedMonitor_state(LOCKREC)
+#endif
+        /* obj->hdr.various32 = lockrec: */
+        sw	LOCKREC, OFFSET_CVMObjectHeader_various32(OBJ)
+
+        /* lockrec->count = 1: */
+        li	v0, 1		/*  Initial lock re-entry count */
+        sw	v0, OFFSET_CVMOwnedMonitor_count(LOCKREC)
+
+        /* lockrec->object = obj: */
+        sw	OBJ, OFFSET_CVMOwnedMonitor_object(LOCKREC)
+
+        /* Release the microlock:	 */
+        li	v0, CVM_MICROLOCK_UNLOCKED
+        sw	v0, 0(MICROLOCK)	/* microlock->lockWord = UNLOCKED */
+
+        /* Remove lockrec from the ee's free list: */
+        /* nextRec = lockrec->next: */
+        lw	v0, OFFSET_CVMOwnedMonitor_next(LOCKREC)
+        /* ee->objLocksFreeOwned = nextRec: */
+        sw	v0, OFFSET_CVMExecEnv_objLocksFreeOwned(EE)
+
+        /* Add the lockrec to the ee's owned list: */
+        /* nextRec = ee->objLocksOwned: */
+        lw	v0, OFFSET_CVMExecEnv_objLocksOwned(EE)
+        /* lockrec->next = nextRec: */
+        sw	v0, OFFSET_CVMOwnedMonitor_next(LOCKREC)
+        /* ee->objLocksOwned = lockrec: */
+        sw	LOCKREC, OFFSET_CVMExecEnv_objLocksOwned(EE)
+
+        jr	ra	/* Return to the caller */
+
+_monenterSlowAcquireMicrolock:
+        /* Call a C function to acquire the microlock:
+           NOTE: We have to save OBJ below because it is in a volatile reg.
+                 However, it is safe to simply save it in a ccmStorage field
+                 without worrying about GC scans because we are currently
+                 GC unsafe and won't be becoming GC safe while acquiring the
+                 microlock.
+        */
+        sw	ra, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+0(sp)
+        sw	MICROLOCK, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+4(sp)
+        sw	OBJ, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+8(sp)
+
+        /* CVMmicrolockLockImpl() requires the address of the microlock in
+           a0.  By design, MICROLOCK is a0, so we're cool here. */
+        CALL_VM_FUNCTION(CVMmicrolockLockImpl)
+        lw	ra, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+0(sp)
+        lw	MICROLOCK, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+4(sp)
+        lw	OBJ, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+8(sp)
+        b	_monenterLockObj
+
+_monenterObjAlreadyLocked:
+        bne	v0, CONSTANT_CVM_LOCKSTATE_LOCKED, _monenterFastReentryFailed
+
+        /* Make sure the current thread owns this lock: */
+        lw	v0, OFFSET_CVMOwnedMonitor_owner(OBITS)
+        bne	v0, EE, _monenterFastReentryFailed
+
+        lw	v1, OFFSET_CVMOwnedMonitor_count(OBITS)
+        addi	v1, v1, 1
+        sw	v1, OFFSET_CVMOwnedMonitor_count(OBITS)
+
+        /* Release the microlock: */
+        li	v0, CVM_MICROLOCK_UNLOCKED
+        sw	v0, 0(MICROLOCK)	/* microlock->lockWord = UNLOCKED */
+
+        jr	ra	/* Return to the caller */
+
+_monenterFastReentryFailed:
+_monenterRecordNotAvailable:
+        /* Release the microlock: */
+        li	v0, CVM_MICROLOCK_UNLOCKED
+        sw	v0, 0(MICROLOCK)
+
+        /* Load the ccee. The obj arg is already loaded. */
+        CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
+
+#undef MICROLOCK
+#undef OBJ
+#undef OBITS
+#undef LOCKREC
+
+#endif /* CVM_MICROLOCK_SWAP_SPINLOCK */
+
 SET_SIZE ( CVMCCMruntimeMonitorEnterGlue )
 
 /*
@@ -641,6 +833,9 @@ ENTRY ( CVMCCMruntimeMonitorExitGlue )
         CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
 #endif
 
+
+#if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
+        /* CAS version of monitorexit: */
         /* Do fastTryUnlock(): */
 
 #define OBJ		a2
@@ -674,7 +869,7 @@ ENTRY ( CVMCCMruntimeMonitorExitGlue )
 	li	jp, CONSTANT_CVM_INVALID_REENTRY_COUNT
 	beq	EXPECTED_CNT, jp, _monexitFastTryUnlockFailed
         addi	NEW_COUNT, EXPECTED_CNT, -1
-        beq	NEW_COUNT, zero, _monexitDoUnlock	/* If zero, then unlock */
+        beq	NEW_COUNT, zero, _monexitDoUnlock  /* If zero, then unlock */
 
 	/* new monitor count > 0, so just update it and we are done */
 1:
@@ -754,6 +949,173 @@ _monexitFastTryUnlockFailed:
 #undef EXPECTED_CNT
 #undef NEW_COUNT
 #undef OLD_COUNT
+
+#elif (CVM_FASTLOCK_TYPE != CVM_FASTLOCK_MICROLOCK) || \
+      (CVM_MICROLOCK_TYPE != CVM_MICROLOCK_SWAP_SPINLOCK)
+	/* TODO: if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SCHEDLOCK, then
+	 * use CVMschedLock for locking. For now, just defer to C */
+	mflr	r7
+	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
+#else
+        /* CVM_MICROLOCK_SWAP_SPINLOCK version of monitorenter: */
+        /* TODO: The following code can be optimized a little more by doing
+           some more selective register usage and instruction scheduling (like
+	   making use of delay slots).  Since the risk of doing this is high
+	   and the gains are small, this is left as an advanced exercise for
+	   later. */
+
+        /* Do fastTryUnlock(): */
+
+        /*
+           a0 = &microlock
+           a2 = obj
+           a3 = lockrec
+	   v0 = scratch
+	   v1 = scratch
+	   jp = scratch
+
+           NOTE: By design, MICROLOCK is assigned to a0 so that it will be in
+	   the appropriate arg register if we need to call
+	   CVMmicrolockLockImpl() in _monexitSlowAcquireMicrolock.
+        */
+
+#define MICROLOCK   a0
+#define OBJ         a2
+#define LOCKREC     a3
+
+        /* ld      MICROLOCK, CVMobjGlobalMicroLockPtr */
+	LA	(MICROLOCK, CVMobjGlobalMicroLockPtr)
+
+        /* Make sure that the object is not NULL */
+        beq	OBJ, zero, ccmRuntimeThrowNullPointerExceptionGlue
+
+	/* Get address of object microlock */
+	lw	MICROLOCK, 0(MICROLOCK)
+
+        /* Acquire the microlock: */
+0:	
+        li	jp, CVM_MICROLOCK_LOCKED 
+	/* Atomically swap CVM_MICROLOCK_LOCKED into MICROLOCK */
+	ll	v1, 0(MICROLOCK)
+	sc	jp, 0(MICROLOCK)
+	beq	jp, zero, 0b /* retry */
+
+	/* Branch if the microlock was already acquired by another thread. */
+        bne	v1, CVM_MICROLOCK_UNLOCKED, _monexitSlowAcquireMicrolock
+
+        /* The microlock has been acquired: */
+_monexitUnlockObj:
+        /* Check to see if the object is locked with a fastlock: */
+        lw	LOCKREC, OFFSET_CVMObjectHeader_various32(OBJ) /* Get obits */
+        andi	v0, LOCKREC, 0x3 /* (obits & 0x3) == CVM_LOCKSTATE_LOCKED? */
+        bne	v0, zero, _monexitFastTryUnlockFailed	/* If not, we failed */
+
+        /* If we get here, then the object is locked with a fastlock: */
+
+        /* Make sure that the current thread owns the monitor: */
+        lw	v0, OFFSET_CVMOwnedMonitor_owner(LOCKREC)
+        bne	v0, EE, _monexitFastTryUnlockFailed	/* If not, we failed */
+
+        /* If we get here, then the current thread does own the monitor,
+           and all is well.  Proceed with unlocking: */
+        lw	v1, OFFSET_CVMOwnedMonitor_count(LOCKREC)
+	addi	v1, v1, -1
+	bne	v1, zero, _monexitFastTryUnlockSuccess/* we're done if not 0 */
+
+        /* If we get here, then the re-entry count has reached 0. */
+        /* Restore the obits to the object header: */
+        lw	v0, OFFSET_CVMOwnedMonitor_u_fast_bits(LOCKREC)
+        sw	v0, OFFSET_CVMObjectHeader_various32(OBJ)
+
+#ifdef CVM_DEBUG
+        /* Make the lockrec play nice with the debug assertions: */
+        li	v0, CONSTANT_CVM_OWNEDMON_FREE
+        sw	v0, OFFSET_CVMOwnedMonitor_state(LOCKREC)
+        sw	zero, OFFSET_CVMOwnedMonitor_u_fast_bits(LOCKREC)
+        sw	zero, OFFSET_CVMOwnedMonitor_object(LOCKREC)
+	sw	zero, OFFSET_CVMOwnedMonitor_count(LOCKREC)
+#endif
+
+        /* Release the microlock: */
+        li	v0, CVM_MICROLOCK_UNLOCKED
+        sw	v0, 0(MICROLOCK)  /* *microlock = CVM_MICROLOCK_UNLOCKED */
+
+        /* Check if the lockrec is the first one on the thread owned list: */
+        lw	v0, OFFSET_CVMExecEnv_objLocksOwned(EE)
+        bne	v0, LOCKREC, _monexitFastTryUnlockFindPrevLockRecord
+
+        /* Remove the lockrec from the ee owned list: */
+        lw	v0, OFFSET_CVMOwnedMonitor_next(LOCKREC)
+        sw	v0, OFFSET_CVMExecEnv_objLocksOwned(EE)
+
+_monexitFastTryUnlockAddLockRecordToFreeList:
+        /* Add the lockrec to the ee's free list: */
+        lw	v1, OFFSET_CVMExecEnv_objLocksFreeOwned(EE)
+        sw	v1, OFFSET_CVMOwnedMonitor_next(LOCKREC)
+        sw	LOCKREC, OFFSET_CVMExecEnv_objLocksFreeOwned(EE)
+
+        jr	ra	/* Return to the caller */
+
+/* v0 is the first one on the thread's owned list */
+#define PREV_REC v0
+_monexitFastTryUnlockFindPrevLockRecord:
+        lw	v1, OFFSET_CVMOwnedMonitor_next(PREV_REC)
+        beq	v1, LOCKREC, _monexitFastTryUnlockFoundPrevLockRecord
+        move	PREV_REC, v1
+        b	_monexitFastTryUnlockFindPrevLockRecord
+
+_monexitFastTryUnlockFoundPrevLockRecord:
+        /* Remove the lockrec from the ee's owned list: */
+        lw	v1, OFFSET_CVMOwnedMonitor_next(LOCKREC)
+        sw	v1, OFFSET_CVMOwnedMonitor_next(PREV_REC)
+        b	_monexitFastTryUnlockAddLockRecordToFreeList
+#undef PREV_REC
+
+
+_monexitFastTryUnlockSuccess:
+        /* Set the new re-entry count: */
+        sw	v1, OFFSET_CVMOwnedMonitor_count(LOCKREC)
+        /* Release the microlock: */
+        li	v0, CVM_MICROLOCK_UNLOCKED
+        sw	v0, 0(MICROLOCK)  /* *microlock = CVM_MICROLOCK_UNLOCKED */
+
+        jr	ra	/* Return to the caller */
+
+_monexitSlowAcquireMicrolock:
+        /* Call a C function to acquire the microlock:
+           NOTE: We have to save OBJ below because it is in a volatile reg.
+                 However, it is safe to simply save it in a non-volatile reg
+                 without worrying about GC scans because we are currently
+                 GC unsafe and won't be becoming GC safe while acquiring the
+                 microlock.
+        */
+        sw	ra, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+0(sp)
+        sw	MICROLOCK, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+4(sp)
+        sw	OBJ, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+8(sp)
+
+        /* CVMmicrolockLockImpl() requires the address of the microlock in
+           r3.  By design, MICROLOCK is a0, so we're cool here. */
+        CALL_VM_FUNCTION(CVMmicrolockLockImpl)
+        lw	ra, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+0(sp)
+        lw	MICROLOCK, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+4(sp)
+        lw	OBJ, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+8(sp)
+        b       _monexitUnlockObj	/* Go unlock the object if possible */
+
+_monexitFastTryUnlockFailed:
+        /* Release the microlock: */
+        li	v0, CVM_MICROLOCK_UNLOCKED
+        sw	v0, 0(MICROLOCK)
+
+        /* Let C helper do the hard stuff: */
+        /* Load the ccee. The obj arg is already loaded. */
+        CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
+
+#undef OBJ
+#undef MICROLOCK
+#undef LOCKREC
+
+#endif /* CVM_MICROLOCK_SWAP_SPINLOCK */
+
 SET_SIZE ( CVMCCMruntimeMonitorExitGlue )
 
 	.text

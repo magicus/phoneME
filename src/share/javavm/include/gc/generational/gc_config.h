@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)gc_config.h	1.29 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -96,8 +101,78 @@ struct CVMGCGlobalState {
     } genGCAttributes;
     CVMInt8* objectHeaderTable;
     CVMGenSummaryTableEntry* summaryTable;
-    CVMUint32* heapBase;
-    CVMUint32* heapBaseMemoryArea;
+    CVMUint32* heapBase;           /* Base ptr rounded up to card boundary. */
+    CVMUint32* heapBaseMemoryArea; /* Base ptr returned by allocator. */
+
+    /* GC sizing info: */
+    CVMUint32 mappedTotalSize;
+
+    /* Memory reservation:
+
+       |                              |
+       |------------------------------| <-- oldGenCurrentSize
+       | ^ ^                          |
+       | | | oldGenGrowThreshold      |
+       | | v                          |
+       |-|----------------------------| <-- oldGenHighWatermark
+       | |                            |
+       | |   memoryReserve            |
+       | v                            |
+       |------------------------------| <-- current usage level
+       |   ^                          |                          
+       |   | oldGenShrinkThreshold    |
+       |   v                          |
+       |------------------------------| <-- oldGenLowWatermark
+       |                              |
+
+
+       oldGenGrowThreshold (in %) - for computing the high watermark.
+       oldGenShrinkThreshold (in %) - for computing the low watermark.
+
+       memoryReserve (in %) - the amount of free memory to make available based
+           on a percentage of the current usage level when resizing the heap.
+	   The actual new size of the heap will be subject to rounding up to
+	   the next page boundary.
+
+       oldGenLowWatermark (in bytes) - after resizing the oldGen, this is
+           computed as current usage * ( 100 - oldGenShrinkThreshold) / 100.
+	   If the heap usage is observed to drop below the oldGenLowWatermark
+	   after an oldGen GC, then the heap will be shrunken.
+
+       oldGenHighWatermark (in bytes) - after resizing the oldGen, this is
+           computed as oldGenCurrentSize * (100 - oldGenGrowThreshold) / 100.
+	   If the heap usage is observed to exceed the oldGenHighWatermark
+	   after an oldGen GC, the the heap will be grown.
+    */
+    CVMUint32 memoryReserve;
+    CVMUint32 oldGenGrowThreshold;
+    CVMUint32 oldGenShrinkThreshold;
+    CVMUint32 oldGenLowWatermark;
+    CVMUint32 oldGenHighWatermark;
+
+    /* Heap sizes: */
+    CVMUint32 heapMinSize;
+    CVMUint32 heapStartSize;
+    CVMUint32 heapMaxSize;
+    CVMUint32 heapCurrentSize;
+
+    CVMUint32 youngGenMinSize;
+    CVMUint32 youngGenStartSize;
+    CVMUint32 youngGenMaxSize;
+    CVMUint32 youngGenCurrentSize;
+
+    CVMUint32 oldGenMinSize;
+    CVMUint32 oldGenStartSize;
+    CVMUint32 oldGenMaxSize;
+    CVMUint32 oldGenCurrentSize;
+
+    CVMUint32 cardTableCurrentSize;
+    CVMUint32 objectHeaderTableCurrentSize;
+    CVMUint32 summaryTableCurrentSize;
+
+    /* Start of heap regions: */
+    CVMUint32* youngGenStart;
+    CVMUint32* oldGenStart;
 
     /* Runtime state information to optimize GC scans: */
     CVMBool hasYoungGenInternedStrings;

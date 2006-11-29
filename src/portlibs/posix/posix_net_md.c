@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)posix_net_md.c	1.24 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/porting/net.h"
@@ -33,6 +38,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include <sys/socket.h>
 #include <netdb.h>
@@ -76,7 +82,8 @@ POSIXnetConnect(CVMInt32 fd, struct sockaddr *him, CVMInt32 len)
 CVMInt32
 POSIXnetAccept(CVMInt32 fd, struct sockaddr *him, CVMInt32 *len)
 {
-    return accept(fd, him, len);
+    assert(sizeof(socklen_t) == sizeof(CVMInt32));
+    return accept(fd, him, (socklen_t *)len);
 }
 
 CVMInt32
@@ -91,7 +98,8 @@ POSIXnetRecvFrom(CVMInt32 fd, char *buf, CVMInt32 nBytes,
 	       CVMInt32 flags, struct sockaddr *from,
 	       CVMInt32 *fromlen)
 {
-    return recvfrom(fd, buf, nBytes, flags, from, fromlen);
+    assert(sizeof(socklen_t) == sizeof(CVMInt32));
+    return recvfrom(fd, buf, nBytes, flags, from, (socklen_t *)fromlen);
 }
 
 CVMInt32
@@ -178,13 +186,15 @@ CVMInt32
 POSIXnetGetSockOpt(CVMInt32 fd, CVMInt32 proto, CVMInt32 flag, void *in_addr,
     CVMInt32 *inSize)
 {
-    return getsockopt(fd, proto, flag, in_addr, inSize);
+    assert(sizeof(socklen_t) == sizeof(CVMInt32));
+    return getsockopt(fd, proto, flag, in_addr, (socklen_t *)inSize);
 }
 
 CVMInt32
 POSIXnetGetSockName(CVMInt32 fd, struct sockaddr *lclAddr, CVMInt32 *lclSize)
 {
-    return getsockname(fd, lclAddr, lclSize);
+    assert(sizeof(socklen_t) == sizeof(CVMInt32));
+    return getsockname(fd, lclAddr, (socklen_t *)lclSize);
 }
 
 CVMInt32

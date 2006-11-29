@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)globals_md.c	1.35 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/porting/sync.h"
@@ -36,6 +41,7 @@
 #include <dlfcn.h>
 #include <assert.h>
 #include <malloc.h>
+#include <sched.h>
 #include <javavm/include/utils.h>
 
 #ifdef CVM_JIT
@@ -102,6 +108,45 @@ static CVMProperties props;
 
 CVMBool CVMinitStaticState()
 {
+#if 0
+#if !defined(CVM_MP_SAFE) && defined(__cpu_set_t_defined)
+    /* If we don't have MP-safe support built in, then make sure
+       that we don't run on more than one processor. */
+    {
+	pid_t pid = getpid();
+	cpu_set_t mask;
+	unsigned int len = sizeof mask;
+	int r = sched_getaffinity(pid, len, &mask);
+	if (r == -1) {
+	    return CVM_FALSE;
+	}
+	/*
+	   Just pick the first processor we find.  We should probably
+	   pick the current processor (how?) or a random processor
+	   instead.
+	*/
+	{
+	    int cpu = -1;
+	    int i;
+	    for (i = 0; i < CPU_SETSIZE; ++i) {
+		if (CPU_ISSET(i, &mask)) {
+		    cpu = i;
+		    break;
+		}
+	    }
+	    assert(cpu != -1);
+	    CPU_ZERO(&mask);
+	    CPU_SET(i, &mask);
+	}
+
+	r = sched_setaffinity(pid, len, &mask);
+	if (r == -1) {
+	    return CVM_FALSE;
+	}
+    }
+#endif
+#endif
+
     /*
      * Initialize the static state for this address space
      */
@@ -205,7 +250,6 @@ CVMBool CVMinitStaticState()
 	fprintf(stderr, "Executable must be in a directory named \"bin\".\n");
 	return CVM_FALSE;
     }
-
     return CVM_TRUE;
 }
 

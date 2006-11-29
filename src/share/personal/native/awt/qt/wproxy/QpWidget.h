@@ -1,28 +1,33 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ *  @(#)QpWidget.h	1.5 04/12/20
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 #ifndef _QpWIDGET_H_
 #define _QpWIDGET_H_
 
 #include <qwidget.h>
+#include <qlabel.h>   //6233632
 #include "QpObject.h"
 
 // QpWidget::getQWidget() is "protected" and C++ allows only references
@@ -65,6 +70,9 @@ public :
     void *parentPeer() ;
 
     /* QWidget Methods */
+    void createWarningLabel(QString warningString); //6233632
+    void resizeWarningLabel(void);                  //6233632
+    int  warningLabelHeight(void);                  //6233632
     QColor & foregroundColor() ;
     QColor & backgroundColor() ;
     QFont  font()            ;
@@ -111,7 +119,7 @@ public :
     bool isA(const char *name);
 
 protected :
-    QpWidget(){}
+    QpWidget() { warningStringLabel = NULL; }
     enum MethodId {
         SOM = QpObject::EOM,
         InsertWidgetAt = QpWidget::SOM,
@@ -159,6 +167,9 @@ protected :
         SetActiveWindow,
         IsEnabled,
         IsA,
+        CreateWarningLabel,
+        ResizeWarningLabel,
+        WarningLabelHeight,
         EOM
     };
 
@@ -168,6 +179,11 @@ protected :
     virtual void execute(int methodId, void *args) ;
 
 private:
+    QLabel *warningStringLabel;   //6233632
+
+    void execCreateWarningLabel(QString warningString); //6233632
+    void execResizeWarningLabel(void);                  //6233632
+    int  execWarningLabelHeight(void);                  //6233632
     void execInsertWidgetAt(QpWidget *widget, int index);
     void *execParentPeer() ;
     QColor & execForegroundColor() ;

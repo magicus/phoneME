@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)IxcClassLoader.java	1.29 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ *
  */
 
 package com.sun.xlet.ixc;
@@ -120,9 +125,9 @@ class IxcClassLoader extends ClassLoader {
     private Hashtable generated = new Hashtable(11);
     // Key is remote class, value is stub we generate.
     private 
-    static	// For debug
+    static	// for debugging
     int nextStubNumber = 1;
-    // This is kind of tricky.  ImportRegistryImpl.copyObject needs to
+    // ImportRegistryImpl.copyObject needs to
     // deserialize objects in the context of this classloader.  To do this,
     // it defines a class called com.sun.xlet.DeserializeUtility, with
     // a single static method, deserialize(byte[]).  The source for this
@@ -563,15 +568,14 @@ class IxcClassLoader extends ClassLoader {
             byte[] classBytes = generateStubClass(stubName.replace('.','/'), 
                                                   remote);
 
-            // Workaround to invoke defineClass() of a ClassLoader
-            // that loaded an xlet..
+            // workaround to invoke defineClass() of a ClassLoader 
+            //           that loaded an xlet..
               
             ClassLoader loader = getParent();
             final java.lang.reflect.Method m
                 = ClassLoader.class.getDeclaredMethod("defineClass",
                    new Class[] { String.class, classBytes.getClass(), int.class, int.class });
 
-            // this is the trick
             AccessController.doPrivileged(new PrivilegedAction() {
                public Object run() {
                    m.setAccessible(new java.lang.reflect.AccessibleObject[]{m}, true);
@@ -705,9 +709,9 @@ class IxcClassLoader extends ClassLoader {
                     cp.addStringConstant(params[j].getName());
                 }
             }
-            // For exceptions
-            // Class[] exceptions = methods[i].getExceptionTypes();
-            // for (int j = 0; j < exceptions.length; j++) {
+            //for exceptions
+            //Class[] exceptions = methods[i].getExceptionTypes();
+            //for (int j = 0; j < exceptions.length; j++) {
             //  cp.addClass(exceptions[j].getName().replace('.', '/'));
             //}
             cp.addClass("java/rmi/RemoteException");
@@ -1001,11 +1005,12 @@ class IxcClassLoader extends ClassLoader {
         dos.writeShort(0);
         // And we're done!
         dos.close();
+        // debug
         //System.out.println("@@ dumping class " + stubName
         //    + " to .class file for debug");
 
 /**
-** Uncomment this part to dump the stub object in the current dir
+** uncomment this part to dump the stub object in the current dir
 **        try {
 **            // dumping the stub class to the current dir. 
 **            dos = new DataOutputStream(new java.io.FileOutputStream(stubName + ".class"));

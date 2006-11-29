@@ -1,22 +1,28 @@
-# Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+#
+# @(#)defs.mk	1.512 06/10/25
 # 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2 only,
-# as published by the Free Software Foundation.
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
 # 
 # This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# version 2 for more details (a copy is included at /legal/license.txt).
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
 # 
-# You should have received a copy of the GNU General Public License version
-# 2 along with this work; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
 # 
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 or visit www.sun.com if you need additional information or have
-# any questions.
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
 
 #
 # Common makefile defs
@@ -73,7 +79,6 @@ HOST_DEVICE	?= mac
 else
 HOST_DEVICE	?= pc
 endif
-JDK_HOME = /System/Library/Frameworks/JavaVM.framework/Versions/1.4.2/Home
 endif
 
 # Windows host support
@@ -203,6 +208,7 @@ CVM_JVMPI               ?= false
 CVM_JVMPI_TRACE_INSTRUCTION ?= $(CVM_JVMPI)
 CVM_THREAD_SUSPENSION   ?= false
 CVM_GPROF		?= false
+CVM_GPROF_NO_CALLGRAPH  ?= true
 CVM_GCOV		?= false
 ifeq ($(CVM_USE_NATIVE_TOOLS), )
 CVM_USE_NATIVE_TOOLS    ?= false
@@ -225,12 +231,20 @@ CVM_PRODUCT             ?= premium
 # %begin lvm
 CVM_LVM                 ?= false
 # %end lvm
-J2ME_CLASSLIB		?= cdc
 
 CVM_CSTACKANALYSIS	?= false
 CVM_TIMESTAMPING	?= true
 CVM_INCLUDE_COMMCONNECTION ?= false
+CVM_INCLUDE_MIDP	?= false
+CVM_INCLUDE_JUMP	?= false
+ifeq ($(CVM_INCLUDE_MIDP), true)
+override CVM_KNI	= true
+endif
+ifeq ($(CVM_INCLUDE_JUMP), true)
+override CVM_MTASK	= true
+endif
 CVM_DUAL_STACK		?= false
+CVM_SPLIT_VERIFY	?= false
 
 CVM_JIT_REGISTER_LOCALS	?= true
 CVM_JIT_USE_FP_HARDWARE ?= false
@@ -250,6 +264,7 @@ CVM_NO_CODE_COMPACTION	?= false
 CVM_INTERPRETER_LOOP    ?= Standard
 CVM_XRUN		?= false
 CVM_CLASSLIB_JCOV       ?= false
+CVM_EMBEDDED_HOOK	?= false
 
 CVM_TRACE_JIT           ?= $(CVM_TRACE)
 CVM_JIT_ESTIMATE_COMPILATION_SPEED ?= false
@@ -260,11 +275,20 @@ CVM_JIT_DEBUG           ?= false
 # mTASK
 CVM_MTASK                ?= false
 
+# AOT
+CVM_AOT			?= false
+
 # By default build  in the $(CVM_TARGET) directory
 CVM_BUILD_SUBDIR  ?= false 
 
 CVM_USE_MEM_MGR		?= false
 CVM_MP_SAFE		?= false
+
+# AOT is only supported for Romized build.
+ifeq ($(CVM_AOT), true)
+override CVM_PRELOAD_LIB = true
+override CVM_JIT         = true
+endif
 
 # Turn all JIT tracing off if we don't have the jit:
 ifneq ($(CVM_JIT), true)
@@ -302,10 +326,11 @@ ifneq ($(strip $(OPT_PKGS)),)
   else
     OPT_PKGS_LIST  := $(subst $(comma),$(space),$(OPT_PKGS))
     OPT_PKGS_NAME  := $(subst $(space),,_$(subst $(comma),_,$(OPT_PKGS)))
-    OPT_PKGS_DEFS_FILES := $(patsubst %,defs_%_pkg.mk,$(OPT_PKGS_LIST))
+    OPT_PKGS_DEFS_FILES := $(foreach PKG,$(OPT_PKGS_LIST),\
+      $(firstword $(value $(shell echo ${patsubst %,%_DIR,${PKG}} | tr [:lower:] [:upper:])) ../..)/build/share/defs_$(PKG)_pkg.mk)
   endif
-  OPT_PKGS_RULES_FILES := $(subst defs,rules,$(OPT_PKGS_DEFS_FILES))
-  OPT_PKGS_ID_FILES := $(subst defs,id,$(OPT_PKGS_DEFS_FILES))
+  OPT_PKGS_RULES_FILES := $(subst /defs_,/rules_,$(OPT_PKGS_DEFS_FILES))
+  OPT_PKGS_ID_FILES := $(subst /defs_,/id_,$(OPT_PKGS_DEFS_FILES))
   # Add optional packages to the J2ME_PRODUCT_NAME
   J2ME_PRODUCT_NAME		+= $(OPT_PKGS_NAME)
 endif
@@ -377,7 +402,7 @@ CVM_CLASSLIB_JAR_NAME		= "$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar"
 CVM_JARFILES			= CVM_CLASSLIB_JAR_NAME
 
 ifneq ($(OPT_PKGS_ID_FILES),)
--include $(patsubst %,../share/%,$(OPT_PKGS_ID_FILES))
+-include $(OPT_PKGS_ID_FILES)
 endif
 
 #   list of property settings that are included in $(CVM_BUILD_DEFS_H) file
@@ -437,6 +462,9 @@ endif
 ifeq ($(CVM_CLASSLIB_JCOV), true)
         CVM_DEFINES   += -DCVM_CLASSLIB_JCOV
 	JAVAC_OPTIONS += -Xjcov
+endif
+ifeq ($(CVM_EMBEDDED_HOOK), true)
+        CVM_DEFINES   += -DCVM_EMBEDDED_HOOK
 endif
 ifeq ($(CVM_DEBUG_CLASSINFO), true)
 	CVM_DEFINES      += -DCVM_DEBUG_CLASSINFO
@@ -524,6 +552,9 @@ endif
 ifeq ($(CVM_DUAL_STACK), true)
 	CVM_DEFINES   += -DCVM_DUAL_STACK
 endif
+ifeq ($(CVM_SPLIT_VERIFY), true)
+	CVM_DEFINES   += -DCVM_SPLIT_VERIFY
+endif
 ifeq ($(CVM_JIT_REGISTER_LOCALS), true)
 	CVM_DEFINES   += -DCVM_JIT_REGISTER_LOCALS
 endif
@@ -543,6 +574,9 @@ endif
 # %end lvm
 ifeq ($(CVM_MTASK), true)
 	CVM_DEFINES   += -DCVM_MTASK
+endif
+ifeq ($(CVM_AOT), true)
+	CVM_DEFINES   += -DCVM_AOT
 endif
 ifeq ($(CVM_TEST_GC), true)
         CVM_DEFINES   += -DCVM_TEST_GC
@@ -598,6 +632,10 @@ endif
 
 ifeq ($(CVM_JIT_PROFILE), true)
         CVM_DEFINES   += -DCVM_JIT_PROFILE
+endif
+
+ifeq ($(CVM_GPROF), true)
+	CVM_DEFINES   += -DCVM_GPROF
 endif
 
 ifeq ($(CVM_JIT_DEBUG), true)
@@ -658,6 +696,7 @@ CVM_FLAGS += \
 	CVM_JVMPI_TRACE_INSTRUCTION \
 	CVM_THREAD_SUSPENSION \
 	CVM_CLASSLIB_JCOV \
+	CVM_EMBEDDED_HOOK \
 	CVM_REFLECT \
 	CVM_SERIALIZATION \
 	CVM_STATICLINK_LIBS \
@@ -668,7 +707,10 @@ CVM_FLAGS += \
 	CVM_TEST_GENERATION_GC \
 	CVM_TIMESTAMPING \
 	CVM_INCLUDE_COMMCONNECTION \
+	CVM_INCLUDE_MIDP \
+	CVM_INCLUDE_JUMP \
 	CVM_DUAL_STACK \
+	CVM_SPLIT_VERIFY \
 	CVM_KNI \
 	CVM_JIT_REGISTER_LOCALS \
 	CVM_INTERPRETER_LOOP \
@@ -686,13 +728,14 @@ CVM_FLAGS += \
 	OPT_PKGS \
         CVM_PRODUCT \
 	CVM_GPROF \
+	CVM_GPROF_NO_CALLGRAPH \
 	CVM_GCOV \
 	CVM_USE_CVM_MEMALIGN \
 	CVM_USE_MEM_MGR \
 	CVM_MP_SAFE \
 	CVM_USE_NATIVE_TOOLS \
 	CVM_MTASK \
-	CVM_JIT_REGISTER_LOCALS
+	CVM_AOT
 
 # %begin lvm
 CVM_FLAGS += \
@@ -700,7 +743,8 @@ CVM_FLAGS += \
 # %end lvm
 
 CVM_DEFAULT_CLEANUP_ACTION 	= \
-	rm -rf $(CVM_OBJDIR)
+	rm -rf $(CVM_OBJDIR)      \
+	rm -rf $(CVM_MIDP_BUILDDIR)
 CVM_HOST_CLEANUP_ACTION 	= \
 	rm -rf $(CVM_JCS_BUILDDIR)
 CVM_JAVAC_DEBUG_CLEANUP_ACTION 	= \
@@ -763,7 +807,8 @@ CVM_CSTACKANALYSIS_CLEANUP_ACTION = \
 	rm -rf $(CVM_OBJDIR)/*.asm $(CVM_OBJDIR)/*.o
 
 CVM_JIT_CLEANUP_ACTION = \
-	rm -rf $(CVM_OBJDIR) $(CVM_ROMJAVA_CPATTERN)* \
+	$(CVM_DEFAULT_CLEANUP_ACTION)   \
+	rm -rf $(CVM_ROMJAVA_CPATTERN)* \
 	       $(CVM_DERIVEDROOT)/javavm/runtime/jit/* \
 	       $(CVM_DERIVEDROOT)/javavm/include/jit/* \
 	       $(CVM_BUILDTIME_CLASSESZIP) \
@@ -777,6 +822,7 @@ CVM_LVM_CLEANUP_ACTION = \
 	       $(CVM_BUILDTIME_CLASSESZIP) \
 	       .buildtimeclasses \
 	       $(CVM_BUILDTIME_CLASSESDIR)/sun/misc/*LogicalVM*.class \
+	       $(CVM_BUILDTIME_CLASSESDIR)/sun/misc/*Isolate*.class \
 	       $(CVM_TEST_CLASSESDIR)/lvmtest \
 	       $(CVM_TEST_CLASSESZIP)
 # %end lvm
@@ -815,12 +861,23 @@ CVM_CLASSLIB_JCOV_CLEANUP_ACTION		= \
 	$(CVM_DEFAULT_CLEANUP_ACTION) 	   	  \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
 
+CVM_EMBEDDED_HOOK_CLEANUP_ACTION		= \
+	$(CVM_DEFAULT_CLEANUP_ACTION) 	   	  \
+	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
+
 CVM_TRACE_CLEANUP_ACTION               = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_TRACE_JIT_CLEANUP_ACTION           = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_INCLUDE_COMMCONNECTION_CLEANUP_ACTION        = \
 	$(CVM_DEFAULT_CLEANUP_ACTION)    \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
+CVM_INCLUDE_MIDP_CLEANUP_ACTION        = \
+	$(CVM_DEFAULT_CLEANUP_ACTION)    \
+	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
+CVM_INCLUDE_JUMP_CLEANUP_ACTION        = \
+	$(CVM_DEFAULT_CLEANUP_ACTION)    \
+	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
 CVM_DUAL_STACK_CLEANUP_ACTION          = $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_SPLIT_VERIFY_CLEANUP_ACTION        = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_KNI_CLEANUP_ACTION                 = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_JIT_REGISTER_LOCALS_CLEANUP_ACTION = $(CVM_JIT_CLEANUP_ACTION)
 CVM_JIT_COLLECT_STATS_CLEANUP_ACTION   = $(CVM_JIT_CLEANUP_ACTION)
@@ -837,12 +894,14 @@ OPT_PKGS_CLEANUP_ACTION                = $(J2ME_CLASSLIB_CLEANUP_ACTION)
 CVM_PRODUCT_CLEANUP_ACTION             = rm -f $(CVM_OBJDIR)/jvm.o \
                                          rm -f $(INSTALLDIR)/src.zip
 CVM_GPROF_CLEANUP_ACTION 	       = $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_GPROF_NO_CALLGRAPH_CLEANUP_ACTION  = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_GCOV_CLEANUP_ACTION 	       = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_USE_NATIVE_TOOLS_CLEANUP_ACTION    = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_USE_CVM_MEMALIGN_CLEANUP_ACTION    = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_USE_MEM_MGR_CLEANUP_ACTION         = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_MP_SAFE_CLEANUP_ACTION	       = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_MTASK_CLEANUP_ACTION                = $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_AOT_CLEANUP_ACTION                = $(CVM_DEFAULT_CLEANUP_ACTION)
 
 #
 # Wipe out objects and classes when J2ME_CLASSLIB changes.
@@ -855,7 +914,8 @@ J2ME_CLASSLIB_CLEANUP_ACTION            = \
 # generate header dependency files
 GENERATEMAKEFILES = true
 
-# use the generational gc by default. Other possible GC choices are:
+# Use the original generational GC as default.
+# Other possible GC choices are:
 #	semispace
 # 	marksweep
 #       generational-seg
@@ -930,12 +990,21 @@ ifeq ($(CVM_DUAL_STACK), true)
 endif
 
 #
+# Object needed for split (CLDC) verifier support
+#
+ifeq ($(CVM_SPLIT_VERIFY), true)
+    CVM_SHAREOBJS_SPACE += \
+	split_verify.o
+endif
+
+#
 # Stuff needed for KNI support
 #
 ifeq ($(CVM_KNI), true)
     CVM_SHAREOBJS_SPACE += \
 	kni_impl.o \
-	KNITest.o
+	KNITest.o  \
+	sni_impl.o
     CVM_TEST_CLASSES += KNITest
     CVM_SRCDIRS += $(CVM_TESTCLASSES_SRCDIR)
     CVM_CNI_CLASSES += KNITest
@@ -949,6 +1018,7 @@ CVM_OBJDIR               = $(CVM_BUILD_TOP)/obj
 CVM_BINDIR               = $(CVM_BUILD_TOP)/bin
 CVM_DERIVEDROOT          = $(CVM_BUILD_TOP)/generated
 CVM_BUILDTIME_CLASSESDIR = $(CVM_BUILD_TOP)/btclasses
+CVM_JSR_CLASSESDIR 	 = $(CVM_BUILD_TOP)/jsrclasses
 CVM_TEST_CLASSESDIR      = $(CVM_BUILD_TOP)/testclasses
 CVM_DEMO_CLASSESDIR	 = $(CVM_BUILD_TOP)/democlasses
 CVM_SHAREROOT  		 = $(CVM_TOP)/src/share
@@ -966,7 +1036,30 @@ BUNDLE_PRODUCT_NAME0 = $(subst $(space),_,$(J2ME_PRODUCT_NAME))
 BUNDLE_PRODUCT_NAME1 = $(subst /,_,$(BUNDLE_PRODUCT_NAME0))
 BUNDLE_PRODUCT_NAME  = $(subst $(TM),$(empty),$(BUNDLE_PRODUCT_NAME1))
 
-BINARY_BUNDLE = $(INSTALLDIR)/$(BUNDLE_PRODUCT_NAME)-$(J2ME_BUILD_VERSION_STRING)-$(CVM_TARGET).tar.gz
+BUNDLE_VERSION	= $(subst -,_,$(J2ME_BUILD_VERSION_STRING))
+BUNDLE_TARGET	= $(subst -,_,$(CVM_TARGET))
+
+BINARY_BUNDLE_NAME	= \
+	$(BUNDLE_PRODUCT_NAME)-$(BUNDLE_VERSION)-$(BUNDLE_TARGET)-bin
+BINARY_BUNDLE_DIRNAME	= $(BINARY_BUNDLE_NAME)
+
+# Location of legal documents in case JAVAME_LEGAL_DIR is not set.
+JAVAME_LEGAL_REPOSITORY = https://phoneme.dev.java.net/svn/phoneme/legal
+
+# Add the svn revison number to BINARY_BUNDLE_NAME and BINARY_BUNDLE_DIRNAME
+# if requested.
+BINARY_BUNDLE_APPEND_REVISION ?= true
+ifeq ($(BINARY_BUNDLE_APPEND_REVISION),true)
+ifneq ($(wildcard .svn),.svn)
+REVISION_NUMBER = UNKNOWN
+else
+REVISION_NUMBER = \
+     $(shell svn info | grep "Revision:" | sed -e 's/Revision: \(.*\)/\1/')
+endif
+override BINARY_BUNDLE_NAME := $(BINARY_BUNDLE_NAME)-rev$(REVISION_NUMBER)
+override BINARY_BUNDLE_DIRNAME := $(BINARY_BUNDLE_DIRNAME)-rev$(REVISION_NUMBER)
+endif
+
 
 #
 # Java source directories. 
@@ -989,6 +1082,7 @@ CVM_POLICY_BUILD  = $(CVM_LIBDIR)/security/java.policy
 
 # Build option record file to generate
 CVM_BUILD_DEFS_H = $(CVM_DERIVEDROOT)/javavm/include/build_defs.h
+CVM_BUILD_DEFS_MK= $(CVM_DERIVEDROOT)/build_defs.mk
 
 # sun.misc.DefaultLoacleList.java
 DEFAULTLOCALELIST_JAVA = $(CVM_DERIVEDROOT)/classes/sun/misc/DefaultLocaleList.java
@@ -1031,6 +1125,11 @@ CVM_SRCDIRS    += \
 ifeq ($(CVM_MTASK), true)
 CVM_SRCDIRS += \
 	$(CVM_SHAREROOT)/native/sun/mtask
+endif
+
+ifeq ($(CVM_LVM), true)
+CVM_SRCDIRS += \
+	$(CVM_SHAREROOT)/javavm/runtime/lvm
 endif
 
 ifeq ($(CVM_JIT), true)
@@ -1414,7 +1513,8 @@ CVM_TEST_CLASSES += \
 	MethodCall \
 	Fib \
 	ExerciseOpcodes \
-	DoResolveAndClinit
+	DoResolveAndClinit \
+	MTSimpleSync
 
 ifneq ($(KBENCH_JAR),)
 CVM_TEST_CLASSES += RunKBench 
@@ -1436,7 +1536,8 @@ CVM_SHAREOBJS_SPACE += \
 #
 CVM_TEST_CLASSES += \
 	lvmtest.LVMLauncher \
-	lvmtest.PlainLauncher
+	lvmtest.PlainLauncher \
+	lvmsh
 
 endif
 # %end lvm
@@ -1676,23 +1777,6 @@ ifneq ($(CVM_TOOLS_DIR)$(CVM_TARGET_TOOLS_DIR)$(CVM_TARGET_TOOLS_PREFIX),)
         endif
     endif
 endif
-ifneq ($(origin CC),default)
-    USER_SPECIFIED_LOCATION = true
-endif
-
-#
-# Test if CC was explicitly set on the command line to a cc tool.
-# If it was then set CVM_USE_NATIVE_TOOLS=true.
-#
-CC_SAVE := $(CC)
-CC	:=
-ifeq ($(CC),cc)
-CVM_USE_NATIVE_TOOLS = true
-endif
-ifeq ($(patsubst %/cc,cc,$(CC)),cc)
-CVM_USE_NATIVE_TOOLS = true
-endif
-CC	:= $(CC_SAVE)
 
 # Locate the target gnu tools:
 #
@@ -1817,26 +1901,12 @@ TARGET_CC	?= $(HOST_CC)
 TARGET_CCC	?= $(HOST_CCC)
 endif
 
-CC		:= $(TARGET_CC)
-CCC		:= $(TARGET_CCC)
-
-TARGET_AS	?= $(CC)
-AS		:= $(TARGET_AS)
-
-TARGET_LD	?= $(CC)
-LD		:= $(TARGET_LD)
-
+TARGET_AS	?= $(TARGET_CC)
+TARGET_LD	?= $(TARGET_CC)
 TARGET_AR	?= $(CVM_TARGET_TOOLS_PREFIX)ar
-AR		= $(TARGET_AR)
-
 TARGET_RANLIB	?= $(CVM_TARGET_TOOLS_PREFIX)ranlib
-RANLIB		= $(TARGET_RANLIB)
-
-TARGET_AR_CREATE ?= $(AR) rc $(1)
-AR_CREATE	 = $(TARGET_AR_CREATE)
-
-TARGET_AR_UPDATE ?= $(RANLIB) $(1)
-AR_UPDATE	 = $(TARGET_AR_UPDATE)
+TARGET_AR_CREATE ?= $(TARGET_AR) rc $(1)
+TARGET_AR_UPDATE ?= $(TARGET_RANLIB) $(1)
 
 # NOTE: We already set HOST_CC above.
 ifneq ($(origin LEX),default)
@@ -1881,7 +1951,11 @@ endif
 
 ifeq ($(CVM_GPROF), true)
 LINKFLAGS 	+= -pg
+ifeq ($(CVM_GPROF_NO_CALLGRAPH), true)
+CCFLAGS   	+= -g
+else
 CCFLAGS   	+= -pg -g
+endif
 endif
 
 ifeq ($(CVM_GCOV), true)
@@ -1906,17 +1980,17 @@ SO_LINKFLAGS 	= $(LINKFLAGS) -shared
 #
 # commands for running the tools
 #
-ASM_CMD 	= $(AT)$(AS) $(ASM_FLAGS) -D_ASM $(CPPFLAGS) -o $@ $<
-CCC_CMD_SPEED	= $(AT)$(CCC) $(CFLAGS_SPEED) $(CCCFLAGS) -o $@ $<
-CCC_CMD_SPACE	= $(AT)$(CCC) $(CFLAGS_SPACE) $(CCCFLAGS) -o $@ $<
-CC_CMD_SPEED	= $(AT)$(CC) $(CFLAGS_SPEED) -o $@ $<
-CC_CMD_SPACE	= $(AT)$(CC) $(CFLAGS_SPACE) -o $@ $<
-CC_CMD_LOOP	= $(AT)$(CC) $(CFLAGS_LOOP) -o $@ $<
-CC_CMD_FDLIB	= $(AT)$(CC) $(CFLAGS_FDLIB) -o $@ $<
-LINK_CMD	= $(AT)$(LD)  $(LINKFLAGS) -o $@ $^ $(LINKLIBS)
+ASM_CMD 	= $(AT)$(TARGET_AS) $(ASM_FLAGS) -D_ASM $(CPPFLAGS) -o $@ $<
+CCC_CMD_SPEED	= $(AT)$(TARGET_CCC) $(CFLAGS_SPEED) $(CCCFLAGS) -o $@ $<
+CCC_CMD_SPACE	= $(AT)$(TARGET_CCC) $(CFLAGS_SPACE) $(CCCFLAGS) -o $@ $<
+CC_CMD_SPEED	= $(AT)$(TARGET_CC) $(CFLAGS_SPEED) -o $@ $<
+CC_CMD_SPACE	= $(AT)$(TARGET_CC) $(CFLAGS_SPACE) -o $@ $<
+CC_CMD_LOOP	= $(AT)$(TARGET_CC) $(CFLAGS_LOOP) -o $@ $<
+CC_CMD_FDLIB	= $(AT)$(TARGET_CC) $(CFLAGS_FDLIB) -o $@ $<
+LINK_CMD	= $(AT)$(TARGET_LD)  $(LINKFLAGS) -o $@ $^ $(LINKLIBS)
 SO_ASM_CMD 	= $(ASM_CMD)
-SO_CC_CMD   	= $(AT)$(CC) $(SO_CFLAGS) -o $@ $<
-SO_LINK_CMD 	= $(AT)$(LD) $(SO_LINKFLAGS) -o $@ $^
+SO_CC_CMD   	= $(AT)$(TARGET_CC) $(SO_CFLAGS) -o $@ $<
+SO_LINK_CMD 	= $(AT)$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $^
 JAVAC_CMD	= $(CVM_JAVAC) $(JAVAC_OPTIONS)
 
 #

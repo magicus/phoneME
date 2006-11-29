@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)AlgorithmId.java	1.93 06/10/11
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package sun.security.x509;
@@ -288,6 +293,7 @@ public class AlgorithmId implements Serializable, DerEncoder {
     }
 
 
+// FIXME: cleaning required
     /**
      * Returns the DER-encoded X.509 AlgorithmId as a byte array.
      */
@@ -312,7 +318,7 @@ public class AlgorithmId implements Serializable, DerEncoder {
      * where synonyms are supported or where a given algorithm
      * is commonly associated with multiple OIDs.
      *
-     * This method needs to be enhanced so that we can also pass the
+     * TODO: This method needs to be enhanced so that we can also pass the
      * scope of the algorithm name to it, e.g., the algorithm name "DSA"
      * may have a different OID when used as a "Signature" algorithm than when
      * used as a "KeyPairGenerator" algorithm.
@@ -369,9 +375,9 @@ public class AlgorithmId implements Serializable, DerEncoder {
 	if (!initOidTable) {
 	    Provider[] provs = Security.getProviders();
 	    for (int i=0; i<provs.length; i++) {
-		for (Enumeration enum = provs[i].keys();
-		     enum.hasMoreElements(); ) {
-		    String alias = (String)enum.nextElement();
+		for (Enumeration enum_ = provs[i].keys();
+		     enum_.hasMoreElements(); ) {
+		    String alias = (String)enum_.nextElement();
 		    int index;
 		    if (alias.toUpperCase().startsWith("ALG.ALIAS") &&
 			(index=alias.toUpperCase().indexOf("OID.", 0)) != -1) {

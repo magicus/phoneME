@@ -1,31 +1,32 @@
-# Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+#
+# @(#)rules.mk	1.173 06/10/24
 # 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2 only,
-# as published by the Free Software Foundation.
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
 # 
 # This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# version 2 for more details (a copy is included at /legal/license.txt).
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
 # 
-# You should have received a copy of the GNU General Public License version
-# 2 along with this work; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
 # 
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 or visit www.sun.com if you need additional information or have
-# any questions.
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
 
 #
 #  Common makefile rules
 #
-
-# speed up makefile by not using implicit suffixes
-.SUFFIXES:
-
-all:: printconfig $(J2ME_CLASSLIB) tools
 
 ifneq ($(CVM_TOOLS_BUILD), true)
 tools :
@@ -60,22 +61,22 @@ TOOL_PATH0	= $(shell \
 	fi;) 2>&1 )
 TOOL_PATH = $(subst //,/,$(call TOOL_PATH0,$($(1))))
 
-CC_PATH:=$(call TOOL_PATH,CC)
-CCC_PATH:=$(call TOOL_PATH,CCC)
-AS_PATH:=$(call TOOL_PATH,AS)
-LD_PATH:=$(call TOOL_PATH,LD)
-HOST_CC_PATH:=$(call TOOL_PATH,HOST_CC)
-HOST_CCC_PATH:=$(call TOOL_PATH,HOST_CCC)
-CVM_JAVA_PATH:=$(call TOOL_PATH,CVM_JAVA)
-CVM_JAVAC_PATH:=$(call TOOL_PATH,CVM_JAVAC)
-CVM_JAVAH_PATH:=$(call TOOL_PATH,CVM_JAVAH)
-CVM_JAR_PATH:=$(call TOOL_PATH,CVM_JAR)
-ZIP_PATH:=$(call TOOL_PATH,ZIP)
-TARGET_AR_PATH:=$(call TOOL_PATH,TARGET_AR)
-TARGET_RANLIB_PATH:=$(call TOOL_PATH,TARGET_RANLIB)
+TARGET_CC_PATH	:= $(call TOOL_PATH,TARGET_CC)
+TARGET_CCC_PATH	:= $(call TOOL_PATH,TARGET_CCC)
+TARGET_AS_PATH	:= $(call TOOL_PATH,TARGET_AS)
+TARGET_LD_PATH	:= $(call TOOL_PATH,TARGET_LD)
+TARGET_AR_PATH	:= $(call TOOL_PATH,TARGET_AR)
+TARGET_RANLIB_PATH := $(call TOOL_PATH,TARGET_RANLIB)
+CVM_JAVA_PATH	:= $(call TOOL_PATH,CVM_JAVA)
+CVM_JAVAC_PATH	:= $(call TOOL_PATH,CVM_JAVAC)
+CVM_JAVAH_PATH	:= $(call TOOL_PATH,CVM_JAVAH)
+CVM_JAR_PATH	:= $(call TOOL_PATH,CVM_JAR)
+ZIP_PATH	:= $(call TOOL_PATH,ZIP)
+HOST_CC_PATH	:= $(call TOOL_PATH,HOST_CC)
+HOST_CCC_PATH	:= $(call TOOL_PATH,HOST_CCC)
 ifeq ($(CVM_JIT), true)
-FLEX_PATH:=$(call TOOL_PATH,FLEX)
-BISON_PATH:=$(call TOOL_PATH,BISON)
+FLEX_PATH	:= $(call TOOL_PATH,FLEX)
+BISON_PATH	:= $(call TOOL_PATH,BISON)
 endif
 
 printconfig::
@@ -93,10 +94,10 @@ endif
 	@echo "CVM_JAVAC  = $(CVM_JAVAC_PATH)"
 	@echo "CVM_JAVAH  = $(CVM_JAVAH_PATH)"
 	@echo "CVM_JAR    = $(CVM_JAR_PATH)"
-	@echo "TARGET_CC     = $(CC_PATH)"
-	@echo "TARGET_CCC    = $(CCC_PATH)"
-	@echo "TARGET_AS     = $(AS_PATH)"
-	@echo "TARGET_LD     = $(LD_PATH)"
+	@echo "TARGET_CC     = $(TARGET_CC_PATH)"
+	@echo "TARGET_CCC    = $(TARGET_CCC_PATH)"
+	@echo "TARGET_AS     = $(TARGET_AS_PATH)"
+	@echo "TARGET_LD     = $(TARGET_LD_PATH)"
 	@echo "TARGET_AR     = $(TARGET_AR_PATH)"
 	@echo "TARGET_RANLIB = $(TARGET_RANLIB_PATH)"
 	@echo "LINKFLAGS  = $(LINKFLAGS)"
@@ -109,7 +110,6 @@ endif
 	@echo "CCFLAGS_FDLIB  = $(CCFLAGS_FDLIB)"
 	@echo "JAVAC_OPTIONS  = $(JAVAC_OPTIONS)"
 	@echo "CVM_DEFINES    = $(CVM_DEFINES)"
-
 #########################
 # Compiling .java files.
 ##########################
@@ -162,6 +162,20 @@ endif
 $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
 	@echo $? >>$(CVM_BUILD_TOP)/.btclasses.list
 	@touch $(CVM_BUILD_TOP)/.btclasses
+
+# TODO: Build a jsr jar file and have a rule that makes the jar file
+# dependent on all the source files, and builds a list of files to
+# recompile. 
+#define appendjavafiles
+#    @_javalist="$?"; ( \
+#    if [ -n "$$_javalist" ]; then \
+#	echo "$$_javalist" >> $(REBUILD_JAVA_LIST); \
+#    fi )
+#endef
+#$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_SATSA_JAVA_FILES)
+#	$(appendjavafiles)
+
+-include ../share/rules_op.mk
 
 # Test classes
 $(CVM_TEST_CLASSESDIR)/%.class: %.java
@@ -304,6 +318,13 @@ testclasses:: .delete.testclasses.list .report.testclasses.list $(TEST_CLASS_FIL
 
 democlasses:: .delete.democlasses.list .report.democlasses.list $(DEMO_CLASS_FILES) .compile.democlasses
 
+# if jarfilename is specified, put jsrclasses in jar file
+ifeq ($(OP_JAR_FILENAME),)
+jsrclasses:: .compile.jsrclasses
+else
+jsrclasses:: $(OP_JAR_FILENAME)
+endif
+
 #####################################
 # include jcc and jcs makefiles
 #####################################
@@ -336,10 +357,14 @@ endif
 $(J2ME_CLASSLIB):: initbuild
 $(J2ME_CLASSLIB):: btclasses $(CVM_BUILDTIME_CLASSESZIP)
 $(J2ME_CLASSLIB):: $(J2ME_CLASSLIB)classes $(LIB_CLASSESJAR)
+ifneq ($(JSR_CLASSES),)
+$(J2ME_CLASSLIB):: jsrclasses
+endif
 $(J2ME_CLASSLIB):: testclasses $(CVM_TEST_CLASSESZIP)
 $(J2ME_CLASSLIB):: democlasses $(CVM_DEMO_CLASSESJAR)
 $(J2ME_CLASSLIB):: headers $(CVM_ROMJAVA_LIST)
 $(J2ME_CLASSLIB):: $(CLASSLIB_DEPS)
+$(J2ME_CLASSLIB):: aotdeps
 $(J2ME_CLASSLIB):: $(CVM_BINDIR)/$(CVM)
 ifeq ($(CDC_10),true)
 $(J2ME_CLASSLIB):: $(CVM_TZDATAFILE)
@@ -362,7 +387,7 @@ include $(CVM_DERIVEDROOT)/empty.mk
 # delete anything that might be dependent on the build flags. 
 #####################################
 CVM_FLAGS := $(sort $(CVM_FLAGS))
-checkflags:: $(CVM_DERIVEDROOT) remove_build_flags $(CVM_FLAGS) $(CVM_BUILD_DEFS_H)
+checkflags:: $(CVM_DERIVEDROOT) remove_build_flags $(CVM_FLAGS) $(CVM_BUILD_DEFS_H) $(CVM_BUILD_DEFS_MK)
 
 remove_build_flags:
 	@rm -rf $(CVM_BUILD_FLAGS_FILE)
@@ -377,7 +402,12 @@ $(CVM_FLAGS):: $(CVM_DERIVEDROOT)/flags
 		echo "Flag $@ changed. Cleaning up."; \
 		rm -f $(CVM_DERIVEDROOT)/flags/$@.*; \
 		touch $(CVM_DERIVEDROOT)/flags/$@.$($@); \
-		$($@_CLEANUP_ACTION); \
+		ACTION='$($@_CLEANUP_ACTION)'; \
+		if [ "$$ACTION" = "" ]; then \
+		    $(CVM_DEFAULT_CLEANUP_ACTION); \
+		else \
+		    eval $$ACTION; \
+		fi; \
 		rm -f $(CVM_BUILD_DEFS_H); \
 	fi
 	@echo $@=$($@) >> $(CVM_BUILD_FLAGS_FILE)
@@ -411,6 +441,17 @@ $(CVM_BUILD_DEFS_H): $(wildcard ${CVM_BUILD_TOP}/../share/id*.mk)
 	@cat $(CVM_BUILD_DEFS_H)
 	@echo
 
+$(CVM_BUILD_DEFS_MK)::
+	$(AT) echo updating $@ ...
+	$(AT) echo "#This file is auto-generated by the CVM build process."> $@
+	$(AT) echo "#Do not edit." >> $@
+	$(AT) echo "CVM_DEFINES = $(CVM_DEFINES)" >> $@
+	$(AT) echo "J2ME_CLASSLIB = $(J2ME_CLASSLIB)" >> $@
+	$(AT) echo "CVM_MTASK = $(CVM_MTASK)" >> $@
+	$(AT) echo "CVM_PRELOAD_LIB = $(CVM_PRELOAD_LIB)" >> $@
+	$(AT) echo "CCFLAGS_SPEED = $(CCFLAGS_SPEED)" >> $@
+	$(AT) echo "" >> $@
+
 #####################################
 # system_properties.c
 #####################################
@@ -432,8 +473,8 @@ SYSTEM_PROPERTIES_C = $(CVM_DERIVEDROOT)/javavm/runtime/system_properties.c
 	$(AT) echo "/* AUTO-GENERATED - DO NOT EDIT */" >> $(CVM_BUILD_TOP)/.system_properties.c
 	$(AT) echo "" >> $(CVM_BUILD_TOP)/.system_properties.c
 	$(AT) if [ "$(SYSTEM_PROPERTIES)" != "" ] ; then \
-		for s in "$(SYSTEM_PROPERTIES)" ; do \
-			printf "%s\n" $$s | sed -e 's/\(.*\)=\(.*\)/PUTPROP (props, "\1", "\2");/' ; \
+		for s in $(SYSTEM_PROPERTIES)"" ; do \
+			printf "%s\n" "$$s" | sed -e 's/\([^=]*\)=\(.*\)/PUTPROP (props, "\1", "\2");/' ; \
 		done ; \
 	 fi >> $(CVM_BUILD_TOP)/.system_properties.c
 	$(AT) echo "" >> $(CVM_BUILD_TOP)/.system_properties.c
@@ -478,14 +519,14 @@ $(CVM_OBJDIR)/executejava.o: $(CVM_DERIVEDROOT)/javavm/include/opcodes.h
 # command to use to generate dependency makefiles if requested
 ifeq ($(GENERATEMAKEFILES), true)
 GENERATEMAKEFILES_CMD = \
-	@$(CC) $(CCDEPEND) $(CPPFLAGS) $< 2> /dev/null | \
-	    sed 's!$*\.o!$(dir $@)&!g' > $(@:.o=.d)
+	@$(TARGET_CC) $(CCDEPEND) $(CC_ARCH_FLAGS) $(CPPFLAGS) $< \
+		2> /dev/null | sed 's!$*\.o!$(dir $@)&!g' > $(@:.o=.d)
 endif
 
 # command to use to generate stack map analysis files if requested
 ifeq ($(CVM_CSTACKANALYSIS), true)
 CSTACKANALYSIS_CMD = \
-	$(AT)$(CC) -S $(CCFLAGS) $(CPPFLAGS) -o $(@:.o=.asm) $<
+	$(AT)$(TARGET_CC) -S $(CCFLAGS) $(CPPFLAGS) -o $(@:.o=.asm) $<
 endif
 
 #
@@ -521,8 +562,8 @@ $(CVM_OBJDIR)/%.o: %.S
 	@echo "as  $@"
 	$(ASM_CMD)
 ifeq ($(GENERATEMAKEFILES), true)
-	@$(CC) $(CCDEPEND) $(CPPFLAGS) $< 2> /dev/null | \
-	    sed 's!$*\.o!$(dir $@)&!g' > $(@:.o=.d)
+	@$(TARGET_CC) $(ASM_ARCH_FLAGS) $(CCDEPEND) $(CPPFLAGS) $< \
+		2> /dev/null | sed 's!$*\.o!$(dir $@)&!g' > $(@:.o=.d)
 endif
 ifeq ($(CVM_CSTACKANALYSIS), true)
 	cp $< $(@:.o=.asm)
@@ -542,14 +583,43 @@ $(CVM_FDLIB_FILES): $(CVM_OBJDIR)/%.o: $(CVM_FDLIBM_SRCDIR)/%.c
 	@echo "cc  $@"
 	$(CC_CMD_FDLIB)
 ifeq ($(GENERATEMAKEFILES), true)
-	@$(CC) $(CCDEPEND) $(CPPFLAGS) $< 2> /dev/null | \
-		sed 's!$*\.o!$(dir $@)&!g' > $(@:.o=.d)
+	@$(TARGET_CC) $(CC_ARCH_FLAGS) $(CCDEPEND) $(CPPFLAGS) $< \
+		2> /dev/null | sed 's!$*\.o!$(dir $@)&!g' > $(@:.o=.d)
 endif
 
 $(CVM_FDLIB): $(CVM_FDLIB_FILES)
 	@echo lib $@
-	$(AT)$(call AR_CREATE,$@) $^
-	$(AT)$(call AR_UPDATE,$@)
+	$(AT)$(call TARGET_AR_CREATE,$@) $^
+	$(AT)$(call TARGET_AR_UPDATE,$@)
+endif
+
+#
+# If CVM_AOT is enabled, compute the SHA-1 checksum for the CVM.
+# A .c file that contains the checksum value is generated,
+# compiled and linked into CVM.
+#
+ifeq ($(CVM_AOT), true)
+CVM_SHA1OBJ	= $(CVM_OBJDIR)/cvm_sha1.o
+CVM_SHA1	= $(CVM_DERIVEDROOT)/javavm/runtime/cvm_sha1.c
+
+$(CVM_SHA1): FORCE
+	$(AT)$(JAVAC_CMD) -d $(CVM_MISC_TOOLS_CLASSPATH) \
+		$(CVM_MISC_TOOLS_SRCDIR)/sha1/sha1.java; \
+	echo "Computing CVM SHA-1 checksum ..."; \
+	$(call TARGET_AR_CREATE,cvm.a) $(CVM_OBJECTS) $(CVM_OBJDIR)/$(CVM_ROMJAVA_O) $(CVM_FDLIB); \
+	sum=`($(CVM_JAVA) \
+		-classpath $(CVM_MISC_TOOLS_CLASSPATH) \
+		sha1 cvm.a)`; \
+	printf "static const char *cvmsha1sum = \"%s\";\n" $$sum > $@; \
+	printf "const char* CVMgetSha1Hash() {\n" >> $@; \
+	printf "    return cvmsha1sum;\n" >> $@; \
+	printf "}\n" >> $@; \
+	rm -rf cvm.a
+
+FORCE:
+
+else
+CVM_SHA1OBJ	=
 endif
 
 #####################################
@@ -559,7 +629,8 @@ endif
 #
 # Initialize the environment for the build process: 
 #
-initbuild: checkflags $(CVM_BUILDDIRS)
+initbuild: checkflags $(CVM_BUILDDIRS) initbuild_profile
+initbuild_profile ::
 
 # make sure we build the headers before the objects
 $(CVM_BINDIR)/$(CVM) :: $(CVM_ROMJAVA_LIST) # jcc creates some of the headers
@@ -570,7 +641,7 @@ endif
 $(CVM_BINDIR)/$(CVM) :: .generate.system_properties.c
 
 ifneq ($(CVM_PROVIDE_TARGET_RULES), true)
-$(CVM_BINDIR)/$(CVM) :: $(CVM_OBJECTS) $(CVM_OBJDIR)/$(CVM_ROMJAVA_O) $(CVM_FDLIB)
+$(CVM_BINDIR)/$(CVM) :: $(CVM_OBJECTS) $(CVM_OBJDIR)/$(CVM_ROMJAVA_O) $(CVM_FDLIB) $(CVM_SHA1OBJ)
 	@echo "Linking $@"
 	$(LINK_CMD)
 	@echo "Done Linking $@"
@@ -584,6 +655,7 @@ endif
 clean::
 	$(MAKE) CVM_TOOLS_BUILD=true tool-clean
 
+ifeq ($(CVM_REBUILD), true)
 clean::
 	rm -rf $(INSTALLDIR)
 	rm -rf $(CVM_BUILD_TOP)/.libclasses
@@ -593,7 +665,8 @@ clean::
 	rm -rf $(CVM_BUILD_TOP)/.*.list
 	rm -rf $(CVM_BUILD_TOP)/.system_properties.c
 	rm -rf .DefaultLocaleList.java
-	rm -rf $(CVM_BUILD_TOP)/.previous.build.flags
+	rm -rf $(CVM_BUILD_FLAGS_FILE)
+	rm -rf $(CVM_MIDP_BUILDDIR)
 	rm -rf $(BUILDFLAGS_JAVA)
 	rm -rf $(CVM_BUILDTIME_CLASSESDIR) \
 	       $(CVM_TEST_CLASSESDIR) $(CVM_DEMO_CLASSESDIR) *_classes
@@ -605,6 +678,10 @@ clean::
 	rm -rf $(CVM_DERIVEDROOT)
 	rm -rf $(CVM_PROPS_BUILD) $(CVM_POLICY_BUILD)
 	rm -rf $(CVM_JCS_BUILDDIR)
+else
+clean::
+	$(MAKE) CVM_REBUILD=true clean
+endif
 
 #####################################
 # zip or jar class files
@@ -626,7 +703,7 @@ $(CVM_TEST_CLASSESZIP): $(CVM_BUILD_TOP)/.testclasses
 
 $(CVM_DEMO_CLASSESJAR): $(CVM_BUILD_TOP)/.democlasses
 	@echo ... $@
-	$(AT)for dir in $(CVM_DEMOCLASSES_SRCDIRS); do files=`(cd $$dir; find . -name .svn -prune -o -type f -print)`; (cd $$dir; tar -cf - $$files) | (cd $(CVM_DEMO_CLASSESDIR); tar -xf - ); done 
+	$(AT)for dir in $(CVM_DEMOCLASSES_SRCDIRS); do files=`(cd $$dir; find . -name SCCS -prune -o -name .svn -prune -o -type f -print)`; (cd $$dir; tar -cf - $$files) | (cd $(CVM_DEMO_CLASSESDIR); tar -xf - ); done 
 	$(AT)(cd $(CVM_DEMO_CLASSESDIR); $(ZIP) -r -q - *) > $(CVM_CLASSES_TMP)
 	$(AT)mv -f $(CVM_CLASSES_TMP) $@
 
@@ -664,11 +741,29 @@ $(CVM_DERIVEDROOT)/jni/.time.stamp : $(LIB_CLASSESJAR)
 		echo ... generating jni class headers ;		\
 		$(CVM_JAVAH) -jni					\
 			-d $(CVM_DERIVEDROOT)/jni			\
-			-classpath $(LIB_CLASSESJAR)			\
+			-classpath $(LIB_CLASSESJAR)$(JSR_JNI_CLASSPATH) \
 			-bootclasspath $(CVM_BUILDTIME_CLASSESZIP)	\
-			@$(CVM_BUILD_TOP)/.javahclasses.list ;		\
+			$(JSR_JNI_CLASSES) @$(CVM_BUILD_TOP)/.javahclasses.list ;		\
 	fi
 	@touch $@
+endif
+
+# Only need to copy methodsList.txt when CVM_AOT is true and
+# CVM_MTASK is false.
+ifeq ($(findstring falsetrue,$(CVM_MTASK)$(CVM_AOT)), falsetrue)
+aotdeps:
+	$(AT)if [ -s $(CVM_SHAREROOT)/lib/profiles/$(J2ME_CLASSLIB)/methodsList.txt ]; then	\
+		rm -rf $(CVM_LIBDIR)/methodsList.txt;	\
+		cp $(CVM_SHAREROOT)/lib/profiles/$(J2ME_CLASSLIB)/methodsList.txt $(CVM_LIBDIR);	\
+	fi
+	$(AT)rm -rf $(CVM_LIBDIR)/cvm.aot
+else
+ifeq ($(CVM_AOT), true)
+aotdeps:
+	$(AT)rm -rf $(CVM_LIBDIR)/cvm.aot
+else
+aotdeps:
+endif
 endif
 
 #####################################
@@ -747,8 +842,8 @@ $(CVM_PROPS_BUILD): $(CVM_PROPS_SRC)
 	 if [ -z "$$provs" ]; then \
 	     provs="sun.security.provider.Sun" ; \
 	 fi ; \
-         awk -F= 'BEGIN { count = 1; } \
-	     NR == 1 { \
+	 awk -F= 'BEGIN { count = 1; } \
+	    NR == 1 { \
 		 includeCount = split( includedProviders, included, " " ); \
 	     } \
 	     /^security.provider.[0-9]*/ { \
@@ -774,13 +869,71 @@ $(CVM_POLICY_BUILD): $(CVM_POLICY_SRC)
 # Rule for building binary bundle
 ################################################
 
+#
+# To build the binary bundle, just add the "bin" target to your make command.
+# You will also need to set some of the following options:
+#
+# - JAVAME_LEGAL_DIR: directory containing legal documents. If not set,
+#	the makefiles will automatically do an svn checkout of the files
+#	from the respository. This will result in a password prompt if you
+# 	haven't already authenticated with the repository.
+# - BINARY_BUNDLE_NAME: name of the binary bundle, excluding .zip
+#	extension.
+# - BINARY_BUNDLE_DIRNAME: directory name the binary bundle will unzip
+# 	into. Defaults to $(BINARY_BUNDLE_NAME).
+# - BINARY_BUNDLE_APPEND_REVISION: Defaults to true. Appends the repository
+#	revision number to the end of BINARY_BUNDLE_NAME and 
+#	BINARY_BUNDLE_DIRNAME
+#
+
+# Make sure the "legal" directory is available if set.
+ifneq ($(JAVAME_LEGAL_DIR),,)
+ifneq ($(JAVAME_LEGAL_DIR),$(wildcard $(JAVAME_LEGAL_DIR)))
+$(error JAVAME_LEGAL_DIR must be set to "legal" directory. The respository can be found at https://phoneme.dev.java.net/svn/phoneme/legal.)
+endif
+endif
+
+# Patterns that we want to bundle. BINARY_BUNDLE_PATTERNS can be appended
+# to from other component makefiles if necssary.
+BINARY_BUNDLE_PATTERNS += \
+	$(CVM_BINDIR)/* \
+	$(CVM_LIBDIR)/* \
+	$(CVM_DEMO_CLASSESJAR) \
+	$(CVM_TEST_CLASSESZIP) \
+	$(CVM_BUILD_TOP)/legal
+
+# Replace $(CVM_BUILD_TOP) with $(BINARY_BUNDLE_NAME)
+BINARY_BUNDLE_PATTERNS := \
+	$(patsubst $(CVM_BUILD_TOP)%,$(BINARY_BUNDLE_DIRNAME)%,$(BINARY_BUNDLE_PATTERNS))
+
 .PHONY : bin
 bin: all
 	@echo ">>>Making binary bundle ..."
-	@mkdir -p $(INSTALLDIR)
-	@echo "$(BINARY_BUNDLE)"
-	tar -cvzf $(BINARY_BUNDLE) \
-		bin/* lib/* democlasses.jar testclasses.zip btclasses.zip
+	@echo "	BINARY_BUNDLE_APPEND_REVISION = $(BINARY_BUNDLE_APPEND_REVISION)"
+	@echo "	BINARY_BUNDLE_NAME	= $(BINARY_BUNDLE_NAME)"
+	@echo "	BINARY_BUNDLE_DIRNAME	= $(BINARY_BUNDLE_DIRNAME)"
+	@echo "	JAVAME_LEGAL_DIR	= $(JAVAME_LEGAL_DIR)"
+	@echo "	JAVAME_LEGAL_REPOSITORY = $(JAVAME_LEGAL_REPOSITORY)"
+
+	$(AT)mkdir -p $(INSTALLDIR)
+	$(AT)rm -rf $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
+	$(AT)mkdir -p $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
+	$(AT)ln -ns $(CVM_BUILD_TOP)/* $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
+	$(AT)rm -rf $(INSTALLDIR)/$(BINARY_BUNDLE_NAME).zip
+
+ifneq ($(JAVAME_LEGAL_DIR),)
+	$(AT)ln -ns $(JAVAME_LEGAL_DIR) $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
+else
+	svn checkout $(JAVAME_LEGAL_REPOSITORY) $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)/legal
+endif
+
+	$(AT)cp $(CVM_BUILDTIME_CLASSESZIP) $(CVM_LIBDIR)/
+
+	$(AT)(cd $(INSTALLDIR); \
+	 $(ZIP) -r -q - $(BINARY_BUNDLE_PATTERNS) -x */.svn/*) \
+		> $(INSTALLDIR)/$(BINARY_BUNDLE_NAME).zip;
+	$(AT)rm -rf $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
+	@echo "<<<Finished binary bundle" ;
 
 ################################################
 # Include target makfiles last
@@ -881,3 +1034,4 @@ $(BUILDFLAGS_JAVA):
 	$(AT) rm .BuildFlags.java
 
 endif
+

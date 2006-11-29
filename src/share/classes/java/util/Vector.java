@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)Vector.java	1.84 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package java.util;
@@ -231,25 +236,29 @@ public class Vector extends AbstractList
      *
      * @see java.util.Vector#ensureCapacity(int)
      */ 
-    private native void ensureCapacityHelper(int minCapacity);
+    //private native void ensureCapacityHelper(int minCapacity);
 
-    /*
-     * The original Java version
-     *
-     *private void ensureCapacityHelper(int minCapacity) {
-     *	int oldCapacity = elementData.length;
-     *	if (minCapacity > oldCapacity) {
-     *	    Object oldData[] = elementData;
-     *	    int newCapacity = (capacityIncrement > 0) ?
-     *		(oldCapacity + capacityIncrement) : (oldCapacity * 2);
-     *	    if (newCapacity < minCapacity) {
-     * 		newCapacity = minCapacity;
-     *	    }
-     *	    elementData = new Object[newCapacity];
-     *	    System.arraycopy(oldData, 0, elementData, 0, elementCount);
-     *	}
-     *}
-     */
+    private void ensureCapacityHelper(int minCapacity) {
+     	int oldCapacity = elementData.length;
+     	if (minCapacity > oldCapacity) {
+     	    Object oldData[] = elementData;
+     	    int newCapacity = (capacityIncrement > 0) ?
+     		(oldCapacity + capacityIncrement) : (oldCapacity * 2);
+    	    if (newCapacity < minCapacity) {
+      		newCapacity = minCapacity;
+     	    }
+     	    elementData = new Object[newCapacity];
+	    /* Since we will be calling CVM.copyObjectArray, we need to do
+	     * some extra bounds checks to maintain the behavior of
+	     * System.arraycopy(). Vector overrides may break assumptions
+	     * about possible values in elementCount.
+	     */
+	    if (elementCount < 0 || oldCapacity < elementCount) {
+		throw new ArrayIndexOutOfBoundsException();
+	    }
+     	    CVM.copyObjectArray(oldData, 0, elementData, 0, elementCount);
+     	}
+    }
 
     /**
      * Sets the size of this vector. If the new size is greater than the 
@@ -283,6 +292,26 @@ public class Vector extends AbstractList
 	return elementData.length;
     }
 
+    private int capacitySimpleSync() {
+	if (CVM.simpleLockGrab(this)) {
+	    Object[] data = elementData;
+	    int result;
+	    boolean gotResult;
+	    if (data != null) {
+		result = data.length;
+		gotResult = true;
+	    } else {
+		result = 0;
+		gotResult = false;
+	    }
+	    CVM.simpleLockRelease(this);
+	    if (gotResult) {
+		return result;
+	    }
+	}
+	return capacity();
+    }
+
     /**
      * Returns the number of components in this vector.
      *
@@ -290,6 +319,15 @@ public class Vector extends AbstractList
      */
     public synchronized int size() {
 	return elementCount;
+    }
+
+    private int sizeSimpleSync() {
+	if (CVM.simpleLockGrab(this)) {
+	    int result = elementCount;
+	    CVM.simpleLockRelease(this);
+	    return result;
+	}
+	return size();
     }
 
     /**
@@ -301,6 +339,15 @@ public class Vector extends AbstractList
      */
     public synchronized boolean isEmpty() {
 	return elementCount == 0;
+    }
+
+    private boolean isEmptySimpleSync() {
+	if (CVM.simpleLockGrab(this)) {
+	    boolean result = (elementCount == 0);
+	    CVM.simpleLockRelease(this);
+	    return result;
+	}
+	return isEmpty();
     }
 
     /**
@@ -328,6 +375,28 @@ public class Vector extends AbstractList
 		    }
 		}
 		throw new NoSuchElementException("Vector Enumeration");
+	    }
+
+	    private Object nextElementSimpleSync() {
+		if (CVM.simpleLockGrab(this)) {
+		    Object[] data = elementData;
+		    Object result;
+		    boolean gotResult;
+		    if (data != null && count >= 0 &&
+			count < data.length && count < elementCount)
+		    {
+			result = data[count++];
+			gotResult = true;
+		    } else {
+			result = null;
+			gotResult = false;
+		    }
+		    CVM.simpleLockRelease(this);
+		    if (gotResult) {
+			return result;
+		    }
+		} 
+		return nextElement();
 	    }
 	};
     }
@@ -457,7 +526,9 @@ public class Vector extends AbstractList
         return elementData[index];
     }
 
-    /* public native synchronized Object elementAt(int index); */
+    private Object elementAtSimpleSync(int index) {
+	return get0(index, true);
+    }
 
     /**
      * Returns the first component (the item at index <tt>0</tt>) of 
@@ -473,6 +544,10 @@ public class Vector extends AbstractList
 	return elementData[0];
     }
 
+    private Object firstElementSimpleSync() {
+	return get0(0, false);
+    }
+
     /**
      * Returns the last component of the vector.
      *
@@ -486,6 +561,28 @@ public class Vector extends AbstractList
 	}
 	return elementData[elementCount - 1];
     }
+
+    private Object lastElementSimpleSync() {
+ 	if (CVM.simpleLockGrab(this)) {
+	    Object[] data = elementData;
+	    Object result;
+	    boolean gotResult;
+	    if (data != null && 
+		elementCount <= data.length && elementCount > 0)
+	    {
+		result = data[elementCount - 1];
+		gotResult = true;
+	    } else {
+		result = null;
+		gotResult = false;
+	    }
+	    CVM.simpleLockRelease(this);
+	    if (gotResult) {
+		return result;
+	    }
+	}
+	return lastElement();
+   }
 
     /**
      * Sets the component at the specified <code>index</code> of this 
@@ -514,6 +611,10 @@ public class Vector extends AbstractList
 						     elementCount);
 	}
 	elementData[index] = obj;
+    }
+
+    private void setElementAtSimpleSync(Object obj, int index) {
+	set0(index, obj);
     }
 
     /**
@@ -584,9 +685,15 @@ public class Vector extends AbstractList
 	} else if (index < 0) {
 	    throw new ArrayIndexOutOfBoundsException(index);
 	}
-	ensureCapacityHelper(elementCount + 1);
-        CVM.copyObjectArray(elementData, index,
+
+	if( (elementCount+1) > elementData.length) { /* IAI - 17 */
+	    ensureCapacityHelper(elementCount + 1);
+        }
+
+	if(elementCount != index) { /* IAI - 17 */
+            CVM.copyObjectArray(elementData, index,
                             elementData, index + 1, elementCount - index);
+        }
 	elementData[index] = obj;
 	elementCount++;
     }
@@ -603,17 +710,35 @@ public class Vector extends AbstractList
      * @see	   #add(Object)
      * @see	   List
      */
-    public native synchronized void addElement(Object obj);
+    public synchronized void addElement(Object obj) {
+     	modCount++;
+     	if (elementCount >= elementData.length) {
+	    ensureCapacityHelper(elementCount + 1);
+	}
+	elementData[elementCount++] = obj;
+    }
 
-    /*
-     * The original Java version
-     *
-     *public synchronized void addElement(Object obj) {
-     *	modCount++;
-     *	ensureCapacityHelper(elementCount + 1);
-     *	elementData[elementCount++] = obj;
-     *}
-     */
+    private void addElementSimpleSync(Object obj) {
+	if (CVM.simpleLockGrab(this)) {
+	    Object[] data = elementData;
+	    boolean done;
+	    if (data != null &&
+		(elementCount > 0) && (elementCount < data.length))
+	    {
+		modCount++;
+		data[elementCount++] = obj;
+		done = true;
+	    } else {
+		done = false;
+	    }
+	    CVM.simpleLockRelease(this);
+	    if (done) {
+		return;
+	    }
+	}
+	addElement(obj);
+	return;
+     } 
 
     /**
      * Removes the first (lowest-indexed) occurrence of the argument 
@@ -741,8 +866,45 @@ public class Vector extends AbstractList
      */
     public synchronized Object get(int index) {
 	if (index >= elementCount)
-	    throw new ArrayIndexOutOfBoundsException(index);
+	    throw new ArrayIndexOutOfBoundsException(index + " >= " +
+						     elementCount);
 
+	return elementData[index];
+    }
+
+    private Object getSimpleSync(int index) {
+	return get0(index, true);
+    }
+
+    private Object get0(int index, boolean throwOOB) {
+	if (CVM.simpleLockGrab(this)) {
+	    Object[] data = elementData;
+	    Object result;
+	    boolean gotResult;
+	    if (data != null && 
+		index >= 0 && index < data.length && index < elementCount)
+	    {
+		result = data[index];
+		gotResult = true;
+	    } else {
+		result = null;
+		gotResult = false;
+	    }
+	    CVM.simpleLockRelease(this);
+	    if (gotResult) {
+		return result;
+	    }
+	}
+	return get1(index, throwOOB);
+    }
+
+    private synchronized Object get1(int index, boolean throwOOB) {
+	if (throwOOB && index >= elementCount) {
+	    throw new ArrayIndexOutOfBoundsException(index + " >= " + 
+						     elementCount);
+	} else if (!throwOOB && elementCount == 0) {
+	    throw new NoSuchElementException();
+	}
 	return elementData[index];
     }
 
@@ -759,7 +921,45 @@ public class Vector extends AbstractList
      */
     public synchronized Object set(int index, Object element) {
 	if (index >= elementCount)
-	    throw new ArrayIndexOutOfBoundsException(index);
+	    throw new ArrayIndexOutOfBoundsException(index + " >= " +
+						     elementCount);
+
+	Object oldValue = elementData[index];
+	elementData[index] = element;
+	return oldValue;
+    }
+
+    private Object setSimpleSync(int index, Object element) {
+	return set0(index, element);
+    }
+
+    private Object set0(int index, Object element) {
+	if (CVM.simpleLockGrab(this)) {
+	    Object[] data = elementData;
+	    Object oldValue;
+	    boolean done;
+	    if (data != null && 
+		index >= 0 && index < data.length && index < elementCount)
+	    {
+		oldValue = data[index];
+		data[index] = element;
+		done = true;
+	    } else {
+		oldValue = null;
+		done = false;
+	    }
+	    CVM.simpleLockRelease(this);
+	    if (done) {
+		return oldValue;
+	    }
+	}
+	return set1(index, element);
+    }
+
+    private synchronized Object set1(int index, Object element) {
+	if (index >= elementCount)
+	    throw new ArrayIndexOutOfBoundsException(index + " >= " +
+						     elementCount);
 
 	Object oldValue = elementData[index];
 	elementData[index] = element;
@@ -775,7 +975,10 @@ public class Vector extends AbstractList
      */
     public synchronized boolean add(Object o) {
 	modCount++;
-	ensureCapacityHelper(elementCount + 1);
+
+	if((elementCount+1) > elementData.length) { /* IAI - 17*/
+	    ensureCapacityHelper(elementCount + 1);
+        }
 	elementData[elementCount++] = o;
         return true;
     }
@@ -881,7 +1084,10 @@ public class Vector extends AbstractList
 	modCount++;
         Object[] a = c.toArray();
         int numNew = a.length;
-	ensureCapacityHelper(elementCount + numNew);
+  
+	if((elementCount+numNew) > elementData.length) { /* IAI - 17*/  	
+	    ensureCapacityHelper(elementCount + numNew);
+        }
         CVM.copyObjectArray(a, 0, elementData, elementCount, numNew);
         elementCount += numNew;
 	return numNew != 0;
@@ -946,7 +1152,10 @@ public class Vector extends AbstractList
             CVM.copyObjectArray(elementData, index,
                                 elementData, index + numNew, numMoved);
         }
-        CVM.copyObjectArray(a, 0, elementData, index, numNew);
+
+	if(numNew != 0) { /* IAI - 17 */
+            CVM.copyObjectArray(a, 0, elementData, index, numNew);
+        }
 	elementCount += numNew;
 	return numNew != 0;
     }

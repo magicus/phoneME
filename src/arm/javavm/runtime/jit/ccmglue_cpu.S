@@ -1,25 +1,27 @@
 /*
- * Portions Copyright 2000-2006 Sun Microsystems, Inc. All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License version 2 for more details (a copy is included at
- * /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public
- * License version 2 along with this work; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ccmglue_cpu.S	1.41 06/10/29
+ *
+ * Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
  */
 
 /*
@@ -36,6 +38,7 @@
 #include "javavm/include/jit/jitasmmacros_cpu.h"
 #include "javavm/include/jit/jitasmconstants.h"
 #include "javavm/include/porting/jit/jit.h"
+#include "javavm/include/sync.h"
 
 	SET_SECTION_EXEC(ccmglue_cpu)
 
@@ -43,10 +46,17 @@
  * Make a pc-relative branch instruction. Used for patching and instruction
  * to jump around generated code.
  */	
+#ifdef __RVCT__
+#define MAKE_BRANCH(offset)					\
+    ((14 << 28) :OR:			 /* COND_AL */		\
+     (5 << 25) :OR:			 /* branch opcode */	\
+     (((offset - 8) >> 2) & 0x00ffffff)) /* branch offset */ 
+#else
 #define MAKE_BRANCH(offset)					\
     ((14 << 28) |			 /* COND_AL */		\
      (5 << 25) |			 /* branch opcode */	\
      (((offset - 8) >> 2) & 0x00ffffff)) /* branch offset */ 
+#endif
 
 /*
  * Macro for calling a helper. Sets up the ccee and ee as first two
@@ -63,6 +73,7 @@
 #else
 	MACRO
 	CALL_HELPER_AND_PASS_EE0 $HELPER
+	IMPORT $HELPER
 	mov	a1,  sp
 	ldr	a2,  [sp,  #OFFSET_CVMCCExecEnv_ee]
         str	lr,  [JFP, #OFFSET_CVMCompiledFrame_PC]
@@ -90,6 +101,7 @@
 #else
 	MACRO
 	CALL_HELPER_AND_PASS_CACHE_ADDR0 $HELPER
+	IMPORT $HELPER
 	ldr	a1,  [sp,  #OFFSET_CVMCCExecEnv_ee]
         str	lr,  [JFP, #OFFSET_CVMCompiledFrame_PC]
         str     JFP, [a1, #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame]
@@ -120,22 +132,37 @@ ENTRY1 ( CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue )
 
 	ENTRY ( CVMCCMruntimeThrowNullPointerExceptionGlue )
 ENTRY1 ( CVMCCMruntimeThrowNullPointerExceptionGlue )
+	IMPORT(java_lang_NullPointerException_Classblock)
 	FIXUP_FRAMES(JFP, {lr}, 1)
 	ldr	a3, =java_lang_NullPointerException_Classblock
 	mov	a4, #0  /* exception message */
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeThrowClass)
+	SET_SIZE(CVMCCMruntimeThrowNullPointerExceptionGlue)
+
 	ENTRY ( CVMCCMruntimeThrowArrayIndexOutOfBoundsExceptionGlue )
 ENTRY1 ( CVMCCMruntimeThrowArrayIndexOutOfBoundsExceptionGlue )
+	IMPORT(java_lang_ArrayIndexOutOfBoundsException_Classblock)
 	FIXUP_FRAMES(JFP, {lr}, 1)
+#ifdef ARMASM_LONG_SYMBOL_NAME_BUG
+        ldr	a3, L1
+#else
 	ldr	a3, =java_lang_ArrayIndexOutOfBoundsException_Classblock
+#endif
 	mov	a4, #0  /* exception message */
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeThrowClass)
+	SET_SIZE(CVMCCMruntimeThrowArrayIndexOutOfBoundsExceptionGlue)
+#ifdef ARMASM_LONG_SYMBOL_NAME_BUG
+L1	DCD	java_lang_ArrayIndexOutOfBoundsException_Classblock
+#endif
+
 	ENTRY ( CVMCCMruntimeThrowDivideByZeroGlue )
 ENTRY1 ( CVMCCMruntimeThrowDivideByZeroGlue )
+	IMPORT(java_lang_ArithmeticException_Classblock)
 	FIXUP_FRAMES(JFP, {lr}, 1)
 	ldr	a3, =java_lang_ArithmeticException_Classblock
 	ldr	a4, =divideByZeroString /*exception message */
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeThrowClass)
+	SET_SIZE(CVMCCMruntimeThrowDivideByZeroGlue)
 
 /* Throw an object */
 	ENTRY ( CVMCCMruntimeThrowObjectGlue )
@@ -175,6 +202,23 @@ ENTRY1 ( CVMCCMruntimeCheckCastGlue )
 #ifndef IAI_CACHEDCONSTANT 
 	sub	a4,  lr, #4	/* load guess cb address */
 #endif
+
+/* IAI - 21 */
+#if defined(IAI_FAST_ASSIGNABLE_CHECKING) && !defined(CVM_AOT)
+	/* Fast runtime check cast. 
+	 * Compare the cast cb with current object's class, super class, 
+         * super'super class ...  till to the super class is NULL.
+         */
+ 	mov 	a1, a2   /* a1 = object.cb */
+
+FASTCHECKING1:
+	cmp   	a3, a1      /* cast cb ?= object.cb */
+	streq  	a2, [a4]   /* save the matched cb into cache */
+	moveq  	pc, lr    /* match, so return */
+       	ldr   	a1, [a1, #OFFSET_CVMClassBlock_superClassCb]   /* load super class*/
+       	cmp   	a1,  #0      /* Object class? no super class */
+       	bne   	FASTCHECKING1
+#endif /* IAI_FAST_ASSIGNABLE_CHECKING */
 
 	/* need to call the helper
 	 * a2 = objectCb 
@@ -220,6 +264,25 @@ ENTRY1 ( CVMCCMruntimeInstanceOfGlue )
 	sub	a4,  lr, #4	/* load guess cb address */
 #endif
 
+/* IAI - 21 */
+#if defined(IAI_FAST_ASSIGNABLE_CHECKING) && !defined(CVM_AOT)
+        /* Fast runtime instanceOf Test. 
+         *  Compare the cast cb with current object's class, super class, 
+         *  super'super class ...  till to the super class is NULL.
+         */
+
+        mov 	a1, a2      /* a1 = object.cb */
+
+FASTCHECKING2:
+        cmp    	a3, a1       /* cast cb ?= object.cb */
+        streq  	a2, [a4]    /* save the matched cb into cache */
+        moveq  	a1, #1
+        moveq  	pc, lr     /* match, so return */
+        ldr    	a1, [a1, #OFFSET_CVMClassBlock_superClassCb]   /* load super class*/
+       	cmp    	a1,  #0     /* Object class? no super class */
+       	bne    	FASTCHECKING2
+#endif  /* IAI_FAST_ASSIGNABLE_CHECKING */
+
 	/* need to call the helper 
 	 * a2 = objectCb 
 	 * a3 = instanceCb 
@@ -238,6 +301,7 @@ ENTRY1 ( CVMCCMruntimeCheckArrayAssignableGlue )
 	ldr	a3, [a3, #OFFSET_CVMArrayInfo_elementCb]   /* arrayInfo->elemCb*/
 	cmp	a3, a4		/* check if elemClass(arr) == class(rhs) */
 	moveq	pc, lr
+	IMPORT(java_lang_Object_Classblock)
 	ldr	a1, =java_lang_Object_Classblock
 	cmp	a3, a1		/* check if elemClass(arr) == Object */
 	moveq	pc, lr
@@ -277,6 +341,24 @@ ENTRY1 ( CVMCCMruntimeRunClassInitializerGlue )
 	 * a branch around the call to the helper. The ldr may be the
 	 * first instruction of a block, which means we may also try to
 	 * patch it when doing a gc-rendezvous. */
+
+#ifdef CVM_AOT
+	/* We don't want to patch pre-compiled code through. */
+	IMPORT(CVMJITcodeCacheAOTEnd)
+	IMPORT(CVMJITcodeCacheAOTStart)
+	ldr	a2, =CVMJITcodeCacheAOTEnd
+	ldr	a2, [a2]
+	ldr	a2, [a2]
+	cmp	lr, a2
+	bcs	doPatch
+	ldr	a2,  =CVMJITcodeCacheAOTStart
+	ldr	a2, [a2]
+	ldr	a2, [a2]
+	cmp	lr, a2
+	movcs	pc, lr
+#endif
+
+LABEL(doPatch)	
 	ldr	a2,  =0xe1a00000   /* get the patch, a nop instruction */
 	str	a2,  [lr, #-4]     /* apply the patch */
 	/* flush the patched instruction */
@@ -333,55 +415,40 @@ ENTRY1 ( CVMCCMruntimeResolveGlue )
 	/* return to compiled code */
         ldr	pc,  [JFP, #OFFSET_CVMCompiledFrame_PC]
 	
-	ENTRY ( CVMCCMruntimeResolveNewClassBlockAndClinitGlue )
-ENTRY1 ( CVMCCMruntimeResolveNewClassBlockAndClinitGlue )
-	ldr	ip, =CVMCCMruntimeResolveNewClassBlockAndClinit
-	b	CVMCCMruntimeResolveGlue
+#ifdef __RVCT__
+	MACRO
+	res_entry $x
+	ENTRY($x.Glue)
+	IMPORT  $x
+	ldr     ip, =$x
+	b       CVMCCMruntimeResolveGlue
+	SET_SIZE($x.Glue)
+	MEND
+#define RES_ENTRY(x) res_entry x
+#else
+#ifdef __STDC__
+#define CONCAT(x,y) x##y
+#else
+#define CONCAT(x,y) x/**/y
+#endif
+#define RES_ENTRY(x) 						\
+	ENTRY(CONCAT(x,Glue));					\
+	IMPORT(CVMCCMruntimeResolveNewClassBlockAndClinit);	\
+	ldr	ip, =x;						\
+	b	CVMCCMruntimeResolveGlue;			\
+	SET_SIZE(CONCAT(x,Glue))
+#endif
 
-	ENTRY ( CVMCCMruntimeResolveGetstaticFieldBlockAndClinitGlue )
-ENTRY1 ( CVMCCMruntimeResolveGetstaticFieldBlockAndClinitGlue )
-	ldr	ip, =CVMCCMruntimeResolveGetstaticFieldBlockAndClinit
-	b	CVMCCMruntimeResolveGlue
-
-	ENTRY ( CVMCCMruntimeResolvePutstaticFieldBlockAndClinitGlue )
-ENTRY1 ( CVMCCMruntimeResolvePutstaticFieldBlockAndClinitGlue )
-	ldr	ip, =CVMCCMruntimeResolvePutstaticFieldBlockAndClinit
-	b	CVMCCMruntimeResolveGlue
-
-	ENTRY ( CVMCCMruntimeResolveStaticMethodBlockAndClinitGlue )
-ENTRY1 ( CVMCCMruntimeResolveStaticMethodBlockAndClinitGlue )
-	ldr	ip, =CVMCCMruntimeResolveStaticMethodBlockAndClinit
-	b	CVMCCMruntimeResolveGlue
-
-	ENTRY ( CVMCCMruntimeResolveClassBlockGlue )
-ENTRY1 ( CVMCCMruntimeResolveClassBlockGlue )
-	ldr	ip, =CVMCCMruntimeResolveClassBlock
-	b	CVMCCMruntimeResolveGlue
-
-	ENTRY ( CVMCCMruntimeResolveArrayClassBlockGlue )
-ENTRY1 ( CVMCCMruntimeResolveArrayClassBlockGlue )
-	ldr	ip, =CVMCCMruntimeResolveArrayClassBlock
-	b	CVMCCMruntimeResolveGlue
-
-	ENTRY ( CVMCCMruntimeResolveGetfieldFieldOffsetGlue )
-ENTRY1 ( CVMCCMruntimeResolveGetfieldFieldOffsetGlue )
-	ldr	ip, =CVMCCMruntimeResolveGetfieldFieldOffset
-	b	CVMCCMruntimeResolveGlue
-
-	ENTRY ( CVMCCMruntimeResolvePutfieldFieldOffsetGlue )
-ENTRY1 ( CVMCCMruntimeResolvePutfieldFieldOffsetGlue )
-	ldr	ip, =CVMCCMruntimeResolvePutfieldFieldOffset
-	b	CVMCCMruntimeResolveGlue
-
-	ENTRY ( CVMCCMruntimeResolveSpecialMethodBlockGlue )
-ENTRY1 ( CVMCCMruntimeResolveSpecialMethodBlockGlue )
-	ldr	ip, =CVMCCMruntimeResolveSpecialMethodBlock
-	b	CVMCCMruntimeResolveGlue
-
-	ENTRY ( CVMCCMruntimeResolveMethodBlockGlue )
-ENTRY1 ( CVMCCMruntimeResolveMethodBlockGlue )
-	ldr	ip, =CVMCCMruntimeResolveMethodBlock
-	b	CVMCCMruntimeResolveGlue
+	RES_ENTRY(CVMCCMruntimeResolveNewClassBlockAndClinit)
+	RES_ENTRY(CVMCCMruntimeResolveGetstaticFieldBlockAndClinit)
+	RES_ENTRY(CVMCCMruntimeResolvePutstaticFieldBlockAndClinit)
+	RES_ENTRY(CVMCCMruntimeResolveStaticMethodBlockAndClinit)
+	RES_ENTRY(CVMCCMruntimeResolveClassBlock)
+	RES_ENTRY(CVMCCMruntimeResolveArrayClassBlock)
+	RES_ENTRY(CVMCCMruntimeResolveGetfieldFieldOffset)
+	RES_ENTRY(CVMCCMruntimeResolvePutfieldFieldOffset)
+	RES_ENTRY(CVMCCMruntimeResolveSpecialMethodBlock)
+	RES_ENTRY(CVMCCMruntimeResolveMethodBlock)
 
 /*
  * Resolve a vtable offset. The protocol here is slight
@@ -405,6 +472,7 @@ ENTRY1 ( CVMCCMruntimeResolveMethodBlockGlue )
  */
 	ENTRY ( CVMCCMruntimeResolveMethodTableOffsetGlue )
 ENTRY1 ( CVMCCMruntimeResolveMethodTableOffsetGlue )
+	IMPORT(CVMCCMruntimeResolveMethodTableOffset)
         /* a3 = cpIndex */
 	/* lr = address of instruction following call */
 	ldr	ip, =CVMCCMruntimeResolveMethodTableOffset
@@ -549,6 +617,43 @@ LABEL(call_lookup_helper)
 #undef OCB
 #undef TARGET_METHODTABLE_INDICES
 
+/* support for fastlocking with C sync helpers */
+#if defined(CVM_JIT_CCM_USE_C_HELPER) || defined(CVM_JIT_CCM_USE_C_SYNC_HELPER)
+
+/*
+ * Entry point for monitorenter.
+ */
+	ENTRY ( CVMCCMruntimeMonitorEnterGlue )
+ENTRY1 ( CVMCCMruntimeMonitorEnterGlue )
+        /* Arguments: 
+         *       r2 = a3 = 'obj' 
+	 *
+         * Also incoming: 
+         *       r4 = v1 = jfp 
+         *       r5 = v2 = jsp 
+         *       sp = ccee 
+	 */
+        CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
+
+/*
+ * Entry point for monitorexit.
+ */
+	ENTRY ( CVMCCMruntimeMonitorExitGlue )
+ENTRY1 ( CVMCCMruntimeMonitorExitGlue )
+        /* Arguments: 
+         *       r2 = a3 = 'obj' 
+	 *
+         * Also incoming: 
+         *       r4 = v1 = jfp 
+         *       r5 = v2 = jsp 
+         *       sp = ccee 
+	 */
+	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
+
+/* Support for fastlocking with swap/spinlock based microlocks */
+#elif CVM_FASTLOCK_TYPE == CVM_FASTLOCK_MICROLOCK && \
+    CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK
+
 /*
  * Entry point for monitorenter.
  */
@@ -564,10 +669,6 @@ ENTRY1 ( CVMCCMruntimeMonitorEnterGlue )
          *       sp = ccee 
 	 */
 
-#ifdef CVM_JIT_CCM_USE_C_HELPER
-        CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
-
-#else
         /* Do fastTryLock(): */
 
         /*
@@ -580,8 +681,6 @@ ENTRY1 ( CVMCCMruntimeMonitorEnterGlue )
            r12 = lockrec
         */
 
-#define CVM_MICROLOCK_LOCKED    0xff
-#define CVM_MICROLOCK_UNLOCKED  0x00
 #define EE          r1
 #define OBJ         r2
 #define OBITS       r3
@@ -714,15 +813,11 @@ LABEL(_monenterRecordNotAvailable)
         str     JFP, [a2, #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame]
         BRANCH_TO_VM_FUNCTION(CVMCCMruntimeMonitorEnter)
 
-#undef CVM_MICROLOCK_LOCKED
-#undef CVM_MICROLOCK_UNLOCKED
 #undef EE
 #undef OBJ
 #undef OBITS
 #undef MICROLOCK
 #undef LOCKREC
-
-#endif
 
 /*
  * Entry point for monitorexit.
@@ -739,9 +834,6 @@ ENTRY1 ( CVMCCMruntimeMonitorExitGlue )
          *       sp = ccee 
 	 */
 
-#ifdef CVM_JIT_CCM_USE_C_HELPER
-	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
-#else
         /* Do fastTryUnlock(): */
 
         /*
@@ -754,8 +846,6 @@ ENTRY1 ( CVMCCMruntimeMonitorExitGlue )
            r12 = lockrec
         */
 
-#define CVM_MICROLOCK_LOCKED    0xff
-#define CVM_MICROLOCK_UNLOCKED  0x00
 #define EE          r1
 #define OBJ         r2
 #define MICROLOCK   r0
@@ -896,14 +986,409 @@ LABEL(_monexitFastTryUnlockFailed)
         str     JFP, [a2, #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame]
         BRANCH_TO_VM_FUNCTION(CVMCCMruntimeMonitorExit)
 
-#undef CVM_MICROLOCK_LOCKED
-#undef CVM_MICROLOCK_UNLOCKED
 #undef EE
 #undef OBJ
 #undef MICROLOCK
 #undef LOCKREC
 
-#endif /* CVM_JIT_CCM_USE_C_HELPER */
+/* We only support fastlocking with atomic ops */
+#elif CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
+
+/*
+ * Entry point for monitorenter.
+ */
+        LEAF_ENTRY CVMCCMruntimeMonitorEnterGlue
+
+        ;
+        ; Arguments:
+        ;       r2 = a3 = 'obj'
+        ;
+        ; Also incoming:
+        ;       r4 = v1 = jfp
+        ;       r5 = v2 = jsp
+        ;       sp = ccee
+        ;
+
+/* TODO: This monitorenter and monitorexit code has not undergone thorough
+   multi-threaded stress testing yet.  It needs to undergo stress testing
+   before release. */
+
+#if 0
+        ;
+        ; If you just want to call the C helper and write very little
+        ; assembler code, then just the following line is needed.
+        ;
+        CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
+
+#endif
+
+        /* Do fastTryLock(): */
+
+#define TEMP            r0
+#define EXPECTED_BITS   r1
+#define OBJ             r2
+#define EE              r3
+#define OWNEDREC        r12
+
+        ; Make sure that the object is not NULL:
+        ldr     EE, [sp, #OFFSET_CVMCCExecEnv_ee]
+        cmp     OBJ, #0
+        beq     CVMCCMruntimeThrowNullPointerExceptionGlue
+
+        /* Setup a lock record and assume the object has not been locked
+           yet: */
+        ; ownedRec = ee->objLocksFreeOwned:
+        ldr     OWNEDREC, [EE, #OFFSET_CVMExecEnv_objLocksFreeOwned]
+        cmp     OWNEDREC, #0
+        beq     _monenterRecordNotAvailable
+
+        ; ownedRec->object = obj:
+        str     OBJ, [OWNEDREC, #OFFSET_CVMOwnedMonitor_object]
+
+        ; ownedRec->count = 1:
+        mov     TEMP, #1        /* Initial lock re-entry count */
+        str     TEMP, [OWNEDREC, #OFFSET_CVMOwnedMonitor_count]
+
+#ifdef CVM_DEBUG
+        ; ownedRec->state = CONSTANT_CVM_OWNEDMON_OWNED:
+        mov     TEMP, #CONSTANT_CVM_OWNEDMON_OWNED
+        str     TEMP, [OWNEDREC, #OFFSET_CVMOwnedMonitor_state]
+#endif
+
+        ; NEW_BITS = (OWNEDREC) | CVM_LOCKSTATE_LOCKED:
+        ; Since the value of CVM_LOCKSTATE_LOCKED is 0 by design, this means
+        ; that NEW_BITS is essentially ownedRec.  Nothing need to be done to
+        ; initialize NEW_BITS.
+
+#define ACTUAL_BITS     r0
+#define NEW_BITS        OWNEDREC
+
+        ; obits = CVMhdrBitsPtr(obj->hdr.various32) | CVM_LOCKSTATE_UNLOCKED:
+        ldr     EXPECTED_BITS, [OBJ, #OFFSET_CVMObjectHeader_various32]
+        bic     EXPECTED_BITS, EXPECTED_BITS, #3 /* clear rightmost 2 bits */
+        orr     EXPECTED_BITS, EXPECTED_BITS, #CONSTANT_CVM_LOCKSTATE_UNLOCKED
+
+        ; ownedRec->u.fast.bits = obits:
+        str     EXPECTED_BITS, [OWNEDREC, #OFFSET_CVMOwnedMonitor_u_fast_bits]
+
+        ; Do atomicCompareAndSwap:
+        ; ACTUAL_BITS = [OBJ, #OFFSET_CVMObjectHeader_various32]
+        ; if ([OBJ, #OFFSET_CVMObjectHeader_various32] == EXPECTED_BITS) {
+        ;     [OBJ, #OFFSET_CVMObjectHeader_various32] = NEW_BITS
+        ; }
+
+        /* Save some values that we need later:
+           NOTE: We don't save EE and EXPECTED_BITS, because EE can always be
+           fetched from the CCEE, and EXPECTED_BITS was already saved in the
+           OWNEDREC.
+        */
+        str     OBJ, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
+        str     OWNEDREC, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4]
+        str     lr, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+8]
+
+        add     r0, OBJ, #OFFSET_CVMObjectHeader_various32
+        mov     r1, EXPECTED_BITS
+        mov     r2, NEW_BITS
+        CALL_VM_FUNCTION(InterlockedTestExchange)
+
+        /* Restore the needed values: */
+        ldr     OBJ, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
+        ldr     OWNEDREC, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4]
+        ldr     lr, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+8]
+        ldr     EXPECTED_BITS, [OWNEDREC, #OFFSET_CVMOwnedMonitor_u_fast_bits]
+        ldr     EE, [sp, #OFFSET_CVMCCExecEnv_ee] /* Restore EE. */
+
+        cmp     ACTUAL_BITS, EXPECTED_BITS      /* ACTUAL_BITS is in r0. */
+        bne     _monenterFastFailed             /* already locked */
+
+#undef NEW_BITS
+
+        /* Remove lockrec from the ee's free list: */
+        ; nextRec = ownedRec->next:
+        ldr     TEMP, [OWNEDREC, #OFFSET_CVMOwnedMonitor_next]
+        ; ee->objLocksFreeOwned = nextRec:
+        str     TEMP, [EE, #OFFSET_CVMExecEnv_objLocksFreeOwned]
+
+        /* Add the lockrec to the ee's owned list: */
+        ; nextRec = ee->objLocksOwned:
+        ldr     TEMP, [EE, #OFFSET_CVMExecEnv_objLocksOwned]
+        ; ownedRec->next = nextRec:
+        str     TEMP, [OWNEDREC, #OFFSET_CVMOwnedMonitor_next]
+        ; ee->objLocksOwned = lockrec:
+        str     OWNEDREC, [EE, #OFFSET_CVMExecEnv_objLocksOwned]
+
+        mov     pc, lr          /* Return to the caller */
+
+_monenterFastFailed
+#ifdef CVM_DEBUG
+        /* NOTE: EXPECTED_BITS is no longer needed here.  We can't use TEMP
+                 because TEMP is r0 which is currently needed to retain the
+                 value of ACTUAL_BITS. */
+#define TEMP2   EXPECTED_BITS
+        ; ownedRec->state = CONSTANT_CVM_OWNEDMON_FREE:
+        mov     TEMP2, #0
+        str     TEMP2, [OWNEDREC, #OFFSET_CVMOwnedMonitor_count]
+        mov     TEMP2, #CONSTANT_CVM_OWNEDMON_FREE
+        str     TEMP2, [OWNEDREC, #OFFSET_CVMOwnedMonitor_state]
+#undef TEMP2
+#endif
+
+        ; If object is not in LOCKED state, then fail:
+        tst     ACTUAL_BITS, #0x3 /* check for CVM_LOCKSTATE_LOCKED */
+        bne     _monenterFastRetryFailed
+
+        ; If not associated with an ownedRec, then fail:
+        bics    OWNEDREC, ACTUAL_BITS, #3
+        beq     _monenterFastReentryFailed
+
+#undef ACTUAL_BITS
+
+        ; If (ownedRec->owner != ee), then fail:
+        ldr     TEMP, [OWNEDREC, #OFFSET_CVMOwnedMonitor_owner]
+        cmp     TEMP, EE
+        bne     _monenterFastReentryFailed
+
+#define EXPECTED_CNT    EXPECTED_BITS
+#define ACTUAL_CNT      r0
+#define NEW_COUNT       r2
+
+        ; If we get here, then we are re-entering the lock:
+        ldr     EXPECTED_CNT, [OWNEDREC, #OFFSET_CVMOwnedMonitor_count]
+        cmp     EXPECTED_CNT, #CONSTANT_CVM_INVALID_REENTRY_COUNT
+        beq     _monenterFastReentryFailed
+
+        add     NEW_COUNT, EXPECTED_CNT, #1
+
+        /* Save some values that we need later:
+           NOTE: We only need OBJ, EXPECTED_CNT, and lr after this call.
+           OBJ and lr was already saved before the first call to
+           InterlockedTestExchange() and is invariant during that call.
+           Hence, we only need to save the EXPECTED_CNT.
+        */
+        str     EXPECTED_CNT, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4]
+
+        add     r0, OWNEDREC, #OFFSET_CVMOwnedMonitor_count
+        mov     r1, EXPECTED_CNT
+        ; r2 already contains NEW_CNT.
+
+        CALL_VM_FUNCTION(InterlockedTestExchange)
+
+        /* Restore the needed values: */
+        ldr     OBJ, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
+        ldr     EXPECTED_CNT, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4]
+        ldr     lr, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+8]
+
+        cmp     ACTUAL_CNT, EXPECTED_CNT        /* ACTUAL_CNT is in r0. */
+        bne     _monenterFastReentryFailed      /* Fail if not as expected. */
+
+#undef EXPECTED_CNT
+#undef ACTUAL_CNT
+#undef NEW_COUNT
+
+        ; If the old count is as expected, then we're successful:
+        mov     pc, lr  /* Return to the caller */
+
+_monenterFastRetryFailed
+_monenterFastReentryFailed
+_monenterRecordNotAvailable
+        /* Let C helper do the hard stuff: */
+        /* NOTE: It is expected that the OBJ pointer is already in r2. */
+        CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorEnter)
+
+#undef TEMP
+#undef EXPECTED_BITS
+#undef OBJ
+#undef EE
+#undef OWNEDREC
+
+	ENTRY_END
+
+/*
+ * Entry point for monitorexit.
+ */
+        ;
+        ; Arguments:
+        ;       r2 = a3 = 'obj'
+        ;
+        ; Also incoming:
+        ;       r4 = v1 = jfp
+        ;       r5 = v2 = jsp
+        ;       sp = ccee
+        ;
+
+        LEAF_ENTRY CVMCCMruntimeMonitorExitGlue
+
+#if 0
+        ;
+        ; If you just want to call the C helper and write very little
+        ; assembler code, then just the following line is needed.
+        ;
+        CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
+
+#endif
+
+        /* Do fastTryUnlock(): */
+
+#define TEMP            r0
+#define EXPECTED_CNT    r1
+#define OBJ             r2
+#define EE              r3
+#define OWNEDREC        r12
+
+        ; Make sure that the object is not NULL:
+        ldr     EE, [sp, #OFFSET_CVMCCExecEnv_ee]
+        cmp     OBJ, #0
+        beq     CVMCCMruntimeThrowNullPointerExceptionGlue
+
+        /* Check to see if the object is locked with a fastlock: */
+        ldr     OWNEDREC, [OBJ, #OFFSET_CVMObjectHeader_various32] /* obits */
+        tst     OWNEDREC, #0x3 /* (obits & 0x3) == CVM_LOCKSTATE_LOCKED? */
+        bne     _monexitFastTryUnlockFailed /* If not, we failed. */
+
+        /* If the LOCKREC is NULL, is is currently being inflated */
+        cmp     OWNEDREC, #0
+        beq     _monexitFastTryUnlockFailed
+
+        /* If we get here, then the object is locked with a fastlock: */
+
+        /* Make sure that the current thread owns the monitor: */
+        ldr     TEMP, [OWNEDREC, #OFFSET_CVMOwnedMonitor_owner]
+        cmp     TEMP, EE
+        bne     _monexitFastTryUnlockFailed	/* If not owner, we failed. */
+
+        /* If we get here, then the current thread does own the monitor,
+           and all is well.  Proceed with unlocking: */
+        ldr     EXPECTED_CNT, [OWNEDREC, #OFFSET_CVMOwnedMonitor_count]
+        cmp     EXPECTED_CNT, #CONSTANT_CVM_INVALID_REENTRY_COUNT
+        beq     _monexitFastTryUnlockFailed
+
+#define ACTUAL_CNT      r0
+#define NEW_COUNT       OBJ     /* r2 */
+
+        str     OBJ, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
+        subs    NEW_COUNT, EXPECTED_CNT, #1
+        beq     _monexitDoUnlock	/* If zero, then unlock */
+
+        ; new monitor count > 0, so just update it and we're done:
+
+        str     lr, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+8]
+        add     r0, OWNEDREC, #OFFSET_CVMOwnedMonitor_count
+        str     EXPECTED_CNT, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4]
+        ; r1 already has EXPECTED_CNT.
+        ; r2 already has NEW_COUNT.
+
+        CALL_VM_FUNCTION(InterlockedTestExchange)
+
+        ldr     OBJ, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
+        ldr     EXPECTED_CNT, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4]
+        ldr     lr, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+8]
+
+        cmp     ACTUAL_CNT, EXPECTED_CNT        /* ACTUAL_CNT is in r0. */
+        bne     _monexitFastTryUnlockFailed     /* Go slow way. */
+
+#undef ACTUAL_CNT
+#undef NEW_COUNT
+
+        ; we're done! monitor count was successfully decrement:
+        mov     pc, lr  /* return to caller */
+
+_monexitDoUnlock
+#define ACTUAL_BITS     r0
+#define EXPECTED_BITS   OWNEDREC
+#define NEW_BITS        r2
+        /* If we get here, then the re-entry count has reached 0. */
+        ; Restore the obits to the object header:
+
+        ldr     OBJ, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
+        add     r0, OBJ, #OFFSET_CVMObjectHeader_various32
+        ; NEW_BITS is r2.
+        ldr     NEW_BITS, [OWNEDREC, #OFFSET_CVMOwnedMonitor_u_fast_bits]
+        mov     r1, EXPECTED_BITS
+
+        str     EXPECTED_BITS, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4]
+        str     lr, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+8]
+
+        CALL_VM_FUNCTION(InterlockedTestExchange)
+
+        /* NOTE: EXPECTED_BITS is defined to be OWNEDREC.  By restoring
+                 EXPECTED_BITS, we're also restoring OWNEDREC.
+        */
+        ldr     OBJ, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+0]
+        ldr     EXPECTED_BITS, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+4]
+        ldr     lr, [sp, #OFFSET_CVMCCExecEnv_ccmStorage+8]
+
+        cmp     ACTUAL_BITS, EXPECTED_BITS      /* ACTUAL_BITS is in r0. */
+        bne     _monexitFastTryUnlockFailed     /* Go slow way. */
+
+#undef ACTUAL_BITS
+#undef EXPECTED_BITS
+#undef NEW_BITS
+
+#ifdef CVM_DEBUG
+        ; Make the lockrec play nice with the debug assertions:
+        mov     TEMP, #CONSTANT_CVM_OWNEDMON_FREE
+        str     TEMP, [OWNEDREC, #OFFSET_CVMOwnedMonitor_state]
+        mov     TEMP, #0
+        str     TEMP, [OWNEDREC, #OFFSET_CVMOwnedMonitor_u_fast_bits]
+        str     TEMP, [OWNEDREC, #OFFSET_CVMOwnedMonitor_object]
+        str     TEMP, [OWNEDREC, #OFFSET_CVMOwnedMonitor_count]
+#endif
+
+        ldr     EE, [sp, #OFFSET_CVMCCExecEnv_ee]
+
+        ; Check if the lockrec is the first one on the thread's owned list:
+        ldr     TEMP, [EE, #OFFSET_CVMExecEnv_objLocksOwned]
+        cmp     TEMP, OWNEDREC
+        bne     _monexitFastTryUnlockFindPrevLockRecord
+
+        ; Remove the lockrec from the ee's owned list:
+        ldr     TEMP, [OWNEDREC, #OFFSET_CVMOwnedMonitor_next]
+        str     TEMP, [EE, #OFFSET_CVMExecEnv_objLocksOwned]
+
+_monexitFastTryUnlockAddLockRecordToFreeList
+        ; Add the lockrec to the ee's free list:
+        ldr     TEMP, [EE, #OFFSET_CVMExecEnv_objLocksFreeOwned]
+        str     TEMP, [OWNEDREC, #OFFSET_CVMOwnedMonitor_next]
+        str     OWNEDREC, [EE, #OFFSET_CVMExecEnv_objLocksFreeOwned]
+
+        mov     pc, lr  /* Return to the caller. */
+
+/* It is safe to reuse NBITS at this point */
+/* NOTE: PREV_REC must be defined to be TEMP because it depends on the value
+         that TEMP is set to above (as its initial value) before coming here.
+*/
+#define PREV_REC        TEMP
+#define TEMP2           EXPECTED_CNT
+_monexitFastTryUnlockFindPrevLockRecord
+        ldr     TEMP2, [PREV_REC, #OFFSET_CVMOwnedMonitor_next]
+        cmp     TEMP2, OWNEDREC
+        beq     _monexitFastTryUnlockFoundPrevLockRecord
+        mov     PREV_REC, TEMP2
+        b       _monexitFastTryUnlockFindPrevLockRecord
+
+_monexitFastTryUnlockFoundPrevLockRecord
+        ; Remove the lockrec from the ee's owned list:
+        ldr     TEMP2, [OWNEDREC, #OFFSET_CVMOwnedMonitor_next]
+        str     TEMP2, [PREV_REC, #OFFSET_CVMOwnedMonitor_next]
+        b       _monexitFastTryUnlockAddLockRecordToFreeList
+#undef PREV_REC
+#undef TEMP2
+
+_monexitFastTryUnlockFailed
+        /* Let C helper do the hard stuff: */
+        /* NOTE: It is expected that the OBJ pointer is already in r2. */
+        CALL_HELPER_AND_PASS_EE(CVMCCMruntimeMonitorExit)
+
+#undef TEMP
+#undef EXPECTED_CNT
+#undef OBJ
+#undef EE
+#undef OWNEDREC
+
+        ENTRY_END
+#else
+#error unsupported CVM_FASTLOCK_TYPE or CVM_MICROLOCK_TYPE
+#endif 
 
 LABEL(divideByZeroString)
 	STRING("/ by zero")

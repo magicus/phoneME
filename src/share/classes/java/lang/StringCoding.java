@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)StringCoding.java	1.9 02/04/09
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
 package java.lang;
@@ -46,6 +50,7 @@ import sun.io.ByteToCharConverter;
 import sun.io.CharToByteConverter;
 import sun.io.Converters;
 
+import sun.misc.CVM;
 
 /**
  * Utility class for string encoding and decoding.
@@ -79,7 +84,9 @@ class StringCoding {
 	if (len == ba.length)
 	    return ba;
 	byte[] tba = new byte[len];
-	System.arraycopy(ba, 0, tba, 0, len);
+/* IAI - 15 */
+	CVM.copyByteArray(ba, 0, tba, 0, len);
+/* IAI - 15 */
 	return tba;
     }
 
@@ -89,7 +96,9 @@ class StringCoding {
 	if (len == ca.length)
 	    return ca;
 	char[] tca = new char[len];
-	System.arraycopy(ca, 0, tca, 0, len);
+/* IAI - 15 */
+	CVM.copyCharArray(ca, 0, tca, 0, len);
+/* IAI - 15 */
 	return tca;
     }
 

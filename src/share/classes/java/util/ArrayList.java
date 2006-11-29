@@ -1,27 +1,33 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ArrayList.java	1.33 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package java.util;
 
+import sun.misc.CVM;
 /**
  * Resizable-array implementation of the <tt>List</tt> interface.  Implements
  * all optional list operations, and permits all elements, including
@@ -162,7 +168,9 @@ public class ArrayList extends AbstractList
 	if (size < oldCapacity) {
 	    Object oldData[] = elementData;
 	    elementData = new Object[size];
-	    System.arraycopy(oldData, 0, elementData, 0, size);
+/* IAI - 15 */
+	    CVM.copyObjectArray(oldData, 0, elementData, 0, size);
+/* IAI - 15 */
 	}
     }
 
@@ -182,7 +190,9 @@ public class ArrayList extends AbstractList
     	    if (newCapacity < minCapacity)
 		newCapacity = minCapacity;
 	    elementData = new Object[newCapacity];
-	    System.arraycopy(oldData, 0, elementData, 0, size);
+/* IAI - 15 */
+	    CVM.copyObjectArray(oldData, 0, elementData, 0, size);
+/* IAI - 15 */
 	}
     }
 
@@ -269,7 +279,9 @@ public class ArrayList extends AbstractList
 	try { 
 	    ArrayList v = (ArrayList)super.clone();
 	    v.elementData = new Object[size];
-	    System.arraycopy(elementData, 0, v.elementData, 0, size);
+/* IAI - 15 */
+	    CVM.copyObjectArray(elementData, 0, v.elementData, 0, size);
+/* IAI - 15 */
 	    v.modCount = 0;
 	    return v;
 	} catch (CloneNotSupportedException e) { 
@@ -387,8 +399,10 @@ public class ArrayList extends AbstractList
 		"Index: "+index+", Size: "+size);
 
 	ensureCapacity(size+1);  // Increments modCount!!
-	System.arraycopy(elementData, index, elementData, index + 1,
+/* IAI - 15 */
+	CVM.copyObjectArray(elementData, index, elementData, index + 1,
 			 size - index);
+/* IAI - 15 */
 	elementData[index] = element;
 	size++;
     }
@@ -449,7 +463,9 @@ public class ArrayList extends AbstractList
         Object[] a = c.toArray();
         int numNew = a.length;
 	ensureCapacity(size + numNew);  // Increments modCount
-        System.arraycopy(a, 0, elementData, size, numNew);
+/* IAI - 15 */
+        CVM.copyObjectArray(a, 0, elementData, size, numNew);
+/* IAI - 15 */
         size += numNew;
 	return numNew != 0;
     }
@@ -480,11 +496,14 @@ public class ArrayList extends AbstractList
 	ensureCapacity(size + numNew);  // Increments modCount
 
 	int numMoved = size - index;
-	if (numMoved > 0)
-	    System.arraycopy(elementData, index, elementData, index + numNew,
+	if (numMoved > 0) {
+/* IAI - 15 */
+	    CVM.copyObjectArray(elementData, index, elementData, index + numNew,
 			     numMoved);
+        }
 
-        System.arraycopy(a, 0, elementData, index, numNew);
+        CVM.copyObjectArray(a, 0, elementData, index, numNew);
+/* IAI - 15 */
 	size += numNew;
 	return numNew != 0;
     }

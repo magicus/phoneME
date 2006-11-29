@@ -1,22 +1,28 @@
-# Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
-# 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2 only,
-# as published by the Free Software Foundation.
-# 
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# version 2 for more details (a copy is included at /legal/license.txt).
-# 
-# You should have received a copy of the GNU General Public License version
-# 2 along with this work; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
-# 
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 or visit www.sun.com if you need additional information or have
-# any questions.
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+#   
+# This program is free software; you can redistribute it and/or  
+# modify it under the terms of the GNU General Public License version  
+# 2 only, as published by the Free Software Foundation.   
+#   
+# This program is distributed in the hope that it will be useful, but  
+# WITHOUT ANY WARRANTY; without even the implied warranty of  
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+# General Public License version 2 for more details (a copy is  
+# included at /legal/license.txt).   
+#   
+# You should have received a copy of the GNU General Public License  
+# version 2 along with this work; if not, write to the Free Software  
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+# 02110-1301 USA   
+#   
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+# Clara, CA 95054 or visit www.sun.com if you need additional  
+# information or have any questions. 
+#
+# @(#)jdwp.mk	1.16 06/10/24
+#
 
 #
 #  Makefile for building the jdwp tool
@@ -230,10 +236,7 @@ $(CVM_JDWP_BUILD_TOP)/JDWPCommands.h : $(JDWPGEN_CLASS)
 $(CVM_JDWP_OBJDIR)/%.o: %.c
 	@echo "... $@"
 	$(SO_CC_CMD)
-ifeq ($(GENERATEMAKEFILES), true)
-	@$(CC) $(CCDEPEND) $(CPPFLAGS) $< 2> /dev/null | \
-	    sed 's!$*\.o!$(dir $@)&!g' > $(@:.o=.d)
-endif
+	$(GENERATEMAKEFILES_CMD)
 
 $(CVM_JDWP_OBJDIR)/%.o: %.S
 	@echo "... $@"

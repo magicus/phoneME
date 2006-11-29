@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)PolicyFile.java	1.6 06/10/11
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -596,10 +601,10 @@ public class PolicyFile extends java.security.Policy {
 	    isr.close();
 	    KeyStore keyStore = initKeyStore(policy, pp.getKeyStoreUrl(),
 					     pp.getKeyStoreType());
-	    Enumeration enum = pp.grantElements();
-	    while (enum.hasMoreElements()) {
+	    Enumeration enum_ = pp.grantElements();
+	    while (enum_.hasMoreElements()) {
 		PolicyParser.GrantEntry ge =
-		    (PolicyParser.GrantEntry) enum.nextElement();
+		    (PolicyParser.GrantEntry) enum_.nextElement();
 		addGrantEntry(ge, keyStore, newInfo);
 	    }
 	    success = true;
@@ -815,16 +820,16 @@ public class PolicyFile extends java.security.Policy {
 	    if (replacePrincipals(ge.principals, keyStore) == false)
 		return;
 	    PolicyEntry entry = new PolicyEntry(codesource, ge.principals);
-	    Enumeration enum = ge.permissionElements();
-	    while (enum.hasMoreElements()) {
+	    Enumeration enum_ = ge.permissionElements();
+	    while (enum_.hasMoreElements()) {
 		PolicyParser.PermissionEntry pe =
-		    (PolicyParser.PermissionEntry) enum.nextElement();
+		    (PolicyParser.PermissionEntry) enum_.nextElement();
 
 		try { 
 		    // perform ${{ ... }} expansions within permission name
 		    expandPermissionName(pe, keyStore);
 
-		    // Special case PrivateCredentialPermission-SELF
+		    // special case PrivateCredentialPermission-SELF
 		    Permission perm;
 		    if (pe.permission.equals
                         ("javax.security.auth.PrivateCredentialPermission") &&
@@ -953,7 +958,7 @@ public class PolicyFile extends java.security.Policy {
 	       NoSuchMethodException,
 	       InvocationTargetException
     {
-        // We might want to keep a hash of created factories...
+        //we might want to keep a hash of created factories...
         Class pc = Class.forName(type);
 	Permission answer = getKnownInstance(pc, name, actions);
 	if (answer != null) {
@@ -1000,7 +1005,7 @@ public class PolicyFile extends java.security.Policy {
      */
     private static final Permission getKnownInstance(Class claz,
 	String name, String actions) {
-	// Shorten list to most popular ones?
+	// TODO: shorten list to most popular ones?
 	if (claz.equals(FilePermission.class)) {
 	    return new FilePermission(name, actions);
 	} else if (claz.equals(SocketPermission.class)) {
@@ -2144,8 +2149,8 @@ public class PolicyFile extends java.security.Policy {
 	/**
 	 * Given a Permission and a CodeSource, create a policy entry.
 	 * 
-	 * Decide if/how to add validity fields and "purpose" fields to
-	 * policy entries 
+	 * TODO: Decide if/how to add validity fields and "purpose" fields to
+	 *       policy entries 
 	 * 
 	 * @param cs the CodeSource, which encapsulates the URL and the
 	 *        public key

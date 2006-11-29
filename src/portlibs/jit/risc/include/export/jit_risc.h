@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jit_risc.h	1.23 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -26,6 +31,23 @@
 
 #ifndef _INCLUDED_JIT_RISC_H
 #define _INCLUDED_JIT_RISC_H
+
+#include "javavm/include/sync.h"
+
+/*
+ * Support Simple Sync methods if we do fast locking with spinlock microlocks
+ * or with atomic ops unless the platform has told us not to be #defining
+ * CVMCPU_NO_SIMPLE_SYNC_METHODS.
+ */
+#if defined(CVMJIT_INTRINSICS) && !defined(CVMCPU_NO_SIMPLE_SYNC_METHODS)
+#if (CVM_FASTLOCK_TYPE == CVM_FASTLOCK_MICROLOCK &&	\
+     CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK) || \
+    CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
+#define CVMJIT_SIMPLE_SYNC_METHODS
+#endif
+#endif /* !CVMCPU_NO_SIMPLE_SYNC_METHODS */
+
+#ifndef _ASM
 
 #include "javavm/include/jit/jit_defs.h"
 #include "javavm/include/jit/jitriscemitterdefs_cpu.h"
@@ -123,6 +145,8 @@ extern const CVMJITIntrinsicConfigList CVMJITriscIntrinsicsList;
 #define CVMJITriscParentIntrinsicsList CVMJITdefaultIntrinsicsList
 #endif
 
+#endif /* CVMJIT_INTRINSICS */
+
 /*
  * Values assigned to the irnode's regsRequired field.
  *
@@ -140,7 +164,5 @@ typedef enum {
 typedef CVMUint8 CVMJITRegsRequiredType;
 #endif
 
-
-#endif /* CVMJIT_INTRINSICS */
-
+#endif /* !_ASM */
 #endif /* _INCLUDED_JIT_RISC_H */

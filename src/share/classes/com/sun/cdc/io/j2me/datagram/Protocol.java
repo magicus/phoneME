@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)Protocol.java	1.33 06/10/13
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package com.sun.cdc.io.j2me.datagram;
@@ -99,6 +104,14 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
         return Integer.parseInt(name.substring(colon+1));
     }
 
+    /*
+     * throws SecurityException if MIDP permission check fails 
+     * nothing to do for CDC
+    */
+    protected void checkMIDPPermission(String host, int port) {
+        return;
+    }
+
     /**
      * Open a connection to a target. <p>
      *
@@ -138,6 +151,8 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
             if(port <= 0) {
                 throw new IllegalArgumentException("Bad port number \"//\" "+name);
             }
+            checkMIDPPermission(host, port);
+
             if(host == null) {
                 /* Open a server datagram socket (no host given) */
                 endpoint = new DatagramSocket(port);
@@ -188,7 +203,10 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
      */
     public int getMaximumLength() throws IOException {
         try {
-            return endpoint.getReceiveBufferSize();
+	    int receiveLen = endpoint.getReceiveBufferSize();
+	    int sendLen = endpoint.getSendBufferSize();
+	    /* return lesser of the two */
+	    return (receiveLen < sendLen ? receiveLen : sendLen);
         } catch(java.net.SocketException x) {
             throw new IOException(x.getMessage());
         }

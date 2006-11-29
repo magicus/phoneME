@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)globals.h	1.167 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_GLOBALS_H
@@ -69,6 +74,7 @@ struct CVMOptions {
     CVMBool timeStampEnabled;
 #endif
 
+    const char *startHeapSizeStr;
     const char *minHeapSizeStr;
     const char *maxHeapSizeStr;
     const char *nativeStackSizeStr;
@@ -146,9 +152,7 @@ struct CVMGlobalState {
     /* shared data for consistent states */
     CVMCState cstate[CVM_NUM_CONSISTENT_STATES];
 
-#if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_DEFAULT
     CVMMicroLock objGlobalMicroLock;
-#endif
 
     CVMSysMutex globalRootsLock; /* protect globalRoots */
     CVMStack globalRoots;	 /* stack for allocating global roots,
@@ -332,9 +336,7 @@ struct CVMGlobalState {
     CVMObjMonitor *objLocksUnbound;
     CVMObjMonitor *objLocksFree;	/* free locks */
 
-#if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_DEFAULT
     CVMMicroLock sysMicroLock[CVM_NUM_SYS_MICROLOCKS];
-#endif
 
     /*
      * Well-known ROMizer generated structures
@@ -439,6 +441,10 @@ struct CVMGlobalState {
     CVMMethodBlock*     java_security_SecureClassLoader_getProtectionDomain;
     CVMMethodBlock*     java_lang_ClassLoader_checkCerts;
 #endif /* CVM_CLASSLOADING */
+
+#ifdef CVM_AOT
+    CVMMethodBlock*     sun_mtask_Warmup_runit;
+#endif
 
     /*
      * Simple hash table used to keep track of packages loaded by the system
@@ -560,11 +566,11 @@ struct CVMGlobalState {
     CVMObject* deferredWeakrefs;
     /* 2. Those that are dying and with referents to be cleared go
        into here. In case of undo, we won't clear the referents. */
-    CVMObject* deferredWeakrefs2;
+    CVMObject* deferredWeakrefsToClear;
     /* 3. Those that are dying and with live referent's go into
        here. If we don't do an undo, we put these items in the pending
        queue. */
-    CVMObject* deferredWeakrefs3;
+    CVMObject* deferredWeakrefsToAddToPending;
 
 #ifdef CVM_JVMDI
     /* JVMDI-specific globally defined static variables */
@@ -584,7 +590,7 @@ struct CVMGlobalState {
 
 #ifdef CVM_LVM /* %begin lvm */
     /* Logical VM specific globally defined variables */
-    CVMLVMGlobals lvmGlobals;
+    CVMLVMGlobals lvm;
 #endif /* %end lvm */
 
 #ifdef CVM_MTASK
@@ -592,6 +598,7 @@ struct CVMGlobalState {
     CVMInt32 clientId; /* The client ID as it is recognized by mTASK */
     /* Are we running in server mode? */
     CVMBool isServer;
+    CVMInt32 serverPort; /* The port number master mTASK process listens to */
 #endif
 
     /* Variables for GC statistics */

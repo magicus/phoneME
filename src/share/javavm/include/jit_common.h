@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jit_common.h	1.85 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -192,6 +197,27 @@ typedef enum {
    significant. See CVMJITcodeCacheInit */
 #define CVMJIT_DEFAULT_LOWER_CCACHE_THR     -1
 
+/*
+ * Normally the CVMJIT_MAX_CODE_CACHE_SIZE is set to 32MB. The size shouldn't
+ * be larger than the maximum offset possible with a PC relative call 
+ * instruction. Otherwise poor code will be generated when calling CCM glue 
+ * code that is copied to the start of the code cache. 32MB is within the 
+ * PC relative call limit for ARM, Sparc, MIPS, PowerPC, and x86.
+ *
+ * If CVM_JIT_PATCHED_METHOD_INVOCATIONS is enabled, then the code cache is
+ * limited by the the number of encoding bits for the  codecache offset value
+ * stored in a patch entry in the Caller Table. Currently there are 23 bits
+ * for the offset (see  CVMJITPMICallerRecord), allowing the size to be
+ * 2^23 * CVMCPU_INSTRUCTION_SIZE.  This works out to 32MB on 32-bit RISC
+ * platforms, but x86 is stuck with just 8MB because we have to assume
+ * a 1 byte instruction size.
+ */
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+#define CVMJIT_MAX_CODE_CACHE_SIZE (8*1024*1024*CVMCPU_INSTRUCTION_SIZE)
+#else
+#define CVMJIT_MAX_CODE_CACHE_SIZE (32*1024*1024)
+#endif
+
 #ifdef CVM_JIT_COLLECT_STATS
 
 /* Order must match jitStatsToCollect table */
@@ -220,6 +246,53 @@ typedef struct CVMCCMGCPatchPoint {
     CVMUint8* patchPoint; /* instruction to patch */
     CVMCPUInstruction  patchInstruction; /* instr that does gc rendezvous */
 } CVMCCMGCPatchPoint;
+
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+
+typedef struct CVMJITPMICalleeRecord CVMJITPMICalleeRecord;
+typedef struct CVMJITPMICallerRecord CVMJITPMICallerRecord;
+
+/*
+ * Add a patch record. callerMb is making a direct call to calleeMb at
+ * address instrAddr. If isVirtual is true, then this is a virtual
+ * invoke of a method that has not been overridden. Returns CVM_FALSE
+ * if this fails for any reason, in which case a direct method call
+ * should not be used.
+ */
+extern CVMBool
+CVMJITPMIaddPatchRecord(CVMMethodBlock* callerMb,
+			CVMMethodBlock* calleeMb,
+			CVMUint8* instrAddr,
+			CVMBool isVirtual);
+
+/*
+ * Remove patch records. callerMb is being decompiled, so remove all
+ * calleeMb records that refer to addresses in callerMb.
+ */
+extern void
+CVMJITPMIremovePatchRecords(CVMMethodBlock* callerMb, CVMMethodBlock* calleeMb,
+			    CVMUint8* callerStartPC, CVMUint8* callerEndPC);
+
+/*
+ * Patch method calls to calleeMb based on the new state of the callee method.
+ */
+typedef enum {
+    CVMJITPMI_PATCHSTATE_COMPILED = 0,    /* calleeMb was just compiled */
+    CVMJITPMI_PATCHSTATE_DECOMPILED = 1,  /* calleeMb was just decompiled */
+    CVMJITPMI_PATCHSTATE_OVERRIDDEN = 2   /* calleeMb was just overridden */
+} CVMJITPMI_PATCHSTATE;
+extern void
+CVMJITPMIpatchCallsToMethod(CVMMethodBlock* calleeMb,
+			    CVMJITPMI_PATCHSTATE newPatchState);
+
+#if defined(CVM_DEBUG) || defined(CVM_TRACE_JIT)
+extern void
+CVMJITPMIdumpMethodCalleeInfo(CVMMethodBlock* callerMb,
+			      CVMBool printCallerInfo);
+#endif
+
+#endif /* CVM_JIT_PATCHED_METHOD_INVOCATIONS */
 
 /*********************************************************************
  * Support for copying ccm assembler code into the start of the code cache 
@@ -336,6 +409,44 @@ typedef struct {
     CVMUint32      codeCacheBytesAllocated;    /* bytes currently allocated */
     CVMUint32      codeCacheLargestFreeBuffer; /* largest free buffer */
 
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+
+    /*
+     * The table that maps mb's to the list of code cache addresses that
+     * call the method directly. It's needed so the direct calls can be
+     * patched as the method is compiled, decompiled, or overridden.
+     * It's implemented as a hash table. See jit_common.c for details.
+     */
+    CVMJITPMICalleeRecord*      pmiCalleeRecords;
+    CVMUint32                   pmiNumCalleeRecords;
+    CVMUint32                   pmiNumUsedCalleeRecords;
+    CVMUint32                   pmiMaxUsedCalleeRecordsAllowed;
+    CVMUint32                   pmiNumDeletedCalleeRecords;
+    /*
+     * The table used by the above callee table to map callee's to
+     * all the code cache locations that call the callee. See jit_common.c
+     * for details.
+     */
+    CVMJITPMICallerRecord*      pmiCallerRecords;
+    CVMUint32                   pmiNumCallerRecords;
+    CVMUint32                   pmiNumUsedCallerRecords;
+    CVMInt32                    pmiFirstFreeCallerRecordIdx; /* free list */
+    CVMUint32                   pmiNextAvailCallerRecordIdx;
+#endif
+
+#ifdef CVM_AOT
+    /* AOT states  */
+    CVMUint8*  codeCacheAOTStart; /* start of AOT code */
+    CVMUint8*  codeCacheAOTEnd;   /* end of AOT code */
+    CVMUint8*  codeCacheAOTGeneratedCodeStart;
+    CVMBool    codeCacheAOTCodeExist; /* true if there are pre-compiled code */
+    char*      aotMethodList;     /* List of Method to be compiled ahead of time*/
+#endif
+
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+    CVMBool    isPrecompiling; /* true if we are doing AOT/warmup compilation */
+#endif
+
 #ifdef CVM_USE_MEM_MGR
     CVMMemType codeCacheMemType;
 #endif
@@ -404,7 +515,7 @@ typedef struct {
     CVMJITGlobalStats *globalStats;
 #endif
 
-#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
+#if defined(CVMJIT_PATCH_BASED_GC_CHECKS) && CVMCPU_NUM_CCM_PATCH_POINTS > 0
     /* Patch points in ccm code required for gc */
     CVMCCMGCPatchPoint  ccmGcPatchPoints[CVMCPU_NUM_CCM_PATCH_POINTS];
 #endif
@@ -413,8 +524,33 @@ typedef struct {
     /* Max offset in words allowed when loading from gcTrapAddr */
 #define CVMJIT_MAX_GCTRAPADDR_WORD_OFFSET 32
     void**   gcTrapAddr;  /* address that will trap when gc is requested */
-    CVMCPUInstruction gcTrapInstr; /* instruction that will cause the trap */
 #endif
+
+#ifdef CVMJIT_SIMPLE_SYNC_METHODS
+    /* mb mappings for Simple Sync methods */
+    struct {
+	CVMMethodBlock* originalMB;
+	CVMMethodBlock* simpleSyncMB;
+    } *simpleSyncMBs;
+    int numSimpleSyncMBs;
+
+#ifdef CVM_DEBUG
+#if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_MICROLOCK && \
+    CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK
+    /* Disabled until needed. References in jitgrammarrules.jcs
+       must also be enabled. */
+#if 0 
+    /* The currently executing Simple Sync method and the method that
+       inlined the currently executing Simple Sync method. Note that these
+       are set every time a Simple Sync method is executed and are
+       never cleared, thus they can be stale.
+    */
+    CVMMethodBlock* currentSimpleSyncMB;
+    CVMMethodBlock* currentMB;
+#endif  /* 0 */
+#endif  /* CVM_FASTLOCK_TYPE == CVM_FASTLOCK_MICROLOCK */
+#endif  /* CVM_DEBUG */
+#endif  /* CVMJIT_SIMPLE_SYNC_METHODS */
 } CVMJITGlobalState;
 
 #ifdef CVM_MTASK
@@ -426,8 +562,23 @@ extern CVMBool
 CVMjitReinitialize(CVMExecEnv* ee, const char *options);
 #endif
 
+#if defined(CVM_AOT) && !defined(CVM_MTASK)
+/* If there is no existing AOT code, compile a list of methods. The
+ * compiled methods will be saved as AOT code.
+ */
+void
+CVMjitCompileAOTCode(CVMExecEnv* ee);
+#endif
+
 extern CVMBool
 CVMjitInit(CVMExecEnv* ee, CVMJITGlobalState* jgs, const char *options);
+
+extern CVMBool
+CVMjitPolicyInit(CVMExecEnv* ee, CVMJITGlobalState* jgs);
+
+/* Purpose: Set up the inlining threshold table. */
+CVMBool
+CVMjitSetInliningThresholds(CVMExecEnv* ee, CVMJITGlobalState* jgs);
 
 extern void
 CVMjitDestroy(CVMJITGlobalState* jgs);

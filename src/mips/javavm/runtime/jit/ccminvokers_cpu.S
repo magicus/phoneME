@@ -1,29 +1,35 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ccminvokers_cpu.S	1.35 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/asmmacros_cpu.h"
 #include "javavm/include/jit/jitasmmacros_cpu.h"
 #include "javavm/include/jit/jitasmconstants.h"
 #include "javavm/include/porting/jit/jit.h"
+#include "javavm/include/sync.h"
 
 /*
  * Some of the code in this file gets patched at runtime for handling
@@ -48,7 +54,9 @@ ccmInvokeNonstaticSyncMethodHelper:
 	/*
 	 * a0 = mb
 	 * a1 = CVMObjectICell* of object to sync on.
+	 * a2 = NEW_JFP
 	 */
+#define MB		a0
 
 #if 0
 	/*
@@ -59,7 +67,20 @@ ccmInvokeNonstaticSyncMethodHelper:
         b       letInterpreterDoInvoke
 #endif
 
-#define MB		a0
+#if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
+        /* CAS version of CVMCCMinvokeNonstaticSyncMethodHelper: */
+
+        /*
+           a0 = mb
+           a1 = obj
+           a2 = NEW_JFP
+           a3 = obits
+	   t7 = lockrec
+	   v0 = obits0
+	   v1 = nbits
+	   jp = scratch
+        */
+	
 #define OBJ		a1
 #define OBITS		a3
 #define LOCKREC		t7
@@ -164,6 +185,166 @@ _lockRecordNotAvailable:
         move	PREV, JFP
         b	letInterpreterDoInvoke
 
+#undef OBJ
+#undef OBITS
+#undef LOCKREC
+#undef OBITS0
+#undef NBITS
+
+#elif (CVM_FASTLOCK_TYPE != CVM_FASTLOCK_MICROLOCK) || \
+      (CVM_MICROLOCK_TYPE != CVM_MICROLOCK_SWAP_SPINLOCK)
+	/* TODO: if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SCHEDLOCK, then
+	 * use CVMschedLock for locking. For now, just defer to C */
+        b       letInterpreterDoInvoke
+#else
+        /* CVM_MICROLOCK_SWAP_SPINLOCK version of
+	   CVMCCMinvokeNonstaticSyncMethodHelper: */
+        /* TODO: The following code can be optimized a little more by doing
+           some more selective register usage and instruction scheduling (like
+	   making use of delay slots).  Since the risk of doing this is high
+	   and the gains are small, this is left as an advanced exercise for
+	   later.
+
+	   TODO: user zero rather than loading CVM_MICROLOCK_UNLOCKED into
+	   a register. Need to assert that CVM_MICROLOCK_UNLOCKED == 0.
+	 */
+
+        /*
+           a0 = mb
+           a1 = &microlock
+           a2 = NEW_JFP
+           a3 = obj
+	   t4 = obits
+	   t5 = lockrec
+	   v0 = scratch
+	   v1 = scratch
+	   jp = scratch
+        */
+
+#define MICROLOCK   a1
+#define OBJ         a3
+#define OBITS       t4
+#define LOCKREC     t5
+
+	lw	OBJ, 0(a1)	/* get object to sync on. */
+
+        /* ld      MICROLOCK, CVMobjGlobalMicroLockPtr */
+	LA	(MICROLOCK, CVMobjGlobalMicroLockPtr)
+
+	sw	MB, OFFSET_CVMFrame_mb(NEW_JFP)
+	/* optimistically store receiver object */
+	sw	OBJ, OFFSET_CVMCompiledFrame_receiverObjX(NEW_JFP)
+
+	/* Get address of object microlock */
+	lw	MICROLOCK, 0(MICROLOCK)
+
+        /* Acquire the microlock: */
+0:
+        li	jp, CVM_MICROLOCK_LOCKED 
+	/* Atomically swap CVM_MICROLOCK_LOCKED into MICROLOCK */
+	ll	v1, 0(MICROLOCK)
+	sc	jp, 0(MICROLOCK)
+	beq	jp, zero, 0b /* retry */
+
+	/* Branch if the microlock was already acquired by another thread. */
+        bne	v1, CVM_MICROLOCK_UNLOCKED, _fastLockAcquireMicrolock
+
+        /* The microlock has been acquired: */
+_lockObj:
+        lw	OBITS, OFFSET_CVMObjectHeader_various32(OBJ) /* Get obits */
+        andi	v0, OBITS, 0x3
+        bne	v0, CONSTANT_CVM_LOCKSTATE_UNLOCKED, _objAlreadyLocked
+
+        /* If we get here, then the object has not been locked yet. */
+        /* lockrec = ee->objLocksFreeOwned: */
+        lw	LOCKREC, OFFSET_CVMExecEnv_objLocksFreeOwned(EE)
+        beq	LOCKREC, zero, _lockRecordNotAvailable
+
+        /* lockrec->u.fast.bits = obits: */
+        sw	OBITS, OFFSET_CVMOwnedMonitor_u_fast_bits(LOCKREC)
+
+#ifdef CVM_DEBUG
+        /* lockrec->state = CONSTANT_CVM_OWNEDMON_OWNED: */
+        li	v0, CONSTANT_CVM_OWNEDMON_OWNED
+        sw	v0, OFFSET_CVMOwnedMonitor_state(LOCKREC)
+#endif
+        /* obj->hdr.various32 = lockrec: */
+        sw	LOCKREC, OFFSET_CVMObjectHeader_various32(OBJ)
+
+        /* lockrec->count = 1: */
+        li	v0, 1		/*  Initial lock re-entry count */
+        sw	v0, OFFSET_CVMOwnedMonitor_count(LOCKREC)
+
+        /* lockrec->object = obj: */
+        sw	OBJ, OFFSET_CVMOwnedMonitor_object(LOCKREC)
+
+        /* Release the microlock:	 */
+        li	v0, CVM_MICROLOCK_UNLOCKED
+        sw	v0, 0(MICROLOCK)	/* microlock->lockWord = UNLOCKED */
+
+        /* Remove lockrec from the ee's free list: */
+        /* nextRec = lockrec->next: */
+        lw	v0, OFFSET_CVMOwnedMonitor_next(LOCKREC)
+        /* ee->objLocksFreeOwned = nextRec: */
+        sw	v0, OFFSET_CVMExecEnv_objLocksFreeOwned(EE)
+
+        /* Add the lockrec to the ee's owned list: */
+        /* nextRec = ee->objLocksOwned: */
+        lw	v0, OFFSET_CVMExecEnv_objLocksOwned(EE)
+        /* lockrec->next = nextRec: */
+        sw	v0, OFFSET_CVMOwnedMonitor_next(LOCKREC)
+        /* ee->objLocksOwned = lockrec: */
+        sw	LOCKREC, OFFSET_CVMExecEnv_objLocksOwned(EE)
+
+        b	_fastlockSuccess
+
+_fastLockAcquireMicrolock:
+        /* Call a C function to acquire the microlock: */
+        sw	ra, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+0(sp)
+        sw	MICROLOCK, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+4(sp)
+        sw	NEW_JFP, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+8(sp)
+	move	a0, MICROLOCK
+	CALL_VM_FUNCTION(CVMmicrolockLockImpl)
+        lw	ra, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+0(sp)
+        lw	MICROLOCK, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+4(sp)
+        lw	NEW_JFP, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+8(sp)
+        lw	OBJ, OFFSET_CVMCompiledFrame_receiverObjX(NEW_JFP)
+        lw	MB, OFFSET_CVMFrame_mb(NEW_JFP) /* restore MB */
+        b	_lockObj
+
+_objAlreadyLocked:
+        bne	v0, CONSTANT_CVM_LOCKSTATE_LOCKED, _fastReentryFailed
+
+        /* Make sure the current thread owns this lock: */
+        lw	v0, OFFSET_CVMOwnedMonitor_owner(OBITS)
+        bne	v0, EE, _fastReentryFailed
+
+        lw	v1, OFFSET_CVMOwnedMonitor_count(OBITS)
+        addi	v1, v1, 1
+        sw	v1, OFFSET_CVMOwnedMonitor_count(OBITS)
+
+        /* Release the microlock: */
+        li	v0, CVM_MICROLOCK_UNLOCKED
+        sw	v0, 0(MICROLOCK)	/* microlock->lockWord = UNLOCKED */
+
+        b	_fastlockSuccess
+
+_fastReentryFailed:
+_lockRecordNotAvailable:
+        /* Release the microlock: */
+        li	v0, CVM_MICROLOCK_UNLOCKED
+        sw	v0, 0(MICROLOCK)
+
+_fastTryLockFailed:
+        b       letInterpreterDoInvoke
+
+#undef MICROLOCK
+#undef OBJ
+#undef OBITS
+#undef LOCKREC
+
+#endif /* CVM_MICROLOCK_SWAP_SPINLOCK */
+
 _fastlockSuccess:
         move	PREV, JFP
         move	JFP, NEW_JFP
@@ -186,46 +367,35 @@ _fastlockSuccess:
 	jr	ra
 #endif
 
-#undef MB
-#undef OBJ
-#undef OBITS
-#undef LOCKREC
-#undef OBITS0
-#undef NBITS
-
 /* TODO: Implement gc patch. See the ARM port for example. */
-EXPORT( CVMARMgcPatchPointAtInvoke ) 
-CVMARMgcPatchPointAtInvoke:
-armGcPatchPointAtInvoke:	
+EXPORT( CVMMIPSgcPatchPointAtInvoke ) 
+CVMMIPSgcPatchPointAtInvoke:
+mipsGcPatchPointAtInvoke:	
 	/*
 	 * GC check - gc will patch at this location when a rendezvous is
 	 * needed. See ccmGcPatchPoints in jitinit_cpu.c. The patch will
-	 * be a "b CVMARMhandleGCAtInvoke"
+	 * be a "b CVMMIPShandleGCAtInvoke"
 	 */
 
         jr	ra	# Return to method after handling possible GC request
 
 /* TODO: Implement gc patch. See the ARM port for example. */
-EXPORT( CVMARMhandleGCAtInvoke)	
-CVMARMhandleGCAtInvoke:	
+EXPORT( CVMMIPShandleGCAtInvoke)	
+CVMMIPShandleGCAtInvoke:	
 	/*
 	 * At this point a GC is requested.
 	 */
 
 #define ORIG_LR s6
-#define r0 a0
-#define r1 a1
-#define r2 a2
-#define r3 a3
 
 	move	ORIG_LR, ra
 	
 	FIXUP_FRAMES_0(JFP, a0)
 
-	lw	r1, OFFSET_CVMFrame_mb(JFP)		# r1 = mb
+	lw	a1, OFFSET_CVMFrame_mb(JFP)		# a1 = mb
 
 	/* We will be gcsafe soon. Prevent this method from being decompiled */
-	sw	r1, OFFSET_CVMExecEnv_invokeMb(EE)
+	sw	a1, OFFSET_CVMExecEnv_invokeMb(EE)
 
 	/*
 	 * Check if this is a synchronized invocation
@@ -234,29 +404,29 @@ CVMARMhandleGCAtInvoke:
 	 * yet "committed" to the stack, and as such, cannot be located
 	 * by GC.
 	 */
-        lbu	r1, OFFSET_CVMMethodBlock_accessFlagsX(r1)
-	andi	r1, r1, CONSTANT_METHOD_ACC_SYNCHRONIZED
-	beq	r1, zero, 1f
+        lbu	a1, OFFSET_CVMMethodBlock_accessFlagsX(a1)
+	andi	a1, a1, CONSTANT_METHOD_ACC_SYNCHRONIZED
+	beq	a1, zero, 1f
 	
 	/*
 	 * Synchronized method if result of 'tst' is 'ne'. Stash
 	 * receiver in [ee->miscICell]
 	 */
-	lw	r1, OFFSET_CVMCompiledFrame_receiverObjX(JFP)
-	lw	r2, OFFSET_CVMExecEnv_miscICell(EE)
-	sw	r1, (r2)				# stash in miscICell
+	lw	a1, OFFSET_CVMCompiledFrame_receiverObjX(JFP)
+	lw	a2, OFFSET_CVMExecEnv_miscICell(EE)
+	sw	a1, (a2)				# stash in miscICell
 
 1:
 	LA(jp, CVMglobals)
         sw	PREV, OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame(EE)
 	li	a3, 1
 	addiu	a1, jp, OFFSET_CVMGlobalState_cstate_GCSAFE
-	addiu	a2, r0, OFFSET_CVMExecEnv_tcstate_GCSAFE
+	addiu	a2, a0, OFFSET_CVMExecEnv_tcstate_GCSAFE
 	move	a0, EE
 	CALL_VM_FUNCTION(CVMcsRendezvous)
 
 	/* reload the mb */
-	lw	r1, OFFSET_CVMFrame_mb(JFP)		# r1 = mb
+	lw	a1, OFFSET_CVMFrame_mb(JFP)		# a1 = mb
 
 	/* we no longer need to prevent the method from being decompiled */
 	sw	zero, OFFSET_CVMExecEnv_invokeMb(EE)
@@ -268,25 +438,22 @@ CVMARMhandleGCAtInvoke:
 	  again to see if we should restore 'receiverObjX'
 	  from miscICell.
 	*/
-        lbu	r2, OFFSET_CVMMethodBlock_accessFlagsX(r1)
-	andi	r2, r2, CONSTANT_METHOD_ACC_SYNCHRONIZED
-        beq	r2, zero, armGcPatchPointAtInvoke
+        lbu	a2, OFFSET_CVMMethodBlock_accessFlagsX(a1)
+	andi	a2, a2, CONSTANT_METHOD_ACC_SYNCHRONIZED
+        beq	a2, zero, mipsGcPatchPointAtInvoke
 
 	/* Restore receiverObjX in new frame */
-	lw	r0, OFFSET_CVMExecEnv_miscICell(EE)	# r0 = &miscICell
-	lw	jp, (r0)
+	lw	a0, OFFSET_CVMExecEnv_miscICell(EE)	# a0 = &miscICell
+	lw	jp, (a0)
 	sw	jp, OFFSET_CVMCompiledFrame_receiverObjX(JFP)
 	
 	/* And clear miscICell for other uses */
-	sw	zero, (r0)
+	sw	zero, (a0)
 
-	b armGcPatchPointAtInvoke
+	b mipsGcPatchPointAtInvoke
 
+#undef MB
 #undef ORIG_LR
-#undef r0
-#undef r1
-#undef r2
-#undef r3
 
 	SET_SIZE( CVMCCMinvokeNonstaticSyncMethodHelper )
 
@@ -476,7 +643,7 @@ SET_SIZE( CVMCCMletInterpreterDoInvoke )
 /*
  * Do a GC check, and rendezvous if one is requested
  */
-ENTRY( CVMARMhandleGCForReturn )
+ENTRY( CVMMIPShandleGCForReturn )
 handleGCForReturn:	
 	/*
 	 * At this point a GC is requested.
@@ -521,16 +688,16 @@ handleGCForReturn:
 /*
  * The GC checks for the various return variants
  */
-EXPORT( CVMARMhandleGCForReturnFromMethod ) 
+EXPORT( CVMMIPShandleGCForReturnFromMethod ) 
 	LA(s6, CVMCCMreturnFromMethod)
 	b	handleGCForReturn	
 	nop
 
-EXPORT( CVMARMhandleGCForReturnFromSyncMethod ) 
+EXPORT( CVMMIPShandleGCForReturnFromSyncMethod ) 
 	LA(s6, CVMCCMreturnFromSyncMethod)
 	b	handleGCForReturn	
 	nop
-SET_SIZE( CVMARMhandleGCForReturn )
+SET_SIZE( CVMMIPShandleGCForReturn )
 
 /* 
  * Native code doing a return comes here. 
@@ -616,6 +783,10 @@ ENTRY( CVMCCMreturnFromSyncMethod )
 	 */
         b       returnToInterpreter
 #endif
+
+#if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
+
+        /* CAS version of CVMCCMreturnFromSyncMethod: */
 
 #define OBJ		a0
 #define NBITS		a1
@@ -738,7 +909,171 @@ _fastTryUnlockFailed:
 #undef EXPECTED_CNT
 #undef NEW_COUNT
 #undef OLD_COUNT
-        SET_SIZE( CVMCCMreturnFromSyncMethod )
+
+#elif (CVM_FASTLOCK_TYPE != CVM_FASTLOCK_MICROLOCK) || \
+      (CVM_MICROLOCK_TYPE != CVM_MICROLOCK_SWAP_SPINLOCK)
+	/* TODO: if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SCHEDLOCK, then
+	 * use CVMschedLock for locking. For now, just defer to C */
+	b	returnToInterpreter
+#else
+        /* CVM_MICROLOCK_SWAP_SPINLOCK microlock version: */
+        /* TODO: The following code can be optimized a little more by doing
+           some more selective register usage and instruction scheduling (like
+	   making use of delay slots).  Since the risk of doing this is high
+	   and the gains are small, this is left as an advanced exercise for
+	   later. */
+
+        /* Do fastTryUnlock(): */
+
+        /*
+           a0 = &microlock
+           a1 = obj
+           a2 = lockrec
+	   v0 = scratch
+	   v1 = scratch
+	   jp = scratch
+
+           NOTE: By design, MICROLOCK is assigned to a0 so that it will be in
+	   the appropriate arg register if we need to call
+	   CVMmicrolockLockImpl() in _fastUnlockAcquireMicrolock.
+        */
+
+#define MICROLOCK   a0
+#define OBJ         a1
+#define LOCKREC     a2
+
+	/* See if previous frame is compiled or not. */
+	/* PREV is set up by all code that branches here */
+	andi	jp, PREV, CONSTANT_CVM_FRAME_MASK_SLOW
+	bne	jp, zero, returnToInterpreter
+
+        /* ld      MICROLOCK, CVMobjGlobalMicroLockPtr */
+	LA	(MICROLOCK, CVMobjGlobalMicroLockPtr)
+
+	/* load the sync object */
+        lw	OBJ, OFFSET_CVMCompiledFrame_receiverObjX(JFP)
+
+	/* Get address of object microlock */
+	lw	MICROLOCK, 0(MICROLOCK)
+
+        /* Acquire the microlock: */
+0:
+        li	jp, CVM_MICROLOCK_LOCKED 
+	/* Atomically swap CVM_MICROLOCK_LOCKED into MICROLOCK */
+	ll	v1, 0(MICROLOCK)
+	sc	jp, 0(MICROLOCK)
+	beq	jp, zero, 0b /* retry */
+
+	/* Branch if the microlock was already acquired by another thread. */
+        bne	v1, CVM_MICROLOCK_UNLOCKED, _fastUnlockAcquireMicrolock
+
+        /* The microlock has been acquired: */
+_unlockObj:
+        /* Check to see if the object is locked with a fastlock: */
+        lw	LOCKREC, OFFSET_CVMObjectHeader_various32(OBJ) /* Get obits */
+        andi	v0, LOCKREC, 0x3 /* (obits & 0x3) == CVM_LOCKSTATE_LOCKED? */
+        bne	v0, zero, _fastTryUnlockFailed	/* If not, we failed */
+
+        /* If we get here, then the object is locked with a fastlock: */
+
+        /* Make sure that the current thread owns the monitor: */
+        lw	v0, OFFSET_CVMOwnedMonitor_owner(LOCKREC)
+        bne	v0, EE, _fastTryUnlockFailed	/* If not, we failed */
+
+        /* If we get here, then the current thread does own the monitor,
+           and all is well.  Proceed with unlocking: */
+        lw	v1, OFFSET_CVMOwnedMonitor_count(LOCKREC)
+	addi	v1, v1, -1
+	bne	v1, zero, _fastTryUnlockSuccess	/* If not zero, we are done */
+
+        /* If we get here, then the re-entry count has reached 0. */
+        /* Restore the obits to the object header: */
+        lw	v0, OFFSET_CVMOwnedMonitor_u_fast_bits(LOCKREC)
+        sw	v0, OFFSET_CVMObjectHeader_various32(OBJ)
+
+#ifdef CVM_DEBUG
+        /* Make the lockrec play nice with the debug assertions: */
+        li	v0, CONSTANT_CVM_OWNEDMON_FREE
+        sw	v0, OFFSET_CVMOwnedMonitor_state(LOCKREC)
+        sw	zero, OFFSET_CVMOwnedMonitor_u_fast_bits(LOCKREC)
+        sw	zero, OFFSET_CVMOwnedMonitor_object(LOCKREC)
+	sw	zero, OFFSET_CVMOwnedMonitor_count(LOCKREC)
+#endif
+
+        /* Release the microlock: */
+        li	v0, CVM_MICROLOCK_UNLOCKED
+        sw	v0, 0(MICROLOCK)  /* *microlock = CVM_MICROLOCK_UNLOCKED */
+
+        /* Check if the lockrec is the first one on the thread owned list: */
+        lw	v0, OFFSET_CVMExecEnv_objLocksOwned(EE)
+        bne	v0, LOCKREC, _fastTryUnlockFindPrevLockRecordLoop
+
+        /* Remove the lockrec from the ee owned list: */
+        lw	v0, OFFSET_CVMOwnedMonitor_next(LOCKREC)
+        sw	v0, OFFSET_CVMExecEnv_objLocksOwned(EE)
+
+_fastTryUnlockAddLockRecordToFreeList:
+        /* Add the lockrec to the ee's free list: */
+        lw	v1, OFFSET_CVMExecEnv_objLocksFreeOwned(EE)
+        sw	v1, OFFSET_CVMOwnedMonitor_next(LOCKREC)
+        sw	LOCKREC, OFFSET_CVMExecEnv_objLocksFreeOwned(EE)
+
+_fastTryUnlockDone:
+        b       doReturnToCompiled
+
+
+/* v0 is the first one on the thread's owned list */
+#define PREV_REC v0
+_fastTryUnlockFindPrevLockRecordLoop:
+        lw	v1, OFFSET_CVMOwnedMonitor_next(PREV_REC)
+        beq	v1, LOCKREC, _fastTryUnlockFoundPrevLockRecord
+        move	PREV_REC, v1
+        b	_fastTryUnlockFindPrevLockRecordLoop
+
+_fastTryUnlockFoundPrevLockRecord:
+        /* Remove the lockrec from the ee's owned list: */
+        lw	v1, OFFSET_CVMOwnedMonitor_next(LOCKREC)
+        sw	v1, OFFSET_CVMOwnedMonitor_next(PREV_REC)
+        b	_fastTryUnlockAddLockRecordToFreeList
+#undef PREV_REC
+
+
+_fastTryUnlockSuccess:
+        /* Set the new re-entry count: */
+        sw	v1, OFFSET_CVMOwnedMonitor_count(LOCKREC)
+        /* Release the microlock: */
+        li	v0, CVM_MICROLOCK_UNLOCKED
+        sw	v0, 0(MICROLOCK)  /* *microlock = CVM_MICROLOCK_UNLOCKED */
+
+        b       _fastTryUnlockDone
+
+_fastUnlockAcquireMicrolock:
+        /* Call a C function to acquire the microlock: */
+        sw	MICROLOCK, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+4(sp)
+        sw	PREV, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+8(sp)
+        /* CVMmicrolockLockImpl() requires the address of the microlock in
+           a0.  By design, MICROLOCK is a0, so we're cool here. */
+        CALL_VM_FUNCTION(CVMmicrolockLockImpl)
+        lw	OBJ, OFFSET_CVMCompiledFrame_receiverObjX(JFP)
+        lw	MICROLOCK, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+4(sp)
+        lw	PREV, OFFSET_CStack_CCEE+OFFSET_CVMCCExecEnv_ccmStorage+8(sp)
+	lw	LOCKREC, OFFSET_CVMObjectHeader_various32(OBJ)
+        b       _unlockObj	/* Go unlock the object if possible */
+
+_fastTryUnlockFailed:
+        /* Release the microlock: */
+        li	v0, CVM_MICROLOCK_UNLOCKED
+        sw	v0, 0(MICROLOCK)
+
+        /* Let the interpreter handle the hard cases: */
+        b       returnToInterpreter
+
+#undef OBJ
+#undef MICROLOCK
+#undef LOCKREC
+
+#endif /* CVM_MICROLOCK_SWAP_SPINLOCK */
+SET_SIZE( CVMCCMreturnFromSyncMethod )
 
 #ifdef CVM_TRACE
 

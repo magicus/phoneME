@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jni_impl.c	1.378 06/10/20
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/defs.h"
@@ -89,6 +94,10 @@
 
 #ifdef CVM_DEBUG_ASSERTS
 #include "javavm/include/constantpool.h"
+#endif
+
+#ifdef CVM_EMBEDDED_HOOK
+#include "javavm/include/hook.h"
 #endif
 
 #undef MIN
@@ -467,7 +476,7 @@ CVMjniPopLocalFrame(JNIEnv *env, jobject resultArg)
 	/*
 	 * Don't return ICells containing NULL. 
 	 *
-	 * %comment: r011
+	 * %comment: rt011
 	 */
 	if (CVMID_icellIsNull(&returnVal->ref)) {
 	    return NULL;
@@ -521,7 +530,7 @@ CVMjniDeleteGlobalRef(JNIEnv *env, jobject ref)
 {
     /* Apparently Sheng's book, which contains the revised JNI spec,
        says that deleting a NULL global ref is a no-op */
-    /* %comment: r012 */
+    /* %comment: rt012 */
     if (ref != NULL) {
 	CVMExecEnv* currentEE = CVMjniEnv2ExecEnv(env);
 #ifdef CVM_JVMPI
@@ -566,7 +575,7 @@ CVMjniDeleteWeakGlobalRef(JNIEnv* env, jweak ref)
 {
     /* Apparently Sheng's book, which contains the revised JNI spec,
        says that deleting a NULL global ref is a no-op */
-    /* %comment: r012 */
+    /* %comment: rt012 */
     if (ref != NULL) {
 	CVMExecEnv* currentEE = CVMjniEnv2ExecEnv(env);
 #ifdef CVM_JVMPI
@@ -695,7 +704,7 @@ CVMjniRegisterNatives(JNIEnv *env, jclass clazz,
 	}
     }
 
-    /* %comment: r013 */
+    /* %comment: rt013 */
     for (i = 0; i < nMethods; ++i) {
         struct CVMMethodBlock *mb;
         const char *name = methods[i].name;
@@ -744,7 +753,7 @@ CVMjniUnregisterNatives(JNIEnv *env, jclass clazz)
 	return JNI_OK;
     }
 
-    /* %comment: r013 */
+    /* %comment: rt013 */
     for (i = 0; i < CVMcbMethodCount(cb); ++i) {
         CVMMethodBlock* mb = CVMcbMethodSlot(cb, i);
 
@@ -1530,7 +1539,7 @@ CVMjniGetPrimitiveArrayCritical(JNIEnv *env, jarray array, jboolean *isCopy)
 	*isCopy = JNI_TRUE;
     }
 
-    /* %comment r015 */
+    /* %comment rt015 */
     switch(base) {
 #ifdef CVMGC_HAS_NONREF_BARRIERS
         case CVM_T_BOOLEAN: {
@@ -1631,7 +1640,7 @@ CVMjniReleasePrimitiveArrayCritical(JNIEnv *env, jarray array,
 	return;
     }
 
-    /* %comment r015 */
+    /* %comment rt015 */
     switch(base) {
 #ifdef CVMGC_HAS_NONREF_BARRIERS
         case CVM_T_BOOLEAN: {
@@ -1857,7 +1866,7 @@ CVMjniNewObjectArray(JNIEnv* env, jsize length,
 		    (CVMArrayOfRef*)CVMID_icellDirect(ee, resultCell);
 		int i;
 
-		/* %comment: r016 */
+		/* %comment: rt016 */
 		for (i = 0; i < length; i++) {
 		    CVMD_arrayWriteRef(refArray, i, directInitObj);
 		}
@@ -2360,7 +2369,7 @@ void JNICALL
 CVMjniExceptionClear(JNIEnv *env)
 {
     CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
-    /* %comment: r017 */
+    /* %comment: rt017 */
     CVMclearLocalException(ee);
     CVMclearRemoteException(ee);
 }
@@ -2578,7 +2587,7 @@ CVMjniInvoke(JNIEnv *env, jobject obj, jmethodID methodID,
     
     CVMassert(CVMframeIsFreelist(CVMeeGetCurrentFrame(ee)));
 
-    /* %comment h003 */
+    /* %comment hideya003 */
     if (CVMlocalExceptionOccurred(ee)) {
 #ifdef CVM_DEBUG
 	CVMconsolePrintf("Pending exception entering CVMjniInvoke!\n");
@@ -3328,6 +3337,7 @@ initializeThreadObjects(JNIEnv* env)
 	"[-XtimeStamping] " \
 	CVM_GC_OPTIONS \
 	"[-Xms<size>] " \
+	"[-Xmn<size>] " \
 	"[-Xmx<size>] " \
 	"[-Xss<size>] " \
 	CVM_JIT_OPTIONS \
@@ -3338,7 +3348,7 @@ initializeThreadObjects(JNIEnv* env)
    properties to the global properties table and optionally find
    the main class name and arguments.
    
-   %comment: r024
+   %comment: rt024
    
    NOTE we skip any options that were recognized in the first phase
    of initialization
@@ -3439,6 +3449,12 @@ void
 CVMmtaskClientId(JNIEnv* env, CVMInt32 clientId)
 {
     CVMglobals.clientId = clientId;
+}
+
+void
+CVMmtaskServerPort(JNIEnv* env, CVMInt32 serverPort)
+{
+    CVMglobals.serverPort = serverPort;
 }
 
 #ifdef CVM_TIMESTAMPING
@@ -3554,6 +3570,24 @@ initializeSystemClasses(JNIEnv* env,
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
     char* errorStr;
 
+    /* First ensure that we have no clinit for sun_misc_CVM before proceeding
+       with class initialization of system classes: */
+    if (CVMclassGetMethodBlock(CVMsystemClass(sun_misc_CVM),
+			       CVMglobals.clinitTid, CVM_TRUE) != NULL) {
+	CVMconsolePrintf("WARNING: sun.misc.CVM has a static initializer!\n");
+    }
+
+    /* 
+     * Set initialization flag for sun_misc_CVM to prevent executing
+     * its clinit. This is a work around for bug 4645152 in JDK 1.4
+     * javac, which incorrectly inserts <clinit> in class files when
+     * -g is specified. When 4645152 is fixed in javac, we can replace
+     * the work around with an assert:
+     * CVMassert(CVMclassGetMethodBlock(CVMsystemClass(sun_misc_CVM),
+     *     CVMglobals.clinitTid, CVM_TRUE) == NULL);
+     */
+    CVMcbSetROMClassInitializationFlag(ee, CVMsystemClass(sun_misc_CVM));
+
     /* First do the initialization that doesn't require thread support */
     if (!initializeClassList(ee, errorStrBuf, sizeofErrorStrBuf,
 			     classInitList, classInitListLen)) {
@@ -3566,6 +3600,15 @@ initializeSystemClasses(JNIEnv* env,
 	return errorStr;
     }
     
+#ifdef CVM_LVM /* %begin lvm */
+    /* Now we can finish up CVMglobals.lvm initialization.
+     * This creates the main (primordial) LogicalVM object. */
+    if (!CVMLVMglobalsInitPhase2(ee, &CVMglobals.lvm)) {
+	errorStr = "out of memory during LVM initialization";
+        return errorStr;
+    }
+#endif /* %end lvm */
+
     /* Initialize java.lang.System */
     if ((errorStr = initializeSystemClass(env)) != NULL) {
 	return errorStr;
@@ -3594,6 +3637,16 @@ initializeSystemClasses(JNIEnv* env,
 #endif
     
     return NULL;
+}
+
+/* Purpose: Prints a message about the erroneous use of the specified memory
+            sizing option. */
+static void printMemorySizeSpecificationError(const char *option)
+{
+    CVMconsolePrintf("Illegal %s option: no size specified\n"
+		     "\tUsage: %s<size> e.g. %s1m\n"
+		     "\tNote: Do not insert spaces between %s and the size.\n",
+		     option, option, option, option);
 }
 
 JNIEXPORT jint JNICALL
@@ -3646,7 +3699,7 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     options.javaAssertionsSysDefault = CVM_FALSE;
 #endif
 
-    /* %comment: r021 */
+    /* %comment: rt021 */
     if (numJVMs == 0) {
 	if (!CVMinitStaticState()) {
 	    errorStr = "CVMinitStaticState failed";
@@ -3687,11 +3740,33 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 
 	const char *str = initArgs->options[argCtr].optionString;
 	if (!strncmp(str, "-Xms", 4)) {
+	    options.startHeapSizeStr = str + 4;
+	    if (options.startHeapSizeStr[0] == '\0') {
+		printMemorySizeSpecificationError("-Xms");
+		errorNo = JNI_EINVAL;
+		goto done;
+	    }
+	} else if (!strncmp(str, "-Xmn", 4)) {
 	    options.minHeapSizeStr = str + 4;
+	    if (options.minHeapSizeStr[0] == '\0') {
+		printMemorySizeSpecificationError("-Xmn");
+		errorNo = JNI_EINVAL;
+		goto done;
+	    }
 	} else if (!strncmp(str, "-Xmx", 4)) {
 	    options.maxHeapSizeStr = str + 4;
+	    if (options.maxHeapSizeStr[0] == '\0') {
+		printMemorySizeSpecificationError("-Xmx");
+		errorNo = JNI_EINVAL;
+		goto done;
+	    }
 	} else if (!strncmp(str, "-Xss", 4)) {
 	    options.nativeStackSizeStr = str + 4;
+	    if (options.nativeStackSizeStr[0] == '\0') {
+		printMemorySizeSpecificationError("-Xss");
+		errorNo = JNI_EINVAL;
+		goto done;
+	    }
 #ifdef CVM_MTASK
 	} else if (!strncmp(str, "-Xserver", 8)) {
 	    options.isServer = CVM_TRUE;
@@ -3987,22 +4062,6 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 	goto done;
     }
 
-    if (CVMclassGetMethodBlock(CVMsystemClass(sun_misc_CVM),
-			       CVMglobals.clinitTid, CVM_TRUE) != NULL) {
-	CVMconsolePrintf("WARNING: sun.misc.CVM has a static initializer!\n");
-    }
-
-    /* 
-     * Set initialization flag for sun_misc_CVM to prevent executing
-     * its clinit. This is a work around for bug 4645152 in JDK 1.4
-     * javac, which incorrectly inserts <clinit> in class files when
-     * -g is specified. When 4645152 is fixed in javac, we can replace
-     * the work around with an assert:
-     * CVMassert(CVMclassGetMethodBlock(CVMsystemClass(sun_misc_CVM),
-     *     CVMglobals.clinitTid, CVM_TRUE) == NULL);
-     */
-    CVMcbSetROMClassInitializationFlag(CVMsystemClass(sun_misc_CVM));
-
     /* Initialize system classes, classpaths, and command line options */
     if ((errorStr = initializeSystemClasses(env, 
 					    errorStrBuf,
@@ -4012,16 +4071,12 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 	errorNo = JNI_ERR;
 	goto done;
     }
+
+#if defined(CVM_AOT) && !defined(CVM_MTASK)
+    CVMjitCompileAOTCode(ee);
+#endif
     
 #ifdef CVM_LVM /* %begin lvm */
-    /* Now we can finish up CVMglobals.lvmGlobals initialization.
-     * This creates the main (primordial) LogicalVM object. */
-    if (!CVMLVMglobalsInitPhase2(ee, &CVMglobals.lvmGlobals)) {
-	errorStr = "out of memory during LVM initialization";
-	errorNo = JNI_ERR;
-	goto done;
-    }
-
     /* Finish-up the main LVM bootstrapping after the VM gets 
      * fully initialized */
     if (!CVMLVMfinishUpBootstrapping(ee)) {
@@ -4121,6 +4176,10 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 	    goto done;
 	}
     }
+#endif
+
+#ifdef CVM_EMBEDDED_HOOK
+    CVMhookVMStart(ee);
 #endif
 
     /* In the future JVMPI will need to get a thread start event here
@@ -4228,13 +4287,17 @@ CVMjniDestroyJavaVM(JavaVM *vm)
     CVMExecEnv *ee;
     jint res;
 
-    /* %comment: r026 */
+    /* %comment: rt026 */
     res = (*vm)->AttachCurrentThread(vm, &envV, NULL);
     if (res < 0) {
 	return res;
     }
     env = (JNIEnv *)envV;
     ee = CVMjniEnv2ExecEnv(env);
+
+#ifdef CVM_EMBEDDED_HOOK
+    CVMhookVMShutdown(ee);
+#endif
 
     /* %comment d001 */
     /* Wait for all the user threads exit and call the shutdown hooks 
@@ -4354,6 +4417,14 @@ CVMjniDestroyJavaVM(JavaVM *vm)
     }
 #endif
 
+#ifdef CVMJIT_COUNT_VIRTUAL_INLINE_STATS
+    /* See jitgrammarrules.jcs for details */
+    {
+        extern void CVMJITprintVirtualInlineHitMiss();
+        CVMJITprintVirtualInlineHitMiss();
+    }
+#endif
+
     /*
      * If we have a process model, then we cannot destroy the VM data
      * structures, otherwise the daemon threads may crash.
@@ -4384,7 +4455,7 @@ CVMjniDestroyJavaVM(JavaVM *vm)
 	}
 
 
-	/* %comment: r028 */
+	/* %comment: rt028 */
 	if (numJVMs == 1) {
 	    CVMdestroyStaticState();
 	}
@@ -4404,7 +4475,7 @@ static jint JNICALL
 CVMjniAttachCurrentThread(JavaVM *vm, void **penv, void *_args)
 {
     JavaVMAttachArgs *args = (JavaVMAttachArgs *)_args;
-    /* %comment: r029 */
+    /* %comment: rt029 */
     CVMExecEnv *ee = CVMgetEE();
     JNIEnv *env;
 
@@ -4412,7 +4483,7 @@ CVMjniAttachCurrentThread(JavaVM *vm, void **penv, void *_args)
 	/* already attached */
         env = CVMexecEnv2JniEnv(ee);
         *(JNIEnv **)penv = env;
-	/* %comment: r030 */
+	/* %comment: rt030 */
 	return JNI_OK;
     } else {
 	ee = (CVMExecEnv *)calloc(1, sizeof *ee);
@@ -4522,7 +4593,7 @@ CVMjniDetachCurrentThread(JavaVM *vm)
     if (ee == NULL) {
 	return JNI_EDETACHED;
     } else {
-	/* %comment: r031 */
+	/* %comment: rt031 */
 	JNIEnv *env = CVMexecEnv2JniEnv(ee);
 	jclass threadClass =
 	    CVMcbJavaInstance(CVMsystemClass(java_lang_Thread));

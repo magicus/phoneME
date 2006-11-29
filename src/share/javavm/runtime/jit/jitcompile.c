@@ -1,25 +1,27 @@
 /*
- * Portions Copyright 2000-2006 Sun Microsystems, Inc. All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License version 2 for more details (a copy is included at
- * /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public
- * License version 2 along with this work; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitcompile.c	1.148 06/10/13
+ *
+ * Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
  */
 
 /*
@@ -48,6 +50,7 @@
 #include "javavm/include/jit/jitasmconstants.h"
 
 #include "javavm/include/porting/jit/ccm.h"
+#include "javavm/include/porting/jit/jit.h"
 
 #include "javavm/include/clib.h"
 #include "javavm/include/porting/ansi/setjmp.h"
@@ -62,7 +65,7 @@
 #endif
 
 
-#define CVMJIT_MIN_MAX_LOCAL_WORDS	100
+#define CVMJIT_MIN_MAX_LOCAL_WORDS	300
 #define CVMJIT_MIN_MAX_CAPACITY		500
 
 /*
@@ -126,9 +129,17 @@ void CVMJITassertMiscJITAssumptions(void)
 {
     /* The following are sanity checks for the JIT system in general that
        does not have anything to do with the current context of compilation.
-       These assertions can be called from anywhere with the same result. */
+       These assertions can be called from anywhere with the same result.
+       NOTE: Each of these assertions corresponds to a constant or offset
+       value defined in jitasmconstants.h.
+    */
 
     /* Verifying CVMClassBlock offsets: */
+    CVMassert(OFFSET_CVMClassBlock_classNameX ==
+	      offsetof(CVMClassBlock, classNameX));
+    CVMassert(OFFSET_CVMClassBlock_superClassCb ==
+	      offsetof(CVMClassBlock, superclassX.superclassCb));
+
     CVMassert(OFFSET_CVMClassBlock_interfacesX ==
 	      offsetof(CVMClassBlock, interfacesX));
     CVMassert(OFFSET_CVMClassBlock_arrayInfoX ==
@@ -146,14 +157,35 @@ void CVMJITassertMiscJITAssumptions(void)
     CVMassert(OFFSET_CVMArrayInfo_elementCb ==
 	      offsetof(CVMArrayInfo, elementCb));
 
+    /* Offsets and constants for CVMTypeID */
+    CVMassert(CONSTANT_CVMtypeidArrayShift == CONSTANT_CVMtypeidArrayShift);
+    CVMassert(CONSTANT_CVMtypeidArrayMask == CONSTANT_CVMtypeidArrayMask);
+    CVMassert(CONSTANT_CVM_TYPEID_INT_ARRAY ==
+	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_INT));
+    CVMassert(CONSTANT_CVM_TYPEID_SHORT_ARRAY ==
+	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_SHORT));
+    CVMassert(CONSTANT_CVM_TYPEID_CHAR_ARRAY ==
+	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_CHAR));
+    CVMassert(CONSTANT_CVM_TYPEID_LONG_ARRAY ==
+	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_LONG));
+    CVMassert(CONSTANT_CVM_TYPEID_BYTE_ARRAY ==
+	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_BYTE));
+    CVMassert(CONSTANT_CVM_TYPEID_FLOAT_ARRAY ==
+	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_FLOAT));
+    CVMassert(CONSTANT_CVM_TYPEID_DOUBLE_ARRAY ==
+	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_DOUBLE));
+    CVMassert(CONSTANT_CVM_TYPEID_BOOLEAN_ARRAY ==
+	      CVMtypeidEncodeBasicPrimitiveArrayType(CVM_TYPEID_BOOLEAN));
+
     /* Verifying CVMMethodBlock offsets and constants: */
 #ifdef CVM_METHODBLOCK_HAS_CB
     CVMassert(OFFSET_CVMMethodBlock_cbX ==
 	      offsetof(CVMMethodBlock, immutX.cbX));
 #endif
-    CVMassert(CONSTANT_CVMMethodBlock_size == sizeof(CVMMethodBlock));
     CVMassert(OFFSET_CVMMethodBlock_jitInvokerX ==
 	      offsetof(CVMMethodBlock, jitInvokerX));
+    CVMassert(OFFSET_CVMMethodBlock_methodTableIndexX ==
+	      offsetof(CVMMethodBlock, immutX.methodTableIndexX));
     CVMassert(OFFSET_CVMMethodBlock_argsSizeX ==
 	      offsetof(CVMMethodBlock, immutX.argsSizeX));
     CVMassert(OFFSET_CVMMethodBlock_invokerIdxX ==
@@ -164,6 +196,7 @@ void CVMJITassertMiscJITAssumptions(void)
 	      offsetof(CVMMethodBlock, immutX.methodIndexX));
     CVMassert(OFFSET_CVMMethodBlock_codeX ==
 	      offsetof(CVMMethodBlock, immutX.codeX));
+    CVMassert(CONSTANT_CVMMethodBlock_size == sizeof(CVMMethodBlock));
 
     /* Verifying CVMMethodRange offsets and constants: */
     CVMassert(OFFSET_CVMMethodRange_mb ==
@@ -192,26 +225,8 @@ void CVMJITassertMiscJITAssumptions(void)
     CVMassert(OFFSET_CVMFrame_mb == offsetof(CVMFrame, mb));
 
     /* Verifying CVMExecEnv offsets and constants: */
-    CVMassert(OFFSET_CVMGlobalState_allocPtrPtr ==
-	      offsetof(CVMGlobalState, allocPtrPtr));
-    CVMassert(OFFSET_CVMGlobalState_allocTopPtr ==
-	      offsetof(CVMGlobalState, allocTopPtr));
-#ifdef CVM_ADV_ATOMIC_SWAP
-    CVMassert(OFFSET_CVMGlobalState_fastHeapLock ==
-	      offsetof(CVMGlobalState, fastHeapLock));
-#endif
-#ifdef CVM_TRACE_ENABLED
-    CVMassert(OFFSET_CVMGlobalState_debugFlags ==
-	      offsetof(CVMGlobalState, debugFlags));
-#endif
-#ifdef CVM_TRACE_JIT
-    CVMassert(OFFSET_CVMGlobalState_debugJITFlags ==
-	      offsetof(CVMGlobalState, debugJITFlags));
-#endif
-    CVMassert(OFFSET_CVMGlobalState_cstate_GCSAFE ==
-	      offsetof(CVMGlobalState, cstate));
-
-    /* Verifying CVMExecEnv offsets and constants: */
+    CVMassert(OFFSET_CVMExecEnv_tcstate_GCSAFE ==
+	      offsetof(CVMExecEnv, tcstate[CVM_GC_SAFE]));
     CVMassert(OFFSET_CVMExecEnv_interpreterStack ==
 	      offsetof(CVMExecEnv, interpreterStack));
     CVMassert(OFFSET_CVMExecEnv_miscICell ==
@@ -253,10 +268,37 @@ void CVMJITassertMiscJITAssumptions(void)
     CVMassert(OFFSET_CVMCCExecEnv_ccmGCRendezvousGlue ==
 	      offsetof(CVMCCExecEnv, ccmGCRendezvousGlue));
 #endif
+#if defined(CVMJIT_TRAP_BASED_GC_CHECKS) && defined(CVMCPU_HAS_VOLATILE_GC_REG)
+    CVMassert(OFFSET_CVMCCExecEnv_gcTrapAddr ==
+	      offsetof(CVMCCExecEnv, gcTrapAddr));
+#endif
     CVMassert(OFFSET_CVMCCExecEnv_ccmStorage ==
 	      offsetof(CVMCCExecEnv, ccmStorage));
     CVMassert(CONSTANT_CVMCCExecEnv_size ==
 	      (size_t)(((CVMCCExecEnv *)0) + 1));
+
+    /* Verifying CVMGlobalState offsets and constants: */
+    CVMassert(OFFSET_CVMGlobalState_allocPtrPtr ==
+	      offsetof(CVMGlobalState, allocPtrPtr));
+    CVMassert(OFFSET_CVMGlobalState_allocTopPtr ==
+	      offsetof(CVMGlobalState, allocTopPtr));
+#ifdef CVM_ADV_ATOMIC_SWAP
+    CVMassert(OFFSET_CVMGlobalState_fastHeapLock ==
+	      offsetof(CVMGlobalState, fastHeapLock));
+#endif
+#ifdef CVM_TRACE_ENABLED
+    CVMassert(OFFSET_CVMGlobalState_debugFlags ==
+	      offsetof(CVMGlobalState, debugFlags));
+#endif
+#ifdef CVM_TRACE_JIT
+    CVMassert(OFFSET_CVMGlobalState_debugJITFlags ==
+	      offsetof(CVMGlobalState, debugJITFlags));
+#endif
+    CVMassert(OFFSET_CVMGlobalState_cstate_GCSAFE ==
+	      offsetof(CVMGlobalState, cstate));
+
+    /* Verifying CVMCState offsets and constants: */
+    CVMassert(OFFSET_CVMCState_request == offsetof(CVMCState, request));
 
     /* Verifying CVMObjectHeader offsets and constants: */
     CVMassert(OFFSET_CVMObjectHeader_clas ==
@@ -267,6 +309,7 @@ void CVMJITassertMiscJITAssumptions(void)
     /* Verifying CVMOwnedMonitor offsets and constants: */
     CVMassert(CONSTANT_CVM_OBJECT_NO_HASH == CVM_OBJECT_NO_HASH);
     CVMassert(CONSTANT_CVM_SYNC_BITS == CVM_SYNC_BITS);
+    CVMassert(CONSTANT_CVM_HASH_BITS == CVM_HASH_BITS);
     CVMassert(CONSTANT_CVM_HASH_MASK == CVM_HASH_MASK);
     CVMassert(OFFSET_CVMObjMonitor_bits == offsetof(CVMObjMonitor, bits));
 
@@ -292,6 +335,7 @@ void CVMJITassertMiscJITAssumptions(void)
     CVMassert(CONSTANT_CVM_OWNEDMON_FREE == CVM_OWNEDMON_FREE);
     CVMassert(CONSTANT_CVM_OWNEDMON_OWNED == CVM_OWNEDMON_OWNED);
 #endif
+
     CVMassert(CONSTANT_CVM_LOCKSTATE_UNLOCKED == CVM_LOCKSTATE_UNLOCKED);
     CVMassert(CONSTANT_CVM_LOCKSTATE_LOCKED == CVM_LOCKSTATE_LOCKED);
     CVMassert(CONSTANT_CVM_INVALID_REENTRY_COUNT == CVM_INVALID_REENTRY_COUNT);
@@ -313,8 +357,8 @@ void CVMJITassertMiscJITAssumptions(void)
 
     CVMassert(CONSTANT_TRACE_METHOD == sun_misc_CVM_DEBUGFLAG_TRACE_METHOD);
     
-    CVMassert(CONSTANT_CVM_FRAME_MASK_SLOW == CVM_FRAME_MASK_SLOW);
     CVMassert(CONSTANT_CVM_FRAME_MASK_SPECIAL == CVM_FRAME_MASK_SPECIAL);
+    CVMassert(CONSTANT_CVM_FRAME_MASK_SLOW == CVM_FRAME_MASK_SLOW);
     CVMassert(CONSTANT_CVM_FRAME_MASK_ALL == CVM_FRAME_MASK_ALL);
 
 #ifdef CVM_DEBUG_ASSERTS
@@ -331,7 +375,15 @@ void CVMJITassertMiscJITAssumptions(void)
               CVMoffsetOfjava_lang_String_count * sizeof(CVMUint32));
 
     /* Offset and constants for Array classes: */
+    CVMassert(OFFSET_ARRAY_LENGTH == offsetof(CVMArrayOfAnyType, length));
     CVMassert(OFFSET_ARRAY_ELEMENTS == offsetof(CVMArrayOfAnyType, elems));
+
+    /* Offset and constants for GC: */
+#if (CVM_GCCHOICE == CVM_GC_GENERATIONAL) && !defined(CVM_SEGMENTED_HEAP)
+    CVMassert(CONSTANT_CARD_DIRTY_BYTE == CARD_DIRTY_BYTE);
+    CVMassert(CONSTANT_CVM_GENGC_CARD_SHIFT == CVM_GENGC_CARD_SHIFT);
+    CVMassert(CONSTANT_NUM_BYTES_PER_CARD == NUM_BYTES_PER_CARD);
+#endif
 
     /* We only have 8 bits for the encoding of the CVMJITIROpcodeTag: */
     CVMassert(CVMJIT_TOTAL_IR_OPCODE_TAGS <= 256);
@@ -492,6 +544,33 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 	CVMJITcompileGenerateCode(&con);
 	CVMJITwriteStackmaps(&con);
 
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+	if (con.callees != NULL && (CVMUint32)con.callees[0] != 0) {
+	    /* Make room for the callee table. It will be after the stackmaps,
+	       which are located after the generated code. */
+	    CVMUint32 numCallees = (CVMUint32)con.callees[0];
+	    /* On platforms with variably sized instructions, such as x86,
+	       need to pad the codebuffer before the start of callee table. */
+	    CVMMethodBlock** callees = (CVMMethodBlock**)
+		(((CVMAddr)CVMJITcbufGetPhysicalPC(&con) +
+		  sizeof(CVMAddr) - 1) &
+		 ~(sizeof(CVMAddr) - 1));
+
+	    CVMJITcbufGetPhysicalPC(&con) =
+		(CVMUint8*)&callees[numCallees + 1];
+	    if (CVMJITcbufGetPhysicalPC(&con) >= con.codeBufEnd) {
+		/* Fail to compile. We will retry with a larger buffer */
+		CVMJITerror(&con, CODEBUFFER_TOO_SMALL,
+			    "Estimated code buffer too small");
+	    }
+	    memcpy(callees, con.callees,
+		   (numCallees + 1) * sizeof(CVMMethodBlock*));
+	    con.callees = callees;
+	} else {
+	    con.callees = NULL;
+	}
+#endif
+
 #ifdef CVM_JIT_ESTIMATE_COMPILATION_SPEED
         if (--measuredCycle != 0) {
             CVMJITerror(&con, RETRY, "Retry to measure compilation time");
@@ -537,8 +616,8 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 
 	    /* We allocate memory in the code cache for other data, not
 	       just the compiled code.  These regions are:
-	       PC map table, inlining info, gc patches, constant pool,
-	       and stackmaps */
+	       PC map table, inlining info, gc patches, stackmaps,
+	       and callee table. */
 	       
 	    /* Fill in the offsets for reaching our memory regions
 	       from the cmd */
@@ -567,14 +646,31 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 	    }
 	    CVMassert(CVMcmdInliningInfo(cmd) == con.inliningInfo);
 
-#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
-	    if (con.gcCheckPcs != NULL) {
-		cmd->gcCheckPCsOffsetX =
-		    (CVMUint16 *)con.gcCheckPcs - (CVMUint16 *)cmd;
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+	    if (con.callees != NULL) {
+	    	cmd->calleesOffsetX =
+		    (CVMUint32*)con.callees - (CVMUint32 *)cmd;
 	    } else {
-		cmd->gcCheckPCsOffsetX = 0;
+	    	cmd->calleesOffsetX = 0;
 	    }
-	    CVMassert(CVMcmdGCCheckPCs(cmd) == con.gcCheckPcs);
+		    
+	    CVMassert(CVMcmdCallees(cmd) == con.callees);
+#endif
+
+#if  defined(CVM_AOT) || defined(CVM_MTASK)
+            /* AOT/warmup compilation use trap based GC */
+            if (!CVMglobals.jit.isPrecompiling)
+#endif
+#ifdef CVMJIT_PATCH_BASED_GC_CHECKS
+	    {
+	        if (con.gcCheckPcs != NULL) {
+		    cmd->gcCheckPCsOffsetX =
+		        (CVMUint16 *)con.gcCheckPcs - (CVMUint16 *)cmd;
+	        } else {
+		    cmd->gcCheckPCsOffsetX = 0;
+	        }
+	        CVMassert(CVMcmdGCCheckPCs(cmd) == con.gcCheckPcs);
+            }
 #endif
 
 #ifdef CVMCPU_HAS_CP_REG
@@ -621,6 +717,13 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 		 * protect from races with decompilation.
 		 */
 		CVMJITcbufCommit(&con);
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+		/* If any compiled method calls this method, patch the call
+		 * to be a direct call to this compiled method.
+		 */
+		CVMJITPMIpatchCallsToMethod(mb, CVMJITPMI_PATCHSTATE_COMPILED);
+#endif
 	    }
 
 	    /* IAI-07: Notify JVMPI of compilation. */
@@ -632,6 +735,12 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 	    CVMtraceJITStatus(("JS: COMPILED: size=%d startPC=0x%x %C.%M\n",
 			       CVMcmdCodeBufSize(cmd), startPC,
 			       CVMmbClassBlock(mb), mb));
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+	    CVMtraceJITPatchedInvokesExec({
+	        CVMJITPMIdumpMethodCalleeInfo(con.mb, CVM_FALSE);
+	    });
+#endif
 
             CVMJITstatsExec({
                 endTime = CVMtimeMillis();
@@ -681,6 +790,26 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 			   retVal, con.errorMessage));
     }
 
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+    /* We've probably already added some patchable method invokes to
+       the database, so we need to remove them if compilation failed. */
+    if (retVal != CVMJIT_SUCCESS && needDestroyContext && con.callees != NULL){
+	/*
+	 * For each method directly called by this method, have that method
+	 * (the callee method) remove this method (the caller method)
+	 * from its entries in the patch table.
+	 */
+	CVMUint32 numCallees = (CVMUint32)con.callees[0];
+	CVMUint32 i;
+	for (i = 1; i <= numCallees; i++) {
+	    CVMMethodBlock* calleeMb = con.callees[i];
+	    /* Remove records. */ 
+	    CVMJITPMIremovePatchRecords(con.mb, calleeMb,
+					con.codeBufAddr, con.codeBufEnd);
+	}
+    }
+#endif
+
     switch (retVal) {
         case CVMJIT_SUCCESS:
 	    break;
@@ -711,7 +840,19 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 	     * much code, then retry with a smaller max inlining depth.
 	     */
 	    CVMassert(con.inliningDepthLimit > 0);
-	    inliningDepthLimit = con.maxInliningDepth - 1;
+	    /*
+	     * We sometimes allow inlining trivial methods beyond
+	     * inliningDepthLimit, which results in con.maxInliningDepth
+	     * being greater than inliningDepthLimit. In this case
+	     * we just decrement inliningDepthLimit. Otherwise we set
+	     * inliningDepthLimit to one less than the depth we were
+	     * at when the failure happened.
+	     */
+	    if (inliningDepthLimit < con.maxInliningDepth) {
+		inliningDepthLimit--;
+	    } else {
+		inliningDepthLimit = con.maxInliningDepth - 1;
+	    }
 	    CVMtraceJITStatus(("JS: Inlining too deep (%d) - "
 		"retrying with %d\n", con.inliningDepthLimit,
 		inliningDepthLimit));
@@ -768,7 +909,10 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 	        needDestroyContext = CVM_FALSE;
 	        goto retry;
 	    }
-            /* Else, compilation failed. */
+            /* Else, compilation failed. Possibly this method will
+	       be compilable in the future, so we just want to
+	       backoff for a while. */
+	    backOff(mb, CVMJIT_DEFAULT_CLIMIT * 2);
             break;
 	}
 
@@ -809,13 +953,54 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
     return retVal;
 }
 
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+/*
+ * Removes any patch records for decompiledMb as a callerMb. Also
+ * updates the patch state of instructions that call decompiledMb to
+ * reflect the decompiled state.
+ */
+static void
+CVMJITPMIhandleDecompilation(CVMMethodBlock* decompiledMb) 
+{
+    CVMMethodBlock** callees = CVMcmdCallees(CVMmbCmd(decompiledMb));
+    CVMUint8* callerStartPC = CVMcmdStartPC(CVMmbCmd(decompiledMb));
+    CVMUint8* callerEndPC = 
+	callerStartPC + CVMcmdCodeSize(CVMmbCmd(decompiledMb));
+    if (callees != NULL) {
+	/*
+	 * For each method directly called by this method, have that method
+	 * (the callee method) remove this method (the caller method)
+	 * from its entries in the patch table.
+	 */
+	CVMUint32 numCallees = (CVMUint32)callees[0];
+	CVMUint32 i;
+	for (i = 1; i <= numCallees; i++) {
+	    CVMMethodBlock* calleeMb = callees[i];
+	    /* Remove records. */ 
+	    CVMJITPMIremovePatchRecords(decompiledMb, calleeMb,
+					callerStartPC, callerEndPC);
+	}
+    }
+    
+    /* If the method being decompiled is called directly, patch the
+       direct calls to instead defer to the interpreter. */
+    CVMJITPMIpatchCallsToMethod(decompiledMb,
+				CVMJITPMI_PATCHSTATE_DECOMPILED);
+}
+#endif
+
 extern void
 CVMJITdecompileMethod(CVMExecEnv* ee, CVMMethodBlock* mb)
 {
     CVMCompiledMethodDescriptor* cmd = CVMmbCmd(mb);
 
-    CVMtraceJITStatus(("JS: DECOMPILED: size=%d %C.%M\n",
-		       CVMcmdCodeBufSize(cmd), CVMmbClassBlock(mb), mb));
+    CVMtraceJITStatus(("JS: DECOMPILED: cbuf=0x%x size=%d mb=0x%x %C.%M\n",
+		       CVMcmdCodeBufAddr(cmd), CVMcmdCodeBufSize(cmd), mb,
+		       CVMmbClassBlock(mb), mb));
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+    CVMJITPMIhandleDecompilation(mb);
+#endif
 
     /* The ee is NULL during VM shutdown, in which case jitLock is gone. */
     if (ee != NULL) {
@@ -989,7 +1174,7 @@ extern void
 CVMJITlimitExceeded(CVMJITCompilationContext *con, const char *errorStr)
 {
     if (con->maxInliningDepth > 0) {
-	/* Blame it on inlining */
+	/* Try less inlining. */
 	CVMJITerror(con, INLINING_TOO_DEEP, "Inlining is too deep");
     } else {
 	CVMJITerror(con, CANNOT_COMPILE, errorStr);

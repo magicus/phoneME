@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)typeid_impl.h	1.32 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -129,6 +134,7 @@ struct pkg; /* see below */
 struct scalarTableEntry {
     COMMON_TYPE_ENTRY_HEADER
     CVMUint8			tag;
+    CVMUint8			nameLength; /* only used for classnameType */
 
     union valueUnion{
 	struct classnameType {
@@ -152,11 +158,11 @@ struct scalarTableEntry {
 #define CVM_TYPE_ENTRY_OBJ	1
 #define CVM_TYPE_ENTRY_ARRAY	2
 
-#define INIT_CLASSTYPE( hashnext, pkgname, myname ) \
-    { hashnext, MAX_COUNT, ROMSTATE CVM_TYPE_ENTRY_OBJ, {{ pkgname, myname }} }
+#define INIT_CLASSTYPE( hashnext, pkgname, myname, length ) \
+    { hashnext, MAX_COUNT, ROMSTATE CVM_TYPE_ENTRY_OBJ, length, {{ pkgname, myname }}}
 
 #define INIT_ARRAYTYPE( hashnext, depth, base ) \
-    { hashnext, MAX_COUNT, ROMSTATE CVM_TYPE_ENTRY_ARRAY, \
+    { hashnext, MAX_COUNT, ROMSTATE CVM_TYPE_ENTRY_ARRAY, 0, \
       {{ (struct pkg*)depth, (const char*)base }} }
 
 
@@ -199,7 +205,7 @@ extern struct scalarTableSegment CVMFieldTypeTable;
  */
 
 
-#define NCLASSHASH	7
+#define NCLASSHASH	11
 #define NPACKAGEHASH	17
 
 struct pkg {
@@ -334,7 +340,7 @@ extern struct methodTypeTableSegment CVMMethodTypeTable;
  * IMPORTANT:
  * When you change this number also change it in CVMMethodType in jcc.
  */
-#define NMETHODTYPEHASH	(3*37) /* arbitrary odd number */
+#define NMETHODTYPEHASH	(13*37) /* arbitrary odd number */
 
 extern CVMTypeIDPart * const CVMMethodTypeHash;
 

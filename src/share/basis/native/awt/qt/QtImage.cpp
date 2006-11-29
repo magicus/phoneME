@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)QtImage.cpp	1.24 06/10/10
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
 #include <stdlib.h>
@@ -74,27 +78,11 @@ Java_java_awt_QtImage_imageCompleteLoadBuffer (JNIEnv * env, jclass cls, jint qt
 	
 	assert(QtImageDescPool[qtImageDesc].loadBuffer!=NULL);
 
-    // AGUI-Notes
-    // AGUI does not create "qpd", a QPixmap since it only need the RGB pixels
-    // which we keep around in the loadBuffer. It does the rendering of the
-    // pixels, so it does not need an QPixmap() for rendering.
-    //
-    // we need access to the QImage, which has the alpha channel
-    // and QPatchedPixmap does not work correctly. By keeping the QImage
-    // around we need not convert from QPixmap every time.
-    //
-    // When the PSD gets disposed the "loadBuffer" also gets disposed.
-    // AGUI-Notes
-
-#ifndef J2ME_CLASSLIB_BASIS_AGUI
     AWT_QT_LOCK;
 	((QPixmap *)QtImageDescPool[qtImageDesc].qpd)->convertFromImage(*(QtImageDescPool[qtImageDesc].loadBuffer),
                 Qt::ThresholdDither | Qt::ThresholdAlphaDither | 
                 Qt::AvoidDither);
 										
-//	if(QtImageDescPool[qtImageDesc].mask != NULL)
-//		delete QtImageDescPool[qtImageDesc].mask;
-	
 	QtImageDescPool[qtImageDesc].mask = ((QPixmap *)QtImageDescPool[qtImageDesc].qpd)->mask();
 	
 	if(QtImageDescPool[qtImageDesc].mask == NULL)
@@ -115,7 +103,6 @@ Java_java_awt_QtImage_imageCompleteLoadBuffer (JNIEnv * env, jclass cls, jint qt
 		QtImageDescPool[qtImageDesc].loadBuffer = NULL;
 	}
     AWT_QT_UNLOCK;
-#endif /* !J2ME_CLASSLIB_BASIS_AGUI */
 }
 
 
@@ -530,14 +517,6 @@ Java_java_awt_QtImage_pGetRGB(JNIEnv *env, jclass cls, jint qtImageDesc, jint x,
     return pixel;
 }
 
-// AGUI Notes
-// AGUI relies on pGetRGBArray() to get the decoded image data into a 
-// buffer, so we have code only in this method to get the QImage of the
-// image loaded.
-//
-// AGUI does not use pGetRGB() and pSetRGBArray() hence we dont handle any
-//
-// AGUI Notes
 JNIEXPORT void JNICALL
 Java_java_awt_QtImage_pGetRGBArray(JNIEnv *env, jclass cls, jint qtImageDesc,
 jint startX, jint startY, jint width, jint height, jintArray pixelArray,
@@ -556,16 +535,11 @@ int offset, int scansize)
 	pa += offset;
 
     AWT_QT_LOCK; {
-#ifdef J2ME_CLASSLIB_BASIS_AGUI
-    // We keep the QImage around and not convert it to a QPixmap for AGUI
-    QImage qi = *(QtImageDescPool[qtImageDesc].loadBuffer);
-#else
 #   ifdef QWS
 	QImage qi = ((QPatchedPixmap *)QtImageDescPool[qtImageDesc].qpd)->convertToImage();	
 #   else
 	QImage qi = ((QPixmap *)QtImageDescPool[qtImageDesc].qpd)->convertToImage();
 #   endif /* QWS */
-#endif /* J2ME_CLASSLIB_BASIS_AGUI */
 	
     QImage *qip = &qi ;
     QImage qi32bpp ;

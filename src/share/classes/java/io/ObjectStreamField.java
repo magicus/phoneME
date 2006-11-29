@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ObjectStreamField.java	1.35 02/01/03
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package java.io;
@@ -32,6 +37,7 @@ import java.lang.reflect.Field;
  * fields of a class.
  *
  * @author	Mike Warres
+ * @author	Roger Riggs
  * @version 1.38, 01/07/25
  * @see ObjectStreamClass
  * @since 1.2
@@ -185,7 +191,7 @@ public class ObjectStreamField implements Comparable {
      *
      * @return	the typecode of the serializable field
      */
-    // TODO: deprecate?
+    // NOTE: deprecate?
     public char getTypeCode() {
 	return signature.charAt(0);
     }
@@ -195,7 +201,7 @@ public class ObjectStreamField implements Comparable {
      *
      * @return	null if this field has a primitive type.
      */
-    // TODO: deprecate?
+    // NOTE: deprecate?
     public String getTypeString() {
 	return isPrimitive() ? null : signature;
     }
@@ -206,7 +212,7 @@ public class ObjectStreamField implements Comparable {
      * @return	the offset of this field
      * @see #setOffset
      */
-    // TODO: deprecate?
+    // NOTE: deprecate?
     public int getOffset() {
 	return offset;
     }
@@ -217,7 +223,7 @@ public class ObjectStreamField implements Comparable {
      * @param	offset the offset of the field
      * @see #getOffset
      */
-    // TODO: deprecate?
+    // NOTE: deprecate?
     protected void setOffset(int offset) {
 	this.offset = offset;
     }
@@ -227,7 +233,7 @@ public class ObjectStreamField implements Comparable {
      *
      * @return	true if and only if this field corresponds to a primitive type
      */
-    // TODO: deprecate?
+    // NOTE: deprecate?
     public boolean isPrimitive() {
 	char tcode = signature.charAt(0);
 	return ((tcode != 'L') && (tcode != '['));
@@ -247,7 +253,7 @@ public class ObjectStreamField implements Comparable {
      * Types that are primitives are "smaller" than object types.
      * If equal, the field names are compared.
      */
-    // TODO: deprecate?
+    // NOTE: deprecate?
     public int compareTo(Object obj) {
 	ObjectStreamField other = (ObjectStreamField) obj;
 	boolean isPrim = isPrimitive();

@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)sync.h	1.24 06/10/10
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
 #ifndef _INCLUDED_PORTING_SYNC_H
@@ -33,11 +37,53 @@
 
 #define CVM_MICROLOCK_DEFAULT		-1
 #define CVM_MICROLOCK_SCHEDLOCK		1
+#define CVM_MICROLOCK_SWAP_SPINLOCK	2
+#define CVM_MICROLOCK_PLATFORM_SPECIFIC	3
 
-#ifdef CVM_HAVE_PLATFORM_SPECIFIC_MICROLOCK
 /*
- * If CVM_HAVE_PLATFORM_SPECIFIC_MICROLOCK is defined, the platform must
- * provide definitions for the following opaque struct:
+ * The platform defines the CVM_FASTLOCK_TYPE variable to be
+ * one of the following.
+ */
+
+#define CVM_FASTLOCK_NONE		-1
+#define CVM_FASTLOCK_ATOMICOPS		1
+#define CVM_FASTLOCK_MICROLOCK		3
+
+#ifndef _ASM
+
+#ifdef CVM_ADV_SPINLOCK
+/*
+ * If CVM_ADV_SPINLOCK is #defined, then CVM_ADV_ATOMIC_SWAP must also
+ * be defined, and the platform must supply CVMvolatileStore and
+ * CVMspinlockYield.
+ */
+
+/*
+ * Yield the processor to another thread, so a later attempt can be made
+ * to grab the microlock.
+ */
+extern void CVMspinlockYield();
+
+/*
+ * CVMvolatileStore is used to unlock the microlock. Conceptually
+ * it is simply a store of new_value into *addr. However, it must be done
+ * in such a way as to guarantee that the compiler doesn't shuffle
+ * instructions around it. Thus an assembler inline function is normally
+ * used. It also must provide a membar on MP systems.
+ */
+extern void CVMvolatileStore(volatile CVMAddr *addr, CVMAddr new_value);
+
+#endif /* CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK */
+
+/*
+ * If CVM_MICROLOCK_TYPE == CVM_MICROLOCK_PLATFORM_SPECIFIC, then the
+ * platform must provide definitions for the following microlock
+ * related struct and APIs. Otherwise default versions will be
+ * provided based on the setting of CVM_MICROLOCK_TYPE.
+ */
+
+/*
+ * opaque struct for microlocks.
  *
  * struct CVMMicroLock
  */
@@ -66,27 +112,6 @@ extern void    CVMmicrolockLock   (CVMMicroLock* m);
  * Release a lock previously acquired by CVMmicrolockLock.
  */
 extern void    CVMmicrolockUnlock (CVMMicroLock* m);
-
-#else /* !CVM_HAVE_PLATFORM_SPECIFIC_MICROLOCK */
-
-/* If CVM_HAVE_PLATFORM_SPECIFIC_MICROLOCK is not defined, then microlocks
-   will be implemented using CVMMutex: */
-#define CVMMicroLock            CVMMutex
-#define CVMmicrolockInit        CVMmutexInit
-#define CVMmicrolockDestroy     CVMmutexDestroy
-#define CVMmicrolockLock        CVMmutexLock
-#define CVMmicrolockUnlock      CVMmutexUnlock
-
-#endif /* CVM_HAVE_PLATFORM_SPECIFIC_MICROLOCK */
-
-/*
- * The platform defines the CVM_FASTLOCK_TYPE variable to be
- * one of the following.
- */
-
-#define CVM_FASTLOCK_NONE		-1
-#define CVM_FASTLOCK_ATOMICOPS		1
-#define CVM_FASTLOCK_MICROLOCK		3
 
 /*
  * Platform must provide definitions for the following opaque structs:
@@ -158,22 +183,17 @@ extern CVMBool CVMthreadBoostInit(CVMThreadBoostRecord *b);
 extern void CVMthreadBoostDestroy(CVMThreadBoostRecord *b);
 
 /*
- * Set target (synchronized).
+ * Add a booster (synchronized).  Returns queue for boost-and-wait call.
  */
-extern void CVMthreadBoostSetTarget(CVMThreadID *self,
-				    CVMThreadBoostRecord *b,
-				    CVMThreadID *ti);
-
-/*
- * Add a booster (synchronized).
- */
-extern void    CVMthreadAddBooster(CVMThreadID *self,
-				   CVMThreadBoostRecord *b);
+extern CVMThreadBoostQueue *CVMthreadAddBooster(CVMThreadID *self,
+					        CVMThreadBoostRecord *b,
+					        CVMThreadID *ti);
 /*
  * Boost the priority of a thread and wait until canceled (unsynchronized).
  */
 extern void    CVMthreadBoostAndWait(CVMThreadID *self,
-				     CVMThreadBoostRecord *b);
+				     CVMThreadBoostRecord *b,
+				     CVMThreadBoostQueue *q);
 /*
  * Cancel all boosters (synchronized).
  */
@@ -278,6 +298,8 @@ extern CVMAddr CVMatomicSwap(volatile CVMAddr *addr, CVMAddr nnew);
 extern void    CVMmemoryBarrier();
 #endif
 
+#endif /* !_ASM */
+
 #include CVM_HDR_SYNC_H
 
 /*
@@ -289,7 +311,15 @@ extern void    CVMmemoryBarrier();
 #ifndef CVM_ADV_SCHEDLOCK
 #error CVM_MICROLOCK_SCHEDLOCK but not CVM_ADV_SCHEDLOCK
 #endif
+#elif CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK
+#ifndef CVM_ADV_SPINLOCK
+#error CVM_MICROLOCK_SWAP_SPINLOCK but not CVM_ADV_SPINLOCK
+#endif
+#ifndef CVM_ADV_ATOMIC_SWAP
+#error CVM_MICROLOCK_SWAP_SPINLOCK but not ADV_ATOMIC_SWAP
+#endif
 #elif CVM_MICROLOCK_TYPE == CVM_MICROLOCK_DEFAULT
+#elif CVM_MICROLOCK_TYPE == CVM_MICROLOCK_PLATFORM_SPECIFIC
 #else
 #error Unknown CVM_MICROLOCK_TYPE
 #endif

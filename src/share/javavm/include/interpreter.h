@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)interpreter.h	1.252 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_INTERPRETER_H
@@ -39,7 +44,7 @@
 #endif
 
 #ifdef CVM_LVM /* %begin lvm */
-#include "javavm/include/lvm.h"
+#include "javavm/include/lvm/lvm.h"
 #endif /* %end lvm */
 
 
@@ -176,7 +181,7 @@ struct CVMExecEnv {
     /* pre-allocated memory for thread shutdown */
     CVMBool threadExiting;
     CVMOwnedMonitor *objLocksReservedOwned;
-    CVMObjMonitor *objLocksReservedUnlocked;
+    CVMObjMonitor   *objLocksReservedUnlocked;
 
 #ifdef CVM_JIT
     CVMMethodBlock* invokeMb; /* method currently being invoked */
@@ -223,7 +228,7 @@ struct CVMExecEnv {
 #endif
 
 #ifdef CVM_LVM /* %begin lvm */
-    CVMLVMPerEEInfo lvmInfo;	/* Info on LVM to which this EE belongs */
+    CVMLVMExecEnv lvmEE;	/* Info on LVM to which this EE belongs */
 #endif /* %end lvm */
 
 #ifdef CVM_TRACE_ENABLED
@@ -239,12 +244,30 @@ struct CVMExecEnv {
     CVMBool maskedInterrupt;	/* Was Thread.interrupt() called while
 				   interrupts were masked? */
 
+#if defined(CVMJIT_SIMPLE_SYNC_METHODS) \
+    && CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
+    CVMOwnedMonitor simpleSyncReservedOwnedMonitor;
+#if CVM_DEBUG
+    /* The currently executing Simple Sync method and the method that
+       inlined the currently executing Simple Sync method. Note that these
+       are set every time a Simple Sync method is executed and are
+       never cleared, thus they can be stale.
+    */
+    CVMMethodBlock* currentSimpleSyncMB;
+    CVMMethodBlock* currentMB;
+#endif
+#endif
+
     /* pinned object monitors during thread shutdown */
     /* 16 is overkill.  To find the minimum number, build */
     /* with CVM_FASTLOCK_TYPE set to CVM_FASTLOCK_NONE */
 #define CVM_PINNED_OBJMON_COUNT 16
     CVMObjMonitor *objLocksPinned[CVM_PINNED_OBJMON_COUNT];
     CVMSize objLocksPinnedCount;
+
+#ifdef CVM_TRACE
+    CVMUint32 traceDepth;
+#endif
 };
 
 /* 
@@ -1288,19 +1311,19 @@ extern void CVMtraceReset(CVMUint32 old, CVMUint32 nnew);
 
 #ifdef CVM_TRACE
 #define TRACE_METHOD_CALL(frame, isJump)			\
-    if (CVMglobals.debugFlags & CVM_DEBUGFLAG(TRACE_METHOD)) {	\
+    if (CVMcheckDebugFlags(CVM_DEBUGFLAG(TRACE_METHOD))) {	\
 	CVMtraceMethodCall(ee, frame, isJump);			\
     }
 #define TRACE_METHOD_RETURN(frame)				\
-    if (CVMglobals.debugFlags & CVM_DEBUGFLAG(TRACE_METHOD)) {	\
+    if (CVMcheckDebugFlags(CVM_DEBUGFLAG(TRACE_METHOD))) {	\
          CVMtraceMethodReturn(ee, frame);			\
     }
 #define TRACE_FRAMELESS_METHOD_CALL(frame, mb, isJump)		\
-    if (CVMglobals.debugFlags & CVM_DEBUGFLAG(TRACE_METHOD)) {	\
+    if (CVMcheckDebugFlags(CVM_DEBUGFLAG(TRACE_METHOD))) {	\
 	CVMtraceFramelessMethodCall(ee, frame, mb, isJump);	\
     }
 #define TRACE_FRAMELESS_METHOD_RETURN(mb, frame)		\
-    if (CVMglobals.debugFlags & CVM_DEBUGFLAG(TRACE_METHOD)) {	\
+    if (CVMcheckDebugFlags(CVM_DEBUGFLAG(TRACE_METHOD))) {	\
          CVMtraceFramelessMethodReturn(ee, mb, frame);		\
     }
 extern void CVMtraceMethodCall(CVMExecEnv *ee,

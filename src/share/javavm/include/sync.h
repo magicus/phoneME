@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)sync.h	1.62 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_SYNC_H
@@ -26,6 +31,13 @@
 #include "javavm/include/defs.h"
 #include "javavm/include/porting/defs.h"
 #include "javavm/include/porting/sync.h"
+
+#if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK
+#define CVM_MICROLOCK_UNLOCKED  0x00
+#define CVM_MICROLOCK_LOCKED    0xff
+#endif
+
+#ifndef _ASM
 
 /*
  * Global micro locks
@@ -69,15 +81,70 @@ CVMsysMicroUnlockAll(CVMExecEnv *ee);
 #define CVMsysMicroUnlock(ee, l) {(void)(ee); CVMsysMicroUnlockImpl((l));}
 #endif
 
-#if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SCHEDLOCK
-#define CVMsysMicroLockImpl(l)		CVMschedLock()
-#define CVMsysMicroUnlockImpl(l)	CVMschedUnlock()
-#else /* CVM_MICROLOCK_TYPE == CVM_MICROLOCK_DEFAULT */
-
 #define CVMsysMicroLockImpl(l) \
     CVMmicrolockLock(&CVMglobals.sysMicroLock[(l)])
 #define CVMsysMicroUnlockImpl(l) \
     CVMmicrolockUnlock(&CVMglobals.sysMicroLock[(l)])
+
+/*********************************************
+ * Various CVM_MICROLOCK_TYPE implementations.
+ *********************************************/
+
+#if CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SCHEDLOCK
+
+/*
+ * CVM_MICROLOCK_SCHEDLOCK
+ */
+struct CVMMicroLock { CVMUint8 unused; };
+#define CVMmicrolockInit(m)	   (CVM_TRUE)
+#define CVMmicrolockDestroy(m)
+#define CVMmicrolockLock(m)        CVMschedLock()
+#define CVMmicrolockUnlock(m)      CVMschedUnlock()
+
+#elif CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK
+
+/*
+ * CVM_MICROLOCK_SWAP_SPINLOCK
+ */
+
+struct CVMMicroLock
+{
+    volatile CVMAddr lockWord;
+};
+
+extern void CVMmicrolockLockImpl(CVMMicroLock *m);
+
+#define CVMmicrolockLock(m) {                                          \
+    CVMAddr                                                            \
+    oldWord = CVMatomicSwap(&(m)->lockWord, CVM_MICROLOCK_LOCKED);     \
+    if (oldWord != CVM_MICROLOCK_UNLOCKED) {                           \
+        CVMmicrolockLockImpl(m);                                       \
+    }                                                                  \
+}
+#define CVMmicrolockUnlock(m) \
+    CVMvolatileStore(&(m)->lockWord, CVM_MICROLOCK_UNLOCKED)
+
+#elif CVM_MICROLOCK_TYPE == CVM_MICROLOCK_DEFAULT
+
+/*
+ * CVM_MICROLOCK_DEFAULT
+ */
+/* Microlocks will be implemented using CVMMutex. */
+#define CVMMicroLock            CVMMutex
+#define CVMmicrolockInit        CVMmutexInit
+#define CVMmicrolockDestroy     CVMmutexDestroy
+#define CVMmicrolockLock        CVMmutexLock
+#define CVMmicrolockUnlock      CVMmutexUnlock
+
+#elif CVM_MICROLOCK_TYPE == CVM_MICROLOCK_PLATFORM_SPECIFIC
+
+/*
+ * CVM_MICROLOCK_PLATFORM_SPECIFIC
+ */
+/* Platform will supply implementation */
+#else
+
+#error "Invalid CVM_MICROLOCK_TYPE"
 
 #endif /* CVM_MICROLOCK_TYPE */
 
@@ -476,4 +543,5 @@ CVMBool CVMcondvarDestroyStub(CVMCondVar* c);
 
 #endif
 
+#endif /* !_ASM */
 #endif /* _INCLUDED_SYNC_H */

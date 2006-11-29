@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitirdump.c	1.102 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 #ifdef CVM_TRACE_JIT
 
@@ -39,8 +44,6 @@
 
 static const char *const opcodeTagMap[] = {
     "CVMJITOP_INVALID",
-
-    "ROOT",		/* CVMJITRoot */
 
     "CONST_JAVA_NUMERIC32", 	/* CVMJITConstant32 */
     "CONST_JAVA_NUMERIC64", 	/* CVMJITConstant64 */
@@ -120,6 +123,11 @@ static const char *const opcodeTagMap[] = {
     "CHECKCAST",
     "INSTANCEOF",
     "FETCH_MB_FROM_VTABLE",
+/* IAI - 20 */
+    "FETCH_VCB",
+    "FETCH_MB_FROM_VTABLE_OUTOFLINE",
+    "MB_TEST_OUTOFLINE",
+/* IAI - 20 */   
     "FETCH_MB_FROM_INTERFACETABLE",
     "PARAMETER",
     "IARG",
@@ -181,19 +189,19 @@ static const char *const typeTagMap[] = {
 };
 
 static const char *const subnodeTagMap[] = {
-    "ROOT_NODE",
     "CONSTANT_NODE",
     "NULL_NODE",
     "LOCAL_NODE",
-    "UNARY_NODE",
-    "BINARY_NODE",
-    "BRANCH_NODE",
-    "CONDBRANCH_NODE",
-    "LOOKUPSWITCH_NODE",
-    "TABLESWITCH_NODE",
-    "PHI",
     "PHI_LIST",
     "MAP_PC_NODE",
+    "BRANCH_NODE",
+    "PHI0_NODE",
+    "UNARY_NODE",
+    "PHI1_NODE",
+    "LOOKUPSWITCH_NODE",
+    "TABLESWITCH_NODE",
+    "BINARY_NODE",
+    "CONDBRANCH_NODE",
 };
 
 static const char *const conditions[] = {

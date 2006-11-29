@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jit_common.c	1.159 06/10/25
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/interpreter.h"
@@ -27,6 +32,7 @@
 #include "javavm/include/bcattr.h"
 #include "javavm/include/porting/int.h"
 #include "javavm/include/common_exceptions.h"
+#include "javavm/include/preloader.h"
 
 #include "javavm/include/jit_common.h"
 #include "javavm/include/porting/jit/jit.h"
@@ -189,6 +195,7 @@ CVMJITframeIterate(CVMFrame* frame, CVMJITFrameIterator *iter)
     /* No inlining in this method. So we can trust the frame */
     if (inliningInfo == NULL) {
 	iter->numEntries = 0;
+	iter->inliningEntries = NULL;  /* avoid compiler warning */
 	return;
     }
 
@@ -469,8 +476,8 @@ CVMcompiledFrameScanner(CVMExecEnv* ee,
     CVMInt32			  pcOffset = pc - CVMcmdStartPC(cmd);
     CVMBool			  isAtReturn = CVM_FALSE;
     CVMUint16*			  mapData;
-    CVMInt32			  mapSize;
-    CVMInt32			  paramSize;
+    CVMInt32			  mapSize = 0;
+    CVMInt32			  paramSize = 0;
     CVMUint16			  bitmap;
     int				  bitNo;
     int				  noSlotsToScan;
@@ -1294,7 +1301,14 @@ CVMinvokeOSRCompiledHelper(CVMExecEnv *ee, CVMFrame *frame,
     ee->invokeMb = NULL;
 
     /* Continue executing in the compiled method: */
-    CVMcmdEntryCount(cmd)++;
+#ifdef CVM_AOT
+    /* Don't adjust entry count for AOT methods. */
+    if (!((CVMUint8*)cmd >= CVMglobals.jit.codeCacheAOTStart &&
+        (CVMUint8*)cmd < CVMglobals.jit.codeCacheAOTEnd))
+#endif
+    {
+        CVMcmdEntryCount(cmd)++;
+    }
     resCode = CVMreturnToCompiledHelper(ee, frame, mb_p, NULL);
 
     return resCode;
@@ -1342,6 +1356,9 @@ const CVMSubOptionEnumData jitTraceOptions[] = {
     { "inlining",       CVM_DEBUGFLAG(TRACE_JITINLINING) },
     { "osr",            CVM_DEBUGFLAG(TRACE_JITOSR) },
     { "reglocals",      CVM_DEBUGFLAG(TRACE_JITREGLOCALS) },
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+    { "patchedinvokes", CVM_DEBUGFLAG(TRACE_JITPATCHEDINVOKES) },
+#endif
 };
 #endif
 
@@ -1411,7 +1428,7 @@ static const CVMSubOptionData knownJitSubOptions[] = {
 
     {"codeCacheSize", "Code Cache Size", 
      CVM_INTEGER_OPTION, 
-     {{0, 32*1024*1024, CVMJIT_DEFAULT_CODE_CACHE_SIZE}},
+     {{0, CVMJIT_MAX_CODE_CACHE_SIZE, CVMJIT_DEFAULT_CODE_CACHE_SIZE}},
      &CVMglobals.jit.codeCacheSize},
 
     {"upperCodeCacheThreshold", "Upper Code Cache Threshold", 
@@ -1423,6 +1440,13 @@ static const CVMSubOptionData knownJitSubOptions[] = {
      CVM_PERCENT_OPTION, 
      {{0, 100, CVMJIT_DEFAULT_LOWER_CCACHE_THR}},
      &CVMglobals.jit.lowerCodeCacheThresholdPercent},
+
+#ifdef CVM_AOT
+    {"aotMethodList", "List of Method to be compiled ahead of time", 
+     CVM_STRING_OPTION, 
+     {{0, (CVMAddr)"<filename>", 0}},
+     &CVMglobals.jit.aotMethodList},
+#endif
 
 #define CVM_JIT_EXPERIMENTAL_OPTIONS
 #ifdef  CVM_JIT_EXPERIMENTAL_OPTIONS
@@ -1499,8 +1523,8 @@ static const CVMSubOptionData knownJitSubOptions[] = {
 };
 
 /* Purpose: Initializes the compilation policy data. */
-static CVMBool
-CVMJITpolicyInit(CVMExecEnv* ee, CVMJITGlobalState* jgs)
+CVMBool
+CVMjitPolicyInit(CVMExecEnv* ee, CVMJITGlobalState* jgs)
 {
     /* Some extra logic to reconcile the -Xjit:compile option with the rest */
     if (jgs->whenToCompile == CVMJIT_COMPILE_NONE) {
@@ -1511,69 +1535,93 @@ CVMJITpolicyInit(CVMExecEnv* ee, CVMJITGlobalState* jgs)
         jgs->compileThreshold = 1000;
     } else if (jgs->whenToCompile == CVMJIT_COMPILE_ALL) {
         jgs->compileThreshold = 0;
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+        /* The [imb]cost were set to 0 earlier in CVMjitInit() to 
+           prevent unwanted methods being compiled as AOT methods.
+           Need to reset [im]cost here.
+	 */
+        jgs->interpreterTransitionCost = CVMJIT_DEFAULT_ICOST;
+        jgs->mixedTransitionCost = CVMJIT_DEFAULT_MCOST;
+        jgs->backwardsBranchCost = CVMJIT_DEFAULT_BCOST;
+#endif
     } /* Otherwise do nothing.
-         The default [im]cost and climit will do the work */
+         The default [im]cost and climit will do the work normally */
+#if defined(CVM_AOT) || defined(CVM_MTASK)
+    else {
+        /* Need to initialize the [im]cost and climit by re-obtaining them 
+         * from the JIT options */
+        if (!CVMprocessSubOptions(knownJitSubOptions, "-Xjit",
+			      &jgs->parsedSubOptions)) {
+	return CVM_FALSE;
+        }
+    }
+#endif
 
+    return CVM_TRUE;
+}
+
+/* Purpose: Set up the inlining threshold table. */
+CVMBool
+CVMjitSetInliningThresholds(CVMExecEnv* ee, CVMJITGlobalState* jgs)
+{
     /* Set up the inlining threshold table: */
-    {
-        CVMInt32 depth = jgs->maxInliningDepth;
-        CVMInt32 thresholdLimit;
-        CVMInt32 *costTable;
-        CVMInt32 i;
-        CVMInt32 effectiveMaxDepth;
+    CVMInt32 depth = jgs->maxInliningDepth;
+    CVMInt32 thresholdLimit;
+    CVMInt32 *costTable;
+    CVMInt32 i;
+    CVMInt32 effectiveMaxDepth;
 
-        /* The inlining threshold table is used to determine if it is OK to
-           inline a certain target method at a certain inlining depth.
-           Basically, we use the current inlining depth to index into the
-           inlining threshold table and come up with a threshold value.  If
-           the target method's invocation cost has decreased to or below the
-           threshold value, then we'll allow that target method to be inlined.
+    /* The inlining threshold table is used to determine if it is OK to
+       inline a certain target method at a certain inlining depth.
+       Basically, we use the current inlining depth to index into the
+       inlining threshold table and come up with a threshold value.  If
+       the target method's invocation cost has decreased to or below the
+       threshold value, then we'll allow that target method to be inlined.
 
-           For inlining depths less or equal to 6, the threshold value are
-           determine based on the quadratic curve:
-               100 * x^2.
-           For inlining depths greater than 6, the target method must have a
-           cost of 0 in order to be inlined.
+        For inlining depths less or equal to 6, the threshold value are
+        determine based on the quadratic curve:
+           100 * x^2.
+        For inlining depths greater than 6, the target method must have a
+        cost of 0 in order to be inlined.
 
-           The choice of a quadratic mapping function, the QUAD_COEFFICIENT of
-           100, and EFFECTIVE_MAX_DEPTH_THRESHOLD of 6 were determined by
-           testing.  These heuristics were found to produce an effective
-           inilining policy.
-        */
+       The choice of a quadratic mapping function, the QUAD_COEFFICIENT of
+       100, and EFFECTIVE_MAX_DEPTH_THRESHOLD of 6 were determined by
+       testing.  These heuristics were found to produce an effective
+       inilining policy.
+    */
 #define QUAD_COEFFICIENT                100
 #define EFFECTIVE_MAX_DEPTH_THRESHOLD   6
 #define MIN(x, y)                       (((x) < (y)) ? (x) : (y))
 
-        if (depth == 0) {
-            depth = 1;
-        }
-        costTable = malloc(depth * sizeof(CVMInt32));
-        if (costTable == NULL) {
-            return CVM_FALSE;
-        }
+    if (depth == 0) {
+        depth = 1;
+    }
+    costTable = malloc(depth * sizeof(CVMInt32));
+    if (costTable == NULL) {
+        return CVM_FALSE;
+    }
 
-        thresholdLimit = QUAD_COEFFICIENT *
-                         EFFECTIVE_MAX_DEPTH_THRESHOLD *
-                         EFFECTIVE_MAX_DEPTH_THRESHOLD;
+    thresholdLimit = QUAD_COEFFICIENT *
+                     EFFECTIVE_MAX_DEPTH_THRESHOLD *
+                     EFFECTIVE_MAX_DEPTH_THRESHOLD;
 
-        effectiveMaxDepth = MIN(depth, EFFECTIVE_MAX_DEPTH_THRESHOLD);
-        for (i = 0; i < effectiveMaxDepth; i++) {
-            CVMInt32 cost = (jgs->compileThreshold *
-                             (QUAD_COEFFICIENT *i*i)) / thresholdLimit;
-            costTable[i] = jgs->compileThreshold - cost;
-            if (costTable[i] < 0) {
-                costTable[i] = 0;
-            }
-        }
-        for (; i < depth; i++) {
+    effectiveMaxDepth = MIN(depth, EFFECTIVE_MAX_DEPTH_THRESHOLD);
+    for (i = 0; i < effectiveMaxDepth; i++) {
+        CVMInt32 cost = (jgs->compileThreshold *
+                         (QUAD_COEFFICIENT *i*i)) / thresholdLimit;
+        costTable[i] = jgs->compileThreshold - cost;
+        if (costTable[i] < 0) {
             costTable[i] = 0;
-        }
+         }
+    }
+    for (; i < depth; i++) {
+	costTable[i] = costTable[effectiveMaxDepth-1];
+    }
 
-        jgs->inliningThresholds = costTable;
+    jgs->inliningThresholds = costTable;
 #undef QUAD_COEFFICIENT
 #undef EFFECTIVE_MAX_DEPTH_THRESHOLD
 #undef MIN
-    }
 
     return CVM_TRUE;
 }
@@ -1622,8 +1670,11 @@ CVMjitReinitialize(CVMExecEnv* ee, const char* subOptionsString)
 
     free(jgs->inliningThresholds);
 
-    /* Re-build cost table */
-    if (!CVMJITpolicyInit(ee, jgs)) {
+    if (!CVMjitPolicyInit(ee, jgs)) {
+        return CVM_FALSE;
+    }
+
+    if (!CVMjitSetInliningThresholds(ee, jgs)) {
         return CVM_FALSE;
     }
 
@@ -1646,6 +1697,1548 @@ CVMjitReinitialize(CVMExecEnv* ee, const char* subOptionsString)
     return CVM_TRUE;
 }
 #endif
+
+#if defined(CVM_AOT) && !defined(CVM_MTASK)
+/*
+ * CVMjitCompileAOTCode() is called during VM startup. If there is
+ * no existing AOT code, compile all the methods on 
+ * CVMglobals.jit.aotMethodList. The compiled methods will be save 
+ * as the AOT code.
+ */
+void
+CVMjitCompileAOTCode(CVMExecEnv* ee)
+{
+    JNIEnv* env = CVMexecEnv2JniEnv(ee);
+    jstring jmlist;
+
+    if (CVMglobals.jit.aotMethodList == NULL) {
+        const CVMProperties *sprops = CVMgetProperties();
+        CVMglobals.jit.aotMethodList = 
+            (char*)malloc(strlen(sprops->library_path) +
+                          strlen("/methodsList.txt") + 
+                          1);
+        if (CVMglobals.jit.aotMethodList == NULL) {
+            return;
+        }
+        *CVMglobals.jit.aotMethodList = '\0';
+        strcat(CVMglobals.jit.aotMethodList, sprops->library_path);
+        strcat(CVMglobals.jit.aotMethodList, "/methodsList.txt");
+    }
+
+    jmlist = (*env)->NewStringUTF(env, CVMglobals.jit.aotMethodList);
+    if ((*env)->ExceptionOccurred(env)) {
+        return;
+    }
+
+    CVMjniCallStaticVoidMethod(env,
+        CVMcbJavaInstance(CVMsystemClass(sun_mtask_Warmup)),
+        CVMglobals.sun_mtask_Warmup_runit, NULL, jmlist);
+}
+#endif
+
+#ifdef CVMJIT_SIMPLE_SYNC_METHODS
+
+/*
+ * Simple Sync Method Names
+ *
+ * Array of method names that have simple synchronization requirements
+ * and should be remapped to "Simple Sync" versions. This array provides
+ * the symbolic mappings, and is processed to produce the mb->mb mappings
+ * stored in jgs->simpleSyncMBs[].
+ */
+typedef struct {
+    CVMClassBlock* cb;
+    const char* methodName;
+    const char* methodSig;
+    const char* simpleSyncMethodName; /* uses methodSig as the signature */
+    const CVMUint16 jitFlags; /* extra mb->jitFlagsx flags to set */
+} CVMJITSimpleSyncMethodName;
+
+static const CVMJITSimpleSyncMethodName CVMJITsimpleSyncMethodNames[] = {
+    {
+	/* java.util.Random.next(I)I */
+	CVMsystemClass(java_util_Random),
+	"next", "(I)I",
+	"nextSimpleSync"
+    },
+    {
+	/* java.util.Hashtable.size()I */
+	CVMsystemClass(java_util_Hashtable),
+	"size", "()I",
+	"sizeSimpleSync"
+    },
+    {
+	/* java.util.Hashtable.isEmpty()Z */
+	CVMsystemClass(java_util_Hashtable),
+	"isEmpty", "()Z",
+	"isEmptySimpleSync"
+    },
+    {
+	/* java.lang.String.<init>(Ljava.lang.StringBuffer;) */
+	CVMsystemClass(java_lang_String),
+	"<init>", "(Ljava/lang/StringBuffer;)V",
+	"initSimpleSync",
+	/* calls other simple methods, which must be inlined */
+	CVMJIT_NEEDS_TO_INLINE
+    },
+    {
+	/* java.lang.StringBuffer.length()I */
+	CVMsystemClass(java_lang_StringBuffer),
+	"length", "()I",
+	"lengthSimpleSync"
+    },
+    {
+	/* java.lang.StringBuffer.capacity()I */
+	CVMsystemClass(java_lang_StringBuffer),
+	"capacity", "()I",
+	"capacitySimpleSync"
+    },
+    {
+	/* java.lang.StringBuffer.charAt(I)C */
+	CVMsystemClass(java_lang_StringBuffer),
+	"charAt", "(I)C",
+	"charAtSimpleSync"
+    },
+    {
+	/* java.lang.StringBuffer.append(C)Ljava/lang/StringBuffer; */
+	CVMsystemClass(java_lang_StringBuffer),
+	"append", "(C)Ljava/lang/StringBuffer;",
+	"appendSimpleSync"
+    },
+    {
+	/* java.util.Vector.capacity()I */
+	CVMsystemClass(java_util_Vector),
+	"capacity", "()I",
+	"capacitySimpleSync"
+    },
+    {
+	/* java.util.Vector.size()I */
+	CVMsystemClass(java_util_Vector),
+	"size", "()I",
+	"sizeSimpleSync"
+    },
+    {
+	/* java.util.Vector.isEmpty()Z */
+	CVMsystemClass(java_util_Vector),
+	"isEmpty", "()Z",
+	"isEmptySimpleSync"
+    },
+    {
+	/* java.util.Vector.elementAt(I)Ljava/lang/Object; */
+	CVMsystemClass(java_util_Vector),
+	"elementAt", "(I)Ljava/lang/Object;",
+	"elementAtSimpleSync",
+	/* calls get0, which really does the simple sync work */
+	CVMJIT_NEEDS_TO_INLINE
+    },
+    {
+	/* java.util.Vector.firstElement()Ljava/lang/Object; */
+	CVMsystemClass(java_util_Vector),
+	"firstElement", "()Ljava/lang/Object;",
+	"firstElementSimpleSync",
+	/* calls get0, which really does the simple sync work */
+	CVMJIT_NEEDS_TO_INLINE
+    },
+    {
+	/* java.util.Vector.lastElement()Ljava/lang/Object; */
+	CVMsystemClass(java_util_Vector),
+	"lastElement", "()Ljava/lang/Object;",
+	"lastElementSimpleSync"
+    },
+    {
+	/* java.util.Vector.setElementAt(Ljava/lang/Object;I)V */
+	CVMsystemClass(java_util_Vector),
+	"setElementAt", "(Ljava/lang/Object;I)V",
+	"setElementAtSimpleSync",
+	/* calls set0, which really does the simple sync work */
+	CVMJIT_NEEDS_TO_INLINE
+    },
+    {
+	/* java.util.Vector.addElement(Ljava/lang/Object;)V */
+	CVMsystemClass(java_util_Vector),
+	"addElement", "(Ljava/lang/Object;)V",
+	"addElementSimpleSync"
+    },
+    {
+	/* java.util.Vector.get(I)Ljava/lang/Object; */
+	CVMsystemClass(java_util_Vector),
+	"get", "(I)Ljava/lang/Object;",
+	"getSimpleSync",
+	/* calls get0, which really does the simple sync work */
+	CVMJIT_NEEDS_TO_INLINE
+    },
+    {
+	/* java.util.Vector.set(ILjava/lang/Object;)Ljava/lang/Object; */
+	CVMsystemClass(java_util_Vector),
+	"set", "(ILjava/lang/Object;)Ljava/lang/Object;",
+	"setSimpleSync",
+	/* calls set0, which really does the simple sync work */
+	CVMJIT_NEEDS_TO_INLINE
+    },
+    {
+	/* java.util.Vector$1.nextElement()Ljava/lang/Object; */
+	CVMsystemClass(java_util_Vector_1),
+	"nextElement", "()Ljava/lang/Object;",
+	"nextElementSimpleSync"
+    },
+};
+
+#define CVM_JIT_NUM_SIMPLESYNC_METHODS  \
+    (sizeof(CVMJITsimpleSyncMethodNames) / sizeof(CVMJITSimpleSyncMethodName))
+
+static CVMBool
+CVMJITsimpleSyncInit(CVMExecEnv* ee, CVMJITGlobalState* jgs)
+{
+    int i;
+    CVMMethodTypeID methodTypeID; 
+    CVMMethodBlock* mb;
+
+    /* These method are always inlinable. They are called by the
+     * simple sync methods, but are actually the ones that really
+     * do the simple sync work. For example:
+     *
+     * private Object setSimpleSync(int index, Object element) {
+     *	   return set0(index, element);
+     * }
+     *
+     * We want to be agressive about inlining them.
+     */
+    methodTypeID = CVMtypeidLookupMethodIDFromNameAndSig(
+	ee, "get0", "(IZ)Ljava/lang/Object;");
+    mb = CVMclassGetMethodBlock(
+       	CVMsystemClass(java_util_Vector), methodTypeID, CVM_FALSE);
+    CVMassert(mb != NULL);
+    CVMmbCompileFlags(mb) |= CVMJIT_ALWAYS_INLINABLE;
+
+    methodTypeID = CVMtypeidLookupMethodIDFromNameAndSig(
+	ee, "set0", "(ILjava/lang/Object;)Ljava/lang/Object;");
+    mb = CVMclassGetMethodBlock(
+       	CVMsystemClass(java_util_Vector), methodTypeID, CVM_FALSE);
+    CVMassert(mb != NULL);
+    CVMmbCompileFlags(mb) |= CVMJIT_ALWAYS_INLINABLE;
+
+    /*
+     * allocate jgs->simpleSyncMBs[]
+     */
+    jgs->numSimpleSyncMBs = CVM_JIT_NUM_SIMPLESYNC_METHODS;
+    jgs->simpleSyncMBs = (void*)
+	malloc(sizeof(jgs->simpleSyncMBs[0]) * CVM_JIT_NUM_SIMPLESYNC_METHODS);
+    if (jgs->simpleSyncMBs == NULL) {
+	return CVM_FALSE;
+    }
+
+    /*
+     * initialize jgs->simpleSyncMBs based on the info in
+     * CVMJITsimpleSyncMethodNames[]
+     */
+    for (i = 0; i < CVM_JIT_NUM_SIMPLESYNC_METHODS; i++) {
+	/* lookup originalMB */
+	methodTypeID = CVMtypeidLookupMethodIDFromNameAndSig(
+	    ee, 
+	    CVMJITsimpleSyncMethodNames[i].methodName, 
+	    CVMJITsimpleSyncMethodNames[i].methodSig);
+	mb = CVMclassGetMethodBlock(
+            CVMJITsimpleSyncMethodNames[i].cb, methodTypeID, CVM_FALSE);
+#if 0
+	CVMconsolePrintf("%C.%!M\n",
+			 CVMJITsimpleSyncMethodNames[i].cb,
+			 methodTypeID);
+#endif
+	CVMassert(mb != NULL);
+	jgs->simpleSyncMBs[i].originalMB = mb;
+
+	/* lookup simpleSyncMB */
+	methodTypeID = CVMtypeidLookupMethodIDFromNameAndSig(
+	    ee, 
+	    CVMJITsimpleSyncMethodNames[i].simpleSyncMethodName, 
+	    CVMJITsimpleSyncMethodNames[i].methodSig);
+	mb = CVMclassGetMethodBlock(
+            CVMJITsimpleSyncMethodNames[i].cb, methodTypeID,  CVM_FALSE);
+	CVMassert(mb != NULL);
+	jgs->simpleSyncMBs[i].simpleSyncMB = mb;
+	/* these methods are always inlinable */
+	CVMmbCompileFlags(mb) |= CVMJIT_ALWAYS_INLINABLE;
+	/* Possibly set CVMJIT_NEEDS_TO_INLINE flag */
+	CVMmbCompileFlags(mb) |= CVMJITsimpleSyncMethodNames[i].jitFlags;
+    }
+    return CVM_TRUE;
+}
+
+static void
+CVMJITsimpleSyncDestroy(CVMJITGlobalState* jgs)
+{
+    free(jgs->simpleSyncMBs);
+    jgs->simpleSyncMBs = NULL;
+}
+
+#endif /* CVMJIT_SIMPLE_SYNC_METHODS */
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+
+/********************************************************************
+  PMI - Patched Method Invocations support.
+ 
+  Support for the patch table used to support direct method invocations.
+  The patch table is used to track which code cache locations have direct
+  calls so they can be patched as methods get compiled/decompiled or
+  overridden for the first time. It has two main components:
+
+   -A hash table used to lookup mb's that have direct method calls to them.
+    This is referred to as the "Callee Table".
+
+   -An array that contains codecache offsets of instructions that make
+    direct method calls. This is referred to as the "Caller Table".
+
+  The Caller Table is indexed by the entries in the Callee Table. Each
+  Caller Table entry forms a linked list of entries. When an mb changes
+  state, it looks itself up in the Callee Table. If it finds an entry
+  for itself, then it knows there are direct method calls to it that
+  need to be patched. The location of these calls are discovered by
+  following the link (actually an array index) in the Callee Table
+  entry to the first entry for the method in the Caller Table. From
+  there each Caller Table method has a link (index) to the next entry
+  for the method. This is how a method finds all code cache locations
+  that need to be patched.
+
+  Details for the Callee Table and Caller Table are below:
+*/
+
+/*
+  CALLEE TABLE - Hash table for tracking callee records.
+
+  Callee records (CVMJITPMICalleeRecords) are used to find all direct
+  method calls to a given callee. For tracking CVMJITPMICalleeRecords,
+  we use a hash table with open addressing and a double hashing
+  (secondary hash used when there is a collision). The secondary hash
+  value is a small prime number indexed out of the prime number table
+  below. We use a table size that is relatively prime to the secondary
+  hash (no factors common to any of the secondary hash primes). This
+  guarantees that all entries will be traversed and we will get a good
+  dispersal of entries in the table.
+
+  The reason for using this type of hash table is that it strikes a
+  good balance between minimal space and minimal lookup times. A
+  simple array would use the least amount of space, but would result
+  in either very slow lookups, or require extra space in each mb to
+  map each mb to an entry (even ones with no patched calls to
+  them). Any other type of data structure would waste space with link
+  pointers.
+
+  Since entries can be deleted, they need to be specially tagged so the
+  search does not end when a deleted entry is found. If callerMb == NULL,
+  this indicates an empty entry. If callerMb == 1, this indicates a
+  deleted entry.
+
+  The hash table grows if it gets too full, including counting
+  entries marked as deleted. CVMJITPMI_CALLEETABLE_MAX_PERCENT_FULL
+  determines when the table grows. Deleted entries are purged during
+  this process.
+
+  Each entry in the callee hash table is a CVMJITPMICalleeRecord,
+  which contains indices for the first and last caller entries in the
+  Caller Table (see Caller Table details below).  A "caller" is a
+  patchable invoke site that calls the calleeMb.
+*/
+struct CVMJITPMICalleeRecord {
+    CVMMethodBlock* calleeMb;       /* the method directly called */
+    CVMUint16 firstCallerRecordIdx; /* first caller record in Caller Table */
+    CVMUint16 lastCallerRecordIdx;  /* last caller record in Caller Table */
+};
+
+/* Primes used for secondary hash. We avoid 2, 3, and 5 so hash chains
+   are not too condensed. */
+static int CVMJITPMIsecondaryHashPrimes[] =
+    {7, 11, 13, 17, 19, 23, 29, 31, 37};
+
+#define CVMJITPMI_NUM_SECONDARY_HASH_PRIMES \
+    (sizeof(CVMJITPMIsecondaryHashPrimes) / sizeof(int))
+
+/* When the callee table is this % full, it must grow before being added to. */
+#define CVMJITPMI_CALLEETABLE_MAX_PERCENT_FULL 80
+
+/*
+  CALLER TABLE: Table for tracking caller records.
+
+  A caller record (CVMJITPMICallerRecord) is simply a mapping to a
+  code cache address that contains a patchable direct method
+  call. Since you get to a CVMJITPMICallerRecord via the
+  CVMJITPMICalleeRecord, the method being called is always the one in
+  the CVMJITPMICalleeRecord.
+
+  A CVMJITPMICallerRecord contains a pair of patchable direct method
+  calls. The reason is that for any given record we also need to find
+  the next record in the sequence. Since there can't be more than 64k
+  of entries, we need 16-bits to index to the next entry. However, we
+  need more than 16-bits to index into the code cache. Thus every
+  CVMJITPMICallerRecord contains two 23-bit code cache references and
+  a 16-bit index to the next CVMJITPMICallerRecord. It also has a two
+  1-bit "isVirtual" flags to indicate if the patches are for a virtual
+  invokes of non-overridden methods. This makes a total of
+  64-bits. The 16-bit index is split into two 8-bit values so the
+  compiler can generated better code when accessing the two code cache
+  indices, and also to guarantee that no alignment of the bits is
+  done, which would result in more than 64-bits per record.
+ 
+  The isVirtual flag is needed for two reasons. The first is to make
+  sure that after a method is overridden and calls to it are patched
+  to do a true virtual invoke, we don't then patch the calls later
+  when the state of the original callee method changes between the
+  compiled and decompiled states. Otherwise we'll start calling the
+  original callee again rather than doing a true virtual invoke. The
+  other reason is to properly handle non-virtual calls to virtual
+  methods. We don't want to patch them to do a true virtual invoke
+  when the method is overridden. These checks are handled in the
+  CVMJITPMIpatchCall() funtion.
+
+  It's possible for first_ccIndex to be non-zero and second_ccIndex to
+  be 0, in which case any new patchable direct method call for the
+  specified calleeMb will be added to second_ccIndex in this record.
+
+  All freed up records are maintained on a link list, using nextIndex as
+  the index to the next free record. This is is also true of records
+  linked together for the same calleeMb.
+*/
+
+struct CVMJITPMICallerRecord {
+    unsigned first_ccIndex    : 23;
+    unsigned first_isVirtual  :  1;
+    unsigned nextIndex_upper8 :  8;
+    unsigned second_ccIndex   : 23;
+    unsigned second_isVirtual :  1;
+    unsigned nextIndex_lower8 :  8;
+};
+
+
+/* Estimate of average number of instructions per patchable
+   instruction. Used to compute how many patch records we'll need in
+   pmiCalleeRecords. A more accurate ratio is probably closer to 70
+   to 1, but we are conservative on the high side. If the patchable
+   instructions are more densily packed than the estimate, the table
+   can always grow.
+*/
+#define CVMJITPMI_NUM_INSTRUCTIONS_PER_PATCH 200
+
+/* Estimate of average number of caller records we'll have for each
+   callee record. In other words, the average number of times a
+   patchable call is made to a given method. Used to compute the
+   number of mb entries that will be needed in pmiCallerRecords. A
+   more accurate ratio is probably closer to 3 to 1. We are
+   conservative on the high side. If we end up with a higher ratio of
+   patch sites (callers) to callees, we will just end up expanding the
+   hash table, which is fine.
+*/
+#define CVMJITPMI_NUM_CALLER_RECORDS_PER_CALLEE_RECORD 6
+
+
+/* This value must be less than 0xffff since 0xffff is the index used
+   to mark the end of the caller list. */
+#define CVMJITPMI_MAX_CALLER_RECORDS 0xfffe
+
+/* A number big enough to make sure that growing the table by a few
+   percent will always result in some progress being made. */
+#define CVMJITPMI_MIN_CALLER_RECORDS 100
+#define CVMJITPMI_MIN_CALLEE_RECORDS 20
+
+/************************
+ * PMI Debugging APIs
+ ************************/
+
+#if defined(CVM_DEBUG) || defined(CVM_TRACE_JIT)
+extern void
+CVMJITPMIcallerTableDumpEntry(const char* prefix,
+			      int callerRecIdx, CVMBool isFirst_ccIndex);
+extern void
+CVMJITPMIcalleeTableDumpIdx(CVMUint32 calleeRecIdx, CVMBool printCallerInfo);
+extern void
+CVMJITPMIcalleeTableDumpMB(CVMMethodBlock* calleeMb, CVMBool printCallerInfo);
+extern void
+CVMJITPMIcalleeTableDump(CVMBool printCallerInfo);
+#endif
+
+/************************
+ * PMI Caller Table APIs
+ ************************/
+
+static CVMBool
+CVMJITPMIcallerTableAllocateTable()
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    jgs->pmiCallerRecords =
+	malloc(jgs->pmiNumCallerRecords * sizeof(CVMJITPMICallerRecord));
+    if (jgs->pmiCallerRecords == NULL) {
+	return CVM_FALSE;
+    }
+    jgs->pmiFirstFreeCallerRecordIdx = -1; /* list is empty */
+    return CVM_TRUE;
+}
+
+static void
+CVMJITPMIcallerTableFreeTable()
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    if (jgs->pmiCallerRecords != NULL) {
+	free(jgs->pmiCallerRecords);
+	jgs->pmiCallerRecords = NULL;
+    }
+}
+static CVMUint32
+CVMJITPMIcallerTableGetNextInList(CVMJITPMICallerRecord* callerRec)
+{
+    return (callerRec->nextIndex_upper8 << 8) + callerRec->nextIndex_lower8;
+}
+
+static void
+CVMJITPMIcallerTableSetNextInList(CVMJITPMICallerRecord* callerRec,
+				  CVMUint32 nextCallerRecIdx)
+{
+    callerRec->nextIndex_upper8 = nextCallerRecIdx >> 8;
+    callerRec->nextIndex_lower8 = nextCallerRecIdx;
+    CVMassert(nextCallerRecIdx == 
+	      CVMJITPMIcallerTableGetNextInList(callerRec));
+}
+
+static void
+CVMJITPMIcallerTableMarkEndOfList(CVMJITPMICallerRecord* callerRec)
+{
+    callerRec->nextIndex_upper8 = 0xff;
+    callerRec->nextIndex_lower8 = 0xff;
+}
+
+static CVMBool
+CVMJITPMIcallerTableIsEndOfList(CVMJITPMICallerRecord* callerRec)
+{
+    return (callerRec->nextIndex_upper8 == 0xff &&
+	    callerRec->nextIndex_lower8 == 0xff);
+}
+
+static void
+CVMJITPMIcallerTableDeleteRecord(CVMUint32 callerRecIdx)
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    CVMJITPMICallerRecord* callerRec = &jgs->pmiCallerRecords[callerRecIdx];
+    if (jgs->pmiFirstFreeCallerRecordIdx == -1) {
+	/* Free record list is empty, so this new record will be last */
+	CVMJITPMIcallerTableMarkEndOfList(callerRec);
+    } else {
+	/* Make this newly freed record point to the first free record. */
+	CVMJITPMIcallerTableSetNextInList(callerRec,
+					  jgs->pmiFirstFreeCallerRecordIdx);
+    }
+    /* Make this newly free record the first in the free list. */
+    jgs->pmiFirstFreeCallerRecordIdx = callerRecIdx;
+    jgs->pmiNumUsedCallerRecords--;
+}
+
+static CVMBool
+CVMJITPMIcallerTableAllocateRecord(CVMUint32* callerRecIdxPtr)
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+
+    if (jgs->pmiFirstFreeCallerRecordIdx != -1) {
+	CVMJITPMICallerRecord* callerRec;
+	/* found free caller record on the free list */
+	*callerRecIdxPtr = jgs->pmiFirstFreeCallerRecordIdx;
+	callerRec = &jgs->pmiCallerRecords[*callerRecIdxPtr];
+	if (CVMJITPMIcallerTableIsEndOfList(callerRec)) {
+	    jgs->pmiFirstFreeCallerRecordIdx = -1;
+	} else {
+	    jgs->pmiFirstFreeCallerRecordIdx =
+		CVMJITPMIcallerTableGetNextInList(callerRec);
+	}
+    } else {
+	/* allocate from the unallocated part of pmiCallerRecords */
+	if (jgs->pmiNextAvailCallerRecordIdx == jgs->pmiNumCallerRecords) {
+	    /* No room in pmiCallerRecords. Try to grow by 15%. */
+	    CVMUint32 newNumCallerRecords;
+	    CVMJITPMICallerRecord* newCallerRecords;
+	    if (jgs->pmiNumCallerRecords == CVMJITPMI_MAX_CALLER_RECORDS) {
+		/* we've already max'd out */
+		return CVM_FALSE;
+	    }
+	    newNumCallerRecords = jgs->pmiNumCallerRecords * 1.15;
+	    if (newNumCallerRecords > CVMJITPMI_MAX_CALLER_RECORDS) {
+		newNumCallerRecords = CVMJITPMI_MAX_CALLER_RECORDS;
+	    }
+	    newCallerRecords = (CVMJITPMICallerRecord*)
+		realloc(jgs->pmiCallerRecords,
+			newNumCallerRecords * sizeof(CVMJITPMICallerRecord));
+	    if (newCallerRecords == NULL) {
+		return CVM_FALSE;
+	    }
+	    CVMtraceJITPatchedInvokes((
+                "PMI RESIZE CALLER TABLE: oldSize(%d) newSize(%d)\n",
+	        jgs->pmiNumCallerRecords, newNumCallerRecords));
+	    jgs->pmiCallerRecords = newCallerRecords;
+	    jgs->pmiNumCallerRecords = newNumCallerRecords;
+	}
+	/* allocate record */
+	*callerRecIdxPtr = jgs->pmiNextAvailCallerRecordIdx;
+	jgs->pmiNextAvailCallerRecordIdx++;
+	CVMassert(jgs->pmiNextAvailCallerRecordIdx <=
+		  jgs->pmiNumCallerRecords);
+    }
+    jgs->pmiNumUsedCallerRecords++;
+    return CVM_TRUE;
+}
+
+
+#if defined(CVM_DEBUG) || defined(CVM_TRACE_JIT)
+
+void
+CVMJITPMIcallerTableDumpEntry(const char* prefix,
+			      int callerRecIdx, CVMBool isFirst_ccIndex)
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    CVMUint8* instrToPatch;
+    CVMJITPMICallerRecord* callerRec = &jgs->pmiCallerRecords[callerRecIdx];
+
+    CVMconsolePrintf("%s callerIdx(%d) nextIdx(%d) ", prefix, callerRecIdx,
+		     CVMJITPMIcallerTableGetNextInList(callerRec));
+    if (isFirst_ccIndex) {
+	CVMconsolePrintf("virtual(%d) first_ccIndex(%d) ",
+			 callerRec->first_isVirtual, callerRec->first_ccIndex);
+	instrToPatch = jgs->codeCacheStart + callerRec->first_ccIndex;
+    } else {
+	CVMconsolePrintf("virtual(%d) second_ccIndex(%d)",
+			 callerRec->second_isVirtual,
+			 callerRec->second_ccIndex);
+	instrToPatch = jgs->codeCacheStart + callerRec->second_ccIndex;
+    }
+    CVMconsolePrintf(" instrToPatch(0x%x) ", instrToPatch);
+    /* This will print out the method name */
+    CVMJITcodeCacheFindCompiledMethod(instrToPatch, CVM_TRUE);
+}
+
+#endif /* CVM_DEBUG || CVM_TRACE_JIT */
+
+/************************
+ * PMI Callee Table APIs
+ ************************/
+
+/*
+ * Allocate a new callee hash table, using the size in jgs->pmiCalleeRecords.
+ */
+static CVMBool
+CVMJITPMIcalleeTableAllocateTable()
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    int searchCount = 0; /* number of secondary primes we compare against */
+    if (jgs->pmiNumCalleeRecords < CVMJITPMI_MIN_CALLEE_RECORDS) {
+	jgs->pmiNumCalleeRecords = CVMJITPMI_MIN_CALLEE_RECORDS;
+    }
+    jgs->pmiNumCalleeRecords |= 1; /* make it odd */
+
+    /*
+     * Loop until we find a size for the callee table that is relatively
+     * prime with all the primes used for the secondary hash.
+     */
+    while (CVM_TRUE) {
+	int i = 0;
+	CVMBool relativelyPrime = CVM_TRUE;
+	for (i = 0; i < CVMJITPMI_NUM_SECONDARY_HASH_PRIMES; i++) {
+	    searchCount++;
+	    if (jgs->pmiNumCalleeRecords % CVMJITPMIsecondaryHashPrimes[i]
+		== 0)
+	    {
+		/* secondary prime is a factor of jgs->pmiNumCalleeRecords */
+		relativelyPrime = CVM_FALSE;
+		break;
+	    }
+	}
+	if (relativelyPrime) {
+	    break; /* we found it */
+	}
+	jgs->pmiNumCalleeRecords += 2; /* try next candidate */
+    }
+    CVMassert(searchCount < 200); /* we should never need this many tries */
+
+    if (jgs->pmiNumCalleeRecords > 65535) {
+	/* A relative prime that is less than 65535 */
+	jgs->pmiNumCalleeRecords = 101 * 631;
+    }
+
+    /* Allocate callee table */
+    jgs->pmiCalleeRecords =
+	calloc(jgs->pmiNumCalleeRecords * sizeof(CVMJITPMICalleeRecord), 1);
+    if (jgs->pmiCalleeRecords == NULL) {
+	return CVM_FALSE;
+    }
+
+    /* Don't allow callee table to get too full */
+    jgs->pmiMaxUsedCalleeRecordsAllowed = jgs->pmiNumCalleeRecords *
+	CVMJITPMI_CALLEETABLE_MAX_PERCENT_FULL / 100;
+
+#if 0 /* some debug tracing that we normally want off */
+    CVMconsolePrintf("CVMJITPMIcalleeTableAllocate: searchCount(%d) "
+		     "size(%d) callerSize(%d/%d==%d%%)\n",
+		     searchCount, jgs->pmiNumCalleeRecords,
+		     jgs->pmiNumUsedCallerRecords, jgs->pmiNumCallerRecords,
+		     (jgs->pmiNumUsedCallerRecords * 100 /
+		      jgs->pmiNumCallerRecords));
+#endif
+    return CVM_TRUE;
+}
+
+static void
+CVMJITPMIcalleeTableFreeTable() {
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    if (jgs->pmiCalleeRecords != NULL) {
+	free(jgs->pmiCalleeRecords);
+	jgs->pmiCalleeRecords = NULL;
+    }
+}
+
+static CVMBool
+CVMJITPMIcalleeTableIsEmptyRecord(CVMJITPMICalleeRecord* calleeRec)
+{
+    return calleeRec->calleeMb == NULL;
+}
+
+static CVMBool
+CVMJITPMIcalleeTableIsDeletedRecord(CVMJITPMICalleeRecord* calleeRec)
+{
+    return calleeRec->calleeMb == (CVMMethodBlock*)1;
+}
+
+static void
+CVMJITPMIcalleeTableDeleteRecord(CVMJITPMICalleeRecord* calleeRec)
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    jgs->pmiNumUsedCalleeRecords--;
+    jgs->pmiNumDeletedCalleeRecords++;
+    calleeRec->calleeMb = (CVMMethodBlock*)1;
+}
+
+/*
+ * Finds the index in jgs->pmiCalleeRecords of the callee record
+ * that contains calleeMb. Returns CVM_TRUE if found, with the
+ * index in *indexPtr. Returns CVM_FALSE if not found, with the
+ * index to use for adding a new record in *indexPtr.
+ */
+static CVMBool
+CVMJITPMIcalleeTableFindRecord(CVMMethodBlock* calleeMb, CVMUint32* indexPtr)
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    CVMJITPMICalleeRecord* calleeRec;
+    CVMBool result = CVM_FALSE; /* assume not found */
+    int chainLen = 0; /* used to track how long a search takes */
+    CVMUint32 hashIdx =
+	(CVMmbNameAndTypeID(calleeMb) + (int)calleeMb) %
+	jgs->pmiNumCalleeRecords;
+
+    /* Make sure we own the jitLock */
+    CVMassert(CVMsysMutexIAmOwner(CVMgetEE(), &CVMglobals.jitLock));
+
+    /* See if the primary hash slot is the record we are looking for */
+    calleeRec = &jgs->pmiCalleeRecords[hashIdx];
+    if (calleeRec->calleeMb == calleeMb) {
+	result = CVM_TRUE; /* calleeMb found */
+	goto done;
+    }
+
+    /* If the primary hash slot is empty, then the record is not found */
+    if (CVMJITPMIcalleeTableIsEmptyRecord(calleeRec)) {
+	goto done; /* calleeRec not found */
+    }
+    
+    /*
+     * Search the secondary hash slots until we find the calleeMb or find
+     * an empty record. Keep track of the first deleted slot we find
+     * so the caller can add a new record there if no match is found.
+     */
+    {
+	int firstDeletedHashIdx;
+	int secondaryHashPrimesIdx = 
+	    (CVMmbNameAndTypeID(calleeMb) + (int)calleeMb) %
+	    CVMJITPMI_NUM_SECONDARY_HASH_PRIMES;
+	int secondaryHashPrime =
+	    CVMJITPMIsecondaryHashPrimes[secondaryHashPrimesIdx];
+
+	if (CVMJITPMIcalleeTableIsDeletedRecord(calleeRec)) {
+	    firstDeletedHashIdx = hashIdx;
+	} else {
+	    firstDeletedHashIdx = -1;
+	}
+
+	do {
+	    chainLen++;
+#ifdef CVM_DEBUG_ASSERTS
+	    if (chainLen > jgs->pmiNumCalleeRecords) {
+		CVMdebugPrintf(("chainLen(%d) > pmiNumCalleeRecords(%d)\n",
+				chainLen, jgs->pmiNumCalleeRecords));
+		CVMdebugPrintf(("hashIdx(%d) secondaryHashPrime(%d)\n",
+				hashIdx, secondaryHashPrime));
+		CVMassert(CVM_FALSE);
+	    }
+#endif
+	    hashIdx =
+		(hashIdx + secondaryHashPrime) % jgs->pmiNumCalleeRecords;
+
+	    /* See if this hash slot has the record we are looking for */
+	    calleeRec = &jgs->pmiCalleeRecords[hashIdx];
+	    if (calleeRec->calleeMb == calleeMb) {
+		result = CVM_TRUE;
+		goto done; /* calleeRec found */
+	    }
+
+	    /* If the hash slot is empty, then the record is not found */
+	    if (CVMJITPMIcalleeTableIsEmptyRecord(calleeRec)) {
+		if (firstDeletedHashIdx != -1) {
+		    hashIdx = firstDeletedHashIdx;
+		}
+		goto done; /* calleeRec not found */
+	    }
+
+	    if (firstDeletedHashIdx == -1 &&
+		CVMJITPMIcalleeTableIsDeletedRecord(calleeRec))
+	    {
+		firstDeletedHashIdx = hashIdx;
+	    }
+	} while(CVM_TRUE);
+    }
+    CVMassert(CVM_FALSE);
+
+ done:
+    CVMtraceJITPatchedInvokes((
+	"PMI FIND: chainLen(%d) %s(%d) %C.%M\n", chainLen,
+	result ? "Found idx" : "Not Found newIdx", hashIdx,
+	CVMmbClassBlock(calleeMb), calleeMb));
+    *indexPtr = hashIdx; /* index of found or available slot */
+    return result; 
+}
+
+/*
+ * Resize the callee hash table. This is done with too large of a % of
+ * the entries are either allocated or deleted (too few are truly
+ * empty).
+ */
+static CVMBool
+CVMJITPMIcalleeTableResize()
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    CVMUint32 oldCalleeRecIdx;
+    CVMUint32 oldNumCalleeRecords = jgs->pmiNumCalleeRecords;
+    CVMJITPMICalleeRecord* oldCalleeRecords = jgs->pmiCalleeRecords;
+    CVMBool success;
+
+    /* Make new size big enough so the table can add 20% more entries before
+     * reaching the "max % full" threshold */
+    jgs->pmiNumCalleeRecords = jgs->pmiNumUsedCalleeRecords * 
+	100 / CVMJITPMI_CALLEETABLE_MAX_PERCENT_FULL * 1.20;
+
+    success = CVMJITPMIcalleeTableAllocateTable();
+
+    CVMtraceJITPatchedInvokes(("PMI RESIZE CALLEE TABLE: "
+			       "oldSize(%d) newSize(%d)\n",
+			       oldNumCalleeRecords, jgs->pmiNumCalleeRecords));
+
+    /* Allocate callee hash table */
+    if (!success) {
+	jgs->pmiNumCalleeRecords = oldNumCalleeRecords;
+	jgs->pmiCalleeRecords = oldCalleeRecords;
+	CVMtraceJITPatchedInvokes(("PMI RESIZE CALLEE TABLE: FAILED\n"));
+	return CVM_FALSE;
+    }
+
+    jgs->pmiNumDeletedCalleeRecords = 0;
+
+    /* iteratate over the entire old callee hash table and add each
+     * entry to the new hash table. */
+    for (oldCalleeRecIdx = 0;
+	 oldCalleeRecIdx < oldNumCalleeRecords;
+	 oldCalleeRecIdx++)
+    {
+	CVMUint32 calleeRecIdx;
+	CVMBool calleeRecordExists;
+	CVMJITPMICalleeRecord* calleeRec;
+	CVMJITPMICalleeRecord* oldCalleeRec =
+	    &oldCalleeRecords[oldCalleeRecIdx];
+
+	if (CVMJITPMIcalleeTableIsDeletedRecord(oldCalleeRec) ||
+	    CVMJITPMIcalleeTableIsEmptyRecord(oldCalleeRec))
+	{
+	    continue;
+	}
+
+	calleeRecordExists =
+	    CVMJITPMIcalleeTableFindRecord(oldCalleeRec->calleeMb,
+					   &calleeRecIdx);
+	CVMassert(!calleeRecordExists);
+	calleeRec = &jgs->pmiCalleeRecords[calleeRecIdx];
+	/* copy the callee record */
+	*calleeRec = *oldCalleeRec;
+    }
+    CVMtraceJITPatchedInvokesExec({
+        CVMJITPMIcalleeTableDump(CVM_FALSE);
+    });
+    CVMtraceJITPatchedInvokes(("PMI RESIZE CALLEE TABLE: DONE\n"));
+    return CVM_TRUE;
+}
+
+/*
+ * Adds calleeMb to the callee table, using the table entry indicated
+ * by *calleeRecIdxPtr. If this makes the table too full, it will be
+ * grown first and *calleeRecIdxPtr will be updated to reference a new
+ * slot in the expanded table. Returns CVM_TRUE if added
+ * successfully. Returns CVM_FALSE if unsucessful, which can happen if
+ * the hash table cannot be grown.
+ */
+static CVMBool
+CVMJITPMIcalleeTableAddRecord(CVMMethodBlock* calleeMb,
+			      CVMUint32* calleeRecIdxPtr)
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    CVMJITPMICalleeRecord* calleeRec =
+	&jgs->pmiCalleeRecords[*calleeRecIdxPtr];
+
+    if (CVMJITPMIcalleeTableIsDeletedRecord(calleeRec)) {
+	/* If it is a previously deleted record, then just use it without
+	   checking if we exceeded the hash table usage threshold (which
+	   we can't possibly be exceeding. */
+	jgs->pmiNumDeletedCalleeRecords--;
+	goto done;
+    }
+
+    /* Make sure there is room in callee hash table for a new entry */
+    if(jgs->pmiNumUsedCalleeRecords + jgs->pmiNumDeletedCalleeRecords ==
+       jgs->pmiMaxUsedCalleeRecordsAllowed)
+    {
+	/* Table too full. Try to grow it first. */
+	CVMassert(!CVMJITPMIcalleeTableIsDeletedRecord(calleeRec));
+	if (!CVMJITPMIcalleeTableResize()) {
+	    CVMtraceJITPatchedInvokes((
+                "PMI ADD: Failed. Callee Table Full(%d/%d) %C.%M\n",
+		jgs->pmiNumUsedCalleeRecords, jgs->pmiNumCallerRecords,
+		CVMmbClassBlock(calleeMb), calleeMb));
+	    return CVM_FALSE; /* no more room and we can't grow */
+	}
+	/* find a new empty slot in the expanded hash table */
+	CVMJITPMIcalleeTableFindRecord(calleeMb, calleeRecIdxPtr);
+	calleeRec = &jgs->pmiCalleeRecords[*calleeRecIdxPtr];
+    }
+
+ done:
+    jgs->pmiNumUsedCalleeRecords++;
+    calleeRec->calleeMb = calleeMb;    
+    return CVM_TRUE;
+}
+
+#if defined(CVM_DEBUG) || defined(CVM_TRACE_JIT)
+
+void
+CVMJITPMIcalleeTableDumpIdx(CVMUint32 calleeRecIdx,
+			    CVMBool printCallerInfo)
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    CVMJITPMICalleeRecord* calleeRec = &jgs->pmiCalleeRecords[calleeRecIdx];
+
+    /* Print callee record info */
+    CVMconsolePrintf("%3d ", calleeRecIdx);
+    if (CVMJITPMIcalleeTableIsEmptyRecord(calleeRec)) {
+	CVMconsolePrintf("<empty>\n");
+    } else if (CVMJITPMIcalleeTableIsDeletedRecord(calleeRec)) {
+	CVMconsolePrintf("<deleted>\n");
+    } else {
+	CVMMethodBlock* calleeMb = calleeRec->calleeMb;
+	CVMconsolePrintf("firstCaller(%d) lastCaller(%d) "
+			 "calleeMb(0x%x) %C.%M\n",
+			 calleeRec->firstCallerRecordIdx,
+			 calleeRec->lastCallerRecordIdx,
+			 calleeMb, CVMmbClassBlock(calleeMb), calleeMb);
+	if (printCallerInfo) {
+	    /* Print each caller record */
+	    CVMUint32 callerRecIdx = calleeRec->firstCallerRecordIdx;
+	    CVMJITPMICallerRecord* callerRec;
+	    do {
+		callerRec = &jgs->pmiCallerRecords[callerRecIdx];
+		/* print first caller in record */
+		CVMJITPMIcallerTableDumpEntry(" -->", callerRecIdx, CVM_TRUE);
+		if (callerRec->second_ccIndex != 0) {
+		    /* print second caller in record */
+		    CVMJITPMIcallerTableDumpEntry(" -->",
+						  callerRecIdx, CVM_FALSE);
+		}
+		callerRecIdx = CVMJITPMIcallerTableGetNextInList(callerRec);
+	    } while (!CVMJITPMIcallerTableIsEndOfList(callerRec));
+	}
+    }
+}
+
+void
+CVMJITPMIcalleeTableDumpMB(CVMMethodBlock* calleeMb, CVMBool printCallerInfo)
+{
+    CVMUint32 calleeRecIdx;
+    if (!CVMJITPMIcalleeTableFindRecord(calleeMb, &calleeRecIdx)) {
+	CVMconsolePrintf(" <not found>. 0x%x %C.%M\n",
+			 calleeMb, CVMmbClassBlock(calleeMb), calleeMb);
+	return;
+    }
+    CVMJITPMIcalleeTableDumpIdx(calleeRecIdx, printCallerInfo);
+}
+
+void
+CVMJITPMIcalleeTableDump(CVMBool printCallerInfo)
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    CVMUint32 calleeRecIdx;
+    CVMUint32 numEmpty = 0;
+    CVMUint32 numDeleted = 0;
+    CVMUint32 numUsed = 0;
+
+    CVMconsolePrintf("========== CALLEE TABLE DUMP ==========\n");
+
+    /* iteratate over the entire callee hash table */
+    for (calleeRecIdx = 0;
+	 calleeRecIdx < jgs->pmiNumCalleeRecords;
+	 calleeRecIdx++)
+    {
+	CVMJITPMICalleeRecord* calleeRec =
+	    &jgs->pmiCalleeRecords[calleeRecIdx];
+	if (calleeRec->calleeMb == NULL) {
+	    numEmpty++;
+	} else if ((int)calleeRec->calleeMb == 1) {
+	    numDeleted++;
+	} else {
+	    numUsed++;
+	}
+	/* Dump info for this callee table entry */
+	CVMJITPMIcalleeTableDumpIdx(calleeRecIdx, printCallerInfo);
+    }
+
+    CVMconsolePrintf(
+	"empty(%d==%d%%) deleted(%d==%d%%) "
+	"callees(%d/%d==%d%%) callers(%d/%d==%d%%)\n",
+	numEmpty, numEmpty * 100 / jgs->pmiNumCalleeRecords,
+	numDeleted, numDeleted * 100 / jgs->pmiNumCalleeRecords,
+	numUsed, jgs->pmiNumCalleeRecords, 
+	numUsed * 100 / jgs->pmiNumCalleeRecords,
+	jgs->pmiNumUsedCallerRecords, jgs->pmiNumCallerRecords,
+	jgs->pmiNumUsedCallerRecords * 100 / jgs->pmiNumCallerRecords);
+
+    CVMassert(numUsed == jgs->pmiNumUsedCalleeRecords);
+    CVMassert(numDeleted == jgs->pmiNumDeletedCalleeRecords);
+    CVMconsolePrintf("========== END CALLEE TABLE DUMP ==========\n");
+}
+
+#endif /* CVM_DEBUG || CVM_TRACE_JIT */
+
+/****************************
+ * PMI Public APIs
+ ****************************/
+
+static CVMBool
+CVMJITPMIinit(CVMJITGlobalState* jgs)
+{
+    /* Set size of callee and caller tables. The sizes of two are related, with
+     * the ratio determined by CVMJITPMI_NUM_CALLER_RECORDS_PER_CALLEE_RECORD
+     */
+    jgs->pmiNumCallerRecords = (jgs->codeCacheSize / CVMCPU_INSTRUCTION_SIZE) /
+	CVMJITPMI_NUM_INSTRUCTIONS_PER_PATCH / 2 /* 2 callers per record */;
+    if (jgs->pmiNumCallerRecords > CVMJITPMI_MAX_CALLER_RECORDS) {
+	jgs->pmiNumCallerRecords = CVMJITPMI_MAX_CALLER_RECORDS;
+    } else if (jgs->pmiNumCallerRecords < CVMJITPMI_MIN_CALLER_RECORDS) {
+	jgs->pmiNumCallerRecords = CVMJITPMI_MIN_CALLER_RECORDS;
+    }
+    jgs->pmiNumCalleeRecords = jgs->pmiNumCallerRecords /
+	CVMJITPMI_NUM_CALLER_RECORDS_PER_CALLEE_RECORD;
+
+    /* Allocate callee hash table */
+    if (!CVMJITPMIcalleeTableAllocateTable()) {
+	return CVM_FALSE;
+    }
+
+    /* Allocate caller table */
+    if (!CVMJITPMIcallerTableAllocateTable()) {
+	CVMJITPMIcalleeTableFreeTable();
+	return CVM_FALSE;
+    }
+
+    return CVM_TRUE;
+}
+
+static void
+CVMJITPMIdestroy(CVMJITGlobalState* jgs)
+{
+    CVMJITPMIcalleeTableFreeTable();
+    CVMJITPMIcallerTableFreeTable();
+}
+
+/*
+ * Add a patch record. callerMb is making a direct call to calleeMb at
+ * address instrAddr. If isVirtual is true, then this is a virtual
+ * invoke of a method that has not been overridden. Returns CVM_FALSE
+ * if this fails for any reason, in which case a direct method call
+ * should not be used.
+ */
+extern CVMBool
+CVMJITPMIaddPatchRecord(CVMMethodBlock* callerMb,
+			CVMMethodBlock* calleeMb,
+			CVMUint8* instrAddr,
+			CVMBool isVirtual)
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    CVMBool calleeRecordExists;
+    CVMJITPMICalleeRecord* calleeRec;
+    CVMJITPMICallerRecord* callerRec;
+    CVMUint32 calleeRecIdx;
+    CVMUint32 callerRecIdx;
+
+    /* Make sure we own the jitLock */
+    CVMassert(CVMsysMutexIAmOwner(CVMgetEE(), &CVMglobals.jitLock));
+    
+    CVMtraceJITPatchedInvokes((
+        "PMI ADD: callerMb=0x%x instrAddr=0x%x %C.%M\n",
+	callerMb, instrAddr, CVMmbClassBlock(callerMb), callerMb));
+    CVMtraceJITPatchedInvokes((
+        "PMI ADD: calleeMb=0x%x %C.%M\n",
+	calleeMb, CVMmbClassBlock(calleeMb), calleeMb));
+
+    /* See if there is already a callee record. If not, get an index
+     * for a new record. */
+    calleeRecordExists = 
+	CVMJITPMIcalleeTableFindRecord(calleeMb, &calleeRecIdx);
+
+    if (!calleeRecordExists) {
+	/* Add the new record. If the table is too full, it will be grown.
+	 * If the table can't grow, then it will fail. */
+	if (!CVMJITPMIcalleeTableAddRecord(calleeMb, &calleeRecIdx)) {
+	    return CVM_FALSE;
+	}
+    }
+    calleeRec = &jgs->pmiCalleeRecords[calleeRecIdx];
+    
+    /* 
+     * If the callee record already exists and second_ccIndex of the last
+     * caller record is not yet in use, then just use it and we are done.
+     */
+    if (calleeRecordExists) {
+	callerRecIdx = calleeRec->lastCallerRecordIdx;
+	callerRec = &jgs->pmiCallerRecords[callerRecIdx];
+	if (callerRec->second_ccIndex == 0) {
+	    callerRec->second_ccIndex = instrAddr - jgs->codeCacheStart;
+	    callerRec->second_isVirtual = isVirtual;
+	    CVMtraceJITPatchedInvokesExec({
+	        CVMJITPMIcallerTableDumpEntry("PMI ADD CALLER:",
+					      callerRecIdx, CVM_FALSE);
+	    });
+	    goto success;
+	}
+    }
+
+    /*
+     * Find a free caller record.
+     */
+    if (!CVMJITPMIcallerTableAllocateRecord(&callerRecIdx)) {
+	/* Failed to allocate caller record. */
+	CVMtraceJITPatchedInvokes((
+            "PMI ADD: Failed. Caller Table Full. %C.%M\n",
+	    CVMmbClassBlock(calleeMb), calleeMb));
+	/* Delete callee record if it is a newly allocated one and then fail */
+	if (!calleeRecordExists) {
+	    CVMJITPMIcalleeTableDeleteRecord(calleeRec);
+	}
+	return CVM_FALSE;
+    }
+    callerRec = &jgs->pmiCallerRecords[callerRecIdx];
+
+    /* Update existing callee record or initialize new callee record */
+    if (calleeRecordExists) {
+	/* we need to link the last caller record to the newly allocated one */
+	CVMJITPMIcallerTableSetNextInList(
+            &jgs->pmiCallerRecords[calleeRec->lastCallerRecordIdx],
+	    callerRecIdx);
+    } else {
+	/* this is the first caller record for this callee */
+	calleeRec->firstCallerRecordIdx = callerRecIdx;
+    }
+    calleeRec->lastCallerRecordIdx = callerRecIdx;
+
+    /* initialized the caller record */
+    callerRec->first_ccIndex = instrAddr - jgs->codeCacheStart;
+    callerRec->first_isVirtual = isVirtual;
+    callerRec->second_ccIndex = 0;
+    CVMJITPMIcallerTableMarkEndOfList(callerRec);
+
+    CVMtraceJITPatchedInvokesExec({
+	CVMJITPMIcallerTableDumpEntry("PMI ADD CALLER:",
+				      callerRecIdx, CVM_TRUE);
+    });
+
+ success:
+
+    CVMtraceJITPatchedInvokesExec({
+	CVMJITPMIcalleeTableDumpIdx(calleeRecIdx, CVM_TRUE);
+	/*CVMJITPMIcalleeTableDump(CVM_FALSE);*/
+    });
+    CVMtraceJITPatchedInvokes(("PMI ADD: DONE\n"));
+
+    return CVM_TRUE;
+}
+
+extern void 
+CVMJITPMIremovePatchRecords(CVMMethodBlock* callerMb, CVMMethodBlock* calleeMb,
+			    CVMUint8* callerStartPC, CVMUint8* callerEndPC)
+{
+    CVMJITGlobalState* jgs = &CVMglobals.jit;
+    CVMBool calleeRecordExists;
+    CVMJITPMICalleeRecord* calleeRec;
+    CVMJITPMICallerRecord* callerRec;
+    CVMJITPMICallerRecord* prevCallerRec = NULL;
+    CVMJITPMICallerRecord* lastCallerRec;
+    CVMUint32 calleeRecIdx;
+    CVMUint32 callerRecIdx;
+    CVMUint32 prevCallerRecIdx = 0;    
+
+    /* Make sure we own the jitLock */
+    CVMassert(CVMsysMutexIAmOwner(CVMgetEE(), &CVMglobals.jitLock));
+    
+    CVMtraceJITPatchedInvokes(("PMI REMOVE: calleeMb=0x%x %C.%M\n",
+			       calleeMb, CVMmbClassBlock(calleeMb), calleeMb));
+    CVMtraceJITPatchedInvokes(("PMI REMOVE: callerMb=0x%x %C.%M\n",
+			       callerMb, CVMmbClassBlock(callerMb), callerMb));
+
+    /* find the callee record for calleeMb */
+    calleeRecordExists =
+	CVMJITPMIcalleeTableFindRecord(calleeMb, &calleeRecIdx);
+    CVMassert(calleeRecordExists);
+    calleeRec = &jgs->pmiCalleeRecords[calleeRecIdx];
+    lastCallerRec = &jgs->pmiCallerRecords[calleeRec->lastCallerRecordIdx];
+
+    CVMtraceJITPatchedInvokesExec({
+	CVMJITPMIcalleeTableDumpIdx(calleeRecIdx, CVM_TRUE);
+    });
+
+    /* 
+     * Iterate over all the callers referenced by the callee record.
+     * If the caller is in the caller method, then remove it.
+     */
+    callerRecIdx = calleeRec->firstCallerRecordIdx;
+
+    do {
+	CVMUint8* instrToPatch;
+	CVMBool removeFirst, removeSecond;
+	CVMUint32 nextCallerRecIdx;
+
+	callerRec = &jgs->pmiCallerRecords[callerRecIdx];
+	nextCallerRecIdx = CVMJITPMIcallerTableGetNextInList(callerRec);
+
+	/* check first call in caller record */
+	instrToPatch = jgs->codeCacheStart + callerRec->first_ccIndex;
+	if (instrToPatch >= callerStartPC && instrToPatch <= callerEndPC) {
+	    removeFirst = CVM_TRUE;
+	} else {
+	    removeFirst = CVM_FALSE;
+	}
+	/* check second call in caller record */
+	if (callerRec->second_ccIndex == 0) {
+	    removeSecond = CVM_FALSE; /* already empty */
+	    CVMassert(callerRecIdx == calleeRec->lastCallerRecordIdx);
+	} else {
+	    instrToPatch = jgs->codeCacheStart + callerRec->second_ccIndex;
+	    if (instrToPatch >= callerStartPC && instrToPatch <= callerEndPC) {
+		removeSecond = CVM_TRUE;
+	    } else {
+		removeSecond = CVM_FALSE;
+	    }
+	}
+
+	/* If no callers to remove, then go on to next record */
+	if (!removeFirst && !removeSecond) {
+	    prevCallerRec = callerRec;
+	    prevCallerRecIdx = callerRecIdx;
+	    goto next_iter;
+	}
+
+	/*
+	 * If required, deal with having just one of the two callers
+	 * remaining after a removal.
+	 */
+	if (removeFirst != removeSecond && callerRec->second_ccIndex != 0) {
+	    /* one caller remains in this caller record */
+	    if (callerRecIdx == calleeRec->lastCallerRecordIdx) {
+		/* It's the last record, so just leave whichever entry we are
+		   keeping in the 1st caller and zero out the 2nd caller. */
+		if (removeFirst) {
+		    callerRec->first_ccIndex = callerRec->second_ccIndex;
+		    callerRec->first_isVirtual = callerRec->second_isVirtual;
+		}
+		callerRec->second_ccIndex = 0;
+		CVMtraceJITPatchedInvokes((
+		    "PMI REMOVE: removed %s from lastCallerRecord(%d)\n",
+		    removeFirst ? "first_ccIndex" : "second_ccIndex",
+		    callerRecIdx));
+		break; /* we are done */
+	    }
+
+	    /* If second_ccIndex in the lastCallerRec is open, then move the
+	       caller we are keeping into it and then remove this record. */
+	    if (lastCallerRec->second_ccIndex == 0) {
+		if (removeFirst) {
+		    lastCallerRec->second_ccIndex = callerRec->second_ccIndex;
+		    lastCallerRec->second_isVirtual =
+			callerRec->second_isVirtual;
+		} else {
+		    lastCallerRec->second_ccIndex = callerRec->first_ccIndex;
+		    lastCallerRec->second_isVirtual =
+			callerRec->first_isVirtual;
+		}
+		CVMtraceJITPatchedInvokes((
+		    "PMI REMOVE: moved %s(%d) to lastCallerRec(%d)\n",
+		    removeFirst ? "first_ccIndex" : "second_ccIndex",
+		    callerRecIdx, calleeRec->lastCallerRecordIdx));
+		goto delete_record;
+	    }
+
+	    /* If we get here, we know we need to remove just one of the
+	       two callers, and that we can't move it into second_ccIndex
+	       in the last caller. We also know this is not the last record.
+	       So, make this record the last caller record, and also make
+	       sure the caller we keep is put in first_ccIndex. (NOTE: only
+	       the last record is allowed to have second_ccIndex == 0).
+	    */
+	    if (removeFirst) {
+		callerRec->first_ccIndex = callerRec->second_ccIndex;
+		callerRec->first_isVirtual = callerRec->second_isVirtual;
+	    }
+	    callerRec->second_ccIndex = 0;
+	    calleeRec->lastCallerRecordIdx = callerRecIdx;
+	    if (callerRecIdx == calleeRec->firstCallerRecordIdx) {
+		/* callerRec moved from the front of the list to the end,
+		   so update calleeRec->firstCallerRecordIdx. */
+		calleeRec->firstCallerRecordIdx = nextCallerRecIdx;
+	    } else {
+		/* calleeRec moved from the middle of the list to the end,
+		   so update the next pointer of the previous record. */
+		CVMJITPMIcallerTableSetNextInList(prevCallerRec,
+						  nextCallerRecIdx);
+	    }
+	    /* calleeRec is now at the end of the list. */
+	    CVMJITPMIcallerTableMarkEndOfList(callerRec);
+	    /* The old end of the list now points to calleeRec. */
+	    CVMJITPMIcallerTableSetNextInList(lastCallerRec, callerRecIdx);
+	    lastCallerRec = callerRec; /* keep lastCallerRec up to date */
+	    callerRec = prevCallerRec; /* needed to keep loop going */
+	    CVMtraceJITPatchedInvokes((
+	        "PMI REMOVE: removed %s(%d) and moved to last\n",
+		    removeFirst ? "first" : "second", callerRecIdx));
+	    goto next_iter;
+	}
+		
+    delete_record:
+	/*
+	 * If we get here, the whole record is going away, either
+	 * because both callers were removed, the first caller was removed
+	 * and there is no second caller, or the one that was not
+	 * removed was moved to the last caller record.
+	 */
+
+	/* we are done with the caller record, so delete it */
+	CVMJITPMIcallerTableDeleteRecord(callerRecIdx);
+	CVMtraceJITPatchedInvokes((
+	    "PMI REMOVE: deleted callerRec(%d)\n", callerRecIdx));
+	if (callerRecIdx == calleeRec->firstCallerRecordIdx) {
+	    if (callerRecIdx == calleeRec->lastCallerRecordIdx) {
+		/* This is the last remaining caller record for calleeMb,
+		   so remove calleeMb from the callee table. */
+		CVMJITPMIcalleeTableDeleteRecord(calleeRec);
+		CVMtraceJITPatchedInvokes((
+	            "PMI REMOVE: deleted calleeRec(%d)\n", calleeRecIdx));
+		CVMtraceJITPatchedInvokesExec({
+			/*CVMJITPMIcalleeTableDump(CVM_FALSE);*/
+		});
+		break; /* we are done */
+	    }
+	    /* First callerRec removed, so update firstCallerRecordIdx */
+	    calleeRec->firstCallerRecordIdx = nextCallerRecIdx;
+	} else {
+	    /* calleeRec removed from the middle of the list, so update the
+	       next pointer of the previous record. */
+	    if (callerRecIdx == calleeRec->lastCallerRecordIdx) {
+		CVMJITPMIcallerTableMarkEndOfList(prevCallerRec);
+		calleeRec->lastCallerRecordIdx = prevCallerRecIdx;
+	    } else {
+		CVMJITPMIcallerTableSetNextInList(prevCallerRec,
+						  nextCallerRecIdx);
+	    }
+	}
+	callerRec = prevCallerRec; /* needed to keep loop going */
+
+    next_iter:
+	/* Check out the next caller record. */
+	callerRecIdx = nextCallerRecIdx;
+    } while (callerRec == NULL || !CVMJITPMIcallerTableIsEndOfList(callerRec));
+
+    CVMtraceJITPatchedInvokesExec({
+	CVMJITPMIcalleeTableDumpIdx(calleeRecIdx, CVM_TRUE);
+    });
+}
+
+static void
+CVMJITPMIpatchCall(CVMMethodBlock* calleeMb,
+		   CVMUint8* instrAddr,
+		   CVMJITPMI_PATCHSTATE newPatchState,
+		   CVMBool isVirtual)
+{
+    int branchTargetOffset;
+    
+    /*
+      These are the possible states a patch point can be in, and the
+      transitions that can be made while in each state.
+
+              COMPILED <-------------------------> DECOMPILED
+         (direct method call)              (CVMCCMletInterpreterDoInvoke)
+                 |                                     |
+                 |                                     |
+                 +----------> OVERRIDDEN <-------------+
+                         (CVMCCMinvokeVirtual)
+    */
+
+    /*
+     * It's possible to have a non-virtual method call to a virtual method,
+     * such as when super.<method>() is used to invoke a method. In this
+     * case we don't want to apply the patch that will force an invoke
+     * virtual to be done. We just keep the call site as is.
+     */
+    if (!isVirtual && newPatchState == CVMJITPMI_PATCHSTATE_OVERRIDDEN) {
+	CVMtraceJITPatchedInvokes((
+	    "PMI PATCH: not patched. Method call is not virtual."));
+	return;
+    }
+
+    /*
+     * If this is a patch for a virtual method call and the target
+     * method has been overridden, then don't apply the patch unless
+     * it is for handling the override. This is done to make sure we
+     * don't ever move a patch from the OVERRIDDEN state to the
+     * COMPILED or DECOMPILED states, which can result in the wrong
+     * method being called.
+     */
+    if (isVirtual &&
+	newPatchState != CVMJITPMI_PATCHSTATE_OVERRIDDEN &&
+	(CVMmbCompileFlags(calleeMb) & CVMJIT_IS_OVERRIDDEN) != 0)
+    {
+	CVMtraceJITPatchedInvokes((
+	    "PMI PATCH: not patched. Method OVERRIDDEN."));
+	return;
+    }
+
+    switch (newPatchState) {
+        case CVMJITPMI_PATCHSTATE_COMPILED:
+	    branchTargetOffset = CVMmbStartPC(calleeMb) - instrAddr;
+	    break;
+        case CVMJITPMI_PATCHSTATE_DECOMPILED:
+	    branchTargetOffset =
+		CVMJIT_CCMCODE_ADDR(CVMCCMletInterpreterDoInvoke) - instrAddr;
+	    break;
+        case CVMJITPMI_PATCHSTATE_OVERRIDDEN:
+	    branchTargetOffset =
+		CVMJIT_CCMCODE_ADDR(CVMCCMinvokeVirtual) - instrAddr;
+	    break;
+        default:
+	    branchTargetOffset = 0;
+	    CVMassert(CVM_FALSE);
+    }
+
+    /* Modify the branch bits to call new target. */
+    CVMCPUpatchBranchInstruction(branchTargetOffset, instrAddr);
+    
+    /* Flush the cache after patching. */
+    CVMJITflushCache(instrAddr, instrAddr + CVMCPU_INSTRUCTION_SIZE);
+}
+
+extern void
+CVMJITPMIpatchCallsToMethod(CVMMethodBlock* calleeMb,
+			    CVMJITPMI_PATCHSTATE newPatchState)
+{
+    CVMJITGlobalState*     jgs = &CVMglobals.jit;
+    CVMBool                calleeRecordExists;
+    CVMUint32              calleeRecIdx;
+    CVMJITPMICalleeRecord* calleeRec;
+    CVMUint32              callerRecIdx;
+    CVMJITPMICallerRecord* callerRec;
+
+      /* Make sure we own the jitLock */
+    CVMassert(CVMsysMutexIAmOwner(CVMgetEE(), &CVMglobals.jitLock));
+
+    /* get the callee record */
+    calleeRecordExists =
+	CVMJITPMIcalleeTableFindRecord(calleeMb, &calleeRecIdx);
+    
+    CVMtraceJITPatchedInvokesExec({
+	switch (newPatchState) {
+	    case CVMJITPMI_PATCHSTATE_COMPILED:
+		CVMconsolePrintf("PMI PATCH: newstate(COMPILED) ");
+		break;
+	    case CVMJITPMI_PATCHSTATE_DECOMPILED:
+		CVMconsolePrintf("PMI PATCH: newstate(DECOMPILED) ");
+		break;
+	    case CVMJITPMI_PATCHSTATE_OVERRIDDEN:
+		CVMconsolePrintf("PMI PATCH: newstate(OVERRIDDEN) ");
+		break;
+	}
+	if (calleeRecordExists) {
+	    CVMJITPMIcalleeTableDumpIdx(calleeRecIdx, CVM_TRUE);
+	} else {
+	    CVMconsolePrintf("<not found> calleeMb=0x%x %C.%M\n",
+			     calleeMb, CVMmbClassBlock(calleeMb), calleeMb);
+	}
+    });
+
+    if (!calleeRecordExists) {
+	return; /* no one calls this method so no patching needed */
+    }
+    calleeRec = &jgs->pmiCalleeRecords[calleeRecIdx];
+
+    /* 
+     * Iterate over all the callers referenced by the callee record
+     * and patch each one.
+     */
+    callerRecIdx = calleeRec->firstCallerRecordIdx;
+    do {
+	CVMUint8* instrToPatch;
+	callerRec = &jgs->pmiCallerRecords[callerRecIdx];
+	/* patch first call in caller record */
+	instrToPatch = jgs->codeCacheStart + callerRec->first_ccIndex;
+	CVMJITPMIpatchCall(calleeMb, instrToPatch, newPatchState,
+			   callerRec->first_isVirtual);
+	if (callerRec->second_ccIndex != 0) {
+	    /* patch second call in caller record */
+	    instrToPatch = jgs->codeCacheStart + callerRec->second_ccIndex;
+	    CVMJITPMIpatchCall(calleeMb, instrToPatch, newPatchState,
+			       callerRec->second_isVirtual);
+	}
+	callerRecIdx = CVMJITPMIcallerTableGetNextInList(callerRec);
+    } while (!CVMJITPMIcallerTableIsEndOfList(callerRec));
+}
+
+#if CVM_DEBUG || CVM_TRACE_JIT
+void
+CVMJITPMIdumpMethodCalleeInfo(CVMMethodBlock* callerMb,
+			      CVMBool printCallerInfo)
+{
+    CVMMethodBlock** callees = CVMcmdCallees(CVMmbCmd(callerMb));
+    if (callees == NULL) {
+	CVMconsolePrintf("PMI CALLEES: No callees. callerMb(0x%x) %C.%M\n",
+			 callerMb, CVMmbClassBlock(callerMb), callerMb);
+    } else {
+	CVMUint32 numCallees = (CVMUint32)callees[0];
+	CVMUint32 i;
+	CVMconsolePrintf("PMI CALLEES: numCallees(%d) callerMb(0x%x) %C.%M\n",
+			 numCallees, callerMb,
+			 CVMmbClassBlock(callerMb), callerMb);
+	for (i = 1; i <= numCallees; i++) {
+	    CVMMethodBlock* calleeMb = callees[i];
+	    if (printCallerInfo) {
+		CVMconsolePrintf("PMI CALLEES: calleeIdx(%d)", i);
+		CVMJITPMIcalleeTableDumpMB(calleeMb, printCallerInfo);
+	    }
+	}
+    }
+    
+}
+#endif
+
+#endif /* CVM_JIT_PATCHED_METHOD_INVOCATIONS */
 
 CVMBool
 CVMjitInit(CVMExecEnv* ee, CVMJITGlobalState* jgs,
@@ -1676,7 +3269,35 @@ CVMjitInit(CVMExecEnv* ee, CVMJITGlobalState* jgs,
     handleDoPrivileged();
     
     /* Do the following after parsing options: */
-    if (!CVMJITpolicyInit(ee, jgs)) {
+#if defined(CVM_MTASK) || defined(CVM_AOT)
+    /*
+     * Prevent methods being compiled too early if AOT is enabled or it's
+     * in MTASK server mode.
+     * The JIT policy is initialized after MTASK or AOT compile the methods
+     * in the method list.
+     */
+#ifdef CVM_MTASK
+    if (CVMglobals.isServer)
+#endif
+    {
+        jgs->interpreterTransitionCost = 0;
+        jgs->mixedTransitionCost = 0;
+        jgs->backwardsBranchCost = 0;
+        jgs->compileThreshold = CVMJIT_DEFAULT_CLIMIT;
+    }
+#endif
+
+#ifdef CVM_MTASK
+    else /* !CVMglobals.isServer */
+#endif
+    {
+#ifndef CVM_AOT
+        if (!CVMjitPolicyInit(ee, jgs)) {
+            return CVM_FALSE;
+        }
+#endif
+    }
+    if (!CVMjitSetInliningThresholds(ee, jgs)) {
         return CVM_FALSE;
     }
 
@@ -1691,6 +3312,18 @@ CVMjitInit(CVMExecEnv* ee, CVMJITGlobalState* jgs,
     if (!CVMJITcodeCacheInit(ee, jgs)) {
 	return CVM_FALSE;
     }
+
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+    if (!CVMJITPMIinit(jgs)) {
+	return CVM_FALSE;
+    }
+#endif /* CVM_JIT_PATCHED_METHOD_INVOCATIONS */
+
+#ifdef CVMJIT_SIMPLE_SYNC_METHODS
+    if (!CVMJITsimpleSyncInit(ee, jgs)) {
+	return CVM_FALSE;
+    }
+#endif
 
 #ifdef CVMJIT_INTRINSICS
     if (!CVMJITintrinsicInit(ee, jgs)) {
@@ -1715,11 +3348,24 @@ CVMjitInit(CVMExecEnv* ee, CVMJITGlobalState* jgs,
 void
 CVMjitDestroy(CVMJITGlobalState *jgs)
 {
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+    CVMJITPMIdestroy(jgs);
+#endif
+#ifdef CVMJIT_SIMPLE_SYNC_METHODS
+	CVMJITsimpleSyncDestroy(jgs);
+#endif
 #ifdef CVMJIT_INTRINSICS
     CVMJITintrinsicDestroy(jgs);
 #endif
     CVMJITcodeCacheDestroy(jgs);
     CVMJITdestroyCompilerBackEnd();
+
+    CVMassert(jgs->inliningThresholds != NULL);
+    free(jgs->inliningThresholds);
+#ifdef CVM_DEBUG_ASSERTS
+    jgs->inliningThresholds = NULL;
+#endif
+
     CVMdestroyParsedSubOptions(&jgs->parsedSubOptions);
     CVMJITstatsDestroyGlobalStats(&jgs->globalStats);
     jgs->destroyed = CVM_TRUE;
@@ -1840,3 +3486,4 @@ CVMjitReportCompilationSpeed()
     CVMconsolePrintf("\n");
 }
 #endif /* CVM_JIT_ESTIMATE_COMPILATION_SPEED */
+

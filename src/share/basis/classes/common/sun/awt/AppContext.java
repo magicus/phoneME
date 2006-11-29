@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)AppContext.java	1.35 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
 package sun.awt;
@@ -30,7 +34,7 @@ import java.awt.event.InvocationEvent;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.HashMap;
-import java.util.Hashtable;
+import java.util.IdentityHashMap;
 import java.util.Enumeration;
 
 import java.beans.PropertyChangeSupport;
@@ -117,7 +121,7 @@ import java.beans.PropertyChangeListener;
  *
  * @author  Thomas Ball
  * @author  Fred Ecks
- * @version 1.31 03/12/05
+ * @version 1.35 10/10/06
  */
 public final class AppContext {
 
@@ -130,7 +134,7 @@ public final class AppContext {
 
     /* A map of AppContexts, referenced by ThreadGroup.
      */
-    private static Hashtable threadGroup2appContext = null;
+    private static IdentityHashMap threadGroup2appContext = null;
 
     /* The main "system" AppContext, used by everything not otherwise
        contained in another AppContext.
@@ -219,7 +223,7 @@ public final class AppContext {
         numAppContexts++;
 
         if (threadGroup2appContext == null) {
-            threadGroup2appContext = new Hashtable(2, 0.2f);
+            threadGroup2appContext = new IdentityHashMap();
         }
         this.threadGroup = threadGroup;
         threadGroup2appContext.put(threadGroup, this);
@@ -371,7 +375,7 @@ public final class AppContext {
 
         final Object notificationLock = new Object();
 
-        /* No mutiple frames in basis 
+        /*no mutiple frames in basis 
         * Runnable runnable = new Runnable() { public void run() {
         *     Frame [] frames = Frame.getFrames();
         *     for (int i = frames.length - 1; i >= 0; i--) {
@@ -472,7 +476,7 @@ public final class AppContext {
         mostRecentKeyValue = null;
     }
 
-/* There is no AWTAutoShutdown in pbp right now
+/*   There is no AWTAutoShutdown in pbp right now
 *
 *    static final class PostShutdownEventRunnable implements Runnable {
 *        private final AppContext appContext;

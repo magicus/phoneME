@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)XletRunner.java	1.26 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -86,19 +91,30 @@ public class XletRunner {
             }
         } 
 
-        String   name;
+        String   name = null;
         String[] paths;
         String[] xletArgs = new String[]{};
         for (int i = 0; i < args.length;) {
             try {
                 if (args[i].equals("-name")) {
+                    if (i+1 == args.length){
+                        System.err.println("Name not specified");
+                        printErrorAndExit();
+                    }
                     name = args[++i];
-                    if (!(args[++i].equals("-path") || args[i].equals("-codebase"))) {
+                    if (++i == args.length || 
+                            !(args[i].equals("-path") || 
+                            args[i].equals("-codebase"))) {
+                        System.err.println("Missing path arguments");
                         printErrorAndExit();
                     }
                     Vector v = new Vector();
                     if (args[i].equals("-path")) {
-                       StringTokenizer tok = new StringTokenizer(args[++i], File.pathSeparator);
+                       if (++i == args.length){
+                           System.err.println("Path not specified");
+                           printErrorAndExit();
+                       }
+                       StringTokenizer tok = new StringTokenizer(args[i], File.pathSeparator);
                        while (tok.hasMoreTokens()) { 
                            v.addElement(tok.nextToken()); 
                        }
@@ -134,30 +150,34 @@ public class XletRunner {
                        handler.postStartXlet();
                     } catch (Exception e) {
                         System.out.println("Error while loading xlet: " + name);
-                        e.printStackTrace();
+                        e.printStackTrace();  
+                        System.exit(1);
                     }
                     xletArgs = new String[]{};
                 } else {
                     i++;
                 }
-
             } catch (Exception e) { 
                 e.printStackTrace(); 
                 printErrorAndExit();
             }
         }
+        if (name == null){
+            System.err.println("Missing name arguments");
+            printErrorAndExit();
+        }
     }
    
     // If there was a problem parsing the command line, call this method, which ultimately exits.
     static void printErrorAndExit() {
-        System.out.println("\n\nXletRunner Usage: ");
-        System.out.println("cvm com.sun.xlet.XletRunner " + 
+        System.err.println("XletRunner Usage: ");
+        System.err.println("cvm com.sun.xlet.XletRunner " + 
             "-name <xletname> -path <xletpath> ");
-        System.out.println("\nOptions");
-        System.out.println("-filename <filename>                   Reads XletRunner arguments from a file");
-        System.out.println("-args <arguments separated by space>   Xlet runtime arguments");
-        System.out.println("-codebase <URLs separated by space>    Specifies class location in URL format, replaces \"-path\" option");
-        System.out.println("\nRepeat arguments to run more than one xlets");
+        System.err.println("\nOptions");
+        System.err.println("-filename <filename>                   Reads XletRunner arguments from a file");
+        System.err.println("-args <arguments separated by space>   Xlet runtime arguments");
+        System.err.println("-codebase <URLs separated by space>    Specifies class location in URL format, replaces \"-path\" option");
+        System.err.println("\nRepeat arguments to run more than one xlets");
         System.exit(1);
     }
 }

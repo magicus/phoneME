@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)AppletViewer.java	1.135 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ *
  */
 
 package sun.applet;
@@ -197,6 +202,7 @@ public class AppletViewer extends Frame implements AppletContext {
         initEventQueue();
     }
 
+    // NOTE: probably should be "private"
     public MenuItem addMenuItem(Menu m, String s) {
         MenuItem mItem = new MenuItem(amh.getMessage(s));
         mItem.addActionListener(new UserActionListener());
@@ -517,7 +523,7 @@ public class AppletViewer extends Frame implements AppletContext {
     void appletSave() {
         AccessController.doPrivileged(new PrivilegedAction() {
                 public Object run() {
-                    // This privileged block should be made smaller
+                    // TODO: this privileged block should be made smaller
                     // by initializing a private static variable with "user.dir"
 
                     // Applet needs to be stopped for serialization to succeed.
@@ -947,7 +953,7 @@ public class AppletViewer extends Frame implements AppletContext {
                             }
                         }
                         if (atts != null) {
-                            // In general this code just simply
+                            // NOTE: In general this code just simply
                             // shouldn't be part of parsing.
                             factory.createAppletViewer(x, y, url, atts);
                             x += XDELTA;

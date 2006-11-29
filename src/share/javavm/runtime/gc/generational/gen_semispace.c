@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)gen_semispace.c	1.74 06/10/19
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -39,12 +44,13 @@
 #include "javavm/include/gc/gc_impl.h"
 
 #include "javavm/include/gc/generational/generational.h"
-
 #include "javavm/include/gc/generational/gen_semispace.h"
+#include "javavm/include/gc/generational/gen_markcompact.h"
 
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
 #endif
+
 
 /* NOTE: The following symbol is not defined for this implementation because
    the semispace generation is only used as the youngGen in this generational
@@ -156,6 +162,7 @@ CVMgenSemispaceIsYoung(CVMGenSemispaceGeneration* thisGen)
 }
 #endif
 
+#ifdef CVM_SEMISPACE_AS_OLDGEN
 /*
  * Scan objects in contiguous range, and do all special handling as well.
  */
@@ -185,7 +192,6 @@ scanObjectsInRangeFull(CVMExecEnv* ee, CVMGCOptions* gcOpts,
     CVMassert(curr == top); /* This had better be exact */
 }
 
-#ifdef CVM_SEMISPACE_AS_OLDGEN
 /*
  * Re-build the old-to-young pointer tables after an old generation is
  * done. 
@@ -213,33 +219,8 @@ CVMgenSemispaceRebuildBarrierTable(CVMGenSemispaceGeneration* thisGen,
 }
 #endif
 
-static void       
-CVMgenSemispaceScanYoungerToOlderPointers(CVMGeneration* gen,
-					  CVMExecEnv* ee,
-					  CVMGCOptions* gcOpts,
-					  CVMRefCallbackFunc callback,
-					  void* callbackData)
-{
-    /*
-     * Iterate over the current space objects, and call 'callback' on
-     * each reference slot found in there. 'callback' is passed in by
-     * an older generation to get young-to-old pointers.  
-     *
-     * This generation has just been GC'ed, so the space we need to iterate
-     * on is 'fromSpace', which has all remaining live pointers to older
-     * generations.
-     */
-    CVMGenSemispaceGeneration* thisGen = (CVMGenSemispaceGeneration*)gen;
-    CVMGenSpace* currentSpace = thisGen->fromSpace;
-    CVMUint32* startRange     = currentSpace->allocBase;
-    CVMUint32* endRange       = currentSpace->allocPtr;
-    CVMtraceGcCollect(("GC[SS,%d,full]: "
-		       "Scanning younger to older ptrs [%x,%x)\n",
-		       thisGen->gen.generationNo, startRange, endRange));
-    scanObjectsInRangeFull(ee, gcOpts, startRange, endRange,
-			   callback, callbackData);
-}
 
+#if defined(CVM_SEMISPACE_AS_OLDGEN) || defined(CVM_DEBUG_ASSERTS)
 static void       
 CVMgenSemispaceScanOlderToYoungerPointers(CVMGeneration* gen,
 					  CVMExecEnv* ee,
@@ -260,26 +241,7 @@ CVMgenSemispaceScanOlderToYoungerPointers(CVMGeneration* gen,
     CVMassert(CVM_FALSE);
 #endif
 }
-
-
-/*
- * Start and end GC for this generation. 
- */
-static void
-CVMgenSemispaceStartGC(CVMGeneration* gen,
-		       CVMExecEnv* ee, CVMGCOptions* gcOpts)
-{
-    CVMtraceGcCollect(("GC[SS,%d,full]: Starting GC\n",
-		       gen->generationNo));
-}
-
-static void
-CVMgenSemispaceEndGC(CVMGeneration* gen,
-		     CVMExecEnv* ee, CVMGCOptions* gcOpts)
-{
-    CVMtraceGcCollect(("GC[SS,%d,full]: Ending GC\n",
-		       gen->generationNo));
-}
+#endif /* defined(CVM_SEMISPACE_AS_OLDGEN) || defined(CVM_DEBUG_ASSERTS) */
 
 /*
  * Return remaining amount of memory
@@ -372,10 +334,10 @@ static void
 CVMgenSemispaceCopyDisjointWords(CVMUint32* dest, CVMUint32* source, 
 				 CVMUint32 numBytes)
 {
-    CVMUint8* sourceEnd = (CVMUint8*)source + numBytes;
-    while (source < (CVMUint32*)sourceEnd) {
-	*dest++ = *source++;
-    }
+    CVMUint32*       d = dest;
+    CVMUint32*       s = source;
+    CVMUint32        n = numBytes / 4; /* numWords to copy */
+    CVMmemmoveForGC(s, d, n);
 }
 
 /* Promote 'objectToPromote' into the current generation. Returns
@@ -464,18 +426,15 @@ CVMgenSemispaceAlloc(CVMUint32* space, CVMUint32 totalNumBytes)
      * And finally, set the function pointers for this generation
      */
     thisGen->gen.collect = CVMgenSemispaceCollect;
+#if defined(CVM_SEMISPACE_AS_OLDGEN) || defined(CVM_DEBUG_ASSERTS)
     thisGen->gen.scanOlderToYoungerPointers =
 	CVMgenSemispaceScanOlderToYoungerPointers;
-    thisGen->gen.scanYoungerToOlderPointers =
-	CVMgenSemispaceScanYoungerToOlderPointers;
+#endif
     thisGen->gen.promoteInto = 
 	CVMgenSemispacePromoteInto;
     thisGen->gen.scanPromotedPointers =
 	CVMgenSemispaceScanPromotedPointers;
-    thisGen->gen.getExtraSpace = 
-	CVMgenSemispaceGetExtraSpace;
-    thisGen->gen.startGC = CVMgenSemispaceStartGC;
-    thisGen->gen.endGC = CVMgenSemispaceEndGC;
+    thisGen->gen.getExtraSpace = CVMgenSemispaceGetExtraSpace;
     thisGen->gen.freeMemory = CVMgenSemispaceFreeMemory;
     thisGen->gen.totalMemory = CVMgenSemispaceTotalMemory;
     
@@ -522,10 +481,12 @@ CVMgenSemispaceSetupCopying(CVMGenSemispaceGeneration* thisGen)
 static void
 CVMgenSemispaceFlip(CVMGenSemispaceGeneration* thisGen)
 {
+    /* Flip the spaces: */
     CVMGenSpace* newCurrent = thisGen->toSpace;
     thisGen->toSpace = thisGen->fromSpace;
     thisGen->fromSpace = newCurrent;
-
+ 
+    /* Update the alloc ptrs in this gen and the new current space: */
     newCurrent->allocPtr = thisGen->copyTop;
     CVMgenSemispaceMakeCurrent(thisGen, newCurrent);
 }
@@ -707,6 +668,517 @@ CVMgenSemispaceFilteredHandleRoot(CVMObject** refPtr, void* data)
     CVMgenSemispaceFilteredGrayObject(thisGen, refPtr, ref);
 }
 
+typedef struct CVMGenSemispaceTransitiveScanData {
+    CVMExecEnv* ee;
+    CVMGCOptions* gcOpts;
+    CVMGenSemispaceGeneration* thisGen;
+} CVMGenSemispaceTransitiveScanData;
+
+#ifndef BREADTH_FIRST_SCAN
+
+/* NOTE: The following CVMObjectIterator code is based on the
+   CVMobjectWalkRefsAux() macro, and is supposed to achieve the equivalent
+   scanning of objects.  The difference being that CVMObjectIterator allows
+   for a depth-first scan algorithm at the cost of a slightly higher
+   overhead, while CVMobjectWalkRefsAux() enforces breadth-first scanning.
+*/
+typedef struct CVMObjectIterator CVMObjectIterator;
+struct CVMObjectIterator
+{
+    CVMObject *ref;
+    CVMObject *forwardedRef;
+    CVMAddr offset;
+
+    CVMAddr map;
+    CVMObject **refPtr;
+    CVMAddr flags;
+
+    /* For arrays only: */
+    CVMObject **arrEnd;
+
+    /* For Big GC maps only: */
+    CVMAddr *mapPtr;
+    CVMAddr *mapEnd;
+    CVMObject** otherRefPtr;
+};
+
+/* Initializes the iterator to walk the references in the given object. */
+static void
+CVMobjectIteratorInit(CVMExecEnv *ee, CVMGCOptions *gcOpts,
+		      CVMObjectIterator *iter, CVMObject *obj,
+		      CVMObject *forwardedObj)
+{
+    CVMClassBlock *cb;
+    CVMAddr map;
+    CVMObject **refPtr;
+    CVMAddr flags;
+    CVMBool handleWeakReferences = CVM_TRUE;
+
+    iter->ref = obj;
+    iter->forwardedRef = forwardedObj;
+    iter->offset = 0;
+
+    cb = CVMobjectGetClass(forwardedObj);
+    map = CVMcbGcMap(cb).map;
+    flags = map & CVM_GCMAP_FLAGS_MASK;
+    iter->map = map;
+    iter->flags = flags;
+    if (map == CVM_GCMAP_NOREFS) {
+	return;
+    }
+
+    refPtr = (CVMObject **)&(forwardedObj)->fields[0];
+    if (flags == CVM_GCMAP_SHORTGCMAP_FLAG) {
+	/* First skip the flags */
+	map >>= CVM_GCMAP_NUM_FLAGS;
+
+	if (handleWeakReferences &&
+	    gcOpts->discoverWeakReferences) {
+	    if (CVMcbIs(cb, REFERENCE)) {
+		/* Skip referent, next in case we just discovered
+		   a new active weak reference object. */
+		if (CVMweakrefField(forwardedObj, next) == NULL) {
+		    CVMweakrefDiscover(ee, forwardedObj);
+		    map >>= CVM_GCMAP_NUM_WEAKREF_FIELDS;
+		    refPtr += CVM_GCMAP_NUM_WEAKREF_FIELDS;
+		}
+	    }
+	}
+
+    } else if (flags == CVM_GCMAP_ALLREFS_FLAG) {
+	CVMArrayOfRef *arrRefs = (CVMArrayOfRef *)forwardedObj;
+	CVMJavaInt arrLen = CVMD_arrayGetLength(arrRefs);
+
+	refPtr = (CVMObject **) &arrRefs->elems[0];
+	iter->arrEnd = (CVMObject **) &arrRefs->elems[arrLen];
+
+    } else {
+	/* object with "big" GC map */
+	/*
+	 * CVMGCBitMap is a union of the scalar 'map' and the
+	 * pointer 'bigmap'. So it's best to
+	 * use the pointer if we need the pointer
+	 */
+	CVMBigGCBitMap *bigmap = (CVMBigGCBitMap *)
+	                            ((CVMAddr)(CVMcbGcMap(cb).bigmap) &
+				      ~CVM_GCMAP_FLAGS_MASK);
+	CVMUint32 mapLen = bigmap->maplen;
+	/*
+	 * Make 'mapPtr' and 'mapEnd' pointers to the type of 'map'
+	 * in 'CVMBigGCBitMap'.
+	 */
+	CVMAddr *mapPtr = bigmap->map;
+	CVMAddr *mapEnd = mapPtr + mapLen;
+	CVMObject** otherRefPtr = refPtr;
+
+	CVMassert(flags == CVM_GCMAP_LONGGCMAP_FLAG);
+	/* Make sure there is something to do. */
+	CVMassert(mapPtr < mapEnd);
+	map = *mapPtr;
+	if (handleWeakReferences &&		
+	    gcOpts->discoverWeakReferences) {
+	    if (CVMcbIs(cb, REFERENCE)) {
+		/* Skip referent, next in case we just discovered
+		   a new active weak reference object. */
+		if (CVMweakrefField(obj, next) == NULL) {
+		    CVMweakrefDiscover(ee, obj);
+		    map >>= CVM_GCMAP_NUM_WEAKREF_FIELDS;
+		    refPtr += CVM_GCMAP_NUM_WEAKREF_FIELDS;
+		}
+	    }
+	}
+
+	while (mapPtr < mapEnd) {
+	    while (map != 0) {
+		if ((map & 0x1) != 0) {
+		    goto bigMapFoundNonNullPtr;
+		}
+		map >>= 1;
+		refPtr++;
+	    }
+	    mapPtr++;
+	    /* This may be a redundant read that may fall off the
+	       edge of the world. To prevent this case,
+	       we've left an extra
+	       safety word in the big map. (n120299) */
+	    map = *mapPtr;
+	    /* Advance the object pointer to the next group of 32
+	     * fields, in case map becomes 0 before we iterate
+	     * through all the fields in group *mapPtr
+	     */
+	    otherRefPtr += 32;
+	    refPtr = otherRefPtr;
+	}
+bigMapFoundNonNullPtr:
+
+	iter->mapPtr = mapPtr;
+	iter->mapEnd = mapEnd;
+	iter->otherRefPtr = otherRefPtr;
+    }
+
+    iter->map = map;
+    iter->refPtr = refPtr;
+}
+
+/* Re-initializes the iterator based on where we left off last time as
+   indicated by the specified offset value.  The offset value is an
+   opaque value that is dependent partially on the object map type.
+*/
+static void
+CVMobjectIteratorReinit(CVMExecEnv *ee, CVMGCOptions *gcOpts,
+			CVMObjectIterator *iter, CVMObject *obj,
+			CVMObject *forwardedObj, CVMAddr offset)
+{
+    CVMClassBlock *cb;
+    CVMAddr map;
+    CVMObject **refPtr;
+    CVMAddr flags;
+
+    iter->ref = obj;
+    iter->forwardedRef = forwardedObj;
+    iter->offset = offset;
+
+    cb = CVMobjectGetClass(forwardedObj);
+    map = CVMcbGcMap(cb).map;
+    flags = map & CVM_GCMAP_FLAGS_MASK;
+    iter->map = map;
+    iter->flags = flags;
+    if (map == CVM_GCMAP_NOREFS) {
+	return;
+    }
+
+    if (flags == CVM_GCMAP_SHORTGCMAP_FLAG) {
+	CVMInt32 numberOfSlots;
+	CVMObject** startPtr = (CVMObject **)&(forwardedObj)->fields[0];
+
+	/* First skip the flags */
+	map >>= CVM_GCMAP_NUM_FLAGS;
+
+	refPtr = (CVMObject **)offset;
+	numberOfSlots = refPtr - startPtr;
+	map >>= numberOfSlots;
+
+    } else if (flags == CVM_GCMAP_ALLREFS_FLAG) {
+	CVMArrayOfRef *arrRefs = (CVMArrayOfRef *)forwardedObj;
+	CVMJavaInt arrLen = CVMD_arrayGetLength(arrRefs);
+
+	refPtr = (CVMObject **)offset;
+	iter->arrEnd = (CVMObject **) &arrRefs->elems[arrLen];
+
+    } else {
+	/* object with "big" GC map */
+	/*
+	 * CVMGCBitMap is a union of the scalar 'map' and the
+	 * pointer 'bigmap'. So it's best to
+	 * use the pointer if we need the pointer
+	 */
+	CVMBigGCBitMap *bigmap = (CVMBigGCBitMap *)
+	                             ((CVMAddr)(CVMcbGcMap(cb).bigmap) &
+				      ~CVM_GCMAP_FLAGS_MASK);
+	CVMUint32 mapLen = bigmap->maplen;
+	/*
+	 * Make 'mapPtr' and 'mapEnd' pointers to the type of 'map'
+	 * in 'CVMBigGCBitMap'.
+	 */
+	CVMAddr *mapPtr = bigmap->map;
+	CVMAddr *mapEnd = mapPtr + mapLen;
+	CVMObject** otherRefPtr;
+	CVMObject** startPtr = (CVMObject **)&(forwardedObj)->fields[0];
+	CVMInt32 numberOfSlots;
+	CVMInt32 numberOfWords;
+
+	CVMassert(flags == CVM_GCMAP_LONGGCMAP_FLAG);
+
+	refPtr = (CVMObject **)offset;
+	numberOfSlots = refPtr - startPtr;
+	numberOfWords = numberOfSlots / 32;
+	numberOfSlots = numberOfSlots % 32;
+
+	mapPtr += numberOfWords;
+	otherRefPtr = startPtr + (numberOfWords * 32);
+
+	/* Make sure there is something to do. */
+	CVMassert(mapPtr <= mapEnd);
+	if (mapPtr == mapEnd) {
+	    map = 0;
+	    goto bigMapNothingLeftToScan;
+	}
+
+	map = *mapPtr;
+	map >>= numberOfSlots;
+
+	while (mapPtr < mapEnd) {
+	    while (map != 0) {
+		if ((map & 0x1) != 0) {
+		    goto bigMapFoundNonNullPtr;
+		}
+		map >>= 1;
+		refPtr++;
+	    }
+	    mapPtr++;
+	    /* This may be a redundant read that may fall off the
+	       edge of the world. To prevent this case,
+	       we've left an extra
+	       safety word in the big map. (n120299) */
+	    map = *mapPtr;
+	    /* Advance the object pointer to the next group of 32
+	     * fields, in case map becomes 0 before we iterate
+	     * through all the fields in group *mapPtr
+	     */
+	    otherRefPtr += 32;
+	    refPtr = otherRefPtr;
+	}
+bigMapNothingLeftToScan:
+bigMapFoundNonNullPtr:
+
+	iter->mapPtr = mapPtr;
+	iter->mapEnd = mapEnd;
+	iter->otherRefPtr = otherRefPtr;
+    }
+
+    iter->map = map;
+    iter->refPtr = refPtr;
+}
+
+/* Gets the address of the next object pointer in the object. */
+static CVMObject **
+CVMobjectIteratorGetNextChild(CVMObjectIterator *iter)
+{
+    CVMAddr map = iter->map;
+    CVMObject **refPtr = iter->refPtr;
+    CVMAddr flags = iter->flags;
+
+    /* NOTE: For the map == CVM_GCMAP_NOREFS case, flags will have the same
+       value as CVM_GCMAP_SHORTGCMAP_FLAG and map will be 0.  Hence, we
+       will return NULL as expected.  The following asserts ensure that the
+       assumptions, that the above depends on, doesn't change: */
+    CVMassert(CVM_GCMAP_NOREFS == 0);
+    CVMassert(CVM_GCMAP_SHORTGCMAP_FLAG == 0);
+
+    if (flags == CVM_GCMAP_SHORTGCMAP_FLAG) {
+	while (map != 0) {
+	    /* We skip NULL references because we don't need to scan it: */
+	    if ((map & 0x1) != 0 && (*refPtr != NULL)) {
+		/* Point to the next reference: */
+		iter->map = (map >> 1);
+		iter->refPtr = (refPtr + 1);
+		iter->offset = (CVMAddr)iter->refPtr;
+		return refPtr;
+	    }
+	    map >>= 1;
+	    refPtr++;
+	}
+	CVMassert(map == 0);
+	/* We have reached the end of the map.  We have no more references.
+	   We need not save the state of the iteration either since we
+	   won't be iterating this object again.
+	*/
+	return NULL;
+
+    } else if (flags == CVM_GCMAP_ALLREFS_FLAG) {
+	while (refPtr < iter->arrEnd) {
+	    /* Point to the next reference: */
+	    if (*refPtr != NULL) {
+		iter->refPtr = (refPtr + 1);
+		iter->offset = (CVMAddr)iter->refPtr;
+		return refPtr;
+	    }
+	    refPtr++;
+	}
+	CVMassert(refPtr == iter->arrEnd);
+	/* Fall thru to return NULL. */
+
+    } else {
+	while (iter->mapPtr < iter->mapEnd) {
+	    while (map != 0) {
+		if ((map & 0x1) != 0 && (*refPtr != NULL)) {
+		    iter->map = (map >> 1);
+		    iter->refPtr = (refPtr + 1);
+		    iter->offset = (CVMAddr)iter->refPtr;
+		    return refPtr;
+		}
+		map >>= 1;
+		refPtr++;
+	    }
+	    iter->mapPtr++;
+	    /* This may be a redundant read that may fall off the
+	       edge of the world. To prevent this case,
+	       we've left an extra
+	       safety word in the big map. (n120299) */
+	    map = *iter->mapPtr;
+	    /* Advance the object pointer to the next group of 32
+	     * fields, in case map becomes 0 before we iterate
+	     * through all the fields in group *mapPtr
+	     */
+	    iter->otherRefPtr += 32;
+	    refPtr = iter->otherRefPtr;
+	}
+	/* Fall thru to return NULL. */
+    }
+    return NULL;
+}
+
+/* Does a depth-first transitive scan of all object references starting
+   from the object in the specified reference pointer.
+*/
+static void
+CVMgenSemispaceScanDepthFirstTransitively(CVMObject **refPtr, void *data)
+{
+    CVMGenSemispaceTransitiveScanData *tsd =
+	(CVMGenSemispaceTransitiveScanData *)data;
+    CVMExecEnv *ee = tsd->ee;
+    CVMGCOptions *gcOpts = tsd->gcOpts;
+    CVMGenSemispaceGeneration *thisGen = tsd->thisGen;
+
+    CVMObject *parent = *refPtr;
+    CVMObject *fparent;
+
+    CVMGenSemispaceScanStackEntry *root = thisGen->scanStack;
+    CVMGenSemispaceScanStackEntry *stackPtr = root;
+    CVMObject *objectsToScan = NULL;
+
+    CVMObjectIterator iter;
+    CVMObject **childPtr;
+    CVMAddr  classWord;
+
+    /* The caller should have filtered out the NULLs: */
+    CVMassert(parent != NULL);
+
+    if (!CVMgenSemispaceInOld(thisGen, parent)) {
+	return;
+    }
+
+    classWord = CVMobjectGetClassWord(parent);
+    if (CVMobjectMarkedOnClassWord(classWord)) {
+	/* Get the forwarding pointer */
+	*refPtr = (CVMObject*)CVMobjectClearMarkedOnClassWord(classWord);
+	CVMtraceGcCollect(("GC[SS,%d]: Object already forwarded: %x -> %x\n",
+			   thisGen->gen.generationNo,
+			   parent, *refPtr));
+	return;
+    }
+
+    /* Forward or promote this root object: */
+    fparent = CVMgenSemispaceForwardOrPromoteObject(thisGen, parent, classWord);
+    *refPtr = fparent;
+
+    /* Get rid of gcc warning about using an uninitialized variable */
+    memset(&iter, 0, sizeof(iter));
+
+    /* Scan and promote its children: */
+scanObjectFields:
+    CVMobjectIteratorInit(ee, gcOpts, &iter, parent, fparent);
+
+nextChild:
+    for (childPtr = CVMobjectIteratorGetNextChild(&iter);
+	 childPtr != NULL;
+	 childPtr = CVMobjectIteratorGetNextChild(&iter)) {
+
+	CVMObject **fchildPtr;
+	CVMObject *child;
+	CVMAddr classWord;
+
+	child = *childPtr;
+	/* This has already been filtered out by the iterator.  So, we replace
+	   it with an assertion:
+	   if (child == NULL) {
+	       continue; / * Go to the next child. * /
+	   }
+	*/
+	CVMassert(child != NULL);
+
+	if (!CVMgenSemispaceInOld(thisGen, child)) {
+	    continue;
+	}
+
+	classWord = CVMobjectGetClassWord(child);
+
+	/* Forward or promote the child if needed as well as update the
+	   referencing pointer: */
+	fchildPtr = childPtr;
+	CVMgenSemispaceFilteredGrayObject(thisGen, fchildPtr, child);
+
+	/* If child was already marked prior to forwarding or promotion,
+	   then this child was already scanned and forwarded/promoted
+	   previously.  There's no need to scan this child again: */
+	if (CVMobjectMarkedOnClassWord(classWord)) {
+	    continue; /* Go to the next child. */
+	}
+
+	/* If the child is a leaf node, then there's nothing to scan: */
+	if (CVMobjectSize(*fchildPtr) <= sizeof(CVMObjectHeader)) {
+	    continue;
+	}
+
+	/* Recurse into the child: */
+	if (stackPtr < &root[CVMGC_MAX_SCAN_STACK]) {
+
+	    /* Set the child's parent in the child: */
+	    stackPtr->obj = parent;
+	    /* Save the parent's iterator state: */
+	    stackPtr->offset = iter.offset;
+	    stackPtr++;
+	    CVMassert(stackPtr <= &root[CVMGC_MAX_SCAN_STACK]);
+
+	    /* Install the child as the new parent: */
+	    fparent = *fchildPtr;
+	    parent = child;
+	    goto scanObjectFields;
+
+	} else {
+	    
+	    /* If we can't recurse, then queue the current object in the scan
+	       list to be scanned later.  We'll skip it for now.
+	       Note: These objects that we're skipping have already been
+	       forwarded or promoted.
+	    */
+	    CVMobjectVariousWord(child) = (CVMAddr)objectsToScan;
+	    objectsToScan = child;
+	    continue;
+	}
+    }
+    
+    /* Done scanning all children.  Time to return to the previous parent: */
+    if (stackPtr != root) {
+	CVMAddr classWord;
+	stackPtr--;
+	parent = stackPtr->obj;
+
+	classWord = CVMobjectGetClassWord(parent);
+	CVMassert(CVMobjectMarkedOnClassWord(classWord));
+	fparent = (CVMObject*)CVMobjectClearMarkedOnClassWord(classWord);
+
+	CVMobjectIteratorReinit(ee, gcOpts, &iter, parent, fparent,
+				stackPtr->offset);
+	goto nextChild;
+    }
+
+    CVMassert(stackPtr == thisGen->scanStack);
+
+    /* We're done with the current root.  Let's check the scan list to see if
+       we have another root to scan: */
+    if (objectsToScan != NULL) {
+	CVMAddr classWord;
+
+	/* Get the root object and go scan: */
+	parent = objectsToScan;
+	objectsToScan = (CVMObject *)CVMobjectVariousWord(parent);
+
+	classWord = CVMobjectGetClassWord(parent);
+	CVMassert(CVMobjectMarkedOnClassWord(classWord));
+	fparent = (CVMObject*)CVMobjectClearMarkedOnClassWord(classWord);
+
+	goto scanObjectFields;
+    }
+
+    /* When we get here, we would have completely transitively scanned
+       the forwarded and promoted objects.  So, update the base
+       pointers. */
+    thisGen->copyBase = thisGen->copyTop;
+}
+
+#endif /* !BREADTH_FIRST_SCAN */
+
 static void
 CVMgenSemispaceBlackenObjectFull(CVMGenSemispaceGeneration* thisGen,
 				 CVMExecEnv* ee, 
@@ -790,12 +1262,6 @@ CVMgenSemispaceFollowRootsFull(CVMGenSemispaceGeneration* thisGen,
     CVMgenSemispaceFollowRootsWithBlackener(thisGen, ee, gcOpts,
         CVMgenSemispaceBlackenObjectFull);
 }
-
-typedef struct CVMGenSemispaceTransitiveScanData {
-    CVMExecEnv* ee;
-    CVMGCOptions* gcOpts;
-    CVMGenSemispaceGeneration* thisGen;
-} CVMGenSemispaceTransitiveScanData;
 
 static void
 CVMgenSemispaceScanTransitively(CVMObject** refPtr, void* data)
@@ -936,7 +1402,9 @@ CVMgenSemispaceScanFreedObjects(CVMGeneration *thisGen, CVMExecEnv *ee)
             /* Get the forwarding pointer */
             obj = (CVMObject*)CVMobjectClearMarkedOnClassWord(classWord);
             collected = CVM_FALSE;
-        }
+        } else if (CVMGenObjectIsSynthesized(obj)) {
+	    collected = CVM_FALSE;
+	}
 
         objCb = CVMobjectGetClass(obj);
         objSize = CVMobjectSizeGivenClass(obj, objCb);
@@ -1008,6 +1476,8 @@ CVMgenSemispaceCollect(CVMGeneration* gen,
     CVMGenSpace* space;
     CVMBool success;
 
+    CVMtraceGcCollect(("GC[SS,%d,full]: Starting GC\n", gen->generationNo));
+
     gcOpts->discoverWeakReferences = CVM_TRUE;
     thisGen->hasFailedPromotion = CVM_FALSE;
 
@@ -1021,6 +1491,7 @@ CVMgenSemispaceCollect(CVMGeneration* gen,
     /*
      * Scan all roots that point to this generation.
      */
+#ifdef BREADTH_FIRST_SCAN
     CVMgenScanAllRoots((CVMGeneration*)thisGen,
 		       ee, gcOpts, CVMgenSemispaceFilteredHandleRoot, thisGen);
 
@@ -1029,6 +1500,26 @@ CVMgenSemispaceCollect(CVMGeneration* gen,
      */
     CVMgenSemispaceFollowRootsFull(thisGen, ee, gcOpts);
 
+#else
+    {
+	CVMGeneration* nextGen = thisGen->gen.nextGen;
+	CVMGenMarkCompactGeneration *markCompactGen =
+	    (CVMGenMarkCompactGeneration *)nextGen;
+	CVMGenSemispaceTransitiveScanData tsd;
+
+	/* Scan the GC roots transitively: */
+	tsd.ee = ee;
+	tsd.gcOpts = gcOpts;
+	tsd.thisGen = thisGen;
+	CVMgenScanAllRoots((CVMGeneration*)thisGen,
+	    ee, gcOpts, CVMgenSemispaceScanDepthFirstTransitively, &tsd);
+
+	CVMgenMarkCompactRebuildBarrierTable(markCompactGen,
+	    ee, gcOpts, nextGen->allocMark, nextGen->allocPtr);
+	/* Advance mark for the next batch of promotions */
+	nextGen->allocMark = nextGen->allocPtr;
+    }
+#endif
     /*
      * Don't discover any more weak references.
      */
@@ -1038,6 +1529,7 @@ CVMgenSemispaceCollect(CVMGeneration* gen,
      * At this point, we know which objects are live and which are not.
      * Do the special objects processing.
      */
+    CVMassert(gcOpts->isUpdatingObjectPointers == CVM_TRUE);
     CVMgenSemispaceProcessSpecialWithLivenessInfo(ee, gcOpts, thisGen);
 
     CVMgenSemispaceScanFreedObjects((CVMGeneration*)thisGen, ee);
@@ -1073,6 +1565,8 @@ CVMgenSemispaceCollect(CVMGeneration* gen,
      */
     CVMassert((gen->nextGen == NULL) ||
 	      (gen->nextGen->allocMark == gen->nextGen->allocPtr));
+
+    CVMtraceGcCollect(("GC[SS,%d,full]: Ending GC\n", gen->generationNo));
 
     /*
      * Can we allocate in this space after this GC?

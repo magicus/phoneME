@@ -1,25 +1,27 @@
 /*
- * Portions Copyright 2000-2006 Sun Microsystems, Inc. All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License version 2 for more details (a copy is included at
- * /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public
- * License version 2 along with this work; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)memory_asm_cpu.S	1.13 06/10/10
+ *
+ * Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
  */
 
 /*
@@ -28,7 +30,7 @@
 
 #include "javavm/include/asmmacros_cpu.h"
 #include "javavm/include/iai_opt_config.h"
-	
+
 	SET_SECTION_EXEC(memory_asm_cpu)
 
 	ENTRY (CVMARMmemmove8Bit)
@@ -48,6 +50,9 @@ ENTRY1(CVMARMmemmove8Bit)
         cmp     LENGTH, #0
         cmpne   DEST, SRC
         BRCOND_REG(lr,eq)          /* Nothing to copy.  Return to caller. */
+        /* If (dest >= src + length) or (dest < src), then we can do forward copying: */
+        addhi   r12, SRC, LENGTH
+        cmphi   r12, DEST
         bhi     memmove8Bit_inverse
 
 LABEL(memmove8Bit_copyForward)
@@ -55,8 +60,6 @@ LABEL(memmove8Bit_copyForward)
 
 /* IAI-01 */
 #ifdef IAI_MEMMOVE
-        cmp     LENGTH, #64
-        blt     memmove8Bit_smallLength
 
 #ifdef IAI_MEMMOVE_PLD
         pld     [SRC]
@@ -66,6 +69,9 @@ LABEL(memmove8Bit_copyForward)
         pld     [DEST,	#32]
         pld     [DEST,	#64]
 #endif
+	cmp     LENGTH, #64
+	blt     memmove8Bit_smallLength
+
         /* Check if the DEST and SRC pointers are similarly aligned: */
         eor     r3,	SRC,	 DEST      /* Equal bits will become 0. */
         tst     r3, 	#0x7               /* Check if low 3 bits are equal. */
@@ -83,6 +89,11 @@ LABEL(memmove8Bit_alignedDoubleWords)
         wldrd	wR2,	[SRC],	#8
         
 L10:        
+#ifdef IAI_MEMMOVE_PLD2
+        pld     [SRC,	#64]
+        pld     [DEST, #64]
+#endif
+
         wstrd	wR0,	[DEST],	#8
         wldrd	wR0,	[SRC],	#8
         wstrd	wR1,	[DEST],	#8
@@ -165,6 +176,11 @@ LABEL(memmove8Bit_alignedWord)
         wstrw	wR0,	[DEST],	#4
         
 LABEL(L11)
+#ifdef IAI_MEMMOVE_PLD2
+        pld     [SRC,	#64]
+        pld     [DEST, #64]
+#endif
+
         waligni	wR3,	wR0,	wR1,	#4
         wldrd	wR0,	[SRC],	#8
         wstrd	wR3,	[DEST],	#8
@@ -254,7 +270,7 @@ LABEL(memmove8Bit_Doubleunaligned)
         and     r3,	SRC,	#7	/*r3 = number of src unaligned */
         and     r5,	DEST,	#7	/*r5 = number of DEST unaligned */
         subs	r7,	r3,	r5	
-        blt     L2
+        blt     LM2
         
         /* Do alignment for the starting part.
            
@@ -295,7 +311,12 @@ LABEL(memmove8Bit_Doubleunaligned)
         /* The first unaligned 8-byte has been done. Begin mainloop
  	 * of 8-byte memmove.
 	 */
-LABEL(L1)     
+LABEL(LM1)     
+#ifdef IAI_MEMMOVE_PLD2
+        pld     [r4,	#64]
+        pld     [r6, #64]
+#endif
+
         walignr0	wR3,	wR0,	wR1
         wldrd	wR0,	[r4],	#8
         wstrd	wR3,	[r6],	#8
@@ -306,7 +327,7 @@ LABEL(L1)
         wldrd	wR2,	[r4],	#8
         wstrd	wR5,	[r6],	#8
         subs	LENGTH,	LENGTH,	#24
-        bge     L1	
+        bge     LM1	
          
         /*
          * Do the end unaligned part
@@ -348,7 +369,7 @@ LABEL(L105)
         ldmfd	sp!,	{r4-r7,lr}     
         BR_REG(lr)	          /* Return to caller. */
         
-LABEL(L2)
+LABEL(LM2)
         
         /* Do alignment for the starting part.
            
@@ -389,23 +410,11 @@ LABEL(L2)
         The first unaligned 8-byte has been done. Begin mainloop of 8-byte memmove.
         */
 
-        b       L1
+        b       LM1
 	
 LABEL(memmove8Bit_smallLength)
 #endif /* IAI_MEMMOVE */
- 
-        /* If the length is short, it will be faster to just do byte copying.
-           This also simplifies the aligned case so that it doesn't have to
-           check for short arrays. */
-        cmp     LENGTH, #4
-        blt     memmove8Bit_unaligned
 
-        /* Check if the DEST and SRC pointers are similarly aligned: */
-        eor     r3, SRC, DEST           /* Equal bits will become 0. */
-        tst     r3, #0x3                /* Check if low 2 bits are equal. */
-        bne     memmove8Bit_unaligned
-
-        /* Do aligned copying: */
         tst     SRC, #0x3               /* Check if already word aligned. */
         bne     memmove8Bit_alignedLeadingByte
 
@@ -414,6 +423,12 @@ LABEL(memmove8Bit_alignedWords)
         bic     LENGTH, LENGTH, #0x3
         subs    LENGTH, LENGTH, #4
         blt     memmove8Bit_alignedWordsTrailingHalfword
+
+	/* Check if the DEST is word aligned. The SRC
+	 * is already word aligned when we get here.
+         */
+	tst	DEST, #0x3		/* Check if low 2 bits are 0. */
+	bne     memmove8Bit_unalignedLoop
 
 LABEL(memmove8Bit_alignedWordsLoop)
         ldr     r3, [SRC], #4
@@ -426,12 +441,18 @@ LABEL(memmove8Bit_alignedWordsTrailingHalfword)
         tst     r12, #0x2
         beq     memmove8Bit_alignedTrailingByte
         ldrh    r3, [SRC], #2
-        strh    r3, [DEST], #2
+
+	/* Can't do strh because the DEST pointer
+	 * is not guaranteed to be half-word aligned.
+	 */
+	strb	r3, [DEST], #1
+	mov	r3, r3, lsr #8
+	strb	r3, [DEST], #1
 
 LABEL(memmove8Bit_alignedTrailingByte)
         /* Copy the trailing byte if necessary: */
         tst     r12, #0x1
-        beq     memmove8Bit_alignedWordsDone
+	BRCOND_REG(lr,eq)	/* Done. Return to caller. */
         ldrb    r3, [SRC]
         strb    r3, [DEST]
 
@@ -443,30 +464,40 @@ LABEL(memmove8Bit_alignedLeadingByte)
         tst     SRC, #0x1
         beq     memmove8Bit_alignedLeadingHalfWord
         ldrb    r3, [SRC], #1
-        sub     LENGTH, LENGTH, #1
+        subs    LENGTH, LENGTH, #1
         strb    r3, [DEST], #1
+	BRCOND_REG(lr,ls)	/* Done. LENGTH = 1 */	
 
 LABEL(memmove8Bit_alignedLeadingHalfWord)
         /* Copy the leading halfword if necessary: */
         tst     SRC, #0x2
         beq     memmove8Bit_alignedWords
         ldrh    r3, [SRC], #2
-        sub     LENGTH, LENGTH, #2
-        strh    r3, [DEST], #2
-        b       memmove8Bit_alignedWords
-
-LABEL(memmove8Bit_unaligned)
-        subs    LENGTH, LENGTH, #1
-        blt     memmove8Bit_unalignedLoopDone
+        subs     LENGTH, LENGTH, #2
+	/* Can't do strh because the DEST pointer
+	 * is not guaranteed to be half-word aligned.
+	 */
+	strb	r3, [DEST], #1
+	mov	r3, r3, lsr #8
+	strgeb	r3, [DEST], #1	/* LENGTH >= 2 */
+        bgt       memmove8Bit_alignedWords
+	BR_REG(lr)	/* Done. */
 
 LABEL(memmove8Bit_unalignedLoop)
-        ldrb    r3, [SRC], #1
-        subs    LENGTH, LENGTH, #1
-        strb    r3, [DEST], #1
+	/* The SRC pointer is word aligned when we get here. The
+	 * DEST pointer however is not.
+         */
+        ldr     r3, [SRC], #4
+        subs    LENGTH, LENGTH, #4
+	strb	r3, [DEST], #1
+	mov	r3, r3, lsr #8
+	strb	r3, [DEST], #1
+	mov	r3, r3, lsr #8
+	strb	r3, [DEST], #1
+	mov	r3, r3, lsr #8
+	strb	r3, [DEST], #1
         bge     memmove8Bit_unalignedLoop
-
-LABEL(memmove8Bit_unalignedLoopDone)
-        BR_REG(lr)	          /* Return to caller. */
+	b	memmove8Bit_alignedWordsTrailingHalfword /* Loop done */
 
         /* ===============================================================*/
 LABEL(memmove8Bit_inverse)
@@ -505,6 +536,11 @@ LABEL(memmove8Bit_inverse_alignedDoubleWords)
         wldrd	wR2,	[SRC,	#-8]!
         
 LABEL(IL10)
+#ifdef IAI_MEMMOVE_PLD2
+        pld     [SRC,	#-64]
+        pld     [DEST, #-64]
+#endif
+
         wstrd	wR0,	[DEST,	#-8]!
         wldrd	wR0,	[SRC,	#-8]!
         wstrd	wR1,	[DEST,	#-8]!
@@ -589,6 +625,11 @@ LABEL(memmove8Bit_inverse_alignedWord)
         and     r12,	LENGTH,	#7
         
 LABEL(IL11)
+#ifdef IAI_MEMMOVE_PLD2
+        pld     [SRC,	#-64]
+        pld     [DEST, #-64]
+#endif
+
         waligni	wR3,	wR1,	wR0,	#4
         wldrd	wR0,	[SRC,	#-8]!
         wstrd	wR3,	[DEST,	#-8]!
@@ -718,6 +759,11 @@ LABEL(memmove8Bit_inverse_unaligned)
         The first unaligned 8-byte has been done. Begin mainloop of 8-byte memmove.
         */
 LABEL(IL1)
+#ifdef IAI_MEMMOVE_PLD2
+        pld     [r4,	#-64]
+        pld     [r6,     #-64]
+#endif
+
         walignr0	wR3,	wR1,	wR0
         wldrd	wR0,	[r4,	#-8]!
         wstrd	wR3,	[r6,	#-8]!
@@ -824,11 +870,6 @@ LABEL(IL2)
 LABEL(memmove8Bit_inverse_smallLength)
 #endif /* IAI_MEMMOVE */
 
-        /* If (dest >= src + length), then we can do forward copying: */
-        add     r12, SRC, LENGTH
-        cmp     DEST, r12
-        bhs     memmove8Bit_copyForward
-
 LABEL(memmove8Bit_copyBackward)
         /* Do backward copying: */
         subs    LENGTH, LENGTH, #1
@@ -868,16 +909,12 @@ ENTRY1(CVMARMmemmove16Bit)
         cmp     LENGTH, #0
         cmpne   DEST, SRC
         BRCOND_REG(lr,eq)          /* Nothing to copy.  Return to caller. */
-        bhi     memmove16Bit_inverse
+	/* If (dest >= src + length) or (dest < src), then we can do forward copying: */
+        addhi     r12, SRC, LENGTH
+        cmphi     r12, DEST
+	bhi	  memmove16Bit_copyBackward
 
 LABEL(memmove16Bit_copyForward)
-        /* Do forward copying: */
-        /* Check if the DEST and SRC pointers are similarly aligned: */
-        eor     r3, SRC, DEST   /* Equal bits will become 0. */
-        tst     r3, #0x3        /* Check if the low 2 bits are equal. */
-        bne     memmove16Bit_unaligned
-
-        /* Do aligned copying: */
         tst     SRC, #0x3       /* Check low 2 bits for word alignment. */
         beq     memmove16Bit_alignedWords
 
@@ -893,6 +930,12 @@ LABEL(memmove16Bit_alignedWords)
         subs    LENGTH, LENGTH, #4
         blt     memmove16Bit_alignedWordsTrailingHalfword
 
+	/* Check if the DEST is word aligned. The SRC
+	 * is already word algined when we get here.
+         */
+	tst	DEST, #0x3	/* Check if the low 2 bits are 0. */
+	bne     memmove16Bit_unalignedLoop
+
 LABEL(memmove16Bit_alignedWordsLoop)
         ldr     r3, [SRC], #4
         subs    LENGTH, LENGTH, #4
@@ -902,32 +945,25 @@ LABEL(memmove16Bit_alignedWordsLoop)
 LABEL(memmove16Bit_alignedWordsTrailingHalfword)
         /* Copy the trailing half word if necessary: */
         tst     r12, #0x2
-        beq     memmove16Bit_alignedWordsDone
+	BRCOND_REG(lr,eq)	/* Done. Return to caller. */
         ldrh    r3, [SRC], #2
         strh    r3, [DEST], #2
 
 LABEL(memmove16Bit_alignedWordsDone)
         BR_REG(lr)	          /* Return to caller. */
 
-LABEL(memmove16Bit_unaligned)
-        subs    LENGTH, LENGTH, #2
-        blt     memmove16Bit_unalignedLoopDone
-
 LABEL(memmove16Bit_unalignedLoop)
-        ldrh    r3, [SRC], #2
-        subs    LENGTH, LENGTH, #2
-        strh    r3, [DEST], #2
-        bge     memmove16Bit_unalignedLoop
-
-LABEL(memmove16Bit_unalignedLoopDone)
-        BR_REG(lr)	          /* Return to caller. */
+	/* The SRC pointer is word aligned when we get here. The
+	 * DEST pointer however is not. */
+	ldr     r3, [SRC], #4
+        subs    LENGTH, LENGTH, #4
+	strh	r3, [DEST], #2
+	mov	r3, r3, lsr #16
+	strh	r3, [DEST], #2
+	bge     memmove16Bit_unalignedLoop
+	b	memmove16Bit_alignedWordsTrailingHalfword	
 
         /* ===============================================================*/
-LABEL(memmove16Bit_inverse)
-        /* If (dest >= src + length), then we can do forward copying: */
-        add     r12, SRC, LENGTH
-        cmp     DEST, r12
-        bhs     memmove16Bit_copyForward
 
 LABEL(memmove16Bit_copyBackward)
         /* Do backward copying: */
@@ -971,6 +1007,16 @@ ENTRY1(CVMARMmemmove32Bit)
         bhi     memmove32Bit_inverse
 
 LABEL(memmove32Bit_copyForward)
+#ifdef IAI_MEMMOVE_PLD2
+        pld     [SRC,	#32]
+        pld     [SRC,	#64]
+        pld     [SRC,	#96]
+        pld     [DEST, #32]
+        pld     [DEST, #64]
+        pld     [DEST, #96]
+        
+#endif
+
         /* Do forward copying: */
         subs    LENGTH, LENGTH, #4
         blt     memmove32Bit_alignedWordsDone
@@ -986,6 +1032,16 @@ LABEL(memmove32Bit_alignedWordsDone)
 
 LABEL(memmove32Bit_inverse)
         /* Do backward copying: */
+#ifdef IAI_MEMMOVE_PLD2
+        pld     [SRC,	#-32]
+        pld     [SRC,	#-64]
+        pld     [SRC,	#-96]
+
+        pld     [DEST, #-32]
+        pld     [DEST, #-64]
+        pld     [DEST, #-96]
+#endif
+
         subs    LENGTH, LENGTH, #4
         add     SRC, SRC, LENGTH
         add     DEST, DEST, LENGTH

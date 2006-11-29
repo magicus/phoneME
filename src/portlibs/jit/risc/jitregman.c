@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitregman.c	1.167 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -506,6 +511,8 @@ findAvailableRegister0(
     int		   regNo = -1;
     CVMRMregset	   availList[6];
     CVMRMregset	   prefMask;
+    CVMRMregset    unoccupiedRegisters;
+    CVMRMregset    unpinnedRegisters;
     int            numTargetGroups = 1;
     struct {
 	int numTargetSets;
@@ -513,6 +520,20 @@ findAvailableRegister0(
     } targetGroup[2];
     int		   numAvailSets = 0;
     int		   g;
+
+    /* Exclude registers that are not on RM_ANY_SET. */
+    target &= RM_ANY_SET;
+
+    if (target == ~CVMRM_ANY_SET && avoid == CVMRM_ANY_SET) {
+	/*
+	 * This is a byproduct of the caller trying to avoid the target
+	 * set of a subsequent resource allocation, and in this case the
+	 * target was CVMRM_ANY_SET. Clean this up by allowing any register
+	 * to be used.
+	 */
+	target = CVMRM_ANY_SET;
+	avoid = CVMRM_EMPTY_SET;
+    }
 
     /*
      * If there are no target registers that are not in the avoid set,
@@ -572,8 +593,6 @@ findAvailableRegister0(
     if (pref != CVMRM_REGPREF_TARGET) {
 	targetGroup[0].targetList[1] = target; /* Group 0, List 1. */
 	targetGroup[0].numTargetSets = 2;
-    } else {
-	CVMassert(target == targetGroup[0].targetList[0]);
     }
     if (!targetSetIsStrict) {
         numTargetGroups++;
@@ -589,53 +608,56 @@ findAvailableRegister0(
 
     /* The target lists about will be match against the following availability
        sets.  The availability sets are:
-        Set 1: Unoccupied regs not on the avoid set.
-        Set 2: All unoccupied regs.
-        Set 3: Unpinned regs not on the avoid set.
-        Set 4: All unpinned regs.
+        Set 1: Unoccupied regs not in the avoid set, and in 
+               the sandboxRegSet.
+        Set 2: All unoccupied regs in the sandboxRegSet.
+        Set 3: Unpinned regs not in the avoid set, and in 
+               the sandboxRegSet.
+        Set 4: All unpinned regs in the sandboxRegSet.
     */
+    unoccupiedRegisters = ~con->occupiedRegisters & con->sandboxRegSet;
+    unpinnedRegisters = ~con->pinnedRegisters & con->sandboxRegSet;
 
-    /* include unoccupied, unavoided registers */
-    availList[numAvailSets++] = ~avoid & ~con->occupiedRegisters; /* Set 1.*/
+    /* include unoccupied, unavoided, sandbox registers */
+    availList[numAvailSets++] = ~avoid & unoccupiedRegisters; /* Set 1.*/
 #ifndef PREFER_SPILL_OVER_AVOID
-    /* include unoccupied, avoided registers */
+    /* include unoccupied, avoided, sandbox registers */
     {
-	CVMRMregset set = ~con->occupiedRegisters;
-	if (set != availList[numAvailSets - 1]) {
-	    availList[numAvailSets++] = set; /* Set 2.*/
+	if (unoccupiedRegisters != availList[numAvailSets - 1]) {
+	    availList[numAvailSets++] = unoccupiedRegisters; /* Set 2.*/
 	}
     }
 #endif
     if (okToSpill) {
 	CVMRMregset set;
 #if 0
-	/* include clean, occupied, unavoided registers */
-	set = ~avoid & ~con->dirtyRegisters;
+	/* include clean, occupied, unavoided, sandbox registers */
+	set = ~avoid & ~con->dirtyRegisters & con->sandboxRegSet;
 	if (set != availList[numAvailSets - 1]) {
 	    availList[numAvailSets++] = set;
 	}
 #endif
-	/* include dirty, occupied, unavoided registers */
-	set = ~avoid & ~con->pinnedRegisters;
+	/* include dirty, occupied, unavoided, sandbox registers */
+	set = ~avoid & unpinnedRegisters;
 	if (set != availList[numAvailSets - 1]) {
 	    availList[numAvailSets++] = set; /* Set 3. */
 	}
     }
 #ifdef PREFER_SPILL_OVER_AVOID
-    /* include unoccupied, avoided registers */
-    availList[numAvailSets++] = ~con->occupiedRegisters; /* Set 2. */
+    /* include unoccupied, avoided, sandbox registers */
+    availList[numAvailSets++] = unoccupiedRegisters; /* Set 2. */
 #endif
     if (okToSpill) {
 	CVMRMregset set;
 #if 0
-	/* include clean, occupied, avoided registers */
-	set = ~con->dirtyRegisters;
+	/* include clean, occupied, avoided, sandbox registers */
+	set = ~con->dirtyRegisters & con->sandboxRegSet;
 	if (set != availList[numAvailSets - 1]) {
 	    availList[numAvailSets++] = set;
 	}
 #endif
-	/* include dirty, occupied, avoided registers */
-	set = ~con->pinnedRegisters;
+	/* include dirty, occupied, avoided, sandbox registers */
+	set = unpinnedRegisters;
 	if (set != availList[numAvailSets - 1]) {
 	    availList[numAvailSets++] = set; /* Set 4. */
 	}
@@ -675,6 +697,10 @@ findAvailableRegister0(
 			    for (i=0; i < nregs; i++ ){
 				if (con->occupiedRegisters &
 				    (1U<<(regNo+i))){
+				    /* If sandbox is in effect, the register
+				       must come from the sandboxRegSet. */
+                                    CVMassert((con->sandboxRegSet &
+                                              (1U<<(regNo+i))) != 0);
 				    spillRegister(con, regNo+i, CVM_TRUE);
 				}
 			    }
@@ -1768,6 +1794,9 @@ CVMRMpinResourceEagerlyIfDesireable(
     /* Don't attempt to pin to a pinned register or we'll get an assert */
     avail &= ~con->pinnedRegisters;
 
+    /* Don't pin to a register outside the sandboxRegSet*/
+    avail &= con->sandboxRegSet;
+
     /* limit the target set to the available registers */
     if (rp->nregs == 1) {
 	target &= avail;
@@ -1784,7 +1813,7 @@ CVMRMpinResourceEagerlyIfDesireable(
 				    (rp->nregs>1) ? RM_DOUBLE_REG_ALIGN :
 				                    RM_SINGLE_REG_ALIGN);
 	if (regNo != -1) {
-	    //CVMconsolePrintf("EAGER PIN (%d)\n",regNo);
+	    /*CVMconsolePrintf("EAGER PIN (%d)\n",regNo);*/
 	    CVMRMpinResourceSpecific(con, rp, regNo);
 	}
     }
@@ -2085,10 +2114,22 @@ RMbeginBlock(CVMJITRMContext* con, CVMJITIRBlock* b){
     con->occupiedRegisters = con->busySet;
 
     con->phiPinnedRegisters = 0;
+
+    /* By default there are no restrictions on register allocation. */
+    con->sandboxRegSet = CVMCPU_ALL_SET;
     memset(con->reg2res, 0,
 	sizeof(CVMRMResource *) * (RM_MAX_INTERESTING_REG + 1));
     memset(con->local2res, 0,
 	sizeof(CVMRMResource *) * con->numberLocalWords);
+}
+
+static void
+RMapplyRegSandboxRestriction(CVMJITRMContext* con, CVMJITIRBlock* b)
+{
+    CVMassert(con->sandboxRegSet == CVMCPU_ALL_SET);
+    if (b->sandboxRegSet != 0) {
+        con->sandboxRegSet = b->sandboxRegSet;
+    }
 }
 
 void
@@ -2142,6 +2183,7 @@ CVMRMbeginBlock(CVMJITCompilationContext* con, CVMJITIRBlock* b)
 	}
     }
 
+    RMapplyRegSandboxRestriction(CVMRM_INT_REGS(con), b);
 
 #if 0
     /* DEBUGGING ONLY */
@@ -2210,6 +2252,75 @@ CVMRMendBlock(CVMJITCompilationContext* con){
 }
 
 /*
+ * Get register sandbox for the target block 'b'. The number of
+ * registers in the sandbox is specified by 'numOfRegs'. The
+ * register numbers are stored in the target block. The sandbox
+ * will take effect when enter the target block, and only the
+ * registers in the sandbox are allowed to be allocated before
+ * sandbox is removed. When the sandbox is in effect, the registers
+ * occupied by any 'USED' values can also be accessed. However
+ * cautions need to be taken to prevent 'USED' registers being
+ * trashed.
+ */
+CVMRMregSandboxResources*
+CVMRMgetRegSandboxResources(CVMJITRMContext* con,
+                            CVMJITIRBlock* b,
+                            CVMRMregset target,
+                            CVMRMregset avoid,
+                            int numOfRegs)
+{
+    int i = 0;
+    CVMRMregSandboxResources* sandboxRes;
+
+    CVMassert(numOfRegs <
+        CVMCPU_MAX_INTERESTING_REG - CVMCPU_MIN_INTERESTING_REG);
+
+    if (numOfRegs <= 0) {
+        return NULL;
+    }
+
+    sandboxRes = CVMJITmemNew(con->compilationContext,
+                              JIT_ALLOC_CGEN_REGMAN,
+                              sizeof(CVMRMregSandboxResources));
+    for (i = 0; i < numOfRegs; i++) {
+        CVMRMResource* rp = CVMRMgetResource(con, target, avoid, 1);
+        CVMtraceJITCodegen((":::::Reserve reg(%d) for block ID: %d\n",
+                            CVMRMgetRegisterNumber(rp), b->blockID));
+        b->sandboxRegSet |= rp->rmask;
+        sandboxRes->num++;
+        sandboxRes->res[i] = rp;
+    }
+    CVMassert(sandboxRes->num == numOfRegs);
+    return sandboxRes;
+}
+
+/* Relinquish the resources associated with the sandbox registers. */
+void
+CVMRMrelinquishRegSandboxResources(CVMJITRMContext* con,
+                                   CVMRMregSandboxResources *sandboxRes)
+{
+    if (sandboxRes != NULL) {
+        int i = 0;
+        for (i = 0; i < sandboxRes->num; i++) {
+            CVMRMrelinquishResource(con, sandboxRes->res[i]);
+        }
+    }
+}
+
+/* Remove the register usage restriction applied to the block. Once
+ * the sandbox is removed, the normal register usage rules resume. */
+void
+CVMRMremoveRegSandboxRestriction(CVMJITRMContext* con, CVMJITIRBlock* b)
+{
+    if (b->sandboxRegSet != 0) {
+        CVMtraceJITCodegen((":::::Revoke register usage restriction\n"));
+        con->sandboxRegSet = CVMCPU_ALL_SET;
+        b->sandboxRegSet = 0;
+    }
+    CVMassert(con->sandboxRegSet == CVMCPU_ALL_SET);
+}
+
+/*
  * A minor spill is the register spill needed to call a light-weight
  * helper function, such as integer division or logical shift. These
  * cannot cause a GC or throw an exception, so only the registers which
@@ -2242,7 +2353,7 @@ spillRegsInRange(CVMJITRMContext* con,
     ignore &= safe; /* Exclude the 'safe' set from the 'ignore' set. */
 
     /* The set of registers to spill are all the occupied registers excluding
-       the the BUSY regs and the ignore list i.e.
+       the BUSY regs and the ignore list i.e.
                 occupied registers - BUSY regs - ignore set. 
        The BUSY regs are the JSP, JFP, PC, and SP.  These are preserved by
        other mechanisms (not the the spill mechanism).  The spill mechanism
@@ -2285,7 +2396,7 @@ spillRegsInRange(CVMJITRMContext* con,
 /*
  *
  * TODO: For now, we assume that all outgoing registers are in the integer
- * set. if any of the outgoing registers are in the FP regseter set,
+ * set. if any of the outgoing registers are in the FP register set,
  * they should not be included in "outgoing" and they will always be
  * spilled. We should provide another API to support mixed int and fp
  * arguments.
@@ -2293,9 +2404,14 @@ spillRegsInRange(CVMJITRMContext* con,
 extern void
 CVMRMminorSpill(CVMJITCompilationContext* con, CVMRMregset outgoing)
 {
-
+    /* NOTE: We remove the outgoing registers from the safe set because the
+       minor spill mechanism may be used for intrinsics where the outgoing
+       register set may contain non-volatile registers as well.  It is
+       assumed that the intrinsics code may use these outgoing set without
+       preserving it thereby rendering them effectively volatile.
+    */
     spillRegsInRange(CVMRM_INT_REGS(con), outgoing,
-		     CVMRM_SAFE_SET, CVMRM_SAFE_SET);
+		     CVMRM_SAFE_SET, CVMRM_SAFE_SET & ~outgoing);
 #ifdef CVM_JIT_USE_FP_HARDWARE
 #if (CVMRM_FP_UNSAFE_SET != CVMRM_EMPTY_SET)
     /* if fp registers are all callee save, we need not do this */
@@ -2317,6 +2433,12 @@ CVMRMminorSpill(CVMJITCompilationContext* con, CVMRMregset outgoing)
  * for things like method invocations. However, when calling C functions
  * it can be set to CVMRM_SAFE_SET, because these will be
  * restored for us by the C function.
+ *
+ * One exception to the C function safe set above are intrinsic functions
+ * or inlined intrinsic code which makes special use of non-volatile
+ * registers for their work without preserving it.  In these cases, the
+ * caller should be responsible for removing those registers from the
+ * safe set so that they can be spilled if needed.
  *
  * The set of outgoing parameter WORDS is given to know not to
  * molest any expression we may have already pinned to those registers.

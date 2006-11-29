@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)gc_common.h	1.78 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -42,8 +47,15 @@
 /*
  * The default min and max sizes of the heap
  */
+#ifndef CVM_DEFAULT_MAX_HEAP_SIZE_IN_BYTES
 #define CVM_DEFAULT_MAX_HEAP_SIZE_IN_BYTES (5 * 1024 * 1024)
+#endif
+#ifndef CVM_DEFAULT_MIN_HEAP_SIZE_IN_BYTES
 #define CVM_DEFAULT_MIN_HEAP_SIZE_IN_BYTES (2 * 1024 * 1024)
+#endif
+#ifndef CVM_DEFAULT_START_HEAP_SIZE_IN_BYTES
+#define CVM_DEFAULT_START_HEAP_SIZE_IN_BYTES (2 * 1024 * 1024)
+#endif
 
 typedef struct CVMGCCommonGlobalState CVMGCCommonGlobalState;
 struct CVMGCCommonGlobalState {
@@ -82,6 +94,7 @@ struct CVMGCCommonGlobalState {
  * the root scan phase.
  */
 struct CVMGCOptions {
+    CVMBool isUpdatingObjectPointers;
     CVMBool discoverWeakReferences;
 #if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
     CVMBool isProfilingPass;
@@ -458,7 +471,7 @@ CVMgcTotalMemory(CVMExecEnv* ee);
                 /* This may be a redundant read that may fall off the	  \
 		   edge of the world. To prevent this case, 		  \
 		   we've left an extra	  				  \
-		   safety word in the big map. (nedim120299) */ 	  \
+		   safety word in the big map. */		 	  \
                 map = *mapPtr;						  \
 		/* Advance the object pointer to the next group of 32	  \
 		 * fields, in case map becomes 0 before we iterate	  \

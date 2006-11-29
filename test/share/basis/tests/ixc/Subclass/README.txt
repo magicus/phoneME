@@ -1,3 +1,5 @@
+#
+# @(#)README.txt	1.7 06/10/25
 # 
 # Copyright 2006 Sun Microsystems, Inc. All rights reserved.
 # 

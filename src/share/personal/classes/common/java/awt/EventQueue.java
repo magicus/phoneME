@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)EventQueue.java	1.19 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ *
  */
 
 package java.awt;
@@ -33,8 +38,19 @@ import java.awt.ActiveEvent;
 import java.util.EmptyStackException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.ref.WeakReference;
+
 import sun.awt.AppContext;
 import sun.awt.SunToolkit;
+
+/*
+ * Fix for 6370528 - EventQueue race condition or synchronization bug
+ * Both the EventQueue class and EventQueueProxy class were used for
+ * synchronization, which caused the race condition. Fixed by changing
+ * all synchronization using the EventQueueProxy class, since that is
+ * the class that contains the core logic of EventQueue after the
+ * refactoring to fix 6261461
+ */
+
 /**
  * EventQueue is a platform-independent class that queues events, both
  * from the underlying peer classes and from trusted application classes.
@@ -57,6 +73,7 @@ public class EventQueue {
     private static final int NORM_PRIORITY = 1;
     private static final int HIGH_PRIORITY = 2;
     static final int NUM_PRIORITIES = HIGH_PRIORITY + 1; // 6261461
+
     /*
      * We maintain one Queue for each priority that the EventQueue supports.
      * That is, the EventQueue object is actually implemented as
@@ -66,6 +83,7 @@ public class EventQueue {
      * across all Queues.
      */
     Queue[] queues = new Queue[NUM_PRIORITIES]; // 6261461
+
     /*
      * The next EventQueue on the stack, or null if this EventQueue is
      * on the top of the stack.  If nextQueue is non-null, requests to post
@@ -93,7 +111,7 @@ public class EventQueue {
         }
         String name = "AWT-EventQueue-" + nextThreadNum();
         dispatchThread = new EventDispatchThread(name, 
-                 this.proxy = new EventQueueProxy(this)); // 6261461
+                             this.proxy = new EventQueueProxy(this)); // 6261461
         dispatchThread.setPriority(Thread.NORM_PRIORITY + 1);
         dispatchThread.start();
     }
@@ -214,20 +232,22 @@ public class EventQueue {
      *            if another thread has interrupted this thread.
      */
     public AWTEvent getNextEvent() throws InterruptedException {
-         return this.proxy.getNextEvent(); // 6261461
+        return this.proxy.getNextEvent(); // 6261461
     }
 
     /**
      * Return the first event on the EventQueue without removing it.
      * @return the first event
      */
-    public synchronized AWTEvent peekEvent() {
+    public AWTEvent peekEvent() {
+        synchronized (this.proxy) { // 6370528
         for (int i = NUM_PRIORITIES - 1; i >= 0; i--) {
             if (queues[i].head != null) {
                 return queues[i].head.event;
             }
         }
         return null;
+        }
     }
 
     /**
@@ -235,7 +255,8 @@ public class EventQueue {
      * @param id the id of the type of event desired.
      * @return the first event of the specified id
      */
-    public synchronized AWTEvent peekEvent(int id) {
+    public AWTEvent peekEvent(int id) {
+        synchronized (this.proxy) { // 6370528
         for (int i = NUM_PRIORITIES - 1; i >= 0; i--) {
             EventQueueItem q = queues[i].head;
             for (; q != null; q = q.next) {
@@ -245,6 +266,7 @@ public class EventQueue {
             }
         }
         return null;
+        }
     }
 
     /**
@@ -292,8 +314,8 @@ public class EventQueue {
         } else if (src instanceof Component) {
             ((Component) src).dispatchEvent(event);
         } else if (src instanceof MenuComponent) {
-            ((MenuComponent) src).dispatchEvent(event);
-        } else {
+         ((MenuComponent)src).dispatchEvent(event);
+         } else {
             System.err.println("unable to dispatch event: " + event);
         }
     }
@@ -306,7 +328,8 @@ public class EventQueue {
      * @param an EventQueue (or subclass thereof) instance to be used.
      * @see      java.awt.EventQueue#pop
      */
-    public synchronized void push(EventQueue newEventQueue) {
+    public void push(EventQueue newEventQueue) {
+        synchronized (this.proxy) { // 6370528
         if (debug) {
             System.out.println("EventQueue.push(" + newEventQueue + ")");
         }
@@ -314,7 +337,7 @@ public class EventQueue {
             nextQueue.push(newEventQueue);
             return;
         }
-        synchronized (newEventQueue) {
+        synchronized (newEventQueue.proxy) { // 6370528
             // Transfer all events forward to new EventQueue.
             while (peekEvent() != null) {
                 try {
@@ -329,10 +352,13 @@ public class EventQueue {
             newEventQueue.previousQueue = this;
         }
         nextQueue = newEventQueue;
+
         AppContext appContext = AppContext.getAppContext();
         if (appContext.get(AppContext.EVENT_QUEUE_KEY) == this) {
             appContext.put(AppContext.EVENT_QUEUE_KEY, newEventQueue);
         }
+        }
+
     }
 
     /**
@@ -351,8 +377,8 @@ public class EventQueue {
         // this one.  This uses the same locking order as everything else
         // in EventQueue.java, so deadlock isn't possible.
         EventQueue prev = previousQueue;
-        synchronized ((prev != null) ? prev : this) {
-            synchronized (this) {
+        synchronized ((prev != null) ? prev.proxy : this.proxy) { // 6370528
+            synchronized (this.proxy) { // 6370528
                 if (nextQueue != null) {
                     nextQueue.pop();
                     return;
@@ -372,10 +398,11 @@ public class EventQueue {
                         }
                     }
                 }
+
                 AppContext appContext = AppContext.getAppContext();
                 if (appContext.get(AppContext.EVENT_QUEUE_KEY) == this) {
-                    appContext.put(AppContext.EVENT_QUEUE_KEY, previousQueue);
-               }
+                   appContext.put(AppContext.EVENT_QUEUE_KEY, previousQueue);
+                }
                 previousQueue = null;
             }
         }
@@ -411,7 +438,8 @@ public class EventQueue {
     /*
      * Change the target of any pending KeyEvents because of a focus change.
      */
-    final synchronized void changeKeyEventFocus(Object newSource) {
+    final void changeKeyEventFocus(Object newSource) {
+        synchronized (this.proxy) { // 6370528
         for (int i = 0; i < NUM_PRIORITIES; i++) {
             EventQueueItem q = queues[i].head;
             for (; q != null; q = q.next) {
@@ -420,6 +448,7 @@ public class EventQueue {
                 }
             }
         }
+        }
     }
 
     /*
@@ -427,7 +456,7 @@ public class EventQueue {
      * This method is normally called by the source's removeNotify method.
      */
     final void removeSourceEvents(Object source) {
-        synchronized (this) {
+        synchronized (this.proxy) { // 6370528
             for (int i = 0; i < NUM_PRIORITIES; i++) {
                 EventQueueItem entry = queues[i].head;
                 EventQueueItem prev = null;
@@ -459,7 +488,7 @@ public class EventQueue {
      * This method is normally called by the source's removeNotify method.
      */
     final void removeEvents(Class type, int id) {
-        synchronized (this) {
+        synchronized (this.proxy) { // 6370528
             for (int i = 0; i < NUM_PRIORITIES; i++) {
                 EventQueueItem entry = queues[i].head;
                 EventQueueItem prev = null;
@@ -535,8 +564,9 @@ public class EventQueue {
         Toolkit.getEventQueue().setCurrentEventAndMostRecentTimeImpl(e);
     }
 
-    private synchronized void setCurrentEventAndMostRecentTimeImpl(AWTEvent e)
+    private void setCurrentEventAndMostRecentTimeImpl(AWTEvent e)
     {
+        synchronized(this.proxy) { // 6370528
         if (Thread.currentThread() != dispatchThread) {
             return;
         }
@@ -548,7 +578,7 @@ public class EventQueue {
         // getWhen() method). However, this would require us to make such
         // a type public, or to place it in sun.awt. Both of these approaches
         // have been frowned upon.
-        //
+  
         // In tiger, we will probably give timestamps to all events, so this
         // will no longer be an issue.
         if (e instanceof InputEvent) {
@@ -561,22 +591,23 @@ public class EventQueue {
             InvocationEvent ie = (InvocationEvent)e;
             mostRecentEventTime = ie.getWhen();
         }
+        }
     }
 
     final void removeSourceEvents(Object source, boolean removeAllEvents) {
-        synchronized (this) {
+        synchronized (this.proxy) { // 6370528
             for (int i = 0; i < NUM_PRIORITIES; i++) {
                 EventQueueItem entry = queues[i].head;
                 EventQueueItem prev = null;
                 while (entry != null) {
                     if ((entry.event.getSource() == source) 
                         && (removeAllEvents 
-                            || ! (entry.event instanceof SequencedEvent
-                                  || entry.event instanceof SentEvent
-                                  || entry.event instanceof FocusEvent
-                                  || entry.event instanceof WindowEvent
-                                  || entry.event instanceof KeyEvent)))
-                    {
+                            || ! (
+                                  entry.event instanceof SentEvent ||
+                                  entry.event instanceof SequencedEvent ||
+                                  entry.event instanceof FocusEvent ||
+                                  entry.event instanceof WindowEvent ||
+                                  entry.event instanceof KeyEvent))) {
                         if (entry.event instanceof SequencedEvent) {
                             ((SequencedEvent)entry.event).dispose();
                         }
@@ -601,12 +632,13 @@ public class EventQueue {
     public static long getMostRecentEventTime() {
         return Toolkit.getEventQueue().getMostRecentEventTimeImpl();
     }
-    private synchronized long getMostRecentEventTimeImpl() {
+    private long getMostRecentEventTimeImpl() {
+        synchronized(this.proxy) { // 6370528
         return (Thread.currentThread() == dispatchThread)
             ? mostRecentEventTime
             : System.currentTimeMillis();
+        }
     }
-
     /**
      * Returns the the event currently being dispatched by the
      * <code>EventQueue</code> associated with the calling thread. This is
@@ -622,10 +654,13 @@ public class EventQueue {
     public static AWTEvent getCurrentEvent() {
         return Toolkit.getEventQueue().getCurrentEventImpl();
     }
-    private synchronized AWTEvent getCurrentEventImpl() {
+    private AWTEvent getCurrentEventImpl() {
+        synchronized(this.proxy) { // 6370528
+
         return (Thread.currentThread() == dispatchThread)
             ? ((AWTEvent)currentEvent.get())
             : null;
+        }
     }
 
     AWTEvent getNextEvent(int id) throws InterruptedException {

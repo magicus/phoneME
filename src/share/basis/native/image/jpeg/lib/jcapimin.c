@@ -1,25 +1,28 @@
 /*
- * Portions Copyright 2000-2006 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ * @(#)jcapimin.c	1.12 06/10/03
+ *
+ * Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
- * 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License version 2 for more details (a copy is included at
- * /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public
- * License version 2 along with this work; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
  */
 
 /*
@@ -283,7 +286,7 @@ jpeg_write_tables (j_compress_ptr cinfo)
   /* (Re)initialize error mgr and destination modules */
   (*cinfo->err->reset_error_mgr) ((j_common_ptr) cinfo);
   (*cinfo->dest->init_destination) (cinfo);
-  /* Initialize the marker writer. */
+  /* Initialize the marker writer ... bit of a crock to do it here. */
   jinit_marker_writer(cinfo);
   /* Write them tables! */
   (*cinfo->marker->write_tables_only) (cinfo);

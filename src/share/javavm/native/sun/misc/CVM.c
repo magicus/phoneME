@@ -1,28 +1,33 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)CVM.c	1.80 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
  * All methods in this file use the CNI native method interface. See
- * cjp07/13/99 for details.
+ * cni.h for details.
  */
 
 #include "javavm/include/interpreter.h"
@@ -890,8 +895,10 @@ CNIsun_misc_CVM_markCodeBuffer(CVMExecEnv* ee,
 {
 #ifdef CVM_JIT
     CVMJITmarkCodeBuffer();
+#ifdef CVM_DEBUG
     CVMconsolePrintf("MARKED THIS JITBUFFER SPOT, %d BYTES IN USE\n",
 		     CVMglobals.jit.codeCacheBytesAllocated);
+#endif
 #endif
 
 #ifdef CVM_USE_MEM_MGR
@@ -900,6 +907,41 @@ CNIsun_misc_CVM_markCodeBuffer(CVMExecEnv* ee,
 #endif /* CVM_USE_MEM_MGR */
 
     return CNI_VOID;
+}
+
+/*
+ * Enable compilation
+ */
+CNIResultCode
+CNIsun_misc_CVM_initializeJITPolicy(CVMExecEnv* ee,
+			          CVMStackVal32 *arguments,
+			          CVMMethodBlock **p_m)
+{
+#ifdef CVM_JIT
+    CVMjitPolicyInit(ee, &CVMglobals.jit);
+#endif
+
+    return CNI_VOID;
+}
+
+/*
+ * Initialize pre-compiled code.
+ */
+CNIResultCode
+CNIsun_misc_CVM_initializeAOTCode(CVMExecEnv* ee,
+                                  CVMStackVal32 *arguments,
+                                  CVMMethodBlock **p_m)
+{
+#ifdef CVM_AOT
+    CVMD_gcSafeExec(ee, {
+        arguments[0].j.i = CVMJITinitializeAOTCode();
+    });
+#else
+    CVMD_gcSafeExec(ee, {
+        arguments[0].j.i = CVM_TRUE;
+    });
+#endif
+    return CNI_SINGLE;
 }
 
 CNIResultCode
@@ -1159,3 +1201,100 @@ CNIsun_misc_CVM_xdebugSet(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
+#if 1
+
+/*
+ * The following should never be called. These APIs are only called
+ * in JIT'd code that support CVMJIT_SIMPLE_SYNC_METHODS, and in this
+ * case they are implemented as intrinsics emitters.
+ */
+
+CNIResultCode
+CNIsun_misc_CVM_simpleLockGrab(CVMExecEnv* ee, CVMStackVal32 *arguments,
+			       CVMMethodBlock **p_mb) {
+    CVMassert(CVM_FALSE);
+    arguments[0].j.i = CVM_FALSE;
+    return CNI_SINGLE;
+}
+
+CNIResultCode
+CNIsun_misc_CVM_simpleLockRelease(CVMExecEnv* ee, CVMStackVal32 *arguments,
+				  CVMMethodBlock **p_mb)
+{
+    CVMassert(CVM_FALSE);
+    return CNI_SINGLE;
+}
+
+#else
+
+/*
+ * CNI versions of CVM.simpleLockGrab and CVM.simpleLockRelease.
+ * These are disabled by default and are only used to gather stats
+ * about how often the simple sync methods are called. In order
+ * to use them you must also declare these methods native in CVM.java 
+ * and disabled the intrinsics in ccmintrinsics_risc.c.
+ */
+#define CVM_MAX_SYNC_PROF_MBS 50
+
+static CVMMethodBlock* mbs[CVM_MAX_SYNC_PROF_MBS];
+static int slow[CVM_MAX_SYNC_PROF_MBS];
+static int fast[CVM_MAX_SYNC_PROF_MBS];
+
+static int findMB(CVMMethodBlock* mb) {
+    int i = 0;
+    while (i < CVM_MAX_SYNC_PROF_MBS) {
+	if (mbs[i] == mb) {
+	    return i;
+	}
+	if (mbs[i] == NULL) {
+	    mbs[i] = mb;
+	    return i;
+	}
+	i++;
+    }
+    CVMassert(CVM_FALSE);
+    return 0;
+}
+
+extern void dumpMBs() {
+    int i = 0;
+    CVMconsolePrintf("   fast       slow\n");
+    while (mbs[i] != NULL) {
+	CVMconsolePrintf("%10d %10d %C.%M\n", fast[i], slow[i],
+			 CVMmbClassBlock(mbs[i]), mbs[i]);
+	i++;
+    }
+}
+
+/* NOTE: this code is disabled. See comment above */
+CNIResultCode
+CNIsun_misc_CVM_simpleLockGrab(CVMExecEnv* ee, CVMStackVal32 *arguments,
+			       CVMMethodBlock **p_mb)
+{
+    jobject obj = &arguments[0].j.r;
+    CVMObject* directObj = CVMID_icellDirect(ee, obj);
+    CVMMethodBlock* mb = ee->interpreterStack.currentFrame->mb;
+    int mbslot = findMB(mb);
+    if (CVMglobals.objGlobalMicroLock.lockWord == CVM_MICROLOCK_UNLOCKED &&
+	CVMobjMonitorState(directObj) == CVM_LOCKSTATE_UNLOCKED)
+    {
+	fast[mbslot]++;
+    }  else {
+	slow[mbslot]++;
+	//CVMdumpStack(&ee->interpreterStack,0,0,10);
+	//CVMconsolePrintf("\n");
+    }
+    
+    arguments[0].j.i = CVM_FALSE;
+    return CNI_SINGLE;
+}
+
+/* NOTE: this code is disabled. See comment above */
+CNIResultCode
+CNIsun_misc_CVM_simpleLockRelease(CVMExecEnv* ee, CVMStackVal32 *arguments,
+				  CVMMethodBlock **p_mb)
+{
+    return CNI_VOID;
+}
+
+#endif

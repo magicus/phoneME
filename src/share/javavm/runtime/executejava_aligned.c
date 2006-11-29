@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)executejava_aligned.c	1.403 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/defs.h"
@@ -1160,7 +1165,7 @@ dispatch_opcode:
 	    TRACE(("\t%s\n", CVMopnames[pc[0]])); 			\
 	    UPDATE_PC_AND_TOS_AND_CONTINUE(1, 1);
 
-	    /* Outline to make pc-relative table smaller on sarm */
+	    /* TODO - outline to make pc-relative table smaller on sarm */
 #undef  OPC_CONST2_n
 #define OPC_CONST2_n(opcname, value, key)				  \
         CASE(opc_##opcname, 1)						  \
@@ -3541,7 +3546,7 @@ dispatch_opcode:
 	}
 
 
-    opc_f2l_overflow: /* Fits on sarm */
+    opc_f2l_overflow: /* FIXME: fits on sarm */
 	ASMLABEL(opc_f2l_overflow);
 	{
 	    CVMJavaLong r;
@@ -3551,7 +3556,7 @@ dispatch_opcode:
             UPDATE_PC_AND_TOS_AND_CONTINUE(1, 1);
 	}
 
-    opc_d2l_overflow: /* Fits on sarm */
+    opc_d2l_overflow: /* FIXME: fits on sarm */
 	ASMLABEL(opc_d2l_overflow);
 	{
 	    CVMJavaDouble r1;
@@ -4224,7 +4229,7 @@ compiled_code_result_code:
 	    }
         }
 
-    /* These might fit in 64 bytes on some processors, but not sparc */
+    /* NOTE - These might fit in 64 bytes on some processors, but not sparc */
     opc_ldiv_overflow:
 	ASMLABEL(opc_ldiv_overflow);
 	OPC_LONG_BINARY(Div, 1)

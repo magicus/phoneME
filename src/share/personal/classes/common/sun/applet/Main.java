@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)Main.java	1.21 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ *
  */
 
 package sun.applet;
@@ -49,7 +54,7 @@ public class Main {
     static final String[][] avDefaultUserProps = {
             // There's a bootstrapping problem here.  If we don't have a proxyHost,
             // then we will not be able to connect to a URL outside the firewall;
-            // however, there's no way for us to set the proxyHost without starting
+            // however, it's not possible to set the proxyHost without starting
             // AppletViewer.  This problem existed before the re-write.
             {"http.proxyHost", ""},
             {"http.proxyPort", "80"},
@@ -132,7 +137,7 @@ public class Main {
             // LAUNCH APPLETVIEWER FOR EACH URL
         for (int i = 0; i < urlList.size(); i++) {
             try {
-                // This parsing method should be changed/fixed so that
+                // NOTE: this parsing method should be changed/fixed so that
                 // it doesn't do both parsing of the html file and launching of
                 // the AppletPanel
                 AppletViewer.parse((URL) urlList.elementAt(i), encoding);
@@ -309,7 +314,7 @@ public class Main {
         // GET APPLETVIEWER USER-SPECIFIC PROPERTIES
         Properties avProps = getAVProps();
         // ADD OTHER RANDOM PROPERTIES
-        // Need to revisit why these are here, is there some
+        // TODO: need to revisit why these are here, is there some
         // standard for what is available?
 
         // Define a number of standard properties
@@ -323,7 +328,7 @@ public class Main {
         avProps.put("browser.vendor", "Sun Microsystems Inc.");
         avProps.put("http.agent", "Java(tm) 2 SDK, Standard Edition v" + theVersion);
         // Define which packages can be extended by applets
-        // Probably not needed, not checked in AppletSecurity
+        // NOTE: probably not needed, not checked in AppletSecurity
         avProps.put("package.restrict.definition.java", "true");
         avProps.put("package.restrict.definition.sun", "true");
         // Define which properties can be read by applets.

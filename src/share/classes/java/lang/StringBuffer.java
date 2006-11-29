@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)StringBuffer.java	1.72 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package java.lang;
@@ -156,6 +161,23 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
 	return count;
     }
 
+    private int lengthSimpleSync() {
+ 	if (CVM.simpleLockGrab(this)) {
+	    int result = count;
+	    CVM.simpleLockRelease(this);
+	    return result;
+	} else {
+	    return length();
+	}
+    }
+
+    /* Used for quick access from java.lang.String when StringBuffer is
+     * already sychronized.
+     */
+    int lengthNoSync() {
+	return count;
+    }
+
     /**
      * Returns the current capacity of the String buffer. The capacity
      * is the amount of storage available for newly inserted
@@ -167,13 +189,26 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
 	return value.length;
     }
 
+    private int capacitySimpleSync() {
+ 	if (CVM.simpleLockGrab(this)) {
+	    int result = value.length;
+	    CVM.simpleLockRelease(this);
+	    return result;
+	} else {
+	    return capacity();
+	}
+    }
+
     /**
      * Copies the buffer value.  This is normally only called when shared
      * is true.  It should only be called from a synchronized method.
      */
     private final void copy() {
 	char newValue[] = new char[value.length];
-        CVM.copyCharArray(value, 0, newValue, 0, count);
+
+        if(count != 0) { /* IAI - 17 */
+            CVM.copyCharArray(value, 0, newValue, 0, count);
+        }
 	value = newValue;
 	shared = false;
     }
@@ -305,6 +340,25 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
 	return value[index];
     }
 
+    private char charAtSimpleSync(int index) {
+	if (CVM.simpleLockGrab(this)) {
+	    char result;
+	    boolean gotResult;
+	    if ((index >= 0) && (index < count)) {
+		result = value[index];
+		gotResult = true;
+	    } else {
+		result = 0;
+		gotResult = false;
+	    }
+	    CVM.simpleLockRelease(this);
+	    if (gotResult) {
+		return result;
+	    }
+	}
+	return charAt(index);
+    }
+
     /**
      * Characters are copied from this string buffer into the 
      * destination character array <code>dst</code>. The first character to 
@@ -337,6 +391,12 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
      *             </ul>
      */
     public synchronized void getChars(int srcBegin, int srcEnd, char dst[], int dstBegin) {
+/* IAI - 15 */
+	if ((dstBegin < 0) ||
+		(((long)(dstBegin) + srcEnd -srcBegin) > dst.length)) {
+           throw new StringIndexOutOfBoundsException();
+	}
+/* IAI - 15 */
 	if (srcBegin < 0) {
 	    throw new StringIndexOutOfBoundsException(srcBegin);
 	}
@@ -346,7 +406,11 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
         if (srcBegin > srcEnd) {
             throw new StringIndexOutOfBoundsException("srcBegin > srcEnd");
         }
-	System.arraycopy(value, srcBegin, dst, dstBegin, srcEnd - srcBegin);
+/* IAI - 15 */
+        if(srcEnd != srcBegin) { /* IAI - 17 */
+	    CVM.copyCharArray(value, srcBegin, dst, dstBegin, srcEnd - srcBegin);
+        }
+/* IAI - 15 */
     }
 
     /**
@@ -572,6 +636,23 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
 	return this;
     }
 
+    private StringBuffer appendSimpleSync(char c) {
+	if (CVM.simpleLockGrab(this)) {
+	    boolean gotResult;
+	    if (count + 1 <= value.length) {
+		value[count++] = c;
+		gotResult = true;
+	    } else {
+		gotResult = false;
+	    }
+	    CVM.simpleLockRelease(this);
+	    if (gotResult) {
+		return this;
+	    }
+	}
+	return append(c);
+    }
+
     /**
      * Appends the string representation of the <code>int</code> 
      * argument to this string buffer. 
@@ -671,7 +752,9 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
         if (len > 0) {
             if (shared)
                 copy();
-            CVM.copyCharArray(value, start+len, value, start, count-end);
+	    if(count != end) { /* IAI - 17 */
+                CVM.copyCharArray(value, start+len, value, start, count-end);
+            }
             count -= len;
         }
         return this;
@@ -694,7 +777,10 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
 	    throw new StringIndexOutOfBoundsException();
 	if (shared)
 	    copy();
-        CVM.copyCharArray(value, index+1, value, index, count-index-1);
+
+	if(count - index - 1 != 0) { /* IAI - 17 */
+            CVM.copyCharArray(value, index+1, value, index, count-index-1);
+        }
 	count--;
         return this;
     }
@@ -734,7 +820,9 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
 	else if (shared)
 	    copy();
 
-        CVM.copyCharArray(value, end, value, start + len, count - end);
+	if(count != end) { /* IAI - 17 */
+            CVM.copyCharArray(value, end, value, start + len, count - end);
+        }
         str.getChars(0, len, value, start);
         count = newCount;
         return this;
@@ -850,8 +938,13 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
 	    expandCapacity(newCount);
 	else if (shared)
 	    copy();
-        CVM.copyCharArray(value, index, value, index + len, count - index);
-        CVM.copyCharArray(str, offset, value, index, len);
+	if(count != index) { /* IAI - 17 */
+            CVM.copyCharArray(value, index, value, index + len, count - index);
+        }
+
+	if(len != 0) { /* IAI - 17 */	
+            CVM.copyCharArray(str, offset, value, index, len);
+	}
 	count = newCount;
 	return this;
     }
@@ -927,7 +1020,9 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
 	    expandCapacity(newcount);
 	else if (shared)
 	    copy();
-        CVM.copyCharArray(value, offset, value, offset + len, count - offset);
+	if(count != offset) { /* IAI - 17 */
+            CVM.copyCharArray(value, offset, value, offset + len, count - offset);
+        }
 	str.getChars(0, len, value, offset);
 	count = newcount;
 	return this;
@@ -964,8 +1059,14 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
 	    expandCapacity(newcount);
 	else if (shared)
 	    copy();
-        CVM.copyCharArray(value, offset, value, offset + len, count - offset);
-        CVM.copyCharArray(str, 0, value, offset, len);
+
+	if(count != offset) { /* IAI - 17 */
+            CVM.copyCharArray(value, offset, value, offset + len, count - offset);
+        }
+
+	if(len != 0) { /* IAI - 17 */
+            CVM.copyCharArray(str, 0, value, offset, len);
+        }
 	count = newcount;
 	return this;
     }
@@ -1025,7 +1126,16 @@ public final class StringBuffer implements java.io.Serializable, CharSequence {
 	    expandCapacity(newcount);
 	else if (shared)
 	    copy();
-	System.arraycopy(value, offset, value, offset + 1, count - offset);
+/* IAI - 15 */
+        if ((offset < 0) || (offset > count)) {
+             throw new StringIndexOutOfBoundsException(offset);
+        }
+
+	if(count != offset) { 	/* IAI - 17 */
+	    CVM.copyCharArray(value, offset, value, offset + 1, count - offset);
+        }
+/* IAI - 15 */
+
 	value[offset] = c;
 	count = newcount;
 	return this;

@@ -1,27 +1,33 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ByteArrayOutputStream.java	1.53 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package java.io;
 
+import sun.misc.CVM;
 
 /**
  * This class implements an output stream in which the data is 
@@ -34,7 +40,6 @@ package java.io;
  * this class can be called after the stream has been closed without
  * generating an <tt>IOException</tt>.
  *
- * @author  Arthur van Hoff
  * @version 1.44, 05/03/00
  * @since   JDK1.0
  */
@@ -83,7 +88,9 @@ public class ByteArrayOutputStream extends OutputStream {
 	int newcount = count + 1;
 	if (newcount > buf.length) {
 	    byte newbuf[] = new byte[Math.max(buf.length << 1, newcount)];
-	    System.arraycopy(buf, 0, newbuf, 0, count);
+/* IAI - 15 */
+	    CVM.copyByteArray(buf, 0, newbuf, 0, count);
+/* IAI - 15 */
 	    buf = newbuf;
 	}
 	buf[count] = (byte)b;
@@ -108,7 +115,9 @@ public class ByteArrayOutputStream extends OutputStream {
         int newcount = count + len;
         if (newcount > buf.length) {
             byte newbuf[] = new byte[Math.max(buf.length << 1, newcount)];
-            System.arraycopy(buf, 0, newbuf, 0, count);
+/* IAI - 15 */
+            CVM.copyByteArray(buf, 0, newbuf, 0, count);
+/* IAI - 15 */
             buf = newbuf;
         }
         System.arraycopy(b, off, buf, count, len);
@@ -149,7 +158,9 @@ public class ByteArrayOutputStream extends OutputStream {
      */
     public synchronized byte toByteArray()[] {
 	byte newbuf[] = new byte[count];
-	System.arraycopy(buf, 0, newbuf, 0, count);
+/* IAI - 15 */
+	CVM.copyByteArray(buf, 0, newbuf, 0, count);
+/* IAI - 15 */
 	return newbuf;
     }
 

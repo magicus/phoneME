@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)interpreter.c	1.408 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #include "javavm/include/defs.h"
@@ -72,6 +77,37 @@
 #include "javavm/include/porting/jit/ccm.h"
 #include "javavm/include/ccee.h"
 #endif
+
+
+#ifdef CVM_TRACE
+#define MAX_TRACE_INDENT_DEPTH  15
+
+static void printIndent(int traceDepth)
+{
+    /* We're assuming the number of decimal digits in the trace depth is less
+       than 3.  If it reaches 3 or above (which highly unlikely), we'll just
+       allow the indentation to be little off by the extra digits: */
+    const char *digitPad = (traceDepth < 10) ? " " : "";
+    int depth, i;
+
+    CVMconsolePrintf("%d%s", traceDepth, digitPad);
+    depth = (traceDepth < MAX_TRACE_INDENT_DEPTH) ?
+	     traceDepth : MAX_TRACE_INDENT_DEPTH;
+    for (i = 0; i < depth; i++) {
+	CVMconsolePrintf("  ");
+    }
+
+}
+
+#define CVMtraceMethod(ee, x) \
+    CVMtraceExec(CVM_DEBUGFLAG(TRACE_METHOD), {		       \
+	CVMconsolePrintf("<%d>", ee->threadID);		       \
+	printIndent(ee->traceDepth);			       \
+	CVMconsolePrintf x;				       \
+    })
+
+#endif /* CVM_TRACE */
+
 
 static CVMFrame *
 CVMframeIterateGetBaseFrame(CVMFrameIterator *iter);
@@ -414,7 +450,7 @@ CVMinitExecEnv(CVMExecEnv* ee, CVMExecEnv* targetEE,
 	/* Initialize Logical VM related part of 'ee'. */
 	CVMLVMEEInitAux* initInfo = 
 	    (threadInfo != NULL)?(&threadInfo->lvmEEInitAux):(NULL);
-	if (!CVMLVMeeLVMInfoInit(targetEE, initInfo)) {
+	if (!CVMLVMinitExecEnv(targetEE, initInfo)) {
 	    goto failed; /* exception NOT thrown */
 	    return CVM_FALSE;
 	}
@@ -495,7 +531,7 @@ CVMdestroyExecEnv(CVMExecEnv* ee)
 
 #ifdef CVM_LVM /* %begin lvm */
     /* Deptroy Logical VM related part of 'ee' */
-    CVMLVMeeLVMInfoDestroy(ee);
+    CVMLVMdestroyExecEnv(ee);
 #endif /* %end lvm */
 
     CVMdestroyStack(&ee->interpreterStack);
@@ -1404,7 +1440,10 @@ CVMgcSafeSignalError(CVMExecEnv* ee, CVMClassBlock* exceptionCb,
 {
     CVMassert(CVMD_isgcSafe(ee));
     CVMassert(!CVMlocalExceptionOccurred(ee));
-
+#if CVM_DEBUG
+    /* We better not be holding a microlock */
+    CVMassert(ee->microLock == 0);
+#endif
 
     CVMtraceExceptions(("[<%d> Signaling Error: %C, \"%s\"]\n", 
 			ee->threadID, exceptionCb,
@@ -2096,6 +2135,42 @@ CVMmultiArrayAlloc(CVMExecEnv*     ee,
 		   CVMClassBlock*  arrayCb,
 		   CVMObjectICell* resultCell)
 {
+    /* The algorithm for allocating the tree of arrays is not as straight-
+       forward as on first glance.  Here's how it is actually done by the
+       code below:
+
+       Let's say that we're going to allocate the following array tree:
+       
+                                        A[]
+                                         |
+                   ,---------------------+---------------------.
+		   |                     |                     |
+                  B1[]                  B2[]                  B3[]
+                   |                     |                     |
+            ,------+------.       ,------+------.       ,------+------.
+            |      |      |       |      |      |       |      |      |
+          C11[]  C12[]  C13[]   C21[]  C22[]  C23[]   C31[]  C32[]  C33[]
+
+
+       While filling in the elements of A with B1, B2, and B3, we also need
+       to keep track of B1, B2, and B3 so that we can allocate the element
+       arrays at the next level.  This is done by chaining B1, B2, and B3
+       into a link list.  The head of the list is currNodeSet.
+
+       Once we are done allocating the B level, we iterate and allocate the
+       C level.  At this point, we move the currNodeSet list over to another
+       list, prevNodeSet.
+
+           For each node in prevNodeSet, we allocate it's elements at the C
+       level.  As we allocate the C elements, we insert them into the new
+       currNodeSet list in order to allocate their elements for the
+       subsequent level.
+
+           However, if the C level is the last dimension and there are no
+       more elements to be allocated beneath it, then we don't need to
+       chain it into the currNodeSet list.
+     */
+
     CVMID_localrootBegin(ee); {
 	/*
 	 * Temporary array to hold the root of the tree
@@ -3348,13 +3423,23 @@ int
 CVMassertHook(const char *filename, int lineno, const char *expr) {
     CVMconsolePrintf("Assertion failed at line %d in %s: %s\n",
                       lineno, filename, expr);
+#if 0 && defined(CVMJIT_SIMPLE_SYNC_METHODS) && defined(CVM_DEBUG)
+    CVMconsolePrintf("%C.%M\n",
+		     CVMmbClassBlock(CVMglobals.jit.currentSimpleSyncMB),
+		     CVMglobals.jit.currentSimpleSyncMB);
+    CVMconsolePrintf("%C.%M\n",
+		     CVMmbClassBlock(CVMglobals.jit.currentMB),
+		     CVMglobals.jit.currentMB);
+#endif
+
 #ifdef CVM_DEBUG_DUMPSTACK
 #ifdef CVM_JIT
     /* 4975844: fixup frames first so CVMdumpStack doesn't also assert! */
     CVMCCMruntimeLazyFixups(CVMgetEE());
 #endif
     CVMdumpStack(&(CVMgetEE()->interpreterStack),0,0,0);
-#endif
+#endif /* CVM_DEBUG_DUMPSTACK */
+
     /* %comment l028 */
     /* Force a segmentation fault to cause a crash: */
     {
@@ -3690,22 +3775,20 @@ void CVMtraceMethodReturn(CVMExecEnv *ee, CVMFrame* frame)
     }
 #elif defined(CVM_PROFILE_CALL)
 #else
-    CVMtrace(CVM_DEBUGFLAG(TRACE_METHOD),
-	     ("<%d> Rtrn from: %s method %P\n", ee->threadID,
-	      (CVMmbIs(frame->mb, NATIVE) ? "JNI " : "Java"),
-	      frame));
+    CVMtraceMethod(ee, ("Rtrn from: %s method %P\n",
+			(CVMmbIs(frame->mb, NATIVE) ? "JNI " : "Java"),
+			frame));
+    ee->traceDepth--;
     frame = CVMframePrev(frame);
 
     if (frame->mb == NULL) {
-	CVMtrace(CVM_DEBUGFLAG(TRACE_METHOD),
-		 ("<%d>      to:   (JNI Local Frame)\n", ee->threadID));
+	CVMtraceMethod(ee,  ("to: (JNI Local Frame)\n"));
     } else {
-	CVMtrace(CVM_DEBUGFLAG(TRACE_METHOD),
-		 ("<%d>      to:   %s method %P\n", ee->threadID,
-		  (CVMframeIsTransition(frame) 
-		   ? "Tran"
-		   : traceMBType(frame->mb)),
-		  frame));
+	CVMtraceMethod(ee, ("to: %s method %P\n",
+			    (CVMframeIsTransition(frame) 
+			     ? "Tran"
+			     : traceMBType(frame->mb)),
+			    frame));
     }
 #endif
 }
@@ -3717,20 +3800,18 @@ void CVMtraceFramelessMethodReturn(CVMExecEnv *ee, CVMMethodBlock *mb,
     CVMprofileMethodCallReturn(ee, mb, frame->mb, 1);
 #elif defined(CVM_PROFILE_CALL) 
 #else
-    CVMtrace(CVM_DEBUGFLAG(TRACE_METHOD),
-	     ("<%d> Rtrn from: %s method %C.%M\n", ee->threadID,
-	      traceMBType(mb), CVMmbClassBlock(mb), mb));
+    CVMtraceMethod(ee, ("Rtrn from: %s method %C.%M\n",
+			traceMBType(mb), CVMmbClassBlock(mb), mb));
+    ee->traceDepth--;
 
     if (frame->mb == NULL) {
-	CVMtrace(CVM_DEBUGFLAG(TRACE_METHOD),
-		 ("<%d>      to:   (JNI Local Frame)\n", ee->threadID));
+	CVMtraceMethod(ee, ("to: (JNI Local Frame)\n"));
     } else {
-	CVMtrace(CVM_DEBUGFLAG(TRACE_METHOD),
-		 ("<%d>      to:   %s method %P\n", ee->threadID,
-		  (CVMframeIsTransition(frame) 
-		   ? "Tran"
-		   : traceMBType(frame->mb)), 
-		  frame));
+	CVMtraceMethod(ee, ("to: %s method %P\n",
+			    (CVMframeIsTransition(frame) 
+			     ? "Tran"
+			     : traceMBType(frame->mb)), 
+			    frame));
     }
 #endif
 }
@@ -3757,25 +3838,23 @@ void CVMtraceMethodCall(CVMExecEnv *ee, CVMFrame* frame, CVMBool isJump)
 
     frame = CVMframePrev(frame);
     if (frame->mb == NULL) {
-	CVMtrace(CVM_DEBUGFLAG(TRACE_METHOD),
-		 ("<%d> Call from: (JNI Local Frame)\n", ee->threadID));
+	CVMtraceMethod(ee, ("Call from: (JNI Local Frame)\n"));
     } else {
-	CVMtrace(CVM_DEBUGFLAG(TRACE_METHOD),
-		 ("<%d> %s from: %s method %P\n", ee->threadID,
-		  (isJump ? "Jump" : "Call"),
-		  (CVMframeIsTransition(frame)
-		   ? "Tran"
-		   : (CVMmbIs(frame->mb, NATIVE) ? "JNI " : "Java")),
-		  frame));
+	CVMtraceMethod(ee, ("%s from: %s method %P\n",
+			    (isJump ? "Jump" : "Call"),
+			    (CVMframeIsTransition(frame)
+			     ? "Tran"
+			     : (CVMmbIs(frame->mb, NATIVE) ? "JNI " : "Java")),
+			    frame));
     }
 
     frame = savedFrame;
-    CVMtrace(CVM_DEBUGFLAG(TRACE_METHOD),
-	     ("<%d>      to:   %s method %P\n", ee->threadID,
-	      (CVMframeIsTransition(frame)
-	       ? "Tran"
-	       : (CVMmbIs(frame->mb, NATIVE) ? "JNI " : "Java")), 
-	      frame));
+    ee->traceDepth++;
+    CVMtraceMethod(ee, ("to: %s method %P\n",
+			(CVMframeIsTransition(frame)
+			 ? "Tran"
+			 : (CVMmbIs(frame->mb, NATIVE) ? "JNI " : "Java")), 
+			frame));
 #endif
 }
 
@@ -3786,21 +3865,19 @@ void CVMtraceFramelessMethodCall(CVMExecEnv *ee,
     CVMprofileMethodCallReturn(ee, frame->mb, mb, 0);
 #else
     if (frame->mb == NULL) {
-	CVMtrace(CVM_DEBUGFLAG(TRACE_METHOD),
-		 ("<%d> Call from: (JNI Local Frame)\n", ee->threadID));
+	CVMtraceMethod(ee, ("Call from: (JNI Local Frame)\n"));
     } else {
-	CVMtrace(CVM_DEBUGFLAG(TRACE_METHOD),
-		 ("<%d> %s from: %s method %P\n", ee->threadID,
-		  (isJump ? "Jump" : "Call"),
-		  (CVMframeIsTransition(frame)
-		   ? "Tran"
-		   : (CVMmbIs(frame->mb, NATIVE) ? "JNI " : "Java")),
-		  frame));
+	CVMtraceMethod(ee, ("%s from: %s method %P\n",
+			    (isJump ? "Jump" : "Call"),
+			    (CVMframeIsTransition(frame)
+			     ? "Tran"
+			     : (CVMmbIs(frame->mb, NATIVE) ? "JNI " : "Java")),
+			    frame));
     }
 
-    CVMtrace(CVM_DEBUGFLAG(TRACE_METHOD),
-	     ("<%d>      to:   %s method %C.%M\n", ee->threadID,
-	      traceMBType(mb), CVMmbClassBlock(mb), mb));
+    ee->traceDepth++;
+    CVMtraceMethod(ee, ("to: %s method %C.%M\n",
+			traceMBType(mb), CVMmbClassBlock(mb), mb));
 #endif
 }
 #endif
@@ -4047,7 +4124,7 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
 #endif /* CVM_JVMPI */
 
 #ifdef CVM_JVMDI
-    /* %comment k001 */
+    /* %comment kbr001 */
     if (CVMjvmdiThreadEventsEnabled(ee)) {
 	CVMD_gcSafeExec(ee, {
 	    CVMjvmdiNotifyDebuggerOfFramePush(ee);

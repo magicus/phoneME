@@ -1,27 +1,34 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitriscemitterdefs_cpu.h	1.27 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_ARM_JITRISCEMITTERDEFS_CPU_H
 #define _INCLUDED_ARM_JITRISCEMITTERDEFS_CPU_H
+
+#include "javavm/include/jit/jitrisc_cpu.h"
 
 /*
  * This file defines all of the emitter types and option definitions that
@@ -81,6 +88,7 @@ typedef enum CVMCPUCondCode {
 #define CVMCPU_LDR16U_OPCODE    0x005000b0  /* Load unsigned 16 bit value. */
 #define CVMCPU_LDR16_OPCODE     0x005000f0  /* Load signed 16 bit value. */
 #define CVMCPU_STR16_OPCODE     0x004000b0  /* Store 16 bit value. */
+#define CVMCPU_LDR8U_OPCODE     0x04500000  /* Load unsigned 8 bit value. */
 #define CVMCPU_LDR8_OPCODE      0x005000d0  /* Load signed 8 bit value. */
 
 /* 32 bit ALU opcodes: */
@@ -100,10 +108,19 @@ typedef enum CVMCPUCondCode {
 #define CVMCPU_SRA_OPCODE       (2 << 5)
 #define CVMARM_NOSHIFT_OPCODE   CVMCPU_SLL_OPCODE
 
+#define CVMARM_MLA_OPCODE   0x00200090   /* reg32 = reg32 + (reg32 * reg32) */
 #define CVMCPU_MULL_OPCODE  0x00000090   /* reg32 = LO32(reg32 * reg32). */
 #define CVMCPU_MULH_OPCODE  0x00C00090   /* reg32 = HI32(reg32 * reg32). */
 #define CVMCPU_CMP_OPCODE   (0x15 << 20) /* cmp reg32, aluRhs32 => set cc. */
 #define CVMCPU_CMN_OPCODE   (0x17 << 20) /* cmp reg32, ~aluRhs32 => set cc. */
+
+#ifdef CVMJIT_SIMPLE_SYNC_METHODS
+#if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_MICROLOCK && \
+    CVM_MICROLOCK_TYPE == CVM_MICROLOCK_SWAP_SPINLOCK
+/* Atomic swap opcode */
+#define CVMARM_SWP_OPCODE  0x01000090
+#endif
+#endif
 
 /* 64 bit ALU opcodes:
  * NOTE: The ALU64 opcodes are actually encoded in terms of 2 32 bit ARM
@@ -200,6 +217,55 @@ struct CVMCPUMemSpec {
 typedef CVMUint32 CVMCPUMemSpecToken;
 
 /**************************************************************
+ * CPU MemSpec and associated types
+ **************************************************************/
+
+/* MemSpec private definitions: =========================================== */
+
+/*
+ * These are the address-mode computation bits used for modes 2 and 3.
+ * the P, U, and W bits (pre/post index, offset add/subtract, and write back)
+ * are common and are ORed directly into the instruction. The imm/reg offset
+ * indicator bit has to be steered based on opcode. And of course the
+ * representation of an immediate value is opcode dependent as well.
+ *
+ * Be careful of the U bit: for an immediate offset it is NOT the same
+ * as a sign bit. Default needs to be U bit set.
+ * 
+ * Be careful of the P bit: for the usual operations, you want to
+ * preindex. Failing to do so will compute the wrong address AND
+ * cause the base register to be updated. Default needs to be P bit set.
+ */
+#define ARM_LOADSTORE_PREINDEX	0x01000000	/* P bit */
+#define ARM_LOADSTORE_ADDOFFSET	0x00800000	/* U bit */
+#define ARM_LOADSTORE_WRITEBACK 0x00200000	/* W bit */ 
+#define ARM_LOADSTORE_IMMEDIATE_OFFSET 0
+#define ARM_LOADSTORE_REGISTER_OFFSET (1 << 25)
+#define ARM_LOADSTORE_MODE3_IMMEDIATE_OFFSET (1 << 22)
+
+/* The common combinations: reg+reg addressing, reg+imm addressing */
+#define ARM_MEMSPEC_IMMEDIATE_OFFSET \
+    (ARM_LOADSTORE_PREINDEX | ARM_LOADSTORE_ADDOFFSET | \
+    ARM_LOADSTORE_IMMEDIATE_OFFSET)
+
+#define ARM_MEMSPEC_REG_OFFSET \
+    (ARM_LOADSTORE_PREINDEX | ARM_LOADSTORE_ADDOFFSET | \
+    ARM_LOADSTORE_REGISTER_OFFSET)
+
+/*
+ * How to use the load/store word instructions to access a stack:
+ * These assume that stack grows + and that the stack pointer is
+ * addressing the EMPTY cell after the top. Thus post-increment and
+ * pre-decrement are what you want.
+ */
+#define ARM_MEMSPEC_POSTINCREMENT_IMMEDIATE_OFFSET \
+	(ARM_LOADSTORE_IMMEDIATE_OFFSET | ARM_LOADSTORE_ADDOFFSET)
+
+#define ARM_MEMSPEC_PREDECREMENT_IMMEDIATE_OFFSET \
+	(ARM_LOADSTORE_PREINDEX | ARM_LOADSTORE_IMMEDIATE_OFFSET | \
+	ARM_LOADSTORE_WRITEBACK)
+
+/**************************************************************
  * CPU C Call convention abstraction - The following are prototypes of calling
  * convention support functions required by the RISC emitter porting layer.
  **************************************************************/
@@ -210,5 +276,13 @@ struct CVMCPUCallContext
 };
 
 #define CVMCPU_HAVE_PLATFORM_SPECIFIC_C_CALL_CONVENTION
+
+#ifdef CVMJIT_TRAP_BASED_GC_CHECKS
+#define CVMCPU_GCTRAP_INSTRUCTION \
+    (CVMCPU_COND_AL << 28 | CVMCPU_LDR32_OPCODE | \
+     ARM_LOADSTORE_PREINDEX  | \
+     CVMCPU_GC_REG << 16 | CVMCPU_GC_REG << 12)
+#define CVMCPU_GCTRAP_INSTRUCTION_MASK ~0x00800fff
+#endif
 
 #endif /* _INCLUDED_ARM_JITRISCEMITTERDEFS_CPU_H */

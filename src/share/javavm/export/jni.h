@@ -1,4 +1,6 @@
 /*
+ * @(#)jni.h	1.59 06/10/23
+ *
  * Portions Copyright 2000-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 

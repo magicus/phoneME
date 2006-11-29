@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)classes.h	1.282 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -198,7 +203,7 @@ struct CVMClassBlock {
     CVMMethodBlock** methodTablePtrX;
 
     /* Pointer to inner classes information. NULL if there is none. */
-    /* %comment c004 */
+    /* %comment c */
     CVMInnerClassesInfo* innerClassesInfoX;
 };
 
@@ -434,10 +439,24 @@ struct CVMClassBlock {
 
 /* In LVM-enabled mode, we replicate clinitEE field per LVM,
  * which is accessed via 'ee'. */
-#define CVMcbClinitEERawX(ee, cb)					\
-    (*((CVMcbLVMClassIndex(cb) > 0)					\
-	? &((CVMExecEnv**)CVMLVMeeStatics(ee))[CVMcbLVMClassIndex(cb)]	\
-	: &((cb)->clinitEEX.ee)))
+#define CVMcbLVMROMClassClinitEERawX(ee, cb)	\
+    (((CVMExecEnv**)CVMLVMeeStatics(ee))[CVMcbLVMClassIndex(cb)])
+
+/*
+ * CVMcbLVMROMClassClinitEERawX(cb) is casted to a native pointer
+ * therefore change the cast to CVMAddr which is 4 byte on
+ * 32 bit platforms and 8 byte on 64 bit platforms
+ */
+#define CVMcbSetROMClassInitializationFlag(ee_, cb)		\
+    ((void)(CVMassert(CVMcbLVMClassIndex(cb) > 0),		\
+	    CVMcbLVMROMClassClinitEERawX((ee_), (cb))		\
+	 = (CVMExecEnv*)((CVMAddr)CVMcbLVMROMClassClinitEERawX((ee_), (cb)) \
+			 | CVM_CLINITEE_CLASS_INIT_FLAG)))
+
+#define CVMcbClinitEERawX(ee_, cb)			\
+    (*((CVMcbLVMClassIndex(cb) > 0) ?			\
+       &(CVMcbLVMROMClassClinitEERawX((ee_), (cb)))	\
+       : &((cb)->clinitEEX.ee)))
 
 #else /* %end lvm */
 
@@ -459,10 +478,11 @@ struct CVMClassBlock {
  * therefore change the cast to CVMAddr which is 4 byte on
  * 32 bit platforms and 8 byte on 64 bit platforms
  */
-#define CVMcbSetROMClassInitializationFlag(cb)			\
-    ((void)(CVMcbROMClassClinitEERawX(cb)			\
-         = (CVMExecEnv*)((CVMAddr)CVMcbROMClassClinitEERawX(cb)	\
-    			| CVM_CLINITEE_CLASS_INIT_FLAG)))
+#define CVMcbSetROMClassInitializationFlag(ee_, cb)		\
+    ((void)((void)(ee_),					\
+	    CVMcbROMClassClinitEERawX(cb)			\
+	        = (CVMExecEnv*)((CVMAddr)CVMcbROMClassClinitEERawX(cb) \
+				| CVM_CLINITEE_CLASS_INIT_FLAG)))
 
 #define CVMcbClinitEERawX(ee_, cb) \
     (*((void)(ee_), (CVMcbIsInROM(cb) ? &(CVMcbROMClassClinitEERawX(cb)) \
@@ -679,11 +699,17 @@ struct CVMMethodBlock {
     CVMUint16  jitFlagsX;
 #define CVMJIT_NOT_INLINABLE	0x1	/* Method cannot be inlined */
 #define CVMJIT_IS_INTRINSIC	0x10	/* Method is intrinsic. */
+#define CVMJIT_ALWAYS_INLINABLE 0x40    /* agressively inline. */
+#define CVMJIT_NEEDS_TO_INLINE  0x80    /* must inline called methods. */
 /* The following flags are only set after an attempt to compile the method */
 #define CVMJIT_NOT_COMPILABLE	0x2	/* Method cannot be compiled */
 #define CVMJIT_HAS_BACKBRANCH	0x4	/* Method has a backward branch */
 #define CVMJIT_COMPILE_ONCALL   0x8     /* Method to be compiled on 1st call */
 #define CVMJIT_HAS_RET          0x20    /* Method has ret opcode. */
+#define CVMJIT_IGNORE_THRESHOLD 0x100   /* ignore threshold when inlining. */
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+#define CVMJIT_IS_OVERRIDDEN 	0x200   /* Method is overridden by subclass. */
+#endif
 /* Notes for MTASK:
  * 
  * Normally, the 16-bit invokeCostX field contains the actual invokeCost
@@ -815,6 +841,15 @@ struct CVMCompiledMethodDescriptor {
     CVMInt16	pcMapTableOffsetX;
     CVMInt16	stackMapsOffsetX;
     CVMInt16	inliningInfoOffsetX;
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+    /* 
+     * This is the offset into the CMD where the table of callees
+     * resides for this compiled method. The first entry is the number
+     * of entries. What follows are addresses in the code cache of all
+     * direct method calls to this method.
+     */
+    CVMInt16	calleesOffsetX;
+#endif
 #ifdef CVMCPU_HAS_CP_REG
     /* base register for the constant pool */
     CVMInt16	cpBaseRegOffsetX;
@@ -861,6 +896,12 @@ struct CVMCompiledMethodDescriptor {
     ((cmd)->inliningInfoOffsetX == 0 ? NULL :			\
     ((CVMCompiledInliningInfo*)					\
 	((CVMUint16 *)(cmd) + (cmd)->inliningInfoOffsetX)))
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+#define CVMcmdCallees(cmd)					\
+    ((cmd)->calleesOffsetX == 0 ? NULL :			\
+    ((CVMMethodBlock**)						\
+	((CVMUint32 *)(cmd) + (cmd)->calleesOffsetX)))
+#endif
 #define CVMcmdStartPC(cmd)	  ((CVMUint8*)((cmd) + 1))
 #define CVMcmdEndPC(cmd)				\
     ((cmd)->stackMapsOffsetX != 0			\
@@ -910,7 +951,7 @@ struct CVMJavaMethodDescriptor {
        */
     CVMUint16      maxLocalsX;    /* including arguments */
     CVMUint16	   flagsX;	  /* see CVM_JMD_xxx     */
-    /* %comment f001 */  
+    /* %comment f */  
     CVMUint32      capacityX;     /* maxLocals + sizeof(Frame) + max_stack */
     CVMUint16      exceptionTableLengthX;
     CVMUint16      codeLengthX; 

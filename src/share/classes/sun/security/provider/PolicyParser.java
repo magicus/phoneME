@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)PolicyParser.java	1.33 06/10/11
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package sun.security.provider;
@@ -30,19 +35,21 @@ import java.util.ListIterator;
 import java.util.Vector;
 import java.util.StringTokenizer;
 import java.text.MessageFormat;
-/* Initial CDC port; X500Principal exists in
+/* 
+ * Initial CDC port; X500Principal exists in
  * CDC/FP and is used here only to re-write in
  * incorrectly encoded name as part of a bug
- * fix, so comment it out for the time being. 
- * import javax.security.auth.x500.X500Principal;
+ * fix, so comment it out for the time being.
+import javax.security.auth.x500.X500Principal;
  */
 
 import java.security.GeneralSecurityException;
 import sun.security.util.Debug;
 import sun.security.util.PropertyExpander;
-/* Comment out ResourcesMgr use for the time
- * being; it is created now in CDC/FP. 
- * import sun.security.util.ResourcesMgr;
+/* 
+ * Comment out ResourcesMgr use for the time
+ * being; it is created now in CDC/FP.
+ import sun.security.util.ResourcesMgr;
  */
 
 /**
@@ -272,7 +279,7 @@ public class PolicyParser {
     {
 	PrintWriter out = new PrintWriter(new BufferedWriter(policy));
 
-	Enumeration enum = grantElements();
+	Enumeration enum_ = grantElements();
 
 	out.println("/* AUTOMATICALLY GENERATED ON "+
 		    (new java.util.Date()) + "*/");
@@ -286,8 +293,8 @@ public class PolicyParser {
 	}
 
 	// write "grant" entries
-	while (enum.hasMoreElements()) {
-	    GrantEntry ge = (GrantEntry) enum.nextElement();
+	while (enum_.hasMoreElements()) {
+	    GrantEntry ge = (GrantEntry) enum_.nextElement();
 	    ge.write(out);
 	    out.println();
 	}
@@ -349,7 +356,7 @@ public class PolicyParser {
 
 	    if (peekAndMatch("Codebase")) {
 		if (e.codeBase != null)
-                    /* Comment out ResourceMgr use
+                    /* comment out ResourceMgr use
                      * in initial CDC port.
                     throw new ParsingException(
 			    st.lineno(),
@@ -364,7 +371,7 @@ public class PolicyParser {
 	    } else if (peekAndMatch("SignedBy")) {
 		if (e.signedBy != null)
                     /* Comment out ResourcesMgr use in
-                     * initial CDC port.
+                     * initial CDC port. 
 		    throw new ParsingException(
 			    st.lineno(),
 			    ResourcesMgr.getString(
@@ -438,7 +445,7 @@ public class PolicyParser {
 				    "has WILDCARD class but no WILDCARD name");
 			}
                         /* Comment out ResourcesMgr use in
-                         * initial CDC port.
+                         * initial CDC port. 
 			throw new ParsingException
 				(st.lineno(),
 				 ResourcesMgr.getString
@@ -489,7 +496,7 @@ public class PolicyParser {
 
 	    } else {
                 /* Comment out ResourcesMgr use in
-                 * initial CDC port.
+                 * initial CDC port. 
 		throw new ParsingException(st.lineno(),
 		                  ResourcesMgr.getString(
 				      "expected codeBase or SignedBy or " +
@@ -686,7 +693,7 @@ public class PolicyParser {
 	switch (lookahead) {
 	case StreamTokenizer.TT_NUMBER:
             /* Comment out ResourcesMgr use in
-             * initial CDC port
+             * initial CDC port. 
 	    throw new ParsingException(st.lineno(), expect,
 				       ResourcesMgr.getString("number ") +
 				       String.valueOf(st.nval));
@@ -696,7 +703,7 @@ public class PolicyParser {
 				       String.valueOf(st.nval));
 	case StreamTokenizer.TT_EOF:
             /* Comment out ResourcesMgr use in
-             * initial CDC port.
+             * initial CDC port. 
 	    MessageFormat form = new MessageFormat(
 	            ResourcesMgr.getString
 		            ("expected [expect], read [end of file]"));
@@ -779,7 +786,7 @@ public class PolicyParser {
 	    switch (lookahead) {
 	    case StreamTokenizer.TT_NUMBER:
                 /* Comment out ResourcesMgr use in
-                 * initial CDC port.
+                 * initial CDC port. 
 		throw new ParsingException(st.lineno(), ";",
 					  ResourcesMgr.getString("number ") +
 					  String.valueOf(st.nval));
@@ -910,10 +917,10 @@ public class PolicyParser {
 		}
 	    }
 	    out.println(" {");
-	    Enumeration enum = permissionEntries.elements();
-	    while (enum.hasMoreElements()) {
+	    Enumeration enum_ = permissionEntries.elements();
+	    while (enum_.hasMoreElements()) {
 		PermissionEntry pe =
-		    (PermissionEntry) enum.nextElement();
+		    (PermissionEntry) enum_.nextElement();
 		out.write("  ");
 		pe.write(out);
 	    }
@@ -1200,7 +1207,7 @@ public class PolicyParser {
 	public ParsingException(int line, String msg) {
 	    super("line " + line + ": " + msg);
             /* Comment out ResourcesMgr use in
-             * initial CDC port.
+             * initial CDC port. 
 	    MessageFormat form = new MessageFormat
 		(ResourcesMgr.getString("line number: msg"));
             */

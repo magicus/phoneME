@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)gc_impl.c	1.114 06/10/20
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -43,6 +48,67 @@
 #include "javavm/include/gc/generational/gen_semispace.h"
 #include "javavm/include/gc/generational/gen_markcompact.h"
 
+#include "javavm/include/porting/memory.h"
+
+
+#if !CVM_USE_MMAP_APIS
+
+#define CVMmemInit()
+#define CVMmemPageSize()    NUM_BYTES_PER_CARD
+
+/* Purpose: Uses calloc() to simulate the reservation of memory. */
+static
+void *CVMgenMap(size_t requestedSize, size_t *mappedSize)
+{
+    void *mem;
+    void *alignedMem;
+    mem = calloc(1, requestedSize + CVMmemPageSize());
+    if (mem != NULL) {
+	*mappedSize = requestedSize;
+    }
+
+    /* We want to reserve at least the size of a pointer to store the actual
+       address of the start of the allocated area.  After that, we will
+       realigned the pointer to the next alignment of NUM_BYTES_PER_CARD. 
+       Note: the padding in the the allocated size above is to allow room for
+       this.
+    */
+    alignedMem = (CVMUint8 *)mem + sizeof(void *);
+    alignedMem = (void *)CVMpackSizeBy((CVMAddr)alignedMem, CVMmemPageSize());
+
+    /* Store the actual calloc'ed pointer just before the start of the "mapped"
+       memory: */
+    ((void **)alignedMem)[-1] = mem;
+
+    return alignedMem;
+}
+
+/* Purpose: Releases the memory that was calloc'ed to simulate the reservation
+            of memory.  */
+static
+void *CVMgenUnmap(void *addr, size_t requestedSize, size_t *unmappedSize)
+{
+    /* Retrieve the actual calloc'ed pointer from just before the start of the
+       "mapped" memory tobe used by free(): */
+    void *mem = ((void **)addr)[-1];
+    free(mem);
+    *unmappedSize = requestedSize;
+    return addr;
+}
+
+
+#define CVMmemMap CVMgenMap
+#define CVMmemUnmap CVMgenUnmap
+
+#define CVMmemCommit(addr, requestedSize, committedSize) \
+    (CVMassert(CVM_FALSE /* Should not be used: CVMmemCommit() */), NULL)
+
+#define CVMmemDecommit(addr, requestedSize, decommittedSize) \
+    (CVMassert(CVM_FALSE /* Should not be used: CVMmemDecommit() */), NULL)
+
+#endif /* !CVM_USE_MMAP_APIS */
+
+
 /*
  * Define to GC on every n-th allocation try
  */
@@ -55,6 +121,24 @@
          objects in the heap.  If an object is allocated, the count is
          incremented.  When the object is GC'ed, the count is decremented. */
 CVMUint32 liveObjectCount;
+#endif
+
+#ifdef CVM_JIT
+void** const CVMgcCardTableVirtualBasePtr = 
+        (void**)&CVMglobals.gc.cardTableVirtualBase;
+#endif
+
+
+#define roundUpToPage(x, pageSize) CVMpackSizeBy((x), pageSize)
+#define roundDownToPage(x, pageSize) \
+    CVMpackSizeBy(((CVMAddr)(x) - (pageSize-1)), pageSize)
+#define isPageAligned(x, pageSize) \
+    ((CVMAddr)(x) == CVMpackSizeBy((CVMAddr)(x), pageSize))
+
+#if CVM_USE_MMAP_APIS
+static CVMUint32
+CVMgcimplSetSizeAndWatermarks(CVMGCGlobalState *gc, CVMUint32 newSize,
+			      CVMUint32 currentUsage);
 #endif
 
 /*
@@ -75,6 +159,17 @@ CVMgenClearBarrierTable()
     memset(CVMglobals.gc.cardTable, CARD_CLEAN_BYTE, CVMglobals.gc.cardTableSize);
     memset(CVMglobals.gc.objectHeaderTable, 0, CVMglobals.gc.cardTableSize);
 }
+
+#ifdef CVM_DEBUG_ASSERTS
+void CVMgenAssertBarrierTableIsClear()
+{
+    CVMUint32 i;
+    for (i = 0; i < CVMglobals.gc.cardTableSize; i++) {
+	CVMassert(CVMglobals.gc.cardTable[i] == CARD_CLEAN_BYTE);
+	CVMassert(CVMglobals.gc.objectHeaderTable[i] == 0);
+    }
+}
+#endif /* CVM_DEBUG_ASSERTS */
 
 /*
  * Update the object headers table for objects in range [startRange, endRange)
@@ -104,6 +199,11 @@ CVMgenBarrierObjectHeadersUpdate(CVMGeneration* gen, CVMExecEnv* ee,
 	 * I'd have to make a special case of it here, and check
 	 * whether cardBoundary == curr.
 	 */
+
+	/* If the object resides entirely within the same card i.e. the
+	   startCard is the same as the endCard, then there is nothing to
+	   do.  We only need to handle the case where the object spans a
+	   card boundary. */
 	if (startCard != endCard) {
 	    CVMUint8*  card;
 	    CVMInt8*   hdr;
@@ -210,7 +310,11 @@ scanAndSummarizeObjectsOnCard(CVMExecEnv* ee, CVMGCOptions* gcOpts,
      * Clear summary table entry.
      * The summary table is 0xff terminated.
      */
+#if (CVM_GENGC_SUMMARY_COUNT == 4)
     summEntry->intVersion = 0xffffffff;
+#else
+    memset(summEntry->offsets, 0xff, CVM_GENGC_SUMMARY_COUNT);
+#endif
     
     /*
      * And scan the objects on the card
@@ -218,22 +322,15 @@ scanAndSummarizeObjectsOnCard(CVMExecEnv* ee, CVMGCOptions* gcOpts,
     while (curr < top) {
 	CVMObject* currObj = (CVMObject*)curr;
 	CVMClassBlock* currCb = CVMobjectGetClass(currObj);
-	CVMObject* currCbInstance = *((CVMObject**)CVMcbJavaInstance(currCb));
 	CVMUint32  objSize    = CVMobjectSizeGivenClass(currObj, currCb);
-	/*
-	 * First, handle the class. 
-	 *
-	 * If the class of this object is in a different generation than
-	 * the instance, the caller cannot mark this card summarized.
+
+	/* Note: No need to mark the card for the class of the object.  All
+	   classes are scanned for the youngGen, and the oldGen does a
+	   comprehensive root scan which include classes of objects found
+	   in the root tree.  Hence, the cardTable need not concern itself
+	   with classes.
 	 */
-	if ((CVMUint32*)currCbInstance < oldGenLower) {
-	    CVMscanClassWithGCOptsIfNeeded(ee, currCb, gcOpts,
-					   callback, callbackData);
-	    /* Force the card to stay dirty if the class was not ROMized */
-	    if (!CVMcbIsInROM(currCb)) {
-		scanStatus = CARD_DIRTY_BYTE;
-	    }
-	}
+
 	/* Special-case large arrays of refs */
 	if ((objSize >= NUM_BYTES_PER_CARD) && 
 	    ((CVMcbGcMap(currCb).map & CVM_GCMAP_FLAGS_MASK) == 
@@ -277,7 +374,7 @@ scanAndSummarizeObjectsOnCard(CVMExecEnv* ee, CVMGCOptions* gcOpts,
 		CVMJavaVal32* ref = (CVMJavaVal32*) *scanPtr;
                 /* Only scan youngGen pointers: */
 		if ((ref >= youngGenStart) && (ref < youngGenEnd)) {
-		    if (numRefs < 4) {
+		    if (numRefs < CVM_GENGC_SUMMARY_COUNT) {
 			summEntry->offsets[numRefs] = (CVMUint8)
 			    ((CVMJavaVal32*)scanPtr - cardBoundary);
 		    }
@@ -304,7 +401,7 @@ scanAndSummarizeObjectsOnCard(CVMExecEnv* ee, CVMGCOptions* gcOpts,
 		    goto returnStatus;
 		} else if ((CVMJavaVal32*)refPtr >= regionStart) {
 		    /* Call the callback if we are within the bounds */
-		    if (numRefs < 4) {
+		    if (numRefs < CVM_GENGC_SUMMARY_COUNT) {
 			summEntry->offsets[numRefs] = (CVMUint8)
 			    ((CVMJavaVal32*)refPtr - cardBoundary);
 		    }
@@ -322,7 +419,7 @@ scanAndSummarizeObjectsOnCard(CVMExecEnv* ee, CVMGCOptions* gcOpts,
     if (scanStatus != CARD_DIRTY_BYTE) {
 	if (numRefs == 0) {
 	    scanStatus = CARD_CLEAN_BYTE;
-	} else if (numRefs <= 4) {
+	} else if (numRefs <= CVM_GENGC_SUMMARY_COUNT) {
 	    scanStatus = CARD_SUMMARIZED_BYTE;
 	} else {
 	    scanStatus = CARD_DIRTY_BYTE;
@@ -331,13 +428,37 @@ scanAndSummarizeObjectsOnCard(CVMExecEnv* ee, CVMGCOptions* gcOpts,
     return scanStatus;
 }
 
+/* Purpose: Given the starting address for the heap location that correspond
+            to the specified card, find the starting address of the object
+	    that occupies the specified heap address. */
 static CVMJavaVal32* 
 findObjectStart(CVMUint8* card, CVMJavaVal32* heapAddrForCard)
 {
     CVMInt8* hdr = HEADER_TABLE_SLOT_ADDRESS_FOR_CARD(card);
     CVMInt8  n;
+
+    /* The header table entry must be within the range of the header table: */
     CVMassert(hdr >= CVMglobals.gc.objectHeaderTable);
     CVMassert(hdr <  CVMglobals.gc.objectHeaderTable + CVMglobals.gc.cardTableSize);
+
+    /* The header info from the entry is encoded in the following way:
+       1. If the header info is >= 0, then it represents the absolute value of
+          the negative offset (in terms of number of words) from the specified
+	  heap address to the start of the object that occupies that heap
+	  address.  The start address of the object is less that the specified
+	  heap address by definition.  Hence, the start address of the object
+	  is computed by:
+	      obj = heapAddrForCard - n;
+
+       2. If the header info is < 0, then it represents the negative offset to
+          the next piece of header info that may contain the offset to the
+	  start of the object as in case 1 above.
+	     Since the maximum negative offset is -128, if the actual offset
+	  to the header info that contains the object header offset is greater
+	  than -128, then the info will be expressed in a chain of -128 (or
+	  greater) offsets until we come to a positive header info which will
+	  be intepreted analogously as is done in case 1 above.
+    */
     n = *hdr;
     CVMassert(HEAP_ADDRESS_FOR_CARD(card) == heapAddrForCard);
     if (n >= 0) {
@@ -401,7 +522,8 @@ callbackIfNeeded(CVMExecEnv* ee, CVMGCOptions* gcOpts,
 	i = 0;
 	/* If this card is summarized, it must have at least one entry */
 	CVMassert(summEntry->offsets[0] != 0xff);
-	while ((i < 4) && ((offset = summEntry->offsets[i]) != 0xff)) {
+	while ((i < CVM_GENGC_SUMMARY_COUNT) &&
+	       ((offset = summEntry->offsets[i]) != 0xff)) {
 	    CVMObject** refPtr = (CVMObject**)(cardBoundary + offset);
             CVMObject *ref;
 	    /* We could not have summarized a NULL pointer */
@@ -424,7 +546,7 @@ callbackIfNeeded(CVMExecEnv* ee, CVMGCOptions* gcOpts,
         if (hasNoCrossGenPointer) {
             *card = CARD_CLEAN_BYTE;
         }
-	CVMassert(i <= 4);
+	CVMassert(i <= CVM_GENGC_SUMMARY_COUNT);
 	cardStatsOnly(cStats.cardsSummarized++);
     } else if (*card == CARD_DIRTY_BYTE) {
 	CVMJavaVal32* objStart;
@@ -445,7 +567,6 @@ callbackIfNeeded(CVMExecEnv* ee, CVMGCOptions* gcOpts,
 	CVMassert(*card == CARD_CLEAN_BYTE);
 	cardStatsOnly(cStats.cardsClean++);
     }
-		      
 }
 
 /*
@@ -479,11 +600,21 @@ CVMgenBarrierPointersTraverse(CVMGeneration* gen, CVMExecEnv* ee,
 
     /* We have to cover all pointers in [genLower,genHigher) */
     genLower        = (CVMJavaVal32*)gen->allocBase;
-    genHigher       = (CVMJavaVal32*)gen->allocMark;
+    genHigher       = (CVMJavaVal32*)gen->allocPtr;
 
     /* ... and look at all the cards in [lowerCardLimit,higherCardLimit) */
     lowerCardLimit  = (CVMUint8*)CARD_TABLE_SLOT_ADDRESS_FOR(genLower);
     higherCardLimit = (CVMUint8*)CARD_TABLE_SLOT_ADDRESS_FOR(genHigher);
+
+    if (gen->allocMark != gen->allocPtr) {
+	/* If we get here, then we may have allocated some large objects
+	   directly from the old generation.  While the card table is
+	   up to date, the object header table is not.  So, we need to
+	   update that before we proceed with scanning the barrier
+	   for this region as well. */
+	CVMgenBarrierObjectHeadersUpdate(gen,
+            ee, gcOpts, gen->allocMark, gen->allocPtr);
+    }
 
     /* This is the heap boundary corresponding to the next card */
     heapPtr         = NEXT_CARD_BOUNDARY_FOR(genLower);
@@ -650,49 +781,33 @@ CVMgenBarrierPointersTraverse(CVMGeneration* gen, CVMExecEnv* ee,
     }
 }
 
+typedef struct CVMClassScanOptions CVMClassScanOptions;
 struct CVMClassScanOptions {
     CVMRefCallbackFunc callback;
     void* callbackData;
-    CVMGeneration* generation; /* Scan only classes in this generation */
 };
 
-typedef struct CVMClassScanOptions CVMClassScanOptions;
-
-/*
- * Callback function to scan a promoted class' statics
- */
+/* Callback function to scan a class' statics and instance obj. */
 static void
-CVMgenScanClassPointersInGeneration(CVMExecEnv* ee, CVMClassBlock* cb,
-				    void* opts)
+CVMgenScanClassPointers(CVMExecEnv* ee, CVMClassBlock* cb, void* opts)
 {
-    CVMObject* instance = *((CVMObject**)CVMcbJavaInstance(cb));
     CVMClassScanOptions* options = (CVMClassScanOptions*)opts;
-    CVMGeneration* gen = options->generation;
-    /*
-     * Scan the class state if the java.lang.Class instance is in this
-     * generation.
-     */
-    CVMscanClassIfNeededConditional(ee, cb, CVMgenInGeneration(gen, instance),
-				    options->callback, options->callbackData);
+    /* Scan the class state if the java.lang.Class instance: */
+    CVMscanClassIfNeeded(ee, cb, options->callback, options->callbackData);
 }
 
-/*
- * Find all class instances in generation 'gen' and scan them
- * for pointers. 
- */
+/* Find all class instances and scan them for pointers. */
 static void
-CVMgenScanClassPointersInGen(CVMGeneration* gen,
-			     CVMExecEnv* ee, CVMGCOptions* gcOpts,
-			     CVMRefCallbackFunc callback,
-			     void* callbackData)
+CVMgenScanAllClassPointers(CVMExecEnv* ee, CVMGCOptions* gcOpts,
+			   CVMRefCallbackFunc callback,
+			   void* callbackData)
 {
     CVMClassScanOptions opts;
 
     opts.callback = callback;
     opts.callbackData = callbackData;
-    opts.generation = gen;
     CVMclassIterateDynamicallyLoadedClasses(
-        ee, CVMgenScanClassPointersInGeneration, &opts);
+        ee, CVMgenScanClassPointers, &opts);
 }
 
 /*
@@ -700,9 +815,13 @@ CVMgenScanClassPointersInGen(CVMGeneration* gen,
  * divisible by 4.  */
 /* Returns: CVM_TRUE if successful, else CVM_FALSE. */
 CVMBool
-CVMgcimplInitHeap(CVMGCGlobalState* globalState,
-		  CVMUint32 minHeapSize,
-		  CVMUint32 maxHeapSize)
+CVMgcimplInitHeap(CVMGCGlobalState* gc,
+		  CVMUint32 startSize,
+		  CVMUint32 minSize,
+		  CVMUint32 maxSize,
+		  CVMBool startIsUnspecified,
+		  CVMBool minIsUnspecified,
+		  CVMBool maxIsUnspecified)
 {
     CVMUint32  heapSize;
     CVMGeneration* youngGen;
@@ -711,16 +830,66 @@ CVMgcimplInitHeap(CVMGCGlobalState* globalState,
     CVMUint32  totYoungGenSize; /* Total for both semispaces */
     CVMUint32  roundedSemispaceSize;
     char* youngGenAttr;
-    /*
-     * Let the minimum total heap size be 1K.
+
+    size_t cardTableSize;
+    size_t objectHeaderTableSize;
+    size_t summaryTableSize;
+
+    /* Note: the packedHeapSize is stored in totBytes. */
+    size_t packedCardTableSize;
+    size_t packedObjectHeaderTableSize;
+    size_t packedSummaryTableSize;
+
+    size_t totalSize;
+    size_t actualSize = 0;
+    CVMUint8 *heapRegion;
+    void *mem;
+
+    size_t pageSize = CVMmemPageSize();
+
+    /* The code below assumes that page size is always an increment of card
+       sizes: */
+    CVMassert(pageSize == (size_t)ROUND_UP_TO_CARD_SIZE(pageSize));
+
+    /* Heap layout:
+         .-----------------------.
+	 | Heap area             |
+	 | .-------------------. |
+	 | | YoungGen          | |
+	 | |-------------------| |
+	 | | OldGen            | |
+	 | |                   | |
+	 | `-------------------' |
+	 |-----------------------|
+	 | CardTable             |
+	 |-----------------------|
+	 | ObjectHeaderTable     |
+	 |-----------------------|
+	 | SummaryTable          |
+	 `-----------------------'
+    */
+
+    /*======================================================================
+     * Compute sizes of memory regions:
      */
-#define MIN_TOTAL_HEAP (1 << 10)
+
+    /*
+     * Let the minimum total heap size be at least 2 pages worth of memory:
+     * one for the youngGen and oldGen each.
+     */
+#define MIN_TOTAL_HEAP (2 * pageSize)
 
 #ifdef CVM_JVMPI
     liveObjectCount = 0;
 #endif
 
-    heapSize = maxHeapSize;  /* This implementation cannot expand heap */
+    /* Handle the cases where only -Xms is specified: */
+    if (!startIsUnspecified && maxIsUnspecified) {
+        /* This is for compatibility with legacy -Xms behavior: */
+        maxSize = startSize;
+    }
+
+    heapSize = maxSize;
 
     /*
      * Make a sane minimum check on the total size of the heap.
@@ -732,7 +901,26 @@ CVMgcimplInitHeap(CVMGCGlobalState* globalState,
 			heapSize, MIN_TOTAL_HEAP));
 	CVMdebugPrintf(("\tTotal heap size now %d bytes\n", MIN_TOTAL_HEAP));
 	heapSize = MIN_TOTAL_HEAP;
+
+	/* Since the total size was too small and had to be bumped up to the
+	   MIN_TOTAL_HEAP, the min, start, and max must therefore be too small
+	   as well and have to be bumped up too: */
+	minSize = heapSize;
+	maxSize = heapSize;
+	startSize = heapSize;
     }
+
+    /* Round up the heap bounds: */
+    heapSize = roundUpToPage(heapSize, pageSize);
+    gc->heapMaxSize = roundUpToPage(maxSize, pageSize);
+#if CVM_USE_MMAP_APIS
+    gc->heapMinSize = roundUpToPage(minSize, pageSize);
+    gc->heapStartSize = roundUpToPage(startSize, pageSize);
+#else
+    gc->heapMinSize = gc->heapMaxSize;
+    gc->heapStartSize = gc->heapMaxSize;
+#endif
+    gc->heapCurrentSize = gc->heapStartSize;
 
     /*
      * Parse relevant attributes
@@ -740,14 +928,14 @@ CVMgcimplInitHeap(CVMGCGlobalState* globalState,
     youngGenAttr = CVMgcGetGCAttributeVal("youngGen");
 
     if (youngGenAttr == NULL) {
-	globalState->genGCAttributes.youngGenSize = 1 << 20; /* The default size */
+	gc->genGCAttributes.youngGenSize = 1024 * 1024; /* The default size */
     } else {
 	CVMInt32 size = CVMoptionToInt32(youngGenAttr);
 	if (size < 0) {
 	    /* ignore -- the empty string, or no value at all */
-	    size = 1 << 20;
+	    size = 1024 * 1024;
 	}
-	globalState->genGCAttributes.youngGenSize = size;
+	gc->genGCAttributes.youngGenSize = size;
     }
 
     /*
@@ -755,14 +943,17 @@ CVMgcimplInitHeap(CVMGCGlobalState* globalState,
      * smaller than the stated size of the young generation. Make the
      * heap all young in that case. */
 
-    if (heapSize < globalState->genGCAttributes.youngGenSize) {
+    if (heapSize <= gc->genGCAttributes.youngGenSize) {
 	CVMdebugPrintf(("GC[generational]: "
-                        "Total heap size %d bytes < "
+                        "Total heap size %d bytes <= "
 			"young gen size of %d bytes\n",
-			heapSize, globalState->genGCAttributes.youngGenSize));
+			heapSize, gc->genGCAttributes.youngGenSize));
+
+	/* Leave at least one page for the oldGen: */
+	gc->genGCAttributes.youngGenSize = heapSize - pageSize;
+
 	CVMdebugPrintf(("\tYoung generation size now %d bytes\n",
-			heapSize));
-	globalState->genGCAttributes.youngGenSize = heapSize;
+			gc->genGCAttributes.youngGenSize));
     }
     
     /*
@@ -775,134 +966,279 @@ CVMgcimplInitHeap(CVMGCGlobalState* globalState,
      * algorithm will not have enough scratch space to work with,
      * causing eventual crashes.  
      */
-    if ((globalState->genGCAttributes.youngGenSize < (1 << 20)) &&
-	(globalState->genGCAttributes.youngGenSize < heapSize / 8)) {
+    if ((gc->genGCAttributes.youngGenSize < (1024 * 1024)) &&
+	(gc->genGCAttributes.youngGenSize < heapSize / 8)) {
 	CVMdebugPrintf(("GC[generational]: "
 			"young gen size of %d bytes < 1M\n",
-			globalState->genGCAttributes.youngGenSize));
+			gc->genGCAttributes.youngGenSize));
 	CVMdebugPrintf(("\tYoung generation size now %d bytes\n",
 			heapSize / 8));
-	globalState->genGCAttributes.youngGenSize = heapSize / 8;
+	gc->genGCAttributes.youngGenSize = heapSize / 8;
     }
+
     /*
-     * %comment 001 
+     * %comment f001 
      */
     roundedSemispaceSize = 
-	(CVMUint32)(CVMAddr)ROUND_UP_TO_CARD_SIZE(globalState->genGCAttributes.youngGenSize);
+	(CVMUint32)ROUND_UP_TO_CARD_SIZE(gc->genGCAttributes.youngGenSize);
+    roundedSemispaceSize = roundUpToPage(roundedSemispaceSize, pageSize);
+
+    /* Currently, the youngGen does not resize.  Hence, the start, min, max,
+       and current sizes are all the same: */
+    if (roundedSemispaceSize >= gc->heapMinSize) {
+	/* Leave at least one page for the oldGen: */
+	gc->heapMinSize = roundedSemispaceSize + pageSize;
+	/* Since we've moved up the min size, we may need to move the start
+	   size as well: */
+	if (gc->heapStartSize < gc->heapMinSize) {
+	    gc->heapStartSize = gc->heapMinSize;
+	}
+    }
+    CVMassert(isPageAligned(roundedSemispaceSize, pageSize));
+    gc->youngGenMaxSize = roundedSemispaceSize;
+#if CVM_USE_MMAP_APIS
+    gc->youngGenMinSize = roundedSemispaceSize;
+    gc->youngGenStartSize = roundedSemispaceSize;
+#else
+    gc->youngGenMinSize = gc->youngGenMaxSize;
+    gc->youngGenStartSize = gc->youngGenMaxSize;
+#endif
+    gc->youngGenCurrentSize = gc->youngGenStartSize;
+
     totYoungGenSize = roundedSemispaceSize * 2;
+    CVMassert(totYoungGenSize ==
+	      (CVMUint32)ROUND_UP_TO_CARD_SIZE(totYoungGenSize));
 
     /* Add the size of one 'wasted' semispace. */
-    totBytes = heapSize + roundedSemispaceSize; 
+    totBytes = heapSize + roundedSemispaceSize;
+    CVMassert(totBytes == (CVMUint32)ROUND_UP_TO_CARD_SIZE(totBytes));
+    CVMassert(isPageAligned(totBytes, pageSize));
 
-    /*
-     * Round up to card size and add a card size for good measure.
-     * We're going to need the slack, because we are going to round
-     * the heap up to a card boundary.
-     */
-    totBytes = (CVMUint32)(CVMAddr)ROUND_UP_TO_CARD_SIZE(totBytes) + NUM_BYTES_PER_CARD;
+    /* Compute the oldGen sizes: */
+    CVMassert(gc->heapMaxSize > gc->youngGenMaxSize);
+    CVMassert(gc->heapMinSize > gc->youngGenMinSize);
+    CVMassert(gc->heapStartSize > gc->youngGenStartSize);
 
-    /*
-     * A heap space allocator might be required here, where a porter
-     * may have the option of allocating the heap with something other
-     * than a malloc.
-     */
-    globalState->heapBaseMemoryArea = (CVMUint32*)calloc(1, totBytes);
-    if (globalState->heapBaseMemoryArea == NULL) {
-        goto failed;
-    }
-    /*
-     * Remember the beginning of this space. This is how we are going to
-     * map a store into a card table entry.
-     */
-    globalState->heapBase = (CVMUint32*)
-	ROUND_UP_TO_CARD_SIZE(globalState->heapBaseMemoryArea);
+    gc->oldGenMaxSize     = gc->heapMaxSize - gc->youngGenMaxSize;
+    gc->oldGenMinSize     = gc->heapMinSize - gc->youngGenMinSize;
+    gc->oldGenStartSize   = gc->heapStartSize - gc->youngGenStartSize;
+    gc->oldGenCurrentSize = gc->oldGenStartSize;
 
-    /*
-     * Now totBytes is an integral number of cards. Subtract the slack,
-     * and you get a safe region that is [heapBase, heapBase+totBytes)
-     */
-    totBytes -= NUM_BYTES_PER_CARD;
+    CVMassert((CVMInt32)gc->oldGenMaxSize > 0);
+    CVMassert((CVMInt32)gc->oldGenMinSize > 0);
+    CVMassert((CVMInt32)gc->oldGenStartSize > 0);
 
-    /*
-     * Allocate the extra data structures necessary
+    CVMassert(isPageAligned(gc->oldGenMaxSize, pageSize));
+    CVMassert(isPageAligned(gc->oldGenMinSize, pageSize));
+    CVMassert(isPageAligned(gc->oldGenStartSize, pageSize));
+    CVMassert(isPageAligned(gc->oldGenCurrentSize, pageSize));
+
+    /* Memory reservation:
+
+       |                              |
+       |------------------------------| <-- oldGenCurrentSize
+       | ^ ^                          |
+       | | | oldGenGrowThreshold      |
+       | | v                          |
+       |-|----------------------------| <-- oldGenHighWatermark
+       | |                            |
+       | |   memoryReserve            |
+       | v                            |
+       |------------------------------| <-- current usage level
+       |   ^                          |                          
+       |   | oldGenShrinkThreshold    |
+       |   v                          |
+       |------------------------------| <-- oldGenLowWatermark
+       |                              |
+
+
+       oldGenGrowThreshold (in %) - for computing the high watermark.
+       oldGenShrinkThreshold (in %) - for computing the low watermark.
+
+       memoryReserve (in %) - the amount of free memory to make available based
+           on a percentage of the current usage level when resizing the heap.
+	   The actual new size of the heap will be subject to rounding up to
+	   the next page boundary.
+
+       oldGenLowWatermark (in bytes) - after resizing the oldGen, this is
+           computed as current usage * ( 100 - oldGenShrinkThreshold) / 100.
+	   If the heap usage is observed to drop below the oldGenLowWatermark
+	   after an oldGen GC, then the heap will be shrunken.
+
+       oldGenHighWatermark (in bytes) - after resizing the oldGen, this is
+           computed as oldGenCurrentSize * (100 - oldGenGrowThreshold) / 100.
+	   If the heap usage is observed to exceed the oldGenHighWatermark
+	   after an oldGen GC, the the heap will be grown.
+    */
+
+    /* Reserve 25% free memory: */
+    gc->memoryReserve = 25;
+
+    /* Allow for 10% oscillation in size before resizing: */
+    gc->oldGenGrowThreshold = 10;
+    gc->oldGenShrinkThreshold = 10;
+
+    /*======================================================================
+     * Total up the memory needs for all memory regions:
      */
-    /* The pre-fetch padding is allocated to ensure that the pre-fetching done
-       in CVMgenBarrierPointersTraverse() doesn't read an inaccessible region
-       of memory. */
-#undef PREFETCH_PADDING
-#define PREFETCH_PADDING sizeof(CVMUint32)
-    globalState->cardTableSize = totBytes / NUM_BYTES_PER_CARD;
-    CVMassert(globalState->cardTableSize * NUM_BYTES_PER_CARD == totBytes);
-    globalState->cardTable = (CVMUint8*)calloc(1, globalState->cardTableSize +
-                                               PREFETCH_PADDING);
-    if (globalState->cardTable == NULL) {
-        goto failed_after_heapBaseMemoryArea;
-    }
-    globalState->cardTableEnd = globalState->cardTable + globalState->cardTableSize;
-    /*
-     * The objectHeaderTable records locations of the nearest object headers
-     * for a given card. Its size is the same as the card table.
+    totalSize = totBytes; /* for heap regions. */
+
+    /* Compute the space needed for the cardTable:
+       NOTE: The cardTable is read using a prefetch that looks ahead by a
+       32-bit word.  By always allocating the objectHeader table from the
+       contiguous region that follows the cardTable, we guarantee that there
+       will be allocated memory to be read from there without triggering a
+       fault.  If this were not the case, we would have to pad the size of
+       the cardTable with another 32-bit word to avoid this memory fault.
+    */
+    cardTableSize = totBytes / NUM_BYTES_PER_CARD;
+    packedCardTableSize = roundUpToPage(cardTableSize, pageSize);
+    CVMassert(cardTableSize * NUM_BYTES_PER_CARD == totBytes);
+    totalSize += packedCardTableSize;
+
+    /* Compute the space needed for the objectHeaderTable: */
+    objectHeaderTableSize = cardTableSize;
+    packedObjectHeaderTableSize = packedCardTableSize;
+    totalSize += packedObjectHeaderTableSize;
+
+    /* Compute the space needed for the summaryTable: */
+    summaryTableSize = cardTableSize * sizeof(CVMGenSummaryTableEntry);
+    packedSummaryTableSize = roundUpToPage(summaryTableSize, pageSize);
+    totalSize += packedSummaryTableSize;
+
+    CVMassert(isPageAligned(totalSize, pageSize));
+
+    /* Record the computed sizes of the barrier tables: 
+       Note: Currently these values are unused because the barrier tables are
+             fixed sized.
+    */
+    gc->cardTableCurrentSize = packedCardTableSize;
+    gc->objectHeaderTableCurrentSize = packedObjectHeaderTableSize;
+    gc->summaryTableCurrentSize = packedSummaryTableSize;
+
+    /*======================================================================
+     * Reserve/allocate the memory range for the regions:
      */
-    globalState->objectHeaderTable = (CVMInt8*)calloc(1, globalState->cardTableSize);
-    if (globalState->objectHeaderTable == NULL) {
-        goto failed_after_cardTable;
+
+    /* Reserve the needed space: */
+    heapRegion = CVMmemMap(totalSize, &actualSize);
+    if (heapRegion == NULL) {
+	goto failed;
     }
-    /*
-     * The summaryTable records up to 4 locations of pointers
-     * per card. If the card is not dirtied after it is summarized,
-     * we can use the summary instead of scanning the card again.
+
+    CVMassert(actualSize == totalSize);
+    gc->mappedTotalSize = actualSize;
+
+    /*======================================================================
+     * Assign address of memory regions:
      */
-    globalState->summaryTable = 
-	(CVMGenSummaryTableEntry*)calloc(globalState->cardTableSize,
-					 sizeof(CVMGenSummaryTableEntry));
-    if (globalState->summaryTable == NULL) {
-	/* The caller will signal heap initialization failure */
-        goto failed_after_objectHeaderTable;
-    }
-    /*
-     * Computing this virtual origin for the card table makes marking
+
+    /* Assign the heap region for the heap generations: */
+    CVMassert(heapRegion == (CVMUint8 *)ROUND_UP_TO_CARD_SIZE(heapRegion));
+    gc->heapBaseMemoryArea = (CVMUint32 *)heapRegion;
+    gc->heapBase = (CVMUint32 *)heapRegion;
+
+    /* Assign the region for the youngGen: */
+    gc->youngGenStart = gc->heapBase;
+    CVMassert(gc->youngGenStart ==
+	      (void *)roundUpToPage((CVMAddr)gc->youngGenStart, pageSize));
+    CVMassert(gc->youngGenStart ==
+	      (void *)ROUND_UP_TO_CARD_SIZE(gc->youngGenStart));
+
+    /* Assign the region for the oldGen: */
+    gc->oldGenStart = gc->youngGenStart + totYoungGenSize / sizeof(CVMUint32);
+    CVMassert(gc->oldGenStart ==
+	      (void *)roundUpToPage((CVMAddr)gc->oldGenStart, pageSize));
+    CVMassert(gc->oldGenStart ==
+	      (void *)ROUND_UP_TO_CARD_SIZE(gc->oldGenStart));
+
+    /* Assign the region for the cardTable: */
+    gc->cardTable = (CVMUint8 *)gc->heapBase + totBytes;
+    gc->cardTableSize = cardTableSize;
+    gc->cardTableEnd = gc->cardTable + gc->cardTableSize;
+    CVMassert(gc->cardTableSize <= cardTableSize);
+
+    /* Assign the region for the objectHeaderTable: */
+    gc->objectHeaderTable = (CVMInt8 *)gc->cardTable + packedCardTableSize;
+
+    /* Assign the region for the summaryTable: */
+    gc->summaryTable =
+	(CVMGenSummaryTableEntry*)((CVMUint8 *)gc->objectHeaderTable +
+				   packedObjectHeaderTableSize);
+
+    /* Computing this virtual origin for the card table makes marking
      * the dirty byte very cheap.
      */
 #ifdef CVM_64
-    globalState->cardTableVirtualBase =
-	&(globalState->cardTable[-((CVMInt64)(((CVMAddr)globalState->heapBase)/NUM_BYTES_PER_CARD))]);
+    gc->cardTableVirtualBase =
+	&(gc->cardTable[-((CVMInt64)(((CVMAddr)gc->heapBase)/NUM_BYTES_PER_CARD))]);
 #else
-    globalState->cardTableVirtualBase =
-	&(globalState->cardTable[-((CVMInt32)(((CVMAddr)globalState->heapBase)/NUM_BYTES_PER_CARD))]);
+    gc->cardTableVirtualBase =
+	&(gc->cardTable[-((CVMInt32)(((CVMAddr)gc->heapBase)/NUM_BYTES_PER_CARD))]);
 #endif
-    
-    CVMassert((totYoungGenSize & (NUM_BYTES_PER_CARD - 1)) == 0);
 
-    youngGen = CVMgenSemispaceAlloc(globalState->heapBase, totYoungGenSize); 
+#if CVM_USE_MMAP_APIS
+    /*======================================================================
+     * Commit memory regions:
+     */
 
+    /* Commit the youngGen region: */
+    mem = CVMmemCommit(gc->youngGenStart,
+		       gc->youngGenCurrentSize * 2, &actualSize);
+    CVMassert(mem == (void *)gc->youngGenStart);
+    CVMassert(actualSize == gc->youngGenCurrentSize * 2);
+
+    /* Commit the oldGen region: */
+    mem = CVMmemCommit(gc->oldGenStart, gc->oldGenCurrentSize, &actualSize);
+    CVMassert(mem == (void *)gc->oldGenStart);
+    CVMassert(actualSize == gc->oldGenCurrentSize);
+
+    /* Commit the cardTable region: */
+    mem = CVMmemCommit(gc->cardTable, packedCardTableSize, &actualSize);
+    CVMassert(mem == (void *)gc->cardTable);
+    CVMassert(actualSize == packedCardTableSize);
+
+    /* Commit the objectHeaderTable region: */
+    mem = CVMmemCommit(gc->objectHeaderTable,
+		       packedObjectHeaderTableSize, &actualSize);
+    CVMassert(mem == (void *)gc->objectHeaderTable);
+    CVMassert(actualSize == packedObjectHeaderTableSize);
+
+    /* Commit the summaryTable region: */
+    mem = CVMmemCommit(gc->summaryTable, packedSummaryTableSize, &actualSize);
+    CVMassert(mem == (void *)gc->summaryTable);
+    CVMassert(actualSize == packedSummaryTableSize);
+#endif /* CVM_USE_MMAP_APIS */
+
+    /*======================================================================
+     * Initialize collectors:
+     */
+
+    /* Allocate and initialize the youngGen collector: */
+    youngGen = CVMgenSemispaceAlloc(gc->youngGenStart, totYoungGenSize);
     if (youngGen == NULL) {
         goto failed_after_summaryTable;
     }
 
     youngGen->generationNo = 0;
-    globalState->CVMgenGenerations[0] = youngGen;
+    gc->CVMgenGenerations[0] = youngGen;
 
     CVMglobals.allocPtrPtr = &youngGen->allocPtr;
     CVMglobals.allocTopPtr = &youngGen->allocTop;
     
-    /*
-     * And allocate the desired amount of heap space
-     */
-    oldGen = CVMgenMarkCompactAlloc(globalState->heapBase + totYoungGenSize / 4,
-				    totBytes - totYoungGenSize);
-
-    /*
-     * Make sure old space is on a card boundary!
-     */
-    CVMassert((((CVMAddr)(globalState->heapBase + totYoungGenSize / 4)) & 
-	      (NUM_BYTES_PER_CARD-1)) == 0);
+    /* Allocate and initialize the oldGen collector: */
+#if !CVM_USE_MMAP_APIS
+    CVMassert(gc->oldGenCurrentSize == gc->oldGenMaxSize);
+#endif
+    oldGen = CVMgenMarkCompactAlloc(gc->oldGenStart, gc->oldGenCurrentSize);
     if (oldGen == NULL) {
         goto failed_after_youngGen;
     }
 
     oldGen->generationNo = 1;
-    globalState->CVMgenGenerations[1] = oldGen;
+    gc->CVMgenGenerations[1] = oldGen;
 
+    /* Relate the generations: */
     youngGen->nextGen = oldGen;
     youngGen->prevGen = NULL;
 
@@ -912,41 +1248,58 @@ CVMgcimplInitHeap(CVMGCGlobalState* globalState,
     /*
      * Initialize the barrier
      */
-    CVMgenClearBarrierTable();
+#ifdef CVM_DEBUG_ASSERTS
+    CVMgenAssertBarrierTableIsClear();
+#endif
+
+#if CVM_USE_MMAP_APIS
+    /* Compute and set the size, and low and high watermarks: 
+       Note: the currentUsage of the oldGen heap is 0 because we've only just
+       initialized it.  We assert here to make sure that that is true.
+    */
+    CVMassert(((oldGen->allocPtr - oldGen->allocBase)*sizeof(CVMUint32)) == 0);
+    gc->oldGenCurrentSize =
+	CVMgcimplSetSizeAndWatermarks(gc, gc->oldGenCurrentSize, 0);
+#endif
+
     /*
      * Initialize GC times. Let heap initialization be the first
      * major GC.
      */
-    globalState->lastMajorGCTime = CVMtimeMillis();
+    gc->lastMajorGCTime = CVMtimeMillis();
 
 #ifdef CVM_JVMPI
     /* Report the arena info: */
     CVMgcimplPostJVMPIArenaNewEvent();
 #endif
 
+    CVMdebugPrintf(("GC[generational]: Sizes\n"
+		    "\tyoungGen = min %d start %d max %d\n"
+		    "\toldGen   = min %d start %d max %d\n"
+		    "\toverall  = min %d start %d max %d\n",
+		    gc->youngGenMinSize, gc->youngGenStartSize, gc->youngGenMaxSize,
+		    gc->oldGenMinSize, gc->oldGenStartSize, gc->oldGenMaxSize,
+		    gc->heapMinSize, gc->heapStartSize, gc->heapMaxSize));
+
     CVMdebugPrintf(("GC[generational]: Auxiliary data structures\n"));
     CVMdebugPrintf(("\theapBaseMemoryArea=[0x%x,0x%x)\n",
-		    globalState->heapBaseMemoryArea,
-		    globalState->heapBaseMemoryArea + (totBytes + NUM_BYTES_PER_CARD) / 4));
+		    gc->heapBaseMemoryArea,
+		    gc->heapBaseMemoryArea + (totBytes + NUM_BYTES_PER_CARD) / 4));
     CVMdebugPrintf(("\tcardTable=[0x%x,0x%x)\n",
-		    globalState->cardTable, globalState->cardTable + globalState->cardTableSize));
+		    gc->cardTable, gc->cardTable + gc->cardTableSize));
     CVMdebugPrintf(("\tobjectHeaderTable=[0x%x,0x%x)\n",
-		    globalState->objectHeaderTable, globalState->objectHeaderTable + globalState->cardTableSize));
+		    gc->objectHeaderTable, gc->objectHeaderTable + gc->cardTableSize));
     CVMdebugPrintf(("\tsummaryTable=[0x%x,0x%x)\n",
-		    globalState->summaryTable, globalState->summaryTable + globalState->cardTableSize));
+		    gc->summaryTable, gc->summaryTable + gc->cardTableSize));
     CVMtraceMisc(("GC: Initialized heap for generational GC\n"));
     return CVM_TRUE;
 
 failed_after_youngGen:
     CVMgenSemispaceFree((CVMGenSemispaceGeneration*)youngGen);
 failed_after_summaryTable:
-    free(globalState->summaryTable);
-failed_after_objectHeaderTable:
-    free(globalState->objectHeaderTable);
-failed_after_cardTable:
-    free(globalState->cardTable);
-failed_after_heapBaseMemoryArea:
-    free(globalState->heapBaseMemoryArea);
+    mem = CVMmemUnmap(heapRegion, totalSize, &actualSize);
+    CVMassert(mem == heapRegion);
+    CVMassert(actualSize == totalSize);
 failed:
     /* The caller will signal heap initialization failure */
     return CVM_FALSE;
@@ -1058,6 +1411,7 @@ CVMgenScanAllRoots(CVMGeneration* thisGen,
 
 	/* First scan older to younger pointers */
 	CVMGeneration* oldGen = CVMglobals.gc.CVMgenGenerations[1];
+
 	/*
 	 * Scan older to younger pointers up until 'allocMark'.
 	 * These are pointers for which the object header table
@@ -1065,6 +1419,8 @@ CVMgenScanAllRoots(CVMGeneration* thisGen,
 	 */
 	oldGen->scanOlderToYoungerPointers(oldGen, ee,
 					   gcOpts, callback, data);
+
+#ifdef BREADTH_FIRST_SCAN
 	/*
 	 * Get any allocated pointers in the old generation for which
 	 * object headers and card tables have not been updated yet.
@@ -1077,26 +1433,273 @@ CVMgenScanAllRoots(CVMGeneration* thisGen,
 	    oldGen->scanPromotedPointers(oldGen, ee, gcOpts, callback, data);
 	    CVMassert(oldGen->allocPtr == oldGen->allocMark);
 	}
-        /* And scan classes in old generation that are pointing to young */
-        CVMgenScanClassPointersInGen(oldGen, ee, gcOpts, callback, data);
+#endif
+        /* And scan all classes.  In practice, even if we do a true
+	   reachability scan to find classes, we will tend to reach all
+	   classes anyway.  So, scanning all classes actually simplifies
+	   things because we no longer need to track reachability of
+	   classes in the youngGen root scan and the card tables.
+	*/
+        CVMgenScanAllClassPointers(ee, gcOpts, callback, data);
 
     } else {
-	/* Collecting old generation */
-	CVMGeneration* youngGen = CVMglobals.gc.CVMgenGenerations[0];
-	/*
-	 * For now, assume one or two generations
-	 */
-	CVMassert(thisGen->generationNo == 1);
+	/* Collecting full heap: */
 
-	/* Scan younger to older pointers */
-	youngGen->scanYoungerToOlderPointers(youngGen, ee,
-					     gcOpts, callback, data);
+	/* For now, assume one or two generations */
+	CVMassert(thisGen->generationNo == 1);
     }
     /*
      * And now go through "system" pointers to this generation.
      */
     CVMgcScanRoots(ee, gcOpts, callback, data);
 }
+
+#if CVM_USE_MMAP_APIS
+
+/* Purpose: Sets the size of the region as well as the watermarks. */
+static CVMUint32
+CVMgcimplSetSizeAndWatermarks(CVMGCGlobalState *gc, CVMUint32 newSize,
+			      CVMUint32 currentUsage)
+{
+    CVMGeneration *oldGen = gc->CVMgenGenerations[1];
+    CVMUint8 *allocBase = (CVMUint8 *)oldGen->allocBase;
+    CVMInt32 newLow = 0;
+    CVMInt32 newHigh = 0;
+
+    size_t pageSize = CVMmemPageSize();
+
+    if (newSize <= gc->oldGenMinSize) {
+	/* Cannot shrink below minimum: */
+	newSize = gc->oldGenMinSize;
+	/* Once size is at minimum, set the low watermark so low that we don't
+           have to check if we need to shrink.  By definition, we will never
+           need to shrink because we are already at the minimum even if the
+	   usage level drops below the minimum: */
+	newLow = 0;
+
+    } else {
+	CVMInt32 threshold;
+	CVMJavaDouble dNewSize;
+	CVMJavaDouble dThreshold;
+	CVMJavaDouble d100;
+	CVMJavaDouble dResult;
+
+	CVMassert(gc->oldGenShrinkThreshold <= 100);
+
+	/* Note: Need to do this calculation using floating point to prevent
+	   integer overflow errors.  Since this calculation is rarely done,
+	   there is no performance penalty for using floating point math:
+	      threshold = (newSize * gc->oldGenShrinkThreshold) / 100; 
+	*/
+	dNewSize = CVMint2Double(newSize);
+	dThreshold = CVMint2Double(gc->oldGenShrinkThreshold);
+	d100 = CVMint2Double(100);
+	dResult = CVMdoubleMul(dNewSize, dThreshold);
+	dResult = CVMdoubleDiv(dResult, d100);
+	threshold = CVMdouble2Int(dResult);
+
+	if (threshold < pageSize) {
+	    threshold = pageSize;
+	}
+	newLow = currentUsage - threshold;
+	if (newLow < 0) {
+	    newLow = 0;
+	}
+	newLow = roundDownToPage(newLow, pageSize);
+	if (newLow < gc->oldGenMinSize) {
+	    newLow = gc->oldGenMinSize;
+	}
+    }
+
+    /* Compute the new high watermark: */
+    if (newSize >= gc->oldGenMaxSize) {
+	/* Cannot grow abive maximum: */
+	newSize = gc->oldGenMaxSize;
+	/* Skip high threshold checks if we're already at max capacity: */
+	newHigh = gc->oldGenMaxSize;
+
+    } else {
+	CVMInt32 threshold;
+	CVMJavaDouble dNewSize;
+	CVMJavaDouble dThreshold;
+	CVMJavaDouble d100;
+	CVMJavaDouble dResult;
+
+	CVMassert(gc->oldGenGrowThreshold <= 100);
+
+	/* Note: Need to do this calculation using floating point to prevent
+	   integer overflow errors.  Since this calculation is rarely done,
+	   there is no performance penalty for using floating point math:
+	      threshold = (newSize * gc->oldGenGrowThreshold) / 100; 
+	*/
+	dNewSize = CVMint2Double(newSize);
+	dThreshold = CVMint2Double(gc->oldGenGrowThreshold);
+	d100 = CVMint2Double(100);
+	dResult = CVMdoubleMul(dNewSize, dThreshold);
+	dResult = CVMdoubleDiv(dResult, d100);
+	threshold = CVMdouble2Int(dResult);
+
+	if (threshold < pageSize) {
+	    threshold = pageSize;
+	}
+	newHigh = newSize - threshold;
+	if (newHigh < 0) {
+	    newHigh = 0;
+	}
+	newHigh = roundUpToPage(newHigh, pageSize);
+	CVMassert(newHigh <= gc->oldGenMaxSize);
+    }
+
+    /* Publish the new sizes: */
+    gc->oldGenCurrentSize = newSize;
+    gc->oldGenLowWatermark = newLow;
+    gc->oldGenHighWatermark = newHigh;
+
+    oldGen->heapTop = (CVMUint32 *)(allocBase + newSize);
+    oldGen->allocTop = (CVMUint32 *)(allocBase + newSize);
+    CVMassert(oldGen->allocPtr <= oldGen->allocTop);
+    CVMassert(oldGen->allocMark <= oldGen->allocTop);
+
+    return newSize;
+}
+
+/* Purpose: Resizes the heap. */
+static CVMBool
+CVMgcimplResize(CVMExecEnv *ee, CVMUint32 numBytes, CVMBool grow)
+{
+    CVMGCGlobalState *gc = &CVMglobals.gc;
+    CVMGeneration *oldGen = gc->CVMgenGenerations[1];
+    CVMUint8 *allocBase = (CVMUint8 *)oldGen->allocBase;
+    CVMUint8 *allocPtr = (CVMUint8 *)oldGen->allocPtr;
+    CVMUint32 currentUsage = allocPtr - allocBase;
+    CVMUint32 oldSize = gc->oldGenCurrentSize;
+
+    CVMUint32 newSize;
+    size_t pageSize = CVMmemPageSize();
+
+    CVMBool success = CVM_TRUE;
+
+    CVMJavaDouble dNewSize;
+    CVMJavaDouble dTemp;
+    CVMJavaDouble d100;
+    CVMJavaDouble dUsage;
+
+    /* Compute the new Size: 
+
+       currentUsage     100 - gc->memoryReserve
+       ------------  =  -----------------------
+         newSize                 100
+
+       And in addition to the above ratio, we add numBytes which is expected to
+       be consumed immediately after this for youngGen to oldGen promotion.
+       Adding this estimate allows us to avoid having the need to grow again
+       due to promotion filling up the oldGen immediately after a growth cycle.
+    */
+    CVMassert(100 >= gc->memoryReserve);
+
+    /* Note: Need to do this calculation using floating point to prevent
+       integer overflow errors.  Since this calculation is rarely done,
+       there is no performance penalty for using floating point math:
+          newSize = (currentUsage * 100) / (100 - gc->memoryReserve);
+    */
+    dUsage = CVMint2Double(currentUsage);
+    d100 = CVMint2Double(100);
+    dTemp = CVMint2Double(100 - gc->memoryReserve);
+    dNewSize = CVMdoubleMul(dUsage, d100);
+    dNewSize = CVMdoubleDiv(dNewSize, dTemp);
+    newSize = CVMdouble2Int(dNewSize);
+
+    newSize += numBytes;
+    newSize = roundUpToPage(newSize, pageSize);
+    if (newSize > gc->oldGenMaxSize) {
+	newSize = gc->oldGenMaxSize;
+    }
+
+    newSize = CVMgcimplSetSizeAndWatermarks(gc, newSize, currentUsage);
+
+    /* Resize the new memory: */
+    if (grow) {
+	/* Commit the new memory: */
+	CVMUint8 *commitStart;
+	CVMInt32 commitSize;
+	CVMUint8 *cardAreaStart;
+	CVMUint32 cardAreaSize;
+
+	commitStart = allocBase + oldSize;
+	CVMassert(isPageAligned(commitStart, pageSize));
+	commitSize = newSize - oldSize;
+
+	if (commitSize > 0) {
+	    CVMUint8 *mem;
+	    size_t actualSize;
+	    CVMassert(isPageAligned(commitSize, pageSize));
+	    mem = CVMmemCommit(commitStart, commitSize, &actualSize);
+	    if (mem == NULL) {
+		/* It's possible to fail is the OS fails to provide physical
+		   memory to make the commit.  This will just result in an
+		   OutOfMemoryError being thrown. */
+		success = CVM_FALSE;
+
+		/* Reset the size and watermarks before failing: */
+		CVMgcimplSetSizeAndWatermarks(gc, oldSize, currentUsage);
+
+		goto failed;
+	    }
+
+	    CVMassert(mem == commitStart);
+	    CVMassert(actualSize == commitSize);
+
+	    /* Initialize the corresponding card table region: */
+	    cardAreaStart = (void *)CARD_TABLE_SLOT_ADDRESS_FOR(commitStart);
+	    cardAreaSize = commitSize / NUM_BYTES_PER_CARD;
+	    CVMassert((void *)HEAP_ADDRESS_FOR_CARD(cardAreaStart) == commitStart);
+	    CVMassert(cardAreaSize * NUM_BYTES_PER_CARD == commitSize);
+	    memset(cardAreaStart, CARD_CLEAN_BYTE, cardAreaSize);
+	}
+
+    } else {
+	/* Decommit the new memory: */
+	CVMUint8 *decommitStart;
+	CVMInt32 decommitSize;
+
+	decommitStart = allocBase + newSize;
+	CVMassert(isPageAligned(decommitStart, pageSize));
+	decommitSize = oldSize - newSize;
+
+	if (decommitSize > 0) {
+	    CVMUint8 *mem;
+	    size_t actualSize;
+	    CVMassert(isPageAligned(decommitSize, pageSize));
+	    mem = CVMmemDecommit(decommitStart, decommitSize, &actualSize);
+	    CVMassert(mem == decommitStart);
+	    CVMassert(actualSize == decommitSize);
+	}
+    }
+
+#if 0 /* For debugging the resizing operation only. */
+    /* Dump the resizing data: */
+#define SIZES(x) (x) /*bytes*/ , ((x)/1024.0) /*KB*/, ((x)/1024.0/1024.0)/*MB*/
+#define SIZEDIFF (grow?((CVMInt32)newSize-(CVMInt32)oldSize):((CVMInt32)oldSize-(CVMInt32)newSize))
+    CVMconsolePrintf("===========================================\n");
+    CVMconsolePrintf("Resizing to %s oldGen (numBytes %d) by %d (%.1fk:%.1fM)\n",
+		     grow? "GROW":"SHRINK", numBytes, SIZES(SIZEDIFF));
+    CVMconsolePrintf("     min     = %d (%.1fk:%.1fM)\n", SIZES(gc->oldGenMinSize));
+    CVMconsolePrintf("     start   = %d (%.1fk:%.1fM)\n", SIZES(gc->oldGenStartSize));
+    CVMconsolePrintf("     max     = %d (%.1fk:%.1fM)\n", SIZES(gc->oldGenMaxSize));
+    CVMconsolePrintf("     current = %d (%.1fk:%.1fM)\n", SIZES(gc->oldGenCurrentSize));
+    CVMconsolePrintf("     LowWatermark  = %d (%.1fk:%.1fM)\n", SIZES(gc->oldGenLowWatermark));
+    CVMconsolePrintf("     HighWatermark = %d (%.1fk:%.1fM)\n", SIZES(gc->oldGenHighWatermark));
+    CVMconsolePrintf("     used          = %d (%.1fk:%.1fM)\n", SIZES(allocPtr-allocBase));
+    CVMconsolePrintf("===========================================\n");
+#undef SIZES
+#undef SIZEDIFF
+#endif
+
+failed:
+    return success;
+}
+
+#endif /* CVM_USE_MMAP_APIS */
 
 /*
  * This routine is called by the common GC code after all locks are
@@ -1114,6 +1717,11 @@ CVMgcimplDoGC(CVMExecEnv* ee, CVMUint32 numBytes)
     CVMBool success;
     CVMGeneration* oldGen;
     CVMGeneration* youngGen;
+
+#if CVM_USE_MMAP_APIS
+    CVMBool haveAttemptedResize = CVM_FALSE;
+#endif
+
 /*#define SOLARIS_TIMING*/
 #ifdef SOLARIS_TIMING
 #include <sys/time.h>
@@ -1124,6 +1732,8 @@ CVMgcimplDoGC(CVMExecEnv* ee, CVMUint32 numBytes)
 
     time = gethrtime();
 #endif /* SOLARIS_TIMING */
+
+    gcOpts.isUpdatingObjectPointers = CVM_TRUE;
     gcOpts.discoverWeakReferences = CVM_FALSE;
 #if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
     gcOpts.isProfilingPass = CVM_FALSE;
@@ -1134,9 +1744,10 @@ CVMgcimplDoGC(CVMExecEnv* ee, CVMUint32 numBytes)
      */
     youngGen = CVMglobals.gc.CVMgenGenerations[0];
     oldGen = CVMglobals.gc.CVMgenGenerations[1];
-    youngGen->startGC(youngGen, ee, &gcOpts);
-    oldGen->startGC(oldGen, ee, &gcOpts);
 
+#if CVM_USE_MMAP_APIS
+retryGC:
+#endif
     /* If we are interned strings detected in the youngGen heap during the
        last GC or there are newly created interned strings, then we need to
        scan the interned strings table because there may still be interned
@@ -1157,10 +1768,9 @@ CVMgcimplDoGC(CVMExecEnv* ee, CVMUint32 numBytes)
     /* Do a youngGen collection and see if it is adequate to satisfy this
        GC request: */
     success = youngGen->collect(youngGen, ee, numBytes, &gcOpts);
-    
-    /*
-     * Try an old-space GC if no success
-     */
+
+    /* Try a full heap GC if we can't satisfy the request from the youngGen:
+    */
     if (!success) {
         /* For a full GC, classes can be unloaded.  Hence, we definitely need
            to scan for class-unloading activity: */
@@ -1175,8 +1785,58 @@ CVMgcimplDoGC(CVMExecEnv* ee, CVMUint32 numBytes)
 	CVMglobals.gc.lastMajorGCTime = CVMtimeMillis();
     }
 
-    youngGen->endGC(youngGen, ee, &gcOpts);
-    oldGen->endGC(oldGen, ee, &gcOpts);
+#if CVM_USE_MMAP_APIS
+    /* Resize heap if necessary: */
+    if (!haveAttemptedResize)
+    {
+	CVMBool gcFailed;
+	CVMGCGlobalState *gc = &CVMglobals.gc;
+	CVMUint32 oldGenUsedSize;
+
+	haveAttemptedResize = CVM_TRUE;
+	oldGenUsedSize =
+	    oldGen->totalMemory(oldGen, ee) - oldGen->freeMemory(oldGen, ee);
+
+	/* We consider the GC failed if a full GC wasn't requested but we still
+	   failed to satisfy the requested memory: */
+	gcFailed = !success && (numBytes != (CVMUint32)(-1));
+
+	/* If we can't satisfy the request or don't have enough free memory in
+	   reserve, then maybe we need to grow the oldGen: */
+	if (gcFailed || oldGenUsedSize > gc->oldGenHighWatermark) {
+	    /* Only attempt to grow the heap if there is still room to grow: */
+	    if (gc->oldGenCurrentSize < gc->oldGenMaxSize) {
+		CVMUint32 additionalBytesToGrow = 0;
+		CVMBool resized;
+		if (gcFailed) {
+		    /* Conservatively estimate that the entire youngGen content
+		       will be promoted: */
+		    CVMUint8 *allocPtr = (CVMUint8 *)youngGen->allocPtr;
+		    CVMUint8 *allocBase = (CVMUint8*)youngGen->allocBase;
+		    additionalBytesToGrow = allocPtr - allocBase;
+		    if (numBytes != (CVMUint32)-1) {
+			additionalBytesToGrow += numBytes;
+		    }
+		}
+	        resized = CVMgcimplResize(ee, additionalBytesToGrow, CVM_TRUE);
+		/* Now that we've grown the heap, we should re-attempt the
+		   youngGen GC if we failed to produce the requested memory: */
+		if (resized && gcFailed) {
+		    goto retryGC;
+		}
+	    }
+
+	/* If have too much free memory in reserve, then maybe we need to
+	   shrink the oldGen: */
+	} else if (oldGenUsedSize < gc->oldGenLowWatermark) {
+	    /* Only shrink the heap if there is room to shrink: */
+	    if (gc->oldGenCurrentSize > gc->oldGenMinSize) {
+		CVMgcimplResize(ee, 0, CVM_FALSE);
+	    }
+	}
+    }
+
+#endif /* CVM_USE_MMAP_APIS */
 
 #ifdef SOLARIS_TIMING
     time = gethrtime() - time;
@@ -1301,29 +1961,31 @@ CVMgcimplDestroyGlobalState(CVMGCGlobalState* globalState)
  * Destroy heap
  */
 CVMBool
-CVMgcimplDestroyHeap(CVMGCGlobalState* globalState)
+CVMgcimplDestroyHeap(CVMGCGlobalState* gc)
 {
+    size_t actualSize;
+    void *mem;
+
     CVMtraceMisc(("Destroying heap for generational GC\n"));
 
 #ifdef CVM_JVMPI
     CVMgcimplPostJVMPIArenaDeleteEvent();
 #endif
 
-    free(globalState->heapBaseMemoryArea);
-    free(globalState->cardTable);
-    free(globalState->objectHeaderTable);
-    free(globalState->summaryTable);
+    mem = CVMmemUnmap(gc->heapBaseMemoryArea, gc->mappedTotalSize, &actualSize);
+    CVMassert(mem == gc->heapBaseMemoryArea);
+    CVMassert(actualSize == gc->mappedTotalSize);
 
-    globalState->heapBaseMemoryArea = NULL;
-    globalState->cardTable = NULL;
-    globalState->objectHeaderTable = NULL;
-    globalState->summaryTable = NULL;
+    gc->heapBaseMemoryArea = NULL;
+    gc->cardTable = NULL;
+    gc->objectHeaderTable = NULL;
+    gc->summaryTable = NULL;
 
-    CVMgenSemispaceFree((CVMGenSemispaceGeneration*)globalState->CVMgenGenerations[0]);
-    CVMgenMarkCompactFree((CVMGenMarkCompactGeneration*)globalState->CVMgenGenerations[1]);
+    CVMgenSemispaceFree((CVMGenSemispaceGeneration*)gc->CVMgenGenerations[0]);
+    CVMgenMarkCompactFree((CVMGenMarkCompactGeneration*)gc->CVMgenGenerations[1]);
 	
-    globalState->CVMgenGenerations[0] = NULL;
-    globalState->CVMgenGenerations[1] = NULL;
+    gc->CVMgenGenerations[0] = NULL;
+    gc->CVMgenGenerations[1] = NULL;
 
     return CVM_TRUE;
 }
@@ -1339,6 +2001,27 @@ CVMgcimplTimeOfLastMajorGC()
 
 #if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
 
+typedef struct CallbackInfo CallbackInfo;
+struct CallbackInfo
+{
+    CVMObjectCallbackFunc callback;
+    void* callbackData;
+};
+
+/* Purpose: Call back to the callback function if the object is not
+            synthesized.  Filter out synthesized objects. */
+static CVMBool
+CVMgcCallBackIfNotSynthesized(CVMObject *obj, CVMClassBlock *cb,
+                              CVMUint32 size, void *data)
+{
+    CallbackInfo *info = (CallbackInfo *)data;
+    if (!CVMGenObjectIsSynthesized(obj)) {
+        return info->callback(obj, cb, size, info->callbackData);
+    }
+    return CVM_TRUE;
+}
+
+
 /*
  * Heap iteration. Call (*callback)() on each object in the heap.
  */
@@ -1349,6 +2032,11 @@ CVMgcimplIterateHeap(CVMExecEnv* ee,
 		     CVMObjectCallbackFunc callback, void* callbackData)
 {
     int i;
+    CallbackInfo info;
+
+    info.callback = callback;
+    info.callbackData = callbackData;
+
     /*
      * Iterate over objects in all generations
      */
@@ -1357,7 +2045,8 @@ CVMgcimplIterateHeap(CVMExecEnv* ee,
 	CVMUint32*     base = gen->allocBase;
 	CVMUint32*     top  = gen->allocPtr;
         CVMBool completeScanDone =
-                CVMgcScanObjectRange(ee, base, top, callback, callbackData);
+            CVMgcScanObjectRange(ee, base, top,
+				 CVMgcCallBackIfNotSynthesized, &info);
         if (!completeScanDone) {
             return CVM_FALSE;
         };
@@ -1366,3 +2055,7 @@ CVMgcimplIterateHeap(CVMExecEnv* ee,
 }
 
 #endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) */
+
+#undef roundUpToPage
+#undef roundDownToPage
+#undef isPageAligned

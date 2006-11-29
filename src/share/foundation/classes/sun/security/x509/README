@@ -1,4 +1,6 @@
-#
+# 
+# @(#)README	1.14 06/10/25
+# 
 # Copyright 2006 Sun Microsystems, Inc. All rights reserved.
 # 
 # Sun Microsystems, Inc. has intellectual property rights relating to technology
@@ -34,7 +36,7 @@
 # 
 # Sun, Sun Microsystems, phoneME et Java sont des marques de fabrique ou des
 # marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
-# 
+
 
 Quick summary of the main purpose here:  X.509 certs are used in public
 key infrastructure for protocols such as SSL and SET.  These certificates

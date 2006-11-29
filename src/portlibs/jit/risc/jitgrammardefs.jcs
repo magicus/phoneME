@@ -1,23 +1,27 @@
-// Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
-// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 //
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License version 2 only,
-// as published by the Free Software Foundation.
+// Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+//   
+// This program is free software; you can redistribute it and/or  
+// modify it under the terms of the GNU General Public License version  
+// 2 only, as published by the Free Software Foundation.   
+//   
+// This program is distributed in the hope that it will be useful, but  
+// WITHOUT ANY WARRANTY; without even the implied warranty of  
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+// General Public License version 2 for more details (a copy is  
+// included at /legal/license.txt).   
+//   
+// You should have received a copy of the GNU General Public License  
+// version 2 along with this work; if not, write to the Free Software  
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+// 02110-1301 USA   
+//   
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+// Clara, CA 95054 or visit www.sun.com if you need additional  
+// information or have any questions. 
 //
-// This program is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-// version 2 for more details (a copy is included at /legal/license.txt).
-//
-// You should have received a copy of the GNU General Public License version
-// 2 along with this work; if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
-//
-// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-// CA 95054 or visit www.sun.com if you need additional information or have
-// any questions.
-
+// @(#)jitgrammardefs.jcs	1.35 06/10/10
 //
 // converting CVM IR subset to RISC assembler
 //
@@ -514,6 +518,14 @@ const CVMRMregset CVMCPUfloatAvoidSets[CVMCPU_NUM_AVOID_SETS] = {
         DEFAULT_INHERITANCE2((con), (node))
 
 #ifdef CVMJIT_INTRINSICS
+
+#ifdef CVMJIT_INTRINSICS_HAVE_PLATFORM_SPECIFIC_REG_ARGS
+#define GET_REG_ARGS(properties) \
+	(((properties) & CVMJITINTRINSIC_REG_ARGS) != 0)
+#else
+#define GET_REG_ARGS(properties)	CVM_FALSE
+#endif
+
 static CVMJITRegsRequiredType
 intrinsicRequired(CVMJITCompilationContext *con, CVMJITIRNode *intrinsicNode,
                   CVMJITIRNodePtr *submatch_roots)
@@ -534,7 +546,9 @@ intrinsicRequired(CVMJITCompilationContext *con, CVMJITIRNode *intrinsicNode,
     } else {
         /* Just like a C call, we avoid the safe set because we'll be
            effectively making a C call to the helper: */
-        required = CVMCPUCCALLgetRequired(con, required);
+	CVMBool useRegArgs = GET_REG_ARGS(properties);
+        required = CVMCPUCCALLgetRequired(con, required, intrinsicNode,
+					  irec, useRegArgs);
     }
     return required;
 }
@@ -577,23 +591,28 @@ iargTarget(CVMJITCompilationContext *con, CVMJITIRNode *iargNode,
 
         } else {
             CVMCPUCallContext *callContext;
-            CVMassert((properties & CVMJITINTRINSIC_C_ARGS) != 0);
+            CVMBool useRegArgs = GET_REG_ARGS(properties);
+            CVMassert((properties & CVMJITINTRINSIC_C_ARGS) != 0 ||
+		      useRegArgs);
             if (argNo == 0) {
                 callContext = CVMCPUCCallnewContext(con);
-                CVMCPUCCALLinitArgs(con, callContext, irec, CVM_TRUE);
+                CVMCPUCCALLinitArgs(con, callContext, irec, CVM_TRUE,
+				    useRegArgs);
             } else {
                 callContext = GET_CALL_CONTEXT(con);
             }
             targetSet = CVMCPUCCALLgetArgTarget(con, callContext,
-                                                argType, argNo, argWordIndex);
+		            argType, argNo, argWordIndex, useRegArgs);
             SET_TARGET2_0(iargNode, targetSet);
             SET_CALL_CONTEXT(1, callContext);
         }
     } else {
         if ((properties & CVMJITINTRINSIC_C_ARGS) != 0) {
             if (irec->numberOfArgs != 0) {
+		CVMBool useRegArgs = GET_REG_ARGS(properties);
                 CVMCPUCallContext *callContext = GET_CALL_CONTEXT(con);
-                CVMCPUCCALLdestroyArgs(con, callContext, irec, CVM_TRUE);
+                CVMCPUCCALLdestroyArgs(con, callContext, irec, CVM_TRUE,
+				       useRegArgs);
             }
         }
     }

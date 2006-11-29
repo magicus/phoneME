@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ObjectInputStream.java	1.123 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package java.io;
@@ -30,6 +35,7 @@ import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.HashMap;
 import sun.misc.SoftCache;
+import sun.misc.CVM;
 
 /* Back-ported JDK 1.4 implementation */
 
@@ -177,7 +183,6 @@ import sun.misc.SoftCache;
  * ObjectInput.  It is the responsibility of the objects to handle any
  * versioning that occurs.
  *
- * @author	Mike Warres
  * @version 1.135, 01/09/15
  * @see java.io.DataInput
  * @see java.io.ObjectOutputStream
@@ -1458,14 +1463,14 @@ public class ObjectInputStream
 	    throw new StreamCorruptedException("illegal handle value");
 	}
 	if (unshared) {
-	    // TODO: What type of exception to throw here?
+	    // what type of exception to throw here?
 	    throw new InvalidObjectException(
 		"cannot read back reference as unshared");
 	}
 	
 	Object obj = handles.lookupObject(passHandle);
 	if (obj == unsharedMarker) {
-	    // TODO: What type of exception to throw here?
+	    // what type of exception to throw here?
 	    throw new InvalidObjectException(
 		"cannot read back reference to unshared object");
 	}
@@ -1585,7 +1590,7 @@ public class ObjectInputStream
 	try {
 	    readDesc = readClassDescriptor();
 	} catch (ClassNotFoundException ex) {
-	    // TODO: Do something less drastic here?
+	    // do something less drastic here?
 	    throw new StreamCorruptedException();
 	}
 	
@@ -1905,7 +1910,7 @@ public class ObjectInputStream
     private void defaultReadFields(Object obj, ObjectStreamClass desc)
 	throws IOException
     {
-	// TODO: Is isInstance check necessary?
+	// is isInstance check necessary?
 	Class cl = desc.forClass();
 	if (cl != null && obj != null && !cl.isInstance(obj)) {
 	    throw new ClassCastException();
@@ -1965,7 +1970,7 @@ public class ObjectInputStream
     /**
      * Converts specified span of bytes into float values.
      */
-    // TODO: emove once hotspot inlines Float.intBitsToFloat
+    // TODO: remove once hotspot inlines Float.intBitsToFloat
     private static native void bytesToFloats(byte[] src, int srcpos,
 					     float[] dst, int dstpos, 
 					     int nfloats);
@@ -3403,10 +3408,11 @@ public class ObjectInputStream
 	    byte[] newStatus = new byte[newCapacity];
 	    Object[] newEntries = new Object[newCapacity];
 	    HandleList[] newDeps = new HandleList[newCapacity];
-	    
-	    System.arraycopy(status, 0, newStatus, 0, size);
-	    System.arraycopy(entries, 0, newEntries, 0, size);
-	    System.arraycopy(deps, 0, newDeps, 0, size);
+/* IAI - 15 */	    
+	    CVM.copyByteArray(status, 0, newStatus, 0, size);
+	    CVM.copyObjectArray(entries, 0, newEntries, 0, size);
+	    CVM.copyObjectArray(deps, 0, newDeps, 0, size);
+/* IAI - 15 */
 	    
 	    status = newStatus;
 	    entries = newEntries;
@@ -3426,7 +3432,9 @@ public class ObjectInputStream
 	    public void add(int handle) {
 		if (size >= list.length) {
 		    int[] newList = new int[list.length << 1];
-		    System.arraycopy(list, 0, newList, 0, list.length);
+/* IAI - 15 */
+		    CVM.copyIntArray(list, 0, newList, 0, list.length);
+/* IAI - 15 */
 		    list = newList;
 		}
 		list[size++] = handle;

@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)Protocol.java	1.16 06/10/13
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
 package com.sun.cdc.io.j2me.comm;
@@ -201,6 +205,14 @@ public class Protocol extends BufferedConnectionAdapter
         }
     }
 
+    /*
+     * throws SecurityException if MIDP permission check fails 
+     * nothing to do for CDC
+    */
+    protected void checkMIDPPermission(String name) {
+        return;
+    }
+
     /**
      * Open a serial port connection.
      * 
@@ -255,14 +267,6 @@ public class Protocol extends BufferedConnectionAdapter
         int start = 0;
         int pos = 0;
 
-///  Do not check for permission here (MIDP 2.0 style).
-///    Instead, now using doPriveleged() in code at location below for
-///    getProperty(). 
-///    Will remove this section before beta.
-//        if (!permissionChecked) {
-//	    throw new SecurityException("The permission check was bypassed");
-//        }
-
         if (name.length() == 0) {
              throw new IllegalArgumentException("Missing port ID");
         }
@@ -305,6 +309,7 @@ public class Protocol extends BufferedConnectionAdapter
         // blocking is handled at the Java layer so other Java threads can run
 
         if (deviceName != null) {
+            checkMIDPPermission(deviceName);
 	    /* 6231661: before checking if port is already open, 
 	       check if no open Streams (ensureNoStreamsOpen).  This is 
 	       done to throw the correct exception: IOException when 
@@ -319,6 +324,7 @@ public class Protocol extends BufferedConnectionAdapter
 	    handle = native_openByName(deviceName, baud,
 				       bbc|stop|parity|rts|cts);
         } else {
+            checkMIDPPermission("comm:" + portNumber);
 	    handle = native_openByNumber(portNumber, baud,
 					 bbc|stop|parity|rts|cts);
         }

@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)Protocol.java	1.50 06/10/16
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 package com.sun.cdc.io.j2me.http;
@@ -119,6 +124,14 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
     }
 
+    /*
+     * throws SecurityException if MIDP permission check fails 
+     * nothing to do for CDC
+    */
+    protected void checkMIDPPermission(String url) {
+        return;
+    }
+
     public void open(String url, int mode, boolean timeouts) throws IOException {
         // DEBUG: System.out.println ("open " + url); 
         if (opens > 0) {
@@ -131,7 +144,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             && mode != Connector.READ_WRITE) {
             throw new IOException("illegal mode: " + mode);
         }
-
+        
+        checkMIDPPermission("http:" + url);
         this.url = url;
         this.mode = mode;
         parseURL();
@@ -442,9 +456,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
 
         public void write(int b) throws IOException {
-            // CR 6216611: set the content-length 
-            reqProperties.put("Content-Length", "" + 1);
             output.write(b);
+            // CR 6216611: set the content-length. Note: we shouldn't set
+            // content-length to the size of the current bytes that we are
+            // writing. The length should be number of all valid bytes in the 
+            // output buffer.
+            reqProperties.put("Content-Length", "" + output.size());
         }
 
         /* Override this method from OutputStream class, this is either called
@@ -463,13 +480,15 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             for (int i = 0 ; i < len ; i++) {
                 write(b[off + i]);
             }
-            reqProperties.put("Content-Length", "" + len );
+            // Update Content-Length. Note: we should't set
+            // content-length to the size of the current bytes that we are
+            // writing. The length should be number of all valid bytes in the 
+            // output buffer.
+            reqProperties.put("Content-Length", "" + output.size());
         }
 
         public void write(byte[] b) throws IOException{
             // Create the headers
-            reqProperties.put("Content-Length", "" + b.length);
- 
             String reqLine = method + " " + getFile()
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
@@ -489,6 +508,11 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             }
             write("\r\n".getBytes(), 0, "\r\n".length());
             write(b, 0, b.length);
+            // Update Content-Length. Note: we should't set
+            // content-length to the size of the current bytes that we are
+            // writing. The length should be number of all valid bytes in the 
+            // output buffer.
+            reqProperties.put("Content-Length", "" + output.size());
         }
 
 

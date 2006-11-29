@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)jitcontext.h	1.195 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 #ifndef _INCLUDED_JIT_IMPL_H
@@ -403,6 +408,25 @@ struct CVMJITCompilationContext {
     /* estimate for stackmap memory */
     CVMUint32		      extraStackmapSpace;
 
+#ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
+    /* Total number direct methods calls made by this method. Setup by
+     * the front end */
+    CVMUint32		      numCallees;
+
+    /*
+     * The callee table. 
+     *  
+     * The structure of this table is as follows:  
+     *  
+     * The value stored at callees[0] is the number of 
+     * unique methods that are called by the method being compiled.
+     * This number allows us to simplify the traversal of this table 
+     * on method decompilation.  What follows is the mb* of each method
+     * that this method calls directly.
+     */
+    CVMMethodBlock**	      callees;
+#endif
+
     /* Error handler context to longjmp to */
     jmp_buf errorHandlerContext;
 
@@ -444,12 +468,5 @@ struct CVMJITCompilationContext {
      */
     CVMJITTargetCompilationContext target;
 };
-
-
-#ifdef CVM_DEBUG
-extern const char *const opcodeTagMap[];
-extern const char *const typeTagMap[];
-extern const char *const subnodeTagMap[];
-#endif
 
 #endif /* _INCLUDED_JIT_IMPL_H */

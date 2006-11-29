@@ -1,23 +1,27 @@
 #
-# Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
-# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+# @(#)defs_basis.mk	1.126 06/10/10
 # 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2 only,
-# as published by the Free Software Foundation.
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
 # 
 # This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-# version 2 for more details (a copy is included at /legal/license.txt).
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
 # 
-# You should have received a copy of the GNU General Public License version
-# 2 along with this work; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
 # 
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 or visit www.sun.com if you need additional information or have
-# any questions.
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
 #
 
 # Include target specific makefiles first
@@ -371,6 +375,7 @@ CLASSLIB_CLASSES += \
 		sun.awt.AppContext \
 		sun.awt.AWTSecurityManager \
 		sun.awt.SunToolkit \
+		sun.awt.IdentityWeakHashMap \
 		sun.awt.Robot \
 		sun.awt.RobotHelper \
 		sun.awt.im.InputContext \
@@ -395,22 +400,7 @@ CLASSLIB_CLASSES += \
    		sun.mtask.xlet.PXletRunner \
    		sun.mtask.xlet.PXletStateQueue \
    		sun.mtask.xlet.PXletManager \
-   		sun.mtask.xlet.PXletContextImpl \
-                com.sun.xlet.mvmixc.ConnectionReceiver \
-                com.sun.xlet.mvmixc.ConstantPool \
-                com.sun.xlet.mvmixc.CDCAmsAppManagerStub \
-                com.sun.xlet.mvmixc.ExportedObject \
-                com.sun.xlet.mvmixc.ImportedObject \
-                com.sun.xlet.mvmixc.IxcInputStream \
-                com.sun.xlet.mvmixc.IxcOutputStream \
-                com.sun.xlet.mvmixc.MvmIxcRegistryImpl \
-                com.sun.xlet.mvmixc.RemoteObjectType \
-                com.sun.xlet.mvmixc.RemoteRef \
-                com.sun.xlet.mvmixc.StubClassGenerator \
-                com.sun.xlet.mvmixc.StubObject \
-                com.sun.xlet.mvmixc.TypeInfo \
-                com.sun.xlet.mvmixc.Utils \
-                com.sun.xlet.mvmixc.Worker 
+   		sun.mtask.xlet.PXletContextImpl 
 else 
 CLASSLIB_CLASSES += \
                 com.sun.xlet.ixc.ConstantPool \
@@ -435,7 +425,8 @@ CLASSLIB_CLASSES += \
 		com.sun.xlet.XletRunner \
 		com.sun.xlet.XletSecurity \
 		com.sun.xlet.XletStateQueue 
-
+#CVM_DEMO_CLASSES += \
+#		IXCDemo.IXCMain 
 endif
 endif
 
@@ -533,7 +524,18 @@ CVM_DEMO_CLASSES += \
     basis.demos.ImageDemo \
     basis.demos.LayoutDemo \
     basis.demos.MiscDemo \
-    basis.demos.NullLayoutDemo 
+    basis.demos.NullLayoutDemo \
+	IXCDemo.shared.Plane \
+	IXCDemo.shared.PlaneListener \
+	IXCDemo.shared.Position \
+	IXCDemo.ixcXlets.clientXlet.PlaneClient \
+	IXCDemo.ixcXlets.serverXlet.PlaneImpl \
+	IXCDemo.ixcXlets.serverXlet.PlaneServer 
+
+ifneq ($(CVM_MTASK), true)
+CVM_DEMO_CLASSES += \
+	IXCDemo.IXCMain 
+endif
 
 #
 # Stuff to export. Do this before including defs_foundation.mk

@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)generational.h	1.44 06/10/10
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
+ *
  */
 
 /*
@@ -65,14 +70,6 @@ typedef struct CVMGeneration {
 					     CVMRefCallbackFunc callback,
 					     void* callbackData);
 
-    /* Iterate over pointers to an older generation. Used only
-       during a full collection, and so does not really need to be fast. */
-    void       (*scanYoungerToOlderPointers)(struct CVMGeneration* gen,
-					     CVMExecEnv* ee,
-					     CVMGCOptions* gcOpts,
-					     CVMRefCallbackFunc callback,
-					     void* callbackData);
-
     /* Promote 'objectToPromote' into the current generation. Returns
        the new address of the object, or NULL if the promotion failed. */
     CVMObject* (*promoteInto)(struct CVMGeneration* gen,
@@ -93,16 +90,6 @@ typedef struct CVMGeneration {
      * Get extra, unused space for use by another generation.
      */
     CVMGenSpace* (*getExtraSpace)(struct CVMGeneration* gen);
-				  
-    /* Indicate to the generation that a GC is about to start, or has
-       ended, so it can initialize and destroy its data structures,
-       especially those used for inter-generational
-       "communication". Information about the kind of GC is encoded in
-       the CVMGCOptions passed in. */
-    void       (*startGC)(struct CVMGeneration* gen,
-			  CVMExecEnv* ee, CVMGCOptions* gcOpts);
-    void       (*endGC)(struct CVMGeneration* gen,
-			CVMExecEnv* ee, CVMGCOptions* gcOpts);
 
     /* Get total amount of usable space in this generation */
     CVMUint32  (*totalMemory)(struct CVMGeneration* gen, CVMExecEnv* ee);
@@ -171,6 +158,11 @@ CVMgenBarrierObjectHeadersUpdate(CVMGeneration* gen, CVMExecEnv* ee,
  */
 #define CVM_GEN_PROMOTION_THRESHOLD 2
 
+#define CVM_GEN_SYNTHESIZED_OBJ_MARK ((-1) << CVM_GC_SHIFT)
+#define CVMGenObjectIsSynthesized(obj) \
+    ((CVMobjectVariousWord(obj) & CVM_GEN_SYNTHESIZED_OBJ_MARK) == \
+     CVM_GEN_SYNTHESIZED_OBJ_MARK)
+
 /*
  * Write barrier
  */
@@ -182,9 +174,12 @@ CVMgenBarrierObjectHeadersUpdate(CVMGeneration* gen, CVMExecEnv* ee,
 /*
  * 0xff terminated list of object offsets
  */
+#define CVM_GENGC_SUMMARY_COUNT 4
 typedef union CVMGenSummaryTableEntry {
-    CVMUint8  offsets[4];
+    CVMUint8  offsets[CVM_GENGC_SUMMARY_COUNT];
+#if (CVM_GENGC_SUMMARY_COUNT == 4)
     CVMUint32 intVersion; /* For zeroing quickly */
+#endif
 } CVMGenSummaryTableEntry;
 
 /* 
@@ -228,10 +223,10 @@ typedef union CVMGenSummaryTableEntry {
     (CVMJavaVal32*)(((crd) - CVMglobals.gc.cardTable) * NUM_WORDS_PER_CARD + (CVMJavaVal32*)CVMglobals.gc.heapBase)
 
 /* A card is dirty */
-#define CARD_DIRTY_BYTE 0
+#define CARD_DIRTY_BYTE 1
 
 /* A card is clean */
-#define CARD_CLEAN_BYTE 1
+#define CARD_CLEAN_BYTE 0
 
 /* A card is summarized */
 #define CARD_SUMMARIZED_BYTE 2

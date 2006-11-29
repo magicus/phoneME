@@ -1,25 +1,27 @@
 /*
- * Portions Copyright 2000-2006 Sun Microsystems, Inc. All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License version 2 for more details (a copy is included at
- * /legal/license.txt).
- * 
- * You should have received a copy of the GNU General Public
- * License version 2 along with this work; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * @(#)ccmmath_cpu.S	1.112 06/10/10
+ *
+ * Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
+ *   
+ * This program is free software; you can redistribute it and/or  
+ * modify it under the terms of the GNU General Public License version  
+ * 2 only, as published by the Free Software Foundation.   
+ *   
+ * This program is distributed in the hope that it will be useful, but  
+ * WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
+ * General Public License version 2 for more details (a copy is  
+ * included at /legal/license.txt).   
+ *   
+ * You should have received a copy of the GNU General Public License  
+ * version 2 along with this work; if not, write to the Free Software  
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
+ * 02110-1301 USA   
+ *   
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
+ * Clara, CA 95054 or visit www.sun.com if you need additional  
+ * information or have any questions. 
  */
 
 /*
@@ -29,6 +31,16 @@
 #include "javavm/include/asmmacros_cpu.h"
 #include "javavm/include/porting/endianness.h"
 #include "javavm/include/iai_opt_config.h"
+
+#ifdef __RVCT__
+#define OR2(x,y)	((x) :OR: (y))
+#define OR3(x,y,z)	((x) :OR: (y) :OR: (z))
+#define OR4(x,y,z,p)	((x) :OR: (y) :OR: (z) :OR: (p))
+#else
+#define OR2(x,y)	((x) | (y))
+#define OR3(x,y,z)	((x) | (y) | (z))
+#define OR4(x,y,z,p)	((x) | (y) | (z) | (p))
+#endif
 
 	SET_SECTION_EXEC(ccmmath_cpu)
 
@@ -195,7 +207,156 @@ ENTRY1 ( CVMCCMruntimeFAdd_C )
          * v2 = jsp 
          * sp = ccee
 	 */
+/* IAI - 16 */
+#ifdef IAI_WMMX_FADD
+#define FEXP1 r2
+#define FEXP2 r3
+#define FMANT1 ip
+#define FMANT2 r1
+        @ arrange for the larger summand to be in FLOAT1
+        mov	ip, FLOAT1, LSL #1      
+        cmp	ip, FLOAT2, LSL #1
+        tmcrrlo	wR0, FLOAT1, FLOAT2
+        tmrrclo	FLOAT2, FLOAT1, wR0		/* exchage FLOAT1 and FLOAT2 */
 
+LABEL(_fadd_noxchng)
+        mov     EMASK, #0xff			/* Setup the pre-shifted exponent mask. */
+        ands    FEXP2, EMASK, FLOAT2, LSR #23	/* Extract exponent2. */
+        beq	_fadd_fexp2_equal_0
+        and	FEXP1, EMASK, FLOAT1, LSR #23	/* Extract exponent1. */
+        
+        cmp     FEXP1, EMASK
+        cmpne   FEXP2, EMASK
+        beq     _fadd_fexp_equal_emask
+       
+        sub	r3, FEXP1, FEXP2		/* exp1 = exp1 - exp2. */
+        cmp	r3, #25				/* difference too large, return */
+        movhi	pc, lr
+        
+        teq	FLOAT1, FLOAT2
+        bic	FMANT2, FLOAT2, #0xff000000	/* Extract mantissa2.	*/
+        orr	FMANT2, FMANT2, #0x00800000
+       	bmi	_fadd_sub
+		
+LABEL(_fadd_add)       
+        bic	FMANT1, FLOAT1, #0xff000000	/* Extract mantissa1.	*/
+        orr	FMANT1, FMANT1, #0x00800000
+
+        add	ip, FMANT1, FMANT2, LSR r3	/* {hi<ip>,lo<r1>} = FMANT1 + FMANT2. */
+        rsb     r3, r3, #32
+	mov	FMANT2, FMANT2, LSL r3
+	
+LABEL(_fadd_process_result)        
+        tst	ip, #0x01000000 
+	addne	FEXP1, FEXP1, #1
+	movnes	ip, ip, lsr #1
+	moveqs  r1, r1, lsl #1
+	adc	ip, ip, #0
+	bcs	_fadd_process_result_round	/* r1 = #0x8xxxxxxx */
+
+LABEL(_fadd_process_result_done)	
+	tst	ip, #0x01000000
+	addne	FEXP1, FEXP1, #1
+
+	cmp	FEXP1, #0xff
+	and	r0, r0, #0x80000000
+	orr	r0, r0, FEXP1, lsl #23
+	bicne	ip, ip, #0x01800000
+	orrne	r0, ip, r0
+	mov 	pc, lr				/* normalized result returned. */
+
+LABEL(_fadd_process_result_round)
+	teq	r1, #0
+	biceq	ip, ip, #1
+	b	_fadd_process_result_done
+
+LABEL(_fadd_fexp2_equal_0)
+        ands	FEXP1, EMASK, FLOAT1, LSR #23	/* Extract exponent1. */
+        beq	_fadd_fexp1_equal_0
+        
+        cmp     FEXP1, EMASK
+        moveq	pc, lr
+        
+        teq	FLOAT1,FLOAT2
+        bic	FMANT2, FLOAT2, #0x80000000
+        sub	r3, FEXP1, #1
+        bpl	_fadd_add
+	
+LABEL(_fadd_sub)
+        bic	FMANT1, FLOAT1, #0x7f000000	/* Extract mantissa1.	*/
+        orr	FMANT1, FMANT1, #0x00800000
+	rsb	r0, r3, #32
+	mov	r0, FMANT2, LSL r0
+	rsbs	r0, r0, #0
+	sbc	ip, FMANT1, FMANT2, LSR r3	/* {hi<ip>,lo<r0>} = FMANT1 - FMANT2. */
+
+	tst	ip, #0x00800000
+	beq	_fadd_sub_result_need_shift
+	
+	cmp	r0, #0x80000000
+	addhs	ip, ip, #1
+	biceq	ip, ip, #1
+	bic	r0, ip, #0x00800000
+	orr	r0, r0, FEXP1, lsl #23
+	mov	pc, lr
+
+LABEL(_fadd_sub_result_need_shift)
+	bic	r3, ip, #0x80000000
+	orrs	r1, r3, r0
+	moveq	r0, #0
+	moveq	pc, lr				/* FLOAT1 = - FLOAT2, return 0 */
+	
+	clz	r1, r3
+	sub	r1, r1, #8
+	
+	cmp	FEXP1, r1
+	suble	r1, FEXP1, #1
+	movle	FEXP1, ip, LSR #23
+	subgt	FEXP1, FEXP1, r1
+	orrgt	FEXP1, FEXP1, ip, LSR #23
+	
+	mov	ip, r3, LSL r1			/* need shift left */
+	rsb	r3, r1, #32
+	orr	ip, ip, r0, LSR r3
+	mov	r0, r0, LSL r1
+	
+	cmp	r0, #0x80000000
+	addhs	ip, ip, #1
+	biceq	ip, ip, #1
+
+	tst	ip, #0x01000000
+	addne	FEXP1, FEXP1, #1
+	bic	ip, ip, #0x01800000
+	orr	r0, ip, FEXP1, LSL #23
+	mov	pc, lr
+        
+LABEL(_fadd_fexp1_equal_0)   
+	eors	r3, FLOAT1, FLOAT2
+	bic	r2, FLOAT2, #0x80000000
+	addpl	r0, FLOAT1, r2
+	movpl	pc, lr
+	
+	teq	r3, #0x80000000
+	moveq	r0, #0
+	subne	r0, FLOAT1, r2
+	mov	pc, lr
+	     
+
+LABEL(_fadd_fexp_equal_emask)
+	cmp	FEXP1, EMASK
+	movne	r0, FLOAT2
+        cmpeq   FEXP2, EMASK
+        movne	pc, lr
+        
+	eors	r2, FLOAT1, FLOAT2	
+        orr	r0, FLOAT1, FLOAT2	
+        movpl	pc, lr
+
+        mov	r0, #0x7f000000
+        orr	r0, r0, #0x00c00000
+        mov	pc, lr
+        
+#else /* IAI - 16 */
 LABEL(_faddStart)
         /* The following saves registers that we're going to use and extracts
            exponents and mantissas from the floats.  */
@@ -401,6 +562,8 @@ LABEL(_faddFloat1CheckForNanOrInfinity)
         /* Else, return a NaN: */
         ldr     r0, floatNaN            /* result = NaN (0x7f800000). */
 	FLOAT_RETURN_TO_CALLER	 	/* Return the result. */
+#endif
+/* IAI - 16 */
 
 /*
  * Entry point for multiplying floats.
@@ -416,6 +579,236 @@ ENTRY1 ( CVMCCMruntimeFMul_C )
          * v2 = jsp 
          * sp = ccee
 	 */
+
+/* IAI - 16 */
+#ifdef IAI_WMMX_FMUL
+#define FEXP1 r2
+#define FEXP2 r3
+#define FMANT1 ip
+#define FMANT2 r1
+#define SIGN  r3
+        eor     SIGN, FLOAT1, FLOAT2            /* Positive if same, else negative. */
+        tmcr    wCASF, SIGN                     /* move SIGN to WMMX register */
+
+        mov     EMASK, #0xff000000              /* Setup the pre-shifted exponent mask. */
+        ands    FEXP1, EMASK, FLOAT1, LSL #1    /* Extract exponent1. */
+        beq     fmul_fexp1_equal_0
+        ands    FEXP2, EMASK, FLOAT2, LSL #1    /* Extract exponent2. */
+        beq     fmul_fexp1_not_equal_0_fexp2_equal_0
+
+        cmp     FEXP1, EMASK
+        cmpne   FEXP2, EMASK
+        beq     fmul_fexp_equal_emask
+
+        adds    FEXP1, FEXP1, FEXP2             /* exp1 = exp1 + exp2. */
+        bcs     fmul_fexp_too_big
+        bpl     fmul_result_denormal_pre1       /* result needs to be donormalized */
+
+LABEL(fmul_result_normal)
+        eor     FMANT2, FEXP2, FLOAT2, LSL #1   /* Extract mantissa1. */
+        mov     FMANT1, FLOAT1, LSL #8          /* Extract mantissa2. */
+        orr     FMANT2, FMANT2, #0x01000000
+        orr     FMANT1, FMANT1, #0x80000000
+
+        umull   r3, r0, FMANT1, FMANT2          /* {hi<r0>,lo<r3>} = FMANT1 * FMANT2. */
+
+        sub     FEXP1, FEXP1, #0x7f000000       /* exp1 -= 127 (i.e. the bias). */
+        cmp     FEXP1, #0xfe000000
+        bhs     fmul_result_too_big
+
+LABEL(fmul_process_result)
+        tst     r0, #0x01000000
+        addne   FEXP1, FEXP1, #0x01000000
+        movnes  r0, r0, lsr #1
+        moveqs  r3, r3, lsl #1
+        adc     r0, r0, #0
+        bcs     fmul_process_result_round       /* r3 = #0x8xxxxxxx */
+
+LABEL(fmul_process_result_done)
+        tst     r0, #0x01000000
+        addne   FEXP1, FEXP1, #0x01000000
+
+        textrcb R15, #7
+        bic     r0, r0, #0x01800000
+        orrmi   r0, r0, #0x80000000
+        orr     r0, r0, FEXP1, lsr #1
+        mov     pc, lr                          /* normalized result returned. */
+
+LABEL(fmul_process_result_round)
+        teq     r3, #0
+        biceq   r0, r0, #1
+        b       fmul_process_result_done
+
+LABEL(fmul_fexp1_equal_0)
+        movs    r3, FLOAT1, LSL #8
+        beq     fmul_float1_equal_0
+
+        clz     FEXP1, r3
+        mov     FLOAT1, FLOAT1, LSL FEXP1
+        rsb     FEXP1, FEXP1, #0
+        mov     FEXP1, FEXP1, LSL #24           /* Normalize FLOAT1 and compute FEXP1 */
+
+        ands    FEXP2, EMASK, FLOAT2, LSL #1    /* Extract exponent2. */
+        beq     fmul_return_zero
+
+        cmp     FEXP2, EMASK
+        beq     fmul_float2_0_or_fexp2_emask
+
+        adds    FEXP1, FEXP1, FEXP2             /* exp1 = exp1 + exp2. */
+        bpl     fmul_result_denormal_pre2
+        addcs   FEXP1, FEXP1, #0x01000000       /* exp1 = exp1 + 1 for normalized result */
+        bcs     fmul_result_normal
+
+LABEL(fmul_return_zero)
+        textrcb R15, #7
+        mov     r0, #0x0
+        orrmi   r0, r0, #0x80000000
+        mov     pc, lr
+
+LABEL(fmul_float1_equal_0)
+        and     FEXP2, EMASK, FLOAT2, LSL #1    /* Extract exponent2. */
+        cmp     FEXP2, EMASK
+        moveq   r0, #0x7f000000
+        addeq   r0, r0, #0x00c00000             /* return NaN */
+        andne   r1, r1, #0x80000000
+        eorne   r0, FLOAT1, FLOAT2              @ return +/- 0
+        mov     pc, lr
+
+LABEL(fmul_fexp1_not_equal_0_fexp2_equal_0)
+        cmp     FEXP1, EMASK
+        beq     fmul_fexp1_emask_fexp2_0
+
+        movs    r3, FLOAT2, LSL #8
+        beq     fmul_float2_0_or_fexp2_emask
+
+        clz     FEXP2, r3
+        mov     FLOAT2, FLOAT2, LSL FEXP2
+
+        subs    FEXP1, FEXP1, FEXP2, LSL #24    /* exp1 = exp1 + exp2. */
+        bpl     fmul_result_denormal_pre3
+        bcc     fmul_return_zero
+
+LABEL(fmul_fexp1_not_equal_0_fexp2_equal_0_process)
+        mov     FMANT1, FLOAT1, LSL #8          /* Extract mantissa2. */
+        mov     FMANT2, FLOAT2, LSL #1
+        orr     FMANT1, FMANT1, #0x80000000
+        umull   r3, r0, FMANT1, FMANT2          /* {hi<r0>,lo<r3>} = FMANT1 * FMANT2. */
+        sub     FEXP1, FEXP1, #0x7e000000       /* exp1 -= 126 (i.e. the bias). */
+        b       fmul_process_result
+
+LABEL(fmul_fexp1_emask_fexp2_0)
+        movs    r3, FLOAT2, LSL #8
+        moveq   r0, #0x7f000000
+        addeq   r0, r0, #0x00c00000             /* return NaN */
+        andne   r1, r1, #0x80000000             /* return +/- 0 */
+        eorne   r0, r0, r1
+        mov     pc, lr
+
+LABEL(fmul_fexp_equal_emask)
+        cmp     FEXP1, EMASK
+        bne     fmul_float2_0_or_fexp2_emask
+        cmp     FEXP2, EMASK
+        beq     fmul_fexp1_and_fexp2_equal_emask
+
+        and     r1, r1, #0x80000000
+        eor     r0, r0, r1
+        mov     pc, lr
+
+LABEL(fmul_fexp1_and_fexp2_equal_emask)
+        orr     FLOAT1, FLOAT1, FLOAT2
+        textrcb R15, #7
+        bicpl   r0, FLOAT1, #0x80000000         /* return +/- inf or NaN */
+        mov     pc, lr
+
+
+LABEL(fmul_float2_0_or_fexp2_emask)
+        textrcb R15, #7
+        bicpl   r0, FLOAT2, #0x80000000
+        orrmi   r0, FLOAT2, #0x80000000         /* return +/- 0 or inf or NaN */
+        mov     pc, lr
+
+LABEL(fmul_result_denormal_pre3)
+        cmp     FEXP1, #0x7f000000              /* special case */
+        beq     fmul_fexp1_not_equal_0_fexp2_equal_0_process
+        b       fmul_result_denormal
+
+LABEL(fmul_result_denormal_pre2)
+        cmp     FEXP1, #0x7f000000              /* special case */
+        addeq   FEXP1, FEXP1, #0x01000000
+        beq     fmul_result_normal
+        b       fmul_result_denormal
+
+LABEL(fmul_result_denormal_pre1)
+        sub     FEXP1, FEXP1, #1
+
+LABEL(fmul_result_denormal)
+        subs    FEXP1, FEXP1,  #0x66000000      /* fexp1 < -25 */
+        blt     fmul_return_zero
+
+        mov     FMANT2, FLOAT2, LSL #8          /* Extract mantissa1. */
+        mov     FMANT1, FLOAT1, LSL #8          /* Extract mantissa2. */
+        mov     FMANT2, FMANT2, LSR #3
+        mov     FMANT1, FMANT1, LSR #4
+        orr     FMANT2, FMANT2, #0x10000000
+        orr     FMANT1, FMANT1, #0x08000000
+
+        mov     FEXP1, FEXP1, LSR #24
+        rsb     FEXP1, FEXP1, #25
+        tmcr    wCGR0, FEXP1
+        textrcb R15, #7
+        wzero   wR0
+        tmia    wR0, FMANT1, FMANT2             /* {wR0} = FMANT1 * FMANT2. */
+        wsrldg  wR0, wR0, wCGR0
+        tmrrc   r3, r0, wR0
+        movpl   r1, #0
+        movmi   r1, #0x80000000
+        cmp     r3, #0x80000000
+        addhs   r0, r0, #1
+        biceq   r0, r0, #1
+
+
+        eor     r0, r0, r1
+        mov     pc, lr
+
+LABEL(fmul_result_too_big)
+        tst     r0, #0x01000000                 /* if result has carry, return inf */
+        bne     fmul_return_inf
+        movs    r3, r3, lsl #1
+        adc     r0, r0, #0
+        bcs     fmul_result_too_big_round
+
+LABEL(fmul_result_too_big_round_done)
+        tst     r0, #0x01000000                 /* if result has carry, return inf */
+        bne     fmul_return_inf
+
+        textrcb R15, #7
+        bic     r0, r0, #0x01800000
+        orrmi   r0, r0, #0x80000000
+        orr     r0, r0, FEXP1, lsr #1
+        mov     pc, lr
+
+LABEL(fmul_result_too_big_round)
+        teq     r3, #0
+        biceq   r0, r0, #1
+        b       fmul_result_too_big_round_done
+
+LABEL(fmul_fexp_too_big)
+        cmp     FEXP1, #0x7e000000
+        blo     fmul_result_normal
+
+LABEL(fmul_return_inf)
+        textrcb R15, #7
+        mov     r0, #0x7f000000
+        add     r0, r0, #0x00800000
+        orrmi   r0, r0, #0x80000000
+        mov     pc, lr
+#undef FEXP1
+#undef FEXP2
+#undef FMANT1
+#undef FMANT2
+#undef SIGN
+
+#else
 
         /* The following saves registers that we're going to use and extracts
            exponents and mantissa from the floats. */
@@ -492,6 +885,8 @@ LABEL(_fmulNormalizing)
         adcs    MANT1, MANT1, MANT1     /* Shift high-order word left by 1. */
         bpl     _fmulNormalizing        /* If high bit not set, continue. */
         /* Fall through to _fmulCheckForStickyBit. */
+#endif
+/* IAI - 16 */
 
 LABEL(_fmulCheckForStickyBit)
         /* Is already normalized.  Check the sticky bit for rounding: */
@@ -518,6 +913,8 @@ LABEL(_fmulDoGradualUnderflow)
         mov     MANT1, MANT1, LSR r7    /* Shift right be said bits. */
         b       _fmulCheckForStickyBit  /* Go do rounding for the result. */
 
+/* IAI - 16 */
+#ifndef IAI_WMMX_FMUL
 LABEL(_fmulCheckFloat1ForZero)
         /* If we get here, then float1 and float2 are finite: */
         cmp     MANT1, #0               /* Check for 0. */
@@ -563,6 +960,8 @@ LABEL(_fmulFloat1CheckForZeroInFloat2)
         orrs    r12, EXP2, MANT2        /* Check for 0. */
         beq     _floatReturnNaN         /* inf * 0 => nan. */
         b       _floatReturnInfinity    /* inf * finite => inf. */
+#endif
+/* IAI - 16 */
 
 /*
  * The following are common to FAdd, FSub, and FMul:
@@ -1859,7 +2258,7 @@ LABEL(_double_deliver_Infinity)
 LABEL(_dmult_unpackB)
 	DOUBLE_UNPACK( B1, EXPB, _dmult_normalizeB, _dmult_exceptionalB )
 LABEL(_dmult_unpacked)
-	tst	FLAGS, #(ZEROFLAG|INFFLAG)
+	tst	FLAGS, #OR2(ZEROFLAG,INFFLAG)
 	bne	_dmult_special_operands
 	/*
 	 * Here we have a couple of normalized operands and
@@ -2512,7 +2911,7 @@ LABEL(_dadd_noxchng)
 LABEL(_dadd_unpackB)
 	DOUBLE_UNPACK( B1, EXPB, _dadd_subnormalB, _dadd_exceptionalB )
 LABEL(_dadd_unpacked)
-	tst	FLAGS, #(AINFFLAG|BINFFLAG|AZFLAG|BZFLAG)
+	tst	FLAGS, #OR4(AINFFLAG,BINFFLAG,AZFLAG,BZFLAG)
 	bne	_dadd_unusual_operands
 
 	/*
@@ -2676,7 +3075,7 @@ LABEL(_dadd_exceptionalB)
 	DOUBLE_EXCEPTIONAL( B1, B2, #BINFFLAG, _dadd_unpacked )
 
 LABEL(_dadd_unusual_operands)
-	tst	FLAGS, #(AINFFLAG|BINFFLAG)
+	tst	FLAGS, #OR2(AINFFLAG,BINFFLAG)
 	bne	_dadd_infinite_operands
 	/*
 	 * one or more zeros. No Infinities or NaNs here.
@@ -2749,7 +3148,7 @@ ENTRY1( CVMCCMruntimeDDiv_C )
 LABEL(_ddivUnpackB)
 	DOUBLE_UNPACK( B1, EXPB, _ddivNormalizeB, _ddivExceptionalB )
 LABEL(_ddivUnpacked)
-	tst	FLAGS, #(AZFLAG|BZFLAG|AINFFLAG|BINFFLAG)
+	tst	FLAGS, #OR4(AZFLAG,BZFLAG,AINFFLAG,BINFFLAG)
 	bne	_ddivSpecialOperands
 	/*
 	 * Here we have a couple of normalized operands and
@@ -2897,11 +3296,11 @@ LABEL(_ddivExceptionalB)
 	 */
 LABEL(_ddivSpecialOperands)
 	bic	RESULTX, FLAGS, #0x80000000 /* disregard sign */
-	teq	RESULTX, #(AINFFLAG|BINFFLAG)
+	teq	RESULTX, #OR2(AINFFLAG,BINFFLAG)
 	beq	_double_deliver_NaN	/* Inf / Inf => NaN */
-	teq	RESULTX, #(AZFLAG|BZFLAG)
+	teq	RESULTX, #OR2(AZFLAG,BZFLAG)
 	beq	_double_deliver_NaN	/* 0 / 0 => NaN */
-	tst	RESULTX, #(AINFFLAG|BZFLAG)
+	tst	RESULTX, #OR2(AINFFLAG,BZFLAG)
 	bne	_double_deliver_Infinity /* Inf / non-Inf == non-0 / 0 => Inf */
 	/* resulting cases are: */
 	/*	non-Inf / Inf => 0 */
@@ -3049,6 +3448,48 @@ ENTRY1( CVMCCMruntimeIDiv )
 	ENTRY ( CVMCCMruntimeIDiv_C )
 ENTRY1 ( CVMCCMruntimeIDiv_C )
 
+#define DIVIDE_STEP0(shiftcount, R, V, QUOT) \
+        cmp         R,          V,          LSL shiftcount
+#define DIVIDE_STEP1(shiftcount, R, V, QUOT) \
+        subhs       R,          R,          V,          LSL shiftcount
+#define DIVIDE_STEP2(shiftcount, R, V, QUOT) \
+        adc         QUOT,       QUOT,       QUOT
+
+#define DIVIDE_INTERLOOP_STEP0(shiftcount, label, R, V) \
+        cmp         R,          V,          LSL shiftcount
+#define DIVIDE_INTERLOOP_STEP1(shiftcount, label, R, V) \
+        bls         label       
+
+#ifdef __RVCT__
+	MACRO
+	M_DIVIDE_STEP $ShiftCount, $R, $V, $Q
+	DIVIDE_STEP0($ShiftCount, $R, $V, $Q)
+	DIVIDE_STEP1($ShiftCount, $R, $V, $Q)
+	DIVIDE_STEP2($ShiftCount, $R, $V, $Q)
+	MEND
+#define DIVIDE_STEP(shiftcount) M_DIVIDE_STEP shiftcount, R, V, QUOT
+
+	MACRO
+	M_DIVIDE_INTERLOOP_STEP $ShiftCount, $Label, $R, $V
+	DIVIDE_INTERLOOP_STEP0($ShiftCount, $Label, $R, $V)
+	DIVIDE_INTERLOOP_STEP1($ShiftCount, $Label, $R, $V)
+	MEND
+#define DIVIDE_INTERLOOP_STEP($shiftcount, label) \
+	M_DIVIDE_INTERLOOP_STEP shiftcount, label, R, V
+#else
+
+#define DIVIDE_STEP(shiftcount) \
+	DIVIDE_STEP0(shiftcount, R, V, QUOT); \
+	DIVIDE_STEP1(shiftcount, R, V, QUOT); \
+	DIVIDE_STEP2(shiftcount, R, V, QUOT)
+
+#define DIVIDE_INTERLOOP_STEP(shiftcount, label) \
+	DIVIDE_INTERLOOP_STEP0(shiftcount, label, R, V); \
+	DIVIDE_INTERLOOP_STEP1(shiftcount, label, R, V) \
+
+#endif
+
+
 /* IAI-06 */
 #ifdef IAI_IDIV
 	/*
@@ -3072,13 +3513,6 @@ ENTRY1 ( CVMCCMruntimeIDiv_C )
 	 * We shift the Carry bit from the compare into the quotient,
 	 * and diminish the shifted divisor.
 	 */
-#define DIVIDE_STEP(shiftcount) \
-        cmp         R,          V,          LSL shiftcount ; \
-        subhs       R,          R,          V,          LSL shiftcount ; \
-        adc         QUOT,       QUOT,       QUOT        
-#define DIVIDE_INTERLOOP_STEP(shiftcount, label) \
-        cmp         R,          V,          LSL shiftcount ; \
-        bls         label       
 
         mov         FLAGS,      #DIVFLAG    
 	/* rem merges in here. */
@@ -3283,10 +3717,6 @@ LABEL(_idivByZeroOrOne)
 	 * We shift the Carry bit from the compare into the quotient,
 	 * and diminish the shifted divisor.
 	 */
-#define DIVIDE_STEP(shiftcount) \
-	cmp	R, V, LSL  shiftcount ; \
-	subhs	R, R, V, LSL  shiftcount ; \
-	adc	QUOT, QUOT, QUOT
 #define DIVIDE_STEP_INSTRUCTIONS 3
 #define DIVIDE_STEP_SIZE (DIVIDE_STEP_INSTRUCTIONS*4)
 #define MAX_ITER 31

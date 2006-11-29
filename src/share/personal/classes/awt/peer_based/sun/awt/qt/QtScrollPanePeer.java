@@ -1,23 +1,28 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)QtScrollPanePeer.java	1.22 06/10/20
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ *
  */
 package sun.awt.qt;
 
@@ -30,6 +35,7 @@ import sun.awt.peer.*;
 /**
  *
  *
+ * @author Nicholas Allen
  */
 class QtScrollPanePeer extends QtContainerPeer implements ScrollPanePeer
 {
@@ -79,15 +85,68 @@ class QtScrollPanePeer extends QtContainerPeer implements ScrollPanePeer
         
         // This accounts for the 2 pixels from the edge of the viewport
         // to the edge of the scrollview on qt-emb-2.3.2.
-	Insets inset = new Insets(2, 2, 2, 2);
+	Insets insets = new Insets(2, 2, 2, 2);
 
-        if (scrollbarVisible(Adjustable.VERTICAL))
-            inset.right = vScrollbarWidth;
-      
-        if (scrollbarVisible(Adjustable.HORIZONTAL))
-            inset.bottom = hScrollbarHeight;
- 
-	return inset;
+        // 6347067.
+        // TCK: ScrollPane test failed when waiting time is added after the validate().
+        // Fixed 6228838: Resizing the panel cause wrong scroll bar range
+        // on zaurus, which, in turn, fixed the viewport size problem in
+        // CDC 1.1 linux-x86.  But zaurus still has a problem which is shown when
+        // running the PP-TCK interactive ComponetTests where two tests will have
+        // both scroll bars on and in these two tests, you can see that the
+        // bottom of the "Yes" "No" buttons are chopped off.
+        //
+        // The getInsets() call is modified to calculate whether scrollbars are on
+        // in order to return the correct insets.  In particular,
+        //
+        // Given that the hScrollbarHeight and vScrollbarWidth are known, which
+        // is true in the Qt port case:
+        //
+        // hScrollbarOn is a function of scrollpane dim, child dim, as well as
+        // vScrollbarOn in the boundary case where the horizontal scrollbar could
+        // be needed if the vertical scrollbar needs to be present and the extra
+        // width due to the vertical scrollbar just makes the horizontal
+        // scrollbar necessary!
+
+        ScrollPane sp = (ScrollPane)target;
+        Dimension d = sp.size();
+        Component c = getScrollChild();
+        Dimension cd;
+        if (c != null) {
+            cd = c.size();
+        } else {
+            cd = new Dimension(0, 0);
+        }
+
+        if (scrollbarDisplayPolicy == ScrollPane.SCROLLBARS_ALWAYS) {
+            insets.right += vScrollbarWidth;
+            insets.bottom += hScrollbarHeight;
+        } else if (scrollbarDisplayPolicy == ScrollPane.SCROLLBARS_AS_NEEDED) {
+            if (d.width - insets.left*2 < cd.width) {
+                // Hbar is necessary.
+                insets.bottom += hScrollbarHeight;
+                if (d.height - insets.top - insets.bottom < cd.height) {
+                    insets.right += vScrollbarWidth;
+                }
+            } else if (d.width - insets.left*2 - cd.width >= vScrollbarWidth) {
+                // We're very sure that hbar will not be on.
+                if (d.height - insets.top*2 < cd.height) {
+                    insets.right += vScrollbarWidth;
+                }
+            } else {
+                // Borderline case so we need to check vbar first.
+                if (d.height - insets.top*2 < cd.height) {
+                    insets.right += vScrollbarWidth;
+                    if (d.width - insets.left - insets.right < cd.width) {
+                        // Hbar is needed after all!
+                        insets.bottom += hScrollbarHeight;
+                    }
+                }
+            }
+        } 
+        // 6347067.
+
+	return insets;
     }
 	
     public int getHScrollbarHeight() 

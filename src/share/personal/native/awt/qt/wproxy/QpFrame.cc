@@ -1,23 +1,27 @@
 /*
- * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ * @(#)QpFrame.cc	1.10 06/10/25
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 only,
- * as published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * version 2 for more details (a copy is included at /legal/license.txt).
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
  * 
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
  * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 or visit www.sun.com if you need additional information or have
- * any questions.
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */
 
 #include "QpWidgetFactory.h"
@@ -39,48 +43,6 @@ QpFrame::QpFrame(QpWidget *parent, char *name, int flags) {
                                                                name,
                                                                flags);
     this->setQWidget(widget);
-    warningStringLabel = NULL;   //6233632
-}
-
-/*
-  6233632
-*/
-void
-QpFrame::createWarningLabel(QString warningString) {
-    QT_METHOD_ARGS_ALLOC(qtMethodParam, argp);
-    argp->param = (void *)&warningString;
-    invokeAndWait(QpFrame::CreateWarningLabel,argp);
-    QT_METHOD_ARGS_FREE(argp);
-}
-
-/*
-  6233632
-*/
-void
-QpFrame::resizeWarningLabel(void) {
-    //if (statusBar != NULL) {
-    if (warningStringLabel != NULL) {
-        QT_METHOD_ARGS_ALLOC(qtMethodParam, argp);
-        invokeAndWait(QpFrame::ResizeWarningLabel,argp);
-        QT_METHOD_ARGS_FREE(argp);
-    }
-}
-
-/*
-  6233632
-*/
-int
-QpFrame::warningLabelHeight(void) {
-    //if (statusBar == NULL) {
-    if (warningStringLabel == NULL) {
-        return 0;
-    } else {
-        QT_METHOD_ARGS_ALLOC(qtMethodReturnValue, argp);
-        invokeAndWait(QpFrame::WarningLabelHeight, argp);
-        int rv = (int)argp->rvalue;
-        QT_METHOD_ARGS_FREE(argp);
-        return rv;
-    }
 }
 
 void
@@ -117,6 +79,7 @@ QpFrame::setFrameRect(QRect rect){
 }
 
 #ifdef QWS
+#ifdef QTOPIA
 QPoint 
 QpFrame::getOriginWithDecoration(){
     QT_METHOD_ARGS_ALLOC(qtQPointArg, argp);
@@ -125,6 +88,7 @@ QpFrame::getOriginWithDecoration(){
     QT_METHOD_ARGS_FREE(argp);
     return rv;
 }
+#endif
 #endif /* QWS */
 
 QRect
@@ -171,64 +135,16 @@ QpFrame::execute(int methodId, void *args) {
     case QpFrame::FrameStyle:
         ((qtMethodReturnValue *)args)->rvalue = (void *)execFrameStyle();
         break;
-    case QpFrame::CreateWarningLabel:{
-        QString *warningString = (QString *)((qtMethodParam *)args)->param;
-        execCreateWarningLabel(*warningString);
-        }
-        break;
-    case QpFrame::ResizeWarningLabel:   //6233632
-        execResizeWarningLabel();
-        break;
-    case QpFrame::WarningLabelHeight:
-        ((qtMethodReturnValue *)args)->rvalue = (void *)execWarningLabelHeight();
-        break;
 #ifdef QWS
+#ifdef QTOPIA
     case QpFrame::GetOriginWithDecoration:
         ((qtQPointArg *)args)->arg = execGetOriginWithDecoration();
         break;
+#endif
 #endif /* QWS */
     default :
         break;
     }
-}
-
-/*
-  6233632
-*/        
-void 
-QpFrame::execCreateWarningLabel(QString warningString) {
-    QFrame *frame = (QFrame *)this->getQWidget();
-
-    // Create the warning label
-    warningStringLabel = new QLabel(warningString, frame);
-    warningStringLabel->setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum));
-    warningStringLabel->setAlignment(Qt::AlignHCenter);
-
-    // Set the color to slightly darker then the frame.
-    QColor color = frame->backgroundColor();
-    QColor darkColor = color.dark(125);
-    warningStringLabel->setBackgroundColor(darkColor);
-    warningStringLabel->setGeometry(0, 
-                                    frame->height() - warningStringLabel->height(), 
-                                    frame->width(), 
-                                    warningStringLabel->height());
- }
-
-/*
-  6233632
-*/
-void
-QpFrame::execResizeWarningLabel(void) {
-    QFrame *frame = (QFrame *)this->getQWidget();
-    warningStringLabel->setGeometry(0, 
-                                    frame->height() - warningStringLabel->height(), 
-                                    frame->width(), 
-                                    warningStringLabel->height());
-}
-
-int
-QpFrame::execWarningLabelHeight(void) {
-    return warningStringLabel->height();
 }
 
 void
@@ -268,6 +184,7 @@ QpFrame::execFrameStyle(void) {
 }
 
 #ifdef QWS
+#ifdef QTOPIA
 #include <qpe/qpeapplication.h>
 QPoint
 QpFrame::execGetOriginWithDecoration() {
@@ -281,4 +198,5 @@ QpFrame::execGetOriginWithDecoration() {
     return rv;
 }
 
+#endif
 #endif /* QWS */
