@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -30,11 +31,6 @@
 # Add to global SUBSYSTEMS list
 #
 SUBSYSTEMS += jsr_172
-
-# Project speficic definitions
-ifndef PROJECT_JSR_172_DIR
-PROJECT_JSR_172_DIR=$(JSR_172_DIR)
-endif
 
 # Javadoc source path
 SUBSYSTEM_JSR172_SOURCEPATH += $(JSR_172_DIR)/src/ri/jaxp$(PATHSEP)$(JSR_172_DIR)/src/ri/jaxrpc$(PATHSEP)$(JSR_172_DIR)/src/ri/sg

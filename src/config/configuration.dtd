@@ -1,9 +1,10 @@
 <!--
+        	
 
         Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 -->
-<!ELEMENT configuration (properties | constants | localized_strings | skin)*>
+<!ELEMENT configuration (properties | constants | localized_strings | skin | rawimage)*>
 <!ELEMENT properties (property)+>
 <!ELEMENT property EMPTY>
 <!-- If callout is specified, it must be a defined native function -->
@@ -45,15 +46,17 @@
     (starting from zero and going up).
 
     JavaOnly: generate only .java file for constants.
+    NativeOnly: generate only native definitions for constants.
 -->
 <!ATTLIST constant_class
     Package  CDATA                          #REQUIRED
     Name     CDATA                          #REQUIRED
     Scope    (protected | public)           "public"
     Comment  CDATA                          #IMPLIED
-    KeysValuesProvider (true | false)        "false"
-    AutoValue (true | false)                "false"
-    JavaOnly  (true | false)                "false"
+    KeysValuesProvider (true | false)       "false"
+    AutoValue  (true | false)               "false"
+    JavaOnly   (true | false)               "false"
+    NativeOnly (true | false)               "false"
 >
 
 <!ELEMENT constant EMPTY>
@@ -63,27 +66,14 @@
     Value     CDATA                          #IMPLIED
     VScope    (protected | public | private) "public"
     Comment   CDATA                          #IMPLIED
+    JavaOnly   (true | false)                "false"
+    NativeOnly (true | false)                "false"
 >
 
 <!--
     Top level node for skin description
 -->
 <!ELEMENT skin (skin_properties)>
-
-<!--
-    Raw format: what raw file format to use for romized
-    images. 
-
-    ColorFormat: what color format to use for romized
-    images.
-
-    Endian: raw image data endianess 
--->
-<!ATTLIST skin
-    RawFormat       (Putpixel | ARGB)       #REQUIRED
-    ColorFormat     CDATA                   #REQUIRED
-    Endian          (Big | Little)          #REQUIRED
->
 
 
 <!--
@@ -158,3 +148,12 @@
         Romized     (true | false)          "false"
 >
 
+<!--
+    Raw image format description
+-->
+<!ELEMENT rawimage EMPTY>
+<!ATTLIST rawimage
+        Format    (Putpixel | ARGB)         #REQUIRED
+        Colors    (565 | 888)               #REQUIRED
+        Endian    (Little | Big)            #REQUIRED
+>
