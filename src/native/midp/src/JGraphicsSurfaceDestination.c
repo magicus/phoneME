@@ -34,6 +34,9 @@
 #include <gxapi_graphics.h>
 #include <gx_graphics.h>
 
+#include <sni.h>
+#include <commonKNIMacros.h>
+
 static jboolean pisces_drawRGB(jobject graphicsHandle, 
                                jint* argb, jint scanLength, 
                                jint x, jint y, 
@@ -115,28 +118,17 @@ Java_com_sun_pisces_GraphicsSurfaceDestination_drawRGBImpl() {
     KNI_GetParameterAsObject(2, arrayHandle);
 
     if ((width > 0) && (height > 0) && (opacity > 0)) {
-        jint size = ((height - 1) * scanLength + width) * sizeof(jint);
-        jint* tempArray = (jint*)pcsl_mem_malloc(size);
-    
-        if (NULL == tempArray) {
-            KNI_ThrowNew("java/lang/OutOfMemoryError", 
-                         "Allocation of temporary renderer memory buffer failed.");
-        } else {
-            jboolean retVal;
-            KNI_GetRawArrayRegion(arrayHandle, offset * sizeof(jint), size,
-                                  (jbyte*)tempArray);
+	jint* tempArray;
 
-            retVal = pisces_drawRGB(graphicsHandle, tempArray, scanLength,
-                                    x, y, width,
-                                    height, opacity);
-      
-            pcsl_mem_free(tempArray);
+	SNI_BEGIN_RAW_POINTERS;
 
-            if(KNI_FALSE == retVal) {
-                KNI_ThrowNew("java/lang/RuntimeError", 
-                             "Renderer error : drawRGB failed.");
-            }
-        }
+	tempArray = &JavaIntArray(arrayHandle)[offset];
+	    
+	pisces_drawRGB(graphicsHandle, tempArray, scanLength,
+		       x, y, width,
+		       height, opacity);
+
+	SNI_END_RAW_POINTERS;
     }
   
     KNI_EndHandles();

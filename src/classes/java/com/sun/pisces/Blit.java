@@ -300,9 +300,10 @@ public class Blit {
                                        int imageScanlineStride,
                                        int imagePixelStride,
                                        byte[] alpha,
-                                       int alphaOffset, int alphaStride,
+                                       int alphaOffset,
                                        int width, int height,
                                        int[] minTouched, int[] maxTouched,
+                                       int[] rowOffsets,
                                        int cred, int cgreen, int cblue,
                                        int calpha, int[] alphaMap) {
         int cval = 0xff000000 | (cred << 16) | (cgreen << 8) | cblue;
@@ -311,7 +312,7 @@ public class Blit {
             int minX = minTouched[j];
             int maxX = maxTouched[j];
 
-            int aidx = alphaOffset + minX;
+            int aidx = alphaOffset + rowOffsets[j] + minX;
             int iidx = imageOffset + minX*imagePixelStride;
             int w = (maxX >= minX) ? (maxX - minX + 1) : 0;
             if (w + minX > width) {
@@ -329,7 +330,6 @@ public class Blit {
                 }
             }
 
-            alphaOffset += alphaStride;
             imageOffset += imageScanlineStride;
         }
     }
@@ -339,9 +339,10 @@ public class Blit {
                                         int imageScanlineStride,
                                         int imagePixelStride,
                                         byte[] alpha,
-                                        int alphaOffset, int alphaStride,
+                                        int alphaOffset,
                                         int width, int height,
                                         int[] minTouched, int[] maxTouched,
+                                        int[] rowOffsets,
                                         int cred, int cgreen, int cblue,
                                         int calpha, int[] alphaMap) {
         int cval = 0xff000000 | (cred << 16) | (cgreen << 8) | cblue;
@@ -350,7 +351,7 @@ public class Blit {
             int minX = minTouched[j];
             int maxX = maxTouched[j];
 
-            int aidx = alphaOffset + minX;
+            int aidx = alphaOffset + rowOffsets[j] + minX;
             int iidx = imageOffset + minX*imagePixelStride;
             int w = (maxX >= minX) ? (maxX - minX + 1) : 0;
             if (w + minX > width) {
@@ -368,7 +369,6 @@ public class Blit {
                 }
             }
 
-            alphaOffset += alphaStride;
             imageOffset += imageScanlineStride;
         }
     }
@@ -378,9 +378,10 @@ public class Blit {
                                        int imageScanlineStride,
                                        int imagePixelStride,
                                        byte[] alpha,
-                                       int alphaOffset, int alphaStride,
+                                       int alphaOffset,
                                        int width, int height,
                                        int[] minTouched, int[] maxTouched,
+                                       int[] rowOffsets,
                                        int cred5, int cgreen6, int cblue5,
                                        int calpha, int[] alphaMap) {
         short cval = (short)((cred5 << 11) | (cgreen6 << 5) | (cblue5));
@@ -389,7 +390,7 @@ public class Blit {
             int minX = minTouched[j];
             int maxX = maxTouched[j];
 
-            int aidx = alphaOffset + minX;
+            int aidx = alphaOffset + rowOffsets[j] + minX;
             int iidx = imageOffset + minX*imagePixelStride;
             int w = (maxX >= minX) ? (maxX - minX + 1) : 0;
             if (w + minX > width) {
@@ -407,7 +408,6 @@ public class Blit {
                 }
             }
 
-            alphaOffset += alphaStride;
             imageOffset += imageScanlineStride;
         }
     }
@@ -417,9 +417,10 @@ public class Blit {
                                      int imageScanlineStride,
                                      int imagePixelStride,
                                      byte[] alpha,
-                                     int alphaOffset, int alphaStride,
+                                     int alphaOffset,
                                      int width, int height,
                                      int[] minTouched, int[] maxTouched,
+                                     int[] rowOffsets,
                                      int cgray,
                                      int calpha, int[] alphaMap) {
         byte cval = (byte)cgray;
@@ -428,7 +429,7 @@ public class Blit {
             int minX = minTouched[j];
             int maxX = maxTouched[j];
 
-            int aidx = alphaOffset + minX;
+            int aidx = alphaOffset + rowOffsets[j] + minX;
             int iidx = imageOffset + minX*imagePixelStride;
             int w = (maxX >= minX) ? (maxX - minX + 1) : 0;
             if (w + minX > width) {
@@ -446,7 +447,6 @@ public class Blit {
                 }
             }
 
-            alphaOffset += alphaStride;
             imageOffset += imageScanlineStride;
         }
     }
@@ -457,9 +457,10 @@ public class Blit {
                                        int imageScanlineStride,
                                        int imagePixelStride,
                                        byte[] alpha,
-                                       int alphaOffset, int alphaStride,
+                                       int alphaOffset,
                                        int width, int height,
                                        int[] minTouched, int[] maxTouched,
+                                       int[] rowOffsets,
                                        int[] paintData,
                                        int paintOffset,
                                        int paintScanlineStride,
@@ -468,7 +469,7 @@ public class Blit {
             int minX = minTouched[j];
             int maxX = maxTouched[j];
 
-            int aidx = alphaOffset + minX;
+            int aidx = alphaOffset + rowOffsets[j] + minX;
             int pidx = paintOffset + minX;
             int iidx = imageOffset + minX*imagePixelStride;
             int w = (maxX >= minX) ? (maxX - minX + 1) : 0;
@@ -500,7 +501,6 @@ public class Blit {
                 }
             }
 
-            alphaOffset += alphaStride;
             paintOffset += paintScanlineStride;
             imageOffset += imageScanlineStride;
         }
@@ -512,9 +512,10 @@ public class Blit {
                                         int imageScanlineStride,
                                         int imagePixelStride,
                                         byte[] alpha,
-                                        int alphaOffset, int alphaStride,
+                                        int alphaOffset,
                                         int width, int height,
                                         int[] minTouched, int[] maxTouched,
+                                        int[] rowOffsets,
                                         int[] paintData,
                                         int paintOffset,
                                         int paintScanlineStride,
@@ -523,7 +524,7 @@ public class Blit {
             int minX = minTouched[j];
             int maxX = maxTouched[j];
 
-            int aidx = alphaOffset + minX;
+            int aidx = alphaOffset + rowOffsets[j] + minX;
             int pidx = paintOffset + minX;
             int iidx = imageOffset + minX*imagePixelStride;
             int w = (maxX >= minX) ? (maxX - minX + 1) : 0;
@@ -554,7 +555,6 @@ public class Blit {
                 }
             }
 
-            alphaOffset += alphaStride;
             paintOffset += paintScanlineStride;
             imageOffset += imageScanlineStride;
         }
@@ -566,9 +566,10 @@ public class Blit {
                                        int imageScanlineStride,
                                        int imagePixelStride,
                                        byte[] alpha,
-                                       int alphaOffset, int alphaStride,
+                                       int alphaOffset,
                                        int width, int height,
                                        int[] minTouched, int[] maxTouched,
+                                       int[] rowOffsets,
                                        int[] paintData,
                                        int paintOffset,
                                        int paintScanlineStride,
@@ -577,7 +578,7 @@ public class Blit {
             int minX = minTouched[j];
             int maxX = maxTouched[j];
 
-            int aidx = alphaOffset + minX;
+            int aidx = alphaOffset + rowOffsets[j] + minX;
             int pidx = paintOffset + minX;
             int iidx = imageOffset + minX*imagePixelStride;
             int w = (maxX >= minX) ? (maxX - minX + 1) : 0;
@@ -609,7 +610,6 @@ public class Blit {
                 }
             }
 
-            alphaOffset += alphaStride;
             paintOffset += paintScanlineStride;
             imageOffset += imageScanlineStride;
         }
@@ -621,9 +621,10 @@ public class Blit {
                                      int imageScanlineStride,
                                      int imagePixelStride,
                                      byte[] alpha,
-                                     int alphaOffset, int alphaStride,
+                                     int alphaOffset,
                                      int width, int height,
                                      int[] minTouched, int[] maxTouched,
+                                     int[] rowOffsets,
                                      int[] paintData,
                                      int paintOffset,
                                      int paintScanlineStride,
@@ -632,7 +633,7 @@ public class Blit {
             int minX = minTouched[j];
             int maxX = maxTouched[j];
 
-            int aidx = alphaOffset + minX;
+            int aidx = alphaOffset + rowOffsets[j] + minX;
             int pidx = paintOffset + minX;
             int iidx = imageOffset + minX*imagePixelStride;
             int w = (maxX >= minX) ? (maxX - minX + 1) : 0;
@@ -666,7 +667,6 @@ public class Blit {
                 }
             }
 
-            alphaOffset += alphaStride;
             paintOffset += paintScanlineStride;
             imageOffset += imageScanlineStride;
         }
@@ -985,9 +985,10 @@ public class Blit {
                             int imageScanlineStride,
                             int imagePixelStride,
                             byte[] alphaData,
-                            int alphaOffset, int alphaStride,
+                            int alphaOffset,
                             int width, int height,
                             int[] minTouched, int[] maxTouched,
+                            int[] rowOffsets,
                             int compositeRule,
                             int red, int green, int blue,
                             int alpha, int[] alphaMap) {
@@ -997,8 +998,9 @@ public class Blit {
             case TYPE_INT_RGB:
                 blitSrcOver888((int[])imageData, imageOffset,
                                imageScanlineStride, imagePixelStride,
-                               alphaData, alphaOffset, alphaStride,
-                               width, height, minTouched, maxTouched,
+                               alphaData, alphaOffset,
+                               width, height,
+                               minTouched, maxTouched, rowOffsets,
                                red, green, blue,
                                alpha, alphaMap);
                 return;
@@ -1006,8 +1008,9 @@ public class Blit {
             case TYPE_INT_ARGB:
                 blitSrcOver8888((int[])imageData, imageOffset,
                                 imageScanlineStride, imagePixelStride,
-                                alphaData, alphaOffset, alphaStride,
-                                width, height, minTouched, maxTouched,
+                                alphaData, alphaOffset,
+                                width, height,
+                                minTouched, maxTouched, rowOffsets,
                                 red, green, blue,
                                 alpha, alphaMap);
                 return;
@@ -1015,8 +1018,9 @@ public class Blit {
             case TYPE_USHORT_565_RGB:
                 blitSrcOver565((short[])imageData, imageOffset,
                                imageScanlineStride, imagePixelStride,
-                               alphaData, alphaOffset, alphaStride,
-                               width, height, minTouched, maxTouched,
+                               alphaData, alphaOffset,
+                               width, height,
+                               minTouched, maxTouched, rowOffsets,
                                red, green, blue,
                                alpha, alphaMap);
                 return;
@@ -1025,8 +1029,9 @@ public class Blit {
                 int gray = (int)(0.3f*red + 0.59f*green + 0.11f*blue + 0.5f);
                 blitSrcOver8((byte[])imageData, imageOffset,
                              imageScanlineStride, imagePixelStride,
-                             alphaData, alphaOffset, alphaStride,
-                             width, height, minTouched, maxTouched,
+                             alphaData, alphaOffset,
+                             width, height,
+                             minTouched, maxTouched, rowOffsets,
                              gray,
                              alpha, alphaMap);
                 return;
@@ -1045,9 +1050,10 @@ public class Blit {
                             int imageScanlineStride,
                             int imagePixelStride,
                             byte[] alphaData,
-                            int alphaOffset, int alphaStride,
+                            int alphaOffset,
                             int width, int height,
                             int[] minTouched, int[] maxTouched,
+                            int[] rowOffsets,
                             int compositeRule,
                             int[] paintData,
                             int paintOffset, int paintScanlineStride,
@@ -1059,8 +1065,9 @@ public class Blit {
             case TYPE_INT_RGB:
                 blitSrcOver888((int[])imageData, imageOffset,
                                imageScanlineStride, imagePixelStride,
-                               alphaData, alphaOffset, alphaStride,
-                               width, height, minTouched, maxTouched,
+                               alphaData, alphaOffset,
+                               width, height,
+                               minTouched, maxTouched, rowOffsets,
                                paintData, paintOffset,
                                paintScanlineStride,
                                alphaMap);
@@ -1069,8 +1076,9 @@ public class Blit {
             case TYPE_INT_ARGB:
                 blitSrcOver8888((int[])imageData, imageOffset,
                                 imageScanlineStride, imagePixelStride,
-                                alphaData, alphaOffset, alphaStride,
-                                width, height, minTouched, maxTouched,
+                                alphaData, alphaOffset,
+                                width, height,
+                                minTouched, maxTouched, rowOffsets,
                                 paintData, paintOffset,
                                 paintScanlineStride,
                                 alphaMap);
@@ -1079,8 +1087,9 @@ public class Blit {
             case TYPE_USHORT_565_RGB:
                 blitSrcOver565((short[])imageData, imageOffset,
                                imageScanlineStride, imagePixelStride,
-                               alphaData, alphaOffset, alphaStride,
-                               width, height, minTouched, maxTouched,
+                               alphaData, alphaOffset,
+                               width, height,
+                               minTouched, maxTouched, rowOffsets,
                                paintData, paintOffset,
                                paintScanlineStride,
                                alphaMap);
@@ -1089,8 +1098,9 @@ public class Blit {
             case TYPE_BYTE_GRAY:
                 blitSrcOver8((byte[])imageData, imageOffset,
                              imageScanlineStride, imagePixelStride,
-                             alphaData, alphaOffset, alphaStride,
-                             width, height, minTouched, maxTouched,
+                             alphaData, alphaOffset,
+                             width, height,
+                             minTouched, maxTouched, rowOffsets,
                              paintData, paintOffset,
                              paintScanlineStride,
                              alphaMap);

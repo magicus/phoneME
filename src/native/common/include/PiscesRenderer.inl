@@ -1114,7 +1114,6 @@ renderStrip(Renderer* rdr) {
           x0 -= rdr->_rasterMinX;
           x1 -= rdr->_rasterMinX;
           
-          // Fast inner loop
           x = x0 >> rdr->_SUBPIXEL_LG_POSITIONS_X;
           xmaxm1 = (x1 - 1) >> rdr->_SUBPIXEL_LG_POSITIONS_X;
           xmax = x1 >> rdr->_SUBPIXEL_LG_POSITIONS_X;
