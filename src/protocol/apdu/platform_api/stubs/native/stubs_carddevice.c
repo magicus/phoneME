@@ -1,5 +1,5 @@
 /*
- * @(#)stubs_carddevice.c	1.12 06/04/05 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -36,7 +36,7 @@ void jsr177_clear_error() {
  * Sets error state and stores message (like printf).
  * @param fmt printf-like format string
  */
-void jsr177_set_error(const jbyte *fmt, ...) {
+void jsr177_set_error(const char *fmt, ...) {
     (void)fmt;
 }
 
@@ -71,6 +71,19 @@ JSR177_STATUSCODE jsr177_init() {
  * @return JSR177_STATUSCODE_OK is if all done successfuly, JSR177_STATUSCODE_FAIL otherwise
  */
 JSR177_STATUSCODE jsr177_finalize() {
+    return JSR177_STATUSCODE_OK;
+}
+
+/** 
+ * Sets property value. If the property is used during the initialization
+ * process then this method must be called before <code>jsr177_init()</code>
+ * @return JSR177_STATUSCODE_OK if all done successfuly, 
+ *         JSR177_STATUSCODE_NOT_IMPLEMENTED when this property is not supported
+ *         JSR177_STATUSCODE_OUT_OF_MEMORY if there is no enough memory
+ *         JSR177_STATUSCODE_FAIL otherwise
+ */
+JSR177_STATUSCODE jsr177_set_property(const jbyte *prop_name, 
+    const jbyte *prop_value) {
     return JSR177_STATUSCODE_OK;
 }
 
@@ -110,30 +123,46 @@ JSR177_STATUSCODE jsr177_select_slot(jint slot_index) {
 }
 
 /** 
- * Sends 'POWER UP' command to device and gets ATR into specified buffer.
- * @param atr Buffer to store ATR.
- * @param atr_size Before call: size of provided buffer
- *                 After call: length of received ATR.
- * @return JSR177_STATUSCODE_OK is if all done successfuly, JSR177_STATUSCODE_FAIL otherwise
- */
-JSR177_STATUSCODE jsr177_power_up(jbyte *atr, jsize *atr_size) {
-    (void)atr;
-    (void)atr_size;
-    return JSR177_STATUSCODE_OK;
-}
-
-/** 
  * Sends 'RESET' command to device and gets ATR into specified buffer.
  * @param atr Buffer to store ATR.
  * @param atr_size Before call: size of provided buffer
  *                 After call: size of received ATR.
- * @return JSR177_STATUSCODE_OK is if all done successfuly, JSR177_STATUSCODE_FAIL otherwise
+ * @param context a context which can keep information between 
+ *                <code>jsr177_reset_start</code> and <code>jsr177_reset_finish</code> calls
+ * @retval JSR177_STATUSCODE_OK if all done successfuly. 
+ * @retval JSR177_STATUSCODE_WOULD_BLOCK if this call has started asynchronous 
+ *         operation. In this case <code>jsr177_reset_finish</code> must be used
+ *         for finishing this operation.
+ * @retval JSR177_STATUSCODE_FAIL otherwise
  */
-JSR177_STATUSCODE jsr177_reset(jbyte *atr, jsize *atr_size) {
+JSR177_STATUSCODE jsr177_reset_start(jbyte *atr, jsize *atr_size, void **context) {
     (void)atr;
     (void)atr_size;
+    (void)context;
     return JSR177_STATUSCODE_OK;
 }
+
+/** 
+ * Finishes 'RESET' command on device and gets ATR into specified buffer.
+ * @param atr Buffer to store ATR.
+ * @param atr_size Before call: size of provided buffer
+ *                 After call: size of received ATR.
+ * @param context a context which can carry information between 
+ *                <code>jsr177_reset_start</code> and <code>jsr177_reset_finish</code> calls
+ * @retval JSR177_STATUSCODE_OK if all done successfuly. 
+ * @retval JSR177_STATUSCODE_WOULD_BLOCK if the asynchronous operation has not 
+ *         completed yet. In this case a new call of 
+ *         <code>jsr177_reset_finish</code> must be used for finishing 
+ *         this operation.
+ * @retval JSR177_STATUSCODE_FAIL otherwise
+ */
+JSR177_STATUSCODE jsr177_reset_finish(jbyte *atr, jsize *atr_size, void *context) {
+    (void)atr;
+    (void)atr_size;
+    (void)context;
+    return JSR177_STATUSCODE_OK;
+}
+
 
 /** 
  * Sends 'POWER DOWN' command to device.
@@ -184,50 +213,47 @@ JSR177_STATUSCODE jsr177_card_movement_events(JSR177_CARD_MOVEMENT *mask) {
  * @param rx_buffer Buffer to store the response.
  * @param rx_size Before call: size of <tt>rx_buffer</tt>
  *                 After call: size of received response.
- * @return JSR177_STATUSCODE_OK is if all done successfuly, JSR177_STATUSCODE_FAIL otherwise
+ * @param context a context which can carry information between 
+ *                <code>jsr177_xfer_data_start</code> and <code>jsr177_xfer_data_finish</code> calls
+ * @retval JSR177_STATUSCODE_OK if all done successfuly. 
+ * @retval JSR177_STATUSCODE_WOULD_BLOCK if this call has started asynchronous 
+ *         operation. In this case <code>jsr177_xfer_data_finish</code> must be used
+ *         for finishing this operation.
+ * @retval JSR177_STATUSCODE_FAIL otherwise
  */
-JSR177_STATUSCODE jsr177_xfer_data(jbyte *tx_buffer, jsize tx_size,
-    jbyte *rx_buffer, jsize *rx_size) {
+JSR177_STATUSCODE jsr177_xfer_data_start(jbyte *tx_buffer, jsize tx_size,
+    jbyte *rx_buffer, jsize *rx_size, void **context) {
     (void)tx_buffer;
     (void)tx_size;
     (void)rx_buffer;
     (void)rx_size;
+    (void)context;
     return JSR177_STATUSCODE_OK;
 }
 
 /** 
- * Transfers control data to the device and receives response from the device.
- * @param tx_buffer Buffer with data to be sent.
+ * Finishes APDU data transfer to the device and receiving the response from the device.
+ * @param tx_buffer Buffer with APDU to be sent.
  * @param tx_size Size of APDU.
  * @param rx_buffer Buffer to store the response.
  * @param rx_size Before call: size of <tt>rx_buffer</tt>
  *                 After call: size of received response.
- * @return JSR177_STATUSCODE_OK is if all done successfuly, JSR177_STATUSCODE_FAIL otherwise
+ * @param context a context which can keep information between 
+ *                <code>jsr177_xfer_data_start</code> and <code>jsr177_xfer_data_finish</code> calls
+ * @retval JSR177_STATUSCODE_OK if all done successfuly. 
+ * @retval JSR177_STATUSCODE_WOULD_BLOCK if the asynchronous operation has not 
+ *         completed yet. In this case a new call of 
+ *         <code>jsr177_xfer_data_finish</code> must be used for finishing 
+ *         this operation.
+ * @retval JSR177_STATUSCODE_FAIL otherwise
  */
-JSR177_STATUSCODE jsr177_escape(jbyte *tx_buffer, jsize tx_size,
-    jbyte *rx_buffer, jsize *rx_size) {
+JSR177_STATUSCODE jsr177_xfer_data_finish(jbyte *tx_buffer, jsize tx_size,
+    jbyte *rx_buffer, jsize *rx_size, void *context) {
     (void)tx_buffer;
     (void)tx_size;
     (void)rx_buffer;
     (void)rx_size;
+    (void)context;
     return JSR177_STATUSCODE_OK;
 }
 
-/** 
- * Transfers control data to the device and receives response from the device.
- * To allow entering the PIN for verification or modification.
- * @param tx_buffer Buffer with data to be sent.
- * @param tx_size Size of data.
- * @param rx_buffer Buffer to store the response.
- * @param rx_size Before call: size of <tt>rx_buffer</tt>
- *                 After call: size of received response.
- * @return JSR177_STATUSCODE_OK is if all done successfuly, JSR177_STATUSCODE_FAIL otherwise
- */
-JSR177_STATUSCODE jsr177_securePIN(jbyte *tx_buffer, jsize tx_size,
-    jbyte *rx_buffer, jsize *rx_size) {
-    (void)tx_buffer;
-    (void)tx_size;
-    (void)rx_buffer;
-    (void)rx_size;
-    return JSR177_STATUSCODE_OK;
-}

@@ -1,5 +1,5 @@
 #
-# @(#)subsystem.gmk	1.44 06/06/15 @(#)
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -38,16 +38,11 @@
 #
 SUBSYSTEMS += satsa
 
-# Project speficic definitions
-ifndef PROJECT_JSR_177_DIR
-PROJECT_JSR_177_DIR=$(JSR_177_DIR)
-endif
-
 # Add my verify and display commands
 verify: jsr177_verify
 display: jsr177_display
 
-# Trick to specify an space as an argument  for subst
+# Way to specify an space as an argument  for subst
 # Copied from genlibrary.make
 JSR177_EMPTY=
 JSR177_SPACECHAR=$(JSR177_EMPTY) $(JSR177_EMPTY)
@@ -55,9 +50,12 @@ JSR177_SPACECHAR=$(JSR177_EMPTY) $(JSR177_EMPTY)
 # Variable for config errors
 JSR_177_ERRORS :=
 
+# Try to include platform's defaults
+-include $(JSR_177_DIR)/src/config/$(TARGET_PLATFORM).gmk
+
 # Default values for options
 #
-# ACL from RI's text files={true|false}
+# ACL from another implementation text files={true|false}
 ifeq ($(USE_JSR_177_ACL_TEXT),)
 USE_JSR_177_ACL_TEXT = false
 endif
@@ -152,6 +150,7 @@ GROUP_DOC_ALL += \
 JSR_177_COMMON = $(JSR_177_DIR)/src/common
 
 MODULE_SATSA_COMMON_JAVA_FILES = \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/security/SecurityInitializer.java \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/PKCS15File.java \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/AODF.java \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/DODF.java \
@@ -231,8 +230,7 @@ MODULE_SATSA_APDU_JAVA_FILES = \
     $(JSR_177_DIR)/src/protocol/apdu/simple/classes/com/sun/cardreader/CardDeviceException.java
 vpath % $(JSR_177_DIR)/src/protocol/apdu/simple/native
 MODULE_SATSA_APDU_NATIVE_FILES += \
-	apdu_manager_kni.c \
-	apdu_asynchro.c
+	apdu_manager_kni.c 
 JSR_177_PLATFORM_API_NEEDED=true
 else
 
@@ -297,6 +295,12 @@ MODULE_SATSA_APDU_NATIVE_FILES += \
 	apdu_errors.c \
 	apdu_simulator.c
 else
+# JSR_177_APDU_PLATFORM_API=javacall
+ifeq ($(JSR_177_APDU_PLATFORM_API),javacall)
+vpath % $(JSR_177_DIR)/src/protocol/apdu/platform_api/javacall/native
+MODULE_SATSA_APDU_NATIVE_FILES += \
+	javacall_carddevice.c
+else
 # JSR_177_APDU_PLATFORM_API=stubs
 ifeq ($(JSR_177_APDU_PLATFORM_API),stubs)
 vpath % $(JSR_177_DIR)/src/protocol/apdu/platform_api/stubs/native
@@ -310,6 +314,8 @@ else
     LIBS += -L$(JSR_177_DIR)/src/protocol/apdu/platform_api/driver_lib -l$(JSR_177_APDU_PLATFORM_API)
 endif
 # end of JSR_177_APDU_PLATFORM_API=stubs
+endif
+# end of JSR_177_APDU_PLATFORM_API=javacall
 endif
 # end of JSR_177_APDU_PLATFORM_API=simulator
 endif
@@ -444,11 +450,19 @@ ifeq ($(JSR_177_APDU_MANAGER),carddevice)
         ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
             SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
                 $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_platform.xml
+            ifeq ($(JSR_177_APDU_PLATFORM_API),javacall)
+                SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+                    $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
+            endif
         endif
     endif
 else
     ifeq ($(JSR_177_APDU_MANAGER),simple)
         ifeq ($(JSR_177_APDU_PLATFORM_API),simulator)
+            SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+                $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
+        endif
+        ifeq ($(JSR_177_APDU_PLATFORM_API),javacall)
             SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
                 $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
         endif
@@ -509,6 +523,8 @@ SUBSYSTEM_SATSA_EXTRA_INCLUDES = \
     $(MODULE_SATSA_APDU_EXTRA_INCLUDES)
 
 EXTRA_INCLUDES += $(SUBSYSTEM_SATSA_EXTRA_INCLUDES)
+EXTRA_CFLAGS += -DENABLE_JSR_177
+JPP_DEFS += -DENABLE_JSR_177
 
 # Specify romizer configuration file for the jsr
 # and path where the file is located
@@ -608,6 +624,7 @@ jsr177_display:
 	@echo   "JSR177 Build Configuration" $(LOG)
 	@echo   "==========================" $(LOG)
 	@echo   "" $(LOG)
+	@echo   "TARGET_PLATFORM             = ""$(TARGET_PLATFORM)" $(LOG)
 	@echo   "JSR_177_DIR                 = ""$(JSR_177_DIR)" $(LOG)
 	@echo   "JC_DIR                      = ""$(JC_DIR)" $(LOG)
 	@echo   "USE_JSR_177_ACL_TEXT        = ""$(USE_JSR_177_ACL_TEXT)" $(LOG)
