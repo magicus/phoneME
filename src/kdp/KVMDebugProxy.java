@@ -96,7 +96,7 @@ public class KVMDebugProxy {
         System.out.println("     the larger the number the more output that is generated.");
         System.out.println("     'level' can be from 1-9.");
         System.out.println("  -m Enable support for Multitasking VM.");
-        System.out.println("  -nb4 Enable use of Netbeans 4.x with older VMs (version < CLDC_HI 1.1.3)");
+        System.out.println("  -nb4 Enable use of Netbeans 4.x with older VMs (version < CLDC_VM 1.1.3)");
         System.out.println("  -cp or -classpath specifies a list of paths separated by " + File.pathSeparator + " where the");
         System.out.println("     debug agent can find copies of the class files.  Only needed if -p is set.");
         System.out.println();
