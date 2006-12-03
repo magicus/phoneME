@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -34,6 +35,7 @@ extern "C" {
 
 #include <kni.h>
 #include <jsr120_types.h>
+#include <wmaInterface.h>
 
 /**
  * @file
@@ -46,22 +48,22 @@ extern "C" {
  * @param protocol  A protocol type.
  * @param port  The local port to attach to.
  *
- * @return JSR120_NET_SUCCESS if the function completes successfully;\n
- * JSR120_NET_IOERROR if there was an IO error and IOException needs
+ * @return WMA_NET_SUCCESS if the function completes successfully;\n
+ * WMA_NET_IOERROR if there was an IO error and IOException needs
  * to be thrown;
  */
-JSR120_STATUS jsr120_datagram_open(JSR120_PROTOCOLS protocol, jint port);
+WMA_STATUS jsr120_datagram_open(WMA_PROTOCOLS protocol, jint port);
 
 /**
  * Closes a platform-specific datagram socket.
  *
  * @param protocol  A protocol type.
  *
- * @return JSR120_NET_SUCCESS upon success,\n
- * JSR120_NET_WOULDBLOCK if the caller must call the finish function again to
- * complete the operation;\n JSR120_NET_IOERROR for an error
+ * @return WMA_NET_SUCCESS upon success,\n
+ * WMA_NET_WOULDBLOCK if the caller must call the finish function again to
+ * complete the operation;\n WMA_NET_IOERROR for an error
  */
-JSR120_STATUS jsr120_datagram_close(JSR120_PROTOCOLS protocol);
+WMA_STATUS jsr120_datagram_close(WMA_PROTOCOLS protocol);
 
 /**
  * Read from a platform-specific datagram.
@@ -79,15 +81,15 @@ JSR120_STATUS jsr120_datagram_close(JSR120_PROTOCOLS protocol);
  *		 of <code>buffer</code> are set by this function.
  * @param length the length of the buffer
  * @param pBytesRead returns the number of bytes actually read; it is
- *	  set only when this function returns JSR120_NET_SUCCESS
+ *	  set only when this function returns WMA_NET_SUCCESS
  *
- * @return JSR120_NET_SUCCESS for successful read operation;\n
- *	 JSR120_NET_WOULDBLOCK if the operation would block,\n
- *	 JSR120_NET_INTERRUPTED for an Interrupted IO Exception\n
- *	 JSR120_NET_IOERROR for all other errors
+ * @return WMA_NET_SUCCESS for successful read operation;\n
+ *	 WMA_NET_WOULDBLOCK if the operation would block,\n
+ *	 WMA_NET_INTERRUPTED for an Interrupted IO Exception\n
+ *	 WMA_NET_IOERROR for all other errors
  */
 
-JSR120_STATUS jsr120_datagram_read(JSR120_PROTOCOLS protocol, unsigned char *pAddress, jint *port,
+WMA_STATUS jsr120_datagram_read(WMA_PROTOCOLS protocol, unsigned char *pAddress, jint *port,
                                    char *buffer, jint length, jint *pBytesRead);
 
 /**
@@ -95,11 +97,11 @@ JSR120_STATUS jsr120_datagram_read(JSR120_PROTOCOLS protocol, unsigned char *pAd
  *
  * @param phoneNumber The phone number to be matched again the properties.
  *
- * @return <code>JSR120_NET_IOERROR</code> if the device's phone number cannot be
+ * @return <code>WMA_NET_IOERROR</code> if the device's phone number cannot be
  *     determined. <code>1</code> if there's a match; <code>0</code>,
  *     otherwise.
  */
-JSR120_STATUS is_device_phone_number(char* phoneNumber);
+WMA_STATUS is_device_phone_number(char* phoneNumber);
 
 /**
  * Send an sms message
@@ -113,15 +115,15 @@ JSR120_STATUS is_device_phone_number(char* phoneNumber);
  * @param destPort port number of the remote location to send the datagram
  * @param bytesWritten returns the number of bytes written after
  *	  successful write operation; only set if this function returns
- *	  JSR120_NET_SUCCESS
+ *	  WMA_NET_SUCCESS
  * @param pContext Not used in this implementation.
  *
- * @return JSR120_NET_SUCCESS for successful write operation;\n
- *	 JSR120_NET_WOULDBLOCK if the operation would block,\n
- *	 JSR120_NET_INTERRUPTED for an Interrupted IO Exception\n
- *	 JSR120_NET_IOERROR for all other errors
+ * @return WMA_NET_SUCCESS for successful write operation;\n
+ *	 WMA_NET_WOULDBLOCK if the operation would block,\n
+ *	 WMA_NET_INTERRUPTED for an Interrupted IO Exception\n
+ *	 WMA_NET_IOERROR for all other errors
  */
-JSR120_STATUS jsr120_sms_write(jchar msgType, unsigned char *address, 
+WMA_STATUS jsr120_sms_write(jchar msgType, unsigned char *address, 
                                unsigned char *msgBuffer, 
                                jchar msgLen, 
                                jchar sourcePort, jchar destPort,
@@ -143,30 +145,17 @@ JSR120_STATUS jsr120_sms_write(jchar msgType, unsigned char *address,
  *     header and message body structures.
  * @param bytesWritten Returns the number of bytes written after successful
  *     write operation. This is only set if this function returns
- *     JSR120_NET_SUCCESS.
+ *     WMA_NET_SUCCESS.
  *
- * @return JSR120_NET_SUCCESS for successful write operation;\n
- *	 JSR120_NET_WOULDBLOCK if the operation would block,\n
- *	 JSR120_NET_INTERRUPTED for an Interrupted IO Exception\n
- *	 JSR120_NET_IOERROR for all other errors.
+ * @return WMA_NET_SUCCESS for successful write operation;\n
+ *	 WMA_NET_WOULDBLOCK if the operation would block,\n
+ *	 WMA_NET_INTERRUPTED for an Interrupted IO Exception\n
+ *	 WMA_NET_IOERROR for all other errors.
  */
-JSR120_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr, 
+WMA_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr, 
                                char* appID, char* replyToAppID, jint msgLen, 
                                char* msg, jint *bytesWritten);
 
-/**
- * Open datagram ports for receiving/sending sms messages
- *
- * @return  <code>JSR120_NET_SUCCESS</code> for success; 
- *          <code>JSR120_NET_IOERROR</code> for failure.
- */
-JSR120_STATUS init_jsr120();
-
-/**
- * Close datagram ports for a protocol.
- *
- */
-void finalize_jsr120();
 
 #ifdef __cplusplus
 }

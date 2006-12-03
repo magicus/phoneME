@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -26,11 +27,11 @@
 /*
  * SUBSYSTEM: WMA (Wireless Messaging API)
  * FILE:      smsProtocol.c
- * OVERVIEW:  This file handles WMA functions such as 
+ * OVERVIEW:  This file handles WMA functions such as
  *            - opening an SMS connection
  *            - sending an SMS message to a destination address
  *            - receiving an SMS message
- *            - closing the connection 
+ *            - closing the connection
  */
 
 #include <stdio.h>
@@ -48,6 +49,7 @@
 #include <midp_logging.h>
 #include <midpResourceLimit.h>
 #include <push_server_export.h>
+#include <suitestore_common.h>
 
 #include <jsr120_sms_protocol.h>
 #include <jsr120_sms_pool.h>
@@ -78,7 +80,7 @@ static int isClosed = 0;
  * @return A handle to the open SMS connection.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) { 
+Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) {
 
     int handle = 0;
     int port;
@@ -86,10 +88,8 @@ Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) {
     MidpString msHost = NULL_MIDP_STRING;
     /* The host name for this connection. */
     unsigned char* host = NULL;
-    /** The MIDP String version of the Midlet suite ID. */
-    MidpString msMsid = NULL_MIDP_STRING;
     /* The midlet suite name for this connection. */
-    unsigned char* msid = NULL;
+    SuiteIdType msid = UNUSED_SUITE_ID;
 
     /* Set closed flag to false */
     isClosed = 0;
@@ -99,14 +99,13 @@ Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) {
     /* When port is 0 then return else continue */
     if (port) {
         /* Create handles for all Java objects. */
-        KNI_StartHandles(2);
+        KNI_StartHandles(1);
         KNI_DeclareHandle(javaStringHost);
-        KNI_DeclareHandle(javaStringMsid);
 
         /* Pick up the host string. */
         KNI_GetParameterAsObject(1, javaStringHost);
-        /* Pick up the Midlet Suite ID string. */
-        KNI_GetParameterAsObject(2, javaStringMsid);
+        /* Pick up the Midlet Suite ID. */
+        msid = KNI_GetParameterAsInt(2);
 
         do {
             /*
@@ -138,24 +137,6 @@ Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) {
                 }
             }
 
-            /* Pick up the Midlet suite name. */
-            if (!KNI_IsNullHandle(javaStringMsid)) {
-
-                msMsid.len = KNI_GetStringLength(javaStringMsid);
-                msMsid.data = (jchar*)pcsl_mem_malloc(msMsid.len * sizeof(jchar));
-                if (msMsid.data == NULL) {
-                    /* Couldn't allocate space for the Midlet suite name string. */
-                    KNI_ThrowNew(midpOutOfMemoryError, NULL);
-                    break;
-                } else {
-
-                    /* Convert the MIDP string contents to a character array. */
-                    KNI_GetStringRegion(javaStringMsid, 0, msMsid.len, msMsid.data);
-                    msid = (unsigned char*)midpJcharsToChars(msMsid);
-                    pcsl_mem_free(msMsid.data);
-                }
-            }
-
             /*
              * Register the port with the message pool, only if this
              * is a server connection (NULL host name.).
@@ -163,11 +144,11 @@ Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) {
             if (host == NULL) {
 
                 /* register SMS port with SMS pool */
-                if (jsr120_is_sms_midlet_port_registered((jchar)port) == JSR120_ERR) {
+                if (jsr120_is_sms_midlet_port_registered((jchar)port) == WMA_ERR) {
 
                     if (jsr120_register_sms_midlet_port((jchar)port,
                                                         msid,
-                                                        handle) == JSR120_ERR) {
+                                                        handle) == WMA_ERR) {
 
                         KNI_ThrowNew(midpIOException, "already in use");
                         break;
@@ -182,7 +163,6 @@ Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) {
 
         /* Memory clean-up (The strings can be NULL). */
         pcsl_mem_free(host);
-        pcsl_mem_free(msid);
 
         KNI_EndHandles();
     }
@@ -199,7 +179,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) {
  * @return <code>0</code> if successful; <code>-1</code> if failed.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_sms_Protocol_close0(void) { 
+Java_com_sun_midp_io_j2me_sms_Protocol_close0(void) {
     int status = 0;
     int port = 0;
     int handle = 0;
@@ -223,14 +203,8 @@ Java_com_sun_midp_io_j2me_sms_Protocol_close0(void) {
             /** unregister SMS port from SMS pool */
             jsr120_unregister_sms_midlet_port((jchar)port);
 
-            /* If the handle hasn't been created, the connection isn't open. */
-            if (handle == 0) {
-                status = -1;
-            } else {
-
-                /* Release the handle associated with this connection. */
-                pcsl_mem_free((void *)handle);
-            }
+            /* Release the handle associated with this connection. */
+            pcsl_mem_free((void *)handle);
         }
 
     }
@@ -239,7 +213,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_close0(void) {
 }
 
 /**
- * Sends an SMS message. 
+ * Sends an SMS message.
  *
  * @param handle The handle to the open SMS connection.
  * @param messageType The type of message: binary or text.
@@ -251,8 +225,8 @@ Java_com_sun_midp_io_j2me_sms_Protocol_close0(void) {
  * @return Always returns <code>0</code>.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) { 
-    JSR120_STATUS status = JSR120_ERR;
+Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
+    WMA_STATUS status = WMA_ERR;
     jint messageLength = 0;
     jint messageType;
     jint sourcePort;
@@ -272,7 +246,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
         KNI_StartHandles(2);
         KNI_DeclareHandle(messageBuffer);
         KNI_DeclareHandle(address);
-            
+
         handle = KNI_GetParameterAsInt(1);
         messageType = KNI_GetParameterAsInt(2);
         KNI_GetParameterAsObject(3, address);
@@ -285,8 +259,8 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
             if (info == NULL) {	  /* First invocation. */
 
                 if (KNI_IsNullHandle(address)) {
-                
-                    KNI_ThrowNew(midpIllegalArgumentException, NULL);            
+
+                    KNI_ThrowNew(midpIllegalArgumentException, NULL);
                     break;
                 } else {
                     msAddress.len = KNI_GetStringLength(address);
@@ -300,16 +274,16 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
                         KNI_GetStringRegion(address, 0, msAddress.len, msAddress.data);
                         pAddress = (unsigned char *)midpJcharsToChars(msAddress);
                         pcsl_mem_free(msAddress.data);
-                    
+
                         if (!KNI_IsNullHandle(messageBuffer)) {
                             messageLength = KNI_GetArrayLength(messageBuffer);
                         }
                         if (messageLength >= 0) {
                             if (messageLength > 0) {
                                 pMessageBuffer = (unsigned char *)pcsl_mem_malloc(messageLength);
-                                memset(pMessageBuffer, 0, messageLength);                    
-                                KNI_GetRawArrayRegion(messageBuffer, 0, messageLength, 
-                                                      (jbyte *)pMessageBuffer);                    
+                                memset(pMessageBuffer, 0, messageLength);
+                                KNI_GetRawArrayRegion(messageBuffer, 0, messageLength,
+                                                      (jbyte *)pMessageBuffer);
                             }
 
                             trySend = KNI_TRUE;
@@ -321,7 +295,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
                 pMessageBuffer = messageStateData->pMessageBuffer;
                 pAddress = messageStateData->pAddress;
                 pdContext = messageStateData->pdContext;
-                
+
                 trySend = KNI_TRUE;
             }
 
@@ -336,10 +310,10 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
                                          &bytesSent,
                                          &pdContext);
 
-                if (status == JSR120_ERR) {
+                if (status == WMA_ERR) {
                     KNI_ThrowNew(midpIOException, "Sending SMS");
                     break;
-                } else if (status == JSR120_NET_WOULDBLOCK) {
+                } else if (status == WMA_NET_WOULDBLOCK) {
                     if (messageStateData == NULL) {
                         messageStateData =
                             (jsr120_sms_message_state_data *)pcsl_mem_malloc(
@@ -347,7 +321,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
                         messageStateData->pMessageBuffer = pMessageBuffer;
                         messageStateData->pAddress = pAddress;
                     }
-                                 
+
                     messageStateData->pdContext = pdContext;
 
                     /* Block calling Java Thread. */
@@ -371,7 +345,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
             pcsl_mem_free(pAddress);
         }
 
-        KNI_EndHandles();  
+        KNI_EndHandles();
     }
     KNI_ReturnInt(0); /* currently ignored. */
 }
@@ -386,61 +360,30 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
  * @return The length of the SMS message (in bytes).
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) { 
+Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) {
     MidpReentryData *info = (MidpReentryData*)SNI_GetReentryData(NULL);
     int port, handle;
     int messageLength = -1;
     SmsMessage *psmsData = NULL;
-    /** The MIDP String version of the Midlet suite ID. */
-    MidpString msMsid = NULL_MIDP_STRING;
     /* The midlet suite name for this connection. */
-    unsigned char* msid = NULL;
+    SuiteIdType msid = UNUSED_SUITE_ID;
 
     if (!isClosed) { /* No close in progress */
-        KNI_StartHandles(5);
-        KNI_DeclareHandle(javaStringMsid);
+        KNI_StartHandles(4);
         KNI_DeclareHandle(messageClazz);
         KNI_DeclareHandle(messageObject);
         KNI_DeclareHandle(addressArray);
         KNI_DeclareHandle(byteArray);
 
         port = KNI_GetParameterAsInt(1);
-        /* Pick up the Midlet Suite ID string. */
-        KNI_GetParameterAsObject(2, javaStringMsid);
+        msid = KNI_GetParameterAsInt(2);
         handle = KNI_GetParameterAsInt(3);
         KNI_GetParameterAsObject(4, messageObject);
 
         do {
-
-            /* Pick up the Midlet suite name. */
-            if (!KNI_IsNullHandle(javaStringMsid)) {
-
-                msMsid.len = KNI_GetStringLength(javaStringMsid);
-                msMsid.data = (jchar*)pcsl_mem_malloc(msMsid.len * sizeof(jchar));
-                if (msMsid.data == NULL) {
-                    /* Couldn't allocate space for the Midlet suite name string. */
-                    KNI_ThrowNew(midpOutOfMemoryError, NULL);
-                    break;
-                } else {
-
-                    /* Convert the MIDP string contents to a character array. */
-                    KNI_GetStringRegion(javaStringMsid, 0, msMsid.len, msMsid.data);
-                    msid = (unsigned char*)midpJcharsToChars(msMsid);
-                    pcsl_mem_free(msMsid.data);
-                }
-            }
-
             if (!info) {
                 psmsData = jsr120_sms_pool_peek_next_msg((jchar)port);
                 if (psmsData == NULL) {
-                    if (jsr120_is_sms_midlet_port_registered((jchar)port) == JSR120_ERR) {
-                        if (jsr120_register_sms_midlet_port((jchar)port, 
-                                                            msid,
-                                                            handle) == JSR120_ERR) {
-                            KNI_ThrowNew(midpIOException, "Registering SMS receive");
-                            break;
-                        }
-                    }
                     /* block and wait for a message. */
                     midp_thread_wait(WMA_SMS_READ_SIGNAL, handle, NULL);
                 }
@@ -463,7 +406,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) {
 
                     KNI_GetObjectClass(messageObject, messageClazz);
                     if(KNI_IsNullHandle(messageClazz)) {
-                        KNI_ThrowNew(midpOutOfMemoryError, NULL);            
+                        KNI_ThrowNew(midpOutOfMemoryError, NULL);
                         break;
                     } else {
                         jfieldID message_field_id = KNI_GetFieldID(messageClazz, "message","[B");
@@ -477,7 +420,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) {
 
                             /* REPORT_ERROR(LC_WMA, "ERROR can't get class field ID"); */
 
-                            KNI_ThrowNew(midpRuntimeException, NULL);            
+                            KNI_ThrowNew(midpRuntimeException, NULL);
                             break;
                         } else {
                             messageLength = psmsData->msgLen;
@@ -493,15 +436,15 @@ Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) {
                                     SNI_NewArray(SNI_BYTE_ARRAY, messageLength, byteArray);
                                     if (KNI_IsNullHandle(byteArray)) {
 
-                                        KNI_ThrowNew(midpOutOfMemoryError, NULL);            
+                                        KNI_ThrowNew(midpOutOfMemoryError, NULL);
                                         break;
                                     } else {
                                         for (i = 0; i < messageLength; i++) {
-                                            KNI_SetByteArrayElement(byteArray, i, 
+                                            KNI_SetByteArrayElement(byteArray, i,
                                                                     psmsData->msgBuffer[i]);
                                         }
-                               
-                                        KNI_SetObjectField(messageObject, message_field_id, 
+
+                                        KNI_SetObjectField(messageObject, message_field_id,
                                                            byteArray);
                                     }
                                 }
@@ -509,25 +452,25 @@ Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) {
                                 if (addressLength >= 0) {
                                     SNI_NewArray(SNI_BYTE_ARRAY, addressLength, addressArray);
                                     if (KNI_IsNullHandle(addressArray)) {
-                                   
-                                        KNI_ThrowNew(midpOutOfMemoryError, NULL);            
+
+                                        KNI_ThrowNew(midpOutOfMemoryError, NULL);
                                         break;
                                     } else {
                                         for (i = 0; i < addressLength; i++) {
-                                            KNI_SetByteArrayElement(addressArray, i, 
+                                            KNI_SetByteArrayElement(addressArray, i,
                                                                  psmsData->msgAddr[i]);
                                         }
-                                   
-                                        KNI_SetObjectField(messageObject, address_field_id, 
+
+                                        KNI_SetObjectField(messageObject, address_field_id,
                                                            addressArray);
                                     }
                                 }
 
-                                KNI_SetIntField(messageObject, port_field_id, 
+                                KNI_SetIntField(messageObject, port_field_id,
                                                 psmsData->sourcePortNum);
-                                KNI_SetLongField(messageObject, sentAt_field_id, 
-                                                 psmsData->timeStamp);                           
-                                KNI_SetIntField(messageObject, messageType_field_id, 
+                                KNI_SetLongField(messageObject, sentAt_field_id,
+                                                 psmsData->timeStamp);
+                                KNI_SetIntField(messageObject, messageType_field_id,
                                                 psmsData->encodingType);
                            }
                        }
@@ -537,7 +480,6 @@ Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) {
         } while (0);
 
         jsr120_sms_delete_msg(psmsData);
-        pcsl_mem_free(msid);
 
         KNI_EndHandles();
     }
@@ -566,7 +508,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0(void) {
 
         if (port == 0) {
             /*
-             * A receive thread wouldn't have been started with a port 
+             * A receive thread wouldn't have been started with a port
              * of 0. But a connection can be closed and port set to 0,
              * just before this method is called.
              * The receiverThread uses the IllegalArgumentException to
@@ -610,13 +552,13 @@ Java_com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0(void) {
  * @return The number of transport-layer segments required to send the message.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_sms_Protocol_numberOfSegments0(void) { 
+Java_com_sun_midp_io_j2me_sms_Protocol_numberOfSegments0(void) {
 
     unsigned char* msgBuffer = NULL;
     int msgLen = 0;
     int msgType = 0;
     jboolean hasPort = KNI_FALSE;
-    JSR120_STATUS status;
+    WMA_STATUS status;
 
     jint segments = 0;
 
@@ -638,13 +580,13 @@ Java_com_sun_midp_io_j2me_sms_Protocol_numberOfSegments0(void) {
 
         if (length > 0) {
             msgBuffer = (unsigned char *)pcsl_mem_malloc(length);
-            memset(msgBuffer, 0, length);                    
-            KNI_GetRawArrayRegion(msgBufferObject, 0, length, (jbyte*)msgBuffer);                    
+            memset(msgBuffer, 0, length);
+            KNI_GetRawArrayRegion(msgBufferObject, 0, length, (jbyte*)msgBuffer);
 	}
 	/* Compute the number of segments required to send the message. */
 	status = jsr120_number_of_sms_segments(msgBuffer, msgLen, msgType,
 					       hasPort, &segments);
-	
+
 	/* Limit SMS messages to 3 segments. */
         if (segments > 3){
 	  segments = 0;

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -40,15 +41,15 @@
  *
  * @param msgID    The subscribed CBS message identifier.
  *
- * @return Returns enum JSR120_STATUS, JSR120_OK on success or
- *	   JSR120_ERR on error.
+ * @return Returns enum WMA_STATUS, WMA_OK on success or
+ *	   WMA_ERR on error.
  */
-JSR120_STATUS jsr120_add_cbs_listening_msgID(jchar msgID) {
+WMA_STATUS jsr120_add_cbs_listening_msgID(jchar msgID) {
 
     (void)msgID;
 
     /* The message identifier has been set. */
-    return JSR120_OK;
+    return WMA_OK;
 }
 
 /**
@@ -60,15 +61,15 @@ JSR120_STATUS jsr120_add_cbs_listening_msgID(jchar msgID) {
  *
  * @param msgID    The unsubscribed CBS message identifier.
  *
- * @return Returns enum JSR120_STATUS, JSR120_OK on success or
- *	   JSR120_ERR on error.
+ * @return Returns enum WMA_STATUS, WMA_OK on success or
+ *	   WMA_ERR on error.
  */
-JSR120_STATUS jsr120_remove_cbs_listening_msgID(jchar msgID) {
+WMA_STATUS jsr120_remove_cbs_listening_msgID(jchar msgID) {
 
     (void)msgID;
 
     /* The message identifier has been unsubscribed. */
-    return JSR120_OK;
+    return WMA_OK;
 }
 
 /**

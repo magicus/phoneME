@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,14 +25,14 @@
  */
 
 /**
- * @defgroup wma1.1 JSR120 Wireless Messaging API (WMA) 1.1
+ * @defgroup wma2.0 JSR120 Wireless Messaging API (WMA) 1.1
  * @ingroup subsystems
  */
 
 /**
  * @file
  * @defgroup sms SMS Packet Manipulation Interface
- * @ingroup wma1.1
+ * @ingroup wma2.0
  * @brief These functions can be used to create SMS, CBS and MMS packets
  *
  *

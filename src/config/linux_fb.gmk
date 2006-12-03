@@ -1,4 +1,5 @@
 #
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -49,7 +50,6 @@ SUBSYSTEM_JSR_120_NATIVE_FILES += \
 	wmaSocket.c \
 	wmaUDPEmulator.c
 
-#
 SUBSYSTEM_JSR_120_EXTRA_INCLUDES += \
     -I$(JSR_120_DIR)/src/protocol/sms/native/share/inc \
     -I$(JSR_120_DIR)/src/protocol/cbs/native/share/inc \

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -25,19 +26,10 @@
 
 package com.sun.midp.io.j2me.sms;
 
-// Interfaces
-import com.sun.cldc.io.ConnectionBaseInterface;
-import com.sun.midp.security.ImplicitlyTrustedClass;
-import javax.microedition.io.StreamConnection;
-import javax.wireless.messaging.MessageConnection;
+import com.sun.midp.io.j2me.ProtocolBase;
 
-// Classes
 import com.sun.midp.io.HttpUrl;
-import com.sun.midp.main.Configuration;
-import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midlet.Scheduler;
 import com.sun.midp.security.Permissions;
-import com.sun.midp.security.SecurityToken;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.InputStream;
@@ -46,7 +38,7 @@ import java.util.Vector;
 import javax.microedition.io.Connector;
 import javax.microedition.io.Connection;
 import javax.wireless.messaging.Message;
-import javax.wireless.messaging.MessageListener;
+import javax.wireless.messaging.MessageConnection;
 
 // Exceptions
 import java.io.IOException;
@@ -101,82 +93,23 @@ import java.io.InterruptedIOException;
  * </p>
  *
  */
-public class Protocol implements MessageConnection, 
-			         ImplicitlyTrustedClass,
-				 ConnectionBaseInterface, 
-				 StreamConnection {
+public class Protocol extends ProtocolBase {
 
-    /** Prefic for sms addressed message connections. */    
-    private static final String ADDRESS_PREFIX = "sms://";
-
-    /** Connection mode. */    
+    /** Connection mode. */
     private final int connectionMode = 0;
 
     /** Currently opened connections. */
     static protected Vector openconnections = new Vector();
-            
+
     /** Name of current connection. */
     protected String url;
-
-    /** Machine name - the parsed target address from the URL. */
-    protected String host = null;
 
     /** Local handle for port number. */
     private int m_iport = 0;
 
-    /** Local handle to SMS connection */
-    private int smsHandle = 0;
-
-    /**
-     * Indicates whether the connection is open or closed. If it is closed,
-     * subsequent operations should throw an exception.
-     */
-    protected boolean open = false;
-
-    /** Connector mode. */
-    protected int m_mode = 0;    
-
-    /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken;
-
     /** Count of simultaneous opened conenctions. */
     protected static int open_count = 0;
-    
-    /** Message listener for async notifications. */
-    volatile MessageListener m_listener = null;
 
-    /** Listener thread. */
-    Thread m_listenerThread = null;
-
-    /** Handle to the MIDlet suite containing this MIDlet. */
-    private MIDletSuite midletSuite;
-    
-    /**
-     * Indicates whether a trusted application is allowed to open the
-     * message connection. Set to true if the permission check passes.
-     * Note: return true to override Security Permissions
-     */
-    private boolean openPermission = false;
-    
-    /**
-     * Indicates whether a trusted application is allowed to read from the
-     * message connection. Set to true if the permission check passes.
-     * Note: return true to override Security Permissions
-     */
-    protected boolean readPermission = false;
-    
-    /**
-     * Indicates whether a trusted application is allowed to write to the
-     * message connection. Set to true if the permission check passes.
-     * Note: return true to override Security Permissions
-     */
-    protected boolean writePermission = false;
-
-    /**
-     * Flag to indicate successful retrieval of message.
-     */
-    private boolean doneRetrieving = false;
-    
     /** Ports barred from use int the specification. */
     int restrictedPorts[] = {
 	2805, // WAP WTA secure connection-less session service
@@ -206,6 +139,36 @@ public class Protocol implements MessageConnection,
     /**	 DCS: Unicode UCS-2 */
     protected static final int GSM_UCS2 = 2;
 
+    /** Creates a message connection protocol handler. */
+    public Protocol() {
+        super();
+        ADDRESS_PREFIX = "sms://";
+    }
+
+    /**
+     * Gets the connection parameter in string mode.
+     * @return string that contains a parameter 
+     */
+    protected String getAppID() {
+        if (m_iport > 0) {
+            return new String(Integer.toString(m_iport));
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Sets the connection parameter in string mode.
+     * @param newValue new value of connection parameter 
+     */
+    protected void setAppID(String newValue) {
+        try {
+            m_iport = Integer.parseInt(newValue);
+        } catch (NumberFormatException exc) {
+            m_iport = 0;
+        }
+    }
+
     /**
      * Private class to encapsulate SMSPacket data structure
      *
@@ -223,13 +186,6 @@ public class Protocol implements MessageConnection,
 	public int messageType;
     };
 
-
-    /** Creates an SMS message connection protocol handler. */
-    public Protocol() {
-	midletSuite = Scheduler.getScheduler().getMIDletSuite();
-    }
-    
-
     /*
      * MessageConnection Interface
      */
@@ -246,6 +202,10 @@ public class Protocol implements MessageConnection,
      * object is requested from the connection. For example:
      * <p>
      * <code>Message msg = conn.newMessage(TEXT_MESSAGE);</code>
+     * <p>
+     * The newly created <code>Message</code> does not have the destination
+     * address set. It must be set by the application before
+     * the message is sent.
      * <p>
      * If this method is called in receiving mode, the
      * <code>Message</code> object does have
@@ -267,7 +227,7 @@ public class Protocol implements MessageConnection,
     public Message newMessage(String type) {
 	String address = null;
 
-	/* 
+	/*
          * Provide the default address from the original open.
          */
 
@@ -322,7 +282,6 @@ public class Protocol implements MessageConnection,
 	return message;
     }
 
-
     /**
      * Receives the bytes that have been sent over the connection, constructs a
      * <code>Message</code> object, and returns it.
@@ -334,8 +293,11 @@ public class Protocol implements MessageConnection,
      * @return a <code>Message</code> object.
      * @exception java.io.IOException if an error occurs while receiving a
      *     message.
-     * @exception java.io.InterruptedIOException 
-     * @exception java.lang.SecurityException 
+     * @exception java.io.InterruptedIOException if this
+     *     <code>MessageConnection</code> object is closed during this receive
+     *     method call.
+     * @exception java.lang.SecurityException if the application does not have
+     *      permission to receive messages using the given port number.
      */
     public synchronized Message receive() throws IOException {
 
@@ -361,8 +323,8 @@ public class Protocol implements MessageConnection,
              * Time to wake up receive thread.
              */
             // Pick up the SMS message from the message pool.
-            length = receive0(m_iport, midletSuite.getID(), 
-                              smsHandle, smsPacket);
+            length = receive0(m_iport, midletSuite.getID(),
+                              connHandle, smsPacket);
 
 	    if (length >= 0) {
 	  	String type;
@@ -375,8 +337,8 @@ public class Protocol implements MessageConnection,
 				isTextMessage = true;
 	        }
 	        message = newMessage(type,
-	        	new String(ADDRESS_PREFIX 
-                                   + new String(smsPacket.address) 
+	        	new String(ADDRESS_PREFIX
+                                   + new String(smsPacket.address)
                                    + ":" + smsPacket.port));
 	        String messg = null;
 	        if (isTextMessage) {
@@ -416,8 +378,26 @@ public class Protocol implements MessageConnection,
 	return message;
     }
 
-
-    // JAVADOC COMMENT ELIDED
+    /**
+     * Sends a message over the connection. This method extracts the data
+     * payload from the <code>Message</code> object so that it can be sent as a
+     * datagram.
+     *
+     * @param     dmsg a <code>Message</code> object
+     * @exception java.io.IOException if the message could not be sent or
+     *     because of network failure
+     * @exception java.lang.IllegalArgumentException if the message is
+     *     incomplete or contains invalid information. This exception is also
+     *     thrown if the payload of the message exceeds the maximum length for
+     *     the given messaging protocol.
+     * @exception java.io.InterruptedIOException if a timeout occurs while
+     *     either trying to send the message or if this <code>Connection</code>
+     *     object is closed during this <code>send</code> operation.
+     * @exception java.lang.NullPointerException if the parameter is
+     *     <code>null</code>.
+     * @exception java.lang.SecurityException if the application does not have
+     *      permission to send the message.
+     */
     public void send(Message dmsg) throws IOException {
 	String phoneNumber = null;
 	String address = null;
@@ -459,7 +439,7 @@ public class Protocol implements MessageConnection,
             throw new InterruptedIOException("Interrupted while trying " +
                              "to ask the user permission");
         }
-    
+
 	ensureOpen();
 
 	if ((m_mode & Connector.WRITE) == 0) {
@@ -509,70 +489,35 @@ public class Protocol implements MessageConnection,
             throw new IllegalArgumentException("Message type not supported");
 	}
 
-        int status = send0(smsHandle, messageType,
-                           url.host,			       
+        int status = send0(connHandle, messageType,
+                           url.host,
                            url.port,
 			   sourcePort,
                            msgBuffer);
     }
 
-    // JAVADOC COMMENT ELIDED
-    public void setMessageListener(MessageListener listener) 
-                                                     throws IOException {
-
-        /*
-         * Make sure the connection is still open.
-	 */
-        ensureOpen();
-
-        /*
-         * Check if we have permission to recieve.
-	 */
-        checkReceivePermission();
-
-        /*
-         * Don't let the application waste time listening on a client
-         * connection, which can not be used for receive operations. 
-	 */
-        if (host != null && host.length() > 0) {
-            throw new IOException("Cannot listen on " + "client connection");
-	}
-
-	if ((m_listener != null) && (listener == null)) {
-            m_listenerThread = null;
-            if (m_listenerThread != null) {
-                if (m_listenerThread.isAlive()) {
-                    int save_m_iport = 0;
-                    if (m_iport != 0) {
-                        save_m_iport = m_iport;
-                    }
-                    m_iport = m_iport;
-
-                    /* Close thread without deregistering */
-                    close0(save_m_iport, smsHandle, 0);
-                    try {
-                        m_listenerThread.join();
-                    } catch (InterruptedException ie) {
-                    }  /* Ignore interrupted exception */
-                    m_iport = save_m_iport;
-                    /* Unblock the low level */
-                    open0(null, null, 0);
-                }
-            }
-        }
-
-        /*
-         * The previous listener, if any, is discarded and "listener" is 
-         * the new listener 
-	 */
-        m_listener = listener;
-
-        if (listener != null && m_listenerThread == null) {
-            startReceiverThread();
-        }
-    }
-
-    // JAVADOC COMMENT ELIDED
+    /**
+     * Returns how many segments in the underlying protocol would
+     * be needed for sending the <code>Message</code> given as the parameter.
+     *
+     * <p>Note that this method does not actually send the message;
+     * it will only calculate the number of protocol segments
+     * needed for sending it.
+     * </p>
+     * <p>This method will calculate the number of segments
+     * needed when this message is split into the protocol
+     * segments using the appropriate features of the underlying protocol.
+     * This method does not take into account possible limitations
+     * of the implementation that may limit the number of
+     * segments that can be sent using this feature. These
+     * limitations are protocol specific and are documented
+     * with the adapter definition for that protocol.
+     * </p>
+     * @param msg the message to be used for the calculation
+     * @return number of protocol segments needed for sending the message.
+     *     Returns <code>0</code> if the <code>Message</code> object cannot be
+     *     sent using the underlying protocol.
+     */
     public int numberOfSegments(Message msg) {
 
         /** The number of segments required to send the message. */
@@ -648,19 +593,11 @@ public class Protocol implements MessageConnection,
 	m_iport = 0;
 
         /*
-	 * last connection closing 
+	 * last connection closing
          */
-	close0(save_iport, smsHandle, 1);
+	close0(save_iport, connHandle, 1);
 
-        if (m_listenerThread != null) {
-            if (m_listenerThread.isAlive()) {
-                try {
-                    m_listenerThread.join();
-                } catch (InterruptedException ie) {
-                } /* Ignore interrupted exception */
-            }
-        }
-
+        setMessageListener(null);
 
         /*
          * Reset handle and other params to default
@@ -668,7 +605,7 @@ public class Protocol implements MessageConnection,
          * by the spec and the resetting would prevent any
          * strange behaviour.
          */
-        smsHandle = 0;
+        connHandle = 0;
 	open = false;
 	host = null;
 	m_mode = 0;
@@ -686,23 +623,6 @@ public class Protocol implements MessageConnection,
         }
 
 	open_count--;
-    }
-
-
-    /*
-     * ImplicitlyTrustedClass Interface
-     */
-
-    /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class.
-     */
-    public void initSecurityToken(SecurityToken token) {
-        if (classSecurityToken == null) {
-            classSecurityToken = token;
-        }
     }
 
     /*
@@ -764,7 +684,7 @@ public class Protocol implements MessageConnection,
 
     /**
      * Open and return an input stream for a connection.
-     * This method always throw 
+     * This method always throw
      * <code>IllegalArgumentException</code>.
      *
      * @return                 An input stream
@@ -778,7 +698,7 @@ public class Protocol implements MessageConnection,
 
     /**
      * Open and return a data input stream for a connection.
-     * This method always throw 
+     * This method always throw
      * <code>IllegalArgumentException</code>.
      *
      * @return                 An input stream
@@ -792,7 +712,7 @@ public class Protocol implements MessageConnection,
 
     /**
      * Open and return an output stream for a connection.
-     * This method always throw 
+     * This method always throw
      * <code>IllegalArgumentException</code>.
      *
      * @return                 An output stream
@@ -805,7 +725,7 @@ public class Protocol implements MessageConnection,
     }
     /**
      * Open and return a data output stream for a connection.
-     * This method always throw 
+     * This method always throw
      * <code>IllegalArgumentException</code>.
      *
      * @return                 an output stream
@@ -837,8 +757,8 @@ public class Protocol implements MessageConnection,
      * @return this connection
      * @exception IOException if the connection is closed or unavailable
      */
-    public synchronized Connection openPrimInternal(String name, 
-						    int mode, 
+    public synchronized Connection openPrimInternal(String name,
+						    int mode,
 						    boolean timeouts)
                                                  throws IOException {
 
@@ -853,8 +773,8 @@ public class Protocol implements MessageConnection,
 
 	String portName = null;
 
-	if ((name == null) || (name.length() <= 2) || 
-            (name.charAt(0) != '/') || 
+	if ((name == null) || (name.length() <= 2) ||
+            (name.charAt(0) != '/') ||
             (name.charAt(1) != '/')) {
 	    throw new IllegalArgumentException("Missing protocol separator");
 	}
@@ -918,19 +838,19 @@ public class Protocol implements MessageConnection,
 	}
 
 	if (mode == Connector.READ && host != null && host.length() > 0) {
-	    throw new IllegalArgumentException("Cannot read on " + 
+	    throw new IllegalArgumentException("Cannot read on " +
 					       "client connection");
 	}
 
 	if ((mode == Connector.WRITE) && (host == null)) {
-        /* 
-         * avoid throwing the following exception for compliance 
-	 * throw new IllegalArgumentException("Missing host name"); 
+        /*
+         * avoid throwing the following exception for compliance
+	 * throw new IllegalArgumentException("Missing host name");
          */
 	}
 
-	if ((mode != Connector.READ) && 
-	    (mode != Connector.WRITE) && 
+	if ((mode != Connector.READ) &&
+	    (mode != Connector.WRITE) &&
 	    (mode != Connector.READ_WRITE)) {
 
 	    throw new IllegalArgumentException("Invalid mode");
@@ -955,7 +875,7 @@ public class Protocol implements MessageConnection,
 	 */
 	int len = openconnections.size();
 	for (int i = 0; i < len; i++) {
-	    if (!(openconnections.elementAt(i) 
+	    if (!(openconnections.elementAt(i)
 		  instanceof com.sun.midp.io.j2me.sms.Protocol)
 		|| ((Protocol) openconnections.elementAt(i)).url.equals(name)) {
 		throw new IOException("Already opened");
@@ -966,40 +886,29 @@ public class Protocol implements MessageConnection,
 	url = name;
 
 	try {
-            smsHandle = open0(host, midletSuite.getID(), m_iport);
+            connHandle = open0(host, midletSuite.getID(), m_iport);
 	} catch (IOException ioexcep) {
 	    m_mode = 0;
 	    throw new IOException("SMS connection cannot be opened");
 	} catch (OutOfMemoryError oomexcep) {
 	    m_mode = 0;
 	    throw new IOException("SMS connection cannot be opened");
-        }	
+        }
 
 	open_count++;
 	m_mode = mode;
-	open = true;        
+	open = true;
 
 	return this;
     }
 
     /**
-     * Ensures that the connection is open.
-     * @exception InterruptedIOException if the connection is closed
-     */
-    public void ensureOpen() throws InterruptedIOException {
-	if (!open) {
-	    throw new InterruptedIOException("Connection closed");
-	}
-    }
-
-
-    /**
      * Checks internal setting of receive permission.
      * Called from receive and setMessageListener methods.
-     * @exception InterruptedIOException if permission dialog 
+     * @exception InterruptedIOException if permission dialog
      * was preempted
      */
-    void checkReceivePermission() throws InterruptedIOException {
+    protected void checkReceivePermission() throws InterruptedIOException {
 	/* Check if we have permission to recieve. */
 	if (!readPermission) {
 	    try {
@@ -1027,8 +936,20 @@ public class Protocol implements MessageConnection,
      * @param port port to open
      * @return    returns handle to SMS connection.
      */
-    private native int open0(String host, 
-                             String msid, int port) throws IOException;
+    private native int open0(String host,
+                             int msid, int port) throws IOException;
+
+    /**
+     * Unblock the receive thread.
+     *
+     * @param msid The MIDlet suite ID.
+     *
+     * @return  returns handle to the connection.
+     */
+    protected int unblock00(int msid)
+        throws IOException {
+        return open0(null, msid, 0);
+    }
 
     /**
      * Native function to close sms connection
@@ -1039,6 +960,17 @@ public class Protocol implements MessageConnection,
      * @return    0 on success, -1 on failure
      */
     private native int close0(int port, int handle, int deRegister);
+
+    /**
+     * Close connection.
+     *
+     * @param connHandle handle returned by open0
+     * @param deRegister Deregistration appID when parameter is 1.
+     * @return    0 on success, -1 on failure
+     */
+    protected int close00(int connHandle, int deRegister) {
+        return close0(m_iport, connHandle, deRegister);
+    }
 
     /**
      * Sends SMS message
@@ -1054,34 +986,46 @@ public class Protocol implements MessageConnection,
      */
     static private native int send0(int handle,
                                     int type,
-                                    String host, 
-				    int destPort, 
-				    int sourcePort, 
+                                    String host,
+				    int destPort,
+				    int sourcePort,
 				    byte[] message);
 
     /**
      * Receives SMS message
      *
-     * @param port incoming port 
+     * @param port incoming port
      * @param msid Midlet suite ID
-     * @param handle handle to open SMS connection 
+     * @param handle handle to open SMS connection
      * @param smsPacket received packet
      * @return number of bytes received
      * @exception IOException  if an I/O error occurs
      */
-    static private native int receive0(int port, String msid, int handle,
+    static private native int receive0(int port, int msid, int handle,
 			       SMSPacket smsPacket) throws IOException;
 
     /**
      * Waits until message available
      *
-     * @param port incoming port 
-     * @param handle handle to SMS connection 
+     * @param port incoming port
+     * @param handle handle to SMS connection
      * @return 0 on success, -1 on failure
      * @exception IOException  if an I/O error occurs
      */
-    private native int waitUntilMessageAvailable0(int port, int handle) 
+    private native int waitUntilMessageAvailable0(int port, int handle)
                                throws IOException;
+
+    /**
+     * Waits until message available
+     *
+     * @param handle handle to connection
+     * @return 0 on success, -1 on failure
+     * @exception IOException  if an I/O error occurs
+     */
+    protected int waitUntilMessageAvailable00(int handle) 
+        throws IOException {
+        return waitUntilMessageAvailable0(m_iport, handle);
+    }
 
     /**
      * Computes the number of transport-layer segments that would be required to
@@ -1098,74 +1042,5 @@ public class Protocol implements MessageConnection,
      */
     private native int numberOfSegments0(byte msgBuffer[], int msgLen,
         int msgType, boolean hasPort);
-
-    /** Waits until message available and notify listeners */
-    /**
-     * Start receiver thread
-     */
-    private void startReceiverThread() {
-	final MessageConnection messageConnection = this;
-
-	if (m_listenerThread == null) {
-
-	    m_listenerThread = new Thread() {
-
-		/**
-		 * Run the steps that wait for a new message.
-		 */
-		public void run() {
-
-		    int messageLength = 0;
-		    do {
-
-			/* No message, initially. */
-			messageLength = -1;
-			try {
-		            messageLength = 
-                                waitUntilMessageAvailable0(m_iport,
-                                                           smsHandle);
-                            if (m_iport == 0) {
-                                break;
-                            }
-				/*
-				 * If a message is available and there are
-				 * listeners, notify all listeners of the
-				 * incoming message.
-				 */
-				if (messageLength >= 0) {
-                                    if (m_listener != null) {
-
-					// Invoke registered listener.
-					m_listener.notifyIncomingMessage(
-                                            messageConnection);
-                                    }
-                                }
-			} catch (InterruptedIOException iioe) {
-                            /*
-                             * Terminate, the reader thread has been
-                             * interrupted
-                             */
-                            break;
-                        } catch (IOException exception) {
-                            break;
-                        } catch (IllegalArgumentException iae) {
-                            /*
-                             * This happens if port has been set to 0;
-                             * which indicates that the connection has been
-                             * closed. So Terminate.
-                             */
-                            break;
-			}
-
-                    /*
-                     * m_iport = 0 on close 
-                     */
-		    } while (m_iport > 0);
-		}
-            };
-
-            m_listenerThread.start();
-	}
-    }
 
 }

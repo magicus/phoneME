@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -45,17 +46,6 @@ extern "C" {
  */
 
 /**
- * Checks if given signal is related to operation performed by WMA
- * and if so performs required processing.
- *
- * @param signalType the signal type occurred
- * @param fd the platform-specific file descriptor the event is signalled on
- *
- * @return KNI_TRUE if given fd is owned by WMA, KNI_FALSE otherwise
- */
-jboolean jsr120_check_signal(midpSignalType signalType, int fd);
-
-/**
  * Creates a platform-specific handle.
  *
  * @param fd platform-specific file descriptor to be associated with
@@ -63,7 +53,7 @@ jboolean jsr120_check_signal(midpSignalType signalType, int fd);
  *
  * @return the platform-specific handle; NULL if there was an error
  */
-void *wmaCreateSocketHandle(JSR120_PROTOCOLS protocol, int fd);
+void *wmaCreateSocketHandle(WMA_PROTOCOLS protocol, int fd);
 
 /**
  * Gets the platform-specific file descriptor associated with the

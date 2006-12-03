@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -138,7 +139,14 @@ public class MessageObject  implements Message {
 	messaddr = addr;
     }
 
-    // JAVADOC COMMENT ELIDED
+    /**
+     * Returns the timestamp indicating when this message has been
+     * sent.
+     *
+     * @return the date indicating the timestamp in the message or
+     *         <code>null</code> if the timestamp is not set
+     * @see #setTimeStamp
+     */
     public java.util.Date getTimestamp() {
         if (sentAt == 0) {
             return null;
