@@ -1201,7 +1201,7 @@ bool_t ProcessJARfile(char *buf, int len)  {
             * The documentation states:
             *   "If command is not NULL, system returns the value that is
             *    returned by the command interpreter.".
-            * Thus it is probably a bug within 'command.com'.
+            * Thus it is probably a CR within 'command.com'.
             * Note that _spawnlp correctly returns the exit status of the
             * new process.
             */

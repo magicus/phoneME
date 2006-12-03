@@ -39,7 +39,7 @@ open_iconv(const char* to, const char* from) {
     iconv_t ic = iconv_open(to, from);
     if (ic == (iconv_t)-1) { 
         if (errno == EINVAL) { 
-            /* There is a bug in some versions of Solaris in which
+            /* There is a CR in some versions of Solaris in which
              * nl_langinfo() returns a string beginning with ISO, but you
              * have to remove the ISO before calling open_iconv.
              */
