@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -77,7 +78,7 @@ extern "C" {
  * @param    elsize Size of one element 
  * @return	  pointer to the newly allocated and cleared memory 
  * 
- * <b>void* pcsl_mem_calloc_impl(unsigned int nelem, unsigned int elsize);</b>
+ * <b>void* pcsl_mem_calloc(unsigned int nelem, unsigned int elsize);</b>
  *
  *  Re-allocates memory at the given pointer location from the private \n
  *  PCSL memory pool (or null for new memory) so that it is the given \n

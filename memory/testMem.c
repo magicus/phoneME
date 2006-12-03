@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -285,8 +286,8 @@ void testMem_runTests() {
   testAllocateChunk();
   /*
    * comment out this test. The implementation changes the
-   * specified max size, to align with a page and we have
-   * no way of knowing what the new max size is. So we can't
+   * specified max size, to align with a page
+   * need revisit: what the new max size is. So we can't
    * compare against it.
    */
   /*

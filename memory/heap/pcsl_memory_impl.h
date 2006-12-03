@@ -1,4 +1,5 @@
 /*
+ * 	
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,8 +26,6 @@
 
 #ifndef _PCSL_MEMORY_IMPL_H_
 #define _PCSL_MEMORY_IMPL_H_
-
-#include <stdlib.h> 
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,4 +1,5 @@
 /*
+ * E
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -144,8 +145,8 @@ void testInterleavedRead_runTests() {
     char data1[1024*8];
     char data2[1024*8];
     char *hostname = "host.domain";
-    char* request1 = "GET /path/midlet.jad HTTP/1.0\n\n";
-    char* request2 = "GET /path/midlet.jad HTTP/1.0\n\n";
+    char* request1 = "GET /midlets/midlet.jad HTTP/1.0\n\n";
+    char* request2 = "GET /midlets/midlet.jad HTTP/1.0\n\n";
 
     testGetHostByName2(hostname, ipBytes);
 

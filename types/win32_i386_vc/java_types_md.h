@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -38,6 +39,7 @@
 
 #include <wchar.h>
 
+#ifndef _JAVASOFT_JNI_H_
 /** Byte parameter type. */
 typedef signed char jbyte;
 
@@ -49,6 +51,7 @@ typedef int         jint;
 
 /** Long parameter type. */
 typedef __int64     jlong;
+#endif /* _JAVASOFT_JNI_H_ */
 
 /** Platform-specific type specifier for 64-bit integer */
 #define PCSL_LLD "%I64d"

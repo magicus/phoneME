@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -26,7 +27,7 @@
 #include <stdlib.h>
 #include <utf.h>
 
-pcsl_string_status utf8_convert_to_utf16(const jbyte * str, jsize str_length, 
+pcsl_string_status utf8_convert_to_utf16(const jbyte * str, jsize str_length,
 			      jchar * buffer, jsize buffer_length,
 			      jsize * converted_length) {
   const jbyte * const str_end = str + str_length;
@@ -98,7 +99,7 @@ pcsl_string_status utf8_convert_to_utf16(const jbyte * str, jsize str_length,
     } else {
       return PCSL_STRING_EILSEQ;
     }
-	    
+
     if (buffer_overflow == PCSL_FALSE && buffer != NULL) {
       if (output_off + output_size > buffer_length) {
 	buffer_overflow = PCSL_TRUE;
@@ -120,12 +121,12 @@ pcsl_string_status utf8_convert_to_utf16(const jbyte * str, jsize str_length,
   return buffer_overflow == PCSL_TRUE ? PCSL_STRING_BUFFER_OVERFLOW : PCSL_STRING_OK;
 }
 
-pcsl_string_status utf16_convert_to_utf8(const jchar * str, jsize str_length, 
-			      jbyte * buffer, jsize buffer_length, 
+pcsl_string_status utf16_convert_to_utf8(const jchar * str, jsize str_length,
+			      jbyte * buffer, jsize buffer_length,
 			      jsize * converted_length) {
   const jchar * const str_end = str + str_length;
   const jbyte * const buffer_end = buffer + buffer_length;
-  
+
   jchar input_char = 0;
   jbyte output_byte[6] = { 0 };
   jsize output_size = 0;
@@ -155,8 +156,8 @@ pcsl_string_status utf16_convert_to_utf8(const jchar * str, jsize str_length,
 
 	if (low_char < 0xdc00 || low_char > 0xdfff) {
 	  return PCSL_STRING_EILSEQ;
-	} else {      
-	  int ucs4 = 
+	} else {
+	  int ucs4 =
 	    (input_char - 0xd800) * 0x400 + (low_char - 0xdc00) + 0x10000;
 	  output_byte[0] = (jbyte)(0xf0 | ((ucs4 >> 18)) & 0x07);
 	  output_byte[1] = (jbyte)(0x80 | ((ucs4 >> 12) & 0x3f));
@@ -170,7 +171,7 @@ pcsl_string_status utf16_convert_to_utf8(const jchar * str, jsize str_length,
       output_byte[1] = (jbyte)(0x80 | ((input_char >> 6) & 0x3f));
       output_byte[2] = (jbyte)(0x80 | (input_char & 0x3f));
       output_size = 3;
-    } 
+    }
 
     if (buffer_overflow == PCSL_FALSE && buffer != NULL) {
       if (output_off + output_size > buffer_length) {
@@ -186,7 +187,7 @@ pcsl_string_status utf16_convert_to_utf8(const jchar * str, jsize str_length,
 
     output_off += output_size;
   }
-  
+
   if (converted_length != NULL) {
     *converted_length = output_off;
   }
@@ -199,15 +200,15 @@ pcsl_string_status utf16_convert_to_utf8(const jchar * str, jsize str_length,
  * See Unicode Glossary at http://www.unicode.org/glossary/.
  * High surrogate is stored in code_unit[0],
  * low surrogate is stored in code_unit[1].
- * 
+ *
  * @param code_point  Unicode code point
  * @param code_unit   Storage for UTF-16 code unit
- * @param unit_length Storage for the number of 16-bit units 
- *                    in the UTF-16 code unit 
+ * @param unit_length Storage for the number of 16-bit units
+ *                    in the UTF-16 code unit
  * @return status of the conversion
  */
-pcsl_string_status code_point_to_utf16_code_unit(jint code_point, 
-				      jchar code_unit[2], 
+pcsl_string_status code_point_to_utf16_code_unit(jint code_point,
+				      jchar code_unit[2],
 				      jsize * unit_length) {
 
   if ((code_point & 0xffff0000) == 0) {
@@ -227,11 +228,11 @@ pcsl_string_status code_point_to_utf16_code_unit(jint code_point,
 }
 
 /**
- * Returns the number of abstract characters in the string specified 
- * by the UTF-16 code unit sequence. 
+ * Returns the number of abstract characters in the string specified
+ * by the UTF-16 code unit sequence.
  * Returns -1 if str is NULL or is not a valid UTF-16 code unit sequence.
  * See Unicode Glossary at http://www.unicode.org/glossary/.
- * 
+ *
  * @param str           UTF-16 code unit sequence
  * @param str_length    number of UTF-16 code units in the sequence
  * @return number of abstract characters in the string
@@ -240,12 +241,12 @@ jsize utf16_string_length(jchar * str, jsize str_length) {
   const jchar * const str_end = str + str_length;
   jsize char_count = 0;
   jchar input_char = 0;
-  
+
   if (str == NULL) {
     return -1;
   }
 
-  while(str < str_end) {    
+  while(str < str_end) {
     input_char = *str++;
     char_count++;
     if (input_char >= 0xd800 && input_char <= 0xdbff) {
@@ -260,8 +261,57 @@ jsize utf16_string_length(jchar * str, jsize str_length) {
 	  return -1;
 	}
       }
-    } 
+    }
   }
-  
+
   return char_count;
+}
+
+/**
+ * Convert a Unicode string into a form that can be safely stored on
+ * an ANSI-compatible file system. All characters that are not
+ * [A-Za-z0-9] are converted into %uuuu, where uuuu is the hex
+ * representation of the character's unicode value. Note even
+ * though "_" is allowed it is converted because we use it for
+ * for internal purposes. Potential file separators are converted
+ * so the storage layer does not have deal with sub-directory hierarchies.
+ *
+ * @param str_data buffer with a string that may contain any unicode character
+ * @param str_len length of the string pointed to by str_data
+ * @param pBuffer a buffer that is at least 5 times the size of str after
+ *        the offset, must not be the memory as str
+ * @param offset where to start putting the characters
+ *
+ * @return number of characters put in pBuffer
+ */
+int unicode_to_escaped_ascii(const jchar* str_data, const int str_len,
+                             jchar* pBuffer, int offset) {
+    static jchar NUMS[] = {
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+    };
+
+    int i;
+    int j;
+
+    for (i = 0, j = offset; i < str_len; i++) {
+        jchar c = str_data[i];
+
+        if ((c >= 'a' && c <= 'z') ||
+            (c >= '0' && c <= '9')) {
+            pBuffer[j++] = c;
+        } else if (c >= 'A' && c <= 'Z') {
+            /* Some file systems do not treat capital letters differently. */
+            pBuffer[j++] = '#';
+            pBuffer[j++] = c;
+        } else {
+            pBuffer[j++] = '%';
+            pBuffer[j++] = NUMS[(c >> 12) & 0x000f];
+            pBuffer[j++] = NUMS[(c >>  8) & 0x000f];
+            pBuffer[j++] = NUMS[(c >>  4) & 0x000f];
+            pBuffer[j++] = NUMS[c & 0x000f];
+        }
+    }
+
+    return j - offset;
 }

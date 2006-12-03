@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,7 +27,7 @@
 #ifndef _PCSL_MEMORY_IMPL_H_
 #define _PCSL_MEMORY_IMPL_H_
 
-#include <stdlib.h> 
+#include <pcsl_memory_port.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,18 +42,18 @@ extern "C" {
  * Allocates memory of the given size from the private PCSL memory
  * pool.
  */
-#define pcsl_mem_malloc_impl(x)     malloc((x))
+#define pcsl_mem_malloc_impl(x)     pcsl_malloc_port((x))
 
 /**
  * Allocates and clears the given number of elements of the given size
  * from the private PCSL memory pool.
  */
-#define pcsl_mem_calloc_impl(x, y)  calloc((x), (y))
+#define pcsl_mem_calloc_impl(x, y)  pcsl_calloc_port((x), (y))
 
 /**
  * Duplicates the given string after allocating the memory for it.
  */
-#define pcsl_mem_strdup_impl(x)     strdup((x))
+#define pcsl_mem_strdup_impl(x)     pcsl_strdup_port((x))
 
 /**
  * Frees memory at the given pointer in the private PCSL memory pool.
@@ -60,7 +61,7 @@ extern "C" {
 #define pcsl_mem_free_impl(x)       do { \
                                         void* __pcslFree_ptr__ = (void*)(x); \
                                         if(__pcslFree_ptr__ != NULL) { \
-                                            free(__pcslFree_ptr__); \
+                                            pcsl_free_port(__pcslFree_ptr__); \
                                         } \
                                     } while (0)
 
@@ -69,7 +70,7 @@ extern "C" {
  * PCSL memory pool (or null for new memory) so that it is the given
  * size.
  */
-#define pcsl_mem_realloc_impl(x, y) realloc((x), (y))
+#define pcsl_mem_realloc_impl(x, y) pcsl_realloc_port((x), (y))
 
 /**
  * Initializes a PCSL memory pool of the given size and starting at the specified

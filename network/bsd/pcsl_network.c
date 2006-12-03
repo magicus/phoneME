@@ -1,4 +1,5 @@
 /*
+ * 	
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -549,4 +550,11 @@ unsigned short pcsl_network_htons(
 unsigned short pcsl_network_ntohs(
     unsigned short value) {
     return ntohs(value);
+}
+
+/**
+ * See pcsl_network.h for definition.
+ */
+char * pcsl_inet_ntoa (void *ipBytes) {
+    return inet_ntoa(*((struct in_addr*)ipBytes));
 }

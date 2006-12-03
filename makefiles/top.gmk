@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -58,6 +59,11 @@ ifndef MEMORY_MODULE
 MEMORY_MODULE = malloc
 endif
 
+#possible values are "malloc", "javacall"
+ifndef MEMORY_PORT_MODULE
+MEMORY_PORT_MODULE=malloc
+endif
+
 # define chunk memory implementation and src directory
 ifndef PCSL_CHUNKMEM_IMPL
 PCSL_CHUNKMEM_IMPL=pcsl_chunkheap
@@ -100,6 +106,7 @@ endif
 
 #default modules
 MEMORY_DIR=$(PCSL_DIR)/memory
+MEMORY_PORT_DIR=$(MEMORY_DIR)/memory_port
 FILE_DIR=$(PCSL_DIR)/file
 NETWORK_DIR=$(PCSL_DIR)/network
 PRINT_DIR=$(PCSL_DIR)/print
@@ -109,6 +116,7 @@ TYPES_MD_DIR=$(PCSL_DIR)/types/$(PCSL_PLATFORM)
 STRING_DIR=$(PCSL_DIR)/string
 
 MEMORY_SELECT_DIR=$(MEMORY_DIR)/$(MEMORY_MODULE)
+MEMORY_PORT_SELECT_DIR=$(MEMORY_PORT_DIR)/$(MEMORY_PORT_MODULE)
 FILE_SELECT_DIR=$(FILE_DIR)/$(FILE_MODULE)
 NETWORK_SELECT_DIR=$(NETWORK_DIR)/$(NETWORK_MODULE)
 PRINT_SELECT_DIR=$(PRINT_DIR)/$(PRINT_MODULE)

@@ -1,3 +1,4 @@
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -38,6 +39,8 @@ endif
 #
 
 all doc clean donuts : verify $(MEMORY_SELECT_DIR)
+	@echo "building memory port module..."
+	@$(MAKE) -C $(MEMORY_PORT_DIR) $@
 	@echo "building memory module..."
 	@cd $(MEMORY_SELECT_DIR); $(MAKE) $@
 

@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -34,7 +35,7 @@
  * @file
  * @ingroup network
  * @brief PCSL networking interfaces for network events notification \n
- * ##include <pcsl_network_notifier.h>
+ * ##include <>
  * @{
  *
  */
