@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -40,6 +41,7 @@ NATIVE_THREAD_DIR = $(SUBSYSTEM_CORE_DIR)/$(NATIVE_THREAD_LIB)
 SUBSYSTEM_NATIVETHREAD_EXTRA_INCLUDES += \
     -I$(NATIVE_THREAD_DIR)/include
 
+ifeq ($(TARGET_VM), cldc_vm)
 # Platform definitions
 #
 ifeq ($(PLATFORM), stubs)
@@ -51,7 +53,14 @@ else
       ifeq ($(PLATFORM), win32)
           include $(NATIVE_THREAD_DIR)/$(PLATFORM)/lib.gmk
       else
-          include $(NATIVE_THREAD_DIR)/pthread/lib.gmk
+          ifeq ($(PLATFORM), javacall)
+              include $(NATIVE_THREAD_DIR)/stubs/lib.gmk
+          else
+              include $(NATIVE_THREAD_DIR)/pthread/lib.gmk
+          endif
       endif
    endif
+endif
+else
+   include $(NATIVE_THREAD_DIR)/stubs/lib.gmk
 endif

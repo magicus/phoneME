@@ -1,26 +1,27 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.main;
@@ -52,6 +53,13 @@ public class NativeAppManagerPeer
 
     /** Singleton native app manager peer reference. */
     private static NativeAppManagerPeer singleton;
+
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
 
     /**
      * Called at the initial start of the VM.
@@ -103,24 +111,27 @@ public class NativeAppManagerPeer
      * Create and initialize a new native app manager peer MIDlet.
      */
     private NativeAppManagerPeer() {
-	/*
-	 * WARNING: Don't add any calls before this !
-	 *
-	 * Register AMS Isolate ID in native global variable.
-	 * Since native functions rely on this value to distinguish
-	 * whether Java AMS is running, this MUST be called before any
-	 * other native functions from this Isolate. I.E. This call
-	 * must be the first thing this main class makes.
-	 */
+        /*
+         * WARNING: Don't add any calls before this !
+         *
+         * Register AMS Isolate ID in native global variable.
+         * Since native functions rely on this value to distinguish
+         * whether Java AMS is running, this MUST be called before any
+         * other native functions from this Isolate. I.E. This call
+         * must be the first thing this main class makes.
+         */
         registerAmsIsolateId();
 
-        // Throws SecurityException if already called,
-        internalSecurityToken = SecurityInitializer.initDisplay();
+        internalSecurityToken =
+            SecurityInitializer.requestToken(new SecurityTrusted());
         eventQueue = EventQueue.getEventQueue(internalSecurityToken);
 
         // current isolate & AMS isolate is the same object
-        int amsIsolateId = MIDletSuiteLoader.getAmsIsolateId();
-        int currentIsolateId = MIDletSuiteLoader.getIsolateId();
+        int amsIsolateId = MIDletSuiteUtils.getAmsIsolateId();
+        int currentIsolateId = MIDletSuiteUtils.getIsolateId();
+
+        // init AMS task resources needed for all tasks
+        MIDletSuiteUtils.initAmsResources();
 
         // create all needed event-related objects but not initialize ...
         MIDletEventProducer midletEventProducer =
@@ -228,7 +239,7 @@ public class NativeAppManagerPeer
      * @param className Class name of the MIDlet
      * @param error start error code
      */
-    public void midletStartError(int externalAppId, String suiteId,
+    public void midletStartError(int externalAppId, int suiteId,
                                  String className, int error) {
         notifyMidletStartError(externalAppId, error);
     }
@@ -244,7 +255,7 @@ public class NativeAppManagerPeer
      *
      * @param suiteId ID of the suite
      */
-    public void suiteTerminated(String suiteId) {
+    public void suiteTerminated(int suiteId) {
         notifySuiteTerminated(suiteId);
     }
 
@@ -288,17 +299,19 @@ public class NativeAppManagerPeer
 
         case EventTypes.NATIVE_MIDLET_EXECUTE_REQUEST:
             if (midlet == null) {
-                if (nativeEvent.stringParam1 == null) {
+                if (nativeEvent.intParam2 == MIDletSuite.UNUSED_SUITE_ID) {
                     notifyMidletStartError(nativeEvent.intParam1,
                                            Constants.MIDLET_ID_NOT_GIVEN);
-                } else if (nativeEvent.stringParam2 == null) {
+                } else if (nativeEvent.stringParam1 == null) {
                     notifyMidletStartError(nativeEvent.intParam1,
                                            Constants.MIDLET_CLASS_NOT_GIVEN);
                 } else {
-                    MIDletSuiteLoader.executeWithArgs(internalSecurityToken,
-                        nativeEvent.intParam1, nativeEvent.stringParam1,
-                        nativeEvent.stringParam2, nativeEvent.stringParam3,
-                        nativeEvent.stringParam4, nativeEvent.stringParam5,
+                    MIDletSuiteUtils.executeWithArgs(internalSecurityToken,
+                        nativeEvent.intParam1, nativeEvent.intParam2,
+                        nativeEvent.stringParam1, nativeEvent.stringParam2,
+                        nativeEvent.stringParam3, nativeEvent.stringParam4,
+                        nativeEvent.stringParam5, nativeEvent.intParam3,
+                        nativeEvent.intParam4, nativeEvent.intParam5,
                         nativeEvent.stringParam6);
                 }
             } else {
@@ -310,7 +323,7 @@ public class NativeAppManagerPeer
             if (midlet != null) {
                 midlet.activateMidlet();
             } else {
-            	errorMsg = "Invalid App Id";
+                errorMsg = "Invalid App Id";
             }
             break;
 
@@ -324,9 +337,9 @@ public class NativeAppManagerPeer
 
         case EventTypes.NATIVE_MIDLET_DESTROY_REQUEST:
             if (midlet != null) {
-            	midlet.destroyMidlet();
+                midlet.destroyMidlet();
             } else {
-            	errorMsg = "Invalid App Id";
+                errorMsg = "Invalid App Id";
             }
             break;
 
@@ -335,9 +348,17 @@ public class NativeAppManagerPeer
             // with special AppId 0
             if (midlet != null ||
                 nativeEvent.intParam1 == Constants.MIDLET_APPID_NO_FOREGROUND) {
-            	midletProxyList.setForegroundMIDlet(midlet);
+                if (midletProxyList.getForegroundMIDlet() == midlet &&
+                        midlet != null) {
+                    // send the notification even if the midlet already has
+                    // the foreground
+                    NativeDisplayControllerPeer.notifyMidletHasForeground(
+                        midlet.getExternalAppId());
+                } else {
+                    midletProxyList.setForegroundMIDlet(midlet);
+                }
             } else {
-            	errorMsg = "Invalid App Id";
+                errorMsg = "Invalid App Id";
             }
             break;
 
@@ -407,7 +428,7 @@ public class NativeAppManagerPeer
      *
      * @param suiteId ID of the MIDlet suite
      */
-    private static native void notifySuiteTerminated(String suiteId);
+    private static native void notifySuiteTerminated(int suiteId);
 
     /**
      * Register the Isolate ID of the AMS Isolate by making a native

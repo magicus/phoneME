@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -53,7 +54,7 @@
  * @param height The height of the selected region
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_lcdui_Image_getRGB() {
+KNIDECL(javax_microedition_lcdui_Image_getRGB) {
     int height = KNI_GetParameterAsInt(7);
     int width = KNI_GetParameterAsInt(6);
     int y = KNI_GetParameterAsInt(5);
@@ -147,7 +148,7 @@ Java_javax_microedition_lcdui_Image_getRGB() {
  * @see Image
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_javax_microedition_lcdui_Image_render() {
+KNIDECL(javax_microedition_lcdui_Image_render) {
     jboolean success = KNI_TRUE;
 
     int anchor = KNI_GetParameterAsInt(4);
@@ -221,7 +222,7 @@ Java_javax_microedition_lcdui_Image_render() {
  *               <tt>Image</tt>
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_javax_microedition_lcdui_Image_renderRegion() {
+KNIDECL(javax_microedition_lcdui_Image_renderRegion) {
     int anchor    = KNI_GetParameterAsInt(9);
     int y_dest    = KNI_GetParameterAsInt(8);
     int x_dest    = KNI_GetParameterAsInt(7);
@@ -283,3 +284,66 @@ Java_javax_microedition_lcdui_Image_renderRegion() {
     KNI_EndHandles();
     KNI_ReturnBoolean(success);
 }
+
+#ifndef UNDER_CE
+/*
+ * Dummy functions for native soft buttons and menus
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_chameleon_layers_SoftButtonLayer_setNativeSoftButton) {
+    KNI_ReturnVoid();
+}
+
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_chameleon_layers_SoftButtonLayer_setNativePopupMenu) {
+    KNI_ReturnVoid();
+}
+
+/*
+ * These are dummy functions for testing native text editor. You can
+ * change src/configuration/linux_fb/skin.xml to have TEXTFIELD_NATIVE_EDITOR=1
+ * and then look at the stdout for the messages sent by TextFieldLFImpl.java
+ */
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(javax_microedition_lcdui_TextFieldLFImpl_enableNativeEditor) {
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(javax_microedition_lcdui_TextFieldLFImpl_setNativeEditorContent) {
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(javax_microedition_lcdui_TextFieldLFImpl_disableNativeEditor) {
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(javax_microedition_lcdui_TextFieldLFImpl_getNativeEditorContent) {
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(temp);
+    KNI_ReleaseHandle(temp);
+    KNI_EndHandlesAndReturnObject(temp);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(javax_microedition_lcdui_TextFieldLFImpl_getNativeEditorCursorIndex) {    
+    KNI_ReturnInt(0);
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_chameleon_MIDPWindow_disableAndSyncNativeEditor) {
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(javax_microedition_lcdui_TextFieldLFImpl_mallocToJavaChars) {
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(temp);
+    KNI_ReleaseHandle(temp);
+    KNI_EndHandlesAndReturnObject(temp);
+}
+#endif

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -41,6 +42,9 @@ public interface MIDletProxyListListener {
     /** Field ID for the PREEMPTING_DISPLAY. */
     static final int PREEMPTING_DISPLAY = 4;
 
+    /** Field ID for the resources suspend notification. */
+    static final int RESOURCES_SUSPENDED = 5;
+
     /**
      * Called when a MIDlet is added to the list.
      *
@@ -72,6 +76,6 @@ public interface MIDletProxyListListener {
      * @param className Class name of the MIDlet
      * @param error start error code
      */
-    void midletStartError(int externalAppId, String suiteId, String className,
+    void midletStartError(int externalAppId, int suiteId, String className,
                           int error);
 }

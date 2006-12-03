@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,15 +27,8 @@
 package com.sun.midp.security;
 
 /**
- * Enables optional dynamically loaded implicitly trusted classes to be given
- * security tokens.
+ * The implementers of this interface known to SecurityInitializer
+ * can dynamically request for security token 
  */
 public interface ImplicitlyTrustedClass {
-    /**
-     * Initializes the security token this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class
-     */
-    public void initSecurityToken(SecurityToken token);
 }

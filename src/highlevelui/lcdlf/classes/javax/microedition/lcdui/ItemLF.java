@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -120,4 +121,12 @@ interface ItemLF {
      * Caller should hold LCDUILock around this call.
      */
     void lCommitPendingInteraction();
+
+    /**
+     * Return whether the cached requested sizes are valid.
+     *
+     * @return <code>true</code> if the cached requested sizes are up to date.
+     *         <code>false</code> if they have been invalidated.
+     */
+    boolean isRequestedSizesValid();
 }

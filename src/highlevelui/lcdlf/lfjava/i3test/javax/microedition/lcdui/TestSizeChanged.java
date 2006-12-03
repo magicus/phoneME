@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -614,8 +615,8 @@ public class TestSizeChanged extends TestCase {
         protected void paint(Graphics g) {
             int c = g.getColor();
 
-            // IMPL_NOTE:  
-	    // FIX: remove this once chameleon sizeChanged() code is working.
+            // IMPL_NOTE: 
+	    // remove this once chameleon sizeChanged() code is working.
             // This line is used to fake sizeChanged() being called before paint().
             // It appears sizeChanged is not being called in the chameleon code...
 	    // ...but we don't know why.

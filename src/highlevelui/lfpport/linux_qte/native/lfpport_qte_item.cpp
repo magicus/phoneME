@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_item.cpp	1.62 06/04/05 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -92,7 +92,7 @@ MidpError Item::relocate(int x, int y) {
 
   move(x, y);
 
-  // Patch Qt 2.3.2 bug that move() does not properly repaint widget that was
+  // Patch Qt 2.3.2 feature that move() does not properly repaint widget that was
   // originally covered by other widget before this move.
   if (y > oldY || x > oldX) {
     repaint(); // force a repaint of the previously covered area
@@ -297,7 +297,7 @@ MidpError Item::minimumWidth(int *w) {
 MidpError Item::minimumHeight(int *h) {
     // The smallest height could be if we use all the width
     // available or should we allow clipping 
-    // if clipping is allowed setSize will be tricky
+    // if clipping is allowed setSize will be complex
     preferredHeight(h, -1);
 
     return KNI_OK;

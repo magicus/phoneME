@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -53,7 +54,7 @@
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_midlet_MIDletPeer_dispatchPlatformRequest(void) {
+KNIDECL(com_sun_midp_midlet_MIDletPeer_dispatchPlatformRequest) {
     jsize urlLen;
     char* pszUrl;
     jchar* temp;

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,6 +26,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #include <midp_libc_ext.h>
 #include <midp_logging.h>
@@ -73,4 +75,41 @@ int midp_vsnprintf(char *buffer, int bufferSize,
 
     return rv;
 }
-#endif
+#endif /* ENABLE_DEBUG */
+
+/**
+ * Not all compilers provide the POSIX function strcasesmp, so we need to
+ * use workaround for it. The function compares to strings ignoring the
+ * case of characters. How uppercase and lowercase characters are related
+ * is determined by the currently selected locale.
+ *
+ * @param s1 the first string for comparision
+ * @param s2 the second string for comparison
+ * @return an integer less than, equal to, or greater than zero if s1 is
+ *   found, respectively, to be less than, to  match, or be greater than s2.
+ */
+int midp_strcasecmp(const char *s1, const char *s2) {
+    while (*s1 && *s2) {
+        int d = tolower(*s1) - tolower(*s2);
+        if (d) return d;
+        ++s1;
+        ++s2;
+    }
+    return tolower(*s1) - tolower(*s2);
+}
+
+/**
+ * Same as for midp_strcasecmp, except it only compares the first n
+ * characters of s1.
+ */
+int midp_strncasecmp(const char *s1, const char *s2, size_t n) {
+    if (!n) return 0;
+    while (*s1 && *s2) {
+        int d = tolower(*s1) - tolower(*s2);
+        if (d) return d;
+        else if (!--n) return 0;
+        ++s1;
+        ++s2;
+    }
+    return tolower(*s1) - tolower(*s2);
+}

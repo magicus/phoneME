@@ -1,5 +1,5 @@
 /*
- * @(#)MD2.java	1.10 06/06/09 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

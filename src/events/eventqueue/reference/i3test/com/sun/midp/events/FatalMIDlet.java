@@ -1,4 +1,5 @@
 /*
+ * 	
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,7 +28,7 @@ package com.sun.midp.events;
 
 import javax.microedition.midlet.MIDlet;
 
-import com.sun.midp.main.MIDletSuiteLoader;
+import com.sun.midp.main.MIDletSuiteUtils;
 
 /**
  * Register an event listener, send an event to self, and throw a
@@ -41,8 +42,7 @@ public class FatalMIDlet extends MIDlet implements EventListener {
         EventQueue eventQueue;
         Event event;
 
-        if (MIDletSuiteLoader.getAmsIsolateId() == 
-                MIDletSuiteLoader.getIsolateId()) {
+        if (MIDletSuiteUtils.isAmsIsolate()) {
             // This is single VM mode don't throw a fatal error. Just end.
             notifyDestroyed();
             return;

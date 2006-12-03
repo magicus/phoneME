@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -185,4 +186,10 @@ public interface DisplayEventConsumer {
      *
      * Now processed by ItemEventConsumer. 
      */
+
+
+     /*
+      * Called by event delivery when size of screen was changed.
+      */
+     public void handleRotationEvent();
 }

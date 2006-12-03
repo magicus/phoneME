@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,25 +27,36 @@ package com.sun.midp.chameleon.skins;
 
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Font;
+import com.sun.midp.chameleon.skins.resources.*;
 
 /**
  * ScrollIndSkin represents the properties and values used to render
  * a ScrollIndLayer in the com.sun.microedition.chameleon.layers package.
  */
 public class ScrollIndSkin {
+    /**
+     * IMPL_NOTE: constants below have been moved to 
+     * ScrollIndResourcesConstants class. However, 
+     * they are duplicated here because this file is 
+     * used by skin authors to lookup for possible 
+     * constants values. This should be changed in
+     * future releases.
+     */
 
     /**
-     * An identifer value for describing a scroll indicator which
+     * An value for describing a scroll indicator which
      * uses arrows in the soft button bar.
      */
-    public final static int MODE_ARROWS = 0;
+    public final static int MODE_ARROWS = 
+        ScrollIndResourcesConstants.MODE_ARROWS;
     
     /**
-     * An identifier value for describing a scroll indicator which
+     * An value for describing a scroll indicator which
      * uses a vertical bar with a thumb.
      */
-    public final static int MODE_BAR = 1;
-    
+    public final static int MODE_BAR = 
+        ScrollIndResourcesConstants.MODE_BAR;
+
     /**
      * This field corresponds to SCROLL_MODE skin property.
      * See its comment for further details.
@@ -69,6 +81,21 @@ public class ScrollIndSkin {
      */
     public static int COLOR_FG;
     
+    /**
+     * the arrow fill color when it's released
+     */
+    public static int COLOR_UP_ARROW;
+
+    /**
+     * the arrow fill color when it's pressed
+     */
+    public static int COLOR_DN_ARROW;
+
+    /**
+     * scroll bar frame color
+     */
+    public static int COLOR_FRAME;
+
     /**
      * This field corresponds to SCROLL_IMAGE_BG skin property.
      * See its comment for further details.

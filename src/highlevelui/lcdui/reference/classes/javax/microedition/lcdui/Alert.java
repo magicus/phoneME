@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -669,10 +670,25 @@ public class Alert extends Screen {
      * @param d The Displayable to display when this Alert is completed
      */
     void setReturnScreen(Displayable d) {
-        if (d != null) {
-            this.returnScreen = d;
-        } else {
-            this.returnScreen = new Form("");
+        this.returnScreen = d;
+    }
+
+    /**
+     * Get the screen that the display should return to
+     * when this Alert is dismissed.
+     * @return The Displayable to display when this Alert is completed
+     */
+    Displayable getReturnScreen() {
+        return returnScreen;
+    }
+
+    /**
+     * Dismisses this alert.
+     */
+    void lDismiss() {
+        Display dpy = alertLF.lGetCurrentDisplay();
+        if (dpy != null && returnScreen != null) {
+            dpy.clearAlert(this, returnScreen);
         }
     }
 
@@ -811,7 +827,7 @@ public class Alert extends Screen {
 		    listenerToCall = userCommandListener;
 		} else {
 		    // Treat all commands as if they were 'DISMISS'
-                    alertLF.lDismiss(returnScreen);
+                    lDismiss();
 		}
 	    } // synchronized
 

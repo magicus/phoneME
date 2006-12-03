@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -118,6 +119,11 @@ extern "C" {
 
 /* Automation API events */
 #define SET_FOREGROUND_BY_NAME_REQUEST  43
+
+#define ROTATION_EVENT       44
+
+/* MIDlet resources paused notification */
+#define MIDLET_RS_PAUSED_NOTIFICATION   45
 
 /** @} */
 

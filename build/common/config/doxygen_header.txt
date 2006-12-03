@@ -7,7 +7,7 @@
 
 <html>
   <head>
-    <title>Reference Documentation - phoneME Feature project - Version MR1</title>
+    <title>Reference Documentation - phoneME Feature project - Version 1.0</title>
     <link rel="stylesheet" href="doxygen_style.css" type="text/css">
   </head>
 

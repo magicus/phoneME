@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -47,25 +48,18 @@ import com.sun.midp.security.*;
  * This class implements the necessary functionality
  * for an SSL connection.
  */
-public class Protocol implements SecureConnection, ConnectionBaseInterface, 
-				 ImplicitlyTrustedClass {
+public class Protocol implements SecureConnection, ConnectionBaseInterface {
+
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
 
     /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken;
-    
-    /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class.
-     */
-    public void initSecurityToken(SecurityToken token) {
-	if (classSecurityToken != null) {
-	    return;
-	}
-	
-	classSecurityToken = token;
-    }
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /** Underlying TCP connection. */
     private com.sun.midp.io.j2me.socket.Protocol tcpConnection;

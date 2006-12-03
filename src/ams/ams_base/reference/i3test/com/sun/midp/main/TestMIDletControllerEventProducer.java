@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -35,9 +36,9 @@ import com.sun.midp.security.SecurityToken;
 import java.util.Random;
 
 /**
- * Unit tests for the MIDletControllerEventProducer class. This class, and 
- * event producer classes in general, don't have much logic. However, they do 
- * implement the mapping between specific data and generic event fields (e.g., 
+ * Unit tests for the MIDletControllerEventProducer class. This class, and
+ * event producer classes in general, don't have much logic. However, they do
+ * implement the mapping between specific data and generic event fields (e.g.,
  * intParam1 or stringParam2) which is important to test.
  */
 public class TestMIDletControllerEventProducer extends TestCase {
@@ -48,10 +49,10 @@ public class TestMIDletControllerEventProducer extends TestCase {
 
     // Constant test data.
 
-    static final String SUITE_ID = "the midlet suite ID";
+    static final int SUITE_ID = 10000;
     static final String CLASS_NAME = "the midlet class name";
     static final String DISPLAY_NAME = "the display-name of the midlet";
-    static final String TARGET_SUITE_ID = "the target midlet suite ID";
+    static final int TARGET_SUITE_ID = 10001;
     static final String TARGET_CLASS_NAME = "the target midlet's class name";
 
     // The following instance variables comprise the test fixture.
@@ -66,7 +67,7 @@ public class TestMIDletControllerEventProducer extends TestCase {
     MIDletControllerEventProducer producer;
 
     /**
-     * Initializes the test fixture with random data, creates the stub event 
+     * Initializes the test fixture with random data, creates the stub event
      * queue, and creates the MIDletControllerEventProducer under test.
      */
     void setUp() {
@@ -89,7 +90,7 @@ public class TestMIDletControllerEventProducer extends TestCase {
     }
 
     /**
-     * Utility method to check the stub event queue's log to ensure that it 
+     * Utility method to check the stub event queue's log to ensure that it
      * contains exactly one native event.  Returns this event.
      */
     NativeEvent checkSingleNativeEvent() {
@@ -103,7 +104,7 @@ public class TestMIDletControllerEventProducer extends TestCase {
 
     /**
      * Utility method to check the stub event queue's log to ensure that it
-     * contains exactly numEvents native events.  Returns an array containing 
+     * contains exactly numEvents native events.  Returns an array containing
      * exactly that number of native events.
      */
     NativeEvent[] checkNativeEvents(int numEvents) {
@@ -154,7 +155,7 @@ public class TestMIDletControllerEventProducer extends TestCase {
         assertEquals(EventTypes.MIDLET_START_ERROR_EVENT, nev.getType());
         assertEquals(1, nev.intParam1);
         assertEquals(1, nev.intParam2);
-        assertEquals(SUITE_ID, nev.stringParam1);
+        assertEquals(String.valueOf(SUITE_ID), nev.stringParam1);
         assertEquals(CLASS_NAME, nev.stringParam2);
     }
 
@@ -171,7 +172,7 @@ public class TestMIDletControllerEventProducer extends TestCase {
         assertEquals(currentIsolateId, nev.intParam1);
         assertEquals(1, nev.intParam2);
         assertEquals(displayId, nev.intParam4);
-        assertEquals(SUITE_ID, nev.stringParam1);
+        assertEquals(String.valueOf(SUITE_ID), nev.stringParam1);
         assertEquals(CLASS_NAME, nev.stringParam2);
         assertEquals(DISPLAY_NAME, nev.stringParam3);
     }
@@ -238,9 +239,9 @@ public class TestMIDletControllerEventProducer extends TestCase {
         NativeEvent nev = checkSingleNativeEvent();
 
         assertEquals(EventTypes.FOREGROUND_TRANSFER_EVENT, nev.getType());
-        assertEquals(SUITE_ID, nev.stringParam1);
+        assertEquals(String.valueOf(SUITE_ID), nev.stringParam1);
         assertEquals(CLASS_NAME, nev.stringParam2);
-        assertEquals(TARGET_SUITE_ID, nev.stringParam3);
+        assertEquals(String.valueOf(TARGET_SUITE_ID), nev.stringParam3);
         assertEquals(TARGET_CLASS_NAME, nev.stringParam4);
     }
 

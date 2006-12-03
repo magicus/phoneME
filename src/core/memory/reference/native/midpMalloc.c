@@ -1,26 +1,27 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -55,7 +56,7 @@
  * @warning This code is not thread safe.
  *
  * @note  In this midpMalloc implementation we wrap the pcslMemory functions
- * defined in pcsl_memory.h.  
+ * defined in pcsl_memory.h.
  */
 
 #include <stdio.h>
@@ -78,7 +79,7 @@ extern "C" {
  *   parameters:  size   Size of memory pool to use; if size is '-1',
  *                        the default memory pool size will be used
  *   returns:     0 on success; != 0 on failure
- *                
+ *
  */
 int
 midpInitializeMemory(int size) {
@@ -95,7 +96,7 @@ midpInitializeMemory(int size) {
  * INTERFACE:
  *   parameters:  <none>
  *   returns:     <nothing>
- *                
+ *
  */
 void
 midpFinalizeMemory() {
@@ -112,7 +113,7 @@ midpFinalizeMemory() {
  *                filename   Filename where allocation occurred
  *                lineno     Line number where allocation occurred
  *   returns:     pointer to the newly allocated memory
- *                
+ *
  */
 void*
 midpMallocImpl(unsigned int size, char* filename, int lineno) {
@@ -133,10 +134,10 @@ midpMallocImpl(unsigned int size, char* filename, int lineno) {
  *                filename   Filename where allocation occurred
  *                lineno     Line number where allocation occurred
  *   returns:     pointer to the newly allocated and cleared memory
- *                
+ *
  */
 void*
-midpCallocImpl(unsigned int nelem, unsigned int elsize, 
+midpCallocImpl(unsigned int nelem, unsigned int elsize,
                char* filename, int lineno) {
     (void) filename;
     (void) lineno;
@@ -153,7 +154,7 @@ midpCallocImpl(unsigned int nelem, unsigned int elsize,
  *                filename   Filename where allocation occurred
  *                lineno     Line number where allocation occurred
  *   returns:     pointer to the re-allocated memory
- *                
+ *
  */
 void*
 midpReallocImpl(void* ptr, unsigned int size, char* filename, int lineno) {
@@ -161,6 +162,16 @@ midpReallocImpl(void* ptr, unsigned int size, char* filename, int lineno) {
     (void) lineno;
     return pcsl_mem_realloc(ptr, size);
 }
+
+#ifdef UNDER_CE
+char * strdup(const char *s) {
+    char *result = (char*)malloc(strlen(s)+1);
+    if (result) {
+        strcpy(result, s);
+    }
+    return result;
+}
+#endif
 
 /**
  * FUNCTION:      midpStrdupImpl()
@@ -171,7 +182,7 @@ midpReallocImpl(void* ptr, unsigned int size, char* filename, int lineno) {
  *                filename   Filename where allocation occurred
  *                lineno     Line number where allocation occurred
  *   returns:     pointer to the duplicate string
- *                
+ *
  */
 char*
 midpStrdupImpl(const char *s1, char* filename, int lineno) {
@@ -190,7 +201,7 @@ midpStrdupImpl(const char *s1, char* filename, int lineno) {
  *                filename   Filename where allocation occurred
  *                lineno     Line number where allocation occurred
  *   returns:     <nothing>
- *                
+ *
  */
 void
 midpFreeImpl(void *ptr, char *filename, int lineno) {
@@ -207,7 +218,7 @@ midpFreeImpl(void *ptr, char *filename, int lineno) {
  * INTERFACE:
  *   parameters:  <none>
  *   returns:     The total amount of available heap
- *                
+ *
  */
 int
 midpGetTotalHeap() {
@@ -223,7 +234,7 @@ midpGetTotalHeap() {
  * INTERFACE:
  *   parameters:  <none>
  *   returns:     The current amount of unused heap
- *                
+ *
  */
 int
 midpGetFreeHeap() {

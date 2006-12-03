@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -48,6 +49,7 @@
 #define _MIDPSTORAGE_H_
 
 #include <midpString.h>
+#include <java_types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,7 +59,6 @@ extern "C" {
  * Maximum length of a file name, not including the terminator.
  */
 #define MAX_FILENAME_LENGTH 255 /* does not include the zero terminator */
-
 
 /* I/O Modes */
 /**
@@ -112,6 +113,9 @@ extern "C" {
 #define S_ISBLK(mode)   ( ((mode) & S_IFMT) == S_IFBLK )
 #endif /* _S_ISREG */
 
+/** Type definition for the storage identifier */
+typedef jint StorageIdType;
+
 /**
  * Initializes the storage subsystem.
  *
@@ -132,7 +136,7 @@ void storageFinalize();
  * Sets the amount of total storage space allocated to MIDlet suites to the
  * given number of bytes. The given value may be different from the system
  * default.  This value is used to enforce a maximum size limit for the
- * amount of space that can be used by installed MIDlet suites and 
+ * amount of space that can be used by installed MIDlet suites and
  * their record stores.
  *
  * <p>Do not call this function from <tt>storageInitialize</tt> if you
@@ -173,10 +177,12 @@ jchar storageGetPathSeparator();
  * Since the lifetime of the returned object is from storageInitialize
  * until storageFinalize, you do not have to free the returned object.
  *
- * @return prefix used for all file names. It may be empty, but not
- *         PCSL_STRING_NULL
+ * @param storageId ID of the storage the root of which must be returned
+ *
+ * @return prefix used for all file names in the given storage.
+ *         It may be empty, but not PCSL_STRING_NULL.
  */
-const pcsl_string* storage_get_root();
+const pcsl_string* storage_get_root(StorageIdType storageId);
 
 /**
  * Returns the root string that configuration files start with, including a
@@ -187,10 +193,12 @@ const pcsl_string* storage_get_root();
  * Since the lifetime of the returned object is from initializeConfigRoot
  * until storageFinalize, you do not have to free the returned object.
  *
+ * @param storageId ID of the storage the config root of which must be returned
+ *
  * @return prefix used for all configuration file names. It may be empty,
  *         but not PCSL_STRING_NULL
  */
-const pcsl_string* storage_get_config_root();
+const pcsl_string* storage_get_config_root(StorageIdType storageId);
 
 /**
  * Frees an error string, or does nothing if null is passed in. The
@@ -230,7 +238,7 @@ void storageClose(char** ppszError, int handle);
 
 /**
  * Reads from the given open native-storage file, and places the
- * results in the given buffer. 
+ * results in the given buffer.
  *
  * @param ppszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -249,7 +257,7 @@ long storageRead(char** ppszError, int handle, char* buffer, long length);
 /**
  * Writes to the given open native-storage file.  This function is
  * atomic: it will write all or none of the given bytes. If it writes
- * none, it will pass back an error in the given string pointer. 
+ * none, it will pass back an error in the given string pointer.
  *
  * @param ppszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -272,7 +280,7 @@ void storageCommitWrite(char** ppszError, int handle);
 
 /**
  * Changes the read/write position in the given open native-storage
- * file to the given position. 
+ * file to the given position.
  *
  * @param ppszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -285,7 +293,7 @@ void storagePosition(char** ppszError, int handle, long absolutePosition);
 
 /**
  * Changes the read/write position in the given open native-storage
- * file by the given number of bytes. 
+ * file by the given number of bytes.
  *
  * @param ppszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -300,7 +308,7 @@ void storagePosition(char** ppszError, int handle, long absolutePosition);
 long storageRelativePosition(char** ppszError, int handle, long offset);
 
 /**
- * Returns the size of the given open native-storage file. 
+ * Returns the size of the given open native-storage file.
  *
  * @param ppszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -311,11 +319,11 @@ long storageRelativePosition(char** ppszError, int handle, long offset);
  * or 0 if there was an error (for example, if the given handle was
  * not valid)
  */
-long storageSizeOf(char** ppszError,  int handle);
+long storageSizeOf(char** ppszError, int handle);
 
 /**
  * Truncates the size of the given open native-storage file to the
- * given number of bytes. 
+ * given number of bytes.
  *
  * @param ppszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -323,18 +331,20 @@ long storageSizeOf(char** ppszError,  int handle);
  * @param handle handle to the open native-storage file
  * @param size new size of the file, in bytes
  */
-void storageTruncate(char** ppszError,  int handle, long size);
+void storageTruncate(char** ppszError, int handle, long size);
 
 /**
  * Returns the amount of free space of native-file storage, in
- * bytes. 
+ * bytes.
+ *
+ * @param storageId ID of the storage to check for free space
  *
  * @return the number of bytes of available free space
  */
-long storageGetFreeSpace();
+jlong storage_get_free_space(StorageIdType storageId);
 
 /**
- * Checks whether a native-storage file of the given name exists. 
+ * Checks whether a native-storage file of the given name exists.
  *
  * @param filename name of the file that might exist
  *
@@ -344,7 +354,7 @@ int storage_file_exists(const pcsl_string* filename);
 
 /**
  * Renames a native-storage file from the given current name to the given new
- * name. 
+ * name.
  *
  * @param ppszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -367,13 +377,13 @@ void storage_rename_file(char** ppszError, const pcsl_string* oldFilename,
 void storage_delete_file(char** ppszError,  const pcsl_string* filename);
 
 /*
- * Returns the handle that represents the savedRootlength, savedDirectory 
+ * Returns the handle that represents the savedRootlength, savedDirectory
  * etc. This handle needs to be passed to storage_get_next_file_in_iterator()
- * in order to get the filename that matches with a given string. In 
- * order to clean-up the memory storageCloseFileIterator() must be 
- * called to close the handle properly. 
- * 
- * 
+ * in order to get the filename that matches with a given string. In
+ * order to clean-up the memory storageCloseFileIterator() must be
+ * called to close the handle properly.
+ *
+ *
  * Returns NULL if memory allocation fails for MidpStorageDirInfo structure
  * or root directory of the input 'string' can not be found
  *

@@ -1,27 +1,27 @@
 /*
- * @(#)lfjport_qte_mscreen.cpp	1.38 06/04/05 @(#)
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  * 
  * This source file is specific for Qt-based configurations.
  */
@@ -31,26 +31,26 @@
 #include <qpainter.h>
 #include <qpaintdevice.h>
 #include <qpaintdevicemetrics.h>
-#include <qlayout.h> 
-#include <qtoolbar.h> 
-#include <qmenubar.h> 
-#include <qaction.h> 
-#include <qmessagebox.h> 
+#include <qlayout.h>
+#include <qtoolbar.h>
+#include <qmenubar.h>
+#include <qaction.h>
+#include <qmessagebox.h>
 
 #include <jvm.h>
 
 #include <keymap_input.h>
 #include <midpEventUtil.h>
+#include <midp_constants_data.h>
+#include <suspend_resume.h>
 
 #include <qteapp_export.h>
 #include <qteapp_key.h>
 
-#ifdef ENABLE_JSR_184
-#include <swvapi.h>
-#endif
-
 #include "lfjport_qte_mscreen.h"
 #include <moc_lfjport_qte_mscreen.cpp>
+
+jboolean ChameleonMScreen::r_orientation = false;
 
 /**
  * @class ChameleonMScreen lfjport_qte_mscreen.h
@@ -84,8 +84,8 @@ void ChameleonMScreen::init() {
   // Full screen mode
   // -Height
   // -Width
-  DISPLAY_FULLHEIGHT = qApp->desktop()->height();
-  DISPLAY_FULLWIDTH  = qApp->desktop()->width();
+  DISPLAY_FULLHEIGHT = CHAM_FULLHEIGHT;
+  DISPLAY_FULLWIDTH  = CHAM_FULLWIDTH;
 
   // Set up coordinate for the whole screen
   // SCREEN excludes the scroll bar
@@ -108,10 +108,6 @@ void ChameleonMScreen::init() {
   force_refresh = true;
   last_pen = last_brush = -1;
   last_dotted = 0;
-
-#ifdef ENABLE_JSR_184
-  engine_initialize();
-#endif
 }
 
 /**
@@ -160,9 +156,6 @@ ChameleonMScreen::~ChameleonMScreen()
     killTimers();
     delete gc;
     gc = NULL;
-#ifdef ENABLE_JSR_184
-    engine_uninitialize();
-#endif
 }
 
 void ChameleonMScreen::mousePressEvent(QMouseEvent *mouse)
@@ -217,10 +210,19 @@ void ChameleonMScreen::keyPressEvent(QKeyEvent *key)
     if (key->key() == Qt::Key_F12||
         key->key() == Qt::Key_Home) {
         // F12 to display the foreground selector
-      if (!key->isAutoRepeat()) {
+        if (!key->isAutoRepeat()) {
             MidpEvent evt;
             MIDP_EVENT_INITIALIZE(evt);
             evt.type = SELECT_FOREGROUND_EVENT;
+            evt.intParam1 = 0;
+            midpStoreEventAndSignalAms(evt);
+        }
+    } else if (key->key() == Qt::Key_F4) {
+        if (!key->isAutoRepeat()) {
+            MidpEvent evt;
+            MIDP_EVENT_INITIALIZE(evt);
+            evt.type = SELECT_FOREGROUND_EVENT;
+            evt.intParam1 = 1;
             midpStoreEventAndSignalAms(evt);
         }
     }
@@ -235,9 +237,13 @@ void ChameleonMScreen::keyPressEvent(QKeyEvent *key)
     else {
         MidpEvent evt;
         MIDP_EVENT_INITIALIZE(evt);
- 
+
         if ((evt.CHR = mapKey(key)) != KEY_INVALID) {
-          evt.type   = MIDP_KEY_EVENT;
+          if (evt.CHR == KEY_SCREEN_ROT) {
+            evt.type   =  ROTATION_EVENT;
+          } else {
+            evt.type   = MIDP_KEY_EVENT;
+          }
           evt.ACTION = key->isAutoRepeat() ? REPEATED : PRESSED;
           midpStoreEventAndSignalForeground(evt);
         }
@@ -248,9 +254,9 @@ void ChameleonMScreen::pauseAll() {
 
   // if (!allPaused) {
       MidpEvent evt;
-  
+
       MIDP_EVENT_INITIALIZE(evt);
-      
+
       evt.type = PAUSE_ALL_EVENT;
       midpStoreEventAndSignalAms(evt);
       allPaused = true;
@@ -263,7 +269,7 @@ void ChameleonMScreen::activateAll() {
     MidpEvent evt;
 
     MIDP_EVENT_INITIALIZE(evt);
-  
+
     evt.type = ACTIVATE_ALL_EVENT;
     midpStoreEventAndSignalAms(evt);
     allPaused = false;
@@ -329,7 +335,7 @@ ChameleonMScreen::isCurrentPaintDevice(QPaintDevice *dst) {
  */
 QPainter
 *ChameleonMScreen::setupGC(int pixel_pen, int pixel_brush, const jshort *clip,
-                  QPaintDevice *dst, int dotted) {     
+                  QPaintDevice *dst, int dotted) {
     painted = KNI_TRUE;
 
     QPaintDevice* dev = gc->device();
@@ -344,19 +350,19 @@ QPainter
         if (gc->isActive()) {
             gc->end();
         }
-    }       
-    
+    }
+
     /* start operation on new device, if needed */
     if (!gc->isActive()) {
         gc->begin(dst);
     }
-    
+
     /* check if pen parameters changed */
-    if (((dev != dst)            || 
-         (last_pen != pixel_pen) || 
-         (last_dotted != dotted) ||     
+    if (((dev != dst)            ||
+         (last_pen != pixel_pen) ||
+         (last_dotted != dotted) ||
          force_refresh)) {
-           
+
         if (pixel_pen != -1) {
             QColor color = getColor(pixel_pen);
             QPen pen = QPen(color, 0,
@@ -366,12 +372,12 @@ QPainter
             gc->setPen(Qt::NoPen);
         }
         last_pen = pixel_pen;
-        last_dotted = dotted;      
+        last_dotted = dotted;
     }
 
     // check if pen parameters changed
-    if (((dev != dst)            || 
-         (last_brush != pixel_brush)   || 
+    if (((dev != dst)            ||
+         (last_brush != pixel_brush)   ||
          force_refresh)) {
         if (pixel_brush != -1) {
             gc->setBrush(getColor(pixel_brush));
@@ -382,7 +388,6 @@ QPainter
 
     }
 
-
     // check if clipping region changed
     if (clip != NULL &&
         ((dev != dst)            ||
@@ -391,7 +396,7 @@ QPainter
          (clip[1] != last_clip.top())   ||
          ((clip[2] - clip[0]) != last_clip.width()) ||
          ((clip[3] - clip[1]) != last_clip.height()))) {
-        QRect uclip(clip[0], clip[1], 
+        QRect uclip(clip[0], clip[1],
                     clip[2] - clip[0], clip[3] - clip[1]);
         last_clip = uclip;
         gc->setClipRect(uclip);
@@ -399,7 +404,7 @@ QPainter
 
     // drop force_refresh flag after all
     force_refresh = false;
-    
+
     return gc;
 }
 
@@ -410,7 +415,7 @@ void ChameleonMScreen::setNextVMTimeSlice(int millis) {
         if (vm_slicer.isActive()) {
             vm_slicer.stop();
         }
-    } else {
+    } else if (!vm_suspended) {
         if (vm_slicer.isActive()) {
             vm_slicer.changeInterval(millis);
         } else {
@@ -426,7 +431,10 @@ void ChameleonMScreen::slotTimeout() {
         return;
     }
 
-    ms = JVM_TimeSlice();
+    // check and align stack suspend/resume state
+    midp_checkAndResume();
+
+    ms = vm_suspended ? SR_RESUME_CHECK_TIMEOUT : JVM_TimeSlice();
 
     /* Let the VM run for some time */
     if (ms <= -2) {
@@ -457,25 +465,92 @@ void ChameleonMScreen::slotTimeout() {
  * @param y2 right hand size bottom y coordinate
  */
 void ChameleonMScreen::refresh(int x1, int y1, int x2, int y2) {
+
     if (painted) {
         if (gc->isActive()) {
             gc->end();
         }
-
         /* Draw the MIDlets screen from the back buffer */
-        bitBlt((QPaintDevice*)this, x1 + SCREEN_X, y1 + SCREEN_Y, 
+        bitBlt((QPaintDevice*)this, x1 + SCREEN_X, y1 + SCREEN_Y,
                 &qpixmap, x1, y1, (x2 - x1 + 1), (y2 - y1 + 1));
     }
-    force_refresh = true;    
+    force_refresh = true;
     last_pen = last_brush = -1;
 }
 
 /**
- * Resets native resources of the device when foreground is gained 
+ * Resets native resources of the device when foreground is gained
  * by a new Display.
  */
 void ChameleonMScreen::gainedForeground() {
   force_refresh  = KNI_TRUE;
   seen_key_press = KNI_FALSE;
-  painted        = KNI_FALSE;  
+  painted        = KNI_FALSE;
 }
+
+/**
+ * Width of a normal screen.
+ */
+int ChameleonMScreen::getDisplayWidth() const { 
+    if (r_orientation) {
+        return DISPLAY_HEIGHT; 
+    } else {
+        return DISPLAY_WIDTH;
+    }
+}
+
+/**
+ * Height of a normal screen.
+ */
+ int ChameleonMScreen::getDisplayHeight() const {
+    if (r_orientation) {
+        return DISPLAY_WIDTH; 
+    } else {
+        return DISPLAY_HEIGHT;
+    }
+}
+
+/**
+ * Width of a full screen canvas.
+ */
+int ChameleonMScreen::getDisplayFullWidth() const {
+    if (r_orientation) {
+        return DISPLAY_FULLHEIGHT;
+    } else {
+        return DISPLAY_FULLWIDTH;
+    }
+}
+
+/**
+ * Height of a full screen canvas.
+ */
+int ChameleonMScreen::getDisplayFullHeight() const {
+    if (r_orientation) {
+        return DISPLAY_FULLWIDTH;
+    } else {
+        return DISPLAY_FULLHEIGHT;
+    }
+}
+
+/**
+ * Width available for laying out items in a Form.
+ */
+int ChameleonMScreen::getScreenWidth() const {
+    if (r_orientation) {
+        return SCREEN_HEIGHT;
+    } else {
+        return SCREEN_WIDTH;
+    }
+}
+
+/**
+ * Hieght available for laying out items in a Form.
+ */
+int ChameleonMScreen::getScreenHeight() const {
+    if (r_orientation) {
+        return SCREEN_WIDTH;
+    } else {
+        return SCREEN_HEIGHT;
+    }
+}
+

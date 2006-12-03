@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -38,19 +39,19 @@ public class PAPICleanUp {
     /**
      * The function for a Missed Transactions  validation.
      *
-     * @param suiteID The MIDletSuite ID
+     * @param suiteId The MIDletSuite ID
      * @return null if no pending Transactions for this Suite
      *         otherwise returns list of missed transactions
      */
-    public static String checkMissedTransactions(String suiteID) {
+    public static String checkMissedTransactions(int suiteId) {
     		return null;
     }
 
     /**
      * Remove missed transaction for give midlet suite
      *
-     * @param suiteID midlet suite id
+     * @param suiteId midlet suite id
      */
-    public static void removeMissedTransaction(String suiteID) {
+    public static void removeMissedTransaction(int suiteId) {
     }
 }

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -77,13 +78,13 @@ class CommandState {
     /** Status of the last command. */
     int status;
     /** The ID given to a suite load. */
-    String suiteID;
+    int suiteId;
     /** Class name of MIDlet. */
     String midletClassName;
     /** Has the application manager MIDlet displayed the Java logo yet? */
     boolean logoDisplayed;
     /** The ID of suite to load when there is no other queued. */
-    String lastSuiteID;
+    int lastSuiteId;
     /** The MIDlet class name for the suite to load. */
     String lastMidletClassName;
     /** The argument for a MIDlet in the suite, will be app property arg-0. */
@@ -92,6 +93,23 @@ class CommandState {
     String arg1;
     /** The argument for a MIDlet in the suite, will be app property arg-2. */
     String arg2;
+    /**
+     * The minimum amount of memory guaranteed to be available
+     * to the VM at any time; &lt; 0 if not used.
+     */
+    int memoryReserved;
+    /**
+     * The total amount of memory that the VM can reserve; &lt; 0 if not used.
+     */
+    int memoryTotal;
+    /**
+     * Priority to set after restarting the VM; &lt;= 0 if not used.
+     */
+    int priority;
+    /**
+     * Name of the profile to set after restarting the VM; null if not used.
+     */
+    String profileName;
 
     /** Only the factory method can instantiate this class */
     private CommandState() {

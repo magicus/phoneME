@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -103,24 +104,25 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
      */
     public void uCallShow() {
 
+        // Create native resource with title and ticker
+        super.uCallShow();
+
         // Notify the canvas subclass before showing native resource
         synchronized (Display.calloutLock) {
             try {
                 canvas.showNotify();
-		/* For MMAPI VideoControl in a Canvas */
-		if (mmHelper != null) {
-		    for (Enumeration e = embeddedVideos.elements();
-                                              e.hasMoreElements();) {
-			mmHelper.showVideo(e.nextElement());
-		    }
-		}
+		        /* For MMAPI VideoControl in a Canvas */
+		        if (mmHelper != null) {
+		            for (Enumeration e = embeddedVideos.elements();
+                                                    e.hasMoreElements();) {
+			        mmHelper.showVideo(e.nextElement());
+		            }
+		        }
             } catch (Throwable t) {
                 Display.handleThrowable(t);
             }
         }
 
-        // Create native resource with title and ticker
-        super.uCallShow();
     }
 
     /**
@@ -139,12 +141,12 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
             if (oldState == SHOWN) {
                 try {
                     canvas.hideNotify();
-		    /* For MMAPI VideoControl in a Canvas */
+        		    /* For MMAPI VideoControl in a Canvas */
                     if (mmHelper != null) {
-			for (Enumeration e = embeddedVideos.elements();
+                        for (Enumeration e = embeddedVideos.elements();
                                                   e.hasMoreElements();) {
                             mmHelper.hideVideo(e.nextElement());
-			}
+                        }
                     }
                 } catch (Throwable t) {
                     Display.handleThrowable(t);
@@ -152,28 +154,38 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
             }
         }
     }
-    /**
-     * Notify this <code>Canvas</code> that it is being frozen on the 
-     * given <code>Display</code>.
-     */
-    public void uCallFreeze() {
-        
-        int oldState = state;
 
-        // Delete native resources including title and ticker
-        super.uCallFreeze();
+     /**
+      * Notify this <code>Canvas</code> that it is being frozen on the
+      * given <code>Display</code>.
+      */
 
-        // Notify canvas subclass after hiding the native resource
-        synchronized (Display.calloutLock) {
-            if (oldState == SHOWN) {
-                try {
-                    canvas.hideNotify();
-                } catch (Throwable t) {
-                    Display.handleThrowable(t);
-                }
-            }
-        }
-    }
+     public void uCallFreeze() {
+ 
+         int oldState = state;
+ 
+         // Delete native resources including title and ticker
+         super.uCallFreeze();
+ 
+         // Notify canvas subclass after hiding the native resource
+         synchronized (Display.calloutLock) {
+             if (oldState == SHOWN) {
+                 try {
+                     canvas.hideNotify();
+                    // For MMAPI VideoControl in a Canvas 
+                    if (mmHelper != null) {
+                        for (Enumeration e = embeddedVideos.elements();
+                                                  e.hasMoreElements();) {
+                            mmHelper.hideVideo(e.nextElement());
+                        }
+                    }
+                 } catch (Throwable t) {
+                     Display.handleThrowable(t);
+                 }
+             }
+         }
+     }
+
 
     /**
      * Paint this <code>Canvas</code>.
@@ -313,33 +325,6 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
                 canvas.pointerDragged(x, y);
             } catch (Throwable t) {
                 Display.handleThrowable(t);
-            }
-        }
-    }
-
-
-    /**
-     * Handle a size change notification.
-     *
-     * @param w the new width of this <code>Canvas</code>
-     * @param h the new height of this <code>Canvas</code>
-     */
-    public void uCallSizeChanged(int w, int h) {
-        super.uCallSizeChanged(w, h);
-
-        /*
-         * sizeChangeOccurred is a boolean which (when true) indicates
-         * that sizeChanged() will be called at a later time. So, if it
-         * is false after calling super(), we go ahead and notify the
-         * Canvas now, rather than later
-         */
-        if (!super.sizeChangeOccurred) {
-            synchronized (Display.calloutLock) {
-                try {
-                    owner.sizeChanged(w, h);
-                } catch (Throwable t) {
-                    Display.handleThrowable(t);
-                }
             }
         }
     }

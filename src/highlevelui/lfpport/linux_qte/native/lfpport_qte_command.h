@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_command.h	1.20 06/04/18 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -35,7 +35,7 @@
 #define _LFPPORT_QTE_COMMANDS_H_
 
 #include <qmenubar.h>
-#include <qaction.h>
+#include <qaccel.h>
 #include "lfpport_qte_patched.h"
 
 #include <lfpport_command.h>
@@ -61,11 +61,25 @@
 #define MOVE_FOCUS  Key_F1
 #endif
 
-class FocusAction : public QAction {
-    Q_OBJECT
-    
+/**
+ * Extend QPopupMenu to support text truncation 
+ */
+class QPopupMenuExt : public PatchedQPopupMenu {
 public:
-    FocusAction(int accel, QWidget* parent);
+    /**
+     * Constructor.
+     *
+     * @param parent parent widget
+     */
+    QPopupMenuExt(QWidget *parent) : PatchedQPopupMenu(parent) { }
+
+    /**
+     * Insert item, truncating the text if it cannot fit on the screen.
+     * @param text0 menu item text
+     * @param id the menu item identifier
+     * @return actual id
+     */
+    int insertItemTrunc( const QString & text0, int id);
 };
 
 
@@ -77,11 +91,11 @@ class CommandManager : public QMenuBar {
     Q_OBJECT
 
     /** Pointer to the the action menu */
-    PatchedQPopupMenu *actionMenu;
+    QPopupMenuExt *actionMenu;
     /** Pointer to the the go menu */
-    PatchedQPopupMenu *goMenu;
+    QPopupMenuExt *goMenu;
     /** Pointer to the the help menu */
-    PatchedQPopupMenu *helpMenu;
+    QPopupMenuExt *helpMenu;
 
 public:
     /**

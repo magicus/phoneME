@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -72,6 +73,10 @@ extern int appManagerRequestWaiting;
 /** The event loop timer handle */
 #define EVENT_TIMER_ID (1)
 
+#define EMULATOR_WIDTH  (241 + 8)
+#define EMULATOR_HEIGHT (635 + 24)
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -90,6 +95,27 @@ extern void win32app_finalize();
  * Refresh the given area.  For double buffering purposes.
  */
 extern void win32app_refresh(int x, int y, int w, int h);
+
+/**
+ * Return screen width
+ */
+extern int get_screen_width();
+
+/**
+ * Return screen height
+ */
+extern int get_screen_height();
+
+/**
+ * Invert screen rotation flag
+ */
+extern jboolean win32app_reverse_orientation();
+
+/**
+ * Get screen rotation flag
+ */
+extern jboolean win32app_get_reverse_orientation();
+
 
 /**
  * Returns the handle of the main application window.

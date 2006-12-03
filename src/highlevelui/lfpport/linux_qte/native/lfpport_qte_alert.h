@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_alert.h	1.26 06/04/05 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -93,6 +93,15 @@ public:
      * @return true if the contents will need to be scrolled; false otherwise.
      */
     bool needScrolling();
+
+protected:
+    /**
+     * Override QMultiLineEdit to performe traversal.
+     *
+     * @param keyEvent key event to handle
+     */
+    void keyPressEvent ( QKeyEvent *key);
+
 };
 
 /**

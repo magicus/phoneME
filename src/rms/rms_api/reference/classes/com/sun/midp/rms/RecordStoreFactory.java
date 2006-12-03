@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -48,9 +49,9 @@ public class RecordStoreFactory {
      *
      * @param token security token with MIDP AMS permission
      * @param id ID of the suite
-     */ 
+     */
     public static void removeRecordStoresForSuite(SecurityToken token,
-            String id) {
+            int id) {
 
 	if (token == null) {
             MIDletSuite midletSuite =
@@ -66,7 +67,7 @@ public class RecordStoreFactory {
 
         RecordStoreFile.removeRecordStores(id);
     }
-    
+
     /**
      * Returns true if the suite has created at least one record store.
      * Called by the installer when updating a suite.
@@ -74,6 +75,6 @@ public class RecordStoreFactory {
      * @param id ID of the suite
      *
      * @return true if the suite has at least one record store
-     */ 
-    public static native boolean suiteHasRmsData(String id);
+     */
+    public static native boolean suiteHasRmsData(int id);
 }

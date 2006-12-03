@@ -1,3 +1,4 @@
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -60,37 +61,8 @@ vpath % \
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
     -I$(NAMS_DIR)/../include
 
-# I3test files
-#
-ifeq ($(USE_I3_TEST), true)
-
-SUBSYSTEM_AMS_I3TEST_JAVA_FILES += \
-    $(NAMS_DIR)/i3test/com/sun/midp/events/EventCopyStorage.java \
-    $(NAMS_DIR)/i3test/com/sun/midp/main/DummyNamsMIDlet1.java \
-    $(NAMS_DIR)/i3test/com/sun/midp/main/DummyNamsMIDlet2.java \
-    $(NAMS_DIR)/i3test/com/sun/midp/main/DummyNamsMIDlet3.java \
-    $(NAMS_DIR)/i3test/com/sun/midp/main/DummyNamsMIDlet.java \
-    $(NAMS_DIR)/i3test/com/sun/midp/main/NamsAPIWrapper.java \
-    $(NAMS_DIR)/i3test/com/sun/midp/main/NamsManager.java \
-    $(NAMS_DIR)/i3test/com/sun/midp/main/NamsNotifier.java \
-    $(NAMS_DIR)/i3test/com/sun/midp/main/NamsStorage.java \
-    $(NAMS_DIR)/i3test/com/sun/midp/main/TestNamsStartMidlet.java
-endif    
-#else    
-    # This is the stubbed version of the NamsTestService to use
-    # if i3tests are disabled.
-    # The real NamsTestService (i3test/com/sun/midp/main/NamsTestService.java)
-    # is required to execute runNams in the "NAMS test service" mode; otherwise,
-    # this version should be used.
-    SUBSYSTEM_AMS_JAVA_FILES += \
-        $(NAMS_DIR)/classes/com/sun/midp/main/NamsTestService.java
-#endif
-
 # Native files for common module
 #
 SUBSYSTEM_AMS_NATIVE_FILES += \
-    midpNamsManager.c \
-    midpNamsTestEventProducer.c \
-    midpNamsTestService.c \
     midpNativeAppManagerPeer.c \
     midpNativeDisplayControllerPeer.c

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -39,6 +40,28 @@
 #include "lfp_intern_registry.h"
 
 #include <midpUtilKni.h>
+/**
+ * Cached field ID to be accessible in finalizer.
+ */
+static jfieldID nativeFieldId = 0;
+
+/**
+ * Static class initializer.
+ * Java Prototype: private static native void initialize();
+ * Class: javax.microedition.lcdui.DisplayableLFImpl
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_javax_microedition_lcdui_DisplayableLFImpl_initialize0(void)
+{
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(classHandle);
+    KNI_GetClassPointer(classHandle);
+
+    nativeFieldId = KNI_GetFieldID(classHandle, "nativeId", "I");
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
 
 /**
  * KNI function to set current Displayable's title.
@@ -99,5 +122,30 @@ Java_javax_microedition_lcdui_DisplayableLFImpl_deleteNativeResource0() {
     /* free platform dependent resource and MidpDisplayable structure */
     MidpDeleteDisplayable(p);
 
+    KNI_ReturnVoid();
+}
+
+/**
+ * Native finalizer.
+ * Java Prototype: private native void finalize();
+ * Class: javax.microedition.lcdui.DisplayableLFImpl
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_javax_microedition_lcdui_DisplayableLFImpl_finalize() {
+
+    jint nativeId;
+    MidpDisplayable *p;
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(thisHandle);
+
+    KNI_GetThisPointer(thisHandle);
+    nativeId = KNI_GetIntField(thisHandle, nativeFieldId);
+    
+    if (nativeId != 0) {
+        p = (MidpDisplayable *)nativeId;
+        MidpDeleteDisplayable(p);
+    }
+
+    KNI_EndHandles();
     KNI_ReturnVoid();
 }

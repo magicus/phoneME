@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -25,17 +26,9 @@
 
 package com.sun.midp.appmanager;
 
-import java.util.*;
-
-import java.io.*;
-
-import javax.microedition.io.*;
-
 import javax.microedition.midlet.*;
 
 import javax.microedition.lcdui.*;
-
-import javax.microedition.rms.*;
 
 import com.sun.midp.i18n.*;
 
@@ -45,29 +38,25 @@ import com.sun.midp.installer.*;
 
 import com.sun.midp.midletsuite.*;
 
-import com.sun.midp.security.*;
-
-import com.sun.midp.log.*;
-
 import com.sun.midp.main.*;
-
-import com.sun.midp.io.j2me.storage.*;
 
 import com.sun.midp.configurator.Constants;
 
 /**
  * This is an implementation of the ApplicationManager interface
- * for the MVM mode of VM capable of running with 
+ * for the MVM mode of the VM capable of running with
  * more than 1 midlet concurrently.
- * 
+ *
  * Application manager controls midlet life cycle:
  *    - installs, updates and removes midlets/midlet suites
  *    - launches, moves to foreground and terminates midlets
  *    - displays info about a midlet/midlet suite
  *    - shuts down the AMS system
  */
-public class MVMManager extends MIDlet 
-    implements MIDletProxyListListener, ApplicationManager {
+public class MVMManager extends MIDlet
+    implements MIDletProxyListListener,
+                DisplayControllerListener, 
+                ApplicationManager {
 
     /** Constant for the discovery application class name. */
     private static final String DISCOVERY_APP =
@@ -91,7 +80,7 @@ public class MVMManager extends MIDlet
     /** MIDlet proxy list reference. */
     private MIDletProxyList midletProxyList;
 
-    /** UI to display error alerts. */
+   /** UI to display error alerts. */
     private DisplayError displayError;
 
 
@@ -105,7 +94,7 @@ public class MVMManager extends MIDlet
 
         /*
          * Listen to the MIDlet proxy list.
-         * this allows us to notify the Application Selector 
+         * this allows us to notify the Application Selector
          * of any changes whenever switch back to the AMS.
          */
         midletProxyList = MIDletProxyList.getMIDletProxyList();
@@ -113,9 +102,9 @@ public class MVMManager extends MIDlet
 
         // The proxy for this MIDlet may not have been create yet.
         for (; ; ) {
-            thisMidlet = midletProxyList.findMIDletProxy("internal",
-                         this.getClass().getName());
-        
+            thisMidlet = midletProxyList.findMIDletProxy(
+                MIDletSuite.INTERNAL_SUITE_ID, this.getClass().getName());
+
             if (thisMidlet != null) {
                 break;
             }
@@ -127,19 +116,21 @@ public class MVMManager extends MIDlet
             }
         }
 
-        midletProxyList.setDisplayController(
-            new MVMDisplayController(midletProxyList, thisMidlet));
+        MVMDisplayController dc = new MVMDisplayController(
+            midletProxyList, thisMidlet); 
+        midletProxyList.setDisplayController(dc);
+        dc.addListener(this);
 
         IndicatorManager.init(midletProxyList);
 
         GraphicalInstaller.initSettings();
 
-	first = (getAppProperty("logo-displayed") == null);
+        first = (getAppProperty("logo-displayed") == null);
 
         Display display = Display.getDisplay(this);
-	displayError = new DisplayError(display);
+        displayError = new DisplayError(display);
 
-	// AppManagerUI will be set to be current at the end of its constructor
+        // AppManagerUI will be set to be current at the end of its constructor
         appManagerUI = new AppManagerUI(this, display, displayError, first);
 
         if (first) {
@@ -172,15 +163,31 @@ public class MVMManager extends MIDlet
         /*
          * Save user settings such as currently selected MIDlet
          * This may not be needed since we are always running
+         * IMPL_NOTE: remove this
          */
-        GraphicalInstaller.saveSettings(null, "");
+        GraphicalInstaller.saveSettings(null, MIDletSuite.UNUSED_SUITE_ID);
 
         // Ending the MIDlet ends all others.
         midletProxyList.shutdown();
     }
 
     // ==============================================================
-    // ------ Implementation of the MIDletProxyListListener interface 
+    // ------ Implementation of the DisplayControllerListener interface
+    /**
+     * Called when going to select midlet to
+     * bring it to foreground.
+     *
+     * @param onlyFromLaunched true if midlet should
+     *        be selected from the list of already launched midlets,
+     *        if false then possibility to launch midlet is needed.
+     */
+    public void selectForeground(boolean onlyFromLaunchedList) {
+        appManagerUI.showMidletSwitcher(onlyFromLaunchedList);
+    }
+
+
+    // ==============================================================
+    // ------ Implementation of the MIDletProxyListListener interface
 
     /**
      * Called when a MIDlet is added to the list.
@@ -218,18 +225,19 @@ public class MVMManager extends MIDlet
      * @param className Class name of the MIDlet
      * @param error start error code
      */
-    public void midletStartError(int externalAppId, String suiteId,
+    public void midletStartError(int externalAppId, int suiteId,
 				 String className, int error) {
         appManagerUI.notifyMidletStartError(suiteId, className, error);
     }
 
     // ==============================================================
-    // ------ Implementation of the MIDletProxyListListener interface 
+    // ------ Implementation of the MIDletProxyListListener interface
 
     /** Discover and install a suite. */
     public void installSuite() {
         try {
-            MIDletSuiteLoader.execute("internal", DISCOVERY_APP,
+            MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID,
+                DISCOVERY_APP,
                 Resource.getString(ResourceConstants.INSTALL_APPLICATION));
         } catch (Exception ex) {
             displayError.showErrorAlert(Resource.getString(
@@ -241,7 +249,8 @@ public class MVMManager extends MIDlet
     /** Launch the CA manager. */
     public void launchCaManager() {
         try {
-            MIDletSuiteLoader.execute("internal", CA_MANAGER,
+            MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID,
+                CA_MANAGER,
                 Resource.getString(ResourceConstants.CA_MANAGER_APP));
         } catch (Exception ex) {
             displayError.showErrorAlert(Resource.getString(
@@ -265,7 +274,7 @@ public class MVMManager extends MIDlet
         try {
             // Create an instance of the MIDlet class
             // All other initialization happens in MIDlet constructor
-            MIDletSuiteLoader.execute(suiteInfo.id, midletToRun, null);
+            MIDletSuiteUtils.execute(suiteInfo.suiteId, midletToRun, null);
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
         }
@@ -281,9 +290,11 @@ public class MVMManager extends MIDlet
          * Setting arg 0 to "U" signals that arg 1 is a suite ID for updating.
          */
         try {
-            MIDletSuiteLoader.executeWithArgs("internal", INSTALLER,
-                                              suiteInfo.displayName, 
-                                              "U", suiteInfo.id, null); 
+            MIDletSuiteUtils.executeWithArgs(MIDletSuite.INTERNAL_SUITE_ID,
+                                      INSTALLER,
+                                      suiteInfo.displayName,
+                                      "U", String.valueOf(suiteInfo.suiteId),
+                                      null);
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
         }
@@ -295,11 +306,11 @@ public class MVMManager extends MIDlet
     public void shutDown() {
         midletProxyList.shutdown();
     }
-   
+
     /**
-     * Bring the midlet with the passed in midlet suite info to the 
+     * Bring the midlet with the passed in midlet suite info to the
      * foreground.
-     * 
+     *
      * @param suiteInfo information for the midlet to be put to foreground
      */
     public void moveToForeground(MIDletSuiteInfo suiteInfo) {
@@ -307,7 +318,7 @@ public class MVMManager extends MIDlet
             if (suiteInfo != null) {
                 midletProxyList.setForegroundMIDlet(suiteInfo.proxy);
             }
-            
+
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
         }
@@ -316,7 +327,7 @@ public class MVMManager extends MIDlet
 
     /**
      * Exit the midlet with the passed in midlet suite info.
-     * 
+     *
      * @param suiteInfo information for the midlet to be terminated
      */
     public void exitMidlet(MIDletSuiteInfo suiteInfo) {
@@ -324,7 +335,7 @@ public class MVMManager extends MIDlet
             if (suiteInfo != null) {
                 suiteInfo.proxy.destroyMidlet();
             }
-            
+
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
         }

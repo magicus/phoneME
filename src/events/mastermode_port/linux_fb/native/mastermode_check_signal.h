@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -57,7 +58,7 @@ typedef jboolean (*fCheckForSignal)(/*OUT*/ MidpReentryData* pNewSignal,
     /*OUT*/ MidpEvent* pNewMidpEvent, jlong timeout);
 
 /**
- * Check and handle socket & keyboard system signals.
+ * Check and handle socket & pointer & keyboard system signals.
  * The function groups signals that can be checked with a single system call.
 
  * @param pNewSignal        reentry data to unblock threads waiting for a signal
@@ -68,7 +69,7 @@ typedef jboolean (*fCheckForSignal)(/*OUT*/ MidpReentryData* pNewSignal,
  *
  * @return KNI_TRUE if signal received, KNI_FALSE otherwise
  */
-jboolean checkForSocketAndKeyboardSignal(/*OUT*/ MidpReentryData* pNewSignal,
+jboolean checkForSocketPointerAndKeyboardSignal(/*OUT*/ MidpReentryData* pNewSignal,
     /*OUT*/ MidpEvent* pNewMidpEvent, jlong timeout64);
 
 /**

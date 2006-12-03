@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -194,7 +195,7 @@ public class InvalidJadException extends java.io.IOException {
     public static final int ALREADY_INSTALLED        = 39;
 
     /**
-     * (40) The device does not support either the configuration or 
+     * (40) The device does not support either the configuration or
      * profile in the JAD.
      */
     public static final int DEVICE_INCOMPATIBLE      = 40;
@@ -295,7 +296,7 @@ public class InvalidJadException extends java.io.IOException {
      * suite is incomplete or incorrect.
      */
     public static final int INVALID_PAYMENT_INFO = 58;
-    
+
     /**
      * (59) Indicates that the MIDlet suite has payment provisioning
      * information but it is not trusted.
@@ -307,6 +308,12 @@ public class InvalidJadException extends java.io.IOException {
      * software authorization. The extra data contains the CA's name.
      */
     public static final int CA_DISABLED = 60;
+
+    /**
+     * (61) Indicates that the character encoding specified in the MIME type
+     * is not supported.
+     */
+    public static final int UNSUPPORTED_CHAR_ENCODING = 61;
 
     /** The reason why this exception occurred. */
     private int reason;

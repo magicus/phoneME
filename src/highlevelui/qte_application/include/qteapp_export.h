@@ -1,5 +1,5 @@
 /*
- * @(#)qteapp_export.h	1.8 06/05/23
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

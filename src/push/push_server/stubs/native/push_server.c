@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -61,7 +62,7 @@ void pushclose() {
  * Adds one entry to the push registry.
  * If the entry already exists return IO_ERROR_LEN (midpString.h).
  *
- * @param suiteID ID of the suite
+ * @param suiteId ID of the suite
  * @param connection generic connection name (no spaces)
  * @param midlet class name of the MIDlet (no spaces)
  * @param filter filter string (no spaces)
@@ -69,13 +70,13 @@ void pushclose() {
  * @return 0 for success, OUT_OF_MEM_LEN for out of memory,
  * IO_ERROR_LEN if already registered
  */
-int midpAddPushEntry(const pcsl_string * suiteID,
+int midpAddPushEntry(SuiteIdType suiteId,
                      const pcsl_string * connection,
                      const pcsl_string * midlet,
                      const pcsl_string * filter) {
     /* need revisit */
     REPORT_WARN(LC_PUSH, "midpAddPushEntry: Stubbed out.");
-    (void)suiteID;
+    (void)suiteId;
     (void)connection;
     (void)midlet;
     (void)filter;
@@ -203,7 +204,7 @@ void pushcheckinall() {
  *     that is not checked in and does not belong to the next suite to
  *     to run will be checked in.
  */
-void pushcheckinLeftOvers(const pcsl_string * nextToRun) {
+void pushcheckinLeftOvers(SuiteIdType nextToRun) {
     /* need revisit */
     REPORT_WARN(LC_PUSH, "pushcheckinLeftOvers: Stubbed out.");
     (void)nextToRun;
@@ -213,13 +214,13 @@ void pushcheckinLeftOvers(const pcsl_string * nextToRun) {
  * Checks in connections that are in
  * launch pending state for a specific MIDlet.
  *
- * @param pszSuiteId Suite ID of the MIDlet
+ * @param suiteId Suite ID of the MIDlet
  * @param pszClassName Class name of the MIDlet
  */
-void pushcheckinbymidlet(char* pszSuiteId, char* pszClassName) {
+void pushcheckinbymidlet(SuiteIdType suiteId, char* pszClassName) {
     /* need revisit */
     REPORT_WARN(LC_PUSH, "pushcheckinbymidlet: Stubbed out.");
-    (void)pszSuiteId;
+    (void)suiteId;
     (void)pszClassName;
 }
 
@@ -397,7 +398,7 @@ int pushpoll() {
  *
  * @param id The suite ID to be removed from the push registry
  */
-void pushdeletesuite(const pcsl_string * id) {
+void pushdeletesuite(SuiteIdType id) {
     /* need revisit */
     REPORT_WARN(LC_PUSH, "pushdeletesuite: Stubbed out.");
     (void)id;

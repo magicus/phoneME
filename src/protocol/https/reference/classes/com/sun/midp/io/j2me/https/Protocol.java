@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -94,7 +95,7 @@ import com.sun.midp.util.Properties;
  * </p></blockquote>
  */
 public class Protocol extends com.sun.midp.io.j2me.http.Protocol
-    implements HttpsConnection, ImplicitlyTrustedClass {
+    implements HttpsConnection {
 
     /** Common name label. */
     private static final String COMMON_NAME_LABEL = "CN=";
@@ -103,9 +104,17 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
     private static final int COMMON_NAME_LABEL_LENGTH =
         COMMON_NAME_LABEL.length();
 
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
     /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken;
-    
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
+
     /**
      * The methods other than openPrim need to know that the
      * permission occurred.
@@ -114,20 +123,6 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
 
     /** True if the owner of this connection is trusted. */
     private boolean ownerTrusted;
-
-    /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class.
-     */
-    public void initSecurityToken(SecurityToken token) {
-	if (classSecurityToken != null) {
-	    return;
-	}
-	
-	classSecurityToken = token;
-    }
 
     /**
      * Parse the common name out of a distinguished name.
@@ -312,8 +307,8 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
      */
     public String getRequestProperty(String key) {
         /* https handles the proxy fields in a different way */
-        if (key.startsWith("Proxy-")) {
-            return proxyHeaders.getProperty(key);
+        if (key.toLowerCase().startsWith("proxy-")) {
+            return proxyHeaders.getPropertyIgnoreCase(key);
         }
 
         return super.getRequestProperty(key);
@@ -327,8 +322,8 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
      */
     protected void setRequestField(String key, String value) {
         /* https handles the proxy fields in a different way */
-        if (key.startsWith("Proxy-")) {
-            proxyHeaders.setProperty(key, value);
+        if (key.toLowerCase().startsWith("proxy-")) {
+            proxyHeaders.setPropertyIgnoreCase(key, value);
             return;
         }
 

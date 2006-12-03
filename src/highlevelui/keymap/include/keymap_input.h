@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -108,8 +109,6 @@ typedef enum {
     KEY_GAME_LEFT     = -19,
     KEY_GAME_RIGHT    = -20,
 
-    KEY_MACHINE_DEP   = -21,
-
     /* This is generated only when tracing is enabled. Currently only 
      * one type (DEBUG_TRACE1) is supported (dump all stacks)
      * but you can add more DEBUG_TRACE<n> keys in the future.
@@ -117,7 +116,17 @@ typedef enum {
      * This key is consumed inside DisplayEventListener.process(Event event)
      * and is never passed to application.
      **/
-    KEY_DEBUG_TRACE1  = -22
+    KEY_DEBUG_TRACE1  = -21,
+    KEY_SCREEN_ROT = -22,
+
+    /* This is the last enum. Please shift
+     * it if you are adding new values.
+     * All values lower than KEY_MACHINE_DEP
+     * can be used for associations with platform
+     * dependent keys (for example MD_KEY_HOME).
+     **/
+    KEY_MACHINE_DEP   = -23
+
 } KeyType;
 /** @} */
 

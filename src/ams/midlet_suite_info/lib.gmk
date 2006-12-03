@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -43,7 +44,7 @@ MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SUITE_INFO_DIR)/classes$(PATHSEP)$(SUBSYSTEM
 # Java files for the library
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(MIDLET_SUITE_INFO_DIR)/classes/com/sun/midp/appmanager/MIDletSuiteInfo.java
+    $(MIDLET_SUITE_INFO_DIR)/classes/com/sun/midp/midletsuite/MIDletSuiteInfo.java
 
 # vpath for sub-system
 #

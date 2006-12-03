@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -22,6 +23,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
 #include <stdio.h>
 
 #include <jvmconfig.h>
@@ -34,35 +36,27 @@
 #include <midpNativeAppManager.h>
 #include <midpEventUtil.h>
 
-static MIDP_MIDLET_FOREGROUND_LISTENER foregroundListener = NULL;
-static MIDP_SYSTEM_BACKGROUND_LISTENER backgroundListener = NULL;
+/* from midpNativeAppManager.c */
+extern MIDPError
+nams_listeners_notify(NamsListenerType listenerType,
+                      const NamsEventData* pEventData);
 
 /**
- * Sets the foreground listener.
+ * Select which running MIDlet should have the foreground.  If appId is a
+ * valid application ID, that application is placed into the foreground. If
+ * appId is MIDLET_APPID_NO_FOREGROUND, the current foreground MIDlet will be
+ * put into background and no MIDlet will have the foreground.
  *
- * @param listener            The midlet foreground listener
- */
-void midp_midlet_set_foreground_listener(
-        MIDP_MIDLET_FOREGROUND_LISTENER listener) {
-    foregroundListener = listener;
-}
-
-/**
- * Sets the background listener.
+ * If appId is invalid, or that application already has the foreground, this
+ * has no effect, but the foreground listener will be called anyway.
  *
- * @param listener            The background listener
- */
-void midp_system_set_background_listener(
-        MIDP_SYSTEM_BACKGROUND_LISTENER listener) {
-    backgroundListener = listener;
-}
-
-/**
- * Select which running midlet should have the foreground.
+ * @param appId The ID of the application to be put into the foreground,
+ *              or the special value MIDLET_APPID_NO_FOREGROUND (that is
+ *              defined in src/configuration/common/constants.xml)
  *
- * @param appId               The application id used to identify the app
+ * @return error code: ALL_OK if successful
  */
-void midp_midlet_set_foreground(jint appId) {
+MIDPError midp_midlet_set_foreground(jint appId) {
     MidpEvent evt;
 
     MIDP_EVENT_INITIALIZE(evt);
@@ -71,6 +65,7 @@ void midp_midlet_set_foreground(jint appId) {
     evt.intParam1 = appId;
 
     midpStoreEventAndSignalAms(evt);
+    return ALL_OK;
 }
 
 /**
@@ -81,11 +76,14 @@ void midp_midlet_set_foreground(jint appId) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_main_NativeDisplayControllerPeer_notifyMidletHasForeground
         (void) {
-    jint externalAppId = KNI_GetParameterAsInt(1);
+    NamsEventData eventData;
 
-    if (foregroundListener != NULL) {
-        foregroundListener(externalAppId, 0);
-    }
+    memset((char*)&eventData, 0, sizeof(NamsEventData));
+    eventData.appId  = KNI_GetParameterAsInt(1);
+    eventData.state  = MIDP_DISPLAY_STATE_FOREGROUND;
+    eventData.reason = 0;
+
+    nams_listeners_notify(DISPLAY_EVENT_LISTENER, &eventData);
 }
 
 /**
@@ -96,10 +94,12 @@ Java_com_sun_midp_main_NativeDisplayControllerPeer_notifyMidletHasForeground
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_main_NativeDisplayControllerPeer_forwardBackgroundRequest
         (void) {
-    jint externalAppId = KNI_GetParameterAsInt(1);
-    (void)externalAppId; /* suppress compiler warnings */
+    NamsEventData eventData;
 
-    if (backgroundListener != NULL) {
-        backgroundListener(0);
-    }
+    memset((char*)&eventData, 0, sizeof(NamsEventData));
+    eventData.appId  = KNI_GetParameterAsInt(1);
+    eventData.state  = MIDP_DISPLAY_STATE_BACKGROUND;
+    eventData.reason = 0;
+    
+    nams_listeners_notify(DISPLAY_EVENT_LISTENER, &eventData);
 }

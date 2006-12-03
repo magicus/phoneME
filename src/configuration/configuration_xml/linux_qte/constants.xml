@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
 <!--
-        @(#)constants.xml	1.48     06/05/26
+             
 
         Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -50,6 +50,10 @@
             Name="CHAM_FULLHEIGHT"
             Value="210"
             Comment="(Chameleon Only) full display height"/>
+  <constant Type="int"
+            Name="CHAM_FULLWIDTH"
+            Value="176"
+            Comment="(Chameleon Only) full display width"/>
   <constant Type="boolean"
             Name="TRAVERSAL2D"
             Value="true"
@@ -112,11 +116,11 @@
             Comment="Number of color the platform supports"/>
   <constant Type="boolean"
             Name="POINTER_SUPPORTED"
-            Value="false" 
+            Value="true" 
             Comment="Whether both the platform and MIDP implementation provide support for a pointer (press and release). Set to true when pointer is supported; set to false when pointer is not supported."/>
   <constant Type="boolean"
             Name="MOTION_SUPPORTED"
-            Value="false" 
+            Value="true" 
             Comment="If your platform supports pointer motion and you want MIDP implementation provides support for pointer motions, set it to true; otherwise, set it to false so that MIDP runtime can provide this information to MIDlet."/>
   <constant Type="boolean"
             Name="REPEAT_SUPPORTED"

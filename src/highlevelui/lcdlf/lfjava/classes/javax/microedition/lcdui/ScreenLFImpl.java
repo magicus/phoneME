@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,6 +28,8 @@ package javax.microedition.lcdui;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
+import com.sun.midp.chameleon.layers.ScrollBarLayer;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 
 /**
 * This is the look &amps; feel implementation for Screen.
@@ -46,7 +49,6 @@ class ScreenLFImpl extends DisplayableLFImpl {
         // Because of that just knowing current state of DisplayLF
         // is not enough to set it properly in lCallShow.
         // That is why it has to be updated in lCallHide and lCallFreeze
-        resetToTop = true;
         super.lCallHide();
     }
 
@@ -123,7 +125,7 @@ class ScreenLFImpl extends DisplayableLFImpl {
      *
      * @return int The vertical scroll position on a scale of 0-100
      */
-    int getVerticalScrollPosition() {
+    public int getVerticalScrollPosition() {
         // SYNC NOTE: return of atomic value
         return vScrollPosition;
     }
@@ -133,7 +135,7 @@ class ScreenLFImpl extends DisplayableLFImpl {
      *
      * @return ing The vertical scroll proportion on a scale of 0-100
      */
-    int getVerticalScrollProportion() {
+    public int getVerticalScrollProportion() {
         // SYNC NOTE: return of atomic value
         return vScrollProportion;
     }
@@ -148,7 +150,7 @@ class ScreenLFImpl extends DisplayableLFImpl {
             setVerticalScroll(0, 100);
         } else {
             setVerticalScroll((viewable[Y] * 100 /
-                                  (viewable[HEIGHT] - viewport[HEIGHT])),
+                               (viewable[HEIGHT] - viewport[HEIGHT])),
                               (viewport[HEIGHT] * 100 / viewable[HEIGHT]));
         }
     }
@@ -172,6 +174,182 @@ class ScreenLFImpl extends DisplayableLFImpl {
                       w, h);
     }
 
+
+    /**
+     * Perform a page flip in the given direction. This method will
+     * attempt to scroll the view to show as much of the next page
+     * as possible.
+     *
+     * @param dir the direction of the flip, either DOWN or UP
+     */
+    protected void uScrollViewport(int dir) {
+        int newY = viewable[Y];
+        switch (dir) {
+        case Canvas.UP:
+            newY -= lGetHeight() - getScrollAmount();
+            if (newY < 0) {
+                newY = 0;
+            }
+            break;
+        case Canvas.DOWN:
+            newY += lGetHeight() - getScrollAmount();
+            int max = getMaxScroll();
+            if (newY > max) {
+                newY = max;
+            }
+            break;
+        default:
+            break;
+        }
+        viewable[Y] = newY;
+    }
+
+    /**
+     * Perform a line scrolling in the given direction. This method will
+     * attempt to scroll the view to show next/previous line.
+     *
+     * @param dir the direction of the flip, either DOWN or UP
+     */
+    protected void uScrollByLine(int dir) {
+        int newY = viewable[Y];
+        if (dir == Canvas.UP) {
+            newY -= getScrollAmount();
+            if (newY < 0) {
+                newY = 0;
+            }
+        } else if (dir == Canvas.DOWN) {
+            newY += getScrollAmount();
+            int max = getMaxScroll();
+            if (newY > max) {
+                newY = max;
+            }
+        }
+        viewable[Y] = newY;
+    }
+    
+    /**
+     * Perform a scrolling at the given position. 
+     * @param context position  
+     */
+    protected void uScrollAt(int position) {
+        int max = getMaxScroll();
+        int newY = max * position / 100 ;
+        if (newY < 0) {
+            newY = 0;
+        } else if (newY > max) {
+            newY = max;
+        }
+        viewable[Y] = newY;
+    }
+
+    /**
+     * The maximum amount of scroll needed to see all the contents
+     * @return get the maximum scroll amount
+     */
+    protected int getMaxScroll() {
+        return viewable[HEIGHT] - viewport[HEIGHT];
+    }
+    
+    /**
+     * This is the number of pixels left from the previous "page"
+     * when a page up or down occurs. The same value is used for line by
+     * line scrolling 
+     * @return the number of pixels. 
+     */
+    protected int getScrollAmount() {
+        return ScreenSkin.SCROLL_AMOUNT;
+    }
+
+    /**
+     * Scroll content inside of the form.
+     * @param scrollType scrollType. Scroll type can be one of the following
+     * @see ScrollBarLayer.SCROLL_NONE 
+     * @see ScrollBarLayer.SCROLL_PAGEUP
+     * @see ScrollBarLayer.SCROLL_PAGEDOWN
+     * @see ScrollBarLayer.SCROLL_LINEUP
+     * @see ScrollBarLayer.SCROLL_LINEDOWN or
+     * @see ScrollBarLayer.SCROLL_THUMBTRACK
+     * @param thumbPosition
+     */
+    public void uCallScrollContent(int scrollType, int thumbPosition) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, 
+                           LogChannels.LC_HIGHUI,
+                           "Screen.uCallScrollContent scrollType=" + scrollType + 
+                           " thumbPosition=" + thumbPosition); 
+        }
+        int oldY = viewable[Y]; 
+        
+        switch (scrollType) {
+            case ScrollBarLayer.SCROLL_PAGEUP:
+                uScrollViewport(Canvas.UP);
+                break;
+            case ScrollBarLayer.SCROLL_PAGEDOWN:
+                uScrollViewport(Canvas.DOWN);
+                break;
+            case ScrollBarLayer.SCROLL_LINEUP:
+                uScrollByLine(Canvas.UP);
+                break;
+            case ScrollBarLayer.SCROLL_LINEDOWN:
+                uScrollByLine(Canvas.DOWN);
+                break;
+            case ScrollBarLayer.SCROLL_THUMBTRACK:
+                uScrollAt(thumbPosition);
+                break;
+            default:
+                break;
+        }
+        if (oldY != viewable[Y]) {
+            uRequestPaint();
+            setupScroll();
+        }
+    }
+    
+    /**
+     * all scroll actions should be handled through here.
+     * 
+     */
+    void setupScroll() {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, 
+                           LogChannels.LC_HIGHUI_FORM_LAYOUT,
+                           "[F] >> in FormLFImpl - setupScroll " +
+                           invalidScroll +
+                           "[F] >> viewable[Y] == "+viewable[Y] +
+                           " lastScrollPosition] == "+lastScrollPosition +
+                           "[F] >> viewable[HEIGHT] == "+viewable[HEIGHT] +
+                           " lastScrollSize == "+lastScrollSize);
+        }
+        
+        // check if scroll moves, and if so, refresh scrollbars
+        if (!invalidScroll &&
+            (viewable[Y] != lastScrollPosition ||
+             (lastScrollSize != 0 &&
+              viewable[HEIGHT] + viewport[HEIGHT] != lastScrollSize))) {
+            
+            lastScrollPosition = viewable[Y];
+            lastScrollSize = viewport[HEIGHT] >= viewable[HEIGHT] ?
+                0: viewable[HEIGHT] + viewport[HEIGHT];
+            
+            invalidScroll = true;
+            // IMPL_NOTE: mark Items for repaint. -au
+        }
+
+        
+        if (invalidScroll) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, 
+                               LogChannels.LC_HIGHUI_FORM_LAYOUT,
+                               "[F]  ## invalidScroll ");
+            }
+            
+            // draw the scrollbars
+            setVerticalScroll();
+            
+            invalidScroll = false;
+        }
+    }
+    
     // **************************************************************
 
     // ************************************************************
@@ -213,6 +391,17 @@ class ScreenLFImpl extends DisplayableLFImpl {
     
     /** The vertical scroll proportion */
     private int vScrollProportion   = 100;
+
+    /**
+     * Used in setupScroll in order to determine if scroll is needed
+     */
+    private int lastScrollPosition = -1;
+
+    /**
+     * Used in setupScroll in order to determine if scroll is needed.
+     * The value has no meaning for the actual scroll size
+     */
+    private int lastScrollSize = -1;
 
     // ************************************************************
     //  Static initializer, constructor

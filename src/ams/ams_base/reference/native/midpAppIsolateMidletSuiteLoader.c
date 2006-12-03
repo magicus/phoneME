@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -37,7 +38,7 @@
  * even if killed.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_AppIsolateMIDletSuiteLoader_finalize() {
+KNIDECL(com_sun_midp_main_AppIsolateMIDletSuiteLoader_finalize) {
     midpFreeReservedResources();
     KNI_ReturnVoid();
 }
@@ -48,7 +49,7 @@ Java_com_sun_midp_main_AppIsolateMIDletSuiteLoader_finalize() {
  * @return true if the resources are available, otherwise return false
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_main_AppIsolateMIDletSuiteLoader_allocateReservedResources() {
+KNIDECL(com_sun_midp_main_AppIsolateMIDletSuiteLoader_allocateReservedResources0) {
     KNI_ReturnBoolean(midpAllocateReservedResources());
 }
 
@@ -58,6 +59,7 @@ Java_com_sun_midp_main_AppIsolateMIDletSuiteLoader_allocateReservedResources() {
  * handleFatalError(Ljava/lang/Throwable;)V
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_AppIsolateMIDletSuiteLoader_handleFatalError(void) {
+KNIDECL(com_sun_midp_main_AppIsolateMIDletSuiteLoader_handleFatalError) {
     handleFatalError();
+    KNI_ReturnVoid();
 }

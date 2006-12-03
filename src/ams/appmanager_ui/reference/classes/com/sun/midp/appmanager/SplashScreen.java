@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -31,13 +32,12 @@ import com.sun.midp.installer.*;
 import java.util.Timer;
 import java.util.TimerTask;
 
-       
+
 /** Implements the splash screen */
 class SplashScreen extends Canvas {
 
     /** Splash screen image */
-    private Image splashScreen =
-        GraphicalInstaller.getImageFromStorage("splash_screen");
+    private Image splashScreen;
 
     /** The displayable to be displayed after SplashScreen is dismissed. */
     private Displayable nextScreen;
@@ -64,7 +64,7 @@ class SplashScreen extends Canvas {
      */
     SplashScreen(Display display, Displayable nextScreen) {
         this.nextScreen = nextScreen;
-	this.display = display;
+        this.display = display;
 
         setFullScreenMode(true);
     }
@@ -83,7 +83,7 @@ class SplashScreen extends Canvas {
         if (splashScreen != null) {
             g.drawImage(splashScreen, 0, 0, Graphics.LEFT | Graphics.TOP);
         }
-    } 
+    }
 
     /**
      * Override showNotify to set a timer task so that Splash screen
@@ -97,6 +97,9 @@ class SplashScreen extends Canvas {
         if (timeoutTimer  == null) {
             timeoutTimer = new Timer();
         }
+        splashScreen = 
+            GraphicalInstaller.getImageFromInternalStorage("splash_screen_" 
+            + getWidth() + "x" + getHeight());
 
         timerTask = new TimeoutTask();
         timeoutTimer.schedule(timerTask, 2000);
@@ -123,12 +126,12 @@ class SplashScreen extends Canvas {
      * a time out time set.
      */
     private class TimeoutTask extends TimerTask {
-        
+
         /**
          * Create a new timeout task
          */
         TimeoutTask() { }
-        
+
         /**
          * Switch to the the App Manager Screen.
          */

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -37,6 +38,7 @@ import com.sun.midp.midletsuite.*;
 import com.sun.midp.io.j2me.push.*;
 
 import com.sun.midp.installer.*;
+import com.sun.midp.configurator.Constants;
 
 /**
  * The Graphical MIDlet suite information display.
@@ -68,17 +70,17 @@ public class AppInfo extends Form {
 
     /**
      * Create and initialize a new Application Info MIDlet.
-     * @param suiteId - the id of the suite for 
+     * @param suiteId - the id of the suite for
      *                  which the AppInfo should be displayed
      * @exception Exception if error occurs
      */
-    public AppInfo(String suiteId) throws Exception {
+    public AppInfo(int suiteId) throws Throwable {
 
         super(null);
 
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
-	displaySuiteInfo(suiteId); 
+        displaySuiteInfo(suiteId);
     }
 
     /**
@@ -87,16 +89,16 @@ public class AppInfo extends Form {
      * @param suiteId ID for suite to display
      * @exception Exception if error occurs
      */
-    private void displaySuiteInfo(String suiteId) throws Exception {
+    private void displaySuiteInfo(int suiteId) throws Throwable {
         StringBuffer label = new StringBuffer(40);
         StringBuffer value = new StringBuffer(40);
         Item item;
         String[] authPath;
         String temp;
-	MIDletSuiteImpl midletSuite = null;
+        MIDletSuiteImpl midletSuite = null;
 
         try {
-	    midletSuite = midletSuiteStorage.getMIDletSuite(suiteId, false);
+            midletSuite = midletSuiteStorage.getMIDletSuite(suiteId, false);
 
             initMidletSuiteInfo(midletSuite);
 
@@ -134,7 +136,7 @@ public class AppInfo extends Form {
             label.append(Resource.getString(ResourceConstants.AMS_VERSION));
             label.append(": ");
             item = new StringItem(label.toString(),
-                midletSuite.getProperty(Installer.VERSION_PROP));
+                midletSuite.getProperty(MIDletSuite.VERSION_PROP));
             item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
             append(item);
 
@@ -151,11 +153,11 @@ public class AppInfo extends Form {
             label.append(temp);
             label.append(": ");
             item = new StringItem(label.toString(),
-                midletSuite.getProperty(Installer.VENDOR_PROP));
+                midletSuite.getProperty(MIDletSuite.VENDOR_PROP));
             item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
             append(item);
 
-            temp = midletSuite.getProperty(Installer.DESC_PROP);
+            temp = midletSuite.getProperty(MIDletSuite.DESC_PROP);
             if (temp != null) {
                 label.setLength(0);
                 label.append(Resource.getString
@@ -208,6 +210,15 @@ public class AppInfo extends Form {
             item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
             append(item);
 
+            // Append classes verification state to advanced section
+            if (Constants.VERIFY_ONCE && midletSuite.isVerified()) {
+                item = new StringItem(null, Resource.getString(
+                    ResourceConstants.AMS_VERIFIED_CLASSES));
+                item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
+                append(item);
+
+            }
+
             authPath = installInfo.getAuthPath();
             if (authPath != null) {
                 label.setLength(0);
@@ -234,16 +245,13 @@ public class AppInfo extends Form {
                 item.setLayout(Item.LAYOUT_NEWLINE_AFTER | Item.LAYOUT_2);
                 append(item);
             }
-        } catch (MIDletSuiteCorruptedException e) {
-            String msg = "Following suiteid is corrupted :" + suiteId; 
-            throw new Exception(msg);
-        } catch (Exception ex) {
-            throw ex;
+        } catch (Throwable t) {
+            throw t;
         } finally {
-	    if (midletSuite != null) {
-		midletSuite.close();
-	    }
-	}
+            if (midletSuite != null) {
+                midletSuite.close();
+            }
+        }
     }
 
     /**
@@ -253,22 +261,22 @@ public class AppInfo extends Form {
      *
      * @exception Exception if problem occurs while getting the suite info
      */
-    private void initMidletSuiteInfo(MIDletSuiteImpl midletSuite) 
-	throws Exception {
+    private void initMidletSuiteInfo(MIDletSuiteImpl midletSuite)
+        throws Exception {
 
-	installInfo = midletSuite.getInstallInfo();
-	numberOfMidlets = midletSuite.getNumberOfMIDlets();
-	
-	if (numberOfMidlets == 1) {
-	    String value = midletSuite.getProperty("MIDlet-1");
-	    MIDletInfo temp = new MIDletInfo(value);
-	    displayName = temp.name;
-	    icon = getSingleSuiteIcon();
-	} else {
-	    displayName = 
-		midletSuite.getProperty(MIDletSuiteImpl.SUITE_NAME_PROP);
-	    icon = getSuiteIcon();
-	}
+        installInfo = midletSuite.getInstallInfo();
+        numberOfMidlets = midletSuite.getNumberOfMIDlets();
+
+        if (numberOfMidlets == 1) {
+            String value = midletSuite.getProperty("MIDlet-1");
+            MIDletInfo temp = new MIDletInfo(value);
+            displayName = temp.name;
+            icon = getSingleSuiteIcon();
+        } else {
+            displayName =
+                midletSuite.getProperty(MIDletSuiteImpl.SUITE_NAME_PROP);
+            icon = getSuiteIcon();
+        }
     }
 
     /**
@@ -302,7 +310,7 @@ public class AppInfo extends Form {
             return suiteIcon;
         }
 
-        suiteIcon = GraphicalInstaller.getImageFromStorage("_suite8");
+        suiteIcon = GraphicalInstaller.getImageFromInternalStorage("_suite8");
         return suiteIcon;
     }
 
@@ -316,7 +324,8 @@ public class AppInfo extends Form {
             return singleSuiteIcon;
         }
 
-        singleSuiteIcon = GraphicalInstaller.getImageFromStorage("_single8");
+        singleSuiteIcon = GraphicalInstaller.
+            getImageFromInternalStorage("_single8");
         return singleSuiteIcon;
     }
 }

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -153,6 +154,27 @@ abstract class ItemLFImpl implements ItemLF {
     }
 
     /**
+     * Returns if the pointer location (x, y, w.r.t. the Form origin)
+     * is within the bounds of the 'clickable' area of this
+     * ItemLFImpl. We exclude non-interactive areas such as the
+     * label. <p>
+     * 
+     * Most items can use this method. The only case that needs
+     * overriding is the ChoiceGroupPopupLFImpl.  
+     */
+    boolean itemContainsPointer(int x, int y) {
+        int contentX = bounds[X] + contentBounds[X];
+        int contentY = bounds[Y] + contentBounds[Y];
+
+        int myX = x - contentX;
+        int myY = y - contentY;
+
+        return (myX >= 0 && myX <= contentBounds[WIDTH] &&
+                myY >= 0 && myY <= contentBounds[HEIGHT]);
+    }
+
+    
+    /**
      * Notifies L&F of a label change in the corresponding Item.
      * @param label the new label string
      */
@@ -244,6 +266,16 @@ abstract class ItemLFImpl implements ItemLF {
             hasFocus = false;
         }
     }
+
+    /**
+     * Return whether the cached requested sizes are valid.
+     *
+     * @return <code>true</code> if the cached requested sizes are up to date.
+     *         <code>false</code> if they have been invalidated.
+     */
+    public final boolean isRequestedSizesValid() {
+        return (cachedWidth != INVALID_SIZE);
+    }
  
     // *****************************************************
     //  Package private methods
@@ -315,8 +347,10 @@ abstract class ItemLFImpl implements ItemLF {
      * @return The width available for the item by default
      */
     int lGetAvailableWidth() {
-        return (Constants.CHAM_WIDTH - 
-                ScreenSkin.PAD_FORM_ITEMS - ScreenSkin.PAD_FORM_ITEMS);
+        int w = (item.owner != null) ?
+            ((DisplayableLFImpl)item.owner.getLF()).lGetWidth() :
+            ScreenSkin.WIDTH - 2 * ScreenSkin.PAD_FORM_ITEMS;
+        return w;
     }
 
     /**
@@ -326,6 +360,7 @@ abstract class ItemLFImpl implements ItemLF {
      * @param h - the new height of the item
      */
     void lSetSize(int w, int h) {
+        //        System.out.println("set size: w=" + w + " h=" + h);
         bounds[WIDTH] = w;
         bounds[HEIGHT] = h;
     }
@@ -387,6 +422,7 @@ abstract class ItemLFImpl implements ItemLF {
         g.translate(-labelBounds[X] + contentBounds[X],
                     -labelBounds[Y] + contentBounds[Y]);
 
+        //        System.out.println("PRINT lCallPaint lPaintContent= contentBounds[WIDTH] " + contentBounds[WIDTH]);
         lPaintContent(g, contentBounds[WIDTH], contentBounds[HEIGHT]);
 
         g.translate(-contentBounds[X], -contentBounds[Y]);
@@ -413,7 +449,6 @@ abstract class ItemLFImpl implements ItemLF {
      */        
     void lDoInternalLayout(int labelBounds[], int contentBounds[], 
                            int w, int h) {
-
         if (cachedWidth == INVALID_SIZE || cachedWidth != w) {
             if (actualBoundsInvalid[WIDTH] || actualBoundsInvalid[HEIGHT]) {
                 // Note: It is possible that lDoInternalLayout is called while
@@ -424,6 +459,7 @@ abstract class ItemLFImpl implements ItemLF {
                 layoutDone = false;
                 return;
             }
+
             lGetLabelSize(labelBounds, w);
             lGetContentSize(contentBounds, w);
             cachedWidth = w;
@@ -800,7 +836,9 @@ abstract class ItemLFImpl implements ItemLF {
      *
      * @see #getInteractionModes
      */
-    void uCallPointerPressed(int x, int y) { }
+    void uCallPointerPressed(int x, int y) {
+        itemHasFocusWhenPressed = hasFocus;
+    }
     
     /**
      * Called by the system to signal a pointer release
@@ -810,7 +848,16 @@ abstract class ItemLFImpl implements ItemLF {
      *
      * @see #getInteractionModes
      */
-    void uCallPointerReleased(int x, int y) {}
+    void uCallPointerReleased(int x, int y) {
+        x -= contentBounds[X];
+        y -= contentBounds[Y];
+        if ( (x>= 0 && x <= contentBounds[WIDTH] && y>= 0 &&
+              y <= contentBounds[HEIGHT]) &&
+             (itemHasFocusWhenPressed || item.owner.numCommands <= 1)) {
+            //should check the x,y is in item's content area
+            uCallKeyPressed(Constants.KEYCODE_SELECT);
+        }
+    }
     
     /**
      * Called by the system to signal a pointer drag
@@ -934,7 +981,7 @@ abstract class ItemLFImpl implements ItemLF {
             } else if (item.owner.getLF() instanceof AlertLFImpl) {
                 // ((AlertLFImpl)item.owner.getLF()).lRequestPaintItem(item, 
                 //                                               x, y, w, h); 
-                // Causes a paint bug in Alert 
+                // Causes a paint error in Alert 
                 // only a partial painting of the gauge...
                 ((AlertLFImpl)item.owner.getLF()).lRequestPaint();
             }
@@ -1015,25 +1062,6 @@ abstract class ItemLFImpl implements ItemLF {
 
         // If the Item is inside the clip, go ahead and paint it
         if (g.getClipWidth() > 0 && g.getClipHeight() > 0) {
-            if (sizeChanged) {
-
-                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                    Logging.report(Logging.INFORMATION, 
-                                   LogChannels.LC_HIGHUI_ITEM_PAINT,
-                                   "  [I] ItemLFImpl: paintItem(.)" +
-                                   " sizeChanged (???)");
-                    // repaint logic should call paint only after layout
-                    // is complete, and not the other way round - set 
-                    // do layout if paint is called. 
-                    // current state of events will cause paint() to take
-                    // longer to return.
-                }
-
-                // IMPL_NOTE: Cannot call uCall function while holding LCDUILock
-                uCallSizeChanged(getInnerBounds(WIDTH), 
-                                 getInnerBounds(HEIGHT));
-                sizeChanged = false;
-            }
 
             // Translate into the Item's coordinate space
             g.translate(tX, tY);
@@ -1250,7 +1278,6 @@ abstract class ItemLFImpl implements ItemLF {
             ScreenSkin.PAD_FORM_ITEMS;
     }
 
-
     /** bounds[] array index to x coordinate */
     final static int X      = DisplayableLFImpl.X;
     
@@ -1365,4 +1392,7 @@ abstract class ItemLFImpl implements ItemLF {
      * recalculated.
      */
     boolean layoutDone; // = false
+
+    /** true is the item has been focused before pointer down */
+    boolean itemHasFocusWhenPressed; // = false
 }

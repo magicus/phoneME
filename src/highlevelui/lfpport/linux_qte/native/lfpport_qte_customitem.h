@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_customitem.h	1.35 06/04/05 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

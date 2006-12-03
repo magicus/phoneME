@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -63,13 +64,26 @@ public class PTILayer extends PopupLayer {
     /** separator character between words within the list */
     private static final String SEPARATOR = " ";
 
+    /** pointer is clicked outside of any area */
+    private static final int OUT_OF_BOUNDS = -1;
+
+    /** pointer is clicked to left arrow */
+    private static final int LEFT_ARROW_AREA = 0;
+
+    /** pointer is clicked to right arrow */
+    private static final int RIGHT_ARROW_AREA = 1;
+
+    /** pointer is clicked to the word inside of list */
+    private static final int LIST_MATCHES_AREA = 2;
+
+    /** Flag indicates that pointer release event should be processed */
+    private boolean checkReleased ; //= false;
     /**
      * Create an instance of PTILayer
      * @param inputSession current input session
      */
     public PTILayer(TextInputSession inputSession) {
         super(PTISkin.IMAGE_BG, PTISkin.COLOR_BG);
-        layerID = "PTILayer";
         iSession = inputSession;
     }
 
@@ -90,17 +104,24 @@ public class PTILayer extends PopupLayer {
     protected void initialize() {
         super.initialize();
 
-        bounds[W] = PTISkin.WIDTH;
+        setAnchor();
+        selId = 0;
+    }
+
+    /**
+     * Sets the anchor constants for rendering operation.
+     */
+    private void setAnchor() {
+        bounds[W] = ScreenSkin.WIDTH;
         bounds[H] = PTISkin.HEIGHT;
         bounds[X] = (ScreenSkin.WIDTH - bounds[W]) >> 1;
-        bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT - bounds[H];
+        bounds[Y] = ScreenSkin.HEIGHT - bounds[H];
         widthMax = bounds[W] - PTISkin.MARGIN;
         if (PTISkin.LEFT_ARROW != null && PTISkin.RIGHT_ARROW != null) {
             widthMax -= 4 * PTISkin.MARGIN +
                 PTISkin.LEFT_ARROW.getWidth() +
                 PTISkin.RIGHT_ARROW.getWidth();
         }
-        selId = 0;
     }
 
     /**
@@ -153,7 +174,6 @@ public class PTILayer extends PopupLayer {
                 ret = true;
                 break;
             case Constants.KEYCODE_SELECT:
-                // IMPL_NOTE: handle select action
                 iSession.processKey(keyCode, false);
                 ret = true;
                 break;
@@ -166,6 +186,71 @@ public class PTILayer extends PopupLayer {
         return ret;
     }
 
+    /**
+     * Get id of the word inside of the list selected by pointer
+     * @param x - x coordinate of pointer
+     * @param y - y coordinate of pointer
+     * @return word index in the range of 0 and list length  - 1.
+     * If the pointer does not point to any word  return -1
+     */ 
+    private int getWordIdAtPointerPosition(int x, int y) {
+        String[] l = getList();
+        int id = 0;
+        int start = PTISkin.MARGIN;
+        if (PTISkin.LEFT_ARROW != null) {
+            start += PTISkin.LEFT_ARROW.getWidth();
+        }
+        
+        while (id < l.length) {
+            int w = PTISkin.FONT.stringWidth(SEPARATOR + l[id]); 
+            if (x > start && x <= start + w) {
+                break;
+            }
+            start += w;
+            id++;
+        }
+        
+        return id < l.length ? id : -1;
+    }
+
+    /**
+     * Utility method to determine if this layer wanna handle
+     * the given point. PTI layer handles the point if it
+     * lies within the bounds of this layer.  The point should be in
+     * the coordinate space of this layer's containing CWindow.
+     *
+     * @param x the "x" coordinate of the point
+     * @param y the "y" coordinate of the point
+     * @return true if the coordinate lies in the bounds of this layer
+     */
+    public boolean handlePoint(int x, int y) {
+        return containsPoint(x, y);
+    }
+    
+    /**
+     * Get the layer area the pointer is clicked in
+     * @param x - x coordinate of pointer
+     * @param y - y coordinate of pointer
+     * @return retuen the area. It can be either OUT_OF_BOUNDS or
+     * LEFT_ARROW_AREA or RIGHT_ARROW_AREA or LIST_MATCHES_AREA
+     */ 
+    private int getAreaAtPointerPosition(int x, int y) {
+        int area = OUT_OF_BOUNDS;
+        if (x >= PTISkin.MARGIN && x <= bounds[W] - PTISkin.MARGIN) {
+            if (PTISkin.LEFT_ARROW != null &&
+                x <= PTISkin.MARGIN + PTISkin.LEFT_ARROW.getWidth()) {
+                area = LEFT_ARROW_AREA; 
+            } else if (PTISkin.RIGHT_ARROW != null &&
+                       x >= bounds[W] - PTISkin.MARGIN -
+                       PTISkin.RIGHT_ARROW.getWidth()) {
+                area = RIGHT_ARROW_AREA; 
+            } else {
+                area = LIST_MATCHES_AREA; 
+            }
+        }
+        return area;
+    }
+    
     /**
      * Allow this window to process pointer input. The type of pointer input
      * will be press, release, drag, etc. The x and y coordinates will 
@@ -181,8 +266,63 @@ public class PTILayer extends PopupLayer {
      * @return true if this window or one of its layers processed the event
      */
     public boolean pointerInput(int type, int x, int y) {
-        // IMPL_NOTE: handle focus change inside of list 
-        return false;
+        if (visible) {
+            String[] l = getList();
+            
+            int area = getAreaAtPointerPosition(x, y);
+            
+            switch(type) {
+            case EventConstants.PRESSED:
+                switch (area) {
+                case LEFT_ARROW_AREA:
+                    selId = (selId - 1 + l.length) % l.length;
+                    iSession.processKey(Canvas.UP, false);
+                    requestRepaint();
+                    break;
+                case RIGHT_ARROW_AREA:
+                    selId = (selId + 1) % l.length;
+                    iSession.processKey(Canvas.DOWN, false);
+                    requestRepaint();
+                    break;
+                case LIST_MATCHES_AREA:
+                    // move focus to the selected word
+                    int id = getWordIdAtPointerPosition(x, y);
+                    if (id >= 0) {
+                        checkReleased = true;
+                        int i = selId;
+                        if (id  > selId) {
+                            while (i < id) {
+                                iSession.processKey(Canvas.DOWN, false);
+                                i++;
+                            }
+                        } else if (id  < selId) {
+                            while (i > id) {
+                                iSession.processKey(Canvas.UP, false);
+                                i--;
+                            }
+                        }
+                        requestRepaint();
+                    }
+                    break;
+                }
+                break;
+            case EventConstants.RELEASED:
+                if (area == LIST_MATCHES_AREA &&
+                    checkReleased
+                    // IMPL_NOTE: move the focus in the standart maner,
+                    // doon't move the selected item at the head of the list 
+                    // && getWordIdAtPointerPosition(x, y) == selId
+                    ) {
+                    iSession.processKey(Constants.KEYCODE_SELECT, false);
+                    requestRepaint();
+                }
+                checkReleased = false;
+                break;
+            default:
+                break;
+            }
+        }
+        return true;
     }
 
     /**
@@ -212,7 +352,7 @@ public class PTILayer extends PopupLayer {
         int x = 0, y = 0;
 
         String text_b = "", text_a = "";
-        
+
         for (int i = -1; ++i < l.length; ) {
             if (i < selId) {
                 text_a += l[i] + SEPARATOR;
@@ -223,29 +363,29 @@ public class PTILayer extends PopupLayer {
 
         g.translate((bounds[W] - widthMax) >> 1, 0);
         g.setClip(0, 0, widthMax, bounds[H]);
-        
+
         x = 0;
         y = PTISkin.FONT.getHeight() < bounds[H] ?
             (bounds[H] - PTISkin.FONT.getHeight()) >> 1 : 0;
-        
-        // draw before words 
+
+        // draw before words
         if (text_a.length() > 0) {
             g.setColor(PTISkin.COLOR_FG);
             g.drawString(text_a, x, y, Graphics.LEFT | Graphics.TOP);
-            x += PTISkin.FONT.stringWidth(text_a); 
+            x += PTISkin.FONT.stringWidth(text_a);
         }
 
         if (l[selId].length() > 0) {
             // draw highlighted word
             // draw highlighted fill rectangle
             g.setColor(PTISkin.COLOR_BG_HL);
-            
+
             g.fillRect(x - PTISkin.FONT.stringWidth(SEPARATOR) / 2,
                        y < PTISkin.MARGIN ? y : PTISkin.MARGIN,
                        PTISkin.FONT.stringWidth(l[selId] + SEPARATOR),
                        bounds[H] - (y < PTISkin.MARGIN ? y :
                                     PTISkin.MARGIN) * 2);
-            
+
             g.setColor(PTISkin.COLOR_FG_HL);
             g.drawString(l[selId] + SEPARATOR, x, y,
                          Graphics.LEFT | Graphics.TOP);
@@ -261,6 +401,22 @@ public class PTILayer extends PopupLayer {
 
         g.translate(-((bounds[W] - widthMax) >> 1), 0);
         g.setClip(0, 0, bounds[W], bounds[H]);
+    }
+
+    /**
+     * Update bounds of layer 
+     * @param layers - current layer can be dependant on this parameter
+     */
+    public void update(CLayer[] layers) {
+        super.update(layers);
+        if (visible) {
+            setAnchor();
+            bounds[Y] -= (layers[MIDPWindow.BTN_LAYER].isVisible() ?
+                    layers[MIDPWindow.BTN_LAYER].bounds[H] : 0) +
+                    (layers[MIDPWindow.TICKER_LAYER].isVisible() ?
+                            layers[MIDPWindow.TICKER_LAYER].bounds[H] : 0);
+
+        }
     }
 }
 

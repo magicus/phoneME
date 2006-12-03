@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -31,6 +32,7 @@
 #include <jvmspi.h>
 #include <sni.h>
 #include <pcsl_print.h>
+#include <pcsl_memory.h>
 
 #include <midpAMS.h>
 #include <midpInit.h>
@@ -40,18 +42,17 @@
 #include <midpServices.h>
 #include <midp_properties_port.h>
 #include <midpTimeZone.h>
-#include <push_server_export.h>
 #include <midp_logging.h>
 #include <midpMIDletProxyList.h>
 #include <midpEvents.h>
-#include <suitestore_util.h>
+#include <suitestore_task_manager.h>
 #include <midpError.h>
 #include <midp_run_vm.h>
 #include <midp_check_events.h>
-#include <midpMidletSuiteLoader.h>
+#include <midpMidletSuiteUtils.h>
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
 #include <jsr120_types.h>
-#include <wmaUDPEmulator.h>
+#include <wmaInterface.h>
 #endif
 
 #include <lcdlf_export.h>
@@ -64,15 +65,28 @@
  * Platform-specific VM startup and shutdown routines.
  *
  * This file provides platform-specific virtual machine
- * startup and shutdown routines.  Refer to file 
+ * startup and shutdown routines.  Refer to file
  * "/src/vm/share/runtime/JVM.hpp" and the Porting
  * Guide for details.
  */
-static JvmPathChar getCharPathSeparator();
-static MIDP_ERROR getClassPathPlus(const pcsl_string * storageName,
-                      JvmPathChar** userClassPath, char* classPathExt);
 
-#if REPORT_LEVEL <= LOG_INFORMATION
+/**
+ * @def MAX_VM_PROFILE_LEN
+ * Maximal length of the VM profile name.
+ */
+#define MAX_VM_PROFILE_LEN 256
+
+static JvmPathChar getCharPathSeparator();
+static MIDP_ERROR getClassPathPlus(SuiteIdType storageName,
+    JvmPathChar** userClassPath, char* classPathExt);
+
+#if VERIFY_ONCE
+static MIDP_ERROR getClassPathForVerifyOnce(
+    JvmPathChar** classPath, SuiteIdType suiteId,
+    const pcsl_string* midletName, const pcsl_string* jarPath);
+#endif
+
+#if (REPORT_LEVEL <= LOG_INFORMATION) && !ENABLE_CONTROL_ARGS_FROM_JAD
 
 #define STACK_SIZE 8192
 
@@ -82,7 +96,7 @@ measureStack(int clearStack) {
     char  stack[STACK_SIZE];
     char  tag = (char)0xef;
     int   i;
-    
+
     if (clearStack) {
 	for (i = 0; i < STACK_SIZE; i++) {
 	    stack[i] = tag;
@@ -90,7 +104,7 @@ measureStack(int clearStack) {
     } else {
 	for (i = 0; i < STACK_SIZE; i++) {
 	    if (stack[i] != tag) {
-  	        reportToLog(LOG_INFORMATION, LC_CORE_STACK, 
+  	        reportToLog(LOG_INFORMATION, LC_CORE_STACK,
 			    "Max Native Stack Size:  %d",
 			    (STACK_SIZE - i));
 		break;
@@ -104,7 +118,7 @@ measureStack(int clearStack) {
 
 #define measureStack(x) ;
 
-#endif 
+#endif
 
 #if 0
 void monitorHeap() {
@@ -129,7 +143,7 @@ void monitorHeap() {
 /**
  * Convert Java classes to Monet bundle (In-Place Execution format)
  * upon the first run of a newly installed MIDletSuite.
- * 
+ *
  * @param userClassPath pointer to current classpath string.
  */
 static void setMonetClassPath(JvmPathChar **userClassPath, int pathLen) {
@@ -185,7 +199,7 @@ static void setMonetClassPath(JvmPathChar **userClassPath, int pathLen) {
         pcsl_string_convert_from_utf16(binFile, i, &uBinFile);
         /* IMPL_NOTE: can we do anything meaningful in case of out-of-memory? */
 
-	/* If Monet bundle file does not exist, convert now */
+        /* If Monet bundle file does not exist, convert now */
         if (storage_file_exists(&uBinFile) == 0) {
             errorcode = JVM_CreateAppImage(*userClassPath, binFile,
                                       JVM_REMOVE_CLASSES_FROM_JAR);
@@ -211,7 +225,7 @@ static void setMonetClassPath(JvmPathChar **userClassPath, int pathLen) {
 
             newPath[i] = getCharPathSeparator();
             i++;
-            
+
             for (j = 0; j < pathLen; i++, j++) {
                 newPath[i] = (*userClassPath)[j];
             }
@@ -237,7 +251,7 @@ char*
 JVMSPI_GetSystemProperty(char* prop_name) {
 
     char *result = (char *)getSystemProperty(prop_name);
-    
+
     if (result == NULL && prop_name != NULL) {
         if (strcmp(prop_name, TIMEZONE_PROP_NAME) == 0) {
             /* Get the local timezone from the native platform */
@@ -254,8 +268,8 @@ JVMSPI_SetSystemProperty(char* propName, char* value) {
      * override internal configuration parameters.
      */
     setInternalProp(propName, value);
-    
-     /* 
+
+     /*
       * Also override System.getProperty() for backward compatibility
       * with CLDC uses of property vales.
       */
@@ -312,7 +326,7 @@ JVMSPI_DebuggerNotification(jboolean is_active) {
 
 /**
  * This function provides an implementation
- * used by the logging service, as well as by the 
+ * used by the logging service, as well as by the
  * Java system output streams (System.out.println(), etc.)
  *
  * @param s a string sent to a system specific output stream
@@ -333,7 +347,7 @@ midpInitializeUI(void) {
         return -1;
     }
 
-    /* 
+    /*
      * Porting consideration:
      * Here is a good place to put I18N init.
      * function. e.g. initLocaleMethod();
@@ -397,8 +411,8 @@ midpFinalizeUI(void) {
      * function. e.g. finalizeLocaleMethod(); */
 
     /*
-     * Note: the AMS isolate will have been registered by a native method 
-     * call, so there is no corresponding midpRegisterAmsIsolateId in the 
+     * Note: the AMS isolate will have been registered by a native method
+     * call, so there is no corresponding midpRegisterAmsIsolateId in the
      * midpInitializeUI() function.
      */
     midpUnregisterAmsIsolateId();
@@ -407,10 +421,10 @@ midpFinalizeUI(void) {
 /**
  * Runs the given MIDlet from the specified MIDlet suite with the
  * given arguments. Up to 3 arguments will be made available to
- * the MIDlet as properties <tt>arg-&lt;num&gt;</tt>, where 
+ * the MIDlet as properties <tt>arg-&lt;num&gt;</tt>, where
  * <tt><i>num</i></tt> is <tt>0</tt> for the first argument, etc.
  *
- * @param suiteID The MIDlet Suite ID that the MIDlet is in
+ * @param suiteId The MIDlet Suite ID that the MIDlet is in
  * @param midletClassName The class name of MIDlet to run
  * @param arg0 The first argument for the MIDlet to be run.
  * @param arg1 The second argument for the MIDlet to be run.
@@ -425,20 +439,23 @@ midpFinalizeUI(void) {
  *         <tt>SUITE_NOT_FOUND_STATUS</tt> if the MIDlet suite not found
  */
 int
-midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
-                        const pcsl_string* midletClassName,
-		                const pcsl_string* arg0,
-		                const pcsl_string* arg1,
-		                const pcsl_string* arg2,
-                        int debugOption,
-                        char* classPathExt) {
-     int   vmStatus = 0;
+midp_run_midlet_with_args_cp(SuiteIdType suiteId,
+                             const pcsl_string* midletClassName,
+                             const pcsl_string* arg0,
+                             const pcsl_string* arg1,
+                             const pcsl_string* arg2,
+                             int debugOption,
+                             char* classPathExt) {
+    int vmStatus = 0;
     MIDPCommandState* commandState;
     JvmPathChar* classPath = NULL;
     pcsl_string_status res;
 
-    if (midpInitCallback(VM_LEVEL, midpInitializeUI, midpFinalizeUI) != 0) {
+#if (VERIFY_ONCE)
+    jboolean classVerifier = JVM_GetUseVerifier();
+#endif
 
+    if (midpInitCallback(VM_LEVEL, midpInitializeUI, midpFinalizeUI) != 0) {
         REPORT_WARN(LC_CORE, "Out of memory during init of VM.\n");
         return MIDP_ERROR_STATUS;
     }
@@ -449,7 +466,7 @@ midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
      * Consider moving this as appropriate in course of pause/resume
      * framework implementation
      */
-    if (init_jsr120() != JSR120_NET_SUCCESS) {
+    if (init_jsr120() != WMA_NET_SUCCESS) {
         REPORT_WARN(LC_CORE, "Cannot init WMA");
         return MIDP_ERROR_STATUS;
     }
@@ -457,18 +474,13 @@ midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
 
     commandState = midpGetCommandState();
 
-    pcsl_string_free(&commandState->suiteID);
-    res = pcsl_string_dup(suiteID, &commandState->suiteID);
-    if (PCSL_STRING_OK != res) {
-        REPORT_WARN(LC_CORE, "Out of memory: could not dup suite ID.\n");
-        return MIDP_ERROR_STATUS;
-    }
+    commandState->suiteId = suiteId;
 
     if (! pcsl_string_is_null(midletClassName)) {
         pcsl_string_free(&commandState->midletClassName);
         res = pcsl_string_dup(midletClassName, &commandState->midletClassName);
         if (PCSL_STRING_OK != res) {
-	    REPORT_WARN(LC_CORE, "Out of memory: could not dup classname.\n");
+            REPORT_WARN(LC_CORE, "Out of memory: could not dup classname.\n");
             return MIDP_ERROR_STATUS;
         }
     }
@@ -477,7 +489,7 @@ midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
         pcsl_string_free(&commandState->arg0);
         res = pcsl_string_dup(arg0, &commandState->arg0);
         if (PCSL_STRING_OK != res) {
-	    REPORT_WARN(LC_CORE, "Out of memory: could not dup arg0.\n");
+            REPORT_WARN(LC_CORE, "Out of memory: could not dup arg0.\n");
             return MIDP_ERROR_STATUS;
         }
     }
@@ -495,7 +507,7 @@ midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
         pcsl_string_free(&commandState->arg2);
         res = pcsl_string_dup(arg2, &commandState->arg2);
         if (PCSL_STRING_OK != res) {
-	    REPORT_WARN(LC_CORE, "Out of memory: could not dup arg2.\n");
+            REPORT_WARN(LC_CORE, "Out of memory: could not dup arg2.\n");
             return MIDP_ERROR_STATUS;
         }
     }
@@ -521,18 +533,34 @@ midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
 #endif
 
     do {
-        switch (getClassPathPlus(&commandState->suiteID, 
-				 &classPath, classPathExt)) {
+        MIDP_ERROR status = MIDP_ERROR_NONE;
+
+#if (VERIFY_ONCE)
+        /* For cached suite verification we should add the suite classpath */
+        status = getClassPathForVerifyOnce(&classPath,
+            commandState->suiteId, &commandState->midletClassName,
+            &commandState->arg1);
+
+        /* Since it is not suite verifier call follow the common way */
+        if (status == MIDP_ERROR_UNSUPPORTED) {
+            status = getClassPathPlus(commandState->suiteId,
+                &classPath, classPathExt);
+        }
+#else
+        status = getClassPathPlus(commandState->suiteId,
+                    &classPath, classPathExt);
+#endif
+        switch (status) {
         case MIDP_ERROR_OUT_MEM:
-	    REPORT_WARN(LC_CORE, "Out of memory: could allocate classpath.\n");
+            REPORT_WARN(LC_CORE, "Out of memory: could allocate classpath.\n");
             return MIDP_ERROR_STATUS;
 
         case MIDP_ERROR_AMS_SUITE_CORRUPTED:
-	    REPORT_WARN(LC_CORE, "I/O error reading appdb.\n");
+            REPORT_WARN(LC_CORE, "I/O error reading appdb.\n");
             return MIDP_ERROR_STATUS;
 
         case MIDP_ERROR_AMS_SUITE_NOT_FOUND:
-	    REPORT_WARN(LC_CORE, "Suite not found.\n");
+            REPORT_WARN(LC_CORE, "Suite not found.\n");
             return SUITE_NOT_FOUND_STATUS;
 
         default:
@@ -542,10 +570,19 @@ midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
         midp_resetEvents();
         midpMIDletProxyListReset();
 
-        pushcheckinLeftOvers(&commandState->suiteID);
+        pushcheckinLeftOvers(commandState->suiteId);
 
         measureStack(KNI_TRUE);
-	monitorHeap();
+        monitorHeap();
+
+#if (VERIFY_ONCE)
+        /*
+         * Restore class verifier state for new VM being started,
+         * since it could be disabled by the previous VM start
+         * for faster startup of a preverified MIDlet suite.
+         */
+        JVM_SetUseVerifier(classVerifier);
+#endif
 
         /*
          * The VM can exit abruptly with a status of zero or -1.
@@ -560,6 +597,7 @@ midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
 
         if (classPath != NULL) {
             midpFree(classPath);
+            classPath = NULL;
         }
 
         if (vmStatus != MAIN_EXIT) {
@@ -569,19 +607,54 @@ midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
              */
             vmStatus = MIDP_ERROR_STATUS;
 
-            if (PCSL_FALSE != pcsl_string_is_null(&commandState->lastSuiteID)) {
+            if (commandState->lastSuiteId == UNUSED_SUITE_ID) {
                 /* nothing to run last so just break out */
                 break;
             }
 
             /* Something like autotest is running, do not exit. */
-            pcsl_string_free(&commandState->suiteID);
-            commandState->suiteID = commandState->lastSuiteID;
-            commandState->lastSuiteID = PCSL_STRING_NULL;
-            
+            commandState->suiteId = commandState->lastSuiteId;
+            commandState->lastSuiteId = UNUSED_SUITE_ID;
+
             pcsl_string_free(&commandState->midletClassName);
             commandState->midletClassName = commandState->lastMidletClassName;
             commandState->lastMidletClassName = PCSL_STRING_NULL;
+
+            /* Set memory quotas (if specified) for the next midlet. */
+            if (commandState->runtimeInfo.memoryReserved >= 0) {
+                JVM_SetConfig(JVM_CONFIG_HEAP_MINIMUM,
+                              commandState->runtimeInfo.memoryReserved);
+                commandState->runtimeInfo.memoryReserved = -1;
+            }
+
+            if (commandState->runtimeInfo.memoryTotal >= 0) {
+                JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY,
+                              commandState->runtimeInfo.memoryTotal);
+                commandState->runtimeInfo.memoryTotal = -1;
+            }
+
+#if ENABLE_VM_PROFILES
+            /* Set the VM profile (if specified) for the next midlet. */
+            if (pcsl_string_length(&commandState->profileName) > 0) {
+                jbyte profileName[MAX_VM_PROFILE_LEN];
+                jsize profileNameLen;
+
+                if (pcsl_string_convert_to_utf8(&commandState->profileName,
+                        profileName,
+                        MAX_VM_PROFILE_LEN,
+                        &profileNameLen) != PCSL_STRING_OK) {
+                    REPORT_WARN(LC_CORE, "Out of memory: "
+                                "could not set the VM profile.\n");
+                    commandState->status = MIDP_ERROR_OUT_MEM;
+                    break;
+                }
+
+                JVM_SetProfile((char*)profileName);
+
+                pcsl_string_free(&commandState->profileName);
+                commandState->profileName = PCSL_STRING_NULL;
+            }
+#endif /* ENABLE_VM_PROFILES */
 
             pushcheckinall();
             continue;
@@ -593,7 +666,7 @@ midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
             vmStatus = MIDP_SHUTDOWN_STATUS;
             break;
         }
-    } while (PCSL_FALSE == pcsl_string_is_null(&commandState->suiteID));
+    } while (commandState->suiteId != UNUSED_SUITE_ID);
 
     pushcheckinall();
 
@@ -611,10 +684,10 @@ static JvmPathChar getCharPathSeparator() {
 /**
  * Runs the given MIDlet from the specified MIDlet suite with the
  * given arguments. Up to 3 arguments will be made available to
- * the MIDlet as properties <tt>arg-&lt;num&gt;</tt>, where 
+ * the MIDlet as properties <tt>arg-&lt;num&gt;</tt>, where
  * <tt><i>num</i></tt> is <tt>0</tt> for the first argument, etc.
  *
- * @param suiteID The MIDlet Suite ID that the MIDlet is in
+ * @param suiteId The MIDlet Suite ID that the MIDlet is in
  * @param midletClassName The class name of MIDlet to run
  * @param arg0 The first argument for the MIDlet to be run.
  * @param arg1 The second argument for the MIDlet to be run.
@@ -628,14 +701,14 @@ static JvmPathChar getCharPathSeparator() {
  *         <tt>SUITE_NOT_FOUND_STATUS</tt> if the MIDlet suite not found
  */
 int
-midp_run_midlet_with_args(const pcsl_string* suiteID,
+midp_run_midlet_with_args(SuiteIdType suiteId,
                           const pcsl_string* midletClassName,
-		                  const pcsl_string* arg0,
-		                  const pcsl_string* arg1,
-		                  const pcsl_string* arg2,
+                          const pcsl_string* arg0,
+                          const pcsl_string* arg1,
+                          const pcsl_string* arg2,
                           int debugOption) {
-    return midp_run_midlet_with_args_cp(suiteID, midletClassName,
-		      arg0, arg1, arg2, debugOption, NULL);
+    return midp_run_midlet_with_args_cp(suiteId, midletClassName,
+        arg0, arg1, arg2, debugOption, NULL);
 }
 
 /**
@@ -643,42 +716,48 @@ midp_run_midlet_with_args(const pcsl_string* suiteID,
  * Suite. This generated value is stored in the global variable
  * <tt>MidpCommandLineClassPath</tt>.
  *
- * @param suiteID The MIDlet Suite ID.
+ * @param suiteId The MIDlet Suite ID.
  * @param userClassPath The classpath to be used when executing a
- *                      MIDlet Suite in <tt>suiteID</tt>.
+ *                      MIDlet Suite in <tt>suiteId</tt>.
  * @param classPathExt The classpath extension to be appended to
  *                 the generated classpath. May be NULL or empty.
  * @return <tt>0</tt> if the classpath was generated,
- *    NULL_STR_LEN mean the suite does not exist,
+ *    MIDP_ERROR_AMS_SUITE_NOT_FOUND mean the suite does not exist,
  *    OUT_OF_MEM_LEN if out of memory for the new string,
  *    IO_ERROR if an IO_ERROR.
  */
-static MIDP_ERROR getClassPathPlus(const pcsl_string * suiteID, 
-				   JvmPathChar** userClassPath, 
-				   char* classPathExt) {
+static MIDP_ERROR getClassPathPlus(SuiteIdType suiteId,
+                                   JvmPathChar** userClassPath,
+                                   char* classPathExt) {
     pcsl_string jarPath;
     const jchar* jarPathData;
     jsize jarPathLen;
     JvmPathChar* newPath;
-    char* additionalPath =		/* replace NULL with empty string */
+    char* additionalPath =        /* replace NULL with empty string */
             classPathExt!=NULL ? classPathExt : "";
     int additionalPathLength = strlen(additionalPath);
     int i,j;
 
-    if (PCSL_FALSE != pcsl_string_is_null(suiteID) || pcsl_string_length(suiteID) <= 0) {
+    if (suiteId == UNUSED_SUITE_ID) {
         return -1;
     }
 
-    if (pcsl_string_equals(suiteID, &INTERNAL_SUITE_ID)) {
+    if (suiteId == INTERNAL_SUITE_ID) {
         jarPath = PCSL_STRING_EMPTY;
     } else {
-        MIDP_ERROR error = midp_suite_get_class_path(suiteID, KNI_TRUE,
-						     &jarPath);
+        MIDPError error;
+        StorageIdType storageId;
 
-	if (error != MIDP_ERROR_NONE) {
-	    return error;
-	}
+        error = midp_suite_get_suite_storage(suiteId, &storageId);
 
+        if (error == ALL_OK) {
+            error = midp_suite_get_class_path(suiteId, storageId,
+                                              KNI_TRUE, &jarPath);
+        }
+
+        if (error != ALL_OK) {
+            return MIDP_ERROR_AMS_SUITE_NOT_FOUND;
+        }
     }
 
     jarPathLen = pcsl_string_utf16_length(&jarPath);
@@ -703,8 +782,8 @@ static MIDP_ERROR getClassPathPlus(const pcsl_string * suiteID,
     if (additionalPathLength!=0)
     {
         if (i != 0) {
-	    newPath[i++]=(JvmPathChar)getCharPathSeparator();
-	}
+            newPath[i++]=(JvmPathChar)getCharPathSeparator();
+        }
 
         for (j = 0; j < additionalPathLength; j++,i++) {
             newPath[i] = (JvmPathChar)additionalPath[j];
@@ -722,6 +801,66 @@ static MIDP_ERROR getClassPathPlus(const pcsl_string * suiteID,
     return 0;
 }
 
+
+#if (VERIFY_ONCE)
+/**
+ * Check whether MIDlet to be started is the suite verifier MIDlet.
+ * If that's the case set class path value to a specified JAR path
+ * provided to the verifier MIDlet as one of the arguments.
+ *
+ * @param pClassPath reference to classpath to be used for the nearest
+ *   MIDlet start; classpath value could be allocated in this function
+ *   and caller is responsible to free its memory
+ * @param suiteId id of the suite scheduled for the nearest VM start
+ * @param midletName name of the MIDlet scheduled for the nearest VM start
+ * @param jarPath if MIDlet name is the name of suite verifier MIDlet from
+ *   internal suite, jarPath will be set as classpath value for the nearest
+ *   VM start
+ */
+static MIDP_ERROR getClassPathForVerifyOnce(
+    JvmPathChar** pClassPath, SuiteIdType suiteId,
+    const pcsl_string* midletName, const pcsl_string* jarPath) {
+
+    const jchar* jarPathData;
+    jsize jarPathLen;
+    int i;
+
+    /* Change classpath for suite verifier MIDlet only */
+    if (pcsl_string_is_null(midletName) || pcsl_string_is_null(jarPath) ||
+        suiteId != INTERNAL_SUITE_ID ||
+        !pcsl_string_equals(midletName, &SUITE_VERIFIER_MIDLET) ) {
+
+        return MIDP_ERROR_UNSUPPORTED;
+    }
+
+    /* Free previously allocated classpath */
+    if (*pClassPath != NULL) {
+        midpFree(*pClassPath);
+    }
+
+    /* Allcoate new classpath variable */
+    jarPathLen = pcsl_string_utf16_length(jarPath);
+    *pClassPath = (JvmPathChar*)midpMalloc(
+        sizeof(JvmPathChar) * (jarPathLen + 1));
+    if (NULL == *pClassPath) {
+        return OUT_OF_MEM_LEN;
+    }
+
+    jarPathData = pcsl_string_get_utf16_data(jarPath);
+    if (NULL == jarPathData) {
+        return OUT_OF_MEM_LEN;
+    }
+
+    for (i = 0; i < jarPathLen; i++) {
+        (*pClassPath)[i] = (JvmPathChar)jarPathData[i];
+    }
+    pcsl_string_release_utf16_data(jarPathData, jarPath);
+    (*pClassPath)[i] = 0;
+
+    return MIDP_ERROR_NONE;
+}
+#endif /*VERIFY_ONCE */
+
 /**
  * Starts the system and instructs the VM to run the main() method of
  * the specified class. Does not return until the system is stopped.
@@ -730,7 +869,7 @@ static MIDP_ERROR getClassPathPlus(const pcsl_string * suiteID,
  * @param mainClass string containing the main class for the VM to run.
  * @param argc the number of arguments to pass to the main method
  * @param argv the arguments to pass to the main method
- * 
+ *
  * @return <tt>MIDP_SHUTDOWN_STATUS</tt> if the system is shutting down or
  *         <tt>MIDP_ERROR_STATUS</tt> if an error
  */
@@ -738,12 +877,11 @@ int midpRunMainClass(JvmPathChar *classPath,
                      char *mainClass,
                      int argc,
                      char **argv) {
-    int   vmStatus = 0;
+    int vmStatus = 0;
 
     midpInitialize();
 
     if (midpInitCallback(VM_LEVEL, midpInitializeUI, midpFinalizeUI) != 0) {
-
         REPORT_WARN(LC_CORE, "Out of memory during init of VM.\n");
         return MIDP_ERROR_STATUS;
     }

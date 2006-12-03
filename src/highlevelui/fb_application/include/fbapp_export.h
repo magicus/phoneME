@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -39,6 +40,7 @@
  */
 
 #include <fbapp_device_type.h>
+#include <java_types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,14 +62,58 @@ extern void fbapp_finalize();
 extern void fbapp_refresh(int x, int y, int w, int h);
 
 /**
+ * Invert screen orientation flag
+ */
+extern jboolean fbapp_reverse_orientation();
+
+/*
+ * Return screen orientation flag
+ */
+extern jboolean fbapp_get_reverse_orientation();
+
+/**
+ * Set full screen mode on/off
+ */
+extern void fbapp_set_fullscreen_mode(int mode);
+
+/**
  * Returns the file descriptor for reading the keyboard. 
  */
+#ifndef DIRECTFB
 extern int fbapp_get_keyboard_fd();
+#else
+/**
+ * Checks for events from keyboard. Gotten event must be retrieved 
+ * by <code>fbapp_get_event</code>.
+ */
+extern int fbapp_event_is_waiting();
+
+/**
+ * Retrieves next event from queue. Must be called when 
+ * <code>fbapp_event_is_waiting</code> returned true.
+ */
+extern void fbapp_get_event(void*);
+
+/**
+ * Closes application window.
+ */
+extern void fbapp_close_window();
+
+#endif
+/**
+ * Returns the file descriptor for reading the mouse. 
+ */
+extern int fbapp_get_mouse_fd();
 
 /**
  * Returns the type of the frame buffer device.
  */
 extern int fbapp_get_fb_device_type();
+
+extern int get_screen_width();
+
+extern int get_screen_height();
+
 
 #ifdef __cplusplus
 }

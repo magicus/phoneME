@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,7 +32,6 @@
 #include <midpMalloc.h>
 #include <midp_constants_data.h>
 #include <gxj_putpixel.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -55,6 +55,29 @@
 #endif
 #endif
 
+#ifdef DIRECTFB
+#include <linux/kd.h>
+#include <termios.h>
+#include <sys/vt.h>
+#include <signal.h>
+#include <directfb.h>
+#define DFBCHECK2(x, lab)  \
+    do { \
+        DFBResult err = (x); \
+        if (err != DFB_OK) { \
+            REPORT_WARN4(LC_LOWUI, \
+                "%s (%d): DFB Error: %s <%d>", \
+                __FILE__, __LINE__, \
+                DirectFBErrorString(err), err); \
+            goto lab; \
+        } \
+    } while(0)
+
+#define DFBCHECK(x) DFBCHECK2(x, dfb_err)
+#define releaseInterface(x) do {if ((x) != NULL) {(x)->Release(x); (x) = NULL;}} while(0)
+static void close_directfb();
+#endif
+
 #ifdef ENABLE_JSR_184
 #include <swvapi.h>
 #endif
@@ -73,11 +96,21 @@
 
 gxj_screen_buffer gxj_system_screen_buffer;
 
+static jboolean reverse_orientation;
+/**
+* True if we are in full-screen mode; false otherwise.
+*/
+static int isFullScreen;
+static void resizeScreenBuffer();
+
 static void connectFrameBuffer();
 static int linuxFbDeviceType;
 
 /* The file descriptor for reading the keyboard. */ 
 static int keyboardFd;
+
+/* The file descriptor for reading the mouse. */ 
+static int mouseFd;
 
 static void checkDeviceType() {
     char buff[1000];
@@ -92,7 +125,8 @@ static void checkDeviceType() {
                 strstr(buff, "ARM-Versatile") != NULL) {
                 linuxFbDeviceType = LINUX_FB_VERSATILE_INTEGRATOR;
             } else if (strstr(buff, "Sharp-Collie") != NULL ||
-                       strstr(buff, "SHARP Poodle") != NULL) {
+                       strstr(buff, "SHARP Poodle") != NULL ||
+                       strstr(buff, "SHARP Shepherd") != NULL) {
                 linuxFbDeviceType = LINUX_FB_ZAURUS;
             } else if (strstr(buff, "Intel DBBVA0 Development") != NULL) {
                 linuxFbDeviceType = LINUX_FB_INTEL_MAINSTONE;
@@ -110,21 +144,24 @@ static void checkDeviceType() {
  * Initializes the fbapp_ native resources.
  */
 void fbapp_init() {
-    int screenSize = sizeof(gxj_pixel_type) * CHAM_WIDTH * CHAM_HEIGHT;
+    int screenSize = sizeof(gxj_pixel_type) * get_screen_width() * get_screen_height();
+    isFullScreen = 0;
 
-    gxj_system_screen_buffer.width = CHAM_WIDTH;
-    gxj_system_screen_buffer.height = CHAM_HEIGHT;
+    gxj_system_screen_buffer.width = get_screen_width();
+    gxj_system_screen_buffer.height = get_screen_height();
+
+#ifndef DIRECTFB
     gxj_system_screen_buffer.pixelData = (gxj_pixel_type *)midpMalloc(screenSize);
-    gxj_system_screen_buffer.alphaData = NULL;
-
     memset(gxj_system_screen_buffer.pixelData, 0, screenSize);
+#else 
+    gxj_system_screen_buffer.pixelData = NULL;
+#endif
+
+    gxj_system_screen_buffer.alphaData = NULL;
 
     checkDeviceType();
     connectFrameBuffer();
-
-#ifdef ENABLE_JSR_184
-    engine_initialize();
-#endif
+    resizeScreenBuffer();
 }
 
 #define CLIP_RECT(x1, y1, x2, y2)                   \
@@ -132,14 +169,17 @@ void fbapp_init() {
     if ((x1) < 0) { (x1) = 0; }                     \
     if ((y1) < 0) { (y1) = 0; }                     \
                                                     \
-    if ((x2) > CHAM_WIDTH)  { (x2) = CHAM_WIDTH; }  \
-    if ((y2) > CHAM_HEIGHT) { (y2) = CHAM_HEIGHT; } \
+    if ((x2) > get_screen_width())  { (x2) = get_screen_width(); }  \
+    if ((y2) > get_screen_height()) { (y2) = get_screen_height(); } \
                                                     \
     if ((x1) > (x2)) { (x1) = (x2) = 0; }           \
     if ((y1) > (y2)) { (y1) = (y2) = 0; }           \
   } while (0)
 
-#ifndef ARM
+static void fbapp_refresh_normal(int x1, int y1, int x2, int y2);
+static void fbapp_refresh_rotate(int x1, int y1, int x2, int y2);
+
+#if !defined(ARM) && !defined(DIRECTFB)
 
 typedef struct _QVFbHeader {
     int width;
@@ -174,11 +214,16 @@ static void connectFrameBuffer() {
     }
 
     sprintf(buff, "/tmp/.qtvfb_mouse-%d", displayId);
+    if ((mouseFd = open(buff, O_RDONLY | O_NONBLOCK, 0)) < 0) {
+        fprintf(stderr, "open of %s failed\n", buff);
+        exit(1);
+    } 
+    
     if ((key = ftok(buff, 'b')) == -1) {
         PERROR("ftok() failed");
         exit(1);
     }
-
+    
     if ((shmId = shmget(key, 0, 0)) == -1) {
         PERROR("shmget() failed");
         exit(1);
@@ -196,9 +241,9 @@ static void connectFrameBuffer() {
     fprintf(stderr, "QVFB info: %dx%d, depth=%d\n",
            hdr->width, hdr->height, hdr->depth);
 
-    if (hdr->width < CHAM_WIDTH || hdr->height < CHAM_HEIGHT) {
+    if (hdr->width < get_screen_width() || hdr->height < get_screen_height()) {
         fprintf(stderr, "QVFB screen too small. Need %dx%d\n",
-               CHAM_WIDTH, CHAM_HEIGHT);
+               get_screen_width(), get_screen_height());
         exit(1);
     }
     if (hdr->depth != 16) {
@@ -216,6 +261,51 @@ static void connectFrameBuffer() {
 }
 
 /**
+ * Resizes system screen buffer to fit the screen dimensions.
+ * Call after frame buffer is initialized.
+ */
+static void resizeScreenBuffer() /* QVFB version */
+{
+    int newWidth = get_screen_width();
+    int newHeight = get_screen_height();
+    int screenSize = sizeof(gxj_pixel_type) * newWidth * newHeight;
+    if (gxj_system_screen_buffer.pixelData != NULL) {
+        if ((gxj_system_screen_buffer.width == newWidth) 
+            && (gxj_system_screen_buffer.height == newHeight)) {
+
+            memset(gxj_system_screen_buffer.pixelData, 0, screenSize);
+            // no need to reallocate buffer, return
+            return;
+
+        } else {
+            // check if frame buffer is big enough
+            if (hdr->width < newWidth || hdr->height < newHeight) {
+                fprintf(stderr, "QVFB screen too small. Need %dx%d\n",
+                    newWidth, newHeight);
+                exit(1);
+            }
+
+            // clear frame buffer
+            memset(qvfbPixels, 0, sizeof(gxj_pixel_type) * hdr->width * hdr->height);
+
+            // free screen buffer
+            midpFree(gxj_system_screen_buffer.pixelData);
+            gxj_system_screen_buffer.pixelData = NULL;
+
+        }
+    }
+
+
+    gxj_system_screen_buffer.width = newWidth;
+    gxj_system_screen_buffer.height = newHeight;
+    gxj_system_screen_buffer.pixelData = (gxj_pixel_type *)midpMalloc(screenSize);
+    gxj_system_screen_buffer.alphaData = NULL;
+
+    memset(gxj_system_screen_buffer.pixelData, 0, screenSize);
+
+}
+
+/**
  * Bridge function to request a repaint
  * of the area specified.
  *
@@ -226,32 +316,44 @@ static void connectFrameBuffer() {
  */
 void fbapp_refresh(int x1, int y1, int x2, int y2) /* QVFB version */
 {
-    int y;
-    gxj_pixel_type *dstpixels = (gxj_pixel_type *)qvfbPixels;
+    if (reverse_orientation) {
+        fbapp_refresh_rotate(x1, y1, x2, y2);
+        } else {
+        fbapp_refresh_normal(x1, y1, x2, y2);
+        }
+}
+
+static void fbapp_refresh_normal(int x1, int y1, int x2, int y2) /* QVFB version */
+{
     // QVFB feature: a number of bytes per line can be different from
     // screenWidth * pixelSize, so lineStep should be used instead.
     int lineStep = hdr->lineStep / sizeof(gxj_pixel_type);
-    gxj_pixel_type *dst;
-    gxj_pixel_type *src;
+    int dstWidth =  hdr->lineStep / sizeof(gxj_pixel_type);//, dstHeight = hdr->height;
+    gxj_pixel_type *dst  = (gxj_pixel_type *)qvfbPixels;
+    gxj_pixel_type *src  = gxj_system_screen_buffer.pixelData;
+
+    int srcWidth = x2 - x1;
+
     REPORT_CALL_TRACE4(LC_HIGHUI, "LF:fbapp_refresh(%3d, %3d, %3d, %3d )\n",
                        x1, y1, x2, y2);
 
     CLIP_RECT(x1, y1, x2, y2);
 
     // center the LCD output area
-    if (hdr->width > CHAM_WIDTH) {
-        dstpixels += (hdr->width - CHAM_WIDTH) / 2;
+    if (hdr->width > get_screen_width()) {
+        dst += (hdr->width - get_screen_width()) / 2;
     }
-    if (hdr->height > CHAM_HEIGHT) {
-        dstpixels += (hdr->height - CHAM_HEIGHT) * lineStep / 2;
+    if (hdr->height > get_screen_height()) {
+        dst += (hdr->height - get_screen_height()) * lineStep / 2;
     }
 
-    // Copy the pixels
-    for (y=y1; y < y2; y++) {
-        src = &gxj_system_screen_buffer.pixelData[y*gxj_system_screen_buffer.width + x1];
-        dst = &dstpixels[y * lineStep + x1];
+    src += y1 * get_screen_width() + x1;
+    dst += y1 * dstWidth + x1;
 
-        memcpy(dst, src, (x2 - x1) * sizeof(gxj_pixel_type));
+    for (; y1 < y2; y1++) {
+        memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
+        src += get_screen_width();
+        dst += dstWidth;
     }
 
     hdr->dirty_x1 = 0;
@@ -261,12 +363,226 @@ void fbapp_refresh(int x1, int y1, int x2, int y2) /* QVFB version */
     hdr->is_dirty = 1;
 }
 
+static void fbapp_refresh_rotate(int x1, int y1, int x2, int y2) {    /* QVFB version */
+
+    gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
+    gxj_pixel_type *dst = (gxj_pixel_type *)qvfbPixels;
+    int srcWidth, srcHeight;
+    int dstWidth =  hdr->lineStep / sizeof(gxj_pixel_type), dstHeight = hdr->height;
+
+
+    srcWidth = x2 - x1;
+    srcHeight = y2 - y1;
+
+    CLIP_RECT(x1, y1, x2, y2);
+
+    if (get_screen_width() < dstHeight || get_screen_height() < dstWidth) {
+            // We are drawing into a frame buffer that's larger than what MIDP
+            // needs. Center it.
+            dst += (dstHeight - get_screen_width()) / 2 * dstWidth;
+            dst += ((dstWidth - get_screen_height()) / 2);
+        }
+
+
+    dst += y1 + (get_screen_width() - x2 - 1) * dstWidth;
+    src += x2-1 + y1 * get_screen_width();
+
+    while( x2-- > x1) {
+
+        int y;
+
+        for (y = y1; y < y2; y++) {
+
+            *dst++ = *src;
+            src += get_screen_width();
+         }
+
+         dst += dstWidth - srcHeight;
+         src += -1 - srcHeight * get_screen_width();
+
+    }
+
+    hdr->dirty_x1 = 0;
+    hdr->dirty_y1 = 0;
+    hdr->dirty_x2 = hdr->width;
+    hdr->dirty_y2 = hdr->height;
+    hdr->is_dirty = 1;
+}
+
+
+
 #endif /* !defined(ARM) */
 
-#ifdef ARM
+#ifdef DIRECTFB
 
-static void fbapp_refresh_normal(int x1, int y1, int x2, int y2);
-static void fbapp_refresh_rotate(int x1, int y1, int x2, int y2);
+static IDirectFB *dfb = NULL;
+static IDirectFBSurface *screen = NULL;
+static IDirectFBEventBuffer *event_buffer = NULL;
+static IDirectFBWindow *window = NULL;
+static int screen_width  = 0;
+static int screen_height = 0;
+
+static void initKeyboard() {    /* DIRECTFB version */
+
+    DFBCHECK(window->CreateEventBuffer(window, &event_buffer));
+    DFBCHECK(window->EnableEvents(window, 
+        DWET_KEYDOWN | DWET_KEYUP | DWET_CLOSE | DWET_DESTROYED
+        /* DEBUG: Request focus */ | DWET_GOTFOCUS | DWET_LOSTFOCUS));
+    return;
+    
+dfb_err:;
+    close_directfb();
+    exit(1); /* TODO: exit from Java */
+}
+
+/* This macro calculates a position for new application window.
+ * This work must be normally performed by a window manager.
+ * IMPL_NOTE: remove or replace it after any wm is being used
+ */
+#define set_win_position(w_id, width, height, x, y)    \
+    do { \
+        int w = (width) - CHAM_WIDTH; \
+        int h = (height) - CHAM_HEIGHT; \
+        if (w > 10 && h > 10) { \
+            /* initialize with window ID */ \
+            /* IMPL_NOTE: remove if the random is already initialized */ \
+            srand(w_id); \
+            /* we use high bits because they should be more random */ \
+            (x) = (int)(((double)w * rand()) / (RAND_MAX + 1.0)); \
+            (y) = (int)(((double)h * rand()) / (RAND_MAX + 1.0)); \
+        } else { \
+            (x) = 0; \
+            (y) = 0; \
+        } \
+    } while(0) 
+
+static void initFrameBuffer() { /* DIRECTFB version */
+    DFBSurfaceDescription dsc;
+    DFBWindowDescription wdesc;
+    DFBDisplayLayerConfig lconfig;
+    static char *argv_array[] = {
+        "CVM",
+        "--dfb:system=FBDev"
+            ",force-windowed"   /* use windows instead of surfaces */
+            ",no-vt-switch"     /* do not switch between Linux' VT */
+            ",no-cursor"        /* do not use pointer */
+            // ",no-deinit-check" /* do not check for deinit */
+        ,NULL
+    };
+    int argc = sizeof argv_array / sizeof argv_array[0] - 1;
+    char **argv = argv_array;
+    IDirectFBDisplayLayer *dlayer;
+    char *dst;
+    int pitch;
+    int win_id;
+    int win_x, win_y;
+    
+    DFBCHECK(DirectFBInit(&argc, &argv));
+    DFBCHECK(DirectFBCreate(&dfb));
+    DFBCHECK(dfb->SetCooperativeLevel(dfb, DFSCL_NORMAL));
+    
+    DFBCHECK(dfb->GetDisplayLayer(dfb, DLID_PRIMARY, &dlayer));
+    DFBCHECK(dlayer->GetConfiguration(dlayer, &lconfig));
+    wdesc.caps = DWCAPS_DOUBLEBUFFER;
+    wdesc.surface_caps = DSCAPS_DOUBLE;
+    wdesc.pixelformat = DSPF_RGB16;
+    wdesc.width = CHAM_WIDTH;
+    wdesc.height = CHAM_HEIGHT;
+    wdesc.flags = DWDESC_CAPS | DWDESC_WIDTH | DWDESC_HEIGHT | DWDESC_PIXELFORMAT |
+        DWDESC_SURFACE_CAPS;
+    DFBCHECK(dlayer->CreateWindow(dlayer, &wdesc, &window));
+    releaseInterface(dlayer);
+    if (lconfig.flags & (DLCONF_WIDTH | DLCONF_HEIGHT) == (DLCONF_WIDTH | DLCONF_HEIGHT)) {
+        DFBCHECK(window->GetID(window, &win_id));
+        set_win_position(win_id, lconfig.width, lconfig.height, win_x, win_y);
+        DFBCHECK(window->MoveTo(window, win_x, win_y));
+    }
+    DFBCHECK(window->RaiseToTop(window));
+    DFBCHECK(window->SetOpacity(window, 0xff));
+    DFBCHECK(window->RequestFocus(window));
+    DFBCHECK(window->GetSurface(window, &screen));
+    DFBCHECK(screen->GetSize(screen, &screen_width, &screen_height));
+    DFBCHECK(screen->Lock(screen, DSLF_WRITE, (void**)&dst, &pitch));
+    if (pitch != (int)sizeof(gxj_pixel_type) * screen_width) {
+        REPORT_ERROR(LC_LOWUI, 
+            "Invalid pixel format: Supports only 16-bit, 5:6:5 display");
+        goto dfb_err;
+    }
+    gxj_system_screen_buffer.width = screen_width;
+    gxj_system_screen_buffer.height = screen_height;
+    gxj_system_screen_buffer.pixelData = (gxj_pixel_type *)dst;
+    return;
+    
+dfb_err:;
+    close_directfb();
+    exit(1); /* TODO: exit from Java */
+}
+
+static void connectFrameBuffer() {  /* DIRECTFB version */
+    initFrameBuffer();
+    initKeyboard();
+}
+
+void fbapp_refresh(int x1, int y1, int x2, int y2) {    /* DIRECTFB version */
+    int pitch;
+    char *dst;
+    int width;
+    DFBRegion reg, *preg;
+
+    /* DEBUG: to be deleted after debugging */
+    if (x1 < 0 || x2 < 0 || y1 < 0 || y2 < 0 ||
+            x1 > screen_width || x2 > screen_width ||
+            y1 > screen_height || y2 > screen_height) {
+        char b[50];
+        sprintf(b, "%d %d %d %d", x1, x2, y1, y2);
+        REPORT_ERROR1(LC_LOWUI, "Invalid rectangle for refresh: %s", b);
+        return;
+    }
+    
+    if (x1 >= x2) {
+        width = sizeof(gxj_pixel_type);
+        x2 = x1 + 1;
+    } else {
+        width = (x2 - x1) * sizeof(gxj_pixel_type);
+    }
+    if (y1 >= y2) {
+        y2 = y1 + 1;
+    }
+    reg.x1 = x1;
+    reg.y1 = y1;
+    reg.x2 = x2;
+    reg.y2 = y2;
+    
+    DFBCHECK(screen->Unlock(screen));
+    DFBCHECK(screen->Flip(screen, &reg, DSFLIP_BLIT));
+    DFBCHECK(screen->Lock(screen, DSLF_WRITE, (void**)&dst, &pitch));
+    if (pitch != (int)sizeof(gxj_pixel_type) * screen_width) {
+        REPORT_ERROR(LC_LOWUI, 
+            "Invalid pixel format: Supports only 16-bit, 5:6:5 display");
+        goto dfb_err;
+    }
+    gxj_system_screen_buffer.pixelData = (gxj_pixel_type *)dst;
+dfb_err:;
+}
+
+/**
+ * Closes application window.
+ */
+void fbapp_close_window() {
+    window->Close(window);
+    sleep(1); /* wait while the window is destroying */
+}
+
+static void close_directfb() {
+    releaseInterface(event_buffer);
+    releaseInterface(screen);
+    releaseInterface(window);
+    releaseInterface(dfb);
+}
+
+#endif /* ifdef DIRECTFB */
+
+#if defined(ARM) && !defined(DIRECTFB)
 
 static struct termios origTermData;
 static struct termios termdata;
@@ -401,12 +717,15 @@ static void initFrameBuffer() {
         PERROR("mapping /dev/fb0");
         exit(1);
     } else {
+      /* IMPL_NOTE - CDC disabled.*/
+#if 0 /* Don't draw into the screen area outside of the main midp window. */
         int n;
         gxj_pixel_type *p = fb.data;
         gxj_pixel_type color = (gxj_pixel_type)GXJ_RGB2PIXEL(0xa0, 0xa0, 0x80);
         for (n = w * h; n>0; n--) {
             *p ++ = color;
         }
+#endif
     }
 }
 
@@ -414,6 +733,59 @@ static void connectFrameBuffer()  /* ARM version */
 {
     initKeyboard();
     initFrameBuffer();
+}
+
+/**
+ * Resizes system screen buffer to fit the screen dimensions.
+ * Call after frame buffer is initialized.
+ */
+static void resizeScreenBuffer() /* ARM version */
+{
+    int newWidth = get_screen_width();
+    int newHeight = get_screen_height();
+    int screenSize = sizeof(gxj_pixel_type) * newWidth * newHeight;
+
+    if (gxj_system_screen_buffer.pixelData != NULL) {
+        if ((gxj_system_screen_buffer.width == newWidth) 
+            && (gxj_system_screen_buffer.height == newHeight)) {
+
+            memset(gxj_system_screen_buffer.pixelData, 0, screenSize);
+            // no need to reallocate buffer, return
+            return;
+
+        } else {
+            // check if frame buffer is big enough
+            if (fb.width < newWidth || fb.height < newHeight) {
+                fprintf(stderr, "Device screen too small. Need %dx%d\n",
+                    newWidth, newHeight);
+                exit(1);
+            }
+
+            // clear frame buffer
+            {
+                int n;
+                gxj_pixel_type *p = fb.data;
+                gxj_pixel_type color = (gxj_pixel_type)GXJ_RGB2PIXEL(0xa0, 0xa0, 0x80);
+                for (n = fb.width * fb.height; n>0; n--) {
+                    *p ++ = color;
+                }
+            }
+
+            // free screen buffer
+            midpFree(gxj_system_screen_buffer.pixelData);
+            gxj_system_screen_buffer.pixelData = NULL;
+
+        }
+    }
+
+
+    gxj_system_screen_buffer.width = newWidth;
+    gxj_system_screen_buffer.height = newHeight;
+    gxj_system_screen_buffer.pixelData = (gxj_pixel_type *)midpMalloc(screenSize);
+    gxj_system_screen_buffer.alphaData = NULL;
+
+    memset(gxj_system_screen_buffer.pixelData, 0, screenSize);
+
 }
 
 /**
@@ -427,21 +799,27 @@ static void connectFrameBuffer()  /* ARM version */
  */
 void fbapp_refresh(int x1, int y1, int x2, int y2) /* ARM version */
 {
-    CLIP_RECT(x1, y1, x2, y2);
 
+    CLIP_RECT(x1, y1, x2, y2);
     switch (linuxFbDeviceType) {
     case LINUX_FB_ZAURUS:
+#if 0
         fbapp_refresh_rotate(x1, y1, x2, y2);
+#endif
         break;
     case LINUX_FB_INTEL_MAINSTONE:
     case LINUX_FB_VERSATILE_INTEGRATOR:
     case LINUX_FB_OMAP730:
     default:
-        fbapp_refresh_normal(x1, y1, x2, y2);
+         if (reverse_orientation) {
+            fbapp_refresh_rotate(x1, y1, x2, y2);
+         } else {
+            fbapp_refresh_normal(x1, y1, x2, y2);
+         }
     }
 }
 
-static void fbapp_refresh_normal(int x1, int y1, int x2, int y2)
+static void fbapp_refresh_normal(int x1, int y1, int x2, int y2) /* ARM version */
 {
     gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
     gxj_pixel_type *dst = (gxj_pixel_type*)fb.data;
@@ -451,7 +829,7 @@ static void fbapp_refresh_normal(int x1, int y1, int x2, int y2)
     if (linuxFbDeviceType == LINUX_FB_OMAP730) {
         // Needed by the P2 board
         // Max screen size is 176x220 but can only display 176x208
-        dstHeight = CHAM_HEIGHT;
+        dstHeight = get_screen_height();
     }
 
     // Make sure the copied lines are 4-byte aligned for faster memcpy
@@ -464,11 +842,11 @@ static void fbapp_refresh_normal(int x1, int y1, int x2, int y2)
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
 
-    if (CHAM_WIDTH < dstWidth || CHAM_HEIGHT < dstHeight) {
+    if (get_screen_width() < dstWidth || get_screen_height() < dstHeight) {
         // We are drawing into a frame buffer that's larger than what MIDP
         // needs. Center it.
-        dst += ((dstHeight - CHAM_HEIGHT) / 2) * dstWidth;
-        dst += (dstWidth - CHAM_WIDTH) / 2;
+        dst += ((dstHeight - get_screen_height()) / 2) * dstWidth;
+        dst += (dstWidth - get_screen_width()) / 2;
     }
 
     if (srcWidth == dstWidth && srcHeight == dstHeight &&
@@ -476,68 +854,137 @@ static void fbapp_refresh_normal(int x1, int y1, int x2, int y2)
         // copy the entire screen with one memcpy
         memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type) * srcHeight);
     } else {
-        src += y1 * CHAM_WIDTH + x1;
+        src += y1 * get_screen_width() + x1;
         dst += y1 * dstWidth + x1;
 
         for (; y1 < y2; y1++) {
             memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
-            src += CHAM_WIDTH;
+            src += get_screen_width();
             dst += dstWidth;
         }
     }
 }
 
-// Rotate the display bt 90 degrees clock-wise (Zaurus).
-// IMPL NOTE: there's must be a way to flip it in hardware, but let's
-// write a software copy-loop just for fun!
-static void fbapp_refresh_rotate(int x1, int y1, int x2, int y2)
+
+static void fbapp_refresh_rotate(int x1, int y1, int x2, int y2)  /* ARM version */
 {
     gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
     gxj_pixel_type *dst = (gxj_pixel_type*)fb.data;
     int srcWidth, srcHeight;
     int dstWidth = fb.width, dstHeight = fb.height;
 
-    // Force 2-byte alignment for faster writes
-    if ((y1 & 2) == 1) {
-        y1 -= 1;
-    }
-    if ((y2 & 2) == 1) {
-        y2 += 1;
-    }
-
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
 
-    if (CHAM_WIDTH < dstHeight || CHAM_HEIGHT < dstWidth) {
-        // We are drawing into a frame buffer that's larger than what MIDP
-        // needs. Center it.
-        dst += (dstHeight - CHAM_WIDTH) / 2 * dstWidth;
-        dst += ((dstWidth - CHAM_HEIGHT) / 2);
-    }
+    CLIP_RECT(x1, y1, x2, y2);
 
-    dst += x1 * dstWidth + (CHAM_HEIGHT - y2);
-
-    for (; x1 < x2; x1++) {
-        gxj_pixel_type *s    = src + ((y2-1) * CHAM_WIDTH) + x1;
-        gxj_pixel_type *sEnd = src + ( y1    * CHAM_WIDTH) + x1;
-        gxj_pixel_type *d    = dst;
-
-        while (s >= sEnd) {
-            *d++ = *s;
-            s -= CHAM_WIDTH;
+    if (get_screen_width() < dstHeight || get_screen_height() < dstWidth) {
+            // We are drawing into a frame buffer that's larger than what MIDP
+            // needs. Center it.
+            dst += (dstHeight - get_screen_width()) / 2 * dstWidth;
+            dst += ((dstWidth - get_screen_height()) / 2);
         }
 
-        dst += dstWidth;
+
+    dst += y1 + (get_screen_width() - x2 - 1) * dstWidth;
+    src += x2-1 + y1 * get_screen_width();
+
+    while( x2-- > x1) {
+
+
+        int y;
+
+        for (y = y1; y < y2; y++) {
+
+            *dst++ = *src;
+            src += get_screen_width();
+         }
+
+         dst += dstWidth - srcHeight;
+         src += -1 - srcHeight * get_screen_width();
+
     }
+
 }
 
-#endif /* defined(ARM) */
 
+#endif /* defined(ARM) && !defined(DIRECTFB) */
+
+#ifndef DIRECTFB
 /**
- * Returns the file descriptor for reading the keyboard. 
+ * Returns the file descriptor for reading the keyboard.
  */
 int fbapp_get_keyboard_fd() {
   return keyboardFd;
+}
+#else
+/**
+ * Checks for events from keyboard. Gotten event must be retrieved 
+ * by <code>fbapp_get_event</code>.
+ * Processes events: DWET_GOTFOCUS and DWET_LOSTFOCUS.
+ */
+int fbapp_event_is_waiting() {
+    DFBWindowEvent event;
+    
+    for (;;) {
+        if (event_buffer->HasEvent(event_buffer) == DFB_OK) {
+            DFBCHECK(event_buffer->PeekEvent(event_buffer, DFB_EVENT(&event)));
+            if (event.type == DWET_KEYUP || event.type == DWET_KEYDOWN) {
+                return 1;
+            } else {
+                DFBCHECK(event_buffer->GetEvent(event_buffer, DFB_EVENT(&event)));
+                switch (event.type) {
+                case DWET_GOTFOCUS:
+                    DFBCHECK2(window->RaiseToTop(window), dfb_err1);
+                    DFBCHECK2(window->SetOpacity(window, 0xff), dfb_err1);
+                    break;
+                case DWET_LOSTFOCUS:
+                    DFBCHECK2(window->SetOpacity(window, 0x7f), dfb_err1);
+                    break;
+                case DWET_DESTROYED:
+                    close_directfb();
+                    printf("Destroy my window...\n");
+                    exit(0); /* IMPL_NOTE: exit from Java */
+                    break;
+                case DWET_CLOSE:
+                    printf("Closing my window...\n");
+                    DFBCHECK2(window->Destroy(window), dfb_err1);
+                    break;
+                default:
+                    break;
+                }
+            }
+        } else {
+            return 0;
+        }
+    dfb_err1:;
+    }
+    
+dfb_err:;
+    return 0;
+}
+
+
+/**
+ * Retrieves next event from queue. Must be called when 
+ * <code>fbapp_event_is_waiting</code> returned true.
+ */
+void fbapp_get_event(void *event) {
+    
+    if (fbapp_event_is_waiting()) {
+        DFBCHECK(event_buffer->GetEvent(event_buffer, DFB_EVENT(event)));
+        return;
+    }
+    REPORT_ERROR(LC_LOWUI, "Invalid sequence of calls: no events waiting");
+dfb_err:;
+}
+
+#endif /* !defined(DIRECTFB) */
+/**
+ * Returns the file descriptor for reading the mouse.
+ */
+int fbapp_get_mouse_fd() {
+  return mouseFd;
 }
 
 /**
@@ -548,11 +995,61 @@ int fbapp_get_fb_device_type() {
 }
 
 /**
+ * Invert screen orientation flag
+ */
+jboolean fbapp_reverse_orientation() {
+    reverse_orientation = !reverse_orientation;
+    gxj_system_screen_buffer.width = get_screen_width();
+    gxj_system_screen_buffer.height = get_screen_height();
+    return reverse_orientation; 
+}
+
+/*
+ * Return screen orientation flag
+ */
+jboolean fbapp_get_reverse_orientation()
+{
+    return reverse_orientation;
+}        
+
+/**
+ * Set full screen mode on/off
+ */
+void fbapp_set_fullscreen_mode(int mode) {
+    if (isFullScreen != mode) {
+        isFullScreen = mode;
+        resizeScreenBuffer();
+    }
+}
+
+int get_screen_width() {
+    if (reverse_orientation) {
+        return (isFullScreen == 1) ? CHAM_FULLHEIGHT : CHAM_HEIGHT;
+    } else {
+        return (isFullScreen == 1) ? CHAM_FULLWIDTH : CHAM_WIDTH;
+    }
+
+}
+
+int get_screen_height() {
+    if (reverse_orientation) {
+        return (isFullScreen == 1) ? CHAM_FULLWIDTH : CHAM_WIDTH;
+    } else {
+        return (isFullScreen == 1) ? CHAM_FULLHEIGHT : CHAM_HEIGHT;
+    }
+
+}
+
+/**
  * Finalize the fbapp_ native resources.
  */
 void fbapp_finalize() {
-#ifdef ARM
+#if defined(ARM) && !defined(DIRECTFB)
     restoreConsole();
+#endif
+
+#ifdef DIRECTFB
+    close_directfb();
 #endif
 
 #ifdef ENABLE_JSR_184

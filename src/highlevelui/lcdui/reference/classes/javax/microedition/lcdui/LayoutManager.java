@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -590,6 +591,7 @@ class LayoutManager {
 
             // If the Item is changing size, set the flag so that callPaint()
             // will call the Item's sizeChanged() method before painting
+
             if (itemLFs[index].bounds[WIDTH] != pW ||
                 itemLFs[index].bounds[HEIGHT] != pH) {
                 itemLFs[index].sizeChanged = true;

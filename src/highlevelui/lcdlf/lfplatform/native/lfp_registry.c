@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -79,19 +80,19 @@ MidpDisplayable* MidpNewDisplayable(MidpComponentType type) {
     MidpDisplayable* p = (MidpDisplayable *)midpMalloc(sizeof(MidpDisplayable));
     
     if (p) {
-	p->frame.component.type = type;
-	p->frame.component.modelVersion = 0;
-	p->frame.component.next = (MidpComponent *)MidpFirstScreen;
-	p->frame.component.child = NULL;
-	MidpFirstScreen = (MidpFrame *)p;
-	
-	/*
-	 * The rest of the structure is not yet initialized.
-	 * If MidpDeleteDisplayable() is called on this pointer before
-	 * they are initialized, this flag will help preventing calling
-	 * hideAndDelete() unnecessarily
-	 */
-	p->frame.widgetPtr = NULL;
+        p->frame.component.type = type;
+        p->frame.component.modelVersion = 0;
+        p->frame.component.next = (MidpComponent *)MidpFirstScreen;
+        p->frame.component.child = NULL;
+        MidpFirstScreen = (MidpFrame *)p;
+
+        /*
+        * The rest of the structure is not yet initialized.
+        * If MidpDeleteDisplayable() is called on this pointer before
+        * they are initialized, this flag will help preventing calling
+        * hideAndDelete() unnecessarily
+        */
+        p->frame.widgetPtr = NULL;
     }
 
     return p;
@@ -113,40 +114,40 @@ void MidpDeleteDisplayable(MidpDisplayable *displayablePtr) {
     MidpComponent *p, *c;
 
     if (displayablePtr == NULL) {
-	return;
+        return;
     }
 
     /* If this displayable is current screen, clear current screen pointer */
     if (MidpCurrentScreen == &displayablePtr->frame) {
-	MidpCurrentScreen = NULL;
+        MidpCurrentScreen = NULL;
     }
 
     /* First Delete all children */
     while (displayablePtr->frame.component.child != NULL) {
-	MidpDeleteItem((MidpItem *)displayablePtr->frame.component.child);
+        MidpDeleteItem((MidpItem *)displayablePtr->frame.component.child);
     }
 
     /* Then detach this displayable from displayable linked list */
     if (MidpFirstScreen == (MidpFrame *)displayablePtr ||
-	MidpFirstScreen == NULL) {
-	MidpFirstScreen = (MidpFrame *)displayablePtr->frame.component.next;
+        MidpFirstScreen == NULL) {
+        MidpFirstScreen = (MidpFrame *)displayablePtr->frame.component.next;
     } else {
-	p = (MidpComponent *)MidpFirstScreen;
-	c = p->next;
-	while (c != NULL) {
-	    if (c == (MidpComponent *)displayablePtr) {
-		p->next = c->next;
-		break;
-	    } else {
-		p = c;
-		c = c->next;
-	    }
-	}
+        p = (MidpComponent *)MidpFirstScreen;
+        c = p->next;
+        while (c != NULL) {
+            if (c == (MidpComponent *)displayablePtr) {
+                p->next = c->next;
+                break;
+            } else {
+                p = c;
+                c = c->next;
+            }
+        }
     }
 
     /* Next destroy platform dependent resource */
     if (displayablePtr->frame.widgetPtr) {
-	displayablePtr->frame.hideAndDelete(&displayablePtr->frame, KNI_FALSE);
+        displayablePtr->frame.hideAndDelete(&displayablePtr->frame, KNI_FALSE);
     }
     
     /* Last free the structure */
@@ -215,41 +216,41 @@ void MidpDeleteItem(MidpItem *itemPtr) {
     MidpComponent *p, *c;
     
     if (itemPtr == NULL) {
-	return;
+        return;
     }
 
     /* First detach this item from its owner's children list */
     if (itemPtr->ownerPtr == NULL) {
-	p = (MidpComponent *)MidpFirstOrphanItem;
-	if (p == (MidpComponent *)itemPtr || p == NULL) {
-	    MidpFirstOrphanItem = (MidpItem *)itemPtr->component.next;
-	    c = NULL;
-	} else {
-	    c = p->next;
-	}
+        p = (MidpComponent *)MidpFirstOrphanItem;
+        if (p == (MidpComponent *)itemPtr || p == NULL) {
+            MidpFirstOrphanItem = (MidpItem *)itemPtr->component.next;
+            c = NULL;
+        } else {
+            c = p->next;
+        }
     } else {
-	p = itemPtr->ownerPtr->frame.component.child;
-	if (p == (MidpComponent *)itemPtr || p == NULL) {
-	    itemPtr->ownerPtr->frame.component.child = itemPtr->component.next;
-	    c = NULL;
-	} else {
-	    c = p->next;
-	}
+        p = itemPtr->ownerPtr->frame.component.child;
+        if (p == (MidpComponent *)itemPtr || p == NULL) {
+            itemPtr->ownerPtr->frame.component.child = itemPtr->component.next;
+            c = NULL;
+        } else {
+            c = p->next;
+        }
     }
 
     while (c != NULL) {
-	if (c == (MidpComponent *)itemPtr) {
-	    p->next = c->next;
-	    break;
-	} else {
-	    p = c;
-	    c = c->next;
-	}
+        if (c == (MidpComponent *)itemPtr) {
+            p->next = c->next;
+            break;
+        } else {
+            p = c;
+            c = c->next;
+        }
     }
 
     /* Then free all platform dependent resource */
     if (itemPtr->widgetPtr) {
-	itemPtr->destroy(itemPtr);
+        itemPtr->destroy(itemPtr);
     }
 
     /* Last free the MidpItem structure */
@@ -288,8 +289,7 @@ MidpItem* MidpFindItem(MidpDisplayable *ownerPtr,
  * Delete all MIDP components when VM is exiting.
  */
 void MidpDeleteAllComponents() {
-
-    while (MidpFirstScreen != NULL) {
-	MidpDeleteDisplayable((MidpDisplayable *)MidpFirstScreen);
+    while (MidpFirstOrphanItem != NULL) {
+        MidpDeleteItem(MidpFirstOrphanItem);
     }
 }

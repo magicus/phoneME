@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -27,6 +28,7 @@ package javax.microedition.lcdui;
 
 import com.sun.midp.midlet.MIDletEventConsumer;
 import com.sun.midp.midlet.MIDletPeer;
+import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.main.MIDletControllerEventProducer;
 
@@ -44,20 +46,20 @@ import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
 /**
- * This class has dual functiopnality: 
+ * This class has dual functiopnality:
  *
  * First, it implements DisplayEventHandler I/F and thus provides access
  * to display objects (creation, preemption, set/get IDs and other properties).
  *
- * Second, it implements ItemEventConsumer I/F and thus processes 
- * LCDUI events that due to different reasons can't be associated with 
- * Display instance specific DisplayEventConsumer objects, 
- * but need to be processed by isolate-wide handler. 
- * TBD: These are subjects for futher investigation to move them 
- * to DisplayEventConsumer. 
+ * Second, it implements ItemEventConsumer I/F and thus processes
+ * LCDUI events that due to different reasons can't be associated with
+ * Display instance specific DisplayEventConsumer objects,
+ * but need to be processed by isolate-wide handler.
+ * TBD: These are subjects for futher investigation to move them
+ * to DisplayEventConsumer.
  *
- * In addition, it implements a number of package private methods that work 
- * with Display and are called locally by display/DisplayAccessor. 
+ * In addition, it implements a number of package private methods that work
+ * with Display and are called locally by display/DisplayAccessor.
  * TBD: These are subjects for further investination to move them closer
  * to end users: Display & displayAccessor classes.
  *
@@ -93,7 +95,7 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
     /**
      * Initializes the security token for this class, so it can
      * perform actions that a normal MIDlet Suite cannot.
-     * DisplayEventHandler I/F method. 
+     * DisplayEventHandler I/F method.
      *
      * @param token security token for this class.
      */
@@ -104,8 +106,8 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
     }
 
     /**
-     * Initialize Display Event Handler. 
-     * DisplayEventHandler I/F method. 
+     * Initialize Display Event Handler.
+     * DisplayEventHandler I/F method.
      *
      * @param token security token for initilaization
      * @param theEventQueue the event queue
@@ -123,29 +125,29 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
         DisplayContainer theDisplayContainer) {
 
         token.checkIfPermissionAllowed(Permissions.MIDP);
-        
+
         midletControllerEventProducer = theMIDletControllerEventProducer;
-        
+
         displayContainer = theDisplayContainer;
-        
-        /* 
-         * TBD: not a good idea to call static initializer 
+
+        /*
+         * TBD: not a good idea to call static initializer
          * from non-static method ...
-         * Maybe to create a separate method: 
-         * DisplayEventHandler.initDisplayClass(token,...) 
+         * Maybe to create a separate method:
+         * DisplayEventHandler.initDisplayClass(token,...)
          * for these purposes and call it from Suite Loader's main() ?
-         * displayEventHandlerImpl I/F miplementor will call 
+         * displayEventHandlerImpl I/F miplementor will call
          * Display.initClass() from itsinitDisplayClass() method ?
          */
         Display.initClass(
             theMIDletControllerEventProducer,
-            theDisplayEventProducer, 
+            theDisplayEventProducer,
             theRepaintEventProducer,
             theDisplayContainer);
-        
+
         /** create DisplayEventListener & initialize it */
         new DisplayEventListener(
-            theEventQueue, 
+            theEventQueue,
             theDisplayContainer);
     }
 
@@ -156,7 +158,7 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
      * occurs. The event will have a null MIDlet parameter. To avoid
      * dead locking the event thread his method
      * MUST NOT be called in the event thread.
-     * DisplayEventHandler I/F method. 
+     * DisplayEventHandler I/F method.
      *
      * @param l object to notify with the destroy MIDlet event.
      * @param d displayable to show the user
@@ -195,25 +197,25 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
             throw new RuntimeException(
                 "Blocking call performed in the event thread");
         }
-        
+
         /**
-         * This sync protects preempt related local fields:  
+         * This sync protects preempt related local fields:
          * preemptingDisplay and destroyPreemptingDisplay.
          */
         synchronized (this) {
             /**
              * ATTENTION !
-             * The synchronization below is essential for atomic creation of 
-             * preempting Displays: 
-             * "create display Id" and "add the display in the container" 
-             * (see "new Display(...)") shall be synchronized with 
+             * The synchronization below is essential for atomic creation of
+             * preempting Displays:
+             * "create display Id" and "add the display in the container"
+             * (see "new Display(...)") shall be synchronized with
              * check if other displays exist in the container
-             * (see "isOneElementInContainer()"). 
-             * This check is needed to distinguish the situation when 
+             * (see "isOneElementInContainer()").
+             * This check is needed to distinguish the situation when
              * no midlets exist in current isolate yet.
              *
              * This code is suspicious, in future preemption will definitely
-             * be reworked and simplified, but until that this synchronization 
+             * be reworked and simplified, but until that this synchronization
              * on an external object is needed.
              */
             synchronized (displayContainer) {
@@ -233,7 +235,8 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
                 if (displayContainer.isOneElementInContainer()) {
                     // No applications, so this preempt is like a new MIDlet.
                     midletControllerEventProducer.sendMIDletCreateNotifyEvent(
-                        0, tempDisplay.displayId, "preempt", "preempt", title);
+                        0, tempDisplay.displayId, MIDletSuite.UNUSED_SUITE_ID,
+                            "preempt", title);
 
                     midletControllerEventProducer.
                         sendDisplayForegroundRequestEvent(
@@ -253,13 +256,13 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
     /**
      * Display the displayable that was being displayed before
      * preemptDisplay was called.
-     * DisplayEventHandler I/F method. 
+     * DisplayEventHandler I/F method.
      *
      * @param preemptToken the token returned from preemptDisplay
      */
     public void donePreempting(Object preemptToken) {
         /**
-         * This sync protects preempt related local fields:  
+         * This sync protects preempt related local fields:
          * preemptingDisplay and destroyPreemptingDisplay.
          */
         synchronized (this) {
@@ -270,15 +273,15 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
                     // No applications, so this preempt is like a new MIDlet.
                     midletControllerEventProducer.sendMIDletDestroyNotifyEvent(
                         preemptingDisplay.getDisplayId());
-                    
+
                 } else {
                     midletControllerEventProducer.sendDisplayPreemptStopEvent(
                         preemptingDisplay.getDisplayId());
-                    
+
                 }
 
                 preemptingDisplay = null;
-               
+
                 displayContainer.removeDisplay(preemptingDisplay);
 
                 // A midlet may be waiting to preempt
@@ -289,7 +292,7 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
 
     /**
      * Create a display and return its internal access object.
-     * DisplayEventHandler I/F method. 
+     * DisplayEventHandler I/F method.
      *
      * @param token security token for the calling class
      * @param midlet peer of the MIDlet that will own this display
@@ -309,7 +312,7 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
     /**
      * Get the Image of the trusted icon for this Display.
      * Only callers with the internal MIDP permission can use this method.
-     * DisplayEventHandler I/F method. 
+     * DisplayEventHandler I/F method.
      *
      * @return an Image of the trusted icon.
      */

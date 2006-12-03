@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -26,29 +27,29 @@
 package com.sun.midp.main;
 
 /**
- * This interface is to be implemnted by an event processing target 
- * for MIDlet events on MIDlet controller (i.e. AMS) side. 
+ * This interface is to be implemnted by an event processing target
+ * for MIDlet events on MIDlet controller (i.e. AMS) side.
  *
- * EventListener for these events must find appropriate 
+ * EventListener for these events must find appropriate
  * instance of this I/F implementor and call its methods.
  *
- * TBD: although Consumer I/F is intended to be instance specific, 
- * the implementor of this one shall be assosiated with a MIDletProxyList, 
+ * TBD: although Consumer I/F is intended to be instance specific,
+ * the implementor of this one shall be assosiated with a MIDletProxyList,
  * which is a single static object that exists only in AMS isolate ...
  *
- * However, I/F implementor shall NOT assume 
- * that it is a static singleton object ... 
+ * However, I/F implementor shall NOT assume
+ * that it is a static singleton object ...
  *
- * TBD: method and parameter lists of the I/F is preliminary 
+ * TBD: method and parameter lists of the I/F is preliminary
  * and is a subject for changes.
  *
  * TBD: it makes sence replace some handlerXXXEvent method parameters
- * (isolateId, displayId) by MIdletProxy object that is able to provide 
+ * (isolateId, displayId) by MIdletProxy object that is able to provide
  * all needed information to process event.
  *
  */
 public interface MIDletControllerEventConsumer {
-    
+
     /*
      * MIDlet Startup Events:
      *
@@ -66,7 +67,7 @@ public interface MIDletControllerEventConsumer {
      */
     public void handleMIDletStartErrorEvent(
         int midletExternalAppId,
-        String midletSuiteId, 
+        int midletSuiteId,
         String midletClassName,
         int error);
 
@@ -86,10 +87,10 @@ public interface MIDletControllerEventConsumer {
         int midletExternalAppId,
         int midletIsolateId,
         int midletDisplayId,
-        String midletSuiteId,
-        String midletClassName, 
+        int midletSuiteId,
+        String midletClassName,
         String midletDisplayName);
-    
+
     /*
      * MIDlet State Management (Lifecycle) Events:
      *
@@ -105,7 +106,7 @@ public interface MIDletControllerEventConsumer {
      *
      * FATAL_ERROR_NOTIFICATION - produced by native code
      *
-     */    
+     */
     /**
      * Processes MIDLET_ACTIVE_NOTIFICATION event
      *
@@ -119,7 +120,7 @@ public interface MIDletControllerEventConsumer {
         int midletIsolateId,
         int midletDisplayId);
     /**
-     * Processes MIDLET_PAUSE_NOTIFICATION event
+     * Processes MIDLET_PAUSED_NOTIFICATION event
      *
      * TBD: param midletProxy proxy with information about MIDlet
      *
@@ -131,7 +132,7 @@ public interface MIDletControllerEventConsumer {
         int midletIsolateId,
         int midletDisplayId);
     /**
-     * Processes MIDLET_DESTROY_NOTIFICATION event
+     * Processes MIDLET_DESTROYED_NOTIFICATION event
      *
      * TBD: param midletProxy proxy with information about MIDlet
      *
@@ -142,7 +143,19 @@ public interface MIDletControllerEventConsumer {
         // MIDletProxy midletProxy);
         int midletIsolateId,
         int midletDisplayId);
-    
+
+    /**
+     * Processes MIDLET_RS_PAUSED_NOTIFICATION event
+     *
+     * TBD: param midletProxy proxy with information about MIDlet
+     *
+     * @param midletIsolateId isolate ID of the sending MIDlet
+     * @param midletDisplayId ID of the sending Display
+     */
+    public void handleMIDletRsPauseNotifyEvent(
+            int midletIsolateId,
+            int midletDisplayId);
+
     /**
      * Processes MIDLET_DESTROY_REQUEST event
      *
@@ -155,7 +168,7 @@ public interface MIDletControllerEventConsumer {
         // MIDletProxy midletProxy);
         int midletIsolateId,
         int midletDisplayId);
-    
+
     /**
      * Processes ACTIVATE_ALL_EVENT
      */
@@ -178,7 +191,7 @@ public interface MIDletControllerEventConsumer {
     public void handleFatalErrorNotifyEvent(
         int midletIsolateId,
         int midletDisplayId);
-        
+
     /*
      * Foreground MIDlet Management Events:
      *
@@ -186,28 +199,28 @@ public interface MIDletControllerEventConsumer {
      * FOREGROUND_TRANSFER
      * SET_FOREGROUND_BY_NAME_REQUEST
      *
-     */    
+     */
     /**
      * Processes SELECT_FOREGROUND event
      */
-    public void handleMIDletForegroundSelectEvent();
+    public void handleMIDletForegroundSelectEvent(int onlyFromLaunched);
     /**
      * Processes FOREGROUND_TRANSFER event
      *
-     * @param originMIDletSuiteId ID of MIDlet from which 
-     *        to take forefround ownership away, 
-     * @param originMIDletClassName Name of MIDlet from which 
+     * @param originMIDletSuiteId ID of MIDlet from which
+     *        to take forefround ownership away,
+     * @param originMIDletClassName Name of MIDlet from which
      *        to take forefround ownership away
-     * @param targetMIDletSuiteId ID of MIDlet 
-     *        to give forefround ownership to, 
-     * @param targetMIDletClassName Name of MIDlet 
+     * @param targetMIDletSuiteId ID of MIDlet
+     *        to give forefround ownership to,
+     * @param targetMIDletClassName Name of MIDlet
      *        to give forefround ownership to
      */
     public void handleMIDletForegroundTransferEvent(
-        String originMIDletSuiteId,
+        int originMIDletSuiteId,
         String originMIDletClassName,
-        String targetMIDletSuiteId,
-        String targetMIDletClassName);   
+        int targetMIDletSuiteId,
+        String targetMIDletClassName);
     /**
      * Processes SET_FOREGROUND_BY_NAME_REQUEST
      *
@@ -215,7 +228,7 @@ public interface MIDletControllerEventConsumer {
      * @param className MIDlet's class name
      */
     public void handleSetForegroundByNameRequestEvent(
-        String suiteId,
+        int suiteId,
         String className);
 
     /*
@@ -224,7 +237,7 @@ public interface MIDletControllerEventConsumer {
      * FOREGROUND_REQUEST
      * BACKGROUND_REQUEST
      *
-     */    
+     */
     /**
      * Processes FOREGROUND_REQUEST event
      *
@@ -251,13 +264,13 @@ public interface MIDletControllerEventConsumer {
         // MIDletProxy midletProxy);
         int midletIsolateId,
         int midletDisplayId);
-    
+
     /*
      * Display Preemption Management Events:
      *
      * PREEMPT
      *
-     */    
+     */
     /**
      * Processes PREEMPT_EVENT(true),
      * parameters - to create MIDletProxy object instance

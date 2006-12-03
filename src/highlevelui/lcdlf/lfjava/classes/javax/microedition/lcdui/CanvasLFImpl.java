@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -329,32 +330,6 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
                 canvas.pointerDragged(x, y);
             } catch (Throwable t) {
                 Display.handleThrowable(t);
-            }
-        }
-    }
-
-    /**
-     * Handle a size change notification.
-     *
-     * @param w the new width of this Canvas
-     * @param h the new height of this Canvas
-     */
-    public void uCallSizeChanged(int w, int h) {
-        super.uCallSizeChanged(w, h);
-
-        /*
-         * sizeChangeOccurred is a boolean which (when true) indicates
-         * that sizeChanged() will be called at a later time. So, if it
-         * is false after calling super(), we go ahead and notify the
-         * Canvas now, rather than later
-         */
-        if (!super.sizeChangeOccurred) {
-            synchronized (Display.calloutLock) {
-                try {
-                    owner.sizeChanged(w, h);
-                } catch (Throwable t) {
-                    Display.handleThrowable(t);
-                }
             }
         }
     }

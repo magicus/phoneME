@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -35,6 +36,8 @@ import com.sun.midp.main.AmsUtil;
 
 import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.configurator.Constants;
 
 /**
  * Installs/Updates a test suite, runs the first MIDlet in the suite in a loop
@@ -105,20 +108,20 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
         Installer inp_installer, String inp_url) {
 
         MIDletInfo midletInfo;
-        String suiteID = null;
+        int suiteId = MIDletSuite.UNUSED_SUITE_ID;
 
         try {
             Isolate testIsolate;
 
             for (; loopCount != 0; ) {
                 // force an overwrite and remove the RMS data
-                suiteID = inp_installer.installJad(inp_url, true, true,
-						   installListener);
+                suiteId = inp_installer.installJad(inp_url,
+                    Constants.INTERNAL_STORAGE_ID, true, true, installListener);
 
-                midletInfo = getFirstMIDletOfSuite(suiteID,
+                midletInfo = getFirstMIDletOfSuite(suiteId,
                                                    midletSuiteStorage);
                 testIsolate =
-                    AmsUtil.startMidletInNewIsolate(suiteID,
+                    AmsUtil.startMidletInNewIsolate(suiteId,
                         midletInfo.classname, midletInfo.name, null,
                         null, null);
 
@@ -129,12 +132,13 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
                 }
             }
         } catch (Throwable t) {
-            handleInstallerException(suiteID, t);
+            handleInstallerException(suiteId, t);
         }
 
-        if (midletSuiteStorage != null && suiteID != null) {
+        if (midletSuiteStorage != null &&
+                suiteId != MIDletSuite.UNUSED_SUITE_ID) {
             try {
-                midletSuiteStorage.remove(suiteID);
+                midletSuiteStorage.remove(suiteId);
             } catch (Throwable ex) {
                 // ignore
             }

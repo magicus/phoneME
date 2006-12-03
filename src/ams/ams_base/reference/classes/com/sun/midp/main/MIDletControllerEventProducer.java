@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -39,39 +40,39 @@ import com.sun.midp.main.MIDletSuiteLoader;
 
 
 /**
- * This class provides methods to send events of types 
- * handled by MIDletControllerEventConsumer I/F implementors. 
+ * This class provides methods to send events of types
+ * handled by MIDletControllerEventConsumer I/F implementors.
  * This class completely hide event construction & sending in its methods.
  *
- * This class is intended to be used by MIDletStateHandler & MIDletPeer 
- * classes in Allication Isolate. 
- * So in some of its sendXXXEvent()methods we can change int IDs to 
- * MIDletPeer references. 
- * 
+ * This class is intended to be used by MIDletStateHandler & MIDletPeer
+ * classes in Allication Isolate.
+ * So in some of its sendXXXEvent()methods we can change int IDs to
+ * MIDletPeer references.
+ *
  * Generic comments for all XXXEventProducers:
  *
- * For each supported event type there is a separate sendXXXEvent() method, 
+ * For each supported event type there is a separate sendXXXEvent() method,
  * that gets all needed parameters to construct an event of an approprate class.
  * The method also performs event sending itself.
  *
- * If a given event type merges a set of logically different subtypes, 
+ * If a given event type merges a set of logically different subtypes,
  * this class shall provide separate methods for these subtypes.
  *
  * It is assumed that only one object instance of this class (per isolate)
- * is created at (isolate) startup. 
- * All MIDP runtime subsystems that need to send events of supported types, 
- * must get a reference to an already created istance of this class. 
+ * is created at (isolate) startup.
+ * All MIDP stack subsystems that need to send events of supported types,
+ * must get a reference to an already created istance of this class.
  * Typically, this instance should be passed as a constructor parameter.
  *
- * For security reasons constructor is not public. 
- * Use createXXXProducer(...) method, 
+ * For security reasons constructor is not public.
+ * Use createXXXProducer(...) method,
  * protected by security, to create and object instance of this class
  * from a different package.
  *
  * Class is NOT final to allow debug/profile/test/automation subsystems
  * to change, substitute, complement default "event sending" functionality :
- * Ex. 
- * class LogXXXEventProducer 
+ * Ex.
+ * class LogXXXEventProducer
  *      extends XXXEventProducer {
  *  ...
  *  void sendXXXEvent(parameters) {
@@ -83,24 +84,29 @@ import com.sun.midp.main.MIDletSuiteLoader;
  * }
  */
 public class MIDletControllerEventProducer {
-    
+
     /** Cached reference to the MIDP event queue. */
     protected EventQueue eventQueue;
     /** Cached reference to AMS isolate ID. */
-    protected int amsIsolateId; 
+    protected int amsIsolateId;
     /** Cached reference to current isolate ID. */
-    protected int currentIsolateId; 
+    protected int currentIsolateId;
 
     /** Preallocate start error event to work in case of out of memory */
-    NativeEvent startErrorEvent;
+    final NativeEvent startErrorEvent;
     /** Preallocate MIDlet created event to work in case of out of memory */
-    NativeEvent midletCreatedEvent;
+    final NativeEvent midletCreatedEvent;
     /** Preallocate MIDlet active event to work in case of out of memory */
-    NativeEvent midletActiveEvent;
+    final NativeEvent midletActiveEvent;
     /** Preallocate MIDlet paused event to work in case of out of memory */
-    NativeEvent midletPausedEvent;
+    final NativeEvent midletPausedEvent;
     /** Preallocate MIDlet destroyed event to work in case of out of memory */
-    NativeEvent midletDestroyedEvent;
+    final NativeEvent midletDestroyedEvent;
+    /**
+     * Preallocate MIDlet resources paused event to work in case of out
+     * of memory
+     */
+    final NativeEvent midletRsPausedEvent;
 
     /**
      * Construct a new MIDletControllerEventProducer.
@@ -112,10 +118,10 @@ public class MIDletControllerEventProducer {
      */
     public MIDletControllerEventProducer(
         SecurityToken token,
-        EventQueue theEventQueue, 
-        int theAmsIsolateId, 
+        EventQueue theEventQueue,
+        int theAmsIsolateId,
         int theCurrentIsolateId) {
-            
+
         token.checkIfPermissionAllowed(Permissions.MIDP);
         eventQueue = theEventQueue;
         amsIsolateId = theAmsIsolateId;
@@ -124,14 +130,16 @@ public class MIDletControllerEventProducer {
         /* Cache all of the notification events. */
         startErrorEvent =
             new NativeEvent(EventTypes.MIDLET_START_ERROR_EVENT);
-        midletCreatedEvent = 
+        midletCreatedEvent =
             new NativeEvent(EventTypes.MIDLET_CREATED_NOTIFICATION);
-        midletActiveEvent = 
+        midletActiveEvent =
             new NativeEvent(EventTypes.MIDLET_ACTIVE_NOTIFICATION);
-        midletPausedEvent = 
+        midletPausedEvent =
             new NativeEvent(EventTypes.MIDLET_PAUSED_NOTIFICATION);
         midletDestroyedEvent =
             new NativeEvent(EventTypes.MIDLET_DESTROYED_NOTIFICATION);
+        midletRsPausedEvent =
+            new NativeEvent(EventTypes.MIDLET_RS_PAUSED_NOTIFICATION);
     }
 
     /*
@@ -139,10 +147,10 @@ public class MIDletControllerEventProducer {
      *
      * MIDLET_START_ERROR
      * MIDLET_CREATED_NOTIFICATION
-     */    
+     */
     /**
      * Notifies AMS that MIDlet creation failed
-     * NEW: earlier it has been explicitely generated by 
+     * NEW: earlier it has been explicitely generated by
      * void static AppIsolateMIDletSuiteLoader.main(...)
      *
      * @param midletExternalAppId ID of given by an external application
@@ -153,16 +161,17 @@ public class MIDletControllerEventProducer {
      */
     public void sendMIDletStartErrorEvent(
         int midletExternalAppId,
-        String midletSuiteId, 
+        int midletSuiteId,
         String midletClassName,
         int error) {
 
         synchronized (startErrorEvent) {
             // use pre-created event to work in case of hadling out of memory
             startErrorEvent.intParam1 = midletExternalAppId;
-            startErrorEvent.stringParam1 = midletSuiteId;
-            startErrorEvent.stringParam2 = midletClassName;
-            startErrorEvent.intParam2 = error;
+            startErrorEvent.intParam2 = midletSuiteId;
+            startErrorEvent.intParam3 = error;
+
+            startErrorEvent.stringParam1 = midletClassName;
 
             eventQueue.sendNativeEventToIsolate(startErrorEvent, amsIsolateId);
         }
@@ -179,25 +188,25 @@ public class MIDletControllerEventProducer {
      */
     public void sendMIDletCreateNotifyEvent(
         int midletExternalAppId,
-        int midletDisplayId, 
-        String midletSuiteId,
-        String midletClassName, 
+        int midletDisplayId,
+        int midletSuiteId,
+        String midletClassName,
         String midletDisplayName) {
 
         synchronized (midletCreatedEvent) {
-            midletCreatedEvent.intParam1 = currentIsolateId;
-            midletCreatedEvent.intParam2 = midletExternalAppId;
-            midletCreatedEvent.intParam4 = midletDisplayId;
-        
-            midletCreatedEvent.stringParam1 = midletSuiteId;
-            midletCreatedEvent.stringParam2 = midletClassName;
-            midletCreatedEvent.stringParam3 = midletDisplayName;
+            midletCreatedEvent.intParam1 = midletExternalAppId;
+            midletCreatedEvent.intParam2 = currentIsolateId;
+            midletCreatedEvent.intParam3 = midletDisplayId;
+            midletCreatedEvent.intParam4 = midletSuiteId;
+
+            midletCreatedEvent.stringParam1 = midletClassName;
+            midletCreatedEvent.stringParam2 = midletDisplayName;
 
             eventQueue.sendNativeEventToIsolate(midletCreatedEvent,
                                                 amsIsolateId);
         }
     }
-    
+
     /*
      * MIDlet State Management (Lifecycle) Events:
      *
@@ -213,20 +222,14 @@ public class MIDletControllerEventProducer {
      *
      * FATAL_ERROR_NOTIFICATION - produced by native code
      *
-     */    
+     */
     /**
      * Called to send a MIDlet active notification to the AMS isolate.
      *
      * @param midletDisplayId ID of the sending Display
      */
     public void sendMIDletActiveNotifyEvent(int midletDisplayId) {
-        synchronized (midletActiveEvent) {
-            midletActiveEvent.intParam1 = currentIsolateId;
-            midletActiveEvent.intParam4 = midletDisplayId;
-        
-            eventQueue.sendNativeEventToIsolate(midletActiveEvent,
-                                                amsIsolateId);
-        }
+        sendEvent(midletActiveEvent, midletDisplayId);
     }
     /**
      * Called to send a MIDlet paused notification to the AMS isolate.
@@ -234,13 +237,7 @@ public class MIDletControllerEventProducer {
      * @param midletDisplayId ID of the sending Display
      */
     public void sendMIDletPauseNotifyEvent(int midletDisplayId) {
-        synchronized (midletPausedEvent) {
-            midletPausedEvent.intParam1 = currentIsolateId;
-            midletPausedEvent.intParam4 = midletDisplayId;
-
-            eventQueue.sendNativeEventToIsolate(midletPausedEvent,
-                                                amsIsolateId);
-        }
+        sendEvent(midletPausedEvent, midletDisplayId);
     }
     /**
      * Called to send a MIDlet destroyed notification to the AMS isolate.
@@ -248,29 +245,27 @@ public class MIDletControllerEventProducer {
      * @param midletDisplayId ID of the sending Display
      */
     public void sendMIDletDestroyNotifyEvent(int midletDisplayId) {
-        synchronized (midletDestroyedEvent) {
-            midletDestroyedEvent.intParam1 = currentIsolateId;
-            midletDestroyedEvent.intParam4 = midletDisplayId;
-
-            eventQueue.sendNativeEventToIsolate(midletDestroyedEvent,
-                                                amsIsolateId);
-        }
+        sendEvent(midletDestroyedEvent, midletDisplayId);
     }
+    /**
+     * Sends notification for MIDlet resources pause to the AMS isolate.
+     *
+     * @param midletDisplayId ID of the sending Display
+     */
+    public void sendMIDletRsPauseNotifyEvent(int midletDisplayId) {
+        sendEvent(midletRsPausedEvent, midletDisplayId);
+    }
+
     /**
      * Called to send a MIDlet destroy request to the AMS isolate.
      *
      * @param midletDisplayId ID of the sending Display
      */
     public void sendMIDletDestroyRequestEvent(int midletDisplayId) {
-        NativeEvent event =
-            new NativeEvent(EventTypes.MIDLET_DESTROY_REQUEST_EVENT);
-
-        event.intParam1 = currentIsolateId;
-        event.intParam4 = midletDisplayId;
-
-        eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
+        sendEvent(new NativeEvent(EventTypes.MIDLET_DESTROY_REQUEST_EVENT),
+                midletDisplayId);
     }
-        
+
     /*
      * Foreground MIDlet Management Events:
      *
@@ -278,32 +273,33 @@ public class MIDletControllerEventProducer {
      * FOREGROUND_TRANSFER
      * SET_FOREGROUND_BY_NAME_REQUEST
      *
-     */    
+     */
     /**
      * Called to send a foreground MIDlet transfer event to the AMS isolate.
      * Former: NEW method, originally sent from CHAPI
      *
-     * @param originMIDletSuiteId ID of MIDlet from which 
-     *        to take forefround ownership away, 
-     * @param originMIDletClassName Name of MIDlet from which 
+     * @param originMIDletSuiteId ID of MIDlet from which
+     *        to take forefround ownership away,
+     * @param originMIDletClassName Name of MIDlet from which
      *        to take forefround ownership away
-     * @param targetMIDletSuiteId ID of MIDlet 
-     *        to give forefround ownership to, 
-     * @param targetMIDletClassName Name of MIDlet 
+     * @param targetMIDletSuiteId ID of MIDlet
+     *        to give forefround ownership to,
+     * @param targetMIDletClassName Name of MIDlet
      *        to give forefround ownership to
      */
     public void sendMIDletForegroundTransferEvent(
-        String originMIDletSuiteId,
+        int originMIDletSuiteId,
         String originMIDletClassName,
-        String targetMIDletSuiteId,
+        int targetMIDletSuiteId,
         String targetMIDletClassName) {
-        NativeEvent event = 
+        NativeEvent event =
             new NativeEvent(EventTypes.FOREGROUND_TRANSFER_EVENT);
 
-        event.stringParam1 = originMIDletSuiteId;
-        event.stringParam2 = originMIDletClassName;
-        event.stringParam3 = targetMIDletSuiteId;
-        event.stringParam4 = targetMIDletClassName;
+        event.intParam1 = originMIDletSuiteId;
+        event.intParam2 = targetMIDletSuiteId;
+
+        event.stringParam1 = originMIDletClassName;
+        event.stringParam2 = targetMIDletClassName;
 
         eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
     }
@@ -314,26 +310,26 @@ public class MIDletControllerEventProducer {
      * @param suiteId MIDlet's suite ID
      * @param className MIDlet's class name
      */
-    public void sendSetForegroundByNameRequestEvent(String suiteId, 
+    public void sendSetForegroundByNameRequestEvent(int suiteId,
             String className) {
 
         NativeEvent event =
             new NativeEvent(EventTypes.SET_FOREGROUND_BY_NAME_REQUEST);
 
-        event.stringParam1 = suiteId;
-        event.stringParam2 = className;
+        event.intParam1 = suiteId;
+        event.stringParam1 = className;
 
         eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
     }
-    
-    
+
+
     /*
      * Foreground Display Management Events:
      *
      * FOREGROUND_REQUEST
      * BACKGROUND_REQUEST
      *
-     */    
+     */
     /**
      * Called to send a foreground request event to the AMS isolate.
      *
@@ -345,16 +341,13 @@ public class MIDletControllerEventProducer {
         NativeEvent event =
             new NativeEvent(EventTypes.FOREGROUND_REQUEST_EVENT);
 
-        event.intParam1 = currentIsolateId;
-        event.intParam4 = midletDisplayId;
-
         if (isAlert) {
             event.intParam2 = 1;
         } else {
             event.intParam2 = 0;
         }
 
-        eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
+        sendEvent(event, midletDisplayId);
     }
     /**
      * Called to send a background request event to the AMS isolate.
@@ -362,21 +355,16 @@ public class MIDletControllerEventProducer {
      * @param midletDisplayId ID of the sending Display
      */
     public void sendDisplayBackgroundRequestEvent(int midletDisplayId) {
-        NativeEvent event =
-            new NativeEvent(EventTypes.BACKGROUND_REQUEST_EVENT);
-
-        event.intParam1 = currentIsolateId;
-        event.intParam4 = midletDisplayId;
-
-        eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
-    } 
+        sendEvent(new NativeEvent(EventTypes.BACKGROUND_REQUEST_EVENT),
+                midletDisplayId);
+    }
 
     /*
      * Display Preemption Management Events:
      *
      * PREEMPT
      *
-     */    
+     */
     /**
      * Called to start preempting and end preempting.
      * Probably: will need more parameters, ex. MIDlet ID
@@ -387,11 +375,9 @@ public class MIDletControllerEventProducer {
         NativeEvent event =
             new NativeEvent(EventTypes.PREEMPT_EVENT);
 
-        event.intParam1 = currentIsolateId;
-        event.intParam4 = midletDisplayId;
         event.intParam2 = -1; /* start = true */
 
-        eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
+        sendEvent(event, midletDisplayId);
     }
     /**
      * Called to start preempting and end preempting.
@@ -403,11 +389,9 @@ public class MIDletControllerEventProducer {
         NativeEvent event =
             new NativeEvent(EventTypes.PREEMPT_EVENT);
 
-        event.intParam1 = currentIsolateId;
-        event.intParam4 = midletDisplayId;
         event.intParam2 = 0; /* start = false */
 
-        eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
+        sendEvent(event, midletDisplayId);
     }
 
     /**
@@ -416,13 +400,24 @@ public class MIDletControllerEventProducer {
      * @param midletDisplayId ID of the sending Display
      */
     public void sendMIDletResumeRequest(int midletDisplayId) {
-        NativeEvent event = 
-            new NativeEvent(EventTypes.MIDLET_RESUME_REQUEST);
+        sendEvent(new NativeEvent(EventTypes.MIDLET_RESUME_REQUEST),
+                midletDisplayId);
+    }
 
-        event.intParam1 = currentIsolateId;
-        event.intParam4 = midletDisplayId;
-
-        eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
+    /**
+     * Sends standard MIDlet controller event setting two integer parameters
+     * for display ID and isolate ID. It is synchronized by the event to be 
+     * sent to avoid inconsistent parameters setting.
+     *
+     * @param event event to be sent
+     * @param midletDisplayId ID of the sending Display
+     */
+    private void sendEvent(NativeEvent event, int midletDisplayId) {
+        synchronized (event) {
+            event.intParam1 = currentIsolateId;
+            event.intParam4 = midletDisplayId;
+            eventQueue.sendNativeEventToIsolate(event, amsIsolateId);
+        }
     }
 }
 

@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,13 +28,24 @@ package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
+import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
+import com.sun.midp.chameleon.skins.ScrollIndSkin;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 
 /**
  * Basic layer containing the application area of the display. This layer
  * contains the current Displayable contents, such as a Form or Canvas.
  */
-public class BodyLayer extends CLayer {
+public class BodyLayer extends CLayer
+    implements ScrollListener {
 
+    /**
+     * The scroll indicator layer to notify of scroll settings
+     * in case not all content can fit on the menu.
+     */
+    protected ScrollIndLayer scrollInd;
+    
+    
     ChamDisplayTunnel tunnel;
 
     /**
@@ -63,8 +75,9 @@ public class BodyLayer extends CLayer {
     {
         super(bgImage, bgColor);
         this.tunnel = tunnel;
-        this.visible = true;
-        this.layerID = "BodyLayer";
+        this.visible = false;
+
+        setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
     
     /**
@@ -83,8 +96,42 @@ public class BodyLayer extends CLayer {
     {
         super(bgImage, bgColor);
         this.tunnel = tunnel;
-        this.visible = true;
-        this.layerID = "BodyLayer";
+        this.visible = false;
+        setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
+    }
+
+    /**
+     * Toggle the visibility state of this layer within its containing
+     * window.
+     *
+     * @param visible If true, this layer will be painted as part of its
+     *                containing window, as well as receive events if it
+     *                supports input.
+     */
+    public void setVisible(boolean visible) {
+        boolean oldVis = this.visible;
+        super.setVisible(visible);
+        if (oldVis != visible) {
+            if (scrollInd != null && !visible) {
+                scrollInd.setVisible(visible);
+            } else {
+                updateScrollIndicator();
+            }
+        }
+    }
+
+    /**
+     * Add this layer's entire area to be marked for repaint. Any pending
+     * dirty regions will be cleared and the entire layer will be painted
+     * on the next repaint.
+     * TODO: need to be removed as soon as removeLayer algorithm
+     * takes into account layers interaction
+     */
+    public void addDirtyRegion() {
+        super.addDirtyRegion();
+        if (scrollInd != null) {
+            scrollInd.addDirtyRegion();
+        }
     }
     
     /**
@@ -99,6 +146,63 @@ public class BodyLayer extends CLayer {
     }
     
     /**
+     * Scrolling the contents according to the scrolling parameters.
+     * @param scrollType  can be SCROLL_LINEUP, SCROLL_LINEDOWN, SCROLL_PAGEUP,
+     *                SCROLL_PAGEDOWN or SCROLL_THUMBTRACK
+     * @thumbPosition only valid when scrollType is SCROLL_THUMBTRACK
+     * 
+     */
+    public void scrollContent(int scrollType, int thumbPosition) {
+        tunnel.callScrollContent(scrollType, thumbPosition);
+    }
+
+    public void setScrollInd(ScrollIndLayer newScrollInd) {
+        if (scrollInd != newScrollInd ||
+            scrollInd != null && scrollInd.scrollable != this ||
+            scrollInd != null && scrollInd.listener != this) {
+            if (scrollInd != null) {
+                scrollInd.setScrollable(null);
+                scrollInd.setListener(null);
+            }
+            if (owner != null) {
+                owner.removeLayer(scrollInd);
+            }
+            
+            scrollInd = newScrollInd;
+            if (scrollInd != null) {
+                scrollInd.setScrollable(this);
+                scrollInd.setListener(this);
+            }
+        }
+        updateScrollIndicator();        
+    }
+
+    /**
+     * Updates the scroll indicator.
+     */
+    public void updateScrollIndicator() {
+        tunnel.updateScrollIndicator();
+    }
+
+    /**
+     * Set the current vertical scroll position and proportion.
+     *
+     * @param scrollPosition vertical scroll position.
+     * @param scrollProportion vertical scroll proportion.
+     */
+    public void setVerticalScroll(int scrollPosition, int scrollProportion) {
+        if (scrollInd != null && owner != null)  {
+            scrollInd.setVerticalScroll(scrollPosition, scrollProportion);
+            if (scrollInd.isVisible()) {
+                owner.addLayer(scrollInd);
+            } else {
+                owner.removeLayer(scrollInd);
+            }
+        }
+    }
+
+
+    /**
      * Paint the contents of this layer. This method is overridden from
      * the parent class to use the package tunnel to call back into the
      * javax.microedition.lcdui package and cause the current Displayable
@@ -109,6 +213,38 @@ public class BodyLayer extends CLayer {
     protected void paintBody(Graphics g) {
         if (tunnel != null) {
             tunnel.callPaint(g);
+        }
+    }
+
+    /**
+     * Update bounds of layer
+     *
+     * @param layers - current layer can be dependant on this parameter
+     */
+    public void update(CLayer[] layers) {
+        super.update(layers);
+
+        bounds[W] = ScreenSkin.WIDTH;
+        bounds[H] = ScreenSkin.HEIGHT;
+
+        if (layers[MIDPWindow.PTI_LAYER] != null && layers[MIDPWindow.PTI_LAYER].isVisible()) {
+            bounds[H] -= layers[MIDPWindow.PTI_LAYER].bounds[H];
+        }
+        if (layers[MIDPWindow.TITLE_LAYER].isVisible()) {
+            bounds[Y] = layers[MIDPWindow.TITLE_LAYER].bounds[H];
+            bounds[H] -= layers[MIDPWindow.TITLE_LAYER].bounds[H];
+        } else {
+            bounds[Y] = 0;
+        }
+        if (layers[MIDPWindow.TICKER_LAYER].isVisible()) {
+            bounds[H] -= layers[MIDPWindow.TICKER_LAYER].bounds[H];
+        }
+        if (layers[MIDPWindow.BTN_LAYER].isVisible()) {
+            bounds[H] -= layers[MIDPWindow.BTN_LAYER].bounds[H];
+        }
+
+        if (scrollInd != null) {
+            scrollInd.update(layers);
         }
     }
 }

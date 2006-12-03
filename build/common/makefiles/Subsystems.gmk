@@ -1,5 +1,6 @@
 #
 #
+#
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -183,6 +184,17 @@ include $(SUBSYSTEM_DIR)/test/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
+# (Extra) Links Library
+# Description: Cross-Isolate Communications API
+#####################################################################
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+ifeq ($(USE_LINKS), true)
+include $(SUBSYSTEM_DIR)/links/$(LIB_MAKE_FILE)
+endif
+endif
+
+#####################################################################
 # (Extra) JSR75 Subsystem
 # Description: JSR 75
 #####################################################################
@@ -357,6 +369,15 @@ endif
 ifeq ($(USE_JSR_238), true)
 JPP_DEFS += -DENABLE_JSR_238
 include $(JSR_238_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) OpenGL ES Subsystem
+# Description: JSR 239
+#####################################################################
+ifeq ($(USE_JSR_239), true)
+JPP_DEFS += -DENABLE_JSR_239
+include $(JSR_239_DIR)/src/cldc-oi/config/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################

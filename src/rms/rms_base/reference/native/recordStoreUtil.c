@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -42,29 +43,30 @@
  * Looks to see if the storage file for record store
  * identified by <code>uidPath</code> exists
  *
- * @param suiteID ID of the MIDlet suite that owns the record store
+ * @param suiteId ID of the MIDlet suite that owns the record store
  * @param name name of the record store
  * @param extension extension number to add to the end of the file name
  *
  * @return true if the file exists, false if it does not.
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_rms_RecordStoreUtil_exists() {
+KNIDECL(com_sun_midp_rms_RecordStoreUtil_exists) {
     int extension = KNI_GetParameterAsInt(3);
     jboolean exists = KNI_FALSE;
     int status;
+    SuiteIdType suiteId;
 
-    KNI_StartHandles(2);
-    GET_PARAMETER_AS_PCSL_STRING(2, name_str)
-    GET_PARAMETER_AS_PCSL_STRING(1, suiteID_str) {
-        status = rmsdb_record_store_exists(&suiteID_str, &name_str, extension);
+    KNI_StartHandles(1);
+    suiteId = KNI_GetParameterAsInt(1);
+
+    GET_PARAMETER_AS_PCSL_STRING(2, name_str) {
+        status = rmsdb_record_store_exists(suiteId, &name_str, extension);
         if (status == OUT_OF_MEM_LEN) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
         } else if (status > 0) {
             exists = KNI_TRUE;
         }
-    } RELEASE_PCSL_STRING_PARAMETER
-    RELEASE_PCSL_STRING_PARAMETER;
+    } RELEASE_PCSL_STRING_PARAMETER;
 
     KNI_EndHandles();
 
@@ -75,7 +77,7 @@ Java_com_sun_midp_rms_RecordStoreUtil_exists() {
  * Removes the storage file for record store <code>filename</code>
  * if it exists.
  *
- * @param suiteID ID of the MIDlet suite that owns the record store
+ * @param suiteId ID of the MIDlet suite that owns the record store
  * @param name name of the record store
  * @param extension extension number to add to the end of the file name
  *
@@ -84,22 +86,24 @@ Java_com_sun_midp_rms_RecordStoreUtil_exists() {
  */
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_rms_RecordStoreUtil_deleteFile() {
+KNIDECL(com_sun_midp_rms_RecordStoreUtil_deleteFile) {
     int extension = KNI_GetParameterAsInt(3);
     jboolean existed = KNI_FALSE;
     int status;
     char* pszError;
+    SuiteIdType suiteId;
 
-    KNI_StartHandles(2);
-    GET_PARAMETER_AS_PCSL_STRING(2, name_str)
-    GET_PARAMETER_AS_PCSL_STRING(1, suiteID_str) {
-        status = rmsdb_record_store_delete(&pszError, &suiteID_str, &name_str, extension);
+    KNI_StartHandles(1);
+    suiteId = KNI_GetParameterAsInt(1);
+
+    GET_PARAMETER_AS_PCSL_STRING(2, name_str) {
+        status = rmsdb_record_store_delete(&pszError, suiteId, &name_str, extension);
 
         switch (status) {
             case  0 : // Identifies IOException which is not allowed in
                       // contexts this utility method is called from.
                       // Fall through to RecordStoreException.
-                        
+
             case -1 : KNI_ThrowNew(midpRecordStoreException, pszError);
                       recordStoreFreeError(pszError);
                       break;
@@ -109,8 +113,7 @@ Java_com_sun_midp_rms_RecordStoreUtil_deleteFile() {
 
             default : existed = KNI_TRUE;
         }
-    } RELEASE_PCSL_STRING_PARAMETER
-    RELEASE_PCSL_STRING_PARAMETER;
+    } RELEASE_PCSL_STRING_PARAMETER;
 
     KNI_EndHandles();
 

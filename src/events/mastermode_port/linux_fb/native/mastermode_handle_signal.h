@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -75,6 +76,14 @@ void handleSockets(const SocketHandle* socketsList,
  */
 void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent);
 
+/**
+ * Handle received pointer signals
+ *
+ * @param pNewSignal        reentry data to unblock threads waiting for a signal
+ * @param pNewMidpEvent     a native MIDP event to be stored to Java event queue
+ */
+void handlePointer(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent);
+    
 /**
  * Handle a timer created for repeated keypress and schedule a new one.
  *

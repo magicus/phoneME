@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -82,7 +83,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_del0() {
         storeLen = KNI_GetArrayLength(storage);
         if ((szStore = midpMalloc(storeLen)) != NULL) {
             KNI_GetRawArrayRegion(storage, 0, storeLen, (jbyte*)szStore);
-            
+
             /* Perform the delete operation. */
             ret = pushdel(szConn, szStore);
             midpFree(szStore);
@@ -95,7 +96,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_del0() {
     else {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     }
-    KNI_EndHandles();  
+    KNI_EndHandles();
 
     KNI_ReturnInt(ret);
 }
@@ -137,7 +138,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_checkInByName0() {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     }
 
-    KNI_EndHandles();  
+    KNI_EndHandles();
     KNI_ReturnInt(ret);
 }
 
@@ -177,15 +178,16 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_checkInByHandle0() {
  */
 KNIEXPORT void
 Java_com_sun_midp_io_j2me_push_PushRegistryImpl_checkInByMidlet0() {
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(suiteIdObj);
+    SuiteIdType suiteId;
+
+    KNI_StartHandles(1);
     KNI_DeclareHandle(classNameObj);
 
-    KNI_GetParameterAsObject(1, suiteIdObj);
+    suiteId = KNI_GetParameterAsInt(1);
     KNI_GetParameterAsObject(2, classNameObj);
 
     SNI_BEGIN_RAW_POINTERS;
-    pushcheckinbymidlet((char*)JavaByteArray(suiteIdObj),
+    pushcheckinbymidlet(/*(char*)JavaByteArray(suiteIdObj)*/ suiteId,
                         (char*)JavaByteArray(classNameObj));
     SNI_END_RAW_POINTERS;
 
@@ -203,7 +205,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_checkInByMidlet0() {
  *
  * @param connection The connection to add to the push registry
  *
- * @return <tt>0</tt> upon successfully adding the connection, otherwise 
+ * @return <tt>0</tt> upon successfully adding the connection, otherwise
  *         <tt>-1</tt> if connection already exists
  */
 KNIEXPORT KNI_RETURNTYPE_INT
@@ -231,7 +233,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_add0() {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     }
 
-    KNI_EndHandles();  
+    KNI_EndHandles();
     KNI_ReturnInt(ret);
 }
 
@@ -278,7 +280,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_addAlarm0() {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     }
 
-    KNI_EndHandles();  
+    KNI_EndHandles();
     KNI_ReturnLong(lastalarm);
 }
 
@@ -365,7 +367,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_poll0() {
     jlong ret = (jlong) pushpoll();
 
     /*if (ret == -1) {
-     If there is no pending I/O, check for alarms 
+     If there is no pending I/O, check for alarms
         jlong time = KNI_GetParameterAsLong(1);
     }*/
 
@@ -480,7 +482,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_getEntry0() {
 }
 
 /**
- * Deletes all push registry entries for the given MIDlet suite. 
+ * Deletes all push registry entries for the given MIDlet suite.
  * <p>
  * Java declaration:
  * <pre>
@@ -491,14 +493,10 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_getEntry0() {
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_io_j2me_push_PushRegistryImpl_delAllForSuite0() {
+    SuiteIdType suiteId;
 
-    KNI_StartHandles(1);
-
-    GET_PARAMETER_AS_PCSL_STRING(1, id)
-    pushdeletesuite(&id);
-    RELEASE_PCSL_STRING_PARAMETER
-
-    KNI_EndHandles();  
+    suiteId = KNI_GetParameterAsInt(1);
+    pushdeletesuite(suiteId);
 
     KNI_ReturnVoid();
 }

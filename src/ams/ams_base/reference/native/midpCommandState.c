@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -56,12 +57,22 @@ MIDPCommandState* midpGetCommandState() {
         memset((unsigned char*)&MidpCommandState, 0,
                sizeof (MidpCommandState));
         MidpCommandState.midletClassName = PCSL_STRING_NULL;
-        MidpCommandState.suiteID = PCSL_STRING_NULL;
-        MidpCommandState.lastSuiteID = PCSL_STRING_NULL;
+        MidpCommandState.suiteId = UNUSED_SUITE_ID;
+        MidpCommandState.lastSuiteId = UNUSED_SUITE_ID;
         MidpCommandState.lastMidletClassName = PCSL_STRING_NULL;
         MidpCommandState.arg0 = PCSL_STRING_NULL;
         MidpCommandState.arg1 = PCSL_STRING_NULL;
         MidpCommandState.arg2 = PCSL_STRING_NULL;
+        MidpCommandState.profileName = PCSL_STRING_NULL;
+        MidpCommandState.runtimeInfo.memoryReserved = -1;
+        MidpCommandState.runtimeInfo.memoryTotal    = -1;
+        MidpCommandState.runtimeInfo.priority       = -1;
+        /*
+         * Actually, this following field is not used in CommandState
+         * (it is used in NAMS API). MidpCommandState.profileName
+         * is used instead.
+         */
+        MidpCommandState.runtimeInfo.profileName    = NULL;
         state_initialized = KNI_TRUE;
     }
 
@@ -73,12 +84,11 @@ MIDPCommandState* midpGetCommandState() {
  */
 void finalizeCommandState(void) {
     pcsl_string_free(&MidpCommandState.midletClassName);
-    pcsl_string_free(&MidpCommandState.suiteID);
-    pcsl_string_free(&MidpCommandState.lastSuiteID);
     pcsl_string_free(&MidpCommandState.lastMidletClassName);
     pcsl_string_free(&MidpCommandState.arg0);
     pcsl_string_free(&MidpCommandState.arg1);
     pcsl_string_free(&MidpCommandState.arg2);
+    pcsl_string_free(&MidpCommandState.profileName);
     state_initialized = KNI_FALSE;
 }
 
@@ -92,26 +102,34 @@ void finalizeCommandState(void) {
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_CommandState_restoreCommandState() {
+KNIDECL(com_sun_midp_main_CommandState_restoreCommandState) {
     KNI_StartHandles(3);
     KNI_DeclareHandle(commandState);
     KNI_DeclareHandle(clazz);
     KNI_DeclareHandle(string);
 
     KNI_GetParameterAsObject(1, commandState);
-    
+
     KNI_GetObjectClass(commandState, clazz);
 
     KNI_RESTORE_INT_FIELD(commandState, clazz, "status",
-			  MidpCommandState.status);
-    KNI_RESTORE_BOOLEAN_FIELD(commandState, clazz, "logoDisplayed", 
-			      (jboolean)MidpCommandState.logoDisplayed);
+                          MidpCommandState.status);
+    KNI_RESTORE_BOOLEAN_FIELD(commandState, clazz, "logoDisplayed",
+                              (jboolean)MidpCommandState.logoDisplayed);
     KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "midletClassName",
                                   &MidpCommandState.midletClassName, string);
-    KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "suiteID",
-                                  &MidpCommandState.suiteID, string);
-    KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "lastSuiteID",
-                                  &MidpCommandState.lastSuiteID, string);
+    KNI_RESTORE_INT_FIELD(commandState, clazz, "suiteId",
+                          MidpCommandState.suiteId);
+    KNI_RESTORE_INT_FIELD(commandState, clazz, "lastSuiteId",
+                          MidpCommandState.lastSuiteId);
+
+    KNI_RESTORE_INT_FIELD(commandState, clazz, "memoryReserved",
+                          MidpCommandState.runtimeInfo.memoryReserved);
+    KNI_RESTORE_INT_FIELD(commandState, clazz, "memoryTotal",
+                          MidpCommandState.runtimeInfo.memoryTotal);
+    KNI_RESTORE_INT_FIELD(commandState, clazz, "priority",
+                          MidpCommandState.runtimeInfo.priority);
+
     KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "lastMidletClassName",
                                   &MidpCommandState.lastMidletClassName,
                                   string);
@@ -121,6 +139,8 @@ Java_com_sun_midp_main_CommandState_restoreCommandState() {
                                   &MidpCommandState.arg1, string);
     KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "arg2",
                                   &MidpCommandState.arg2, string);
+    KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "profileName",
+                                  &MidpCommandState.profileName, string);
 
     KNI_EndHandles();
     KNI_ReturnVoid();
@@ -135,7 +155,7 @@ Java_com_sun_midp_main_CommandState_restoreCommandState() {
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_CommandState_saveCommandState() {
+KNIDECL(com_sun_midp_main_CommandState_saveCommandState) {
     KNI_StartHandles(3);
     KNI_DeclareHandle(commandState);
     KNI_DeclareHandle(clazz);
@@ -144,11 +164,21 @@ Java_com_sun_midp_main_CommandState_saveCommandState() {
     KNI_GetParameterAsObject(1, commandState);
     KNI_GetObjectClass(commandState, clazz);
 
-    KNI_SAVE_INT_FIELD(commandState, clazz, 
-		       "status", MidpCommandState.status);
-    KNI_SAVE_BOOLEAN_FIELD(commandState, clazz, 
-			  "logoDisplayed", MidpCommandState.logoDisplayed);
+    KNI_SAVE_INT_FIELD(commandState, clazz, "status",
+                       MidpCommandState.status);
+    KNI_SAVE_INT_FIELD(commandState, clazz, "suiteId",
+                       MidpCommandState.suiteId);
+    KNI_SAVE_INT_FIELD(commandState, clazz, "lastSuiteId",
+                       MidpCommandState.lastSuiteId);
+    KNI_SAVE_BOOLEAN_FIELD(commandState, clazz, "logoDisplayed",
+                           MidpCommandState.logoDisplayed);
 
+    KNI_SAVE_INT_FIELD(commandState, clazz, "memoryReserved",
+                       MidpCommandState.runtimeInfo.memoryReserved);
+    KNI_SAVE_INT_FIELD(commandState, clazz, "memoryTotal",
+                       MidpCommandState.runtimeInfo.memoryTotal);
+    KNI_SAVE_INT_FIELD(commandState, clazz, "priority",
+                       MidpCommandState.runtimeInfo.priority);
     /*
      * We need to put these in the do/while block since the SAVE_STRING
      * macros may throw an OutOfMemoryException. If this happens, we
@@ -157,10 +187,6 @@ Java_com_sun_midp_main_CommandState_saveCommandState() {
     do {
         KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "midletClassName",
                                    &MidpCommandState.midletClassName, string);
-        KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "suiteID",
-                                   &MidpCommandState.suiteID, string);
-        KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "lastSuiteID",
-                                   &MidpCommandState.lastSuiteID, string);
         KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "lastMidletClassName",
                                    &MidpCommandState.lastMidletClassName,
                                    string);
@@ -170,6 +196,9 @@ Java_com_sun_midp_main_CommandState_saveCommandState() {
                                    &MidpCommandState.arg1, string);
         KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "arg2",
                                    &MidpCommandState.arg2, string);
+
+        KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "profileName",
+                                   &MidpCommandState.profileName, string);
     } while (0);
 
     KNI_EndHandles();

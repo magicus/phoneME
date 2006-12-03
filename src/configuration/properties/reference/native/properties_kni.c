@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -89,7 +90,7 @@ UnicodeToCString(jchar* uString, int length) {
  *         <tt>null<tt>
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_main_Configuration_getProperty0(void) {
+KNIDECL(com_sun_midp_main_Configuration_getProperty0) {
     jchar* uStr;
     const char* key;
     const char* value;

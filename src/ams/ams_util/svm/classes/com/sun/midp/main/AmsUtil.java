@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -25,39 +26,16 @@
 
 package com.sun.midp.main;
 
+import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 /** Implements utilities that are different for SVM and MVM modes. */
 public class AmsUtil {
     /** Cached reference to the MIDletProxyList. */
     private static MIDletProxyList midletProxyList;
-        
-    /** The unique ID of the next MIDlet suite to run. */
-    static String nextMidletSuiteToRun;
-
-    /** The class of the next MIDlet to run. */
-    static String nextMidletToRun; 
 
     /**
-     * If not null, this will be available to the MIDlet to run as
-     * application property arg-0.
-     */
-    static String arg0ForNextMidlet;
-
-    /**
-     * If not null, this will be available to the MIDlet to run as
-     * application property arg-1.
-     */
-    static String arg1ForNextMidlet;
-
-    /**
-     * If not null, this will be available to the MIDlet to run as
-     * application property arg-2.
-     */
-    static String arg2ForNextMidlet;
-
-    /**
-     * Initializes AmsUtil class. shall only be called from 
+     * Initializes AmsUtil class. shall only be called from
      * MIDletSuiteLoader's main() in MVM AMS isolate
      * or in SVM main isolate.
      * No need in security checks since it is package private method.
@@ -67,10 +45,10 @@ public class AmsUtil {
      */
     static void initClass(MIDletProxyList theMIDletProxyList,
             MIDletControllerEventProducer theMidletControllerEventProducer) {
-            
+
         midletProxyList = theMIDletProxyList;
     }
-    
+
     /**
      * Queues the execution of the named Application suite to run.
      * The current application suite should terminate itself normally
@@ -92,26 +70,40 @@ public class AmsUtil {
      *             MIDlet as application property arg-1
      * @param arg2 if not null, this parameter will be available to the
      *             MIDlet as application property arg-2
+     * @param memoryReserved the minimum amount of memory guaranteed to be
+     *             available to the isolate at any time; &lt; 0 if not used
+     * @param memoryTotal the total amount of memory that the isolate can
+                   reserve; &lt; 0 if not used
+     * @param priority priority to set for the new isolate;
+     *                 &lt;= 0 if not used
+     * @param profileName name of the profile to set for the new isolate;
+     *                    null if not used
      *
      * @return true to signal that the MIDlet suite MUST first exit before the
      * MIDlet is run
      */
     static boolean executeWithArgs(MIDletSuiteStorage midletSuiteStorage,
-            int externalAppId, String id, String midlet,
-            String displayName, String arg0, String arg1, String arg2) {
+            int externalAppId, int id, String midlet,
+            String displayName, String arg0, String arg1, String arg2,
+            int memoryReserved, int memoryTotal, int priority,
+            String profileName) {
 
-        if (id != null) {
+        if (id != MIDletSuite.UNUSED_SUITE_ID) {
             if (midletProxyList.isMidletInList(id, midlet)) {
                 // No need to exit, MIDlet already loaded
                 return false;
             }
         }
 
-        nextMidletSuiteToRun = id;
-        nextMidletToRun = midlet; 
-        arg0ForNextMidlet = arg0;
-        arg1ForNextMidlet = arg1;
-        arg2ForNextMidlet = arg2;
+        MIDletSuiteUtils.nextMidletSuiteToRun = id;
+        MIDletSuiteUtils.nextMidletToRun = midlet;
+        MIDletSuiteUtils.arg0ForNextMidlet = arg0;
+        MIDletSuiteUtils.arg1ForNextMidlet = arg1;
+        MIDletSuiteUtils.arg2ForNextMidlet = arg2;
+        MIDletSuiteUtils.memoryReserved = memoryReserved;
+        MIDletSuiteUtils.memoryTotal = memoryTotal;
+        MIDletSuiteUtils.priority    = priority;
+        MIDletSuiteUtils.profileName = profileName;
 
         return true;
     }

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,10 +24,10 @@
  * information or have any questions. 
  */
 
+#include <kni.h>
 #include <lfjport_export.h>
 #include <fbapp_export.h>
 #include <midp_logging.h>
-#include <kni.h>
 
 /**
  * @file
@@ -70,6 +71,39 @@ void lfjport_refresh(int x1, int y1, int x2, int y2)
 }
 
 /**
+ * Bridge function to change screen orientation flag
+ */
+jboolean lfjport_reverse_orientation()
+{
+    return fbapp_reverse_orientation();
+}
+
+/**
+ * Bridge function to get screen orientation flag
+ */
+jboolean lfjport_get_reverse_orientation()
+{
+    return fbapp_get_reverse_orientation();
+}
+
+/**
+ * Bridge function to return screen width
+ */
+int lfjport_get_screen_width()
+{
+    return get_screen_width();
+}
+
+/**
+ *  Bridge function to return screen height
+ */
+int lfjport_get_screen_height()
+{
+    return get_screen_height();
+}
+
+
+/**
  * Porting API function to update scroll bar.
  *
  * @param scrollPosition current scroll position
@@ -96,7 +130,8 @@ int lfjport_set_vertical_scroll(
  *             false for normal
  */
 void lfjport_set_fullscreen_mode(jboolean mode) {
-  inFullScreenMode = mode;
+    fbapp_set_fullscreen_mode(mode ? 1 : 0);
+    inFullScreenMode = mode;
 }
 
 /**

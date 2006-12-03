@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_gauge.cpp	1.43 06/04/25 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

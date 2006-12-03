@@ -1,5 +1,5 @@
 /*
- * @(#)lfjport_qte_mainwindow.h	1.14 06/05/26 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

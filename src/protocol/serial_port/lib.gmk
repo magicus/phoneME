@@ -1,4 +1,5 @@
 #
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -42,8 +43,11 @@ SUBSYSTEM_SERIAL_PORT_EXTRA_INCLUDES += \
 
 # Platform
 #
-ifeq ($(PLATFORM),linux_qte)
-include $(SUBSYSTEM_DIR)/protocol/serial_port/$(PLATFORM)/lib.gmk
+#IMPL_NOTE - build subsystem on linux and javacall only
+ifneq ($(findstring $(TARGET_OS),linux javacall),)
+
+include $(SUBSYSTEM_DIR)/protocol/serial_port/$(TARGET_OS)/lib.gmk
 else
-include $(SUBSYSTEM_DIR)/protocol/serial_port/stubs/lib.gmk
+display:
+	echo "Serial communication is not implemented yet for OS $(TARGET_OS)"
 endif

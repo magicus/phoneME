@@ -1,5 +1,5 @@
 /*
- * @(#)MD5.c	1.2 05/08/10 @(#)
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -89,9 +89,6 @@
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
- *
- * This program is released under the GPL with the additional exemption that 
- * compiling, linking, and/or using OpenSSL is allowed.
  */
 
 #include <MD5.h>
@@ -109,8 +106,6 @@ void MD5_Update(MD5_CTX *c, register unsigned char *data, unsigned long len)
 	if (len == 0) return;
 
 	l=(c->Nl+(len<<3))&0xffffffffL;
-	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
-	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
 	if (l < c->Nl) /* overflow */
 		c->Nh++;
 	c->Nh+=(len>>29);
@@ -320,8 +315,7 @@ void MD5_Final(unsigned char *md, MD5_CTX *c)
 	 * already in p[i].  If and only if j&0x03 == 0, the UMR will
 	 * occur but this is also the only time p_c2l will do
 	 * l= *(cp++) instead of l|= *(cp++)
-	 * Many thanks to Alex Tang <altitude@cic.net> for pickup this
-	 * 'potential bug' */
+     */
 #ifdef PURIFY
 	if ((j&0x03) == 0) p[i]=0;
 #endif

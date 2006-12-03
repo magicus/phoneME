@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -34,30 +35,31 @@
  */
 
 #include <midpString.h>
+#include <suitestore_common.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * Loads a native image from cache, if present. 
+ * Loads a native image from cache, if present.
  *
- * @param suiteId   Suite id
+ * @param suiteID   Suite id
  * @param resName   Name of the image resource
  * @param bufPtr    Pointer to buffer pointer. Caller will need
  *                  to free this on return.
  *
  * @return handle to a jar or NULL if an error with pError containing a status
  */
-int loadImageFromCache(const pcsl_string * suiteId, const pcsl_string * resName,
+int loadImageFromCache(SuiteIdType suiteID, const pcsl_string * resName,
                        unsigned char **bufPtr);
 
 /**
- * Create cache of images in the jar file associated with the suiteId
+ * Create cache of images in the jar file associated with the suiteID
  *
- * @param suiteId   Suite id
+ * @param suiteID   Suite id
  */
-void createImageCache(const pcsl_string * suiteId);
+void createImageCache(SuiteIdType suiteID);
 
 #ifdef __cplusplus
 }

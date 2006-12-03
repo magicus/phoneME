@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -128,7 +129,7 @@ public final class Permissions {
 
     /** javax.microedition.content.ContentHandler permission ID. */
     public static final int CHAPI_REGISTER = 25;
-    
+
     /** javax.microedition.pim.ContactList.read ID. */
     public static final int PIM_CONTACT_READ = 26;
     /** javax.microedition.pim.ContactList.write ID. */
@@ -136,7 +137,7 @@ public final class Permissions {
     /** javax.microedition.pim.EventList.read ID. */
     public static final int PIM_EVENT_READ = 28;
     /** javax.microedition.pim.EventList.write ID. */
-    public static final int PIM_EVENT_WRITE = 29; 
+    public static final int PIM_EVENT_WRITE = 29;
     /** javax.microedition.pim.ToDoList.read ID. */
     public static final int PIM_TODO_READ = 30;
     /** javax.microedition.pim.ToDoList.write ID. */
@@ -183,31 +184,43 @@ public final class Permissions {
     public static final int PAYMENT = 49;
 
     /** javax.microedition.amms.control.camera.enableShutterFeedback perm. ID */
-    public static final int AMMS_CAMERA_SHUTTERFEEDBACK = 50;    
+    public static final int AMMS_CAMERA_SHUTTERFEEDBACK = 50;
     /** javax.microedition.amms.control.tuner.setPreset permission ID. */
     public static final int AMMS_TUNER_SETPRESET = 51;
 
+    /*
+     * IMPL_NOTE: if this value is changed, the appropriate change should be
+     * made in suitestore_installer.c under ENABLE_CONTROL_ARGS_FROM_JAD
+     * section. NUMBER_OF_PERMISSIONS was not moved to *.xml because it is never
+     * used in native in normal case (i.e. when
+     * ENABLE_CONTROL_ARGS_FROM_JAD=false).
+     */
     /** Number of permissions. */
     public static final int NUMBER_OF_PERMISSIONS = 52;
 
-    /** Never allowed an permission. */
+    /** Never allow the permission. */
     public static final byte NEVER = 0;
     /** Allow an permission with out asking the user. */
     public static final byte ALLOW = 1;
-    /** Allow permission until the the user changes it in the settings form. */
+    /**
+     * Permission granted by the user until the the user changes it in the
+     * settings form.
+     */
     public static final byte BLANKET_GRANTED = 2;
-    /** Allow a permission after asking the user once. */
+    /**
+     * Allow a permission to be granted or denied by the user
+     * until changed in the settings form.
+     */
     public static final byte BLANKET = 4;
-    /** Allow an permission after asking the user once a session. */
+    /** Allow a permission to be granted only for the current session. */
     public static final byte SESSION = 8;
-    /** Allow an permission after asking the user every use. */
-    public static final byte ONE_SHOT = 16;
-    /** Denied by the user, until next session. */
-    public static final byte DENY_SESSION = 32;
-    /** Ask the user to Deny by default. */
-    public static final byte DENY = 64;
-    /** Deny by the user, until the user changes it in the settings form. */
-    public static final byte USER_DENIED = -128;
+    /** Allow a permission to be granted only for one use. */
+    public static final byte ONESHOT = 16;
+    /**
+     * Permission denied by the user until the user changes it in the
+     * settings form.
+     */
+    public static final byte BLANKET_DENIED = -128;
 
     /** Third Party Never permission group. */
     static final PermissionGroup NEVER_GROUP =
@@ -228,26 +241,26 @@ public final class Permissions {
         ResourceConstants.AMS_MGR_NET_SETTINGS_QUE_DONT,
         ResourceConstants.PERMISSION_NET_ACCESS_DIALOG_TITLE,
         ResourceConstants.PERMISSION_NET_ACCESS_QUE, 0,
-        BLANKET, SESSION, SESSION, ONE_SHOT);
+        BLANKET, SESSION, SESSION, ONESHOT);
 
     /** Read Message permission group. */
     static final PermissionGroup READ_MESSAGE_GROUP = new PermissionGroup(
-        ResourceConstants.AMS_MGR_MSG_SETTINGS,
-        ResourceConstants.AMS_MGR_MSG_SETTINGS_QUE,
-        ResourceConstants.AMS_MGR_MSG_SETTINGS_QUE_DONT,
+        0, 0, 0,
         ResourceConstants.PERMISSION_RECEIVE_MESSAGE_DIALOG_TITLE,
         ResourceConstants.PERMISSION_RECEIVE_MESSAGE_QUE, 0,
-        BLANKET, ONE_SHOT, ONE_SHOT, ONE_SHOT);
+        BLANKET, BLANKET, BLANKET, BLANKET);
 
     /**
      * Send Message permission group. Send was broken out because send
      * is treated as one shot even though it is in the messaging group.
      */
     static final PermissionGroup SEND_MESSAGE_GROUP = new PermissionGroup(
-        0, 0, 0, 
+        ResourceConstants.AMS_MGR_MSG_SETTINGS,
+        ResourceConstants.AMS_MGR_MSG_SETTINGS_QUE,
+        ResourceConstants.AMS_MGR_MSG_SETTINGS_QUE_DONT,
         ResourceConstants.PERMISSION_SEND_MESSAGE_DIALOG_TITLE,
         ResourceConstants.PERMISSION_SEND_MESSAGE_QUE, 0,
-        ONE_SHOT, ONE_SHOT, ONE_SHOT, ONE_SHOT);
+        ONESHOT, ONESHOT, ONESHOT, ONESHOT);
 
     /** Application Auto Invocation permission group. */
     static final PermissionGroup AUTO_INVOCATION_GROUP = new PermissionGroup(
@@ -256,7 +269,7 @@ public final class Permissions {
         ResourceConstants.AMS_MGR_AUTO_START_SETTINGS_QUE_DONT,
         ResourceConstants.PERMISSION_AUTO_START_DIALOG_TITLE,
         ResourceConstants.PERMISSION_AUTO_START_QUE, 0,
-        BLANKET, ONE_SHOT, SESSION, ONE_SHOT);
+        BLANKET, ONESHOT, SESSION, ONESHOT);
 
     /** Local Connectivity permission group. */
     static final PermissionGroup LOCAL_CONN_GROUP = new PermissionGroup(
@@ -265,7 +278,7 @@ public final class Permissions {
         ResourceConstants.AMS_MGR_LOCAL_CONN_SETTINGS_QUE_DONT,
         ResourceConstants.PERMISSION_LOCAL_CONN_DIALOG_TITLE,
         ResourceConstants.PERMISSION_LOCAL_CONN_QUE, 0,
-        BLANKET, SESSION, BLANKET, ONE_SHOT);
+        BLANKET, SESSION, BLANKET, ONESHOT);
 
     /** Multimedia Recording permission group. */
     static final PermissionGroup MULTIMEDIA_GROUP = new PermissionGroup(
@@ -274,7 +287,7 @@ public final class Permissions {
         ResourceConstants.AMS_MGR_REC_SETTINGS_QUE_DONT,
         ResourceConstants.PERMISSION_MULTIMEDIA_DIALOG_TITLE,
         ResourceConstants.PERMISSION_MULTIMEDIA_QUE, 0,
-        BLANKET, SESSION, SESSION, ONE_SHOT);
+        BLANKET, SESSION, SESSION, ONESHOT);
 
     /** Read User Data permission group. */
     static final PermissionGroup READ_USER_DATA_GROUP = new PermissionGroup(
@@ -283,7 +296,7 @@ public final class Permissions {
         ResourceConstants.AMS_MGR_READ_USER_DATA_SETTINGS_QUE_DONT,
         ResourceConstants.PERMISSION_READ_USER_DATA_TITLE,
         ResourceConstants.PERMISSION_READ_USER_DATA_QUE, 0,
-        BLANKET, ONE_SHOT, ONE_SHOT, ONE_SHOT);
+        BLANKET, ONESHOT, ONESHOT, ONESHOT);
 
     /** Write User Data permission group. */
     static final PermissionGroup WRITE_USER_DATA_GROUP = new PermissionGroup(
@@ -293,7 +306,7 @@ public final class Permissions {
         ResourceConstants.PERMISSION_WRITE_USER_DATA_TITLE,
         ResourceConstants.PERMISSION_WRITE_USER_DATA_QUE,
         ResourceConstants.PERMISSION_WRITE_USER_DATA_ONESHOT_QUE,
-        BLANKET, ONE_SHOT, ONE_SHOT, ONE_SHOT);
+        BLANKET, ONESHOT, ONESHOT, ONESHOT);
 
     /** Location permission group. */
     static final PermissionGroup LOCATION_GROUP = new PermissionGroup(
@@ -302,7 +315,7 @@ public final class Permissions {
         ResourceConstants.AMS_MGR_LOC_SETTINGS_QUE_DONT,
         ResourceConstants.PERMISSION_LOCATION_TITLE,
         ResourceConstants.PERMISSION_LOCATION_QUE, 0,
-        BLANKET, SESSION, SESSION, ONE_SHOT);
+        BLANKET, SESSION, SESSION, ONESHOT);
 
     /** Landmark store permission group. */
     static final PermissionGroup LANDMARK_GROUP = new PermissionGroup(
@@ -311,7 +324,16 @@ public final class Permissions {
         ResourceConstants.AMS_MGR_LANDMARK_SETTINGS_QUE_DONT,
         ResourceConstants.PERMISSION_LANDMARK_TITLE, 0,
         ResourceConstants.PERMISSION_LANDMARK_QUE,
-        BLANKET, SESSION, SESSION, ONE_SHOT);
+        BLANKET, SESSION, SESSION, ONESHOT);
+
+    /** Smart card permission group. */
+    static final PermissionGroup SMART_CARD_GROUP = new PermissionGroup(
+        ResourceConstants.AMS_MGR_SMART_CARD_SETTINGS,
+        ResourceConstants.AMS_MGR_SMART_CARD_SETTINGS_QUE,
+        ResourceConstants.AMS_MGR_SMART_CARD_SETTINGS_QUE_DONT,
+        ResourceConstants.PERMISSION_SMART_CARD_TITLE, 0,
+        ResourceConstants.PERMISSION_SMART_CARD_QUE,
+        BLANKET, SESSION, NEVER, NEVER);
 
     /** Authentication (identification) permission group. */
     static final PermissionGroup AUTHENTICATION_GROUP = new PermissionGroup(
@@ -320,7 +342,7 @@ public final class Permissions {
         ResourceConstants.AMS_MGR_AUTHENTICATION_SETTINGS_QUE_DONT,
         ResourceConstants.PERMISSION_SIGNATURE_DIALOG_TITLE,
         ResourceConstants.PERMISSION_SIGNATURE_QUE, 0,
-        ONE_SHOT, ONE_SHOT, NEVER, NEVER);
+        BLANKET, SESSION, NEVER, NEVER);
 
     /** Call Control (restricted network connection) permission group. */
     static final PermissionGroup CALL_CONTROL_GROUP = new PermissionGroup(
@@ -329,7 +351,7 @@ public final class Permissions {
         ResourceConstants.AMS_MGR_CALL_CONTROL_SETTINGS_QUE_DONT,
         ResourceConstants.PERMISSION_CALL_CONTROL_TITLE,
         ResourceConstants.PERMISSION_CALL_CONTROL_QUE, 0,
-        BLANKET, ONE_SHOT, ONE_SHOT, ONE_SHOT);
+        BLANKET, ONESHOT, ONESHOT, ONESHOT);
 
     /** Permission specifications. */
     static final PermissionSpec[] permissionSpecs = {
@@ -375,9 +397,9 @@ public final class Permissions {
         new PermissionSpec("javax.wireless.messaging.mms.receive",
             READ_MESSAGE_GROUP),
         new PermissionSpec("javax.microedition.apdu.aid",
-            NEVER_GROUP),
+            SMART_CARD_GROUP),
         new PermissionSpec("javax.microedition.jcrmi",
-            NEVER_GROUP),
+            SMART_CARD_GROUP),
         new PermissionSpec(
             "javax.microedition.securityservice.CMSMessageSignatureService",
             AUTHENTICATION_GROUP),
@@ -425,10 +447,10 @@ public final class Permissions {
             LANDMARK_GROUP),
         new PermissionSpec(
             "javax.microedition.location.LandmarkStore.category",
-            NEVER_GROUP),
+            LANDMARK_GROUP),
         new PermissionSpec(
             "javax.microedition.location.LandmarkStore.management",
-            NEVER_GROUP),
+            LANDMARK_GROUP),
         new PermissionSpec("javax.microedition.io.Connector.sip",
             CALL_CONTROL_GROUP),
         new PermissionSpec("javax.microedition.io.Connector.sips",
@@ -629,15 +651,15 @@ public final class Permissions {
         PermissionGroup[] groups = new PermissionGroup[12];
 
         groups[0] = NET_ACCESS_GROUP;
-        groups[1] = READ_MESSAGE_GROUP;
-        groups[2] = SEND_MESSAGE_GROUP;
-        groups[3] = AUTO_INVOCATION_GROUP;
-        groups[4] = LOCAL_CONN_GROUP;
-        groups[5] = MULTIMEDIA_GROUP;
-        groups[6] = READ_USER_DATA_GROUP;
-        groups[7] = WRITE_USER_DATA_GROUP;
-        groups[8] = LOCATION_GROUP;
-        groups[9] = LANDMARK_GROUP;
+        groups[1] = SEND_MESSAGE_GROUP;
+        groups[2] = AUTO_INVOCATION_GROUP;
+        groups[3] = LOCAL_CONN_GROUP;
+        groups[4] = MULTIMEDIA_GROUP;
+        groups[5] = READ_USER_DATA_GROUP;
+        groups[6] = WRITE_USER_DATA_GROUP;
+        groups[7] = LOCATION_GROUP;
+        groups[8] = LANDMARK_GROUP;
+        groups[9] = SMART_CARD_GROUP;
         groups[10] = AUTHENTICATION_GROUP;
         groups[11] = CALL_CONTROL_GROUP;
 
@@ -666,7 +688,7 @@ public final class Permissions {
                  */
                 if (levels[i] < maxLevel || maxLevel == NEVER) {
                     maxLevel = levels[i];
-                }                    
+                }
             }
         }
 
@@ -708,6 +730,49 @@ public final class Permissions {
                 setPermission(current, i, level);
             }
         }
+
+        /*
+         * For some reason specs do not want separate send and
+         * receive message groups, but want the questions and interrupt
+         * level to be different for send, so internally we have 2 groups
+         * that must be kept in synch. The setting dialog only presents
+         * the send message group, see the getSettingGroups method.
+         */
+        if (group == SEND_MESSAGE_GROUP) {
+            /*
+             * Since the send group have a max level of oneshot, this method
+             * will only code get used by the settings dialog, when a user
+             * changes the send group from blanket denied to oneshot.
+             */
+            if (level != BLANKET_DENIED) {
+                /*
+                 * If send is set to to any thing but blanket denied
+                 * then receive is set to blanket.
+                 */
+                level = BLANKET_GRANTED;
+            }
+
+            for (int i = 0; i < permissionSpecs.length; i++) {
+                if (permissionSpecs[i].group == READ_MESSAGE_GROUP) {
+                    setPermission(current, i, level);
+                }
+            }
+
+            return;
+        }
+
+        if (group == READ_MESSAGE_GROUP && level == BLANKET_DENIED) {
+            /*
+             * This code will only be used when the user says no during
+             * a message read runtime permission prompt.
+             */
+
+            for (int i = 0; i < permissionSpecs.length; i++) {
+                if (permissionSpecs[i].group == SEND_MESSAGE_GROUP) {
+                    setPermission(current, i, BLANKET_DENIED);
+                }
+            }
+        }
     }
 
     /**
@@ -734,11 +799,7 @@ public final class Permissions {
 
         PermissionGroup group = permissionSpecs[permission].group;
 
-        for (int i = 0; i < permissionSpecs.length; i++) {
-            if (permissionSpecs[i].group == group) {
-                setPermission(current, i, level);
-            }
-        }
+        setPermissionGroup(current, NEVER, group, level);
     }
 
 
@@ -832,31 +893,31 @@ public final class Permissions {
                         NET_ACCESS_GROUP.getName(),
                         ResourceConstants.AMS_MGR_INTRUPT));
             }
-            
+
             level = getPermissionGroupLevel(current, AUTO_INVOCATION_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
                 throw new SecurityException(
                     createMutuallyExclusiveErrorMessage(NET_ACCESS_GROUP,
                         AUTO_INVOCATION_GROUP));
             }
-            
+
             level = getPermissionGroupLevel(current, READ_USER_DATA_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
                 throw new SecurityException(
                     createMutuallyExclusiveErrorMessage(NET_ACCESS_GROUP,
                         READ_USER_DATA_GROUP));
             }
-            
+
             level = getPermissionGroupLevel(current, MULTIMEDIA_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
                 throw new SecurityException(
                     createMutuallyExclusiveErrorMessage(NET_ACCESS_GROUP,
                         MULTIMEDIA_GROUP));
             }
-            
+
             return;
         }
-                    
+
         if (group == LOCAL_CONN_GROUP) {
             level = getPermissionGroupLevel(current, READ_USER_DATA_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
@@ -864,8 +925,8 @@ public final class Permissions {
                     createMutuallyExclusiveErrorMessage(LOCAL_CONN_GROUP,
                         READ_USER_DATA_GROUP));
             }
-            
-            
+
+
             level = getPermissionGroupLevel(current, MULTIMEDIA_GROUP);
             if (level == BLANKET_GRANTED || level == BLANKET) {
                 throw new SecurityException(
@@ -883,7 +944,7 @@ public final class Permissions {
                     createMutuallyExclusiveErrorMessage(AUTO_INVOCATION_GROUP,
                         NET_ACCESS_GROUP));
             }
-        }            
+        }
 
         if (group == READ_USER_DATA_GROUP) {
             level = getPermissionGroupLevel(current, NET_ACCESS_GROUP);
@@ -931,7 +992,7 @@ public final class Permissions {
             PermissionGroup groupToSet, PermissionGroup blanketGroup) {
         return createMutuallyExclusiveErrorMessage(groupToSet.getName(),
             blanketGroup.getName());
-    }                                                    
+    }
 
     /**
      * Create a mutally exclusive permission setting error message.
@@ -945,11 +1006,11 @@ public final class Permissions {
             int nameId, int otherNameId) {
         String[] values = {Resource.getString(nameId),
                            Resource.getString(otherNameId)};
-        
+
         return Resource.getString(
             ResourceConstants.PERMISSION_MUTUALLY_EXCLUSIVE_ERROR_MESSAGE,
                 values);
-    }                                                    
+    }
 }
 
 /** Specifies a permission name and its group. */

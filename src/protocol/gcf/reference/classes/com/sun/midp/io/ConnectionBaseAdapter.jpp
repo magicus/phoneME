@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -620,6 +621,8 @@ class BaseInputStream extends InputStream {
             parent.closeInputStream();
             parent = null;
         }
+	// free buffer used by mark/reset operations if it was allocated
+	markBuf = null;
     }
 
     /**

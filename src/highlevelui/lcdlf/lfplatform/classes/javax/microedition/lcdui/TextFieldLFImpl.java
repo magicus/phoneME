@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -263,6 +264,13 @@ class TextFieldLFImpl extends ItemLFImpl implements TextFieldLF {
 	// No visual impact
     }
 
+     /**
+      * Notifies item that it has been recently deleted
+      * Traverse out the textFieldLF. 
+      */
+     public void itemDeleted() {
+         uCallTraverseOut();
+     }
 
     // *****************************************************
     //  Package private methods

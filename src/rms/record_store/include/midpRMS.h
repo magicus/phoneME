@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -37,26 +38,27 @@
  *
  * @brief Interface for managing records and record stores.
  * A platform independent file based implementation of this interface
- * is provided already. This interface only needs to be ported if 
+ * is provided already. This interface only needs to be ported if
  * a platform specific storage is preferred, like a Database.
  *
- * ##include &lt;midpRMS.h&gt;
+ * ##include &lt;&gt;
  * @{
  */
 
 #include <pcsl_string.h>
+#include <suitestore_common.h>
 
 /**
  * Checks whether a record-store file of the given name for the given
  * MIDlet suite exists.
  *
- * @param suiteID MIDlet suite's identifier
+ * @param suiteId MIDlet suite's identifier
  * @param name name of the record store
  * @param extension platform-specific extension for the record-store file
  *
  * @return 1 if the file exists, 0 if it does not
  */
-int rmsdb_record_store_exists(const pcsl_string* suiteID,
+int rmsdb_record_store_exists(SuiteIdType suiteId,
                               const pcsl_string* name,
                               int extension);
 
@@ -67,43 +69,44 @@ int rmsdb_record_store_exists(const pcsl_string* suiteID,
  * @param ppszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
  *        successful (this function sets <tt>ppszError</tt>'s value).
- * @param suiteID MIDlet suite's identifier
+ * @param suiteId MIDlet suite's identifier
  * @param name name of the record store
  * @param extension platform-specific extension for the record-store file
  *
- * @return 1 if successful 
+ * @return 1 if successful
  *         0 if an IOException occurred
- *        -1 if file is locked by another isolate 
+ *        -1 if file is locked by another isolate
  *        -2 if out of memory error occurs
  *
  */
 int rmsdb_record_store_delete(char** ppszError,
-                              const pcsl_string* suiteID,
+                              SuiteIdType suiteId,
                               const pcsl_string* name,
                               int extension);
 
 /**
  * Gets the number of record stores owned by the given MIDlet suite.
  *
- * @param suiteID MIDlet suite's identifier
+ * @param suiteId MIDlet suite's identifier
  *
  * @return number of record stores or <tt>OUT_OF_MEM_LEN</tt> if the
  * MIDP implementation has run out of memory
  */
-int rmsdb_get_number_of_record_stores(const pcsl_string* suiteID);
+int rmsdb_get_number_of_record_stores(SuiteIdType suiteId);
 
 /**
  * Gets the names of the record stores owned by the given MIDlet
  * suite.
  *
- * @param suiteID MIDlet suite's identifier
+ * @param suiteId MIDlet suite's identifier
  * @param ppStoreNames pointer to an array that will hold record-store
  *        names. This function sets ppStoreNames' value
  *
  * @return the number of record store names or <tt>OUT_OF_MEM_LEN</tt>
  * if the MIDP implementation has run out of memory
  */
-int rmsdb_get_record_store_list(const pcsl_string* suiteID, pcsl_string* * ppNames);
+int rmsdb_get_record_store_list(SuiteIdType suiteId,
+                                pcsl_string* *const ppNames);
 
 /**
  * Gets the approximate number of bytes of RMS space available to the
@@ -113,12 +116,12 @@ int rmsdb_get_record_store_list(const pcsl_string* suiteID, pcsl_string* * ppNam
  * platform must look at the size of every file in the MIDP memory
  * space.</p>
  *
- * @param suiteID  MIDlet suite's identifier
+ * @param suiteId  MIDlet suite's identifier
  *
  * @return the approximate space available to grow the record store,
  *         in bytes
  */
-long rmsdb_get_new_record_store_space_available(const pcsl_string* suiteID);
+long rmsdb_get_new_record_store_space_available(SuiteIdType suiteId);
 
 /**
  * Opens a native record-store file.
@@ -126,17 +129,17 @@ long rmsdb_get_new_record_store_space_available(const pcsl_string* suiteID);
  * @param pszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
  *        successful (this function sets <tt>ppszError</tt>'s value).
- * @param suiteID  MIDlet suite's identifier
+ * @param suiteId  MIDlet suite's identifier
  * @param name name of the record-store file
  * @param extension platform-specific extension for the record-store file
  *
  * @return storage handle on success
  *  return -1 if there is an error getting the filename
  *  return -2 if the file is locked
- * 
+ *
  */
 int rmsdb_record_store_open(char** ppszError,
-                            const pcsl_string * suiteID_str,
+                            SuiteIdType suiteId,
                             const pcsl_string * name_str,
                             int extension);
 
@@ -159,16 +162,16 @@ void recordStoreFreeError(char* pszError);
  * space.
  *
  * @param handle handle to a record-store file
- * @param suiteID MIDlet suite's identifier
+ * @param suiteId MIDlet suite's identifier
  *
  * @return approximate space available to grow the record-store file,
  * in bytes
  */
-long rmsdb_get_record_store_space_available(int handle, const pcsl_string* suiteID);
+long rmsdb_get_record_store_space_available(int handle, SuiteIdType suiteId);
 
 /**
  * Changes the read/write position in the given open record-store file
- * to the given position.  
+ * to the given position.
  *
  * @param pszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -184,7 +187,7 @@ void recordStoreSetPosition(char** pszError, int handle, int absolutePosition);
  * Writes to the given open record-store file. This function is
  * atomic: it will write all or none of the given bytes. If it writes
  * none, it will pass back an error in the given pointer to a
- * string. 
+ * string.
  *
  * @param pszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -197,7 +200,7 @@ void recordStoreWrite(char** pszError, int handle, char* bytes, long length);
 
 /**
  * Commits pending writes to the record-store file. If the commit fails,
- * it will pass back an error in the given pointer to a string. 
+ * it will pass back an error in the given pointer to a string.
  *
  * @param pszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -210,7 +213,7 @@ void recordStoreCommitWrite(char** pszError, int handle);
  * Reads from the given open record-store file, and places the results
  * in the given buffer. This function might read less than the length
  * of the buffer; it returns the number of bytes it actually
- * read. 
+ * read.
  *
  * @param pszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -237,7 +240,7 @@ void recordStoreClose(char** pszError, int handle);
 
 /**
  * Truncates the size of the given open record-store file to the given
- * number of bytes.  
+ * number of bytes.
  *
  * @param pszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -250,7 +253,7 @@ void recordStoreTruncate(char** pszError, int handle, long size);
 
 /**
  * Returns the size, in bytes, of the given open record-store
- * file. 
+ * file.
  *
  * @param pszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
@@ -266,33 +269,33 @@ long recordStoreSizeOf(char** ppszError, int handle);
 /**
  * Gets the amount of RMS storage that the given MIDlet suite is using.
  *
- * @param suiteID MIDlet suite's identifier
+ * @param suiteId MIDlet suite's identifier
  *
  * @return the number of bytes of storage the suite is using, or
  * <tt>OUT_OF_MEM_LEN</tt> if the MIDP implementation has run out of memory
  */
-long rmsdb_get_rms_storage_size(const pcsl_string* suiteID);
+long rmsdb_get_rms_storage_size(SuiteIdType suiteId);
 
 /**
  * Returns true if the suite has created at least one record store.
  * Used by an OTA installer.
  *
- * @param suiteID ID of the suite
+ * @param suiteId ID of the suite
  *
  * @return true if the suite has at least one record store
  */
-int rmsdb_suite_has_rms_data(const pcsl_string* suiteID);
+int rmsdb_suite_has_rms_data(SuiteIdType suiteId);
 
 /**
  * Remove all the Record Stores for a suite. Used by an OTA installer
  * when updating a installed suite after asking the user.
  *
- * @param suiteID ID of the suite
+ * @param suiteId ID of the suite
  *
  * @return false if the stores could not be deleted (ex: out of memory or
  *  file locked) else true
  */
-int rmsdb_remove_record_stores_for_suite(const pcsl_string* suiteID);
+int rmsdb_remove_record_stores_for_suite(SuiteIdType suiteId);
 
 /* @} */
 

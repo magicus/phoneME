@@ -1,3 +1,4 @@
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -52,5 +53,6 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppSettings.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/DisplayError.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/MIDletSelector.java \
+    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/MIDletSwitcher.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/SplashScreen.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/CaManager.java

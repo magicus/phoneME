@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,13 +27,31 @@
 #ifndef _GXJ_INTERN_FONT_BITMAP_H_
 #define _GXJ_INTERN_FONT_BITMAP_H_
 
+/* The font bitmap starts with a header containing the font parameters */
 #define FONT_WIDTH 0
 #define FONT_HEIGHT 1
 #define FONT_ASCENT 2
 #define FONT_DESCENT 3
 #define FONT_LEADING 4
-#define FONT_DATA 5
+/* the high byte of the whole range of symbols */
+/* in other words, high bytes of the firt and the last symbol in a table
+   will be equal */
+#define FONT_CODE_RANGE_HIGH 5
+/* the low byte of the code of the first symbol in the bit map */
+/* for inclusive comparison */
+#define FONT_CODE_FIRST_LOW 6
+/* the high byte of the code of the last symbol in the bit map */
+/* for inclusive comparison */
+#define FONT_CODE_LAST_LOW 7
+#define FONT_DATA 8
 
-extern unsigned char TheFontBitmap[2021];
+typedef unsigned char* pfontbitmap;
+
+/* the 0-th element is the number of bitmap tables;
+ * the parameters: width, height, ascent,descent, leading
+ * MUST be the same for all bitmap tables pointed to from
+ * this array.
+ */
+extern pfontbitmap FontBitmaps[];
 
 #endif /* _GXJ_INTERN_FONT_BITMAP_H_ */

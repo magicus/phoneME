@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration SYSTEM "../configuration.dtd">
 <!--
+        	
 
         Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,7 +26,8 @@
                      the directionality of various text on the display.
                      Valid values are Graphics.LEFT and Graphics.RIGHT.
                      A value of Graphics.RIGHT, for example, would indicate
-                     text which reads from left to right."/>
+                     text which reads from left to right.
+                     NOTE: This property currently has no effect."/>
 
   <constant Type="int"
             Name="SCREEN_PAD_FORM_ITEMS"
@@ -93,6 +95,10 @@
             Comment="The style of border for those visual elements 
                      which draw a border, either Graphics.SOLID or 
                      Graphics.DOTTED."/>
+  <constant Type="int"
+            Name="SCREEN_SCROLL_AMOUNT"
+            Comment="The amount of pixels to scroll the contents of the Screen
+                     at one time."/>
 
   <constant Type="int"
             Name="SCREEN_FONT_LABEL"
@@ -281,7 +287,7 @@
             Name="SCROLL_MODE"
             Comment="The 'mode' of the scroll indicator. Valid values are 
                      either ScrollIndSkin.MODE_ARROWS or 
-                     ScrollIndSkin.MODE_BAR"/>
+                     ScrollIndSkin.MODE_BAR."/>
 
   <constant Type="int"
             Name="SCROLL_WIDTH"
@@ -301,6 +307,18 @@
                      (in bar mode). If no images can be loaded, this color 
                      is used to render the foreground of a scrollbar."/>
             
+  <constant Type="int"
+            Name="SCROLL_COLOR_FRAME"
+            Comment="The foreground fill color for the scroll bar frame."/>
+  <constant Type="int"
+            Name="SCROLL_COLOR_UP_ARROW"
+            Comment="The foreground fill color for the pressed
+            scrollbar arrow"/>
+  <constant Type="int"
+            Name="SCROLL_COLOR_DN_ARROW"
+            Comment="The foreground fill color for the released
+            scrollbar arrow"/>
+
   <constant Type="int"
             Name="SCROLL_IMAGE_BG"
             Comment="A 3 piece background image to use to render the 
@@ -648,10 +666,6 @@
             Name="PTI_HEIGHT"
             Comment="The overall height of this ticker (in pixels)."/>
             
-  <constant Type="int"
-            Name="PTI_WIDTH"
-            Comment="The overall width of this ticker (in pixels)."/>
-
   <constant Type="int"
             Name="PTI_MARGIN"
             Comment="The text margin in PTI bar (in pixels)."/>

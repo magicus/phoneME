@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -32,7 +33,7 @@
  *
  * @brief Porting interface for playing Alert sound.
  *
- * ##include &lt;anc_audio.h&gt;
+ * ##include &lt;&gt;
  *
  * @{
  */

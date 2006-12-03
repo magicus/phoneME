@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -47,7 +48,7 @@
  * </pre> 
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_javax_microedition_lcdui_Display_playAlertSound0() {
+KNIDECL(javax_microedition_lcdui_Display_playAlertSound0) {
     int alertType = KNI_GetParameterAsInt(2);
     int displayId = KNI_GetParameterAsInt(1);
 

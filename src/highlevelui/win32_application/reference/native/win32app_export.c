@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,7 +32,6 @@
 
 #include <stdio.h>
 #include <windows.h>
-#include <ctype.h>
 #include <math.h>
 
 #include <kni.h>
@@ -49,7 +49,7 @@
 #include <gxj_putpixel.h>
 #include <midp_foreground_id.h>
 
-#include "staticGraphics.h"
+//#include "staticGraphics.h"
 #include "midpStubsKeymapping.h"
 
 #define NUMBEROF(x) (sizeof(x)/sizeof(x[0]))
@@ -59,12 +59,10 @@
  * left corner of the display screen within the MIDP phone handset
  * graphic window
  */
-#define X_SCREEN_OFFSET 30
-#define Y_SCREEN_OFFSET 131
+#define X_SCREEN_OFFSET 60
+#define Y_SCREEN_OFFSET 76
 
-#define EMULATOR_WIDTH  (241 + 8)
-#define EMULATOR_HEIGHT (635 + 24)
-#define TOP_BAR_HEIGHT  11
+#define TOP_BAR_HEIGHT  0
 
 /*
  * Defines Java code paintable region
@@ -82,6 +80,7 @@
     "%s:%d: (%s)is NOT true\n", __FILE__, __LINE__, #expr)
 
 #define MD_KEY_HOME (KEY_MACHINE_DEP)
+#define MD_KEY_SWITCH_APP (KEY_MACHINE_DEP - 1)
 
 static HBITMAP getBitmapDCtmp = NULL;
 
@@ -99,14 +98,19 @@ typedef struct _mbs {
 } myBitmapStruct;
 
 /* Network Indicator position parameters */
+/*
 #define LED_xposition 17
 #define LED_yposition 82
 #define LED_width     20
 #define LED_height    20
+*/
 
 #define INSIDE(_x, _y, _r)                              \
     ((_x >= (_r).x) && (_x < ((_r).x + (_r).width)) &&  \
      (_y >= (_r).y) && (_y < ((_r).y + (_r).height)))
+
+
+static jboolean reverse_orientation = KNI_FALSE;
 
 static LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 
@@ -116,31 +120,8 @@ static HDC getBitmapDC(void *imageData);
 static HPEN setPen(HDC hdc, int pixel, int dotted);
 static void CreateBacklight(HDC hdc);
 static void CreateEmulatorWindow();
+static void resizeScreenBuffer();
 static void invalidateLCDScreen(int x1, int y1, int x2, int y2);
-
-/* BackLight top bar position parameters */
-#define BkliteTop_xposition 0
-#define BkliteTop_yposition 113
-#define BkliteTop_width     241
-#define BkliteTop_height    18
-
-/* BackLight bottom bar position parameters */
-#define BkliteBottom_xposition 0
-#define BkliteBottom_yposition 339
-#define BkliteBottom_width      241
-#define BkliteBottom_height    6
-
-/* BackLight left bar position parameters */
-#define BkliteLeft_xposition 0
-#define BkliteLeft_yposition 131
-#define BkliteLeft_width        30
-#define BkliteLeft_height    208
-
-/* BackLight right bar position parameters */
-#define BkliteRight_xposition 210
-#define BkliteRight_yposition 131
-#define BkliteRight_width       31
-#define BkliteRight_height    208
 
 int    blackPixel;
 int    whitePixel;
@@ -159,7 +140,7 @@ HPEN            BACKGROUND_PEN, FOREGROUND_PEN;
 gxj_screen_buffer gxj_system_screen_buffer;
 
 static jboolean initialized = KNI_FALSE;
-static jboolean inFullScreenMode;
+static jboolean inFullScreenMode = KNI_FALSE;
 static jboolean bkliteImageCreated = KNI_FALSE;
 static jboolean isBklite_on = KNI_FALSE;
 
@@ -176,97 +157,24 @@ static HDC hMemDC = NULL;
 static TEXTMETRIC    fixed_tm, tm;
 static HFONT            fonts[3][3][8];
 
-/* The bits of the Network Indicator images */
-static HBITMAP          LED_on_Image;
-static HBITMAP          LED_off_Image;
-
+/* The phone images */
 static HBITMAP          hPhoneBitmap;
-static HBITMAP          topbar_Image;
+static HBITMAP          hPhoneLightBitmap;
 
-/* The bits of the BackLight images */
-static HBITMAP          bklite_Top_Image;
-static HBITMAP          bklite_Bottom_Image;
-static HBITMAP          bklite_Left_Image;
-static HBITMAP          bklite_Right_Image;
-
-#define INVALIDATETOPBAR()                                 \
-{                                                          \
-  RECT r;                                                  \
-  r.left   = DISPLAY_X;                                     \
-  r.top    = Y_SCREEN_OFFSET;                              \
-  r.right  = DISPLAY_X + DISPLAY_WIDTH;                     \
-  r.bottom = DISPLAY_Y;                                     \
-  InvalidateRect(hMainWindow, &r, KNI_TRUE);               \
-}
-
-/* refresh the Top backlight bar */
-#define INVALIDATE_BACKLIGHT_TOPBAR()                      \
-{                                                      \
-  RECT r;                                              \
-  r.left   = BkliteTop_xposition;                       \
-  r.top    = BkliteTop_yposition;                       \
-  r.right  = BkliteTop_xposition + BkliteTop_width;    \
-  r.bottom = BkliteTop_yposition + BkliteTop_height;   \
-  InvalidateRect(hMainWindow, &r, KNI_TRUE);            \
-}
-
-/* refresh the bottom backlight bar */
-#define INVALIDATE_BACKLIGHT_BOTTOMBAR()                   \
-{                                                          \
-  RECT r;                                                  \
-  r.left   = BkliteBottom_xposition;                       \
-  r.top    = BkliteBottom_yposition;                       \
-  r.right  = BkliteBottom_xposition + BkliteBottom_width;  \
-  r.bottom = BkliteBottom_yposition + BkliteBottom_height; \
-  InvalidateRect(hMainWindow, &r, KNI_TRUE);               \
-}
-
-/* refresh the left backlight bar */
-#define INVALIDATE_BACKLIGHT_LEFTBAR()                                       \
-{                                                          \
-  RECT r;                                                  \
-  r.left   = BkliteLeft_xposition;                         \
-  r.top    = BkliteLeft_yposition;                         \
-  r.right  = BkliteLeft_xposition + BkliteLeft_width;      \
-  r.bottom = BkliteLeft_yposition + BkliteLeft_height;     \
-  InvalidateRect(hMainWindow, &r, KNI_TRUE);               \
-}
-
-/* refresh the right backlight bar */
-#define INVALIDATE_BACKLIGHT_RIGHTBAR()                                       \
-{                                                          \
-  RECT r;                                                  \
-  r.left   = BkliteRight_xposition;                        \
-  r.top    = BkliteRight_yposition;                        \
-  r.right  = BkliteRight_xposition + BkliteRight_width;    \
-  r.bottom = BkliteRight_yposition + BkliteRight_height;   \
-  InvalidateRect(hMainWindow, &r, KNI_TRUE);               \
-}
 
 void win32app_init() {
-    inFullScreenMode = KNI_FALSE;
-
     CreateEmulatorWindow();
 }
 
 /**
- * Bridge function to request logical screen to be painted
- * to the physical screen.
- * <p>
- * On win32 there are 3 bitmap buffers, putpixel screen buffer, the phone
- * bitmap that includes an LCD screen area, and the actual window buffer.
- * Paint the screen buffer on the LCD screen area of the phone bitmap.
- * On a real win32 (or high level window API) device the phone bitmap would
- * not be needed and this function would just invalidate the window and
- * when the system call back to paint the window, then the putpixel buffer
- * would be painted to the window.
- *
+ * Utility function to request logical screen to be painted
+ * to the physical screen when screen is in normal mode. 
  * @param x1 top-left x coordinate of the area to refresh
  * @param y1 top-left y coordinate of the area to refresh
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-void win32app_refresh(int x1, int y1, int x2, int y2) {
+static void win32app_refresh_normal(int x1, int y1, int x2, int y2) {
     int x;
     int y;
     int width;
@@ -368,6 +276,174 @@ void win32app_refresh(int x1, int y1, int x2, int y2) {
     invalidateLCDScreen(x1, y1, x2, y2);
 }
 
+/**
+ * Utility function to request logical screen to be painted
+ * to the physical screen when screen is in rotated mode. 
+ * @param x1 top-left x coordinate of the area to refresh
+ * @param y1 top-left y coordinate of the area to refresh
+ * @param x2 bottom-right x coordinate of the area to refresh
+ * @param y2 bottom-right y coordinate of the area to refresh
+ */
+static void win32app_refresh_rotate(int x1, int y1, int x2, int y2) {
+    int x;
+    int y;
+    int width;
+    int height;
+    gxj_pixel_type* pixels = gxj_system_screen_buffer.pixelData;
+    gxj_pixel_type pixel;
+    int r;
+    int g;
+    int b;
+    unsigned char *destBits;
+    unsigned char *destPtr;
+
+    HDC		   hdcMem;
+    HBITMAP	   destHBmp;
+    BITMAPINFO	   bi;
+    HGDIOBJ	   oobj;
+    HDC hdc;
+    
+    REPORT_CALL_TRACE4(LC_HIGHUI,
+                       "LF:STUB:win32app_refresh(%3d, %3d, %3d, %3d )\n",
+                       x1, y1, x2, y2);
+
+    if (x1 < 0) {
+        x1 = 0;
+    }
+
+    if (y1 < 0) {
+        y1 = 0;
+    }
+
+    if (x2 <= x1 || y2 <= y1) {
+        return;
+    }
+
+    if (x2 > gxj_system_screen_buffer.width) {
+        x2 = gxj_system_screen_buffer.width;
+    }
+
+    if (y2 > gxj_system_screen_buffer.height) {
+        y2 = gxj_system_screen_buffer.height;
+    }    
+
+    x = x1;
+    y = y1;
+    width = x2 - x1;
+    height = y2 - y1;
+
+
+    bi.bmiHeader.biSize		 = sizeof(bi.bmiHeader);
+    bi.bmiHeader.biWidth	 = height; //width;
+    bi.bmiHeader.biHeight	 = -width; //-height;
+    bi.bmiHeader.biPlanes	 = 1;
+    bi.bmiHeader.biBitCount	 = sizeof (long) * 8;
+    bi.bmiHeader.biCompression	 = BI_RGB;
+    bi.bmiHeader.biSizeImage	 = width * height * sizeof (long);
+    bi.bmiHeader.biXPelsPerMeter = 0;
+    bi.bmiHeader.biYPelsPerMeter = 0;
+    bi.bmiHeader.biClrUsed	 = 0;
+    bi.bmiHeader.biClrImportant	 = 0;
+
+    hdc = getBitmapDC(NULL);
+
+    hdcMem = CreateCompatibleDC(hdc);
+
+    destHBmp = CreateDIBSection (hdcMem, &bi, DIB_RGB_COLORS, &destBits,
+                                 NULL, 0);
+
+    if (destBits != NULL) {
+	oobj = SelectObject(hdcMem, destHBmp);
+
+        SelectObject(hdcMem, oobj);
+
+    destPtr = destBits;
+
+    pixels += x2-1 + y1 * get_screen_width();
+
+      for (x = x2; x > x1; x--) {
+
+        int y;
+
+        for (y = y1; y < y2; y++) {            
+            r = GXJ_GET_RED_FROM_PIXEL(*pixels);
+            g = GXJ_GET_GREEN_FROM_PIXEL(*pixels);
+            b = GXJ_GET_BLUE_FROM_PIXEL(*pixels);            
+            *destPtr++ = b;
+            *destPtr++ = g;
+            *destPtr++ = r;            
+            destPtr += sizeof(long) - 3*sizeof(*destPtr);
+            pixels += get_screen_width();
+         }
+         pixels += -1 - height * get_screen_width();         
+
+    }    
+
+        SetDIBitsToDevice(hdc, y, get_screen_width() - width - x, height, width, 0, 0, 0,
+                          width, destBits, &bi, DIB_RGB_COLORS);
+}
+
+    DeleteObject(oobj);
+    DeleteObject(destHBmp);
+    DeleteDC(hdcMem);
+    releaseBitmapDC(hdc);
+
+    invalidateLCDScreen(x1, y1, x1 + height, y1 + width);
+}
+
+
+/**
+ * Bridge function to request logical screen to be painted
+ * to the physical screen.
+ * <p>
+ * On win32 there are 3 bitmap buffers, putpixel screen buffer, the phone
+ * bitmap that includes an LCD screen area, and the actual window buffer.
+ * Paint the screen buffer on the LCD screen area of the phone bitmap.
+ * On a real win32 (or high level window API) device the phone bitmap would
+ * not be needed and this function would just invalidate the window and
+ * when the system call back to paint the window, then the putpixel buffer
+ * would be painted to the window.
+ *
+ * @param x1 top-left x coordinate of the area to refresh
+ * @param y1 top-left y coordinate of the area to refresh
+ * @param x2 bottom-right x coordinate of the area to refresh
+ * @param y2 bottom-right y coordinate of the area to refresh
+ */
+void win32app_refresh(int x1, int y1, int x2, int y2) {
+    if (reverse_orientation) {
+        win32app_refresh_rotate(x1, y1, x2, y2);
+    } else {
+        win32app_refresh_normal(x1, y1, x2, y2);
+    }
+}
+
+/**
+ * Invert screen rotation flag
+ */
+jboolean win32app_reverse_orientation() {
+    reverse_orientation = !reverse_orientation;
+    resizeScreenBuffer();
+    return reverse_orientation;
+}
+
+/**
+ * Get screen rotation flag
+ */
+jboolean win32app_get_reverse_orientation() {
+    return reverse_orientation;
+}
+
+/**
+ * Set full screen mode on/off
+ */
+void win32app_set_fullscreen_mode(jboolean mode) {
+    if (inFullScreenMode != mode) {
+        inFullScreenMode = mode;
+        resizeScreenBuffer();
+    }
+}
+
+
 void win32app_finalize() {
 
     if (hMainWindow != NULL) {
@@ -404,27 +480,17 @@ jboolean drawBackLight(int mode) {
     }
     else {
         CreateBacklight(hdc);
-
         if ((mode == BACKLIGHT_ON) || 
             (mode == BACKLIGHT_TOGGLE && isBklite_on == KNI_FALSE)) {
             isBklite_on = KNI_TRUE;
-            DrawBitmap(hdc, bklite_Top_Image, BkliteTop_xposition,
-                       BkliteTop_yposition, SRCCOPY);
-            DrawBitmap(hdc, bklite_Bottom_Image, BkliteBottom_xposition,
-                       BkliteBottom_yposition, SRCCOPY);
-            DrawBitmap(hdc, bklite_Left_Image, BkliteLeft_xposition,
-                       BkliteLeft_yposition, SRCCOPY);
-            DrawBitmap(hdc, bklite_Right_Image, BkliteRight_xposition,
-                       BkliteRight_yposition, SRCCOPY);
+            DrawBitmap(hdc, hPhoneLightBitmap, 0, 0, SRCCOPY);
+            invalidateLCDScreen(0, 0, get_screen_width(), get_screen_height());
             result = KNI_TRUE;
         } else if ((mode == BACKLIGHT_OFF) ||
                   (mode == BACKLIGHT_TOGGLE && isBklite_on == KNI_TRUE)){
             if (isBklite_on) {
                 isBklite_on = KNI_FALSE;
-                INVALIDATE_BACKLIGHT_TOPBAR();
-                INVALIDATE_BACKLIGHT_BOTTOMBAR();
-                INVALIDATE_BACKLIGHT_LEFTBAR();
-                INVALIDATE_BACKLIGHT_RIGHTBAR();
+                InvalidateRect(hMainWindow, NULL, KNI_TRUE);
             }
             result = KNI_TRUE;
         }
@@ -432,58 +498,6 @@ jboolean drawBackLight(int mode) {
 
     ReleaseDC(hMainWindow, hdc);
     return result;
-}
-
-static void CreateBacklight(HDC hdc) {
-
-    if (KNI_FALSE == bkliteImageCreated) {
-
-        int cmapLen;
-        BITMAPINFOHEADER* bkliteTopInfo = bkliteTop_dib;
-        BITMAPINFOHEADER* bkliteBottomInfo = bkliteBottom_dib;
-        BITMAPINFOHEADER* bkliteLeftInfo = bkliteLeft_dib;
-        BITMAPINFOHEADER* bkliteRightInfo = bkliteRight_dib;
-
-        /* Create top backlight bar */
-        cmapLen = (bkliteTopInfo->biBitCount > 8) ? 0 :
-        (bkliteTopInfo->biClrUsed ? bkliteTopInfo->biClrUsed :
-         (1 << bkliteTopInfo->biBitCount));
-        bklite_Top_Image = CreateDIBitmap(hdc, bkliteTopInfo, CBM_INIT,
-                      ((char*)bkliteTopInfo) + bkliteTopInfo->biSize
-                      + 4 * cmapLen, (BITMAPINFO*)bkliteTopInfo,
-                      DIB_RGB_COLORS);
-
-        /* Create bottom backlight bar */
-        cmapLen = (bkliteBottomInfo->biBitCount > 8) ? 0 :
-        (bkliteBottomInfo->biClrUsed ? bkliteBottomInfo->biClrUsed :
-         (1 << bkliteBottomInfo->biBitCount));
-        bklite_Bottom_Image = CreateDIBitmap(hdc, bkliteBottomInfo, CBM_INIT,
-                      ((char*)bkliteBottomInfo) + bkliteBottomInfo->biSize
-                      + 4 * cmapLen, (BITMAPINFO*)bkliteBottomInfo,
-                      DIB_RGB_COLORS);
-
-        /* Create left backlight bar */
-        cmapLen = (bkliteLeftInfo->biBitCount > 8) ? 0 :
-        (bkliteLeftInfo->biClrUsed ? bkliteLeftInfo->biClrUsed :
-         (1 << bkliteLeftInfo->biBitCount));
-        bklite_Left_Image = CreateDIBitmap(hdc, bkliteLeftInfo, CBM_INIT,
-                      ((char*)bkliteLeftInfo) + bkliteLeftInfo->biSize
-                      + 4 * cmapLen, (BITMAPINFO*)bkliteLeftInfo,
-                      DIB_RGB_COLORS);
-
-        /* Create right backlight bar */
-        cmapLen = (bkliteRightInfo->biBitCount > 8) ? 0 :
-        (bkliteRightInfo->biClrUsed ? bkliteRightInfo->biClrUsed :
-         (1 << bkliteRightInfo->biBitCount));
-        bklite_Right_Image = CreateDIBitmap(hdc, bkliteRightInfo, CBM_INIT,
-                      ((char*)bkliteRightInfo) + bkliteRightInfo->biSize
-                      + 4 * cmapLen, (BITMAPINFO*)bkliteRightInfo,
-                      DIB_RGB_COLORS);
-
-        bkliteImageCreated = KNI_TRUE;
-
-    }
-
 }
 
 static jint mapKey(WPARAM wParam, LPARAM lParam) {
@@ -497,8 +511,14 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
     case VK_F2:
         return KEY_SOFT2;
 
+     case VK_F3:
+        return KEY_SCREEN_ROT;
+
     case VK_F9:
         return KEY_GAMEA;
+
+    case VK_F4:
+        return MD_KEY_SWITCH_APP;
 
     case VK_F10:
         return KEY_GAMEB;
@@ -635,12 +655,29 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         case KEY_INVALID:
             return 0;
 
+        case MD_KEY_SWITCH_APP:
+            if (iMsg == WM_KEYDOWN) {
+                return 0;
+            }
+            pMidpEventResult->type = SELECT_FOREGROUND_EVENT;
+            pMidpEventResult->intParam1 = 1;
+            pSignalResult->waitingFor = AMS_SIGNAL;
+            return 0;
+
+    	case KEY_SCREEN_ROT:
+	        if (iMsg == WM_KEYDOWN) {
+	            return 0;
+            }
+            pMidpEventResult->type = ROTATION_EVENT;
+	        pSignalResult->waitingFor = UI_SIGNAL;
+            return 0;
         case MD_KEY_HOME:
             if (iMsg == WM_KEYDOWN) {
                 return 0;
             }
 
             pMidpEventResult->type = SELECT_FOREGROUND_EVENT;
+            pMidpEventResult->intParam1 = 0;
             pSignalResult->waitingFor = AMS_SIGNAL;
             return 0;
 
@@ -683,9 +720,8 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         y = (short)HIWORD(lParam);
 
         if ((INSIDE(x, y, SCREEN_BOUNDS)) || (penDown)) {
-            /* The max possible values for the X & Y coordinates */
-            int maxX = DISPLAY_X + DISPLAY_WIDTH - 1;
-            int maxY = DISPLAY_Y + DISPLAY_HEIGHT - 1;
+            /* The max possible values for the X & Y coordinates */   
+            int maxX, maxY;
  
             /*
              * Check to see if we have moved the mouse outside of
@@ -694,12 +730,21 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
              * events to the MIDlet, but, with at least one
              * coordinate "pegged" to the edge of the screen.
              */
-            pMidpEventResult->X_POS = min(x, maxX) - DISPLAY_X;
+            if (reverse_orientation) {
+                maxX = DISPLAY_Y + get_screen_width() - 1;
+                maxY = DISPLAY_X + get_screen_height() - 1;
+                pMidpEventResult->X_POS = min(get_screen_width() - y + DISPLAY_Y, maxX - DISPLAY_Y);
+                pMidpEventResult->Y_POS = min(x, maxY) - DISPLAY_X;
+            } else {
+                maxX = DISPLAY_X + get_screen_width() - 1;
+                maxY = DISPLAY_Y + get_screen_height() - 1;
+                pMidpEventResult->X_POS = min(x, maxX) - DISPLAY_X;
+                pMidpEventResult->Y_POS = min(y, maxY) - DISPLAY_Y;                        
+            }
             if (pMidpEventResult->X_POS < 0) {
                 pMidpEventResult->X_POS = 0;
             }
 
-            pMidpEventResult->Y_POS = min(y, maxY) - DISPLAY_Y;
             if (pMidpEventResult->Y_POS < 0) {
                 pMidpEventResult->Y_POS = 0;
             }
@@ -884,124 +929,97 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProc (hwnd, iMsg, wParam, lParam);
 }
 
-static int strcasecmp(const char *a, const char *b) {
-    while (*a && *b) {
-        int d = tolower(*a) - tolower(*b);
-        if (d) return d;
-        ++a;
-        ++b;
+/**
+ * Return screen width
+ */
+int get_screen_width() {
+    if (reverse_orientation) {
+        return inFullScreenMode ? CHAM_FULLHEIGHT : CHAM_HEIGHT;
+    } else {
+        return inFullScreenMode ? CHAM_FULLWIDTH : CHAM_WIDTH;
     }
-
-    return tolower(*a) - tolower(*b);
-}
-
-static void CreateScreenBitmap(HDC hdc) {
-    HDC hdcMem = CreateCompatibleDC(hdc);
-    BITMAPINFOHEADER* b = phone_dib;
-    HBITMAP img, tmp;
-    int cmapLen;
-
-    BITMAPINFOHEADER* grayLEDInfo = grayLED_dib;
-    BITMAPINFOHEADER* greenLEDInfo = greenLED_dib;
-    BITMAPINFOHEADER* topbarInfo = topbar_dib;
-
-    backgroundColor = lightGrayPixel;
-    foregroundColor = blackPixel;
-
-    hPhoneBitmap = CreateCompatibleBitmap(hdc,
-                                           EMULATOR_WIDTH, EMULATOR_HEIGHT);
-    CHECK_RETURN(tmp = SelectObject(hdcMem, hPhoneBitmap));
-
-    cmapLen = (b->biBitCount > 8) ? 0 :
-        (b->biClrUsed ? b->biClrUsed : (1 << b->biBitCount));
-
-    img = CreateDIBitmap(hdc, b, CBM_INIT,
-                        ((char*)b) + b->biSize + 4*cmapLen,
-                       (BITMAPINFO*)b, DIB_RGB_COLORS);
-
-    DrawBitmap(hdcMem, img, 0, 0, SRCCOPY);
-
-    CHECK_RETURN(SelectObject(hdcMem, BACKGROUND_PEN));
-    CHECK_RETURN(SelectObject(hdcMem, BACKGROUND_BRUSH));
-
-    Rectangle(hdcMem, DISPLAY_X, DISPLAY_Y,
-              DISPLAY_X + DISPLAY_WIDTH, DISPLAY_Y + DISPLAY_HEIGHT);
-
-    DeleteObject(img);
-
-    cmapLen = (topbarInfo->biBitCount > 8) ? 0 :
-        (topbarInfo->biClrUsed ? topbarInfo->biClrUsed :
-         (1 << topbarInfo->biBitCount));
-
-    topbar_Image = CreateDIBitmap(hdc, topbarInfo, CBM_INIT,
-                                  ((char*)topbarInfo) + topbarInfo->biSize +
-                                  4*cmapLen, (BITMAPINFO*)topbarInfo,
-                                  DIB_RGB_COLORS);
-    
-    DrawBitmap(hdcMem, topbar_Image, X_SCREEN_OFFSET, Y_SCREEN_OFFSET,
-               SRCCOPY);
-
-    /* Create dim (default) network indicator and draw it */
-    cmapLen = (grayLEDInfo->biBitCount > 8) ? 0 :
-        (grayLEDInfo->biClrUsed ? grayLEDInfo->biClrUsed :
-         (1 << grayLEDInfo->biBitCount));
-
-    LED_off_Image = CreateDIBitmap(hdc, grayLEDInfo, CBM_INIT,
-                                   ((char*)grayLEDInfo) + grayLEDInfo->biSize +
-                                   4*cmapLen, (BITMAPINFO*)grayLEDInfo,
-                                   DIB_RGB_COLORS);
-    DrawBitmap(hdcMem, LED_off_Image, LED_xposition, LED_yposition, SRCCOPY);
-
-    /* Create bright network indicator */
-    cmapLen = (greenLEDInfo->biBitCount > 8) ? 0 :
-        (greenLEDInfo->biClrUsed ? greenLEDInfo->biClrUsed :
-         (1 << greenLEDInfo->biBitCount));
-    LED_on_Image = CreateDIBitmap(hdc, greenLEDInfo, CBM_INIT,
-                                  ((char*)greenLEDInfo) + greenLEDInfo->biSize
-                                  + 4 * cmapLen, (BITMAPINFO*)greenLEDInfo,
-                                  DIB_RGB_COLORS);
-
-    /* Create trusted icon */
-    /*
-    cmapLen = (trustIconInfo->biBitCount > 8) ? 0 :
-        (trustIconInfo->biClrUsed ?
-        trustIconInfo->biClrUsed :
-        (1 << trustIconInfo->biBitCount));
-
-    TrustIcon_Image = CreateDIBitmap(hdc, trustIconInfo, CBM_INIT,
-                                     ((char*)trustIconInfo)
-                                     + trustIconInfo->biSize
-                                     + 4 * cmapLen,
-                                     (BITMAPINFO*)trustIconInfo,
-                                     DIB_RGB_COLORS);
-    */
-
-    /* SetTextColor(hdcMem, RGB(255,255,255)); */
-    /* SetTextAlign(hdcMem, TA_TOP | TA_LEFT); */
-    /* SetBkMode(hdcMem, TRANSPARENT); */
-    /* TextOut(hdcMem, 8, 8, "kvm", 3); */
-    /* SetBkMode(hdcMem, OPAQUE); */
-    //SetBkMode(hdcMem, OPAQUE);
-    //SetBkColor(hdcMem, backgroundColor);
-
-    SelectObject(hdcMem, tmp);
-    DeleteDC(hdcMem);
 }
 
 /**
- * Initializes the screen back buffer
+ * Return screen height
  */
-static void initScreenBuffer(int w, int h) {
-    gxj_system_screen_buffer.width = w;
-    gxj_system_screen_buffer.height = h;
-    gxj_system_screen_buffer.pixelData = 
-      (gxj_pixel_type*)midpMalloc(w*h*sizeof(gxj_pixel_type));
-    gxj_system_screen_buffer.alphaData = NULL;
-    
-    if (gxj_system_screen_buffer.pixelData == NULL) {
-    	REPORT_CRIT(LC_HIGHUI, "gxj_system_screen_buffer allocation failed");
+int get_screen_height() {
+    if (reverse_orientation) {
+        return inFullScreenMode ? CHAM_FULLWIDTH : CHAM_WIDTH;
+    } else {
+        return inFullScreenMode ? CHAM_FULLHEIGHT : CHAM_HEIGHT;
     }
 }
+
+/**
+ * Resizes the screen back buffer
+ */
+static void resizeScreenBuffer() {
+
+    int newWidth = get_screen_width();
+    int newHeight = get_screen_height();
+    int newScreenSize = sizeof(gxj_pixel_type) * newWidth * newHeight;
+    if (gxj_system_screen_buffer.pixelData != NULL) {
+        if (newScreenSize != sizeof(gxj_pixel_type) 
+                * gxj_system_screen_buffer.width 
+                * gxj_system_screen_buffer.height) {
+            // free screen buffer
+            midpFree(gxj_system_screen_buffer.pixelData);
+            gxj_system_screen_buffer.pixelData = NULL;
+        }
+    }
+
+
+    gxj_system_screen_buffer.width = newWidth;
+    gxj_system_screen_buffer.height = newHeight;
+    gxj_system_screen_buffer.alphaData = NULL;
+
+    if (gxj_system_screen_buffer.pixelData == NULL) {
+        gxj_system_screen_buffer.pixelData = 
+            (gxj_pixel_type *)midpMalloc(newScreenSize);
+    }
+
+    if (gxj_system_screen_buffer.pixelData == NULL) {
+        REPORT_CRIT(LC_HIGHUI, "gxj_system_screen_buffer allocation failed");
+    } else {
+        memset(gxj_system_screen_buffer.pixelData, 0, newScreenSize);
+    }
+}
+
+void getBitmapSize(HBITMAP img, int* width, int* height){
+    BITMAPINFO bitmapInfo=        {{sizeof(BITMAPINFOHEADER)}};
+    GetDIBits(GetDC(NULL),img,1,0,0,&bitmapInfo,DIB_RGB_COLORS);
+    if (width!=NULL) {
+        *width=bitmapInfo.bmiHeader.biWidth;
+    }
+    if (height!=NULL) {
+        *height=bitmapInfo.bmiHeader.biHeight+28;
+    }
+
+}
+
+HBITMAP loadBitmap(char* path, int* width, int* height){
+    HBITMAP hBitmap;
+
+    hBitmap = (HBITMAP) LoadImage (GetModuleHandle(NULL), path, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    if (NULL == hBitmap) {
+        printf("Cannot load background image from resources.\n");
+        return NULL;
+    }
+    getBitmapSize(hBitmap, width, height);
+    return hBitmap;
+}
+
+static void CreateBacklight(HDC hdc) {
+
+    int width, height;
+    if (KNI_FALSE == bkliteImageCreated) {
+        hPhoneLightBitmap = loadBitmap("phone_hilight.bmp",&width,&height);
+        bkliteImageCreated = KNI_TRUE;
+    }
+
+}
+
 
 static void CreateEmulatorWindow() {
     HINSTANCE hInstance = GetModuleHandle(NULL);
@@ -1012,7 +1030,11 @@ static void CreateEmulatorWindow() {
     static WORD graybits[] = {0xaaaa, 0x5555, 0xaaaa, 0x5555,
                               0xaaaa, 0x5555, 0xaaaa, 0x5555};
 
-    unsigned int width = EMULATOR_WIDTH, height = EMULATOR_HEIGHT;
+    unsigned int width ;// = EMULATOR_WIDTH;
+    unsigned int height; // = EMULATOR_HEIGHT;
+    static char caption[32];
+
+    hPhoneBitmap = loadBitmap("phone.bmp",&width,&height);
 
     if (initialized) {
         return;
@@ -1056,7 +1078,11 @@ static void CreateEmulatorWindow() {
     hMainWindow = hwnd;
 
     /* create back buffer from mutable image, include the bottom bar. */
-    initScreenBuffer(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    gxj_system_screen_buffer.pixelData = NULL;
+    gxj_system_screen_buffer.width = 0;
+    gxj_system_screen_buffer.height = 0;
+    gxj_system_screen_buffer.alphaData = NULL;
+    resizeScreenBuffer();
 
     /* colors chosen to match those used in topbar.h */
     whitePixel = 0xffffff;
@@ -1077,10 +1103,6 @@ static void CreateEmulatorWindow() {
     BACKGROUND_PEN   = CreatePen(PS_SOLID, 1, backgroundColor);
     FOREGROUND_BRUSH = CreateSolidBrush(foregroundColor);
     FOREGROUND_PEN   = CreatePen(PS_SOLID, 1, foregroundColor);
-
-    hdc = GetDC(hwnd);
-    CreateScreenBitmap(hdc);
-    ReleaseDC(hwnd, hdc);
 
     ShowWindow(hwnd, SW_SHOWNORMAL);
     UpdateWindow(hwnd);

@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_export.cpp	1.6 06/04/05 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -102,6 +102,36 @@ void lfpport_set_fullscreen_mode(jboolean mode) {
     PlatformMIDPMainWindow::getMainWindow();
   mainWindow->setFullScreen(mode);
   inFullScreenMode = mode;
+}
+
+jboolean lfpport_reverse_orientation()
+{
+    jboolean res = qteapp_get_mscreen()->reverse_orientation();
+    PlatformMIDPMainWindow * mainWindow =
+        PlatformMIDPMainWindow::getMainWindow();
+    mainWindow->resize();
+    return res;
+}
+
+jboolean lfpport_get_reverse_orientation()
+{
+    return qteapp_get_mscreen()->get_reverse_orientation();
+}
+
+int lfpport_get_screen_width() {
+    if (inFullScreenMode) {
+        return qteapp_get_mscreen()->getDisplayFullWidth();
+    } else {
+        return qteapp_get_mscreen()->getDisplayWidth();
+    }
+}
+
+int lfpport_get_screen_height() {
+    if (inFullScreenMode) {
+        return qteapp_get_mscreen()->getDisplayFullHeight();
+    } else {
+        return qteapp_get_mscreen()->getDisplayHeight();            
+    }
 }
 
 /**

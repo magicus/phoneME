@@ -1,4 +1,5 @@
 #
+# 	
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -70,6 +71,18 @@ define verify_cldc
         grep "^\#define ENABLE_MONET[[:space:]]\+0" \
     	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
         echo 'ERROR: VM MONET setting mismatches.'; \
+        exit -1; \
+    fi; \
+    if [ "$(USE_VERIFY_ONCE)" = "true" ] && \
+        grep "^\#define ENABLE_VERIFY_ONLY[[:space:]]\+0" \
+    	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+        echo 'ERROR: VM VERIFY ONCE setting mismatches.'; \
+        exit -1; \
+    fi; \
+    if [ "$(USE_VM_PROFILES)" = "true" ] && \
+        grep "^\#define ENABLE_MULTIPLE_PROFILES_SUPPORT[[:space:]]\+0" \
+    	$(CLDC_DIST_DIR)/include/jvmconfig.h > /dev/null ; then \
+        echo 'ERROR: ENABLE_MULTIPLE_PROFILES_SUPPORT setting mismatches.'; \
         exit -1; \
     fi; \
     if [ "$(USE_JAVA_PROFILER)" = "true" ] && \
@@ -201,14 +214,14 @@ $(MIDP_OUTPUT_DIR)/ROMImage.cpp: $(MIDP_OUTPUT_DIR)/classes.zip \
 		
 	@echo	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
 		-cp $(MIDP_OUTPUT_DIR)/classes.zip \
-		-romize =HeapCapacity32M \
+		-romize =HeapCapacity96M \
 		$(foreach path, $(ROMGEN_INCLUDE_PATHS), \
-		-romincludepath $(path)) $(LOG_ONLY)		
+		-romincludepath $(path)) $(LOG)		
 		
 	@cd $(MIDP_OUTPUT_DIR); \
 	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
 		-cp $(MIDP_OUTPUT_DIR)/classes.zip \
-		-romize =HeapCapacity32M \
+		-romize =HeapCapacity96M \
 		$(foreach path, $(ROMGEN_INCLUDE_PATHS), \
 		-romincludepath $(path)) $(LOG)
 

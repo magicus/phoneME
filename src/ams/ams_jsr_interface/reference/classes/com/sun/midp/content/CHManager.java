@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -39,21 +40,19 @@ import com.sun.midp.installer.InstallState;
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
-import java.util.Vector;
-
 /**
  * Stub interface to handle ContentHandlers functions.
  * If ContentHandlers are not supported it provides a no-op
  * implementation.
- * The "real" Content Handler implementation is 
+ * The "real" Content Handler implementation is
  * {@link com.sun.midp.content.CHInstallerImpl}.
  * The methods here are called at by the {@link Installer}
  *  at the appropriate times to
  * {@link #preInstall parse and verify the JAD/Manifest attributes} and
  * {@link #install remove old content handlers and register new ones}.
- * When a suite is to be removed the content handlers are 
+ * When a suite is to be removed the content handlers are
  * {@link #uninstall uninstalled}.
- * At startup {@link #initCleanupMonitor} to initialize any 
+ * At startup {@link #initCleanupMonitor} to initialize any
  * necessary cleanup handling when the application exits.
  * When a MIDlet is about to created the
  * {@link #midletAdded} method is called.
@@ -65,9 +64,9 @@ import java.util.Vector;
  * {@link #getInstallURL} method to check if a URL is available
  * and should be installed. When it succeeds or fails the
  * {@link #installDone} method is called to complete the invocation.
- * The registration of the GraphicalInstaller as a content handler 
+ * The registration of the GraphicalInstaller as a content handler
  * for the types and suffixes for java archives and
- * java application descriptors is handled by 
+ * java application descriptors is handled by
  * {@link com.sun.midp.content.Registry#initGraphicalInstaller}.
  *
  * @see GraphicalInstaller
@@ -90,7 +89,7 @@ public class CHManager {
      * if content handlers are not supported.
      * @param token the SecurityToken to get the CHManager
      * @return the CHInstaller instance to be used to handle
-     *  management and installation of content handlers. 
+     *  management and installation of content handlers.
      * @see com.sun.midp.content.CHInstaller
      * @exception SecurityException if the token or suite is not allowed
      */
@@ -98,10 +97,10 @@ public class CHManager {
         if (token != null) {
             token.checkIfPermissionAllowed(Permissions.MIDP);
         } else {
-            MIDletSuite msuite = 
+            MIDletSuite msuite =
                 MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
             if (msuite != null) {
-                msuite.checkIfPermissionAllowed(Permissions.AMS);           
+                msuite.checkIfPermissionAllowed(Permissions.AMS);
             }
         }
 
@@ -116,17 +115,17 @@ public class CHManager {
 	}
 	return manager;
     }
-    
+
     /**
      * Install the content handlers found and verified by preInstall.
      * Register any content handlers parsed from the JAD/Manifest
-     * attributes.  
+     * attributes.
      * @exception InvalidJadException thrown if the application
      *   descriptor is invalid
      */
     public void install() throws InvalidJadException {
     }
-    
+
     /**
      * Parse the ContentHandler attributes and check for errors.
      * <ul>
@@ -149,21 +148,21 @@ public class CHManager {
      * the option field is not "true", "false" or blank or if there are
      * more than five comma separated fields on the line.
      */
-    public void preInstall(Installer installer, 
-			   InstallState state, 
+    public void preInstall(Installer installer,
+			   InstallState state,
 			   MIDletSuite msuite,
 			   String authority)
 	throws InvalidJadException {
     }
-    
+
     /**
      * Uninstall the Content handler specific information for
-     * the specified suiteID.
-     * @param suiteID the suiteID
+     * the specified suiteId.
+     * @param suiteId the suite ID
      */
-    public void uninstall(String suiteID) {
+    public void uninstall(int suiteId) {
     }
-    
+
     /**
      * Check for a URL to install from the Invocation mechanism,
      * if one has been queued.
@@ -179,7 +178,7 @@ public class CHManager {
      * Notify the invocation mechanism that the install
      * of the URL provided by {@link #getURLToInstall}
      * succeeded or failed.
-     * @param success <code>true</code> if the install was a success; 
+     * @param success <code>true</code> if the install was a success;
      *  <code>false</code> otherwise
      * @see com.sun.midp.content.CHInstallerImpl
      */
@@ -199,11 +198,11 @@ public class CHManager {
      * Notification that a MIDlet is about to be created.
      * Stub implementation used when CHAPI is not present.
      *
-     * @param suiteID the storage name of the MIDlet suite
+     * @param suiteId the storage name of the MIDlet suite
      * @param classname the midlet classname
      * @see com.sun.midp.midlet.MIDletState
      */
-    public void midletInit(String suiteID, String classname) {
+    public void midletInit(int suiteId, String classname) {
     }
 
 }

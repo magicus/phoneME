@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -30,7 +31,7 @@ package com.sun.midp.events;
  * <p>
  * Since KNI does not allow creation of Java objects an empty object
  * must be create at the Java level to be filled in by the native level.
- * Because the Java level may not know what native event is pending (this 
+ * Because the Java level may not know what native event is pending (this
  * to save native method calls) it the object sent down must be able to
  * handle the data of any native event.</p>
  */
@@ -61,6 +62,9 @@ public class NativeEvent extends Event {
 
     /** Fourth int parameter for the event. Event dependent. */
     public int intParam4;
+
+    /** Fifth int parameter for the event. Event dependent. */
+    public int intParam5;
 
     /** First string parameter for the event. Event dependent. */
     public String stringParam1;

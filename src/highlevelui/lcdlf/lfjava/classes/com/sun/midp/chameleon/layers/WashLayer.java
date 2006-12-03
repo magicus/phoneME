@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,6 +27,7 @@
 package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.chameleon.CLayer;
+import com.sun.midp.chameleon.MIDPWindow;
 import com.sun.midp.chameleon.skins.*;
 
 import javax.microedition.lcdui.*;
@@ -37,7 +39,7 @@ public class WashLayer extends CLayer {
     
     public WashLayer() {
         super(ScreenSkin.IMAGE_WASH, -1);
-        setVisible(false);
+        setVisible(true);
         setOpaque(false);
     }
     
@@ -52,6 +54,21 @@ public class WashLayer extends CLayer {
     protected void initialize() {
         super.initialize();
         bounds[H] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT;        
+    }
+
+    /**
+     * Update bounds of layer
+     *
+     * @param layers - current layer can be dependant on this parameter
+     */
+    public void update(CLayer[] layers) {
+        super.update(layers);
+        bounds[W] = ScreenSkin.WIDTH;
+        if (layers[MIDPWindow.BTN_LAYER].isVisible()) {
+            bounds[H] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT;    
+        } else {
+            bounds[H] = ScreenSkin.HEIGHT;
+        }
     }
 }
 

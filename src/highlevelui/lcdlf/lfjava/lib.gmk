@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -53,6 +54,7 @@ vpath % $(LCDLF_J_DIR)/native
 SUBSYSTEM_LCDLF_NATIVE_FILES += \
     lfj_export.c \
     lfj_cskin.c \
+    lfj_native_input_mode.c \
     lfj_image_rom.c	
 
 
@@ -87,6 +89,8 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/lcdui/TextInfo.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/lcdui/TextCursor.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/CLayer.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/CLayerElement.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/CLayerList.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/CWindow.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/CGraphicsQ.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/CGraphicsUtil.java \
@@ -101,6 +105,8 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/KeyboardInputMode.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/SymbolInputMode.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/PredictiveTextInputMode.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/NativeInputMode.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/InputModeFactory.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/PTDictionary.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/PTIterator.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/input/PTDictionaryFactory.java \
@@ -136,9 +142,11 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/StringItemResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/ImageItemResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/FontResources.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/FontResourcesConstants.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/AlertResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/ScreenResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/ScrollIndResources.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/ScrollIndResourcesConstants.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/MenuResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SoftButtonResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/TitleResources.java \
@@ -146,13 +154,19 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/PTIResources.java \
     $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/ImageTunnel.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesConstants.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/AlertLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/TitleLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/TickerLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/BodyLayer.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/BackgroundLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/ScrollIndLayer.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/ScrollArrowLayer.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/ScrollBarLayer.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/ScrollListener.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/SoftButtonLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/PopupLayer.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/ScrollablePopupLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/MenuLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/CascadeMenuLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/WashLayer.java \
@@ -160,8 +174,7 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/PTILayer.java
 
 # romized skin files
-SUBSYSTEM_LCDLF_ROMIZED_SKIN_JAVA_FILE = \
-	$(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/RomizedSkin.java
+SUBSYSTEM_LCDLF_ROMIZED_SKIN_BIN_FILE = $(GENERATED_DIR)/lib/skin.bin
 
 
 # Command for invoking skin romization tool
@@ -180,10 +193,8 @@ define romize_skin
 	@$(INT_ROMIZE_SKIN) \
 		-xml $(SUBSYSTEM_CONFIGURATION_MERGED_FILE) \
 		-imagedir `$(call fixcygpath, $(SUBSYSTEM_LCDLF_SKIN_RESOURCES_DIR))` \
-		-outjava `$(call fixcygpath, $(SUBSYSTEM_LCDLF_ROMIZED_SKIN_JAVA_FILE))` \
+		-outbin `$(call fixcygpath, $(SUBSYSTEM_LCDLF_ROMIZED_SKIN_BIN_FILE))` \
 		-outc `$(call fixcygpath, $(GENERATED_DIR)/lfj_image_rom.c)`
-
-	@echo $(SUBSYSTEM_LCDLF_ROMIZED_SKIN_JAVA_FILE) >> $(GENERATED_JAVA_LIST)
 endef
     
 # I3test files for the library
@@ -195,7 +206,8 @@ SUBSYSTEM_LCDLF_I3TEST_JAVA_FILES += \
     $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestCommandSorting.java \
     $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestTextFieldInput.java \
     $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestIsShown.java \
-    $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/Test6254765.java 
+    $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/Test6254765.java \
+    $(LCDLF_J_DIR)/i3test/com/sun/midp/chameleon/input/TestNativeInputMode.java  
 #    $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestSizeChanged.java \
 
 endif
@@ -209,6 +221,7 @@ define copy_lcdlf_resources
 	@cp -f $(SUBSYSTEM_LCDLF_RESOURCES_DIR)/*.png $(LIBDIR) $(LOG)
 	@cp -f $(SUBSYSTEM_LCDLF_SKIN_RESOURCES_DIR)/*.png $(LIBDIR) $(LOG)
 	@rm -f $(CHAM_ROMIZED_IMAGE_FILES) $(LOG)
+	@cp -f $(SUBSYSTEM_LCDLF_ROMIZED_SKIN_BIN_FILE) $(LIBDIR) $(LOG)
 endef
 
 

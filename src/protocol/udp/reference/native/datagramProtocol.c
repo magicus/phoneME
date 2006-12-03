@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -42,6 +43,7 @@
 #include <midp_libc_ext.h>
 #include <kni_globals.h>
 #include <pcsl_memory.h>
+#include <suitestore_common.h>
 
 /**
  * @file
@@ -63,20 +65,20 @@ typedef struct Java_com_sun_midp_io_j2me_datagram_Protocol _datagramProtocol;
  * </pre>
  *
  * @param port port to listen on, or 0 to have one selected
- * @param suiteID the ID of the current MIDlet suite
+ * @param suiteId the ID of the current MIDlet suite
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_io_j2me_datagram_Protocol_open0(void) {
     int port;
+    SuiteIdType suiteId;
     jboolean tryOpen = KNI_TRUE;
 
-    KNI_StartHandles(2);
+    KNI_StartHandles(1);
     KNI_DeclareHandle(thisObject);
-    KNI_DeclareHandle(suiteID);
     KNI_GetThisPointer(thisObject);
 
     port = (int)KNI_GetParameterAsInt(1);
-    KNI_GetParameterAsObject(2, suiteID);
+    suiteId = KNI_GetParameterAsInt(2);
 
     if (getMidpDatagramProtocolPtr(thisObject)->nativeHandle
             != (jint)INVALID_HANDLE) {
@@ -86,12 +88,8 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_open0(void) {
 
     if (tryOpen) {
         int pushReturn;
-
-        SNI_BEGIN_RAW_POINTERS;
-        pushReturn = pushcheckout("datagram", port, 
-            (char*)JavaByteArray(suiteID));
-        SNI_END_RAW_POINTERS;
-        
+        pushReturn = pushcheckout("datagram", port,
+                                  (char*)midp_suiteid2chars(suiteId));
         /*
          * pushcheckout() returns -1 if the handle wasn't found, -2 if it's
          * already in use by another suite, otherwise a valid checked-out
@@ -186,7 +184,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_send0(void) {
     unsigned char ipBytes[MAX_ADDR_LENGTH];
 
     KNI_StartHandles(2);
-        
+
     KNI_DeclareHandle(bufferObject);
     KNI_DeclareHandle(thisObject);
     KNI_GetThisPointer(thisObject);
@@ -199,8 +197,8 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_send0(void) {
 
     socketHandle =
         (void *)getMidpDatagramProtocolPtr(thisObject)->nativeHandle;
-        
-    REPORT_INFO5(LC_PROTOCOL, 
+
+    REPORT_INFO5(LC_PROTOCOL,
         "datagram::send0 off=%d len=%d port=%d ip=0x%x handle=0x%x",
         offset, length, port, ipAddress, (int)socketHandle);
 
@@ -232,7 +230,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_send0(void) {
 	    context = info->pResult;
             SNI_BEGIN_RAW_POINTERS;
 	    status = pcsl_datagram_write_finish(
-                socketHandle, ipBytes, port, 
+                socketHandle, ipBytes, port,
                 (char*)&(JavaByteArray(bufferObject)[offset]),
                 length, &bytesSent, context);
             SNI_END_RAW_POINTERS;
@@ -269,14 +267,14 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_send0(void) {
 }
 
 /**
- * Packs an IP address, port number, and the number of bytes received into a 
+ * Packs an IP address, port number, and the number of bytes received into a
  * jlong value suitable for returning from the receive0 native method.
  */
 static jlong
 pack_recv_retval(int ipAddress, int port, int bytesReceived) {
     return
-        (((jlong)ipAddress) << 32) + 
-        (unsigned)((port & 0xFFFF) << 16) + 
+        (((jlong)ipAddress) << 32) +
+        (unsigned)((port & 0xFFFF) << 16) +
         (bytesReceived & 0xFFFF);
 }
 
@@ -312,13 +310,13 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_receive0(void) {
     KNI_GetParameterAsObject(1, bufferObject);
     offset = (int)KNI_GetParameterAsInt(2);
     length = (int)KNI_GetParameterAsInt(3);
-        
+
     socketHandle =
         (void *)getMidpDatagramProtocolPtr(thisObject)->nativeHandle;
-        
+
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
 
-    REPORT_INFO3(LC_PROTOCOL, 
+    REPORT_INFO3(LC_PROTOCOL,
         "datagram::receive0 off=%d len=%d handle=0x%x",
 	offset, length, (int)socketHandle);
 
@@ -329,14 +327,14 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_receive0(void) {
 
         /*
          * Check the push cache for a waiting datagram.
-         * 
+         *
          * If pusheddatagram() returns -1 [IMPL NOTE: the code checks for less
          * than zero; which is correct?], we need to read a datagram
          * ourselves. Otherwise, pusheddatagram() has returned a waiting
          * datagram and has set ipAddress and port to valid values.
          */
         SNI_BEGIN_RAW_POINTERS;
-        bytesReceived = pusheddatagram((int)socketHandle, &ipAddress, &port, 
+        bytesReceived = pusheddatagram((int)socketHandle, &ipAddress, &port,
                            (char*)&(JavaByteArray(bufferObject)[offset]),
                            length);
         SNI_END_RAW_POINTERS;
@@ -351,7 +349,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_receive0(void) {
                 INC_NETWORK_INDICATOR;
                 SNI_BEGIN_RAW_POINTERS;
                 status = pcsl_datagram_read_start(
-                           socketHandle, ipBytes, &port, 
+                           socketHandle, ipBytes, &port,
                            (char*)&(JavaByteArray(bufferObject)[offset]),
                            length, &bytesReceived, &context);
                 SNI_END_RAW_POINTERS;
@@ -365,7 +363,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_receive0(void) {
                 context = info->pResult;
                 SNI_BEGIN_RAW_POINTERS;
                 status = pcsl_datagram_read_finish(
-                           socketHandle, ipBytes, &port, 
+                           socketHandle, ipBytes, &port,
                            (char*)&(JavaByteArray(bufferObject)[offset]),
                            length, &bytesReceived, context);
                 SNI_END_RAW_POINTERS;
@@ -478,7 +476,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_close0(void) {
         } else {
             /* it was checked into push; don't really close the socket
                but notify a possible listeners to be unblocked */
-            getMidpDatagramProtocolPtr(thisObject)->nativeHandle = 
+            getMidpDatagramProtocolPtr(thisObject)->nativeHandle =
                                                    (jint)INVALID_HANDLE;
             midp_thread_signal(NETWORK_READ_SIGNAL, (int)socketHandle, 0);
             midp_thread_signal(NETWORK_WRITE_SIGNAL, (int)socketHandle, 0);
@@ -493,7 +491,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_close0(void) {
         }
     }
 
-    KNI_EndHandles();  
+    KNI_EndHandles();
     KNI_ReturnVoid();
 }
 
@@ -556,7 +554,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_getIpNumber(void) {
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(hostObject);
-    
+
     KNI_GetParameterAsObject(1, hostObject);
 
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
@@ -564,7 +562,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_getIpNumber(void) {
     if (info == NULL) {  /* First invocation */
         SNI_BEGIN_RAW_POINTERS;
         status = pcsl_network_gethostbyname_start(
-               (char*)JavaByteArray(hostObject), 
+               (char*)JavaByteArray(hostObject),
                 ipBytes, MAX_ADDR_LENGTH, &len, &handle, &context);
         SNI_END_RAW_POINTERS;
     } else {  /* Reinvocation after unblocking the thread */
@@ -580,9 +578,9 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_getIpNumber(void) {
     KNI_EndHandles();
 
     if (status == PCSL_NET_SUCCESS) {
-        /* 
+        /*
          * Convert the unsigned char ip bytes array into an integer
-         * that represents a raw IP address. 
+         * that represents a raw IP address.
          */
         //ipn = pcsl_network_getRawIpNumber(ipBytes);
         memcpy(&ipn, ipBytes, MAX_ADDR_LENGTH);
@@ -590,11 +588,11 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_getIpNumber(void) {
         midp_thread_wait(HOST_NAME_LOOKUP_SIGNAL, (int)handle, context);
     } else {
         /* status is either PCSL_NET_IOERROR or PCSL_NET_INVALID */
-        ipn = -1; 
+        ipn = -1;
         REPORT_INFO1(LC_PROTOCOL,
             "datagram::getIpNumber returns PCSL error code %d", status);
         /*
-         * IOException is thrown at the Java layer when return value 
+         * IOException is thrown at the Java layer when return value
          * is -1
          */
         //KNI_ThrowNew(midpIOException, "Host name could not be resolved");
@@ -628,10 +626,10 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_getMaximumLength0(void) {
     if (socketHandle != INVALID_HANDLE) {
         int status;
 
-        /* 
+        /*
          * IMPL NOTE:
-         * Option=3 represents SO_RCVBUF 
-         * The SO_RCVBUF option is used by the the network implementation 
+         * Option=3 represents SO_RCVBUF
+         * The SO_RCVBUF option is used by the the network implementation
          * as a hint to size the underlying network I/O buffers.
          */
         status = pcsl_network_getsockopt(socketHandle, 3, &len);
@@ -681,10 +679,10 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_getNominalLength0(void) {
     if (socketHandle != INVALID_HANDLE) {
         int status;
 
-        /* 
+        /*
          * IMPL NOTE:
-         * Option=3 represents SO_RCVBUF 
-         * The SO_RCVBUF option is used by the the network implementation 
+         * Option=3 represents SO_RCVBUF
+         * The SO_RCVBUF option is used by the the network implementation
          * as a hint to size the underlying network I/O buffers.
          */
         status = pcsl_network_getsockopt(socketHandle, 3, &len);
@@ -759,7 +757,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_finalize(void) {
  *
  * @return the local IP address as a dotted-quad <tt>String</tt>
  */
-KNIEXPORT KNI_RETURNTYPE_OBJECT 
+KNIEXPORT KNI_RETURNTYPE_OBJECT
 Java_com_sun_midp_io_j2me_datagram_Protocol_getHost0(void) {
     char value[MAX_HOST_LENGTH];
     int status;
@@ -775,7 +773,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_getHost0(void) {
         KNI_ReleaseHandle(result);
     }
 
-    KNI_EndHandlesAndReturnObject(result); 
+    KNI_EndHandlesAndReturnObject(result);
 }
 
 /**

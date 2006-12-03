@@ -1,4 +1,5 @@
 #
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -85,7 +86,12 @@ $(CRYPTO_LIB_DIR):
 
 CRYPTO_LIB = $(CRYPTO_LIB_DIR)/libcrypto$(LIB_SUFFIX)
 
+CRYPTO_ROMGEN_FILE = crypto_rom.config
+
 ifeq ($(USE_BINARY_CRYPTO), true)
+  ROMGEN_INCLUDE_PATHS += $(CRYPTO_OUTPUT_DIR)
+  ROMGEN_CFG_FILES     += $(CRYPTO_ROMGEN_FILE)
+
   LIBS += $(CRYPTO_LIB)
 
   $(MIDP_OUTPUT_DIR)/classes.zip::$(CLASSBINDIR)/com/sun/midp/crypto

@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -29,8 +30,7 @@ LIB_DEPENDENCIES=ams/ams_base
 LIB_JAVA_FILES= \
     com/sun/midp/main/AmsUtil.java \
     com/sun/midp/main/MIDletProxyUtils.java \
-    com/sun/midp/main/MIDletSuiteVerifier.java \
-    com/sun/midp/main/TerminateMIDlet.java
+    com/sun/midp/main/MIDletSuiteVerifier.java
 
 #
 # IMPL_NOTE: revome when decoupling is complete

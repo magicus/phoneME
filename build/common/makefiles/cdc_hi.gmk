@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,16 +25,59 @@
 #
 ######################################################################
 
+# If USE_QT_FB is true, obtain the frame buffer from QT instead
+# of /dev/fb0.
+USE_QT_FB ?= true
+
 ifndef _CDC_GMK_
 _CDC_GMK_	=
 
-include $(CDC_DIST_DIR)/cvm-defines.mk
-EXTRA_CFLAGS	+= $(CVM_DEFINES)
+include $(CDC_DIST_DIR)/generated/build_defs.mk
+EXTRA_CFLAGS	+= $(CCFLAGS_SPEED) $(CVM_DEFINES)
+
+ifeq ($(TARGET_CPU), arm)
+EXTRA_CFLAGS	+= -DARM
+endif
+
+ifeq ($(USE_QT_FB), true)
+    ifeq ($(QTOPIA_SDK_DIR),)
+        export QTOPIA_SDK_DIR = /micro/tools/lib/linux-arm-qt/usr/lib/qt-emb-2.3.2
+    endif
+    ifeq ($(HOST_QTLIBDIR),)
+        HOST_QTLIBDIR = $(QTOPIA_SDK_DIR)/lib
+    endif
+    
+    ifeq ($(TARGET_QTLIBDIR),)
+        TARGET_QTLIBDIR = $(QTOPIA_SDK_DIR)/lib
+    endif
+
+    EXTRA_INCLUDES  += -I$(QTOPIA_SDK_DIR)/include -I$(QTOPIA_SDK_DIR)/include/qpe
+    LIBS		+= -Wl,-rpath,$(TARGET_QTLIBDIR) -L$(HOST_QTLIBDIR) -lqte -lqpe
+endif
+
+ifeq ($(USE_DIRECTFB), true)
+    ifeq ($(DIRECTFB_INSTALL_DIR),)
+        export DIRECTFB_INSTALL_DIR = /usr/local
+    endif
+    ifeq ($(HOST_DIRECTFBLIBDIR),)
+        HOST_DIRECTFBLIBDIR = $(DIRECTFB_INSTALL_DIR)/lib
+    endif
+    
+    ifeq ($(TARGET_DIRECTFBLIBDIR),)
+        TARGET_DIRECTFBLIBDIR = $(DIRECTFB_INSTALL_DIR)/lib
+    endif
+
+    EXTRA_INCLUDES  += -I$(DIRECTFB_INSTALL_DIR)/include/directfb
+    LIBS            += -Wl,-rpath,$(TARGET_DIRECTFBLIBDIR) 
+    LIBS            += -L$(HOST_DIRECTFBLIBDIR) -ldirectfb
+    
+    EXTRA_CFLAGS    += -DDIRECTFB
+endif
 
 #----------------------------------------------------------------------
 # CDC_DIST_DIR --
 #
-# This variable points to the CDC-HI binary distribution directory
+# This variable points to the CDC-VM binary distribution directory
 # from which we obtain the VM library, CDC class library, and other
 # build tools supplied by the VM.
 #
@@ -43,7 +87,7 @@ define cdc_dist_dir_help
 	echo '=========================================================='; \
 	echo 'Setting CDC_DIST_DIR:'; \
 	echo ''; \
-	echo 'If you build the CDC-HI VM yourself, you need to specify'; \
+	echo 'If you build the CDC-VM yourself, you need to specify'; \
 	echo 'CDC_DIST_DIR as something like:'; \
 	echo '    CDC_DIST_DIR=$${CDC_DIR}/build/linux-x86-redhat'; \
 	echo '=========================================================='
@@ -51,10 +95,10 @@ endef
 
 
 CDC_CLASSES_ZIP     = $(CDC_DIST_DIR)/btclasses.zip
-PROFILE_CLASSES_ZIP = $(CDC_DIST_DIR)/lib/foundation.jar
+PROFILE_CLASSES_ZIP = $(CDC_DIST_DIR)/lib/${J2ME_CLASSLIB}.jar
 CDCTEST_CLASSES_ZIP = $(CDC_DIST_DIR)/testclasses.zip
 
-# CDC HI exported include directory
+# CDC VM exported include directory
 #
 CDC_TARGET_CPU_i386 = x86
 CDC_TARGET_CPU_arm  = arm
@@ -62,14 +106,45 @@ CDC_TARGET_CPU      = ${CDC_TARGET_CPU_${TARGET_CPU}}
 
 VM_INCLUDES += -I$(CDC_DIST_DIR)/include -I$(CDC_DIR)/src \
                -I$(CDC_DIR)/src/share -I$(CDC_DIR)/src/share/javavm/export \
-               -I$(CDC_DIR)/src/$(TARGET_OS) -I$(CDC_DIST_DIR) \
-               -I$(CDC_DIR)/src/$(TARGET_OS)-$(CDC_TARGET_CPU) \
-               -I$(CDC_DIR)/src/$(CDC_TARGET_CPU)
+               -I$(CDC_DIR)/src/$(HOST_OS) -I$(CDC_DIST_DIR) \
+               -I$(CDC_DIR)/src/$(HOST_OS)-$(CDC_TARGET_CPU) \
+               -I$(CDC_DIR)/src/$(CDC_TARGET_CPU) \
+	             -I$(MIDP_OUTPUT_DIR) \
+               -I$(MIDP_DIR)/src/core/vm_services/cdc_hi/native
+
+ifeq ($(USE_QT_FB), true)
+VM_INCLUDES += -I$(QTOPIA_SDK_DIR)/include -I$(QTOPIA_SDK_DIR)/include/qpe
+endif
 
 VM_BOOTCLASSPATH = $(CDC_CLASSES_ZIP)$(PATHSEP)${PROFILE_CLASSES_ZIP}
+ifeq ($(CVM_INCLUDE_JUMP), true)
+    VM_BOOTCLASSPATH := $(VM_BOOTCLASSPATH)$(PATHSEP)$(JUMP_API_CLASSESZIP)
+endif
 
 BTCLASSES     = ${CDC_DIST_DIR}/btclasses
 BTCLASSES_ZIP = ${CDC_DIST_DIR}/btclasses.zip
+
+
+# Generate ROMStructs.h
+MIDP_ROMSTRUCTS_CLASSES += \
+	javax.microedition.lcdui.Graphics \
+	javax.microedition.lcdui.Image \
+	javax.microedition.lcdui.ImageData \
+	javax.microedition.lcdui.Font \
+	java.lang.String \
+	com.sun.midp.rms.RecordStoreFile \
+	com.sun.midp.chameleon.input.NativeInputMode \
+	com.sun.midp.io.j2me.storage.RandomAccessStream \
+	javax.microedition.lcdui.game.GameCanvas
+
+ROMSTRUCTS_H = $(MIDP_OUTPUT_DIR)/ROMStructs.h
+
+$(ROMSTRUCTS_H): $(MIDP_OUTPUT_DIR)/classes.zip
+	@echo "creating $@..."
+	@$(JDK_DIR)/bin/javah -old -bootclasspath $(BTCLASSES_ZIP) \
+		-classpath $^ -o $@ \
+		$(MIDP_ROMSTRUCTS_CLASSES)
+	@perl $(MIDP_DIR)/build/common/genROMStructs.pl $@
 
 # A way to add MIDP classes to be romized by CVM:
 # in LF build directory:    make newrom
@@ -77,7 +152,7 @@ BTCLASSES_ZIP = ${CDC_DIST_DIR}/btclasses.zip
 #
 newrom:
 	@cd $(MIDP_OUTPUT_DIR)/classes; jar uvf ${BTCLASSES_ZIP} .
-	@cd ${BTCLASSES}/../foundation_classes/; \
+	@cd ${BTCLASSES}/../${J2ME_CLASSLIB}_classes/; \
 		jar uvf ${BTCLASSES_ZIP} java/util/Timer* 
 	@ls -l ${BTCLASSES_ZIP}
 
@@ -86,119 +161,30 @@ oldrom:
 	@cd ${BTCLASSES}; jar cvf ${BTCLASSES_ZIP} .
 	@ls -l ${BTCLASSES_ZIP}
 
-# The CDC build cannot compile the following files yet. Let's create dummy
-# .o files for now.
+JTWI_NATIVE_FILES += cdc_natives.c
+
+SUBSYSTEM_CORE_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/ams/ams_base/reference/classes/com/sun/midp/main/CDCInit.java 
+
+#    $(SUBSYSTEM_DIR)/ams/ota/reference/classes/com/sun/midp/installer/HelloWorld.java
+
+#
+# Include com.sun.mtask.midlet.PMidletManager class if CVM_MTASK is enabled
+#
+ifeq ($(CVM_MTASK), true)
+SUBSYSTEM_CORE_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/ams/ams_base/reference/classes/com/sun/mtask/midlet/PMidletManager.java
+endif
+
+# The CDC build cannot compile the following files yet. 
 cdc_dummies:
 	@mkdir -p $(GENERATED_DIR)
-	@for i in jvmconfig.h ROMStructs.h dummy.c; do \
+	@for i in jvmconfig.h ; do \
 	    if test ! -f $(GENERATED_DIR)/$$i; then \
 		echo "creating dummy $$i"; \
 		echo '// empty' > $(GENERATED_DIR)/$$i; \
 	    fi; \
 	 done	
-	@for i in \
-		anc_fb_audio \
-		anc_fb_indicator \
-		anc_fb_vibrate \
-		commandLineUtil \
-		conv \
-		datagramProtocol \
-		defaultGenConv \
-		defaultLocale \
-		exitInternal \
-		fbapp_export \
-		fileInstallerShared \
-		findMidlet \
-		gcf_export \
-		gxapi_font_kni \
-		gxapi_graphics_kni \
-		gxapi_image_kni \
-		gxj_font_bitmap \
-		gxj_graphics_asm \
-		gxj_graphics \
-		gxj_imagedatafactory_kni \
-		gxj_image_decode \
-		gxj_image \
-		gxj_png_decode \
-		gxj_putpixel \
-		gxj_text \
-		gxutl_graphics_util \
-		gxutl_image_util \
-		jadParser \
-		jar \
-		JarReader \
-		lcdui_audio \
-		lcdui_display \
-		lcdui_game \
-		lcdui_indicators \
-		lcdui_input \
-		lcdui_vibrate \
-		lfj_cskin \
-		lfj_export \
-		lfjport_fb_export \
-		localeMethod \
-		LocalizedStringsBase \
-		manifestParser \
-		MD2 \
-		MD5 \
-		messagedigest \
-		midletsuiteimpl_kni \
-		midp_alarm_timer_md \
-		midpDataHash \
-		midpEvents \
-		midpEventUtil \
-		midp_file_cache \
-		midp_foreground_id \
-		midpInflate \
-		midpInit \
-		midpintern_suite_storage_common \
-		midpintern_suite_storage \
-		midpJar \
-		midp_logging_kni \
-		midp_logging \
-		midp_master_mode_events \
-		midpMidletAppImageGenerator \
-		midpMIDletProxyList \
-		midpMidletSuiteLoader \
-		midpMidletSuiteVerifier \
-		midp_msgQueue_md \
-		midpNativeThread_md \
-		midp_ota_notifier_db \
-		midp_ota_notifier_kni \
-		midp_platform_request_md \
-		midpport_suite_storage_common \
-		midpport_suite_storage \
-		midp_properties_static \
-		midp_push_registry_kni \
-		midp_push_registry_md \
-		midpResourceLimit \
-		midp_run \
-		midpServices \
-		midp_suite_storage_locks \
-		midp_suite_storage \
-		midp_suite_store_kni \
-		midp_thread \
-		midpUtilKni \
-		nativeFunctionTable \
-		properties_kni \
-		RandomAccessStream \
-		recordStoreFile \
-		recordStoreUtil \
-		rms \
-		ROMImage \
-		runMidlet \
-		serverSocketProtocol \
-		SHA \
-		socket_notify_export \
-		socketProtocol \
-		storageFile \
-		; do \
-	    if test ! -f $(OBJ_DIR)/$$i.o; then \
-		echo "creating dummy $$i.o"; \
-		$(CC) $(CFLAGS) -c $(CC_OUTPUT)$(OBJ_DIR)/$$i.o \
-			$(GENERATED_DIR)/dummy.c; \
-	    fi; \
-	 done
 
 # ifndef _CDC_GMK_
 endif

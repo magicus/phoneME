@@ -1,26 +1,27 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <string.h>
@@ -29,8 +30,8 @@
 #include <midpStorage.h>
 #include <midp_properties_port.h>
 #include <midpInit.h>
-#include <suitestore_port.h>
-
+#include <suitestore_common.h>
+#include <suspend_resume.h>
 
 #if MEASURE_STARTUP
 #include <stdio.h>
@@ -72,11 +73,11 @@ int midpInitialize() {
 #if MEASURE_STARTUP
     extern jlong Java_java_lang_System_currentTimeMillis();
     char msg[128];
-    sprintf(msg, "System Startup Time: Begin at %lld\n",
-	    (long long)Java_java_lang_System_currentTimeMillis());
+    sprintf(msg, "System Startup Time: Begin at %ld\n",
+            (long)Java_java_lang_System_currentTimeMillis());
     pcsl_print(msg);
 #endif
- 
+
     /*
      * Initialization is performed in steps so that we do use any
      * extra resources such as the VM for the operation being performed.
@@ -104,6 +105,15 @@ int midpInit(int level) {
 }
 
 /**
+ * Internal function for retrieving current MIDP initialization level.
+ *
+ * @return maximum initialization level achieved
+ */
+int getMidpInitLevel() {
+    return initLevel;
+}
+
+/**
  * Internal function to initialize MIDP to only the level required by
  * the current functionality being used. This can be called multiple
  * times with the same level or lower.
@@ -125,71 +135,96 @@ int midpInit(int level) {
 int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
     const char* spaceProp;
     long totalSpace;
+    int result = -1; /* error status by default */
 
     if (initLevel >= level) {
         return 0;
     }
 
-    if (initLevel == NO_INIT) {
-        if (midpInitializeMemory(-1) != 0) {
-            return -1;
-        }
-    }
-
-    if (midpHome == NULL) {
-        /* The caller has to set midpHome before calling midpInitialize(). */
-        midpFinalize();
-        return -1;
-    }
-
-    if (level > MEM_LEVEL && initLevel <= MEM_LEVEL) {
-        if (storageInitialize(midpHome) != 0) {
-            initLevel = MEM_LEVEL;
-            midpFinalize();
-            return -1;
+    do {
+        if (midpHome == NULL) {
+            /*
+             * The caller has to set midpHome before calling midpInitialize().
+             */
+            break;
         }
 
-        if (initializeConfig() != 0) {
-            initLevel = MEM_LEVEL + 1;
-            midpFinalize();
-            return -1;
-        }
-
-	/* IMPL_NOTE:revisit for theme loading clean up
-	 * look in javax.microedition.lcdui.Theme for default theme
-        if (initializeThemeConfig() != 0) {
-            initLevel = MEM_LEVEL + 1;
-            midpFinalize();
-            return -1;
-        }
-	*/
-
-	/* 
-	 * in the event that the system.jam_space property is set,
-	 * use it as the maximum space use limit for MIDP MIDlet 
-	 * suites and their record stores.
-	 */
-        spaceProp = getInternalProp("system.jam_space");
-        if (spaceProp != NULL) {
-            totalSpace = atoi(spaceProp);
-            storageSetTotalSpace(totalSpace);
-        }
-    }
-
-    if (level >= VM_LEVEL && initLevel < VM_LEVEL) {
-        if (init != NULL) {
-            if (init() != 0) {
-                midpFinalize();
-                return -1;
+        if (level >= MEM_LEVEL && initLevel < MEM_LEVEL) {
+            /* Do initialization for the next level: MEM_LEVEL */
+            if (midpInitializeMemory(-1) != 0) {
+                break;
             }
+            initLevel = MEM_LEVEL;
         }
-        
-        vmFinalizer = final;
+
+        if (level >= LIST_LEVEL && initLevel < LIST_LEVEL) {
+            /* Do initialization for the next level: LIST_LEVEL */
+            MIDPError status;
+            int err;
+
+            // initializing suspend/resume system first, other systems may then
+            // register their resources there.
+            sr_initSystem();
+
+            err = storageInitialize(midpHome);
+            if (err == 0) {
+                status = midp_suite_storage_init();
+            } else {
+                status = OUT_OF_MEMORY;
+            }
+
+            if (status != ALL_OK) {
+                break;
+            }
+
+            if (initializeConfig() != 0) {
+                break;
+            }
+
+            /*
+             * IMPL_NOTE: revisit for theme loading clean up
+             * look in javax.microedition.lcdui.Theme for default theme.
+             */
+            /*
+            if (initializeThemeConfig() != 0) {
+                break;
+            }
+            */
+
+            /*
+             * in the event that the system.jam_space property is set,
+             * use it as the maximum space use limit for MIDP MIDlet
+             * suites and their record stores.
+             */
+            spaceProp = getInternalProp("system.jam_space");
+            if (spaceProp != NULL) {
+                totalSpace = atoi(spaceProp);
+                storageSetTotalSpace(totalSpace);
+            }
+
+            initLevel = LIST_LEVEL;
+        }
+
+        if (level >= VM_LEVEL && initLevel < VM_LEVEL) {
+            /* Do initialization for the next level: VM_LEVEL */
+            if (init != NULL) {
+                if (init() != 0) {
+                    break;
+                }
+            }
+
+            vmFinalizer = final;
+            initLevel   = VM_LEVEL;
+        }
+
+        result = 0; /* OK status */
+    } while (0);
+
+    if (result != 0) {
+        midpFinalize();
     }
 
-    initLevel = level;
-
-    return 0;
+    return result;
 }
 
 /**
@@ -209,16 +244,20 @@ void midpFinalize() {
         }
     }
 
-    midpport_suite_storage_reset();
+    midp_suite_storage_cleanup();
+
+    /** Now it makes no sense to process suspend/resume requests. */
+    sr_finalizeSystem();
 
     if (initLevel > MEM_LEVEL) {
         /* Cleanup native code resources on exit */
         finalizeConfig();
- 
-	/* IMPL_NOTE:revisit for theme loading clean up
-	 * look in javax.microedition.lcdui.Theme for default theme
-	finalizeThemeConfig();
-	*/
+
+        /*
+         * IMPL_NOTE: revisit for theme loading clean up
+         * look in javax.microedition.lcdui.Theme for default theme.
+         */
+        /* finalizeThemeConfig(); */
 
         storageFinalize();
     }

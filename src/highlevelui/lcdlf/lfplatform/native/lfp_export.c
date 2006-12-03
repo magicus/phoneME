@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -46,6 +47,34 @@ void lcdlf_refresh(int x, int y, int w, int h) {
 }
 
 /**
+ * Change screen orientation flag
+ */
+jboolean lcdlf_reverse_orientation() {
+  return lfpport_reverse_orientation();
+}
+
+/**
+ * Change screen orientation flag
+ */
+jboolean lcdlf_get_reverse_orientation() {
+  return lfpport_get_reverse_orientation();
+}
+
+/**
+ * Return screen width
+ */
+int lcdlf_get_screen_width() {
+  return lfpport_get_screen_width();
+}
+
+/**
+ *  Return screen height
+ */
+int lcdlf_get_screen_height() {
+  return lfpport_get_screen_height();
+}
+
+/**
  * set the screen mode either to fullscreen or normal.
  *
  * @param mode The screen mode
@@ -60,6 +89,7 @@ void lcdlf_set_fullscreen_mode(jboolean mode) {
 void lcdlf_gained_foreground() {
   lfpport_gained_foreground();
 }
+
 
 /**
  * Initializes the window system.

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -148,7 +149,7 @@ package javax.microedition.lcdui;
  * selected is left to the implementation.  Applications for
  * which the selected 
  * element is significant should set the selection explicitly.
- * There is no way for the user to unselect an element within an
+ * The user cannot unselect an element within an
  * exclusive <code>Choice</code>.</p>
  *
  * <P>The popup choice is similar to the exclusive choice.  The selection

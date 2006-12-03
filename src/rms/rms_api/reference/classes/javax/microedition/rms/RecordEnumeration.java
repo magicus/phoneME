@@ -1,5 +1,5 @@
 /*
- * @(#)RecordEnumeration.java	1.23 04/12/01 @(#)
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

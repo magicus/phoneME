@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -31,7 +32,7 @@ import com.sun.midp.events.*;
 /**
  * Class controlling foreground
  */
-final class AutoForegroundStateController 
+final class AutoForegroundStateController
     implements AutoDisplayControllerListener {
 
     /** MIDlet proxy list reference. */
@@ -48,40 +49,40 @@ final class AutoForegroundStateController
 
     /** The one and only AutoMIDletStateController instance */
     private static AutoForegroundStateController stateController = null;
-   
+
     /**
      * Private constructor to prevent direct creation of instances.
      */
     private AutoForegroundStateController() {
         midletProxyList = MIDletProxyList.getMIDletProxyList();
-        
+
         displayController = new AutoDisplayController(midletProxyList);
         displayController.setListener(this);
         midletProxyList.setDisplayController(displayController);
 
-        midletControllerEventProducer = 
+        midletControllerEventProducer =
             AutomationInitializer.getMIDletControllerEventProducer();
-        
+
         midletsInfo = AutoMIDletInfoList.getMIDletInfoList();
     }
-   
+
 
     /**
      * Gets AutoMIDletStateController instance.
      *
      * @return AutoMIDletStateController instance
      */
-    synchronized static AutoForegroundStateController 
+    synchronized static AutoForegroundStateController
         getForegroundStateController() {
-            
+
         if (stateController == null) {
             stateController = new AutoForegroundStateController();
         }
 
         return stateController;
     }
-    
-    
+
+
     /**
      * Initiates switching MIDlet to specified state.
      *
@@ -92,30 +93,30 @@ final class AutoForegroundStateController
         MIDletProxy midletProxy = midletsInfo.findMIDletProxy(midlet);
         if (midletProxy != null) {
             if (state == AutoMIDletForegroundState.FOREGROUND) {
-                String suiteID = midletProxy.getSuiteId();
+                int suiteID = midletProxy.getSuiteId();
                 String className = midletProxy.getClassName();
-                
+
                 midletControllerEventProducer.
                     sendSetForegroundByNameRequestEvent(suiteID, className);
-            } 
+            }
         }
     }
-   
-    
-    
+
+
+
     /**
      * AutoDisplayControllerListener interface implementation.
      */
 
     /**
      * Called when foreground MIDlet is about to be changed.
-     * 
+     *
      * @param oldForeground MIDlet currently in foreground
-     * @param newForeground MIDlet getting foreground     
-     */    
-    public void foregroundMIDletChanged(MIDletProxy oldForeground, 
+     * @param newForeground MIDlet getting foreground
+     */
+    public void foregroundMIDletChanged(MIDletProxy oldForeground,
             MIDletProxy newForeground) {
-        
+
         if (oldForeground != null) {
             AutoMIDletImpl midlet = midletsInfo.findMIDlet(oldForeground);
             if (midlet != null) {
@@ -128,11 +129,11 @@ final class AutoForegroundStateController
             if (midlet != null) {
                 midlet.stateChanged(AutoMIDletForegroundState.FOREGROUND);
             }
-        }        
+        }
     }
 
 
-    
+
     /**
      * AutoForegroundRequestEventConsumer interface implementation.
      */
@@ -143,7 +144,7 @@ final class AutoForegroundStateController
      * @param midletSuiteID MIDlet's suite ID
      * @param midletClassName MIDlet's class name
      */
-    public void handleForegroundRequestEvent(String midletSuiteID, 
+    public void handleForegroundRequestEvent(int midletSuiteID,
             String midletClassName) {
 
         MIDletProxy midletProxy = midletProxyList.findMIDletProxy(

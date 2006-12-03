@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,8 +24,9 @@
  * information or have any questions. 
  */
 
-#include <kni.h>
+#include <sni.h>
 
+#include <midpJar.h>
 #include <midpError.h>
 #include <midpMalloc.h>
 #include <midpServices.h>
@@ -46,17 +48,43 @@
  * @throw IOException if JAR is corrupt or not found
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_installer_JarReader_readJarEntry0() {
+KNIDECL(com_sun_midp_installer_JarReader_readJarEntry0) {
+    int error;
+    void* jarHandle;
+    long sizeOfEntry;
+    unsigned char* entryData;
+
     KNI_StartHandles(3);
-    KNI_DeclareHandle(fileContents);
-    GET_PARAMETER_AS_PCSL_STRING(1, jarName)
-    GET_PARAMETER_AS_PCSL_STRING(2, entryName) {
-        if (KNI_TRUE !=
-            midp_readJarEntry(&jarName, &entryName, &fileContents)) {
-            KNI_ThrowNew(midpIOException,
-                         "JAR not found or corrupt");
-        }
+    KNI_DeclareHandle(entryObj);
+
+    GET_PARAMETER_AS_PCSL_STRING(1, jarName) {
+        GET_PARAMETER_AS_PCSL_STRING(2, entryName) {
+            jarHandle = midpOpenJar(&error, &jarName);
+            if (0 == error) {
+                sizeOfEntry = midpGetJarEntry(jarHandle, &entryName,
+                                              &entryData);
+                if (sizeOfEntry > 0) {
+                    SNI_NewArray(SNI_BYTE_ARRAY, sizeOfEntry, entryObj);
+                    if (KNI_IsNullHandle(entryObj)) {
+                        KNI_ThrowNew(midpOutOfMemoryError, NULL);
+                    } else {
+                        KNI_SetRawArrayRegion(entryObj, 0, sizeOfEntry,
+                                              (jbyte*)entryData);
+                    }
+
+                    midpFree(entryData);
+                } else if (0 == sizeOfEntry){
+                    KNI_ThrowNew(midpIOException, "Entry not found");
+                } else {
+                    KNI_ThrowNew(midpIOException, "JAR Corrupt");
+                }
+                
+                midpCloseJar(jarHandle);
+            } else {
+                KNI_ThrowNew(midpIOException, "JAR not found");
+            }
+        } RELEASE_PCSL_STRING_PARAMETER
     } RELEASE_PCSL_STRING_PARAMETER
-    RELEASE_PCSL_STRING_PARAMETER
-    KNI_EndHandlesAndReturnObject(fileContents);
+
+    KNI_EndHandlesAndReturnObject(entryObj);
 }

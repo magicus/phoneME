@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -455,8 +456,6 @@ abstract public class CustomItem extends Item {
         synchronized (Display.LCDUILock) {
             itemLF = customItemLF = LFFactory.getFactory().getCustomItemLF(this);
         }
-
-        Display.itemSizeRefresh(this); // Request to collect sizing info
     }
 
     /**

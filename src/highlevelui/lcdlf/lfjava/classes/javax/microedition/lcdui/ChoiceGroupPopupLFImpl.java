@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -29,13 +30,15 @@ package javax.microedition.lcdui;
 
 import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.lcdui.Text;
-import com.sun.midp.lcdui.*;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.resources.ChoiceGroupResources;
+import com.sun.midp.chameleon.skins.ScrollIndSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
-import com.sun.midp.chameleon.layers.PopupLayer;
+import com.sun.midp.chameleon.layers.ScrollablePopupLayer;
+import com.sun.midp.chameleon.layers.ScrollIndLayer;
 import com.sun.midp.chameleon.CGraphicsUtil;
+import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 
 
 /**
@@ -66,7 +69,6 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      * @param width The width available for this Item
      */
     public void lGetContentSize(int size[], int width) {
-
         // no label and empty popup => nothing is drawn
         // no elements => only label is drawn
         if (cg.numOfEls == 0) {
@@ -76,11 +78,6 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
         int w = getAvailableContentWidth(Choice.POPUP, width);
         int maxContentWidth = getMaxElementWidth(w);
-        if (ChoiceGroupSkin.IMAGE_BUTTON_ICON != null) {
-            maxContentWidth += ChoiceGroupSkin.IMAGE_BUTTON_ICON.getWidth();
-        } else {
-            maxContentWidth += 11;
-        }
 
         viewable[HEIGHT] = calculateHeight(w);
 
@@ -89,12 +86,11 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             (2 * ChoiceGroupSkin.PAD_V);
 
         if (maxContentWidth < w) {
-            // note that (width - w) = extra padding used
-            size[WIDTH] = maxContentWidth;
+            size[WIDTH] = width - w + maxContentWidth;
         } else {
             size[WIDTH] = width;
         }
-        viewable[WIDTH] = size[WIDTH];        
+        viewable[WIDTH] = size[WIDTH];
     }
 
     // *****************************************************
@@ -115,7 +111,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         if (cg.numOfEls == 0) {
             return;
         }
-        
+
         // draw background
         if (ChoiceGroupSkin.IMAGE_BG != null) {
             CGraphicsUtil.draw9pcsBackground(g, 0, 0, width, height,
@@ -124,20 +120,20 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             // draw widget instead of using images
             CGraphicsUtil.drawDropShadowBox(g, 0, 0, width, height,
                 ChoiceGroupSkin.COLOR_BORDER,
-                ChoiceGroupSkin.COLOR_BORDER_SHD, 
+                ChoiceGroupSkin.COLOR_BORDER_SHD,
                 ChoiceGroupSkin.COLOR_BG);
         }
-        
+
         if (hasFocus && !popUpOpen) {
             // hilight the background
             g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
             g.fillRect(2, 2, width - 3, height - 3);
-        } 
-                    
+        }
+
         // draw icon
         if (ChoiceGroupSkin.IMAGE_BUTTON_ICON != null) {
             int w = ChoiceGroupSkin.IMAGE_BUTTON_ICON.getWidth();
-            int yOffset = height - 
+            int yOffset = height -
                 ChoiceGroupSkin.IMAGE_BUTTON_ICON.getHeight();
             if (yOffset > 0) {
                 yOffset = (int)(yOffset / 2);
@@ -151,45 +147,48 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                     ChoiceGroupSkin.IMAGE_BUTTON_BG);
             }
             g.drawImage(ChoiceGroupSkin.IMAGE_BUTTON_ICON,
-                        width, yOffset + 1, 
+                        width, yOffset + 1,
                         Graphics.LEFT | Graphics.TOP);
             width -= ChoiceGroupSkin.PAD_H;
         }
-        
-        g.translate(ChoiceGroupSkin.PAD_H, ChoiceGroupSkin.PAD_V);        
-            
+
+        g.translate(ChoiceGroupSkin.PAD_H, ChoiceGroupSkin.PAD_V);
+
         int s = selectedIndex < 0 ? 0 : selectedIndex;
-        
+
         // paint value
 
         int textOffset = 0;
-        
+
         if (cg.cgElements[s].imageEl != null) {
             int iX = g.getClipX();
             int iY = g.getClipY();
             int iW = g.getClipWidth();
             int iH = g.getClipHeight();
-           
+
             g.clipRect(0, 0,
-                       ChoiceGroupSkin.WIDTH_IMAGE, 
+                       ChoiceGroupSkin.WIDTH_IMAGE,
                        ChoiceGroupSkin.HEIGHT_IMAGE);
             g.drawImage(cg.cgElements[s].imageEl,
                         0, 0,
                         Graphics.LEFT | Graphics.TOP);
-            g.setClip(iX, iY, iW, iH); 
-            textOffset = ChoiceGroupSkin.WIDTH_IMAGE + 
+            g.setClip(iX, iY, iW, iH);
+            textOffset = ChoiceGroupSkin.WIDTH_IMAGE +
                 ChoiceGroupSkin.PAD_H;
         }
-                    
-        Text.paint(g, cg.cgElements[s].stringEl, 
-                   cg.cgElements[s].getFont(), 
-                   (hasFocus) ? ScreenSkin.COLOR_FG_HL :    
-                        ChoiceGroupSkin.COLOR_FG, 
-                   0, width, 
-                   cg.cgElements[s].getFont().getHeight(), 
-                   textOffset, Text.TRUNCATE, null);
 
+        Text.drawTruncString(g,
+                        cg.cgElements[s].stringEl,
+                        cg.cgElements[s].getFont(),
+                        (hasFocus) ? ScreenSkin.COLOR_FG_HL :
+                            ChoiceGroupSkin.COLOR_FG,
+                        width);
         g.translate(-ChoiceGroupSkin.PAD_H, -ChoiceGroupSkin.PAD_V);
+
+        if (refreshNeeded && cachedWidth != INVALID_SIZE) {
+            popupLayer.refresh();
+            refreshNeeded = false;
+        }
     }
 
     /**
@@ -202,9 +201,8 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         
         synchronized (Display.LCDUILock) {
             if (popUpOpen) {
-                popUpOpen = false;
                 hilightedIndex = 0;
-                getCurrentDisplay().hidePopup(popupLayer);
+                popupLayer.hide();
             }
         }
     }
@@ -323,22 +321,20 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                     return;
                 }
                 // show popup
-                
+
                 ScreenLFImpl sLF = (ScreenLFImpl)cg.owner.getLF();
                 int x = getInnerBounds(X) - sLF.viewable[X] + contentBounds[X];
                 int y = getInnerBounds(Y) - sLF.viewable[Y] + contentBounds[Y];
                 hilightedIndex = selectedIndex > 0 ? selectedIndex : 0;
-                
-                popupLayer.show(x, y, 
+
+                popupLayer.show(x, y,
                                 contentBounds[WIDTH], contentBounds[HEIGHT],
                                 viewable[WIDTH], viewable[HEIGHT],
                                 y, 
                                 sLF.viewport[HEIGHT] - 
                                 y - contentBounds[HEIGHT]);
-                
-                popUpOpen = !popUpOpen;
-                
             } else {
+
                 // popup is closed when SELECT, LEFT or RIGHT is pressed;
                 // popup selection is changed only when SELECT is pressed
                 if (keyCode != Constants.KEYCODE_SELECT &&
@@ -346,8 +342,6 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                     keyCode != Constants.KEYCODE_RIGHT) {
                     return;
                 }
-
-                popUpOpen = !popUpOpen;
 
                 // IMPL_NOTE Check if we need notification if selected element 
                 // did not change
@@ -358,7 +352,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                     }
                 }
                 hilightedIndex = 0;
-                getCurrentDisplay().hidePopup(popupLayer);
+                popupLayer.hide();
             }
             lRequestPaint();
         } // synchronized
@@ -369,12 +363,136 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         }
     }
 
+    /**
+     * Check if the pointer is clicked to the item
+     * @param x x coordinate of pointer 
+     * @param y y coordinate of pointer
+     * @return true if the item contains the pointer, otherwise - false
+     */
+    boolean itemContainsPointer(int x, int y) {
+        if (!popUpOpen) {
+            return super.itemContainsPointer(x, y);
+        } else {
+            // We grab the whole screen, so consider all clicks contained
+            // by this item.
+            return true;
+        }
+    }
+
+    /**
+     * Find the choice index inside of the list containing the pointer 
+     * @param x x coordinate of pointer 
+     * @param y y coordinate of pointer
+     * @return choice index, -1 - if index is not found
+     */
+    int getIndexByPointer(int x, int y) {
+        int popupLayer_bounds[]= popupLayer.getBounds();
+        int id = -1;
+        if (cg.numOfEls > 0) {
+            ScreenLFImpl sLF = (ScreenLFImpl)cg.owner.getLF();
+            x = x +(bounds[X] - sLF.viewable[X]) - popupLayer_bounds[X];
+            y = y +(bounds[Y] - sLF.viewable[Y]) - popupLayer_bounds[Y];
+            
+            if (x >= 0 && x <= popupLayer_bounds[WIDTH] &&
+                y >= 0 && y <= popupLayer_bounds[HEIGHT]) {
+                int visY =  0;
+                int i = 0;
+                
+                // calculate the scroll position and update the y coordinate accordingly.
+                y += viewable[Y];
+                
+                for (i = 0; i < cg.numOfEls; i++) {
+                    int h = elHeights[i];
+                    if (y > visY && y < visY + h) {
+                        break;
+                    }
+                    visY += h;
+                }
+                if (i < cg.numOfEls) {
+                    id = i;
+                }
+            }
+        }
+        return id;
+    }
+
+    /**
+     * Called by the system to signal a pointer press
+     *
+     * @param x the x coordinate of the pointer down
+     * @param y the y coordinate of the pointer down
+     */
+    void uCallPointerPressed(int x, int y) {
+        itemSelectedWhenPressed = false;
+        if (popUpOpen) {
+            // popupLayer.
+            int i = getIndexByPointer(x, y);
+            if (i >= 0) {
+                itemSelectedWhenPressed = true;
+                if (hilightedIndex != i) {
+                    hilightedIndex = i;
+                    uRequestPaint();//request paint as the highlighted changed
+                    popupLayer.requestRepaint();//of course, we should repaint the popupLayer
+                    getCurrentDisplay().serviceRepaints(cg.owner.getLF());
+                }
+            } else {
+                hilightedIndex = 0;
+                popupLayer.hide();
+            }
+        }
+    }
+
+    /**
+     * Called by the system to signal a pointer release
+     *
+     * @param x the x coordinate of the pointer up
+     * @param y the x coordinate of the pointer up
+     */
+    void uCallPointerReleased(int x, int y) {
+        if (popUpOpen) {
+            // do not dismiss the popup until a new selection is made.
+            int i = getIndexByPointer(x, y);
+            if ( (i >= 0 && hilightedIndex == i && itemSelectedWhenPressed) ||
+                 (!itemSelectedWhenPressed)) {
+                uCallKeyPressed(itemSelectedWhenPressed ?
+                                // close the popup with highlighted item selected
+                                Constants.KEYCODE_SELECT :
+                                // close the popup as cancel
+                                Constants.KEYCODE_RIGHT);
+            }
+        } else {
+            if (super.itemContainsPointer(x + bounds[X], y + bounds[Y])) {
+                uCallKeyPressed(Constants.KEYCODE_SELECT);
+            }
+        }
+        itemSelectedWhenPressed = false;
+    }
+
+    /**
+     * Called by the system to indicate the size available to this Item
+     * has changed
+     *
+     * @param w the new width of the item's content area
+     * @param h the new height of the item's content area
+     */
+    void uCallSizeChanged(int w, int h) {
+        super.uCallSizeChanged(w,h);
+        refreshNeeded = true;
+    }
+
     // *****************************************************
     //  Private methods
     // *****************************************************
 
     /** The state of the popup ChoiceGroup (false by default) */
     private boolean popUpOpen; // = false;
+
+    // True if size of screen was changed
+    private boolean refreshNeeded;
+
+
+    /** pressed on a valid item in popup layer **/
+    private boolean itemSelectedWhenPressed = false;
 
     /** The PopupLayer that represents open state of this ChoiceGroup POPUP. */
     CGPopupLayer popupLayer;
@@ -400,7 +518,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      * If possible popup should be displayed below the button.
      * If possible the entire content of the popup should be seen.
      */
-    class CGPopupLayer extends PopupLayer {
+    class CGPopupLayer extends ScrollablePopupLayer {
         
         /**
          * CGPopupLayer constructor. Sets ChoiceGroupPopupLFImpl that
@@ -409,7 +527,9 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
          *             CGPopupLayer
          */
         CGPopupLayer(ChoiceGroupPopupLFImpl lf) {
-            super(ChoiceGroupSkin.IMAGE_POPUP_BG, 
+            super(ScrollIndSkin.MODE == 
+                    ScrollIndResourcesConstants.MODE_ARROWS ?
+                  ChoiceGroupSkin.IMAGE_POPUP_BG : null, 
                   ChoiceGroupSkin.COLOR_BG);
             this.lf = lf;
         }
@@ -436,11 +556,12 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 {
                     if (lf.traverseInPopup(KeyConverter.getGameAction(code),
                                            viewport[WIDTH], 
-                                           viewport[HEIGHT])) 
-                                           {
-                                               dirty = true;
-                                               return true;
-                                           }
+                                           viewport[HEIGHT])) {
+                        // the viewable[Y] is correct after traverseInPopup() calls,
+                        // but we should update scroll position
+                        updatePopupLayer(viewable[Y]); 
+                        return true;
+                    }
                 }
 
                 lf.uCallKeyPressed(code);
@@ -456,17 +577,17 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
          */
         protected void paintBackground(Graphics g) {
             super.paintBackground(g);
-           
             // draw border if there is no background image
             if (bgImage == null) {
                 g.setColor(ChoiceGroupSkin.COLOR_BORDER);
-                g.drawRect(0, 0, bounds[W]-1, bounds[HEIGHT]-1);
+                g.drawRect(0, 0, bounds[W] - 1, bounds[HEIGHT] - 1);
               
                 g.setColor(ChoiceGroupSkin.COLOR_BORDER_SHD);
-                g.drawLine(1, 1, 1, bounds[HEIGHT]-2); 
-           }
-
-            if (sbVisible) {
+                g.drawLine(1, 1, 1, bounds[HEIGHT] - 2); 
+            }
+            
+            if (sbVisible && ScrollIndSkin.MODE == 
+                    ScrollIndResourcesConstants.MODE_ARROWS) {
                 int sbX = bounds[WIDTH] - 
                     (ChoiceGroupSkin.WIDTH_SCROLL / 2) - 1;
                 int sbY = ChoiceGroupSkin.PAD_V;
@@ -503,17 +624,16 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
          * @param g - The Graphics object to paint content on
          */
         protected void paintBody(Graphics g) {
-
-            g.clipRect(viewport[X], viewport[Y], 
+            g.clipRect(viewport[X], viewport[Y],
                        viewport[WIDTH], viewport[HEIGHT]);
 
             g.translate(viewport[X] - lf.viewable[X],
                         viewport[Y] - lf.viewable[Y]);
 
-            
+
             lf.lPaintElements(g, bounds[WIDTH], viewable[HEIGHT]);
-            
-            g.translate(-viewport[X] + lf.viewable[X], 
+
+            g.translate(-viewport[X] + lf.viewable[X],
                         -viewport[Y] + lf.viewable[Y]);
         }
 
@@ -542,10 +662,10 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                   int buttonW, int buttonH,
                   int elementsWidth, int elementsHeight,
                   int top, int bottom) {
-            
             // popup with all elements displayed fits under the popup button
+            
             if (elementsHeight + 1 <= bottom - ChoiceGroupSkin.PAD_V) {
-                setBounds(buttonX, 
+                setBounds(buttonX,
                           buttonY + buttonH - 1, // hide top border
                           buttonW,
                           elementsHeight + 2); // border width
@@ -554,40 +674,280 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
             // popup with all elements displayed fits above the popup button
             } else if (elementsHeight + 1 <= top - ChoiceGroupSkin.PAD_V) {
-                setBounds(buttonX, 
+                setBounds(buttonX,
                           buttonY - elementsHeight - 1, // show top border
-                          buttonW, 
+                          buttonW,
                           elementsHeight + 2); // border width
                 popupDrawnDown = false;
                 sbVisible = false;
 
             } else if (bottom > top) { // there is more space at the bottom
-                setBounds(buttonX, 
+                setBounds(buttonX,
                           buttonY + buttonH - 1, // hide top border width
-                          buttonW, 
+                          buttonW,
                           bottom - ChoiceGroupSkin.PAD_V);
                 popupDrawnDown = true;
                 sbVisible = true;
 
-            } else { // there is more space at the top 
-                setBounds(buttonX, 
-                          buttonY - elementsHeight - 1, // show top border
-                          buttonW, 
-                          top - ChoiceGroupSkin.PAD_V);
+            } else { // there is more space at the top
+                setBounds(buttonX,
+                          buttonY - top + buttonH + 1, // show top border
+                          buttonW,
+                          top - ChoiceGroupSkin.PAD_V + buttonH + 1);
                 popupDrawnDown = false;
                 sbVisible = true;
             }
-            
+
             // set viewport in popup's coordinate system
             viewport[X] = 2; // border width
             viewport[Y] = 1; // border width
             viewport[WIDTH]  = viewable[WIDTH];
             viewport[HEIGHT] = bounds[HEIGHT] - 2; // border width
 
-            // ASSERT: since we are receiving key events, 
+            // ASSERT: since we are receiving key events,
             //         currentDisplay cannot be null.
+
             lf.getCurrentDisplay().showPopup(popupLayer);
+            popUpOpen = true;
+
+            if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR) {
+                setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
+                setBackground(sbVisible ? null : ChoiceGroupSkin.IMAGE_POPUP_BG,
+                              ChoiceGroupSkin.COLOR_BG);
+            }
+            updatePopupLayer(viewable[Y]);
         }
+
+        /**
+         * Hide popup for choice group 
+         */
+        
+        void hide() {
+            if (scrollInd != null) {
+                scrollInd.setVisible(false);
+                sbVisible = false;
+                updateScrollIndicator();
+                setScrollInd(null);
+            }
+            
+            lf.getCurrentDisplay().hidePopup(popupLayer);
+            popUpOpen = false;
+        }
+
+        
+        /**
+         * Scroll content inside of the CouiceGroup.
+         * @param scrollType scrollType. Scroll type can be one of the following
+         * @see ScrollIndLayer.SCROLL_NONE
+         * @see ScrollIndLayer.SCROLL_PAGEUP
+         * @see ScrollIndLayer.SCROLL_PAGEDOWN
+         * @see ScrollIndLayer.SCROLL_LINEUP
+         * @see ScrollIndLayer.SCROLL_LINEDOWN or
+         * @see ScrollIndLayer.SCROLL_THUMBTRACK
+         * @param thumbPosition
+         */
+        public void scrollContent(int scrollType, int thumbPosition) {
+            switch (scrollType) {
+                case ScrollIndLayer.SCROLL_PAGEUP:
+                    uScrollViewport(Canvas.UP);
+                    break;
+                case ScrollIndLayer.SCROLL_PAGEDOWN:
+                    uScrollViewport(Canvas.DOWN);
+                    break;
+                case ScrollIndLayer.SCROLL_LINEUP:
+                    uScrollByLine(Canvas.UP);
+                    break;
+                case ScrollIndLayer.SCROLL_LINEDOWN:
+                    uScrollByLine(Canvas.DOWN);
+                    break;
+                case ScrollIndLayer.SCROLL_THUMBTRACK:
+                    uScrollAt(thumbPosition);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        /**
+         * Perform a line scrolling in the given direction. This method will
+         * attempt to scroll the view to show next/previous line.
+         *
+         * @param dir the direction of the flip, either DOWN or UP
+         */
+        private void uScrollByLine(int dir) {
+            int newY = viewable[Y];
+            switch (dir) {
+            case Canvas.UP:
+                newY -= PIXELS_LEFT_ON_PAGE;
+                if (newY < 0) {
+                    newY = 0;
+                }
+                break;
+            case Canvas.DOWN:
+                newY += PIXELS_LEFT_ON_PAGE;
+                if (newY > viewable[HEIGHT] - viewport[HEIGHT]) {
+                    newY = viewable[HEIGHT] - viewport[HEIGHT];
+                }
+                break;
+            }
+            updatePopupLayer(newY);
+        }
+
+        /**
+         * Perform a page flip in the given direction. This method will
+         * attempt to scroll the view to show as much of the next page
+         * as possible. It uses the locations and bounds of the items on
+         * the page to best determine a new location - taking into account
+         * items which may lie on page boundaries as well as items which
+         * may span several pages.
+         *
+         * @param dir the direction of the flip, either DOWN or UP
+         */
+        private void uScrollViewport(int dir) {
+            int newY = viewable[Y];
+            switch (dir) {
+            case Canvas.UP:
+                newY -= viewport[HEIGHT] - PIXELS_LEFT_ON_PAGE;
+                if (newY < 0) {
+                    newY = 0;
+                }
+                break;
+            case Canvas.DOWN:
+                newY += viewport[HEIGHT] - PIXELS_LEFT_ON_PAGE;
+                if (newY > viewable[HEIGHT] - viewport[HEIGHT]) {
+                    newY = viewable[HEIGHT] - viewport[HEIGHT];
+                }
+                break;
+            }
+            updatePopupLayer(newY);
+        }
+
+        /**
+         * Perform a scrolling at the given position.
+         * @param context position
+         */
+        void uScrollAt(int position) {
+            int newY = (viewable[HEIGHT] - viewport[HEIGHT]) * position / 100;
+            if (newY < 0) {
+                newY = 0;
+            } else if (newY > viewable[HEIGHT] - viewport[HEIGHT]) {
+                newY = viewable[HEIGHT] - viewport[HEIGHT];
+            }
+            updatePopupLayer(newY);
+        }
+
+        /**
+         * This method initiate repaint of the popup layer
+         *
+         * @param newY
+         */
+        private void updatePopupLayer(int newY) {
+            viewable[Y] = newY;
+            
+            // correct hilighted index depending on new viewport. The hilighted item
+            // always has to be visible
+            if (hilightedIndex >= 0) {
+                // calculate y coordinates of hilighted item
+
+                int vy1 = viewable[Y];
+                int vy2 = viewable[Y] + viewport[HEIGHT];
+                for (int i = 0, y = 0;
+                     i <= cg.numOfEls - 1;
+                     i++, y += elHeights[i]) {
+                    
+                    if (y >= vy1) {
+                        if (y + elHeights[i] <= vy2) {
+                            if (hilightedIndex <= i) {
+                                hilightedIndex = i;
+                                break;
+                            }
+                        } else {
+                            if (hilightedIndex >= i) {
+                                hilightedIndex = i;
+                                if (i > 0 && y > vy1) {
+                                    hilightedIndex--;
+                                } 
+                                break;
+                            }                            
+                        }
+                    } else if (y + elHeights[i] >= vy2) {
+                        hilightedIndex = i;
+                        break;
+                    }
+                }
+            } 
+            
+            addDirtyRegion();
+            requestRepaint();
+            updateScrollIndicator();
+        }
+
+        /**
+         * Updates the scroll indicator.
+         */
+        public void updateScrollIndicator() {
+            if (scrollInd != null) {
+                if (sbVisible) {
+                    scrollInd.setVerticalScroll(
+                          (viewable[Y] * 100 / (viewable[HEIGHT] - viewport[HEIGHT])),
+                          (viewport[HEIGHT] * 100 / viewable[HEIGHT]));
+                } else {
+                    scrollInd.setVerticalScroll(0, 100);
+                }
+                super.updateScrollIndicator();
+            } 
+        }
+
+
+        /**
+         * Handle pointer events 
+         * @param type pointer event type 
+         * @param x x coordinate of pointer 
+         * @param y y coordinate of pointer
+         * @return true if the event is processed and should not be passed
+         * to other layers, false - otherwise 
+         */
+        public boolean pointerInput(int type, int x, int y) {
+            ScreenLFImpl sLF = (ScreenLFImpl)lf.item.owner.getLF();
+            int transX = x + this.bounds[X] + sLF.viewable[X] - lf.bounds[X];
+            int transY = y + this.bounds[Y] + sLF.viewable[Y] - lf.bounds[Y];
+
+            boolean consume = true;
+            
+            if (!containsPoint(x + bounds[X], y + bounds[Y])) {
+                consume = false;
+            }
+            
+            switch (type) {
+            case EventConstants.PRESSED:
+                lf.uCallPointerPressed(transX, transY);
+                break;
+            case EventConstants.RELEASED:
+                lf.uCallPointerReleased(transX, transY);
+                break;
+            }
+            return consume;
+        }
+
+        /**
+         * Update bounds of popup anf show
+         */
+        public void refresh() {
+            // show popup
+            if (popUpOpen) {
+                ScreenLFImpl sLF = (ScreenLFImpl) cg.owner.getLF();
+                int x = getInnerBounds(X) - sLF.viewable[X] + contentBounds[X];
+                int y = getInnerBounds(Y) - sLF.viewable[Y] + contentBounds[Y];
+
+                popupLayer.show(x, y,
+                        contentBounds[WIDTH], contentBounds[HEIGHT],
+                        viewable[WIDTH], viewable[HEIGHT],
+                        y,
+                        sLF.viewport[HEIGHT] -
+                                y - contentBounds[HEIGHT]);
+            }
+        }
+
 
         /** The ChoiceGroupPopupLFImpl associated with this popup */
         ChoiceGroupPopupLFImpl lf; // = null;
@@ -603,6 +963,14 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
         /** True if sb is present in the Popup layer, false - otherwise */
         private boolean sbVisible; // = false;
+
+        /**
+         * This is the number of pixels left from the previous "page"
+         * when a page up or down occurs
+         */
+        static final int PIXELS_LEFT_ON_PAGE = 15;
+        
     }
+
 }
 

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -207,6 +208,7 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
                            LogChannels.LC_HIGHUI_ITEM_LAYOUT,
                            ">>> CustomItemLFImpl -- lInvalidate()");
         }
+        setDirtyRegionFull();
         lRequestInvalidate(true, true);
     }
 
@@ -646,6 +648,9 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
                     // We shift the return value from the item's traverse
                     // by the label height to give the real location
                     visRect_inout[Y] += lH;
+                    if (ret) {
+                        setDirtyRegionFull();
+                    }
                 }
             }
         } catch (Throwable thr) {
@@ -669,6 +674,7 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
         try {
             synchronized (Display.calloutLock) {
                 customItem.traverseOut();
+                setDirtyRegionFull();
             }
         } catch (Throwable thr) {
             Display.handleThrowable(thr);

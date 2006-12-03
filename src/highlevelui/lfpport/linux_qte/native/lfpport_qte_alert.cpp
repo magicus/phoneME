@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_alert.cpp	1.51 06/04/26 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -91,6 +91,25 @@ TextViewer::TextViewer(QWidget* parent) : QMultiLineEdit(parent) {
 bool TextViewer::needScrolling() {
     return  lastRowVisible() != numLines() - 1;
 }
+
+/**
+ * Override QMultiLineEdit to performe traversal.
+ *
+ * @param keyEvent key event to handle
+ */
+void TextViewer::keyPressEvent(QKeyEvent *key)
+{
+    int k = key->key();
+    if ((k == Key_Up && rowIsVisible(0))
+        || (k == Key_Down && rowIsVisible(numRows() - 1))
+        || (k == Key_Tab))  {
+        parentWidget()->setFocus();
+    } else {
+        QMultiLineEdit::keyPressEvent(key);
+    }
+}
+
+
 
 /**
  * Construct a new modal window.
@@ -362,6 +381,7 @@ Alert::setCommands(MidpCommand* cmds, int numOfCmds) {
                 return KNI_ENOMEM;
             }
             buttons[i]->show();
+            buttons[i]->setFocusPolicy(QWidget::StrongFocus);
         }
 
         // Set geometry
@@ -425,6 +445,12 @@ Alert::setCommands(MidpCommand* cmds, int numOfCmds) {
         }
     } else if (buttons[ALERT_NUM_OF_BUTTONS-1] != NULL) {
         buttons[ALERT_NUM_OF_BUTTONS-1]->setPopup(NULL);
+    }
+    /* set focus to first command button 
+        & make it focusProxy */
+    if ((numOfCmds > 0) && (buttons[0] != NULL)) {
+        setFocusProxy(buttons[0]);
+        buttons[0]->setFocus();
     }
 
     closeCommandId = MidpCommandMapNegative(cmds, numOfCmds);
@@ -512,8 +538,10 @@ alert_handle_event(MidpFrame* screenPtr, PlatformEventPtr eventPtr) {
 extern "C" MidpError
 alert_set_title(MidpDisplayable* alertPtr, const pcsl_string* title) {
     QString qtitle;
-
     pcsl_string2QString(*title, qtitle);
+    truncateQString(qtitle,
+                ((Alert *)alertPtr->frame.widgetPtr)->font(),
+                calculateCaptionWidth((Alert *)alertPtr->frame.widgetPtr));
     ((Alert *)alertPtr->frame.widgetPtr)->setCaption(qtitle);
 
     return KNI_OK;

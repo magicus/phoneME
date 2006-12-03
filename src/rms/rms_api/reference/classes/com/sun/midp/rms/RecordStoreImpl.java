@@ -1,5 +1,5 @@
 /*
- * @(#)RecordStoreImpl.java	1.35 06/04/12 @(#)
+ *
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -52,7 +52,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     final static int AUTHMODE_ANY_RO = 2;
 
     /** unique id for suite that owns this record store */
-    String suiteID;
+    int suiteId;
 
     /** lock used to synchronize this record store */
     Object rsLock;
@@ -77,7 +77,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * calls to any registered listeners of this RecordStore.
      *
      * @param token security token for authorization
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      * @param recordStoreName the MIDlet suite unique record store to
      *          delete
      *
@@ -87,18 +87,18 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *          could not be found
      */
     public static void deleteRecordStore(SecurityToken token,
-                                         String suiteID, 
-                                         String recordStoreName) 
+                                         int suiteId,
+                                         String recordStoreName)
         throws RecordStoreException, RecordStoreNotFoundException {
 
         token.checkIfPermissionAllowed(Permissions.MIDP);
 
         // check if file exists and delete it
-        if (RecordStoreUtil.exists(suiteID, recordStoreName, 
+        if (RecordStoreUtil.exists(suiteId, recordStoreName,
                                    RecordStoreFile.DB_EXTENSION)) {
             boolean success = RecordStoreIndex.deleteIndex(
-                suiteID, recordStoreName);
-            RecordStoreUtil.deleteFile(suiteID,
+                suiteId, recordStoreName);
+            RecordStoreUtil.deleteFile(suiteId,
                 recordStoreName, RecordStoreFile.DB_EXTENSION);
 
             if (!success) {
@@ -108,10 +108,10 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         } else {
             throw new RecordStoreNotFoundException("deleteRecordStore " +
                                                    "error: file " +
-                                                   "not found"); 
+                                                   "not found");
         }
     }
-    
+
     /**
      * Open (and possibly create) a record store associated with the
      * given MIDlet suite. If this method is called by a MIDlet when
@@ -119,7 +119,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * this method returns a reference to the same RecordStoreImpl object.
      *
      * @param token security token for authorization
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      * @param recordStoreName the MIDlet suite unique name for the
      *          record store, consisting of between one and 32 Unicode
      *          characters inclusive.
@@ -138,15 +138,15 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *          recordStoreName is invalid
      */
     public static RecordStoreImpl openRecordStore(SecurityToken token,
-                                                  String suiteID,
-                                                  String recordStoreName, 
-                                                  boolean createIfNecessary) 
-        throws RecordStoreException, RecordStoreFullException, 
+                                                  int suiteId,
+                                                  String recordStoreName,
+                                                  boolean createIfNecessary)
+        throws RecordStoreException, RecordStoreFullException,
                RecordStoreNotFoundException {
 
         token.checkIfPermissionAllowed(Permissions.MIDP);
 
-        return new RecordStoreImpl(suiteID, recordStoreName, 
+        return new RecordStoreImpl(suiteId, recordStoreName,
                                    createIfNecessary);
     }
 
@@ -200,7 +200,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 dbFile.write(dbHeader, RS1_AUTHMODE, 4);
                 // dbFile.commitWrite();
             } catch (java.io.IOException ioe) {
-                throw new RecordStoreException("error writing record " + 
+                throw new RecordStoreException("error writing record " +
                                                "store attributes");
             }
         }
@@ -230,7 +230,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
         synchronized (rsLock) {
             try {
-                // close native fd 
+                // close native fd
                 compactRecords();  // compact before close
 
                 dbFile.close();
@@ -254,17 +254,17 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * dependent.
      *
      * @param token security token for authorization
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      *
      * @return array of the names of record stores owned by the
      * MIDlet suite. Note that if the MIDlet suite does not
      * have any record stores, this function will return null.
      */
     public static String[] listRecordStores(SecurityToken token,
-                                            String suiteID) {
+                                            int suiteId) {
         token.checkIfPermissionAllowed(Permissions.MIDP);
 
-        return RecordStoreFile.listRecordStores(suiteID);
+        return RecordStoreFile.listRecordStores(suiteId);
     }
 
     /**
@@ -304,7 +304,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     public int getNumRecords() {
         return RecordStoreUtil.getInt(dbHeader, RS3_NUM_LIVE);
     }
-    
+
     /**
      * Returns the amount of space, in bytes, that the record store
      * occupies. The size returned includes any overhead associated
@@ -329,16 +329,16 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *          this record store to grow
      */
     public int getSizeAvailable() {
-        int fileSpace = dbFile.spaceAvailable(suiteID) -
+        int fileSpace = dbFile.spaceAvailable(suiteId) -
                         BLOCK_HEADER_SIZE - DB_HEADER_SIZE;
-        int limitSpace = RMSConfig.STORAGE_SUITE_LIMIT - 
+        int limitSpace = RMSConfig.STORAGE_SUITE_LIMIT -
                          RecordStoreUtil.getInt(dbHeader, RS6_DATA_SIZE) -
                          BLOCK_HEADER_SIZE - DB_HEADER_SIZE;
 
-        int rv = (fileSpace < limitSpace) ? fileSpace : limitSpace;        
+        int rv = (fileSpace < limitSpace) ? fileSpace : limitSpace;
         return (rv < 0) ? 0 : rv;
     }
-    
+
     /**
      * Returns the last time the record store was modified, in the
      * format used by System.currentTimeMillis().
@@ -393,8 +393,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * @exception SecurityException if the MIDlet has read-only access
      *          to the RecordStore
      */
-    public int addRecord(byte[] data, int offset, int numBytes) 
-        throws RecordStoreNotOpenException, RecordStoreException, 
+    public int addRecord(byte[] data, int offset, int numBytes)
+        throws RecordStoreNotOpenException, RecordStoreException,
             RecordStoreFullException {
 
         synchronized (rsLock) {
@@ -408,7 +408,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 RecordStoreUtil.putInt(recordId+1, dbHeader, RS2_NEXT_ID);
                 RecordStoreUtil.putInt(getNumRecords()+1, dbHeader, RS3_NUM_LIVE);
                 RecordStoreUtil.putInt(getVersion()+1, dbHeader, RS4_VERSION);
-                RecordStoreUtil.putLong(System.currentTimeMillis(), dbHeader, 
+                RecordStoreUtil.putLong(System.currentTimeMillis(), dbHeader,
                         RS5_LAST_MODIFIED);
 
                 // write out the changes to the db header
@@ -416,7 +416,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 dbFile.write(dbHeader, RS2_NEXT_ID, 3*4+8);
                 // dbFile.commitWrite();
             } catch (java.io.IOException ioe) {
-                throw new RecordStoreException("error writing new record " 
+                throw new RecordStoreException("error writing new record "
                                                + "data");
             }
 
@@ -424,7 +424,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             return recordId;
         }
     }
-    
+
     /**
      * The record is deleted from the record store. The recordId for
      * this record is NOT reused.
@@ -439,8 +439,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * @exception SecurityException if the MIDlet has read-only access
      *          to the RecordStore
      */
-    public void deleteRecord(int recordId) 
-        throws RecordStoreNotOpenException, InvalidRecordIDException, 
+    public void deleteRecord(int recordId)
+        throws RecordStoreNotOpenException, InvalidRecordIDException,
             RecordStoreException {
         synchronized (rsLock) {
             try {
@@ -456,16 +456,16 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 // update the db header
                 RecordStoreUtil.putInt(getNumRecords()-1, dbHeader, RS3_NUM_LIVE);
                 RecordStoreUtil.putInt(getVersion()+1, dbHeader, RS4_VERSION);
-                RecordStoreUtil.putLong(System.currentTimeMillis(), dbHeader, 
+                RecordStoreUtil.putLong(System.currentTimeMillis(), dbHeader,
                         RS5_LAST_MODIFIED);
-        
+
                 // save the updated db header
                 dbFile.seek(RS3_NUM_LIVE);
                 dbFile.write(dbHeader, RS3_NUM_LIVE, 2*4+8);
                 // dbFile.commitWrite();
 
             } catch (java.io.IOException ioe) {
-                throw new RecordStoreException("error updating file after" + 
+                throw new RecordStoreException("error updating file after" +
                                                " record deletion");
             }
         }
@@ -486,8 +486,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * @exception RecordStoreException if a general record store
      *          exception occurs
      */
-    public int getRecordSize(int recordId) 
-        throws RecordStoreNotOpenException, InvalidRecordIDException, 
+    public int getRecordSize(int recordId)
+        throws RecordStoreNotOpenException, InvalidRecordIDException,
                RecordStoreException {
         synchronized (rsLock) {
             byte[] header = new byte[BLOCK_HEADER_SIZE];
@@ -501,7 +501,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             return RecordStoreUtil.getInt(header, 4);
         }
     }
-    
+
     /**
      * Returns the data stored in the given record.
      *
@@ -521,8 +521,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *          index <code>offset</code>
      * @see #setRecord
      */
-    public int getRecord(int recordId, byte[] buffer, int offset) 
-        throws RecordStoreNotOpenException, InvalidRecordIDException, 
+    public int getRecord(int recordId, byte[] buffer, int offset)
+        throws RecordStoreNotOpenException, InvalidRecordIDException,
             RecordStoreException {
         synchronized (rsLock) {
             try {
@@ -538,7 +538,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             }
         }
     }
-    
+
     /**
      * Returns a copy of the data stored in the given record.
      *
@@ -554,8 +554,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *          record has no data, this method will return null.
      * @see #setRecord
      */
-    public byte[] getRecord(int recordId) 
-        throws RecordStoreNotOpenException, InvalidRecordIDException, 
+    public byte[] getRecord(int recordId)
+        throws RecordStoreNotOpenException, InvalidRecordIDException,
                RecordStoreException {
         synchronized (rsLock) {
             try {
@@ -568,7 +568,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 }
 
                 byte[] buffer = new byte[dataSize];
-                
+
                 dbFile.seek(blockOffset+BLOCK_HEADER_SIZE);
                 dbFile.read(buffer);
 
@@ -603,17 +603,17 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *          to the RecordStore
      * @see #getRecord
      */
-    public void setRecord(int recordId, byte[] newData, 
-                          int offset, int numBytes) 
-        throws RecordStoreNotOpenException, InvalidRecordIDException, 
+    public void setRecord(int recordId, byte[] newData,
+                          int offset, int numBytes)
+        throws RecordStoreNotOpenException, InvalidRecordIDException,
             RecordStoreException, RecordStoreFullException {
- 
+
         synchronized (rsLock) {
             try {
                 byte[] header = new byte[BLOCK_HEADER_SIZE];
                 int blockOffset = dbIndex.getRecordHeader(recordId, header);
 
-                int oldBlockSize = 
+                int oldBlockSize =
                   RecordStoreUtil.calculateBlockSize(RecordStoreUtil.getInt(
                                                        header, 4));
                 int newBlockSize = RecordStoreUtil.calculateBlockSize(numBytes);
@@ -630,7 +630,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
                 // update the db header
                 RecordStoreUtil.putInt(getVersion()+1, dbHeader, RS4_VERSION);
-                RecordStoreUtil.putLong(System.currentTimeMillis(), dbHeader, 
+                RecordStoreUtil.putLong(System.currentTimeMillis(), dbHeader,
                         RS5_LAST_MODIFIED);
 
                 // write out the changes to the db header
@@ -655,8 +655,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         }
     }
 
-    /** 
-     * Returns data base file associated with this record store 
+    /**
+     * Returns data base file associated with this record store
      *
      * @return data base file
      */
@@ -664,37 +664,37 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         return dbFile;
     }
 
-    /** 
-     * Creates data base index file associated with this record store 
+    /**
+     * Creates data base index file associated with this record store
      *
-     * @param suiteID unique ID of the suite that owns the store
+     * @param suiteId unique ID of the suite that owns the store
      * @param name a string to name the index file
      * @return data base index file
      * @exception IOException if failed to create a file
      */
-    public AbstractRecordStoreFile createIndexFile(String suiteID, String name) 
+    public AbstractRecordStoreFile createIndexFile(int suiteId, String name)
       throws IOException {
-        return new RecordStoreFile(suiteID, name, 
+        return new RecordStoreFile(suiteId, name,
                                    AbstractRecordStoreFile.IDX_EXTENSION);
     }
 
     /**
      * Remove free blocks from the record store and compact records
      * with data into as small a space in <code>dbFile</code> as
-     * possible.  Operates from smallest to greatest offset in 
-     * <code>dbFile</code>, copying data in chunks towards the 
+     * possible.  Operates from smallest to greatest offset in
+     * <code>dbFile</code>, copying data in chunks towards the
      * beginning of the file, and updating record store meta-data
      * as it progresses.
      *
      * Warning: This is a slow operation that scales linearly
-     * with dbFile size.  
+     * with dbFile size.
      *
-     * @exception RecordStoreNotOpenException if this record store 
+     * @exception RecordStoreNotOpenException if this record store
      *            is closed
-     * @exception RecordStoreException if an error occurs during record 
+     * @exception RecordStoreException if an error occurs during record
      *            store compaction
      */
-    private void compactRecords() 
+    private void compactRecords()
         throws IOException {
 
         // check if the db can be compacted
@@ -721,7 +721,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             }
 
             currentId = RecordStoreUtil.getInt(header, 0);
-            currentSize = 
+            currentSize =
               RecordStoreUtil.calculateBlockSize(RecordStoreUtil.getInt(
                                                    header, 4));
 
@@ -735,10 +735,10 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             if (currentId < 0) {
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                                   "found free block at offset " + 
+                                   "found free block at offset " +
                                    currentOffset);
                 }
-                
+
                 // a free block, add to the moveUpNumBytes
                 moveUpNumBytes += currentSize;
 
@@ -747,7 +747,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             } else {
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                                   "found record block at offset " + 
+                                   "found record block at offset " +
                                    currentOffset);
                 }
 
@@ -788,8 +788,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
         // check if the db file can be truncated
         if (moveUpNumBytes > 0) {
-            RecordStoreUtil.putInt(RecordStoreUtil.getInt(dbHeader, RS6_DATA_SIZE) - moveUpNumBytes, 
-                   dbHeader, RS6_DATA_SIZE);
+            RecordStoreUtil.putInt(
+                RecordStoreUtil.getInt(dbHeader, RS6_DATA_SIZE) -
+                    moveUpNumBytes, dbHeader, RS6_DATA_SIZE);
             RecordStoreUtil.putInt(0, dbHeader, RS7_FREE_SIZE);
             dbFile.seek(RS6_DATA_SIZE);
             dbFile.write(dbHeader, RS6_DATA_SIZE, 4+4);
@@ -799,7 +800,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                               "compactRecords, truncate to size " + 
+                               "compactRecords, truncate to size " +
                                getSize());
             }
         }
@@ -819,19 +820,19 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *
      * @exception IOException if there is an error accessing the db file
      */
-    private void splitBlock(int blockOffset, byte[] header, 
-                            byte[] newData, int offset, 
+    private void splitBlock(int blockOffset, byte[] header,
+                            byte[] newData, int offset,
                             int numBytes) throws IOException {
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                           "splitBlock("+RecordStoreUtil.getInt(header, 0) + 
-                           ") old numBytes = " + RecordStoreUtil.getInt(header, 4) + 
+                           "splitBlock("+RecordStoreUtil.getInt(header, 0) +
+                           ") old numBytes = " + RecordStoreUtil.getInt(header, 4) +
                            " new numBytes=" + numBytes);
         }
 
         // calculate the size of the block
-        int oldBlockSize = 
+        int oldBlockSize =
           RecordStoreUtil.calculateBlockSize(RecordStoreUtil.getInt(
                                                header, 4));
 
@@ -843,7 +844,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
         // seek to the location and write the block and header
         writeBlock(blockOffset, header, newData, offset, numBytes);
-        
+
         // check if there is any left over free space
         int freeSize = oldBlockSize - newBlockSize - BLOCK_HEADER_SIZE;
         if (freeSize >= 0) {
@@ -854,7 +855,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
     }
 
     /**
-     * Adds a block for the record and data or sets an existing block to 
+     * Adds a block for the record and data or sets an existing block to
      * the data.  Splits an exiting block if needed.
      *
      * @param recordId the ID of the record to use in this operation
@@ -867,14 +868,14 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * @exception RecordStoreFullException if the operation cannot be
      *          completed because the record store has no more room
      * @exception IOException if there is an error accessing the db file
-     * @exception RecordStoreException if the new consumption is gong to 
+     * @exception RecordStoreException if the new consumption is gong to
      *            exceed the resource limit
      *
      * @return the offset in the db file of the block added
      */
-    private int addBlock(int recordId, byte[] data, int offset, int numBytes) 
+    private int addBlock(int recordId, byte[] data, int offset, int numBytes)
         throws IOException, RecordStoreFullException, RecordStoreException {
-        
+
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                            "addBlock("+recordId+") numBytes="+numBytes);
@@ -892,12 +893,12 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                               "blockSize = " + blockSize + 
-                               "free size = " + 
+                               "blockSize = " + blockSize +
+                               "free size = " +
                                RecordStoreUtil.getInt(dbHeader, RS7_FREE_SIZE));
             }
 
-            // initialize the number of bytes and search for an 
+            // initialize the number of bytes and search for an
             // available free block
             RecordStoreUtil.putInt(numBytes, header, 4);
             blockOffset = dbIndex.getFreeBlock(header);
@@ -913,10 +914,10 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             // search failed, add a new block to the end of the db file
             int spaceAvailable = getSizeAvailable();
             /**
-             * spaceAvailable returns the smaller number of total space 
+             * spaceAvailable returns the smaller number of total space
              * available and the storage limit per suite. If it is less than
              * the block size to be added, RecordStoreFullException is thrown
-             */ 
+             */
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                                "spaceAvailable = "+spaceAvailable);
@@ -933,7 +934,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
             writeBlock(blockOffset, header, data, offset, numBytes);
 
             // update the db data size
-            RecordStoreUtil.putInt(RecordStoreUtil.getInt(dbHeader, RS6_DATA_SIZE) + blockSize, 
+            RecordStoreUtil.putInt(RecordStoreUtil.getInt(dbHeader, RS6_DATA_SIZE) + blockSize,
                    dbHeader, RS6_DATA_SIZE);
             dbFile.seek(RS6_DATA_SIZE);
             dbFile.write(dbHeader, RS6_DATA_SIZE, 4);
@@ -964,7 +965,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                           "freeBlock(" + blockOffset + ") size = " + 
+                           "freeBlock(" + blockOffset + ") size = " +
                            blockSize);
         }
 
@@ -976,7 +977,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         writeBlock(blockOffset, header, null, 0, 0);
 
         // add to the db free size
-        RecordStoreUtil.putInt(RecordStoreUtil.getInt(dbHeader, RS7_FREE_SIZE) + blockSize, 
+        RecordStoreUtil.putInt(RecordStoreUtil.getInt(dbHeader, RS7_FREE_SIZE) + blockSize,
                dbHeader, RS7_FREE_SIZE);
         dbFile.seek(RS7_FREE_SIZE);
         dbFile.write(dbHeader, RS7_FREE_SIZE, 4);
@@ -996,8 +997,8 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      *
      * @exception IOException if there is an error accessing the db file
      */
-    private void writeBlock(int blockOffset, byte[] header, 
-                            byte[] data, int offset, int numBytes) 
+    private void writeBlock(int blockOffset, byte[] header,
+                            byte[] data, int offset, int numBytes)
         throws IOException {
 
         int remainder;
@@ -1006,9 +1007,9 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         if (data != null && numBytes > 0) {
             dbFile.write(data, offset, numBytes);
             remainder = numBytes % BLOCK_HEADER_SIZE;
-            if (remainder != 0) { 
+            if (remainder != 0) {
                 // DB_SIGNATURE used here as meaningless pad bytes
-                dbFile.write(DB_SIGNATURE, 0, BLOCK_HEADER_SIZE - remainder); 
+                dbFile.write(DB_SIGNATURE, 0, BLOCK_HEADER_SIZE - remainder);
             }
         }
         // flush the writes
@@ -1021,7 +1022,7 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * Creates a RecordStoreImpl instance; for internal use only.
      * Callers from outside must use <code>openRecordStore()</code>.
      *
-     * @param suiteID unique ID of the suite that owns the store
+     * @param suiteId unique ID of the suite that owns the store
      * @param recordStoreName a string to name the record store
      * @param create if true, create the record store if it doesn't exist
      *
@@ -1032,36 +1033,36 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
      * @exception RecordStoreFullException if there is no room in storage
      *            to create a new record store
      */
-    private RecordStoreImpl(String suiteID, String recordStoreName, 
+    private RecordStoreImpl(int suiteId, String recordStoreName,
                             boolean create)
         throws RecordStoreException, RecordStoreNotFoundException {
 
-        this.suiteID = suiteID;
+        this.suiteId = suiteId;
         rsLock = new Object();
 
-        boolean exists = RecordStoreUtil.exists(suiteID, recordStoreName, 
+        boolean exists = RecordStoreUtil.exists(suiteId, recordStoreName,
                                                 RecordStoreFile.DB_EXTENSION);
 
         // Check for errors between app and record store existance.
         if (!create && !exists) {
-            throw new RecordStoreNotFoundException("cannot find record " 
+            throw new RecordStoreNotFoundException("cannot find record "
                                                    + "store file");
         }
 
-        /* 
-         * If a new RecordStoreImpl will be created in storage, 
+        /*
+         * If a new RecordStoreImpl will be created in storage,
          * check to see if the space required is available.
          */
         if (create && !exists) {
-            int space = RecordStoreFile.spaceAvailableNewRecordStore(suiteID);
-            if (space - DB_HEADER_SIZE < 0) { 
+            int space = RecordStoreFile.spaceAvailableNewRecordStore(suiteId);
+            if (space - DB_HEADER_SIZE < 0) {
                 throw new RecordStoreFullException();
             }
         }
 
         // Create a RecordStoreFile for storing the record store.
         try {
-            dbFile = new RecordStoreFile(suiteID, recordStoreName, 
+            dbFile = new RecordStoreFile(suiteId, recordStoreName,
                                          RecordStoreFile.DB_EXTENSION);
 
             // allocate a new header
@@ -1086,38 +1087,38 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 for (int i = 0; i < DB_SIGNATURE.length; i++) {
                     dbHeader[i] = DB_SIGNATURE[i];
                 }
-                
+
                 RecordStoreUtil.putInt(1, dbHeader, RS2_NEXT_ID);
-                RecordStoreUtil.putLong(System.currentTimeMillis(), dbHeader, 
+                RecordStoreUtil.putLong(System.currentTimeMillis(), dbHeader,
                         RS5_LAST_MODIFIED);
-                
+
                 // write the header to the file
                 dbFile.write(dbHeader);
                 dbFile.commitWrite();
             }
 
             // create the index object
-            dbIndex = new RecordStoreIndex(this, suiteID, recordStoreName);
+            dbIndex = new RecordStoreIndex(this, suiteId, recordStoreName);
 
         } catch (java.io.IOException ioe) {
             try {
                 if (dbFile != null) {
                     dbFile.close();
                 }
-            } catch (java.io.IOException ioe2) { 
+            } catch (java.io.IOException ioe2) {
                 // ignore exception within exception block
             }
-            
+
             if (!exists) {
                 // avoid preserving just created damaged files
-                RecordStoreUtil.quietDeleteFile(suiteID,
+                RecordStoreUtil.quietDeleteFile(suiteId,
                     recordStoreName, RecordStoreFile.DB_EXTENSION);
-                RecordStoreIndex.deleteIndex(suiteID, recordStoreName);
+                RecordStoreIndex.deleteIndex(suiteId, recordStoreName);
             }
-            
+
             dbFile = null;
-            throw new RecordStoreException("error opening record store " + 
+            throw new RecordStoreException("error opening record store " +
                                            "file");
-        } 
+        }
     }
 }

@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -51,7 +52,6 @@ public class InputModeLayer extends PopupLayer {
         super();
         setBackground(null, 0xA3E2F8);
         this.supportsInput = false;
-        this.layerID = "InputModeLayer";
         anchor = new int[2];
         stringHeight = Font.getDefaultFont().getHeight();        
     }

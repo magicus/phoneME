@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -95,7 +96,6 @@ public class AlphaNumericInputMode extends BasicInputMode {
      * @return true if the key map has been changed otherwise false
      */
     protected boolean setKeyMap(int constraints, boolean longPress) {
-        // IMPL_NOTE: localize keyMap and get rid of this assignment
         char[][] oldKeyMap = keyMap;
             
         keyMap = longPress ?

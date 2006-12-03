@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -83,7 +84,9 @@ public class TestCanvasSizing extends TestCase {
         
         STD_WIDTH = ScreenSkin.WIDTH;
         STD_HEIGHT = ScreenSkin.HEIGHT;
-        FS_HEIGHT = ScreenSkin.FULLHEIGHT;
+        //FS_HEIGHT = ScreenSkin.FULLHEIGHT;
+        // IMPL NOTE: should get FULLHEIGHT from native
+        FS_HEIGHT = ScreenSkin.HEIGHT;
         TITLE_HEIGHT = TitleSkin.HEIGHT;
         TICKER_HEIGHT = TickerSkin.HEIGHT;
         SOFTBTN_HEIGHT = SoftButtonSkin.HEIGHT;

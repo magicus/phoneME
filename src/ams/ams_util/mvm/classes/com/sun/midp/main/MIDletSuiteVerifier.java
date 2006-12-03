@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,6 +28,8 @@ package com.sun.midp.main;
 
 import com.sun.cldc.isolate.Util;
 import com.sun.cldc.isolate.Isolate;
+import com.sun.midp.midletsuite.MIDletSuiteStorage;
+
 import java.io.IOException;
 
 /**
@@ -49,24 +52,37 @@ public class MIDletSuiteVerifier {
     }
 
     /**
-     * Verify suite classes and return hash value of the suite JAR
-     * @param jarPath path to the JAR package within file system
+     * Verify suite classes and return hash value of the suite JAR,
+     * throws Error in the case of unsuccessful class verification
+     *
+     * @param suiteId id of the suite whose classes are to be verified
+     * @param suiteStorage suite storage instance
      * @return hash value of the successfully verified JAR package,
-     * or null if verification failed
+     *   or null if class verification wasn't done by some reason,
+     *   e.g. it was scheduled to be started later
+     * @throws Error, IOException
      */
-    public static byte[] verifyJarClasses(String jarPath) throws IOException {
-        if (verifyJar(jarPath))
+    public static byte[] verifySuiteClasses(int suiteId,
+            MIDletSuiteStorage suiteStorage) throws IOException {
+
+        String jarPath = suiteStorage.getMidletSuiteJarPath(suiteId);
+        if (verifyJar(jarPath)) {
             return getJarHash(jarPath);
-        else return null;
+        } else {
+            /**
+             * Class verification failure is a serious problem, it's
+             * up to caller how to handle it and proceed with further
+             * execution.
+             */
+            throw new java.lang.Error();
+        }
     }
 
     /**
-     * Disable or enable verifier for the current isolate
+     * Disable or enable class verifier for the current Isolate
      * @param verifier true to enable, false to disable verifier
      */
-    static void setUseVerifier(boolean verifier) {
-        Isolate.currentIsolate().setUseVerifier(verifier);
-    }
+    static native void useClassVerifier(boolean verifier);
 
     /**
      * Evaluate hash value for the JAR  package
@@ -75,4 +91,16 @@ public class MIDletSuiteVerifier {
      * @return hash value for JAR package
      */
     public native static byte[] getJarHash(String jarPath) throws IOException;
+
+    /**
+     * Compare hash value of the JAR with provided hash value.
+     *
+     * @param jarPath path to JAR file
+     * @param hashValue hash value to compare with
+     * @return true if JAR has hash value equal to the provided one,
+     *   otherwise false
+     * @throws IOException
+     */
+    public native static boolean checkJarHash(String jarPath,
+            byte[] hashValue) throws IOException;
 }

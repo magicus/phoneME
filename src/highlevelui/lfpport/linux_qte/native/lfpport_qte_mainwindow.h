@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_mainwindow.h	1.24 06/04/11 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -136,6 +136,8 @@ public:
    */
   void showFullScreen();
 
+  void resize();
+
   /**
    * Return the abstract command widget.
    *
@@ -150,6 +152,12 @@ public:
   static PlatformMIDPMainWindow * getMainWindow() {
     return (PlatformMIDPMainWindow*)qteapp_get_main_window();
   }
+
+   /**
+    * Override to notify Java of key press.
+    */
+   void keyPressEvent(QKeyEvent *key);
+
 protected:
   /**
    * Filter special system level Qt events, like Close event,
@@ -192,7 +200,8 @@ private:
    * Whether the main window is in full-screen mode: true
    * if it is; false otherwise.
    */
-  bool isFullScreen; 
+  bool isFullScreen;
+
 
   /**
    * A reference needed by this class

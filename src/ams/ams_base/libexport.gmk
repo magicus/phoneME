@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,12 +27,14 @@
 LIB_EXPORT_JAVA_FILES= \
     com/sun/midp/main/CommandState.java \
     com/sun/midp/main/DisplayController.java \
+    com/sun/midp/main/DisplayControllerListener.java \
     com/sun/midp/main/MIDletControllerEventConsumer.java \
     com/sun/midp/main/MIDletControllerEventProducer.java \
     com/sun/midp/main/MIDletProxy.java \
     com/sun/midp/main/MIDletProxyList.java \
     com/sun/midp/main/MIDletProxyListListener.java \
-    com/sun/midp/main/MIDletSuiteLoader.java
+    com/sun/midp/main/MIDletSuiteLoader.java \
+    com/sun/midp/main/MIDletSuiteUtils.java
 
 LIB_HEADER_FILES= \
     imageCache.h \
@@ -43,4 +46,4 @@ LIB_HEADER_FILES= \
     midpInflatetables.h \
     midpInit.h \
     midpMIDletProxyList.h \
-    midpMidletSuiteLoader.h
+    midpMidletSuiteUtils.h

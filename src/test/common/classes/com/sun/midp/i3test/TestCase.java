@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -27,6 +28,7 @@ package com.sun.midp.i3test;
 
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.ImplicitlyTrustedClass;
 
 /**
  * The main class for writing integrated internal interface (i3) tests.  Tests
@@ -138,7 +140,7 @@ public abstract class TestCase {
      */
     public TestCase() {
         if (verbose) {
-            p("## test case " + this.getClass().getName());
+            p("## TestCase " + this.getClass().getName());
         }
         currentTestCase = this;
         currentTest = null;
@@ -445,8 +447,12 @@ public abstract class TestCase {
     // ==================== static variables ====================
 
     static boolean verbose = false;
+
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
     private static SecurityToken internalSecurityToken =
-        SecurityInitializer.getSecurityToken();
+        SecurityInitializer.requestToken(new SecurityTrusted());
+
     static boolean tokenEnabled = false;
 
     // general statistics
@@ -588,13 +594,16 @@ public abstract class TestCase {
 
     static void report() {
         System.out.print("Test run complete: ");
-        System.out.print(totalCases + " testcases ");
-        System.out.print(totalTests + " tests ");
-        System.out.println(totalAsserts + " assertions");
+        System.out.print(totalCases
+            + (totalCases == 1 ? " testcase " : " testcases "));
+        System.out.print(totalTests
+            + (totalTests == 1 ? " test " : " tests "));
+        System.out.println(totalAsserts
+            + (totalAsserts == 1 ? " assertion" : " assertions"));
 
         if (totalFailures != 0) {
-            System.out.println(totalFailures +
-               (totalFailures == 1 ? " FAILURE!!!" : " FAILURES!!!"));
+            System.out.println(totalFailures
+               + (totalFailures == 1 ? " FAILURE!!!" : " FAILURES!!!"));
         }
 
         int totalErrors = 
@@ -607,8 +616,8 @@ public abstract class TestCase {
             errorTestWithoutAssert;
 
         if (totalErrors != 0) {
-            System.out.println(totalErrors +
-                (totalErrors == 1 ? " ERROR!!!" : " ERRORS!!!"));
+            System.out.println(totalErrors
+                + (totalErrors == 1 ? " ERROR!!!" : " ERRORS!!!"));
             perror(errorClassNotFound, "test class not found");
             perror(errorConstructorException, "constructor threw exception");
             perror(errorNotTestCase, "class not subclass of TestCase");

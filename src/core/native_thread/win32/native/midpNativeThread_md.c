@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -71,10 +72,14 @@ midp_ThreadId midp_startNativeThread(midp_ThreadRoutine thread,
     }
 }
 
+#endif
+
 /**
- * suspends current thread for a given number of seconds.
- * The primary usage of this function is testing of NAMS subsystem - 
- * additional thread needs to wait for s\ome time until java subsystem will 
+ * Suspends current thread for a given number of seconds.
+ * Used to place java stack to suspended state in default suspend/resume
+ * implementation.
+ * Used for testing of NAMS subsystem - 
+ * additional thread needs to wait for some time until java subsystem will
  * initialize inself correctly.
  *
  * @param duration  how many seconds to sleep
@@ -82,7 +87,6 @@ midp_ThreadId midp_startNativeThread(midp_ThreadRoutine thread,
 void midp_sleepNativeThread(int duration) {
     Sleep(duration);
 }
-#endif
 
 /**
  * Returns the platform-specific handle of the current thread.

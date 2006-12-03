@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -54,8 +55,14 @@ MIDP_JAVADOC_ALL += \
 
 SUBSYSTEM_JAVAUTIL_JAVA_FILES += \
     $(JAVAUTIL_DIR)/reference/classes/com/sun/midp/util/DateParser.java \
-    $(JAVAUTIL_DIR)/reference/classes/com/sun/midp/util/Properties.java \
+    $(JAVAUTIL_DIR)/reference/classes/com/sun/midp/util/Properties.java
+
+# CDC/Foundation already provides following classes. Don't include them
+# in MIDP.
+ifneq ($(TARGET_VM), cdc_hi)
+SUBSYSTEM_JAVAUTIL_JAVA_FILES += \
     $(JAVAUTIL_DIR)/reference/classes/java/util/Timer.java \
     $(JAVAUTIL_DIR)/reference/classes/java/util/TimerTask.java \
     $(JAVAUTIL_DIR)/reference/classes/java/lang/IllegalStateException.java
+endif
 

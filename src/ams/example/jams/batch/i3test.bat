@@ -1,3 +1,4 @@
+@rem 	
 @rem
 @rem Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 @rem DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,6 +27,6 @@ setlocal
 
 %~d0
 chdir %~p0
-runMidlet internal com.sun.midp.i3test.Framework %*
+runMidlet -1 com.sun.midp.i3test.Framework %*
 
 endlocal

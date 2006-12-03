@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,9 +28,7 @@ package com.sun.midp.chameleon.skins.resources;
 
 import com.sun.midp.chameleon.skins.SkinPropertiesIDs;
 import com.sun.midp.chameleon.skins.PTISkin;
-
-import javax.microedition.lcdui.Image;
-import javax.microedition.lcdui.Font;
+import com.sun.midp.chameleon.skins.ScreenSkin;
 
 /** Resources for predictive text input layer */
 public class PTIResources {
@@ -58,8 +57,7 @@ public class PTIResources {
         
         PTISkin.HEIGHT = SkinResources.getInt(
                 SkinPropertiesIDs.PTI_HEIGHT);
-        PTISkin.WIDTH = SkinResources.getInt(
-                SkinPropertiesIDs.PTI_WIDTH);
+
         PTISkin.MARGIN = SkinResources.getInt(
                 SkinPropertiesIDs.PTI_MARGIN);
         PTISkin.COLOR_BG = SkinResources.getInt(

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -160,6 +161,7 @@ class SkinProperty {
         new SkinProperty("screen.color_border_hl", "-1", "SCREEN_COLOR_BORDER_HL", INT_T), 
         new SkinProperty("screen.color_traverse_ind", "-1", "SCREEN_COLOR_TRAVERSE_IND", INT_T), 
         new SkinProperty("screen.border_style", "-1", "SCREEN_BORDER_STYLE", INT_T), 
+        new SkinProperty("screen.scroll_amount", "-1", "SCREEN_SCROLL_AMOUNT", INT_T), 
         new SkinProperty("screen.font_label", "500", "SCREEN_FONT_LABEL", FONT_T), 
         new SkinProperty("screen.font_input_text", "500", "SCREEN_FONT_INPUT_TEXT", FONT_T), 
         new SkinProperty("screen.font_static_text", "500", "SCREEN_FONT_STATIC_TEXT", FONT_T), 
@@ -174,6 +176,9 @@ class SkinProperty {
         new SkinProperty("scroll.width", "-1", "SCROLL_WIDTH", INT_T), 
         new SkinProperty("scroll.color_bg", "-1", "SCROLL_COLOR_BG", INT_T), 
         new SkinProperty("scroll.color_fg", "-1", "SCROLL_COLOR_FG", INT_T), 
+        new SkinProperty("scroll.color_frame", "-1", "SCROLL_COLOR_FRAME", INT_T), 
+        new SkinProperty("scroll.color_up_arrow", "-1", "SCROLL_COLOR_UP_ARROW", INT_T), 
+        new SkinProperty("scroll.color_dn_arrrow", "-1", "SCROLL_COLOR_DN_ARROW", INT_T), 
         new SkinProperty("scroll.image_bg", "scroll.image_bg", "SCROLL_IMAGE_BG", C_IMAGE_T), 
         new SkinProperty("scroll.image_fg", "scroll.image_fg", "SCROLL_IMAGE_FG", C_IMAGE_T), 
         new SkinProperty("scroll.image_up", "scroll.image_up", "SCROLL_IMAGE_UP", IMAGE_T), 
@@ -217,7 +222,6 @@ class SkinProperty {
         new SkinProperty("ticker.image_au_bg", "ticker.image_au_bg", "TICKER_IMAGE_AU_BG", C_IMAGE_T), 
 
         new SkinProperty("pti.height", "-1", "PTI_HEIGHT", INT_T), 
-        new SkinProperty("pti.width", "-1", "PTI_WIDTH", INT_T), 
         new SkinProperty("pti.margin", "-1", "PTI_MARGIN", INT_T), 
         new SkinProperty("pti.color_bg", "-1", "PTI_COLOR_BG", INT_T), 
         new SkinProperty("pti.color_fg", "-1", "PTI_COLOR_FG", INT_T), 
@@ -842,6 +846,7 @@ public class UpgradeRomizedProperties {
         pl("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         pl("<!DOCTYPE configuration SYSTEM \"../configuration.dtd\">");
         pl("<!--");
+        pl("        	");
         pl("");
         pl("        Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.");
         pl("        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");

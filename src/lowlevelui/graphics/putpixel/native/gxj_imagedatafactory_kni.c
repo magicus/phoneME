@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -213,7 +214,7 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
  * @return pointer to the buffer, or NULL if offset/length are
  *    are not applicable.
  */
-static unsigned char *gx_get_java_byte_buffer(
+static unsigned char *gx_get_java_byte_buffer(KNIDECLARGS
     jobject byteArray, int offset, int length) {
 
     unsigned char *buffer = (unsigned char *)JavaByteArray(byteArray);
@@ -242,7 +243,7 @@ static unsigned char *gx_get_java_byte_buffer(
  * @return KNI_TRUE in the case ImageData is successfully loaded with
  *    raw image data, otherwise KNI_FALSE.
  */
-static int gx_load_imagedata_from_raw_buffer(jobject imageData,
+static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
     unsigned char *nativeBuffer, jobject javaBuffer,
     int offset, int length) {
 
@@ -263,7 +264,7 @@ static int gx_load_imagedata_from_raw_buffer(jobject imageData,
                     "Native and Java buffers should not be used together");
                 break;
             }
-            nativeBuffer = gx_get_java_byte_buffer(
+            nativeBuffer = gx_get_java_byte_buffer(KNIPASSARGS
                 javaBuffer, offset, length);
         }
         if (nativeBuffer == NULL) {
@@ -302,11 +303,11 @@ static int gx_load_imagedata_from_raw_buffer(jobject imageData,
                 break;
             }
             /** Link the new array into ImageData to protect if from GC */
-            midp_set_jobject_field(imageData, "alphaData", "[B", alphaData);
+            midp_set_jobject_field(KNIPASSARGS imageData, "alphaData", "[B", alphaData);
 
             /** New array allocation could cause GC and buffer moving */
             if (!KNI_IsNullHandle(javaBuffer)) {
-                nativeBuffer = gx_get_java_byte_buffer(
+                nativeBuffer = gx_get_java_byte_buffer(KNIPASSARGS
                     javaBuffer, offset, length);
                 rawBuffer = (gxutl_image_buffer_raw *)
                     (nativeBuffer + offset);
@@ -320,11 +321,11 @@ static int gx_load_imagedata_from_raw_buffer(jobject imageData,
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
             break;
         }
-	    midp_set_jobject_field(imageData, "pixelData", "[B", pixelData);
+	    midp_set_jobject_field(KNIPASSARGS imageData, "pixelData", "[B", pixelData);
 
         /** New array allocation could cause GC and buffer moving */
         if (!KNI_IsNullHandle(javaBuffer)) {
-            nativeBuffer = gx_get_java_byte_buffer(
+            nativeBuffer = gx_get_java_byte_buffer(KNIPASSARGS
                 javaBuffer, offset, length);
             rawBuffer = (gxutl_image_buffer_raw *)
                 (nativeBuffer + offset);
@@ -358,33 +359,34 @@ static int gx_load_imagedata_from_raw_buffer(jobject imageData,
  * @return true if a cached image was loaded, false otherwise
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_javax_microedition_lcdui_ImageDataFactory_loadCachedImage0() {
+KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadCachedImage0) {
 #if ENABLE_IMAGE_CACHE
     int len;
+    SuiteIdType suiteId;
     jboolean status = KNI_FALSE;
     unsigned char *rawBuffer = NULL;
 
-    KNI_StartHandles(4);
+    KNI_StartHandles(3);
 
     /* A handle for which KNI_IsNullHandle() check is true */
     KNI_DeclareHandle(nullHandle);
 
     GET_PARAMETER_AS_PCSL_STRING(3, resName)
-    GET_PARAMETER_AS_PCSL_STRING(2, suiteId)
 
     KNI_DeclareHandle(imageData);
     KNI_GetParameterAsObject(1, imageData);
 
-    len = loadImageFromCache(&suiteId, &resName, &rawBuffer);
+    suiteId = KNI_GetParameterAsInt(2);
+
+    len = loadImageFromCache(suiteId, &resName, &rawBuffer);
     if (len != -1 && rawBuffer != NULL) {
         /* image is found in cache */
-        status = gx_load_imagedata_from_raw_buffer(
+        status = gx_load_imagedata_from_raw_buffer(KNIPASSARGS
             imageData, rawBuffer, nullHandle, 0, len);
     }
 
     midpFree(rawBuffer);
 
-    RELEASE_PCSL_STRING_PARAMETER
     RELEASE_PCSL_STRING_PARAMETER
 
     KNI_EndHandles();
@@ -409,7 +411,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadCachedImage0() {
  * @param imageLength the length of the data in the array
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_lcdui_ImageDataFactory_loadRAW() {
+KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRAW) {
 
     int offset = KNI_GetParameterAsInt(3);
     int length = KNI_GetParameterAsInt(4);
@@ -422,7 +424,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRAW() {
     KNI_GetParameterAsObject(2, imageBytes);
 
     /* Load ImageData content from Java byte array with raw image data */
-    if (gx_load_imagedata_from_raw_buffer(
+    if (gx_load_imagedata_from_raw_buffer(KNIPASSARGS
             imageData, NULL, imageBytes, offset, length) != KNI_TRUE) {
         KNI_ThrowNew(midpIllegalArgumentException, NULL);
     }
@@ -447,7 +449,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRAW() {
  * @return true if there is alpha data
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_javax_microedition_lcdui_ImageDataFactory_loadPNG() {
+KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
     int            length = KNI_GetParameterAsInt(4);
     int            offset = KNI_GetParameterAsInt(3);
     int            status = KNI_TRUE;
@@ -531,7 +533,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadPNG() {
  * @param imageLength The length of the image data in the byte array
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_lcdui_ImageDataFactory_loadJPEG() {
+KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
     int            length = KNI_GetParameterAsInt(4);
     int            offset = KNI_GetParameterAsInt(3);
     unsigned char* srcBuffer = NULL;
@@ -600,7 +602,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadJPEG() {
  * @param imageDataLength length of image data array
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_javax_microedition_lcdui_ImageDataFactory_loadRomizedImage() {
+KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
     int imageDataPtr = KNI_GetParameterAsInt(2);
     int imageDataLength = KNI_GetParameterAsInt(3);
 
@@ -663,12 +665,12 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRomizedImage() {
         midpImageData->nativePixelData = (jint)rawBuffer->data;
 
         if (rawBuffer->hasAlpha) {
-            midpImageData->nativeAlphaData = 
+            midpImageData->nativeAlphaData =
                 (jint)(rawBuffer->data + pixelSize);
         }
 
         status = KNI_TRUE;
-        
+
     } while (0);
 
     KNI_EndHandles();
@@ -687,7 +689,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRomizedImage() {
  * @param rgbData The array of argb image data
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_lcdui_ImageDataFactory_loadRGB() {
+KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
     /* jboolean processAlpha = KNI_GetParameterAsBoolean(2); */
     int height;
     int width;
@@ -697,7 +699,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRGB() {
     KNI_StartHandles(2);
     KNI_DeclareHandle(rgbData);
     KNI_DeclareHandle(imageData);
-    
+
     KNI_GetParameterAsObject(2, rgbData);
     KNI_GetParameterAsObject(1, imageData);
 
@@ -709,7 +711,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRGB() {
         int i;
         int len = KNI_GetArrayLength(rgbData);
         int data_length = width * height;
-        
+
         if (len > data_length) {
             len = data_length;
         }
@@ -730,7 +732,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRGB() {
             }
         }
     }
-    
+
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
@@ -738,12 +740,12 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRGB() {
 #define PIXEL gxj_pixel_type
 #define ALPHA gxj_alpha_type
 
-void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc, 
-               const int srcYInc, const int srcXStart, 
+void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc,
+               const int srcYInc, const int srcXStart,
                PIXEL *dst, const int w, const int h) {
     int x, srcX;
     PIXEL *dstPtrEnd = dst + (h * w );
-    
+
     (void)srcLineW; /* Surpress unused warning */
 
     for (; dst < dstPtrEnd; dst += w, src += srcYInc) {
@@ -754,16 +756,16 @@ void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc,
     }
 }
 
-void pixelAndAlphaCopy(PIXEL *src, const int srcLineW, const int srcXInc, 
-                       const int srcYInc, const int srcXStart, PIXEL *dst, 
+void pixelAndAlphaCopy(PIXEL *src, const int srcLineW, const int srcXInc,
+                       const int srcYInc, const int srcXStart, PIXEL *dst,
                        const int w, const int h,
                        const ALPHA *srcAlpha, ALPHA *dstAlpha) {
     int x, srcX;
     PIXEL *dstPtrEnd = dst + (h * w );
-    
+
     (void)srcLineW; /* Surpress unused warning */
-    
-    for (; dst < dstPtrEnd; dst += w, src += srcYInc, 
+
+    for (; dst < dstPtrEnd; dst += w, src += srcYInc,
         dstAlpha += w, srcAlpha += srcYInc) {
         for (x = 0, srcX = srcXStart; x < w; srcX += srcXInc) {
             // printf("%d = %d\n", ((dst+x)-dstData), (src+srcX)-srcData);
@@ -773,7 +775,7 @@ void pixelAndAlphaCopy(PIXEL *src, const int srcLineW, const int srcXInc,
     }
 }
 
-void blit(const gxj_screen_buffer *src, int xSrc, int ySrc, int width, int height, 
+void blit(const gxj_screen_buffer *src, int xSrc, int ySrc, int width, int height,
           gxj_screen_buffer *dst, int transform) {
     PIXEL *srcPtr = NULL;
     int srcXInc=0, srcYInc=0, srcXStart=0;
@@ -831,30 +833,30 @@ void blit(const gxj_screen_buffer *src, int xSrc, int ySrc, int width, int heigh
 
     if (transform & TRANSFORM_INVERTED_AXES) {
         if (src->alphaData == NULL) {
-            pixelCopy(srcPtr, src->width, srcXInc, srcYInc, srcXStart, 
+            pixelCopy(srcPtr, src->width, srcXInc, srcYInc, srcXStart,
                       dst->pixelData, height, width);
         } else {
             ALPHA *srcAlpha = src->alphaData + (srcPtr - src->pixelData);
-            pixelAndAlphaCopy(srcPtr, src->width, srcXInc, srcYInc, 
-                              srcXStart, 
-                              dst->pixelData, height, width, srcAlpha, 
+            pixelAndAlphaCopy(srcPtr, src->width, srcXInc, srcYInc,
+                              srcXStart,
+                              dst->pixelData, height, width, srcAlpha,
                               dst->alphaData);
         }
     } else {
         if (src->alphaData == NULL) {
-            pixelCopy(srcPtr, src->width, srcXInc, srcYInc, srcXStart, 
+            pixelCopy(srcPtr, src->width, srcXInc, srcYInc, srcXStart,
                       dst->pixelData, width, height);
         } else {
             ALPHA *srcAlpha = src->alphaData + (srcPtr - src->pixelData);
-            pixelAndAlphaCopy(srcPtr, src->width, srcXInc, srcYInc, srcXStart, 
-                              dst->pixelData, width, height, 
+            pixelAndAlphaCopy(srcPtr, src->width, srcXInc, srcYInc, srcXStart,
+                              dst->pixelData, width, height,
                               srcAlpha, dst->alphaData);
         }
     }
 }
 
 /**
- * Copies the region of the specified <tt>ImageData</tt> to 
+ * Copies the region of the specified <tt>ImageData</tt> to
  * the specified <tt>ImageData</tt> object.
  * <p>
  * Java declaration:
@@ -874,7 +876,7 @@ void blit(const gxj_screen_buffer *src, int xSrc, int ySrc, int width, int heigh
  * @param transform The transform to apply to the selected region.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_lcdui_ImageDataFactory_loadRegion() {
+KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRegion) {
     int      transform = KNI_GetParameterAsInt(7);
     int         height = KNI_GetParameterAsInt(6);
     int          width = KNI_GetParameterAsInt(5);
@@ -890,7 +892,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRegion() {
     KNI_GetParameterAsObject(2, srcImg);
     KNI_GetParameterAsObject(1, destImg);
 
-    if (getImageScreenBuffer(destImg, &dstSBuf) != NULL && 
+    if (getImageScreenBuffer(destImg, &dstSBuf) != NULL &&
         getImageScreenBuffer(srcImg, &srcSBuf) != NULL) {
 
         blit(&srcSBuf, x, y, width, height, &dstSBuf, transform);

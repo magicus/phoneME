@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -28,6 +29,9 @@ import javax.microedition.lcdui.*;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
+import com.sun.midp.midletsuite.MIDletSuiteLockedException;
+import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
+
 /**
  * Displays error messages using the Display instance object passed
  * into the Constructor.
@@ -52,7 +56,7 @@ class DisplayError {
      * Display the Alert with the error message.
      *
      * @param appName - name of the application in which the error happen
-     * @param ex - exception that was thrown while performing one
+     * @param t - throwable that was thrown while performing one
      *             of the operations on the application
      * @param alertTitle - if non-null it will be the Alert title, otherwise 
      *        a default value will be used 
@@ -61,18 +65,36 @@ class DisplayError {
      *        otherwise a default message will be generated using
      *       (Resource.getString(ResourceConstants.ERROR))
      */
-    void showErrorAlert(String appName, Exception ex, 
+    void showErrorAlert(String appName, Throwable t, 
                         String alertTitle, String alertMessage) {
 
         if (alertMessage == null) {
-            StringBuffer sb = new StringBuffer();
-            
-            sb.append(appName);
-            sb.append("\n");
-            sb.append(Resource.getString(ResourceConstants.ERROR));
-            sb.append(": ");
-            sb.append(ex.toString());
-            alertMessage = sb.toString();
+
+            if (t instanceof MIDletSuiteLockedException) {
+                String[] values = new String[1];
+                values[0] = appName;
+                alertMessage = Resource.getString(
+                                   ResourceConstants.AMS_MGR_UPDATE_IS_RUNNING,
+                                   values);
+            } else if (t instanceof MIDletSuiteCorruptedException) {
+                String[] values = new String[1];
+                values[0] = appName;
+                alertMessage = Resource.getString(
+                            ResourceConstants.AMS_MIDLETSUITE_ID_CORRUPT_MSG,
+                            values);
+            } else {
+
+                t.printStackTrace();
+
+                StringBuffer sb = new StringBuffer();
+                
+                sb.append(appName);
+                sb.append("\n");
+                sb.append(Resource.getString(ResourceConstants.ERROR));
+                sb.append(": ");
+                sb.append(t.toString());
+                alertMessage = sb.toString();
+            }
         
         }
 

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -25,22 +26,21 @@
 
 package com.sun.midp.publickeystore;
 
-import java.io.*;
+// Explicit list of declarations to avoid CDC conflict
+// with use of java.io.File
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import java.util.*;
- 
+
 import javax.microedition.io.*;
-
 import com.sun.midp.io.j2me.storage.*;
-
 import com.sun.midp.midlet.*;
-
 import com.sun.midp.security.*;
-
+import com.sun.midp.configurator.Constants;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
-
-import com.sun.midp.crypto.*;
-
 import com.sun.midp.pki.*;
 
 /**
@@ -48,11 +48,19 @@ import com.sun.midp.pki.*;
  * To work with SSL this class implements the SSL
  * {@link CertStore} interface.
  */
-public class WebPublicKeyStore extends PublicKeyStore 
-    implements CertStore, ImplicitlyTrustedClass {
+public class WebPublicKeyStore extends PublicKeyStore
+    implements CertStore {
+
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
 
     /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken;
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /** keystore this package uses for verifying descriptors */
     private static WebPublicKeyStore trustedKeyStore;
@@ -60,18 +68,6 @@ public class WebPublicKeyStore extends PublicKeyStore
     /** keystore this package uses for verifying descriptors */
     private static Vector sharedKeyList;
 
-    /**
-     * Initializes the security domain for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class.
-     */
-    public void initSecurityToken(SecurityToken token) {
-        if (classSecurityToken == null) {
-            classSecurityToken = token;
-        }
-    }
-        
     /**
      * Load the certificate authorities for the MIDP from storage
      * into the SSL keystore.
@@ -87,8 +83,8 @@ public class WebPublicKeyStore extends PublicKeyStore
 
         try {
             storage = new RandomAccessStream(classSecurityToken);
-            storage.connect(File.getStorageRoot() + "_main.ks",
-                            Connector.READ);
+            storage.connect(File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
+                "_main.ks", Connector.READ);
             tks = storage.openInputStream();
         } catch (Exception e) {
             if (Logging.TRACE_ENABLED) {
@@ -104,7 +100,7 @@ public class WebPublicKeyStore extends PublicKeyStore
         } catch (Exception e) {
             if (Logging.TRACE_ENABLED) {
                 Logging.trace(e, "Corrupt key store file, cannot" +
-                              "authenticate HTTPS servers"); 
+                              "authenticate HTTPS servers");
             }
             return;
         } finally {
@@ -186,8 +182,8 @@ public class WebPublicKeyStore extends PublicKeyStore
         keystore = new PublicKeyStoreBuilderBase(sharedKeyList);
         try {
             storage = new RandomAccessStream(classSecurityToken);
-            storage.connect(File.getStorageRoot() + "_main.ks",
-                            RandomAccessStream.READ_WRITE_TRUNCATE);
+            storage.connect(File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
+                "_main.ks", RandomAccessStream.READ_WRITE_TRUNCATE);
             outputStream = storage.openOutputStream();
         } catch (Exception e) {
             if (Logging.TRACE_ENABLED) {
@@ -202,7 +198,7 @@ public class WebPublicKeyStore extends PublicKeyStore
         } catch (Exception e) {
             if (Logging.TRACE_ENABLED) {
                 Logging.trace(e, "Corrupt key store file, cannot" +
-                              "authenticate HTTPS servers"); 
+                              "authenticate HTTPS servers");
             }
 
             return;
@@ -282,13 +278,13 @@ public class WebPublicKeyStore extends PublicKeyStore
     }
 
     /**
-     * Returns the certificate(s) corresponding to a 
+     * Returns the certificate(s) corresponding to a
      * subject name string.
-     * 
+     *
      * @param subjectName subject name of the certificate in printable form.
      *
      * @return corresponding certificates or null (if not found)
-     */ 
+     */
     public X509Certificate[] getCertificates(String subjectName) {
         Vector keys;
         X509Certificate[] certs;
@@ -320,7 +316,7 @@ public class WebPublicKeyStore extends PublicKeyStore
         try {
             X509Certificate cert;
 
-            cert = new X509Certificate((byte)1, // fixed at version 1
+            cert = new X509Certificate((byte)0, // fixed at version 1 (raw 0)
                                 new byte[0],
                                 keyInfo.getOwner(),
                                 keyInfo.getOwner(), // issuer same as subject

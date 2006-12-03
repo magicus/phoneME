@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -486,7 +487,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
                                     String resName) {
         MIDletSuite midletSuite =
             MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-        String suiteId = midletSuite.getID();
+        int suiteId = midletSuite.getID();
 
         return loadCachedImage0(imageData, suiteId, resName);
     }
@@ -503,7 +504,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
      * @return          true if image was loaded and created, false otherwise
      */
     private native boolean loadCachedImage0(ImageData imageData,
-                                            String suiteId, String resName);
+                                            int suiteId, String resName);
 
     /**
      * Function to decode an <code>ImageData</code> from PNG data.

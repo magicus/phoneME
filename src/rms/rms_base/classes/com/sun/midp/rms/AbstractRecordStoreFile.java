@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -59,13 +60,13 @@ interface AbstractRecordStoreFile {
      * stored in the MIDP memory space and include its size
      * in the total.
      *
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      *        can be null
      *
      * @return the approximate space available to grow the
      *         record store in bytes.
      */
-    int spaceAvailable(String suiteID);
+    int spaceAvailable(int suiteId);
 
     /**
      * Sets the position within <code>recordStream</code> to

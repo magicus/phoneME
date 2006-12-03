@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -53,15 +54,15 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      * MIDlet suite. Note that if the MIDlet suite does not
      * have any record stores, this function will return NULL.
      *
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      *
      * @return an array of record store names.
      */
-    static String[] listRecordStores(String suiteID) {
-        String[] array = new String[getNumberOfStores(suiteID)];
+    static String[] listRecordStores(int suiteId) {
+        String[] array = new String[getNumberOfStores(suiteId)];
 
         if (array.length > 0) {
-            getRecordStoreList(suiteID, array);
+            getRecordStoreList(suiteId, array);
             return array;
         } else {
             return null;
@@ -75,7 +76,7 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      *
      * @return the number of installed suites
      */
-    private static native int getNumberOfStores(String id);
+    private static native int getNumberOfStores(int id);
 
     /**
      * Retrieves the list of record stores a MIDlet suites owns.
@@ -84,14 +85,14 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      * @param names an empty array of suite IDs to fill, call
      *     getNumberOfSuites to know how big to make the array
      */
-    private static native void getRecordStoreList(String id, String[] names);
+    private static native void getRecordStoreList(int id, String[] names);
 
     /**
      * Remove all the Record Stores for a suite.
      *
      * @param id ID of the suite
      */
-    static native void removeRecordStores(String id);
+    static native void removeRecordStores(int id);
 
     /**
      * Approximation of remaining space in storage for a new record store.
@@ -101,12 +102,12 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      * stored in the MIDP memory space and include its size
      * in the total.
      *
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      *
      * @return the approximate space available to create a
      *         record store in bytes.
      */
-    static native int spaceAvailableNewRecordStore(String suiteID);
+    static native int spaceAvailableNewRecordStore(int suiteId);
 
     /**
      * Constructs a new RecordStoreFile instance.
@@ -127,15 +128,15 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      *  instance is stored..
      * </ul>
      *
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
      * @exception IOException if there is an error opening the file.
      */
-    RecordStoreFile(String suiteID, String name,
+    RecordStoreFile(int suiteId, String name,
                     int extension) throws IOException {
-        handle = openRecordStoreFile(suiteID, name, extension);
+        handle = openRecordStoreFile(suiteId, name, extension);
     }
 
     /**
@@ -145,7 +146,7 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      * pointer to register the cleanup routine. When we have full
      * native finalization, open() can be made 'static' again.
      *
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
@@ -153,7 +154,7 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      *
      * @exception IOException if there is an error opening the file.
      */
-    private native int openRecordStoreFile(String suiteID,
+    private native int openRecordStoreFile(int suiteId,
                                            String name,
                                            int extension) throws IOException;
 
@@ -165,14 +166,14 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      * stored in the MIDP memory space and include its size
      * in the total.
      *
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      *        can be null
      *
      * @return the approximate space available to grow the
      *         record store in bytes.
      */
-    public int spaceAvailable(String suiteID) {
-        return spaceAvailableRecordStore(handle, suiteID);
+    public int spaceAvailable(int suiteId) {
+        return spaceAvailableRecordStore(handle, suiteId);
     }
 
     /**
@@ -184,13 +185,13 @@ class RecordStoreFile implements AbstractRecordStoreFile {
      * in the total.
      *
      * @param handle to an open record store
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      *
      * @return the approximate space available to grow the
      *         record store in bytes.
      */
     private static native int spaceAvailableRecordStore(int handle,
-                                                        String suiteID);
+                                                        int suiteId);
 
     /**
      * Sets the position within <code>recordStream</code> to

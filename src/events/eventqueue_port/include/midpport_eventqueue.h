@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -59,6 +60,8 @@ typedef struct _MidpEvent {
     jint intParam3;
     /** Generic int parameter 4. */
     jint intParam4;
+    /** Generic int parameter 5. */
+    jint intParam5;
     /** Generic String parameter 1. */
     pcsl_string stringParam1;
     /** Generic String parameter 2. */
@@ -98,7 +101,7 @@ void midp_unlockEventQueue(void);
  *
  *   StoreMIDPEvent(event, 0);
  * </pre>
- * 
+ *
  * @param event The event to enqueue.
  * @param isolateId ID of an Isolate or 0 for SMV mode
  */

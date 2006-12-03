@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -32,7 +33,7 @@ import com.sun.midp.main.*;
  */
 class AutoMIDletInfo {
     /** Suite ID */
-    String suiteID;
+    int suiteID;
 
     /** MIDlet's class name */
     String midletClassName;
@@ -55,7 +56,7 @@ class AutoMIDletInfo {
      * @param suiteID suite ID
      * @param midletClassName MIDlet's class name
      */
-    AutoMIDletInfo(String suiteID, String midletClassName) {
+    AutoMIDletInfo(int suiteID, String midletClassName) {
         this.suiteID = suiteID;
         this.midletClassName = midletClassName;
         this.midletProxy = null;

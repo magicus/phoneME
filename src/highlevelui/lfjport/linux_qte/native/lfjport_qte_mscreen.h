@@ -1,5 +1,5 @@
 /*
- * @(#)lfjport_qte_mscreen.h	1.21 06/04/05 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -190,20 +190,24 @@ public:
     /**
      * Size of a normal screen.
      */
-    int getDisplayWidth() const { return DISPLAY_WIDTH; }
-    int getDisplayHeight() const { return DISPLAY_HEIGHT; }
+    int getDisplayWidth() const;
+    int getDisplayHeight() const;
 
     /**
      * Size of a full screen canvas.
      */
-    int getDisplayFullWidth() const { return DISPLAY_FULLWIDTH; }
-    int getDisplayFullHeight() const { return DISPLAY_FULLHEIGHT; }
+    int getDisplayFullWidth() const;
+    int getDisplayFullHeight() const;
 
     /**
      * Size available for laying out items in a Form.
      */
-    int getScreenWidth() const { return SCREEN_WIDTH; }
-    int getScreenHeight() const { return SCREEN_HEIGHT; }
+    int getScreenWidth() const;
+    int getScreenHeight() const;
+
+    jboolean reverse_orientation() { r_orientation = !r_orientation; return r_orientation;}
+        
+    jboolean get_reverse_orientation() const { return r_orientation;}
 
 public slots:
     /**
@@ -309,6 +313,8 @@ private:
      * boolean to toggle Home button for pause and resume.
      */
     bool allPaused;
+
+    static jboolean r_orientation;
 
     friend class ChameleonMIDPMainWindow;
 };

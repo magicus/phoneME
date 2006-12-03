@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -25,7 +26,7 @@
 
 package com.sun.midp.main;
 
-/** 
+/**
  * Class that need to be notified when suites terminate implement this
  * interface and implementation to the Isolate monitor.
  */
@@ -35,5 +36,5 @@ interface IsolateMonitorListener {
      *
      * @param suiteId ID of the suite
      */
-    void suiteTerminated(String suiteId);
+    void suiteTerminated(int suiteId);
 }

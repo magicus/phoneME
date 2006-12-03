@@ -1,4 +1,5 @@
 #
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -63,11 +64,17 @@ SUBSYSTEM_SOCKET_JAVA_FILES += \
     $(GENERATED_DIR)/classes/com/sun/midp/io/j2me/socket/Protocol.java \
     $(SUBSYSTEM_DIR)/protocol/socket/classes/com/sun/midp/io/j2me/socket/ServerSocket.java
 
+ifneq ($(USE_NATIVE_AMS), true)
+SUBSYSTEM_SOCKET_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/socket/reference/classes/com/sun/midp/io/j2me/socket/ProtocolPushImpl.java
+endif
+
 # Native files for the ( socket ) module
 #
-
+ifeq ($(TARGET_VM), cldc_vm)
 SUBSYSTEM_SOCKET_NATIVE_FILES += \
 	socketProtocol.c
+endif
 
 SUBSYSTEM_SOCKET_EXTRA_INCLUDES += \
     -I$(SUBSYSTEM_DIR)/protocol/socket/include

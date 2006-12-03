@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -29,6 +30,8 @@
  * Utility functions to check for system signals.
  */
 
+#include <kni.h>
+
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -47,7 +50,7 @@
 
 /** Static list of registered system signal checkers */
 fCheckForSignal checkForSignal[] = {
-    checkForSocketAndKeyboardSignal
+    checkForSocketPointerAndKeyboardSignal,
     // ...
 };
 
@@ -56,7 +59,7 @@ int checkForSignalNum =
     sizeof(checkForSignal) / sizeof(fCheckForSignal);
 
 /**
- * Check and handle socket & keyboard system signals.
+ * Check and handle socket & pointer & keyboard system signals.
  * The function groups signals that can be checked with a single system call.
 
  * @param pNewSignal        OUT reentry data to unblock threads waiting for a signal
@@ -67,7 +70,7 @@ int checkForSignalNum =
  *
  * @return KNI_TRUE if signal received, KNI_FALSE otherwise
  */
-jboolean checkForSocketAndKeyboardSignal(MidpReentryData* pNewSignal,
+jboolean checkForSocketPointerAndKeyboardSignal(MidpReentryData* pNewSignal,
     MidpEvent* pNewMidpEvent, jlong timeout64) {
 
     fd_set read_fds;
@@ -86,9 +89,17 @@ jboolean checkForSocketAndKeyboardSignal(MidpReentryData* pNewSignal,
     FD_ZERO(&write_fds);
     FD_ZERO(&except_fds);
 
+#ifndef DIRECTFB
     /* Set keyboard descriptor for select */
     FD_SET(fbapp_get_keyboard_fd(), &read_fds);
     num_fds = fbapp_get_keyboard_fd() + 1;
+#endif /* DIRECTFB */
+
+    /* Set pointer descriptor for select */
+    FD_SET(fbapp_get_mouse_fd(), &read_fds);
+    if (num_fds <= fbapp_get_mouse_fd()) {
+        num_fds = fbapp_get_mouse_fd() + 1;
+    }
 
     /* Set the sockets to be checked during select */
     setSockets(socketsList, &read_fds, &write_fds, &except_fds, &num_fds);
@@ -113,23 +124,29 @@ jboolean checkForSocketAndKeyboardSignal(MidpReentryData* pNewSignal,
     }
 
     if (num_ready > 0) {
-
+#ifndef DIRECTFB
         if (FD_ISSET(fbapp_get_keyboard_fd(), &read_fds)) {
             /* Handle keyboard event */
-            REPORT_INFO(LC_CORE, "[checkForSocketAndKeyboardSignal] keyboard signal detected");
+            REPORT_INFO(LC_CORE, "[checkForSocketPointerAndKeyboardSignal] keyboard signal detected");
             handleKey(pNewSignal, pNewMidpEvent);
-        } else {
-            REPORT_INFO(LC_CORE, "[checkForSocketAndKeyboardSignal] socket signal detected");
+        } else if (FD_ISSET(fbapp_get_mouse_fd(), &read_fds)) {
+            /* Handle pointer event */
+            REPORT_INFO(LC_CORE, "[checkForSocketPointerAndKeyboardSignal] pointer signal detected");
+            handlePointer(pNewSignal, pNewMidpEvent);
+        } else 
+#endif /* DIRECTFB */
+        {
+            REPORT_INFO(LC_CORE, "[checkForSocketPointerAndKeyboardSignal] socket signal detected");
             handleSockets(socketsList,
-                &read_fds, &write_fds, &except_fds, pNewSignal);
+                          &read_fds, &write_fds, &except_fds, pNewSignal);
 #ifdef ENABLE_JSR_82_SOCK
             handleSockets(btSocketsList,
-                &read_fds, &write_fds, &except_fds, pNewSignal);
+                          &read_fds, &write_fds, &except_fds, pNewSignal);
 #endif /* ENABLE_JSR_82_SOCK */
         }
         return KNI_TRUE;
     } /* num_ready > 0 */
-
+    
     /* No pending signals were detected */
     return KNI_FALSE;
 }

@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -33,7 +34,7 @@
 # Variables required to be defined here:
 #
 # LIBS          Four specific libraries to be linked with; location and name: 
-#               1. The VM library;
+#               1. The cldc_vm library;
 #               2. If in mvm mode and USE_I3_TEST= true,
 #                    the cldc_vmtest library
 #               3. The PCSL libraries

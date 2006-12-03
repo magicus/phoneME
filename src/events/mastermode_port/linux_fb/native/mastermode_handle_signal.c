@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -28,7 +29,6 @@
  *
  * Utility functions to handle received system signals.
  */
-
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -40,7 +40,9 @@
 #include <keymap_input.h>
 #include <midp_logging.h>
 #include <jvm.h>
-
+#ifdef DIRECTFB
+#include <directfb.h>
+#endif
 
 #include "mastermode_handle_signal.h"
 #include "mastermode_keymapping.h"
@@ -121,7 +123,7 @@ void handleSockets(const SocketHandle* socketsList,
     } /* socketList != NULL */
 }
 
-#ifndef ARM
+#if !defined(ARM) && !defined(DIRECTFB)
 /**
  * On i386 platforms read data from the QVFB keyboard pipe.
  *
@@ -150,6 +152,8 @@ void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
         switch (key) {
         case 0x1030: /* F1    */   key = KEY_SOFT1;   break;
         case 0x1031: /* F2    */   key = KEY_SOFT2;   break;
+        case 0x1032: /* F3    */   key = KEY_SCREEN_ROT; break;
+        case 0x1033: /* F4    */   key = MD_KEY_SWITCH_APP; break;
         case 0x1038: /* F9    */   key = KEY_GAMEA;   break;
         case 0x1039: /* F10   */   key = KEY_GAMEB;   break;
         case 0x103a: /* F11   */   key = KEY_GAMEC;   break;
@@ -177,9 +181,20 @@ void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
     switch (key) {
     case MD_KEY_HOME:
         pNewMidpEvent->type = SELECT_FOREGROUND_EVENT;
+        pNewMidpEvent->intParam1 = 0; 
         pNewSignal->waitingFor = AMS_SIGNAL;
         break;
-
+    case MD_KEY_SWITCH_APP:
+        pNewMidpEvent->type = SELECT_FOREGROUND_EVENT;
+        pNewMidpEvent->intParam1 = 1; 
+        pNewSignal->waitingFor = AMS_SIGNAL;
+        break;
+    case KEY_SCREEN_ROT:
+        if (input.press) {
+            pNewMidpEvent->type = ROTATION_EVENT;
+            pNewSignal->waitingFor = UI_SIGNAL;
+        }
+        break;
     case KEY_END:
         if (input.press) {
 #if ENABLE_MULTIPLE_ISOLATES
@@ -194,7 +209,7 @@ void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
 #endif
         }
         break;
-        
+
     default:
         pNewMidpEvent->type = MIDP_KEY_EVENT;
         pNewMidpEvent->CHR = key;
@@ -210,10 +225,96 @@ void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
         pNewSignal->waitingFor = UI_SIGNAL;
     }
 }
-#endif /* !defined(ARM) */
 
-#ifdef ARM
+#ifndef max
+#define max(x,y)        x > y ? x :y
+#endif
 
+#ifndef min
+#define min(x,y)        x > y ? y: x
+#endif
+
+/**
+ * On i386 platforms read data from the QVFB mouse pipe.
+ *
+ * @param pNewSignal        reentry data to unblock threads waiting for a signal
+ * @param pNewMidpEvent     a native MIDP event to be stored to Java event queue
+ */
+void handlePointer(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
+    int maxX, maxY;
+    int n;
+    static const int mouseBufSize = 12;
+    unsigned char mouseBuf[mouseBufSize];
+    int mouseIdx = 0;
+    jboolean pressed = KNI_FALSE;
+    
+    static struct {
+        int x;
+        int y;
+    } pointer;
+
+    do {
+        n = read(fbapp_get_mouse_fd(), mouseBuf + mouseIdx, mouseBufSize - mouseIdx);
+	if ( n > 0 )
+	    mouseIdx += n;
+    } while ( n > 0 );
+
+    // mouse package dump
+    //    for (n = 0; n < mouseIdx; n++) {
+    //        printf("%02x ", mouseBuf[n]);
+    //        fflush(stdout);
+    //    }
+    //    printf("\n");
+
+    // unexpected data size.  Broken package, no handling - just return
+    if (mouseIdx < mouseBufSize)
+        return;
+
+    pNewMidpEvent->type = MIDP_PEN_EVENT;
+
+    maxX = get_screen_width();
+    maxY = get_screen_height();
+    if (fbapp_get_reverse_orientation()) {
+        pNewMidpEvent->X_POS = min(maxX - (int)mouseBuf[4], maxX);
+        pNewMidpEvent->Y_POS = min((int)mouseBuf[0], maxY);
+    } else {
+        pNewMidpEvent->X_POS = min((int)mouseBuf[0], maxX);
+        pNewMidpEvent->Y_POS = min((int)mouseBuf[4], maxY);
+    }
+    if (pNewMidpEvent->X_POS < 0) {
+        pNewMidpEvent->X_POS = 0;
+    }
+
+
+    if (pNewMidpEvent->Y_POS < 0) {
+        pNewMidpEvent->Y_POS = 0;
+    }
+
+    pressed = mouseBuf[8]  ||
+        mouseBuf[9]  ||
+        mouseBuf[10] ||
+        mouseBuf[11];
+    
+    pNewMidpEvent->ACTION = 
+        ( pointer.x != pNewMidpEvent->X_POS ||
+          pointer.y != pNewMidpEvent->Y_POS ) ?
+        ( pressed ? DRAGGED : -1 ) :
+        ( pressed ? PRESSED : RELEASED );
+
+    if ( pNewMidpEvent->ACTION != -1 ) {
+        pNewSignal->waitingFor = UI_SIGNAL;
+    }
+        
+    //    printf("mouse event: pNewMidpEvent->X_POS =%d  pNewMidpEvent->Y_POS =%d pNewMidpEvent->ACTION = %d\n",
+    //           pNewMidpEvent->X_POS, pNewMidpEvent->Y_POS, pNewMidpEvent->ACTION);
+    
+    // keep the previous coordinates to detect dragged event
+    pointer.x = pNewMidpEvent->X_POS;
+    pointer.y = pNewMidpEvent->Y_POS;
+}
+#endif /* !defined(ARM) && !defined(DIRECTFB) */
+
+#if defined(ARM) || defined(DIRECTFB)
 
 /** Handle key repeat timer alarm on timer wakeup */
 static void handleRepeatKeyTimerAlarm(TimerHandle *timer) {
@@ -236,7 +337,7 @@ static void handleRepeatKeyTimerAlarm(TimerHandle *timer) {
 }
 
 /**
- * ARM version to read keyboard events from /dev/tty0.
+ * ARM/DIRECTFB version to read keyboard events from /dev/tty0.
  *
  * @param pNewSignal        reentry data to unblock threads waiting for a signal
  * @param pNewMidpEvent     a native MIDP event to be stored to Java event queue
@@ -248,14 +349,26 @@ void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
     static unsigned key = 0;
     int n;
 
+#ifdef DIRECTFB
+    int event_keyup = 0;
+    DFBWindowEvent keyboard_event;
+#endif /* defined(DIRECTFB) */
+
     jlong current_time = JVM_JavaMilliSeconds();
+
+#ifdef DIRECTFB
+    fbapp_get_event(&keyboard_event);
+#endif /* defined(DIRECTFB) */
 
     switch (fbapp_get_fb_device_type()) {
     case LINUX_FB_OMAP730: {
         if (!hasPendingKeySignal) {
+#ifndef DIRECTFB
             InputEvent event;
+#endif /* !defined(DIRECTFB) */
 
             km = mapping = omap_730_keys;
+#ifndef DIRECTFB
             n = read(fbapp_get_keyboard_fd(), &event, sizeof(InputEvent));
 
             if ( n < (int)sizeof(InputEvent)) {
@@ -266,6 +379,12 @@ void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
             }
             changedBits = event.value ^ key;
             key = event.value;
+#else
+            event_keyup = keyboard_event.type == DWET_KEYUP;
+            changedBits = keyboard_event.key_code ^ key;
+            key = keyboard_event.key_code;
+            n = 1;
+#endif /* !defined(DIRECTFB) */
         } else {
             n = 1;
         }
@@ -273,19 +392,35 @@ void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
     }
     case LINUX_FB_ZAURUS:
         {
+#ifndef DIRECTFB
           unsigned char c;
+#endif /* !defined(DIRECTFB) */
           mapping = zaurus_sl5500_keys;
+#ifndef DIRECTFB
           n = read(fbapp_get_keyboard_fd(), &c, sizeof(c));
           key = c;
+#else
+            event_keyup = keyboard_event.type == DWET_KEYUP;
+            key = keyboard_event.key_code;
+            n = 1;
+#endif /* !defined(DIRECTFB) */
         }
         break;
     case LINUX_FB_VERSATILE_INTEGRATOR:
     default:
         {
+#ifndef DIRECTFB
           unsigned char c;
+#endif /* !defined(DIRECTFB) */
           mapping = versatile_integrator_keys;
+#ifndef DIRECTFB
           n = read(fbapp_get_keyboard_fd(), &c, sizeof(c));
           key = c;
+#else
+            event_keyup = keyboard_event.type == DWET_KEYUP;
+            key = keyboard_event.key_code;
+            n = 1;
+#endif /* !defined(DIRECTFB) */
         }
     }
 
@@ -326,14 +461,40 @@ void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
                 }
             }
         }
+        
+#ifdef DIRECTFB
+        /* DirectFB sends key-up codes via DWET_KEYUP event 
+           with ordinary (like key-down) key code */
+        if (event_keyup) {
+            down = 0;
+        }
+#endif
         if (km->midp_keycode == MD_KEY_HOME) {
             if (down) {
                 pNewMidpEvent->type = SELECT_FOREGROUND_EVENT;
+                pNewMidpEvent->intParam1 = 0;
                 pNewSignal->waitingFor = AMS_SIGNAL;
             } else {
                 // ignore it
             }
-        } else if (km->midp_keycode == KEY_END) {
+
+        } else if (km->midp_keycode == MD_KEY_SWITCH_APP) {
+            if (down) {
+                pNewMidpEvent->type = SELECT_FOREGROUND_EVENT;
+                pNewMidpEvent->intParam1 = 1;
+                pNewSignal->waitingFor = AMS_SIGNAL;
+            } else {
+                // ignore it
+            }
+        } else if (km->midp_keycode == KEY_SCREEN_ROT) {
+            if (down) {
+                pNewMidpEvent->type = ROTATION_EVENT;
+                pNewSignal->waitingFor = UI_SIGNAL;
+            } else {
+                // ignore it
+            }
+        }
+        else if (km->midp_keycode == KEY_END) {
             if (down) {
 #if ENABLE_MULTIPLE_ISOLATES
                 pNewSignal->waitingFor = AMS_SIGNAL;
@@ -352,7 +513,8 @@ void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
             pNewMidpEvent->type = MIDP_KEY_EVENT;
             pNewMidpEvent->CHR = km->midp_keycode;
             if (down) {
-                new_timer(current_time + REPEAT_TIMEOUT, (void*)km->midp_keycode, handleRepeatKeyTimerAlarm);
+                new_timer(current_time + REPEAT_TIMEOUT,
+                          (void*)km->midp_keycode, handleRepeatKeyTimerAlarm);
                 pNewMidpEvent->ACTION = PRESSED;
             } else {
                 delete_timer_by_userdata((void*)km->midp_keycode);
@@ -363,4 +525,18 @@ void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
         }
     }
 }
-#endif /* defined(ARM) */
+
+/**
+ * ARM version to read mouse events.
+ * By default it's empty because currently it does not supported pointer events
+ * It should be implemented if required
+ *
+ * @param pNewSignal        reentry data to unblock threads waiting for a signal
+ * @param pNewMidpEvent     a native MIDP event to be stored to Java event queue
+ */
+void handlePointer(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
+    (void)pNewSignal;
+    (void)pNewMidpEvent;
+}
+
+#endif /* defined(ARM) || defined(DIRECTFB) */

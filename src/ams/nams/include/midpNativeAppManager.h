@@ -1,26 +1,27 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #ifndef _MIDPNATIVEAPPMANAGER_H_
@@ -35,110 +36,160 @@
  * @{
  */
 
-#include <kni.h>
-#include <midp_constants_data.h>
+#include <java_types.h>
+#include <midp_global_status.h>
+#include <suitestore_common.h>
+#include <listeners_intern.h>
+#include <midp_runtime_info.h>
 
-/**
- * Defines for Java platform system states
+/*
+ * Defines the heap requirement to use when initializing the VM.
  */
-#define MIDP_SYSTEM_STATE_STARTED    1 /**< when system is started up and ready to serve any MIDlet requests */
-#define MIDP_SYSTEM_STATE_SUSPENDED  2 /**< when system finishes suspending all MIDlets and resources */
-#define MIDP_SYSTEM_STATE_STOPPED    3 /**< when system stops the VM and frees all resources */
-#define MIDP_SYSTEM_STATE_ERROR      4 /**< when system cannot be started */
+#if ENABLE_MULTIPLE_ISOLATES
+    #define MIDP_HEAP_REQUIREMENT (MAX_ISOLATES * 1024 * 1024)
+#else
+    #define MIDP_HEAP_REQUIREMENT (1024 * 1024)
+#endif
 
-/**
- * Starts the system. Does not return until the system is stopped.
+/*
+ * Defines for Java platform system states.
  *
- * @return <tt>MIDP_SHUTDOWN_STATUS</tt> if the system is shutting down or
- *         <tt>MIDP_ERROR_STATUS</tt> if an error
+ * IMPL_NOTE: please note that for NAMS testing it is supposed that
+ *            the following state constants have the consequent values;
+ *            otherwise, please change NamsTestService.getStateByValue().
  */
-jint midp_system_start(void);
+/**
+ * @def MIDP_SYSTEM_STATE_STARTED
+ * when system is started up and ready to serve any MIDlet requests
+ */
+#define MIDP_SYSTEM_STATE_STARTED    1
 
 /**
- * Initiates shutdown of the system and returns immediately. System shutdown
- * is not complete until midp_system_start() returns.
+ * @def MIDP_SYSTEM_STATE_SUSPENDED
+ * when system finishes suspending all MIDlets and resources
  */
-void midp_system_stop(void);
+#define MIDP_SYSTEM_STATE_SUSPENDED  2
+
+/**
+ * @def MIDP_SYSTEM_STATE_STOPPED
+ * when system stops the VM and frees all resources
+ */
+#define MIDP_SYSTEM_STATE_STOPPED    3
+
+/**
+ * @def MIDP_SYSTEM_STATE_ERROR
+ * when system cannot be started
+ */
+#define MIDP_SYSTEM_STATE_ERROR      4
+
+/**
+ * Defines for MIDlet states
+ */
+#define MIDP_MIDLET_STATE_STARTED    1
+#define MIDP_MIDLET_STATE_PAUSED     2
+#define MIDP_MIDLET_STATE_DESTROYED  3
+#define MIDP_MIDLET_STATE_ERROR      4
+#define MIDP_DISPLAY_STATE_FOREGROUND 5
+#define MIDP_DISPLAY_STATE_BACKGROUND 6
+#define MIDP_DISPLAY_STATE_FOREGROUND_REQUEST 7
+#define MIDP_DISPLAY_STATE_BACKGROUND_REQUEST 8
+
+/**
+ * Reasons that may cause a state change
+ */
+#define MIDP_REASON_TERMINATED 1
+#define MIDP_REASON_EXIT       2
+#define MIDP_REASON_OTHER      3
+
+/**
+ * @def MIDP_INVALID_ISOLATE_ID
+ * An ID value that an isolate never has.
+ */
+#define MIDP_INVALID_ISOLATE_ID -1
+
+/**
+ * A structure containing all information about the event that caused
+ * the call of the listener.
+ */
+typedef struct _namsEventData {
+    /** a structure containing a common data for all types of listeners */
+    GenericListener genericListener;
+    /** event type */
+    jint event;
+    /** ID identifying the running application which this event is related to */
+    jint appId;
+    /**
+     * The reason why the state change has happened.
+     * For a midlet state change, the reason code is one of the values:
+     * MIDLET_CONSTRUCTOR_FAILED,
+     * MIDLET_SUITE_NOT_FOUND,
+     * MIDLET_CLASS_NOT_FOUND
+     * MIDLET_INSTANTIATION_EXCEPTION,
+     * MIDLET_ILLEGAL_ACCESS_EXCEPTION,
+     * MIDLET_OUT_OF_MEM_ERROR,
+     * MIDLET_RESOURCE_LIMIT, or
+     * MIDLET_ISOLATE_RESOURCE_LIMIT, or
+     * MIDLET_ISOLATE_CONSTRUCTOR_FAILED.
+     * See src/configuration/common/constants.xml for definitions.
+     */
+    jint reason;
+    /** the new state of the application or system (depending on the event) */
+    jint state;
+    /** information about the midlet suite corresponding to this application */
+    MidletSuiteData* pSuiteData;
+} NamsEventData;
+
+/**
+ * Listener types
+ */
+typedef enum _namsListenerType {
+    /*
+     * Starting from 1 because LISTENER_TYPE_INVALID is defined as 0
+     * in our implementation of listeners. If you need to change this,
+     * adjust the constants in listeners_intern.h.
+     */
+    SYSTEM_EVENT_LISTENER  = 1,
+    MIDLET_EVENT_LISTENER  = 2,
+    DISPLAY_EVENT_LISTENER = 3,
+    ANY_EVENT_LISTENER     = 4
+} NamsListenerType;
 
 /**
  * The typedef of the function that will be called when Java platform
  * system state changes.
  *
- * @param state One of the MIDP_SYSTEM_STATE_* values
+ * @param pEventData pointer to a structure containing all information
+ *                   about the event that caused the call of the listener
  */
-typedef void (*MIDP_SYSTEM_STATE_CHANGE_LISTENER)(jint state);
+typedef void (*MIDP_NAMS_EVENT_LISTENER) (const NamsEventData* pEventData);
+
+/* ------------------- API to control the system ------------------- */
 
 /**
- * Sets the system state listener.
+ * Initializes the system. This function must be called before setting
+ * the listeners and calling midp_system_start().
  *
- * @param listener The system state listener
+ * @return error code: (ALL_OK if successful)
  */
-void midp_system_set_state_change_listener(
-    MIDP_SYSTEM_STATE_CHANGE_LISTENER listener);
+MIDPError midp_system_initialize(void);
 
 /**
- * The typedef of the background listener that is notified
- * when the background system changes.
+ * Starts the system. Does not return until the system is stopped.
  *
- * @param reason              The reason the background change happened,
- *                            currently always zero.
+ * @return <tt>ALL_OK</tt> if the system is shutting down or
+ *         <tt>GENERAL_ERROR</tt> if an error
  */
-typedef void (*MIDP_SYSTEM_BACKGROUND_LISTENER)(jint reason);
+MIDPError midp_system_start(void);
 
 /**
- * Sets the background listener.
+ * Initiates shutdown of the system and returns immediately. System shutdown
+ * is not complete until midp_system_start() returns.
  *
- * @param listener            The background listener
+ * @return error code: ALL_OK if the operation was started successfully
  */
-void midp_system_set_background_listener(MIDP_SYSTEM_BACKGROUND_LISTENER listener);
+MIDPError midp_system_stop(void);
 
-/**
- * Select which running MIDlet should have the foreground.  If appId is a
- * valid application ID, that application is placed into the foreground. If
- * appId is MIDLET_APPID_NO_FOREGROUND, the current foreground MIDlet will be
- * put into background and no MIDlet will have the foreground.
- *
- * If appId is invalid, or that application already has the foreground, this
- * has no effect and the foreground listener is not called.
- *
- * @param appId The ID of the application to be put into the foreground,
- *              or the special value MIDLET_APPID_NO_FOREGROUND.
- */
-void midp_midlet_set_foreground(jint appId);
-
-/**
- * The typedef of the foreground listener that is notified
- * when the foreground MIDlet changes.
- *
- * @param appId               The ID of the application that is now
- *                            in the foreground
- * @param reason              The reason the foreground change happened,
- *                            currently always zero.
- */
-typedef void (*MIDP_MIDLET_FOREGROUND_LISTENER)(jint appId, jint reason);
-
-/**
- * Sets the foreground listener.
- *
- * @param listener            The MIDlet foreground listener
- */
-void midp_midlet_set_foreground_listener(MIDP_MIDLET_FOREGROUND_LISTENER listener);
-
-/**
- * The typedef of the listener that is notified
- * when a suite is terminatied.
- *
- * @param suiteId ID of the suite
- * @param suiteIdLen length of the suite ID
- */
-typedef void (*MIDP_SUITE_TERMINATION_LISTENER)(jchar* suiteId, jint suiteIdLen);
-
-/**
- * Sets the suite termination listener.
- *
- * @param listener            The termination listener
- */
-void midp_suite_set_termination_listener(MIDP_SUITE_TERMINATION_LISTENER listener);
+/* ------------------- API to control individual midlets ------------------- */
 
 /**
  * Create and start the specified MIDlet. The suiteId is passed to the
@@ -148,15 +199,19 @@ void midp_suite_set_termination_listener(MIDP_SUITE_TERMINATION_LISTENER listene
  * name a MIDlet that is already running. The appId must not have already been
  * used to identify another running MIDlet.
  *
- * @param suiteId             The application suite ID
- * @param suiteIdLen          Length of the application suite ID
- * @param className           Fully qualified name of the MIDlet class
- * @param classNameLen        Length of the MIDlet class name
- * @param appId               The application id used to identify the app
+ * @param suiteId      The application suite ID
+ * @param pClassName   Fully qualified name of the MIDlet class
+ * @param classNameLen Length of the MIDlet class name
+ * @param appId        The application id used to identify the app
+ * @param pRuntimeInfo Quotas and profile to set for the new application
+ *
+ * @return error code: ALL_OK if the operation was started successfully,
+ *                     BAD_PARAMS if suiteId is invalid or pClassName is null
  */
-void midp_midlet_create_start(jchar *suiteId, jint suiteIdLen,
-                              jchar *className, jint classNameLen,
-                              jint appId);
+MIDPError midp_midlet_create_start(SuiteIdType suiteId,
+                                   const jchar *pClassName, jint classNameLen,
+                                   jint appId,
+                                   const MidletRuntimeInfo* pRuntimeInfo);
 
 /**
  * Create and start the specified MIDlet passing the given arguments to it.
@@ -167,89 +222,135 @@ void midp_midlet_create_start(jchar *suiteId, jint suiteIdLen,
  * running. The appId must not have already been used to identify another
  * running MIDlet.
  *
- * @param suiteId             The application suite ID
- * @param suiteIdLen          Length of the application suite ID
- * @param className           Fully qualified name of the MIDlet class
- * @param classNameLen        Length of the MIDlet class name
- * @param args                An array containning up to 3 arguments for
- *                            the MIDlet to be run
- * @param argsLen             An array containing the length of each argument
- * @param argsNum             Number of arguments
- * @param appId               The application id used to identify the app
+ * @param suiteId      The application suite ID
+ * @param pClassName   Fully qualified name of the MIDlet class
+ * @param classNameLen Length of the MIDlet class name
+ * @param args         An array containning up to 3 arguments for
+ *                     the MIDlet to be run
+ * @param argsLen      An array containing the length of each argument
+ * @param argsNum      Number of arguments
+ * @param appId        The application id used to identify the app
+ * @param pRuntimeInfo Quotas and profile to set for the new application
+ *
+ * @return error code: ALL_OK if the operation was started successfully,
+ *                     BAD_PARAMS if suiteId is invalid or pClassName is null
  */
-void midp_midlet_create_start_with_args(jchar *suiteId, jint suiteIdLen,
-                              jchar *className, jint classNameLen,
-                              jchar **args, jint *argsLen, jint argsNum,
-                              jint appId);
+MIDPError midp_midlet_create_start_with_args(SuiteIdType suiteId,
+                              const jchar *pClassName, jint classNameLen,
+                              const jchar **args, const jint *argsLen,
+                              jint argsNum, jint appId,
+                              const MidletRuntimeInfo* pRuntimeInfo);
 
 /**
  * Resume the specified paused MIDlet.
  *
  * If appId is invalid, or if that application is already active, this call
- * has no effect and the MIDlet state change listener is not called.
+ * has no effect and the MIDlet state change listener will be called anyway.
  *
- * @param appId               The ID used to identify the application
+ * @param appId The ID used to identify the application
+ *
+ * @return error code: ALL_OK if the operation was started successfully
  */
-void midp_midlet_resume(jint appId);
+MIDPError midp_midlet_resume(jint appId);
 
 /**
  * Pause the specified MIDlet.
  *
  * If appId is invalid, or if that application is already paused, this call
- * has no effect and the MIDlet state change listener is not called.
+ * has no effect and the MIDlet state change listener will be called anyway.
  *
- * @param appId               The ID used to identify the application
+ * @param appId The ID used to identify the application
+ *
+ * @return error code: ALL_OK if the operation was started successfully
  */
-void midp_midlet_pause(jint appId);
+MIDPError midp_midlet_pause(jint appId);
 
 /**
  * Stop the specified MIDlet.
  *
- * If appId is invalid, this call has no effect and the MIDlet state change
- * listener is not called.
+ * If appId is invalid, this call has no effect, but the MIDlet state change
+ * listener will be called anyway.
  *
- * @param appId               The ID used to identify the application
+ * @param appId The ID used to identify the application
+ *
+ * @return error code: ALL_OK if the operation was started successfully
  */
-void midp_midlet_destroy(jint appId);
+MIDPError midp_midlet_destroy(jint appId);
 
 /**
- * Defines for MIDlet states
+ * Select which running MIDlet should have the foreground.  If appId is a
+ * valid application ID, that application is placed into the foreground. If
+ * appId is MIDLET_APPID_NO_FOREGROUND, the current foreground MIDlet will be
+ * put into background and no MIDlet will have the foreground.
+ *
+ * If appId is invalid, or that application already has the foreground, this
+ * has no effect, but the foreground listener will be called anyway.
+ *
+ * @param appId The ID of the application to be put into the foreground,
+ *              or the special value MIDLET_APPID_NO_FOREGROUND (that is
+ *              defined in src/configuration/common/constants.xml)
+ *
+ * @return error code: ALL_OK if successful
  */
-#define MIDP_MIDLET_STATE_STARTED    1
-#define MIDP_MIDLET_STATE_PAUSED     2
-#define MIDP_MIDLET_STATE_DESTROYED  3
-#define MIDP_MIDLET_STATE_ERROR      4
+MIDPError midp_midlet_set_foreground(jint appId);
 
 /**
- * The typedef of the MIDlet state listener that is notified
- * with the MIDlet state changes.
+ * Gets information about the specified MIDlet.
  *
- * The reason code is one of the values
- * MIDLET_CONSTRUCTOR_FAILED,
- * MIDLET_SUITE_NOT_FOUND,
- * MIDLET_CLASS_NOT_FOUND
- * MIDLET_INSTANTIATION_EXCEPTION,
- * MIDLET_ILLEGAL_ACCESS_EXCEPTION,
- * MIDLET_OUT_OF_MEM_ERROR,
- * MIDLET_RESOURCE_LIMIT, or
- * MIDLET_ISOLATE_RESOURCE_LIMIT, or
- * MIDLET_ISOLATE_CONSTRUCTOR_FAILED.
- * See src/configuration/common/constants.xml for definitions.
+ * @param appId The ID used to identify the application
+ * @param pRuntimeInfo [out] pointer to a structure where run-time
+ *                           information about the midlet will be stored
+ * @param pSuiteData [out] pointer to a structure where static information
+ *                         about the midlet will be stored
  *
- * @param appId               The ID used to identify the application
- * @param state               The new state of the application, one of
- *                            the MIDP_MIDLET_STATE_* values
- * @param reason              The reason the state change happened
+ * @return error code: ALL_OK if successful,
+ *                     NOT_FOUND if the application was not found,
+ *                     BAD_PARAMS if both pRuntimeInfo and pSuiteData are null
  */
-typedef void (*MIDP_MIDLET_STATE_CHANGE_LISTENER)(jint appId, jint state, int reason);
+MIDPError midp_midlet_get_info(jint appId, MidletRuntimeInfo* pRuntimeInfo,
+                               MidletSuiteData* pSuiteData);
+
+/* ------------------- API to control listeners ------------------- */
 
 /**
- * Sets the MIDlet state change listener.
+ * Adds a listener of the given type.
  *
- * @param listener            The MIDlet state change listener
+ * @param listener pointer to a callback function that will be called when
+ * an event of the given type happens
+ * @param listenerType defines on which type of events (SYSTEM, MIDLET or
+ * DISPLAY) this listener should be invoked
+ *
+ * @return error code: ALL_OK if successful,
+ *                     OUT_OF_MEMORY if not enough memory,
+ *                     BAD_PARAMS if listener is NULL
  */
-void midp_midlet_set_state_change_listener(
-        MIDP_MIDLET_STATE_CHANGE_LISTENER listener);
+MIDPError midp_add_event_listener(MIDP_NAMS_EVENT_LISTENER listener,
+                                  NamsListenerType listenerType);
+
+/**
+ * Removes the given listener of the given type.
+ *
+ * @param listener listener that should be removed
+ * @param listenerType defines for which type of events (SYSTEM, MIDLET or
+ * DISPLAY) this listener was added
+ *
+ * @return error code: ALL_OK if successful,
+ *                     NOT_FOUND if the listener was not found
+ */
+MIDPError midp_remove_event_listener(MIDP_NAMS_EVENT_LISTENER listener,
+                                     NamsListenerType listenerType);
+
+/**
+ * Removes all listeners of the given type.
+ *
+ * @param listenerType defines for which type of events (SYSTEM, MIDLET or
+ * DISPLAY) the registered listeneres must be removed
+ *
+ * @return error code: ALL_OK if successful,
+ *                     NOT_FOUND if there are no registered listeners
+ *                               of the given type
+ */
+MIDPError midp_remove_all_event_listeners(NamsListenerType listenerType);
 
 /* @} */
 

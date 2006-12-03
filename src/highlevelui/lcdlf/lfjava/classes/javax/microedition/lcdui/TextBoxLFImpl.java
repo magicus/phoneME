@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -39,6 +40,7 @@ import com.sun.midp.chameleon.CGraphicsUtil;
 import com.sun.midp.chameleon.input.*;
 import com.sun.midp.chameleon.skins.*;
 import com.sun.midp.chameleon.skins.resources.*;
+import com.sun.midp.chameleon.layers.ScrollBarLayer;
 
 /**
  * This is the look &amps; feel implementation for TextBox.
@@ -79,9 +81,12 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
     public void lSetChars() {
         cursor.index = tf.buffer.length(); // cursor at the end
         cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+
         myInfo.isModified = true;
-        myInfo.topVis = 0; // force recalculate incase new content
-	                       // is much shorter
+        myInfo.topVis = myInfo.numLines > myInfo.visLines ?
+            myInfo.numLines - myInfo.visLines : 0;
+        
+        // is much shorter
         setVerticalScroll();
         lRequestPaint();
     }
@@ -262,7 +267,6 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
      */
     void lPaintContent(Graphics g, int width, int height) {
         g.translate(TextFieldSkin.BOX_MARGIN, TextFieldSkin.BOX_MARGIN);
-
         width -= (2 * TextFieldSkin.BOX_MARGIN);
         height -= ((2 * TextFieldSkin.BOX_MARGIN) +     
                    (inputModeIndicator.getDisplayMode() != null ?
@@ -329,18 +333,171 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
     }
 
     /**
+     * Get character index at the pointer position
+     *
+     * @param x pointer x coordinate
+     * @param y pointer y coordinate
+     * @return the character index
+     */
+    protected int getIndexAt(int x, int y) {
+        x -= contentBounds[X] +
+            TextFieldSkin.BOX_MARGIN +
+            TextFieldSkin.PAD_H;
+        y -= contentBounds[Y] +
+            TextFieldSkin.BOX_MARGIN +
+            TextFieldSkin.PAD_V;
+        int id = -1;
+        // the pointer is inside of the content 
+        if (x >= 0 && y >= 0) {
+            
+            int numLines = myInfo.topVis + y / ScreenSkin.FONT_INPUT_TEXT.getHeight();
+            id = tf.buffer.length();
+            
+            // the cursor has to be moved to the symbol the pointer is clicked at
+            // if pointer is out of text just move the cursor at the last text position
+            // if pointer is out of line just move the cursor at the last line position
+            if (numLines < myInfo.numLines) {
+                char[] data = tf.buffer.toCharArray();
+                int i = 1;
+                int startId = myInfo.lineStart[numLines];
+                for (; i <= myInfo.lineEnd[numLines] - startId; i++) {
+                    if (x <= ScreenSkin.FONT_INPUT_TEXT.charsWidth(data, startId, i)) {
+                        break;
+                    }
+                }
+                id = startId + i - 1;
+            }
+        }
+        return id;
+    }
+
+
+    /**
      * Used internally to set the vertical scroll position
      */
     void setVerticalScroll() {
-        Display d = getCurrentDisplay();
-        if (d != null) {
-            log("TB.setVertical setting scroll to " + myInfo.getScrollPosition()
-                + " " + myInfo.getScrollProportion());
-            d.setVerticalScroll(myInfo.getScrollPosition(),
-                                myInfo.getScrollProportion());
+        ScreenLFImpl lf = null;
+        if (tf != null &&
+            tf.owner != null &&
+            (lf = (ScreenLFImpl)tf.owner.getLF()) != null &&
+            myInfo != null) {
+            lf.setVerticalScroll(myInfo.getScrollPosition(),
+                                 myInfo.getScrollProportion());          
         }
     }
-    
+
+    /**
+     * Scroll content inside of the form.
+     * @param scrollType scrollType. Scroll type can be one of the following
+     * @see ScrollBarLayer.SCROLL_NONE 
+     * @see ScrollBarLayer.SCROLL_PAGEUP
+     * @see ScrollBarLayer.SCROLL_PAGEDOWN
+     * @see ScrollBarLayer.SCROLL_LINEUP
+     * @see ScrollBarLayer.SCROLL_LINEDOWN or
+     * @see ScrollBarLayer.SCROLL_THUMBTRACK
+     * @param thumbPosition
+     */
+    void uCallScrollContent(int scrollType, int thumbPosition) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, 
+                           LogChannels.LC_HIGHUI,
+                           "TextBoxLFImpl.uCallScrollContent scrollType=" + scrollType + 
+                           " thumbPosition=" + thumbPosition); 
+        }
+        
+        switch (scrollType) {
+            case ScrollBarLayer.SCROLL_PAGEUP:
+                uScrollViewport(Canvas.UP);
+                break;
+            case ScrollBarLayer.SCROLL_PAGEDOWN:
+                uScrollViewport(Canvas.DOWN);
+                break;
+            case ScrollBarLayer.SCROLL_LINEUP:
+                uScrollByLine(Canvas.UP);
+                break;
+            case ScrollBarLayer.SCROLL_LINEDOWN:
+                uScrollByLine(Canvas.DOWN);
+                break;
+            case ScrollBarLayer.SCROLL_THUMBTRACK:
+                uScrollAt(thumbPosition);
+                break;
+            default:
+                break;
+        }
+    }
+
+
+    /**
+     * Perform a page flip in the given direction. This method will
+     * attempt to scroll the view to show as much of the next page
+     * as possible. It uses the locations and bounds of the items on
+     * the page to best determine a new location - taking into account
+     * items which may lie on page boundaries as well as items which
+     * may span several pages.
+     *
+     * @param dir the direction of the flip, either DOWN or UP
+     */
+    protected void uScrollViewport(int dir) {
+        int lines = myInfo.scrollByPage(dir == Canvas.UP ?
+                                        TextInfo.BACK : TextInfo.FORWARD);
+        if (lines != 0) {
+	    if (editable) {
+                cursor.y += ScreenSkin.FONT_INPUT_TEXT.getHeight() * lines;
+                cursor.option = Text.PAINT_GET_CURSOR_INDEX;
+                myInfo.scrollY = true;
+	    } 
+            setVerticalScroll();
+            lRequestPaint();
+        }
+    }
+
+    /**
+     * Perform a line scrolling in the given direction. This method will
+     * attempt to scroll the view to show next/previous line.
+     *
+     * @param dir the direction of the flip, either DOWN or UP
+     */
+    protected void uScrollByLine(int dir) {
+        int oldTopVis = myInfo.topVis;
+        if (myInfo.scroll(dir == Canvas.UP ? TextInfo.BACK : TextInfo.FORWARD)) {
+            if (editable) {
+                cursor.y += (myInfo.topVis - oldTopVis) * ScreenSkin.FONT_INPUT_TEXT.getHeight();
+                cursor.option = Text.PAINT_GET_CURSOR_INDEX;
+                myInfo.scrollY = true;
+            }
+            setVerticalScroll();
+            lRequestPaint();
+            
+        }
+    }
+
+    /**
+     * Perform a scrolling at the given position. 
+     * @param context position  
+     */
+    protected void uScrollAt(int position) {
+        int oldTopVis = myInfo.topVis;
+        myInfo.topVis  = ((myInfo.height - myInfo.visLines * ScreenSkin.FONT_INPUT_TEXT.getHeight()) *
+                          position / 100) / ScreenSkin.FONT_INPUT_TEXT.getHeight();
+        
+        if (myInfo.topVis < 0) {
+            myInfo.topVis = 0;
+        } else if (myInfo.topVis - myInfo.visLines > myInfo.numLines) {
+            myInfo.topVis = myInfo.numLines - myInfo.visLines;
+        }
+        
+        if (myInfo.topVis != oldTopVis) {
+            if (editable) {
+                cursor.y += (myInfo.topVis - oldTopVis) * ScreenSkin.FONT_INPUT_TEXT.getHeight();
+                cursor.option = Text.PAINT_GET_CURSOR_INDEX;
+                myInfo.scrollY = true;
+            }
+            
+            setVerticalScroll();
+            lRequestPaint();
+        }
+    }
+
     /**
      * Move the text cursor in the given direction
      *
@@ -421,6 +578,8 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 	    break;
 	}
 
+        setVerticalScroll();
+        
         return keyUsed;
     }
      
@@ -454,4 +613,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
             sLF.viewport[HEIGHT] - space - 4,                    
             space};
     }
+
+
+
 }

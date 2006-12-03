@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -133,6 +134,37 @@ public class TextInfo {
 	return rv;
     }
     
+
+    /**
+     * Scroll Up or down by page if possible
+     *
+     * @param dir direction of scroll, FORWARD or BACK
+     * @return number of scrolled lines
+     */
+    public int scrollByPage(int dir) {
+	int oldTopVis = topVis;
+            
+	if (visLines < numLines) {
+	    switch (dir) {
+	    case FORWARD:
+		if ((topVis + visLines) < numLines) {
+                    topVis = numLines - (topVis + visLines - 1) < visLines ?
+                        numLines - visLines : topVis + visLines - 1;
+		}
+		break;
+	    case BACK:
+		if (topVis > 0) {
+                    topVis = (topVis - visLines + 1) < 0 ?
+                        0 : topVis - visLines + 1;
+		}
+		break;
+	    default:
+		// no-op
+	    }
+	}
+	return topVis - oldTopVis;
+    }
+
     /**
      * Returns scroll position from 0-100
      * @return scroll position mapped to the range 0-100

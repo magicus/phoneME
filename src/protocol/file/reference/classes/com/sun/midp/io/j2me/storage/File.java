@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -58,13 +59,15 @@ public class File {
      * file separators, abstracting difference of the file systems
      * of development and device platforms. Note the root is never null.
      *
+     * @param storageId ID of the storage the root of which should be returned
+     *
      * @return root of any filename for accessing device persistant
-     *         storage. 
+     *         storage.
      */
-    public static String getStorageRoot() {
+    public static String getStorageRoot(int storageId) {
         if (storageRoot == null) {
-            storageRoot = initStorageRoot();
-        } 
+            storageRoot = initStorageRoot(storageId);
+        }
 
         return storageRoot;
     }
@@ -74,13 +77,16 @@ public class File {
      * file separators, abstracting difference of the file systems
      * of development and device platforms. Note the root is never null.
      *
+     * @param storageId ID of the storage the config root of which
+     * should be returned
+     *
      * @return root of any configuration filename for accessing device
-     *     persistant storage. 
+     *     persistant storage.
      */
-    public static String getConfigRoot() {
+    public static String getConfigRoot(int storageId) {
         if (configRoot == null) {
-            configRoot = initConfigRoot();
-        } 
+            configRoot = initConfigRoot(storageId);
+        }
 
         return configRoot;
     }
@@ -229,25 +235,32 @@ public class File {
      * Retrieves the approximate space available to grow or
      * create new storage files.
      *
+     * @param storageId ID of the storage to check for available space
+     *
      * @return approximate number of free bytes in storage
      */
-    public int getBytesAvailableForFiles() {
-        return availableStorage();
+    public long getBytesAvailableForFiles(int storageId) {
+        return availableStorage(storageId);
     }
 
     /**
      * Initializes storage root for this file instance.
      *
+     * @param storageId ID of the storage the root of which should be returned
+     *
      * @return path of the storage root
      */
-    private static native String initStorageRoot();
+    private static native String initStorageRoot(int storageId);
 
     /**
      * Initializes the configuration root for this file instance.
      *
+     * @param storageId ID of the storage the config root of which
+     * should be returned
+     *
      * @return path of the configuration root
      */
-    private static native String initConfigRoot();
+    private static native String initConfigRoot(int storageId);
 
     /**
      * Renames storage file.
@@ -258,13 +271,13 @@ public class File {
     private static native void renameStorage(String oldName,
                                              String newName)
         throws IOException;
-    
+
     /**
      * Determines if a storage file matching filename exists.
      *
      * @param filename storage file to match
      *
-     * @return <code>true</code> if storage indicated by 
+     * @return <code>true</code> if storage indicated by
      *         <code>szFilename</code> exists
      */
     private static native boolean storageExists(String filename);
@@ -282,7 +295,9 @@ public class File {
     /**
      * Gets the approximate number of free storage bytes remaining.
      *
+     * @param storageId ID of the storage to check for available space
+     *
      * @return free storage space remaining, in bytes
      */
-    private static native int availableStorage();
+    private static native long availableStorage(int storageId);
 }

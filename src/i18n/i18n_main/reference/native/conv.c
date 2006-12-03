@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -75,11 +76,16 @@ getLcConvMethodsIDByEncoding(char *encoding) {
     return -1;
 }
 
+#define MAX_LEN_ENC_NAME 15
 static int
 getLcConvMethodsID(jchar *uc, int len) {
-    char enc[16];
+    char enc[MAX_LEN_ENC_NAME + 1];
     int i;
     
+    /* Check the length of the encoding name */
+    if (len > MAX_LEN_ENC_NAME) {
+        len = MAX_LEN_ENC_NAME;
+    }
     for (i = 0; i < len; i++) {
         enc[i] = (char) uc[i];
     }

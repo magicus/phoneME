@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -65,14 +66,7 @@ public class BasicTextInputSession implements
      * Construct a new BasicTextInputSession
      */
     public BasicTextInputSession() { 
-        inputModeSet = new InputMode[] { 
-            new KeyboardInputMode(),
-            new NumericInputMode(),
-            new AlphaNumericInputMode(),
-            new PredictiveTextInputMode(),
-            new SymbolInputMode()
-        };
-
+        inputModeSet = InputModeFactory.createInputModes();
     }
     
     /**

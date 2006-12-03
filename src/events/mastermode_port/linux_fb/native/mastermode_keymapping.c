@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -34,7 +35,7 @@
 #include <keymap_input.h>
 #include "mastermode_keymapping.h"
 
-#ifdef ARM
+#if defined(ARM) || defined(DIRECTFB)
 
 KeyMapping *mapping = NULL;
 /**
@@ -145,34 +146,34 @@ KeyMapping zaurus_sl5500_keys[] = {
  * Key release values are not used.
  */
 KeyMapping omap_730_keys[] = {
-    {KEY_UP,         1,          0},
-    {KEY_RIGHT,      2,          0},
-    {KEY_LEFT,       4,          0},
-    {KEY_DOWN,       8,          0},
-    {KEY_SELECT,     16,         0},
-    {KEY_SOFT2,      64,         0},    // Right button
-    {KEY_SOFT1,      4096,       0},    // Left button
-    {KEY_SEND,       128,        0},    // Call button
-    {KEY_POWER,      128,        0},
-    {KEY_END,        256,        0},    // Hangup button
-    {MD_KEY_HOME,    16777216,   0},    // Home button
-    {KEY_BACKSPACE,  262144,     0},    // Enter button
-    {KEY_0,          4194304,    0},
-    {KEY_1,          33554432,   0},
-    {KEY_2,          524288,     0},
-    {KEY_3,          8192,       0},
-    {KEY_4,          67108864,   0},
-    {KEY_5,          1048576,    0},
-    {KEY_6,          16384,      0},
-    {KEY_7,          134217728,  0},
-    {KEY_8,          2097152,    0},
-    {KEY_9,          32768,      0},
-    {KEY_ASTERISK,   268435456,  0},
-    {KEY_POUND,      65536,      0},
-    {KEY_INVALID,    512,        0},    // Left side down button
-    {KEY_INVALID,    1024,       0},    // Left side up button
-    {KEY_INVALID,    2048,       0},    // Right side button
-    {KEY_INVALID,    0,          0},     // end of table
+    {KEY_UP,            1,          0},
+    {KEY_RIGHT,         2,          0},
+    {KEY_LEFT,          4,          0},
+    {KEY_DOWN,          8,          0},
+    {KEY_SELECT,        16,         0},
+    {KEY_SOFT2,         64,         0},    // Right button
+    {KEY_SOFT1,         4096,       0},    // Left button
+    {KEY_SEND,          128,        0},    // Call button
+    {KEY_POWER,         128,        0},
+    {KEY_END,           256,        0},    // Hangup button
+    {MD_KEY_HOME,       16777216,   0},    // Home button
+    {KEY_BACKSPACE,     262144,     0},    // Enter button
+    {KEY_0,             4194304,    0},
+    {KEY_1,             33554432,   0},
+    {KEY_2,             524288,     0},
+    {KEY_3,             8192,       0},
+    {KEY_4,             67108864,   0},
+    {KEY_5,             1048576,    0},
+    {KEY_6,             16384,      0},
+    {KEY_7,             134217728,  0},
+    {KEY_8,             2097152,    0},
+    {KEY_9,             32768,      0},
+    {KEY_ASTERISK,      268435456,  0},
+    {KEY_POUND,         65536,      0},
+    {KEY_SCREEN_ROT,    512,        0},    // Left side down button
+    {MD_KEY_SWITCH_APP, 1024,       0},    // Left side up button
+    {KEY_INVALID,       2048,       0},    // Right side button
+    {KEY_INVALID,       0,          0},     // end of table
 };
 
-#endif /* ARM */
+#endif /* ARM || DIRECTFB */

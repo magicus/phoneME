@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -62,6 +63,10 @@ SUBSYSTEM_SECURITY_JAVA_FILES += \
 #
 # Interfaces must always be included
 #
+# CDC/Foundation already provides following classes. Don't include them
+# in MIDP.
+ifneq ($(TARGET_VM), cdc_hi)
 SUBSYSTEM_SECURITY_JAVA_FILES += \
     $(PKI_DIR)/reference/classes/javax/microedition/pki/Certificate.java \
     $(PKI_DIR)/reference/classes/javax/microedition/pki/CertificateException.java
+endif

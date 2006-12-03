@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_textfield.cpp	1.47 06/04/17 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -75,17 +75,29 @@ void TextFieldBody::setCursorPosition(int position) {
 void TextFieldBody::keyPressEvent(QKeyEvent *key)
 {
     int k = key->key();
-    int line;
-    int col;
-    QMultiLineEdit::getCursorPosition(&line, &col);
-    if (k == Key_Up && line == 0)  {
-        PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-        mscreen->keyPressEvent(key);
-    } else if (k == Key_Down && line == numLines() - 1) {
-        PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-        mscreen->keyPressEvent(key);
+    if (isReadOnly()) {
+        if ((k == Key_Up && rowIsVisible(0))
+            || (k == Key_Down && rowIsVisible(numRows() - 1)))  {
+    
+            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+            mscreen->keyPressEvent(key);
+
+        } else {
+            QMultiLineEdit::keyPressEvent(key);
+        }
     } else {
-        QMultiLineEdit::keyPressEvent(key);
+        int line;
+        int col;
+        QMultiLineEdit::getCursorPosition(&line, &col);
+        if ((k == Key_Up && line == 0)  
+            || (k == Key_Down && (line == numLines() - 1))){
+
+            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+            mscreen->keyPressEvent(key);
+
+        } else {
+            QMultiLineEdit::keyPressEvent(key);
+        }
     }
 }
 
@@ -369,7 +381,7 @@ TextField::setMaxSize(int maxSize) {
     qedit->setMaxLength(maxSize);
 
     /*
-     * Workaround Qt bug in QMultiLineEdit::setMaxLength()
+     * Workaround Qt feature in QMultiLineEdit::setMaxLength()
      * Truncate existing text if it is larger than the new maxSize.
      */
     if (maxSize < qedit->length()) {

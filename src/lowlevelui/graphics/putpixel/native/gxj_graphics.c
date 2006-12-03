@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,6 +24,7 @@
  * information or have any questions. 
  */
 
+#include <kni.h>
 #include <midp_logging.h>
 
 #include <gx_graphics.h>
@@ -251,7 +253,7 @@ gx_draw_rect(int color, const jshort *clip,
 }
 
 
-#if (UNDER_ADS) || (defined(__GNUC__) && defined(ARM))
+#if (UNDER_ADS || UNDER_CE) || (defined(__GNUC__) && defined(ARM))
 extern void fast_pixel_set(unsigned * mem, unsigned value, int number_of_pixels);
 #else
 void fast_pixel_set(unsigned * mem, unsigned value, int number_of_pixels)

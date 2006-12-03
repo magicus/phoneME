@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -34,9 +35,10 @@
 #include <push_server_export.h>
 #include <midp_thread.h>
 #include <midp_run_vm.h>
+#include <suspend_resume.h>
 
 #if (ENABLE_JSR_120 || ENABLE_JSR_205)
-#include <wmaSocket.h>
+#include <wmaInterface.h>
 #endif
 
 static MidpReentryData newSignal;
@@ -94,6 +96,8 @@ eventUnblockJavaThread(
 void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 		       int blocked_threads_count,
 		       jlong timeout) {
+    midp_waitWhileSuspended();
+
     newSignal.waitingFor = 0;
     newSignal.pResult = NULL;
     MIDP_EVENT_INITIALIZE(newMidpEvent);
@@ -153,7 +157,7 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         eventUnblockJavaThread(blocked_threads, blocked_threads_count,
             NETWORK_WRITE_SIGNAL, newSignal.descriptor,
             newSignal.status);
-        return;
+        return; 
 
     case PUSH_ALARM_SIGNAL:
         if (findPushTimerBlockedHandle(newSignal.descriptor) != 0) {
@@ -163,6 +167,29 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         }
 
         break;
+#ifdef ENABLE_JSR_179
+    case JSR179_LOCATION_SIGNAL:
+        midp_thread_signal_list(blocked_threads,
+            blocked_threads_count, JSR179_LOCATION_SIGNAL, newSignal.descriptor, newSignal.status);
+        break;
+#endif /* ENABLE_JSR_179 */
+
+#if (ENABLE_JSR_120 || ENABLE_JSR_205)
+    case WMA_SMS_READ_SIGNAL:
+    case WMA_CBS_READ_SIGNAL:
+    case WMA_MMS_READ_SIGNAL:
+    case WMA_SMS_WRITE_SIGNAL:
+    case WMA_MMS_WRITE_SIGNAL:
+         jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor);
+         break;
+#endif
+#ifdef ENABLE_JSR_177
+    case CARD_READER_DATA_SIGNAL:
+        midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                                newSignal.waitingFor, newSignal.descriptor,
+                                newSignal.status);
+        break;
+#endif /* ENABLE_JSR_177 */
 
     default:
         break;

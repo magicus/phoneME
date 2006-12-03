@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -61,7 +62,7 @@ DWORD WINAPI midlet_starter_routine(midp_ThreadRoutineParameter param) {
     */
 
     /* sleep for a few seconds to let java subsystem to be initialized */
-        midp_sleepNativeThread(5);
+    midp_sleepNativeThread(5);
     
     nams_process_command(cmd[0], cmd[1]);
 

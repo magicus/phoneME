@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -93,4 +94,9 @@ interface TextFieldLF extends ItemLF {
      * or <code>null</code>
      */
     void lSetInitialInputMode(String characterSubset);
+    
+    /**
+     * Notifies item that it has been recently deleted
+     */
+    void itemDeleted();
 }

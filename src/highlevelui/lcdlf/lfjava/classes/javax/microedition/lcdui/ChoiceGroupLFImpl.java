@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,10 +32,11 @@ import javax.microedition.lcdui.ChoiceGroup.CGElement;
 import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.resources.ChoiceGroupResources;
 import com.sun.midp.chameleon.skins.ScreenSkin;
+import com.sun.midp.chameleon.layers.ScrollIndLayer;
 
 /**
-* This is the look &amps; feel implementation for ChoiceGroup.
-*/
+ * This is the look &amps; feel implementation for ChoiceGroup.
+ */
 class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
 
     /**
@@ -362,49 +364,93 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
     boolean lCallTraverse(int dir, int viewportWidth, int viewportHeight,
                           int[] visRect) 
     {
-        super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
+        int newY = visRect[Y];
+        boolean ret = super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
 
-        // If we have no elements, or if the user pressed left/right,
-        // don't bother with the visRect and just return false
-        if (cg.numOfEls == 0) {
-            return false;
-        }
-
-        visRect[Y] = labelBounds[HEIGHT] > 0 ? 
-                     labelBounds[HEIGHT] + ScreenSkin.PAD_LABEL_VERT : 0;
-        
-        for (int i = 0; i < hilightedIndex; i++) {
-            visRect[Y] += elHeights[i];
-        }
-        visRect[HEIGHT] = elHeights[hilightedIndex];
-
-        if (!traversedIn) {
-            traversedIn = true;
-        } else {
-            if (dir == Canvas.UP) {
-                if (hilightedIndex > 0) {
-                    hilightedIndex--;
-                    visRect[Y] -= elHeights[hilightedIndex];
-                } else {
-                    return false;
-                }
-            } else if (dir == Canvas.DOWN) {
-                if (hilightedIndex < (cg.numOfEls - 1)) {
-                    visRect[Y] += elHeights[hilightedIndex];
-                    hilightedIndex++;
-                } else {
-                    return false;
-                }
-            } else if (dir != CustomItem.NONE) {
-                return false;
+        // If we have no elements - just return false
+        if (cg.numOfEls > 0) {
+            int newHeight = visRect[HEIGHT];
+            int newHilightedIndex = hilightedIndex;
+            newY = labelBounds[HEIGHT] > 0 ? 
+                labelBounds[HEIGHT] + ScreenSkin.PAD_LABEL_VERT : 0;
+            
+            for (int i = 0; i < newHilightedIndex; i++) {
+                newY += elHeights[i];
             }
+            newHeight = elHeights[newHilightedIndex];
+            
+            // highlighted index is out of visible rect
+            // move highlight to the best place
+            if (newY + newHeight > visRect[Y] + visRect[HEIGHT]) {
+                for (int i = newHilightedIndex,
+                         y = newY + newHeight;
+                     i >= 0; i--) {
+                    if (y < visRect[Y] + visRect[HEIGHT]) {
+                        newHeight = elHeights[i];
+                        newY = y - newHeight;
+                        newHilightedIndex = i;
+                        ret = true;
+                        break;
+                    }
+                    y -= elHeights[i];
+                }
+            } else if (newY < visRect[Y]) {
+                for (int i = newHilightedIndex,
+                         y = newY;
+                     i < cg.numOfEls;
+                     i++) {
+                    if (y > visRect[Y]) {
+                        newHeight = elHeights[i];
+                        newY = y;
+                        newHilightedIndex = i;
+                        ret = true;
+                        break;
+                    }
+                    y += elHeights[i];
+                }
+            }
+
+            if (traversedIn) {
+                // if the visRect does not contain highlighted item
+                // don't adjust the highlighted index once again
+                if (!ret) {
+                    switch (dir) {
+                    case Canvas.UP:
+                        if (hilightedIndex > 0) {
+                            newHeight = elHeights[--newHilightedIndex];
+                            newY -=newHeight;
+                            ret = true;
+                        }
+                        break;
+                    case Canvas.DOWN:
+                        if (hilightedIndex < (cg.numOfEls - 1)) {
+                            newY +=elHeights[newHilightedIndex];
+                            newHeight = elHeights[++newHilightedIndex];
+                            ret = true;
+                        }
+                        break;
+                    case CustomItem.NONE:
+                        // don't move the highlight 
+                        ret = true;
+                        break;
+                    }
+                }
+            } else {
+                traversedIn = true;
+            }
+            
+            if (hilightedIndex != newHilightedIndex) {
+                if (cg.choiceType == Choice.IMPLICIT) {
+                    setSelectedIndex(newHilightedIndex, true);
+                }
+                lRequestPaint();
+            }
+            
+            visRect[Y] = newY;
+            visRect[HEIGHT] = newHeight;
+            hilightedIndex = newHilightedIndex;
         }
-        visRect[HEIGHT] = elHeights[hilightedIndex];
-        if (cg.choiceType == Choice.IMPLICIT) {
-            setSelectedIndex(hilightedIndex, true);
-        }
-        lRequestPaint();
-        return true;
+        return ret;
     }
 
     /**
@@ -428,6 +474,83 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         return false;
     }
 
+    /**
+     * Get the index of choice item contains the pointer 
+     * @param x the x coordinate of the pointer
+     * @param y the y coordinate of the pointer
+     * @return the index of choice item
+     */
+    int getIndexByPointer(int x, int y) {
+        if (cg.numOfEls <= 0) {
+            return -1;
+        }
+        //if pointer was dragged outside the item.
+        if (contentBounds[X] > x ||
+                x > contentBounds[X] + contentBounds[WIDTH] ) {
+            return -1;
+        }
+        int visY = labelBounds[HEIGHT] > 0 ? 
+                   labelBounds[HEIGHT] + ScreenSkin.PAD_LABEL_VERT : 0;
+        if (y < visY) {
+            return -1;
+        }
+        int i;
+        for (i = 0; i < cg.numOfEls; i++) {
+            int h = elHeights[i];
+            if (visY <= y && y < visY + h) {
+                break;
+            } else {
+                visY += h;
+            }
+        }
+        if (i >= cg.numOfEls) {
+            return -1;
+        }
+        return i;
+    }
+
+    /**
+     * Called by the system to signal a pointer press
+     *
+     * @param x the x coordinate of the pointer down
+     * @param y the y coordinate of the pointer down
+     *
+     * @see #getInteractionModes
+     */
+    void uCallPointerPressed(int x, int y) {
+        int i = getIndexByPointer(x, y);
+        if (i >= 0) {
+            hilightedIndex = i;
+            hasFocusWhenPressed = cg.cgElements[hilightedIndex].selected; 
+            if (cg.choiceType == Choice.IMPLICIT) {               
+                setSelectedIndex(hilightedIndex, true);
+            }
+            uRequestPaint();
+            //            getCurrentDisplay().serviceRepaints(cg.owner.getLF()); //make the change shown immediately for better user experience
+        }
+
+    }
+
+    /**
+     * Called by the system to signal a pointer release
+     *
+     * @param x the x coordinate of the pointer up
+     * @param y the x coordinate of the pointer up
+     */
+    void uCallPointerReleased(int x, int y) {
+        int i = getIndexByPointer(x, y);
+        if (i == hilightedIndex) { // execute command only if no drag event occured
+            if (cg.choiceType == Choice.IMPLICIT) {
+                if (hasFocusWhenPressed || item.owner.numCommands <= 1) {
+                    uCallKeyPressed(Constants.KEYCODE_SELECT);
+                }
+            } else {
+                uCallKeyPressed(Constants.KEYCODE_SELECT);
+            }
+            uRequestPaint();
+        }
+    }
+    
     /**
      * Handle a key press event
      *
@@ -528,15 +651,14 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             }
             
             if ((cg.cgElements[i].stringEl != null) && 
-                (cg.cgElements[i].stringEl.length() > 0)) 
-            {
+                (cg.cgElements[i].stringEl.length() > 0)) {
                 width += (2 * ChoiceGroupSkin.PAD_H) +
                     Text.getWidestLineWidth(
-                        cg.cgElements[i].stringEl, width,
-                        availableWidth, 
-                        cg.cgElements[i].getFont());
+                                            cg.cgElements[i].stringEl,
+                                            width,
+                                            availableWidth, 
+                                            cg.cgElements[i].getFont());
             }
-            
             if (width > maxWidth) {
                 maxWidth = width;
             }
@@ -757,7 +879,6 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             break;
             
         case Choice.POPUP:
-            w -= 3;
             if (ChoiceGroupSkin.IMAGE_BUTTON_ICON != null) {
                 w -= ChoiceGroupSkin.IMAGE_BUTTON_ICON.getWidth();
             } else {
@@ -885,4 +1006,6 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
      * in lCallTraverseOut().
      */
     boolean traversedIn;
+
+    boolean hasFocusWhenPressed; // = false
 }

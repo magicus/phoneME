@@ -1,5 +1,6 @@
 #!/bin/sh
 #
+# 	
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,4 +26,4 @@
 #
 DIR=${0%/*}
 cd $DIR
-exec ./runMidlet_g internal com.sun.midp.i3test.Framework "$@"
+exec ./runMidlet_g -1 com.sun.midp.i3test.Framework "$@"

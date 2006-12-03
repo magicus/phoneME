@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -81,5 +82,19 @@ public interface ChamDisplayTunnel {
      * @param h the new height
      */
     public void callSizeChanged(int w, int h);
+
+    /**
+     * This method is used by Chameleon to invoke 
+     * Displayable.uCallScrollContent() method.
+     *
+     * @param scrollType scrollType
+     * @param thumbPosition
+     */
+    public void callScrollContent(int scrollType, int thumbPosition);
+
+    /**
+     * Updates the scroll indicator.
+     */
+    public void updateScrollIndicator();
 }
 

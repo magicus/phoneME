@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -39,6 +40,7 @@ import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.events.EventQueue;
 
 import com.sun.midp.io.j2me.storage.*;
+import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -48,6 +50,14 @@ import com.sun.midp.log.LogChannels;
  * a MIDlet suite.
  */
 public final class SecurityHandler {
+    /** Session level interaction has not occured. */
+    private final static byte NOT_ASKED = 0;
+
+    /** User granted permission for this session. */
+    private final static byte GRANTED = 1;
+
+    /** User denied permission for this session. */
+    private final static byte DENIED = -1;
 
     /** The security token for this class. */
     private static SecurityToken classSecurityToken;
@@ -59,11 +69,8 @@ public final class SecurityHandler {
     /** Permission list. */
     private byte permissions[];
 
-    /**
-     * A flag for each permission, != 0 if permission has been asked
-     * this session.
-     */
-    private byte permissionAsked[];
+    /** A flag for the session value of each permission. */
+    private byte sessionValues[];
 
     /** Maximum permission level list. */
     private byte maxPermissionLevels[];
@@ -133,7 +140,7 @@ public final class SecurityHandler {
 
         permissions = apiPermissions;
 
-        permissionAsked = new byte[permissions.length];
+        sessionValues = new byte[permissions.length];
 
         trusted = Permissions.isTrusted(domain);
     }
@@ -173,33 +180,24 @@ public final class SecurityHandler {
                 return 1;
 
             case Permissions.SESSION:
-                if (permissionAsked[i] != 0) {
+                if (sessionValues[i] == GRANTED) {
+                    // report allowed
                     return 1;
+                }
+
+                if (sessionValues[i] == DENIED) {
+                    // report denied
+                    return 0;
                 }
 
                 // fall through
             case Permissions.BLANKET:
-            case Permissions.ONE_SHOT:
-            case Permissions.DENY:
+            case Permissions.ONESHOT:
                 // report unknown
                 return -1;
 
-            case Permissions.DENY_SESSION:
-                if (permissionAsked[i] == 0) {
-                    return -1;
-                }
-                // deny the session.
-                break;
-
             default:
-                // for safety/completeness, deny the session.
-                //
-                // Note: This can happen normally. Must not log
-                // anything about this!
-                //
-                // Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,
-                //    "SecurityHandler session denied; permissions=" +
-                //    permissions[i]);
+                // Permissions.NEVER
                 break;
             }
 
@@ -234,8 +232,9 @@ public final class SecurityHandler {
      * @param extraValue string to insert into a string,
      *        can be null if no %3 in a string
      *
-     * @return true if the permission was allow and was not allowed
-     *    before
+     * @return <code>true</code> if the permission interaction has permanently
+     * changed and the new state should be saved, this will only happen
+     * if the permission granted
      *
      * @exception SecurityException if the permission is not
      *            allowed by this token
@@ -279,8 +278,9 @@ public final class SecurityHandler {
      *        can be null if no %3 in a string
      * @param exceptionMsg message if a security exception is thrown
      *
-     * @return <code>true</code> if the permission was allowed and was
-     * not allowed before; <code>false</code>, if permission is granted..
+     * @return <code>true</code> if the permission interaction has permanently
+     * changed and the new state should be saved, this will only happen
+     * if the permission granted
      *
      * @exception SecurityException if the permission is not
      *            allowed by this token
@@ -298,12 +298,8 @@ public final class SecurityHandler {
         }
 
         synchronized (this) {
-            byte prevPermission;
-
             if (permission >= 0 && permission < permissions.length) {
-                prevPermission = permissions[permission];
-
-                switch (prevPermission) {
+                switch (permissions[permission]) {
                 case Permissions.ALLOW:
                 case Permissions.BLANKET_GRANTED:
                     return false;
@@ -320,87 +316,55 @@ public final class SecurityHandler {
                     }
 
                     Permissions.setPermissionGroup(permissions,
-                        permission, Permissions.USER_DENIED);
+                        permission, Permissions.BLANKET_DENIED);
                     break;
 
                 case Permissions.SESSION:
-                case Permissions.DENY_SESSION:
-                    if (permissionAsked[permission] != 0) {
-                        if (permissions[permission] == Permissions.SESSION) {
-                            return false;
-                        }
+                    if (sessionValues[permission] == GRANTED) {
+                        return false;
+                    }
 
+                    if (sessionValues[permission] == DENIED) {
                         break;
                     }
 
                     if (askUserForPermission(classSecurityToken, trusted,
                             title, question, app, resource, extraValue)) {
-                        Permissions.setPermissionGroup(permissions,
-                            permission, Permissions.SESSION);
-
                         /*
                          * Save the fact that the question has already
                          * been asked this session.
                          */
-                        Permissions.setPermissionGroup(permissionAsked,
-                            permission, (byte)1 /* any non-zero number */);
+                        Permissions.setPermissionGroup(sessionValues,
+                            permission, GRANTED);
 
-                        // If same permissions as before, grant permission.
-                        if (permissions[permission] == prevPermission) {
-                            return false;
-                        }
-
-                        return true;
+                        return false;
                     }
-
-                    Permissions.setPermissionGroup(permissions,
-                        permission, Permissions.DENY_SESSION);
 
                     /*
                      * Save the fact that the question has already
                      * been asked this session.
                      */
-                    Permissions.setPermissionGroup(permissionAsked,
-                        permission, (byte)1 /* any non-zero number */);
+                    Permissions.setPermissionGroup(sessionValues,
+                        permission, DENIED);
                     break;
 
-                case Permissions.ONE_SHOT:
-                case Permissions.DENY:
+                case Permissions.ONESHOT:
                     if (askUserForPermission(classSecurityToken, trusted,
                             title, oneShotQuestion, app, resource,
                             extraValue)) {
-                        Permissions.setPermissionGroup(permissions,
-                            permission, Permissions.ONE_SHOT);
-
-                        if (permissions[permission] == prevPermission) {
-                            return false;
-                        }
-
-                        return true;
+                        return false;
                     }
 
-                    // Deny permission, always.
-                    Permissions.setPermissionGroup(permissions,
-                        permission, Permissions.DENY);
                     break;
 
                 default:
-                    // for safety/completeness, deny the session.
-                    //
-                    // Note: This can happen normally. Must not log
-                    // anything about this!
-                    //
-                    // Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,
-                    //    "SecurityHandler session denied;
-                    //    prevPermission=" + prevPermission);
+                    // Permissions.NEVER
                     break;
-
                 } // switch
-
             } // if
 
             throw new SecurityException(exceptionMsg);
-        }
+        } // synchronized
     }
 
     /**
@@ -507,14 +471,15 @@ class PermissionDialog implements CommandListener, MIDletEventConsumer {
         RandomAccessStream stream;
         byte[] rawPng;
         Image icon;
+        String configRoot = File.getConfigRoot(Constants.INTERNAL_STORAGE_ID);
 
         displayEventHandler =
             DisplayEventHandlerFactory.getDisplayEventHandler(token);
 
         if (trusted) {
-            iconFilename = File.getConfigRoot() + "trusted_icon.png";
+            iconFilename = configRoot + "trusted_icon.png";
         } else {
-            iconFilename = File.getConfigRoot() + "untrusted_icon.png";
+            iconFilename = configRoot + "untrusted_icon.png";
         }
 
         stream = new RandomAccessStream(token);
@@ -605,7 +570,7 @@ class PermissionDialog implements CommandListener, MIDletEventConsumer {
     public void handleMIDletPauseEvent() {}
 
     /**
-     * Start the currently paused state. 
+     * Start the currently paused state.
      * <p>
      * This is not apply to the security dialog.
      * MIDletEventConsumer I/F method.

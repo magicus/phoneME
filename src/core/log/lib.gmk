@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -35,45 +36,15 @@
 LOG_LIB = log
 LIB_SET += $(LOG_LIB)
 
+ifeq ($(USE_CONTROL_ARGS_FROM_JAD), true)
+    LOG_IMPL = dynamic
+else
+    LOG_IMPL = static
+endif
+
 LOG_DIR = $(SUBSYSTEM_CORE_DIR)/$(LOG_LIB)
 
 # Javadoc source path
-SUBSYSTEM_LOG_SOURCEPATH += $(LOG_DIR)/reference/classes
+SUBSYSTEM_LOG_SOURCEPATH += $(LOG_DIR)/$(LOG_IMPL)/classes
 
-SUBSYSTEM_LOG_PACKAGES = \
-    com.sun.midp.log
-
-MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_LOG_SOURCEPATH)
-MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_LOG_PACKAGES)
-
-MIDP_JAVADOC_ALL += \
-        -group "Logging service" \
-	$(shell echo $(SUBSYSTEM_LOG_PACKAGES)|tr ' ' $(PATHSEP))
-
-# There are no modules for subsystem ( log )
-#
-
-# vpath for ( log ) subsystem
-#
-vpath % $(LOG_DIR)/reference/native
-
-# Java files for the ( log ) subsystem
-#
-SUBSYSTEM_LOG_JAVA_FILES += \
-    $(LOG_DIR)/reference/classes/com/sun/midp/log/Logging.java
-
-# Native files for the ( log ) subsystem
-#
-
-INTERNAL_LOG_NATIVE_FILES += \
-    midp_logging.c \
-    midp_logging_kni.c
-
-############################################################
-# Native files under LOG subsystem
-############################################################
-SUBSYSTEM_LOG_NATIVE_FILES += \
-    $(INTERNAL_LOG_NATIVE_FILES)
-
-SUBSYSTEM_LOG_EXTRA_INCLUDES += \
-    -I$(LOG_DIR)/include
+include $(LOG_DIR)/$(LOG_IMPL)/lib.gmk

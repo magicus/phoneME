@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -23,12 +24,13 @@
  * information or have any questions. 
  */
 
-/** 
+/**
  * @file
  *
  * This file is for utility function that depend on KNI VM functions
  * so that other files do not have to be dependent on the VM.
  */
+#include <kni.h>
 #include <midp_logging.h>
 #include <midpMalloc.h>
 #include <midpString.h>
@@ -49,7 +51,7 @@ jobject *scratchHandle2 = &scratchObject2;
 #endif
 
 /**
- * Gets the KNI field ID for an instance field of a class and checks it for 
+ * Gets the KNI field ID for an instance field of a class and checks it for
  * validity. See KNI_GetFieldID for further information.
  *
  * @param classHandle the handle to the containing object's class
@@ -57,7 +59,7 @@ jobject *scratchHandle2 = &scratchObject2;
  * @param signature the field's type
  */
 jfieldID
-midp_get_field_id(jclass classHandle,
+midp_get_field_id(KNIDECLARGS jclass classHandle,
                   const char* name,
                   const char* signature)
 {
@@ -73,7 +75,7 @@ midp_get_field_id(jclass classHandle,
 }
 
 /**
- * Gets the KNI field ID for a static field of a class and checks it for 
+ * Gets the KNI field ID for a static field of a class and checks it for
  * validity. See KNI_GetStaticFieldID for further information.
  *
  * @param classHandle the handle to the containing class
@@ -81,7 +83,7 @@ midp_get_field_id(jclass classHandle,
  * @param signature the field's type
  */
 jfieldID
-midp_get_static_field_id(jclass classHandle,
+midp_get_static_field_id(KNIDECLARGS jclass classHandle,
                          const char* name,
                          const char* signature)
 {
@@ -95,6 +97,27 @@ midp_get_static_field_id(jclass classHandle,
     }
 
     return id;
+}
+
+/**
+ * Get a String from a field of an object and converts it to pcsl_string.
+ *
+ * @param obj a handle to Java object whose field will be set
+ * @param classObj handle of the object's class
+ * @param pszFieldName field name
+ * @param fieldHandle handle where to put the resulting jstring
+ * @param newValue a handle to the new Java value of the field
+ * @param result pointer to the location where the result must be saved
+ *
+ * @return status of the operation
+ */
+pcsl_string_status midp_get_string_field(KNIDECLARGS jobject obj, jclass classObj,
+                                  char* pszFieldName, jobject fieldHandle,
+                                  pcsl_string* result) {
+    KNI_GetObjectField(obj, midp_get_field_id(KNIPASSARGS classObj, pszFieldName,
+        "Ljava/lang/String;"), fieldHandle);
+
+    return midp_jstring_to_pcsl_string(fieldHandle, result);
 }
 
 
@@ -113,9 +136,9 @@ midp_get_static_field_id(jclass classHandle,
  * @param obj a handle to Java object whose field will be set
  * @param fieldName field name
  * @param fieldSignature field signature string
- * @param newValue a handle to the new Java value of the field 
+ * @param newValue a handle to the new Java value of the field
  */
-void midp_set_jobject_field(jobject obj,
+void midp_set_jobject_field(KNIDECLARGS jobject obj,
 			    const char *fieldName, const char *fieldSignature,
 			    jobject newValue) {
 
@@ -129,7 +152,8 @@ void midp_set_jobject_field(jobject obj,
     KNI_GetObjectClass(obj, clazz);
 
     KNI_SetObjectField(obj,
-		       midp_get_field_id(clazz, fieldName, fieldSignature),
+		       midp_get_field_id(KNIPASSARGS 
+					 clazz, fieldName, fieldSignature),
 		       newValue);
 
     KNI_EndHandles();
@@ -222,7 +246,7 @@ MidpString midpNewStringFromArrayImpl(jcharArray jCharArrayHandle, int length,
  * @param pcsl_str pointer to the pcsl_string instance
  * @return status of the operation
  */
-pcsl_string_status midp_jstring_to_pcsl_string(jstring java_str, 
+pcsl_string_status midp_jstring_to_pcsl_string(jstring java_str,
 					       pcsl_string * pcsl_str) {
   if (pcsl_str == NULL) {
     return PCSL_STRING_EINVAL;
@@ -233,13 +257,13 @@ pcsl_string_status midp_jstring_to_pcsl_string(jstring java_str,
     return PCSL_STRING_OK;
   } else {
     const jsize length  = KNI_GetStringLength(java_str);
-  
+
     if (length < 0) {
       * pcsl_str = PCSL_STRING_NULL;
       return PCSL_STRING_ERR;
     } else if (length == 0) {
       * pcsl_str = PCSL_STRING_EMPTY;
-      return PCSL_STRING_OK;      
+      return PCSL_STRING_OK;
     } else {
       jchar * buffer = pcsl_mem_malloc(length * sizeof(jchar));
 
@@ -250,8 +274,8 @@ pcsl_string_status midp_jstring_to_pcsl_string(jstring java_str,
 
       KNI_GetStringRegion(java_str, 0, length, buffer);
 
-      { 
-	pcsl_string_status status = 
+      {
+	pcsl_string_status status =
 	  pcsl_string_convert_from_utf16(buffer, length, pcsl_str);
 
 	pcsl_mem_free(buffer);
@@ -317,7 +341,8 @@ midp_jchar_array_to_pcsl_string(jcharArray java_arr, jint length,
  * @param java_str pointer to the Java String instance
  * @return status of the operation
  */
-pcsl_string_status midp_jstring_from_pcsl_string(const pcsl_string * pcsl_str,
+pcsl_string_status midp_jstring_from_pcsl_string(KNIDECLARGS
+						 const pcsl_string * pcsl_str,
 						 jstring java_str) {
   if (pcsl_str == NULL) {
     KNI_ReleaseHandle(java_str);
@@ -328,7 +353,7 @@ pcsl_string_status midp_jstring_from_pcsl_string(const pcsl_string * pcsl_str,
     if (length < 0) {
       KNI_ReleaseHandle(java_str);
       return PCSL_STRING_EINVAL;
-    } else {      
+    } else {
       const jchar * buffer = pcsl_string_get_utf16_data(pcsl_str);
 
       if (buffer == NULL) {

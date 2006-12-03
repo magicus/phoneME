@@ -1,3 +1,4 @@
+@rem 	
 @rem
 @rem Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 @rem DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -34,6 +35,6 @@ goto :EOF
 :run_midlet
 %~d0
 chdir %~p0
-runMidlet internal com.sun.midp.installer.GraphicalInstaller I %1 %2
+runMidlet -1 com.sun.midp.scriptutil.CommandLineInstaller I %1 %2
 
 endlocal

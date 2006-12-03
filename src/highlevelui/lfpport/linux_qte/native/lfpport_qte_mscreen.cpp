@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_mscreen.cpp	1.78	06/05/26
+ * 	
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,8 +25,6 @@
  * 
  * This source file is specific for Qt-based configurations.
  */
-
-#include <stdio.h>
 
 #include <kni.h>
 #include <jvm.h>
@@ -56,21 +54,21 @@
 #include <midpEventUtil.h>
 #include <lfpport_font.h>
 #include <lfp_registry.h>
+#include <suspend_resume.h>
 
 #include <qteapp_key.h>
 #include "lfpport_qte_mscreen.h"
 #include "lfpport_qte_mainwindow.h"
 #include <moc_lfpport_qte_mscreen.cpp>
 
-#ifdef ENABLE_JSR_184
-#include <swvapi.h>
-#endif
-
 /**
  * @file  lfpport_qte_mscreen.cpp
  *
  * A frame-less widget that all Displayables are rendered on.
  */
+
+
+jboolean PlatformMScreen::r_orientation = false;
 
 /**
  * A frame-less widget that all Displayables are rendered on.
@@ -150,16 +148,13 @@ void PlatformMScreen::init() {
     setVScrollBarMode(QScrollView::Auto);
 
     // Set the size of the midlet suites app area
-    setFixedSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
-    qpixmap.resize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    setFixedSize(getDisplayWidth(), getDisplayHeight());
+    qpixmap.resize(getDisplayWidth(), getDisplayHeight());
     qpixmap.fill(); // Qt::white is default
-
-#ifdef ENABLE_JSR_184
-  engine_initialize();
-#endif
 
     TRACE_MSC(..PlatformMScreen::init);
 }
+
 
 /**
  * Resize the buffer size (either normal or fullscreen)
@@ -174,11 +169,11 @@ void PlatformMScreen::setBufferSize(BufferSize newSize)
            if (gc->isActive()) {
                gc->end();
            }
-           setFixedSize(DISPLAY_FULLWIDTH, DISPLAY_FULLHEIGHT);
-           qpixmap.resize(DISPLAY_FULLWIDTH, DISPLAY_FULLHEIGHT);
+           setFixedSize(getDisplayFullWidth(), getDisplayFullHeight());
+           qpixmap.resize(getDisplayFullWidth(), getDisplayFullHeight());
        } else {
-           setFixedSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
-           qpixmap.resize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+           setFixedSize(getDisplayWidth(), getDisplayHeight());
+           qpixmap.resize(getDisplayWidth(), getDisplayHeight());
        }
 
        bufferSize = newSize;
@@ -216,10 +211,6 @@ PlatformMScreen::~PlatformMScreen()
     killTimers();
     delete gc;
     gc = NULL;
-
-#ifdef ENABLE_JSR_184
-    engine_uninitialize();
-#endif
 }
 
 /**
@@ -291,7 +282,6 @@ void PlatformMScreen::viewportMouseReleaseEvent(QMouseEvent *mouse)
 void PlatformMScreen::keyPressEvent(QKeyEvent *key)
 {
     key_press_count += 1;
-
 #if ENABLE_MULTIPLE_ISOLATES
     if (key->key() == Qt::Key_F12 ||
         key->key() == Qt::Key_Home) {
@@ -299,7 +289,16 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
         if (!key->isAutoRepeat()) {
             MidpEvent evt;
             MIDP_EVENT_INITIALIZE(evt);
+            evt.intParam1 = 0;
             evt.type = SELECT_FOREGROUND_EVENT;
+            midpStoreEventAndSignalAms(evt);
+        }
+    } else if (key->key() == Qt::Key_F4) {
+        if (!key->isAutoRepeat()) {
+            MidpEvent evt;
+            MIDP_EVENT_INITIALIZE(evt);
+            evt.type = SELECT_FOREGROUND_EVENT;
+            evt.intParam1 = 1;
             midpStoreEventAndSignalAms(evt);
         }
     }
@@ -313,9 +312,12 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
     else {
         MidpEvent evt;
         MIDP_EVENT_INITIALIZE(evt);
-
         if ((evt.CHR = mapKey(key)) != KEY_INVALID) {
-            evt.type = MIDP_KEY_EVENT;
+            if (evt.CHR == KEY_SCREEN_ROT) {
+                evt.type   =  ROTATION_EVENT;
+            } else {
+                evt.type   = MIDP_KEY_EVENT;
+            }
             evt.ACTION = key->isAutoRepeat() ? REPEATED : PRESSED;
             handleKeyEvent(evt);
         }
@@ -402,7 +404,6 @@ void PlatformMScreen::viewportPaintEvent(QPaintEvent *e)
     const QRect& r = e->rect();
     refresh(r.left(), r.top(), r.right(), r.bottom());
 }
-
 
 /**
  * Create a Color from the packed pixel value.
@@ -513,7 +514,7 @@ void PlatformMScreen::setNextVMTimeSlice(int millis) {
         if (vm_slicer.isActive()) {
             vm_slicer.stop();
         }
-    } else {
+    } else if (!vm_suspended){
         if (vm_slicer.isActive()) {
             vm_slicer.changeInterval(millis);
         } else {
@@ -529,7 +530,10 @@ void PlatformMScreen::slotTimeout() {
         return;
     }
 
-    ms = JVM_TimeSlice();
+    // check and align stack suspend/resume state
+    midp_checkAndResume();
+
+    ms = vm_suspended ? SR_RESUME_CHECK_TIMEOUT : JVM_TimeSlice();
 
     /* Let the VM run for some time */
     if (ms <= -2) {
@@ -578,9 +582,14 @@ void PlatformMScreen::refresh(int x1, int y1, int x2, int y2) {
 }
 
 int
-PlatformMScreen::scrollPosition()
+PlatformMScreen::getScrollPosition()
 {
   return (contentsY());
+}
+
+void PlatformMScreen::setScrollPosition(int pos)
+{
+    setContentsPos(0, pos);
 }
 
 /**
@@ -591,3 +600,69 @@ void PlatformMScreen::gainedForeground() {
   force_refresh  = KNI_TRUE;
   key_press_count = 0;
 }
+
+/**
+ * Width of a normal screen.
+ */
+ int PlatformMScreen::getDisplayWidth() const { 
+    if (r_orientation) {
+        return DISPLAY_HEIGHT;
+    } else {
+        return DISPLAY_WIDTH; 
+    }
+}
+/**
+ * Height of a normal screen.
+ */
+int PlatformMScreen::getDisplayHeight() const {
+    if (r_orientation) {
+        return DISPLAY_WIDTH;
+    } else {
+        return DISPLAY_HEIGHT; 
+    }
+}
+
+/**
+ * Width of a full screen canvas.
+ */
+int PlatformMScreen::getDisplayFullWidth() const {
+    if (r_orientation) {
+        return DISPLAY_FULLHEIGHT;
+    } else {
+        return DISPLAY_FULLWIDTH; 
+    }
+}
+
+/**
+ * Height of a full screen canvas.
+ */
+int PlatformMScreen::getDisplayFullHeight() const {
+    if (r_orientation) {
+        return DISPLAY_FULLWIDTH;
+    } else {
+        return DISPLAY_FULLHEIGHT;
+    }
+}
+
+/**
+ * Width available for laying out items in a Form.
+ */
+int PlatformMScreen::getScreenWidth() const {
+    if (r_orientation) {
+        return SCREEN_HEIGHT;
+    } else {
+        return SCREEN_WIDTH; 
+    }
+}
+
+/**
+ * Height available for laying out items in a Form.
+ */
+int PlatformMScreen::getScreenHeight() const {
+    if (r_orientation) {
+        return SCREEN_WIDTH;
+    } else {
+        return SCREEN_HEIGHT; 
+    }
+}
+

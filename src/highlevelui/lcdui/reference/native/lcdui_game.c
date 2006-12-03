@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -46,7 +47,7 @@ typedef struct Java_javax_microedition_lcdui_game_GameCanvas _MidpGameCanvas;
  *   returns:     <nothing>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_lcdui_game_GameCanvas_setSuppressKeyEvents() {
+KNIDECL(javax_microedition_lcdui_game_GameCanvas_setSuppressKeyEvents) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(canvas);
 
@@ -56,4 +57,5 @@ Java_javax_microedition_lcdui_game_GameCanvas_setSuppressKeyEvents() {
         KNI_GetParameterAsBoolean(2);
 
     KNI_EndHandles();
+    KNI_ReturnVoid();
 }

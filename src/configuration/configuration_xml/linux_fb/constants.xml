@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
 <!--
+          
 
         Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,7 +24,7 @@
             Comment="(Fixed) full display width"/>
   <constant Type="int"
             Name="GAMECANVAS_FULLHEIGHT"
-            Value="210" 
+            Value="210"
             Comment="(Fixed) full display height"/>
 
 <!-- Package javax.microedition.lcdui -->
@@ -39,6 +40,10 @@
             Name="CHAM_WIDTH"
             Value="176"
             Comment="(Chameleon Only) display width"/>
+  <constant Type="int"
+            Name="CHAM_FULLWIDTH"
+            Value="176"
+            Comment="(Chameleon Only) full display width"/>
   <constant Type="int"
             Name="CHAM_HEIGHT"
             Value="210"
@@ -105,11 +110,11 @@
             Comment="Number of color the platform supports"/>
   <constant Type="boolean"
             Name="POINTER_SUPPORTED"
-            Value="false" 
+            Value="true" 
             Comment="Whether both the platform and MIDP implementation provide support for a pointer (press and release). Set to true when pointer is supported; set to false when pointer is not supported."/>
   <constant Type="boolean"
             Name="MOTION_SUPPORTED"
-            Value="false" 
+            Value="true" 
             Comment="If your platform supports pointer motion and you want MIDP implementation provides support for pointer motions, set it to true; otherwise, set it to false so that MIDP runtime can provide this information to MIDlet."/>
   <constant Type="boolean"
             Name="REPEAT_SUPPORTED"

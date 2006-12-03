@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_dateeditor.cpp	1.48 06/04/27 @(#)
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -67,9 +67,10 @@ DateEditor::DateEditor(bool longDate, DateTimeEditor *parent) :
     TRACE_DE(  DateEditor::DateEditor..);
 
     QString qiconPath;
-    pcsl_string* iconPath = (pcsl_string*)storage_get_config_root();
+    pcsl_string* iconPath = (pcsl_string*)
+        storage_get_config_root(INTERNAL_STORAGE_ID);
     pcsl_string2QString(*iconPath, qiconPath);
-    QPixmap qicon(qiconPath+"calendar.png");
+    QPixmap qicon(qiconPath + "calendar.png");
 
     setPixmap(qicon);
 
@@ -673,7 +674,7 @@ void DateTimeEditor::setInputMode(int dmode) {
     layout()->activate();
 
     // alternatively -
-    // A trick like "call serially"...
+    // A way like "call serially"...
     // QApplication::sendPostedEvents();
 
     REPORT_INFO1(LC_HIGHUI,

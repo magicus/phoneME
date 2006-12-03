@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -28,13 +29,14 @@ package com.sun.midp.chameleon.layers;
 import javax.microedition.lcdui.*;
 
 import com.sun.midp.chameleon.ChamDisplayTunnel;
+import com.sun.midp.chameleon.CLayer;
 import com.sun.midp.chameleon.layers.BodyLayer;
 
 import com.sun.midp.chameleon.skins.*;
 import com.sun.midp.lcdui.Text;
 
 /**
- * AlertLayer IMPL_NOTE
+ * AlertLayer 
  */
 public class AlertLayer extends BodyLayer {
 
@@ -46,7 +48,6 @@ public class AlertLayer extends BodyLayer {
     public AlertLayer(ChamDisplayTunnel tunnel) {
         super(AlertSkin.IMAGE_BG, AlertSkin.COLOR_BG, tunnel);
         setVisible(false);
-        this.layerID  = "AlertLayer";
     }
 
     /**
@@ -62,8 +63,6 @@ public class AlertLayer extends BodyLayer {
      */
     public void setAlert(boolean alertVisible, Alert alert, int height) {
         this.alert = alert;
-        
-        alignAlert(height);
         dirty = true;
         setVisible(alertVisible);
     }
@@ -90,20 +89,17 @@ public class AlertLayer extends BodyLayer {
      */
     protected void initialize() {
         super.initialize();
-        bounds[X] = 0; // set in alignAlert()
-        bounds[Y] = 0; // set in alignAlert()
+        setAnchor();
+    }
+
+    /**
+     * Align alert depend on skin
+     */
+    public void setAnchor() {
+
         bounds[W] = AlertSkin.WIDTH;
         bounds[H] = AlertSkin.HEIGHT;
-    }
         
-    protected void alignAlert(int height) {
-        /*
-        if (height < AlertSkin.MIN_HEIGHT) {
-            bounds[H] = AlertSkin.MIN_HEIGHT;
-        } else if (height < AlertSkin.MAX_HEIGHT) {
-            bounds[H] = height;
-        }
-        */
         switch (AlertSkin.ALIGN_X) {
             case Graphics.LEFT:
                 bounds[X] = 0;
@@ -140,5 +136,20 @@ public class AlertLayer extends BodyLayer {
 
     /** The Alert instance which content is currently visible */
     private Alert alert;
+
+    /**
+     * Update bounds of layer
+     *
+     * @param layers - current layer can be dependant on this parameter
+     */
+    public void update(CLayer[] layers) {
+        setAnchor();
+        if (visible) {
+            addDirtyRegion();
+        }
+        if (scrollInd != null) {
+            scrollInd.update(layers);
+        }
+    }
 }
 

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -46,7 +47,7 @@ import com.sun.midp.io.j2me.mms.MMSAddress;
 
 /**
  * Dynamic push connection and alarm registry.
- * Static push connections are expected to be handled by 
+ * Static push connections are expected to be handled by
  * external AMS and Push directly.
  */
 public class PushRegistryImpl {
@@ -317,14 +318,14 @@ public class PushRegistryImpl {
                         throw new ConnectionNotFoundException(
                             "Connection not supported");
                     }
-                    
+
                     /*
                      * Check the suite permission for the connection
                      * and close the connection immediately.
                      */
                     midletSuite.checkForPermission(Permissions.UDP_SERVER,
                                                    connection);
-                } 
+                }
                  // #ifdef ENABLE_JSR_120
                  else if (connection.startsWith("sms://")) {
                     try {
@@ -333,7 +334,7 @@ public class PushRegistryImpl {
                         throw new ConnectionNotFoundException(
                             "Connection not supported");
                     }
-                    
+
                     /*
                      * Check the suite permission for the connection
                      * and close the connection immediately.
@@ -347,10 +348,10 @@ public class PushRegistryImpl {
                         throw new ConnectionNotFoundException(
                             "Connection not supported");
                     }
-                    
+
                     midletSuite.checkForPermission(Permissions.CBS_SERVER,
                            connection);
-                } 
+                }
                 // #endif ENABLE_JSR_120
 
 		// #ifdef ENABLE_JSR_205
@@ -367,14 +368,14 @@ public class PushRegistryImpl {
                     if (mmsAddress.type != MMSAddress.APP_ID) {
                         throw new IllegalArgumentException("Invalid connection string");
                     }
-                    
+
                     /*
                      * Check the suite permission for the connection
                      * and close the connection immediately.
                      */
                     midletSuite.checkForPermission(Permissions.MMS_SERVER,
                            connection);
-                } 
+                }
                  // #endif ENABLE_JSR_205
 
                  else {
@@ -502,7 +503,7 @@ public class PushRegistryImpl {
      *       represented by the generic connection <em>protocol</em>,
      *       <em>host</em> and <em>port number</em> identification
      */
-    public static String listConnections(String id, boolean available) {
+    public static String listConnections(int id, boolean available) {
 
         return listConnections(null, id, available);
     }
@@ -523,7 +524,7 @@ public class PushRegistryImpl {
      *       <em>host</em> and <em>port number</em> identification
      */
     public static String listConnections(SecurityToken token,
-            String id, boolean available) {
+            int id, boolean available) {
         String connections = null;
 
         if (token == null) {
@@ -556,14 +557,14 @@ public class PushRegistryImpl {
      *
      * @param id identifies the specific <code>MIDlet</code> suite
      */
-    public static void unregisterConnections(String id) {
+    public static void unregisterConnections(int id) {
         MIDletSuite current =
             MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
 
         if (current != null) {
             current.checkIfPermissionAllowed(Permissions.AMS);
         }
-	
+
 	// throw new IllegalStateException("Unsupported");
     }
 
@@ -739,7 +740,7 @@ public class PushRegistryImpl {
     public static void enablePushLaunch(SecurityToken token,
           boolean enable) {
         token.checkIfPermissionAllowed(Permissions.AMS);
-	
+
 	// throw new IllegalStateException("Unsupported");
     }
 
@@ -808,21 +809,21 @@ public class PushRegistryImpl {
      * @exception SecurityException if the <code>MIDlet</code> does not
      *              have permission to register a connection
      */
-    private static native void registerConnection0(String suiteId,
+    private static native void registerConnection0(int suiteId,
 						   String connection,
 						   String midlet,
 						   String filter);
 
     /**
      * Native connection registry add alarm function.
-     * 
+     *
      * @param suiteId current MIDlet Suite ID
      * @param midlet string to register
      * @param time
      * @return 0 if unregistered, otherwise the time of the previous
      *         registered alarm
      */
-    private static native long registerAlarm0(String suiteId,
+    private static native long registerAlarm0(int suiteId,
 					      String midlet,
 					      long time);
 
@@ -835,7 +836,7 @@ public class PushRegistryImpl {
      * @exception SecurityException if connection was registered by another
      *				    suite
      */
-    private static native boolean unregisterConnection0(String suiteId,
+    private static native boolean unregisterConnection0(int suiteId,
 							String connection);
 
     /**
@@ -846,6 +847,6 @@ public class PushRegistryImpl {
      * @return array of strings which are ordered in triplet
      *        (connection, midlet, filter)
      */
-    private static native String[] listEntries0(String suiteId,
+    private static native String[] listEntries0(int suiteId,
 						boolean available);
 }

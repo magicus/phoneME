@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -51,10 +52,17 @@ public class TitleResources {
                 SkinPropertiesIDs.TITLE_HEIGHT);
         TitleSkin.MARGIN = SkinResources.getInt(
                 SkinPropertiesIDs.TITLE_MARGIN);
-        TitleSkin.TEXT_ALIGN_X = SkinResources.getInt(
+
+        int alignX = SkinResources.getInt(
                 SkinPropertiesIDs.TITLE_TEXT_ALIGN_X);
-        TitleSkin.TEXT_SHD_ALIGN = SkinResources.getInt(
+        TitleSkin.TEXT_ALIGN_X = SkinResources.resourceConstantsToGraphics(
+                alignX);
+
+        int shdAlign = SkinResources.getInt(
                 SkinPropertiesIDs.TITLE_TEXT_SHD_ALIGN);
+        TitleSkin.TEXT_SHD_ALIGN = SkinResources.resourceConstantsToGraphics(
+                shdAlign);
+
         TitleSkin.COLOR_FG = SkinResources.getInt(
                 SkinPropertiesIDs.TITLE_COLOR_FG);
         TitleSkin.COLOR_FG_SHD = SkinResources.getInt(

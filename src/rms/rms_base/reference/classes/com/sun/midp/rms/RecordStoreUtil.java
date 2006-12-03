@@ -1,5 +1,5 @@
 /*
- * @(#)RecordStoreUtil.java	1.6 06/04/12 @(#)
+ *
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -42,7 +42,7 @@ public class RecordStoreUtil {
      * @param data the byte array returned from the database.
      * @param offset the offset into the array of the first byte to start from.
      *
-     * @return an int corresponding to the first four bytes 
+     * @return an int corresponding to the first four bytes
      *         of the array passed in.
      */
     static int getInt(byte[] data, int offset) {
@@ -59,7 +59,7 @@ public class RecordStoreUtil {
      *
      * @param data the byte array returned from the database.
      * @param offset the offset into the array of the first byte to start from.
-     * @return a long corresponding to the first eight bytes 
+     * @return a long corresponding to the first eight bytes
      *         of the array passed in.
      */
     static long getLong(byte[] data, int offset) {
@@ -81,7 +81,7 @@ public class RecordStoreUtil {
      *
      * @param i the integer to turn into a byte array.
      * @param data a place to store the bytes of <code>i</code>.
-     * @param offset starting point within <code>data<code> to 
+     * @param offset starting point within <code>data<code> to
      *        store <code>i</code>.
      *
      * @return the number of bytes written to the array.
@@ -101,7 +101,7 @@ public class RecordStoreUtil {
      *
      * @param l the <code>long<code> to turn into a byte array.
      * @param data a place to store the bytes of <code>l</code>.
-     * @param offset Starting point within <code>data</code> to 
+     * @param offset Starting point within <code>data</code> to
      *        store <code>l</code>.
      *
      * @return the number of bytes written to the array.
@@ -123,7 +123,7 @@ public class RecordStoreUtil {
      *
      * @param dataSize the size of the data in the block.
      *
-     * @return an int corresponding to the size of the block padded to 
+     * @return an int corresponding to the size of the block padded to
      *         a multiple of the BLOCK HEADER SIZE.
      */
     static int calculateBlockSize(int dataSize) {
@@ -133,7 +133,7 @@ public class RecordStoreUtil {
         if (remainder == 0) {
             return dataSize + block_header_size;
         } else {
-            return dataSize + (block_header_size - remainder) + 
+            return dataSize + (block_header_size - remainder) +
                 block_header_size;
         }
     }
@@ -142,43 +142,43 @@ public class RecordStoreUtil {
      * Looks to see if the storage file for record store
      * identified by <code>uidPath</code> exists
      *
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
      * @return true if the file exists, false if it does not.
      */
-    native static boolean exists(String suiteID, String name, int extension);
+    native static boolean exists(int suiteId, String name, int extension);
 
     /**
      * Removes the storage file for record store <code>filename</code>
      * if it exists.
      *
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
      * @throws RecordStoreException if deletion encountered an error
      *         internally.
      */
-    native static void deleteFile(String suiteID, String name, int extension)
+    native static void deleteFile(int suiteId, String name, int extension)
             throws RecordStoreException;
-    
+
     /**
      * Removes record store file without throwing an exception on failure.
      *
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      * @param name name of the record store
      * @param extension the extension for the record store file
      *
      * @return <code>true</code> if file was found and deleted successfully,
      *         <code>false</code> otherwise.
      */
-    static boolean quietDeleteFile(String suiteID, String name, int extension) {
+    static boolean quietDeleteFile(int suiteId, String name, int extension) {
         try {
-            deleteFile(suiteID, name, extension);
+            deleteFile(suiteId, name, extension);
         } catch (Throwable t) {
-            return false;        
+            return false;
         }
         return true;
     }

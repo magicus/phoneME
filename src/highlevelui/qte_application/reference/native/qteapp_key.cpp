@@ -1,5 +1,5 @@
 /*
- * @(#)qteapp_key.cpp	1.24 06/04/05 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -148,7 +148,10 @@ int mapKey(QKeyEvent *key) {
     case Qt::Key_F2:
         unicode = KEY_SOFT2;
         break;
-
+    // rotation
+    case Qt::Key_F3:
+        unicode = KEY_SCREEN_ROT;
+        break;
     // Calendar
     case Qt::Key_F9:
         unicode = KEY_GAMEA;

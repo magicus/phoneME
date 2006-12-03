@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -44,30 +45,45 @@ extern "C" {
 #endif
 
 /**
- * Gets the KNI field ID for an instance field of a class and checks it for 
+ * Gets the KNI field ID for an instance field of a class and checks it for
  * validity. See KNI_GetFieldID for further information.
  *
  * @param classHandle the handle to the containing object's class
  * @param name the field's name
  * @param signature the field's type
  */
-jfieldID midp_get_field_id(jclass classHandle,
+jfieldID midp_get_field_id(KNIDECLARGS jclass classHandle,
                            const char* name,
                            const char* signature);
 
 
 /**
- * Gets the KNI field ID for a static field of a class and checks it for 
+ * Gets the KNI field ID for a static field of a class and checks it for
  * validity. See KNI_GetStaticFieldID for further information.
  *
  * @param classHandle the handle to the containing class
  * @param name the field's name
  * @param signature the field's type
  */
-jfieldID midp_get_static_field_id(jclass classHandle,
+jfieldID midp_get_static_field_id(KNIDECLARGS jclass classHandle,
                                   const char* name,
                                   const char* signature);
 
+/**
+ * Get a String from a field of an object and converts it to pcsl_string.
+ *
+ * @param obj a handle to Java object whose field will be set
+ * @param classObj handle of the object's class
+ * @param pszFieldName field name
+ * @param fieldHandle handle where to put the resulting jstring
+ * @param newValue a handle to the new Java value of the field
+ * @param result pointer to the location where the result must be saved
+ *
+ * @return status of the operation
+ */
+pcsl_string_status midp_get_string_field(KNIDECLARGS jobject obj, jclass classObj,
+                                  char* pszFieldName, jobject fieldHandle,
+                                  pcsl_string* result);
 
 /**
  * Set a jobject field from Java platform native functions.
@@ -84,9 +100,9 @@ jfieldID midp_get_static_field_id(jclass classHandle,
  * @param obj a handle to Java platform object whose field will be set
  * @param fieldName field name
  * @param fieldSignature field signature string
- * @param newValue a handle to the new Java platform value of the field 
+ * @param newValue a handle to the new Java platform value of the field
  */
-void midp_set_jobject_field(jobject obj,
+void midp_set_jobject_field(KNIDECLARGS jobject obj,
 			    const char *fieldName, const char *fieldSignature,
 			    jobject newValue);
 
@@ -158,7 +174,7 @@ MidpString midpNewStringFromArrayImpl(jcharArray jCharArrayHandle, int length,
  * @param pcsl_str address of variable to receive the pcsl_string instance
  * @return status of the operation
  */
-pcsl_string_status midp_jstring_to_pcsl_string(jstring java_str, 
+pcsl_string_status midp_jstring_to_pcsl_string(jstring java_str,
 					       pcsl_string * pcsl_str);
 
 /**
@@ -181,7 +197,7 @@ midp_jchar_array_to_pcsl_string(jcharArray java_arr, jint length,
  * @param java_str pointer to the Java platform String instance
  * @return status of the operation
  */
-pcsl_string_status midp_jstring_from_pcsl_string(const pcsl_string * pcsl_str,
+pcsl_string_status midp_jstring_from_pcsl_string(KNIDECLARGS const pcsl_string * pcsl_str,
 						 jstring java_str);
 
 /**
@@ -366,12 +382,12 @@ jint midp_jstring_to_address_and_length(jstring jStringHandle, jchar* * pAddr);
 /**
  * Given name of pcsl_string specified as the GET_PCSL_STRING_DATA_AND_LENGTH
  * macro parameter, returns true if out-of-memory error has happened.
- * 
- * @param id the variable name, from which new names are derived in 
+ *
+ * @param id the variable name, from which new names are derived in
  *           GET_PCSL_STRING_DATA_AND_LENGTH macro
  */
 #define PCSL_STRING_PARAMETER_ERROR(id) \
-    ((id##_data) == NULL && (id##_len) > 0) 
+    ((id##_data) == NULL && (id##_len) > 0)
 
 
 /**
@@ -385,7 +401,7 @@ jint midp_jstring_to_address_and_length(jstring jStringHandle, jchar* * pAddr);
 */
 #define PRINTF_PCSL_STRING(fmt,id) \
     { \
-        const char * const __data = pcsl_string_get_utf8_data(id); \
+        const jbyte * const __data = pcsl_string_get_utf8_data(id); \
         printf(fmt,__data); \
         pcsl_string_release_utf8_data(__data, id); \
     }

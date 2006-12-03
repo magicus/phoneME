@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,6 +32,7 @@ import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.ImplicitlyTrustedClass;
 
 /**
  * A <code>MIDlet</code> is a MID Profile application.
@@ -65,8 +67,17 @@ import com.sun.midp.security.SecurityInitializer;
  */
 
 public abstract class MIDlet {
-    /** security token to allow access to implementation APIs */
-    private static SecurityToken classSecurityToken;
+
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
+    /** Security token to allow access to implementation APIs */
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /** Internal peer of this MIDlet */
     private MIDletPeer peer;
@@ -76,7 +87,6 @@ public abstract class MIDlet {
      * in MIDletPeer class.
      */
     static {
-        classSecurityToken = SecurityInitializer.getSecurityToken();
         MIDletPeer.setMIDletTunnel(classSecurityToken,
                                     new MIDletTunnelImpl());
     }

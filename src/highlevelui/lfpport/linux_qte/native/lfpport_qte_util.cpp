@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_util.cpp	1.20 06/04/26
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -29,6 +29,12 @@
 #include "lfpport_qte_util.h"
 #include <midpMalloc.h>
 #include <midpUtilKni.h>
+#include <qstring.h>
+#include <qfontmetrics.h>
+#include <qfont.h>
+#include <qwidget.h>
+#include <qwsdecoration_qws.h>
+#include <qapplication.h>
 
 extern "C" void
 pcsl_string2QString(const pcsl_string &pstring, QString &qstring) {
@@ -83,3 +89,30 @@ QString2pcsl_string(QString &qstring, pcsl_string &pstring) {
     return KNI_OK;
 }
 
+
+PCSL_DEFINE_ASCII_STRING_LITERAL_START(truncmark)
+{ 0x2026, 0 }
+PCSL_DEFINE_ASCII_STRING_LITERAL_END(truncmark);
+
+void truncateQString(QString & str, QFont font, int widthLimit) {
+    QFontMetrics fm(font);
+    if (fm.width(str) > widthLimit) {
+        QString qTruncMark;
+        pcsl_string2QString(truncmark, qTruncMark);
+        int truncMarkWidth = fm.width(qTruncMark,1);
+        int len = str.length();
+        while (len>0 && fm.width(str,len)>widthLimit-truncMarkWidth) {
+            len--;
+        }
+        str.truncate(len);
+        str.append(qTruncMark);
+    }
+}
+
+int calculateCaptionWidth(QWidget * widget) {
+    QWSDecoration & decor = QApplication::qwsDecoration();
+    QRect winRect = widget->geometry();
+    QRect rect = decor.region(widget,winRect,QWSDecoration::Title).boundingRect();
+    return rect.width()-PAD_CAPTION; // take into account space between buttons
+                           // and around the text
+}

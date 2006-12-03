@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -41,6 +42,7 @@
 #include <midp_logging.h>
 #include <midpResourceLimit.h>
 #include <midp_thread.h>
+#include <suitestore_common.h>
 
 /**
  * @file
@@ -58,8 +60,8 @@ typedef struct Java_com_sun_midp_io_j2me_socket_Protocol _socketProtocol;
 #define getMidpSocketProtocolPtr(handle) (unhand(_socketProtocol,(handle)))
 
 /**
- * Opens a server socket connection on the given port.  If successful, 
- * stores a handle directly into the nativeHandle field.  If unsuccessful, 
+ * Opens a server socket connection on the given port.  If successful,
+ * stores a handle directly into the nativeHandle field.  If unsuccessful,
  * throws an exception.
  * <p>
  * Java declaration:
@@ -68,9 +70,9 @@ typedef struct Java_com_sun_midp_io_j2me_socket_Protocol _socketProtocol;
  * </pre>
  *
  * @param port       TCP port to listen for connections on
- * @param suiteID    ID of current midlet suite, or null if there
+ * @param suiteId    ID of current midlet suite, or null if there
  *                   is no current suite
- * 
+ *
  * @exception IOException  if some other kind of I/O error occurs
  * or if reserved by another suite
  */
@@ -78,33 +80,31 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_io_j2me_serversocket_Socket_open0(void) {
     int port;
     jboolean tryOpen;
+    SuiteIdType suiteId;
     void *pcslHandle = INVALID_HANDLE;
     int status = PCSL_NET_INVALID;
 
-    KNI_StartHandles(2);
+    KNI_StartHandles(1);
     KNI_DeclareHandle(thisObject);
-    KNI_DeclareHandle(suiteID);
 
     KNI_GetThisPointer(thisObject);
     port = (int)KNI_GetParameterAsInt(1);
-    KNI_GetParameterAsObject(2, suiteID);
-        
+    suiteId = KNI_GetParameterAsInt(2);
+
     getMidpServerSocketProtocolPtr(thisObject)->nativeHandle = (jint)INVALID_HANDLE;
 
     /*
-     * Determine whether to try opening a socket ourselves, or whether push 
+     * Determine whether to try opening a socket ourselves, or whether push
      * has made a determination for us.
      */
 
-    if (KNI_IsNullHandle(suiteID)) {
+    if (suiteId == UNUSED_SUITE_ID) {
         tryOpen = KNI_TRUE;
     } else {
         int pushReturn;
 
-        SNI_BEGIN_RAW_POINTERS;
         pushReturn = pushcheckout("socket", port,
-                                  (char*)JavaByteArray(suiteID));
-        SNI_END_RAW_POINTERS;
+                                  (char*)midp_suiteid2chars(suiteId));
 
         /*
          * pushcheckout() returns -1 if the handle wasn't found, -2 if it's
@@ -132,7 +132,7 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_open0(void) {
     if (tryOpen) {
         if (midpCheckResourceLimit(RSC_TYPE_TCP_SER, 1) == 0) {
             REPORT_INFO(LC_PROTOCOL,
-                        "Resource limit exceeded for TCP server sockets"); 
+                        "Resource limit exceeded for TCP server sockets");
             KNI_ThrowNew(midpIOException,
                          "Resource limit exceeded for TCP server sockets");
         } else {
@@ -156,13 +156,13 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_open0(void) {
                 REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
                 KNI_ThrowNew(midpIOException, gKNIBuffer);
             } else {
-                REPORT_INFO(LC_PROTOCOL, "Unknown error during serversocket::open"); 
+                REPORT_INFO(LC_PROTOCOL, "Unknown error during serversocket::open");
                 KNI_ThrowNew(midpIOException, NULL);
             }
         }
     }
 
-    KNI_EndHandles();  
+    KNI_EndHandles();
     KNI_ReturnVoid();
 }
 
@@ -247,7 +247,7 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_close0(void) {
         }
     }
 
-    KNI_EndHandles();  
+    KNI_EndHandles();
     KNI_ReturnVoid();
 }
 
@@ -260,16 +260,16 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_close0(void) {
  * <p>
  * The 'con' parameter must be a freshly created client socket connection
  * object.  If an incoming connection is accepted, the socket handle for
- * the newly accepted connection is stored into this object directly from 
- * native code. This technique ensures that the acceptance of a new 
- * connection and the storing of the native handle are performed 
+ * the newly accepted connection is stored into this object directly from
+ * native code. This technique ensures that the acceptance of a new
+ * connection and the storing of the native handle are performed
  * atomically.
  * <p>
  * Java declaration:
  * <pre>
  *     accept0(Lcom/sun/midp/io/j2me/socket/Protocol;)V
  * </pre>
- * 
+ *
  * @param con the client socket connection object
  *
  * @return true if a connection was made, otherwise false
@@ -302,20 +302,20 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_accept0(void) {
         if (info == NULL) {   /* First invocation */
             REPORT_INFO1(LC_PROTOCOL, "serversocket::accept handle=%d\n",
                          serverSocketHandle);
-     
+
             /*
-             * pushcheckoutaccept() returns -1 if nothing was checked out, so we 
+             * pushcheckoutaccept() returns -1 if nothing was checked out, so we
              * have to do the accept operation ourselves.
              *
-             * If a connection was checked out of the push registry, we needn't do 
+             * If a connection was checked out of the push registry, we needn't do
              * anything else.
-             * 
+             *
              * IMPL NOTE: how to do resource accounting for the push case?
              */
             connectionHandle = (void*)pushcheckoutaccept(serverSocketHandle);
             if (connectionHandle == (void*)-1) {
                 /*
-                 * An incoming socket connection counts against the client socket 
+                 * An incoming socket connection counts against the client socket
                  * resource limit.
                  */
                 if (midpCheckResourceLimit(RSC_TYPE_TCP_CLI, 1) == 0) {
@@ -326,14 +326,14 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_accept0(void) {
                 } else {
                     status = pcsl_serversocket_accept_start(
                         (void*)serverSocketHandle, &connectionHandle, &context);
-                    
+
                     processStatus = KNI_TRUE;
                 }
             }
         } else {  /* Reinvocation after unblocking the thread */
             if (info->descriptor != serverSocketHandle) {
                 midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
-                              "serversocket::accept Handles mismatched 0x%x != 0x%x\n", 
+                              "serversocket::accept Handles mismatched 0x%x != 0x%x\n",
                               serverSocketHandle,
                               info->descriptor);
                 REPORT_CRIT(LC_PROTOCOL, gKNIBuffer);
@@ -354,8 +354,8 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_accept0(void) {
         }
 
         if (processStatus) {
-            REPORT_INFO1(LC_PROTOCOL, 
-                         "serversocket::accept connection handle=%d\n", 
+            REPORT_INFO1(LC_PROTOCOL,
+                         "serversocket::accept connection handle=%d\n",
                          connectionHandle);
             if (status == PCSL_NET_SUCCESS) {
                 if (midpIncResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
@@ -372,15 +372,15 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_accept0(void) {
                 REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
                 KNI_ThrowNew(midpIOException, gKNIBuffer);
             } else {
-                REPORT_INFO(LC_PROTOCOL, "Unknown error during serversocket::accept"); 
+                REPORT_INFO(LC_PROTOCOL, "Unknown error during serversocket::accept");
                 KNI_ThrowNew(midpIOException, NULL);
             }
         }
 
         if (connectionHandle != (void*)-1) {
             /*
-             * We got a valid connection, either by checking it out of the 
-             * push registry, or by accepting an incoming connection from the 
+             * We got a valid connection, either by checking it out of the
+             * push registry, or by accepting an incoming connection from the
              * platform.
              */
             (getMidpSocketProtocolPtr(socketObject))->handle =
@@ -391,7 +391,7 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_accept0(void) {
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
-    
+
 
 /**
  * Releases any native resources used by the server socket connection.
@@ -416,7 +416,7 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_finalize(void) {
 
     REPORT_INFO1(LC_PROTOCOL, "serversocket::finalize handle=%d",
         serverSocketHandle);
-     
+
     if (serverSocketHandle != (int)INVALID_HANDLE) {
         if (pushcheckin(serverSocketHandle) == -1) {
             status = pcsl_socket_close_start(
@@ -426,14 +426,14 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_finalize(void) {
                     "TCP Server : Resource limit update error");
             }
 
-            if (status == PCSL_NET_IOERROR) { 
+            if (status == PCSL_NET_IOERROR) {
                 midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
-                              "IOError in serversocket::finalize error=%d\n", 
+                              "IOError in serversocket::finalize error=%d\n",
                               pcsl_network_error((void*)serverSocketHandle));
                 REPORT_ERROR1(LC_PROTOCOL, "%s", gKNIBuffer);
             } else if (status == PCSL_NET_WOULDBLOCK) {
                 /* blocking during finalize is not supported */
-                REPORT_CRIT1(LC_PROTOCOL, "serversocket::finalize = 0x%x blocked\n", 
+                REPORT_CRIT1(LC_PROTOCOL, "serversocket::finalize = 0x%x blocked\n",
                              serverSocketHandle);
             }
         }
@@ -455,7 +455,7 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_finalize(void) {
  *
  * @return the IP address as a dotted-quad <tt>String</tt>
  */
-KNIEXPORT KNI_RETURNTYPE_OBJECT 
+KNIEXPORT KNI_RETURNTYPE_OBJECT
 Java_com_sun_midp_io_j2me_serversocket_Socket_getLocalAddress0(void) {
     int serverSocketHandle;
     char value[MAX_HOST_LENGTH];
@@ -471,7 +471,7 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_getLocalAddress0(void) {
 
     if (serverSocketHandle != (int)INVALID_HANDLE) {
         status = pcsl_network_getLocalIPAddressAsString(value);
-       
+
         if (status == PCSL_NET_SUCCESS) {
             KNI_NewStringUTF(value, result);
         } else {
@@ -481,7 +481,7 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_getLocalAddress0(void) {
         KNI_ThrowNew(midpIOException, NULL);
     }
 
-    KNI_EndHandlesAndReturnObject(result); 
+    KNI_EndHandlesAndReturnObject(result);
 }
 
 /**
@@ -500,7 +500,7 @@ KNIEXPORT KNI_RETURNTYPE_INT
 Java_com_sun_midp_io_j2me_serversocket_Socket_getLocalPort0(void) {
     int port = -1;
     int serverSocketHandle;
-    
+
     KNI_StartHandles(1);
     KNI_DeclareHandle(thisObject);
     KNI_GetThisPointer(thisObject);
@@ -512,9 +512,9 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_getLocalPort0(void) {
         int status;
 
         /*
-         * IMPL NOTE: even though there is currently no PCSL serversocket 
-         * implementation, it HAPPENS to work to call PCSL's getlocalport 
-         * because on Linux and Win32, the old porting layer and PCSL both use 
+         * IMPL NOTE: even though there is currently no PCSL serversocket
+         * implementation, it HAPPENS to work to call PCSL's getlocalport
+         * because on Linux and Win32, the old porting layer and PCSL both use
          * a socket descriptor as the handle.
          */
         status = pcsl_network_getlocalport((void *) serverSocketHandle, &port);
@@ -528,5 +528,3 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_getLocalPort0(void) {
     KNI_EndHandles();
     KNI_ReturnInt((jint)port);
 }
-
-

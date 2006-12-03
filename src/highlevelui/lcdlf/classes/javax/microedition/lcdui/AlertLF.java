@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -93,13 +94,4 @@ interface AlertLF extends DisplayableLF {
      * @param newIndicator - the new indicator set in the corresponding Alert
      */
     void lSetIndicator(Gauge oldIndicator, Gauge newIndicator);
-
-    /**
-     * Called by Alert when dismiss command is selected.
-     *
-     * @param returnScreen The Displayable to return to after this
-     *                     Alert is dismissed
-     */
-    void lDismiss(Displayable returnScreen);
-
 }

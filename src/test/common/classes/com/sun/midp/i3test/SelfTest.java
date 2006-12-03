@@ -1,4 +1,5 @@
 /*
+ * 	
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,8 +26,9 @@
 
 package com.sun.midp.i3test;
 
-import javax.microedition.midlet.*;
 import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+import com.sun.midp.security.SecurityInitializer;
 
 class SelfTest {
 
@@ -165,8 +167,8 @@ class SelfTest {
         runOneTest("SelfTest$TestAllFail");
         check("TestAllFail",                1, 1, 24, 24, 0, 0, 0, 0, 0, 0, 0);
 
-        runOneTest("SelfTest$TestGetSecurityToken");
-        check("TestGetSecurityToken",       1, 1,  1,  0, 0, 0, 0, 0, 0, 0, 0);
+        runOneTest("SelfTest$TestRequestSecurityToken");
+        check("TestRequestSecurityToken",       1, 1,  1,  0, 0, 0, 0, 0, 0, 0, 0);
 
         System.out.println();
         System.out.println("========================================");
@@ -302,10 +304,18 @@ class SelfTest {
         }
     }
 
-    static class TestGetSecurityToken extends TestCase {
+    static class TestRequestSecurityToken extends TestCase {
+        /**
+         * Inner class to request security token from SecurityInitializer.
+         * SecurityInitializer should be able to check this inner class name.
+         */
+        static private class SecurityTrusted
+            implements ImplicitlyTrustedClass {};
+
         public void runTests() {
-            declare("GetSecurityToken");
-            SecurityToken tok = getSecurityToken();
+            declare("RequestSecurityToken");
+            SecurityToken tok =
+                SecurityInitializer.requestToken(new SecurityTrusted());
             assertNotNull("token is null", tok);
         }
     }

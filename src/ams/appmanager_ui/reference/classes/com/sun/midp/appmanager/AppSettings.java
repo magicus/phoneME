@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -44,7 +45,7 @@ import com.sun.midp.log.LogChannels;
 /**
  * The Graphical MIDlet suite settings form.
  */
-public class AppSettings extends Form 
+public class AppSettings extends Form
     implements CommandListener, ItemStateListener {
 
     /** ID for the interrupt choice. */
@@ -115,26 +116,26 @@ public class AppSettings extends Form
 
     /**
      * Create and initialize a new application settings MIDlet.
-     * @param suiteId - the id of the suite for 
+     * @param suiteId - the id of the suite for
      *                  which the App settings  should be displayed
      * @param display - the display instance to be used
      * @param displayError - the UI to be used to display error alerts.
-     * @param nextScreen - the displayable to be shown after 
+     * @param nextScreen - the displayable to be shown after
      *                     this Form is dismissed
      */
-    public AppSettings(String suiteId, 
+    public AppSettings(int suiteId,
                        Display display,
                        DisplayError displayError,
-		       Displayable nextScreen) {
+                       Displayable nextScreen) throws Throwable {
         super(null);
 
         this.displayError = displayError;
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
-	this.display = display;
-	this.nextScreen = nextScreen;
+        this.display = display;
+        this.nextScreen = nextScreen;
 
-	displayApplicationSettings(suiteId);
+        displayApplicationSettings(suiteId);
     }
 
     /**
@@ -146,11 +147,11 @@ public class AppSettings extends Form
     public void commandAction(Command c, Displayable s) {
         if (c == saveAppSettingsCmd) {
             saveApplicationSettings();
-	    midletSuite.close();
+            midletSuite.close();
         } else if (c == cancelCmd) {
-	    display.setCurrent(nextScreen);
-	    midletSuite.close();
-	}
+            display.setCurrent(nextScreen);
+            midletSuite.close();
+        }
     }
 
     /**
@@ -199,20 +200,20 @@ public class AppSettings extends Form
      *
      * @exception Exception if problem occurs while getting the suite info
      */
-    private void initMidletSuiteInfo(MIDletSuiteImpl midletSuite) 
-	throws Exception {
+    private void initMidletSuiteInfo(MIDletSuiteImpl midletSuite)
+        throws Exception {
 
-	int numberOfMidlets = midletSuite.getNumberOfMIDlets();
-	installInfo = midletSuite.getInstallInfo();
+        int numberOfMidlets = midletSuite.getNumberOfMIDlets();
+        installInfo = midletSuite.getInstallInfo();
 
-	if (numberOfMidlets == 1) {
-	    String value = midletSuite.getProperty("MIDlet-1");
-	    MIDletInfo temp = new MIDletInfo(value);
-	    suiteDisplayName = temp.name;
-	} else {
-	    suiteDisplayName = midletSuite.getProperty(
-			       MIDletSuiteImpl.SUITE_NAME_PROP);
-	}
+        if (numberOfMidlets == 1) {
+            String value = midletSuite.getProperty("MIDlet-1");
+            MIDletInfo temp = new MIDletInfo(value);
+            suiteDisplayName = temp.name;
+        } else {
+            suiteDisplayName = midletSuite.getProperty(
+                               MIDletSuiteImpl.SUITE_NAME_PROP);
+        }
     }
 
     /**
@@ -220,7 +221,9 @@ public class AppSettings extends Form
      *
      * @param suiteId ID for suite to display
      */
-    private void displayApplicationSettings(String suiteId) {
+    private void displayApplicationSettings(int suiteId)
+        throws Throwable {
+
         int maxLevel;
         String[] values = new String[1];
         int interruptSetting;
@@ -229,14 +232,14 @@ public class AppSettings extends Form
         try {
             groups = Permissions.getSettingGroups();
 
-	    midletSuite = midletSuiteStorage.getMIDletSuite(suiteId, false);
+            midletSuite = midletSuiteStorage.getMIDletSuite(suiteId, false);
             initMidletSuiteInfo(midletSuite);
 
             maxLevels =
                 (Permissions.forDomain(installInfo.getSecurityDomain()))
                    [Permissions.MAX_LEVELS];
-            curLevels = installInfo.getPermissions();
-            pushInterruptSetting = (byte)installInfo.getPushInterruptSetting();
+            curLevels = midletSuite.getPermissions();
+            pushInterruptSetting = midletSuite.getPushInterruptSetting();
             pushOptions = midletSuite.getPushOptions();
 
             values[0] = suiteDisplayName;
@@ -271,7 +274,7 @@ public class AppSettings extends Form
                     ResourceConstants.AMS_MGR_SETTINGS_PUSH_OPT_ANSWER,
                     PUSH_OPTION_1_ID);
 
-            groupSettings = new RadioButtonSet[groups.length];
+           groupSettings = new RadioButtonSet[groups.length];
 
             if (interruptChoice != null) {
                 numberOfSettings = 1;
@@ -284,7 +287,7 @@ public class AppSettings extends Form
                                        maxLevels, groups[i]);
                 byte currentGroupSetting = Permissions.getPermissionGroupLevel(
                                            curLevels, groups[i]);
-                                           
+
                 groupSettings[i] = newSettingChoice(
                     settingsPopup,
                     groups[i].getName(),
@@ -311,23 +314,16 @@ public class AppSettings extends Form
             if (initialSetting != null) {
                 displayedSettingID = append(initialSetting);
             }
-        } catch (MIDletSuiteCorruptedException e) {
-            String msg = Resource.getString
-                         (ResourceConstants.AMS_MIDLETSUITE_ID_CORRUPT_MSG) 
-                         + suiteId;
-            displayError.showCorruptedSuiteAlert(msg);
-            return;
-        } catch (Exception ex) {
-            displayError.showErrorAlert(suiteDisplayName, ex,
-					Resource.getString
-					(ResourceConstants.AMS_CANT_ACCESS),
-					null);
-            return;
+        } catch (Throwable t) {
+            if (midletSuite != null) {
+                midletSuite.close();
+            }
+            throw t;
         }
 
         addCommand(saveAppSettingsCmd);
         addCommand(cancelCmd);
-	setCommandListener(this);
+        setCommandListener(this);
 
         setItemStateListener(this);
     }
@@ -392,14 +388,14 @@ public class AppSettings extends Form
         default:
             choice.append(Resource.getString(
                 ResourceConstants.AMS_MGR_SETTINGS_ONE_SHOT_ANSWER),
-                Permissions.ONE_SHOT);
+                Permissions.ONESHOT);
 
             if (extraAnswer > 0) {
                 choice.append(Resource.getString(extraAnswer), extraAnswerId);
             }
 
             choice.append(Resource.getString(denyAnswer),
-                          Permissions.USER_DENIED);
+                          Permissions.BLANKET_DENIED);
             break;
         }
 
@@ -416,20 +412,18 @@ public class AppSettings extends Form
             break;
 
         case Permissions.SESSION:
-        case Permissions.DENY_SESSION:
             initValue = Permissions.SESSION;
             break;
 
-        case Permissions.ONE_SHOT:
-        case Permissions.DENY:
-            initValue = Permissions.ONE_SHOT;
+        case Permissions.ONESHOT:
+            initValue = Permissions.ONESHOT;
             break;
 
         default:
             if (level == extraAnswerId) {
                 initValue = extraAnswerId;
             } else {
-                initValue = Permissions.USER_DENIED;
+                initValue = Permissions.BLANKET_DENIED;
             }
             break;
         }
@@ -481,7 +475,7 @@ public class AppSettings extends Form
                             pushInterruptSetting, groups[i], newSetting);
                     }
                 }
-            }            
+            }
 
 
             if (numberOfSettings > 0) {
@@ -497,8 +491,9 @@ public class AppSettings extends Form
             a.setTimeout(Alert.FOREVER);
             display.setCurrent(a);
             throw ex;
-        } catch (Exception ex) {
-            displayError.showErrorAlert(suiteDisplayName, ex,
+        } catch (Throwable t) {
+            t.printStackTrace();
+            displayError.showErrorAlert(suiteDisplayName, t,
                                         Resource.getString
                                         (ResourceConstants.EXCEPTION), null);
         }
@@ -510,7 +505,7 @@ public class AppSettings extends Form
      */
     private void displaySuccessMessage(String successMessage) {
 
-        Image icon = GraphicalInstaller.getImageFromStorage("_dukeok8");
+        Image icon = GraphicalInstaller.getImageFromInternalStorage("_dukeok8");
 
         Alert successAlert = new Alert(null, successMessage, icon, null);
 

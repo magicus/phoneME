@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -22,7 +23,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <midpMidletSuiteLoader.h>
+#include <midpMidletSuiteUtils.h>
 #include <midpMIDletProxyList.h>
 #include <midp_foreground_id.h>
 #include <midpPauseResume.h>
@@ -45,7 +46,7 @@ void midpMIDletProxyListReset() {
  * @param displayId ID of the foreground Display
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_MIDletProxyList_setForegroundInNativeState(void) {
+KNIDECL(com_sun_midp_main_MIDletProxyList_setForegroundInNativeState) {
     gForegroundIsolateId = KNI_GetParameterAsInt(1);
     gForegroundDisplayId = KNI_GetParameterAsInt(2);
     KNI_ReturnVoid();
@@ -57,8 +58,7 @@ Java_com_sun_midp_main_MIDletProxyList_setForegroundInNativeState(void) {
  * Class: com.sun.midp.lcdui.DefaultEventHandler.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_MIDletProxyList_notifySuspendAll0() {
-
+KNIDECL(com_sun_midp_main_MIDletProxyList_notifySuspendAll0) {
     /* Call the platform dependent code */
     pdMidpNotifySuspendAll();
 
@@ -71,8 +71,7 @@ Java_com_sun_midp_main_MIDletProxyList_notifySuspendAll0() {
  * Class: com.sun.midp.lcdui.DefaultEventHandler.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_MIDletProxyList_notifyResumeAll0() {
-
+KNIDECL(com_sun_midp_main_MIDletProxyList_notifyResumeAll0) {
     /* Call the platform dependent code */
     pdMidpNotifyResumeAll();
 

@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -48,5 +49,4 @@ MIDP_JAVADOC_SOURCEPATH += $(AMS_UTIL_SVM_DIR)/classes
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_UTIL_SVM_DIR)/classes/com/sun/midp/main/AmsUtil.java \
     $(AMS_UTIL_SVM_DIR)/classes/com/sun/midp/main/MIDletProxyUtils.java \
-    $(AMS_UTIL_SVM_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java \
-    $(AMS_UTIL_SVM_DIR)/classes/com/sun/midp/main/TerminateMIDlet.java
+    $(AMS_UTIL_SVM_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java

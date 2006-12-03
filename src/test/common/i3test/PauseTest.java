@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -38,12 +39,18 @@ public class PauseTest extends MIDlet {
     boolean firstTime = true;
     boolean suspended = false;
 
-    private static SecurityToken myToken;
-    private EventQueue myQ;
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
 
-    static {
-	myToken = SecurityInitializer.getSecurityToken();
-    }
+    /** Security token to allow access to implementation APIs */
+    private static SecurityToken myToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
+
+    private EventQueue myQ;
 
     public PauseTest() {
 	myQ = EventQueue.getEventQueue(myToken);

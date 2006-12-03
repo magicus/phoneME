@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -59,7 +60,7 @@
  * @return handle to the native stream
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_storage_RandomAccessStream_open(void) {
+KNIDECL(com_sun_midp_io_j2me_storage_RandomAccessStream_open) {
     int   ioMode = KNI_GetParameterAsInt(2);
     int   handle = -1;
     char* pszError;
@@ -88,7 +89,7 @@ Java_com_sun_midp_io_j2me_storage_RandomAccessStream_open(void) {
  * @param handle the native handle to the stream
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_io_j2me_storage_RandomAccessStream_close(void) {
+KNIDECL(com_sun_midp_io_j2me_storage_RandomAccessStream_close) {
     int   handle;
     char* pszError;
 
@@ -120,7 +121,7 @@ Java_com_sun_midp_io_j2me_storage_RandomAccessStream_close(void) {
  *         the stream has been reached.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_storage_RandomAccessStream_read(void) {
+KNIDECL(com_sun_midp_io_j2me_storage_RandomAccessStream_read) {
     int   bytesRead = 0;
     int   length;
     int   offset;
@@ -166,7 +167,7 @@ Java_com_sun_midp_io_j2me_storage_RandomAccessStream_read(void) {
  * @param length the number of bytes to write
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_io_j2me_storage_RandomAccessStream_write() {
+KNIDECL(com_sun_midp_io_j2me_storage_RandomAccessStream_write) {
     int   length;
     int   offset;
     int   handle;
@@ -207,7 +208,7 @@ Java_com_sun_midp_io_j2me_storage_RandomAccessStream_write() {
  * @param handle the native handle to the stream
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_io_j2me_storage_RandomAccessStream_commitWrite(void) {
+KNIDECL(com_sun_midp_io_j2me_storage_RandomAccessStream_commitWrite) {
     int   handle;
     char* pszError;
 
@@ -233,7 +234,7 @@ Java_com_sun_midp_io_j2me_storage_RandomAccessStream_commitWrite(void) {
  *                         of the stream
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_io_j2me_storage_RandomAccessStream_position(void) {
+KNIDECL(com_sun_midp_io_j2me_storage_RandomAccessStream_position) {
     long  absolutePosition;
     int   handle;
     char* pszError;
@@ -262,7 +263,7 @@ Java_com_sun_midp_io_j2me_storage_RandomAccessStream_position(void) {
  * @return the size of the stream in bytes
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_storage_RandomAccessStream_sizeOf(void) {
+KNIDECL(com_sun_midp_io_j2me_storage_RandomAccessStream_sizeOf) {
     int   handle;
     char* pszError;
     long  size;
@@ -290,7 +291,7 @@ Java_com_sun_midp_io_j2me_storage_RandomAccessStream_sizeOf(void) {
  * @param size the size to truncate the native to
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_io_j2me_storage_RandomAccessStream_truncateStream(void) {
+KNIDECL(com_sun_midp_io_j2me_storage_RandomAccessStream_truncateStream) {
     int   size;
     int   handle;
     char* pszError;
@@ -315,7 +316,7 @@ Java_com_sun_midp_io_j2me_storage_RandomAccessStream_truncateStream(void) {
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_io_j2me_storage_RandomAccessStream_finalize() {
+KNIDECL(com_sun_midp_io_j2me_storage_RandomAccessStream_finalize) {
     char* pszError;
     int   handle;
 

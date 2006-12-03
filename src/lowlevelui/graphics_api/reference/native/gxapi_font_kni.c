@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -52,7 +53,7 @@
  * @param size The point size of the font to initialize
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_lcdui_Font_init() {
+KNIDECL(javax_microedition_lcdui_Font_init) {
     int size  = (int)KNI_GetParameterAsInt(3);
     int style = (int)KNI_GetParameterAsInt(2);
     int face  = (int)KNI_GetParameterAsInt(1);
@@ -90,7 +91,7 @@ Java_javax_microedition_lcdui_Font_init() {
  * @return the total advance width in pixels (a non-negative value)
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_javax_microedition_lcdui_Font_charWidth() {
+KNIDECL(javax_microedition_lcdui_Font_charWidth) {
     jchar c = (jchar)KNI_GetParameterAsChar(1);
     int face, style, size;
 
@@ -122,7 +123,7 @@ Java_javax_microedition_lcdui_Font_charWidth() {
  * @return the total width of the character range in pixels
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_javax_microedition_lcdui_Font_charsWidth() {
+KNIDECL(javax_microedition_lcdui_Font_charsWidth) {
     int length = (int)KNI_GetParameterAsInt(3);
     int offset = (int)KNI_GetParameterAsInt(2);
     int chLen;
@@ -177,7 +178,7 @@ Java_javax_microedition_lcdui_Font_charsWidth() {
  * @return the total advance width of the <tt>String</tt> in pixels
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_javax_microedition_lcdui_Font_stringWidth() {
+KNIDECL(javax_microedition_lcdui_Font_stringWidth) {
     int strLen;
     jint result = 0;
 
@@ -228,7 +229,7 @@ Java_javax_microedition_lcdui_Font_stringWidth() {
  * @return the total advance width of the substring in pixels
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_javax_microedition_lcdui_Font_substringWidth() {
+KNIDECL(javax_microedition_lcdui_Font_substringWidth) {
     int length = KNI_GetParameterAsInt(3);
     int offset = KNI_GetParameterAsInt(2);
     int strLen;

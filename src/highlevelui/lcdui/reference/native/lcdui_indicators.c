@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -50,7 +51,7 @@
  *   returns:     <nothing>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_lcdui_Display_drawTrustedIcon0() {
+KNIDECL(javax_microedition_lcdui_Display_drawTrustedIcon0) {
     jboolean drawTrusted = KNI_GetParameterAsBoolean(2);
     jint displayId = KNI_GetParameterAsInt(1);
 
@@ -83,7 +84,7 @@ Java_javax_microedition_lcdui_Display_drawTrustedIcon0() {
  * IMPL_NOTE:(Deoxy - Consider using endverbatim)
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_lcdui_DisplayDeviceAccess_showBacklight0() {
+KNIDECL(com_sun_midp_lcdui_DisplayDeviceAccess_showBacklight0) {
     int mode = KNI_GetParameterAsInt(2);
     jint displayId = KNI_GetParameterAsInt(1);
 
@@ -96,7 +97,7 @@ Java_com_sun_midp_lcdui_DisplayDeviceAccess_showBacklight0() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_IndicatorManager_toggleHomeIcon0() {
+KNIDECL(com_sun_midp_main_IndicatorManager_toggleHomeIcon0) {
 
     jboolean isHomeOn = KNI_GetParameterAsBoolean(1);
 

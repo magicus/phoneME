@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -43,13 +44,11 @@ import com.sun.midp.lcdui.DisplayAccess;
 import com.sun.midp.lcdui.DisplayEventHandler;
 
 import com.sun.midp.main.Configuration;
-import com.sun.midp.main.MIDletSuiteLoader;
 import com.sun.midp.main.MIDletControllerEventProducer;
+import com.sun.midp.main.MIDletSuiteUtils;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
-
-import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -171,6 +170,7 @@ public class MIDletPeer implements MIDletEventConsumer {
         midletStateHandler = theMIDletStateHandler;
         midletControllerEventProducer = theMIDletControllerEventProducer;
     }
+
     /**
      * Sets up the reference to the MIDletTunnel implementation.
      * This must be called exactly once during system initialization.
@@ -460,7 +460,7 @@ public class MIDletPeer implements MIDletEventConsumer {
                  * cancelled.
                  */
                 if (INSTALLER_CLASS.equals(
-                    MIDletSuiteLoader.getNextMIDletToRun())) {
+                    MIDletSuiteUtils.getNextMIDletToRun())) {
                     /*
                      * Try to cancel the installer midlet. Note this call only
                      * works now because suite are not run concurrently and
@@ -469,8 +469,8 @@ public class MIDletPeer implements MIDletEventConsumer {
                      * This cancel code can be remove when the installer is
                      * runs concurrently with this suite.
                      */
-                    MIDletSuiteLoader.execute(classSecurityToken, null,
-                                              null, null);
+                    MIDletSuiteUtils.execute(classSecurityToken,
+                        MIDletSuite.UNUSED_SUITE_ID, null, null);
                     return false;
                 }
             }
@@ -596,9 +596,9 @@ public class MIDletPeer implements MIDletEventConsumer {
      * content can be fetched.
      */
     private boolean dispatchMidletSuiteUrl(String url) {
-        return MIDletSuiteLoader.executeWithArgs(classSecurityToken,
-            "internal", INSTALLER_CLASS, "MIDlet Suite Installer", "I",
-            url, null);
+        return MIDletSuiteUtils.executeWithArgs(classSecurityToken,
+            MIDletSuite.INTERNAL_SUITE_ID, INSTALLER_CLASS,
+                "MIDlet Suite Installer", "I", url, null);
     }
 
     /**
@@ -746,5 +746,4 @@ public class MIDletPeer implements MIDletEventConsumer {
     public void handleMIDletDestroyEvent() {
         setState(MIDletPeer.DESTROY_PENDING);
     }
-
 }

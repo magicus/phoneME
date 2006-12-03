@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -1019,6 +1020,14 @@ abstract public class Item {
         this.layout = layout;
     }
 
+     /**
+      * Notify the item to the effect that it has been recently deleted
+      */     
+     void itemDeleted() {
+         synchronized (Display.LCDUILock) {
+             lSetOwner(null);
+         }
+     }
 
 // ************************************************************
 //  protected member variables

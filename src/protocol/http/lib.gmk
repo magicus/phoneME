@@ -1,4 +1,5 @@
 #
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -56,3 +57,10 @@ SUBSYSTEM_HTTP_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/http/reference/classes/com/sun/midp/io/j2me/http/Protocol.java \
     $(SUBSYSTEM_DIR)/protocol/http/reference/classes/com/sun/midp/io/j2me/http/StreamConnectionElement.java \
     $(SUBSYSTEM_DIR)/protocol/http/reference/classes/com/sun/midp/io/j2me/http/StreamConnectionPool.java
+
+ifeq ($(USE_I3_TEST), true)
+
+SUBSYSTEM_HTTP_I3TEST_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/http/reference/i3test/com/sun/midp/io/j2me/http/TestHttpHeaders.java
+
+endif

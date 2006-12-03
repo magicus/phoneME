@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -24,15 +25,10 @@
  */
 
 package com.sun.midp.appmanager;
-import javax.microedition.io.*;
-import java.util.*;
-import java.io.*;
 
 import javax.microedition.midlet.*;
 
 import javax.microedition.lcdui.*;
-
-import javax.microedition.rms.*;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
@@ -43,27 +39,16 @@ import com.sun.midp.installer.*;
 
 import com.sun.midp.midletsuite.*;
 
-import com.sun.midp.security.*;
-
 import com.sun.midp.main.*;
 
-import javax.microedition.io.*;
-
-import com.sun.midp.io.j2me.storage.*;
-
-import com.sun.midp.io.j2me.push.*;
-
 import com.sun.midp.configurator.Constants;
-
-import com.sun.midp.log.Logging;
-import com.sun.midp.log.LogChannels;
 
 /**
  * This is an implementation of the ApplicationManager interface
  * for the single VM mode of the VM.
- * 
+ *
  * In this mode the VM is shut down each time a MIDlet exits.
- * 
+ *
  * Application manager controls midlet life cycle:
  *    - installs, updates and removes midlets/midlet suites
  *    - launches and terminates midlets
@@ -135,9 +120,10 @@ public class Manager extends MIDlet implements ApplicationManager {
      * destroys itself when requested.
      */
     public void destroyApp(boolean unconditional) {
-        GraphicalInstaller.saveSettings(null, "");
+        GraphicalInstaller.saveSettings(null, MIDletSuite.UNUSED_SUITE_ID);
 
-        if (MIDletSuiteLoader.getNextMIDletSuiteToRun() != null) {
+        if (MIDletSuiteUtils.getNextMIDletSuiteToRun() !=
+                MIDletSuite.UNUSED_SUITE_ID) {
             /*
              * A MIDlet was pushed.
              * So make sure this MIDlet is run after the pushed one.
@@ -146,7 +132,7 @@ public class Manager extends MIDlet implements ApplicationManager {
              * needed now because suites are not run concurrently and must
              * be queued to be run after this MIDlet is destroyed.
              */
-            MIDletSuiteLoader.setLastSuiteToRun(MIDletStateHandler.
+            MIDletSuiteUtils.setLastSuiteToRun(MIDletStateHandler.
                  getMidletStateHandler().getMIDletSuite().getID(),
                  getClass().getName());
         }
@@ -155,8 +141,8 @@ public class Manager extends MIDlet implements ApplicationManager {
     // ===================================================================
     // ---- Implementation of the ApplicationManager interface ------------
 
-    /** 
-     * Discover and install a suite. 
+    /**
+     * Discover and install a suite.
      */
     public void installSuite() {
         try {
@@ -165,7 +151,7 @@ public class Manager extends MIDlet implements ApplicationManager {
                 Resource.getString(ResourceConstants.INSTALL_APPLICATION));
 
             yieldForNextMidlet();
-            
+
 
         } catch (Exception ex) {
             displayError.showErrorAlert(Resource.getString
@@ -182,7 +168,7 @@ public class Manager extends MIDlet implements ApplicationManager {
                 Resource.getString(ResourceConstants.CA_MANAGER_APP));
 
             yieldForNextMidlet();
-            
+
 
         } catch (Exception ex) {
             displayError.showErrorAlert(Resource.getString(
@@ -206,7 +192,7 @@ public class Manager extends MIDlet implements ApplicationManager {
         try {
             // Create an instance of the MIDlet class
             // All other initialization happens in MIDlet constructor
-            MIDletSuiteLoader.execute(suiteInfo.id, midletToRun,
+            MIDletSuiteUtils.execute(suiteInfo.suiteId, midletToRun,
                                       suiteInfo.displayName);
 
             /*
@@ -215,8 +201,8 @@ public class Manager extends MIDlet implements ApplicationManager {
              * restart the VM let the select suite run.
              */
             yieldForNextMidlet();
-            
-            
+
+
 
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
@@ -237,11 +223,12 @@ public class Manager extends MIDlet implements ApplicationManager {
          * Setting arg 0 to "U" signals that arg 1 is a suite ID for updating.
          */
         midletSuite.setTempProperty(null, "arg-0", "U");
-        midletSuite.setTempProperty(null, "arg-1", suiteInfo.id);
+        midletSuite.setTempProperty(null, "arg-1",
+            String.valueOf(suiteInfo.suiteId));
         try {
             midletStateHandler.startMIDlet(INSTALLER, null);
             yieldForNextMidlet();
-            
+
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
         }
@@ -255,9 +242,9 @@ public class Manager extends MIDlet implements ApplicationManager {
     }
 
     /**
-     * Bring the midlet with the passed in midlet suite info to the 
+     * Bring the midlet with the passed in midlet suite info to the
      * foreground.
-     * 
+     *
      * @param suiteInfo information for the midlet to be put to foreground
      */
     public void moveToForeground(MIDletSuiteInfo suiteInfo) {}
@@ -265,7 +252,7 @@ public class Manager extends MIDlet implements ApplicationManager {
 
     /**
      * Exit the midlet with the passed in midlet suite info.
-     * 
+     *
      * @param suiteInfo information for the midlet to be terminated
      */
     public void exitMidlet(MIDletSuiteInfo suiteInfo) {}
@@ -281,10 +268,10 @@ public class Manager extends MIDlet implements ApplicationManager {
      */
     private void yieldForNextMidlet() {
         // We want this MIDlet to run after the next MIDlet is run.
-        MIDletSuiteLoader.setLastSuiteToRun(MIDletStateHandler.
+        MIDletSuiteUtils.setLastSuiteToRun(MIDletStateHandler.
             getMidletStateHandler().getMIDletSuite().getID(),
             getClass().getName());
-        destroyApp(false); 
+        destroyApp(false);
         notifyDestroyed();
     }
 }

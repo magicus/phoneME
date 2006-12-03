@@ -1,5 +1,6 @@
 #!/bin/sh
 #
+# 	
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,10 +26,10 @@
 #
 if [ $1X = X ]; then
   echo ""
-  echo "Usage: installMidlet_g.sh <URL> [<URL label>]"
+  echo "Usage: installMidlet_g <URL> [<URL label>]"
   echo ""
   exit
 fi
 
 DIR=${0%/*}
-cd $DIR; ./runMidlet_g internal com.sun.midp.installer.GraphicalInstaller I $1 $2;
+cd $DIR; ./runMidlet_g -1 com.sun.midp.scriptutil.CommandLineInstaller I $1 $2;

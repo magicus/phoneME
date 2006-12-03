@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -36,9 +37,10 @@
 extern "C" {
 #endif
 
-#define MD_KEY_HOME (KEY_MACHINE_DEP)
+#define MD_KEY_HOME       (KEY_MACHINE_DEP)
+#define MD_KEY_SWITCH_APP (KEY_MACHINE_DEP - 1)
 
-#ifdef ARM
+#if defined(ARM) || defined(DIRECTFB)
 /** Map MIDP keyss and platform dependent key up/down codes */
 typedef struct _KeyMapping {
     int midp_keycode;
@@ -70,5 +72,5 @@ extern KeyMapping omap_730_keys[];
 /** Active key mapping to handle received keyboard signals */
 extern KeyMapping *mapping;
 
-#endif /* ARM */
+#endif /* ARM || DIRECTFB */
 #endif /* _MASTERMODE_KEYMAPPING_H_ */

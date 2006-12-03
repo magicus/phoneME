@@ -1,4 +1,5 @@
 /*
+ * 	
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -65,13 +66,14 @@ public class TestPermissions extends TestCase {
               Permissions.forDomain(Permissions.UNIDENTIFIED_DOMAIN_BINDING);
         int push = temp[Permissions.CUR_LEVELS][Permissions.PUSH];
 
-        assertTrue(Permissions.DENY !=
+        assertTrue(Permissions.ONESHOT !=
                    temp[Permissions.CUR_LEVELS][Permissions.HTTPS]);
 
         Permissions.setPermissionGroup(temp[Permissions.CUR_LEVELS],
-                                       Permissions.HTTP, Permissions.DENY);
+                                       Permissions.HTTP,
+                                       Permissions.ONESHOT);
 
-        assertEquals(Permissions.DENY,
+        assertEquals(Permissions.ONESHOT,
                      temp[Permissions.CUR_LEVELS][Permissions.HTTPS]);
 
         assertEquals(push,

@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,6 +24,7 @@
  * information or have any questions. 
  */
 
+#include <kni.h>
 #include <midpMalloc.h>
 #include <midp_logging.h>
 
@@ -1536,7 +1538,9 @@ drawClippedOutlineArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     int evenXOffset, evenYOffset;
     int solid[4], empty[4], draw[4]; // for dotted lines
     int x_point, y_point;
-
+    draw[3] = 0;
+    draw[2] = 0;
+    draw[1] = 0;
     CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
 
     SetUpEllipseParams(x, y, x + w, y + h, &a, &b, &a2, &b2,
@@ -2018,6 +2022,8 @@ drawClippedArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
 
     int startQuadrant, endQuadrant, startRatio, endRatio, quadrantStatus[4];
     int nPixelsInQuadrant;
+    startQuadrant = 0;
+    endQuadrant = 0;
 
     CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
 

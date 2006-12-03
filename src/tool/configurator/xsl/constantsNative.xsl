@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?> 
 <!--
+          
 
         Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -8,6 +9,7 @@
     This stylesheet outputs all constants definitions in form of C header file
 -->
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:strip-space elements="*"/>
 <xsl:output method="text"/>
 <!-- for pretty printing the comments -->
 <xsl:include href="prettyPrint.xsl"/>
@@ -25,6 +27,9 @@
  */
 #ifndef _MIDP_CONSTANT_CORE_H_
 #define _MIDP_CONSTANT_CORE_H_
+
+#include &lt;pcsl_string.h&gt;
+
 /**
  * @file
  *
@@ -47,6 +52,7 @@
 
 <!-- template to generate constant definition -->
 <xsl:template match="constant">
+<xsl:if test="@JavaOnly!='true'">
 /**
 <xsl:call-template name="prettyPrint">
     <xsl:with-param name="outputString" select="normalize-space(@Comment)"/>
@@ -55,21 +61,32 @@
 </xsl:call-template>
  *
  * Package: <xsl:value-of select="../@Name"/>
- */
-#define <xsl:value-of select="@Name"/><xsl:text> </xsl:text>
+ */ <xsl:text>&#10;</xsl:text>
     <xsl:choose>
-        <xsl:when test="@Value='true'">
-            <xsl:text>1</xsl:text>
-        </xsl:when>
+    <xsl:when test="@Type='String'">
+	<xsl:text>extern const pcsl_string </xsl:text>
+	<xsl:value-of select="@Name"/>
+	<xsl:text>;</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+	<xsl:text>#define </xsl:text>
+	<xsl:value-of select="@Name"/><xsl:text> </xsl:text>
+	<xsl:choose>
+	<xsl:when test="@Value='true'">
+    	    <xsl:text>1</xsl:text>
+    	</xsl:when>
         <xsl:when test="@Value='false'">
-            <xsl:text>0</xsl:text>
-        </xsl:when>
+	    <xsl:text>0</xsl:text>
+    	</xsl:when>
         <xsl:otherwise>
-            <xsl:value-of select="@Value"/>
-        </xsl:otherwise>
+	    <xsl:value-of select="@Value"/>
+    	</xsl:otherwise>
+	</xsl:choose>
+    </xsl:otherwise>
     </xsl:choose>
 <xsl:text>
 </xsl:text>
+</xsl:if> <!-- JavaOnly -->
 </xsl:template>
 
 </xsl:stylesheet>

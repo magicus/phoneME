@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -71,7 +72,6 @@ public class PopupLayer extends CLayer {
      */
     public PopupLayer(Image bgImage, int bgColor) {
         super(bgImage, bgColor);
-        this.visible = true;
         this.supportsInput = true;
     }
     
@@ -82,7 +82,6 @@ public class PopupLayer extends CLayer {
      */
     public PopupLayer(Image[] bgImage, int bgColor) {
         super(bgImage, bgColor);
-        this.visible = true;
         this.supportsInput = true;
     }
 
@@ -139,5 +138,24 @@ public class PopupLayer extends CLayer {
     public CommandListener getCommandListener() {
         return listener;
     }
+
+    /**
+     * Returns true for popup layer because almost all pointer events
+     * have to be handled by popup even if it's out of bounds. The most of
+     * popups has to be closed if the pointer event is out of its bounds.
+     * The exception is the pointer is a part of the command layer. 
+     *
+     * @param x the "x" coordinate of the point
+     * @param y the "y" coordinate of the point
+     * @return true if the point is handled by this layer
+     */
+    public boolean handlePoint(int x, int y) {
+        boolean ret = true;
+        if (commands != null && commands.length > 0 && owner != null) {
+            ret = !((MIDPWindow)owner).belongToCmdLayers(x, y);
+        }
+        return ret | containsPoint(x, y);
+    }
+
 }
 

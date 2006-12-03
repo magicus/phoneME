@@ -1,4 +1,5 @@
-/*
+/**
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -28,12 +29,13 @@ package com.sun.midp.chameleon.layers;
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.*;
+import com.sun.midp.chameleon.skins.resources.*;
 import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.lcdui.EventConstants;
 
 
-public class CascadeMenuLayer extends PopupLayer {
+public class CascadeMenuLayer extends ScrollablePopupLayer {
     
     /** The list of Commands to display in the menu */
     protected Command[] menuCmds;
@@ -53,20 +55,18 @@ public class CascadeMenuLayer extends PopupLayer {
      */
     protected MenuLayer menuLayer;
     
-    /**
-     * The scroll indicator layer to notify of scroll settings
-     * in case not all menu commands can fit on the menu
-     */
-    protected ScrollIndLayer scrollInd;
+    /** pointer pressed outside of the menuLayer's bounds */
+    private final static int PRESS_OUT_OF_BOUNDS = -1; 
     
+    /** variable used in pointerInput handling */
+    private int itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS; 
+
     public CascadeMenuLayer() {
         super();
         setBackground(null, MenuSkin.COLOR_BG);
-        this.layerID = "CascadeMenuLayer";
     }
     
-    public void setMenuCommands(Command[] cmdList, MenuLayer menuLayer,
-                                ScrollIndLayer scrollInd) 
+    public void setMenuCommands(Command[] cmdList, MenuLayer menuLayer) 
     {
         if (cmdList.length == 1 && cmdList[0] instanceof SubMenuCommand) {
             cmdList = ((SubMenuCommand)cmdList[0]).getSubCommands();
@@ -84,11 +84,9 @@ public class CascadeMenuLayer extends PopupLayer {
         }
         bounds[H] -= MenuSkin.ITEM_TOPOFFSET;
         alignMenu();           
-        this.dirty = true;
         requestRepaint();
 
         this.menuLayer = menuLayer;
-        this.scrollInd = scrollInd;
         selI = 0;
     }
     
@@ -100,16 +98,92 @@ public class CascadeMenuLayer extends PopupLayer {
     }
     
     public void updateScrollIndicator() {
-        if (menuCmds.length > MenuSkin.MAX_ITEMS) {
-            scrollInd.setVerticalScroll(true, 
-                (scrollIndex * 100) / 
-                    (menuCmds.length - MenuSkin.MAX_ITEMS),
-                (MenuSkin.MAX_ITEMS * 100) / menuCmds.length);
-        } else {
-            scrollInd.setVerticalScroll(false, 0, 100);
+        if (scrollInd != null) {
+            if (menuCmds.length > MenuSkin.MAX_ITEMS) {
+                scrollInd.setVerticalScroll( 
+                 (scrollIndex * 100) / (menuCmds.length - MenuSkin.MAX_ITEMS),
+                 (MenuSkin.MAX_ITEMS * 100) / menuCmds.length);
+            } else {
+                scrollInd.setVerticalScroll(0, 100);
+            }
+            super.updateScrollIndicator();
         }
     }
-    
+
+    /**
+     * Helper function to determine the itemIndex at the x,y position
+     *
+     * @param x,y   pointer coordinates in menuLayer's space (0,0 means left-top
+     *      corner) both value can be negative as menuLayer handles the pointer
+     *      event outside its bounds
+     * @return menuItem's index since 0, or PRESS_OUT_OF_BOUNDS
+     *
+     */
+    private int itemIndexAtPointerPosition(int x, int y) {
+        int ret;
+        if (!containsPoint(x + bounds[X], y + bounds[Y])) {
+            // IMPL_NOTE: nothing happened. Need to be handled another way 
+            ret = PRESS_OUT_OF_BOUNDS; 
+        } else {
+            ret = y / MenuSkin.ITEM_HEIGHT;
+        }
+        return ret;
+    }
+
+    /**
+     * Handle input from a pen tap. Parameters describe
+     * the type of pen event and the x,y location in the
+     * layer at which the event occurred. Important : the
+     * x,y location of the pen tap will already be translated
+     * into the coordinate space of the layer.
+     *
+     * @param type the type of pen event
+     * @param x the x coordinate of the event
+     * @param y the y coordinate of the event
+     */
+    public boolean pointerInput(int type, int x, int y) {
+        boolean consume = true;
+        switch (type) {
+        case EventConstants.PRESSED:
+            itemIndexWhenPressed =  itemIndexAtPointerPosition(x, y);
+
+            // dismiss the menu layer if the user pressed outside the menu
+            if (itemIndexWhenPressed == PRESS_OUT_OF_BOUNDS) {
+                if (menuLayer != null) {
+                    menuLayer.dismissCascadeMenu();
+                }
+                consume = false;
+            } else if (itemIndexWhenPressed >= 0) { // press on valid menu item
+                selI = scrollIndex + itemIndexWhenPressed;
+                requestRepaint();
+                // if (btnLayer != null) btnLayer.serviceRepaints();
+            }
+            break;
+        case EventConstants.RELEASED:
+            int itemIndexWhenReleased = itemIndexAtPointerPosition(x, y);
+            
+            if (itemIndexWhenReleased == itemIndexWhenPressed) {
+                if (itemIndexWhenPressed >= 0) {
+                    if (menuLayer != null) {
+                        if (selI >= 0 && selI < menuCmds.length) {
+                            menuLayer.subCommandSelected(menuCmds[selI]);
+                        }
+                    }
+                }
+            }
+            
+            if (itemIndexWhenReleased == PRESS_OUT_OF_BOUNDS) {
+                consume = false;
+            }
+
+            // remember to reset the variables
+            itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS;
+            break;
+        }
+        // return true always as menuLayer will capture all of the pointer inputs
+        return consume;  
+    }
+   
     public boolean keyInput(int type, int keyCode) {
         // The system menu will absorb all key presses except
         // for the soft menu keys - that is, it will always
@@ -118,15 +192,13 @@ public class CascadeMenuLayer extends PopupLayer {
         // returns 'false'
         
         if (keyCode == EventConstants.SOFT_BUTTON1 || 
-            keyCode == EventConstants.SOFT_BUTTON2)
-        {
+            keyCode == EventConstants.SOFT_BUTTON2) {
             return false;
         }
         
         if (type != EventConstants.PRESSED && type != EventConstants.REPEATED) {
             return true;
         }
-        dirty = true;
         
         if (keyCode == Constants.KEYCODE_UP) {
             if (selI > 0) {
@@ -190,6 +262,27 @@ public class CascadeMenuLayer extends PopupLayer {
         return true;
     }
 
+    /**
+     * Cleans up the display when the cascaded menu is dismissed.
+     * Removes the layer with the menu and requests the display to be
+     * repainted.
+     */
+    public void dismiss() {
+        selI = scrollIndex = 0;
+        
+        if (owner != null &&
+            scrollInd != null &&
+            scrollInd.scrollable == this) {
+            owner.removeLayer(scrollInd);
+        }
+    }
+
+    public void setScrollInd(ScrollIndLayer scrollInd) {
+        if (ScrollIndSkin.MODE != ScrollIndResourcesConstants.MODE_BAR) {
+            super.setScrollInd(scrollInd);
+        }
+    }
+    
     protected void initialize() {
         super.initialize();
         bounds[X] = 0; // set in alignMenu()
@@ -289,6 +382,14 @@ public class CascadeMenuLayer extends PopupLayer {
         }
         g.setColor(0);
         g.drawRect(0, 0, bounds[W] - 1, bounds[H] - 1);
-    }   
+    }
+
+    /**
+     * Update bounds of layer
+     * @param layers - current layer can be dependant on this parameter
+     */
+    public void update(CLayer[] layers) {
+        alignMenu();
+    }
 }
 

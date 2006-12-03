@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -66,6 +67,7 @@
 
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
 #include <wmaPushRegistry.h>
+#include <stdio.h>
 #endif
 
 #if ENABLE_JSR_180
@@ -75,6 +77,10 @@
 #if ENABLE_JSR_82
 #include <stdio.h>
 #include "btPush.h"
+#endif
+
+#if ENABLE_I3_TEST
+#include <midpUtilKni.h>
 #endif
 
 #ifndef MAX_DATAGRAM_LENGTH
@@ -201,8 +207,8 @@ static int parseAlarmList(int);
 static int checkfilter(char *filter, char *ip);
 static void pushcheckinentry(PushEntry *p);
 static void pushcleanupentry(PushEntry *p);
-static void pushDeleteSuiteNoVM(const pcsl_string * id);
-static void pushDeleteSuiteLive(const pcsl_string * id);
+static void pushDeleteSuiteNoVM(SuiteIdType id);
+static void pushDeleteSuiteLive(SuiteIdType id);
 static int pushOpenInternal(int startListening);
 static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext);
 static void alarmstart(AlarmEntry *entry, jlong alarm);
@@ -218,22 +224,49 @@ static long readLine(char** ppszError, int handle, char* buffer, long length);
  *
  */
 static char *pushstorage(char *value, int field) {
-   char *storagefield;
-   char *storagename= NULL;
-    int comma = 0 ;
+    char *storagefield;
+    char *storagename = NULL;
+    int comma = 0;
 
     for (storagefield = value; *storagefield; storagefield++) {
-      if (*storagefield == ',')
-        comma ++;
-      /* Push entry contains "connection, midletname, filter, storage" */
-      /* Alarm entry contains "midletname, alarm, storage" */
-      if (comma == field) {
-        storagename = storagefield + 1;
-        break;
-      }
+        if (*storagefield == ',') {
+            comma ++;
+        }
+
+        /* Push entry contains "connection, midletname, filter, storage" */
+        /* Alarm entry contains "midletname, alarm, storage" */
+        if (comma == field) {
+            storagename = storagefield + 1;
+            break;
+        }
     }
+
     return storagename;
 }
+
+#if (ENABLE_JSR_205 || ENABLE_JSR_120)
+/**
+ * Converts a given string to a suite ID.
+ *
+ * @param strId a string to convert
+ *
+ * @return suite ID (UNUSED_SUITE_ID if conversion failed)
+ *
+ */
+static SuiteIdType suiteIdFromChars(const char* strId) {
+    unsigned long lid;
+    SuiteIdType suiteId = UNUSED_SUITE_ID;
+
+    if (strId) {
+        /* IMPL NOTE: here it's assumed that strId represents a HEX integer */
+        if (sscanf(strId, "%lx", &lid) == 1) {
+            suiteId = (SuiteIdType)lid;
+        }
+    }
+
+    return suiteId;
+}
+#endif
 
 /**
  * Parses and extracts the filter field from the registry entry string.
@@ -296,7 +329,6 @@ static char *pushclassname(char *value, int *pLength) {
  */
 int pushopen() {
 #if ENABLE_JSR_82
-    bt_sddb_startup();
     bt_push_startup();
 #endif
     return pushOpenInternal(1);
@@ -335,14 +367,16 @@ static int pushOpenInternal(int startListening) {
          * Initialize the fully qualified pathnames
          * of the push and alarm persistent files.
          */
-        if (PCSL_STRING_OK != pcsl_string_cat(storage_get_root(),
-                &PUSH_LIST_FILENAME, &pushpathname)) {
+        if (PCSL_STRING_OK != pcsl_string_cat(
+                storage_get_root(INTERNAL_STORAGE_ID),
+                    &PUSH_LIST_FILENAME, &pushpathname)) {
             status = -1;
             break;
         }
 
-        if (PCSL_STRING_OK != pcsl_string_cat(storage_get_root(),
-                &ALARM_LIST_FILENAME, &alarmpathname)) {
+        if (PCSL_STRING_OK != pcsl_string_cat(
+                storage_get_root(INTERNAL_STORAGE_ID),
+                    &ALARM_LIST_FILENAME, &alarmpathname)) {
             status = -1;
             break;
         }
@@ -390,7 +424,6 @@ void pushclose() {
     alarmListFree();
 #if ENABLE_JSR_82
     bt_push_shutdown();
-    bt_sddb_shutdown();
 #endif
     pcsl_string_free(&pushpathname);
     pcsl_string_free(&alarmpathname);
@@ -425,7 +458,7 @@ static void pushsave() {
  * Adds one entry to the push registry.
  * If the entry already exists return IO_ERROR_LEN (midpString.h).
  *
- * @param suiteID ID of the suite
+ * @param suiteId ID of the suite
  * @param connection generic connection name (no spaces)
  * @param midlet class name of the MIDlet (no spaces)
  * @param filter filter string (no spaces)
@@ -433,7 +466,7 @@ static void pushsave() {
  * @return 0 for success, OUT_OF_MEM_LEN for out of memory,
  * IO_ERROR_LEN if already registered
  */
-int midpAddPushEntry(const pcsl_string * suiteID,
+int midpAddPushEntry(SuiteIdType suiteId,
                      const pcsl_string * connection,
                      const pcsl_string * midlet,
                      const pcsl_string * filter) {
@@ -457,7 +490,7 @@ int midpAddPushEntry(const pcsl_string * suiteID,
     total_len = pcsl_string_length(connection)
               + pcsl_string_length(midlet)
               + pcsl_string_length(filter)
-              + pcsl_string_length(suiteID)
+              + GET_SUITE_ID_LEN(suiteId)
               + PCSL_STRING_LITERAL_LENGTH(COMMA_STRING) * 3;
 
     pcsl_string_predict_size(&temp, total_len);
@@ -488,7 +521,8 @@ int midpAddPushEntry(const pcsl_string * suiteID,
             break;
         }
 
-        if (PCSL_STRING_OK != pcsl_string_append(&temp, suiteID)) {
+        if (PCSL_STRING_OK != pcsl_string_append(&temp,
+                midp_suiteid2pcsl_string(suiteId))) {
             break;
         }
 
@@ -698,8 +732,8 @@ static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext) {
         }
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
         /* Check for sms,cbs or mms connection. */
-        wmaPushCloseEntry(p->state, p->value, p->port, p->storagename,
-                          p->appID, p->fd);
+        wmaPushCloseEntry(p->state, p->value, p->port,
+            suiteIdFromChars(p->storagename), p->appID, p->fd);
 #endif
         p->fd = -1;
     }
@@ -894,13 +928,14 @@ void pushcheckinall() {
  * The method does not check in connections that may still be used
  * by the next MIDlet, but leaves them ready to check out.
  *
- * @param nextToRun suiteID of the next suite to run, any connection
+ * @param nextToRun suiteId of the next suite to run, any connection
  *     that is not checked in and does not belong to the next suite to
  *     to run will be checked in.
  */
-void pushcheckinLeftOvers(const pcsl_string * nextToRun) {
+void pushcheckinLeftOvers(SuiteIdType nextToRun) {
     PushEntry *p;
-    const char* pszTemp = pcsl_string_get_utf8_data(nextToRun);
+    const pcsl_string* strSuiteId = midp_suiteid2pcsl_string(nextToRun);
+    const char* pszTemp = (char*)pcsl_string_get_utf8_data(strSuiteId);
     /* IMPL_NOTE: can we do anything meaningful in case of out-of-memory error? */
 
     for (p = pushlist; p != NULL ; p = p->next) {
@@ -918,21 +953,24 @@ void pushcheckinLeftOvers(const pcsl_string * nextToRun) {
         pushcheckinentry(p);
     }
 
-    pcsl_string_release_utf8_data(pszTemp, nextToRun);
+    pcsl_string_release_utf8_data((jbyte*)pszTemp, strSuiteId);
 }
 
 /**
  * Checks in connections that are in
  * launch pending state for a specific MIDlet.
  *
- * @param pszSuiteId Suite ID of the MIDlet
+ * @param suiteId Suite ID of the MIDlet
  * @param pszClassName Class name of the MIDlet
  */
 void
-pushcheckinbymidlet(char* pszSuiteId, char* pszClassName) {
+pushcheckinbymidlet(SuiteIdType suiteId, char* pszClassName) {
     PushEntry *p;
     char* pTemp;
     int tempLen;
+    const pcsl_string* strId = midp_suiteid2pcsl_string(suiteId);
+    const char* pszSuiteId = (char*)pcsl_string_get_utf8_data(strId);
+
     for (p = pushlist; p != NULL ; p = p->next) {
 #ifdef ENABLE_JSR_82
         /* IMPL_NOTE: Provide a separate function for this functionality.
@@ -964,6 +1002,8 @@ pushcheckinbymidlet(char* pszSuiteId, char* pszClassName) {
 
         pushcheckinentry(p);
     }
+
+    pcsl_string_release_utf8_data((jbyte*)pszSuiteId, strId);
 }
 
 /**
@@ -1094,7 +1134,7 @@ char *pushfindfd(int fd) {
                 bt_pushid_t id = bt_push_find_server((bt_handle_t)fd);
                 if (id != BT_INVALID_PUSH_HANDLE) {
                     if (bt_push_accept(id, pushp->filter,
-                            (bt_handle_t *)&pushp->fdsock)) {
+                            (bt_handle_t *)(void*)&pushp->fdsock)) {
                         return midpStrdup(pushp->value);
                     }
                 }
@@ -1139,17 +1179,17 @@ char *pushfindfd(int fd) {
 
                 memcpy(&addr.s_addr, ipBytes, sizeof(addr.s_addr));
                 memset(ipAddress, '\0', MAX_HOST_LENGTH);
-                strcpy(ipAddress, inet_ntoa(addr));
+                strcpy(ipAddress, pcsl_inet_ntoa(&addr));
 
                 /* Datagram and Socket connections use the IP filter. */
                 if (checkfilter(pushp->filter, ipAddress)) {
                     return midpStrdup(pushp->value);
                 }
                 /*
-         * Dispose of the filtered push request.
+                 * Dispose of the filtered push request.
                  * Release any cached datagrams.
                  */
-        pushcheckinentry(pushp);
+                pushcheckinentry(pushp);
                 return NULL;
 #if ENABLE_SERVER_SOCKET
             } else if (strncmp(pushp->value, "socket://:", 10) == 0) {
@@ -1204,10 +1244,10 @@ char *pushfindfd(int fd) {
                 }
 
                 /*
-         * Dispose of the filtered push request.
+                 * Dispose of the filtered push request.
                  * Close any accepted socket not accessed, yet.
                  */
-        pushcheckinentry(pushp);
+                pushcheckinentry(pushp);
                 return NULL;
 #endif
             }
@@ -1270,7 +1310,7 @@ char *pushfindfd(int fd) {
            * Check if a media type filter is also needed.
            */
           for (p = pushp->value; *p; p++) {
-              if(strncasecmp(p, "type=\"application/", 18) == 0 ){
+              if(midp_strncasecmp(p, "type=\"application/", 18) == 0 ){
               /* Extract just the quoted media type. */
                   p += 18;
               for (end = p; *end; end++) {
@@ -1304,7 +1344,9 @@ char *pushfindfd(int fd) {
                                    pushp->dg->buffer,
                                    pushp->dg->length);
 
-              if (strcasecmp((char *)required_type, (char*)acceptcontact_type) ==0) {
+              if (midp_strcasecmp((char *)required_type,
+                    (char*)acceptcontact_type) ==0) {
+                    
               REPORT_INFO2(LC_PROTOCOL,
                     "SIP Push Message Media Type Matched: %s == %s",
                     required_type,acceptcontact_type);
@@ -1648,10 +1690,11 @@ static int parsePushList(int pushfd, int startListening) {
  * @param buffer A full-text push entry string from the registry
  * @param fd A pointer to a handle. Used to return the open handle
  * @param port A pointer to a portId. Used to return the port to the caller
+ * @param appID Application ID
  * @param isWMAEntry Set to KNI_TRUE for a WMA connection, KNI_FALSE otherwise
  */
 static void pushProcessPort(char *buffer, int *fd, int *port,
-                            char **appID, jboolean *isWMAEntry){
+                            char **appID, jboolean *isWMAEntry) {
     char *p;
     int colon_found;
     void *handle;
@@ -1835,8 +1878,8 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
                 /* check for sms,cbs or mms connection */
                 wmaPushProcessPort(buffer, fd, *port,
-                                   pushstorage(buffer, 3), *appID);
-                if(*fd != -1) {
+                    suiteIdFromChars(pushstorage(buffer, 3)), *appID);
+                if (*fd != -1) {
                     *isWMAEntry = KNI_TRUE;
                 }
 #endif
@@ -1909,7 +1952,8 @@ static int checkfilter(char *filter, char *ip) {
                     if (*(p2+1) == f2 || f2 == '?' || f2 == '*') {
                         /* Always consume an IP character. */
                         p2++;
-                        if (f2 != '?' || *(p2+1) == '.' || *(p2+1) == '\0') {
+                        if (f2 == '*' || *p2 == '.' || *p2 == '\0' ||
+                            *(p2+1) == '.' || *(p2+1) == '\0') {
                             /* Also, consume a filter character. */
                             p1++;
                         }
@@ -2108,7 +2152,7 @@ int pushpoll() {
  *
  * @param id The suite ID to be removed from the push registry
  */
-void pushdeletesuite(const pcsl_string * id) {
+void pushdeletesuite(SuiteIdType id) {
     if ((pushlist != NULL) || (alarmlist != NULL)) {
         pushDeleteSuiteLive(id);
         return;
@@ -2125,7 +2169,7 @@ void pushdeletesuite(const pcsl_string * id) {
  *
  * @param id The suite ID to be removed from the push registry
  */
-static void pushDeleteSuiteNoVM(const pcsl_string * id) {
+static void pushDeleteSuiteNoVM(SuiteIdType id) {
     /* Tell push open not to start listening to connections. */
     if (pushOpenInternal(0) != 0) {
         return;
@@ -2142,7 +2186,7 @@ static void pushDeleteSuiteNoVM(const pcsl_string * id) {
  *
  * @param id The suite ID to be removed from the push registry
  */
-static void pushDeleteSuiteLive(const pcsl_string * id) {
+static void pushDeleteSuiteLive(SuiteIdType id) {
     PushEntry *pushp;
     PushEntry **pPrevNext = &pushlist;
     PushEntry *pushnext;
@@ -2150,7 +2194,8 @@ static void pushDeleteSuiteLive(const pcsl_string * id) {
     AlarmEntry *alarmp;
     AlarmEntry **alarmpPrevNext = &alarmlist;
     AlarmEntry *alarmnext;
-    const char* pszID = pcsl_string_get_utf8_data(id);
+    const pcsl_string* strId = midp_suiteid2pcsl_string(id);
+    const char* pszID = (char*)pcsl_string_get_utf8_data(strId);
 
     if (pszID == NULL) {
         return;
@@ -2192,7 +2237,7 @@ static void pushDeleteSuiteLive(const pcsl_string * id) {
 
     alarmsave();
 
-    pcsl_string_release_utf8_data(pszID, id);
+    pcsl_string_release_utf8_data((jbyte*)pszID, strId);
 }
 
 /**
@@ -2529,3 +2574,196 @@ readLine(char** ppszError, int handle, char* buffer, long length) {
 
     return pos;
 }
+
+/**
+ * Wildcard comparing the pattern and the string.
+ * @param pattern The pattern that can contain '*' and '?'
+ * @param str The string for comparing
+ * @return <tt>1</tt> if the comparison is successful, <tt>0</tt> if it fails
+ */
+int wildComp(const char *pattern, const char *str) {
+    /* Current compare position of the pattern */
+    const char *p1 = NULL;
+    /* Current compare position of the string */
+    const char *p2 = NULL;
+    char tmp, tmp1;
+    /* Last position of '*' in pattern */
+    const char *posStar = NULL;
+    /* Last position of string when '*' was found in the pattern */
+    const char *posCmp = NULL;
+    int num_quest, i;
+
+    if ((pattern == NULL) || (str == NULL)) return 0;
+
+    /* Filter is exactly "*", then any string is allowed. */
+    if (strcmp(pattern, "*") == 0) return 1;
+
+    /*
+     * Otherwise walk through the pattern string looking for character
+     * matches and wildcard matches.
+     * The pattern pointer is incremented in the main loop and the
+     * string pointer is incremented as characters and wildcards
+     * are matched.
+     */
+    for (p1=pattern, p2=str; *p1 && *p2; ) {
+        switch (tmp = *p1) {
+            case '*' :
+        /*
+         * For an asterisk, consume all the characters up to
+         * a matching next character.
+         */
+                num_quest = 0;
+                posStar = p1; /* Save asterisk position in pattern */
+                posCmp = p2;
+                posCmp++;    /* Pointer to next position in string */
+                do {
+                    tmp = *++p1;
+                    if (tmp == '?') {
+                        num_quest++; /* number of question symbols */
+                    }
+                } while ((tmp == '*') || (tmp == '?'));
+                for (i = 0; i < num_quest; i++) {
+                    if (*p2++ == 0) { /* EOL before questions number was exhausted */
+                        return 0;
+                    }
+                }
+                if (tmp == 0) { /* end of pattern */
+                    return 1;
+                }
+                /* tmp is a next non-wildcard symbol */
+                /* search it in the str */
+                while (((tmp1 = *p2) != 0) && (tmp1 != tmp)) {
+                    p2++;
+                }
+                if (tmp1 == 0) { /* no match symbols in str */
+                    return 0;
+                }
+                /* symbol found - goto next symbols */
+                break;
+
+            case '?' :
+                /*
+                 * Skip a single symbol of str.
+                 * p1 and p2 points to non-EOL symbol
+                 */
+                p1++;
+                p2++;
+                break;
+
+            default :
+                /*
+                 * Any other symbol - compare.
+                 * p1 and p2 points to non-EOL symbol
+                 */
+                if (tmp != *p2) { /* symbol is not match */
+                    if (posStar == NULL) { /* No previous stars */
+                        return 0;
+                    } else { /* Return to the previous star position */
+                        if (posCmp < p2) {
+                            p2 = posCmp++;
+                        }
+                        p1 = posStar;
+                    }
+                } else { /* match symbol */
+                  p1++;
+                  p2++;
+                }
+                break;
+        } /* end if switch */
+
+        if ((*p1 == 0) && (*p2 != 0)) { 
+            if (posStar == NULL) { /* end of pattern */
+                return 0;
+            } else {
+                if (posCmp < p2) {
+                    p2 = posCmp++;
+                }
+                p1 = posStar;
+            }
+        }
+    } /* end of loop */
+
+    if (*p2 != 0) { /* symbols remainder in str - not match */
+        return 0;
+    }
+
+    if (*p1 != 0) { /* symbols remainder in pattern */
+        while (*p1++ == '*') { /* Skip multiple wildcard symbols. */
+        }
+        if (*--p1 != 0) { /* symbols remainder in pattern - not match */
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+#if ENABLE_I3_TEST
+/**
+ * API for testing wildComp() function.
+ * @param pattern The pattern that can contain '*' and '?'
+ * @param str The string for comparing
+ * @return <tt>true</tt> if the comparison is successful, <tt>false</tt> if it fails
+             */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+Java_com_sun_midp_i3test_TestCompWildcard_cmpWildCard() {
+    const char *pPattern = NULL;
+    int patLen = 0, convFltLen;
+    const char *pStr = NULL;
+    int strLen = 0, convIpLen;
+    int ret = KNI_FALSE;
+    pcsl_string pcslFilter, pcslIp;
+    pcsl_string_status rc1 = PCSL_STRING_ERR;
+    pcsl_string_status rc2 = PCSL_STRING_ERR;
+    pcsl_string_status rc3 = PCSL_STRING_ERR;
+    pcsl_string_status rc4 = PCSL_STRING_ERR;
+
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(filter);
+    KNI_DeclareHandle(ip);
+
+    KNI_GetParameterAsObject(1, filter);
+    KNI_GetParameterAsObject(2, ip);
+    rc1 = midp_jstring_to_pcsl_string(filter, &pcslFilter);
+    rc2 = midp_jstring_to_pcsl_string(ip, &pcslIp);
+
+    KNI_EndHandles();
+
+    if (PCSL_STRING_OK == rc1 && PCSL_STRING_OK == rc2 ) {
+        patLen = pcsl_string_utf8_length(&pcslFilter) + 1;
+        strLen = pcsl_string_utf8_length(&pcslIp) + 1;
+        if ((patLen > 0) && (strLen > 0)) {
+            pPattern = (char*)midpMalloc(patLen);
+            pStr = (char*)midpMalloc(strLen);
+        }
+    }
+
+    if (pPattern != NULL && pStr != NULL) {
+        rc3 = pcsl_string_convert_to_utf8(&pcslFilter, (jbyte*)pPattern,
+            patLen, &convFltLen);
+        rc4 = pcsl_string_convert_to_utf8(&pcslIp, (jbyte*)pStr,
+            strLen, &convIpLen);
+    }
+
+    if (PCSL_STRING_OK == rc1) {
+        pcsl_string_free(&pcslFilter);
+    }
+    if (PCSL_STRING_OK == rc2) {
+        pcsl_string_free(&pcslIp);
+    }
+
+    if (PCSL_STRING_OK == rc3 && PCSL_STRING_OK == rc4 &&
+        patLen == convFltLen + 1 && strLen == convIpLen + 1) {
+        ret = wildComp(pPattern, pStr);
+}
+
+    if (pPattern != NULL) {
+        midpFree((jchar*)pPattern);
+    }
+    if (pStr != NULL) {
+        midpFree((jchar*)pStr);
+    }
+
+    KNI_ReturnBoolean(ret);
+}
+#endif

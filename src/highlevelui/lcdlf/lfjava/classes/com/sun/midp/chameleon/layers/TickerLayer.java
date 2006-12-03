@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,8 +27,10 @@
 package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.chameleon.*;
+
 import javax.microedition.lcdui.*;
 import java.util.*;
+
 import com.sun.midp.chameleon.skins.TickerSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.SoftButtonSkin;
@@ -42,15 +45,18 @@ public class TickerLayer extends CLayer {
     protected int textLoc;
     protected int textLen;
 
-    /** A Timer which will handle firing repaints of the TickerPainter */
+    /**
+     * A Timer which will handle firing repaints of the TickerPainter
+     */
     protected Timer tickerTimer;
 
-    /** A TimerTask which will repaint the Ticker on a repeated basis */
+    /**
+     * A TimerTask which will repaint the Ticker on a repeated basis
+     */
     protected TickerPainter tickerPainter;
 
     public TickerLayer() {
         super(TickerSkin.IMAGE_BG, TickerSkin.COLOR_BG);
-        this.layerID = "TickerLayer";
     }
 
     public void toggleAlert(boolean alertUp) {
@@ -60,23 +66,27 @@ public class TickerLayer extends CLayer {
             super.setBackground(TickerSkin.IMAGE_BG, TickerSkin.COLOR_BG);
         }
     }
-    
+
     protected void initialize() {
         super.initialize();
 
+        setAnchor();
+        tickerTimer = new Timer();
+    }
+
+    public void setAnchor() {
         bounds[X] = 0;
         bounds[W] = ScreenSkin.WIDTH;
         bounds[H] = TickerSkin.HEIGHT;
         switch (TickerSkin.ALIGN) {
-            case (Graphics.TOP):
+            case(Graphics.TOP):
                 bounds[Y] = 0;
                 break;
-            case (Graphics.BOTTOM):
+            case(Graphics.BOTTOM):
             default:
                 bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                    bounds[H];
+                        bounds[H];
         }
-        tickerTimer = new Timer();
     }
 
     public void setText(String text) {
@@ -103,30 +113,30 @@ public class TickerLayer extends CLayer {
                 int x = textLoc;
                 int y = TickerSkin.TEXT_ANCHOR_Y;
                 switch (TickerSkin.TEXT_SHD_ALIGN) {
-                    case (Graphics.TOP | Graphics.LEFT):
+                    case(Graphics.TOP | Graphics.LEFT):
                         x -= 1;
                         y -= 1;
                         break;
-                    case (Graphics.TOP | Graphics.RIGHT):
+                    case(Graphics.TOP | Graphics.RIGHT):
                         x += 1;
                         y -= 1;
                         break;
-                    case (Graphics.BOTTOM | Graphics.LEFT):
+                    case(Graphics.BOTTOM | Graphics.LEFT):
                         x -= 1;
                         y += 1;
                         break;
-                    case (Graphics.BOTTOM | Graphics.RIGHT):
+                    case(Graphics.BOTTOM | Graphics.RIGHT):
                     default:
                         x += 1;
                         y += 1;
-                        break;                    
+                        break;
                 }
                 g.setColor(TickerSkin.COLOR_FG_SHD);
                 g.drawString(text, x, y, Graphics.TOP | TickerSkin.DIRECTION);
             }
             g.setColor(TickerSkin.COLOR_FG);
-            g.drawString(text, textLoc, TickerSkin.TEXT_ANCHOR_Y, 
-                         Graphics.TOP | TickerSkin.DIRECTION);
+            g.drawString(text, textLoc, TickerSkin.TEXT_ANCHOR_Y,
+                    Graphics.TOP | TickerSkin.DIRECTION);
 
             if (tickerPainter == null) {
                 startTicker();
@@ -146,7 +156,6 @@ public class TickerLayer extends CLayer {
 
     /**
      * Stop the ticking of the ticker.
-     *
      */
     public void stopTicker() {
         if (tickerPainter == null) {
@@ -154,6 +163,16 @@ public class TickerLayer extends CLayer {
         }
         tickerPainter.cancel();
         tickerPainter = null;
+    }
+
+    /**
+     * Update bounds of layer
+     *
+     * @param layers - current layer can be dependant on this parameter
+     */
+    public void update(CLayer[] layers) {
+        super.update(layers);
+        setAnchor();
     }
 
     /**

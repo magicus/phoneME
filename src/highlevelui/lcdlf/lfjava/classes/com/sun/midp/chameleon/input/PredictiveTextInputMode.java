@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -85,7 +86,7 @@ public class PredictiveTextInputMode implements InputMode {
      * @param str debug message
      */
     private void log(String str) {
-        //         System.out.println(str +" part = "+part);
+        //        System.out.println(str +" part = "+part);
     }
               
     /**
@@ -229,6 +230,7 @@ public class PredictiveTextInputMode implements InputMode {
         int ret = KEYCODE_NONE;
         boolean gotoNextState = true;
         boolean needClear = false;
+        boolean needFinishWord = false;
 
         validateState(true);
                        
@@ -254,7 +256,7 @@ public class PredictiveTextInputMode implements InputMode {
             }   
         } else if (longPress) {
             log("         **longPress**");
-            finishWord();
+            needFinishWord = true;
             if (isValidKey(keyCode)) {
                 // if (part.length()>0) {
                 // }
@@ -267,6 +269,7 @@ public class PredictiveTextInputMode implements InputMode {
              * 2. handle '#' (show next completion option) case 
              */
             log("         **isNextOption**");
+
             if (part.length() == 0) {
                 gotoNextState = false;
             } else {
@@ -286,7 +289,7 @@ public class PredictiveTextInputMode implements InputMode {
             /**
              * 4. handle whitespace  
              */
-            finishWord();
+            needFinishWord = true;
             if (keyCode == '#') {
                 part = part + ' ';
             }
@@ -314,6 +317,9 @@ public class PredictiveTextInputMode implements InputMode {
             if (needClear) {
                 clear();
             }
+        }
+        if (needFinishWord) {
+            finishWord();
         }
         return ret;
     }
@@ -635,48 +641,17 @@ public class PredictiveTextInputMode implements InputMode {
                 nextState.length() + ") state=" + state + "(length=" +
                 state.length() + ")");
          
-            boolean needClear = true;
-            if (mediator == null) {
-                return;
-            }
-            if (nextState.length() >= state.length()) {
-                log("           lengths >=");
-                needClear = state.compareTo(
-                                      nextState.substring(0,
-                                            state.length())) != 0;
-                if (!needClear) {
-                    log("           !need clear");
-                    String str = nextState.substring(state.length());
-                    log("           commiting " + str);
-                    mediator.commit(str);
-                }
-            }
-            
-            if (needClear) {
-                log("           need clear, resending all");
-                resendAll(state, nextState);
-            }
-            state = nextState;
-            log("[nextState] <<<<");
-        }
+            if (mediator != null) {
+                log("           resending all");
 
-        /**
-         * Resend all chars in next state after we backspace on
-         * the current state
-         *   
-         * @param lastState the last state string
-         * @param nextState the next state string
-         */
-        public void resendAll(String lastState, String nextState) {
-            log("[resendAll] >>>>");
-            if (mediator == null) {
-                return;
+                log("clearing " + state + ": " + state.length() + " chars");
+                mediator.clear(state.length());
+                log("         commiting "+ nextState);
+                mediator.commit(nextState);
+                log("[resendAll] <<<<");
+                state = nextState;
             }
-            log("clearing " + lastState + ": " + lastState.length() + " chars");
-            mediator.clear(lastState.length());
-            log("         commiting "+ nextState);
-            mediator.commit(nextState);
-            log("[resendAll] <<<<");
+            log("[nextState] <<<<");
         }
     }
     /** this mode is not set as default. So the map is initialoized by false */

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
 <!--
+        	
 
         Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -60,6 +61,10 @@
         Key="SCREEN_BORDER_STYLE"
       Value="Graphics.SOLID"/>
 
+  <integer
+        Key="SCREEN_SCROLL_AMOUNT"
+      Value="15"/>
+
   <font
         Key="SCREEN_FONT_LABEL"
       Value="FontResources.PROP_P_M"/>
@@ -113,18 +118,28 @@
 
   <integer
         Key="SCROLL_MODE"
-      Value="0"/>
+      Value="ScrollIndSkin.MODE_BAR"/>
 
   <integer
         Key="SCROLL_WIDTH"
-      Value="9"/>
+      Value="13"/>
 
   <integer
         Key="SCROLL_COLOR_BG"
-      Value="0x000000"/>
+      Value="0xFFFFFF"/>
 
   <integer
         Key="SCROLL_COLOR_FG"
+      Value="0xCEDFEF"/>
+
+  <integer
+        Key="SCROLL_COLOR_FRAME"
+      Value="0"/>
+  <integer
+        Key="SCROLL_COLOR_UP_ARROW"
+      Value="0"/>
+  <integer
+        Key="SCROLL_COLOR_DN_ARROW"
       Value="0xFFFFFF"/>
 
   <composite_image
@@ -316,10 +331,6 @@
   <integer
         Key="PTI_HEIGHT"
       Value="17"/>
-
-  <integer
-        Key="PTI_WIDTH"
-      Value="168"/>
 
   <integer
         Key="PTI_MARGIN"

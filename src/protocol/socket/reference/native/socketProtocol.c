@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -135,7 +136,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_open0(void) {
         }
     } else {  /* Reinvocation after unblocking the thread */
         pcslHandle = (void *) info->descriptor;
-        context = info->pResult;
+        context = (void *)info->status;
 
         if (getMidpSocketProtocolPtr(thisObject)->handle != (jint)pcslHandle) {
             REPORT_CRIT2(LC_PROTOCOL, 

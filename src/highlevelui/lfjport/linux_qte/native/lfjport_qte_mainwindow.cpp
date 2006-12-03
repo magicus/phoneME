@@ -1,5 +1,5 @@
 /*
- * @(#)lfjport_qte_mainwindow.cpp	1.29 06/06/21 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,7 +26,6 @@
  * This source file is specific for Qt-based configurations.
  */
 
-#include <stdio.h>
 #include <kni.h>
 #include <qapplication.h>
 #include <qmainwindow.h>
@@ -157,7 +156,7 @@ bool ChameleonMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
 void ChameleonMIDPMainWindow::setFullScreen(int fullscn) {
  
      if (fullscn && !isFullScreen) {
-     showFullScreen();
+        showFullScreen();
      }
 
      if (!fullscn && isFullScreen) {
@@ -184,6 +183,7 @@ void ChameleonMIDPMainWindow::showFullScreen(void) {
     box->addWidget(mscreen);
 
     setCentralWidget(mwindow);
+    setFixedSize(CHAM_FULLWIDTH, CHAM_FULLHEIGHT);
     mscreen->setFocus();
 
 }
@@ -208,6 +208,8 @@ void ChameleonMIDPMainWindow::showNormalScreen(void) {
     indicatorBar->show();
 
     setCentralWidget(mwindow);
+    int indicatorHeight = indicatorBar->height();
+    setFixedSize(CHAM_WIDTH, CHAM_HEIGHT + indicatorHeight);
     mscreen->setFocus();
 }
 

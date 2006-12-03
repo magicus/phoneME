@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,13 +25,14 @@
  */
 
 package com.sun.midp.chameleon.layers;
-
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.*;
 import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.lcdui.EventConstants;
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
 
 /**
  * A special popup layer which implements a system
@@ -38,7 +40,7 @@ import com.sun.midp.lcdui.EventConstants;
  * both screen (Back, Exit, etc) and item specific
  * commands. 
  */
-public class MenuLayer extends PopupLayer {
+public class MenuLayer extends ScrollablePopupLayer {
     
     /** The list of Commands to display in the menu. */
     protected Command[] menuCmds;
@@ -60,12 +62,6 @@ public class MenuLayer extends PopupLayer {
     protected SoftButtonLayer btnLayer;
     
     /**
-     * The scroll indicator layer to notify of scroll settings
-     * in case not all menu commands can fit on the menu.
-     */
-    protected ScrollIndLayer scrollInd;
-    
-    /**
      * A cascading menu which holds commands for a SubMenuCommand.
      */
     protected CascadeMenuLayer cascadeMenu;
@@ -75,13 +71,21 @@ public class MenuLayer extends PopupLayer {
      */
     protected boolean cascadeMenuUp;
     
+    /** pointer pressed outside of the menuLayer's bounds */
+    private final static int PRESS_OUT_OF_BOUNDS = -1; 
+    
+    /** pointer pressed on the menuLayer's title area */
+    private final static int PRESS_ON_TITLE = -2; 
+    
+    /** variable used in pointerInput handling */
+    private int itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS; 
+    
     /**
      * Construct a new system menu layer.
      */
     public MenuLayer() {
         super();
         setBackground(MenuSkin.IMAGE_BG, MenuSkin.COLOR_BG);
-        this.layerID = "MenuLayer";
         cascadeMenu = new CascadeMenuLayer();
     }
 
@@ -94,15 +98,11 @@ public class MenuLayer extends PopupLayer {
      *                (the commands should already be sorted by priority)
      * @param btnLayer the SoftButtonLayer to notify of any command
      *                 selections
-     * @param scrollInd the scroll indicator layer to set proper scroll
-     *                  settings if we have more commands than can fit
-     *                  on the menu
      * @param index the command index has to be highlighted. If index exceeds
      * the number of commands the 1st command has to be highlighted.
      */
     public void setMenuCommands(Command[] cmdList, SoftButtonLayer btnLayer,
-                                ScrollIndLayer scrollInd, int index) 
-    {
+                                int index) {
         if (cmdList.length == 1 && cmdList[0] instanceof SubMenuCommand) {
             cmdList = ((SubMenuCommand)cmdList[0]).getSubCommands();
         }
@@ -118,11 +118,10 @@ public class MenuLayer extends PopupLayer {
             bounds[H] = MenuSkin.HEIGHT;
         }
         alignMenu();           
-        this.dirty = true;
         requestRepaint();
 
         this.btnLayer = btnLayer;
-        this.scrollInd = scrollInd;
+        
         selI = index < cmdList.length ? index : 0;
     }
     
@@ -130,16 +129,87 @@ public class MenuLayer extends PopupLayer {
      * Updates the scroll indicator.
      */
     public void updateScrollIndicator() {
-        if (menuCmds.length > MenuSkin.MAX_ITEMS) {
-            scrollInd.setVerticalScroll(true, 
-                (scrollIndex * 100) / 
-                    (menuCmds.length - MenuSkin.MAX_ITEMS),
-                (MenuSkin.MAX_ITEMS * 100) / menuCmds.length);
-        } else {
-            scrollInd.setVerticalScroll(false, 0, 100);
+        if (scrollInd != null) {
+            if (menuCmds.length > MenuSkin.MAX_ITEMS) {
+                scrollInd.setVerticalScroll(
+                  (scrollIndex * 100) / (menuCmds.length - MenuSkin.MAX_ITEMS),
+                  (MenuSkin.MAX_ITEMS * 100) / menuCmds.length);
+            } else {
+                scrollInd.setVerticalScroll(0, 100);
+            }
+            super.updateScrollIndicator();
         }
     }
     
+    /**
+     * Helper function to determine the itemIndex at the x,y position
+     *
+     * @param x,y   pointer coordinates in menuLayer's space (0,0 means left-top
+     *      corner) both value can be negative as menuLayer handles the pointer
+     *      event outside its bounds
+     * @return menuItem's index since 0, or PRESS_OUT_OF_BOUNDS, PRESS_ON_TITLE
+     *
+     */
+    private int itemIndexAtPointerPosition(int x, int y) {
+        int ret;
+        if (!containsPoint(x + bounds[X], y + bounds[Y])) {
+            ret = PRESS_OUT_OF_BOUNDS; 
+        } else if (y < MenuSkin.ITEM_TOPOFFSET) {
+            ret = PRESS_ON_TITLE;
+        } else {
+            ret = (y - MenuSkin.ITEM_TOPOFFSET) / MenuSkin.ITEM_HEIGHT;
+        }
+        return ret;
+    }
+
+    /**
+     * Handle input from a pen tap. Parameters describe
+     * the type of pen event and the x,y location in the
+     * layer at which the event occurred. Important : the
+     * x,y location of the pen tap will already be translated
+     * into the coordinate space of the layer.
+     *
+     * @param type the type of pen event
+     * @param x the x coordinate of the event
+     * @param y the y coordinate of the event
+     */
+    public boolean pointerInput(int type, int x, int y) {
+        switch (type) {
+        case EventConstants.PRESSED:
+            itemIndexWhenPressed =  itemIndexAtPointerPosition(x, y);
+
+            // dismiss the menu layer if the user pressed outside the menu
+            if (itemIndexWhenPressed == PRESS_OUT_OF_BOUNDS) {
+                if (btnLayer != null) {
+                    btnLayer.dismissMenu();
+                }
+            } else if (itemIndexWhenPressed >= 0) { // press on valid menu item
+                selI = scrollIndex + itemIndexWhenPressed;
+                requestRepaint();
+                // if (btnLayer != null) btnLayer.serviceRepaints();
+            }
+            break;
+        case EventConstants.RELEASED:
+            int itemIndexWhenReleased = itemIndexAtPointerPosition(x, y);
+            
+            if (itemIndexWhenReleased == itemIndexWhenPressed) {
+                if (itemIndexWhenPressed >= 0) {
+                    if (btnLayer != null && !showSubMenu(selI)) {
+                        if (selI >= 0 && selI < menuCmds.length) {
+                            btnLayer.commandSelected(menuCmds[selI]);
+                        }
+                    }
+                }
+            }
+
+            // remember to reset the variables
+            itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS;
+            break;
+        }
+        // return true always as menuLayer will capture all of the pointer inputs
+        return true;  
+    }
+
     /**
      * Handles key input from a keypad. Parameters describe
      * the type of key event and the platform-specific
@@ -159,15 +229,13 @@ public class MenuLayer extends PopupLayer {
         // returns 'false'
         
         if (keyCode == EventConstants.SOFT_BUTTON1 || 
-            keyCode == EventConstants.SOFT_BUTTON2)
-        {
+            keyCode == EventConstants.SOFT_BUTTON2) {
             return false;
         }
         
         if (type != EventConstants.PRESSED && type != EventConstants.REPEATED) {
             return true;
         }
-        dirty = true;
         
         if (keyCode == Constants.KEYCODE_UP) {
             if (selI > 0) {
@@ -181,10 +249,9 @@ public class MenuLayer extends PopupLayer {
         } else if (keyCode == Constants.KEYCODE_DOWN) {
             if (selI < (menuCmds.length - 1)) {
                 selI++;
-                if (selI >= MenuSkin.MAX_ITEMS &&
-                    scrollIndex < (menuCmds.length - MenuSkin.MAX_ITEMS))
-                {
-                        scrollIndex++;
+                if (selI >= scrollIndex + MenuSkin.MAX_ITEMS &&
+                    scrollIndex < (menuCmds.length - MenuSkin.MAX_ITEMS)) {
+                    scrollIndex++;
                 } 
                 updateScrollIndicator();
                 requestRepaint();
@@ -246,11 +313,25 @@ public class MenuLayer extends PopupLayer {
      * repainted.
      */
     public void dismissCascadeMenu() {
-        if (cascadeMenuUp) {
+        if (owner != null && cascadeMenuUp) {
             cascadeMenuUp = false;
+            cascadeMenu.dismiss();
+
+            setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
+
             owner.removeLayer(cascadeMenu);
             requestRepaint();
         }
+    }
+
+    /**
+     * Cleans up the display when the cascaded menu is dismissed.
+     * Removes the layer with the menu and requests the display to be
+     * repainted.
+     */
+    public void dismiss() {
+        dismissCascadeMenu();
+        selI = scrollIndex = 0;
     }
 
     /**
@@ -407,17 +488,19 @@ public class MenuLayer extends PopupLayer {
         boolean ret = false;
         if (menuCmds[index] instanceof SubMenuCommand) {
             SubMenuCommand subMenu = (SubMenuCommand)menuCmds[index];
-            cascadeMenu.setMenuCommands(
-                                        subMenu.getSubCommands(),
-                                        this,
-                                        scrollInd);
-            cascadeMenu.setAnchorPoint(bounds[X], 
+            cascadeMenu.setMenuCommands(subMenu.getSubCommands(), this);
+            cascadeMenu.setAnchorPoint(bounds[X],
                                        bounds[Y] + MenuSkin.ITEM_TOPOFFSET + 
                                        ((index - scrollIndex) *
-                                        MenuSkin.ITEM_HEIGHT)); 
+                                        MenuSkin.ITEM_HEIGHT));
             cascadeMenuUp = true;
             owner.addLayer(cascadeMenu);
+            setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
+            // IMPL_NOTE: fix layer inrteraction in removeLayer
+            btnLayer.requestRepaint();
+
             selI = index;
+            addDirtyRegion();
             ret = true;
         }
         return ret;
@@ -429,6 +512,142 @@ public class MenuLayer extends PopupLayer {
      */
     public int getIndex() {
         return selI;
+    }
+
+    /**
+     * Update bounds of layer
+     * @param layers - current layer can be dependant on this parameter
+     */
+    public void update(CLayer[] layers) {
+        super.update(layers);
+        alignMenu();
+        if (owner != null && cascadeMenuUp) {
+            cascadeMenu.update(layers);
+            if (btnLayer != null) {
+                showSubMenu(selI);
+            }
+        }
+    }
+
+    /**
+     * Scroll content inside of the Menu.
+     * @param scrollType scrollType. Scroll type can be one of the following
+     * @see ScrollBarLayer.SCROLL_NONE
+     * @see ScrollBarLayer.SCROLL_PAGEUP
+     * @see ScrollBarLayer.SCROLL_PAGEDOWN
+     * @see ScrollBarLayer.SCROLL_LINEUP
+     * @see ScrollBarLayer.SCROLL_LINEDOWN or
+     * @see ScrollBarLayer.SCROLL_THUMBTRACK
+     * @param thumbPosition
+     */
+    public void scrollContent(int scrollType, int thumbPosition) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, 
+                           LogChannels.LC_HIGHUI,
+                           "MenuLayer.scrollContent scrollType=" + scrollType + 
+                           " thumbPosition=" + thumbPosition); 
+        }
+        // keep old scrollIndex
+        int oldScrollIndex = scrollIndex;
+        
+        switch (scrollType) {
+        case ScrollBarLayer.SCROLL_PAGEUP:
+            uScrollViewport(Canvas.UP);
+            break;
+        case ScrollBarLayer.SCROLL_PAGEDOWN:
+            uScrollViewport(Canvas.DOWN);
+            break;
+        case ScrollBarLayer.SCROLL_LINEUP:
+            uScrollByLine(Canvas.UP);
+            break;
+        case ScrollBarLayer.SCROLL_LINEDOWN:
+            uScrollByLine(Canvas.DOWN);
+            break;
+        case ScrollBarLayer.SCROLL_THUMBTRACK:
+            uScrollAt(thumbPosition);
+            break;
+        default:
+            break;
+        }
+        // only if scroll index has been changed do update
+        if (oldScrollIndex != scrollIndex && scrollIndex >= 0) {
+
+            // correct selI if required.
+            // The selected item always should be on the screen
+            if (selI < scrollIndex) {
+                selI = scrollIndex;
+            } else if (selI >= (scrollIndex + MenuSkin.MAX_ITEMS)) {
+                selI = scrollIndex + MenuSkin.MAX_ITEMS - 1;
+            }
+
+            updateScrollIndicator();
+            requestRepaint();
+        }
+    }
+   
+    /**
+     * Perform a line scrolling in the given direction. This method will
+     * attempt to scroll the view to show next/previous line.
+     *
+     * @param dir the direction of the flip, either DOWN or UP
+     */
+    private void uScrollByLine(int dir) {
+        switch(dir) {
+        case Canvas.UP:
+            if (scrollIndex > 0) {
+                scrollIndex--;
+            }
+            break;
+        case Canvas.DOWN:
+            if (scrollIndex < (menuCmds.length - MenuSkin.MAX_ITEMS)) {
+                scrollIndex++;
+            }
+            break;
+        }
+    }
+    
+    /**
+     * Perform a page flip in the given direction. This method will
+     * attempt to scroll the view to show as much of the next page
+     * as possible. It uses the locations and bounds of the items on
+     * the page to best determine a new location - taking into account
+     * items which may lie on page boundaries as well as items which
+     * may span several pages.
+     *
+     * @param dir the direction of the flip, either DOWN or UP
+     */
+    private void uScrollViewport(int dir) {
+        switch (dir) {
+        case Canvas.UP:
+            scrollIndex -= MenuSkin.MAX_ITEMS - 1;
+            if (scrollIndex < 0) {
+                scrollIndex = 0;
+            }
+            break;
+        case Canvas.DOWN:
+            scrollIndex += MenuSkin.MAX_ITEMS - 1;
+            if (scrollIndex > menuCmds.length - MenuSkin.MAX_ITEMS) {
+                scrollIndex = menuCmds.length - MenuSkin.MAX_ITEMS;
+            }
+            break;
+        }
+    }
+    
+    /**
+     * Perform a scrolling at the given position.
+     * @param context position
+     */
+    void uScrollAt(int position) {
+        int viewableH =  MenuSkin.ITEM_HEIGHT * menuCmds.length;
+        int viewportH =  MenuSkin.ITEM_HEIGHT * MenuSkin.MAX_ITEMS;
+        
+        int newY = (viewableH - viewportH) * position / 100;
+        if (newY < 0) {
+            newY = 0;
+        } else if (newY > viewableH - viewportH) {
+            newY = viewableH - viewportH;
+        }
+        scrollIndex = newY / MenuSkin.ITEM_HEIGHT;
     }
 }
 

@@ -1,4 +1,5 @@
 /*
+ * 	
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -90,7 +91,7 @@ public class TestInterruptedIO extends TestCase implements Runnable {
             connection = (SocketConnection)
               Connector.open("socket://host.domain:80");
             //OutputStream os = connection.openOutputStream();
-            //os.write("GET /path/midlet.jad HTTP/1.0\n\n".getBytes());
+            //os.write("GET /midlets/midlet.jad HTTP/1.0\n\n".getBytes());
         } catch (IOException ioe) {
             assertNull("Exception during socket open", ioe);
         }

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -36,7 +37,7 @@
 #include <commonKNIMacros.h>
 #include <ROMStructs.h>
 #include <midpMalloc.h>
-#include <midpMidletSuiteLoader.h>
+#include <midpMidletSuiteUtils.h>
 #include <midpServices.h>
 #include <midpEvents.h>
 #include <midpError.h>

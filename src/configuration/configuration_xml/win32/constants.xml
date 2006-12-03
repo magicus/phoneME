@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
 <!--
+        	
 
         Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -19,11 +20,11 @@
 <!-- Package javax.microedition.lcdui.game -->
   <constant Type="int"
             Name="GAMECANVAS_FULLWIDTH"
-            Value="180"
+            Value="240"
             Comment="(Fixed) full display width"/>
   <constant Type="int"
             Name="GAMECANVAS_FULLHEIGHT"
-            Value="198" 
+            Value="320" 
             Comment="(Fixed) full display height"/>
 
 <!-- Package javax.microedition.lcdui -->
@@ -37,15 +38,19 @@
             Comment="When false, Chameleon will not even attempt to load romized images for the UI."/>
   <constant Type="int"
             Name="CHAM_WIDTH"
-            Value="180"
+            Value="240"
             Comment="(Chameleon Only) display width"/>
   <constant Type="int"
             Name="CHAM_HEIGHT"
-            Value="198"
+            Value="320"
             Comment="(Chameleon Only) display height"/>
   <constant Type="int"
+            Name="CHAM_FULLWIDTH"
+            Value="240"
+            Comment="(Chameleon Only) full display width"/>
+  <constant Type="int"
             Name="CHAM_FULLHEIGHT"
-            Value="198"
+            Value="320"
             Comment="(Chameleon Only) full display height"/>
   <constant Type="boolean"
             Name="TRAVERSAL2D"
@@ -57,19 +62,19 @@
             Comment="The maximum number of events in the event queue"/>
   <constant Type="int"
             Name="FULLWIDTH"
-            Value="180"
+            Value="240"
             Comment="(Fixed) full display width"/>
   <constant Type="int"
             Name="FULLHEIGHT"
-            Value="198" 
+            Value="320" 
             Comment="(Fixed) full display height"/>
   <constant Type="int"
             Name="NORMALWIDTH"
-            Value="180" 
+            Value="240" 
             Comment="(Fixed) normal width"/>
   <constant Type="int"
             Name="NORMALHEIGHT"
-            Value="179" 
+            Value="320" 
             Comment="(Fixed) normal height"/>
   <constant Type="int"
             Name="VERT_SCROLLBAR_WIDTH"

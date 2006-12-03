@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
@@ -26,13 +27,11 @@
 package com.sun.midp.lcdui;
 
 import javax.microedition.lcdui.Font;
-import javax.microedition.lcdui.Item;
-import javax.microedition.lcdui.Image;
-import javax.microedition.lcdui.ImageItem;
 import javax.microedition.lcdui.Graphics;
 
-import com.sun.midp.chameleon.skins.TextFieldSkin;
 import com.sun.midp.chameleon.skins.StringItemSkin;
+import com.sun.midp.i18n.Resource;
+import com.sun.midp.i18n.ResourceConstants;
 
 /**
  * Static method class use to draw and size text.
@@ -40,8 +39,9 @@ import com.sun.midp.chameleon.skins.StringItemSkin;
 
 public class Text {
 
-    /** String to represent an ellipsis (...). */
-    private static final char[] ellipsis = {'.', '.', '.'};
+    /** Character to be used as a truncation indiactor,
+     *  for example, \u2026 which is ellipsis (...). */
+    private static final char truncationMark = Resource.getString(ResourceConstants.TRUNCATION_MARK).charAt(0);//'\u2026';
  
     // the following are used in calling the getNextLine method
 
@@ -105,7 +105,6 @@ public class Text {
     /**
      * Sets up a new inout structure used in various 
      * text methods.
-     * IMPL_NOTE javadoc
      * @param font the font to use
      * @param w the available width for the text
      * @param h the available height for the text
@@ -123,7 +122,7 @@ public class Text {
         inout[GNL_HEIGHT] = h;
         inout[GNL_OPTIONS] = options;
         inout[GNL_OFFSET] = offset;
-        inout[GNL_ELLIP_WIDTH] = font.charsWidth(ellipsis, 0, 3);	
+        inout[GNL_ELLIP_WIDTH] = font.charWidth(truncationMark);
         inout[GNL_LINE_START] = 0;
         inout[GNL_LINE_END] = 0;
         inout[GNL_NEW_LINE_START] = 0;
@@ -572,7 +571,7 @@ public class Text {
                     // draw the ellipsis
                     //
                     if (truncate) {
-                        g.drawChars(ellipsis, 0, 3,
+                        g.drawChar(truncationMark,
                                     curX, curY,
                                     Graphics.BOTTOM | Graphics.LEFT);
                     }
@@ -591,7 +590,7 @@ public class Text {
                     // draw the ellipsis
                     //
                     if (truncate) {
-                        g.drawChars(ellipsis, 0, 3,
+                        g.drawChar(truncationMark,
                                     offset + font.charsWidth(
                                         text, lineStart, lineEnd),
                                     height,
@@ -769,8 +768,10 @@ public class Text {
      *
      * @param text text to process. this must not be null
      * @param font font to use for width information
-     * @param inout an array of input parameters corresponding to the
-     *              GNL_ constants
+     * @param inout an array of in/out parameters, the GNL_ constants
+     *              define the meaning of each element;
+     *              this array implements a structure that keeps data
+     *              between invocations of getNextLine.
      * @return true if the text had to be truncated, false otherwise
      */
     private static boolean getNextLine(char[] text, Font font, int[] inout) {
@@ -799,8 +800,11 @@ public class Text {
                 inout[GNL_LINE_END] = curLoc;
                 inout[GNL_NEW_LINE_START] = curLoc + 1;
                 inout[GNL_LINE_WIDTH] = prevLineWidth;
-                
-                return false;
+                return
+                  (  ((inout[GNL_OPTIONS] & TRUNCATE) == TRUNCATE)
+                  && ((inout[GNL_NUM_LINES] + 1) * inout[GNL_FONT_HEIGHT]
+                        > inout[GNL_HEIGHT])
+                  );
 
             } else if (text[curLoc] == ' ') {
                 inout[GNL_LINE_END] = curLoc;
@@ -1036,5 +1040,131 @@ public class Text {
     
     /** Used as an index into the size[], for the height. */
     public final static int HEIGHT = 3;
+
+    /**
+     *
+     *
+     * @param g the Graphics to paint with
+     * @param text the string to be painted
+     * @param font the font to be used
+     * @param fgColor foreground text color
+     * @param shdColor shadow color
+     * @param shdAlign shadow alignment
+     * @param titlew width
+
+     */
+    public static void drawTruncStringShadowed(Graphics g, String text, Font font,
+                                               int fgColor, int shdColor, int shdAlign,
+                                               int titlew) {
+        int dx=1, dy=1;
+        // draw the shadow
+        if (shdColor != fgColor) {
+            switch (shdAlign) {
+                case (Graphics.TOP | Graphics.LEFT):
+                    dx=-1;
+                    dy=-1;
+                    break;
+                case (Graphics.TOP | Graphics.RIGHT):
+                    dx=1;
+                    dy=-1;
+                    break;
+                case (Graphics.BOTTOM | Graphics.LEFT):
+                    dx=-1;
+                    dy=1;
+                    break;
+                case (Graphics.BOTTOM | Graphics.RIGHT):
+                default:
+                    dx=1;
+                    dy=1;
+                    break;
+            }
+            g.translate(dx, dy);
+            drawTruncString(g, text, font,
+                    shdColor, titlew);
+/* if we wanted multi-line text output, we would use this:
+            paint(g, text, font,
+                    shdColor, 0,
+                    titlew, titleh, 0,
+                    TRUNCATE, null);
+*/
+            g.translate(-dx, -dy);
+        }
+        // now draw the text whose shadow we have drawn above
+        drawTruncString(g, text, font,
+                fgColor, titlew);
+/* if we wanted multi-line text output, we would use this:
+        paint(g, text, font,
+                fgColor, 0,
+                titlew, titleh, 0,
+                TRUNCATE, null);
+*/
+    }
+
+    /**
+     * Given a string, determine the length of a substring that can be drawn
+     * within the current clipping area.
+     * If the whole string fits into the clip area,
+     * return the length of the string.
+     * Else, return the length of a substring (starting from the beginning
+     * of the original string) that can be drawn within the current clipping
+     * area before the truncation indicator.
+     * The truncation indicator, typically, ellipsis, is not included into
+     * the returned length.
+     *
+     * @param g the Graphics to paint with
+     * @param str the string to be painted
+     * @param width the available width, including room
+     *          for the truncation indicator
+     * @return either the length of str (if it fits into the clip area),
+     *          or the length of the substring that can fit into the clip area
+     *          (not including the truncation mark)
+     */
+    public static int canDrawStringPart(Graphics g, String str,
+                                 int width) {
+        if (width < 0) {
+            return 0;
+        }
+        final Font font = g.getFont();
+        final int stringWidth = font.stringWidth(str);
+
+        if (width >= stringWidth) {
+            return str.length();
+        }
+        final int widthForTruncatedText = width - font.charWidth(truncationMark);
+        int availableLength;
+        for (availableLength = str.length() - 1 ;
+             font.substringWidth(str,0,availableLength) > widthForTruncatedText;
+             availableLength-- ) {};
+        return availableLength;
+    }
+
+    /**
+     * Draw the string within the specified width.
+     * If the string does not fit in the available width,
+     * it is truncated at the end,
+     * and a truncation indicator is displayed (usually,
+     * an ellipsis, but this can be changed).
+     * Use Graphics.translate(x,y) to specify the anchor point location
+     * (the alignment will be TOP|LEFT relative to 0,0).
+     *
+     * @param g the Graphics to paint with
+     * @param str the string to be painted
+     * @param font the font to be used
+     * @param fgColor the color to paint with
+     * @param width the width available for painting
+     */
+    public static void drawTruncString(Graphics g, String str,
+                                       Font font, int fgColor, int width) {
+        g.setFont(font);
+        g.setColor(fgColor);
+        int lengthThatCanBeShown = canDrawStringPart(g, str, width);
+        if (lengthThatCanBeShown == str.length()) {
+            g.drawString(str, 0, 0, Graphics.TOP | Graphics.LEFT);
+        } else {
+            String s = str.substring(0,lengthThatCanBeShown) + truncationMark;
+            g.drawString(s, 0, 0, Graphics.TOP | Graphics.LEFT);
+        }
+    }
+
 }
 

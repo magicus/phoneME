@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -43,6 +44,8 @@ import org.w3c.dom.*;
 import java.awt.image.*;
 import java.awt.*;
 import com.sun.midp.imageutil.*;
+import java.lang.reflect.*;
+import com.sun.midp.chameleon.skins.resources.*;
 
 /**
  * Represents romization job
@@ -55,7 +58,7 @@ class RomizationJob {
     public String skinImagesDirName = "";
 
     /** Output file name for RomizedSkin class */
-    public String outJavaFileName = "";
+    public String outBinFileName = "";
 
     /** Output file name for romized images data */
     public String outCFileName = "";
@@ -119,8 +122,8 @@ public class SkinRomizationTool {
             String arg = args[i];
             if (arg.equals("-xml")) {
                 romizationJob.skinXMLFileName = args[++i];
-            } else if (arg.equals("-outjava")) {
-                romizationJob.outJavaFileName = args[++i];
+            } else if (arg.equals("-outbin")) {
+                romizationJob.outBinFileName = args[++i];
             } else if (arg.equals("-imagedir")) {
                 romizationJob.skinImagesDirName = args[++i];
             } else if (arg.equals("-outc")) {
@@ -182,7 +185,7 @@ public class SkinRomizationTool {
             + "com.sun.midp.SkinRomizationTool "
             + "-xml <localXMLFile> " 
             + "-imagedir <skinImagesDirName> "
-            + "-outjava <localOutputJavaFile> "
+            + "-outbin <localOutputBinFile> "
             + "-outc <localOutputCFile> "
             + "[-debug] "
             + "[-help]");
@@ -252,7 +255,8 @@ abstract class SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    abstract void printValue(PrintWriter writer, String indent);
+    abstract void outputValue(DataOutput out) 
+        throws java.io.IOException;
 
     /**
      * Factory method: constructs SkinProperty from DOM node that
@@ -323,6 +327,159 @@ abstract class SkinPropertyBase {
 
         return attrValue.trim();
     }
+
+    /**
+     * Helper method for renaming symbolic property value coming
+     * from XML file (constant name) into another constant name.
+     * Needed for backward compatibility.
+     *
+     * @param value original value
+     * @return renamed value
+     */
+    protected static String renameSymbolicValue(String value) {
+        /**
+         * Value can be in form of "Graphics.VALUE" where "VALUE" is 
+         * the name of one of the constants defined in Graphics class.
+         * Convert such value into "SkinResourcesConstants.VALUE".
+         * The reason why "SkinResourcesConstants.VALUE" is not used 
+         * directly in XML file is backward compatibility.
+         */
+        if (value.startsWith("Graphics.")) {
+            int dotIdx = value.indexOf(".");
+            value = "SkinResourcesConstants" + value.substring(dotIdx);
+        }
+
+        /**
+         * Value can be in form of "ScrollIndSkin.VALUE" where "VALUE" is 
+         * the name of one of the constants defined in 
+         * ScrollIndResourcesConstants class.
+         * Convert such value into "ScrollIndResourcesConstants.VALUE".
+         * The reason why "ScrollIndResourcesConstants.VALUE" is not 
+         * used directly in XML file is backward compatibility.
+         */
+        if (value.startsWith("ScrollIndSkin.")) {
+            int dotIdx = value.indexOf(".");
+            value = "ScrollIndResourcesConstants" + value.substring(dotIdx);
+        }
+
+        /**
+         * Value can be in form of "FontResources.VALUE" where "VALUE" is 
+         * the name of one of the constants defined in 
+         * FontResourcesConstants class.
+         * Convert such value into "FontResourcesConstants.VALUE".
+         * The reason why "FontResourcesConstants.VALUE" is not 
+         * used directly in XML file is backward compatibility.
+         */
+        if (value.startsWith("FontResources.")) {
+            int dotIdx = value.indexOf(".");
+            value = "FontResourcesConstants" + value.substring(dotIdx);
+        }
+
+        return value;
+    }
+
+    /**
+     * Helper method for convertic symbolic property value into int value.
+     * Basically, it converts integer constant name into constant value.
+     *
+     * @param value symbolic value
+     * @return integer value
+     */
+    protected static int symbolicValueToInt(String value) {
+        int dotIdx = value.indexOf(".");
+        if (dotIdx == -1 || dotIdx == value.length() - 1) {
+            throw new IllegalArgumentException();
+        }
+
+        String className = value.substring(0, dotIdx);
+        if (className.length() == 0) {
+            throw new IllegalArgumentException(); 
+        }
+
+        className = "com.sun.midp.chameleon.skins.resources." + className;
+        Class c = null;
+        try {
+            c = Class.forName(className);
+        } catch (Throwable t) {
+            throw new IllegalArgumentException();
+        }
+
+        String fieldName = value.substring(dotIdx + 1);
+        if (fieldName.length() == 0) {
+            throw new IllegalArgumentException();
+        }
+
+        Field f = null;
+        try {
+            f = c.getField(fieldName);
+        } catch (Throwable t) {
+            throw new IllegalArgumentException();
+        }
+
+        int val = 0;
+        try {
+            val = f.getInt(null);
+        } catch (Throwable t) {
+            throw new IllegalArgumentException();
+        }
+
+        return val;
+    }
+
+    /**
+     * Property value can be primitive arithmetic expression. 
+     * This helper method evaluates such expression. Operators
+     * precedence is simple, left to right.
+     *
+     * @param exp expression to evaluate
+     * @return integer expression value
+     */
+    protected static int evalValueExpression(String exp) {
+        int result = 0;
+        char op = '=';
+
+        StringTokenizer st = new StringTokenizer(exp);
+        while (true) {
+            String v = renameSymbolicValue(st.nextToken());
+
+            int intVal = 0;
+            try {
+                int radix = 10;
+                if (v.startsWith("0x")) {
+                    v = v.substring(2);
+                    radix = 16;
+                }
+                intVal = Integer.parseInt(v, radix);
+            } catch (NumberFormatException e) {
+                intVal = symbolicValueToInt(v);
+            }
+
+            switch (op) {
+                case '=':
+                    result = intVal;
+                    break;
+
+                case '|':
+                    result |= intVal;
+                    break;
+
+                default:
+                    throw new IllegalArgumentException();
+            }
+
+            if (!st.hasMoreTokens()) {
+                break;
+            }
+
+            String opStr = st.nextToken();
+            if (opStr.length() > 1) {
+                throw new IllegalArgumentException(); 
+            }
+            op = (opStr.toCharArray())[0];
+        }
+
+        return result;
+    }
 }
 
 /**
@@ -331,9 +488,9 @@ abstract class SkinPropertyBase {
 class IntSkinProperty extends SkinPropertyBase {
     
     /**
-     * Property's value: integer number as string
+     * Property's value: integer number 
      */
-    String value;
+    int value;
 
     /**
      * Constructor
@@ -344,7 +501,14 @@ class IntSkinProperty extends SkinPropertyBase {
      */
     IntSkinProperty(String idName, String id, String value) {
         super(idName, id);
-        this.value = value;
+
+        String v = value;
+        try {
+            this.value = evalValueExpression(v);
+        } catch (Throwable t) {
+            throw new IllegalArgumentException(
+                    "Invalid int property value: " + value);
+        }
     }
 
     /**
@@ -359,7 +523,7 @@ class IntSkinProperty extends SkinPropertyBase {
         }
         IntSkinProperty p = (IntSkinProperty)prop;
 
-        return p.value.equals(value);
+        return (p.value == value);
     }
 
     /**
@@ -382,8 +546,10 @@ class IntSkinProperty extends SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    void printValue(PrintWriter writer, String indent) {
-        writer.println(indent + value + ",");
+    void outputValue(DataOutput out) 
+        throws java.io.IOException {
+
+        out.writeInt(value);
     }
 }
 
@@ -393,9 +559,9 @@ class IntSkinProperty extends SkinPropertyBase {
 class IntSeqSkinProperty extends SkinPropertyBase {
 
     /**
-     * Propety's value: array of integers as strings
+     * Propety's value: array of integers 
      */
-    String[] value;
+    int[] value;
 
     /**
      * Constructor
@@ -410,25 +576,31 @@ class IntSeqSkinProperty extends SkinPropertyBase {
         // find number of integers in sequence
         int seqLen = 0;
         char[] chars = value.toCharArray();
-        int numIndex = 0, numStart = 0;
+        int numStart = 0;
         for (int i = 0; i <= chars.length; ++i) {
             if (i == chars.length || chars[i] == ',') {
-                seqLen += 1;
+                seqLen++;
                 numStart = i + 1;
             }
         }
 
-        this.value = new String[seqLen];
+        this.value = new int[seqLen];
         
         // fill values array
         int idx = 0;
-        numIndex = 0;
         numStart = 0;
         for (int i = 0; i <= chars.length; ++i) {
             if (i == chars.length || chars[i] == ',') {
-                String numStr = value.substring(numStart, i);
-
-                this.value[idx++] = numStr.trim();
+                String v = (value.substring(numStart, i)).trim();
+                int intVal = 0;
+                try {
+                    intVal = evalValueExpression(v);
+                } catch (Throwable t) {
+                    throw new IllegalArgumentException(
+                        "Invalid integer sequence property value: " + value);
+                }
+                
+                this.value[idx++] = intVal;
                 numStart = i + 1;
             }
         }
@@ -450,15 +622,13 @@ class IntSeqSkinProperty extends SkinPropertyBase {
             return false;
         }
         
-        boolean equal = true;
         for (int i = 0; i < value.length; ++i) {
-            if (!(p.value[i].equals(value[i]))) {
-                equal = false;
-                break;
+            if (p.value[i] != value[i]) {
+                return false;
             }
         }
 
-        return equal;
+        return true;
     }
 
     /**
@@ -480,13 +650,15 @@ class IntSeqSkinProperty extends SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    void printValue(PrintWriter writer, String indent) {
-        // print sequence length
-        writer.println(indent + value.length + ",");
+    void outputValue(DataOutput out) 
+        throws java.io.IOException {
 
-        // print sequence integers
+        // out sequence length
+        out.writeInt(value.length);
+
+        // out sequence integers
         for (int i = 0; i < value.length; ++i) {
-            writer.println(indent + value[i] + ",");
+            out.writeInt(value[i]);
         }
     }
 }
@@ -545,8 +717,10 @@ class StringSkinProperty extends SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    void printValue(PrintWriter writer, String indent) {
-        writer.println(indent + "\"" + value + "\",");
+    void outputValue(DataOutput out) 
+        throws java.io.IOException {
+
+        out.writeUTF(value);
     }
 }
 
@@ -556,9 +730,9 @@ class StringSkinProperty extends SkinPropertyBase {
 class FontSkinProperty extends SkinPropertyBase {
     
     /**
-     * Property's value: integer font type as string
+     * Property's value: integer font type 
      */
-    String value;
+    int value;
 
     /**
      * Constructor
@@ -569,7 +743,14 @@ class FontSkinProperty extends SkinPropertyBase {
      */
     FontSkinProperty(String idName, String id, String value) {
         super(idName, id);
-        this.value = value;
+
+        String v = value;
+        try {
+            this.value = evalValueExpression(v);
+        } catch (Throwable t) {
+            throw new IllegalArgumentException(
+                    "Invalid font property value: " + value);
+        }
     }
 
     /**
@@ -584,7 +765,7 @@ class FontSkinProperty extends SkinPropertyBase {
         }
         FontSkinProperty p = (FontSkinProperty)prop;
 
-        return p.value.equals(value);
+        return (p.value == value);
     }
 
     /**
@@ -604,8 +785,10 @@ class FontSkinProperty extends SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    void printValue(PrintWriter writer, String indent) {
-        writer.println(indent + value + ",");
+    void outputValue(DataOutput out) 
+        throws java.io.IOException {
+
+        out.writeInt(value);
     }
 }
 
@@ -699,8 +882,10 @@ class ImageSkinProperty extends SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    void printValue(PrintWriter writer, String indent) {
-        writer.println(indent + "\"" + value + "\",");
+    void outputValue(DataOutput out) 
+        throws java.io.IOException {
+
+        out.writeUTF(value);
     }
 }
 
@@ -838,10 +1023,12 @@ class CompositeImageSkinProperty extends SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    void printValue(PrintWriter writer, String indent) {
-        // print pieces file names
+    void outputValue(DataOutput out) 
+        throws java.io.IOException {
+
+        // output pieces file names
         for (int i = 0; i < value.length; ++i) {
-            writer.println(indent + "\"" + value[i] + "\",");
+            out.writeUTF(value[i]);
         }
     }
 }
@@ -1030,8 +1217,11 @@ class SkinRomizer {
     /** Romized image factory */
     RomizedImageFactory romizedImageFactory;
 
-    /** Output file writer */
+    /** Character output file writer */
     PrintWriter writer = null;
+
+    /** Binary output file stream */
+    DataOutputStream outputStream = null;
     
     /** raw image file format */
     int rawFormat = ImageToRawConverter.FORMAT_INVALID;
@@ -1143,17 +1333,15 @@ class SkinRomizer {
         romizeImages();
 
         // output generated file
-        makeDirectoryTree(romizationJob.outJavaFileName);
+        makeDirectoryTree(romizationJob.outBinFileName);
 
         FileOutputStream out = new FileOutputStream(
-                romizationJob.outJavaFileName);
-        writer = new PrintWriter(new OutputStreamWriter(out));
+                romizationJob.outBinFileName);
+        outputStream = new DataOutputStream(out);
 
-        writeJavaHeader();
+        writeBinHeader();
         writeRomizedProperties();
-        writeFooter();
-
-        writer.close();
+        outputStream.close();
 
         out = new FileOutputStream(romizationJob.outCFileName);
         writer = new PrintWriter(new OutputStreamWriter(out));
@@ -1454,32 +1642,18 @@ class SkinRomizer {
     /**
      * Writes RomizedSkin class file header
      */
-    private void writeJavaHeader() {
-        writeCopyright();
-        
-        pl("");
-        pl("package com.sun.midp.chameleon.skins.resources;");
-        pl("import javax.microedition.lcdui.Graphics;");
-        pl("import com.sun.midp.chameleon.skins.resources.FontResources;");
-        pl("");
+    private void writeBinHeader() 
+        throws IOException {
 
-        pl("public final class RomizedSkin {");
-        pl("");
-        pl("    /**");
-        pl("     * A value of 'true' indicates this class can be relied" + 
-                " upon to");
-        pl("     * provide romized values for all Chameleon skin" + 
-                " properties. A value");
-        pl("     * of 'false' indicates the runtime should get the" + 
-                " properties out");
-        pl("     * of the skin file on the filesystem.");
-        pl("     */");
-        pl("    public final static boolean ENABLED = true;");
-        pl("");    
-        pl("    // private constructor");
-        pl("    private RomizedSkin() {");
-        pl("    }");
-        pl("");
+        // write magic sequence
+        int magicLength = SkinResourcesConstants.CHAM_BIN_MAGIC.length;
+        for (int i = 0; i < magicLength; ++i) {
+            byte b = (byte)(SkinResourcesConstants.CHAM_BIN_MAGIC[i] & 0xFF);
+            outputStream.writeByte(b);
+        }
+
+        // write version info
+        outputStream.writeShort(SkinResourcesConstants.CHAM_BIN_FORMAT_VERSION);
     }
 
     /**
@@ -1503,69 +1677,30 @@ class SkinRomizer {
     private void writeRomizedProperties() 
         throws Exception {
             
-        pl("    private static final int[] properties = {");
+        outputStream.writeInt(allProps.size());
         for (int i = 0; i < allProps.size(); ++i) {
             SkinPropertyBase p = (SkinPropertyBase)allProps.elementAt(i);
-            pl("        // " + p.idName);
             if (p instanceof IntSkinProperty) {
                 IntSkinProperty intP = (IntSkinProperty)p;
                 // for integer property the array holds actual property's 
                 // value, not an offset into values array
-                p.printValue(writer, "        ");
+                p.outputValue(outputStream);
             } else {
                 // for all other properties the array holds an offset into
                 // values array, in which actual values are stored
-                pl("        " + p.valueOffset + ",");
+                outputStream.writeInt(p.valueOffset);
             }
         }
-        pl("    };");
 
-        pl("");
-        pl("    private static final int[] intSeqValues = {");
         writePropertiesValues(intSeqProps);
-        pl("    };");
-
-
-        pl("");
-        pl("    private static final String[] stringValues = {");
         writePropertiesValues(stringProps);
-        pl("    };");
-
-
-        pl("");
-        pl("    private static final int[] fontValues = {");
         writePropertiesValues(fontProps);
-        pl("    };");
-        
-        pl("");
-        pl("    private static final String[] imageValues = {");
-        writePropertiesValues(imageProps);
-        writePropertiesValues(compImageProps);
-        pl("    };");
 
-        pl("");
-        pl("    private static final int[] romizedImagesIndexes = {");
+        Vector v = new Vector(imageProps);
+        v.addAll(compImageProps);
+        writePropertiesValues(v);
+
         writeRomizedImagesIndexes();
-        pl("    };");
-        
-        pl("");
-        pl("    public static void getProperties" + 
-                "(LoadedSkinProperties props) {");
-        pl("        if (props == null) {");
-        pl("            return;");
-        pl("        }");
-        pl("");        
-        pl("        props.properties = properties;");
-        pl("        props.stringValues = stringValues;");
-        pl("        props.fontValues = fontValues;");
-        pl("        props.imageValues = imageValues;");
-        pl("        props.intSeqValues = intSeqValues;");
-        pl("    }");
-
-        pl("");
-        pl("    public static int getRomizedImageIndex(int imageIndex) {");
-        pl("        return romizedImagesIndexes[imageIndex];");
-        pl("    }");
     }
     
     /**
@@ -1573,8 +1708,11 @@ class SkinRomizer {
      *
      * @param props properties to write entries for 
      */
-    private void writePropertiesValues(Vector props) {
+    private void writePropertiesValues(Vector props) 
+        throws java.io.IOException {
+
         int maxOffset = -1;
+        int totalValues = 0;
         for (int i = 0; i < props.size(); ++i) {
             SkinPropertyBase p = (SkinPropertyBase)props.elementAt(i);
 
@@ -1584,7 +1722,22 @@ class SkinRomizer {
                 continue;
             }
 
-            p.printValue(writer, "        ");
+            totalValues += p.getValueOffsetDelta();
+            maxOffset = p.valueOffset;
+        }
+        outputStream.writeInt(totalValues);
+
+        maxOffset = -1;
+        for (int i = 0; i < props.size(); ++i) {
+            SkinPropertyBase p = (SkinPropertyBase)props.elementAt(i);
+
+            // this property has the same value as some other 
+            // property outputed before, so skip it
+            if (p.valueOffset <= maxOffset) {
+                continue;
+            }
+
+            p.outputValue(outputStream);
             maxOffset = p.valueOffset;
         }
     }
@@ -1592,15 +1745,18 @@ class SkinRomizer {
     /**
      * Writes indexes for romized images. 
      */
-    private void writeRomizedImagesIndexes() {
+    private void writeRomizedImagesIndexes() 
+        throws java.io.IOException {
+
+        outputStream.writeInt(romizedImages.size());
         for (int i = 0; i < romizedImages.size(); ++i) {
             Object o = romizedImages.elementAt(i);
             // image with index = i isn't romized
             if (o == null) {
-                writer.println("        " + "-1,");
+                outputStream.writeInt(-1);
             } else {
                 RomizedImage ri = (RomizedImage)o;
-                writer.println("        " + ri.imageIndex + ",");
+                outputStream.writeInt(ri.imageIndex);
             }
         }
     }
@@ -1730,13 +1886,6 @@ class SkinRomizer {
         pl("}");
     }
 
-    
-    /**
-     * Writes romized skin file footer
-     */
-    private void writeFooter() {
-        pl("}");
-    }
     
     /**
      * Creates a directory structure.

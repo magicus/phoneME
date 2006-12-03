@@ -45,8 +45,10 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * @param numOfItems current number of elements
      */
     FormLFImpl(Form form, Item items[], int numOfItems) {
-
         super(form);
+
+        // Initialize the in-out rect for Item traversal
+        visRect = new int[4];
 
         width -= Constants.VERT_SCROLLBAR_WIDTH;
 
@@ -82,6 +84,9 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         itemLFs = new ItemLFImpl[1];
         itemLFs[0] = (ItemLFImpl)item.getLF();
         numOfLFs = 1;
+
+        // Initialize the in-out rect for Item traversal
+        visRect = new int[4];
     }
 
     // ************************************************************
@@ -128,15 +133,27 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      *
      * @param item the <code>Item</code> to make the current traversal item
      */
-    public void uItemMakeVisible(Item item) {
+    public void uItemMakeVisible(Item i) {
 
-	// Focus needs to be transferred to new pending current item
-	// Request invalidate if there isn't one scheduled already
-	if (pendingCurrentItemLF == null) {
-	    lRequestInvalidate();
-	}
+        synchronized (Display.LCDUILock) {
 
-    pendingCurrentItemLF = (item == null ? null : (ItemLFImpl)item.itemLF);
+            if (i == null) {
+                pendingCurrentItem = null;
+            }
+
+            /**
+             * Display could be made visible using display.setCurrentItem()
+             * call. In those cases foregroung will be granted after there
+             * there is a screen change event and after uItemMakeVisible()
+             * is called. In such cases we need to set pendingCurrentItem and
+             * call uItemMakeVisible() again when the FormLF changes its
+             * state to SHOWN.
+             */
+            if (state != SHOWN) {
+                pendingCurrentItem = i;
+                return;
+            }
+        }
     }
 
     /**
@@ -149,8 +166,9 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
     public void lSet(int itemNum, Item item) {
 
         itemLFs[itemNum] = (ItemLFImpl)item.getLF();
+        itemsModified = true;
 
-	// Focus index remains at the same location
+        // Focus index remains at the same location
 
         lRequestInvalidate();
     }
@@ -180,13 +198,12 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
         itemLFs[itemNum]  = (ItemLFImpl)item.getLF();
 
-	numOfLFs++;
-
-	// Focus remains on the same item
-	if (itemNum <= focusIndex) {
-	    focusIndex++;
-	}
-
+        numOfLFs++;
+        itemsModified = true;
+        // Focus remains on the same item
+        if (traverseIndex >= itemNum) {
+            traverseIndex++;
+        }
         lRequestInvalidate();
     }
 
@@ -198,10 +215,6 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * @param deleteditem the item deleted in the corresponding form
      */
     public void lDelete(int itemNum, Item deleteditem) {
-
-        if (pendingCurrentItemLF != null && pendingCurrentItemLF.item == deleteditem) {
-	    pendingCurrentItemLF = null;
-	}
 
         // if the previous item has new line after, or the next item has
         // new line before, and it's not the last item,
@@ -239,7 +252,16 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             }
         }
 
+        // Focus remains on the same item if not deleted
+        if (traverseIndex > itemNum) {
+            traverseIndex--;
+        } else if (traverseIndex == itemNum) {
+            lastTraverseItem = itemLFs[traverseIndex];
+            traverseIndex = -1;
+        }
+
         numOfLFs--;
+        itemsModified = true;
 
         if (itemNum < numOfLFs) {
             System.arraycopy(itemLFs, itemNum + 1, itemLFs, itemNum,
@@ -250,13 +272,9 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         // that was left after array copy
         itemLFs[numOfLFs] = null;
 
-	// Focus remains on the same item if not deleted
-	// Otherwise remains at the same location
-	// Otherwise shift to the last item
-	if (itemNum < focusIndex ||
-	    (itemNum == focusIndex && focusIndex == numOfLFs)) {
-	    focusIndex--;
-	}
+        if (pendingCurrentItem == deleteditem) {
+            pendingCurrentItem = null;
+        }
 
         lRequestInvalidate();
     }
@@ -266,14 +284,16 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * the corresponding <code>Form</code>.
      */
     public void lDeleteAll() {
-	// Dereference all itemLFImpls so they can be GC'ed
-	for (int i = 0; i < numOfLFs; i++) {
-	    itemLFs[i] = null;
-	}
-        numOfLFs = 0;
-	focusIndex = -1;
-	pendingCurrentItemLF = null;
-
+        if (traverseIndex != -1) {
+            lastTraverseItem = itemLFs[traverseIndex];
+        }
+        // Dereference all ItemLFImpls so they can be GC'ed
+        while (numOfLFs > 0) {
+            itemLFs[--numOfLFs] = null;
+        }
+        traverseIndex = -1;
+        itemsModified = true;
+        pendingCurrentItem = null;
         lRequestInvalidate();
     }
 
@@ -285,17 +305,54 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * (3) repaint the currently visible <code>Item</code>s
      */
     public void uCallInvalidate() {
-        // this call set up the location of the viewable and the scroll.
 
-	// SYNC NOTE:
-	// called without LCDUILock, since it may end up calling into a MIDlet
-	uShowContents();
+        super.uCallInvalidate();
 
-	// SYNC NOTE:
-	// 1. We are on event dispatch thread, currentDisplay won't change.
-	// 2. We are on event dispatch thread, call paint synchronously.
-	// 3. Since we could call into app's functions, like traverse(),
-	//    showNotify() and paint(), do this outside LCDUILock block.
+        int new_width = Display.getScreenWidth0();
+        int new_height = Display.getScreenHeight0();
+
+        // It could be that setCurrentItem() was called and we
+        // have done an 'artificial' traversal. In this case, we
+        // manually call traverseOut() on the last traversed item
+        // if there is one.
+
+        if (lastTraverseItem != null) {
+            try {
+                lastTraverseItem.uCallTraverseOut();                
+            } catch (Throwable t) {
+                if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                    Logging.report(Logging.WARNING, LogChannels.LC_HIGHUI,
+                                  "Throwable while traversing out");
+                }
+            }
+            lastTraverseItem = null;
+            updateCommandSet();
+        }
+
+        synchronized (Display.LCDUILock) {
+            // Do nothing if paint is suspended in current Display
+            if (!lIsShown()) {
+                return;
+            }
+            // Do not reset the Form from the top since this is an update
+            resetToTop = false;
+        }
+
+        // Setup items and show form native resource
+        // SYNC NOTE: 
+        // called without LCDUILock, since it may end up calling into a MIDlet
+        if (new_width != width || new_height != height) {
+            width = new_width;
+            height = new_height;
+            firstShown = true;
+        }
+        uShowContents(false);
+
+        // SYNC NOTE:
+        // 1. We are on event dispatch thread, currentDisplay won't change.
+        // 2. We are on event dispatch thread, call paint synchronously.
+        // 3. Since we could call into app's functions, like traverse(),
+        //    showNotify() and paint(), do this outside LCDUILock block.
         currentDisplay.callPaint(0, 0, width, height, null);
     }
 
@@ -306,144 +363,160 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * @param target the target Object of this repaint
      */
     public void uCallPaint(Graphics g, Object target) {
-	int count;
-
+        int count;
         synchronized (Display.LCDUILock) {
             // super.lCallPaint(g, target); -- obsolete
 
             if (numOfLFs == 0) {
-		return;
+                return;
             }
 
-	    // SYNC NOTE: since we may call into CustomItem.paint(),
-	    // we have to do it outside LCDUILock. So make a copy of the
-	    // itemLFs array.
-	    if (target instanceof Item) {
-		if (((Item)target).owner == this.owner) {
-		    ensureDispatchItemArray(1);
-		    dispatchItemLFs[0] = (ItemLFImpl)((Item)target).itemLF;
-		    count = 1;
-		} else {
-		    count = 0;
-		}
-	    } else {
-		ensureDispatchItemArray(numOfLFs);
-		System.arraycopy(itemLFs, 0, dispatchItemLFs, 0, numOfLFs);
-		count = numOfLFs;
-	    }
-	}
+            // SYNC NOTE: since we may call into CustomItem.paint(),
+            // we have to do it outside LCDUILock. So make a copy of the
+            // itemLFs array.
+            if (target instanceof Item) {
+                if (((Item)target).owner == this.owner) {
+                    ensureDispatchItemArray(1);
+                    dispatchItemLFs[0] = (ItemLFImpl)((Item)target).itemLF;
+                    count = 1;
+                } else {
+                    count = 0;
+                }
+            } else {
+                ensureDispatchItemArray(numOfLFs);
+                System.arraycopy(itemLFs, 0, dispatchItemLFs, 0, numOfLFs);
+                count = numOfLFs;
+            }
+        }
 
-	// Call paint on the copied itemLFs array
-	for (int i = 0; i < count; i++) {
-	    uPaintItem(dispatchItemLFs[i], g);
-	}
+        // Call paint on the copied itemLFs array
+        for (int i = 0; i < count; i++) {
+            uPaintItem(dispatchItemLFs[i], g);
+        }
 
-	// Dereference ItemLFImpl objects in dispatchItemLFs
-	// But leave the shrinking to uCallHide
-	resetDispatchItemArray(false);
+        // Dereference ItemLFImpl objects in dispatchItemLFs
+        // But leave the shrinking to uCallHide
+        resetDispatchItemArray(false);
     }
 
     /**
      * Notify this <code>Form</code> that it is being shown.
      */
     public void uCallShow() {
-	// Create native resources with title and ticker
-	super.uCallShow();
+        // Create native resources with title and ticker
+        super.uCallShow();
+        // Setup items and show form native resource
+        // SYNC NOTE: May call into app code to collect sizes.
+        // Call it outside LCDUILock
+        uShowContents(true);
 
-	// Setup items and show form native resource
-	// SYNC NOTE: May call into app code to collect sizes.
-	// Call it outside LCDUILock
-	uShowContents();
-
-	// Scroll native window to show current item.
-	// traverse() is called only in lSetCurrentItem, not here.
-	synchronized (Display.LCDUILock) {
-	    // It's possible that the current item is set right before
-	    // this locking block, we need to check its native resource id.
-	    ItemLFImpl itemLFInFocus = getItemInFocus();
-	    if (itemLFInFocus != null &&
-		itemLFInFocus.nativeId != INVALID_NATIVE_ID) {
-		setCurrentItem0(nativeId, itemLFInFocus.nativeId, 0);
-	    }
-	}
+        synchronized (Display.LCDUILock) {
+           
+           if (pendingCurrentItem != null) {
+              lScrollToItem(pendingCurrentItem);
+              pendingCurrentItem = null;
+           }
+        }
     }
 
     /**
      * Notify this <code>Form</code> that it is being hidden.
      */
+
     public void uCallHide() {
 
-	// No more than one custom item can be in focus at a time
-	ItemLFImpl customItemToTraverseOut = null;
-	int count = 0;
+        synchronized (Display.LCDUILock) {
+            pendingCurrentItem = null;
+        } 
 
-	synchronized (Display.LCDUILock) {
+        uCallItemHide();
+	    // Delete Form's native resource including title and ticker
+	    super.uCallHide();
+    }
 
-            pendingCurrentItemLF = null;
+    /**
+     * Notify this <code>Form</code> that it is being frozen.
+     */
 
-	    // We need to loop through our Items to identify those
-	    // that traverseOut and hideNotify need to be called.
-	    //
-	    // SYNC NOTE:
-	    // We cannot call into app code while holding LCDUILock.
-	    // For CustomItems, we postpone calls to outside this
-	    // sync. block.
+    public void uCallFreeze() {
 
-	    ensureDispatchItemArray(numOfLFs);
+        if (state == SHOWN) {
+            resetToTop = false;
+        }
+        uCallItemHide();
+        // Delete Form's native resource including title and ticker
+        super.uCallFreeze();
+    }
 
-	    for (int x = 0; x < numOfLFs; x++) {
-		try {
-		    // callTraverseOut needs to happen on the item in focus
-		    if (itemLFs[x].hasFocus) {
-			if (itemLFs[x] instanceof CustomItemLFImpl) {
-			    customItemToTraverseOut = itemLFs[x];
-			} else {
-			    // SYNC NOTE: Items other than CustomItem do not
-			    // call into app code in their traverseOut.
-			    // We can call it while holding the LCDUILock.
-			    itemLFs[x].uCallTraverseOut();
-			}
-		    }
 
-		    itemLFs[x].lHideNativeResource();
+    /**
+     * Hide items when Form is frozen or hidden
+     */
+   void uCallItemHide() {
+        // No more than one custom item can be in focus at a time
+        ItemLFImpl customItemToTraverseOut = null;
+        ItemLFImpl[] itemsCopy = null;
+        int count = 0;
 
-		    // Free native resource of each ItemLF
-		    itemLFs[x].deleteNativeResource();
+        synchronized (Display.LCDUILock) {
 
-		    // Items that are visible in the viewport
-		    // should set their visibleInViewport flag to false and
-		    // CustomItems should call app's hideNotify() as well
-		    if (itemLFs[x].visibleInViewport) {
-			if (itemLFs[x] instanceof CustomItemLFImpl) {
-			    // Remember it in temporary array
-			    dispatchItemLFs[count++] = itemLFs[x];
-			} else {
-			    itemLFs[x].lCallHideNotify();
-			}
-		    }
+            // We need to loop through our Items to identify those
+            // that traverseOut and hideNotify need to be called.
+            //
+            // SYNC NOTE:
+            // We cannot call into app code while holding LCDUILock.
+            // For CustomItems, we postpone calls to outside this
+            // sync. block.
 
-		} catch (Throwable t) {
-		    // do nothing... move on
-		}
-	    }
+            itemsCopy = new ItemLFImpl[numOfLFs];
 
-	} // synchronized
+            for (int x = 0; x < numOfLFs; x++) {
+                try {
+                   // callTraverseOut needs to happen on the item in focus
+                    if (itemLFs[x].hasFocus) {
+                        if (itemLFs[x] instanceof CustomItemLFImpl) {
+                            customItemToTraverseOut = itemLFs[x];
+                        } else {
+                            // SYNC NOTE: Items other than CustomItem do not
+                            // call into app code in their traverseOut.
+                            // We can call it while holding the LCDUILock.
+                            itemLFs[x].uCallTraverseOut();
+                        }
+                    }
 
-	// Call CustomItem traverseOut outside LCDUILock
-	if (customItemToTraverseOut != null) {
-	    customItemToTraverseOut.uCallTraverseOut();
-	}
+                    itemLFs[x].lHideNativeResource();
+                    // Free native resource of each ItemLF
+                    itemLFs[x].deleteNativeResource();
 
-	// Call CustomItem hideNotify outside LCDUILock
-	for (count--; count >= 0; count--) {
-	    dispatchItemLFs[count].uCallHideNotify();
-	}
 
-	// Reset temp array to default size
-	resetDispatchItemArray(true);
+                    // Items that are visible in the viewport
+                    // should set their visibleInViewport flag to false and
+                    // CustomItems should call app's hideNotify() as well
+                    if (itemLFs[x].visibleInViewport) {
+                        if (itemLFs[x] instanceof CustomItemLFImpl) {
+                            // Remember it in temporary array
+                            itemsCopy[count++] = itemLFs[x];
+                        } else {
+                            itemLFs[x].lCallHideNotify();
+                        }
+                    }
 
-	// Delete Form's native resource including title and ticker
-	super.uCallHide();
+                } catch (Throwable t) {
+                    // do nothing... move on
+                }
+            }
+
+        } // synchronized
+
+        // Call CustomItem traverseOut outside LCDUILock
+        if (customItemToTraverseOut != null) {
+            customItemToTraverseOut.uCallTraverseOut();
+        }
+
+        // Call CustomItem hideNotify outside LCDUILock
+        for (count--; count >= 0; count--) {
+            itemsCopy[count].uCallHideNotify();
+        }
     }
 
     /**
@@ -485,25 +558,25 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 	ItemLFImpl oldFocus = null, itemLFToNotify = null;
 
 	synchronized (Display.LCDUILock) {
-	    if (modelVersion != super.modelVersion) {
-		return; // model version out of sync, ignore the event
-	    }
+        if (modelVersion != super.modelVersion) {
+            return; // model version out of sync, ignore the event
+        }
 
-	    // If not matching ItemLF, this is a focus changed notification
-	    // 'hint' is the id of the new focused itemLF
-	    if (peerId == INVALID_NATIVE_ID) {
-		notifyType = 1; // focus changed
-		oldFocus = getItemInFocus();
-		itemLFToNotify = id2Item(hint);
-	    } else if (peerId == nativeId) {
-		// there is a scroll event from the native peer,
-		// we call show/hide Notify outside of the synchronized block
-		notifyType = 2; // viewport changed
-	    } else {
-		// peerId identified the ItemLF, notify it
-		notifyType = 3; // item peer state changed
-		itemLFToNotify = id2Item(peerId);
-	    }
+        // If not matching ItemLF, this is a focus changed notification
+        // 'hint' is the id of the new focused itemLF
+        if (peerId == INVALID_NATIVE_ID) {
+            notifyType = 1; // focus changed
+            oldFocus = getItemInFocus();
+            itemLFToNotify = id2Item(hint);
+        } else if (peerId == nativeId) {
+            // there is a scroll event from the native peer,
+            // we call show/hide Notify outside of the synchronized block
+            notifyType = 2; // viewport changed
+        } else {
+            // peerId identified the ItemLF, notify it
+            notifyType = 3; // item peer state changed
+            itemLFToNotify = id2Item(peerId);
+        }
 	}
 
 	// SYNC NOTE: Following calls may end in app code.
@@ -511,8 +584,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 	switch (notifyType) {
 
 	case 1: // Focus notification
-        pendingCurrentItemLF = itemLFToNotify;
-        uCallSetCurrentItem(true, CustomItem.NONE);
+        uFocusChanged(itemLFToNotify);
 	    break;
             
 	case 2: // Scrolling notification
@@ -544,6 +616,46 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
     }
 
     /**
+     * Update current item index and notify related item of the change.
+     * Item specific abstract commands will also be shown.
+     *
+     * @param newFocus the new item in focus.
+     */
+    private void uFocusChanged(ItemLFImpl newFocus) {
+        ItemLFImpl oldFocus = null;
+        synchronized (Display.LCDUILock) {
+            pendingCurrentItem = null;
+            int focusIndex = item2Index(newFocus); // Could be -1
+            if (focusIndex == traverseIndex) {
+                oldFocus = newFocus;
+            } else {
+                oldFocus = traverseIndex > 0 ? itemLFs[traverseIndex] : null;
+                traverseIndex = focusIndex;
+            }
+        }
+
+        if (oldFocus != newFocus) {
+            if (oldFocus != null) {
+                oldFocus.uCallTraverseOut();
+            }
+            if (newFocus != null) {
+                itemTraverse = 
+                    uCallItemTraverse(newFocus, CustomItem.NONE);
+                
+                if (itemTraverse) {
+                    // We may have to scroll to accommodate the new
+                    // traversal location 
+                    scrollForBounds(CustomItem.NONE, visRect);
+                }
+
+            }
+            updateCommandSet();
+            // call paint for custom items
+            uRequestPaint();
+        }
+    }
+
+    /**
      * This method is used in repaint, in order to determine the translation
      * of the draw coordinates.
      *
@@ -571,6 +683,19 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             key == Canvas.DOWN ||
             key == Canvas.RIGHT;
     }
+
+    /**
+     * Set status of screen rotation
+     * @param newStatus
+     * @return
+     */
+    public boolean uSetRotatedStatus (boolean newStatus) {
+         boolean status = super.uSetRotatedStatus(newStatus);
+         if (status) {
+             firstShown = true;
+         }
+         return status;
+     }
     
     /**
      * Handle a key press.
@@ -585,19 +710,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         }
         int dir = KeyConverter.getGameAction(keyCode);
         if (isNavigationKey(dir)) {
-            boolean forward = true;
-            switch (dir) {
-            case Canvas.UP:
-            case Canvas.LEFT:
-                forward = false;
-                break;
-            case Canvas.DOWN:
-            case Canvas.RIGHT:
-            default:
-                forward = true;
-                break;
-            }
-            uCallSetCurrentItem(forward, dir);
+            uTraverse(dir);
         } else {
             ItemLFImpl v = null;
             synchronized (Display.LCDUILock) {
@@ -683,22 +796,22 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * @param y The y coordinate of the press
      */
     void uCallPointerPressed(int x, int y) {
-	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-	    Logging.report(Logging.INFORMATION,
-			   LogChannels.LC_HIGHUI_FORM_LAYOUT,
-			   "got callPointerPressed: " + x + "," + y);
-	}
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION,
+                LogChannels.LC_HIGHUI_FORM_LAYOUT,
+                "got callPointerPressed: " + x + "," + y);
+        }
 
         ItemLFImpl v = null;
 
         synchronized (Display.LCDUILock) {
 
-	    v = getItemInFocus();
+            v = getItemInFocus();
 
-	    // stop here if no current item to handle the key
+	        // stop here if no current item to handle the key
             if (v == null) {
-		return;
-	    }
+                return;
+            }
 
         } // synchronized
 
@@ -706,8 +819,9 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         // traversal, which can only occur serially on the event
         // thread, so its safe to use it outside of the lock
 
-	if (v instanceof CustomItemLFImpl)
-	    v.uCallPointerPressed(x, y);
+        if (v instanceof CustomItemLFImpl) {
+            v.uCallPointerPressed(x, y);
+        }
     }
 
     /**
@@ -717,22 +831,22 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * @param y The y coordinate of the release
      */
     void uCallPointerReleased(int x, int y) {
-	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-	    Logging.report(Logging.INFORMATION,
-			   LogChannels.LC_HIGHUI_FORM_LAYOUT,
-			   "got callPointerReleased: " + x + "," + y);
-	}
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION,
+                LogChannels.LC_HIGHUI_FORM_LAYOUT,
+                "got callPointerReleased: " + x + "," + y);
+        }
 
         ItemLFImpl v = null;
 
         synchronized (Display.LCDUILock) {
 
-	    v = getItemInFocus();
+            v = getItemInFocus();
 
-	    // stop here if no current item to handle the key
+            // stop here if no current item to handle the key
             if (v == null) {
-		return;
-	    }
+                return;
+            }
 
         } // synchronized
 
@@ -740,8 +854,9 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         // traversal, which can only occur serially on the event
         // thread, so its safe to use it outside of the lock
 
-	if (v instanceof CustomItemLFImpl)
-	    v.uCallPointerReleased(x, y);
+        if (v instanceof CustomItemLFImpl) {
+            v.uCallPointerReleased(x, y);
+        }
     }
 
     /**
@@ -751,22 +866,22 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * @param y The y coordinate of the drag
      */
     void uCallPointerDragged(int x, int y) {
-	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-	    Logging.report(Logging.INFORMATION,
-			   LogChannels.LC_HIGHUI_FORM_LAYOUT,
-			   "got callPointerDragged: " + x + "," + y);
-	}
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION,
+                LogChannels.LC_HIGHUI_FORM_LAYOUT,
+                "got callPointerDragged: " + x + "," + y);
+        }
 
         ItemLFImpl v = null;
 
         synchronized (Display.LCDUILock) {
 
-	    v = getItemInFocus();
+            v = getItemInFocus();
 
-	    // stop here if no current item to handle the key
+            // stop here if no current item to handle the key
             if (v == null) {
-		return;
-	    }
+                return;
+            }
 
         } // synchronized
 
@@ -774,8 +889,9 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         // traversal, which can only occur serially on the event
         // thread, so its safe to use it outside of the lock
 
-	if (v instanceof CustomItemLFImpl)
-	    v.uCallPointerDragged(x, y);
+        if (v instanceof CustomItemLFImpl) {
+            v.uCallPointerDragged(x, y);
+        }
     }
 
     /**
@@ -785,13 +901,13 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      *         if there are no items in focus, <code>null</code> is returned
      */
     public Item lGetCurrentItem() {
-	ItemLFImpl v = getItemInFocus();
+        ItemLFImpl v = getItemInFocus();
 
-	if (v == null) {
-	    return null;
-	}
+        if (v == null) {
+            return null;
+        }
 
-	return v.item;
+        return v.item;
     }
 
     /**
@@ -801,34 +917,28 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * @param g the <code>Graphics</code> object to paint to
      */
     void uPaintItem(ItemLFImpl itemLF, Graphics g) {
-	synchronized (Display.LCDUILock) {
-	    // NOTE: Its possible, that an Item is in an invalid state
-	    // during a requested repaint. Its ok to simply return,
-	    // because it means there is a validation event coming on
-	    // the event thread. When the form re-validates, the Item
-	    // will be given a proper bounds and will be repainted
-	    if (itemLF.actualBoundsInvalid[X]
-	    || itemLF.actualBoundsInvalid[Y]
-	    || itemLF.actualBoundsInvalid[WIDTH]
-	    || itemLF.actualBoundsInvalid[HEIGHT]
-	    || itemLF.nativeId == INVALID_NATIVE_ID) {
-		return;
-	    }
-	}
-
-	if (itemLF.sizeChanged) {
-	    itemLF.uCallSizeChanged(itemLF.bounds[WIDTH],
-				    itemLF.bounds[HEIGHT]);
-	    itemLF.sizeChanged = false;
-	}
-
-	// repaint only visible in viewport items
-	if (itemLF.visibleInViewport) {
-	    // CustomItem uses its own off screen graphics for painting
-	    // and the rest of the items do not need to repaint
-	    itemLF.uCallPaint(null,
-			      itemLF.bounds[WIDTH], itemLF.bounds[HEIGHT]);
-	}
+        synchronized (Display.LCDUILock) {
+            // NOTE: Its possible, that an Item is in an invalid state
+            // during a requested repaint. Its ok to simply return,
+            // because it means there is a validation event coming on
+            // the event thread. When the form re-validates, the Item
+            // will be given a proper bounds and will be repainted
+            if (itemLF.actualBoundsInvalid[X]
+                || itemLF.actualBoundsInvalid[Y]
+                || itemLF.actualBoundsInvalid[WIDTH]
+                || itemLF.actualBoundsInvalid[HEIGHT]
+                || itemLF.nativeId == INVALID_NATIVE_ID) {
+                return;
+            }
+        }
+        
+        // repaint only visible in viewport items
+        if (itemLF.visibleInViewport) {
+            // CustomItem uses its own off screen graphics for painting
+            // and the rest of the items do not need to repaint
+            itemLF.uCallPaint(null,
+                itemLF.bounds[WIDTH], itemLF.bounds[HEIGHT]);
+        }
     }
 
 
@@ -856,7 +966,8 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * <code>Item</code>s' resources are not created here.
      */
     void createNativeResource() {
-	nativeId = createNativeResource0(owner.title,
+        setScrollPosition0(0);    
+        nativeId = createNativeResource0(owner.title,
 					 owner.ticker == null ?  null
 					    : owner.ticker.getString());
     }
@@ -868,12 +979,11 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      *         if there is no current.
      */
     ItemLFImpl getItemInFocus() {
-
-	if (focusIndex < 0) {
-	    return null;
-	} else {
-	    return itemLFs[focusIndex];
-	}
+        if (traverseIndex < 0) {
+            return null;
+        } else {
+            return itemLFs[traverseIndex];
+        }
     }
 
     // ***************************************************************
@@ -894,6 +1004,12 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * @return current scroll Y position
      */
     native int getScrollPosition0();
+
+    /**
+     * Set Y position in a scrollable form.
+     *
+     */
+    native void setScrollPosition0(int pos);
 
     /**
      * Create the native resource of this <code>Form</code>.
@@ -936,235 +1052,728 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * cached.
      */
     private void uEnsureResourceAndRequestedSizes() {
-	int i, count = 0;
+        int i, count = 0;
+        ItemLFImpl[] itemsCopy = null;
 
-	synchronized (Display.LCDUILock) {
+        synchronized (Display.LCDUILock) {
+            if (nativeId == INVALID_NATIVE_ID) {
+                return;
+            }
+            // Make a temporary copy of ItemLFs we need to collect sizes from
+            itemsCopy = new ItemLFImpl[numOfLFs];
 
-	    // Make a temporary copy of ItemLFs we need to collect sizes from
-	    ensureDispatchItemArray(numOfLFs);
 
-	    // Make sure each Item has native resource
-	    // and remember all the CustomItemLFImpls
-	    for (i = 0; i < numOfLFs; i++) {
-		if (itemLFs[i].nativeId == INVALID_NATIVE_ID) {
-		    itemLFs[i].createNativeResource(super.nativeId);
-		    // layout(UPDATE_LAYOUT) later will not call
-		    // setSize/setLocation on an ItemLF that has valid bounds
-		    // already. But the native resource is recreated
-		    // above, we make up these two calls here.
-		    itemLFs[i].initNativeResource();
-		    // Every native resource is default to be visible in
-		    // viewport. It's up to the native container to maintain
-		    // viewport.
-		    itemLFs[i].lShowNativeResource();
-		}
+            // Make sure each Item has native resource
+            // and remember all the CustomItemLFImpls
+            for (i = 0; i < numOfLFs; i++) {
+                if (itemLFs[i].nativeId == INVALID_NATIVE_ID) {
+                    itemLFs[i].createNativeResource(super.nativeId);
+                    // layout(UPDATE_LAYOUT) later will not call
+                    // setSize/setLocation on an ItemLF that has valid bounds
+                    // already. But the native resource is recreated
+                    // above, we make up these two calls here.
+                    itemLFs[i].initNativeResource();
+                    // Every native resource is default to be visible in
+                    // viewport. It's up to the native container to maintain
+                    // viewport.
+                    itemLFs[i].lShowNativeResource();
+                }
+    
+                if (itemLFs[i] instanceof CustomItemLFImpl) {
+                    // Remember this in temporary array
+                    itemsCopy[count++] = itemLFs[i];
+                }
+            }
+        } // synchronized
 
-		if (itemLFs[i] instanceof CustomItemLFImpl) {
-		    // Remember this in temporary array
-		    dispatchItemLFs[count++] = itemLFs[i];
-		}
-	    }
-	} // synchronized
+        // Collect min and preferred sizes from CustomItems
+        // SYNC NOTE: This may call into app code like
+        // CustomItem.getPrefContentWidth(). So do it outside LCDUILock
+        for (i = 0; i < count; i++) {
+            ((CustomItemLFImpl)itemsCopy[i]).uCallSizeRefresh();
+        }
 
-	// Collect min and preferred sizes from CustomItems
-	// SYNC NOTE: This may call into app code like
-	// CustomItem.getPrefContentWidth(). So do it outside LCDUILock
-	for (i = 0; i < count; i++) {
-	    ((CustomItemLFImpl)dispatchItemLFs[i]).uCallSizeRefresh();
-	}
-
-	// Dereference ItemLFImpl objects in dispatchItemLFs
-	// But leave the shrinking to uCallHide
-	resetDispatchItemArray(false);
     }
+
 
     /**
      * Show all items and give focus to current item.
      * SYNC NOTE: caller must NOT hold LCDUILock since this function may
      * call into app code like getPrefContentWidth(), sizeChanged or paint()
-     * of <code>CustomItem</code>.
-     */
-    private void uShowContents() {
-	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-	    Logging.report(Logging.INFORMATION,
-			   LogChannels.LC_HIGHUI_FORM_LAYOUT,
-			   "\nFormLFImpl: showContents()");
-	}
+     * of CustomItem. 
+     * @param initialTraverse the flag to indicate this is the initial 
+     *               traversal focus setup when this Form is being shown
+     */    
+    private void uShowContents(boolean initialTraverse) {
 
-	// Ensure resources for all items and requested sizes for CustomItems
-	uEnsureResourceAndRequestedSizes();
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION,
+                LogChannels.LC_HIGHUI_FORM_LAYOUT,
+                "\nFormLFImpl: showContents()");
+        }
 
-	// Layout
-	synchronized (Display.LCDUILock) {
+        synchronized (Display.LCDUILock) {
+            if (firstShown) {
+                for (int i = 0; i < numOfLFs; i++) {
+                    itemLFs[i].cachedWidth = ItemLFImpl.INVALID_SIZE;
+                }
+            }
+        }
 
-	    if (firstShown) {
-		LayoutManager.instance().lLayout(LayoutManager.FULL_LAYOUT,
-						 itemLFs,
-						 numOfLFs,
-						 width,
-						 height,
-						 viewable);
-		firstShown = false;
+        // Ensure resources for all items and requested sizes for CustomItems
+        uEnsureResourceAndRequestedSizes();
 
-	    } else {
-		LayoutManager.instance().lLayout(LayoutManager.UPDATE_LAYOUT,
-						 itemLFs,
-						 numOfLFs,
-						 width,
-						 height,
-						 viewable);
-	    }
+        ItemLFImpl[] itemsCopy = null;
+        int traverseIndexCopy = -1;
 
-	    // Set native Form's window viewable size (logical Form size)
-	    // and make it shown if not yet
-	    showNativeResource0(nativeId, modelVersion, width,
-				viewable[HEIGHT]);
+        // Layout
+        synchronized (Display.LCDUILock) {
+            if (nativeId == INVALID_NATIVE_ID) {
+                return;
+            }
 
-	    // update viewport height
+            if (firstShown) {
+                LayoutManager.instance().lLayout(LayoutManager.FULL_LAYOUT,
+                    itemLFs,
+                    numOfLFs,
+                    width,
+                    height,
+                    viewable);
+                firstShown = false;
+
+            } else {
+                LayoutManager.instance().lLayout(LayoutManager.UPDATE_LAYOUT,
+                    itemLFs,
+                    numOfLFs,
+                    width,
+                    height,
+                    viewable);
+            }
+
+            if (resetToTop) {
+                traverseIndex = -1;
+                setScrollPosition0(0);
+           }
+
+            itemsCopy = new ItemLFImpl[numOfLFs];
+            System.arraycopy(itemLFs, 0, itemsCopy, 0, numOfLFs);
+            traverseIndexCopy = traverseIndex;
+            itemsModified = false;
+
+            // Set native Form's window viewable size (logical Form size)
+            // and make it shown if not yet
+            showNativeResource0(nativeId, modelVersion, width,
+                viewable[HEIGHT]);
+
+            // update viewport height
             viewportHeight = getViewportHeight0();
 
-	} // synchronized
-
-	// Set up current focused item and viewport
-	uCallSetCurrentItem(true, CustomItem.NONE);
-
-	// Set visibleInViewport flag for CustomItems in the
-	// viewport and call showNotify()
-	int pos = getScrollPosition0();
-	uViewportChanged(pos, pos + viewportHeight);
-    }
-
-    /**
-     * Setup focus and scroll viewport to show focused item.
-     * @param forward true if forward direction is required,
-     * false in case of backward direction
-     * @param dir the traversal direction
-     */
-    private void uCallSetCurrentItem(boolean forward, int dir) {
-        ItemLFImpl oldFocus, newFocus = null;
-        
-        synchronized (Display.LCDUILock) {
-            oldFocus = getItemInFocus();
         } // synchronized
-        
-        int start = 0, count = 0;
-        // Make a temporary copy of ItemLFs
-        ensureDispatchItemArray(numOfLFs);
-        System.arraycopy(itemLFs, 0, dispatchItemLFs, 0, numOfLFs);
-        count = numOfLFs;
-        
-        if (focusIndex >= 0) {
-            start = focusIndex;
+
+        uInitItemsInViewport(CustomItem.NONE, itemsCopy, traverseIndexCopy);
+
+        if (initialTraverse) {
+            updateCommandSet();
         }
-        for (int j, i = 0; i < count; ) {
-            j = forward ?
-                (start + i) % count :
-                (start - i + count) % count;
-            
-            if (j != focusIndex && pendingCurrentItemLF != null) {
-                newFocus = pendingCurrentItemLF;
-                pendingCurrentItemLF = null;
-                // break anyway, even if new item does not accept the focus
-                i = count;
-            } else {
-                newFocus = dispatchItemLFs[j];
-                i++;
-            }
-            
-            if (newFocus != null &&
-                (newFocus.uCallTraverse(dir, width, height, 
-                                        getVisRect(newFocus)) || 
-                 newFocus != oldFocus)) {
-                break;
-            }
-            newFocus = null;
-        }
-        // Dereference ItemLFImpl objects in dispatchItemLFs
-        // But leave the shrinking to uCallHide
-        resetDispatchItemArray(false);
-        
-        // Update focus index and command set
-        uFocusChanged(dir, newFocus, oldFocus);
-        
-        // IMPL_NOTE: we need to examine the returned visRect and
-        // see if extra scrolling is needed
-        
-        if (newFocus != null && newFocus != oldFocus) {
-            // Set up focus and scroll viewport to show new focus item
-            synchronized (Display.LCDUILock) {
-                // It's possible that this newFocus item has
-                // been just removed from this Form since we
-                // are outside LCDUILock. Check again.
-                if (newFocus.nativeId != INVALID_NATIVE_ID) {
-                    setCurrentItem0(nativeId, newFocus.nativeId, 0);
-                }
+
+        for (int index = 0; index < numOfLFs; index++) {
+            if (itemLFs[index].sizeChanged) {
+                itemLFs[index].uCallSizeChanged(itemLFs[index].bounds[WIDTH],
+                        itemLFs[index].bounds[HEIGHT]);
+                itemLFs[index].sizeChanged = false;
             }
         }
     }
-        
+
     /**
-     * Update current item index and notify related item of the change.
-     * Item specific abstract commands will also be shown.
-     * This call will not setup scrolling.
+     * Perform a traversal. This method handles traversal within a
+     * "page" after the initial page has been shown via the 
+     * uInitItemsInViewport() routine. At the point this method is 
+     * called, the following conditions must be true:
      *
-     * @param direction traversal direction
-     * @param newFocus the new item in focus.
-     * @param oldFocus the fallback item if new item refuses to take focus.
-     * @return true if the internal traversal has been done false otherwise 
+     * 1.) There are no interactive items at all on the current page
+     * or
+     * 2.) There is at least one interactive item on the current page
+     *     and the traverseIndex is currently set to that item. In this
+     *     case, itemTraverse represents the return value of that item's
+     *     initial traverse() call.
+     *
+     * Based on these conditions, this method will either:
+     *
+     * 1.) Continue the internal traversal on the current item (scrolling
+     *     as necessary to display the item's internal traversal location)
+     * or
+     * 2.) Perform a traversal to the next interactive item on the page
+     * or
+     * 3.) Perform a page flip (uScrollViewport()) and call the 
+     *     uInitItemsInViewport() routine to select an appropriate 
+     *     traversal item
+     *
+     * SYNC NOTE: Maybe call into CustomItem.traverse().
+     * So caller must not hold LCDUILock.
+     *
+     * @param dir the direction of traversal
      */
-    private boolean uFocusChanged(int direction,
-                  ItemLFImpl newFocus, ItemLFImpl oldFocus) {
-        boolean ret = false;
-        if (newFocus != null && newFocus != oldFocus) {
-            // itemLFs array may have changed. So re-map the focus index
-            synchronized (Display.LCDUILock) {
-                // Update item specific commands
-                focusIndex = item2Index(newFocus); // Could be -1
-                if (oldFocus != null) {
-                    oldFocus.uCallTraverseOut();
-                }
-                updateCommandSet();
-                ret = true;
-            }
+    void uTraverse(int dir) {
+
+        ItemLFImpl[] itemsCopy;
+        int traverseIndexCopy;
+        synchronized (Display.LCDUILock) {
+            itemsCopy = new ItemLFImpl[numOfLFs];
+            traverseIndexCopy = traverseIndex;
+            System.arraycopy(itemLFs, 0, itemsCopy, 0, numOfLFs);
+            itemsModified = false;
         }
-        return ret;
+        
+        // itemTraverse indicates the return value of the
+        // last call to the current item's traverse method.
+        // 'true' indicates it is doing internal traversal,
+        // 'false' indicates we may traverse out of that item
+        // if we have something else to traverse to or scrolling
+        // that needs to be done
+        if (itemTraverse) {
+            
+            if (traverseIndexCopy == -1) {
+                itemTraverse = false;
+                return;
+            }
+                        
+            itemTraverse = 
+                    uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+                
+            if (itemTraverse) {
+                // We may have to scroll to accommodate the new
+                // traversal location 
+                if (scrollForBounds(dir, visRect)) {
+                    uRequestPaint();
+                }
+                return;
+            }
+        } 
+                     
+        // We are done with the traversal of the current item, so
+        // we look to see if another interactive item is available on
+        // current page
+        int nextIndex = 
+                getNextInteractiveItem(itemsCopy, dir, traverseIndexCopy);
+        int scrollPos = getScrollPosition0();
+
+        if (nextIndex != -1) {
+            // NOTE: In traverse(), if there is a "next" interactive
+            // item, there must have been a "first" interactive item
+            // (which was set initially in uInitItemsInViewport())
+            // so traverseIndex should always be valid
+            
+            // We need to traverse out of the previous item, now that
+            // we've found a new item to traverse to
+
+            // NOTE WELL: traverseIndex (and thus traverseIndexCopy) may well 
+            // be invalid if there is no currently focused item, the app adds 
+            // a focusable item, and then the user traverses before the 
+            // resulting invalidation can be processed. Thus, this value must 
+            // be guarded anyway. See CR#6254765.
+
+            if (traverseIndexCopy != -1) {
+                itemsCopy[traverseIndexCopy].uCallTraverseOut();
+            }
+            
+            /*
+             * NOTE: Although we update traverseIndex in a synchronized block
+             * and call "lRefreshItems()" to update itemsCopy[] & 
+             * traverseIndexCopy, 
+             * original itemLFs[] & traverseIndex can change after sync block - 
+             * so we still have a risk of referring to a non-existent item...
+             */
+            synchronized (Display.LCDUILock) {
+                if (itemsModified) {
+                    // SYNCHRONIZE itemLFs & itemsCopy ...
+                    itemsCopy = lRefreshItems(
+                            itemsCopy, traverseIndexCopy, nextIndex);
+                } else {
+                    // Update our traverse index to the new item
+                    traverseIndex = nextIndex;
+                }
+                traverseIndexCopy = traverseIndex;
+            }
+            
+            if (traverseIndexCopy != -1) {
+                // We then need to traverse to the next item
+                itemTraverse = 
+                        uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+            }
+            
+            // There is a special case when traversing to the very last
+            // item on a Form
+            if (traverseIndexCopy == (itemsCopy.length - 1) && 
+                !itemCompletelyVisible(itemsCopy[traverseIndexCopy])) 
+            {
+                // Since its the last item, we may need to
+                // perform a partial scroll to fit it.                
+                if (scrollPos + viewportHeight !=
+                    itemsCopy[traverseIndexCopy].bounds[Y] + 
+                    itemsCopy[traverseIndexCopy].bounds[HEIGHT])
+                {
+                    scrollPos = viewable[HEIGHT] - viewportHeight;
+                        
+                    // We make sure we don't go past the top of the
+                    // item, as we must have been going down to reach
+                    // the last item
+                    if (scrollPos > itemsCopy[traverseIndexCopy].bounds[Y]) {
+                        scrollPos = itemsCopy[traverseIndexCopy].bounds[Y];
+                    }
+                }
+            }
+            
+            // Likewise, there is a special case when traversing up to
+            // the very first item on a Form
+            if (traverseIndexCopy == 0) {
+                // Since its the first item, we may need to
+                // perform a partial scroll to fit it.
+                if (scrollPos != itemsCopy[traverseIndexCopy].bounds[Y]) {
+                    scrollPos = itemsCopy[traverseIndexCopy].bounds[Y];
+                    
+                    // We make sure we don't go past the bottom of the
+                    // item, as we must have been going up to get to
+                    // the first item
+                    if (itemsCopy[traverseIndexCopy].bounds[HEIGHT] > 
+                            viewportHeight)
+                    {
+                        scrollPos = 
+                            itemsCopy[traverseIndexCopy].bounds[HEIGHT] -
+                            viewportHeight;
+                    }
+                }
+            }
+            setScrollPosition0(scrollPos);
+            updateCommandSet();
+            uRequestPaint();
+            
+        } else {                      
+            
+            // There is no more interactive items wholly visible on
+            // the current page. We may need to scroll to the next page,
+            // if we do, then traverse out of the current item and 
+            // scroll the page
+            
+            if ((dir == Canvas.LEFT || dir == Canvas.UP) && scrollPos > 0) {
+                // Special case. We're at the top-most interactive item, but
+                // its internal traversal doesn't allow the very top to be
+                // seen, we just scroll the view to show it
+                if (traverseIndexCopy != -1 && 
+                    (scrollPos > itemsCopy[traverseIndexCopy].bounds[Y])) 
+                {
+                    scrollPos -= (viewportHeight - PIXELS_LEFT_ON_PAGE);
+                    if (scrollPos < 0) {
+                        scrollPos = 0;
+                    }
+                    setScrollPosition0(scrollPos);
+                    uRequestPaint();
+                } else {
+                    // page up
+                    uScrollViewport(Canvas.UP, itemsCopy);
+                    uInitItemsInViewport(
+                            Canvas.UP, itemsCopy, traverseIndexCopy);
+                    updateCommandSet();
+                    return;
+                }
+            } else if ((dir == Canvas.RIGHT || dir == Canvas.DOWN) &&
+                (scrollPos + viewportHeight < viewable[HEIGHT])) 
+            {
+                // Special case. We're at the bottom-most interactive item,
+                // but its internal traversal doesn't allow the very bottom
+                // to be seen, we just scroll the view to show it
+                if (traverseIndexCopy != -1 &&
+                    ((itemsCopy[traverseIndexCopy].bounds[Y] + 
+                        itemsCopy[traverseIndex].bounds[HEIGHT]) >
+                    (scrollPos + viewportHeight))) 
+                {
+                    scrollPos += (viewportHeight - PIXELS_LEFT_ON_PAGE);
+                    if (scrollPos > (viewable[HEIGHT] - viewportHeight)) 
+                    {
+                        scrollPos = viewable[HEIGHT] - viewportHeight;
+                    }
+                    setScrollPosition0(scrollPos);
+                    uRequestPaint();
+                } else {            
+                    // page down
+                    uScrollViewport(Canvas.DOWN, itemsCopy);
+                    uInitItemsInViewport(
+                            Canvas.DOWN, itemsCopy, traverseIndexCopy);
+                    updateCommandSet();
+                    return;
+                }
+            }
+            
+            // If we don't need to scroll the page and there is nothing
+            // to traverse to, we reset the itemTraverse result as if
+            // the Item wishes to proceed with internal traversal (as long
+            // as there was some initial traverse in the first place, ie,
+            // traverseIndex != -1)
+            if (traverseIndexCopy != -1) {
+                itemTraverse = true;
+            }
+            updateCommandSet();
+        }        
     }
+
+
+    /**
+     * Perform a page flip in the given direction. This method will
+     * attempt to scroll the view to show as much of the next page
+     * as possible. It uses the locations and bounds of the items on
+     * the page to best determine a new location - taking into account
+     * items which may lie on page boundaries as well as items which
+     * may span several pages.
+     *
+     * @param dir the direction of the flip, either DOWN or UP
+     * @param items the set of items on the Form, used to determine
+     *        the best suited scroll locations
+     */
+    void uScrollViewport(int dir, ItemLFImpl[] items) {
+        int scrollPos = getScrollPosition0();
+
+        if (dir == Canvas.UP) {
+            int newY = scrollPos - (viewportHeight - PIXELS_LEFT_ON_PAGE);
+            if (newY < 0) {
+                newY = 0;
+            }
+            
+            // We loop upwards until we find the first item which is
+            // currently at least partially visible
+            int firstVis = items.length;
+            for (int i = items.length - 1; i >= 0; i--) {
+                if (items[i].visibleInViewport) {
+                    firstVis = i;
+                }
+            }
+            
+            // case 1. We're at the top of the item so just
+            // traverse normally
+            if (items[firstVis].bounds[Y] >= scrollPos) {
+                scrollPos = newY;
+                setScrollPosition0(scrollPos);
+                return;
+            }
+            
+            // case 2. We try to fit as much of the partially visible
+            // item onscreen as possible.
+            int fitY = 
+                (items[firstVis].bounds[Y] + items[firstVis].bounds[HEIGHT]) -
+                viewportHeight;
+                
+            if (fitY > newY && scrollPos > fitY) {
+                newY = fitY;
+            } 
+           
+            scrollPos = newY;
+            setScrollPosition0(scrollPos);
+            return;
+            
+        } else if (dir == Canvas.DOWN) {            
+            int newY = scrollPos + (viewportHeight - PIXELS_LEFT_ON_PAGE);
+            if (newY > viewable[HEIGHT] - viewportHeight) {
+                newY = viewable[HEIGHT] - viewportHeight;
+            }
+            
+            // We loop downwards until we find the last item which is
+            // at least partially visible
+            int lastVis = -1;
+            for (int i = 0; i < items.length; i++) {
+                if (items[i].visibleInViewport) {
+                    lastVis = i;
+                }
+            }
+
+            
+            // case 1. We're at the bottom of the item so just
+            // traverse normally
+            if (items[lastVis].bounds[Y] + items[lastVis].bounds[HEIGHT] <=
+                scrollPos + viewportHeight)
+            {
+                scrollPos = newY;
+                setScrollPosition0(scrollPos);
+                return;
+            }
+
+            // case 2. We try to fit as much of the partially visible
+            // item onscreen as possible unless we're already at the top
+            // of the item from a previous scroll
+            if (newY > items[lastVis].bounds[Y] && 
+                scrollPos < items[lastVis].bounds[Y]) 
+            {
+                newY = items[lastVis].bounds[Y];
+            }
+            
+            scrollPos = newY;
+            setScrollPosition0(scrollPos);
+            return;
+        }
+    }
+
+    /**
+     * Determine if scrolling is needed for a given bounding box,
+     * and perform such scrolling if necessary.
+     *
+     * @param dir the direction of travel
+     * @param bounds the bounding box of the traversal location
+     * @return <code>true</code> if it was necessary to scroll the view 
+     *         in order to best accommodate the bounding box
+     */
+    boolean scrollForBounds(int dir, int bounds[]) {
+        if (bounds == null || bounds[0] == -1) {
+            return false;
+        }
+
+        int scrollPos = getScrollPosition0();
+        
+        // There is a special case whereby the CustomItem
+        // spec mandates the upper left corner of the internal
+        // traversal rect be visible if the rect is larger than
+        // the available viewport
+        if (bounds[HEIGHT] >= viewportHeight &&
+            scrollPos != bounds[Y])
+        {
+            setScrollPosition0(bounds[Y]);
+            return true;
+        }
+        
+        switch (dir) {
+            case Canvas.LEFT:
+            case Canvas.UP:
+                if (bounds[Y] >= scrollPos) {
+                    return false;
+                }
+
+                scrollPos -= (viewportHeight - PIXELS_LEFT_ON_PAGE);
+                if (scrollPos < 0) {
+                    scrollPos = 0;
+                }
+                setScrollPosition0(scrollPos);
+                return true;
+            case Canvas.RIGHT:
+            case Canvas.DOWN:
+                if (bounds[Y] + bounds[HEIGHT] <=
+                    scrollPos + viewportHeight) 
+                {
+                    return false;
+                }
+
+                scrollPos += (viewportHeight - PIXELS_LEFT_ON_PAGE);
+                if (scrollPos > bounds[Y]) {
+                    scrollPos = bounds[Y];
+                }
+                if (scrollPos + viewportHeight > viewable[HEIGHT]) {
+                    scrollPos = viewable[HEIGHT] - viewportHeight;
+                }
+                setScrollPosition0(scrollPos);
+                return true;
+            default:
+                // for safety/completeness, don't scroll.
+                Logging.report(Logging.ERROR, 
+                    LogChannels.LC_HIGHUI_FORM_LAYOUT,
+                    "FormLFImpl: bounds, dir=" + dir);
+                break;
+        }
+        return false;
+    }
+
+
+    /**
+     * This method will return the index of the next interactive
+     * item which is wholly visible on the screen given the traversal
+     * direction, or -1 if no visible items in that traversal direction
+     * are interactive (or completely visible).
+     *
+     * @param items the set of items to search
+     * @param dir the direction of traversal
+     * @param index the "anchor" of the index to start from
+     * @return the index of the next interactive item, or -1 if one is
+     *         not completely visible or available in the given direction
+     */
+    int getNextInteractiveItem(ItemLFImpl[] items, int dir, int index) {
+              
+        try {
+            int scrollPos = getScrollPosition0();
+            
+            while (true) {
+                switch (dir) {
+                    case Canvas.UP:
+                    case Canvas.LEFT:
+                        index -= 1;
+                        break;
+                    case Canvas.DOWN:
+                    case Canvas.RIGHT:
+                        index += 1;
+                        break;
+                    case CustomItem.NONE:
+                        // no - op
+                        break;
+                    default:
+                        // for safety/completeness.
+                        Logging.report(Logging.ERROR, 
+                                       LogChannels.LC_HIGHUI_FORM_LAYOUT,
+                                       "FormLFImpl: dir=" + dir);
+                        return index;
+                }
+                // If we've exhausted the set, stop looking                
+                if (index < 0 || index >= items.length) {
+                    break;
+                }
+                
+                // If we've found a non-interactive item, continue
+
+                if (!items[index].item.acceptFocus()) {
+                    continue;
+                }
+
+
+                // If we've found a completely visible, interactive
+                // item, stop and traverse to it
+                if (itemCompletelyVisible(items[index])) {
+                    break;
+                }
+
+                // If we've found a partially visible, interactive
+                // item, there is some special casing involved with
+                // how to scroll appropriately
+                if (itemPartiallyVisible(items[index])) {
+                    if (dir == Canvas.RIGHT || dir == Canvas.DOWN) {
+                        
+                        // If we're paging down and the item's top
+                        // is at the top of the viewport, stop and
+                        // traverse to that item (its bigger than the
+                        // viewport
+                        if (items[index].bounds[Y] == scrollPos) {
+                            break;
+                        }
+                            
+                        // If we're paging down and the item's bottom
+                        // is the very last thing in the view, stop and
+                        // keep traversal on that item (item is bigger
+                        // than the viewport and we can go no further)
+                        if (items[index].bounds[Y] +
+                            items[index].bounds[HEIGHT] == 
+                                viewable[HEIGHT]) 
+                        {
+                            break;
+                        }
+                    } else if (dir == Canvas.LEFT || dir == Canvas.UP) {
+                        
+                        // If we're paging up and the item's bottom is the
+                        // very bottom of the viewport, stop and keep
+                        // traversal on that item (item is bigger than the
+                        // viewport and we start at the bottom)
+                        if (items[index].bounds[Y] +
+                            items[index].bounds[HEIGHT] == 
+                                viewable[HEIGHT]) 
+                        {
+                            break;
+                        }
+                        
+                        // If we're paging up and the item's top is at
+                        // the top of the viewport, stop and traverse
+                        // to that item (its bigger than the viewport
+                        // and we should show the top of it before leaving)
+                        if (items[index].bounds[Y] == scrollPos &&
+                            scrollPos == 0) 
+                        {
+                            break;
+                        }
+                    }
+                }                
+            } // while                
+        } catch (Throwable t) {
+            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                Logging.report(Logging.WARNING, LogChannels.LC_HIGHUI,
+                           "Throwable while finding next item for traversal");
+            }
+            return -1;
+        }
+        
+        // This means there was no interactive item in the currently
+        // visible viewport
+        if (index < 0 || index >= items.length) {
+            return -1;
+        }       
+        
+        return index;
+    }
+
+    /**
+     * Determine if the given item is at least partially visible
+     * in the current viewport.
+     *
+     * @param item the item to determine visibility
+     * @return true if at least part of the item is visible
+     */
+    boolean itemPartiallyVisible(ItemLFImpl item) {
+        // If the Form is hidden, all the items are
+        // hidden and we just return false
+        if (super.state == HIDDEN) {
+            return false;
+        }
+        int scrollPos = getScrollPosition0();        
+        // If the Item's top is within the viewport, return true
+        return !(item.bounds[Y] > scrollPos + viewportHeight ||
+                 item.bounds[Y] + item.bounds[HEIGHT] < scrollPos);
+    }
+
+    /**
+     * Determine if the given item is at completely visible
+     * in the current viewport.
+     *
+     * @param item the item to determine visibility
+     * @return true if at the item is entirely visible
+     */
+    boolean itemCompletelyVisible(ItemLFImpl item) {
+        // If the Form is being hidden, all the items are
+        // hidden and we just return false
+        if (super.state == HIDDEN) {
+            return false;
+        }
+
+        // If the Item's top and bottom are within the viewport,
+        // return true
+        int scrollPos = getScrollPosition0();
+        return (item.bounds[Y] >= scrollPos) && 
+            (item.bounds[Y] + item.bounds[HEIGHT] <= scrollPos + viewportHeight);
+    }
+
 
     /**
      * Calculate the rectangle representing the region of the item that is
      * currently visible. This region might have zero area if no part of the
      * item is visible, for example, if it is scrolled offscreen.
      * @param item item
-     * @return  It must be an int[4] array. The information in this array is
+     * @param visRect  It must be an int[4] array. The information in this array is
      * a rectangle of the form [x,y,w,h]  where (x,y) is the location of the
      * upper-left corner of the rectangle relative to the item's origin, and
      * (w,h) are the width and height of the rectangle.
      */
-    private int[] getVisRect(ItemLFImpl item) {
-        int visRect[] = new int[4];
+    private void setVisRect(ItemLFImpl item, int[] visRect) {
         synchronized (Display.LCDUILock) {
             // Initialize the in-out rect for traversal
             visRect[X] = 0;
             visRect[WIDTH] = width;
-
+ 
             // take the coordinates from the overall
             // coordinate space 
-
+ 
             int itemY1 = item.bounds[Y];
             int itemY2 = item.bounds[Y] + item.bounds[HEIGHT];
-
+ 
             // vpY1 the y coordinate of the top left visible pixel
             // current scroll position
-            int vpY1 = getScrollPosition0();
+            int vpY1 = getScrollPosition0();;
             // vpY2 the y coordinate of bottom left pixel
-            int vpY2 = vpY1 + viewportHeight;
-                        
+            int vpY2 = vpY1 + height;
+                         
             // return only the visible region of item
-
+ 
             // item completely visible in viewport
             visRect[Y] = 0;
             visRect[HEIGHT] = item.bounds[HEIGHT];
-                        
+                         
             if ((itemY1 >= vpY2) || (itemY2 <= vpY1)) { 
                 // no part of the item is visible
                 // so this region has zero area
@@ -1176,15 +1785,227 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                     visRect[Y] =  vpY1 - itemY1;
                     visRect[HEIGHT] -= (vpY1 - itemY1);
                 }
-                if (itemY2 >= vpY2) {
+                if (itemY2 > vpY2) {
                     // lower overlap
                     visRect[HEIGHT] -= (itemY2 - vpY2);
                 }
             } 
         }
-        return visRect;
+    }
+
+    /**
+     * Perform an internal traversal on the given item in
+     * the given direction. The only assertion here is that
+     * the item provided must be interactive (or otherwise
+     * be a CustomItem). When this method returns, visRect[]
+     * will hold the bounding box of the item's internal
+     * traversal (in the Form's coordinate space).
+     *
+     * @param item the item to traverse within
+     * @param dir the direction of traversal
+     * @return true if this item performed an internal traversal
+     *         in the given direction.
+     */
+    boolean uCallItemTraverse(ItemLFImpl item, int dir) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, 
+                           LogChannels.LC_HIGHUI_FORM_LAYOUT,
+                           "[F] uCallItemTraverse: dir=" + dir +
+                           " traverseIndex=" + traverseIndex);
+        }
+
+        // The visRect is supposed to show the bounds of the Item
+        // currently visible on the screen
+        setVisRect(item, visRect);
+
+        // Whether the item performs an internal traversal or not,
+        // it has the current input focus
+        //item.hasFocus = true;
+        
+        // Call traverse() outside LCDUILock
+        if (item.uCallTraverse(dir,
+                               width, viewportHeight, visRect)) 
+        {
+            
+            // Since visRect is sent to the Item in its own coordinate
+            // space, we translate it back into the overall Form's
+            // coordinate space
+            visRect[X] += item.bounds[X];
+            visRect[Y] += item.bounds[Y];
+
+            synchronized (Display.LCDUILock) {
+                // It's possible that this newFocus item has
+                // been just removed from this Form since we
+                // are outside LCDUILock. Check again.
+                if (item.nativeId != INVALID_NATIVE_ID) {
+                    setCurrentItem0(nativeId, item.nativeId, 0);
+                }
+            }
+
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Scrolls to the passed in Item.
+     * @param item The Item that should be shown on the screen.
+     */
+    private void lScrollToItem(Item item) {
+        
+        if (item == null || item.owner != owner) {
+            return;
+        }
+
+        int index = -1;
+        
+        ItemLFImpl itemLF = null;
+        if (traverseIndex != -1 && (itemLFs[traverseIndex].item == item)) {
+            index = traverseIndex;
+        } else {
+            for (int i = 0; i < numOfLFs; i++) {
+                if (itemLFs[i].item == item) {
+                    index = i;
+                    break;
+                }
+            }
+        }
+
+        itemLF = itemLFs[index];
+        
+        // Ensure the item is visible
+        if (!itemCompletelyVisible(itemLF)) {
+            // We'll initially position at the bottom of the form,
+            // then adjust upward to the top corner of the item
+            // if necessary
+            if (itemLF.bounds[Y] > getScrollPosition0()) {
+                int scrollPos = viewable[HEIGHT] - viewportHeight;
+                if (itemLF.bounds[Y] < scrollPos) {
+                    scrollPos = itemLF.bounds[Y];
+                }
+                setScrollPosition0(scrollPos);
+            }
+        }
+        if (index != traverseIndex) {
+            // We record the present traverseItem because if it
+            // is valid, we will have to call traverseOut() on that
+            // item when we process the invalidate call.
+            if (traverseIndex != -1) {
+                lastTraverseItem = itemLFs[traverseIndex];
+            }
+            
+            // If the item is not interactive, we just leave it
+            // visible on the screen, but set traverseIndex to -1
+            // so that any interactive item which is visible will
+            // be traversed to when the invalidate occurs
+            traverseIndex = itemLF.item.acceptFocus() ? index : -1;
+            lRequestInvalidate();
+        }
     }
     
+    /**
+     * Initialize the current page of items, perform a traverse if possible.
+     * This method is always called when a page is initially "shown".
+     * This occurs when the form gains visibility for the very first
+     * time as well as after every page up/page down occurs.
+     *
+     * This method searches for the most appropriate item on the form
+     * to receive the interaction focus.
+     *
+     * @param dir the direction of travel. Can be NONE when a page is
+     *        first shown or as the result of an invalidate.
+     * @param itemsCopy a copy of the set of ItemLFImpls in this form.
+     * @param traverseIndexCopy a copy of taverseIndex to work with itesCopy[]
+     */
+    void uInitItemsInViewport(
+        int dir, ItemLFImpl[] itemsCopy, int traverseIndexCopy) {
+        // Create a copy of the current index for comparisons, below.
+        if (itemsCopy.length == 0) {
+            return;
+        }
+        
+        // Hide & Show Items 
+        int pos = getScrollPosition0();
+        uViewportChanged(pos, pos + viewportHeight);
+        
+        // The result of an invalidate() call
+        if (traverseIndexCopy != -1 && dir == CustomItem.NONE) {
+            itemTraverse = 
+                    uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+            
+            synchronized (Display.LCDUILock) {
+                lScrollToItem(itemsCopy[traverseIndexCopy].item);
+            }
+            uRequestPaint(); // request to paint contents area
+            return;
+        }
+        
+        // Special case: It could be that no item in the current view
+        // is interactive, and thus the traverseIndexCopy is -1. If we
+        // are scrolling upwards, we artificially set it to be the last
+        // item on the form (+1) so that the getNextInteractiveItem()
+        // routine will subsequently reduce it by 1 and start searching
+        // for an interactive item from the bottom of the form upwards.
+        if (dir == Canvas.UP && traverseIndexCopy == -1) {
+            traverseIndexCopy = itemsCopy.length;
+        }
+        
+        // If paging "down", we find the interactive item by moving
+        // left to right - this ensures we move line by line searching
+        // for an interactive item. When paging "up", we search from
+        // right to left.
+        int nextIndex = (dir == Canvas.DOWN || dir == CustomItem.NONE)
+            ? getNextInteractiveItem(
+                itemsCopy, Canvas.RIGHT, traverseIndexCopy)
+            : getNextInteractiveItem(
+
+                itemsCopy, Canvas.LEFT, traverseIndexCopy);
+        
+        if (traverseIndexCopy > -1 && traverseIndexCopy < itemsCopy.length) {
+            if (nextIndex != -1 || 
+                !itemCompletelyVisible(itemsCopy[traverseIndexCopy])) 
+            {
+                // It could be we need to traverse out of a current
+                // item before paging
+                itemsCopy[traverseIndexCopy].uCallTraverseOut();
+                synchronized (Display.LCDUILock) {
+                    traverseIndex = -1;  // reset real index
+                    traverseIndexCopy = traverseIndex;
+                }
+            }
+        } 
+        /*
+         * NOTE: between these two sync sections itemLFs[] & traverseIndex
+         * can change again ...
+         */
+        synchronized (Display.LCDUILock) {
+            if (itemsModified) { 
+                // SYNCHRONIZE itemLFs & itemsCopy, update traverseIndex ...
+                itemsCopy = lRefreshItems(
+                        itemsCopy, traverseIndexCopy, nextIndex);
+            } else if ((nextIndex > -1) && (nextIndex < numOfLFs)) {
+                traverseIndex = nextIndex;
+            }
+            traverseIndexCopy = traverseIndex;
+        }
+
+        if (traverseIndexCopy == -1 || traverseIndexCopy == itemsCopy.length) {
+            // If there is no traversable item on the current page,
+            // we simply return, and on the next 'traverse' we will
+            // perform a page scroll and repeat this method
+        } else {
+            // If there is a traversable item, we go ahead and traverse
+            // to it. We do *not* scroll at all under these circumstances
+            // because we have just performed a fresh page view (or scroll)
+            itemTraverse = 
+                    uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+        }
+         
+        uRequestPaint(); // request to paint contents area                
+    }
+
+
     /**
      * Called by the system to notify that viewport scroll location
      * or height has been changed.
@@ -1195,42 +2016,41 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      */
     private void uViewportChanged(int vpY1, int vpY2) {
 	
-	int i, showCount, hideCount, size;
+    int i, showCount, hideCount, size;
+    ItemLFImpl[] itemsCopy = null;
 	
-	synchronized (Display.LCDUILock) {
+    synchronized (Display.LCDUILock) {
 
-	    ensureDispatchItemArray(numOfLFs);
-	    size = numOfLFs;
+        itemsCopy = new ItemLFImpl[numOfLFs];
+        size = numOfLFs;
 	       
-	    showCount = 0;
-	    hideCount = numOfLFs;
+        showCount = 0;
+        hideCount = numOfLFs;
 	       
-	    for (i = 0; i < numOfLFs; i++) {
-		if (itemLFs[i].bounds[Y] + 
-		    itemLFs[i].bounds[HEIGHT]-1 > vpY1 &&
-		    itemLFs[i].bounds[Y] < vpY2) { 
-		    // should become visible
-		    if (itemLFs[i].visibleInViewport == false) {
-			dispatchItemLFs[showCount++] = itemLFs[i];
-		    }
-		} else { 
-		    // should not be visible
-		    if (itemLFs[i].visibleInViewport) {
-			dispatchItemLFs[--hideCount] = itemLFs[i];
-		    }
-		}
-	    }
+        for (i = 0; i < numOfLFs; i++) {
+            if (itemLFs[i].bounds[Y] + 
+                itemLFs[i].bounds[HEIGHT]-1 > vpY1 &&
+                itemLFs[i].bounds[Y] < vpY2) { 
+                // should become visible
+                if (itemLFs[i].visibleInViewport == false) {
+                    itemsCopy[showCount++] = itemLFs[i];
+                }
+            } else { 
+                // should not be visible
+                if (itemLFs[i].visibleInViewport) {
+                    itemsCopy[--hideCount] = itemLFs[i];
+                }
+            }
+        }
 	} // synchronized (LCDUILock)
 	   
-        for (i = 0; i < showCount; i++) {
-	    dispatchItemLFs[i].uCallShowNotify();
-        }
+    for (i = 0; i < showCount; i++) {
+        itemsCopy[i].uCallShowNotify();
+    }
 	   
-	for (i = hideCount; i < size; i++) {
-	    dispatchItemLFs[i].uCallHideNotify();
-	}
-	
-	resetDispatchItemArray(true);
+    for (i = hideCount; i < size; i++) {
+        itemsCopy[i].uCallHideNotify();
+    }
     }
 
     /**
@@ -1243,23 +2063,19 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      */
     private ItemLFImpl id2Item(int nativeId) {
 
-	ItemLFImpl focus = getItemInFocus();
+        ItemLFImpl focus = getItemInFocus();
 
-	if (focus != null && focus.nativeId == nativeId) {
-	    
-	    return focus;
-	    
-	} else {
-
-	    for (int i = 0; i < numOfLFs; i++) {
-		if (itemLFs[i].nativeId == nativeId) {
-		    return itemLFs[i];
-		}
-	    }
-
-	    // there is no matching ItemLFImpl
-	    return null;
-	}
+        if (focus != null && focus.nativeId == nativeId) {
+            return focus;
+        } else {
+            for (int i = 0; i < numOfLFs; i++) {
+                if (itemLFs[i].nativeId == nativeId) {
+                    return itemLFs[i];
+                }
+            }
+            // there is no matching ItemLFImpl
+            return null;
+        }
     }
 
     /**
@@ -1311,6 +2127,83 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 	}
     }
 
+    /**
+     * Synchronizes itemLFs[] array with itemsCopy[] array, 
+     * as well as traverseIndex with traverseIndexCopy & nextIndex. 
+     *
+     * Since most of work with copies occurs outside of LCDUILock
+     * (this is, BTW, the reason, why copies are used instead of original
+     * fields), there is a risk, that
+     * itemLFs[] content can be changed (ex. insert/delete/replace Item): 
+     * traverseIndexCopy can point to a different object 
+     * (including non-interactive), 
+     * or outside of changed itemLFs array (throws exception), 
+     * or we can refer to a deleted item (deleted in itemLFs, 
+     * but still exists in a copy).
+     *
+     * This method tries to find item, referred by nextIndex in itemsCopy[], 
+     * in itelLFs[], and if found, sets traverseIndex to foundItem, 
+     * else sets traverse index to -1.
+     *
+     * This method indended to be called in LCDUILock-protected code, 
+     * from uInitItemsInViewport(...) & uTraverse(...).
+     *
+     * @param itemsCopy a copy of the set of ItemLFImpls in this form.
+     * @param traverseIndexCopy a copy of traverseIndex to work with itemsCopy
+     * @param nextIndex suggested new value of traverseIndex, 
+     *        the item from itemsCopy[] to be found in changed itemLFs[]
+     *
+     * @return updated itemsCopy[] array, synchronized with itemLFs[]
+     */
+    private ItemLFImpl[] lRefreshItems(
+            ItemLFImpl[] itemsCopy, 
+            int traverseIndexCopy, 
+            int nextIndex) {
+        
+        final int nextIndexInLFs = nextIndex + 
+                (traverseIndex - traverseIndexCopy);
+        traverseIndex = (
+            (traverseIndex > -1) && 
+            /* (traverseIndex < numOfLFs) && */
+            (traverseIndexCopy > -1) && 
+            /* (traverseIndexCopy < itemsCopy.length) && */
+            (nextIndex > -1) && 
+            /* (nextIndex < itemsCopy.length) && */
+            (nextIndexInLFs > -1) && 
+            (nextIndexInLFs < numOfLFs) &&
+            !itemLFs[nextIndexInLFs].item.acceptFocus())
+            /* (itemsCopy[nextIndex] == itemLFs[nextIndexInLFs])) */
+            /*
+             * Assume that:
+             * 1). traverseIndex has always valid value: 
+             * i.e. -1 or within [0..numOfLFs[ range of itemLFs[] array.
+             * 2). traverseIndexCopy & nextIndex have always valid values: 
+             * i.e. -1 or within [0..itemsCopy.length[ range  
+             * of itemsCopy[] array.
+             * As the result we need to check them only for "-1" value.
+             * Computed "nextIndexInLFs" needs to be checked for 
+             * being in bounds of itemLFs[].
+             *
+             * Need revisit : if last condition in the above  "IF" is needed,
+             * however it ensures, that the  next current item 
+             * will be exactly the same item that has been found 
+             * by "getNext...". 
+             * Without thast statement we have a risk to point to 
+             * a completely different item: still valid & 
+             * in the range, but probably NON-interactive :-( 
+             * To avoid this, "shouldSkipTraverse()" could be used insead ...
+             */
+            ? nextIndexInLFs
+            : -1;
+
+        // refresh itemsCopy array ...
+        itemsCopy = new ItemLFImpl[numOfLFs];
+        System.arraycopy(itemLFs, 0, itemsCopy, 0, numOfLFs);
+        itemsModified = false;
+        return itemsCopy;
+    }
+
+
 
     /** 
      * A bit mask to capture the horizontal layout directive of an item.
@@ -1337,6 +2230,51 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * it gets filled up.
      */
     private static final int GROW_SIZE = 4;
+
+    /**
+     * This is the number of pixels left from the previous "page"
+     * when a page up or down occurs
+     */
+    static final int PIXELS_LEFT_ON_PAGE = 15;
+
+
+    /** The item index which has the traversal focus */
+    int traverseIndex = -1;
+
+    /**
+     * Item that was made visible using display.setCurrentItem() call
+     * while FormLF was in HIDDEN or FROZEN state.
+     */
+    Item pendingCurrentItem = null;
+
+    /** 
+     * This is a special case variable which tracks the last
+     * traversed item when a new item is traversed to via the
+     * setCurrentItem() call.
+     */
+    ItemLFImpl lastTraverseItem;
+
+    /** 
+     * A flag indicating the return value of the currently
+     * selected Item from its traverse() method
+     */
+    boolean itemTraverse;
+
+    /** 
+     * A flag that shows that itemLFs[] storage has been modified
+     * (items inserted/deleted) and earlier made copies (extends itemsCopy[])
+     * are outdated. 
+     * flag is set by item insert/delete operations, 
+     * cleared when copy operation is performed. 
+     */
+    boolean itemsModified; 
+
+    /**
+     * When a Form calls an Item's traverse() method, it passes in
+     * an in-out int[] that represents the Item's internal traversal
+     * bounds. This gets cached in the visRect variable
+     */
+    int[] visRect;
 
     /**
      * Array of <code>ItemLF</code>s that correspond to the array of items 
@@ -1371,6 +2309,13 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      */
     private boolean firstShown = true;
 
+    /**
+     * Screens should automatically reset to the top of the when
+     * they are shown, except in cases where it is interrupted by
+     * a system menu or an off-screen editor - in which case it
+     * should be reshown exactly as it was.
+     */
+    boolean resetToTop = true;
 
     /**
      * Viewport height in the native resource
@@ -1382,19 +2327,6 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * as a reference to <code>LayoutManager</code>.
      */
     int viewable[] = new int[4];
-
-    /**
-     * This holds the index of the current item in focus.
-     */
-    int focusIndex = -1;
-
-    /**
-     * ItemLF pending to become the current focused item.
-     * It is set in lSetCurrentItem() upon API call Display.setCurrentItem().
-     * During show or invalidate, the focus will be transfer from current item
-     * to this pending item and this variable will be cleared afterwards.
-     */
-    ItemLFImpl pendingCurrentItemLF;
 
     /**
      * Left to right layout is default.

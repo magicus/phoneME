@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -35,174 +36,181 @@ import javax.microedition.lcdui.Font;
  * Underline Bold Italic. There are three different sizes 
  * available: Small, Medium, and Large. That presents
  * a matrix of 72 different font possibilities. This class
- * serves to manage those different possibilities and define
- * a numeric identifer to each one for easy representation
- * and loading.
+ * serves to manage those different possibilities.
  *
  * Identifiers use a FACE_STYLE_SIZE naming scheme, where
  * FACE is one of [MONO|PROP|SYS], STYLE is one of 
  * [P|I|B|BI|U|UI|UB|UBI], and SIZE is one of [S|M|L].
  */
 public class FontResources {
-    
+
+    /**
+     * IMPL_NOTE: font constants have been moved to 
+     * FontResourcesConstants class. However, they are
+     * duplicated here because this file is used by
+     * skin authors to lookup for possible constants 
+     * values. This should be changed in future releases.
+     */
+
     /** Monospaced, plain, small */
-    public static final int MONO_P_S    = 100;
+    public final static int MONO_P_S    = FontResourcesConstants.MONO_P_S;
     /** Monospaced, italic, small */
-    public static final int MONO_I_S    = 101;
+    public final static int MONO_I_S    = FontResourcesConstants.MONO_I_S;
     /** Monospaced, bold, small */
-    public static final int MONO_B_S    = 102;
+    public final static int MONO_B_S    = FontResourcesConstants.MONO_B_S;
     /** Monospaced, bold italic, small */
-    public static final int MONO_BI_S   = 103;
+    public final static int MONO_BI_S   = FontResourcesConstants.MONO_BI_S;
     /** Monospaced, underline, small */
-    public static final int MONO_U_S    = 104;
+    public final static int MONO_U_S    = FontResourcesConstants.MONO_U_S;
     /** Monospaced, underline italic, small */
-    public static final int MONO_UI_S   = 105;
+    public final static int MONO_UI_S   = FontResourcesConstants.MONO_UI_S;
     /** Monospaced, underline bold, small */
-    public static final int MONO_UB_S   = 106;
+    public final static int MONO_UB_S   = FontResourcesConstants.MONO_UB_S;
     /** Monospaced, underline bold italic, small */
-    public static final int MONO_UBI_S  = 107;
+    public final static int MONO_UBI_S  = FontResourcesConstants.MONO_UBI_S;
 
     /** Monospaced, plain, medium */
-    public static final int MONO_P_M    = 200;
+    public final static int MONO_P_M    = FontResourcesConstants.MONO_P_M;
     /** Monospaced, italic, medium */
-    public static final int MONO_I_M    = 201;
+    public final static int MONO_I_M    = FontResourcesConstants.MONO_I_M;
     /** Monospaced, bold, medium */
-    public static final int MONO_B_M    = 202;
+    public final static int MONO_B_M    = FontResourcesConstants.MONO_B_M;
     /** Monospaced, bold italic, medium */
-    public static final int MONO_BI_M   = 203;
+    public final static int MONO_BI_M   = FontResourcesConstants.MONO_BI_M;
     /** Monospaced, underline, medium */
-    public static final int MONO_U_M    = 204;
+    public final static int MONO_U_M    = FontResourcesConstants.MONO_U_M;
     /** Monospaced, underline italic, medium */
-    public static final int MONO_UI_M   = 205;
+    public final static int MONO_UI_M   = FontResourcesConstants.MONO_UI_M;
     /** Monospaced, underline bold, medium */
-    public static final int MONO_UB_M   = 206;
+    public final static int MONO_UB_M   = FontResourcesConstants.MONO_UB_M;
     /** Monospaced, underline bold italic, medium */
-    public static final int MONO_UBI_M  = 207;
+    public final static int MONO_UBI_M  = FontResourcesConstants.MONO_UBI_M;
     
     /** Monospaced, plain, large */
-    public static final int MONO_P_L    = 300;
+    public final static int MONO_P_L    = FontResourcesConstants.MONO_P_L;
     /** Monospaced, italic, large */
-    public static final int MONO_I_L    = 301;
+    public final static int MONO_I_L    = FontResourcesConstants.MONO_I_L;
     /** Monospaced, bold, large */
-    public static final int MONO_B_L    = 302;
+    public final static int MONO_B_L    = FontResourcesConstants.MONO_B_L;
     /** Monospaced, bold italic, large */
-    public static final int MONO_BI_L   = 303;
+    public final static int MONO_BI_L   = FontResourcesConstants.MONO_BI_L;
     /** Monospaced, underline, large */
-    public static final int MONO_U_L    = 304;
+    public final static int MONO_U_L    = FontResourcesConstants.MONO_U_L;
     /** Monospaced, underline italic, large */
-    public static final int MONO_UI_L   = 305;
+    public final static int MONO_UI_L   = FontResourcesConstants.MONO_UI_L;
     /** Monospaced, underline bold, large */
-    public static final int MONO_UB_L   = 306;
+    public final static int MONO_UB_L   = FontResourcesConstants.MONO_UB_L;
     /** Monospaced, underline bold italic, large */
-    public static final int MONO_UBI_L  = 307;
+    public final static int MONO_UBI_L  = FontResourcesConstants.MONO_UBI_L;
     
     /** Proportional, plain, small */
-    public static final int PROP_P_S    = 400;
+    public final static int PROP_P_S    = FontResourcesConstants.PROP_P_S;
     /** Proportional, italic, small */
-    public static final int PROP_I_S    = 401;
+    public final static int PROP_I_S    = FontResourcesConstants.PROP_I_S;
     /** Proportional, bold, small */
-    public static final int PROP_B_S    = 402;
+    public final static int PROP_B_S    = FontResourcesConstants.PROP_B_S;
     /** Proportional, bold italic, small */
-    public static final int PROP_BI_S   = 403;
+    public final static int PROP_BI_S   = FontResourcesConstants.PROP_BI_S;
     /** Proportional, underline, small */
-    public static final int PROP_U_S    = 404;
+    public final static int PROP_U_S    = FontResourcesConstants.PROP_U_S;
     /** Proportional, underline italic, small */
-    public static final int PROP_UI_S   = 405;
+    public final static int PROP_UI_S   = FontResourcesConstants.PROP_UI_S;
     /** Proportional, underline bold, small */
-    public static final int PROP_UB_S   = 406;
+    public final static int PROP_UB_S   = FontResourcesConstants.PROP_UB_S;
     /** Proportional, underline bold italic, small */
-    public static final int PROP_UBI_S  = 407;
+    public final static int PROP_UBI_S  = FontResourcesConstants.PROP_UBI_S;
     
     /** Proportional, plain, medium */
-    public static final int PROP_P_M    = 500;
+    public final static int PROP_P_M    = FontResourcesConstants.PROP_P_M;
     /** Proportional, italic, medium */
-    public static final int PROP_I_M    = 501;
+    public final static int PROP_I_M    = FontResourcesConstants.PROP_I_M;
     /** Proportional, bold, medium */
-    public static final int PROP_B_M    = 502;
+    public final static int PROP_B_M    = FontResourcesConstants.PROP_B_M;
     /** Proportional, bold italic, medium */
-    public static final int PROP_BI_M   = 503;
+    public final static int PROP_BI_M   = FontResourcesConstants.PROP_BI_M;
     /** Proportional, underline, medium */
-    public static final int PROP_U_M    = 504;
+    public final static int PROP_U_M    = FontResourcesConstants.PROP_U_M;
     /** Proportional, underline italic, medium */
-    public static final int PROP_UI_M   = 505;
+    public final static int PROP_UI_M   = FontResourcesConstants.PROP_UI_M;
     /** Proportional, underline bold, medium */
-    public static final int PROP_UB_M   = 506;
+    public final static int PROP_UB_M   = FontResourcesConstants.PROP_UB_M;
     /** Proportional, underline bold italic, medium */
-    public static final int PROP_UBI_M  = 507;
+    public final static int PROP_UBI_M  = FontResourcesConstants.PROP_UBI_M;
     
     /** Proportional, plain, large */
-    public static final int PROP_P_L    = 600;
+    public final static int PROP_P_L    = FontResourcesConstants.PROP_P_L;
     /** Proportional, italic, large */
-    public static final int PROP_I_L    = 601;
+    public final static int PROP_I_L    = FontResourcesConstants.PROP_I_L;
     /** Proportional, bold, large */
-    public static final int PROP_B_L    = 602;
+    public final static int PROP_B_L    = FontResourcesConstants.PROP_B_L;
     /** Proportional, bold italic, large */
-    public static final int PROP_BI_L   = 603;
+    public final static int PROP_BI_L   = FontResourcesConstants.PROP_BI_L;
     /** Proportional, underline, large */
-    public static final int PROP_U_L    = 604;
+    public final static int PROP_U_L    = FontResourcesConstants.PROP_U_L;
     /** Proportional, underline italic, large */
-    public static final int PROP_UI_L   = 605;
+    public final static int PROP_UI_L   = FontResourcesConstants.PROP_UI_L;
     /** Proportional, underline bold, large */
-    public static final int PROP_UB_L   = 606;
+    public final static int PROP_UB_L   = FontResourcesConstants.PROP_UB_L;
     /** Proportional, underline bold italic, large */
-    public static final int PROP_UBI_L  = 607;
+    public final static int PROP_UBI_L  = FontResourcesConstants.PROP_UBI_L;
     
     /** System, plain, small */
-    public static final int SYS_P_S     = 700;
+    public final static int SYS_P_S     = FontResourcesConstants.SYS_P_S;
     /** System, italic, small */
-    public static final int SYS_I_S     = 701;
+    public final static int SYS_I_S     = FontResourcesConstants.SYS_I_S;
     /** System, bold, small */
-    public static final int SYS_B_S     = 702;
+    public final static int SYS_B_S     = FontResourcesConstants.SYS_B_S;
     /** System, bold italic, small */
-    public static final int SYS_BI_S    = 703;
+    public final static int SYS_BI_S    = FontResourcesConstants.SYS_BI_S;
     /** System, underline, small */
-    public static final int SYS_U_S     = 704;
+    public final static int SYS_U_S     = FontResourcesConstants.SYS_U_S;
     /** System, underline italic, small */
-    public static final int SYS_UI_S    = 705;
+    public final static int SYS_UI_S    = FontResourcesConstants.SYS_UI_S;
     /** System, underline bold, small */
-    public static final int SYS_UB_S    = 706;
+    public final static int SYS_UB_S    = FontResourcesConstants.SYS_UB_S;
     /** System, underline bold italic, small */
-    public static final int SYS_UBI_S   = 707;
+    public final static int SYS_UBI_S   = FontResourcesConstants.SYS_UBI_S;
     
     /** System, plain, medium */
-    public static final int SYS_P_M     = 800;
+    public final static int SYS_P_M     = FontResourcesConstants.SYS_P_M;
     /** System, italic, medium */
-    public static final int SYS_I_M     = 801;
+    public final static int SYS_I_M     = FontResourcesConstants.SYS_I_M;
     /** System, bold, medium */
-    public static final int SYS_B_M     = 802;
+    public final static int SYS_B_M     = FontResourcesConstants.SYS_B_M;
     /** System, bold italic, medium */
-    public static final int SYS_BI_M    = 803;
+    public final static int SYS_BI_M    = FontResourcesConstants.SYS_BI_M;
     /** System, underline, medium */
-    public static final int SYS_U_M     = 804;
+    public final static int SYS_U_M     = FontResourcesConstants.SYS_U_M;
     /** System, underline italic, medium */
-    public static final int SYS_UI_M    = 805;
+    public final static int SYS_UI_M    = FontResourcesConstants.SYS_UI_M;
     /** System, underline bold, medium */
-    public static final int SYS_UB_M    = 806;
+    public final static int SYS_UB_M    = FontResourcesConstants.SYS_UB_M;
     /** System, underline bold italic, medium */
-    public static final int SYS_UBI_M   = 807;
+    public final static int SYS_UBI_M   = FontResourcesConstants.SYS_UBI_M;
     
     /** System, plain, large */
-    public static final int SYS_P_L     = 900;
+    public final static int SYS_P_L     = FontResourcesConstants.SYS_P_L;
     /** System, italic, large */
-    public static final int SYS_I_L     = 901;
+    public final static int SYS_I_L     = FontResourcesConstants.SYS_I_L;
     /** System, bold, large */
-    public static final int SYS_B_L     = 902;
+    public final static int SYS_B_L     = FontResourcesConstants.SYS_B_L;
     /** System, bold italic, large */
-    public static final int SYS_BI_L    = 903;
+    public final static int SYS_BI_L    = FontResourcesConstants.SYS_BI_L;
     /** System, underline, large */
-    public static final int SYS_U_L     = 904;
+    public final static int SYS_U_L     = FontResourcesConstants.SYS_U_L;
     /** System, underline italic, large */
-    public static final int SYS_UI_L    = 905;
+    public final static int SYS_UI_L    = FontResourcesConstants.SYS_UI_L;
     /** System, underline bold, large */
-    public static final int SYS_UB_L    = 906;
+    public final static int SYS_UB_L    = FontResourcesConstants.SYS_UB_L;
     /** System, underline bold italic, large */
-    public static final int SYS_UBI_L   = 907;
-    
+    public final static int SYS_UBI_L   = FontResourcesConstants.SYS_UBI_L;
+
+
     /**
      * This is a static convenience method for retrieving a
      * system Font object based on an identifier. The identifier
-     * must be one of the values defined in FontProperties, ie,
-     * MONO_S_P, SYS_L_UBI, etc.
+     * must be one of the values defined in FontResourcesConstants, 
+     * ie, MONO_S_P, SYS_L_UBI, etc.
      *
      * @param fontID the integer identifier for the Font to retrieve
      * @return the system Font corresponding to the given integer id,
@@ -212,7 +220,6 @@ public class FontResources {
      *         terms of what gets returned versus the parameters given.
      */
     static Font getFont(int fontID) {
-                                    
         int face, size, style;
         
         if (fontID >= 700) {

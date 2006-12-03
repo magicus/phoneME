@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -40,7 +41,8 @@ import com.sun.midp.chameleon.skins.*;
 * This is the look &amp; feel implementation for Displayable.
 */
 class DisplayableLFImpl implements DisplayableLF {
-    
+
+
     /**
      * Creates DisplayableLF for the passed in Displayable.
      * @param d the Displayable object associated with this
@@ -177,8 +179,7 @@ class DisplayableLFImpl implements DisplayableLF {
      * @return true if current DisplayableLF is interactive with user.
      */
     public boolean lIsShown() {
-        return (currentDisplay == null) ? false
-                                        : currentDisplay.isShown(this);
+        return !(currentDisplay == null) && currentDisplay.isShown(this);
     }
 
     /**
@@ -190,7 +191,6 @@ class DisplayableLFImpl implements DisplayableLF {
      *               without title, ticker, etc.; if false - otherwise 
      */
     public void uSetFullScreenMode(boolean mode) {
-        int widthCopy, heightCopy;
         boolean requestRepaint = false;
         
         synchronized (Display.LCDUILock) {
@@ -210,15 +210,7 @@ class DisplayableLFImpl implements DisplayableLF {
                 // in getWidth() and getHeight()
                 layout();
             }  
-                             
-            widthCopy = viewport[WIDTH];
-            heightCopy = viewport[HEIGHT];   
         } 
-
-        if (!lIsShown()) {
-            // This may call into app code, so do it outside LCDUILock
-            uCallSizeChanged(widthCopy, heightCopy);
-        }
 
         // app's sizeChanged has to be called before repaint
         synchronized (Display.LCDUILock) {
@@ -229,7 +221,7 @@ class DisplayableLFImpl implements DisplayableLF {
     }
 
     /**
-     * \todo Move this to CanvasLFImpl.
+     * \Need revisit Move this to CanvasLFImpl.
      * Called to get key mask of all the keys that were pressed.
      * @return keyMask  The key mask of all the keys that were pressed.
      */
@@ -268,6 +260,7 @@ class DisplayableLFImpl implements DisplayableLF {
      */
     public void uCallShow() {
         int widthCopy, heightCopy;
+
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
@@ -275,6 +268,7 @@ class DisplayableLFImpl implements DisplayableLF {
         }
 
         synchronized (Display.LCDUILock) {
+
             // Assure correct screen mode
             currentDisplay.lSetFullScreen(owner.isInFullScreenMode);
 
@@ -292,6 +286,12 @@ class DisplayableLFImpl implements DisplayableLF {
         // This may call into app code, so do it outside LCDUILock
         if (widthCopy >= 0) {
             uCallSizeChanged(widthCopy, heightCopy);
+        } else {
+            synchronized (Display.LCDUILock) {
+                if (pendingInvalidate) {
+                    lRequestInvalidate();
+                }
+            }
         }
     }
 
@@ -338,12 +338,13 @@ class DisplayableLFImpl implements DisplayableLF {
 
     } // lCallShow()
 
+
     /**
      * Get the current vertical scroll position
      *
      * @return int The vertical scroll position on a scale of 0-100
      */
-    int getVerticalScrollPosition() {
+    public int getVerticalScrollPosition() {
         return 0;
     }
 
@@ -352,7 +353,7 @@ class DisplayableLFImpl implements DisplayableLF {
      *
      * @return ing The vertical scroll proportion on a scale of 0-100
      */
-    int getVerticalScrollProportion() {
+    public int getVerticalScrollProportion() {
         // SYNC NOTE: return of atomic value
         return 100;
     }
@@ -442,10 +443,13 @@ class DisplayableLFImpl implements DisplayableLF {
                            "# in DisplayableLFImpl: uCallInvalidate");        
         }
 
-        // SYNC NOTE: It is safe to obtain a lock here because 
+        // SYNC NOTE: It is safe to obtain a lock here because
         // the only subclass that can call into the app code in layout()
         // is FormLFImpl and it overrides uCallInvalidate()
+
         synchronized (Display.LCDUILock) {
+            pendingInvalidate = false;
+
             layout();
         }
     }
@@ -477,12 +481,41 @@ class DisplayableLFImpl implements DisplayableLF {
             // If there is no Display, or if this Displayable is not
             // currently visible, we simply record the fact that the
             // size has changed
-            sizeChangeOccurred = (currentDisplay == null) || 
-                                 (!currentDisplay.isShown(this));
-                                 
-            resetViewport();                                 
+            sizeChangeOccurred = (state != SHOWN);
+
+            /*
+            * sizeChangeOccurred is a boolean which (when true) indicates
+            * that sizeChanged() will be called at a later time. So, if it
+            * is false after calling super(), we go ahead and notify the
+            * Canvas now, rather than later
+            */
+
+            resetViewport();
+
+            if (!sizeChangeOccurred) {
+                lRequestInvalidate();
+                synchronized (Display.calloutLock) {
+                    try {
+                        owner.sizeChanged(w, h);
+                    } catch (Throwable t) {
+                        Display.handleThrowable(t);
+                    }
+                }
+            }
+
         }
     }
+
+    /**
+     * This method notify displayable to scroll its content 
+     *
+     * @param scrollType scrollType
+     * @param thumbPosition
+     */
+    public void uCallScrollContent(int scrollType, int thumbPosition) {
+        // by default nothing to do 
+    }
+    
 
     /**
      * Display calls this method on it's current Displayable.
@@ -708,6 +741,24 @@ class DisplayableLFImpl implements DisplayableLF {
      */
     public void lCommitPendingInteraction() { }
 
+
+    /**
+     * Set status of screen rotation
+     * @param newStatus
+     * @return
+     */
+    public boolean uSetRotatedStatus(boolean newStatus) {
+        synchronized (Display.LCDUILock) {
+            if (newStatus == owner.isRotated) {
+                return false;
+            } else {
+                owner.isRotated = newStatus;
+                return true;
+            }
+        }
+    }
+
+
     /**
      * Perform any necessary layout, and update the viewport
      * as necessary
@@ -794,12 +845,13 @@ class DisplayableLFImpl implements DisplayableLF {
                            "# in DisplayableLFImpl: invalidate");
         }
 
+        pendingInvalidate = true;
+
         if (state == SHOWN && currentDisplay != null) {
             currentDisplay.invalidate();
             invalidScroll = true;
         }
     }
-
     
     // ************************************************************
     //  private methods
@@ -819,7 +871,6 @@ class DisplayableLFImpl implements DisplayableLF {
 
         viewport[WIDTH] = getDisplayableWidth();
         viewport[HEIGHT] = getDisplayableHeight();
-
     }
 
     /**
@@ -841,7 +892,7 @@ class DisplayableLFImpl implements DisplayableLF {
                 h -= TickerSkin.HEIGHT;
             }
         } else {
-            h = ScreenSkin.FULLHEIGHT;
+            h = ScreenSkin.HEIGHT;
         }
         return h;
     }
@@ -853,7 +904,10 @@ class DisplayableLFImpl implements DisplayableLF {
      * @return the width a displayable would occupy 
      */
     public int getDisplayableWidth() {
-        return ScreenSkin.WIDTH;
+        int w = currentDisplay != null ?
+            currentDisplay.getWindow().getBodyWidth() :
+            ScreenSkin.WIDTH;
+        return w;
     }
     
 
@@ -1025,6 +1079,11 @@ class DisplayableLFImpl implements DisplayableLF {
     // sets the key to 1 when the key
     // is currently down
     private int currentKeyMask;
+
+    /**
+     * Used to indicate the invalidate is needed
+     */
+    boolean pendingInvalidate;
    
     // ************************************************************
     //  Static initializer, constructor

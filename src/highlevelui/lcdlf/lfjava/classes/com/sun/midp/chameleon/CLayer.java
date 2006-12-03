@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -36,9 +37,6 @@ import com.sun.midp.util.ResourceHandler;
  * also has content, such as its background and its foreground.
  */
 public class CLayer {
-    
-    /** A String identifier used by subclasses (for debug purposes) */
-    protected String layerID;
     
     /** Flag indicating this layer is in need of repainting */
     protected boolean dirty;
@@ -83,6 +81,13 @@ public class CLayer {
     protected boolean tileBG;
     
     /**
+     * The window which owns this layer. If this layer has not been added
+     * to a window or it has been removed from a window, the owner will be
+     * null.
+     */
+    protected CWindow owner;
+
+    /**
      * An array holding the bounds of this layer. The indices are
      * as follows:
      * 0 = layer's 'x' coordinate
@@ -92,14 +97,7 @@ public class CLayer {
      * The 'x' and 'y' coordinates are in the coordinate space of the
      * window which contains this layer.
      */
-    protected int[]   bounds;
-
-    /**
-     * The window which owns this layer. If this layer has not been added
-     * to a window or it has been removed from a window, the owner will be
-     * null.
-     */
-    protected CWindow owner;
+    public int[]   bounds;
 
     /** Constant used to reference the '0' index of the bounds array */
     public static final int X = 0;
@@ -234,7 +232,7 @@ public class CLayer {
             transparent = (bgColor < 0);
         }
         this.bgColor = bgColor;
-        setDirty();
+        addDirtyRegion();
     }
     
     /**
@@ -262,7 +260,7 @@ public class CLayer {
             transparent = (bgColor < 0);
         }
         this.bgColor = bgColor;
-        setDirty();            
+        addDirtyRegion();            
     }
 
     /**
@@ -356,13 +354,20 @@ public class CLayer {
      * Mark this layer as being dirty. By default, this will also mark the
      * containing window (if there is one) as being dirty as well.
      */    
-    public void setDirty() {
+    protected void setDirty() {
         this.dirty = true;
         if (owner != null) {
             owner.setDirty();
         }
     }
-     
+
+    /** Clean any dirty regions of the layer and mark layer as not dirty */
+    protected void cleanDirty() {
+        dirty = false;
+        dirtyBounds[X] = dirtyBounds[Y]
+            = dirtyBounds[W] = dirtyBounds[H] = -1;
+    }
+
     /**
      * Determine if this layer supports input, such as key and pen events.
      *
@@ -431,66 +436,23 @@ public class CLayer {
      * @return true if the coordinate lies in the bounds of this layer
      */
     public boolean containsPoint(int x, int y) {
-        if (x >= bounds[X] && x <= (bounds[X] + bounds[W])) {
-            if (y >= bounds[Y] && y <= (bounds[Y] + bounds[H])) {
-                return true;
-            }
-        }
-        return false;
+        return (visible &&
+                x >= bounds[X] && x <= (bounds[X] + bounds[W]) &&
+                y >= bounds[Y] && y <= (bounds[Y] + bounds[H]));
     }
 
     /**
-     * Utility method to determine if the given region lies at
-     * least in part within the bounds of this layer. The region
-     * should be in the coordinate space of this layer's containing
-     * CWindow.
+     * Utility method to determine if this layer wanna handle
+     * the given point. By default the layer handles the point if it
+     * lies within the bounds of this layer.  The point should be in
+     * the coordinate space of this layer's containing CWindow.
      *
-     * @param region A four element array containing a region defined
-     *               by the X, Y, width, and height respectively
-     * @return true if the given region lies in any part within the
-     *              bounds of this layer
+     * @param x the "x" coordinate of the point
+     * @param y the "y" coordinate of the point
+     * @return true if the coordinate lies in the bounds of this layer
      */
-    public boolean intersectsRegion(int[] region) {
-        return intersectsRegion(region[X], region[Y], region[W], region[H]);
-    }
-    
-    /**
-     * Utility method to determine if the given region lies at
-     * least in part within the bounds of this layer. The region
-     * should be in the coordinate space of this layer's containing
-     * CWindow.
-     *
-     * @param x the x coordinate of the region
-     * @param y the y coordinate of the region
-     * @param w the width of the region
-     * @param h the height of the region
-     * @return true if the given region lies in any part within the
-     *              bounds of this layer
-     */
-    public boolean intersectsRegion(int x, int y, int w, int h) {
-        if (CGraphicsQ.DEBUG) {
-            System.err.println("comparing regions (" + layerID + "):");
-            System.err.println("\t" + x + ", " + y 
-                + ", " + w + ", " + h);
-                System.err.println("\t" + bounds[X] + ", " + bounds[Y] 
-                    + ", " + bounds[W] + ", " + bounds[H]);
-                    
-            if (x < bounds[X] + bounds[W] && 
-                x + w > bounds[X] && 
-                    y < bounds[Y] + bounds[H] && 
-                        y + h > bounds[Y])
-            {
-                System.err.println("\t...returning true");
-                return true;
-            }
-            System.err.println("\t...returning false");
-            return false;
-        }
-        
-        return (x < bounds[X] + bounds[W] && 
-               x + w > bounds[X] && 
-               y < bounds[Y] + bounds[H] && 
-               y + h > bounds[Y]);
+    public boolean handlePoint(int x, int y) {
+        return containsPoint(x, y);
     }
     
     /**
@@ -500,10 +462,11 @@ public class CLayer {
      */
     public void addDirtyRegion() {
         if (CGraphicsQ.DEBUG) {
-            System.err.println("Layer " + layerID + ":");
+            System.err.println("Layer " + layerID() + ":");
             System.err.println("\tMarking entire layer dirty");
         }
-        dirtyBounds[X] = dirtyBounds[Y] = dirtyBounds[W] = dirtyBounds[H] = -1;
+        dirtyBounds[X] = dirtyBounds[Y]
+            = dirtyBounds[W] = dirtyBounds[H] = -1;
         setDirty();
     }
     
@@ -517,68 +480,199 @@ public class CLayer {
      * @param y the y coordinate of the region
      * @param w the width of the region
      * @param h the height of the region
+     * @return true if dirty region of the layer was changed,
+     *         false otherwise
      */
-    public void addDirtyRegion(int x, int y, int w, int h) {
+    public boolean addDirtyRegion(int x, int y, int w, int h) {
         if (CGraphicsQ.DEBUG) {
-            System.err.println("Layer " + layerID + ":");
-            System.err.println("\tAdd Dirty: " + x + ", " 
+            System.err.println("Layer " + this + ":");
+            System.err.println("\tAdd dirty: " + x + ", "
                 + y + ", " + w + ", " + h);
         }
-        
-        // If the layer is dirty and the bounds isn't yet set,
-        // then the bounds is actually the entire layer, so just
-        // return
+
+        // The whole layer is dirty already
         if (dirty && dirtyBounds[X] == -1) {
-            return;
+            if (CGraphicsQ.DEBUG) {
+                System.err.println(
+                    "\tWhole layer is dirty already");
+            }
+            return false;
         }
-        
+
+        // Cache layer bounds
+        int bw = bounds[W];
+        int bh = bounds[H];
+        int x2 = x + w;
+        int y2 = y + h;
+
+        // Dirty region can be outside of the layer
+        if (x >= bw || y >= bh || x2 <= 0 || y2 <=0) {
+            if (CGraphicsQ.DEBUG) {
+                System.err.println(
+                    "\tAdded region is outside of the layer");
+            }
+            return false;
+        }
+
+        boolean res = false;
+        int dx, dy, dx2, dy2;
         if (dirtyBounds[X] == -1) {
-            dirtyBounds[X] = x;
-            dirtyBounds[Y] = y;
-            dirtyBounds[W] = w;
-            dirtyBounds[H] = h;
+            dx = x; dy = y;
+            dx2 = x2; dy2 = y2;
         } else {
-            int x2 = x + w;
-            if (x2 < (dirtyBounds[X] + dirtyBounds[W])) {
-                x2 = dirtyBounds[X] + dirtyBounds[W];
-            }
-            int y2 = y + h;
-            if (y2 < (dirtyBounds[Y] + dirtyBounds[H])) {
-                y2 = dirtyBounds[Y] + dirtyBounds[H];
-            }
-            if (x < dirtyBounds[X]) {
-                dirtyBounds[X] = x;
-            }
-            if (y < dirtyBounds[Y]) {
-                dirtyBounds[Y] = y;
-            }
-            dirtyBounds[W] = x2 - dirtyBounds[X];
-            dirtyBounds[H] = y2 - dirtyBounds[Y];
-        }        
-        setDirty();
-        
+            dx = dirtyBounds[X];
+            dy = dirtyBounds[Y];
+            dx2 = dx + dirtyBounds[W];
+            dy2 = dy + dirtyBounds[H];
+            if (dx2 < x2) dx2 = x2;
+            if (dy2 < y2) dy2 = y2;
+            if (x < dx) dx = x;
+            if (y < dy) dy = y;
+        }
+
         // Lastly, we carefully restrict the dirty region
         // to be within the bounds of this layer
-        if (dirtyBounds[X] < 0) {
-            dirtyBounds[X] = 0;
+        if (dx < 0) dx = 0;
+        if (dy < 0) dy = 0;
+        if (dx2 > bw) dx2 = bw;
+        if (dy2 > bh) dy2 = bh;
+
+        // Update changed dirty region
+        int dw = dx2 - dx;
+        int dh = dy2 - dy;
+        if (dirtyBounds[W] != dw || dirtyBounds[H] != dh) {
+            if (dw == bw && dh == bh) {
+                // The entire layer is dirty now
+                dirtyBounds[X] = dirtyBounds[Y] =
+                    dirtyBounds[W] = dirtyBounds[H] = -1;
+
+                if (CGraphicsQ.DEBUG) {
+                    System.err.println(
+                        "\tThe entire layer became dirty");
+                }
+            } else {
+                dirtyBounds[X] = dx;
+                dirtyBounds[Y] = dy;
+                dirtyBounds[W] = dw;
+                dirtyBounds[H] = dh;
+
+                if (CGraphicsQ.DEBUG) {
+                    System.err.println(
+                        "\tCurrent dirty: " + dirtyBounds[X] + ", "
+                        + dirtyBounds[Y] + ", " + dirtyBounds[W] + ", "
+                        + dirtyBounds[H]);
+                }
+            }
+            res = true;
+            setDirty();
         }
-        if (dirtyBounds[Y] < 0) {
-            dirtyBounds[Y] = 0;
-        }
-        if ((dirtyBounds[X] + dirtyBounds[W]) > bounds[W]) {
-            dirtyBounds[W] = bounds[W] - dirtyBounds[X];
-        }
-        if ((dirtyBounds[Y] + dirtyBounds[H]) > bounds[H]) {
-            dirtyBounds[H] = bounds[H] - dirtyBounds[Y];
-        }
-        
-        if (CGraphicsQ.DEBUG) {
-            System.err.println("\tCurrent Dirty: " + dirtyBounds[X] + ", " 
-                + dirtyBounds[Y] + ", " + dirtyBounds[W] + ", " 
-                + dirtyBounds[H]);
-        }
+
+        return res;
     }
-    
+
+    /**
+     * Subtract a layer area not needed for repaint of this layer.
+     * It could be needed for a variety of reasons, such as layer being
+     * overlapped with opague higher layer or window element.
+     * The subtracted region should be in the coordinate space
+     * of this layer.
+     *
+     * @param x the x coordinate of the region
+     * @param y the y coordinate of the region
+     * @param w the width of the region
+     * @param h the height of the region
+     * @return true if dirty region of the layer was changed,
+     *         false otherwise
+     */
+    boolean subDirtyRegion(int x, int y, int w, int h) {
+        if (!dirty) return false;
+
+        if (CGraphicsQ.DEBUG) {
+            System.err.println("Layer " + this + ":");
+            System.err.println("\tSub dirty: " + x + ", "
+                + y + ", " + w + ", " + h);
+        }
+
+        int x2 = x + w;
+        int y2 = y + h;
+        boolean res = false;
+        int dx, dy, dx2, dy2;
+        if (dirtyBounds[X] == -1) {
+            dx = 0; dy = 0;
+            dx2 = bounds[W];
+            dy2 = bounds[H];
+        } else {
+            dx = dirtyBounds[X];
+            dy = dirtyBounds[Y];
+            dx2 = dx + dirtyBounds[W];
+            dy2 = dy + dirtyBounds[H];
+        }
+
+        // Subtracted region can be outside of the dirty area
+        if (x >= dx2 || y >= dy2 || x2 <= dx || y2 <=dy) {
+            if (CGraphicsQ.DEBUG) {
+                System.err.println(
+                    "\tSubtracted region is outside of dirty area");
+            }
+            return false;
+        }
+
+        boolean insideVert = (y <= dy && y2 >= dy2);
+        boolean insideHorz = (x <= dx && x2 >= dx2);
+
+        if (insideVert) {
+            if (dx >= x && dx < x2) dx = x2;
+            else if (dx2 > x && dx2 <= x2) dx2 = x;
+        } else if (insideHorz) {
+            if (dy >= y && dy < y2) dy = y2;
+            else if (dy2 > y && dy2 <= y2) dy2 = y;
+        } else {
+            // We can subtract only such a regions that result
+            // of subtraction is a rectangular area
+            if (CGraphicsQ.DEBUG) {
+                System.err.println(
+                    "\tSubtraction can't be done");
+            }
+            return false;
+
+        }
+
+        // Result of subtraction can be an empty dirty region
+        if (dx >= dx2 || dy >= dy2) {
+            cleanDirty();
+            res = true;
+
+            if (CGraphicsQ.DEBUG) {
+                System.err.println(
+                    "\tThe layer is no more dirty");
+            }
+
+        } else if (dirtyBounds[W] != dx2 - dx ||
+                dirtyBounds[H] != dy2 - dy) {
+            // Update changed dirty region
+            dirtyBounds[X] = dx;
+            dirtyBounds[Y] = dy;
+            dirtyBounds[W] = dx2 - dx;
+            dirtyBounds[H] = dy2 - dy;
+            res = true;
+
+            if (CGraphicsQ.DEBUG) {
+                System.err.println(
+                    "\tCurrent dirty: " + dirtyBounds[X] + ", "
+                    + dirtyBounds[Y] + ", " + dirtyBounds[W] + ", "
+                    + dirtyBounds[H]);
+            }
+        } else {
+            if (CGraphicsQ.DEBUG) {
+                System.err.println(
+                    "\tDirty area has not been changed");
+            }
+        }
+
+        return res;
+    }
+
+
     /**
      * Request a repaint for the entire contents of this layer.
      */
@@ -598,7 +692,6 @@ public class CLayer {
      */
     public void requestRepaint(int x, int y, int w, int h) {
         addDirtyRegion(x, y, w, h);
-        
         if (owner != null && visible) {
             // We request a repaint of our parent window after translating
             // the origin into the coordinate space of the window.
@@ -621,7 +714,7 @@ public class CLayer {
      * @param g The graphics object to use to paint this layer.
      */
     public void paint(Graphics g) {
-        try {
+        try {            
             // We first reset our dirty flag
             this.dirty = false;
             
@@ -667,7 +760,7 @@ public class CLayer {
      *
      * @param g The Graphics object to use to paint the background.
      */
-    protected void paintBackground(Graphics g) {
+    protected void paintBackground(Graphics g) {        
         if (bgImage == null) {
             // background is null, just fill using the fill color
             g.setColor(bgColor);
@@ -700,5 +793,50 @@ public class CLayer {
     protected void paintBody(Graphics g) {
     }
 
-}
 
+    public void update(CLayer[] mainLayers) {
+        if (visible) {
+            addDirtyRegion();
+        }
+    }
+
+    /**
+     * A String identifier used by subclasses (for debug purposes)
+     * @return abbreviated class name of the layer instance
+     */
+    protected String layerID() {
+        int i;
+        String res = getClass().getName();
+        if (res != null && (i = res.lastIndexOf('.')) > -1) {
+            res = res.substring(i+1);
+        }
+        return res + "@" +
+            Integer.toHexString(hashCode());
+    }
+
+    /**
+     * Get the layer details including
+     * its bound and dirty region information
+     *
+     * @return String with layer details
+     */
+    public String toString() {
+        String res = layerID() + " [" +
+            bounds[X] + ", " + bounds[Y] + ", " +
+            bounds[W] + ", " + bounds[H] + "]";
+
+        if (dirty) {
+            res += ", dirty";
+            if (dirtyBounds[X] != -1) {
+                res += " (" +
+                    dirtyBounds[X] + ", " + dirtyBounds[Y] + ", " +
+                    dirtyBounds[W] + ", " + dirtyBounds[H] + ")";
+            }
+        }
+        res += ", opaque: " + (opaque ? 1 : 0);
+        res += ", visible: " + (visible ? 1 : 0);
+        res += ", transparent: " + (transparent ? 1 : 0);
+        return res;
+    }
+
+}

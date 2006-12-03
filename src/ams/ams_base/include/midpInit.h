@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -33,12 +34,14 @@
  * @{
  */
 #define NO_INIT 0      /**< no initialization yet */
-#define MEM_LEVEL 1    /**< storage subsystem initialized
-                            (non-volatile memory) */
-#define LIST_LEVEL 2   /**< configuration sub-system initialized
+#define MEM_LEVEL 1    /**< memory subsystem initialized */
+#define LIST_LEVEL 2   /**< storage sub-system initialized
                             (the list of midlets) */
-#define REMOVE_LEVEL 3 /**< reserved for removeMidlet requirements,
-                            currently unused */
+#define REMOVE_LEVEL 2 /**< de-facto it is the same as LIST_LEVEL
+                    	    - suite storage initialization.
+			    Porting efforts may include defining
+			    REMOVE_LEVEL as 3 and adding extra
+			    functionality to midpInit */
 #define VM_LEVEL 4     /**< what is required to run midlets
                             (full initialization) */
 /** @} */
@@ -64,6 +67,13 @@ extern "C" {
  * @return zero for success, non-zero if out of memory
  */
 int midpInit(int level);
+
+/**
+ * Internal function for retrieving current MIDP initialization level.
+ *
+ * @return maximum initialization level achieved
+ */
+int getMidpInitLevel();
 
 /**
  * Internal function to initialize MIDP to only the level required by

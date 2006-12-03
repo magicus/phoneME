@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -52,7 +53,7 @@ import com.sun.midp.security.SecurityToken;
  *
  * It is assumed that only one object instance of this class (per isolate)
  * is created at (isolate) startup. 
- * All MIDP runtime subsystems that need to send events of supported types, 
+ * All MIDP stack subsystems that need to send events of supported types, 
  * must get a reference to an already created istance of this class. 
  * Typically, this instance should be passed as a constructor parameter.
  *
@@ -105,6 +106,7 @@ public class MIDletEventProducer {
      * DESTROY_MIDLET_EVENT
      *
      */
+
     /**
      * Pause a MIDlet.
      * Called by the system event handler within Display.
@@ -112,19 +114,12 @@ public class MIDletEventProducer {
      * Probably: need some form of MIDlet ID instead of displayId.
      *           use MIDletProxy instead of 2 int ID parameters.
      *
-     * @param midletIsolateId ID of the target isolate (where to send event)
-     * @param midletDisplayId ID of the target display
+     * @param isolateId ID of the target isolate (where to send event)
+     * @param displayId ID of the target display
      */
-    public void sendMIDletActivateEvent(
-        int midletIsolateId, 
-        int midletDisplayId) {
-
-        NativeEvent event =
-            new NativeEvent(EventTypes.ACTIVATE_MIDLET_EVENT);
-        
-        event.intParam4 = midletDisplayId;
-        
-        eventQueue.sendNativeEventToIsolate(event, midletIsolateId);
+    public void sendMIDletActivateEvent(int isolateId, int displayId) {
+        sendMIDletEvent(EventTypes.ACTIVATE_MIDLET_EVENT,
+                isolateId, displayId);
     }
     /**
      * Activate a MIDlet.
@@ -133,19 +128,13 @@ public class MIDletEventProducer {
      * Probably: need some form of MIDlet ID instead of displayId.
      *           use MIDletProxy instead of 2 int ID parameters.
      *
-     * @param midletIsolateId ID of the target isolate (where to send event)
-     * @param midletDisplayId ID of the target display
+     * @param isolateId ID of the target isolate (where to send event)
+     * @param displayId ID of the target display
      */
-    public void sendMIDletPauseEvent(
-        int midletIsolateId, 
-        int midletDisplayId) {
-        NativeEvent event =
-            new NativeEvent(EventTypes.PAUSE_MIDLET_EVENT);
-        
-        event.intParam4 = midletDisplayId;
-        
-        eventQueue.sendNativeEventToIsolate(event, midletIsolateId);
+    public void sendMIDletPauseEvent(int isolateId, int displayId) {
+        sendMIDletEvent(EventTypes.PAUSE_MIDLET_EVENT, isolateId, displayId);
     }
+
     /**
      * Destroy a MIDlet.
      * Called by the system event handler within Display.
@@ -153,18 +142,11 @@ public class MIDletEventProducer {
      * Probably: need some form of MIDlet ID instead of displayId.
      *           use MIDletProxy instead of 2 int ID parameters.
      *
-     * @param midletIsolateId ID of the target isolate (where to send event)
-     * @param midletDisplayId ID of the target display
+     * @param isolateId ID of the target isolate (where to send event)
+     * @param displayId ID of the target display
      */
-    public void sendMIDletDestroyEvent(
-        int midletIsolateId, 
-        int midletDisplayId) {
-        NativeEvent event =
-            new NativeEvent(EventTypes.DESTROY_MIDLET_EVENT);
-        
-        event.intParam4 = midletDisplayId;
-        
-        eventQueue.sendNativeEventToIsolate(event, midletIsolateId);
+    public void sendMIDletDestroyEvent(int isolateId, int displayId) {
+        sendMIDletEvent(EventTypes.DESTROY_MIDLET_EVENT, isolateId, displayId);
     }
 
     /*
@@ -216,6 +198,23 @@ public class MIDletEventProducer {
         event.intParam1 = 0; /* hasForeground = true */
         event.intParam4 = midletDisplayId;
         
+        eventQueue.sendNativeEventToIsolate(event, midletIsolateId);
+    }
+
+    /**
+     * Sends an event with the only integer parameter for display ID
+     * to a MIDlet .
+     *
+     * @param eventType type of event to be sent
+     * @param midletIsolateId ID of the target isolate
+     * @param midletDisplayId ID of the target display
+     */
+    private void sendMIDletEvent(int eventType, int midletIsolateId,
+                                 int midletDisplayId) {
+        NativeEvent event = new NativeEvent(eventType);
+
+        event.intParam4 = midletDisplayId;
+
         eventQueue.sendNativeEventToIsolate(event, midletIsolateId);
     }
 }

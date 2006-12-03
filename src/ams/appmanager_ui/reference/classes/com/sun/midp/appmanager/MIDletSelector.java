@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -39,8 +40,8 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 /**
- * Selector provides a simple user interface to select MIDlets to run.  
- * It extracts the list of MIDlets from the attributes in the 
+ * Selector provides a simple user interface to select MIDlets to run.
+ * It extracts the list of MIDlets from the attributes in the
  * descriptor file and presents them to the user using the MIDlet-&lt;n&gt;
  * name and icon if any. When the user selects a MIDlet an instance
  * of the class indicated by MIDlet-&lt;n&gt; classname is created.
@@ -49,7 +50,7 @@ final class MIDletSelector implements CommandListener {
     /**
      * The List of all the MIDlets.
      */
-    private List mlist;         
+    private List mlist;
     /**
      * Information needed to display a list of MIDlets.
      */
@@ -57,7 +58,7 @@ final class MIDletSelector implements CommandListener {
     /**
      * The Display.
      */
-    private Display display;    
+    private Display display;
     /**
      * The parent's display able.
      */
@@ -73,19 +74,19 @@ final class MIDletSelector implements CommandListener {
     /**
      * MIDlet information, class, name, icon; one per MIDlet.
      */
-    private MIDletInfo[] minfo; 
+    private MIDletInfo[] minfo;
     /**
      * the Command object to exit back to the MIDlet Suite Manager
      */
     private Command backCmd = new Command(Resource.getString
-					  (ResourceConstants.BACK),
+                                          (ResourceConstants.BACK),
                                           Command.BACK, 2);
     /**
      * the Command object for "Launch".
      */
     private Command launchCmd = new Command(Resource.getString
-					    (ResourceConstants.LAUNCH), 
-					    Command.ITEM, 1);
+                                            (ResourceConstants.LAUNCH),
+                                            Command.ITEM, 1);
     /**
      * Index of the selected MIDlet, starts at -1 for non-selected.
      */
@@ -102,7 +103,9 @@ final class MIDletSelector implements CommandListener {
      * @param theManager the parent application manager
      */
     MIDletSelector(MIDletSuiteInfo theSuiteInfo, Display theDisplay,
-            Displayable theParentDisplayable, ApplicationManager theManager) {
+                   Displayable theParentDisplayable,
+                   ApplicationManager theManager) throws Throwable {
+
         MIDletSuiteStorage mss;
 
         suiteInfo = theSuiteInfo;
@@ -135,7 +138,7 @@ final class MIDletSelector implements CommandListener {
      * @param s the Displayable the command was on.
      */
     public void commandAction(Command c, Displayable s) {
-	if ((s == mlist && c == List.SELECT_COMMAND) || (c == launchCmd)) {
+        if ((s == mlist && c == List.SELECT_COMMAND) || (c == launchCmd)) {
             synchronized (this) {
                 if (selectedMidlet != -1) {
                     // the previous selected MIDlet is being launched
@@ -148,12 +151,12 @@ final class MIDletSelector implements CommandListener {
             manager.launchSuite(suiteInfo, minfo[selectedMidlet].classname);
             display.setCurrent(parentDisplayable);
             return;
-	}
+        }
 
         if (c == backCmd) {
             display.setCurrent(parentDisplayable);
             return;
-        } 
+        }
     }
 
     /**
@@ -165,29 +168,31 @@ final class MIDletSelector implements CommandListener {
     private void setupList(MIDletSuiteStorage mss) {
         if (mlist == null) {
             mlist = new List(Resource.getString
-			     (ResourceConstants.AMS_SELECTOR_SEL_TO_LAUNCH), 
+                             (ResourceConstants.AMS_SELECTOR_SEL_TO_LAUNCH),
                              Choice.IMPLICIT);
 
-	    // Add each midlet
-	    for (int i = 0; i < mcount; i++) {
-		Image icon = null;
-		if (minfo[i].icon != null) {
-                    icon = suiteInfo.getIcon(suiteInfo.id, minfo[i].icon, mss);
-		}
+            // Add each midlet
+            for (int i = 0; i < mcount; i++) {
+                Image icon = null;
+                if (minfo[i].icon != null) {
+                    icon = MIDletSuiteInfo.getIcon(suiteInfo.suiteId,
+                        minfo[i].icon, mss);
+                }
 
-		mlist.append(minfo[i].name, icon);
-	    }
-	}
+                mlist.append(minfo[i].name, icon);
+            }
+        }
     }
-        
+
     /**
-     * Read in and create a MIDletInfor for each MIDlet-&lt;n&gt;
+     * Read in and create a MIDletInfo for each MIDlet-&lt;n&gt;
      *
      * @param mss the midlet suite storage
      */
-    private void readMIDletInfo(MIDletSuiteStorage mss) {
+    private void readMIDletInfo(MIDletSuiteStorage mss) throws Throwable {
         try {
-            MIDletSuite midletSuite = mss.getMIDletSuite(suiteInfo.id, false);
+            MIDletSuite midletSuite =
+                mss.getMIDletSuite(suiteInfo.suiteId, false);
 
             if (midletSuite == null) {
                 return;
@@ -199,16 +204,14 @@ final class MIDletSelector implements CommandListener {
                     String attr = midletSuite.getProperty(nth);
                     if (attr == null || attr.length() == 0)
                         break;
-                    
+
                     addMIDlet(new MIDletInfo(attr));
                 }
             } finally {
                 midletSuite.close();
             }
-        } catch (MIDletSuiteCorruptedException msce) {
-            // ignore
-        } catch (MIDletSuiteLockedException msle) {
-            // ignore
+        } catch (Throwable t) {
+            throw t;
         }
     }
 

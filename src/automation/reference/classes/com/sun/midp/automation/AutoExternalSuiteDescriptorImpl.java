@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -31,11 +32,11 @@ import java.util.*;
 /**
  *  AutoSuiteDescriptor implementation for external suite
  */
-class AutoExternalSuiteDescriptorImpl 
+class AutoExternalSuiteDescriptorImpl
     extends AutoSuiteDescriptorImpl {
-    
+
     /** suite ID */
-    private String suiteID;
+    private int suiteID;
 
 
     /**
@@ -44,13 +45,13 @@ class AutoExternalSuiteDescriptorImpl
      * @param suiteID suite ID
      * @param midletSuite internal MIDlet suite representation
      */
-    AutoExternalSuiteDescriptorImpl(String suiteID, 
+    AutoExternalSuiteDescriptorImpl(int suiteID,
             MIDletSuiteImpl midletSuite) {
         super(midletSuite);
-        
+
         this.suiteID = suiteID;
         if (suiteName == null) {
-            suiteName = suiteID;
+            suiteName = String.valueOf(suiteID);
         }
     }
 
@@ -62,13 +63,13 @@ class AutoExternalSuiteDescriptorImpl
     boolean isExternalSuite() {
         return true;
     }
-    
+
     /**
      * Gets suite ID
      *
      * @return suite ID as String
      */
-    String getSuiteID() {
+    int getSuiteID() {
         return suiteID;
     }
 
@@ -77,7 +78,7 @@ class AutoExternalSuiteDescriptorImpl
      */
     void updateMIDletsList() {
         suiteMIDlets = new Vector(totalMIDlets);
-        
+
         for (int i = 1; i <= totalMIDlets; i++) {
             AutoMIDletDescriptorImpl midlet = null;
             String midletAttr = midletSuite.getProperty("MIDlet-" + i);
