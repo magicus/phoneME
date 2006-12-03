@@ -1,5 +1,5 @@
 /*
- * @(#)WIMApplication.java	1.32 06/05/10 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -1005,7 +1005,7 @@ class WIMApplication {
         }
 
         if (pinStatus != PIN_DISABLED) {
-            // IMPL_NOTE: - need warning message?
+            // IMPL_NOTE: need warning message?
             throw new CMSMessageSignatureServiceException(
                  CMSMessageSignatureServiceException.SE_CRYPTO_FAILURE);
         }

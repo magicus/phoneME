@@ -1,5 +1,5 @@
 /*
- * @(#)Protocol.java	1.51 06/06/12 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -42,11 +42,14 @@ import com.sun.midp.io.j2me.apdu.Handle;
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midletsuite.MIDletSuiteImpl;
-import com.sun.midp.security.*;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.Permissions;
 import com.sun.satsa.acl.ACLPermissions;
 import com.sun.satsa.acl.AccessControlManager;
 import com.sun.satsa.acl.JCRMIPermissions;
 import com.sun.satsa.util.Utils;
+import com.sun.satsa.security.SecurityInitializer;
 import javacard.framework.*;
 import javacard.framework.service.ServiceException;
 
@@ -55,10 +58,18 @@ import javacard.framework.service.ServiceException;
  */
 public class Protocol
     implements JavaCardRMIConnection, ConnectionBaseInterface,
-	       StreamConnection, ImplicitlyTrustedClass  {
+	       StreamConnection {
+
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
 
     /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken;
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * Size of APDU buffer.
@@ -114,20 +125,6 @@ public class Protocol
      * This object verifies access rights of MIDlet.
      */
     private JCRMIPermissions verifier;
-
-    /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class.
-     */
-    public void initSecurityToken(SecurityToken token) {
-        if (classSecurityToken != null) {
-            return;
-        }
-        classSecurityToken = token;
-    }
-
 
     /**
      * Connector uses this method to initialize the connection object.

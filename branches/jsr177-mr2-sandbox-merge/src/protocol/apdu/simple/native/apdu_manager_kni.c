@@ -1,5 +1,5 @@
 /*
- * @(#)apdu_manager_kni.c	1.2 06/04/26 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -36,7 +36,7 @@
 #include <midpMalloc.h>
 
 #include "carddevice.h"
-#include "apdu_asynchro.h"
+
 #include "string.h" /* memcpy() and memset() */
 
 /** This structure represents the connection handle object. */
@@ -68,14 +68,14 @@ KNIEXPORT KNI_RETURNTYPE_INT
 Java_com_sun_midp_io_j2me_apdu_APDUManager_init0() {
     jint retcode;
     JSR177_STATUSCODE status;
-    jbyte *err_msg;
-    const jbyte *prop_value;
+    char *err_msg;
+    const char *prop_value;
 
     prop_value = getInternalProp(hostsandports);
     if (prop_value != NULL) {
-        status = jsr177_set_property(hostsandports, prop_value);
+        status = jsr177_set_property((jbyte*)hostsandports, (jbyte*)prop_value);
         if (status == JSR177_STATUSCODE_NOT_IMPLEMENTED) {
-            if (jsr177_get_error(gKNIBuffer, KNI_BUFFER_SIZE)) {
+            if (jsr177_get_error((jbyte*)gKNIBuffer, KNI_BUFFER_SIZE)) {
                 err_msg = gKNIBuffer;
             } else {
                 err_msg = "Required property not supported";
@@ -84,7 +84,7 @@ Java_com_sun_midp_io_j2me_apdu_APDUManager_init0() {
             goto end;
         }
         if (status == JSR177_STATUSCODE_OUT_OF_MEMORY) {
-            if (jsr177_get_error(gKNIBuffer, KNI_BUFFER_SIZE)) {
+            if (jsr177_get_error((jbyte*)gKNIBuffer, KNI_BUFFER_SIZE)) {
                 err_msg = gKNIBuffer;
             } else {
                 err_msg = "init0()";
@@ -93,7 +93,7 @@ Java_com_sun_midp_io_j2me_apdu_APDUManager_init0() {
             goto end;
         }
         if (status != JSR177_STATUSCODE_OK) {
-            if (jsr177_get_error(gKNIBuffer, KNI_BUFFER_SIZE)) {
+            if (jsr177_get_error((jbyte*)gKNIBuffer, KNI_BUFFER_SIZE)) {
                 err_msg = gKNIBuffer;
             } else {
                 err_msg = "Invalid 'hostsandports' property";
@@ -111,7 +111,7 @@ Java_com_sun_midp_io_j2me_apdu_APDUManager_init0() {
     }
     if (status != JSR177_STATUSCODE_OK) {
     err:
-        if (jsr177_get_error(gKNIBuffer, KNI_BUFFER_SIZE)) {
+        if (jsr177_get_error((jbyte*)gKNIBuffer, KNI_BUFFER_SIZE)) {
             err_msg = gKNIBuffer;
         } else {
             err_msg = "init0()";
@@ -147,7 +147,7 @@ Java_com_sun_midp_io_j2me_apdu_APDUManager_isSAT() {
     int slotIndex = KNI_GetParameterAsInt(1);
     
     if (jsr177_is_sat(slotIndex, &result) != JSR177_STATUSCODE_OK) {
-        if (jsr177_get_error(gKNIBuffer, KNI_BUFFER_SIZE)) {
+        if (jsr177_get_error((jbyte*)gKNIBuffer, KNI_BUFFER_SIZE)) {
             err_msg = gKNIBuffer;
         } else {
             err_msg = "isSAT()";
@@ -226,7 +226,7 @@ Java_com_sun_midp_io_j2me_apdu_APDUManager_reset0() {
 
     if (status_code != JSR177_STATUSCODE_OK) {
     err:
-        if (jsr177_get_error(gKNIBuffer, KNI_BUFFER_SIZE)) {
+        if (jsr177_get_error((jbyte*)gKNIBuffer, KNI_BUFFER_SIZE)) {
             err_msg = gKNIBuffer;
         } else {
             err_msg = "reset0()";
@@ -457,7 +457,7 @@ Java_com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0() {
             if ((movements & JSR177_CARD_MOVEMENT_MASK) != 0) {
                 err_msg = "Card changed";
                 jsr177_set_error(err_msg);
-                if (jsr177_get_error(gKNIBuffer, KNI_BUFFER_SIZE)) {
+                if (jsr177_get_error((jbyte*)gKNIBuffer, KNI_BUFFER_SIZE)) {
                     err_msg = gKNIBuffer;
                 }
                 card_slot->powered = KNI_FALSE;
@@ -472,7 +472,7 @@ Java_com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0() {
         
         if (status_code != JSR177_STATUSCODE_OK) {
         err:
-            if (jsr177_get_error(gKNIBuffer, KNI_BUFFER_SIZE)) {
+            if (jsr177_get_error((jbyte*)gKNIBuffer, KNI_BUFFER_SIZE)) {
                 err_msg = gKNIBuffer;
             } else {
                 err_msg = "exchangeAPDU0()";
