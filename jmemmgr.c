@@ -1029,7 +1029,7 @@ self_destruct (j_common_ptr cinfo)
 
   /* Close all backing store, release all memory.
    * Releasing pools in reverse order might help avoid fragmentation
-   * with some (brain-damaged) malloc libraries.
+   * with some (some) malloc libraries.
    */
   for (pool = JPOOL_NUMPOOLS-1; pool >= JPOOL_PERMANENT; pool--) {
     free_pool(cinfo, pool);
@@ -1061,7 +1061,7 @@ jm_jinit_memory_mgr (j_common_ptr cinfo)
   /* Check for configuration errors.
    * SIZEOF(ALIGN_TYPE) should be a power of 2; otherwise, it probably
    * doesn't reflect any real hardware alignment requirement.
-   * The test is a little non-trivial: for X>0, X and X-1 have no one-bits
+   * The test is a little complex: for X>0, X and X-1 have no one-bits
    * in common if and only if X is a power of 2, ie has only one one-bit.
    * Some compilers may give an "unreachable code" warning here; ignore it.
    */

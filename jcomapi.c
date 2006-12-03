@@ -57,7 +57,7 @@ jm_jpeg_abort (j_common_ptr cinfo)
     return;
 
   /* Releasing pools in reverse order might help avoid fragmentation
-   * with some (brain-damaged) malloc libraries.
+   * with some (some) malloc libraries.
    */
   for (pool = JPOOL_NUMPOOLS-1; pool > JPOOL_PERMANENT; pool--) {
     (*cinfo->mem->free_pool) (cinfo, pool);
