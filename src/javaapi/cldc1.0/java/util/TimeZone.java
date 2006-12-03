@@ -1,5 +1,5 @@
 /*
- * @(#)TimeZone.java	1.8 06/01/26 16:07:32
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

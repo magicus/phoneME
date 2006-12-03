@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -47,81 +48,9 @@ BinaryAssembler::BinaryAssembler(CompilerState* compiler_state,
                          = compiler_state->code_offset_to_force_literals();
   _code_offset_to_desperately_force_literals
                  = compiler_state->code_offset_to_desperately_force_literals();
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_NPCE  
-  ThrowExceptionStub::npe_count = compiler_state->npe_count(); 
-  _npe_index = compiler_state->npe_index();
-#endif
   _relocation.set_assembler(this);
   CodeInterleaver::initialize(this);
 }
-
-#if ENABLE_LOOP_OPTIMIZATION && ARM
-//check whether current instruction is a conditional jump instruction
-bool BinaryAssembler::is_jump_instr(int instr, int next_instr, Assembler::Condition& cond,
-                                                             bool& link, bool& op_pc, int& offset) {
-  cond = Assembler::as_condition(instr >> 28 & 0xf);
-  int op = (instr >> 25) & 0x7;
-  op_pc = false;
-//check whether the instruction may contain pc operation
-  if(rd_field(instr) == Assembler::pc || rm_field(instr) == Assembler::pc ||
-      rn_field(instr) == Assembler::pc || rs_field(instr) == Assembler::pc) {
-    op_pc = true;
-  }
-#if ENABLE_XSCALE_WMMX_TIMER_TICK && !ENABLE_TIMER_THREAD
-#define TEXTRCB_R15_ZERO  0xee13f170
-  if( next_instr != TEXTRCB_R15_ZERO ) {
-    return false;
-  }
-#else
-  int next_cond = Assembler::as_condition(next_instr >> 28 & 0xf);
-  int next_offset = next_instr & 0xFFF;
-  int next_op =( next_instr >> 26 ) & 0x3;
-  int timer_tick_offset = (address)(&_rt_timer_ticks) - (address)&gp_base_label; 
-  if( next_cond != 0xE || next_op != 0x1) { 
-    return false;
-  }
-  if(rn_field(next_instr) != Assembler::gp ) {
-    return false;
-  }
-  if( next_offset != timer_tick_offset ) {
-    return false;
-  }
-#endif
-
-  if( op == 5) {
-    if (bit(instr, 24)) {
-      link = true;
-    } else      {
-      link = false;
-    }
-    offset = ((instr & 0xffffff) | (bit(instr, 23) ? 0xff000000 : 0)) << 2; 
-    return true;
-  }
-  return false;
-}
-
-//get the reverse condition of current condition
-Assembler::Condition BinaryAssembler::get_reverse_cond(Assembler::Condition cond) {
-  if((int)cond % 2 == 0) {
-    return (Assembler::Condition)(cond + 1);
-  } else {
-    return (Assembler::Condition)(cond - 1);
-  }
-}
-
-//call the branch function
-void BinaryAssembler::back_branch(Label& L, bool link, Assembler::Condition cond) {
-  branch(L, link, cond);
-}
-
-//get the instruction in specified position
-int BinaryAssembler::get_instruction(jint pos) {
-  address adr = addr_at(pos);
-  jint instr = *(int *)adr;
-
-  return instr;
-}
-#endif //#if ENABLE_LOOP_OPTIMIZATION && ARM
 
 void BinaryAssembler::save_state(CompilerState *compiler_state) {
   compiler_state->set_code_size(_code_offset);
@@ -133,21 +62,12 @@ void BinaryAssembler::save_state(CompilerState *compiler_state) {
                      _code_offset_to_force_literals);
   compiler_state->set_code_offset_to_desperately_force_literals(
                      _code_offset_to_desperately_force_literals);
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_NPCE  
-  compiler_state->set_npe_count(ThrowExceptionStub::npe_count);
-  compiler_state->set_npe_index( _npe_index);
-#endif
   _relocation.save_state(compiler_state);
 }
 
-#if ENABLE_INLINE && ARM
-void BinaryAssembler::restore_state(CompilerState *compiler_state) {
-  _relocation.restore_state(compiler_state);      
-}
-#endif
-
 ReturnOop
-BinaryAssembler::LiteralPoolElement::allocate(Oop* oop, int imm32 JVM_TRAPS) {
+BinaryAssembler::LiteralPoolElement::allocate(const Oop* oop, 
+                                              int imm32 JVM_TRAPS) {
   if (ObjectHeap::free_memory_for_compiler_without_gc() > allocation_size()) {
     // We can allocate only if we have enough space -- there are
     // many RawLocation operations in VirtualStackFrame that would
@@ -213,6 +133,24 @@ void BinaryAssembler::b(CompilationQueueElement* cqe, Condition cond) {
   cqe->set_entry_label(target);
 }
 
+void BinaryAssembler::bl(address target, Condition cond) { 
+#if USE_COMPILER_GLUE_CODE
+  GUARANTEE((address(target) >= address(&compiler_glue_code_start) &&
+            address(target) < address(&compiler_glue_code_end)),
+            "target must be withn glue_code_start and glue_code_end");
+      
+  int glue_offset = DISTANCE(&compiler_glue_code_start, target);
+  address glue = ObjectHeap::glue_code_start() + glue_offset;
+  address cur_pc = addr_at(code_size()) + 8;
+  int branch_offset = int(glue) - int(cur_pc);
+
+  emit_long_branch();
+  compiled_method()->set_has_branch_relocation();
+  Assembler::bl(branch_offset, cond);
+#else
+  SHOULD_NOT_REACH_HERE();
+#endif
+}
 
 void BinaryAssembler::signal_output_overflow() {
   Compiler::current()->closure()->signal_output_overflow();
@@ -248,104 +186,6 @@ void BinaryAssembler::bind(Label& L, int /*alignment*/) {
   bind_to(L, _code_offset);
 }
 
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER
-//code_offset record the end offset of current jitted code
-//begin_offset represent the start offset of the CC
-//give the offset and label return the address of first ldr instruction
-//which access this literal
-int BinaryAssembler::get_first_literal_load_instruction(Label& L, address  code_offset) {
-    if (L.position() < (code_offset - addr_at(0))) {
-      return -1;      
-    }
-
-    // follow the chain and fixup all instructions -
-    // last instruction in chain is referring to itself
-#ifndef PRODUCT      
-    if (OptimizeCompiledCodeVerboseInternal) { 
-      TTY_TRACE_CR(("%d CC begin at %d", L.position(), (code_offset - addr_at(0))));
-    }
-#endif    
-    address p = addr_at(L.position());
-    address q;
-    do {
-      q = p;
-      Instruction instr(q);
-#ifndef PRODUCT      
-          if (OptimizeCompiledCodeVerboseInternal) { 
-            int offset = q - addr_at(0);
-            Disassembler d(tty);
-            tty->print("**%d:\t", offset);
-            tty->print("0x%08x\t", instr.addr());
-            d.disasm(NULL, *(int *)q, offset);
-            tty->cr();
-          }
-#endif       
-      if (instr.kind() == 2) {
-        MemAccess m(q);
-        p = m.location();
-          if( p <  code_offset ) {
-            return p - addr_at(0);
-          }
-      } else {
-        SHOULD_NOT_REACH_HERE();
-      }
-    } while (p != q);
-    return q - addr_at(0);
-}
-
-int BinaryAssembler::get_next_schedulable_branch_instruction(Label L, 
-                                  address code_offset, int& next) {
-    address p;
-    address q;
-
-    if (next !=  0) {
-      p = addr_at(next);
-    } else {
-      if(L.position() < (code_offset - addr_at(0))) {
-        //label patch address  is out of current CC
-        return -1;      
-      }
-      p = addr_at(L.position());
-    }
-
-    {
-      q = p;
-      Instruction instr(q);
-      
-#ifndef PRODUCT      
-      if (OptimizeCompiledCodeVerboseInternal) { 
-        int offset = q - addr_at(0);
-        Disassembler d(tty);
-        tty->print("**%d:\t", offset);
-        tty->print("0x%08x\t", instr.addr());
-        d.disasm(NULL, *(int *)q, offset);
-        tty->cr();
-      }
-#endif       
-
-      if (instr.kind() == 5) {
-        if ( next == 0) {
-           return q - addr_at(0);
-        }
-        Branch b(q);
-        p = b.target();
-        if ( ( p-addr_at(0)) == next ) {
-          return -1;
-        } else if ( p < code_offset ) {
-          next = (int) p;
-          return -2;
-        } else {
-          return p - addr_at(0);
-        }
-        
-      } else {
-        SHOULD_NOT_REACH_HERE();
-      }
-    } 
-    return -1;
-}
-#endif
-
 void BinaryAssembler::bind_to(Label& L, jint code_offset) {
   // if the code has overflowed the compiled method, we
   // cannot expect to be able to follow the link chain.
@@ -372,6 +212,14 @@ void BinaryAssembler::bind_to(Label& L, jint code_offset) {
             b.set_target(addr_at(code_offset));
           }
           break;
+#if ENABLE_ARM_VFP
+        case  6:
+          { VFPMemAccess m(q);
+            p = m.location();
+            m.set_location(addr_at(code_offset));
+          }
+          break;
+#endif
         default: SHOULD_NOT_REACH_HERE();
       }
 #if USE_COMPILER_COMMENTS
@@ -400,8 +248,17 @@ void BinaryAssembler::access_literal_pool(Register rd,
   // Generate instruction that loads from the target
   if (is_store) { 
     str(rd, address, cond);
-  } else { 
-    ldr(rd, address, cond);
+  } else {
+#if ENABLE_ARM_VFP
+    if (rd > Assembler::r15) {
+      if (L.is_bound()) {
+        flds(rd, imm_index5(pc, target - (pos + 8)), cond);
+      } else {
+        flds_stub(rd, imm_index5_stub(pc, target - (pos + 8)), cond);
+      }
+    } else
+#endif
+      ldr(rd, address, cond);
   }
   if (!L.is_bound()) { 
     L.link_to(pos);    
@@ -409,10 +266,13 @@ void BinaryAssembler::access_literal_pool(Register rd,
   literal->set_label(L);
 }
     
-void BinaryAssembler::ldr_literal(Register rd, Oop* oop, int imm32,
+void BinaryAssembler::ldr_literal(Register rd, const Oop* oop, int imm32,
                                   Condition cond) {
   SETUP_ERROR_CHECKER_ARG;
-  LiteralPoolElement::Raw e = find_literal(oop, imm32 JVM_CHECK);
+  enum {
+    max_ldr_offset = 1 << 12
+  };
+  LiteralPoolElement::Raw e = find_literal(oop, imm32, max_ldr_offset JVM_CHECK);
   if (e.not_null()) {
     AllocationDisabler allocation_not_allowed_in_this_block;
     ldr_from(rd, &e, cond);
@@ -421,55 +281,59 @@ void BinaryAssembler::ldr_literal(Register rd, Oop* oop, int imm32,
   }
 }
 
-void BinaryAssembler::ldr_oop(Register rd, Oop* oop, Condition cond) {
+void BinaryAssembler::ldr_oop(Register rd, const Oop* oop, Condition cond) {
   if (oop->is_null()) {
     // Java null is 0.
     mov(rd, zero, cond);
     return;
   }
 
-#if USE_SOURCE_IMAGE_GENERATOR
+#if USE_AOT_COMPILATION  
   /*
-   * This allows AOT-compiled methods to stay in TEXT area of ROMImage.cp
+   * Try to avoid direct reference from AOT-compiled method to Java heap.
+   * This allows AOT-compiled methods to stay in TEXT area of ROMImage.cpp.
    */
-  bool load_class = false;
-  bool load_near = false;
+  if (GenerateROMImage && !ROM::system_contains(oop->obj())) {
+    bool load_class = false;
+    bool load_near = false;
 
-  if (GenerateROMImage && oop->is_java_class()) {
-    load_class = true;
-  }
-  else if (GenerateROMImage && oop->is_java_near()) {
-    JavaClass::Raw klass = oop->klass();
-    if (oop->equals(klass().prototypical_near())) {
+    if (oop->is_java_class()) {
       load_class = true;
-      load_near = true;
     }
-  }
-
-  if (load_class) {
-    JavaClass::Raw klass;
-    if (oop->is_java_near()) {
-      klass = oop->klass();
-    } else {
-      klass = oop;
+    else if (oop->is_java_near()) {
+      JavaClass::Raw klass = oop->klass();
+      if (oop->equals(klass().prototypical_near())) {
+        load_class = true;
+        load_near = true;
+      }
     }
 
-    int class_id = klass().class_id();
-    get_class_list_base(rd, cond);
-    int offset = class_id * sizeof(OopDesc*);
+    if (load_class) {
+      JavaClass::Raw klass;
+      if (oop->is_java_near()) {
+        klass = oop->klass();
+      } else {
+        klass = oop;
+      }
 
-    while (!has_room_for_imm(offset, 12) && offset >= 4096) {
-      // All immediates below 4096 are possible to encode with imm12!
-      add_imm(rd, rd, 4096, no_CC, cond);
-      offset -= 4096;
+      int class_id = klass().class_id();
+      get_class_list_base(rd, cond);
+      int offset = class_id * sizeof(OopDesc*);
+
+      if (offset >= 0x1000) {
+        // impossible to use single LDR
+        add_imm(rd, rd, offset & ~0xfff, no_CC, cond);
+        offset &= 0xfff;
+      }
+      ldr(rd, imm_index(rd, offset), cond);
+
+      if (load_near) {
+        ldr(rd, imm_index(rd, InstanceClass::prototypical_near_offset()), 
+            cond);
+      }
+
+      return;
     }
-    ldr(rd, imm_index(rd, offset), cond);
-
-    if (load_near) {
-      ldr(rd, imm_index(rd, InstanceClass::prototypical_near_offset()), cond);
-    }
-
-    return;
   }
 #endif
 
@@ -505,23 +369,108 @@ void BinaryAssembler::ldr_big_integer(Register rd, int imm32, Condition cond){
   ldr_literal(rd, &null_oop, imm32, cond);
 }    
 
-ReturnOop BinaryAssembler::find_literal(Oop* oop, int imm32 JVM_TRAPS){
+#if ENABLE_ARM_VFP
+void BinaryAssembler::fld_literal(Register rd, int imm32, Condition cond) {
+  Oop::Raw null_oop;            // ::Raw since don't need to tell GC about NULL
+
+  SETUP_ERROR_CHECKER_ARG;
+  enum {
+    max_fld_offset = 1 << 8
+  };
+  LiteralPoolElement::Raw e = find_literal(&null_oop, imm32, max_fld_offset JVM_CHECK);
+  if (e.not_null()) {
+    AllocationDisabler allocation_not_allowed_in_this_block;    
+    ldr_from(rd, &e, cond);
+  } else {
+    GUARANTEE(has_overflown_compiled_method(), "Must have signalled overflow");
+  }
+}
+#endif
+
+#if ENABLE_ARM_VFP
+ReturnOop BinaryAssembler::find_literal(const Oop* oop, int imm32, 
+                                        int offset JVM_TRAPS){
   AllocationDisabler allocation_not_allowed_in_this_block;
 
+  enum { max_code_size_to_branch_around_literals = 8 };
+  offset -= max_code_size_to_branch_around_literals;
+
+  {
+    const OopDesc *oopdesc = (OopDesc*)oop->obj();
+    LiteralPoolElementDesc* ptr = (LiteralPoolElementDesc*)_first_literal.obj();
+
+    // Search for a bound literal not too far from current instruction
+    {
+      const int min_offset = _code_offset - offset;
+      for( ; ptr && ptr->is_bound(); ptr = ptr->_next) {
+        if( ptr->_bci >= min_offset && ptr->matches(oopdesc, imm32)) {
+          return (ReturnOop)ptr;
+        }
+      }
+    }
+
+    // Search for an unbound literal
+    {
+      int unbound_literal_offset = 0;
+      for( ; ptr; ptr = ptr->_next) {
+        if( ptr->matches(oopdesc, imm32)) {
+          if( unbound_literal_offset < offset ) {
+            set_delayed_literal_write_threshold(offset - unbound_literal_offset);
+          } else {
+            write_literals(true);
+          }
+          return (ReturnOop)ptr;
+        }
+        unbound_literal_offset += 4; // literal size in bytes
+      }
+    }
+  }
+
+  // We need to create a new literal.
+  LiteralPoolElement::Raw literal =
+    LiteralPoolElement::allocate(oop, imm32 JVM_CHECK_0);
+  // Add this literal to the end of the literal pool list
+  if( literal.not_null() ) {
+    append_literal(&literal);
+
+    enum {
+      max_unbound_literal_count = 0x100 - 64    // max size of literals per one bytecode
+    };
+
+    _unbound_literal_count++;
+    if (_unbound_literal_count >= max_unbound_literal_count) {
+      // If we get too many literals, their size might not fit into an
+      // immediate.  So we force a cutoff.
+      _code_offset_to_force_literals = 0; // force at the next chance
+      _code_offset_to_desperately_force_literals = 0;
+    } else {
+      set_delayed_literal_write_threshold(offset);
+    }
+  }
+  return literal;
+}
+#else  // !ENABLE_ARM_VFP
+ReturnOop BinaryAssembler::find_literal(const Oop* oop, int imm32, 
+                                        int offset JVM_TRAPS){
+  AllocationDisabler allocation_not_allowed_in_this_block;
+
+  enum { max_code_size_to_branch_around_literals = 8 };
+
+  offset -= max_code_size_to_branch_around_literals;
   // position is just beyond where a ldr instruction can reach
-  const int position = _code_offset + 8 - 4096;
+  const int position = _code_offset - offset;
 
   {
     LiteralPoolElementDesc *ptr;
     OopDesc *oopdesc = (OopDesc*)oop->obj();
     for (ptr = (LiteralPoolElementDesc*)_first_literal.obj();
          ptr; ptr = ptr->_next) {
-      if (ptr->is_bound() && ptr->_bci <= position) { 
+      if (ptr->is_bound() && ptr->_bci <= position) {
         // This literal is too far away to use.  We could discard it
         // but it's not really worth the effort.
         continue;
       }
-      if (ptr->matches(oopdesc, imm32)) { 
+      if (ptr->matches(oopdesc, imm32)) {
         return (ReturnOop)ptr;
       }
     }
@@ -533,9 +482,24 @@ ReturnOop BinaryAssembler::find_literal(Oop* oop, int imm32 JVM_TRAPS){
   // Add this literal to the end of the literal pool list
   if( literal.not_null() ) {
     append_literal(&literal);
+
+    enum {
+      max_unbound_literal_count = 0x100 - 64    // max size of literals per one bytecode
+    };
+
+    _unbound_literal_count++;
+    if (_unbound_literal_count >= max_unbound_literal_count) {
+      // If we get too many literals, their size might not fit into an
+      // immediate.  So we force a cutoff.
+      _code_offset_to_force_literals = 0; // force at the next chance
+      _code_offset_to_desperately_force_literals = 0;
+    } else {
+      set_delayed_literal_write_threshold(offset);
+    }
   }
   return literal;
 }
+#endif
 
 void BinaryAssembler::append_literal(LiteralPoolElement* literal) {
   if (_first_literal.is_null()) {
@@ -551,7 +515,6 @@ void BinaryAssembler::append_literal(LiteralPoolElement* literal) {
     // This is the first literal that hasn't yet been written out.
     _first_unbound_literal = literal;
   }
-  increment_literal_count();
 }
 
 void BinaryAssembler::write_literals(bool force) {
@@ -608,7 +571,7 @@ void BinaryAssembler::write_literal(LiteralPoolElement* literal) {
     if (ObjectHeap::contains_moveable(oop.obj())) {
       // GC needs to know about these
       GUARANTEE(literal->literal_int() == 0, "Can't yet handle oop + offset");
-      _relocation.emit(Relocation::oop_type, _code_offset);
+      _relocation.emit_oop(_code_offset);
     } else { 
 #ifndef PRODUCT
       // Let the disassembler know that this is an oop
@@ -631,9 +594,10 @@ void BinaryAssembler::get_thread(Register reg) {
   get_current_thread(reg);
 }  
 
-void BinaryAssembler::ensure_compiled_method_space() {
-  if (!has_room_for(1024)) {
-    const int delta = 1024;
+void BinaryAssembler::ensure_compiled_method_space(int delta) {
+  delta += 256;
+  if (!has_room_for(delta)) {
+    delta = align_allocation_size(delta + (1024 - 256));
     if (compiled_method()->expand_compiled_code_space(delta, 
                                                       relocation_size())) {
       _relocation.move(delta);
@@ -699,7 +663,7 @@ void BinaryAssembler::comment(const char* fmt, ...) {
   if (PrintCompiledCodeAsYouGo) {
     tty->print_cr(";; %s", buffer);
   } else if (GenerateCompilerComments) {
-    _relocation.emit_comment(buffer, _code_offset);
+    _relocation.emit_comment(_code_offset, buffer);
   }
 }
 #endif
@@ -731,83 +695,255 @@ void BinaryAssembler::LiteralPoolElement::print_value_on(Stream*s) {
 #endif // PRODUCT
 
 #if ENABLE_NPCE
-inline 
-void BinaryAssembler::record_npe_point(Label& L,int instruction_offset) {
-  const int pos = _code_offset;
-  int offset = instruction_offset * 4;
-  COMPILER_PRINT_AS_YOU_GO(("**record a NPCE position, offset is %d", 
-                            (pos + offset)));
-  if (!L.is_bound()) {
-    L.link_to(pos + offset);
-  }
-}
-
-#if ENABLE_CODE_OPTIMIZER && !ENABLE_THUMB_COMPILER
-inline 
-void BinaryAssembler::write_npe_info(Label& L, 
-                                  jint code_offset, jint second_word) {
-#else
-inline void BinaryAssembler::write_npe_info(Label& L, jint code_offset) {
-#endif //ENABLE_CODE_OPTIMIZER
-  if (L.is_linked() && !has_overflown_compiled_method()) {
-    COMPILER_PRINT_AS_YOU_GO(("**update_mapping_table to %d\n", code_offset));
-    COMPILER_PRINT_AS_YOU_GO(("**Label address is  to %d\n", L.position()));
-
-    address q = addr_at(L.position());
+bool BinaryAssembler::is_branch_instr(jint offset) {
+    address q = addr_at(offset);
     Instruction instr(q);
     //if the instruction is branch, use old Null Point code
     if (instr.kind() == 5) {
+      return true;
+  }
+  return false;
+}
+void 
+BinaryAssembler::emit_null_point_callback_record(Label& L, 
+                                 jint offset_of_second_instr_in_words) {
+  jint stub_offset = _code_offset;
+  if (L.is_linked() && !has_overflown_compiled_method()) {
+
+    COMPILER_PRINT_AS_YOU_GO(("**update_mapping_table to %d\n", stub_offset));
+    COMPILER_PRINT_AS_YOU_GO(("**Label address is  to %d\n", L.position()));
+
+    //if the instruction is branch, use old Null Point code
+   if (is_branch_instr(L.position())) {
       COMPILER_PRINT_AS_YOU_GO((
          "special case in NPCE, use cmp instruction, update jump target  \n"));
-      bind_to(L,code_offset);
+      bind_to(L,stub_offset);
       return;
     }
-    _relocation.emit_npe_item( L.position() , code_offset);
-#if ENABLE_CODE_OPTIMIZER && !ENABLE_THUMB_COMPILER     
-    if (second_word > 0) {
-      _relocation.emit_npe_item( L.position() + (second_word<<2), code_offset);
-      COMPILER_PRINT_AS_YOU_GO(("**Label address is  to %d", 
-                       (L.position() + (second_word<<2))));
+    _relocation.emit(Relocation::npe_item_type, stub_offset, L.position());
+    if (offset_of_second_instr_in_words > 0) {
+      _relocation.emit(Relocation::npe_item_type, stub_offset,
+        L.position() + (offset_of_second_instr_in_words << LogBytesPerWord));
+      COMPILER_PRINT_AS_YOU_GO(("**Label address is  to %d",
+                       (L.position() + (offset_of_second_instr_in_words<<LogBytesPerWord))));
     }
-#endif
   }
   if (!L.is_linked() && !has_overflown_compiled_method()) {
-    COMPILER_PRINT_AS_YOU_GO(("**Default stub is  to %d\n", code_offset));
-    _relocation.emit_npe_item( 0, code_offset );        
+    COMPILER_PRINT_AS_YOU_GO(("**Default stub is  to %d\n", stub_offset));
+    _relocation.emit(Relocation::npe_item_type, stub_offset, 0);
   }
-  L.bind_to(code_offset);
+  L.bind_to(stub_offset);
 }
-#if ENABLE_CODE_OPTIMIZER && !ENABLE_THUMB_COMPILER
-void BinaryAssembler::write_npe_info(Label& L,  jint second_word) {
-  write_npe_info(L,_code_offset, second_word);
-}
-#else
-void BinaryAssembler::write_npe_info(Label& L) {
-  write_npe_info(L,_code_offset);
-}
-#endif //ENABLE_CODE_OPTIMIZER
 
-void 
-BinaryAssembler::record_npe_point(CompilationQueueElement* cqe, 
-                                    int instruction_offset , Condition cond) { 
-    int pos = _code_offset + 4 * instruction_offset;  
-#if ENABLE_CODE_OPTIMIZER && ENABLE_INTERNAL_CODE_OPTIMIZER
-    Compiler::insert_npe_address( _npe_index++, pos);
+void
+BinaryAssembler::record_npe_point(CompilationQueueElement* stub, 
+                                    int offset_in_instr_nums , Condition cond) { 
+  int instruction_offset = _code_offset + (offset_in_instr_nums << LogBytesPerWord);  
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+  //we record the instr offset into a table, we will mark them into a 
+  //abort point bitmap later for extend basic block scheduling
+  //all the LDR instr which may result a null point exception will be recorded
+  //into the table. While only instr with exception handle will emit relocaiton
+  //item.
+  Compiler::current()->record_null_point_exception_inst(instruction_offset);
 #endif
-  if (cqe == NULL ) {
-    return;
-  }
-  if (((ThrowExceptionStub*)cqe)->is_persistent() ) {
-    return;
-  }
-  Label target = cqe->entry_label();
-  record_npe_point(target, instruction_offset);
-  cqe->set_entry_label(target);
-}
 
-void BinaryAssembler::emit_npe_item(int stub_offset) {
-  _relocation.emit_npe_item( stub_offset, _code_offset);  
+  if (stub == NULL ) {
+    return;
+  }
+
+  //if it's a shared stub for the exception code,
+  //we don't record their position into relocation stream
+  //later.
+  if (((ThrowExceptionStub*)stub)->is_persistent() ) {
+    return;
+  }
+  
+  Label target = stub->entry_label();
+  if (!target.is_bound()) {
+    GUARANTEE(!target.is_linked(), "Non shared stub should not be linked before");
+    target.link_to(instruction_offset);
+    COMPILER_PRINT_AS_YOU_GO(("**record a NPCE position, offset is %d", 
+                            (instruction_offset)));
+  } else {
+    //stub has been generated
+    _relocation.emit(Relocation::npe_item_type, target.position(),
+                     instruction_offset);
+  }
+  stub->set_entry_label(target);
 }
 #endif //ENABLE_NPCE
 
+
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+#define address_to_offset(address)  (address -addr_at(0))
+#ifndef PRODUCT
+#define DUMP_INSTRUCTIONS(i, a)         do{  Disassembler disa(tty);\
+      if(OptimizeCompiledCodeVerboseInternal) {\
+          int offset = i - addr_at(0);\
+            tty->print("**%d:\t", offset);\
+            tty->print("0x%08x\t", a.addr());\
+            disa.disasm(NULL, *(int *)i, offset);\
+            tty->cr();};} while(false);
+#else
+#define DUMP_INSTRUCTIONS(i, a) 
+#endif
+
+int BinaryAssembler::first_instr_of_literal_loading(Label& L, 
+                                       address  begin_of_cc) {
+    if (L.position() < address_to_offset(begin_of_cc)) {
+      return literal_not_used_in_current_cc;      
+    }
+
+    // follow the chain and fixup all instructions -
+    // last instruction in chain is referring to itself
+    VERBOSE_SCHEDULING_AS_YOU_GO(
+                       ("%d CC begin at %d", L.position(), 
+                      address_to_offset(begin_of_cc)));
+    address p = addr_at(L.position());
+    address q;
+    do {
+      q = p;
+      Instruction instr(q);
+      DUMP_INSTRUCTIONS(q, instr);
+      //it is memory access ins         
+      if (instr.kind() == 2) {
+        MemAccess m(q);
+        //p go to previous ins
+        p = m.location();
+        //the head of the chain is out of current compilation continuals and we             
+        //has step out of current compilation continuals,
+        //so we abort here.
+        if( p <  begin_of_cc ) {
+          return address_to_offset(p);
+        }
+      } else {
+        SHOULD_NOT_REACH_HERE();
+      }
+    } while (p != q);
+    // the head of the chain is in current compilation continuals
+    // and we found the head
+    return address_to_offset(q);
+}
+
+int BinaryAssembler::next_schedulable_branch(Label L, 
+                                  address begin_of_cc, int& next) {
+    address p;
+    address q;
+
+    if (next !=  no_schedulable_branch) {
+      p = addr_at(next);
+    } else {
+      if(L.position() <address_to_offset(begin_of_cc) ) {
+        //next == 0 so label patch address  is no in current CC
+        return stop_searching;      
+      }
+      p = addr_at(L.position());
+    }
+
+    {
+      q = p;
+      Instruction instr(q);
+      DUMP_INSTRUCTIONS(q, instr);
+
+      if (instr.kind() == 5) {
+        if ( next == no_schedulable_branch) {
+          //we are at the tail of the chain
+          return address_to_offset(q);
+        }
+        Branch b(q);
+        //b is the prev branch,
+        //so we get the next branch from it
+        p = b.target();
+        //is it point to itself
+        if ( address_to_offset(p) == next ) {
+          //we reach the head and should stop the searching
+          return stop_searching;
+        } else if ( p < begin_of_cc ) {
+          //the head is in previous cc. we also stop here
+          //and put the branch address in param next.
+          next = (int) p;
+          return branch_is_in_prev_cc;
+        } else {
+          //we get the next branch, we still
+          //in the chain, the chain still in current cc.
+          return address_to_offset(p);
+        }
+        
+      } else {
+        SHOULD_NOT_REACH_HERE();
+      }
+    } 
+    return stop_searching;
+}
+#undef address_to_offset
+#endif
+
+#if ENABLE_LOOP_OPTIMIZATION
+//check whether current instruction is a conditional jump instruction
+bool BinaryAssembler::is_jump_instr(int instr, int next_instr, Assembler::Condition& cond,
+                                                             bool& link, bool& op_pc, int& offset) {
+  cond = Assembler::as_condition(instr >> 28 & 0xf);
+  int op = (instr >> 25) & 0x7;
+  op_pc = false;
+//check whether the instruction may contain pc operation
+  if(rd_field(instr) == Assembler::pc || rm_field(instr) == Assembler::pc ||
+      rn_field(instr) == Assembler::pc || rs_field(instr) == Assembler::pc) {
+    op_pc = true;
+  }
+#if ENABLE_PAGE_PROTECTION
+  // This encoding denotes ldr/str/ldrb/strb rd, [gp, #-offset]
+  if ((next_instr & 0xffaf0000) != (0xe5000000 | (Assembler::gp << 16))) {
+    return false;
+  }
+#elif ENABLE_XSCALE_WMMX_TIMER_TICK && !ENABLE_TIMER_THREAD
+#define TEXTRCB_R15_ZERO  0xee13f170
+  if( next_instr != TEXTRCB_R15_ZERO ) {
+    return false;
+  }
+#else
+  int next_cond = Assembler::as_condition(next_instr >> 28 & 0xf);
+  int next_offset = next_instr & 0xFFF;
+  int next_op =( next_instr >> 26 ) & 0x3;
+  int timer_tick_offset = (address)(&_rt_timer_ticks) - (address)&gp_base_label; 
+  if( next_cond != 0xE || next_op != 0x1) { 
+    return false;
+  }
+  if(rn_field(next_instr) != Assembler::gp ) {
+    return false;
+  }
+  if( next_offset != timer_tick_offset ) {
+    return false;
+  }
+#endif
+
+  if( op == 5) {
+    if (bit(instr, 24)) {
+      link = true;
+    } else      {
+      link = false;
+    }
+    offset = ((instr & 0xffffff) | (bit(instr, 23) ? 0xff000000 : 0)) << 2; 
+    return true;
+  }
+  return false;
+}
+
+//get the reverse condition of current condition
+Assembler::Condition BinaryAssembler::get_reverse_cond(Assembler::Condition cond) {
+  if((int)cond % 2 == 0) {
+    return (Assembler::Condition)(cond + 1);
+  } else {
+    return (Assembler::Condition)(cond - 1);
+  }
+}
+
+//call the branch function
+void BinaryAssembler::back_branch(Label& L, bool link, Assembler::Condition cond) {
+  branch(L, link, cond);
+}
+
+#endif // ENABLE_LOOP_OPTIMIZATION
+
 #endif // ENABLE_COMPILER && !ENABLE_THUMB_COMPILER
+

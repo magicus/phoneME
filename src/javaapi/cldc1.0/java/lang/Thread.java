@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -159,7 +160,7 @@ class Thread implements Runnable {
      * @see     java.lang.Runnable
      */
     public Thread() {
-        /* The VM the thread "under the hood" */
+        /* The VM initializes the thread "under the hood" */
         // this(null);
     }
 

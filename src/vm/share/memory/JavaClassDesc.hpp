@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -66,6 +67,9 @@ class JavaClassDesc: public FarClassDesc {
 
   // Here starts the instance oop map
   // Here starts the static oop map
+#if !ENABLE_ISOLATES && USE_EMBEDDED_VTABLE_BITMAP
+  // Here starts vtable methods bitmap
+#endif
   // <-- END OF DATA STRUCTURE
 
   // It's very important that no other fields are stored here,

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,6 +32,205 @@
 # include "incls/_CompiledMethod_arm.cpp.incl"
 
 #if ENABLE_COMPILER && !ENABLE_THUMB_COMPILER
+
+#if ENABLE_CODE_PATCHING
+
+bool Compiler::_is_undoing_patching;
+int BytecodeCompileClosure::_jump_from_bci;
+
+bool Compiler::can_patch(int bci_from, int bci_to) {
+  if (bci_from >= bci_to) {
+    return false;
+  }
+
+  register jubyte *bcptr = (jubyte*)Compiler::method()->code_base();
+  for(int bci = bci_from; bci < bci_to;) {    
+    const Bytecodes::Code code = (Bytecodes::Code)*(bcptr + bci);
+    if (Bytecodes::disables_code_patching(code)) {
+      return false;
+    }
+
+    const int simple_len = Bytecodes::length_for(code);
+    if (simple_len > 0) {
+      bci += simple_len;
+    } else if (simple_len == 0) {
+      const int wide_len = Bytecodes::wide_length_for(Compiler::method(), bci, code);
+      if (wide_len > 0) {
+        bci += wide_len;
+      } else {
+        SHOULD_NOT_REACH_HERE();
+      }
+    } else {
+      SHOULD_NOT_REACH_HERE();
+    }
+  }
+  return true;
+}
+
+void Compiler::update_checkpoints_table(CompiledMethod* cm) {
+  GUARANTEE((cm != NULL) && cm->not_null(), "Sanity");
+
+  for (RelocationReader stream(cm); !stream.at_end(); stream.advance()) {
+    if (stream.is_checkpoint_info()) {          
+      const int offset = stream.code_offset();
+
+      const int pos = offset + CompiledMethod::base_offset();
+
+      const int initial_instruction = 
+        (stream.current(1) << BitsPerShort) | stream.current(2);
+
+      const int current_instruction = cm->int_field(pos);      
+      if (initial_instruction != current_instruction) {
+        cm->short_field_put(stream.current_offset(1), 
+          current_instruction >> BitsPerShort);
+        cm->short_field_put(stream.current_offset(2), 
+          current_instruction & 0xFFFF);
+      }
+    }
+  }
+}
+
+CompiledMethodDesc* Compiler::get_current_compiled_method(address current_pc) {
+  GUARANTEE(Thread::current() != NULL, "Sanity");
+  GUARANTEE(!ENABLE_TIMER_THREAD, "Not supported for timer threads");
+  GUARANTEE(!ObjectHeap::is_gc_active(), "Wrong frame state");
+
+  CompiledMethodDesc* cm = NULL;
+  address pc = 0;
+  if (Thread::current()->last_java_frame_exists()) {
+    JavaFrame fr(Thread::current());
+    if (fr.is_heap_compiled_frame()) {
+      pc = fr.pc();
+    }
+  } 
+
+  if (pc == 0) {            
+    pc = current_pc;
+  }  
+  return CompiledMethodCache::item_for_address(pc);      
+}
+
+void Compiler::patch_compiled_method(CompiledMethod* cm) {
+  GUARANTEE(cm != NULL, "Sanity");
+  GUARANTEE(cm->not_null(), "Sanity");
+
+  bool patched_anything = false;
+
+  for (RelocationReader stream(cm); !stream.at_end(); stream.advance()) {
+    if (stream.is_checkpoint_info()) {          
+      const int offset = stream.code_offset();           
+      const int end_bit = 1 << (BitsPerShort - 1);
+
+      int branch_offset = 0;
+      // skip type and offset (1) + skip original instruction (2)
+      int index = 1 + 2;
+      if(!(end_bit & stream.current(index))) {
+        branch_offset = bitfield(stream.current(index++), 0, BitsPerShort - 1);
+      }
+
+      branch_offset = (branch_offset << (BitsPerShort - 1)) | 
+        bitfield(stream.current(index), 0, BitsPerShort - 1);
+      
+      GUARANTEE(stream.current(index) & end_bit, "Sanity");
+
+      //
+      // Branch instruction:
+      //   (cond << 28) | (0xA << 24) | ((offset_26 - 8) >> 2)
+      //
+      branch_offset -= 8;
+      GUARANTEE(abs(offset) <= 0x003ffffff, "branch offset limit");
+      const int new_instruction = 0xEA000000 | ((branch_offset & 0x3ffffff) >> 2);
+
+      const int pos = offset + CompiledMethod::base_offset();      
+      cm->int_field_put(pos, new_instruction);      
+      patched_anything = true;
+
+      // flush icache
+#if !USE_SINGLE_METHOD_FLUSHING
+      OsMisc_flush_icache((address)cm->obj() + pos, BytesPerInt);
+#endif
+    }
+  }
+#if USE_SINGLE_METHOD_FLUSHING
+  if (patched_anything) {
+    cm->flush_icache();
+    CompiledMethodCache::set_patched_method((CompiledMethodDesc*)cm->obj());
+  }
+#endif
+}
+
+// 
+// Patches checkpoints from the current java method.
+// Only one method can be patched at the given moment.
+// 
+void Compiler::patch_checkpoints(address current_pc) {
+  if (Compiler::is_undoing_patching() || ObjectHeap::is_gc_active()) {
+    return;
+  }
+
+  // retrieve the current java method from the frame
+  CompiledMethod::Raw cm = get_current_compiled_method(current_pc);
+  
+  
+#if USE_PATCHED_METHOD_CACHE
+  CompiledMethod::Raw patched_cm = CompiledMethodCache::patched_method();    
+  if (cm().not_null() && (cm().obj() != patched_cm().obj())) {
+    {
+      // if patched method is set then unpatch it first        
+      if (patched_cm().not_null()) {
+        unpatch_compiled_method(&patched_cm);
+
+      }    
+    }
+    patch_compiled_method(&cm);
+  }
+#else
+  if (cm().not_null()) {
+    // patch current java method and reset patched_method
+    patch_compiled_method(&cm);
+  }  
+#endif
+}
+
+void Compiler::unpatch_compiled_method(CompiledMethod* cm) {
+  GUARANTEE(cm != NULL, "Sanity");
+  GUARANTEE(cm->not_null(), "Sanity");
+  GUARANTEE(!Compiler::is_undoing_patching(), "Sanity");
+
+  TemporaryModifyGlobal(&_is_undoing_patching, !_is_undoing_patching);
+
+  for (RelocationReader stream(cm); !stream.at_end(); stream.advance()) {
+    if (stream.is_checkpoint_info()) {
+      const int offset = stream.code_offset() + CompiledMethod::base_offset();
+      const int old_instruction =
+         (stream.current(1) << BitsPerShort) | (stream.current(2));
+      cm->int_field_put(offset, old_instruction);
+#if !USE_SINGLE_METHOD_FLUSHING
+      OsMisc_flush_icache((address)cm->obj() + offset, BytesPerInt);
+#endif
+    }
+  }
+#if USE_SINGLE_METHOD_FLUSHING
+  cm->flush_icache();
+#endif
+}
+
+void Compiler::unpatch_checkpoints() {
+#if USE_PATCHED_METHOD_CACHE
+  CompiledMethod::Raw cm = CompiledMethodCache::patched_method();
+
+  if (cm().not_null()) {
+    unpatch_compiled_method(&cm);
+    CompiledMethodCache::reset_patched_method();
+  }
+#else
+  CompiledMethod::Raw cm = get_current_compiled_method(0);
+  if (cm().not_null()) {
+    unpatch_compiled_method(&cm);
+  }
+#endif
+}
+#endif // ENABLE_CODE_PATCHING
 
 #ifndef PRODUCT
 

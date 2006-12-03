@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -63,6 +64,24 @@ public class JVM {
      * creation process has succeeded.
      */
     public static final int STATUS_SUCCEEDED = 100;
+
+    /**
+     * Returned by verifyJar() to indicate no classes verification
+     * has ever been started since VM didn't find any classes in JAR.
+     */
+    public static final int STATUS_VERIFY_NOTHING = 1;
+
+    /**
+     * Returned by verifyJar() to indicate all JAR classes were
+     * successfully verified.
+     */
+    public static final int STATUS_VERIFY_SUCCEEDED = 2;
+
+    /**
+     * Returned by verifyJar() to indicate JAR classes verification
+     * failed by some reason.
+     */
+    public static final int STATUS_VERIFY_FAILED = 3;
 
     /**
      * Creates an application image file. It loads the Java classes
@@ -150,4 +169,113 @@ public class JVM {
 
     public native static void loadLibrary(String libName)
          throws Error;
+
+
+    /**
+     * Copy an array from the specified source array, beginning at the
+     * specified position, to the specified position of the destination array.
+     * <p>
+     * Impose the following restrictions on the input arguments:
+     * <ul>
+     * <li><code>dst</code> is not <code>null</code>.
+     * <li><code>src</code> is not <code>null</code>.
+     * <li>The <code>srcOffset</code> argument is not negative.
+     * <li>The <code>dstOffset</code> argument is not negative.
+     * <li>The <code>length</code> argument is not negative.
+     * <li><code>srcOffset+length</code> is not greater than
+     *     <code>src.length</code>, the length of the source array.
+     * <li><code>dstOffset+length</code> is not greater than
+     *     <code>dst.length</code>, the length of the destination array.
+     * <li>any actual component of the source array from position 
+     *     <code>srcOffset</code> through <code>srcOffset+length-1</code> 
+     *     can be converted to the component type of the destination array
+     * </ul>
+     * <p>
+     * The caller is responsible that these restrictions are not violated.
+     * If any of the restrictions above is violated, the behavior is undefined.
+     *
+     * @param      src          the source array.
+     * @param      srcOffset    start position in the source array.
+     * @param      dst          the destination array.
+     * @param      dstOffset    start position in the destination data.
+     * @param      length       the number of array elements to be copied.
+     */
+    public static void unchecked_byte_arraycopy(byte[] src, 
+                                                       int srcOffset,
+                                                       byte[] dst, 
+                                                       int dstOffset, 
+                                                       int length) {
+      System.arraycopy(src, srcOffset, dst, dstOffset, length);
+    }
+
+    public static void unchecked_char_arraycopy(char[] src, 
+                                                       int srcOffset,
+                                                       char[] dst, 
+                                                       int dstOffset, 
+                                                       int length) {
+      System.arraycopy(src, srcOffset, dst, dstOffset, length);
+    }
+
+    public static void unchecked_int_arraycopy(int[] src, 
+                                                      int srcOffset,
+                                                      int[] dst, 
+                                                      int dstOffset, 
+                                                      int length) {
+      System.arraycopy(src, srcOffset, dst, dstOffset, length);
+    }
+
+    public static void unchecked_long_arraycopy(long[] src, 
+                                                int srcOffset,
+                                                long[] dst, 
+                                                int dstOffset, 
+                                                int length) {
+      System.arraycopy(src, srcOffset, dst, dstOffset, length);
+    }
+
+    public static void unchecked_obj_arraycopy(Object[] src, 
+                                                      int srcOffset,
+                                                      Object[] dst, 
+                                                      int dstOffset, 
+                                                      int length) {
+      System.arraycopy(src, srcOffset, dst, dstOffset, length);
+    }
+
+    /**
+     * Verifies all classes of the given JAR package within the current
+     * VM instance. The JAR path should be included into classpath(s) of
+     * the VM.
+     *
+     * @param jar specifies the JAR file to be verified.
+     * @param chunkSize amount of bytecode to be verified with a single
+     *          native call, however not less than one class will be
+     *          verified with a single call.
+     * @return status of the JAR classes verification, it can be one of the
+     *   following values STATUS_VERIFY_NOTHING, STATUS_VERIFY_SUCCEEDED or
+     *   STATUS_VERIFY_FAILED
+     */
+    public static int verifyJar(String jar, int chunkSize) {
+
+        int nextChunkID = 0;
+        int status = STATUS_VERIFY_NOTHING;
+        try {
+            do {
+                nextChunkID = verifyNextChunk(jar, nextChunkID, chunkSize);
+                Thread.yield();
+            } while (nextChunkID > 0);
+            // OK, just all files verified
+            if (nextChunkID == 0) {
+                status = STATUS_VERIFY_SUCCEEDED;
+            }
+        } catch (Throwable t) {
+            //do we need it?
+            t.printStackTrace();
+            status = STATUS_VERIFY_FAILED;
+        }
+
+        return status;
+    }
+
+    private static native int verifyNextChunk(String jar, int nextChunkID,
+                                              int chunkSize);
+
 }

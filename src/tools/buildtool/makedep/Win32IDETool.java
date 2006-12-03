@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -1191,7 +1192,7 @@ class VC6VMProject extends VC6Project {
         globalProps.put("ENABLE_GENERATE_SOURCE_ROM_IMAGE", "true");
         globalProps.put("ENABLE_INTERPRETER_GENERATOR", "true");
 
-        database.get(tool().getConfigArg(), tool().getDatabaseArg(),
+        database.get(tool().getPlatformArg(), tool().getDatabaseArg(),
                      globalProps);
         database.compute();
     }
@@ -1674,6 +1675,19 @@ class VC6VMProject extends VC6Project {
         String fullpath = tool().getOutputFileFullPath(filename);
         Vector extra = new Vector();
         extra.addElement("USE_UNICODE_FOR_FILENAMES=1");
+
+        // Append product-specific definitions
+        {
+            String productName = tool().configurator.getProductName();
+            if (productName != null) {
+                extra.addElement("JVM_NAME=\"" + productName + "\"");
+            }
+            String releaseVersion = tool().configurator.getReleaseVersion();
+            if (releaseVersion != null) {
+                extra.addElement("JVM_RELEASE_VERSION=\"" + releaseVersion + "\"");
+            }
+        }
+
         win32Tool().configurator.write(fullpath, env, extra);
     }
 }

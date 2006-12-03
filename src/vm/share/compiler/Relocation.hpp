@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -46,34 +47,45 @@
 class Relocation: public StackObj {
  public:
   enum Kind {
-    oop_type            =  0, // embedded oop
-    comment_type        =  1, // comment for embedding in relocation (also
-                              // used for padding!)
-    comment_or_padding_type =  comment_type, // Ditto
-    osr_stub_type       =  2, // stub for osr entry
-    compiler_stub_type  =  3, // stub for relative calls/jumps to static code
-    rom_oop_type        =  4, // embedded oop, but GC doesn't care
-#if ENABLE_NPCE
-    npe_item_type      =  5, // npe mapping item;
-#endif //ENABLE_NPCE
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER
-    pre_load_type         =  6,
-#endif
-#if ENABLE_APPENDED_CALLINFO
-    callinfo_type       =  7, // CallInfo record
-#endif
-    no_relocation       = -1  // Used for specifying no relocation in 
-                              // BinaryAssembler
+    oop_type = 0,         // embedded oop
+    comment_type,         // code comment (also used for padding)
+    comment_or_padding_type =  comment_type,
+    osr_stub_type,        // stub for osr entry
+    compiler_stub_type,   // stub for relative calls/jumps to static code
+    rom_oop_type,         // embedded oop, but GC doesn't care
+    npe_item_type,        // ENABLE_NPCE
+    pre_load_type,        // ENABLE_INTERNAL_CODE_OPTIMIZER
+    long_branch_type,     // USE_COMPILER_GLUE_CODE
+    compressed_vsf_type,  // ENABLE_COMPRESSED_VSF
+    callinfo_type,        // ENABLE_APPENDED_CALLINFO
+    tick_checkpoint_type, // ENABLE_CODE_PATCHING
+    no_relocation = -1    // Used for specifying no relocation in BinaryAssembler
   };
 
-  static bool has_bci(Kind kind) {
-    return kind == osr_stub_type;
+  static bool has_param(Kind kind) {
+    return kind == osr_stub_type ||
+           kind == npe_item_type ||
+           kind == pre_load_type;
   }
 
   enum Constants {
-    type_width   =  3,
-    offset_width = 13
+    type_width   = CallInfoRecord::type_width,
+    offset_width = CallInfoRecord::length_width
   };
+
+  enum VSFConstants {
+    extended_mask    = 1 << 12,
+    last_mask        = 1 << 13,
+    location_width   = 12,
+    max_location     = 1 << location_width,
+    location_mask    = ~(extended_mask | last_mask),
+    max_sp_delta     = 3,
+    sp_shift         = 5,
+    sp_mask          = max_sp_delta << sp_shift,
+    sp_negative      = 1 << 15,
+    reg_mask         = ~(sp_mask | sp_negative)
+  };
+
 };
 
 class RelocationStream : public Relocation {
@@ -81,8 +93,14 @@ class RelocationStream : public Relocation {
   jint current_relocation_offset() const {
     return _current_relocation_offset;
   }
+
+  jushort* current_address() const {
+    return _compiled_method->obj()->
+           ushort_field_addr(_current_relocation_offset);
+  }
+  
   void save_state(CompilerState* compiler_state);
-#if ENABLE_INLINE && ARM
+#if ENABLE_INLINE
   void restore_state(CompilerState* compiler_state);
   void set_compiled_method(CompiledMethod* method);
 #endif
@@ -92,8 +110,8 @@ class RelocationStream : public Relocation {
   RelocationStream(CompilerState* compiler_state,
                    CompiledMethod* compiled_method);
 
-  void decrement() {
-    _current_relocation_offset -= sizeof(jushort);
+  void decrement(const jint items = 1) {
+    _current_relocation_offset -= items * sizeof(jushort);
   }
 
   CompiledMethod* _compiled_method;
@@ -109,11 +127,6 @@ inline int sign_extend(int x, int field_length) {
 
 class RelocationReader: public RelocationStream {
  private: 
-  jushort current(jint offset = 0) const {
-    return _compiled_method->ushort_field(_current_relocation_offset -
-                                          (offset * sizeof(jushort)));
-  }
-
   void update_current() {
     _current_code_offset += 
       sign_extend(bitfield(current(), 0, offset_width), offset_width);
@@ -131,6 +144,12 @@ class RelocationReader: public RelocationStream {
     update_current();
   }
 
+#if ENABLE_CODE_PATCHING
+  jint current_offset(jint offset) {
+    return _current_relocation_offset - (offset * sizeof(jushort));
+  }
+#endif
+
   // Tells whether we are at the end of the stream.
   bool at_end() const {
     return current() == 0;
@@ -147,9 +166,8 @@ class RelocationReader: public RelocationStream {
   // Advance to next relocation pair
   void advance();
 
-  jint bci() const {
-    return _compiled_method->ushort_field(_current_relocation_offset -
-                                          sizeof(jushort));
+  jushort current(jint offset = 0) const {
+    return current_address()[-offset];
   }
 
   void print_comment_on(Stream* st) {
@@ -164,23 +182,17 @@ class RelocationReader: public RelocationStream {
     (void) st;
 #endif
   }
-#if ENABLE_NPCE || ( ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER )
-  jint current_item(int offset){
-    return current(offset);
-  }
-#endif //ENABLE_NPCE
 
-  bool is_oop()            const { return kind() == oop_type;            }
-  bool is_comment()        const { return kind() == comment_type;        }
-  bool is_osr_stub()       const { return kind() == osr_stub_type;       }
-  bool is_compiler_stub()  const { return kind() == compiler_stub_type;  }
-  bool is_rom_oop()        const { return kind() == rom_oop_type;        }
-#if ENABLE_NPCE
-  bool is_npe_item()      const { return kind() == npe_item_type;      }
-#endif //ENABLE_NPCE
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER
-  bool is_pre_load_item()      const { return kind() == pre_load_type;      }
-#endif
+  bool is_oop()             const { return kind() == oop_type;             }
+  bool is_comment()         const { return kind() == comment_type;         }
+  bool is_osr_stub()        const { return kind() == osr_stub_type;        }
+  bool is_compiler_stub()   const { return kind() == compiler_stub_type;   }
+  bool is_rom_oop()         const { return kind() == rom_oop_type;         }
+  bool is_npe_item()        const { return kind() == npe_item_type;        }
+  bool is_pre_load_item()   const { return kind() == pre_load_type;        }
+  bool is_long_branch()     const { return kind() == long_branch_type;     }
+  bool is_compressed_vsf()  const { return kind() == compressed_vsf_type;  }
+  bool is_checkpoint_info() const { return kind() == tick_checkpoint_type; }
 
 #ifndef PRODUCT
   Kind kind_at(int pc_offset);
@@ -207,27 +219,34 @@ class RelocationWriter: public RelocationStream {
    void set_assembler(BinaryAssembler* value);
    
    void emit(Kind kind, jint code_offset);
-   void emit_osr_entry(jint code_offset, jint bci);
-   void emit_sentinel() { emit_ushort(0); }
-   void emit_comment_or_dummy(const char* comment, jint code_offset);
-   void emit_comment(const char* comment, jint code_offset)  {
-        emit_comment_or_dummy(comment, code_offset);
+   void emit(Kind kind, jint code_offset, jint param) {
+     GUARANTEE(has_param(kind), "Sanity");
+     emit(kind, code_offset);
+     emit_ushort((jushort) param);
    }
+   void emit_oop(jint code_offset);
+   void emit_sentinel() {
+     emit_ushort(0);
+   }
+   void emit_comment(jint code_offset, const char* comment);
    void emit_dummy(jint code_offset) {
-        emit_comment_or_dummy((const char*)NULL, code_offset);
+     emit(comment_type, code_offset);
+     emit_ushort(0);
    }
-#if ENABLE_NPCE
-   void emit_npe_item(jint ldr_offset, jint code_offset);
-#endif //ENABLE_NPCE
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER
-   void emit_pre_load_item(jint ldr_offset, jint code_offset);
-#endif
+   void emit_vsf(jint code_offset, VirtualStackFrame* frame);
+
    // Returns the size of the relocation data in bytes.
    jint size() const {
      return _compiled_method->end_offset()
           - _current_relocation_offset
           - sizeof(jushort);
    }
+
+#if ENABLE_CODE_PATCHING
+   void emit_checkpoint_info_record(int code_offset, 
+                                    unsigned int original_instruction,
+                                    int stub_position);
+#endif 
 
    // This is called after the compiled method has been expanded in-place
    // (by moving the relocation data to higher address)
@@ -242,8 +261,6 @@ class RelocationWriter: public RelocationStream {
                (int)_compiled_method->object_size(), "sanity");
    }
  private:
-   void emit_oop(jint code_offset);
-
    void emit_ushort(jushort value);
    jint compute_embedded_offset(jint code_offset);
 

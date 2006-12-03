@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -66,13 +67,20 @@ class Disassembler: public StackObj {
   void emit_address3(int instr, int instr_offset);
   void emit_address5(int instr, int instr_offset);
 
+
 #if ENABLE_XSCALE_WMMX_INSTRUCTIONS
   // To support Xscale WMMX instructions
   static const char* Disassembler::wmmx_align_name(int ww);
   static const char* wmmx_wreg_name(Assembler::WMMXRegister reg);
   static const char* wmmx_wcgreg_name(Assembler::WCGRegister reg);
   void emit_wmmx_instruction(int instr);
-#endif // ENABLE_XSCALE_WMMX_INSTRUCTIONS 
+#endif
+
+#if ENABLE_ARM_VFP
+  void emit_vfp_register_list(int instr);
+  void emit_vfp_instruction(int instr, int instr_offset);
+  void unknown_vfp_instr(int instr);
+#endif
 
  public:
   // creation
@@ -86,6 +94,11 @@ class Disassembler: public StackObj {
   static const char* shift_name (Assembler::Shift     shift );
   static const char* opcode_name(Assembler::Opcode    opcode);
 
+#if ENABLE_ARM_VFP
+  // type is either 's' (float) or 'd' (double)
+  static void vfp_reg_name(const char type, unsigned reg, char buff[]);
+#endif
+
   // usage
   enum { NO_OFFSET = -1 };
 #if USE_COMPILER_DISASSEMBLER
@@ -95,6 +108,8 @@ class Disassembler: public StackObj {
   void disasm(int*, int, int = NO_OFFSET) {}
   static const char* reg_name(Assembler::Register) {return "";}
 #endif
+
+  typedef Assembler::Register Register;
 };
 
 #endif // PRODUCT

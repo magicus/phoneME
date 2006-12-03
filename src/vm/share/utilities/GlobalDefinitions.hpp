@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -122,7 +123,6 @@
 #define CompilerStubs  JVMCompilerStubs
 #define CompilerTest  JVMCompilerTest
 #define ConcatenatedStream  JVMConcatenatedStream
-#define Condition  JVMCondition
 #define ConditionDesc  JVMConditionDesc
 #define ConstantPool  JVMConstantPool
 #define ConstantPoolDesc  JVMConstantPoolDesc
@@ -476,7 +476,7 @@
 #define WTKThreadRecordDesc  JVMWTKThreadRecordDesc
 #define WeakReference  JVMWeakReference
 #define ZeroDivisorCheckStub  JVMZeroDivisorCheckStub
- 
+
 
 //----------------------------------------------
 // Forward declaration of classes -- these can be used by headers that
@@ -500,7 +500,6 @@ class CompiledMethodDesc;
 class Compiler;
 class CompilerState;
 class CodeGenerator;
-class Condition;
 class ConstantPool;
 class ConstantPoolDesc;
 class ConstantPoolRewriter;
@@ -620,6 +619,7 @@ const jint max_jint          = 0x7FFFFFFF;    // largest jint
 
 // All kinds of 'plain' byte addresses
 typedef unsigned char* address;
+typedef const unsigned char* const_address;
 typedef uintptr_t      address_word; // unsigned integer which will hold a
                                      // pointer except for some
                                      // implementations of a C++
@@ -862,23 +862,6 @@ public:
   address base_address();
 };
 
-class GlobalSaver {
-protected:
-  int  _value;
-  int* _ptr;
-  
-public:
-  GlobalSaver(int* ptr) : _value(*ptr), _ptr(ptr) {}
-  ~GlobalSaver() { *_ptr = _value; }
-};
-
-class TemporaryModifyGlobal : public GlobalSaver {
-public:
-  TemporaryModifyGlobal(int* ptr, int new_value) : GlobalSaver(ptr) {
-    *_ptr = new_value;
-  }
-};
-
 #if ENABLE_JAVA_STACK_TAGS
 #define TaggedJavaStack         1
 #define WordsPerStackElement    2
@@ -1085,11 +1068,6 @@ void check_basic_types();
 #endif
 
 //----------------------------------------------------------------------------
-// Special constants for debugging
-
-const int BadHeapValue   = 0xAB;       // value used to zap heap after GC
-
-//----------------------------------------------------------------------------
 // Utility functions for bitfield manipulations
 
 const intptr_t AllBits = ~0;   // all bits set in a word
@@ -1122,6 +1100,11 @@ inline bool is_set_nth_bit(intptr_t  x, int n) {
 // field_length (no sign-extension!)
 inline intptr_t bitfield(intptr_t x, int start_bit_no, int field_length) {
   return mask_bits(x >> start_bit_no, right_n_bits(field_length));
+}
+
+// returns number of bytes sufficient to hold bitmap of the given length
+inline size_t bitmap_size(int length) {
+  return ((length - 1) >> LogBitsPerByte) + 1;
 }
 
 //----------------------------------------------------------------------------
@@ -1306,8 +1289,10 @@ extern jint global_check_count;
 // future changes, JVM_NO_CHECK_AT_BOTTOM should be used instead of
 // THREAD.
 
-#define JVM_NO_CHECK_AT_BOTTOM              , _traps_ptr); INC_COUNTER; _IGNORE_ME_(0
-#define JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM   _traps_ptr);   INC_COUNTER; _IGNORE_ME_(0
+#define JVM_NO_CHECK_AT_BOTTOM              , _traps_ptr); _IGNORE_ME_(0
+#define JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM   _traps_ptr);   _IGNORE_ME_(0
+
+#define JVM_NO_CHECK_AT_BOTTOM_0            , _traps_ptr); _IGNORE_ME_(0
 
 #define JVM_NO_CHECK                        JVM_NO_CHECK_AT_BOTTOM
 #define JVM_SINGLE_ARG_NO_CHECK             JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM
@@ -1368,6 +1353,7 @@ extern jint global_check_count;
 #define JVM_THROW_(result)             JVM_SINGLE_ARG_THROW_(result)
 
 #define JVM_NO_CHECK_AT_BOTTOM
+#define JVM_NO_CHECK_AT_BOTTOM_0
 #define JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM
 
 #endif
@@ -1654,7 +1640,7 @@ typedef class OopDesc* ReturnOop;
  template(jvm_class_must_be_hidden,"com.sun.cldchi.jvm must be marked " \
                                    "as a HiddenPackage in your ROM " \
                                    "configuration file")
-  
+
 
 #if !USE_VERBOSE_ERROR_MSG
 
@@ -1687,10 +1673,17 @@ enum {
   OopDesc** var = _interpretation_log; for( --var; *++var; )
 
 enum {
-  method_execution_sensor_size = 512    // 2048 max, 12-bit signed negative 
+  method_execution_sensor_size = 512    // 2048 max, 12-bit signed negative
                                         // offset on ARM
 };
 
+enum {
+  PROTECTED_PAGE_SIZE         = 4096,    // limited by 12-bit offset on ARM
+  INTERPRETER_TIMER_TICK_SLOT = PROTECTED_PAGE_SIZE - 4,
+  COMPILER_TIMER_TICK_SLOT    = PROTECTED_PAGE_SIZE - 8
+};
+
+extern "C" unsigned char _protected_page[];
 
 enum {
   SYSTEM_TASK = 0,
@@ -1710,7 +1703,7 @@ enum {
   template(x, OopDesc*,  current_thread)            \
   template(x, OopDesc*,  current_pending_exception) \
   template(x, Oop*,      last_handle)               \
-  template(x, address,   bitvector_base)            \
+  template(x, OopDesc**, collection_area_start)     \
                                                     \
   template(x, OopDesc**, heap_start)                \
   template(x, OopDesc**, heap_top)                  \
@@ -1719,8 +1712,8 @@ enum {
                                                     \
   template(x, OopDesc**, heap_limit)                \
   template(x, OopDesc**, heap_end)                  \
-  template(x, OopDesc**, collection_area_start)     \
-  template(x, int,        xxx3)                     \
+  template(x, address,   bitvector_base)            \
+  template(x, int,       bit_selector)              \
                                                     \
   template(x, OopDesc**, young_generation_start)    \
   template(x, OopDesc**, collection_area_end)       \
@@ -1774,6 +1767,7 @@ struct JVMFastGlobals {
 #define _current_pending_exception    jvm_fast_globals.current_pending_exception
 #define _last_handle                  jvm_fast_globals.last_handle
 #define _bitvector_base               jvm_fast_globals.bitvector_base
+#define _bit_selector                 jvm_fast_globals.bit_selector
 
 #define _heap_start                   jvm_fast_globals.heap_start
 #define _heap_top                     jvm_fast_globals.heap_top
@@ -1821,11 +1815,8 @@ struct JVMFastGlobals {
 #define _compiler_frame               jvm_fast_globals.compiler_frame
 #define _compiler_bci                 jvm_fast_globals.compiler_bci
 
-
 #define _compiler_closure             jvm_fast_globals.compiler_closure
 #define _num_stack_lock_words         jvm_fast_globals.num_stack_lock_words
-#define _xxx2                         jvm_fast_globals.xxx2
-#define _xxx3                         jvm_fast_globals.xxx3
 
 /* Variables used by the interpreter and compiler */
 extern "C" {
@@ -1863,6 +1854,7 @@ extern "C" {
   extern OopDesc* _task_class_init_marker;
 #endif
   extern address  _current_stack_limit;
+  extern address  _compiler_stack_limit;
   extern int      _rt_timer_ticks;
   extern address  _primordial_sp;
 #if ENABLE_CLDC_11
@@ -1896,13 +1888,27 @@ extern "C" {
   void force_terminated(Thread* thread);
   address setup_stack_asm(address sp);
 
-
 #if ENABLE_COMPILER
   void compiler_rethrow_exception();
   void compiler_new_object();
   void compiler_new_obj_array();
   void compiler_new_type_array();
   void compiler_idiv_irem();
+#if USE_COMPILER_GLUE_CODE
+  void compiler_glue_code_start();
+  void compiler_glue_code_end();
+#endif
+#if ENABLE_COMPRESSED_VSF
+  void compiler_callvm_stubs_start();
+  void compiler_callvm_stubs_end();
+#endif
+#endif
+
+#if ENABLE_ARM_VFP
+  void vfp_redo();
+  void vfp_fcmp_redo();
+  void vfp_double_redo();
+  void vfp_dcmp_redo();
 #endif
 
   void shared_monitor_enter();
@@ -1940,6 +1946,11 @@ extern "C" {
   void shared_fast_getint_accessor();
   void shared_fast_getlong_accessor();
 
+  void shared_fast_getfloat_accessor();
+  void shared_fast_getdouble_accessor();
+  void shared_fast_getfloat_static_accessor();
+  void shared_fast_getdouble_static_accessor();
+
   void shared_fast_getbyte_static_accessor();
   void shared_fast_getshort_static_accessor();
   void shared_fast_getchar_static_accessor();
@@ -1973,7 +1984,7 @@ extern "C" {
 
   OopDesc * multianewarray(JVM_SINGLE_ARG_TRAPS);
   OopDesc * newobject(JVM_SINGLE_ARG_TRAPS);
-  OopDesc* _newobject(Thread*thread, OopDesc* raw_klass JVM_TRAPS);
+  OopDesc* _newobject(Thread* thread, OopDesc* raw_klass JVM_TRAPS);
 
   jlong jvm_lmul(jlong a, jlong b);
   jlong jvm_ldiv(jlong a, jlong b);
@@ -2094,7 +2105,7 @@ extern "C" {
 // PCSL requires Unicode filenames
 #if ENABLE_PCSL
 
-#if defined(USE_UNICODE_FOR_FILENAMES) 
+#if defined(USE_UNICODE_FOR_FILENAMES)
 #if !USE_UNICODE_FOR_FILENAMES
 #error "USE_UNICODE_FOR_FILENAMES must be set if ENABLE_PCSL is set"
 #endif
@@ -2228,8 +2239,8 @@ static inline jfloat  jvm_l2f(jlong x)               { return (jfloat)x; }
 static inline jlong   jvm_f2l(jfloat x)              { return (jlong)x; }
 static inline jdouble jvm_i2d(jint x)                { return (jdouble)x; }
 static inline jdouble jvm_l2d(jlong x)               { return (jdouble)x; }
-static inline jint    jvm_fcmpg(jfloat x, jfloat y)  { return ((x > y)  ? 1 : 
-                                                               (x == y) ? 0 : 
+static inline jint    jvm_fcmpg(jfloat x, jfloat y)  { return ((x > y)  ? 1 :
+                                                               (x == y) ? 0 :
                                                                (x < y)  ? -1:
                                                                           1);
                                                      }
@@ -2419,6 +2430,20 @@ extern "C" int   jvm_memcmp(const void *s1, const void *s2, int n);
 #define jvm_memcmp      memcmp
 #endif
 
+#if defined(AZZERT) && !ENABLE_ZERO_YOUNG_GENERATION
+#define DIRTY_HEAP(start, length)  jvm_memset(start, 0xAB, length)
+#else
+#define DIRTY_HEAP(start, length)
+#endif
+
+#if ARM_EXECUTABLE && ENABLE_ZERO_YOUNG_GENERATION
+extern "C" void fast_memclear(void* start, int length);
+#else
+inline void fast_memclear(void* start, int length) {
+  jvm_memset(start, 0, length);
+}
+#endif
+
 extern "C" size_t fn_strlen(const JvmPathChar* str);
 extern "C" void   fn_strcat(JvmPathChar* s1, const JvmPathChar *s2);
 
@@ -2436,7 +2461,7 @@ enum CIBType {
 
 //---------------------------------------------------------------------
 // OopMap generation and validation
-typedef void (*oopmaps_doer)(BasicType type, void *param, 
+typedef void (*oopmaps_doer)(BasicType type, void *param,
                              const char *name, size_t offset, int flags);
 
 typedef void (*oop_doer)(OopDesc**);
@@ -2465,7 +2490,7 @@ typedef void (*oop_doer)(OopDesc**);
 // There used to be some compiler classes.  There aren't any more, but we
 // leave this around just in case we get more in the future.
 #if USE_COMPILER_STRUCTURES
-#define OOPMAP_CLASSES_DO_COMPILER(template) 
+#define OOPMAP_CLASSES_DO_COMPILER(template)
 #else
 #define OOPMAP_CLASSES_DO_COMPILER(template)
 #endif
@@ -2499,7 +2524,7 @@ inline int arm_JavaFrame__arg_offset_from_sp(int index) {
   if (JavaStackDirection < 0) {
     // The stack pointer points at the beginning of the last argument
     return BytesPerStackElement * index;
-  } else { 
+  } else {
     // The stack pointer points at the end of the last argument
     return (-BytesPerStackElement * (index + 1)) + BytesPerWord;
   }
@@ -2510,7 +2535,7 @@ inline int arm_JavaFrame__bcp_store_offset()            { return -16; }
 inline int arm_JavaFrame__locals_pointer_offset()       { return -12; }
 inline int arm_JavaFrame__cpool_offset()                { return - 8; }
 inline int arm_JavaFrame__method_offset()               { return - 4; }
-inline int arm_JavaFrame__caller_fp_offset()            { return   0; } 
+inline int arm_JavaFrame__caller_fp_offset()            { return   0; }
 inline int arm_JavaFrame__stack_bottom_pointer_offset() { return   4; }
 
 // These two slots are not used in this architecture.
@@ -2519,7 +2544,7 @@ inline int arm_JavaFrame__stored_int_value2_offset()    {return  -99999;}
 
 inline int arm_JavaFrame__frame_desc_size() {
     return 7*BytesPerWord;
-}  
+}
 
 inline int arm_JavaFrame__end_of_locals_offset() {
   return JavaStackDirection < 0 ? 8 : -24;
@@ -2549,7 +2574,7 @@ inline int arm_EntryFrame__empty_stack_offset()          {
 #if ENABLE_EMBEDDED_CALLINFO
 // number of bytes between the return address and the start of the callinfo
 inline int arm_JavaFrame__callinfo_offset_from_return_address() { return -4;}
-#endif 
+#endif
 
 // number of bytes between a stack tag value and its tag
 inline int arm_StackValue__stack_tag_offset() { return 4; }
@@ -2575,7 +2600,7 @@ typedef class SourceROMWriter CurrentSourceROMWriter;
 #define PERFORMANCE_COUNTER_SET_MAX(name, value) \
         if (jvm_perf_count.name < value) { \
           jvm_perf_count.name = value; \
-        } 
+        }
 #else
 #define PERFORMANCE_COUNTER_INCREMENT(name, value)
 #define PERFORMANCE_COUNTER_SET_MAX(name, value)

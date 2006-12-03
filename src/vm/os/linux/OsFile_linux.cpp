@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -93,16 +94,6 @@ int OsFile_remove(const char *filename) {
 #endif // !ENABLE_PCSL
 
 #if USE_IMAGE_MAPPING
-
-#ifdef SOLARIS
-  // otherwise mmap/munmap has bad signature
-#ifndef  _XPG4_2
-#define _XPG4_2 1
-#endif
-#endif
-
-#include <unistd.h>
-#include <sys/mman.h>
 
 struct Linux_MappedImage : public OsFile_MappedImage {
   size_t  ro_length;

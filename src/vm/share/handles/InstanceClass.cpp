@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -48,7 +49,7 @@ ReturnOop InstanceClass::package_name(JVM_SINGLE_ARG_TRAPS) {
   }
   GUARANTEE(SymbolTable::current()->not_null(), 
     "JavaClass::package_name() requires SymbolTable");
-  return SymbolTable::symbol_for(&byte_array JVM_CHECK_0);
+  return SymbolTable::symbol_for(&byte_array JVM_NO_CHECK_AT_BOTTOM_0);
 }
 #endif
 
@@ -62,6 +63,9 @@ void InstanceClass::bootstrap_initialize(JVM_SINGLE_ARG_TRAPS) {
   AZZERT_ONLY_VAR(init);
 #endif
   set_initialized();
+#if USE_EMBEDDED_VTABLE_BITMAP
+  update_vtable_bitmaps(JVM_SINGLE_ARG_CHECK);
+#endif
   verify(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
 }
 #endif
@@ -105,7 +109,8 @@ ReturnOop InstanceClass::initialize_for_task(JVM_SINGLE_ARG_TRAPS){
     tm = TaskMirror::clinit_list_lookup(this);
     if (tm.is_null()) {
       // allocate Task mirror
-      tm = setup_task_mirror(static_field_size(), true JVM_CHECK_0);
+      tm = setup_task_mirror(static_field_size(), vtable_length(), 
+                             true JVM_CHECK_0);
       initialize_static_fields(&tm);
     }
   } else {
@@ -301,6 +306,39 @@ size_t InstanceClass::last_nonstatic_oop_offset() const {
   }
   return oop_offset;
 }
+
+size_t InstanceClass::static_map_size() const {
+  size_t map_start = first_static_map_offset();
+  size_t map_offset = map_start;
+  while (oop_map_at(map_offset) != OopMapSentinel) {
+    map_offset++;
+  }
+  return map_offset + 1 - map_start;
+}
+
+#if USE_EMBEDDED_VTABLE_BITMAP
+void InstanceClass::set_is_method_overridden(int vtable_index) {
+  GUARANTEE(0 <= vtable_index && vtable_index < vtable_length(),
+            "Bound check");
+  ClassInfo::Raw info = class_info();    
+  Method::Raw method = info().vtable_method_at(vtable_index);
+  InstanceClass::Raw holder = method().holder();
+  holder().set_vtable_bitmap_bit(vtable_index);
+}
+
+bool InstanceClass::is_method_overridden(int vtable_index) const {
+  GUARANTEE(0 <= vtable_index && vtable_index < vtable_length(),
+            "Bound check");
+  ClassInfo::Raw info = class_info();    
+  Method::Raw method = info().vtable_method_at(vtable_index);
+  InstanceClass::Raw holder = method().holder();
+  if (holder().is_vtable_bitmap_installed()) {
+    return holder().vtable_bitmap_bit(vtable_index);
+  } else {
+    return false;
+  }
+}
+#endif
 
 /// Find a method with matching name and signature (regardless of access
 /// flags). We start by searching the current class, and recursively walk
@@ -660,36 +698,7 @@ bool InstanceClass::is_same_class_package(InstanceClass* other_class) {
   Symbol::Raw other_class_name = other_class->name();
   return is_same_class_package(&other_class_name);
 }
-#if ENABLE_INLINE && ARM
-bool InstanceClass::is_same_root_package(InstanceClass* other_class) {
-  Symbol::Raw other_class_name = other_class->name();
-  return is_same_root_package(&other_class_name);
-}
 
-bool InstanceClass::is_same_root_package(Symbol* other_class_name) {
-  Symbol::Raw this_class_name = name();
-  return this_class_name().is_same_root_package(other_class_name);
-}
-
-void InstanceClass::clean_compiled_method() {
-  UsingFastOops fast_oops;
-  ObjArray::Fast array = this->methods();
-  Method::Fast m;
-  int len = array().length();
-  for (int i = 0; i < len; i++) {
-    m = array().obj_at(i);
-    if (m().has_compiled_code()) {
-      m().unlink_compiled_code();
-#if ENABLE_TTY_TRACE
-      if (PrintCompiledCodeAsYouGo) {
-        tty->print_cr("decompile happened+++");
-        m().print_name_on_tty();
-      }
-#endif
-    }
-  }
-}
-#endif
 // See JVMS 5.4.4
 bool InstanceClass::check_access_by(InstanceClass* sender_class, 
                                     FailureMode fail_mode JVM_TRAPS) {
@@ -705,7 +714,7 @@ bool InstanceClass::check_access_by(InstanceClass* sender_class,
   // system ones are covered by previous check
   if (is_hidden()) {
     UsingFastOops fast_oops;
-    Symbol::Fast class_name = name();
+    Symbol::Fast class_name = name();        
     Throw::class_not_found(&class_name, fail_mode JVM_THROW_0);
   }
 
@@ -1026,6 +1035,73 @@ void InstanceClass::initialize_static_fields(Oop *statics_holder) {
     }
   }
 }
+
+#if ENABLE_COMPILER && ENABLE_INLINE
+void InstanceClass::update_vtable_bitmaps(JVM_SINGLE_ARG_TRAPS) const {
+  if (is_interface()) {
+    return;
+  }
+
+  UsingFastOops fast_oops;
+  InstanceClass::Fast super_class = this->super();
+
+  if (super_class.not_null()) {
+    UsingFastOops fast_oops_2;
+    ClassInfo::Fast this_class_info = this->class_info();
+    ClassInfo::Fast super_class_info = super_class().class_info();
+    const int super_vtable_length = super_class_info().vtable_length();
+
+    GUARANTEE(super_vtable_length <= this_class_info().vtable_length(),
+              "Sanity");
+
+    for (int vtable_index = 0; vtable_index < super_vtable_length; 
+         vtable_index++) {
+      Method::Raw this_method = 
+        this_class_info().vtable_method_at(vtable_index);
+      if (this_method.not_null()) {
+        InstanceClass::Raw holder = this_method().holder();
+        if (holder.equals(this)) {
+          if (!super_class().is_method_overridden(vtable_index)) {
+            Method::Raw super_method = 
+              super_class_info().vtable_method_at(vtable_index);
+
+            GUARANTEE(!this_method.equals(&super_method), 
+                      "Cannot be equal: must have different holders");
+            
+            if (TraceMethodInlining) {
+              tty->print("Method ");
+              this_method().print_name_on_tty();
+              tty->print(" overrides ");
+              super_method().print_name_on_tty();
+              tty->cr();
+            }
+
+            // If the loaded class overrides this method in super_class,
+            // unlink all methods that has this method inlined and mark 
+            // the method as overriden in the inline table.
+            super_method().unlink_direct_callers();
+
+            super_class().set_is_method_overridden(vtable_index);
+          } else {
+#ifdef AZZERT
+            Method::Raw super_method = 
+              super_class_info().vtable_method_at(vtable_index);
+
+            GUARANTEE(!this_method.equals(&super_method), 
+                      "Cannot be equal: must have different holders");
+            
+            Method::DirectCallerStream reader(&super_method);
+
+            GUARANTEE(!reader.has_next(), 
+                      "Overridden method must not have direct callers");
+#endif
+          }
+        }
+      }
+    }
+  }
+}
+#endif
 
 bool InstanceClass::compute_is_subtype_of(JavaClass* other_class) {
   if (other_class->is_interface()) {

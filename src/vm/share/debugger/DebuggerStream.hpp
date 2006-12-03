@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -151,7 +152,6 @@ public:
 
 
   static int current_id;
-  julong get_Java_u8(address p);
 
   jubyte* current_output_addr() {
     return _input_data.base_address() + (sizeof(jubyte) * _output_index);
@@ -214,6 +214,7 @@ public:
     return *(float*)&rv;
   }
   jdouble read_double() {
+    // IMPL_NOTE: consider whether it is right 
     return double_from_bits(read_long());
   }
   jlong read_long();
@@ -279,9 +280,9 @@ public:
   void write_boolean(jboolean val);
   virtual void write_byte(jbyte val);
   void write_char(jchar val);
-  void write_short(jshort val);
-  virtual void write_int(jint val);
-  virtual void write_long(jlong val);
+  void write_short(jushort val);
+  virtual void write_int(juint val);
+  virtual void write_long(julong val);
   void write_class(Oop* clazz) {
     write_object(clazz);
   }
@@ -320,16 +321,15 @@ public:
   void check_buffer_size(int size);
 };
 
-#define HOST_TO_JAVA_CHAR(x) Bytes::get_Java_u2((unsigned char *)&x)
-#define HOST_TO_JAVA_SHORT(x) Bytes::get_Java_u2((unsigned char *)&x)
-#define HOST_TO_JAVA_INT(x) Bytes::get_Java_u4((unsigned char *)&x)
-// Removed from Bytes for some reason
-#define HOST_TO_JAVA_LONG(x) get_Java_u8((unsigned char *)&x)
+#define HOST_TO_JAVA_CHAR(x)  Bytes::put_Java_u2((address)&x, x)
+#define HOST_TO_JAVA_SHORT(x) Bytes::put_Java_u2((address)&x, x)
+#define HOST_TO_JAVA_INT(x)   Bytes::put_Java_u4((address)&x, x)
+#define HOST_TO_JAVA_LONG(x)  Bytes::put_Java_u8((address)&x, x)
 
-#define JAVA_TO_HOST_CHAR(x) HOST_TO_JAVA_CHAR(x)
-#define JAVA_TO_HOST_SHORT(x) HOST_TO_JAVA_SHORT(x)
-#define JAVA_TO_HOST_INT(x) HOST_TO_JAVA_INT(x)
-#define JAVA_TO_HOST_LONG(x) HOST_TO_JAVA_LONG(x)
+#define JAVA_TO_HOST_CHAR(x)  Bytes::get_Java_u2((address)&x)
+#define JAVA_TO_HOST_SHORT(x) Bytes::get_Java_u2((address)&x)
+#define JAVA_TO_HOST_INT(x)   Bytes::get_Java_u4((address)&x)
+#define JAVA_TO_HOST_LONG(x)  Bytes::get_Java_u8((address)&x)
 
 #define FLAGS_REPLY ((unsigned char)0x80)
 #define FLAGS_NONE  ((unsigned char)0x0)

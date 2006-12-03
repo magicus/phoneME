@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -194,28 +195,28 @@ void FloatSupport::generate() {
 // Macros used to check if exception occurred in arthmetic operations
 // a+a, a*a...
 #define VFP_RETURN_IF_NO_EXCEPTION_r2 \
-  VFP_COMMENT("return to caller if no FP exception"); \
-  VFP_EMIT_RAW("fmrx    r2, FPSCR"); \
-  VFP_COMMENT("Check cumulative exceptions IDC|UFC|OFC|DZC|IOC"); \
-  VFP_EMIT_RAW("tst     r2, #0x8f"); \
-  VFP_EMIT_RAW("bxeq    lr"); \
-  VFP_COMMENT("clear cumulative exceptions lazily"); \
-  VFP_EMIT_RAW("mov     r2, r2, lsr #8"); \
-  VFP_EMIT_RAW("mov     r2, r2, lsl #8"); \
-  VFP_EMIT_RAW("fmxr    FPSCR, r2")
+   VFP_COMMENT("return to caller if no FP exception"); \
+   VFP_EMIT_RAW("fmrx    r2, FPSCR"); \
+   VFP_COMMENT("Check cumulative exceptions IDC|UFC|OFC|DZC|IOC"); \
+   VFP_EMIT_RAW("tst     r2, #0x8f"); \
+   VFP_EMIT_RAW("bxeq    lr"); \
+   VFP_COMMENT("clear cumulative exceptions lazily"); \
+   VFP_EMIT_RAW("mov     r2, r2, lsr #8"); \
+   VFP_EMIT_RAW("mov     r2, r2, lsl #8"); \
+   VFP_EMIT_RAW("fmxr    FPSCR, r2")
 
 // Macros used to check if exception occurred in conversions operations.
 // i.e. f2i, d2i...
 #define VFP_RETURN_IF_NO_EXCEPTION_r2_conversions \
-  VFP_COMMENT("return to caller if no FP exception"); \
-  VFP_EMIT_RAW("fmrx    r2, FPSCR"); \
-  VFP_COMMENT("Check cumulative exceptions IDC|UFC|OFC|DZC"); \
-  VFP_EMIT_RAW("tst     r2, #0x8E"); \
-  VFP_EMIT_RAW("bxeq    lr"); \
-  VFP_COMMENT("clear cumulative exceptions lazily"); \
-  VFP_EMIT_RAW("mov     r2, r2, lsr #8"); \
-  VFP_EMIT_RAW("mov     r2, r2, lsl #8"); \
-  VFP_EMIT_RAW("fmxr    FPSCR, r2")
+   VFP_COMMENT("return to caller if no FP exception"); \
+   VFP_EMIT_RAW("fmrx    r2, FPSCR"); \
+   VFP_COMMENT("Check cumulative exceptions IDC|UFC|OFC|DZC"); \
+   VFP_EMIT_RAW("tst     r2, #0x8E"); \
+   VFP_EMIT_RAW("bxeq    lr"); \
+   VFP_COMMENT("clear cumulative exceptions lazily"); \
+   VFP_EMIT_RAW("mov     r2, r2, lsr #8"); \
+   VFP_EMIT_RAW("mov     r2, r2, lsl #8"); \
+   VFP_EMIT_RAW("fmxr    FPSCR, r2")
 
 // This is an operation for floats in the form
 //       r0 := r0 <opcode> r1
@@ -282,9 +283,9 @@ void FloatSupport::generate() {
 #if ENABLE_ARM_VFP
 void FloatSupport::generate_set_vfp_fast_mode() {
   bind_global("jvm_set_vfp_fast_mode");
-  mov(r0, imm(0x03 << 24));
-  VFP_EMIT_RAW("fmxr    FPSCR, r0");
-  jmpx(lr);
+    mov(r0, imm(0x03 << 24));
+    fmxr(fpscr, r0);
+    jmpx(lr);
 }
 #endif
 
@@ -310,7 +311,8 @@ void FloatSupport::generate_jvm_fadd() {
   Label floatRoundingDone, floatRoundUp;
 
 bind_global(fadd);
-  VFP_FLOAT_2_TO_1("fadds");
+//  Handled by the JIT
+//  VFP_FLOAT_2_TO_1("fadds");
 
   stmfd(sp, FLOAT_SAVE_SET, writeback);
   mov(EMASK, imm(0xFF));
@@ -591,7 +593,8 @@ void FloatSupport::generate_jvm_fsub() {
   Label fadd("jvm_fadd");
 
 bind_global(fsub);
-  VFP_FLOAT_2_TO_1("fsubs");
+//  Handled by the JIT
+//  VFP_FLOAT_2_TO_1("fsubs");
 
   comment("invert sign of arg 2");
   eor(r1, r1, imm(0x80000000));
@@ -619,7 +622,8 @@ void FloatSupport::generate_jvm_fmul() {
   Label  float1CheckForZeroInFloat2;
 
 bind_global(fmul);
-  VFP_FLOAT_2_TO_1("fmuls");
+//  Handled by the JIT
+//  VFP_FLOAT_2_TO_1("fmuls");
 
   stmfd(sp, FLOAT_SAVE_SET, writeback);
   mov(EMASK, imm(0xFF));
@@ -817,7 +821,8 @@ void FloatSupport::generate_jvm_fdiv() {
   Label  float1IsZero;
 
 bind_global(fdiv);
-  VFP_FLOAT_2_TO_1("fdivs");
+//  Handled by the JIT
+//  VFP_FLOAT_2_TO_1("fdivs");
 
   stmfd(sp, FLOAT_SAVE_SET, writeback);
   mov(EMASK, imm(0xFF));
@@ -997,9 +1002,8 @@ void FloatSupport::generate_jvm_f2i() {
   // compiler can use it, too.
 bind_global(f2i);
 
-#if 0  // Doesn't work with VFP on H4
-  VFP_FLOAT_1_TO_1("ftosizs");
-#endif
+//  Handled by the JIT
+//  VFP_FLOAT_1_TO_1("ftosizs");
 
   comment("Strip sign");
   bic(F, ARG, imm(0x80000000));
@@ -1109,7 +1113,7 @@ void FloatSupport::generate_jvm_i2d() {
   // the compiler can use them, too.
 bind_global(i2d);
 
-  VFP_INT_1_TO_1("fsitod")
+//  VFP_INT_1_TO_1("fsitod")
 
   Register F = r2;
   Register EXP = r3;
@@ -1156,7 +1160,8 @@ void FloatSupport::generate_jvm_i2f() {
   // These are written as separate functions so that
   // the compiler can use them, too.
 bind_global(i2f);
-  VFP_FLOAT_1_TO_1("fsitos");
+//  Handled by the JIT
+//  VFP_FLOAT_1_TO_1("fsitos");
 
   Register F = r1;
   Register EXP = r2;
@@ -1202,7 +1207,8 @@ void FloatSupport::generate_jvm_dcmp() {
   Label dcmpl("jvm_dcmpl");
   Label dcmpg("jvm_dcmpg");
 
-#if 0 //ENABLE_ARM_VFP
+// Disable don't pass TCK in RunFastMode
+#if 0 // ENABLE_ARM_VFP
 
   bind_global(dcmpg);
   VFP_EMIT_RAW("  fmdrr d6, r0, r1");
@@ -1326,41 +1332,6 @@ void FloatSupport::generate_jvm_fcmp() {
   Label fcmpl("jvm_fcmpl");
   Label fcmpg("jvm_fcmpg");
 
-#if 0 //ENABLE_ARM_VFP
-
-  bind_global(fcmpg);
-  VFP_EMIT_RAW("fmsr  s14, r0");
-  VFP_EMIT_RAW("fmsr  s15, r1");
-  VFP_EMIT_RAW("fcmpes  s14, s15");
-  VFP_EMIT_RAW("fmstat");
-  VFP_EMIT_RAW("mov r0, #1");
-  VFP_EMIT_RAW("bxgt  lr");
-  VFP_EMIT_RAW("fcmps s14, s15");
-  VFP_EMIT_RAW("fmstat");
-  VFP_EMIT_RAW("mov r0, #0");
-  VFP_EMIT_RAW("bxeq  lr");
-  VFP_EMIT_RAW("fcmpes  s14, s15");
-  VFP_EMIT_RAW("fmstat");
-  VFP_EMIT_RAW("sub r0, r0, #1");
-  VFP_EMIT_RAW("bxmi  lr");
-  VFP_EMIT_RAW("mov r0, #1");
-  VFP_EMIT_RAW("bx  lr");
-
-  bind_global(fcmpl);
-  VFP_EMIT_RAW("  fmsr  s14, r0");
-  VFP_EMIT_RAW("  fmsr  s15, r1");
-  VFP_EMIT_RAW("  fcmpes  s14, s15");
-  VFP_EMIT_RAW("  fmstat");
-  VFP_EMIT_RAW("  mov r0, #1");
-  VFP_EMIT_RAW("  bxgt  lr");
-  VFP_EMIT_RAW("  fcmps s14, s15");
-  VFP_EMIT_RAW("  fmstat");
-  VFP_EMIT_RAW("  mvnne r0, #0");
-  VFP_EMIT_RAW("  moveq r0, #0");
-  VFP_EMIT_RAW("  bx  lr");
-
-#else
-
   Label oppositeSigns;
   Label fcmp_join;
 
@@ -1409,8 +1380,6 @@ void FloatSupport::generate_jvm_fcmp() {
   mov(r1, imm_shift(r1, lsr, 31));
   sub(r0, r1, imm_shift(r0, lsr, 31));
   jmpx(lr);
-
-#endif // ENABLE_ARM_VFP
 }
 
 #if MSW_FIRST_FOR_DOUBLE
@@ -1516,13 +1485,7 @@ void FloatSupport::generate_jvm_dadd() {
     _double_denorm_done_rounding("_double_denorm_done_rounding");
 
 bind_global(dadd);
-  // IMPL_NOTE: this seems to be a bug on ARM926EJ-Sid(wb) rev 3
-  // You can uncomment the following line if you're using ARM1136JF-S rev 2,
-  // or if you know the bug doesn't exist on your CPU. The test case is:
-  // javasoft.sqe.tests.lang.fpl038.fpl03801mAD4.fpl03801mAD4_wrapper
-#if ENABLE_ARM_V6
-  VFP_DOUBLE_2_TO_1("faddd");
-#endif
+//  VFP_DOUBLE_2_TO_1("faddd");
 
 bind_global("jvm_dadd_software");
   stmfd(sp, DOUBLE_SAVE_SET, writeback);
@@ -1759,13 +1722,7 @@ void FloatSupport::generate_jvm_dsub() {
   Label dadd("jvm_dadd_software");
 
 bind_global(dsub);
-  // IMPL_NOTE: this seems to be a bug on ARM926EJ-Sid(wb) rev 3
-  // You can uncomment the following line if you're using ARM1136JF-S rev 2,
-  // or if you know the bug doesn't exist on your CPU. The test case is:
-  // javasoft.sqe.tests.vm.instr.dsub.dsub001.dsub00108m1.dsub00108m1_wrapper
-#if ENABLE_ARM_V6
-  VFP_DOUBLE_2_TO_1("fsubd");
-#endif
+//  VFP_DOUBLE_2_TO_1("fsubd");
 
   comment("invert sign of arg 2");
   eor(B1, B1, imm(0x80000000));
@@ -1824,7 +1781,7 @@ void FloatSupport::generate_jvm_dmul() {
     _dmult_denorm_result("_dmult_denorm_result");
 
 bind_global(dmul);
-  VFP_DOUBLE_2_TO_1("fmuld");
+//  VFP_DOUBLE_2_TO_1("fmuld");
 
   stmfd(sp, DOUBLE_SAVE_SET, writeback);
   comment("capture sign of result");
@@ -1836,7 +1793,7 @@ bind_global(dmul);
   comment("clear other flags");
   andr(FLAGS, FLAGS, imm(0x80000000));
   comment("exponent mask");
-  // IMPL_NOTE: consider if it should be fixed. 
+  // IMPL_NOTE
   mov_imm(EXPMASK, DOUBLE_EXPVAL);
   bind(_dmult_unpackA);
   DOUBLE_UNPACK( A1, EXPA, _dmult_normalizeA, _dmult_exceptionalA);
@@ -2004,7 +1961,7 @@ bind_global(dmul);
 
   bind(_dmult_denorm_looping);
   mov(A1, imm_shift(A1, lsr, 1), set_CC);
-  // IMPL_NOTE: consider if it should be fixed. 
+  // IMPL_NOTE
   mov(A2, imm_shift(A2, ror, 0), set_CC);
   mov(RESULTX, imm_shift(RESULTX, ror, 0), set_CC);
   comment("this is why we call it sticky");
@@ -2067,7 +2024,7 @@ void FloatSupport::generate_jvm_ddiv() {
     _dmult_denorm_result("_dmult_denorm_result");
 
 bind_global(ddiv);
-  VFP_DOUBLE_2_TO_1("fdivd");
+//  VFP_DOUBLE_2_TO_1("fdivd");
 
   comment("In addition to the above conventions, working register are:");
   comment("QUOT1 for first quotient word (after done with EXPB)");
@@ -2237,7 +2194,7 @@ void FloatSupport::generate_jvm_f2d() {
   Label _internal("jvm_f2d_internal");
   bind(f2d);
 
-  VFP_INT_1_TO_1("fcvtds");
+//  VFP_INT_1_TO_1("fcvtds");
 
   import(_internal);
   b(_internal);
@@ -2252,7 +2209,7 @@ void FloatSupport::generate_jvm_d2f() {
   Label _internal("jvm_d2f_internal");
   bind(d2f);
 
-  VFP_DOUBLE_1_TO_1("fcvtsd");
+//  VFP_DOUBLE_1_TO_1("fcvtsd");
 
   import(_internal);
   b(_internal);
@@ -2452,7 +2409,7 @@ extern "C" {
     if (aExp == 0x7FF) {
       if (aSig) {
         juint nan = floatNaN;
-        // IMPL_NOTE: consider if it is correct 
+        // need revisit
         return *(jfloat*)&nan;
       }
       return packFloat32(aSign, 0xFF, 0);

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -41,6 +42,11 @@ void Macros::ldr_big_integer(Register rd, int imm32, Condition cond) {
 void Macros::get_bitvector_base(Register rd, Condition cond) {
   BinaryAssembler* ba = (BinaryAssembler*) this;
   ba->get_bitvector_base(rd, cond);
+}
+
+void Macros::get_bit_selector(Register rd, Condition cond) {
+  BinaryAssembler* ba = (BinaryAssembler*) this;
+  ba->get_bit_selector(rd, cond);
 }
 
 void Macros::get_heap_start(Register rd, Condition cond) {
@@ -156,6 +162,8 @@ const struct OpcodeInfo OpcodeInfo::table[16] = {
 
 void Macros::arith_imm(Opcode opcode, Register rd, Register rn, int imm32,
                        LiteralAccessor* la, CCMode s, Condition cond) {
+  GUARANTEE(rd <= r15 && rn <= r15, "Invalid register used");
+  
   Address1 result;
   if (is_rotated_imm(imm32, result)) {
     // Simplest case.  We can handle the immediate directly
@@ -371,33 +379,28 @@ void Macros::mov_reg(Register rd, Register rs, CCMode s, Condition cond) {
 
 void Macros::oop_write_barrier(Register dst, Register tmp1, Register tmp2,
                                Register tmp3, bool range_check) {
-  Register base            = tmp1;
-  Register bit_offset      = dst;
-  Register tmp             = tmp3;
-  Condition cond           = al;
-
   NOT_PRODUCT(comment("oop_write_barrier"));
+  Condition cond = al;
   if (range_check) {
     get_heap_start(tmp1);
     get_old_generation_end(tmp2);
     cmp(dst, reg(tmp1));
-    add(tmp2, tmp2, one);
+    // don't care of one byte beyond old_generation_end
     cmp(tmp2, reg(dst), hs);
     cond = hs;
-  } else {
-    if (GenerateDebugAssembly || 
-        (!GenerateAssemblyCode && GenerateCompilerAssertions)) {
-      get_heap_start(tmp1);
-      get_heap_top(tmp2);
-      cmp(dst, reg(tmp1));
-      breakpoint(lo);
-      cmp(dst, reg(tmp2));
-      breakpoint(hs);
-    }
+  } else if (GenerateDebugAssembly || 
+             (!GenerateAssemblyCode && GenerateCompilerAssertions)) {
+    get_heap_start(tmp1);
+    get_heap_top(tmp2);
+    cmp(dst, reg(tmp1));
+    breakpoint(lo);
+    cmp(dst, reg(tmp2));
+    breakpoint(hs);
   }
-  get_bitvector_base(base, cond);
-  // bit_offset starting from base
-  mov(bit_offset, imm_shift(dst, lsr, LogBytesPerWord), cond);
+
+  Register bitvector_base = tmp1;
+  Register bit_selector   = tmp2; // magic constant, see below
+  Register mem_value      = tmp3;
 
 #ifdef SOLARIS
   // We only use Solaris/ARM to generate precompiled methods inside
@@ -409,32 +412,21 @@ void Macros::oop_write_barrier(Register dst, Register tmp1, Register tmp2,
 #endif
 
   if (little_end) {
-    const int rem_mask = right_n_bits(LogBitsPerByte);
-    Register byte_value = tmp2;
-    Register byte_bit_offset = bit_offset;
-
-    // Get the byte, update base
-    ldrb(byte_value,
-         add_index(base, bit_offset, lsr, LogBitsPerByte, pre_indexed), cond);
-    // Compute the bit offset (dst % bitsPerByte) inside the mask
-    mov(tmp, one, cond);
-    andr(byte_bit_offset, bit_offset, imm(rem_mask), cond);
-    orr(byte_value, byte_value, reg_shift(tmp, lsl, byte_bit_offset), cond);
-    strb(byte_value, imm_index(base), cond);
+    get_bitvector_base(bitvector_base, cond);
+    get_bit_selector(bit_selector, cond);          // constant 0x80808080
+    ldrb(mem_value, add_index(bitvector_base, dst, lsr, 5, pre_indexed), cond);
+    mvn(dst, imm_shift(dst, lsr, LogBytesPerWord), cond);
+    orr(mem_value, mem_value, reg_shift(bit_selector, ror, dst), cond);
+    strb(mem_value, imm_index(bitvector_base), cond);
   } else {
-    const int rem_mask = right_n_bits(LogBitsPerWord);
-    Register word_value = tmp2;
-    Register word_bit_offset = bit_offset;
-
-    // With big-endian, we must set a word at a time, so that we match
-    // the behavior of ObjectHeap_arm.cpp.
-    mov(tmp, imm_shift(dst, lsr, LogBitsPerWord), cond);
-    ldr(word_value,
-        add_index(base, tmp, lsl, LogBytesPerWord, pre_indexed), cond);
-    mov(tmp, one, cond);
-    andr(word_bit_offset, bit_offset, imm(rem_mask), cond);
-    orr(word_value, word_value, reg_shift(tmp, lsl, word_bit_offset), cond);
-    str(word_value, imm_index(base), cond);
+    get_bitvector_base(bitvector_base, cond);
+    mov(bit_selector, imm_rotate(2, 2), cond);     // constant 0x80000000
+    mov(mem_value, imm_shift(dst, lsr, 7), cond);
+    ldr(mem_value, add_index(bitvector_base, mem_value, lsl, 2, pre_indexed),
+                                                                       cond);
+    mvn(dst, imm_shift(dst, lsr, LogBytesPerWord), cond);
+    orr(mem_value, mem_value, reg_shift(bit_selector, ror, dst), cond);
+    str(mem_value, imm_index(bitvector_base), cond);
   }
 }
 #endif /*#ifdef PRODUCT */

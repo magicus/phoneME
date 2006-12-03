@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -49,8 +50,8 @@ class Method: public Oop {
   static int max_locals_offset() {
     return FIELD_OFFSET(MethodDesc, x._max_locals);
   }
-  static int size_of_parameters_and_return_type_offset() {
-    return FIELD_OFFSET(MethodDesc, _size_of_parameters);
+  static int method_attributes_offset() {
+    return FIELD_OFFSET(MethodDesc, _method_attributes);
   }
   static int name_index_offset() {
     return FIELD_OFFSET(MethodDesc, _name_index);
@@ -68,9 +69,30 @@ class Method: public Oop {
     return FIELD_OFFSET(MethodDesc, _stackmaps);
   }
   enum {
-    NUMBER_OF_RETURN_TYPE_BITS = 2,
-    NUMBER_OF_PARAMETERS_BITS = 14,
-    SIZE_OF_PARAMETERS_MASK = 0x3fff
+    // According to VM spec:
+    // The number of method parameters is limited to 255, 
+    // where the limit includes one unit for this in the 
+    // case of instance or interface method invocations.
+    // So the maximum summary size of parameters is 510
+    // and 9 bit is enough to encode it.
+
+    SIZE_OF_PARAMETERS_BITS    = 9,
+    RESULT_STORAGE_TYPE_BITS   = 3,
+
+    SIZE_OF_PARAMETERS_SHIFT   = 0,
+    RESULT_STORAGE_TYPE_SHIFT  = SIZE_OF_PARAMETERS_BITS,
+
+    SIZE_OF_PARAMETERS_MASK    = (1 << SIZE_OF_PARAMETERS_BITS ) - 1,
+    RESULT_STORAGE_TYPE_MASK   = (1 << RESULT_STORAGE_TYPE_BITS) - 1,
+  };
+
+  enum {
+    NO_RESULT                  = 0x0,
+    FP_SINGLE                  = 0x1, // s0
+    SINGLE                     = 0x2, // r0
+    FP_DOUBLE                  = 0x3, // s0/s1
+    DOUBLE                     = 0x4, // r0/r1
+    NUMBER_OF_RESULT_STORAGE_TYPES
   };
 
 #if ENABLE_REFLECTION
@@ -173,18 +195,18 @@ class Method: public Oop {
 
     // size of parameters
   jushort size_of_parameters() const {
-    return ushort_field(size_of_parameters_and_return_type_offset()) & 
-           SIZE_OF_PARAMETERS_MASK;
+    return (ushort_field(method_attributes_offset()) >> 
+            SIZE_OF_PARAMETERS_SHIFT) & SIZE_OF_PARAMETERS_MASK;
   }
-  jushort size_of_return_type() const {
-    return ushort_field(size_of_parameters_and_return_type_offset()) >>
-           NUMBER_OF_PARAMETERS_BITS;
+  jushort return_type() const {
+    return (ushort_field(method_attributes_offset()) >> 
+            RESULT_STORAGE_TYPE_SHIFT) & RESULT_STORAGE_TYPE_MASK;
+  }  
+  jushort method_attributes() const {
+    return ushort_field(method_attributes_offset());
   }
-  jushort size_of_parameters_and_return_type() const {
-    return ushort_field(size_of_parameters_and_return_type_offset());
-  }
-  void set_size_of_parameters_and_return_type(jushort value) {
-    ushort_field_put(size_of_parameters_and_return_type_offset(), value);
+  void set_method_attributes(jushort value) {
+    ushort_field_put(method_attributes_offset(), value);
   }
 
   // max stack locations needed
@@ -223,7 +245,7 @@ class Method: public Oop {
   }
 
   // vtable index
-  int vtable_index();
+  int vtable_index() const;
 
   // access flag
   AccessFlags access_flags() const {
@@ -381,7 +403,7 @@ public:
     GUARANTEE(native_code_offset() % BytesPerWord == 0, "bad native alignment");
     *(address *)field_base(native_code_offset()) = code;
   }
-  address get_native_code() { 
+  address get_native_code() const { 
     return *(address *)field_base(native_code_offset());
   }
 
@@ -392,7 +414,7 @@ public:
                   "misuse of overloaded field");
     *(address *)field_base(quick_native_code_offset()) = code;
   }
-  address get_quick_native_code() { 
+  address get_quick_native_code() const { 
     GUARANTEE(GenerateROMImage || is_quick_native(),
               "misuse of overloaded field");
     return *(address *)field_base(quick_native_code_offset());
@@ -510,7 +532,10 @@ public:
   }
 
   // Returns the compiled code for this method.
-  ReturnOop compiled_code() const;
+  ReturnOop compiled_code() const {
+    GUARANTEE(has_compiled_code(), "sanity check");
+    return compiled_code_unchecked();
+  }
 
   // Tells whether it is impossible to compile this method
   bool is_impossible_to_compile (void) const;
@@ -519,6 +544,10 @@ public:
   // Tells whether the method has been compiled
   bool has_compiled_code(void) const {
     return method()->has_compiled_code();
+  }
+
+  bool has_compiled_code(const OopDesc * p) const {
+    return p == compiled_code_unchecked();
   }
 
   bool can_be_compiled( void ) const {
@@ -558,9 +587,6 @@ public:
   // If possible, set the execution entry to corresponding
   // shared_fast_getXXX_accessor
   void set_fast_accessor_entry(JVM_SINGLE_ARG_TRAPS);
-#if ENABLE_INLINE && ARM
-  bool is_fast_get_accessor(BasicType& type, int& offset) const;
-#endif
   // Is this method a converted fast accessor? If so, compiler can do inlining
   bool is_fast_get_accessor() const;
 
@@ -568,9 +594,70 @@ public:
   // accessor. This is called immediately after a class is verified
   // but before any bytecodes in this method is quickened.
   bool may_convert_to_fast_get_accessor(BasicType& type, int& offset JVM_TRAPS);
-#if ENABLE_INLINE && ARM
-  bool bytecode_inline_filter(bool& has_field_get, int& index JVM_TRAPS);
-  bool bytecode_inline_prepass(JVM_SINGLE_ARG_TRAPS);
+
+#if USE_COMPILER_STRUCTURES
+ private:
+  static void add_entry(jubyte counts[], const int bci, const int inc=1);
+ public:
+
+  struct Attributes : public StackObj {
+    FastOopInStackObj __must_appear_before_fast_objects__;
+    TypeArray::Fast entry_counts; // Number of incoming control flow edges for
+                                  // each bytecodes
+    TypeArray::Fast bci_flags; // Attribute flags for each bytecode
+    int num_locks; // Count of monitor enter bytecodes
+    int num_bytecodes_can_throw_npe; // Count of bytecodes that can throw NPE
+    bool has_loops;
+    bool can_throw_exceptions;
+  };
+
+  // Bytecode attributes
+  enum {
+    bci_exception_has_osr_entry = 1,
+    bci_branch_taken = 1 << 1
+  };
+
+  // Computes method attributes used by compiler and romizer.
+  void compute_attributes(Attributes& attributes JVM_TRAPS) const;
+#endif
+
+#if ENABLE_COMPILER && ENABLE_INLINE
+  bool bytecode_inline_filter(bool& has_field_get, int& index JVM_TRAPS) const;
+  bool bytecode_inline_prepass(Attributes& attributes JVM_TRAPS) const;
+
+  // Returns if a method can be shared between tasks
+  bool is_shared() const;
+
+  // Returns a this method's record in the global direct callers table
+  ReturnOop find_callee_record() const;
+
+  // Register given method as a direct (non-virtual) caller of this method
+  void add_direct_caller(const Method * caller JVM_TRAPS) const;
+
+  // Unregister all direct (non-virtual) callers of this method
+  // and unlink their compiled code
+  void unlink_direct_callers() const;
+
+  class DirectCallerStream : public StackObj {
+    FastOopInStackObj _fast_oops;
+    OopCons::Fast _cons;
+   public:
+    DirectCallerStream(const Method* callee) {
+      OopCons::Raw record = callee->find_callee_record();
+      if (record.not_null()) {
+        _cons = record().next();
+      }
+    }
+    bool has_next() const {
+      return _cons.not_null();
+    }
+    ReturnOop next() {
+      GUARANTEE(has_next(), "No next");
+      Method::Raw method = _cons().oop();
+      _cons = _cons().next();
+      return method.obj();
+    }
+  };
 #endif
   // Try to resolve a getfield/setfield bytecode, whose <index> operand
   // is located at <index_bci>. This is done without causing any class
@@ -622,13 +709,13 @@ public:
   bool can_access_by(InstanceClass* sender_class, 
              InstanceClass* static_receiver_class);
 
-  bool match(Symbol* name, Symbol* signature);
+  bool match(Symbol* name, Symbol* signature) const;
   void check_bytecodes(JVM_SINGLE_ARG_TRAPS);
-  bool is_object_initializer();
+  bool is_object_initializer() const;
 
   // Computes whether this method is a vanilla constructor. 
   // Used for setting the has_vanilla_constructor flag in the class.
-  bool is_vanilla_constructor();
+  bool is_vanilla_constructor() const;
 
   // Iterators for invoking the BytecodeClosure
   void iterate(int begin, int end, BytecodeClosure* blk JVM_TRAPS);
@@ -638,12 +725,12 @@ public:
 
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || \
        ENABLE_PERFORMANCE_COUNTERS || ENABLE_JVMPI_PROFILE
-  ReturnOop get_original_name(bool& renamed);
+  ReturnOop get_original_name(bool& renamed) const ;
   // Print the name of the method in <class>.<name>() format. The
   // method signature is printed only if necessary (to distinguish between
   // overloaded methods).
 #else
-  ReturnOop get_original_name(bool& renamed) {
+  ReturnOop get_original_name(bool& renamed) const {
     renamed = false;
     return name();
   }
@@ -654,18 +741,18 @@ public:
     return get_original_name(dummy);
   }
 
-  bool is_overloaded();
+  bool is_overloaded() const;
 
 #ifdef PRODUCT
-  void print_name_on_tty() PRODUCT_RETURN;
+  void print_name_on_tty() const PRODUCT_RETURN;
 #else
-  void print_name_on_tty() {
+  void print_name_on_tty() const {
     print_name_on(tty);
   }
-  void print_name_on(Stream* st) {
+  void print_name_on(Stream* st) const {
     print_name_on(st, false);
   }
-  void print_name_on(Stream* st, bool long_output);
+  void print_name_on(Stream* st, bool long_output) const;
   void iterate(OopVisitor* visitor);
   void print_bytecodes(Stream* st) {
     print_bytecodes(st, 0, code_size());
@@ -798,21 +885,42 @@ public:
       OsMisc_flush_icache((address) code_base(), code_size());
     }
   }
+
 #if ENABLE_CSE
-  bool check_codes(jint begin_bci, jint end_bci, int& local_mask, int& constant_mask, int& array_type);
-  bool compare_bytecode(const jint begin_bci, const jint end_bci, jint cur_bci, jint& next_bci);
-  void kill_changed_values(int bci, Bytecodes::Code code) ;
+  //scan the byte code snippet start from begin bci to end bci.  If the snippet contains
+  //byte code which can't be skipped based on semantic or constraint of our 
+  //implementation. We return false. Otherwise, we fill the three kinds of dependency
+  //bitmap and return true.
+  bool is_snippet_can_be_elminate(jint begin_bci, jint end_bci, 
+                              int& bitmap_of_depending_locals, 
+                              int& bitmap_of_depending_field, 
+                              int& bitmap_of_depending_array_type);
+ 
+  //check whether two pieces of byte code are same. and return the bci of first different byte
+  //code following the snippet if checking result is true.
+  //begin_bci is the begin bci of sequence in notation
+  //end_bci is the end bci of sequence in notation
+  //cur_bci is the current bci to be compiled
+  bool compare_bytecode(const jint begin_bci, const jint end_bci, 
+                         jint cur_bci, jint& next_bci);
+
+  //clean the register notation if any variable appeared in their dependency set are 
+  //changed(the value in the register is obsolete).
+  //For example, if we keep the result of local_1 + local_2 in R1, if the local_1 is changed,
+  //the value of R1 doesn't stand for the result of after that changing. So we mark
+  //notation and the value in the register as absolete.
+  void wipe_out_dirty_recorded_snippet(int bci, Bytecodes::Code code) ;
 #endif
 
-
  private:
+  // Returns the compiled code for this method.
+  ReturnOop compiled_code_unchecked() const;
 
   void iterate_push_constant_1(int i, BytecodeClosure* blk JVM_TRAPS);
   void iterate_push_constant_2(int i, BytecodeClosure* blk JVM_TRAPS);
 
   friend class ClassFileParser;
   friend class Bytecodes;
-  friend class BasicBlock;
   friend class JavaFrame;
   friend class VMEvent;
 };

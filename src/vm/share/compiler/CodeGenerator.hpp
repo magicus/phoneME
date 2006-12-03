@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -44,7 +45,7 @@ class CodeGenerator: public BinaryAssembler {
 
   // Save my state when suspending compilation
   void save_state(CompilerState *compiler_state);
-#if ENABLE_INLINE && ARM
+#if ENABLE_INLINE
   void restore_state(CompilerState *compiler_state);
 #endif
   // generate the jmp to interpreter_method_entry for overflow
@@ -52,8 +53,12 @@ class CodeGenerator: public BinaryAssembler {
   // generate the code for the method entry of the given method
   void method_entry       (Method* method JVM_TRAPS);
 
-#if ENABLE_REMEMBER_ARRAY_LENGTH & ARM
+#if ENABLE_REMEMBER_ARRAY_LENGTH
+  //preload the first array object which appears in the method 
+  //parameters in a register.
   void preload_parameter (Method* method);
+#else
+  void preload_parameter (Method* method) {}
 #endif
 
   // load/store value from/to the location at the specified index
@@ -80,11 +85,26 @@ class CodeGenerator: public BinaryAssembler {
   // check that an object isn't null
   void null_check         (const Value& object JVM_TRAPS);
 #if ENABLE_NPCE
-  void null_check_by_signal(Value& object, bool fakeldr JVM_TRAPS);
-  void null_check_by_signal_quick(Value& object,BasicType type  JVM_TRAPS);
-  void maybe_null_check_by_signal(Value& value, bool fakeldr JVM_TRAPS);
-  void 
-  maybe_null_check_by_signal_quick(Value& value, BasicType type  JVM_TRAPS);
+  //do the null check by NPCE. if need_tigger_instr is true, compiler
+  //will emit a LDR instr in order to trigger a exception in case of a 
+  //access of null pointer.
+  //if is_quick_return is true, the compiler won't record the LDR instr into the entry 
+  //label of stub. Skip the recording due to the LDR instr is not emitted yet. It will 
+  //be record later. see store_to_address_and_record_offset_of_exception_instr()
+  void null_check_by_npce(Value& object, bool need_tigger_instr, 
+            bool is_quick_return, BasicType type_of_data  JVM_TRAPS);
+
+  //do the null check if needed. 
+  void maybe_null_check_by_npce(Value& value, bool need_tigger_instr, 
+  	     bool is_quick_return, BasicType type_of_data JVM_TRAPS) ;
+
+private:
+
+  //record the address of LDR instr during emit code of store to adress
+  //this method is corresponding to the is_quick_return case in null_check_by_npce
+  void store_to_address_and_record_offset_of_exception_instr (Value& value,  BasicType type,
+                         MemoryAddress& address);
+public:
 #endif //ENABLE_NPCE
   // check that the array isn't null and that the given index is within the
   // bounds of the given array.
@@ -138,8 +158,6 @@ class CodeGenerator: public BinaryAssembler {
                                BytecodeClosure::cond_op condition,
                                int destination, Value& op1, Value& op2
                                JVM_TRAPS);
-
-  void cmp_values(Value& op1, Value& op2);
 
   void branch_if_do(BytecodeClosure::cond_op condition, Value& op1, Value& op2,
                     int destination JVM_TRAPS);
@@ -249,10 +267,7 @@ class CodeGenerator: public BinaryAssembler {
   void check_stack_overflow(Method *m JVM_TRAPS);
 
   // Method invocation.
-  void invoke(Method* method, bool must_do_null_check JVM_TRAPS);
-#if ENABLE_INLINE && ARM
-  void virtual_method_override_verify(Method* method, ClassInfo* info JVM_TRAPS);
-#endif
+  void invoke(const Method* method, bool must_do_null_check JVM_TRAPS);
   void invoke_virtual(Method* method, int vtable_index, 
                       BasicType return_type JVM_TRAPS);
   void invoke_interface(JavaClass* klass, int itable_index, 
@@ -275,9 +290,10 @@ class CodeGenerator: public BinaryAssembler {
     return !value.must_be_nonnull();
   }
 
-  bool quick_check_cast(int class_id, Label& stub_label, Label& return_label
-                        JVM_TRAPS);
-  bool quick_instance_of(int class_id JVM_TRAPS);
+  void check_cast_stub(CompilationQueueElement* cqe JVM_TRAPS);
+  void instance_of_stub(CompilationQueueElement* cqe JVM_TRAPS);
+  void new_object_stub(CompilationQueueElement* cqe JVM_TRAPS);
+  void new_type_array_stub(CompilationQueueElement* cqe JVM_TRAPS);
 
   // Throw exception in the simple case (the method is not synchronized,
   // has no monitor bytecodes, and no handler in the current method covers
@@ -294,7 +310,7 @@ class CodeGenerator: public BinaryAssembler {
   void verify_location_is_constant(jint index, const Value& constant);
 #endif
 
-#if CROSS_GENERATOR && !ENABLE_ISOLATES
+#if USE_AOT_COMPILATION && !ENABLE_ISOLATES
   void initialize_class(InstanceClass* klass JVM_TRAPS);
 #endif
 
@@ -304,6 +320,11 @@ class CodeGenerator: public BinaryAssembler {
   void load_task_mirror(Oop* klass, Value& statics_holder,
           bool needs_cib JVM_TRAPS);
   void check_cib(Oop* klass JVM_TRAPS);
+#endif
+
+#if ENABLE_INLINED_ARRAYCOPY
+  bool arraycopy(JVM_SINGLE_ARG_TRAPS);
+  bool unchecked_arraycopy(BasicType array_element_type JVM_TRAPS);  
 #endif
 
  protected:
@@ -408,15 +429,15 @@ class CodeGenerator: public BinaryAssembler {
   // store value to the given memory address
   void store_to_address (Value& value, BasicType type,
                          MemoryAddress& address);
-#if ENABLE_NPCE
-  void store_to_address_safe (Value& value,  BasicType type,
-                         MemoryAddress& address);
-#endif
+
 
   // Do conditional jump.
   void conditional_jump(BytecodeClosure::cond_op condition,
                         int destination,
                         bool assume_backward_jumps_are_taken JVM_TRAPS);
+
+  void conditional_jump_do(BytecodeClosure::cond_op condition, 
+                           Label& destination);
 
   static inline VirtualStackFrame* frame ( void ) {
     return jvm_fast_globals.compiler_frame;

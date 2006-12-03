@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -77,7 +78,7 @@ endif
 
 VM_JAR_TESTS = bad_test.jar good_test.jar
 
-_javatests:  sanity tests.jar testtool.jar _build_ams_jars runtests.sh
+_javatests:  sanity tests.jar testtool.jar _build_ams_jars _build_shlib_jars _build_dyn_native_jars runtests.sh
 tests.jar:   $(VM_JAR_TESTS)
 javatests:   _javatests $(HTML_FILE)
 nativetests: romtestvm_g
@@ -125,6 +126,44 @@ _build_ams_jars: tests.jar
 		amstest/HelloWorld.class
 	@touch $@
 
+SHARED_LIB_JARS_DIR = sharedlibjars
+
+_build_shlib_jars: tests.jar
+ifeq ($(ENABLE_LIB_IMAGES), true)
+	@if test ! -d $(SHARED_LIB_JARS_DIR); then \
+		mkdir $(SHARED_LIB_JARS_DIR); \
+	fi
+
+	$(JAR) -cfM0 $(SHARED_LIB_JARS_DIR)/lib.jar -C testclasses \
+		shared_libraries/simple/ShLib.class
+	$(JAR) -cfM0 $(SHARED_LIB_JARS_DIR)/b.jar -C testclasses \
+		shared_libraries/simple/ShLibB.class
+ifeq ($(ENABLE_ISOLATES), true)
+	$(JAR) -cfM0 $(SHARED_LIB_JARS_DIR)/a.jar -C testclasses \
+		shared_libraries/simple/MShLibA.class
+	@touch $@
+endif
+endif
+
+DYN_NATIVES_DIR = dyn_natives
+
+_build_dyn_native_jars: tests.jar
+ifeq ($(os_family), linux)
+ifeq ($(ENABLE_ISOLATES), true)
+	@if test ! -d $(DYN_NATIVES_DIR); then \
+		mkdir $(DYN_NATIVES_DIR); \
+	fi
+	$(JAR) -cfM0 $(DYN_NATIVES_DIR)/sys_cp.jar -C testclasses dynamic_natives/system_package/SystemCls.class \
+               -C testclasses dynamic_natives/restricted_package/Cls2.class
+	@touch $@
+	$(JAR) -cfM0 $(DYN_NATIVES_DIR)/app_cp.jar -C testclasses dynamic_natives/MainCls.class -C testclasses dynamic_natives/restricted_package/Cls.class -C testclasses dynamic_natives/hidden_package/Cls.class
+	@touch $@ 
+
+	@cp $(JVMWorkSpace)/src/tests/dynamic_natives/lib.c $(DYN_NATIVES_DIR) 
+	@gcc -fPIC -I$(BuildSpace)/linux_i386/dist/include/ -DLINUX -c dyn_natives/lib.c  -o dyn_natives/lib.obj
+	@gcc -shared -o dyn_natives/lib.so dyn_natives/lib.obj
+endif
+endif
 testtool.jar: $(TOOL_SRCS)
 	@if test ! -d testtool; then \
 		mkdir testtool; \

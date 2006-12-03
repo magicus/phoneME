@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -58,7 +59,7 @@ extern "C" {
 #endif
 
 /*
- * macros to be compatible with CDC-HI
+ * macros to be compatible with CDC-VM
  */
 #define KNIDECLARGS 
 #define KNIPASSARGS 
@@ -371,7 +372,7 @@ KNIEXPORT void     _KNI_pop_handles(_KNI_HandleInfo*);
   int __dummy__ = _KNI_push_handles(n, &__handle_info__, __handles__)
 
 #define KNI_DeclareHandle(x) \
-  jobject x = (jobject)&__handles__[__handle_info__.declared_count++]
+  jobject x = (jobject)(void*)&__handles__[__handle_info__.declared_count++]
 
 #define KNI_IsNullHandle(x) \
   (*(jobject*)x == 0)

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -170,7 +171,8 @@ KNIEXPORT jint SNI_AddReference(jobject objectHandle, jboolean isStrong) {
   const ObjectHeap::ReferenceType type =
       (isStrong) ? ObjectHeap::STRONG: ObjectHeap::WEAK;
   SETUP_ERROR_CHECKER_ARG;
-  return ObjectHeap::register_global_ref_object(&oop, type JVM_MUST_SUCCEED);
+  jint ret = ObjectHeap::register_global_ref_object(&oop, type JVM_MUST_SUCCEED);
+  return ret;
 }
 
 KNIEXPORT void SNI_GetReference(jint ref, jobject objectHandle) {

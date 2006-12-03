@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -54,28 +55,76 @@ bool OopDesc::is_instance(void) const {
   return instance_size > 0;
 }
 bool OopDesc::is_bool_array(void) const {
-  return blueprint() == Universe::bool_array_class()->obj();
+  OopDesc* p = blueprint();
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  if (p == Universe::rom_bool_array_class()->obj()) {
+    return true;
+  }
+#endif
+  return p == Universe::bool_array_class()->obj();
 }
 bool OopDesc::is_char_array(void) const {
-  return blueprint() == Universe::char_array_class()->obj();
+  OopDesc* p = blueprint();
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  if (p == Universe::rom_char_array_class()->obj()) {
+    return true;
+  }
+#endif
+  return p == Universe::char_array_class()->obj();
 }
 bool OopDesc::is_int_array(void) const {
-  return blueprint() == Universe::int_array_class()->obj();
+  OopDesc* p = blueprint();
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  if (p == Universe::rom_int_array_class()->obj()) {
+    return true;
+  }
+#endif
+  return p == Universe::int_array_class()->obj();
 }
 bool OopDesc::is_byte_array(void) const {
-  return blueprint() == Universe::byte_array_class()->obj();
+  OopDesc* p = blueprint();
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  if (p == Universe::rom_byte_array_class()->obj()) {
+    return true;
+  }
+#endif
+  return p == Universe::byte_array_class()->obj();
 }
 bool OopDesc::is_short_array(void) const {
-  return blueprint() == Universe::short_array_class()->obj();
+  OopDesc* p = blueprint();
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  if (p == Universe::rom_short_array_class()->obj()) {
+    return true;
+  }
+#endif
+  return p == Universe::short_array_class()->obj();
 }
 bool OopDesc::is_long_array(void) const {
-  return blueprint() == Universe::long_array_class()->obj();
+  OopDesc* p = blueprint();
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  if (p == Universe::rom_long_array_class()->obj()) {
+    return true;
+  }
+#endif
+  return p == Universe::long_array_class()->obj();
 }
 bool OopDesc::is_float_array(void) const {
-  return blueprint() == Universe::float_array_class()->obj();
+  OopDesc* p = blueprint();
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  if (p == Universe::rom_float_array_class()->obj()) {
+    return true;
+  }
+#endif
+  return p == Universe::float_array_class()->obj();
 }
 bool OopDesc::is_double_array(void) const {
-  return blueprint() == Universe::double_array_class()->obj();
+  OopDesc* p = blueprint();
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  if (p == Universe::rom_double_array_class()->obj()) {
+    return true;
+  }
+#endif
+  return p == Universe::double_array_class()->obj();
 }
 bool OopDesc::is_obj_array(void) const {
   const jint instance_size = blueprint()->instance_size_as_jint();
@@ -189,6 +238,22 @@ bool OopDesc::is_java_near(void) const {
   return instance_size == InstanceSize::size_java_near;
 }
 
+#if ENABLE_HEAP_NEARS_IN_HEAP && USE_SOURCE_IMAGE_GENERATOR
+bool OopDesc::is_generic_near(void) const {  
+  const jint instance_size = blueprint()->instance_size_as_jint();
+  return instance_size == InstanceSize::size_generic_near;
+}
+
+bool OopDesc::is_far(void) const {    
+  const jint instance_size = blueprint()->instance_size_as_jint();
+  return instance_size == InstanceSize::size_far_class;
+}
+
+bool OopDesc::is_near(void) const {    
+  return is_java_near() || is_obj_near() || is_generic_near() || is_far() ||
+    is_instance_class() || is_type_array_class() || is_obj_array_class();
+}
+#endif 
 bool OopDesc::is_task_mirror(void) const {
   const jint instance_size = blueprint()->instance_size_as_jint();
   return instance_size == InstanceSize::size_task_mirror;

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -35,6 +36,11 @@ class SharedStubs: public SourceMacros {
 
   void generate();
 
+ public:
+  // These two are used for generating ARM compiler glue code.
+  void generate_shared_monitor_enter();
+  void generate_shared_monitor_exit();
+
  private:
   void generate_shared_invoke_method();
   void generate_shared_invoke_compiler();
@@ -51,11 +57,9 @@ class SharedStubs: public SourceMacros {
 
   void generate_invoke_pending_entries();
 
+  void generate_fast_memclear();
   void generate_brute_force_icache_flush();
   void generate_shared_invoke_debug();
-
-  void generate_shared_monitor_enter();
-  void generate_shared_monitor_exit();
 
 #if ENABLE_METHOD_TRAPS
   void generate_cautious_invoke();

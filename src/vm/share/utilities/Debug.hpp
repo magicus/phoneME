@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -152,10 +153,17 @@
 #define COMPILER_COMMENT(x) Compiler::code_generator()->comment x
 #define COMPILER_PRINT_AS_YOU_GO(x) \
         if (PrintCompiledCodeAsYouGo) {TTY_TRACE_CR(x);}
+#define VERBOSE_SCHEDULING_AS_YOU_GO(x) \
+	    if (OptimizeCompiledCodeVerboseInternal) {TTY_TRACE_CR(x);}
+#define VERBOSE_CSE(x) \
+	    if (VerboseByteCodeEliminate) {TTY_TRACE_CR(x);}
 #else
 #define COMPILER_COMMENT(x) 
 #define COMPILER_PRINT_AS_YOU_GO(x)
+#define VERBOSE_SCHEDULING_AS_YOU_GO(x)
+#define VERBOSE_CSE(x)
 #endif
+
 
 // main error reporting function.
 // is_vm_internal_error allows us to print a different error message
@@ -274,6 +282,9 @@ extern void fpu();
 
 // Print object heap
 extern void poh();
+
+// Find references to heap object
+extern void ref(int x);
 
 #endif // NOT PRODUCT
 

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -36,7 +37,6 @@ class InterpreterStubs: public SourceMacros {
   void generate_interpreter_call_vm_redo();
   void generate_interpreter_call_vm_dispatch();
   void generate_interpreter_throw_exceptions();
-
   void generate_interpreter_rethrow_exception_init();
   void generate_interpreter_rethrow_exception();
   void generate_interpreter_unwind_activation();
@@ -45,6 +45,7 @@ class InterpreterStubs: public SourceMacros {
   void generate_interpreter_fill_in_tags();
 #endif
   void generate_interpreter_deoptimization_entry();
+  void generate_interpreter_timer_tick();
 
   void generate_primordial_to_current_thread();
   void generate_current_thread_to_primordial();

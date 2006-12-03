@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -37,12 +38,12 @@ public:
     return FIELD_OFFSET(TaskMirrorDesc, _containing_class);
   }
 
-  // IMPL_NOTE: The statics end offset could be deduced from the class info
-  // of the class being mirror.  Since a TaskMirror is always
+  // IMPL_NOTE: Object size can be deduced from statics size and vtable length
+  // of the class being mirror. Since a TaskMirror is always
   // allocated with a java mirror object, that means it is possible to
-  // always get the size of static variables.
-  static int statics_end_offset_offset() {
-    return FIELD_OFFSET(TaskMirrorDesc, _statics_end_offset);
+  // always get the size of static variables and vtable length
+  static int object_size_offset() {
+    return FIELD_OFFSET(TaskMirrorDesc, _object_size);
   }
 
   // IMPL_NOTE: remove this and replace with an exogen list to reduce space overhead of 
@@ -97,15 +98,11 @@ public:
     return sizeof(TaskMirrorDesc);
   }
 
-  int statics_end_offset() {
-    return int_field(statics_end_offset_offset());
+  int object_size() {
+    return int_field(object_size_offset());
   }
-  void set_statics_end_offset(jint value) {
-    int_field_put(statics_end_offset_offset(), value);
-  }
-
-  int static_field_size() {
-    return (statics_end_offset() - static_field_start());
+  void set_object_size(jint value) {
+    int_field_put(object_size_offset(), value);
   }
 
   ReturnOop array_class() {
@@ -129,9 +126,9 @@ public:
     return TaskMirrorDesc::is_being_initialized_mirror((TaskMirrorDesc*)obj());
   }
 
-  static ReturnOop clinit_list_lookup(Oop *containing_class);
+  static ReturnOop clinit_list_lookup(const Oop *containing_class);
   static ReturnOop clinit_list_lookup(TaskMirror *found,
-                                      Oop *containing_class);
+                                      const Oop *containing_class);
 
   static void clinit_list_add(TaskMirror *task_class_mirror);
 

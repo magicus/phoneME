@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -344,7 +345,12 @@ void SharedStubs::generate_shared_invoke_compiler() {
   comment_section("Shared invoke compiler");
   entry("shared_invoke_compiler");
 
+#if ENABLE_PAGE_PROTECTION
+  call(Constant("OsMisc_page_protect"));
+#else
   incl(Address(Constant("_rt_timer_ticks")));
+#endif
+
   if (AddExternCUnderscore) {
     emit_instruction("jmp _interpreter_method_entry");
   } else {
@@ -374,7 +380,9 @@ void SharedStubs::generate_shared_fast_accessors() {
     { T_BYTE  , "byte"},
     { T_SHORT , "short"},
     { T_CHAR  , "char"},
+    { T_FLOAT , "float"},
     { T_INT   , "int"},
+    { T_DOUBLE, "double"},
     { T_LONG  , "long"},
   };
 
@@ -385,6 +393,16 @@ void SharedStubs::generate_shared_fast_accessors() {
       sprintf(tmp, "shared_fast_get%s%s_accessor", desc[i].name,
               is_static ? "_static" : "");
       rom_linkable_entry(tmp);
+
+      if ((desc[i].type == T_FLOAT) || (desc[i].type == T_DOUBLE)) {
+        sprintf(tmp, "shared_fast_get%s%s_accessor", 
+                desc[i].type == T_FLOAT ? "int" : "long",
+                is_static ? "_static" : "");
+        jmp(Constant(tmp));
+        rom_linkable_entry_end();
+        continue;
+      }
+
 
       if (::byte_size_for(desc[i].type) <= BytesPerWord) {
         // this is the top of the stack, except for the return address

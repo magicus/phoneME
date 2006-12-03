@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -175,8 +176,6 @@ void ROMOptimizer::read_config_file(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_KVM_COMPAT
   kvm_native_methods_vector.initialize(JVM_SINGLE_ARG_CHECK);
 #endif
-
-  precompile_method_list()->initialize(JVM_SINGLE_ARG_CHECK);
 
   _disable_compilation_log   = &disable_compilation_log;
   _quick_natives_log         = &quick_natives_log;
@@ -457,7 +456,9 @@ void ROMOptimizer::process_config_line(char * s JVM_TRAPS) {
       enable_quick_natives(value JVM_CHECK);
     }
     else if (jvm_strcmp(name, "Precompile") == 0) {
+#if USE_AOT_COMPILATION
       enable_precompile(value JVM_CHECK);
+#endif
     }
 
     else {
@@ -945,6 +946,8 @@ void ROMOptimizer::write_quick_natives_log() {
 }
 #endif
 
+#if USE_AOT_COMPILATION
+
 class PrecompileMatcher : public JavaClassPatternMatcher {
   ROMVector *_log_vector;
 public:
@@ -965,6 +968,8 @@ void ROMOptimizer::enable_precompile(char * pattern JVM_TRAPS) {
   PrecompileMatcher matcher(precompile_method_list());
   matcher.run(pattern JVM_NO_CHECK_AT_BOTTOM);
 }
+
+#endif
 
 class KvmNativesMatcher : public JavaClassPatternMatcher {
   ROMVector *_log_vector;
@@ -1062,7 +1067,7 @@ void ROMOptimizer::remove_unused_static_fields(JVM_SINGLE_ARG_TRAPS) {
   //     getstatic/putstatic bytecodes), or if the field is accessible
   //     by applications.
   mark_static_fieldrefs(&directory);
-  mark_unremoveable_static_fields(&directory);
+  mark_unremoveable_static_fields(&directory JVM_CHECK);
 
   {
     // Inside this block the heap may be in inconsistent state
@@ -1167,7 +1172,7 @@ void ROMOptimizer::fix_static_fieldrefs(ObjArray *directory) {
   }
 }
 
-void ROMOptimizer::mark_unremoveable_static_fields(ObjArray *directory) {
+void ROMOptimizer::mark_unremoveable_static_fields(ObjArray *directory JVM_TRAPS) {
   UsingFastOops fast_oops;
   InstanceClass::Fast klass;
   TypeArray::Fast fields;
@@ -1187,7 +1192,8 @@ void ROMOptimizer::mark_unremoveable_static_fields(ObjArray *directory) {
 
     for (int i = 0; i < fields().length(); i += Field::NUMBER_OF_SLOTS) {
       Field f(&klass, i);
-      if (f.is_static() && !is_field_removable(&klass, i, false)) {
+      bool removable = is_field_removable(&klass, i, false JVM_CHECK);
+      if (f.is_static() && !removable) {
         int offset = f.offset();
         BasicType type = f.type();
         int idx = (offset - JavaClass::static_field_start()) / BytesPerWord;
@@ -1240,6 +1246,11 @@ void ROMOptimizer::compact_static_field_containers(ObjArray *directory) {
     holder = klass().task_mirror();
 #else
     holder = klass.obj();
+#endif
+
+    const size_t old_static_field_size = klass().static_field_size();
+#if USE_EMBEDDED_VTABLE_BITMAP
+    const size_t old_vtable_bitmap_start = klass().vtable_bitmap_start();    
 #endif
 
     // (1) Move the fields
@@ -1320,6 +1331,7 @@ void ROMOptimizer::compact_static_field_containers(ObjArray *directory) {
     // (3) - Relocate and compact the static oopmaps, 
     //     - relocate and compact the fields within the holder
     //     - Relocate and compact write-barrier bits.
+    //     - Relocate vtable bitmap (SVM-only).
     //     - Shrink the holder.
     {
       // Clear all bits in the holder, in case a stale bit that used to
@@ -1372,9 +1384,31 @@ void ROMOptimizer::compact_static_field_containers(ObjArray *directory) {
       
       // Shrink InstanceClass object -- note: even in MVM case, the
       // InstaneClass may shrink because we may have removed some oopmap entries
-      size_t new_klass_size = align_allocation_size(
-          klass().embedded_oop_map_start() + klass().nonstatic_map_size() +
-          static_map_size);
+      const size_t new_static_field_size = 
+        old_static_field_size - fields_shrink_size;
+      const size_t new_oop_map_size = 
+        klass().nonstatic_map_size() + static_map_size;
+      const size_t new_klass_size = 
+        InstanceClassDesc::allocation_size(new_static_field_size,
+                                           new_oop_map_size,
+                                           klass().vtable_length());
+
+#if !ENABLE_ISOLATES && USE_EMBEDDED_VTABLE_BITMAP
+      // Move vtable bitmap
+      const size_t new_vtable_bitmap_start = klass().vtable_bitmap_start();
+      GUARANTEE(old_vtable_bitmap_start > new_vtable_bitmap_start, 
+                "Must decrease: some static fields were removed");
+
+      const size_t vtable_bitmap_size = 
+        new_klass_size - new_vtable_bitmap_start;
+      GUARANTEE(vtable_bitmap_size >= 0, "Sanity");
+
+      address map_src = (address)klass().obj() + old_vtable_bitmap_start;
+      address map_dst = (address)klass().obj() + new_vtable_bitmap_start;
+      
+      jvm_memmove(map_dst, map_src, vtable_bitmap_size);
+#endif
+
       GUARANTEE(new_klass_size <= old_klass_size, "sanity");
       size_t reduction = old_klass_size - new_klass_size;
 
@@ -1390,14 +1424,28 @@ void ROMOptimizer::compact_static_field_containers(ObjArray *directory) {
     {
       TaskMirror::Raw mirror = holder.obj();
       size_t old_size = mirror().object_size();
-      int end_offset = mirror().statics_end_offset();
+      int end_offset = klass().static_field_end();
+
+#if ENABLE_ISOLATES && USE_EMBEDDED_VTABLE_BITMAP
+      // Move vtable bitmap
+      const size_t new_vtable_bitmap_start = 
+        old_vtable_bitmap_start - fields_shrink_size;
+      GUARANTEE(old_vtable_bitmap_start > new_vtable_bitmap_start, 
+                "Must decrease: some static fields were removed");
+
+      const size_t vtable_bitmap_size = old_size - end_offset;
+      GUARANTEE(vtable_bitmap_size >= 0, "Sanity");
+
+      address map_src = (address)mirror().obj() + old_vtable_bitmap_start;
+      address map_dst = (address)mirror().obj() + new_vtable_bitmap_start;
+      
+      jvm_memmove(map_dst, map_src, vtable_bitmap_size);
+#endif
 
       end_offset -= fields_shrink_size;
       GUARANTEE(end_offset >= 0, "sanity");
-      mirror().set_statics_end_offset(end_offset);
+      mirror().set_object_size(old_size - fields_shrink_size);
       
-      GUARANTEE(old_size - mirror().object_size() == (size_t)fields_shrink_size,
-                "sanity");
       ROMTools::shrink_object(&mirror, old_size, fields_shrink_size);
 
       // info().static_field_end() is used by JavaClass.cpp to calculate the

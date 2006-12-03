@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -35,8 +36,24 @@ extern "C" {
 
 #if ENABLE_COMPILER
 
-void CompiledMethodDesc::update_relative_offsets(int /*delta*/) {
-  // Nothing to do on ARM.
+void CompiledMethodDesc::update_relative_offsets(int delta) {
+  if ((_flags_and_size & HAS_BRANCH_RELOCATION_MASK) == 0) {
+    return;
+  }
+
+  CompiledMethod::Raw cm = this;
+  if (cm().size() > 0) {
+    // Compiled methods of size 0 are discarded compiled methods that we're
+    // in the middle of discarding.  Attempting to use a RelocationReader
+    // on them fails.
+
+    for (RelocationReader stream(&cm); !stream.at_end(); stream.advance()) {
+      if (stream.is_long_branch()) {
+        Branch b(cm().entry() + stream.code_offset());
+        b.relocate(delta);
+      }
+    }
+  }
 }
 
 #endif
@@ -45,19 +62,23 @@ void CompiledMethodDesc::update_relative_offsets(int /*delta*/) {
 
 int CompiledMethodDesc::get_cache_index ( void ) const {
   // The top 9 bits are the cache index.
-  return (int)(_flags_and_size >> 23);
+  return (int)(_flags_and_size >> 
+               CompiledMethodDesc::NUMBER_OF_NON_INDEX_BITS);
 }
 
 void CompiledMethodDesc::set_cache_index ( const int i ) {
-  _flags_and_size = (size_t(i) << 23) | code_size();
+  const size_t non_index_mask = ~CompiledMethodDesc::INDEX_MASK;
+  const size_t bits_and_size = _flags_and_size & non_index_mask;
+  _flags_and_size = bits_and_size | 
+                    (size_t(i)<<CompiledMethodDesc::NUMBER_OF_NON_INDEX_BITS);
 
   // Patch the "strb gp, [gp, #xxxx]" instruction. It does not appear
   // at a fixed location because of code scheduling.
   juint* index_loc = (juint*) (this+1);
 
 #ifdef AZZERT
-  juint* index_end = index_loc + 10; // we might have debug code at the beginning
-                                     // of the compiled method prolog
+  juint* index_end = index_loc + 10; // we might have debug code at the
+                                     // beginning of the compiled method prolog
 #else
   juint* index_end = index_loc + 3;
 #endif

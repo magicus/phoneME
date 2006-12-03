@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,6 +28,7 @@
 package view;
 import javax.swing.*;
 import javax.swing.table.*;
+import java.net.*;
 import java.awt.*;
 import java.awt.event.*;
 import com.sun.cldchi.tools.memoryprofiler.data.JavaObject;
@@ -45,6 +47,8 @@ public class ViewObjectsPanel extends JPanel {
   private MPDataProvider _provider;
   private JButton _root_path;
   private JList _object_list;
+  private JButton _stack_location;
+  private Object[] _objects;
 
   public ViewObjectsPanel(MPDataProvider provider) {
     _provider = provider;
@@ -73,6 +77,18 @@ public class ViewObjectsPanel extends JPanel {
       _root_path.setFont(_root_path.getFont().deriveFont(9.0f));
       _root_path.setEnabled(false);
       top_panel.add(_root_path);
+    } else { //this is show path from the root object
+        _stack_location = new JButton("Show stack trace") {
+          public Dimension getPreferredSize() {
+            return new Dimension(160, 20);
+          }
+        };
+        _stack_location.addActionListener(new ShowStackTraceListener());
+  
+        _stack_location.setFont(_stack_location.getFont().deriveFont(9.0f));
+        _stack_location.setEnabled(false);
+        top_panel.add(_stack_location);
+  
     }
     add(top_panel, new GridBagConstraints(0, 0, 1, 1, 1, 1,
            GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
@@ -127,6 +143,9 @@ public class ViewObjectsPanel extends JPanel {
       if (_root_path != null) {
         _root_path.setEnabled(obj.getRootDistance() != -1);
       }
+      if (_stack_location != null) {
+        _stack_location.setEnabled(obj.object_type == MPDataProvider.STACK_OBJECT);
+      }
     } else {
       address_field.setText("");
       type_field.setText("");
@@ -142,6 +161,7 @@ public class ViewObjectsPanel extends JPanel {
 
   public void setObjects(Object[] objects) {
     _object_list.setListData(objects);
+    _objects = objects;
     repaint();
   }
 
@@ -205,4 +225,20 @@ public class ViewObjectsPanel extends JPanel {
     }
   }
 
+  class ShowStackTraceListener implements ActionListener {
+    public void actionPerformed(ActionEvent e) {
+      for (int i = 0; i < _objects.length-1; i++) {
+        if (_objects[i] == _obj) {
+          int ptr = ((JavaObject)_objects[i+1]).address;
+          String stackTrace = null;
+          try {
+            stackTrace = _provider.getStackTrace((JavaObject)_objects[i], ptr);
+          } catch (SocketException ex) {
+            //IMPL_NOTE: need to handle it
+          }
+          JOptionPane.showMessageDialog(null, stackTrace, "Object location StackTrace", JOptionPane.PLAIN_MESSAGE);         
+        }
+      }
+    }
+  }
 }

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -241,7 +242,20 @@ void SegmentedSourceROMWriter::write_stuff_block(SourceObjectWriter* obj_writer
   write_consistency_checks();
   // We don't need to write footer for stuff here.
 }
+#if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES 
+void SegmentedSourceROMWriter::write_tm_body(SourceObjectWriter* obj_writer 
+                                      JVM_TRAPS) {
+  tty->print_cr("Writing TASK MIRRORS block ...");
+  obj_writer->start_block(TASK_MIRRORS_BLOCK, _tm_block_count JVM_CHECK);
+  visit_all_objects(obj_writer, 0 JVM_CHECK);
+  obj_writer->end_block(JVM_SINGLE_ARG_CHECK);
+}
 
+void SegmentedSourceROMWriter::write_tm_block(SourceObjectWriter* obj_writer 
+                                      JVM_TRAPS) {
+  write_tm_body(obj_writer JVM_CHECK);
+}
+#endif
 // Returns the number of pass which corresponds to the given global offset.
 int SegmentedSourceROMWriter::pass_of(int global_offset) {
   GUARANTEE(global_offset >= 0, "Sanity");

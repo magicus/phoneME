@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -560,12 +561,19 @@ void NativeGenerator::generate_native_string_entries() {
     ldrh(first_char, imm_index3(str1_charp, BytesPerShort, post_indexed));
 
     {
-      Register str0_char  = r5;
-      Register str1_char  = r6;
-      Register str0_cur_charp = r7;
+      Register str0_char  = gp;
+      Register str1_char  = jsp;
+      Register str0_cur_charp = locals;
       Register str1_cur_charp = lr;
-      Address4 save_set = set(r5, r6, r7, lr);
-      Address4 restore_set = set(r5, r6, r7, pc);
+      Address4 save_set = set(gp, jsp, locals, lr);
+      // If register set for ldm contains pc it performs jump without mode 
+      // switching.  We should avoid this and use dx to switch from ARM to 
+      // Thumb mode for Thumb VM here.
+#if ENABLE_THUMB_VM
+      Address4 restore_set = set(gp, jsp, locals, tmp4);
+#else
+      Address4 restore_set = set(gp, jsp, locals, pc);
+#endif
 
       stmfd(sp, save_set, writeback);
 
@@ -601,6 +609,9 @@ void NativeGenerator::generate_native_string_entries() {
       set_return_type(T_INT);
       comment("continue in caller");
       ldmfd(sp, restore_set, writeback);
+#if ENABLE_THUMB_VM
+      jmpx(tmp4);
+#endif
 
     bind(found_first_char);
       mov(str0_cur_charp, reg(str0_min_charp));
@@ -622,8 +633,13 @@ void NativeGenerator::generate_native_string_entries() {
       mov(result, imm_shift(result, lsr, LogBytesPerShort));
       set_return_type(T_INT);
       comment("continue in caller");
+
       ldmfd(sp, restore_set, writeback);
-    }
+#if ENABLE_THUMB_VM
+      jmpx(tmp4);
+#endif
+
+  }
 
   bind(bailout);
     comment("Bailout to interpreter");
@@ -1168,6 +1184,33 @@ void NativeGenerator::generate_native_string_entries() {
 
 }
 
+#define UNCHECKED_ARRAY_COPY_ENTRY(type) \
+  do {                                                                     \
+    comment("No fallthrough");                                             \
+    breakpoint();                                                          \
+                                                                           \
+    bind_rom_linkable("native_jvm_unchecked_" #type "_arraycopy_entry");   \
+    wtk_profile_quick_call(/* param size */ 5);                            \
+                                                                           \
+    /* IMPL_NOTE: consider using LDM, currently conflicts with existing */ \
+    /* register assignment fixed by hardcoded WMMX instructions.        */ \
+    comment("Pop arguments from stack");                                   \
+    pop(length);                                                           \
+    pop(dst_pos);                                                          \
+    pop(dst);                                                              \
+    pop(src_pos);                                                          \
+    pop(src);                                                              \
+                                                                           \
+    sub(length, length, one, set_CC);                                      \
+                                                                           \
+    comment("Length == 0.  Just return");                                  \
+    b(done, lt);                                                           \
+                                                                           \
+    comment("Point at actual data");                                       \
+    add(dst, dst, imm(Array::base_offset()));                              \
+    add(src, src, imm(Array::base_offset()));                              \
+  } while (0)
+
 void NativeGenerator::generate_native_system_entries() {
   Segment seg(this, code_segment, "Native entry points for system functions");
   Label bailout, bailout_2;
@@ -1202,7 +1245,6 @@ void NativeGenerator::generate_native_system_entries() {
   Assembler::Register m1      = callee;
 
   comment("load arguments to registers");
-#if ENABLE_XSCALE_WMMX_ARRAYCOPY
   comment("r%d = src", src);
   ldr(src, imm_index(jsp, JavaFrame::arg_offset_from_sp(4)));
 
@@ -1217,22 +1259,6 @@ void NativeGenerator::generate_native_system_entries() {
 
   comment("r%d = src_pos", src_pos);
   ldr(src_pos, imm_index(jsp, JavaFrame::arg_offset_from_sp(3)));
-#else
-  comment("r%d = length", length);
-  ldr(length, imm_index(jsp, JavaFrame::arg_offset_from_sp(0)));
-
-  comment("r%d = dst_pos", dst_pos);
-  ldr(dst_pos, imm_index(jsp, JavaFrame::arg_offset_from_sp(1)));
-
-  comment("r%d = dst", dst);
-  ldr(dst, imm_index(jsp, JavaFrame::arg_offset_from_sp(2)));
-
-  comment("r%d = src_pos", src_pos);
-  ldr(src_pos, imm_index(jsp, JavaFrame::arg_offset_from_sp(3)));
-
-  comment("r%d = src", src);
-  ldr(src, imm_index(jsp, JavaFrame::arg_offset_from_sp(4)));
-#endif // ENABLE_XSCALE_WMMX_ARRAYCOPY   
 
   comment("if (src == NULL || dst == NULL) goto bailout;");
   cmp(src, imm(0));
@@ -1333,6 +1359,13 @@ void NativeGenerator::generate_native_system_entries() {
 #endif
   if (OptimizeArrayCopy) {
     for (int i = 0; i <= 3; i++) { 
+      switch (i) {
+      case 0: UNCHECKED_ARRAY_COPY_ENTRY(byte); break;
+      case 1: UNCHECKED_ARRAY_COPY_ENTRY(char); break;
+      case 2: UNCHECKED_ARRAY_COPY_ENTRY(int);  break;
+      case 3: UNCHECKED_ARRAY_COPY_ENTRY(long);  break;
+      }
+      
       if( i == 2 ) {
         bind(copy_int_array);
       }
@@ -1368,6 +1401,13 @@ void NativeGenerator::generate_native_system_entries() {
   } else {
 
     for (int i = 0; i <= 3; i++) {
+      switch (i) {
+      case 0: UNCHECKED_ARRAY_COPY_ENTRY(byte); break;
+      case 1: UNCHECKED_ARRAY_COPY_ENTRY(char); break;
+      case 2: UNCHECKED_ARRAY_COPY_ENTRY(int);  break;
+      case 3: UNCHECKED_ARRAY_COPY_ENTRY(long);  break;
+      }
+
       Label again;
       if( i == 2 ) {
         bind(copy_int_array);
@@ -1594,6 +1634,8 @@ void NativeGenerator::generate_native_system_entries() {
       }
   }
 
+  UNCHECKED_ARRAY_COPY_ENTRY(obj);
+
 bind(copy_object_array);  
   comment("If dst is in new space, there's no need to set bitvector");
   get_old_generation_end(t3);
@@ -1617,6 +1659,7 @@ bind(copy_upwards);
     Label aligned_copy_loop;
     Label not_yet_aligned_copy;
     Label small_length_copy;
+
     Address4 four_regs = set(src_pos, dst_pos, t1, t2);
 
     if (upwards) {
@@ -1795,6 +1838,8 @@ bind(bailout_length_zero);
 #endif
 }
 
+#undef UNCHECKED_ARRAY_COPY_ENTRY
+
 void NativeGenerator::generate_native_thread_entries() {
   // bind_rom_linkable("native_thread_enterLockObject_entry");
   // Label c_code("Java_com_sun_cldchi_jvm_Thread_enterLockObject");
@@ -1840,8 +1885,8 @@ void NativeGenerator::generate_native_misc_entries() {
     comment("Increment the count, append the char.");
     ldr(thechar,  imm_index(jsp, JavaFrame::arg_offset_from_sp(0)));
     add(count, count, imm(1));
-    strh(thechar, imm_index3(buf, Array::base_offset()));
     str(count, imm_index(obj, Instance::header_size()+sizeof(jobject)));
+    strh(thechar, imm_index3(buf, Array::base_offset()));
 
     comment("Return the object.");
     mov(return_value, reg(obj));
@@ -2108,17 +2153,19 @@ bind(label_expand_vector);
 
     comment("Put new element into the Vector");
     ldr(r1, imm_index(jsp, JavaFrame::arg_offset_from_sp(0)));
-    mov(r2, imm_shift(el_count, lsl, times_4), set_CC);
+    add_imm(jsp, jsp, -JavaStackDirection * 2 * BytesPerStackElement);
     str(r1, imm_index(fill_start));
 
-    comment("Fill other elements with zero using memset");
-    add(r0, fill_start, imm(sizeof(jobject)), ne);
-    mov(r1, zero, ne);
-    bl(label_memset, ne);
+    if (!ENABLE_ZERO_YOUNG_GENERATION) {
+      comment("Fill other elements with zero using memset");
+      mov(r2, imm_shift(el_count, lsl, times_4), set_CC);
+      add(r0, fill_start, imm(sizeof(jobject)), ne);
+      mov(r1, zero, ne);
+      bl(label_memset, ne);
+    }
     
     comment("Return to caller");
     set_return_type(T_VOID);
-    add_imm(jsp, jsp, -JavaStackDirection * 2 * BytesPerStackElement);
     jmpx(return_reg);
   }
 

@@ -145,6 +145,9 @@ private:
   develop(bool, GenerateGNUCode, false,                                     \
           "Generate assembly code output for GNU assembler")                \
                                                                             \
+  develop(bool, GenerateMicrosoftCode, false,                               \
+          "Generate assembly code output for Microsoft assembler")          \
+                                                                            \
   develop(bool, GenerateInlineAsm, false,                                   \
           "Generate assembly code output as C with inline assembler")       \
                                                                             \
@@ -174,9 +177,6 @@ private:
       /* GC  and heap Flags */                                              \
   product(int, HeapCapacity, 1 * 1024 * 1024,                               \
           "Maximum size of object heap in bytes")                           \
-                                                                            \
-  product(int, RecommendedFreeHeapPercentage, 10,                           \
-          "Recommended percentage of heap to keep free" )                   \
                                                                             \
   product(int, HeapMin, 1 * 1024 * 1024,                                    \
           "Minimin heap size in bytes. 0 means for the system to pick "     \
@@ -280,9 +280,6 @@ private:
                                                                             \
   product(int, StackSizeMaximum, 128 * 1024,                                \
           "Max Java stack size in bytes")                                   \
-                                                                            \
-  product(int, StarvationTime, 200,                                         \
-          "Max time in clock ticks to starve a thread")                     \
                                                                             \
       /* Runtime flags */                                                   \
   product(bool, SlaveMode, false,                                           \
@@ -473,6 +470,17 @@ private:
           "this limit (in bytes)")                                         \
   op(int, CompiledCodeFactor, 15,                                          \
           "Compute the maximum compiled code size using method code size") \
+  op(int, ArrayCopyLoopUnrollingLimit, 10,                                 \
+          "Limit on the number of load instructions for unrolled loop"     \
+          "for inlined arraycopy (only for ENABLE_INLINED_ARRAYCOPY)")     \
+  op(int, ArrayCopyByteInlineLimit, 48,                                    \
+          "Maximum length of byte array to be copied with inlined"         \
+          "arraycopy (only for ENABLE_INLINED_ARRAYCOPY)."                 \
+          "Tune value for your platform.")                                 \
+  op(int, ArrayCopyShortInlineLimit, 64,                                   \
+          "Maximum length of short array to be copied with inlined"        \
+          "arraycopy (only for ENABLE_INLINED_ARRAYCOPY)."                 \
+          "Tune value for your platform.")                                 \
   op(bool, PrintPerformanceCounters, false,                                \
           "Print a choice group of 'important' perf counters at VM exit")  \
   op(bool, PrintAllPerformanceCounters, false,                             \
@@ -530,6 +538,9 @@ private:
                                                                             \
        op(bool, PrintCompiledCodeAsYouGo, false,                            \
           "Prints the native code for all compiled methods")                \
+                                                                            \
+       op(bool, TraceMethodInlining, false,                                 \
+          "Trace method inlining (only for ENABLE_INLINE)")                 \
                                                                             \
   develop(bool, TraceNativeCalls, false,                                    \
           "Trace native method calls")                                      \
@@ -627,11 +638,19 @@ private:
        op(bool, TraceCallInfo, false,                                       \
           "Trace call info records")                                        \
                                                                             \
+       op(bool, TracePageAccess, false,                                     \
+          "Trace access to the protected page")                             \
+                                                                            \
        op(bool, TraceMirandaMethods, false,                                 \
           "Print miranda methods (abstract interface methods added"         \
           " silently by the VM")                                            \
        op(bool, TraceTaskContext,  false,                                   \
-          "Trace task switching")
+          "Trace task switching")                                                \
+       op(bool, VerboseNullPointExceptionThrowing,  false,                                   \
+          "Print verbose null point exception information")                                      \
+       op(bool, VerboseByteCodeEliminate,  false,                                   \
+          "Print byte code eliminate information ")   
+          
 
 /*
  * The "optional()" flags would be "product()" in product builds w/o Monet
@@ -640,6 +659,9 @@ private:
 #define __ROM_GENERATOR_FLAGS(develop, product, optional) \
   optional(bool, GenerateROMImage, false,                                   \
           "Generate ROM image")                                             \
+                                                                            \
+  optional(bool, GenerateSharedROMImage, false,                             \
+          "Generate ROM image which could be used shared")                  \
                                                                             \
   develop(bool, EnableAllROMOptimizations, false,                           \
           "Turn on all ROM optimizations")                                  \
@@ -710,7 +732,7 @@ private:
   develop(bool, RemoveROMUnusedStaticFields, true,                          \
           "Remove all unused static fields from romized classes")           \
                                                                             \
-  develop(bool, EnableROMCompilation, true,                                 \
+  optional(bool, EnableROMCompilation, true,                                \
           "Compile some ROM methods to machine code")                       \
                                                                             \
   develop(bool, RemoveUnusedSymbols, true,                                  \
@@ -980,9 +1002,13 @@ RUNTIME_FLAGS(DECLARE_DEVELOPER_FLAG,DECLARE_PRODUCT_FLAG,DECLARE_ALWAYS_FLAG)
 #endif
 
 #ifndef JVM_RELEASE_VERSION
-#define JVM_RELEASE_VERSION ""
+#define JVM_RELEASE_VERSION "internal"
 #endif
 
 #ifndef JVM_BUILD_VERSION
 #define JVM_BUILD_VERSION "internal"
+#endif
+
+#ifndef JVM_NAME
+#define JVM_NAME "CLDC VM"
 #endif

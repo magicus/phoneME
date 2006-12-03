@@ -1,5 +1,5 @@
 /*
- * @(#)Assembler_wmmx.hpp	1.4 06/03/27 18:46:17
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

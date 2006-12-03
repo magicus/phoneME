@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -152,6 +153,8 @@
 //
 // ENABLE_ARM_VFP                0,0  Support ARM VFP instructions.
 //
+// ENABLE_ARM9_VFP_BUG_WORKAROUND 0,0  Workaround ARM9+VFP hardware feature
+//
 // ENABLE_BRUTE_FORCE_ICACHE_FLUSH 0,0 Generate brute-force code to flush
 //                                    the instruction cache (for platforms
 //                                    without OS support).
@@ -169,12 +172,11 @@
 // ENABLE_CODE_OPTIMIZER         0,0  Enable optimization of code generated
 //                                    by dynamic compiler for a specific CPU.
 //
-// ENABLE_COMPILATION_RETRY      1,1  Temporarily relax CompiledCodeFactor
-//                                    and retry compilation if the method
-//                                    requires a bigger CompiledCodeFactor.
-//
 // ENABLE_COMPILER               1,1  Add the dynamic adaptive compiler
 //                                    for byte code execution.
+//
+// ENABLE_COMPILER_TYPE_INFO     1,1  Maintain object type information during
+//                                    compilation.
 //
 // ENABLE_CPU_VARIANT            0,0  Enable specialized features for
 //                                    a variant of the main CPU type.
@@ -199,6 +201,9 @@
 //                                    generated as a C file with
 //                                    inlined assembly code.  This
 //                                    option is used on x86 only.
+//
+// ENABLE_INLINED_ARRAYCOPY      1,1  Inline arraycopy() calls in compiled code
+//
 //
 // ENABLE_INTERPRETATION_LOG     1,1  Use a log of the most recently
 //                                    interpreted methods to make sure
@@ -228,8 +233,25 @@
 //                                    that enables a number of other
 //                                    build flags.
 //
+// ENABLE_HEAP_NEARS_IN_HEAP     0,0  Ensure all nears of romized HEAP objects and prototypical nears
+//                                    of all classes are in ROM HEAP block by cloning those nears
+//                                    from ROM TEXT and DATA blocks to the ROM HEAP block. 
+//                                    Speeds up GC, but slightly increases footprint. 
+//
+// ENABLE_PREINITED_TASK_MIRRORS 1,1  Put TaskMirror to a separate section of SystemROM image
+//                                    to allow loading them during startup of each task.                                   
+//
 // ENABLE_LIB_IMAGES             0,0  (unsupported) allow loading of multiple
 //                                    binary images into the same task.
+//
+// ENABLE_PAGE_PROTECTION        0,0  Use the mechanism of protected memory
+//                                    pages for certain compiler optimizations
+//                                    (e.g. check_timer_tick). Works only
+//                                    if the feature is supported by OS.
+//
+// ENABLE_ZERO_YOUNG_GENERATION  1,1  Fills youngen with zero values after GC.
+//                                    When the option is off each newly created
+//                                    object is cleared right after allocation.
 //
 // ENABLE_MEMORY_MAPPED_FILES    1,1  Use memory-mapped files for
 //                                    loading binary images. This flag takes
@@ -277,6 +299,9 @@
 // ENABLE_MONET                  0,0  Enable on-device support (conversion
 //                                    and loading) of binary application
 //                                    image files for fast class loading.
+//
+// ENABLE_MONET_COMPILATION      0,0  Enable on-device method precompilation 
+//                                    Requires ENABLE_MONET.
 //
 // ENABLE_MONET_DEBUG_DUMP       1,0  Create debug dump files that describe
 //                                    the contents of binary ROM image files.
@@ -389,6 +414,17 @@
 //                                    a method at the end of compiled
 //                                    code of that method.
 //
+// ENABLE_COMPRESSED_VSF         0,0  Compiler-specific.
+//                                    Include table of compressed VSF 
+//                                    in the Relocation of CompiledMethod
+//                                    to reduce the produced code size.
+//
+//
+// ENABLE_INLINE_COMPILER_STUBS  1,1  Compiler-specific.
+//                                    Generate inlined code for creating
+//                                    new objects and type arrays
+//                                    (instead of calling compiler_new_object
+//                                    and compiler_new_type_array stubs).
 //
 //
 // ENABLE_XSCALE_WMMX_INSTRUCTIONS      0,0 Use XScale WMMX instructions
@@ -418,7 +454,7 @@
 // ENABLE_INTERNAL_CODE_OPTIMIZER       0,0 Improved code optimizer for
 //                                          scheduling ARM instructions.
 //
-// ENABLE_INLINE                        0,0 Inline simple methods into their
+// ENABLE_INLINE                        1,1 Inline simple methods into their
 //                                          callers in compiled code.
 //
 // ENABLE_REMEMBER_ARRAY_CHECK          0,0 Remember the length 
@@ -448,7 +484,7 @@
 // ENABLE_OOP_TAG                       0,0 Support for debug int in oopdesc
 //                                          used for MVM GC tracing
 //
-// ENABLE_MULTIPLE_PROFILES_SUPPORT     1,0 Add support for using multiple
+// ENABLE_MULTIPLE_PROFILES_SUPPORT     0,0 Add support for using multiple
 //                                          profiles that may provide multually
 //                                          exclusive APIs.  Allows the hiding
 //                                          of certain classes under
@@ -458,6 +494,9 @@
 //
 // ENABLE_JVMPI_PROFILE_VERIFY          0,0 To support JVMPI profiler
 //                                          verification.
+// 
+// ENABLE_CODE_PATCHING                 0,0 Use code patching mechanism for
+//                                          timer tick checking optimizations.
 //
 //============================================================================
 // ENABLE_FLAGS_END }}
@@ -545,6 +584,9 @@
 // USE_PRODUCT_BINARY_IMAGE_GENERATOR Build the binare image generator in
 //                                    PRODUCT mode (smaller and faster).
 //
+// USE_AOT_COMPILATION                Add the ability to compile selected
+//                                    methods during image generation
+//
 // USE_BINARY_IMAGE_LOADER            Include the binary image loader
 //                                    in the VM for fast classloading.
 //
@@ -610,6 +652,20 @@
 #error "ENABLE_ROM_GENERATOR must be enabled to support ENABLE_MONET"
 #endif
 
+#if ENABLE_MONET_COMPILATION && (!ENABLE_MONET || !ENABLE_COMPILER)
+// ENABLE_MONET_COMPILATION makes no sense if Monet or compiler is not enabled
+#undef ENABLE_MONET_COMPILATION
+#define ENABLE_MONET_COMPILATION 0
+#endif
+
+// AOT compilation is supported only for ARM
+#if ENABLE_COMPILER && defined(ARM) && \
+     (USE_SOURCE_IMAGE_GENERATOR || ENABLE_MONET_COMPILATION)
+#define USE_AOT_COMPILATION 1
+#else
+#define USE_AOT_COMPILATION 0
+#endif
+
 #if !ENABLE_APPENDED_CALLINFO && !ENABLE_EMBEDDED_CALLINFO
 #error "Either ENABLE_APPENDED_CALLINFO or ENABLE_EMBEDDED_CALLINFO must be set"
 #endif
@@ -618,9 +674,47 @@
 #error "TIMER_THREAD is not supported in this configuration"
 #endif
 
+#if ENABLE_COMPRESSED_VSF && \
+    (ENABLE_THUMB_GP_TABLE || ENABLE_ARM_VFP || ENABLE_CSE || !defined(ARM))
+#error NOT currently supported in this configuration
+#endif
+
+#if !ENABLE_COMPRESSED_VSF && ENABLE_PAGE_PROTECTION
+#error NOT supported in this configuration
+#endif
+
+#if ENABLE_INLINE_COMPILER_STUBS && !ENABLE_ZERO_YOUNG_GENERATION
+#error ENABLE_INLINE_COMPILER_STUBS requires ENABLE_ZERO_YOUNG_GENERATION
+#endif
+
+#if ENABLE_CODE_PATCHING && \
+    (ENABLE_TIMER_THREAD || ENABLE_EMBEDDED_CALLINFO || !defined(ARM))
+#error ENABLE_CODE_PATCHING is not supported in this configuration
+#endif
+
+#if !defined(ARM) && ENABLE_LOOP_OPTIMIZATION
+#error "ENABLE_LOOP_OPTIMIZATION is supported only for ARM"
+#endif
+
 #if !ENABLE_TIMER_THREAD && !SUPPORTS_TIMER_INTERRUPT
 #error "TIMER_INTERRUPT is not supported in this configuration"
 #endif
+
+//
+// USE_SINGLE_METHOD_FLUSHING         During code patching use the single 
+//                                    flush icache for the method instead of
+//                                    several flushes for each instruction.
+//
+// USE_PATCHED_METHOD_CACHE           Use patched method cache.
+//
+#ifndef USE_SINGLE_METHOD_FLUSHING
+#define USE_SINGLE_METHOD_FLUSHING 1
+#endif
+
+#ifndef USE_PATCHED_METHOD_CACHE
+#define USE_PATCHED_METHOD_CACHE 1
+#endif
+
 
 #if ENABLE_INTERPRETATION_LOG && !ENABLE_COMPILER
 // ENABLE_INTERPRETATION_LOG is useful with the compiler only
@@ -708,6 +802,12 @@
 #define ARM 1
 #endif
 
+#if defined(ARM) && !ENABLE_INTERPRETER_GENERATOR && !CROSS_GENERATOR
+#define ARM_EXECUTABLE 1
+#else
+#define ARM_EXECUTABLE 0
+#endif
+
 // USE_COMPILER_FPU_MAP               If true, the VirtualStackFrame class
 //                                    include extra information for FPU
 //                                    registers.
@@ -728,6 +828,12 @@
 #endif
 
 #define USE_COMPILER_LITERALS_MAP (ARM | defined(HITACHI_SH))
+
+#if ENABLE_COMPILER && defined(ARM) && !ENABLE_EMBEDDED_CALLINFO
+#define USE_COMPILER_GLUE_CODE 1
+#else
+#define USE_COMPILER_GLUE_CODE 0
+#endif
 
 // USE_UNICODE_FOR_FILENAMES          Use 16-bit unicode chars for filenames
 //                                    instead of ASCII chars
@@ -867,7 +973,7 @@
 #  define USE_IMAGE_MAPPING     1
 #  define USE_IMAGE_PRELOADING  0
 #  define USE_LARGE_OBJECT_AREA 0
-#elif !ENABLE_ISOLATES && !ENABLE_LIB_IMAGES
+#elif !ENABLE_ISOLATES
 #  define USE_IMAGE_MAPPING     0
 #  define USE_IMAGE_PRELOADING  1
 #  define USE_LARGE_OBJECT_AREA 0
@@ -978,9 +1084,11 @@
 #ifdef PRODUCT
 #define PRODUCT_CONST  const
 #define PRODUCT_STATIC static
+#define PRODUCT_INLINE inline
 #else
 #define PRODUCT_CONST
 #define PRODUCT_STATIC
+#define PRODUCT_INLINE
 #endif
 
 // ROMIZED_PRODUCT -- true if we are building Romized, PRODUCE build, in
@@ -990,4 +1098,45 @@
 #define ROMIZED_PRODUCT 1
 #else
 #define ROMIZED_PRODUCT 0
+#endif
+
+#if ENABLE_MEMORY_PROFILER
+#if !ENABLE_JAVA_DEBUGGER
+#error "ENABLE_JAVA_DEBUGGER must be true for ENABLE_MEMORY_PROFILER build"
+#endif
+#endif
+
+#if ENABLE_INLINED_ARRAYCOPY && !ENABLE_COMPILER_TYPE_INFO
+#error "ENABLE_COMPILER_TYPE_INFO must be set for ENABLE_INLINED_ARRAYCOPY"
+#endif
+
+//
+// USE_FP_RESULT_IN_VFP_REGISTER      Return floating point retult in VFP 
+//                                    registers. 
+//
+#if ENABLE_ARM_VFP
+#define USE_FP_RESULT_IN_VFP_REGISTER 1
+#else
+#define USE_FP_RESULT_IN_VFP_REGISTER 0
+#endif
+
+//
+// ENABLE_ARM9_VFP_BUG_WORKAROUND  Workaround for ARM9 + VFP hardware bugs
+//
+//
+#if ENABLE_ARM_VFP
+#ifndef ENABLE_ARM9_VFP_BUG_WORKAROUND
+#define ENABLE_ARM9_VFP_BUG_WORKAROUND 0
+#endif
+#endif
+
+//
+// USE_EMBEDDED_VTABLE_BITMAP      Embed a vtable bitmap in JavaClassDesc,
+//                                 one bit per virtual method to mark
+//                                 overridden methods
+//
+#if ENABLE_COMPILER && ENABLE_INLINE
+#define USE_EMBEDDED_VTABLE_BITMAP 1
+#else
+#define USE_EMBEDDED_VTABLE_BITMAP 0
 #endif

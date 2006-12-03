@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -44,7 +45,7 @@ ReturnOop ObjArrayClass::get_array_class(jint distance JVM_TRAPS) {
   }
   UsingFastOops fast_oops;
   ObjArrayClass::Fast ac = compute_higher_dimension(JVM_SINGLE_ARG_ZCHECK(ac));
-  return ac().get_array_class(distance - 1 JVM_NO_CHECK_AT_BOTTOM);
+  return ac().get_array_class(distance - 1 JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 ReturnOop ObjArrayClass::multi_allocate(int rank, JavaFrame* frame JVM_TRAPS) { 
@@ -110,7 +111,7 @@ bool ObjArrayClass::check_access_by(InstanceClass* sender_class,
                                     FailureMode fail_mode JVM_TRAPS) {
   UsingFastOops fast_oops;
   JavaClass::Fast ec = element_class();
-  return ec().check_access_by(sender_class, fail_mode JVM_NO_CHECK_AT_BOTTOM);
+  return ec().check_access_by(sender_class, fail_mode JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 #ifndef PRODUCT

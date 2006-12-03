@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,10 +27,6 @@
  * Copyright 2006 Intel Corporation. All rights reserved.
  *!c>
  */
-
-extern "C" {
-  void unlink_compiled_code(JVM_SINGLE_ARG_TRAPS);
-}
 
 enum {
   // NOTE: to see a comprehensive listing of all the flags, run
@@ -197,16 +194,6 @@ class AccessFlags {
     return _flags;
   }
 
-#if ENABLE_INLINE && ARM
-  bool is_not_inlinable() const {
-  //isLeaf method is in a inner class
-  //in 113EA2, _flags is always zero.
-  return  (_flags & 
-                ( JVM_ACC_HAS_MONITOR_BYTECODES |
-                  JVM_ACC_HAS_INVOKE_BYTECODES )
-              ) != 0;
-  }
-#endif
   // Atomic update of flags
   void atomic_set_bits(jint bits) {
     // This is only atomic because we have cooperative scheduling.
@@ -250,7 +237,6 @@ class AccessFlags {
   friend class SystemDictionary;
   friend class JVM;
   friend class ConstantPool;
-  friend void unlink_compiled_code(JVM_SINGLE_ARG_TRAPS);
 
   // The functions below should only be called on the _access_flags
   // instance variables directly, otherwise they are just changing a

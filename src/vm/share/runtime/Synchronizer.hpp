@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -60,7 +61,7 @@ class StackLock {
   void clear_real_java_near() { _real_java_near = (JavaNearDesc*) 0; }
 
   ReturnOop waiters()                 { return _waiters; }
-  void set_waiters(Condition* value);
+  void set_waiters(Thread* value);
 
   static size_t size() {
     return sizeof(StackLock) + JavaNearDesc::allocation_size();
@@ -73,6 +74,15 @@ class StackLock {
     GUARANTEE(java_near().is_locked(), "Must be on stack");
 #endif
     return ((StackLock*) java_oop->klass()) - 1;
+  }
+
+  static ReturnOop waiters_from_java_oop(JavaOop* java_oop) {
+    JavaNear::Raw java_near = java_oop->klass();
+    if (!java_near().is_locked()) {
+      return NULL;
+    } else {
+      return ((StackLock*)(((StackLock*) java_oop->klass()) - 1))->_waiters;
+    }
   }
 
   // GC support

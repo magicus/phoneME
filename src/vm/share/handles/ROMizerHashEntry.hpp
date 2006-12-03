@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -39,7 +40,9 @@ class ROMizerHashEntry: public MixedOop {
 #if ENABLE_SEGMENTED_ROM_TEXT_BLOCK
   DEFINE_ACCESSOR_NUM(ROMizerHashEntry, int,                 loc_offset)
 #endif
-
+#if ENABLE_HEAP_NEARS_IN_HEAP && USE_SOURCE_IMAGE_GENERATOR
+  DEFINE_ACCESSOR_NUM(ROMizerHashEntry, int,                 heap_offset)
+#endif
  public:
   static ReturnOop allocate(JVM_SINGLE_ARG_TRAPS);
 };

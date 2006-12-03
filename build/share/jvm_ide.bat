@@ -1,5 +1,6 @@
 @echo off
 @rem ======================================================================
+@rem SCCS ID   
 @rem
 @rem Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 @rem DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -143,10 +144,23 @@ echo os_arch  = %JVM_OS%_%JVM_ARCH% >> %BuildRoot%\platform.cfg
 echo compiler = %JVM_COMPILER%      >> %BuildRoot%\platform.cfg
 
 @rem ======================================================================
+@rem create product.cfg - product configuration file
+@rem ======================================================================
+set ProductFile=%WorkSpace%/build/share/product.make
+
+if exist %ProductFile% goto product
+set ProductFile=%WorkSpace%/build/share/jvm.make
+:product
+
+find "PRODUCT_NAME " < %ProductFile% | find "=" > %BuildRoot%\product.cfg
+find "RELEASE_VERSION " < %ProductFile% | find "=" >> %BuildRoot%\product.cfg
+
+@rem ======================================================================
 @rem Execute MakeDeps
 @rem ======================================================================
 set CMDS=java -classpath %BuildToolDir% %JVM_IDETOOL_MAIN%
-set CMDS=%CMDS% -config %BuildRoot%\platform.cfg
+set CMDS=%CMDS% -product %BuildRoot%\product.cfg
+set CMDS=%CMDS% -platform %BuildRoot%\platform.cfg
 set CMDS=%CMDS% -workspace %WorkSpace%
 set CMDS=%CMDS% -buildspace %BuildSpace%
 set CMDS=%CMDS% -database %WorkSpace%\src\vm\includeDB

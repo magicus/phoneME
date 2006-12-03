@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -91,34 +92,52 @@ static void process_frame(JavaFrame* jf) {
               StackLock::copied_near_offset() + 
               JavaNear::raw_value_offset());
     // only if has meaningful waiters
-    if (raw_near & 2) {      
-      Condition::Raw cond = lock->waiters();
-      if (cond.not_null()) {      
-        for (Thread::Raw current = cond().waiters_head(); current.not_null();
-             current = current().next()) {
-          new BlockedThread(current.obj(), lock);
-        }
+    if (raw_near & 2) {
+      Thread::Raw wt;
+      wt = lock->waiters();
+      while (!wt.is_null()) {
+        new BlockedThread(wt.obj(), lock);
+        wt = wt().next();
       }
     }
   }
 }
+
+/* XXXX I don't think this works correctly.  What if we have this:
+ *   synchronized(Y) {
+ *     synchronized(X) {
+ *         X.wait();
+ *     }
+ *   }
+ *
+ * Seems like the thread waiting for X owns Y lock.  Suppose another 
+ * thread is waiting for Y lock like:
+ *   synchronized (X) {
+ *     synchronized(Y) {
+ *      ...
+ *
+ * Seems like deadlock to me but this loop doesn't process this thread since
+ * it appears on the list of threads 'waiting'
+ */
 
 static void process_thread(Thread* t) {
   if (t->last_java_sp() == 0) {
     // not executing in VM
     return;
   }
-  
+  Thread::Raw wt, thr;
   // if thread is waiting on condition it cannot be part of the deadlock
   // and waiters field has different sematics, so we ignore such threads
-  for (Condition::Raw c = Universe::scheduler_waiting(); c.not_null();
-       c = c().next()) {
-    for (Thread::Raw thr = c().waiters_head(); thr.not_null();
-         thr = thr().next()) {
+  wt = Universe::scheduler_waiting();
+  while (!wt.is_null()) {
+    thr = wt.obj();
+    while (!thr.is_null()) {
       if (thr.obj() == t->obj()) {
         return;
       }
+      thr = thr().next();
     }
+    wt = wt().next_waiting();
   }
 
   Frame fr(t);

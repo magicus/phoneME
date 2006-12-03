@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -126,7 +127,7 @@ public class ResourceInputStream extends InputStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public int read() throws IOException {
-        //Fix for CR 6303054
+        // Fix for CR 6303054
         if (fileDecoder == null) {
             throw new IOException();
         }
@@ -157,7 +158,7 @@ public class ResourceInputStream extends InputStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public int read(byte b[], int off, int len) throws IOException {
-        //Fix for CR 6303054
+        // Fix for CR 6303054
         if (fileDecoder == null) {
             throw new IOException();
         }
@@ -211,14 +212,13 @@ public class ResourceInputStream extends InputStream {
     public boolean markSupported() {
         return true;
     }
-    
+
     // OS-specific interface to underlying file system.
     private static native Object open(String name);
     private static native int bytesRemain(Object fileDecoder);
     private static native int readByte(Object fileDecoder);
     private static native int readBytes(Object fileDecoder,
                                         byte b[], int off, int len);
-
     /*
      * Copies all fields from one FileDecoder object to another -
      * used remember or restore current ResourceInputStream state.

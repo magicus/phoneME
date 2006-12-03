@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -59,6 +60,7 @@ public class CLDC_HI_NativesWriter
     static String VECTOR       = "java/util/Vector";
     static String STRINGBUFFER = "java/lang/StringBuffer";
     static String INTEGER      = "java/lang/Integer";
+    static String JVM          = "com/sun/cldchi/jvm/JVM";
 
     static String[][] use_entries = {
         // class     method  signature(null=any)  entry_name
@@ -98,7 +100,17 @@ public class CLDC_HI_NativesWriter
         {MATH,   "tan",        "(D)D",  "native_math_tan_entry"},
         {MATH,   "sqrt",       "(D)D",  "native_math_sqrt_entry"},
         {MATH,   "ceil",       "(D)D",  "native_math_ceil_entry"},
-        {MATH,   "floor",      "(D)D",  "native_math_floor_entry"}
+        {MATH,   "floor",      "(D)D",  "native_math_floor_entry"},
+        {JVM, "unchecked_byte_arraycopy", null,  
+                               "native_jvm_unchecked_byte_arraycopy_entry"},
+        {JVM, "unchecked_char_arraycopy", null,  
+                               "native_jvm_unchecked_char_arraycopy_entry"},
+        {JVM, "unchecked_int_arraycopy",  null,  
+                               "native_jvm_unchecked_int_arraycopy_entry"},
+        {JVM, "unchecked_long_arraycopy",  null,  
+                               "native_jvm_unchecked_long_arraycopy_entry"},
+        {JVM, "unchecked_obj_arraycopy",  null,  
+                               "native_jvm_unchecked_obj_arraycopy_entry"}
     };
 
     /* INSTANCE DATA */

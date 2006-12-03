@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -54,7 +55,7 @@ int Java_com_sun_cldc_isolate_Isolate_usedMemory0() {
   IsolateObj::Raw isolate = GET_PARAMETER_AS_OOP(0);
   const jint task = isolate().task_id();
   return task == Task::INVALID_TASK_ID ? 0 :
-    ObjectHeap::get_task_memory_usage( task );
+    ObjectHeap::get_task_memory_estimate( task );
 }
 
 /*
@@ -69,50 +70,40 @@ int Java_com_sun_cldc_isolate_Isolate_usedMemory0() {
  */
 void Java_com_sun_cldc_isolate_Isolate_nativeStart(JVM_SINGLE_ARG_TRAPS) {
   Thread::Raw saved;
-  Thread::Raw current;
   bool has_exception = false;
-  int id;
+  const int id = Task::allocate_task_id(JVM_SINGLE_ARG_CHECK);
   {
     UsingFastOops fast_oops;
-
     IsolateObj::Fast isolate = GET_PARAMETER_AS_OOP(0);
-
-    id = Task::allocate_task_id(JVM_SINGLE_ARG_CHECK);
     ObjectHeap::set_task_memory_quota(id, isolate().memory_reserve(),
                                           isolate().memory_limit() JVM_CHECK);
 
     const int prev = ObjectHeap::on_task_switch( id );
-    Thread::Raw t = Task::create_task(id, &isolate JVM_NO_CHECK);
+    saved = Task::create_task(id, &isolate JVM_NO_CHECK);    
     ObjectHeap::on_task_switch( prev );
-    if( t.is_null() ) {
+    
+    if( saved.is_null() ) {
+      ObjectHeap::reset_task_memory_usage(id);
       return;
-    }
-    saved = t.obj();
-
-#if ENABLE_MULTIPLE_PROFILES_SUPPORT
-    Task::Fast task = Task::get_task(id);
-    // Setting current active profile name.
-    task().set_profile_id(isolate().profile_id());
-#endif
+    }        
   }
   // save current thread pointer, no non-raw handles please!
-  current = Thread::current()->obj();
+  Thread::Raw current = Thread::current();
   Thread::set_current(&saved);
   {
     // handles ok now
     UsingFastOops fast_oops;
-    Thread::Fast orig = current.obj();
-    Thread::Fast t = saved.obj();
+    Thread::Fast orig = &current();
+    Thread::Fast t = &saved();
     // IMPL_NOTE: SHOULDN'T WE DO SOMETHING HERE IF THERE IS SOME EXCEPTION
     // RELATED TO STARTUP FAILURE (i.e., reclaim the task's id and
     // proceed to task termination cleanup, including sending of
     // isolate events)
     Task::start_task(&t JVM_NO_CHECK);
     has_exception = (CURRENT_HAS_PENDING_EXCEPTION != NULL);
-
     
-    current = orig.obj();  // GC may have happened. Reload.
-    saved = t.obj();       // GC may have happened. Reload.
+    current = orig;  // GC may have happened. Reload.
+    saved = t;       // GC may have happened. Reload.
   }
 
   // we set the current thread back to the original so that the C interpreter
@@ -128,12 +119,12 @@ void Java_com_sun_cldc_isolate_Isolate_nativeStart(JVM_SINGLE_ARG_TRAPS) {
     // task mirrors may not be setup etc.  We just tear down the new isolate
     // and return an exception to the parent.
     Task::Fast task = Task::get_task(id);
-    Thread::Fast thrd = saved.obj();
+    Thread::Fast thrd = &saved();
     GUARANTEE(!task.is_null(), "Task should not be null at this point");
     task().stop_unstarted_task(-1 JVM_NO_CHECK);
     task().set_status(Task::TASK_STOPPED);
     task().set_thread_count(0);
-    saved = thrd.obj();       // GC may have happened. Reload.
+    saved = thrd;       // GC may have happened. Reload.
   }
   if (has_exception) {
     // Convoluted dance here.  Child isolate failed to start
@@ -148,7 +139,7 @@ void Java_com_sun_cldc_isolate_Isolate_nativeStart(JVM_SINGLE_ARG_TRAPS) {
     // calling Task::cleanup_terminated_task()
     //    
     UsingFastOops fast_oops;
-    Thread::Fast thrd = saved.obj();
+    Thread::Fast thrd = &saved();
     JavaOop::Fast exception = thrd().noncurrent_pending_exception();
     String::Fast str;
     {
@@ -191,8 +182,8 @@ void Java_com_sun_cldc_isolate_Isolate_stop(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   IsolateObj::Fast isolate_obj = GET_PARAMETER_AS_OOP(0);
   Task::Fast task = isolate_obj().task();
-  int exit_code = KNI_GetParameterAsInt(1);
-  int exit_reason = KNI_GetParameterAsBoolean(2);
+  const int exit_code = KNI_GetParameterAsInt(1);
+  const int exit_reason = KNI_GetParameterAsBoolean(2);
 
   switch (isolate_obj().status()) {
   case Task::TASK_NEW:
@@ -223,7 +214,7 @@ jint Java_com_sun_cldc_isolate_Isolate_getStatus() {
 
 void Java_com_sun_cldc_isolate_Isolate_suspend0() {
   UsingFastOops fast_oops;
-  IsolateObj::Fast isolate_obj = GET_PARAMETER_AS_OOP(0);
+  IsolateObj::Raw isolate_obj = GET_PARAMETER_AS_OOP(0);
   Task::Fast task = isolate_obj().task();
   if (task.not_null()) {
     task().suspend();
@@ -232,17 +223,14 @@ void Java_com_sun_cldc_isolate_Isolate_suspend0() {
 
 int Java_com_sun_cldc_isolate_Isolate_isSuspended0() {
   UsingFastOops fast_oops;
-  IsolateObj::Fast isolate_obj = GET_PARAMETER_AS_OOP(0);
+  IsolateObj::Raw isolate_obj = GET_PARAMETER_AS_OOP(0);
   Task::Fast task = isolate_obj().task();
-  if (task.not_null()) {
-    return task().is_suspended();
-  }
-  return 0;
+  return task.not_null() ? task().is_suspended() : 0;
 }
 
 void Java_com_sun_cldc_isolate_Isolate_resume0() {
   UsingFastOops fast_oops;
-  IsolateObj::Fast isolate_obj = GET_PARAMETER_AS_OOP(0);
+  IsolateObj::Raw isolate_obj = GET_PARAMETER_AS_OOP(0);
   Task::Fast task = isolate_obj().task();
   if (task.not_null()) {
     task().resume();
@@ -250,9 +238,8 @@ void Java_com_sun_cldc_isolate_Isolate_resume0() {
 }
 
 void Java_com_sun_cldc_isolate_Isolate_setPriority0() {
-  UsingFastOops fast_oops;
-  IsolateObj::Fast isolate_obj = GET_PARAMETER_AS_OOP(0);
-  jint new_priority = KNI_GetParameterAsInt(1);
+  IsolateObj::Raw isolate_obj = GET_PARAMETER_AS_OOP(0);
+  const jint new_priority = KNI_GetParameterAsInt(1);
   // new_priority tested at java level, should never be out of range
   GUARANTEE(new_priority >= Task::PRIORITY_MIN &&
             new_priority <= Task::PRIORITY_MAX, "priority out of range");
@@ -263,15 +250,13 @@ void Java_com_sun_cldc_isolate_Isolate_setPriority0() {
 }
 
 jint Java_com_sun_cldc_isolate_Isolate_getPriority0() {
-  UsingFastOops fast_oops;
-  IsolateObj::Fast isolate_obj = GET_PARAMETER_AS_OOP(0);
+  IsolateObj::Raw isolate_obj = GET_PARAMETER_AS_OOP(0);
   return isolate_obj().priority();
 }
 
 // private native int id0();
 jint Java_com_sun_cldc_isolate_Isolate_id0() {
-  UsingFastOops fast_oops;
-  IsolateObj::Fast isolate_obj = GET_PARAMETER_AS_OOP(0);
+  IsolateObj::Raw isolate_obj = GET_PARAMETER_AS_OOP(0);
   return isolate_obj().task_id();
 }
 
@@ -279,17 +264,14 @@ jint Java_com_sun_cldc_isolate_Isolate_id0() {
 void Java_com_sun_cldc_isolate_Isolate_waitStatus(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   IsolateObj::Fast isolate_obj = GET_PARAMETER_AS_OOP(0);
-  jint maxStatus = KNI_GetParameterAsInt(1);
-  if (isolate_obj().status() >= maxStatus) {
-    return;
-  } else {
+  const jint maxStatus = KNI_GetParameterAsInt(1);
+  if (isolate_obj().status() < maxStatus) {
     Scheduler::wait(&isolate_obj, 0 JVM_NO_CHECK_AT_BOTTOM);
   }
 }
 
 jint Java_com_sun_cldc_isolate_Isolate_exitCode0() {
-  UsingFastOops fast_oops;
-  IsolateObj::Fast isolate_obj = GET_PARAMETER_AS_OOP(0);
+  IsolateObj::Raw isolate_obj = GET_PARAMETER_AS_OOP(0);
   return isolate_obj().exit_code();
 }
 
@@ -315,36 +297,10 @@ void Java_com_sun_cldc_isolate_Isolate_notifyStatus(JVM_SINGLE_ARG_TRAPS) {
 static jint _linkIdGenerator = 0;
 
 jint Java_com_sun_cldc_isolate_Link_nativeCreateLinkId() {
-  /* Shouldn't need synchronization due to the way thread are currently
-   * scheduled with VM    */
+  /* Shouldn't need synchronization due to the way threads are currently
+   * scheduled with the VM
+   */
   return ++_linkIdGenerator;
-}
-
-jint Java_com_sun_cldc_isolate_Verifier_verifyNextChunk(JVM_SINGLE_ARG_TRAPS) {
-#if ENABLE_VERIFY_ONLY
-  UsingFastOops fast_oops;
-  String::Fast jar_str = GET_PARAMETER_AS_OOP(1);
-  jint next_chunk_id = KNI_GetParameterAsInt(2);
-  jint chunk_size = KNI_GetParameterAsInt(3);
-
-  GlobalSaver verify_saver(&VerifyOnly);
-  VerifyOnly = 1;
-
-#ifndef PRODUCT  
-  tty->print("Verifying JAR ");
-  jar_str().print_string_on(tty);
-  tty->print_cr(" chunk_id: %d", next_chunk_id);
-#endif
-  
-  FilePath::Fast path = FilePath::from_string(&jar_str JVM_CHECK_0);
-  return Universe::load_next_and_verify(&path, next_chunk_id, 
-                                        chunk_size JVM_CHECK_0);
-
-#else
-
-  return -1;
-
-#endif
 }
 
 void Java_com_sun_cldc_isolate_Isolate_setProfile(JVM_SINGLE_ARG_TRAPS) {
@@ -358,14 +314,27 @@ void Java_com_sun_cldc_isolate_Isolate_setProfile(JVM_SINGLE_ARG_TRAPS) {
   }
 
   String::Fast string = GET_PARAMETER_AS_OOP(1);
-  TypeArray::Fast cstring = string().to_cstring(JVM_SINGLE_ARG_CHECK);  
-  char *profile_name = (char*)cstring().data();
+  TypeArray::Raw cstring = string().to_cstring(JVM_SINGLE_ARG_CHECK);  
+  const char* profile_name = (const char*) cstring().data();
   const int profile_id = Universe::profile_id_by_name(profile_name);
   isolate().set_profile_id(profile_id);
 
   if (profile_id == Universe::DEFAULT_PROFILE_ID) {
     Throw::throw_exception(Symbols::java_lang_IllegalArgumentException() 
       JVM_THROW);
+  }
+#endif
+}
+
+// private native static attachDebugger();
+void Java_com_sun_cldc_isolate_Isolate_attachDebugger0(JVM_SINGLE_ARG_TRAPS){
+#if ENABLE_JAVA_DEBUGGER
+  IsolateObj::Raw isolate = GET_PARAMETER_AS_OOP(0);
+  Task::Raw task = isolate().task();
+  const int task_id = task().task_id();
+  if (task_id != -1) {
+    TaskGCContext tmp(task_id);
+    JavaDebugger::initialize_java_debugger_task(JVM_SINGLE_ARG_CHECK);
   }
 #endif
 }

@@ -42,6 +42,8 @@ d'autres pays.
 UNIX est une marque deposee aux Etats-Unis et dans d'autres pays et
 licenciee exlusivement par X/Open Company, Ltd. 
 
+       C Interpreter Loop
+
  This is simple replacement for generated ASM interpreter loop written in 
 pure C++, although in ASM-style way, to make ASM interpreter studing simpler.
 We barely use any objects in it at all.

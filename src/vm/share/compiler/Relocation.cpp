@@ -1,4 +1,5 @@
 /*
+ *    
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -91,14 +92,37 @@ void RelocationWriter::set_assembler(BinaryAssembler* value) {
   _assembler = value;
 }
 
-void RelocationWriter::emit(Kind kind, jint code_offset) {
-  if (kind == oop_type) {
-    emit_oop(code_offset);
+#if ENABLE_CODE_PATCHING
+void RelocationWriter::emit_checkpoint_info_record(int code_offset,
+                       unsigned int original_instruction, 
+                       int stub_position) {
+#if AZZERT
+  for (RelocationReader stream(_compiled_method); !stream.at_end(); 
+       stream.advance()) {
+    GUARANTEE(stream.code_offset() != code_offset || 
+              stream.kind() == comment_type, 
+      "Trying to patch relocatable instruction");
+  }
+#endif
+
+  emit(Relocation::tick_checkpoint_type, code_offset);
+  emit_ushort(bitfield(original_instruction, BitsPerShort, BitsPerShort)); 
+  emit_ushort(bitfield(original_instruction, 0,            BitsPerShort));        
+
+  const unsigned int uvalue = (unsigned int) stub_position;
+  const unsigned int end_flag = 1 << (BitsPerShort - 1);
+  const unsigned int max_value = end_flag - 1; 
+
+  if (uvalue > max_value) {
+    GUARANTEE(uvalue < 0x3FFFFFFF, "Sanity");
+    emit_ushort(bitfield(uvalue, 0, BitsPerShort - 1));
+    emit_ushort(
+      bitfield(uvalue, BitsPerShort - 1, BitsPerShort - 1) | end_flag);
   } else {
-    int offset = compute_embedded_offset(code_offset);
-    emit_ushort((jushort) (((int) kind << offset_width) | offset));
+    emit_ushort(bitfield(uvalue, 0, BitsPerShort - 1) | end_flag);
   }
 }
+#endif // ENABLE_CODE_PATCHING
 
 /*
  * oop_type entries are inserted before all others to speed up relocation
@@ -188,46 +212,109 @@ void RelocationWriter::emit_oop(jint code_offset) {
   _current_oop_code_offset = code_offset;
 }
 
-void RelocationWriter::emit_osr_entry(jint code_offset, jint bci) {
-  emit(osr_stub_type, code_offset);
-  emit_ushort((jushort) bci);
+void RelocationWriter::emit(Kind kind, jint code_offset) {
+  GUARANTEE(kind != oop_type, "Use emit_oop() instead");
+  const int offset = compute_embedded_offset(code_offset);
+  emit_ushort((jushort) (((int) kind << offset_width) | offset));
 }
 
-void RelocationWriter::emit_comment_or_dummy(const char* comment, jint code_offset) {
-  emit(comment_type, code_offset);
-  int len;
-  if (comment == NULL) {
-    // We want to emit a dummy
-    len = 0;
-  } else {
-    // We're really emitting comments. Try not to overflow.
-    len = jvm_strlen(comment);
-    int max = (_assembler->free_space() - 8) / sizeof(jushort) - 10;
-    if (len > max) {
-      len = max;
-    }
-    if (len < 0) {
-      len = 0;
-    }
+void RelocationWriter::emit_comment(jint code_offset, const char* comment) {
+  int len = jvm_strlen(comment);
+  int max = (_assembler->free_space() - 8) / sizeof(jushort) - 10;
+  if (len > max) {
+    len = max;
   }
+  if (len < 0) {
+    len = 0;
+  }
+
+  Compiler::code_generator()->ensure_compiled_method_space(2 * len + 4);
+  emit(comment_type, code_offset);
   emit_ushort((jushort)len);
   for (int index = 0; index < len; index++) {
     emit_ushort((jushort) comment[index]);
   }
 }
-#if ENABLE_NPCE
-void  RelocationWriter::emit_npe_item(jint ldr_offset, jint code_offset){
-  emit(npe_item_type, code_offset);
-  emit_ushort((jshort)ldr_offset);
-}
-#endif
 
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER
-void  RelocationWriter::emit_pre_load_item(jint ldr_offset, jint code_offset){
-  emit(pre_load_type, code_offset);
-  emit_ushort((jshort)ldr_offset);
+void RelocationWriter::emit_vsf(jint code_offset, VirtualStackFrame* frame) {
+  emit(compressed_vsf_type, code_offset);
+
+  int reg_location[Assembler::number_of_registers + 1];
+  memset(reg_location, 0, sizeof(reg_location));
+  juint reg_list = 0;
+
+  AllocationDisabler allocation_not_allowed;
+  RawLocation* loc = frame->raw_location_at(0);
+  RawLocation* end  = frame->raw_location_end(loc);
+
+  // 1st pass: create mapped register list and count mapped locations
+  int index = 0;
+  bool second_word = false;
+  for (; loc < end; loc++, index++) {
+    if (second_word || !loc->is_flushed() && loc->in_register()) {
+      const juint reg_no = loc->value();
+      reg_location[reg_no + 1] -= (index < max_location ? 1 : 2);
+      reg_list |= (1 << reg_no);
+      second_word = loc->is_two_word();
+    }
+  }
+
+  // Emit list of mapped registers with encoded SP difference
+  const int sp_delta = frame->stack_pointer() - frame->virtual_stack_pointer();
+  if (sp_delta >= max_sp_delta) {
+    emit_ushort(reg_list | (max_sp_delta << sp_shift));
+    emit_ushort((jushort)sp_delta);
+  } else if (sp_delta >= 0) {
+    // in most cases Virtual SP is very close to Real SP
+    emit_ushort(reg_list | (sp_delta << sp_shift));
+  } else if (-sp_delta < max_sp_delta) {
+    emit_ushort(reg_list | sp_negative | ((-sp_delta) << sp_shift));
+  } else {
+    emit_ushort(reg_list | sp_negative | (max_sp_delta << sp_shift));
+    emit_ushort((jushort)(-sp_delta));
+  }
+  if (reg_list == 0) {
+    // optimization for the case when there are no mapped registers
+    return;
+  }
+
+  // Calculate offsets in the map for each register data
+  int i;
+  for (i = 0; i < Assembler::number_of_registers; i++) {
+    reg_location[i + 1] += reg_location[i];
+  }
+
+  // Signal overflow if there's not enough space in compiled code
+  const int items_required = - reg_location[Assembler::number_of_registers];
+  Compiler::code_generator()->ensure_compiled_method_space(2 * items_required);
+  jushort* pool = current_address() + 1;
+  decrement(items_required);
+
+  // 2nd pass: fill in the map
+  index = 0;
+  GUARANTEE(second_word == false, "Sanity");
+  for (loc = frame->raw_location_at(0); loc < end; loc++, index++) {
+    if (second_word || !loc->is_flushed() && loc->in_register()) {
+      const juint reg_no = loc->value();
+      int offset = --reg_location[reg_no];
+      if (index < max_location) {
+        pool[offset] = index;
+      } else {
+        pool[offset] = extended_mask | (index >> location_width);
+        pool[offset - 1] = index & location_mask;
+        --reg_location[reg_no];
+      }
+      second_word = loc->is_two_word();
+    }
+  }
+
+  // Mark the last location index for each mapped register
+  for (i = 0; i < Assembler::number_of_registers; i++) {
+    if (reg_list & (1 << i)) {
+      pool[reg_location[i]] |= last_mask;
+    }
+  }
 }
-#endif 
 
 void RelocationWriter::emit_ushort(jushort value) {
 //  printf("emit index=%d\n", _current_relocation_offset);
@@ -245,27 +332,34 @@ void RelocationReader::advance() {
 #if ENABLE_APPENDED_CALLINFO
   GUARANTEE(k != callinfo_type, "Must be skipped");
 #endif
-  decrement();
-  if (has_bci(k)) {
-    decrement();
-  }
-  else if (k == comment_or_padding_type) {
-    jint len = current();
-    decrement();
-    for (int index = 0; index < len; index++) {
-      decrement();
+  if (has_param(k)) {
+    decrement(2);
+  } else if (k == comment_or_padding_type) {
+    decrement(2 + current(1));
+#if ENABLE_COMPRESSED_VSF
+  } else if (k == compressed_vsf_type) {
+    juint reg_list = current(1);
+    decrement((reg_list & sp_mask) == sp_mask ? 3 : 2);
+    for (reg_list &= reg_mask; reg_list != 0; reg_list >>= 1) {
+      if (reg_list & 1) {
+        while ((current() & last_mask) == 0) {
+          decrement();
+        }
+        decrement();
+      }
     }
+#endif
+#if ENABLE_CODE_PATCHING
+  } else if (k == tick_checkpoint_type) {
+    // original instruction
+    decrement(2); 
+    // offset to stub
+    const int end_bit = 1 << (BitsPerShort - 1);
+    decrement(!(end_bit & current()) ? 2 : 1);
+#endif
+  } else {
+    decrement();
   }
-#if ENABLE_NPCE
-  else if (k == npe_item_type) {
-    decrement(); //ldr offset
-  }
-#endif //ENABLE_NPCE
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER
-  else if (k == pre_load_type ) {
-    decrement(); //ldr offset
-  }
-#endif //ENABLE_INTERNAL_CODE_OPTIMIZER
   update_current();
 }
 
@@ -291,24 +385,21 @@ void RelocationReader::print_current(Stream* st, bool verbose) {
       st->print("  ");
     }
     switch (kind()) {
-     case Relocation::oop_type            : st->print("oop");           break;
-     case Relocation::comment_type        : st->print("comment");       break;
-     case Relocation::osr_stub_type       : st->print("osr stub");      break;
-     case Relocation::compiler_stub_type  : st->print("compiler stub"); break;
-     case Relocation::rom_oop_type        : st->print("rom oop");       break;
-#if ENABLE_NPCE
-     case Relocation::npe_item_type       : st->print("npe table item");break;
-#endif //ENABLE_NPCE
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER
-     case Relocation::pre_load_type       : st->print("pre load  item");break;
-#endif //ENABLE_INTERNAL_CODE_OPTIMIZER
-
-     default:                               st->print("<illegal>");     break;
+     case Relocation::oop_type            : st->print("oop");            break;
+     case Relocation::comment_type        : st->print("comment");        break;
+     case Relocation::osr_stub_type       : st->print("osr stub");       break;
+     case Relocation::compiler_stub_type  : st->print("compiler stub");  break;
+     case Relocation::rom_oop_type        : st->print("rom oop");        break;
+     case Relocation::npe_item_type       : st->print("npe table item"); break;
+     case Relocation::pre_load_type       : st->print("pre load  item"); break;
+     case Relocation::long_branch_type    : st->print("long branch");    break;
+     case Relocation::compressed_vsf_type : st->print("compressed vsf"); break;
+     default:                               st->print("<illegal>");      break;
     }
     st->print("@%d", code_offset());
 
-    if (has_bci(kind())) {
-      st->print(", bci=%d", bci());
+    if (has_param(kind())) {
+      st->print(", param=%d", current(1));
     }
   }
   st->cr();

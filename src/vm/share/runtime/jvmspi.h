@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -123,6 +124,35 @@ void JVMSPI_MethodTrap(int trap_action, int trap_handle);
  */
 jboolean JVMSPI_IsRestrictedPackage(const char* pkg_name, int name_length);
 #endif
+
+#if ENABLE_MONET_COMPILATION
+/*
+ * This function is called during Monet conversion of a JAR file.
+ * It is called for every method defined in this JAR's classes.
+ * If the return value is true, the method will be precompiled 
+ * during conversion.
+ *
+ * <class_name> name of the class containing the method. 
+ *              This string is a fully qualified class name 
+ *              encoded in internal form (see JVMS 4.2).
+ *              This string is NOT 0-terminated.
+ * <class_name_length> number of UTF8 characters in <class_name>.
+ * <method_name> name of the method (see JVMS 4.6).
+ *              This string is NOT 0-terminated.
+ * <method_name_length> number of UTF8 characters in <method_name>.
+ * <descriptor> descriptor of the method (see JVMS 4.3.3).
+ *              This string is NOT 0-terminated.
+ * <descriptor_length> number of UTF8 characters in <descriptor>.
+ * <code_size> bytecode size of the method
+ */
+jboolean JVMSPI_IsPrecompilationTarget(const char * class_name, 
+                                       int class_name_length,
+                                       const char * method_name, 
+                                       int method_name_length,
+                                       const char * descriptor, 
+                                       int descriptor_length,
+                                       int code_size);
+#endif				      
 
 #ifdef __cplusplus
 }

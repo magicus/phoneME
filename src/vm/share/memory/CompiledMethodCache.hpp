@@ -56,7 +56,9 @@ public:
   static void on_timer_tick( void );
 
   // Set the generation boundary
-  static void on_promotion( void );
+  static void on_promotion( void ) {
+    last_old = upb;
+  }
 
   // External policy has to calculate code_size_to_evict taking into account
   // heap size, amount of objects survived previous GC and current
@@ -156,20 +158,35 @@ public:
   static void cleanup_unmarked ( void );
 #endif
 
+#if ENABLE_CODE_PATCHING && USE_PATCHED_METHOD_CACHE
+public:
+  static Item* patched_method() {
+    return _patched_method;
+  }
+
+  static void set_patched_method( Item* p ) {
+    _patched_method = p;
+  }
+
+  static void reset_patched_method( void ) {
+    _patched_method = NULL;
+  }
+private:
+  static Item* _patched_method;
+#endif
+
   friend class ObjectHeap;
 #if (ENABLE_INLINE || ENABLE_TRAMPOLINE) && ARM
 public:
-  static int get_upb()
-  {
-  return upb;
+  static int get_upb(void) {
+    return upb;
   }
-  static CompiledMethodDesc* get_item(int i)
-  {
+  static CompiledMethodDesc* get_item(int i) {
     return Map[i];
   }
 #endif
 #if ENABLE_TRAMPOLINE  && !CROSS_GENERATOR
-
   friend class BranchTable;
 #endif
+
 };

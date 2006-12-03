@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -252,7 +253,7 @@ public class TimeZoneImpl extends TimeZone {
                     // When incrementing the month, it is desirable to overflow
                     // from DECEMBER to DECEMBER+1, since we use the result to
                     // compare against a real month. Wraparound of the value
-                    // leads to bug 4173604.
+                    // leads to CR 4173604.
                     ++month;
                 }
             }

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -67,6 +68,10 @@ ROM_PerformanceCounters rom_perf_counts;
 void ROM::initialize(const JvmPathChar* classpath) {
   (void)classpath;
 
+#if ENABLE_SEGMENTED_ROM_TEXT_BLOCK
+  init_rom_text_constants();
+#endif
+
   if (!_rom_has_linked_image) {
     GUARANTEE(UseROM == false, "sanity");
   }
@@ -88,7 +93,10 @@ void ROM::initialize(const JvmPathChar* classpath) {
   // In SVM mode, we can load the app image into the low address of
   // the ObjectHeap. In MVM we don't do this because we need to handle
   // multiple app images.
-  if (!GenerateROMImage) {
+#if !ENABLE_LIB_IMAGES
+  if (!GenerateROMImage) 
+#endif
+  {
     ROMBundle::preload(classpath);
   }
 #endif
@@ -103,18 +111,32 @@ int ROM::_heap_relocation_offset;
 #if ENABLE_SEGMENTED_ROM_TEXT_BLOCK
   juint ROM::_min_text_seg_addr; 
   juint ROM::_text_total_size;
-  juint ROM::_rom_text_block_segment_sizes[] = {
-      _rom_text_block0_size, _rom_text_block1_size, 
-      _rom_text_block2_size, _rom_text_block3_size, 
-      _rom_text_block4_size, _rom_text_block5_size, 
-      _rom_text_block6_size, _rom_text_block7_size, 
-      _rom_text_block8_size, _rom_text_block9_size};
-  juint ROM::_rom_text_block_segments[] = {
-      (juint)_rom_text_block0, (juint)_rom_text_block1,
-      (juint)_rom_text_block2, (juint)_rom_text_block3,
-      (juint)_rom_text_block4, (juint)_rom_text_block5,
-      (juint)_rom_text_block6, (juint)_rom_text_block7,
-      (juint)_rom_text_block8, (juint)_rom_text_block9 };
+  juint ROM::_rom_text_block_segment_sizes[ROM::TEXT_BLOCK_SEGMENTS_COUNT];
+  juint ROM::_rom_text_block_segments[ROM::TEXT_BLOCK_SEGMENTS_COUNT];
+
+void ROM::init_rom_text_constants() {
+  ROM::_rom_text_block_segment_sizes[0] = _rom_text_block0_size;
+  ROM::_rom_text_block_segment_sizes[1] = _rom_text_block1_size;
+  ROM::_rom_text_block_segment_sizes[2] = _rom_text_block2_size;
+  ROM::_rom_text_block_segment_sizes[3] = _rom_text_block3_size;
+  ROM::_rom_text_block_segment_sizes[4] = _rom_text_block4_size;
+  ROM::_rom_text_block_segment_sizes[5] = _rom_text_block5_size;
+  ROM::_rom_text_block_segment_sizes[6] = _rom_text_block6_size;
+  ROM::_rom_text_block_segment_sizes[7] = _rom_text_block7_size;
+  ROM::_rom_text_block_segment_sizes[8] = _rom_text_block8_size;
+  ROM::_rom_text_block_segment_sizes[9] = _rom_text_block9_size;
+
+  ROM::_rom_text_block_segments[0] = (juint)_rom_text_block0;
+  ROM::_rom_text_block_segments[1] = (juint)_rom_text_block1;
+  ROM::_rom_text_block_segments[2] = (juint)_rom_text_block2;
+  ROM::_rom_text_block_segments[3] = (juint)_rom_text_block3;
+  ROM::_rom_text_block_segments[4] = (juint)_rom_text_block4;
+  ROM::_rom_text_block_segments[5] = (juint)_rom_text_block5;
+  ROM::_rom_text_block_segments[6] = (juint)_rom_text_block6;
+  ROM::_rom_text_block_segments[7] = (juint)_rom_text_block7;
+  ROM::_rom_text_block_segments[8] = (juint)_rom_text_block8;
+  ROM::_rom_text_block_segments[9] = (juint)_rom_text_block9;
+}
 
 void ROM::arrange_text_block() {
   // First sort the text segments
@@ -255,6 +277,10 @@ bool ROM::link_static(OopDesc** ram_persistent_handles, int num_handles) {
   jvm_memcpy(_inline_allocation_top, &_rom_heap_block[0], _rom_heap_block_size);
   jvm_memcpy(ram_persistent_handles, _rom_persistent_handles,
              _rom_persistent_handles_size);
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  jvm_memcpy(ram_persistent_handles + _rom_persistent_handles_size/sizeof(int), _rom_rom_duplicated_handles,
+             _rom_rom_duplicated_handles_size);
+#endif
 #if !ROMIZED_PRODUCT
   int num_bytes = Symbols::number_of_system_symbols() * sizeof(OopDesc*);
   jvm_memcpy(system_symbols, _rom_system_symbols_src, num_bytes);
@@ -649,7 +675,7 @@ void ROM::oops_do(void do_oop(OopDesc**), bool do_all_data_objects,
 #if USE_BINARY_IMAGE_LOADER
     GUARANTEE(UseROM, "Monet requires the system classes to be romized");
 #if ENABLE_ISOLATES
-    ObjArray::Raw list = Universe::binary_images();
+    ObjArray::Raw list = Universe::global_binary_images();
 #else
     ObjArray::Raw list = Task::current()->binary_images();
 #endif
@@ -658,7 +684,7 @@ void ROM::oops_do(void do_oop(OopDesc**), bool do_all_data_objects,
       for (int i=0; i<list().length(); i++) {
         ROMBundle *bundle = (ROMBundle*)list().obj_at(i);
         if (bundle == NULL) {
-          break;
+          continue;
         }
         bundle->method_variable_parts_oops_do(do_oop);
       }
@@ -676,12 +702,15 @@ void ROM::oops_do(void do_oop(OopDesc**), bool do_all_data_objects,
 #endif
 
 #if USE_BINARY_IMAGE_GENERATOR
-  //IMPL_NOTE: this condition should always be enabled!!!
+  //this condition means that the task is terminating, so may  
+  //remove _romized_heap_marker, cause it MUST belong to terminating task!
+  if (_romized_heap_marker != NULL) {
 #if ENABLE_LIB_IMAGES
-  if (_romized_heap_marker != _inline_allocation_top) 
+    //IMPL_NOTE: this condition might always be better enabled?!
+    if (_romized_heap_marker != _inline_allocation_top) 
 #endif
-     do_oop((OopDesc**)&_romized_heap_marker);
-  
+       do_oop((OopDesc**)&_romized_heap_marker);
+  }
 #endif
 
 #if ENABLE_PERFORMANCE_COUNTERS
@@ -690,23 +719,16 @@ void ROM::oops_do(void do_oop(OopDesc**), bool do_all_data_objects,
 #endif
 }
 
-
 /*
  * For now we have only one image per task, so this is not really a loop.
  */
-#define FOREACH_BINARY_IMAGE_IN_CURRENT_TASK(ptr) \
-  { const ROMBundle *ptr = ROMBundle::current(); if (bundle) {
-
-#define ENDEACH_BINARY_IMAGE_IN_CURRENT_TASK }}
-
 bool ROM::in_any_loaded_bundle_of_current_task(const OopDesc* target) {
   if (system_contains(target)) {
     return true;
   }
 
 #if USE_BINARY_IMAGE_LOADER
-  FOREACH_BINARY_IMAGE_IN_CURRENT_TASK(bundle)
-  {
+  FOREACH_BINARY_IMAGE_IN_CURRENT_TASK(bundle) {
     if (bundle->text_contains(target)) {
       return true;
     }
@@ -724,8 +746,9 @@ bool ROM::in_any_loaded_bundle(const OopDesc* target) {
   }
 
 #if USE_BINARY_IMAGE_LOADER
+  if (Universe::global_binary_images()->is_null()) {return false;}
   const ROMBundle **p = 
-      (const ROMBundle**)Universe::binary_images()->base_address();
+      (const ROMBundle**)Universe::global_binary_images()->base_address();  
   while (*p) {
     if ((*p)->text_contains(target)) {
       return true;
@@ -755,17 +778,15 @@ ReturnOop ROM::compiled_method_from_address(const address addr) {
   if (ROM::system_text_contains((const OopDesc*)addr)) {
     return 
       (OopDesc*)CompiledMethodDesc::find((const CompiledMethodDesc * const *)
-                                         _rom_compiled_methods_in_text,
-                                         _rom_compiled_methods_in_text_count,
-                                         addr);
-  } else if (ROM::system_data_contains((const OopDesc*)addr)) {
-    return 
-      (OopDesc*)CompiledMethodDesc::find((const CompiledMethodDesc * const *)
-                                         _rom_compiled_methods_in_data,
-                                         _rom_compiled_methods_in_data_count,
+                                         _rom_compiled_methods,
+                                         _rom_compiled_methods_count,
                                          addr);
   } else {
+#if USE_AOT_COMPILATION && USE_BINARY_IMAGE_LOADER
+    return ROMBundle::compiled_method_from_address(addr);
+#else
     return NULL;
+#endif
   }
 }
 #endif // ENABLE_COMPILER && ENABLE_APPENDED_CALLINFO
@@ -789,12 +810,15 @@ ReturnOop ROM::get_original_class_name(ClassInfo *clsinfo) {
     }
   }
 #endif
+  if (_original_class_name_list == NULL) {
+    return Symbols::unknown()->obj();
+  }
 
-  ObjArray::Raw name_list = _original_class_name_list;
+  ObjArray::Raw name_list = _original_class_name_list;  
   return name_list().obj_at(class_id);
 }
 
-ReturnOop ROM::get_original_method_info(Method *method) {
+ReturnOop ROM::get_original_method_info(const Method *method) {
   int class_id = method->holder_id();
   ObjArray::Raw info;
 
@@ -831,7 +855,7 @@ ReturnOop ROM::get_original_method_info(Method *method) {
   return NULL;
 }
 
-ReturnOop ROM::get_original_method_name(Method *method) {
+ReturnOop ROM::get_original_method_name(const Method *method) {
   if (!GenerateROMImage && _original_method_info_list == NULL) {
     return Symbols::unknown()->obj();
   }
@@ -921,7 +945,7 @@ OopDesc* ROM::raw_text_klass_of(const OopDesc* obj) {
 #endif /* !PRODUCT */
 
 void ROM::dispose() {
-#if USE_BINARY_IMAGE_LOADER
+#if USE_BINARY_IMAGE_LOADER && !ENABLE_LIB_IMAGES
   ROMBundle::set_current( NULL );
 #endif
 
@@ -952,11 +976,23 @@ ReturnOop ROM::string_from_table(String *string, juint hash_value) {
     p ++;
   }
 #if USE_BINARY_IMAGE_LOADER
+#if ENABLE_LIB_IMAGES
+  ObjArray::Raw images = Task::current()->binary_images();
+  if (images.is_null()) { 
+    ROM_DETAILED_PERFORMANCE_COUNTER_END(string_from_table_hrticks);
+    return NULL;
+  }
+
+  for (int bun_i = 0; bun_i < images().length(); bun_i++) {
+    ROMBundle* bun = (ROMBundle*)images().obj_at(bun_i);
+    if (bun == NULL) continue;
+#else //ENABLE_LIB_IMAGES
   if( ROMBundle::current() != NULL &&
       ROMBundle::current()->string_table_num_buckets() > 0) {
-    juint i = hash_value % ROMBundle::current()->string_table_num_buckets();
-    rom_table = (OopDesc ***)
-      ROMBundle::current()->ptr_at(ROMBundle::current()->STRING_TABLE);
+    ROMBundle* bun = ROMBundle::current();
+#endif //ENABLE_LIB_IMAGES    
+    juint i = hash_value % bun->string_table_num_buckets();
+    rom_table = (OopDesc ***) bun->ptr_at(bun->STRING_TABLE);
     p   = rom_table[i];   // start of the bucket
     end = rom_table[i+1]; // end of the bucket (exclusive)
     while (p != end) {
@@ -968,7 +1004,7 @@ ReturnOop ROM::string_from_table(String *string, juint hash_value) {
       p ++;
     }
   }
-#endif
+#endif //USE_BINARY_IMAGE_LOADER
   ROM_DETAILED_PERFORMANCE_COUNTER_END(string_from_table_hrticks);
   return NULL;
 }
@@ -1062,7 +1098,12 @@ ReturnOop ROM::symbol_for(utf8 s, juint hash_value, int len) {
   \
   template(Java_unimplemented)                 \
   template(Java_abstract_method_execution)     \
-  template(Java_incompatible_method_execution)
+  template(Java_incompatible_method_execution) \
+  \
+  template(shared_fast_getfloat_accessor)        \
+  template(shared_fast_getdouble_accessor)       \
+  template(shared_fast_getfloat_static_accessor) \
+  template(shared_fast_getdouble_static_accessor)
 
 #if ENABLE_COMPILER
 #define COMPILER_METHOD_ENTRIES_DO(template) \
@@ -1259,3 +1300,189 @@ bool ROM::class_is_hidden_in_profile(const JavaClass* const jc) {
   return false;
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
+#if ENABLE_LIB_IMAGES && ENABLE_MONET && ENABLE_ISOLATES
+void ROM::accumulate_task_memory_usage() {
+  for( int task = 0; task < MAX_TASKS; task++ ) {      
+    Task::Raw t = Task::get_task(task);
+    if (t.is_null()) continue;
+    ObjArray::Raw binary_images = t().binary_images();
+    if (binary_images.is_null()) continue;
+    int i = 0; 
+    for (; i < binary_images().length(); i++ ) {
+      ROMBundle* bun = (ROMBundle*)binary_images().obj_at(i);
+      if (bun == NULL) continue; //break?
+      ObjectHeap::get_task_info( task ).estimate += bun->heap_block_size();
+    }
+  }
+}
+#endif
+
+#if ENABLE_MONET || (ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES )
+int ROM::encode_heap_reference(Oop *object) {
+  FarClass blueprint = object->blueprint();
+  InstanceSize instance_size = blueprint.instance_size();
+  const juint is_heap = juint(ROM::HEAP_BLOCK) << ROM::block_type_start;
+  int encoded_value = int(is_heap) |
+        ((-instance_size.value()) << ROM::instance_size_start) |
+        (0x1 << ROM::flag_start);
+
+  switch (instance_size.value()) {
+  default:
+  case InstanceSize::size_compiled_method:
+  case InstanceSize::size_type_array_1:
+  case InstanceSize::size_type_array_2:
+  case InstanceSize::size_type_array_4:
+  case InstanceSize::size_type_array_8:
+  case InstanceSize::size_method:
+  case InstanceSize::size_far_class:
+  case InstanceSize::size_constant_pool:
+  case InstanceSize::size_stackmap_list:
+  case InstanceSize::size_class_info:
+  case InstanceSize::size_symbol:
+  case InstanceSize::size_mixed_oop:
+  case InstanceSize::size_obj_near:
+    tty->print_cr("BinaryObjectWriter::encode_heap_ref: instance_size 0x%x", 
+                  instance_size.value());
+    SHOULD_NOT_REACH_HERE();
+    return 0;
+  case InstanceSize::size_generic_near:
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES
+    GUARANTEE(object->equals(Universe::task_mirror_class()->prototypical_near()), "only such nears should be present here!");
+    encoded_value |= (1 << ROM::type_start); //this is a near for TaskMirror!
+    break;
+#endif
+    tty->print_cr("BinaryObjectWriter::encode_heap_ref: instance_size 0x%x", 
+                  instance_size.value());
+    SHOULD_NOT_REACH_HERE();
+    return 0;
+#if ENABLE_ISOLATES
+  case InstanceSize::size_task_mirror:
+    {
+      TaskMirror *tm = (TaskMirror *)object;
+      GUARANTEE(tm->equals(Universe::task_class_init_marker()), "sanity");
+      JavaClass::Raw jc = tm->containing_class();
+      encoded_value |= (jc().class_id() << ROM::type_start);
+    }
+    break;
+#endif
+  case InstanceSize::size_obj_array_class:
+  case InstanceSize::size_type_array_class:
+  case InstanceSize::size_instance_class:
+    {
+      JavaClass *jc = (JavaClass *)object;
+      encoded_value |= (jc->class_id() << ROM::type_start);
+    }
+    break;
+
+  case InstanceSize::size_java_near:
+    {
+      JavaNear *jn = (JavaNear *)object;
+      ClassInfo cl = jn->class_info();
+      encoded_value |= (cl.class_id() << ROM::type_start);
+    }
+    break;
+  }  
+
+  return encoded_value;
+}
+
+ReturnOop ROM::decode_heap_reference(int value) {  
+  // reference to romized system image
+#ifdef AZZERT
+  const unsigned int type = unsigned(value) >> ROM::offset_width;
+#if ENABLE_LIB_IMAGES
+  //IMPL_NOTE:check this
+  GUARANTEE(type == ROM::HEAP_BLOCK || type == 0/*UNKNOWN_BLOCK*/, 
+    "only system HEAP references needs encoding");
+#else
+  GUARANTEE(type == ROM::HEAP_BLOCK, 
+    "only system HEAP references needs encoding");
+#endif
+#endif          
+  const int class_id = (value >> ROM::type_start) & ROM::type_mask;
+  const int instance_size = 
+        (value >> ROM::instance_size_start) & ROM::instance_size_mask;
+  switch( instance_size ) {
+    default: {
+#ifdef AZZERT
+        SHOULD_NOT_REACH_HERE();
+        return NULL;
+      }
+    case -InstanceSize::size_obj_array: {
+#endif          
+      return Universe::empty_obj_array()->obj();
+    }
+#if ENABLE_ISOLATES
+    case -InstanceSize::size_task_mirror: {
+        //Need revisit:
+#if !ENABLE_LIB_IMAGES
+      GUARANTEE(class_id < ROM::number_of_system_classes(), 
+                        "Bad classid");
+#endif
+      return Universe::task_class_init_marker()->obj();
+    }
+#endif
+#if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES
+    case -InstanceSize::size_generic_near:
+    GUARANTEE(class_id == 1, "check");
+    return Universe::task_mirror_class()->prototypical_near();
+#endif
+
+    case -InstanceSize::size_obj_array_class:
+    case -InstanceSize::size_type_array_class:
+    case -InstanceSize::size_instance_class: {
+      JavaClass::Raw jc = Universe::class_from_id(class_id);
+      return jc.obj();
+    }
+    case -InstanceSize::size_java_near: {
+      JavaClass::Raw jc = Universe::class_from_id(class_id);
+      JavaNear::Raw jn = jc().prototypical_near();
+      return jn.obj() ;
+    }
+  }
+}
+#endif // ENABLE_MONET || (ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES )
+
+#if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES
+ReturnOop ROM::link_static_mirror_list(JVM_SINGLE_ARG_TRAPS) {
+  if (_rom_task_mirrors_size == 0) return NULL;
+  int size = _rom_task_mirrors_size;
+  OopDesc* result = ObjectHeap::allocate(_rom_task_mirrors_size JVM_CHECK_0);
+  jvm_memcpy( result, _rom_task_mirrors, size );
+  int offset = 0;
+  juint* p_obj_start = (juint*)result;
+  const juint* bitmap = (const juint*)_rom_task_mirrors_bitmap;
+  const int bitmap_size =  size / BitsPerWord + 1; 
+  const juint* bitmap_end = DERIVED( const juint*, bitmap, bitmap_size);
+  const juint is_heap = juint(ROM::HEAP_BLOCK) << ROM::block_type_start;
+
+  for( ; bitmap < bitmap_end; bitmap++, p_obj_start += BitsPerWord )
+  {
+    juint bitword = *bitmap;
+    if( !bitword ) {
+      continue;
+    }
+    juint* p = p_obj_start;
+    do {
+#define SHIFT_ZEROS(n) if((bitword & ((1 << n)-1)) == 0) { bitword >>= n; p += n; }
+      SHIFT_ZEROS(16)
+      SHIFT_ZEROS( 8)
+      SHIFT_ZEROS( 4)
+      SHIFT_ZEROS( 2)
+      SHIFT_ZEROS( 1)
+#undef SHIFT_ZEROS                
+      int value = *p;
+      if( (value & is_heap) == 0 ) {
+        value = ((int)result)+value;
+      } else {
+        value = (int)ROM::decode_heap_reference(value);
+      }
+      *p = value;
+      p++;
+    } while( (bitword >>= 1) != 0);
+  }
+  return result;
+}
+#endif
+

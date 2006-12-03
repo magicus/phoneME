@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -724,7 +725,7 @@ bool ClassFileParser::are_valid_method_access_flags(
       if ((flags & JVM_ACC_STRICT) != 0) {
         if (state->major_version() == 45 && state->minor_version() == 3) {
           // The class is built with JDK 1.1 and this combination
-          // is deemed OK. See bug 6363911
+          // is deemed OK. See CR 6363911
         } else {
           return false;
         }
@@ -1566,6 +1567,9 @@ bool ClassFileParser::is_package_restricted(Symbol *class_name) {
       is_restricted |= JVMSPI_IsRestrictedPackage(ptr, pkg_length);
     }
 #endif
+#if ENABLE_ISOLATES
+    is_restricted |= Task::current()->is_restricted_package(ptr, pkg_length);
+#endif
 
     return is_restricted;
   }
@@ -1781,7 +1785,14 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
   if (has_finalizer) {
     access_flags.set_has_finalizer();
   }
-
+#if ENABLE_ISOLATES
+  if (Task::current()->is_hidden_class(&class_name)) {
+    access_flags.set_is_hidden();
+  }
+#endif
+  if (_loader_ctx->is_system_class) {
+    access_flags.set_is_preloaded();
+  }
   // Iterate over fields again and compute correct offsets.  The
   // relative offset (starting at zero) was temporarily stored in the
   // offset slot.
@@ -1837,50 +1848,6 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
   // Update static field offsets and static oop map
   update_fields(&cp, &fields, true, first_static_offset, prev_static_oop_offset,
                 &static_map, static_map_size, static_map_index);
-
-#if ENABLE_INLINE && ARM && !CROSS_GENERATOR
-  if (super_class.not_null()) {
-    if ( !super_class().is_overridden()) {
-      super_class().set_is_overridden();
-      int i;
-
-      //search the code cache and de-compilation the 
-      //inlined method.
-      
-      for( i = 0 ; i < Universe::inlined_count ; i++) {
-       if ((Universe::inlined_class_ids[i] >> INLINED_CLASS_BITS)
-        == super_class().class_id()) 
-      {
-          break;
-      }         
-     }
-     int dst = i;
-     int decompiled = 0;
-     for (i; i < Universe::inlined_count; i++)
-     {
-        if ((Universe::inlined_class_ids[i] >> INLINED_CLASS_BITS) 
-          == super_class().class_id()) 
-        {
-          CompiledMethodDesc* cm = 
-            CompiledMethodCache::get_item(Universe::inlined_class_ids[i] 
-            & METHOD_INDEX_MASK);
-          Method::Raw mm = cm->method();
-          mm().unlink_compiled_code();
-          decompiled++;
-        }else
-        {
-          Universe::inlined_class_ids[dst] = Universe::inlined_class_ids[i];
-          dst++;
-        }
-     }
-     
-    Universe::inlined_count -= decompiled;
-    }
-
-    
-  }
-
-#endif
 
   // We can now create the basic InstanceClass.
   InstanceClass::Fast this_class = Universe::new_instance_class(vtable_length,
@@ -2089,7 +2056,7 @@ void ClassFileParser::print_on(Stream *st) {
   _name->print_symbol_on(tty);
   tty->print_cr("  _previous = 0x%x", _previous);
 
-  // IMPL_NOTE: LoaderContext*   _loader_ctx;
+  // IMPL_NOTE: Need revisit LoaderContext*   _loader_ctx;
 #endif
 }
 

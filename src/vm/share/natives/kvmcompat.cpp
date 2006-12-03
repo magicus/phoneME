@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -394,6 +395,7 @@ void garbageCollect(int moreMemory) {
 
   SETUP_ERROR_CHECKER_ARG;
   ObjectHeap::collect(moreMemory JVM_NO_CHECK);
+  ObjectHeap::clear_inline_allocation_area();
   Thread::clear_current_pending_exception();
 }
 

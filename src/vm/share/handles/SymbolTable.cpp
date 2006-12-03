@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -214,32 +215,12 @@ ReturnOop SymbolTable::slashified_symbol_for(utf8 s, int len JVM_TRAPS) {
     }
   }
 
-  return symbol_for(&byte_array JVM_NO_CHECK_AT_BOTTOM);
+  return symbol_for(&byte_array JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 // This function is not frequently used. No need to optimize.
 ReturnOop SymbolTable::slashified_symbol_for(const char* s JVM_TRAPS) {
   return slashified_symbol_for((utf8)s, jvm_strlen(s) JVM_NO_CHECK_AT_BOTTOM);
-}
-
-void SymbolTable::put_unicode_char(utf8 &p, jchar ch) {
-  if ((ch != 0) && (ch <=0x7f)) {
-    *p++ = (jubyte) ch;
-  } else if (ch <= 0x7FF) {
-    /* 11 bits or less. */
-    unsigned char high_five = (jubyte) (ch >> 6);
-    unsigned char low_six = (jubyte) (ch & 0x3F);
-    *p++ = (char) (high_five | 0xC0); /* 110xxxxx */
-    *p++ = (char) (low_six   | 0x80); /* 10xxxxxx */
-  } else {
-    /* possibly full 16 bits. */
-    char high_four = (char) (ch >> 12);
-    char mid_six = (char) ((ch >> 6) & 0x3F);
-    char low_six = (char) (ch & 0x3f);
-    *p++ = (char) (high_four | 0xE0); /* 1110xxxx */
-    *p++ = (char) (mid_six   | 0x80); /* 10xxxxxx */
-    *p++ = (char) (low_six   | 0x80); /* 10xxxxxx */
-  }
 }
 
 // This function is not frequently used (only by Class.forName()).
@@ -249,31 +230,9 @@ ReturnOop SymbolTable::symbol_for(String* string, bool slashify JVM_TRAPS) {
   // the maximum possible space needed for UTF-8 conversion.
   UsingFastOops fast_oops;
 
-  int bytes_len = string->count() * 4;
-  TypeArray::Fast byte_array = Universe::new_byte_array(bytes_len JVM_CHECK_0);
+  TypeArray::Fast byte_array = Symbol::copy_string_to_byte_array(string->obj(), slashify JVM_CHECK_0);
   
-  utf8 start = (utf8)byte_array().base_address();
-  utf8 to = start;
-
-  TypeArray::Fast jchar_array = string->value();
-  jchar *from = (jchar *) jchar_array().base_address();
-  from += string->offset();
-
-  for (int i = 0; i < string->count(); i++) {
-    if (*from == '/') {
-      // This makes external class names which already contain '/' instead of
-      // '.' fail resolution 
-      *to++ = slashify ? '.' : '/';
-    } else if (*from == '.') {
-      *to++ = slashify ? '/' : '.';
-    } else {
-      put_unicode_char(to, *from);
-    }
-    from++;
-  }
-
-  int utf8_len = to - start;
-  return symbol_for(&byte_array, start, utf8_len JVM_NO_CHECK_AT_BOTTOM);
+  return symbol_for(&byte_array, (utf8)byte_array().base_address(), byte_array().length() JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 inline void SymbolTable::insert(Symbol* symbol) {

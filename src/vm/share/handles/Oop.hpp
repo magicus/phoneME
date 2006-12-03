@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -46,7 +47,7 @@ public:
   /// <OopDesc> access operations.
   ReturnOop obj() const { return _obj;}
   void set_obj(ReturnOop value) { _obj = value; }
-  void set_obj(BasicOop* value) { _obj = value->obj(); }
+  void set_obj(const BasicOop* value) { _obj = value->obj(); }
   void set_null() { _obj = NULL; }
   AZZERT_ONLY(static bool is_bootstrapping();)
 
@@ -83,7 +84,7 @@ public:
     set_obj(value);
     return *this;
   }
-  BasicOop& operator=(BasicOop* value) {
+  BasicOop& operator=(const BasicOop* value) {
     if (this != value) {
       set_obj(value);
     }
@@ -94,7 +95,7 @@ public:
   ReturnOop obj_field(int offset) const { 
     return *obj()->obj_field_addr(offset);
   }
-  void obj_field_put(int offset, BasicOop* value) { 
+  void obj_field_put(int offset, const BasicOop* value) { 
     oop_write_barrier(obj()->obj_field_addr(offset), value->obj());
   }
   void obj_field_put(int offset, OopDesc* value) { 
@@ -140,7 +141,6 @@ public:
 
   bool is_execution_stack() const;
   bool is_jvm_thread() const;
-  bool is_condition() const;
   bool is_thread() const;
   bool is_virtual_stack_frame() const;
   bool is_entry_activation() const;
@@ -201,7 +201,7 @@ public:
 
 
   /// Equality-testing operations.
-  bool equals(BasicOop* other) const { return obj() == other->obj(); }
+  bool equals(const BasicOop* other) const { return obj() == other->obj(); }
   bool equals(ReturnOop other) const { return obj() == other; }
 
   /// Get size of object pointed to by handle.
@@ -460,7 +460,7 @@ public:
   LinkedBasicOop(BasicOop *oop) : BasicOop(oop) { push_handle(); }
 
   /// Assignment operators.
-  LinkedBasicOop& operator=(BasicOop* value) {
+  LinkedBasicOop& operator=(const BasicOop* value) {
     if (this != value) {
       set_obj(value);
     }
@@ -539,7 +539,7 @@ public:
       check_and_init();                          \
       return *this;                              \
     }                                            \
-    DisposingFast& operator=(BasicOop* oop) {    \
+    DisposingFast& operator=(const BasicOop* oop) {    \
       BasicOop::operator = (oop);                \
       check_and_init();                          \
       return *this;                              \
@@ -608,7 +608,7 @@ public:
     AZZERT_ONLY(type_check();)                   \
     return *this;                                \
   }                                              \
-  this_class& operator=(BasicOop* obj) {         \
+  this_class& operator=(const BasicOop* obj) {   \
     BasicOop::operator=(obj);                    \
     AZZERT_ONLY(type_check();)                   \
     return *this;                                \
@@ -659,7 +659,7 @@ public:
       check_and_init();                          \
       return *this;                              \
     }                                            \
-    Raw& operator=(BasicOop* oop) {              \
+    Raw& operator=(const BasicOop* oop) {        \
       BasicOop::operator=(oop);                  \
       check_and_init();                          \
       return *this;                              \
@@ -717,7 +717,7 @@ public:
       check_and_init();                          \
       return *this;                              \
     }                                            \
-    Fast& operator=(BasicOop* oop) {             \
+    Fast& operator=(const BasicOop* oop) {       \
       BasicOop::operator = (oop);                \
       check_and_init();                          \
       return *this;                              \

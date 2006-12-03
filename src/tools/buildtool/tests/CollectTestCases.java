@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -113,7 +114,24 @@ public class CollectTestCases {
 	    if (s.indexOf("isolate") != -1) {
 		return true;
 	    }
+	    if (s.indexOf("dynamic_natives") != -1) {
+		return true;
+	    }
 	    if (s.indexOf("Isolate") != -1) {
+		return true;
+	    }
+	    if (s.indexOf("MShLib") != -1) {
+		return true;
+	    }
+	} else {
+            if (s.indexOf("SShLib") != -1) {
+		return true;
+	    }
+        }
+
+        value = (String)env.get("ENABLE_LIB_IMAGES");
+	if (value == null || !value.equals("true")) {
+	    if (s.indexOf("ShLib") != -1) {
 		return true;
 	    }
 	}

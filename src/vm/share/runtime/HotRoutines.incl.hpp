@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -57,33 +58,27 @@ int       Verifier::_stackmap_cache_max;
 ObjectHeap::QuickVars ObjectHeap::_quick_vars;
 
 #if ENABLE_COMPILER
-Compiler* Compiler::_current = NULL;
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM && ENABLE_CODE_OPTIMIZER
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
 InternalCodeOptimizer* InternalCodeOptimizer::_current = NULL;
 int InternalCodeOptimizer::_start_code_offset = 0;
 CompiledMethod* InternalCodeOptimizer::_start_method = NULL;
+int OptimizerInstruction::latency_dty[] ={ 0, 1, 0, 3, 1, 2, 2, 5, 3, 
+    1, 0, 0, 0}; 
 #endif 
 #if ENABLE_CSE
 jint VirtualStackFrame::_pop_bci = -1;
 jint VirtualStackFrame::_cse_tag = 0;
-bool VirtualStackFrame::_clean = false;
-jint VirtualStackFrame::_passable_osr = 0;
+bool VirtualStackFrame::_abort = false;
+jint VirtualStackFrame::_passable_entry = 0;
 jint RegisterAllocator::_notation_map = 0;
 jint RegisterAllocator::_status_checked = 0;
 RegisterNotation RegisterAllocator::_register_notation_table[Assembler::number_of_registers] 
   = {};
 #endif
 
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER && !ENABLE_THUMB_COMPILER
-int OptimizerInstruction::latency_dty[] ={ 0, 1, 0, 3, 1, 2, 2, 5, 3, 
-    1, 0, 0, 0}; 
-#endif
+
 int RegisterAllocator::_register_references[Assembler::number_of_registers]
     = {0, };
-#endif
-
-#if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
-int ThrowExceptionStub::npe_count = 0;
 #endif
 
 #endif // USE_HOT_ROUTINES
@@ -152,12 +147,18 @@ void RawLocation::read_value(Value& v, int index) {
     Compiler::code_generator()->load_from_location(v, index);
     v.set_flags(flags());
     v.set_length(length());
+#if ENABLE_COMPILER_TYPE_INFO
+    v.set_class_id(class_id());
+#endif
     write_value(v);
     mark_as_cached();
   } else { 
     v.set_where(where());
     v.set_flags(flags());
     v.set_length(length());
+#if ENABLE_COMPILER_TYPE_INFO
+    v.set_class_id(class_id());
+#endif
 
     GUARANTEE(type() == v.stack_type(), "Types must match");
     v.set_low_word(value());
@@ -552,6 +553,9 @@ void RawLocation::write_value(const Value& v) {
   set_type(v.stack_type());
   set_flags(v.flags());
   set_length(v.length());
+#if ENABLE_COMPILER_TYPE_INFO
+  set_class_id(v.class_id());
+#endif
   set_value(v.low_word());
 
   mark_as_changed();

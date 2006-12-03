@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -81,6 +82,38 @@ Assembler::Address3 MemoryAddress::address_3_for(jint address_offset) {
   // Unlike Address2, we have nothing to gain by using pre_indexed mode.
   // This is not used for modifying objects, longs, or doubles.
   return Assembler::imm_index3(address_register(), address_offset);
+}
+
+Assembler::Address5 MemoryAddress::address_5_for(jint address_offset) {
+  if (!has_address_register()) {
+    // Try to do direct access
+    jint fixed_offset;
+    if (has_fixed_offset(fixed_offset)) {
+      jint offset = fixed_offset + base_offset() + address_offset;
+      if (-(1 << 10) < offset && offset < (1 << 10)) {
+        return Assembler::imm_index5(fixed_register(), offset);
+      }
+    }
+    create_and_initialize_address_register();
+  }
+  GUARANTEE(has_address_register(), "We must have address register by now");
+  int xbase_offset =            // base_offset or 0
+      address_register_includes_base_offset() ? 0 : base_offset();
+#if 1
+  return Assembler::imm_index5(address_register(), 
+                               address_offset + xbase_offset);
+#else
+  // ??
+  if (address_offset == 0 && xbase_offset != 0) { 
+      // Update the address_register so that it includes the base_offset
+      set_address_register_includes_base_offset();
+      return Assembler::imm_index5(address_register(), xbase_offset, 
+                                   Assembler::pre_indexed);
+  } else { 
+      return Assembler::imm_index5(address_register(), 
+                                   address_offset + xbase_offset);
+  }
+#endif
 }
 
 
@@ -214,12 +247,7 @@ bool LocationAddress::has_fixed_offset(jint& fixed_offset) {
       // The offset from the fp that would have it point at the end of the
       // locals block 
       base_offset = JavaFrame::end_of_locals_offset();
-      actual_index = method()->max_locals() - 1 - index();
-#if ENABLE_INLINE && ARM
-      if (Compiler::current()->is_inline() > 0) {
-        actual_index = Compiler::current()-> caller_max_local() - 1 - index();
-      }
-#endif	  
+      actual_index = Compiler::root()->method()->max_locals() - 1 - index();
     } else {
       if (Assembler::jsp == Assembler::sp) {
         // We need to make sure that we don't put something beyond
@@ -249,18 +277,9 @@ jint LocationAddress::get_fixed_offset() {
   }
   return fixed_offset;
 }
-#if ENABLE_INLINE && ARM
-bool    LocationAddress::is_local() const {
-  if (Compiler::current()->is_inline() > 0) {
-    //inline method
-    jint caller_max_local = Compiler::current()-> caller_max_local();
-    if ( 0 <= index() && index() < caller_max_local ) {
-	return true;
-    }
-    return false;
-  }
-  return  method()->is_local(index());
+
+inline bool LocationAddress::is_local() const { 
+  return Compiler::root()->method()->is_local(index()); 
 }
-#endif
 
 #endif /*#if !ENABLE_THUMB_COMPILER && ENABLE_COMPILER */

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -44,6 +45,10 @@ class Bytes: AllStatic {
       return juint(p[0] << 24) | (juint(p[1]) << 16) | (juint(p[2]) << 8) | (juint(p[3]));
   }
 
+  static inline julong get_Java_u8(address p) {
+      return ((julong)get_Java_u4(p) << 32 | (julong)get_Java_u4(p + 4));
+  }
+
   static inline jushort get_native_u2(address p){ 
     if (HARDWARE_LITTLE_ENDIAN) { 
       return jushort(p[0]) | ( jushort(p[1]) << 8 );
@@ -72,6 +77,11 @@ class Bytes: AllStatic {
      ((jubyte*)p)[3] = (jubyte)x; 
   }
 
+  static inline void put_Java_u8(address p, julong x) {
+    put_Java_u4(p, (juint)(x >> 32));
+    put_Java_u4(p + 4, (juint)(x & 0xFFFFFFFFL));
+  }
+
   static inline void put_native_u2(address p, jushort x)   { 
     if (HARDWARE_LITTLE_ENDIAN) { 
       p[0] = (unsigned char)x;
@@ -92,12 +102,12 @@ class Bytes: AllStatic {
     }
   }
 
-  static inline jushort Bytes::swap_u2(jushort x) {
+  static inline jushort swap_u2(jushort x) {
     // Note: make an assembly version for better performance
      return (x & 0x00ff) << 8 | (x & 0xff00) >> 8;
   }
 
-  static inline juint Bytes::swap_u4(juint x) {
+  static inline juint swap_u4(juint x) {
     juint l = swap_u2((jushort)(x         & 0x0000ffff));
     juint h = swap_u2((jushort)((x >> 16) & 0x0000ffff));
     juint res = (l << 16) | h;

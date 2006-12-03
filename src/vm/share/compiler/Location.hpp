@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -91,6 +92,27 @@ public:
   void set_length(jint length) {
     _length = length;
   }
+#if ENABLE_COMPILER_TYPE_INFO
+  jushort class_id() const {
+    GUARANTEE(_class_id < Universe::number_of_java_classes(), "Sanity");
+    return _class_id;
+  }
+  void set_class_id(jushort class_id) {
+    GUARANTEE(class_id < Universe::number_of_java_classes(), "Sanity");
+    _class_id = class_id;
+  }
+  void reset_class_id() {
+    GUARANTEE(Universe::object_class()->class_id() == 0,
+              "java/lang/Object must be the first on class list");
+    set_class_id(0);
+  }
+  void set_is_exact_type(void) {
+    _flags |= Value::F_IS_EXACT_TYPE;
+  }
+  bool is_exact_type(void) {
+    return (_flags & Value::F_IS_EXACT_TYPE) != 0;
+  }
+#endif
 
   Assembler::Register get_register() const {
     return (Assembler::Register)value();
@@ -128,7 +150,10 @@ public:
     set_status(changed);
   }
 
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
+#if ENABLE_REMEMBER_ARRAY_LENGTH
+  //mark the location is not first time access if the location is assigned 
+  //same register. This is called when do set_is_not_first_time_access in
+  //VirtualStackFrame::set_is_not_first_time_access().
   bool set_is_not_first_time_access(Assembler::Register reg ) {
     if (!is_flushed() && in_register() && uses_register(reg) ) {
       _flags |= Value::F_IS_NOT_FIRST_TIME_ACCESS;
@@ -136,6 +161,27 @@ public:
     }
     return false;
   }
+
+  //set the value as not first time access.
+  void set_is_first_time_access(void) {
+    _flags = (jubyte) (_flags &  (~Value::F_IS_NOT_FIRST_TIME_ACCESS)); 
+  }
+
+#if ENABLE_REMEMBER_ARRAY_CHECK && ENABLE_NPCE  
+  //clear array length checked tag if the value
+  //is modified.
+  void set_is_not_index_checked() {
+      if (type() == T_INT || type() == T_LONG) {
+      set_flags(flags() & ~Value::F_HAS_INDEX_CHECKED);
+    }
+  }
+#else
+  void set_is_not_index_checked() {}
+#endif
+
+#else
+  void set_is_not_index_checked() {}
+  void set_is_first_time_access(void) {}
 #endif
   
   // Read a value from the VSF
@@ -266,6 +312,12 @@ class Location: public StackObj {
     return frame_raw_location_at(index())->type();
   }
 
+#if ENABLE_COMPILER_TYPE_INFO
+  jushort class_id() const {
+    return frame_raw_location_at(index())->class_id();
+  }
+#endif
+
   // accessors on the embedded value
   bool is_two_word(void) const { return ::is_two_word(type()); }
 
@@ -313,15 +365,31 @@ class Location: public StackObj {
   }
 
   bool is_string(void) const {
+#if ENABLE_COMPILER_TYPE_INFO
+    return must_be_nonnull() && 
+      raw_location()->class_id() == Universe::string_class()->class_id();
+#else
     return check_flags(Value::F_IS_STRING);
+#endif
   }
 
   bool is_string_array(void) const {
+#if ENABLE_COMPILER_TYPE_INFO
+    return must_be_nonnull() && 
+      raw_location()->class_id() == 
+      JavaClass::Raw(Universe::string_class()->array_class())().class_id();
+#else
     return check_flags(Value::F_IS_STRING_ARRAY);
+#endif
   }
 
   bool is_object_array(void) const {
+#if ENABLE_COMPILER_TYPE_INFO
+    return must_be_nonnull() && raw_location()->is_exact_type() &&
+      raw_location()->class_id() == Universe::object_array_class()->class_id();
+#else
     return check_flags(Value::F_IS_OBJECT_ARRAY);
+#endif
   }
 
   // Modify a location which had been in Register src to instead be in

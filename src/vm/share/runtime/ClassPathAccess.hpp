@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -35,6 +36,12 @@ public:
    */
   static ReturnOop open_entry(Symbol* entry_name, bool is_class_file
                               JVM_TRAPS);
+  /**
+   * Tries to read the given entry from the given classpath segment.
+   */
+  static ReturnOop open_entry_from_file(Symbol* entry_name, bool is_class_file, FilePath* path
+                              JVM_TRAPS);
+                              
 private:
 
 #if ENABLE_ROM_GENERATOR

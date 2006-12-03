@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -321,7 +322,7 @@ void SourceMacros::restore_stack_state_from(State state, Condition cond) {
     case tos_in_regs:
       // We adjust the stack pointer before pushing the result in order
       // to minimize pipeline stalls
-      comment("Restore stack stack from tos_in_regs");
+      // comment("Restore stack stack from tos_in_regs");
       if (!ENABLE_FULL_STACK) {
         eol_comment("Adjust the stack");
         add_imm(jsp, jsp, JavaStackDirection * BytesPerWord, no_CC, cond);
@@ -394,6 +395,38 @@ void SourceMacros::simple_c_bytecode(const char* name,
   dispatch(tos_interpreter_basic);
 }
 
+#if USE_FP_RESULT_IN_VFP_REGISTER
+void SourceMacros::pop_fp_result(BasicType type) {
+
+  const Register A = JavaStackDirection < 0 ? s0 : s1;
+  const Register B = JavaStackDirection < 0 ? s1 : s0;
+
+  switch (type) {
+    case T_FLOAT:
+      comment("load float");
+      // return type float, size = 1
+      if (ENABLE_TOS_CACHING) {
+        fmsr(s0, r0);
+      } else {
+        pop(s0);
+      }
+      break;
+    case T_DOUBLE:
+      comment("load double");
+      // return type double, size = 2
+      if (ENABLE_TOS_CACHING) {
+        fmsr(A, r0);
+      } else {
+        pop(A);
+      }
+      pop(B);
+      break;
+    default:
+      simple_c_setup_arguments(type);
+  }
+}
+#endif // USE_FP_RESULT_IN_VFP_REGISTER
+
 void SourceMacros::simple_c_setup_arguments(BasicType arg1, BasicType arg2,
                                             bool commutative) {
   StackTypeMode mode = ENABLE_FULL_STACK ? full : empty;
@@ -447,35 +480,34 @@ void SourceMacros::simple_c_store_result(BasicType kind) {
       Register target = JavaStackDirection > 0
                               ? as_register(count_r - i - 1)
                               : as_register(i);
-      int this_tag =  basic_type2tag(kind) << (count_r - i - 1);
       if (ENABLE_TOS_CACHING && i == 0) {
         mov_reg(r0, target);
-        if (TaggedJavaStack) {
-          mov_imm(r1, this_tag);
-        }
       } else {
-        if (TaggedJavaStack) {
-          mov_imm(r2, this_tag);
-          push(set(target, r2), al, mode);
-        } else {
-          push(target, al, mode);
-        }
+        push(target, al, mode);
       }
     }
   }
 }
 
 void SourceMacros::dispatch(State state) {
+   int cur_pos;
    comment("dispatch");
    eol_comment("get implementation of bytecode");
+   _stream->mark();
    ldr(bcode, bytecode_impl(bcode));
+   cur_pos = _stream->current_position();
    restore_stack_state_from(state);
 #if ENABLE_CPU_VARIANT
    CPUVariantSupport cpu_variant_support(stream());
    cpu_variant_support.jmp(bcode);
 #else
-   eol_comment("go to next bytecode");
-   mov(pc, reg(bcode));
+   if (cur_pos == _stream->current_position()) {
+     _stream->reset();
+     ldr(pc, bytecode_impl(bcode));
+   } else {
+     eol_comment("go to next bytecode");
+     mov(pc, reg(bcode));
+   }
 #endif
 }
 
@@ -483,27 +515,35 @@ void SourceMacros::dispatch(int count,
                             Address4 result1, Address4 result2,
                             Address4 result3, Address4 result4,
                             Address4 result5, Address4 result6) {
+   int cur_pos;
    comment("dispatch");
    eol_comment("get implementation of bytecode");
+   _stream->mark();
    ldr(bcode, bytecode_impl(bcode));
+   cur_pos = _stream->current_position();
    push_results(count, result1, result2, result3, result4, result5, result6);
 #if ENABLE_CPU_VARIANT
    CPUVariantSupport cpu_variant_support(stream());
    cpu_variant_support.jmp(bcode);
 #else
-   eol_comment("go to next bytecode");
-   mov(pc, reg(bcode));
+   if (cur_pos == _stream->current_position()) {
+     _stream->reset();
+     ldr(pc, bytecode_impl(bcode));
+   } else {
+     eol_comment("go to next bytecode");
+     mov(pc, reg(bcode));
+   }
 #endif
 }
-
 
 void SourceMacros::push_results(int count,
                                 Address4 result1, Address4 result2,
                                 Address4 result3, Address4 result4,
                                 Address4 result5, Address4 result6) {
   StackTypeMode mode = ENABLE_TOS_CACHING ? full : empty;
-  comment("Exit: Count = %d", count);
+//  comment("Exit: Count = %d", count);
   if (count == 0) {
+
     if (ENABLE_TOS_CACHING) {
       pop(tos, al, mode);
     }
@@ -601,8 +641,8 @@ void SourceMacros::get_method(Register reg, Condition cond) {
 void SourceMacros::get_method_parameter_size(Register result, Register method)
 {
   ldrh(result, imm_index3(method, 
-       Method::size_of_parameters_and_return_type_offset()));
-  int num_bits = 32 - Method::NUMBER_OF_PARAMETERS_BITS;
+       Method::method_attributes_offset()));
+  int num_bits = 32 - Method::RESULT_STORAGE_TYPE_SHIFT;
   mov(result, imm_shift(result, lsl, num_bits));
 
   eol_comment("%s = parameter size in words", reg_name(result));
@@ -715,30 +755,18 @@ void SourceMacros::wtk_profile_quick_call(int param_size) {
 }      
       
 
-void SourceMacros::check_timer_tick(State state) {
-  Label done;
+void SourceMacros::check_timer_tick() {
   eol_comment("Timer tick?");
-
-#if ENABLE_XSCALE_WMMX_TIMER_TICK && !ENABLE_TIMER_THREAD
-  // textrcb(0);
-  define_long(0xEE13F170); 
-  b(done, eq);
+#if ENABLE_PAGE_PROTECTION
+  strb(gp, imm_index(gp, -4));
+#elif ENABLE_XSCALE_WMMX_TIMER_TICK && !ENABLE_TIMER_THREAD
+  define_long(0xEE13F170); // textrcb(0);
+  b("interpreter_timer_tick", ne);
 #else
-  get_rt_timer_ticks(tmp5);
-  cmp(tmp5, imm(0x0));
-  b(done, eq);
+  get_rt_timer_ticks(tmp0);
+  cmp(tmp0, imm(0x0));
+  b("interpreter_timer_tick", ne);
 #endif
-
-  if (state == tos_on_stack) {
-    interpreter_call_vm("timer_tick", T_VOID);
-  } else {
-    restore_stack_state_from(state);
-    set_stack_state_to(tos_on_stack);
-    interpreter_call_vm("timer_tick", T_VOID);
-    restore_stack_state_from(tos_on_stack);
-    set_stack_state_to(state);
-  }
-  bind(done);
 }
 
 void SourceMacros::set_tag(Tag tag, Register reg) {
@@ -756,38 +784,52 @@ void SourceMacros::set_tags(Tag tag, Register reg1, Register reg2) {
   }
 }
 
-
 void SourceMacros::set_return_type(BasicType type, Condition cond) {
   GUARANTEE(type == stack_type_for(type), "Must be stack type");
-  if (TaggedJavaStack) {
-    Tag tag = ::basic_type2tag(type);
-    eol_comment("set method return type");
-    mov(method_return_type, imm(MAKE_IMM(tag)), cond);
+  if (type == T_VOID) {
+    mov(method_return_type, zero, cond);
   } else {
-    if (type == T_VOID) {
-      mov(method_return_type, zero, cond);
-    } else {
-      mov(method_return_type, imm(word_size_for(type)), cond);
-    }
+    mov(method_return_type, imm(word_size_for(type)), cond);
   }
 }
 
 void SourceMacros::push(Register reg, Condition cond,
-                        StackTypeMode type, WritebackMode mode) {
+                        StackTypeMode type) {
   const int offset =  JavaStackDirection * BytesPerWord;
-  Address2 addr = (mode == writeback)  ?
-                    ((type == full) ? imm_index(jsp, offset, pre_indexed)
-                                    : imm_index(jsp, offset, post_indexed))
-                  : ((type == full) ? imm_index(jsp, offset)
-                                    : imm_index(jsp, 0));
+
+#if USE_FP_RESULT_IN_VFP_REGISTER
+  GUARANTEE(is_arm_register(reg) ||
+            is_vfp_register(reg), "Wrong register value");
+  if (is_vfp_register(reg)) {
+    if (type == full) {
+      if (JavaStackDirection < 0) {
+        fstmfds(jsp, reg, 1, writeback, cond);
+      } else {
+        add_imm(jsp, jsp, offset, no_CC, cond);
+        fsts(reg, imm_index5(jsp, 0));
+      }
+    } else {
+      if (JavaStackDirection < 0) {
+        fsts(reg, imm_index5(jsp, 0));
+        add_imm(jsp, jsp, offset, no_CC, cond);
+      } else {
+        fstmeas(jsp, reg, 1, writeback, cond);
+      }
+    }
+  } else
+#endif // USE_FP_RESULT_IN_VFP_REGISTER
+  {
+  Address2 addr = (type == full) ? imm_index(jsp, offset, pre_indexed)
+                                 : imm_index(jsp, offset, post_indexed);
   str(reg, addr, cond);
+  }
 }
 
 void SourceMacros::push(Address4 set, Condition cond,
-                       StackTypeMode type, WritebackMode mode) {
+                       StackTypeMode type) {
   if (is_power_of_2((int)set)) {
     Register reg = as_register(exact_log2(set));
-    push(reg, cond, type, mode);
+    push(reg, cond, type);
   } else {
     if (type == full) {
       if (JavaStackDirection < 0) {
@@ -806,21 +848,42 @@ void SourceMacros::push(Address4 set, Condition cond,
 }
 
 void SourceMacros::pop(Register reg, Condition cond,
-                        StackTypeMode type, WritebackMode mode) {
+                        StackTypeMode type) {
   int offset = -JavaStackDirection * BytesPerWord;
-  Address2 addr = (mode == writeback)  ?
-                    ((type == full) ? imm_index(jsp, offset, post_indexed)
-                                    : imm_index(jsp, offset, pre_indexed))
-                  : ((type == full) ? imm_index(jsp, 0)
-                                    : imm_index(jsp, offset));
+#if USE_FP_RESULT_IN_VFP_REGISTER
+  GUARANTEE(((reg >= s0) && (reg <= s31)) ||
+            ((reg >= r0) && (reg <= r15)), "Wrong register value");
+
+  if (is_vfp_register(reg)) {
+    if (type == full) {
+      if (JavaStackDirection < 0) {
+        fldmfds(jsp, reg, 1, writeback, cond);
+      } else {
+        add_imm(jsp, jsp, offset, no_CC, cond);
+        flds(reg, imm_index5(jsp, 0));
+      }
+    } else {
+      if (JavaStackDirection < 0) {
+        flds(reg, imm_index5(jsp, 0));
+        add_imm(jsp, jsp, offset, no_CC, cond);
+      } else {
+        fldmeas(jsp, reg, 1, writeback, cond);
+      }
+    }
+  } else
+#endif // USE_FP_RESULT_IN_VFP_REGISTER
+  {
+  Address2 addr = (type == full) ? imm_index(jsp, offset, post_indexed)
+                                 : imm_index(jsp, offset, pre_indexed);
   ldr(reg, addr, cond);
+  }
 }
 
 void SourceMacros::pop(Address4 set, Condition cond,
-                       StackTypeMode type, WritebackMode mode) {
+                       StackTypeMode type) {
   if (is_power_of_2((int)set)) {
     Register reg = as_register(exact_log2(set));
-    pop(reg, cond, type, mode);
+    pop(reg, cond, type);
   } else {
     if (type == full) {
       if (JavaStackDirection < 0) {
@@ -838,17 +901,18 @@ void SourceMacros::pop(Address4 set, Condition cond,
   }
 }
 
-void SourceMacros::fast_c_call(Label name, Register tmp) {
-  GUARANTEE(is_c_saved_register(tmp3), "Register sanity");
+void SourceMacros::fast_c_call(Label name, Register preserved) {
+  GUARANTEE(sp != jsp, "This configuration no more supported");
+  GUARANTEE(is_c_saved_register(tmp2) && is_c_saved_register(tmp3),
+            "Register sanity");
+
   mov(tmp3, reg(bcp));
-  if (JavaStackDirection < 0 || sp != jsp) {
-    // We can call this on the Java stack.  It doesn't matter
-    bl(name);
-  } else {
-    mov(tmp, reg(jsp));
-    get_primordial_sp(jsp);
-    bl(name);
-    mov(jsp, reg(tmp));
+  if (preserved != no_reg && !is_c_saved_register(preserved)) {
+    mov(tmp2, reg(preserved));
+  }
+  bl(name);
+  if (preserved != no_reg && !is_c_saved_register(preserved)) {
+    mov(preserved, reg(tmp2));
   }
   mov(bcp, reg(tmp3));
 }
@@ -964,7 +1028,7 @@ void SourceMacros::update_interpretation_log() {
 #endif
 
 void SourceMacros::return_from_invoker(int prefetch_size, 
-                                       int callee_return_type_size) {
+                                       int result_type) {
   if (!ENABLE_WTK_PROFILER) {
      prefetch(prefetch_size);
   }
@@ -972,53 +1036,41 @@ void SourceMacros::return_from_invoker(int prefetch_size,
   Register A = JavaStackDirection < 0 ? r0 : r1;
   Register B = JavaStackDirection < 0 ? r1 : r0;
 
-  if (GenerateDebugAssembly) {
-    if (TaggedJavaStack) {
-      GUARANTEE(callee_return_type_size == -1, "sanity");
-      comment("method_return_type must be zero or be a power of two");
-      sub(tmp3, method_return_type, one);
-      tst(method_return_type, reg(tmp3));
-      breakpoint(ne);
-      comment("method_return_type can only have one of these bits set");
-      bic(tmp3, method_return_type,
-                imm(int_tag | obj_tag | float_tag | long_tag | double_tag),
-                set_CC);
-      breakpoint(ne);
-    }
-  }
+#if USE_FP_RESULT_IN_VFP_REGISTER
+  Register A_vfp = JavaStackDirection < 0 ? s0 : s1;
+  Register B_vfp = JavaStackDirection < 0 ? s1 : s0;
+#endif
 
-  if (TaggedJavaStack) {
-    GUARANTEE(uninitialized_tag == 0, "Sanity check");
-    cmp(method_return_type, imm(uninitialized_tag + 1));
-    tst(method_return_type, imm(long_tag | double_tag), hs);
-
-    eol_comment("lo = void return");
-    pop(tos,                                lo);
-
-    comment("-- do nothing on eq -- ");
-
-    eol_comment("hi = long/double return");
-    push(set(B, method_return_type),      hi);
-    mov_reg(r0, A, no_CC,                 hi);
-    mov(tos_tag, imm_shift(method_return_type, lsl, times_2), hi);
-  } else {
-    switch (callee_return_type_size) {
-    case 0:  
-      comment("return type size == 0");
-      pop(tos);
+  switch (result_type) {
+    case Method::NO_RESULT:
+      comment("return type is void");
+      pop(tos_val);
       break;
-    case 1:
-      comment("return type size == 1: do nothing");
+    case Method::SINGLE:
+      comment("result is in r0: do nothing");
       break;
-    case 2: default:
-      comment("return type size == 2");
+    case Method::DOUBLE:
+      comment("result is in r0/r1");      
       push(B);
       mov_reg(r0, A, no_CC);
-    }
+      break;
+#if USE_FP_RESULT_IN_VFP_REGISTER
+    case Method::FP_SINGLE:
+      comment("result is in s0");
+      fmrs(r0, s0);
+      break;
+    case Method::FP_DOUBLE:
+      comment("result is in s0/s1");
+      fmrs(r0, A_vfp); 
+      push(B_vfp);
+      break;
+#endif
+    default:
+      SHOULD_NOT_REACH_HERE();        
   }
 
   if (ENABLE_WTK_PROFILER) { 
-    push(tos);
+    push(tos_val);
     interpreter_call_vm("jprof_record_method_transition", T_VOID);
     prefetch(prefetch_size);
     dispatch(tos_on_stack);
@@ -1027,52 +1079,65 @@ void SourceMacros::return_from_invoker(int prefetch_size,
   }
 }
 
-void SourceMacros::invoke_method(Register method, Register entry,
+void SourceMacros::generate_call(Register entry, 
+                                 Label& label,
+                                 int result_type,
+                                 int prefetch_size,
+                                 char* deoptimization_entry_name) {
+  bind(label);
+
+  if (!USE_FP_RESULT_IN_VFP_REGISTER &&
+      ((result_type == Method::FP_SINGLE) ||
+       (result_type == Method::FP_DOUBLE))) {
+    return;
+  }
+
+  GUARANTEE(USE_FP_RESULT_IN_VFP_REGISTER || 
+            ((result_type != Method::FP_SINGLE) && 
+             (result_type != Method::FP_DOUBLE)), "Wrong result type");
+     
+  comment("invoke method with result type == %d", result_type);
+  call_from_interpreter(entry, 0);
+
+  if (deoptimization_entry_name != NULL) {
+    char buff[40];
+#if !USE_FP_RESULT_IN_VFP_REGISTER
+    if (result_type > 0) {
+      jvm_sprintf(buff, "%s_%d", deoptimization_entry_name, result_type - 1);
+      bind(buff);
+    }
+#endif
+    jvm_sprintf(buff, "%s_%d", deoptimization_entry_name, result_type);
+    bind(buff);
+  }
+
+  restore_interpreter_state();
+  return_from_invoker(prefetch_size, result_type);
+}
+
+void SourceMacros::invoke_method(Register method,  Register entry,
                                  Register tmp, int prefetch_size,
                                  char *deoptimization_entry_name) {
-  char buff[40];
-
   // callee must contain the method
-  GUARANTEE(method == callee, "sanity");
+  GUARANTEE(method == callee, "sanity");    
+  ldrh(tmp, imm_index3(method, 
+                       Method::method_attributes_offset()));  
+  eol_comment("%s = result type", reg_name(tmp));
+  mov(tmp, imm_shift(tmp, lsr, Method::RESULT_STORAGE_TYPE_SHIFT));    
 
-  if (TaggedJavaStack) {
-    call_from_interpreter(entry, 0);
+  ldr(pc, add_index(pc, tmp, lsl, 2));
 
-    if (deoptimization_entry_name != NULL) {
-      for (int i=0; i<3; i++) {
-        jvm_sprintf(buff, "%s_%d", deoptimization_entry_name, i);
-        bind(buff);
-      }
-    }
-    restore_interpreter_state();
-    return_from_invoker(prefetch_size);
-  } else {
-    Label labels[3];
+  Label labels[5];  
+  nop();  
+  define_long(labels[0]);
+  define_long(labels[1]);
+  define_long(labels[2]);
+  define_long(labels[3]);
+  define_long(labels[4]);
 
-    ldrh(tmp, imm_index3(method, 
-         Method::size_of_parameters_and_return_type_offset()));
-    eol_comment("%s = size of return type in words", reg_name(tmp));
-    mov(tmp, imm_shift(tmp, lsr, Method::NUMBER_OF_PARAMETERS_BITS));
-
-    ldr(pc, add_index(pc, tmp, lsl, 2));
-    nop();
-    define_long(labels[0]);
-    define_long(labels[1]);
-    define_long(labels[2]);
-
-    for (int i=0; i<3; i++) {
-      comment("invoke method with return type size == %d", i);
-      bind(labels[i]);
-
-      call_from_interpreter(entry, 0);
-
-      if (deoptimization_entry_name != NULL) {
-        jvm_sprintf(buff, "%s_%d", deoptimization_entry_name, i);
-        bind(buff);
-      }
-      restore_interpreter_state();
-      return_from_invoker(prefetch_size, i);
-    }
+  for (int i = 0; i < Method::NUMBER_OF_RESULT_STORAGE_TYPES; i++) {
+    generate_call(entry, labels[i], i, prefetch_size, 
+      deoptimization_entry_name);
   }
 }
 

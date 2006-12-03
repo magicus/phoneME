@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -43,6 +44,10 @@ protected:
   jubyte _flags;
   juint  _value;
   juint  _length;
+#if ENABLE_COMPILER_TYPE_INFO
+  jushort _class_id;
+  jushort _padding;
+#endif
 #ifndef PRODUCT
 public:
   void print_on(Stream *);
@@ -55,9 +60,8 @@ class RawLocation;
 
 class VirtualStackFrame: public MixedOop {
  private:
-  static Method* method() {
-    return jvm_fast_globals.compiler_method;
-  }
+  static Method* method();
+
   static CodeGenerator* code_generator() {
     return jvm_fast_globals.compiler_code_generator;
   }
@@ -82,46 +86,17 @@ class VirtualStackFrame: public MixedOop {
 #if ENABLE_CSE
   friend class BytecodeCompileClosure;
 
-  
-  static jint _cse_tag ;
-  static jint _pop_bci;
-  static jint _passable_osr;
-  static bool _clean;
- private:
-  void   tag_push();
-  void   tag_pop();
-  void     decode_tag(jint tag);
- public:
+  //some osr entry is loop entry also
+  //so they are unpassable and all the cached notation
+  //status should be cleaned.
+  //the osr entry created by "if" is passable. 
   enum osr_const {
     passable = 1,
     unpassable = 0
   };
-  static inline void  set_osr_passable(void) {
-    _passable_osr = passable;
-  }
-  static inline void set_osr_unpassable(void) {
-    _passable_osr = unpassable;
-  }
-  static inline bool osr_passable(void) {
-    return _passable_osr != unpassable;
-  }
-  static inline void set_unkilled_regs(jint regs) {
-    _passable_osr = regs;
-  }
-  static inline jint osr_unkilled_regs(void) {
-    return _passable_osr;
-  }
-  static inline  void clear_cse_status( void ) {
-    _pop_bci = -1;
-    _cse_tag = 0;
-    _clean = true;
-  }
-  static inline bool is_status_cleaned(void) {
-    return _clean;
-  }
-  static inline void reset_clean_status(void) {
-    _clean = false;
-  }
+
+  //high bits stand for the begin index
+  //low bits stand for the end index.
   enum tag_const {
     low_bit = 16,
     low_mask = 0xffff,
@@ -129,7 +104,118 @@ class VirtualStackFrame: public MixedOop {
     high_mask = (0xffff<<16)
   };
 
-  static inline jint get_first_bci(void) {
+  //tag popped from tag stack
+  static jint _cse_tag ;
+
+  //the bci triggest the latest popping from operation stack
+  static jint _pop_bci;
+
+  //whether the notations could pass through the 
+  //osr entry.
+  static jint _passable_entry;
+
+  //whether the tracking of byte code snippet of each value 
+  //in the operation stack should be aborted.
+  static bool _abort;
+ private:
+
+  //push tag on tag stack.      
+  //the tag will contain the leftest bci 
+  //of current item.
+  //example of current execution stack and tag
+  //cur bci = 2:
+  //|         1  |bci2 iconst 1 tag:(0x0,0x2)
+  //|         2  |bci1 iconst 2 tag:(0x0,0x1)
+  //cur bci = 3:
+  //after execution of iadd
+  //|        3   |bci3 iadd     tag:(0x1,0x3)
+  //cur bci = 4
+  //|   1    |bci 4 iconst 1   tag:(0x0, 0x4)
+  //|   3    |bci 3 iadd        tag:(0x1,0x3)
+  //cur bci = 5
+  //after execution of iadd bci 5
+  //|   4    |bci 5 iadd       tag:(0x1, 0x5)
+  
+  //high bits of tag2 is 0x1 (begin bci of result of iadd(bci=3) which is the bci of iconst2)
+  //low bits of tag2 is 0x5
+  void   push_tag();
+  
+  //pop tag from tag stack.
+  //get the leftest bci of current result
+  //value
+  void   pop_tag();
+
+  //get the bci information from a tag
+  void   decode_tag(jint tag);
+
+  //return the size of tag stack used in CSE.
+  static jint size_of_tag_stack(Method* method);
+ public:
+
+  static inline void  mark_as_passable(void) {
+    _passable_entry = passable;
+  }
+  
+  static inline void mark_as_unpassable(void) {
+    _passable_entry = unpassable;
+  }
+  
+  static inline bool is_entry_passable(void) {
+    return _passable_entry != unpassable;
+  }
+
+  //when the entry is passable, we also record the registers whose notation 
+  //shouldn't be cleaned for multi-entry caused by OSR.
+  static inline void record_remained_registers(jint bitmap_of_registers) {
+    _passable_entry = bitmap_of_registers;
+  }
+  
+  static inline jint remained_registers(void) {
+    return _passable_entry;
+  }
+
+  //reset the status values for beginning the tracking of byte code snippet 
+  //of each value in the operation stack.
+  static inline void  init_status_of_current_snippet_tracking(void) {
+    _pop_bci = -1;
+    _cse_tag = 0;
+    _abort = false;
+  }
+
+  //reset the status values for aborting from the tracking of byte code snippet 
+  //of each value in the operation stack.
+  //aborted status will be set if we want to abort from the generation of the
+  //notation of a value in some cases, such as we come across a snippet like the begin_bci > end_bci(
+  //caused by goto)
+  //and so on.
+  static inline  void abort_tracking_of_current_snippet( void ) {
+    _pop_bci = -1;
+    _cse_tag = 0;
+    _abort = true;
+  }
+
+  //tell whether the current status is caused by aborting of tracking
+  static inline bool is_aborted_from_tracking(void) {
+    return _abort;
+  }
+
+  //reset the abort status, in case a aborted is set during the compilation of
+  //last byte code.
+  static inline void mark_as_not_aborted(void) {
+    _abort = false;
+  }
+
+  //check whether the _pop_bci is updated due to popping action of 
+  //operation stack
+  static inline bool is_popped(void) {
+    return  _pop_bci != -1;
+  }
+
+  // get the first bci of the byte code string 
+  // from which we get the result.
+  // since the value store in _cse_tag is start from 1,
+  // we substract 1 here(bci start from zero).
+  static inline jint first_bci_of_current_snippet(void) {
     jint first_bci = 0;
     first_bci = (_cse_tag & low_mask) - 1;
     if ( (_cse_tag & high_mask) != 0 ) {
@@ -137,24 +223,60 @@ class VirtualStackFrame: public MixedOop {
     }
     return first_bci;
   }
-  static inline bool is_popped(void) {
-    return  _pop_bci != -1;
-  }
-  static inline jint assemble_tag(jint current_bci) {
+
+  //creat a tag from the current bci and the popped bci.
+  //The popped bci is extract from cse_tag. 
+  //The popped bci will be the leftest bci of an byte code snippet.
+  //For example, (1+2)+4, the popped bci of final result 7 should
+  //be the bci of iconst 1.
+  //if the current bci won't cause a pop operation, the tag is the current  bci
+  
+  static inline jint create_tag(jint current_bci) {
     //bci encoded in tag start from 1. 
     jint tag = current_bci + 1 ;
     if ( _pop_bci  == current_bci) {
       //the pop item is eat by this bci
       //we should track its _cse_tag.
+      //for example: a iadd is compiled
       if ( (_cse_tag & high_mask) == 0) {
+         //the pop item is atomic
+         //we make the bci of that pop item as 
+         //the begin bci of current tag
         tag  |= (( (_cse_tag) & low_mask) << low_bit); 
       } else {
+        //the pop item is calculated from a expression
+        //we use its begin bci as the begin bci of current tag
         tag  |= ( (_cse_tag) & high_mask);
       }
     } 
     return tag;
   }
+
+  //the offset of bci stack base in the VirtualStackFrame
+  jint bci_stack_base_offset() {
+    return location_map_base_offset() + 
+            location_map_size() - 
+            method()->max_execution_stack_count() *
+            sizeof(jint);
+  }
+
+  //the tag corresponding to the index of item on the operation stack 
+  jint *tag_at(int index)  {
+    address base = ((address)obj()) +bci_stack_base_offset();
+    return (jint*)( base + sizeof(jint) * index);
+  }
+
+  //clean the register notations whose value should be cleaned due to multi-entry
+  void wipe_notation_for_osr_entry();
+#else  
+ private:
+  void   push_tag() {}
+  void   pop_tag() {}
+  static jint size_of_tag_stack(Method* method) {return 0;}
+ public: 
+  void wipe_notation_for_osr_entry() {}
 #endif
+
   // Allocate a new instance of VirtualStackFrame.
   static ReturnOop allocate(int location_map_size JVM_TRAPS);
 
@@ -296,9 +418,6 @@ class VirtualStackFrame: public MixedOop {
 
   bool is_mapping_something(const Assembler::Register reg) const;
 
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
-  bool is_allocated(const Assembler::Register reg) const;
-#endif 
  public:
 #if USE_COMPILER_FPU_MAP
   static jint fpu_register_map_offset() {
@@ -317,14 +436,6 @@ class VirtualStackFrame: public MixedOop {
   static jint flush_count_offset() {
     return FIELD_OFFSET(VirtualStackFrameDesc, _flush_count);
   }
-  static jint literals_mask_offset() {
-    return FIELD_OFFSET(VirtualStackFrameDesc, _literals_mask);
-  }   
-#if ENABLE_REMEMBER_ARRAY_LENGTH  
-  static jint bound_mask_offset() {
-    return FIELD_OFFSET(VirtualStackFrameDesc, _bound_mask);
-  }    
-#endif
 
   // Accessors for the virtual stack pointer variable.
   inline jint virtual_stack_pointer() const { 
@@ -339,6 +450,12 @@ class VirtualStackFrame: public MixedOop {
   void decrement_virtual_stack_pointer() { 
     set_virtual_stack_pointer(virtual_stack_pointer() - 1); 
   }  
+
+#if ENABLE_ARM_VFP
+  jint* literals_mask_addr() const {
+    return ((VirtualStackFrameDesc*)obj())->_literals_mask;
+  }
+#endif
 
   inline static jint header_size() {
     return VirtualStackFrameDesc::header_size();
@@ -356,18 +473,6 @@ class VirtualStackFrame: public MixedOop {
     return literals_map_base_offset() + 
            (literals_map_size * sizeof(int));
   }
-#if ENABLE_CSE  
-  jint bci_stack_base_offset() {
-    return location_map_base_offset() + 
-            location_map_size() - 
-            method()->max_execution_stack_count() *
-            sizeof(jint);
-  }
-  jint *tag_at(int index)  {
-    address base = ((address)obj()) +bci_stack_base_offset();
-    return (jint*)( base + sizeof(jint) * index);
-  }
-#endif
   RawLocation *raw_location_at(int index) const {
     address base = ((address)obj()) + location_map_base_offset();
     return (RawLocation*)(base + index * sizeof(RawLocationData));
@@ -396,19 +501,7 @@ class VirtualStackFrame: public MixedOop {
   void set_fpu_register_map(TypeArray* value) {
     obj_field_put(fpu_register_map_offset(), (Oop*)value);
   }
-#endif
-
-  jint literals_mask() const { 
-    return int_field(literals_mask_offset());      
-  }
-#if ENABLE_REMEMBER_ARRAY_LENGTH
-  jint bound_mask() const { 
-    return int_field(bound_mask_offset());      
-  }
-  void set_bound_mask(jint value) { 
-    int_field_put(bound_mask_offset(), value);      
-  }
-#endif
+#endif  // USE_COMPILER_FPU_MAP
   jint stack_pointer() const { 
     return int_field(real_stack_pointer_offset());
   }
@@ -422,9 +515,6 @@ class VirtualStackFrame: public MixedOop {
   void set_flush_count(jint value) { 
     int_field_put(flush_count_offset(), value);      
   }
-  void set_literals_mask(jint value) { 
-    int_field_put(literals_mask_offset(), value);      
-  }
 
   bool reveiver_must_be_nonnull(int size_of_parameters) const;
   void receiver(Value& value, int size_of_parameters) {
@@ -434,57 +524,260 @@ class VirtualStackFrame: public MixedOop {
 #if USE_COMPILER_LITERALS_MAP
   Assembler::Register get_literal(int imm32, LiteralAccessor& la);
 
-  void set_has_literal_value(Assembler::Register reg, int imm32) {
+  void set_has_literal_value(Assembler::Register reg, const int imm32) {    
     GUARANTEE((int)reg >= 0 && (int)reg < literals_map_size, "range");
-    const int offset = literals_map_base_offset() + (reg * sizeof(int));
-    int_field_put(offset, imm32);
-    set_literals_mask(literals_mask() | (1 << reg));
-  }  
-  bool has_literal_value(Assembler::Register reg, int& imm32) {
-    GUARANTEE((int)reg >= 0 && (int)reg < literals_map_size, "range");
-    if (literals_mask() & (1 << reg)) {
-      const int offset = literals_map_base_offset() + (reg * sizeof(int));
-      imm32 = int_field(offset);
-      return true;
+    set_literal(reg, imm32);
+#if ENABLE_ARM_VFP
+    jint* p = literals_mask_addr();
+    if( reg >= BitsPerInt ) {
+      p++;
+      reg = Assembler::Register(reg - BitsPerInt);
     }
-    return false;
+    const jint mask = 1 << reg;
+    if(imm32 == 0) {
+      *p |= mask;
+    } else {
+      *p &=~mask;
+    }
+#endif
   }
-  void clear_literals() {
-    set_literals_mask(0);
+  
+  jint has_literal(Assembler::Register reg) const {
+#if ENABLE_ARM_VFP
+    jint imm32 = get_literal(reg);
+    if(imm32 == 0) {
+      const jint* p = literals_mask_addr();
+      if( reg >= BitsPerInt ) {
+        p++;
+        reg = Assembler::Register(reg - BitsPerInt);
+      }
+      imm32 = (*p >> reg) & 1;
+    }
+    return imm32;
+#else    
+    return get_literal(reg);
+#endif    
   }
+  
+  void clear_literals(void);
+  
+  bool has_no_literals(void) const;
+  
+  jint get_literal(const Assembler::Register reg) const {
+    const int offset = literals_map_base_offset() + (reg * sizeof(jint));
+    return int_field(offset);    
+  }
+  
+  void set_literal(const Assembler::Register reg, const jint imm32) {
+    const int offset = literals_map_base_offset() + (reg * sizeof(jint));
+    int_field_put(offset, imm32);    
+  }
+  
+  void clear_literal(Assembler::Register reg) {
+    set_literal( reg, 0 );
+#if ENABLE_ARM_VFP
+    jint* p = literals_mask_addr();
+    if( reg >= BitsPerInt ) {
+      p++;
+      reg = Assembler::Register(reg - BitsPerInt);
+    }
+    *p &=~ (1 << reg);
+#endif    
+  }
+  
+#if ENABLE_ARM_VFP
+  Assembler::Register find_zero                 (void) const;
+  Assembler::Register find_non_NaN              (void) const;
+  Assembler::Register find_double_non_NaN       (void) const;
+  Assembler::Register find_double_vfp_literal(const jint lo, const jint hi) const;
+  
+  static bool is_non_NaN(const jint imm32) {
+    enum { NaN_mask = 0x7F800000 };
+    return imm32 && (imm32 & NaN_mask) != NaN_mask;
+  }
+  
+  bool result_register_contains(const jint imm32) const {
+    const jint s0_value = get_literal(Assembler::s0);
+    return imm32 == s0_value &&
+      (s0_value || (literals_mask_addr()[0] & (1 << Assembler::s0)));
+  }
+  
+  bool result_register_contains(const jint lo, const jint hi) const {    
+    const jint mask = ~literals_mask_addr()[0];
+    {
+      const jint s0_value = get_literal(Assembler::s0);
+      if (lo != s0_value) {
+        return false;
+      }
+      if (s0_value == 0 && (mask & (1 << Assembler::s0)) ) {
+        return false;
+      }
+    }
+    {
+      const jint s1_value = get_literal(Assembler::s1);
+      if (hi != s1_value) {
+        return false;
+      }
+      if (s1_value == 0 && (mask & (1 << Assembler::s1)) ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+#endif    
+  
+#else // !USE_COMPILER_FPU_MAP
+  void clear_literal(const Assembler::Register) {}
+  void clear_literals(void) {}
+  bool has_no_literals(void) const { return true; }
+#endif
+
+
+#if ENABLE_REMEMBER_ARRAY_LENGTH
+  enum BoundMaskElement {
+    index_bits = 0xfff, // store the location index of a array bound checked variable
+    max_value_of_index = 0xfff,
+    bound_bits = (0xf <<12), // store the array length
+    bound_shift = 12,
+    base_bits = (0xf << 16), // store the array base 
+    base_shift = 16,
+    flag_bits = (0xf<<28), // store the array access count
+    flag_shift = 28,
+    max_value_of_count = 0xf,
+  };
+
+  //return the bound_mask bitmap
+  jint bound_mask() const { 
+    return int_field(bound_mask_offset());      
+  }
+
+  //set the bound_mask bitmap
+  void set_bound_mask(jint value) { 
+    int_field_put(bound_mask_offset(), value);      
+  }
+
+  //get the register which hold the array base address from
+  //bound_mask
+  Assembler::Register base_register (void) const;
+
+  //get the flag of bound_mask
+  int  bound_flag(void) const;
+
+  //get the register which hold the length of the array whose 
+  //address is cached in the base_register();
+  Assembler::Register length_register(void) const;
+
+  //index of local variable which did boundary check against 
+  //the value of length_register()
+  jint bound_index(void) const ;
+
+  //try to cache the array length into the bound mask bitmap
+  //the array base address is passwd by base_reg
+  Assembler::Register cached_array_length(
+       Assembler::Register base_reg, bool first_time, 
+       Assembler::Condition cond);
+
+  //check whether the array whose base register is hold in "reg" is 
+  //cached by boundary mask bitmap
+  bool is_cached_array_bound_of(Assembler::Register reg) const;
+
+  //whether there's array cached in the bound mask
+  bool is_bound_mask_valid(void) const;
+
+  //clear the bound mask bitmap of current VSF
+  void clear_bound();
+
+  //free the registers allocted for caching of array boundary
+  Assembler::Register free_length_register();
+  
+#if  ENABLE_REMEMBER_ARRAY_CHECK && ENABLE_NPCE  
+  //clear the must_be_index_checked status of all the values in current VSF
+  void clear_must_be_index_checked_status_of_values(void);
+
+  //whether the length is cached in bound mask and 
+  //value is mask as must_be_index_checked
+  bool is_value_must_be_index_checked(
+        Assembler::Register length, Value &value);
+
+  //mark the value as index_checked, 
+  //the "length" must have been cached in 
+  //bound mask
+  void set_value_must_be_index_checked(
+        Assembler::Register length, Value &value);
+
+  //whether need to skip the array boundary check.
+  //And set must_be_index_checked if the local value is not checked before.
+  bool try_to_set_must_be_index_checked(Assembler::Register length, Value& value);
 #else
-  void clear_literals() {}
+  void clear_must_be_index_checked_status_of_values(void){}
+  bool is_value_must_be_index_checked(
+        Assembler::Register, Value &value) {return false;}
+  void set_value_must_be_index_checked(
+        Assembler::Register, Value &value) {}
+  bool try_to_set_must_be_index_checked(Assembler::Register length, Value& value) {return false;}
 #endif
 
-#if ENABLE_REMEMBER_ARRAY_CHECK && \
-     ENABLE_REMEMBER_ARRAY_LENGTH && ENABLE_NPCE
-bool VirtualStackFrame::is_value_must_be_index_checked(
-        Assembler::Register, Value &value);
-void VirtualStackFrame::set_value_must_be_index_checked(
-        Assembler::Register, Value &value);
-#endif
+  //set the flag bound mask.
+  void set_boundary_flag(void);
 
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
-  void rebound(VirtualStackFrameDesc* osr_frame);
-  Assembler::Register get_bound(
-       Assembler::Register reg, bool first_time, Assembler::Condition cond);
-  void set_bound_value(Assembler::Register bound_reg, 
-                                       Assembler::Register reg); 
-  bool has_bound_value(Assembler::Register) const;
-  bool has_bound(void) const;
-  Assembler::Register get_bound_register(void) const;
-  Assembler::Register get_base_register (void) const;
+  //try to recache the same array base and length into the bound mask 
+  //with the same base_reg and bound_reg
+  void recache_array_length(Assembler::Register base_reg, 
+          Assembler::Register bound_reg);
 
-  int get_bound_access_count(void) const;
-  void add_bound_access_count();
-  void clear_bound() { 
-    set_bound_mask(0); 
+  //cache the index of local variable into the bound mask.
+  //the value should have done boundary check against the array 
+  //length cached in the bound mask
+  void set_boundary_index(jint index);
+
+  //update the base register and length register of
+  //the bound mask with the value of parameters
+  void set_boundary_value(Assembler::Register bound_reg, 
+                                       Assembler::Register base_reg); 
+
+  //mark the array holding by a local variable isn't first time accessed.
+  //so the compiler can omit  the loading of array length in next time.
+  //We won't cache non local variable.
+  bool set_is_not_first_time_access(Assembler::Register base_reg);
+
+  //during register allocator, try to free the register used for boundary caching
+  //if exists.
+  Assembler::Register try_to_free_length_register();
+
+  //check is there any location occupied that register.
+  //we must make sure the base register is allocated in the frame
+  //before we do the preload of array length
+  bool is_allocated(const Assembler::Register base_reg) const;
+  
+  static jint bound_mask_offset() {
+    return FIELD_OFFSET(VirtualStackFrameDesc, _bound_mask);
   }
-  bool set_is_not_first_time_access(Assembler::Register reg);
+
+#else
+  void clear_must_be_index_checked_status_of_values(void) {}
+  bool is_value_must_be_index_checked(
+        Assembler::Register, Value &value) {return false;}
+  void set_value_must_be_index_checked(
+        Assembler::Register, Value &value) {}
+  bool try_to_set_must_be_index_checked(Assembler::Register length, Value& value) {return false;}
+  jint bound_mask() const { return 0;}
+  Assembler::Register base_register (void) const {return Assembler::no_reg;}
+  int  bound_flag(void) const {return 0;}
+  Assembler::Register length_register(void) const {return Assembler::no_reg;}
+  void clear_bound() {}
+  bool is_bound_mask_valid(void) const {return false;}
+  void recache_array_length(Assembler::Register base_reg, 
+          Assembler::Register bound_reg) {}; 
+  void set_bound_mask(jint value) {} 
+  Assembler::Register try_to_free_length_register() {return Assembler::no_reg;}
 #endif
   
   void set_value_must_be_nonnull(Value &value);
   void set_value_has_known_min_length(Value &value, int length);
+#if ENABLE_COMPILER_TYPE_INFO
+  void set_value_class(Value & value, JavaClass * java_class);
+#endif
 
   // Debug dump the state of the virtual stack frame.
   void dump_fp_registers(bool /*as_comment*/) PRODUCT_RETURN;
@@ -587,6 +880,16 @@ class PreserveVirtualStackFrameState: public StackObj {
   FastOopInStackObj       _must_precede_fast_oop;
   VirtualStackFrame*      _frame;
   VirtualStackFrame::Fast _saved_frame;
+};
+
+class VirtualStackFrameContext: public StackObj {
+ private:
+  FastOopInStackObj       _must_precede_fast_oop;
+  VirtualStackFrame::Fast _saved_frame;
+ 
+ public:
+  VirtualStackFrameContext(VirtualStackFrame* context);
+  ~VirtualStackFrameContext();
 };
 
 class LiteralElementStream {

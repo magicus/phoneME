@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -40,6 +41,7 @@ import util.*;
 public class Configurator {
     Vector flags;
     Hashtable platform;
+    Hashtable product;
 
     public Configurator() {
 
@@ -57,6 +59,18 @@ public class Configurator {
      */
     public void readPlatformFile(String infile) throws Exception {
         platform = new Hashtable();
+
+        readConfigFile(infile, platform);
+    }
+
+    public void readProductFile(String infile) throws Exception {
+        product = new Hashtable();
+
+        readConfigFile(infile, product);
+    }
+
+    private void readConfigFile(String infile, Hashtable properties) 
+      throws Exception {
         FileInputStream in = new FileInputStream(infile);
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         String line;
@@ -84,7 +98,7 @@ public class Configurator {
                 value = value.trim();
             }
 
-            platform.put(name, value);
+            properties.put(name, value);
         }
     }
 
@@ -228,6 +242,17 @@ public class Configurator {
         }
         throw new Error("Option \"" + name + "\" not found");
     }
+
+    public String getProductName() {
+      return (String)product.get(PRODUCT_NAME_KEY);
+    }
+
+    public String getReleaseVersion() {
+      return (String)product.get(RELEASE_VERSION_KEY);
+    }
+
+    static final String PRODUCT_NAME_KEY    = "PRODUCT_NAME";
+    static final String RELEASE_VERSION_KEY = "RELEASE_VERSION";
 
     static final int ALWAYS_DISABLE = 1;
     static final int DISABLE        = 2;

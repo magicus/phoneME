@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,8 +32,10 @@
 void ObjectReferenceImpl::read_value_to_address(PacketInputStream *in, Oop *p, jint field_offset, jbyte type_tag, jboolean is_static) {
 
   switch(type_tag) { 
+    // Static fields are 32 bits long, non-static fields are packed
+    // In order for ENDIANness to work right we need to use 'int'
+    // accessors for shorter fields
   case JDWP_Tag_BYTE:
-    // quick fix alert, see short below
     if (is_static) {
       p->int_field_put(field_offset, (unsigned int)in->read_byte());
     } else {
@@ -40,18 +43,22 @@ void ObjectReferenceImpl::read_value_to_address(PacketInputStream *in, Oop *p, j
     }
     break;
   case JDWP_Tag_BOOLEAN:
-    p->bool_field_put(field_offset, in->read_boolean());
+    if (is_static) {
+      p->int_field_put(field_offset, (unsigned int)in->read_boolean());
+    } else {
+      p->bool_field_put(field_offset, in->read_boolean());
+    }
     break;
 
   case JDWP_Tag_CHAR:
-    p->char_field_put(field_offset, in->read_char());
+    if (is_static) {
+      p->int_field_put(field_offset, (int)in->read_char());
+    } else {
+      p->char_field_put(field_offset, in->read_char());
+    }
     break;
 
   case JDWP_Tag_SHORT:
-    // Quick fix alert.  Static fields are 32 bits long, shorts are,
-    // well they're short
-    // The sign needs to be extended into the upper 16 bits of the field.
-    // We do an 'int_field_put'.
     if (is_static) {
       p->int_field_put(field_offset, (int)in->read_short());
     } else {
@@ -62,16 +69,19 @@ void ObjectReferenceImpl::read_value_to_address(PacketInputStream *in, Oop *p, j
   case JDWP_Tag_LONG:
     p->long_field_put(field_offset, in->read_long());
     break;
-  case JDWP_Tag_DOUBLE:
-    p->double_field_put(field_offset, in->read_double());
-    break;
 
   case JDWP_Tag_INT:
     p->int_field_put(field_offset, in->read_int());
     break;
+
+#if ENABLE_FLOAT
+  case JDWP_Tag_DOUBLE:
+    p->double_field_put(field_offset, in->read_double());
+    break;
   case JDWP_Tag_FLOAT:
     p->float_field_put(field_offset, in->read_float());
     break;
+#endif
 
   case JDWP_Tag_VOID: 
     /* do nothing */
@@ -89,7 +99,8 @@ void ObjectReferenceImpl::read_value_to_address(PacketInputStream *in, Oop *p, j
 void
 ObjectReferenceImpl::write_value_from_address(PacketOutputStream *out,
                                               Oop *p, jint field_offset,
-                                              jbyte tag, jboolean write_tag) {
+                                              jbyte tag, bool write_tag,
+                                              bool is_static) {
 
   if (tag == JDWP_Tag_OBJECT || tag == JDWP_Tag_ARRAY) {
     Oop::Raw o = p->obj_field(field_offset);
@@ -100,35 +111,54 @@ ObjectReferenceImpl::write_value_from_address(PacketOutputStream *out,
   }
 
   switch(tag) { 
-  case JDWP_Tag_DOUBLE: 
-    out->write_double(p->double_field(field_offset));
-    break;
   case JDWP_Tag_LONG:
     out->write_long(p->long_field(field_offset));
     break;
 
+  case JDWP_Tag_BOOLEAN:
+    if (is_static) {
+      out->write_boolean((jboolean)p->int_field(field_offset));
+    } else {
+      out->write_boolean(p->bool_field(field_offset));
+    }
+    break;
+
   case JDWP_Tag_BYTE:
-    out->write_byte(p->byte_field(field_offset));
+    if (is_static) {
+      out->write_byte((jbyte)p->int_field(field_offset));
+    } else {
+      out->write_byte(p->byte_field(field_offset));
+    }
     break;
 
   case JDWP_Tag_CHAR:
-    out->write_char(p->char_field(field_offset));
+    if (is_static) {
+      out->write_char((jchar)p->int_field(field_offset));
+    } else {
+      out->write_char(p->char_field(field_offset));
+    }
     break;
 
+  case JDWP_Tag_SHORT:
+    if (is_static) {
+      out->write_short((jshort)p->int_field(field_offset));
+    } else {
+      out->write_short(p->short_field(field_offset));
+    }
+    break;
+    
   case JDWP_Tag_INT:
     out->write_int(p->int_field(field_offset));
+    break;
+ 
+#if ENABLE_FLOAT
+  case JDWP_Tag_DOUBLE: 
+    out->write_double(p->double_field(field_offset));
     break;
   case JDWP_Tag_FLOAT:
     out->write_float(p->float_field(field_offset));
     break;
- 
-  case JDWP_Tag_SHORT:
-    out->write_short(p->short_field(field_offset));
-    break;
-    
-  case JDWP_Tag_BOOLEAN:
-    out->write_boolean(p->bool_field(field_offset));
-    break;
+#endif
 
   case JDWP_Tag_VOID:  // happens with function return values
     // write nothing
@@ -304,7 +334,7 @@ void ObjectReferenceImpl::object_field_getter_setter(PacketInputStream *in,
     if (is_setter) { 
       read_value_to_address(in, &object, field.offset(), type_tag, false);
     } else { 
-      write_value_from_address(out, &object, field.offset(), type_tag, true);
+      write_value_from_address(out, &object, field.offset(), type_tag, true, false);
     }
 #ifdef AZZERT
     if (TraceDebugger) {

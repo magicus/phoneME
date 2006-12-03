@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -46,6 +47,7 @@ void InterpreterStubs::generate() {
   GUARANTEE(!TaggedJavaStack, "Tagged stack not supported");
 #endif // ENABLE_EMBEDDED_CALLINFO
   generate_interpreter_deoptimization_entry();
+  generate_interpreter_timer_tick();
 
   generate_primordial_to_current_thread();
   generate_current_thread_to_primordial();
@@ -384,6 +386,38 @@ void InterpreterStubs::generate_interpreter_deoptimization_entry() {
   dispatch_next();
 
   entry_end(); // interpreter_deoptimization_entry
+}
+
+void InterpreterStubs::generate_interpreter_timer_tick() {
+  comment_section("Interpreter call timer_tick");
+  entry("interpreter_timer_tick");
+  interpreter_call_vm(Constant("timer_tick"), T_VOID);
+  dispatch_next();
+  entry_end(); // interpreter_timer_tick
+
+#if ENABLE_PAGE_PROTECTION
+  stop_code_segment();
+  start_data_segment();
+  if (GenerateGNUCode || GenerateInlineAsm) {
+    align(PROTECTED_PAGE_SIZE);
+    define_array_begin("unsigned char", "_protected_page");
+    for (int i = 0; i < PROTECTED_PAGE_SIZE; i++) {
+      define_byte_element(Constant(0));
+    }
+    define_array_end();
+  } else {
+    // MASM doesn't allow 4096-byte alignment,
+    // so surround the protected area with 4K padding.
+    // This will certainly add 8K of static footprint,
+    // but who cares about the size of win32_i386 binary!
+    define_byte(Constant(0), PROTECTED_PAGE_SIZE);
+    define_long(Constant(0), PROTECTED_PAGE_SIZE / BytesPerWord,
+                "_protected_page");
+    define_byte(Constant(0), PROTECTED_PAGE_SIZE);
+  }
+  stop_data_segment();
+  start_code_segment();
+#endif
 }
 
 #endif // ENABLE_INTERPRETER_GENERATOR

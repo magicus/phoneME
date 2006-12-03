@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,9 +24,7 @@
  * information or have any questions. 
  */
 
-#if !ENABLE_THUMB_COMPILER
-
-#if ENABLE_COMPILER
+#if ENABLE_COMPILER && !ENABLE_THUMB_COMPILER
 
 class Instruction: public StackObj {
  private:
@@ -48,14 +47,14 @@ class Instruction: public StackObj {
   bool bit(int i) const                          { return (encoding() >> i & 0x1) == 1; }
 
   // manipulation
-  void set_encoding(int instr) const             { if (!Compiler::current()->code_generator()->has_overflown_compiled_method()) *(int*)_addr = instr; }
+  void set_encoding(int instr) const             { *(int*)_addr = instr; }
 };
 
 class MemAccess: public Instruction {
  public:
   MemAccess(address addr) : Instruction(addr) {
     GUARANTEE(Compiler::current()->code_generator()->has_overflown_compiled_method()
-              || (encoding() & 0x0e0f0000) == 0x040f0000, "must be pc-relative load/store")
+              || (encoding() & 0x0e000000) == 0x04000000, "must be load/store")
   }
 
   int offset() const {
@@ -76,7 +75,36 @@ class MemAccess: public Instruction {
     check_alignment(loc);
     set_offset(loc - addr() - 8);
   }
+
 };
+
+#if ENABLE_ARM_VFP
+class VFPMemAccess: public Instruction {
+ public:
+  VFPMemAccess(address addr) : Instruction(addr) {
+  }
+
+  int offset() const {
+    const int imm8 = (encoding() & 0xfff) << 2;
+    return bit(23) ? imm8 : -imm8;
+  }
+
+  void set_offset(int offset) const {
+    GUARANTEE(abs(offset) < 0x400, "offset too large");
+    // Sets the offset and transforms flds_stub to flds
+    set_encoding(encoding() & 0xff7ff000 | Assembler::up(offset) << 23 | 10 << 8 | (abs(offset) >> 2));
+  }
+
+  address location() const {
+    return addr() + 8 + offset();
+  }
+
+  void set_location(address loc) const {
+    check_alignment(loc);
+    set_offset(loc - addr() - 8);
+  }
+};
+#endif
 
 class Branch: public Instruction {
  public:
@@ -103,8 +131,12 @@ class Branch: public Instruction {
     check_alignment(target);
     set_imm24((target - addr() - 8) >> 2);
   }
+
+  void relocate(int delta) const {
+    check_alignment((address)delta);
+    set_imm24(imm24() - (delta >> 2));
+  }
+
 };
 
-#endif
-
-#endif /*#if !ENABLE_THUMB_COMPILER*/
+#endif // ENABLE_COMPILER && !ENABLE_THUMB_COMPILER

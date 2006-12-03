@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -319,9 +320,6 @@ class OopDispatcher : public StackObj {
   virtual void do_stackmap_list(StackmapList* obj) {
     do_generic(obj, "StackmapList");
   }
-  virtual void do_condition(Condition* obj) {
-    do_generic(obj, "Condition");
-  }
   virtual void do_thread(Thread* obj) {
     do_generic(obj, "Thread");
   }
@@ -444,7 +442,12 @@ void OopDispatcher::dispatch() {
         { NearClass it = obj; do_obj_near_class(&it); return; }
       case InstanceSize::size_far_class:
         // Object is its own meta class. . .
+#if ENABLE_HEAP_NEARS_IN_HEAP
+        GUARANTEE(me.equals(Universe::meta_class()) ||
+            me.equals(Universe::rom_meta_class()), "Sanity");
+#else
         GUARANTEE(me.equals(Universe::meta_class()), "Sanity");
+#endif
         { FarClass it = obj; do_meta_class(&it); return; }
       default:
         { FarClass it = obj; do_far_class(&it); return; }
@@ -576,9 +579,6 @@ class VisitDispatcher : public OopDispatcher {
   }
 #endif
   virtual void do_stackmap_list(StackmapList* obj) {
-    obj->iterate(_visitor);
-  }
-  virtual void do_condition(Condition* obj) {
     obj->iterate(_visitor);
   }
   virtual void do_thread(Thread* obj) {
@@ -766,7 +766,7 @@ void BasicOop::print_rom_definition_on(Stream* st) {
 
   if (VerboseROMComments) {
     if (is_method() || is_class_info() || is_java_class() || is_java_oop() ||
-        is_task_mirror() || is_condition() || obj()->is_compiled_method()) {
+        is_task_mirror() || obj()->is_compiled_method()) {
       st->cr();
       OopPrinter printer(st);
       Oop::Raw object = obj();
@@ -948,6 +948,18 @@ bool BasicOop::is_jar_file_parser() const {
   return obj()->is_jar_file_parser();
 }
 
+bool BasicOop::is_java_near() const {
+  GUARANTEE(not_null(), "Cannot ask for type of NULL");
+  return obj()->is_java_near();
+}
+
+bool BasicOop::is_java_class() const {
+  GUARANTEE(not_null(), "Cannot ask for type of NULL");
+  return (obj()->is_instance_class() ||
+          obj()->is_type_array_class()  ||
+          obj()->is_obj_array_class());
+}
+
 #ifndef PRODUCT
 bool BasicOop::is_bool_array() const {
   GUARANTEE(not_null(), "Cannot ask for type of NULL");
@@ -967,19 +979,10 @@ bool BasicOop::is_double_array() const {
   GUARANTEE(not_null(), "Cannot ask for type of NULL");
   return obj()->is_double_array();
 }
-bool BasicOop::is_java_near() const {
-  GUARANTEE(not_null(), "Cannot ask for type of NULL");
-  return obj()->is_java_near();
-}
 
 bool BasicOop::is_throwable() const {
   GUARANTEE(not_null(), "Cannot ask for type of NULL");
   return (obj()->is_instance() && obj()->is_throwable());
-}
-
-bool BasicOop::is_condition() const {
-  GUARANTEE(not_null(), "Cannot ask for type of NULL");
-  return obj()->is_condition();
 }
 
 bool BasicOop::is_mixed_oop() const {
@@ -995,13 +998,6 @@ bool BasicOop::is_task() const {
 bool BasicOop::is_boundary() const {
   GUARANTEE(not_null(), "Cannot ask for type of NULL");
   return obj()->is_boundary();
-}
-
-bool BasicOop::is_java_class() const {
-  GUARANTEE(not_null(), "Cannot ask for type of NULL");
-  return (obj()->is_instance_class() ||
-          obj()->is_type_array_class()  ||
-          obj()->is_obj_array_class());
 }
 
 bool BasicOop::is_java_oop() const {
@@ -1105,9 +1101,6 @@ int BasicOop::generate_fieldmap(TypeArray* field_map) {
   case InstanceSize::size_compiled_method:
     { CompiledMethod it = _obj; return it.generate_fieldmap(field_map); }
 #endif
-
-  case InstanceSize::size_mixed_oop:
-    { MixedOop it = _obj; return it.generate_fieldmap(field_map); }
 
 #if ENABLE_ISOLATES
   case InstanceSize::size_task_mirror:

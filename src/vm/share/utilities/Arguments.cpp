@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -206,6 +207,17 @@ int Arguments::parse_one_arg(int argc, char** argv) {
 #endif
     count = 1;
   }
+#if ENABLE_LIB_IMAGES
+  else if (jvm_strcmp(argv[0], "-convertshared") == 0) {
+    // Romize a library, so it could be used shared 
+    GenerateSharedROMImage = true;
+    GenerateROMImage = true;
+#if ENABLE_TTY_TRACE
+    TraceMirandaMethods = true;
+#endif
+    count = 1;
+  }
+#endif
 #endif
 
   else if (jvm_strcmp(argv[0], "-romoutputfile") == 0) {

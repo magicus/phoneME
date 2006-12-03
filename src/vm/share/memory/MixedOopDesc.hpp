@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,7 +32,7 @@ public:
   }
   void initialize(int type, size_t size, int pointer_count) {
     GUARANTEE(Type_BufferedFile <= type && type <= _last_type, "size limit");
-    GUARANTEE(size <= 0xffff && _pointer_count <= 0x7f, "size limit");
+    GUARANTEE(size <= 0xffff && pointer_count <= 0x7f, "size limit");
 
     _size = (jushort)size;
     _type = (jubyte)type;
@@ -52,7 +53,7 @@ public:
   template(ClassParserState,        class_parser_state)        \
   template(CompilationQueueElement, compilation_queue_element) \
   template(CompilerState,           compiler_state)            \
-  template(Condition,               condition)                 \
+  template(CompilerContext,         compiler_context)          \
   template(Entry,                   entry)                     \
   template(FileDecoder,             file_decoder)              \
   template(Inflater,                inflater)                  \

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -104,6 +105,9 @@ public:
   void write_referenced_bundles();
 #endif
   
+#if USE_AOT_COMPILATION
+  void write_compiled_method_table(JVM_SINGLE_ARG_TRAPS);
+#endif
   virtual int  print_rom_hashtable_header(const char *table_name, 
                                           const char *element_name,
                                           ObjArray *table, 
@@ -175,6 +179,15 @@ public:
     _binary_stream.print_int_ref((int)value);
   }
 
+#if ENABLE_LIB_IMAGES
+  // A reference to an object in the library TEXT block.
+  inline void writebinary_lib_int_ref(int value) {
+    binary_dump_const_int_ref(value | (0x3 << ROM::flag_start));
+    set_bit_for_current_offset();
+    _binary_stream.print_int_ref(value | (0x3 << ROM::flag_start));
+  }
+#endif
+
   inline void writebinary_null() {
     binary_dump_int(0, "reference");
     _binary_stream.print_int(0);
@@ -186,6 +199,29 @@ public:
     set_eol_comment(ROM::getNameForAddress((address)addr));
 #endif
   }
+
+#if USE_AOT_COMPILATION
+  inline void writebinary_compiled_code_reference(CompiledMethod * cm 
+                                                  JVM_TRAPS) {
+    AZZERT_ONLY(BlockType type = block_type_of(cm JVM_CHECK));
+    GUARANTEE(type == ROMWriter::TEXT_BLOCK, 
+              "All compiled methods must be in TEXT block");
+
+    int offset = offset_of(cm JVM_CHECK);      
+    int delta = CompiledMethod::entry_offset();
+
+#if ENABLE_THUMB_COMPILER
+    // The low bit is set to 0x1 so that BX will automatically switch into
+    // THUMB mode.
+    delta += 1;
+#endif
+
+    writebinary_int_ref(binary_text_block_addr() + offset + delta);
+#if ENABLE_MONET_DEBUG_DUMP
+    set_eol_comment("compiled_method");
+#endif
+  }
+#endif
 
   /* The number of header fields in the binary file before the actual ROM
    * image starts */
@@ -214,6 +250,12 @@ public:
   int binary_referenced_bundles_addr();
   int binary_referenced_bundles_size();
 #endif
+
+#if USE_AOT_COMPILATION
+  int binary_compiled_method_table_addr();
+  int binary_compiled_method_table_size();
+#endif
+
   int binary_total_size();
 
   void write_map(TypeArray *bitmap);

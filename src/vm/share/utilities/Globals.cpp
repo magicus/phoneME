@@ -229,6 +229,14 @@ bool Globals::parse_argument(char* arg) {
   char value[256];
   #define VALUE_RANGE "[-kmKM0123456789]"
   if (jvm_sscanf(arg, "=%" NAME_RANGE "%" VALUE_RANGE, name, value) == 2) {
+#if USE_SET_HEAP_LIMIT
+    if (jvm_strcmp("HeapMin", name) == 0) {
+#ifdef AZZERT
+      tty->print_cr("HeapMin flag is not supported in case USE_SET_HEAP_LIMIT = true!");
+#endif
+      return false;
+    }
+#endif
     return set_numeric_flag(name, value);
   }
   return false;

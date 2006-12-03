@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -38,16 +39,20 @@ class Bytes : public AllStatic {
   // platform-specific byte ordering 
   // (no special code is needed since x86 CPUs can access unaligned data)
 
-  static inline jushort get_Java_u2(address p){ 
+  static inline jushort get_Java_u2(const_address p){ 
       return (jushort) (jushort(p[0] << 8) | ( jushort(p[1]) ));
   }
 
-  static inline juint get_Java_u4(address p) {
+  static inline juint get_Java_u4(const_address p) {
       return juint(p[0] << 24) | (juint(p[1]) << 16) | (juint(p[2]) << 8) |
             (juint(p[3]));
   }
 
-  static inline jushort get_native_u2(address p){ 
+  static inline julong get_Java_u8(const_address p) {
+      return ((julong)get_Java_u4(p) << 32 | (julong)get_Java_u4(p + 4));
+  }
+
+  static inline jushort get_native_u2(const_address p){ 
     if (HARDWARE_LITTLE_ENDIAN) { 
       return (jushort) (jushort(p[0]) | ( jushort(p[1]) << 8 ));
     } else { 
@@ -55,7 +60,7 @@ class Bytes : public AllStatic {
     }
   }
 
-  static inline juint get_native_u4(address p) {
+  static inline juint get_native_u4(const_address p) {
     if (HARDWARE_LITTLE_ENDIAN) { 
       return juint(p[0]) | (juint(p[1]) << 8) | (juint(p[2]) << 16) |
             (juint(p[3]) << 24);
@@ -74,6 +79,11 @@ class Bytes : public AllStatic {
      ((jubyte*)p)[1] = (jubyte)(x >> 16); 
      ((jubyte*)p)[2] = (jubyte)(x >> 8); 
      ((jubyte*)p)[3] = (jubyte)x; 
+  }
+
+  static inline void put_Java_u8(address p, julong x) {
+    put_Java_u4(p, (juint)(x >> 32));
+    put_Java_u4(p + 4, (juint)(x & 0xFFFFFFFFL));
   }
 
   static inline void put_native_u2(address p, jushort x)   { 

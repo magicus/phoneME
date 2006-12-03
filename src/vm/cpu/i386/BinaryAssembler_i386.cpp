@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -81,7 +82,6 @@ void BinaryAssembler::save_state(CompilerState *compiler_state) {
   _relocation.save_state(compiler_state);
 }
 
-
 void BinaryAssembler::signal_output_overflow() {
   Compiler::current()->closure()->signal_output_overflow();
 }
@@ -115,13 +115,13 @@ void BinaryAssembler::movl(Register dst, int imm32) {
   emit_long(imm32);
 }
 
-void BinaryAssembler::movl(Register dst, Oop* oop) {
+void BinaryAssembler::movl(Register dst, const Oop* oop) {
   DisassemblerInfo print_me(this);
   emit_byte(0xB8 | dst);
   // write relocation information for the oop
   if (ObjectHeap::contains_moveable(oop->obj())) {
     // Do need to emit relocation info for ROM objects
-    _relocation.emit(Relocation::oop_type, _code_offset);
+    _relocation.emit_oop(_code_offset);
   } else { 
 #ifndef PRODUCT
     // Let the disassembler know that this is an oop
@@ -144,13 +144,13 @@ void BinaryAssembler::movl(const Address& dst, int imm32) {
   emit_long(imm32);
 }
 
-void BinaryAssembler::movl(const Address& dst, Oop* oop) {
+void BinaryAssembler::movl(const Address& dst, const Oop* oop) {
   DisassemblerInfo print_me(this);
   emit_byte(0xC7);
   emit_operand(eax, dst);
   if (ObjectHeap::contains_moveable(oop->obj())) {
     // Do need to emit relocation info for ROM objects
-    _relocation.emit(Relocation::oop_type, _code_offset);
+    _relocation.emit_oop(_code_offset);
   } else { 
 #ifndef PRODUCT
     // Let the disassembler know that this is an oop
@@ -549,7 +549,7 @@ void BinaryAssembler::pushl(Oop* oop) {
   emit_byte(0x68);
   if (ObjectHeap::contains_moveable(oop->obj())) {
     // Do need to emit relocation info for ROM objects
-    _relocation.emit(Relocation::oop_type, _code_offset);
+    _relocation.emit_oop(_code_offset);
   } else { 
 #ifndef PRODUCT
     // Let the disassembler know that this is an oop
@@ -1464,9 +1464,10 @@ void BinaryAssembler::emit_data(int data, Relocation::Kind reloc) {
   emit_long(data);
 }
 
-void BinaryAssembler::ensure_compiled_method_space() {
-  if (!has_room_for(1024)) {
-    const int delta = 1024;
+void BinaryAssembler::ensure_compiled_method_space(int delta) {
+  delta += 256;
+  if (!has_room_for(delta)) {
+    delta = align_allocation_size(delta + (1024 - 256));
     if (compiled_method()->expand_compiled_code_space(delta, 
                                                       relocation_size())) {
       _relocation.move(delta);
@@ -1482,7 +1483,7 @@ void BinaryAssembler::comment(char* fmt, ...) {
   if (PrintCompiledCodeAsYouGo) {
     tty->print_cr(";; %s", buffer);
   } else if (GenerateCompilerComments) {
-    _relocation.emit_comment(buffer, _code_offset);
+    _relocation.emit_comment(_code_offset, buffer);
   }
 }
 

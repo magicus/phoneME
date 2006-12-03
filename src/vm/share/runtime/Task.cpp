@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -38,7 +39,7 @@ HANDLE_CHECK(Task, is_task())
 #if USE_BINARY_IMAGE_LOADER
 void Task::link_dynamic(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
-  ObjArray::Fast path( classpath() );
+  ObjArray::Fast path( app_classpath() );
   FilePath::Fast path0;
 #if ENABLE_LIB_IMAGES
   int i; 
@@ -52,8 +53,7 @@ void Task::link_dynamic(JVM_SINGLE_ARG_TRAPS) {
       path().obj_at_clear(i);
     } else {
       //IMPL_NOTE: consider whether this should be fixed! 
-      //ROMBundle::set_current(NULL);
-      //free_binary_images();
+      break;
     }
   }
   ROM::_romized_heap_marker = _inline_allocation_top;
@@ -106,11 +106,13 @@ void Task::initialize() {
 void Task::setup_task_mirror(JavaClass *klass JVM_TRAPS) {
   if (klass->is_instance_class()) {
     int static_field_size = ((InstanceClass*)klass)->static_field_size();
+    int vtable_length = klass->vtable_length();
 
-    klass->setup_task_mirror(static_field_size, false JVM_CHECK);
+    klass->setup_task_mirror(static_field_size, vtable_length, 
+                             false JVM_CHECK);
     ((InstanceClass*)klass)->initialize_static_fields();
   } else {
-    klass->setup_task_mirror(0, false JVM_NO_CHECK_AT_BOTTOM);
+    klass->setup_task_mirror(0, 0, false JVM_NO_CHECK_AT_BOTTOM);
   }
 }
 
@@ -139,7 +141,7 @@ void Task::fast_bootstrap(JVM_SINGLE_ARG_TRAPS) {
   // The System class must be initialized here. Otherwise if we call
   // String.getBytes(), among other things, before System is
   // initialized, it will cause a chain reaction and cause the
-  // com.sun.cldc.i18n.Helper class to fail to initialize. See bug
+  // com.sun.cldc.i18n.Helper class to fail to initialize. See CR
   // 6371479: "init_classes_inited_at_build may cause system to fail to start"
   Universe::system_class()->initialize(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
 }
@@ -162,8 +164,8 @@ bool Task::init_first_task(JVM_SINGLE_ARG_TRAPS) {
     isolate_obj().set_unique_id(&unique_id);
   }
   {
-    ObjArray::Raw classpath = task().classpath();
-    isolate_obj().set_classpath(&classpath);
+    ObjArray::Raw classpath = task().app_classpath();
+    isolate_obj().set_app_classpath(&classpath);
   }
   isolate_obj().set_use_verifier(UseVerifier);
 
@@ -181,7 +183,7 @@ bool Task::init_first_task(JVM_SINGLE_ARG_TRAPS) {
   return true;
 }
 
-ReturnOop Task::create_task(int id, IsolateObj *isolate_obj JVM_TRAPS) {
+ReturnOop Task::create_task(const int id, IsolateObj* isolate JVM_TRAPS) {
   UsingFastOops fast_oops;
 
   // Allocate stuff ahead of task id assignment to avoid cleanup code
@@ -196,28 +198,36 @@ ReturnOop Task::create_task(int id, IsolateObj *isolate_obj JVM_TRAPS) {
     thread_obj().set_priority(ThreadObj::PRIORITY_NORMAL);
   }
 
+  // These objects MUST BE allocated prior to the task to avoid
+  // partial initialization and incomplete task termination problems
+  // due to possible OOME
+  ObjArray::Fast priority_queue =
+    Universe::new_obj_array( ThreadObj::NUM_PRIORITY_SLOTS + 1
+      JVM_OZCHECK(priority_queue) );
+  ObjArray::Fast hidden_packages =
+    Universe::copy_strings_to_byte_arrays( isolate->hidden_packages()
+      JVM_OZCHECK(hidden_packages) );
+  ObjArray::Fast restricted_packages =
+    Universe::copy_strings_to_byte_arrays( isolate->restricted_packages()
+      JVM_OZCHECK(restricted_packages) );
+
   Task::Fast task = allocate_task(id JVM_CHECK_0);
-  {
-    ObjArray::Raw oa =
-      Universe::new_obj_array(ThreadObj::NUM_PRIORITY_SLOTS + 1 JVM_NO_CHECK);
-    if (CURRENT_HAS_PENDING_EXCEPTION) {
-      // need to remove task from task list
-      Universe::task_list()->obj_at_clear(id);
-      _num_tasks--;
-      return NULL;
-    }
-    task().set_priority_queue(oa);
-  }
   GUARANTEE(!Universe::java_lang_Class_class()->is_null(),
-            "Mirror class not initialized");
-  //  new_thread().set_task_id(task().task_id());
-  task().set_primary_isolate_obj(isolate_obj);
-  task().set_priority(isolate_obj->priority());
-  new_thread().set_task_id(task().task_id());
+             "Mirror class not initialized");
+  task().set_priority_queue(priority_queue);
+  task().set_hidden_packages(hidden_packages);
+  task().set_restricted_packages(restricted_packages);
+  task().set_primary_isolate_obj(isolate);
+  task().set_priority(isolate->priority());
+#if ENABLE_MULTIPLE_PROFILES_SUPPORT
+  task().set_profile_id(isolate->profile_id()); // Set current active profile
+#endif
+  
+
+  new_thread().set_task_id(id);
   // start will only get an exception before adding thread to global list
   Scheduler::start(&new_thread JVM_CHECK_0);
   Scheduler::set_next_runnable_thread(&new_thread);
-
   return new_thread.obj();
   // We eventually continue below after switching threads
 }
@@ -248,9 +258,19 @@ void Task::start_task(Thread *thread JVM_TRAPS) {
   }
 
   // Allocate space for the classpath in using new task's quota
-  ObjArray::Fast orig_classpath = isolate_obj().classpath();
+  ObjArray::Fast orig_classpath = isolate_obj().app_classpath();
   ObjArray::Fast copy_classpath = deep_copy(&orig_classpath JVM_CHECK);
-  task().set_classpath(&copy_classpath);
+  task().set_app_classpath(&copy_classpath);
+
+  // Allocate space for the classpath in using new task's quota
+  ObjArray::Fast orig_sys_classpath = isolate_obj().sys_classpath();
+  ObjArray::Fast copy_sys_classpath;
+  if (orig_sys_classpath.is_null()) {
+    copy_sys_classpath = Universe::new_obj_array(0 JVM_CHECK);
+  } else {
+    copy_sys_classpath = deep_copy(&orig_sys_classpath JVM_CHECK);
+  }  
+  task().set_sys_classpath(&copy_sys_classpath);
 
 #if USE_BINARY_IMAGE_LOADER
   task().link_dynamic(JVM_SINGLE_ARG_CHECK);
@@ -259,7 +279,8 @@ void Task::start_task(Thread *thread JVM_TRAPS) {
   task().init_classes_inited_at_build(JVM_SINGLE_ARG_CHECK);
   task().load_main_class(thread JVM_CHECK);
 #if ENABLE_JAVA_DEBUGGER
-  if (isolate_obj().connect_debugger() != 0) {
+  if (JavaDebugger::is_debug_isolate_option_on() &&
+      isolate_obj().connect_debugger() != 0) {
     JavaDebugger::initialize_java_debugger_task(
           JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
   }
@@ -323,6 +344,7 @@ int Task::allocate_task_id(JVM_SINGLE_ARG_TRAPS) {
 }
 
 void Task::init_classes_inited_at_build(JVM_SINGLE_ARG_TRAPS) {
+#if !ENABLE_PREINITED_TASK_MIRRORS  
   UsingFastOops fast;
   ObjArray::Fast list = Universe::inited_at_build();
   if (list.is_null()) {
@@ -332,12 +354,14 @@ void Task::init_classes_inited_at_build(JVM_SINGLE_ARG_TRAPS) {
   InstanceClass::Fast klass;
 
   for (int i=0; i<len; i++) {    
+    
     klass = list().obj_at(i);
     
     if (klass.not_null()) {
       klass().initialize(JVM_SINGLE_ARG_CHECK);
     }
-  }
+  }  
+#endif
 }
 
 ReturnOop Task::allocate_task(int id JVM_TRAPS) {
@@ -454,6 +478,7 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
     }
   }
 #endif
+
   {
     UsingFastOops fast_oops;
     Task::Fast task = get_task(id);
@@ -469,19 +494,6 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
     TaskList::Raw tlist = Universe::task_list();
     GUARANTEE(!tlist.is_null(), "No task list");
 
-#if ENABLE_PROFILER
-    if (UseProfiler) {
-      Profiler::dump_and_clear_profile_data(id);
-    }
-#endif
-    // Reload
-    task = get_task(id);
-
-#if ENABLE_WTK_PROFILER
-    if (UseExactProfiler) {
-      WTKProfiler::dump_and_clear_profile_data(id);
-    }
-#endif
     if (TraceGC) {
       TTY_TRACE(("Task: cleanup task %d", id));
 #if ENABLE_OOP_TAG
@@ -537,6 +549,13 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
 
     Verifier::flush_cache();
 
+    //we are marking _romized_heap_marker during GC
+    //but this object MUST belong to terminating task
+    // so it mustn't be marked.
+#if ENABLE_MONET
+    ROM::_romized_heap_marker = NULL;
+#endif
+
 #ifdef AZZERT
     // At this point there should be no root that will reference
     // the task we are ending.
@@ -545,7 +564,7 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
   // 'task' handle is now destroyed so no references to binary image
 #if defined(AZZERT) || USE_BINARY_IMAGE_LOADER
   ObjectHeap::full_collect(JVM_SINGLE_ARG_NO_CHECK);
-#if 0 && ENABLE_ISOLATES
+#if ENABLE_ISOLATES
   GUARANTEE( ObjectHeap::get_task_memory_usage(id) == 0, "Leftover objects" );
 #endif
 #endif
@@ -642,7 +661,7 @@ bool Task::load_main_class(Thread *new_thread JVM_TRAPS) {
     klass().lookup_method(Symbols::main_name(),
                           Symbols::string_array_void_signature());
   if (main_method.is_null() || !main_method().is_static()) {
-    Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0); // See bug 6270554.
+    Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0); // See CR 6270554.
 
   }
 
@@ -852,82 +871,96 @@ extern "C" jboolean JVM_ResumeIsolate(int isolate_id) {
 #endif // ENABLE_ISOLATES
 
 #if USE_BINARY_IMAGE_LOADER
+
+#if ENABLE_LIB_IMAGES
+#if ENABLE_ISOLATES //there are no shared images in SVM case
+void Task::remove_shared_images( void ) const {
+  ObjArray::Raw images = binary_images();
+  if (images.is_null()) return;
+  for( int i = 0; i < images().length(); i++ ) {
+    ROMBundle* bundle = (ROMBundle*)images().obj_at(i);
+    if (bundle->remove_if_not_currently_shared()) {
+      images().obj_at_clear(i);
+    }
+  }
+}
+#endif //ENABLE_ISOLATES
 void Task::free_binary_images( void ) const {
   AllocationDisabler no_allocations_here;
   ObjArray::Raw images = binary_images();
-  if( images.not_null() ) {
-    const int length = images().length();
-#if ENABLE_LIB_IMAGES
-    GUARANTEE(USE_LARGE_OBJECT_AREA, "we are using lib images only with Large objects now");
-    for( int i = 0; i < length; i++ ) {
-      ROMBundle* bundle = (ROMBundle*)images().obj_at(i);
+  if( images.is_null() ) {
+    return;
+  }
+  const int length = images().length();
+  for( int i = 0; i < length; i++ ) {
+    ROMBundle* bundle = (ROMBundle*)images().obj_at(i);
+    if (bundle == NULL) continue;
+#if ENABLE_ISOLATES //there are no shared images in SVM case
+    Task:Raw task = obj();
+    if (!bundle->is_shared(&task)) 
+#endif //ENABLE_ISOLATES 
+    {
       bundle->remove_from_global_binary_images();
-      if( ROMBundle::current() == bundle ) {
-        ROMBundle::set_current(NULL);
-      }            
     }
-    for(int j = length - 1; j>= 0; j-- ) {
-      ROMBundle* last_bundle = (ROMBundle*)images().obj_at(j);
-      if (last_bundle != NULL) {
-        LargeObject::head(last_bundle)->free();
-        break;
-      } 
-    }
-#else      
-#if USE_LARGE_OBJECT_AREA
-    GUARANTEE( length < 2, "Multiple bundles per task are not supported yet" );
-#endif    
+    images().obj_at_clear(i);
+  }
+}
+
+#else //ENABLE_LIB_IMAGES
+void Task::free_binary_images( void ) const {
+  AllocationDisabler no_allocations_here;
+  ObjArray::Raw images = binary_images();
+  if( images.is_null() ) {//no binary images loaded in this task
+    return;
+  }
+  const int length = images().length();
+  {
+    GUARANTEE( length < 2, "Multiple bundles per task are not enabled" );
     for( int i = 0; i < length; i++ ) {
       ROMBundle* bundle = (ROMBundle*)images().obj_at(i);
       bundle->remove_from_global_binary_images();
       if( ROMBundle::current() == bundle ) {
         ROMBundle::set_current(NULL);
       }
-#if USE_LARGE_OBJECT_AREA
-      LargeObject::head(bundle)->free();
-#endif
+      bundle->free();
     }
-#endif //ENABLE_LIB_IMAGES
   }
-
 #if USE_IMAGE_MAPPING
-  TypeArray::Raw handles = mapped_image_handles();
-  if( handles.not_null() ) {
-    const int length = images().length();
-    for( int i = 0; i < length; i++ ) {
+  {
+    TypeArray::Raw handles = mapped_image_handles();    
+    for( int i = 0; i < length; i++ ) {      
       OsFile_MappedImageHandle handle = 
-          (OsFile_MappedImageHandle)handles().int_at(i);
+          (OsFile_MappedImageHandle)handles().int_at(i);      
       OsFile_UnmapImage(handle);
     }
   }
 #endif
 }
+#endif //!ENABLE_LIB_IMAGES
+
 #if ENABLE_LIB_IMAGES
-int Task::decode_reference(int ref) {
+int Task::decode_reference(int o_ref) {
+  int ref = o_ref;
   ObjArray::Raw images = binary_images();
-  unsigned int bundle_count = 0;
-  for (;bundle_count < images().length();bundle_count++) {
-    ROMBundle* bundle = (ROMBundle*)images().obj_at(bundle_count);
-    if (bundle == NULL) {
-      break;
-    }
-  }
-  
+  //for now we always expand binary_images by one item
+  int bundle_count = images().length(); 
+  GUARANTEE(images().obj_at(images().length() - 1) != NULL, 
+        "for now we always expand binary_images by one item");
   unsigned int bundle_num = (bundle_count - (((unsigned int)ref) >> 24)) - 1;
   GUARANTEE(bundle_num <= bundle_count, "sanity");
   unsigned int bundle_offset = ref & 0x00fffffc;    
-  return (int)images().obj_at(bundle_num) + bundle_offset;
+  return ((int)images().obj_at(bundle_num)) + bundle_offset;
 }
 
 int Task::encode_reference(int ref) {
-  ObjArray::Raw list = binary_images();        
+  ObjArray::Raw list = binary_images();          
   GUARANTEE(list.not_null(), "ref must be from binary image");
   GUARANTEE(!(ref & 0x3), "ref must be from binary image");
   int bundle_count = 0;
-  unsigned int bundle_num = 0xffffffff; //not send
-  unsigned int bundle_offset = 0xffffffff;
+  unsigned int bundle_num = 0xffffffff; //not set
+  unsigned int bundle_offset = 0xffffffff; //not set
   for (; bundle_count < list().length(); bundle_count++) {
-    ROMBundle* bundle = (ROMBundle*)list().obj_at(bundle_count);
+    ROMBundle* bundle = (ROMBundle*)list().obj_at(bundle_count);    
     int* rom_start = bundle->text_block();
     int* rom_end = bundle->text_block() + bundle->text_block_size();
     if ((rom_start <= (int*)ref) && ((int*)ref < rom_end)) {
@@ -946,13 +979,81 @@ int Task::encode_reference(int ref) {
             
   GUARANTEE(bundle_num < 0xff, "we have only 8 bits to encode it");
   GUARANTEE(bundle_offset < 0xffffff, "we have only 24 bits to encode it");
-  GUARANTEE((bundle_offset & 0x3) == 0, "it must be valid offset");
+  GUARANTEE((bundle_offset & 0x3) == 0, "it must be valid offset");  
   return bundle_offset | ((bundle_count - bundle_num) << 24);
 }
 
+void Task::add_binary_image(ROMBundle* bun JVM_TRAPS) {
+  UsingFastOops fast;
+  ObjArray::Fast old_binary_images = binary_images();
+  ObjArray::Fast binary_images;
+  if (old_binary_images.not_null()) {    
+    binary_images = Universe::new_obj_array(old_binary_images().length() + 1 JVM_CHECK);
+    int i;
+    for ( i = 0; i < old_binary_images().length(); i++) {
+      binary_images().obj_at_put(i, old_binary_images().obj_at(i));
+    }
+    binary_images().obj_at_put(i, (OopDesc*)bun);
+  } else {
+    //IMPL_NOTE:this could be optimized, so we allocate array enough to keep all bundles!
+    binary_images = Universe::new_obj_array(1 JVM_CHECK);
+    binary_images().obj_at_put(0, (OopDesc*)bun);    
+  }
+  set_binary_images(&binary_images);
+}
 #endif //ENABLE_LIB_IMAGES
+#if USE_IMAGE_MAPPING && !ENABLE_LIB_IMAGES
+void Task::add_binary_image_handle(void* image_handle JVM_TRAPS) {
+  TypeArray::Raw new_img_handles = Universe::new_int_array(1 JVM_CHECK);
+  new_img_handles().int_at_put(0, (int)image_handle);
+  set_mapped_image_handles(&new_img_handles);  
+}
+#endif //IMAGE_MAPPING && !ENABLE_LIB_IMAGES
 #endif // USE_BINARY_IMAGE_LOADER
+#if ENABLE_ISOLATES
+bool Task::is_restricted_package(char *name, int pkg_len) {
+  ObjArray::Raw restricted_packages_names = restricted_packages();
+  if (restricted_packages_names.is_null()) return false;
+  for (int i = 0; i < restricted_packages_names().length(); i++) {
+    TypeArray::Raw value = restricted_packages_names().obj_at(i);
+    char* rp = (char*)value().base_address();
+    int len = value().length();
+    char* rp2 = rp + (len - 2);
+    if(jvm_strncmp(rp2, "/" "*", 2) == 0) {
+      if(pkg_len < (len-2)) continue;
+      if(jvm_strncmp(rp, name, pkg_len) == 0) {
+        return true;
+      }
+    }
+    if (len == pkg_len) {
+      if (jvm_memcmp(rp, name, pkg_len) == 0) {
+        return true; // we have a match. The package is restricted.
+      }
+    }
+  }
+  return false;
+}
 
+bool Task::is_hidden_class(Symbol* checking_name) {
+  ObjArray::Raw hidden_packages_names = hidden_packages();
+  if (hidden_packages_names.is_null()) return false;
+  char* checking = checking_name->base_address();
+  int checking_len = checking_name->strrchr('/');
+  if (checking_len <= 0) {
+    checking_len = checking_name->length();
+  }
+
+  for (int i = 0; i < hidden_packages_names().length(); i++) {
+    TypeArray::Raw pkg_value = hidden_packages_names().obj_at(i);
+    char* pkg = (char*)pkg_value().base_address();
+    int pkg_len = pkg_value().length();    
+    if (Universe::name_matches_pattern(checking, checking_len, pkg, pkg_len)) {
+      return true;
+    }
+  }
+  return false;  
+}
+#endif
 #ifndef PRODUCT
 
 void Task::iterate(OopVisitor* visitor) {
@@ -963,7 +1064,10 @@ void Task::iterate(OopVisitor* visitor) {
 
 void Task::iterate_oopmaps(oopmaps_doer do_map, void *param) {
 #if USE_OOP_VISITOR
-  OOPMAP_ENTRY_4(do_map, param, T_OBJECT, classpath);
+  OOPMAP_ENTRY_4(do_map, param, T_OBJECT, app_classpath);
+  OOPMAP_ENTRY_4(do_map, param, T_OBJECT, sys_classpath);
+  OOPMAP_ENTRY_4(do_map, param, T_OBJECT, hidden_packages);
+  OOPMAP_ENTRY_4(do_map, param, T_OBJECT, restricted_packages);
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, dictionary);
 
 #if USE_BINARY_IMAGE_LOADER
@@ -971,8 +1075,12 @@ void Task::iterate_oopmaps(oopmaps_doer do_map, void *param) {
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, names_of_bad_classes);
 #endif
 
-#if USE_BINARY_IMAGE_LOADER && USE_IMAGE_MAPPING
+#if USE_BINARY_IMAGE_LOADER && USE_IMAGE_MAPPING && !ENABLE_LIB_IMAGES
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, mapped_image_handles);
+#endif
+
+#if ENABLE_COMPILER && ENABLE_INLINE
+  OOPMAP_ENTRY_4(do_map, param, T_OBJECT, direct_callers);
 #endif
 
 #if ENABLE_ISOLATES

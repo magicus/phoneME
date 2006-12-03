@@ -1,4 +1,5 @@
 /*
+ *    
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -53,9 +54,6 @@
 #define NEED_CLOCK_TICKS 1
 #endif
 
-#if defined(ARM) && !CROSS_GENERATOR
-#define ARM_EXECUTABLE 1
-#endif
 
 #if defined(__i386) || defined(ARM_EXECUTABLE)
 #define KNOW_REGISTER_NAMES 1
@@ -69,6 +67,45 @@
 #include <dlfcn.h>
 #endif
 
+// IMPL_NOTE: the offset of PC value in ucontext_t structure
+// is different for every particular platform and OS.
+// Please change the value as suitable for your OS.
+
+#if ARM_EXECUTABLE
+class CPUContext {
+private:
+  address _unused[8];
+  address _regs[16];
+
+public:
+  address* get_regs()         { return _regs;     }
+  address  get_pc()           { return _regs[15]; }
+  void     set_pc(address pc) { _regs[15] = pc;   }
+};
+
+#elif defined(__i386)
+
+class CPUContext {
+private:
+  address _regs[20];
+
+public:
+  address* get_regs()         { return _regs;     }
+  address  get_pc()           { return _regs[19]; }
+  void     set_pc(address pc) { _regs[19] = pc;   }
+};
+
+#else // all other architectures
+
+class CPUContext {
+public:
+  address* get_regs()         { UNIMPLEMENTED(); return NULL; }
+  address  get_pc()           { UNIMPLEMENTED(); return NULL; }
+  void     set_pc(address pc) { UNIMPLEMENTED();              }
+};
+#endif
+
+
 #if USE_LIBC_GLUE
 // will be defined in interpreter loop as stub that can work from both
 // Thumb and ARM
@@ -79,8 +116,13 @@ extern "C" void handle_vtalrm_signal_stub(int no, siginfo_t* inf, void* uc);
 extern "C" void init_jvm_chunk_manager();
 
 #if ENABLE_DYNAMIC_NATIVE_METHODS || ENABLE_JVMPI_PROFILE
+#define MAX_PATH 256
 void* Os::loadLibrary(const char* libName) {
-  return dlopen(libName, RTLD_LAZY);
+  char full_lib_name[MAX_PATH];
+  char lib_ext[] = {'.','s','o','\0'};
+  strcpy(full_lib_name, libName);
+  strcat(full_lib_name, lib_ext);  
+  return dlopen(full_lib_name, RTLD_LAZY);
 }
 void* Os::getSymbol(void* handle, const char* name) {
   return dlsym(handle,name);
@@ -118,6 +160,8 @@ void Os::sleep(jlong ms) {
 static bool   ticker_running = false;
 static bool   ticker_stopping = false;
 static bool   ticker_stopped = false;
+
+AZZERT_ONLY(static bool is_processing_timer_tick = false;)
 
 #if ENABLE_COMPILER
 static bool   _compiler_timer_has_ticked = false;
@@ -221,8 +265,7 @@ void Os::stop_ticks() {
   }
 }
 
-#else
-//!ENABLE_TIMER_THREAD
+#else // ENABLE_TIMER_THREAD
 
 bool Os::start_ticks() {
   if (ticker_running || !EnableTicks || Deterministic) {
@@ -261,13 +304,22 @@ void Os::stop_ticks() {
   suspend_ticks();
 }
 
-
 #endif // ENABLE_TIMER_THREAD
 
 #if !ENABLE_TIMER_THREAD
-
 extern "C" void handle_vtalrm_signal(int signo, siginfo_t* sigi, void* uc) {
+  GUARANTEE(!is_processing_timer_tick, "Sanity");
+  AZZERT_ONLY(TemporaryModifyGlobal(&is_processing_timer_tick,
+                                    !is_processing_timer_tick);)
+
   if (ticker_running) {
+#if ENABLE_CODE_PATCHING
+    if (!VerifyOnly && 
+        !Universe::is_bootstrapping() && 
+        !Compiler::is_active()) {
+      Compiler::patch_checkpoints(((CPUContext*)uc)->get_pc());
+    }
+#endif
     rt_tick_event();
   } else {
     struct itimerval interval;
@@ -278,7 +330,7 @@ extern "C" void handle_vtalrm_signal(int signo, siginfo_t* sigi, void* uc) {
     }
   }
 }
-#endif
+#endif // !ENABLE_TIMER_THREAD
 
 #if ENABLE_TIMER_THREAD && USE_LIBC_GLUE
 extern "C" void handle_vtalrm_signal(int signo, siginfo_t* sigi, void* uc) {
@@ -336,193 +388,8 @@ static void handle_other_signals(int sig) {
   ::jvm_abort();
 }
 
-#if ( ENABLE_NPCE ||\
-     ( ENABLE_INTERNAL_CODE_OPTIMIZER  && ENABLE_CODE_OPTIMIZER)) \
-     && ARM && !CROSS_GENERATOR
-#define NOT_FOUND -1
-static void handle_segv_signal_npe(int sig, siginfo_t* info, void* ucpPtr) {
-  struct ucontext* ucp = (struct ucontext *)ucpPtr;
-  unsigned long pc = ucp->uc_mcontext.arm_pc;
-  bool is_npe = true;
-  bool is_omit_frame = false;
-  
-  int default_npce_stub = NOT_FOUND;
 
-  unsigned long heap_high ;
-  unsigned long heap_low  ;
-  if( (unsigned int) _heap_start > (unsigned int) _heap_top ) {
-    heap_high = (unsigned long) _heap_start;
-    heap_low = (unsigned long) _heap_top;
-  } else {
-    heap_high = (unsigned long) _heap_top;
-    heap_low = (unsigned long) _heap_start;
-  }
-
-  unsigned long r11  = ucp->uc_mcontext.arm_fp;
-  unsigned long lr   = ucp->uc_mcontext.arm_lr;
-  unsigned long r3   = ucp->uc_mcontext.arm_r3;
-#ifndef  PRODUCT
-  if(PrintCompiledCodeAsYouGo){
-    TTY_TRACE(("heap_high address is 0x%08x\n",heap_high));
-    TTY_TRACE(("heap_low address is 0x%08x\n",heap_low));
-    TTY_TRACE(("arm pc  is 0x%08x\n", pc));
-    TTY_TRACE(("arm r11 is 0x%08x\n", r11));
-    TTY_TRACE(("arm lr is 0x%08x\n", lr));
-    TTY_TRACE(("arm r0 is 0x%08x\n", (int)ucp->uc_mcontext.arm_r0));
-    TTY_TRACE(("arm r1 is 0x%08x\n", (int)ucp->uc_mcontext.arm_r1));
-    TTY_TRACE(("arm r2 is 0x%08x\n", (int)ucp->uc_mcontext.arm_r2));
-    TTY_TRACE(("arm r3 is 0x%08x\n", r3));
-    TTY_TRACE(("arm r4 is 0x%08x\n", (int)ucp->uc_mcontext.arm_r4));
-    TTY_TRACE(("arm r5 is 0x%08x\n", (int)ucp->uc_mcontext.arm_r5));
-    TTY_TRACE(("arm r6 is 0x%08x\n", (int)ucp->uc_mcontext.arm_r6));
-    TTY_TRACE(("arm r7 is 0x%08x\n", (int)ucp->uc_mcontext.arm_r7));
-    TTY_TRACE(("arm r8 is 0x%08x\n", (int)ucp->uc_mcontext.arm_r8));
-    TTY_TRACE(("arm r9 is 0x%08x\n", (int)ucp->uc_mcontext.arm_r9));
-    TTY_TRACE(("arm r9 is 0x%08x\n", (int)ucp->uc_mcontext.arm_r9));
-    TTY_TRACE(("arm r10 is 0x%08x\n", (int)ucp->uc_mcontext.arm_r10));
-    TTY_TRACE(("pc >= heap_low%s\n",pc>=heap_low?"true":"false"));
-    TTY_TRACE(("pc <= heap_high%s\n",pc<=heap_high?"true":"false"));
-  }
-#endif
-  if( pc < heap_low || pc > heap_high ) {
-    TTY_TRACE(("Memory access error\nPlease report the bug\n"));
-  }
-  CompiledMethodDesc *cmd = ObjectHeap::getThrowedMethod((void *)pc);
-  if( cmd == NULL){
-    TTY_TRACE(("Memory access error\nPlease report the bug\n"));
-    ::exit(1);
-  }
-  CompiledMethod::Raw method = cmd;
-  Method::Raw raw_method = method().method();
-  int code_begin = (int)cmd+CompiledMethod::base_offset();
-  int stub_offset = NOT_FOUND;
-  int offset = pc - code_begin;
-  int default_stub_offset = NOT_FOUND;
-
-#ifndef  PRODUCT
-  if (PrintCompiledCodeAsYouGo) {
-    raw_method().print_name_on_tty();
-    TTY_TRACE(("code begin at 0x%08x\n", code_begin));
-    TTY_TRACE(("\n"));
-    bool renamed;
-    Symbol::Raw n = raw_method().get_original_name(renamed);
-    n().print_symbol_on(tty);
-    TTY_TRACE(("()\n"));
-  }
-#endif
-  
-
-  if (PrintCompiledCodeAsYouGo) {
-    TTY_TRACE(("offset is %d\n", offset));
-  }
-#if ENABLE_NPCE 
-  for (RelocationReader stream(&method); !stream.at_end(); stream.advance()) {
-    if (stream.is_npe_item()) {
-#ifndef  PRODUCT
-      if (PrintCompiledCodeAsYouGo) {
-        TTY_TRACE(("npce stream.code_offset() is %d\t", stream.code_offset()));
-        TTY_TRACE(("stream.current_item(1) is %d\n", stream.current_item(1)));
-      }
-#endif
-      if (stream.current_item(1) == 0) {
-        default_npce_stub = stream.code_offset();
-#ifndef  PRODUCT
-      if (PrintCompiledCodeAsYouGo) {
-        TTY_TRACE(("Exception found in a omit stack frame method\n"));
-      }
-#endif
-      }
-
-      if (stream.current_item(1) == offset) {
-        stub_offset = stream.code_offset();
-        if (PrintCompiledCodeAsYouGo) {
-          TTY_TRACE(("target stub is 0x%08x\n",stub_offset));
-        }
-        break;
-      }
-    }
-  }
-#endif 
-
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER        
-  for (RelocationReader stream(&method); !stream.at_end(); stream.advance()) {
-    if (stream.is_pre_load_item()) {
-#ifndef  PRODUCT
-      if (PrintCompiledCodeAsYouGo) {
-        TTY_TRACE(("array index stream.code_offset() is %d\t", stream.code_offset()));
-        TTY_TRACE(("stream.current_item(1) is %d\n", stream.current_item(1)));
-      }
-#endif
-      if (stream.current_item(1) == offset) {
-        if (stream.is_pre_load_item()) {
-          is_npe = false;
-        }
-        if (PrintCompiledCodeAsYouGo) {
-          TTY_TRACE_CR(("found a array index out of bound"))
-        }
-        break;
-      }
-    }
-  }
-#endif 
-
-  if (stub_offset != NOT_FOUND ) {
-    stub_offset = stub_offset + code_begin;
-    ucp->uc_mcontext.arm_pc = (unsigned long) stub_offset;
-#ifndef  PRODUCT
-    if(PrintCompiledCodeAsYouGo) {
-      TTY_TRACE(("jump to exception stub target is 0x%08x\n do by Relocation Reader\n", stub_offset));
-    }
-#endif
-    return;
-  }
-
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER        
-  if (!is_npe) {
-    if ( !is_omit_frame) {
-      ucp->uc_mcontext.arm_pc = 
-        (unsigned long)gp_compiler_throw_ArrayIndexOutOfBoundsException_ptr; 
-      ucp->uc_mcontext.arm_r0 = raw_method(). max_locals();
-      return ;
-    } else {
-     ucp->uc_mcontext.arm_pc = 
-      (unsigned long)gp_compiler_throw_ArrayIndexOutOfBoundsException_10_ptr; 
-     ucp->uc_mcontext.arm_r0 = 
-      -raw_method(). size_of_parameters() * JavaStackDirection * BytesPerStackElement;
-    }
-  }
-#endif
-
-  if ( default_npce_stub != NOT_FOUND ) {
-    stub_offset = (int)default_npce_stub + code_begin;
-    ucp->uc_mcontext.arm_pc = (unsigned long) stub_offset;
-#ifndef  PRODUCT
-    if (PrintCompiledCodeAsYouGo) {
-        TTY_TRACE(("jump to default npce  exception stub target is 0x%08x\n do by Relocation Reader\n", stub_offset));
-    }
-#endif
-    return;
-  }
-
-  int max_locals = raw_method().max_locals();
-  ucp->uc_mcontext.arm_pc = (unsigned long) gp_compiler_throw_NullPointerException_ptr;
-  ucp->uc_mcontext.arm_r0 = max_locals;
-  if (PrintCompiledCodeAsYouGo) {
-    TTY_TRACE(("jump to default exception stub target  max_locals %d\ndo by Relocation Reader\n", max_locals));
-  }
-  
-  return;
-
-  TTY_TRACE(("Memory access error\nPlease report the bug\n"));
-  ::exit(1);
-}
-#undef NOT_FOUND
-#endif //ENABLE_NPCE
-
-#if defined(__NetBSD__)
 #define HAVE_SIGINFO 1
-#endif
-
 #if HAVE_SIGINFO
 
 static void print_siginfo(siginfo_t *si) {
@@ -543,17 +410,17 @@ static void print_siginfo(siginfo_t *si) {
     break;
   }
   jvm_fprintf(stderr,
-	      "Fatal signal %s: errno=%d; code=%d; trap=0x%x, addr=%p\n",
-	      name, si->si_errno, si->si_code, si->si_trap, si->si_addr);
+	      "Fatal signal %s: errno=%d; code=%d; addr=%p\n",
+	      name, si->si_errno, si->si_code, si->si_addr);
 }
 
-static void print_ucontext(ucontext_t *uc) {
+static void print_ucontext(void* context) {
+#if defined(__NetBSD__)
+  ucontext_t* uc = (ucontext_t*) context;
   jvm_fprintf(stderr, "UContext dump follows:\n");
   jvm_fprintf(stderr, "uc_flags=%x; ss_sp=%p; ss_size=%d, ss_flags=%x\n",
-	      uc->uc_flags,
+	      (unsigned int) uc->uc_flags,
 	      uc->uc_stack.ss_sp, uc->uc_stack.ss_size, uc->uc_stack.ss_flags);
-
-#if defined(__NetBSD__)
 
   mcontext_t *mc = &uc->uc_mcontext;
   int cnt = 4;
@@ -587,10 +454,47 @@ static void print_ucontext(ucontext_t *uc) {
 #endif // __NetBSD__
 }
 
-static void handle_segv_siginfo(int signo, siginfo_t *info, void *ptr) {
-  print_siginfo(info);
-  print_ucontext((ucontext_t *)ptr);
+#if ENABLE_PAGE_PROTECTION
+extern "C" void interpreter_timer_tick();
+extern "C" void compiler_timer_tick();
+extern "C" void vsf_flush(address* regs);
 
+static inline
+bool protected_page_access(int signo, siginfo_t* info, void* context) {
+  const juint offset = (address)info->si_addr - _protected_page;
+  if (TracePageAccess) {
+    TTY_TRACE_CR(("ACCESS_VIOLATION signaled: offset = %d", offset));
+  }
+
+  CPUContext* ctx = (CPUContext*)context;
+  switch (offset) {
+  case COMPILER_TIMER_TICK_SLOT:
+    vsf_flush(ctx->get_regs());
+    ctx->set_pc((address)compiler_timer_tick);
+    return true;
+  case INTERPRETER_TIMER_TICK_SLOT:
+    ctx->set_pc((address)interpreter_timer_tick);
+    return true;
+  }
+  return false;
+}
+
+#else
+
+static inline
+bool protected_page_access(int signo, siginfo_t* info, void* context) {
+  return false;
+}
+#endif // ENABLE_PAGE_PROTECTION
+
+
+static void handle_segv_siginfo(int signo, siginfo_t *info, void *context) {
+  if (protected_page_access(signo, info, context)) {
+    return;
+  }
+
+  print_siginfo(info);
+  print_ucontext(context);
 #ifndef PRODUCT
   if (!printing_stack) {
     printing_stack = true;
@@ -598,6 +502,7 @@ static void handle_segv_siginfo(int signo, siginfo_t *info, void *ptr) {
     printing_stack = false;
   }
 #endif
+  ::exit(1);
 }
 
 #else  // ! HAVE_SIGINFO
@@ -694,6 +599,191 @@ static void handle_segv_signal(int signo, struct sigcontext sigc) {
 }
 
 #endif // ! HAVE_SIGINFO
+
+#if ( ENABLE_NPCE ||\
+     ( ENABLE_INTERNAL_CODE_OPTIMIZER)) \
+     && ARM_EXECUTABLE
+static void handle_segv_siginfo_npe(int sig, siginfo_t* info, void* ucpPtr) {
+  if (protected_page_access(sig, info, ucpPtr)) {
+    return;
+  }
+
+  struct ucontext* ucp = (struct ucontext *)ucpPtr;
+  unsigned long pc = ucp->uc_mcontext.arm_pc;
+  bool is_npe = true;
+  bool found = false;
+  
+  int default_npce_stub = not_found;
+  int default_array_check_stub = not_found;
+
+  unsigned long heap_high ;
+  unsigned long heap_low  ;
+  if( (unsigned int) _heap_start > (unsigned int) _heap_top ) {
+    heap_high = (unsigned long) _heap_start;
+    heap_low = (unsigned long) _heap_top;
+  } else {
+    heap_high = (unsigned long) _heap_top;
+    heap_low = (unsigned long) _heap_start;
+  }
+
+#ifndef PRODUCT
+  if (VerboseNullPointExceptionThrowing) {
+    TTY_TRACE(("Verbose exception information begin:\n"));	
+    TTY_TRACE(("Heap Status:"));	
+    TTY_TRACE(("[0x%08x,",heap_low));
+    TTY_TRACE(("0x%08x]\n",heap_high));
+  }
+#endif
+
+  if( pc < heap_low || pc > heap_high ) {
+    TTY_TRACE(("Memory access error\nPlease report the bug\n"));
+  }
+  
+  CompiledMethodDesc *cmd = ObjectHeap::method_contain_instruction_of((void *)pc);
+  
+  if( cmd == NULL){
+    TTY_TRACE(("Memory access error\nPlease report the bug\n"));
+    ::exit(1);
+  }
+  
+  CompiledMethod::Raw method = cmd;
+  Method::Raw raw_method = method().method();
+  int code_begin = (int)cmd + CompiledMethod::base_offset();
+  int stub_offset = not_found;
+  int offset = pc - code_begin;
+  int default_stub_offset = not_found;
+
+#ifndef  PRODUCT
+  if (VerboseNullPointExceptionThrowing) {
+    TTY_TRACE(("Method status:\n  name:"));
+    bool renamed;
+    Symbol::Raw n = raw_method().get_original_name(renamed);
+    n().print_symbol_on(tty);
+    TTY_TRACE(("()"));
+    TTY_TRACE((",=>[0x%08x]", code_begin));
+  }
+#endif
+
+  if (VerboseNullPointExceptionThrowing) {
+    TTY_TRACE((",offset[%d]\n", offset));
+  }
+  
+#if ENABLE_NPCE 
+  for (RelocationReader stream(&method); !stream.at_end(); stream.advance()) {
+    if (stream.is_npe_item()) {
+#ifndef  PRODUCT
+      if (VerboseNullPointExceptionThrowing) {
+        TTY_TRACE(("  fail at [%d] should jump to", stream.current(1)));	  	
+        TTY_TRACE(("[%d]\n", stream.code_offset()));
+
+      }
+#endif
+      //if a ldr/str offset is 0 stand for a record of default npe stub
+      if (stream.current(1) == 0) {
+        default_npce_stub = stream.code_offset();
+      }
+
+      //current(1) return the ldr/str offset
+      //if the offset is non zero, the instr must have a correponding 
+      //stub.
+      if (stream.current(1) == offset) {
+        stub_offset = stream.code_offset();
+        if (VerboseNullPointExceptionThrowing) {
+          TTY_TRACE(("  target stub is 0x%08x\n",stub_offset));
+        }
+        break;
+      }
+    }
+  }
+#endif 
+
+#if ENABLE_INTERNAL_CODE_OPTIMIZER        
+  for (RelocationReader stream(&method); !stream.at_end(); stream.advance()) {
+    if (stream.is_pre_load_item()) {
+#ifndef  PRODUCT
+      if (VerboseNullPointExceptionThrowing) {
+        TTY_TRACE((" if  failed at [%d] should jump to", stream.current(1)));	  	
+        TTY_TRACE(("[%d]\t", stream.code_offset()));
+      }
+#endif
+      if (stream.current(1) == 0) {
+        default_array_check_stub = stream.code_offset();
+      }
+      if (!found && (stream.current(1) == offset)) {
+        if (stream.is_pre_load_item()) {
+          is_npe = false;
+        }
+        if (VerboseNullPointExceptionThrowing) {
+          TTY_TRACE_CR(("  found a exception caused index out of bound"))
+        }
+        found = true;
+      }
+    }
+  }
+#endif 
+
+  if (stub_offset != not_found ) {
+    stub_offset = stub_offset + code_begin;
+    ucp->uc_mcontext.arm_pc = (unsigned long) stub_offset;
+#ifndef  PRODUCT
+    if(VerboseNullPointExceptionThrowing) {
+      TTY_TRACE(("  jump to [0x%08x]\n", stub_offset));
+    }
+#endif
+  if(VerboseNullPointExceptionThrowing){
+    TTY_TRACE(("Verbose exception information end\n"));	
+  }	
+    return;
+  }
+
+#if ENABLE_INTERNAL_CODE_OPTIMIZER        
+  if (!is_npe) {
+    if (default_array_check_stub != not_found ) {
+      default_array_check_stub = (int)default_array_check_stub + code_begin;
+      ucp->uc_mcontext.arm_pc = (unsigned long) default_array_check_stub ;	
+      return ;
+    } else {
+      ucp->uc_mcontext.arm_pc = 
+        (unsigned long)gp_compiler_throw_ArrayIndexOutOfBoundsException_ptr; 
+      ucp->uc_mcontext.arm_r0 = raw_method(). max_locals();
+      if(VerboseNullPointExceptionThrowing){	  
+        TTY_TRACE(("Verbose exception information end\n"));		  
+      }
+      return ;
+    }
+  }
+#endif
+
+  if ( default_npce_stub != not_found ) {
+    stub_offset = (int)default_npce_stub + code_begin;
+    ucp->uc_mcontext.arm_pc = (unsigned long) stub_offset;
+#ifndef  PRODUCT
+    if (VerboseNullPointExceptionThrowing) {
+        TTY_TRACE(("  jump to default [0x%08x]\n", stub_offset));
+    }
+#endif
+    if(VerboseNullPointExceptionThrowing){
+      TTY_TRACE(("Verbose exception information end\n"));	
+    }
+    return;
+  }
+
+  int max_locals = raw_method().max_locals();
+  ucp->uc_mcontext.arm_pc = (unsigned long) gp_compiler_throw_NullPointerException_ptr;
+  ucp->uc_mcontext.arm_r0 = max_locals;
+  if (VerboseNullPointExceptionThrowing) {
+    TTY_TRACE(("  jump to fixed stub\n"));
+  }
+  
+  if(VerboseNullPointExceptionThrowing){
+    TTY_TRACE(("Verbose exception information end\n"));	
+  }
+  return;
+
+  TTY_TRACE(("Memory access error\nPlease report the bug\n"));
+  ::exit(1);
+}
+#endif //ENABLE_NPCE
 
 
 #if NEED_CLOCK_TICKS
@@ -811,7 +901,6 @@ static void ignoreit() {}
 #endif
 
 extern "C" void jvm_set_vfp_fast_mode();
-
 void Os::initialize() {
 #if ENABLE_ARM_VFP && !CROSS_GENERATOR
   if (RunFastMode) {
@@ -842,7 +931,9 @@ void Os::initialize() {
   init_jvm_chunk_manager();
 #endif
 
-#if !ENABLE_TIMER_THREAD || !defined(PRODUCT)
+  int sa_flags = SA_RESTART;
+
+#if !defined(ARM)
   // force execution of signals on separate stack, as otherwise
   // results can be unpredictable if we'll modify stack in
   // Java heap and VM will not know. We handle signals either when
@@ -855,12 +946,12 @@ void Os::initialize() {
 
   static char alt_stack_buf[ALT_STACK_SIZE];
   stack_t alt_stack;
-
   alt_stack.ss_sp = alt_stack_buf;
   alt_stack.ss_size = ALT_STACK_SIZE;
   alt_stack.ss_flags = 0;
   ::jvm_sigaltstack(&alt_stack, NULL);
-#endif
+  sa_flags |= SA_ONSTACK;
+#endif // !defined(ARM)
 
 #if ENABLE_TIMER_THREAD
   main_thread_handle = pthread_self();
@@ -871,29 +962,26 @@ void Os::initialize() {
   static struct sigaction vtalrm_action;
   ::jvm_sigaction (SIGVTALRM, NULL, &vtalrm_action);
   vtalrm_action.sa_handler = (void (*)(int)) handle_vtalrm_signal_stub;
-  vtalrm_action.sa_flags = SA_RESTART | SA_ONSTACK;
+  vtalrm_action.sa_flags = sa_flags | SA_SIGINFO;
   ::jvm_sigaction (SIGVTALRM, &vtalrm_action, NULL);
 #endif // ENABLE_TIMER_THREAD
 
   // setup handler for SEGV - it prints native registers and Java backtrace
-#if ( ENABLE_NPCE || ( ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER ) ) && ARM && !CROSS_GENERATOR
+#if ( ENABLE_NPCE || ( ENABLE_INTERNAL_CODE_OPTIMIZER ) ) && ARM_EXECUTABLE
   static struct sigaction segv_action;
   ::jvm_sigaction(SIGSEGV, NULL, &segv_action);
-  segv_action.sa_sigaction = handle_segv_signal_npe;
-  segv_action.sa_flags = SA_RESTART | SA_SIGINFO;
-#else
-#if HAVE_SIGINFO
+  segv_action.sa_sigaction = handle_segv_siginfo_npe;
+  segv_action.sa_flags = sa_flags | SA_SIGINFO;
+#elif HAVE_SIGINFO
   struct sigaction segv_action;
   segv_action.sa_sigaction = handle_segv_siginfo;
-  segv_action.sa_flags = SA_RESTART | SA_NODEFER | SA_RESETHAND | SA_ONSTACK |
-                         SA_SIGINFO;
+  segv_action.sa_flags = sa_flags | SA_SIGINFO;
   sigemptyset(&segv_action.sa_mask);
 #else
   static struct sigaction segv_action;
   ::jvm_sigaction(SIGSEGV, NULL, &segv_action);
   segv_action.sa_handler = (void (*)(int)) handle_segv_signal;
-  segv_action.sa_flags = SA_RESTART | SA_NODEFER | SA_RESETHAND | SA_ONSTACK;
-#endif
+  segv_action.sa_flags = sa_flags;
 #endif // ENABLE_NPCE
 
   ::jvm_sigaction(SIGSEGV, &segv_action, NULL);
@@ -904,7 +992,7 @@ void Os::initialize() {
   static struct sigaction other_action;
   sigemptyset(&other_action.sa_mask);
   other_action.sa_handler = (void (*)(int)) handle_other_signals;
-  other_action.sa_flags = SA_RESTART | SA_ONSTACK;
+  other_action.sa_flags = sa_flags;
 
   ::jvm_sigaction(SIGABRT, &other_action, NULL);
   ::jvm_sigaction(SIGQUIT, &other_action, NULL);
@@ -912,6 +1000,7 @@ void Os::initialize() {
   ::jvm_sigaction(SIGHUP,  &other_action, NULL);
   ::jvm_signal(SIGPIPE, SIG_IGN);
 }
+
 
 /*
  * The Os::dispose method needs to correctly clean-up
@@ -999,7 +1088,6 @@ bool Os::check_compiler_timer() {
   return true;
 #endif
 }
-
 
 static inline void rt_tick_event() {
   real_time_tick(TickInterval);

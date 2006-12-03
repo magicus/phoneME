@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -54,8 +55,6 @@ void BinaryObjectWriter::begin_object(Oop *object JVM_TRAPS) {
   (void)object;
 #if !defined(PRODUCT) || ENABLE_MONET_DEBUG_DUMP
   const ROMWriter::BlockType type = writer()->block_type_of(object JVM_CHECK);
-  GUARANTEE(type != ROMWriter::DATA_BLOCK,
-            "DATA block found while generating Monet image.");
 
   GUARANTEE(type == _current_type, "sanity");
   GUARANTEE(!ROM::system_contains(object->obj()), "sanity");
@@ -118,7 +117,8 @@ void BinaryObjectWriter::put_reference(Oop *owner, int offset, Oop *object
         if (!ROM::system_text_contains(object->obj())) {
 #if ENABLE_LIB_IMAGES
           if (ROM::in_any_loaded_bundle_of_current_task(object->obj())) {
-            writer()->writebinary_int_ref(Task::current()->encode_reference((int)object->obj()));
+            writer()->writebinary_lib_int_ref(
+                 Task::current()->encode_reference((int)object->obj()));
           } else {
           // A reference to another objects in the binary ROM TEXT block
           GUARANTEE(oop_offset != -1, "Offset not set");
@@ -160,7 +160,15 @@ void BinaryObjectWriter::put_reference(Oop *owner, int offset, Oop *object
             tty->print_cr("");
           }
 #endif
-          encode_heap_reference(object);
+          if (object->equals(Universe::empty_obj_array())) {
+            int encoded_value = (int)Universe::rom_text_empty_obj_array()->obj();
+            GUARANTEE(ROM::system_text_contains((OopDesc*)encoded_value), "sanity");
+            writer()->writebinary_const_int_ref((OopDesc*)encoded_value);
+          } else { 
+            GUARANTEE(_current_type != ROMWriter::TEXT_BLOCK,
+              "Heap references are not allowed in TEXT block");
+            writer()->writebinary_int_ref(ROM::encode_heap_reference(object));
+          }
         }
       }
       break;
@@ -171,80 +179,6 @@ void BinaryObjectWriter::put_reference(Oop *owner, int offset, Oop *object
     writer()->set_eol_comment_object(object);
   }
   _offset += sizeof(int);
-}
-
-void BinaryObjectWriter::encode_heap_reference(Oop *object) {
-  FarClass blueprint = object->blueprint();
-  InstanceSize instance_size = blueprint.instance_size();
-  const juint is_heap = juint(ROMWriter::HEAP_BLOCK) << ROM::block_type_start;
-  int encoded_value = int(is_heap) |
-        ((-instance_size.value()) << ROM::instance_size_start) |
-        (1 << ROM::flag_bit);
-
-  switch (instance_size.value()) {
-  default:
-  case InstanceSize::size_compiled_method:
-  case InstanceSize::size_type_array_1:
-  case InstanceSize::size_type_array_2:
-  case InstanceSize::size_type_array_4:
-  case InstanceSize::size_type_array_8:
-  case InstanceSize::size_method:
-  case InstanceSize::size_far_class:
-  case InstanceSize::size_constant_pool:
-  case InstanceSize::size_stackmap_list:
-  case InstanceSize::size_class_info:
-  case InstanceSize::size_symbol:
-  case InstanceSize::size_generic_near:
-  case InstanceSize::size_mixed_oop:
-  case InstanceSize::size_obj_near:
-    tty->print_cr("BinaryObjectWriter::encode_heap_ref: instance_size 0x%x", 
-                  instance_size.value());
-    SHOULD_NOT_REACH_HERE();
-    return;
-  case InstanceSize::size_obj_array:
-    if (object->equals(Universe::empty_obj_array())) {
-      // Special case: Universe::empty_obj_array() is in heap, but it might
-      // be referenced by a method that's destined in binary_text, so
-      // we'll change the reference to Universe::rom_text_empty_obj_array()
-      encoded_value = (int)Universe::rom_text_empty_obj_array()->obj();
-      GUARANTEE(ROM::system_text_contains((OopDesc*)encoded_value), "sanity");
-      writer()->writebinary_const_int_ref((OopDesc*)encoded_value);
-      return;
-    } else {
-      SHOULD_NOT_REACH_HERE();
-    }
-    break;
-#if ENABLE_ISOLATES
-  case InstanceSize::size_task_mirror:
-    {
-      TaskMirror *tm = (TaskMirror *)object;
-      GUARANTEE(tm->equals(Universe::task_class_init_marker()), "sanity");
-      JavaClass::Raw jc = tm->containing_class();
-      encoded_value |= (jc().class_id() << ROM::type_start);
-    }
-    break;
-#endif
-  case InstanceSize::size_obj_array_class:
-  case InstanceSize::size_type_array_class:
-  case InstanceSize::size_instance_class:
-    {
-      JavaClass *jc = (JavaClass *)object;
-      encoded_value |= (jc->class_id() << ROM::type_start);
-    }
-    break;
-
-  case InstanceSize::size_java_near:
-    {
-      JavaNear *jn = (JavaNear *)object;
-      ClassInfo cl = jn->class_info();
-      encoded_value |= (cl.class_id() << ROM::type_start);
-    }
-    break;
-  }
-  writer()->writebinary_int_ref(encoded_value);
-
-  GUARANTEE(_current_type != ROMWriter::TEXT_BLOCK,
-            "Heap references are not allowed in TEXT block");
 }
 
 void BinaryObjectWriter::put_int(Oop *owner, jint value JVM_TRAPS) {
@@ -330,7 +264,15 @@ void BinaryObjectWriter::put_method_symbolic(Method *method, int offset
   } else if (offset == Method::variable_part_offset()) {
     put_method_variable_part(method JVM_CHECK);
   } else if (offset == Method::heap_execution_entry_offset()) {
-    writer()->writebinary_symbolic((address)method->int_field(offset));
+#if USE_AOT_COMPILATION
+    if (method->has_compiled_code()) {
+      CompiledMethod cm = method->compiled_code();
+      writer()->writebinary_compiled_code_reference(&cm JVM_CHECK);
+    } else 
+#endif
+    {
+      writer()->writebinary_symbolic((address)method->int_field(offset));
+    }
   } else {
     // We're writing the bytecodes
     writer()->writebinary_int(method->int_field(offset));
@@ -371,6 +313,12 @@ void BinaryObjectWriter::put_method_variable_part(Method *method JVM_TRAPS) {
 
 bool BinaryObjectWriter::has_split_variable_part(Method *method) {
 #if USE_IMAGE_MAPPING
+#if USE_AOT_COMPILATION
+  if (GenerateROMImage && method->has_compiled_code()) {
+    return false;
+  }
+#endif
+
   // The method may be in a read-only mmap'ed region, so we must put the
   // variable part in a separate, writeable block
   return !method->is_impossible_to_compile();

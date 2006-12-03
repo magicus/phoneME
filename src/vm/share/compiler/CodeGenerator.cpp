@@ -1,4 +1,5 @@
 /*
+ *    
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -67,11 +68,11 @@ void CodeGenerator::store_to_object(Value& value, Value& object, jint offset,
                                     bool null_check JVM_TRAPS) {
   const BasicType type = value.type();
   if (null_check) {
-#if ENABLE_NPCE && ARM
+#if ENABLE_NPCE
     if(need_null_check(object)){
-      maybe_null_check_by_signal_quick(object, type JVM_CHECK);
+      maybe_null_check_by_npce(object, false, true, type JVM_CHECK);
       FieldAddress address(object, offset, type);
-      store_to_address_safe(value, type, address);
+      store_to_address_and_record_offset_of_exception_instr(value, type, address);
       return;
     }
 #else
@@ -102,14 +103,21 @@ void CodeGenerator::store_to_array(Value& value, Value& array, Value& index) {
 #endif
 void CodeGenerator::check_free_space(JVM_SINGLE_ARG_TRAPS) {
   if (has_overflown_compiled_method()) {
-    Compiler::_failure = Compiler::out_of_compiled_code_buffer;
     Throw::out_of_memory_error(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
   }
 }
 
 void CodeGenerator::ensure_sufficient_stack_for(int index, BasicType kind) {
   int adjusted_index = index + (is_two_word(kind) ? 1 : 0);
-  int max_index = method()->max_execution_stack_count() -
+  const int max_execution_stack_count = 
+    Compiler::root()->method()->max_execution_stack_count();
+
+  int inliner_stack_count = 2;
+#if ENABLE_INLINE
+  inliner_stack_count += 3;
+#endif
+
+  int max_index = max_execution_stack_count + inliner_stack_count -
     Compiler::current()->num_stack_lock_words() - 1;
   GUARANTEE(adjusted_index <= max_index || 
             method()->is_native() || method()->is_abstract(), 
@@ -146,6 +154,11 @@ void CodeGenerator::go_to_interpreter(JVM_SINGLE_ARG_TRAPS) {
 void CodeGenerator::uncommon_trap(JVM_SINGLE_ARG_TRAPS) {
   COMPILER_COMMENT(("Uncommon trap"));
 
+  if (GenerateROMImage) {
+    // We can't deal with uncommon traps in precompiled code.
+    Compiler::abort_active_compilation(false JVM_THROW);
+  }
+
   if (Compiler::omit_stack_frame()) {
     // Cannot deoptimize when the frame is omitted.
     // Must abort current compilation discarding any generated code.
@@ -167,30 +180,17 @@ void CodeGenerator::uncommon_trap(JVM_SINGLE_ARG_TRAPS) {
 }
 
 void CodeGenerator::osr_entry(bool force JVM_TRAPS) {
+  GUARANTEE(!Compiler::is_inlining(),
+            "OSR stubs not supported for inlined methods");
+
   if (!Compiler::omit_stack_frame() &&
-      !CROSS_GENERATOR && (force || (!Compiler::is_in_loop()))) {
+      !GenerateROMImage && (force || (!Compiler::is_in_loop()))) {
     // Make sure it's possible to conform to this entry.
     frame()->conformance_entry(false);
-#if ENABLE_CSE
-#ifndef PRODUCT
-      if(GenerateCompilerComments && PrintCompiledCodeAsYouGo) {
-        TTY_TRACE_CR(("clear notation for osr entry bci =%d", Compiler::current()->bci()))
-        TTY_TRACE_CR(("osr is  %s",VirtualStackFrame::osr_passable()?"passable":"un-passable" ))
-      }
-#endif
-      VirtualStackFrame::clear_cse_status();
-    
-      if (VirtualStackFrame::osr_passable()) {
-        RegisterAllocator::clear_notation(
-              VirtualStackFrame::osr_unkilled_regs()
-         );       
-      } else {
 
-        RegisterAllocator::init_notation();
-      }
-      VirtualStackFrame::set_osr_unpassable();
-#endif
-
+    //cse
+    frame()->wipe_notation_for_osr_entry();
+	
     COMPILER_COMMENT(("OSR entry"));
     Label osr_entry;
     bind(osr_entry);
@@ -622,7 +622,7 @@ void CodeGenerator::branch_if(BytecodeClosure::cond_op condition,
 }
 
 bool CodeGenerator::is_inline_exception_allowed(int rte JVM_TRAPS) {
-  Method*m = method();
+  Method* m = Compiler::root()->method();
   bool has_monitors = m->access_flags().is_synchronized() ||
                       m->access_flags().has_monitor_bytecodes();
   if (has_monitors) {
@@ -654,19 +654,11 @@ void CodeGenerator::maybe_null_check(Value& value JVM_TRAPS) {
     }
   }
 }
-#if ENABLE_NPCE && ARM
-void CodeGenerator::maybe_null_check_by_signal(Value& value,  bool fakeldr JVM_TRAPS) {
-  if (need_null_check(value)) {
-    null_check_by_signal(value, fakeldr JVM_CHECK);
-    // Any other location using the same register can also have its
-    // nonnull indication set
-    frame()->set_value_must_be_nonnull(value);
-  }
-}
 
-void CodeGenerator::maybe_null_check_by_signal_quick(Value& value,BasicType type JVM_TRAPS) {
+#if ENABLE_NPCE
+void CodeGenerator::maybe_null_check_by_npce(Value& value, bool fakeldr, bool is_quick, BasicType type_of_data JVM_TRAPS) {
   if (need_null_check(value)) {
-    null_check_by_signal_quick(value, type JVM_CHECK);
+    null_check_by_npce(value, fakeldr, is_quick, type_of_data JVM_CHECK);
     // Any other location using the same register can also have its
     // nonnull indication set
     frame()->set_value_must_be_nonnull(value);
@@ -684,6 +676,37 @@ void CodeGenerator::move(Value& dst, ExtendedValue& src, Condition cond) {
   } else {
     // XValue represents a local still in memory
     load_from_location(dst, src.index(), cond);
+  }
+}
+
+void CodeGenerator::branch_if_do(BytecodeClosure::cond_op condition,
+                                 Value& op1, Value& op2, 
+                                 int destination JVM_TRAPS) {
+  cmp_values(op1, op2, condition);
+  conditional_jump(condition, destination, true JVM_NO_CHECK_AT_BOTTOM);
+}
+
+void CodeGenerator::conditional_jump(BytecodeClosure::cond_op condition,
+                                     int destination,
+                                     bool assume_backward_jumps_are_taken
+                                     JVM_TRAPS) {
+  if ((assume_backward_jumps_are_taken && destination <= bci()) ||
+      Compiler::current()->is_branch_taken(bci())) {
+    Label fall_through;
+    conditional_jump_do(BytecodeClosure::negate(condition), fall_through);
+    COMPILER_COMMENT(("Creating continuation for fallthrough to bci = %d",
+                      bci() + Bytecodes::length_for(method(), bci())));
+    CompilationContinuation::insert(
+                        bci() + Bytecodes::length_for(method(), bci()),
+                        fall_through JVM_CHECK);
+    branch(destination JVM_NO_CHECK_AT_BOTTOM);
+  } else {
+    Label branch_taken;
+    conditional_jump_do(condition, branch_taken);
+    COMPILER_COMMENT(("Creating continuation for target bci = %d", 
+                      destination));
+    CompilationContinuation::insert(destination,
+                                    branch_taken JVM_NO_CHECK_AT_BOTTOM);
   }
 }
 
@@ -989,14 +1012,7 @@ void ForwardBranchOptimizer::load_local(BasicType kind, int index JVM_TRAPS)  {
   ExtendedValue* current_load = push_simple(kind);
   if (current_load != NULL) { 
     VirtualStackFrame* frame = _cg->frame();
-#if ENABLE_INLINE && ARM
-    if (Compiler::current()->is_inline()>0) {
-      int new_local_base = Compiler::current()->caller_virtual_stack_pointer() 
-                                        - Compiler::current()->method()->size_of_parameters();
-      index = new_local_base + index + 1;
-    }
-#endif
-    frame->value_at(*current_load, index);
+    frame->value_at(*current_load, Compiler::current_local_base() + index);
   }
 }
 
@@ -1040,14 +1056,7 @@ void ForwardBranchOptimizer::store_local(BasicType /*kind*/, int index JVM_TRAPS
     // Optimize Load + Store as if it were an if-then-else
     VirtualStackFrame* frame = _cg->frame();
     // TRUE:   local = local
-#if ENABLE_INLINE && ARM
-    if (Compiler::current()->is_inline()>0) {
-      int new_local_base = Compiler::current()->caller_virtual_stack_pointer() 
-                                        - Compiler::current()->method()->size_of_parameters();
-      index = new_local_base + index + 1;
-    }
-#endif
-    frame->value_at(_load_true, index);
+    frame->value_at(_load_true, Compiler::current_local_base() + index);
     frame->clear(index);
     _etc_true_start = bci();
     // We fix things up so we look like if-then-else
@@ -1062,14 +1071,7 @@ void ForwardBranchOptimizer::increment_local_int(int index, jint offset JVM_TRAP
   if (_state == Start && _next_bci == _final_bci) { 
     // Optimize this if it is the sole instruction
     _next_state = Iinc;
-#if ENABLE_INLINE && ARM
-    if (Compiler::current()->is_inline()>0) {
-      int new_local_base = Compiler::current()->caller_virtual_stack_pointer() 
-                                        - Compiler::current()->method()->size_of_parameters();
-      index = new_local_base + index + 1;
-    }
-#endif
-    _iinc_index = index;
+    _iinc_index = Compiler::current_local_base() + index;
     _iinc_delta = offset;
   } else {
     simple_instruction(false);

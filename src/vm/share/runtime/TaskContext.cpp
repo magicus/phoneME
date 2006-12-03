@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -68,36 +69,22 @@ void TaskContext::init(int task_id) {
   set_current_task(task_id);
 }
 
-
-TaskGCContext::TaskGCContext(OopDesc *object) {
-#if ENABLE_ISOLATES
-  if (ObjectHeap::contains(object)) {
-    if (TraceTaskContext) {
-      tty->print_cr("TGCO: 0x%x", (int)object);
-    }
-    init(ObjectHeap::owner_task_id(object));
-  } else if (ROM::system_contains(object)) {
+TaskGCContext::TaskGCContext(const OopDesc* const object) {
+  if (ROM::system_contains(object)) {
     if (TraceTaskContext) {
       tty->print_cr("TGCOROM: 0x%x", (int)object);
     }
     _status = VALID;
     return;
   }
-#if USE_LARGE_OBJECT_AREA
-  else {
-    const LargeObject* p = LargeObject::find(object);
-    GUARANTEE( p != NULL, "sanity" );
+
+  const unsigned task = ObjectHeap::owner_task_id( object );
+  if( task < MAX_TASKS ) {
     if (TraceTaskContext) {
-      tty->print_cr("TGCOL: %p", object);
+      tty->print_cr("TGCO: %p", object);
     }
-    init(p->task());
+    init( task );
   }
-#else
-  // IMPL_NOTE: image mapping code here
-#endif
-#else
-  (void)object;
-#endif
 }
 
 void TaskGCContext::init(int task_id) {

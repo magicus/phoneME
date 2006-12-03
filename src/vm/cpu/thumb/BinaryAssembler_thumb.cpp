@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -81,7 +82,8 @@ void BinaryAssembler::save_state(CompilerState *compiler_state) {
 }
 
 ReturnOop
-BinaryAssembler::LiteralPoolElement::allocate(Oop* oop, int imm32 JVM_TRAPS) {
+BinaryAssembler::LiteralPoolElement::allocate(const Oop* oop, 
+                                              int imm32 JVM_TRAPS) {
 
   if (ObjectHeap::free_memory_for_compiler_without_gc() > allocation_size()) {
     // We can allocate only if we have enough space -- there are
@@ -392,7 +394,7 @@ void BinaryAssembler::access_literal_pool(Register rd,
   literal->set_label(L);
 }
     
-void BinaryAssembler::ldr_literal(Register rd, Oop* oop, int imm32,
+void BinaryAssembler::ldr_literal(Register rd, const Oop* oop, int imm32,
                                   Condition cond) {
   SETUP_ERROR_CHECKER_ARG;
   LiteralPoolElement::Raw e = find_literal(oop, imm32 JVM_CHECK);
@@ -404,7 +406,7 @@ void BinaryAssembler::ldr_literal(Register rd, Oop* oop, int imm32,
   }
 }
 
-void BinaryAssembler::ldr_oop(Register rd, Oop* oop, Condition cond) {
+void BinaryAssembler::ldr_oop(Register rd, const Oop* oop, Condition cond) {
   if (oop->is_null()) {
     // Java null is 0.
     NearLabel skip_mov;
@@ -448,7 +450,7 @@ void BinaryAssembler::ldr_big_integer(Register rd, int imm32, Condition cond){
   ldr_literal(rd, &null_oop, imm32, cond);
 }    
 
-ReturnOop BinaryAssembler::find_literal(Oop* oop, int imm32 JVM_TRAPS){
+ReturnOop BinaryAssembler::find_literal(const Oop* oop, int imm32 JVM_TRAPS){
 
   {
     AllocationDisabler allocation_not_allowed_in_this_block;
@@ -643,7 +645,7 @@ void BinaryAssembler::write_literal(LiteralPoolElement* literal) {
     if (ObjectHeap::contains_moveable(oop.obj())) {
       // GC needs to know about these
       GUARANTEE(literal->literal_int() == 0, "Can't yet handle oop + offset");
-      _relocation.emit(Relocation::oop_type, _code_offset);
+      _relocation.emit_oop(_code_offset);
     } else { 
 #ifndef PRODUCT
       // Let the disassembler know that this is an oop
@@ -720,7 +722,7 @@ void BinaryAssembler::comment(const char* fmt, ...) {
   if (PrintCompiledCodeAsYouGo) {
     tty->print_cr(";; %s", buffer);
   } else if (GenerateCompilerComments) {
-    _relocation.emit_comment(buffer, _code_offset);
+    _relocation.emit_comment(_code_offset, buffer);
   }
 }
 
@@ -1009,9 +1011,10 @@ void BinaryAssembler::oop_write_barrier(Register dst, Register tmp1, Register tm
   }
 }
 
-void BinaryAssembler::ensure_compiled_method_space() {
-  if (!has_room_for(1024)) {
-    const int delta = 1024;
+void BinaryAssembler::ensure_compiled_method_space(int delta) {
+  delta += 256;
+  if (!has_room_for(delta)) {
+    delta = align_allocation_size(delta + (1024 - 256));
     if (compiled_method()->expand_compiled_code_space(delta, 
                                                       relocation_size())) {
       _relocation.move(delta);

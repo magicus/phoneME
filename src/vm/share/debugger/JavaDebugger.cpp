@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -993,7 +994,7 @@ bool JavaDebugger::initialize_java_debugger_main(JVM_SINGLE_ARG_TRAPS) {
 
 void JavaDebugger::initialize_java_debugger_task(JVM_SINGLE_ARG_TRAPS) {
 
-  if (is_debugger_option_on() && is_debug_isolate_option_on()) {
+  if (is_debugger_option_on()) {
     (void) JavaDebugger::initialize_java_debugger(JVM_SINGLE_ARG_CHECK);
   }
 }
@@ -1013,14 +1014,14 @@ bool JavaDebugger::initialize_java_debugger(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_ISOLATES
       {
         // We may be shutting down this task so don't create a transport
-        int task_id = Thread::current()->task_id();
+        int task_id = TaskContext::current_task_id();
         if (task_id == -1) {
           return false;
         }
         // set transport in the task
-        Task::Raw task = Task::get_task(Thread::current()->task_id());
+        Task::Raw task = Task::current();
         task().set_transport(&t);
-        t().set_task_id(Thread::current()->task_id());
+        t().set_task_id(task_id);
       }
 #endif
       // append to list of transports

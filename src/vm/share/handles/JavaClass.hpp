@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -29,7 +30,7 @@
 
 class JavaClass: public FarClass {
  public:
-  HANDLE_DEFINITION(JavaClass, FarClass);
+  HANDLE_DEFINITION_CHECK(JavaClass, FarClass);
   ~JavaClass() {}
   enum AccessType {
     acc_private         = 0,
@@ -107,65 +108,6 @@ class JavaClass: public FarClass {
   void clear_subtype_cache_2() {
     obj_field_clear(subtype_cache_2_offset());
   }
-#if ENABLE_INLINE && ARM
-
- void set_inlined() {
-   if (Universe::inlined_count == Universe::inlined_limit) {
-
-      Universe::inlined_limit <<= 1;
-      juint* p = (juint*) jvm_malloc(Universe::inlined_limit * sizeof(jint));
-      GUARANTEE(p, "sanity");
-      jvm_memcpy(p, Universe::inlined_class_ids, (Universe::inlined_limit >> 1) *sizeof(juint));
-      jvm_free(Universe::inlined_class_ids);
-      Universe::inlined_class_ids = p;
-
-   }
-   Universe::inlined_class_ids[Universe::inlined_count++]
-    = (class_id() << INLINED_CLASS_BITS) | CompiledMethodCache::get_upb() + 1;
- }
-
-bool is_inlined() {
-  for( int i = 0 ; i < Universe::inlined_count ; i++) {
-    if ((Universe::inlined_class_ids[i] >> INLINED_CLASS_BITS) == class_id() && 
-      (Universe::inlined_class_ids[i] & METHOD_INDEX_MASK) 
-      == (CompiledMethodCache::get_upb() + 1)) 
-    {
-      return  true;
-    }
-  }
-  return false;
-}
- void set_is_overridden()  {
-
-   if (Universe::overridden_count == Universe::overridden_Limit) {
-      Universe::overridden_Limit <<= 1;
-      jushort* p = (jushort*) jvm_malloc(Universe::overridden_Limit * sizeof(jshort));
-      GUARANTEE(p, "sanity");
-      jvm_memcpy(p, Universe::overridden_class_ids, 
-        (Universe::overridden_Limit >> 1) *sizeof(jshort));
-      jvm_free(Universe::overridden_class_ids);
-      Universe::overridden_class_ids = p;
-   }
-
-
-   Universe::overridden_class_ids[Universe::overridden_count++] 
-    = class_id();
-    return;
- }
-
- bool is_overridden() const {
-  if (is_romized())
-  {
-    return true;
-  }
-  for( int i = 0 ; i < Universe::overridden_count ; i++) {
-    if (Universe::overridden_class_ids[i] == class_id()) {
-      return  true;
-    }
-  }
-  return false;
- }
-#endif
 
 #if ENABLE_ISOLATES
   // Static variables are embedded in the TaskMirror object
@@ -195,12 +137,12 @@ bool is_inlined() {
 
 public:  
   // Return without cleaning of barrier mark. Caller must take care of that.
-  TaskMirrorDesc* task_mirror_desc() {
+  TaskMirrorDesc* task_mirror_desc() const {
     return (TaskMirrorDesc*)Universe::task_mirror_from_id(class_id());
   }
 
   // Task mirror of current task. Must be called only if mirror is initialized
-  ReturnOop task_mirror() {
+  ReturnOop task_mirror() const {
     GUARANTEE(Universe::is_bootstrapping() ||
               TaskMirrorDesc::is_initialized_mirror(task_mirror_desc()), 
               "Must not be a barrier");
@@ -208,13 +150,14 @@ public:
   }
 
   // Task mirror of current task.
-  ReturnOop task_mirror_no_check() {
+  ReturnOop task_mirror_no_check() const {
     return (OopDesc*)task_mirror_desc();
   }
 
-  ReturnOop real_task_mirror();
+  ReturnOop real_task_mirror() const;
 
   ReturnOop setup_task_mirror(int static_size,
+                              int vtable_length,
                               bool set_init_barrier JVM_TRAPS);
 
   ReturnOop java_mirror();
@@ -355,6 +298,11 @@ public:
 #else
   bool is_hidden_in_profile() const { return false; }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
+#if ENABLE_COMPILER_TYPE_INFO
+  // Returns true if this class doesn't have any subtypes except for itself
+  bool is_final_type() const;
+#endif
 
   bool has_finalizer()     const { return access_flags().has_finalizer(); }
   bool has_vanilla_constructor() const {

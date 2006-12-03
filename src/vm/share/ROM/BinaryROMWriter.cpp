@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -93,7 +94,6 @@ void BinaryROMWriter::start(FilePath *input, FilePath* output, int flags
     Throw::error(romization_requires_fresh_vm JVM_THROW);
   }
 #endif
-
   if (!cancelled()) {
     start0(input, output, flags JVM_NO_CHECK);
   }
@@ -117,7 +117,7 @@ void BinaryROMWriter::start0(FilePath *input, FilePath* output, int flags
   // active.
   jvm_memset(_romwriter_oops, 0, sizeof(_romwriter_oops));
   _optimizer.init_handles();
-  set_variable_parts_count(0);
+  set_variable_parts_count(0);  
 
   // Binary ROM image does not work with EmbeddedROMHashTables
   EmbeddedROMHashTables = false;
@@ -167,7 +167,7 @@ void BinaryROMWriter::start0(FilePath *input, FilePath* output, int flags
 
 void BinaryROMWriter::add_input_jar_to_classpath(FilePath *input JVM_TRAPS) {
   UsingFastOops fast_oops;
-  ObjArray::Fast old_classpath = Task::current()->classpath();
+  ObjArray::Fast old_classpath = Task::current()->app_classpath();
 
   int new_length = old_classpath().length() + 1;
   ObjArray::Fast new_classpath = Universe::new_obj_array(new_length JVM_CHECK);
@@ -177,7 +177,7 @@ void BinaryROMWriter::add_input_jar_to_classpath(FilePath *input JVM_TRAPS) {
                        old_classpath().length() JVM_MUST_SUCCEED);
   new_classpath().obj_at_put(new_length-1, input);
 
-  Task::current()->set_classpath(&new_classpath);
+  Task::current()->set_app_classpath(&new_classpath);
 }
 
 void BinaryROMWriter::cancel() {
@@ -405,7 +405,6 @@ void BinaryROMWriter::stream_object(Oop* object JVM_TRAPS) {
   object->obj()->oops_do(generate_fast_fieldmap_by_oops_do);
   if (object->is_method()) {
     AZZERT_ONLY(Method::Raw method = object->obj());
-    GUARANTEE(!method().has_compiled_code(), "not supported in Monet");
     GUARANTEE(!method().is_quick_native(), "not supported in Monet");
 
     current_fieldmap()->byte_at_put(Method::heap_execution_entry_offset()/4, 2);
@@ -598,6 +597,12 @@ void BinaryROMWriter::init_streams() {
   
   int rom_bundle_id = Os::java_time_millis();
   WRITE_HEADER_FIELD_INT(rom_bundle_id); // ROM_BUNDLE_ID
+#if ENABLE_LIB_IMAGES
+  WRITE_HEADER_FIELD_INT(flags() & JVM_GENERATE_SHARED_IMAGE);
+  if (flags() & JVM_GENERATE_SHARED_IMAGE) printf("Generate shared!\n");
+#else
+  WRITE_HEADER_FIELD_INT(false/*no Shared images supported*/);
+#endif
 }
 
 void BinaryROMWriter::close_streams() {
@@ -625,8 +630,6 @@ void BinaryROMWriter::open_output_file() {
   // will ideally be loaded.
 #if USE_IMAGE_MAPPING
   _image_target_location = (int)OsFile_ImagePreferredAddress(name);
-#elif ENABLE_LIB_IMAGES
-  _image_target_location = 0;
 #else
   // If we use _heap_start, the image's TEXT will block will require
   // no relocation when loaded into an SVM mode VM. See
@@ -763,13 +766,7 @@ void BinaryROMWriter::calculate_layout(JVM_SINGLE_ARG_TRAPS) {
   }
 
   _optimizer.initialize_hashtables(&rom_symbol_table, &rom_string_table 
-                                    JVM_NO_CHECK_AT_BOTTOM);
-  //IMPL_NOTE: requires refactoring  
-#if ENABLE_LIB_IMAGES
-  writebinary_int(binary_referenced_bundles_addr()); // ROM_BUNDLE_OFFSET
-#else 
-  writebinary_int(0); //NOT USED
-#endif
+                                    JVM_NO_CHECK_AT_BOTTOM);  
 }
 
 
@@ -789,9 +786,17 @@ void BinaryROMWriter::write_objects(JVM_SINGLE_ARG_TRAPS) {
   int adj_text_block_size   = binary_text_block_size()   + BINARY_HEADER_SIZE;
 
   // (1) Write the binary ROM image header data
+#if ENABLE_LIB_IMAGES
+  WRITE_HEADER_FIELD_REF(binary_referenced_bundles_addr()); // ROM_BUNDLE_OFFSET
+#else 
+  writebinary_int(0); //NOT USED
+#endif
   WRITE_HEADER_FIELD_REF(adj_text_block_offset);
   WRITE_HEADER_FIELD_REF(binary_symbol_table_addr());
   WRITE_HEADER_FIELD_REF(binary_string_table_addr());
+#if USE_AOT_COMPILATION
+  WRITE_HEADER_FIELD_REF(binary_compiled_method_table_addr());
+#endif
   WRITE_HEADER_FIELD_REF(binary_method_variable_parts_addr());
   WRITE_HEADER_FIELD_REF(binary_persistent_handles_addr());
   WRITE_HEADER_FIELD_REF(binary_heap_block_addr());
@@ -802,6 +807,9 @@ void BinaryROMWriter::write_objects(JVM_SINGLE_ARG_TRAPS) {
   WRITE_HEADER_FIELD_INT(adj_text_block_size);
   WRITE_HEADER_FIELD_INT(binary_symbol_table_num_buckets());
   WRITE_HEADER_FIELD_INT(binary_string_table_num_buckets());
+#if USE_AOT_COMPILATION
+  WRITE_HEADER_FIELD_INT(binary_compiled_method_table_size());
+#endif
   WRITE_HEADER_FIELD_INT(variable_parts_size);
   WRITE_HEADER_FIELD_INT(binary_persistent_handles_size());
   WRITE_HEADER_FIELD_INT(binary_heap_block_size());
@@ -816,6 +824,12 @@ void BinaryROMWriter::write_objects(JVM_SINGLE_ARG_TRAPS) {
   obj_writer.start_block(TEXT_BLOCK, _text_block_count JVM_CHECK);
   write_all_objects_of_type(TEXT_BLOCK JVM_CHECK);
   obj_writer.end_block(JVM_SINGLE_ARG_CHECK);
+
+#if USE_AOT_COMPILATION
+  CHECK_COUNTER(binary_compiled_method_table_addr());
+  DUMP_COMMENT(("=============Compiled Methods======================="));
+  write_compiled_method_table(JVM_SINGLE_ARG_CHECK);
+#endif
 
   CHECK_COUNTER(binary_symbol_table_addr());
   write_symbol_table(JVM_SINGLE_ARG_CHECK);
@@ -857,9 +871,28 @@ int BinaryROMWriter::binary_text_block_size() {
   return  _text_block_count * sizeof(int);
 }
 
+#if USE_AOT_COMPILATION
+
+int BinaryROMWriter::binary_compiled_method_table_addr() {
+  return binary_text_block_addr() + binary_text_block_size();
+}
+
+int BinaryROMWriter::binary_compiled_method_table_size() {
+  return compiled_method_list()->size() * sizeof(OopDesc*);
+}
+
+int BinaryROMWriter::binary_symbol_table_addr() {
+  return binary_compiled_method_table_addr() + 
+    binary_compiled_method_table_size();
+}
+
+#else
+
 int BinaryROMWriter::binary_symbol_table_addr() {
   return binary_text_block_addr() + binary_text_block_size();
 }
+
+#endif
 
 int BinaryROMWriter::binary_symbol_table_num_buckets() {
   ObjArray::Raw table = _optimizer.symbol_table();
@@ -1206,6 +1239,29 @@ void BinaryROMWriter::write_referenced_bundles() {
       break;
     }
     writebinary_int(bundle->int_at(ROMBundle::ROM_BUNDLE_ID));
+  }
+}
+#endif
+
+#if USE_AOT_COMPILATION
+void BinaryROMWriter::write_compiled_method_table(JVM_SINGLE_ARG_TRAPS) {
+  const jint text_block_addr = binary_text_block_addr();
+  ROMVector * const compiled_methods = compiled_method_list();
+  const int compiled_methods_count = compiled_methods->size();
+
+  if (compiled_methods_count > 0) {
+    compiled_methods->sort();
+    CompiledMethod cm;
+    for (int i = 0; i < compiled_methods_count; i++) {
+      cm = compiled_methods->element_at(i);
+
+      AZZERT_ONLY(BlockType type = block_type_of(&cm JVM_CHECK));
+      GUARANTEE(type == ROMWriter::TEXT_BLOCK, 
+                "All compiled methods should be in TEXT block");
+
+      int offset = offset_of(&cm JVM_CHECK);      
+      writebinary_int_ref(text_block_addr + offset);
+    }
   }
 }
 #endif

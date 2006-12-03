@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -51,6 +52,9 @@ public class Client {
   private ViewMemoryPanel _memory_access_panel;
   private ViewObjectsPanel _view_objects_panel;
   private JButton _vm_controller;
+  private JButton _connection_controller;
+  private JButton _statistics_btn;
+  private boolean isConnected = false;
   private static String hostName = "localhost";
   private static int    port = 5000;
 
@@ -65,31 +69,18 @@ public class Client {
       System.err.println(e);
       System.exit(1);
     }
-    (new Client()).start();
+    (new Client()).initUI();
   }
 
-  private void start() {
-   try {
-     initConnection();
-   } catch (java.net.ConnectException e) {
-     System.out.println("Could not connect to VM! Check parameters!");
-     System.exit(1);
-   } catch (java.net.SocketException e) {
-     e.printStackTrace();
-     System.out.println("VM connection was broken during initial update!");
-     System.exit(1);
-   }
-   initUI();
-  }
 
 /************Connectivity SECTION****************************/
-  private void initConnection() throws java.net.ConnectException, java.net.SocketException {
-    _data_provider = MPDataProviderFactory.getMPDataProvider(VMConnectionFactory.getVMConnectionImpl());
+  private void initConnection() throws java.net.ConnectException, java.net.SocketException {    
     _data_provider.connect(hostName, port);
   }
 /************UI SECTION****************************/
   private void initUI() {
-    _frame = new JFrame("VM Memory Observe Tool");
+    _data_provider = MPDataProviderFactory.getMPDataProvider(VMConnectionFactory.getVMConnectionImpl());
+    _frame = new JFrame("Java Heap Memory Observe Tool");
     _frame.pack();
     _frame.setLocation(0, 0);
     _frame.setSize(1000, 650);
@@ -98,22 +89,13 @@ public class Client {
     _frame.getContentPane().setLayout(new GridBagLayout());
     _frame.addWindowListener(new WindowAdapter() {
       public void windowClosing(WindowEvent e) {
-        if (_data_provider != null) {
-          _data_provider.closeConnections();
-        }
+        _data_provider.closeConnections();
         System.exit(0);
       }
     });
 
     /* memory access panel*/
-    try {
-      _classes_list = new JList(_data_provider.getClassList());
-//      _data_provider.update();
-    } catch (SocketException e) {
-      System.out.println("Debugger Connection is broken!");
-      e.printStackTrace();
-      System.exit(-1);    
-    }
+    _classes_list = new JList();
     _memory_access_panel = new ViewMemoryPanel(_data_provider);
     _memory_access_panel.setSize(1000, 300);
     _memory_access_panel.update();
@@ -139,60 +121,38 @@ public class Client {
 
 
     JPanel button_panel = new JPanel();
-    JButton stat = new JButton("Statistics");
-    stat.addActionListener(new ActionListener() {
+    _statistics_btn = new JButton("Statistics");
+    _statistics_btn.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         StatisticsDialog.showDialog(_frame, _data_provider.calculateStatistics());
       }
     });
-    button_panel.add(stat);
+    button_panel.add(_statistics_btn);
     _vm_controller = new JButton("Resume");
-    _vm_controller.addActionListener(new ActionListener() {
-      boolean vm_run = false;
-      public void actionPerformed(ActionEvent e) {
-        vm_run = !vm_run;
-        if (vm_run) {
-          _vm_controller.setText("Pause");
-        } else {
-          _vm_controller.setText("Resume");
-        }
-        try {
-          if (vm_run) {
-            _data_provider.resumeVM();
-          } else {
-            _data_provider.pauseVM();
-          }
-
-          
-        } catch (SocketException e2) {
-          System.out.println("Debugger Connection is broken!");
-          e2.printStackTrace();
-          System.exit(-1);    
-        }
-        if (!vm_run) {
-          try {
-            _classes_list.setListData(_data_provider.getClassList());
-          } catch (SocketException e1) {
-            System.out.println("Debugger Connection is broken!");
-            e1.printStackTrace();
-            System.exit(-1);            
-          }
-          _memory_access_panel.update();
-        }
-
-      }
-    });
+    _vm_controller.addActionListener(new VMActionListener());
     button_panel.add(_vm_controller);
+    _connection_controller = new JButton("Connect");
+    _connection_controller.addActionListener(new ConnectionActionListener());
+    button_panel.add(_connection_controller);
 
     _frame.getContentPane().add(button_panel, new GridBagConstraints(2, 2, 1, 1, 1, 1,
                   GridBagConstraints.SOUTHEAST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
 
-   _frame.invalidate();
-   _frame.validate();
-   _frame.repaint();
+    setDisconnected();
+    _frame.invalidate();
+    _frame.validate();
+    _frame.repaint();
 
   }
 
+  private void update() {
+    try {
+      _classes_list.setListData(_data_provider.getClassList());
+      _memory_access_panel.update();
+    } catch (SocketException e) {
+      setDisconnected();
+    }
+  }
 /******HANDLERS**************************************/
   private void onClassesSelectionChanged() {
     JavaClass item = (JavaClass)_classes_list.getSelectedValue();
@@ -262,13 +222,80 @@ public class Client {
     }
   }
 
+  class ConnectionActionListener implements ActionListener {
+    public void actionPerformed(ActionEvent event) {
+      if (!isConnected) {
+        try {
+          initConnection();
+          update();
+          setConnected();
+        } catch (java.net.ConnectException e) {
+          JOptionPane.showMessageDialog(null, 
+            "Could not connect to the VM! Check parameters! Host:" + hostName + " port:" + port, 
+              "Connection Error", JOptionPane.ERROR_MESSAGE);
+          System.out.println("");
+        } catch (java.net.SocketException e) {
+          JOptionPane.showMessageDialog(null, 
+            "VM connection was broken during initial update!", 
+              "Connection Error", JOptionPane.ERROR_MESSAGE);
+        }
+      } else { //isConnected
+        _data_provider.closeConnections();
+        setDisconnected();
+      }  
+    };
+  }
+
+
+  class VMActionListener implements ActionListener {
+    boolean vm_run = false;
+    public void actionPerformed(ActionEvent e) {
+      try {
+        if (!vm_run) {
+          _data_provider.resumeVM();
+        } else {
+          _data_provider.pauseVM();
+        }      
+        vm_run = !vm_run;
+      } catch (SocketException e2) {
+        vm_run = false;
+        setDisconnected();
+      }
+      if (vm_run) {
+        _vm_controller.setText("Pause");
+      } else {
+        _vm_controller.setText("Resume");
+      }
+      if (!vm_run) {
+        update();
+      }
+
+    }
+  }
+
+  private void setDisconnected() {
+    isConnected = false;
+    _classes_list.setListData(new Object[0]);
+    _memory_access_panel.update();
+    _vm_controller.setEnabled(false);
+    _statistics_btn.setEnabled(false);
+    _connection_controller.setText("Connect");
+  }
+
+  private void setConnected() {
+    isConnected = true;
+    _vm_controller.setEnabled(true);
+    _statistics_btn.setEnabled(true);
+    _connection_controller.setText("Disconnect");
+  }
 }
 
 class CommandLineException extends Exception {
-    public CommandLineException() {
-        super();
-    }
-    public CommandLineException(String s){
-        super(s);
-    }
+  public CommandLineException() {
+    super();
+  }
+  public CommandLineException(String s){
+    super(s);
+  }
 }
+

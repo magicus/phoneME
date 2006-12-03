@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -95,11 +96,36 @@ import java.io.IOException;
  *
  * <p>Part of the definition of an isolate is its
  * classpath, where the basic classes for the isolate are found.
- * The CLDC runtime searches for classes in two sets of
- * locations: the romized system classes, or the isolate class path.
- * 
+ * The CLDC runtime searches for classes in three sets of
+ * locations: 
+ * <ul>
+ *     <li>The romized system classes.
+ *     <li>The isolate system class path.
+ *     <li>The isolate application class path.
+ * </ul>
+ *
+ * <p><i>System</i> and <i>application</i> class paths are specified separately
+ * for an isolate when it is created. Classes on system and application class
+ * paths have different access rights: 
+ * <ul>
+ *   <li>Only classes loaded from the system class path can access 
+ *       hidden classes.
+ *   <li>Only classes on the system class path can be loaded to restricted
+ *       packages.
+ * </ul>
+ * For the definition of hidden and restricted packages, see
+ * doc/misc/Romizer.html.
+ *
  * <p>When an isolate requests a class, the class is first looked up the
- * romized system classes, and then searched in the isolate class path.
+ * romized system classes, then searched in the isolate system class path,
+ * and then searched in the isolate application class path.
+ *
+ * <p>User application classes should be put on the application class path,
+ * system class path can contain only trusted system classes.
+ *
+ * <p>WARNING: UNTRUSTED USER APPLICATION CLASSES MUST NEVER BE PUT ON THE
+ * SYSTEM CLASS PATH, AS IT GRANTS THEM ACCESS TO SYSTEM INTERNALS AND BREAKS
+ * SYSTEM SECURITY.
  *
  * <a name="classdoc_sharing"><h3>Object Sharing</h3></a>
  *
@@ -234,10 +260,27 @@ public final class Isolate {
     private String []        _mainArgs;
 
     /**
-     * Saves classpath[] parameter passed to Isolate() constructor (and
+     * Saves app_classpath[] parameter passed to Isolate() constructor (and
      * convert to char[][] for easy processing inside VM).
      */
-    private Object[]        _classpath;
+    private Object[]        _app_classpath;
+
+    /**
+     * Packages we want to be hidden in this Isolate. See definition of hidden package in 
+     * doc/misc/Romizer.html
+     */
+    private String []        _hidden_packages;
+    /**
+     * Packages we want to be restricted in this Isolate. See definition of restricted package in 
+     * doc/misc/Romizer.html
+     */
+    private String []        _restricted_packages;
+
+    /**
+     * Saves sys_classpath[] parameter passed to Isolate() constructor (and
+     * convert to char[][] for easy processing inside VM).
+     */
+    private Object[]        _sys_classpath;
 
     /**
      * Amount of memory reserved for this isolate
@@ -300,7 +343,8 @@ public final class Isolate {
      *
      * <p>This constructor has the same effect as invoking
      * {@link #Isolate(String,String[],String[])}
-     *  and passing <code>null</code> for the <code>classpath</code> parameter.
+     *  and passing <code>null</code> for the <code>app_classpath</code> 
+     * and <code>sys_classpath</code> parameters.
      * See the long constructor documentation for more details.
      *
      * @param mainClass fully qualified name of the main method class
@@ -314,6 +358,28 @@ public final class Isolate {
     }
 
     /**
+     * Creates a new isolated java application with a default configuration.
+     *
+     * <p>This constructor has the same effect as invoking
+     * {@link #Isolate(String,String[],String[], String[])}
+     * and passing <code>null</code> for the <code>sys_classpath</code> 
+     * parameter.
+     * See the long constructor documentation for more details.
+     *
+     * @param mainClass fully qualified name of the main method class
+     * @param mainArgs the arguments of the main method in the new isolate
+     * @param app_classpath the application classpath(s) for the isolate
+     *        (see <a href=#classdoc_class_path>Class path</a>)
+     * @throws IsolateStartupException if an error occurs in the configuration
+     * or startup of the new isolate before any application code is invoked
+     **/
+    public Isolate(String mainClass, String[] mainArgs, String[] app_classpath)
+        throws IsolateStartupException {
+        this(mainClass, mainArgs, app_classpath, (String[])null);
+    }
+
+
+    /**
      * Creates a new Isolate with the specified arguments and
      * classpath. <p>
      *
@@ -322,7 +388,7 @@ public final class Isolate {
      * <code>mainArgs</code>. The <code>mainClass</code> parameter
      * must reference a class present in the romized system classes,
      * or in one of the classpath elements specified by the
-     * <code>classpath</code> parameter.
+     * <code>sys_classpath</code> and <code>app_classpath</code> parameters.
      *
      * <p>When the constructor returns, the new isolate is not yet
      * running. The new isolate does not start execution until the
@@ -343,17 +409,27 @@ public final class Isolate {
      * <p>If <code>mainArgs</code> is <code>null</code>, a zero-length
      * <code>String</code> array will be provided to the main method
      * of <code>mainClass</code>.
+     * 
+     * <p>User application classes should be put on <code>app_classpath</code>,
+     * while <code>sys_classpath</code> can contain only trusted system
+     * classes.
      *
+     * <p>WARNING: UNTRUSTED USER APPLICATION CLASSES MUST NEVER BE PUT ON THE
+     * SYSTEM CLASS PATH, AS IT GRANTS THEM ACCESS TO SYSTEM INTERNALS AND
+     * BREAKS SYSTEM SECURITY.
      *
      * @param mainClass fully qualified name of the main method class
      * @param mainArgs the arguments of the main method in the new isolate
-     * @param classpath the classpath(s) for loading application classes.
+     * @param app_classpath the application classpath(s) for the isolate
+     * @param sys_classpath the system classpath(s) for the isolate
+     *        (see <a href=#classdoc_class_path>Class path</a>)
      * @throws IsolateStartupException if an error occurs in the configuration
      *         of the new isolate before any application code is invoked
      * @throws IllegalArgumentException if any parameters are found to be
      *         invalid.
      **/
-    public Isolate(String mainClass, String[] mainArgs, String [] classpath)
+    public Isolate(String mainClass, String[] mainArgs, 
+                   String [] app_classpath, String [] sys_classpath)
         throws IsolateStartupException {
         securityCheck();
         _priority = NORM_PRIORITY;
@@ -373,12 +449,35 @@ public final class Isolate {
             }
         }
 
-        // convert classpath to array of char[] for easier processing inside
-        // VM.
-        int len = (classpath == null) ? 0 : classpath.length;
-        _classpath = new Object[len];
+        // convert app_classpath to array of char[] for easier processing 
+        // inside VM.
+        int len = (app_classpath == null) ? 0 : app_classpath.length;
+        _app_classpath = new Object[len];
         for (int i=0; i<len; i++) {
-            _classpath[i] = classpath[i].toCharArray();
+            _app_classpath[i] = app_classpath[i].toCharArray();
+        }
+
+        // convert sys_classpath to array of char[] for easier processing 
+        // inside VM.
+        len = (sys_classpath == null) ? 0 : sys_classpath.length;
+        _sys_classpath = new Object[len];
+        for (int i=0; i<len; i++) {
+            _sys_classpath[i] = sys_classpath[i].toCharArray();
+        }
+
+        /*
+         * <p>WARNING: DO NOT REMOVE THIS MESSAGE UNLESS YOU HAVE READ AND
+         * UNDERSTOOD THE SECURITY IMPLICATIONS: HAVING UNTRUSTED USER
+         * APPLICATION CLASSES ON THE SYSTEM CLASS PATH GRANTS THEM ACCESS TO
+         * SYSTEM INTERNALS AND BREAKS SYSTEM SECURITY.
+         */
+        if (_sys_classpath.length != 0) {
+          System.err.println();
+          System.err.println("****warning****");
+          System.err.println("****Untrusted user classes must never be put");
+          System.err.println("****on the system class path");
+          System.err.println("****warning****");
+          System.err.println();
         }
     }
 
@@ -420,7 +519,7 @@ public final class Isolate {
             // To be somewhat compilant to JSR-121, we do not pass any
             // other errors back to the caller of start().  Instead,
             // the caller can use Isolate.exitCode() to discover that
-            // the isolate has exited. See bug 6270554.
+            // the isolate has exited. See CR 6270554.
         }
 
         // Wait till the fate of the started isolate is known
@@ -818,10 +917,10 @@ public final class Isolate {
      *         Isolate constructor
      */
     public String[] getClassPath() {
-        int len = _classpath.length;
+        int len = _app_classpath.length;
         String[] result = new String[len];
         for (int i = 0; i < len; i++) {
-            result[i] = new String((char[]) _classpath[i]);
+            result[i] = new String((char[]) _app_classpath[i]);
         }
         return result;
     }
@@ -861,7 +960,12 @@ public final class Isolate {
     public void setDebug(boolean mode) {
         _ConnectDebugger = (mode == true ? 1 : 0);
     }
-        
+
+    public void attachDebugger() {
+        securityCheck();
+        attachDebugger0(this);
+    }
+
     /**
      * Controls whether or not classes for this isolate need to be
      * verified. When creating a new Isolate, the AMS may waive
@@ -966,4 +1070,40 @@ public final class Isolate {
     public native void setProfile(String profile) throws 
       IllegalArgumentException,
       IllegalIsolateStateException;
+
+    /**
+     * Sets the packages which will be hidden. See definition of hidden package in 
+     * doc/misc/Romizer.html. Note, that this function call overrides previous settings.
+     *
+     * If isolate is already started the method throws an 
+     * <code>IllegalIsolateStateException</code>.
+     *
+     * @param package_name.  The name of package for marking.
+     */
+    public void setHiddenPackages(String[] package_names) throws 
+      IllegalIsolateStateException {
+        if (getStatus() > NEW) {
+            throw new IllegalIsolateStateException("Can only set hidden packages before Isolate starts");
+        }
+      _hidden_packages = package_names;
+    }
+
+    /**
+     * Sets the packages which will be restricted. See definition of restricted package in 
+     * doc/misc/Romizer.html. Note, that this function call overrides previous settings.
+     *
+     * If isolate is already started the method throws an 
+     * <code>IllegalIsolateStateException</code>.
+     *
+     * @param package_name  The name of package for marking.
+     */
+    public void setRestrictedPackages(String[] package_names) throws 
+      IllegalIsolateStateException {
+        if (getStatus() > NEW) {
+            throw new IllegalIsolateStateException("Can only set restricted packages before Isolate starts");
+        }
+      _restricted_packages = package_names;
+    }
+
+    private native void attachDebugger0(Isolate obj);
 }

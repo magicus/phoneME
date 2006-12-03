@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -138,9 +139,14 @@ ArrayReferenceImpl::array_getter_setter(PacketInputStream *in,
         case JDWP_Tag_LONG:
           out->write_long(ta().long_at(i));
           break;
+#if ENABLE_FLOAT
         case JDWP_Tag_DOUBLE:
           out->write_double(ta().double_at(i));
           break;
+        case JDWP_Tag_FLOAT:
+          out->write_float(ta().float_at(i));
+          break;
+#endif
         case JDWP_Tag_BYTE:
           out->write_byte(ta().byte_at(i));
           break;
@@ -156,9 +162,6 @@ ArrayReferenceImpl::array_getter_setter(PacketInputStream *in,
         case JDWP_Tag_INT:
           out->write_int(ta().int_at(i));
           break;
-        case JDWP_Tag_FLOAT:
-          out->write_float(ta().float_at(i));
-          break;
         case JDWP_Tag_OBJECT:
           // This is the only case in which we write out the tag
           {
@@ -170,7 +173,8 @@ ArrayReferenceImpl::array_getter_setter(PacketInputStream *in,
           }
           break;
         default: 
-          break;
+          out->send_error(JDWP_Error_INVALID_TAG);
+          return;
         }
       }
       out->send_packet();
@@ -181,16 +185,17 @@ ArrayReferenceImpl::array_getter_setter(PacketInputStream *in,
         case JDWP_Tag_INT:
           ta().int_at_put(i, in->read_int());
           break;
+#if ENABLE_FLOAT
         case JDWP_Tag_FLOAT:
           ta().float_at_put(i, in->read_float());
-          break;
-        case JDWP_Tag_LONG:
-          ta().long_at_put(i, in->read_long());
           break;
         case JDWP_Tag_DOUBLE:
           ta().double_at_put(i, in->read_double());
           break;
-        
+#endif
+        case JDWP_Tag_LONG:
+          ta().long_at_put(i, in->read_long());
+          break;
         case JDWP_Tag_BYTE:
           ta().byte_at_put(i, in->read_byte());
           break;
@@ -211,7 +216,8 @@ ArrayReferenceImpl::array_getter_setter(PacketInputStream *in,
           }
           break;
         default:
-          break;
+          out->send_error(JDWP_Error_INVALID_TAG);
+          return;
         }
       }
       out->send_packet();
@@ -223,9 +229,14 @@ ArrayReferenceImpl::array_getter_setter(PacketInputStream *in,
         tty->print("Tag: %c", element_type_tag);
 
         switch(element_type_tag) { 
+#if ENABLE_FLOAT
         case JDWP_Tag_DOUBLE: 
           tty->print(" Data: %lf", ta().double_at(i));  
           break;
+        case JDWP_Tag_FLOAT:
+          tty->print(" Data: %f", jvm_f2d(ta().float_at(i)));
+          break;
+#endif
         case JDWP_Tag_LONG:
           tty->print(" Data: 0x%lx", ta().long_at(i));
           break;
@@ -240,9 +251,6 @@ ArrayReferenceImpl::array_getter_setter(PacketInputStream *in,
 
         case JDWP_Tag_INT:
           tty->print(" Data: 0x%x", ta().int_at(i));
-          break;
-        case JDWP_Tag_FLOAT:
-          tty->print(" Data: %f", jvm_f2d(ta().float_at(i)));
           break;
  
         case JDWP_Tag_SHORT:
@@ -261,7 +269,7 @@ ArrayReferenceImpl::array_getter_setter(PacketInputStream *in,
           // write nothing
           break;
 
-        default:
+        case JDWP_Tag_OBJECT:
           {
             UsingFastOops fast_oops_7;
             
@@ -269,6 +277,8 @@ ArrayReferenceImpl::array_getter_setter(PacketInputStream *in,
             tty->print(" Data: 0x%x, id = 0x%x", o.obj(),
                        JavaDebugger::get_object_id_by_ref_nocreate(&o));
           }
+          break;
+        default:
           break;
         }
         tty->print_cr("");

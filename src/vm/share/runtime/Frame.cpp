@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -34,6 +35,11 @@ extern "C" {
   void invoke5_deoptimization_entry_0();
   void invoke5_deoptimization_entry_1();
   void invoke5_deoptimization_entry_2();
+
+  void invoke3_deoptimization_entry_3();
+  void invoke3_deoptimization_entry_4();
+  void invoke5_deoptimization_entry_3();
+  void invoke5_deoptimization_entry_4();
 }
 
 bool Frame::_in_gc_state = false;
@@ -46,11 +52,10 @@ void Frame::init(Thread* thread) {
   // Setup frame and stack pointers.
   GUARANTEE(thread->last_java_fp() != NULL && thread->last_java_sp() != NULL,
             "Last java fp and sp should be set");
-  address fp      = thread->last_java_fp();
-  address sp      = thread->last_java_sp();
-  address pc_addr = sp + JavaStackDirection * (int)sizeof(jint);
-
-  set_values(thread, thread->stack_base(), (address*)pc_addr, sp, fp);
+  address  fp      = thread->last_java_fp();
+  address  sp      = thread->last_java_sp();
+  address* pc_addr = (address*)(sp + JavaStackDirection * BytesPerWord);
+  set_values(thread, thread->stack_base(), pc_addr, sp, fp);
 
   // Add to the linked list of all frames
   push_frame();
@@ -275,7 +280,7 @@ JavaFrame::find_compiled_method( const address frame_pc ) {
   jint code_size = method_desc->code_size();
   if ( code_size < offset && offset > 0 ) {
   	//this is a unlinked method which is still be used
-    	method_desc = ObjectHeap::getThrowedMethod(frame_pc);
+    	method_desc = ObjectHeap::method_contain_instruction_of(frame_pc);
 	CompiledMethod::Raw ncm = method_desc;
 	return method_desc;
   }
@@ -285,7 +290,7 @@ JavaFrame::find_compiled_method( const address frame_pc ) {
 
 bool JavaFrame::in_compiled_code( const address frame_pc ) {
   return CompiledMethodCache::has_index(((const CompiledMethodDesc*)frame_pc))
-    || ROM::system_contains((const OopDesc*)frame_pc);
+    || ROM::in_any_loaded_bundle_of_current_task((const OopDesc*)frame_pc);
 }
 
 #endif // ENABLE_APPENDED_CALLINFO
@@ -328,7 +333,12 @@ void JavaFrame::set_empty_stack_bottom_pointer() {
                          fp() + empty_stack_offset();
 }
 
-void JavaFrame::deoptimize(bool from_invoker) {
+void JavaFrame::deoptimize() {
+  Method::Raw no_method;
+  deoptimize(&no_method);
+}
+
+void JavaFrame::deoptimize(const Method * callee) {
   // Deoptimizing interpreted frames is trivial - simply return.
   if (!is_compiled_frame()) { 
     return;
@@ -361,7 +371,7 @@ void JavaFrame::deoptimize(bool from_invoker) {
   int bci = this->bci();
 
 #if 0 && USE_INDIRECT_EXECUTION_SENSOR_UPDATE
-  // IMPL_NOTE: not sure if this is ncessary here.
+  // IMPL_NOTE: if this is ncessary here?
   CompiledMethod::Raw cm = method().compiled_code();
   method().set_compiled_execution_entry(cm().entry());
 #endif
@@ -381,18 +391,23 @@ void JavaFrame::deoptimize(bool from_invoker) {
   }
 
   address deoptimization_pc;
-  if (!from_invoker) { 
+  if (callee->is_null()) { 
     deoptimization_pc = (address) interpreter_deoptimization_entry;
   } else { 
+    GUARANTEE(callee->not_null(), "Sanity");
     static const address invoke3_deoptimization_entries[] = {
       (address)invoke3_deoptimization_entry_0,
       (address)invoke3_deoptimization_entry_1,
       (address)invoke3_deoptimization_entry_2,
+      (address)invoke3_deoptimization_entry_3,
+      (address)invoke3_deoptimization_entry_4,
     };
     static const address invoke5_deoptimization_entries[] = {
       (address)invoke5_deoptimization_entry_0,
       (address)invoke5_deoptimization_entry_1,
       (address)invoke5_deoptimization_entry_2,
+      (address)invoke5_deoptimization_entry_3,
+      (address)invoke5_deoptimization_entry_4,
     };
 
     Bytecodes::Code bc = method().bytecode_at(bci);
@@ -408,11 +423,11 @@ void JavaFrame::deoptimize(bool from_invoker) {
               bc == Bytecodes::_fast_invokespecial, "Must be invoker");
     GUARANTEE(Bytecodes::length_for(bc) == 3 ||
               Bytecodes::length_for(bc) == 5, "Sanity check");
-    int ret_size = method().size_of_return_type();
-    GUARANTEE(0 <= ret_size && ret_size <= 2, "sanity");
+    int ret_type = callee->return_type();
+    GUARANTEE(0 <= ret_type && ret_type <= 4, "sanity");
     deoptimization_pc = Bytecodes::length_for(bc) == 3
-                            ? invoke3_deoptimization_entries[ret_size]
-                            : invoke5_deoptimization_entries[ret_size];
+                            ? invoke3_deoptimization_entries[ret_type]
+                            : invoke5_deoptimization_entries[ret_type];
   }
   set_pc(deoptimization_pc);
 }
@@ -459,9 +474,19 @@ bool JavaFrame::is_compiled_frame( void ) const {
 
 #endif // ENABLE_APPENDED_CALLINFO
   }
-#endif
+#endif // ENABLE_C_INTERPRETER
 }
-#endif
+
+#if ENABLE_CODE_PATCHING
+bool JavaFrame::is_heap_compiled_frame() const {
+  GUARANTEE(ENABLE_APPENDED_CALLINFO, "Is not supported for embeded callinfo");
+  GUARANTEE(!in_gc_state(), "Wrong state");
+
+  return CompiledMethodCache::has_index((const CompiledMethodDesc*)pc());
+}
+#endif // ENABLE_CODE_PATCHING
+
+#endif // ENABLE_COMPILER
 
 #if ENABLE_EMBEDDED_CALLINFO
 CallInfo* JavaFrame::cooked_call_info( void ) const {
@@ -728,13 +753,9 @@ void JavaFrame::gc_prologue(void do_oop(OopDesc**)) {
     GUARANTEE((juint)actual_bci < rm->object_size(), 
               "Must be within appropriate limits");
     set_raw_bcp((address)(flags + (actual_bci - Method::base_offset())));
+    // This is just to make sure that we really do fix it up after the GC.
+    AZZERT_ONLY(set_cpool((address)0xdeadc0de));
   }
-
-#ifdef AZZERT  
-
-  // This is just to make sure that we really do fix it up after the GC.
-  set_cpool((address)-1);
-#endif
 
   // Reverse headers for locked objects
   jint stack_lock_len = stack_lock_length();
@@ -1008,7 +1029,7 @@ void JavaFrame::osr_replace_frame(jint bci) {
             !found_osr_entry && !stream.at_end();
             stream.advance()) {
       if (stream.is_osr_stub()) {
-        if (stream.bci() == bci) {
+        if (stream.current(1) == bci) {
 #if !ENABLE_THUMB_COMPILER
           address ret_adr = cm().entry() + stream.code_offset();
 #else

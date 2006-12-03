@@ -1,26 +1,26 @@
 /*
  *
- * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
- * You should have received a copy of the GNU General Public License
- * version 2 along with this work; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
- * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved. 
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
+ *  
+ * This program is free software; you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License version 
+ * 2 only, as published by the Free Software Foundation.  
+ *  
+ * This program is distributed in the hope that it will be useful, but 
+ * WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License version 2 for more details (a copy is 
+ * included at /legal/license.txt).  
+ *  
+ * You should have received a copy of the GNU General Public License 
+ * version 2 along with this work; if not, write to the Free Software 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 
+ * 02110-1301 USA  
+ *  
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa 
+ * Clara, CA 95054 or visit www.sun.com if you need additional 
+ * information or have any questions.  
  *
  *!c<
  * Copyright 2006 Intel Corporation. All rights reserved.
@@ -36,6 +36,10 @@ CompiledMethodCache::Item*
 CompiledMethodCache::Map[ CompiledMethodCache::MaxMethods ];
 
 unsigned CompiledMethodCache::size;
+
+#if ENABLE_CODE_PATCHING && USE_PATCHED_METHOD_CACHE
+CompiledMethodCache::Item* CompiledMethodCache::_patched_method;
+#endif
 
 CompiledMethodCache::weight_type CompiledMethodCache::_aligned_weights;
 #define weights _aligned_weights._weights
@@ -445,42 +449,22 @@ void CompiledMethodCache::evict_zero_weight( void ) {
 
   const Item* threshold = compute_threshold();
   int dst = src - 1;
-#if ENABLE_INLINE && ARM && !CROSS_GENERATOR
-int count = 0;
-int dst2 = 0;
-int reduced = 0;
-while ((count < Universe::inlined_count) && 
-  ((Universe::inlined_class_ids[count] & METHOD_INDEX_MASK) < src))
-{
-   count++;
-   dst2++;
-}
-
+  
+#if ENABLE_CODE_PATCHING && USE_PATCHED_METHOD_CACHE
+  {
+    if (_patched_method != NULL) {
+      GUARANTEE(has_index(_patched_method), "Sanity");
+      const int cached_index = get_index(_patched_method);
+      if (weights[cached_index] == 0) {
+        _patched_method = NULL;
+      }
+    }
+  }
 #endif
+
   for( ; src <= upb; src++ ) {
     Item* p = Map[ src ];
     const Byte weight = weights[ src ];
-#if ENABLE_INLINE && ARM && !CROSS_GENERATOR
-        if (weight)
-        {
-            while ((count < Universe::inlined_count) 
-              && ((Universe::inlined_class_ids[count] & METHOD_INDEX_MASK) ==  get_index(p)))
-            {
-               Universe::inlined_class_ids[dst2] = 
-                (Universe::inlined_class_ids[count] & (~METHOD_INDEX_MASK)) | (dst + 1);
-               count++;
-               dst2++;
-            }
-        }else
-        {
-           while ((count < Universe::inlined_count) && 
-            ((Universe::inlined_class_ids[count] & METHOD_INDEX_MASK) ==  get_index(p)))
-           {
-               count++;
-               reduced++;
-           }
-        }
-#endif
     if( weight ) {
       weights[ ++dst ] = weight;
       _method_execution_sensor[ dst ] = _method_execution_sensor[ src ];
@@ -491,9 +475,6 @@ while ((count < Universe::inlined_count) &&
       free( p );
     }
   }  
-#if ENABLE_INLINE && ARM  && !CROSS_GENERATOR
-  Universe::inlined_count -= reduced;
-#endif
   set_upb( dst );
   compute_last_old( threshold );
 
@@ -522,10 +503,6 @@ int CompiledMethodCache::smart_evict_underweight ( void ) {
     }
   }
   return 0;
-}
-
-void CompiledMethodCache::on_promotion( void ) {
-  last_old = upb;
 }
 
 void CompiledMethodCache::compute_last_old( const Item* const threshold ) {
@@ -597,41 +574,20 @@ void CompiledMethodCache::cleanup_unmarked( void ) {
     
   const Item* threshold = compute_threshold();
   int dst = src - 1;
-#if ENABLE_INLINE && ARM && !CROSS_GENERATOR
-int count = 0;
-int dst2 = 0;
-int reduced = 0;
-while ((count < Universe::inlined_count) && 
-  ((Universe::inlined_class_ids[count] & METHOD_INDEX_MASK)  < src))
-{
-   count++;
-   dst2++;
-}
 
+#if ENABLE_CODE_PATCHING && USE_PATCHED_METHOD_CACHE
+  {
+    if (_patched_method != NULL) {
+      GUARANTEE(has_index(_patched_method), "Sanity");
+      if (marked(_patched_method)) {
+        _patched_method = NULL;
+      }
+    }
+  }
 #endif
+
   for( ; src <= upb; src++ ) {
     Item* p = Map[ src ];
-#if ENABLE_INLINE && ARM && !CROSS_GENERATOR
-        if (marked( p ))
-        {
-            while ((count < Universe::inlined_count) && 
-              ((Universe::inlined_class_ids[count] & METHOD_INDEX_MASK) ==  get_index(p)))
-            {
-               Universe::inlined_class_ids[dst2] = 
-                (Universe::inlined_class_ids[count] & (~METHOD_INDEX_MASK))|(dst + 1);
-               count++;
-               dst2++;
-            }
-        }else
-        {
-           while ((count < Universe::inlined_count) && 
-            ((Universe::inlined_class_ids[count] & METHOD_INDEX_MASK) ==  get_index(p)))
-           {
-               count++;
-               reduced++;
-           }
-        }
-#endif
     if( marked( p ) ) {
       if (TraceGC) {
         TTY_TRACE_CR(("TraceGC: cache: marked, meth: 0x%x, cm: 0x%x",
@@ -650,10 +606,6 @@ while ((count < Universe::inlined_count) &&
       size -= get_size( p );
     }
   }
-#if ENABLE_INLINE && ARM  && !CROSS_GENERATOR
-  Universe::inlined_count -= reduced;
-//  printf("cleanup_unmarked, reduced = %d\n", reduced);
-#endif  
   set_upb( dst );
   compute_last_old( threshold );
 

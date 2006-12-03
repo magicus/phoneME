@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,7 +26,10 @@
 
 class TaskDescPointers: public MixedOopDesc {
 protected:
-  ObjArrayDesc*     _classpath;
+  ObjArrayDesc*     _app_classpath;
+  ObjArrayDesc*     _sys_classpath;
+  ObjArrayDesc*     _hidden_packages;
+  ObjArrayDesc*     _restricted_packages;
   ObjArrayDesc*     _dictionary;
 
 #if USE_BINARY_IMAGE_LOADER
@@ -33,8 +37,12 @@ protected:
   ObjArrayDesc*     _names_of_bad_classes; // ObjArray
 #endif
 
-#if USE_BINARY_IMAGE_LOADER && USE_IMAGE_MAPPING
+#if USE_BINARY_IMAGE_LOADER && USE_IMAGE_MAPPING && !ENABLE_LIB_IMAGES
   TypeArrayDesc*    _mapped_image_handles;
+#endif
+
+#if ENABLE_COMPILER && ENABLE_INLINE
+  ObjArrayDesc*     _direct_callers;
 #endif
 
 #if ENABLE_ISOLATES

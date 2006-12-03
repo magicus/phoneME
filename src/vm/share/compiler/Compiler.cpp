@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -47,8 +48,9 @@ CodeGenerator::CodeGenerator(Compiler* compiler,
   compiler->set_code_generator(this);
 }
 
-CompilerStatic Compiler::_state;
-CompilerState  Compiler::_suspended_compiler_state;
+CompilerStatic  Compiler::_state;
+CompilerState   Compiler::_suspended_compiler_state;
+CompilerContext Compiler::_suspended_compiler_context;
 
 inline void CompilerState::oops_do( void do_oop(OopDesc**) ) {
   if( valid() ) {
@@ -74,6 +76,27 @@ inline void CompilerStaticPointers::cleanup( void ) {
   }
 }
 
+inline void CompilerContext::oops_do( void do_oop(OopDesc**) ) {
+  if( valid() ) {
+    OopDesc** p = (OopDesc**) this;
+    for( int i = pointer_count(); --i >= 0; p++ ) {
+      do_oop( p );
+    }
+    if (parent() != NULL) {
+      parent()->context()->oops_do( do_oop );
+    }
+  }
+}
+
+inline void CompilerContext::cleanup( void ) {
+  if( valid() ) {
+    if (parent() != NULL) {
+      parent()->context()->cleanup();
+    }
+    jvm_memset( this, 0, sizeof *this );
+  }
+}
+
 jlong                           Compiler::_estimated_frame_time;
 jlong                           Compiler::_last_frame_time_stamp;
 Compiler::CompilationFailure    Compiler::_failure;
@@ -87,25 +110,85 @@ CallInfoWriter Compiler::_callinfo_writer;
 #endif
 
 Compiler::Compiler( Method* method, const int active_bci ) {
+  jvm_memset(&_context, 0, sizeof(_context));
+#if ENABLE_INLINE
+  if (is_active()) {
+    // Dump cached values to the context
+    current()->set_saved_bci(Compiler::bci());
+    current()->set_saved_num_stack_lock_words(
+      Compiler::num_stack_lock_words());
+
+    // Set local base for the new compiler
+    GUARANTEE(frame()->not_null(), "Frame must be created by the caller");
+    set_local_base(frame()->virtual_stack_pointer() - 
+                   method->size_of_parameters() + 1);
+  } else 
+#else
+  GUARANTEE(!is_active(), "Only one compiler at a time");
+#endif
+  {
+    set_root(this);
+    set_local_base(0);
+  }
+  set_parent(current());
+  set_current(this);
+
   set_method( method );
   _failure = reservation_failed;
   _closure.initialize(this, method, active_bci);
 
-  GUARANTEE(!is_active(), "Only one compiler at a time");
-  _current = this;
 #if ENABLE_CSE
-  VirtualStackFrame::clear_cse_status();
-  RegisterAllocator::init_notation();
+  VirtualStackFrame::init_status_of_current_snippet_tracking();
+  RegisterAllocator::wipe_all_notations();
 #endif
-  jvm_fast_globals.compiler_method         = _state.method();
+  jvm_fast_globals.compiler_method         = method;
   jvm_fast_globals.compiler_frame          = _state.frame();
   jvm_fast_globals.compiler_closure        = &_closure;
+}
+
+#ifndef PRODUCT
+Compiler::Compiler() {
+  GUARANTEE(!is_active(), "Only one compiler at a time");
+  set_root(this);
+  set_parent(current());
+  set_current(this);
+}
+#endif
+
+Compiler::~Compiler() {
+  GUARANTEE(is_active(), "Sanity check");
+  Compiler * parent_compiler = parent();
+
+  GUARANTEE(parent_compiler == NULL || ENABLE_INLINE, 
+            "Only one compiler if not inlining");
+
+  if (parent_compiler != NULL) {
+#ifdef AZZERT
+    if (!CURRENT_HAS_PENDING_EXCEPTION) {
+      Signature::Raw signature = current_method()->signature();
+      const BasicType return_type = signature().return_type(true);
+      GUARANTEE(frame()->virtual_stack_pointer() == 
+                local_base() - 1 + word_size_for(return_type), "Sanity");
+    }
+#endif
+
+    jvm_fast_globals.compiler_closure = &parent_compiler->_closure;
+    jvm_fast_globals.compiler_method  = parent_compiler->method();
+    jvm_fast_globals.compiler_bci     = parent_compiler->saved_bci();
+    jvm_fast_globals.num_stack_lock_words =
+      parent_compiler->saved_num_stack_lock_words();
+  } else {
+    set_root(NULL);
+  }
+  set_current(parent_compiler);
 }
 
 // Called during VM start-up
 void Compiler::initialize() {
   jvm_memset(&_state, 0, sizeof(_state));
   jvm_memset(&_suspended_compiler_state, 0, sizeof(_suspended_compiler_state));
+  jvm_memset(&_suspended_compiler_context, 0, 
+             sizeof(_suspended_compiler_context));
 #if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
   jvm_memset(&comp_perf_counts, 0, sizeof(comp_perf_counts));
 #endif
@@ -177,21 +260,29 @@ void Compiler::on_timer_tick(bool is_real_time_tick JVM_TRAPS) {
   UsingFastOops fast_oops;
   Method::Fast current_compiling;
   if( resume ) {
+    GUARANTEE(!Compiler::is_inlining(), 
+              "Suspend during inlining is not supported");
     // IMPL_NOTE: (1) don't resume compilation if we have spent too many ticks
     //            on it already.
     //        (2) if current_compiling is the current method, set active_bci
     //            so that it can be more easily OSR'ed.
-    current_compiling = Compiler::method();
+    CompiledMethod::Raw suspended_compiled_method = 
+      Compiler::current_compiled_method();
+    if (suspended_compiled_method.not_null()) {
+      current_compiling = suspended_compiled_method().method();
+    }
   } else {
     if (!frame.is_compiled_frame()) {
       current_compiling = frame.method();
-      Symbol::Raw name = current_compiling().name();
-      if (name.equals(Symbols::class_initializer_name()) && bci == 0) {
-        // Don't compile <clinit> methods on-entry. If this method 
-        // contains a hot loop, it will eventually be discovered later and
-        // we will compile it then. But in most cases, <clinit> methods
-        // aren't worth compiling.
-        return;
+      if (bci == 0) {
+        Symbol::Raw name = current_compiling().name();
+        if (name.equals(Symbols::class_initializer_name())) {
+          // Don't compile <clinit> methods on-entry. If this method 
+          // contains a hot loop, it will eventually be discovered later and
+          // we will compile it then. But in most cases, <clinit> methods
+          // aren't worth compiling.
+          return;
+        }
       }
     }
   }
@@ -285,6 +376,10 @@ void Compiler::process_interpretation_log() {
 void Compiler::oops_do( void do_oop(OopDesc**) ) {
   _state.oops_do( do_oop );
   _suspended_compiler_state.oops_do( do_oop );
+  _suspended_compiler_context.oops_do( do_oop );
+  if (is_active()) {
+    current()->context()->oops_do( do_oop );
+  }
 }
 
 void Compiler::terminate ( OopDesc* result ) {
@@ -297,29 +392,17 @@ void Compiler::terminate ( OopDesc* result ) {
     }
   }
 #endif
-#if ENABLE_INLINE && ARM  && !CROSS_GENERATOR
- if (_failure != none || result == NULL)
-  {
-      for( int i = Universe::inlined_count - 1; i >=  0; i--) {
-       if ((Universe::inlined_class_ids[i] & METHOD_INDEX_MASK)== CompiledMethodCache::get_upb() + 1) 
-       {
-          Universe::inlined_count--;
-       }
-       else
-      { 
-        break;
-      }
-      }
-  }
+  if(_failure != none || result == NULL) {
+#if ENABLE_TRAMPOLINE
+    if (!GenerateROMImage) {
+      BranchTable::revoke(
+        (address) Compiler::current_compiled_method()->obj());
+    }
 #endif
-#if ENABLE_TRAMPOLINE && !CROSS_GENERATOR
-  if (_failure != none || result == NULL)
-  {
-    BranchTable::revoke((address) Compiler::current_compiled_method()->obj());
   }
-#endif  
   _suspended_compiler_state.dispose();
   _state.cleanup();
+  _suspended_compiler_context.cleanup();
   ObjectHeap::update_compiler_area_top( result );
 }
 
@@ -416,7 +499,7 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
       if( TraceCompiledMethodCache ) {
         TTY_TRACE_CR(( "Compilation failed - exception thrown" ));
       };
-      // Intentionally no break; here
+      // Intentionally no break here
     case out_of_time:
       result.set_null();
     case none:
@@ -461,268 +544,66 @@ ReturnOop Compiler::compile(Method* method, int active_bci JVM_TRAPS) {
 
   CompiledMethod::Raw result =
     try_to_compile( method, active_bci, compiled_code_factor JVM_MUST_SUCCEED);
-#if ENABLE_COMPILATION_RETRY
-  if( _failure == out_of_compiled_code_buffer && !method->is_double_size() ) {
-    method->set_double_size();
-    // compiler_area will automatically adjusts compiled_code_buffer size,
-    // so there's no need to retry the compilation
-  }
-#endif
-
-  if( _failure > out_of_time ) {
-    if( Verbose && _failure == out_of_stack ) {
-      TTY_TRACE_CR(("Compilation of method %s failed due to out of stack "
-                      "condition", method->name()));
-    }
-    set_impossible_to_compile(method, "out of memory" );
-  }
 
   EventLogger::log(EventLogger::COMPILE_END);
   return result();
 }
 
-#if ENABLE_INTERPRETER_GENERATOR || USE_SOURCE_IMAGE_GENERATOR
-// This is a table of bits -- each bit indicate whether the corresponding 
-// bytecode may be used by a compiled method without a callframe.
-// For more details on the rules of omitting leaf method frames see 
-// internal_doc/omit_leaf_method_frames.txt
-void Compiler::generate_omit_frame_table(Stream *output) {
-  jubyte table[256 / 8];
-  int i;
-
-  jvm_memset(table, 0, sizeof(table));
-  for (i=0; i<Bytecodes::number_of_java_codes; i++) {
-    Bytecodes::Code code = (Bytecodes::Code)i;
-    bool always_ok = false;
-
-    switch (code) {
-    // All floating point bytecodes (or other bytecodes that need to
-    // call a runtime function from compiled code) require a call frame.
-    // The exceptions are fconst, dload, etc, that are done without
-    // calling runtime functions.
-    case Bytecodes::_nop:
-    case Bytecodes::_aconst_null:
-    case Bytecodes::_iconst_m1:
-    case Bytecodes::_iconst_0:
-    case Bytecodes::_iconst_1:
-    case Bytecodes::_iconst_2:
-    case Bytecodes::_iconst_3:
-    case Bytecodes::_iconst_4:
-    case Bytecodes::_iconst_5:
-    case Bytecodes::_lconst_0:
-    case Bytecodes::_lconst_1:
-    case Bytecodes::_fconst_0:
-    case Bytecodes::_fconst_1:
-    case Bytecodes::_fconst_2:
-    case Bytecodes::_dconst_0:
-    case Bytecodes::_dconst_1:
-    case Bytecodes::_bipush:
-    case Bytecodes::_sipush:
-    case Bytecodes::_iload:
-    case Bytecodes::_lload:
-    case Bytecodes::_fload:
-    case Bytecodes::_dload:
-    case Bytecodes::_aload:
-    case Bytecodes::_iload_0:
-    case Bytecodes::_iload_1:
-    case Bytecodes::_iload_2:
-    case Bytecodes::_iload_3:
-    case Bytecodes::_lload_0:
-    case Bytecodes::_lload_1:
-    case Bytecodes::_lload_2:
-    case Bytecodes::_lload_3:
-    case Bytecodes::_fload_0:
-    case Bytecodes::_fload_1:
-    case Bytecodes::_fload_2:
-    case Bytecodes::_fload_3:
-    case Bytecodes::_dload_0:
-    case Bytecodes::_dload_1:
-    case Bytecodes::_dload_2:
-    case Bytecodes::_dload_3:
-    case Bytecodes::_aload_0:
-    case Bytecodes::_aload_1:
-    case Bytecodes::_aload_2:
-    case Bytecodes::_aload_3:
-    case Bytecodes::_istore:
-    case Bytecodes::_lstore:
-    case Bytecodes::_fstore:
-    case Bytecodes::_dstore:
-    case Bytecodes::_astore:
-    case Bytecodes::_istore_0:
-    case Bytecodes::_istore_1:
-    case Bytecodes::_istore_2:
-    case Bytecodes::_istore_3:
-    case Bytecodes::_lstore_0:
-    case Bytecodes::_lstore_1:
-    case Bytecodes::_lstore_2:
-    case Bytecodes::_lstore_3:
-    case Bytecodes::_fstore_0:
-    case Bytecodes::_fstore_1:
-    case Bytecodes::_fstore_2:
-    case Bytecodes::_fstore_3:
-    case Bytecodes::_dstore_0:
-    case Bytecodes::_dstore_1:
-    case Bytecodes::_dstore_2:
-    case Bytecodes::_dstore_3:
-    case Bytecodes::_astore_0:
-    case Bytecodes::_astore_1:
-    case Bytecodes::_astore_2:
-    case Bytecodes::_astore_3:
-    case Bytecodes::_pop:
-    case Bytecodes::_pop2:
-    case Bytecodes::_dup:
-    case Bytecodes::_dup_x1:
-    case Bytecodes::_dup_x2:
-    case Bytecodes::_dup2:
-    case Bytecodes::_dup2_x1:
-    case Bytecodes::_dup2_x2:
-    case Bytecodes::_swap:
-    case Bytecodes::_iadd:
-    case Bytecodes::_ladd:
-    case Bytecodes::_isub:
-    case Bytecodes::_lsub:
-    case Bytecodes::_imul:
-    case Bytecodes::_lmul:
-    case Bytecodes::_ineg:
-    case Bytecodes::_lneg:
-    case Bytecodes::_fneg:
-    case Bytecodes::_dneg:
-    case Bytecodes::_ishl:
-    case Bytecodes::_lshl:
-    case Bytecodes::_ishr:
-    case Bytecodes::_lshr:
-    case Bytecodes::_iushr:
-    case Bytecodes::_lushr:
-    case Bytecodes::_iand:
-    case Bytecodes::_land:
-    case Bytecodes::_ior:
-    case Bytecodes::_lor:
-    case Bytecodes::_ixor:
-    case Bytecodes::_lxor:
-    case Bytecodes::_iinc:
-    case Bytecodes::_i2l:
-    case Bytecodes::_l2i:
-    case Bytecodes::_i2b:
-    case Bytecodes::_i2c:
-    case Bytecodes::_i2s:
-    case Bytecodes::_lcmp:
-    case Bytecodes::_ireturn:
-    case Bytecodes::_lreturn:
-    case Bytecodes::_freturn:
-    case Bytecodes::_dreturn:
-    case Bytecodes::_areturn:
-    case Bytecodes::_return:
-    case Bytecodes::_wide:
-      // These bytecodes are OK
-      always_ok = true;
-      break;
-    }
-
-    if (always_ok) {
-      int index = i / 8;
-      jubyte value = (jubyte)( ((juint)table[index]) | ((juint) 1 << (i % 8)) );
-      table[index] = value;
-    }
-  }
-
-  output->cr();
-  output->print_cr("extern const unsigned char omit_frame_table[];");
-  output->print   ("       const unsigned char omit_frame_table[] = {");
-
-  for (i=0; i<256/8; i++) {
-    if ((i % 8) == 0) {
-      output->cr();
-      output->print("    ");
-    }
-    output->print("0x%02x, ", table[i]);
-  }
-  output->cr();
-  output->print_cr("};");
-}
-#endif // PRODUCT
-
-
-bool Compiler::check_if_stack_frame_may_be_omitted() {
-
-  if (ENABLE_WTK_PROFILER && !TestCompiler) {
-    // it's a quick solution. Profiler doesn't work without stack frames.
-    return false;
-  }
-
-  Method* m = method(); 
-
-  if (has_loops() || m->access_flags().is_synchronized()
-      || m->access_flags().has_monitor_bytecodes()) {
-    // For simplicity, don't omit stack frame for any methods that have loops,
-    // or need synchronization.
-    return false;
-  }
-
-  if ((m->max_execution_stack_count()) > 4) {
-    // Methods that have a lot of locals/stacks don't benefit too much 
-    // from omitting stack frames.
-    return false;
-  }
-
-  const int codesize = m->code_size();
-  if (codesize > 20) {
-    // Methods that are non-trivial don't benefit too much from omitting 
-    // stack frames.
-    return false;
-  }
-
-  const jubyte *table = (const jubyte*)omit_frame_table;
-
-  for (int bci=0; bci<codesize; ) {
-    Bytecodes::Code code = m->bytecode_at(bci);
-
-    int index = ((jint)code) / 8;
-    int mask  = 1 << (((jint)code) % 8);
-    if ( (((jint)(table[index])) & mask) == 0 ) {
-      // We treat these bytecodes as if they would need a stack frame.
-      return false;
-    }
-
-    bci += Bytecodes::length_for(m, bci);
-  }
-
-  // We have a simple leaf method. Let's omit stack frames.
-  return true;
-}
-
-void Compiler::begin_compile( JVM_SINGLE_ARG_TRAPS ) {
+inline void Compiler::setup_for_compile( Method::Attributes& attributes
+                                         JVM_TRAPS ) {
   // Mark the compiler as being outside any loops.
   mark_as_outside_loop();
+
+#if ENABLE_CODE_PATCHING
+  BytecodeCompileClosure::set_jump_from_bci(0);
+#endif
   
-  { // Compute the entry count for each bytecode index.
-    bool has_loops;
-    OopDesc* p = BasicBlock::compute_entry_counts(method(), has_loops
-                                                  JVM_CHECK);
-    set_entry_counts_table( p );
-    set_has_loops( has_loops );
-  }
+  { 
+    Compiler::set_entry_counts_table( attributes.entry_counts );
+    Compiler::set_bci_flags_table( attributes.bci_flags );
 
-  if (OmitLeafMethodFrames) {
-    set_omit_stack_frame( check_if_stack_frame_may_be_omitted() );
-  } else {
-    set_omit_stack_frame( false );
-  }
+    Compiler::set_num_stack_lock_words(
+      attributes.num_locks * 
+      ((BytesPerWord + StackLock::size()) / sizeof(jobject)));
 
-  const int code_size = method()->code_size();
+#if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
+    Compiler::set_codes_can_throw_null_point_exception(
+      attributes.num_bytecodes_can_throw_npe << 1);
+#endif
+
+    Compiler::set_has_loops( attributes.has_loops );
+  }
 
   { // Allocate object array for the entry table
-    OopDesc* p = Universe::new_obj_array_in_compiler_area(code_size JVM_CHECK);
+    OopDesc* p = Universe::new_obj_array_in_compiler_area(
+      method()->code_size() JVM_CHECK);
     set_entry_table( p );
   }
-  { // Allocate table describing various flags
-    OopDesc* p = Universe::new_byte_array_in_compiler_area(code_size JVM_CHECK);
-    set_bci_flags_table( p );
+}
+
+inline void Compiler::begin_compile( JVM_SINGLE_ARG_TRAPS ) {
+  Method::Attributes attributes;
+  const Method * const mthd = method();
+
+  mthd->compute_attributes( attributes JVM_CHECK );
+
+  Compiler::setup_for_compile( attributes JVM_CHECK );
+
+  if( OmitLeafMethodFrames && (!ENABLE_WTK_PROFILER || TestCompiler) &&
+      !attributes.can_throw_exceptions &&
+      !attributes.has_loops && 
+      mthd->max_execution_stack_count() <= 4 && 
+      mthd->code_size() <= 20 &&
+      !mthd->uses_monitors() ) {
+    Compiler::set_omit_stack_frame( true );
+  } else {
+    Compiler::set_omit_stack_frame( false );
   }
-  { // Instantiate a virtual stack frame for this method.    
+
+  {// Instantiate a virtual stack frame for this method.    
     OopDesc* p = VirtualStackFrame::create(method() JVM_CHECK);
     set_frame( p );
   }
-
   // A different allocation table may be used depending on frame omission.
   RegisterAllocator::initialize();
 
@@ -734,18 +615,19 @@ void Compiler::begin_compile( JVM_SINGLE_ARG_TRAPS ) {
 
   
 #if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
+   //init the table which will record all the null point related
+   //LDR instr in current CC.
   {
+    Compiler::current()->set_null_point_record_counter(0);
     OopDesc* p = Universe::new_int_array_in_compiler_area(
-                              npe_bytecode_count() JVM_CHECK);
-    set_npe_table(p);
+                              codes_can_throw_null_point_exception() JVM_CHECK);
+    Compiler::current()->set_null_point_exception_ins_table(p);
   }
 #endif
 
-#if ENABLE_REMEMBER_ARRAY_LENGTH & ARM
   // Preload the parameter of array type
   // also preload the array length
   code_generator()->preload_parameter(method());
-#endif
 
   {    
     // Add the initial compilation continuation (bci = 0) to the
@@ -772,12 +654,14 @@ void Compiler::begin_compile( JVM_SINGLE_ARG_TRAPS ) {
   check_free_space(JVM_SINGLE_ARG_CHECK);
 }
 
+inline void Compiler::handle_out_of_memory( void ) {
+  method()->set_double_size();
+}
+
 inline void Compiler::internal_compile( JVM_SINGLE_ARG_TRAPS ) {
   begin_compile( JVM_SINGLE_ARG_NO_CHECK );
-  if (CURRENT_HAS_PENDING_EXCEPTION) {    
-    // IMPL_NOTE: Not a good reason to mark the method as impossible_to_compile
-    set_impossible_to_compile(method(),
-      "not enough memory to start compilation");
+  if( CURRENT_HAS_PENDING_EXCEPTION ) {
+    handle_out_of_memory();
     return;
   }
   process_compilation_queue( JVM_SINGLE_ARG_NO_CHECK );
@@ -790,9 +674,11 @@ inline void Compiler::suspend( void ) {
   suspended_state->set_task_id(Task::current_id());
 #endif
   code_generator()->save_state( suspended_state );
+  GUARANTEE(parent() == NULL, "Cannot suspend while inlining");
+  _suspended_compiler_context = *context();
 }
 
-#if  ENABLE_INTERNAL_CODE_OPTIMIZER && ARM && ENABLE_CODE_OPTIMIZER
+#if  ENABLE_INTERNAL_CODE_OPTIMIZER
 void  Compiler::begin_bound_literal_search() {
   _next_bound_literal  =  this->code_generator()->_first_literal;
 }
@@ -832,131 +718,145 @@ BinaryAssembler::Label Compiler::get_next_pinned_entry() {
 }
   
 #if ENABLE_NPCE
-void Compiler::get_npe_instructions(int start_offset) {
+#define is_shared_npe_stub(queue)      (queue().type() == CompilationQueueElement::throw_exception_stub &&\
+                             ( (ThrowExceptionStub) queue()).get_rte() ==\
+                            ThrowExceptionStub::rte_null_pointer &&\
+                            !((ThrowExceptionStub) queue()).is_persistent())
+
+void Compiler::record_instr_offset_of_null_point_stubs(int start_offset) {
   UsingFastOops fast_oops;
-  CompilationQueueElement::Fast ptr;
-  ptr = compilation_queue();
-  int tmp;
-  while (!ptr().is_null() ) {
-    if (ptr().type() == CompilationQueueElement::throw_exception_stub &&
-       ( (ThrowExceptionStub) ptr()).get_rte() == 
-           ThrowExceptionStub::rte_null_pointer &&
-       !((ThrowExceptionStub) ptr()).is_persistent()) {
-      tmp = ptr().entry_label().position();
-      if (tmp >= start_offset) {
-        _internal_code_optimizer.record_npe_ldrs( tmp>>2 ,0);
-        
-        if (( (NullCheckStub)ptr()).is_two_words()) {
-          jint high_word = ((NullCheckStub) ptr()).high_word();
-          _internal_code_optimizer.record_npe_ldrs(((tmp>>2) + high_word), 0);
+  
+  CompilationQueueElement::Fast queue;
+  queue = compilation_queue();
+  int offset;
+  
+  while (!queue().is_null() ) {
+    if (is_shared_npe_stub(queue)) {
+
+      //entry_label record the offset the stub should patch
+      offset = queue().entry_label().position();
+      if (code_generator()->is_branch_instr(offset)){
+        queue = queue().next();
+ 	 //not a npce optimized stub. use old cmp, b approach
+ 	 //we won't do extend basic block schedule on them so continue.
+        continue;
+      }
+
+      //only ins of current cc will be taken into account
+      if (offset >= start_offset) {
+        _internal_code_optimizer.record_npe_ins_with_stub( offset>>2 ,0);
+        if (( (NullCheckStub)queue()).is_two_words()) {
+          jint offset_of_second_ins = ((NullCheckStub) queue()).offset_of_second_instr_in_words();
+          _internal_code_optimizer.record_npe_ins_with_stub(((offset>>2) + offset_of_second_ins), 0);
         }
-          
       }
-#ifndef PRODUCT
-      if (OptimizeCompiledCodeVerboseInternal) {
-        tty->print_cr("\t\t[%d: is a NPE instruction]", 
-          ptr().entry_label().position());
-      }
-#endif
+      VERBOSE_SCHEDULING_AS_YOU_GO(("\t\t[%d: is a NPE instruction]", 
+      queue().entry_label().position()));
     }
-#ifndef PRODUCT
-      if (OptimizeCompiledCodeVerboseInternal) {
-        tty->print_cr("\t\t[%d: is a NOT a NPE instruction]", 
-          ptr().entry_label().position());
-      }
-#endif
-    
-    ptr = ptr().next();
+    VERBOSE_SCHEDULING_AS_YOU_GO(("\t\t[%d: is a NOT a NPE instruction]", 
+        queue().entry_label().position()));
+    //next queue item   
+    queue = queue().next();
   }
 }
 
-void Compiler::patch_null_check_stubs() {
+void Compiler::update_null_check_stubs() {
   UsingFastOops fast_oops;
-  CompilationQueueElement::Fast ptr;
+  
+  CompilationQueueElement::Fast queue;
   int index;
   int old_offset;
   short new_offset;
   BinaryAssembler::Label label;
-#ifndef PRODUCT  
-  if (OptimizeCompiledCodeVerboseInternal) {
-    tty->print_cr("\tenter patch_null_check_stubs ");
-    tty->print_cr("\tNPE record count is %d", 
-      _internal_code_optimizer.get_npe_record_count());
-  }
-#endif  
+  VERBOSE_SCHEDULING_AS_YOU_GO(("\tenter update_null_check_stubs "));
+  VERBOSE_SCHEDULING_AS_YOU_GO(("\tNPE record count is %d", 
+      _internal_code_optimizer.record_count_of_npe_ins_with_stub()));
   for (index = 0; index < 
-     _internal_code_optimizer.get_npe_record_count(); index++) {
-    new_offset = _internal_code_optimizer.get_npe_scheduled_address(index);
+     _internal_code_optimizer.record_count_of_npe_ins_with_stub(); index++) {
+    new_offset = _internal_code_optimizer.scheduled_offset_of_npe_ins_with_stub(index);
 
-    old_offset = _internal_code_optimizer.get_npe_cur_address( index);
-    ptr = compilation_queue();
-    while (!ptr().is_null()) {
-#ifndef PRODUCT  
-      if (OptimizeCompiledCodeVerboseInternal) {
-        TTY_TRACE_CR(("\tCurrent CC label is %d",
-          ptr().entry_label().position()));
-      }
-#endif  
-      if (ptr().type() == CompilationQueueElement::throw_exception_stub  &&
-        ((ThrowExceptionStub) ptr()).get_rte() == 
-               ThrowExceptionStub::rte_null_pointer &&
-        !((ThrowExceptionStub) ptr()).is_persistent()) {
-        if (ptr().entry_label().position() == old_offset << 2) { 
-          //fix for double and long
-          if (((NullCheckStub)ptr()).is_two_words()) {
-            int next_new_offset = 0;
-            next_new_offset = 
-              _internal_code_optimizer.get_npe_scheduled_address(index + 1);
-            if (next_new_offset == 0) {
-              next_new_offset = 
-                _internal_code_optimizer.get_npe_cur_address(index + 1);
+    old_offset = _internal_code_optimizer.offset_of_npe_ins_with_stub( index);
+    queue = compilation_queue();
+    while (!queue().is_null()) {
+      VERBOSE_SCHEDULING_AS_YOU_GO(("\tCurrent CC label is %d",
+          queue().entry_label().position()));
+      if (is_shared_npe_stub(queue)) { 
+          //for double and long
+          //for those ins, we must record the offset of ins who emitted first after scheduling.
+          //somtimes, the second ins will be schedule ahead the first.
+        if (queue().entry_label().position() == old_offset << 2) {  
+          if (((NullCheckStub)queue()).is_two_words()) {
+            int new_offset_of_second_ins = 0;
+            new_offset_of_second_ins = 
+              _internal_code_optimizer.scheduled_offset_of_npe_ins_with_stub(index + 1);
+            if (new_offset_of_second_ins == 0) {
+		//new_offset is zero means the offset of ins is unchanged after scheduling.		
+              new_offset_of_second_ins = 
+                _internal_code_optimizer.offset_of_npe_ins_with_stub(index + 1);
             }
-            if ((new_offset == 0 && next_new_offset  < old_offset) ||
-                 next_new_offset < new_offset) {
-              new_offset = next_new_offset;
+            if ((new_offset == 0 && new_offset_of_second_ins  < old_offset) ||
+                 new_offset_of_second_ins < new_offset) {
+              //first ins is behind second ins after scheduling   
+              new_offset = new_offset_of_second_ins;
             }
             index++;
           }
+		  
           if (new_offset == 0) {  
             break;
           }
-          label = ptr().entry_label();
+		  
+	   //patch back	  
+          label = queue().entry_label();
           label.link_to(new_offset << 2);
-          ptr().set_entry_label(label);
-#ifndef PRODUCT  
-          if (OptimizeCompiledCodeVerboseInternal) {
-            tty->print("\tUpdate NPCE stub label old position is %d ", old_offset << 2);
-            tty->print_cr("new position is %d", new_offset << 2);
-          }
-#endif  
+          queue().set_entry_label(label);
+		  
+          VERBOSE_SCHEDULING_AS_YOU_GO(("\tUpdate NPCE stub label old position is %d ", old_offset << 2));
+          VERBOSE_SCHEDULING_AS_YOU_GO(("new position is %d", new_offset << 2));
           break;
         }
       }
-      ptr = ptr().next();
+      queue = queue().next();
     }
   }
 }
+#undef is_shared_npe_stub
 #endif //ENABLE_NPCE
 #endif //ENABLE_INTERNAL_CODE_OPTIMIZER
 
 void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
+  // Tell OS to interrupt compilation after a platform-specific amount
+  // of time. This avoid long compilation pauses when compiling big methods.
+  Os::start_compiler_timer();
+
+
   // Prevent spending run time on compilation
   // for a specified number of subsequent ticks:
   Universe::_compilation_abstinence_ticks = CompilationAbstinenceTicks;
   _failure = out_of_memory;
 
-  // Tell OS to interrupt compilation after a platform-specific amount
-  // of time. This avoid long compilation pauses when compiling big methods.
-  Os::start_compiler_timer();
   UsingFastOops fast_oops;
   CompilationQueueElement::Fast element;
+  CompiledMethod::Fast result;
 
   // Compile until the continuation queue is empty
   while (!is_compilation_queue_empty()) {
     // Get and compile the first element from the compile queue.
     element = current_compilation_queue_element();
 
-    const bool finished_one_element = element().compile(JVM_SINGLE_ARG_CHECK);
+    const bool finished_one_element = element().compile(JVM_SINGLE_ARG_NO_CHECK);
+    if( _failure == out_of_stack ) {
+      if( Verbose ) {
+        TTY_TRACE_CR(("Compilation of method %s failed due to out of stack "
+                      "condition", method()->name()));
+      }
+      set_impossible_to_compile(method(), "out of stack" );
+      return;
+    }
+    if( CURRENT_HAS_PENDING_EXCEPTION ) {
+      goto Failure;
+    }
+
     if (finished_one_element) {
       RegisterAllocator::guarantee_all_free();
       clear_current_element();
@@ -966,73 +866,73 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
       // call to Compiler::resume()
     }
 
-    check_free_space(JVM_SINGLE_ARG_CHECK);
-
-#if ENABLE_INLINE && ARM
-    if ( is_inline() <= 0) {
-      if (!GenerateROMImage) {
-        if ((Os::check_compiler_timer() || ExcessiveSuspendCompilation)
-            && !is_compilation_queue_empty()) {
-          _failure = out_of_time;
-          suspend();
-          return;
-        }
-      }
+    check_free_space(JVM_SINGLE_ARG_NO_CHECK);
+    if( CURRENT_HAS_PENDING_EXCEPTION ) {
+      goto Failure;
     }
-#else
-    if (!GenerateROMImage) {
-      if ((Os::check_compiler_timer() || ExcessiveSuspendCompilation)
-          && !is_compilation_queue_empty()) {
+
+    if (!GenerateROMImage && !is_compilation_queue_empty() && 
+        !is_inlining()) {
+      if (ExcessiveSuspendCompilation || Os::check_compiler_timer() ) {
         _failure = out_of_time;
         suspend();
         return;
       }
     }
-#endif
   }
-#if ENABLE_INLINE && ARM
-  if (is_inline() > 0) return;
-#endif
+
+  if (is_inlining()) {
+    return;
+  }
+
   {
     COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(sentinel);
     // Insert terminating sentinel.
     code_generator()->generate_sentinel();
   }
 
-  check_free_space( JVM_SINGLE_ARG_CHECK );
+  check_free_space( JVM_SINGLE_ARG_NO_CHECK );
+  if( CURRENT_HAS_PENDING_EXCEPTION ) {
+    goto Failure;
+  }
 
 #if ENABLE_APPENDED_CALLINFO
   _callinfo_writer.commit_table();
 #endif
 
-  // Shrink compiled method object to correct size
-  const jint code_size = code_generator()->code_size();
-  const jint relocation_size = code_generator()->relocation_size();
+  {
+    // Shrink compiled method object to correct size
+    const jint code_size = code_generator()->code_size();
+    const jint relocation_size = code_generator()->relocation_size();
 
-  INCREMENT_COMPILER_PERFORMANCE_COUNTER(relocation, relocation_size);
-  CompiledMethod::Fast result = current_compiled_method();
-  result().shrink(code_size, relocation_size);
+    INCREMENT_COMPILER_PERFORMANCE_COUNTER(relocation, relocation_size);
+    result = current_compiled_method();
+    result().shrink(code_size, relocation_size);
 #ifndef PRODUCT
-  if( Verbose || PrintCompilation ) {
-    if (VerbosePointers) {
-      TTY_TRACE_CR((" [compiled method (0x%x) size=%d, code=%d, reloc=%d, "
-                    "entry=0x%x]",
-        result().obj(), result().object_size(), code_size, relocation_size,
-        result().entry() ));
-    } else {
-      TTY_TRACE_CR((" [compiled method size=%d, code=%d, reloc=%d]",
-        result().object_size(), code_size, relocation_size ));
+    if( Verbose || PrintCompilation ) {
+      if (VerbosePointers) {
+        TTY_TRACE_CR((" [compiled method (0x%x) size=%d, code=%d, reloc=%d, "
+                      "entry=0x%x]",
+          result().obj(), result().object_size(), code_size, relocation_size,
+          result().entry() ));
+      } else {
+        TTY_TRACE_CR((" [compiled method size=%d, code=%d, reloc=%d]",
+          result().object_size(), code_size, relocation_size ));
+      }
     }
-  }
 
-  if( PrintCompiledCode && OptimizeCompiledCodeVerbose ) {
-    tty->print_cr("Before Optimization:");
-    result().print_code_on(tty);
-  }
+    if( PrintCompiledCode && OptimizeCompiledCodeVerbose ) {
+      tty->print_cr("Before Optimization:");
+      result().print_code_on(tty);
+    }
 #endif
+  }
 
 #if !ENABLE_INTERNAL_CODE_OPTIMIZER
-  optimize_code(JVM_SINGLE_ARG_CHECK);
+  optimize_code(JVM_SINGLE_ARG_NO_CHECK);
+  if( CURRENT_HAS_PENDING_EXCEPTION ) {
+    goto Failure;
+  }
 #endif
 
 #ifdef FUNNY_CROSS_COMPILER
@@ -1062,7 +962,7 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
    ((CompiledMethodDesc*)result().obj())->jvmpi_set_code_size(
                                           code_generator()->code_size());
   }
-  
+
   // Send the compiled method load event.
   if(UseJvmpiProfiler && 
     JVMPIProfile::VMjvmpiEventCompiledMethodLoadIsEnabled() &&
@@ -1079,57 +979,36 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
     method()->set_default_interpreter_entry();
   }
 
+#if ENABLE_CODE_PATCHING
+  GUARANTEE(result().not_null(), "Sanity");
+  //
+  // Update checkpoints table here as the offsets of ldr instuctions
+  // could be updated after we added the record for that instruction.
+  //
+  Compiler::update_checkpoints_table(&result);
+#endif
+
   _failure = none;
+  return;
+
+Failure:
+  if( _failure == out_of_memory ) {
+    handle_out_of_memory();
+
+    method()->set_double_size();
+  }
 }
 
-#if ENABLE_INLINE && ARM
-void Compiler::restore_fast_globals() {
-  jvm_fast_globals.compiler_method = _state.method();
-  jvm_fast_globals.compiler_frame = _state.frame();
-  jvm_fast_globals.compiler_closure = &_closure;
-}
-void Compiler::compile_method_for_inline(jint old_code_offset, bool is_static,
-                                   VirtualStackFrame* frame, 
-                                   CompiledMethod* result, CompilerState* caller_state  JVM_TRAPS) {
-  // Mark the compiler as being outside any loops.
-  mark_as_outside_loop();
-
-  { 
-    // Compute the entry count for each bytecode index.
-    bool has_loops;
-    OopDesc* p = BasicBlock::compute_entry_counts(method(), has_loops
-                                                  JVM_CHECK);
-    set_entry_counts_table( p );
-    set_has_loops( has_loops );
-  }
-
-  const int code_size = method()->code_size();
+#if ENABLE_INLINE
+void Compiler::internal_compile_inlined( Method::Attributes& attributes
+                                         JVM_TRAPS ) {
+  Compiler::setup_for_compile(attributes JVM_CHECK);
 
   {
-    // Allocate object array for the entry table
-    OopDesc* p = Universe::new_obj_array_in_compiler_area(code_size JVM_CHECK);
-    set_entry_table( p );
+    BinaryAssembler::Label return_label;
+    set_inline_return_label(return_label);
   }
-  
-  { 
-    // Allocate table describing various flags
-    OopDesc* p = Universe::new_byte_array_in_compiler_area(code_size JVM_CHECK);
-    set_bci_flags_table( p );
-  }
-  {
-     UsingFastOops fast_oops;
-     VirtualStackFrame::Fast frame_clone = frame->clone(JVM_SINGLE_ARG_CHECK);
 
-     set_frame(&frame_clone);
-  }
-  CodeGenerator code_generator(this);
-  set_code_generator(&code_generator);
-  code_generator.set_compiled_method(result);
-  code_generator.set_code_size(old_code_offset);
-
-
-  
-  set_caller_virtual_stack_pointer(frame->virtual_stack_pointer());
   {    
     // Add the initial compilation continuation (bci = 0) to the
     // compilation queue.
@@ -1137,18 +1016,25 @@ void Compiler::compile_method_for_inline(jint old_code_offset, bool is_static,
     CompilationContinuation::Raw stub =
       CompilationContinuation::insert(0, unused JVM_CHECK);
     
+    // Invalidate VSF of the parent compilation element
+    // The proper VSF will be set during compilation of this child
+    clear_parent_frame();
   }
 
-  code_generator.restore_state(caller_state);
-  
   process_compilation_queue(JVM_SINGLE_ARG_CHECK);
-  if (is_static == true) {
-    BinaryAssembler::Label inline_label = get_inline_return_label();
-    if (!inline_label.is_unused()) {
-      code_generator.bind(inline_label);
+
+  {
+    BinaryAssembler::Label return_label = inline_return_label();
+    if (!return_label.is_unused()) {
+      code_generator()->bind(return_label);
     }
   }
-  code_generator.save_state(caller_state);
+
+  // Set the return frame as the current frame for the parent
+  {
+    VirtualStackFrame::Raw return_frame = parent_frame();
+    Compiler::set_frame(&return_frame);
+  }
 }
 #endif  
 
@@ -1256,14 +1142,17 @@ void Compiler::abort_suspended_compilation( void ) {
 void Compiler::abort_active_compilation(bool is_permanent JVM_TRAPS) {
   GUARANTEE(is_active(), "sanity");
   if (is_permanent) {
-    set_impossible_to_compile(method(), "compilation aborted permanently");
+    set_impossible_to_compile(current()->method(), 
+                              "compilation aborted permanently");
   }
   Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW);
 }
 
 inline void Compiler::restore_and_compile( JVM_SINGLE_ARG_TRAPS ) {
   CodeGenerator code_generator(this, suspended_compiler_state() );
-  suspended_compiler_state()->dispose();
+  suspended_compiler_state()->dispose();  
+  *context() = _suspended_compiler_context;
+  GUARANTEE(parent() == NULL, "Cannot suspend while inlining");
   process_compilation_queue( JVM_SINGLE_ARG_NO_CHECK );
 }
 
@@ -1287,18 +1176,11 @@ ReturnOop Compiler::resume_compilation(Method *method JVM_TRAPS) {
     result = _failure == none ? current_compiled_method()->obj() : NULL;
     compiler.update_performance_counters(true, result);
   }
-  switch( _failure ) {
-    default:
-      // IMPL_NOTE: The method may successfully compile later
-      // when more memory will be available
-      set_impossible_to_compile(method, "compiler area 2");
-      // intentionally no break; here
-    case none:
-      terminate( result );
-    case out_of_time:
-      break;
-  }
 
+  if( _failure != out_of_time ) {
+    terminate( result );
+  }
+ 
   EventLogger::log(EventLogger::COMPILE_END);
 
   return result;
@@ -1341,14 +1223,14 @@ void CompilerStatic::print_on(Stream *st) {
 }
 
 void Compiler::print_on(Stream *st) {
-  st->print_cr("Compiler::_current = 0x%08x", _current);
+  st->print_cr("Compiler::_current = 0x%08x", current());
   _state.print_on(st);
   st->print_cr("Compiler::_closure = 0x%08x", &_closure);
   _closure.print_on(st);
 }
 
 void Compiler::p() {
-  _current->print_on(tty);
+  current()->print_on(tty);
 }
 #endif
 
@@ -1365,9 +1247,8 @@ void Compiler::init_performance_counters(bool is_resume) {
   }
 }
 
-void Compiler::update_performance_counters(bool /*is_resume*/, OopDesc *result)
-  const
-{
+void Compiler::update_performance_counters(bool /*is_resume*/, 
+                                           OopDesc *result) {
   {
     const jlong elapsed = Os::elapsed_counter() - _start_time;
     jvm_perf_count.total_compile_hrticks += elapsed;

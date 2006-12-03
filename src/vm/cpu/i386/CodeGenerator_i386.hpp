@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -69,6 +70,14 @@ public:
   // increment the CPU stack pointer without affecting CPU flags
   void increment_stack_pointer_by(int increment);
 
+  void cmp_values(Value& op1, Value& op2, 
+                  BytecodeClosure::cond_op condition) {
+    (void)condition;
+    cmp_values(op1, op2);
+  }
+
 private:
   // load value from the given memory address
   void store_tag_to_address(BasicType type, StackAddress& address);
+
+  void cmp_values(Value& op1, Value& op2);

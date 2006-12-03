@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,6 +32,11 @@ class CompilerStubs: public SourceMacros {
 
   void generate();
 
+  // Generate special glue code that can be efficiently linked to JIT code.
+  // This option is applicable only on certain platforms (such as ARM, which
+  // has a branch-and-link offset limit of +-32MB)
+  void generate_glue_code();
+
  private:
   void generate_compiler_idiv_irem();
   void generate_compiler_rethrow_exception();
@@ -41,12 +47,17 @@ class CompilerStubs: public SourceMacros {
   void generate_compiler_timer_tick();
   void generate_compiler_checkcast();
   void generate_compiler_instanceof();
+  void generate_compiler_callvm_stubs();
   void generate_indirect_execution_sensor_update();
   void generate_handlers();
 #if ENABLE_ARM_V7
   void generate_common_method_prolog();
 #endif
 
+#if ENABLE_ARM_VFP
+  void generate_vfp_redo(void);
+  void generate_vfp_double_redo(void);
+#endif
 };
 
 #endif /*#if ENABLE_INTERPRETER_GENERATOR*/

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -66,52 +67,119 @@ inline void ROMBundle::update_system_array_class(JVM_SINGLE_ARG_TRAPS) {
   }
 }
 
-inline void ROMBundle::restore_vm_structures(JVM_SINGLE_ARG_TRAPS) {
+#if ENABLE_COMPILER && ENABLE_INLINE
+// Vtable bitmaps can be updated when the application classes are initialized
+// during Monet conversion. For the classes being converted the updated
+// bitmaps will be stored in the Monet image. For all other classes (system or
+// previously loaded) bitmap changes aren't saved. So we restore them here
+inline void ROMBundle::update_vtable_bitmaps(const int sys_class_count 
+                                             JVM_TRAPS) const {
   UsingFastOops fast_oops;
-  OopDesc** handles = persistent_handles();
+  ObjArray::Fast class_list = Universe::class_list()->obj();
 
-  // Dictionary
-  OopDesc *object = handles[0];
-  relocate_pointer_to_heap(&object);
-  ObjArray::Fast bun_dictionary = object;
-
-  // class_list
-  object = handles[1];
-  relocate_pointer_to_heap(&object);
-  ObjArray::Fast bun_class_list  = object;
-
-#if ENABLE_ISOLATES
-  // mirror_list
-  object = handles[3];
-  relocate_pointer_to_heap(&object);
-  ObjArray::Fast bun_mirror_list = object;
+  const int total_class_count = class_list().length();
+  for( int i = total_class_count; --i >= sys_class_count; ) {
+    JavaClass::Raw jc = class_list().obj_at(i);
+    if (jc.is_null() || jc().is_fake_class()) {
+      // The tail end of the class_list may have empty slots.
+      // IMPL_NOTE: Having empty slots is not necessary for Monet.
+      // If some class was not found during Monet conversion it is fake.
+      continue;
+    }
+    if (jc.is_instance_class()) {
+      InstanceClass::Raw ic = jc.obj();
+      if (ic().is_initialized()) {
+        ic().update_vtable_bitmaps(JVM_SINGLE_ARG_CHECK);
+      }
+    }
+  }
+}
 #endif
 
-  // names_of_bad_classes
-  object = handles[2];
-  relocate_pointer_to_heap(&object);  
+inline void ROMBundle::restore_vm_structures(  
+#if ENABLE_LIB_IMAGES && ENABLE_ISOLATES
+  int global_bundle_id, bool already_loaded, bool sharable JVM_TRAPS) {
+#else //ENABLE_LIB_IMAGES
+  JVM_SINGLE_ARG_TRAPS) {
+#endif //ENABLE_LIB_IMAGES  
+  UsingFastOops fast_oops;
+  ObjArray::Fast bun_handles;
+  ObjArray::Fast bun_dictionary; 
+  ObjArray::Fast bun_class_list;
+  ObjArray::Fast bun_mirror_list;
+  ObjArray::Fast bun_bad_classes_list;
+#if ENABLE_LIB_IMAGES && ENABLE_ISOLATES
+  if (already_loaded) { 
+    GUARANTEE(sharable, "coudn't reuse non-sharable bundles!");
+    bun_handles = Universe::global_binary_persistante_handles()->obj_at(global_bundle_id);
+    bun_dictionary = bun_handles().obj_at(0); 
+    bun_class_list = bun_handles().obj_at(1); 
+    bun_mirror_list = bun_handles().obj_at(3); 
+    bun_bad_classes_list = bun_handles().obj_at(2); 
+  } else 
+#endif //ENABLE_LIB_IMAGES
+  {
+    OopDesc** handles = persistent_handles();            
+
+    // Dictionary
+    OopDesc *object = handles[0];  
+    relocate_pointer_to_heap(&object);    
+    bun_dictionary = object;
+
+    // class_list
+    object = handles[1];
+    relocate_pointer_to_heap(&object);    
+    bun_class_list  = object;
+
+    // names_of_bad_classes
+    object = handles[2];
+    relocate_pointer_to_heap(&object);
+    bun_bad_classes_list = object;
+
+#if ENABLE_ISOLATES
+    // mirror_list
+    object = handles[3];  
+    relocate_pointer_to_heap(&object);    
+    bun_mirror_list = object;
+#endif 
+#if ENABLE_LIB_IMAGES && ENABLE_ISOLATES 
+    if (sharable) {
+      const int task_id = ObjectHeap::start_system_allocation();
+      bun_handles = Universe::new_obj_array(4 JVM_CHECK); 
+      ObjectHeap::finish_system_allocation(task_id);
+      bun_handles().obj_at_put(0, &bun_dictionary);  
+      bun_handles().obj_at_put(1, &bun_class_list);  
+      bun_handles().obj_at_put(2, &bun_bad_classes_list);
+      bun_handles().obj_at_put(3, bun_mirror_list);
+    Universe::global_binary_persistante_handles()->obj_at_put(global_bundle_id, bun_handles.obj());
+    }
+#endif //ENABLE_LIB_IMAGES    
+  }
 #if ENABLE_LIB_IMAGES
   ObjArray::Fast bad_classes = Task::current()->names_of_bad_classes();
-  ObjArray::Fast new_bad_classes = object;
+  ObjArray::Fast new_bad_classes = bun_bad_classes_list.obj();
   ObjArray::Fast restored_classes_list;
   if (bad_classes.is_null()) {
-    Task::current()->set_names_of_bad_classes(object);
+    //we nedd clone it here to reuse later
+    restored_classes_list = Universe::new_obj_array(new_bad_classes().length() JVM_CHECK);
+    ObjArray::array_copy(&new_bad_classes, 0,
+                       &restored_classes_list, 0, 
+                       new_bad_classes().length() JVM_MUST_SUCCEED);    
   } else {    
      restored_classes_list = Universe::new_obj_array(bad_classes().length() + 
                        new_bad_classes().length() JVM_CHECK);
-     int i;
-    for (i = 0; i < bad_classes().length(); i++) {
-      restored_classes_list().obj_at_put(i, bad_classes().obj_at(i));
-    }
-    for (i = 0; i < bad_classes().length(); i++) {
+     ObjArray::array_copy(&bad_classes, 0,
+                       &restored_classes_list, 0, 
+                       bad_classes().length() JVM_MUST_SUCCEED);
+    for (int i = 0; i < new_bad_classes().length(); i++) {
       int idx = bad_classes().length() + i;
       restored_classes_list().obj_at_put(idx, new_bad_classes().obj_at(i));
-    }
-    Task::current()->set_names_of_bad_classes(restored_classes_list.obj());
+    }    
   }
-#else
-  Task::current()->set_names_of_bad_classes(object);
-#endif
+  Task::current()->set_names_of_bad_classes(restored_classes_list.obj());
+#else //ENABLE_LIB_IMAGES
+  Task::current()->set_names_of_bad_classes(bun_bad_classes_list.obj());
+#endif //ENABLE_LIB_IMAGES
   {
     // restore gc stackmaps. During GC, we need to have a gc_block_stackmap()
     // that's big enough for all the methods in this bundle (as calculated
@@ -128,7 +196,6 @@ inline void ROMBundle::restore_vm_structures(JVM_SINGLE_ARG_TRAPS) {
 #endif
     StackmapGenerator::initialize(bi_stackmap_size JVM_CHECK);
   }
-
 
   // restore class list
 #if ENABLE_LIB_IMAGES
@@ -147,18 +214,31 @@ inline void ROMBundle::restore_vm_structures(JVM_SINGLE_ARG_TRAPS) {
   ObjArray::array_copy(&bun_class_list, 0,
                        &restored_class_list, sys_class_count,
                        bun_class_count JVM_MUST_SUCCEED);
-
 #if ENABLE_ISOLATES
   ObjArray::Fast restored_mirror_list = 
     Universe::new_obj_array(restored_class_list_len JVM_CHECK);
   ObjArray::array_copy(Universe::mirror_list(), 0,
                        &restored_mirror_list, 0, 
                        sys_class_count JVM_MUST_SUCCEED);
-  ObjArray::array_copy(&bun_mirror_list, 0,
-                       &restored_mirror_list, sys_class_count,
-                       bun_class_count JVM_MUST_SUCCEED);
-#endif
-
+  //here we must clone all task mirrors in case on sharing bundles between Isolates
+#if ENABLE_LIB_IMAGES
+  if (sharable) {
+    for (int j = 0; j < bun_class_count; j++) {
+      Oop mir = bun_mirror_list().obj_at(j);
+      OopDesc* cloned_mir = mir;
+      if (!mir.equals(Universe::task_class_init_marker())) {
+        cloned_mir = ObjectHeap::clone(cloned_mir JVM_MUST_SUCCEED);
+      }    
+      restored_mirror_list().obj_at_put(sys_class_count + j, cloned_mir);
+    }
+  } else 
+#endif //ENABLE_LIB_IMAGES
+  {
+    ObjArray::array_copy(&bun_mirror_list, 0,
+                     &restored_mirror_list, sys_class_count,
+                     bun_class_count JVM_MUST_SUCCEED);
+  }
+#endif //ENABLE_ISOLATES
   {
     // Update All of these things at the same time to avoid partial failures
     *Universe::class_list() = restored_class_list.obj();
@@ -170,18 +250,40 @@ inline void ROMBundle::restore_vm_structures(JVM_SINGLE_ARG_TRAPS) {
     Task::Raw task = Task::current();
     task().set_class_list(&restored_class_list());
     task().set_class_count(restored_class_list_len);
-    task().set_mirror_list(&restored_mirror_list());
+    task().set_mirror_list(&restored_mirror_list());    
     task().set_dictionary(&bun_dictionary);
 #endif
-#if ENABLE_LIB_IMAGES
+#if ENABLE_LIB_IMAGES    
     Task::current()->set_classes_in_images(restored_class_list_len);
 #endif
     Universe::update_relative_pointers();
   }
-
   // update array classes
-  update_system_array_class(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
+  update_system_array_class(JVM_SINGLE_ARG_CHECK);
+#if ENABLE_COMPILER && ENABLE_INLINE
+  // Update vtable bitmaps of super classes.
+  update_vtable_bitmaps(sys_class_count JVM_NO_CHECK_AT_BOTTOM);
+#endif
 }
+
+#if USE_AOT_COMPILATION
+ReturnOop 
+ROMBundle::compiled_method_from_address(const address addr) {
+  FOREACH_BINARY_IMAGE_IN_CURRENT_TASK(bundle)
+  {
+    if (bundle->text_contains((const OopDesc*)addr)) {
+      return (OopDesc*)CompiledMethodDesc::find(
+        (const CompiledMethodDesc * const *)
+        bundle->compiled_method_table_addr(),
+        bundle->compiled_method_table_size() / sizeof (OopDesc*),
+        addr);
+    }
+  }
+  ENDEACH_BINARY_IMAGE_IN_CURRENT_TASK;
+
+  return NULL;
+}
+#endif
 
 // This function is an updates each pointer P in the bundle to point to:
 // [1] If P points to an object to the system TEXT/DATA/HEAP, it's
@@ -194,18 +296,25 @@ inline void ROMBundle::restore_vm_structures(JVM_SINGLE_ARG_TRAPS) {
 // and all pointers in case [3] will be updated again to point to the
 // final location.
 inline void ROMBundle::fixup( void ) {
-#define CLEANUP_EXTERNAL_BITS USE_LARGE_OBJECT_AREA
+#define CLEANUP_EXTERNAL_BITS USE_LARGE_OBJECT_AREA 
   const int relocation_diff = DISTANCE( base(), this );
+  juint* heap_ptr = (juint*)heap_block();
+  juint* heap_border = DERIVED(juint*, heap_ptr, relocation_diff);
   juint* pp = array;
 
 #if USE_IMAGE_PRELOADING || USE_IMAGE_MAPPING
   int skip_bytes = 0;
   int bit_skip_bytes = 0;
 
-  if (relocation_diff == 0 && USE_IMAGE_MAPPING) {
+  if (relocation_diff == 0 && USE_IMAGE_MAPPING ) {
     // The TEXT part needs no relocation (and wants none, because it's mapped
     // read-only.
+#if ENABLE_LIB_IMAGES
+    //but it needs in case of multiple images!!!
+    skip_bytes = DISTANCE(this, text_block());
+#else
     skip_bytes = DISTANCE(this, method_variable_parts());
+#endif
     skip_bytes = (int)align_size_down(skip_bytes, BitsPerWord*BytesPerWord);
     bit_skip_bytes = skip_bytes / BitsPerWord;
   }
@@ -214,16 +323,17 @@ inline void ROMBundle::fixup( void ) {
   const int* const bit_end = DERIVED( const int*, bitp, *bitp ); // inclusive
   bitp = DERIVED( const int*, bitp, bit_skip_bytes );
   pp   = DERIVED( juint*, pp, skip_bytes );
-  for( ; ++bitp <= bit_end; pp += BitsPerWord )
+  
+  for( ; ++bitp <= bit_end && pp < heap_border; pp += BitsPerWord )
 #else
   const juint* bitp = LargeObject::bitvector( this );
   const juint* const bit_end = LargeObject::head( this )->next_bitvector();
 
-  // Never make this one a pointer. See bug 6362860
+  // Never make this one a pointer. See CR 6362860
   GUARANTEE(((juint)(*bitp) & (1 << RELOCATION_BITMAP_OFFSET)) == 0,
             "Relocation bitmap bit must not be set");
 
-  for( ; bitp < bit_end; bitp++, pp += BitsPerWord )
+  for( ; bitp < bit_end && pp < heap_border; bitp++, pp += BitsPerWord )
 #endif
   {
     juint bitword = *bitp;
@@ -246,69 +356,39 @@ inline void ROMBundle::fixup( void ) {
         SHIFT_ZEROS( 4)
         SHIFT_ZEROS( 2)
         SHIFT_ZEROS( 1)
-#undef SHIFT_ZEROS
-        int value = *p;
-        if( (value & 0x1) == 0 ) {
+#undef SHIFT_ZEROS        
+        if (p < (juint*)heap_border) {          
+          int value = *p;        
 #if ENABLE_LIB_IMAGES
-          value = Task::current()->decode_reference(value);
-#else
-          value += relocation_diff;
-#endif
+          if( (value & 0x3) == 3 ) {
+            value = Task::current()->decode_reference(value);
 #if CLEANUP_EXTERNAL_BITS
-          new_bitword |= mask;
-#endif
-        } else {
-          // reference to romized system image
-#ifdef AZZERT
-          const unsigned int type = unsigned(*p) >> ROM::offset_width;
-#if ENABLE_LIB_IMAGES
-          //IMPL_NOTE:check this
-          GUARANTEE(type == ROM::HEAP_BLOCK || type == 0/*UNKNOWN_BLOCK*/, 
-                    "only system HEAP references needs encoding");
-#else
-          GUARANTEE(type == ROM::HEAP_BLOCK, 
-                    "only system HEAP references needs encoding");
-#endif
+            new_bitword |= mask; 
 #endif          
-          const int class_id = (value >> ROM::type_start) & ROM::type_mask;
-          const int instance_size = 
-            (value >> ROM::instance_size_start) & ROM::instance_size_mask;
-          switch( instance_size ) {
-            default: {
-#ifdef AZZERT
-              SHOULD_NOT_REACH_HERE();
-            } break;
-            case -InstanceSize::size_obj_array: {
-#endif          
-              value = int( Universe::empty_obj_array()->obj() );
-            } break;
-#if ENABLE_ISOLATES
-            case -InstanceSize::size_task_mirror: {
-              GUARANTEE(class_id < ROM::number_of_system_classes(), 
-                        "Bad classid");
-              value = int( Universe::task_class_init_marker()->obj() );
-            } break;
+          } else 
 #endif
-            case -InstanceSize::size_obj_array_class:
-            case -InstanceSize::size_type_array_class:
-            case -InstanceSize::size_instance_class: {
-              JavaClass::Raw jc = Universe::class_from_id(class_id);
-              value = int( jc.obj() );
-            } break;
-            case -InstanceSize::size_java_near: {
-              JavaClass::Raw jc = Universe::class_from_id(class_id);
-              JavaNear::Raw jn = jc().prototypical_near();
-              value = int( jn.obj() );
-            } break;
-          }
+          if( (value & 0x1) == 0 ) {
+            value += relocation_diff;
+#if CLEANUP_EXTERNAL_BITS            
+            new_bitword |= mask;
+#endif
+          } else {                   
+            value = (int)ROM::decode_heap_reference(value);                    
+          }        
+          *p = value;
+#if CLEANUP_EXTERNAL_BITS
+        } else { 
+            //this link is inside heap block, so it will be resolved in copy_heap_block
+            new_bitword |= mask; 
+#endif          
         }
-        *p++ = value;
+        p++;
 #if CLEANUP_EXTERNAL_BITS
         mask <<= 1;
 #endif
-      } while( (bitword >>= 1) != 0 );
-#if CLEANUP_EXTERNAL_BITS
-      *(juint*)bitp = new_bitword;
+      } while( (bitword >>= 1) != 0 && pp < heap_border);
+#if CLEANUP_EXTERNAL_BITS 
+      *(juint*)bitp = new_bitword;   
 #endif
     }
   }
@@ -318,85 +398,194 @@ inline void ROMBundle::fixup( void ) {
 int ROMBundle::heap_relocation_offset;
 void ROMBundle::relocate_pointer_to_heap(OopDesc** p) {
   GUARANTEE( ROMBundle::current() != NULL, "sanity" );
-  const address obj = *(address*)p;
+  const address obj = *(address*)p;    
   if( ROMBundle::current()->heap_src_block_contains( obj ) ) {
     *p = DERIVED( OopDesc*, obj, heap_relocation_offset );
   }
 }
 
-inline void ROMBundle::copy_heap_block(JVM_SINGLE_ARG_TRAPS) const {
+inline ReturnOop  ROMBundle::copy_heap_block(JVM_SINGLE_ARG_TRAPS) {    
+#define CLEANUP_EXTERNAL_BITS USE_LARGE_OBJECT_AREA
   // (1) Allocate space in the heap for the heap_block
   const unsigned size = heap_block_size();
-  OopDesc* dst = ObjectHeap::allocate( size JVM_CHECK);
-
+#if ENABLE_LIB_IMAGES 
+  const bool sharable = is_sharable();
+  int task_id = 0;
+  if( sharable ) {
+    task_id = ObjectHeap::start_system_allocation();   
+  }
+#endif 
+  OopDesc* dst = ObjectHeap::allocate(size JVM_NO_CHECK); 
+#if ENABLE_LIB_IMAGES 
+  if( sharable ) {
+    ObjectHeap::finish_system_allocation(task_id); 
+  }
+#endif 
+  if( dst == NULL ) { 
+    return NULL; 
+  } 
   // (2) Copy heap_block to its final destination
   const void* src = heap_block();
   jvm_memcpy( dst, src, size );
+  const int relocation_diff = DISTANCE( base(), this ) ;
+  const int diff_heap = DISTANCE( src, dst );
+  heap_relocation_offset = diff_heap;
+  juint* pp = array;
+  pp = DERIVED( juint*, pp, diff_heap); //we are modifing copied block
+  int skip_bytes = DISTANCE(this, heap_block());
+  skip_bytes = (int)align_size_down(skip_bytes, BitsPerWord*BytesPerWord);
+  const int bit_skip_bytes = skip_bytes / BitsPerWord;;
 
-  // (3) Relocate pointers in the heap_block that point into heap_block
-  const int diff = DISTANCE( src, dst );
-  heap_relocation_offset = diff;
-  if( size > 0 ) { 
-    OopDesc* q = dst;
-    OopDesc* const end = (OopDesc*)_inline_allocation_top;
-    while( q < end ) {
-#ifdef AZZERT
-      OopDesc* orig_near_obj = q->klass();
+#if USE_IMAGE_PRELOADING || USE_IMAGE_MAPPING
+  const int* bitp = (const int*)relocation_bit_map();
+  const int* const bit_end = DERIVED( const int*, bitp, *bitp ); // inclusive
+  bitp = DERIVED( const int*, bitp, bit_skip_bytes );
+  pp   = DERIVED( juint*, pp, skip_bytes );
+  for( ; ++bitp <= bit_end; pp += BitsPerWord )
+#else
+  const juint* bitp = LargeObject::bitvector( this );
+  const juint* const bit_end = LargeObject::head( this )->next_bitvector();  
+  pp   = DERIVED( juint*, pp, skip_bytes );
+
+  // Never make this one a pointer. See CR 6362860
+  GUARANTEE(((juint)(*bitp) & (1 << RELOCATION_BITMAP_OFFSET)) == 0,
+            "Relocation bitmap bit must not be set");
+  bitp = DERIVED( const juint*, bitp, bit_skip_bytes );
+
+  for( ; bitp < bit_end; bitp++, pp += BitsPerWord )
 #endif
-      relocate_pointer_to_heap((OopDesc**)q);
-#ifdef AZZERT
-      if( heap_src_block_contains( address(orig_near_obj) ) ) {
-        // If the near object also needs to be relocated, either of
-        // the following must be true:
-        // [1] (q->klass() < q) => the near object has already been relocated,
-        //                         so q->klass()->klass() is good.
-        // [2] (q->klass()->klass()) does not need to be relocated.
-        GUARANTEE((q->klass() < q) ||
-                  (ROM::system_contains(q->klass()->klass())),
-                  "sanity");
-      }
+  {
+    juint bitword = *bitp;
+    if( bitword ) {
+      juint* p = pp;
+#if CLEANUP_EXTERNAL_BITS
+      juint new_bitword = 0;
+      juint mask = 1;
 #endif
-      FarClassDesc* blueprint = q->blueprint();
-      if( heap_src_block_contains( address(blueprint) ) ) {
-        blueprint = DERIVED(FarClassDesc*, blueprint, diff);
-        GUARANTEE((OopDesc*)blueprint < q, 
-                  "blueprint must have been relocated");
-      }
-      q->oops_do_for( blueprint, relocate_pointer_to_heap );
-      q = DERIVED( OopDesc*, q, q->object_size_for(blueprint) );
+      do {
+#if CLEANUP_EXTERNAL_BITS
+  #define SHIFT_ZEROS(n)\
+    if((bitword & ((1 << n)-1)) == 0) { bitword >>= n; mask <<= n; p += n; }
+#else
+  #define SHIFT_ZEROS(n)\
+    if((bitword & ((1 << n)-1)) == 0) { bitword >>= n; p += n; }
+#endif
+        SHIFT_ZEROS(16)
+        SHIFT_ZEROS( 8)
+        SHIFT_ZEROS( 4)
+        SHIFT_ZEROS( 2)
+        SHIFT_ZEROS( 1)
+#undef SHIFT_ZEROS                
+        if (p >= (juint*)dst) { //IMPROVE ME:: align heap block in image!          
+          int value = *p;
+#if ENABLE_LIB_IMAGES
+          if( (value & 0x3) == 3 ) {          
+            value = Task::current()->decode_reference(value);
+          } else 
+#endif
+          if( (value & 0x1) == 0 ) {
+            value += relocation_diff;
+            if (value >= (int)heap_block()) {//this is a heap ref
+              value += diff_heap;
+            }
+          } else {          
+            value = (int)ROM::decode_heap_reference(value);                    
+          }
+          *p = value;
+        }
+#if CLEANUP_EXTERNAL_BITS
+        else {
+            new_bitword |= mask; 
+        }
+#endif          
+#if CLEANUP_EXTERNAL_BITS
+        mask <<= 1;
+#endif
+        p++;
+      } while( (bitword >>= 1) != 0);
+#if CLEANUP_EXTERNAL_BITS 
+      *(juint*)bitp = new_bitword;   
+#endif
     }
-    GUARANTEE(q == end, "foo");
   }
+#undef CLEANUP_EXTERNAL_BITS
+  return dst;
 }
 
 #if USE_IMAGE_PRELOADING
+#if ENABLE_LIB_IMAGES
+OsFile_Handle ROMBundle::_preloaded_handles[MAX_LIB_IMAGES];
+int           ROMBundle::_preloaded_lengths[MAX_LIB_IMAGES];
+int           ROMBundle::_loaded_bundle_count = 0;
+int           ROMBundle::_loaded_bundle_size = 0;
+#else
 OsFile_Handle ROMBundle::_preloaded_handle;
 int           ROMBundle::_preloaded_length;
+#endif
 
 void ROMBundle::preload( const JvmPathChar class_path[] ) {
+  int final_length = 0;
   int length = 0;
   OsFile_Handle handle = NULL;
   if( class_path ) {
-    int count = 0;
+    int start = 0;
+    int bundle_num = 0;
     DECLARE_STATIC_BUFFER(JvmPathChar, new_class_path, NAME_BUFFER_SIZE);
-    for(; class_path[count] != 0 && 
+    while (class_path[start]) {    
+      int count = 0;
+      for(; class_path[count] != 0 && 
           class_path[count] != OsFile_path_separator_char; count++) {
-    }
-
-    jvm_memcpy(new_class_path, class_path, 
+      }
+      jvm_memcpy(new_class_path, class_path + start, 
                 count * sizeof(JvmPathChar));
-    new_class_path[count] = 0;
-    handle = open(new_class_path, length);
-  }
-  _preloaded_handle = handle;
-  _preloaded_length = length;
-  ObjectHeap::set_preallocated_space_size( length );
+      new_class_path[count] = 0;
+      
+      int dummy;
+      handle = open(new_class_path, length, &dummy);
+#if ENABLE_LIB_IMAGES
+      _preloaded_handles[bundle_num] = handle;
+      _preloaded_lengths[bundle_num] = length;      
+      if (!handle) break;
+      final_length += align_size(length);
+      start += count;      
+      if (class_path[start] == OsFile_path_separator_char) start++;
+      bundle_num++;
+#else
+      _preloaded_handle = handle;
+      _preloaded_length = length;
+      final_length = length;
+      break;
+#endif      
+    } 
+  } else {
+#if ENABLE_LIB_IMAGES
+    _preloaded_handles[0] = handle;
+    _preloaded_lengths[0] = length;
+#else
+    _preloaded_handle = handle;
+    _preloaded_length = length;    
+#endif
+    final_length = length;
+  }  
+  
+  ObjectHeap::set_preallocated_space_size( final_length );
 }
 #endif
-
+#if ENABLE_LIB_IMAGES && ENABLE_ISOLATES
+ROMBundle* ROM::already_loaded(const int bundle_id, void** map_handle) {
+  ObjArray::Raw list = Universe::global_binary_images();
+  for( int i = list().length(); --i >= 0; ) {
+    ROMBundle* bun = (ROMBundle*)list().obj_at(i);
+    if( bun && bun->bundle_id() == bundle_id ) {
+      return bun;
+    }
+  }
+  return NULL;
+}
+#endif
 #if USE_IMAGE_MAPPING
 inline ROMBundle* ROMBundle::load( const int /*task_id*/,
-                      const JvmPathChar path_name[], void** map_handle)
+                      const JvmPathChar path_name[], void** map_handle, bool* already_loaded)
 {
   OsFile_Handle file_handle = OsFile_open(path_name, "rb");
   if (file_handle == NULL) {
@@ -422,8 +611,20 @@ inline ROMBundle* ROMBundle::load( const int /*task_id*/,
     return NULL;
   }
 
+#if ENABLE_LIB_IMAGES && ENABLE_ISOLATES
+  int bundle_id = header[ROM_BUNDLE_ID];
+  ROMBundle* tbun = ROM::already_loaded(bundle_id, map_handle);  
+  *already_loaded = (tbun != NULL && tbun->is_sharable());
+  if (*already_loaded) {        
+    return tbun;
+  }
+#endif  
   address preferred_addr = (address)header[BASE];
+#if ENABLE_LIB_IMAGES
+  int ro_length = 0; // text block may contains references to other bundles
+#else
   int ro_length = header[METHOD_VARIABLE_PARTS] - header[BASE];
+#endif
   int rw_offset = ro_length;
   int rw_length = file_length - ro_length;
 
@@ -474,10 +675,9 @@ void ROM::dispose_binary_images() {
   ENDEACH_TASK;
 }
 
-#else
-// !USE_IMAGE_MAPPING
+#else // !USE_IMAGE_MAPPING
 
-inline OsFile_Handle ROMBundle::open(const JvmPathChar* file, int& length) {
+inline OsFile_Handle ROMBundle::open(const JvmPathChar* file, int& length, int* bundle_id) {
   OsFile_Handle file_handle = OsFile_open(file, "rb");
   if (file_handle == NULL) {
     return NULL;
@@ -493,8 +693,9 @@ inline OsFile_Handle ROMBundle::open(const JvmPathChar* file, int& length) {
 
 #if USE_IMAGE_PRELOADING
   {
-    juint magics[3];
+    juint magics[6];
     OsFile_read(file_handle, &magics, 1, sizeof magics);
+    *bundle_id = magics[5];
     if( magics[0] != juint( header_tag        ) ||
         magics[1] != juint( header_word_count ) ||
         magics[2] != juint( ROM_BINARY_MAGIC  ) ) {
@@ -508,6 +709,7 @@ inline OsFile_Handle ROMBundle::open(const JvmPathChar* file, int& length) {
     if( OsFile_read(file_handle, &header, 1, sizeof header ) != sizeof header) {
       goto error;
     }
+    *bundle_id = header.array[ ROM_BUNDLE_ID];
     if ( header.array[ HEADER_TAG        ] != juint( header_tag         ) ||
          header.array[ HEADER_WORD_COUNT ] != juint( header_word_count  ) ||
          header.array[ MAGIC             ] != juint( ROM_BINARY_MAGIC   ) ) {
@@ -536,54 +738,41 @@ error:
   return NULL;
 }
 
-// USE_IMAGE_PRELOADING || USE_LARGE_OBJECT_AREA
+#if USE_IMAGE_PRELOADING
 inline ROMBundle* ROMBundle::load(const int task_id,
-                          const JvmPathChar path_name[], void** map_handle)
+                          const JvmPathChar path_name[], void** map_handle, bool* already_loaded)
 {
   ROMBundle* bundle = NULL;
   (void)map_handle;
-#if USE_IMAGE_PRELOADING
+#if ENABLE_LIB_IMAGES
+  const int length = _preloaded_lengths[_loaded_bundle_count];
+  OsFile_Handle const handle = _preloaded_handles[_loaded_bundle_count];
+#else
   const int length = _preloaded_length;
   OsFile_Handle const handle = _preloaded_handle;
-  (void)path_name;
-#else
-  int length;
-  OsFile_Handle const handle = open( path_name, length );
 #endif
+  (void)path_name;
 
   if( handle ) {
-#if USE_IMAGE_PRELOADING
-    ROMBundle* const p = (ROMBundle*) ObjectHeap::get_preallocated_space();
-#elif USE_LARGE_OBJECT_AREA
-    LargeObject* object =
-      LargeObject::allocate( LargeObject::allocation_size( length ), task_id );
-    ROMBundle* p = (ROMBundle*) (object ? object->body() : object);
+#if ENABLE_LIB_IMAGES
+    address bun_address = (address) ObjectHeap::get_preallocated_space();
+    bun_address = DERIVED(address, bun_address, _loaded_bundle_size);
+    _loaded_bundle_size += align_size(length);
+    _loaded_bundle_count++;
+    ROMBundle* const p = (ROMBundle*) bun_address;
+    bun_address = DERIVED(address, bun_address, length);
+    Universe::fill_heap_gap(bun_address, align_size(length) - length);
 #else
-    SHOULD_NOT_REACH_HERE();
-    // Used to be this, but we don't support it anymore
-    // ROMBundle* const p = (ROMBundle*) OsMemory_allocate( length );
+    ROMBundle* const p = (ROMBundle*) ObjectHeap::get_preallocated_space();
 #endif
 
     if( p ) {
       const int n = OsFile_read( handle, p, 1, size_t(length) );
       if( n == length ) {
-#if USE_LARGE_OBJECT_AREA
-        juint bit_length;
-        if( OsFile_read( handle, &bit_length, 1, sizeof bit_length )
-              == sizeof bit_length &&
-            OsFile_read( handle, LargeObject::bitvector( p ), 1, bit_length )
-              == bit_length ) {
-#endif
-          bundle = p;
-#if USE_LARGE_OBJECT_AREA
-        }
-#endif
+        bundle = p;
       } else {
         tty->print_cr("Error: Unable to read entire binary ROM image: "
                       "need %d, got %d bytes", length, n);
-#if USE_LARGE_OBJECT_AREA
-        LargeObject::head( p )->free();
-#endif
       }
     } else {
       tty->print_cr("Error: Unable to allocate memory "
@@ -593,27 +782,94 @@ inline ROMBundle* ROMBundle::load(const int task_id,
   }
   return bundle;
 }
+#else //USE_LARGE_OBJECT_AREA
+inline ROMBundle* ROMBundle::load(const int task_id,
+                          const JvmPathChar path_name[], void** map_handle, bool* already_loaded)
+{
+  ROMBundle* bundle = NULL;
+  (void)map_handle;
+  int length;
+  int bundle_id;
+  OsFile_Handle const handle = open( path_name, length, &bundle_id );
+#if ENABLE_LIB_IMAGES   
+  ROMBundle* tbun = ROM::already_loaded(bundle_id, NULL);  
+  *already_loaded = (tbun != NULL && tbun->is_sharable());
+  if( *already_loaded ) {
+    return tbun;
+  }
+#endif //ENABLE_LIB_IMAGES 
+
+  if( handle ) {
+    LargeObject* object =
+      LargeObject::allocate( LargeObject::allocation_size( length ) );
+    ROMBundle* p = (ROMBundle*) (object ? object->body() : object);
+    if( p ) {
+      const int n = OsFile_read( handle, p, 1, size_t(length) );
+      if( n == length ) {
+        juint bit_length;
+        if( OsFile_read( handle, &bit_length, 1, sizeof bit_length )
+              == sizeof bit_length &&
+            OsFile_read( handle, LargeObject::bitvector( p ), 1, bit_length )
+              == bit_length ) {
+          bundle = p;
+        }
+      } else {
+        tty->print_cr("Error: Unable to read entire binary ROM image: "
+                      "need %d, got %d bytes", length, n);
+        p->free();
+      }
+    } else {
+      tty->print_cr("Error: Unable to allocate memory "
+                    "for the binary ROM image");
+    }
+    OsFile_close( handle );
+  }
+  return bundle;
+}
+#endif // !USE_LARGE_OBJECT_AREA
 #endif // !USE_IMAGE_MAPPING
 
 #if ENABLE_ISOLATES
-void ROMBundle::add_to_global_binary_images(
 #if ENABLE_LIB_IMAGES
-                                            JVM_SINGLE_ARG_TRAPS) {
-  ObjArray::Raw list = Universe::binary_images();
-  for (int i=0; i<list().length(); i++) {
-    if (list().obj_at(i) == NULL) {
-      list().obj_at_put(i, (OopDesc*)this);
-      return;
+int ROMBundle::add_to_global_binary_images( void* image_handle JVM_TRAPS) {
+  UsingFastOops fast;
+  ObjArray::Fast image_list = Universe::global_binary_images();
+  ObjArray::Fast binary_persistant_list = Universe::global_binary_persistante_handles();
+#if USE_IMAGE_MAPPING
+  TypeArray::Fast handle_list = Universe::global_image_handles();
+#endif
+  int i=0;
+  for (; i<image_list().length(); i++) {
+    if (image_list().obj_at(i) == (OopDesc*)this) {
+      return i;
     }
   }
-  //there are no free space inside Universe::binary_images()!
-  ObjArray::Raw new_list = Universe::new_obj_array(list().length() + MAX_TASKS JVM_CHECK);
-  list = Universe::binary_images();
-  ObjArray::array_copy(&list, 0, &new_list, 0, list().length() JVM_CHECK);
-  new_list().obj_at_put(list().length(), (OopDesc*)this);
-#else
-                                            void ) {
-  ObjArray::Raw list = Universe::binary_images();
+  for (i = 0; i<image_list().length(); i++) {
+    if (image_list().obj_at(i) == NULL) {
+      image_list().obj_at_put(i, (OopDesc*)this);
+#if USE_IMAGE_MAPPING
+      handle_list().int_at_put(i, (int)image_handle);
+#endif
+      return i;
+    }
+  }
+  //there are no free space inside Universe::binary_images()!  
+  int old_length = image_list().length();
+  ObjArray::Fast new_image_list = Universe::new_obj_array(old_length + MAX_TASKS JVM_CHECK_(-1));
+  ObjArray::array_copy(&image_list, 0, &new_image_list, 0, old_length JVM_CHECK_(-1));
+  new_image_list().obj_at_put(old_length, (OopDesc*)this);
+  *Universe::global_binary_images() = new_image_list;  
+#if USE_IMAGE_MAPPING
+  TypeArray::Fast new_handle_list = Universe::new_int_array(old_length + MAX_TASKS JVM_CHECK_(-1));  
+  TypeArray::array_copy(&handle_list, 0, &new_handle_list , 0, old_length);
+  new_handle_list().int_at_put(old_length, (int)image_handle);
+  *Universe::global_image_handles() = new_handle_list;
+#endif
+  return old_length;
+}
+#else //ENABLE_LIB_IMAGES
+void ROMBundle::add_to_global_binary_images( ) {
+  ObjArray::Raw list = Universe::global_binary_images();
   for (int i=0; i<MAX_TASKS; i++) {
     if (list().obj_at(i) == NULL) {
       list().obj_at_put(i, (OopDesc*)this);
@@ -621,20 +877,115 @@ void ROMBundle::add_to_global_binary_images(
     }
   }
   SHOULD_NOT_REACH_HERE();
-#endif
+}
+#endif //ENABLE_LIB_IMAGES
+
+
+#if ENABLE_LIB_IMAGES
+bool ROMBundle::remove_if_not_currently_shared( void  ) {
+  ObjArray::Raw list = Universe::global_binary_images();    
+  bool shared = is_shared( Task::current() ); 
+  if (shared) return true;
+  ObjArray::Raw persistance_handles = Universe::global_binary_persistante_handles();
+  for (int i=0; i<list().length(); i++) {
+    if (list().obj_at(i) == (OopDesc*)this) {      
+        persistance_handles().obj_at_clear(i);
+        return false;
+    }
+  }
+  SHOULD_NOT_REACH_HERE();
+  return false;
 }
 
-void ROMBundle::remove_from_global_binary_images() {
-  ObjArray::Raw list = Universe::binary_images();
-#if !ENABLE_LIB_IMAGES  
+bool ROMBundle::is_shared(const Task* dead_task) {
+  TaskList::Raw tlist = Universe::task_list()->obj();
+  int task_id;
+  const int len = tlist().length();
+  Task::Raw task;
+  ObjArray::Raw images;
+  for (task_id = Task::FIRST_TASK; task_id < len; task_id++) {
+    task =  tlist().obj_at(task_id);
+    if (task.is_null()) continue;
+    if (task.obj() == dead_task->obj()) continue;
+    images = task().binary_images();
+    if (images.is_null()) continue;
+    const int images_len = images().length();
+    for (int i = 0; i < images_len; i++) {
+      if (images().obj_at(i) == (OopDesc*)this) return true;
+    }
+  }
+  return false;
+}
+#ifdef AZZERT
+bool ROMBundle::is_shared() {
+  TaskList::Raw tlist = Universe::task_list()->obj();
+  int task_id;
+  const int len = tlist().length();
+  Task::Raw task;
+  ObjArray::Raw images;
+  int count = 0;
+  for (task_id = Task::FIRST_TASK; task_id < len; task_id++) {
+    task =  tlist().obj_at(task_id);    
+    if (task.is_null()) continue;
+    images = task().binary_images();
+    if (images.is_null()) continue;
+    const int images_len = images().length();
+    for (int i = 0; i < images_len; i++) {
+      if (images().obj_at(i) == (OopDesc*)this) count++;
+    }
+  }
+  return count > 1;
+}
+#endif //AZZERT
+bool ROMBundle::remove_from_global_binary_images() {  
+#ifdef AZZERT
+  GUARANTEE(!is_shared(), "cannot remove shared image from global list!"); 
+#endif //AZZERT
+  ObjArray::Raw list = Universe::global_binary_images();  
   int last;
-  for (last=0; last<MAX_TASKS; last++) {
+  for (last=0; last<list().length(); last++) {
+    if (list().obj_at(last) == NULL) {
+      break;
+    }
+  }
+  GUARANTEE(last > 0, "must have at least one item in the list");  
+  for (int i=0; i<list().length(); i++) {
+    if (list().obj_at(i) == (OopDesc*)this) {           
+#if USE_IMAGE_MAPPING
+      OsFile_MappedImage* image_handle = (OsFile_MappedImage*)
+                              Universe::global_image_handles()->int_at(i);
+      OsFile_UnmapImage(image_handle);
+      Universe::global_image_handles()->int_at_put(i, 0);        
+#endif
+      if (i == last - 1) {
+        list().obj_at_clear(i);
+      } else {
+        last --;
+        list().obj_at_put(i, list().obj_at(last));
+        list().obj_at_clear(last);
+#if USE_IMAGE_MAPPING
+        Universe::global_image_handles()->int_at_put(i, 
+                       Universe::global_image_handles()->int_at(last));
+        Universe::global_image_handles()->int_at_put(last, 0);
+#endif
+      }
+      return true;
+    }
+  }  
+  SHOULD_NOT_REACH_HERE();
+  return true;
+}
+
+#else //ENABLE_LIB_IMAGES
+bool ROMBundle::remove_from_global_binary_images() {    
+  ObjArray::Raw list = Universe::global_binary_images();  
+  int last;
+  for (last=0; last<list().length(); last++) {
     if (list().obj_at(last) == NULL) {
       break;
     }
   }
   GUARANTEE(last > 0, "must have at least one item in the list");
-
   for (int i=0; i<MAX_TASKS; i++) {
     if (list().obj_at(i) == (OopDesc*)this) {
       if (i == last - 1) {
@@ -644,28 +995,22 @@ void ROMBundle::remove_from_global_binary_images() {
         list().obj_at_put(i, list().obj_at(last));
         list().obj_at_clear(last);
       }
-      return;
+      return true;
     }
   }
-
   SHOULD_NOT_REACH_HERE();
-#else
-  //IMPL_NOTE: This shall be modified!
-  for (int i=0; i<list().length(); i++) {
-    if (list().obj_at(i) == (OopDesc*)this) {
-        list().obj_at_clear(i);
-      return;
-    }
-  }  
-#endif
+  return true;
 }
+
+#endif //!ENABLE_LIB_IMAGES
+
 #endif // ENABLE_ISOLATES
 
 /* This function is used for loading in a "dynamic" ROM image. */
 /* A dynamic ROM image is contained in a separate file such */
 /* as "ROM_binary.bun" */
 
-bool ROM::link_dynamic(Task* task, FilePath* unicode_file JVM_TRAPS) {
+bool ROM::link_dynamic(Task* task, FilePath* unicode_file JVM_TRAPS) {  
   DECLARE_STATIC_BUFFER(PathChar, path_name, NAME_BUFFER_SIZE + 7);
   unicode_file->string_copy(path_name, NAME_BUFFER_SIZE);
 
@@ -677,40 +1022,31 @@ bool ROM::link_dynamic(Task* task, FilePath* unicode_file JVM_TRAPS) {
 #endif
 
   // (0a) Open and read the bundle
-  ROMBundle* bun = ROMBundle::load( task->task_id(), path_name, &image_handle );
+  bool already_loaded = false;
+  ROMBundle* bun = ROMBundle::load( task->task_id(), path_name, &image_handle, &already_loaded );
   if( bun == NULL) {
     return false;
   }
-#if ENABLE_LIB_IMAGES
-  if (!check_bundle_references(bun)) {
-    //IMPL_NOTE: free image_handle
+#if ENABLE_LIB_IMAGES   
+  if (!check_bundle_references(bun, already_loaded)) {    
+    if (!already_loaded) {
+#if USE_IMAGE_MAPPING    
+      OsFile_UnmapImage((OsFile_MappedImage*)image_handle);
+#elif USE_LARGE_OBJECT_AREA 
+      bun->free();
+      LargeObject::compact();
+#endif //USE_IMAGE_MAPPING
+    }
     return false;
   }
-#endif
+#endif //ENABLE_LIB_IMAGES 
 
 #if ENABLE_LIB_IMAGES
-  ObjArray::Fast old_binary_images = task->binary_images();
-  if (old_binary_images.not_null()) {
-    ObjArray::Raw binary_images = Universe::new_obj_array(old_binary_images().length() + 1 JVM_CHECK_0);
-    int i;
-    for ( i = 0; i < old_binary_images().length(); i++) {
-      binary_images().obj_at_put(i, old_binary_images().obj_at(i));
-    }
-    binary_images().obj_at_put(i, (OopDesc*)bun);
-    task->set_binary_images(&binary_images);
-  } else {
-    ObjArray::Raw binary_images = Universe::new_obj_array(1 JVM_CHECK_0);
-    binary_images().obj_at_put(0, (OopDesc*)bun);
-    task->set_binary_images(&binary_images);
-  }
+  task->add_binary_image(bun JVM_CHECK_0);
 #endif
 
-#if USE_IMAGE_MAPPING
-  {
-    TypeArray::Raw img_handles = Universe::new_int_array(1 JVM_CHECK_0);
-    img_handles().int_at_put(0, (int)image_handle);
-    task->set_mapped_image_handles(&img_handles);
-  }
+#if USE_IMAGE_MAPPING && !ENABLE_LIB_IMAGES
+  task->add_binary_image_handle(image_handle JVM_CHECK_0);
 #endif
 
   ROMBundle::set_current( bun );
@@ -721,8 +1057,11 @@ bool ROM::link_dynamic(Task* task, FilePath* unicode_file JVM_TRAPS) {
 
   // (0c) Adjust all the pointers in the binary ROM image by 
   // the relocation difference
-  bun->fixup();
+  if (!already_loaded) {
+    bun->fixup();    
+  }
 
+  int global_bundle_id;
   {
     // The effect of this block would be undone in Task::link_dynamic()
     // if we fail later on.
@@ -732,10 +1071,13 @@ bool ROM::link_dynamic(Task* task, FilePath* unicode_file JVM_TRAPS) {
     // block. If a GC happens, VerifyGC requires all references to
     // binary objects to be those that live in Universe::binary_images().
 #if ENABLE_LIB_IMAGES
-#if ENABLE_ISOLATES
-    bun->add_to_global_binary_images(JVM_SINGLE_ARG_CHECK_0);
-#endif
+#if ENABLE_ISOLATES    
+    global_bundle_id = bun->add_to_global_binary_images(image_handle JVM_CHECK_0);    
 #else
+    bun->add_to_global_binary_images();    
+#endif
+#else //!ENABLE_LIB_IMAGES
+#if ENABLE_ISOLATES
     bun->add_to_global_binary_images();
     // This is necessary for restoring ROMBundle:current() -- if a GC happens
     // during loading, we may switch task temporarily to run finalizers.
@@ -743,9 +1085,12 @@ bool ROM::link_dynamic(Task* task, FilePath* unicode_file JVM_TRAPS) {
     binary_images().obj_at_put(0, (OopDesc*)bun);
     task->set_binary_images(&binary_images);
 #endif
+#endif //ENABLE_LIB_IMAGES
   }
 
-  bun->copy_heap_block( JVM_SINGLE_ARG_CHECK_0 );
+  if (!already_loaded) {
+    OopDesc* heap_ptr = bun->copy_heap_block( JVM_SINGLE_ARG_CHECK_0 );
+  }
 
 #if ENABLE_PERFORMANCE_COUNTERS
   const jlong link_elapsed = Os::elapsed_counter() - link_start_time;
@@ -756,14 +1101,19 @@ bool ROM::link_dynamic(Task* task, FilePath* unicode_file JVM_TRAPS) {
   Universe::set_number_of_java_classes( bun->number_of_java_classes() );
 
   // (8) Method entry initialization (for handling -comp flag)
-  bun->update_rom_default_entries();
-
+  if (!already_loaded) {
+    bun->update_rom_default_entries();
+  }
   //
   // OBSOLETE ObjectHeap::recalc_slices_for_binary();
   //
 
   // restore VM structures expecting normal heap layout
+#if ENABLE_LIB_IMAGES && ENABLE_ISOLATES
+  bun->restore_vm_structures(global_bundle_id, already_loaded, bun->is_sharable() JVM_CHECK_0);    
+#else //ENABLE_LIB_IMAGES
   bun->restore_vm_structures(JVM_SINGLE_ARG_CHECK_0);
+#endif //ENABLE_LIB_IMAGES
 
 #if ENABLE_PERFORMANCE_COUNTERS
   jlong elapsed = Os::elapsed_counter() - start_time;
@@ -774,7 +1124,7 @@ bool ROM::link_dynamic(Task* task, FilePath* unicode_file JVM_TRAPS) {
   if( VerifyGC ) {
     // The heap and universe handles should be consistent now
     ObjectHeap::verify();
-  }
+  }    
   return true;
 }
 
@@ -855,7 +1205,9 @@ void ROMBundle::p() {
 #if ENABLE_ISOLATES
 void ROMBundle::print_all() {
   int i;
-  ObjArray::Raw list = Universe::binary_images();
+  ObjArray::Raw list = Universe::global_binary_images();
+  GUARANTEE(!ENABLE_LIB_IMAGES, "doesn't implemented");
+  /*IMPL_NOTE: here shall be list().length() which is != MAX_TASKS in case of ENABLE_LIB_IMAGES*/
   for (i=0; i<MAX_TASKS; i++) {
     if (list().obj_at(i) != NULL) {
       tty->print_cr("Universe::binary_images[%d] = 0x%08x", i,
@@ -884,9 +1236,12 @@ void ROMBundle::print_all() {
 #endif // PRODUCT
 
 #if ENABLE_LIB_IMAGES
-bool ROM::check_bundle_references(ROMBundle* bun) {
-  int bundle_offset = bun->int_at(bun->ROM_LINKED_BUNDLES_OFFSET);
-  int* bundles = (int*)bun + (bundle_offset / sizeof(int));  
+bool ROM::check_bundle_references(ROMBundle* bun, bool already_loaded) {
+  int* bundles = (int*)bun->ptr_at(bun->ROM_LINKED_BUNDLES_OFFSET);  
+  if (!already_loaded) { //we have already relocated this ptr
+    const int relocation_diff = DISTANCE( bun->base(), bun );  
+    bundles = (int*)((int)bundles + relocation_diff);
+  }
   int bundle_count = bundles[0];
   Task::Raw current_task = Task::current();
   ObjArray::Raw images = current_task().binary_images();
@@ -895,7 +1250,7 @@ bool ROM::check_bundle_references(ROMBundle* bun) {
       return true;
     } else {
 #ifdef AZZERT
-      tty->print_cr("Your bundle number 1 requres another number of shared libraries(%d instead of 0).",
+      tty->print_cr("Your bundle number 1 requires another number of shared libraries(%d instead of 0).",
            bundle_count);
 #endif
       return false;
@@ -905,33 +1260,30 @@ bool ROM::check_bundle_references(ROMBundle* bun) {
   for (i = 0; i < bundle_count; i++) {
     if (i >= images().length()) {
 #ifdef AZZERT
-    tty->print_cr("Your bundle number %d requres another number of shared libraries(%d instead of %d).",
+    tty->print_cr("Your bundle number %d requires another number of shared libraries(%d instead of %d).",
       i, bundle_count, i - 1);
 #endif
     return false;
     }
     ROMBundle* bundle = (ROMBundle*)images().obj_at(i);
     int expected_bundle_id = bundles[1+i];
-    if (bundle == NULL) {
-      if (bundle->int_at(ROMBundle::ROM_BUNDLE_ID) != expected_bundle_id) {
+    if (bundle == NULL || expected_bundle_id != bundle->bundle_id()) {
 #ifdef AZZERT
-        tty->print_cr("Your bundle number %d requres another version of shared libraries."
-                                                          , bundle_count + 1);
+      tty->print_cr("Your bundle number %d requires another version of shared libraries."
+                                                        , bundle_count + 1);
 #endif //AZZERT
-        return false;
-      }
+      return false;
     }
   }
   if (i < images().length()) {
     if ((ROMBundle*)images().obj_at(i) != bun) {
 #ifdef AZZERT
-      tty->print_cr("Your bundle number %d requres another number of shared libraries(%d instead of %d).",
+      tty->print_cr("Your bundle number %d requires another number of shared libraries(%d instead of %d).",
         bundle_count + 1, images().length(), bundle_count);
 #endif
       return false;
     }
   }
-
   return true;
 }
 #endif //ENABLE_LIB_IMAGES

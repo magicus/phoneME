@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -29,6 +30,9 @@ protected:
   ThreadDesc*  _previous;              // 
   ThreadDesc*  _global_next;           // next thread in the global
                                        // thread list
+  ThreadDesc*  _next_waiting;          // list of all threads waiting
+  OopDesc*     _wait_obj;              // Object this thread is waiting for
+
   OopDesc*     _pending_exception;     // Contains the pending exception.
   OopDesc*     _thread_obj;            // java.lang.Thread mirror object.
   OopDesc*     _pending_entries;       // Points to the list of pending

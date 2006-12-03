@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -593,7 +594,7 @@ class SourceAssembler: public Assembler {
   INSTRUCTION_0(fchs     , "fchs"       );
   INSTRUCTION_0(fxch     , "fxch"       );
 #ifdef USE_INVERTED_ORDER
-  /* we use fsubrp and fdivrp to workaround syntax bug in X86 as:
+  /* we use fsubrp and fdivrp to workaround syntax in X86 as:
    * it incorrectly swaps operands for some obscure compatibility reasons
    * with AT&T ASM
    */
@@ -754,6 +755,9 @@ class SourceAssembler: public Assembler {
  private:
   // The output stream.
   Stream* _output;
+
+  // Are we generating code inside a function or not
+  bool _inside_entry;
 
   // Helper function for negating conditions.
   Condition negate_cc   (Condition condition);

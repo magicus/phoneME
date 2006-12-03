@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -121,6 +122,16 @@ bind(need_init);
 }
 
 #endif //ENABLE_ISOLATES
+
+#if ENABLE_INLINED_ARRAYCOPY
+bool CodeGenerator::arraycopy(JVM_SINGLE_ARG_TRAPS) { 
+  return false;
+}
+
+bool CodeGenerator::unchecked_arraycopy(BasicType type JVM_TRAPS) {
+  return false;
+}
+#endif
 
 void CodeGenerator::save_state(CompilerState *compiler_state) {
   BinaryAssembler::save_state(compiler_state);
@@ -483,6 +494,8 @@ void CodeGenerator::call_from_compiled_code(address target,
 }
 
 void CodeGenerator::write_call_info(int parameters_size JVM_TRAPS) {
+  GUARANTEE(!Compiler::is_inlining(),
+            "Call info should not be written during inlining");
   // The actual callinfo on the x86 starts >>after<< the bytecode which
   // encodes "testl eax, ..."
   const jint code_offset = code_size();
@@ -844,7 +857,6 @@ void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
 
 }
 
-
 void CodeGenerator::cmp_values(Value& op1, Value& op2) {
   GUARANTEE(op1.in_register(), "op1 must be in a register");
   GUARANTEE(op2.is_immediate() || op2.in_register(),
@@ -860,14 +872,6 @@ void CodeGenerator::cmp_values(Value& op1, Value& op2) {
     cmpl(op1.lo_register(), op2.lo_register());
   }
 }
-
-void CodeGenerator::branch_if_do(BytecodeClosure::cond_op condition,
-                                 Value& op1, Value& op2, int destination JVM_TRAPS)
-{
-  cmp_values(op1, op2);
-  conditional_jump(condition, destination, true JVM_NO_CHECK_AT_BOTTOM);
-}
-
 
 void CodeGenerator::if_then_else(Value& result,
                                  BytecodeClosure::cond_op condition, 
@@ -1072,17 +1076,6 @@ void CodeGenerator::check_cast(Value& object, Value& klass, int class_id
   frame()->pop(object);
 }
 
-bool CodeGenerator::quick_check_cast(int class_id, Label& stub_label, 
-                                     Label& return_label JVM_TRAPS) {
-  // quick checkcast is not implemented on the x86 port.
-  return false;
-}
-
-bool CodeGenerator::quick_instance_of(int class_id JVM_TRAPS) {
-  // quick instanceof is not implemented on the x86 port.
-  return false;
-}
-
 void CodeGenerator::instance_of(Value& result, Value& object, Value& klass,
                                 int class_id JVM_TRAPS) {
   Label slow_case, done_checking;
@@ -1134,6 +1127,29 @@ void CodeGenerator::instance_of(Value& result, Value& object, Value& klass,
 
   frame()->pop(object);
 }
+
+void CodeGenerator::check_cast_stub(CompilationQueueElement* cqe JVM_TRAPS) {
+  (void)cqe;
+  call_vm((address) checkcast, T_VOID JVM_NO_CHECK_AT_BOTTOM);
+}
+
+
+void CodeGenerator::instance_of_stub(CompilationQueueElement* cqe JVM_TRAPS) {
+  (void)cqe;
+  call_vm((address) instanceof, T_INT JVM_NO_CHECK_AT_BOTTOM);
+}
+
+#if ENABLE_INLINE_COMPILER_STUBS
+void CodeGenerator::new_object_stub(CompilationQueueElement* cqe JVM_TRAPS) {
+  (void)cqe;
+  UNIMPLEMENTED();
+}
+
+void CodeGenerator::new_type_array_stub(CompilationQueueElement* cqe JVM_TRAPS) {
+  (void)cqe;
+  UNIMPLEMENTED();
+}
+#endif
 
 void CodeGenerator::type_check(Value& array, Value& index, Value& object JVM_TRAPS){
   Label slow_case, done_checking;
@@ -1739,7 +1755,7 @@ extern "C" {
 
 void CodeGenerator::double_binary_do(Value& result, Value& op1, Value& op2,
                                      BytecodeClosure::binary_op op JVM_TRAPS) {
-  // IMPL_NOTE: IMPL_NOTE. Currently add, bub, mul, div, rem jumps into the interpreter we need
+  // IMPL_NOTE: Need revisit. Currently add, bub, mul, div, rem jumps into the interpreter we need
   // to write the compiled version of this code.
   if (op == BytecodeClosure::bin_add ||
       op == BytecodeClosure::bin_sub ||
@@ -2252,23 +2268,9 @@ void CodeGenerator::lxor(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
   }
 }
 
-void CodeGenerator::conditional_jump(BytecodeClosure::cond_op condition,
-                                     int destination,
-                                     bool assume_backward_jumps_are_taken
-                                     JVM_TRAPS) {
-  if (assume_backward_jumps_are_taken && destination <= bci()) {
-    Label fall_through;
-    jcc(convert_condition(BytecodeClosure::negate(condition)), fall_through);
-    CompilationContinuation::insert(
-                        bci() + Bytecodes::length_for(method(), bci()),
-                        fall_through JVM_CHECK);
-    branch(destination JVM_NO_CHECK_AT_BOTTOM);
-  } else {
-    Label branch_taken;
-    jcc(convert_condition(condition), branch_taken);
-    CompilationContinuation::insert(destination,
-                                    branch_taken JVM_NO_CHECK_AT_BOTTOM);
-  }
+void CodeGenerator::conditional_jump_do(BytecodeClosure::cond_op condition,
+                                        Label& destination) {
+  jcc(convert_condition(condition), destination);
 }
 
 void CodeGenerator::table_switch(Value& index, jint table_index,
@@ -2304,7 +2306,8 @@ void CodeGenerator::lookup_switch(Value& index, jint table_index,
 }
 
 
-void CodeGenerator::invoke(Method* method, bool must_do_null_check JVM_TRAPS) {
+void CodeGenerator::invoke(const Method* method, 
+                           bool must_do_null_check JVM_TRAPS) {
   // If the method we are calling is a vanilla constructor we don't have to
   // do anything.
   BinaryAssembler::Address adr(0);
@@ -2610,15 +2613,18 @@ bind(done);
 
 void CodeGenerator::check_timer_tick(JVM_SINGLE_ARG_TRAPS) {
   Label timer_tick, done;
-
   comment("check for clock tick");
+
+#if ENABLE_PAGE_PROTECTION
+  movl(Address((int)&_protected_page[COMPILER_TIMER_TICK_SLOT]), eax);
+#else
   cmpl(Address((int)&_rt_timer_ticks), 0);
   jcc(not_equal, timer_tick);
- bind(done);
-
-  TimerTickStub::Raw stub =
-      TimerTickStub::allocate(Compiler::current()->bci(),
-                              timer_tick, done JVM_CHECK);
+#endif
+  bind(done);
+  
+  TimerTickStub::Raw stub = TimerTickStub::allocate(Compiler::current()->bci(),
+                                                    timer_tick, done JVM_CHECK);
   stub().insert();
 }
 

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -1416,7 +1417,7 @@ void bc_fast_invoke::generate(bool has_fixed_target_method) {
     if (must_do_null_check) {
       comment("Get the number of parameters from the method");
       load_unsigned_word(ecx, Address(ebx, 
-          Constant(Method::size_of_parameters_and_return_type_offset())));
+          Constant(Method::method_attributes_offset())));
       andl(ecx, Constant(Method::SIZE_OF_PARAMETERS_MASK));
 
       comment("Get receiver object");
@@ -1477,7 +1478,7 @@ void bc_fast_invoke::generate(bool has_fixed_target_method) {
 
     comment("Get the number of parameters from method");
     load_unsigned_word(ecx, Address(edx,
-        Constant(Method::size_of_parameters_and_return_type_offset())));
+        Constant(Method::method_attributes_offset())));
     andl(ecx, Constant(Method::SIZE_OF_PARAMETERS_MASK));
 
     comment("Get receiver object");
@@ -1535,7 +1536,7 @@ void bc_fast_invokespecial::generate() {
 
   comment("Get the number of parameters from method");
   load_unsigned_word(ecx, Address(ebx, 
-      Constant(Method::size_of_parameters_and_return_type_offset())));
+      Constant(Method::method_attributes_offset())));
   andl(ecx, Constant(Method::SIZE_OF_PARAMETERS_MASK));
 
   comment("Get receiver object and perform the null check");
@@ -1569,12 +1570,22 @@ void bc_fast_invokespecial::generate() {
     jmp(Constant("invoke3_deoptimization_entry"));
     entry_end(); // bc_fast_invokespecial_internal
 
+    entry("invoke3_deoptimization_entry_3");
+    jmp(Constant("invoke3_deoptimization_entry"));
+    entry_end(); // bc_fast_invokespecial_internal
+
+    entry("invoke3_deoptimization_entry_4");
+    jmp(Constant("invoke3_deoptimization_entry"));
+    entry_end(); // bc_fast_invokespecial_internal
+
     entry("invoke3_deoptimization_entry");
   } else {
     entry("invoke3_deoptimization_entry", 1);
     entry("invoke3_deoptimization_entry_0", 1);
     entry("invoke3_deoptimization_entry_1", 1);
     entry("invoke3_deoptimization_entry_2", 1);
+    entry("invoke3_deoptimization_entry_3", 1);
+    entry("invoke3_deoptimization_entry_4", 1);
   }
 
   comment("Restore bytecode pointer");
@@ -1707,12 +1718,22 @@ bind(okay);
     jmp(Constant("invoke5_deoptimization_entry"));
     entry_end(); // bc_fast_invokespecial_internal
 
+    entry("invoke5_deoptimization_entry_3");
+    jmp(Constant("invoke5_deoptimization_entry"));
+    entry_end(); // bc_fast_invokespecial_internal
+
+    entry("invoke5_deoptimization_entry_4");
+    jmp(Constant("invoke5_deoptimization_entry"));
+    entry_end(); // bc_fast_invokespecial_internal
+
     entry("invoke5_deoptimization_entry");
   } else {
     entry("invoke5_deoptimization_entry", 1);
     entry("invoke5_deoptimization_entry_0", 1);
     entry("invoke5_deoptimization_entry_1", 1);
     entry("invoke5_deoptimization_entry_2", 1);
+    entry("invoke5_deoptimization_entry_3", 1);
+    entry("invoke5_deoptimization_entry_4", 1);
   }
 
   comment("Restore bytecode pointer");

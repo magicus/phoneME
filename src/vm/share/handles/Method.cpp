@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -32,7 +33,7 @@
 
 HANDLE_CHECK(Method, is_method())
 
-int Method::vtable_index() {
+int Method::vtable_index() const {
   // Retrieve the vtbale index from the vtable by searching
   InstanceClass::Raw klass = holder();
   ClassInfoDesc *info = (ClassInfoDesc*) klass().class_info();
@@ -133,8 +134,7 @@ ReturnOop Method::exception_table() const {
   return result;
 }
 
-ReturnOop Method::compiled_code() const {
-  GUARANTEE(has_compiled_code(), "sanity check");
+ReturnOop Method::compiled_code_unchecked() const {
   int offset = CompiledMethod::entry_offset();
 #if ENABLE_THUMB_COMPILER
   // The low bit is set to 0x1 so that BX will automatically switch into
@@ -272,31 +272,6 @@ void Method::write_u2_index_at(jint bci, jushort index) {
   Bytes::put_native_u2((address)field_base(bc_offset_for(bci)), index);
 }
 
-#if ENABLE_INLINE && ARM
-// Called by compiler to tell if this method may be inlined
-bool Method::is_fast_get_accessor(BasicType& type, int& offset) const {
-  address entry = execution_entry();
-
-  if ((entry == (address)shared_fast_getbyte_accessor)  ||
-      (entry == (address)shared_fast_getshort_accessor) ||
-      (entry == (address)shared_fast_getchar_accessor)  ||
-      (entry == (address)shared_fast_getint_accessor)   ||
-#if ENABLE_JAVA_STACK_TAGS
-      (entry == (address)shared_fast_getobject_accessor) ||
-#if ENABLE_FLOAT
-      (entry == (address)shared_fast_getfloat_accessor)  ||
-      (entry == (address)shared_fast_getdouble_accessor) ||
-#endif
-#endif
-      (entry == (address)shared_fast_getlong_accessor)) {
-    type = fast_accessor_type();
-    offset = fast_accessor_offset();
-    return true;
-  }
-  return false;
-}
-#endif
-
 // Called by compiler to tell if this method may be inlined
 bool Method::is_fast_get_accessor() const {
   const address entry = execution_entry();
@@ -354,8 +329,9 @@ Method::may_convert_to_fast_get_accessor(BasicType& type, int& offset JVM_TRAPS)
                                   JVM_NO_CHECK_AT_BOTTOM);
 }
 
-#if ENABLE_INLINE && ARM
-bool Method::bytecode_inline_filter(bool& has_field_get, int& index JVM_TRAPS) {
+#if ENABLE_COMPILER && ENABLE_INLINE
+bool Method::bytecode_inline_filter(bool& has_field_get, 
+                                    int& index JVM_TRAPS) const {
   AllocationDisabler raw_pointers_used_in_this_function;
   has_field_get = false;
   int has_one_return = 0;
@@ -471,18 +447,22 @@ bool Method::bytecode_inline_filter(bool& has_field_get, int& index JVM_TRAPS) {
       case Bytecodes::_fast_invokenative:
       case Bytecodes::_fast_invokevirtual_final:
       case Bytecodes::_fast_invokespecial:
+   // i386 port can go to interpreter for FP instructions 
+   // IMPL_NOTE: need to check inlining per platform
+      case Bytecodes::_i2f:
+      case Bytecodes::_i2d:
+      case Bytecodes::_l2f: 
+      case Bytecodes::_l2d:
+      case Bytecodes::_f2i: 
+      case Bytecodes::_f2l:
+      case Bytecodes::_f2d:
+      case Bytecodes::_d2i: 
+      case Bytecodes::_d2l:
+      case Bytecodes::_d2f:
         return false;
       case Bytecodes::_getfield:
         has_field_get=true;
         index = get_java_ushort(bci + 1);
-        break;
-      case Bytecodes::_ireturn:
-      case Bytecodes::_lreturn:
-      case Bytecodes::_freturn:
-      case Bytecodes::_dreturn:
-      case Bytecodes::_areturn:
-      case Bytecodes::_return:
-        if (++has_one_return > 1) return false;
         break;
       default:
         break;
@@ -494,12 +474,24 @@ bool Method::bytecode_inline_filter(bool& has_field_get, int& index JVM_TRAPS) {
   return true;
 }
 
-bool Method::bytecode_inline_prepass(JVM_SINGLE_ARG_TRAPS)
-{
-  if (access_flags().is_not_inlinable()) {
+bool Method::bytecode_inline_prepass(Attributes& attributes 
+                                     JVM_TRAPS) const {
+  if (is_native()) {
     return false;
   }
-  // Check obvious requirements
+
+  if (is_impossible_to_compile()) {
+    return false;
+  }
+
+  if (uses_monitors()) {
+    return false;
+  }
+
+  if (!is_leaf()) {
+    return false;
+  }
+
   if (_debugger_active) {
     return false; // Else can't single step into these methods
   }
@@ -520,12 +512,14 @@ bool Method::bytecode_inline_prepass(JVM_SINGLE_ARG_TRAPS)
     return false;
   }
 
-  if ( is_native()) {
-    return false;
-  }
-
   if (uses_monitors()) {
     return false; // must not be synchronized!
+  }
+
+  if (is_object_initializer()) return false;
+
+  if (match(Symbols::object_initializer_name(), Symbols::void_signature())) {
+    return false;
   }
 
   TypeArray::Raw my_exception_table = exception_table();
@@ -545,33 +539,218 @@ bool Method::bytecode_inline_prepass(JVM_SINGLE_ARG_TRAPS)
 
   bool has_field_get = false;
   int index = 0;
-  bool can_be_inline = bytecode_inline_filter(has_field_get, index JVM_NO_CHECK);
 
-  if (can_be_inline == false) {
+  compute_attributes(attributes JVM_CHECK_0);
+
+  // Note: we don't emit OSR stubs for inlined methods, 
+  // so inlining a method with a loop can degrade performance
+  if (attributes.has_loops) {
     return false;
   }
 
-  if (has_field_get == true) {
-    BasicType field_type;
-    int field_offset;
-    ConstantPool::Fast cp = constants();
-    bool resolved = cp().is_field_resolved(index);
-
-    GUARANTEE(!Thread::current_has_pending_exception(), "sanity");
-    if (!resolved) {
-      return false;
-    }
-  }
-
-  if (is_object_initializer()) return false;
-
-  if (match(Symbols::object_initializer_name(), Symbols::void_signature())) {
+  // IMPL_NOTE: for now inlining disabled for exception throwers.
+  if (attributes.can_throw_exceptions) {
     return false;
   }
 
   return true;
 }
 #endif
+
+#if ENABLE_COMPILER && ENABLE_INLINE
+// Returns if a method can be shared between tasks
+bool Method::is_shared() const {
+#if ENABLE_ISOLATES && USE_BINARY_IMAGE_LOADER
+  FOREACH_BINARY_IMAGE_IN_CURRENT_TASK(bundle)
+    if (bundle->text_contains(obj())) {
+      return bundle->is_sharable();
+    }
+  ENDEACH_BINARY_IMAGE_IN_CURRENT_TASK;
+#endif
+  return ENABLE_ISOLATES && ROM::is_rom_method(obj());
+}
+
+ReturnOop Method::find_callee_record() const {
+  AllocationDisabler raw_pointers_used_in_this_function;
+
+  OopCons::Raw table = Task::current()->direct_callers();
+  while (table.not_null()) {
+    OopCons::Raw record = table().oop();
+    GUARANTEE(record.not_null(), "Record must not be null");
+    Method::Raw method = record().oop();
+    if (this->equals(&method)) {
+      return record.obj();
+    }
+    table = table().next();
+  }
+
+  return NULL;
+}
+
+void Method::add_direct_caller(const Method * caller JVM_TRAPS) const {
+  GUARANTEE(vtable_index() >= 0, "Mo need to track non-virtual methods");
+  UsingFastOops fast_oops;
+  OopCons::Fast record = find_callee_record();
+  OopCons::Fast head;
+  OopCons::Fast list;
+  OopCons::Fast table;
+
+  if (record.not_null()) {
+    head = record().next();
+
+    // Avoid adding the same caller twice
+    {
+      list = head;
+      while (list.not_null()) {
+        Method::Raw method = list().oop();
+        if (caller->equals(&method)) {
+          return;
+        }
+        list = list().next();
+      }
+    }
+
+    head = OopCons::cons_up(caller, &head JVM_CHECK);
+
+    record().set_next(&head);
+  } else {
+    // Note: just reusing null 'record' handle here
+    list = OopCons::cons_up(caller, &record JVM_CHECK);
+
+    record = OopCons::cons_up(this, &list JVM_CHECK);
+
+    table = Task::current()->direct_callers();
+    table = OopCons::cons_up(&record, &table JVM_CHECK);
+    Task::current()->set_direct_callers(&table);
+  }
+}
+
+void Method::unlink_direct_callers() const {
+  GUARANTEE(vtable_index() >= 0, "No need to track non-virtual methods");
+
+  AllocationDisabler raw_pointers_used_in_this_function;
+
+  Method::DirectCallerStream reader(this);
+
+  if (!reader.has_next()) {
+    // No direct callers
+    return;
+  }
+
+  // Iterate over all threads of the current task and deoptimize all frames 
+  // with compiled methods of direct callers from stack
+  {
+    ForAllThreads( thread ) {
+#if ENABLE_ISOLATES
+      if (thread().task_id() != Task::current_id()) {
+        continue;
+      }
+#endif
+      Method::Raw callee;
+      for( Frame frame( &thread() );; ) {
+        if( frame.is_entry_frame() ) {
+          if( frame.as_EntryFrame().is_first_frame() ) break;
+          frame.as_EntryFrame().caller_is( frame );
+          callee.set_null();
+        } else {
+          if( frame.as_JavaFrame().is_compiled_frame() ) {
+            CompiledMethod::Raw frame_cm = 
+              frame.as_JavaFrame().compiled_method();
+            
+            Method::DirectCallerStream reader(this);
+            
+            while (reader.has_next()) {
+              Method::Raw direct_caller = reader.next();
+              if (direct_caller().has_compiled_code()) {            
+                CompiledMethod::Raw caller_cm = 
+                  direct_caller().compiled_code();
+                if (caller_cm.equals(&frame_cm)) {
+                  if (TraceMethodInlining) {
+                    tty->print("    Deoptimized %stopmost frame: ",
+                               callee.not_null() ? "non-" : "");
+                    direct_caller().print_name_on_tty();
+                    tty->cr();
+                  }
+                  frame.as_JavaFrame().deoptimize(&callee);
+
+                  break;
+                }
+              }
+            }
+          }
+          callee = frame.as_JavaFrame().method();
+          frame.as_JavaFrame().caller_is(frame);
+        }
+      }
+    }
+  }
+
+  // Compiler should not initialize any classes.
+  // If we get here we should track current compilation as well.
+  GUARANTEE(!Compiler::is_active(), 
+            "Should not get here during compilation");
+
+  // Unlink and remove compiled code for all direct callers
+  {
+    Method::Raw current_compiling;
+
+    if (Compiler::is_suspended()) {
+      CompiledMethod::Raw suspended_compiled_method = 
+        Compiler::current_compiled_method();
+      if (suspended_compiled_method.not_null()) {
+        current_compiling = suspended_compiled_method().method();
+      }
+    }
+
+    GUARANTEE(reader.has_next(), "Must have one");
+
+    while (reader.has_next()) {
+      Method::Raw direct_caller = reader.next();
+
+      if (direct_caller().has_compiled_code()) {
+        direct_caller().unlink_compiled_code();
+        
+        if (TraceMethodInlining) {
+          tty->print("    Decompiled method: ");
+          direct_caller().print_name_on_tty();
+          tty->cr();
+        }
+      } else if (current_compiling.equals(&direct_caller)) {
+        Compiler::abort_suspended_compilation();
+
+        if (TraceMethodInlining) {
+          tty->print("    Compilation aborted: ");
+          direct_caller().print_name_on_tty();
+          tty->cr();
+        }
+      }
+    }
+  }
+
+  // Remove all direct callers of this method from the table
+  {
+    OopCons::Raw prev;
+    OopCons::Raw table = Task::current()->direct_callers();
+    while (table.not_null()) {
+      OopCons::Raw record = table().oop();
+      GUARANTEE(record.not_null(), "Record must not be null");
+      Method::Raw method = record().oop();
+      if (this->equals(&method)) {
+        OopCons::Raw next = table().next();
+        if (prev.not_null()) {
+          prev().set_next(&next);
+        } else {
+          Task::current()->set_direct_callers(&next);
+        }
+        return;
+      }
+      prev = table;
+      table = table().next();
+    }
+  }
+}
+#endif
+
 bool Method::try_resolve_field_access(int index, BasicType& type,
                                       int& offset, bool is_static,
                                       bool is_get JVM_TRAPS) {
@@ -598,7 +777,7 @@ bool Method::try_resolve_field_access(int index, BasicType& type,
   return true;
 }
 
-bool Method::is_object_initializer() {
+bool Method::is_object_initializer() const {
   return Symbols::object_initializer_name()->obj() == name();
 }
 
@@ -639,7 +818,7 @@ bool Method::can_access_by(InstanceClass* sender_class,
   return false;
 }
 
-bool Method::match(Symbol* name, Symbol* signature) {
+bool Method::match(Symbol* name, Symbol* signature) const {
   return ((MethodDesc*)obj())->match(name->obj(), signature->obj());
 }
 
@@ -655,7 +834,7 @@ int Method::itable_index() const {
   return -1;
 }
 
-bool Method::is_vanilla_constructor() {
+bool Method::is_vanilla_constructor() const {
   AllocationDisabler raw_pointers_used_in_this_function;
 
   // Returns true if this is a vanilla constructor, i.e. an "<init>" "()V"
@@ -714,20 +893,41 @@ jushort Method::compute_size_of_parameters() {
   Signature::Raw sig = signature();
 
   int param_size = sig().parameter_word_size(is_static());
-  // sig() uses only 14 bits to encode the parameter size, so we should always
-  // have 2 bits left to encode the return type size.
-  GUARANTEE(param_size >= 0 && param_size <= 0x3fff, "check for overflow");
+  GUARANTEE(param_size >= 0 && param_size <= SIZE_OF_PARAMETERS_MASK, 
+    "check for overflow");
 
   int ret_size = word_size_for(sig().return_type(true));
   GUARANTEE(0 <= ret_size && ret_size <= 2, "sanity");
 
-  int p_and_r_size = (ret_size << 14) | param_size;
-  GUARANTEE(0 <= p_and_r_size && p_and_r_size <= 0xffff, "sanity");
+  int method_attributes = param_size;
 
-  set_size_of_parameters_and_return_type(p_and_r_size);
+  if (ret_size != 0) {
+#if USE_FP_RESULT_IN_VFP_REGISTER
+    if (!is_native() && 
+        ((sig().return_type(true) == T_FLOAT) || 
+         (sig().return_type(true) == T_DOUBLE))) {
+      if (ret_size == 1) {      
+        method_attributes |= (FP_SINGLE << RESULT_STORAGE_TYPE_SHIFT);
+      } else {
+        method_attributes |= (FP_DOUBLE << RESULT_STORAGE_TYPE_SHIFT);      
+      }
+    } else 
+#endif
+    {
+      if (ret_size == 1) {      
+        method_attributes |= (SINGLE << RESULT_STORAGE_TYPE_SHIFT);
+      } else {
+        method_attributes |= (DOUBLE << RESULT_STORAGE_TYPE_SHIFT);      
+      }
+    }
+  }
+
+  GUARANTEE(0 <= method_attributes && method_attributes <= 0xffff, "sanity");
+  set_method_attributes(method_attributes);
 
   return (jushort)param_size;
 }
+
 
 /**
  * (1) Check to make sure this method contains only valid bytecodes.
@@ -1972,6 +2172,175 @@ void Method::unlink_compiled_code() {
   set_default_entry(true);
 }
 
+inline void Method::add_entry( jubyte counts[], const int bci, const int inc ) {
+  // We need to make sure that very large number of entry counts would not
+  // overflow a byte.
+  jubyte count = counts[ bci ] + inc;
+
+  enum { MaxCount = 10 };
+  if( count > MaxCount ) {
+    count = MaxCount;
+  }
+  counts[ bci ] = count;
+}
+
+#define ADD_BRANCH_ENTRY(offset)                        \
+  const int dest = bci + offset;                        \
+  GUARANTEE(dest >= 0 && dest < codesize, "sanity");    \
+  add_entry( entry_counts, dest )
+
+#define ADD_BACK_BRANCH_ENTRY(offset) ADD_BRANCH_ENTRY(offset); \
+  if(dest <= bci) { has_loops = true; }
+
+void Method::compute_attributes(Attributes& attributes JVM_TRAPS) const {
+  const int codesize = code_size();
+
+  UsingFastOops fast_oops;
+  TypeArray::Fast entry_count_array;
+  TypeArray::Fast bci_flags_array;
+#if ENABLE_COMPILER
+  if( Compiler::is_active() ) {
+    entry_count_array = 
+      Universe::new_byte_array_in_compiler_area(codesize JVM_CHECK);
+    bci_flags_array = 
+      Universe::new_byte_array_in_compiler_area(codesize JVM_CHECK);
+  } else 
+#endif
+  {
+    entry_count_array = Universe::new_byte_array(codesize JVM_CHECK);
+    bci_flags_array = Universe::new_byte_array(codesize JVM_CHECK);
+  }
+
+  {
+    // This is a hot function during compilation. Since it only operates
+    // on a few bytecodes, we hand-code the loop rather than 
+    // using Method::iterate, which has much higher overhead. Also, this
+    // saves footprint because we don't need a C++ vtable for BytecodeClosure.
+    AllocationDisabler raw_pointers_used_in_this_function;
+
+    jubyte* entry_counts = entry_count_array().base_address();
+    jubyte* bci_flags = bci_flags_array().base_address();
+
+    // Give the first bytecode an entry, and iterate over the bytecodes.
+    entry_counts[0] = 1;
+    {
+      int num_locks = 0;
+      bool has_loops = false;
+      int exception_count = 0;
+      const jubyte* codebase = (jubyte*)code_base();
+      int bci = 0;
+      jushort accumulated_flags = 0;
+      int branch_bci = -1;
+
+      while( bci < codesize ) {
+        const jubyte* const bcptr = codebase + bci;
+        const Bytecodes::Code code = Bytecodes::Code(*bcptr);
+        GUARANTEE(code >= 0, "sanity: unsigned value");
+
+        const int length = Bytecodes::length_for(this, bci);
+
+        switch (code) {
+          case Bytecodes::_ifeq:
+          case Bytecodes::_ifne:
+          case Bytecodes::_iflt:
+          case Bytecodes::_ifge:
+          case Bytecodes::_ifgt:
+          case Bytecodes::_ifle:
+          case Bytecodes::_if_icmpeq:
+          case Bytecodes::_if_icmpne:
+          case Bytecodes::_if_icmplt:
+          case Bytecodes::_if_icmpge:
+          case Bytecodes::_if_icmpgt:
+          case Bytecodes::_if_icmple:
+          case Bytecodes::_if_acmpeq:
+          case Bytecodes::_if_acmpne:
+          case Bytecodes::_ifnull:
+          case Bytecodes::_ifnonnull:
+            GUARANTEE(Bytecodes::can_fall_through(code), 
+                      "Conditional branches can fall through");
+            branch_bci = bci;
+            // Fall through
+          case Bytecodes::_goto: {
+            ADD_BACK_BRANCH_ENTRY(jshort(Bytes::get_Java_u2(address(bcptr+1))));
+          } break;
+          case Bytecodes::_goto_w: {
+            ADD_BACK_BRANCH_ENTRY(int(Bytes::get_Java_u4(address(bcptr+1))));
+          } break;
+          case Bytecodes::_lookupswitch: {
+            const int table_index  = align_size_up(bci + 1, sizeof(jint));
+            ADD_BRANCH_ENTRY( get_java_switch_int(table_index + 0) );
+
+            const int num_of_pairs = get_java_switch_int(table_index + 4);
+            for( int i = 0; i < num_of_pairs; i++ ) {
+              ADD_BACK_BRANCH_ENTRY( get_java_switch_int(8 * i + table_index + 12) );
+            }
+          } break;
+          case Bytecodes::_tableswitch: {
+            const int table_index  = align_size_up(bci + 1, sizeof(jint));
+            ADD_BRANCH_ENTRY( get_java_switch_int(table_index + 0) );
+
+            const int size = get_java_switch_int(table_index + 8) -
+                             get_java_switch_int(table_index + 4);
+            for (int i = 0; i <= size; i++) {
+              ADD_BACK_BRANCH_ENTRY( get_java_switch_int(4 * i + table_index + 12) );
+            }
+          } break;
+          case Bytecodes::_monitorenter:
+            num_locks++;
+            break;
+          case Bytecodes::_athrow:
+            if (branch_bci >= 0) {
+              GUARANTEE(branch_bci < codesize, "Sanity");
+              bci_flags[branch_bci] |= bci_branch_taken;
+            }
+            // Fall through
+          default:
+#if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
+            if( Bytecodes::is_null_point_exception_throwable(code) ) {
+              exception_count++;
+            } 
+#endif 
+            break;
+        }
+
+        {
+          const jushort flags = Bytecodes::get_flags(code);
+          accumulated_flags |= flags;
+          if( Bytecodes::can_fall_through_flags(flags) ) {
+            ADD_BRANCH_ENTRY(length);
+          } else {
+            branch_bci = -1;
+          }
+        }
+
+        bci += length;
+      }
+
+      GUARANTEE(bci == codesize, "Sanity");
+
+      attributes.entry_counts = entry_count_array;
+      attributes.bci_flags = bci_flags_array;
+      attributes.has_loops = has_loops;
+      attributes.can_throw_exceptions = 
+        Bytecodes::can_throw_exceptions_flags(accumulated_flags);
+      attributes.num_locks = num_locks;
+      attributes.num_bytecodes_can_throw_npe = exception_count;  
+    }
+
+    { // Add entries for the exception handlers.
+      TypeArray::Raw exception_table = this->exception_table();
+      GUARANTEE((exception_table().length() % 4) == 0, "Sanity check");
+      const int len = exception_table().length();
+      for (int i = 0; i < len; i += 4 ) {
+        const int handler_bci = exception_table().ushort_at(i + 2);
+        add_entry(entry_counts, handler_bci, 2);
+      }
+    }
+  }
+}
+
+#undef ADD_BRANCH_ENTRY
+#undef ADD_BACK_BRANCH_ENTRY
 #endif
 
 bool Method::is_impossible_to_compile() const {
@@ -2001,8 +2370,8 @@ void Method::set_fast_accessor_entry(JVM_SINGLE_ARG_TRAPS) {
   static const address accessors[] = {
     /* T_BOOLEAN 4 */ (address) shared_fast_getbyte_accessor,
     /* T_CHAR    5 */ (address) shared_fast_getchar_accessor,
-    /* T_FLOAT   6 */ (address) shared_fast_getint_accessor,
-    /* T_DOUBLE  7 */ (address) shared_fast_getlong_accessor,
+    /* T_FLOAT   6 */ (address) shared_fast_getfloat_accessor,
+    /* T_DOUBLE  7 */ (address) shared_fast_getdouble_accessor,
     /* T_BYTE    8 */ (address) shared_fast_getbyte_accessor,
     /* T_SHORT   9 */ (address) shared_fast_getshort_accessor,
     /* T_INT    10 */ (address) shared_fast_getint_accessor,
@@ -2013,8 +2382,8 @@ void Method::set_fast_accessor_entry(JVM_SINGLE_ARG_TRAPS) {
   static const address static_accessors[] = {
     /* T_BOOLEAN 4 */ (address) shared_fast_getbyte_static_accessor,
     /* T_CHAR    5 */ (address) shared_fast_getchar_static_accessor,
-    /* T_FLOAT   6 */ (address) shared_fast_getint_static_accessor,
-    /* T_DOUBLE  7 */ (address) shared_fast_getlong_static_accessor,
+    /* T_FLOAT   6 */ (address) shared_fast_getfloat_static_accessor,
+    /* T_DOUBLE  7 */ (address) shared_fast_getdouble_static_accessor,
     /* T_BYTE    8 */ (address) shared_fast_getbyte_static_accessor,
     /* T_SHORT   9 */ (address) shared_fast_getshort_static_accessor,
     /* T_INT    10 */ (address) shared_fast_getint_static_accessor,
@@ -2042,7 +2411,7 @@ jushort Method::ushort_at(jint bci) {
 
 #if !defined(PRODUCT) || ENABLE_ROM_GENERATOR
 // Is this method overloaded in its holder class?
-bool Method::is_overloaded() {
+bool Method::is_overloaded() const {
   InstanceClass::Raw h = holder();
   ObjArray::Raw methods = h().methods();
   bool dummy;
@@ -2191,7 +2560,7 @@ void Method::iterate(OopVisitor* visitor) {
 
   {
     NamedField id("size_of_parameters_and_return_type", true);
-    visitor->do_ushort(&id, size_of_parameters_and_return_type_offset(), true);
+    visitor->do_ushort(&id, method_attributes_offset(), true);
   }
 
   {
@@ -2219,7 +2588,7 @@ void Method::iterate(OopVisitor* visitor) {
 #endif
 }
 
-void Method::print_name_on(Stream* st, bool long_output) {
+void Method::print_name_on(Stream* st, bool long_output) const {
 #if USE_DEBUG_PRINTING
   bool renamed;
   bool status = true;
@@ -2323,7 +2692,7 @@ void Method::print_name_to(char *buffer, int max_length) {
 
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || \
         ENABLE_PERFORMANCE_COUNTERS ||ENABLE_JVMPI_PROFILE
-ReturnOop Method::get_original_name(bool& renamed) {
+ReturnOop Method::get_original_name(bool& renamed) const {
   Symbol::Raw n = name();
 
   if (n().equals(Symbols::unknown())) {
@@ -2438,7 +2807,7 @@ void Method::iterate_oopmaps(oopmaps_doer do_map, void* param) {
   OOPMAP_ENTRY_4(do_map, param, T_SHORT,  holder_id);
   OOPMAP_ENTRY_4(do_map, param, T_SHORT,  max_execution_stack_count);
   OOPMAP_ENTRY_4(do_map, param, T_SHORT,  max_locals);
-  OOPMAP_ENTRY_4(do_map, param, T_SHORT,  size_of_parameters_and_return_type);
+  OOPMAP_ENTRY_4(do_map, param, T_SHORT,  method_attributes);
   OOPMAP_ENTRY_4(do_map, param, T_SHORT,  name_index);
   OOPMAP_ENTRY_4(do_map, param, T_SHORT,  signature_index);
   OOPMAP_ENTRY_4(do_map, param, T_SHORT,  code_size);
@@ -2456,13 +2825,13 @@ void Method::iterate_oopmaps(oopmaps_doer do_map, void* param) {
 #endif
 
 #if ENABLE_CSE
-bool Method::check_codes(jint begin_bci, jint end_bci, int& local_mask, int& constant_mask, 
-                           int& array_type) {
+bool Method::is_snippet_can_be_elminate(jint begin_bci, jint end_bci, int& local_mask, int& constant_mask, 
+                           int& array_type_mask) {
  AllocationDisabler raw_pointers_used_in_this_function;
   register int bci = begin_bci;
-  int index, constant_index;
+  int local_index, constant_index, array_type;
   while (bci  <=  end_bci) {
-    index = 0;
+    local_index = 0;
     constant_index = 0;
     Bytecodes::Code code = bytecode_at(bci);
     
@@ -2484,17 +2853,17 @@ bool Method::check_codes(jint begin_bci, jint end_bci, int& local_mask, int& con
     case Bytecodes::_iload_1          : // fall
     case Bytecodes::_iload_2          : // fall
     case Bytecodes::_iload_3          :
-        index = code - Bytecodes::_iload_0;
+        local_index = code - Bytecodes::_iload_0;
         break;
 
     case Bytecodes::_lload            :
-        index = get_ubyte(bci+1);
+        local_index = get_ubyte(bci+1);
         break;
     case Bytecodes::_lload_0          : // fall
     case Bytecodes::_lload_1          : // fall
     case Bytecodes::_lload_2          : // fall
     case Bytecodes::_lload_3          :
-        index = code - Bytecodes::_lload_0;
+        local_index = code - Bytecodes::_lload_0;
         break;
 
     case Bytecodes::_fload            :
@@ -2510,7 +2879,7 @@ bool Method::check_codes(jint begin_bci, jint end_bci, int& local_mask, int& con
         return false;
     case Bytecodes::_aload_2          : // fall
     case Bytecodes::_aload_3          :
-        index = code - Bytecodes::_aload_0;        
+        local_index = code - Bytecodes::_aload_0;        
         break;
     case Bytecodes::_dup:
     case Bytecodes::_dup_x1:
@@ -2603,28 +2972,29 @@ bool Method::check_codes(jint begin_bci, jint end_bci, int& local_mask, int& con
     case Bytecodes::_caload          : // fall
     case Bytecodes::_saload          : {
         array_type = code - Bytecodes::_iaload;
-        array_type |= ( 1 << array_type);
+        array_type_mask |= ( 1 << array_type);
         break;
     }
     case Bytecodes::_aload_0_fast_igetfield_1:
     case Bytecodes::_aload_0_fast_agetfield_1: {
       constant_index = get_ubyte(bci+1) ;
-      index = 0;
+      local_index = 0;
       break;
     }
     case Bytecodes::_aload_0_fast_agetfield_4:
     case Bytecodes::_aload_0_fast_igetfield_4: {
       constant_index = 4;
-      index = 0;
+      local_index = 0;
       break;
     }
     case Bytecodes::_aload_0_fast_agetfield_8:
     case Bytecodes::_aload_0_fast_igetfield_8: {
       constant_index = 8;
-      index = 0;
+      local_index = 0;
       break;
     }
-	
+        
+    //add by andy during 2nd on site QA 
    case Bytecodes::_fast_init_1_putstatic:
    case Bytecodes::_fast_init_2_putstatic:
    case Bytecodes::_fast_init_a_putstatic:
@@ -2632,7 +3002,7 @@ bool Method::check_codes(jint begin_bci, jint end_bci, int& local_mask, int& con
    case Bytecodes::_fast_init_2_getstatic:
    case Bytecodes::_fast_init_invokestatic:
    case Bytecodes::_fast_init_new: {
-	return true;
+        return true;
    }
     case Bytecodes::_fast_invokevirtual:
     case Bytecodes::_fast_invokestatic:
@@ -2647,11 +3017,11 @@ bool Method::check_codes(jint begin_bci, jint end_bci, int& local_mask, int& con
   case Bytecodes::_fast_invokevirtual_final:
     return false;
   case Bytecodes::_aload_1:
-    index = 1;
+    local_index = 1;
     break;
 
   case Bytecodes::_aload:
-    index = get_ubyte(bci+1);
+    local_index = get_ubyte(bci+1);
     break;
   case Bytecodes::_invokevirtual:
     return false;
@@ -2660,11 +3030,11 @@ bool Method::check_codes(jint begin_bci, jint end_bci, int& local_mask, int& con
     break;
 
   case Bytecodes::_iload:
-    index = get_ubyte(bci+1);
+    local_index = get_ubyte(bci+1);
     break;
 
   case Bytecodes::_aload_0:
-    index = 0;
+    local_index = 0;
     break;
 
  case Bytecodes::_tableswitch:
@@ -2675,11 +3045,13 @@ bool Method::check_codes(jint begin_bci, jint end_bci, int& local_mask, int& con
 
   bci += length;
 
-  if ( index > 31 || constant_index > 31 ) {
+  //we can't track more compilicated case
+  //so abort here.
+  if ( local_index > 31 || constant_index > 31 ) {
     
     return false;
   }
-  local_mask |= (1<< index);  
+  local_mask |= (1<< local_index);  
   constant_mask |= (1<<constant_index);
   
   }
@@ -2700,39 +3072,39 @@ bool Method::check_codes(jint begin_bci, jint end_bci, int& local_mask, int& con
  }
 
 
-void Method::kill_changed_values(int bci, Bytecodes::Code code) {
+void Method::wipe_out_dirty_recorded_snippet(int bci, Bytecodes::Code code) {
   switch (code) {
     case Bytecodes::_istore_0         : // fall
     case Bytecodes::_istore_1         : // fall
     case Bytecodes::_istore_2         : // fall
     case Bytecodes::_istore_3         :
-        RegisterAllocator::kill_locals(code - Bytecodes::_istore_0);
+        RegisterAllocator::kill_by_locals(code - Bytecodes::_istore_0);
         break;
 
     case Bytecodes::_lstore           :
-        RegisterAllocator::kill_locals(get_ubyte(bci+1));
+        RegisterAllocator::kill_by_locals(get_ubyte(bci+1));
         break;
     case Bytecodes::_lstore_0         : // fall
     case Bytecodes::_lstore_1         : // fall
     case Bytecodes::_lstore_2         : // fall
     case Bytecodes::_lstore_3         :
-        RegisterAllocator::kill_locals(code - Bytecodes::_lstore_0);
+        RegisterAllocator::kill_by_locals(code - Bytecodes::_lstore_0);
         break;
 
 
     case Bytecodes::_astore           :
-        RegisterAllocator::kill_locals(get_ubyte(bci+1));
+        RegisterAllocator::kill_by_locals(get_ubyte(bci+1));
         break;
     case Bytecodes::_astore_0         : // fall
     case Bytecodes::_astore_1         : // fall
     case Bytecodes::_astore_2         : // fall
     case Bytecodes::_astore_3         :
-        RegisterAllocator::kill_locals(code - Bytecodes::_astore_0);
+        RegisterAllocator::kill_by_locals(code - Bytecodes::_astore_0);
         break;
 
     case Bytecodes::_iinc:
       {
-        RegisterAllocator::kill_locals(get_ubyte(bci+1));
+        RegisterAllocator::kill_by_locals(get_ubyte(bci+1));
       }
       break;
     case Bytecodes::_iastore          : // fall
@@ -2744,15 +3116,15 @@ void Method::kill_changed_values(int bci, Bytecodes::Code code) {
     case Bytecodes::_castore         : // fall
     case Bytecodes::_sastore         :
         
-        RegisterAllocator::kill_array_type((1<<(code - Bytecodes::_iastore)));
+        RegisterAllocator::kill_by_array_type((1<<(code - Bytecodes::_iastore)));
         break;
 
 
     case Bytecodes::_putfield:
-      RegisterAllocator::kill_constant(get_java_ushort(bci+1));
+      RegisterAllocator::kill_by_fields(get_java_ushort(bci+1));
       break;
     case Bytecodes::_putstatic:
-      RegisterAllocator::kill_constant(get_java_ushort(bci+1));
+      RegisterAllocator::kill_by_fields(get_java_ushort(bci+1));
       break;
 
 
@@ -2768,7 +3140,7 @@ void Method::kill_changed_values(int bci, Bytecodes::Code code) {
     case Bytecodes::_fast_2_putstatic: // fall through
     case Bytecodes::_fast_a_putstatic: // fall through
 #endif
-      RegisterAllocator::kill_constant(get_java_ushort(bci+1));
+      RegisterAllocator::kill_by_fields(get_java_ushort(bci+1));
       break;
 
 
@@ -2781,14 +3153,14 @@ void Method::kill_changed_values(int bci, Bytecodes::Code code) {
     case Bytecodes::_fast_aputfield: {
       int offset = ENABLE_NATIVE_ORDER_REWRITING ? get_native_ushort(bci+1)
                                                  : get_java_ushort(bci+1);
-      RegisterAllocator::kill_constant(offset);
+      RegisterAllocator::kill_by_fields(offset);
       break;
     }
 
 
 
   case Bytecodes::_istore:
-    RegisterAllocator::kill_locals(get_ubyte(bci+1));
+    RegisterAllocator::kill_by_locals(get_ubyte(bci+1));
     break;
 
   default:

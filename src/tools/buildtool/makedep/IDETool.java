@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -41,7 +42,9 @@ abstract public class IDETool {
     /** command-line argument */
     String buildspace;
     /** command-line argument */
-    String config;
+    String product;
+    /** command-line argument */
+    String platform;
     /** command-line argument */
     String database;
     /** command-line argument */
@@ -56,8 +59,11 @@ abstract public class IDETool {
     public String getBuildSpaceArg() {
         return buildspace;
     }
-    public String getConfigArg() {
-        return config;
+    public String getProductArg() {
+        return product;
+    }
+    public String getPlatformArg() {
+        return platform;
     }
     public String getDatabaseArg() {
         return database;
@@ -109,8 +115,11 @@ abstract public class IDETool {
         if (arg.equals("-buildspace")) {
             this.buildspace = args[i++];
         }
-        else if (arg.equals("-config")) {
-            this.config = args[i++];
+        else if (arg.equals("-product")) {
+            this.product = args[i++];
+        }
+        else if (arg.equals("-platform")) {
+            this.platform = args[i++];
         }
         else if (arg.equals("-database")) {
             this.database = args[i++];
@@ -132,7 +141,8 @@ abstract public class IDETool {
         String workspace = getWorkSpaceArg();
         String input = workspace + "/src/vm/share/utilities/BuildFlags.hpp";
 
-        configurator.readPlatformFile(config);
+        configurator.readProductFile(product);
+        configurator.readPlatformFile(platform);
         configurator.readInputFile(input);
     }
 

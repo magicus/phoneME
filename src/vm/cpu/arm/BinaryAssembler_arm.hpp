@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -40,25 +41,11 @@ class BinaryAssembler: public Macros {
 
  public:
   jint code_size() const            { return _code_offset; }
-#if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
-  jint npe_index() const           { return _npe_index; }
-  void clear_npe_index()  { _npe_index = 0; } 
-#endif 
 
-#if ENABLE_INLINE && ARM
-  void set_code_size(jint value) {
-    _code_offset = value;
-  }
-  void set_compiled_method(CompiledMethod* compiled_method) {
-    _compiled_method = compiled_method; 
-    _relocation.set_compiled_method(compiled_method);
-  }
-  void restore_state(CompilerState *compiler_state);
-#endif
   jint relocation_size() const      { return _relocation.size(); }
   jint free_space() const {
     return (_relocation.current_relocation_offset() + sizeof(jushort)) -
-	    offset_at(code_size());
+            offset_at(code_size());
   }
   jint code_end_offset() const       { return offset_at(code_size()); }
  
@@ -120,12 +107,16 @@ class BinaryAssembler: public Macros {
   NOT_PRODUCT(virtual) 
   void ldr_big_integer(Register rd, int imm32, Condition cond = al);
 
-  void mov_imm(Register rd, int imm32, Condition cond = al) { 
+#if ENABLE_ARM_VFP
+  void fld_literal(Register rd, int imm32, Condition cond = al);
+#endif
+
+  void mov_imm(Register rd, int imm32, Condition cond = al) {
     Macros::mov_imm(rd, imm32, no_CC, cond);
-  } 
-  void mov_imm(Register rd, int imm32, LiteralAccessor* la, Condition cond=al){ 
-    Macros::mov_imm(rd, imm32, la, no_CC, cond);  
-  }                                                    
+  }
+  void mov_imm(Register rd, int imm32, LiteralAccessor* la, Condition cond=al){
+    Macros::mov_imm(rd, imm32, la, no_CC, cond);
+  }
 
   void mov_imm(Register rd, address addr, Condition cond = al);
 
@@ -138,7 +129,7 @@ public:
     void init_instance(BinaryAssembler* assembler);
   public:
     CodeInterleaver(BinaryAssembler* assembler) {
-      // NB. init_instance() is used here to fix bug 6297942.
+      // NB. init_instance() is used here to fix CR 6297942.
       init_instance(assembler);
     }
     ~CodeInterleaver() {}
@@ -147,7 +138,7 @@ public:
     void start_alternate(JVM_SINGLE_ARG_TRAPS);
     bool emit();
 
-    static void initialize(BinaryAssembler* assembler) { 
+    static void initialize(BinaryAssembler* assembler) {
       assembler->_interleaver = NULL;
     }
 
@@ -179,10 +170,6 @@ public:
     _relocation.set_assembler(this);
     _compiled_method = compiled_method;
     _code_offset     = 0;
-#if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
-    _npe_index = 0;
-#endif
-
     zero_literal_count();
     CodeInterleaver::initialize(this);
   }
@@ -197,11 +184,9 @@ public:
   address addr_at(jint pos) const { 
       return (address)(_compiled_method->field_base(offset_at(pos))); 
   }
-#if ENABLE_INLINE && ARM
-  bool has_enough_space_for_inline(int size) const {
-    return free_space() > size; 
+  int instruction_at(jint pos) const { 
+      return *(int*)(_compiled_method->field_base(offset_at(pos))); 
   }
-#endif
   bool has_overflown_compiled_method() const {
     // Using 8 instead of 0 as defensive programming
     // The shrink operation at the end of compilation will regain the extra
@@ -214,7 +199,7 @@ public:
   
   // If compiler_area is enabled, move the relocation data to higher
   // address to make room for more compiled code.
-  void ensure_compiled_method_space();
+  void ensure_compiled_method_space(int delta = 0);
 
   // branch support
 
@@ -269,15 +254,15 @@ public:
     return Assembler::as_register(instr >> 16 & 0xf);
    }
  
-   static const Assembler::Register	rd_field(int instr) {
+   static const Assembler::Register     rd_field(int instr) {
      return Assembler::as_register(instr >> 12 & 0xf);
    }
  
-  static const Assembler::Register	rs_field(int instr)  {
+  static const Assembler::Register      rs_field(int instr)  {
     return Assembler::as_register(instr >>  8 & 0xf);
   }
  
-  static const Assembler::Register	rm_field(int instr) {
+  static const Assembler::Register      rm_field(int instr) {
     return Assembler::as_register(instr & 0xf);
   }
  
@@ -286,11 +271,14 @@ public:
     return (instr >> i & 0x1) == 1;
   }
  
-  int get_instruction(jint pos);
   Assembler::Condition get_reverse_cond(Assembler::Condition cond);
   bool is_jump_instr(int instr, int next_instr, Assembler::Condition& cond, bool& link, bool& op_pc, int& offset);
   void back_branch(Label& L, bool link, Condition cond);
 #endif//#if ENABLE_LOOP_OPTIMIZATION && ARM
+
+#if ENABLE_CODE_PATCHING || ENABLE_LOOP_OPTIMIZATION
+  int get_instruction(jint pos);
+#endif
 
 public:
   class LiteralPoolElementDesc: public MixedOopDesc {
@@ -305,7 +293,7 @@ public:
       return _bci != 0x7fffffff;
     }
 
-    bool matches(OopDesc* oop, int imm32) const {
+    bool matches(const OopDesc* oop, const int imm32) const {
       return oop == _literal_oop && imm32 == _literal_int;
     }
   };
@@ -340,13 +328,13 @@ protected:
     }
 
   private:
-    enum { 
+    enum {
       // BCI indicating this literal is still unbound.
       not_yet_defined_bci = 0x7fffffff
     };
 
   public:
-    // Note that the bci() field is used as a convenience.  
+    // Note that the bci() field is used as a convenience.
     // If the label is unbound, then bci() == 0x7fffffff
     // If the label is bound, then bci()  is the same as the label's position.
 
@@ -365,13 +353,13 @@ protected:
     }
 
     Label label() const {
-      Label L; 
-      L._encoding = int_field(label_offset()); 
+      Label L;
+      L._encoding = int_field(label_offset());
       return L;
     }
 
     void set_label(Label& value) {
-      int_field_put(label_offset(), value._encoding); 
+      int_field_put(label_offset(), value._encoding);
     }
 
     ReturnOop next() const  {
@@ -384,7 +372,7 @@ protected:
     ReturnOop literal_oop() const {
       return obj_field(literal_oop_offset());
     }
-    void set_literal_oop(Oop *oop) {
+    void set_literal_oop(const Oop *oop) {
       obj_field_put(literal_oop_offset(), oop);
     }
     
@@ -393,7 +381,7 @@ protected:
     }
 
   public:
-    static ReturnOop allocate(Oop* oop, int imm32 JVM_TRAPS);
+    static ReturnOop allocate(const Oop* oop, int imm32 JVM_TRAPS);
       
 #ifndef PRODUCT
     void print_value_on(Stream*s);
@@ -402,35 +390,93 @@ protected:
 
 public:
 #if ENABLE_NPCE
-  inline  void record_npe_point(Label& L, int instruction_offset=0);
-#if ENABLE_CODE_OPTIMIZER && !ENABLE_THUMB_COMPILER
-  inline  void write_npe_info(Label& L, jint code_offset, jint second_word);
-  void write_npe_info(Label& L, jint second_word);
-#else
-  inline  void write_npe_info(Label& L, jint code_offset);
-  void write_npe_info(Label& L);
-#endif //ENABLE_CODE_OPTIMIZER
-  void record_npe_point(CompilationQueueElement* cqe, 
+  enum {
+    no_second_instruction = -1 //the byte code won't emit multi-LDR instructions
+                                         
+  };
+
+  //emit a item into relocation stream. the item contain the address of LDR instr
+  //and the address the stub. So the signal handler could jump to stub. The LDR 
+  //instr is stored in L.position(). the address of stub is gotten by _code_offset
+  
+  void emit_null_point_callback_record(Label& L,
+           jint offset_of_second_instr_in_words = no_second_instruction);
+
+
+  //firstly record the position of  LDR/STR instr into Compiler table for the 
+  //extend basic block scheduling
+  //instruction_offset is offset of memory access instruction from
+  //current code_offset.
+  //the position of LDR/STR is calculated from _code_offset + (instruction_offset<<2) 
+  //secondly if the sub isn't shared, compiler will record the position of LDR instr 
+  //into entry label of the exception stub. 
+  void record_npe_point(CompilationQueueElement* stub, 
                   int instruction_offset =0, Condition cond = al);
-  void emit_npe_item(int stub_offset);
+
+
+  //check whether the instr indexed by offset is a branch instr
+  bool is_branch_instr(jint offset);  
 #endif //ENABLE_NPCE
+
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+  enum {
+    literal_not_used_in_current_cc = -1
+  };
+
+  enum {
+    stop_searching = -1,
+    branch_is_in_prev_cc = -2,
+    no_schedulable_branch = 0, //there's no schedulable branch in current cc.
+  };
+  //if we move a array load action ahead of the array boundary checking
+  //we mark it into the relocation item.
+  void emit_pre_load_item(int ldr_offset, int stub_offset) {
+    _relocation.emit(Relocation::pre_load_type, ldr_offset, stub_offset);
+  }
+
+  void emit_pre_load_item(int ldr_offset) {
+    _relocation.emit(Relocation::pre_load_type, ldr_offset, _code_offset);
+  }
+
+  //begin_of_cc represent the start address of the Compilation Continuous
+  //give the offset and label return the address of first ldr instruction
+  //which access this literal
+  int first_instr_of_literal_loading(Label& L, address begin_of_cc);
+
+  //return the offset of branch in the branchs chain of a unbind array 
+  //boundary checking stub. the param next is the offset 
+  //of the previous branch in the chain
+  int next_schedulable_branch(Label L, 
+                       address begin_of_cc, int& next);
+#endif
+
+  void emit_long_branch() {
+    _relocation.emit(Relocation::long_branch_type, _code_offset);
+  }
+  
+  void emit_compressed_vsf(VirtualStackFrame* frame) {
+    _relocation.emit_vsf(_code_offset, frame);
+  }
+
+#if ENABLE_CODE_PATCHING
+  void emit_checkpoint_info_record(int instruction_offset,
+                                   int stub_position) {
+    _relocation.emit_checkpoint_info_record(instruction_offset, 
+                                            instruction_at(instruction_offset),
+                                            stub_position);
+  }
+#endif // ENABLE_CODE_PATCHING
 
   void branch(Label& L, bool link, Condition cond);
     // alignment is not used on ARM, but is needed to make
     // CompilationContinuation::compile() platform-independent. 
   void bind(Label& L, int alignment = 0); 
   void bind_to(Label& L, jint code_offset);
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER
-  void emit_pre_load_item(int ldr_offset, int stub_offset) {
-    _relocation.emit_pre_load_item(ldr_offset, stub_offset);
-  }
-  int get_first_literal_load_instruction(Label& L, address code_offset);
-  int get_next_schedulable_branch_instruction(Label L, address code_offset, int& next);
-#endif
   // void back_patch(Label& L, jint code_offset);
 
   void b  (Label& L, Condition cond = al)         { branch(L, false, cond); }
   void bl (Label& L, Condition cond = al)         { branch(L, true , cond); }
+  void bl(address target, Condition cond = al);  
   void b(CompilationQueueElement* cqe, Condition cond = al);
 
   void jmp(Label& L)                              { b(L); write_literals(); } 
@@ -445,8 +491,9 @@ public:
       access_literal_pool(rd, lpe, cond, true);
   }
 
-  void ldr_literal(Register rd, Oop* oop, int offset, Condition cond = al);
-  void ldr_oop (Register r, Oop* obj, Condition cond = al);
+  void ldr_literal(Register rd, const Oop* oop, int offset, 
+                   Condition cond = al);
+  void ldr_oop (Register r, const Oop* obj, Condition cond = al);
 
   // miscellaneous helpers
   void get_thread(Register reg);
@@ -460,7 +507,7 @@ public:
   }
 
   void emit_osr_entry(jint bci) { 
-      _relocation.emit_osr_entry(_code_offset, bci); 
+    _relocation.emit(Relocation::osr_stub_type, _code_offset, bci); 
   }
   static int ic_check_code_size() { 
     // no inline caches for ARM (yet)
@@ -496,10 +543,26 @@ public:
 
   GP_GLOBAL_SYMBOLS_DO(pointers_not_used, DEFINE_GP_FOR_BINARY)
 
-  ReturnOop find_literal(Oop* oop, int offset JVM_TRAPS);
+  void set_delayed_literal_write_threshold(const int offset) {
+    const int max_code_offset_to_desperately_force_literals =
+      offset - 4 * _unbound_literal_count + _code_offset;
+
+    const int max_code_offset_to_force_literals =
+      max_code_offset_to_desperately_force_literals - 0x500;
+
+    if (max_code_offset_to_force_literals < _code_offset_to_force_literals) {
+      _code_offset_to_force_literals = max_code_offset_to_force_literals;
+    }
+
+    if (max_code_offset_to_desperately_force_literals < _code_offset_to_desperately_force_literals) {
+      _code_offset_to_desperately_force_literals = max_code_offset_to_desperately_force_literals;
+    }  
+  }
+
+  ReturnOop find_literal(const Oop* oop, int imm32, int offset JVM_TRAPS);
   void append_literal(LiteralPoolElement *literal);
   void write_literal(LiteralPoolElement *literal);
-  void access_literal_pool(Register rd, LiteralPoolElement* literal, 
+  void access_literal_pool(Register rd, LiteralPoolElement* literal,
                            Condition cond, bool is_store);
 
 public:
@@ -507,40 +570,22 @@ public:
   void write_literals_if_desperate(int extra_bytes = 0);
 
   // We should write out the literal pool at our first convenience
-  bool need_to_force_literals() { 
+  bool need_to_force_literals() {
     return _code_offset >= _code_offset_to_force_literals;
   }
 
   // We should write out the literal pool very very soon, even if it
   // generates bad code
-  bool desperately_need_to_force_literals(int extra_bytes = 0) { 
-    return _code_offset + extra_bytes >= _code_offset_to_desperately_force_literals; 
+  bool desperately_need_to_force_literals(int extra_bytes = 0) {
+    return _code_offset + extra_bytes >= _code_offset_to_desperately_force_literals;
   }
 
   int unbound_literal_count() { return _unbound_literal_count; }
 
 private:
-  enum { maximum_unbound_literal_count = 100 };
-
-  void increment_literal_count() {
-    _unbound_literal_count++;
-    if (_unbound_literal_count == 1) { 
-       // If this is the first unbound literal, we need to consider forcing
-       // the literal pool if the code grows more than 0xA00 beyond here,
-       // since 0x1000 is the maximum offset in a ldr
-       _code_offset_to_force_literals = _code_offset + 0xA00;
-       _code_offset_to_desperately_force_literals = _code_offset + 0xF00;
-    } else if (_unbound_literal_count >= maximum_unbound_literal_count) { 
-      // If we get too many literals, their size might not fit into an
-      // immediate.  So we force a cutoff.
-      _code_offset_to_force_literals = 0; // force at the next chance
-      _code_offset_to_desperately_force_literals = 0;
-    }
-  }
-
   friend class RelocationWriter;
   friend class CodeInterleaver;
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
   friend class Compiler;
 #endif
 
@@ -555,10 +600,7 @@ private:
   int                       _unbound_literal_count;
   int                       _code_offset_to_force_literals;
                             // and to boldly split infinitives
-  int                      _code_offset_to_desperately_force_literals;
-#if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
-  jint                      _npe_index;
-#endif
+  int                      _code_offset_to_desperately_force_literals;  
 };
 
 #ifdef PRODUCT

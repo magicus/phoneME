@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,6 +32,20 @@ typedef struct {
   Bytecodes::Code _opcode;
 } locationModifier;
 
+typedef  struct {
+  jboolean            _sig_caught;
+  jboolean            _sig_uncaught;
+} exception_mod;
+
+typedef  struct  {
+  jint                _step_size;
+  jint                _step_depth;
+  jlong               _step_starting_offset;
+  jlong               _dup_current_line_offset;
+  jlong               _post_dup_line_offset;
+  address             _step_starting_fp;
+  locationModifier    _step_target;
+} single_step_mod;
 
 class VMEventModifierDescPointers : public MixedOopDesc {
 protected:
@@ -53,28 +68,13 @@ class VMEventModifierDesc : public VMEventModifierDescPointers {
   public:
 #endif
 
-  struct _exception_mod {
-    jboolean            _sig_caught;
-    jboolean            _sig_uncaught;
-  };
-  struct _single_step_mod {
-    jint                _step_size;
-    jint                _step_depth;
-    jlong               _step_starting_offset;
-    jlong               _dup_current_line_offset;
-    jlong               _post_dup_line_offset;
-    address             _step_starting_fp;
-    locationModifier    _step_target;
-  };
+  exception_mod _exception_mod;
+  single_step_mod _singlestep_mod;
+
 #if defined(UNDER_ADS) && (__ARMCC_VERSION < 200000)
   // ADS 1.2 wants this
   private:
 #endif
-
-  union {
-    _exception_mod  exception_mod;
-    _single_step_mod single_step_mod;
-  };
 
   // If this is in the heap we will not restore it into the method
   // Instead we will just set the entry to the 'default'

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -110,6 +111,12 @@ void SourceObjectWriter::start_block(ROMWriter::BlockType type, int preset_count
     start_block_comments("persistent_handles");
     _stream->print("const int _rom_persistent_handles");
     break;
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  case ROMWriter::ROM_DUPLICATE_HANDLES_BLOCK:
+    start_block_comments("rom duplicated handles");
+    _stream->print("const int _rom_rom_duplicated_handles");
+    break;
+#endif
   case ROMWriter::SYSTEM_SYMBOLS_BLOCK:
     start_block_comments("system_symbols");
     _stream->print_cr("#if defined(PRODUCT) || ENABLE_MINIMAL_ASSERT_BUILD");
@@ -118,6 +125,12 @@ void SourceObjectWriter::start_block(ROMWriter::BlockType type, int preset_count
     _stream->print_cr("const int _rom_system_symbols_src");
     _stream->print_cr("#endif");
     break;
+#if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES 
+  case ROMWriter::TASK_MIRRORS_BLOCK:
+    start_block_comments("task_mirrors");
+    _stream->print("const int _rom_task_mirrors");
+    break;
+#endif  
   default:
     SHOULD_NOT_REACH_HERE();
   }
@@ -171,6 +184,17 @@ void SourceObjectWriter::end_block(JVM_SINGLE_ARG_TRAPS) {
   case ROMWriter::PERSISTENT_HANDLES_BLOCK:
     _stream->print_cr("const int _rom_persistent_handles_size = %d;", _offset);
     break;
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  case ROMWriter::ROM_DUPLICATE_HANDLES_BLOCK:
+    _stream->print_cr("const int _rom_rom_duplicated_handles_size = %d;", _offset);
+    break;
+#endif
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES 
+  case ROMWriter::TASK_MIRRORS_BLOCK:
+    _stream->print_cr("const int _rom_task_mirrors_size = %d;", _offset);
+    write_rom_tm_bitmap();
+    break;
+#endif
   case ROMWriter::SYSTEM_SYMBOLS_BLOCK:
     /* Nothing to do */
     break;
@@ -183,6 +207,21 @@ void SourceObjectWriter::end_block(JVM_SINGLE_ARG_TRAPS) {
   }
 #endif
 }
+
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES 
+void SourceObjectWriter::write_rom_tm_bitmap() {
+  TypeArray::Raw bitmap = writer()->rom_tm_bitmap()->obj();
+  int length = bitmap().length();
+  _stream->print_cr("const int _rom_task_mirrors_bitmap[%d] = {", length);
+  for (int i = 0; i < length; i++) {
+    writer()->write_plain_int(bitmap().int_at(i), _stream);
+    if (i != length - 1) {
+      put_separator();
+    }
+  }
+  _stream->print_cr("\n};\n");
+}
+#endif
 
 void SourceObjectWriter::begin_object(Oop *object JVM_TRAPS) {
   ROMWriter::BlockType type = writer()->block_type_of(object JVM_CHECK);
@@ -205,7 +244,31 @@ void SourceObjectWriter::begin_object(Oop *object JVM_TRAPS) {
     _stream->print("/%s ", "*");
     int header_offset = (type == ROMWriter::DATA_BLOCK) ? sizeof(jint) : 0;
     header_offset -= skip_bytes;
-    writer()->write_reference(type, _offset + header_offset, type, _stream);
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES
+    if (_current_type == ROMWriter::TASK_MIRRORS_BLOCK) {
+       //do nothing at the time
+    } else  
+#endif
+    {
+#if ENABLE_HEAP_NEARS_IN_HEAP
+      /*
+        When writing reference to a cloned object we must reference the correct instance. 
+       Links from HEAP must point to HEAP(this is the idea of optimization) and references from 
+       TEXT or DATA must point to TEXT or DATA instance.
+      */
+      if (type != ROMWriter::TEXT_AND_HEAP_BLOCK && type != ROMWriter::DATA_AND_HEAP_BLOCK) {
+        writer()->write_reference(type, _offset + header_offset, _current_type, _stream);
+      } else if (_current_type == ROMWriter::HEAP_BLOCK) {
+        writer()->write_reference(ROMWriter::HEAP_BLOCK, _offset + header_offset, _current_type, _stream);
+      } else if (type == ROMWriter::TEXT_AND_HEAP_BLOCK) {
+        writer()->write_reference(ROMWriter::TEXT_BLOCK, _offset + header_offset, _current_type, _stream);
+      } else {
+        writer()->write_reference(ROMWriter::DATA_BLOCK, _offset + header_offset, _current_type, _stream);
+      }
+#else
+      writer()->write_reference(type, _offset + header_offset, _current_type, _stream);
+#endif
+    }
     _stream->print(" [%5d] ", (object->object_size() / sizeof(jint)));
     if (skip_words > 0) {
       _stream->print(" skip=%d ", skip_words);
@@ -222,6 +285,20 @@ void SourceObjectWriter::begin_object(Oop *object JVM_TRAPS) {
 
   _word_position = 0;
   int my_calculated_offset = writer()->offset_of(object JVM_CHECK);
+#if ENABLE_HEAP_NEARS_IN_HEAP && USE_SOURCE_IMAGE_GENERATOR
+  /*
+    for objects with type *_AND_HEAP_BLOCK, offset contains offset for the copy located in * block, 
+    while heap_offset contains offset of the copy located in HEAP block
+  */
+  if (type == ROMWriter::TEXT_AND_HEAP_BLOCK && _current_type == ROMWriter::HEAP_BLOCK) {
+    GUARANTEE(object->obj()->is_near(), "TEXT_AND_HEAP_BLOCK  usage sanity");
+    my_calculated_offset = writer()->heap_offset_of(object JVM_CHECK);
+  }
+  if (type == ROMWriter::DATA_AND_HEAP_BLOCK && _current_type == ROMWriter::HEAP_BLOCK) {
+    GUARANTEE(object->obj()->is_near(), "DATA_AND_HEAP_BLOCK  usage sanity");
+    my_calculated_offset = writer()->heap_offset_of(object JVM_CHECK);
+  }
+#endif
   int real_offset = _offset - skip_bytes;
   GUARANTEE(my_calculated_offset == real_offset,
             "calculated address != real address");
@@ -229,7 +306,7 @@ void SourceObjectWriter::begin_object(Oop *object JVM_TRAPS) {
 
 void SourceObjectWriter::end_object(Oop *object JVM_TRAPS) {
   ROMWriter::BlockType type = writer()->block_type_of(object JVM_CHECK);
-  if (type != _current_type) {
+  if (!is_subtype(type, _current_type)) {  
     return;
   }
 }
@@ -246,7 +323,7 @@ void SourceObjectWriter::put_separator() {
 void SourceObjectWriter::put_reference(Oop *owner, int offset, Oop *object JVM_TRAPS) {
   if (!owner->is_null()) {
     ROMWriter::BlockType owner_type = writer()->block_type_of(owner JVM_CHECK);
-    if (owner_type != _current_type) {
+    if (!is_subtype(owner_type, _current_type)) {  
       return;
     }
   }
@@ -267,8 +344,14 @@ void SourceObjectWriter::put_reference(Oop *owner, int offset, Oop *object JVM_T
       _stream->print("\n\t");
       _word_position = 0;
     }
-
-    writer()->write_reference(object, _current_type, _stream JVM_CHECK);
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES         
+    if (_current_type == ROMWriter::TASK_MIRRORS_BLOCK) { 
+      writer()->write_tm_reference(owner, offset, object, _stream); 
+    } else  
+#endif 
+    { 
+      writer()->write_reference(object, _current_type, _stream JVM_CHECK);
+    }
     put_separator();
 
     if (GenerateROMComments) {
@@ -285,7 +368,7 @@ void SourceObjectWriter::put_reference(Oop *owner, int offset, Oop *object JVM_T
 
 void SourceObjectWriter::put_int(Oop *owner, jint value JVM_TRAPS) {
   ROMWriter::BlockType owner_type = writer()->block_type_of(owner JVM_CHECK);
-  if (owner_type != _current_type) {
+  if (!is_subtype(owner_type, _current_type)) {  
     return;
   }
   writer()->write_int(value, _stream);
@@ -294,7 +377,7 @@ void SourceObjectWriter::put_int(Oop *owner, jint value JVM_TRAPS) {
     int owner_offset = writer()->offset_of(owner JVM_CHECK);
     int cp_index = _offset - owner_offset - sizeof(ConstantPoolDesc);
     cp_index /= 4;
-    _stream->print(",  /* [%4d] ", cp_index);
+    _stream->print(" /* [%4d] ", cp_index);
     ConstantPool cp = owner->obj();
     cp.print_entry_on(_stream, cp_index JVM_CHECK);
     _stream->print(" */\n\t", cp_index);
@@ -323,7 +406,7 @@ void SourceObjectWriter::put_int(Oop *owner, jint value JVM_TRAPS) {
 void SourceObjectWriter::put_int_by_mask(Oop *owner, jint be_word, jint le_word,
                                    jint typemask JVM_TRAPS) {
   ROMWriter::BlockType owner_type = writer()->block_type_of(owner JVM_CHECK);
-  if (owner_type != _current_type) {
+  if (!is_subtype(owner_type, _current_type)) {  
     return;
   }
 
@@ -359,7 +442,7 @@ void SourceObjectWriter::put_int_by_mask(Oop *owner, jint be_word, jint le_word,
 
 void SourceObjectWriter::put_long(Oop *owner, jint msw, jint lsw JVM_TRAPS) {
   ROMWriter::BlockType owner_type = writer()->block_type_of(owner JVM_CHECK);
-  if (owner_type != _current_type) {
+  if (!is_subtype(owner_type, _current_type)) {  
     return;
   }
   if (GenerateROMComments && _word_position > 0) {
@@ -382,7 +465,7 @@ void SourceObjectWriter::put_long(Oop *owner, jint msw, jint lsw JVM_TRAPS) {
 
 void SourceObjectWriter::put_double(Oop *owner, jint msw, jint lsw JVM_TRAPS) {
   ROMWriter::BlockType owner_type = writer()->block_type_of(owner JVM_CHECK);
-  if (owner_type != _current_type) {
+  if (!is_subtype(owner_type, _current_type)) {  
     return;
   }
   if (GenerateROMComments && _word_position > 0) {
@@ -404,7 +487,7 @@ void SourceObjectWriter::put_double(Oop *owner, jint msw, jint lsw JVM_TRAPS) {
 
 void SourceObjectWriter::put_symbolic(Oop *owner, int offset JVM_TRAPS) {
   ROMWriter::BlockType owner_type = writer()->block_type_of(owner JVM_CHECK);
-  if (owner_type != _current_type) {
+  if (!is_subtype(owner_type, _current_type)) {  
     return;
   }
 
@@ -1164,9 +1247,29 @@ void SourceObjectWriter::count(MemCounter& counter, int bytes) {
   case ROMWriter::HEAP_BLOCK:
     counter.add_heap(bytes);
     break;
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES 
+  case ROMWriter::TASK_MIRRORS_BLOCK:
+     counter.add_tm(bytes);
+     break;
+#endif  
   default:
       SHOULD_NOT_REACH_HERE();
   }
+}
+
+bool SourceObjectWriter::is_subtype(ROMWriter::BlockType type_to_check, ROMWriter::BlockType type) {
+  
+  if (type_to_check == type) {
+    return true;
+  } 
+#if ENABLE_HEAP_NEARS_IN_HEAP  
+  else if (type_to_check == ROMWriter::TEXT_AND_HEAP_BLOCK ) {
+    return (type == ROMWriter::TEXT_BLOCK || type == ROMWriter::HEAP_BLOCK);
+  } else if (type_to_check == ROMWriter::DATA_AND_HEAP_BLOCK ) {
+    return (type == ROMWriter::DATA_BLOCK || type == ROMWriter::HEAP_BLOCK);
+  }
+#endif
+  return false;
 }
 
 #endif //USE_SOURCE_IMAGE_GENERATOR

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -75,14 +76,14 @@ class Frame {
   // Constructor for top frame
   void init(Thread* thread);
   Frame(Thread* thread) {
-    // NB. init() is used here to fix bug 6297942.
+    // NB. init() is used here to fix CR 6297942.
     init(thread);
   }
 
   // Constructing a frame from a guessed fp
   void init(Thread* /*thread*/, address /*guessed_fp*/) PRODUCT_RETURN;
   Frame(Thread* thread, address guessed_fp) {
-    // NB. init() is used here to fix bug 6297942.
+    // NB. init() is used here to fix CR 6297942.
     init(thread, guessed_fp);
   }
 
@@ -95,21 +96,8 @@ class Frame {
     pop_frame();
   }
 
-  void set_values(Thread* thread, address stack_base,
-                  address* pc_addr, address sp, address fp) {
-    _thread = thread;
-    _stack_base = stack_base;
-    _fp = fp;
-    _sp = sp;
-    _pc_addr= (address)pc_addr;
-#ifdef AZZERT
-    if (JavaStackDirection < 0) {
-      GUARANTEE(fp >= sp && sp > (address) pc_addr, "Invalid frame");
-    } else { 
-      GUARANTEE(fp <= sp && sp < (address) pc_addr, "Invalid frame");
-    }
-#endif
-  }
+  inline void set_values(Thread* thread, address stack_base,
+                         address* pc_addr, address sp, address fp);
 
   static Frame* _last_frame;
 
@@ -301,6 +289,12 @@ class JavaFrame : public Frame {
     return JavaFrame__cpool_offset();
   }
 
+  // The following is used only in compiled frames,
+  // so we can reuse the slot used only during interpretation
+  inline static int saved_pc_offset() {
+    return JavaFrame__cpool_offset();
+  }
+
   // The following two slots are used by C interpreter loop only
   inline static int stored_int_value1_offset() {
     return JavaFrame__stored_int_value1_offset();
@@ -319,7 +313,7 @@ class JavaFrame : public Frame {
   inline static int arg_offset_from_sp(int index) {
     return JavaFrame__arg_offset_from_sp(index);
   }
-  
+
 #if ENABLE_EMBEDDED_CALLINFO
   inline static int callinfo_offset_from_return_address() {
     return JavaFrame__callinfo_offset_from_return_address();
@@ -362,23 +356,21 @@ class JavaFrame : public Frame {
 
   }
 
-#if ENABLE_APPENDED_CALLINFO
+#if ENABLE_APPENDED_CALLINFO || ENABLE_CODE_PATCHING
   address cooked_pc( void ) const;
 
   static CompiledMethodDesc* find_compiled_method( const address pc );
 
   static bool in_compiled_code( const address pc );
-#endif // ENABLE_APPENDED_CALLINFO
-
-#endif
-
-#if ENABLE_COMPILER
+#endif // ENABLE_APPENDED_CALLINFO || ENABLE_CODE_PATCHING
 
   // Fill in the frame descriptor for compiled methods.
   void fill_in_compiled_frame();
 
-  // Deoptimize this frame.
-  void deoptimize(bool from_invoker = false);
+  // Deoptimize topmost frame.
+  void deoptimize();
+  // Deoptimize non-topmost frame, callee is the child frame method
+  void deoptimize(const Method * callee);
 
   void deoptimize_and_continue(bool adjust_bci);
 
@@ -388,13 +380,15 @@ class JavaFrame : public Frame {
   // Tells whether we are in compiled code
   bool is_compiled_frame( void ) const;
 
+  bool is_heap_compiled_frame(void) const;
+
 #else
 
   bool is_compiled_frame( void ) const {
     return false;
   }
 
-#endif
+#endif // ENABLE_COMPILER
 
 
   bool find_exception_frame(Thread *thread, JavaOop* exception JVM_TRAPS);
@@ -404,7 +398,7 @@ class JavaFrame : public Frame {
     const address caller_fp = *(address*) (fp() + caller_fp_offset());
     const address caller_sp = this->caller_sp();
     address* caller_pc_addr = (address*) (fp() + return_address_offset());
-    result.set_values(_thread, _stack_base, caller_pc_addr, caller_sp , caller_fp);
+    result.set_values(_thread, _stack_base, caller_pc_addr, caller_sp, caller_fp);
   }
 
   // Accessor.
@@ -591,7 +585,8 @@ class EntryFrame : public Frame {
     const address caller_fp = *(address*)(fp() + stored_last_fp_offset());
     const address caller_sp = *(address*)(fp() + stored_last_sp_offset());
     address* caller_pc_addr =  (address*)(caller_sp + JavaStackDirection * (int)sizeof(jint));
-    result.set_values(_thread, _stack_base, caller_pc_addr, caller_sp , caller_fp);
+    result.set_values(_thread, _stack_base, caller_pc_addr,
+                      caller_sp, caller_fp);
   }
 
   // Tells whether we are at the end of the stack
@@ -695,4 +690,28 @@ inline bool Frame::is_entry_frame( void ) const {
 
   const address ret_addr = *(address*) (fp() + JavaFrame::return_address_offset());
   return ret_addr == (address)EntryFrame::FakeReturnAddress;
+}
+
+inline void Frame::set_values(Thread* thread, address stack_base,
+                              address* pc_addr, address sp, address fp) {
+  _thread = thread;
+  _stack_base = stack_base;
+  _fp = fp;
+  _sp = sp;
+
+#if ENABLE_COMPRESSED_VSF
+  if (*pc_addr >= (address)compiler_callvm_stubs_start &&
+      *pc_addr <  (address)compiler_callvm_stubs_end) {
+    _pc_addr = fp + JavaFrame::saved_pc_offset();
+  } else
+#endif
+    _pc_addr = (address)pc_addr;
+
+#ifdef AZZERT
+  if (JavaStackDirection < 0) {
+    GUARANTEE(fp >= sp, "Invalid frame");
+  } else { 
+    GUARANTEE(fp <= sp, "Invalid frame");
+  }
+#endif
 }

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,7 +25,8 @@
  */
 
 /*
- * OS_ads.cpp: ARM ADS implementation of the VM  *               operating system porting interface
+ * OS_ads.cpp: ARM ADS implementation of the VM
+ *               operating system porting interface
  *
  * This file defines the ADS-specific implementation
  * of the OS porting interface (class OS).  Refer to file

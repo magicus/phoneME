@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -70,6 +71,8 @@
 //  ----------------------------
 //                                <-- _preallocated_space (optional)
 //  Monet Binary Image (SVM mode only)
+//                                <-- _glue_code
+//  Compiler glue code
 //                                <-- _heap_start
 //  Old generation (full)
 //                                <-- _collection_area_start
@@ -173,9 +176,8 @@ private:
 #endif
 
 public:
-  // Allocate normal object in the heap
+  
   static OopDesc* allocate(size_t size JVM_TRAPS);
-
   // This function implements JVM_GarbageCollect, which is an external
   // interface for MIDP to invoke GC.
   static int jvm_garbage_collect(int flags, int requested_free_bytes);
@@ -186,7 +188,7 @@ public:
     // allocate. There's no reason to duplicate them here.
     OopDesc* p = allocate(size JVM_NO_CHECK_AT_BOTTOM);
     if (p) {
-      jvm_memset(p, 0xab, size);
+      DIRTY_HEAP(p, size);
     }
     return p;
   }
@@ -205,7 +207,7 @@ public:
   // Creates an identical copy of an object in the heap
   // (including _klass field) - use with CARE
   static OopDesc* clone(OopDesc* source JVM_TRAPS);
-
+  
   inline static OopDesc **allocation_top() { return _inline_allocation_top; }
 
   // Deallocate the heap
@@ -224,6 +226,13 @@ public:
   // Expand the young generation
   static void expand_young_generation ( const int size );
 
+  static void clear_inline_allocation_area() {
+#if ENABLE_ZERO_YOUNG_GENERATION
+    fast_memclear(_inline_allocation_top,
+                  DISTANCE(_inline_allocation_top, _inline_allocation_end));
+#endif
+  	}
+
   // Collection
   static void full_collect(JVM_SINGLE_ARG_TRAPS);
   static void safe_collect(size_t min_free_after_collection JVM_TRAPS)
@@ -232,6 +241,7 @@ public:
 #else
     {
       collect( min_free_after_collection JVM_NO_CHECK );
+      clear_inline_allocation_area();
     }
 #endif
   static OopDesc** disable_allocation_trap( void ) {
@@ -301,10 +311,10 @@ public:
 #endif
   }
 
-#if ( ENABLE_NPCE||ENABLE_INLINE || ENABLE_TRAMPOLINE || \
-   ( ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER ) ) && ARM
-  static CompiledMethodDesc* getThrowedMethod(void* p);
-#endif
+  //found the compiled method which contains the instruction pointed 
+  //by pc parameter
+  static CompiledMethodDesc* method_contain_instruction_of(void* pc);
+
   // Finalization support
 private:
   // Finalizer lists
@@ -329,6 +339,9 @@ private:
   static void finalize( FinalizerConsDesc** list, const int task );
   static void set_heap_limit0( void* new_heap_limit );
 public:
+  static address glue_code_start() {
+    return _glue_code;
+  }
   static void finalize_all( void ) {
     finalize( _finalizer_reachable );
     finalize( _finalizer_pending   );
@@ -374,11 +387,13 @@ public:
   static void set_task_memory_quota(const int task,
                       const unsigned reserve, const unsigned limit JVM_TRAPS);
 
+  static void reset_task_memory_usage( const int task );
+
 #if ENABLE_PERFORMANCE_COUNTERS
   static void print_max_memory_usage ( void );
 #endif
 
-  static int owner_task_id( OopDesc* object );
+  static int owner_task_id( const OopDesc* const object );
 
 #else // !ENABLE_ISOLATES
   static int  start_system_allocation ( void ) { return 0; }
@@ -448,10 +463,7 @@ public:
   }
 #endif
 
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM && ENABLE_CODE_OPTIMIZER
-  static void save_compiler_area_top_fast();
-  static void update_compiler_area_top_fast();
-#endif
+
 
 #if USE_SET_HEAP_LIMIT || USE_LARGE_OBJECT_AREA
   static void shrink_with_compiler_area( const int size );
@@ -546,7 +558,7 @@ public:
 
   // Testing
   static bool contains_live(OopDesc** /*target*/) PRODUCT_RETURN0;
-  static bool contains_live(OopDesc* target) {
+  static bool contains_live(const OopDesc* target) {
     return contains_live((OopDesc**) target);
   }
   static bool contains(OopDesc** target) {
@@ -610,12 +622,21 @@ public:
   static bool expand_current_compiled_method(int delta);
 
 #if ENABLE_ISOLATES && (USE_IMAGE_MAPPING || USE_LARGE_OBJECT_AREA)
+#if ENABLE_LIB_IMAGES
+  static bool in_dead_bundles ( const OopDesc* obj );
+#else
   static bool in_dead_bundles ( const OopDesc* obj ) {
     return obj < dead_range_end && obj >= dead_range_beg;
   }
+#endif
 private:  
+#if ENABLE_LIB_IMAGES
+  static const OopDesc* _dead_task_images;    
+#else
   static const OopDesc* dead_range_beg;
   static const OopDesc* dead_range_end;    // exclusive
+#endif //ENABLE_LIB_IMAGES
+  
   static OopDesc* dead_task;
 #else
   static bool in_dead_bundles ( const OopDesc* /*obj*/ ) { return false; }
@@ -681,7 +702,6 @@ private:
 
   static void create_boundary( OopDesc** p, const int task );
   static void accumulate_memory_usage( OopDesc* lwb[], OopDesc* upb[] );
-  static void reset_task_memory_usage( const int task );
   static void set_task_memory_reserve_limit(const int task,
                 const unsigned reserve, const unsigned limit) {
     TaskMemoryInfo& task_info = get_task_info( task );
@@ -846,10 +866,19 @@ private:
 #if USE_IMAGE_PRELOADING  
   // number of bytes to reserved at the low-end of the heap for Monet image
   static size_t     _preallocated_space_size;
-  static address    _preallocated_space;
 #else
   enum { _preallocated_space_size = 0 };
 #endif
+
+#if ENABLE_COMPILER
+  static size_t     _glue_code_size;
+#else
+  enum { _glue_code_size = 0 };
+#endif
+
+  static address    _preallocated_space;
+  static address    _glue_code;
+
   // Size-adjustable chunk for all heap data structures
   static address    _heap_chunk;
   static address    _bitv_chunk;
@@ -884,7 +913,15 @@ private:
   static OopDesc** _saved_compiler_area_top;
 #endif
 
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+public:
+  //save the compiler area top before doing code scheduling
+  static void save_compiler_area_top_fast();
+
+  //restore the compiler area top to the value stored before scheduling.
+  //free the memory allocated during code scheduling quickly
+  static void update_compiler_area_top_fast();
+private:
   static OopDesc** _saved_compiler_area_top_quick;
 #endif
 

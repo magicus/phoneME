@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -143,11 +144,8 @@ class MethodDesc: public OopDesc {
 
     OopDesc *my_sig = cpbase[_signature_index];
     if (my_sig != signature) {
-#if ENABLE_METHOD_TRAPS
       // Empty signature means that any method with the same name will match
       return signature == NULL;
-#endif
-      return false;
     }
 
     return true;
@@ -225,7 +223,7 @@ class MethodDesc: public OopDesc {
    _y y;
   };
 
-  jushort     _size_of_parameters; // size of the parameter block (receiver +
+  jushort     _method_attributes; // size of the parameter block (receiver +
                                    // arguments) in words 
 
   jushort     _name_index;         // Method name (index in constant pool)

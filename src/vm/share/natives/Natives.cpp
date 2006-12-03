@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -58,8 +59,8 @@ ReturnOop Natives::get_native_function_name(Method *method JVM_TRAPS) {
       break;
     }
   }
-
-  return convert_to_jni_name(&class_name, &method_name, &signature JVM_CHECK_0);
+  return convert_to_jni_name(&class_name, &method_name, &signature
+                                      JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 ReturnOop Natives::convert_to_jni_name(Symbol *class_name,
@@ -130,6 +131,9 @@ void Natives::append_jni(TypeArray *byte_array, CharacterStream *stream,
   char *data = ((char*)byte_array->data()) + *index;
   char *start = data;
 
+  static const char HEX_DIGIT[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                                     '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
   for (int i = 0; i < count; i++) {
     if (i < skip) {
       continue;
@@ -158,25 +162,17 @@ void Natives::append_jni(TypeArray *byte_array, CharacterStream *stream,
         *data++ = '3';
         break;
       default:
-        *data++ = hex_digit((ch & 0xf000) >> 24);
-        *data++ = hex_digit((ch & 0x0f00) >> 16);
-        *data++ = hex_digit((ch & 0x00f0) >>  8);
-        *data++ = hex_digit((ch & 0x000f) >>  0);
+        *data++ = '0';
+        *data++ = HEX_DIGIT[(ch >> 12) & 0xf];
+        *data++ = HEX_DIGIT[(ch >> 8)  & 0xf];
+        *data++ = HEX_DIGIT[(ch >> 4)  & 0xf];
+        *data++ = HEX_DIGIT[ ch        & 0xf];
       }
     }
   }
 
   *data = 0;
   *index += (data - start);
-}
-
-char Natives::hex_digit(int i) {
-  GUARANTEE(0<= i && i <= 0x0f, "sanity");
-  if (i <= 9) {
-    return '0' + i;
-  } else {
-    return 'a' + i - 10;
-  }
 }
 
 ReturnOop Natives::get_jni_class_name(InstanceClass *klass JVM_TRAPS) {
@@ -193,6 +189,25 @@ ReturnOop Natives::get_jni_class_name(InstanceClass *klass JVM_TRAPS) {
   return byte_array;
 }
 #endif // ENABLE_DYNAMIC_NATIVE_METHODS || ENABLE_ROM_GENERATOR
+
+#if ENABLE_STACK_TRACE
+void FrameStream::next() {
+  if (_fr.is_java_frame()) {
+    _fr.as_JavaFrame().caller_is(_fr);
+    _at_end = skip();
+  }
+}
+
+bool FrameStream::skip() {
+  while (_fr.is_entry_frame()) {
+    if (_fr.as_EntryFrame().is_first_frame()) {
+      return true;
+    }
+    _fr.as_EntryFrame().caller_is(_fr);
+  }
+  return false;
+}
+#endif
 
 extern "C" {
 
@@ -211,7 +226,7 @@ jboolean Java_unimplemented_bool(JVM_SINGLE_ARG_TRAPS) {
     for(i=0; i<Universe::dynamic_lib_count; i++) {
       handle = (void*)Universe::dynamic_lib_handles()->int_at(i);
       *(void**)(&fptr) = Os::getSymbol(handle, (char *)n.data());
-      if(fptr == 0) continue;
+      if(fptr != 0) break;
     } 
   }
   if(fptr != 0) {
@@ -234,7 +249,7 @@ jbyte Java_unimplemented_byte(JVM_SINGLE_ARG_TRAPS) {
     for(i=0; i<Universe::dynamic_lib_count; i++) {
       handle = (void*)Universe::dynamic_lib_handles()->int_at(i);
       *(void**)(&fptr) = Os::getSymbol(handle, (char *)n.data());
-      if(fptr == 0) continue;
+      if(fptr != 0) break;
     } 
   }
   if(fptr != 0) {
@@ -257,7 +272,7 @@ jchar Java_unimplemented_char(JVM_SINGLE_ARG_TRAPS) {
     for(i=0; i<Universe::dynamic_lib_count; i++) {
       handle = (void*)Universe::dynamic_lib_handles()->int_at(i);
       *(void**)(&fptr) = Os::getSymbol(handle, (char *)n.data());
-      if(fptr == 0) continue;
+      if(fptr != 0) break;
     } 
   }
   if(fptr != 0) {
@@ -280,7 +295,7 @@ jshort Java_unimplemented_short(JVM_SINGLE_ARG_TRAPS) {
     for(i=0; i<Universe::dynamic_lib_count; i++) {
       handle = (void*)Universe::dynamic_lib_handles()->int_at(i);
       *(void**)(&fptr) = Os::getSymbol(handle, (char *)n.data());
-      if(fptr == 0) continue;
+      if(fptr != 0) break;
     } 
   }
   if(fptr != 0) {
@@ -303,7 +318,7 @@ jint Java_unimplemented_int(JVM_SINGLE_ARG_TRAPS) {
     for(i=0; i<Universe::dynamic_lib_count; i++) {
       handle = (void*)Universe::dynamic_lib_handles()->int_at(i);
       *(void**)(&fptr) = Os::getSymbol(handle, (char *)n.data());
-      if(fptr == 0) continue;
+      if(fptr != 0) break;
     } 
   }
   if(fptr != 0) {
@@ -326,7 +341,7 @@ jlong Java_unimplemented_long(JVM_SINGLE_ARG_TRAPS) {
     for(i=0; i<Universe::dynamic_lib_count; i++) {
       handle = (void*)Universe::dynamic_lib_handles()->int_at(i);
       *(void**)(&fptr) = Os::getSymbol(handle, (char *)n.data());
-      if(fptr == 0) continue;
+      if(fptr != 0) break;
     } 
   }
   if(fptr != 0) {
@@ -351,7 +366,7 @@ jfloat Java_unimplemented_float(JVM_SINGLE_ARG_TRAPS) {
     for(i=0; i<Universe::dynamic_lib_count; i++) {
       handle = (void*)Universe::dynamic_lib_handles()->int_at(i);
       *(void**)(&fptr) = Os::getSymbol(handle, (char *)n.data());
-      if(fptr == 0) continue;
+      if(fptr != 0) break;
     } 
   }
   if(fptr != 0) {
@@ -374,7 +389,7 @@ jdouble Java_unimplemented_double(JVM_SINGLE_ARG_TRAPS) {
     for(i=0; i<Universe::dynamic_lib_count; i++) {
       handle = (void*)Universe::dynamic_lib_handles()->int_at(i);
       *(void**)(&fptr) = Os::getSymbol(handle, (char *)n.data());
-      if(fptr == 0) continue;
+      if(fptr != 0) break;
     } 
   }
   if(fptr != 0) {
@@ -399,7 +414,7 @@ jobject Java_unimplemented_object(JVM_SINGLE_ARG_TRAPS) {
     for(i=0; i<Universe::dynamic_lib_count; i++) {
       handle = (void*)Universe::dynamic_lib_handles()->int_at(i);
       *(void**)(&fptr) = Os::getSymbol(handle, (char *)n.data());
-      if(fptr == 0) continue;
+      if(fptr != 0) break;
     } 
   }
   if(fptr != 0) {
@@ -426,7 +441,7 @@ void Java_unimplemented(JVM_SINGLE_ARG_TRAPS) {
     for(i=0; i<Universe::dynamic_lib_count; i++) {
       handle = (void*)Universe::dynamic_lib_handles()->int_at(i);
       *(void**)(&fptr) = Os::getSymbol(handle, (char *)n.data());
-      if(fptr == 0) continue;
+      if(fptr != 0) break;
     } 
   }
   if(fptr != 0) {
@@ -651,7 +666,7 @@ jint Java_java_lang_System_identityHashCode(JVM_SINGLE_ARG_TRAPS) {
   if (argument.is_null()) {
     return 0;
   }
-  return Synchronizer::hash_code(&argument JVM_NO_CHECK_AT_BOTTOM);
+  return Synchronizer::hash_code(&argument JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 // public static native void arraycopy(Object src, int src_position,
@@ -992,7 +1007,7 @@ OopDesc* Java_java_lang_Class_newInstance(JVM_SINGLE_ARG_TRAPS) {
   InstanceClass::Fast sender_class = method().holder();
 
   return receiver_class().new_initialized_instance(&sender_class, thread 
-                                                   JVM_NO_CHECK_AT_BOTTOM);
+                                                   JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 // public native boolean isInstance(Object obj);
@@ -1074,7 +1089,7 @@ void Java_java_lang_Class_invoke_1clinit(JVM_SINGLE_ARG_TRAPS) {
 }
 
 // private native void init9();
-void Java_java_lang_Class_init9() {
+void Java_java_lang_Class_init9(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   JavaClassObj::Raw receiver = GET_PARAMETER_AS_OOP(0);
   JavaClass::Fast c = receiver().java_class();
@@ -1085,6 +1100,9 @@ void Java_java_lang_Class_init9() {
     ic->set_initialized();
 #else
     ic->remove_clinit();
+#endif
+#if USE_EMBEDDED_VTABLE_BITMAP
+    ic->update_vtable_bitmaps(JVM_SINGLE_ARG_CHECK);
 #endif
   }
 }
@@ -1118,7 +1136,7 @@ ReturnOop Java_java_lang_Class_getSuperclass(JVM_SINGLE_ARG_TRAPS) {
   JavaClass::Fast s = c().super();
 #if ENABLE_ISOLATES
   return s.is_null() ? NULL :
-    s().get_or_allocate_java_mirror(JVM_SINGLE_ARG_CHECK_0);
+    s().get_or_allocate_java_mirror(JVM_SINGLE_ARG_NO_CHECK);
 #else
   JVM_IGNORE_TRAPS;
   return s.is_null() ? NULL : s().java_mirror();
@@ -1137,7 +1155,7 @@ ReturnOop Java_java_lang_Object_getClass(JVM_SINGLE_ARG_TRAPS) {
   JavaOop::Fast receiver = GET_PARAMETER_AS_OOP(0);
   JavaClass::Fast cl = receiver().blueprint();
 #if ENABLE_ISOLATES
-  return cl().get_or_allocate_java_mirror(JVM_SINGLE_ARG_CHECK_0)
+  return cl().get_or_allocate_java_mirror(JVM_SINGLE_ARG_NO_CHECK);
 #else
   JVM_IGNORE_TRAPS;
   return cl().java_mirror();
@@ -1148,7 +1166,7 @@ ReturnOop Java_java_lang_Object_getClass(JVM_SINGLE_ARG_TRAPS) {
 jint Java_java_lang_Object_hashCode(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   JavaOop::Fast thisObj = GET_PARAMETER_AS_OOP(0);
-  return Synchronizer::hash_code(&thisObj JVM_NO_CHECK_AT_BOTTOM);
+  return Synchronizer::hash_code(&thisObj JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 void Java_java_lang_Object_notify(JVM_SINGLE_ARG_TRAPS) {
@@ -1310,48 +1328,6 @@ void Java_java_lang_Thread_interrupt0(JVM_SINGLE_ARG_TRAPS) {
 #endif
 
 #if ENABLE_STACK_TRACE
-class FrameStream {
- public:
-  Frame& _fr;
-  bool _at_end;
-
-  bool skip();
-
-  FrameStream(Frame& fr) : _fr(fr) {
-    _at_end = skip();
-  }
-
-  ReturnOop method() const {
-    GUARANTEE(_fr.is_java_frame(), "Sanity");
-    return _fr.as_JavaFrame().method();
-  }
-
-  int bci() const {
-    GUARANTEE(_fr.is_java_frame(), "Sanity");
-    return _fr.as_JavaFrame().bci();
-  }
-
-  void next();
-
-  bool at_end() const { return _at_end; }
-};
-
-void FrameStream::next() {
-  if (_fr.is_java_frame()) {
-    _fr.as_JavaFrame().caller_is(_fr);
-    _at_end = skip();
-  }
-}
-
-bool FrameStream::skip() {
-  while (_fr.is_entry_frame()) {
-    if (_fr.as_EntryFrame().is_first_frame()) {
-      return true;
-    }
-    _fr.as_EntryFrame().caller_is(_fr);
-  }
-  return false;
-}
 
 void Java_java_lang_Throwable_fillInStackTrace(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
@@ -1471,7 +1447,8 @@ ReturnOop Java_com_sun_cldc_io_ResourceInputStream_open(JVM_SINGLE_ARG_TRAPS) {
   }
 
   // Open resource from a file
-  return ClassPathAccess::open_entry(&c_filename, false JVM_NO_CHECK_AT_BOTTOM);
+  return ClassPathAccess::open_entry(&c_filename, false
+                                     JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 // static native int bytesRemain(Object fileDecoder);
@@ -1503,7 +1480,7 @@ int Java_com_sun_cldc_io_ResourceInputStream_readBytes(JVM_SINGLE_ARG_TRAPS) {
   if (fd().bytes_remain() <= 0) {
     return -1;
   }
-  return fd().get_bytes(&destination, len JVM_NO_CHECK_AT_BOTTOM);
+  return fd().get_bytes(&destination, len JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 // static native Object clone(Object source);
@@ -1568,8 +1545,7 @@ void Java_java_lang_ref_WeakReference_finalize() {
 ReturnOop Java_java_lang_String_intern(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   String::Fast thisObj = GET_PARAMETER_AS_OOP(0);
-
-  return Universe::interned_string_for(&thisObj JVM_NO_CHECK_AT_BOTTOM);
+  return Universe::interned_string_for(&thisObj JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 #endif  // ENABLE_CLDC_11
@@ -1587,6 +1563,33 @@ void Java_com_sun_cldc_util_SemaphoreLock_acquire() {
   thisObj().acquire();
 }
 #endif
+
+jint Java_com_sun_cldchi_jvm_JVM_verifyNextChunk(JVM_SINGLE_ARG_TRAPS) {
+#if ENABLE_VERIFY_ONLY
+  UsingFastOops fast_oops;
+  String::Fast jar_str = GET_PARAMETER_AS_OOP(1);
+  jint next_chunk_id = KNI_GetParameterAsInt(2);
+  jint chunk_size = KNI_GetParameterAsInt(3);
+
+  GlobalSaver verify_saver(&VerifyOnly);
+  VerifyOnly = 1;
+
+#ifndef PRODUCT
+  tty->print("Verifying JAR ");
+  jar_str().print_string_on(tty);
+  tty->print_cr(" chunk_id: %d", next_chunk_id);
+#endif
+
+  FilePath::Fast path = FilePath::from_string(&jar_str JVM_CHECK_0);
+  return Universe::load_next_and_verify(&path, next_chunk_id,
+                                        chunk_size JVM_NO_CHECK_AT_BOTTOM);
+
+#else
+
+  return -1;
+
+#endif
+}
 
 } // extern "C"
 
@@ -1674,3 +1677,4 @@ extern "C" void trace_native_call() {
   tty->print_cr("(unknown)");
 }
 #endif
+

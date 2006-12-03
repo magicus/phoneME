@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -32,38 +33,49 @@
 
 #if ENABLE_COMPILER
 
+Method* VirtualStackFrame::method() {
+  return Compiler::root()->method();
+}
+
 #if ENABLE_CSE
-//we record the cse tag of each item appeared on
-//execution stack.
-void VirtualStackFrame::tag_push() {
-  jint bci_stack_pointer = virtual_stack_pointer() -
-                                              method()->max_locals();
-  if ( bci_stack_pointer >= 0 ) { 
-    //add 1 since bci start from zero.
-    jshort bci = (jshort) code_generator()->bci();
-    jint tag = assemble_tag(bci);
-    jint* top_tag = tag_at(bci_stack_pointer);
-    *top_tag = tag; 
+
+void VirtualStackFrame::push_tag() {
+  // IMPL_NOTE: need to revisit for inlining
+  if (!Compiler::is_inlining()) {
+    jint bci_stack_pointer = virtual_stack_pointer() -
+      method()->max_locals();
+    if ( bci_stack_pointer >= 0 ) {
+      //add 1 since bci start from zero.
+      jshort bci = (jshort) code_generator()->bci();
+      jint tag = create_tag(bci);
+      jint* top_tag = tag_at(bci_stack_pointer);
+      *top_tag = tag;
+    }
   }
 }
 
-void  VirtualStackFrame::tag_pop() {
-   jint bci_stack_pointer = virtual_stack_pointer() -
-                                        method()->max_locals();
-  if ( bci_stack_pointer >= 0 ) {
+//for example, iadd will pop twice, so the last pop will
+//get the begin index of current expression
+void  VirtualStackFrame::pop_tag() {
+  // IMPL_NOTE: need to revisit for inlining
+  if (!Compiler::is_inlining()) {
+    jint bci_stack_pointer = virtual_stack_pointer() -
+      method()->max_locals();
+    if ( bci_stack_pointer >= 0 ) {
 
-    BasicType type = expression_stack_type(0);
+      BasicType type = expression_stack_type(0);
 
-    if (type == T_DOUBLE || type == T_LONG) {
-      bci_stack_pointer --;
+      if (type == T_DOUBLE || type == T_LONG) {
+        bci_stack_pointer --;
+      }
+
+      jint* top_tag = tag_at(bci_stack_pointer);
+
+      jint  tag = (*top_tag);
+
+      //update VFS tag status
+      decode_tag(tag);
     }
-  
-    jint* top_tag = tag_at(bci_stack_pointer);
-
-    jint  tag = (*top_tag);
-
-    //update VFS tag status
-    decode_tag(tag);
   }
 }
 
@@ -71,6 +83,30 @@ void  VirtualStackFrame::decode_tag(jint tag) {
     _cse_tag = tag;
     _pop_bci = (jshort) code_generator()->bci();
 }
+
+jint VirtualStackFrame::size_of_tag_stack(Method* method) {
+  return method->max_execution_stack_count()*sizeof(jint);
+}
+
+void VirtualStackFrame::wipe_notation_for_osr_entry() {
+  VERBOSE_CSE(("clear notation for osr entry bci =%d",
+       Compiler::current()->bci()));
+  VERBOSE_CSE(("osr is  %s",
+          VirtualStackFrame::is_entry_passable()?"passable":"un-passable" ));
+
+  VirtualStackFrame::abort_tracking_of_current_snippet();
+  if (VirtualStackFrame::is_entry_passable()) {
+    RegisterAllocator::wipe_all_notation_except(
+      VirtualStackFrame::remained_registers());
+  } else {
+    RegisterAllocator::wipe_all_notations();
+  }
+  VirtualStackFrame::mark_as_unpassable();
+}
+#define ABORT_CSE_TRACKING VirtualStackFrame::abort_tracking_of_current_snippet();\
+      RegisterAllocator::wipe_all_notations();
+#else
+#define ABORT_CSE_TRACKING
 #endif
 
 
@@ -92,45 +128,6 @@ bool VirtualStackFrame::is_mapped_by(RawLocation *item,
   }
   return false;
 }
-
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
-//Checked wheather a register is used by one value in current 
-//VF.
-bool VirtualStackFrame::is_allocated(const Assembler::Register reg) const {
-  AllocationDisabler allocation_not_allowed;
-
-  register RawLocation *raw_location = raw_location_at(0);
-  register RawLocation *end  = raw_location_end(raw_location);
-
-  while (raw_location < end) {
-    if (raw_location->in_register()) {
-      if (raw_location->value() == (jint)reg) {
-        return true;
-      }
-      if (raw_location->is_two_word()) {
-        raw_location ++;
-        if (raw_location->value() == (jint)reg) {
-          return true;
-        }
-      }
-    } else {
-      if (raw_location->is_two_word()) {
-        raw_location ++;
-      }
-    }
-    raw_location ++;
-  }
-
-#if USE_COMPILER_LITERALS_MAP
-  if (literals_mask() & (1 << reg)) {
-    return true;
-  }
-#endif
-
-  return false;
-  
-}
-#endif 
 
 bool
 VirtualStackFrame::is_mapping_something(const Assembler::Register reg) const {
@@ -159,21 +156,25 @@ VirtualStackFrame::is_mapping_something(const Assembler::Register reg) const {
   }
 
 #if USE_COMPILER_LITERALS_MAP
-  if (literals_mask() & (1 << reg)) {
+  if (has_literal(reg)) {
     return true;
   }
 #endif
 
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
+  //remember array length
+  //if the the register is allocated for boundary caching
+  //we return as the register is allocated.
+  //It will be allocated later by try_to_free_length_register()
+  //if there's no other free registers.
   if (bound_mask() != 0) {
-    if (get_bound_register()==reg) {
+    if (length_register() == reg) {
         //allocate_or_fail will allocate it later
         //if there's no other free register
         //available.
         return true;
     }
   }
-#endif
+
   return false;
 }
 
@@ -188,9 +189,9 @@ ReturnOop VirtualStackFrame::allocate(int location_map_size JVM_TRAPS) {
                VirtualStackFrameDesc::pointer_count() JVM_OZCHECK(frame));
 
 #if USE_COMPILER_FPU_MAP
-  TypeArray::Raw fpu_map = 
+  TypeArray::Raw fpu_map =
       Universe::new_int_array_in_compiler_area(
-                              Assembler::number_of_float_registers + 1 
+                              Assembler::number_of_float_registers + 1
                               JVM_OZCHECK(fpu_map));
   frame().set_fpu_register_map(&fpu_map);
 #endif
@@ -207,9 +208,9 @@ bool VirtualStackFrame::fits_compiled_compact_format() const {
   while (raw_location < end) {
     BasicType t = raw_location->type();
     raw_location ++;
-    if (   t != T_ILLEGAL 
-        && t != T_OBJECT 
-        && t != T_INT) { 
+    if (   t != T_ILLEGAL
+        && t != T_OBJECT
+        && t != T_INT) {
       return false;
     }
     // Only one-word items can fit in compiled compact format
@@ -235,18 +236,18 @@ void VirtualStackFrame::fill_in_tags(CallInfo& info, int parameters_size) {
       if (virtual_stack_pointer() - index < parameters_size) {
         tag_index = virtual_stack_pointer() - index;
       } else {
-        tag_index = (CallInfo::format1_tag_width - 1) 
-                     - (virtual_stack_pointer() - index - parameters_size); 
+        tag_index = (CallInfo::format1_tag_width - 1)
+                     - (virtual_stack_pointer() - index - parameters_size);
       }
       info.set_oop_tag_at(tag_index);
     } else {
-      GUARANTEE(stack_type == T_ILLEGAL || stack_type == T_INT, 
+      GUARANTEE(stack_type == T_ILLEGAL || stack_type == T_INT,
                 "frame should only contain uninits, ints and objects");
     }
 
     if (is_two_word(stack_type)) {
       index += 2;
-      raw_location += 2; 
+      raw_location += 2;
     } else {
       index ++;
       raw_location += 1;
@@ -255,7 +256,7 @@ void VirtualStackFrame::fill_in_tags(CallInfo& info, int parameters_size) {
 }
 
 ReturnOop VirtualStackFrame::generate_callinfo_stackmap(JVM_SINGLE_ARG_TRAPS) {
-  TypeArray::Raw result = CallInfo::new_tag_array(virtual_stack_pointer() + 1 
+  TypeArray::Raw result = CallInfo::new_tag_array(virtual_stack_pointer() + 1
                                              JVM_CHECK_0);
   AllocationDisabler allocation_not_allowed;
   RawLocation *raw_location = raw_location_at(0);
@@ -268,7 +269,7 @@ ReturnOop VirtualStackFrame::generate_callinfo_stackmap(JVM_SINGLE_ARG_TRAPS) {
 
     if (is_two_word(type)) {
       index += 2;
-      raw_location += 2; 
+      raw_location += 2;
     } else {
       index ++;
       raw_location += 1;
@@ -296,7 +297,7 @@ void VirtualStackFrame::fill_callinfo_record(CallInfoWriter* writer) {
 
     if (is_two_word(stack_type)) {
       index += 2;
-      raw_location += 2; 
+      raw_location += 2;
     } else {
       index ++;
       raw_location += 1;
@@ -313,22 +314,18 @@ ReturnOop VirtualStackFrame::create(Method* method JVM_TRAPS) {
 
   // NOTE: We have to allocate room for one more location to support pushing
   // parameters to the runtime system onto the Java stack.
-  // For native methods, there must also be space on the "stack" for 
+  // For native methods, there must also be space on the "stack" for
   // a long return value (2 words).
-
-#if ENABLE_INLINE && ARM  
-  int inliner_stack_count = 3;
-#else
   int inliner_stack_count = 2;
+#if ENABLE_INLINE
+  inliner_stack_count += 3;
 #endif
 
   int location_map_size = Location::size() *
-      (inliner_stack_count + method->max_execution_stack_count() - 
+      (inliner_stack_count + method->max_execution_stack_count() -
        num_stack_lock_words());
 
-#if ENABLE_CSE
-  location_map_size += method->max_execution_stack_count()*sizeof(jint);
-#endif
+  location_map_size += size_of_tag_stack(method);
 
   VirtualStackFrame::Fast frame =
      VirtualStackFrame::allocate(location_map_size JVM_CHECK_0);
@@ -347,13 +344,26 @@ ReturnOop VirtualStackFrame::create(Method* method JVM_TRAPS) {
     Signature::Raw signature = method->signature();
     for (SignatureStream ss(&signature, method->is_static());
             !ss.eos(); ss.next()) {
-      RawLocation* raw_location = frame().raw_location_at(ss.index());
-      Value value(ss.type());
-      if (ss.index() == 0 && !method->is_static()) { 
+      const BasicType type = ss.type();
+      const int index = ss.index();
+      RawLocation* raw_location = frame().raw_location_at(index);
+      Value value(type);
+      if (index == 0 && !method->is_static()) {
         value.set_must_be_nonnull();
       }
       raw_location->write_value(value);
       raw_location->mark_as_flushed();
+#if ENABLE_COMPILER_TYPE_INFO
+      if (type == T_OBJECT || type == T_ARRAY) {
+        JavaClass::Raw type_class = (index == 0 && !method->is_static()) ? 
+          method->holder() : ss.type_klass();
+        GUARANTEE(type_class.not_null(), "Sanity");
+        raw_location->set_class_id(type_class().class_id());
+        if (type_class().is_final_type()) {
+          raw_location->set_is_exact_type();
+        }
+      }
+#endif
     }
 
     for (int k = method->size_of_parameters(); k < frame().locations(); k++) {
@@ -379,10 +389,10 @@ void VirtualStackFrame::copy_to(VirtualStackFrame* dst) const {
   //                               v
   //     [literals_map_size][Y][Y][Y][n][n]
   //
-  // Note that virtual_stack_pointer() is a "full stack": it points to 
+  // Note that virtual_stack_pointer() is a "full stack": it points to
   // the current top of stack, so the number of used stack elements are
   // virtual_stack_pointer()+1
-  
+
   size_t literals_bytes = literals_map_size * sizeof(int);
   size_t location_bytes = (virtual_stack_pointer()+1) * Location::size();
   //size_t location_bytes = location_map_size();
@@ -391,6 +401,15 @@ void VirtualStackFrame::copy_to(VirtualStackFrame* dst) const {
   address map_src = literals_map_base();
   address map_dst = dst->literals_map_base();
   jvm_memmove(map_dst, map_src, copy_bytes);
+
+#if ENABLE_ARM_VFP
+  {
+    const jint* src_mask = literals_mask_addr();
+    jint* dst_mask = dst->literals_mask_addr();
+    dst_mask[0] = src_mask[0];
+    dst_mask[1] = src_mask[1];
+  }
+#endif
 
 #ifdef AZZERT
   //size_t left_over_bytes = object_size() - (header_size() + copy_bytes);
@@ -412,10 +431,8 @@ void VirtualStackFrame::copy_to(VirtualStackFrame* dst) const {
   dst->set_real_stack_pointer(stack_pointer());
   dst->set_virtual_stack_pointer(virtual_stack_pointer());
   dst->set_flush_count(flush_count());
-  dst->set_literals_mask(literals_mask());
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
+  //remember array length
   dst->set_bound_mask(bound_mask());
-#endif
 }
 
 ReturnOop VirtualStackFrame::clone(JVM_SINGLE_ARG_TRAPS) {
@@ -433,7 +450,7 @@ void VirtualStackFrame::clear() {
 
   // update the CPU stack pointer
   code_generator()->clear_stack();
-  
+
   // clear all locations
   for (int i = 0; i < max_locals; i++) {
     clear(i);
@@ -469,7 +486,7 @@ void VirtualStackFrame::set_stack_pointer(int location) {
   }
 }
 
-void VirtualStackFrame::adjust_for_invoke(int parameter_size, 
+void VirtualStackFrame::adjust_for_invoke(int parameter_size,
                                           BasicType return_type) {
   // Pop the parameter block
   set_virtual_stack_pointer(virtual_stack_pointer() - parameter_size);
@@ -479,7 +496,7 @@ void VirtualStackFrame::adjust_for_invoke(int parameter_size,
     // Adjust the virtual stack pointer.
     increment_virtual_stack_pointer();
     if (double_word) {
-      increment_virtual_stack_pointer(); 
+      increment_virtual_stack_pointer();
     }
 
     // Mark the location as flushed to memory (handled by callee)
@@ -537,9 +554,9 @@ void VirtualStackFrame::flush() {
 
   // Mark all the literals as being junk
   clear_literals();
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
+
+  //remember array length: clear cached value
   clear_bound();
-#endif
 
   // adjust the stack pointer to reflect the virtual stack pointer.
   // (after the loop above, we might still have stack >= vstack.
@@ -554,10 +571,8 @@ void VirtualStackFrame::flush() {
 
   set_flush_count(flush_count() + 1);
 
-#if ENABLE_CSE
-  clear_cse_status();
-  RegisterAllocator::init_notation();
-#endif
+  ABORT_CSE_TRACKING;
+
 }
 
 void VirtualStackFrame::mark_as_flushed() {
@@ -568,15 +583,16 @@ void VirtualStackFrame::mark_as_flushed() {
 
   // Remove any literals we might have
   clear_literals();
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
+
+  //remember array length: clear cached value
   clear_bound();
-#endif
+
 }
 
-void VirtualStackFrame::conform_to_stack_map(int bci) { 
+void VirtualStackFrame::conform_to_stack_map(int bci) {
   AllocationDisabler allocation_not_allowed_in_this_function;
 
-  StackmapList::Raw method_stackmaps = 
+  StackmapList::Raw method_stackmaps =
       StackmapGenerator::find_verifier_map(method());
   StackmapGenerator gen(method());
   TypeArray::Raw map = gen.generate_stackmap(&method_stackmaps, bci);
@@ -591,13 +607,13 @@ void VirtualStackFrame::conform_to_stack_map(int bci) {
     Tag expected_type = (Tag)map().ubyte_at(index);
     Tag current_type = StackmapGenerator::basictype_to_stackmaptag(type);
 
-    if (current_type != expected_type) { 
+    if (current_type != expected_type) {
       if (expected_type == obj_tag) {
         GUARANTEE(index < method()->max_locals(), "Sanity??");
       }
       raw_location->mark_as_illegal();
     }
-    
+
     if (is_two_word(type)) {
       index += 2;
       raw_location += 2;
@@ -611,26 +627,24 @@ void VirtualStackFrame::conform_to_stack_map(int bci) {
 void VirtualStackFrame::conformance_entry(bool merging) {
   AllocationDisabler allocation_not_allowed_in_this_function;
 
-#if ENABLE_INLINE && ARM
-  if (((Compiler::current()->is_inline()) <= 0)) {
+  // IMPL_NOTE: need revisit why don't kill if inlining
+  if (!Compiler::is_inlining()) {
+    // Kill any stack elements whose type doesn't conform to the stack map
     conform_to_stack_map(code_generator()->bci());
   }
-#else
-  // Kill any stack elements whose type doesn't conform to the stack map
-  conform_to_stack_map(code_generator()->bci());
-#endif
   // Make sure we haven't got any immediates, floats
   // or doubles mapped in the virtual stack frame.
   RawLocation *raw_location = raw_location_at(0);
   RawLocation *end  = raw_location_end(raw_location);
   int index = 0;
 #if ENABLE_CSE
+  //collecting preserve information for OSR entry
   bool check_register = false;
   jint register_bitmap = 0 ;
-  if (VirtualStackFrame::osr_passable() &&
+  if (VirtualStackFrame::is_entry_passable() &&
    !merging ) {
     check_register = true;
-    
+
   }
 #endif
 
@@ -640,21 +654,21 @@ void VirtualStackFrame::conformance_entry(bool merging) {
       BasicType type = raw_location->type();
       if (type == T_FLOAT || type == T_DOUBLE) {
         raw_location->flush(index);
-      } else 
+      } else
 #endif
       /* else */ if (merging && raw_location->is_immediate()) {
         if (RegisterAllocator::has_free(raw_location->is_two_word() ? 2 : 1)) {
           Value value(raw_location, index);
           value.materialize();
           raw_location->write_value(value);
-        } else { 
+        } else {
           raw_location->flush(index);
         }
-      }    
+      }
     }
-    
+
 #if ENABLE_CSE
-    if (check_register && 
+    if (check_register &&
         raw_location->where() == Value::T_REGISTER) {
       jint reg = (jint) raw_location->get_register();
       register_bitmap |= (1<< reg);
@@ -662,6 +676,9 @@ void VirtualStackFrame::conformance_entry(bool merging) {
 #endif
     if (merging) {
       raw_location->clear_flags();
+#if ENABLE_COMPILER_TYPE_INFO
+      raw_location->reset_class_id();
+#endif
     }
     if (raw_location->is_two_word()) {
       raw_location += 2;
@@ -673,47 +690,32 @@ void VirtualStackFrame::conformance_entry(bool merging) {
   }
 
 #if ENABLE_CSE
-    if (check_register) {
-      VirtualStackFrame::set_unkilled_regs( register_bitmap);
-    }
+  if (check_register) {
+    //if those register are still in register
+    //we won't clear theire notation later.
+    VirtualStackFrame::record_remained_registers( register_bitmap);
+  }
 #endif
 
   // Mark all the literals as being junk
   clear_literals();
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
+
   if (merging) {
+    //clear cached value
     clear_bound();
-  } else {
-    //This is case for do OSR switch.
-    //we will do reload in OSR stub.
-    //So we let bound registers live.
-#ifndef PRODUCT  
-    if (PrintCompiledCodeAsYouGo) {
-      if ( has_bound() ) { 
-	 printf("bound value is 0x%08x\n", bound_mask());
-        TTY_TRACE_CR(("has_bound()=%s", 
-           has_bound()?"bound":"no bound"));
-        TTY_TRACE_CR(("base_reg()=%s", 
-           Disassembler::reg_name( get_base_register())));
-        TTY_TRACE_CR(("bound_reg()=%s",
-           Disassembler::reg_name(get_bound_register())));
-      }
-    }
-#endif
   }
-#endif
 
 #if USE_COMPILER_FPU_MAP && ENABLE_FLOAT
   UsingFastOops fast_oops;
   FPURegisterMap::Fast fpu_map = fpu_register_map();
   GUARANTEE(fpu_map().is_clearable(), "mapped registers exist on FPU stack");
   code_generator()->fpu_clear();
-#endif // 
-  
+#endif //
+
   if (merging) {
     // Make sure no register maps two different locations.
     AllocationDisabler allocation_not_allowed_in_this_block;
-    for (int j = 0; j < Assembler::number_of_registers; j++) { 
+    for (int j = 0; j < Assembler::number_of_registers; j++) {
       Assembler::Register reg = (Assembler::Register)j;
       bool used = false;
 
@@ -726,12 +728,12 @@ void VirtualStackFrame::conformance_entry(bool merging) {
           if (!used) {
             used = true;
           } else {
-            if (RegisterAllocator::has_free(1)) { 
+            if (RegisterAllocator::has_free(1)) {
               Assembler::Register new_reg = RegisterAllocator::allocate();
               code_generator()->move(new_reg, reg);
               raw_location->change_register(new_reg, reg);
               RegisterAllocator::dereference(new_reg);
-            } else { 
+            } else {
               raw_location->flush(index);
             }
           }
@@ -748,7 +750,7 @@ void VirtualStackFrame::conformance_entry(bool merging) {
   }
 }
 
-#if USE_COMPILER_FPU_MAP
+#if USE_COMPILER_FPU_MAP || ENABLE_ARM_VFP
 
 void VirtualStackFrame::flush_fpu() {
   for (VSFStream s(this); !s.eos(); s.next()) {
@@ -770,9 +772,9 @@ inline void VirtualStackFrame::conform_to_prologue(VirtualStackFrame* other) {
   UsingFastOops fast_oops;
   GUARANTEE(virtual_stack_pointer() == other->virtual_stack_pointer(),
             "other must have same virtual stack pointer");
-  
+
   // Make sure we haven't got any floats or doubles mapped in the source
-  // virtual  stack frame. 
+  // virtual  stack frame.
   // The destination stack frame will not have floats or doubles
   // mapped either, see VirtualStackFrame::conformance_entry.
 #if USE_COMPILER_FPU_MAP && ENABLE_FLOAT
@@ -782,16 +784,17 @@ inline void VirtualStackFrame::conform_to_prologue(VirtualStackFrame* other) {
   FPURegisterMap::Fast other_fpu_map = other->fpu_register_map();
   GUARANTEE(fpu_map().is_clearable(), "mapped registers exist on FPU stack");
   code_generator()->fpu_clear();
-  GUARANTEE(other_fpu_map().is_empty(), 
+  GUARANTEE(other_fpu_map().is_empty(),
             "destination x86 FPU stack should be empty");
 #endif
 
   clear_literals();
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
+
+  //remember array length: clear cached value
   clear_bound();
-#endif
+
   // This optimization prevents a lot of sp thrashing
-  if (stack_pointer() < other->stack_pointer()) { 
+  if (stack_pointer() < other->stack_pointer()) {
     set_stack_pointer(other->stack_pointer());
   }
 
@@ -814,7 +817,7 @@ inline void VirtualStackFrame::conform_to_prologue(VirtualStackFrame* other) {
       src++;
       dst++;
     }
-  } 
+  }
 
 #ifdef AZZERT
   // Make sure that all literals in the target frame are correct
@@ -828,20 +831,26 @@ inline void VirtualStackFrame::conform_to_prologue(VirtualStackFrame* other) {
       const Value dst( &dst_loc );
       code_generator()->verify_location_is_constant(ta.index(), dst);
     }
-    if (src_loc.type() == T_ILLEGAL && dst_loc.is_two_word()) { 
+    if (src_loc.type() == T_ILLEGAL && dst_loc.is_two_word()) {
       ta.next();
     }
-  }    
+  }
 #endif
 }
 
 inline void VirtualStackFrame::conform_to_epilogue(VirtualStackFrame* other) {
   // make sure the real stack pointer is set properly
   set_stack_pointer(other->stack_pointer());
+
+  //re-load the preloaded array length
+  //after frame conformance
+  if (other->is_bound_mask_valid()) {
+    recache_array_length(other->base_register(), other->length_register());
+  }
 }
 
 // Helper macros to iterate over all locations in source and target frame.
-// It is different from VSFStream in loop increment, also it is faster 
+// It is different from VSFStream in loop increment, also it is faster
 // as operates on raw pointers. No allocations are allowed in the loop.
 
 #define FOR_EACH_LOCATION_IN_FRAMES_DO(src_frame, dst_frame, src, dst, index) \
@@ -866,7 +875,7 @@ inline void VirtualStackFrame::conform_to_epilogue(VirtualStackFrame* other) {
       index ++;                                             \
     }                                                       \
   }                                                         \
-}                                                           
+}
 
 #define FOR_EACH_LOCATION_DO(src, dst, index) \
   FOR_EACH_LOCATION_IN_FRAMES_DO(this, other, src, dst, index)
@@ -920,7 +929,7 @@ void VirtualStackFrame::conform_to_reference_impl(VirtualStackFrame* other) {
   FOR_EACH_LOCATION_DO(src, dst, index)
     if (dst->is_flushed() || !dst->is_immediate()) {
       // make the individual source location conformant to the destination
-      // location 
+      // location
       src->conform_to(index, dst, index);
     }
   FOR_EACH_LOCATION_DONE(src, dst, index);
@@ -943,10 +952,10 @@ inline bool VirtualStackFrame::conform_to_phase_one(VirtualStackFrame* other) {
   FOR_EACH_LOCATION_DO(src, dst, index)
     if (dst->is_flushed() || !dst->is_immediate()) {
       // Perform LOC_STORE if necessary.
-      const RawLocation::Actions remaining_actions = 
+      const RawLocation::Actions remaining_actions =
         src->do_conform_to(index, dst, index, RawLocation::LOC_STORE);
       // Check if this location needs register->register transfers to conform.
-      if (!reg_reg_transfer_found && !src->is_immediate() && 
+      if (!reg_reg_transfer_found && !src->is_immediate() &&
           (remaining_actions & RawLocation::REG_STORE)) {
         // NOTE: this location can be flushed later in this cycle, so
         // register_transfers_found flag set doesn't guarantee there are some
@@ -969,36 +978,36 @@ class TransferGraph : public StackObj {
    template(leaf)                         \
    template(root)                         \
    template(visited)                      \
-   template(changed)                      
+   template(changed)
 
- private: 
+ private:
 
 //#define DEFINE_ENUM_ELEMENT(name) name,
-//  enum {    
+//  enum {
 //    FOR_ALL_NODE_PROPERTIES(DEFINE_ENUM_ELEMENT)
 //  };
 //#undef DEFINE_ENUM_ELEMENT
 
   //Changed to fix ADS compiler warning: "superfluous ',' in enum"
-  enum { 
-    tree, 
-    closed_cycle, 
-    open_cycle, 
-    leaf, 
-    root, 
-    visited, 
-    changed   
+  enum {
+    tree,
+    closed_cycle,
+    open_cycle,
+    leaf,
+    root,
+    visited,
+    changed
   };
 
 //#define DEFINE_MARK_ENUM_ELEMENT(name) name ## _mark = 1 << name,
-//  enum Mark {    
+//  enum Mark {
 //    zero_mark = 0,
 //    FOR_ALL_NODE_PROPERTIES(DEFINE_MARK_ENUM_ELEMENT)
 //  };
 //#undef DEFINE_MARK_ENUM_ELEMENT
 
   //Changed to fix ADS compiler warning: "superfluous ',' in enum"
-  enum Mark {    
+  enum Mark {
     zero_mark         = 0,
     tree_mark         = 1 << tree,
     closed_cycle_mark = 1 << closed_cycle,
@@ -1045,7 +1054,7 @@ class TransferGraph : public StackObj {
   FOR_ALL_NODE_PROPERTIES(DEFINE_GETTER)
 
 #undef DEFINE_GETTER
-  
+
   void markup();
 
   void shift_open_cycles();
@@ -1053,10 +1062,10 @@ class TransferGraph : public StackObj {
   void process_closed_cycles();
 
   void process_trees_and_open_cycles();
- private: 
+ private:
   void initialize(VirtualStackFrame* source, VirtualStackFrame* target);
 
-  void generate_transfer_operations(const Register src_reg, 
+  void generate_transfer_operations(const Register src_reg,
                                     const Mark reg_mark);
   void generate_move(const Register dst_reg, const Register src_reg) const;
 
@@ -1149,8 +1158,15 @@ class TransferGraph : public StackObj {
 
   Register _src_for[Assembler::number_of_registers];
   Register _pair_for[Assembler::number_of_registers];
-  char     _flags[Assembler::number_of_registers]; 
+  char     _flags[Assembler::number_of_registers];
   int      _transfer_count;
+
+  Register first_allocatable_register() const {
+    return Assembler::first_allocatable_register;
+  }
+
+  // Find the first Register r > reg where r is allocable.
+  Register next_allocatable_register(Register reg) const;
 };
 
 #ifndef PRODUCT
@@ -1169,31 +1185,55 @@ void TransferGraph::print_flags(Register reg) const {
 }
 #endif
 
+// The return value r = next_allocatable_register(reg) is different than
+// s = RegisterAllocator::next_for(reg). With ENABLE_ARM_VFP=true, the
+// allocatable registers are divided in two disjoint sets (the integer
+// regs and the float regs). s and reg always belong to the same set, but
+// r may belong to a different set than reg.
+//
+// The main purpose of this function is to iterate over all the
+// allocatable registers without considering whether it float or int.
+Assembler::Register
+TransferGraph::next_allocatable_register(Assembler::Register reg) const {
+#if defined(ARM)
+  for (reg = (Register)(reg+1); int(reg)<int(Assembler::number_of_registers);
+       reg = (Register)(reg+1)) {
+    if (RegisterAllocator::is_allocatable(reg)) {
+      return reg;
+    }
+  }
+  return Assembler::first_allocatable_register;
+#else
+  // IMPL_NOTE: the above doesn't work for x86 case.
+  return RegisterAllocator::next_for(reg);
+#endif
+}
+
 Assembler::Register TransferGraph::get_leaf() const {
-  Register reg = Assembler::first_allocatable_register;
-  
+  Register reg = first_allocatable_register();
+
   do {
     if (is_leaf(reg)) {
       return reg;
     }
-    reg = RegisterAllocator::next_for(reg);
-  } while (reg != Assembler::first_allocatable_register);
+    reg = next_allocatable_register(reg);
+  } while (reg != first_allocatable_register());
 
   return Assembler::no_reg;
 }
 
-inline void TransferGraph::initialize(VirtualStackFrame* source, 
+inline void TransferGraph::initialize(VirtualStackFrame* source,
                                       VirtualStackFrame* target) {
   FOR_EACH_LOCATION_IN_FRAMES_DO(source, target, src, dst, index)
-    if (!src->is_flushed() && src->in_register() && 
+    if (!src->is_flushed() && src->in_register() &&
         !dst->is_flushed() && dst->in_register()) {
       GUARANTEE(src->is_cached() || src->is_changed(), "Sanity");
       GUARANTEE(dst->is_cached() || dst->is_changed(), "Sanity");
-      // Get the type of transfers required to conform this location. 
-      const RawLocation::Actions actions = 
+      // Get the type of transfers required to conform this location.
+      const RawLocation::Actions actions =
         src->do_conform_to(index, dst, index, RawLocation::NO_ACTIONS);
 
-      GUARANTEE((actions & RawLocation::LOC_STORE) == 0, 
+      GUARANTEE((actions & RawLocation::LOC_STORE) == 0,
                 "Must have been performed already");
 
       if (actions & RawLocation::REG_STORE) {
@@ -1231,9 +1271,9 @@ inline void TransferGraph::initialize(VirtualStackFrame* source,
             // at least one register->register transfer link for it.
             GUARANTEE(lo_src_reg != hi_src_reg, "Sanity");
             GUARANTEE(lo_dst_reg != hi_dst_reg, "Sanity");
-            GUARANTEE((pair_for(lo_src_reg) == Assembler::no_reg && 
+            GUARANTEE((pair_for(lo_src_reg) == Assembler::no_reg &&
                        pair_for(hi_src_reg) == Assembler::no_reg) ||
-                      (pair_for(lo_src_reg) == hi_src_reg && 
+                      (pair_for(lo_src_reg) == hi_src_reg &&
                        pair_for(hi_src_reg) == lo_src_reg), "Sanity");
 
             record_pair(lo_src_reg, hi_src_reg);
@@ -1258,13 +1298,13 @@ inline void TransferGraph::markup() {
 #endif
   Register dst_for[Assembler::number_of_registers];
 
-  Register base_reg = Assembler::first_allocatable_register;
-  
+  Register base_reg = first_allocatable_register();
+
   do {
     GUARANTEE(!is_visited(base_reg), "Sanity");
 
     if (mark(base_reg) == zero_mark) {
-      AZZERT_ONLY(jvm_memset(dst_for, -1, 
+      AZZERT_ONLY(jvm_memset(dst_for, -1,
                   sizeof(Register) * Assembler::number_of_registers));
 
       Register reg = base_reg;
@@ -1289,9 +1329,9 @@ inline void TransferGraph::markup() {
           set_root(reg);
         } else {
           // If src_reg has a closed_cycle_mark, reg belongs to a tree
-          // attached to a cycle. So this is no longer a closed cycle, 
+          // attached to a cycle. So this is no longer a closed cycle,
           // but a open cycle.
-          // To properly mark this cycle as a open cycle, we need to 
+          // To properly mark this cycle as a open cycle, we need to
           // go round it, so we clear closed_cycle_mark and proceed.
           if (is_closed_cycle(src_reg)) {
             unset_closed_cycle(src_reg);
@@ -1305,7 +1345,7 @@ inline void TransferGraph::markup() {
                       src_mark == tree_mark, "Sanity");
             // Found a tree attached to a open cycle or a tree.
             if (src_mark == open_cycle_mark) {
-              // A tree attached to a open cycle root should be marked as 
+              // A tree attached to a open cycle root should be marked as
               // a tree, since we need to traverse it in a non-standard way.
               new_mark = is_root(src_reg) ? tree_mark : open_cycle_mark;
             } else {
@@ -1318,9 +1358,9 @@ inline void TransferGraph::markup() {
               new_mark = closed_cycle_mark;
               set_root(base_reg);
             } else {
-              // Found a cycle with an attached tree. 
+              // Found a cycle with an attached tree.
               // Mark it as a open cycle.
-              // The root of a open cycle should be a direct descendant of 
+              // The root of a open cycle should be a direct descendant of
               // any node in the loop, that is not in the loop itself.
               // In this case it is exactly dst_for[src_reg].
               const Register root = dst_for[src_reg];
@@ -1330,9 +1370,9 @@ inline void TransferGraph::markup() {
               GUARANTEE(mark(root) == zero_mark, "Sanity");
 
               // At this point we mark the open cycle and mark the root.
-              // We will shift it after all closed cycles are processed. 
+              // We will shift it after all closed cycles are processed.
               // We have to do it this way, since shifting may remove
-              // the only leaf register needed for processing of closed 
+              // the only leaf register needed for processing of closed
               // cycles.
               set_root(root);
 
@@ -1357,20 +1397,20 @@ inline void TransferGraph::markup() {
       } while (reg != Assembler::no_reg);
     }
 
-    base_reg = RegisterAllocator::next_for(base_reg);
-  } while (base_reg != Assembler::first_allocatable_register);
+    base_reg = next_allocatable_register(base_reg);
+  } while (base_reg != first_allocatable_register());
 }
 
-void TransferGraph::remove_link_from_closed_cycle(const Register src, 
+void TransferGraph::remove_link_from_closed_cycle(const Register src,
                                                     const Register dst) {
-  GUARANTEE((is_closed_cycle(src) && is_closed_cycle(dst)) || 
-            (is_tree(src) && is_root(dst) && src == dst), 
+  GUARANTEE((is_closed_cycle(src) && is_closed_cycle(dst)) ||
+            (is_tree(src) && is_root(dst) && src == dst),
             "Must be a loop or a closed cycle");
   GUARANTEE(src_for(dst) == src, "Sanity");
 
   uninstall_link(src, dst);
 
-  // After this link is removed, this component becomes a tree, 
+  // After this link is removed, this component becomes a tree,
   // so if this component was a closed cycle we need to mark it as a tree.
   if (src != dst) {
     Register tree_reg = src;
@@ -1383,7 +1423,7 @@ void TransferGraph::remove_link_from_closed_cycle(const Register src,
 
     // The reg becomes a root, since it doesn't have ingoing transfers.
     set_root(dst);
-  } else {        
+  } else {
     GUARANTEE(is_tree(src) && is_root(src), "This was a loop");
   }
 
@@ -1400,10 +1440,10 @@ inline Assembler::Register TransferGraph::get_spare_register() {
   } else {
     spare_reg = get_leaf();
     if (spare_reg == Assembler::no_reg) {
-      // We don't have any spare register, so we need to spill one. 
+      // We don't have any spare register, so we need to spill one.
       //
-      // We can get here only if all components of the transfer graph are 
-      // closed cycles or loops (no attached trees), so 
+      // We can get here only if all components of the transfer graph are
+      // closed cycles or loops (no attached trees), so
       // 1.Each register is mapped to exactly one location in the source frame.
       // 2.Whatever register we spill we will need exactly one additional load.
       //
@@ -1411,14 +1451,14 @@ inline Assembler::Register TransferGraph::get_spare_register() {
       // 1.Spilling a register mapped to a changed location requires memory
       // store, while for a cached location it is a noop.
       // 2.Spilling of a paired register requires spilling its pair as well.
-      // 
+      //
       // So we choose a register the selection criteria is as follows:
       // 1.An unpaired register mapped to a cached location (weight 0).
       // 2.An unpaired register mapped to a changed location (weight 1).
       // 3.A paired register mapped to a cached location (weight 2).
       // 4.A paired register mapped to a changed location (weight 3).
 
-      Assembler::Register reg = Assembler::first_allocatable_register;
+      Assembler::Register reg = first_allocatable_register();
       Assembler::Register spill_reg = Assembler::no_reg;
       int spilling_weight = 4;
 
@@ -1426,11 +1466,11 @@ inline Assembler::Register TransferGraph::get_spare_register() {
         GUARANTEE(is_closed_cycle(reg) || (is_tree(reg) && src_for(reg) == reg), "Sanity");
 
         int current_spilling_weight = 0;
-        
+
         if (pair_for(reg) != Assembler::no_reg) {
           current_spilling_weight += 2;
         }
-        
+
         if (current_spilling_weight < spilling_weight && is_changed(reg)) {
           current_spilling_weight++;
         }
@@ -1443,8 +1483,8 @@ inline Assembler::Register TransferGraph::get_spare_register() {
           spilling_weight = current_spilling_weight;
         }
 
-        reg = RegisterAllocator::next_for(reg);
-      } while (reg != Assembler::first_allocatable_register);
+        reg = next_allocatable_register(reg);
+      } while (reg != first_allocatable_register());
 
       GUARANTEE(spill_reg != Assembler::no_reg, "Sanity");
 
@@ -1452,15 +1492,15 @@ inline Assembler::Register TransferGraph::get_spare_register() {
       // pair (if any). The transfers for the removed links will be
       // automatically performed on the third stage.
       //
-      // Each register belongs to a closed cycle in this branch, so it must 
+      // Each register belongs to a closed cycle in this branch, so it must
       // have exactly one ingoing link.
 
-      Register dst_spill_reg = Assembler::first_allocatable_register;
+      Register dst_spill_reg = first_allocatable_register();
 
       do {
-        dst_spill_reg = RegisterAllocator::next_for(dst_spill_reg);
-      } while (src_for(dst_spill_reg) != spill_reg && 
-               dst_spill_reg != Assembler::first_allocatable_register);
+        dst_spill_reg = next_allocatable_register(dst_spill_reg);
+      } while (src_for(dst_spill_reg) != spill_reg &&
+               dst_spill_reg != first_allocatable_register());
 
       remove_link_from_closed_cycle(spill_reg, dst_spill_reg);
 
@@ -1485,18 +1525,18 @@ inline Assembler::Register TransferGraph::get_spare_register() {
   return spare_reg;
 }
 
-void TransferGraph::generate_move(const Register dst_reg, 
+void TransferGraph::generate_move(const Register dst_reg,
                                          const Register src_reg) const {
-  GUARANTEE(src_reg != Assembler::no_reg && 
+  GUARANTEE(src_reg != Assembler::no_reg &&
             dst_reg != Assembler::no_reg, "Sanity");
   GUARANTEE(src_reg != dst_reg, "No loops allowed");
 
   Compiler::code_generator()->move(dst_reg, src_reg);
 }
 
-void TransferGraph::generate_transfer_operations(const Register src_reg, 
+void TransferGraph::generate_transfer_operations(const Register src_reg,
                                                  const Mark reg_mark) {
-  Register dst_reg = Assembler::first_allocatable_register;
+  Register dst_reg = first_allocatable_register();
 
   do {
     if (src_for(dst_reg) == src_reg && mark(dst_reg) == reg_mark) {
@@ -1508,14 +1548,14 @@ void TransferGraph::generate_transfer_operations(const Register src_reg,
       generate_move(dst_reg, src_reg);
     }
 
-    dst_reg = RegisterAllocator::next_for(dst_reg);
-  } while (_transfer_count > 0 && 
-           dst_reg != Assembler::first_allocatable_register);
+    dst_reg = next_allocatable_register(dst_reg);
+  } while (_transfer_count > 0 &&
+           dst_reg != first_allocatable_register());
 }
 
 inline void TransferGraph::process_closed_cycles() {
-  Register base_reg = Assembler::first_allocatable_register;
-  
+  Register base_reg = first_allocatable_register();
+
   Register closed_cycle_root = Assembler::no_reg;
 
   // Look if the graph has any closed cycles.
@@ -1525,8 +1565,8 @@ inline void TransferGraph::process_closed_cycles() {
       break;
     }
 
-    base_reg = RegisterAllocator::next_for(base_reg);
-  } while (base_reg != Assembler::first_allocatable_register);
+    base_reg = next_allocatable_register(base_reg);
+  } while (base_reg != first_allocatable_register());
 
   // No closed cycles in the graph, return.
   if (closed_cycle_root == Assembler::no_reg) {
@@ -1535,14 +1575,14 @@ inline void TransferGraph::process_closed_cycles() {
 
   const Register spare_reg = get_spare_register();
   GUARANTEE(spare_reg != Assembler::no_reg, "Sanity");
-  GUARANTEE((is_tree(spare_reg) || is_open_cycle(spare_reg)) && 
-            is_leaf(spare_reg), 
+  GUARANTEE((is_tree(spare_reg) || is_open_cycle(spare_reg)) &&
+            is_leaf(spare_reg),
             "Can only be a leaf of a tree or a open cycle");
 
   const bool spare_reg_is_root = is_root(spare_reg);
   const Mark spare_reg_mark = mark(spare_reg);
 
-  // We are going to plug the spare register into a closed cycle, 
+  // We are going to plug the spare register into a closed cycle,
   // so mark it as such.
   if (spare_reg_is_root) {
     unset_root(spare_reg);
@@ -1553,11 +1593,11 @@ inline void TransferGraph::process_closed_cycles() {
   const Register src_spare_reg = src_for(spare_reg);
 
   // Handle the case when the selected spare register has an ingoing transfer
-  // link. We save the source register here and restore it after all closed 
+  // link. We save the source register here and restore it after all closed
   // cycles are processed.
   if (src_spare_reg != Assembler::no_reg) {
     // Remove the ingoing link for the spare register, as it will be
-    // damaged anyway. 
+    // damaged anyway.
     // We will reinstall it after we process all closed cycles.
     uninstall_link(src_spare_reg, spare_reg);
   }
@@ -1567,7 +1607,7 @@ inline void TransferGraph::process_closed_cycles() {
 
   do {
     if (is_closed_cycle(base_reg) && is_root(base_reg)) {
-      // Replace src_reg->base_reg transfer with two 
+      // Replace src_reg->base_reg transfer with two
       // src_reg->spare_reg and spare_reg->base_reg.
       const Assembler::Register src_reg = src_for(base_reg);
 
@@ -1582,11 +1622,11 @@ inline void TransferGraph::process_closed_cycles() {
       install_link(spare_reg, base_reg);
 
       // Traverse the graph from the space_reg and generate code.
-      generate_transfer_operations(spare_reg, closed_cycle_mark); 
+      generate_transfer_operations(spare_reg, closed_cycle_mark);
     }
 
-    base_reg = RegisterAllocator::next_for(base_reg);
-  } while (base_reg != Assembler::first_allocatable_register);
+    base_reg = next_allocatable_register(base_reg);
+  } while (base_reg != first_allocatable_register());
 
   // Restore the original marks.
   unset_closed_cycle(spare_reg);
@@ -1598,7 +1638,7 @@ inline void TransferGraph::process_closed_cycles() {
 
   if (src_spare_reg != Assembler::no_reg) {
     GUARANTEE(spare_reg != Assembler::no_reg, "Sanity");
-    
+
     // Reinstall the ingoing link to the spare register.
     install_link(src_spare_reg, spare_reg);
   }
@@ -1606,8 +1646,8 @@ inline void TransferGraph::process_closed_cycles() {
 
 // Shift all open cycles.
 inline void TransferGraph::shift_open_cycles() {
-  Register base_reg = Assembler::first_allocatable_register;
-  
+  Register base_reg = first_allocatable_register();
+
   // Find all roots of open cycles.
   do {
     if (is_open_cycle(base_reg) && is_root(base_reg)) {
@@ -1615,14 +1655,14 @@ inline void TransferGraph::shift_open_cycles() {
 
       const Register src_root_reg = src_for(root_reg);
 
-      GUARANTEE(src_root_reg != Assembler::no_reg && 
+      GUARANTEE(src_root_reg != Assembler::no_reg &&
                 is_open_cycle(src_root_reg) && !is_root(src_root_reg) &&
                 !is_leaf(src_root_reg), "Sanity");
 
       Register cycle_reg = src_root_reg;
       Register src_cycle_reg = src_for(src_root_reg);
 
-      GUARANTEE(src_cycle_reg != Assembler::no_reg && 
+      GUARANTEE(src_cycle_reg != Assembler::no_reg &&
                 is_open_cycle(src_cycle_reg) && !is_root(src_cycle_reg) &&
                 !is_leaf(src_cycle_reg), "Sanity");
 
@@ -1631,7 +1671,7 @@ inline void TransferGraph::shift_open_cycles() {
       do {
         cycle_reg = src_cycle_reg;
         src_cycle_reg = src_for(cycle_reg);
-        GUARANTEE(src_cycle_reg != Assembler::no_reg && 
+        GUARANTEE(src_cycle_reg != Assembler::no_reg &&
                   is_open_cycle(src_cycle_reg) && !is_root(src_cycle_reg) &&
                   !is_leaf(src_cycle_reg), "Sanity");
       } while (src_cycle_reg != src_root_reg);
@@ -1644,34 +1684,34 @@ inline void TransferGraph::shift_open_cycles() {
       unset_leaf(root_reg);
     }
 
-    base_reg = RegisterAllocator::next_for(base_reg);
-  } while (base_reg != Assembler::first_allocatable_register);
+    base_reg = next_allocatable_register(base_reg);
+  } while (base_reg != first_allocatable_register());
 }
 
 inline void TransferGraph::process_trees_and_open_cycles() {
-  Register base_reg = Assembler::first_allocatable_register;
+  Register base_reg = first_allocatable_register();
 
   do {
     if (is_root(base_reg)) {
       if (is_tree(base_reg)) {
-        // Root can have a loop, remove it here as we don't need to generate 
+        // Root can have a loop, remove it here as we don't need to generate
         // any transfer code for loops.
         if (src_for(base_reg) == base_reg) {
           uninstall_link(base_reg, base_reg);
         }
-        generate_transfer_operations(base_reg, tree_mark); 
+        generate_transfer_operations(base_reg, tree_mark);
       } else if (is_open_cycle(base_reg)) {
         // The open cycle must already be shifted by this point.
         // First process a tree attached to this root if any.
-        generate_transfer_operations(base_reg, tree_mark); 
+        generate_transfer_operations(base_reg, tree_mark);
 
         // Then process a open cycle.
-        generate_transfer_operations(base_reg, open_cycle_mark); 
+        generate_transfer_operations(base_reg, open_cycle_mark);
       }
     }
 
-    base_reg = RegisterAllocator::next_for(base_reg);
-  } while (base_reg != Assembler::first_allocatable_register);
+    base_reg = next_allocatable_register(base_reg);
+  } while (base_reg != first_allocatable_register());
 }
 
 
@@ -1695,7 +1735,7 @@ inline void VirtualStackFrame::conform_to_phase_three(VirtualStackFrame* other) 
   FOR_EACH_LOCATION_DO(src, dst, index)
     if (dst->is_flushed() || !dst->is_immediate()) {
       // Process memory->register transfers.
-      const RawLocation::Actions remaining_actions = 
+      const RawLocation::Actions remaining_actions =
         src->do_conform_to(index, dst, index, RawLocation::LOC_LOAD);
 
       // Process immediate->register transfers.
@@ -1703,7 +1743,7 @@ inline void VirtualStackFrame::conform_to_phase_three(VirtualStackFrame* other) 
         Value src_value(src, index);
         Value dst_value(dst, index);
 
-        // do the register store 
+        // do the register store
         Compiler::code_generator()->move(dst_value, src_value);
       }
     }
@@ -1713,7 +1753,7 @@ inline void VirtualStackFrame::conform_to_phase_three(VirtualStackFrame* other) 
 #ifndef PRODUCT
 bool VirtualStackFrame::can_do_optimized_merge(VirtualStackFrame* other) {
   // Check for the limitation of the optimized merge algorithm:
-  // it requires that if a register R1 is mapped to a long location in pair 
+  // it requires that if a register R1 is mapped to a long location in pair
   // with some other register R2, then all other locations mapped to R1
   // are also long locations paired with R2.
   {
@@ -1727,8 +1767,16 @@ bool VirtualStackFrame::can_do_optimized_merge(VirtualStackFrame* other) {
 
         const Assembler::Register lo_reg = src_value.lo_register();
 
-        GUARANTEE(lo_reg >= 0 && 
-                  (int)lo_reg < (int)Assembler::number_of_registers, 
+#if ENABLE_ARM_VFP
+        // IMPL NOTE: Don't optimize if a frame contains a vfp
+        // register.  Need to add support for this later.
+        if (lo_reg > Assembler::number_of_gp_registers) {
+          return false;
+        }
+#endif
+
+        GUARANTEE(lo_reg >= 0 &&
+                  (int)lo_reg < (int)Assembler::number_of_registers,
                   "Invalid register");
 
         if (src_value.use_two_registers()) {
@@ -1788,7 +1836,7 @@ void VirtualStackFrame::verify_conform_to(VirtualStackFrame* other) {
   }
 
 #if USE_DEBUG_PRINTING
-  // If VerboseVsfMerge is set, print source and target frame, 
+  // If VerboseVsfMerge is set, print source and target frame,
   // then print compiled code during merge.
   if (VerboseVSFMerge) {
     tty->print_cr("VSF merge:");
@@ -1821,7 +1869,7 @@ void VirtualStackFrame::commit_changes(Assembler::Register reg) {
     raw_location->write_changes(reg, index);
     if (raw_location->is_two_word()) {
       index += 2;
-      raw_location += 2; 
+      raw_location += 2;
     } else {
       index ++;
       raw_location += 1;
@@ -1840,24 +1888,22 @@ void VirtualStackFrame::spill_register(Assembler::Register reg) {
     raw_location->spill_register(reg, index);
     if (raw_location->is_two_word()) {
       index += 2;
-      raw_location += 2; 
+      raw_location += 2;
     } else {
       index ++;
       raw_location += 1;
     }
   }
 
-#if USE_COMPILER_LITERALS_MAP
-  set_literals_mask(literals_mask() & ~(1 << reg));
-#endif
+  clear_literal(reg);
 
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
+  //remember array length: if the base_register() == length_register()
+  //the statue is error and should be obsolete.
   if (bound_mask() != 0) {
-    if (get_bound_register()==reg || get_base_register()==reg) {
-       set_bound_mask(0);
+    if (length_register() == reg || base_register() == reg) {
+      clear_bound();
     }
   }
-#endif
 
 }
 
@@ -1867,16 +1913,15 @@ void VirtualStackFrame::spill_register(Assembler::Register reg) {
 void VirtualStackFrame::unuse_register(Assembler::Register reg) {
   bool used = false;
   Assembler::Register new_reg = Assembler::no_reg;
-#if USE_COMPILER_LITERALS_MAP
-  set_literals_mask(literals_mask() & ~(1 << reg));
-#endif
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM 
+  clear_literal(reg);
+
+  //remember array length
   if (bound_mask() != 0) {
-    if (get_bound_register()==reg || get_base_register() == reg) {
-      set_bound_mask(0);
+    if (length_register() == reg || base_register() == reg) {
+      clear_bound();
     }
   }
-#endif
+
   for (VSFStream s(this); !s.eos(); s.next()) {
     if (is_mapped_by(s.index(), reg)) {
       if (!used) {
@@ -1885,25 +1930,24 @@ void VirtualStackFrame::unuse_register(Assembler::Register reg) {
         if (RegisterAllocator::has_free(1)) {
           new_reg = RegisterAllocator::allocate();
           code_generator()->move(new_reg, reg);
-#if ENABLE_CSE
+
           RegisterAllocator::move_notation(reg, new_reg);
-#endif
+
         }
       }
-      // Either spill the location, or modify to indicate that it is in 
+      // Either spill the location, or modify to indicate that it is in
       // a different location
       Location location(this, s.index());
-      if (new_reg == Assembler::no_reg) { 
+      if (new_reg == Assembler::no_reg) {
         location.flush();
-#if ENABLE_CSE
-        RegisterAllocator::clear_notation(reg);
-#endif
-      } else { 
+   //cse
+        RegisterAllocator::wipe_notation_of(reg);
+      } else {
         location.change_register(new_reg, reg);
       }
     }
   }
-  if (new_reg != Assembler::no_reg) { 
+  if (new_reg != Assembler::no_reg) {
     RegisterAllocator::dereference(new_reg);
   }
 }
@@ -1930,7 +1974,7 @@ void VirtualStackFrame::pop() {
 
 void VirtualStackFrame::pop2() {
   decrement_virtual_stack_pointer();
-  decrement_virtual_stack_pointer(); 
+  decrement_virtual_stack_pointer();
 }
 
 BasicType VirtualStackFrame::expression_stack_type(int index) {
@@ -1947,7 +1991,7 @@ BasicType VirtualStackFrame::expression_stack_type(int index) {
 }
 
 inline void VirtualStackFrame::stack_2_1_to_1_2(void) {
-  // Form: ..., value2, value1   => ..., value1, value2 
+  // Form: ..., value2, value1   => ..., value1, value2
   Value v1(expression_stack_type(0));
   pop(v1);
 
@@ -1960,7 +2004,7 @@ inline void VirtualStackFrame::stack_2_1_to_1_2(void) {
 }
 
 void VirtualStackFrame::stack_1_to_1_1() {
-  // Form: ..., value1, value1   => ..., value1, value1 
+  // Form: ..., value1, value1   => ..., value1, value1
 
   // create a value for the top stack location
   Value v(expression_stack_type(0));
@@ -1972,7 +2016,7 @@ void VirtualStackFrame::stack_1_to_1_1() {
 }
 
 inline void VirtualStackFrame::stack_2_1_to_2_1_2_1(void) {
-  // Form: ..., value2, value1   => ..., value2, value1, value2. value1 
+  // Form: ..., value2, value1   => ..., value2, value1, value2. value1
   Value v1(expression_stack_type(0));
   pop(v1);
 
@@ -2004,7 +2048,7 @@ void VirtualStackFrame::stack_2_1_to_1_2_1() {
 }
 
 void VirtualStackFrame::stack_3_2_1_to_1_3_2_1() {
-  // Form: ..., value3, value2, value1   => ..., value1, value3, value2. value1 
+  // Form: ..., value3, value2, value1   => ..., value1, value3, value2. value1
   Value v1(expression_stack_type(0));
   pop(v1);
 
@@ -2023,7 +2067,7 @@ void VirtualStackFrame::stack_3_2_1_to_1_3_2_1() {
 
 void VirtualStackFrame::stack_3_2_1_to_2_1_3_2_1() {
   // Form 1: ..., value3, value2, value1   =>
-  //   ..., value2, value1, value3, value2. value1 
+  //   ..., value2, value1, value3, value2. value1
   Value v1(expression_stack_type(0));
   pop(v1);
 
@@ -2125,14 +2169,14 @@ void VirtualStackFrame::value_at(Value& result, int index) {
   raw_location->read_value(result, index);
 }
 
-void VirtualStackFrame::value_at(ExtendedValue& result, int index) { 
+void VirtualStackFrame::value_at(ExtendedValue& result, int index) {
   AllocationDisabler allocation_not_allowed_in_this_function;
 
   RawLocation *raw_location = raw_location_at(index);
-  if (raw_location->is_flushed()) { 
+  if (raw_location->is_flushed()) {
     result.set_index(index, raw_location->type());
     result.set_flags(raw_location->flags());
-  } else { 
+  } else {
     result.is_value(raw_location->type());
     raw_location->read_value(result.value(), index);
   }
@@ -2151,22 +2195,22 @@ void VirtualStackFrame::value_at_put(int index, const Value& value) {
       raw_location->mark_as_illegal();
     }
   }
+
   raw_location->write_value(value);
-#if ENABLE_REMEMBER_ARRAY_CHECK && \
-     ENABLE_REMEMBER_ARRAY_LENGTH && ENABLE_NPCE  
+  //Remember array length check
   //clear array length checked tag if the value
   //is modified.
+
+
   if (index < method()->max_locals()) {
-    if (raw_location->type() == T_INT || raw_location->type() == T_LONG) {
-      if (PrintCompiledCodeAsYouGo) {
-        TTY_TRACE_CR(("update local index=[%d], max_locals=[%d]", 
-                    index, method()->max_locals()));
-      }
-      raw_location->set_flags(raw_location->flags() 
-          & ~Value::F_HAS_INDEX_CHECKED);
+    if (raw_location->type() == T_ARRAY ) {
+      clear_bound();
     }
+    raw_location->set_is_not_index_checked();
+    raw_location->set_is_first_time_access();
+
   }
-#endif
+
 
 }
 
@@ -2175,15 +2219,8 @@ void VirtualStackFrame::pop(Value& result) {
   bool double_word = result.is_two_word();
   int index = virtual_stack_pointer();
 
-#if ENABLE_CSE
-#if ENABLE_INLINE && ARM
-  if (Compiler::current()->is_inline() == 0) {
-#endif    
-    tag_pop();
-#if ENABLE_INLINE && ARM
-  }
-#endif    
-#endif
+  pop_tag();
+
   // Adjust the virtual stack pointer.
   decrement_virtual_stack_pointer();
   if (double_word) {
@@ -2192,7 +2229,7 @@ void VirtualStackFrame::pop(Value& result) {
   }
 
   AllocationDisabler allocation_not_allowed;
-  
+
   // Load the value.
   RawLocation *raw_location = raw_location_at(index);
   raw_location->read_value(result, index);
@@ -2205,18 +2242,12 @@ void VirtualStackFrame::push(const Value& value) {
   bool double_word = value.is_two_word();
   // Adjust the virtual stack pointer.
   increment_virtual_stack_pointer();
-#if ENABLE_CSE  
-#if ENABLE_INLINE && ARM
-  if (Compiler::current()->is_inline() == 0) {
-#endif    
-  tag_push();
-#if ENABLE_INLINE && ARM
-  }
-#endif    
-#endif
-  if (double_word) increment_virtual_stack_pointer(); 
 
-  // Put the value as the new top of stack. 
+  push_tag();
+
+  if (double_word) increment_virtual_stack_pointer();
+
+  // Put the value as the new top of stack.
   value_at_put(virtual_stack_pointer() - (double_word ? 1 : 0), value);
 }
 
@@ -2233,7 +2264,7 @@ bool VirtualStackFrame::reveiver_must_be_nonnull(int size_of_parameters) const
 
 void VirtualStackFrame::set_value_must_be_nonnull(Value &value) {
   AllocationDisabler allocation_not_allowed_in_this_function;
-  GUARANTEE(value.in_register() && (value.stack_type() == T_OBJECT), 
+  GUARANTEE(value.in_register() && (value.stack_type() == T_OBJECT),
             "Guarantee");
   value.set_must_be_nonnull();
 
@@ -2255,7 +2286,7 @@ void VirtualStackFrame::set_value_must_be_nonnull(Value &value) {
 
     if (is_two_word(type)) {
       index += 2;
-      raw_location += 2; 
+      raw_location += 2;
     } else {
       index ++;
       raw_location += 1;
@@ -2266,7 +2297,7 @@ void VirtualStackFrame::set_value_must_be_nonnull(Value &value) {
 void VirtualStackFrame::set_value_has_known_min_length(Value &value,
                                                        int length)
 {
-  GUARANTEE(value.in_register() && (value.stack_type() == T_OBJECT), 
+  GUARANTEE(value.in_register() && (value.stack_type() == T_OBJECT),
             "Guarantee");
   value.set_has_known_min_length(length);
 
@@ -2285,6 +2316,45 @@ void VirtualStackFrame::set_value_has_known_min_length(Value &value,
     }
   }
 }
+
+#if ENABLE_COMPILER_TYPE_INFO
+void VirtualStackFrame::set_value_class(Value &value, JavaClass * java_class) {
+  AllocationDisabler allocation_not_allowed_in_this_function;
+  GUARANTEE(value.in_register() && value.stack_type() == T_OBJECT, "Sanity");
+  const jushort class_id = java_class->class_id();
+  const bool is_final_type = java_class->is_final_type();
+
+  value.set_class_id(class_id);
+  if (is_final_type) {
+    value.set_is_exact_type();
+  }
+
+  register RawLocation *raw_location = raw_location_at(0);
+  register RawLocation *end  = raw_location_end(raw_location);
+  int index = 0;
+  const Assembler::Register value_register = value.lo_register();
+
+  while (raw_location < end) {
+    BasicType type = raw_location->stack_type();
+    if (type == T_OBJECT && !raw_location->is_flushed() && 
+        raw_location->in_register() && 
+        raw_location->get_register() == value_register) {
+      raw_location->set_class_id(class_id);
+      if (is_final_type) {
+        raw_location->set_is_exact_type();
+      }
+    }
+
+    if (is_two_word(type)) {
+      index += 2;
+      raw_location += 2;
+    } else {
+      index ++;
+      raw_location += 1;
+    }
+  }
+}
+#endif
 
 #if USE_COMPILER_LITERALS_MAP
 Assembler::Register VirtualStackFrame::get_literal(int imm32,
@@ -2311,7 +2381,95 @@ Assembler::Register VirtualStackFrame::get_literal(int imm32,
   RegisterAllocator::dereference(reg);
   return reg;
 }
+
+void VirtualStackFrame::clear_literals(void) {
+#if ENABLE_ARM_VFP
+  {
+    jint* p = literals_mask_addr();
+    p[0] = 0;
+    p[1] = 0;
+  }
+#endif  
+  jvm_memset(literals_map_base(), 0, literals_map_size * sizeof(int));
+}
+
+bool VirtualStackFrame::has_no_literals(void) const{
+#if ENABLE_ARM_VFP
+  {
+    const jint* p = literals_mask_addr();
+    if( p[0] | p[1] ) {
+      return false;
+    }
+  }
+#endif  
+  for( int i = 0; i < Assembler::number_of_registers; i++ ) {
+    if (get_literal(Assembler::Register(i))) { 
+      return false;
+    }
+  }
+  return true;
+}
 #endif
+
+#if ENABLE_ARM_VFP
+Assembler::Register VirtualStackFrame::find_zero(void) const {
+  const jint* masks = literals_mask_addr();
+  int reg = 0;
+  if( masks[0] == 0 ) {
+    masks++;
+    reg += BitsPerInt;
+  }
+  for( jint mask = *masks; mask; mask >>= 1 ) {
+    if( mask & 1 ) {
+      return Assembler::Register(reg);
+    }
+    reg++;
+  }
+  return Assembler::no_reg;
+}
+
+Assembler::Register VirtualStackFrame::find_non_NaN(void) const {
+  GUARANTEE( find_zero() == Assembler::no_reg, "must search for zeroes first" );
+  // We prefer NaNs in VFP registers, so do the backward search
+  const jint* literals_map_base = obj()->int_field_addr(literals_map_base_offset());
+  Assembler::Register reg = Assembler::s31;
+  do {
+    const jint imm32 = literals_map_base[reg];
+    if (is_non_NaN(imm32)) {
+      return reg;
+    }
+    reg = Assembler::Register( reg - 1 );
+  } while( reg >= Assembler::r0 );
+  return Assembler::no_reg;
+}
+
+Assembler::Register VirtualStackFrame::find_double_non_NaN(void) const {
+  // We prefer NaNs in VFP registers, so do the backward search
+  const jint* literals_map_base = obj()->int_field_addr(literals_map_base_offset());
+  int reg = Assembler::s31;
+  do {
+    const jint imm32 = literals_map_base[reg];    
+    if (is_non_NaN(imm32)) {
+      return Assembler::Register(reg - 1);
+    }
+    reg -= 2;
+  } while (reg >= Assembler::s1);
+  return Assembler::no_reg;
+}
+
+Assembler::Register VirtualStackFrame::find_double_vfp_literal(const jint lo, const jint hi) const {
+  const jint* literals_map_base = obj()->int_field_addr(literals_map_base_offset());
+  int reg = Assembler::s0;
+  do {
+    if (literals_map_base[reg] == lo && literals_map_base[reg + 1] == hi) {
+      return Assembler::Register(reg);
+    }
+    reg += 2;
+  } while (reg < Assembler::s31);
+  return Assembler::no_reg;
+}
+#endif    
+
 
 #if ENABLE_REMEMBER_ARRAY_CHECK && \
      ENABLE_REMEMBER_ARRAY_LENGTH && ENABLE_NPCE
@@ -2320,35 +2478,30 @@ bool VirtualStackFrame::is_value_must_be_index_checked(
   AllocationDisabler allocation_not_allowed_in_this_function;
   GUARANTEE(value.in_register() && (value.stack_type() == T_INT ||
                value.stack_type() == T_LONG ), "Guarantee");
-  if (bound_mask() == 0 ||  reg != get_bound_register()) {
+  if (bound_mask() == 0 ||  reg != length_register()) {
     return false;
   }
-#if ENABLE_CSE
-  if ( !value.is_two_word() && RegisterAllocator::is_notated(value.lo_register())) {
-    if ( RegisterAllocator::get_check_status(value.lo_register()) != 0) {
-#ifndef PRODUCT
-      if(GenerateCompilerComments) {
-        TTY_TRACE_CR(("reg %s is mark as index checked ", 
+
+  //cse
+  if(!value.is_two_word() &&
+    RegisterAllocator::is_checked_before(value.lo_register())) {
+    VERBOSE_CSE(("reg %s is mark as index checked ",
           Disassembler::reg_name(value.lo_register())));
-      }
-#endif
-      return true;
-    }
-  
+
+    return true;
   }
-#endif
 
   int index = 0;
-  int checked_index = bound_mask() & 0xfff;
+  int checked_index = bound_index();
   register RawLocation *raw_location = raw_location_at(checked_index);
   if ( checked_index !=0 ) {
-    if ( !raw_location->is_flushed() && raw_location->in_register() && 
-      raw_location->flags() & Value::F_HAS_INDEX_CHECKED && 
+    if ( !raw_location->is_flushed() && raw_location->in_register() &&
+      raw_location->flags() & Value::F_HAS_INDEX_CHECKED &&
       Value(raw_location, checked_index).lo_register() == value.lo_register() ) {
       return true;
     }
   }
- 
+
   return false;
 }
 
@@ -2357,39 +2510,39 @@ void VirtualStackFrame::set_value_must_be_index_checked(
   AllocationDisabler allocation_not_allowed_in_this_function;
   GUARANTEE(value.in_register() && (value.stack_type() == T_INT ||
          value.stack_type() == T_LONG ), "Guarantee");
-  if (bound_mask() == 0 ||  reg != get_bound_register()) {
+  if (bound_mask() == 0 ||  reg != length_register()) {
     return ;
   }
 
   value.set_must_be_index_checked();
+
 #if ENABLE_CSE
-  if ( !value.is_two_word() && RegisterAllocator::is_notated(value.lo_register())) {
-#ifndef PRODUCT
-      if(GenerateCompilerComments) {
-        TTY_TRACE_CR(("reg %s is index checked before ", 
+  if ( !value.is_two_word() ) {
+    VERBOSE_CSE(("reg %s is index checked before ",
           Disassembler::reg_name(value.lo_register())));
-      }
-#endif
-    RegisterAllocator::set_check_status(value.lo_register(), 1);
+     RegisterAllocator::set_checked_before(value.lo_register());
   }
 #endif
 
-  
-  int checked_index = bound_mask() & 0xfff;
+
+  int checked_index = bound_index();
   register RawLocation *raw_location = raw_location_at(checked_index);
   //return if an array length index has been cached.
   if ( checked_index !=0 ) {
-    if ( !raw_location->is_flushed() && raw_location->in_register() && 
+    if ( !raw_location->is_flushed() && raw_location->in_register() &&
          raw_location->flags() & Value::F_HAS_INDEX_CHECKED ) {
       return ;
     }
   }
-  
+
   int index = 0;
   raw_location = raw_location_at(0);
   register RawLocation *end  = raw_location_end(raw_location);
   while (raw_location < end) {
     BasicType type = raw_location->stack_type();
+    if ( index > max_value_of_index ) {
+      return ;
+    }
     if ((type == T_INT ||type == T_LONG ) && !raw_location->is_flushed() &&
         raw_location->in_register()) {
       if ( Value(raw_location, index).lo_register() == value.lo_register()) {
@@ -2397,126 +2550,219 @@ void VirtualStackFrame::set_value_must_be_index_checked(
         value.set_must_be_index_checked();
         raw_location->write_value(value);
         raw_location->set_status(old_status);
-        int new_mask = ( bound_mask() & 0xfffff00 ) |index;
-        set_bound_mask(new_mask);
+  set_boundary_index(index);
         return ;
       }
     }
     if (is_two_word(type)) {
       index += 2;
-      raw_location += 2; 
+      raw_location += 2;
     } else {
       index ++;
       raw_location += 1;
     }
   }
-  
+
   return ;
 }
 
 
 #endif
 
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
-//Following functions is added to the class VirtualStackFrame. 
-//Because we added an integer _bound_mask to the structure VirtualStackFrameDesc, 
+#if ENABLE_REMEMBER_ARRAY_LENGTH
+//Following functions is added to the class VirtualStackFrame.
+//Because we added an integer _bound_mask to the structure VirtualStackFrameDesc,
 //VM need these functions to be called to manipulate the new virtual stack frame.
 
-//reload preload array length in OSR stub or TimerTick Stub
-void VirtualStackFrame::rebound(VirtualStackFrameDesc* osr_frame) {
-  Assembler::Register base_reg = get_base_register();
-  Assembler::Register bound_reg = get_bound_register();
-  VirtualStackFrame::Raw frame = osr_frame;
-  if ( frame().is_allocated(base_reg)) {
-    CodeGenerator::Address2 lengthAddress = 
-            CodeGenerator::imm_index(base_reg, Array::length_offset());
-    code_generator()->ldr( bound_reg, lengthAddress, Assembler::al);
-  } 
-}
-
-
-Assembler::Register VirtualStackFrame::get_bound(Assembler::Register reg,
+Assembler::Register VirtualStackFrame::cached_array_length(Assembler::Register array_base,
                                                  bool first_time,
                                                  Assembler::Condition cond) {
-  if (has_bound_value(reg)) {
+  if (is_cached_array_bound_of(array_base)) {
     if (first_time) {
-    //This register cached another array length for one time, 
-    //we must clean the record to cache the new array length
-#if ENABLE_CSE    
-      RegisterAllocator::clear_check_status();
-#endif
-      set_bound_mask(0);
+      //The variable references another array
+      //we must clean the record to cache the new array length
+      clear_bound();
     } else {
-      add_bound_access_count();
-      return get_bound_register();
+      return length_register();
     }
   }
-  
-  CodeGenerator::Address2 lengthAddress = CodeGenerator::imm_index(reg, Array::length_offset());
-  Assembler::Register bound_reg = RegisterAllocator::allocate();
-  code_generator()->ldr( bound_reg, lengthAddress, cond);
-  //if bound access count is less than one, we think it's not hot enough  
-  if (get_bound_access_count()<1) {
-    //We do the setting more careful.
-    //if the value isn't a local variable
-    //we won't do the cache.
-    if (set_is_not_first_time_access(reg)) {  
-#if ENABLE_CSE          
-      RegisterAllocator::clear_check_status();
-#endif
-      set_bound_value(bound_reg, reg);
-    }
-  }
-  //bound access counter is used to find the hot array length
 
-  if (!first_time && 
-  	get_base_register()== reg &&
-  	get_bound_register() == bound_reg ) {
-    add_bound_access_count();
+  Assembler::Register length;
+  {
+   Value result(T_INT);
+   Value array(T_ARRAY);
+   array.set_register(array_base);
+   RegisterAllocator::reference(array_base);
+   SETUP_ERROR_CHECKER_ARG;
+   Compiler::code_generator()->load_from_object(result, array,
+                                     Array::length_offset(), false JVM_NO_CHECK);
+   length = result.lo_register();
   }
-  
-  RegisterAllocator::dereference(bound_reg);
-  return bound_reg;
+
+  bool is_local = false;
+  //We do the setting more careful.
+  //if the value isn't a local variable
+  //we won't do the cache.
+  if(bound_flag() < 1) {
+
+    is_local = set_is_not_first_time_access(array_base);
+
+    if (is_local) {
+      //clear old bound status
+      clear_bound();
+      set_boundary_value(length, array_base);
+    }
+  }
+
+  GUARANTEE(!is_local || is_bound_mask_valid(),
+    "Only length of array in local variable could be cached.");
+
+  return length;
 }
 
-void VirtualStackFrame::set_bound_value(Assembler::Register bound_reg,
-                                              Assembler::Register reg) {
-  set_bound_mask( reg << 16 | bound_reg << 12 );
-}  
+jint VirtualStackFrame::bound_index(void) const {
+  return (bound_mask() & index_bits);
+}
 
-bool VirtualStackFrame::has_bound_value(Assembler::Register reg) const {
-  if (has_bound() && ((bound_mask() >> 16 & 0xf) == reg)) {
+Assembler::Register VirtualStackFrame::length_register(void) const {
+  return Assembler::as_register((bound_mask() & bound_bits) >> bound_shift );
+}
+
+Assembler::Register VirtualStackFrame::base_register(void) const {
+  return Assembler::as_register((bound_mask() & base_bits) >> base_shift);
+}
+
+int VirtualStackFrame::bound_flag(void) const {
+  return (bound_mask() & flag_bits )>> flag_shift;
+}
+
+void VirtualStackFrame::clear_bound(void) {
+  clear_must_be_index_checked_status_of_values();
+  RegisterAllocator::clear_check_status();
+  set_bound_mask(0);
+}
+
+#if  ENABLE_REMEMBER_ARRAY_CHECK && ENABLE_NPCE
+void VirtualStackFrame::clear_must_be_index_checked_status_of_values(void) {
+  AllocationDisabler allocation_not_allowed;
+  register RawLocation *raw_location = raw_location_at(0);
+  register RawLocation *end  = raw_location_end(raw_location);
+  if ( is_bound_mask_valid()) {
+    while (raw_location < end) {
+      raw_location->set_flags(raw_location->flags()
+          & ~Value::F_HAS_INDEX_CHECKED);
+      if (raw_location->is_two_word()) {
+        raw_location ++;
+      }
+      raw_location ++;
+    }
+  }
+}
+#endif
+
+bool VirtualStackFrame::is_cached_array_bound_of(Assembler::Register base_reg) const {
+  if (is_bound_mask_valid() &&  base_register() == base_reg) {
     return true;
   }
   return false;
 }
 
-bool VirtualStackFrame::has_bound(void) const { 
+bool VirtualStackFrame::is_bound_mask_valid(void) const {
+
   if (bound_mask() != 0 ) {
     return true;
   }
   return false;
 }
 
-Assembler::Register VirtualStackFrame::get_bound_register(void) const {
-  return Assembler::as_register(bound_mask() >>12 & 0xf);
+void VirtualStackFrame::set_boundary_flag(void) {
+  set_bound_mask((1)<<flag_shift | bound_mask());
 }
 
-Assembler::Register VirtualStackFrame::get_base_register(void) const {
-  return Assembler::as_register(bound_mask() >>16 & 0xf);
+//Checked wheather a register is used by one value in current
+//VF.
+bool VirtualStackFrame::is_allocated(const Assembler::Register reg) const {
+  AllocationDisabler allocation_not_allowed;
+
+  register RawLocation *raw_location = raw_location_at(0);
+  register RawLocation *end  = raw_location_end(raw_location);
+
+  while (raw_location < end) {
+    if (raw_location->in_register()) {
+      if (raw_location->value() == (jint)reg) {
+        return true;
+      }
+      if (raw_location->is_two_word()) {
+        raw_location ++;
+        if (raw_location->value() == (jint)reg) {
+          return true;
+        }
+      }
+    } else {
+      if (raw_location->is_two_word()) {
+        raw_location ++;
+      }
+    }
+    raw_location ++;
+  }
+
+#if USE_COMPILER_LITERALS_MAP
+  if (has_literal(reg)) {
+    return true;
+  }
+#endif
+
+  return false;
 }
 
-int VirtualStackFrame::get_bound_access_count(void) const {
-  return bound_mask() >>28 & 0xf;
+//free the cached register for register_allocator in case there's no
+//other free registers
+Assembler::Register VirtualStackFrame::free_length_register() {
+   Assembler::Register result = Assembler::no_reg;
+   if (length_register() != 0 &&
+        bound_flag() == 0 ) {
+      result = length_register();
+      clear_bound();
+   }
+   return result;
 }
 
-void VirtualStackFrame::add_bound_access_count() {
-  if (get_bound_access_count() < 0xf) { 
-    set_bound_mask((get_bound_access_count()+1)<<28 | bound_mask());
+
+//reload cached array length in register for OSR stub or TimerTick Stub(non merge conformance)
+void VirtualStackFrame::recache_array_length(Assembler::Register array_base,
+                    Assembler::Register array_length) {
+  if(is_allocated(array_base))
+ {
+    Value array(T_ARRAY);
+    Value length(T_INT);
+    array.set_register(array_base);
+    length.set_register(array_length);
+    RegisterAllocator::reference(array_base);
+    RegisterAllocator::reference(array_length);
+
+
+    //tell the code generator not to assign register for length.
+    length.set_is_not_first_time_access();
+
+    SETUP_ERROR_CHECKER_ARG;
+    Compiler::code_generator()->load_from_object(length,
+                                            array,
+                                            Array::length_offset(),
+                                            false JVM_NO_CHECK);
   }
 }
 
-bool 
+void VirtualStackFrame::set_boundary_index(jint index) {
+   set_bound_mask(( bound_mask() & (~index_bits)) |index);
+}
+
+void VirtualStackFrame::set_boundary_value(Assembler::Register bound_reg,
+                                              Assembler::Register base_reg) {
+  set_bound_mask( base_reg << base_shift | bound_reg << bound_shift );
+  set_boundary_flag();
+}
+
+bool
 VirtualStackFrame::set_is_not_first_time_access(Assembler::Register reg) {
   AllocationDisabler allocation_not_allowed_in_this_function;
   RawLocation *raw_location = raw_location_at(0);
@@ -2533,7 +2779,7 @@ VirtualStackFrame::set_is_not_first_time_access(Assembler::Register reg) {
     }
     if (raw_location->is_two_word()) {
       index += 2;
-      raw_location += 2; 
+      raw_location += 2;
     } else {
       index ++;
       raw_location += 1;
@@ -2541,38 +2787,59 @@ VirtualStackFrame::set_is_not_first_time_access(Assembler::Register reg) {
   }
   return false;
 }
+
+#if ENABLE_REMEMBER_ARRAY_CHECK && ENABLE_NPCE
+bool VirtualStackFrame::try_to_set_must_be_index_checked(Assembler::Register length, Value& index) {
+  if (!index.is_immediate() &&  index.stack_type() == T_INT) {
+    if ( is_value_must_be_index_checked( length, index)) {
+      COMPILER_PRINT_AS_YOU_GO(("Omit a array length checking"));
+      return true;
+    } else {
+      set_value_must_be_index_checked( length, index);
+    }
+  }
+  return false;
+}
 #endif
 
-void LiteralElementStream::next() {
-  int mask = _vsf->literals_mask();
-  _index++;
-  if (mask == 0 || (((unsigned)mask) >> _index) == 0) { 
-    // Since most of the time there will be zero or very few constants
-    // this shortcut to detect no more entries should save us a lot of time
-    _index = Assembler::number_of_registers;
-    return;
-  }
-  for(; _index < Assembler::number_of_registers; _index++) {
-    if ((mask & (1 << _index))) {
+Assembler::Register VirtualStackFrame::try_to_free_length_register() {
+    //This make the allocator allocate bound register until all other
+    // registers are in use.
+    Assembler::Register reg = Compiler::current()->frame()->free_length_register();
+    if ( reg != Assembler::no_reg ) {
+      RegisterAllocator::reference(reg);
+
+      //cse
+      RegisterAllocator::wipe_notation_of(reg);
+
+      return reg;
+    }
+    return Assembler::no_reg;
+}
+#endif //ENABLE_REMEMBER_ARRAY_LENGTH
+
+#if USE_COMPILER_LITERALS_MAP
+void LiteralElementStream::next(void) {
+  int index;
+  for (index = _index; ++index < Assembler::number_of_registers;) {
+    if (_vsf->has_literal(Assembler::Register(index))) {
       break;
     }
   }
+  _index = index;
 }
-      
+#endif
+
 
 #ifndef PRODUCT
 
 void VirtualStackFrame::dump(bool as_comment) {
 #if USE_DEBUG_PRINTING
-#if ENABLE_CSE
-  char str[4096];
-#else
   char str[1024];
-#endif
   char *p = str;
   bool first = true;
   *p++ = '{';
-  if (Verbose) { 
+  if (Verbose) {
     jvm_sprintf(p, " (vsp=%d,sp=%d) ", virtual_stack_pointer(), stack_pointer());
     p += jvm_strlen(p);
   }
@@ -2591,7 +2858,7 @@ void VirtualStackFrame::dump(bool as_comment) {
       p += jvm_strlen(p);
       break;
     }
-    if (!first) { 
+    if (!first) {
         jvm_sprintf(p, ", "); p += 2;
     }
     first = false;
@@ -2602,26 +2869,40 @@ void VirtualStackFrame::dump(bool as_comment) {
     }
     p += jvm_strlen(p);
     Location location(this, s.index());
-    if (location.is_flushed()) { 
+    if (location.is_flushed()) {
       jvm_sprintf(p, "mem"); p += jvm_strlen(p);
-    } else { 
+    } else {
       const Value value( &location );
       if (value.in_register()) {
         if (value.use_two_registers()) {
           Assembler::Register reg_hi = value.hi_register();
           Assembler::Register reg_lo = value.lo_register();
 #if USE_COMPILER_LITERALS_MAP
-          jvm_sprintf(p, "%s:%s", Disassembler::reg_name(reg_hi), 
-                              Disassembler::reg_name(reg_lo));
+#if ENABLE_ARM_VFP
+          if( value.type() == T_DOUBLE ) {
+            Disassembler::vfp_reg_name( 'd', reg_lo - Assembler::s0, p );
+          } else
+#endif
+          {
+            jvm_sprintf(p, "%s:%s", Disassembler::reg_name(reg_hi),
+                                    Disassembler::reg_name(reg_lo));
+          }
 #else
-          jvm_sprintf(p, "%s:%s", Assembler::name_for_long_register(reg_hi), 
+          jvm_sprintf(p, "%s:%s", Assembler::name_for_long_register(reg_hi),
                               Assembler::name_for_long_register(reg_lo));
 #endif // USE_COMPILER_LITERALS_MAP
           p += jvm_strlen(p);
         } else {
           Assembler::Register reg = value.lo_register();
 #if USE_COMPILER_LITERALS_MAP
-          jvm_sprintf(p, "%s", Disassembler::reg_name(reg));
+#if ENABLE_ARM_VFP
+          if( value.type() == T_FLOAT ) {
+            Disassembler::vfp_reg_name( 's', reg - Assembler::s0, p );            
+          } else
+#endif
+          {
+            jvm_sprintf(p, "%s", Disassembler::reg_name(reg));
+          }
           p += jvm_strlen(p);
 #else
           jvm_sprintf(p, "%s", Assembler::name_for_long_register(reg));
@@ -2641,28 +2922,28 @@ void VirtualStackFrame::dump(bool as_comment) {
           case T_BYTE   : // fall-through
           case T_CHAR   : // fall-through
           case T_SHORT  : // fall-through
-          case T_INT    : 
+          case T_INT    :
             jvm_sprintf(p, "%d", value.as_int());
             break;
-          case T_LONG   : 
+          case T_LONG   :
             jvm_sprintf(p, "%lld", value.as_long());
             break;
 #if ENABLE_FLOAT
-          case T_FLOAT  : 
+          case T_FLOAT  :
             // take care of promotion
             jvm_sprintf(p, "%f", jvm_f2d(value.as_float()));
             break;
-          case T_DOUBLE : 
+          case T_DOUBLE :
             jvm_sprintf(p, "%f", value.as_double());
             break;
 #endif
-          case T_OBJECT : 
+          case T_OBJECT :
             GUARANTEE(value.must_be_null(), "immediate object");
             jvm_sprintf(p, "null");
             break;
-          default       : 
-            SHOULD_NOT_REACH_HERE(); 
-            break;        
+          default       :
+            SHOULD_NOT_REACH_HERE();
+            break;
         }
         p += jvm_strlen(p);
       }
@@ -2678,13 +2959,30 @@ void VirtualStackFrame::dump(bool as_comment) {
       case T_BYTE   : // fall-through
       case T_CHAR   : // fall-through
       case T_SHORT  : // fall-through
-      case T_INT    : jvm_sprintf(p, " (int)"); 
+      case T_INT    : jvm_sprintf(p, " (int)");
                       break;
       case T_LONG   : jvm_sprintf(p, " (long)");
                       break;
-      case T_FLOAT  : jvm_sprintf(p, " (float)"); 
+      case T_FLOAT  : jvm_sprintf(p, " (float)");
                       break;
-      case T_OBJECT : jvm_sprintf(p, " (%s%s)", 
+      case T_OBJECT : 
+#if ENABLE_COMPILER_TYPE_INFO
+      {
+        JavaClass::Raw java_class = 
+          Universe::class_from_id(location.class_id());
+        GUARANTEE(java_class.not_null(), "Sanity");
+        Symbol::Raw class_name = java_class().name();
+        *p++ = ' ';
+        *p++ = '(';
+        jvm_memcpy(p, class_name().utf8_data(), class_name().length());
+        p += class_name().length();
+        jvm_sprintf(p, "%s%s)",
+                    (location.must_be_null() ? ":null" :
+                     location.must_be_nonnull() ? ":nonnull" : ""),
+                    (location.not_on_heap() ? "!" : ""));
+      }
+#else
+                   jvm_sprintf(p, " (%s%s)",
                               (location.must_be_null() ? "null" :
                                location.is_string() ? "string" :
                                location.is_string_array() ? "string[]" :
@@ -2692,15 +2990,16 @@ void VirtualStackFrame::dump(bool as_comment) {
                                location.must_be_nonnull() ? "nonnull" : "obj"
                               ),
                               (location.not_on_heap() ? "!" : ""));
-                      if (location.has_known_min_length()) { 
+#endif
+                      if (location.has_known_min_length()) {
                         p += jvm_strlen(p);
                         jvm_sprintf(p, "[%d]", location.length());
                       }
                       break;
-      case T_DOUBLE : jvm_sprintf(p, " (double)"); 
+      case T_DOUBLE : jvm_sprintf(p, " (double)");
                       break;
       case T_ILLEGAL: break;
-      default       : SHOULD_NOT_REACH_HERE(); 
+      default       : SHOULD_NOT_REACH_HERE();
                       break;
     }
     p += jvm_strlen(p);
@@ -2717,7 +3016,17 @@ void VirtualStackFrame::dump(bool as_comment) {
         p += jvm_strlen(p);
         break;
       }
+#if ENABLE_ARM_VFP
+      Assembler::Register r = les.reg();
+      char prefix = 'r';
+      if (r >= Assembler::s0) {
+        r = Assembler::Register(r - Assembler::s0);
+        prefix = 's';
+      }
+      jvm_sprintf(p, ", %c%d = %d", prefix, r, les.value());
+#else
       jvm_sprintf(p, ", r%d = %d", les.reg(), les.value());
+#endif      
       p += jvm_strlen(p);
     }
   }
@@ -2779,6 +3088,9 @@ void PreserveVirtualStackFrameState::save(JVM_SINGLE_ARG_TRAPS) {
       loc.mark_as_flushed();
     }
     loc.clear_flags();
+#if ENABLE_COMPILER_TYPE_INFO
+    loc.reset_class_id();
+#endif
   }
 #endif
 
@@ -2795,29 +3107,21 @@ void PreserveVirtualStackFrameState::restore() {
 #ifdef AZZERT
   for (VSFStream s(frame()); !s.eos(); s.next()) {
     Location loc(frame(), s.index());
-    GUARANTEE(loc.is_flushed(), 
+    GUARANTEE(loc.is_flushed(),
               "cannot change frame across virtual stack frame preserves");
   }
 #endif
 
-#if USE_COMPILER_FPU_MAP  
+#if USE_COMPILER_FPU_MAP
   // remove the contents in the FPU
-  FPURegisterMap fpu_map = _saved_frame().fpu_register_map();  
+  FPURegisterMap fpu_map = _saved_frame().fpu_register_map();
   if (!fpu_map.is_empty()) {
     fpu_map.reset();
   }
 #endif
 
-  
-  frame()->conform_to(saved_frame());
 
-#if ENABLE_REMEMBER_ARRAY_LENGTH && ARM
-  //Reload the preloaded array length 
-  //in timer tick Stub.
-  if (saved_frame()->has_bound()) { 
-    saved_frame()->rebound( (VirtualStackFrameDesc*) frame()->obj());
-  }
-#endif
+  frame()->conform_to(saved_frame());
 
   Compiler::current()->set_cached_preserved_frame(saved_frame());
 
@@ -2825,4 +3129,137 @@ void PreserveVirtualStackFrameState::restore() {
   AZZERT_ONLY(_saved_frame.set_null());
 }
 
+VirtualStackFrameContext::VirtualStackFrameContext(VirtualStackFrame* context) {
+  GUARANTEE(context->not_null(), "Sanity");
+  _saved_frame = Compiler::frame();
+  Compiler::set_frame(context);
+  jvm_fast_globals.compiler_frame = Compiler::frame();
+}
+
+VirtualStackFrameContext::~VirtualStackFrameContext() {
+  Compiler::frame()->conform_to(&_saved_frame);
+  Compiler::set_frame(&_saved_frame);
+  jvm_fast_globals.compiler_frame = Compiler::frame();
+}
+
+#if ENABLE_COMPRESSED_VSF
+static inline void vsf_flush_do(address* regs, OopDesc* method, jushort* pool) {
+  juint reg_list = *--pool;
+  int sp_delta = (reg_list >> Relocation::sp_shift) & Relocation::max_sp_delta;
+  if (sp_delta == Relocation::max_sp_delta) {
+    sp_delta = *--pool;
+  }
+  if (reg_list & Relocation::sp_negative) {
+    regs[Assembler::jsp] -= sp_delta * BytesPerWord;
+  } else {
+    regs[Assembler::jsp] += sp_delta * BytesPerWord;
+  }
+
+  Method::Raw m = method;
+  const address fp = regs[Assembler::fp];
+  const int adjustment = JavaStackDirection * (1 - m().max_locals());
+  address *locals, *expr;
+
+  locals = (address*)(fp + JavaFrame::end_of_locals_offset()) + adjustment;
+  expr = m().uses_monitors() ?
+    *(address**)(fp + JavaFrame::stack_bottom_pointer_offset()) + adjustment :
+    (address*)(fp + JavaFrame::empty_stack_offset()) + adjustment;
+  
+  for (reg_list &= Relocation::reg_mask; reg_list != 0; reg_list >>= 1) {
+    if (reg_list & 1) {
+      do {
+        int location = *--pool & Relocation::location_mask;
+        if (*pool & Relocation::extended_mask) {
+          location = (location << Relocation::location_width) |
+                     (*--pool & Relocation::location_mask);
+        }
+        if (m().is_local(location)) {
+          locals[location * JavaStackDirection] = *regs;
+        } else {
+          expr[location * JavaStackDirection] = *regs;
+        }
+      } while (!(*pool & Relocation::last_mask));
+    }
+    regs++;
+  }
+}
+
+extern "C" void vsf_flush(address* regs) {
+  const address pc = regs[Assembler::pc] + 4;
+  *(address*)(regs[Assembler::fp] + JavaFrame::saved_pc_offset()) = pc;
+  CompiledMethod::Raw cm = JavaFrame::find_compiled_method(pc);
+  const int offset = pc - cm().entry();
+
+  for (RelocationReader stream(&cm); !stream.at_end(); stream.advance()) {
+    if (stream.code_offset() == offset &&
+        stream.kind() == Relocation::compressed_vsf_type) {
+      vsf_flush_do(regs, cm().method(), stream.current_address());
+      return;
+    }
+  }
+  SHOULD_NOT_REACH_HERE();
+}
+
+static inline void vsf_restore_do(address* regs, OopDesc* method, jushort* pool) {
+  juint reg_list = *--pool;
+  int sp_delta = (reg_list >> Relocation::sp_shift) & Relocation::max_sp_delta;
+  if (sp_delta == Relocation::max_sp_delta) {
+    sp_delta = *--pool;
+  }
+  if (reg_list & Relocation::sp_negative) {
+    regs[Assembler::jsp] += sp_delta * BytesPerWord;
+  } else {
+    regs[Assembler::jsp] -= sp_delta * BytesPerWord;
+  }
+
+  Method::Raw m = method;
+  const address fp = regs[Assembler::fp];
+  const int adjustment = JavaStackDirection * (1 - m().max_locals());
+  address *locals, *expr;
+
+  locals = (address*)(fp + JavaFrame::end_of_locals_offset()) + adjustment;
+  expr = m().uses_monitors() ?
+    *(address**)(fp + JavaFrame::stack_bottom_pointer_offset()) + adjustment :
+    (address*)(fp + JavaFrame::empty_stack_offset()) + adjustment;
+  
+  for (reg_list &= Relocation::reg_mask; reg_list != 0; reg_list >>= 1) {
+    if (reg_list & 1) {
+      do {
+        int location = *--pool & Relocation::location_mask;
+        if (*pool & Relocation::extended_mask) {
+          location = (location << Relocation::location_width) |
+                     (*--pool & Relocation::location_mask);
+        }
+        if (m().is_local(location)) {
+          *regs = locals[location * JavaStackDirection];
+        } else {
+          *regs = expr[location * JavaStackDirection];
+        }
+      } while (!(*pool & Relocation::last_mask));
+    }
+    regs++;
+  }
+}
+
+extern "C" void vsf_restore(address* regs) {
+  const address pc =
+    *(address*)(regs[Assembler::fp] + JavaFrame::saved_pc_offset());
+  regs[Assembler::pc] = pc;
+  CompiledMethod::Raw cm = JavaFrame::find_compiled_method(pc);
+  const int offset = pc - cm().entry();
+
+  for (RelocationReader stream(&cm); !stream.at_end(); stream.advance()) {
+    if (stream.code_offset() == offset &&
+        stream.kind() == Relocation::compressed_vsf_type) {
+      vsf_restore_do(regs, cm().method(), stream.current_address());
+      return;
+    }
+  }
+  SHOULD_NOT_REACH_HERE();
+}
+#endif
+
+#ifdef ABORT_CSE_TRACKING
+#undef ABORT_CSE_TRACKING
+#endif
 #endif

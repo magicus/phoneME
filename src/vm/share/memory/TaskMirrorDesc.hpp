@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -55,7 +56,7 @@ public:
   }
 
   size_t object_size() {
-    return _statics_end_offset;
+    return _object_size;
   }
 
   void variable_oops_do(void do_oop(OopDesc **));
@@ -65,24 +66,35 @@ protected:
 
 private:
 
-  static size_t allocation_size(jint statics_size) {
-    return align_allocation_size(header_size() + statics_size);
+  static size_t allocation_size(jint statics_size, jint vtable_length) {
+    size_t size = header_size() + statics_size;
+
+#if USE_EMBEDDED_VTABLE_BITMAP
+    size += bitmap_size(vtable_length);
+#else
+    (void)vtable_length;
+#endif
+
+    return align_allocation_size(size);
   }
 
-  void initialize(OopDesc *klass, jint statics_size) {
+  void initialize(OopDesc *klass, jint statics_size, jint vtable_length) {
     OopDesc::initialize(klass);
-    _statics_end_offset = align_allocation_size(header_size() + statics_size);
+    _object_size = allocation_size(statics_size, vtable_length);
   }
 
   InstanceDesc*         _real_java_mirror;
   InstanceClassDesc*    _containing_class;
-  jint                  _statics_end_offset;
+  jint                  _object_size;
   TaskMirrorDesc *      _next_in_clinit_list;
   // ptr to FarClassDesc of class holding elements of our containing class
   FarClassDesc*         _array_class;
   ThreadDesc*           _init_thread;
 
   // Here starts the static fields
+#if USE_EMBEDDED_VTABLE_BITMAP
+  // Here starts vtable methods bitmap
+#endif
   // <-- END OF DATA STRUCTURE
 
   // It's very important that no other fields are stored here,

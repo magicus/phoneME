@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -182,17 +183,6 @@ void Thread::start_lightweight_thread() {
   // Running on the Java stack at this point, no handles please
   GUARANTEE(Scheduler::get_next_runnable_thread()->is_null(),
             "Must be last thread");
-  // This is it, the end; fini.  Clear out _current_thread and
-  // do some checks in debug mode.
-  // Note that _current_thread is reused by TestCompiler
-#ifdef AZZERT
-#if ENABLE_ISOLATES
-  if (!TestCompiler) {
-    Scheduler::clear_next_runnable_thread();
-    _current_thread = NULL;
-  }
-#endif
-#endif
 
   // Back to C land
   current_thread_to_primordial();
@@ -248,6 +238,19 @@ void Thread::lightweight_thread_exit() {
       thread_count = task().thread_count();
     }
     if (thread_count == 0) {
+#if ENABLE_PROFILER
+      if (UseProfiler) {
+        Profiler::dump_and_clear_profile_data(tid);
+      }
+#endif
+#if ENABLE_WTK_PROFILER
+      if (UseExactProfiler) {
+        WTKProfiler::dump_and_clear_profile_data(tid);
+      }
+#endif
+      // After profiler data is dumped _current_thread is no longer used
+      // and should be cleared in order to dispose the reference
+      // to the task being terminated
       _current_thread = NULL;
       Task::cleanup_terminated_task(tid JVM_NO_CHECK);
     }
@@ -610,6 +613,7 @@ void Thread::set_stack_limit(address value) {
 void Thread::update_current_stack_limit(Thread *thread) {
   // Set the current stack limit to the thread stack limit.
   _current_stack_limit = (address)thread->stack_limit();
+  _compiler_stack_limit = _current_stack_limit;
 }
 
 void Thread::grow_execution_stack(int new_stack_size JVM_TRAPS) {

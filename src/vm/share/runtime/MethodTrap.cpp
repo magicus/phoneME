@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -176,7 +177,7 @@ int MethodTrapDesc::apply(char* trapped_name, char* handler_name JVM_TRAPS) {
   if (handler_name != NULL) {
     Method::Raw handler = parse_method_name(handler_name JVM_CHECK_0);
     if (handler().size_of_parameters() != target().size_of_parameters() ||
-        handler().size_of_return_type() != target().size_of_return_type())
+        handler().return_type() != target().return_type())
     {
       Throw::throw_exception(Symbols::java_lang_IllegalArgumentException(),
                              parameter_types_mismatch JVM_THROW_0);

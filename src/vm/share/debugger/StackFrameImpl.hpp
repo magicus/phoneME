@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -39,9 +40,9 @@ private:
   static void stack_frame_set_values(COMMAND_ARGS);
 
   static void stack_frame_getter_setter(COMMAND_ARGS, bool);
-  static void read_local_to_address(PacketInputStream *, JavaFrame *,
-                                    jint, jbyte);
-  static void write_local_from_address(PacketOutputStream *,
+  static bool read_local_to_address(PacketInputStream *, PacketOutputStream *,
+                                    JavaFrame *, jint, jbyte);
+  static bool write_local_from_address(PacketOutputStream *,
                                        JavaFrame *,
                                        jint, jbyte, jboolean write_tag, 
                                        jboolean bogus_object);

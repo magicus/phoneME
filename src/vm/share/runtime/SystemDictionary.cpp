@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -83,7 +84,6 @@ ReturnOop SystemDictionary::find_class_in_dictionary(ObjArray *dictionary,
                                  bool lookup_only) {
 
   juint hash_value = loader_ctx->class_name->hash();
-
   for (InstanceClass::Raw cl = bucket_for(dictionary, hash_value); 
        !cl.is_null(); 
        cl = cl().next()) {
@@ -136,12 +136,14 @@ ReturnOop SystemDictionary::fetch_buffer(LoaderContext *loader_ctx JVM_TRAPS) {
 
   if (fd.not_null()) {
     if (UseROM && 
-        ClassFileParser::is_package_restricted(loader_ctx->class_name)) {
+        ClassFileParser::is_package_restricted(loader_ctx->class_name) 
+        && !(fd().flags() & SYSTEM_CLASSPATH)) {
       Throw::class_not_found(loader_ctx->class_name, ErrorOnFailure 
                              JVM_THROW_0);
     }
     Buffer::Raw result = fd().read_completely(JVM_SINGLE_ARG_CHECK_0);
     if (result.not_null()) {
+      loader_ctx->is_system_class = fd().flags() & SYSTEM_CLASSPATH;      
       return result;
     }
   }
@@ -225,7 +227,7 @@ ReturnOop SystemDictionary::load_system_class(LoaderContext *loader_ctx JVM_TRAP
     if (ic.is_null()) {
       UsingFastOops level_3;
       // Load the buffer (from class file or from JAR), if necessary
-      Buffer::Fast buffer = cur_class().buffer();
+      Buffer::Fast buffer = cur_class().buffer();      
       if (buffer.is_null()) {
           buffer = fetch_buffer(&top_ctx JVM_CHECK_0);
           cur_class().set_buffer(&buffer);
@@ -330,7 +332,7 @@ void SystemDictionary::update_fake_class(InstanceClass *real_cls,
       if (tm().is_being_initialized_mirror()) {
         tm = TaskMirror::clinit_list_lookup(&ac);
         if (tm.is_null()) {
-          ac().setup_task_mirror(0, false JVM_CHECK);
+          ac().setup_task_mirror(0, 0, false JVM_CHECK);
         }
       }
       // Need to dance around this problem: when we created the fake class
@@ -346,6 +348,7 @@ void SystemDictionary::update_fake_class(InstanceClass *real_cls,
                                            Universe::task_class_init_marker());
       }
       real_cls->setup_task_mirror(real_cls->static_field_size(),
+                                  real_cls->vtable_length(),
                                   Universe::before_main() ? false : true
                                   JVM_CHECK);
     }

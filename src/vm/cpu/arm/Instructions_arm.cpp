@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,12 +25,4 @@
  */
 
 #include "incls/_precompiled.incl"
-
-#if !ENABLE_THUMB_COMPILER
-#if ENABLE_COMPILER
-
 #include "incls/_Instructions_arm.cpp.incl"
-
-#endif
-
-#endif /*#if !ENABLE_THUMB_COMPILER*/

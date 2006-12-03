@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -492,8 +493,7 @@ ReturnOop TypeSymbol::parse_array_class_name(Symbol *external_name JVM_TRAPS) {
   TypeArray::Fast byte_array = Universe::new_byte_array(length JVM_CHECK_0);
   jvm_memcpy(byte_array().base_address(), external_name->base_address(),
              length);
-
-  return parse(&byte_array JVM_CHECK_0);
+  return parse(&byte_array JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 BasicType TypeSymbol::object_basic_type_at(int index) const {
@@ -509,7 +509,8 @@ BasicType TypeSymbol::object_basic_type_at(int index) const {
 }
 
 #if !defined(PRODUCT) || ENABLE_WTK_PROFILER || ENABLE_PERFORMANCE_COUNTERS \
-   || ENABLE_JVMPI_PROFILE// Print the type at the given index
+   || ENABLE_JVMPI_PROFILE || USE_AOT_COMPILATION
+   // Print the type at the given index
 int TypeSymbol::print_type_at(Stream* st, int index) {
   juint byte0 = byte_at(index);
   if (byte0 < 128) {
@@ -521,11 +522,8 @@ int TypeSymbol::print_type_at(Stream* st, int index) {
     // If class_id is in ROM then this TypeSymbol is valid in 
     // current task.  If class_id >= ROM classes then this TypeSymbol
     // class is valid in the task it was defined in
-    int task_id;
-    if (ObjectHeap::contains_live(obj())) {
-      task_id = ObjectHeap::owner_task_id(obj());
-    } else {
-      // IMPL_NOTE: Monet -- find out which task's bundle owns this object
+    int task_id = ObjectHeap::owner_task_id( obj() );
+    if( task_id == MAX_TASKS ) {
       task_id = TaskContext::current_task_id();
     }
     TaskGCContext tmp(task_id);

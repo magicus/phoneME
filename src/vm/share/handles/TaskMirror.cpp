@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -40,7 +41,7 @@ int TaskMirror::generate_fieldmap(TypeArray* field_map) {
   field_map->byte_at_put(map_index++, T_OBJECT);
   // _containing_class
   field_map->byte_at_put(map_index++, T_OBJECT);
-  // _statics_end_offset
+  // _object_size_offset
   field_map->byte_at_put(map_index++, T_INT);
   // _next_in_clinit_list
   field_map->byte_at_put(map_index++, T_OBJECT);
@@ -53,13 +54,13 @@ int TaskMirror::generate_fieldmap(TypeArray* field_map) {
 }
 #endif /* #if ENABLE_ROM_GENERATOR */
 
-ReturnOop TaskMirror::clinit_list_lookup(Oop *containing_class){
+ReturnOop TaskMirror::clinit_list_lookup(const Oop *containing_class){
   TaskMirror::Raw found = Task::current()->clinit_list();
   return clinit_list_lookup(&found, containing_class);
 }
 
 ReturnOop TaskMirror::clinit_list_lookup(TaskMirror *found,
-                                         Oop *containing_class) {
+                                         const Oop *containing_class) {
   while(found->not_null()){
     if (containing_class->equals(found->containing_class())){
       return found->obj();
@@ -167,8 +168,8 @@ void TaskMirror::iterate(OopVisitor* visitor) {
   }
 
   {
-    NamedField id("statics_end_offset", true);
-    visitor->do_int(&id, statics_end_offset_offset(), true);
+    NamedField id("object_size_offset", true);
+    visitor->do_int(&id, object_size_offset(), true);
   }
 
   {
