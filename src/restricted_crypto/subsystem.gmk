@@ -1,5 +1,5 @@
 #
-# @(#)subsystem.gmk	1.14 06/06/16 @(#)
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -86,7 +86,7 @@ SUBSYSTEM_SECURITY_EXTRA_INCLUDES += \
 # and path where the file is located
 #
 ROMGEN_INCLUDE_PATHS += $(RESTRICTED_CRYPTO_DIR)/src/restricted_crypto/
-ROMGEN_CFG_FILES     += crypto_rom.config
+ROMGEN_CFG_FILES     += $(CRYPTO_ROMGEN_FILE)
 
 # Build output directories
 
@@ -100,11 +100,15 @@ CRYPTO_OBJS = $(patsubst %.c,$(OBJ_DIR)/%.o, \
   $(filter %.c,$(R_CRYPTO_NATIVE_FILES)))
 
 $(CRYPTO_LIB): $(CRYPTO_OBJS) $(CRYPTO_LIB_DIR)
-	@ar -r $(CRYPTO_LIB) `$(call fixcygpath, $(CRYPTO_OBJS))`
-	@ranlib $(CRYPTO_LIB)
+	@$(CREATE_LIB) $(LIB_OUTPUT)$(CRYPTO_LIB) \
+                `$(call fixcygpath, $(CRYPTO_OBJS))`
 
-crypto_binaries:: $(CRYPTO_PACKAGE_DIR) $(CRYPTO_CLASSES) $(CRYPTO_LIB)
+crypto_binaries:: $(CRYPTO_PACKAGE_DIR) $(CRYPTO_CLASSES) $(CRYPTO_LIB) \
+  $(RESTRICTED_CRYPTO_DIR)/src/restricted_crypto/$(CRYPTO_ROMGEN_FILE)  
 	@cp -f $(CRYPTO_CLASSES) $(CRYPTO_PACKAGE_DIR)
+	@cp -f \
+         $(RESTRICTED_CRYPTO_DIR)/src/restricted_crypto/$(CRYPTO_ROMGEN_FILE) \
+         $(CRYPTO_OUTPUT_DIR)
 
 clean_crypto:
 	-@rm -fr $(CRYPTO_OUTPUT_DIR)

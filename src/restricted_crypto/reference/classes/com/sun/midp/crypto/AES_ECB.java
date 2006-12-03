@@ -1,5 +1,5 @@
 /*
- * @(#)AES_ECB.java	1.20 06/06/15 @(#)
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -177,7 +177,7 @@ public class AES_ECB extends BlockCipherBase {
     void initKey(byte[] data, int mode) throws InvalidKeyException {
 
         // Min key 128 bits, max key 256 bits
-        if (data.length < 16 || data.length > 32) {
+        if (data.length != 16 && data.length != 24 && data.length != 32) {
             throw new InvalidKeyException();
         }
 
