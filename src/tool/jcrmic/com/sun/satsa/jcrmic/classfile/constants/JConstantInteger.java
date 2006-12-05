@@ -1,5 +1,5 @@
 /*
- * @(#)JConstantInteger.java	1.4 04/12/06 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

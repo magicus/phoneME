@@ -1,5 +1,5 @@
 /*
- * @(#)ACSlot.java	1.8 06/04/05 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,18 +26,33 @@
 package com.sun.satsa.acl;
 
 import java.io.IOException;
-import com.sun.midp.security.*;
 
 import java.util.Vector;
 import com.sun.satsa.util.*;
 
 import com.sun.satsa.util.pkcs15.*;
+import com.sun.satsa.security.SecurityInitializer;
 import com.sun.midp.io.j2me.apdu.*;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+import com.sun.midp.security.SecurityToken;
+
 import javax.microedition.io.ConnectionNotFoundException;
 /**
  * This class represent the ACL Card slot abstraction
  */
-public class ACSlot implements ImplicitlyTrustedClass {
+public class ACSlot{
+
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
+    /** This class has a different security domain than the MIDlet suite */
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
+
     /**
      * Value of OID from the spceification (A.4.2.1 Location of Access
      * Control Files)
@@ -99,8 +114,6 @@ public class ACSlot implements ImplicitlyTrustedClass {
     private AclFileSystem files;
     /** Connection object. */
     private static Connection apdu;
-    /** This class has a different security domain than the MIDlet suite. */
-    private static SecurityToken classSecurityToken;
     /** Indicates if all permissions granted */
     private boolean allGranted;
     /** Indicates if all permissions revoked */
@@ -129,19 +142,6 @@ public class ACSlot implements ImplicitlyTrustedClass {
     private ACSlot(boolean allGranted) {
         this.allGranted = allGranted;
         this.allRevoked = !allGranted;
-    }
-
-    /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class.
-     */
-    public void initSecurityToken(SecurityToken token) {
-        if (classSecurityToken != null) {
-            return;
-        }
-        classSecurityToken = token;
     }
 
     /**

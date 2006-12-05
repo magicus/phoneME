@@ -1,5 +1,5 @@
 /*
- * @(#)carddevice_kni.c	1.18 06/04/26 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -269,6 +269,9 @@ Java_com_sun_cardreader_PlatformCardDevice_reset0() {
     jint retcode;
     jsize atr_length;
     jbyte *atr_buffer;
+    MidpReentryData* info;
+    void *context = NULL;
+    JSR177_STATUSCODE status_code;
     
     KNI_StartHandles(1);
     KNI_DeclareHandle(atr_handle);
@@ -278,6 +281,8 @@ Java_com_sun_cardreader_PlatformCardDevice_reset0() {
         retcode = -1;
         goto end;
     }
+    info = (MidpReentryData*)SNI_GetReentryData(NULL);
+    
     KNI_GetParameterAsObject(1, atr_handle);
     if (KNI_IsNullHandle(atr_handle)) {
         atr_buffer = NULL;
@@ -287,7 +292,17 @@ Java_com_sun_cardreader_PlatformCardDevice_reset0() {
         atr_buffer = SNI_GetRawArrayPointer(atr_handle);
     }
     
-    if (jsr177_reset(atr_buffer, &atr_length) != JSR177_STATUSCODE_OK) {
+    if (info == NULL) {
+        status_code = jsr177_reset_start(atr_buffer, &atr_length, &context);
+    } else {
+        context = info->pResult;
+        status_code = jsr177_reset_finish(atr_buffer, &atr_length, context);
+    }
+    if (status_code == JSR177_STATUSCODE_WOULD_BLOCK) {
+        midp_thread_wait(CARD_READER_DATA_SIGNAL, SIGNAL_RESET, context);
+        goto end;
+    }
+    if (status_code != JSR177_STATUSCODE_OK) {
         retcode = -1;
     } else {
         retcode = atr_length;
@@ -312,6 +327,9 @@ Java_com_sun_cardreader_PlatformCardDevice_cmdXfer0() {
     jint retcode;
     jsize tx_length, rx_length;
     jbyte *tx_buffer, *rx_buffer;
+    MidpReentryData* info;
+    void *context = NULL;
+    JSR177_STATUSCODE status_code;
     
     KNI_StartHandles(2);
     KNI_DeclareHandle(request_handle);
@@ -322,6 +340,7 @@ Java_com_sun_cardreader_PlatformCardDevice_cmdXfer0() {
         retcode = -1;
         goto end;
     }
+    info = (MidpReentryData*)SNI_GetReentryData(NULL);
     
     KNI_GetParameterAsObject(1, request_handle);
     if (KNI_IsNullHandle(request_handle)) {
@@ -352,8 +371,23 @@ Java_com_sun_cardreader_PlatformCardDevice_cmdXfer0() {
         }
     }
 
-    if (jsr177_xfer_data(tx_buffer, tx_length, rx_buffer, &rx_length) 
-            != JSR177_STATUSCODE_OK) {
+    if (info == NULL) {
+        status_code = jsr177_xfer_data_start(tx_buffer, 
+                                             tx_length, 
+                                             rx_buffer, 
+                                             &rx_length, &context);
+    } else {
+        context = info->pResult;
+        status_code = jsr177_xfer_data_finish(tx_buffer, 
+                                              tx_length, 
+                                              rx_buffer, 
+                                              &rx_length, context);
+    }
+    if (status_code == JSR177_STATUSCODE_WOULD_BLOCK) {
+        midp_thread_wait(CARD_READER_DATA_SIGNAL, SIGNAL_XFER, context);
+        goto end;
+    }
+    if (status_code != JSR177_STATUSCODE_OK) {
         retcode = -1;
     } else {
         retcode = rx_length;
