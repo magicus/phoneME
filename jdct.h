@@ -100,7 +100,7 @@ typedef FAST_FLOAT FLOAT_MULT_TYPE; /* preferred floating type */
 #define RANGE_MASK  (MAXJSAMPLE * 4 + 3) /* 2 bits wider than legal samples */
 
 
-/* Short forms of external names for systems with brain-damaged linkers. */
+/* Short forms of external names for systems with some linkers. */
 
 #ifdef NEED_SHORT_EXTERNAL_NAMES
 #define jm_jpeg_fdct_islow		jFDislow
@@ -171,7 +171,7 @@ EXTERN(void) jm_jpeg_idct_1x1
  * This macro is used only when the two inputs will actually be no more than
  * 16 bits wide, so that a 16x16->32 bit multiply can be used instead of a
  * full 32x32 multiply.  This provides a useful speedup on many machines.
- * Unfortunately there is no way to specify a 16x16->32 multiply portably
+ * Unfortunately it is complex to specify a 16x16->32 multiply portably
  * in C, but some C compilers will do the right thing if you provide the
  * correct combination of casts.
  */

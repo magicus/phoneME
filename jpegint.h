@@ -313,7 +313,7 @@ struct jpeg_color_quantizer {
 #endif
 
 
-/* Short forms of external names for systems with brain-damaged linkers. */
+/* Short forms of external names for systems with some linkers. */
 
 #ifdef NEED_SHORT_EXTERNAL_NAMES
 #define jm_jinit_compress_master	jICompress

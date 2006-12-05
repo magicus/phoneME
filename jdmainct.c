@@ -45,7 +45,7 @@
  * buffer; any full-height buffers will be found inside the coefficient or
  * postprocessing controllers.  Nonetheless, the main controller is not
  * trivial.  Its responsibility is to provide context rows for upsampling/
- * rescaling, and doing this in an efficient fashion is a bit non-trivial.
+ * rescaling, and doing this in an efficient fashion is a bit complex.
  *
  * Postprocessor input data is counted in "row groups".  A row group
  * is defined to be (v_samp_factor * DCT_scaled_size / min_DCT_scaled_size)
@@ -125,7 +125,7 @@
  * situation each iMCU row provides only one row group so the buffering logic
  * must be different (eg, we must read two iMCU rows before we can emit the
  * first row group).  For now, we simply do not support providing context
- * rows when min_DCT_scaled_size is 1.  That combination seems unlikely to
+ * rows when min_DCT_scaled_size is 1. Need revisit : if that combination may
  * be worth providing --- if someone wants a 1/8th-size preview, they probably
  * want it quick and dirty, so a context-free upsampler is sufficient.
  */

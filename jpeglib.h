@@ -850,7 +850,7 @@ typedef JMETHOD(boolean, jpeg_marker_parser_method, (j_decompress_ptr cinfo));
 #endif
 
 
-/* Short forms of external names for systems with brain-damaged linkers.
+/* Short forms of external names for systems with some linkers.
  * We shorten external names to be unique in the first six letters, which
  * is good enough for all known systems.
  * (If your compiler itself needs names to be unique in less than 15 
@@ -1079,7 +1079,7 @@ EXTERN(boolean) jm_jpeg_resync_to_restart JPP((j_decompress_ptr cinfo,
 #define JPEG_COM	0xFE	/* COM marker code */
 
 
-/* If we have a brain-damaged compiler that emits warnings (or worse, errors)
+/* If we have a some compiler that emits warnings (or worse, errors)
  * for structure definitions that are never filled in, keep it quiet by
  * supplying dummy definitions for the various substructures.
  */

@@ -32,7 +32,7 @@
  * progressive decoder (jdphuff.c).  No other modules need to see these.
  */
 
-/* Short forms of external names for systems with brain-damaged linkers. */
+/* Short forms of external names for systems with some linkers. */
 
 #ifdef NEED_SHORT_EXTERNAL_NAMES
 #define jm_jpeg_make_d_derived_tbl	jMkDDerived
