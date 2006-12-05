@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -130,7 +131,15 @@ public abstract class MessageObject implements Message {
 	setAddress(reference.getAddress());
     }
 
-    // JAVADOC COMMENT ELIDED
+    /**
+     * Returns the timestamp indicating when this message has been
+     * sent.  
+     * 
+     * @return Date indicating the timestamp in the message or
+     *         <code>null</code> if the timestamp is not set.
+     *
+     * @see #setTimeStamp
+     */
     public abstract java.util.Date getTimestamp();
 
     /**

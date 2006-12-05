@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -27,6 +28,7 @@
 #define _JSR120_CBS_LISTENERS_H
 
 #include <jsr120_cbs_structs.h>
+#include <suitestore_common.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,33 +48,33 @@ void jsr120_cbs_message_arrival_notifier(CbsMessage* message);
  *
  * @param msgID The CBS message identifier to be registered.
  *
- * @return <code>JSR120_OK</code> if the message identifier is registered;
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if the message identifier is registered;
+ *     <code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_cbs_is_midlet_msgID_registered(jchar msgID);
+WMA_STATUS jsr120_cbs_is_midlet_msgID_registered(jchar msgID);
 
 /**
- * Registers the CBS message identifier for the calling MIDlet. 
+ * Registers the CBS message identifier for the calling MIDlet.
  *
  * @param msgID The message identifier to be registered.
  * @param msid The MIDlet suite identifier.
  * @param handle A handle to the open CBS connection.
  *
- * @return <code>JSR120_OK</code> if the message identifier is registered;
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if the message identifier is registered;
+ *     <code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_cbs_register_midlet_msgID(jchar msgID,
-    unsigned char* msid, jint handle);
+WMA_STATUS jsr120_cbs_register_midlet_msgID(jchar msgID,
+    SuiteIdType msid, jint handle);
 
 /**
  * Unregisters the CBS message identifier for the calling MIDlet.
  *
  * @param msgID The message identifier to be unregistered.
  *
- * @return <code>JSR120_OK</code> if the message identifier is unregistered;
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if the message identifier is unregistered;
+ *     <code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_cbs_unregister_midlet_msgID(jchar msgID);
+WMA_STATUS jsr120_cbs_unregister_midlet_msgID(jchar msgID);
 
 /**
  * Checks whether the CBS message identifier has been registered by the push
@@ -80,10 +82,10 @@ JSR120_STATUS jsr120_cbs_unregister_midlet_msgID(jchar msgID);
  *
  * @param msgID The message identifier to be registered.
  *
- * @return <code>JSR120_OK</code> if the message identifier is registered;
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if the message identifier is registered;
+ *     <code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_cbs_is_push_msgID_registered(jchar msgID);
+WMA_STATUS jsr120_cbs_is_push_msgID_registered(jchar msgID);
 
 /**
  * Registers the CBS message identifier with the push registry.
@@ -92,10 +94,10 @@ JSR120_STATUS jsr120_cbs_is_push_msgID_registered(jchar msgID);
  * @param msid The MIDlet suite identifier.
  * @param handle A handle to the open CBS connection.
  *
- * @return <code>JSR120_OK</code> if the message identifier is registered;
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if the message identifier is registered;
+ *     <code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_cbs_register_push_msgID(jchar msgID, unsigned char *msid,
+WMA_STATUS jsr120_cbs_register_push_msgID(jchar msgID, SuiteIdType msid,
     jint handle);
 
 /**
@@ -103,10 +105,10 @@ JSR120_STATUS jsr120_cbs_register_push_msgID(jchar msgID, unsigned char *msid,
  *
  * @param msgID The message identifier to be unregistered.
  *
- * @return <code>JSR120_OK</code> if the message identifier is unregistered;
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if the message identifier is unregistered;
+ *     <code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_cbs_unregister_push_msgID(jchar msgID);
+WMA_STATUS jsr120_cbs_unregister_push_msgID(jchar msgID);
 
 /**
  * Unblocks the thread that matches the specified handle
@@ -118,7 +120,7 @@ JSR120_STATUS jsr120_cbs_unregister_push_msgID(jchar msgID);
  * @result returns true if a matching thread is unblocked,
  *                 false otherwise
  */
-JSR120_STATUS jsr120_cbs_unblock_thread(jint handle, jint waitingFor);
+WMA_STATUS jsr120_cbs_unblock_thread(jint handle, jint waitingFor);
 
 /**
  * Deletes all CBS messages cached in the pool that match the MIDlet suite
@@ -126,7 +128,7 @@ JSR120_STATUS jsr120_cbs_unblock_thread(jint handle, jint waitingFor);
  *
  * @param msid The MIDlet suite identifier.
  */
-void jsr120_cbs_delete_midlet_suite_msg(unsigned char *msid);
+void jsr120_cbs_delete_midlet_suite_msg(SuiteIdType msid);
 
 /**
  * Deletes all CBS messages cached in the pool by the push subsystem, that match
@@ -134,7 +136,7 @@ void jsr120_cbs_delete_midlet_suite_msg(unsigned char *msid);
  *
  * @param msid The MIDlet suite identifier.
  */
-void jsr120_cbs_delete_push_msg(unsigned char *msid); 
+void jsr120_cbs_delete_push_msg(SuiteIdType msid);
 
 #ifdef __cplusplus
 }

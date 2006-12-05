@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -32,6 +33,7 @@
 # other def. (like VPATH)
 #
 ######################################################################
+
 
 # Adds to global SUBSYSTEMS list
 #
@@ -91,6 +93,11 @@ MODULE_JSR_120_COMMON_JAVA_FILES = \
     $(JSR_120_DIR)/src/core/common/classes/javax/wireless/messaging/BinaryMessage.java \
     $(JSR_120_DIR)/src/core/common/classes/javax/wireless/messaging/TextMessage.java
 
+ifneq ($(USE_NATIVE_AMS), true)
+MODULE_JSR_120_COMMON_JAVA_FILES += \
+    $(JSR_120_DIR)/src/core/common/classes/com/sun/midp/wma/ProtocolPushImpl.java
+endif
+
 ifeq ($(DELETE_WMA_MSGS), true)
 #
 # If messages are to be deleted, include a WMACleanupMonitor implementation
@@ -108,6 +115,7 @@ MODULE_JSR_120_COMMON_JAVA_FILES += \
 endif
 
 MODULE_JSR_120_SMS_JAVA_FILES = \
+    $(JSR_120_DIR)/src/protocol/share/com/sun/midp/io/j2me/ProtocolBase.java \
     $(JSR_120_DIR)/src/protocol/sms/classes/com/sun/midp/io/j2me/sms/BinaryObject.java \
     $(JSR_120_DIR)/src/protocol/sms/classes/com/sun/midp/io/j2me/sms/Protocol.java \
     $(JSR_120_DIR)/src/protocol/sms/classes/com/sun/midp/io/j2me/sms/MessageObject.java \
@@ -173,7 +181,6 @@ endif
 #
 ROMGEN_INCLUDE_PATHS += $(JSR_120_DIR)/src/config/common
 ROMGEN_CFG_FILES     += jsr120_rom.cfg
-
 
 # Platform
 #

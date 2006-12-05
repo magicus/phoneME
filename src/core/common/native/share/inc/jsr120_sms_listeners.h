@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -28,6 +29,7 @@
 
 #include <jsr120_types.h>
 #include <jsr120_sms_structs.h>
+#include <suitestore_common.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,34 +57,34 @@ void jsr120_sms_message_sent_notifier();
  *
  * @param port SMS port to be registered
  *
- * @result returns <code>JSR120_OK</code> if port is registered, 
- *                 <code>JSR120_ERR</code> otherwise.
+ * @result returns <code>WMA_OK</code> if port is registered,
+ *                 <code>WMA_ERR</code> otherwise.
  *
  */
-JSR120_STATUS jsr120_is_sms_midlet_port_registered(jchar port);
+WMA_STATUS jsr120_is_sms_midlet_port_registered(jchar port);
 
 /**
- * Registers the specified SMS port for the calling midlet 
+ * Registers the specified SMS port for the calling midlet
  *
  * @param port SMS port to be registered
  * @param msid Midlet Suite ID
  * @param handle A handle to the open SMS connection
  *
- * @result returns <code>JSR120_OK</code> if port is registered, 
- *                 <code>JSR120_ERR</code> otherwise.
+ * @result returns <code>WMA_OK</code> if port is registered,
+ *                 <code>WMA_ERR</code> otherwise.
  */
-JSR120_STATUS jsr120_register_sms_midlet_port(jchar port, 
-                        unsigned char* msid, jint handle);
+WMA_STATUS jsr120_register_sms_midlet_port(jchar port,
+                        SuiteIdType msid, jint handle);
 
 /**
- * Unregister the specified SMS port for the calling midlet 
+ * Unregister the specified SMS port for the calling midlet
  *
  * @param port SMS port to be unregistered
  *
- * @result returns <code>JSR120_OK</code> if port is unregistered, 
- *                 <code>JSR120_ERR</code> otherwise.
+ * @result returns <code>WMA_OK</code> if port is unregistered,
+ *                 <code>WMA_ERR</code> otherwise.
  */
-JSR120_STATUS jsr120_unregister_sms_midlet_port(jchar port);
+WMA_STATUS jsr120_unregister_sms_midlet_port(jchar port);
 
 /**
  * Checks whether the specified port has been registered by the
@@ -90,34 +92,34 @@ JSR120_STATUS jsr120_unregister_sms_midlet_port(jchar port);
  *
  * @param port SMS port to be registered
  *
- * @result returns <code>JSR120_OK</code> if port is registered, 
- *                 <code>JSR120_ERR</code> otherwise.
+ * @result returns <code>WMA_OK</code> if port is registered,
+ *                 <code>WMA_ERR</code> otherwise.
  *
  */
-JSR120_STATUS jsr120_is_sms_push_port_registered(jchar port);
+WMA_STATUS jsr120_is_sms_push_port_registered(jchar port);
 
 /**
- * Registers the specified SMS port for the Push registry 
+ * Registers the specified SMS port for the Push registry
  *
  * @param port SMS port to be registered
  * @param msid Midlet Suite ID
  * @param handle A handle to the open SMS connection
  *
- * @result returns <code>JSR120_OK</code> if port is registered, 
- *                 <code>JSR120_ERR</code> otherwise.
+ * @result returns <code>WMA_OK</code> if port is registered,
+ *                 <code>WMA_ERR</code> otherwise.
  */
-JSR120_STATUS jsr120_register_sms_push_port(jchar port, 
-                     unsigned char* msid, jint handle);
+WMA_STATUS jsr120_register_sms_push_port(jchar port,
+                     SuiteIdType msid, jint handle);
 
 /**
- * Unregister the specified SMS port for the Push registry 
+ * Unregister the specified SMS port for the Push registry
  *
  * @param port SMS port to be unregistered
  *
- * @result returns <code>JSR120_OK</code> if port is unregistered, 
- *                 <code>JSR120_ERR</code> otherwise.
+ * @result returns <code>WMA_OK</code> if port is unregistered,
+ *                 <code>WMA_ERR</code> otherwise.
  */
-JSR120_STATUS jsr120_unregister_sms_push_port(jchar port);
+WMA_STATUS jsr120_unregister_sms_push_port(jchar port);
 
 /**
  * Unblocks the thread that matches the specified handle
@@ -126,10 +128,10 @@ JSR120_STATUS jsr120_unregister_sms_push_port(jchar port);
  * @param handle handle to open SMS connection
  * @param waitingFor signal that thread is waiting for
  *
- * @result returns <code>JSR120_OK</code> if a matching thread is unblocked, 
- *                 <code>JSR120_ERR</code> otherwise.
+ * @result returns <code>WMA_OK</code> if a matching thread is unblocked,
+ *                 <code>WMA_ERR</code> otherwise.
  */
-JSR120_STATUS jsr120_sms_unblock_thread(jint handle, jint waitingFor);
+WMA_STATUS jsr120_sms_unblock_thread(jint handle, jint waitingFor);
 
 /**
  * Delete all SMS messages cached in the pool for the specified
@@ -138,7 +140,7 @@ JSR120_STATUS jsr120_sms_unblock_thread(jint handle, jint waitingFor);
  * @param msid Midlet Suite ID.
  *
  */
-void jsr120_sms_delete_midlet_suite_msg(unsigned char *msid);
+void jsr120_sms_delete_midlet_suite_msg(SuiteIdType msid);
 
 /**
  * Delete all SMS messages cached in the pool for the specified
@@ -147,7 +149,7 @@ void jsr120_sms_delete_midlet_suite_msg(unsigned char *msid);
  * @param msid Midlet Suite ID.
  *
  */
-void jsr120_sms_delete_push_msg(unsigned char *msid);
+void jsr120_sms_delete_push_msg(SuiteIdType msid);
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -354,7 +355,7 @@ public class TCKTest {
         msg = new MultipartObject(address);
 
 /*
- * IMPL_NOTE: MessageConnection sets the "from" address.
+ * RFC: MessageConnection sets the "from" address.
         String fromAddress = "mms://+1234567:33301";
         System.out.println("fromAddress="+fromAddress);
         // ((MultipartObject)msg).addAddress("from", fromAddress);
@@ -370,7 +371,7 @@ public class TCKTest {
          * The Content-ID part is the phone number, while the msg-id
          * part is the application ID [RFC 2045].
          *
-         * IMPL_NOTE: Need verification of syntax.
+         * RFC: Need verification of syntax.
          */
         String contentID = "Content-ID:" + appID;
 

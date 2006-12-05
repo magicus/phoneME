@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -176,13 +177,13 @@ void jsr120_sms_delete_msg(SmsMessage* sms) {
  *
  * @param message The SMS message to be added.
  *
- * @return <code>JSR120_OK</code> if the message was successfully added to the pool;
- *	<code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if the message was successfully added to the pool;
+ *	<code>WMA_ERR</code>, otherwise.
  *
  */
-JSR120_STATUS jsr120_sms_pool_add_msg(SmsMessage* message) {
+WMA_STATUS jsr120_sms_pool_add_msg(SmsMessage* message) {
     (void)message;
-    return JSR120_ERR;
+    return WMA_ERR;
 }
 
 /**
@@ -193,13 +194,13 @@ JSR120_STATUS jsr120_sms_pool_add_msg(SmsMessage* message) {
  * @param smsPort the destination SMS port to look for
  * @param out Space for the message.
  *
- * @return <code>JSR120_OK</code> if a message could be located;
- *	<code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if a message could be located;
+ *	<code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_sms_pool_get_next_msg(jchar smsPort, SmsMessage* out) {
+WMA_STATUS jsr120_sms_pool_get_next_msg(jchar smsPort, SmsMessage* out) {
     (void)smsPort;
     (void)out;
-    return JSR120_ERR;
+    return WMA_ERR;
 }
 
 /**
@@ -223,12 +224,12 @@ SmsMessage* jsr120_sms_pool_retrieve_next_msg(jchar smsPort) {
  *
  * @param smsPort The SMS port to be matched.
  *
- * @return <code>JSR120_OK</code> when a message was removed;
- *	<code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> when a message was removed;
+ *	<code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_sms_pool_remove_next_msg(jchar smsPort) {
+WMA_STATUS jsr120_sms_pool_remove_next_msg(jchar smsPort) {
     (void)smsPort;
-    return JSR120_ERR;
+    return WMA_ERR;
 }
 
 /**
@@ -256,9 +257,9 @@ SmsMessage* jsr120_sms_pool_peek_next_msg(jchar smsPort) {
 /**
  * Deletes the oldest SMS message.
  *
- * @return <code>JSR120_OK</code> if the oldest message was found and deleted;
- *	<code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if the oldest message was found and deleted;
+ *	<code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_sms_pool_delete_next_msg() {
-    return JSR120_ERR;
+WMA_STATUS jsr120_sms_pool_delete_next_msg() {
+    return WMA_ERR;
 }

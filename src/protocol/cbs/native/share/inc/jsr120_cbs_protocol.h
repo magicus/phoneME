@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -68,11 +69,11 @@ extern "C" {
  *
  * @param msgID The subscribed CBS message identifier.
  *
- * @return Returns enum JSR120_STATUS, JSR120_OK on success or
- *	   JSR120_ERR on error.
+ * @return Returns enum WMA_STATUS, WMA_OK on success or
+ *	   WMA_ERR on error.
  *
  */
-JSR120_STATUS jsr120_add_cbs_listening_msgID(jchar msgID);
+WMA_STATUS jsr120_add_cbs_listening_msgID(jchar msgID);
 
 /**
  * Clear a registered CBS Message Identifier.
@@ -83,11 +84,11 @@ JSR120_STATUS jsr120_add_cbs_listening_msgID(jchar msgID);
  *
  * @param msgID The unsubscribed CBS message identifier.
  *
- * @return Returns enum JSR120_STATUS, JSR120_OK on success or
- *	   JSR120_ERR on error.
+ * @return Returns enum WMA_STATUS, WMA_OK on success or
+ *	   WMA_ERR on error.
  *
  */
-JSR120_STATUS jsr120_remove_cbs_listening_msgID(jchar msgID);
+WMA_STATUS jsr120_remove_cbs_listening_msgID(jchar msgID);
 
 /**
  * Incoming CBS Message.
@@ -116,10 +117,10 @@ void jsr120_notify_incoming_cbs(jchar msgType, jchar msgID,
  * @param hasPort indicates if the message includes source or destination port number.
  * @param numSegments The number of message segments is returned here.
  *
- * @return Returns enum JSR120_STATUS, JSR120_OK on success or
- *	   JSR120_ERR on error.
+ * @return Returns enum WMA_STATUS, WMA_OK on success or
+ *	   WMA_ERR on error.
  */
-JSR120_STATUS jsr120_number_of_cbs_segments(unsigned char msgBuffer[], jint msgLen, jint msgType, 
+WMA_STATUS jsr120_number_of_cbs_segments(unsigned char msgBuffer[], jint msgLen, jint msgType, 
                                             jboolean hasPort, /*out*/jint *numSegments);
 
 

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -56,7 +57,7 @@ typedef struct {
     jlong timeStamp;
 
     /* GSM 7-bit alphabet, Unicode or 8-bit Binary. */
-    /* IMPL_NOTE: Make this ENCODING_TYPE instead of unsigned short? */
+    /* RFC: Make this ENCODING_TYPE instead of unsigned short? */
     jchar encodingType;
 
     /* The length of the incoming messsage body. */

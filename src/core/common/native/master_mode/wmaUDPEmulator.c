@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -29,6 +30,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
+#include <wmaInterface.h>
 #include <wmaSocket.h>
 #include <midp_properties_port.h>
 #include <wmaUDPEmulator.h>
@@ -72,7 +74,7 @@ extern "C" {
  * These are default values. Overriden with
  * com.sun.midp.io.j2me.sms.DatagramPortIn and
  * com.sun.midp.io.j2me.sms.DatagramPortOut properties
- * (see jsr120_wma20-gate/src/config/common/properties_jsr120.xml).
+ * (see jsr120_wma11-gate/src/config/common/properties_jsr120.xml).
  * smsInPortNumber also can be overriden with JSR_120_SMS_PORT
  * environment variable which takes precedence over value of the
  * property.
@@ -85,7 +87,7 @@ static void *smsHandle = NULL;
  * CBS protocol inbound physical ports and handles.
  * These are default values. Overriden with
  * com.sun.midp.io.j2me.cbs.DatagramPortIn property
- * (see jsr120_wma20-gate/src/config/common/properties_jsr120.xml).
+ * (see jsr120_wma11-gate/src/config/common/properties_jsr120.xml).
  * Also can be overriden with JSR_120_CBS_PORT
  * environment variable which takes precedence over value of the
  * property.
@@ -114,7 +116,7 @@ static void *mmsHandle = NULL;
  * Target host name to send outbound messages to (typically the host the
  * test suite is running on). Can be overriden with
  * com.sun.midp.io.j2me.wma.DatagramHost property
- * (see jsr120_wma20-gate/src/config/common/properties_jsr120.xml).
+ * (see jsr120_wma11-gate/src/config/common/properties_jsr120.xml).
  */
 static char* targetHost = NULL;
 static char* targetHostDefault = "wmadatagramhost";
@@ -216,30 +218,30 @@ MmsMessage* createMmsMessage(char* fromAddress, char* appID, char* replyToAppID,
  * @param protocol  A protocol type.
  * @param port  The port to be bound to the datagram traffic.
  *
- * @return <code>JSR120_NET_SUCCESS<code> if the port could be opened
- *     successfully; <code>JSR120_NET_IOERROR</code>, otherwise.
+ * @return <code>WMA_NET_SUCCESS<code> if the port could be opened
+ *     successfully; <code>WMA_NET_IOERROR</code>, otherwise.
  */
-JSR120_STATUS jsr120_datagram_open(JSR120_PROTOCOLS protocol, jint port) {
+WMA_STATUS jsr120_datagram_open(WMA_PROTOCOLS protocol, jint port) {
 
     jint fd;
     jint res;
     void *context;
 
-    res = pcsl_datagram_open_start(port, (void**)&fd, &context);
+    res = pcsl_datagram_open_start(port, (void**)(void*)&fd, &context);
 
     /*
-     * IMPL_NOTE: handle WOULDBLOCK
+     * Need revisit: handle WOULDBLOCK
      */
     if (res == PCSL_NET_SUCCESS) {
 
         /* Create WMASocket for receiving datagrams. */
-        if (protocol == JSR120_SMS_PROTOCOL) {
+        if (protocol == WMA_SMS_PROTOCOL) {
             smsHandle = (void *)wmaCreateSocketHandle(protocol, fd);
-        } else if (protocol == JSR120_CBS_PROTOCOL) {
+        } else if (protocol == WMA_CBS_PROTOCOL) {
             cbsHandle = (void *)wmaCreateSocketHandle(protocol, fd);
         } 
 #if ENABLE_JSR_205
-        else if (protocol == JSR120_MMS_PROTOCOL) {
+        else if (protocol == WMA_MMS_PROTOCOL) {
             mmsHandle = (void *)wmaCreateSocketHandle(protocol, fd);
         }
 #endif
@@ -248,15 +250,15 @@ JSR120_STATUS jsr120_datagram_open(JSR120_PROTOCOLS protocol, jint port) {
 
             pcsl_datagram_close_start((void*)fd, &context);
 
-            return JSR120_NET_INVALID;
+            return WMA_NET_INVALID;
         }
 
         pcsl_add_network_notifier((void*)fd, PCSL_NET_CHECK_READ);
         
-        return JSR120_NET_SUCCESS;
+        return WMA_NET_SUCCESS;
     }
     
-    return JSR120_NET_IOERROR;
+    return WMA_NET_IOERROR;
 }
 
 /**
@@ -264,26 +266,26 @@ JSR120_STATUS jsr120_datagram_open(JSR120_PROTOCOLS protocol, jint port) {
  *
  * @param protocol  A protocol type.
  *
- * @return  <code>JSR120_NET_SUCCESS</code> if the datagram port could be closed
- *          successfully; <code>JSR120_NET_IOERROR</code> if the protocol was
+ * @return  <code>WMA_NET_SUCCESS</code> if the datagram port could be closed
+ *          successfully; <code>WMA_NET_IOERROR</code> if the protocol was
  *          unknown, or if there was a problem when closing the port.
  */
-JSR120_STATUS jsr120_datagram_close(JSR120_PROTOCOLS protocol) {
+WMA_STATUS jsr120_datagram_close(WMA_PROTOCOLS protocol) {
     jint status = 0;
 
     /* The socket descriptor. */
     jint fd = -1;
 
     /* Shut down the inbound datagram port. */
-    if (protocol == JSR120_SMS_PROTOCOL) {
+    if (protocol == WMA_SMS_PROTOCOL) {
         fd = wmaGetRawSocketFD(smsHandle);
         wmaDestroySocketHandle(smsHandle);
-    } else if (protocol == JSR120_CBS_PROTOCOL) {
+    } else if (protocol == WMA_CBS_PROTOCOL) {
         fd = wmaGetRawSocketFD(cbsHandle);
         wmaDestroySocketHandle(cbsHandle);
     } 
 #if ENABLE_JSR_205
-      else if (protocol == JSR120_MMS_PROTOCOL) {
+      else if (protocol == WMA_MMS_PROTOCOL) {
         fd = wmaGetRawSocketFD(mmsHandle);
         wmaDestroySocketHandle(mmsHandle);
     }
@@ -295,34 +297,34 @@ JSR120_STATUS jsr120_datagram_close(JSR120_PROTOCOLS protocol) {
         status = pcsl_datagram_close_start((void*)fd, &context);
 
         /*
-         * IMPL_NOTE: handle WOULDBLOCK
+         * Need revisit: handle WOULDBLOCK
          */
         if (status == PCSL_NET_SUCCESS) {
 
-            return JSR120_NET_SUCCESS;
+            return WMA_NET_SUCCESS;
         }
     }
 
-    return JSR120_NET_IOERROR;
+    return WMA_NET_IOERROR;
 }
 
 /**
  * Common implementation between pcsl_datagram_read_start()
  * and pcsl_datagram_read_finish().
  *
- * @param protocol     A protocol type (e.g.: <code>JSR120_SMS_PROTOCOL</code>).
+ * @param protocol     A protocol type (e.g.: <code>WMA_SMS_PROTOCOL</code>).
  * @param pAddress     The network address from the datagram. 
  * @param port         The network port from the datagram.
  * @param buffer       The buffer for the bytes to be read.
  * @param length       The number of bytes to be read.
  * @param pBytesRead   The number of bytes read.
  *
- * @return  <code>JSR120_NET_SUCCESS</code> if the read was successful;
- *          <code>JSR120_NET_WOULDBLOCK</code> if ??;
- *          <code>JSR120_NET_INTERRUPTED</code> if ??;
- *          <code>JSR120_NET_IOERROR</code>, otherwise.
+ * @return  <code>WMA_NET_SUCCESS</code> if the read was successful;
+ *          <code>WMA_NET_WOULDBLOCK</code> if ??;
+ *          <code>WMA_NET_INTERRUPTED</code> if ??;
+ *          <code>WMA_NET_IOERROR</code>, otherwise.
  */
-JSR120_STATUS jsr120_datagram_read(JSR120_PROTOCOLS protocol,
+WMA_STATUS jsr120_datagram_read(WMA_PROTOCOLS protocol,
                                    unsigned char *pAddress,
                                    jint *port,
                                    char *buffer,
@@ -334,20 +336,20 @@ JSR120_STATUS jsr120_datagram_read(JSR120_PROTOCOLS protocol,
     jint status;
 
     /* Pick up the socket descriptor for the given protocol. */
-    if (protocol == JSR120_SMS_PROTOCOL) {
+    if (protocol == WMA_SMS_PROTOCOL) {
         fd = wmaGetRawSocketFD(smsHandle);
-    } else if (protocol == JSR120_CBS_PROTOCOL) {
+    } else if (protocol == WMA_CBS_PROTOCOL) {
         fd = wmaGetRawSocketFD(cbsHandle);
     } 
 #if ENABLE_JSR_205
-      else if (protocol == JSR120_MMS_PROTOCOL) {
+      else if (protocol == WMA_MMS_PROTOCOL) {
         fd = wmaGetRawSocketFD(mmsHandle);
     }
 #endif
 
     if (fd < 0) {
         /* Unknown protocol type. */
-        return JSR120_NET_IOERROR;
+        return WMA_NET_IOERROR;
     }
 
     /* Read the datagram packet. */
@@ -355,13 +357,13 @@ JSR120_STATUS jsr120_datagram_read(JSR120_PROTOCOLS protocol,
 
     switch (status) {
     case PCSL_NET_SUCCESS:
-        return JSR120_NET_SUCCESS;
+        return WMA_NET_SUCCESS;
     case PCSL_NET_WOULDBLOCK:
-        return JSR120_NET_WOULDBLOCK;
+        return WMA_NET_WOULDBLOCK;
     case PCSL_NET_INTERRUPTED:
-        return JSR120_NET_INTERRUPTED;
+        return WMA_NET_INTERRUPTED;
     default:
-        return JSR120_NET_IOERROR;
+        return WMA_NET_IOERROR;
     }
 
 }
@@ -372,7 +374,7 @@ JSR120_STATUS jsr120_datagram_read(JSR120_PROTOCOLS protocol,
  * MMS-specific at this time, because of the mmsOutPortNumber use.
  *
  * @param protocol The id of protocol this packet is associated with. As currently
- *     this function is MMS specific this should be JSR120_MMS_PROTOCOL
+ *     this function is MMS specific this should be WMA_MMS_PROTOCOL
  * @param outPort The datagram output port number.
  * @param handle A handle to the open network connection.
  * @param toAddr The address to which the datagrams will be sent (Unused).
@@ -385,7 +387,7 @@ JSR120_STATUS jsr120_datagram_read(JSR120_PROTOCOLS protocol,
  *     to this function related to the same operation
  */
 #if ENABLE_WMA_LOOPBACK == 0
-static JSR120_STATUS jsr205_datagram_write(JSR120_PROTOCOLS protocol, jint outPort, void* handle, char *toAddr,
+static WMA_STATUS jsr205_datagram_write(WMA_PROTOCOLS protocol, jint outPort, void* handle, char *toAddr,
     char* fromAddr, jint length, char* buf, jint *bytesWritten, jsr120_udp_emulator_context *context) {
 
     /** The maximum amount of data allowed within a network packet. */
@@ -404,7 +406,7 @@ static JSR120_STATUS jsr205_datagram_write(JSR120_PROTOCOLS protocol, jint outPo
     int packetBytesWritten = 0;
 
     /** Return status. */
-    JSR120_STATUS status = JSR120_NET_IOERROR;
+    WMA_STATUS status = WMA_NET_IOERROR;
 
     /** Status of low level operation. */
     int pcsl_status;
@@ -444,7 +446,7 @@ static JSR120_STATUS jsr205_datagram_write(JSR120_PROTOCOLS protocol, jint outPo
         switch (pcsl_status) {
         case PCSL_NET_SUCCESS:
             context->state = JSR120_UDP_EMULATOR_CONTEXT_STATE_GETHOSTBYNAME_DONE;
-            status = JSR120_NET_SUCCESS;
+            status = WMA_NET_SUCCESS;
             break;
         case PCSL_NET_WOULDBLOCK:
             context->state = JSR120_UDP_EMULATOR_CONTEXT_STATE_GETHOSTBYNAME_INPROGRESS;
@@ -452,13 +454,13 @@ static JSR120_STATUS jsr205_datagram_write(JSR120_PROTOCOLS protocol, jint outPo
             context->emulatorSocket =
                 wmaCreateSocketHandle(protocol,
                                       (int)context->pcsl_handle);
-            status = JSR120_NET_WOULDBLOCK;
+            status = WMA_NET_WOULDBLOCK;
             break;
         case PCSL_NET_INTERRUPTED:
-            status = JSR120_NET_INTERRUPTED;
+            status = WMA_NET_INTERRUPTED;
             break;
         default:
-            status = JSR120_NET_IOERROR;
+            status = WMA_NET_IOERROR;
         }
         break;
 
@@ -474,28 +476,28 @@ static JSR120_STATUS jsr205_datagram_write(JSR120_PROTOCOLS protocol, jint outPo
         switch (pcsl_status) {
         case PCSL_NET_SUCCESS:
             context->state = JSR120_UDP_EMULATOR_CONTEXT_STATE_GETHOSTBYNAME_DONE;
-            status = JSR120_NET_SUCCESS;
+            status = WMA_NET_SUCCESS;
             break;
         case PCSL_NET_WOULDBLOCK:
             /* still cannot get host name. */
-            status = JSR120_NET_WOULDBLOCK;
+            status = WMA_NET_WOULDBLOCK;
             break;
         case PCSL_NET_INTERRUPTED:
-            status = JSR120_NET_INTERRUPTED;
+            status = WMA_NET_INTERRUPTED;
             break;
         default:
-            status = JSR120_NET_IOERROR;
+            status = WMA_NET_IOERROR;
         }
         break;
 
     default:
         /* Continue with sendto operation. */
-        status = JSR120_NET_SUCCESS;
+        status = WMA_NET_SUCCESS;
         break;
     }
 
 
-    if (status == JSR120_NET_SUCCESS) {
+    if (status == WMA_NET_SUCCESS) {
         /*
          * We must be in JSR120_UDP_EMULATOR_CONTEXT_STATE_SENDTO state if we
          * managed to get here. So start/continue sending data
@@ -579,17 +581,17 @@ static JSR120_STATUS jsr205_datagram_write(JSR120_PROTOCOLS protocol, jint outPo
         switch (pcsl_status) {
         case PCSL_NET_SUCCESS:
             /* We are done */
-            status = JSR120_NET_SUCCESS;
+            status = WMA_NET_SUCCESS;
             break;
         case PCSL_NET_WOULDBLOCK:
             /* cannot send right now */
-            status = JSR120_NET_WOULDBLOCK;
+            status = WMA_NET_WOULDBLOCK;
             break;
         case PCSL_NET_INTERRUPTED:
-            status = JSR120_NET_INTERRUPTED;
+            status = WMA_NET_INTERRUPTED;
             break;
         default:
-            status = JSR120_NET_IOERROR;
+            status = WMA_NET_IOERROR;
         }
     }
 
@@ -631,7 +633,7 @@ static void load_var_char_env_prop(char **ptrVar, char *nameEnv, char *nameProp)
  * @param nameProp The name of internal property.
  */
 static void load_var_jint_env_prop(jint *ptrVar, char *nameEnv, char *nameProp) {
-    char *charName;
+    char *charName = NULL;
     load_var_char_env_prop(&charName, nameEnv, nameProp);
     *ptrVar = atoi(charName);
 }
@@ -643,11 +645,11 @@ static void load_var_jint_env_prop(jint *ptrVar, char *nameEnv, char *nameProp) 
  *     phone number. The list is preformatted and must be of the form:
  *     <code>phone1;phone2; phone3; ... ; phone_n</code>
  *
- * @return <code>JSR120_NET_IOERROR</code> if the device's phone number cannot be
+ * @return <code>WMA_NET_IOERROR</code> if the device's phone number cannot be
  *     determined. <code>1</code> if there's a match; <code>0</code>,
  *     otherwise.
  */
-JSR120_STATUS is_device_phone_number(char* phoneList) {
+WMA_STATUS is_device_phone_number(char* phoneList) {
 
     /** Device phone number from property list. */
     char *devPhoneNumber = NULL;
@@ -668,7 +670,7 @@ JSR120_STATUS is_device_phone_number(char* phoneList) {
         "com.sun.midp.io.j2me.sms.PhoneNumber");
     if (devPhoneNumber == NULL) {
         /* Cannot determine device's phone number. Fatal error. */
-        return JSR120_NET_IOERROR;
+        return WMA_NET_IOERROR;
     }
 
     if (phoneList != NULL) {
@@ -693,7 +695,7 @@ JSR120_STATUS is_device_phone_number(char* phoneList) {
 
             /* If there's a match, exit now. */
             if (strncmp(p, devPhoneNumber, phoneLen) == 0) {
-                return JSR120_OK;  
+                return WMA_OK;  
             }
 
             /* Skip this phone number and try the next one. */
@@ -701,7 +703,7 @@ JSR120_STATUS is_device_phone_number(char* phoneList) {
         }
     }
 
-    return JSR120_ERR;
+    return WMA_ERR;
 }
 
 /**
@@ -731,7 +733,7 @@ pcsl_string getInternalPhoneNumber(void) {
 /**
  * Write an SMS datagram.
  */
-JSR120_STATUS jsr120_sms_write(jchar msgType,
+WMA_STATUS jsr120_sms_write(jchar msgType,
                                unsigned char address[],
                                unsigned char msgBuffer[],
                                jchar msgLen,
@@ -748,7 +750,7 @@ JSR120_STATUS jsr120_sms_write(jchar msgType,
     jint index = 0;
 
     /** Return status */
-    JSR120_STATUS status = JSR120_NET_SUCCESS;
+    WMA_STATUS status = WMA_NET_SUCCESS;
 
     /** Internal sms phone number property. */
     const char *phNum = NULL;
@@ -757,7 +759,7 @@ JSR120_STATUS jsr120_sms_write(jchar msgType,
     jint sendPort = smsOutPortNumber; 
 
     /** Time related structs, variable */
-    /* IMPL_NOTE: add time code to fetch time */
+    /* Need revisit: add time code to fetch time */
     jlong timestamp = 0;
 
     (void)sourcePort;
@@ -767,7 +769,7 @@ JSR120_STATUS jsr120_sms_write(jchar msgType,
         context = (jsr120_udp_emulator_context*)pcsl_mem_malloc(sizeof(*context));
 
         if (context == NULL) {
-            return JSR120_NET_IOERROR;
+            return WMA_NET_IOERROR;
         }
 
         memset(context, 0, sizeof(*context));
@@ -780,7 +782,7 @@ JSR120_STATUS jsr120_sms_write(jchar msgType,
             /* Free resources and quit */
             pcsl_mem_free(context);
             /* Cannot determine device's phone number. Fatal error. */
-            return JSR120_NET_IOERROR;
+            return WMA_NET_IOERROR;
         }
 
         *pContext = context;
@@ -837,9 +839,9 @@ JSR120_STATUS jsr120_sms_write(jchar msgType,
                 /* add message to pool */
                 jsr120_sms_pool_add_msg(sms);
 
-                status = JSR120_NET_SUCCESS;
+                status = WMA_NET_SUCCESS;
             } else {
-                status = JSR120_NET_IOERROR;
+                status = WMA_NET_IOERROR;
             }
 
         }
@@ -858,22 +860,21 @@ JSR120_STATUS jsr120_sms_write(jchar msgType,
             switch (pcsl_status) {
             case PCSL_NET_SUCCESS:
                 context->state = JSR120_UDP_EMULATOR_CONTEXT_STATE_GETHOSTBYNAME_DONE;
-                status = JSR120_NET_SUCCESS;
+                status = WMA_NET_SUCCESS;
                 break;
             case PCSL_NET_WOULDBLOCK:
                 context->state = JSR120_UDP_EMULATOR_CONTEXT_STATE_GETHOSTBYNAME_INPROGRESS;
                 /* temporarily create entry in emulator-managed sockets list */
                 context->emulatorSocket =
-                    wmaCreateSocketHandle(JSR120_SMS_PROTOCOL,
+                    wmaCreateSocketHandle(WMA_SMS_PROTOCOL,
                                           (int)context->pcsl_handle);
-                status = JSR120_NET_WOULDBLOCK;
+                status = WMA_NET_WOULDBLOCK;
                 break;
             case PCSL_NET_INTERRUPTED:
-                status = JSR120_NET_INTERRUPTED;
+                status = WMA_NET_INTERRUPTED;
+                break;
             default:
-                pcsl_mem_free(context);
-                *pContext = NULL;
-                status = JSR120_NET_IOERROR;
+                status = WMA_NET_IOERROR;
             }
         }
 #endif
@@ -887,8 +888,8 @@ JSR120_STATUS jsr120_sms_write(jchar msgType,
         /** The length of the IP address to be retrieved. */
         int plen;
 
-        if (status == JSR120_NET_SUCCESS && *pContext != NULL) {
-            /* handle reinvocation or continuation. IMPL_NOTE: is it needed for loopback mode?  */
+        if (status == WMA_NET_SUCCESS && *pContext != NULL) {
+            /* handle reinvocation or continuation. RFC: is it needed for loopback mode?  */
             context = (jsr120_udp_emulator_context*)*pContext;
 
             switch (context->state) {
@@ -908,20 +909,20 @@ JSR120_STATUS jsr120_sms_write(jchar msgType,
 
                 switch (pcsl_status) {
                 case PCSL_NET_SUCCESS:
-                    status = JSR120_NET_SUCCESS;
+                    status = WMA_NET_SUCCESS;
                     break;
                 case PCSL_NET_WOULDBLOCK:
                     /* still cannot get host name. */
-                    status = JSR120_NET_WOULDBLOCK;
+                    status = WMA_NET_WOULDBLOCK;
                     break;
                 case PCSL_NET_INTERRUPTED:
-                    status = JSR120_NET_INTERRUPTED;
+                    status = WMA_NET_INTERRUPTED;
                     break;
                 default:
-                    status = JSR120_NET_IOERROR;
+                    status = WMA_NET_IOERROR;
                 }
 
-                if (status != JSR120_NET_SUCCESS)
+                if (status != WMA_NET_SUCCESS)
                     break;
                 /* Intentional fallthrough to continue with sendto. */
             case JSR120_UDP_EMULATOR_CONTEXT_STATE_GETHOSTBYNAME_DONE:
@@ -934,16 +935,16 @@ JSR120_STATUS jsr120_sms_write(jchar msgType,
                 switch (pcsl_status) {
                 case PCSL_NET_SUCCESS:
                     /* finish */
-                    status = JSR120_NET_SUCCESS;
+                    status = WMA_NET_SUCCESS;
                     break;
                 case PCSL_NET_WOULDBLOCK:
-                    status = JSR120_NET_WOULDBLOCK;
+                    status = WMA_NET_WOULDBLOCK;
                     break;
                 case PCSL_NET_INTERRUPTED:
-                    status = JSR120_NET_INTERRUPTED;
+                    status = WMA_NET_INTERRUPTED;
                     break;
                 default:
-                    status = JSR120_NET_IOERROR;
+                    status = WMA_NET_IOERROR;
                 }
                 break;
 
@@ -956,27 +957,27 @@ JSR120_STATUS jsr120_sms_write(jchar msgType,
                 switch (pcsl_status) {
                 case PCSL_NET_SUCCESS:
                     /* finish */
-                    status = JSR120_NET_SUCCESS;
+                    status = WMA_NET_SUCCESS;
                     break;
                 case PCSL_NET_WOULDBLOCK:
                     /* still cannot send */
-                    status = JSR120_NET_WOULDBLOCK;
+                    status = WMA_NET_WOULDBLOCK;
                     break;
                 case PCSL_NET_INTERRUPTED:
-                    status = JSR120_NET_INTERRUPTED;
+                    status = WMA_NET_INTERRUPTED;
                     break;
                 default:
-                    status = JSR120_NET_IOERROR;
+                    status = WMA_NET_IOERROR;
                 }
                 break;
 
             default:
-                status = JSR120_NET_IOERROR;
+                status = WMA_NET_IOERROR;
             }
         }
     }
 #endif
-    if (status != JSR120_NET_WOULDBLOCK) {
+    if (status != WMA_NET_WOULDBLOCK) {
         /* Message was sent, so free the buffer. */
         pcsl_mem_free(context);
         *pContext = NULL;
@@ -1001,16 +1002,16 @@ JSR120_STATUS jsr120_sms_write(jchar msgType,
  *     header and message body structures.
  * @param bytesWritten Returns the number of bytes written after successful
  *     write operation. This is only set if this function returns
- *     JSR120_NET_SUCCESS.
+ *     WMA_NET_SUCCESS.
  * @param pContext pointer to location to save operation context for asynchronous
  *     operations
  *
- * @return JSR120_NET_SUCCESS for successful write operation;\n
- *	 JSR120_NET_WOULDBLOCK if the operation would block,\n
- *	 JSR120_NET_INTERRUPTED for an Interrupted IO Exception\n
- *	 JSR120_NET_IOERROR for all other errors.
+ * @return WMA_NET_SUCCESS for successful write operation;\n
+ *	 WMA_NET_WOULDBLOCK if the operation would block,\n
+ *	 WMA_NET_INTERRUPTED for an Interrupted IO Exception\n
+ *	 WMA_NET_IOERROR for all other errors.
  */
-JSR120_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr, 
+WMA_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr, 
                                char* appID, char* replyToAppID, jint msgLen, char* msg, 
                                jint *bytesWritten, void **pContext) {
 
@@ -1018,7 +1019,7 @@ JSR120_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
     int index = 0;
 
     /** The return status. */
-    JSR120_STATUS status;
+    WMA_STATUS status;
 
     jsr120_udp_emulator_context *context;
 
@@ -1030,15 +1031,15 @@ JSR120_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
     (void)sendingToSelf;
     (void)toAddr;
 #else
-    if (sendingToSelf == JSR120_NET_IOERROR) {
-        return JSR120_NET_IOERROR;
+    if (sendingToSelf == WMA_NET_IOERROR) {
+        return WMA_NET_IOERROR;
     }
 #endif
 
     if (*pContext == NULL) {
         context = (jsr120_udp_emulator_context *)pcsl_mem_malloc(sizeof(*context));
         if (context == NULL)
-            return JSR120_NET_IOERROR;
+            return WMA_NET_IOERROR;
 
         memset(context, 0, sizeof(*context));
 
@@ -1061,7 +1062,7 @@ JSR120_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
         buffer = (char*)pcsl_mem_malloc(context->totalLength);
         if (buffer == NULL) {
             pcsl_mem_free(context);
-            return JSR120_NET_IOERROR;
+            return WMA_NET_IOERROR;
         }
 
         *pContext = context;
@@ -1093,7 +1094,7 @@ JSR120_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
 
     /* Fake the written count as well as the "sending" status. */
     *bytesWritten = context->totalLength;
-    status = JSR120_NET_SUCCESS;
+    status = WMA_NET_SUCCESS;
 
 #else
     {
@@ -1106,13 +1107,13 @@ JSR120_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
         if (sendingToSelf != 0) {
             outputPort = mmsInPortNumber;
         }
-        status = jsr205_datagram_write(JSR120_MMS_PROTOCOL, outputPort, mmsHandle,
+        status = jsr205_datagram_write(WMA_MMS_PROTOCOL, outputPort, mmsHandle,
                                     toAddr, fromAddr, context->totalLength,
                                     buffer, bytesWritten, context);
     }
 #endif
 
-    if (status != JSR120_NET_WOULDBLOCK) {
+    if (status != WMA_NET_WOULDBLOCK) {
         /*
          * Message was sent or operation aborted, so free the buffer and
          * context.
@@ -1129,24 +1130,24 @@ JSR120_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
 /**
  * Initialize datagram support for the given protocol.
  */
-JSR120_STATUS init_jsr120() {
+WMA_STATUS init_jsr120() {
 
-    JSR120_STATUS status;
+    WMA_STATUS status;
 
     /* Initialize networking required for UDP emulator */
     if (pcsl_network_init() != PCSL_NET_SUCCESS) {
-        return JSR120_NET_IOERROR;
+        return WMA_NET_IOERROR;
     }
 
-    /* Initialize  JSR120_SMS_PROTOCOL */
+    /* Initialize  WMA_SMS_PROTOCOL */
 
     /* Check for the SMS-configured datagram input port number. */
     load_var_jint_env_prop(&smsInPortNumber, "JSR_120_SMS_PORT", 
         "com.sun.midp.io.j2me.sms.DatagramPortIn");
 
-    status = jsr120_datagram_open(JSR120_SMS_PROTOCOL, smsInPortNumber);
-    if (status != JSR120_NET_SUCCESS) {
-        return JSR120_NET_IOERROR;
+    status = jsr120_datagram_open(WMA_SMS_PROTOCOL, smsInPortNumber);
+    if (status != WMA_NET_SUCCESS) {
+        return WMA_NET_IOERROR;
     }
 
     /* Check for the SMS-configured datagram output port number. */
@@ -1160,27 +1161,27 @@ JSR120_STATUS init_jsr120() {
         targetHost = targetHostDefault;
     }
 
-    /* Initialize JSR120_CBS_PROTOCOL */
+    /* Initialize WMA_CBS_PROTOCOL */
 
     /* Check for the CBS-configured datagram input port number. */
     load_var_jint_env_prop(&cbsInPortNumber, "JSR_120_CBS_PORT", 
         "com.sun.midp.io.j2me.cbs.DatagramPortIn");
 
-    status = jsr120_datagram_open(JSR120_CBS_PROTOCOL, cbsInPortNumber);
-    if (status != JSR120_NET_SUCCESS) {
-        return JSR120_NET_IOERROR;
+    status = jsr120_datagram_open(WMA_CBS_PROTOCOL, cbsInPortNumber);
+    if (status != WMA_NET_SUCCESS) {
+        return WMA_NET_IOERROR;
     }
 
 #if ENABLE_JSR_205
-    /* Initialize JSR120_MMS_PROTOCOL */
+    /* Initialize WMA_MMS_PROTOCOL */
 
     /* Check for the MMS-configured datagram input port number. */
     load_var_jint_env_prop(&mmsInPortNumber, "JSR_205_MMS_PORT", 
         "com.sun.midp.io.j2me.mms.DatagramPortIn");
 
-    status = jsr120_datagram_open(JSR120_MMS_PROTOCOL, mmsInPortNumber);
-    if (status != JSR120_NET_SUCCESS) {
-        return JSR120_NET_IOERROR;
+    status = jsr120_datagram_open(WMA_MMS_PROTOCOL, mmsInPortNumber);
+    if (status != WMA_NET_SUCCESS) {
+        return WMA_NET_IOERROR;
     }
 
     /* Check for the MMS-configured datagram output port number. */
@@ -1188,7 +1189,7 @@ JSR120_STATUS init_jsr120() {
         "com.sun.midp.io.j2me.mms.DatagramPortOut");
 #endif
 
-    return JSR120_NET_SUCCESS;
+    return WMA_NET_SUCCESS;
 }
 
 /**
@@ -1196,13 +1197,13 @@ JSR120_STATUS init_jsr120() {
  */
 void finalize_jsr120() {
 
-    JSR120_STATUS status;
+    WMA_STATUS status;
 
     /* Shut down the inbound datagram ports. */
-    status = jsr120_datagram_close(JSR120_SMS_PROTOCOL);
-    status = jsr120_datagram_close(JSR120_CBS_PROTOCOL);
+    status = jsr120_datagram_close(WMA_SMS_PROTOCOL);
+    status = jsr120_datagram_close(WMA_CBS_PROTOCOL);
 #if ENABLE_JSR_205
-    status = jsr120_datagram_close(JSR120_MMS_PROTOCOL);
+    status = jsr120_datagram_close(WMA_MMS_PROTOCOL);
 #endif
 }
 

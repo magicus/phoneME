@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -44,6 +45,7 @@ extern "C" {
 #endif
 
 #include <kni.h>
+#include <suitestore_common.h>
 
 /**
  * ListElement data structure.
@@ -59,7 +61,7 @@ typedef struct _list_element {
     unsigned char* strid;
 
     /* Midlet suite ID */
-    unsigned char* msid;
+    SuiteIdType msid;
 
     /* Pointer to any user data */
     void* userData;
@@ -100,10 +102,10 @@ typedef struct _list_element {
  * @param userData  Anything the user needs to attach to this element.
  * @param userDataCallBack  A user-defined callback.
  *
- * @return A pointer to the element that was created. 
+ * @return A pointer to the element that was created.
  */
 ListElement* jsr120_list_new_by_number(ListElement** head, jint num,
-    unsigned char *msid, void* userData, void* userDataCallback);
+    SuiteIdType msid, void* userData, void* userDataCallback);
 
 /**
  * Create a new list element with a string identifier.
@@ -114,10 +116,10 @@ ListElement* jsr120_list_new_by_number(ListElement** head, jint num,
  * @param userData  Anything the user needs to attach to this element.
  * @param userDataCallBack  A user-defined callback.
  *
- * @return A pointer to the element that was created. 
+ * @return A pointer to the element that was created.
  */
 ListElement* jsr120_list_new_by_name(ListElement** head, unsigned char* name,
-    unsigned char* msid, void* userData, void* userDataCallback);
+    SuiteIdType msid, void* userData, void* userDataCallback);
 
 /*
  * ListElement methods
@@ -205,7 +207,18 @@ ListElement* jsr120_list_remove_first_by_name(ListElement** head, unsigned char*
  * @return A pointer to the element that was removed.
  */
 ListElement* jsr120_list_remove_first_by_msID(ListElement** head,
-    unsigned char* msid);
+    SuiteIdType msid);
+
+/**
+ * Retrieve the element matching the given MIDlet suite identifier
+ *
+ * @param head A pointer to the first element in the list.
+ * @param msid The MIDlet suite identifier to be matched.
+ *
+ * @return  A pointer to the element that matched the MIDlet suite 
+ *  identifier, or <code>NULL</code> if no element could be found.
+ */
+ListElement* jsr120_list_get_first_by_msID(ListElement* head, SuiteIdType msid);
 
 /**
  * Retrieve the element matching the numeric identifier.

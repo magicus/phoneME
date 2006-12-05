@@ -1,4 +1,5 @@
 /*
+ *    
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -188,6 +189,10 @@ public class SMSMessageConnection extends PropLoader
      * object is requested from the connection. For example:
      * <p>
      * <code>Message msg = conn.newMessage(TEXT_MESSAGE);</code>
+     * <p>
+     * The newly created <code>Message</code> does not have the destination
+     * address set. It must be set by the application before the message is
+     * sent.
      * <p>
      * If it is called in receiving mode, the <code>Message</code> object does
      * have its address set. The application can act on the object to extract

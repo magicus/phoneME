@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -33,13 +34,13 @@ import com.sun.midp.main.MIDletProxyListListener;
  * The function of this class is to call a native WMA function,
  * when a MIDletSuite terminates. The native function will
  * perform any cleanup that is required, eg: delete any messages
- * left unread by the MIDletSuite. 
+ * left unread by the MIDletSuite.
  * This class implements the MIDletProxyListener interface and is
- * thus notified whenever a MIDletSuite is installed or removed.  
+ * thus notified whenever a MIDletSuite is installed or removed.
  *<p>
  * Two versions of this file exist: one which is a no-op, is used, when
- * MIDP runtime is not built with JSR 205 and the real implementation when
- * MIDP runtime <em>is</em> built with JSR205.
+ * MIDP stack is not built with JSR 205 and the real implementation when
+ * MIDP stack <em>is</em> built with JSR205.
  *
  */
 public class WMACleanupMonitor implements MIDletProxyListListener {
@@ -64,7 +65,7 @@ public class WMACleanupMonitor implements MIDletProxyListListener {
      * Adds itself as a listener, so as to be notified on
      * suite removal.
      *
-     * @param mpl A midlet proxy list, passed down by the 
+     * @param mpl A midlet proxy list, passed down by the
      *            suite loader.
      */
     public static void init(MIDletProxyList mpl) {
@@ -114,7 +115,7 @@ public class WMACleanupMonitor implements MIDletProxyListListener {
      * @param className Class name of the MIDlet
      * @param error start error code
      */
-    public void midletStartError(int externalAppId, String suiteId, 
+    public void midletStartError(int externalAppId, int suiteId,
                                  String className, int error) {
     }
 

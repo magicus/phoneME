@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -29,6 +30,7 @@
 #include <jsr120_cbs_pool.h>
 #include <jsr120_cbs_listeners.h>
 #include <pcsl_memory.h>
+#include <suitestore_common.h>
 
 /*
  * This is a collection of methods to maintain the pool of CBS messages
@@ -105,6 +107,7 @@ CbsMessage* jsr120_cbs_new_msg(jchar encodingType,
         msgLen = MAX_CBS_MESSAGE_SIZE;
     }
     message->msgLen = msgLen;
+    message->msgBuffer = (unsigned char*) pcsl_mem_malloc(msgLen);
 
     /* Copy the message. */
     memcpy(message->msgBuffer, msgBuffer, msgLen);
@@ -119,7 +122,7 @@ CbsMessage* jsr120_cbs_new_msg(jchar encodingType,
  * @param src The source message.
  * @param dst The destination message.
  */
-void jsr120_cbs_copy_msg(CbsMessage* src, CbsMessage* dst){ 
+void jsr120_cbs_copy_msg(CbsMessage* src, CbsMessage* dst){
     short msgLen;
 
     /* Populate the various message fields. */
@@ -127,7 +130,7 @@ void jsr120_cbs_copy_msg(CbsMessage* src, CbsMessage* dst){
     dst->msgID        = src->msgID;
 
     /* Keep the message length in range. */
-    msgLen = src->msgLen; 
+    msgLen = src->msgLen;
     if (msgLen > MAX_CBS_MESSAGE_SIZE) {
         msgLen = MAX_CBS_MESSAGE_SIZE;
     }
@@ -153,7 +156,7 @@ CbsMessage* jsr120_cbs_dup_msg(CbsMessage* message) {
     }
 
     return jsr120_cbs_new_msg(message->encodingType,
-                              message->msgID, 
+                              message->msgID,
                               message->msgLen,
                               message->msgBuffer);
 }
@@ -186,11 +189,11 @@ static void jsr120_cbs_pool_increase_count() {
 /**
  * Decrease the number of messages in the pool by one.
  */
-static void jsr120_cbs_pool_decrease_count() { 
-    CBSPool_count--; 
-    if (CBSPool_count < 0) { 
-        CBSPool_count = 0; 
-    } 
+static void jsr120_cbs_pool_decrease_count() {
+    CBSPool_count--;
+    if (CBSPool_count < 0) {
+        CBSPool_count = 0;
+    }
 }
 
 /**
@@ -249,31 +252,31 @@ static void jsr120_cbs_pool_check_quota() {
  *
  * @param cbsMessage The CBS message to be added.
  *
- * @return <code>JSR120_OK</code> if the message was successfully added to the pool.
- *	<code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if the message was successfully added to the pool.
+ *	<code>WMA_ERR</code>, otherwise.
  *
  */
-JSR120_STATUS jsr120_cbs_pool_add_msg(CbsMessage* cbsMessage) {
+WMA_STATUS jsr120_cbs_pool_add_msg(CbsMessage* cbsMessage) {
     ListElement* newItem;
 
     /* If there is no message to add, bail out. */
     if (cbsMessage == NULL) {
-        return JSR120_ERR;
+        return WMA_ERR;
     }
 
     /* Make room for this message, if necessary. */
     jsr120_cbs_pool_check_quota();
-    
+
     /* Create the new pool item and add it to the pool. */
-    newItem = jsr120_list_new_by_number(NULL, cbsMessage->msgID, NULL, 
-                              (void*)cbsMessage, 0);
+    newItem = jsr120_list_new_by_number(NULL, cbsMessage->msgID,
+        UNUSED_SUITE_ID, (void*)cbsMessage, 0);
     jsr120_list_add_last(&CBSPool_messages, newItem);
     jsr120_cbs_pool_increase_count();
 
     /* Notify all listeners of the new message. */
     jsr120_cbs_message_arrival_notifier(cbsMessage);
 
-    return JSR120_OK;
+    return WMA_OK;
 }
 
 /**
@@ -285,14 +288,14 @@ JSR120_STATUS jsr120_cbs_pool_add_msg(CbsMessage* cbsMessage) {
  * @param out Space for the message. If <code>NULL</code>, this function will
  *     remove the message from the pool.
  *
- * @return <code>JSR120_OK</code> if a message could be located;
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if a message could be located;
+ *     <code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_cbs_pool_get_next_msg(jchar msgID, CbsMessage* out) {
+WMA_STATUS jsr120_cbs_pool_get_next_msg(jchar msgID, CbsMessage* out) {
 
     /* Try to locate the message matching the message ID */
     CbsMessage* cbs = jsr120_cbs_pool_retrieve_next_msg(msgID);
-    
+
     if (cbs != NULL) {
 
         /* If space exists for the message, copy the message */
@@ -304,7 +307,7 @@ JSR120_STATUS jsr120_cbs_pool_get_next_msg(jchar msgID, CbsMessage* out) {
         jsr120_cbs_delete_msg(cbs);
     }
 
-    return ((cbs != NULL) ? JSR120_OK : JSR120_ERR);
+    return ((cbs != NULL) ? WMA_OK : WMA_ERR);
 }
 
 /**
@@ -322,7 +325,7 @@ CbsMessage* jsr120_cbs_pool_retrieve_next_msg(jchar msgID) {
 
     /* The result of the search */
     CbsMessage* result = NULL;
-    
+
     elem = jsr120_list_remove_first_by_number(&CBSPool_messages, msgID);
     if (elem) {
 
@@ -343,10 +346,10 @@ CbsMessage* jsr120_cbs_pool_retrieve_next_msg(jchar msgID) {
  *
  * @param msgID The message identifier to be matched.
  *
- * @return <code>JSR120_OK</code> when a message was removed;
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> when a message was removed;
+ *     <code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_cbs_pool_remove_next_msg(jchar msgID) {
+WMA_STATUS jsr120_cbs_pool_remove_next_msg(jchar msgID) {
     return jsr120_cbs_pool_get_next_msg(msgID, NULL);
 }
 
@@ -356,7 +359,7 @@ JSR120_STATUS jsr120_cbs_pool_remove_next_msg(jchar msgID) {
  * @param msgID The message identifier to be matched.
  */
 void jsr120_cbs_pool_remove_all_msgs(jchar msgID) {
-    while(jsr120_cbs_pool_remove_next_msg(msgID) == JSR120_OK);
+    while(jsr120_cbs_pool_remove_next_msg(msgID) == WMA_OK);
 }
 
 /**
@@ -391,15 +394,15 @@ CbsMessage* jsr120_cbs_pool_peek_next_msg1(jchar msgID, jint isNew){
 /**
  * Deletes the oldest CBS message.
  *
- * @return <code>JSR120_OK</code> if the oldest message was found and deleted;
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if the oldest message was found and deleted;
+ *     <code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_cbs_pool_delete_next_msg() {
+WMA_STATUS jsr120_cbs_pool_delete_next_msg() {
     ListElement* elem;
 
     /* Assume there was no message to delete. */
-    JSR120_STATUS found = JSR120_ERR;
-    
+    WMA_STATUS found = WMA_ERR;
+
     elem = jsr120_list_remove_first(&CBSPool_messages);
     if (elem) {
 
@@ -412,7 +415,7 @@ JSR120_STATUS jsr120_cbs_pool_delete_next_msg() {
         jsr120_cbs_pool_decrease_count();
 
         /* The first (oldest) message was found and deleted. */
-        found = JSR120_OK;
+        found = WMA_OK;
     }
     return found;
 }

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -30,24 +31,28 @@
 #include <jsr120_cbs_protocol.h>
 #include <jsr120_sms_listeners.h>
 #include <jsr120_cbs_listeners.h>
+
+/* Need revisit: delete? */
 #if ENABLE_JSR_205
 #include <jsr205_mms_protocol.h>
 #include <jsr205_mms_listeners.h>
 #endif
+
 #include <push_server_resource_mgmt.h>
+#include <suitestore_common.h>
 #include <kni.h>
 
-static int registerSMSEntry(int port, unsigned char *msid);
+static int registerSMSEntry(int port, SuiteIdType msid);
 static void unregisterSMSEntry(int port, int handle);
-static int registerCBSEntry(int msgID, unsigned char *msid);
+static int registerCBSEntry(int msgID, SuiteIdType msid);
 static void unregisterCBSEntry(int msgID, int handle);
 #if ENABLE_JSR_205
-static int registerMMSEntry(unsigned char *appID, unsigned char* msid);
+static int registerMMSEntry(unsigned char *appID, SuiteIdType msid);
 static void unregisterMMSEntry(unsigned char *appID, int handle);
 #endif
 
 /**
- * Unregister or close the given WMA entry 
+ * Unregister or close the given WMA entry
  *
  * @param state Current state of push connection
  * @param entry Full text of the push entry
@@ -56,8 +61,8 @@ static void unregisterMMSEntry(unsigned char *appID, int handle);
  * @param appID application ID of MMS message
  * @param fd unique identifier for the connection
  */
-void wmaPushCloseEntry(int state, char *entry, int port, 
-                       char *msid, char *appID, int fd) {
+void wmaPushCloseEntry(int state, char *entry, int port,
+                       SuiteIdType msid, char *appID, int fd) {
 
 #ifndef ENABLE_JSR_205
     (void)appID;
@@ -69,7 +74,7 @@ void wmaPushCloseEntry(int state, char *entry, int port,
              * Delete all SMS messages cached for the
              * specified midlet suite.
              */
-            jsr120_sms_delete_push_msg((unsigned char *)msid);
+            jsr120_sms_delete_push_msg(msid);
             /* unregister this sms push entry */
             unregisterSMSEntry(port, fd);
 	} else if(strncmp(entry,"cbs://:",7) == 0) {
@@ -77,17 +82,17 @@ void wmaPushCloseEntry(int state, char *entry, int port,
              * Delete all CBS messages cached for the
              * specified midlet suite.
              */
-            jsr120_cbs_delete_push_msg((unsigned char *)msid);
+            jsr120_cbs_delete_push_msg(msid);
             /* unregister this cbs push entry */
             unregisterCBSEntry(port, fd);
-	} 
+	}
 #if ENABLE_JSR_205
           else if(strncmp(entry,"mms://:",7) == 0) {
             /*
              * Delete all MMS messages cached for the
              * specified midlet suite.
              */
-            jsr205_mms_delete_push_msg((unsigned char *)msid);
+            jsr205_mms_delete_push_msg(msid);
             /* unregister this mms push entry */
             unregisterMMSEntry((unsigned char *)appID, fd);
             if (appID != NULL) {
@@ -110,7 +115,7 @@ void wmaPushCloseEntry(int state, char *entry, int port,
  *
  * @result returns KNI_TRUE if it is WMA protocol, KNI_FALSE otherwise
  */
-jboolean isWmaProtocol(int pushPort, char *entry, char *pushStoreName, 
+jboolean isWmaProtocol(int pushPort, char *entry, char *pushStoreName,
                        int port, char *store) {
 
     jboolean isMMS = KNI_FALSE;
@@ -138,7 +143,7 @@ jboolean isWmaProtocol(int pushPort, char *entry, char *pushStoreName,
  *
  * @result returns KNI_TRUE if it is MMS protocol, KNI_FALSE otherwise
  */
-jboolean isMMSProtocol(char *entry) { 
+jboolean isMMSProtocol(char *entry) {
 
     return (strncmp(entry, "mms", 3) == 0);
 }
@@ -173,14 +178,14 @@ char *getWmaPushEntry(char *entry) {
  * application level connection open request.
  *
  * @param entry A full-text push entry string from the registry
- * @param fd A pointer to a unique identifier.  
+ * @param fd A pointer to a unique identifier.
  *           Used to return the identifier
  * @param port A port ID.
  * @param msid Midlet Suite ID.
  * @param appID Application ID of MMS message.
  */
 void wmaPushProcessPort(char *entry, int *fd, int port,
-                        char *msid, char *appID){
+                        SuiteIdType msid, char *appID){
 
 #ifndef ENABLE_JSR_205
     (void)appID;
@@ -191,23 +196,23 @@ void wmaPushProcessPort(char *entry, int *fd, int port,
          * register entry and port and get a unique
          * identifier back.
          */
-        *fd = registerSMSEntry(port, (unsigned char *)msid);
+        *fd = registerSMSEntry(port, msid);
     } else if(strncmp(entry,"cbs://:",7) == 0) {
-        *fd = registerCBSEntry(port, (unsigned char *)msid);
-    } 
+        *fd = registerCBSEntry(port, msid);
+    }
 #if ENABLE_JSR_205
       else if(strncmp(entry,"mms://:",7) == 0) {
-        *fd = registerMMSEntry((unsigned char *)appID, (unsigned char*)msid);
+        *fd = registerMMSEntry((unsigned char *)appID, msid);
     }
 #endif
 }
 
-static int registerSMSEntry(int port, unsigned char *msid) {
+static int registerSMSEntry(int port, SuiteIdType msid) {
 
     int handle = -1;
 
     /* register SMS port */
-    if (jsr120_is_sms_push_port_registered((jchar)port) == JSR120_ERR) {
+    if (jsr120_is_sms_push_port_registered((jchar)port) == WMA_ERR) {
 
 	/* Get a unique handle that will identify this SMS "session" */
 	handle = (int)(pcsl_mem_malloc(1));
@@ -218,7 +223,7 @@ static int registerSMSEntry(int port, unsigned char *msid) {
 
         if (jsr120_register_sms_push_port((jchar)port,
                                           msid,
-                                          handle) == JSR120_ERR) {
+                                          handle) == WMA_ERR) {
 	    return -1;
         }
     } else {
@@ -239,12 +244,12 @@ static void unregisterSMSEntry(int port, int handle) {
 
 }
 
-static int registerCBSEntry(int msgID, unsigned char *msid) {
+static int registerCBSEntry(int msgID, SuiteIdType msid) {
 
     int handle = -1;
 
     /* register CBS message ID */
-    if (jsr120_cbs_is_push_msgID_registered((jchar)msgID) == JSR120_ERR) {
+    if (jsr120_cbs_is_push_msgID_registered((jchar)msgID) == WMA_ERR) {
 
 	/* Get a unique handle that will identify this CBS "session" */
 	handle = (int)(pcsl_mem_malloc(1));
@@ -255,7 +260,7 @@ static int registerCBSEntry(int msgID, unsigned char *msid) {
 
         if (jsr120_cbs_register_push_msgID((jchar)msgID,
                                            msid,
-                                           handle) == JSR120_ERR) {
+                                           handle) == WMA_ERR) {
 	    return -1;
         }
     } else {
@@ -278,13 +283,13 @@ static void unregisterCBSEntry(int msgID, int handle) {
 
 #if ENABLE_JSR_205
 static int registerMMSEntry(unsigned char *appID,
-                            unsigned char* msid) {
+                            SuiteIdType msid) {
 
     int handle = -1;
 
     /* register MMS message ID */
     if (appID != NULL) {
-        if (jsr205_mms_is_push_appID_registered(appID) == JSR120_ERR) {
+        if (jsr205_mms_is_push_appID_registered(appID) == WMA_ERR) {
 
 	    /* Get a unique handle that will identify this MMS "session" */
             handle = (int)(pcsl_mem_malloc(1));
@@ -295,7 +300,7 @@ static int registerMMSEntry(unsigned char *appID,
 
             if (jsr205_mms_register_push_appID(appID,
                                                msid,
-                                               handle) == JSR120_ERR) {
+                                               handle) == WMA_ERR) {
 	        return -1;
             }
         } else {

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -161,11 +162,11 @@ void jsr120_cbs_delete_msg(CbsMessage* message);
  *
  * @param cbsMessage The CBS message to be added.
  *
- * @return <code>JSR120_OK</code> if the message was successfully added to the pool.
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if the message was successfully added to the pool.
+ *     <code>WMA_ERR</code>, otherwise.
  *                
  */
-JSR120_STATUS jsr120_cbs_pool_add_msg(CbsMessage* cbsMessage);
+WMA_STATUS jsr120_cbs_pool_add_msg(CbsMessage* cbsMessage);
 
 /**
  * Retrieves the next message from the pool that matches the message identifier
@@ -176,10 +177,10 @@ JSR120_STATUS jsr120_cbs_pool_add_msg(CbsMessage* cbsMessage);
  * @param out Space for the message. If <code>NULL</code>, this function will
  *     remove the message from the pool.
  *
- * @return <code>JSR120_OK</code> if a message could be located;
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if a message could be located;
+ *     <code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_cbs_pool_get_next_msg(jchar msgID, CbsMessage* out);
+WMA_STATUS jsr120_cbs_pool_get_next_msg(jchar msgID, CbsMessage* out);
 
 /**
  * Retrieves the next (oldest) message from the pool that matches the message
@@ -199,10 +200,10 @@ CbsMessage* jsr120_cbs_pool_retrieve_next_msg(jchar msgID);
  *
  * @param msgID The message identifier to be matched.
  *
- * @return <code>JSR120_OK</code> when a message was removed;
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> when a message was removed;
+ *     <code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_cbs_pool_remove_next_msg(jchar msgID);
+WMA_STATUS jsr120_cbs_pool_remove_next_msg(jchar msgID);
 
 /**
  * Removes all messages from the pool that match the message identifier.
@@ -235,10 +236,10 @@ CbsMessage* jsr120_cbs_pool_peek_next_msg1(jchar msgID, jint isNew);
 /**
  * Deletes the oldest CBS message.
  *
- * @return <code>JSR120_OK</code> if the oldest message was found and deleted;
- *     <code>JSR120_ERR</code>, otherwise.
+ * @return <code>WMA_OK</code> if the oldest message was found and deleted;
+ *     <code>WMA_ERR</code>, otherwise.
  */
-JSR120_STATUS jsr120_cbs_pool_delete_next_msg();
+WMA_STATUS jsr120_cbs_pool_delete_next_msg();
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -150,7 +151,14 @@ public class MessageObject implements Message {
 	sentAt = timestamp;
     }
 
-    // JAVADOC COMMENT ELIDED
+    /**
+     * Returns the timestamp indicating when this message has been sent.
+     * 
+     * @return Date indicating the time stamp in the message or
+     *         <code>null</code> if the time stamp was not set.
+     *
+     * @see #setTimeStamp
+     */
     public Date getTimestamp() {
         return new Date(sentAt);
     }

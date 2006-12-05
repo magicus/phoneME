@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -46,6 +47,7 @@
 #include <jsr205_mms_listeners.h>
 #include <jsr205_mms_protocol.h>
 #endif
+#include <wmaInterface.h>
 #include <wmaUDPEmulator.h>
 #include <bytePackUnpack.h>
 #include <wmaSocket.h>
@@ -73,10 +75,10 @@ static jboolean assemble_frags(char *packet);
 static int checkfilter(char *filter, char *ip);
 static jboolean checkReadSignal(int socket);
 static jboolean checkWriteSignal(int socket);
-static JSR120_STATUS wmaGetProtocolByFD(int fd, JSR120_PROTOCOLS *pProtocol);
+static WMA_STATUS wmaGetProtocolByFD(int fd, WMA_PROTOCOLS *pProtocol);
 
 typedef struct _jsr120_socket {
-    JSR120_PROTOCOLS sockProtocol;
+    WMA_PROTOCOLS sockProtocol;
     int	sockFD;
     struct _jsr120_socket *next;
 } jsr120_socket;
@@ -143,7 +145,7 @@ MmsHeader* createMmsHeader(MmsMessage* message) {
         /* Later, read header length, then data to be formatted. */
         header = (MmsHeader *)pcsl_mem_malloc(sizeof(MmsHeader));
         memset(header, 0, sizeof(MmsHeader));
-        /* need revisit: Populate the header with data extracted from message fields. */
+        /* Populate the header with data extracted from message fields. */
     }
 
     return header;
@@ -157,7 +159,7 @@ MmsHeader* createMmsHeader(MmsMessage* message) {
 void destroyMMSHeader(MmsHeader* header) {
 
     if (header != NULL) {
-        /* need revisit: Use pcsl_mem_free(header->part) to free each part. */
+        /* Use pcsl_mem_free(header->part) to free each part. */
 
         /* Free the header itself. */
         pcsl_mem_free(header);
@@ -190,23 +192,23 @@ jboolean jsr120_check_signal(midpSignalType signalType, int fd) {
 
 jboolean checkWriteSignal(int socket) {
     jboolean ret = KNI_FALSE;
-    JSR120_PROTOCOLS protocol;
+    WMA_PROTOCOLS protocol;
 
-    if (wmaGetProtocolByFD(socket, &protocol) == JSR120_OK) {
+    if (wmaGetProtocolByFD(socket, &protocol) == WMA_OK) {
     
         /* Make an up-call to unblock the thread */
         switch (protocol) {
 
-        case JSR120_SMS_PROTOCOL:
+        case WMA_SMS_PROTOCOL:
             jsr120_sms_message_sent_notifier();
             ret = KNI_TRUE;
             break;
 
-        case JSR120_CBS_PROTOCOL:
+        case WMA_CBS_PROTOCOL:
             /* No write signal supported for CBS */
             break;
 
-        case JSR120_MMS_PROTOCOL:
+        case WMA_MMS_PROTOCOL:
 #if ENABLE_JSR_205
             jsr205_mms_message_sent_notifier();
             ret = KNI_TRUE;
@@ -220,7 +222,7 @@ jboolean checkWriteSignal(int socket) {
 
 jboolean checkReadSignal(int socket) {
 
-    JSR120_STATUS status;
+    WMA_STATUS status;
     unsigned char ipBytes[MAX_ADDR_LENGTH];
     jint ipPort;
     jint datagramLength;
@@ -229,7 +231,7 @@ jboolean checkReadSignal(int socket) {
     char* recipientPhone = NULL;
     char *filter = NULL;
     jint i;
-    JSR120_PROTOCOLS sockProtocol;
+    WMA_PROTOCOLS sockProtocol;
     char* p;
     jint index;
 
@@ -242,7 +244,7 @@ jboolean checkReadSignal(int socket) {
     MmsMessage* mms = NULL;
 #endif
 
-    if (wmaGetProtocolByFD(socket, &sockProtocol) != JSR120_OK)
+    if (wmaGetProtocolByFD(socket, &sockProtocol) != WMA_OK)
         return KNI_FALSE;
 
     /* Read the datagram. */
@@ -253,12 +255,12 @@ jboolean checkReadSignal(int socket) {
         status = jsr120_datagram_read(sockProtocol, ipBytes, &ipPort, p, MAX_DATAGRAM_LENGTH,
                                       &datagramLength);  
 
-        if (status == JSR120_NET_SUCCESS) {
+        if (status == WMA_NET_SUCCESS) {
             index = 0;
 
             switch (sockProtocol) {
 
-            case JSR120_SMS_PROTOCOL:
+            case WMA_SMS_PROTOCOL:
                 sms = (SmsMessage *)pcsl_mem_malloc(sizeof(SmsMessage));
                 if (sms != NULL) {
                     memset(sms, 0, sizeof(SmsMessage));
@@ -313,7 +315,7 @@ jboolean checkReadSignal(int socket) {
 
                 break;
 
-            case JSR120_CBS_PROTOCOL:
+            case WMA_CBS_PROTOCOL:
                 cbs = (CbsMessage*)pcsl_mem_malloc(sizeof(CbsMessage));
                 if (cbs != NULL) {
                     memset(cbs, 0, sizeof(CbsMessage));
@@ -345,12 +347,12 @@ jboolean checkReadSignal(int socket) {
 
 #if ENABLE_JSR_205
 
-            case JSR120_MMS_PROTOCOL:
+            case WMA_MMS_PROTOCOL:
 
                 if (assemble_frags(p) == KNI_TRUE) {
 
                     /*
-                     * Note (need revisit):
+                     * Note:
                      *
                      * The message is currently received in whole. That is, the
                      * message header and body are contained in the single
@@ -389,7 +391,7 @@ jboolean checkReadSignal(int socket) {
                         pushsetcachedflagmms("mms://:", mms->appID);
 
                         /* When a fetch is confirmed, add message to pool. */
-                        if (jsr205_fetch_mms() == JSR120_OK) {
+                        if (jsr205_fetch_mms() == WMA_OK) {
                             jsr205_mms_pool_add_msg(mms);
                         }
                     }
@@ -401,7 +403,7 @@ jboolean checkReadSignal(int socket) {
 #endif
 
             default:
-                /* IMPL_NOTE: Silently fail for unknown protocols. */
+                /* RFC: Silently fail for unknown protocols. */
                 break;
 
             }  /* switch*/
@@ -421,7 +423,7 @@ jboolean checkReadSignal(int socket) {
  * @return the platform-specific handle; NULL if there was an error
  */
 void *
-wmaCreateSocketHandle(JSR120_PROTOCOLS protocol, int fd) {
+wmaCreateSocketHandle(WMA_PROTOCOLS protocol, int fd) {
     jsr120_socket* ws;
 
     ws = (jsr120_socket*)pcsl_mem_malloc(sizeof(jsr120_socket));
@@ -498,14 +500,14 @@ wmaGetWMASocketByFD(int fd) {
 /**
  *
  */
-static JSR120_STATUS
-wmaGetProtocolByFD(int fd, JSR120_PROTOCOLS *pProtocol) {
+static WMA_STATUS
+wmaGetProtocolByFD(int fd, WMA_PROTOCOLS *pProtocol) {
     jsr120_socket *ws = wmaGetWMASocketByFD(fd);
-    JSR120_STATUS status = JSR120_ERR;
+    WMA_STATUS status = WMA_ERR;
 
     if (ws != NULL) {
         *pProtocol = ws->sockProtocol;
-        status = JSR120_OK;
+        status = WMA_OK;
     }
 
     return status;
