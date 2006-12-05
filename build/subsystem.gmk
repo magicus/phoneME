@@ -114,11 +114,11 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
     # set vpath, includes and src files
 
     vpath % $(INTERNAL_PISCES_DIR)/src/native/common/src
-    vpath % $(INTERNAL_PISCES_DIR)/src/native/cougar/src
+    vpath % $(INTERNAL_PISCES_DIR)/src/native/midp/src
 
     INTERNAL_PISCES_INCLUDES += \
             -I$(INTERNAL_PISCES_DIR)/src/native/common/include \
-            -I$(INTERNAL_PISCES_DIR)/src/native/cougar/include \
+            -I$(INTERNAL_PISCES_DIR)/src/native/midp/include \
 
     INTERNAL_PISCES_SRC_FILES += \
                 PiscesBlit.c \

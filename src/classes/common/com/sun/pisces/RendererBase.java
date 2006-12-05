@@ -103,6 +103,10 @@ public abstract class RendererBase extends LineSink {
 
     public abstract void getBoundingBox(int[] bbox);
 
+    //    public abstract void setCache(PiscesCache cache);
+
+    //    public abstract void renderFromCache(PiscesCache cache);
+
 //     public abstract void drawImage(int imageType, Object data,
 //                                    int width, int height,
 //                                    int offset, int stride,

@@ -58,6 +58,9 @@ public class Renderer extends RendererBase {
 
     private static final int MIN_QUAD_OPT_WIDTH = 100 << 16;
 
+    // Cache to store RLE-encoded coverage mask of the current primitive
+    PiscesCache cache = null;
+
     // Bounds of the drawing region, at S15.16 precsion
     private int boundsMinX, boundsMinY, boundsMaxX, boundsMaxY;
 
@@ -119,6 +122,7 @@ public class Renderer extends RendererBase {
     private int alphaWidth;
     private int[] minTouched = new int[NUM_ALPHA_ROWS];
     private int[] maxTouched = new int[NUM_ALPHA_ROWS];
+    private int[] rowOffsets = new int[NUM_ALPHA_ROWS];
     private int currX, currY;
     private int currImageOffset;
 
@@ -395,7 +399,7 @@ public class Renderer extends RendererBase {
         return x;
     }
 
-    public void endRendering() {
+    private void _endRendering() {
         if (flips == 0) {
             bboxX0 = bboxY0 = 0;
             bboxX1 = bboxY1 = -1;
@@ -556,6 +560,20 @@ public class Renderer extends RendererBase {
         crossingListFinished();
     }
 
+    public void endRendering() {
+        _endRendering();
+
+        // If a cache is present, store the bounding box in it as well
+        if (cache != null) {
+            cache.bboxX0 = bboxX0;
+            cache.bboxY0 = bboxY0;
+            cache.bboxX1 = bboxX1;
+            cache.bboxY1 = bboxY1;
+
+            cache.isValid = true;
+        }
+    }
+
     public void getBoundingBox(int[] bbox) {
         bbox[0] = bboxX0;
         bbox[1] = bboxY0;
@@ -567,13 +585,12 @@ public class Renderer extends RendererBase {
         // Grow rowAA according to the raster width
         int width = (rasterMaxX - rasterMinX + 1) >> SUBPIXEL_LG_POSITIONS_X;
         alphaWidth = width;
+
         // Allocate one extra entry in rowAA to avoid a conditional in
         // the rendering loop
-
         int bufLen = NUM_ALPHA_ROWS*width + 1;
 	if (this.rowAA == null || this.rowAA.length < bufLen) {
-            
-	    this.rowAA = new byte[bufLen];
+            this.rowAA = new byte[bufLen];
 
             this.paintBuffer = new int[bufLen];
             this.paintBufferOffset = 0;
@@ -654,7 +671,6 @@ public class Renderer extends RendererBase {
                         // pixel at a time (i.e., SUBPIXEL_POSITIONS_X
                         // subpixels)
                         
-                        // Fast inner loop 
                         int x = x0 >> SUBPIXEL_LG_POSITIONS_X;
                         int xmaxm1 = (x1 - 1) >> SUBPIXEL_LG_POSITIONS_X;
                         if (x == xmaxm1) {
@@ -710,9 +726,10 @@ public class Renderer extends RendererBase {
     }
 
     private void clearAlpha(byte[] alpha,
-                            int alphaOffset, int alphaStride,
+                            int alphaOffset,
                             int width, int height,
-                            int[] minTouched, int[] maxTouched) {
+                            int[] minTouched, int[] maxTouched,
+                            int[] rowOffsets) {
         for (int j = 0; j < height; j++) {
             int minX = minTouched[j];
             int maxX = maxTouched[j];
@@ -722,27 +739,68 @@ public class Renderer extends RendererBase {
                     w = width - minX;
                 }
                 
-                int aidx = alphaOffset + minX;
+                int aidx = alphaOffset + rowOffsets[j] + minX;
                 for (int i = 0; i < w; i++, aidx++) {
                     alpha[aidx] = (byte)0;
                 }
             }
-            
-            alphaOffset += alphaStride;
         }
     }
     
     private void emitRow(int minX, int maxX, boolean forceOutput) {
+        // Copy rowAA data into the cache if one is present
+        if (cache != null) {
+            if (cache.alphaWidth == 0) {
+                cache.alphaWidth = alphaWidth;
+            } else {
+                if (alphaWidth != cache.alphaWidth) {
+                    throw new IllegalStateException("alphaWidth changed!");
+                }
+            }
+
+            int len = -1;
+            int dstIdx = cache.alphaRLELength;
+            if (maxX >= minX) {
+                int srcIdx = rowAAOffset + minX;
+                len = maxX - minX + 1;
+
+                // Perform run-length encoding
+                // and store results in the cache
+                byte startVal = rowAA[srcIdx];
+                int runLen = 1;
+                for (int x = 1; x < len; x++) {
+                    byte nextVal = rowAA[srcIdx + x];
+                    if (nextVal == startVal && runLen < 255) {
+                        ++runLen;
+                    } else {
+                        cache.addRLERun(startVal, runLen);
+
+                        runLen = 1;
+                        startVal = nextVal;
+                    }                    
+                }
+                if (runLen > 0) {
+                    cache.addRLERun(startVal, runLen);
+                }
+                cache.addRLERun((byte)0, 0);
+            }
+
+            cache.addRow(minX, dstIdx);
+        }
+
+        // Record values for later blitting
+
         this.minTouched[rowNum] = minX;
         this.maxTouched[rowNum] = maxX;
+        this.rowOffsets[rowNum] = rowAAOffset;
 
         rowAAOffset += alphaWidth;
         rowNum++;
         if (forceOutput || rowNum == NUM_ALPHA_ROWS) {
             emitRows(rowNum);
-            clearAlpha(rowAA, 0, alphaWidth,
+            clearAlpha(rowAA, 0,
                        alphaWidth, rowNum,
-                       minTouched, maxTouched);
+                       minTouched, maxTouched, rowOffsets);
 
             currY += rowNum;
             currImageOffset += rowNum*imageScanlineStride;
@@ -755,9 +813,9 @@ public class Renderer extends RendererBase {
         if (paintMode == PAINT_FLAT_COLOR) {
             Blit.blit(imageData, imageType,
                       currImageOffset, imageScanlineStride, imagePixelStride,
-                      rowAA, 0, alphaWidth,
+                      rowAA, 0,
                       alphaWidth, alphaHeight,
-                      minTouched, maxTouched,
+                      minTouched, maxTouched, rowOffsets,
                       compositeRule,
                       cred, cgreen, cblue, calpha, alphaMap);
         } else {
@@ -767,13 +825,85 @@ public class Renderer extends RendererBase {
             
             Blit.blit(imageData, imageType,
                       currImageOffset, imageScanlineStride, imagePixelStride,
-                      rowAA, 0, alphaWidth,
+                      rowAA, 0,
                       alphaWidth, alphaHeight,
-                      minTouched, maxTouched,
+                      minTouched, maxTouched, rowOffsets,
                       compositeRule,
                       paintBuffer, paintBufferOffset, paintBufferStride,
                       alphaMap);
         }
+    }
+
+    public void setCache(PiscesCache cache) {
+        this.cache = cache;
+    }
+
+    public void renderFromCache(PiscesCache cache) {
+        this.alphaWidth = cache.alphaWidth;
+        int alphaHeight = cache.alphaHeight;
+
+        int bufLen = NUM_ALPHA_ROWS*alphaWidth;
+	if (this.rowAA == null || this.rowAA.length < bufLen) {
+            this.rowAA = new byte[bufLen];
+        }
+
+        // Decode run-length encoded alpha mask data
+        // The data for row j begins at cache.rowOffsetsRLE[j]
+        // and is encoded as a set of 2-byte pairs (val, runLen)
+        // terminated by a (0, 0) pair.
+
+        int currX = cache.bboxX0;
+        int currY = cache.bboxY0;
+        currImageOffset = imageOffset +
+            currY*imageScanlineStride +
+            currX*imagePixelStride;
+        
+        int idx = 0;
+        for (int j = 0; j < alphaHeight; j++) {
+            int jj = j & (NUM_ALPHA_ROWS - 1);
+
+            rowOffsets[jj] = idx - cache.minTouched[j];
+
+            int pos = cache.rowOffsetsRLE[j];
+            int len = 0;
+
+            while (true) {
+                byte val = cache.rowAARLE[pos];
+                int runLen = cache.rowAARLE[pos + 1] & 0xff;
+                if (runLen == 0) {
+                    break;
+                }
+                for (int i = 0; i < runLen; i++) {
+                    rowAA[idx++] = val;
+                }
+                len += runLen;
+                pos += 2;
+            }
+
+            minTouched[jj] = cache.minTouched[j];
+            if (len == 0) {
+                // Empty rows have minX = Integer.MAX_VALUE,
+                // maxX = Integer.MIN_VALUE
+                maxTouched[jj] = Integer.MIN_VALUE;
+            } else {
+                maxTouched[jj] = cache.minTouched[j] + len - 1;
+            }
+
+            // Perform blitting after NUM_ALPHA_ROWS rows have
+            // been decoded, or when we reach the last row
+            if ((jj == NUM_ALPHA_ROWS - 1) || (j == alphaHeight - 1)) {
+                emitRows(jj + 1);
+                currImageOffset += (jj + 1)*imageScanlineStride;
+                idx = 0;
+            }
+
+        }
+
+        // Update the bounding box for possible retrieval via getBoundingBox
+        this.bboxX0 = cache.bboxX0;
+        this.bboxY0 = cache.bboxY0;
+        this.bboxX1 = cache.bboxX1;
+        this.bboxY1 = cache.bboxY1;
     }
 
     // Edge list data

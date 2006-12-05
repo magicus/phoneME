@@ -32,6 +32,9 @@
 
 #include <pcsl_memory.h>
 
+#include <sni.h>
+#include <commonKNIMacros.h>
+
 #define SURFACE_NATIVE_PTR 0
 #define SURFACE_LAST SURFACE_NATIVE_PTR 
 
@@ -223,25 +226,15 @@ Java_com_sun_pisces_NativeSurface_setRGB() {
   CORRECT_DIMS(surface, x, y, width, height, srcX, srcY);
   
   if ((width > 0) && (height > 0)) {
-    jint size = ((height - 1) * scanLength + width) * sizeof(jint);
-    jint* tempArray = (jint*)pcsl_mem_malloc(size);
-    
-    if (NULL == tempArray) { 
-        KNI_ThrowNew("java/lang/OutOfMemoryError", 
-                     "Allocation of temporary renderer memory buffer failed.");
-    } else {
+      jint *tempArray;
       offset += srcY * scanLength + srcX;
-      KNI_GetRawArrayRegion(arrayHandle, offset * sizeof(jint), size, 
-          (jbyte*)tempArray);
 
-      surface_setRGB(surface, x, y, width, height, tempArray, scanLength);          
-      pcsl_mem_free(tempArray);
+      SNI_BEGIN_RAW_POINTERS;
+      
+      tempArray = &JavaIntArray(arrayHandle)[offset];
 
-      if(KNI_TRUE == readAndClearMemErrorFlag()) {
-          KNI_ThrowNew("java/lang/OutOfMemoryError", 
-                       "Allocation of internal renderer buffer failed.");
-      }
-    }
+      surface_setRGB(surface, x, y, width, height, tempArray, scanLength);  
+      SNI_END_RAW_POINTERS;
   }
 
   KNI_EndHandles();
@@ -278,11 +271,6 @@ Java_com_sun_pisces_NativeSurface_drawSurfaceImpl() {
   if ((width > 0) && (height > 0) && (opacity > 0)) {
     surface_drawSurface(dstSurface, dstX, dstY, width, height, 
         srcSurface, srcX, srcY, opacity);
-
-    if(KNI_TRUE == readAndClearMemErrorFlag()) {
-        KNI_ThrowNew("java/lang/OutOfMemoryError", 
-                     "Allocation of internal renderer buffer failed.");
-    }
   }
 
   KNI_EndHandles();
@@ -317,29 +305,19 @@ Java_com_sun_pisces_NativeSurface_drawRGBImpl() {
   CORRECT_DIMS(surface, x, y, width, height, srcX, srcY);
   
   if ((width > 0) && (height > 0)) {
-    jint size = ((height - 1) * scanLength + width) * sizeof(jint);
-    jint* tempArray = (jint*)pcsl_mem_malloc(size);
-    
-    if (NULL == tempArray) {
-        KNI_ThrowNew("java/lang/OutOfMemoryError", 
-                     "Allocation of temporary renderer memory buffer failed.");
-    } else {
+      jint* tempArray;
       offset += srcY * scanLength + srcX;
-      KNI_GetRawArrayRegion(arrayHandle, offset * sizeof(jint), size, 
-          (jbyte*)tempArray);
+      
+      SNI_BEGIN_RAW_POINTERS;
+      
+      tempArray = &JavaIntArray(arrayHandle)[offset];
 
       surface_drawRGB(surface, x, y, width, height, tempArray, scanLength, 
           opacity);          
       
-      pcsl_mem_free(tempArray);
-
-      if(KNI_TRUE == readAndClearMemErrorFlag()) {
-          KNI_ThrowNew("java/lang/OutOfMemoryError", 
-                       "Allocation of internal renderer buffer failed.");
-      }
-    }
+      SNI_END_RAW_POINTERS;
   }
-
+  
   KNI_EndHandles();
   KNI_ReturnVoid();
 }

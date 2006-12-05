@@ -369,4 +369,7 @@ public final class PiscesRenderer extends PathSink {
     public native void clearRect(int x, int y, int w, int h);
 
     private native void finalize();
+
+    public native void setPathData(float[] data, byte[] commands, 
+            int nCommands);
 }

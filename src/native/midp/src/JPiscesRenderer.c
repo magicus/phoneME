@@ -1,5 +1,4 @@
 /*
- * 
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -34,8 +33,17 @@
 
 #include <pcsl_memory.h>
 
+#include <sni.h>
+#include <commonKNIMacros.h>
+
 #define RENDERER_NATIVE_PTR 0
 #define RENDERER_LAST RENDERER_NATIVE_PTR 
+
+#define CMD_MOVE_TO 0
+#define CMD_LINE_TO 1
+#define CMD_QUAD_TO 2
+#define CMD_CURVE_TO 3
+#define CMD_CLOSE 4
 
 static jfieldID fieldIds[RENDERER_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
@@ -519,32 +527,19 @@ Java_com_sun_pisces_PiscesRenderer_setLinearGradientImpl() {
   KNI_GetParameterAsObject(7, transformHandle);
   KNI_GetThisPointer(objectHandle);
 
-  ramp = (jint*)pcsl_mem_malloc(GRADIENT_MAP_SIZE*sizeof(jint));
+  transform_get6(&gradientTransform, transformHandle);
 
-  if (NULL == ramp) {
-      KNI_ThrowNew("java/lang/OutOfMemoryError", 
-                   "Allocation of renderer memory for gradient failed.");
-  } else {
-      KNI_GetRawArrayRegion(rampHandle, 0, GRADIENT_MAP_SIZE * sizeof(jint), 
-                            (jbyte*)ramp);
+  rdr = (Renderer*)JLongToPointer(KNI_GetLongField(objectHandle, 
+      fieldIds[RENDERER_NATIVE_PTR]));
 
-      transform_get6(&gradientTransform, transformHandle);
+  SNI_BEGIN_RAW_POINTERS;
+  
+  ramp = JavaIntArray(rampHandle);
 
-      rdr = (Renderer*)
-          JLongToPointer(KNI_GetLongField(objectHandle, 
-                                          fieldIds[RENDERER_NATIVE_PTR]));
+  renderer_setLinearGradient(rdr, x0, y0, x1, y1,
+                             ramp, &gradientTransform);
 
-      renderer_setLinearGradient(rdr, x0, y0, x1, y1,
-                                 ramp, &gradientTransform);
-
-      if(KNI_TRUE == readAndClearMemErrorFlag()) {
-          KNI_ThrowNew("java/lang/OutOfMemoryError", 
-                       "Allocation of internal renderer buffer failed.");
-      }
-
-      pcsl_mem_free(ramp);
-  }
-
+  SNI_END_RAW_POINTERS;
 
   KNI_EndHandles();
   KNI_ReturnVoid();
@@ -573,33 +568,19 @@ Java_com_sun_pisces_PiscesRenderer_setRadialGradientImpl() {
   KNI_GetParameterAsObject(8, transformHandle);
   KNI_GetThisPointer(objectHandle);
 
-  ramp = (jint*)pcsl_mem_malloc(GRADIENT_MAP_SIZE*sizeof(jint));
+  transform_get6(&gradientTransform, transformHandle);
 
-  if (NULL == ramp) {
-      KNI_ThrowNew("java/lang/OutOfMemoryError", 
-                   "Allocation of renderer memory for radial gradient failed.");
-  } else {
-      KNI_GetRawArrayRegion(rampHandle, 0, GRADIENT_MAP_SIZE * sizeof(jint), 
-                            (jbyte*)ramp);
+  rdr = (Renderer*)JLongToPointer(KNI_GetLongField(objectHandle, 
+      fieldIds[RENDERER_NATIVE_PTR]));
 
-      transform_get6(&gradientTransform, transformHandle);
+  SNI_BEGIN_RAW_POINTERS;
+  
+  ramp = JavaIntArray(rampHandle);
 
-      rdr = (Renderer*)
-          JLongToPointer(KNI_GetLongField(objectHandle, 
-                                          fieldIds[RENDERER_NATIVE_PTR]));
+  renderer_setRadialGradient(rdr, cx, cy, fx, fy, radius,
+                             ramp, &gradientTransform);
 
-      renderer_setRadialGradient(rdr, cx, cy, fx, fy, radius,
-                                 ramp, &gradientTransform);
-
-      if(KNI_TRUE == readAndClearMemErrorFlag()) {
-          KNI_ThrowNew("java/lang/OutOfMemoryError", 
-                       "Allocation of internal renderer buffer failed.");
-      }
-
-      pcsl_mem_free(ramp);
-
-  }
-
+  SNI_END_RAW_POINTERS;
   KNI_EndHandles();
   KNI_ReturnVoid();
 }
@@ -1123,6 +1104,95 @@ Java_com_sun_pisces_PiscesRenderer_getBoundingBox() {
   KNI_SetIntArrayElement(bbox, 2, rdr->_bboxX1 - rdr->_bboxX0);
   KNI_SetIntArrayElement(bbox, 3, rdr->_bboxY1 - rdr->_bboxY0);
 
+  KNI_EndHandles();
+  KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID 
+Java_com_sun_pisces_PiscesRenderer_setPathData() {
+  KNI_StartHandles(3);
+  KNI_DeclareHandle(objectHandle);
+  KNI_DeclareHandle(dataHandle);
+  KNI_DeclareHandle(commandsHandle);
+
+  jint nCommands = KNI_GetParameterAsInt(3);
+
+  jint idx;
+  Renderer* rdr;
+  jint dataSize;
+  jint commandsSize;
+  jfloat* data = NULL;
+  jbyte* commands = NULL;
+
+  KNI_GetParameterAsObject(1, dataHandle);
+  KNI_GetParameterAsObject(2, commandsHandle);
+
+  KNI_GetThisPointer(objectHandle);
+  rdr = (Renderer*)JLongToPointer(KNI_GetLongField(objectHandle, 
+      fieldIds[RENDERER_NATIVE_PTR]));
+
+  dataSize = KNI_GetArrayLength(dataHandle) * sizeof(jfloat);
+  commandsSize = nCommands * sizeof(jbyte);
+  
+  data = (jfloat*)PISCESmalloc(dataSize);
+  commands = (jbyte*)PISCESmalloc(commandsSize);
+  
+  if ((data != NULL) && (commands != NULL)) {
+    jint offset = 0;
+
+    KNI_GetRawArrayRegion(dataHandle, 0, dataSize, (jbyte*)data);
+    KNI_GetRawArrayRegion(commandsHandle, 0, commandsSize, (jbyte*)commands);
+    
+    for (idx = 0; idx < nCommands; ++idx) {
+      switch (commands[idx]) {
+        case CMD_MOVE_TO:
+          renderer_moveTo(rdr,
+              (jint)(data[offset] * 65536.0),
+              (jint)(data[offset + 1] * 65536.0));
+          offset += 2;
+          break;
+        case CMD_LINE_TO:
+          renderer_lineTo(rdr,
+              (jint)(data[offset] * 65536.0),
+              (jint)(data[offset + 1] * 65536.0));
+          offset += 2;
+          break;
+        case CMD_QUAD_TO:
+          renderer_quadTo(rdr,
+              (jint)(data[offset] * 65536.0),
+              (jint)(data[offset + 1] * 65536.0),
+              (jint)(data[offset + 2] * 65536.0),
+              (jint)(data[offset + 3] * 65536.0));
+          offset += 4;
+          break;
+        case CMD_CURVE_TO:
+          renderer_cubicTo(rdr,
+              (jint)(data[offset] * 65536.0),
+              (jint)(data[offset + 1] * 65536.0),
+              (jint)(data[offset + 2] * 65536.0),
+              (jint)(data[offset + 3] * 65536.0),
+              (jint)(data[offset + 4] * 65536.0),
+              (jint)(data[offset + 5] * 65536.0));
+          offset += 6;
+          break;
+        case CMD_CLOSE:
+        default:
+          renderer_close(rdr);
+          break;
+      }
+    }
+    
+    PISCESfree(data);
+    PISCESfree(commands);
+  } else {
+    PISCESfree(data);
+    PISCESfree(commands);
+
+    KNI_ThrowNew("java/lang/OutOfMemoryError", "");
+  }    
+
+  // don't do anything here (see the throw above)!
+    
   KNI_EndHandles();
   KNI_ReturnVoid();
 }

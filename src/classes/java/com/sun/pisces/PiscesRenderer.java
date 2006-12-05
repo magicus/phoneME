@@ -36,6 +36,13 @@ public final class PiscesRenderer extends PathSink {
     public static final int ARC_CHORD = 1;
     public static final int ARC_PIE = 2;
 
+    // IMPL NOTE - use Perseus conventions
+    public static final int COMMAND_MOVE_TO  = 0;
+    public static final int COMMAND_LINE_TO  = 1;
+    public static final int COMMAND_QUAD_TO  = 2;
+    public static final int COMMAND_CUBIC_TO = 3;
+    public static final int COMMAND_CLOSE    = 4;
+
     private static final boolean enableLogging = false;
     private static java.io.PrintStream logStream = null;
 
@@ -173,6 +180,7 @@ public final class PiscesRenderer extends PathSink {
                 type);
 
         invalidate();
+        setFill();
 
         messageShown = true;
     }
@@ -571,70 +579,6 @@ public final class PiscesRenderer extends PathSink {
         rdr.beginRendering(minX, minY, width, height, windingRule);
     }
 
-    /**
-     * Completes the rendering of path data.  Destination pixels will
-     * be written at this time.
-     */
-    public void endRendering() {
-        if (enableLogging) {
-            if (logStream != null) {
-                logStream.println("pr.endRendering();");
-            }
-        }
-        end();
-        myEndRendering();
-    }
-
-    private void myEndRendering() {
-        rdr.endRendering();
-    }
-
-    /**
-     * Returns a bounding box containing all pixels drawn during the
-     * rendering of the most recent primitive
-     * (beginRendering/endRendering pair).  The bounding box is
-     * returned in the form (x, y, width, height).
-     */
-    public void getBoundingBox(int[] bbox) {
-        if (enableLogging) {
-            if (logStream != null) {
-                logStream.println("bbox = new int[4];");
-                logStream.println("pr.getBoundingBox(bbox);");
-            }
-        }
-        rdr.getBoundingBox(bbox);
-    }
-
-    public void setStroke() {
-        if (enableLogging) {
-            if (logStream != null) {
-                logStream.println("pr.setStroke();");
-            }
-        }
-        isPathFilled = false;
-        this.externalConsumer = getStroker();
-    }
-    
-    public void setFill() {
-        if (enableLogging) {
-            if (logStream != null) {
-                logStream.println("pr.setFill();");
-            }
-        }
-        isPathFilled = true ;
-        this.externalConsumer = getFiller();
-    }
-
-    public void setTextFill() {
-        if (enableLogging) {
-            if (logStream != null) {
-                logStream.println("pr.setTextFill();");
-            }
-        }
-        isPathFilled = true;
-        this.externalConsumer = getTextFiller();
-    }
-
     public void moveTo(int x0, int y0) {
         if (enableLogging) {
             if (logStream != null) {
@@ -713,6 +657,189 @@ public final class PiscesRenderer extends PathSink {
         }
         inSubpath = false;
         externalConsumer.end();
+    }
+
+    /**
+     * Completes the rendering of path data.  Destination pixels will
+     * be written at this time.
+     */
+    public void endRendering() {
+        if (enableLogging) {
+            if (logStream != null) {
+                logStream.println("pr.endRendering();");
+            }
+        }
+        end();
+        myEndRendering();
+    }
+
+    private void myEndRendering() {
+        rdr.endRendering();
+    }
+
+    private void renderPath(int numCommands,
+                            byte[] commands,
+                            float[] coordsXY,
+                            int windingRule) {
+        beginRendering(windingRule);
+        int clen = coordsXY.length;
+	int offset = 0;
+        for (int i = 0; i < numCommands; i++) {
+            int command = commands[i] & 0xff;
+            switch (command) {
+            case COMMAND_MOVE_TO:
+                if (offset >= 0 & offset < clen - 1) {
+                    int x0 = (int)(coordsXY[offset++]*65536.0f);
+                    int y0 = (int)(coordsXY[offset++]*65536.0f);
+                    moveTo(x0, y0);
+                }
+                break;
+
+            case COMMAND_LINE_TO:
+                if (offset >= 0 & offset < clen - 1) {
+                    int x1 = (int)(coordsXY[offset++]*65536.0f);
+                    int y1 = (int)(coordsXY[offset++]*65536.0f);
+                    lineTo(x1, y1);
+                }
+                break;
+
+            case COMMAND_QUAD_TO:
+                if (offset >= 0 & offset < clen - 3) {
+                    int x1 = (int)(coordsXY[offset++]*65536.0f);
+                    int y1 = (int)(coordsXY[offset++]*65536.0f);
+                    int x2 = (int)(coordsXY[offset++]*65536.0f);
+                    int y2 = (int)(coordsXY[offset++]*65536.0f);
+                    quadTo(x1, y1, x2, y2);
+                }
+                break;
+
+            case COMMAND_CUBIC_TO:
+                if (offset >= 0 & offset < clen - 5) {
+                    int x1 = (int)(coordsXY[offset++]*65536.0f);
+                    int y1 = (int)(coordsXY[offset++]*65536.0f);
+                    int x2 = (int)(coordsXY[offset++]*65536.0f);
+                    int y2 = (int)(coordsXY[offset++]*65536.0f);
+                    int x3 = (int)(coordsXY[offset++]*65536.0f);
+                    int y3 = (int)(coordsXY[offset++]*65536.0f);
+                    cubicTo(x1, y1, x2, y2, x3, y3);
+                }
+                break;
+
+            case COMMAND_CLOSE:
+                close();
+                break;
+            }
+        }
+        endRendering();
+    }
+
+    /**
+     * Render a complex path, possibly caching the results in a form
+     * that can be rendered more rapidly at a future time.  The cache
+     * will be valid across changes in paint style, but not across
+     * changes to the transform, stroke/fill mode setting, stroke
+     * parameters, or winding rule.
+     
+     * <p> The implementation does not check the validity of the cache
+     * relative to changes in the renderer state.  It is up to the
+     * caller to manually invalidate the cache object as needed.  The
+     * other parameters must contain a valid description of the path
+     * even if a valid cache is passed in.  If <code>cache</code> is
+     * <code>null</code>, no caching is performed.
+     *
+     * <p> This method is equivalent to:
+     *
+     * <pre>
+     * beginRendering(windingRule);
+     *
+     * PiscesCache cache = getCache();
+     * if (cache != null) {
+     *   if (cache.isValid()) {
+     *     // Render using the cached form of the path
+     *     renderFromCache(cache);
+     *   } else {
+     *     // Perform rendering and optionally place a pre-renderered
+     *     // representation of the results into the cache
+     *     renderAndComputeCache(numCommands, commands, offsets, coordsXY,
+     *                           windingRule, cache);
+     *   }
+     * } else {
+     *   // Perform rendering without a cache
+     *   renderNoCache(numCommands, commands, offsets, coordsXY, windingRule);
+     * }
+     *
+     * endRendering();
+     * </pre>
+     *
+     * <p> Any command for which the value of <code>offsets</code>
+     * would lead to a reference outside of the bounds of
+     * <code>coordsXY</code> will not be issued.
+     *
+     * <p> Retrieval of the bounding box using <code>getBoundingBox</code>
+     * following a call to <code>render</code> is supported.
+     */
+    public void renderPath(int numCommands,
+                           byte[] commands,
+                           float[] coordsXY,
+                           int windingRule,
+                           PiscesCache cache) {
+        if (cache != null) {
+            if (cache.isValid()) {
+                rdr.renderFromCache(cache);
+            } else {
+                rdr.setCache(cache);
+                renderPath(numCommands, commands, coordsXY, windingRule);
+                rdr.setCache(null);
+            }
+        } else {
+            renderPath(numCommands, commands, coordsXY, windingRule);
+        }
+    }
+
+    /**
+     * Returns a bounding box containing all pixels drawn during the
+     * rendering of the most recent primitive
+     * (beginRendering/endRendering pair).  The bounding box is
+     * returned in the form (x, y, width, height).
+     */
+    public void getBoundingBox(int[] bbox) {
+        if (enableLogging) {
+            if (logStream != null) {
+                logStream.println("bbox = new int[4];");
+                logStream.println("pr.getBoundingBox(bbox);");
+            }
+        }
+        rdr.getBoundingBox(bbox);
+    }
+
+    public void setStroke() {
+        if (enableLogging) {
+            if (logStream != null) {
+                logStream.println("pr.setStroke();");
+            }
+        }
+        isPathFilled = false;
+        this.externalConsumer = getStroker();
+    }
+    
+    public void setFill() {
+        if (enableLogging) {
+            if (logStream != null) {
+                logStream.println("pr.setFill();");
+            }
+        }
+        isPathFilled = true ;
+        this.externalConsumer = getFiller();
+    }
+
+    public void setTextFill() {
+        if (enableLogging) {
+            if (logStream != null) {
+                logStream.println("pr.setTextFill();");
+            }
+        }
+        isPathFilled = true;
+        this.externalConsumer = getTextFiller();
     }
 
     public void drawLine(int x0, int y0, int x1, int y1) {
@@ -822,7 +949,7 @@ public final class PiscesRenderer extends PathSink {
                 myEndRendering();
                 return;
             } else if (joinStyle == Stroker.JOIN_ROUND) {
-                // IMPL_NOTE: - accelerate hollow rects with round joins
+                // IMPL NOTE - accelerate hollow rects with round joins
             }
         }
 
@@ -920,7 +1047,6 @@ public final class PiscesRenderer extends PathSink {
         emitQuadrants(consumer, cx, cy, points, nPoints);
         consumer.close();
     }
-
 
     // Emit the outline of an oval, offset by pen radius lw2
     // The interior path may self-intersect, but this is handled
@@ -1279,5 +1405,9 @@ public final class PiscesRenderer extends PathSink {
         maxY = Math.min(maxY, bbMaxY);
 
         rdr.clearRect(x, y, maxX - x, maxY - y);
+    }
+
+    public void setPathData(float[] data, byte[] commands, int nCommands) {
+        throw new IllegalStateException("Not implemented");
     }
 }
