@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -424,7 +425,7 @@ public class StubGenerator extends AbstractGenerator implements ProcessorAction 
                 boolean isNillable = p.getType().isNillable();
                 //System.out.println("methodName="+methodName+" paramTypeName="+paramTypeName+" isNillable="+isNillable);
                 if (!isNillable) {
-                    // Double check due to bug in JAX-RPC.
+                    // Double check due to a feature of JAX-RPC.
                     isNillable = forceNillable(parameterType, methodName);
                 }
                 boolean isOptional = false;
