@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -101,6 +102,25 @@ void JVMSPI_MethodTrap(int /* trap_action */, int /* trap_handle */) {
   // do nothing
 }
 #endif
+
+#if ENABLE_MONET_COMPILATION
+jboolean JVMSPI_IsPrecompilationTarget(const char * class_name, 
+                                       int class_name_length,
+                                       const char * method_name, 
+                                       int method_name_length,
+                                       const char * descriptor, 
+                                       int descriptor_length,
+                                       int code_size) {
+  (void)class_name;
+  (void)class_name_length;
+  (void)method_name;
+  (void)method_name_length;
+  (void)descriptor;
+  (void)descriptor_length;
+  (void)code_size;
+  return KNI_TRUE;
+}
+#endif				      
 
 static void P(const char* x) {
   tty->print_cr(x);

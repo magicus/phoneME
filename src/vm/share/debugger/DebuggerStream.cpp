@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -37,15 +38,7 @@ PacketInputStream::init()
 {
 }
 
-julong PacketStream::get_Java_u8(address p)
-{
-  return ((julong)Bytes::swap_u4((juint)(*(julong*)p & 0xffffffff)) << 32) |
-    (julong)Bytes::swap_u4((juint)(*(julong*)p >> 32));
-}
-
 void
-
-
 PacketStream::read_bytes(void *dest, int size)
 {
 
@@ -87,7 +80,7 @@ void PacketInputStream::flush_and_send_oom(Transport::transport_op_def_t *ops) {
 bool
 PacketInputStream::receive_packet()
 {
-  int len, id;
+  juint len, id;
   int bytes_avail;
   unsigned char uc;
   SETUP_ERROR_CHECKER_ARG;
@@ -114,12 +107,14 @@ PacketInputStream::receive_packet()
     }
   }
   ops->read_int(&_transport, &len);
+  len = JAVA_TO_HOST_INT(len);
   if (len < JDWP_HEADER_SIZE) {
     flush(ops);
     return false;
   }
   set_data_len(len - JDWP_HEADER_SIZE);
   ops->read_int(&_transport, &id);
+  id = JAVA_TO_HOST_INT(id);
   set_id(id);
 
   ops->read_bytes(&_transport, &uc, sizeof(uc), true);
@@ -127,6 +122,7 @@ PacketInputStream::receive_packet()
   if (flags() & FLAGS_REPLY) {
     short error_code;
     ops->read_short(&_transport, &error_code);
+    error_code = JAVA_TO_HOST_SHORT(error_code);
     set_error(error_code);
   } else {
     ops->read_bytes(&_transport, &uc, sizeof(uc), true);
@@ -495,28 +491,28 @@ PacketOutputStream::write_byte(jbyte val)
 void
 PacketOutputStream::write_char(jchar val)
 {
-  val = HOST_TO_JAVA_CHAR(val);
+  HOST_TO_JAVA_CHAR(val);
   write_bytes((char*)&val, sizeof(val));
 }
 
 void
-PacketOutputStream::write_short(jshort val)
+PacketOutputStream::write_short(jushort val)
 {
-  val = HOST_TO_JAVA_SHORT(val);
+  HOST_TO_JAVA_SHORT(val);
   write_bytes((char*)&val, sizeof(val));
 }
 
 void
-PacketOutputStream::write_int(jint val)
+PacketOutputStream::write_int(juint val)
 {
-  val = HOST_TO_JAVA_INT(val);
+  HOST_TO_JAVA_INT(val);
   write_bytes((char*)&val, sizeof(val));
 }
 
 void
-PacketOutputStream::write_long(jlong val)
+PacketOutputStream::write_long(julong val)
 {
-  val = (jlong)(HOST_TO_JAVA_LONG(val));
+  HOST_TO_JAVA_LONG(val);
   write_bytes((char*)&val, sizeof(val));
 }
 
@@ -543,8 +539,10 @@ PacketOutputStream::send_packet()
   }
 #endif
   // transfer packet header to buffer
-  buffer->_pkt_len = HOST_TO_JAVA_INT(_pkt._pkt_len);
-  buffer->_id = HOST_TO_JAVA_INT(_pkt._id);
+  buffer->_pkt_len = _pkt._pkt_len;
+  HOST_TO_JAVA_INT(buffer->_pkt_len);
+  buffer->_id = _pkt._id;
+  HOST_TO_JAVA_INT(buffer->_id);
   buffer->_x._cmdset._flags = _pkt._x._cmdset._flags;
   if (_pkt._x._cmdset._flags & FLAGS_REPLY) {
     //MSB

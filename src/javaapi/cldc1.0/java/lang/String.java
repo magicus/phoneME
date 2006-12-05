@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,6 +28,7 @@ package java.lang;
 
 import java.io.UnsupportedEncodingException;
 import com.sun.cldc.i18n.*;
+import com.sun.cldchi.jvm.JVM;
 
 /**
  * The <code>String</code> class represents character strings. All
@@ -67,7 +69,7 @@ import com.sun.cldc.i18n.*;
  * String conversions are implemented through the method
  * <code>toString</code>, defined by <code>Object</code> and
  * inherited by all classes in Java. For additional information on
- * string concatenation and conversion, see 
+ * string concatenation and conversion, see
  * <i>The Java Language Specification</i>.
  *
  * @version 1.121, 10/06/99 (CLDC 1.0, Spring 2000)
@@ -129,7 +131,7 @@ class String {
     public String(char value[]) {
         this.count = value.length;
         this.value = new char[count];
-        System.arraycopy(value, 0, this.value, 0, count);
+        JVM.unchecked_char_arraycopy(value, 0, this.value, 0, count);
     }
 
     /**
@@ -176,7 +178,7 @@ class String {
 
         this.value = new char[count];
         this.count = count;
-        System.arraycopy(value, offset, this.value, 0, count);
+        JVM.unchecked_char_arraycopy(value, offset, this.value, 0, count);
     }
 
     /**
@@ -362,6 +364,7 @@ class String {
 /* #endif */
             );
         }
+        // NOTE: dst not checked, cannot use unchecked arraycopy
         System.arraycopy(value, offset + srcBegin, dst, dstBegin,
                          srcEnd - srcBegin);
     }
@@ -1108,7 +1111,7 @@ class String {
 
         char buf[] = new char[count];
 
-        System.arraycopy(value, offset, buf, 0, i);
+        JVM.unchecked_char_arraycopy(value, offset, buf, 0, i);
 
         for(; i < count ; i++) {
             buf[i] = Character.toLowerCase(value[offset+i]);
@@ -1138,7 +1141,7 @@ class String {
 
         char buf[] = new char[count];
 
-        System.arraycopy(value, offset, buf, 0, i);
+        JVM.unchecked_char_arraycopy(value, offset, buf, 0, i);
 
         for(; i < count ; i++) {
             buf[i] = Character.toUpperCase(value[offset+i]);

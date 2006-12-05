@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -116,6 +117,11 @@ void ThreadReferenceImpl::resume_all_threads(int task_id)
   Thread::Fast thread = Universe::global_threadlist();
   Oop null_oop;
 
+#ifdef AZZERT
+  if (TraceDebugger) {
+    tty->print_cr("ThreadResumeAllThreads: task_id: %d", task_id);
+  }
+#endif
   while (thread.not_null()) {
 #if ENABLE_ISOLATES
     if (task_id != -1 && thread().task_id() != task_id) {
@@ -145,8 +151,8 @@ void ThreadReferenceImpl::suspend_specific_thread(Thread *thread, int task_id,
 #endif
 #ifdef AZZERT
   if (TraceDebugger) {
-    tty->print_cr("ThreadSuspend: ThreadID=%lx, Thread: 0x%x", 
-                   JavaDebugger::get_thread_id_by_ref (thread), (int)thread->obj());
+    tty->print_cr("ThreadSuspend: ObjectID=%lx, Thread: 0x%x, id = 0x%x", 
+                  JavaDebugger::get_thread_id_by_ref (thread), (int)thread->obj(), thread->id());
   }
 #endif
   thread->inc_suspend_count();
@@ -166,8 +172,8 @@ void ThreadReferenceImpl::resume_specific_thread(Thread *thread, int task_id)
 #endif
 #ifdef AZZERT
   if (TraceDebugger) {
-    tty->print_cr("ThreadResume: ThreadID=%lx, Thread: 0x%x", 
-                  JavaDebugger::get_thread_id_by_ref(thread), (int)thread->obj());
+    tty->print_cr("ThreadResume: ObjectID=%lx, Thread: 0x%x, id = 0x%x", 
+                  JavaDebugger::get_thread_id_by_ref(thread), (int)thread->obj(), thread->id());
   }
 #endif
     if (thread->dec_suspend_count() <= 0) {

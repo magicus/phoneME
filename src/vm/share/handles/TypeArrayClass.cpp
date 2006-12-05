@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -40,14 +41,14 @@ ReturnOop TypeArrayClass::get_array_class(jint distance JVM_TRAPS) {
 #if ENABLE_ISOLATES
   TaskMirror::Raw tm;
   if (Universe::before_main()) {
-    tm = Universe::new_task_mirror(0 JVM_CHECK_0);
+    tm = Universe::new_task_mirror(0, 0 JVM_CHECK_0);
     tm().set_containing_class(this);
     TaskMirror::clinit_list_add(&tm);
   }
 #endif
   UsingFastOops fast_oops;
   ObjArrayClass::Fast ac = compute_higher_dimension(JVM_SINGLE_ARG_CHECK_0);
-  return ac().get_array_class(distance - 1 JVM_NO_CHECK_AT_BOTTOM);
+  return ac().get_array_class(distance - 1 JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 #ifndef PRODUCT

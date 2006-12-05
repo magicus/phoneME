@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,4 +28,29 @@ class InstanceClassDesc: public JavaClassDesc {
  public:
   // GC support.
   void variable_oops_do(void do_oop(OopDesc**));
+
+ private:
+  // Compute allocation size
+  static size_t allocation_size(size_t static_field_size,
+                                size_t oop_map_size,
+                                size_t vtable_length) {
+    size_t size = sizeof(InstanceClassDesc) + oop_map_size;
+
+#if !ENABLE_ISOLATES 
+    size += static_field_size;
+#else
+    (void)static_field_size;
+#endif
+
+#if !ENABLE_ISOLATES && USE_EMBEDDED_VTABLE_BITMAP
+    size += bitmap_size(vtable_length);
+#else
+    (void)vtable_length;
+#endif
+
+    return align_allocation_size(size);
+  }
+
+  friend class Universe;
+  friend class ROMOptimizer;
 };

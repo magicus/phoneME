@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,6 +26,7 @@
 
 
 /*
+ *   
  */
 
 import java.util.*;
@@ -154,7 +156,7 @@ class Profile {
 
         /* Skip the first line. It's for human consumption only */
         line = reader.readLine();
-        //line = reader.readLine(); /* bug in output */
+        //line = reader.readLine(); /* need revisit */
 
         // Read all lines in the input file
         //

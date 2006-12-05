@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -42,6 +43,7 @@ void InterpreterStubs::generate() {
   GUARANTEE(!TaggedJavaStack, "Tagged stack not supported");
 #endif // ENABLE_EMBEDDED_CALLINFO
   generate_interpreter_deoptimization_entry();
+  generate_interpreter_timer_tick();
 
   generate_primordial_to_current_thread();
   generate_current_thread_to_primordial();
@@ -184,6 +186,18 @@ void InterpreterStubs::generate_interpreter_deoptimization_entry() {
   restore_interpreter_state();
   prefetch(0);
   dispatch(tos_on_stack);
+}
+
+void InterpreterStubs::generate_interpreter_timer_tick() {
+  Segment seg(this, code_segment, "Interpreter call timer_tick");
+  bind("interpreter_timer_tick");
+  restore_stack_state_from(tos_interpreter_basic);
+  set_stack_state_to(tos_on_stack);
+  interpreter_call_vm("timer_tick", T_VOID);
+  prefetch(0);
+  restore_stack_state_from(tos_on_stack);
+  set_stack_state_to(tos_interpreter_basic);
+  dispatch(tos_interpreter_basic);
 }
 
 void InterpreterStubs::generate_primordial_to_current_thread() {

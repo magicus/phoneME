@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -68,6 +69,7 @@ class InstanceClass: public JavaClass {
   }
   size_t nonstatic_map_size() const;
   size_t last_nonstatic_oop_offset() const;
+  size_t static_map_size() const;
 
   // Does this InstanceClass object embed a static field that's an oop?
   // (always false in MVM).
@@ -86,11 +88,6 @@ class InstanceClass: public JavaClass {
                                             int& itable_index);
   bool is_same_class_package(Symbol* other_class_name);
   bool is_same_class_package(InstanceClass* other_class);
-  #if ENABLE_INLINE && ARM
-  bool is_same_root_package(Symbol* other_class_name);
-  bool is_same_root_package(InstanceClass* other_class);  
-  void clean_compiled_method();
-  #endif
   bool check_access_by(InstanceClass* sender_class, FailureMode fail_mode
                        JVM_TRAPS);
 
@@ -166,6 +163,11 @@ class InstanceClass: public JavaClass {
 
   void initialize_static_fields();
 void initialize_static_fields(Oop * o);
+#if ENABLE_COMPILER && ENABLE_INLINE
+  // Track all the methods overridden by this class and update vtable bitmaps
+  // in all super classes accordingly
+  void update_vtable_bitmaps(JVM_SINGLE_ARG_TRAPS) const;
+#endif
 
   // perform class initialization
   void bootstrap_initialize(JVM_SINGLE_ARG_TRAPS);
@@ -214,6 +216,76 @@ void initialize_static_fields(Oop * o);
 #endif
 
   bool is_renamed();
+
+#if USE_EMBEDDED_VTABLE_BITMAP
+ private:
+  bool is_vtable_bitmap_installed() const {
+#if ENABLE_ISOLATES
+    TaskMirror::Raw tm = task_mirror_no_check();
+    if (is_being_initialized_mirror(&tm)) {
+      tm = TaskMirror::clinit_list_lookup(this);
+    }
+    return tm.not_null();
+#else
+    return true;
+#endif
+  }
+
+  void vtable_bitmap_offset(int vtable_index, 
+                            int& byte_offset, int& bit_offset) const {
+    byte_offset = vtable_bitmap_start() + (vtable_index >> LogBitsPerByte);
+    bit_offset = vtable_index & (BitsPerByte - 1);
+  }
+
+  void set_vtable_bitmap_bit(int vtable_index) {
+    int byte_offset, bit_offset;
+    vtable_bitmap_offset(vtable_index, byte_offset, bit_offset);
+    const jbyte bitmap_byte = vtable_bitmap_byte(byte_offset);
+    vtable_bitmap_byte_put(byte_offset, bitmap_byte | (1 << bit_offset));
+  }
+
+  bool vtable_bitmap_bit(int vtable_index) const {
+    int byte_offset, bit_offset;
+    vtable_bitmap_offset(vtable_index, byte_offset, bit_offset);
+    return (vtable_bitmap_byte(byte_offset) & (1 << bit_offset)) != 0;
+  }
+
+  void vtable_bitmap_byte_put(int offset, jbyte value) {    
+    GUARANTEE(is_vtable_bitmap_installed(), "Sanity");
+#if ENABLE_ISOLATES
+    TaskMirror::Raw tm = real_task_mirror();
+    tm().byte_field_put(offset, value);
+#else
+    byte_field_put(offset, value);
+#endif
+  }
+
+  bool vtable_bitmap_byte(int offset) const {
+    GUARANTEE(is_vtable_bitmap_installed(), "Sanity");
+#if ENABLE_ISOLATES
+    TaskMirror::Raw tm = real_task_mirror();
+    return tm().byte_field(offset);
+#else
+    return byte_field(offset);
+#endif
+  }
+ public:
+#if ENABLE_ISOLATES
+  jint vtable_bitmap_start() const {
+    return static_field_end();
+  }
+#else
+  jint vtable_bitmap_start() const {
+    return first_static_map_offset() + static_map_size();
+  }
+#endif
+
+  // Marks the specified vtable entry as overridden in a subclass
+  void set_is_method_overridden(int vtable_index);
+
+  // Returns if the specified vtable entry is overridden in any subclass
+  bool is_method_overridden(int vtable_index) const;
+#endif
 
  private:
   void initialize_internal(Thread *thread, Oop *m JVM_TRAPS);

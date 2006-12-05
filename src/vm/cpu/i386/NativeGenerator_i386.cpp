@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -577,7 +578,29 @@ void NativeGenerator::generate_native_string_entries() {
 
 void NativeGenerator::generate_native_system_entries() {
   comment_section("Native entry points for system functions");
+
+  rom_linkable_entry("native_jvm_unchecked_byte_arraycopy_entry");
+  jmp(Constant("native_system_arraycopy_entry"));
+  rom_linkable_entry_end();
+
+  rom_linkable_entry("native_jvm_unchecked_char_arraycopy_entry");
+  jmp(Constant("native_system_arraycopy_entry"));
+  rom_linkable_entry_end();
+
+  rom_linkable_entry("native_jvm_unchecked_int_arraycopy_entry");
+  jmp(Constant("native_system_arraycopy_entry"));
+  rom_linkable_entry_end();
+
+  rom_linkable_entry("native_jvm_unchecked_long_arraycopy_entry");
+  jmp(Constant("native_system_arraycopy_entry"));
+  rom_linkable_entry_end();
+
+  rom_linkable_entry("native_jvm_unchecked_obj_arraycopy_entry");
+  jmp(Constant("native_system_arraycopy_entry"));
+  rom_linkable_entry_end();
+
   rom_linkable_entry("native_system_arraycopy_entry");
+
   wtk_profile_quick_call(/* param_size*/ 5);
 
   Label bailout, cont, try_2_byte, try_4_byte, try_8_byte, do_4_byte;

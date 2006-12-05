@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -35,6 +36,7 @@ extern "C" {
 #include <pcsl_memory.h>
 }
 
+#ifndef UNDER_CE
 void *OsMemory_allocate(size_t size) {
   return pcsl_mem_malloc(size);
 }
@@ -42,6 +44,7 @@ void *OsMemory_allocate(size_t size) {
 void OsMemory_free(void *p) {
   pcsl_mem_free(p);
 }
+#endif
 
 address OsMemory_allocate_chunk(size_t initial_size,
                                 size_t max_size, size_t alignment) {

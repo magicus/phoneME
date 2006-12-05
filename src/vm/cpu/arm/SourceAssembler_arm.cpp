@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,6 +32,7 @@
 // Implementation of SourceAssembler::Label
 
 int SourceAssembler::Label::_next_id = 0;
+bool SourceAssembler::_in_glue_code = false;
 static int GenerateSDTCode = 0;
 
 void SourceAssembler::Label::import(Stream* s) {
@@ -294,7 +296,7 @@ void SourceAssembler::beg_segment(Segment *segment, SegmentType segment_type) {
 
   GUARANTEE(segment_type != no_segment, "must specify segment");
   if (_segment_type != segment_type) {
-    if (!GenerateSDTCode && !GenerateGNUCode) {
+    if (!GenerateSDTCode && !GenerateGNUCode && !GenerateMicrosoftCode) {
       // Generating code for ADS or RVCT. Need to add PRESERVE8
       // if we're building for RVCT 2.0 or later
       stream()->print_cr("\tIF {ARMASM_VERSION} >= 200000");
@@ -451,7 +453,11 @@ void SourceAssembler::ldr_from(Register r, Label& L, int offset, Condition cond)
 }
 
 void SourceAssembler::b(const Label& L, Condition cond) {
-  stream()->print("\tb%s\t", cond_name(cond)); 
+  if (_in_glue_code && !L.is_anonymous()) {
+    stream()->print("\tldr%s\tpc, =", cond_name(cond));
+  } else {
+    stream()->print("\tb%s\t", cond_name(cond));
+  }
   L.print_on(stream());
   emit_comment_and_cr();
 }
@@ -607,6 +613,14 @@ Segment::Segment(SourceAssembler* sasm,
                  const char* title)
   : _sasm(sasm), _title(title), _in_global(false)
 {
+  if (SourceAssembler::in_glue_code()) {
+    // If glue code contains a data segment, it makes it hard to relocate 
+    // the code segment to the Java heap. However, it's OK for the glue code
+    // to use "ldr reg, =xxx" to refer to a variable in the data segment.
+    GUARANTEE(segment_type == SourceAssembler::code_segment,
+              "glue code cannot contain data");
+  }
+
   if (GenerateGPTableOnly) {
     return;
   }

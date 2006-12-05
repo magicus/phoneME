@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -181,6 +182,10 @@ void ROMWriter::start(JVM_SINGLE_ARG_TRAPS) {
   names_of_bad_classes_vector()->initialize(JVM_SINGLE_ARG_CHECK);
   _visited_all_objects_once = 0;
 
+#if ENABLE_COMPILER
+  compiled_method_list()->initialize(JVM_SINGLE_ARG_CHECK);
+#endif
+
   _num_methods_in_image = -1;
 
 #if ENABLE_TTY_TRACE
@@ -198,7 +203,7 @@ void ROMWriter::start(JVM_SINGLE_ARG_TRAPS) {
 #if USE_SOURCE_IMAGE_GENERATOR
   {
     Oop null_obj;
-    Task::current()->set_classpath(&null_obj);
+    Task::current()->set_app_classpath(&null_obj);
   }
 #endif
   _gc_stackmap_size = Universe::gc_block_stackmap()->length();
@@ -388,7 +393,9 @@ void ROMWriter::visit_all_objects(RomOopVisitor *visitor, int npass JVM_TRAPS)
     visiting_object = ((OopDesc*)system_symbols[index]);
     visit_object(&visiting_object, NULL JVM_CHECK);
   }
+#endif 
 
+#if USE_AOT_COMPILATION
   // AOT methods
   OopDesc *cm  = (OopDesc*)jvm_fast_globals.compiler_area_start;
   OopDesc *end = (OopDesc*)jvm_fast_globals.compiler_area_top;
@@ -855,7 +862,7 @@ int ROMWriter::offset_of(Oop* object JVM_TRAPS) {
   if (write_by_reference(object)) {
     return (int)(object->obj());
   }
-  ROMizerHashEntry::Raw entry = info_for(object JVM_CHECK_(UNKNOWN_BLOCK));
+  ROMizerHashEntry::Raw entry = info_for(object JVM_CHECK_(-1));
   return entry().offset();
 }
 
@@ -863,6 +870,18 @@ void ROMWriter::set_offset_of(Oop* object, int offset JVM_TRAPS) {
   ROMizerHashEntry::Raw entry = info_for(object JVM_CHECK);
   entry().set_offset(offset);
 }
+
+#if ENABLE_HEAP_NEARS_IN_HEAP && USE_SOURCE_IMAGE_GENERATOR
+int ROMWriter::heap_offset_of(Oop* object JVM_TRAPS) {
+  ROMizerHashEntry::Raw entry = info_for(object JVM_CHECK_0);
+  return entry().heap_offset();
+}
+
+void ROMWriter::set_heap_offset_of(Oop* object, int offset JVM_TRAPS) {
+  ROMizerHashEntry::Raw entry = info_for(object JVM_CHECK);
+  entry().set_heap_offset(offset);
+}
+#endif
 
 #if USE_SEGMENTED_TEXT_BLOCK_WRITER
 
@@ -1025,7 +1044,7 @@ void ROMWriter::stream_object(Oop* object JVM_TRAPS) {
 #else
       // stream the static fields for the Java class as well as
       // the associated instance and stack fields oopmap
-      stream_static_fields(&ic, &ic, ic.static_field_start(), true JVM_CHECK);
+      stream_static_fields(&ic, &ic, ic.static_field_start() JVM_CHECK);
 #endif
     }
     break;
@@ -1064,12 +1083,15 @@ void ROMWriter::stream_object(Oop* object JVM_TRAPS) {
       { 
         TaskMirror tm = object;
         gen_and_stream_fieldmap(object JVM_CHECK);
-        // stream out the static fields
-        if (tm.static_field_size() > 0) {
-          JavaClassObj::Raw m = tm.real_java_mirror();
-          InstanceClass ic = m().java_class();
-          stream_static_fields(&ic, &tm, tm.static_field_start(), false 
-                               JVM_CHECK);
+        JavaClassObj::Raw m = tm.real_java_mirror();
+        // task_class_init_marker has null real_java_mirror
+        if (m.not_null()) {
+          JavaClass::Raw jc = m().java_class();
+          // stream out the static fields
+          if (jc().is_instance_class()) {
+            InstanceClass::Raw ic = jc.obj();
+            stream_static_fields(&ic, &tm, tm.static_field_start() JVM_CHECK);
+          }
         }
       }
       break;
@@ -1123,7 +1145,7 @@ void ROMWriter::stream_method(Method* method JVM_TRAPS) {
 #if ENABLE_ISOLATES
 void ROMWriter::stream_static_fields_oopmap(InstanceClass* ic JVM_TRAPS) {
 
-  // Put the instance oop map and static oopmap;
+  // Put the instance oop map, static oopmap and vtable bitmap;
   // they are just a series of bytes.
   int start_offset = ic->header_size();
   int limit = ic->object_size();
@@ -1304,21 +1326,19 @@ int ROMWriter::generate_instance_java_fieldmap(InstanceClass* klass,
 
 // Write the static fields that resides in an InstanceClass.
 int ROMWriter::stream_static_fields(InstanceClass* klass,
-                                     Oop* object,
-                                     jint start_offset,
-                                     bool stream_oopmap
-                                     JVM_TRAPS) {
+                                    Oop* object, jint start_offset JVM_TRAPS) {
   jint field_count = generate_java_fieldmap(klass, true JVM_CHECK_0);
   int current_pos = stream_fields_by_map(object, start_offset, 0, field_count
                                          JVM_CHECK_0);
-  if (stream_oopmap) {
-    // Stream the instance oopmap and static oopmap -- they are just
-    // a bunch of bytes.
-    int limit = object->object_size();
-    while (current_pos < limit) {
-      put_int_field(object, current_pos, BYTE_BYTE_BYTE_BYTE JVM_CHECK_0);
-      current_pos += sizeof(jint);
-    }
+
+  // Static fields are followed by:
+  //  - for SVM: instance oopmap, static oopmap and vtable bitmap 
+  //  - for MVM: vtable bitmap 
+  // -- they are just a bunch of bytes.
+  int limit = object->object_size();
+  while (current_pos < limit) {
+    put_int_field(object, current_pos, BYTE_BYTE_BYTE_BYTE JVM_CHECK_0);
+    current_pos += sizeof(jint);
   }
   return current_pos;
 }
@@ -1817,6 +1837,12 @@ bool ROMWriter::is_current_subtype(Oop* object) {
   // the object already has an info. No allocation will happen here
   SETUP_ERROR_CHECKER_ARG;
   int pass = pass_of(object JVM_MUST_SUCCEED);
+#if ENABLE_HEAP_NEARS_IN_HEAP && USE_SOURCE_IMAGE_GENERATOR
+  BlockType tp = block_type_of(object JVM_MUST_SUCCEED);
+  if (tp == TEXT_AND_HEAP_BLOCK || tp == DATA_AND_HEAP_BLOCK) 
+    return 0 == visiting_pass();
+#endif
+  
   return pass == visiting_pass();
 }
 
@@ -1873,8 +1899,9 @@ void ROMWriter::write_persistent_handles(ObjectWriter *obj_writer JVM_TRAPS) {
     _comment_stream->print("\t");
   }
   // we don't write the last NUM_HANDLES_SKIP handles
+  // we should write the last ROM_DUPLICATED_HANDLES other way!
   int count = Universe::__number_of_persistent_handles -
-              Universe::NUM_HANDLES_SKIP;
+              Universe::NUM_HANDLES_SKIP - Universe::NUM_DUPLICATE_ROM_HANDLES;
   for (int index= 0; index < count; index++) {
 #ifndef PRODUCT
     if (GenerateROMComments) {
@@ -1887,6 +1914,21 @@ void ROMWriter::write_persistent_handles(ObjectWriter *obj_writer JVM_TRAPS) {
     obj_writer->put_reference(&null_owner, -1, &object JVM_CHECK);
   }
   obj_writer->end_block(JVM_SINGLE_ARG_CHECK);
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  obj_writer->start_block(ROM_DUPLICATE_HANDLES_BLOCK, 0 JVM_CHECK);
+  for (int index= 0; index < Universe::NUM_DUPLICATE_ROM_HANDLES; index++) {
+#ifndef PRODUCT
+    if (GenerateROMComments) {
+      _comment_stream->cr();
+      _comment_stream->print("\t");
+      _comment_stream->print("/* [%d] %s */\n\t", index, handle_names[index]);
+    }
+#endif
+    Oop object(persistent_handles[index+count]);
+    obj_writer->put_reference(&null_owner, -1, &object JVM_CHECK);
+  }
+  obj_writer->end_block(JVM_SINGLE_ARG_CHECK);
+#endif
 
 #if USE_ROM_LOGGING
   mc_pers_handles.add_text_bytes(count * sizeof(int));
@@ -2071,6 +2113,10 @@ void BlockTypeFinder::find_array_type(Oop *owner, Oop *object JVM_TRAPS) {
         type = ROMWriter::TEXT_BLOCK;
       } else if (object->equals(writer()->names_of_bad_classes_array())) {
         type = ROMWriter::TEXT_BLOCK;
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES
+      } else if (object->equals(Universe::mirror_list())) {
+        type = ROMWriter::TASK_MIRRORS_BLOCK;
+#endif      
       } else {
         type = ROMWriter::HEAP_BLOCK;
       }
@@ -2192,7 +2238,15 @@ void BlockTypeFinder::find_array_type(Oop *owner, Oop *object JVM_TRAPS) {
   // for each loaded binary image.
   my_skip_words = 0;
 #endif
-
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES         
+  if (owner != NULL) { 
+    ROMWriter::BlockType owner_type = writer()->block_type_of(owner JVM_CHECK); 
+    if (type == ROMWriter::HEAP_BLOCK && owner_type == ROMWriter::TASK_MIRRORS_BLOCK) { 
+      type = ROMWriter::TASK_MIRRORS_BLOCK; 
+      my_skip_words = 0; 
+    } 
+  } 
+#endif 
   if (type != old_type) {
     writer()->set_block_type_of(object, type JVM_CHECK);
     writer()->set_skip_words_of(object, my_skip_words JVM_CHECK);
@@ -2298,7 +2352,7 @@ void BlockTypeFinder::find_type(Oop *owner, Oop *object JVM_TRAPS) {
   else if (object->is_method()) {
     do_method((Method*)object, my_type, my_pass, my_skip_words);
   }
-#if USE_SOURCE_IMAGE_GENERATOR
+#if USE_AOT_COMPILATION
   else if (object->is_compiled_method()) {
     do_compiled_method((CompiledMethod*)object, my_type, my_pass,
                        my_skip_words JVM_CHECK);
@@ -2352,7 +2406,21 @@ void BlockTypeFinder::find_type(Oop *owner, Oop *object JVM_TRAPS) {
   // conversion time.
   my_pass = 0;
 #endif
-
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES
+  if (owner != NULL) {
+    ROMWriter::BlockType owner_type = writer()->block_type_of(owner JVM_CHECK);
+    if (owner_type == ROMWriter::TASK_MIRRORS_BLOCK) {
+      if (object->is_java_class() || object->is_java_near() || object->is_string()) {
+         //do nothing
+         //they shall stay in their blocks
+      } else {
+        my_type = ROMWriter::TASK_MIRRORS_BLOCK;
+        my_pass = 0;
+        my_skip_words = 0;
+      }
+    }
+  }
+#endif
   {
     ROMizerHashEntryDesc *entry_ptr = 
       (ROMizerHashEntryDesc *)writer()->info_for(object JVM_CHECK);
@@ -2418,6 +2486,54 @@ void BlockTypeFinder::do_method(Method* method, ROMWriter::BlockType &my_type,
   }
 #endif
 }
+
+#if USE_AOT_COMPILATION
+
+void BlockTypeFinder::do_compiled_method(CompiledMethod* cm, 
+                                         ROMWriter::BlockType &my_type,
+                                         int &my_pass, int &my_skip_words
+                                         JVM_TRAPS) {
+  my_type = ROMWriter::TEXT_BLOCK;
+
+#ifdef AZZERT
+  // Verify that compiled method doesn't contain references to heap objects.
+
+  // So the recursive call below works.
+  writer()->set_block_type_of(cm, my_type JVM_CHECK);
+
+  GUARANTEE(cm->size() > 0, "No half baked Compiled Methods");
+  for (RelocationReader stream(cm); !stream.at_end(); stream.advance()) {
+    if (stream.kind() == Relocation::oop_type) {
+      Oop value = *(OopDesc**) (cm->entry() + stream.code_offset());
+      if (value.is_method() || value.is_string()) { 
+        // ignore these.  We know they're okay
+      } else { 
+        // we can't put the compiled method into text if any objects
+        // it is pointing at are in the heap
+        find_type(cm, &value JVM_CHECK);
+        ROMWriter::BlockType value_type =
+            writer()->block_type_of(&value JVM_CHECK);
+        if (value_type == ROMWriter::HEAP_BLOCK) {
+          my_type = ROMWriter::DATA_BLOCK;
+          cm->print_value_on(tty);
+          tty->print(" is in data because of ");
+          value.print_value_on(tty);
+          tty->cr();
+          SHOULD_NOT_REACH_HERE();
+          break;
+        }
+      }
+    }
+  }
+#endif
+
+  ROMVector * vector = writer()->compiled_method_list();
+
+  GUARANTEE(!vector->contains(cm), "Already visited");
+  vector->add_element(cm JVM_NO_CHECK_AT_BOTTOM);
+}
+
+#endif
 
 void BlockTypeFinder::finish() {
 #if USE_SOURCE_IMAGE_GENERATOR
@@ -2508,7 +2624,56 @@ void BlockTypeFinder::finish() {
       }
     }
   }
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  for (bucket=0; bucket<ROMWriter::INFO_TABLE_SIZE; bucket++) {
+    for (entry = writer()->info_table()->obj_at(bucket); !entry.is_null(); 
+         entry = entry().next()) {
+      Oop::Raw object = entry().referent();
+      if (object.not_null() && object.obj()->is_near()) {
+        ROMWriter::BlockType type =
+            writer()->block_type_of(&object JVM_MUST_SUCCEED);
+        int my_pass = writer()->pass_of(&object JVM_MUST_SUCCEED);
+        if (type == ROMWriter::TEXT_BLOCK) {
+          type = ROMWriter::TEXT_AND_HEAP_BLOCK;
+          my_pass = 0;
+        } else if (type == ROMWriter::DATA_BLOCK) {
+          type = ROMWriter::DATA_AND_HEAP_BLOCK;          
+          my_pass = 0;
+        } else {
+          GUARANTEE(type == ROMWriter::HEAP_BLOCK, 
+            "cloned types shalln't appear at this time");
+        }
+        writer()->set_block_type_of(&object, type JVM_MUST_SUCCEED);  
+        writer()->set_pass_of(&object, my_pass JVM_MUST_SUCCEED);
+      }
+    }
+  }
 #endif
+#endif //USE_SOURCE_IMAGE_GENERATOR
+}
+
+void OffsetVector::initialize(int count JVM_TRAPS) {
+  ROMVector::initialize(count JVM_CHECK);
+  set_compare_to_func((compare_to_func_type)&OffsetVector::_compare_to);
+}
+
+void OffsetVector::initialize(JVM_SINGLE_ARG_TRAPS) {
+  ROMVector::initialize(JVM_SINGLE_ARG_CHECK);
+  set_compare_to_func((compare_to_func_type)&OffsetVector::_compare_to);
+}
+
+jint OffsetVector::_compare_to(Oop *obj1, Oop* obj2) {
+  SETUP_ERROR_CHECKER_ARG;
+  ROMWriter* romwriter = ROMWriter::singleton();
+  juint offset_1 = romwriter->offset_of(obj1 JVM_NO_CHECK);
+  juint offset_2 = romwriter->offset_of(obj2 JVM_NO_CHECK);
+  GUARANTEE(!CURRENT_HAS_PENDING_EXCEPTION, "sanity");
+
+  if (offset_1 < offset_2) {
+    return -1;
+  } else {
+    return 1;
+  }
 }
 
 #if USE_ROM_LOGGING

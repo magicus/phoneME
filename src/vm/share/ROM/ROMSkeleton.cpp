@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -67,6 +68,12 @@ extern "C" {
   const int              _rom_data_block_scanned_size       =  0;
   const int              _rom_heap_block_size               =  0;
   const int              _rom_heap_block_permanent_size     =  0;
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  const int              _rom_rom_duplicated_handles_size   =  0;
+#endif
+#if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES
+  const int              _rom_task_mirrors_size             =  0;
+#endif   
   const int              _rom_persistent_handles_size       =  0;
   const int              _rom_method_variable_parts_size    =  0;
   const int              _rom_number_of_java_classes        =  0;
@@ -89,6 +96,13 @@ extern "C" {
   const int              _rom_data_block_src[]              = {0};
   const int              _rom_heap_block[]                  = {0};
   const int              _rom_persistent_handles[]          = {0};
+#if ENABLE_HEAP_NEARS_IN_HEAP
+  const int              _rom_rom_duplicated_handles[]      = {0};
+#endif
+#if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES
+  const int              _rom_task_mirrors[]                = {0};
+  const int              _rom_task_mirrors_bitmap[]         = {0};          
+#endif 
   const unsigned short   _rom_strings_src[]                 = {0};
   const int              _rom_strings_count                 =  0;
   const int              _rom_method_variable_parts_src[]   = {0};
@@ -110,10 +124,8 @@ extern "C" {
   const char             _rom_restricted_packages[]       = {(char)0x0};
 
 #if ENABLE_APPENDED_CALLINFO
-  const unsigned int     _rom_compiled_methods_in_text[]     = {0};
-  const unsigned int     _rom_compiled_methods_in_text_count = {0};
-  const unsigned int     _rom_compiled_methods_in_data[]     = {0};
-  const unsigned int     _rom_compiled_methods_in_data_count = {0};
+  const unsigned int     _rom_compiled_methods[]     = {0};
+  const unsigned int     _rom_compiled_methods_count = 0;
 #endif // ENABLE_APPENDED_CALLINFO
 
 #if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -393,7 +394,7 @@ class Class {
             }
         } catch(Throwable e) {
             // Step 10 and 11
-            // Bug 6224346, The VM threading mechanism is such that
+            // CR 6224346, The cldc_vm threading mechanism is such that
             // we can just jam these values in without fear of another
             // thread doing the same since only this thread can be
             // executing the initialize() method and the scheduler is

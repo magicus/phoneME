@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -76,9 +77,12 @@ class Stream: public GlobalObj {
     }
   }
 
-  // closing
+  // closing  
   virtual void close() {}
-
+  virtual void mark()  {}
+  virtual void reset() {}
+  virtual int current_position() { return 0; }
+  
 #ifndef PRODUCT
 public:
   void inc() { _indentation++; };
@@ -128,7 +132,7 @@ public:
 
 extern Stream* tty;        // tty output
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_WTK_PROFILER || ENABLE_PERFORMANCE_COUNTERS || ENABLE_PROFILER || ENABLE_DYNAMIC_NATIVE_METHODS
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_MEMORY_PROFILER || ENABLE_WTK_PROFILER || ENABLE_PERFORMANCE_COUNTERS || ENABLE_PROFILER || ENABLE_DYNAMIC_NATIVE_METHODS
 
 class FileStreamState {
 public:
@@ -145,6 +149,7 @@ class FileStream : public Stream {
  protected:
   OsFile_Handle _file;
   bool _saved;
+  int _mark;
  public:
   FileStream() { _file = 0; _saved = false; }
   FileStream(const JvmPathChar* file_name, int width = 80);
@@ -165,6 +170,10 @@ class FileStream : public Stream {
   }
   void save(FileStreamState* state);
   void restore(FileStreamState* state);
+  void mark();
+  //REturns back to mark
+  void reset();
+  int current_position();
 };
 
 class FixedArrayOutputStream : public Stream { 
@@ -184,6 +193,7 @@ public:
   virtual void print_raw(const char* c);
   char *array() { return _array; }
   void reset()  { _current_size = 0; _array[0] = 0; }
+  int current_size() {return _current_size;}
 private:
   enum { ArraySize = 1024 };
   char  _stack_array[ArraySize];

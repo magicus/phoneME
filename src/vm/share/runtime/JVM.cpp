@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -70,7 +71,7 @@ ReturnOop JVM::resolve_class(char* class_name JVM_TRAPS) {
   Symbol::Fast class_name_symbol =
       SymbolTable::slashified_symbol_for(class_name JVM_CHECK_0);
   return SystemDictionary::resolve(&class_name_symbol, ErrorOnFailure
-                                   JVM_NO_CHECK_AT_BOTTOM);
+                                   JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 void JVM::set_arguments(const JvmPathChar *classpath, char *main_class, 
@@ -274,6 +275,7 @@ const char *JVM::copyright =
    " Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa"
    " Clara, CA 95054 or visit www.sun.com if you need additional"
    " information or have any questions.  ";
+  // \xA9 is the 8-bit ASCII copyright sign
 
 inline bool JVM::initialize( void ) {
   // Just making sure copyright does not get optimized away
@@ -649,7 +651,7 @@ void JVM::initialize_standalone_rom_generator() {
 #ifndef PRODUCT
   tty->cr();
   tty->print_cr("If romizer fails, increase your heap size.");
-  tty->print_cr("  E.g., =HeapCapacity16M");
+  tty->print_cr("  E.g., =HeapCapacity80M");
   tty->cr();
 #endif
 
@@ -700,7 +702,9 @@ bool JVM::start_standalone_rom_generator(JVM_SINGLE_ARG_TRAPS) {
 
     FilePath::Fast input;
     FilePath::Fast output;
-    int flags = RemoveConvertedClassFiles ? JVM_REMOVE_CLASSES_FROM_JAR : 0;
+    int flags = 0;    
+    flags |= RemoveConvertedClassFiles ? JVM_REMOVE_CLASSES_FROM_JAR : 0;
+    flags |= GenerateSharedROMImage ? JVM_GENERATE_SHARED_IMAGE : 0;
 
     get_binary_romizer_args(&input, &output JVM_CHECK_0);
 
@@ -927,6 +931,39 @@ extern "C" jlong JVM_TimeSlice(void) {
   return Scheduler::time_slice(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
 }
 
+extern "C" jboolean JVM_SetUseVerifier(jboolean use_verifier) {
+  jboolean res = UseVerifier;
+#if ENABLE_ISOLATES
+  // when VM is not active there is no current active task
+  if (!Universe::before_main()) {
+    if (!Task::current()->is_null()) {
+      IsolateObj::Raw iso = Task::current()->primary_isolate_obj();
+      if (!iso.is_null()) {
+        res = iso().use_verifier();
+        iso().set_use_verifier(use_verifier);
+        return res;
+      }
+    }
+  }
+#endif
+  UseVerifier = use_verifier;
+  return res;
+}
+
+extern "C" jboolean JVM_GetUseVerifier() {
+#if ENABLE_ISOLATES
+  // when VM is not active there is no current active task
+  if (!Universe::before_main()) {
+    if (!Task::current()->is_null()) {
+      IsolateObj::Raw iso = Task::current()->primary_isolate_obj();
+      if (!iso.is_null()) {
+        return iso().use_verifier();
+      }
+    }
+  }
+#endif
+  return UseVerifier;
+}
 
 extern "C" void JVM_SetHint(int task_id, int hint, int param) {
   JVM::set_hint(task_id, hint, param);
@@ -1060,6 +1097,7 @@ extern "C" jint JVM_CreateAppImage(const JvmPathChar *jarFile,
   JVM::set_arguments(NULL, NULL, 0, NULL);
  
   RemoveConvertedClassFiles = (flags & JVM_REMOVE_CLASSES_FROM_JAR) != 0;
+  GenerateSharedROMImage = (flags & JVM_GENERATE_SHARED_IMAGE) != 0;  
 
   jint code = JVM::start();
 
@@ -1067,6 +1105,7 @@ extern "C" jint JVM_CreateAppImage(const JvmPathChar *jarFile,
   Arguments::set_rom_output_file(NULL, false);
 
   GenerateROMImage = false;
+  GenerateSharedROMImage = false;
 
   return code;
 }

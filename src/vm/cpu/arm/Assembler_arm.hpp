@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -105,7 +106,36 @@ friend struct OpcodeInfo;
     // position and order is relevant!
     r0, r1, r2 , r3 , r4 , r5 , r6 , r7 ,
     r8, r9, r10, r11, r12, r13, r14, r15,
+
+#if ENABLE_ARM_VFP
+    // Single-precision floating point registers.
+    s0, s1, s2, s3, s4, s5, s6, s7,
+    s8, s9, s10, s11, s12, s13, s14, s15,
+    s16, s17, s18, s19, s20, s21, s22, s23,
+    s24, s25, s26, s27, s28, s29, s30, s31,
+#endif
+
     number_of_registers,
+
+#if ENABLE_ARM_VFP
+    // Double-precision floating point registers.
+    d0 = s0,
+    d1 = s2,
+    d2 = s4,
+    d3 = s6,
+    d4 = s8,
+    d5 = s10,
+    d6 = s12,
+    d7 = s14,
+    d8 = s16,
+    d9 = s18,
+    d10 = s20,
+    d11 = s22,
+    d12 = s24,
+    d13 = s26,
+    d14 = s28,
+    d15 = s30,
+#endif
 
     // for platform-independant code
     return_register = r0,
@@ -165,8 +195,14 @@ friend struct OpcodeInfo;
     // for linkage w/ shared code - will probably need to change
     no_reg                    =  -1,
     first_register            =  r0,
+#if ENABLE_ARM_VFP
+    last_register             = s31,
+    number_of_float_registers =  32,
+#else
     last_register             = r15,
     number_of_float_registers =   0,
+#endif
+    number_of_gp_registers    =  16,
 
     first_allocatable_register = r0,
 
@@ -182,6 +218,22 @@ friend struct OpcodeInfo;
               "illegal register");
     return (Register)encoding;
   };
+
+#if ENABLE_ARM_VFP
+  static bool is_vfp_register(const Register reg) {
+    return (unsigned(reg) - unsigned(s0)) < unsigned(number_of_float_registers);
+  }
+
+  static bool is_arm_register(const Register reg) {
+    return unsigned(reg) < unsigned(s0);
+  }
+  
+  enum VFPSystemRegister {
+    fpsid = 0,
+    fpscr = 1,
+    fpexc = 8
+  };
+#endif
 
   enum Condition {
     eq, ne, cs, cc, mi, pl, vs, vc,
@@ -422,13 +474,13 @@ friend struct OpcodeInfo;
   {
     GUARANTEE(rn != r15 || mode == offset, "unpredictable instruction");
     GUARANTEE(offset_8 % 4 == 0, "Offset must be multiple of 4");
-    (void)rn;
     check_imm(abs(offset_8 >> 2), 8);
     if (mode == post_indexed) {
       // I don't know why these is different for coprocessors
       mode = (Mode)(1 << 21);
     }
-    return (Address5)(mode | (up(offset_8) << 23) | abs(offset_8>>2) & 0xff);
+    return (Address5)(mode | (up(offset_8) << 23) | rn << 16 |
+                      abs(offset_8>>2) & 0xff);
   }
 
   static Address5 unindexed5(Register /*rn*/, int options) {
@@ -443,6 +495,7 @@ friend struct OpcodeInfo;
  protected:
   void arith(Opcode opcode, Register rd, Register rn, Address1 shifter_op,
                   CCMode s = no_CC, Condition cond = al) {
+    GUARANTEE(rd <= r15 && rn <= r15, "Invalid register used");
     // Note: The immediate bit is provided via the shifter operand!
     emit(cond << 28 | opcode << 21 | s << 20 | rn << 16 |
          rd << 12 | shifter_op);
@@ -450,6 +503,7 @@ friend struct OpcodeInfo;
 
   void mulop(Register rd, Register rn, Register rs, Register rm,
              int lua, CCMode s = no_CC, Condition cond = al) {
+    GUARANTEE(rd <= r15 && rn <= r15 && rs <= r15 && rm <= r15, "Invalid register used");
     // Note: rd & rn are exchanged for these instructions!
     emit(cond << 28 | lua << 21 | s << 20 | rd << 16 | rn << 12
              | rs << 8 | 0x9 << 4 | rm);
@@ -506,6 +560,7 @@ friend struct OpcodeInfo;
   // load & store word or unsigned byte instructions
 #define F(mnemonic, l, b) \
   void mnemonic(Register rd, Address2 addr, Condition cond = al) {    \
+    GUARANTEE(rd <= r15, "Invalid register used");                     \
     emit(cond << 28 | 1 << 26 | b << 22 | l << 20 | rd << 12 | addr); \
   }
   F(ldr , 1, 0)
@@ -517,6 +572,7 @@ friend struct OpcodeInfo;
   // miscellaneous load and store instructions
 #define F(mnemonic, l, sh) \
   void mnemonic(Register rd, Address3 addr, Condition cond = al) { \
+    GUARANTEE(rd <= r15, "Invalid register used");                  \
     emit(cond << 28 | l << 20 | rd << 12 | 1 << 7 | sh << 5 | 1 << 4 | addr); \
   }
   F(strh , 0, 1)
@@ -534,6 +590,20 @@ friend struct OpcodeInfo;
   enum StackDirectionMode { ascending, descending };
   enum StackTypeMode { full, empty };
 
+#if ENABLE_THUMB_VM
+#define F(mnemonic, l, pu) \
+  void mnemonic(Register rn, Address4 reg_set,                                \
+                WritebackMode w = no_writeback, Condition cond = al) {        \
+    GUARANTEE(reg_set != 0 && ((reg_set & set(rn)) == 0 || w == no_writeback),\
+              "unpredictable instruction");                                   \
+    GUARANTEE((reg_set & set(pc)) == 0 || l == 0,                             \
+              "we should not load pc to avoid jumps without mode switching"); \
+    check_imm(reg_set, 16);                                                   \
+    emit(cond << 28 | 0x4 << 25 | pu << 23 | w << 21 | l << 20 | rn << 16 |   \
+         reg_set);                                                            \
+  }
+
+#else
 #define F(mnemonic, l, pu) \
   void mnemonic(Register rn, Address4 reg_set,                                \
                 WritebackMode w = no_writeback, Condition cond = al) {        \
@@ -543,6 +613,8 @@ friend struct OpcodeInfo;
     emit(cond << 28 | 0x4 << 25 | pu << 23 | w << 21 | l << 20 | rn << 16 |   \
          reg_set);                                                            \
   }
+#endif
+
   // non-stack         stack       addressing modes
   F(ldmda, 1, 0)   F(ldmfa, 1, 0)
   F(ldmia, 1, 1)   F(ldmfd, 1, 1)
@@ -627,6 +699,11 @@ friend struct OpcodeInfo;
     emit(cond << 28 | 0x012fff30 | rm);
   }
 
+  void bl(int offset, Condition cond = al) {
+    GUARANTEE(abs(offset) <= 0x003ffffff, "branch offset limit");
+    emit(cond << 28 | 0x0b000000 | ((offset & 0x3ffffff) >> 2));
+  }
+
   enum CRegister {
     // position and order is relevant!
     c0, c1, c2 , c3 , c4 , c5 , c6 , c7 ,
@@ -690,12 +767,209 @@ friend struct OpcodeInfo;
 #if ENABLE_XSCALE_WMMX_INSTRUCTIONS
   // To support Xscale WMMX instructions
   #include "Assembler_wmmx.hpp"
-#endif // ENABLE_XSCALE_WMMX_INSTRUCTIONS
+#endif
 
   void pld(Address2 addr) {
     GUARANTEE((addr & mode_flags) == offset, "must be offset");
     emit(0xF450F000 | addr);
   }
+
+#if ENABLE_ARM_VFP
+   // sn <- rd
+   void fmsr(Register sn, Register rd, Condition cond = al) {
+     jint n = sn - s0;
+     jint Fn = n >> 1;   // top 4 bits
+     jint N  = n & 0x01; // bottom bit
+     emit(cond << 28 | 0xe0 << 20 | Fn << 16 | rd << 12 |
+          0x0a << 8 | N << 7 | 0x10);
+   }
+   // rd <- sn
+   void fmrs(Register rd, Register sn, Condition cond = al) {
+     jint n = sn - s0;
+     jint Fn = n >> 1;   // top 4 bits
+     jint N  = n & 0x01; // bottom bit
+     emit(cond << 28 | 0xe1 << 20 | Fn << 16 | rd << 12 |
+          0x0a << 8 | N << 7 | 0x10);
+   }
+   // rd <- system reg
+   void fmrx(Register rd, VFPSystemRegister reg, Condition cond = al) {
+     emit(cond << 28 | 0xef << 20 | reg << 16 | rd << 12 |
+          0x0a << 8 | 0x10);
+   }
+   // system reg <- rd
+   void fmxr(VFPSystemRegister reg, Register rd, Condition cond = al) {
+     emit(cond << 28 | 0xee << 20 | reg << 16 | rd << 12 |
+          0x0a << 8 | 0x10);
+   }
+
+   // dm <- rd rn
+   void fmdrr(Register sm, Register rd, Register rn, Condition cond = al) {
+     juint m = sm - s0;
+     jint  Fm = m >> 1;    // top 4 bits
+     jint  M  = m & 0x01;  // bottom bits
+     emit(cond << 28 | 0xc4 << 20 | rn << 16 | rd << 12 |
+          0x0b << 8 | M << 5 | 0x01 << 4 | Fm);
+   }
+   // rd rn <- dm
+   void fmrrd(Register rd, Register rn, Register sm, Condition cond = al) {
+     juint m = sm - s0;
+     jint  Fm = m >> 1;    // top 4 bits
+     jint  M  = m & 0x01;  // bottom bits
+     emit(cond << 28 | 0xc5 << 20 | rn << 16 | rd << 12 |
+          0x0b << 8 | M << 5 | 0x01 << 4 | Fm);
+   }
+
+   void fmstat(Condition cond = al) {
+     emit(cond << 28 | 0xef << 20 | 0x01 << 16 | 0x0f << 12 |
+          0x0a << 8 | 0x10);
+   }
+
+#define F(mnemonic, Fn, N, cpnum) \
+  void mnemonic(Register sd, Register sm, Condition cond = al) { \
+     jint d = sd - s0; \
+     jint m = sm - s0; \
+     jint Fd = d >> 1;   /* top 4 bits */ \
+     jint Fm = m >> 1;   /* top 4 bits */ \
+     jint D  = d & 0x01; /* bottom bit */ \
+     jint M  = m & 0x01; /* bottom bit */ \
+     \
+     emit(cond << 28 | 0x1d << 23 | D << 22 | 3 << 20 | Fn << 16 | Fd << 12 | \
+          cpnum << 8 | N << 7 | 1 << 6 | M << 5 | Fm); \
+   }
+   F(fcpys,   0x0, 0, 10) // sd =  sm
+   F(fabss,   0x0, 1, 10) // sd =  abs(sm)
+   F(fnegs,   0x1, 0, 10) // sd = -sm
+   F(fsqrts,  0x1, 1, 10) // sd =  sqrt(sm)
+   F(fcmps,   0x4, 0, 10)
+   F(fcmpes,  0x4, 1, 10)
+   F(fcmpzs,  0x5, 0, 10)
+   F(fcmpezs, 0x5, 1, 10)
+   F(fcvtds,  0x7, 1, 10)
+   F(fuitos,  0x8, 0, 10)
+   F(fsitos,  0x8, 1, 10)
+   F(ftouis,  0xc, 0, 10)
+   F(ftouizs, 0xc, 1, 10)
+   F(ftosis,  0xd, 0, 10)
+   F(ftosizs, 0xd, 1, 10)
+
+   F(fcpyd,   0x0, 0, 11) // sd =  sm
+   F(fabsd,   0x0, 1, 11) // sd =  abs(sm)
+   F(fnegd,   0x1, 0, 11) // sd = -sm
+   F(fsqrtd,  0x1, 1, 11) // sd =  sqrt(sm)
+   F(fcmpd,   0x4, 0, 11)
+   F(fcmped,  0x4, 1, 11)
+   F(fcmpzd,  0x5, 0, 11)
+   F(fcmpezd, 0x5, 1, 11)
+   F(fcvtsd,  0x7, 1, 11)
+   F(fuitod,  0x8, 0, 11) 
+   F(fsitod,  0x8, 1, 11)
+   F(ftouid,  0xc, 0, 11)
+   F(ftouizd, 0xc, 1, 11)
+   F(ftosid,  0xd, 0, 11)
+   F(ftosizd, 0xd, 1, 11)
+
+#undef F
+
+#define F(mnemonic, p, q, r, s, cpnum) \
+   void mnemonic(Register sd, Register sn, Register sm, Condition cond = al) {\
+     sd = Register(sd - s0); \
+     sm = Register(sm - s0); \
+     sn = Register(sn - s0); \
+     jint Fd = sd >> 1;   /* top 4 bits */ \
+     jint Fm = sm >> 1;   /* top 4 bits */ \
+     jint Fn = sn >> 1;   /* top 4 bits */ \
+     jint D  = sd & 0x01; /* bottom bit */ \
+     jint M  = sm & 0x01; /* bottom bit */ \
+     jint N  = sn & 0x01; /* bottom bit */ \
+     \
+     emit(cond << 28 | 0x0e << 24 | p << 23 | D << 22 | q << 21 | \
+          r << 20 | Fn << 16 |  \
+          Fd << 12 | cpnum << 8 | N << 7 | s << 6 | M << 5 | Fm); \
+   }
+   F(fmacs,  0, 0, 0, 0, 10)
+   F(fnmacs, 0, 0, 0, 1, 10)
+   F(fmscs,  0, 0, 1, 0, 10)
+   F(fnmscs, 0, 0, 1, 1, 10)
+   F(fmuls,  0, 1, 0, 0, 10)
+   F(fnmuls, 0, 1, 0, 1, 10)
+   F(fadds,  0, 1, 1, 0, 10)
+   F(fsubs,  0, 1, 1, 1, 10)
+   F(fdivs,  1, 0, 0, 0, 10)
+
+   F(fmacd,  0, 0, 0, 0, 11)
+   F(fnmacd, 0, 0, 0, 1, 11)
+   F(fmscd,  0, 0, 1, 0, 11)
+   F(fnmscd, 0, 0, 1, 1, 11)
+   F(fmuld,  0, 1, 0, 0, 11)
+   F(fnmuld, 0, 1, 0, 1, 11)
+   F(faddd,  0, 1, 1, 0, 11)
+   F(fsubd,  0, 1, 1, 1, 11)
+   F(fdivd,  1, 0, 0, 0, 11)
+#undef F
+
+  // Place holder for flds to use a 12 bit offset during compilation.
+  // The place holder will be replaced by flsd when the literal is bound.
+  // This way prevents us from using fldd to access the literal pool
+  enum Address5_stub {
+    forceaddress5_stub=0x10000000  // force Address3 to be int size
+  };
+
+  static Address5_stub imm_index5_stub(Register rn, int offset_12) {
+    GUARANTEE(offset_12 % 4 == 0, "Offset must be multiple of 4");
+    check_imm(abs(offset_12 >> 2), 12);
+    return (Address5_stub)(offset | (up(offset_12) << 23) | rn << 16 | abs(offset_12>>2));
+  }
+  
+  void flds_stub(Register sd, Address5_stub address5, Condition cond = al) {
+    sd = Register(sd - s0); 
+    jint Fd = sd >> 1;   /* top 4 bits */ 
+    jint D  = sd & 0x01; /* bottom bit */
+
+    emit(cond << 28 | 0x06 << 25 | D << 22 | 
+        1 << 20 | Fd << 12 | 0 << 8 | address5); 
+  }
+
+
+#define F(mnemonic, L, cpnum) \
+   void mnemonic(Register sd, Address5 address5, Condition cond = al) { \
+     sd = Register(sd - s0); \
+     jint Fd = sd >> 1;   /* top 4 bits */ \
+     jint D  = sd & 0x01; /* bottom bit */ \
+     \
+     emit(cond << 28 | 0x06 << 25 | 1 << 24 | D << 22 | \
+          L << 20 | Fd << 12 | cpnum << 8 | address5); \
+   }
+
+   F(flds, 1, 10)
+   F(fsts, 0, 10)
+   F(fldd, 1, 11)
+   F(fstd, 0, 11)
+#undef F
+
+#define F(mnemonic, P, U, L, cpnum) \
+   void mnemonic(Register rn, Register beg, int size, WritebackMode w = no_writeback, Condition cond = al) { \
+     beg = Register(beg - s0); \
+     jint Fd = beg >> 1;   /* top 4 bits */ \
+     jint D  = beg & 0x01; /* bottom bit */ \
+     \
+     GUARANTEE(size != 0 && beg >= 0 && beg+size <= number_of_float_registers, "Invalid Register List"); \
+     emit(cond << 28 | 0x06 << 25 | P << 24 | U << 23 | D << 22 | w << 21 | \
+          L << 20 | rn << 16 | Fd << 12 | cpnum << 8 | size); \
+   }
+
+   // Non stack                // stack
+   F(fldmiad, 0, 1, 1, 11)   F(fldmfdd, 0, 1, 1, 11)
+   F(fldmias, 0, 1, 1, 10)   F(fldmfds, 0, 1, 1, 10)
+   F(fldmdbd, 1, 0, 1, 11)   F(fldmead, 1, 0, 1, 11)
+   F(fldmdbs, 1, 0, 1, 10)   F(fldmeas, 1, 0, 1, 10)
+   F(fstmiad, 0, 1, 0, 11)   F(fstmead, 0, 1, 0, 11)
+   F(fstmias, 0, 1, 0, 10)   F(fstmeas, 0, 1, 0, 10)
+   F(fstmdbd, 1, 0, 0, 11)   F(fstmfdd, 1, 0, 0, 11)
+   F(fstmdbs, 1, 0, 0, 10)   F(fstmfds, 1, 0, 0, 10)
+#undef F
+
+#endif
+
 
   void swi(int imm_24, Condition cond = al) {
     check_imm(imm_24, 24);
@@ -815,6 +1089,9 @@ class Macros: public Assembler {
 
   NOT_PRODUCT(virtual) void
       get_bitvector_base(Register rd, Condition cond = al)
+         NOT_PRODUCT(JVM_PURE_VIRTUAL_2_PARAM(rd, cond));
+  NOT_PRODUCT(virtual) void
+      get_bit_selector(Register rd, Condition cond = al)
          NOT_PRODUCT(JVM_PURE_VIRTUAL_2_PARAM(rd, cond));
   NOT_PRODUCT(virtual) void
       ldr_big_integer(Register rd, int imm32, Condition cond = al)

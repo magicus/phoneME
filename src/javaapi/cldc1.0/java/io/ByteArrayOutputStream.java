@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,6 +25,8 @@
  */
 
 package java.io;
+
+import com.sun.cldchi.jvm.JVM;
 
 /**
  * This class implements an output stream in which the data is
@@ -87,7 +90,7 @@ public class ByteArrayOutputStream extends OutputStream {
         int newcount = count + 1;
         if (newcount > buf.length) {
             byte newbuf[] = new byte[Math.max(buf.length << 1, newcount)];
-            System.arraycopy(buf, 0, newbuf, 0, count);
+            JVM.unchecked_byte_arraycopy(buf, 0, newbuf, 0, count);
             buf = newbuf;
         }
         buf[count] = (byte)b;
@@ -112,10 +115,10 @@ public class ByteArrayOutputStream extends OutputStream {
         int newcount = count + len;
         if (newcount > buf.length) {
             byte newbuf[] = new byte[Math.max(buf.length << 1, newcount)];
-            System.arraycopy(buf, 0, newbuf, 0, count);
+            JVM.unchecked_byte_arraycopy(buf, 0, newbuf, 0, count);
             buf = newbuf;
         }
-        System.arraycopy(b, off, buf, count, len);
+        JVM.unchecked_byte_arraycopy(b, off, buf, count, len);
         count = newcount;
     }
 
@@ -144,7 +147,7 @@ public class ByteArrayOutputStream extends OutputStream {
             return buf;
         } else {
             byte newbuf[] = new byte[count];
-            System.arraycopy(buf, 0, newbuf, 0, count);
+            JVM.unchecked_byte_arraycopy(buf, 0, newbuf, 0, count);
             return newbuf;
         }
     }

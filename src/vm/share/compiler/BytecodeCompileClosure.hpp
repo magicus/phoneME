@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -33,6 +34,9 @@ class BytecodeCompileClosure: public BytecodeClosure {
   jubyte    _has_exception_handlers;
   jubyte    _has_overflown_output;
   bool      _has_clinit;   // if this or any super has clinit 
+#if ENABLE_CODE_PATCHING
+  static int _jump_from_bci;
+#endif
 
  public:
   BytecodeCompileClosure() {
@@ -45,6 +49,14 @@ class BytecodeCompileClosure: public BytecodeClosure {
   void set_compiler(Compiler* compiler) {
     _compiler = compiler;
   }
+#if ENABLE_CODE_PATCHING
+  static void set_jump_from_bci(int bci) {
+    _jump_from_bci = bci;
+  }
+  static int jump_from_bci() {
+    return _jump_from_bci;
+  }
+#endif  
   void set_active_bci(int bci) {
     _active_bci = bci;
   }
@@ -182,15 +194,26 @@ class BytecodeCompileClosure: public BytecodeClosure {
 
   // Helper function for invoking a method directly (w/o going through
   // vtable or itable.
+  void do_direct_invoke(Method * method, bool must_do_null_check JVM_TRAPS);
+
+  // Helper function for invoking a method directly (w/o going through
+  // vtable or itable.
   void direct_invoke(int index, bool must_do_null_check JVM_TRAPS);
+
   // Helper to retrieve the class at cp_index
   ReturnOop get_klass_or_null(int cp_index, bool must_be_initialized JVM_TRAPS);
 
   // Helper to retrieve the class at class_id (must be initialized)
   ReturnOop get_klass_or_null_from_id(int class_id);
-#if CROSS_GENERATOR && !ENABLE_ISOLATES
+#if USE_AOT_COMPILATION && !ENABLE_ISOLATES
   // Helper to retrieve the class at class_id and initialize it if needed.
   ReturnOop get_klass_from_id_and_initialize(int class_id JVM_TRAPS);
+#endif
+
+#if ENABLE_COMPILER_TYPE_INFO
+  // Assign a class id to the passed field value.
+  void set_field_class_id(Value& field_value, InstanceClass * ic, 
+                          int field_offset, bool is_static);
 #endif
 
   // Accessors for the next bytecode index.
@@ -228,9 +251,32 @@ private:
 #endif
 
 #if ENABLE_CSE
-  void notation_update(const Bytecodes::Code code);
-  void notate(const Bytecodes::Code code);
-  bool cse_match(const jint bci, jint& next_bci);
+  enum {
+    not_found = -1 //no eliminatable byte codes is found
+  };
+
+  //can the byte codes start from current bci be eliminated
+  bool is_following_codes_can_be_eliminated(jint& bci_after_elimination);
+
+  //record the byte codes creating current result value into the  notation
+  //of its register
+  void record_current_code_snippet(void);
+
+  //test whether current byte code can be elimiated before compiling it
+  bool code_eliminate_prologue(Bytecodes::Code code);
+
+  //do byte codes information record after compiling of current byte code.
+  //So the CSE algorithm could use the recorded infomation and the result 
+  //created by current byte code to find new redundant byte codes.
+  void code_eliminate_epilogue(Bytecodes::Code code);
+
+  //if the multi-entry is caused by osr, we try to preserve the register 
+  //notation as much as possible.  
+  void record_passable_statue_of_osr_entry(int dest_bci);
+#else
+  bool code_eliminate_prologue(Bytecodes::Code code) {return false;}
+  void code_eliminate_epilogue(Bytecodes::Code code) {}
+  void record_passable_statue_of_osr_entry(int dest) {}
 #endif
 
   class PoppedValue : public Value {

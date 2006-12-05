@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -142,7 +143,15 @@ private:
   template(ObjArray,     symbol_table, "") \
   template(ConstantPool, embedded_table_holder, "") \
   template(ObjArray,     subclasses_array, "")  \
-  template(ROMVector,    reserved_words, "")
+  template(ROMVector,    reserved_words, "")    \
+  template(TypeArray,    direct_interface_implementation_cache, \
+                                     "for each interface contains class_id of \
+                                      implementing class, or -1 in case of \
+                                      multiple classes") \
+  template(TypeArray,    interface_implementation_cache, \
+                                     "for each interface contains class_id of \
+                                      directly implementing class, or -1 in case of \
+                                      multiple classes")
 
 #if USE_SOURCE_IMAGE_GENERATOR
 
@@ -320,7 +329,7 @@ public:
   static void process_quickening_failure(Method *method);
   bool may_be_initialized(InstanceClass *klass);
   bool is_in_restricted_package(InstanceClass *klass);
-  bool is_in_hidden_package(InstanceClass *klass);
+  bool is_in_hidden_package(InstanceClass *klass  JVM_TRAPS);
   ReturnOop original_fields(InstanceClass *klass, bool &is_orig);
   void set_classes_as_romized();
   bool is_overridden(InstanceClass *ic, Method *method);
@@ -328,6 +337,16 @@ public:
   bool class_matches_classes_list(InstanceClass *klass, ROMVector *patterns);
   bool class_matches_packages_list(InstanceClass *klass, ROMVector *patterns
                                    JVM_TRAPS);
+#endif
+
+#if USE_SOURCE_IMAGE_GENERATOR || (ENABLE_MONET && !ENABLE_LIB_IMAGES)
+  void fill_interface_implementation_cache(JVM_SINGLE_ARG_TRAPS);
+  void forbid_invoke_interface_optimization(InstanceClass* cls, bool indirect_only);
+  void set_implementing_class(int interface_id, int class_id, bool only_childs, bool direct);  
+  enum {
+    NOT_IMPLEMENTED = -1, 
+    FORBID_TO_IMPLEMENT = -2
+  };
 #endif
 
 private:
@@ -355,7 +374,9 @@ private:
   void enable_kvm_natives(char* pattern JVM_TRAPS);
   void update_kvm_natives_table(JVM_SINGLE_ARG_TRAPS);
   void write_kvm_natives_log();
+#if USE_AOT_COMPILATION
   void enable_precompile(char* pattern JVM_TRAPS);
+#endif
 
   bool dont_rename_class(InstanceClass *klass) {
     return class_list_contains(dont_rename_classes(), klass);
@@ -403,7 +424,7 @@ private:
 #endif
   void resize_class_list(JVM_SINGLE_ARG_TRAPS);
   void rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS);
-  int  rename_non_public_class(InstanceClass *klass);
+  int  rename_non_public_class(InstanceClass *klass JVM_TRAPS);
   int  rename_non_public_fields(InstanceClass *klass JVM_TRAPS);
   int  rename_non_public_methods(InstanceClass *klass JVM_TRAPS);
 #if USE_SOURCE_IMAGE_GENERATOR
@@ -429,7 +450,7 @@ private:
   void remove_unused_static_fields(JVM_SINGLE_ARG_TRAPS);
   void mark_static_fieldrefs(ObjArray *directory);
   void fix_static_fieldrefs(ObjArray *directory);
-  void mark_unremoveable_static_fields(ObjArray *directory);
+  void mark_unremoveable_static_fields(ObjArray *directory JVM_TRAPS);
   void compact_static_field_containers(ObjArray *directory);
   void fix_field_tables_after_static_field_removal(ObjArray *directory);
   void fix_one_field_table(InstanceClass *klass, TypeArray *fields, 
@@ -438,7 +459,7 @@ private:
   void compact_method_tablses(JVM_SINGLE_ARG_TRAPS);
   int compact_one_interface(InstanceClass* ic);
   void compact_interface_classes(JVM_SINGLE_ARG_TRAPS);
-  bool is_field_removable(InstanceClass *ic, int field_index, bool from_table);
+  bool is_field_removable(InstanceClass *ic, int field_index, bool from_table JVM_TRAPS);
   void compact_method_tables(JVM_SINGLE_ARG_TRAPS);
   int  compact_method_table(InstanceClass *klass JVM_TRAPS);
   bool is_method_removable_from_table(Method *method);
@@ -447,11 +468,11 @@ private:
                                    AccessFlags member_flags);
   bool field_may_be_renamed(jint package_flags, AccessFlags class_flags,
                             AccessFlags member_flags, Symbol *name);
-  bool method_may_be_renamed(InstanceClass *ic, Method *method);
-  bool is_method_reachable_by_apps(InstanceClass *ic, Method *method);
-  bool is_invocation_closure_root(InstanceClass *ic, Method *method);
-  bool is_in_public_itable(InstanceClass *ic, Method *method);
-  bool is_in_public_vtable(InstanceClass *ic, Method *method);
+  bool method_may_be_renamed(InstanceClass *ic, Method *method JVM_TRAPS);
+  bool is_method_reachable_by_apps(InstanceClass *ic, Method *method JVM_TRAPS);
+  bool is_invocation_closure_root(InstanceClass *ic, Method *method JVM_TRAPS);
+  bool is_in_public_itable(InstanceClass *ic, Method *method JVM_TRAPS);
+  bool is_in_public_vtable(InstanceClass *ic, Method *method JVM_TRAPS);
   void remove_unused_symbols(JVM_SINGLE_ARG_TRAPS);
   bool is_symbol_alive(ObjArray *live_symbols, Symbol* symbol);
   ReturnOop get_live_symbols(JVM_SINGLE_ARG_TRAPS);
@@ -488,7 +509,7 @@ private:
   void resolve_constant_pool(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
 #endif
 
-#if ENABLE_COMPILER && !ENABLE_MONET && defined(ARM)
+#if USE_AOT_COMPILATION
   void precompile_methods(JVM_SINGLE_ARG_TRAPS);
 #else
   void precompile_methods(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
@@ -505,8 +526,9 @@ private:
   ReturnOop get_subclass_list(jushort klass_id);
   //ENDOF SUBCLASS CACHE ZONE
 
-  jint get_package_flags(InstanceClass *ic) {
-    if (is_in_hidden_package(ic)) {
+  jint get_package_flags(InstanceClass *ic JVM_TRAPS) {
+    bool hidden = is_in_hidden_package(ic JVM_CHECK_0);
+    if (hidden) {
       return HIDDEN_PACKAGE;
     } else if (is_in_restricted_package(ic)) {
       return RESTRICTED_PACKAGE;

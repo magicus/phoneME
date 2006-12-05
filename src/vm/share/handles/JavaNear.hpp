@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -131,4 +132,5 @@ class JavaNear: public Near {
   friend class Scheduler;
   friend class Universe;
   friend class BinaryObjectWriter;
+  friend class ROM;
 };

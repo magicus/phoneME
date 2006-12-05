@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,6 +25,8 @@
  */
 
 package java.lang;
+
+import com.sun.cldchi.jvm.JVM;
 
 /**
  * A string buffer implements a mutable sequence of characters. 
@@ -169,7 +172,7 @@ public final class StringBuffer {
      */
     private final void copy() {
         char newValue[] = new char[value.length];
-        System.arraycopy(value, 0, newValue, 0, count);
+        JVM.unchecked_char_arraycopy(value, 0, newValue, 0, count);
         value = newValue;
         shared = false;
     }
@@ -211,7 +214,7 @@ public final class StringBuffer {
         }
         
         char newValue[] = new char[newCapacity];
-        System.arraycopy(value, 0, newValue, 0, count);
+        JVM.unchecked_char_arraycopy(value, 0, newValue, 0, count);
         value = newValue;
         shared = false;
     }
@@ -357,6 +360,7 @@ public final class StringBuffer {
 /* #endif */
             );
         }
+        // NOTE: dst not checked, cannot use unchecked arraycopy
         System.arraycopy(value, srcBegin, dst, dstBegin, srcEnd - srcBegin);
     }
 
@@ -460,7 +464,7 @@ public final class StringBuffer {
         int newcount = count + len;
         if (newcount > value.length)
             expandCapacity(newcount);
-        System.arraycopy(str, 0, value, count, len);
+        JVM.unchecked_char_arraycopy(str, 0, value, count, len);
         count = newcount;
         return this;
     }
@@ -488,6 +492,7 @@ public final class StringBuffer {
         int newcount = count + len;
         if (newcount > value.length)
             expandCapacity(newcount);
+        // NOTE: str and offset not checked, cannot use unchecked arraycopy
         System.arraycopy(str, offset, value, count, len);
         count = newcount;
         return this;
@@ -598,7 +603,8 @@ public final class StringBuffer {
         if (len > 0) {
             if (shared)
                 copy();
-            System.arraycopy(value, start+len, value, start, count-end);
+            JVM.unchecked_char_arraycopy(value, start+len, 
+                                         value, start, count-end);
             count -= len;
         }
         return this;
@@ -621,7 +627,8 @@ public final class StringBuffer {
             throw new StringIndexOutOfBoundsException();
         if (shared)
             copy();
-        System.arraycopy(value, index+1, value, index, count-index-1);
+        JVM.unchecked_char_arraycopy(value, index+1, 
+                                     value, index, count-index-1);
         count--;
         return this;
     }
@@ -697,7 +704,8 @@ public final class StringBuffer {
             expandCapacity(newcount);
         else if (shared)
             copy();
-        System.arraycopy(value, offset, value, offset + len, count - offset);
+        JVM.unchecked_char_arraycopy(value, offset, 
+                                     value, offset + len, count - offset);
         str.getChars(0, len, value, offset);
         count = newcount;
         return this;
@@ -734,8 +742,9 @@ public final class StringBuffer {
             expandCapacity(newcount);
         else if (shared)
             copy();
-        System.arraycopy(value, offset, value, offset + len, count - offset);
-        System.arraycopy(str, 0, value, offset, len);
+        JVM.unchecked_char_arraycopy(value, offset, 
+                                     value, offset + len, count - offset);
+        JVM.unchecked_char_arraycopy(str, 0, value, offset, len);
         count = newcount;
         return this;
     }
@@ -795,6 +804,7 @@ public final class StringBuffer {
             expandCapacity(newcount);
         else if (shared)
             copy();
+        // NOTE: offset not checked, cannot use unchecked arraycopy
         System.arraycopy(value, offset, value, offset + 1, count - offset);
         value[offset] = c;
         count = newcount;

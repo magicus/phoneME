@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -34,10 +35,17 @@
 
 private:
   void method_prolog(Method* method JVM_TRAPS);
-  void call_through_gp(address& target JVM_TRAPS) {
-     call_through_gp(target, /*speed=*/true JVM_NO_CHECK_AT_BOTTOM);
+  int get_jsp_shift(Method* method) {
+    int extra_locals = method->max_locals() - method->size_of_parameters();
+    int jsp_shift = extra_locals*BytesPerStackElement +
+                    JavaFrame::frame_desc_size();
+    return jsp_shift;
   }
-  void call_through_gp(address& target, bool speed JVM_TRAPS);
+  void link_frame_step1();
+  void call_through_gp(address* target_ptr JVM_TRAPS) {
+     call_through_gp(target_ptr, /*speed=*/true JVM_NO_CHECK_AT_BOTTOM);
+  }
+  void call_through_gp(address* target_ptr, bool speed JVM_TRAPS);
 
   void call_from_compiled_code(Register dst, int offset, 
                                int parameters_size JVM_TRAPS) {
@@ -46,16 +54,17 @@ private:
                             /*speed=*/ true
                             JVM_NO_CHECK_AT_BOTTOM);
   }
-#if ENABLE_TRAMPOLINE && !CROSS_GENERATOR
-  void call_from_compiled_code(Method* callee, Register dst, int offset, 
+#if ENABLE_TRAMPOLINE
+  void call_from_compiled_code(const Method* callee, Register dst, int offset, 
                                int parameters_size JVM_TRAPS) {
+    GUARANTEE(!GenerateROMImage, "Should not be used for precompiled methods");
     call_from_compiled_code(callee, dst, offset, parameters_size, 
                             /*indirect=*/ false,
                             /*speed=*/ true
                             JVM_NO_CHECK_AT_BOTTOM);
   }
 
-void call_from_compiled_code(Method* callee, Register dst, int offset, 
+void call_from_compiled_code(const Method* callee, Register dst, int offset, 
                                int parameters_size, bool indirect,
                                bool speed JVM_TRAPS);
 #endif
@@ -103,10 +112,8 @@ void call_from_compiled_code(Method* callee, Register dst, int offset,
   Assembler::Condition maybe_null_check_1(Value& object);
   void maybe_null_check_2(Assembler::Condition cond JVM_TRAPS);
 #if ENABLE_NPCE
-  Assembler::Condition maybe_null_check_1_signal(Value& object, bool& is_npe);
-  void maybe_null_check_2_signal(Assembler::Condition cond,
-                                 bool is_npe JVM_TRAPS);
-  void maybe_null_check_3_signal(Assembler::Condition cond, bool is_npe,
+   //check null point status by signal handler
+  void maybe_null_check_2_by_npce(Value& object,
                                  BasicType type JVM_TRAPS);
 #endif
 
@@ -130,8 +137,33 @@ void call_from_compiled_code(Method* callee, Register dst, int offset,
 
     // On xscale and ARMv6, use an overflow stub instead of ldr pc for
     // stack overflow checking. ldr pc is slower.
-    USE_OVERFLOW_STUB = (ENABLE_XSCALE_WMMX_INSTRUCTIONS||ENABLE_ARM_V6)
+    USE_OVERFLOW_STUB = (ENABLE_XSCALE_WMMX_TIMER_TICK||ENABLE_ARM_V6)
   };
+
+  void load_float_from_address(Value& result, BasicType type,
+                               MemoryAddress& address,
+                               Assembler::Condition cond);
+
+  PRODUCT_INLINE void set_result_register(Value& result);
+
+#if USE_FP_RESULT_IN_VFP_REGISTER
+  void setup_fp_result(Value& result);
+#endif
+
+#if ENABLE_ARM_VFP
+  void ensure_in_float_register(Value& value);
+  void ensure_not_in_float_register(Value& value, bool need_to_copy=true); 
+  void move_vfp_immediate(const Register dst,const jint src, const Condition cond = al);  
+  void move_float_immediate(const Register dst, const jint src, const Condition cond = al);
+  void move_double_immediate(const Register dst, const jint src_lo, const jint src_hi, 
+                             const Condition cond = al);
+#else
+  void ensure_in_float_register(Value& /*value*/) {}
+  void ensure_not_in_float_register(Value& /*value*/) {}
+  void ensure_not_in_float_register(Value& /*value*/, bool /*need_to_copy*/) {}
+#endif
+
+  static bool _interleave_frame_linking;
 
 public:
   void write_call_info(int parameters_size JVM_TRAPS);
@@ -146,12 +178,114 @@ public:
   };
 
   friend class CompilerLiteralAccessor;
-  #if ENABLE_INLINE && ARM
-  friend class BytecodeCompileClosure;
-  #endif
 
   void increment_stack_pointer_by(int adjustment) {
     add_imm(jsp, jsp, JavaStackDirection * adjustment * BytesPerStackElement);
   }
 
+  void cmp_values(Value& op1, Value& op2, 
+                  BytecodeClosure::cond_op condition) {
+    (void)condition;
+    cmp_values(op1, op2);
+  }
+
+private:
+  bool fold_arithmetic(Value& result, Value& op1, Value& op2 JVM_TRAPS);
+
+  void imla(Value& result, Value& op1, Value& op2, Value& op3 JVM_TRAPS);
+
+  void cmp_values(Value& op1, Value& op2, Assembler::Condition cond = al);
+
+#if ENABLE_INLINED_ARRAYCOPY
+public:
+  class RegisterSetIterator;
+
+  /*
+   * A set of registers.
+   * Invariant: each register in the set has exactly one reference.
+   */
+  class RegisterSet : public StackObj {
+    juint _set;
+    int   _length;
+   public:
+    RegisterSet() : _set(0), _length(0) {
+      GUARANTEE(Assembler::number_of_gp_registers < BitsPerWord, 
+                "Cannot have register mask as int");
+    }
+
+    /*
+     * Removes all registers from the set and decrements their ref counts.
+     */
+    ~RegisterSet();
+
+    bool is_empty() const {
+      return _set == 0;
+    }
+
+    int length() const {
+      return _length;
+    }
+
+    /* 
+     * Adds given register to the set. 
+     * Does not increase reference count for this register.
+     */
+    void add(Register reg);
+
+    /* 
+     * Removes given register from the set.
+     * Decrements reference count for this register.
+     */
+    void remove(Register reg);
+
+    /* 
+     * Returns arbitrary register from the set. 
+     */
+    Register get_register() const;
+    
+    friend class RegisterSetIterator;
+  };
+
+  /*
+   * Iterates over the given register set.
+   * If the underlying set is modified during iteration, 
+   * the behavior is undefined.
+   */
+  class RegisterSetIterator : public StackObj {
+    juint _set;
+    int   _index;
+   public:
+    RegisterSetIterator(const RegisterSet& reg_set) : 
+     _set(reg_set._set), _index(0) {}
+
+    bool has_next() const {
+      return _set != 0;
+    }
+
+    Register next();
+  };
+
+private:
+  /* Returns JVM.unchecked_XXX_arraycopy() for the given type. */
+  static ReturnOop unchecked_arraycopy_method(BasicType type);
+
+  /* Helper function to compute data start from offset and element size. */
+  void compute_data_start(Value& result,
+                          Value& array, Value& offset, int log_element_size,
+                          bool& offset_word_aligned);
+
+  /* 
+   * Helper functions to emit appropriate load/store instructions depending on 
+   * element size and direction of copying.
+   */
+  void ldrx(Register rd, Register rn, int element_size, Mode mode, 
+            bool is_backward, Condition cond = always);
+  void strx(Register rd, Register rn, int element_size, Mode mode, 
+            bool is_backward, Condition cond = always);
+  void ldmxa(Register rn, Address4 reg_set, WritebackMode mode, 
+             bool is_backward, Condition cond = always);
+  void stmxa(Register rn, Address4 reg_set, WritebackMode mode, 
+             bool is_backward, Condition cond = always);
+
+#endif
 #endif /*#if !ENABLE_THUMB_COMPILER*/

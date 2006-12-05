@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -38,8 +39,8 @@ class Bytes: AllStatic {
   // Efficient reading and writing of unaligned unsigned data in
   // platform-specific byte ordering (no special code is needed since
   // x86 CPUs can access unaligned data)
-  static inline jushort get_native_u2(address p)       { return *(jushort*)p; }
-  static inline juint   get_native_u4(address p)       { return *(juint*)p; }
+  static inline jushort get_native_u2(const_address p) { return *(jushort*)p; }
+  static inline juint   get_native_u4(const_address p) { return *(juint*)p; }
 
   static inline void put_native_u2(address p, jushort x) { *(jushort*)p = x; }
   static inline void put_native_u4(address p, juint x)   { *(juint*)p = x; }
@@ -47,11 +48,15 @@ class Bytes: AllStatic {
   // Efficient reading and writing of unaligned unsigned data in Java
   // byte ordering (i.e. big-endian ordering). Byte-order reversal is
   // needed since x86 CPUs use little-endian format.
-  static inline jushort get_Java_u2(address p) {
+  static inline jushort get_Java_u2(const_address const p) {
     return swap_u2(get_native_u2(p));
   }
-  static inline juint get_Java_u4(address p) {
+  static inline juint get_Java_u4(const_address const p) {
     return swap_u4(get_native_u4(p));
+  }
+
+  static inline julong get_Java_u8(const_address p) {
+      return ((julong)get_Java_u4(p) << 32 | (julong)get_Java_u4(p + 4));
   }
 
   static inline void put_Java_u2(address p, jushort x) {
@@ -59,6 +64,11 @@ class Bytes: AllStatic {
   }
   static inline void put_Java_u4(address p, juint x) {
     put_native_u4(p, swap_u4(x));
+  }
+
+  static inline void put_Java_u8(address p, julong x) {
+    put_Java_u4(p, (juint)(x >> 32));
+    put_Java_u4(p + 4, (juint)(x & 0xFFFFFFFFL));
   }
 
   // Efficient swapping of byte ordering
@@ -82,9 +92,9 @@ inline jushort Bytes::swap_u2(jushort x) {
        "xchgb   %%ah, %%al;"
        "movw    %%ax, %0;"
         : "=r" (res)
-	: "r" (x)
-	: "eax"
-	);
+        : "r" (x)
+        : "eax"
+        );
    return (res);
 #else
   __asm {

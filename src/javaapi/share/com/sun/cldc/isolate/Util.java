@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,6 +25,8 @@
  */
 
 package com.sun.cldc.isolate;
+
+import com.sun.cldchi.jvm.JVM;
 
 public final class Util {
     /**
@@ -72,58 +75,36 @@ public final class Util {
         if (chunkSize <= 0) {
             throw new IllegalArgumentException();
         }
-	String[] classpath  = new String[1];
-	String[] mainArgs   = new String[2];
-	classpath[0] = jarPath;
-	mainArgs[0] = jarPath;
+    String[] classpath  = new String[1];
+    String[] mainArgs   = new String[2];
+    classpath[0] = jarPath;
+    mainArgs[0] = jarPath;
         mainArgs[1] = new Integer(chunkSize).toString();
-	int status = 0;
+    int status = 0;
 
-	try {
-	    Isolate iso = new Isolate("com.sun.cldc.isolate.Verifier",
-				       mainArgs,
-				       classpath);
+    try {
+        Isolate iso = new Isolate("com.sun.cldc.isolate.Verifier",
+                       mainArgs,
+                       classpath);
             iso.setAPIAccess(true);
-	    iso.start();
-	    iso.waitForExit();
+        iso.start();
+        iso.waitForExit();
 
-	    status = iso.exitCode();
-	}
-	catch (IsolateStartupException ise) {
-	    ise.printStackTrace();
-	    return false;
-	} 
-	return status == 2;
+        status = iso.exitCode();
+    }
+    catch (IsolateStartupException ise) {
+        ise.printStackTrace();
+        return false;
+    }
+    return status == JVM.STATUS_VERIFY_SUCCEEDED;
     }
 }
 
 final class Verifier {
     public static void main(String[] args) {
         int chunkSize = Integer.parseInt(args[1]);
-	Isolate.currentIsolate().exit(verifyJar(args[0], chunkSize));
+	    Isolate.currentIsolate().exit(
+            JVM.verifyJar(args[0], chunkSize));
     }
     
-    private static int verifyJar(String jar, int chunkSize) {
-	int nextChunkID = 0;	
-        int status = 1;
-	try {
-          do {
-	    nextChunkID = verifyNextChunk(jar, nextChunkID, chunkSize);
-            Thread.yield();
-          } while (nextChunkID > 0);
-          // OK, just all files verified
-          if (nextChunkID == 0) {
-            status = 2;
-          }
-	} catch (Throwable t) {
-        //do we need it?
-	    t.printStackTrace();
-	    status = 3;
-	}
-
-	return status;
-    }
-
-    private static native int verifyNextChunk(String jar, 
-                                              int nextChunkID, int chunkSize);
 }

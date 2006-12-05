@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -28,13 +29,19 @@
 
 class MemoryProfiler {
   public:    
-    static bool is_gc_suspended() {return _gc_suspended;}
     static void *memory_profiler_cmds[];
+    // to satisfy build system
+    void dummy_method();
 
   private:
     static OopDesc** _current_object;
-    static bool _gc_suspended;
     static PacketOutputStream* _current_out;
+
+    //these varaibles are used for thread enumeration 
+    //and link offset calculation
+    static OopDesc* _current_stack;
+    static int _stack_count;
+
     //interface functions
     static void get_global_data(PacketInputStream *in, PacketOutputStream *out);
     static void retrieve_all_data(PacketInputStream *in, PacketOutputStream *out);
@@ -42,12 +49,16 @@ class MemoryProfiler {
     static void get_roots(PacketInputStream *in, PacketOutputStream *out);
     static void suspend_vm(PacketInputStream *in, PacketOutputStream *out);
     static void resume_vm(PacketInputStream *in, PacketOutputStream *out);
-
+    static void get_stack_trace(PacketInputStream *in, PacketOutputStream *out);
+    static void print_stack_trace(PacketOutputStream *out, OopDesc* backtrace);
+    static ReturnOop create_stack_trace(Frame frame);
+    static void strace_ptr_address_searcher(OopDesc**);
     //heap dump functions 
     static int get_mp_class_id(JavaClass* clazz);
     static void dump_object(Oop*);
     static void link_counter(OopDesc**);
     static void link_dumper(OopDesc**);
+    static void stack_link_dumper(OopDesc**);
     static int link_count;
 
 };

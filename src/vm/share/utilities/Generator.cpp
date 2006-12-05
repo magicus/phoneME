@@ -1,5 +1,6 @@
 
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -161,6 +162,12 @@ void Generator::generate() {
 #if ENABLE_CPU_VARIANT
     CPUVariantSupport cpu_variant_support(output);
     cpu_variant_support.generate();
+#endif
+
+#if USE_COMPILER_GLUE_CODE
+    // Special compiler glue code that can be efficiently linked to JIT code
+    // (e.g. with a BL instruction on ARM).
+    compiler_stubs.generate_glue_code();
 #endif
 
     GPTableGenerator table_gen(output);
@@ -331,12 +338,6 @@ void Generator::generate_oopmaps() {
     for (int i = 0; i < generator_count; i++) { 
       generate_oopmap(output, generators[i].do_class, generators[i].name);
     }
-
-#if ENABLE_COMPILER
-    // This is a table of bits -- each bit indicate whether the corresponding 
-    // bytecode may be used by a compiled method without a callframe.
-    Compiler::generate_omit_frame_table(output);
-#endif
 
     output->print("}\n\n");
     generate_oopmap_checks("loopgen", output);

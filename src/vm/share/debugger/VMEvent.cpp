@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -157,15 +158,15 @@ ReturnOop VMEvent::get_event_request(DebuggerEvent *d_event,
   VMEvent::Fast ep, epp;
   VMEventModifier::Fast em;
   bool matched;
-  bool should_delete;
+
   jbyte kind = d_event->event_kind();
 
   event_count = 0;
   suspend_policy = 0;
   ep = es.next_by_kind(kind);
   while(!ep.is_null()) {
+    bool should_delete = false;
     // check modifiers
-    should_delete = false;
 #if ENABLE_ISOLATES
     // Check to see what task this event was requested on
     if (ep().task_id() != -1 &&
@@ -232,8 +233,8 @@ VMEvent::get_verifier_breakpoint_opcode(const Method* this_method, int bci) {
     return Bytecodes::_illegal;
   }
   LocationModifier::Raw location = get_modifier(&ep,
-     JDWP_EventRequest_Set_Out_modifiers_Modifier_LocationOnly);
-  GUARANTEE(!location.is_null(), "No location modifier in event");
+        JDWP_EventRequest_Set_Out_modifiers_Modifier_LocationOnly);
+  GUARANTEE(!location.is_null(), "No location modifier for event");
   return(location().save_opcode());
 }
 
@@ -257,8 +258,8 @@ void VMEvent::replace_event_opcode(Method *method, Bytecodes::Code bcode,
   } else {
     // Set the saved opcode to the new fast opcode
     LocationModifier::Raw location = get_modifier(&ep,
-       JDWP_EventRequest_Set_Out_modifiers_Modifier_LocationOnly);
-    GUARANTEE(!location.is_null(), "No location modifier in event");
+        JDWP_EventRequest_Set_Out_modifiers_Modifier_LocationOnly);
+    GUARANTEE(!location.is_null(), "No location modifier for event");
     location().set_save_opcode(bcode);
   }
   return;
@@ -343,8 +344,8 @@ extern "C" {
                                         Thread::current()->task_id());
     if (ep.not_null()) {
       break_location = VMEvent::get_modifier(&ep,
-         JDWP_EventRequest_Set_Out_modifiers_Modifier_LocationOnly);
-      GUARANTEE(!break_location.is_null(), "No location modifier in event");
+          JDWP_EventRequest_Set_Out_modifiers_Modifier_LocationOnly);
+      GUARANTEE(!break_location.is_null(), "No location modifier for event");
       opcode = break_location().save_opcode();
       if (Thread::current()->status() & THREAD_JUST_BORN) {
         Thread* t = Thread::current();
@@ -381,7 +382,7 @@ extern "C" {
  *    How single stepping works
     Assume you are sitting at a breakpoint in some code and you
     decide to single step.  The debugger issues an event request for
-    a single step event. The VM gets this request in create_event_request()
+    a single step event.  The VM gets this request in create_event_request()
     and sends a vendor specific command to the debug agent to obtain 
     information as to where the next line may be. The proxy returns
     with three pieces of info (see JavaDebugger::vendor_get_stepping_info()).
@@ -426,7 +427,7 @@ extern "C" {
 
     You set a breakpoint at line 2 and run the program and hit the
     breakpoint.  Now you single step.  The debugger requests a single
-    step event. The VM calls back to the debug agent requesting stepping
+    step event.  The VM calls back to the debug agent requesting stepping
     info.  The proxy responds with this info:
         target offset  5
             duplicate offset  7

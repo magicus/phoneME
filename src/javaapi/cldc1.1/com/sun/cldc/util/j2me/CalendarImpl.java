@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -58,7 +59,7 @@ public class CalendarImpl extends Calendar {
     /**
      * Useful millisecond constants.  Although ONE_DAY and ONE_WEEK can fit
      * into ints, they must be longs in order to prevent arithmetic overflow
-     * when performing (bug 4173516).
+     * when performing (CR 4173516).
      */
     private static final int  ONE_SECOND = 1000;
     private static final int  ONE_MINUTE = 60*ONE_SECOND;
@@ -97,7 +98,7 @@ public class CalendarImpl extends Calendar {
         // the undesirable effect that the time can wrap around at the ends,
         // yielding, for example, a Date(Long.MAX_VALUE) with a big BC year
         // (should be AD).  Handle this by pinning such values to Long.MIN_VALUE
-        // or Long.MAX_VALUE. - liu 8/11/98 bug 4149677
+        // or Long.MAX_VALUE. - liu 8/11/98 CR 4149677
         if (time > 0 && localMillis < 0 && rawOffset > 0) {
             localMillis = Long.MAX_VALUE;
         } else if (time < 0 && localMillis > 0 && rawOffset < 0) {

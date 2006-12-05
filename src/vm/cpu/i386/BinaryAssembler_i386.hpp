@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -118,14 +119,14 @@ class BinaryAssembler: public Assembler {
   void movl   (Register dst, const Address& src);
   void movl   (Register dst, Register src);
   void movl   (Register dst, int imm32);
-  void movl   (Register dst, Oop* oop);
+  void movl   (Register dst, const Oop* oop);
   
   // alias for platform independant code
   void mov    (Register dst, Register src) { movl(dst, src); }
 
   void movl   (const Address& dst, Register src);
   void movl   (const Address& dst, int imm32);
-  void movl   (const Address& dst, Oop* oop);
+  void movl   (const Address& dst, const Oop* oop);
 
   void movb   (Register dst, const Address& src);
   void movb   (const Address& dst, int imm8);
@@ -371,6 +372,10 @@ class BinaryAssembler: public Assembler {
   int   offset_at(int position) const  { 
     return position + CompiledMethod::base_offset();
   }
+  address addr_at(jint pos) const {
+    return (address)(_compiled_method->field_base(offset_at(pos)));
+  }
+
   jint  byte_at(int position) const  {
     return _compiled_method->byte_field(offset_at(position));
   }
@@ -393,33 +398,33 @@ class BinaryAssembler: public Assembler {
   void emit_byte(jint value)  {
     if (has_room_for(sizeof(jbyte))) {
       byte_at_put(_code_offset, value);
+      _code_offset += sizeof(jbyte);
     } else {
       signal_output_overflow();
     }
-    _code_offset += sizeof(jbyte);
   }
 
   void emit_word(jint value)  {
     if (has_room_for(sizeof(jshort))) {
       word_at_put(_code_offset, value);
+      _code_offset += sizeof(jshort);
     } else {
       signal_output_overflow();
     }
-    _code_offset += sizeof(jshort);
   }
   void emit_long(jint value)  {
     if (has_room_for(sizeof(jint))) {
       long_at_put(_code_offset, value);
+      _code_offset += sizeof(jint);      
     } else {
       signal_output_overflow();
     }
-    _code_offset += sizeof(jint);
   }
   void emit_displacement(Label& L);
   void emit_displacement(NearLabel& L);
 
   void emit_osr_entry(jint bci) {
-    _relocation.emit_osr_entry(_code_offset, bci);
+    _relocation.emit(Relocation::osr_stub_type, _code_offset, bci);
   }
 
   // Helper functions for groups of instructions
@@ -459,13 +464,13 @@ class BinaryAssembler: public Assembler {
   CompiledMethod* compiled_method() { return _compiled_method; }
 
   // Returns the code size in bytes
-  jint code_size()       { return _code_offset; }
-  jint code_end_offset() { return offset_at(code_size()); }
+  jint code_size()       const { return _code_offset; }
+  jint code_end_offset() const { return offset_at(code_size()); }
 
   jint relocation_size() const { return _relocation.size(); }
 
   // Returns the remaining free space in the compiled method.
-  jint free_space() {
+  jint free_space() const {
     return (_relocation.current_relocation_offset() + sizeof(jushort)) - 
             offset_at(code_size());
   }
@@ -487,7 +492,7 @@ class BinaryAssembler: public Assembler {
 
   // If compiler_area is enabled, move the relocation data to higher
   // address to make room for more compiled code.
-  void ensure_compiled_method_space();
+  void ensure_compiled_method_space(int delta = 0);
 
   void comment(char* str, ...) PRODUCT_RETURN;
 

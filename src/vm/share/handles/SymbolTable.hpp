@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -98,7 +99,6 @@ private:
 
   static ReturnOop symbol_for(String* string, bool slashify JVM_TRAPS);
 
-  static void put_unicode_char(utf8 &p, jchar ch);
   void grow_and_replace_symbol_table(void);
   void insert(Symbol* symbol);
 

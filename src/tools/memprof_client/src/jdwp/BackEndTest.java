@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -107,7 +108,6 @@ class BackEndTest extends jdwp implements VMConnection {
         }
         catch (Exception e) {
             System.err.println("* Exception.\n");
-            e.printStackTrace();
             throw new ConnectException("Can't create JDWP connection.");
         }
 
@@ -285,6 +285,21 @@ class BackEndTest extends jdwp implements VMConnection {
         } 
     }
 
+
+    //VMConnection implementation
+    public VMReply sendReplyCommand(int command, int[] params) throws DebugeeException {
+      try {
+        Command cmd = new Command(command);
+        for (int i = 0; i < params.length; i++) {
+          cmd.addInt(params[i]);
+        }
+        Reply reply = checkReply(cmd);
+        reply.resetDataParser(); 
+        return reply;
+      } catch (IOException e) {
+        throw new DebugeeException(e.getMessage());
+      }
+    }
 
     //VMConnection implementation
     public VMReply sendReplyCommand(int command) throws DebugeeException {

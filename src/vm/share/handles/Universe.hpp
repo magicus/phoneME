@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -67,19 +68,6 @@ class Universe: public AllStatic {
   // ^CompiledMethod
   static ReturnOop new_compiled_method(int code_size JVM_TRAPS);
 #endif
-#if ENABLE_INLINE && ARM
-static jushort* overridden_class_ids;
-static jint overridden_count;
-static jint overridden_Limit;
-static juint* inlined_class_ids;
-static jint inlined_count;
-static jint inlined_limit;
-#define INLINED_CLASS_BITS 16
-#define METHOD_INDEX_MASK ((1<<INLINED_CLASS_BITS) - 1)
-#if ENABLE_INTEL_INLINE_DEBUG 
-static int new_inliner_count;  
-#endif
-#endif
   static ReturnOop new_method(int code_length, AccessFlags &access_flags
                               JVM_TRAPS);
   static ReturnOop new_constant_pool(int length JVM_TRAPS);
@@ -115,12 +103,11 @@ static int new_inliner_count;
   static ReturnOop new_type_array(TypeArrayClass* klass, jint length JVM_TRAPS);
 
   // Support for shrinking objects
+  static void fill_heap_gap(address ptr, size_t size_to_fill);
   static ReturnOop shrink_object(Oop* object, size_t new_size,
                                  bool down = true);
 
   static ReturnOop new_entry_activation(Method* method, jint length JVM_TRAPS);
-  static ReturnOop allocate_condition(JVM_SINGLE_ARG_TRAPS);
-  static void free_condition(Condition *condition);
   static bool flush_caches();
   static ReturnOop new_thread(JVM_SINGLE_ARG_TRAPS) {
     return new_mixed_oop(MixedOopDesc::Type_Thread,
@@ -153,7 +140,8 @@ static int new_inliner_count;
   static void setup_isolate_list(JVM_SINGLE_ARG_TRAPS);
   static ReturnOop setup_mirror_list(int i JVM_TRAPS);
   static ReturnOop new_task(int id JVM_TRAPS);
-  static ReturnOop new_task_mirror(jint statics_size JVM_TRAPS);
+  static ReturnOop new_task_mirror(jint statics_size, 
+                                   jint vtable_length JVM_TRAPS);
   static ReturnOop task_from_id(int task_id);
 
   static inline void set_task_list(ObjArray *tl);
@@ -220,7 +208,8 @@ private:
   static ReturnOop allocate_task(JVM_SINGLE_ARG_TRAPS);
 
 #if ENABLE_ISOLATES
-  static ReturnOop allocate_task_mirror(jint statics_size JVM_TRAPS);
+  static ReturnOop allocate_task_mirror(jint statics_size,
+                                        int vtable_length JVM_TRAPS);
 #endif
 
  public:
@@ -310,7 +299,7 @@ private:
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   static void set_profile_id(const int id); 
-  static int profile_id_by_name(char * profile);
+  static int profile_id_by_name(const char * profile);
 
   static int current_profile_id();
 
@@ -321,9 +310,9 @@ private:
   static ReturnOop new_profile(JVM_SINGLE_ARG_TRAPS);
   static ReturnOop new_vector(JVM_SINGLE_ARG_TRAPS);  
 #endif // USE_SOURCE_IMAGE_GENERATOR
+#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
   static bool name_matches_pattern(const char* name, int name_len, 
                                    const char* pattern, int pattern_len);  
-#endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
  
  private:
   typedef OopDesc* Allocator(size_t size JVM_TRAPS);
@@ -357,7 +346,6 @@ private:
   static bool  _before_main;
   static bool  _is_stopping;
   static bool  _is_compilation_allowed;
-  static jint  _number_of_cached_conditions;
 
 #if ENABLE_JVMPI_PROFILE 
   // for set method id
@@ -416,8 +404,6 @@ private:
   /* End of fixed ordering */                                         \
   template(dynamic_lib_handles,                  TypeArray)           \
   template(mixed_oop_class,                      FarClass)            \
-  template(scheduler_new_thread,                 Thread)              \
-  template(scheduler_waiting,                    Condition)           \
   template(rom_text_empty_obj_array,             ObjArray)            \
   template(empty_obj_array,                      ObjArray)            \
   template(empty_short_array,                    TypeArray)           \
@@ -441,7 +427,6 @@ private:
   template(verifier_vstack_classes_cache,        ObjArray)            \
   template(verifier_vlocals_tags_cache,          TypeArray)           \
   template(verifier_vlocals_classes_cache,       ObjArray)            \
-  template(condition_cache,                      Condition)           \
   template(async_watcher,                        Thread)              \
   template(scheduler_async,                      Thread)              \
   template(special_thread,                       Thread)              \
@@ -458,10 +443,30 @@ private:
   template(scheduler_priority_queues,            ObjArray)            \
   template(system_mirror_list,                   ObjArray)            \
   template(current_task_obj,                     Task)                \
+  template(scheduler_waiting,                    Thread)              \
   template(global_threadlist,                    Thread)
 
   // ^^^^^^^NOTE: last NUM_HANDLES_SKIP handles must be
   // global_threadlist, Universe knows this ugly secret
+
+#if ENABLE_HEAP_NEARS_IN_HEAP
+#define ROM_DUPLICATE_CLASS_HANDLES_DO(template)                          \
+  template(rom_meta_class,                           FarClass)            \
+  template(rom_type_array_class_class,               FarClass)            \
+  template(rom_obj_array_class_class,                FarClass)            \
+  template(rom_instance_class_class,                 FarClass)            \
+   /* see as_TypeArrayClass().  Order of array classes is important */ \
+  template(rom_bool_array_class,                     TypeArrayClass)      \
+  template(rom_char_array_class,                     TypeArrayClass)      \
+  template(rom_float_array_class,                    TypeArrayClass)      \
+  template(rom_double_array_class,                   TypeArrayClass)      \
+  template(rom_byte_array_class,                     TypeArrayClass)      \
+  template(rom_short_array_class,                    TypeArrayClass)      \
+  template(rom_int_array_class,                      TypeArrayClass)      \
+  template(rom_long_array_class,                     TypeArrayClass)      
+#else
+#define ROM_DUPLICATE_CLASS_HANDLES_DO(template)                          
+#endif
 
  public:
 
@@ -479,7 +484,8 @@ private:
   template(refnode_class,                        FarClass)            \
   template(objects_by_id_map,                    ObjArray)            \
   template(dbg_class,                            InstanceClass)       \
-  template(objects_by_ref_map,                   ObjArray)
+  template(objects_by_ref_map,                   ObjArray)            \
+  template(mp_stack_list,                        ObjArray)
 
 #else
 #define UNIVERSE_DEBUGGER_HANDLES_DO(template)
@@ -513,7 +519,9 @@ private:
   template(isolate_termination_signal,           Oop)                 \
   template(suspend_task_queue,                   Thread)              \
   template(inited_at_build,                      ObjArray)            \
-  template(binary_images,                        TypeArray)           \
+  template(global_binary_images,                 ObjArray)            \
+  template(global_binary_persistante_handles,    ObjArray)            \
+  template(global_image_handles,                 TypeArray)           \
   template(task_class_init_marker,               Oop)
 
 // These handles are skipped during source romization
@@ -531,6 +539,7 @@ private:
    UNIVERSE_ISOLATES_HANDLES_DO(template)      \
    UNIVERSE_REFLECTION_HANDLES_DO(template)    \
    UNIVERSE_GENERIC_HANDLES_DO(template)       \
+   ROM_DUPLICATE_CLASS_HANDLES_DO(template)    \
    UNIVERSE_ISOLATES_HANDLES_SKIP_DO(template) \
    UNIVERSE_GENERIC_HANDLES_SKIP_DO(template)
 
@@ -554,6 +563,12 @@ private:
    UNIVERSE_ISOLATES_HANDLES_SKIP_DO(UNIVERSE_HANDLES_COUNT_SKIP)
    UNIVERSE_GENERIC_HANDLES_SKIP_DO(UNIVERSE_HANDLES_COUNT_SKIP)
    NUM_HANDLES_SKIP
+  };
+
+  // Count how many duplicated ROM persistent handles we have
+  enum {  
+   ROM_DUPLICATE_CLASS_HANDLES_DO(UNIVERSE_HANDLES_COUNT_SKIP)
+   NUM_DUPLICATE_ROM_HANDLES
   };
 
   static const jubyte* oopmaps[];
@@ -620,6 +635,7 @@ private:
   static ReturnOop class_from_id(jint class_id) {
     ReturnOop cls = ((ReturnOop*)_class_list_base)[class_id];
     GUARANTEE(cls != NULL, "sanity");
+    GUARANTEE(TaskContext::number_of_java_classes() > class_id, "sanity");
     return cls;
   }
 #if ENABLE_ISOLATES
@@ -717,5 +733,9 @@ private:
                           (FarClass*)((void*)object_array_class()),
                           length, sizeof(OopDesc*) JVM_NO_CHECK_AT_BOTTOM);
   }
+#endif
+#if ENABLE_ISOLATES
+  static ReturnOop copy_strings_to_symbols(OopDesc* string_array JVM_TRAPS);
+  static ReturnOop copy_strings_to_byte_arrays(OopDesc* string_array JVM_TRAPS);
 #endif
 };

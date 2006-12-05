@@ -1,5 +1,5 @@
 /*
- * @(#)Disassembler_wmmx.cpp	1.7 06/03/27 18:46:40
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -293,7 +294,7 @@ class SourceMacros: public SourceAssembler {
   void get_task_mirror_list(const Register dst);
   void load_task_mirror_from_list(const Register dst, const Register index, 
                                   const Register tmp);
-  void SourceMacros::load_task_mirror_from_list(const Register dst, const Register tmp) {
+  void load_task_mirror_from_list(const Register dst, const Register tmp) {
           load_task_mirror_from_list(dst, dst, tmp);
   }
   void cib_with_marker(const Register task_mirror,

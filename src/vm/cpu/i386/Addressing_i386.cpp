@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -93,13 +94,18 @@ BinaryAssembler::Address StackAddress::address_for(jint address_offset) {
 jint LocationAddress::compute_base_offset() {
   // compute the base offset for this location address
   if (is_local()) {
+    const int max_locals = Compiler::root()->method()->max_locals();
     // bp + 8 acts like a stack pointer for the locals
     return 2 * sizeof(int)
-        + JavaFrame::arg_offset_from_sp(method()->max_locals() - index() - 1);
+        + JavaFrame::arg_offset_from_sp(max_locals - index() - 1);
   } else {
     code_generator()->ensure_sufficient_stack_for(index(), type());      
     return JavaFrame::arg_offset_from_sp(frame()->stack_pointer() - index());
   } 
+}
+
+bool LocationAddress::is_local_index(jint index) { 
+  return Compiler::root()->method()->is_local(index); 
 }
 
 #endif

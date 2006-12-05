@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -175,10 +176,6 @@ class ConstantPool: public Oop {
 
   ReturnOop resolve_symbol_at_offset(int offset JVM_TRAPS);
   ReturnOop resolve_type_symbol_at_offset(int offset JVM_TRAPS);
-
-#if ENABLE_INLINE && ARM
-   bool is_field_resolved(int index) ;
-#endif  
 
   // declaring_class: the class where the field is declared.
   BasicType field_type_at(int index, int& offset, bool is_static, bool is_get,

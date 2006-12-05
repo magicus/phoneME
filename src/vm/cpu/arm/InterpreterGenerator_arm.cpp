@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -254,9 +255,10 @@ bind(synchronization_done);
     interpreter_call_vm("jprof_record_method_transition", T_VOID);
   }
 
-  check_timer_tick(tos_on_stack);
+  restore_stack_state_from(tos_on_stack);
   prefetch(0);
-  dispatch(tos_on_stack);
+  check_timer_tick();
+  dispatch(tos_interpreter_basic);
 
   // Synchronization code
 bind_local("synchronize_interpreted_method");
@@ -433,9 +435,10 @@ bind(stack_grown);
     interpreter_call_vm("jprof_record_method_transition", T_VOID);
   }
 
-  check_timer_tick(tos_on_stack);
+  restore_stack_state_from(tos_on_stack);
   prefetch(0);
-  dispatch(tos_on_stack);
+  check_timer_tick();
+  dispatch(tos_interpreter_basic);
 }
 
 void InterpreterGenerator::generate_interpreter_grow_stack() {
@@ -778,19 +781,17 @@ void InterpreterGenerator::generate_interpreter_bytecode_template(Template* t, b
   if (Deterministic) {
     comment("Decrement deterministic bytecode counter");
     get_bytecode_counter(tmp1);
+    sub(tmp1, tmp1, one, set_CC);
+    set_bytecode_counter(tmp1);
 
 #if ENABLE_XSCALE_WMMX_TIMER_TICK && !ENABLE_TIMER_THREAD
-    sub(tmp1, tmp1, one, set_CC);
-    set_bytecode_counter(tmp1);
     // wcmpeqb(wR0, wR0, wR0, le);
     define_long(0xDE000060);  
-#else
-    get_rt_timer_ticks(tmp2);
-    add_imm(tmp2, tmp2, 1);
-    sub(tmp1, tmp1, one, set_CC);
-    set_bytecode_counter(tmp1);
-    set_rt_timer_ticks(tmp2,     le);
-#endif // ENABLE_XSCALE_WMMX_TIMER_TICK && !ENABLE_TIMER_THREAD
+#elif !ENABLE_PAGE_PROTECTION
+    get_rt_timer_ticks(tmp2, le);
+    add(tmp2, tmp2, one, le);
+    set_rt_timer_ticks(tmp2, le);
+#endif
 
     mov_imm(tmp1, RESCHEDULE_COUNT/8, le);
   }

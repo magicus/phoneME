@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -179,10 +180,11 @@ void Throw::error(ErrorMsgTag err JVM_TRAPS) {
 
 void Throw::class_format_error(ErrorMsgTag err JVM_TRAPS) {
 #if ENABLE_ROM_GENERATOR
-  if (!UseROM && Universe::before_main()) {
-    tty->print_cr("You use wrong javac version. Please use 1.4!");
-    JVMSPI_Exit(1);
-  }
+    if (!UseROM && Universe::before_main()) {
+        tty->print_cr(
+       "You are using insupported javac version, please use 1.4.* version to compile classes.");
+        JVMSPI_Exit(1);
+    }
 #endif
   allocate_and_throw(Symbols::java_lang_ClassFormatError(),
                      (char*)"ClassFormatError", err

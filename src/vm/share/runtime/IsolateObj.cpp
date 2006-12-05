@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -203,8 +204,14 @@ void IsolateObj::verify_fields() {
                                           main_class_offset()); 
   ic().verify_instance_field("_mainArgs",  "[Ljava/lang/String;", 
                                           main_args_offset()); 
-  ic().verify_instance_field("_classpath",  "[Ljava/lang/Object;", 
-                                          classpath_offset()); 
+  ic().verify_instance_field("_app_classpath",  "[Ljava/lang/Object;", 
+                                          app_classpath_offset()); 
+  ic().verify_instance_field("_hidden_packages",  "[Ljava/lang/String;", 
+                                          hidden_packages_offset()); 
+  ic().verify_instance_field("_restricted_packages",  "[Ljava/lang/String;", 
+                                          restricted_packages_offset()); 
+  ic().verify_instance_field("_sys_classpath",  "[Ljava/lang/Object;", 
+                                          sys_classpath_offset());
   ic().verify_instance_field("_memoryReserve",  "I", 
                                           memory_reserve_offset()); 
   ic().verify_instance_field("_memoryLimit",  "I",

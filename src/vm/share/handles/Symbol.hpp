@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -59,6 +60,7 @@ class Symbol: public Oop {
     GUARANTEE(is_within_bounds(index), "Symbol contents index out of bounds");
     return base_offset() + (index * sizeof(jbyte));
   }
+  static void put_unicode_char(utf8 &p, jchar ch);
 
  public:
 
@@ -69,6 +71,7 @@ class Symbol: public Oop {
   void byte_at_put(int index, jbyte value) {
     byte_field_put(offset_from_index(index), value);
   }
+  static ReturnOop copy_string_to_byte_array(OopDesc* string, bool slashify JVM_TRAPS);
 
   // Returns unbounded equality hash value
   juint hash();
@@ -76,9 +79,6 @@ class Symbol: public Oop {
   bool matches(Symbol *other_symbol);
 
   int strrchr(jbyte c);
-#if ENABLE_INLINE && ARM
-  bool is_same_root_package(Symbol* other);
-#endif
   bool is_same_class_package(Symbol* other);
 
   void string_copy(char* buffer, int buffer_size);

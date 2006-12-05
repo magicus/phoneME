@@ -1,5 +1,5 @@
 /*
- * @(#)Calendar.java	1.10 06/01/26 16:08:15
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

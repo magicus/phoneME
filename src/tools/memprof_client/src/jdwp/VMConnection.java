@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -45,6 +46,25 @@ public interface VMConnection {
 
   /**
    * Sends a command to the VM, which produces some responce and 
+   * returns instance of <code>VMReply</code> for working with the 
+   * responce.
+   * Could throw <code>DebugeeException</code> unless sending command is successful
+   * This functions requires connection to a KDP and will throw <code>DebugeeException</code> otherwise. 
+   * You can check it with <code>isConnected()</code> function.
+   * To connect to a KDP you must use <code>connect(String hostName, int port)</code> function.
+   *
+   * @param command - code of command to be sent
+   * @param params  - additional command parameters
+   *
+   * @return instance of <code>VMReply</code> for working with the VM responce
+   *
+   * @see #sendCommand(int command)
+   * @see #isConnected()
+   */
+  public VMReply sendReplyCommand(int command, int[] params) throws DebugeeException;
+
+   /**
+   * Sends a command to the VM which don't needs any parameters, which produces some responce and 
    * returns instance of <code>VMReply</code> for working with the 
    * responce.
    * Could throw <code>DebugeeException</code> unless sending command is successful

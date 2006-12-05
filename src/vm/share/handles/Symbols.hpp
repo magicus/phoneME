@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -100,6 +101,12 @@
   template(enter_lock_object_name, "enterLockObject")                       \
   template(create_sys_image_name,  "createSysImage")                        \
   template(create_app_image_name,  "createAppImage")                        \
+  template(arraycopy_name,         "arraycopy")                             \
+  template(unchecked_byte_arraycopy_name,  "unchecked_byte_arraycopy")      \
+  template(unchecked_char_arraycopy_name,  "unchecked_char_arraycopy")      \
+  template(unchecked_int_arraycopy_name,   "unchecked_int_arraycopy")       \
+  template(unchecked_obj_arraycopy_name,   "unchecked_obj_arraycopy")       \
+  template(unchecked_long_arraycopy_name,  "unchecked_long_arraycopy")      \
   /* ---- common signatures ---- */                                         \
   sig_template(java_lang_Object_signature,                                  \
                                    "Ljava/lang/Object;")                    \

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,6 +25,8 @@
  */
 
 package java.io;
+
+import com.sun.cldchi.jvm.JVM;
 
 /**
  * A <code>ByteArrayInputStream</code> contains
@@ -103,7 +106,7 @@ class ByteArrayInputStream extends InputStream {
      * that uses <code>buf</code> as its
      * buffer array. The initial value of <code>pos</code>
      * is <code>offset</code> and the initial value
-     * of <code>count</code> is <code>offset+len</code>.
+     * of <code>count</code> is <code>offset+length</code>.
      * The buffer array is not copied.
      * <p>
      * Note that if bytes are simply read from
@@ -183,7 +186,7 @@ class ByteArrayInputStream extends InputStream {
         if (len <= 0) {
             return 0;
         }
-        System.arraycopy(buf, pos, b, off, len);
+        JVM.unchecked_byte_arraycopy(buf, pos, b, off, len);
         pos += len;
         return len;
     }

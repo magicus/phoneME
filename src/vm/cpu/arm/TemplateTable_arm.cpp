@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -380,7 +381,7 @@ void bc_call_vm_redo::generate(const char *name) {
     mov(r0, reg(bcp));
     // For merged bytecodes, make sure we account for the longest one
     mov_imm(r1, max(3, Bytecodes::length_for(bytecode())));
-    fast_c_call("arm_flush_icache", tmp4);
+    fast_c_call("arm_flush_icache");
   }
 
   prefetch(0);
@@ -408,7 +409,7 @@ void bc_call_vm_dispatch::generate(const char*name) {
     mov(r0, reg(bcp));
     // For merged bytecodes, make sure we account for the longest one
     mov_imm(r1, max(3, Bytecodes::length_for(bytecode())));
-    fast_c_call("arm_flush_icache", tmp4);
+    fast_c_call("arm_flush_icache");
     ldr(bcode, bytecode_impl(tmp2));
   } else {
     ldr(bcode, bytecode_impl(r0));
@@ -755,10 +756,12 @@ void bc_dup::generate() {
   } else { 
     // Slight optimization.  Grab the argument without popping it off stack
     eol_comment("Grab tos without popping it");
-    StackTypeMode mode = ENABLE_FULL_STACK ? full : empty;
     prefetch(1);
-    pop_arguments(0);
-    pop(tos, al, mode, no_writeback);
+    pop_arguments(0);    
+    
+    int offset = ENABLE_FULL_STACK ? 0 : -JavaStackDirection * BytesPerWord;
+    ldr(tos_val, imm_index(jsp, offset), al);
+
     dispatch(1, tos);
   }
 }
@@ -780,10 +783,11 @@ void bc_dup_x2::generate() {
 }
 
 void bc_dup2::generate() {
-  StackTypeMode mode = ENABLE_FULL_STACK ? full : empty;
   pop_arguments(1);
-  eol_comment("Grab second element without popping it");
-  pop(tmp01, al, mode, no_writeback);
+  eol_comment("Grab second element without popping it");  
+
+  int offset = ENABLE_FULL_STACK ? 0 : -JavaStackDirection * BytesPerWord;
+  ldr(tmp0, imm_index(jsp, offset), al);
 
   comment("dup2 (...ba => ...baba");
   prefetch(1);
@@ -1222,7 +1226,7 @@ static Assembler::Condition as_ARM_cond(j_condition j_cond) {
 }
 
 void bc_if_0cmp::generate(j_condition condition) {
-  check_timer_tick(tos_interpreter_basic);
+  check_timer_tick();
 
   pop_arguments(1);
   Label not_taken;
@@ -1235,7 +1239,7 @@ void bc_if_0cmp::generate(j_condition condition) {
 }
 
 void bc_if_icmp::generate(j_condition condition) {
-  check_timer_tick(tos_interpreter_basic);
+  check_timer_tick();
 
   pop_arguments(2);
   Label not_taken;
@@ -1248,7 +1252,7 @@ void bc_if_icmp::generate(j_condition condition) {
 }
 
 void bc_if_acmp::generate(j_condition condition) {
-  check_timer_tick(tos_interpreter_basic);
+  check_timer_tick();
 
   pop_arguments(2);
   Label not_taken;
@@ -1261,7 +1265,7 @@ void bc_if_acmp::generate(j_condition condition) {
 }
 
 void bc_if_nullcmp::generate(j_condition condition) {
-  check_timer_tick(tos_interpreter_basic);
+  check_timer_tick();
 
   pop_arguments(1);
   Label not_taken;
@@ -1275,7 +1279,7 @@ void bc_if_nullcmp::generate(j_condition condition) {
 
 // Branch routines.
 void bc_goto::generate(bool is_wide) {
-  check_timer_tick(tos_interpreter_basic);
+  check_timer_tick();
   pop_arguments(0);
   branch(false, is_wide);
 }
@@ -1287,8 +1291,15 @@ void bc_return::generate(BasicType type) {
      set_stack_state_to(tos_on_stack);
     }
   } else { 
-    // This gets the result into r0/r1.  
+
+#if USE_FP_RESULT_IN_VFP_REGISTER
+    // This gets the result into s0/s1 for floats and doubles
+    // and into r0/r1 for other types.
+    pop_fp_result(type);
+#else
+    // This gets the result into r0/r1.
     simple_c_setup_arguments(type);
+#endif
   }
   if (GenerateDebugAssembly) { 
     ldr(tmp0, imm_index(fp, JavaFrame::locals_pointer_offset()));
@@ -1304,7 +1315,7 @@ void bc_return::generate(BasicType type) {
 
 void bc_tableswitch::generate() {
   // branch table can have negative offsets
-  check_timer_tick(tos_interpreter_basic);
+  check_timer_tick();
   pop_arguments(1);
 
   comment("Have tos_tag point to lower limit");
@@ -1339,7 +1350,7 @@ void bc_tableswitch::generate() {
 
 void bc_lookupswitch::generate() {
   // branch table can have negative offsets
-  check_timer_tick(tos_interpreter_basic);
+  check_timer_tick();
   pop_arguments(1);
   // linear search - we may want to choose between linear search
   // and binary search depending on the table size, eventually.
@@ -2127,8 +2138,10 @@ bind(class_is_initialized);
   comment("set prototypical near in object; no need for write barrier");
   str(clazz, imm_index(result));
 
-  comment("initialize object fields to zero");
-  zero_region(result, size, tmp2, tmp3, BytesPerWord, true, true);
+  if (!ENABLE_ZERO_YOUNG_GENERATION) {
+    comment("initialize object fields to zero");
+    zero_region(result, size, tmp2, tmp3, BytesPerWord, true, true);
+  }
 
   set_tag(obj_tag);
   dispatch(tos_in_regs);
@@ -2283,8 +2296,10 @@ void bc_newarray::generate() {
 
   prefetch(2);
 
-  comment("initialize array elements to zero");
-  zero_region(result, size, tmp2, tmp3, Array::base_offset(), true, false);
+  if (!ENABLE_ZERO_YOUNG_GENERATION) {
+    comment("initialize array elements to zero");
+    zero_region(result, size, tmp2, tmp3, Array::base_offset(), true, false);
+  }
 
   comment("set prototypical near in array; no need for write barrier");
   str(clazz, imm_index(tos_val, Oop::klass_offset()));
@@ -2375,8 +2390,10 @@ bind(done);
   comment("get prototypical near from array class");
   ldr(clazz, imm_index(clazz, FarClass::prototypical_near_offset()));
 
-  comment("initialize array elements to zero");
-  zero_region(result, length, tmp2, tmp3, Array::base_offset(), false, false);
+  if (!ENABLE_ZERO_YOUNG_GENERATION) {
+    comment("initialize array elements to zero");
+    zero_region(result, length, tmp2, tmp3, Array::base_offset(), false, false);
+  }
 
   comment("set prototypical near in array; no need for write barrier");
   str(clazz, imm_index(result, Oop::klass_offset()));

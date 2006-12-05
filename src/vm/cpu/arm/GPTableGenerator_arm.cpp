@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,6 +28,19 @@
 
 #if ENABLE_INTERPRETER_GENERATOR
 #include "incls/_GPTableGenerator_arm.cpp.incl"
+
+void GPTableGenerator::generate_protected_page() {
+  if (!GenerateGPTableOnly && ENABLE_PAGE_PROTECTION) {
+    GUARANTEE(!ENABLE_THUMB_GP_TABLE, "Not supported");
+    align(PROTECTED_PAGE_SIZE);
+    bind("_protected_page");
+    // Fill the page with pointers to gp_base_label to allow ldr gp, [gp, -##]
+    Label gp_base_label("gp_base_label");
+    for (int i = 0; i < PROTECTED_PAGE_SIZE; i += BytesPerWord) {
+      define_long(gp_base_label);
+    }
+  }
+}
 
 void GPTableGenerator::generate_bytecode_dispatch_table() {
   if (!GenerateGPTableOnly && ENABLE_DISPATCH_TABLE_ALIGNMENT) {
@@ -170,7 +184,12 @@ void GPTableGenerator::generate_constants_table() {
       char buff[120];
       jvm_sprintf(buff, "_%s", tmpl->name);
       bind(buff);
-      define_zeros(tmpl->size);
+      if (jvm_strcmp(tmpl->name, "bit_selector") == 0) {
+        // IMPL_NOTE: create a common framework to define initial values
+        define_long(0x80808080);
+      } else {
+        define_zeros(tmpl->size);
+      }
     }
   }
 
@@ -322,7 +341,7 @@ void GPTableGenerator::align(int alignment) {
   } else {
     if (alignment > 0) { 
       if (GenerateGNUCode) { 
-          stream()->print_cr("\t.align\t%d", jvm_log2(alignment));
+          stream()->print_cr("\t.align\t%d", alignment);
       } else { 
           stream()->print_cr("\tALIGN\t%d", alignment);
       }
@@ -359,6 +378,7 @@ void GPTableGenerator::define_zeros(int size) {
 
 void GPTableGenerator::generate() {
   Segment seg(this, data_segment, "Global pool");
+  generate_protected_page();
   generate_bytecode_dispatch_table();
   generate_constants_table();
   set_use_offset_comments(false);

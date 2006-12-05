@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -33,7 +34,7 @@ int SourceAssembler::Label::_next_id = 0;
 SourceAssembler::SourceAssembler(Stream* output) {
   // Setup the output stream.
   _output = output;
-
+  _inside_entry = false;
   _current_segment = CODE_SEGMENT;
 }
 
@@ -196,14 +197,18 @@ void SourceAssembler::define_call_info() {
 
 void SourceAssembler::align(int alignment) {
   if (alignment > 0) {
-    if (!GenerateGNUCode)
-      if (!GenerateInlineAsm)
-        emit("\tALIGN %d\n", alignment);
-      else
-        emit("\t__asm ALIGN %d\n", alignment); // IMPL_NOTE: make sure we are inside function
-    else
+    if (GenerateGNUCode) {
       emit("\t.align %d\n", alignment);
-  } 
+    } else if (!GenerateInlineAsm) {
+      emit("\tALIGN %d\n", alignment);
+    } else {
+      if (_inside_entry) {
+        emit("\t__asm ALIGN %d\n", alignment);
+      } else {
+        emit("__DECLSPEC_ALIGN(%d) ", alignment);
+      }
+    }
+  }
 }
 
 void SourceAssembler::bind(const Label& label, int alignment) {
@@ -214,6 +219,7 @@ void SourceAssembler::bind(const Label& label, int alignment) {
 }
 
 void SourceAssembler::entry(const char* name, int alignment) {
+  _inside_entry = true;
   emit("\n");
   if (!GenerateInlineAsm) {
     align(alignment);
@@ -241,6 +247,7 @@ void SourceAssembler::alt_entry(const char* name, int alignment) {
 }
 
 void SourceAssembler::entry_end() {
+  _inside_entry = false;
   if (GenerateInlineAsm)
     emit("\n}\n");
 }
@@ -687,7 +694,8 @@ if (!GenerateGNUCode) {
             emit("\t{\n");
           emited = true;
           if (!GenerateInlineAsm)
-            emit("\tEXTERNDEF %s%s:DWORD\n", extern_c_prefix(), reference);
+            emit("\tEXTERNDEF %s%s:%s\n", extern_c_prefix(), reference,
+                 (adr->displacement().is_proc()) ? "PROC" : "DWORD");
           else {
             // IMPL_NOTE: we need to special case this, b/c compiler will be
             // unhappy after it has seen the definition of this array.
@@ -906,7 +914,7 @@ void SourceAssembler::emit_comment(const char* format, ...) {
 char* SourceAssembler::reverse_format(const char* format) {
 
   static char buf[32];
-  char savepart[8];
+  char savepart[8] = {0};
   char* saveptr;
   int i = 0;
 #if NOT_CURRENTLY_USED

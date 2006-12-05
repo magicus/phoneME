@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -79,6 +80,10 @@ void shared_fast_getshort_static_accessor()        {}
 void shared_fast_getchar_static_accessor()         {}
 void shared_fast_getint_static_accessor()          {}
 void shared_fast_getlong_static_accessor()         {}
+void shared_fast_getfloat_accessor()               {}
+void shared_fast_getdouble_accessor()              {}
+void shared_fast_getfloat_static_accessor()        {}
+void shared_fast_getdouble_static_accessor()       {}
 void fixed_interpreter_method_entry()              {}
 void fixed_interpreter_fast_method_entry_0()       {}
 void fixed_interpreter_fast_method_entry_1()       {}
@@ -87,6 +92,7 @@ void fixed_interpreter_fast_method_entry_3()       {}
 void fixed_interpreter_fast_method_entry_4()       {}
 void invoke_pending_entries(Thread* THREAD)        {}
 void start_lightweight_thread_asm()                {}
+void interpreter_timer_tick()                      {}
 void interpreter_grow_stack()                      {}
 void interpreter_method_entry()                    {}
 void interpreter_fast_method_entry_0()             {}
@@ -102,9 +108,13 @@ void interpreter_deoptimization_entry()            {}
 void invoke3_deoptimization_entry_0()              {}
 void invoke3_deoptimization_entry_1()              {}
 void invoke3_deoptimization_entry_2()              {}
+void invoke3_deoptimization_entry_3()              {}
+void invoke3_deoptimization_entry_4()              {}
 void invoke5_deoptimization_entry_0()              {}
 void invoke5_deoptimization_entry_1()              {}
 void invoke5_deoptimization_entry_2()              {}
+void invoke5_deoptimization_entry_3()              {}
+void invoke5_deoptimization_entry_4()              {}
 void indirect_execution_sensor_update()            {}
 void compiler_rethrow_exception()                  {}
 void compiler_new_object()                         {}
@@ -115,6 +125,14 @@ void compiler_remove_patch()                       {}
 void compiler_timer_tick()                         {}
 void shared_monitor_enter()                        {}
 void shared_monitor_exit()                         {}
+#if USE_COMPILER_GLUE_CODE
+void compiler_glue_code_start()                    {}
+void compiler_glue_code_end()                      {}
+#endif
+#if ENABLE_COMPRESSED_VSF
+void compiler_callvm_stubs_start()                 {}
+void compiler_callvm_stubs_end()                   {}
+#endif
 
 void compiler_invoke_static()                      {}
 void compiler_unlinked_static_method()             {}
@@ -149,6 +167,11 @@ void native_string_endsWith_entry()                {}
 void native_string_substringI_entry()              {}
 void native_string_substringII_entry()             {}
 void native_system_arraycopy_entry()               {}
+void native_jvm_unchecked_byte_arraycopy_entry()   {}
+void native_jvm_unchecked_char_arraycopy_entry()   {}
+void native_jvm_unchecked_int_arraycopy_entry()    {}
+void native_jvm_unchecked_long_arraycopy_entry()   {}
+void native_jvm_unchecked_obj_arraycopy_entry()    {}
 
 void native_vector_elementAt_entry()               {}
 void native_vector_addElement_entry()              {}
@@ -176,10 +199,10 @@ void entry_return_double() {}
 void entry_return_object() {}
 #endif
 
-int current_stack_limit                         = 0;
 jint assembler_loop_type;
+jint _bytecode_counter = 0;
 
-jint _bytecode_counter                          = 0;
+unsigned char _protected_page[1];
 
 #if ENABLE_CPU_VARIANT
 void initialize_cpu_variant() {}
@@ -192,6 +215,7 @@ jint compiler_patched_code[1];
 jint compiler_unpatched_code[1];
 
 address   _current_stack_limit;
+address   _compiler_stack_limit;
 int       _rt_timer_ticks;
 address   _primordial_sp;
 
@@ -220,8 +244,8 @@ int gp_constants_end[1];
 int _gp_bytecode_counter;
 int _gp_misc[1];
 
-int	 _jvm_in_quick_native_method;
-char*	 _jvm_quick_native_exception;
+int  _jvm_in_quick_native_method;
+char*  _jvm_quick_native_exception;
 
 #endif
 
@@ -311,6 +335,13 @@ void* jvm_memcpy(void *dest, const void *src, int n) {
 int jvm_memcmp(const void *s1, const void *s2, int n) {
   return (int)memcmp(s1, s2, n);
 }
+#endif
+
+#if ENABLE_ARM_VFP
+void vfp_redo() {}
+void vfp_fcmp_redo() {}
+void vfp_double_redo() {}
+void vfp_dcmp_redo() {}
 #endif
 
 } // extern "C"

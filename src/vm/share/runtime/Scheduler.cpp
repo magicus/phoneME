@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -64,7 +65,7 @@ jlong      Scheduler::_slave_mode_yield_start_time;
 //
 // Note that tasks of one priority *share* the percentage for that priority
 
-const int
+const unsigned int
 Scheduler::sched_priority[TASK_PRIORITY_SCALE_MAX][Task::PRIORITY_MAX+1] =
   {{0, 33, 33, 33},
    {0, 17, 33, 50},
@@ -73,18 +74,18 @@ Scheduler::sched_priority[TASK_PRIORITY_SCALE_MAX][Task::PRIORITY_MAX+1] =
    {0, 4, 26, 71},
    {0, 3, 21, 76}};
 
-//  need a platform independent tick rate
-int        Scheduler::_task_token_count = /*1000 / TickInterval / SchedulerDivisor*/ 50;
 unsigned int Scheduler::_task_execute_counts[Task::PRIORITY_MAX+1];
 #endif
 
-ReturnOop Scheduler::find_condition(Oop* obj) {
-  for (Condition::Raw current = Universe::scheduler_waiting();
-       current.not_null(); current = current().next()) {
-    Oop::Raw wait_object = current().wait_object();
+inline ReturnOop Scheduler::find_waiting_thread(Oop* obj) {
+  Thread::Raw current, start;
+  current = start = Universe::scheduler_waiting();
+  while (!current.is_null()) {
+    JavaOop::Raw wait_object = current().wait_obj();
     if (wait_object.equals(obj)) {
       return current;
     }
+    current = current().next_waiting();
   }
   return (ReturnOop)NULL;
 }
@@ -92,8 +93,8 @@ ReturnOop Scheduler::find_condition(Oop* obj) {
 bool Scheduler::has_waiters(Oop *obj) {
   // This function is used by SemaphoreLock to check if any thread is
   // on a semaphore.
-  Condition::Raw condition = find_condition(obj);
-  if (!condition.is_null() && condition().has_waiters()) {
+  Thread::Raw thread = find_waiting_thread(obj);
+  if (!thread.is_null()) {
     return true;
   } else {
     return false;
@@ -254,7 +255,7 @@ void Scheduler::remove_from_list(Thread* thread, Thread* list) {
   thread->clear_previous();
 }
 
-/**  Give a thread add/remove it from the appropriate priority queue.
+/**  Given a thread add/remove it from the appropriate priority queue.
  */
 void Scheduler::adjust_priority_list(Thread *thread, bool is_add) {
   jint priority = thread->priority();
@@ -422,36 +423,150 @@ void Scheduler::sleep_forever() {
   }
 }
 
-void Scheduler::add_condition(Condition* condition) {
-  GUARANTEE(Universe::scheduler_waiting()->not_null(), "Sanity check");
-  Condition::Raw next = Universe::scheduler_waiting()->next();
-  GUARANTEE(!next.equals(condition), "Condition already in queue");
-  condition->set_next(&next);
-  Universe::scheduler_waiting()->set_next(condition);
+/*
+ * Universe::scheduler_waiting() is a thread object that serves as
+ * the head of a linked list of threads waiting.  Threads pointed at
+ * by the _next pointer in this head thread are sleeping.  If a thread
+ * is waiting and it is the first waiter for some object then we add it
+ * to the _next_waiting list.  Another thread waiting for same object is
+ * linked to first one via _next pointer.  Both lists single linked,
+ * terminated by null.
+ *
+ *  sleep queue                    waiting for Object A    waiting for Obj B
+ *
+ * sched_waiting._nxt_waiting -> thrdA._nxt_waiting -> thrdB._nxt_waiting(NULL)
+ *   _next                            \_next
+ *     |                                 |
+ *     |                         threadE (waiting for Obj A)
+ *     |                           
+ *  threadC 
+ *     |
+ *  threadD
+ *
+*/
+
+ReturnOop Scheduler::add_waiting_thread(Thread *thread, JavaOop *obj) {
+
+  remove_from_active(thread);
+  Thread::Raw pending_waiters =  find_waiting_thread(obj);
+  thread->clear_previous();
+
+  if (pending_waiters.is_null()) {
+    // link this thread into scheduler_waiting->_next_waiting queue
+    Thread* wait_queue = Universe::scheduler_waiting();
+    GUARANTEE(!wait_queue->is_null(), "scheduler_waiting is null");
+    Thread::Raw tail = wait_queue->global_next();
+    tail().set_next_waiting(thread);
+    wait_queue->set_global_next(thread);
+    pending_waiters = thread->obj();
+    thread->clear_next();
+  } else {
+    GUARANTEE(obj->equals(pending_waiters().wait_obj()),
+              "Wait objects not equal");
+    //    thread->set_next(&pending_waiters);
+    Thread::Raw tail = pending_waiters;
+    while (tail().next() != NULL) {
+      tail = tail().next();
+    }
+    tail().set_next(thread);
+    thread->clear_next();
+  }
+  thread->clear_next_waiting();
+  thread->set_wait_obj(obj);
+  return pending_waiters;
 }
 
-void Scheduler::remove_condition(Condition* condition) {
-  Condition::Raw current = Universe::scheduler_waiting();
-  Condition::Raw next = current().next();
-  while (next.not_null() && !condition->equals(&next)) {
-    current = next;
-    next = next().next();
+ReturnOop Scheduler::add_sync_thread(Thread* thread, Thread *pending_waiters,
+                                   JavaOop *obj) {
+  remove_from_active(thread);
+  if (pending_waiters->is_null()) {
+    pending_waiters = thread;
+    thread->clear_next();
+  } else {
+    Thread::Raw tail = pending_waiters;
+    while (tail().next_waiting() != NULL) {
+      tail = tail().next_waiting();
+    }
+    tail().set_next_waiting(thread);
   }
-  if (condition->equals(&next)) {
-    // Condition found
-    next = condition->next();
-    current().set_next(&next);
-    condition->clear_next();
-    Universe::free_condition(condition); // cache for future use
-  }
+  thread->clear_next_waiting();
+  thread->set_wait_obj(obj);
+  return pending_waiters->obj();
 }
+
+void Scheduler::remove_waiting_thread(Thread* thread) {
+
+  Thread::Raw list;
+  JavaOop obj = thread->wait_obj();
+  if (obj.is_null()) {
+    // sleeping thread
+    list = Universe::scheduler_waiting();
+  } else {
+    list = find_waiting_thread(&obj);
+    GUARANTEE(!list.is_null(), "Waiting thread not in any list");
+  }
+  if (list.equals(thread)) {
+    // Removing the head of the list
+    Thread::Raw current, tail;
+    current = Universe::scheduler_waiting();
+    tail = current().global_next();
+    Thread::Raw next = current().next_waiting();
+    while(next.not_null() && !list.equals(&next)) {
+      current = next;
+      next = next().next_waiting();
+    }
+    GUARANTEE(list.equals(&next), "Waiting thread not in list");
+    if (thread->next() == NULL) {
+      // last thread waiting for this object
+      next = thread->next_waiting();
+      current().set_next_waiting(&next);
+      if (tail.equals(thread)) {
+        // removing last waiting queue head, current is now the tail
+        Universe::scheduler_waiting()->set_global_next(&current);
+      }
+    } else {
+      // More threads waiting for this object
+      Thread::Raw next_waiting = next().next_waiting();
+      next = thread->next();
+      current().set_next_waiting(&next);
+      next().set_next_waiting(&next_waiting);
+      if (tail.equals(thread)) {
+        // 'next' is now the tail
+        Universe::scheduler_waiting()->set_global_next(&next);
+      }
+    }
+  } else {
+    // Removing thread from middle of list of threads waiting for object
+    Thread::Raw current = list;
+    Thread::Raw next = current().next();
+    while(next.not_null() && !thread->equals(&next)) {
+      current = next;
+      next = next().next();
+    }
+    GUARANTEE(thread->equals(&next), "Waiting thread not in list");
+    next = thread->next();
+    current().set_next(&next);
+  }
+  thread->clear_next_waiting();
+  thread->clear_next();
+}
+
 
 void Scheduler::add_to_sleeping(Thread* thread) {
   if (_debugger_active) {
     thread->set_status((thread->status() &
                         ~THREAD_NOT_ACTIVE_MASK) | THREAD_SLEEPING);
   }
-  Universe::scheduler_waiting()->add_waiter(thread);
+  // First list is the sleep queue.
+  Thread::Raw current = Universe::scheduler_waiting();
+  Thread::Raw next = current().next();
+  while(next.not_null()) {
+    current = next;
+    next = next().next();
+  }
+  current().set_next(thread);
+  thread->clear_next();
+  thread->clear_wait_obj();
 }
 
 #if ENABLE_ISOLATES
@@ -488,13 +603,13 @@ void Scheduler::wake_up_terminated_sleepers(int task_id JVM_TRAPS) {
   Oop::Fast termination_signal = Task::get_termination_object();
 
   GUARANTEE(Universe::scheduler_waiting() != NULL, "Sleep queue at front");
-  Condition::Fast this_condition = Universe::scheduler_waiting();
-  Condition::Fast next_condition;
+  Thread::Fast this_waiting, next_waiting;
   Thread::Fast this_thread, next_thread;
-  for (; this_condition.not_null() ;this_condition = next_condition) {
-    next_condition = this_condition().next();
-    this_thread = this_condition().waiters_head();
-    for(; this_thread.not_null() ; this_thread = next_thread) {
+  this_waiting = Universe::scheduler_waiting();
+  while (!this_waiting.is_null()) {
+    next_waiting = this_waiting().next_waiting();
+    this_thread = this_waiting;
+    while (!this_thread.is_null()) {
       next_thread = this_thread().next();
       if (this_thread().task_id() == task_id) {
         if (TraceThreadsExcessive) {
@@ -507,16 +622,14 @@ void Scheduler::wake_up_terminated_sleepers(int task_id JVM_TRAPS) {
         } else {
           this_thread().set_noncurrent_pending_exception(&termination_signal);
         }
-        this_condition().remove_waiter(&this_thread);
-        notify_wakeup(&this_thread, &this_condition JVM_CHECK);
+        remove_waiting_thread(&this_thread);
+        notify_wakeup(&this_thread JVM_CHECK);
       }
+      this_thread = next_thread;
     }
-    if (this_condition().wait_object() != NULL && !this_condition().has_waiters()) {
-      // We are not the "sleep" condition variable, and this condition
-      // variable is not needed any more
-      remove_condition(&this_condition);
-    }
+    this_waiting = next_waiting;
   }
+
   if (_async_count > 0) {
     wake_up_async_threads(task_id);
   }
@@ -539,13 +652,13 @@ void Scheduler::wake_up_timed_out_sleepers(JVM_SINGLE_ARG_TRAPS) {
   jlong time = Os::java_time_millis();
   GUARANTEE(Universe::scheduler_waiting() != NULL, "Sleep queue at front");
   UsingFastOops fast_oops;
-  Condition::Fast this_condition = Universe::scheduler_waiting();
-  Condition::Fast next_condition;
+  Thread::Fast this_waiting, next_waiting;
   Thread::Fast this_thread, next_thread;
-  for (; this_condition.not_null() ;this_condition = next_condition) {
-    next_condition = this_condition().next();
-    this_thread = this_condition().waiters_head();
-    for(; this_thread.not_null() ; this_thread = next_thread) {
+  this_waiting = Universe::scheduler_waiting();
+  while (!this_waiting.is_null()) {
+    next_waiting = this_waiting().next_waiting();
+    this_thread = this_waiting;
+    while (!this_thread.is_null()) {
       next_thread = this_thread().next();
       if ((this_thread().wakeup_time()) != 0 && 
           (time >= this_thread().wakeup_time())) {
@@ -554,16 +667,12 @@ void Scheduler::wake_up_timed_out_sleepers(JVM_SINGLE_ARG_TRAPS) {
                         " (id=%d)", (int)this_thread().obj(),
                         this_thread().id()));
         }
-        this_condition().remove_waiter(&this_thread);
-        notify_wakeup(&this_thread, &this_condition JVM_CHECK);
+        remove_waiting_thread(&this_thread);
+        notify_wakeup(&this_thread JVM_CHECK);
       }
+      this_thread = next_thread;
     }
-    if (this_condition().wait_object() != NULL && 
-        !this_condition().has_waiters()) {
-      // We are not the "sleep" condition variable, and this condition
-      // variable is not needed any more
-      remove_condition(&this_condition);
-    }
+    this_waiting = next_waiting;
   }
 }
 
@@ -751,15 +860,13 @@ void Scheduler::terminate_all() {
   GUARANTEE(!thread->is_null(), "Thread disappeared");
 }
 
-void Scheduler::wait_for(Thread* thread, Condition* condition, jlong timeout) {
+void Scheduler::wait_for(Thread* thread, jlong timeout) {
   // This can be called for either a synchronization variable or for a
   // wait variable.  This may or may not be the current thread.
   if (TraceThreadsExcessive) {
     TTY_TRACE_CR(("wait_for: Thread 0x%x (id=%d)", (int)thread->obj(),
                   thread->id()));
   }
-
-  remove_from_active(thread);
 
   jlong wakeup = timeout;
   if (wakeup > 0) {
@@ -770,114 +877,10 @@ void Scheduler::wait_for(Thread* thread, Condition* condition, jlong timeout) {
     }
   }
   thread->set_wakeup_time(wakeup);
-  condition->add_waiter(thread);
 
   if (Thread::current()->equals(thread)) {
     yield();
   }
-}
-
-void Scheduler::threads_do_list(do_thread_proc do_thread,
-                                void do_oop(OopDesc**),
-                                OopDesc* list_head) {
-  AllocationDisabler no_allocation;
-
-  // Do the threads, if there are any,
-  for (Thread::Raw thread = list_head; thread.not_null();
-                     thread = thread().global_next()) {
-    // If an Isolate build we have to go through all the threads in the system
-    // we need to switch the class list for every thread because
-    // every thread can have a different task_id than the 
-    // current running thread.  Otherwise we will be using
-    // the wrong class list for the thread.o
-    {
-      TaskGCContext tmp(thread().task_id());
-      do_thread(&thread, do_oop);
-    }
-  }
-}
-
-void Scheduler::oops_doer(Thread* thread, void do_oop(OopDesc**)) {
-  thread->nonstack_oops_do(do_oop);
-}
-
-void Scheduler::oops_do(void do_oop(OopDesc**)) {
-    // GUARANTEE(ObjectHeap::is_gc_active(), "This may be called used by GC only");
-  do_oop((OopDesc**)&_current_thread);
-  do_oop((OopDesc**)&_current_pending_exception);
-  do_oop((OopDesc**)&_next_runnable_thread);
-#if ENABLE_ISOLATES
-  do_oop((OopDesc**)&_current_task);
-#endif
-  threads_do_list(oops_doer, do_oop, _gc_global_head);
-  // Oop handles chained on stack
-  ForAllHandles( handle ) {
-    do_oop(&(handle->_obj));
-  }
-
-  // KNI handles
-  _KNI_HandleInfo *info = last_kni_handle_info;
-  while (info != NULL) {
-    GUARANTEE(info->declared_count <= info->total_count,
-              "KNI handles overflow");
-    for (int i=0; i<info->declared_count; i++) {
-      do_oop((OopDesc**)&info->handles[i]);
-    }
-    info = info->prev;
-  }
-}
-
-void Scheduler::gc_prologue(void do_oop(OopDesc**)) {
-  AllocationDisabler no_allocation;
-  // We need to save these raw pointers during
-  // ObjectHeap::update_object_pointers(). At that point
-  // _next_runnable_thread, etc, may have been changed to
-  // point to the new location of these lists. However, the
-  // list themselves have not been moved yet.
-  _gc_current_thread = Thread::current()->obj();
-  Frame::set_gc_state();
-
-  _gc_global_head = Universe::global_threadlist()->obj();
-  Thread::Raw thread = _gc_global_head;
-  for( ; thread.not_null(); thread = thread().global_next()) {
-
-    // If an Isolate build we have to go through all the threads in the system
-    // we need to switch the class list for every thread because
-    // every thread can have a different task_id than the 
-    // current running thread.  Otherwise we will be using
-    // the wrong class list for the thread
-    {
-      TaskGCContext tmp(thread().task_id());
-      thread().gc_prologue(do_oop);
-    }
-  }
-
-#ifdef AZZERT
-  ForAllHandles( handle ){
-    // Make sure that there are no JavaNears that are actually stack locks.
-    // This really confuses the GC, and should never happen.
-    GUARANTEE(handle->is_null() || !ObjectHeap::contains(handle->obj())
-               || !handle->is_java_near() || !((JavaNear*)handle)->is_locked(),
-               "JavaNear in stack not allowed during GC");
-  }
-#endif
-}
-
-void Scheduler::gc_epilogue( void ) {
-#ifndef PRODUCT
-  _gc_global_head  = NULL;
-#endif
-  _gc_current_thread = NULL;
-  // At this point, _next_runnable_thread is valid again  
-  for( Thread::Raw thread = Universe::global_threadlist()->obj();
-       thread.not_null(); thread = thread().global_next()) {
-    thread().gc_epilogue();
-  }
-  Frame::set_normal_state();
-#if ENABLE_ISOLATES
-  // CLEANUP
-  Scheduler::check_active_queues();
-#endif
 }
 
 void Scheduler::wait(JavaOop* obj, jlong millis JVM_TRAPS) {
@@ -885,6 +888,8 @@ void Scheduler::wait(JavaOop* obj, jlong millis JVM_TRAPS) {
   // Synchronizing on an interned string object is handled by
   // allocating a 'proxy' object that is actually stored in the
   // stack lock
+  UsingFastOops fast_oops;
+
   Thread *thread = Thread::current();
   NOT_PRODUCT(trace("enter wait", thread, (Thread *)obj));
   if (obj->klass() == _interned_string_near_addr) {
@@ -906,16 +911,6 @@ void Scheduler::wait(JavaOop* obj, jlong millis JVM_TRAPS) {
   }
 #endif
 
-  // Find, or create the condition variable
-  UsingFastOops fast_oops;
-  Condition::Fast con = find_condition(obj);
-  // Create condition variable if none found
-  if (con.is_null()) {
-    con = Condition::allocate(JVM_SINGLE_ARG_CHECK);
-    con().set_wait_object(obj);
-    add_condition(&con);
-  }
-
   {
     // locked java_near's and stack allocations are not a good thing to have
     // around during a GC.
@@ -929,7 +924,9 @@ void Scheduler::wait(JavaOop* obj, jlong millis JVM_TRAPS) {
     thread->set_status((thread->status() & ~THREAD_NOT_ACTIVE_MASK) |THREAD_CONVAR_WAIT);
     }
 
-  wait_for(thread, &con, millis);
+  Thread::Fast pending_waiters = add_waiting_thread(thread, obj);
+
+  wait_for(thread, millis);
 }
 
 void Scheduler::notify(JavaOop* object, bool all, bool must_be_owner
@@ -961,28 +958,29 @@ void Scheduler::notify(JavaOop* object, bool all, bool must_be_owner
   }
 
   UsingFastOops fast_oops;
-  Condition::Fast condition = find_condition(object);
-  Thread::Fast waker;
-  if (!condition.is_null()) {
+  Thread::Fast waiting_thread = find_waiting_thread(object);
+  Thread::Fast waker, next_waker;
+  if (!waiting_thread.is_null()) {
     if (TraceThreadsExcessive) {
       TTY_TRACE_CR(("notify: signaling object 0x%x", object->obj()));
     }
-    for (int i = 0; (all || i < 1) && condition().has_waiters(); i++) {
-      waker = condition().remove_first_waiter();
-      notify_wakeup(&waker, &condition JVM_CHECK);
-    }
-    if (!condition().has_waiters()) {
-      remove_condition(&condition);
-    }
+    waker = waiting_thread;
+    do {
+      next_waker = waker().next();
+      remove_waiting_thread(&waker);
+      notify_wakeup(&waker JVM_CHECK);
+      waker = next_waker;
+    } while (all && !waker.is_null());
   }
   if (must_be_owner) {
     GUARANTEE(is_in_some_active_queue(thread), "Sanity");
-  }
+  } 
 }
 
 // An internal function called when a waiting thread is notified or times out.
 // It still has to regain the synchronization like
-void Scheduler::notify_wakeup(Thread* thread, Condition* condition JVM_TRAPS) {
+void Scheduler::notify_wakeup(Thread* thread JVM_TRAPS) {
+  JavaOop::Raw obj;
 #if ENABLE_ISOLATES
   bool is_active = true;
 #endif
@@ -994,10 +992,7 @@ void Scheduler::notify_wakeup(Thread* thread, Condition* condition JVM_TRAPS) {
 
   add_to_active(thread);
 
-  // Find the object we had been waiting on.
-  UsingFastOops fast_oops;
-  JavaOop::Raw obj = condition->wait_object();
-
+  obj = thread->wait_obj();
   if (obj.not_null()) {
     // If obj was null, then we were sleeping rather than waking
     GUARANTEE(thread->wait_stack_lock() != NULL, "Sanity");
@@ -1006,6 +1001,7 @@ void Scheduler::notify_wakeup(Thread* thread, Condition* condition JVM_TRAPS) {
     StackLock* stack_lock = thread->wait_stack_lock();
     stack_lock->set_owner(&obj);
     thread->clear_wait_stack_lock();
+    thread->clear_wait_obj();
 #if ENABLE_ISOLATES
     is_active = Synchronizer::enter(thread, stack_lock JVM_CHECK);
 #else
@@ -1048,7 +1044,7 @@ void Scheduler::yield() {
       slave_mode_wait_for_event_or_timer(0);
     }
   } else {
-    Condition::Raw c;
+    Thread::Raw wait_thrd;
     Thread::Raw t;
     if (TraceThreadsExcessive) {
       TTY_TRACE_CR(("yield: no runnable threads"));
@@ -1058,15 +1054,19 @@ void Scheduler::yield() {
       // of them wakes up.
       jlong min_wakeup_time = max_jlong;
       bool sleeper_found = false;
-      for (c = Universe::scheduler_waiting(); c.not_null();
-           c = c().next()) {
-        for (t = c().waiters_head(); t.not_null(); t = t().next()) {
+      wait_thrd = Universe::scheduler_waiting();
+      while (!wait_thrd.is_null()) {
+        t = wait_thrd.obj();
+        while (!t.is_null()) {
           if (t().wakeup_time() != 0) {
             min_wakeup_time = min(min_wakeup_time, t().wakeup_time());
             sleeper_found = true;
           }
+          t = t().next();
         }
+        wait_thrd = wait_thrd().next_waiting();
       }
+
       // Must check here before calling wait_for_event... since slave mode
       // will return 'true' and we'll never resume other threads
       if (JavaDebugger::is_debugger_option_on()) {
@@ -1262,16 +1262,12 @@ void Scheduler::interrupt_thread(Thread* thread JVM_TRAPS) {
   bool found = false;
   GUARANTEE(Universe::scheduler_waiting() != NULL, "Sleep queue at front");
 
-  Condition::Fast this_condition = Universe::scheduler_waiting();
-  Condition::Fast next_condition;
-  Thread::Fast this_thread, next_thread;
-  for (;
-       found == false && this_condition.not_null();
-       this_condition = next_condition) {
-    next_condition = this_condition().next();
-    this_thread = this_condition().waiters_head();
-    for(; this_thread.not_null() ; this_thread = next_thread) {
-      next_thread = this_thread().next();
+  Thread::Fast this_waiting;
+  Thread::Fast this_thread;
+  this_waiting = Universe::scheduler_waiting();
+  while (found == false && !this_waiting.is_null()) {
+    this_thread = this_waiting;
+    while (!this_thread.is_null()) {
       if (this_thread().equals(thread)) {
         NOT_PRODUCT(trace("interrupt_thread: thread found", &this_thread));
         if (TraceThreadsExcessive) {
@@ -1312,17 +1308,13 @@ void Scheduler::interrupt_thread(Thread* thread JVM_TRAPS) {
           }
         }
 
-        this_condition().remove_waiter(&this_thread);
-        notify_wakeup(&this_thread, &this_condition JVM_CHECK);
+        remove_waiting_thread(&this_thread);
+        notify_wakeup(&this_thread JVM_CHECK);
         break;
       }
+      this_thread = this_thread().next();
     }
-    if (this_condition().wait_object() != NULL &&
-        !this_condition().has_waiters()) {
-      // We are not the "sleep" condition variable, and this condition
-      // variable is not needed any more
-      remove_condition(&this_condition);
-    }
+    this_waiting = this_waiting().next_waiting();
   }
 
   if (!found) {
@@ -1615,7 +1607,7 @@ jlong Scheduler::time_slice(JVM_SINGLE_ARG_TRAPS) {
         return 100;
     }
 
-    // We'd come to here if there is a bug in the program's main loop:
+    // need revisit the program's main loop:
     //
     // In slave mode, if all thread were blocked (by
     // SNI_BlockThread(), or by Thread.sleep(), or by Object.wait())
@@ -1765,21 +1757,32 @@ void Scheduler::print() {
   tty->print_cr("Waiting threads:");
 
   jlong now = Os::java_time_millis();
-  for (Condition::Raw c = Universe::scheduler_waiting(); c.not_null();
-       c = c().next()) {
-    for (Thread::Raw t = c().waiters_head(); t.not_null(); t = t().next()) {
+  Thread::Raw wt, wt_start;
+  Thread::Raw thrd;
+  wt_start = wt = Universe::scheduler_waiting();
+  while (!wt.is_null()) {
+    thrd = wt.obj();
+    while (!thrd.is_null()) {
+      if (wt.equals(&wt_start)) {
+        // 'fake' scheduler_waiting thread, skip it
+        thrd = thrd().next();
+        continue;
+      }
       tty->print("  ");
-      t().print_value();
-      tty->print(" (waiting for 0x%x, timeout=", c.obj());
-      if (t().wakeup_time() == 0) {
-        tty->print("forever)", c.obj());
-      } else if ((t().wakeup_time() - now) < ((jlong)100000)) {
-        tty->print("%d)", (int)((t().wakeup_time()-now)));
+      thrd().print_value();
+      JavaOop::Raw obj = thrd().wait_obj();
+      tty->print(" (waiting for 0x%x, timeout=", obj.obj());
+      if (thrd().wakeup_time() == 0) {
+        tty->print("forever)");
+      } else if ((thrd().wakeup_time() - now) < ((jlong)100000)) {
+        tty->print("%d)", (int)((thrd().wakeup_time()-now)));
       } else {
-        tty->print("%I64d)", (t().wakeup_time()-now));
+        tty->print("%I64d)", (thrd().wakeup_time()-now));
       }
       tty->cr();
+      thrd = thrd().next();
     }
+    wt = wt().next_waiting();
   }
 
 #if ENABLE_ISOLATES
@@ -1808,6 +1811,110 @@ void Scheduler::print() {
 }
 
 #endif
+
+void Scheduler::threads_do_list(do_thread_proc do_thread,
+                                void do_oop(OopDesc**),
+                                OopDesc* list_head) {
+  AllocationDisabler no_allocation;
+
+  // Do the threads, if there are any,
+  for (Thread::Raw thread = list_head; thread.not_null();
+                     thread = thread().global_next()) {
+    // If an Isolate build we have to go through all the threads in the system
+    // we need to switch the class list for every thread because
+    // every thread can have a different task_id than the 
+    // current running thread.  Otherwise we will be using
+    // the wrong class list for the thread.o
+    {
+      TaskGCContext tmp(thread().task_id());
+      do_thread(&thread, do_oop);
+    }
+  }
+}
+
+void Scheduler::oops_doer(Thread* thread, void do_oop(OopDesc**)) {
+  thread->nonstack_oops_do(do_oop);
+}
+
+void Scheduler::oops_do(void do_oop(OopDesc**)) {
+    // GUARANTEE(ObjectHeap::is_gc_active(), "This may be called used by GC only");
+  do_oop((OopDesc**)&_current_thread);
+  do_oop((OopDesc**)&_current_pending_exception);
+  do_oop((OopDesc**)&_next_runnable_thread);
+#if ENABLE_ISOLATES
+  do_oop((OopDesc**)&_current_task);
+#endif
+  threads_do_list(oops_doer, do_oop, _gc_global_head);
+  // Oop handles chained on stack
+  ForAllHandles( handle ) {
+    do_oop(&(handle->_obj));
+  }
+
+  // KNI handles
+  _KNI_HandleInfo *info = last_kni_handle_info;
+  while (info != NULL) {
+    GUARANTEE(info->declared_count <= info->total_count,
+              "KNI handles overflow");
+    for (int i=0; i<info->declared_count; i++) {
+      do_oop((OopDesc**)&info->handles[i]);
+    }
+    info = info->prev;
+  }
+}
+
+void Scheduler::gc_prologue(void do_oop(OopDesc**)) {
+  AllocationDisabler no_allocation;
+  // We need to save these raw pointers during
+  // ObjectHeap::update_object_pointers(). At that point
+  // _next_runnable_thread, etc, may have been changed to
+  // point to the new location of these lists. However, the
+  // list themselves have not been moved yet.
+  _gc_current_thread = Thread::current()->obj();
+  Frame::set_gc_state();
+
+  _gc_global_head = Universe::global_threadlist()->obj();
+  Thread::Raw thread = _gc_global_head;
+  for( ; thread.not_null(); thread = thread().global_next()) {
+
+    // If an Isolate build we have to go through all the threads in the system
+    // we need to switch the class list for every thread because
+    // every thread can have a different task_id than the 
+    // current running thread.  Otherwise we will be using
+    // the wrong class list for the thread
+    {
+      TaskGCContext tmp(thread().task_id());
+      thread().gc_prologue(do_oop);
+    }
+  }
+
+#ifdef AZZERT
+  ForAllHandles( handle ){
+    // Make sure that there are no JavaNears that are actually stack locks.
+    // This really confuses the GC, and should never happen.
+    GUARANTEE(handle->is_null() || !ObjectHeap::contains(handle->obj())
+               || !handle->is_java_near() || !((JavaNear*)handle)->is_locked(),
+               "JavaNear in stack not allowed during GC");
+  }
+#endif
+}
+
+void Scheduler::gc_epilogue( void ) {
+#ifndef PRODUCT
+  _gc_global_head  = NULL;
+#endif
+  _gc_current_thread = NULL;
+  // At this point, _next_runnable_thread is valid again  
+  for( Thread::Raw thread = Universe::global_threadlist()->obj();
+       thread.not_null(); thread = thread().global_next()) {
+    thread().gc_epilogue();
+  }
+  Frame::set_normal_state();
+#if ENABLE_ISOLATES
+  // CLEANUP
+  Scheduler::check_active_queues();
+#endif
+}
+
 
 inline void Scheduler::switch_thread_slave_mode(Thread *next_thread,
                                                 Thread* thread JVM_TRAPS) {
@@ -1881,6 +1988,12 @@ inline void Scheduler::switch_thread_master_mode(Thread *next_thread,
  * value, set the current_thread and return.
  */
 
+#ifdef UNDER_CE
+extern "C" {
+    int _quit_now = 0;
+}
+#endif
+
 extern "C" void switch_thread(Thread* thread) {
   // IMPL_NOTE: threads should not be switched between
   // quick native call and call to System.quickNativeThrow(),
@@ -1904,6 +2017,14 @@ extern "C" void switch_thread(Thread* thread) {
     Scheduler::_yield_on_thread_switch = false;
     Scheduler::yield();
   }
+
+#ifdef UNDER_CE
+  {
+    if (_quit_now) {
+      JVM_Stop(0);
+    }
+  }
+#endif
 
   // We are switching away from a thread.  If the JUST_BORN bit is
   // set, clear it and send an event.  The stack pointers are now

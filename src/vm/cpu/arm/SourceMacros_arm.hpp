@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -113,15 +114,14 @@ class SourceMacros: public SourceAssembler {
 
   // untyped stack manipulation
   void push(Register reg, Condition cond = al,
-            StackTypeMode type = full, WritebackMode mode = writeback);
+            StackTypeMode type = full);
   void push(Address4 set, Condition cond = al, 
-            StackTypeMode type = full, WritebackMode mode = writeback);
+            StackTypeMode type = full);
   
   void pop (Register reg, Condition cond = al, 
-            StackTypeMode type = full, WritebackMode mode = writeback);
+            StackTypeMode type = full);
   void pop (Address4 set, Condition cond = al, 
-            StackTypeMode type = full, WritebackMode mode = writeback);
-
+            StackTypeMode type = full);
 
   // Entering and exiting a template
   void set_stack_state_to(State state, Condition cond = al);
@@ -149,6 +149,9 @@ class SourceMacros: public SourceAssembler {
   void simple_c_setup_arguments(BasicType arg1, BasicType arg2 = T_VOID,
                                 bool commutative = false);
   void simple_c_store_result(BasicType result);
+#if USE_FP_RESULT_IN_VFP_REGISTER
+  void pop_fp_result(BasicType type);
+#endif
 
   Address2 bytecode_impl(Register reg) { 
 #if !ENABLE_THUMB_GP_TABLE
@@ -184,9 +187,9 @@ class SourceMacros: public SourceAssembler {
   void wtk_profile_quick_call(int param_size = -1);
 
   // stack handling
-  void check_timer_tick(State state = tos_in_regs);
+  void check_timer_tick();
 
-  void fast_c_call(Label name, Register tmp = r4);
+  void fast_c_call(Label name, Register preserved = no_reg);
 
   // locking, unlocking support
   void unlock_activation ();
@@ -215,7 +218,9 @@ class SourceMacros: public SourceAssembler {
   void interpreter_call_shared_call_vm(BasicType return_value_type);
   void goto_shared_call_vm(BasicType return_value_type);
 
-  void return_from_invoker(int prefetch_size, int callee_return_type_size=-1);
+  void return_from_invoker(int prefetch_size, int result_type);
+  void generate_call(Register entry, Label& label, int result_type, 
+                     int prefetch_size,  char* deoptimization_entry_name);
   void invoke_method(Register method, Register entry, Register tmp,
                      int prefetch_size, char *deoptimization_entry_name);
   void swap_mask(Register msk);

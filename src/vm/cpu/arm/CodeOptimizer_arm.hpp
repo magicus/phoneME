@@ -1,5 +1,5 @@
 /*
- * @(#)CodeOptimizer_arm.hpp	1.16 06/03/27 18:46:32
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -33,20 +33,28 @@
 #define MAX_INSTRUCTIONS_IN_BLOCK       32
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
-#define UNDETERMINED_LITERAL_ID  -1
-#define NON_LITERAL_ID  -2
-#if ENABLE_NPCE
-#define ABORT_POINT_ID  -3
-#endif
+enum {
+  //the insr access literal, but the index of literal isn't 
+  //set yet, this value is to make sure the ins will only
+  //be processed by determine_literal_id() once.
+  undetermined_literal = -1,
+  //the instr does not access literal
+  not_access_literal = -2,
+  //the instr represented by current bitmap point
+  //can throw exception
+  abort_point = -3,
+};
 #endif
 
-#define STATUS_PINNED 0x1
-#define STATUS_ALIASED 0x2
-#define STATUS_WRITEBACK 0x4
-#define COND_CONDITIONAL 0x8
-#define COND_SETCONDITIONAL 0x10
-#define STATUS_EMITTED 0x20
-#define STATUS_SCHEDUABLE 0x40
+enum {
+ status_pinned = 0x1,
+ status_aliased = 0x2,
+ status_writeback = 0x4,
+ cond_conditional = 0x8,
+ cond_setconditional = 0x10,
+ status_emitted = 0x20,
+ status_scheduable = 0x40,
+};
 
 class OptimizerInstruction : public StackObj {
  friend class CodeOptimizer;
@@ -73,6 +81,7 @@ class OptimizerInstruction : public StackObj {
     _results = ((1 << reg) | _results);
   }
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
+  //latency table of each kind of instr
   static int latency_dty[]; 
 #endif  
   int issue_latency();
@@ -108,8 +117,10 @@ class OptimizerInstruction : public StackObj {
   int _status;
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
   union {
+    //the index of the literal used by current instr
     int _literal_id;
 #if ENABLE_NPCE
+    //can the instr throw exception
     int _abortable;
 #endif
   } _internals;
@@ -121,7 +132,6 @@ class OptimizerInstruction : public StackObj {
  };
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
-
 class Bitset : public GlobalObj {
 public:
   Bitset() {
@@ -212,13 +222,19 @@ class CodeOptimizer: public StackObj {
  public:
   bool optimize_code(JVM_SINGLE_ARG_TRAPS);
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
+
+  //reset the Code Optimizer status variable for the reuse 
+  //of a pre-allocated Code Optimizer object.
   void  reset(CompiledMethod* cm, int* start, int* end);
-  void  update_aoi_stub();
-#endif
-#if ENABLE_NPCE
-  void set_has_exception_table(bool has_exception_table) {
+
+  //update the entry label of unbind shared index check stub
+  void  update_shared_index_check_stub();
+
+  //check whether the method have exception table.
+  void set_has_exception_handler(bool has_exception_table) {
     _has_exception_handler = has_exception_table;
   }
+
 #endif
 
  protected:
@@ -244,7 +260,8 @@ class CodeOptimizer: public StackObj {
 
   bool depends_on_ins(OptimizerInstruction* ins_block_curr, 
                       OptimizerInstruction* ins_could_interlock);
-
+bool CodeOptimizer::depends_of_memory_on_ins(OptimizerInstruction* ins_first,
+                                   OptimizerInstruction* ins_next);
   bool build_dependency_graph(int block_size);
   void update_compiled_code();
 
@@ -267,20 +284,73 @@ class CodeOptimizer: public StackObj {
   void update_data_sites(OptimizerInstruction* ins,
                          int* ins_start, int* ins_end);
   void determine_osr_entry(int* ins_start, int* ins_end);
-
+  
   void fix_pc_immediate(OptimizerInstruction* ins_to_fix, int new_index);
 #if ENABLE_NPCE
+  //read the npe related ldr/str from 
+  //relocation stream.
   bool detect_exception_table(int offset);
 #endif
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
 #if ENABLE_NPCE
+  //mark the npe relation instuction
+  //since them may result branch
+  //and should maintain jsp for these instruction.
   void update_abort_points(int* ins_start, int* ins_end);
 #endif
+
+  //Get schedulable branch instruction
+  //      < -- | pointed to itself
+  //      b -- |
+  //     ^
+  //     | 
+  //     b <--- pointed by the unbinded stub label
+  //
+  //
+  void determine_schedulable_branch(int* ins_start, int* ins_end);
+
+  //mark out the data entry created from literal access,
+  //scheduler will skip them.
+  void determine_bound_literal(int* ins_start, int* ins_end);
+
+  // 1. record the new offset of npe_with_stub ins into the table.
+  // 2. if the array load inst is scheduled ahead of arry null point check,
+  //the scheduler will record the address of array load into null point 
+  //exception related instrs table.
   void fix_memory_load(OptimizerInstruction* ins_to_fix, int new_index);
+  
+  //if this is a instruction to access literal,
+  //we assign a literal id to the ldr instruction
+  //to  track the link.
   void determine_literal_id(OptimizerInstruction* ins);
+
+  //update the its targe offset after scheduling a branch instruction 
   void fix_branch_immediate(OptimizerInstruction* ins, int new_index);
-  void fix_pc_immediate_internal(OptimizerInstruction* ins_to_fix, int new_index);
-  bool fix_pc_immediate_internal_fast(OptimizerInstruction* ins_to_fix);
+
+  //like fix_pc_immediate, but simplified for an instr unscheduled.
+  //fix_pc_immediate_for_ins_outside_block and 
+  //fix_pc_immediate_for_ins_unscheduled will invoke it as
+  //the fix function for specific instr.
+  bool fix_pc_immediate_fast(OptimizerInstruction* ins_to_fix);
+
+  //either fix_pc_immediate_for_ins_outside_block or fix_pc_immediate_for_ins_unscheduled
+  //must be called for ins not processed by reorganize(), in order to maintain the validity of 
+  //score board.
+ 
+  //fix the immediate of instructions accessing litreal not included in a basic block
+  void fix_pc_immediate_for_ins_outside_block(
+	int* ins_curr, int* ins_block_end);
+
+  //fix the immediate of instructions accessing literal  in a basic block which can be optimized
+  void fix_pc_immediate_for_ins_unscheduled(int block_size);
+#else
+  void determine_schedulable_branch(int* ins_start, int* ins_end) {
+  }
+  void determine_bound_literal(int* ins_start, int* ins_end) {}
+  void determine_literal_id(OptimizerInstruction* ins) {}
+  void fix_pc_immediate_for_ins_outside_block(
+	int* ins_curr, int* ins_block_end){}
+  void fix_pc_immediate_for_ins_unscheduled(int block_size) {}
 #endif
 #ifndef PRODUCT
   void dumpCurrentBB();
@@ -306,171 +376,180 @@ class CodeOptimizer: public StackObj {
   Bitset   _pinned_entries;
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
-  Bitset _not_instructions; //data instruction
-  Bitset _scheduablebranchs_or_abortpoint;//extended basic block related instruction
-  int _iob_address_tracker;
-  int _iob_stub_position;
-  int _iob_handler_offset;
-#endif
-#if ENABLE_NPCE
+  enum {
+    no_branch_to_index_check_stub = -1,
+    not_bound = -1
+  };
+  //data emitted in the jitted
+  Bitset _data_entries; 
+  //extended basic block related instruction
+  //we only take branch to a shared index 
+  //check stub as scheduable.
+  //since the abort point are mem access instr.
+  //so it could shared the bitmap with schedulable branch.
+  Bitset _scheduable_branchs_and_abortpoint;
+  //emitted branch to index check stub
+  int _address_of_last_emitted_branch_to_index_check_stub;
+  //address of emitted index check stub
+  int _address_of_shared_emitted_index_check_stub;
+  //offset from gp base of global index check handler
+  int _gp_offset_of_index_check_handler;
   bool _has_exception_handler;
 #endif
+
 };
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
 class InternalCodeOptimizer: public StackObj {
  private:
-  CodeOptimizer _optimizer;
-  static InternalCodeOptimizer* _current;
+  CodeOptimizer _optimizer; //current code scheduler
+  static InternalCodeOptimizer* _current;//this
   int  _unbound_literal_count;
-  TypeArray _unbound_literal_tracking_table;
-  TypeArray _scheduled_unbound_literal_tracking_table;
+  //score board record the offset of latest ldr ins accessing each literal before scheduling.
+  TypeArray _score_board_of_unbound_literal_access_ins_before_scheduling;
+  //score board record the offset of latest ldr ins accessing each literal after scheduling
+  //current ins could calculate its offset_imm based on the value on the score board.
+  TypeArray _score_board_of_unbound_literal_access_ins_after_scheduling;
 
 #if ENABLE_NPCE
-  TypeArray _npe_table;
-   int _npe_related_ldrs_ptr;  
+  //table record the position before and after scheduling of a 
+  //LDR instruction pointed by a NullCheckStub.
+  //
+  //
+  TypeArray _npe_ins_with_stub_table;
+  int _npe_ins_with_stub_counter;//table index  
 #endif    
-
-  TypeArray _iob_table;
-   int _iob_related_ldrs_ptr;
-  
  public:
-  void init_iob_table(int size JVM_TRAPS) {
-    if (size == 0) {
-      return ;
-    }
-    OopDesc* oop_iob = 
-             Universe::new_int_array_in_compiler_area(size JVM_CHECK);
-    _iob_table.set_obj(oop_iob);
-    
-  }
-  
-  void record_iob_ldrs(int cur_addr) {
-    _iob_table.int_at_put(_iob_related_ldrs_ptr++, cur_addr);
-  }
-
-  void update_iob_ldrs(int index, int new_addr) {
-    //if new_addr == 0 stand for the ldr instruction is after the cmp,
-    //no need to record in relation items.
-    _iob_table.int_at_put(index, new_addr);
-  }
-
-  int get_index_of_iob_address(unsigned int cur_addr) {
-    for (int i =0 ; i < _iob_related_ldrs_ptr ; i ++ ) {
-      if (_iob_table.int_at(i)  == cur_addr) {
-        return i;
-      }
-    }
-    return -1;
-  }
   
 #if ENABLE_NPCE
-  void init_npe_table(int size  JVM_TRAPS) {
+  //allocate the table to hold the null point related LDR
+  //instrs. The allocated size is the counter of all the LDR 
+  //throwing null point exception. But the scheduler will
+  //only record the LDR associated with null check stub into 
+  //the table later.
+  void init_npe_ins_with_stub_table(int size  JVM_TRAPS) {
     if (size == 0 ) {
       return ;
     }
     OopDesc* oop_npe = 
              Universe::new_int_array_in_compiler_area(size JVM_CHECK);
-    _npe_table.set_obj(oop_npe);
+    _npe_ins_with_stub_table.set_obj(oop_npe);
   }
 
-  void record_npe_ldrs(unsigned int cur_addr,
-                               unsigned int scheduled_addr) {
-    cur_addr = (cur_addr << 16) | scheduled_addr ;
-    _npe_table.int_at_put(_npe_related_ldrs_ptr++, cur_addr);
+  enum {
+    cur_offset_width = 16, //offset before scheduling
+    cur_offset_mask = 0xFFFF0000,
+    scheduled_offset_width = 16,
+    scheduled_offset_mask = 0xFFFF,
+  };
+  
+  //record the LDR associated with null check stub into 
+  //the table later. The table is a int array. The high 16bits
+  //of each element is the instr offset before scheduling.
+  //the low 16bits is the offset after scheduling.
+  void record_npe_ins_with_stub(unsigned int cur_offset,
+                               unsigned int scheduled_offset) {
+    cur_offset = (cur_offset << scheduled_offset_width) |
+		          scheduled_offset ;
+    _npe_ins_with_stub_table.int_at_put(_npe_ins_with_stub_counter++, cur_offset);
   }
 
-  int get_npe_record_count() {
+  int record_count_of_npe_ins_with_stub() {
 #ifndef PRODUCT      
     if (OptimizeCompiledCodeVerboseInternal) {
       dump_npe_related_ldrs();
     }
 #endif
-    return _npe_related_ldrs_ptr;
+    return _npe_ins_with_stub_counter;
   }
 
-  int get_index_of_npe_scheduled_address(unsigned int cur_addr ) {
-    for ( int i =0 ; i < _npe_related_ldrs_ptr ; i ++ ) {
-      if ((_npe_table.int_at(i)>>16) == cur_addr ) {
+  //get the table index of the record whose scheduled offset equal 
+  //offset param
+  int index_of_scheduled_npe_ins_with_stub(unsigned int offset ) {
+    for ( int i =0 ; i < _npe_ins_with_stub_counter ; i ++ ) {
+      if ((_npe_ins_with_stub_table.int_at(i)>>scheduled_offset_width) == offset ) {
         return i;
       }
     }
     return -1;
   }
 
-  int get_npe_scheduled_address(int index) {
-    return _npe_table.int_at(index) & 0xFFFF;
+  //get the scheduled npe instr offset index by index param
+  int scheduled_offset_of_npe_ins_with_stub(int index) {
+    return _npe_ins_with_stub_table.int_at(index) & scheduled_offset_mask;
   }
-  
-  int get_npe_cur_address(int index) {
-    return  _npe_table.int_at(index) >> 16;
+
+  //get the offset of npe instrs before scheduling
+  int offset_of_npe_ins_with_stub(int index) {
+    return  _npe_ins_with_stub_table.int_at(index) >> scheduled_offset_width;
   } 
    
-  void set_npe_scheduled_address(int index , unsigned int addr) {
-    _npe_table.int_at_put(index, _npe_table.int_at(index) & 0xFFFF0000 | addr);
+  void set_scheduled_offset_of_npe_ins_with_stub(int index , unsigned int offset) {
+    _npe_ins_with_stub_table.int_at_put(index, _npe_ins_with_stub_table.int_at(index) & cur_offset_mask | offset);
   }
 
 #ifndef PRODUCT
   void dump_npe_related_ldrs() {
-  for (int i = 0 ; i < _npe_related_ldrs_ptr ; i++) {
-    if (OptimizeCompiledCodeVerboseInternal) {
-      TTY_TRACE_CR(("[%d] npe old offset is %d, new offset is %d ",
-                    i, _npe_table.int_at( i)>>16,
-                    _npe_table.int_at(i)&0xFFFF));
+  for (int i = 0 ; i < _npe_ins_with_stub_counter ; i++) {
+    VERBOSE_SCHEDULING_AS_YOU_GO(("[%d] npe old offset is %d, new offset is %d ",
+                    i, _npe_ins_with_stub_table.int_at( i) >> scheduled_offset_width,
+                    _npe_ins_with_stub_table.int_at(i) & scheduled_offset_mask));
     }
   }
-}
 #endif
-
 #endif //ENABLE_NPCE
 
+  //allocate a table to record the unbound literals
   void init_unbound_literal_tables(int size  JVM_TRAPS) {
-#ifndef PRODUCT      
-    if (OptimizeCompiledCodeVerboseInternal) {
-      TTY_TRACE_CR(("[allocating unbound literal table]=%dWords", size));
-    }
-#endif     
+    VERBOSE_SCHEDULING_AS_YOU_GO(("[allocating unbound literal table]=%dWords", size));
     if (size == 0 ) {
       return ;
     }
+
     OopDesc* oop_table = 
              Universe::new_int_array_in_compiler_area(size JVM_CHECK);
-             
-    _unbound_literal_tracking_table.set_obj(oop_table);
+    _score_board_of_unbound_literal_access_ins_before_scheduling.set_obj(oop_table);
+	
     oop_table = Universe::new_int_array_in_compiler_area(size JVM_CHECK);
-    _scheduled_unbound_literal_tracking_table.set_obj(oop_table);
+    _score_board_of_unbound_literal_access_ins_after_scheduling.set_obj(oop_table);
+	
   }
 
   int get_unbound_literal_count() {
     return _unbound_literal_count;
   }
 
-  void record_unbound_literal_ldr_address( int addr) {
-    _unbound_literal_tracking_table.int_at_put(_unbound_literal_count++, addr);
+  //record the offset of instrs access literals.
+  //for literal with multi-access, scheduler only records the earliest one
+  void record_offset_of_unbound_literal_access_ins( int offset) {
+    _score_board_of_unbound_literal_access_ins_before_scheduling.int_at_put(_unbound_literal_count++, offset);
   }
 
   //mark the latest position(before scheduling) of ldr 
   //acess the literal indexed by literal_id
-  void update_unbound_literal_tracking_address(int literal_id,  int addr) {
-      _unbound_literal_tracking_table.int_at_put(literal_id, addr);
-  }
-  
-  int get_unbound_literal_address(int literal_id) {
-    return _unbound_literal_tracking_table.int_at(literal_id);
+  void update_offset_of_unbound_literal_access_ins(int literal_id,  int offset) {
+      _score_board_of_unbound_literal_access_ins_before_scheduling.int_at_put(literal_id, offset);
   }
 
-  void update_scheduled_unbound_literal_tracking_address(int literal_id,
-                                                                    int addr) {
-    _scheduled_unbound_literal_tracking_table.int_at_put(literal_id, addr);
+  //record the offset of latest emitted literal access ins associated with the 
+  //literal indexed by literal_id
+  void update_offset_of_scheduled_unbound_literal_access_ins(
+  	                                                      int literal_id,
+                                                             int offset) {
+    _score_board_of_unbound_literal_access_ins_after_scheduling.int_at_put(literal_id, offset);
   }
 
-  int get_scheduled_unbound_literal_address(int literal_id) {
-    return _scheduled_unbound_literal_tracking_table.int_at(literal_id);
+  //get the offset of latest emitted literal access ins associated with the 
+  //literal indexed by literal_id
+  int offset_of_scheduled_unbound_literal_access_ins(int literal_id) {
+    return _score_board_of_unbound_literal_access_ins_after_scheduling.int_at(literal_id);
   }
- 
-  int search_unbound_literal( int addr ) {
+
+   //get the literal_id whose latest position(before scheduling) equal param 
+   //offset
+  int index_of_unbound_literal_access_ins( int offset ) {
     for (int i =0 ; i < _unbound_literal_count ; i ++) {
-      if (_unbound_literal_tracking_table.int_at(i) ==  addr) {
+      if (_score_board_of_unbound_literal_access_ins_before_scheduling.int_at(i) ==  offset) {
         return i;
       }
     }
@@ -479,13 +558,9 @@ class InternalCodeOptimizer: public StackObj {
 
   void dump_unbound_literal_table() {
     for (int i = 0 ; i < _unbound_literal_count ; i++) {
-#ifndef PRODUCT
-      if (OptimizeCompiledCodeVerboseInternal) {
-        TTY_TRACE_CR(("[%d] literal offset is %d ",
-                     i, _unbound_literal_tracking_table.int_at( i)));
+        VERBOSE_SCHEDULING_AS_YOU_GO(("[%d] literal offset is %d ",
+                     i, _score_board_of_unbound_literal_access_ins_before_scheduling.int_at( i)));
       }
-#endif
-    }
   }
   
   InternalCodeOptimizer() {
@@ -500,28 +575,26 @@ class InternalCodeOptimizer: public StackObj {
   static InternalCodeOptimizer* current() {
     return _current;
   }
-  
-  void StartInternalCodeOptimizer(CompiledMethod* cm, int curren_code_offset) {
+
+  //record the begin address of current cc
+  void prepare_for_scheduling_of_current_cc(CompiledMethod* cm, int current_code_offset) {
     _start_method = cm;
-    _start_code_offset = curren_code_offset;
-#if ENABLE_NPCE    
-    _npe_related_ldrs_ptr=0;
-#endif
-    _unbound_literal_count = 0;
-    _iob_related_ldrs_ptr = 0;
+    _start_code_offset = current_code_offset;
   }   
 
-  bool StopInternalCodeOptimizer( CompiledMethod* cm,
-                                  int curren_code_offset JVM_TRAPS );
+  //scheduling the instruction in current cc. 
+  bool schedule_current_cc( CompiledMethod* cm,
+                                  int current_code_offset JVM_TRAPS );
 
  public:
 
  friend class CodeOptimizer;
  
  protected:
- // instruction fields
+  // begin offset of current cc
   static int _start_code_offset;
   static CompiledMethod* _start_method;
+  // end offset  of current cc
   int _stop_code_offset;  
   CompiledMethod* _stop_method;  
 };

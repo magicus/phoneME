@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -127,7 +128,7 @@ void ReferenceTypeImpl::static_field_getter_setter(PacketInputStream *in,
     } else { 
       ObjectReferenceImpl::write_value_from_address(out, &p,
                                                     field.offset(),
-                                                    type_tag, true);
+                                                    type_tag, true, true);
     }
 #ifdef AZZERT
     if (TraceDebugger) { 

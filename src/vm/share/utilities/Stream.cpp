@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -146,7 +147,7 @@ Stream::Stream(int width) {
   _indentation = 0;
 }
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_WTK_PROFILER || ENABLE_PERFORMANCE_COUNTERS || ENABLE_PROFILER
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_MEMORY_PROFILER || ENABLE_WTK_PROFILER || ENABLE_PERFORMANCE_COUNTERS || ENABLE_PROFILER
 
 FileStream::FileStream(const PathChar* file_name, int width) : Stream(width) {
   _file = OsFile_open(file_name, "w");
@@ -212,6 +213,24 @@ void FileStream::close() {
   }
   _file = NULL;
 }
+
+void FileStream::mark() {
+  _mark = current_position();
+}
+
+void FileStream::reset() {
+  OsFile_seek(_file, _mark, 0);  
+}
+
+int FileStream::current_position() {
+  int position = OsFile_length(_file);
+  // Since OsFile_length resets the pointer back to the beginning
+  // We need to restore the pointer back the last position
+  // before the call.
+  OsFile_seek(_file, position, 0);  
+  return position;
+}
+
 #endif // !defined(PRODUCT) || ENABLE_ROM_GENERATOR
 
 

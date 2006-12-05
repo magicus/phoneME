@@ -1,5 +1,5 @@
 /*
- * @(#)CodeOptimizer_i386.hpp	1.6 06/01/26 16:36:31
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

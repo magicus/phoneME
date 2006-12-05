@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -51,6 +52,16 @@ class GlobalData implements MPDataProvider {
   private static final int MPGetRoots          = 0x1204;
   private static final int MPVMSuspend         = 0x1205;
   private static final int MPVMResume          = 0x1206;
+  private static final int MPVMStackTrace      = 0x1207;
+
+  //presentation strings
+  public static final String InternalObjectName = "VM Internal object";
+  public static final String StaticsObjectName =  "Statics of class ";
+  public static final String StackObjectName =    "Stack object";
+
+  private static final int  CLASS_ID_OFFSET = 0;
+  private static final int  TASK_ID_OFFSET = 16;
+  private static final int  OBJ_TYPE_OFFSET = 23;
 
   public int get_heap_start() {return _heap_start;};
   public int get_heap_top() {return _heap_top;};
@@ -71,9 +82,11 @@ class GlobalData implements MPDataProvider {
       _heap_top =       r.getInt();
       _old_gen_end =    r.getInt();
       _allocation_top = r.getInt();
-    }catch(DebugeeException e){
+    }catch(DebugeeException e) {
+      reset();
       throw new SocketException(e.getMessage());
-    }catch(BoundException e){
+    }catch(BoundException e) {
+      reset();
       throw new SocketException(e.getMessage());
     }
     calculateDeadObjects();
@@ -94,6 +107,7 @@ class GlobalData implements MPDataProvider {
         result[i] = new_item;
       }
     } catch (Exception e) {
+      reset();
       throw new SocketException(e.getMessage());
     }
     return result;
@@ -110,20 +124,51 @@ class GlobalData implements MPDataProvider {
         while (object_address != -1 && object_address != -2) {
           int size = r.getInt();
           int mp_class_id = r.getInt();
+          int object_type = mp_class_id >> OBJ_TYPE_OFFSET;
+          int stack_number = -1;
+          if (object_type == STACK_OBJECT) {
+            stack_number = r.getInt();
+            read++;
+          } 
           int links = r.getInt();
           int[] refs = new int[links];
-          for (int i = 0; i < links; i++) {
-            refs[i] = r.getInt();
-          }
-          int class_id = -1;
-          JavaClass class_item = (JavaClass)_allClasses.get(new Integer(mp_class_id));
-          if (class_item == null) { //this means that this is internal object
-            class_id = -1;
+          HashMap offsets = new HashMap(links);
+          if (object_type == STACK_OBJECT) {
+            for (int i = 0; i < links; i++) {
+              refs[i] = r.getInt();
+              int offset = r.getInt();
+              Integer cur_offset = (Integer)offsets.get(new Integer(refs[i]));
+              if (cur_offset == null || cur_offset.intValue() < offset) {
+                offsets.put(new Integer(refs[i]), new Integer(offset));
+              }
+            }
+            read += links;
           } else {
+            for (int i = 0; i < links; i++) {
+              refs[i] = r.getInt();
+            }
+          }
+          mp_class_id = mp_class_id & 0x7FFFFF;
+          JavaClass class_item = (JavaClass)_allClasses.get(new Integer(mp_class_id));
+          int class_id = mp_class_id;
+          if (class_item != null) {
             class_id = class_item.id;
           }
-
-          _allJavaObjects.put(new Integer(object_address), new JavaObject(object_address, class_id, size, refs));
+          if (object_type == JAVA_OBJECT) {
+            _allJavaObjects.put(new Integer(object_address), 
+               new JavaObject(object_address, class_id, size, refs, JAVA_OBJECT));
+          } else if (object_type == STATICS_OBJECT) {
+            _allJavaObjects.put(new Integer(object_address), 
+               new JavaObject(object_address, class_id, size, refs, STATICS_OBJECT));
+          } else if (object_type == STACK_OBJECT) {
+            _allJavaObjects.put(new Integer(object_address), 
+               new JavaObject(object_address, -1, size, refs, STACK_OBJECT, offsets, stack_number));
+          } else if (object_type == VM_OBJECT) {
+            _allJavaObjects.put(new Integer(object_address), 
+               new JavaObject(object_address, -1, size, refs, VM_OBJECT));
+          } else {
+            System.out.println("Wrong response from VM! Unknown object type. Skipped!");
+          }
           object_address = r.getInt();
           read += 4;
           read += links;
@@ -132,7 +177,7 @@ class GlobalData implements MPDataProvider {
         if (object_address == -1) break;
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      reset();
       throw new SocketException(e.getMessage());
     }
     updateAllObjects();
@@ -163,14 +208,14 @@ class GlobalData implements MPDataProvider {
 
     for (Iterator it = _allJavaObjects.values().iterator(); it.hasNext(); ) {
       JavaObject elem = (JavaObject)it.next();
-      if (elem.class_id == class_id)
+      if (elem.object_type == JAVA_OBJECT && elem.class_id == class_id)
         obj_count++;
     } 
     JavaObject result[] = new JavaObject[obj_count];
     obj_count = 0;
     for (Iterator it = _allJavaObjects.values().iterator(); it.hasNext(); ) {
       JavaObject elem = (JavaObject)it.next();
-      if (elem.class_id == class_id)
+      if (elem.object_type == JAVA_OBJECT && elem.class_id == class_id)
         result[obj_count++] = elem;
     }
     return result;
@@ -185,9 +230,25 @@ class GlobalData implements MPDataProvider {
   }
 
   public String getObjectTypeName(JavaObject obj) {
-    if (obj.class_id == -1) return "VM Internal object"; 
-    JavaClass item = (JavaClass)_allClasses.get(new Integer(obj.class_id)); 
-    return item.name;
+    if (obj.object_type == JAVA_OBJECT || obj.object_type == STATICS_OBJECT) {
+      JavaClass item = (JavaClass)_allClasses.get(new Integer(obj.class_id)); 
+      if (item == null) { //this is just for debug!
+        System.out.println(obj.class_id);
+        System.out.println(obj.object_type);
+        return "null!";
+      }
+      if (obj.object_type == JAVA_OBJECT) {
+        return item.name;
+      } else { //statics object
+        return StaticsObjectName + item.name;
+      }    
+    } else if (obj.object_type == STACK_OBJECT) {
+      return StackObjectName;
+    } else if (obj.object_type == VM_OBJECT) {        
+      return InternalObjectName;
+    } else {
+      return "Wrong object type! Report a bug please!";
+    }
   }
 
   private void getRoots() throws SocketException {
@@ -203,6 +264,7 @@ class GlobalData implements MPDataProvider {
         root = r.getInt();
       }
     } catch (Exception e) {
+      reset();
       throw new SocketException(e.getMessage());
     }
 
@@ -281,14 +343,17 @@ class GlobalData implements MPDataProvider {
       _connector.sendCommand(MPVMSuspend);
       update();
     } catch (Exception e ) {
+      reset();
       throw new SocketException(e.getMessage());
     }
   } 
 
   public void resumeVM() throws SocketException { 
     try {
+      reset();
       _connector.sendCommand(MPVMResume);
     } catch (Exception e ) {
+      reset();
       throw new SocketException(e.getMessage());
     }
   } 
@@ -305,9 +370,13 @@ class GlobalData implements MPDataProvider {
     result.put(new Integer(-1), new ClassStatistics("Internal VM Objects"));
     for (Iterator it = _allJavaObjects.values().iterator(); it.hasNext();) {
       JavaObject obj = (JavaObject)it.next();
-      ClassStatistics cls = (ClassStatistics)result.get(new Integer(obj.class_id));
+      int type_id = obj.class_id;      
+      if (obj.object_type != JAVA_OBJECT) {
+         type_id = -1;
+      }
+      ClassStatistics cls = (ClassStatistics)result.get(new Integer(type_id));
+      if (cls == null) continue; //shall not happend
       cls.add(obj, get_old_gen_end());
-      if (cls == null) continue; //should not happend!      
     }
     Object[] arr = result.values().toArray();
     Arrays.sort(arr, new Comparator() {
@@ -325,30 +394,32 @@ class GlobalData implements MPDataProvider {
     return res;    
   }
 
-    /**
-     * Converts object type name from JNI form to <code>javap</code>-like
-     * form (for example, <code>Ljava/lang/String;</code> will be converted to
-     * <code>java.lang.String</code>). This method is
-     * used by <code>fields</code> and <code>methods</code> KJDB commands.
-     *
-     * @param jniTypeName an object type name in JNI form
-     * @return an object type name in <code>javap</code>-like form
-     */
-    private String objectTypeNameFromJNI(String jniTypeName){
-        if(jniTypeName.indexOf("L") != 0 ||
-        jniTypeName.lastIndexOf(";") != jniTypeName.length() - 1){
-            return jniTypeName;
-        }
-        char[] chars = new char[jniTypeName.length()-2];
-        jniTypeName.getChars(1,jniTypeName.length()-1,chars,0);
-        for(int i=0 ; i<chars.length ; i++){
-            if(chars[i] == '/'){
-                chars[i] = '.';
-            }
-        }
-        return new String(chars);
+  /**
+   * Converts object type name from JNI form to <code>javap</code>-like
+   * form (for example, <code>Ljava/lang/String;</code> will be converted to
+   * <code>java.lang.String</code>). This method is
+   * used by <code>fields</code> and <code>methods</code> KJDB commands.
+   *
+   * @param jniTypeName an object type name in JNI form
+   * @return an object type name in <code>javap</code>-like form
+   */
+  private String objectTypeNameFromJNI(String jniTypeName){
+    if(jniTypeName.indexOf("L") != 0 ||
+      jniTypeName.lastIndexOf(";") != jniTypeName.length() - 1){
+        return jniTypeName;
     }
+    char[] chars = new char[jniTypeName.length()-2];
+    jniTypeName.getChars(1,jniTypeName.length()-1,chars,0);
+    for(int i=0 ; i<chars.length ; i++){
+      if(chars[i] == '/'){
+        chars[i] = '.';
+      }
+    }
+    return new String(chars);
+  }
+
   public void closeConnections() {
+     reset();
     _connector.closeConnections();
   }
 
@@ -361,6 +432,37 @@ class GlobalData implements MPDataProvider {
       throw new IllegalStateException("Another connector is connected to the VM");
     }
     _connector = connector;
+    reset();
   }
 
+  public String getStackTrace(JavaObject stack_object, int ptr) throws SocketException {
+    if (stack_object.object_type != STACK_OBJECT) {
+      return "JavaObject of wrong type type was passed to MPDataProvider.getStackTrace.\n" +
+                   "Please report a bug!";
+    }
+    int[] params = new int[2];    
+    params[0] = stack_object._stack_id;
+    Integer offset = (Integer)stack_object._stack_offsets.get(new Integer(ptr));
+    params[1] = offset.intValue();
+    String result = null;
+    try {
+      VMReply reply = _connector.sendReplyCommand(MPVMStackTrace, params);
+      result = reply.getString();
+    } catch (Exception e) {
+      result = "VM connection is broken!";
+      reset();
+      throw new SocketException(e.getMessage());
+    }
+    return result;
+  }
+
+  private void reset() {
+    _heap_start = 0;
+    _heap_top = 0;
+    _old_gen_end = 0;
+    _allocation_top = 0;
+    _allJavaObjects.clear();
+    _allClasses.clear();
+    ClassStatistics.reset();
+  }
 }

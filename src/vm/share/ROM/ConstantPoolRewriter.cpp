@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -620,8 +621,7 @@ ReturnOop ConstantPoolRewriter::copy_method(Method *old_method, int new_size
   new_method().set_stackmaps(&orig_maps);
   new_method().set_holder_id(old_method->holder_id());
   new_method().set_max_locals(old_method->max_locals());
-  new_method().set_size_of_parameters_and_return_type(
-     old_method->size_of_parameters_and_return_type());
+  new_method().set_method_attributes(old_method->method_attributes());
   new_method().set_name_index(old_method->name_index());
   new_method().set_signature_index(old_method->signature_index());
   new_method().set_max_execution_stack_count(
@@ -767,7 +767,7 @@ void ConstantPoolRewriter::replace_method_references(JVM_SINGLE_ARG_TRAPS) {
   }
 #endif
 
-#if USE_SOURCE_IMAGE_GENERATOR
+#if USE_AOT_COMPILATION
   // Replace methods in the ROMOptimizer's list of methods to compile
   ROMVector *vector = _optimizer->precompile_method_list();
   int precompile_size = vector->size();
@@ -1453,8 +1453,13 @@ void ConstantPoolRewriter::account_for_new_entry(ConstantTag new_entry_tag) {
 void ConstantPoolRewriter::init_branch_targets(Method *method JVM_TRAPS) {
   // _branch_targets is an int array. For all bci's in the method that's
   // a branch target, _branch_targets.int_at(bci) is non-zero.
-  bool dummy;
-  _branch_targets = BasicBlock::compute_entry_counts(method, dummy JVM_CHECK);
+#if USE_COMPILER_STRUCTURES
+  Method::Attributes attributes;
+  method->compute_attributes(attributes JVM_CHECK);
+  _branch_targets = attributes.entry_counts;
+#else
+  _branch_targets = NULL;
+#endif
 }
 
 bool ConstantPoolRewriter::is_branch_target(int old_bci) {

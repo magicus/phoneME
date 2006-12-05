@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -57,7 +58,14 @@ class ROMizerHashEntryDesc: public MixedOopDesc {
   // TEXT, because there is no global TEXT offset when ROM is linked.
   int _loc_offset;
 #endif
-
+#if ENABLE_HEAP_NEARS_IN_HEAP && USE_SOURCE_IMAGE_GENERATOR
+  //this field is only needed for keeping offset inside HEAP block for 
+  // objects which need to be cloned into the both TEXT and HEAP blocks.
+  // this is made as a performance optimization, to avoid using references
+  // to near objects inside ROM, from objects in HEAP, what lead to complicated
+  // near ptr encoding
+  int _heap_offset;
+#endif
   friend class ROMizerHashEntry;
   friend class ROMWriter;
   friend class BinaryROMWriter;

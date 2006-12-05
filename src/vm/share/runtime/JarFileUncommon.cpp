@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -46,7 +47,7 @@ Jvm_read_jar_entry(const JvmPathChar* jar_file_name, const char* entry_name,
    }
 
    // This file may not be in the classpath and the MIDP code may try to 
-   // delete this file, so let's not keep it in cache. See bug 6357720.
+   // delete this file, so let's not keep it in cache. See CR 6357720.
    //
    // IMPL_NOTE: we should add an API to flush a specific cached JarFile.
    JarFileParser::flush_caches();

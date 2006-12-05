@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -35,7 +36,7 @@ public:
   static void read_value_to_address(PacketInputStream *, Oop *, jint,
                                     jbyte, jboolean);
   static void write_value_from_address(PacketOutputStream *, Oop *,
-                                       jint, jbyte, jboolean);
+                                       jint, jbyte, bool, bool);
 #ifdef AZZERT
   static void print_value_from_address(Oop *p, jint field_id, jbyte tag ); 
 #endif

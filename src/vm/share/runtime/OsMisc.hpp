@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -40,6 +41,11 @@ void OsMisc_flush_icache(address start, int size);
 #ifndef PRODUCT
   const char *OsMisc_jlong_format_specifier();  // IMPL_NOTE this is not portable
   const char *OsMisc_julong_format_specifier(); // IMPL_NOTE this is not portable
+#endif
+
+#if ENABLE_PAGE_PROTECTION
+void OsMisc_page_protect();
+void OsMisc_page_unprotect();
 #endif
 
 #ifdef __cplusplus

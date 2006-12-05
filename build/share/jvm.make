@@ -1,4 +1,5 @@
 #
+#   
 #
 # Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -112,7 +113,7 @@ PRODUCT_NAME        = phoneME Feature VM
 endif
 
 ifndef RELEASE_VERSION
-RELEASE_VERSION     = MR1
+RELEASE_VERSION     = 1.1
 endif
 
 ifndef BUILD_VERSION
@@ -471,14 +472,17 @@ endif
 # after they are changed by the settings in jvm.make and <platform>.cfg
 #----------------------------------------------------------------------
 print_env:
-	$(A)env
+	env
+	which $(CPP)
+	which $(ASM)
+	which $(LINK)
 
 #--------------------------------------------------------
 #
 # Names of the generated files
 #
 # -------------------------------------------------------
-BINARY_NAME         = cldc_vm
+BINARY_NAME        = cldc_vm
 JVM_EXE_NAME       = $(BINARY_NAME)$(BUILD_EXT)$(EXE_SUFFIX)
 JVM_MAP_NAME       = $(BINARY_NAME)$(BUILD_EXT).map
 JVM_LIB_NAME       = $(LIB_PREFIX)$(BINARY_NAME)$(BUILD_EXT)$(LIB_SUFFIX)
@@ -736,7 +740,7 @@ endif
 # $(WorkSpace)/src/tools/buildtool/makedeps/Database.java
 # to keep its vpath list in sync.
 #
-VPATH_PATTERNS = %.cpp %.hpp %.incl
+VPATH_PATTERNS = %.cpp %.hpp %.incl %.rc %.h
 vpath
 vpath $(VPATH_PATTERNS) $(GEN_DIR)
 vpath $(VPATH_PATTERNS) $(GEN_DIR)/incls
@@ -787,7 +791,7 @@ ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
     endef
 else
     define fixcygpath
-    cygpath -w $(1)
+    echo $(1) | xargs -n1 cygpath -w
     endef
 endif
 
@@ -819,6 +823,10 @@ CPP_OPT_FLAGS          += $(CPP_OPT_FLAGS_$(BUILD))
 CPP_DEF_FLAGS_debug     = -D_DEBUG -DAZZERT
 CPP_DEF_FLAGS_release   = 
 CPP_DEF_FLAGS_product   = -DPRODUCT
+
+ifeq ($(USE_VS2005), true)
+CPP_DEF_FLAGS          += -D_CRT_SECURE_NO_DEPRECATE
+endif
 
 CPP_DEF_FLAGS          += -DWIN32 -D_WINDOWS
 CPP_DEF_FLAGS          += $(CPP_DEF_FLAGS_$(BUILD))
@@ -860,11 +868,11 @@ LINK_FLAGS_EXPORT      += $(LINK_OPT_FLAGS)
 LINK_FLAGS             += $(LINK_FLAGS_EXPORT) wsock32.lib
 
 ifeq ($(ENABLE_PCSL), true)
-PCSL_LIBS               = $(PCSL_DIST_DIR)/lib/libpcsl_memory.lib   \
-                          $(PCSL_DIST_DIR)/lib/libpcsl_print.lib    \
-                          $(PCSL_DIST_DIR)/lib/libpcsl_network.lib  \
-                          $(PCSL_DIST_DIR)/lib/libpcsl_string.lib   \
-                          $(PCSL_DIST_DIR)/lib/libpcsl_file.lib
+PCSL_LIBS               = `$(call fixcygpath, $(PCSL_DIST_DIR)/lib/libpcsl_memory.lib)`   \
+                          `$(call fixcygpath, $(PCSL_DIST_DIR)/lib/libpcsl_print.lib)`    \
+                          `$(call fixcygpath, $(PCSL_DIST_DIR)/lib/libpcsl_network.lib)`  \
+                          `$(call fixcygpath, $(PCSL_DIST_DIR)/lib/libpcsl_string.lib)`   \
+                          `$(call fixcygpath, $(PCSL_DIST_DIR)/lib/libpcsl_file.lib)`
 MAKE_EXPORT_EXTRA_LIBS += $(PCSL_LIBS)
 endif
 
@@ -1130,30 +1138,55 @@ else
     endef
 endif
 
-ifeq ($(arch), arm)
-    ifdef ARM_LIB
-    override LIB     := $(ARM_LIB)
-    export   LIB
+ifeq ($(USE_VS2005), true)
+    ifeq ($(arch), arm)
+	EVC_LIB_PATH    = $(VS2005_CE_ARM_LIB)
+	EVC_INCLUDE_PATH= $(VS2005_CE_ARM_INCLUDE)
+	EVC_ARCH_PATH   = $(VS2005_CE_ARM_PATH)
+        ARCH_ASM        = armasm.exe
+    else
+        # i386 build of WinCE is no longer supported for Visual Studio 2005.
+        # this is just a place holder.
+	EVC_LIB_PATH    = $(VS2005_CE_I386_LIB)
+	EVC_INCLUDE_PATH= $(VS2005_CE_I386_INCLUDE)
+	EVC_ARCH_PATH   = $(VS2005_CE_I386_PATH)
+        ARCH_ASM        = ml.exe
     endif
 
-    ifdef ARM_INCLUDE
-    override INCLUDE := $(ARM_INCLUDE)
-    export   INCLUDE
+    CPP                := $(EVC_ARCH_PATH)/cl.exe
+    CC                 := $(EVC_ARCH_PATH)/cl.exe
+    ASM                := $(EVC_ARCH_PATH)/$(ARCH_ASM)
+    LINK               := $(EVC_ARCH_PATH)/link.exe
+    LIB                := $(EVC_ARCH_PATH)/lib.exe
+    RC                 := $(VS2005_COMMON_PATH)/rc.exe
+
+    CESubsystem         = windowsce,5.01
+    CEVersion           = 0x501
+
+else
+    ifeq ($(arch), arm)
+	EVC_LIB_PATH    = $(EVC_ARM_LIB)
+	EVC_INCLUDE_PATH= $(EVC_ARM_INCLUDE)
+	EVC_ARCH_PATH   = $(EVC_ARM_PATH)
+    else
+	EVC_LIB_PATH    = $(EVC_I386_LIB)
+	EVC_INCLUDE_PATH= $(EVC_I386_INCLUDE)
+	EVC_ARCH_PATH   = $(EVC_I386_PATH)
     endif
 
-    ifdef ARM_PATH
-    override PATH    := $(ARM_PATH);$(PATH)
-    export   PATH
-    endif
+    CPP                := $(EVC_ARCH_PATH)/$(CPP)
+    CC                 := $(EVC_ARCH_PATH)/$(CC)
+    LINK               := $(EVC_ARCH_PATH)/$(LINK)
+    ASM                := $(EVC_ARCH_PATH)/$(ASM)
+    LIB                := $(EVC_ARCH_PATH)/$(LIB)
+    RC                 := $(EVC_COMMON_PATH)/rc.exe
+
+    LINK_ARCH_FLAGS_arm+= /MACHINE:ARM /base:"0x00010000" /stack:0x10000,0x1000
+
+    CESubsystem         = windowsce,4.00
+    CEVersion           = 400
+
 endif
-
-#windowsce,4.00
-CESubsystem             = $(CE_SUBSYSTEM)
-
-#400
-CEVersion               = $(CE_VERSION)
-
-CEPlatform              = $(CE_PLATFORM)
 
 LIBS                    = commctrl.lib coredll.lib  \
                           winsock.lib
@@ -1164,22 +1197,22 @@ CPP_OPT_FLAGS_product   = /Oxs
 CPP_OPT_FLAGS           =
 CPP_OPT_FLAGS          += $(CPP_OPT_FLAGS_$(BUILD))
 
-CPP_ARCH_FLAGS_arm      = /D"$(CEPlatform)" -DARM -D_ARM -D_ARM_ /MC
-CPP_ARCH_FLAGS_i386     = -D_X86_ -D_X86  /D _WIN32_WCE_EMULATION
+CPP_ARCH_FLAGS_arm      = -DARM -D_ARM -D_ARM_
+CPP_ARCH_FLAGS_i386     = -D_X86_ -D_X86 -Dx86
 CPP_ARCH_FLAGS          = $(CPP_ARCH_FLAGS_$(arch))
 
 CPP_DEF_FLAGS_debug     = /D "_DEBUG" /D "AZZERT" /D "DEBUG"
 CPP_DEF_FLAGS_release   = -DNDEBUG
 CPP_DEF_FLAGS_product   = -DPRODUCT -DNDEBUG
 
-CPP_DEF_FLAGS          += $(CPP_DEF_FLAGS_$(BUILD))
+CPP_DEF_FLAGS          += $(CPP_DEF_FLAGS_$(BUILD)) /X /I"${EVC_INCLUDE_PATH}"
 
 CPP_FLAGS_EXPORT        = $(CPP_DEF_FLAGS) -DREQUIRES_JVMCONFIG_H=1
 CPP_FLAGS_EXPORT       += /W3 -D_WIN32_WCE=$(CEVersion) $(CPP_ARCH_FLAGS) \
                           -DUNDER_CE=$(CEVersion) \
                           -DUNICODE -D_UNICODE /nologo $(SAVE_TEMPS_CFLAGS) \
                           $(ENABLE_CFLAGS) $(ROMIZING_CFLAGS) \
-                          $(BUILD_VERSION_CFLAGS)
+                          $(BUILD_VERSION_CFLAGS) $(CPP_OPT_FLAGS)
 
 CPP_FLAGS               = $(CPP_INCLUDE_DIRS) $(CPP_FLAGS_EXPORT)
 
@@ -1188,25 +1221,38 @@ LIB_FLAGS_release       =
 LIB_FLAGS_product       =
 LIB_FLAGS               = /nologo $(LIB_FLAGS_$(BUILD))
 
+ifeq ($(ENABLE_PCSL), true)
+PCSL_LIBS               = $(PCSL_DIST_DIR)/lib/libpcsl_memory.lib   \
+                          $(PCSL_DIST_DIR)/lib/libpcsl_print.lib    \
+                          $(PCSL_DIST_DIR)/lib/libpcsl_network.lib  \
+                          $(PCSL_DIST_DIR)/lib/libpcsl_string.lib   \
+                          $(PCSL_DIST_DIR)/lib/libpcsl_file.lib
+MAKE_EXPORT_EXTRA_LIBS += $(PCSL_LIBS)
+endif
 
-LINK_OPT_FLAGS_debug    = /debug /pdb:$(basename $@).pdb
+LINK_OPT_FLAGS_debug    = /pdb:$(basename $@).pdb
 LINK_OPT_FLAGS_release  =
 LINK_OPT_FLAGS_product  =
 
-LINK_ARCH_FLAGS_arm     = /MACHINE:ARM /SUBSYSTEM:$(CESubsystem) \
-                          /base:"0x00010000" /stack:0x10000,0x1000
-LINK_ARCH_FLAGS_i386    = /subsystem:windows /WINDOWSCE:EMULATION \
-                          /MACHINE:ix86
-LINK_ARCH_FLAGS         = $(LINK_ARCH_FLAGS_$(arch))
+LINK_OPT_FLAGS_EXPORT_debug    = /debug 
+LINK_OPT_FLAGS_EXPORT_release  =
+LINK_OPT_FLAGS_EXPORT_product  =
 
-LINK_FLAGS_EXPORT       = /incremental /nologo /entry:"WinMainCRTStartup" \
-                          /MAP $(LINK_ARCH_FLAGS) \
+LINK_ARCH_FLAGS_arm    += /SUBSYSTEM:$(CESubsystem)
+LINK_ARCH_FLAGS_i386   += /MACHINE:ix86 /SUBSYSTEM:$(CESubsystem) \
+                          /base:"0x00010000" /stack:0x10000,0x1000
+LINK_ARCH_FLAGS         = $(LINK_ARCH_FLAGS_$(arch)) /LIBPATH:$(EVC_LIB_PATH) \
+                          /VERBOSE:LIB
+
+LINK_FLAGS_EXPORT       = /incremental:no /nologo /entry:"WinMainCRTStartup" \
+                          /MAP $(LINK_ARCH_FLAGS) corelibc.lib aygshell.lib \
+                          /nodefaultlib:libc.lib \
                           /nodefaultlib:libcd.lib /nodefaultlib:libcmt.lib \
                           /nodefaultlib:libcmtd.lib /nodefaultlib:msvcrt.lib \
-                          /nodefaultlib:msvcrtd.lib
+                          /nodefaultlib:msvcrtd.lib /nodefaultlib:oldnames.lib
 
-LINK_FLAGS_EXPORT      += $(LINK_OPT_FLAGS_$(BUILD))
-LINK_FLAGS             += $(LINK_FLAGS_EXPORT) $(LIBS)
+LINK_FLAGS_EXPORT      += $(LINK_OPT_FLAGS_EXPORT_$(BUILD))
+LINK_FLAGS              = $(LINK_FLAGS_EXPORT) 
 
 CPP_USE_PCH             = /Fp"cldchi.pch" /Yu"incls/_precompiled.incl"
 BUILD_PCH               = _build_pch_visCPP.obj
@@ -1250,10 +1296,6 @@ define BUILD_C_TARGET
 		`$(call fixcygpath, $<)`
 endef
 endif
-
-#Note " in following command.  That's so on win32 it forces the 
-#command to be issued in a shell script and not directly from make
-#Otherwise PATH is not ARM_PATH set above
 
 Interpreter_arm.obj: Interpreter_arm.asm
 	$(A)$(ASM) -o $@ -list "Interpreter_$(arch).lst" $(THIS_DIR)/$<
@@ -1300,6 +1342,14 @@ LIB_OBJS += Interpreter_$(arch).obj
 endif
 
 EXE_OBJS +=         ROMImage.obj
+EXE_OBJS +=         resources.res
+
+resources.res: $(WorkSpace)/src/vm/os/wince/resources.rc \
+               $(WorkSpace)/src/vm/os/wince/resources.h
+	@echo creating $@
+	$(A)$(RC) -D_WIN32_WCE=$(CEVersion) /I"${EVC_INCLUDE_PATH}" \
+		-DUNDER_CE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /fo"$@" \
+		$(WorkSpace)/src/vm/os/wince/resources.rc
 
 ifeq ($(SeparateROMImage), true)
 ifeq ($(CompileROMImageSeparately), true)
@@ -1358,13 +1408,12 @@ $(JVMTEST_LIB): $(BIN_DIR) $(BUILD_PCH) $(LIBTEST_OBJS)
 	$(A)$(LIBMGR) $(LIB_FLAGS) /out:$@ $(LIBTEST_OBJS)
 	$(A)echo generated `pwd`/$@
 
-$(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) $(EXE_OBJS)
-	$(A)$(LINK) $(LINK_FLAGS) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB)
-	$(A)if test "$(arch)-$(BUILD)" = "arm-product"; then \
-	    echo running pdstrip ...; \
-	    $(WorkSpace)/build/share/bin/wince_arm/pdstrip.exe $@; \
-	    mv stripped.exe $@; \
-	fi
+$(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVMTEST_LIB) \
+            $(JVM_LIB) $(EXE_OBJS)
+	$(A)$(LINK) $(LINK_FLAGS) /out:$@ $(EXE_OBJS) $(JVMX_LIB) \
+            $(JVMTEST_LIB) $(JVM_LIB) $(LINK_OPT_FLAGS_$(BUILD)) \
+            $(LIBS) $(PCSL_LIBS)
+
 	$(A)echo generated `pwd`/$@
 
 endif

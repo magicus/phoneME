@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -38,6 +39,7 @@ public:
   FailureMode fail_mode;
   ResolveMode resolve_mode;
   Buffer *buf;
+  bool is_system_class;
 
   LoaderContext(Symbol* class_name,
                 FailureMode fail_mode = ExceptionOnFailure,
@@ -47,6 +49,7 @@ public:
     this->fail_mode = fail_mode;
     this->resolve_mode = resolve_mode;
     this->buf = bufp;
+    is_system_class = false;
   }
 //  bool is_system_class_loader() {
 //    return true;

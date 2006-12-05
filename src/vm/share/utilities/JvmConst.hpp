@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -30,7 +31,7 @@
  * part of the Java Virtual Machine Specification (JVMS).
  *
  * Bibliographic reference:
- * Java Virtual Machine
+ *  Java Virtual Machine
  * Specification (Java Series), 2nd Edition, Addison-Wesley,
  * 1999, ISBN 0-201-43294-3.
  */

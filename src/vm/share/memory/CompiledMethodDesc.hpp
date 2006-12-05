@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,7 +28,7 @@
  *!c>
  */
 
-#if ENABLE_TRAMPOLINE && !CROSS_GENERATOR
+#if ENABLE_TRAMPOLINE
 class BranchItem{
 private:
   address _inst_addr;  /*the mov pc... inst address*/
@@ -97,7 +98,7 @@ public:
 class CompiledMethodDesc: public OopDesc {
 public:
   size_t code_size() const {
-    return _flags_and_size & 0x7FFFFF;
+    return _flags_and_size & SIZE_MASK;
   }
 
 #if ENABLE_JVMPI_PROFILE 
@@ -110,9 +111,7 @@ public:
   void jvmpi_set_code_size(size_t code_size) {
     _jvmpi_code_size = code_size;
   }
- 
 #endif
-
 
   static size_t header_size() {
     return sizeof(CompiledMethodDesc);
@@ -189,7 +188,7 @@ public:
   // GC support.
  private:
   void _set_size(size_t size) { 
-    _flags_and_size = (_flags_and_size & 0xFF800000) | size;
+    _flags_and_size = (_flags_and_size & ~SIZE_MASK) | size;
   }
   // Initializes the object after allocation
   void initialize(OopDesc* klass, size_t size) {
@@ -245,9 +244,47 @@ public:
   friend class Universe;
   friend class ObjectHeap;
 
+
+  // The bitmasks for accessing the different parts of _flags_and_size
+  //
+  // cache_index  has_embedded_oop
+  //    |          |
+  //    v          v
+  // [31.......23][22][21][20...................0]
+  //                    ^       ^
+  //                    |       |
+  //  has_branch_relocation     size-in-bytes
+
   enum {
-    NUMBER_OF_SIZE_BITS = 23,  // The lowe 23 bits in flags_and_size is
+    NUMBER_OF_SIZE_BITS = 21,  // The lowe 21 bits in flags_and_size is
                                // used for size (in bytes).
+
+    NUMBER_OF_EXTRA_BITS = 2,  // Two bits for HAS_BRANCH_RELOCATION_MASK and
+                               // HAS_EMBEDDED_OOP_MASK.
+
+    NUMBER_OF_NON_INDEX_BITS = NUMBER_OF_SIZE_BITS + NUMBER_OF_EXTRA_BITS,
+                               // The number of bits that are not used for
+                               // the index. We can get the index by
+                               //     jiunt(flags_and_size) >> 
+                               //     NUMBER_OF_NON_INDEX_BITS
+
+    SIZE_MASK = (1 << NUMBER_OF_SIZE_BITS) - 1,
+                               // The bits in flags_and_size that are occupied
+                               // by the size (in bytes)
+
+    HAS_BRANCH_RELOCATION_MASK = 1 << (NUMBER_OF_SIZE_BITS + 0),
+                               // Does this compiled method have branches
+                               // that need to be relocated when the compiled
+                               // methods move.
+
+    HAS_EMBEDDED_OOP_MASK      = 1 << (NUMBER_OF_SIZE_BITS + 1),
+                               // Does this compiled method have embedded oop
+                               // that need to be relocated when objects in 
+                               // the heap move.
+
+    INDEX_MASK = 0xffffffff << NUMBER_OF_NON_INDEX_BITS,
+                               // The bits in flags_and_size that are occupied
+                               // by the cache index
 
     NUMBER_OF_EXECUTION_SENSOR_BYTES = 6
                                // The number of bytes of instructions

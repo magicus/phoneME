@@ -1,5 +1,5 @@
 /*
- * @(#)CodeOptimizer_arm.cpp	1.23 06/04/05 09:11:30 
+ *    
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -39,8 +39,8 @@ OptimizerInstruction::OptimizerInstruction(OptimizerInstruction& copy) {
 
 void OptimizerInstruction::init(int* ins_raw) {
   memset(this, 0, sizeof(OptimizerInstruction));
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_CODE_OPTIMIZER
-  _internals._literal_id = UNDETERMINED_LITERAL_ID;
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+  _internals._literal_id = undetermined_literal;
 #endif
   _raw = ins_raw;
 }
@@ -54,7 +54,7 @@ int OptimizerInstruction::result_latency() {
   int opcode;
   int latency = 0;
   latency = latency_dty[_type];
-  if (_status & STATUS_WRITEBACK ) latency++;
+  if (_status & status_writeback ) latency++;
   if (_type == stm || _type == ldm) {
     latency += _operand_count;
   }
@@ -64,7 +64,7 @@ int OptimizerInstruction::result_latency() {
 int OptimizerInstruction::result_latency() {
   int opcode;
   int latency = 0;
-  if (_status & STATUS_WRITEBACK ) latency++;
+  if (_status & status_writeback ) latency++;
   switch (_type) {
     case data:
     case str:
@@ -131,40 +131,54 @@ extern "C" {
 }
 
 CodeOptimizer::CodeOptimizer() {}
-void  CodeOptimizer::update_aoi_stub() {
-  if(_iob_stub_position == -1 && _iob_address_tracker != -1) {
-    Compiler::current()->update_aoi_stub(_iob_address_tracker - (int)method->entry());
+
+void  CodeOptimizer::update_shared_index_check_stub() {
+  if( (_address_of_shared_emitted_index_check_stub == 
+  	  not_bound) &&
+      (_address_of_last_emitted_branch_to_index_check_stub != 
+         no_branch_to_index_check_stub)) {
+    Compiler::current()->update_shared_index_check_stub(
+	_address_of_last_emitted_branch_to_index_check_stub - (int)method->entry());
   }
 }
+
 void  CodeOptimizer::reset(CompiledMethod* cm, int* start, int* end) {
   int size = end - start;
   method = cm;
   _branch_targets.calculate(size);
   _pinned_entries.calculate(size);
-  _not_instructions.calculate(size);
-  _scheduablebranchs_or_abortpoint.calculate( size);
+  //new bitmap
+  _data_entries.calculate(size);
+  _scheduable_branchs_and_abortpoint.calculate( size);
+  
   _ins_raw_start = start;
   _ins_raw_end = end;
-#ifndef PRODUCT  
-  if (OptimizeCompiledCodeVerboseInternal) {
-    TTY_TRACE_CR(("\t\t[CompilationContinuation size]= %d Word",size));
-  }
-#endif
   _ins_block_top = _ins_block_base + MAX_INSTRUCTIONS_IN_BLOCK;
   _ins_block_next = _ins_block_base;
+  VERBOSE_SCHEDULING_AS_YOU_GO(("\t\t[CompilationContinuation size]= %d Word",size));
 
   // Initialize the instructions
   for (int i = 0; i < MAX_INSTRUCTIONS_IN_BLOCK; i++) {
     _ins_block_base[i].init(NULL);
   }
-  _iob_handler_offset =(int) ((long) &gp_compiler_throw_ArrayIndexOutOfBoundsException_0_ptr -
+  
+  _gp_offset_of_index_check_handler = 
+  	(int) ((long) &gp_compiler_throw_ArrayIndexOutOfBoundsException_0_ptr -
                                 (long) &gp_base_label);
-  _iob_address_tracker = -1;
-  _iob_stub_position = Compiler::current()->aoi_stub_position();
-  if (_iob_stub_position != -1) {
-    _iob_stub_position = _iob_stub_position + (int) method->entry();
+  
+  _address_of_last_emitted_branch_to_index_check_stub = 
+  	no_branch_to_index_check_stub;
+  //get the offset, will convert to address later.
+  _address_of_shared_emitted_index_check_stub = 
+  	Compiler::current()->index_check_stub_offset();
+  if (_address_of_shared_emitted_index_check_stub != 
+  	not_bound) {
+    _address_of_shared_emitted_index_check_stub = 
+		_address_of_shared_emitted_index_check_stub + (int) method->entry();
   }
+  
 }
+
 #else
 CodeOptimizer::CodeOptimizer(CompiledMethod* cm, int* start, int* end) : 
                _branch_targets((end-start)), _pinned_entries((end-start)) {
@@ -190,36 +204,602 @@ bool CodeOptimizer::depends_on_ins(OptimizerInstruction* ins_first,
   int index = 0;
 
   // doesn't support moves over these type of instructions
-  if ( (ins_first->_status | ins_next->_status) & STATUS_PINNED) {
+  if ( (ins_first->_status | ins_next->_status) & status_pinned) {
     return true;
   }
   
-  if( (ins_first->_status & ins_next->_status ) & COND_SETCONDITIONAL) {
+  if( (ins_first->_status & ins_next->_status ) & cond_setconditional) {
     return true;
   }
 
-  if( ( ins_first->_status & COND_SETCONDITIONAL) && 
-      ( ins_next->_status & COND_CONDITIONAL)) {
+  if( ( ins_first->_status & cond_setconditional) && 
+      ( ins_next->_status & cond_conditional)) {
     return true;
   }
 
-  if( ( ins_first->_status & COND_CONDITIONAL) && 
-      ( ins_next->_status & COND_SETCONDITIONAL)) {
+  if( ( ins_first->_status & cond_conditional) && 
+      ( ins_next->_status & cond_setconditional)) {
     return true;
   }
 
-#if  ENABLE_INTERNAL_CODE_OPTIMIZER  
-  if( (ins_first->_status & STATUS_SCHEDUABLE)  &&
-      ins_next->_type == OptimizerInstruction::str  ) {
+  if(depends_of_memory_on_ins(ins_first, ins_next)) {
     return true;
   }
-  if( (ins_next->_status & STATUS_SCHEDUABLE ) &&
-      ins_first->_type == OptimizerInstruction::str  ) {
-    return true;
+
+  return false;
+}
+
+bool CodeOptimizer::is_end_of_block(OptimizerInstruction* ins, int offset) {
+  GUARANTEE(ins != NULL, "Invalid instruction");
+
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+  if ( ExtendBasicBlock ) {
+    if ( ins->_status & status_scheduable ) {
+	 //we needn't to check the _exception_handler here.
+	 //because the branch taken as schedulable only
+	 //when it target is a shared index check stub.
+        return false;
+    }
   }
 #endif
 
-#if  ENABLE_INTERNAL_CODE_OPTIMIZER  
+  if ( ins->_type == OptimizerInstruction::branch || 
+       ins->_type == OptimizerInstruction::swi ) {
+    return true;
+  }
+
+  // Check for ldr pc or mov pc
+  if (ins->_results & REGISTER_PC) {
+#if  ENABLE_INTERNAL_CODE_OPTIMIZER
+    if ( ExtendBasicBlock ) {
+      unsigned int offset =(unsigned int) ((int) ins->_imm - 
+	  	_gp_offset_of_index_check_handler);
+      if (ins->_operands & REGISTER_GP && offset <= 10 * BytesPerWord ) {
+        ins->_status |= status_scheduable;
+        return false;
+      }
+    }
+#endif
+    return true;
+  } else { 
+    return false;
+  }
+}
+
+#if ENABLE_NPCE
+bool CodeOptimizer::detect_exception_table(int offset) {
+  int table_item;
+  int address;
+  for (RelocationReader stream(method); !stream.at_end(); stream.advance()) {
+    if (stream.is_npe_item()) {
+      if (stream.current(1) == 4*offset) {
+        return true; 
+      }
+    } 
+  } 
+  return false;
+}
+
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+void CodeOptimizer::update_abort_points(int* ins_start,
+                                                  int* ins_end) {
+  
+  int relative_offset;//relateive offset to the begin of cur CC.
+  int table_size = Compiler::current()->null_point_record_counter();
+  int start_offset = (int) ins_start - (int) method->entry();
+  for ( int i = 0; i < table_size ; i++) {
+    relative_offset = ( Compiler::current()->null_point_exception_abort_point( i ) - start_offset );
+    if ( relative_offset >= 0 ) {
+      _scheduable_branchs_and_abortpoint.set( (relative_offset>>2));
+    }
+  }
+}
+#endif
+#endif //ENABLE_NPCE
+
+void CodeOptimizer::determine_pin_status( OptimizerInstruction* ins,
+                                          int offset) {
+  ins->_status &= ~status_pinned;
+  
+  determine_literal_id(ins);
+
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+  //handler npe cases
+  if ((ins->_type == OptimizerInstruction::ldr ||
+         ins->_type == OptimizerInstruction::str) && 
+         _scheduable_branchs_and_abortpoint.get(offset)) {
+    //pinned all npe related ins,
+    //if the method has any exception handler.
+    if (_has_exception_handler) {
+      ins->_status |= status_pinned;
+      return;
+    }
+    //make the jsp modification ins won't be scheduled ahead of 
+    //those npe related ins by adding dependency relationship.
+    ins->put_result(Assembler::jsp);
+    ins->_internals._abortable = abort_point;
+  }
+
+  //decoder will take some data of call info as instructions.
+  //we mark those no-instructions address in _data_entries
+  //and pinned them.
+  if (_data_entries.get(offset)) {
+    ins->_internals._literal_id  = not_access_literal;
+    ins->_status |= status_pinned;
+    return;
+  }
+
+  //if current ins jumps to a global index check stub (ldr pc stub_ptr)
+  //mark them as scheduable to extend basic block.
+  if ( (ins->_type ==OptimizerInstruction::ldr) && 
+       (ins->_results & REGISTER_PC) && 
+      (ins->_operands & REGISTER_GP) ) {
+    unsigned int offset =(unsigned int)((int) ins->_imm - 
+		_gp_offset_of_index_check_handler);
+    //offset located in stub0 and stub9	
+    if ( offset <= 10 * BytesPerWord ) {
+      ins->_status |= status_scheduable;
+      ins->put_result(Assembler::jsp);
+      return;
+    }
+  } else if (ins->_type ==OptimizerInstruction::branch && 
+       _scheduable_branchs_and_abortpoint.get(offset)) {
+      
+    ins->_status |= status_scheduable;
+    ins->put_result(Assembler::jsp);
+    return;
+  }
+#else
+  if (ins->_type == OptimizerInstruction::str) {
+    unsigned short imm_register = ins->_results;
+    if ((imm_register & ~REGISTER_FP) &&
+       (imm_register & ~REGISTER_SP) &&
+       (imm_register & ~REGISTER_GP)) {
+      ins->_status |= ( status_pinned | status_aliased);
+      return;
+    }
+  }
+#endif // ENABLE_INTERNAL_CODE_OPTIMIZER
+
+  // Check if the instruction is an osr entry
+  if (_pinned_entries.get(offset)) {
+    ins->_status |= ( status_pinned | status_aliased);
+    return;
+  }
+
+  // remove cmp instruction from no-move list
+  if (ins->_type == OptimizerInstruction::ldm ||
+      ins->_type == OptimizerInstruction::stm || 
+      ins->_type == OptimizerInstruction::unknown ||
+      ins->_type == OptimizerInstruction::mult ||
+      ins->_type == OptimizerInstruction::branch ||      
+      ins->_type == OptimizerInstruction::data_carry) {
+      ins->_status |= status_pinned;
+    return;
+  }
+
+  // shift ror/rrx 
+  if (ins->_shift >= 2) {
+    ins->_status |= status_pinned;
+    return;
+  }
+
+  // Pin if uses pc
+  if (ins->_results & REGISTER_PC) {
+    ins->_status |= status_pinned;
+    return;
+  }
+
+  if (ins->_operands & REGISTER_PC) {
+    if (ins->_type != OptimizerInstruction::ldr ||
+       ins->_imm > 3976 || ins->_imm < -3976) {
+       ins->_status |= status_pinned;      
+    }
+    return;
+  }
+
+  if (ins->_type == OptimizerInstruction::ldr ||
+      ins->_type == OptimizerInstruction::str ) {
+#if ENABLE_NPCE && \
+     !ENABLE_INTERNAL_CODE_OPTIMIZER 
+   if ( detect_exception_table(offset)) {
+      ins->_status |= status_pinned;
+      return;
+    }
+#endif
+  }
+  return;
+}
+
+int* CodeOptimizer::unpack_block(int* ins_start, int* ins_end,
+                                 int  offset) {
+  _ins_block_next = _ins_block_base;
+
+  // filter out single instruction blocks
+  _ins_block_next->init(ins_start);
+  unpack_instruction(_ins_block_next);
+  determine_pin_status(_ins_block_next, offset);
+
+
+
+  if (is_end_of_block(_ins_block_next, offset)) {
+    return ins_start;
+  } else {
+    ++_ins_block_next;
+    ++offset;
+  }
+
+  // Currently supports only basic blocks of max size 30 instructions
+  for (int* ins_curr = ins_start + 1; ins_curr <= ins_end; ins_curr++, offset++) {
+    _ins_block_next->init(ins_curr);
+    unpack_instruction(_ins_block_next);
+    determine_pin_status(_ins_block_next, offset);
+#if !ENABLE_INTERNAL_CODE_OPTIMIZER
+    // the first instruction of method shouldn't be
+    // moved because of _method_execution_sensor
+    if ( ins_start == _ins_raw_start ) {
+      _ins_block_next->_status |= status_pinned;
+    }
+#endif    
+
+    // Check for branch target as well
+    if ( _branch_targets.get(offset)) {
+      return ins_curr - 1;
+    }
+
+    // Check for the end of block, included mov pc, rx into basic block
+    if (is_end_of_block(_ins_block_next, offset)) {
+      if ( _ins_block_next->_type == OptimizerInstruction::branch || 
+            _ins_block_next->_type == OptimizerInstruction::swi ||
+            _ins_block_next->_type == OptimizerInstruction::ldr) {
+      return ins_curr - 1;
+      } else {
+        _ins_block_next++;
+        return ins_curr;
+      }
+    }
+
+    if (_ins_block_next+1 == _ins_block_top) {
+      _ins_block_next++;
+      return ins_curr;
+    }
+
+    ++_ins_block_next;
+  }
+  return ins_end;
+}
+
+
+void CodeOptimizer::update_branch_target(OptimizerInstruction* ins, 
+                                        int* ins_start, 
+                                        int* ins_end) {
+  if (ins->_type == OptimizerInstruction::branch) {
+    int offset = ((*ins->_raw & 0xffffff) | 
+                 (bit(*ins->_raw, 23) ? 0xff000000 : 0)) << 2; 
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+    if (offset == -8) {
+      //this must be branch hasn't been patched
+      //if the offset pointed ot other un-patched 
+      //instruction, we can't mark them as branh target also.
+      //changed, but need performance is not good.
+      //so keep the old.
+      VERBOSE_SCHEDULING_AS_YOU_GO(("\t\t[0%d] Unpatched BL", 
+                (int)ins->_raw-(int)method->entry()));
+      return;
+    }
+#endif
+    int* targetPc = (int*) ((int)ins->_raw + 8 + offset);
+    if (targetPc >= ins_start && targetPc <= ins_end) {
+      _branch_targets.set(abs(targetPc - ins_start));
+    }
+#if ENABLE_INTERNAL_CODE_OPTIMIZER    
+    //if the shared index check stub of current method has been compiled
+    else if (_address_of_shared_emitted_index_check_stub != 
+		not_bound) {
+      //if target is index out of boundary stub,
+      //we mark them as schedulable branch
+      //for later extended basic block work
+      //if the stub isn't emitted yet. we don't count
+      //the branch into scheduable ones here.
+      if (((int) targetPc) == _address_of_shared_emitted_index_check_stub) {
+        VERBOSE_SCHEDULING_AS_YOU_GO(("Found a bound schedulable branch %d", 
+              abs(ins->_raw - ins_start)<<2));
+        _scheduable_branchs_and_abortpoint.set(abs(ins->_raw - ins_start));
+      };
+    }
+#endif      
+  }
+  return;
+}
+
+void CodeOptimizer::update_data_sites(OptimizerInstruction* ins,
+                                      int* ins_start,
+                                      int* ins_end) {
+  if (ins->_type == OptimizerInstruction::data &&
+      (ins->_results & REGISTER_LR) &&
+      (ins->_operands & REGISTER_PC)) {
+    // covers add lr, pc, #<immed>
+    // followed by jump and call data
+    int* targetPc = (int*) ((int)ins->_raw + 8 + ins->_imm);
+    if (targetPc >= ins_start && targetPc <= ins_end) {
+      // Pin all instructions between this and the target
+      int i = abs(ins->_raw - ins_start);
+#if ENABLE_INTERNAL_CODE_OPTIMIZER      
+      // this address has identified as data entry before, 
+      // we can skip the left code of curren function.
+      if ( _data_entries.get(i) ) {
+        return ;
+      }
+#endif      
+      for (; i < abs(targetPc - ins_start); i++) {
+        _pinned_entries.set(i);
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+        //mark it as a data site.
+        //this can make sure the decoder won't
+        //touch them later.
+        _data_entries.set(i);
+#endif
+      }
+    }
+  } else if (ins->_type == OptimizerInstruction::ldr && 
+             ins->_operands & REGISTER_PC) {
+    // covers literals that are embedded in code
+#if !ENABLE_INTERNAL_CODE_OPTIMIZER
+    //in internal code optimizer, this will be handler by fix_memory load 
+    //function
+    int* targetPc = (int*) ((int)ins->_raw + 8 + ins->_imm);
+    if (targetPc >= ins_start && targetPc <= ins_end) {
+      _pinned_entries.set(abs(targetPc - ins_start));
+    }
+#endif
+  }
+  return;
+}
+
+void CodeOptimizer::update_instruction_info_tables(int* ins_start, 
+                                                   int* ins_end) {
+  OptimizerInstruction ins;
+  for (int* ins_curr = ins_start; ins_curr < ins_end; ins_curr++) {
+    ins.init(ins_curr);
+    unpack_instruction(&ins);
+    update_branch_target(&ins, ins_start, ins_end);
+    update_data_sites(&ins, ins_start, ins_end);
+  }
+}
+
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+#define offset_to_index(offset, optimizer)   ((offset - \
+	optimizer->_start_code_offset)/4)
+void CodeOptimizer::determine_osr_entry(int* ins_start, int* ins_end) {
+  Compiler *current_compiler = Compiler::current();
+  InternalCodeOptimizer* internal_optimizer = current_compiler->optimizer();
+  BinaryAssembler::Label label;
+
+  //Pin OSR entries and Entry Frames
+  current_compiler->begin_pinned_entry_search();
+  label = current_compiler->get_next_pinned_entry();
+  while (!label.is_unused()) {
+    if (label.position() >= internal_optimizer->_start_code_offset ) {
+      _pinned_entries.set(offset_to_index(label.position(), 
+	  	 internal_optimizer));
+    }
+    label = current_compiler->get_next_pinned_entry();
+  }
+}
+
+//mark out the data entry created from literal access
+//scheduler will skip them.
+void CodeOptimizer::determine_bound_literal(
+               int* ins_start, int* ins_end) {
+  Compiler *current_compiler = Compiler::current();
+  InternalCodeOptimizer* internal_optimizer = current_compiler->optimizer();
+  BinaryAssembler::Label label;
+
+   //create literal data structure
+  current_compiler->begin_bound_literal_search();
+  label = current_compiler->get_next_bound_literal();
+  while (!label.is_unused()) {
+    if (label.position() >= internal_optimizer->_start_code_offset ) {
+      _data_entries.set(offset_to_index(label.position(),internal_optimizer)); 
+    }
+    label = current_compiler->get_next_bound_literal();
+  }
+}
+
+#undef offset_to_index
+
+void CodeOptimizer::determine_schedulable_branch(
+               int* ins_start, int* ins_end) {
+    Compiler *current_compiler = Compiler::current();
+    InternalCodeOptimizer* internal_optimizer = current_compiler->optimizer();
+    BinaryAssembler::Label label;
+    int next = BinaryAssembler::no_schedulable_branch;
+    int prev = BinaryAssembler::no_schedulable_branch;
+    while ((next = 
+            current_compiler->next_schedulable_branch(
+            ins_start, prev, &label)) >
+            BinaryAssembler::no_schedulable_branch) {
+      _scheduable_branchs_and_abortpoint.set(
+        (next -internal_optimizer->_start_code_offset)/4);
+      //since the target extract from those unpatched schedulable branch
+      //pointed one by one by update_branch_info() are not 
+      //real branch target.
+      _branch_targets.set(
+      (next -internal_optimizer->_start_code_offset)/4, false);
+      prev = next;
+    }
+    //if next = -2 
+    //the index out of boundary chain head is in previous 
+    //CC.
+    //record the last branch ins outside of cc.
+    if (next != BinaryAssembler::stop_searching) {
+      _address_of_last_emitted_branch_to_index_check_stub = prev ;
+    } 
+  }
+
+void CodeOptimizer::determine_literal_id(OptimizerInstruction* ins) {
+  VERBOSE_SCHEDULING_AS_YOU_GO(("\t[BB Head]=0x%08x",
+  	(int)_ins_block_next->_raw));
+  if ((ins->_type == OptimizerInstruction::ldr) &&
+      (ins->_operands & REGISTER_PC) &&
+      (ins->_internals._literal_id  == undetermined_literal) ) {
+    InternalCodeOptimizer* ico = Compiler::current()->optimizer();
+    int offset =(int) ins->_raw -(int) method->entry();
+      
+    //old_offset is the offset of ldr instruction accessing
+    //same constant and pointed by current instruction
+    // ldr rx, [pc, #xx]
+    //  |
+    // ldr rxx, [pc, #xx]
+
+    //we use id to identify the ldrs which access the same literal    
+    int prev_offset = offset +  (ins->_imm + 8);
+	
+    int id = ico->index_of_unbound_literal_access_ins(prev_offset);
+    ins->_internals._literal_id  = id;
+    if (id != undetermined_literal) {
+      //the table keep the offset of last ldr accessing the same literal 
+      ico->update_offset_of_unbound_literal_access_ins(id, offset);
+  
+      if (prev_offset < ico->_start_code_offset) {
+        //if the ldr link is start from previous CC
+        //we record the offset and recreat link based on 
+        //this fixed offset(old_offset)
+        //otherwise we need to tracker the link head
+        //durning scheduling
+        if (ico->offset_of_scheduled_unbound_literal_access_ins(id) == 0) {			
+          ico->update_offset_of_scheduled_unbound_literal_access_ins(id, 
+                                                        prev_offset);
+        }
+      }
+    }
+  }
+}
+
+void CodeOptimizer::fix_memory_load(OptimizerInstruction* ins_to_fix,
+                                         int new_index) {
+  int raw_index = 0;
+  InternalCodeOptimizer* ico = Compiler::current()->optimizer();
+
+  if (ins_to_fix->_shift != 0) {
+    return;
+  }
+  
+  for (OptimizerInstruction* curr = _ins_block_base;
+        curr < _ins_block_next; curr++, raw_index++) {
+    if (curr == ins_to_fix) {
+      break;
+    }
+  }
+        
+  if (raw_index == new_index) {
+    return;
+  }
+
+  //predecessor of cur instruction
+  int raw_index_of_predecessor = raw_index - 1;
+  
+  short old_code_offset = 
+          (short) ( ins_to_fix->_raw - (int *) ico->_stop_method->entry());
+  short new_code_offset =
+          (short)( old_code_offset +  new_index - raw_index);
+  int index;
+
+  bool need_item = true;
+  if ( raw_index_of_predecessor >= 0 ) {
+    //previous instruction is in current BB
+    if ( ( _ins_block_base[raw_index_of_predecessor]._status & 
+              (status_emitted | status_scheduable) ) == 
+              (status_emitted | status_scheduable) ) {
+      //previous ins(before scheduling) is a scheduable branch and has been emitted now.
+      //so current ins must be a array element loading.
+
+      
+      int load_offset = ins_to_fix->_raw - (int *)method->entry() + 
+                                             new_index - raw_index;
+#if ENABLE_NPCE        
+      int raw_index_of_load_length = raw_index - 3 ;
+      if (  raw_index_of_load_length >= 0  && 
+	     !( _ins_block_base[raw_index_of_load_length]._status & status_emitted ) &&
+            _ins_block_base[raw_index_of_load_length]._internals._abortable == abort_point) { 
+        // ins of loading element is scheduled ahead of loading of array length ins.
+        // For exmple:
+        // ldr length : -> raw_index -3 
+        // cmp length
+        // b index check stub
+        // ldr element
+        int possible_abort_point = old_code_offset - 3;
+        VERBOSE_SCHEDULING_AS_YOU_GO(("abort a array bound check item at %d", 
+                                                               load_offset <<2));
+        //null point exception may
+        //be trigger first.
+        //error memory access should 
+        //be taken as npe in signal handler and 
+        //pre_load item needn't be emitted.
+        need_item = false;
+
+        index = ico->index_of_scheduled_npe_ins_with_stub( 
+                   possible_abort_point);
+		
+        if (index != -1) {
+          // in this case,
+          // we need to use the offset of element loading ins to replace 
+          // the offset of the array length loading ins in npe table.
+          // so stub could be patched accurately later.
+          ico->set_scheduled_offset_of_npe_ins_with_stub( index, new_code_offset);
+          //mark the npe related ldr has processed
+          //so later he will not cleanup the updating.
+          _ins_block_base[raw_index_of_load_length]._status |= status_emitted;
+        }
+      }
+#endif
+
+      if (need_item) {
+        Compiler::current()->code_generator()->
+               emit_pre_load_item( load_offset<<2, ico->_stop_code_offset);
+      }
+    }
+  }
+  
+#if ENABLE_NPCE
+  if (ico->record_count_of_npe_ins_with_stub() == 0) {
+    return;
+  }
+  
+  index = ico->index_of_scheduled_npe_ins_with_stub(old_code_offset);
+          
+#ifndef PRODUCT
+  if (OptimizeCompiledCodeVerboseInternal) {
+    tty->print( "\t\tNPE LDR old=[%d] ",
+                old_code_offset<<2 );
+    tty->print_cr("new=[%d] ", new_code_offset<<2);
+    tty->print_cr("[table index]=%d \n", index);
+    tty->print_cr("\t\t");
+    Disassembler(tty).disasm(NULL,*( ins_to_fix->_raw), -1);
+    tty->cr();
+  }
+#endif  
+  if (index != -1  && !(ins_to_fix->_status & status_emitted)) {
+    ico->set_scheduled_offset_of_npe_ins_with_stub( index,  new_code_offset);
+  }
+#endif
+}
+
+bool CodeOptimizer::depends_of_memory_on_ins(OptimizerInstruction* ins_first,
+                                   OptimizerInstruction* ins_next) {
+  //for extend basic block scheduling
+  //we forbid the memory store operation be scheduled
+  //ahead of branch instr. So the heap and java frame
+  //won't be dirty when exception happens
+  if( (ins_first->_status & status_scheduable)  &&
+      ins_next->_type == OptimizerInstruction::str  ) {
+    return true;
+  }
+  if( (ins_next->_status & status_scheduable ) &&
+      ins_first->_type == OptimizerInstruction::str  ) {
+    return true;
+  }
+
 // 0xE860 = 0b 1010 1001 1110 0000
 // r15 (pc) r13 (sp) r11 (fp)  r6 (jsp) r5(global pool)
 //#define SPECIFIC_MEMORY_OPT 0xA860 
@@ -227,7 +807,7 @@ bool CodeOptimizer::depends_on_ins(OptimizerInstruction* ins_first,
 
   
   bool writeback = ( ins_first->_status | ins_next->_status ) & 
-                                                             STATUS_WRITEBACK;
+                                                             status_writeback;
   bool checkImm = 
        ( (ins_first->_type == OptimizerInstruction::str && 
           ins_next->_type  == OptimizerInstruction::ldr) );
@@ -279,12 +859,383 @@ bool CodeOptimizer::depends_on_ins(OptimizerInstruction* ins_first,
     if( checkImm && (ins_next->_results&~SPECIFIC_MEMORY_OPT) && 
         (ins_first->_results&~SPECIFIC_MEMORY_OPT) ) {
       return true;
+    }
   }
-  }
-#else
+  return false;
+}
 
+bool InternalCodeOptimizer::schedule_current_cc(CompiledMethod* cm,
+                                        int current_code_offset JVM_TRAPS){
+  int i, code_length;
+  int* begin_address;
+  int* end_address;
+    
+  Compiler *compiler = Compiler::current();
+    
+  _stop_method = cm;
+  _stop_code_offset = current_code_offset - BytesPerWord;
+
+  //should be GUARANTEE here too, if no method switch happens.
+  //GUARANTEE(_start_method == _stop_method && 
+  //  	_stop_code_offset >= _start_code_offset  , "should be same compiled method");
+  if ( _start_method == _stop_method && 
+  	_stop_code_offset >= _start_code_offset ) {
+  	
+    // begin the code optimizing
+    //record value in byte.
+    code_length = (_stop_code_offset - _start_code_offset) >> 2;
+    begin_address = (int *)cm->entry() + (_start_code_offset >> 2);
+    end_address = begin_address + code_length;
+
+    //for fast memory release in compiler area.
+    ObjectHeap::save_compiler_area_top_fast();
+
+    _unbound_literal_count = 0;
+
+    //don't skip any un-schedulable instructions 
+    //they may need to do literal patching. 
+#if ENABLE_NPCE
+    //counter of npe_table
+    _npe_ins_with_stub_counter = 0;
+
+    //we allocate more space than the num of npe ins with stub here
+    init_npe_ins_with_stub_table(Compiler::current()->null_point_record_counter() 
+		JVM_CHECK_0);
+
+    VERBOSE_SCHEDULING_AS_YOU_GO(("\tNPE ldr instructions"));
+    //fill the npe_table
+    compiler->record_instr_offset_of_null_point_stubs(_start_code_offset);     
+#endif
+
+    _optimizer.set_has_exception_handler(false);
+    //if has exception handler
+    //don't do extend basic block scheduling on npe
+    //related inst.
+    Method::Raw cur_method = cm->method();
+    if ( !cur_method().has_no_exception_table() ) {
+      _optimizer.set_has_exception_handler(true);
+    }
+    
+    //idea same as the process of npe stub
+    init_unbound_literal_tables(
+           compiler->get_unbound_literal_count() JVM_CHECK_0);
+
+    VERBOSE_SCHEDULING_AS_YOU_GO(( "\t[ub_literal_count]=%d",
+                     compiler->get_unbound_literal_count()) );
+    VERBOSE_SCHEDULING_AS_YOU_GO(("\tAccesses of unbound literal"));
+    //get the offset first ldrs of each literal 
+    compiler->get_first_literal_ldrs(begin_address);
+
+   //begin the scheduling
+    _optimizer.reset(cm, begin_address, end_address);
+    _optimizer.optimize_code(JVM_SINGLE_ARG_CHECK_0);
+
+#if ENABLE_NPCE       
+    //update entry label
+    compiler->update_null_check_stubs();
+#endif
+
+#ifndef PRODUCT
+    if (OptimizeCompiledCodeVerboseInternal) {
+      dump_unbound_literal_table();
+    }
+#endif    
+
+    //update entry label
+    _optimizer.update_shared_index_check_stub();
+    //update label of unbound literal
+    compiler->patch_unbound_literal_elements(_start_code_offset);
+
+    //fast memory release
+    ObjectHeap::update_compiler_area_top_fast();
+
+    VERBOSE_SCHEDULING_AS_YOU_GO(("****Internal optimization finish"));
+
+  } else {
+    if ( _start_method != _stop_method ) {
+      VERBOSE_SCHEDULING_AS_YOU_GO(("Can't optimization code due to method switching!"));
+    }
+  }
+
+  return 0;
+}
+
+//code handler constant load in internal code scheduling
+void 
+CodeOptimizer::fix_pc_immediate( OptimizerInstruction* ins_to_fix,
+                                          int new_index) {
+  // determine the location of the instruction in the original stream
+  int raw_index = 0;
+  
+  if (ins_to_fix->_internals._literal_id  == not_access_literal) {
+    return;
+  }
+  if (ins_to_fix->_shift != 0) {
+    return;
+  }
+  
+  for (OptimizerInstruction* curr = _ins_block_base;
+        curr < _ins_block_next; curr++, raw_index++) {
+    if (curr == ins_to_fix) {
+      break;
+    }
+  }
+
+#ifndef PRODUCT
+  int old_instruction=0;
+  if (OptimizeCompiledCodeVerboseInternal) {
+    old_instruction = *(ins_to_fix->_raw);
+  }
+#endif
+
+  InternalCodeOptimizer* ico = Compiler::current()->optimizer();
+
+  int old_code_offset = ins_to_fix->_raw - (int *) ico->_stop_method->entry();
+  int new_code_offset  = old_code_offset +  new_index - raw_index;
+  int new_imm = ins_to_fix->_imm + (raw_index - new_index)*4 ;
+
+  VERBOSE_SCHEDULING_AS_YOU_GO(("\t\t fix_pc_immediate_internal"));
+  VERBOSE_SCHEDULING_AS_YOU_GO(("\t\t\tindex old[%d]=>new[%d], ", raw_index, new_index));
+  VERBOSE_SCHEDULING_AS_YOU_GO( ("\t\t\toffset old[%d]=>new[%d], ",
+                  old_code_offset<<2, new_code_offset<<2));
+
+  if ( ins_to_fix->_internals._literal_id  > undetermined_literal) {
+    //get the prev node of the scheduled chain	
+    int prev_emit_offset = 
+         ico->offset_of_scheduled_unbound_literal_access_ins(
+                                 ins_to_fix->_internals._literal_id );
+   //update the score board with the new_offset of current ins	
+    ico->update_offset_of_scheduled_unbound_literal_access_ins(
+                ins_to_fix->_internals._literal_id , new_code_offset<<2);     
+   
+    if (prev_emit_offset != 0) {
+      new_imm = prev_emit_offset - (new_code_offset<<2 ) - 8;
+    } else { 
+      //_literal_id related constant access instructions has not be 
+      //emitted before.we are the first one.
+      if ( ins_to_fix->_imm == -8) {
+        return;
+      } else {
+        if ( ((old_code_offset <<  2) + ins_to_fix->_imm + 8 ) >= 
+              ico->_start_code_offset ) {
+          //only to fix new_imm when the previous one  is in current CC.
+          new_imm = -8;
+        }
+      }
+    }
+  }
+
+  VERBOSE_SCHEDULING_AS_YOU_GO(("\t\t\timm  old[%d]=>new[%d], ",  
+         ins_to_fix->_imm, new_imm));
+
+  int new_raw_ins = *ins_to_fix->_raw;
+  new_raw_ins &= 0xFFFFF000;
+
+  // Make sure sign bit for the offset
+  // is setup properly
+  if (new_imm < 0) {
+    new_imm = -new_imm;
+    new_raw_ins &= ~0x800000;
+  } else {
+    new_raw_ins |= 0x800000;
+  }
+  new_raw_ins |= (new_imm & 0xFFF);
+  *ins_to_fix->_raw = new_raw_ins;
+#ifndef PRODUCT 
+  if (OptimizeCompiledCodeVerboseInternal) {
+    TTY_TRACE(("\t\t\t "));
+    Disassembler(tty).disasm(NULL, old_instruction, -1);
+    TTY_TRACE((" =>  "));
+    Disassembler(tty).disasm(NULL, *(ins_to_fix->_raw), -1);
+    TTY_TRACE_CR((""));
+  }
+#endif
+
+  return;
+}
+
+// handle instruction not be scheduled.
+bool 
+CodeOptimizer::fix_pc_immediate_fast(
+                          OptimizerInstruction* ins_to_fix) {
+  // determine the location of the instruction in the original stream
+  if (ins_to_fix->_internals._literal_id  == not_access_literal) {
+    return false;
+  }
+  if (ins_to_fix->_shift != 0) {
+    return false;
+  }
+
+#ifndef PRODUCT
+  int old_instruction = 0;
+  if (OptimizeCompiledCodeVerboseInternal) {
+    old_instruction = *(ins_to_fix->_raw);
+  }
+#endif
+
+  InternalCodeOptimizer* ico = Compiler::current()->optimizer();
+  int old_code_offset = ins_to_fix->_raw - (int *) ico->_stop_method->entry();
+  int new_imm = ins_to_fix->_imm;
+
+  VERBOSE_SCHEDULING_AS_YOU_GO(("\t\t fix_pc_immediate_internal_fast"));
+  VERBOSE_SCHEDULING_AS_YOU_GO( ("\t\t\toffset old[%d]=>new[%d]",
+                  old_code_offset<<2, old_code_offset<<2));
+
+  if (ins_to_fix->_internals._literal_id  > undetermined_literal) {
+
+    //get the previous node of current ldr chain by the offset kept in score board	
+    int prev_emit_offset = 
+           ico->offset_of_scheduled_unbound_literal_access_ins(
+              ins_to_fix->_internals._literal_id );
+    //update the score board	with the emitted offset of current ins
+    ico->update_offset_of_scheduled_unbound_literal_access_ins(
+              ins_to_fix->_internals._literal_id , old_code_offset<<2);     
+    if (prev_emit_offset != 0) {
+      new_imm = prev_emit_offset - (old_code_offset<<2 ) - 8;
+    } else {
+      
+      if ( ins_to_fix->_imm == -8) {
+	 //current ins has alread been the head of the chain(pointed)	
+        return false;
+      } else {
+        //current ins becomes the head of the chain after scheduling
+        new_imm = -8;
+      }
+    }
+  }
+  VERBOSE_SCHEDULING_AS_YOU_GO(("\t\t\timm  old[%d]=>new[%d], ",  ins_to_fix->_imm, new_imm));
+  int new_raw_ins = *ins_to_fix->_raw;
+  new_raw_ins &= 0xFFFFF000;
+
+  // Make sure sign bit for the offset
+  // is setup properly
+  if (new_imm < 0) {
+    new_imm = -new_imm;
+    new_raw_ins &= ~0x800000;
+  } else {
+    new_raw_ins |= 0x800000;
+  }  
+
+  new_raw_ins |= (new_imm & 0xFFF);
+  *ins_to_fix->_raw = new_raw_ins;
+
+#ifndef PRODUCT 
+  if (OptimizeCompiledCodeVerboseInternal) {
+    TTY_TRACE(("\t\t\t "));
+    Disassembler(tty).disasm(0, old_instruction, -1);
+    TTY_TRACE(("=>  "));
+    Disassembler(tty).disasm(0, *(ins_to_fix->_raw), -1);
+    TTY_TRACE_CR((""));
+  }
+#endif
+  return true;
+}
+
+//fix the branch inst for boundary checking code
+//
+void 
+CodeOptimizer::fix_branch_immediate( OptimizerInstruction* ins_to_fix, 
+                                                             int new_index ) {
+  // determine the location of the instruction in the original stream
+  int raw_index = 0;
+  if (ins_to_fix->_shift != 0) {
+    return;
+  }
+  
+  for (OptimizerInstruction* curr = _ins_block_base;
+       curr < _ins_block_next; curr++, raw_index++) {
+    if (curr == ins_to_fix) {
+      break;
+    }
+  }
+       
+  int new_position =((int) ins_to_fix->_raw + (new_index<<2) - (raw_index<<2));
+  int imm24;
+  int new_raw;
+  
+  if (_address_of_shared_emitted_index_check_stub != 
+  	        not_bound) {
+    //the stub is emitted. 	        
+    imm24 = (_address_of_shared_emitted_index_check_stub 
+		     - new_position - 8) >> 2;
+  } else {
+     if (_address_of_last_emitted_branch_to_index_check_stub == 
+	 	no_branch_to_index_check_stub) {
+	//we are the head of the chain 
+       imm24 = (-8)>> 2;
+     } else {
+       //we adjust the target to maintain the chain of un-patched branch 
+       imm24 = ( _address_of_last_emitted_branch_to_index_check_stub
+	   	         - new_position - 8) >> 2;
+     }
+       //update value of the latest emitted branch of that chain.
+     _address_of_last_emitted_branch_to_index_check_stub
+	 	= new_position;
+  }
+
+  new_raw = *ins_to_fix->_raw;
+  new_raw = new_raw & 0xff000000 | imm24 & 0x00ffffff;
+  *ins_to_fix->_raw = new_raw;
+  return;
+}
+
+void CodeOptimizer::fix_pc_immediate_for_ins_unscheduled(
+	int block_size) {
+  OptimizerInstruction* insBlockCurr;
+  OptimizerInstruction *temp_p;
+  int i;
+  if (Compiler::current()->optimizer()->get_unbound_literal_count() != 0) {
+    insBlockCurr = _ins_block_base;
+    for (i=0; i<block_size; i++) {
+      temp_p = insBlockCurr+i;
+      if ((temp_p->_operands & REGISTER_PC) &&
+          (temp_p->_type == OptimizerInstruction::ldr)) {
+        //found a literal access ins  
+        if (fix_pc_immediate_fast(temp_p)) {
+          *(_ins_block_base->_raw+i) = *(temp_p->_raw);
+        }
+      }
+    }
+  }
+}
+
+
+void CodeOptimizer::fix_pc_immediate_for_ins_outside_block(
+	int* ins_curr, int* ins_block_end) {
+      //fix for literal access
+      ins_curr = ins_block_end + 1;
+      if (ins_curr != (_ins_raw_end + 1)  && 
+        !_data_entries.get( ins_curr - _ins_raw_start)) {
+        bool found =false;
+        OptimizerInstruction op;
+        for (OptimizerInstruction* curr = _ins_block_base;
+              curr < _ins_block_top; curr++) {
+          if (curr->_raw == ins_curr) {
+            found = true;
+            op = *curr;
+            break;
+          }
+        }
+        if (!found) {
+          op.init( ins_curr);
+          unpack_instruction(&op);
+          determine_literal_id(&op);
+        }
+        if (op._operands & REGISTER_PC &&
+          op._type == OptimizerInstruction::ldr) {
+          //found a literal access ins
+          if (fix_pc_immediate_fast(&op)) {
+            *(ins_curr) = *(op._raw);
+          }
+        }
+      }
+}
+
+#else //ENABLE_INTERNAL_CODE_OPTIMIZER
+bool CodeOptimizer::depends_of_memory_on_ins(OptimizerInstruction* ins_first,
+                                   OptimizerInstruction* ins_next) {
   bool writeback =( ins_first->_status | ins_next->_status ) & 
-                                   STATUS_WRITEBACK;
+                                   status_writeback;
   bool checkImm = 
        ( (ins_first->_type == OptimizerInstruction::str && 
           ins_next->_type  == OptimizerInstruction::ldr) ||
@@ -324,946 +1275,9 @@ bool CodeOptimizer::depends_on_ins(OptimizerInstruction* ins_first,
       return true;
     }
   }
-  
-#endif //ENABLE_INTERNAL_CODE_OPTIMIZER
 
   return false;
 }
-
-bool CodeOptimizer::is_end_of_block(OptimizerInstruction* ins, int offset) {
-  GUARANTEE(ins != NULL, "Invalid instruction");
-
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-  if ( ExtendBasicBlock ) {
-    if ( ins->_status & STATUS_SCHEDUABLE ) {
-      return false;
-    }
-  }
-#endif
-
-  if ( ins->_type == OptimizerInstruction::branch || 
-       ins->_type == OptimizerInstruction::swi ) {
-    return true;
-  }
-
-  // Check for ldr pc or mov pc
-  if (ins->_results & REGISTER_PC) {
-#if  ENABLE_INTERNAL_CODE_OPTIMIZER
-    if ( ExtendBasicBlock ) {
-      unsigned int offset =(unsigned int) ((int) ins->_imm - _iob_handler_offset);
-      if (ins->_operands & REGISTER_GP && offset <= 10 * BytesPerWord ) {
-        ins->_status |= STATUS_SCHEDUABLE;
-        return false;
-      }
-    }
-#endif
-    return true;
-  } else { 
-    return false;
-  }
-}
-
-#if ENABLE_NPCE
-//read the npe related ldr/str from 
-//relocation stream.
-bool CodeOptimizer::detect_exception_table(int offset) {
-  int table_item;
-  int address;
-  for (RelocationReader stream(method); !stream.at_end(); stream.advance()) {
-    if (stream.is_npe_item()) {
-      if (stream.current_item(1) == 4*offset) {
-        return true; 
-      }
-    } 
-  } 
-  return false;
-}
-#endif //ENABLE_NPCE
-
-void CodeOptimizer::determine_pin_status( OptimizerInstruction* ins,
-                                          int offset) {
-  ins->_status &= ~STATUS_PINNED;
-
-
-#if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
-  //handler npe cases
-  if ((ins->_type == OptimizerInstruction::ldr ||
-         ins->_type == OptimizerInstruction::str) && 
-         _scheduablebranchs_or_abortpoint.get(offset)) {
-    //pinned all npe and array index related
-    //schedule if the method has exception handler.
-    if (_has_exception_handler) {
-      ins->_status |= STATUS_PINNED;
-      return;
-    }
-#ifndef PRODUCT        
-    if (OptimizeCompiledCodeVerboseInternal) {
-      TTY_TRACE(("abort point "));
-      Disassembler(tty).disasm(NULL, *( ins->_raw), -1);
-      TTY_TRACE_CR((""));
-    }
-#endif
-    ins->put_result(Assembler::jsp);
-    ins->_internals._abortable = ABORT_POINT_ID;
-  }
-#endif
-
-#if ENABLE_INTERNAL_CODE_OPTIMIZER 
-  //decoder will take some data of call info as instructions.
-  //we mark those no-instructions address in _not_instructions
-  //and pinned them.
-  if (_not_instructions.get(offset)) {
-    ins->_internals._literal_id  = NON_LITERAL_ID;
-    ins->_status |= STATUS_PINNED;
-    return;
-  }
-
-  //if is a inline array out of boundary exception thrower
-  //mark them to create exteded basic block
-  if ( (ins->_type ==OptimizerInstruction::ldr) && 
-       (ins->_results & REGISTER_PC) && 
-      (ins->_operands & REGISTER_GP) ) {
-    unsigned int offset =(unsigned int)((int) ins->_imm - _iob_handler_offset);
-    if ( offset <= 10 * BytesPerWord ) {
-      ins->_status |= STATUS_SCHEDUABLE;
-      ins->put_result(Assembler::jsp);
-      return;
-    }
-  //if a standard array out of boundary exception thrower  
-  //mark them to create exteded basic block
-  } else if (ins->_type ==OptimizerInstruction::branch && 
-       _scheduablebranchs_or_abortpoint.get(offset)) {
-    ins->_status |= STATUS_SCHEDUABLE;
-    ins->put_result(Assembler::jsp);
-    return;
-  }
-#else
-  if (ins->_type == OptimizerInstruction::str) {
-    unsigned short imm_register = ins->_results;
-    if ((imm_register & ~REGISTER_FP) &&
-       (imm_register & ~REGISTER_SP) &&
-       (imm_register & ~REGISTER_GP)) {
-      ins->_status |= ( STATUS_PINNED | STATUS_ALIASED);
-      return;
-    }
-  }
-#endif // ENABLE_INTERNAL_CODE_OPTIMIZER
-
-  // Check if the instruction is an osr entry
-  if (_pinned_entries.get(offset)) {
-    ins->_status |= ( STATUS_PINNED | STATUS_ALIASED);
-    return;
-  }
-
-  // remove cmp instruction from no-move list
-  if (ins->_type == OptimizerInstruction::ldm ||
-      ins->_type == OptimizerInstruction::stm || 
-      ins->_type == OptimizerInstruction::unknown ||
-      ins->_type == OptimizerInstruction::mult ||
-      ins->_type == OptimizerInstruction::branch ||      
-      ins->_type == OptimizerInstruction::data_carry) {
-      ins->_status |= STATUS_PINNED;
-    return;
-  }
-
-  // shift ror/rrx 
-  if (ins->_shift >= 2) {
-    ins->_status |= STATUS_PINNED;
-    return;
-  }
-
-  // Pin if uses pc
-  if (ins->_results & REGISTER_PC) {
-    ins->_status |= STATUS_PINNED;
-    return;
-  }
-
-  if (ins->_operands & REGISTER_PC) {
-    if (ins->_type != OptimizerInstruction::ldr ||
-       ins->_imm > 3976 || ins->_imm < -3976) {
-       ins->_status |= STATUS_PINNED;      
-    }
-    return;
-  }
-
-  if (ins->_type == OptimizerInstruction::ldr ||
-      ins->_type == OptimizerInstruction::str ) {
-#if ENABLE_NPCE && \
-     !ENABLE_INTERNAL_CODE_OPTIMIZER 
-   if ( detect_exception_table(offset)) {
-      ins->_status |= STATUS_PINNED;
-      return;
-    }
-#endif
-  }
-  return;
-}
-
-int* CodeOptimizer::unpack_block(int* ins_start, int* ins_end,
-                                 int  offset) {
-  _ins_block_next = _ins_block_base;
-
-  // filter out single instruction blocks
-  _ins_block_next->init(ins_start);
-  unpack_instruction(_ins_block_next);
-  determine_pin_status(_ins_block_next, offset);
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-#ifndef PRODUCT  
-  if (OptimizeCompiledCodeVerboseInternal) {
-    TTY_TRACE_CR(("\t[BB Head]=0x%08x",(int)_ins_block_next->_raw));
-  }
-#endif  
-  determine_literal_id(_ins_block_next);
-#endif//ENABLE_INTERNAL_CODE_OPTIMIZER
-
-  if (is_end_of_block(_ins_block_next, offset)) {
-    return ins_start;
-  } else {
-    ++_ins_block_next;
-    ++offset;
-  }
-
-  // Currently supports only basic blocks of max size 30 instructions
-  for (int* ins_curr = ins_start + 1; ins_curr <= ins_end; ins_curr++, offset++) {
-    _ins_block_next->init(ins_curr);
-    unpack_instruction(_ins_block_next);
-    determine_pin_status(_ins_block_next, offset);
-
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-    determine_literal_id(_ins_block_next);
-#else
-    // the first instruction of method shouldn't be
-    // moved because of _method_execution_sensor
-    if ( ins_start == _ins_raw_start ) {
-      _ins_block_next->_status |= STATUS_PINNED;
-    }
-#endif    
-
-    // Check for branch target as well
-    if ( _branch_targets.get(offset)) {
-      return ins_curr - 1;
-    }
-
-    // Check for the end of block, included mov pc, rx into basic block
-    if (is_end_of_block(_ins_block_next, offset)) {
-      if ( _ins_block_next->_type == OptimizerInstruction::branch || 
-            _ins_block_next->_type == OptimizerInstruction::swi ||
-            _ins_block_next->_type == OptimizerInstruction::ldr) {
-      return ins_curr - 1;
-      } else {
-        _ins_block_next++;
-        return ins_curr;
-      }
-    }
-
-    if (_ins_block_next+1 == _ins_block_top) {
-      _ins_block_next++;
-      return ins_curr;
-    }
-
-    ++_ins_block_next;
-  }
-  return ins_end;
-}
-
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-//if this is a instruction to load constant,
-//we assign a literal id to the ldr instruction
-//to  track the link.
-void CodeOptimizer::determine_literal_id(OptimizerInstruction* ins) {
-  if ((ins->_type == OptimizerInstruction::ldr) &&
-      (ins->_operands & REGISTER_PC) &&
-      (ins->_internals._literal_id  == UNDETERMINED_LITERAL_ID) ) {
-    InternalCodeOptimizer* ico = Compiler::current()->optimizer();
-#ifndef PRODUCT        
-    int old_literal_id= ins->_internals._literal_id ;
-#endif
-    int offset =(int) ins->_raw -(int) method->entry();
-
-    //old_offset is the offset of ldr instruction accessing
-    //same constant and pointed by current instruction
-    // ldr rx, [pc, #xx]
-    //  |
-    // ldr rxx, [pc, #xx]
-    int old_offset = offset +  (ins->_imm + 8);
-    int id = ico->search_unbound_literal( old_offset);
-    ins->_internals._literal_id  = id;
-    if (id != UNDETERMINED_LITERAL_ID) {
-      ico->update_unbound_literal_tracking_address(id, offset);
-      if (ico->get_scheduled_unbound_literal_address(id) == 0) {
-        //if the ldr link is start from previous CC
-        //we record the offset and recreat link based on 
-        //this fixed offset(old_offset)
-        //otherwise we need to tracker the link head
-        //durning scheduling
-        if (old_offset < ico->_start_code_offset) {
-          ico->update_scheduled_unbound_literal_tracking_address(id, 
-                                                        old_offset);
-        }
-      }
-    }
-#ifndef PRODUCT      
-    if (OptimizeCompiledCodeVerboseInternal) {
-      TTY_TRACE(("\t\tdetermin_literal_id[%d]\n\t\t\t", offset));
-      Disassembler(tty).disasm(NULL, *( ins->_raw), -1);
-      TTY_TRACE_CR((""));
-      TTY_TRACE_CR(("\t\t\tliteral_id[%d]=>[%d]", old_literal_id, 
-                                   ins->_internals._literal_id ));
-      TTY_TRACE_CR(("\t\t\t[pre offset=%d]<=[my offset=%d]", old_offset, 
-                                                               offset));
-    }
-#endif        
-  }
-}
-#endif // ENABLE_INTERNAL_CODE_OPTIMIZER
-
-void CodeOptimizer::update_branch_target(OptimizerInstruction* ins, 
-                                        int* ins_start, 
-                                        int* ins_end) {
-  if (ins->_type == OptimizerInstruction::branch) {
-   // TTY_TRACE_CR(("\t\t[0%d] Unpatched BL", 
-   //                (int)ins->_raw-(int)method->entry()));
-     
-   // Disassembler(tty).disasm(NULL, *( ins->_raw), -1);
-    int offset = ((*ins->_raw & 0xffffff) | 
-                 (bit(*ins->_raw, 23) ? 0xff000000 : 0)) << 2; 
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-   /*
-    //This code will slow the eembc kxml
-    int target =(int) ins->_raw  + offset + 8;
-    if (target < (int) method->entry() ||  
-        target > (int) ins_end) {
-      return; 
-    }  
-    int encode = *(int*)target;
-    if (((encode >> 25) & 0x7) == 5) {
-    */
-    if (offset == -8) {
-      //this must be branch hasn't been patched
-      //if the offset pointed ot other un-patched 
-      //instruction, we can't mark them as branh target also.
-      //changed, but need performance is not good.
-      //so keep the old.
-#ifndef PRODUCT
-      if (OptimizeCompiledCodeVerboseInternal) {
-        TTY_TRACE_CR(("\t\t[0%d] Unpatched BL", 
-                (int)ins->_raw-(int)method->entry()));
-      }
-#endif
-      return;
-    }
-#endif
-    int* targetPc = (int*) ((int)ins->_raw + 8 + offset);
-    if (targetPc >= ins_start && targetPc <= ins_end) {
-      _branch_targets.set(abs(targetPc - ins_start));
-    }
-#if ENABLE_INTERNAL_CODE_OPTIMIZER    
-    else if (_iob_stub_position != -1) {
-      //if target is index out of boundary stub,
-      //we mark them as schedulable branch
-      //for later extended basic block work
-      if (((int) targetPc-(int) method->entry()) == _iob_stub_position) {
-        if (OptimizeCompiledCodeVerboseInternal) {        
-          TTY_TRACE_CR(("Found a bound schedulable branch %d", 
-              abs(ins->_raw - ins_start)<<2));
-        }
-        _scheduablebranchs_or_abortpoint.set(abs(ins->_raw - ins_start));
-      };
-    }
-#endif      
-  }
-  return;
-}
-
-void CodeOptimizer::update_data_sites(OptimizerInstruction* ins,
-                                      int* ins_start,
-                                      int* ins_end) {
-  if (ins->_type == OptimizerInstruction::data &&
-      (ins->_results & REGISTER_LR) &&
-      (ins->_operands & REGISTER_PC)) {
-    // covers add lr, pc, #<immed>
-    // followed by jump and call data
-    int* targetPc = (int*) ((int)ins->_raw + 8 + ins->_imm);
-    if (targetPc >= ins_start && targetPc <= ins_end) {
-      // Pin all instructions between this and the target
-      int i = abs(ins->_raw - ins_start);
-#if ENABLE_INTERNAL_CODE_OPTIMIZER      
-      // this address has identied as data
-      // skip the follow code.
-      if ( _not_instructions.get(i) ) {
-        return ;
-      }
-#endif      
-      for (; i < abs(targetPc - ins_start); i++) {
-        _pinned_entries.set(i);
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-        _not_instructions.set(i);
-#endif
-      }
-    }
-  } else if (ins->_type == OptimizerInstruction::ldr && 
-             ins->_operands & REGISTER_PC) {
-    // covers literals that are embedded in code
-#if !ENABLE_INTERNAL_CODE_OPTIMIZER
-    //in internal code optimizer, this will be handler by fix_memory load 
-    //function
-    int* targetPc = (int*) ((int)ins->_raw + 8 + ins->_imm);
-    if (targetPc >= ins_start && targetPc <= ins_end) {
-      _pinned_entries.set(abs(targetPc - ins_start));
-    }
-#endif
-  }
-  return;
-}
-
-#if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
-//mark the npe relation instuction
-//since them may result branch
-//and should maintain jsp for these instruction.
-void CodeOptimizer::update_abort_points(int* ins_start,
-                                                  int* ins_end) {
-  int table_size = Compiler::current()->
-       code_generator()->npe_index();
-  int index;
-  int start_offset = (int) ins_start - (int) method->entry();
-  for ( int i = 0; i < table_size ; i++) {
-    index = ( Compiler::npe_address( i ) - start_offset ) >> 2;
-    _scheduablebranchs_or_abortpoint.set(index);
-  }
-}
-#endif
-
-void CodeOptimizer::update_instruction_info_tables(int* ins_start, 
-                                                   int* ins_end) {
-  OptimizerInstruction ins;
-  for (int* ins_curr = ins_start; ins_curr < ins_end; ins_curr++) {
-    ins.init(ins_curr);
-    unpack_instruction(&ins);
-    update_branch_target(&ins, ins_start, ins_end);
-    update_data_sites(&ins, ins_start, ins_end);
-  }
-}
-
-void CodeOptimizer::determine_osr_entry(int* ins_start, int* ins_end) {
-
-#if ENABLE_INTERNAL_CODE_OPTIMIZER 
-  Compiler *current_compiler = Compiler::current();
-  InternalCodeOptimizer* internal_optimizer = current_compiler->optimizer();
-  BinaryAssembler::Label label;
-  //Get schedulable branch instruction
-  {
-    int next = 0;
-    int prev = 0;
-    while ((next = 
-    current_compiler->next_schedulable_branch( ins_start, prev, &label)) > 0) {
-      _scheduablebranchs_or_abortpoint.set(
-        (next -internal_optimizer->_start_code_offset)/4);
-
-      _branch_targets.set(
-      (next -internal_optimizer->_start_code_offset)/4, false);
-      prev = next;
-    }
-    //if next = -2 
-    //the index out of boundary linker head is in previous 
-    //CC.
-    if (next != -1) {
-      _iob_address_tracker = prev ;
-    } 
-  }
-
-  //Pin OSR entries and Entry Frames
-  current_compiler->begin_pinned_entry_search();
-  label = current_compiler->get_next_pinned_entry();
-  while (!label.is_unused()) {
-#ifndef PRODUCT   
-    if (OptimizeCompiledCodeVerboseInternal) {
-      TTY_TRACE(("\t***OSR Entry offset=%d,",label.position())); 
-    }
-#endif
-    if (label.position() >= internal_optimizer->_start_code_offset ) {
-#ifndef PRODUCT   
-      if (OptimizeCompiledCodeVerboseInternal) {
-        TTY_TRACE_CR( ("pinned at bitmap [%d]",
-          ((label.position() - internal_optimizer->_start_code_offset)/4)));
-      }
-#endif//PRODUCT
-      _pinned_entries.set(
-        (label.position() - internal_optimizer->_start_code_offset)/4);
-    }
-    label = current_compiler->get_next_pinned_entry();
-  }
-
-  //create literal data structure
-  current_compiler->begin_bound_literal_search();
-  label = current_compiler->get_next_bound_literal();
-  while (!label.is_unused()) {
-#ifndef PRODUCT   
-    if (PrintCompiledCodeAsYouGo) {
-      TTY_TRACE_CR(("\tBound literal Offset is %d", label.position())); 
-    }
-#endif//PRODUCT
-    if (label.position() >= internal_optimizer->_start_code_offset ) {
-#ifndef   PRODUCT   
-      if (PrintCompiledCodeAsYouGo) {
-        TTY_TRACE(("\tBound literal Pinned %d \t", label.position()));
-        TTY_TRACE_CR(("set bitmap at %d \t",
-            ((label.position()-internal_optimizer->_start_code_offset)/4)));
-      }
-#endif//PRODUCT
-      _not_instructions.set( (label.position() - 
-              internal_optimizer->_start_code_offset)/4 );
-    }
-    label = current_compiler->get_next_bound_literal();
-  }
-#else
-  for (RelocationReader stream(method); !stream.at_end(); stream.advance()) {
-    if (stream.is_osr_stub()) {        
-      _pinned_entries.set(stream.code_offset()/4);      
-    }    
-  }
-#endif//ENABLE_INTERNAL_CODE_OPTIMIZER
-}
-
-#if ENABLE_INTERNAL_CODE_OPTIMIZER  
-void CodeOptimizer::fix_memory_load(OptimizerInstruction* ins_to_fix,
-                                         int new_index) {
-  int raw_index = 0;
-  InternalCodeOptimizer* ico = Compiler::current()->optimizer();
-
-  if (ins_to_fix->_shift != 0) {
-    return;
-  }
-  
-  for (OptimizerInstruction* curr = _ins_block_base;
-        curr < _ins_block_next; curr++, raw_index++) {
-    if (curr == ins_to_fix) {
-      break;
-    }
-  }
-        
-  if (raw_index == new_index) {
-    return;
-  }
-
-  //previous instruction
-  int i = raw_index - 1;
-  
-#if ENABLE_NPCE      
-  short instruction_index_before_schedule = 
-          (short) ( ins_to_fix->_raw - (int *) ico->_stop_method->entry());
-  short instruction_index_after_schedule =
-          (short)( instruction_index_before_schedule +  new_index - raw_index);
-  int index;
-#endif
-
-  bool need_item = true;
-  if ( i >= 0 ) {
-    //previous instruction is in BB
-    if ( ( _ins_block_base[i]._status & 
-              (STATUS_EMITTED | STATUS_SCHEDUABLE) ) == 
-              (STATUS_EMITTED | STATUS_SCHEDUABLE) ) {
-      //if previous is scheduable branch and has been emitted
-      //so cmp of array boundary has happened
-
-      
-      int load_offset = ins_to_fix->_raw - (int *)method->entry() + 
-                                             new_index - raw_index;
-#if ENABLE_NPCE        
-      int j = raw_index - 3 ;
-      if (  j >= 0  &&  !( _ins_block_base[j]._status & STATUS_EMITTED ) &&
-            _ins_block_base[j]._internals._abortable == ABORT_POINT_ID) { 
-        // if this is the first array access, which mean a npe may happend
-        // when acess array length.
-        // ldr -> raw_index -3 
-        // cmp
-        // b
-        // ldr
-        int possible_abort_point = instruction_index_before_schedule - 3;
-#ifndef PRODUCT
-        if (PrintCompiledCodeAsYouGo) {
-          TTY_TRACE_CR(("abort a array bound check item at %d", 
-                                                               load_offset <<2));
-        }
-#endif
-
-        //in this case, 
-        //error memory access
-        //should be taken as npe 
-        need_item = false;
-
-        index = ico->get_index_of_npe_scheduled_address( 
-                   possible_abort_point);
-        if (index != -1) {
-          // in this case
-          // array element load is scheduled 
-          // ahead of array length acess
-          // we need update the npe information 
-          // to handle this
-          ico->set_npe_scheduled_address( index,  
-                  instruction_index_after_schedule);
-          //mark the npe related ldr has processed
-          //so later he will not cleanup the updating.
-          _ins_block_base[j]._status |= STATUS_EMITTED;
-        }
-      }
-#endif
-
-      if (need_item) {
-        Compiler::current()->code_generator()->
-               emit_pre_load_item( load_offset<<2, ico->_stop_code_offset);
-      }
-    }
-  }
-  
-#if ENABLE_NPCE
-  if (ico->get_npe_record_count() == 0) {
-    return;
-  }
-  
-  index = ico->get_index_of_npe_scheduled_address( 
-                       instruction_index_before_schedule);
-          
-#ifndef PRODUCT
-  if (PrintCompiledCodeAsYouGo) {
-    tty->print( "\t\tNPE LDR old=[%d] ",
-                instruction_index_before_schedule<<2 );
-    tty->print_cr("new=[%d] ", instruction_index_after_schedule<<2);
-    tty->print_cr("[table index]=%d \n", index);
-    tty->print_cr("\t\t");
-    Disassembler(tty).disasm(NULL,*( ins_to_fix->_raw), -1);
-    tty->cr();
-  }
-#endif  
-  if (index != -1  && !(ins_to_fix->_status & STATUS_EMITTED)) {
-    ico->set_npe_scheduled_address( index,  instruction_index_after_schedule);
-  }
-#endif
-}
-#endif // ENABLE_INTERNAL_CODE_OPTIMIZER
-
-
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-bool InternalCodeOptimizer::StopInternalCodeOptimizer(CompiledMethod* cm,
-                                        int curren_code_offset JVM_TRAPS){
-  int i, code_length;
-  int* code_begin;
-  int* code_end;
-    
-  Compiler *compiler = Compiler::current();
-    
-  _stop_method = cm;
-  _stop_code_offset = curren_code_offset - BytesPerWord;
-  if ( _start_method == _stop_method && 
-       _stop_code_offset >= _start_code_offset ) {
-    // begin the code optimizing
-    code_length = (_stop_code_offset - _start_code_offset) >> 2;
-    code_begin = (int *)cm->entry() + (_start_code_offset>>2);
-    code_end = code_begin + code_length;
-
-    ObjectHeap::save_compiler_area_top_fast();
-#ifndef PRODUCT
-    if (OptimizeCompiledCodeVerboseInternal) {
-      TTY_TRACE_CR(("****Internal optimization start"));
-    }
-#endif
-
-#if ENABLE_NPCE    
-    _npe_related_ldrs_ptr = 0;
-#endif
-    _unbound_literal_count = 0;
-    _iob_related_ldrs_ptr = 0;
-    //don't skip any un-schedulable instructions 
-    //they may need to patch literal.
-#if ENABLE_NPCE      
-    init_npe_table(ThrowExceptionStub::npe_count  JVM_CHECK_0);
-#endif
-
-    init_unbound_literal_tables(
-           compiler->get_unbound_literal_count() JVM_CHECK_0);
-
-#ifndef PRODUCT      
-    if (OptimizeCompiledCodeVerboseInternal) {          
-      TTY_TRACE_CR(( "\t[ub_literal_count]=%d",
-                     compiler->get_unbound_literal_count()) );
-    }
-#endif      
-
-#ifndef PRODUCT                  
-    if (OptimizeCompiledCodeVerboseInternal) {
-      TTY_TRACE_CR(("\tAccesses of unbound literal"));
-    }
-#endif
-
-    compiler->get_first_literal_ldrs(code_begin);
-
-#if ENABLE_NPCE    
-#ifndef PRODUCT                  
-    if (OptimizeCompiledCodeVerboseInternal)
-      TTY_TRACE_CR(("\tNPE ldr instructions"));
-#endif
-    compiler->get_npe_instructions(_start_code_offset);     
-#endif
-
-    _optimizer.reset(cm, code_begin, code_end);
-
-#if ENABLE_NPCE
-    //if has exception handler
-    //don't do extend basic block scheduling
-    Method::Raw cur_method = cm->method();
-    if ( !cur_method().has_no_exception_table()  ) {
-      _optimizer.set_has_exception_table(true);
-    }
-#endif
-
-    _optimizer.optimize_code(JVM_SINGLE_ARG_CHECK_0);
-
-#if ENABLE_NPCE       
-    compiler->patch_null_check_stubs();
-#endif
-
-#ifndef PRODUCT
-    if (OptimizeCompiledCodeVerboseInternal) {
-      dump_unbound_literal_table();
-    }
-#endif    
-
-    compiler->patch_unbound_literal(_start_code_offset);
-    _optimizer.update_aoi_stub();
-    ObjectHeap::update_compiler_area_top_fast();
-
-#ifndef PRODUCT
-    if (OptimizeCompiledCodeVerboseInternal) {
-      TTY_TRACE_CR(("****Internal optimization finish"));
-    }
-#endif
-
-  } else {
-#ifndef PRODUCT
-    if (OptimizeCompiledCodeVerboseInternal) {
-      if ( _start_method != _stop_method ) {
-        TTY_TRACE_CR(("Can't optimization code due to method switching!"));
-      }
-    }
-#endif
-  }
-
-  return 0;
-}
-
-//code handler constant load in internal code scheduling
-void 
-CodeOptimizer::fix_pc_immediate_internal( OptimizerInstruction* ins_to_fix,
-                                          int new_index) {
-  // determine the location of the instruction in the original stream
-  int raw_index = 0;
-  
-  if (ins_to_fix->_internals._literal_id  == NON_LITERAL_ID) {
-    return;
-  }
-  if (ins_to_fix->_shift != 0) {
-    return;
-  }
-  
-  for (OptimizerInstruction* curr = _ins_block_base;
-        curr < _ins_block_next; curr++, raw_index++) {
-    if (curr == ins_to_fix) {
-      break;
-    }
-  }
-
-#ifndef PRODUCT
-  int old_instruction=0;
-  if (OptimizeCompiledCodeVerboseInternal) {
-    old_instruction = *(ins_to_fix->_raw);
-  }
-#endif
-
-  InternalCodeOptimizer* ico = Compiler::current()->optimizer();
-  int old_code_offset = ins_to_fix->_raw - (int *) ico->_stop_method->entry();
-  int new_code_offset  = old_code_offset +  new_index - raw_index;
-  int new_imm = ins_to_fix->_imm + (raw_index - new_index)*4 ;
-#ifndef PRODUCT  
-  if (OptimizeCompiledCodeVerboseInternal) {
-    TTY_TRACE_CR(("\t\t fix_pc_immediate_internal"));
-    TTY_TRACE_CR(("\t\t\tindex old[%d]=>new[%d], ", raw_index, new_index));
-    TTY_TRACE_CR( ("\t\t\toffset old[%d]=>new[%d], ",
-                  old_code_offset<<2, new_code_offset<<2));
-  }
-#endif  
-  if ( ins_to_fix->_internals._literal_id  > UNDETERMINED_LITERAL_ID) {
-    int prev_emit_offset = 
-         ico->get_scheduled_unbound_literal_address(
-                                 ins_to_fix->_internals._literal_id );
-    ico->update_scheduled_unbound_literal_tracking_address(
-                ins_to_fix->_internals._literal_id , new_code_offset<<2);     
-    if (prev_emit_offset != 0) {
-      new_imm = prev_emit_offset - (new_code_offset<<2 ) - 8;
-    } else { 
-      //_literal_id related constant access instructions has not be 
-      //emitted before.we are the first one.
-      if ( ins_to_fix->_imm == -8) {
-        return;
-      } else {
-        //only fix new_imm when the previous one  is in current CC
-        //otherwise, new_imm = change of current instruction + old _imm.
-        if ( ((old_code_offset <<  2) + ins_to_fix->_imm + 8 ) >= 
-              ico->_start_code_offset ) {
-          new_imm = -8;
-        }
-      }
-    }
-  }
-
-#ifndef PRODUCT  
-  if (OptimizeCompiledCodeVerboseInternal) {  
-    TTY_TRACE_CR(("\t\t\timm  old[%d]=>new[%d], ",  
-         ins_to_fix->_imm, new_imm));
-  }
-#endif  
-
-  int new_raw_ins = *ins_to_fix->_raw;
-  new_raw_ins &= 0xFFFFF000;
-
-  // Make sure sign bit for the offset
-  // is setup properly
-  if (new_imm < 0) {
-    new_imm = -new_imm;
-    new_raw_ins &= ~0x800000;
-  } else {
-    new_raw_ins |= 0x800000;
-  }
-  new_raw_ins |= (new_imm & 0xFFF);
-  *ins_to_fix->_raw = new_raw_ins;
-#ifndef PRODUCT 
-  if (OptimizeCompiledCodeVerboseInternal) {
-    TTY_TRACE(("\t\t\t "));
-    Disassembler(tty).disasm(NULL, old_instruction, -1);
-    TTY_TRACE((" =>  "));
-    Disassembler(tty).disasm(NULL, *(ins_to_fix->_raw), -1);
-    TTY_TRACE_CR((""));
-  }
-#endif
-
-  return;
-}
-
-// handle instruction not be scheduled.
-bool 
-CodeOptimizer::fix_pc_immediate_internal_fast(
-                          OptimizerInstruction* ins_to_fix) {
-  // determine the location of the instruction in the original stream
-  if (ins_to_fix->_internals._literal_id  == NON_LITERAL_ID) {
-    return false;
-  }
-  if (ins_to_fix->_shift != 0) {
-    return false;
-  }
-
-#ifndef PRODUCT
-  int old_instruction = 0;
-  if (OptimizeCompiledCodeVerboseInternal) {
-    old_instruction = *(ins_to_fix->_raw);
-  }
-#endif
-
-  InternalCodeOptimizer* ico = Compiler::current()->optimizer();
-  int old_code_offset = ins_to_fix->_raw - (int *) ico->_stop_method->entry();
-  int new_imm = ins_to_fix->_imm;
-
-#ifndef PRODUCT
-  if (OptimizeCompiledCodeVerboseInternal) {
-    TTY_TRACE_CR(("\t\t fix_pc_immediate_internal_fast"));
-    TTY_TRACE_CR( ("\t\t\toffset old[%d]=>new[%d]",
-                  old_code_offset<<2, old_code_offset<<2));
-  }
-#endif  
-
-  if (ins_to_fix->_internals._literal_id  > UNDETERMINED_LITERAL_ID) {
-    int prev_emit_offset = 
-           ico->get_scheduled_unbound_literal_address(
-              ins_to_fix->_internals._literal_id );
-    ico->update_scheduled_unbound_literal_tracking_address(
-              ins_to_fix->_internals._literal_id , old_code_offset<<2);     
-    if (prev_emit_offset != 0) {
-      new_imm = prev_emit_offset - (old_code_offset<<2 ) - 8;
-    } else {
-      if ( ins_to_fix->_imm == -8) {
-        return false;
-      } else {
-        new_imm = -8;
-      }
-    }
-  }
-#ifndef PRODUCT  
-  if (OptimizeCompiledCodeVerboseInternal) {  
-    TTY_TRACE_CR(("\t\t\timm  old[%d]=>new[%d], ",  ins_to_fix->_imm, new_imm));
-  }
-#endif  
-  int new_raw_ins = *ins_to_fix->_raw;
-  new_raw_ins &= 0xFFFFF000;
-
-  // Make sure sign bit for the offset
-  // is setup properly
-  if (new_imm < 0) {
-    new_imm = -new_imm;
-    new_raw_ins &= ~0x800000;
-  } else {
-    new_raw_ins |= 0x800000;
-  }  
-
-  new_raw_ins |= (new_imm & 0xFFF);
-  *ins_to_fix->_raw = new_raw_ins;
-
-#ifndef PRODUCT 
-  if (OptimizeCompiledCodeVerboseInternal) {
-    TTY_TRACE(("\t\t\t "));
-    Disassembler(tty).disasm(0, old_instruction, -1);
-    TTY_TRACE(("=>  "));
-    Disassembler(tty).disasm(0, *(ins_to_fix->_raw), -1);
-    TTY_TRACE_CR((""));
-  }
-#endif
-  return true;
-}
-
-void 
-CodeOptimizer::fix_branch_immediate( OptimizerInstruction* ins_to_fix, 
-                                                             int new_index ) {
-  // determine the location of the instruction in the original stream
-  int raw_index = 0;
-  if (ins_to_fix->_shift != 0) {
-    return;
-  }
-  
-  for (OptimizerInstruction* curr = _ins_block_base;
-       curr < _ins_block_next; curr++, raw_index++) {
-    if (curr == ins_to_fix) {
-      break;
-    }
-  }
-       
-  int new_position =((int) ins_to_fix->_raw + (new_index<<2) - (raw_index<<2));
-  int imm24;
-  int new_raw;
-  
-  if (_iob_stub_position != -1) {
-    imm24 = (_iob_stub_position - new_position - 8) >> 2;
-  } else {
-     if (_iob_address_tracker == -1) {
-       imm24 = (-8)>> 2;
-     } else {
-       imm24 = ( _iob_address_tracker - new_position - 8) >> 2;
-     }
-     _iob_address_tracker = new_position;
-  }
-
-  new_raw = *ins_to_fix->_raw;
-  new_raw = new_raw & 0xff000000 | imm24 & 0x00ffffff;
-  *ins_to_fix->_raw = new_raw;
-  return;
-}
-
-#endif //ENABLE_INTERNAL_CODE_OPTIMIZER
 
 void CodeOptimizer::fix_pc_immediate( OptimizerInstruction* ins_to_fix,
                                       int new_index) {
@@ -1303,6 +1317,15 @@ void CodeOptimizer::fix_pc_immediate( OptimizerInstruction* ins_to_fix,
   return;
 }
 
+void CodeOptimizer::determine_osr_entry(int* ins_start, int* ins_end) {
+  for (RelocationReader stream(method); !stream.at_end(); stream.advance()) {
+    if (stream.is_osr_stub()) {        
+      _pinned_entries.set(stream.code_offset()/4);      
+    }    
+  }
+}
+#endif
+
 bool CodeOptimizer::build_dependency_graph(int block_size) {
   int i,j,m;
   OptimizerInstruction *temp_p, *temp_c;
@@ -1317,7 +1340,7 @@ bool CodeOptimizer::build_dependency_graph(int block_size) {
     temp_p = insBlockCurr+i;
     child_uses_result = false; 
 
-    if( temp_p->_status & STATUS_PINNED) {
+    if( temp_p->_status & status_pinned) {
       pinned_instructions[num_pinned++] = temp_p;
     }
      
@@ -1326,8 +1349,8 @@ bool CodeOptimizer::build_dependency_graph(int block_size) {
 
       //If parent is pinned, all instructions below it are its children
       if( ( temp_p->_status & 
-          ( STATUS_PINNED | STATUS_ALIASED) ) == 
-          STATUS_PINNED ) {
+          ( status_pinned | status_aliased) ) == 
+          status_pinned ) {
         temp_p->_children[temp_p->_num_children++] = temp_c;
       } else if (depends_on_ins(temp_p, temp_c)) {
         temp_c->_parents[temp_c->_num_parents++] = temp_p;
@@ -1339,7 +1362,7 @@ bool CodeOptimizer::build_dependency_graph(int block_size) {
       if(temp_c - temp_p  == 1) {
         //Add all pinned instructions as parents of this child
         for(m=0; m<num_pinned; m++) {
-          if (!(pinned_instructions[m]->_status & STATUS_ALIASED) ) {
+          if (!(pinned_instructions[m]->_status & status_aliased) ) {
             temp_c->_parents[temp_c->_num_parents++] = pinned_instructions[m];
           }
         }
@@ -1410,45 +1433,12 @@ bool CodeOptimizer::build_dependency_graph(int block_size) {
       }
     }
 
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
+
     //add for fix pc related ldr
     if (!can_be_optimized) {
-#ifndef PRODUCT
-      if (OptimizeCompiledCodeVerboseInternal) {
-        TTY_TRACE_CR( (
-"\tEnter block can't be optimized\n\t\tsize=%d\n\t\tunbound literal count=%d",
-                      block_size, 
-                      InternalCodeOptimizer::current()->get_unbound_literal_count()) );
-      }
-#endif    
-    if (Compiler::current()->optimizer()->get_unbound_literal_count() != 0) {
-      insBlockCurr = _ins_block_base;
-      for (i=0; i<block_size; i++) {
-        temp_p = insBlockCurr+i;
-#ifndef PRODUCT        
-        if (OptimizeCompiledCodeVerboseInternal) {
-          TTY_TRACE(("\t\t"));
-          Disassembler(tty).disasm(NULL, 
-             *temp_p->_raw,(int) temp_p->_raw - (int)method->entry());
-          TTY_TRACE_CR((""));
-        }
-#endif
-        if ((temp_p->_operands & REGISTER_PC) &&
-          (temp_p->_type == OptimizerInstruction::ldr)) {
-          if (fix_pc_immediate_internal_fast(temp_p)) {
-#ifndef PRODUCT        
-            if (OptimizeCompiledCodeVerboseInternal) {
-              TTY_TRACE_CR(("\t\tpatch instruction at  0x%08x",
-                            (_ins_block_base->_raw+i)) );
-            }
-#endif            
-            *(_ins_block_base->_raw+i) = *(temp_p->_raw);
-          }
-        }
-      }
+      fix_pc_immediate_for_ins_unscheduled(block_size);
     }
-  }
-#endif//ENABLE_INTERNAL_CODE_OPTIMIZER
+
   return can_be_optimized;
 }
 
@@ -1570,35 +1560,26 @@ bool CodeOptimizer::reorganize() {
     if ( last_scheduled->_operands & REGISTER_PC &&
          last_scheduled->_type == OptimizerInstruction::ldr) {
       // fix up PC immediate
-#if ENABLE_INTERNAL_CODE_OPTIMIZER        
-      fix_pc_immediate_internal(last_scheduled, _schedule_index);
-#else
       fix_pc_immediate(last_scheduled, _schedule_index);
-#endif
     }
 #if ENABLE_INTERNAL_CODE_OPTIMIZER 
-    else if ( !(last_scheduled->_status & ( STATUS_PINNED | 
-                                                        STATUS_SCHEDUABLE))  &&
+    else if ( !(last_scheduled->_status & ( status_pinned | 
+                                                        status_scheduable))  &&
                  (last_scheduled->_type == OptimizerInstruction::ldr || 
                   last_scheduled->_type == OptimizerInstruction::str) ) {
-      //handle npe and array load            
+      //emit npce or pre_ldr item into relocation if needed
       fix_memory_load(last_scheduled, _schedule_index);
-    }
-#endif
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-    else if (((last_scheduled->_status & 
-                        ( STATUS_PINNED | STATUS_SCHEDUABLE)) == 
-                        STATUS_SCHEDUABLE  ) && 
+    } else if (((last_scheduled->_status & 
+                        ( status_pinned | status_scheduable)) == 
+                        status_scheduable  ) && 
                 last_scheduled->_type == OptimizerInstruction::branch) {
-      //handle un-patched branch instruction
+      //fix for maintainning the chain of un-patched branch pointting to a 
+      //shared index check stub.
       fix_branch_immediate(last_scheduled, _schedule_index);
     }
 #endif
+    last_scheduled->_status |= status_emitted;
     _schedule[_schedule_index++] = *last_scheduled->_raw;
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-    last_scheduled->_status |= STATUS_EMITTED;
-#endif
-
 #ifndef PRODUCT
     last_scheduled->_scheduled = true;
 #endif
@@ -1704,87 +1685,38 @@ bool CodeOptimizer::optimize_code(JVM_SINGLE_ARG_TRAPS) {
   _branch_targets.init(JVM_SINGLE_ARG_CHECK_0);
   _pinned_entries.init(JVM_SINGLE_ARG_CHECK_0);
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
-  _not_instructions.init(JVM_SINGLE_ARG_CHECK_0);
-  _scheduablebranchs_or_abortpoint.init(JVM_SINGLE_ARG_CHECK_0);
+  _data_entries.init(JVM_SINGLE_ARG_CHECK_0);
+  _scheduable_branchs_and_abortpoint.init(JVM_SINGLE_ARG_CHECK_0);
 #if ENABLE_NPCE
+   //mark npe related instr into bitmap
    update_abort_points(_ins_raw_start, _ins_raw_end);
 #endif
-
 #endif
-  //_unbound_literal_ldrs.init(JVM_SINGLE_ARG_CHECK_0);
+
   // determine literals and callinfo sites in code
   // as well as branch targets
   update_instruction_info_tables(_ins_raw_start, _ins_raw_end);
+
+  determine_schedulable_branch(_ins_raw_start, _ins_raw_end);
+
+  determine_bound_literal(_ins_raw_start, _ins_raw_end);
+  
   // determine entry points 
+  // also mark boundary check related instr into bitmap
   determine_osr_entry(_ins_raw_start, _ins_raw_end);
 
   while (ins_curr < _ins_raw_end) {
     ins_block_end =
           unpack_block(ins_curr, _ins_raw_end, (ins_curr - _ins_raw_start));
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-#ifndef PRODUCT
-    if (OptimizeCompiledCodeVerboseInternal) {
-      TTY_TRACE_CR(("\t\tins_block_end=[0x%08x], ins_cur=[0x%08x]",ins_block_end, ins_curr));
-    }
-#endif  
-#endif
-
     if (build_dependency_graph(ins_block_end - ins_curr + 1)) {
       reorganize();
       update_compiled_code();
     }
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-#ifndef PRODUCT
-    if (OptimizeCompiledCodeVerboseInternal) {
-      TTY_TRACE_CR( ("\tis BB end a branch target  %s",
-                    _branch_targets.get(ins_block_end - _ins_raw_start)==0?"false":"true"));
-    }
-#endif  
-#endif
+
     if (_branch_targets.get(ins_block_end - _ins_raw_start)) {
       ins_curr = ins_block_end + 1;
     } else {
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-      //fix for constant access
-      ins_curr = ins_block_end + 1;
-      if (ins_curr != (_ins_raw_end + 1)  && 
-        !_not_instructions.get( ins_curr - _ins_raw_start)) {
-        bool found =false;
-        OptimizerInstruction op;
-        for (OptimizerInstruction* curr = _ins_block_base;
-              curr < _ins_block_top; curr++) {
-          if (curr->_raw == ins_curr) {
-            found = true;
-            op = *curr;
-#ifndef PRODUCT
-            if(OptimizeCompiledCodeVerboseInternal) {
-              TTY_TRACE_CR(("\t\t[0x%08x] decoded",(int)ins_curr));
-            }
-#endif  
-            break;
-          }
-        }
-        if (!found) {
-          op.init( ins_curr);
-          unpack_instruction(&op);
-          determine_literal_id(&op);
-        }
-        if (op._operands & REGISTER_PC &&
-          op._type == OptimizerInstruction::ldr) {
-          if (fix_pc_immediate_internal_fast(&op)) {
-#ifndef PRODUCT
-            if (OptimizeCompiledCodeVerboseInternal) {
-              tty->print( "literal[%d]=%s",
-                      op._internals._literal_id , found?"true":"false");
-              tty->print( " patching among BB [0x%08x] 0x%08x=>0x%08x\n",
-                      (int)(ins_curr),*(ins_curr),*(op._raw) );
-            }
-#endif  
-            *(ins_curr) = *(op._raw);
-          }
-        }
-      }
-#endif//ENABLE_INTERNAL_CODE_OPTIMIZER
+      fix_pc_immediate_for_ins_outside_block(ins_curr, ins_block_end);
       ins_curr = ins_block_end + 2; // skip over the branch/pc load
     }
   }
@@ -1805,7 +1737,7 @@ void CodeOptimizer::get_shifted_reg(OptimizerInstruction* ins) {
     int imm_shift = *ins->_raw>>7 & 0x1f;
     if (imm_shift == 0) {
       if (shift == Assembler::ror) {
-        ins->_status |= COND_SETCONDITIONAL;
+        ins->_status |= cond_setconditional;
       } else {
         ins->_shift = 0;
       }
@@ -1839,7 +1771,7 @@ void CodeOptimizer::unpack_address2(OptimizerInstruction* ins) {
     if (rn_field(*ins->_raw) != Assembler::r15) {
       ins->put_result(rn_field(*ins->_raw));
     }
-//     It is a bug.
+//    need revisit
 //    ins->put_operand(rn_field(*ins->_raw));
   } else {
     ins->put_operand(rn_field(*ins->_raw));
@@ -1856,7 +1788,7 @@ void CodeOptimizer::unpack_address2(OptimizerInstruction* ins) {
     }
   }
   if ((p && w) || (!p && !w)) {
-    ins->_status |= STATUS_WRITEBACK;
+    ins->_status |= status_writeback;
     ins->put_result(register_rn);
   }
 }
@@ -1887,7 +1819,7 @@ void CodeOptimizer::unpack_address3(OptimizerInstruction* ins) {
     ins->put_operand(rm_field(*ins->_raw));
   }
   if (p && w) {
-    ins->_status |= STATUS_WRITEBACK;
+    ins->_status |= status_writeback;
     ins->put_result(register_rn);
   }
 }
@@ -1901,8 +1833,8 @@ bool CodeOptimizer::unpack_instruction(OptimizerInstruction* ins) {
     return false;
   }
   if (cond != Assembler::al) 
-    ins->_status |= COND_CONDITIONAL;
-    ins->_status &= ~COND_SETCONDITIONAL;
+    ins->_status |= cond_conditional;
+    ins->_status &= ~cond_setconditional;
 
   switch (*ins->_raw >> 25 & 0x7) {
     case  0:
@@ -1928,7 +1860,7 @@ bool CodeOptimizer::unpack_instruction(OptimizerInstruction* ins) {
             const bool a = bit(*ins->_raw, 21);
             const bool s = bit(*ins->_raw, 20);
             if (s)
-              ins->_status |= COND_SETCONDITIONAL;
+              ins->_status |= cond_setconditional;
             ins->_type = OptimizerInstruction::mult;
             ins->put_result(rd_field(*ins->_raw));
             if (l || a) {
@@ -1959,7 +1891,7 @@ bool CodeOptimizer::unpack_instruction(OptimizerInstruction* ins) {
       }
       { 
         if (bit(*ins->_raw, 20))
-              ins->_status |= COND_SETCONDITIONAL;
+              ins->_status |= cond_setconditional;
         const Assembler::Opcode opcode = 
                       Assembler::as_opcode(*ins->_raw >> 21 & 0xf);
 
@@ -1970,7 +1902,7 @@ bool CodeOptimizer::unpack_instruction(OptimizerInstruction* ins) {
             ins->put_result(rd_field(*ins->_raw));
             ins->put_operand(rn_field(*ins->_raw));
             ins->_type = OptimizerInstruction::data;
-            ins->_status |= COND_SETCONDITIONAL;
+            ins->_status |= cond_setconditional;
             
             break;
           case Assembler::_tst: // fall through
@@ -1986,7 +1918,7 @@ bool CodeOptimizer::unpack_instruction(OptimizerInstruction* ins) {
             // <opcode>{<cond>}{s} <rd>, <shifter_op>
             ins->put_result(rd_field(*ins->_raw));
             if (bit(*ins->_raw, 20)) {
-                ins->_status |= COND_SETCONDITIONAL;
+                ins->_status |= cond_setconditional;
             }
             ins->_type = OptimizerInstruction::data;
             break;
@@ -1994,7 +1926,7 @@ bool CodeOptimizer::unpack_instruction(OptimizerInstruction* ins) {
             ins->put_result(rd_field(*ins->_raw));
             ins->put_operand(rn_field(*ins->_raw));
             if (bit(*ins->_raw, 20)) {
-                  ins->_status |= COND_SETCONDITIONAL;
+                  ins->_status |= cond_setconditional;
             }
             ins->_type = OptimizerInstruction::data;
         }

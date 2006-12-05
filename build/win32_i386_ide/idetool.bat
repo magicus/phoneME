@@ -1,5 +1,6 @@
 @echo off
 @rem ======================================================================
+@rem SCCS ID   
 @rem
 @rem Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 @rem DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -210,9 +211,9 @@ ReturnOop ConstantPool::checked_class_name_at(int index JVM_TRAPS) {
   } else {
     TypeArray::Raw byte_array(obj_field(offset));
     if (byte_array().length() > 1 && byte_array().byte_at(0) == '[') {
-      return resolve_type_symbol_at_offset(offset JVM_NO_CHECK_AT_BOTTOM);
+      return resolve_type_symbol_at_offset(offset JVM_NO_CHECK_AT_BOTTOM_0);
     } else {
-      return resolve_symbol_at_offset(offset JVM_NO_CHECK_AT_BOTTOM);
+      return resolve_symbol_at_offset(offset JVM_NO_CHECK_AT_BOTTOM_0);
     }
   }
 }
@@ -295,15 +296,6 @@ ReturnOop ConstantPool::klass_ref_at(int index JVM_TRAPS) {
   jint class_index = klass_ref_index_at(index JVM_ZCHECK(class_index));
   return klass_at(class_index JVM_NO_CHECK_AT_BOTTOM);
 }
-
-#if ENABLE_INLINE && ARM
-bool ConstantPool::is_field_resolved(int index) {
-  if (ConstantTag::is_resolved_field(tag_value_at(index))) {
-    return true;
-  }
-  return false;                                      
-}
-#endif
 
 // Returns the class in the field reference in static_receiver_class.
 BasicType ConstantPool::field_type_at(int index, int& offset, bool is_static,
@@ -389,6 +381,11 @@ ConstantPool::lookup_method_at(InstanceClass *sender_class, int index,
                                InstanceClass* static_receiver_class JVM_TRAPS)
 {
   UsingFastOops fast_oops;
+  if (tag_at(index).is_resolved_virtual_method()) {
+    //see CR6463588
+    //TCK test:javasoft.sqe.tests.vm.instr.invokestatic.invokestatic009.invokestatic00902m1
+    Throw::incompatible_class_change_error(method_changed JVM_THROW_0)
+  }
   GUARANTEE(tag_at(index).is_method(), "Corrupted constant pool");
 
   resolve_helper(index, name, signature, static_receiver_class JVM_CHECK_0);
@@ -435,7 +432,7 @@ ConstantPool::resolve_invoke_special_at(InstanceClass *sender_class,
                                         int index JVM_TRAPS) {
   jubyte t = tag_value_at(index);
   if (ConstantTag::is_resolved_static_method(t)) {
-    // Bug 4862713/6324543, If method was resolved by some good reference but
+    // CR 4862713/6324543, If method was resolved by some good reference but
     // this one is some hacked class file with an invokespecial opcode
     // but the index of a static method then we must check this case.
     Method::Raw m = resolved_static_method_at(index);
@@ -471,7 +468,7 @@ ConstantPool::resolve_invoke_special_at(InstanceClass *sender_class,
   }
 
   return resolve_method_ref(index, &static_receiver_class, &m 
-                            JVM_NO_CHECK_AT_BOTTOM);
+                            JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 // return code: true == class has been initialized
@@ -525,7 +522,7 @@ bool ConstantPool::resolve_invoke_virtual_at(InstanceClass *sender_class,
     return false;
   }
   if (ConstantTag::is_resolved_static_method(t)) {
-    // Bug 4862713/6324540, If method was resolved by some good reference but
+    // CR 4862713/6324540, If method was resolved by some good reference but
     // this one is some hacked class file with an invokevirtual opcode
     // but the index of a static method then we must check this case.
     Method::Raw m = resolved_static_method_at(index);
@@ -553,7 +550,7 @@ bool ConstantPool::resolve_invoke_virtual_at(InstanceClass *sender_class,
   }
 
   return resolve_method_ref(index, &static_receiver_class, &method 
-                            JVM_NO_CHECK_AT_BOTTOM);
+                            JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 void ConstantPool::resolve_invoke_interface_at(InstanceClass *sender_class,
@@ -564,6 +561,14 @@ void ConstantPool::resolve_invoke_interface_at(InstanceClass *sender_class,
     return;
   }
   if (ConstantTag::is_resolved_uncommon_interface_method(t)) {
+    return;
+  }
+
+  if (ConstantTag::is_resolved_static_method(t)) {
+    return;
+  }
+
+  if (ConstantTag::is_resolved_virtual_method(t)) {
     return;
   }
 
@@ -625,9 +630,46 @@ void ConstantPool::resolve_invoke_interface_at(InstanceClass *sender_class,
       tag_at_put(index, JVM_CONSTANT_ResolvedUncommonInterfaceMethod);
     }
   } else {
-    BasicType return_type = method_signature().return_type();
-    resolved_interface_method_at_put(index, (jushort) itable_index, 
+#if USE_SOURCE_IMAGE_GENERATOR || (ENABLE_MONET && !ENABLE_LIB_IMAGES)
+
+    TypeArray::Raw implementation_cache = 
+       ((ROMWriter::_singleton)->_optimizer).
+            interface_implementation_cache()->obj();
+    TypeArray::Raw direct_implementation_cache = 
+       ((ROMWriter::_singleton)->_optimizer).
+            direct_interface_implementation_cache()->obj();
+    int implementing_class_id = -1;
+    int direct_implementing_class_id = -1;
+    if (GenerateROMImage) {
+      implementing_class_id =implementation_cache().int_at(interface_class_id);
+      direct_implementing_class_id = direct_implementation_cache().int_at(interface_class_id);
+    }
+    
+    if( implementing_class_id >= 0) { //single implementing class
+      InstanceClass::Raw implement_cls = Universe::class_from_id(implementing_class_id);        
+        named_method = implement_cls().lookup_method(&method_name, 
+                                                   &method_signature);  
+      if (named_method.is_null()) {
+        SHOULD_NOT_REACH_HERE();//implementing class MUST have such method
+      } else {        
+        resolved_static_method_at_put(index, &named_method);
+      }
+    } else if (direct_implementing_class_id >= 0) { //single direct implementing class
+        InstanceClass::Raw implement_cls = Universe::class_from_id(direct_implementing_class_id);        
+        named_method = implement_cls().lookup_method(&method_name, 
+                                                   &method_signature);
+        if (named_method.is_null()) {
+          SHOULD_NOT_REACH_HERE();//implementing class MUST have such method
+        } else {
+          resolve_method_ref(index, &implement_cls, &named_method JVM_CHECK);
+        }
+    } else
+#endif  
+    {
+      BasicType return_type = method_signature().return_type();
+      resolved_interface_method_at_put(index, (jushort) itable_index, 
                                      (jushort) interface_class_id, return_type);
+    }                                            
   }
 }
 
@@ -1166,6 +1208,7 @@ void ConstantPool::check_quickened_field_access(int index,
   InstanceClass::Raw klass = Universe::class_from_id(class_id);
   TypeArray::Raw fields = klass().fields();
   AccessFlags af;
+  af.set_flags(0);
 
   jint flags = -1;
 

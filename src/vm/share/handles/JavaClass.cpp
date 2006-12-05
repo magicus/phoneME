@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -29,6 +30,8 @@
 
 # include "incls/_precompiled.incl"
 # include "incls/_JavaClass.cpp.incl"
+
+HANDLE_CHECK(JavaClass, is_java_class())
 
 bool JavaClass::check_access_by(InstanceClass* sender_class, 
                                 FailureMode fail_mode JVM_TRAPS) {
@@ -113,7 +116,7 @@ ReturnOop JavaClass::class_loader() {
 }
 
 #if ENABLE_ISOLATES
-ReturnOop JavaClass::real_task_mirror() { 
+ReturnOop JavaClass::real_task_mirror() const { 
   TaskMirror::Raw tm = task_mirror_no_check();
   if (is_being_initialized_mirror(&tm)) {
     tm = TaskMirror::clinit_list_lookup(this);
@@ -167,7 +170,7 @@ void JavaClass::set_array_class(ObjArrayClass* value JVM_TRAPS) {
       } else {
         if (tm.is_null()) {
           // 'this' is an array class, ok to allocate mirror now
-          setup_task_mirror(0, false JVM_CHECK);
+          setup_task_mirror(0, 0, false JVM_CHECK);
           tm = task_mirror_no_check();
           GUARANTEE(!tm.is_null(), "Task mirror is null");
         }
@@ -198,11 +201,12 @@ ReturnOop JavaClass::get_array_class(jint distance JVM_TRAPS) {
       TaskMirror::Raw tm = task_mirror_no_check();
       if (is_being_initialized_mirror(&tm)) {
         if (is_instance_class()) {
-          tm = setup_task_mirror(static_field_size(), true JVM_CHECK_0);
+          tm = setup_task_mirror(static_field_size(), vtable_length(),
+                                 true JVM_CHECK_0);
           InstanceClass::Raw ic = obj();
           ic().initialize_static_fields(&tm);
         } else {
-          tm = setup_task_mirror(0, false JVM_CHECK_0);
+          tm = setup_task_mirror(0, 0, false JVM_CHECK_0);
         }
       }
     }
@@ -214,7 +218,7 @@ ReturnOop JavaClass::get_array_class(jint distance JVM_TRAPS) {
       //      VMEvent::class_prepare_event(&ac);
     }
   }
-  return ac().get_array_class(distance JVM_NO_CHECK_AT_BOTTOM);
+  return ac().get_array_class(distance JVM_NO_CHECK_AT_BOTTOM_0);
 }
 
 #if ENABLE_ISOLATES
@@ -235,10 +239,11 @@ ReturnOop JavaClass::get_or_allocate_java_mirror(JVM_SINGLE_ARG_TRAPS) {
     if (tm.is_null()) {
       // let's init this class for this task
       if (is_instance_class()) {
-        tm = setup_task_mirror(ic().static_field_size(),true JVM_ZCHECK(tm));
+        tm = setup_task_mirror(ic().static_field_size(), 
+                               ic().vtable_length(), true JVM_ZCHECK(tm));
         ic().initialize_static_fields(&tm);
       } else {
-        tm = setup_task_mirror(0, false JVM_ZCHECK(tm));
+        tm = setup_task_mirror(0, 0, false JVM_ZCHECK(tm));
       }
       GUARANTEE(!tm.is_null(), "Task mirror cannot be null");
     }
@@ -251,12 +256,14 @@ ReturnOop JavaClass::get_or_allocate_java_mirror(JVM_SINGLE_ARG_TRAPS) {
 // Initialize the task mirror entry for the task and setup a java mirror
 // for the class.
 ReturnOop JavaClass::setup_task_mirror(int statics_size,
+                                       int vtable_length, 
                      bool set_initializing_barrier JVM_TRAPS) {
   if (Universe::java_lang_Class_class()->is_null()) {
     return NULL;
   }
   UsingFastOops fast_oops;
-  TaskMirror::Fast tm = Universe::new_task_mirror(statics_size JVM_CHECK_0);
+  TaskMirror::Fast tm = 
+    Universe::new_task_mirror(statics_size, vtable_length JVM_CHECK_0);
   JavaClassObj::Fast m = 
       Universe::new_instance(Universe::java_lang_Class_class() JVM_CHECK_0);
   m().set_java_class(this);
@@ -529,3 +536,21 @@ bool JavaClass::is_hidden_in_profile() const {
   return ROM::class_is_hidden_in_profile(this);
 }
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
+
+#if ENABLE_COMPILER_TYPE_INFO
+// Returns true if this class doesn't have any subtypes except for itself
+bool JavaClass::is_final_type() const {
+  if (is_instance_class()) {
+    // ROM optimizer can mark hidden interface or abstract class as final
+    return !is_interface() && !is_abstract() && is_final();
+  } else if (is_type_array_class()) {
+    return true;
+  } else {
+    GUARANTEE(is_obj_array_class(), "Must be an object array class");
+    ObjArrayClass::Raw obj_array_class = this->obj();
+    JavaClass::Raw element_class = obj_array_class().element_class();
+    return element_class().is_final_type();
+  }
+}
+#endif
+

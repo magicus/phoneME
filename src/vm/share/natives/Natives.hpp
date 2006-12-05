@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -52,8 +53,35 @@ public:
                                 int skip, char end_char, int *index JVM_TRAPS);
   static void append_jni(TypeArray *byte_array, CharacterStream *stream,
                                 int skip, char end_char, int *index JVM_TRAPS);
-  static char hex_digit(int i);
   static ReturnOop get_jni_class_name(InstanceClass *klass JVM_TRAPS);
 
 #endif
 };
+
+#if ENABLE_STACK_TRACE
+class FrameStream {
+ public:
+  Frame& _fr;
+  bool _at_end;
+
+  bool skip();
+
+  FrameStream(Frame& fr) : _fr(fr) {
+    _at_end = skip();
+  }
+
+  ReturnOop method() const {
+    GUARANTEE(_fr.is_java_frame(), "Sanity");
+    return _fr.as_JavaFrame().method();
+  }
+
+  int bci() const {
+    GUARANTEE(_fr.is_java_frame(), "Sanity");
+    return _fr.as_JavaFrame().bci();
+  }
+
+  void next();
+
+  bool at_end() const { return _at_end; }
+};
+#endif

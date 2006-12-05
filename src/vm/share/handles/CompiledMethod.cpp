@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -127,8 +128,8 @@ void CompiledMethod::print_comment_for(int code_offset, Stream* st) {
         st->print("       // ");
         stream.print_comment_on(st);
         st->cr();
-      } else if (Relocation::has_bci(stream.kind())) {
-        st->print_cr("       @ bci = %d", stream.bci());
+      } else if (stream.kind() == Relocation::osr_stub_type) {
+        st->print_cr("       @ bci = %d", stream.current(1));
       }
     }
   }

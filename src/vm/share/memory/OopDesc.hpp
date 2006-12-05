@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -132,6 +133,11 @@ public:
 
   inline bool is_obj_near() const;
   inline bool is_java_near() const;
+#if ENABLE_HEAP_NEARS_IN_HEAP && USE_SOURCE_IMAGE_GENERATOR
+  inline bool is_generic_near() const;
+  inline bool is_near() const;
+  inline bool is_far() const;
+#endif
 
   inline bool is_task_mirror() const;
   inline bool is_thread() const;
@@ -217,7 +223,7 @@ private:
 #if USE_LARGE_OBJECT_AREA
   friend class LargeObject;
 #endif
-#if ENABLE_TRAMPOLINE  && !CROSS_GENERATOR
+#if ENABLE_TRAMPOLINE
   friend class BranchTable;
 #endif
 };

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -74,6 +75,12 @@ class Thread: public Oop {
   }
   static jint global_next_offset() {
     return FIELD_OFFSET(ThreadDesc, _global_next);
+  }
+  static jint next_waiting_offset() {
+    return FIELD_OFFSET(ThreadDesc, _next_waiting);
+  }
+  static jint wait_obj_offset() {
+    return FIELD_OFFSET(ThreadDesc, _wait_obj);
   }
   static jint wait_stack_lock_offset() {
     return FIELD_OFFSET(ThreadDesc, _wait_stack_lock);
@@ -344,6 +351,27 @@ class Thread: public Oop {
     obj_field_clear(previous_offset());
   }
 
+  ReturnOop next_waiting() {
+    return obj_field(next_waiting_offset());
+  }
+  void set_next_waiting(Thread* value) {
+    obj_field_put(next_waiting_offset(), value);
+  }
+  void clear_next_waiting() {
+    obj_field_clear(next_waiting_offset());
+  }
+
+  ReturnOop wait_obj() {
+    return obj_field(wait_obj_offset());
+  }
+  void set_wait_obj(Oop* value) {
+    obj_field_put(wait_obj_offset(), value);
+  }
+  void clear_wait_obj() {
+    obj_field_clear(wait_obj_offset());
+  }
+
+
   // Accessors for wait stack lock
   // (used during synchronization and java.lang.Object.wait). 
   StackLock* wait_stack_lock() const {
@@ -552,18 +580,30 @@ class Thread: public Oop {
 
   static void set_timer_tick() {
     _real_time_has_ticked = true;
-#if ARM && ENABLE_XSCALE_WMMX_TIMER_TICK && !ENABLE_TIMER_THREAD
+#if ENABLE_PAGE_PROTECTION
+    OsMisc_page_protect();
+#elif ARM && ENABLE_XSCALE_WMMX_TIMER_TICK && !ENABLE_TIMER_THREAD
     wmmx_set_timer_tick();
 #else
     _rt_timer_ticks++;
 #endif
+
+    if (JavaStackDirection > 0) {
+      _compiler_stack_limit = (address)0x0;
+    } else {
+      _compiler_stack_limit = (address)0xffffffff;
+    }
   }
+
   static void clear_timer_tick() {
-#if ARM && ENABLE_XSCALE_WMMX_TIMER_TICK && !ENABLE_TIMER_THREAD
+#if ENABLE_PAGE_PROTECTION
+    OsMisc_page_unprotect();
+#elif ARM && ENABLE_XSCALE_WMMX_TIMER_TICK && !ENABLE_TIMER_THREAD
     wmmx_clear_timer_tick();
 #else
     _rt_timer_ticks = 0;
 #endif
+    _compiler_stack_limit = _current_stack_limit;
   }
 
   void grow_execution_stack(int new_length JVM_TRAPS);

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -45,21 +46,60 @@ public:
   }
 #endif
 
-  static int classpath_offset(void) {
-    return FIELD_OFFSET(TaskDesc, _classpath);
+  static int app_classpath_offset(void) {
+    return FIELD_OFFSET(TaskDesc, _app_classpath);
+  }
+  static int sys_classpath_offset(void) {
+    return FIELD_OFFSET(TaskDesc, _sys_classpath);
+  }
+  static int hidden_packages_offset(void) {
+    return FIELD_OFFSET(TaskDesc, _hidden_packages);
+  }
+  static int restricted_packages_offset(void) {
+    return FIELD_OFFSET(TaskDesc, _restricted_packages);
   }
   static int dictionary_offset(void) {
     return FIELD_OFFSET(TaskDesc, _dictionary);
   }
 
-  ReturnOop classpath(void) {
-    return obj_field(classpath_offset());
+  ReturnOop app_classpath(void) {
+    return obj_field(app_classpath_offset());
   }
-  void set_classpath(Oop* value) {
-    obj_field_put(classpath_offset(), value);
+  void set_app_classpath(Oop* value) {
+    obj_field_put(app_classpath_offset(), value);
   }
-  void set_classpath(OopDesc* value) {
-    obj_field_put(classpath_offset(), value);
+  void set_app_classpath(OopDesc* value) {
+    obj_field_put(app_classpath_offset(), value);
+  }
+
+  ReturnOop sys_classpath(void) {
+    return obj_field(sys_classpath_offset());
+  }
+  void set_sys_classpath(Oop* value) {
+    obj_field_put(sys_classpath_offset(), value);
+  }
+  void set_sys_classpath(OopDesc* value) {
+    obj_field_put(sys_classpath_offset(), value);
+  }
+
+  ReturnOop restricted_packages(void) const {
+    return obj_field(restricted_packages_offset());
+  }
+  void set_restricted_packages(Oop* value) {
+    obj_field_put(restricted_packages_offset(), value);
+  }
+  void set_restricted_packages(OopDesc* value) {
+    obj_field_put(restricted_packages_offset(), value);
+  }
+
+  ReturnOop hidden_packages(void) const {
+    return obj_field(hidden_packages_offset());
+  }
+  void set_hidden_packages(Oop* value) {
+    obj_field_put(hidden_packages_offset(), value);
+  }
+  void set_hidden_packages(OopDesc* value) {
+    obj_field_put(hidden_packages_offset(), value);
   }
 
   ReturnOop dictionary(void) const {
@@ -99,6 +139,7 @@ public:
 
   void free_binary_images(void) const;
 #if ENABLE_LIB_IMAGES
+void Task::remove_shared_images( void ) const;
   static int classes_in_images_offset() {
     return FIELD_OFFSET(TaskDesc, _classes_in_images);
   }
@@ -108,8 +149,7 @@ public:
     if (list.not_null()) {
       int count = 0;
       for (; count < list().length(); count++) {
-        int bundle = (int)list().obj_at(count);
-        if (bundle == 0) {
+        if (list().obj_at(count) == NULL) {
           break;
         }        
       }
@@ -131,7 +171,9 @@ public:
 
 #endif //USE_BINARY_IMAGE_LOADER
 
-#if USE_BINARY_IMAGE_LOADER && USE_IMAGE_MAPPING
+#if USE_BINARY_IMAGE_LOADER && USE_IMAGE_MAPPING && !ENABLE_LIB_IMAGES
+  //in case of ENABLE_LIB_IMAGES we keep all handles in 
+  //Universe::global_image_handles
   static int mapped_image_handles_offset(void) {
     return FIELD_OFFSET(TaskDesc, _mapped_image_handles);
   }
@@ -141,6 +183,11 @@ public:
   void set_mapped_image_handles(TypeArray *value) {
     obj_field_put(mapped_image_handles_offset(), value);
   }
+#endif
+
+#if ENABLE_COMPILER && ENABLE_INLINE
+  DEFINE_ACCESSOR_OBJ(Task, OopCons, direct_callers);
+ public:
 #endif
 
   void iterate(OopVisitor* /*visitor*/) PRODUCT_RETURN;
@@ -303,7 +350,7 @@ public:
   static void setup_task_mirror(JavaClass *ic JVM_TRAPS);
   static void setup_mirrors(JVM_SINGLE_ARG_TRAPS);
   static bool init_first_task(JVM_SINGLE_ARG_TRAPS);
-  static ReturnOop create_task(int id, IsolateObj *isolate_obj JVM_TRAPS);
+  static ReturnOop create_task(const int id, IsolateObj* isolate JVM_TRAPS);
   static void start_task(Thread *thread JVM_TRAPS);
 
   void forward_stop(int ecode, int ereason JVM_TRAPS);
@@ -315,6 +362,8 @@ public:
   void suspend();
   void resume();
   bool is_suspended();
+  bool is_restricted_package(char *name, int len);  
+  bool is_hidden_class(Symbol* class_name);  
 
   static bool is_valid_task_id(int task_id);
 
@@ -643,5 +692,11 @@ public:
 
 #if USE_BINARY_IMAGE_LOADER
   void link_dynamic(JVM_SINGLE_ARG_TRAPS);
+#if ENABLE_LIB_IMAGES
+  void add_binary_image(ROMBundle* JVM_TRAPS);
+#endif //ENABLE_LIB_IMAGES
+#if USE_IMAGE_MAPPING
+  void add_binary_image_handle(void* JVM_TRAPS);
 #endif
+#endif //USE_BINARY_IMAGE_LOADER
 };

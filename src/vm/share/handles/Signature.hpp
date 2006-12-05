@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -109,7 +110,7 @@ class SignatureStream : public StackObj {
     GUARANTEE(size == T_VOID_word_size || size == 1 || size == 2, "sanity");
     return size;
   }
-#if ENABLE_JAVA_DEBUGGER
+#if ENABLE_JAVA_DEBUGGER || ENABLE_COMPILER_TYPE_INFO
   ReturnOop type_klass();
 #endif
 

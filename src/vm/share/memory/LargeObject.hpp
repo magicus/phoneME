@@ -26,38 +26,22 @@
 class LargeObject {
 protected:
   enum {
-    alignment = BitsPerWord * BytesPerWord,
-    task_mask = alignment-1
+    alignment   = BitsPerWord * BytesPerWord,
+    align_mask  = alignment-1,
   };
   
-  unsigned attributes;  // size & task
+  unsigned _size;
 
   static void must_be_aligned ( const unsigned x ) {
     (void)x;
 #ifndef PRODUCT
-    GUARANTEE( (x & task_mask) == 0, "must be aligned" );
+    GUARANTEE( (x & align_mask) == 0, "must be aligned" );
 #endif
   }
 
   static void must_be_aligned ( const void* const x ) {
     must_be_aligned( unsigned(x) );
   }
-  static unsigned make_attributes( const unsigned size, const unsigned task ) {
-    GUARANTEE( (size & task_mask) == 0, "size must be aligned" );
-    must_be_aligned( size );
-    return size | task;
-  }
-  static unsigned get_size( const unsigned attributes ) {
-    return attributes & ~unsigned( task_mask );
-  }
-  static unsigned get_task( const unsigned attributes ) {
-    return attributes & task_mask;
-  }
-
-  void set_attributes( const unsigned size, const unsigned task ) {
-    attributes = make_attributes( size, task );
-  }
-  unsigned size( void ) const { return get_size( attributes ); }
 
   const LargeObject* next ( const unsigned size ) const {
     return DERIVED( const LargeObject*, this, size );
@@ -65,10 +49,34 @@ protected:
   const LargeObject* next ( void ) const {
     return next( size() );
   }
-public:
-  unsigned task( void ) const { return get_task( attributes ); }
 
-  static const LargeObject* find( const OopDesc* object );
+#if ENABLE_LIB_IMAGES && USE_LARGE_OBJECT_AREA
+  enum { mark_mask = 1 };
+
+  static unsigned marked  ( const unsigned x ) { return x & mark_mask; }
+  static unsigned mark    ( const unsigned x ) { return x | mark_mask; }
+  static unsigned unmark  ( const unsigned x ) { return x &~mark_mask; }
+
+  unsigned marked ( void ) const { return marked( _size ); }
+  void mark       ( void )       { _size |= mark_mask; }
+  void unmark     ( void )       { _size &=~mark_mask; }
+
+  static LargeObject** interval_table_beg;
+  static LargeObject** interval_table_end;
+
+  static void move( LargeObject dst[],
+                    const LargeObject beg[], const LargeObject end[] );
+  static void compact( LargeObject* table_beg[], LargeObject* table_end[] );
+#endif
+
+  void set_size( const unsigned size ) {
+    must_be_aligned( size );
+    _size = size;
+  }
+public:
+  const unsigned size( void ) const { return _size; }
+
+//  static const LargeObject* find( const OopDesc* object );
 
   const void* body( void ) const {
     const void* p = this + 1;
@@ -106,11 +114,13 @@ protected:
   }
 
   static void move ( const int delta, const LargeObject limit[] );
+  static bool is_moving ( const OopDesc* p );
+  static int  delta     ( const OopDesc* p );
 
   static const LargeObject* current_limit;
   static int                current_delta;
-  static void update_pointer  ( OopDesc** p );
-  static void update_classinfo_pointers();
+  static void update_pointer                  ( OopDesc** p );
+  static void update_classinfo_pointers       ( void );
   static void update_pointer_in_instance_class( OopDesc** p );
   static void update_pointers ( OopDesc* beg, OopDesc exclusive_end[] );
 public:
@@ -159,8 +169,24 @@ public:
   static unsigned allocation_size( const unsigned size ) {
     return  align_size( size + sizeof( LargeObject ) );
   }
-  static LargeObject* allocate (const unsigned alloc_size, const unsigned task);
-  void free( void );
+
+#if USE_LARGE_OBJECT_AREA
+  static LargeObject* allocate( const unsigned alloc_size );
+  void free( void )
+#if ENABLE_LIB_IMAGES
+    { mark(); }
+#else
+    ;
+#endif
+
+  static void compact( void )
+#if ENABLE_LIB_IMAGES
+    ;
+#else
+    {}
+#endif
+
+#endif  // USE_LARGE_OBJECT_AREA
 
   static juint* bitvector( const void* p ) {
     return ObjectHeap::get_bitvectorword_for_aligned( (OopDesc**) p );
@@ -171,34 +197,18 @@ public:
     return bottom() <= p && p < end();
   }
 
-  static void accumulate_task_memory_usage( void ) {
-#if ENABLE_ISOLATES && USE_LARGE_OBJECT_AREA
-    const LargeObject* const limit = end();
-    for( const LargeObject* p = bottom(); p < limit; ) {
-      const unsigned attributes = p->attributes;
-      const unsigned size = get_size( attributes );
-      ObjectHeap::get_task_info( get_task( attributes ) ).usage += size;
-      p = p->next( size );
-    }
-#endif
-  }
-
 #if USE_LARGE_OBJECT_AREA
   static void verify( void ) PRODUCT_RETURN;
 #else
   static void verify( void ) {}
 #endif
-
-#if ENABLE_LIB_IMAGES
-  friend class ObjectHeap;
-#endif
 };
 
-#ifndef PRODUCT
-  #define USE_LARGE_OBJECT_DUMMY  USE_LARGE_OBJECT_AREA
-#else
+//#ifndef PRODUCT
+//  #define USE_LARGE_OBJECT_DUMMY  0 USE_LARGE_OBJECT_AREA
+//#else
   #define USE_LARGE_OBJECT_DUMMY  0
-#endif
+//#endif
 
 #if USE_LARGE_OBJECT_DUMMY
 class LargeObjectDummy: public LargeObject {

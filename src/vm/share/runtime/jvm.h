@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -227,6 +228,7 @@ int unicode_strlen(const jchar* str);
  */
 
 #define JVM_REMOVE_CLASSES_FROM_JAR    (1 << 1)
+#define JVM_GENERATE_SHARED_IMAGE      (1 << 2)
 
 jint JVM_CreateAppImage(const JvmPathChar *jarFile, const JvmPathChar *binFile,
                         int flags);
@@ -684,6 +686,31 @@ jboolean JVM_IsIsolateSuspended(int isolate_id);
 jboolean JVM_ResumeIsolate(int isolate_id);
 
 #endif /* ENABLE_ISOLATES */
+
+/*
+ * Enables or disables class verification for the current VM in SVM mode,
+ * and for the current task in MVM mode.
+ *
+ * Whether VM is not running or there is no current active task, the
+ * function enables/disables class verification for newly started VM/task.
+ *
+ * In the case class verification is disabled, all classes newly loaded
+ * in the VM/task won't be verified and therefore can be loaded faster.
+ * It's responsibility of the caller to guarantee that only trusted or
+ * preverified classes can be loaded with no verification.
+ *
+ * Returns the previous state of class verification in 
+ * the current VM/task.
+ */
+jboolean JVM_SetUseVerifier(jboolean use_verifier);
+
+/*
+ * Get state of the class verifier for the current VM/task in SVM/MVM
+ * modes correspondingly.
+ *
+ * Returns true if class verification is enabled, otherwise false.
+ */
+jboolean JVM_GetUseVerifier();
 
 #if ENABLE_FLOAT
 

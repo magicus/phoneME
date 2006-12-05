@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -68,10 +69,6 @@ public:
   FIELD( int,  current_code_offset       )
   FIELD( int,  current_oop_relocation_offset )
   FIELD( int,  current_oop_code_offset       )
-#if ENABLE_CODE_OPTIMIZER && ENABLE_NPCE
-  FIELD( int,  npe_count                 )
-  FIELD( int,  npe_index                 )
-#endif
 #if ENABLE_ISOLATES
   // The ID of the task that started this compilation. Compilation uses
   // information that are specific to a task's context -- for example, 
@@ -100,55 +97,118 @@ public:
 
   void oops_do( void do_oop(OopDesc**) );
 };
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_NPCE
-#define  SCHEDULER_HANDLES \
-  ARRAY( TypeArray,                npe_table             )
-#endif 
-#if ENABLE_INLINE && ARM
-#define COMPILER_HANDLES  \
-  FIELD( CompiledMethod,          current_compiled_method ) \
+
+#define COMPILER_INSTANCE_HANDLES  \
   FIELD( Method,                  method                  ) \
-  FIELD( VirtualStackFrame,       frame                   ) \
-  FIELD( VirtualStackFrame,       conforming_frame        ) \
-  FIELD( VirtualStackFrame,       cached_preserved_frame  ) \
-  FIELD( VirtualStackFrame,       inline_frame        )\
   FIELD( CompilationQueueElement, compilation_queue       ) \
   FIELD( CompilationQueueElement, current_element         ) \
   ARRAY( ObjArray,                entry_table             ) \
   ARRAY( TypeArray,               entry_counts_table      ) \
   ARRAY( TypeArray,               bci_flags_table         ) 
-#else
-#define COMPILER_HANDLES  \
-  FIELD( CompiledMethod,          current_compiled_method ) \
-  FIELD( Method,                  method                  ) \
-  FIELD( VirtualStackFrame,       frame                   ) \
-  FIELD( VirtualStackFrame,       conforming_frame        ) \
-  FIELD( VirtualStackFrame,       cached_preserved_frame  ) \
-  FIELD( CompilationQueueElement, compilation_queue       ) \
-  FIELD( CompilationQueueElement, current_element         ) \
-  ARRAY( ObjArray,                entry_table             ) \
-  ARRAY( TypeArray,               entry_counts_table      ) \
-  ARRAY( TypeArray,               bci_flags_table         ) \
 
+#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_NPCE
+//address of all the null point related LDR(STR)
+//this will be used to update the abort_point bitmap during 
+//code scheduling
+#define  SCHEDULER_HANDLES \
+  ARRAY( TypeArray,               null_point_exception_ins_table )
+#else
+#define  SCHEDULER_HANDLES
 #endif
-class CompilerStaticPointers {
-public:
+
+#define COMPILER_CONTEXT_HANDLES \
+      COMPILER_INSTANCE_HANDLES \
+      SCHEDULER_HANDLES
+
+class CompilerContextPointers {
   #define ARRAY( type, name ) DEF( Array, type, name )
   #define FIELD( type, name ) DEF( type,  type, name )
   #define DEF( repr, type, name ) \
     repr##Desc* _##name;    \
-    type* name ( void ) const { return (type*) &_##name; }              \
-    void clear_##name ( void )        { _##name = NULL; }               \
-    void set_##name ( OopDesc* val )  { _##name = (repr##Desc*) val; }  \
-    void set_##name ( type* val )     { set_##name( val->obj() ); }     \
+    type* name ( void ) const           { return (type*) &_##name;     }  \
+    void clear_##name ( void )          { _##name = NULL;              }  \
+    void set_##name ( OopDesc* val )    { _##name = (repr##Desc*) val; }  \
+    void set_##name ( const type* val ) { set_##name( val->obj() );    }
 
-  COMPILER_HANDLES
-#if ENABLE_INTERNAL_CODE_OPTIMIZER  && ENABLE_NPCE
-  SCHEDULER_HANDLES 
-#endif 
+public:
+  COMPILER_CONTEXT_HANDLES
+
   #undef ARRAY
   #undef FIELD
   #undef DEF
+
+  static int pointer_count( void ) {
+    return sizeof(CompilerContextPointers) / sizeof(OopDesc*);
+  }
+};
+
+#define GENERIC_COMPILER_CONTEXT_FIELDS_DO(template) \
+        template( Compiler*, parent                        )   \
+        template( bool,      in_loop                       )   \
+        template( bool,      has_loops                     )   \
+        template( int,       saved_bci                     )   \
+        template( int,       saved_num_stack_lock_words    )   \
+        template( int,       local_base                    )
+
+#if ENABLE_INLINE
+#define INLINER_COMPILER_CONTEXT_FIELDS_DO(template)  \
+        template( int, inline_return_label_encoding )
+#else
+#define INLINER_COMPILER_CONTEXT_FIELDS_DO(template)
+#endif
+
+#if ENABLE_CODE_OPTIMIZER && ENABLE_NPCE
+#define SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) \
+        template( int, codes_can_throw_null_point_exception ) \
+        template( int, null_point_record_counter)
+#else
+#define SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) 
+#endif
+
+#define COMPILER_CONTEXT_FIELDS_DO(template) \
+        GENERIC_COMPILER_CONTEXT_FIELDS_DO(template) \
+        INLINER_COMPILER_CONTEXT_FIELDS_DO(template) \
+        SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) 
+
+class CompilerContext: public CompilerContextPointers {
+public:
+  #define FIELD( type, name ) \
+    type _##name;             \
+    type name         ( void )     { return _##name; } \
+    void set_##name   ( type val ) { _##name = val;  }
+
+  COMPILER_CONTEXT_FIELDS_DO(FIELD)
+
+  #undef FIELD
+
+  bool valid ( void ) const { return method()->not_null(); }
+
+  void oops_do( void do_oop(OopDesc**) );
+  void cleanup( void );
+
+#if USE_DEBUG_PRINTING
+  void print_on(Stream *st);
+#endif
+};
+
+#define COMPILER_STATIC_HANDLES  \
+  FIELD( CompiledMethod,          current_compiled_method ) \
+  FIELD( VirtualStackFrame,       frame                   ) \
+  FIELD( VirtualStackFrame,       conforming_frame        ) \
+  FIELD( VirtualStackFrame,       cached_preserved_frame  )
+
+class CompilerStaticPointers {
+public:
+  #define FIELD( type, name )  \
+    type##Desc* _##name;       \
+    type* name        ( void )            { return (type*)&_##name;     } \
+    void clear_##name ( void )            { _##name = NULL;             } \
+    void set_##name   ( OopDesc* val )    { _##name = (type##Desc*)val; } \
+    void set_##name   ( const type* val ) { set_##name( val->obj() );   }
+
+  COMPILER_STATIC_HANDLES
+
+  #undef FIELD
 
   OopDesc* _rte_handlers[ThrowExceptionStub::number_of_runtime_exceptions];
 
@@ -162,40 +222,16 @@ public:
   void cleanup( void );
 };
 
-#define GENERIC_COMPILER_STATIC_FIELDS_DO(template)  \
-        template( bool,  in_loop           ) \
-        template( bool,  has_loops         ) \
-        template( bool,  omit_stack_frame  )
-
-#if ENABLE_INLINE && ARM
-#define INLINER_COMPILER_STATIC_FIELDS_DO(template) \
-        template( int, is_inline                    ) \
-        template( int, inline_return_label          ) \
-        template( int, caller_max_local            ) \
-        template( int, caller_virtual_stack_pointer )
-#else
-#define INLINER_COMPILER_STATIC_FIELDS_DO(template)
-#endif
-
-#if ENABLE_CODE_OPTIMIZER && ENABLE_NPCE
-#define SCHEDULER_COMPILER_STATIC_FIELDS_DO(template) \
-        template( int, npe_bytecode_count ) \
-        template( int, npe_index          )
-#else
-#define SCHEDULER_COMPILER_STATIC_FIELDS_DO(template) 
-#endif
-
-#define COMPILER_STATIC_FIELDS_DO(template) \
-        GENERIC_COMPILER_STATIC_FIELDS_DO(template) \
-        INLINER_COMPILER_STATIC_FIELDS_DO(template) \
-        SCHEDULER_COMPILER_STATIC_FIELDS_DO(template) 
-
+#define COMPILER_STATIC_FIELDS_DO(template)  \
+        template( Compiler*, root                    ) \
+        template( Compiler*, current                 ) \
+        template( bool,      omit_stack_frame        )
 
 class CompilerStatic: public CompilerStaticPointers {
 public:
-  #define COMPILER_STATIC_FIELDS_DECLARE( type, name ) \
+  #define DECLARE_FIELD( type, name ) \
           type _##name;
-  COMPILER_STATIC_FIELDS_DO(COMPILER_STATIC_FIELDS_DECLARE)
+  COMPILER_STATIC_FIELDS_DO(DECLARE_FIELD)
 
 #if USE_DEBUG_PRINTING
   void print_on(Stream *st);
@@ -204,8 +240,7 @@ public:
 
 class Compiler: public StackObj {
  private:
-  // The current compiler.
-  static Compiler*      _current;
+  // The compiler state.
   static CompilerStatic _state;
 
   // Info used to tune down compilation for smoother animation.
@@ -213,24 +248,41 @@ class Compiler: public StackObj {
   static jlong          _last_frame_time_stamp;
 
  public:
-  #define COMPILER_STATIC_FIELDS_ACCESSOR( type, name ) \
-          static type name (void) { return _state._##name; }  \
-          static void set_##name(const type name) { _state._##name = name; }
-  COMPILER_STATIC_FIELDS_DO(COMPILER_STATIC_FIELDS_ACCESSOR)
+  #define DEFINE_ACCESSOR( type, name ) \
+    static type name       ( void )          { return _state._##name;    } \
+    static void set_##name ( type name )     { _state._##name = name;    }
+  COMPILER_STATIC_FIELDS_DO(DEFINE_ACCESSOR)
+
+  #undef DEFINE_ACCESSOR
+
+  #define FIELD( type, name ) \
+    static type* name       ( void )         { return _state.name();     } \
+    static void clear_##name( void )         { _state.clear_##name();    } \
+    static void set_##name( OopDesc* val )   { _state.set_##name( val ); } \
+    static void set_##name( const type* val ){ _state.set_##name( val ); }
+
+  COMPILER_STATIC_HANDLES
+
+  #undef FIELD
+
+  #define DEFINE_ACCESSOR( type, name ) \
+    type name                  ( void )      { return _context.name();   } \
+    void set_##name            ( type name ) { _context.set_##name(name);} \
+    static type current_##name ( void )      { return current()->name(); }
+  COMPILER_CONTEXT_FIELDS_DO(DEFINE_ACCESSOR)
+
+  #undef DEFINE_ACCESSOR
 
   #define ARRAY( type, name ) FIELD( type, name )
   #define FIELD( type, name ) \
-    static type* name       ( void )          { return _state.name();     } \
-    static void clear_##name( void )          { _state.clear_##name();    } \
-    static void set_##name  ( OopDesc* val )  { _state.set_##name( val ); } \
-    static void set_##name  ( type* val    )  { _state.set_##name( val ); } \
+    type* name       ( void )            { return _context.name();     } \
+    void clear_##name( void )            { _context.clear_##name();    } \
+    void set_##name  ( OopDesc* val )    { _context.set_##name( val ); } \
+    void set_##name  ( const type* val ) { _context.set_##name( val ); } \
+    static type* current_##name ( void ) { return current()->name();   }
 
-  COMPILER_HANDLES
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_NPCE
-  SCHEDULER_HANDLES 
-#endif 
+  COMPILER_CONTEXT_HANDLES
 
-  #undef ARRAY
   #undef FIELD
 
   // Constructor and deconstructor.
@@ -239,14 +291,9 @@ class Compiler: public StackObj {
 #ifndef PRODUCT
   // Create a dummy compiler that does nothing, but just make is_active()
   // to true.
-  Compiler() {
-    _current = this;
-  }
+  Compiler();
 #endif
-  ~Compiler() {
-    GUARANTEE(is_active(), "Sanity check");
-    _current = NULL;
-  }
+  ~Compiler();
 
   // Called during VM start-up
   static void initialize();
@@ -287,7 +334,7 @@ class Compiler: public StackObj {
   }
 
   // Accessors for the compilation queue.
-  static ReturnOop current_compilation_queue_element( void ) {
+  ReturnOop current_compilation_queue_element( void ) {
     ReturnOop p = (CompilationQueueElementDesc*)current_element()->obj();
     if( !p ) {
       p = compilation_queue()->obj();
@@ -297,7 +344,14 @@ class Compiler: public StackObj {
     return p;
   }
 
+  CompilerContext* context() {
+    return &_context;
+  }
+
 #if ENABLE_NPCE
+  //get the exception stub whose's entry label is still unset.
+  //the function will find the stub and let the store_to_add_xx() to fill the 
+  //address in LDR instr  in it.
   CompilationQueueElementDesc* get_unlinked_exception_stub(jint bci){
     CompilationQueueElement::Raw next_element = compilation_queue()->obj();
     while( ! next_element().is_null()){
@@ -316,64 +370,92 @@ class Compiler: public StackObj {
 
     return NULL;
   }
-#endif   
+
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+  //Null pointer exception accessor
+  void record_null_point_exception_inst( int offset ) {
+    int index = null_point_record_counter();
+    null_point_exception_ins_table()->int_at_put( index++, offset); 
+    set_null_point_record_counter(index);     
+  }
+
+  //return the null point related instr indexed by index parameter
+  int null_point_exception_abort_point( int index) {
+    return null_point_exception_ins_table()->int_at( index);
+  }
+
+  //record the instr offset of those null point stubs into a npe_table.
+  //we will track the offset changing of those instr during scheduling and
+  //update the entry label of those instr after scheduling.
+  void record_instr_offset_of_null_point_stubs(int start_offset);
+
+  //update the entry lable of those null point stubs base on the information
+  //of npe_table after scheduling
+  void update_null_check_stubs();
+#endif // ENABLE_INTERNAL_CODE_OPTIMIZER 
+#endif // ENABLE_NPCE 
 
 #if ENABLE_LOOP_OPTIMIZATION && ARM
+  //get the first compilation queue item.
   ReturnOop get_first_compilation_queue_element() {
     return compilation_queue()->obj();
   }
   
+  //get the next element in the current compilation queue. 
   ReturnOop get_next_compilation_queue_element(CompilationQueueElement *
                                                current_elem) {
     return current_elem->next();
   }
 #endif //#if ENABLE_LOOP_OPTIMIZATION && ARM
 
-#if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
-  //Null pointer exception accessor
-  static void insert_npe_address( int index, int address ) {
-    npe_table()->int_at_put( index, address); 
-  }
-
-  static int npe_address( int index) {
-    return npe_table()->int_at( index);
-  }
-#endif 
-  static void insert_compilation_queue_element(CompilationQueueElement* value) {
+  void insert_compilation_queue_element(CompilationQueueElement* value) {
     value->set_next( compilation_queue() );
     set_compilation_queue( value );
   }
 
-  static bool is_compilation_queue_empty( void ) {
+  bool is_compilation_queue_empty( void ) {
     return compilation_queue()->is_null() && current_element()->is_null();
   }
 
   // Entry counts accessor.
-  static int entry_count_for(const jint bci)  {
+  int entry_count_for(const jint bci)  {
     return entry_counts_table()->ubyte_at(bci);
   }
 
-  static bool exception_has_osr_entry(const jint bci) {
-    return (bci_flags_table()->byte_at(bci) & bci_exception_has_osr_entry) != 0;
+  bool exception_has_osr_entry(const jint bci) {
+    return (bci_flags_table()->byte_at(bci) & 
+            Method::bci_exception_has_osr_entry) != 0;
   }
 
-  static void set_exception_has_osr_entry(const jint bci) {
+  void set_exception_has_osr_entry(const jint bci) {
     bci_flags_table()->byte_at_put(bci,
-      (jbyte) (bci_flags_table()->byte_at(bci) | bci_exception_has_osr_entry));
+      (jbyte) (bci_flags_table()->byte_at(bci) | 
+               Method::bci_exception_has_osr_entry));
+  }
+
+  bool is_branch_taken(const jint bci) {
+    return (bci_flags_table()->byte_at(bci) & 
+            Method::bci_branch_taken) != 0;
+  }
+
+  void set_branch_taken(const jint bci) {
+    bci_flags_table()->byte_at_put(bci,
+      (jbyte) (bci_flags_table()->byte_at(bci) | 
+               Method::bci_branch_taken));
   }
 
   // Entry accessor.
-  static ReturnOop entry_for(const jint bci)  {
+  ReturnOop entry_for(const jint bci)  {
     return entry_table()->obj_at(bci);
   }
-  static void set_entry_for(const jint bci, Entry* entry) {
+  void set_entry_for(const jint bci, Entry* entry) {
     entry_table()->obj_at_put(bci, entry);
   }
-  static bool has_entry_for(const jint bci)  {
+  bool has_entry_for(const jint bci)  {
     return entry_for(bci) != NULL;
   }
 
-  static bool method_aborted_for_exception_at(const int bci) {
+  bool method_aborted_for_exception_at(const int bci) {
     const AccessFlags flags = method()->access_flags();
     return !( flags.is_synchronized()
            || flags.has_monitor_bytecodes()
@@ -382,8 +464,7 @@ class Compiler: public StackObj {
   }
 
   // Tells whether is compiler is active
-  static Compiler* current  ( void ) { return _current;          }
-  static bool      is_active( void ) { return current() != NULL; }
+  static bool is_active( void ) { return current() != NULL; }
 
   // Support for sharing of exception thrower stubs.
   typedef ThrowExceptionStub::RuntimeException RuntimeException;
@@ -393,16 +474,47 @@ class Compiler: public StackObj {
   static void set_rte_handler(const RuntimeException rte, OopDesc* value) {
     _state._rte_handlers[rte] = value;
   }
-#if ENABLE_INLINE && ARM
-  void restore_fast_globals();
-  void compile_method_for_inline(jint old_code_offset, bool is_static, 
-                 VirtualStackFrame* frame, CompiledMethod* result, CompilerState* caller_state  JVM_TRAPS);
+#if ENABLE_INLINE
+  void internal_compile_inlined( Method::Attributes& attributes JVM_TRAPS );
 
-  static BinaryAssembler::Label get_inline_return_label() {
-    BinaryAssembler::Label L;
-    L._encoding = inline_return_label();
-    return L;
+  BinaryAssembler::Label inline_return_label() {
+    BinaryAssembler::Label label;
+    label._encoding = inline_return_label_encoding();
+    return label;
   }
+
+  void set_inline_return_label(BinaryAssembler::Label& label) {
+    set_inline_return_label_encoding(label._encoding);
+  }
+
+ private:
+  ReturnOop parent_frame() {
+    GUARANTEE(is_inlining(), "Can only be called during inlining");
+    Compiler* parent_compiler = parent();
+    GUARANTEE(parent_compiler != NULL, "Cannot be null when inlining");
+    GUARANTEE(parent_compiler != this, "Sanity");
+    CompilationQueueElement::Raw parent_element = 
+      parent_compiler->current_element();
+    GUARANTEE(parent_element.not_null(), "Cannot be null when inlining");
+    return parent_element().frame();
+  }
+
+  void set_parent_frame(VirtualStackFrame* frame) {
+    GUARANTEE(is_inlining(), "Can only be called during inlining");
+    Compiler* parent_compiler = parent();
+    GUARANTEE(parent_compiler != NULL, "Cannot be null when inlining");
+    GUARANTEE(parent_compiler != this, "Sanity");
+    CompilationQueueElement::Raw parent_element = 
+      parent_compiler->current_element();
+    GUARANTEE(parent_element.not_null(), "Cannot be null when inlining");
+    parent_element().set_frame(frame);
+  }
+
+  void clear_parent_frame() {
+    VirtualStackFrame::Raw null_frame;
+    set_parent_frame(&null_frame);
+  }
+ public:
 #endif
   static int bci( void ) {
     return jvm_fast_globals.compiler_bci;
@@ -418,142 +530,26 @@ class Compiler: public StackObj {
     jvm_fast_globals.num_stack_lock_words = num_lock_words;
   }
 
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM &&ENABLE_CODE_OPTIMIZER
-#if ENABLE_NPCE
-  void patch_null_check_stubs();
-  void get_npe_instructions(int start_offset);
-#endif  
-  
-  InternalCodeOptimizer* optimizer() {
-    return &_internal_code_optimizer;
+  static bool is_in_loop           ( void ) { 
+    return Compiler::current()->in_loop();     
+  }
+  static void mark_as_in_loop      ( void ) { 
+    Compiler::current()->set_in_loop( true );  
+  }
+  static void mark_as_outside_loop ( void ) { 
+    Compiler::current()->set_in_loop( false ); 
   }
 
-  void StartInternalCodeOptimizer(CompiledMethod* cm) {
-    _internal_code_optimizer.StartInternalCodeOptimizer(cm, code_generator()->code_size());
-  }
-  
-  bool StopInternalCodeOptimizer(CompiledMethod* cm JVM_TRAPS) {
-   return  _internal_code_optimizer.StopInternalCodeOptimizer(cm, code_generator()->code_size() JVM_NO_CHECK_AT_BOTTOM);
+  static bool is_inlining( void ) { 
+    return current() != root();
   }
 
-  int get_unbound_literal_count() {
-    return this->code_generator()->unbound_literal_count();
-  }
-
-  int next_schedulable_branch(int* begin, int& next, BinaryAssembler::Label* label) {
-    if (label->is_unused()) {
-      CompilationQueueElement::Raw stub = this->rte_handler(
-        ThrowExceptionStub::rte_array_index_out_of_bounds);
-      if (stub().is_null()) {
-        return -1;
-      }
-      (*label) = stub().entry_label();
-      if ( label->is_unused() || label->is_bound()) {
-        //TTY_TRACE_CR(("array index stub  is bound %d", label->position()));
-        return -1;
-      }
-    }
-    return code_generator()->get_next_schedulable_branch_instruction(
-      *label, (address)begin, next);
- 
-  }
-
-  int aoi_stub_position() {
-   CompilationQueueElement::Raw stub = this->rte_handler(ThrowExceptionStub::rte_array_index_out_of_bounds);
-   if (stub().is_null() || !stub().entry_label().is_bound()) {
-     return -1;
-   }
-   return stub().entry_label().position();
-
-  }
-  
-  void get_first_literal_ldrs(int* begin) {
-    BinaryAssembler::LiteralPoolElementDesc* ptr;
-    BinaryAssembler::Label tmp;
-    int offset;
-#ifndef PRODUCT                  
-    int index=0;
-#endif    
-    ptr = (BinaryAssembler::LiteralPoolElementDesc*)
-                this->code_generator()->_first_unbound_literal.obj();
-    for (; ptr ; ptr = ptr->_next) {
-      tmp._encoding = ptr->_label;
-      offset = this->code_generator()->get_first_literal_load_instruction(tmp, 
-               (address)begin);
-      if (offset >= 0) {
-#ifndef PRODUCT                  
-        if (OptimizeCompiledCodeVerboseInternal)
-          TTY_TRACE_CR(("\t\t[%d] =>literal[%d] ", offset, index));
-#endif
-          _internal_code_optimizer.record_unbound_literal_ldr_address(offset);
-      }
-#ifndef PRODUCT      
-      index++;
-#endif
-    }
-  }
-
- void patch_unbound_literal(int offset) {
-    int index = 0; 
-    int new_offset;
-    BinaryAssembler::LiteralPoolElementDesc*  ptr;
-    BinaryAssembler::Label tmp;
-    ptr = (BinaryAssembler::LiteralPoolElementDesc*)
-          this->code_generator()->_first_unbound_literal.obj();
-    
-    for (; ptr; ptr = ptr->_next) {
-#ifndef PRODUCT	
-      if (OptimizeCompiledCodeVerboseInternal) {
-        BinaryAssembler::LiteralPoolElement::Raw t = ptr;
-        TTY_TRACE(("\t\t\t"));
-        t().print_value_on(tty);
-        TTY_TRACE_CR((""));
-      }
-#endif
-      tmp._encoding = ptr->_label;
-      if(tmp.position() < offset ){
-#ifndef PRODUCT	
-        if(OptimizeCompiledCodeVerboseInternal){          
-          TTY_TRACE_CR(("\t\t\t\tNO modify"));
-        }
-#endif     
-          continue;
-      }
-      new_offset = _internal_code_optimizer.get_scheduled_unbound_literal_address(index); 
-#ifndef PRODUCT	
-      if(OptimizeCompiledCodeVerboseInternal){                 
-        TTY_TRACE_CR(("\t\t\t\tlink change from %d  to %d ", tmp.position(), new_offset));
-      }
-#endif      
-      if(new_offset !=0 ){
-        tmp.link_to( new_offset);
-        ptr->_label = tmp._encoding;
-      }
-      index++;   
-    }
-  }
-
-  void update_aoi_stub(int position) {
-    CompilationQueueElement::Raw stub = rte_handler(ThrowExceptionStub::rte_array_index_out_of_bounds);
-    if (!stub().is_null() && !stub().entry_label().is_bound() ) {
-      BinaryAssembler::Label label;
-      label.link_to(position);
-      stub().set_entry_label(label);
-    }
-  }
-#endif
-
-  static bool is_in_loop           ( void ) { return in_loop();     }
-  static void mark_as_in_loop      ( void ) { set_in_loop( true );  }
-  static void mark_as_outside_loop ( void ) { set_in_loop( false ); }
-
-  enum CompilationFailure { // Do not reorder
+  enum CompilationFailure {
     none,
     reservation_failed,
     out_of_time,
-    out_of_stack,
-    out_of_compiled_code_buffer,
-    out_of_memory
+    out_of_memory,
+    out_of_stack
   };
 
   static CompilationFailure _failure;
@@ -561,6 +557,7 @@ class Compiler: public StackObj {
 
  private:
   static CompilerState _suspended_compiler_state;
+  static CompilerContext _suspended_compiler_context;
  public:
   static void on_timer_tick(bool is_real_time_tick JVM_TRAPS);
   static void process_interpretation_log();
@@ -569,6 +566,9 @@ class Compiler: public StackObj {
   static CompilerState* suspended_compiler_state( void ) {
     return &_suspended_compiler_state;
   }
+  static CompilerContext* suspended_compiler_context( void ) {
+    return &_suspended_compiler_context;
+  }
 
   static bool is_suspended ( void ) {
     return suspended_compiler_state()->valid();
@@ -576,15 +576,13 @@ class Compiler: public StackObj {
 
   static void oops_do( void do_oop(OopDesc**) );
 
-  static void generate_omit_frame_table(Stream*) PRODUCT_RETURN;
-
 #if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
   static void print_detailed_performance_counters();
 #else 
   static void print_detailed_performance_counters() {}
 #endif
  private:
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM &&ENABLE_CODE_OPTIMIZER
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
   InternalCodeOptimizer _internal_code_optimizer;
   FastOopInStackObj    __must_be_first_item__;
 #endif
@@ -592,22 +590,173 @@ class Compiler: public StackObj {
   // The compiler closure.
   BytecodeCompileClosure _closure;
 
-  // The entry counts and the entry table.
-
-  enum {
-    bci_exception_has_osr_entry = 1
-  };
+  // The compiler context.
+  CompilerContext        _context;
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM &&ENABLE_CODE_OPTIMIZER
   CompilationQueueElement::Fast _next_element;
   CompilationQueueElement::Fast _cur_element;
   BinaryAssembler::LiteralPoolElement::Fast  _next_bound_literal;
-  BinaryAssembler::Label get_next_pinned_entry();
-  BinaryAssembler::Label get_next_bound_literal();
-  BinaryAssembler::Label get_bound_literal_debug(int);
+
+  InternalCodeOptimizer* optimizer() {
+    return &_internal_code_optimizer;
+  }
+
+  void prepare_for_scheduling_of_current_cc(CompiledMethod* cm) {
+#if ENABLE_NPCE
+    //reset counter before compilation of cc.
+    set_null_point_record_counter(0);
+#endif
+    _internal_code_optimizer.prepare_for_scheduling_of_current_cc(
+              cm, code_generator()->code_size());
+  }
+  
+  bool  schedule_current_cc(CompiledMethod* cm JVM_TRAPS) {
+#if ENABLE_NPCE
+       //should be GUARANTEE(Compiler::current()->null_point_record_counter() <= 
+       //                     Compiler::null_point_exception_ins_table()->length(), "there're more npe related ins");
+       //if the table is smaller than the real number of npe ins, we don't scheduling code
+       //since we have no enough information to maintain the npe relationship during scheduling.
+       //null_point_record_counter is the real number of npe ins appeared in current cc.
+        if (Compiler::current()->null_point_record_counter() > 
+                      Compiler::null_point_exception_ins_table()->length()) {
+          return false;
+        }             
+#endif
+      
+    return  _internal_code_optimizer.schedule_current_cc(
+      cm, code_generator()->code_size() JVM_NO_CHECK_AT_BOTTOM);
+  }
+
+  //get the number of unbound literal count
+  //if the count>0, scheduler should track the 
+  //literal access instruction during scheduling
+  int get_unbound_literal_count() {
+    return this->code_generator()->unbound_literal_count();
+  }
+
+  //get the next branch instruction of the chain 
+  //pointed to the same unbind index check stub
+  int next_schedulable_branch(int* begin, 
+      int& next, BinaryAssembler::Label* label) {
+
+    if (label->is_unused()) {
+      //only entered for the first call of Compiler::next_scheduable_branch()
+      //in a loop.
+              
+      CompilationQueueElement::Raw stub = this->rte_handler(
+        ThrowExceptionStub::rte_array_index_out_of_bounds);
+
+      // There's no array boundary checking code in current emitted code.       
+      if (stub().is_null()) {
+        return BinaryAssembler::stop_searching;
+      }
+
+      (*label) = stub().entry_label();
+
+      // Stub is emitted. is_unused should be replace by assertion.
+      if ( label->is_unused() || label->is_bound()) {
+        return BinaryAssembler::stop_searching;
+      }
+    }
+
+    // Stub isn't emitted.     we are going to find each branch
+    // in the chain.
+    return code_generator()->next_schedulable_branch(
+      *label, (address)begin, next);
+ 
+  }
+
+  //get the offset of bound index check stub
+  int index_check_stub_offset() {
+   CompilationQueueElement::Raw stub = 
+      this->rte_handler(ThrowExceptionStub::rte_array_index_out_of_bounds);
+   if (stub().is_null() || !stub().entry_label().is_bound()) {
+     return -1;
+   }
+   return stub().entry_label().position();
+
+  }
+
+  //for the ldr ins accessing  the same literal, we find out the first one, if the chain 
+  //start from current CC. Otherwise, we  
+  //return the last literal access LDR of previous CC
+  //if the chain starts from there.
+  //please refer: 
+  // "Figure.3.8.2.2.2 algorithm for maintaining the literal accessing chain"
+  //of optimization document.
+  void get_first_literal_ldrs(int* begin_offset_of_block) {
+    AllocationDisabler allocation_not_allowed_in_this_function;
+      
+    BinaryAssembler::LiteralPoolElement::Raw literal;
+    BinaryAssembler::Label label;
+    int offset;
+    literal = this->code_generator()->_first_unbound_literal.obj();
+    
+    for (; !literal.is_null(); literal = literal().next()) { 
+      label._encoding = literal().label()._encoding;
+      offset = this->code_generator()->first_instr_of_literal_loading(label, 
+               (address)begin_offset_of_block);
+      //if offset is -1, means the this literal is not used 
+      //in current compilation continuals
+      if (offset > BinaryAssembler::literal_not_used_in_current_cc) {
+        VERBOSE_SCHEDULING_AS_YOU_GO(("\t\t[%d] =>literal[%d] ", offset, index));
+      //record the offset into table  
+        _internal_code_optimizer.record_offset_of_unbound_literal_access_ins(offset);
+      }
+    }
+  }
+
+  //modify the lables of literal pool element based on the scheduling result
+  //of literal access instructions
+  void patch_unbound_literal_elements(int begin_offset_of_block) {
+    AllocationDisabler allocation_not_allowed_in_this_function;
+      
+    BinaryAssembler::LiteralPoolElement::Raw literal;
+    BinaryAssembler::Label tmp;
+    int index = 0; 
+    int new_offset;
+    
+    literal = this->code_generator()->_first_unbound_literal.obj();
+    
+    for (; !literal.is_null(); literal = literal().next()) { 
+      tmp._encoding = literal().label()._encoding;
+      if(tmp.position() < begin_offset_of_block){
+          continue;
+      }
+      new_offset = _internal_code_optimizer.offset_of_scheduled_unbound_literal_access_ins(index); 
+      if(new_offset !=0 ){
+        tmp.link_to( new_offset);
+        literal().set_label(tmp);
+      }
+      index++;   
+    }
+  }
+
+  //update the entry label of a unbind index check stub.
+  //the entry label point to the tail of a chain of branch.
+  void update_shared_index_check_stub(int position) {
+    CompilationQueueElement::Raw stub = rte_handler(
+              ThrowExceptionStub::rte_array_index_out_of_bounds);
+    if (!stub().is_null() && !stub().entry_label().is_bound() ) {
+      BinaryAssembler::Label label;
+      label.link_to(position);
+      stub().set_entry_label(label);
+    }
+  }
+
+  //two methods for getting the jitted code offset recorded 
+  //in uncompiled OSRStub or
+  //EntryFrame.We won't schedule those instruction since 
+  //other code will jump to those places later.
   void begin_pinned_entry_search();
+  BinaryAssembler::Label get_next_pinned_entry();
+
+  //two method for getting the jittted code offset of the
+  //literal who has been written
+  //out. We won't unpack those place during scheduling
   void begin_bound_literal_search();
-  void init_bound_literal_detect_debug();
+  BinaryAssembler::Label get_next_bound_literal();
 
   friend class CodeOptimizer;
   friend class InternalCodeOptimizer;
@@ -630,14 +779,17 @@ class Compiler: public StackObj {
   void suspend                 ( void );
   void restore_and_compile     ( JVM_SINGLE_ARG_TRAPS );
   void optimize_code           ( JVM_SINGLE_ARG_TRAPS );
+  void setup_for_compile       ( Method::Attributes& attributes JVM_TRAPS );
 
   void process_compilation_queue ( JVM_SINGLE_ARG_TRAPS );
   static void terminate ( OopDesc* result );
   bool reserve_compiler_area(size_t compiled_method_size);
+
+  void handle_out_of_memory( void );
   static void set_impossible_to_compile(Method *method, const char why[]);
 #if ENABLE_PERFORMANCE_COUNTERS
   void init_performance_counters(bool is_resume);
-  void update_performance_counters(bool is_resume, OopDesc* result) const;
+  void update_performance_counters(bool is_resume, OopDesc* result);
 
   jlong _start_time;
   int   _mem_before_compile;
@@ -666,11 +818,30 @@ class Compiler: public StackObj {
   static void p();
 #endif
 
- private:
+private:
 #if ENABLE_APPENDED_CALLINFO
   static CallInfoWriter _callinfo_writer;
 
   static CallInfoWriter* callinfo_writer() { return &_callinfo_writer; }
+#endif
+
+#if ENABLE_CODE_PATCHING
+public:
+  static void update_checkpoints_table(CompiledMethod* cm);
+  static void patch_checkpoints(address current_pc);
+  static void unpatch_checkpoints();
+  static bool is_undoing_patching() {
+    return _is_undoing_patching;
+  }
+  static bool can_patch(int bci_from, int bci_to);
+
+private:
+  static void patch_compiled_method(CompiledMethod* cm);
+  static void unpatch_compiled_method(CompiledMethod* cm);
+
+  static CompiledMethodDesc* get_current_compiled_method(address current_pc);
+
+  static bool _is_undoing_patching;
 #endif
 };
 
@@ -766,7 +937,11 @@ class Compiler: public StackObj {
   template(stack_overflow_stub, 0)                      \
   template(timer_tick_stub, 0)                          \
                                                         \
+  template(new_object_stub, 0)                          \
+  template(new_type_array_stub, 0)                      \
+                                                        \
   template(generic_compile, 1)                          \
+  template(custom_compile, 1)                           \
                                                         \
   template(sentinel, 0)                                 \
   template(relocation, 0)                               \

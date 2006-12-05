@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -29,7 +30,6 @@ public:
   ReturnOop _send_next;     // chain of events to send to debugger
   ReturnOop _queue_next;
   ReturnOop _mods;
-  ReturnOop _location_mod;  // can only have one location for an event
   ReturnOop _transport;
 
   /* All oops must go before here.  If you change the number of oops, be
@@ -41,8 +41,6 @@ public:
   jbyte _padding1;
   jbyte _padding2;
   jint _num_modifiers;
-  jboolean _count_active;
-  jint _count;
   jint _event_id;
   jint _task_id;
 
@@ -50,7 +48,7 @@ private:
   static size_t allocation_size() {
     return align_allocation_size(sizeof(VMEventDesc));
   }
-  static int pointer_count() { return 6; }
+  static int pointer_count() { return 5; }
 
   friend class OopDesc;
   friend class VMEvent;

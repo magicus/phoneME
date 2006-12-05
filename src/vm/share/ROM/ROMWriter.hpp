@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -61,6 +62,7 @@
 
 #define ROMWRITER_OOP_FIELDS_DO_SOURCE(template) \
  template(ConstantPool, skipped_constant_pool, "") \
+ template(TypeArray,    rom_tm_bitmap, "bitmap of references inside TASK_MIRRORS_BLOCK") \
  template(ROMLookupTable, constant_string_table, "")
 
 #define ROMWRITER_OOP_FIELDS_DO_BINARY(template) \
@@ -106,6 +108,7 @@
 
 #define ROMWRITER_INT_FIELDS_DO_SOURCE(template) \
  template(int, constant_string_count, "") \
+ template(int, tm_block_count, "") \
  template(FileStreamState, declare_stream_state, "") \
  template(FileStreamState, main_stream_state, "") \
  template(FileStreamState, reloc_stream_state, "") \
@@ -131,9 +134,18 @@
 #define ROMWRITER_INT_FIELDS_DO_ISOLATE(template)
 #endif
 
+#if ENABLE_COMPILER
+#define ROMWRITER_OOP_FIELDS_DO_AOT_COMMON(template) \
+ template(OffsetVector, compiled_method_list, \
+          "List of precompiled methods")
+#else
+#define ROMWRITER_OOP_FIELDS_DO_AOT_COMMON(template)
+#endif
+
 #if USE_SOURCE_IMAGE_GENERATOR
 #define ROMWRITER_OOP_FIELDS_DO(template) \
         ROMWRITER_OOP_FIELDS_DO_COMMON(template) \
+        ROMWRITER_OOP_FIELDS_DO_AOT_COMMON(template) \
         ROMWRITER_OOP_FIELDS_DO_SOURCE(template)
 #define ROMWRITER_INT_FIELDS_DO(template) \
         ROMWRITER_INT_FIELDS_DO_COMMON(template) \
@@ -141,6 +153,7 @@
 #else
 #define ROMWRITER_OOP_FIELDS_DO(template) \
         ROMWRITER_OOP_FIELDS_DO_COMMON(template) \
+        ROMWRITER_OOP_FIELDS_DO_AOT_COMMON(template) \
         ROMWRITER_OOP_FIELDS_DO_BINARY(template)
 #define ROMWRITER_INT_FIELDS_DO(template) \
         ROMWRITER_INT_FIELDS_DO_COMMON(template) \
@@ -260,6 +273,15 @@ public:
   }
 };
 
+class OffsetVector: public ROMVector {
+public:
+  HANDLE_DEFINITION(OffsetVector, ROMVector);
+
+  void initialize(int count JVM_TRAPS);
+  void initialize(JVM_SINGLE_ARG_TRAPS);
+  jint _compare_to(Oop *obj1, Oop* obj2);
+};
+
 class ROMWriter: public StackObj {
 public:
   // Count the number of integer and oop fields in the ROMWriter class
@@ -370,7 +392,16 @@ public:
     DATA_BLOCK,  // objects that stay in .data segment
     HEAP_BLOCK,  // objects that get copied into heap before they're used
     PERSISTENT_HANDLES_BLOCK,
-    SYSTEM_SYMBOLS_BLOCK
+    SYSTEM_SYMBOLS_BLOCK,
+#if ENABLE_HEAP_NEARS_IN_HEAP  
+    ROM_DUPLICATE_HANDLES_BLOCK,
+    TEXT_AND_HEAP_BLOCK, 
+    DATA_AND_HEAP_BLOCK,
+#endif
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES
+    TASK_MIRRORS_BLOCK, 
+#endif
+    BLOCK_COUNT
   };
 
   enum {
@@ -447,6 +478,11 @@ public:
 
   int  offset_of(Oop* object JVM_TRAPS);
   void set_offset_of(Oop* object, int offset JVM_TRAPS);
+
+#if ENABLE_HEAP_NEARS_IN_HEAP    
+  int  heap_offset_of(Oop* object JVM_TRAPS);
+  void set_heap_offset_of(Oop* object, int offset JVM_TRAPS);
+#endif
 
   void set_block_type_of(Oop* object, BlockType type JVM_TRAPS);  
   BlockType block_type_of(Oop* object JVM_TRAPS);
@@ -544,7 +580,9 @@ public:
   virtual void write_hidden_in_profiles() {}
 #endif
   virtual void write_global_singletons(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
-
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES        
+  virtual void write_tm_reference(Oop* /*owner*/, int owner_offset, Oop* /*oop*/, FileStream* /*stream*/) {}
+#endif
   virtual void write_reference(Oop* /*oop*/, BlockType /*current_type*/,
                                FileStream* /*stream*/ JVM_TRAPS)
                {JVM_IGNORE_TRAPS;}
@@ -608,8 +646,7 @@ private:
                               jint start_offset JVM_TRAPS);
   int  stream_static_fields(InstanceClass* klass, 
                             Oop* object, 
-                            jint start_offset, 
-                            bool stream_oopmap JVM_TRAPS);
+                            jint start_offset JVM_TRAPS);
   int  stream_java_fields(InstanceClass* klass, 
                           Oop* object, bool is_static,
                           jint start_offset JVM_TRAPS);
@@ -764,7 +801,13 @@ public:
   template(shared_fast_getshort_static_accessor)  \
   template(shared_fast_getchar_static_accessor)   \
   template(shared_fast_getint_static_accessor)    \
-  template(shared_fast_getlong_static_accessor)
+  template(shared_fast_getlong_static_accessor)   \
+  \
+  template(shared_fast_getfloat_accessor)         \
+  template(shared_fast_getdouble_accessor)        \
+  template(shared_fast_getfloat_static_accessor)  \
+  template(shared_fast_getdouble_static_accessor)
+
 
 #if ENABLE_COMPILER
 #define COMPILER_ENTRIES_DO(template)      \
@@ -791,11 +834,42 @@ public:
 #define THUMB_COMPILER_INTERPRETER_ENTRIES_DO(template)
 #endif
 
+#if defined(ARM) && ENABLE_FLOAT && !ENABLE_SOFT_FLOAT
+#define COMPILER_FLOAT_ENTRIES_DO(template) \
+  template(jvm_fadd)  \
+  template(jvm_fsub)  \
+  template(jvm_fmul)  \
+  template(jvm_fdiv)  \
+  template(jvm_frem)  \
+  template(jvm_dadd)  \
+  template(jvm_dsub)  \
+  template(jvm_dmul)  \
+  template(jvm_ddiv)  \
+  template(jvm_drem)  \
+  template(jvm_fcmpl)  \
+  template(jvm_fcmpg)  \
+  template(jvm_dcmpl)  \
+  template(jvm_dcmpg)  \
+  template(jvm_i2d)  \
+  template(jvm_d2i)  \
+  template(jvm_f2i)  \
+  template(jvm_i2f)  \
+  template(jvm_d2l)  \
+  template(jvm_l2d)  \
+  template(jvm_f2l)  \
+  template(jvm_l2f)  \
+  template(jvm_d2f)  \
+  template(jvm_f2d)  
+#else
+#define COMPILER_FLOAT_ENTRIES_DO(template)
+#endif 
+
 #define EXECUTION_ENTRIES_DO(template)            \
   INTERPRETER_ENTRIES_DO(template)                \
   COMPILER_ENTRIES_DO(template)                   \
-  THUMB_COMPILER_INTERPRETER_ENTRIES_DO(template)
-
+  THUMB_COMPILER_INTERPRETER_ENTRIES_DO(template) \
+  COMPILER_FLOAT_ENTRIES_DO(template) 
+  
 #define ROM_DEFINE_ENTRY(x)             {(address) &x, STR(x)},
 
   friend class SourceROMWriter;
@@ -810,7 +884,9 @@ public:
   int text_bytes, text_objects;
   int data_bytes, data_objects;
   int heap_bytes, heap_objects;  
-
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES 
+  int tm_bytes, tm_objects;  
+#endif
   MemCounter(const char *n);
 
   int all_bytes() {
@@ -850,7 +926,15 @@ public:
   void add_heap_bytes(int bytes) {
     heap_bytes += bytes;
   }
-
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES  
+  void add_tm(int bytes) { 
+    tm_objects ++; 
+    tm_bytes += bytes; 
+  } 
+  void add_tm_bytes(int bytes) { 
+    tm_bytes += bytes; 
+  } 
+#endif 
   void reset() {
     text_objects = 0;
     data_objects = 0;
@@ -858,6 +942,9 @@ public:
     text_bytes   = 0;
     data_bytes   = 0;
     heap_bytes   = 0;
+#if ENABLE_PREINITED_TASK_MIRRORS && USE_SOURCE_IMAGE_GENERATOR && ENABLE_ISOLATES 
+    tm_bytes = tm_objects = 0;
+#endif  
   }
 
   void print(Stream *stream);

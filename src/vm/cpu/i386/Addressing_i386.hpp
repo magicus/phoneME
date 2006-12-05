@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -180,11 +181,17 @@ class LocationAddress: public StackAddress {
   // accessor for the index
   jint       index()       const { return _index; }
 
-  // check if the location address is the address of a local (as opposed to an expression stack element)
-  bool       is_local()    const { return method()->is_local(index()); }
+  bool       is_local() const { return is_local_index(index()); }
+
+  // check if the location address is the address of a local 
+  // (as opposed to an expression stack element) 
+  static bool is_local_index(jint index);
 
   // compute the base register for a location address with the given index
-  static BinaryAssembler::Register base_for(jint index) { return method()->is_local(index) ? BinaryAssembler::ebp : BinaryAssembler::esp; }
+  static BinaryAssembler::Register base_for(jint index) { 
+    return is_local_index(index) ? 
+      BinaryAssembler::ebp : BinaryAssembler::esp; 
+  }
 };
 
 #endif

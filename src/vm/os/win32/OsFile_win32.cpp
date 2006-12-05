@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -122,7 +123,8 @@ bool OsFile_exists(const PathChar *fn_filename) {
   struct _stat statBuf;
 
 #ifdef _MSC_VER
-  if (_wstat(fn_filename, &statBuf) != 0 || (statBuf.st_mode & S_IFREG) == 0) {
+  if (_wstat((const wchar_t *)fn_filename, &statBuf) != 0 ||
+      (statBuf.st_mode & S_IFREG) == 0) {
     return false;
   } else {
     return true;
@@ -152,8 +154,8 @@ int OsFile_eof(OsFile_Handle handle) {
 
 bool OsFile_rename(const JvmPathChar *fn_from, const JvmPathChar *fn_to) {
 #ifdef _MSC_VER
-  _wremove(fn_to);
-  _wrename(fn_from, fn_to);
+  _wremove((const wchar_t *)fn_to);
+  _wrename((const wchar_t *)fn_from, (const wchar_t *)fn_to);
 #else
   PATHCHAR_TO_ASCII(fn_from, from);
   PATHCHAR_TO_ASCII(fn_to, to);
@@ -165,7 +167,7 @@ bool OsFile_rename(const JvmPathChar *fn_from, const JvmPathChar *fn_to) {
 
 int OsFile_remove(const JvmPathChar *fn_filename) {
 #ifdef _MSC_VER
-  return _wremove(fn_filename);
+  return _wremove((const wchar_t *)fn_filename);
 #else
   PATHCHAR_TO_ASCII(fn_filename, filename);
   return remove(filename);

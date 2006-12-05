@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -264,10 +265,6 @@ public:
   }
   void set_block_type(juint value) {
     uint_field_put(block_type_offset(), value);
-  }
-
-  void add_flags(juint mask) {
-    (*obj()->uint_field_addr(flags_offset())) |= mask;
   }
 
   ReturnOop read_completely(JVM_SINGLE_ARG_TRAPS);

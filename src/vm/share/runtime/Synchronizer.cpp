@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,14 +27,16 @@
 # include "incls/_precompiled.incl"
 # include "incls/_Synchronizer.cpp.incl"
 
-void StackLock::set_waiters(Condition* value) {
-  GUARANTEE(!value->is_null(), "Sanity");
-  GUARANTEE(value->wait_object() == this->owner(), "Sanity check");
-
+void StackLock::set_waiters(Thread* thread) {
+  GUARANTEE(!thread->is_null(), "Sanity");
+#ifdef AZZERT
+  StackLock* stack_lock = thread->wait_stack_lock();
+  GUARANTEE(stack_lock != NULL, "null stack lock");
+#endif
   // Don't use JavaNear since this is a stack lock
   JavaNear::Raw n = java_near();
   n().set_lock(JavaNear::waiters_value);
-  _waiters = value->obj();
+  _waiters = thread->obj();
 }
 
 void StackLock::lock(Thread* thread, JavaOop *obj) {
@@ -140,65 +143,41 @@ bool Synchronizer::enter(Thread* thread, StackLock* stack_lock JVM_TRAPS) {
     }
   }
   JavaNear::Raw java_near = obj.klass();
+  if (TraceThreadsExcessive) {
+    TTY_TRACE_CR(("enter: thread: 0x%x, obj: 0x%x, locked %d",
+                  thread->obj(), obj.obj(), java_near().is_locked()));
+  }
   if (!java_near().is_locked()) {
      // Grab the lock
      stack_lock->lock(thread, &obj);
      return true;
   } else { 
     UsingFastOops rare_inside_case;
+    if (TraceThreadsExcessive) {
+      TTY_TRACE_CR(("locked by: 0x%x",
+                    StackLock::from_java_oop(&obj)->thread()));
+    }
     // Add THREAD to the list of waiters. 
     GUARANTEE(StackLock::from_java_oop(&obj)->thread() != 
               thread->obj(), "Reentrancy stack lock not allowed");
     thread->set_wait_stack_lock(stack_lock);
     stack_lock->clear_owner();
     AZZERT_ONLY(stack_lock = (StackLock*)-1); // Not GC Safe
+ 
+    Thread::Fast pending_waiters = StackLock::from_java_oop(&obj)->waiters(); 
 
     // Add this thread to the list of waiters
-    Condition::Fast pending_waiters = 
-           StackLock::from_java_oop(&obj)->waiters(); 
-    if (pending_waiters.is_null()) {
-      // Note that the condition being allocated is >>not<< put onto
-      // Universe::scheduler_waiting() list.  This condition is for
-      // synchronizing rather than for waiting.
-#if ENABLE_ISOLATES
-      const int prev = ObjectHeap::on_task_switch(thread->task_id());
-      pending_waiters = Condition::allocate(JVM_SINGLE_ARG_NO_CHECK);
-      ObjectHeap::on_task_switch(prev);
-#else
-      pending_waiters = Condition::allocate(JVM_SINGLE_ARG_NO_CHECK);
-#endif
-      if (CURRENT_HAS_PENDING_EXCEPTION) {
-        // Bad, very bad.  We could get into a serious DOS condition
-        // here.  See bug 6441635.  If this is  not the current_thread
-        // then we need to send an uncatchable exception to 'thread'
-        // thread.  Otherwise it could end up in a never ending loop
-        // of throwing IllegalMontitorStateExceptions in the
-        // exception handler itself.
-        // A slightly different case would be that Thread A has the lock
-        // and thread B gets here.  Thread A could be sleeping holding this
-        // lock then wakeup and do a 'wait' on this object.  If this thread
-        // just gets the OOME then thread A will never get a notify.  Hence
-        // we blow it out of the water with the uncatchable exception.
-        if (!Thread::current()->equals(thread)) {
-          thread->set_noncurrent_pending_exception (Universe::string_class());
-          if (TraceThreadsExcessive) {
-            TTY_TRACE_CR(
-              ("Failed enter: killed 0x%x (id=%d), curr: 0x%x (id=%d)",
-               thread->obj(), thread->id(),
-               Thread::current()->obj(),
-               Thread::current()->id()));
-          }
-        }
-        return false;
-      }
-      pending_waiters().set_wait_object(&obj);
-      StackLock::from_java_oop(&obj)->set_waiters(&pending_waiters);
-    }
+    // Note that this thread is >>not<< put onto the
+    // Universe::scheduler_waiting() list.  This is for
+    // synchronizing rather than for waiting.
+    pending_waiters = Scheduler::add_sync_thread(thread, &pending_waiters,
+                                                 &obj);
+    StackLock::from_java_oop(&obj)->set_waiters(&pending_waiters);
     // Wait until object has been unlocked, then lock it.
     if (_debugger_active) {
       thread->set_status((thread->status() & ~THREAD_NOT_ACTIVE_MASK) |THREAD_MONITOR_WAIT);
     }
-    Scheduler::wait_for(thread, &pending_waiters);
+    Scheduler::wait_for(thread);
     return false;
   }
 }
@@ -211,12 +190,6 @@ void Synchronizer::exit(StackLock* stack_lock) {
   Oop::Raw real_near = stack_lock->real_java_near();
   obj.set_klass(&real_near);
   stack_lock->clear_owner();
-#ifdef AZZERT
-  Condition::Raw waiters = stack_lock->waiters();
-  if (waiters.not_null()) {
-    GUARANTEE(waiters().wait_object() == obj.obj(), "Sanity check");
-  }
-#endif
   // See if someone else wants to run
   signal_waiters(stack_lock);
 }
@@ -236,27 +209,34 @@ void Synchronizer::signal_waiters(StackLock* stack_lock) {
   // This might not a lock on the current thread.
   GUARANTEE(stack_lock->owner() == NULL, "Must be free lock");
   GUARANTEE(stack_lock->real_java_near() != NULL, "Must still be a lock");
-  Condition::Raw waiters = stack_lock->waiters();
+  Thread::Raw waiters = stack_lock->waiters();
   // We can now clear the lock
   stack_lock->clear_real_java_near();      
-  if (waiters.not_null() && waiters().has_waiters()) {
+  if (waiters.not_null()) {
     // Wake up the first thread on the queue
-    Thread::Raw first_waiter = waiters().remove_first_waiter();
+    Thread::Raw first_waiter = waiters.obj();
+    Thread::Raw next_waiter = first_waiter().next_waiting();
     if (TraceThreadsExcessive) {
-      TTY_TRACE_CR(("signal: 0x%x (id=%d), curr: 0x%x (id=%d)",
+      TTY_TRACE_CR(("signal: 0x%x (id=%d), curr: 0x%x (id=%d), obj: 0x%x, next: 0x%x, lock: 0x%x",
                     first_waiter().obj(), first_waiter().id(),
                     Thread::current()->obj(),
-                    Thread::current()->id()));
+                    Thread::current()->id(),
+                    first_waiter().wait_obj(),
+                    next_waiter().obj(),
+                    (int)stack_lock));
     }
     Scheduler::add_to_active(&first_waiter);
-    JavaOop::Raw obj = waiters().wait_object();
+    JavaOop::Raw obj = first_waiter().wait_obj();
     first_waiter().wait_stack_lock()->lock(&first_waiter, &obj);
-    if (waiters().has_waiters()) {
+    if (!next_waiter.is_null()) {
       // If there are more waiters, transfer this information to
       // the new lock
-      first_waiter().wait_stack_lock()->set_waiters(&waiters);
-    } else {
-      Universe::free_condition(&waiters);
+      if (TraceThreadsExcessive) {
+        TTY_TRACE_CR(("signal: obj 0x%x, next waiter: 0x%x (id=%d)",
+                    first_waiter().wait_obj(),
+                      next_waiter().obj(), next_waiter().id()));
+      }
+      first_waiter().wait_stack_lock()->set_waiters(&next_waiter);
     }
     first_waiter().clear_wait_stack_lock();
   }

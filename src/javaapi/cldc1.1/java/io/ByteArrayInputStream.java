@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,6 +25,8 @@
  */
 
 package java.io;
+
+import com.sun.cldchi.jvm.JVM;
 
 /**
  * A <code>ByteArrayInputStream</code> contains
@@ -183,7 +186,7 @@ class ByteArrayInputStream extends InputStream {
         if (len <= 0) {
             return 0;
         }
-        System.arraycopy(buf, pos, b, off, len);
+        JVM.unchecked_byte_arraycopy(buf, pos, b, off, len);
         pos += len;
         return len;
     }

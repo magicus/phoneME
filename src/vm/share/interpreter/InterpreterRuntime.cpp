@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -82,6 +83,9 @@ extern "C" {
 
   void timer_tick() {
     if (!VerifyOnly) {
+#if ENABLE_CODE_PATCHING
+      Compiler::unpatch_checkpoints();
+#endif
       // No thread switch should happen, especially during Monet + MVM 
       // conversion.
       Thread::timer_tick();
@@ -312,7 +316,7 @@ extern "C" {
     } else {
       GUARANTEE(bc == Bytecodes::_fast_anewarray, "Sanity check");
     }
-    return Universe::new_obj_array(&klass, length JVM_NO_CHECK_AT_BOTTOM);
+    return Universe::new_obj_array(&klass, length JVM_NO_CHECK_AT_BOTTOM_0);
   }
 
   OopDesc* _newarray(Thread *thread, BasicType type, int length JVM_TRAPS) {
@@ -326,7 +330,7 @@ extern "C" {
     // Note that this code carefully doesn't create any handles.
     TypeArrayClass* array_class = Universe::as_TypeArrayClass(type);
     return Universe::new_type_array(array_class, length 
-                                    JVM_NO_CHECK_AT_BOTTOM);
+                                            JVM_NO_CHECK_AT_BOTTOM_0);
   }
   
 #if ENABLE_INTERPRETER_GENERATOR || ENABLE_ROM_GENERATOR
@@ -655,7 +659,7 @@ extern "C" {
     JavaOop::Fast exception = raw_exception;
     JavaFrame frame(thread);
     return frame.find_exception_frame(thread, &exception 
-                                      JVM_NO_CHECK_AT_BOTTOM);
+                                      JVM_NO_CHECK_AT_BOTTOM_0);
   }
 
 #ifndef PRODUCT
@@ -868,6 +872,35 @@ extern "C" {
           //     invokeinterface SomeInterface.getClass() 1
           quicken_bc = Bytecodes::_fast_invokevirtual_final;
           break;
+#if USE_SOURCE_IMAGE_GENERATOR || ( ENABLE_MONET && !ENABLE_LIB_IMAGES)
+        case JVM_CONSTANT_ResolvedStaticMethod:
+          // This case is an optimization
+          // this method has only one implementation and 
+          // GUARANTEED won't have another
+          // so we replace invoke interface to _fast_invokevirtual_final
+          // of this implementation
+          quicken_bc = Bytecodes::_fast_invokevirtual_final;
+          break;
+        case JVM_CONSTANT_ResolvedBooleanVirtualMethod:
+        case JVM_CONSTANT_ResolvedCharVirtualMethod:
+        case JVM_CONSTANT_ResolvedFloatVirtualMethod:
+        case JVM_CONSTANT_ResolvedDoubleVirtualMethod:
+        case JVM_CONSTANT_ResolvedByteVirtualMethod:
+        case JVM_CONSTANT_ResolvedShortVirtualMethod:
+        case JVM_CONSTANT_ResolvedIntVirtualMethod:
+        case JVM_CONSTANT_ResolvedLongVirtualMethod:
+        case JVM_CONSTANT_ResolvedObjectVirtualMethod:
+        case JVM_CONSTANT_ResolvedArrayVirtualMethod:
+        case JVM_CONSTANT_ResolvedVoidVirtualMethod:
+
+          // This case is an optimization
+          // this method has only one implementation and 
+          // GUARANTEED won't have another
+          // so we replace invoke interface to _fast_invokevirtual_final
+          // of this implementation
+          quicken_bc = Bytecodes::_fast_invokevirtual;
+          break;
+#endif
         default:
           quicken_bc = Bytecodes::_fast_invokeinterface;
         }

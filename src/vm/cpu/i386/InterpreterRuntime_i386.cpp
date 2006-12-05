@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -57,7 +58,8 @@ OopDesc* newarray(JVM_SINGLE_ARG_TRAPS) {
   GUARANTEE(method().bytecode_at(frame.bci()) == Bytecodes::_newarray,
             "Sanity check");
   TypeArrayClass* array_class = Universe::as_TypeArrayClass(type);
-  return Universe::new_type_array(array_class, length JVM_NO_CHECK_AT_BOTTOM);
+  OopDesc *arr = Universe::new_type_array(array_class, length JVM_NO_CHECK_AT_BOTTOM);
+  return arr;
 }
 
 address setup_stack_asm(address sp) {

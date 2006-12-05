@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -56,10 +57,10 @@ class TaskGCContext : public TaskContextSave {
   void dispose();
 public:
   TaskGCContext(int task_id) { init(task_id); };
-  TaskGCContext(OopDesc *object);
-
+#if ENABLE_ISOLATES
+  TaskGCContext(const OopDesc* const object);
+#endif
   ~TaskGCContext() {dispose();}
-
 };
 
 #if ENABLE_OOP_TAG

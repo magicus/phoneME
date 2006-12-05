@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -697,7 +698,7 @@ void SourceMacros::push_from_fpu_stack(Tag tag, int offset, bool set_tags) {
 // Pops off one item from the FPU stack, using space that's currently
 // unused above the top of stack.
 void SourceMacros::clear_one_from_fpu_stack(Tag tag, int offset) {
-  void (SourceAssembler::*inst)(const Address&);
+  void (SourceAssembler::*inst)(const Address&) = NULL;
   switch(tag) {
   case float_tag: case int_tag:
     inst = (tag == int_tag) ? &SourceAssembler::fistp_f
@@ -899,7 +900,7 @@ void SourceMacros::wtk_profile_quick_call(int param_size) {
   if (param_size == -1) { 
     comment("Get the size of the parameters");
     load_unsigned_word(ecx, Address(ebx, Constant(
-        Method::size_of_parameters_and_return_type_offset())));
+        Method::method_attributes_offset())));
     andl(ecx, Constant(Method::SIZE_OF_PARAMETERS_MASK));
     comment("Compute the start of the parameters - the locals pointer");
     leal(edi, Address(esp, ecx, TaggedJavaStack ? times_8 : times_4));
@@ -987,11 +988,13 @@ void SourceMacros::interpreter_call_vm_redo(const Constant& routine) {
 }
 
 void SourceMacros::check_timer_tick() {
-  Label done;
+  comment("Check timer tick");
+#if ENABLE_PAGE_PROTECTION
+  movl(Address(Constant("_protected_page", INTERPRETER_TIMER_TICK_SLOT)), eax);
+#else
   cmpl(Address(Constant("_rt_timer_ticks")), Constant(0));
-  jcc(equal, Constant(done));
-  interpreter_call_vm(Constant("timer_tick"), T_VOID);
-  bind(done);
+  jcc(not_equal, Constant("interpreter_timer_tick"));
+#endif
 }
 
 void SourceMacros::dispatch_prologue(int step) {

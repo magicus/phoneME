@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -87,12 +88,12 @@ class FPUControl : public SourceMacros {
     set_fpu_control_word(0x027F);
   }
 
-  void FPUControl::restore() {
+  void restore() {
     fldcw(Address(Constant("local_saved_cw"))); // Restore rounding mode
   }
 
  private:
-  void FPUControl::set_fpu_control_word(int mode) {
+  void set_fpu_control_word(int mode) {
     fstcw(Address(Constant("local_saved_cw")));
     fstcw(Address(Constant("local_masked_cw")));
     // we'd better use explicit setting

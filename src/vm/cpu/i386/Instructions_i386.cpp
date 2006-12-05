@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,5 +26,3 @@
 
 #include "incls/_precompiled.incl"
 #include "incls/_Instructions_i386.cpp.incl"
-
-// This file is currently unused for i386

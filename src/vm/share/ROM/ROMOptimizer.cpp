@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -189,7 +190,7 @@ void ROMOptimizer::optimize(Stream *log_stream JVM_TRAPS) {
 
       // Remove all Symbols that are not used by any of the romized
       // classes.  For application conversion, only symbols reachable
-      // from the application are written to the ROM image (see bug id
+      // from the application are written to the ROM image (see CR id
       // 6190703), so this optimization makes sense only for
       // GenerateSystemROMImage.
       if (RemoveUnusedSymbols) {
@@ -324,8 +325,8 @@ void ROMOptimizer::mark_hidden_classes(JVM_SINGLE_ARG_TRAPS) {
     UsingFastOops fast_oops;
     InstanceClass::Fast klass = st.next();
     AccessFlags flags = klass().access_flags();
-
-    if (is_in_hidden_package(&klass)) {
+    bool hidden = is_in_hidden_package(&klass JVM_CHECK);
+    if (hidden) {
       flags.set_is_hidden();
       klass().set_access_flags(flags);
 #if USE_ROM_LOGGING
@@ -362,6 +363,10 @@ void ROMOptimizer::initialize(Stream *log_stream JVM_TRAPS) {
   set_state(STATE_FIRST_STATE);
 
   jvm_memset(_time_counters, 0, sizeof(int)*STATE_COUNT);
+
+#if USE_AOT_COMPILATION
+  precompile_method_list()->initialize(JVM_SINGLE_ARG_CHECK);
+#endif
 
 #if USE_SOURCE_IMAGE_GENERATOR
   // These operations are not supported by Monet:
@@ -448,8 +453,8 @@ void ROMOptimizer::make_restricted_packages_final(JVM_SINGLE_ARG_TRAPS) {
     AccessFlags flags = klass().access_flags();
     if (!flags.is_final() && !has_subclasses(&klass)) {
       bool make_final = false;
-
-      if (is_in_hidden_package(&klass)) {        
+      bool hidden = is_in_hidden_package(&klass JVM_CHECK);
+      if (hidden) {        
         make_final = true;
       } else if (is_in_restricted_package(&klass) && !flags.is_public()) {
         make_final = true;
@@ -493,7 +498,8 @@ void ROMOptimizer::make_restricted_methods_final(JVM_SINGLE_ARG_TRAPS) {
     AccessFlags flags = klass().access_flags();
 
     if (!flags.is_final()) {
-      if (is_in_hidden_package(&klass) || is_in_restricted_package(&klass)) {
+	  bool hidden = is_in_hidden_package(&klass JVM_CHECK);
+      if (hidden || is_in_restricted_package(&klass)) {
         make_virtual_methods_final(&klass, &log_vector JVM_CHECK);
       }
     }
@@ -544,7 +550,7 @@ void ROMOptimizer::make_virtual_methods_final(InstanceClass *ic,
                                               JVM_TRAPS) {
   UsingFastOops fast_oops;
   ObjArray::Fast methods = ic->methods();
-  jint package_flags = get_package_flags(ic);
+  jint package_flags = get_package_flags(ic JVM_CHECK);
   AccessFlags class_flags = ic->access_flags();
 
   Method::Fast method;
@@ -599,9 +605,8 @@ bool ROMOptimizer::is_in_restricted_package(InstanceClass *klass) {
 #endif
 }
 
-bool ROMOptimizer::is_in_hidden_package(InstanceClass *klass) {
+bool ROMOptimizer::is_in_hidden_package(InstanceClass *klass JVM_TRAPS) {
 #if USE_SOURCE_IMAGE_GENERATOR
-  SETUP_ERROR_CHECKER_ARG; // IMPL_NOTE: consider whether this should be fixed 
   return class_matches_packages_list(klass, hidden_packages()
                                      JVM_NO_CHECK_AT_BOTTOM);
 #else
@@ -875,10 +880,22 @@ void ROMOptimizer::quicken_methods(JVM_SINGLE_ARG_TRAPS) {
   _log_stream->cr();
 #endif
 
+#if USE_SOURCE_IMAGE_GENERATOR || (ENABLE_MONET && !ENABLE_LIB_IMAGES) 
+  *interface_implementation_cache() = 
+        Universe::new_int_array(Universe::number_of_java_classes() JVM_CHECK);
+  *direct_interface_implementation_cache() = 
+        Universe::new_int_array(Universe::number_of_java_classes() JVM_CHECK);
+  fill_interface_implementation_cache(JVM_SINGLE_ARG_CHECK);
+#endif
   UsingFastOops level1;
   ObjArray::Fast methods;
   Method::Fast method;
   InstanceClass::Fast klass;
+
+#if USE_BINARY_IMAGE_GENERATOR && USE_AOT_COMPILATION
+  TypeArray::Fast buffer = Universe::new_byte_array(1024 JVM_CHECK);
+#endif
+
   for (SystemClassStream st; st.has_next();) {
     klass = st.next();
     bool class_is_verified = klass().is_verified();
@@ -899,6 +916,14 @@ void ROMOptimizer::quicken_methods(JVM_SINGLE_ARG_TRAPS) {
     methods = klass().methods();
 
     for (int i=0; i<methods().length(); i++) {
+#if ENABLE_LIB_IMAGES && ENABLE_MONET
+      OopDesc* method_ptr = methods().obj_at(i);
+      if (ROM::in_any_loaded_bundle( method_ptr ) || 
+          (ObjectHeap::contains(method_ptr) && method_ptr < ROM::romized_heap_marker())) {
+        continue;
+      }
+#endif
+
       method = methods().obj_at(i);
       
       if (method.is_null()) {
@@ -906,6 +931,42 @@ void ROMOptimizer::quicken_methods(JVM_SINGLE_ARG_TRAPS) {
         continue;
       }
     
+#if USE_BINARY_IMAGE_GENERATOR && USE_AOT_COMPILATION
+      {
+        UsingFastOops level2;
+        Symbol::Fast method_name = method().name();
+        Signature::Fast signature = method().signature();
+        InstanceClass::Fast holder = method().holder();
+        Symbol::Fast holder_name = holder().name();
+
+        jboolean precompile = KNI_FALSE;
+
+        {
+          AllocationDisabler raw_pointers_used_in_this_block;
+
+          char * buffer_data = (char*)buffer().data();
+
+          FixedArrayOutputStream stream(buffer_data,
+                                        buffer().length());  
+
+          signature().print_decoded_on(&stream);
+
+          precompile = 
+            JVMSPI_IsPrecompilationTarget(holder_name().utf8_data(), 
+                                          holder_name().length(),
+                                          method_name().utf8_data(), 
+                                          method_name().length(),
+                                          stream.array(), 
+                                          stream.current_size(),
+                                          method().code_size());
+        }
+        
+        if (precompile) {
+          precompile_method_list()->add_element(&method JVM_CHECK);
+        }
+      }
+#endif
+
       if (method().is_abstract()) {
         // By setting this flag, we won't need to include a variable
         // part of this method in the DATA section.
@@ -953,7 +1014,10 @@ void ROMOptimizer::quicken_methods(JVM_SINGLE_ARG_TRAPS) {
 #endif    
     EmbeddedROMHashTables = false;
   }
-
+#if USE_SOURCE_IMAGE_GENERATOR || (ENABLE_MONET && !ENABLE_LIB_IMAGES) 
+  interface_implementation_cache()->set_null();
+  direct_interface_implementation_cache()->set_null();
+#endif
 #if USE_ROM_LOGGING
   if (mcount) {
     int percent = (qcount * 100) / mcount;
@@ -968,6 +1032,103 @@ void ROMOptimizer::quicken_methods(JVM_SINGLE_ARG_TRAPS) {
   // IMPL_NOTE: on a final pass, quicken all 'static' bytecodes in <clinit>
   // methods that operate on the current class.
 }
+#if USE_SOURCE_IMAGE_GENERATOR || (ENABLE_MONET && !ENABLE_LIB_IMAGES)
+void ROMOptimizer::fill_interface_implementation_cache(JVM_SINGLE_ARG_TRAPS) {
+  //initialization
+  int i = 0;
+  for (; i < Universe::number_of_java_classes(); i++) {
+    interface_implementation_cache()->int_at_put(i, NOT_IMPLEMENTED); 
+    direct_interface_implementation_cache()->int_at_put(i, NOT_IMPLEMENTED); 
+  }
+  //return;
+#if USE_SOURCE_IMAGE_GENERATOR
+  i = 0;
+#else
+  i = ROM::number_of_system_classes();
+#endif
+  for (; i < Universe::number_of_java_classes(); i++) {
+    UsingFastOops fast;
+    JavaClass::Fast java_cls = Universe::class_from_id(i);
+
+    if (!java_cls().is_instance_class()) {
+      continue;
+    }
+
+    InstanceClass::Fast cls = java_cls.obj();
+    int class_id = cls().class_id();
+
+#if USE_SOURCE_IMAGE_GENERATOR      
+    bool reachable_by_applications = true;
+    bool hidden = is_in_hidden_package(&cls JVM_CHECK);
+    if (hidden) {
+      reachable_by_applications = false;
+    } else if (is_in_restricted_package(&cls) && !cls().is_public()) {
+      reachable_by_applications = false;
+    }
+#elif (ENABLE_MONET && !ENABLE_LIB_IMAGES)
+    bool reachable_by_applications = false;
+#endif
+    if (cls().is_interface()) {
+      if (reachable_by_applications) {
+        forbid_invoke_interface_optimization(&cls, false);
+        forbid_invoke_interface_optimization(&cls, true);
+      }
+    } else {
+      set_implementing_class(class_id, class_id, true, true);
+      if (!reachable_by_applications || cls().is_final()) {
+        set_implementing_class(class_id, class_id, true, false);        
+      } else {
+        forbid_invoke_interface_optimization(&cls, false);
+      }
+    }
+  }
+}
+#endif
+
+#if USE_SOURCE_IMAGE_GENERATOR || !ENABLE_LIB_IMAGES
+void ROMOptimizer::forbid_invoke_interface_optimization(InstanceClass* cls, bool direct) {
+  TypeArray::Raw local_interfaces = cls->local_interfaces();
+  TypeArray::Raw cache = direct ? direct_interface_implementation_cache()->obj() : 
+                                  interface_implementation_cache()->obj() ;
+  InstanceClass::Raw interf;
+  int len = local_interfaces().length();
+  cache().int_at_put(cls->class_id(), FORBID_TO_IMPLEMENT);
+  for (int i = 0; i < len; i++) {
+    int interf_id = local_interfaces().ushort_at(i);
+    cache().int_at_put(interf_id, FORBID_TO_IMPLEMENT);
+  }
+  InstanceClass::Raw super_cls = cls->super();
+  if (super_cls.not_null() && !direct) {
+    forbid_invoke_interface_optimization(&super_cls, direct);
+  }
+}
+
+void ROMOptimizer::set_implementing_class(int interf_id, int class_id, bool only_childs, bool direct_only) {
+  TypeArray::Raw cache = direct_only ? 
+                  direct_interface_implementation_cache()->obj() : interface_implementation_cache()->obj();
+  if (!only_childs) {
+    if (cache().int_at(interf_id) == NOT_IMPLEMENTED) {
+      //this is the first implementing class
+      cache().int_at_put(interf_id, class_id);
+    } else {
+      //we have multiple implementations of the interface
+      cache().int_at_put(interf_id, FORBID_TO_IMPLEMENT);
+    }
+  }
+  InstanceClass::Raw cls = Universe::class_from_id(interf_id);
+  TypeArray::Raw interfaces = cls().local_interfaces();
+  for (int i = 0; i < interfaces().length(); i++) {
+    set_implementing_class(interfaces().ushort_at(i), class_id, false, direct_only);
+  }
+  if (!direct_only) {
+    InstanceClass::Raw super_cls = cls().super();
+    if (super_cls().not_null()) {
+      set_implementing_class(super_cls().class_id(), class_id, true, direct_only);
+    }
+  }
+}
+#endif
+
 
 void ROMOptimizer::initialize_hashtables(ObjArray* symbol_table_input,
                                          ObjArray* string_table_input
@@ -982,13 +1143,14 @@ void ROMOptimizer::initialize_hashtables(ObjArray* symbol_table_input,
   _embedded_strings_offset = hashtab_mgr.embedded_strings_offset();
 }
 
-bool ROMOptimizer::is_in_public_vtable(InstanceClass *ic, Method *method) {
+bool ROMOptimizer::is_in_public_vtable(InstanceClass *ic, Method *method JVM_TRAPS) {
   UsingFastOops fast_oops;
   int vtable_index = method->vtable_index();
   InstanceClass::Fast klass = ic;
 
   for (klass = ic->obj(); klass.not_null(); klass = klass().super()) {
-    if (is_in_hidden_package(&klass)) {
+    bool hidden = is_in_hidden_package(&klass JVM_CHECK_(1));
+    if (hidden) {
       // Not a public base class
       continue;
     }
@@ -1005,7 +1167,7 @@ bool ROMOptimizer::is_in_public_vtable(InstanceClass *ic, Method *method) {
   return false;
 }
 
-bool ROMOptimizer::is_in_public_itable(InstanceClass *ic, Method *method) {
+bool ROMOptimizer::is_in_public_itable(InstanceClass *ic, Method *method JVM_TRAPS) {
   UsingFastOops fast_oops;
   ClassInfo::Fast ci = ic->class_info();
   InstanceClass::Fast intf;
@@ -1013,8 +1175,8 @@ bool ROMOptimizer::is_in_public_itable(InstanceClass *ic, Method *method) {
     int offset = ci().itable_offset_at(index);
     if (offset > 0) {
       intf = ci().itable_interface_at(index);
-
-      if (is_in_hidden_package(&intf)) {
+      bool hidden = is_in_hidden_package(&intf JVM_CHECK_(1));
+      if (hidden) {
         // Not a public interface
         continue;
       }
@@ -1135,8 +1297,8 @@ bool ROMOptimizer::field_may_be_renamed(jint package_flags,
 }
 
 bool
-ROMOptimizer::is_method_reachable_by_apps(InstanceClass *ic, Method *method) {
-  jint package_flags = get_package_flags(ic);
+ROMOptimizer::is_method_reachable_by_apps(InstanceClass *ic, Method *method JVM_TRAPS) {
+  jint package_flags = get_package_flags(ic JVM_CHECK_(1));
   AccessFlags class_flags = ic->access_flags();
   AccessFlags method_flags = method->access_flags();
   
@@ -1145,10 +1307,12 @@ ROMOptimizer::is_method_reachable_by_apps(InstanceClass *ic, Method *method) {
   }
 
   if (method->is_public() && !method->is_static()){
-    if (is_in_public_vtable(ic, method)) {
+    bool public_vtable = is_in_public_vtable(ic, method JVM_CHECK_(1));
+    if (public_vtable) {
       return true;
     }
-    if (is_in_public_itable(ic, method)) {
+    bool public_itable = is_in_public_itable(ic, method JVM_CHECK_(1));
+    if (public_itable) {
       return true;
     }
   }
@@ -1156,8 +1320,9 @@ ROMOptimizer::is_method_reachable_by_apps(InstanceClass *ic, Method *method) {
   return false;
 }
 
-bool ROMOptimizer::method_may_be_renamed(InstanceClass *ic, Method *method) {
-  if (is_method_reachable_by_apps(ic, method)) {
+bool ROMOptimizer::method_may_be_renamed(InstanceClass *ic, Method *method JVM_TRAPS) {
+  bool reachable = is_method_reachable_by_apps(ic, method JVM_CHECK_(1));
+  if (reachable) {
     return false;
   }
 
@@ -1171,14 +1336,15 @@ bool ROMOptimizer::method_may_be_renamed(InstanceClass *ic, Method *method) {
 // Should this method be added to the initial invocation closure (when we
 // start to search for methods that are not dead)
 bool
-ROMOptimizer::is_invocation_closure_root(InstanceClass *ic, Method *method) {
+ROMOptimizer::is_invocation_closure_root(InstanceClass *ic, Method *method JVM_TRAPS) {
   if (is_special_method(method)) {
     return true;
   }
   if (method->is_native()) {
     return true; // private finalize, etc
   }
-  if (is_method_reachable_by_apps(ic, method)) {
+  bool reachable = is_method_reachable_by_apps(ic, method JVM_CHECK_(1));
+  if (reachable) {
     return true;
   }
 
@@ -1228,7 +1394,8 @@ void ROMOptimizer::remove_dead_methods(JVM_SINGLE_ARG_TRAPS) {
         // A nulled-out method
         continue;
       }
-      if (is_invocation_closure_root(&klass, &method)) {
+      bool in_closure = is_invocation_closure_root(&klass, &method JVM_CHECK)
+      if (in_closure) {
         mic.add_method(&method JVM_CHECK);
       }
     }
@@ -1858,7 +2025,7 @@ void ROMOptimizer::rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS) {
       // Class.forName).
     } else {
       if (RenameNonPublicROMClasses) {
-        class_count += rename_non_public_class(&klass);
+        class_count += rename_non_public_class(&klass JVM_CHECK);
       }
     }
 
@@ -1889,12 +2056,13 @@ void ROMOptimizer::rename_non_public_symbols(JVM_SINGLE_ARG_TRAPS) {
 #endif
 }
 
-int ROMOptimizer::rename_non_public_class(InstanceClass *klass) {
+int ROMOptimizer::rename_non_public_class(InstanceClass *klass JVM_TRAPS) {
   // The following types of classes may be renamed:
   // [1] all classes in hidden packages
   // [2] package-private classes in restricted packages
   bool may_rename = false;
-  if (is_in_hidden_package(klass)) {
+  bool hidden = is_in_hidden_package(klass JVM_CHECK_0;)
+  if (hidden) {
     may_rename = true;
   } else if (is_in_restricted_package(klass) && !klass->is_public()) {
     may_rename = true;
@@ -1917,7 +2085,7 @@ int ROMOptimizer::rename_non_public_fields(InstanceClass *klass JVM_TRAPS) {
   TypeArray::Fast fields = klass->fields();
   int count = 0;
 
-  jint package_flags = get_package_flags(klass);
+  jint package_flags = get_package_flags(klass JVM_CHECK_0);
   AccessFlags class_flags = klass->access_flags();
 
   for (int i=0; i<fields().length(); i+= 5) {
@@ -1950,7 +2118,8 @@ int ROMOptimizer::rename_non_public_methods(InstanceClass *klass JVM_TRAPS) {
       continue;
     }
 
-    if (method_may_be_renamed(klass, &method)) {
+    bool may_be_renamed = method_may_be_renamed(klass, &method JVM_CHECK_0);
+    if (may_be_renamed) {
       record_original_method_info(&method JVM_CHECK_0);
       method().set_name_index(unknown_symbol_index);
       count ++;
@@ -2035,7 +2204,8 @@ void ROMOptimizer::compact_field_tables(JVM_SINGLE_ARG_TRAPS) {
     }
 
     for (i = 0; i < len; i += Field::NUMBER_OF_SLOTS) {
-      if (is_field_removable(&klass, i, true)) {
+      bool removable = is_field_removable(&klass, i, true JVM_CHECK);
+      if (removable) {
         num_removed ++;
       }
     }
@@ -2058,7 +2228,8 @@ void ROMOptimizer::compact_field_tables(JVM_SINGLE_ARG_TRAPS) {
       new_fields = Universe::new_short_array(new_len JVM_CHECK);
 
       for (i = 0, j = 0; i < len; i += Field::NUMBER_OF_SLOTS) {
-        if (!is_field_removable(&klass, i, true)) {
+        bool removable = is_field_removable(&klass, i, true JVM_CHECK);
+        if (!removable) {
           for (int x=0; x<Field::NUMBER_OF_SLOTS; x++) {
             jushort val = fields().ushort_at(i+x);
             new_fields().ushort_at_put(j+x, val);
@@ -2089,7 +2260,7 @@ void ROMOptimizer::compact_field_tables(JVM_SINGLE_ARG_TRAPS) {
 
 // Can this field be removed (from the fields table, or from InstanceClass)
 bool ROMOptimizer::is_field_removable(InstanceClass *ic, int field_index,
-                                      bool from_table) {
+                                      bool from_table JVM_TRAPS) {
   TypeArray::Raw fields = ic->fields();
 
   AccessFlags flags;
@@ -2119,7 +2290,7 @@ bool ROMOptimizer::is_field_removable(InstanceClass *ic, int field_index,
     }
   }
 
-  jint package_flags = get_package_flags(ic);
+  jint package_flags = get_package_flags(ic JVM_CHECK_0);
   AccessFlags class_flags = ic->access_flags();
 
   if (is_member_reachable_by_apps(package_flags, class_flags, flags)) {
@@ -2216,7 +2387,7 @@ bool ROMOptimizer::is_method_removable_from_table(Method *method) {
 #endif
   
   if (method->is_native() && method->is_overloaded()) {
-    // See bug 4969018. If we remove it from the table ROMWriter
+    // See CR 4969018. If we remove it from the table ROMWriter
     // will fail to generate an overloaded signature for the
     // native "C" function that implements this method.
     return false;
@@ -2306,6 +2477,12 @@ int ROMOptimizer::compact_one_interface(InstanceClass* ic) {
   {
     GCDisabler no_gc_must_happen_in_this_block; // IMPL_NOTE: shrinking
 
+    const int old_vtable_length = info().vtable_length();
+    const size_t old_klass_size = ic->object_size();
+    const size_t static_field_size = ic->static_field_size();
+    const size_t oop_map_size = 
+      ic->nonstatic_map_size() + ic->static_map_size();
+
     int itable_length = info().itable_length();  
     size_t old_size = info().object_size();
     size_t new_itable_size = 2 * itable_length * sizeof(int);
@@ -2343,6 +2520,26 @@ int ROMOptimizer::compact_one_interface(InstanceClass* ic) {
 
     ROMTools::shrink_object(&info, old_size, reduction);
 
+    // InstanceClass size can change if we use embedded vtable bitmap
+    if (old_vtable_length > 0) {
+      const size_t new_klass_size = 
+        InstanceClassDesc::allocation_size(static_field_size, oop_map_size, 0);
+      const size_t klass_reduction = old_klass_size - new_klass_size;
+      GUARANTEE(klass_reduction >= 0, "Sanity");
+
+      if (klass_reduction > 0) {
+        InstanceClassDesc *oopdesc = (InstanceClassDesc*)ic->obj();
+
+        oopdesc->_object_size = new_klass_size;
+
+        ROMTools::shrink_object(ic, old_klass_size, klass_reduction);
+
+        GUARANTEE(new_klass_size > 0 && new_klass_size <= 0xFFFF, "Sanity");
+        ic->set_object_size((jushort)new_klass_size);
+
+        reduction += klass_reduction;
+      }
+    }
     return reduction;
   }
 }
@@ -2980,6 +3177,23 @@ bool ROMOptimizer::is_special_method(Method* method) {
   if (name.equals(Symbols::create_sys_image_name())) {
     return true;
   }
+#if ENABLE_INLINED_ARRAYCOPY
+  if (name.equals(Symbols::unchecked_byte_arraycopy_name())) {
+    return true;
+  }
+  if (name.equals(Symbols::unchecked_char_arraycopy_name())) {
+    return true;
+  }
+  if (name.equals(Symbols::unchecked_int_arraycopy_name())) {
+    return true;
+  }
+  if (name.equals(Symbols::unchecked_long_arraycopy_name())) {
+    return true;
+  }
+  if (name.equals(Symbols::unchecked_obj_arraycopy_name())) {
+    return true;
+  }
+#endif
 
   if (method->equals(Universe::throw_null_pointer_exception_method())) {
     return true;
@@ -3333,10 +3547,21 @@ void ROMOptimizer::resolve_constant_pool(JVM_SINGLE_ARG_TRAPS) {
 }
 #endif
 
-#if ENABLE_COMPILER && !ENABLE_MONET && defined(ARM)
+#if USE_AOT_COMPILATION
 void ROMOptimizer::precompile_methods(JVM_SINGLE_ARG_TRAPS) {
   // AOT is supported only on ARM right now.
-  int precompile_size = precompile_method_list()->size();
+  // Note that AOT cross-compiler uses different Java Frame layout than
+  // JVM runtime with C interpreter does. So, when compiler needs to allocate
+  // and causes GC, the conflict of Java Frame layout mismatch occurs.
+  // Possible solutions are:
+  //  1. Make C interpreter frame layout identical to ARM frame layout;
+  //  2. Dynamically change frame layout during compilation and GC;
+  //  3. Disable GC at all during AOT compilation.
+  // Currently we use the latter solution.
+  // Try increasing HeapCapacity if ROMizer fails here.
+  GCDisabler gc_during_aot_compilation_not_supported;
+
+#if USE_ROM_LOGGING
   int native_count = 0;
   int impossible_count = 0;
   int removed_count = 0;
@@ -3347,26 +3572,34 @@ void ROMOptimizer::precompile_methods(JVM_SINGLE_ARG_TRAPS) {
   _log_stream->cr();
   _log_stream->print_cr("[AOT compilation report]");
   _log_stream->cr();
+#endif
 
   UsingFastOops level1;
   Method::Fast method;
   InstanceClass::Fast holder;
+  int precompile_size = precompile_method_list()->size();
   for (int i=0; i < precompile_size; i++) {
-    int old = jvm_perf_count.uncommon_traps_generated;
+    AZZERT_ONLY(int old = jvm_perf_count.uncommon_traps_generated;)
     method = precompile_method_list()->element_at(i);
     holder = method().holder();
 
+#if USE_ROM_LOGGING
     method().print_value_on(_log_stream);
+#endif
 
     if (method().is_impossible_to_compile()) {
+#if USE_ROM_LOGGING
       _log_stream->print_cr(" impossible to compile.");
       impossible_count++;
+#endif
       continue;
     }
 
     if (!holder().is_optimizable()) {
+#if USE_ROM_LOGGING
       _log_stream->print_cr(" is in a bad class, compilation skipped.");
       non_optimizable_count++;
+#endif
       continue;
     }
 
@@ -3380,8 +3613,10 @@ void ROMOptimizer::precompile_methods(JVM_SINGLE_ARG_TRAPS) {
         if (method().match(name, signature)) {
           GUARANTEE(holder().lookup_method(name, signature) == NULL,
                     "Must be removed");
+#if USE_ROM_LOGGING
           _log_stream->print_cr(" removed.");
           removed_count++;
+#endif
           continue;
         }
       }
@@ -3389,10 +3624,10 @@ void ROMOptimizer::precompile_methods(JVM_SINGLE_ARG_TRAPS) {
 #endif
 
     method().compile(-1, false JVM_CHECK);
-    if (jvm_perf_count.uncommon_traps_generated != old) {
-      // IMPL_NOTE: we can't deal with uncommon traps inside AOT-compiled code
-      method().unlink_compiled_code();
-    }
+
+    // IMPL_NOTE: we can't deal with uncommon traps inside AOT-compiled code
+    GUARANTEE(jvm_perf_count.uncommon_traps_generated == old,
+              "Uncommon trap in AOT-compiled code");
 
 #if 0
     // Methods that are too big might fail to compile
@@ -3400,6 +3635,7 @@ void ROMOptimizer::precompile_methods(JVM_SINGLE_ARG_TRAPS) {
               "Precompilation failed");
 #endif
 
+#if USE_ROM_LOGGING
     if (method().is_impossible_to_compile() || !method().has_compiled_code()) {
       _log_stream->print_cr(" compilation failed.");
       failed_count++;
@@ -3407,8 +3643,10 @@ void ROMOptimizer::precompile_methods(JVM_SINGLE_ARG_TRAPS) {
       _log_stream->print_cr(" compiled.");
       compiled_count++;
     }
+#endif
   }
 
+#if USE_ROM_LOGGING
   _log_stream->cr();
   _log_stream->print_cr("[AOT compilation statistics]");
   _log_stream->cr();
@@ -3424,6 +3662,7 @@ void ROMOptimizer::precompile_methods(JVM_SINGLE_ARG_TRAPS) {
                         compiled_count);
   _log_stream->print_cr("   Failed to compile:                %5d", 
                         failed_count);
+#endif
 }
 #endif
 

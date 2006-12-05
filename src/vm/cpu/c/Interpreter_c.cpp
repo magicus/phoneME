@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -32,23 +33,25 @@ extern "C" {
 
   // external routines used when quickening
   extern Bytecodes::Code quicken(Thread* THREAD);
-  extern Bytecodes::Code quicken_invokestatic(Thread* THREAD);  
-  extern Bytecodes::Code putfield(Thread* THREAD);    
+  extern Bytecodes::Code quicken_invokestatic(Thread* THREAD);
+  extern Bytecodes::Code putfield(Thread* THREAD);
   extern Bytecodes::Code getfield(Thread* THREAD);
   extern Bytecodes::Code putstatic(Thread* THREAD);
   extern Bytecodes::Code getstatic(Thread* THREAD);
-  
+  extern Bytecodes::Code handle_breakpoint(Thread *thread);
+  extern void handle_single_step(Thread *thread);
+
   // external interpreter runtime routines, see InterpreterRuntime_<arch>.cpp
   // and  InterpreterRuntime.cpp
   extern OopDesc*        anewarray(Thread *THREAD);
   extern OopDesc*        _newarray(Thread *THREAD, BasicType type, jint len);
-  extern void            signal_waiters(Thread *THREAD, 
+  extern void            signal_waiters(Thread *THREAD,
                                         StackLock* stack_lock);
-  extern void            lock_stack_lock(Thread* THREAD, 
+  extern void            lock_stack_lock(Thread* THREAD,
                                          StackLock* stack_lock JVM_TRAPS);
-  extern ReturnOop       find_exception_frame(Thread* THREAD, 
+  extern ReturnOop       find_exception_frame(Thread* THREAD,
                                               OopDesc* raw_exception);
-  extern void            unlock_special_stack_lock(Thread* THREAD, 
+  extern void            unlock_special_stack_lock(Thread* THREAD,
                                                    OopDesc *lock_obj);
 
   // init FPU
@@ -78,7 +81,7 @@ extern "C" {
   typedef jchar      (*char_func_t)(Thread* THREAD, ...);
   typedef jshort     (*short_func_t)(Thread* THREAD, ...);
   typedef jobject    (*object_func_t)(Thread* THREAD, ...);
-  typedef OopDesc*   (*oop_func_t)(Thread* THREAD, ...);  
+  typedef OopDesc*   (*oop_func_t)(Thread* THREAD, ...);
 
   typedef union {
     jbyte   byte_val;
@@ -102,16 +105,16 @@ extern "C" {
 
   /* bytecodes dispatch table */
   static func_t interpreter_dispatch_table[256+WIDE_OFFSET];
-  
+
   // has_Interpreter, has_FloatingPoint, has_TraceBytecodes
   jint assembler_loop_type = 0x1 + 0x40 + 0x4;
 
 #ifndef PRODUCT
-  jlong interpreter_pair_counters[Bytecodes::number_of_java_codes * 
+  jlong interpreter_pair_counters[Bytecodes::number_of_java_codes *
                                   Bytecodes::number_of_java_codes];
   jlong interpreter_bytecode_counters[Bytecodes::number_of_java_codes];
 #endif
-  
+
   // bytecode stream accessors
 #define GET_BYTE(x) (*(jubyte*)(g_jpc + (x) + 1))
 #define GET_SIGNED_BYTE(x) (*(jbyte*)(g_jpc + (x) + 1))
@@ -196,14 +199,14 @@ extern "C" {
   // thread accessors
 #define THREAD_OFFSET(name) Thread::name##_offset()
 #define GET_THREAD_INT(name)                                    \
-       *(jint*)((address)_current_thread + THREAD_OFFSET(name)) 
+       *(jint*)((address)_current_thread + THREAD_OFFSET(name))
 #define SET_THREAD_INT(name, value)                             \
        *(jint*)((address)_current_thread + THREAD_OFFSET(name)) = value
 
   // entry access
 #define ENTRY_OFFSET(name) EntryActivation::name##_offset()
 #define GET_ENTRY(entry, name)                                    \
-       *(jint*)((address)entry + ENTRY_OFFSET(name)) 
+       *(jint*)((address)entry + ENTRY_OFFSET(name))
 
   // stacklock access
 #define STACKLOCK_OFFSET(name) StackLock::name##_offset()
@@ -239,8 +242,12 @@ extern "C" {
     BREAKPOINT;
 
 // Interpreter entrance/exit
-#define REASON_THREAD_EXIT       1
-#define REASON_STOPPED_MANUALLY  2
+enum {
+  JMP_ENTER = 0,
+  JMP_THREAD_EXIT,
+  JMP_STOPPED_MANUALLY,
+  JMP_CONTEXT_CHANGED
+};
 
 #define BREAK_INTERPRETER_LOOP(reason)                                \
     GUARANTEE(inside_interpreter, "Must be inside interpreter loop"); \
@@ -280,10 +287,10 @@ extern "C" {
   }
 
   static inline address get_class_by_id(jushort id) {
-    return *(address*)(_class_list_base + id*4);    
+    return *(address*)(_class_list_base + id*4);
   }
 
-  static inline address get_method_from_ci(address ci, jint idx) {    
+  static inline address get_method_from_ci(address ci, jint idx) {
     return *(address*)(ci + idx * 4 + ClassInfoDesc::header_size());
   }
 
@@ -293,8 +300,8 @@ extern "C" {
   }
 
   static inline jushort get_num_params(address method) {
-    jushort value = 
-      *(jushort*)(method+Method::size_of_parameters_and_return_type_offset());
+    jushort value =
+      *(jushort*)(method+Method::method_attributes_offset());
     value &= Method::SIZE_OF_PARAMETERS_MASK;
     return value;
   }
@@ -310,21 +317,21 @@ extern "C" {
   static inline jushort get_max_stack(address method) {
     return *(jushort*)(method + Method::max_execution_stack_count_offset());
   }
-  
+
   static inline jushort get_holder_id(address method) {
     return *(jushort*)(method + Method::holder_id_offset());
-  }  
+  }
 
   static inline address get_quick_native(address method) {
     return *(address*)(method + Method::quick_native_code_offset());
-  }  
+  }
 
   static inline jint get_from_cpool(address cpool, jushort index) {
     return *(jint*)(cpool + index * 4);
   }
 
   static inline void write_barrier(address addr) {
-    ObjectHeap::set_bit_for((OopDesc**)addr); 
+    ObjectHeap::set_bit_for((OopDesc**)addr);
   }
 
   static inline void call_from_interpreter(address addr, int offset) {
@@ -333,52 +340,52 @@ extern "C" {
     // in ASM interpreters we put call info right after function call
     // we have no need for that in C interpreter
   }
-  
+
   static inline address get_cpool(address method) {
     address rv;
 
-    if (get_access_flags(method) & JVM_ACC_HAS_COMPRESSED_HEADER)  {    
-      rv = (address)_rom_constant_pool;                               
-    } else {                                                            
+    if (get_access_flags(method) & JVM_ACC_HAS_COMPRESSED_HEADER)  {
+      rv = (address)_rom_constant_pool;
+    } else {
       rv = *(address*)(method + Method::constants_offset());
-    }                                                      
-    return (rv + ConstantPool::base_offset()); 
+    }
+    return (rv + ConstantPool::base_offset());
   }
-  
+
   // stack accessors
   static inline jint POP() {
     jint value = *(jint*)g_jsp;
     g_jsp += sizeof(jint);
     return value;
   }
-  
+
   static inline address OBJ_POP() {
     address value = *(address*)g_jsp;
     g_jsp += sizeof(address);
     return value;
   }
-  
+
   static inline jfloat FLOAT_POP() {
     jfloat value = *(jfloat*)g_jsp;
     g_jsp += sizeof(jfloat);
     return value;
   }
-  
-  static inline void PUSH(jint v) {    
+
+  static inline void PUSH(jint v) {
     g_jsp -= sizeof(jint);
     *(jint*)g_jsp = v;
   }
-  
+
   static inline void OBJ_PUSH(address v) {
     g_jsp -= sizeof(address);
     *(address*)g_jsp = v;
   }
-  
+
   static inline void FLOAT_PUSH(jfloat v) {
     g_jsp -= sizeof(jfloat);
     *(jfloat*)g_jsp = v;
   }
-  
+
   static inline jlong LONG_POP() {
     jlong_accessor acc;
     acc.words[0] = POP();
@@ -392,7 +399,7 @@ extern "C" {
     PUSH(acc.words[1]);
     PUSH(acc.words[0]);
   }
-  
+
   static inline jdouble DOUBLE_POP() {
      jdouble_accessor acc;
      acc.words[0] = POP();
@@ -446,14 +453,14 @@ extern "C" {
     *(jint*)addr = acc.words[0];
     *(jint*)(addr+4) = acc.words[1];
   }
- 
+
   static inline address callee_method() {
     return (address)GET_THREAD_INT(obj_value);
   }
-  
+
   static inline void set_callee_method(address method) {
-    SET_THREAD_INT(obj_value, (int)method); 
-    write_barrier((address)_current_thread + Thread::obj_value_offset()); 
+    SET_THREAD_INT(obj_value, (int)method);
+    write_barrier((address)_current_thread + Thread::obj_value_offset());
   }
 
   static inline bool interpreter_call_vm(address callback, BasicType rv_type) {
@@ -462,18 +469,23 @@ extern "C" {
 
   static inline bool interpreter_call_vm_1(address callback, BasicType rv_type,
                                            jint arg1) {
-    return shared_call_vm_internal(callback, NULL, rv_type, 1, arg1);   
+    return shared_call_vm_internal(callback, NULL, rv_type, 1, arg1);
   }
 
   static inline bool interpreter_call_vm_2(address callback, BasicType rv_type,
                                            jint arg1, jint arg2) {
-    return shared_call_vm_internal(callback, NULL, rv_type, 2, arg1, arg2);   
+    return shared_call_vm_internal(callback, NULL, rv_type, 2, arg1, arg2);
   }
 
   static inline void check_timer_tick() {
+#if ENABLE_PAGE_PROTECTION
+    // use g_jpc to prevent compiler from optimizing this memory access
+    _protected_page[INTERPRETER_TIMER_TICK_SLOT] = (int)g_jpc;
+#else
     if (_rt_timer_ticks > 0) {
       interpreter_call_vm_1((address)&timer_tick, T_VOID, (jint)NATIVE_ARG);
     }
+#endif
   }
 
   static inline void method_transition() {
@@ -498,10 +510,10 @@ extern "C" {
     if (invoker_size) {
       SET_FRAME(locals_pointer, g_jlocals);
       SET_FRAME(bcp_store, g_jpc);
-      SET_FRAME(return_advance, (address)invoker_size);     
+      SET_FRAME(return_advance, (address)invoker_size);
     }
-       
-    address exec_entry = 
+
+    address exec_entry =
       *(address*)(method + Method::variable_part_offset());
     // double indirection to keep in-heap footprint of ROMized methods
     // minimal
@@ -509,7 +521,7 @@ extern "C" {
 
     // store method in obj_value field of current thread
     set_callee_method(method);
-    
+
     // and invoke it
     call_from_interpreter(exec_entry, 0);
   }
@@ -567,7 +579,7 @@ extern "C" {
     if (fromIndex < 0) {
       fromIndex = 0;
     }
-    
+
     jint count = *(jint*)(obj + String::count_offset());
 
     if (fromIndex >= count) {
@@ -580,7 +592,7 @@ extern "C" {
     int max = offset + count;
     jchar* v = (jchar*)
       (*(address*)(obj + String::value_offset()) + Array::base_offset());
-    
+
     for (int i = offset + fromIndex ; i < max ; i++) {
       if (v[i] == ch) {
         PUSH(i - offset);
@@ -588,7 +600,7 @@ extern "C" {
         return;
       }
     }
-    
+
     PUSH(-1);
     ADVANCE_FOR_RETURN();
   }
@@ -660,6 +672,31 @@ extern "C" {
     interpreter_method_entry();
   }
 
+  void native_jvm_unchecked_byte_arraycopy_entry() {
+    // call generic native implementation
+    interpreter_method_entry();
+  }
+
+  void native_jvm_unchecked_char_arraycopy_entry() {
+    // call generic native implementation
+    interpreter_method_entry();
+  }
+
+  void native_jvm_unchecked_int_arraycopy_entry() {
+    // call generic native implementation
+    interpreter_method_entry();
+  }
+
+  void native_jvm_unchecked_long_arraycopy_entry() {
+    // call generic native implementation
+    interpreter_method_entry();
+  }
+
+  void native_jvm_unchecked_obj_arraycopy_entry() {
+    // call generic native implementation
+    interpreter_method_entry();
+  }
+
   void native_vector_elementAt_entry() {
     // call generic implementation
     interpreter_method_entry();
@@ -687,7 +724,7 @@ extern "C" {
   FUNC_UNIMPLEMENTED(shared_call_vm);
   FUNC_UNIMPLEMENTED(shared_call_vm_oop);
   FUNC_UNIMPLEMENTED(shared_call_vm_exception);
-  FUNC_UNIMPLEMENTED(interpreter_grow_stack);    
+  FUNC_UNIMPLEMENTED(interpreter_grow_stack);
   FUNC_UNIMPLEMENTED(shared_monitor_enter);
   FUNC_UNIMPLEMENTED(shared_monitor_exit);
 
@@ -699,6 +736,10 @@ extern "C" {
   FUNC_UNIMPLEMENTED(compiler_idiv_irem);
   FUNC_UNIMPLEMENTED(compiler_checkcast);
   FUNC_UNIMPLEMENTED(compiler_instanceof);
+  FUNC_UNIMPLEMENTED(compiler_glue_code_start);
+  FUNC_UNIMPLEMENTED(compiler_glue_code_end);
+  FUNC_UNIMPLEMENTED(compiler_callvm_stubs_start);
+  FUNC_UNIMPLEMENTED(compiler_callvm_stubs_end);
 
   FUNC_UNIMPLEMENTED(compiler_remove_patch);
   FUNC_UNIMPLEMENTED(compiler_timer_tick);
@@ -729,29 +770,33 @@ extern "C" {
   FUNC_UNIMPLEMENTED(invoke3_deoptimization_entry_0)
   FUNC_UNIMPLEMENTED(invoke3_deoptimization_entry_1)
   FUNC_UNIMPLEMENTED(invoke3_deoptimization_entry_2)
-  FUNC_UNIMPLEMENTED(invoke5_deoptimization_entry_0) 
-  FUNC_UNIMPLEMENTED(invoke5_deoptimization_entry_1) 
-  FUNC_UNIMPLEMENTED(invoke5_deoptimization_entry_2) 
+  FUNC_UNIMPLEMENTED(invoke3_deoptimization_entry_3)
+  FUNC_UNIMPLEMENTED(invoke3_deoptimization_entry_4)
+  FUNC_UNIMPLEMENTED(invoke5_deoptimization_entry_0)
+  FUNC_UNIMPLEMENTED(invoke5_deoptimization_entry_1)
+  FUNC_UNIMPLEMENTED(invoke5_deoptimization_entry_2)
+  FUNC_UNIMPLEMENTED(invoke5_deoptimization_entry_3)
+  FUNC_UNIMPLEMENTED(invoke5_deoptimization_entry_4)
 
   // called but actually should do nothing
-  FUNC_UNUSED(interpreter_deoptimization_entry)            
-  
+  FUNC_UNUSED(interpreter_deoptimization_entry)
+
   // maybe needs implementation
-  FUNC_UNIMPLEMENTED(shared_invoke_debug);    
+  FUNC_UNIMPLEMENTED(shared_invoke_debug);
 
 #if ENABLE_METHOD_TRAPS
-  FUNC_UNIMPLEMENTED(cautious_invoke);    
+  FUNC_UNIMPLEMENTED(cautious_invoke);
 #endif
 
-#if !CROSS_GENERATOR  
+#if !CROSS_GENERATOR
   jint _bytecode_counter;
 #endif
 
-  static bool lock_object(address object, address lock) {    
-    
+  static bool lock_object(address object, address lock) {
+
     // Store the object in the stack lock and lock it
     *(address*)(lock + StackLock::size()) = object;
-    
+
     // Get the near object
     address near_obj = *(address*)object;
     address tmp1;
@@ -769,7 +814,7 @@ extern "C" {
       // thread of object's lock
       tmp1 = *(address*)(near_obj + StackLock::thread_offset() -
                          StackLock::copied_near_offset());
-      
+
       // is this a recursive lock?
       if ((address)_current_thread == tmp1) {
         SET_STACKLOCK(lock, real_java_near, 0);
@@ -785,11 +830,11 @@ extern "C" {
     }
 
     // We have the fast case
-    
+
     // Clear waiters
     SET_STACKLOCK(lock, waiters, 0);
 
-    // Update the near pointer in the object    
+    // Update the near pointer in the object
     *(address*)object = lock + StackLock::copied_near_offset();
 
     // fill in stacklock fields
@@ -797,13 +842,13 @@ extern "C" {
     SET_STACKLOCK(lock, thread, (address)_current_thread);
 
     // Copy the locked near object to the stack
-    SET_STACKLOCK_OFFSET(lock, copied_near, 0, 
+    SET_STACKLOCK_OFFSET(lock, copied_near, 0,
                          *(address*)(near_obj + 0));
-    SET_STACKLOCK_OFFSET(lock, copied_near, 4, 
+    SET_STACKLOCK_OFFSET(lock, copied_near, 4,
                          *(address*)(near_obj+4));
     // set lock bit
     jint raw_value =  *(jint*)(near_obj+8) | 0x1;
-    SET_STACKLOCK_OFFSET(lock, copied_near, 8, 
+    SET_STACKLOCK_OFFSET(lock, copied_near, 8,
                          (address)raw_value);
     return false;
   }
@@ -832,7 +877,7 @@ extern "C" {
     *(address*)object = tmp1;
 
     // The last argument can be false if we separate out the case of
-    // unlocking synchronized methods into a separate case. There are 
+    // unlocking synchronized methods into a separate case. There are
     // no synchronized methods in String.
 
     // Oop write barrier is needed in case new near object has been assigned
@@ -842,9 +887,9 @@ extern "C" {
       write_barrier(object);
     }
 
-    address tmp0 = GET_STACKLOCK_OFFSET(lock, copied_near, 
+    address tmp0 = GET_STACKLOCK_OFFSET(lock, copied_near,
                                         JavaNear::raw_value_offset());
-    
+
     // Check for waiters
     if (((jint)tmp0 & 2) == 0) {
       return false;
@@ -860,7 +905,7 @@ extern "C" {
     g_jsp -=  StackLock::size() + BytesPerWord;
     SET_FRAME(stack_bottom_pointer, g_jsp);
     address lock = g_jsp; // pointer to the stacklock
-    return lock_object(object, lock); 
+    return lock_object(object, lock);
   }
 
   static bool unlock_synchronized_method_internal() {
@@ -876,20 +921,20 @@ extern "C" {
     }
 
     return unlock_object(object, lock);
-  } 
+  }
 
   static bool unlock_activation() {
     // unlock_activation
     address lock = GET_FRAME(stack_bottom_pointer);
 
-    // See if there are any locks on this frame    
+    // See if there are any locks on this frame
     if (lock == g_jfp + JavaFrame::empty_stack_offset()) {
       return false;
     }
 
     // check if the method is synchronized
     jushort flagz = get_access_flags(GET_FRAME(method));
-    
+
     if (flagz & JVM_ACC_SYNCHRONIZED) {
       if (unlock_synchronized_method_internal()) {
         return true;
@@ -901,9 +946,9 @@ extern "C" {
 
     // Check that all stack locks have been unlocked
     // lock is pointing at first word of stack lock
-    
+
     address tmp1 = g_jfp + JavaFrame::stack_bottom_pointer_offset();
-      
+
     // We know that there is at least one stack lock, or we wouldn't be here in
     // the first place!
     do {
@@ -919,9 +964,9 @@ extern "C" {
   }
 
   static address allocate_monitor() {
-    // Set lock to old expression stack bottom    
+    // Set lock to old expression stack bottom
     address lock = GET_FRAME(stack_bottom_pointer);
-    
+
     // Move expression stack top and bottom
     jint len = StackLock::size() + 4;
     g_jsp -= len;
@@ -946,29 +991,29 @@ extern "C" {
     address tmp0 = GET_FRAME(stack_bottom_pointer);
     address tmp1 = g_jfp + JavaFrame::stack_bottom_pointer_offset();
     address lock = NULL;
-    
+
     // Find free slot in monitor block
     while (tmp0 != tmp1) {
-      // Start the loop by checking if the current stack lock is empty      
+      // Start the loop by checking if the current stack lock is empty
       address tmp2 = *(address*)(tmp0 + StackLock::size());
 
       if (tmp2 == 0) {
         lock = tmp0;
       }
-      
+
       // Check to see if the object in the current stack lock is equal
       // to the object from the stack
       if (tmp2 == object) {
         break;
       }
-      
+
       tmp0 += BytesPerWord + StackLock::size();
     }
-    
+
     if (!lock) {
       lock = allocate_monitor();
     }
-   
+
     return lock_object(object, lock);
   }
 
@@ -983,10 +1028,10 @@ extern "C" {
     // address of lock just beyond the first
     address tmp1 = g_jfp + JavaFrame::pre_first_stack_lock_offset();
     //JavaFrame::stack_bottom_pointer_offset();
-    
+
     // loop to find correct monitor
     bool found = false;
-    // at the end of the monitor block? 
+    // at the end of the monitor block?
     while (lock != tmp1) {
       // Is monitor pointed at by lock the right one?
 
@@ -1001,7 +1046,7 @@ extern "C" {
 
       // Go to next lock
       lock += BytesPerWord + StackLock::size();
-    } 
+    }
 
     if (!found) {
       return interpreter_call_vm((address)&illegal_monitor_state_exception,
@@ -1009,9 +1054,9 @@ extern "C" {
     }
 
     return unlock_object(object, lock);
-  } 
- 
-  static void invoke_native_entry(address entry_point, 
+  }
+
+  static void invoke_native_entry(address entry_point,
                                   BasicType return_value_type,
                                   jint num_args,
                                   va_list ap,
@@ -1021,9 +1066,9 @@ extern "C" {
     switch (return_value_type) {
     // IMPL_NOTE: consider about other int types, like short, byte
     case T_INT:
-      { 
-        int_func_t f = (int_func_t)entry_point; 
-      
+      {
+        int_func_t f = (int_func_t)entry_point;
+
         switch (num_args) {
         case 0:
           r1 = f(NATIVE_ARG);
@@ -1043,7 +1088,7 @@ extern "C" {
       }
       break;
     case T_LONG:
-      { 
+      {
         long_func_t f = (long_func_t)entry_point;
         jlong_accessor acc;
 
@@ -1064,7 +1109,7 @@ extern "C" {
           SHOULD_NOT_REACH_HERE();
           return;
         }
-        
+
         r1 = acc.words[0];
         r2 = acc.words[1];
       }
@@ -1072,7 +1117,7 @@ extern "C" {
 #if ENABLE_FLOAT
     case T_FLOAT:
       {
-        float_func_t f = (float_func_t)entry_point;     
+        float_func_t f = (float_func_t)entry_point;
         jfloat val;
         switch (num_args) {
         case 0:
@@ -1095,7 +1140,7 @@ extern "C" {
       }
       break;
     case T_DOUBLE:
-      { 
+      {
         double_func_t f = (double_func_t)entry_point;
         jdouble_accessor acc;
 
@@ -1123,7 +1168,7 @@ extern "C" {
 #endif // ENABLE_FLOAT
     case T_OBJECT:
     case T_ARRAY:
-      { 
+      {
         oop_func_t f = (oop_func_t)entry_point;
         switch (num_args) {
         case 0:
@@ -1144,9 +1189,9 @@ extern "C" {
       }
       break;
     case T_VOID:
-      { 
+      {
         void_func_t f = (void_func_t)entry_point;
-      
+
         switch (num_args) {
         case 0:
           f(NATIVE_ARG);
@@ -1183,6 +1228,7 @@ extern "C" {
     if (pentry) {
       if (GET_THREAD_INT(status) & THREAD_TERMINATING) {
         SET_THREAD_INT(pending_entries, 0);
+        BREAK_INTERPRETER_LOOP(JMP_THREAD_EXIT);
       } else {
         jint max_len = GET_ENTRY(pentry, length);
         while ((pentry = (address)GET_ENTRY(pentry, next)) != NULL) {
@@ -1207,7 +1253,7 @@ extern "C" {
       }
     }
 
-    // read data from frame    
+    // read data from frame
     g_jpc = GET_FRAME(bcp_store);
     g_jlocals = GET_FRAME(locals_pointer);
 
@@ -1227,19 +1273,19 @@ extern "C" {
     }
     return false;
   }
-  
+
   static bool shared_call_vm_internal(address entry_point,
                                       address return_point,
                                       BasicType return_value_type,
                                       jint num_args,
                                       ...)
   {
-    // Save last java stack pointer and last java frame pointer in thread    
+    // Save last java stack pointer and last java frame pointer in thread
     SET_THREAD_INT(last_java_fp, (jint)g_jfp);
     SET_THREAD_INT(last_java_sp, (jint)g_jsp);
     // sync up other globals
     SET_FRAME(bcp_store, g_jpc);
-    SET_FRAME(locals_pointer, g_jlocals);    
+    SET_FRAME(locals_pointer, g_jlocals);
 
     // dummies to keep stack layout
     // should be return address of our caller
@@ -1261,7 +1307,7 @@ extern "C" {
     bool is_oop = (stack_type_for(return_value_type) == T_OBJECT);
 
     jint r1 = 0, r2 = 0;
-    va_list ap;       
+    va_list ap;
     va_start(ap, num_args);
 
     if (return_value_type == T_ILLEGAL) {
@@ -1269,21 +1315,21 @@ extern "C" {
       OopDesc* raw_exc =  (OopDesc*)va_arg(ap, jint);
 
       // this call also fills in last_java_fp and last_java_sp in
-      // current thread to the frame of handler      
+      // current thread to the frame of handler
       r1 = (jint)find_exception_frame(NATIVE_ARG, raw_exc);
-      
+
       g_jsp = (address)GET_THREAD_INT(last_java_sp);
       g_jfp = (address)GET_THREAD_INT(last_java_fp);
 
       // A return value of zero means the initial entry frame
       if (r1 == 0) {
         va_end(ap);
-        
+
         // exception is stored in frame
-        _current_pending_exception = 
+        _current_pending_exception =
           (OopDesc*)GET_ENTRY_FRAME(pending_exception);
 
-        BREAK_INTERPRETER_LOOP(REASON_THREAD_EXIT);
+        BREAK_INTERPRETER_LOOP(JMP_THREAD_EXIT);
       } else {
         // update Java stack with new g_jfp, so that resume_thread() will
         // proceed with exception handler in the right Java frame
@@ -1294,19 +1340,19 @@ extern "C" {
       }
     } else {
       // Call the native entry
-      invoke_native_entry(entry_point, return_value_type, num_args, 
+      invoke_native_entry(entry_point, return_value_type, num_args,
                           ap, r1, r2);
     }
-    
+
     va_end(ap);
 
     // save the return values in the thread
-    if (is_oop) {      
+    if (is_oop) {
       SET_THREAD_INT(obj_value, r1);
       write_barrier((address)_current_thread + Thread::obj_value_offset());
     } else {
       SET_THREAD_INT(int1_value, r1);
-      SET_THREAD_INT(int2_value, r2);      
+      SET_THREAD_INT(int2_value, r2);
     }
 
     switch_thread(NATIVE_ARG);
@@ -1319,7 +1365,7 @@ extern "C" {
     g_jfp = g_jsp - EntryFrame::empty_stack_offset();
 
     // stored data in frame
-    SET_ENTRY_FRAME(pending_exception,   (jint)_current_pending_exception); 
+    SET_ENTRY_FRAME(pending_exception,   (jint)_current_pending_exception);
     SET_ENTRY_FRAME(stored_last_sp,      GET_THREAD_INT(last_java_sp));
     SET_ENTRY_FRAME(stored_last_fp,      GET_THREAD_INT(last_java_fp));
     SET_ENTRY_FRAME(fake_return_address, EntryFrame::FakeReturnAddress);
@@ -1333,11 +1379,11 @@ extern "C" {
     SET_THREAD_INT(last_java_fp, 0);
 
     // Get the pending exception and (first) pending activation from the thread
-    address pending_entry = (address)GET_THREAD_INT(pending_entries); 
-    
+    address pending_entry = (address)GET_THREAD_INT(pending_entries);
+
     // clear the pending activation and pending exception thread field
     SET_THREAD_INT(pending_entries, 0);
-    
+
     _current_pending_exception = 0;
 
     jint entry = GET_ENTRY(pending_entry, next);
@@ -1352,7 +1398,7 @@ extern "C" {
     for (int i = 0; i < len; i++) {
       PUSH(*((jint*)header + 2 * i));
     }
-      
+
     // find Java method
     address method = (address)GET_ENTRY(pending_entry, method);
     // invoke it
@@ -1367,13 +1413,13 @@ extern "C" {
 #endif
   }
 
-  bool interpreter_grow_stack_internal(address method, 
+  bool interpreter_grow_stack_internal(address method,
                                        address new_stack_ptr) {
     // please note that here we have simplification over ASM version:
     // as we aren't afraid to be interrupted by system interrupt
-    // leaving stack in inconsistent way, we can easily shift FP at the 
+    // leaving stack in inconsistent way, we can easily shift FP at the
     // very beginning
-    address old_jfp = g_jfp;    
+    address old_jfp = g_jfp;
     // Reserve space on stack for frame
     g_jsp -= JavaFrame::frame_desc_size();
 
@@ -1392,18 +1438,38 @@ extern "C" {
     g_jpc =  (address)
       (((juint)method + Method::base_offset()) + JavaFrame::overflow_frame_flag);
 
-    if (interpreter_call_vm_1((address)stack_overflow, T_VOID, 
+    if (interpreter_call_vm_1((address)stack_overflow, T_VOID,
                               (jint)new_stack_ptr)) {
       return true;
     }
-    
+
     g_jlocals = GET_FRAME(locals_pointer);
     g_jsp = g_jfp + JavaFrame::end_of_locals_offset();
     g_jfp = GET_FRAME(caller_fp);
     return false;
   }
 
-  static jint quick_native_throw(Thread *thread, const char* name, 
+  // This function is to be used with ENABLE_PAGE_PROTECTION=true
+  void interpreter_timer_tick() {
+    // Save current state like shared_call_vm does
+    SET_THREAD_INT(last_java_fp, (jint)g_jfp);
+    SET_THREAD_INT(last_java_sp, (jint)g_jsp);
+    SET_FRAME(bcp_store, g_jpc);
+    SET_FRAME(locals_pointer, g_jlocals);
+    OBJ_PUSH(NULL);
+    PUSH(0xDEADBEEF);
+    OBJ_PUSH(g_jfp);
+    SET_THREAD_INT(stack_pointer, (jint)g_jsp);
+    // Call the native routine
+    timer_tick();
+    switch_thread(NATIVE_ARG);
+    // interpreter_timer_tick is called from a signal handler
+    // in the context of another function. We can't just return from here,
+    // but we may use longjmp to restore primordial context.
+    BREAK_INTERPRETER_LOOP(JMP_CONTEXT_CHANGED);
+  }
+
+  static jint quick_native_throw(Thread *thread, const char* name,
     const char* message) {
     (void)thread;
     return KNI_ThrowNew(name, message);
@@ -1417,8 +1483,8 @@ extern "C" {
 
     // Get the method parameter size
     jushort num_params = get_num_params(method);
-    
-    // Point _kni_parameter_base to the first parameter      
+
+    // Point _kni_parameter_base to the first parameter
     address locals = g_jsp +
       num_params * BytesPerStackElement + JavaFrame::arg_offset_from_sp(-1);
 
@@ -1427,27 +1493,27 @@ extern "C" {
       locals += BytesPerStackElement;
     }
     _kni_parameter_base = locals;
-    
+
     // Get the native method pointer from the bytecode
     address native_ptr = get_quick_native(method);
-    
+
     _jvm_in_quick_native_method = 1;
     jint r1, r2;
     invoke_native_entry(native_ptr, return_type, 0, NULL, r1, r2);
     _jvm_in_quick_native_method = 0;
-   
+
     if (_jvm_quick_native_exception != NULL) {
-      interpreter_call_vm_2((address)&quick_native_throw, T_INT, 
+      interpreter_call_vm_2((address)&quick_native_throw, T_INT,
         (jint)_jvm_quick_native_exception, 0);
       _jvm_quick_native_exception = NULL;
-      return;      
+      return;
     }
 
     // remove parameters from stack
     g_jsp +=  num_params * BytesPerStackElement;
 
     switch (return_type) {
-    case T_INT:      
+    case T_INT:
     case T_OBJECT:
       PUSH(r1);
       break;
@@ -1459,7 +1525,7 @@ extern "C" {
     }
     ADVANCE_FOR_RETURN();
   }
- 
+
   void quick_void_native_method_entry() {
     quick_native_method_entry(T_VOID);
   }
@@ -1479,7 +1545,7 @@ extern "C" {
   static inline address get_current_task() {
     return (address)_current_task;
   }
-  
+
   static inline address get_mirror_by_id(jushort id) {
     return *((address*)_mirror_list_base + id);
   }
@@ -1528,7 +1594,7 @@ extern "C" {
   }
 
 #else
-  
+
   static inline bool is_initialized_class(address klass) {
     address java_mirror = *(address*)(klass + JavaClass::java_mirror_offset());
     jint status = *(jint*)(java_mirror + JavaClassObj::status_offset());
@@ -1553,7 +1619,7 @@ extern "C" {
     jushort num_params = get_num_params(method);
 
     // setup locals
-    g_jlocals = g_jsp + 
+    g_jlocals = g_jsp +
       num_params * BytesPerStackElement + JavaFrame::arg_offset_from_sp(-1);
 
     // stack overflow check
@@ -1568,27 +1634,27 @@ extern "C" {
     }
 
     // get the size of the locals
-    jushort max_locals = get_max_locals(method);    
+    jushort max_locals = get_max_locals(method);
 
     // reserve space for locals
     g_jsp -= (max_locals - num_params) * BytesPerStackElement;
     // Reserve space on stack for frame
     g_jsp -= JavaFrame::frame_desc_size();
-    
+
     // Set the Frame pointer
     address old_jfp = g_jfp;
-      
+
     // set frame pointer
     g_jfp = g_jsp - JavaFrame::empty_stack_offset();
 
-    // Fill in fields of the frame    
+    // Fill in fields of the frame
     SET_FRAME(stored_int_value1, 0x0);
     SET_FRAME(stored_int_value2, 0x0);
     SET_FRAME(stack_bottom_pointer, g_jsp);
     SET_FRAME(locals_pointer, g_jlocals);
     SET_FRAME(method, method);
     SET_FRAME(cpool, get_cpool(method));
-    SET_FRAME(caller_fp, old_jfp);    
+    SET_FRAME(caller_fp, old_jfp);
     SET_FRAME(return_address, g_jpc);
 
     // set bcp
@@ -1596,7 +1662,7 @@ extern "C" {
 
     // check if the method is synchronized
     jushort flagz = get_access_flags(method);
-    
+
     if (flagz & JVM_ACC_SYNCHRONIZED) {
       address obj = NULL;
       if (flagz & JVM_ACC_STATIC) {
@@ -1619,17 +1685,17 @@ extern "C" {
         return;
       }
     }
-    
+
     method_transition();
   }
-  
+
   static void dispatch_return_point() {
     if (!CURRENT_HAS_PENDING_EXCEPTION) {
       interpreter_dispatch_table[GET_THREAD_INT(int1_value)]();
     }
   }
 
-  static inline void interpreter_call_vm_dispatch(address callback, 
+  static inline void interpreter_call_vm_dispatch(address callback,
                                                   BasicType rv_type) {
     GUARANTEE(rv_type == T_INT, "Only ints allowed here");
     // Call the shared call vm and disregard any return value
@@ -1640,6 +1706,13 @@ extern "C" {
   static inline void interpreter_call_vm_redo(address callback, BasicType rv_type) {
     // Call the shared call vm and disregard any return value
     shared_call_vm_internal(callback, NULL, rv_type, 0);
+#if ENABLE_JAVA_DEBUGGER
+    if (_debugger_active != 0) {
+      if (*g_jpc == Bytecodes::_breakpoint) {
+        interpreter_dispatch_table[GET_THREAD_INT(int1_value)]();
+      }
+    }
+#endif
   }
 
   FUNC_UNIMPLEMENTED(interpreter_throw_NullPointerException_tos_cached)
@@ -1647,7 +1720,7 @@ extern "C" {
   void interpreter_throw_NullPointerException() {
     interpreter_call_vm((address)&null_pointer_exception, T_VOID);
   }
-  
+
   void interpreter_throw_ArrayIndexOutOfBoundsException() {
     interpreter_call_vm((address)&array_index_out_of_bounds_exception, T_VOID);
   }
@@ -1660,7 +1733,7 @@ extern "C" {
   void interpreter_throw_ArithmeticException() {
     interpreter_call_vm((address)&arithmetic_exception, T_VOID);
   }
-  
+
   static inline bool type_check(address ref, address obj, jint idx) {
     if (!obj) {
       return true;
@@ -1744,13 +1817,37 @@ extern "C" {
     ADVANCE_FOR_RETURN();
   }
 
+  void shared_fast_getfloat_accessor() {
+    FLOAT_PUSH(*(jfloat*)(OBJ_POP() + get_fast_accessor_offset()));
+    ADVANCE_FOR_RETURN();
+  }
+
+  void shared_fast_getdouble_accessor() {
+    DOUBLE_PUSH(double_from_addr(OBJ_POP() + get_fast_accessor_offset()));
+    ADVANCE_FOR_RETURN();
+  }
+
+  void shared_fast_getfloat_static_accessor() {
+    address obj = OBJ_POP();
+    NULL_CHECK(obj);
+    FLOAT_PUSH(*(jfloat*)(obj + get_fast_accessor_offset()));
+    ADVANCE_FOR_RETURN();
+  }
+
+  void shared_fast_getdouble_static_accessor() {
+    address obj = OBJ_POP();
+    NULL_CHECK(obj);
+    DOUBLE_PUSH(double_from_addr(obj + get_fast_accessor_offset()));
+    ADVANCE_FOR_RETURN();
+  }
+
   // Fixed method entries
 
   void shared_invoke_compiler() {
     shared_call_vm_internal((address)&compile_current_method, NULL, T_VOID, 0);
     interpreter_method_entry();
   }
- 
+
   void fixed_interpreter_method_entry() {
     interpreter_method_entry();
   }
@@ -1762,7 +1859,7 @@ extern "C" {
   void fixed_interpreter_fast_method_entry_1() {
     interpreter_method_entry();
   }
-    
+
   void fixed_interpreter_fast_method_entry_2() {
     interpreter_method_entry();
   }
@@ -1779,15 +1876,15 @@ extern "C" {
 
   void interpreter_fast_method_entry_0() {
     interpreter_method_entry();
-  }  
+  }
 
   void interpreter_fast_method_entry_1() {
     interpreter_method_entry();
-  }      
+  }
 
   void interpreter_fast_method_entry_2() {
     interpreter_method_entry();
-  }  
+  }
 
   void interpreter_fast_method_entry_3() {
     interpreter_method_entry();
@@ -1795,13 +1892,13 @@ extern "C" {
 
   void interpreter_fast_method_entry_4() {
     interpreter_method_entry();
-  }  
+  }
 
   static bool array_load(BasicType type) {
     jint    idx = POP();
     address ref = OBJ_POP();
     BOUNDS_CHECK(ref, idx);
-    
+
     switch (type) {
     case T_BYTE    :
       {
@@ -1854,11 +1951,11 @@ extern "C" {
     default        :
       SHOULD_NOT_REACH_HERE();
     }
-    
+
     return true;
   }
 
-  static bool array_store(BasicType type) {   
+  static bool array_store(BasicType type) {
     switch (type) {
     case T_BYTE    :
       {
@@ -1869,7 +1966,7 @@ extern "C" {
         SET_ARRAY_ELEMENT(ref, idx, jbyte, val);
       }
       break;
-    case T_CHAR    :    
+    case T_CHAR    :
       {
         jushort val = POP();
         jint    idx  = POP();
@@ -1895,7 +1992,7 @@ extern "C" {
         BOUNDS_CHECK(ref, idx);
         SET_ARRAY_ELEMENT(ref, idx, jint, val);
       }
-      break;    
+      break;
     case T_OBJECT  :
       {
         address val = OBJ_POP();
@@ -1907,7 +2004,7 @@ extern "C" {
         write_barrier(ref + Array::base_offset() + idx * sizeof(jint));
         SET_ARRAY_ELEMENT(ref, idx, address, val);
       }
-      break;    
+      break;
     case T_LONG    :
       {
         jlong   val  = LONG_POP();
@@ -1964,7 +2061,7 @@ extern "C" {
   static inline void dload(int n) {
     PUSH(GET_LOCAL_LOW(n));
     PUSH(GET_LOCAL_HIGH(n));
-  } 
+  }
 
   static inline void istore(int n) {
     SET_LOCAL(n, POP());
@@ -1975,7 +2072,7 @@ extern "C" {
     acc.long_value = LONG_POP();
 
     SET_LOCAL_LOW(n,  acc.words[1]);
-    SET_LOCAL_HIGH(n, acc.words[0]);    
+    SET_LOCAL_HIGH(n, acc.words[0]);
   }
 
   static inline void fstore(int n) {
@@ -1989,7 +2086,7 @@ extern "C" {
   static inline void dstore(int n) {
     jdouble_accessor acc;
     acc.double_value = DOUBLE_POP();
-    
+
     SET_LOCAL_LOW(n,  acc.words[1]);
     SET_LOCAL_HIGH(n, acc.words[0]);
   }
@@ -2029,18 +2126,18 @@ extern "C" {
 #endif
     return obj + second_ushort_from_cpool(cpool, idx); // offset
   }
-  
+
   static void return_internal(BasicType type) {
     basic_value rv;
-    
+
     if (unlock_activation()) {
       return;
     }
 
-    switch(type) {          
+    switch(type) {
     case T_OBJECT :
     case T_INT    :
-    case T_FLOAT  : 
+    case T_FLOAT  :
       rv.int_val =  int_from_sp(0);
       break;
     case T_LONG   :
@@ -2056,9 +2153,9 @@ extern "C" {
     }
 
     g_jlocals = GET_FRAME(locals_pointer);
-        
+
     // go to previous frame
-    g_jfp = GET_FRAME(caller_fp);    
+    g_jfp = GET_FRAME(caller_fp);
 
     g_jsp = g_jlocals - JavaFrame::arg_offset_from_sp(-1);
 
@@ -2079,14 +2176,14 @@ extern "C" {
           PUSH(*((jint*)header + 2 * i));
         }
         // find Java method
-        address method = (address)GET_ENTRY(pending_entry, method);     
+        address method = (address)GET_ENTRY(pending_entry, method);
         // invoke it
         invoke_java_method(method, 0);
         return;
       }
 
       // restore pending exception
-      _current_pending_exception = 
+      _current_pending_exception =
         (OopDesc*)GET_ENTRY_FRAME(pending_exception);
 
       SET_THREAD_INT(obj_value, (jint)GET_ENTRY_FRAME(stored_obj_value));
@@ -2098,20 +2195,20 @@ extern "C" {
 
       // Pop the entry frame off the stack
       address old_jsp = GET_ENTRY_FRAME(stored_last_sp);
-      address old_jfp = GET_ENTRY_FRAME(stored_last_fp);    
-      g_jsp = g_jfp + 
+      address old_jfp = GET_ENTRY_FRAME(stored_last_fp);
+      g_jsp = g_jfp +
         EntryFrame::empty_stack_offset() + EntryFrame::frame_desc_size();
       g_jfp = old_jfp;
       SET_THREAD_INT(last_java_sp, (jint)old_jsp);
       SET_THREAD_INT(last_java_fp, (jint)old_jfp);
 
       if (g_jfp == NULL) {
-        BREAK_INTERPRETER_LOOP(REASON_THREAD_EXIT);
+        BREAK_INTERPRETER_LOOP(JMP_THREAD_EXIT);
       }
 
       g_jpc = GET_FRAME(bcp_store);
       g_jlocals = GET_FRAME(locals_pointer);
-      
+
       if (CURRENT_HAS_PENDING_EXCEPTION) {
         OopDesc* exception =_current_pending_exception;
         _current_pending_exception = NULL;
@@ -2128,21 +2225,21 @@ extern "C" {
     g_jpc = GET_FRAME(bcp_store) + (int)(GET_FRAME(return_advance));
     g_jlocals = GET_FRAME(locals_pointer);
 
-    switch(type) { 
+    switch(type) {
     case T_INT    : PUSH(rv.int_val);              break;
     case T_LONG   : LONG_PUSH(rv.long_val);        break;
     case T_FLOAT  : FLOAT_PUSH(rv.float_val);      break;
     case T_DOUBLE : DOUBLE_PUSH(rv.double_val);    break;
     case T_OBJECT : OBJ_PUSH(rv.object_val);       break;
     case T_VOID   : break;
-    }    
+    }
   }
 
   static void fast_ldc(BasicType type, bool wide) {
     jushort idx = wide ? GET_SHORT(0) : GET_BYTE(0);
     // Get constant pool of current method
     address cpool = GET_FRAME(cpool);
-    
+
     // Push value on the stack
     switch (type) {
     case T_INT    :
@@ -2152,8 +2249,8 @@ extern "C" {
         jint val = get_from_cpool(cpool, idx);
         PUSH(val);
       }
-      break;    
-    case T_LONG   : 
+      break;
+    case T_LONG   :
       {
         jlong val = long_from_addr(cpool + idx * 4);
         LONG_PUSH(val);
@@ -2165,11 +2262,11 @@ extern "C" {
         DOUBLE_PUSH(val);
       }
       break;
-    default       : 
+    default       :
       SHOULD_NOT_REACH_HERE();
     }
 
-    ADVANCE(wide ? 3 : 2); 
+    ADVANCE(wide ? 3 : 2);
   }
 
   static void fast_invoke_internal(bool has_fixed_target_method,
@@ -2179,10 +2276,10 @@ extern "C" {
     jushort index = GET_SHORT(0);
     // Get constant pool of current method
     address cpool = GET_FRAME(cpool);
-    
+
     if (has_fixed_target_method) {
       // Get method from resolved constant pool entry
-      method = (address)get_from_cpool(cpool, index);      
+      method = (address)get_from_cpool(cpool, index);
       if (must_do_null_check) {
         // Get the number of parameters from the method
         jushort num_params = get_num_params(method);
@@ -2222,36 +2319,45 @@ extern "C" {
       // Get the ClassInfo
       address ci = *(address*)(klazz + JavaClass::class_info_offset());
       // Get method from vtable of the ClassInfo
-      method = get_method_from_ci(ci, vindex);      
-      // Get the number of parameters from method    
+      method = get_method_from_ci(ci, vindex);
+      // Get the number of parameters from method
       jushort num_params = get_num_params(method);
        // Get receiver object and perform the null check
       address receiver = OBJ_PEEK(num_params - 1);
       NULL_CHECK(receiver);
 
       // Get prototype of receiver object
-      receiver = *(address*)receiver;    // java near      
+      receiver = *(address*)receiver;    // java near
       // Get method from vtable of the class
       method = get_method_from_vtable(receiver, vindex);
       GUARANTEE(method != NULL, "must be in the vtable");
     }
-    
+
     // Call method
     invoke_java_method(method, invoker_size);
   }
-  
+
   /* bytecodes implementation follows */
+
 #define START_BYTECODES
 #define END_BYTECODES
+#define BYTECODE_IMPL_NO_STEP(x) static void bc_impl_##x() {
+#if ENABLE_JAVA_DEBUGGER
+#define BYTECODE_IMPL(x) static void bc_impl_##x() {            \
+  if (_debugger_active & DEBUGGER_STEPPING) {                   \
+    interpreter_call_vm((address)&handle_single_step, T_VOID);  \
+  }
+#else
 #define BYTECODE_IMPL(x) static void bc_impl_##x() {
+#endif
 #define BYTECODE_IMPL_END }
 
   START_BYTECODES
-  
+
   BYTECODE_IMPL(nop)
     ADVANCE(1);
   BYTECODE_IMPL_END
- 
+
   BYTECODE_IMPL(aconst_null)
     PUSH(0);
     ADVANCE(1);
@@ -2343,18 +2449,18 @@ extern "C" {
     ADVANCE(3);
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(ldc)
+  BYTECODE_IMPL_NO_STEP(ldc)
     interpreter_call_vm_redo((address)&quicken, T_INT);
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(ldc_w)
-    interpreter_call_vm_redo((address)&quicken, T_INT);    
-  BYTECODE_IMPL_END
-
-  BYTECODE_IMPL(ldc2_w)
+  BYTECODE_IMPL_NO_STEP(ldc_w)
     interpreter_call_vm_redo((address)&quicken, T_INT);
   BYTECODE_IMPL_END
- 
+
+  BYTECODE_IMPL_NO_STEP(ldc2_w)
+    interpreter_call_vm_redo((address)&quicken, T_INT);
+  BYTECODE_IMPL_END
+
   BYTECODE_IMPL(iload)
     iload(GET_BYTE(0));
     ADVANCE(2);
@@ -2372,7 +2478,7 @@ extern "C" {
 
   BYTECODE_IMPL(lload_wide)
     lload(GET_SHORT(0));
-    ADVANCE(3) ;
+    ADVANCE(3);
   BYTECODE_IMPL_END
 
   BYTECODE_IMPL(fload)
@@ -2487,7 +2593,7 @@ extern "C" {
 
   BYTECODE_IMPL(aload_0)
     aload(0);
-    ADVANCE(1);  
+    ADVANCE(1);
   BYTECODE_IMPL_END
 
   BYTECODE_IMPL(aload_1)
@@ -2556,7 +2662,7 @@ extern "C" {
   BYTECODE_IMPL(istore)
     istore(GET_BYTE(0));
     ADVANCE(2);
-  BYTECODE_IMPL_END  
+  BYTECODE_IMPL_END
 
   BYTECODE_IMPL(istore_wide)
     istore(GET_SHORT(0));
@@ -2581,7 +2687,7 @@ extern "C" {
   BYTECODE_IMPL(fstore_wide)
     fstore(GET_SHORT(0));
     ADVANCE(3);
-  BYTECODE_IMPL_END  
+  BYTECODE_IMPL_END
 
   BYTECODE_IMPL(dstore)
     dstore(GET_BYTE(0));
@@ -2591,7 +2697,7 @@ extern "C" {
   BYTECODE_IMPL(dstore_wide)
     dstore(GET_SHORT(0));
     ADVANCE(3);
-  BYTECODE_IMPL_END  
+  BYTECODE_IMPL_END
 
   BYTECODE_IMPL(astore)
     astore(GET_BYTE(0));
@@ -2601,7 +2707,7 @@ extern "C" {
   BYTECODE_IMPL(astore_wide)
     astore(GET_SHORT(0));
     ADVANCE(3);
-  BYTECODE_IMPL_END  
+  BYTECODE_IMPL_END
 
   BYTECODE_IMPL(istore_0)
     istore(0);
@@ -2850,7 +2956,7 @@ extern "C" {
   BYTECODE_IMPL(fadd)
     jfloat val1 = FLOAT_POP();
     jfloat val2 = FLOAT_POP();
-    FLOAT_PUSH(jvm_fadd(val1, val2));    
+    FLOAT_PUSH(jvm_fadd(val1, val2));
     ADVANCE(1);
   BYTECODE_IMPL_END
 
@@ -2926,11 +3032,11 @@ extern "C" {
     if (val2 == 0) {
       interpreter_throw_ArithmeticException();
       return;
-    } 
+    }
     jint rv = val1;
     if (val1 != 0x80000000 || val2 != -1) {
       rv  /=  val2;
-    } 
+    }
     PUSH(rv);
 
     ADVANCE(1);
@@ -2949,7 +3055,7 @@ extern "C" {
 
   BYTECODE_IMPL(fdiv)
     jfloat val2 = FLOAT_POP();
-    jfloat val1 = FLOAT_POP();    
+    jfloat val1 = FLOAT_POP();
     FLOAT_PUSH(jvm_fdiv(val1, val2));
     ADVANCE(1);
   BYTECODE_IMPL_END
@@ -3021,7 +3127,7 @@ extern "C" {
     FLOAT_PUSH(jvm_fmul(val, -1.0f));
     ADVANCE(1);
   BYTECODE_IMPL_END
- 
+
   BYTECODE_IMPL(dneg)
     jdouble val = DOUBLE_POP();
     DOUBLE_PUSH(jvm_dneg(val));
@@ -3076,14 +3182,14 @@ extern "C" {
   BYTECODE_IMPL(iand)
     jint val2 = POP();
     jint val1 = POP();
-    PUSH(val1 & val2); 
+    PUSH(val1 & val2);
     ADVANCE(1);
   BYTECODE_IMPL_END
 
   BYTECODE_IMPL(land)
     jlong val2 = LONG_POP();
     jlong val1 = LONG_POP();
-    LONG_PUSH(val1 & val2); 
+    LONG_PUSH(val1 & val2);
     ADVANCE(1);
   BYTECODE_IMPL_END
 
@@ -3133,7 +3239,7 @@ extern "C" {
 
   BYTECODE_IMPL(i2l)
     jlong val = POP();
-    LONG_PUSH(val);    
+    LONG_PUSH(val);
     ADVANCE(1);
   BYTECODE_IMPL_END
 
@@ -3170,7 +3276,7 @@ extern "C" {
     ADVANCE(1);
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(f2l)    
+  BYTECODE_IMPL(f2l)
     LONG_PUSH(jvm_f2l(FLOAT_POP()));
     ADVANCE(1);
   BYTECODE_IMPL_END
@@ -3218,7 +3324,7 @@ extern "C" {
   BYTECODE_IMPL(lcmp)
     jlong val2 = LONG_POP();
     jlong val1 = LONG_POP();
-    
+
     jint rv = val1 < val2 ? -1 : val1 == val2 ? 0 : 1;
     PUSH(rv);
 
@@ -3259,9 +3365,9 @@ extern "C" {
   BYTECODE_IMPL_END
 #endif
 
-  BYTECODE_IMPL(ifeq)    
+  BYTECODE_IMPL(ifeq)
     jint val = POP();
-    branch(val == 0);    
+    branch(val == 0);
   BYTECODE_IMPL_END
 
   BYTECODE_IMPL(ifne)
@@ -3343,8 +3449,8 @@ extern "C" {
 
   BYTECODE_IMPL(tableswitch)
     jint index = POP();
-    // method entry point is 4-byte aligned, jpc points to 
-    // tableswitch bytecode   
+    // method entry point is 4-byte aligned, jpc points to
+    // tableswitch bytecode
     address aligned_jpc = (address)((jint)(g_jpc + 1 + 3) & ~3);
     // get default target
     jint    target = int_from_addr(aligned_jpc);
@@ -3359,20 +3465,20 @@ extern "C" {
 
   BYTECODE_IMPL(lookupswitch)
     jint key = POP();
-    // method entry point is 4-byte aligned, jpc points to 
+    // method entry point is 4-byte aligned, jpc points to
     // lookupswitch bytecode
     address aligned_jpc = (address)((jint)(g_jpc + 1 + 3) & ~3);
     // get default target
     jint    target = int_from_addr(aligned_jpc);
     jint    npairs = int_from_addr(aligned_jpc + 4);
-    
+
     while (npairs-- > 0) {
-      aligned_jpc += 8;         
+      aligned_jpc += 8;
       if (int_from_addr(aligned_jpc) == key) {
         target = int_from_addr(aligned_jpc + 4);
         break;
       }
-    }    
+    }
     // branch to target offset
     g_jpc += target;
     check_timer_tick();
@@ -3402,40 +3508,40 @@ extern "C" {
     return_internal(T_VOID);
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(getstatic)
+  BYTECODE_IMPL_NO_STEP(getstatic)
     interpreter_call_vm_dispatch((address)&getstatic, T_INT);
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(putstatic)
+  BYTECODE_IMPL_NO_STEP(putstatic)
     interpreter_call_vm_dispatch((address)&putstatic, T_INT);
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(getfield)
+  BYTECODE_IMPL_NO_STEP(getfield)
     interpreter_call_vm_redo((address)&getfield, T_INT);
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(putfield)
+  BYTECODE_IMPL_NO_STEP(putfield)
     interpreter_call_vm_redo((address)&putfield, T_INT);
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(invokevirtual)
+  BYTECODE_IMPL_NO_STEP(invokevirtual)
     interpreter_call_vm_redo((address)&quicken, T_INT);
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(invokespecial)
+  BYTECODE_IMPL_NO_STEP(invokespecial)
     interpreter_call_vm_redo((address)&quicken, T_INT);
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(invokestatic)
+  BYTECODE_IMPL_NO_STEP(invokestatic)
     interpreter_call_vm_dispatch((address)&quicken_invokestatic, T_INT);
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(invokeinterface)
+  BYTECODE_IMPL_NO_STEP(invokeinterface)
     interpreter_call_vm_redo((address)&quicken, T_INT);
   BYTECODE_IMPL_END
 
   static void new_return_point() {
-    PUSH(GET_THREAD_INT(obj_value));    
+    PUSH(GET_THREAD_INT(obj_value));
     ADVANCE(3);
   }
 
@@ -3448,8 +3554,8 @@ extern "C" {
     jint type = GET_BYTE(0);
     jint len = POP();
 
-    // actually newarray is different on x86 and everything else, 
-    // as x86 C code reads it from Java stack, and ARM, SH and C does it 
+    // actually newarray is different on x86 and everything else,
+    // as x86 C code reads it from Java stack, and ARM, SH and C does it
     // in interpreter
     if (!interpreter_call_vm_2((address)&_newarray, T_ARRAY, type, len)) {
       // put returned value on stack
@@ -3462,8 +3568,8 @@ extern "C" {
     if (!interpreter_call_vm((address)&anewarray, T_ARRAY)) {
       // remove length from stack
       POP();
-      // put returned value on stack    
-      PUSH(GET_THREAD_INT(obj_value));    
+      // put returned value on stack
+      PUSH(GET_THREAD_INT(obj_value));
       ADVANCE(3);
     }
   BYTECODE_IMPL_END
@@ -3471,7 +3577,7 @@ extern "C" {
   BYTECODE_IMPL(arraylength)
     address obj = OBJ_POP();
     NULL_CHECK(obj);
-    PUSH(GET_ARRAY_LENGTH(obj)); 
+    PUSH(GET_ARRAY_LENGTH(obj));
     ADVANCE(1);
   BYTECODE_IMPL_END
 
@@ -3489,19 +3595,19 @@ extern "C" {
   BYTECODE_IMPL_END
 
   BYTECODE_IMPL(instanceof)
-    // instanceof can throw an exception, like in 
+    // instanceof can throw an exception, like in
     // vm.instr.instanceofX.instanceof012.instanceof01201m1_1.instanceof01201m1
     // when we're using invalid class index in Java file
     if (interpreter_call_vm((address)&instanceof, T_INT)) {
       return;
     }
-    
+
     // remove object from stack
     POP();
 
-    // put returned value on stack  
+    // put returned value on stack
     PUSH(GET_THREAD_INT(int1_value));
-    
+
     ADVANCE(3);
   BYTECODE_IMPL_END
 
@@ -3509,8 +3615,8 @@ extern "C" {
     // Get the object to lock from the stack
     address obj = OBJ_POP();
     NULL_CHECK(obj);
-    
-    // IMPL_NOTE: Increment the bytecode pointer before locking to make 
+
+    // IMPL_NOTE: Increment the bytecode pointer before locking to make
     // asynchronous exceptions work???
     ADVANCE(1);
     monitor_enter_internal(obj);
@@ -3520,7 +3626,7 @@ extern "C" {
     // Get the object to unlock from the stack
     address obj = OBJ_POP();
     NULL_CHECK(obj);
-    
+
     if (!monitor_exit_internal(obj)) {
       ADVANCE(1);
     }
@@ -3535,8 +3641,8 @@ extern "C" {
     if (!interpreter_call_vm((address)&multianewarray, T_ARRAY)) {
       // remove parameters
       g_jsp += GET_BYTE(2) * BytesPerStackElement;
-      // put returned value on stack    
-      PUSH(GET_THREAD_INT(obj_value));    
+      // put returned value on stack
+      PUSH(GET_THREAD_INT(obj_value));
       ADVANCE(4);
     }
   BYTECODE_IMPL_END
@@ -3556,8 +3662,13 @@ extern "C" {
     g_jpc += offset;
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(breakpoint)
+  BYTECODE_IMPL_NO_STEP(breakpoint)
+#if ENABLE_JAVA_DEBUGGER
+    interpreter_call_vm((address)&handle_breakpoint, T_INT);
+    interpreter_dispatch_table[GET_THREAD_INT(int1_value)]();
+#else
     UNIMPL(breakpoint);
+#endif
   BYTECODE_IMPL_END
 
   BYTECODE_IMPL(fast_1_ldc)
@@ -3679,8 +3790,8 @@ extern "C" {
     NULL_CHECK(obj);
     double_to_addr(obj + GET_SHORT_NATIVE(0) * 4, value);
     ADVANCE(3);
-  BYTECODE_IMPL_END  
-  
+  BYTECODE_IMPL_END
+
   BYTECODE_IMPL(fast_aputfield)
     address value = OBJ_POP();
     address obj = OBJ_POP();
@@ -3763,22 +3874,22 @@ extern "C" {
     // read arguments
     jushort index = GET_SHORT(0);
     jubyte  num_params = GET_BYTE(2);
-  
+
     // Get constant pool of current method
     address cpool = GET_FRAME(cpool);
-  
+
     // Get the method index and class id from resolved constant pool entry
     jushort method_index =  first_ushort_from_cpool(cpool, index);
     jushort class_id = second_ushort_from_cpool(cpool, index);
-  
+
     // Get receiver object and perform the null check
     address receiver = OBJ_PEEK(num_params - 1);
     NULL_CHECK(receiver);
-  
+
     // Get class of receiver object
     receiver = *(address*)receiver;
     receiver = *(address*)receiver;
-  
+
     // Get the itable from the class of the receiver object
     // Get the ClassInfo
     address ci = *(address*)(receiver + JavaClass::class_info_offset());
@@ -3787,7 +3898,7 @@ extern "C" {
     jint ilength = *(jushort*)(ci + ClassInfo::itable_length_offset());
     // start of itable
     address itable = ci + ClassInfoDesc::header_size() + vlength * 4;
-  
+
     // Lookup interface method table by linear search
     for (itable = ci + ClassInfoDesc::header_size() + vlength*4; ; ilength--){
       // IMPL_NOTE: or < 0
@@ -3795,15 +3906,15 @@ extern "C" {
        interpreter_throw_IncompatibleClassChangeError();
        return;
       }
-   
-      // found 
+
+      // found
       if (class_id == int_from_addr(itable)) {
         break;
       }
-   
+
       itable += 8;
     }
-  
+
     // method table of the receiver class
     address table = int_from_addr(itable + 4) + ci;
     address method = *(address*)(table + method_index * 4);
@@ -3818,7 +3929,10 @@ extern "C" {
       SET_THREAD_INT(async_redo, 0);
       bc_impl_fast_invokenative();
       return;
-    }     
+    }
+
+    // Clear async_info (even if the methods was never redone)
+    SET_THREAD_INT(async_info, 0);
 
     // Clear async_info (even if the methods was never redone)
     SET_THREAD_INT(async_info, 0);
@@ -3852,7 +3966,7 @@ extern "C" {
 
       case T_OBJECT:
         PUSH(GET_THREAD_INT(obj_value));
-        bc_impl_areturn();      
+        bc_impl_areturn();
         break;
 
       default:
@@ -3860,9 +3974,9 @@ extern "C" {
     }
   }
 
-  BYTECODE_IMPL(fast_invokenative)    
+  BYTECODE_IMPL(fast_invokenative)
     address method = callee_method();
-    // Point _kni_parameter_base to the first parameter      
+    // Point _kni_parameter_base to the first parameter
     address locals = g_jlocals;
 
     // Set space for fake parameter for static method (KNI-ism)
@@ -3870,11 +3984,11 @@ extern "C" {
       locals += 4;
     }
     _kni_parameter_base = locals;
-      
+
     // Get the native method pointer from the bytecode
-    address native_ptr = 
-      *(address*)(g_jpc + Method::native_code_offset_from_bcp());      
-      
+    address native_ptr =
+      *(address*)(g_jpc + Method::native_code_offset_from_bcp());
+
     method_transition();
 
     shared_call_vm_internal(native_ptr, (address)&invokenative_return_point,
@@ -3920,7 +4034,7 @@ extern "C" {
     address ci = *(address*)(klazz + JavaClass::class_info_offset());
     // Get method from vtable of the ClassInfo
     address method = get_method_from_ci(ci, vindex);
-    // Get the number of parameters from method    
+    // Get the number of parameters from method
     jushort num_params = get_num_params(method);
     // Get receiver object and perform the null check
     address receiver = OBJ_PEEK(num_params - 1);
@@ -3993,7 +4107,7 @@ extern "C" {
   BYTECODE_IMPL(init_static_array)
     address ref = OBJ_PEEK(0);
     NULL_CHECK(ref);
-    int size_factor = 1 << (int)GET_BYTE(0);    
+    int size_factor = 1 << (int)GET_BYTE(0);
     int count = (jushort)GET_SHORT_NATIVE(1);
     int len = GET_ARRAY_LENGTH(ref);
     if (count < 0 || count > len) {
@@ -4010,8 +4124,8 @@ extern "C" {
     tty->print_cr("Undefined bytecode hit: 0x%x at %x", *g_jpc, g_jpc);
     BREAKPOINT;
   }
-             
-} /* of extern "C" */ 
+
+} /* of extern "C" */
 
 
 #define DEF_BC(name)               \
@@ -4024,7 +4138,7 @@ extern "C" {
     interpreter_dispatch_table[Bytecodes::_##name] = \
        &bc_impl_##name
 #else
-#define DEF_BC_FLOAT(name)     
+#define DEF_BC_FLOAT(name)
 #endif
 
 static void init_dispatch_table() {
@@ -4050,7 +4164,7 @@ static void init_dispatch_table() {
   DEF_BC(ldc_w);
   DEF_BC(ldc2_w);
   DEF_BC(iload);
-  DEF_BC_WIDE(iload);  
+  DEF_BC_WIDE(iload);
   DEF_BC(lload);
   DEF_BC_WIDE(lload);
   DEF_BC(fload);
@@ -4088,15 +4202,15 @@ static void init_dispatch_table() {
   DEF_BC(caload);
   DEF_BC(saload);
   DEF_BC(istore);
-  DEF_BC_WIDE(istore);  
+  DEF_BC_WIDE(istore);
   DEF_BC(lstore);
-  DEF_BC_WIDE(lstore);    
+  DEF_BC_WIDE(lstore);
   DEF_BC(fstore);
-  DEF_BC_WIDE(fstore);    
+  DEF_BC_WIDE(fstore);
   DEF_BC(dstore);
-  DEF_BC_WIDE(dstore);    
+  DEF_BC_WIDE(dstore);
   DEF_BC(astore);
-  DEF_BC_WIDE(astore); 
+  DEF_BC_WIDE(astore);
   DEF_BC(istore_0);
   DEF_BC(istore_1);
   DEF_BC(istore_2);
@@ -4274,7 +4388,7 @@ static void init_dispatch_table() {
   DEF_BC(fast_invokespecial);
   DEF_BC(fast_invokespecial);
   DEF_BC(fast_igetfield_1);
-  DEF_BC(fast_agetfield_1);  
+  DEF_BC(fast_agetfield_1);
   DEF_BC(aload_0_fast_igetfield_1);
   DEF_BC(aload_0_fast_igetfield_4);
   DEF_BC(aload_0_fast_igetfield_8);
@@ -4284,7 +4398,7 @@ static void init_dispatch_table() {
   DEF_BC(pop_and_npe_if_null);
   DEF_BC(init_static_array);
   DEF_BC(fast_init_1_putstatic);
-  DEF_BC(fast_init_1_putstatic);
+  DEF_BC(fast_init_2_putstatic);
   DEF_BC(fast_init_a_putstatic);
   DEF_BC(fast_init_1_getstatic);
   DEF_BC(fast_init_2_getstatic);
@@ -4352,16 +4466,20 @@ void primordial_to_current_thread() {
     // this helps us to avoid additional checks on every bytecode execution.
     // WARNING: no stack objects are allowed in interpreter implementation
     int rv = setjmp(interpreter_env);
-    if (!rv) {
+    if (rv == JMP_ENTER) {
       GUARANTEE(!inside_interpreter, "Cannot enter interpreter recursively");
       inside_interpreter = true;
       Interpret();
+      SHOULD_NOT_REACH_HERE(); // Interpret() can exit only by longjmp
     }
     inside_interpreter = false;
 
-    if (rv != REASON_THREAD_EXIT || Universe::is_stopping()) {
+    if (rv == JMP_CONTEXT_CHANGED) {
+      continue;
+    } else if (rv == JMP_STOPPED_MANUALLY || Universe::is_stopping()) {
       break;
     }
+    GUARANTEE(rv == JMP_THREAD_EXIT, "no other values");
 
     if (CURRENT_HAS_PENDING_EXCEPTION) {
       Thread::lightweight_thread_uncaught_exception();
@@ -4378,7 +4496,7 @@ void primordial_to_current_thread() {
 }
 
 void current_thread_to_primordial() {
-  BREAK_INTERPRETER_LOOP(REASON_STOPPED_MANUALLY);
+  BREAK_INTERPRETER_LOOP(JMP_STOPPED_MANUALLY);
 }
 
 void call_on_primordial_stack(void (*)(void)) {
@@ -4399,7 +4517,7 @@ public:
   static Initer me;
 };
 
-Initer Initer::me; 
+Initer Initer::me;
 
 typedef struct JavaFrameDebug {
   int stack_bottom_pointer;
@@ -4414,7 +4532,7 @@ typedef struct JavaFrameDebug {
 } JavaFrameDebug;
 
 JavaFrameDebug * jfp_debug() {
-  return (JavaFrameDebug*)( ((int)g_jfp) + 
+  return (JavaFrameDebug*)( ((int)g_jfp) +
                             JavaFrame::stack_bottom_pointer_offset() );
 }
 
@@ -4494,5 +4612,24 @@ void revert_java_pointers() {
   SET_THREAD_INT(last_java_sp, 0);
 }
 #endif
+
+#if ENABLE_ARM_VFP
+void vfp_redo() {}
+void vfp_fcmp_redo() {}
+void vfp_double_redo() {}
+void vfp_dcmp_redo() {}
+#endif
+
+#if ENABLE_PAGE_PROTECTION
+// Take care of page-boundary alignment of _protected_page variable
+#ifdef __GNUC__
+#define ALIGN(x) __attribute__ ((aligned (x)))
+unsigned char _protected_page[PROTECTED_PAGE_SIZE] ALIGN(4096);
+#else 
+unsigned char _dummy1[PROTECTED_PAGE_SIZE];
+unsigned char _protected_page[PROTECTED_PAGE_SIZE];
+unsigned char _dummy2[PROTECTED_PAGE_SIZE];
+#endif // __GNUC__
+#endif // ENABLE_PAGE_PROTECTION
 
 } // extern "C"

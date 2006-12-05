@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,6 +25,8 @@
  */
 
 #if ENABLE_ROM_GENERATOR && USE_SOURCE_IMAGE_GENERATOR
+
+class SourceObjectWriter;  // Forward reference
 
 class SourceROMWriter : public ROMWriter {
 public:
@@ -62,10 +65,7 @@ private:
   bool execute0(JVM_SINGLE_ARG_TRAPS);
 
 #if ENABLE_COMPILER && ENABLE_APPENDED_CALLINFO
-  void write_compiled_method_tables(JVM_SINGLE_ARG_TRAPS);
-  void write_compiled_method_table_for_block(ROMVector* compiled_methods, 
-                                             BlockType type, 
-                                             FileStream* stream JVM_TRAPS);
+  void write_compiled_method_table(JVM_SINGLE_ARG_TRAPS);
 #endif
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   void print_packages_list(ROMVector* patterns);
@@ -110,6 +110,7 @@ private:
   virtual void write_text_reference(FileStream* stream, int offset);
   virtual void write_compiled_text_reference(FileStream* stream,int offset, 
                                              int delta);
+  bool is_text_subtype(int type);
 
 protected:
   virtual void write_data_body(SourceObjectWriter* obj_writer JVM_TRAPS);
@@ -119,6 +120,11 @@ protected:
   virtual void write_data_block(SourceObjectWriter* obj_writer JVM_TRAPS);
   virtual void write_heap_block(SourceObjectWriter* obj_writer JVM_TRAPS);
   virtual void write_stuff_block(SourceObjectWriter* obj_writer JVM_TRAPS);
+
+#if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES 
+  virtual void write_tm_body(SourceObjectWriter* obj_writer JVM_TRAPS);
+  virtual void write_tm_block(SourceObjectWriter* obj_writer JVM_TRAPS);
+#endif  
   virtual void init_declare_stream();
   
 public:
@@ -159,7 +165,9 @@ public:
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
   virtual void write_global_singletons(JVM_SINGLE_ARG_TRAPS);
   virtual void write_link_checks();
-
+#if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES         
+  virtual void write_tm_reference(Oop* /*owner*/, int owner_offset, Oop* /*oop*/, FileStream* /*stream*/); 
+#endif 
   virtual void write_reference(Oop* oop, BlockType current_type,
                                FileStream* stream JVM_TRAPS);
   virtual void write_reference(BlockType type, int offset,
@@ -194,15 +202,21 @@ private:
   int _text_offset;
   int _data_offset;
   int _heap_offset;
+#if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES 
+  int _task_mirrors_offset;
+#endif
   int _last_text_offset;
   bool _string_started;
-  ROMWriter::BlockType current_type;
+  ROMWriter::BlockType _current_type;
   int _romized_reference_count;
 public:
   OffsetFinder() {
     _text_offset = 0;
     _data_offset = 0;
     _heap_offset = 0;
+#if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES 
+    _task_mirrors_offset = 0;
+#endif
     _romized_reference_count = 0;
     _last_text_offset = -4;
     _string_started = false;
@@ -219,6 +233,9 @@ public:
   int get_text_count() {return _text_offset / sizeof(int);}
   int get_data_count() {return _data_offset / sizeof(int);}
   int get_heap_count() {return _heap_offset / sizeof(int);}
+#if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES 
+  int get_task_mirrors_count() {return _task_mirrors_offset / sizeof(int);}
+#endif
   int romized_reference_count() { return _romized_reference_count;}
 };
 
@@ -295,7 +312,10 @@ public:
   void put_method_variable_part(Method *method JVM_TRAPS);
   void print_method_variable_parts(JVM_SINGLE_ARG_TRAPS);
   bool has_split_variable_part(Method *method);
-
+  bool is_subtype(ROMWriter::BlockType type_to_check, ROMWriter::BlockType type);
+#if ENABLE_PREINITED_TASK_MIRRORS && ENABLE_ISOLATES  
+  void write_rom_tm_bitmap(); 
+#endif 
   void put_c_function(Method *owner, address addr JVM_TRAPS) {
     put_c_function(owner, addr, _stream JVM_CHECK);
   }

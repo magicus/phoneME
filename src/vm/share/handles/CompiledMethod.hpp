@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -73,6 +74,21 @@ class CompiledMethod : public Oop {
   // Returns the size of the dynamic part
   jint size() const {
     return ((CompiledMethodDesc*)obj())->code_size();
+  }
+
+private:
+  juint flags_and_size() {
+    return uint_field(flags_and_size_offset());
+  }
+  void set_flags_and_size(const juint value) {
+    uint_field_put(flags_and_size_offset(), value);
+  }
+
+public:
+  void set_has_branch_relocation() {
+    juint fs = flags_and_size();
+    fs |= CompiledMethodDesc::HAS_BRANCH_RELOCATION_MASK;
+    set_flags_and_size(fs);
   }
 
 #if ENABLE_JVMPI_PROFILE
@@ -230,7 +246,7 @@ class CallInfoRecord {
  public:
   CallInfoRecord(const CompiledMethod * const compiled_method,
                  const address return_address) {
-    // NB. init() is used here to fix bug 6297942.
+    // NB. init() is used here to fix CR 6297942.
     init(compiled_method, return_address);
   }
 
@@ -248,8 +264,8 @@ class CallInfoRecord {
 
   // Table header layout.
   enum {
-    length_width = 13,
-    type_width   = 3,
+    length_width = 12,
+    type_width   = 4,
     length_start = 0,
     type_start   = length_start + length_width,
     table_header_size = 2

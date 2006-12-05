@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -375,17 +376,45 @@ class Bytecodes: public AllStatic {
     return 0 <= code && code < number_of_java_codes 
           && data[code]._length != -1; 
   }
-  
+
   static int length_for(Code code) { 
     return data[code]._length; 
   }
 
-  static int wide_length_for(Code code) { 
-    return (data[code]._wide_length_and_flags & 0x3f);
+  enum {
+    WideLengthMask  = 0x00F,
+    Exceptions      = 0x010,
+    NullCheck       = 0x020 | Exceptions,
+    CSE             = 0x040,
+    NoFallThru      = 0x080,
+    NoPatching      = 0x100,
+
+    // For stack frame omission, mark as throwing exceptions the bytecodes which:
+    // 1. allocate memory (including exception throwing)
+    // 2. yield to the scheduler
+    // 3. call a runtime function on a target where call instruction saves
+    //    return address in a fixed register.
+    // 4. use uncommon trap
+#if ENABLE_THUMB_COMPILER || HITACHI_SH
+    SoftLong        = Exceptions,
+#else
+    SoftLong        = 0,
+#endif
+
+    // Note: need to revisit it for hardware fp on ARM
+    SoftFloat       = Exceptions,
+
+    None            = 0
+  };
+  static jushort get_flags(const Code code) {
+    return data[code]._wide_length_and_flags;
   }
 
+  static int wide_length_for(Code code) { 
+    return get_flags(code) & WideLengthMask;
+  }
   static bool wide_is_defined(int code) { 
-   return is_defined(code) && (wide_length_for((Code)code) != 0);
+   return is_defined(code) && wide_length_for((Code)code) != 0;
   }
 
 
@@ -393,18 +422,62 @@ class Bytecodes: public AllStatic {
   static int length_for(const Method* method, const int bci);
   static int wide_length_for(const Method* method, const int bci, Code code);
 
-  static bool can_fall_through(Code code) {
-    jbyte b = data[code]._wide_length_and_flags;
-    return (((int)b) >= 0);
+  static bool can_fall_through_flags(const jushort flags) {
+    return !(flags & NoFallThru);
+  }
+  static bool can_fall_through(const Code code) {
+    return can_fall_through_flags(get_flags(code));
   }
 
-  static bool is_zero_const  (Code code) { 
-    return (code == _aconst_null || code == _iconst_0 
-              || code == _fconst_0   || code == _dconst_0); 
+  static bool can_throw_exceptions_flags(const jushort flags) {
+    return flags & Exceptions;
+  }
+  static bool can_throw_exceptions(const Code code) {
+    return can_throw_exceptions_flags(get_flags(code));
+  }
+
+  static bool is_zero_const  (const Code code) { 
+    return code == _aconst_null || code == _iconst_0 ||
+           code == _fconst_0    || code == _dconst_0; 
   }
 
   static void verify() PRODUCT_RETURN;
 
+#if ENABLE_CSE
+//a cse string should  begin with a byte code who 
+//won't eat value in the expression stack
+//since when we omit a common sequence,
+//we just push a result on top of stack.
+  static bool can_decrease_stack(const Code code) {
+    return code <= _aload_3 ||
+           code == _aload_0_fast_agetfield_1 ||
+           code == _aload_0_fast_igetfield_1 || 
+           (code >=_aload_0_fast_agetfield_4 && 
+           code < _fast_init_1_putstatic);
+  }
+
+  static bool is_kind_of_eliminable(const Code code) {
+#if ENABLE_JAVA_STACK_TAGS
+    switch (code) {
+     case Bytecodes::_fast_igetstatic:
+     case Bytecodes::_fast_lgetstatic:
+     case Bytecodes::_fast_fgetstatic:
+     case Bytecodes::_fast_dgetstatic:
+     case Bytecodes::_fast_agetstatic:
+       return true;
+    }
+#endif
+    return get_flags(code) & CSE;
+  }
+
+#endif // if ENABLE_CSE
+
+#if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
+  static bool is_null_point_exception_throwable(const Code code) {
+    return get_flags(code) & NullCheck;
+  }
+#endif 
+ 
 #ifndef PRODUCT
   static const char* name(Code code) { 
     check(code); 
@@ -417,24 +490,12 @@ class Bytecodes: public AllStatic {
   static void print_definitions();
 #endif  
 
-#if ENABLE_CSE
-//a cse string should  begin with a byte code who 
-//won't eat value in the expression stack
-//since when we omit a common sequence,
-//we just push a result on top of stack.
-static  bool is_decrease_stack_code(Bytecodes::Code code) {
-    if ( code <= _aload_3 || 
-         code == _aload_0_fast_agetfield_1||
-         code == _aload_0_fast_igetfield_1 || 
-         (code >=_aload_0_fast_agetfield_4 && 
-         code < _fast_init_1_putstatic))
-    return true;
-    return false;
+#if ENABLE_CODE_PATCHING
+  static bool disables_code_patching(const Code code) {
+    return get_flags(code) & NoPatching;
   }
-
-static bool cse_enabled(Bytecodes::Code code);
 #endif
- 
+
 private:
 
 #ifndef PRODUCT
@@ -463,12 +524,13 @@ private:
     const char* _name;  // name of the bytecode
     jbyte       _length; 
     const char* _format;
-    jbyte       _wide_length_and_flags;
+    jushort     _wide_length_and_flags;
     const char* _wide_format;
 #else
-    jbyte _length; 
-    jbyte _wide_length_and_flags;
-#endif
+    jushort     _wide_length_and_flags;        
+    jbyte       _length; 
+    jbyte       _unused_padding; // To avoid odd structure size.
+#endif    
   };
 
   PRODUCT_CONST static BytecodeData data[];

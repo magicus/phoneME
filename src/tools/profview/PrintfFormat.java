@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -455,7 +456,7 @@ import java.text.DecimalFormatSymbols;
  * Release 1: Initial release.
  * Release 2: Asterisk field widths and precisions    
  *            %n$ and *m$
- *            Bug fixes
+ *            changes:
  *              g format fix (2 digits in e form corrupt)
  *              rounding in f format implemented
  *              round up when digit not printed is 5

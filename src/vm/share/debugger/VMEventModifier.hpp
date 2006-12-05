@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -148,7 +149,7 @@ public:
   HANDLE_DEFINITION(VMEventModifier, MixedOop);
 
   jboolean thread_match(DebuggerEvent *);
-  jboolean match(DebuggerEvent *, bool *);
+  jboolean match(DebuggerEvent *, bool*);
   static ReturnOop allocate_modifier();
   static ReturnOop new_modifier(PacketInputStream *, PacketOutputStream *,
                                 bool& error);
@@ -228,40 +229,40 @@ protected:
     return FIELD_OFFSET(VMEventModifierDesc, _location_mod._opcode);
   }
   static int sig_caught_offset() {
-    return FIELD_OFFSET(VMEventModifierDesc, exception_mod._sig_caught);
+    return FIELD_OFFSET(VMEventModifierDesc, _exception_mod._sig_caught);
   }
   static int sig_uncaught_offset() {
-    return FIELD_OFFSET(VMEventModifierDesc, exception_mod._sig_uncaught);
+    return FIELD_OFFSET(VMEventModifierDesc, _exception_mod._sig_uncaught);
   }
   static int class_name_offset() {
     return FIELD_OFFSET(VMEventModifierDesc, _class_name);
   }
   static int step_target_clazz_id_offset() {
-    return FIELD_OFFSET(VMEventModifierDesc, single_step_mod._step_target._clazz_id);
+    return FIELD_OFFSET(VMEventModifierDesc, _singlestep_mod._step_target._clazz_id);
   }
   static int step_target_method_id_offset() {
-    return FIELD_OFFSET(VMEventModifierDesc, single_step_mod._step_target._method_id);
+    return FIELD_OFFSET(VMEventModifierDesc, _singlestep_mod._step_target._method_id);
   }
   static int step_target_offset_offset() {
-    return FIELD_OFFSET(VMEventModifierDesc, single_step_mod._step_target._offset);
+    return FIELD_OFFSET(VMEventModifierDesc, _singlestep_mod._step_target._offset);
   }
   static int step_size_offset() {
-    return FIELD_OFFSET(VMEventModifierDesc, single_step_mod._step_size);
+    return FIELD_OFFSET(VMEventModifierDesc, _singlestep_mod._step_size);
   }
   static int step_depth_offset() {
-    return FIELD_OFFSET(VMEventModifierDesc, single_step_mod._step_depth);
+    return FIELD_OFFSET(VMEventModifierDesc, _singlestep_mod._step_depth);
   }
   static int step_starting_offset_offset() {
-    return FIELD_OFFSET(VMEventModifierDesc, single_step_mod._step_starting_offset);
+    return FIELD_OFFSET(VMEventModifierDesc, _singlestep_mod._step_starting_offset);
   }
   static int dup_current_line_offset_offset() {
-    return FIELD_OFFSET(VMEventModifierDesc, single_step_mod._dup_current_line_offset);
+    return FIELD_OFFSET(VMEventModifierDesc, _singlestep_mod._dup_current_line_offset);
   }
   static int post_dup_line_offset_offset() {
-    return FIELD_OFFSET(VMEventModifierDesc, single_step_mod._post_dup_line_offset);
+    return FIELD_OFFSET(VMEventModifierDesc, _singlestep_mod._post_dup_line_offset);
   }
   static int step_starting_fp_offset() {
-    return FIELD_OFFSET(VMEventModifierDesc, single_step_mod._step_starting_fp);
+    return FIELD_OFFSET(VMEventModifierDesc, _singlestep_mod._step_starting_fp);
   }
   static int compile_state_offset() {
     return FIELD_OFFSET(VMEventModifierDesc, _compile_state);
