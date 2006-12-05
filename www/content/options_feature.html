@@ -1,0 +1,1068 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+
+             <style type="text/css"> 
+<!-- /* <![CDATA[ */
+@import "/branding/css/tigris.css";
+@import "/inst.css"; 
+ 
+
+ /* ]]> */
+ --> 
+
+ </style>
+ <link rel="stylesheet" type="text/css" href="OSS_Doc_Template_files/print.html" media="print">
+ <script src="OSS_Doc_Template_files/tigris.html" type="text/javascript"></script><!-- ------- ORIGINAL CODE --------------------------- --><!--<head>
+ <style type="text/css"> 
+ /* <![CDATA[ */
+ @import "/branding/css/tigris.css";
+ @import "/branding/css/inst.css";
+ /* ]]> */
+ </style>
+ <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
+ <script src="/branding/scripts/tigris.js" type="text/javascript"></script> --><title>java-net: Java.net template 1</title>
+ 
+ 
+
+
+                                                       
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+ <meta http-equiv="Content-Style-Type" content="text/css">
+ <meta name="version" content="3.5.1.19.8">
+ <style type="text/css">
+<!--
+a:link {
+	text-decoration: none;
+}
+a:visited {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+a:active {
+	text-decoration: none;
+}
+.style1 {font-size: small}
+-->
+ </style></head>
+<body class="composite">
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!--  ================= BEGIN BODY (Ignore Everything Above)  ============ -->
+
+<!-- BEGIN TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Default Build 
+Configuration Options <span class="style1"> </span></font></h1>
+<!-- END TITLE -->
+
+<p>
+<a href="./index_feature.html">first</a> | <a href="./client_feature.html">prev</a> 
+<p>
+
+This document describes the options used to build the PCSL and phoneME Feature software default 
+configurations. It has the following sections:
+<p>
+<ul>
+<li><a href="#pcsl_ops">Build Options for PCSL Software</a></li>
+<li><a href="#phoneme_ops">Build Options for phoneME Software</a></li>
+</ul>
+<p>
+The options described in this document are set when you run the build procedures described in 
+<A HREF="./pcsl_feature.html">Building a PCSL Reference Port</A> and 
+<A HREF="client_feature.html">Building a phoneME Software Reference Port</A>. 
+They are presented here for reference only.
+<P>
+
+<b>Note:</b> For success with the instructions in this guide, do 
+<EM CLASS="Emphasis">not</EM> change the default settings. For information on 
+build configurations and changing default settings, see the 
+<a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/build-guide/index.html"><i>
+Sun Java Wireless Client Build Guide</i></a>.
+<p>
+
+<!-- =================================== Start PCSL Options  ================== -->
+
+<!-- BEGIN SECTION HEADER -->
+<hr noshade="noshade" size="1">
+<a name="pcsl_ops"></a><h3>Build Options for PCSL Software</h3>
+<!-- END SECTION HEADER -->
+<p>
+
+Building PCSL software on your build platform (Linux or Windows) uses the 
+default build options shown in <A HREF="#table-a1">TABLE A-1</A>. Running 
+the command <KBD CLASS="Filename-Command">make all</KBD> in the PCSL build 
+environment sets these options for you. 
+<p>
+
+<!-- ______________________________ Begin Table-A1 _____________________ -->
+
+<TABLE BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000" CELLPADDING=5 
+CELLSPACING=0>
+<CAPTION>
+<A NAME="table-a1"><b>TABLE A-1</b></A>
+PCSL Default Configuration Build Option Settings</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-1001250"></A>Module Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-1001252"></A>Value
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-1001254"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001258"></A><A NAME="marker-1001256">
+</A><A NAME="marker-1001257"></A><KBD>FILE_MODULE</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001260"></A><kbd>posix</kbd> (Linux)
+<P CLASS="TableText"><A NAME="pgfId-1001262"></A><kbd>win32</kbd> (Windows)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001265"></A>Use a <kbd>posix</kbd> file 
+system on Linux. 
+On Windows, use <KBD CLASS="Filename-Command">win32</KBD>.
+<P>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001266"></A><kbd>FILE_MODULE=posix</kbd>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001270"></A><KBD>MEMORY_MODULE</KBD>
+<A NAME="marker-1001268"></A><A NAME="marker-1001269"></A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001272"></A><kbd>malloc</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001274"></A>Use standard C <KBD>malloc</KBD>.
+<P>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001275"></A><kbd>MEMORY_MODULE=malloc</kbd>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001277"></A><KBD>USE_DATAGRAM</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001279"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001281"></A>Enable datagram APIs.
+<BR>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001282"></A><KBD>USE_DATAGRAM=true</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001286"></A><KBD>NETWORK_MODULE</KBD>
+<A NAME="marker-1001284"></A><A NAME="marker-1001285"></A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001288"></A><kbd>bsd/generic</kbd>
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001289"></A>(Linux)
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001290"></A><kbd>winsock</kbd>
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001291"></A>(Windows)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001293"></A>On Linux, use <KBD>bsd/generic</KBD>. On 
+Windows, use <KBD CLASS="Filename-Command">winsock</KBD>.
+<BR>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001294"></A>
+<KBD>NETWORK_MODULE=bsd/generic</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001298"></A><A NAME="marker-1001296"></A>
+<A NAME="marker-1001297"></A><KBD>PRINT_MODULE</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001300"></A><kbd>stdout</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001302"></A>Print to <KBD>stdout</KBD>.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001303"></A>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001304"></A><kbd>PRINT_MODULE=stdout</kbd>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001308"></A><A NAME="marker-1001306"></A>
+<A NAME="marker-1001307"></A><kbd>PCSL_CHUNKMEM_IMPL</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001310"></A><kbd>pcsl_chunkheap</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001312"></A>Build with the named file, 
+which implements the public API <KBD>pcsl_mem_*_chunk</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001316"></A><A NAME="marker-1001314">
+</A><A NAME="marker-1001315"></A><kbd>PCSL_CHUNKMEM_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001321"></A>
+<I>InstallDir</I><kbd>/memory/heap</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001323"></A>Build with the named directory, 
+which holds the implementation of <KBD>pcsl_mem_*_chunk</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001327"></A><A NAME="marker-1001325"></A>
+<A NAME="marker-1001326"></A><kbd>USE_DEBUG</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001329"></A><kbd>false</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001331"></A>Build to optimize compilation. 
+Do not include debugging information.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001332"></A>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001333"></A><kbd>USE_DEBUG=false</kbd>
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<pre>
+
+</pre>
+
+<!-- ============================== Start phoneME Options ===================== -->
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="phoneme_ops"></a><h3>Build Options for phoneME Feature Software</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+The default configuration file, <KBD CLASS="Filename-Command">Default.gmk</KBD>, 
+is a plain text file located in the default build directory of your build platform. 
+For example, on a Linux platform, the <KBD CLASS="Filename-Command">Default.gmk</KBD> 
+file can be found in the following location:
+<P>
+<EM>InstallDir</EM><KBD>/midp/build/linux_fb_gcc</KBD>
+<p>
+<b>Note:</b> <EM>InstallDir</EM> is the location of your phoneME Feature software.
+<p>
+
+<A NAME="core_midp"></A>
+<strong>Build Options for Core MIDP Package</strong>
+<p>
+
+<A href="#table-a2">TABLE A-2</A> describes the build options used to build core 
+MIDP technology in the phoneME Feature software default configuration. For more 
+information, see <A HREF="./client_feature.html">Building a phoneME Feature
+Reference Port</A>.
+<P>
+For more information on additional core MIDP build options, see the 
+<A HREF="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/build-guide/index.html">
+<EM>Sun Java Wireless Client Build Guide</EM>.
+<p>
+
+<!-- _____________________________ Begin Table A-2 _______________________ -->
+
+<TABLE BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000" CELLPADDING=5
+CELLSPACING=0>
+<CAPTION>
+<A NAME="table-a2"><b>TABLE A-2</b></A>
+Default Build Options for Core MIDP</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-1000930"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-1000932"></A>Value
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-1000934"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000936"></A><kbd>TARGET_CPU</Kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000938"></A><kbd>arm</kbd>
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1000939"></A>(Linux)
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1000940"></A><kbd>i386</kbd>
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1000941"></A>(Win32)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000943"></A>Builds an implementation for 
+the specified target platform.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000944"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000945"></A><KBD>TARGET_CPU=arm</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000949"></A>
+<KBD>SUBSYSTEM_LCDUI_MODULES</KBD><A NAME="marker-1000947"></A>
+<A NAME="marker-1000948"></A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000951"></A><kbd>chameleon</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000953"></A>Builds an implementation that 
+uses adaptive user-interface technology.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000954"></A>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1000955"></A>
+<KBD>SUBSYSTEM_LCDUI_MODULES=chameleon</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000959"></A><A NAME="marker-1000957"></A>
+<A NAME="marker-1000958"></A><KBD>USE_MULTIPLE_ISOLATES</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000961"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000963"></A>Builds an implementation able 
+to run more than one MIDlet at a time.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000964"></A>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1000965"></A>
+<KBD>USE_MULTIPLE_ISOLATES=true</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000969"></A><A NAME="marker-1000967"></A>
+<A NAME="marker-1000968"></A><KBD>USE_CLDC_11</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000971"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000973"></A>Builds an implementation 
+compliant with the CLDC 1.1 Specification.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000974"></A>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1000975"></A><KBD>USE_CLDC_11=true</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000977"></A><kbd>MIDP_USE_ABB</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000979"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000981"></A>Builds an implementation 
+using the MIDP Audio Building Block (ABB) sound capability.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000982"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000983"></A><KBD>MIDP_USE_ABB=true</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000985"></A><kbd>USE_JPEG</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000987"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000989"></A>Builds an implementation 
+that uses the JPEG graphics recorder provided by the phoneME Feature software.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000990"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000991"></A><KBD>USE_JPEG=true</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000993"></A><kbd>JPEG_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000995"></A>(jpeg source)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000997"></A>Provides a pointer to the 
+location of the <KBD CLASS="Filename-Command">libjpeg</KBD> open source library.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000998"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000999"></A>
+<KBD>JPEG_DIR=</KBD><I>InstallDir</I><KBD>/libjpeg</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001003"></A><A NAME="marker-1001001">
+</A><A NAME="marker-1001002"></A><KBD>USE_SSL</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001005"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001007"></A>Builds an implementation that 
+includes an SSL library.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001008"></A>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001009"></A><KBD>USE_SSL=true</KBD>
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001010"></A>Note that this build flag 
+does not affect security for OTA and SATSA. For that, see 
+<KBD>USE_RESTRICTED_CRYPTO</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001014"></A><A NAME="marker-1001012"></A>
+<A NAME="marker-1001013"></A><KBD CLASS="Filename-Command">USE_RESTRICTED_CRYPTO</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001016"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001018"></A>Builds an implementation that 
+includes ciphers and features that depend on ciphers. The features that depend 
+on ciphers are: secure OTA, SecureConnection, HTTPS, and SATSA-CRYPTO (JSR 177).
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001019"></A>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001020"></A>
+<KBD>USE_RESTRICTED_CRYPTO=true</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001022"></A><kbd>RESTRICTED_CRYPTO_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001024"></A>(crypto source)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001026"></A>Provides a pointer to the 
+location of the restricted crypto source.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001027"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001028"></A>
+<KBD>RESTRICTED_CRYPTO_DIR=</KBD><EM>crypto_dir</EM>
+</P>
+where <em>crypto_dir</em> is the location of your restricted crypto source.
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001030"></A><kbd>USE_BINARY_CRYPTO</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001032"></A><kbd>false
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001034"></A>Set this variable to 
+<KBD>true</KBD> if you do not have restricted crypto source code. 
+The build system will rebuild demos by linking with binary objects instead of 
+attempting to compile source code.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001036"></A><KBD>USE_NATIVE_AMS</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001038"></A><kbd>false</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001040"></A>Builds an implementation that 
+uses the AMS written in the Java programming language.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001041"></A>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001042"></A><KBD>USE_NATIVE_AMS=false</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001046"></A><KBD>USE_FIXED</KBD>
+<A NAME="marker-1001044"></A><A NAME="marker-1001045"></A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001048"></A><kbd>false</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001050"></A>Builds an implementation that 
+uses the default resource policy, open-for-competition.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001051"></A>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001052"></A><KBD>USE_FIXED=false</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001056"></A><A NAME="marker-1001054"></A>
+<A NAME="marker-1001055"></A><KBD>USE_DEBUG</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001058"></A><kbd>false</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001060"></A>Builds an optimized 
+implementation without debugging enabled.
+<BR>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001061"></A><KBD>USE_DEBUG=false</KBD>
+</P>
+</TD>
+</TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001065"></A><A NAME="marker-1001063"></A>
+<A NAME="marker-1001064"></A><KBD>USE_I3_TEST</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001067"></A><kbd>false</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001069"></A>Builds an implementation 
+without unit tests enabled.
+<BR>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001070"></A><KBD>USE_I3_TEST=false</KBD></P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001074"></A><A NAME="marker-1001072"></A>
+<A NAME="marker-1001073"></A><KBD>USE_JAVA_DEBUGGER</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001076"></A><kbd>false</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001078"></A>Disables Java platform debugger 
+support, also known as KDWP.
+<BR>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001079"></A><KBD>USE_JAVA_DEBUGGER=false</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001083"></A><A NAME="marker-1001081"></A>
+<A NAME="marker-1001082"></A><KBD>USE_JAVA_PROFILER</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001085"></A><kbd>false</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001087"></A>Disables the profiler feature 
+of the phoneME Feature software in CLDC.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001091"></A>Example:
+</P>
+<P CLASS="TableTextCode"><A NAME="pgfId-1001092"></A><KBD>USE_JAVA_PROFILER=false</KBD>
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+<A NAME="op_packages"></A>
+<strong>Build Options for Optional Package JSRs</strong>
+<p>
+
+<A HREF="#table-a3">TABLE A-3</A> describes the options used to build optional 
+package JSRs in the phoneME Feature software default configuration. For more 
+information on each optional package and other build settings, see the 
+<A HREF="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/build-guide/index.html">
+<EM>Sun Java Wireless Client Build Guide</EM></A>.
+<P>
+For each optional package shown in <A HREF="#table-a3">TABLE A-3</A>, it is 
+necessary to set two environment variables: one to indicate that an optional 
+package should be built; the other to point to the location where your optional 
+package source files are installed.
+<P>
+For example, to build the Bluetooth (JSR 82) optional package, the following 
+variables must be set:
+<P>
+<UL>
+<LI><KBD CLASS="Filename-Command">USE_JSR_82=true</KBD></LI>
+<LI><KBD CLASS="Filename-Command">JSR_82_DIR=</KBD><EM>InstallDir</EM><KBD>/jsr82</KBD></LI>
+</UL>
+<p>
+
+<!-- _______________________________ Begin Table A3 ______________________ -->
+
+<TABLE BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000" CELLPADDING=5
+CELLSPACING=0>
+<CAPTION>
+<A NAME="table-a3"><b>TABLE A-3</b></A>
+Default Build Options for Optional Package JSRs</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-1000511"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-1000513"></A>Default Value
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-1000515"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000517"></A><kbd>USE_JSR_75</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000519"></A></kbd><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000521"></A>Builds an implementation of 
+JSR 75 (Personal Information and File Management).
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000522"></A>Example:
+<p>
+<KBD>USE_JSR_75=true</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000524"></A><kbd>JSR_75_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000526"></A>(JSR 75 source)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000528"></A>Provides a pointer to the 
+location of the JSR 75 source code.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000529"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000530"></A>
+<KBD>JSR_75_DIR=</KBD><EM>InstallDir</EM><KBD>/jsr75</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000532"></A><kbd>USE_JSR_82</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000534"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000536"></A>Builds an implementation of 
+JSR 82 (Bluetooth).
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000537"></A>Example:
+<p>
+<KBD>USE_JSR_82=true</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000539"></A><kbd>JSR_82_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000541"></A>(JSR 82 source)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000543"></A>Provides a pointer to the 
+location of the JSR 82 source code.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000544"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000545"></A>
+<KBD>JSR_82_DIR=</KBD><EM>InstallDir</EM><KBD>/jsr82</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000547"></A><kbd>USE_JSR_120</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000549"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000551"></A>Builds an implementation of 
+JSR 120 (Java Wireless Messaging 1.0).
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000552"></A>Example:
+<p>
+<KBD CLASS="Filename-Command">USE_JSR_120=true</KBD>
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001535"></A>(Note: Setting 
+<KBD>JSR_205_DIR</KBD> includes JSR 120.)
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001526"></A><kbd>USE_JSR_135</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001528"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001530"></A>Builds an implementation of 
+JSR 135 (Mobile Media API).
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001531"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001532"></A><KBD>USE_JSR_135=true</KBD>
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001550"></A>(Note: To set the directory 
+location for JSR 135 source code, use <KBD>JSR_234_DIR</KBD>.)
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000554"></A><kbd>USE_JSR_172</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000556"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000558"></A>Builds an implementation of 
+JSR 172 (Java Web Services).
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000559"></A>Example:
+<p>
+<KBD>USE_JSR_172=true</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001108"></A><kbd>JSR_172_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001110"></A>(JSR 172 source)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001112"></A>Provides a pointer to the 
+location of the JSR 172 source
+code.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001125"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001126"></A>
+<KBD>JSR_172_DIR=</KBD><EM>InstallDir</EM><KBD>/jsr172</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000561"></A><kbd>USE_JSR_177</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000563"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000565"></A>Builds an implementation of 
+JSR 177 (Java Security and Trust Services).
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000566"></A>Example:
+<p>
+<KBD>USE_JSR_177=true</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001114"></A><kbd>JSR_177_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001116"></A>(JSR 177 source)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001118"></A>Provides a pointer to the 
+location of the JSR 177 source code.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001133"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001134"></A>
+<KBD>JSR_177_DIR=</KBD><EM>InstallDir</EM><KBD>/jsr177</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000568"></A><kbd>USE_JSR_205</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000570"></A><kbd>true
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000572"></A>Builds an implementation of 
+JSR 205 (Java Wireless Messaging 2.0).
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000573"></A>Example:
+<P>
+<KBD>USE_JSR_205=true</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000575"></A><kbd>JSR_205_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000577"></A>(JSR 205 source)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000579"></A>Provides a pointer to the 
+location of the JSR 205 source code.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000580"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000581"></A>
+<KBD>JSR_205_DIR=</KBD><EM>InstallDir</EM><KBD>/jsr205</KBD>
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000582"></A>(Note: Setting JSR_205_DIR 
+includes JSR 120.)
+
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000584"></A><kbd>USE_JSR_226</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000586"></A><kbd>true</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000588"></A>Builds an implementation 
+of JSR 226 (Scalable 2D Vector Graphics).
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000589"></A>Example:
+<p>
+<KBD>USE_JSR_226=true</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001483"></A><kbd>JSR_226_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001485"></A>(JSR 226 source)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001502"></A>Provides a pointer to the 
+location of the JSR 226 source code.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001503"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001504"></A>
+<KBD>JSR_226_DIR</KBD>=<EM>InstallDir</EM><KBD>/jsr226</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001120"></A><kbd>PISCES_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1001122"></A>(path to 2D Renderer 
+Subsystem)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1001510"></A>Provides a pointer to the 
+location of the 2D Renderer Subsystem.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001511"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1001512"></A>
+<KBD>PISCES_DIR=</KBD><EM>InstallDir</EM><KBD>/pisces</KBD>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000599"></A><kbd>jsr_234_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableTextCode"><A NAME="pgfId-1000601"></A>(JSR 135 source)
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-1000603"></A>Provides a pointer to the 
+location of the JSR 135 source code.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000604"></A>Example:
+</P>
+<P CLASS="TableText"><A NAME="pgfId-1000605"></A>
+<KBD>JSR_234_DIR=</KBD><EM>InstallDir</EM><KBD>/jsr135</KBD>
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+
+<p>
+<a href="./index_feature.html">first</a> | <a href="./client_feature.html">prev</a> 
+<p>
+
+<!-- =================================== END PAGE BODY ================== -->
+
+</div></td></tr></tbody></table></body></html>

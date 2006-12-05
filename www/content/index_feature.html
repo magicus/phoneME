@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+
+             <style type="text/css"> 
+<!-- /* <![CDATA[ */
+@import "/branding/css/tigris.css";
+@import "/inst.css"; 
+ 
+
+ /* ]]> */
+ --> 
+
+ </style>
+ <link rel="stylesheet" type="text/css" href="OSS_Doc_Template_files/print.html" media="print">
+ <script src="OSS_Doc_Template_files/tigris.html" type="text/javascript"></script><!-- ------- ORIGINAL CODE --------------------------- --><!--<head> <style type="text/css">  /* <![CDATA[ */ @import "/branding/css/tigris.css"; @import "/branding/css/inst.css"; /* ]]> */ </style> <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" /> <script src="/branding/scripts/tigris.js" type="text/javascript"></script> --><title>java-net: Java.net template 1</title>
+ 
+                                                       
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+ <meta http-equiv="Content-Style-Type" content="text/css">
+ <meta name="version" content="3.5.1.19.8">
+ <style type="text/css">
+<!--
+a:link {
+	text-decoration: none;
+}
+a:visited {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+a:active {
+	text-decoration: none;
+}
+.style1 {font-size: small}
+-->
+ </style></head>
+<body class="composite">
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!--  ===============    BEGIN PAGE BODY (Ignore Everything Above)  ============= -->
+
+<!--BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00"> Getting Started with 
+phoneME Feature Software  &nbsp; <span class="style1"> </span></font></h1>
+<!--END PAGE TITLE -->
+
+<p>
+<a href="./buildenv_feature.html">next</a> | <a href="./options_feature.html">last</a>
+<p>
+
+This guide contains the following chapters:
+<p>
+<ul>
+<!-- <li><A HREF="intro_feature.html">Introducing phoneME Feature Software</A></li> -->
+<li><A HREF="buildenv_feature.html">Build Environment</A></P>
+<li><A HREF="pcsl_feature.html">Building a PCSL Reference Port</A></P>
+<li><A HREF="cldc_feature.html">Building a CLDC Reference Port</A></P>
+<li><A HREF="client_feature.html">Building a phoneME Feature Software Reference
+Port</A></P>
+<li><A HREF="options_feature.html">Default Build Configuration Options</A></P>
+<!-- <li><A HREF="ix_gsg_feature.html">Index</A></P> -->
+</ul>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="intro"></a><h3>Introduction</h3>
+<!-- END SECTION HEAD -->
+
+This guide contains information for building and running the phoneME&#153; Feature software, 
+an optimized Java ME stack based on Milestone Release 1 (MR1) of the phoneME Feature 
+project. 
+<p>
+This guide allows you to take the following general steps:
+<p>
+<UL>
+<LI>Set up and configure your Linux/i386 or Win32/i386 build environment.</LI> 
+<LI>Build a default version of the PCSL libraries, CLDC, and phoneME Feature software 
+binaries.</LI>
+<LI>Run the phoneME Feature software on your default platform.</LI>
+<LI>Find additional information about phoneME Feature software.</LI>
+</UL>
+<p>
+<b>Note:</b> MR1 is the stable version of phoneME Feature software. It is unlikely 
+to change beyond adding necessary bug fixes. For active development, see the MR2 
+version of the phoneME Feature project. 
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="in"></a><h3>What's in This Release</h3>
+<!-- END SECTION HEAD  -->
+
+The phoneME Feature software contains the following software features and components:
+<p>
+<UL>
+<LI>Support for Texas Instruments P2SAMPLE64-V6 reference platform (P2 board)</LI>
+<LI>Multitasking capabilities and support for multiple, simultaneous applications
+(MIDlets)</LI>
+<LI>Full or partial implementations for the following Java Specification Request (JSR)
+optional packages:</LI>
+<UL>
+<LI>Connected Limited Device Configuration (CLDC) 1.0 (JSR 30) and 1.1. (JSR 139)</LI>
+<LI>Mobile Information Device Profile (MIDP) 1.0 (JSR 37) and 2.0 (JSR 118)</LI>
+<LI>Java Wireless Messaging (WMA) 1.1 (JSR 120) and 2.0 (JSR 205)</LI>
+<LI>Personal Information Management (PIM) 1.0 (JSR 75)</LI>
+<LI>FileConnection 1.0 (JSR 75)</LI>
+<LI>Java APIs for Bluetooth Wireless Technology 1.0 (JSR 82)</LI>
+<LI>Mobile Media API (JSR 135)</LI>
+<LI>J2ME Web Services 1.0 (JSR 172)</LI>
+<LI>Security and Trust Services API (SATSA) 1.0 (JSR 177)</LI>
+<LI>Java Technology for the Wireless Industry version 1.0 (JSR 185)</LI>
+<LI>Scalable 2D Vector Graphics API for J2ME 1.1 (JSR 226)</LI>
+</UL>
+<LI>Customizable user interface (skin) using Chameleon Adaptive User Interface
+Technology (AUIT) and XML</LI>
+<!-- <LI>Native Application Management API</LI> -->
+<!-- <LI>Native Resource Management API</LI> -->
+</UL>
+<p>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="not_in"></a><h3>What's Not in This Release</h3>
+<!-- END SECTION HEAD  -->
+
+<p>
+The following software components are not included in the phoneME Feature software release:
+<p>
+<UL>
+<LI>Mobile 3D Graphics API (JSR 184)</LI>
+<LI>Audio functionality in MIDP 2.0 (JSR 118), Mobile Media APIs (JSR 135), and Java
+Technology for the Wireless Industry (JSR 185) implementations</LI>
+</UL>
+<p>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="docs"></a><h3>Commercial Documentation</h3>
+<!-- END SECTION HEAD  -->
+
+<p>
+This guide provides only the minimal information needed to set up, build, and run the
+phoneME Feature software quickly, using only the default settings for each implementation.
+<p>
+For more information about phoneME Feature software topics, including additional build 
+options, porting, multitasking, using Adaptive User Interface technology, and others, see 
+the <a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/index.html">
+commercial documentation set</a>.
+<p>
+
+<p>
+<a href="./buildenv_feature.html">next</a> | <a href="./options_feature.html">last</a>
+<p>
+
+
+<!-- =============================== END PAGE BODY ================================= --> 
+
+</div></td></tr></tbody></table></body></html>

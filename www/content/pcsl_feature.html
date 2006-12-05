@@ -1,0 +1,400 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+
+             <style type="text/css"> 
+<!-- /* <![CDATA[ */
+@import "/branding/css/tigris.css";
+@import "/inst.css"; 
+ 
+
+ /* ]]> */
+ --> 
+
+ </style>
+ <link rel="stylesheet" type="text/css" href="OSS_Doc_Template_files/print.html" media="print">
+ <script src="OSS_Doc_Template_files/tigris.html" type="text/javascript"></script><!-- ------- ORIGINAL CODE --------------------------- --><!--<head>
+ <style type="text/css"> 
+ /* <![CDATA[ */
+ @import "/branding/css/tigris.css";
+ @import "/branding/css/inst.css";
+ /* ]]> */
+ </style>
+ <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
+ <script src="/branding/scripts/tigris.js" type="text/javascript"></script> --><title>java-net: Java.net template 1</title>
+ 
+ 
+
+
+                                                       
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+ <meta http-equiv="Content-Style-Type" content="text/css">
+ <meta name="version" content="3.5.1.19.8">
+ <style type="text/css">
+<!--
+a:link {
+	text-decoration: none;
+}
+a:visited {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+a:active {
+	text-decoration: none;
+}
+.style1 {font-size: small}
+-->
+ </style></head>
+<body class="composite">
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!--  ================= BEGIN PAGE BODY (Ignore Everything Above)  ============ -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Building a PCSL 
+Reference Port<span class="style1"> </span></font></h1>
+<!-- END PAGE TITLE -->
+<p>
+<a href="./index_feature.html">first</a> | <a href="./buildenv_feature.html">prev</a> | 
+<a href="./cldc_feature.html">next</a> | <a href="./options_feature.html">last</a>
+<p>
+
+This document contains instructions for building a PCSL reference port. It has the 
+following sections:
+<p>
+<ul>
+<li><a href="#variables">PCSL Environment Variables</a>
+<li><a href="#makefiles">Using PCSL <em>make</em> Files</a>
+<li><a href="#build_pcsl">Building PCSL Software</a>
+<li><a href="#pcsl_docs">Building PCSL Documentation</a>
+</ul>
+<p>
+
+The phoneME Feature software uses the PCSL libraries to build the phoneME Feature 
+software.  PCSL contains the following individual services:
+<P>
+<UL>
+<LI>file</LI>
+<LI>memory</LI>
+<LI>network</LI>
+<LI>print</LI>
+</UL>
+<p>
+<b>Note:</b> Although each PCSL service can be individually built, this guide
+describes how to build the full PCSL only.
+<P>
+To build a default implementation of PCSL, you take the following general steps:
+<p>
+<UL>
+<LI>Set environment variables for your platform</LI>
+<LI>Run <KBD CLASS="Filename-Command">make all</KBD> to build the PCSL implementation</LI>
+<LI>Build Doxygen PCSL documentation (optional)</LI>
+</UL>
+<P>
+For more information on building individual PCSL services and other build options, 
+see the
+<a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/build-guide/index.html"><i>Sun 
+Java Wireless Client Build Guide</i>.
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="variables"></a><h3>PCSL Environment Variables</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+<b>Note:</b> Make a note of the values you choose for these variables. When building 
+the phoneME Feature software, you must set corresponding values.
+<P>
+PCSL has three environment variables that can be set, as shown below:
+<P>
+<UL>
+<LI><KBD>PCSL_PLATFORM</KBD> - Identifies the target operating system, the target CPU, 
+and the compiler that the build system uses to create the PCSL library. Its value has 
+the form <I>os_cpu_compiler</I>. This is a mandatory variable and must be set when 
+building for all platforms.</LI>
+<p>
+<LI><KBD>PCSL_OUTPUT_DIR</KBD> - Specifies into which directory the build system puts 
+its output (for example, object files and libraries). This is an optional variable. If 
+it is not specified, PCSL sets the output directory for you.</LI>
+<P>
+<LI><KBD>GNU_TOOLS_DIR</KBD> - Specifies the location of the Monta Vista build tools 
+for the Linux platform. <!-- This is a mandatory variable that must be set 
+<EM>only</EM> when building PCSL for the Linux/ARM target platform. --> </LI>
+</UL>
+<p>
+<b>Note:</b> In order for the CLDC and phoneME Feature software build processes to 
+find PCSL output, the variable <KBD>PCSL_OUTPUT_DIR</KBD> <EM>must</EM> be set as 
+a system variable.
+<P>
+
+<strong>Setting System Variables on a Linux Platform</strong>
+<P>
+<b>Note:</b> This document assumes the use of the Bash shell on the Linux platform. 
+If you are using some other shell, set the variables for the shell you are using.
+<P>
+To set <KBD>PCSL_PLATFORM</KBD>, <KBD>PCSL_OUTPUT_DIR</KBD>, and 
+<KBD>GNU_TOOLS_DIR</KBD>  as Linux system variables, enter the following commands:
+<P>
+<KBD>$ export PCSL_PLATFORM=linux_arm_gcc</KBD>
+<br>
+<KBD>$ export PCSL_OUTPUT_DIR=$HOME/</KBD><em>pcsl_output</em>
+<br>
+<kbd>$ export 
+GNU_TOOLS_DIR=/opt/montavista/cee/devkit/arm/v4t_le/armv4tl-hardhat-linux</kbd> 
+<P>
+<B>Note:</B> In the variables shown above, <KBD>$HOME</KBD> represents the location of your PCSL software. 
+<i>pcsl_output</i> represents the location of the PCSL build output for your 
+target platform (for example, <KBD>linux_arm</KBD>).
+<P>
+
+<strong>Setting System Variables on a Windows Platform</strong>
+<P> 
+<B>Note:</B> This document assumes the use of Cyg4Me on the Windows platform.
+<P>
+To set <KBD>PCSL_PLATFORM</KBD> and <KBD>PCSL_OUTPUT_DIR</KBD> as Windows system 
+variables, enter the following commands:
+<P>
+<KBD>$ set PCSL_PLATFORM=win32_i386_vc</KBD>
+<br>
+<KBD>$ set PCSL_OUTPUT_DIR=C:/my_output/pcsl/</KBD><EM>output</EM>
+<P>
+<B>Note:</B> In the variables shown above, <em>output</em> represents the location of the PCSL build output for 
+your target platform (for example, <KBD>win32_i386)</KBD>.
+<P>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="makefiles"></a><h3>Using PCSL <code>make</code> Files</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+To build a full implementation of PCSL, you run the <KBD>make</KBD> command at the 
+top of your PCSL file tree. The <KBD>make</KBD> command calls a platform-specific 
+makefile, called <EM>os_cpu_compiler</EM><KBD>.gmk</KBD>, which builds an 
+implementation of PCSL for your specific platform.
+<P>
+Each target platform has a makefile, which is tailored to the target platform's 
+operating system, CPU, and the compiler used to build the PCSL implementation. 
+For example, the makefile for the Windows implementation of PCSL is called 
+<KBD>win32_i386_vc.gmk</KBD>.
+<P>
+The file <EM>os_cpu_compiler</EM><KBD>.gmk</KBD> is located in the directory 
+<I>InstallDir</I><KBD>/pcsl/makefiles/platforms</KBD>.
+<P>
+<B>Note:</B><i> InstallDir</i> is the location of your phoneME Feature software.
+<P>
+
+<strong>PCSL Build Targets</strong>
+<p>
+The PCSL build system provides several <KBD>make</KBD> targets that enable you to 
+build specific sections of the PCSL reference port. However, this guide describes 
+only two, as shown in <A HREF="#table3-1">TABLE 3-1</A>.
+<P>
+
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000" 
+CELLPADDING=5 CELLSPACING=0>
+<A NAME="table3-1"></A> 
+<CAPTION><b>TABLE 3-1</b> PCSL Build Targets</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485154"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485156"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>all</KBD>
+<P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Builds libraries and public header files for services. Build results are in the 
+<KBD>$PCSL_OUTPUT_DIR/<EM>os_cpu</EM></KBD> subdirectory.
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>doc</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Builds services API document generated by Doxygen. Output is in the 
+<KBD>$PCSL_OUTPUT_DIR/doc</KBD> subdirectory. For more information, see
+<A HREF="#pcsl_docs">Building PCSL Documentation</A>.
+<P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+For more information on PCSL build targets, see the 
+<a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/build-guide/index.html">
+<EM>Sun Java Wireless Client Build Guide</EM></a>.
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="build_pcsl"></a><h3>Building PCSL Software</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+PCSL software is used to build both CLDC and phoneME Feature software. To build 
+CLDC for the Linux/ARM target platform, you must first build PCSL for the 
+Linux/i386 platform. By following the procedures in this section, you can build 
+a default PCSL software reference port that contains libraries, tools, tests, 
+and documentation bundles for your target platform.
+<P>
+
+<B>Note:</B> The following procedures build more than just the <i>lib</i> and 
+<i>inc</i> directories. However, these are all the only directories needed for 
+software development. For a complete list of directories built on the Linux 
+and Windows platforms, see the 
+<a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/build-guide/index.html">
+<EM>Sun Java Wireless Client Build Guide</EM></a>.
+<p>
+</OL>
+
+
+<strong>Building for a Linux/i386 Platform</strong>
+<p>
+
+<OL>
+<li>Change to the PCSL directory.</li>
+<P>
+<KBD>$ cd </KBD><I>InstallDir</I><KBD>/pcsl</KBD>
+<P>
+<!-- <B>Note:</B> When building PCSL for a Linux/i386 platform, the 
+<KBD>GNU_TOOLS_DIR</KBD> variable <EM>must</EM> not be set. -->
+<P>
+<li>Run the <KBD>make</KBD> command.</li>
+<P>
+<KBD>$ make GNU_TOOLS_DIR= PCSL_PLATFORM=linux_i386_gcc all</KBD>
+<p>
+<b>Note:</b> In the command above, the <kbd>GNU_TOOLS_DIR</KBD> variable is 
+intentionally left undefined.  This lack of definition overrides the previously 
+set variable and prevents the build from picking up the Monta Vista tools used 
+by other Linux platform builds. 
+<P>
+When the <KBD>make</KBD> command has successfully completed, the following directories 
+exist:
+<P>
+<UL>
+<LI><KBD>$PCSL_OUTPUT_DIR/linux_i386/lib</KBD></LI>
+<LI><KBD>$PCSL_OUTPUT_DIR/linux_i386/inc</KBD></LI>
+</UL>
+</OL>
+
+<strong>Building for a Linux/ARM Platform</strong>
+<p>
+<OL>
+<li>Change to the PCSL directory.</li>
+<P>
+<KBD>$ cd </KBD><I>InstallDir</I><KBD>/pcsl</KBD>
+<P>
+<li>Run the <KBD>make</KBD> command.
+<P>
+<KBD>$ make <!-- NETWORK_MODULE=bsd/generic --> all</KBD>
+<P>
+When the <KBD>make</KBD> command successfully completes, the following directories 
+exist:
+<P>
+<UL>
+<LI><KBD>$PCSL_OUTPUT_DIR/linux_arm/lib</KBD></LI>
+<LI><KBD>$PCSL_OUTPUT_DIR/linux_arm/inc</KBD></LI>
+</UL>
+</OL>
+<p>
+
+<strong>Building on a Windows Platform</strong>
+<P>
+<OL>
+<LI>Mount the phoneME Feature software's PCSL directory at the root level.</LI>
+<P>
+For example, if you installed the phoneME Feature software in 
+<KBD>C:&#92;jwc1.1.3</KBD>, use this command:
+<P>
+<KBD>$ mount C:&#92;jwc1.1.3&#92;pcsl /jwc1.1.3/pcsl</KBD>
+<P>
+<LI>Change to the PCSL directory.</LI>
+<P>
+<KBD>$ cd </KBD><I>InstallDir</I><KBD>/pcsl</KBD>
+<P>
+<LI>Run the <KBD>make</KBD> command.</LI>
+<P>
+<KBD>$ </KBD>make all</KBD>
+<P>
+When the <KBD>make</KBD> command has successfully completed, the following 
+directories exist:
+<P>
+<UL>
+<LI><KBD>$PCSL_OUTPUT_DIR/win32_i386/lib</KBD></LI>
+<LI><KBD>$PCSL_OUTPUT_DIR/win32_i386/inc</KBD></LI>
+<P CLASS="Linebreak">
+</UL>
+</OL>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="pcsl_docs"></a><h3>Building PCSL Documentation</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+If you installed the Doxygen tool (from <KBD><A HREF="http://www.doxygen.org">
+http://www.doxygen.org</A></KBD>), you can create HTML documents from porting 
+interfaces. To do this for PCSL, use the <KBD>make doc</KBD> build target. The 
+documents are put in the directory <KBD>$PCSL_OUTPUT_DIR/doc/doxygen/html</KBD>.
+<P>
+<b>Note:</b> The build system assumes that the Doxygen executable is 
+<KBD>/usr/bin/doxygen</KBD>. If your executable is in a different location, edit 
+the <KBD>Docs.gmk</KBD> file in the directory 
+<I>InstallDir</I><KBD>/pcsl/makefiles/share</KBD> (where 
+<EM>InstallDir</EM> is the location of your phoneME Feature software).
+<P>
+Set the <KBD>DOXYGEN_CMD</KBD> variable to the appropriate value.
+<p>
+
+<strong>Generating Doxygen Documentation</strong>
+<P>
+The following procedure for building Doxygen documentation is the same for both 
+Linux and Windows build platforms.
+<P>
+<OL>
+<LI>Change to the PCSL directory:</LI>
+<P>
+<KBD>$ cd </KBD><I>InstallDir</I><KBD>/pcsl</KBD>
+<P>
+<LI>Run the <KBD>make doc</KBD> command:</LI>
+<P>
+<KBD>$ make doc</KBD>
+</OL>
+<p>
+
+<strong>Viewing PCSL Documents</strong>
+<P> 
+Use any browser to display the Doxygen output file at the following URL:
+<P>
+<KBD>file:///$PCSL_OUTPUT_DIR/doc/doxygen/html/index.html</KBD>
+<P>
+
+<p>
+<a href="./index_feature.html">first</a> | <a href="./buildenv_feature.html">prev</a> |
+<a href="./cldc_feature.html">next</a> | <a href="./options_feature.html">last</a>
+<p>
+
+
+<!-- =================================== END PAGE BODY ================== -->
+
+</div></td></tr></tbody></table></body></html>

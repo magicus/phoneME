@@ -1,0 +1,535 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+
+             <style type="text/css"> 
+<!-- /* <![CDATA[ */
+@import "/branding/css/tigris.css";
+@import "/inst.css"; 
+ 
+
+ /* ]]> */
+ --> 
+
+ </style>
+ <link rel="stylesheet" type="text/css" href="OSS_Doc_Template_files/print.html" media="print">
+ <script src="OSS_Doc_Template_files/tigris.html" type="text/javascript"></script><!-- ------- ORIGINAL CODE --------------------------- --><!--<head>
+ <style type="text/css"> 
+ /* <![CDATA[ */
+ @import "/branding/css/tigris.css";
+ @import "/branding/css/inst.css";
+ /* ]]> */
+ </style>
+ <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
+ <script src="/branding/scripts/tigris.js" type="text/javascript"></script> --><title>java-net: Java.net template 1</title>
+ 
+ 
+
+
+                                                       
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+ <meta http-equiv="Content-Style-Type" content="text/css">
+ <meta name="version" content="3.5.1.19.8">
+ <style type="text/css">
+<!--
+a:link {
+	text-decoration: none;
+}
+a:visited {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+a:active {
+	text-decoration: none;
+}
+.style1 {font-size: small}
+-->
+ </style></head>
+<body class="composite">
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!--  ================= BEGIN PAGE BODY (Ignore Everything Above)  ============ -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Building a CLDC 
+Reference Port<span class="style1"> </span></font></h1>
+<!-- END PAGE TITLE -->
+<p>
+<a href="./index_feature.html">first</a> | <a href="./pcsl_feature.html">prev</a> | 
+<a href="./client_feature.html">next</a> | <a href="./options_feature.html">last</a>
+<p>
+
+CLDC software is an OSS community version of Sun Microsystems' Connected Limited 
+Device Configuration HotSpot&#153; Implementation virtual machine. Although 
+primarily created from the same shared code base, Sun Microsystems' commercial 
+product might not fully and accurately represent the OSS source base, due to 
+licensing and other legal restrictions.
+<P>
+This document has the following sections:
+<p>
+<ul>
+<li><a href="#cldc_env">CLDC Build Environment</a></li>
+<li><a href="#build_cldc">Building CLDC Software</a></li>
+<li><a href="#build_docs">Building CLDC Documentation</a></li>
+<li><a href="#run_cldc">Running CLDC Software</a></li>
+</ul>
+<p>
+For more information about CLDC, see 
+<a href="http://java.sun.com/javame/reference/docs/cldc-hi-1.1.3-web/index.html">
+CLDC HotSpot Implementation software documentation</a>.
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="cldc_env"></a><h3>CLDC Build Environment</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+This chapter provides basic instructions for building the CLDC software, which is 
+needed to build the phoneME Feature software. Many CLDC software build configurations 
+and options are possible. This guide describes how to build a default implementation 
+only.
+<p>
+
+<a name="set_linux_var"></a>
+<strong>Setting Variables for a Linux Platform</strong>
+<P>
+<b>Note:</b> This document assumes the use of the Bash shell on the Linux platform. 
+If you are using some other shell, set the variables for the shell you are using.
+<P>
+To properly build CLDC software on a Linux build platform, you must set the environment 
+variables shown in <A HREF="#table4-1">TABLE 4-1</A>. For more information on setting 
+other Linux build environment variables, see <A HREF="./buildenv_feature.html#linux_setup"> 
+Setting Up the Linux Build Environment</A>.
+<P>
+Once the variables in <A HREF="#table4-1">TABLE 4-1</A> are set, no other Linux build 
+environment set up is needed.
+<P>
+
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000" 
+CELLPADDING=5 CELLSPACING=0>
+<CAPTION<A NAME="table4-1"></A><b>TABLE 4-1</b> Linux Platform Environment Variables</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-474025"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-474027"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474029"></A><KBD>JVMWorkSpace</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474034"></A>The location of your CLDC software 
+source code workspace.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474036"></A><KBD>JVMBuildSpace</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474041"></A>The location of your CLDC software 
+build output.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474036"></A><KBD>CLDC_DIST_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474041"></A>Required for building phoneME Feature 
+software. Must point to the location of CLDC software build output. For example:
+<kbd>CLDC_DIST_DIR=$JVMBuildSpace/linux_arm/dist
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474043"></A><KBD>PATH</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474045"></A>Must be set to include all gnumake 
+and compiler tools used in the build process.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474047"></A><KBD>ENABLE_PCSL</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474049"></A>Required for building the phoneME 
+Feature software. Must be set to <KBD CLASS="Filename-Command">true</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474051"></A><KBD>ENABLE_ISOLATES</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474053"></A>Required for using multitasking 
+functionality. Must be set to <KBD CLASS="Filename-Command">true</KBD>.
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+For example, to set the variable <KBD>JVMWorkSpace</KBD> as a system variable, 
+enter this command:
+<P>
+<KBD>$ export JVMWorksSpace=/development/openvm/linux</KBD>
+<P>
+To set <KBD>JVMWorkSpace</KBD> on a <KBD>make</KBD> command line, enter this command:
+<P>
+<KBD>$ make JVMWorkSpace=/development/openvm/linux</KBD>
+<p>
+
+<a name="set_win_var"></a>
+<strong>Setting Variables for a Windows Platform</strong>
+<p>
+
+<B>Note:</B> This document assumes the use of Cyg4Me on the Windows platform.
+<P>
+
+To properly build the CLDC software on a Windows platform, you must set the 
+environment variables shown in <a href="#table4-2">TABLE 4-2</A>. For more 
+information on setting other Windows build environment variables, see 
+<A HREF="./buildenv_feature.html#win_setup">Setting Up the Windows Build 
+Environment</A>.
+<P>
+Once the variables shown in <A HREF="#table4-2">TABLE 4-2</A> are set, no other 
+build environment setup is needed.
+<P>
+
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000" 
+CELLPADDING=5 CELLSPACING=0>
+<CAPTION><a name="table4-2"><b>TABLE 4-2</b> Windows Platform Environment Variables</a></CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-473082"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-473084"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473089"></A><KBD>JVMWorkSpace</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473092"></A>The location of your CLDC software 
+source code workspace.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473197"></A><KBD>JVMBuildSpace</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473199"></A>The location of your CLDC software 
+build output.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474036"></A><KBD>CLDC_DIST_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474041"></A>Required for building phoneME Feature
+software. Must point to the location of CLDC software build output. For example:
+<kbd>CLDC_DIST_DIR=$JVMBuildSpace/win32_i386/dist
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473491"></A><KBD>PATH</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473493"></A>Must be set to include all gnumake 
+and compiler tools used in the build process.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473487"></A><KBD>INCLUDE</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473489"></A>Points to the <KBD>include</KBD>
+directory inside your MSVC++ installation.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473483"></A><KBD>LIB</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473485"></A>Points to the <KBD>lib</KBD> 
+directory inside your MSVC++ installation.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473479"></A><KBD>X86_PATH</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473481"></A>Set it to the same value as your 
+<KBD>PATH</KBD> variable.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473475"></A><KBD>X86_INCLUDE</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473477"></A>Set it to the same value as your 
+<KBD>INCLUDE</KBD> variable.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473471"></A><KBD>X86_LIB<KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473473"></A>Set it to the same value as your 
+<KBD>LIB</KBD> variable.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473736"></A><KBD>ENABLE_PCSL</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473738"></A>Required for building the phoneME 
+Feature software. Must be set to <KBD>true</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473732"></A><KBD>ENABLE_ISOLATES</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473734"></A>Required for using multitasking 
+functionality. Must be set to <KBD>true</KBD>.
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+For example, to set <KBD>JVMWorkSpace</KBD> as a system variable, enter this 
+command:
+<P>
+<KBD>$ set JVMWorkSpace=C:/development/openvm/win32</KBD>
+<P>
+To set <KBD>JVMWorkSpace</KBD> on a <KBD>gnumake</KBD> command line, enter this 
+command:
+<P>
+<KBD>$ make JVMWorkSpace=C:/development/openvm/win32</KBD>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="build_cldc"></a><h3>Building CLDC Software</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+The default CLDC software build mode is <I>Debug</I>. Building a default version 
+of the CLDC software creates a debuggable version of the CLDC software executable 
+(<KBD>cldc_vm_g</KBD> on Linux and <KBD>cldc_vm_g.exe</KBD> on Windows).
+The debug build version executes relatively slowly, but is valuable for testing 
+and debugging the system.
+<P>
+After building the CLDC system, follow the instructions in <A HREF="#run_cldc">
+Running CLDC Software</A> to run it.
+<P>
+
+<a name="build_linux"></a>
+<strong>Building CLDC for a Linux Platform</strong>
+<p>
+<b>Note:</b> This document assumes the use of the Bash shell on the Linux platform. 
+If you are using some other shell, set the variables for the shell you are using.
+<p>
+
+<OL>
+<LI>Ensure that you have set the required environment variables.</LI>
+<P>
+For more information, see <A HREF="#set_linux_var">Setting Variables for a Linux 
+Platform</A>.
+<P>
+<LI>Change directory to <KBD>$JVMWorkSpace/build/linux_arm</KBD> and run the 
+<KBD>make</KBD> command.
+<P>
+<KBD>$ make debug</KBD>
+<P>
+Output is generated under <KBD>$JVMBuildSpace/linux_arm/target/bin</KBD>
+</OL>
+<p>
+
+<a name="build_win"></a>
+<strong>Building CLDC for a Windows Platform</strong>
+<P>
+<B>Note:</B> This document assumes the use of Cyg4Me on the Windows platform.
+<P>
+<OL>
+<LI>Ensure that you have set the required environment variables.</LI>
+<P>
+For more information, see <A HREF="#set_win_var">Setting Variables for a Windows 
+Platform</A>.
+<P>
+<LI>Change directory to <KBD>%JVMWorkSpace%/build/win32_i386</KBD> and run the 
+<KBD>make</KBD> command.
+<P>
+<KBD>$ make debug</KBD>
+<P>
+Output is generated under <KBD>%JVMBuildSpace%/build/win32_i386/target/bin</KBD>.
+</OL>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="build_docs"></a><h3>Building CLDC Documentation</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+You can create HTML documents from CLDC porting interfaces. To do this for the 
+CLDC software, use the <KBD>make docs_html</KBD> build target.
+<P>
+
+<a name="javadoc"></a>
+<strong>Generating Javadoc Tool Documentation</strong>
+<P>
+Building Javadoc&#153; tool documentation is the same for both Linux and Windows 
+platforms.
+<P>
+<OL>
+<LI>Change to the default build directory for your target platform.</LI>
+<P>
+<KBD>$ cd $JVMWorkSpace/build/platform</KBD>
+<P>
+<LI>Build Javadoc tool HTML documentation.</LI>
+<P>
+<KBD>$ make docs_html</KBD>
+<P>
+The generated HTML documents are put in the following directory:
+<P>
+<KBD>$JVMBuildSpace/doc/javadoc/html</KBD>
+</OL>
+<p>
+
+<a name="view_javadoc"></a>
+<strong>Viewing phoneME Feature Documents</strong>
+<P>
+Use any browser to display the Javadoc tool output file at the following URL:
+<P>
+<KBD>file:///$JVMBuildSpace/doc/javadoc/html/index.html</KBD>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="run_cldc"></a><h3>Running CLDC Software</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+Once you build a debug version of CLDC, you can invoke it from the command line 
+to run a class compiled from the Java programming language. The path to the 
+executable depends on the target platform (operating system and processor) for 
+which you build the software.
+<P>
+
+<b>Note:</b> Many more command options are available to run the CLDC software, 
+on both Linux and Windows platforms, than shown here. For more information, see
+<a href="http://java.sun.com/javame/reference/docs/cldc-hi-1.1.3-web/doc/build/html/index.html">
+<em>CLDC HotSpot Implementation Build Guide</em></a>.
+<p>
+
+<a name="run_linux"></a>
+<strong>Running CLDC on a Linux Platform</strong>
+<p>
+<OL>
+<LI>Change to the CLDC build space for the Linux/ARM platform:</LI>
+<P>
+<KBD>$ cd $JVMBuildSpace/linux_arm</KBD>
+<P>
+<LI>Enter the following command:</LI>
+<P>
+<KBD>$ bin/cldc_vm_g -classpath</KBD>
+<EM>location-of-compiled-applications</EM><KBD>/classes</KBD> <EM>classname</EM>
+</OL>
+<p>
+
+<a name="run_win"></a>
+<strong>Running CLDC on a Windows Platform</strong>
+<p>
+<OL>
+<LI>Change to the CLDC build space for the Win32/i386 platform:</LI>
+<P>
+<KBD>$ cd %JVMBuildSpace%/win32/i386</KBD>
+<P>
+<LI>Enter the following command:</LI>
+<P>
+<KBD>$ bin/cldc_vm_g.exe -classpath</KBD>
+<EM>location-of-compiled-applications</EM><KBD>/classes</KBD> <EM>classname</EM>
+</OL>
+<p>
+
+<p>
+<a href="./index_feature.html">first</a> | <a href="./pcsl_feature.html">prev</a> |
+<a href="./client_feature.html">next</a> | <a href="./options_feature.html">last</a>
+<p>
+
+
+
+<!-- =================================== END PAGE BODY ================== -->
+
+</div></td></tr></tbody></table></body></html>

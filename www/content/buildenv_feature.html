@@ -1,0 +1,488 @@
+
+<html><head>
+
+             <style type="text/css"> 
+<!-- /* <![CDATA[ */
+@import "/branding/css/tigris.css";
+@import "/inst.css"; 
+ 
+
+ /* ]]> */
+ --> 
+
+ </style>
+ <link rel="stylesheet" type="text/css" href="OSS_Doc_Template_files/print.html" media="print">
+ <script src="OSS_Doc_Template_files/tigris.html" type="text/javascript"></script><!-- ------- ORIGINAL CODE --------------------------- --><!--<head>
+ <style type="text/css"> 
+ /* <![CDATA[ */
+ @import "/branding/css/tigris.css";
+ @import "/branding/css/inst.css";
+ /* ]]> */
+ </style>
+ <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
+ <script src="/branding/scripts/tigris.js" type="text/javascript"></script> --><title>java-net: Java.net template 1</title>
+ 
+ 
+
+
+                                                       
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+ <meta http-equiv="Content-Style-Type" content="text/css">
+ <meta name="version" content="3.5.1.19.8">
+ <style type="text/css">
+<!--
+a:link {
+	text-decoration: none;
+}
+a:visited {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+a:active {
+	text-decoration: none;
+}
+.style1 {font-size: small}
+-->
+ </style></head>
+<body class="composite">
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!-- =========  BEGIN PAGE BODY (Ignore Everything Above)  ====================== -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Build Environment<span 
+class="style1"></span></font></h1>
+<!-- END PAGE TITLE -->
+
+<p>
+<a href="./index_feature.html">first-prev</a> | <!-- <a href="./index_feature.html">prev</a> | --> 
+<a href="./pcsl_feature.html">next</a> | <a href="./options_feature.html">last</a>
+<p>
+
+This document contains the following sections:
+<p>
+<ul>
+<li><a href="#linux_req">Requirements for Building on a Linux Platform</a>
+<li><a href="#win_req">Requirements for Building on a Windows Platform</a>
+<li><a href="#make_targ"><KBD>make</KBD> Targets and Options</a>
+<li><a href="#prep_env">Preparing Your Build Environment</a>
+<li><a href="#linux_setup">Setting Up the Linux Build Environment</a>
+<li><a href="#win_setup">Setting Up the Windows Build Environment</a>
+</ul>
+<P>The phoneME Feature software build environment must be set up on your <i>build 
+platform</i>. The build platform is the machine where source code is installed, 
+the compilers are run, and executable code is built. This executable code is then 
+installed and run on a <i>target platform</i>.
+<P>
+The phoneME Feature software supports the following build platforms:
+<P>
+<UL>
+<LI>Linux/i386</LI>
+<LI>Win32/i386</LI>
+<P>
+</UL>
+<P>
+<b>Note:</b> Linux/i386 is not supported as a target platform.
+<P>
+The phoneME Feature software supports the following target platforms:
+<P>
+<UL>
+<LI>Linux/ARM (Texas Instruments P2SAMPLE64-V6 board)</LI>
+<LI>Windows/i386 (which runs the phoneME Feature software in emulation mode)</LI>
+</UL>
+<P>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="linux_req"></a><h3>Requirements for Building on a Linux Platform</h3>
+<!-- END SECTION HEAD -->
+
+<p>
+To properly build executables for the Linux/ARM target platform, a Linux/i386 
+build platform must meet the following requirements:
+<P>
+<UL>
+<LI>Red Hat Linux distribution version 7.2 - 9.0</LI>
+<LI>Java 2 Platform, Standard Edition (J2SE&#153;) Development Kit (JDK&#153;) version 1.4.2</LI>
+<LI>GNU Make version 3.79.1 or later</LI>
+<LI>GNU Cross Compiler (GCC) 3.4.6 or later</LI>
+<LI>Doxygen version 1.4.1</LI>
+<LI>Development Kit for the Java Card&#153; Platform 2.2.1</LI>
+</UL>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="win_req"></a><h3>Requirements for Building on a Windows Platform</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+A Win32/i386 build-target platform must meet the following requirements:
+<p>
+<ul>
+<li>Windows 2000 or Windows XP
+<li>JDK version 1.4.2
+<li>GNU Make version 3.79.1 or later
+<li>Microsoft Visual C++ (MSVC++) Professional Version 6.0 or higher (or Visual 
+Studio .NET 2003 or later)
+<li>Doxygen version 1.4.4
+<li>Microsoft Processor Pack 5, version 6.15 or later
+<li>Cyg4Me version 1.1 (a version of Cygwin for building Java ME technology. 
+Cyg4Me contains GNU Make.)
+<li>Development Kit for the Java Card Platform 2.2.1</li>
+</ul>
+<p>
+<!-- <b>Note:</b> If you are building CLDC on a Windows platform with output targeted 
+for the ARM platform, you must use Microsoft eMbedded Visual C++, version 3.0 or 
+later. -->
+<p>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="make_targ"></a><h3><code>make</code> Targets and Options</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+The phoneME Feature software and its supporting components (PCSL and CLDC) are 
+built using the makefiles and source files provided for each component, using 
+only the component's default settings. 
+<p>
+To build a component, set the environment variables and enter the <code>make</code> 
+command:
+<P>
+<PRE CLASS="Codeline"><A NAME="pgfId-474118"></A>$ make all
+</PRE>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="prep_env"></a><h3>Preparing Your Build Environment</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+Preparing your environment requires you to set environment variables for your 
+Linux and Windows build platforms.  Other environment variables may be needed, 
+specific to the component being built. These are described in the chapter for 
+each component. 
+<p>
+
+BuIld environment variables can be set in two ways:
+<P>
+<UL>
+<LI>As a system variable</LI>
+<LI>On the command line, when you run <code>make</code></LI>
+</UL>
+<P> 
+<b>Note:</b> This document assumes the use of the Bash shell on the Linux 
+platform. If you are using some other shell, set the variables for the shell 
+you are using.
+<P>
+<strong>Setting Variables for a Linux Platform</strong>
+<p>
+To set a build environment variable as a system variable for a Linux platform, 
+use the following format:
+<P>
+<code> $ export <i>VARIABLE</i><code>=value</code>
+<P>
+For example, to set <code>MIDP_DIR</code> as a system variable, type:
+<P>
+<code> $ export MIDP_DIR=</code><i>InstallDir</i><code>/jwc/midp</code>
+<P>
+<b>Note:</b> <i>InstallDir</i> is the location of your phoneME Feature software.
+<P>
+To set a build environment variable using the <code>make</code> command line 
+for a Linux platform, use the following format:
+<P>
+<code>$ make <i>VARIABLE</i>=value make_target</code>
+<P>
+For example, to set <code>MIDP_DIR</code> on a <code>make</code> command line, 
+type:
+<P>
+<code>$ make MIDP_DIR=</code><i>InstallDir</i><code>/jwc/midp all</code>
+<p>
+
+<strong>Setting Variables for a Windows Platform</strong>
+<p>
+<b>Note:</b> This document assumes the use of Cyg4Me on the Windows platform.
+<p>
+
+To set a build environment variable as a system variable for a Windows platform, 
+use the following format:
+<P>
+<KBD CLASS="Filename-Command">$ set <EM>VARIABLE</EM>=<EM>value</EM></KBD>
+<P>
+For example, to set the <KBD CLASS="Filename-Command">MIDP_DIR</KBD> as a system 
+variable, type:
+<P>
+<KBD Class="Filename-Command">$ set MIDP_DIR=</KBD><EM>InstallDir</EM><KBD>/jwc/midp</KBD>
+<p>
+
+To set a build environment variable on the <KBD CLASS="Filename-Command">make</KBD> 
+command line for a Windows platform, use the following format:
+<P>
+<KBD CLASS="Filename-Command">$ make <EM>VARIABLE</EM>=<EM>value make_target</EM></KBD>
+<p>
+For example, to set <KBD CLASS="Filename-Command">MIDP_DIR</KBD> on a 
+<KBD CLASS="Filename-Command">make</KBD> command line, type:
+<P>
+<KBD CLASS="Filename-Command">$ make MIDP_DIR=</KBD><EM>InstallDir</EM><KBD>/jwc/midp all</KBD>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="linux_setup"></a><h3>Setting Up the Linux Build Environment</a></h3>
+<!-- END SECTION HEAD -->
+<p>
+To set up the Linux/i386 build environment, you must do the following things:
+<P>
+<UL>
+<LI>Acquire Monta Vista Developer Tools</LI>
+<LI>Set Linux platform environment variables</LI>
+</UL>
+<p>
+
+<strong>Acquiring Monta Vista Developer Tools</strong>
+<p>
+
+To build phoneME Feature software for the Linux/ARM (P2 board) target platform, 
+you must acquire the 
+<a href="http://www.mvista.com/products/cee/adk_features.html">MontaVista CEE 3.1 
+ADK</a> developer tools. 
+<P>
+Instructions for use of these tools are provided by MontaVista.
+<p>
+
+<strong>Setting Environment Variables</strong>
+<p>
+To properly set up the Linux/i386 build environment, you must set the environment 
+variables shown in <A HREF="#table2-1">TABLE 2-1</A>.
+<P>
+<a name="table2-1">
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000" 
+CELLPADDING=5 CELLSPACING=0 >
+<CAPTION> <b>TABLE 2-1</b> Linux Platform Environment Variables</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-473760"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-473762"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473767"></A><KBD CLASS="Filename-Command">
+JDK_DIR</KBD><A NAME="marker-473764"></A><A NAME="marker-473765"></A>
+<A NAME="marker-473766"></A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473769"></A>Directory that contains the JDK
+release.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-473770"></A>For example, 
+<KBD CLASS="Filename-Command">/usr/java/j2sdk1.4.2</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473772"></A><KBD CLASS="Filename-Command">
+MIDP_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473774"></A>Top-level MIDP directory, usually 
+<EM>InstallDir</EM><KBD Class="filename-command">/jwc/midp</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474801"></A><KBD Class="Filename-Command">
+MIDP_OUTPUT_DIR<KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474803"></A>Location where output from phoneME Feature build is stored.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473785"></A><KBD CLASS="Filename-Command">LD_LIBRARY_PATH</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473787"></A>Directory that contains the libraries needed by the build
+and run the phoneME Feature software.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-475081"></A><KBD Class="Filename-Command">
+GNU_TOOLS_DIR<KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-475083"></A>Build tools for the Linux/i386 platform, used to generate
+executables for the Linux/ARM target platform.
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="win_setup"></a><h3>Setting Up the Windows Build Environment</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+To set up your Windows platform, you must take the following steps:
+<P>
+<UL>
+<LI>Install Cyg4Me</LI>
+<LI>Set environment variable</LI>
+<LI>Update your PATH environment variable</LI>
+</UL>
+<p>
+
+<strong>Installing Cyg4Me</strong>
+<p>
+
+Before you build phoneME Feature on a Windows platform, download and install Cyg4Me, 
+version 1.1. Cyg4Me is a standardized version of Cygwin for building Java ME platform 
+products on Windows. It provides the necessary UNIX&#174; system tools, such as
+<KBD CLASS="Filename-Command">sh</KBD> and <KBD CLASS="Filename-Command">gnumake</KBD>.
+<P>
+<ol>
+<li>Download the Cyg4Me zip file 
+<a href="ftp://ftp.sunfreeware.com/pub/freeware/contributions/cygwin">
+<code>cyg4me1_1_full.zip</code></a>.
+<P>
+This file contains all the executables and libraries needed to build on the Windows 
+platform.
+<P>
+<li>Unpack the file into a directory.</li>
+<P>
+
+For example, you could unpack the file into 
+<KBD CLASS="Filename-Command">C:&#92;cyg4me</KBD>.
+<P>
+<li>Ensure that the Cyg4Me <KBD CLASS="Filename-Command">bin</KBD> directory is the 
+only version of Cygwin on your path.</li>
+<p>
+See <A HREF="#path_update">Updating Your PATH Environment Variable</A> for instructions.
+</ol>
+<p>
+
+<strong>Setting Environment Variables</strong>
+<p>
+
+To build the phoneME Feature software on a Windows platform, you must set the 
+environment variables shown in <A HREF="#table2-2">TABLE 2-2</A>.
+</P>
+<BR>
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000" 
+CELLPADDING=5 CELLSPACING=0 <CAPTION><a name="table2-2"><b>TABLE 2-2</b></a> Windows Platform 
+Environment Variables</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-474006"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-474008"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474013"></A><KBD CLASS="Filename-Command">
+JDK_DIR</KBD><A NAME="marker-474010"></A><A NAME="marker-474011"></A>
+<A NAME="marker-474012"></A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474015"></A>Directory that contains the JDK 
+release.
+</P>
+<P CLASS="TableText"><A NAME="pgfId-474016"></A>For example, 
+C:<KBD CLASS="Filename-Command">/java/j2sdk1.4.2</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474018"></A><KBD CLASS="Filename-Command">MIDP_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474020"></A>Top-level MIDP directory, usually 
+<EM>InstallDir</EM><KBD CLASS="Filename-Command">/jwc/midp</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474809"></A><kbd class="filename-command">
+MIDP_OUTPUT_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474811"></A>Location where output from phoneME 
+Feature build is stored.
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+<a name="path_update"></a>
+<strong>Updating Your PATH Environment Variable</strong>
+<p>
+
+If you are using a Windows system, you must put Cyg4Me on your 
+<KBD CLASS="Filename-Command">PATH</KBD> environment variable.
+<P>
+<ol>
+<li>Make the <KBD CLASS="Filename-Command">bin</KBD> directory of your Cyg4Me 
+installation the first element of your <KBD CLASS="Filename-Command">PATH</KBD> 
+variable's value.</li>
+<P>
+For example, you could set your <KBD CLASS="Filename-Command">PATH</KBD> in the 
+command window where you build the Java ME platform products with this command:
+<P>
+<kbd class="filename-command">$ set PATH=C:&#92;cyg4me&#92;bin;%PATH%
+<P>
+<li>Remove all <KBD CLASS="Filename-Command">PATH</KBD> elements that point to 
+other versions of Cygwin.
+<P>
+This is necessary because Cyg4Me contains binaries from a specific snapshot of Cygwin. 
+It might not be compatible with other versions of Cygwin installed on the same PC.
+<P>
+If you performed Step 1 in a command window, perform this step in the same window.
+</ol>
+
+<p>
+<a href="./index_feature.html">first-prev</a> | <!-- <a href="./index_feature.html">prev</a> | -->
+<a href="./pcsl_feature.html">next</a> | <a href="./options_feature.html">last</a>
+<p>
+
+
+<!-- =============================== END PAGE BODY ======================= -->
+
+</div></td></tr></tbody></table></body></html>

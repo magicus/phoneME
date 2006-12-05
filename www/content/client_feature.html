@@ -1,0 +1,488 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+
+             <style type="text/css"> 
+<!-- /* <![CDATA[ */
+@import "/branding/css/tigris.css";
+@import "/inst.css"; 
+ 
+
+ /* ]]> */
+ --> 
+
+ </style>
+ <link rel="stylesheet" type="text/css" href="OSS_Doc_Template_files/print.html" media="print">
+ <script src="OSS_Doc_Template_files/tigris.html" type="text/javascript"></script><!-- ------- ORIGINAL CODE --------------------------- --><!--<head>
+ <style type="text/css"> 
+ /* <![CDATA[ */
+ @import "/branding/css/tigris.css";
+ @import "/branding/css/inst.css";
+ /* ]]> */
+ </style>
+ <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
+ <script src="/branding/scripts/tigris.js" type="text/javascript"></script> --><title>java-net: Java.net template 1</title>
+ 
+ 
+
+
+                                                       
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+ <meta http-equiv="Content-Style-Type" content="text/css">
+ <meta name="version" content="3.5.1.19.8">
+ <style type="text/css">
+<!--
+a:link {
+	text-decoration: none;
+}
+a:visited {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+a:active {
+	text-decoration: none;
+}
+.style1 {font-size: small}
+-->
+ </style></head>
+<body class="composite">
+  <table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
+ <td id="midcol">
+
+<!--  ================= BEGIN PAGE BODY (Ignore Everything Above)  ============ -->
+
+<!-- BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Building a phoneME 
+Feature Software Reference Port<span class="style1"> </span></font></h1>
+<!-- END PAGE TITLE -->
+
+<p>
+<a href="./index_feature.html">first</a> | <a href="./cldc_feature.html">prev</a> |
+<a href="./options_feature.html">next-last</a> <!-- | <a href="./options_feature.html">last</a> -->
+<p>
+
+The phoneME Feature software is an Open Source version of Sun Microsystems' 
+commercial implementation, the Sun Java Wireless Client software, version 1.1.3. 
+The phoneME Feature software is built on top of CLDC, an Open Source version of 
+Sun Microsystems' Connected Limited Device Configuration, HotSpot Implementation, 
+version 1.1.3.
+<P>
+This document has instructions for building a default configuration of the phoneME 
+Feature software. It has the following sections:
+<p>
+<ul>
+<li><a href="#make">Using the <em>make</em> Command</a>
+<li><a href="#default_config">Default Build Configuration</a>
+<li><a href="#build_phoneme">Building phoneME Feature Software</a>
+<li><a href="#phoneme_docs">Building phoneME Feature Software Documentation</a>
+<li><a href="#using_phoneme">Using phoneME Feature Software</a>
+</ul>
+<p>
+
+For proper building and performance, your system must meet the 
+requirements provided in <A HREF="buildenv_feature.html">Build Environment</A>
+<P>
+For more information on items in this chapter or other phoneME Feature software 
+build topics, see the 
+<a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/build-guide/index.html">
+<EM>Sun Java Wireless Client Build Guide</EM>.
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="make"></a><h3>Using the <code>make</code> Command</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+To build a default implementation of the phoneME Feature software, you run the 
+<KBD>make</KBD> command with the file, <KBD>Default.gmk</KBD>. This builds a 
+default version of the phoneME Feature software for your target platform.
+<P>
+The <KBD>Default.gmk</KBD> file is located in the directory 
+<I>InstallDir</I><KBD>/midp/build</KBD>/<EM>platform</EM>
+<P>
+<B>Note:</B><EM>InstallDir</EM> is the location of your phoneME Feature 
+software.
+<P>
+For more information on using the <KBD>Default.gmk</KBD> file to build a default 
+configuration of the phoneME Feature software for your target platform, see 
+<A HREF="#build_phoneme">Building phoneME Feature Software</A>.
+<p>
+
+<a name="build_targs"></a>
+<strong>phoneME Feature Software Build Targets</strong>
+<P>
+The phoneME Feature software provides several <KBD>make</KBD> targets for building 
+a phoneME Feature reference port. Although several <KBD>make</KBD> targets are 
+available, this guide describes only two, as shown in <A HREF="#table5-1">TABLE 5-1</A>.
+<P>
+
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000" 
+CELLPADDING=5 CELLSPACING=0>
+<CAPTION><A NAME="table5-1"><b>TABLE 5-1</b> phoneME Feature Software Build Targets</A>
+</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485277"></A>Target
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485279"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>all</KBD><A NAME="marker-485282"></A><A NAME="marker-485283"></A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-485286"></A>Creates the executables, classes, 
+and tools for a version of the phoneME Feature software.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>docs_html</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-485296"></A>Generates phoneME Feature API 
+documentation.
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+For more information on phoneME Feature build targets, see the
+<a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/build-guide/index.html">
+<EM>Sun Java Wireless Client Build Guide</EM>.
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="default_config"></a><h3>Default Build Configuration</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+The default build configuration for your target platform is named using a 
+combination of <EM>operating system</EM> (Linux or Win32), <EM>platform</EM> 
+(ARM or i386), and one or more build <EM>options</EM>. Setting (or not setting) 
+specific build options determines the configuration of the build.
+<P>
+For example, for the Linux/ARM target platform (P2 board), the default build 
+configuration uses Frame Buffer graphics (<KBD>fb</KBD>), with Adaptive User Interface 
+Technology (<KBD>chameleon</KBD>), and multitasking (<KBD>mvm</KBD>). Therefore, 
+the default build configuration is named <KBD>linux_arm_fb_chameleon_mvm</KBD>.
+<P>
+On the Win32/i386 platform, the default build configuration is <KBD>win32_i386</KBD>.
+<P>
+For more information about build options in the phoneME Feature software default 
+build configuration, see <A HREF="options_feature.html">Default Bulld Configuration 
+Options</A>.
+<p>
+
+<a name="audio"></a>
+<strong>Building a Complete Audio Implementation</strong>
+<p>
+In order to build a complete implementation of JSR 135, the following files need 
+to be modified.
+<P>
+On a Win32/i386 platform:
+<P>
+<UL>
+<LI><KBD>jsr135/win32-jsr135/src/native/AMRDecoder.c</KBD></LI>
+<LI><KBD>jsr135/win32-jsr135/src/native/qsoundnative.c</KBD></LI>
+</UL>
+<P> 
+On a Linux/ARM platform: 
+<p>
+<UL>
+<LI><KBD>jsr135/linux-abb/src/native/qsoundnative.c</KBD></LI>
+</UL>
+<P>
+These files contain stubbed implementations of all native methods for the following 
+classes.
+<P>
+On a Win32/i386 platform:
+<P>
+<UL>
+<LI><KBD>com.sun.mmedia.AMRDecoder</KBD></LI>
+</UL>
+<p>
+On Win32/i386 and Linux/ARM platforms:
+<P>
+<UL>
+<LI><KBD>com.sun.mmedia.QSound*</KBD></LI>
+</UL>
+<P>
+Sun Microsystems' compliant Mobile Media API (JSR 135) implementation utilizes audio 
+libraries licensed from QSound Labs, Inc. (www.qsound.com).
+<P>
+<B>Note:</B> Other libraries are possible.  If you choose other audio libraries, you 
+will need to modify the listed files for those libraries.
+<P>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="build_phoneme"></a><h3>Building phoneME Feature Software</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+By following the procedures provided in this section, you can build a default phoneME 
+Feature software reference port that contains the libraries, tools, tests, and 
+documentation bundles for your target platform.
+<p>
+
+<a name="build_linux"></a>
+<strong>Building for a Linux Platform</strong>
+<p>
+
+<b>Note:</b> This procedure assumes the use of the Bash shell on the Linux platform.
+<p>
+<OL>
+<LI>Change to the default phoneME Feature software build directory for the Linux/ARM 
+target platform.</LI>
+<P>
+<KBD>$ cd </KBD><I>InstallDir</I><KBD>/midp/build/linux_fb_gcc</KBD>
+<P>
+<B>Note:</B> <I>InstallDir</I> represents the location of your phoneME Feature software.
+<P>
+<LI>Ensure that all environment variables have been set.</LI>
+<P>
+For more information on environment variables, see <A HREF="buildenv_feature.html">
+Build Envrionment</A> and <A HREF="pcsl_feature.html">Building a PCSL Reference Port</A>.
+<P>
+<LI>Ensure that a PCSL reference port has been built for the Linux/ARM target platform.</LI>
+<P>
+For more information on building PCSL, see <A HREF="pcsl_feature.html">Building a PCSL
+Reference Port</A>.
+<P>
+<LI>Ensure that a CLDC reference port has been built for the Linux/ARM target platform.</LI>
+<P>
+For more information on building CLDC, see <A HREF="cldc_feature.html">Building a CLDC
+Reference Port</A>.
+<P>
+<LI>Use <KBD>make</KBD> to build a reference port of the phoneME Feature software.</LI>
+<P>
+<KBD>$ make VAR_IMPORT_FROM=Default.gmk all</KBD>
+<P>
+This builds the full phoneME Feature software.
+<P>
+<b>Note:</b> To build Javadoc documentation at the same time you build the phoneME 
+Feature software default build configuration, enter the following command in Step 5:
+<p><KBD>$ make VAR_IMPORT_FROM=Default.gmk docs_html all</KBD>
+</OL>
+<p>
+
+<a name="build_win"></a>
+<strong>Building for a Windows Platform</strong>
+<p>
+
+
+<B>Note:</B> This document assumes the use of Cyg4Me on the Windows platform.
+<p>
+<OL>
+<LI>Change to the default phoneME Feature build directory for the Win32/i386 target 
+platform.</LI>
+<P>
+<KBD>$ cd </KBD><I>InstallDir</I><KBD>/midp/build/win32</KBD>
+<P>
+<B>Note:</B> <I>InstallDir</I> represents the location of your phoneME 
+Feature software.
+<P>
+<LI>Ensure that all environment variables are set.</LI>
+<P>
+For more information on environment variables, see <A HREF="./buildenv_feature.html">
+Build Environment</A> and <A HREF="pcsl_feature.html">Building a PCSL Reference Port</A>.
+<P>
+<LI>Ensure that a PCSL reference port is built for the Win32/i386 target platform.</LI>
+<P>
+For more information on building PCSL, see <A HREF="./pcsl_feature.html">Building a
+PCSL Reference Port</A>.
+<P>
+<LI>Ensure that a CLDC reference port is built for the Win32/i386 target platform.</LI>
+<P>
+For more information on building CLDC, see <A HREF="./cldc_feature.html">Building a 
+CLDC Reference Port</A>.
+<P>
+<LI>Mount the phoneME Feature software <KBD>midp</KBD> directory at the root level.</LI>
+<P>
+For example, if you installed the phoneME Feature software in <KBD>C:&#92;jwc1.1.3</KBD>, 
+use the following command:
+<P>
+<KBD>mount C:&#92;jwc1.1.3&#92;midp /jwc1.1.3/midp</KBD>
+<P>
+<LI>Use <KBD>make</KBD> to build a reference port of the phoneME Feature software.
+<P>
+<KBD>$ make VAR_IMPORT_FROM=Default.gmk all</KBD>
+<P>
+This builds the full phoneME Feature software bundle, including the example executables.
+<P>
+<B>Note:</B> To build Javadoc documentation at the same time you build the phoneME 
+Feature software default build configuration, enter the following command in Step 6:
+<p>
+<KBD>$ make VAR_IMPORT_FROM=Default.gmk docs_html all</KBD>
+</OL>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="phoneme_docs"></a><h3>Building phoneME Feature Software Documentation</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+You can create HTML documents from phoneME Feature software from porting interfaces. 
+To do this for the phoneME Feature software, use the <KBD>make docs_html</KBD> build 
+target.
+<P>
+
+<a name="javadoc"></a>
+<strong>Generating Javadoc Tool Documentation</strong>
+<p>
+
+Building Javadoc tool documentation is the same for both Linux and Windows platforms.
+<P>
+<OL>
+<LI>Change to the default build directory for your target platform.</LI>
+<P>
+<KBD>$ cd </KBD><I>InstallDir</I><KBD>/midp/build/platform</KBD>
+<P>
+<LI>Build Javadoc tool HTML documentation.</LI>
+<P>
+<KBD>$ make docs_html</KBD>
+<P>
+The generated HTML documents are put in the following directory:
+<P>
+<KBD>$PHONEME_OUTPUT_DIR/doc/javadoc/html</KBD>
+<P>
+</OL>
+
+<a name="view_docs"></a>
+<strong>Viewing phoneME Feature Software Documents</strong>
+<P> 
+Use any browser to display the Javadoc output file at the following URL:
+<P>
+<KBD>file:///$PHONEME_OUTPUT_DIR/doc/javadoc/html/index.html</KBD>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="using_phoneme"></a><h3>Using phoneME Feature Software</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+Once you build the phoneME Feature software for your target platform, it provides
+an environment in which MIDlet suites can be installed, listed, run, and uninstalled.
+<p>
+
+<a name="install_midlet"></a>
+<strong>Installing a MIDlet Suite</strong>
+<p>
+For end users, the Over the Air (OTA) installer is used to install a MIDlet suite by 
+clicking on the graphical link to a Java Application Descriptor (JAD) or Java Archive 
+(JAR) file. For developers, a shell script is provided, called <KBD>installMidlet</KBD>
+that runs the OTA Installer from the command line. The <KBD>installMidlet</KBD> script 
+is located in the directory <KBD>$MIDP_OUTPUT_DIR/bin/<EM CLASS="Emphasis">cpu</EM></KBD>.
+<P>
+<OL>
+<LI>Change to the directory containing the <KBD>installMidlet</KBD> script.</LI>
+<P>
+For example, on a Linux/ARM platform, change to the following directory:
+<P>
+<KBD>$ cd $MIDP_OUTPUT_DIR/bin/</KBD>arm
+<P>
+<LI>To run the <KBD>installMidlet</KBD> script, enter the following in a command 
+line:</LI>
+<P>
+<KBD>$ installMidlet <I>url</I></KBD>
+<P>
+The argument <EM>url</EM> indicates the URL of a JAD or a JAR file. The MIDlet suite 
+is installed from this URL.
+<P>
+<B>Note:</B> The OTA installer used by the phoneME Feature software uses only the 
+HTTP and HTTPS protocols to install MIDlet suites.
+</OL>
+For more information on the OTA installer and <KBD>installMIDlet</KBD> subcommands, 
+see the 
+<a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/build-guide/index.html">
+<EM>Sun Java Wireless Client Build Guide</EM>.
+<P>
+
+<a name="run_midlet"></a>
+<strong>Using the <em>runMidlet</em> Command</strong>
+<p>
+
+The <KBD>runMidlet</KBD> application is built by default when you run the 
+<KBD>make all</KBD> command to build the phoneME Feature software. The 
+<KBD>runMidlet</KBD> script is located in the directory 
+<KBD>$MIDP_OUTPUT_DIR/bin/<EM>cpu</EM></KBD>.
+<P>
+Several arguments can be used with the <KBD>runMidlet</KBD> command, but this guide
+describes only two. For a complete list of arguments for <KBD>runMidlet</KBD>, see 
+the <a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/build-guide/index.html">
+<EM>Sun Java Wireless Client Build Guide</EM></a>.
+<P>
+<OL>
+<LI>Change to the directory that contains the <KBD>runMidlet</KBD> script.</LI>
+<P>
+For example, on a Linux/ARM platform, change to the following directory:
+<P>
+<KBD>$ cd $MIDP_OUTPUT_DIR/bin/arm</KBD>
+<P>
+<LI>Enter the following in a command line:
+<P>
+<KBD>$ runMidlet <I>suiteNumber</I> | <I>suiteID </I></KBD>
+<P>
+The <KBD>runMidlet</KBD> command takes the argument <I>suiteNumber</I> | <I>suiteID</I>, 
+which is the number or storage identifier given to the MIDlet suite when it was installed.
+</OL>
+<p>
+
+<a name="remove_midlet"></a>
+<strong>Removing an Installed MIDlet Suite</strong>
+<p>
+
+To remove one or all MIDlet suites installed in your phoneME Feature software 
+environment, use the <KBD>removeMidlet</KBD> command. The <KBD>removeMidlet</KBD> 
+script is located in the directory <KBD>$MIDP_OUTPUT_DIR/bin/<EM>cpu</EM></KBD>.
+<P>
+<OL>
+<LI>Change to the directory that contains the <KBD>removeMidlet</KBD> script.</LI>
+<P>
+For example, on a Linux/ARM platform, change to the following directory:
+<P>
+<KBD>$ cd $MIDP_OUTPUT_DIR/bin/arm</KBD>
+<P>
+<LI>To run the <KBD>removeMIDlet</KBD> command, enter the following in a command 
+line:</LI>
+<P>
+<KBD>$ removeMidlet ( <I>suiteNumber</I> | <I>suiteID</I> | all )
+<P>
+The <KBD>removeMidlet</KBD> command takes the argument <I>suiteNumber</I> | 
+<I>suiteID</I>, which is the number or storage identifier given to the MIDlet suite 
+when it was installed.
+<P>
+The argument <KBD>all</KBD> requests that all MIDlet suites be removed.
+</OL>
+
+<p>
+<a href="./index_feature.html">first</a> | <a href="./cldc_feature.html">prev</a> |
+<a href="./options_feature.html">next-last</a> <!-- | <a href="./options_feature.html">last</a> -->
+<p>
+
+
+<!-- =================================== END PAGE BODY ================== -->
+
+</div></td></tr></tbody></table></body></html>
