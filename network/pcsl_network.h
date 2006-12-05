@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -47,7 +48,7 @@
  * @file
  * @ingroup network
  * @brief PCSL networking interfaces for client TCP sockets \n
- * ##include <pcsl_network.h>
+ * ##include <>
  * @{
  *
  * This is the PCSL API for networking.  Currently, the APIs support only 
@@ -438,6 +439,20 @@ extern unsigned short pcsl_network_htons(
  */
 extern unsigned short pcsl_network_ntohs(
     unsigned short value);
+
+
+/**
+ * A pcsl equivalent of BSD inet_ntoa () function.
+ * The inet_ntoa() function converts the Internet host address to a string 
+ * in standard numbers-and-dots notation. The string is returned in
+ * a statically allocated buffer, which subsequent calls will overwrite.
+ * 
+ * @param ipBytes the IP address of the remote device in the form of byte array
+ *
+ * @return converted address
+ */
+extern char * pcsl_inet_ntoa (void *ipBytes);
+
 
 /** @} */   //End of group High Level Interface
 

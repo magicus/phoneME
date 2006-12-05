@@ -1,4 +1,5 @@
 /*
+ * 	
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -60,6 +61,7 @@
 #include <string.h>
 #include <pcsl_memory.h>
 #include <pcsl_print.h>
+#include <pcsl_memory_port.h>
 
 #ifdef PCSL_DEBUG
 /* 
@@ -107,7 +109,11 @@ static void report(char* message, ...){
 
         va_start(ap, message);
         
+#ifdef _WIN32
+        _vsnprintf(buf, RPT_BUF_LEN, message, ap);
+#else
         vsnprintf(buf, RPT_BUF_LEN, message, ap);
+#endif
         pcsl_print(buf);
         
         va_end(ap);
@@ -297,7 +303,7 @@ pcsl_mem_initialize_impl0(void *startAddr, int size) {
 #ifndef PCSL_MEMORY_USE_STATIC
 
         /* allocate the chunk of memory to C heap */
-        PcslMemory = (char*)malloc(size);
+        PcslMemory = (char*)pcsl_heap_allocate_port(size,&size);
         if (PcslMemory == NULL) {
             return -1;
         }
@@ -351,7 +357,7 @@ pcsl_mem_finalize_impl0() {
 #endif 
 
 #ifndef PCSL_MEMORY_USE_STATIC       
-    free(PcslMemory);
+    pcsl_heap_deallocate_port(PcslMemory);
     PcslMemory = NULL;
 #endif
 

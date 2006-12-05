@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -36,6 +37,7 @@
 #ifndef _JAVA_TYPES_MD_H_
 #define _JAVA_TYPES_MD_H_
 
+#ifndef _JAVASOFT_JNI_H_
 /** Byte parameter type. */
 typedef signed char jbyte;
 
@@ -47,6 +49,7 @@ typedef int         jint;
 
 /** Long parameter type. */
 typedef long long   jlong;
+#endif /* _JAVASOFT_JNI_H_ */
 
 /** Platform-specific type specifier for 64-bit integer */
 #define PCSL_LLD "%lld"

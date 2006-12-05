@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -40,6 +41,7 @@
 #define KNI_PRIMITIVE_TYPES
 
 #include <java_types_md.h>
+#ifndef _JAVASOFT_JNI_H_
 
 /** Boolean parameter type. */
 typedef unsigned char   jboolean;
@@ -55,6 +57,7 @@ typedef double          jdouble;
 
 /** Integer parameter type. */
 typedef jint            jsize;
+#endif /* _JAVASOFT_JNI_H_ */
 
 #endif /* KNI_PRIMITIVE_TYPES */
 

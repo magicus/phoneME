@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,7 +32,7 @@
  * @defgroup serial Serial Port Interface
  * @ingroup network_low
  * @brief Serial port interfaces \n
- * ##include <pcsl_network_serial.h>
+ * ##include <>
  * @{
  *
  * This file defines serial port interfaces for serial port operations 

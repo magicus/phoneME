@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -26,7 +27,7 @@
 #ifndef _PCSL_STRING_H_
 #define _PCSL_STRING_H_
 
-#include <java_types.h> 
+#include <java_types.h>
 #include <pcsl_string_status.h>
 #include <pcsl_string_md.h>
 
@@ -50,7 +51,7 @@ extern "C" {
  * @{
  *
  * This file defines the API for common string operations, like
- * conversion, comparison, concatenation etc. 
+ * conversion, comparison, concatenation etc.
  * In order to accomodate different implementations, the data type
  * pcsl_string that represents strings is opaque, i.e. the calling routine need
  * have no knowledge of its actual definition. The calling routines just pass
@@ -69,7 +70,7 @@ extern "C" {
  * The interface is designed to fully support Unicode 4.0 standard.
  * In particular, the implementation is required to support strings with
  * arbitrary unicode characters, including supplementary characters
- * (see http://www.unicode.org/glossary/#supplementary_character) that 
+ * (see http://www.unicode.org/glossary/#supplementary_character) that
  * cannot be encoded with UCS2.
  */
 
@@ -139,7 +140,7 @@ typedef pcsl_string_md pcsl_string;
 #define PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(literal_name) \
   PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END_MD(literal_name)
 
-/** 
+/**
  * NULL initializer for pcsl_string variables.
  * <p>
  * For a plain char* initialization:
@@ -154,10 +155,16 @@ typedef pcsl_string_md pcsl_string;
 #define PCSL_STRING_NULL_INITIALIZER PCSL_STRING_NULL_INITIALIZER_MD
 
 /**
+ * This macro us used to determine size of the result buffer for passing it to
+ * unicode_to_escaped_ascii function. Namely it multiplies given length by 5.
+ */
+#define PCSL_STRING_ESCAPED_BUFFER_SIZE(length) ((length) * 5)
+
+/**
  * Returns whether the string system is active.
- * The string subsystem is active after it is initialized and 
+ * The string subsystem is active after it is initialized and
  * before it is finalized.
- * 
+ *
  * @return PCSL_TRUE if the string system is active,
  *         PCSL_FALSE otherwise
  */
@@ -165,20 +172,20 @@ jboolean pcsl_string_is_active(void);
 
 /**
  * Performs platform-specific initialization of the string system.
- * This function must be invoked before any other functions of 
+ * This function must be invoked before any other functions of
  * the string subsystem.
  * Has no effect if the string system is active.
- * 
+ *
  * @return initialization status
  */
 pcsl_string_status pcsl_string_initialize(void);
 
 /**
  * Performs platform-specific finalization of the string system.
- * No functions of the string subsystem should be used after 
+ * No functions of the string subsystem should be used after
  * the string system is finalized.
  * Has no effect if the string system is not active.
- * 
+ *
  * @return finalization status
  */
 pcsl_string_status pcsl_string_finalize();
@@ -186,32 +193,32 @@ pcsl_string_status pcsl_string_finalize();
 /**
  * Returns the number of abstract characters in the specified string,
  * not including the terminating zero character.
- * Returns a negative value if str is NULL or doesn't represent 
+ * Returns a negative value if str is NULL or doesn't represent
  * a valid abstract character sequence.
  * See Unicode Glossary at http://www.unicode.org/glossary/.
- * 
+ *
  * @param str string
  * @return number of abstract characters in the string
  */
 jsize pcsl_string_length(const pcsl_string * str);
 
 /**
- * Returns the number of 16-bit units in the UTF-16 representation 
+ * Returns the number of 16-bit units in the UTF-16 representation
  * of the specified string, not including the terminating zero character.
- * Returns a negative value if str is NULL or doesn't have 
+ * Returns a negative value if str is NULL or doesn't have
  * a valid UTF-16 representation.
- * 
+ *
  * @param str string
  * @return length of UTF-16 representation of the string
  */
 jsize pcsl_string_utf16_length(const pcsl_string * str);
 
 /**
- * Returns the number of bytes in the UTF-8 representation 
+ * Returns the number of bytes in the UTF-8 representation
  * of the specified string, not including the terminating zero character.
- * Returns a negative value if str is NULL or doesn't have 
+ * Returns a negative value if str is NULL or doesn't have
  * a valid UTF-8 representation.
- * 
+ *
  * @param str string
  * @return length of UTF-8 representation of the string
  */
@@ -219,43 +226,47 @@ jsize pcsl_string_utf8_length(const pcsl_string * string);
 
 /**
  * Converts the string to UTF-8.
- * If the buffer length is not sufficient, the conversion is not performed and
+ * If the buffer length is not sufficient to hold both the UTF-8 data and 
+ * the terminating zero character, the conversion is not performed and
  * the function returns PCSL_BUFFER_OVERFLOW.
  * If converted_length is not NULL and the specified string has a valid UTF-8
- * representation, the number of bytes in the UTF-8 representation 
- * of the string is written to converted_length. 
- * 
+ * representation, the number of bytes in the UTF-8 representation
+ * of the string (not including the terminating zero character) is written 
+ * to converted_length.
+ *
  * @param str           string to convert
  * @param buffer        buffer to store the result of conversion
  * @param buffer_length length of buffer (number of bytes)
- * @param converted_length 
+ * @param converted_length
  *            storage for the number of bytes in UTF-8 representation
  *            of the string, not including the terminating zero character
  * @return status of the operation
  */
-pcsl_string_status pcsl_string_convert_to_utf8(const pcsl_string * string, 
-				    jbyte * buffer, 
+pcsl_string_status pcsl_string_convert_to_utf8(const pcsl_string * string,
+				    jbyte * buffer,
 				    jsize buffer_length,
 				    jsize * converted_length);
 
 /**
  * Converts the string to UTF-16.
- * If the buffer length is not sufficient, the conversion is not performed and
+ * If the buffer length is not sufficient to hold both the UTF-16 data and 
+ * the terminating zero character, the conversion is not performed and
  * the function returns PCSL_BUFFER_OVERFLOW.
  * If converted_length is not NULL and the specified string has a valid UTF-8
- * representation, the number of 16-bit units in the UTF-16 representation 
- * of the string is written to converted_length. 
- * 
+ * representation, the number of 16-bit units in the UTF-16 representation
+ * of the string (not including the terminating zero character) is written 
+ * to converted_length.
+ *
  * @param str           string to convert
  * @param buffer        buffer to store the result of conversion
  * @param buffer_length length of buffer (number of 16-bit units)
- * @param converted_length 
+ * @param converted_length
  *            storage for the number of 16-bit units in UTF-16 representation
  *            of the string, not including the terminating zero character
  * @return status of the operation
  */
-pcsl_string_status pcsl_string_convert_to_utf16(const pcsl_string * str, 
-				     jchar * buffer, 
+pcsl_string_status pcsl_string_convert_to_utf16(const pcsl_string * str,
+				     jchar * buffer,
 				     jsize buffer_length,
 				     jsize * converted_length);
 
@@ -267,51 +278,51 @@ pcsl_string_status pcsl_string_convert_to_utf16(const pcsl_string * str,
  * then a single zero character is appended at the end.
  * <p>
  * Use pcsl_string_free() to dispose of the created string when done.
- * 
+ *
  * @param buffer        array of UTF-8 characters
  * @param buffer_length number of bytes in the array
  * @param string        storage for the created string
  * @return status of the operation
  */
-pcsl_string_status pcsl_string_convert_from_utf8(const jbyte * buffer, 
-				      jsize buffer_length, 
+pcsl_string_status pcsl_string_convert_from_utf8(const jbyte * buffer,
+				      jsize buffer_length,
 				      pcsl_string * string);
 
 /**
- * Creates a new string from the specified array of UTF-16 characters 
+ * Creates a new string from the specified array of UTF-16 characters
  * and saves a pointer to that string into the specified storage 'string'.
  * Fails if either 'buffer' or 'string' is NULL.
  * Trailing zero characters in the specified array are stripped,
  * then a single zero character is appended at the end.
  * <p>
  * Use pcsl_string_free() to dispose of the created string when done.
- * 
+ *
  * @param buffer        array of UTF-16 characters
  * @param buffer_length number of 16-bit units in the array
  * @param string        storage for the created string
  * @return status of the operation
  */
-pcsl_string_status pcsl_string_convert_from_utf16(const jchar * buffer, 
-				       jsize buffer_length, 
+pcsl_string_status pcsl_string_convert_from_utf16(const jchar * buffer,
+				       jsize buffer_length,
 				       pcsl_string * string);
 
 /**
  * Tests if two strings are equal.
  * <p>
  * Returns PCSL_FALSE if either of the two strings is NULL.
- * 
+ *
  * @param str1 first string to compare
  * @param str2 second string to compare
- * @return PCSL_TRUE if both strings are not NULL and are equal, 
+ * @return PCSL_TRUE if both strings are not NULL and are equal,
  *         PCSL_FALSE otherwise
  */
 jboolean pcsl_string_equals(const pcsl_string * str1, const pcsl_string * str2);
 
 /**
- * Compares two strings. The result of comparison is an integer less than, 
- * equal to, or greater than zero if str1 is found, respectively, to be 
+ * Compares two strings. The result of comparison is an integer less than,
+ * equal to, or greater than zero if str1 is found, respectively, to be
  * less than, to match, or be greater than str2.
- * 
+ *
  * @param str1 first string to compare
  * @param str2 second string to compare
  * @param comparison storage for the result of comparison
@@ -323,17 +334,17 @@ pcsl_string_status pcsl_string_compare(const pcsl_string * str1, const pcsl_stri
 /**
  * Creates a new string that is a concatenation of the two specified strings.
  * <p>
- * The terminating zero character at the end of the first string is stripped 
+ * The terminating zero character at the end of the first string is stripped
  * before the concatenation.
  * <p>
  * Use pcsl_string_free() to dispose of the created string when done.
- * 
+ *
  * @param str1 first string to concatenate
  * @param str2 second string to concatenate
  * @param dst  storage for the created concatenation
  * @return status of the operation
  */
-pcsl_string_status pcsl_string_cat(const pcsl_string * str1, 
+pcsl_string_status pcsl_string_cat(const pcsl_string * str1,
 			const pcsl_string * str2,
 			pcsl_string * str);
 
@@ -341,12 +352,12 @@ pcsl_string_status pcsl_string_cat(const pcsl_string * str1,
  * Creates a new string that is a duplicate of this string.
  * <p>
  * Use pcsl_string_free() to dispose of the created string when done.
- * 
- * @param str         string 
+ *
+ * @param str         string
  * @param dst         storage for the created duplicate
  * @return status of the operation
  */
-pcsl_string_status pcsl_string_dup(const pcsl_string * src, 
+pcsl_string_status pcsl_string_dup(const pcsl_string * src,
 			pcsl_string * dst);
 
 /**
@@ -390,7 +401,7 @@ pcsl_string_status pcsl_string_append_buf(pcsl_string* dst,
  * All buffers obtained from a string must be released before the string
  * is changed by this function.
  *
- * This function is a hint that allows an efficient implementation 
+ * This function is a hint that allows an efficient implementation
  * of concatenation of multiple strings using the append functions
  * (see pcsl_string_append, pcsl_string_append_buf, pcsl_string_append_char).
  * Before appending, invoke this function to specify the final string length.
@@ -412,7 +423,7 @@ void pcsl_string_predict_size(pcsl_string* str, jint size);
 #define pcsl_string_set_capacity(x,y) pcsl_string_predict_size(y,x)
 
 /**
- * Creates a new string that is a substring of this string. 
+ * Creates a new string that is a substring of this string.
  * The substring represents a subsequence of the abstract character sequence
  * specified by the given string.
  * The subsequence begins with the abstract character at the specified
@@ -424,51 +435,51 @@ void pcsl_string_predict_size(pcsl_string* str, jint size);
  * 0 <= begin_index <= end_index <= pcsl_string_length(str).
  * <p>
  * Use pcsl_string_free() to dispose of the created string when done.
- * 
+ *
  * @param str         string to look in
  * @param begin_index the beginning index, inclusive
  * @param end_index   the ending index, exclusive
  * @param dst         storage for the created substring
  * @return status of the operation
  */
-pcsl_string_status pcsl_string_substring(const pcsl_string * str, 
+pcsl_string_status pcsl_string_substring(const pcsl_string * str,
 			      jint begin_index, jint end_index,
 			      pcsl_string * dst);
 
 /**
  * Tests if this string starts with the specified prefix
- * 
+ *
  * @param str    string to look in
  * @param prefix prefix to look for
- * @return PCSL_TRUE if the string and the prefix are not NULL and 
+ * @return PCSL_TRUE if the string and the prefix are not NULL and
  *         the starts with the specified prefix, PCSL_FALSE otherwise
  */
-jboolean pcsl_string_starts_with(const pcsl_string * str, 
+jboolean pcsl_string_starts_with(const pcsl_string * str,
 				 const pcsl_string * prefix);
 
 /**
  * Tests if this string ends with the specified suffix.
- * 
+ *
  * @param str    string to look in
  * @param suffix suffix to look for
- * @return PCSL_TRUE if the string and the suffix are not NULL and 
+ * @return PCSL_TRUE if the string and the suffix are not NULL and
  *         the ends with the specified suffix, PCSL_FALSE otherwise
  */
-jboolean pcsl_string_ends_with(const pcsl_string * str, 
+jboolean pcsl_string_ends_with(const pcsl_string * str,
 			       const pcsl_string * suffix);
 
 /**
- * Returns an index of the first occurrence of the abstract character 
- * in the abstract character sequence specified by the given string. 
+ * Returns an index of the first occurrence of the abstract character
+ * in the abstract character sequence specified by the given string.
  * The abstract character is specified by the Unicode code point.
  * <p>
- * Returns a negative value if the specified integer value 
+ * Returns a negative value if the specified integer value
  * is not in the Unicode codespace,
  * or the specified integer value is a surrogate code point,
  * or the string is NULL, or the character doesn't occur.
- * Otherwise, 
+ * Otherwise,
  * the returned index must be 0 <= index <= pcsl_string_length(str)-1.
- * 
+ *
  * @param str   string to look in
  * @param c     Unicode code point to look for
  * @return index of the first occurence of the character
@@ -476,29 +487,29 @@ jboolean pcsl_string_ends_with(const pcsl_string * str,
 jint pcsl_string_index_of(const pcsl_string * str, jint c);
 
 /**
- * Returns an index of the first occurrence of the abstract character 
- * in the abstract character sequence specified by the given string, 
- * starting the search at the specified from_index. 
+ * Returns an index of the first occurrence of the abstract character
+ * in the abstract character sequence specified by the given string,
+ * starting the search at the specified from_index.
  * The abstract character is specified by the Unicode code point.
  * <p>
- * Returns a negative value if the specified integer value 
+ * Returns a negative value if the specified integer value
  * is not in the Unicode codespace,
  * or the specified integer value is a surrogate code point,
  * or the string is NULL, or the character doesn't occur.
- * Otherwise, 
+ * Otherwise,
  * the returned index must be from_index <= index <= pcsl_string_length(str)-1.
  * <p>
- * 
+ *
  * @param str   string to look in
  * @param c     Unicode code point to look for
  * @return index of the first occurence of the character in the string
  */
-jint pcsl_string_index_of_from(const pcsl_string * str, jint c, 
+jint pcsl_string_index_of_from(const pcsl_string * str, jint c,
 			       jint from_index);
 
 /**
- * Returns an index of the last occurrence of the abstract character 
- * in the abstract character sequence specified by the given string. 
+ * Returns an index of the last occurrence of the abstract character
+ * in the abstract character sequence specified by the given string.
  * The abstract character is specified by the Unicode code point.
  * <p>
  * Returns a negative value if the specified integer value is not in the Unicode codespace,
@@ -506,7 +517,7 @@ jint pcsl_string_index_of_from(const pcsl_string * str, jint c,
  * or the string is NULL, or the character doesn't occur.
  * Otherwise,
  * the returned index must be 0 <= index <= pcsl_string_length(str)-1.
- * 
+ *
  * @param  str   string to look in
  * @param  c     Unicode code point to look for
  * @return index of the last occurence of the character in the string
@@ -514,7 +525,7 @@ jint pcsl_string_index_of_from(const pcsl_string * str, jint c,
 jint pcsl_string_last_index_of(const pcsl_string * str, jint c);
 
 /**
- * Returns an index of the last occurrence of the abstract character 
+ * Returns an index of the last occurrence of the abstract character
  * in the abstract character sequence specified by the given string,
  * searching backward starting at the specified from_index.
  * The abstract character is specified by the Unicode code point.
@@ -524,47 +535,47 @@ jint pcsl_string_last_index_of(const pcsl_string * str, jint c);
  * or the string is NULL, or the character doesn't occur.
  * Otherwise,
  * the returned index must be 0 <= index <= from_index.
- * 
+ *
  * @param  str   string to look in
  * @param  c     Unicode code point to look for
  * @return index of the last occurence of the character in the string
  */
-jint pcsl_string_last_index_of_from(const pcsl_string * str, jint c, 
+jint pcsl_string_last_index_of_from(const pcsl_string * str, jint c,
 				    jint from_index);
 
 /**
  * Removes white spaces from both sides of the string.
- * 
+ *
  * @param  str string to handle
  * @param  dst storage for the trimmed string
  * @return status of trimming
  */
-pcsl_string_status pcsl_string_trim(const pcsl_string * str, 
+pcsl_string_status pcsl_string_trim(const pcsl_string * str,
 				  pcsl_string * dst);
 
 /**
  * Removes white spaces from the end of the string.
- * 
+ *
  * @param  str string to handle
  * @param  dst storage for the trimmed string
  * @return status of trimming
  */
-pcsl_string_status pcsl_string_trim_from_end(const pcsl_string * str, 
+pcsl_string_status pcsl_string_trim_from_end(const pcsl_string * str,
 				  pcsl_string * dst);
 
 /**
  * Parses the string argument as a signed decimal integer. The
  * characters in the string must all be decimal digits, except that
- * the first character may be an ASCII minus sign to indicate 
- * a negative value or plus to indicate positive value. 
+ * the first character may be an ASCII minus sign to indicate
+ * a negative value or plus to indicate positive value.
  * The value must fit into 32-bit signed integer.
  * <p>
- * The parsed integer value is written to the memory location specified by 
+ * The parsed integer value is written to the memory location specified by
  * 'value'. Fails if 'value' is NULL.
  * <p>
  * If parsing fails, nothing is written and the return value indicates the
  * failure status.
- * 
+ *
  * @param str    the string to be parsed
  * @param value  storage for the parsed value
  * @return parsing status
@@ -581,7 +592,7 @@ pcsl_string_status pcsl_string_convert_to_jint(const pcsl_string * str, jint * v
  * Use pcsl_string_free() to dispose of the created string when done.
  *
  * @param   value the value to be converted
- * @param   str   storage for the created string 
+ * @param   str   storage for the created string
  * @return  conversion status
  */
 pcsl_string_status pcsl_string_convert_from_jint(jint value, pcsl_string * str);
@@ -589,15 +600,15 @@ pcsl_string_status pcsl_string_convert_from_jint(jint value, pcsl_string * str);
 /**
  * Parses the string argument as a signed decimal integer. The
  * characters in the string must all be decimal digits, except that
- * the first character may be an ASCII minus sign to indicate 
+ * the first character may be an ASCII minus sign to indicate
  * a negative value. The value must fit into 64-bit signed integer.
  * <p>
- * The parsed integer value is written to the memory location specified by 
+ * The parsed integer value is written to the memory location specified by
  * 'value'. Fails if 'value' is NULL.
  * <p>
  * If parsing fails, nothing is written and the return value indicates the
  * failure status.
- * 
+ *
  * @param str    the string to be parsed
  * @param value  storage for the parsed value
  * @return parsing status
@@ -614,14 +625,14 @@ pcsl_string_status pcsl_string_convert_to_jlong(const pcsl_string * str, jlong *
  * Use pcsl_string_free() to dispose of the created string when done.
  *
  * @param   value the value to be converted
- * @param   str   storage for the created string 
+ * @param   str   storage for the created string
  * @return  conversion status
  */
 pcsl_string_status pcsl_string_convert_from_jlong(jlong value, pcsl_string * str);
 
 /**
- * Frees the specified string. 
- * Sets the freed pcsl_string to PCSL_STRING_NULL. 
+ * Frees the specified string.
+ * Sets the freed pcsl_string to PCSL_STRING_NULL.
  *
  * @param   str string to free
  * @return  status
@@ -632,9 +643,10 @@ pcsl_string_status pcsl_string_free(pcsl_string * str);
  * Returns UTF-8 representation for the specified string.
  * Returns NULL in case of failure.
  * <p>
- * If not NULL, the returned pointer points to an internal buffer that contains 
- * UTF-8 representation of the string. You can safely read up to 
- * <code>pcsl_string_utf8_length(str)</code> bytes from this buffer.
+ * If not NULL, the returned pointer points to an internal buffer that contains
+ * UTF-8 representation of the string. You can safely read up to
+ * <code>pcsl_string_utf8_length(str)</code> bytes from this buffer,
+ * plus one terminating zero byte.
  * <p>
  * Do not write into the returned buffer, honor the 'const' modifier.
  * The implementation is not required to synchronize the buffer contents with
@@ -645,7 +657,7 @@ pcsl_string_status pcsl_string_free(pcsl_string * str);
  * <p>
  * All buffers obtained from a string must be released before the string
  * itself is destroyed with <code>pcsl_string_free()</code>.
- * 
+ *
  * @param str the string
  * @return UTF-8 representation for the specified string
  */
@@ -653,12 +665,12 @@ const jbyte * pcsl_string_get_utf8_data(const pcsl_string * str);
 
 /**
  * Releases the internal buffer that pointed to by <code>buf</code>.
- * The pointer must have been returned by a previous call to 
+ * The pointer must have been returned by a previous call to
  * <code>pcsl_string_get_data_utf8()</code>, otherwise the behavior is not
- * specified. 
+ * specified.
  * <p>
  * Does nothing if <code>buf</code> is NULL.
- * 
+ *
  * @param buf pointer to the buffer
  * @param str the string from which this buffer was obtained
  */
@@ -668,9 +680,10 @@ void pcsl_string_release_utf8_data(const jbyte * buf, const pcsl_string * str);
  * Returns UTF-16 representation for the specified string.
  * Returns NULL in case of failure.
  * <p>
- * If not NULL, the returned pointer points to an internal buffer that contains 
- * UTF-16 representation of the string. You can safely read up to 
- * <code>pcsl_string_utf16_length(str)</code> 16-bit units from this buffer.
+ * If not NULL, the returned pointer points to an internal buffer that contains
+ * UTF-16 representation of the string. You can safely read up to
+ * <code>pcsl_string_utf16_length(str)</code> 16-bit units from this buffer,
+ * plus one terminating zero 16-bit unit.
  * <p>
  * Do not write into the returned buffer, honor the 'const' modifier.
  * The implementation is not required to synchronize the buffer contents with
@@ -681,7 +694,7 @@ void pcsl_string_release_utf8_data(const jbyte * buf, const pcsl_string * str);
  * <p>
  * All buffers obtained from a string must be released before the string
  * itself is destroyed with <code>pcsl_string_free()</code>.
- * 
+ *
  * @param str the string
  * @return UTF-8 representation for the specified string
  */
@@ -689,12 +702,12 @@ const jchar * pcsl_string_get_utf16_data(const pcsl_string * str);
 
 /**
  * Releases the internal buffer that pointed to by <code>buf</code>.
- * The pointer must have been returned by a previous call to 
+ * The pointer must have been returned by a previous call to
  * <code>pcsl_string_get_data_utf16()</code>, otherwise the behavior is not
- * specified. 
+ * specified.
  * <p>
  * Does nothing if <code>buf</code> is NULL.
- * 
+ *
  * @param buf pointer to the buffer
  * @param str the string from which this buffer was obtained
  */
@@ -702,12 +715,29 @@ void pcsl_string_release_utf16_data(const jchar * buf, const pcsl_string * str);
 
 /**
  * Compares the given string with PCSL_STRING_NULL.
- * 
+ *
  * @param str the string to compare
- * @return PCSL_TRUE if str is not NULL and is equal to PCSL_STRING_NULL, 
+ * @return PCSL_TRUE if str is not NULL and is equal to PCSL_STRING_NULL,
  * PCSL_FALSE otherwise
  */
 jboolean pcsl_string_is_null(const pcsl_string * str);
+
+/**
+ * Convert a Unicode string into a form that can be safely stored on
+ * an ANSI-compatible file system and append it to the string specified
+ * as the first parameter. All characters that are not
+ * [A-Za-z0-9] are converted into %uuuu, where uuuu is the hex
+ * representation of the character's unicode value. Note even
+ * though "_" is allowed it is converted because we use it for
+ * for internal purposes. Potential file separators are converted
+ * so the storage layer does not have deal with sub-directory hierarchies.
+ *
+ * @param dst the string to which the converted text is appendsd
+ * @param suffix text to be converted into escaped-ascii
+ * @return error code
+ */
+pcsl_string_status
+pcsl_string_append_escaped_ascii(pcsl_string* dst, const pcsl_string* suffix);
 
 /** Zero-terminated empty string constant. */
 extern const pcsl_string PCSL_STRING_EMPTY;
@@ -715,7 +745,7 @@ extern const pcsl_string PCSL_STRING_EMPTY;
 /** NULL string constant. */
 extern const pcsl_string PCSL_STRING_NULL;
 
-/** @} */   //End of group 
+/** @} */   //End of group
 
 #ifdef __cplusplus
 }

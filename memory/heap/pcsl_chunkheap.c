@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -87,13 +88,18 @@ void* pcsl_mem_allocate_chunk(unsigned int initial_size,
                               unsigned int max_size, 
                               unsigned int alignment){
     ChunkInfo *ci;
-
-    void *ptr = pcsl_mem_malloc(max_size + alignment);
-        if (ptr == NULL) {
+    void *ptr;
+    ci = (ChunkInfo*)pcsl_mem_malloc(sizeof(ChunkInfo));
+    if (ci == NULL) {
         return NULL;
     }
 
-    ci = (ChunkInfo*)pcsl_mem_malloc(sizeof(ChunkInfo));
+    ptr = pcsl_mem_malloc(max_size + alignment);
+    if (ptr == NULL) {
+	pcsl_mem_free(ci);
+        return NULL;
+    }
+
     ci->ptr = ptr;
     ci->aligned_start_address = align_size_up(ptr, alignment);
     ci->max_size = max_size;

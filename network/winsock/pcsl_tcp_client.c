@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -368,4 +369,11 @@ int pcsl_socket_close_finish(
     (void)handle;
     (void)context;
     return PCSL_NET_INVALID;
+}
+
+/**
+ * See pcsl_network.h for definition.
+ */
+char * pcsl_inet_ntoa (void *ipBytes) {
+    return inet_ntoa(*((struct in_addr*)ipBytes));
 }

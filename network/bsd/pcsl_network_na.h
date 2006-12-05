@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -33,7 +34,7 @@
  * @defgroup bsd BSD Notification Adapter Interface
  * @ingroup network_low
  * @brief Low level interface using Notification Adapter \n
- * ##include <pcsl_network_na.h>
+ * ##include <>
  * @{
  *
  * Notification adapter is an abstraction layer that implements certain

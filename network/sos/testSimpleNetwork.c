@@ -1,4 +1,5 @@
 /*
+ * E
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -124,7 +125,7 @@ void testSimpleNetwork_runTests() {
     int numBytes;
     char *data;
     char *hostname = "host.domain";
-    char* request = "GET /path/midlet.jad HTTP/1.0\n\n";
+    char* request = "GET /midlets/midlet.jad HTTP/1.0\n\n";
 
     testGetHostByName(hostname, ipBytes);
 

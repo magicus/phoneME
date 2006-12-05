@@ -1,4 +1,5 @@
 #
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,8 +32,9 @@
 #
 ######################################################################
 
-DOC_DIR       = $(PCSL_OUTPUT_DIR)/doc
-CFG_SRC_DIR   = $(PCSL_DIR)/makefiles/share
+DOC_DIR             = $(PCSL_OUTPUT_DIR)/doc
+CFG_SRC_DIR         = $(PCSL_DIR)/makefiles/share
+PROJECT_CFG_SRC_DIR = $(PROJECT_PCSL_DIR)/makefiles/share
 
 #
 GROUPNAME =Portable Common Service Layer 
@@ -59,16 +61,21 @@ VERIFY_DOXYGEN_CMD:
 	   echo "ERROR: Please set DOXYGEN_CMD to point to your doxygen executable"; \
 	   /bin/false; \
 	fi;
-	
+
 # Style sheets and other configuration templates
 #
 DOXYGEN_SUPPORT_LIST += \
-    $(DOXYGEN_DIR)/doxygen_header.txt \
-    $(DOXYGEN_DIR)/doxygen_footer.txt \
     $(DOXYGEN_DIR)/doxygen_style.css
+
+PROJECT_DOXYGEN_SUPPORT_LIST += \
+    $(DOXYGEN_DIR)/doxygen_header.txt \
+    $(DOXYGEN_DIR)/doxygen_footer.txt
 
 $(DOXYGEN_SUPPORT_LIST): $(DOXYGEN_DIR)/%: $(CFG_SRC_DIR)/%
 	@(cp $< $@)
+
+$(PROJECT_DOXYGEN_SUPPORT_LIST): $(DOXYGEN_DIR)/%: $(PROJECT_CFG_SRC_DIR)/%
+	@(cp $< $@) $(LOG)
 
 $(DOXYGEN_CONFIG_FILE): $(DOXYGEN_DIR) $(DOXYGEN_CFG) $(FRC_DOC_REBUILD)
 	-@(sed -e 'sz<OUTPUT_DIR>z$(DOXYGEN_DIR)z' \
@@ -82,7 +89,7 @@ force_doc_rebuild :
 
 # doc is dependent on "file print memory network"
 doc:  \
-     verify VERIFY_DOXYGEN_CMD $(DOXYGEN_DIR) $(DOXYGEN_CONFIG_FILE) $(DOXYGEN_SUPPORT_LIST)
+     verify VERIFY_DOXYGEN_CMD $(DOXYGEN_DIR) $(DOXYGEN_CONFIG_FILE) $(DOXYGEN_SUPPORT_LIST) $(PROJECT_DOXYGEN_SUPPORT_LIST)
 	@echo +++ $(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE)
 	 -@($(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE))
 
