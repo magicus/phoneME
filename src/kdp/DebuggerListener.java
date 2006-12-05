@@ -234,7 +234,7 @@ class DebuggerListener extends ProxyListener implements VMConstants {
             ps.writeInt(MAJOR_VERSION);             /* major version */
             ps.writeInt(0);                         /* minor version */
             ps.writeString("1.1.3");
-            ps.writeString("KVM/CLDC_HI");
+            ps.writeString("KVM/CLDC_VM");
             ps.send(); 
             
             handled = true;
@@ -302,7 +302,7 @@ class DebuggerListener extends ProxyListener implements VMConstants {
                     handled = true;
                 }
             } catch(PacketStreamException e) {
-                // We're not sure where the exception happened so
+                // need revisit : where the exception happened so
                 // just send an error back
                 Log.LOGN(3, "ClassBySig: VM exception: " + e);
                 sendErrorReply(this, in, ILLEGAL_ARGUMENT);
