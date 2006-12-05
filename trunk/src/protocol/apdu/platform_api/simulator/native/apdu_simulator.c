@@ -1,5 +1,5 @@
 /*
- * @(#)apdu_simulator.c	1.4 06/05/29 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -219,7 +219,7 @@ JSR177_STATUSCODE jsr177_set_property(const jbyte *prop_name,
             return JSR177_STATUSCODE_OK;
         }
         if (prop_value != NULL && saved_hostsandports != NULL &&
-                    !strcmp(prop_value, saved_hostsandports)) {
+                    !strcmp((char*)prop_value, saved_hostsandports)) {
             return JSR177_STATUSCODE_OK;
         }
         jsr177_set_error("jsr177_set_property: driver already initialized");
@@ -282,7 +282,7 @@ JSR177_STATUSCODE jsr177_set_property(const jbyte *prop_name,
     if (saved_hostsandports != NULL) {
         free(saved_hostsandports);
     }
-    saved_hostsandports = strdup(prop_value);
+    saved_hostsandports = strdup((char*)prop_value);
     if (saved_hostsandports == NULL) {
         jsr177_set_error("jsr177_set_property: No memory for property");
         return JSR177_STATUSCODE_OUT_OF_MEMORY;
@@ -348,14 +348,22 @@ JSR177_STATUSCODE jsr177_is_sat(jint slot, jboolean *result) {
 }
 
 /** 
- * Sends 'POWER UP' command to device and gets ATR into specified buffer.
+ * Sends 'RESET' command to device and gets ATR into specified buffer.
  * @param atr Buffer to store ATR.
  * @param atr_size Before call: size of provided buffer
- *                 After call: length of received ATR.
- * @return JSR177_STATUSCODE_OK if all done successfuly, JSR177_STATUSCODE_FAIL otherwise
+ *                 After call: size of received ATR.
+ * @param context a context which can carry information between 
+ *                <code>jsr177_reset_start</code> and <code>jsr177_reset_finish calls</code>
+ * @retval JSR177_STATUSCODE_OK if all done successfuly. 
+ * @retval JSR177_STATUSCODE_WOULD_BLOCK if this call has started asynchronous 
+ *         operation. In this case <code>jsr177_reset_finish</code> must be used
+ *         for finishing this operation.
+ * @retval JSR177_STATUSCODE_FAIL otherwise
  */
-JSR177_STATUSCODE jsr177_power_up(jbyte *atr, jsize *atr_size) {
+JSR177_STATUSCODE jsr177_reset_start(jbyte *atr, jsize *atr_size, void **context) {
     int bytes;
+    
+    (void)context;
     if (!DriverInitialized) {
         jsr177_set_error("Driver is not initialized");
         return JSR177_STATUSCODE_FAIL;
@@ -379,15 +387,27 @@ JSR177_STATUSCODE jsr177_power_up(jbyte *atr, jsize *atr_size) {
 }
 
 /** 
- * Sends 'RESET' command to device and gets ATR into specified buffer.
+ * Finishes 'RESET' command on device and gets ATR into specified buffer.
+ * This is synchronous implementation. This function must not be invoked.
+ *
  * @param atr Buffer to store ATR.
  * @param atr_size Before call: size of provided buffer
  *                 After call: size of received ATR.
- * @return JSR177_STATUSCODE_OK if all done successfuly, JSR177_STATUSCODE_FAIL otherwise
+ * @param context a context which can carry information between 
+ *                <code>jsr177_reset_start</code> and <code>jsr177_reset_finish</code> calls
+ * @retval JSR177_STATUSCODE_OK if all done successfuly. 
+ * @retval JSR177_STATUSCODE_WOULD_BLOCK if this call has started asynchronous 
+ *         operation. In this case <code>jsr177_reset_finish</code> must be used
+ *         for finishing this operation.
+ * @retval JSR177_STATUSCODE_FAIL otherwise
  */
-JSR177_STATUSCODE jsr177_reset(jbyte *atr, jsize *atr_size) {
-    return jsr177_power_up(atr, atr_size);
+JSR177_STATUSCODE jsr177_reset_finish(jbyte *atr, jsize *atr_size, void *context) {
+    (void)atr;
+    (void)atr_size;
+    (void)context;
+    return JSR177_STATUSCODE_FAIL;
 }
+
 
 /** 
  * Sends 'POWER DOWN' command to device.
@@ -466,12 +486,19 @@ JSR177_STATUSCODE jsr177_card_movement_events(JSR177_CARD_MOVEMENT *events) {
  * @param rx_buffer Buffer to store the response.
  * @param rx_size Before call: size of <tt>rx_buffer</tt>
  *                 After call: size of received response.
- * @return JSR177_STATUSCODE_OK if all done successfuly, JSR177_STATUSCODE_FAIL otherwise
+ * @param context a context which can carry information between 
+ *                <code>jsr177_xfer_data_start</code> and <code>jsr177_xfer_data_finish</code> calls
+ * @retval JSR177_STATUSCODE_OK if all done successfuly. 
+ * @retval JSR177_STATUSCODE_WOULD_BLOCK if this call has started an asynchronous 
+ *         operation. In this case <code>jsr177_xfer_data_finish</code> must be used
+ *         for finishing this operation.
+ * @retval JSR177_STATUSCODE_FAIL otherwise
  */
-JSR177_STATUSCODE jsr177_xfer_data(jbyte *tx_buffer, jsize tx_size,
-    jbyte *rx_buffer, jsize *rx_size) {
+JSR177_STATUSCODE jsr177_xfer_data_start(jbyte *tx_buffer, jsize tx_size,
+    jbyte *rx_buffer, jsize *rx_size, void **context) {
     int ret_value;
 
+    (void)context;
     if (!DriverInitialized) {
         jsr177_set_error("Driver is not initialized");
         return JSR177_STATUSCODE_FAIL;
@@ -508,6 +535,34 @@ JSR177_STATUSCODE jsr177_xfer_data(jbyte *tx_buffer, jsize tx_size,
     *rx_size = ret_value;
     return JSR177_STATUSCODE_OK;
 }
+
+/** 
+ * Finishes APDU data transfer to the device and receiving the response from the device.
+ * This is synchronous implementation. This function must not be invoked.
+ * @param tx_buffer Buffer with APDU to be sent.
+ * @param tx_size Size of APDU.
+ * @param rx_buffer Buffer to store the response.
+ * @param rx_size Before call: size of <tt>rx_buffer</tt>
+ *                 After call: size of received response.
+ * @param context a context which can keep information between 
+ *                <code>jsr177_xfer_data_start</code> and <code>jsr177_xfer_data_finish</code> calls
+ * @retval JSR177_STATUSCODE_OK if all done successfuly. 
+ * @retval JSR177_STATUSCODE_WOULD_BLOCK if the asynchronous operation has not 
+ *         completed yet. In this case a new call of 
+ *         <code>jsr177_xfer_data_finish</code> must be used for finishing 
+ *         this operation.
+ * @retval JSR177_STATUSCODE_FAIL otherwise
+ */
+JSR177_STATUSCODE jsr177_xfer_data_finish(jbyte *tx_buffer, jsize tx_size,
+    jbyte *rx_buffer, jsize *rx_size, void *context) {
+    (void)tx_buffer;
+    (void)tx_size;
+    (void)rx_buffer;
+    (void)rx_size;
+    (void)context;
+    return JSR177_STATUSCODE_FAIL;
+}
+
 
 /* Internal functions */
 

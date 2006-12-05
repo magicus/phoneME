@@ -1,5 +1,5 @@
 /*
- * @(#)apdu_errors.c	1.1 06/04/20 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -46,7 +46,7 @@ void jsr177_clear_error() {
 	*err_line_top = '\0';
 }
 
-void jsr177_set_error(const jbyte *fmt, ...) {
+void jsr177_set_error(const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	add_error_msg("Error", fmt, ap);
