@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -158,8 +159,11 @@ public final class EventTypes {
     public static final int BACKGROUND_REQUEST_EVENT  =  22;
 
     /**
-     * User request to show the main screen, if any.
-     * The event parameters are unused.
+     * User request to show the midlet selection screen, if any.
+     * <ul>
+     * <li>stringParam1 = 1 if midlet should be selected from the 
+     * list of aunched midlets, if 0 then possibility to launch midlet is needed.
+     * </ul>
      * @see com.sun.midp.main.MIDletProxyList#selectForegroundEvent
      */
     public static final int SELECT_FOREGROUND_EVENT  =  23;
@@ -283,4 +287,14 @@ public final class EventTypes {
      * </ul>
      */
     public static final int SET_FOREGROUND_BY_NAME_REQUEST = 43;
-};
+
+    /*
+     * Sent to request screen rotation
+     */
+    public static final int ROTATION_EVENT = 44;
+
+    /**
+     * MIDlet resources paused notification 
+     */
+    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 45;
+}

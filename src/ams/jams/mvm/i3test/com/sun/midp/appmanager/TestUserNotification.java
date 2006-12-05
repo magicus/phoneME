@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -28,6 +29,7 @@ package com.sun.midp.appmanager;
 import com.sun.midp.i3test.TestCase;
 
 import com.sun.midp.main.*;
+import com.sun.midp.midlet.MIDletSuite;
 
 public class TestUserNotification extends TestCase implements
     MIDletProxyListListener {
@@ -50,54 +52,54 @@ public class TestUserNotification extends TestCase implements
     }
 
     private void startMIDlet1() {
-	try {
-	    // Start a new instance of DummyMIDlet1
-	    MIDletSuiteLoader.execute("internal", DUMMY_MIDLET1_CLASS_NAME,
-                                      "DummyMIDlet1");
-	    
-	    // Wait for async request to be processed 
+        try {
+            // Start a new instance of DummyMIDlet1
+            MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID,
+                DUMMY_MIDLET1_CLASS_NAME, "DummyMIDlet1");
+
+            // Wait for async request to be processed
             synchronized (this) {
                 if (midlet1 == null) {
                     // We only wait the full time on a failure
                     wait(10000);
                 }
-	    }
+            }
 
             assertTrue(DUMMY_MIDLET1_CLASS_NAME + " not started",
                        midlet1 != null);
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void startMIDlet2() {
-	try {
-	    // Start a new instance of DummyMIDlet2
-	    MIDletSuiteLoader.execute("internal", DUMMY_MIDLET2_CLASS_NAME,
-                                      "DummyMIDlet2");
-	    
-	    // Wait for async request to be processed 
+        try {
+            // Start a new instance of DummyMIDlet2
+            MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID,
+                DUMMY_MIDLET2_CLASS_NAME, "DummyMIDlet2");
+
+            // Wait for async request to be processed
             synchronized (this) {
                 if (midlet2 == null) {
                     // We only wait the full time on a failure
                     wait(10000);
                 }
-	    }
+            }
 
             assertTrue(DUMMY_MIDLET2_CLASS_NAME + " not started",
                        midlet2 != null);
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void test1() {
         declare("One");
-	// Launch MIDlet 1
-	startMIDlet1();
+        // Launch MIDlet 1
+        startMIDlet1();
 
-	// Wait for async request to be processed 
-	// Headless MIDlet also occupy foreground
+        // Wait for async request to be processed
+        // Headless MIDlet also occupy foreground
         synchronized (midlet1) {
             if (!midlet1InForeground) {
                 waitForMIDletToGetForeground(midlet1);
@@ -107,10 +109,10 @@ public class TestUserNotification extends TestCase implements
                        midlet1InForeground);
         }
 
-	/*
+        /*
          * Launching a headless MIDlet shouldn't trigger UNS
          */
-	assertTrue(IndicatorManager.getHomeIconState() == false);
+        assertTrue(IndicatorManager.getHomeIconState() == false);
     }
 
     private void test3() {
@@ -124,7 +126,7 @@ public class TestUserNotification extends TestCase implements
          * in startApp and MIDlet 1 will be put in background
          */
 
-	// Wait for async request to be processed 
+	// Wait for async request to be processed
         synchronized (midlet2) {
             if (!midlet2InForeground) {
                 waitForMIDletToGetForeground(midlet2);
@@ -163,7 +165,7 @@ public class TestUserNotification extends TestCase implements
             // ignore
         }
 
-	// Home icon should be on upon background display foreground request 
+	// Home icon should be on upon background display foreground request
 	assertTrue(IndicatorManager.getHomeIconState() == true);
     }
 
@@ -289,6 +291,6 @@ public class TestUserNotification extends TestCase implements
      * @param className Class name of the MIDlet
      * @param error start error code
      */
-    public void midletStartError(int externalAppId, String suiteId,
+    public void midletStartError(int externalAppId, int suiteId,
         String className, int error) {}
 }

@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -216,6 +217,7 @@ endif
 
 ifeq ($(USE_NATIVE_AMS), true)
    EXTRA_CFLAGS += -DENABLE_NATIVE_AMS=1
+   JPP_DEFS	+= -DENABLE_NATIVE_AMS
 else
    EXTRA_CFLAGS += -DENABLE_NATIVE_AMS=0
 endif
@@ -237,6 +239,13 @@ ifeq ($(USE_CLDC_11), true)
     JPP_DEFS	 += -DENABLE_CLDC_11
 else
     EXTRA_CFLAGS += -DENABLE_CLDC_11=0
+endif
+
+ifeq ($(USE_VM_PROFILES), true)
+    EXTRA_CFLAGS += -DENABLE_VM_PROFILES=1
+    JPP_DEFS	 += -DENABLE_VM_PROFILES
+else
+    EXTRA_CFLAGS += -DENABLE_VM_PROFILES=0
 endif
 
 ifeq ($(USE_MONET), true)
@@ -284,6 +293,13 @@ else
     EXTRA_CFLAGS += -DENABLE_DEBUG=0
     JAVAC_DEBUG = :none
     g = 
+endif
+
+ifeq ($(USE_CONTROL_ARGS_FROM_JAD), true)
+    EXTRA_CFLAGS += -DENABLE_CONTROL_ARGS_FROM_JAD=1
+    JPP_DEFS	 += -DENABLE_CONTROL_ARGS_FROM_JAD
+else
+    EXTRA_CFLAGS += -DENABLE_CONTROL_ARGS_FROM_JAD=0
 endif
 
 # Default compile flags

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -37,10 +38,9 @@
  * The security permission should have already been checked before calling this function.
  *
  * @param suiteId    - The application suite ID string
- * @param suiteIdLen - Length of the application suite ID string
  * @param entry      - new dynamic connection entry to be registered with current MIDlet suite
  *
- * @return one of error codes: 
+ * @return one of error codes:
  *        MIDP_ERROR_NONE
  *        MIDP_ERROR_ILLEGAL_ARGUMENT  - if the connection or filter string is invalid
  *        MIDP_ERROR_UNSUPPORTED       - if the runtime system does not support push delivery for the requested connection protocol
@@ -49,10 +49,9 @@
  *        MIDP_ERROR_SUITE_NOT_FOUND
  *        MIDP_ERROR_CONNECTION_IN_USE
  */
-MIDP_ERROR midpport_push_register_connection(jchar *suiteId, jint suiteIdLen,
-					     MIDP_PUSH_ENTRY* entry) {
+MIDP_ERROR midpport_push_register_connection(SuiteIdType suiteId,
+                                             MIDP_PUSH_ENTRY* entry) {
     (void)suiteId;
-    (void)suiteIdLen;
     (void)entry;
     return MIDP_ERROR_UNSUPPORTED;
 }
@@ -61,7 +60,6 @@ MIDP_ERROR midpport_push_register_connection(jchar *suiteId, jint suiteIdLen,
  * Remove a dynamic connection registration.
  *
  * @param suiteId    - The application suite ID string
- * @param suiteIdLen - Length of the application suite ID string
  * @param connection - generic connection protocol, host and port number (optional parameters may be included separated with semi-colons (;))
  * @param connectionLen - number of chars in connection string
  *
@@ -72,12 +70,10 @@ MIDP_ERROR midpport_push_register_connection(jchar *suiteId, jint suiteIdLen,
  *        MIDP_ERROR_SUITE_NOT_FOUND
  *        MIDP_ERROR_PERMISSION_DENIED - if the connection was registered by another MIDlet suite
  */
-MIDP_ERROR midpport_push_unregister_connection(jchar *suiteId, jint suiteIdLen,
-					       jchar* connection, 
-					       jint connectionLen)
-{
+MIDP_ERROR midpport_push_unregister_connection(SuiteIdType suiteId,
+                                               jchar* connection,
+                                               jint connectionLen) {
     (void)suiteId;
-    (void)suiteIdLen;
     (void)connection;
     (void)connectionLen;
 
@@ -86,9 +82,8 @@ MIDP_ERROR midpport_push_unregister_connection(jchar *suiteId, jint suiteIdLen,
 
 /**
  * Return a list of registered connections for the current MIDlet suite.
- * 
+ *
  * @param suiteId - The application suite ID string
- * @param suiteIdLen - Length of the application suite ID string
  * @param available - if true, only return the list of connections with input available, otherwise return the complete list of registered connections for the current MIDlet suite.
  * @param entries - OUT pointer to be set to an array of registered connections for calling MIDlet suite. Caller is responsible for freeing the array after use. Null if no connection is registered.
  * @param pNumOfConnections - OUT pointer to be set to the number of connections returned
@@ -98,12 +93,11 @@ MIDP_ERROR midpport_push_unregister_connection(jchar *suiteId, jint suiteIdLen,
  *           MIDP_ERROR_SUITE_NOT_FOUND
  *           MIDP_ERROR_OUT_OF_RESOURCE
  */
-MIDP_ERROR midpport_push_list_entries(jchar *suiteId, jint suiteIdLen,
-				      jboolean available,
-				      MIDP_PUSH_ENTRY** entries,
-				      jint* pNumOfConnections) {
+MIDP_ERROR midpport_push_list_entries(SuiteIdType suiteId,
+                                      jboolean available,
+                                      MIDP_PUSH_ENTRY** entries,
+                                      jint* pNumOfConnections) {
     (void)suiteId;
-    (void)suiteIdLen;
     (void)available;
     (void)entries;
     (void)pNumOfConnections;
@@ -115,7 +109,6 @@ MIDP_ERROR midpport_push_list_entries(jchar *suiteId, jint suiteIdLen,
  * Register a time to launch the specified MIDlet.
  *
  * @param suiteId    - The application suite ID string
- * @param suiteIdLen - Length of the application suite ID string
  * @param midlet    - class name of the MIDlet to be launched
  * @param midletLen - number of chars in MIDlet class name
  * @param time      - time at which the MIDlet is to be executed in the format of milliseconds since EPOC time (1970/1/1)
@@ -124,14 +117,13 @@ MIDP_ERROR midpport_push_list_entries(jchar *suiteId, jint suiteIdLen,
  * @return one of the error codes:
  *        MIDP_ERROR_NONE
  *        MIDP_ERROR_UNSUPPORTED      - if the runtime system does not support alarm based application launch
- *        MIDP_ERROR_MIDLET_NOT_FOUND   
+ *        MIDP_ERROR_MIDLET_NOT_FOUND
  *        MIDP_ERROR_SUITE_NOT_FOUND
  */
-MIDP_ERROR midpport_push_register_alarm(jchar *suiteId, jint suiteIdLen,
-					jchar* midlet, jint midletLen,
-					jlong time, jlong* previousTime) {
+MIDP_ERROR midpport_push_register_alarm(SuiteIdType suiteId,
+                                        jchar* midlet, jint midletLen,
+                                        jlong time, jlong* previousTime) {
     (void)suiteId;
-    (void)suiteIdLen;
     (void)midlet;
     (void)midletLen;
     (void)time;

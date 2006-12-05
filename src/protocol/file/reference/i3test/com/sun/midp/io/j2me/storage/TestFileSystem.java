@@ -1,4 +1,5 @@
 /*
+ *  
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -27,6 +28,8 @@ package com.sun.midp.io.j2me.storage;
 import java.io.*;
 import javax.microedition.io.*;
 import com.sun.midp.i3test.*;
+import com.sun.midp.configurator.Constants;
+
 
 /**
  * Unit test for File.java.
@@ -34,8 +37,8 @@ import com.sun.midp.i3test.*;
 public class TestFileSystem extends TestCase {
 
     final static String EMPTY_STR = "";
-    final static String TEST_FILE_A = File.getStorageRoot() + "A";
-    final static String TEST_FILE_B = File.getStorageRoot() + "B";
+    final static String TEST_FILE_A = File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) + "A";
+    final static String TEST_FILE_B = File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) + "B";
     
     File fs;
     RandomAccessStream ras;
@@ -53,7 +56,7 @@ public class TestFileSystem extends TestCase {
     public void testGetStorageRoot() {
 
 	// Storage root should not be null
-        assertTrue("getStorageRoot == null", File.getStorageRoot() != null);
+        assertTrue("getStorageRoot == null", File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) != null);
 
 	// Storage root should be writable
         try {
@@ -69,7 +72,7 @@ public class TestFileSystem extends TestCase {
      * - Check config root for null
      */
     public void testGetConfigRoot() {
-        assertTrue("getConfigRoot != null", File.getConfigRoot() != null);
+        assertTrue("getConfigRoot != null", File.getConfigRoot(Constants.INTERNAL_STORAGE_ID) != null);
     }
   
     /*
@@ -275,7 +278,7 @@ public class TestFileSystem extends TestCase {
 	int SIZE = 2048; // bytes
 	int OVERHEAD = 512; // bytes
 
-	int initialSpace = fs.getBytesAvailableForFiles();
+	long initialSpace = fs.getBytesAvailableForFiles(Constants.INTERNAL_STORAGE_ID);
 	assertTrue("initialSpace="+initialSpace, initialSpace > 0);
 
 	try {
@@ -284,9 +287,9 @@ public class TestFileSystem extends TestCase {
 		// Create a file with certain size
 		// expect overhead be less than allowed number 
 		createTestFile(TEST_FILE_A, SIZE);
-		int lessSpace = fs.getBytesAvailableForFiles();
+		long lessSpace = fs.getBytesAvailableForFiles(Constants.INTERNAL_STORAGE_ID);
 		
-		int delta = initialSpace - lessSpace;
+		long delta = initialSpace - lessSpace;
 		
 		assertTrue("space used="+delta, delta >= SIZE);
 
@@ -296,7 +299,7 @@ public class TestFileSystem extends TestCase {
 		// expect delete a file will give back some space
 		// expect less than overhead bytes will be kept
 		fs.delete(TEST_FILE_A);
-		int moreSpace = fs.getBytesAvailableForFiles();
+		long moreSpace = fs.getBytesAvailableForFiles(Constants.INTERNAL_STORAGE_ID);
 
 		delta = moreSpace - lessSpace;
 

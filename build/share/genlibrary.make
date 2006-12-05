@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -109,7 +110,7 @@ LIB_TEMP_I3TEST_CLASS_LIST=$(LIB_BLD_PATH)/i3test_classlist.tmp
 LIB_I3TEST_JAVA_PATHS=$(addprefix $(LIB_SRC_PATH)/$(LIB_IMPL)/i3test/,$(LIB_I3TEST_FILES))
 
 #
-# Trick to specify an space as an argument  for subst
+# Way to specify an space as an argument  for subst
 #
 EMPTY=
 ONESPACE=$(EMPTY) $(EMPTY)

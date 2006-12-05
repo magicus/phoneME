@@ -1,4 +1,5 @@
 #
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -81,3 +82,9 @@ SUBSYSTEM_SOCKET_NATIVE_FILES += \
 
 SUBSYSTEM_SOCKET_EXTRA_INCLUDES += \
     -I$(SUBSYSTEM_DIR)/protocol/gcf/include
+
+ifeq ($(USE_I3_TEST), true)
+  SUBSYSTEM_GCF_I3TEST_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/i3test/com/sun/midp/io/TestHttpUrl.java
+
+endif

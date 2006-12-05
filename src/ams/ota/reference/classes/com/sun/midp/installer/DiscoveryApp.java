@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -59,7 +60,7 @@ import javax.microedition.lcdui.List;
 public class DiscoveryApp extends MIDlet implements CommandListener {
 
     /** Display for this MIDlet. */
-    private Display display;    
+    private Display display;
     /** Contains the default URL for the install list. */
     private String defaultInstallListUrl = "http://";
     /** Contains the URL the user typed in. */
@@ -79,23 +80,23 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
 
     /** Command object for URL screen to go and discover available suites. */
     private Command discoverCmd =
-        new Command(Resource.getString(ResourceConstants.GOTO), 
+        new Command(Resource.getString(ResourceConstants.GOTO),
                     Command.SCREEN, 1);
     /** Command object for "Install" command in the suite list form . */
     private Command installCmd = new Command(
         Resource.getString(ResourceConstants.INSTALL), Command.ITEM, 1);
     /** Command object for "Back" command in the suite list form. */
     private Command backCmd = new Command(Resource.getString
-                                          (ResourceConstants.BACK), 
+                                          (ResourceConstants.BACK),
                                           Command.BACK, 1);
     /** Command object for URL screen to save the URL for suites. */
     private Command saveCmd =
-        new Command(Resource.getString(ResourceConstants.SAVE), 
+        new Command(Resource.getString(ResourceConstants.SAVE),
                     Command.SCREEN, 2);
 
     /** Command object for "Back" command in the URL form. */
     private Command endCmd = new Command(Resource.getString
-                                         (ResourceConstants.BACK), 
+                                         (ResourceConstants.BACK),
                                          Command.BACK, 1);
 
     /**
@@ -166,7 +167,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         DataInputStream dis;
         byte[] data;
         RecordStore settings = null;
-        
+
         try {
             settings = RecordStore.openRecordStore(
                        GraphicalInstaller.SETTINGS_STORE, false);
@@ -211,7 +212,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
 
         temp = urlTextBox.getString();
 
-        ex = GraphicalInstaller.saveSettings(temp, null);
+        ex = GraphicalInstaller.saveSettings(temp, MIDletSuite.INTERNAL_SUITE_ID);
         if (ex != null) {
             displayException(Resource.getString
                              (ResourceConstants.EXCEPTION), ex.toString());
@@ -233,7 +234,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         Image icon;
         Alert successAlert;
 
-        icon = GraphicalInstaller.getImageFromStorage("_dukeok8");
+        icon = GraphicalInstaller.getImageFromInternalStorage("_dukeok8");
 
         successAlert = new Alert(null, successMessage, icon, null);
 
@@ -278,11 +279,11 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         progressForm.setTitle(action + " " + name);
 
         if (size <= 0) {
-            progressGauge = new Gauge(gaugeLabel, 
+            progressGauge = new Gauge(gaugeLabel,
                                       false, Gauge.INDEFINITE,
                                       Gauge.CONTINUOUS_RUNNING);
         } else {
-            progressGauge = new Gauge(gaugeLabel, 
+            progressGauge = new Gauge(gaugeLabel,
                                       false, size, 0);
         }
 
@@ -343,7 +344,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
             sb.append(ex.toString());
 
             Alert a = new Alert(Resource.getString
-                                (ResourceConstants.AMS_CANNOT_START), 
+                                (ResourceConstants.AMS_CANNOT_START),
                                 sb.toString(), null, AlertType.ERROR);
             a.setTimeout(Alert.FOREVER);
             display.setCurrent(a, urlTextBox);
@@ -367,11 +368,11 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
                GraphicalInstaller.ALERT_TIMEOUT);
 
         if (size <= 0) {
-            progressGauge = new Gauge(gaugeLabel, 
-                                      false, Gauge.INDEFINITE, 
+            progressGauge = new Gauge(gaugeLabel,
+                                      false, Gauge.INDEFINITE,
                                       Gauge.CONTINUOUS_RUNNING);
         } else {
-            progressGauge = new Gauge(gaugeLabel, 
+            progressGauge = new Gauge(gaugeLabel,
                                       false, size, 0);
         }
 
@@ -413,7 +414,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
 
             display.setCurrent(urlTextBox);
         } catch (Exception ex) {
-            displayException(Resource.getString(ResourceConstants.EXCEPTION), 
+            displayException(Resource.getString(ResourceConstants.EXCEPTION),
                              ex.toString());
         }
     }
@@ -469,7 +470,7 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
                 parent.displayProgressForm(
                         Resource.getString(
                         ResourceConstants.AMS_DISC_APP_GET_INSTALL_LIST),
-                        "", url, 0, 
+                        "", url, 0,
                         Resource.getString(
                         ResourceConstants.AMS_GRA_INTLR_CONN_GAUGE_LABEL));
                 conn = (StreamConnection)Connector.open(url, Connector.READ);
@@ -481,9 +482,9 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
 
                     parent.installList =
                         SuiteDownloadInfo.getDownloadInfoFromPage(in);
-                    
+
                     if (parent.installList.size() > 0) {
-                        parent.installListBox = 
+                        parent.installListBox =
                             new List(Resource.getString
                                      (ResourceConstants.
                                       AMS_DISC_APP_SELECT_INSTALL),
@@ -503,10 +504,10 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
 
                         /*
                          * We need to prevent "flashing" on fast development
-                         * platforms. 
+                         * platforms.
                          */
                         while (System.currentTimeMillis() -
-                            parent.lastDisplayChange < 
+                            parent.lastDisplayChange <
                             GraphicalInstaller.ALERT_TIMEOUT);
 
                         parent.display.setCurrent(parent.installListBox);

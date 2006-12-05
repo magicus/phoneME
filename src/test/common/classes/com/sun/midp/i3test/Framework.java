@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -25,6 +26,7 @@
 
 package com.sun.midp.i3test;
 
+import java.util.Vector;
 import javax.microedition.midlet.*;
 
 /**
@@ -38,11 +40,35 @@ public class Framework extends MIDlet implements Runnable {
     boolean verbose = false;
     boolean error = false;
     String testClass = null;
+    String filterString = null;
+    /** Indicates whether a thread running test cases has been started. */
+    private boolean started = false;
 
     void runTestCases(String[] nameArray) {
         for (int i = 0; i < nameArray.length; i++) {
             TestCase.runTestCase(nameArray[i]);
         }
+        TestCase.report();
+    }
+
+    void listTestCases(String[] nameArray) {
+        for (int i = 0; i < nameArray.length; i++) {
+            System.out.println(nameArray[i]);
+        }
+    }
+
+    String[] doFilter(String[] nameArray, String filter) {
+        Vector vec = new Vector();
+
+        for (int i = 0; i < nameArray.length; i++) {
+            if (filter == null || (nameArray[i].indexOf(filter) >= 0)) {
+                vec.addElement(nameArray[i]);
+            }
+        }
+
+        String[] ret = new String[vec.size()];
+        vec.copyInto(ret);
+        return ret;
     }
 
     public Framework() {
@@ -56,6 +82,8 @@ public class Framework extends MIDlet implements Runnable {
         for (int a = 0; a < argc; a++) {
             if (argv[a] == null) {
                 break;
+            } else if (argv[a].startsWith("-filter:")) {
+                filterString = argv[a].substring(8);
             } else if ("-list".equals(argv[a])) {
                 listmode = true;
             } else if ("-selftest".equals(argv[a])) {
@@ -66,9 +94,11 @@ public class Framework extends MIDlet implements Runnable {
                 System.err.print(
                     "usage: i3test [option] [testclass]\n" +
                     "options:\n" +
-                    "  -list: prints a list of known tests\n" +
-                    "  -selftest: runs the framework's self test\n" +
-                    "  -verbose: enables verbose output\n" +
+                    "  -filter:pattern  " +
+                            "runs tests whose names contain pattern\n" +
+                    "  -list            prints a list of known tests\n" +
+                    "  -selftest        runs the framework's self test\n" +
+                    "  -verbose         enables verbose output\n" +
                     "Given a testclass argument, runs just that test.\n" +
                     "Without a testclass argument, runs all known tests.\n");
                 error = true;
@@ -83,17 +113,13 @@ public class Framework extends MIDlet implements Runnable {
 
     public void run() {
         if (listmode) {
-            for (int i = 0; i < Repository.testNames.length; i++) {
-                System.out.println(Repository.testNames[i]);
-            }
+            listTestCases(doFilter(Repository.testNames, filterString));
         } else if (selftest) {
             SelfTest.run();
         } else if (testClass != null) {
-            TestCase.runTestCase(testClass);
-            TestCase.report();
+            runTestCases(new String[] { testClass });
         } else {
-            runTestCases(Repository.testNames);
-            TestCase.report();
+            runTestCases(doFilter(Repository.testNames, filterString));
         }
 
         notifyDestroyed();
@@ -102,7 +128,8 @@ public class Framework extends MIDlet implements Runnable {
     public void startApp() {
         if (error) {
             notifyDestroyed();
-        } else {
+        } else if (!started) {
+            started = true;
             new Thread(this).start();
         }
     }

@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -151,6 +152,7 @@ Java_com_sun_midp_chameleon_input_PTIteratorImpl_ptNextCompletionOption0() {
     jint handle = 0;
     jint outStringLen;
     jchar nextCompletion[256] = {0};
+    jsize resultLength;
     KNI_StartHandles(1);
     KNI_DeclareHandle(string);
     handle = (int)KNI_GetParameterAsInt(1);
@@ -158,7 +160,8 @@ Java_com_sun_midp_chameleon_input_PTIteratorImpl_ptNextCompletionOption0() {
    
     result = ptNextCompletionOption(handle, nextCompletion, outStringLen);
     if (result == KNI_TRUE) {
-        KNI_NewString(nextCompletion, result, string);
+        for (resultLength = 0; nextCompletion[resultLength]; resultLength++) {}
+        KNI_NewString(nextCompletion, resultLength, string);
     } else {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     }

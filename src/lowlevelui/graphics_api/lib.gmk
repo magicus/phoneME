@@ -1,3 +1,4 @@
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -56,8 +57,18 @@ vpath % \
 
 # Include path for the sub-system
 #
+ifeq ($(PLATFORM), wince)
+
+SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_DIR)/lowlevelui/graphics_api/include \
+    -I$(SUBSYSTEM_DIR)/lowlevelui/graphics/putpixel/native
+
+else
+
 SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES += \
     -I$(SUBSYSTEM_DIR)/lowlevelui/graphics_api/include
+
+endif
 
 # I3test files
 #

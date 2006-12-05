@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -55,7 +56,7 @@
  * @endverbatim
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_javax_microedition_lcdui_Display_vibrate0() {
+KNIDECL(javax_microedition_lcdui_Display_vibrate0) {
     int dur = KNI_GetParameterAsInt(2);
     int displayId = KNI_GetParameterAsInt(1);
 

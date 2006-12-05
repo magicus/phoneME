@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,6 +24,7 @@
  * information or have any questions. 
  */
 
+#include <kni.h>
 #include <midp_logging.h>
 #include <lfjport_export.h>
 
@@ -108,4 +110,35 @@ void lfjport_set_fullscreen_mode(jboolean mode) {
  */
 void lfjport_gained_foreground() {
     REPORT_CALL_TRACE(LC_HIGHUI, "LF:STUB:gainedForeground()\n");
+}
+
+/**
+ * Change screen orientation flag
+ */
+jboolean lfjport_reverse_orientation() {
+    // not implemented
+    return KNI_FALSE;
+}
+
+/**
+ * Change screen orientation flag
+ */
+jboolean lfjport_get_reverse_orientation() {
+    return KNI_FALSE;        
+}
+
+/**
+ * Return screen width
+ */
+int lfjport_get_screen_width() {
+    // not implemented
+    return 0;
+}
+
+/**
+ * Return screen height
+ */
+int lfjport_get_screen_height() {
+    // not implemented
+    return 0;
 }

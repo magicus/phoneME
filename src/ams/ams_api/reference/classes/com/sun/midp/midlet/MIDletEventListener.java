@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,7 +32,6 @@ import com.sun.midp.events.EventQueue;
 import com.sun.midp.events.EventListener;
 import com.sun.midp.events.NativeEvent;
 
-import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.lcdui.DisplayContainer;
 import com.sun.midp.lcdui.DisplayAccess;
 
@@ -78,7 +78,7 @@ public class MIDletEventListener implements EventListener {
          * to call methods of found consumer.
          */
         eventQueue.registerEventListener(EventTypes.ACTIVATE_MIDLET_EVENT, 
-					 this);
+					this);
         eventQueue.registerEventListener(EventTypes.PAUSE_MIDLET_EVENT, this);
         eventQueue.registerEventListener(EventTypes.DESTROY_MIDLET_EVENT, this);
     }

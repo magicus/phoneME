@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -28,10 +29,6 @@
 #include <armsdapp_ui.h>
 #include <gxj_putpixel.h>
 #include <midpMalloc.h>
-
-#ifdef ENABLE_JSR_184
-#include <swvapi.h>
-#endif
 
 gxj_screen_buffer gxj_system_screen_buffer;
 
@@ -63,22 +60,13 @@ void armsdapp_init() {
     gxj_system_screen_buffer.height = CHAM_HEIGHT;
     gxj_system_screen_buffer.alphaData = 0;
     gxj_system_screen_buffer.pixelData = (gxj_pixel_type *)midpMalloc(screenSize);
-    memset(gxj_system_screen_buffer.pixelData, 0, screenSize);
-
-#ifdef ENABLE_JSR_184
-    engine_initialize();
-#endif
-    
+    memset(gxj_system_screen_buffer.pixelData, 0, screenSize);    
 }
 
 /**
  * Finalize the ARMSD native resources.
  */
 void armsdapp_finalize() {
-   
-#ifdef ENABLE_JSR_184
-    engine_uninitialize();
-#endif 
     midpFree(gxj_system_screen_buffer.pixelData);
 }
 

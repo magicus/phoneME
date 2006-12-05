@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -287,9 +288,19 @@ abstract class ItemLFImpl implements ItemLF {
 	    actualBoundsInvalid[Y] = true;
 	    actualBoundsInvalid[WIDTH] = true;
 	    actualBoundsInvalid[HEIGHT] = true;
-	    validRequestedSizes = false;
+	    cachedWidth = INVALID_SIZE;
 	    hasFocus = false;
 	}
+    }
+
+    /**
+     * Return whether the cached requested sizes are valid.
+     *
+     * @return <code>true</code> if the cached requested sizes are up to date.
+     *	       <code>false</code> if they have been invalidated.
+     */
+    public final boolean isRequestedSizesValid() {
+	    return (cachedWidth != INVALID_SIZE);
     }
 
     // *****************************************************
@@ -494,7 +505,7 @@ abstract class ItemLFImpl implements ItemLF {
      * Initialize native resource - size and location.
      */
     void initNativeResource() {
-	if (nativeId != DisplayableLFImpl.INVALID_NATIVE_ID) {
+    if (nativeId != DisplayableLFImpl.INVALID_NATIVE_ID) {
 	    if (!actualBoundsInvalid[WIDTH] && !actualBoundsInvalid[HEIGHT]) {
 		setSize0(nativeId, bounds[WIDTH], bounds[HEIGHT]);
 	    }
@@ -736,7 +747,7 @@ abstract class ItemLFImpl implements ItemLF {
         actualBoundsInvalid[HEIGHT] = actualBoundsInvalid[HEIGHT] || height;
 
 	if (width || height) {
-	    validRequestedSizes = false;
+	    cachedWidth = INVALID_SIZE;
 	}
 	
 	// if native resource is not visible we still need 
@@ -745,16 +756,6 @@ abstract class ItemLFImpl implements ItemLF {
         if (item.owner != null) {
 	    ((DisplayableLFImpl)item.owner.getLF()).lRequestInvalidate();
         }
-    }
-
-    /**
-     * Return whether the cached requested sizes are valid.
-     * 
-     * @return <code>true</code> if the cached requested sizes are up to date.
-     *	       <code>false</code> if they have been invalidated.
-     */
-    final boolean isRequestedSizesValid() {
-	return validRequestedSizes;
     }
 
     /**
@@ -774,7 +775,7 @@ abstract class ItemLFImpl implements ItemLF {
 	minimumHeight = mh;
 	preferredWidth = pw;
 	preferredHeight = ph;
-	validRequestedSizes = true;
+	cachedWidth= pw;
 
 	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
 	    Logging.report(Logging.INFORMATION,
@@ -797,7 +798,7 @@ abstract class ItemLFImpl implements ItemLF {
      */
     void lGetRequestedSizes() {
 
-	if (validRequestedSizes) {
+	if (cachedWidth != INVALID_SIZE) {
 	    return;
 	}
 
@@ -882,7 +883,7 @@ abstract class ItemLFImpl implements ItemLF {
 	    deleteNativeResource();
 	}
 
-	validRequestedSizes = true;
+	cachedWidth = preferredWidth;
 	
 	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
 	    Logging.report(Logging.INFORMATION,
@@ -1146,12 +1147,6 @@ abstract class ItemLFImpl implements ItemLF {
     boolean[] actualBoundsInvalid;
     
     /**
-     * Flag that indicates if the preferredHeight, preferredWidth, 
-     * minimumHeight, minimumWidth are valid, or need a new query.
-     */
-    private boolean validRequestedSizes;
-
-    /**
      * Cached preferred height when validRequestedSizes is <code>false</code>.
      */
     private int preferredHeight;
@@ -1192,4 +1187,15 @@ abstract class ItemLFImpl implements ItemLF {
      * This variable is set and read by <code>FormLFImpl</code> during layout.
      */
     int rowHeight = 0;
+
+    /**
+     * A constant used to indicate that Item sizes have to be recalculated.
+     */
+    static final int INVALID_SIZE = -1;
+
+    /**
+     * Width used for last calculations. If that indicates if the preferredHeight, preferredWidth,
+     * minimumHeight, minimumWidth are valid, or need a new query.
+     */
+    int cachedWidth = INVALID_SIZE;
 }

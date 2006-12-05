@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -48,18 +49,28 @@ public class TickerResources {
         
         TickerSkin.HEIGHT = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_HEIGHT);
-        TickerSkin.ALIGN = SkinResources.getInt(
+
+        int align = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_ALIGN);
-        TickerSkin.DIRECTION = SkinResources.getInt(
+        TickerSkin.ALIGN = SkinResources.resourceConstantsToGraphics(align);
+
+        int direction = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_DIRECTION);
+        TickerSkin.DIRECTION = SkinResources.resourceConstantsToGraphics(
+                direction);
+
         TickerSkin.RATE = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_RATE);
         TickerSkin.SPEED = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_SPEED);
         TickerSkin.TEXT_ANCHOR_Y = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_TEXT_ANCHOR_Y);
-        TickerSkin.TEXT_SHD_ALIGN = SkinResources.getInt(
+
+        int shdAlign = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_TEXT_SHD_ALIGN);
+        TickerSkin.TEXT_SHD_ALIGN = SkinResources.resourceConstantsToGraphics(
+                shdAlign);
+
         TickerSkin.COLOR_BG = SkinResources.getInt(
                 SkinPropertiesIDs.TICKER_COLOR_BG);
         TickerSkin.COLOR_FG = SkinResources.getInt(

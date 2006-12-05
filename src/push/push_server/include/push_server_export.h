@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -30,20 +31,21 @@
  * @defgroup push_server Push Registry low-level implementation
  * @ingroup push
  */
- 
+
 /**
  * @file
  * @ingroup push_server
- * 
+ *
  * @brief Push server functionality provided for Push Registry and AMS.
  *
- * ##include &lt;push_server_export.h&gt;
+ * ##include &lt;&gt;
  *
  * @{
  */
 
 #include <kni.h>
 #include <pcsl_string.h>
+#include <suitestore_common.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,7 +67,7 @@ int pushadd(char* str);
  * Remove one entry from the push registry.
  * If the entry is not registered return an error.
  * On successful deletion, write a new copy of the file to disk.
- * 
+ *
  * @param str The push entry string to be deleted
  * @param store The MIDletSuite storagename
  * @return <tt>0</tt> if successful, <tt>-2</tt> if the entry belongs
@@ -124,14 +126,14 @@ char* pushfindconn(char* str);
  * Check in the handle for the requested connection,
  * given the connection name.
  * @param str The connection name
- * @return <tt>0</tt> on success, or <tt>-1</tt> on failure to check in the 
+ * @return <tt>0</tt> on success, or <tt>-1</tt> on failure to check in the
  * file descriptor to the cached push registry.
  */
 int pushcheckinbyname(char* str);
 
 /**
  * Check in all the push connections. Used to cleanup by runMIDletWithArgs.
- * 
+ *
  */
 void pushcheckinall();
 
@@ -141,32 +143,32 @@ void pushcheckinall();
  * The method does not check in connections that may still be used
  * by the next MIDlet, but leaves them alive.
  *
- * @param nextToRun suiteID of the next suite to run
+ * @param nextToRun suiteId of the next suite to run
  */
-void pushcheckinLeftOvers(const pcsl_string * nextToRun);
+void pushcheckinLeftOvers(SuiteIdType nextToRun);
 
 /**
  * Check in connections that are in
  * launch-pending state for a specific MIDlet.
  *
- * @param pszSuiteId Suite ID of the MIDlet
+ * @param suiteId Suite ID of the MIDlet
  * @param pszClassName Class name of the MIDlet
  *                  array
  */
-void pushcheckinbymidlet(char* pszSuiteId, char* pszClassName);
+void pushcheckinbymidlet(SuiteIdType suiteId, char* pszClassName);
 
 /**
  * Open the push registry files and populate the push memory structures.
  *
  * @return <tt>0</tt> for success, non-zero if there is a resource problem
- *                
+ *
  */
 int pushopen();
 
 /**
  * Destroy the push and alarm memory resources. Maintain the push
  * registrations in the push registry file.
- * 
+ *
  */
 void pushclose();
 
@@ -175,7 +177,7 @@ void pushclose();
  *
  * @param id The suite ID to be removed from the push registry
  */
-void pushdeletesuite(const pcsl_string * id);
+void pushdeletesuite(SuiteIdType id);
 
 /**
  * Add one entry to the alarm registry.
@@ -196,7 +198,7 @@ int alarmadd(char* str, jlong alarm, jlong* lastalarm);
  * registry of push entries for a handle that matches the argument. If one is
  * found, its push entry state is set to RECEIVED_EVENT and the handle is
  * returned.
- * 
+ *
  * @param handle The handle to test for in the push registry
  * @return <tt>0</tt> if no entry is found. Otherwise, <tt>handle</tt> is
  *          returned
@@ -208,7 +210,7 @@ int findPushBlockedHandle(int handle);
  * registry of alarm entries for a handle that matches the argument. If
  * one is found, its entry state is set to RECEIVED_EVENT and the handle is
  * returned.
- * 
+ *
  * @param handle The handle to test for in the alarm registry
  * @return <tt>0</tt> if no entry is found. Otherwise, <tt>handle</tt> is
  *          returned
@@ -219,7 +221,7 @@ int findPushTimerBlockedHandle(int handle);
  * Add one entry to the push registry.
  * If the entry already exists return IO_ERROR_LEN (midpString.h).
  *
- * @param suiteID ID of the suite
+ * @param suiteId ID of the suite
  * @param connection generic connection name (no spaces)
  * @param midlet class name of the MIDlet (no spaces)
  * @param filter filter string (no spaces)
@@ -227,10 +229,18 @@ int findPushTimerBlockedHandle(int handle);
  * @return 0 for success, OUT_OF_MEM_LEN for out of memory,
  * IO_ERROR_LEN if already registered
  */
-int midpAddPushEntry(const pcsl_string * suiteID,
+int midpAddPushEntry(SuiteIdType suiteId,
                      const pcsl_string * connection,
                      const pcsl_string * midlet,
                      const pcsl_string * filter);
+
+/**
+ * Wildcard comparing the pattern and the string.
+ * @param pattern The pattern that can contain '*' and '?'
+ * @param str The string for comparing
+ * @return <tt>1</tt> if the comparison is successful, <tt>0</tt> if it fails
+ */
+int wildComp(const char *pattern, const char *str);
 
 #ifdef __cplusplus
 }

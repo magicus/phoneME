@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -30,6 +31,7 @@ import com.sun.midp.chameleon.skins.ScreenSkin;
 
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Font;
+import javax.microedition.lcdui.Display;
 
 import com.sun.midp.configurator.Constants;
 
@@ -49,13 +51,15 @@ public class ScreenResources {
         }
 
         // These 3 values come from the underlying system and get compiled
-        // into MIDP using the constants.xml and generator
-        ScreenSkin.WIDTH = Constants.CHAM_WIDTH;
-        ScreenSkin.HEIGHT = Constants.CHAM_HEIGHT;
-        ScreenSkin.FULLHEIGHT = Constants.CHAM_FULLHEIGHT;
+        // into MIDP stack using the constants.xml and generator
+        ScreenSkin.WIDTH =  Display.getScreenWidth0(); //Constants.CHAM_WIDTH;
+        ScreenSkin.HEIGHT = Display.getScreenHeight0(); //Constants.CHAM_HEIGHT;
 
-        ScreenSkin.TEXT_ORIENT = SkinResources.getInt(
+        int textOrient = SkinResources.getInt(
                 SkinPropertiesIDs.SCREEN_TEXT_ORIENT);
+        ScreenSkin.TEXT_ORIENT = SkinResources.resourceConstantsToGraphics(
+                textOrient);
+
         ScreenSkin.PAD_FORM_ITEMS = SkinResources.getInt(
                 SkinPropertiesIDs.SCREEN_PAD_FORM_ITEMS);
         ScreenSkin.PAD_LABEL_VERT = SkinResources.getInt(
@@ -78,8 +82,14 @@ public class ScreenResources {
                 SkinPropertiesIDs.SCREEN_COLOR_BORDER_HL);
         ScreenSkin.COLOR_TRAVERSE_IND = SkinResources.getInt(
                 SkinPropertiesIDs.SCREEN_COLOR_TRAVERSE_IND);
-        ScreenSkin.BORDER_STYLE = SkinResources.getInt(
+
+        int borderStyle = SkinResources.getInt(
                 SkinPropertiesIDs.SCREEN_BORDER_STYLE);
+        ScreenSkin.BORDER_STYLE = SkinResources.resourceConstantsToGraphics(
+                borderStyle);
+
+        ScreenSkin.SCROLL_AMOUNT = SkinResources.getInt(
+                SkinPropertiesIDs.SCREEN_SCROLL_AMOUNT);
         ScreenSkin.FONT_LABEL = SkinResources.getFont(
                 SkinPropertiesIDs.SCREEN_FONT_LABEL);
         ScreenSkin.FONT_INPUT_TEXT = SkinResources.getFont(

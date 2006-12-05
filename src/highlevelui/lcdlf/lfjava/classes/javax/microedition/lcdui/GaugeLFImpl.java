@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -475,8 +476,7 @@ class GaugeLFImpl extends ItemLFImpl implements GaugeLF {
      */
     void uCallKeyPressed(int keyCode) {
         if (keyCode != Constants.KEYCODE_SELECT ||
-            !gauge.interactive) 
-        {
+            !gauge.interactive) {
             return;
         }
         
@@ -520,6 +520,142 @@ class GaugeLFImpl extends ItemLFImpl implements GaugeLF {
         }
     }
 
+    
+    /**
+     * Called by the system to signal a pointer press
+     *
+     * @param x the x coordinate of the pointer down
+     * @param y the y coordinate of the pointer down
+     *
+     * @see #getInteractionModes
+     */
+    void uCallPointerPressed(int x, int y) {
+        if (gauge.interactive) {
+            pointerArea = getPointerArea(x, y);
+
+            switch(pointerArea) {
+            case DEC_BTN_AREA:
+                focusBtn = I_DEC_BTN;
+                uRequestPaint();
+                break;
+            case INC_BTN_AREA:
+                focusBtn = I_INC_BTN;
+                uRequestPaint();
+                break;
+            default:
+                break;
+            }
+        }
+    }
+   
+    /**
+     * Get the area of gauge the pointer cliked in.
+     * @param x x coordinate of pointer 
+     * @param y y coordinate of pointer 
+     * @return the gauge area is returned. The possible values are
+     *
+     * @see #INVALID_AREA if pointer is out of gauge's bounds 
+     * @see #INC_BTN_AREA if pointer is on the increment button
+     * @see #DEC_BTN_AREA if pointer is on the decrement button
+     * @see #METER_AREA if pointer is on the meter
+     */
+    private int getPointerArea(int x, int y) {
+        int area = INVALID_AREA;
+
+        x -= contentBounds[X];
+        y -= contentBounds[Y];
+
+        if (area == INVALID_AREA &&
+            GaugeSkin.IMAGE_DEC_BTN != null &&
+            // check coordinates
+            x >= GaugeSkin.DEC_BTN_X &&
+            y > GaugeSkin.DEC_BTN_Y &&
+            x <= (GaugeSkin.DEC_BTN_X +
+                  GaugeSkin.IMAGE_DEC_BTN.getWidth()) &&
+            y <= (GaugeSkin.DEC_BTN_Y +
+                  GaugeSkin.IMAGE_DEC_BTN.getHeight())) {
+            
+            area = DEC_BTN_AREA;
+        }
+        if (area == INVALID_AREA &&
+            GaugeSkin.IMAGE_INC_BTN != null &&
+            // check coordinates
+            x >= GaugeSkin.INC_BTN_X &&
+            y > GaugeSkin.INC_BTN_Y &&
+            x <= (GaugeSkin.INC_BTN_X +
+                  GaugeSkin.IMAGE_INC_BTN.getWidth()) &&
+            y <= (GaugeSkin.INC_BTN_Y +
+                  GaugeSkin.IMAGE_INC_BTN.getHeight())) {
+            
+            area = INC_BTN_AREA;
+        }
+        if (area == INVALID_AREA &&
+            // check coordinates
+            x >= GaugeSkin.METER_X && y > GaugeSkin.METER_Y &&
+            x <= (GaugeSkin.METER_X +
+                  GaugeSkin.IMAGE_METER_FULL.getWidth()) && 
+            y <= (GaugeSkin.METER_Y +
+                  GaugeSkin.IMAGE_METER_FULL.getHeight())) {
+            
+            area = METER_AREA;
+        }
+        
+        return area;
+    }
+    
+    /**
+     * Called by the system to signal a pointer release
+     *
+     * @param x the x coordinate of the pointer up
+     * @param y the x coordinate of the pointer up
+     */
+    void uCallPointerReleased(int x, int y) {
+        if (gauge.interactive) {
+            int newArea = getPointerArea(x, y);
+        
+            if (pointerArea == newArea) {
+                switch (pointerArea) {
+                case DEC_BTN_AREA:
+                case INC_BTN_AREA:
+                    uCallKeyPressed(Constants.KEYCODE_SELECT);
+                    break;
+                case METER_AREA:
+                    {
+                        Form form = null;
+                        synchronized (Display.LCDUILock) {
+                            int oldValue = gauge.value;
+                            int locationOnMeter = x - contentBounds[X] - GaugeSkin.METER_X;
+                            float percent = locationOnMeter * 100 / GaugeSkin.IMAGE_METER_FULL.getWidth(); 
+                            float value = percent / 100 * gauge.maxValue;
+                            /* round the value */
+                            int intValue = (int)value;
+                            float remainder = value - intValue;
+                            if (remainder > 0.5) {
+                                intValue++;
+                            }
+                            
+                            gauge.setValueImpl(intValue);
+                            lRequestPaint();
+                            if (intValue != oldValue) {
+                                // notify the ItemStateChangedListener
+                                form = (Form)gauge.owner;
+                            }
+                        }
+                        // SYNC NOTE: We make sure we notify the ItemStateChangedListener
+                        // outside of LCDUILock
+                        if (form != null) {
+                            form.uCallItemStateChanged(gauge);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+                } // end of switch 
+            } // pointerArea == newArea
+        } // interactive gauge
+    }
+
+    
     /**
      * Called by the system to notify this Item it is being shown
      *
@@ -1264,5 +1400,19 @@ class GaugeLFImpl extends ItemLFImpl implements GaugeLF {
      * the gauge itself.
      */
     boolean intTraverse;
+    
+    /**
+     * the area accepting the pointer event
+     */ 
+    private int pointerArea = INVALID_AREA;
+
+    /** 
+     * the different areas of an interactive gauge, used for pointer events
+     */ 
+    private static final int INVALID_AREA = -1;
+    private static final int DEC_BTN_AREA = 0;
+    private static final int INC_BTN_AREA = 1;
+    private static final int METER_AREA = 2;
+    
     
 } // GaugeView

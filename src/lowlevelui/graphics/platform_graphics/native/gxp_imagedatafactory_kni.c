@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -47,6 +48,8 @@
 #include <jvm.h>
 #include <sni.h>
 
+#include <suitestore_common.h>
+
 #if ENABLE_IMAGE_CACHE
 #include <imageCache.h>
 #endif
@@ -62,10 +65,10 @@
  *         <tt>ImageData</tt> object. Otherwise NULL.
  */
 gxpport_image_native_handle gxp_get_imagedata(jobject imgData) {
-    
+
     if (KNI_IsNullHandle(imgData)) {
         return NULL;
-    } else {        
+    } else {
 	return (gxpport_image_native_handle)GXAPI_GET_IMAGEDATA_PTR(imgData)->nativeImageData;
     }
 }
@@ -78,7 +81,7 @@ gxpport_image_native_handle gxp_get_imagedata(jobject imgData) {
  *  @param srcBuffer input data to be decoded.
  *  @param length length of the input data.
  *  @param ret_dataBuffer pointer to the platform representation data that *         be saved.
- *  @param ret_length pointer to the length of the return data. 
+ *  @param ret_length pointer to the length of the return data.
  *  @return one of error codes:
  *              MIDP_ERROR_NONE,
  *              MIDP_ERROR_OUT_MEM,
@@ -94,10 +97,10 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
 
     /* This external API is implemented in each platform */
     gxpport_decodeimmutable_to_platformbuffer(srcBuffer, (long)length,
-					      ret_dataBuffer, 
+					      ret_dataBuffer,
 					      (long *)ret_length,
 					      &creationError);
-    
+
     switch (creationError) {
 
     case GXUTL_NATIVE_IMAGE_NO_ERROR:
@@ -129,7 +132,7 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDataCopy() {
-    
+
     gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
 
     /* mutable image */
@@ -205,23 +208,23 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDataRegion() 
 
     KNI_GetParameterAsObject(2, srcImg);
     KNI_GetParameterAsObject(1, destImg);
-        
+
     /* get src image's midpNative data */
     srcImagePtr = gxp_get_imagedata(srcImg);
 
     if (KNI_FALSE == ismutable) {
 	/* immutable image */
-        gxpport_createimmutable_from_immutableregion(srcImagePtr, 
-						     x, y, width, height, 
+        gxpport_createimmutable_from_immutableregion(srcImagePtr,
+						     x, y, width, height,
 						     transform,
-						     &newImagePtr, 
+						     &newImagePtr,
 						     &creationError);
     } else {
 	/* mutable image */
-	gxpport_createimmutable_from_mutableregion(srcImagePtr, 
-						   x, y, width, height, 
+	gxpport_createimmutable_from_mutableregion(srcImagePtr,
+						   x, y, width, height,
 						   transform,
-						   &newImagePtr, 
+						   &newImagePtr,
 						   &creationError);
     }
 
@@ -271,8 +274,8 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeImage()
     KNI_GetParameterAsObject(1, imageData);
 
     do {
-        if ((offset < 0) || 
-            (length < 0) || 
+        if ((offset < 0) ||
+            (length < 0) ||
             (offset + length) > KNI_GetArrayLength(pngData)) {
             KNI_ThrowNew(midpArrayIndexOutOfBoundsException, NULL);
             break;
@@ -281,13 +284,13 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeImage()
         srcBuffer = (unsigned char *)JavaByteArray(pngData);
 
 	SNI_BEGIN_RAW_POINTERS;
-        
-	gxpport_decodeimmutable_from_selfidentifying(srcBuffer + offset, 
+
+	gxpport_decodeimmutable_from_selfidentifying(srcBuffer + offset,
 						     length,
-						     &imgWidth, &imgHeight, 
-						     &newImagePtr, 
+						     &imgWidth, &imgHeight,
+						     &newImagePtr,
 						     &creationError);
-	
+
 	SNI_END_RAW_POINTERS;
 
         if (GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
@@ -319,7 +322,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeImage()
 }
 
 /**
- * boolean loadRomizedImage(IamgeData imageData, int imageDataArrayPtr, 
+ * boolean loadRomizedImage(IamgeData imageData, int imageDataArrayPtr,
  * int imageDataArrayLength);
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
@@ -332,7 +335,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRomizedImage() {
 
     /* pointer to native image structure */
     gxpport_image_native_handle newImagePtr;
-    
+
     KNI_StartHandles(1);
     KNI_DeclareHandle(imageData);
 
@@ -340,12 +343,12 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRomizedImage() {
 
     do {
         unsigned char* buffer = (unsigned char*)imageDataArrayPtr;
- 
+
         gxpport_loadimmutable_from_platformbuffer(
                           buffer, imageDataArrayLength,
                           KNI_TRUE,
-						  &imgWidth, &imgHeight, 
-						  &newImagePtr, 
+						  &imgWidth, &imgHeight,
+						  &newImagePtr,
 						  &creationError);
 
         if (GXUTL_NATIVE_IMAGE_NO_ERROR == creationError) {
@@ -369,18 +372,19 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRomizedImage() {
             break;
         }
     } while (0);
-    
+
     KNI_EndHandles();
-    KNI_ReturnBoolean(status);    
+    KNI_ReturnBoolean(status);
 }
 
 /**
- * Loads a native image data from image cache and creates 
+ * Loads a native image data from image cache and creates
  * a native image.
  * <p>
  * Java declaration:
  * <pre>
- *   boolean loadAndCreateImmutableImageFromCache0(ImageData imgData, String suiteId, String resName);
+ *   boolean loadAndCreateImmutableImageFromCache0(ImageData imgData,
+ *                                                 int suiteId, String resName);
  * </pre>
  *
  * @param imageData  The ImageData object
@@ -396,21 +400,23 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadAndCreateImmutableImageDataFr
     int            status = KNI_FALSE;
     int imgWidth;
     int imgHeight;
+    SuiteIdType suiteId;
     gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
 
     /* pointer to native image structure */
     gxpport_image_native_handle newImagePtr;
 
-    KNI_StartHandles(3);
+    KNI_StartHandles(2);
 
     GET_PARAMETER_AS_PCSL_STRING(3, resName)
-    GET_PARAMETER_AS_PCSL_STRING(2, suiteId)
 
     KNI_DeclareHandle(imageData);
     KNI_GetParameterAsObject(1, imageData);
 
+    suiteId = KNI_GetParameterAsInt(2);
+
     do {
-        len = loadImageFromCache(&suiteId, &resName, &buffer);
+        len = loadImageFromCache(suiteId, &resName, &buffer);
 
         if ((len == -1) || (buffer == NULL)) {
             REPORT_WARN(LC_LOWUI,"Warning: could not load cached image;\n");
@@ -422,8 +428,8 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadAndCreateImmutableImageDataFr
          * the class variables.
          */
         gxpport_loadimmutable_from_platformbuffer(buffer, len, KNI_FALSE,
-						  &imgWidth, &imgHeight, 
-						  &newImagePtr, 
+						  &imgWidth, &imgHeight,
+						  &newImagePtr,
 						  &creationError);
 
         if (GXUTL_NATIVE_IMAGE_NO_ERROR == creationError) {
@@ -451,7 +457,6 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadAndCreateImmutableImageDataFr
     midpFree(buffer);
 
     RELEASE_PCSL_STRING_PARAMETER
-    RELEASE_PCSL_STRING_PARAMETER
 
     KNI_EndHandles();
     KNI_ReturnBoolean(status);
@@ -461,7 +466,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadAndCreateImmutableImageDataFr
 }
 
 /**
- * Populates a passed in immutable <tt>ImageData</tt> 
+ * Populates a passed in immutable <tt>ImageData</tt>
  * from the given ARGB integer
  * array. The array consists of values in the form of 0xAARRGGBB.
  * <p>
@@ -493,7 +498,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeRGBImag
     KNI_StartHandles(2);
     KNI_DeclareHandle(rgbData);
     KNI_DeclareHandle(imageData);
-    
+
     KNI_GetParameterAsObject(2, rgbData);
     KNI_GetParameterAsObject(1, imageData);
 
@@ -518,7 +523,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeRGBImag
 
 	SNI_BEGIN_RAW_POINTERS;
 
-        gxpport_decodeimmutable_from_argb(imageBuffer, width, height, 
+        gxpport_decodeimmutable_from_argb(imageBuffer, width, height,
 					  processAlpha,
 					  &newImagePtr, &creationError);
 
@@ -543,10 +548,10 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeRGBImag
                          "Resource limit exceeded for immutable image");
             break;
         }
-        
+
         KNI_ThrowNew(midpIllegalArgumentException, NULL);
     } while (0);
-    
+
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
@@ -580,21 +585,21 @@ Java_javax_microedition_lcdui_ImageDataFactory_createMutableImageData() {
     } else {
         /* initialize the internal members of the native image
            structure as required by the platform. */
-        gxpport_create_mutable(&newImagePtr, 
+        gxpport_create_mutable(&newImagePtr,
 			       width, height, &creationError);
 
         if (GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
-	    KNI_ThrowNew(midpOutOfMemoryError, "Resource limit exceeded for" 
+	    KNI_ThrowNew(midpOutOfMemoryError, "Resource limit exceeded for"
 					       " Mutable image");
         } else if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
 	    KNI_ThrowNew(midpOutOfMemoryError, NULL);
         } else {
 	    KNI_StartHandles(1);
 	    KNI_DeclareHandle(imageData);
-          
+
 	    KNI_GetParameterAsObject(1, imageData);
-            
-	    GXAPI_GET_IMAGEDATA_PTR(imageData)->nativeImageData = 
+
+	    GXAPI_GET_IMAGEDATA_PTR(imageData)->nativeImageData =
                 (jint) newImagePtr;
 	    KNI_EndHandles();
         }

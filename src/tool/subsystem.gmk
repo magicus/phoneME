@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -48,6 +49,7 @@ INT_AMS_DIR = $(SUBSYSTEM_DIR)/ams/installer/reference/classes
 INT_JAVAUTIL_DIR = $(SUBSYSTEM_DIR)/core/javautil/reference/classes
 INT_IMAGEUTIL_DIR = $(SUBSYSTEM_DIR)/tool/imageutil/classes/com/sun/midp/imageutil
 INT_SKINROMIZATION_DIR = $(SUBSYSTEM_DIR)/tool/chameleon/classes/com/sun/midp/skinromization
+INT_LCDLF_J_DIR = $(SUBSYSTEM_DIR)/highlevelui/lcdlf/lfjava/classes
 
 # Java files for the ( mekeytool ) module
 #
@@ -90,4 +92,7 @@ MODULE_TOOL_IMAGE2RAW_JAVA_FILES = \
 #
 MODULE_TOOL_SKINROMIZATION_JAVA_FILES = \
 	$(INT_IMAGEUTIL_DIR)/ImageToRawConverter.java \
-	$(INT_SKINROMIZATION_DIR)/SkinRomizationTool.java
+	$(INT_SKINROMIZATION_DIR)/SkinRomizationTool.java \
+    $(INT_LCDLF_J_DIR)/com/sun/midp/chameleon/skins/resources/FontResourcesConstants.java \
+    $(INT_LCDLF_J_DIR)/com/sun/midp/chameleon/skins/resources/SkinResourcesConstants.java \
+    $(INT_LCDLF_J_DIR)/com/sun/midp/chameleon/skins/resources/ScrollIndResourcesConstants.java

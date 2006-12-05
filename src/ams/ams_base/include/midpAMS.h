@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -24,7 +25,7 @@
  */
 
 /**
- * @mainpage Sun Java<sup class="Copyright">TM</sup> Wireless Client
+ * @mainpage MIDP Optimized Implementation
  *
  * <h3>Reference Documentation for Native Code</h3>
  *
@@ -45,7 +46,7 @@
  */
 
  /**
-  * @defgroup stack 
+  * @defgroup stack
   */
 
 /**
@@ -57,7 +58,7 @@
  * @defgroup cams Common
  * @ingroup ams
  */
- 
+
 /**
  * @defgroup cams_port Porting Interface
  * @ingroup cams
@@ -72,12 +73,12 @@
  * @defgroup jams Java Platform AMS - External Interface
  * @ingroup ams
  */
- 
+
 /**
  * @defgroup nams Native AMS
  * @ingroup ams
  */
- 
+
 /**
  * @defgroup nams_extern External Interface
  * @ingroup nams
@@ -112,6 +113,7 @@
 #include <kni.h>
 #include <jvm.h>
 #include <midpString.h>
+#include <suitestore_common.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -172,7 +174,7 @@ void midpSetHomeDir(const char* dir);
  * the MIDlet as properties <tt>arg-&lt;num&gt;</tt>, where
  * <tt><i>num</i></tt> is <tt>0</tt> for the first argument, etc.
  *
- * @param suiteID The MIDlet Suite ID that the MIDlet is in
+ * @param suiteId The MIDlet Suite ID that the MIDlet is in
  * @param midletClassName The class name of MIDlet to run
  * @param arg0 The first argument for the MIDlet to be run.
  * @param arg1 The second argument for the MIDlet to be run.
@@ -186,11 +188,11 @@ void midpSetHomeDir(const char* dir);
  *         <tt>MIDP_ERROR_STATUS</tt> if an error,
  *         <tt>SUITE_NOT_FOUND_STATUS</tt> if the MIDlet suite not found
  */
-int midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
+int midp_run_midlet_with_args_cp(SuiteIdType suiteId,
                                  const pcsl_string* midletClassName,
                                  const pcsl_string* arg0,
-		                         const pcsl_string* arg1,
-		                         const pcsl_string* arg2,
+                                 const pcsl_string* arg1,
+                                 const pcsl_string* arg2,
                                  int debugOption,
                                  char* classPathExt);
 
@@ -199,7 +201,7 @@ int midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
  * to the MIDlet as properties arg-&lt;n&gt;, when n is 0 for the first
  * argument.
  *
- * @param suiteID ID of the suite the MIDlet is in
+ * @param suiteId ID of the suite the MIDlet is in
  * @param midletClassName class name of MIDlet to run
  * @param arg0 argument to for the MIDlet to be run.
  * @param arg1 argument to for the MIDlet to be run.
@@ -212,13 +214,13 @@ int midp_run_midlet_with_args_cp(const pcsl_string* suiteID,
  *         -1 (MIDP_ERROR_STATUS) if an error,
  *         -2 (SUITE_NOT_FOUND_STATUS) if MIDlet suite not found
  */
-int midp_run_midlet_with_args(const pcsl_string* suiteID,
+int midp_run_midlet_with_args(SuiteIdType suiteId,
                               const pcsl_string* midletClassName,
-		                      const pcsl_string* arg0,
-		                      const pcsl_string* arg1,
-		                      const pcsl_string* arg2,
+                              const pcsl_string* arg0,
+                              const pcsl_string* arg1,
+                              const pcsl_string* arg2,
                               int debugOption);
-
+#if !ENABLE_CDC
 /**
  * Starts the system and instructs the VM to run the main() method of
  * the specified class. Does not return until the system is stopped.
@@ -227,7 +229,7 @@ int midp_run_midlet_with_args(const pcsl_string* suiteID,
  * @param mainClass string containing the main class for the VM to run.
  * @param argc the number of arguments to pass to the main method
  * @param argv the arguments to pass to the main method
- * 
+ *
  * @return <tt>MIDP_SHUTDOWN_STATUS</tt> if the system is shutting down or
  *         <tt>MIDP_ERROR_STATUS</tt> if an error
  */
@@ -235,6 +237,7 @@ int midpRunMainClass(JvmPathChar *classPath,
                      char *mainClass,
                      int argc,
                      char **argv);
+#endif
 
 /**
  * Cleans up MIDP resources. This should be last MIDP function called or
@@ -248,4 +251,3 @@ void midpFinalize();
 #endif
 
 #endif /* _MIDP_H_ */
-

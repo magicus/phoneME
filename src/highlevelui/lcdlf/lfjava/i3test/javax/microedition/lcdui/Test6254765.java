@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -70,7 +71,7 @@ public class Test6254765 extends TestCase {
     }
 
     /**
-     * Regression test for the main bug described in CR 6254765.  This is a
+     * Regression test for the main CR described in CR 6254765.  This is a
      * race condition between modifying a Form's contents (for example, with
      * append) while the Form is in the process of becoming current.
      */
@@ -111,9 +112,9 @@ public class Test6254765 extends TestCase {
     }
 
     /**
-     * This is a regression test for another bug that is also mentioned in 
+     * This is a regression test for another CR that is also mentioned in 
      * 6254765, which occurs when the form is in an inconsistent state such as 
-     * what arose from the initial bug, but which can also arise for other 
+     * what arose from the initial CR, but which can also arise for other 
      * reasons.
      * 
      * This case is as follows: traverseIndex == -1 and itemTraverse == false,

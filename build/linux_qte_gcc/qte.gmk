@@ -1,5 +1,5 @@
 #
-# @(#)qte.gmk	1.13 06/06/17
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -48,7 +48,7 @@ ifeq ($(TARGET_CPU), arm)
     EXTRA_CPPFLAGS += -DENABLE_MIDP_MALLOC_FOR_NEW
 endif
 
-# The product excutable will be started as
+# The product executable will be started as
 # Qt/Embedded master application
 USE_QWS = true
 
@@ -60,7 +60,8 @@ ifndef TARGET_QTLIBDIR
     TARGET_QTLIBDIR = $(QTOPIA_SDK_DIR)/lib
 endif
 
-EXTRA_INCLUDES  += -I$(QTOPIA_SDK_DIR)/include
+# if warnings-as-errors happen in system header files, they are just ignored
+EXTRA_INCLUDES  += -isystem$(QTOPIA_SDK_DIR)/include
 EXTRA_CFLAGS	+= -DQWS -DMAINWINDOW_TITLE=\"$(MAINWINDOW_TITLE)\"
 LIBS		+= -Wl,-rpath,$(TARGET_QTLIBDIR) -L$(HOST_QTLIBDIR) -lqte
 

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -29,7 +30,7 @@ import com.sun.midp.io.j2me.storage.File;
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
-
+import com.sun.midp.configurator.Constants;
 
 /**
  * The ResourceHandler class is a system level utility class.
@@ -38,6 +39,22 @@ import com.sun.midp.security.Permissions;
  * class should be protected through use of the SecurityToken.
  */
 public class ResourceHandler {
+    /**
+     * Load a resource from the system and return it as a byte array.
+     * This method is used to load AMS icons.
+     *
+     * @param token the SecurityToken to use to grant permission to
+     *              execute this method.
+     * @param resource a String identifier which can uniquely describe
+     *                 the location of the resource to be loaded.
+     * @return a byte[] containing the resource retrieved from the
+     *         system. null if the resource could not be found.
+     */
+    public static byte[] getAmsResource(SecurityToken token,
+                                        String resource) {
+        return getResourceImpl(token, File.getStorageRoot(
+            Constants.INTERNAL_STORAGE_ID) + resource);
+    }
 
     /**
      * Load a resource from the system and return it as a byte array.
@@ -52,12 +69,27 @@ public class ResourceHandler {
      *         system. null if the resource could not be found.
      */
     public static byte[] getSystemResource(SecurityToken token,
-                                           String resource)
-    {
+                                           String resource) {
+        return getResourceImpl(token, File.getConfigRoot(
+            Constants.INTERNAL_STORAGE_ID) + resource);
+    }
+
+    /**
+     * Load a resource from the system and return it as a byte array.
+     * This method is used to load system level resources, such as
+     * images, sounds, properties, etc.
+     *
+     * @param token the SecurityToken to use to grant permission to
+     *              execute this method.
+     * @param resourceFilename full path to the file containing the resource.
+     * @return a byte[] containing the resource retrieved from the
+     *         system. null if the resource could not be found.
+     */
+    private static byte[] getResourceImpl(SecurityToken token,
+            String resourceFilename) {
         token.checkIfPermissionAllowed(Permissions.MIDP);
 
         byte[] resourceBuffer = null;
-        String resourceFilename = File.getConfigRoot() + resource;
         RandomAccessStream stream = new RandomAccessStream(token);
 
         try {
@@ -70,7 +102,7 @@ public class ResourceHandler {
             try {
                 stream.disconnect();
             } catch (java.io.IOException ignored) {
-	    }
+            }
         }
 
         return resourceBuffer;

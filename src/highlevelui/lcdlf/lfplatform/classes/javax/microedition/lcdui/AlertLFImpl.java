@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -32,7 +33,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /**
- * Look &amp; Feel implementation of <code>Alert</code> based on 
+ * Look &amp; Feel implementation of <code>Alert</code> based on
  * platform widget.
  */
 class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
@@ -55,7 +56,7 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
      * Determines if <code>Alert</code> associated with this view is modal.
      *
      * @return true if this <code>AlertLF</code> should be displayed as modal
-     */    
+     */
     public boolean lIsModal() {
 	if (alert.numCommands > 1) {
 	    return true;
@@ -69,7 +70,7 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
     }
 
     /**
-     * Gets default timeout for the <code>Alert</code> associated with 
+     * Gets default timeout for the <code>Alert</code> associated with
      * this view.
      *
      * @return the default timeout
@@ -79,9 +80,9 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
     }
 
     /**
-     * Return the command that should be mapped to 
+     * Return the command that should be mapped to
      * <code>Alert.DISMISS_COMMAND</code>.
-     * 
+     *
      * @return command that maps to <code>Alert.DISMISS_COMMAND</code>
      */
     public Command lGetDismissCommand() {
@@ -90,10 +91,10 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
 
     /**
      * Notifies timeout change.
-     * Changing timeout on an already visible <code>Alert</code> will 
+     * Changing timeout on an already visible <code>Alert</code> will
      * restart the timer, but has no effect on current layout.
-     * 
-     * @param timeout the new timeout set in the corresponding 
+     *
+     * @param timeout the new timeout set in the corresponding
      *                <code>Alert</code>.
      */
     public void lSetTimeout(int timeout) {
@@ -112,10 +113,10 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
 
     /**
      * Notifies <code>Alert</code> type change.
-     * Changing type on an already visible <code>Alert</code> will only 
+     * Changing type on an already visible <code>Alert</code> will only
      * update the default icon. No sound will be played.
-     * 
-     * @param type the new <code>AlertType</code> set in the 
+     *
+     * @param type the new <code>AlertType</code> set in the
      *             corresponding <code>Alert</code>.
      */
     public void lSetType(AlertType type) {
@@ -124,10 +125,10 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
 
     /**
      * Notifies string change.
-     * 
-     * @param oldString the old string set in the corresponding 
+     *
+     * @param oldString the old string set in the corresponding
      *                  <code>Alert</code>.
-     * @param newString the new string set in the corresponding 
+     * @param newString the new string set in the corresponding
      *                  <code>Alert</code>.
      */
     public void lSetString(String oldString, String newString) {
@@ -136,10 +137,10 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
 
     /**
      * Notifies image change.
-     * 
-     * @param oldImg the old image set in the corresponding 
+     *
+     * @param oldImg the old image set in the corresponding
      *               <code>Alert</code>.
-     * @param newImg the new image set in the corresponding 
+     * @param newImg the new image set in the corresponding
      *               <code>Alert</code>.
      */
     public void lSetImage(Image oldImg, Image newImg) {
@@ -148,10 +149,10 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
 
     /**
      * Notifies indicator change.
-     * 
-     * @param oldIndicator the old indicator set in the corresponding 
+     *
+     * @param oldIndicator the old indicator set in the corresponding
      *                     <code>Alert</code>.
-     * @param newIndicator the new indicator set in the corresponding 
+     * @param newIndicator the new indicator set in the corresponding
      *                     <code>Alert</code>.
      */
     public void lSetIndicator(Gauge oldIndicator, Gauge newIndicator) {
@@ -159,23 +160,11 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
     }
 
     /**
-     * Called by <code>Alert</code> when dismiss command is selected.
-     *
-     * @param returnScreen The <code>Displayable</code> to return to after
-     *                     this <code>Alert</code> is dismissed.
-     */
-    public void lDismiss(Displayable returnScreen) {
-	if (currentDisplay != null && currentDisplay.isShown(this)) {
-	    currentDisplay.clearAlert(returnScreen);
-	}
-    }
-
-    /**
      * Notify this <code>Alert</code> that it is being displayed.
      * Override the version in <code>DisplayableLFImpl</code>.
      */
     void lCallShow() {
-	
+
 	// Create native resource with title and ticker
 	super.lCallShow();
 
@@ -210,7 +199,7 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
      * Override the version in <code>DisplayableLFImpl</code>.
      */
     void lCallHide() {
-	
+
 	// Stop the timer
 	if (timerTask != null) {
 	    try {
@@ -237,23 +226,34 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
     }
 
     /**
-     * Called by the event handler to perform a re-layout 
+     * Called by the event handler to perform a re-layout
      * on this <code>AlertLF</code>.
      */
     public void uCallInvalidate() {
-	synchronized (Display.LCDUILock) {
-	    showContents();
-	}
-    } 
+        synchronized (Display.LCDUILock) {
+            showContents();
+        }
+    }
+
+    /**
+     * Notify return screen about screen size change
+     */
+    public void uCallSizeChanged(int w, int h) {
+        super.uCallSizeChanged(w,h);
+        Displayable returnScreen = alert.getReturnScreen();
+        if (returnScreen != null) {
+            (returnScreen.displayableLF).uCallSizeChanged(w,h);
+        }
+    }
 
     // *****************************************************
     //  Package private methods
     // *****************************************************
 
-    /** 
-     * Called upon content change to schedule a request for relayout and 
-     * repaint. 
-     */ 
+    /**
+     * Called upon content change to schedule a request for relayout and
+     * repaint.
+     */
     void lRequestInvalidate() {
 	super.lRequestInvalidate();
 	isContentScroll = -1; // Unknown scrolling state
@@ -315,7 +315,7 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
         }
 
 	// Set content to native dialog and get layout information back
-	if (setNativeContents0(nativeId, imageData, 
+	if (setNativeContents0(nativeId, imageData,
                                gaugeBounds, alert.text)) {
 	    isContentScroll = 1; // scrolling needed
 	} else {
@@ -341,7 +341,7 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
      * SYNC NOTE: Caller must hold LCDUILock around this call.
      */
     private void showContents() {
-	
+
 	// Make sure gauge has native resource ready
 	GaugeLFImpl gaugeLF = (alert.indicator == null)
 					? null
@@ -366,7 +366,7 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
 	    // its visibleInViewport will always be set to true.
 	    // If dynamic update of gauge's visibleInViewport flag is
             // required in AlertLFImpl
-	    // uViewportChanged() can be moved up from FormLFImpl to 
+	    // uViewportChanged() can be moved up from FormLFImpl to
 	    // DisplayableLFImpl
 	}
     }
@@ -381,9 +381,9 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
 			alert.ticker == null ? null : alert.ticker.getString(),
 			alert.type == null ? 0 : alert.type.getType());
     }
-    
+
     /**
-     * Create native dialog with image and text widget for this 
+     * Create native dialog with image and text widget for this
      * <code>Alert</code>.
      *
      * @param title the title being passed to native
@@ -396,7 +396,7 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
 					     int type);
 
     /**
-     * (Re)Show native dialog with image and text widget for this 
+     * (Re)Show native dialog with image and text widget for this
      * <code>Alert<code>.
      *
      * @param nativeId native resource id
@@ -417,7 +417,7 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
      * @param text IN alert text string
      * @return <code>true</code> if content requires scrolling
      */
-    private native boolean setNativeContents0(int nativeId, 
+    private native boolean setNativeContents0(int nativeId,
                                               ImageData imgId,
 					      int[] indicatorBounds,
 					      String text);
@@ -426,40 +426,40 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
      * Get the corresponding image for a given alert type.
      *
      * @param alertType type defined in <code>AlertType</code>
-     * @return image object to be displayed. Null if type is invalid. 
+     * @return image object to be displayed. Null if type is invalid.
      */
     private Image getAlertImage(AlertType alertType) {
 	if (alertType != null) {
 	    if (alertType.equals(AlertType.INFO)) {
 		if (ALERT_INFO == null) {
 		    ALERT_INFO =
-			Display.getSystemImage("alert.image_icon_info.png");
+			Display.getSystemImage("alert.image_icon_info");
 		}
 		return ALERT_INFO;
 	    } else if (alertType.equals(AlertType.WARNING)) {
 		if (ALERT_WARN == null) {
 		    ALERT_WARN =
-			Display.getSystemImage("alert.image_icon_warn.png");
+			Display.getSystemImage("alert.image_icon_warn");
 		}
 		return ALERT_WARN;
 	    } else if (alertType.equals(AlertType.ERROR)) {
 		if (ALERT_ERR == null) {
 		    ALERT_ERR =
-			Display.getSystemImage("alert.image_icon_errr.png");
+			Display.getSystemImage("alert.image_icon_errr");
 		}
 		return ALERT_ERR;
 	    } else if (alertType.equals(AlertType.ALARM)) {
 		if (ALERT_ALRM == null) {
 		    ALERT_ALRM =
-			Display.getSystemImage("alert.image_icon_alrm.png");
+			Display.getSystemImage("alert.image_icon_alrm");
 		}
 		return ALERT_ALRM;
 	    } else if (alertType.equals(AlertType.CONFIRMATION)) {
 		if (ALERT_CFM == null) {
 		    ALERT_CFM =
-			Display.getSystemImage("alert.image_icon_cnfm.png");
+			Display.getSystemImage("alert.image_icon_cnfm");
 		}
-		return ALERT_CFM;		
+		return ALERT_CFM;
 	    }
 	}
 
@@ -475,16 +475,16 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
      * <code>Alert.DISMISS_COMMAND</code>.
      */
     private static final Command DISMISS_COMMAND =
-	new Command(Resource.getString(ResourceConstants.DONE), 
+	new Command(Resource.getString(ResourceConstants.DONE),
 		    Command.CANCEL, 0);
- 
+
     /**
      * The default timeout of all alerts.
      */
     private static final int DEFAULT_TIMEOUT = 2000;
 
     /**
-     * A <code>Timer</code> which serves all <code>Alert</code> objects 
+     * A <code>Timer</code> which serves all <code>Alert</code> objects
      * to schedule their timeout tasks.
      */
     private static Timer timeoutTimer;
@@ -495,7 +495,7 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
     private Alert alert;
 
     /**
-     * A <code>TimerTask</code> which will be set to expire this 
+     * A <code>TimerTask</code> which will be set to expire this
      * <code>Alert</code> after its timeout period has elapsed.
      */
     private TimerTask timerTask;
@@ -543,8 +543,8 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
     // *****************************************************
 
     /**
-     * A <code>TimerTask</code> subclass which will notify the 
-     * <code>Display</code> to make the 'returnScreen' of this 
+     * A <code>TimerTask</code> subclass which will notify the
+     * <code>Display</code> to make the 'returnScreen' of this
      * <code>Alert</code> the new current screen.
      */
     private class TimeoutTask extends TimerTask {
@@ -555,7 +555,7 @@ class AlertLFImpl extends DisplayableLFImpl implements AlertLF {
 	 * of new TimerTask instance.
          */
         TimeoutTask() { }
-        
+
         /**
          * Simply set the <code>Display</code>'s current screen to be this
          * <code>Alert</code>'s return screen.

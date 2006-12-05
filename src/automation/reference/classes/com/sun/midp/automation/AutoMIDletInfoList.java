@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -37,7 +38,7 @@ class AutoMIDletInfoList {
 
     /** The one and only instance of AutoMIDletInfoList */
     private static AutoMIDletInfoList midletInfoList = null;
-    
+
     /**
      * Private constructor to prevent direct creation of instances.
      */
@@ -58,8 +59,8 @@ class AutoMIDletInfoList {
 
         return midletInfoList;
     }
-    
-    
+
+
     /**
      * Creates AutoMIDletInfo and adds it to the list.
      *
@@ -67,9 +68,9 @@ class AutoMIDletInfoList {
      * @param midletClassName MIDlet's class name
      * @return created AutoMIDletInfo instance
      */
-    AutoMIDletInfo addToList(String suiteID, String midletClassName) {
+    AutoMIDletInfo addToList(int suiteID, String midletClassName) {
         synchronized (this) {
-            AutoMIDletInfo info = 
+            AutoMIDletInfo info =
                 new AutoMIDletInfo(suiteID, midletClassName);
             midletsInfo.addElement(info);
 
@@ -83,15 +84,15 @@ class AutoMIDletInfoList {
      *
      * @param suiteID suite ID
      * @param midletClassName MIDlet's class name
-     * @return corresponding AutoMIDletInfo instance or null, 
+     * @return corresponding AutoMIDletInfo instance or null,
      *         if it hasn't been found
      */
-    AutoMIDletInfo findMIDletInfo(String suiteID, String midletClassName) {
+    AutoMIDletInfo findMIDletInfo(int suiteID, String midletClassName) {
         synchronized (this) {
             for (int i = 0; i < midletsInfo.size(); ++i) {
-                AutoMIDletInfo info = 
+                AutoMIDletInfo info =
                     (AutoMIDletInfo)midletsInfo.elementAt(i);
-                if (info.suiteID.equals(suiteID) && 
+                if (info.suiteID == suiteID &&
                     info.midletClassName.equals(midletClassName)) {
                     return info;
                 }
@@ -102,16 +103,16 @@ class AutoMIDletInfoList {
     }
 
     /**
-     * Finds MIDlet info by AutoMIDletImpl. 
+     * Finds MIDlet info by AutoMIDletImpl.
      *
      * @param midlet AutoMIDletImpl reference to be used as key
-     * @return corresponding AutoMIDletInfo instance or null, 
+     * @return corresponding AutoMIDletInfo instance or null,
      *         if it hasn't been found
      */
     AutoMIDletInfo findMIDletInfo(AutoMIDletImpl midlet) {
         synchronized (this) {
             for (int i = 0; i < midletsInfo.size(); ++i) {
-                AutoMIDletInfo info = 
+                AutoMIDletInfo info =
                     (AutoMIDletInfo)midletsInfo.elementAt(i);
                 if (info.midlet == midlet) {
                     return info;
@@ -123,12 +124,12 @@ class AutoMIDletInfoList {
     }
 
     /**
-     * Finds MIDlet info by MIDletProxy. 
+     * Finds MIDlet info by MIDletProxy.
      *
      * @param midletProxy MIDletProxy reference to be used as key
-     * @return corresponding AutoMIDletInfo instance or null, 
+     * @return corresponding AutoMIDletInfo instance or null,
      *         if it hasn't been found
-     */   
+     */
     AutoMIDletInfo findMIDletInfo(MIDletProxy midletProxy) {
         AutoMIDletInfo info = findMIDletInfo(
                 midletProxy.getSuiteId(), midletProxy.getClassName());
@@ -148,7 +149,7 @@ class AutoMIDletInfoList {
         AutoMIDletImpl midlet = null;
         AutoMIDletInfo info = findMIDletInfo(midletProxy);
         if (info != null) {
-            midlet = info.midlet;    
+            midlet = info.midlet;
         }
 
         return midlet;
@@ -165,7 +166,7 @@ class AutoMIDletInfoList {
         MIDletProxy midletProxy = null;
         AutoMIDletInfo info = findMIDletInfo(midlet);
         if (info != null) {
-            midletProxy = info.midletProxy;    
+            midletProxy = info.midletProxy;
         }
 
         return midletProxy;

@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,7 +28,7 @@ LIB_DESCRIPTION=MidletSuiteInfo Library reference implementation
 LIB_VERSION=1.0
 LIB_DEPENDENCIES=
 LIB_JAVA_FILES= \
-    com/sun/midp/appmanager/MIDletSuiteInfo.java
+    com/sun/midp/midletsuite/MIDletSuiteInfo.java
 
 #
 # IMPL_NOTE: remove when decoupling is complete

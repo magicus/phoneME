@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_util.h	1.28 06/04/26 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -48,7 +48,7 @@
 /**
  * Macro to report ToDo comments at runtime.
  */
-#define IMPL_NOTE(msg) reportToLog(LOG_INFORMATION, LC_HIGHUI, \
+#define TODO(msg) reportToLog(LOG_INFORMATION, LC_HIGHUI, \
 "IMPL_NOTE: "#msg" ("__FILE__":%d)", __LINE__)
 
 /**
@@ -91,7 +91,7 @@
 /**
  * Empty definition.
  */
-#define IMPL_NOTE(msg) ;
+#define TODO(msg) ;
 
 /**
  * Empty definition.
@@ -134,5 +134,25 @@ pcsl_string2QString(const pcsl_string &pstring, QString &qstring);
  */
 extern "C" MidpError
 QString2pcsl_string(QString &qstring, pcsl_string &pstring);
+
+/**
+ * Truncate str so that, if printed using given font, it would
+ * fit in the width limit.
+ * If the original string does not fit, the string is truncated,
+ * and a truncation mark character is appended to it.
+ *
+ * @param str string to be truncated, if necessary
+ * @param font font
+ * @param widthLimit width limit
+ */
+void truncateQString(QString & str, class QFont font, int widthLimit);
+
+/**
+ * Calculate width available for the text in the title bar of the widget.
+ *
+ * @param widget widget whose title bar is of interest
+ * @return width available for the caption text
+ */
+int calculateCaptionWidth(class QWidget* widget);
 
 #endif /* _LFPPORT_QTE_UTIL_H_ */

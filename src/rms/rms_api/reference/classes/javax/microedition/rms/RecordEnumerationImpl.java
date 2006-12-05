@@ -1,5 +1,5 @@
 /*
- * @(#)RecordEnumerationImpl.java	1.44	05/12/15
+ * 	
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -577,7 +577,7 @@ class RecordEnumerationImpl implements RecordEnumeration, RecordListener {
 		// if this record matches the filter keep it
 		try {
 		    if (filter.matches(recordStore.getRecord(filtered[i]))) {
-			// not sure if element overlap is allowed
+			// need revisit : if element overlap is allowed
 			if (filteredIndex != i) {
 			    filtered[filteredIndex++] = filtered[i];
 			} else {

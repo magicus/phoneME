@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -99,23 +100,23 @@ class RecordStoreIndex {
      * Constructor for creating an index object for the given Record Store.
      *
      * @param rs record store that this object indexes
-     * @param suiteID unique ID of the suite that owns the store
+     * @param suiteId unique ID of the suite that owns the store
      * @param recordStoreName a string to name the record store
      *
      * @exception IOException if there are any file errors
      */
-    RecordStoreIndex(AbstractRecordStoreImpl rs, String suiteID, 
+    RecordStoreIndex(AbstractRecordStoreImpl rs, int suiteId,
                      String recordStoreName) throws IOException {
         recordStore = rs;
         if (rs != null) {
             dbFile = rs.getDbFile();
         }
 
-        boolean exist = 
-          RecordStoreUtil.exists(suiteID, recordStoreName, 
+        boolean exist =
+          RecordStoreUtil.exists(suiteId, recordStoreName,
                                  AbstractRecordStoreFile.IDX_EXTENSION);
 
-        idxFile = rs.createIndexFile(suiteID, recordStoreName);
+        idxFile = rs.createIndexFile(suiteId, recordStoreName);
 
         if (exist) {
             // load header
@@ -123,10 +124,10 @@ class RecordStoreIndex {
                throw new IOException("Index file corrupted");
             }
         } else {
-            RecordStoreUtil.putInt(IDX_HEADER_SIZE + NODE_SIZE * 2, 
+            RecordStoreUtil.putInt(IDX_HEADER_SIZE + NODE_SIZE * 2,
                                    idxHeader, IDX0_SIZE);
             RecordStoreUtil.putInt(IDX_HEADER_SIZE, idxHeader, IDX1_ID_ROOT);
-            RecordStoreUtil.putInt(IDX_HEADER_SIZE + NODE_SIZE, 
+            RecordStoreUtil.putInt(IDX_HEADER_SIZE + NODE_SIZE,
                                    idxHeader, IDX2_FREE_BLOCK_ROOT);
             idxFile.write(idxHeader);
             idxFile.write(nodeBuf);
@@ -145,18 +146,18 @@ class RecordStoreIndex {
     }
 
     /**
-     * Deletes index files of the named record store. MIDlet suites are 
+     * Deletes index files of the named record store. MIDlet suites are
      * only allowed to delete their own record stores.
      *
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      * @param recordStoreName the MIDlet suite unique record store to
      *          delete
      * @return <code>true</code> if file was found and deleted successfully,
      *         <code>false</code> otherwise.
      */
-    static boolean deleteIndex(String suiteID, String recordStoreName) {
-        return RecordStoreUtil.quietDeleteFile(suiteID,
-                                   recordStoreName, 
+    static boolean deleteIndex(int suiteId, String recordStoreName) {
+        return RecordStoreUtil.quietDeleteFile(suiteId,
+                                   recordStoreName,
                                    AbstractRecordStoreFile.IDX_EXTENSION);
     }
 
@@ -176,7 +177,7 @@ class RecordStoreIndex {
 
     /**
      * Returns places all of the recordId's in the index.
-     * If the array is not big enough, the recordId list will be 
+     * If the array is not big enough, the recordId list will be
      * limited to the size of the given array.
      *
      * @param recordIdList array to place the recordId's
@@ -202,7 +203,7 @@ class RecordStoreIndex {
     }
 
     /**
-     *  Finds the record header for the given record and returns the 
+     *  Finds the record header for the given record and returns the
      *  offset to the header.
      *
      * @param recordId the ID of the record to use in this operation
@@ -213,7 +214,7 @@ class RecordStoreIndex {
      *
      * @return the offset in the db file of the block added
      */
-    int getRecordHeader(int recordId, byte[] header) 
+    int getRecordHeader(int recordId, byte[] header)
         throws IOException, InvalidRecordIDException {
 
         if (recordId <= 0) {
@@ -249,7 +250,7 @@ class RecordStoreIndex {
      *
      * @return the offset in the db file of the record block
      */
-    int getBlockOffsetOfRecord(int recordId) 
+    int getBlockOffsetOfRecord(int recordId)
         throws IOException, InvalidRecordIDException {
 
         Node node = new Node(idxFile);
@@ -282,7 +283,7 @@ class RecordStoreIndex {
     }
 
     /**
-     * Updates the given recordId with the given offset. Adds the 
+     * Updates the given recordId with the given offset. Adds the
      * recordId if it did not already exist.
      *
      * @param recordId the id of the record
@@ -444,7 +445,7 @@ class RecordStoreIndex {
      */
 
     /**
-     * Returns the offset to a free node if one exists. Otherwise, 
+     * Returns the offset to a free node if one exists. Otherwise,
      * returns the offset of a newly create node.
      *
      * @exception IOException if there is an error accessing the index file
@@ -458,7 +459,7 @@ class RecordStoreIndex {
         if (loc_offset == 0) {
             // no free blocks, add one to the end of the index file
             loc_offset = RecordStoreUtil.getInt(idxHeader, IDX0_SIZE);
-            RecordStoreUtil.putInt(loc_offset + NODE_SIZE, 
+            RecordStoreUtil.putInt(loc_offset + NODE_SIZE,
 	                           idxHeader, IDX0_SIZE);
         } else {
             idxFile.seek(loc_offset);
@@ -494,7 +495,7 @@ class RecordStoreIndex {
      */
 
     /**
-     * Walks the tree starting at the given node and loads all of the tree's 
+     * Walks the tree starting at the given node and loads all of the tree's
      * keys into the given array.
      *
      * @param node the root node of the tree to walk
@@ -511,7 +512,7 @@ class RecordStoreIndex {
 	if (count > keyList.length - 1) { // array is filled
 	    return keyList.length;
 	}
-	for (i = 0; i < NODE_ELEMENTS + 1 && 
+	for (i = 0; i < NODE_ELEMENTS + 1 &&
                     count < keyList.length; i++) {
 	    if (node.child[i] > 0) { // subtree
                 // load the node
@@ -531,7 +532,7 @@ class RecordStoreIndex {
     }
 
     /**
-     * Searches the tree starting at the given node for the given key and 
+     * Searches the tree starting at the given node for the given key and
      * returns the value associated with the key
      *
      * @param node the root node of the tree to search for the key
@@ -567,7 +568,7 @@ class RecordStoreIndex {
      *
      * @return the offset of the new tree root if one was added, 0 otherwise
      */
-    int updateKey(Node node, 
+    int updateKey(Node node,
                   int key, int value) throws IOException {
         // find the node that contains the key
         int index = findNodeWithKey(node, key);
@@ -649,7 +650,7 @@ class RecordStoreIndex {
             node.load(parentOffset);
 
             // find position to insert the midpoint of split
-            for (index = 0; index < NODE_ELEMENTS && 
+            for (index = 0; index < NODE_ELEMENTS &&
                  node.child[index] != leftChild; index++);
         }
 
@@ -657,7 +658,7 @@ class RecordStoreIndex {
     }
 
     /**
-     * Searches the tree starting with the given node for the given key. If 
+     * Searches the tree starting with the given node for the given key. If
      * the key is in the tree, the key value pair is deleted.  If the key
      * is not in the tree, nothing happens.  If the deletion causes the root
      * node to be merged, the offset to the new root is returned, otherwise 0
@@ -668,7 +669,7 @@ class RecordStoreIndex {
      *
      * @exception IOException if there is an error accessing the index file
      *
-     * @return the offset of the new tree root if the old one was removed, 
+     * @return the offset of the new tree root if the old one was removed,
      *         otherwise 0
      */
     int deleteKey(Node node, int key) throws IOException {
@@ -684,8 +685,8 @@ class RecordStoreIndex {
     }
 
     /**
-     * Deleted the key value pair at the given index from the given node. If 
-     * the deletion causes the root node to be merged, the offset to the new 
+     * Deleted the key value pair at the given index from the given node. If
+     * the deletion causes the root node to be merged, the offset to the new
      * root is returned, otherwise 0 is returned.
      *
      * @param node the root node of the tree to remove key from
@@ -693,10 +694,10 @@ class RecordStoreIndex {
      *
      * @exception IOException if there is an error accessing the index file
      *
-     * @return the offset of the new tree root if the old one was removed, 
+     * @return the offset of the new tree root if the old one was removed,
      *         otherwise 0
      */
-    private int deleteKeyFromNode(Node node, 
+    private int deleteKeyFromNode(Node node,
                                   int index) throws IOException {
         // check if this node has right child
         if (node.child[index+1] > 0) {
@@ -719,7 +720,7 @@ class RecordStoreIndex {
 
             // now delete discovered key
             index = 0;
-            
+
             // preserve right subtree from deleting
             node.child[0] = node.child[1];
         }
@@ -747,7 +748,7 @@ class RecordStoreIndex {
 
             // find the offset of the node in the parent
             int childIdx = 0;
-            for (; parentNode.child[childIdx] != node.offset && 
+            for (; parentNode.child[childIdx] != node.offset &&
                  childIdx < NODE_ELEMENTS+1; childIdx++);
 
             int midpointIdx = childIdx;
@@ -762,14 +763,14 @@ class RecordStoreIndex {
             }
 
             // check if this is a merge candidate
-            if (siblingNode == null || 
+            if (siblingNode == null ||
                 node.numKeys + siblingNode.numKeys + 1 > NODE_ELEMENTS) {
                 if (siblingNode == null) {
                     siblingNode = new Node(idxFile);
                 }
 
                 // not a merge candidate, check the right sibling
-                if (childIdx+1 < NODE_ELEMENTS+1 && 
+                if (childIdx+1 < NODE_ELEMENTS+1 &&
                     parentNode.child[childIdx+1] > 0) {
                     // load the right sibling
                     siblingNode.load(parentNode.child[childIdx+1]);
@@ -788,15 +789,15 @@ class RecordStoreIndex {
                     leftNode = siblingNode;
                     rightNode = node;
                 }
-                leftNode.addKey(parentNode.key[midpointIdx], 
-                                parentNode.value[midpointIdx], 
-                                rightNode.child[0], 
+                leftNode.addKey(parentNode.key[midpointIdx],
+                                parentNode.value[midpointIdx],
+                                rightNode.child[0],
                                 leftNode.numKeys);
 
                 for (int i = 0; i < rightNode.numKeys; i++) {
-                    leftNode.addKey(rightNode.key[i], 
-                                    rightNode.value[i], 
-                                    rightNode.child[i+1], 
+                    leftNode.addKey(rightNode.key[i],
+                                    rightNode.value[i],
+                                    rightNode.child[i+1],
                                     leftNode.numKeys);
                 }
 
@@ -831,9 +832,9 @@ class RecordStoreIndex {
                 // make sure each siblings has a minimum number of nodes
                 if (midpointIdx == childIdx) {
                     // node is on the left, sibling is on the right
-                    node.addKey(parentNode.key[midpointIdx], 
-                                parentNode.value[midpointIdx], 
-                                siblingNode.child[0], 
+                    node.addKey(parentNode.key[midpointIdx],
+                                parentNode.value[midpointIdx],
+                                siblingNode.child[0],
                                 node.numKeys);
 
                     parentNode.key[midpointIdx] = siblingNode.key[0];
@@ -843,15 +844,15 @@ class RecordStoreIndex {
                     siblingNode.deleteKey(0);
                 } else {
                     // sibling is on the left, node is on the right
-                    node.addKey(parentNode.key[midpointIdx], 
-                                parentNode.value[midpointIdx], 
-                                node.child[0], 
+                    node.addKey(parentNode.key[midpointIdx],
+                                parentNode.value[midpointIdx],
+                                node.child[0],
                                 0);
 
                     int tempIdx = siblingNode.numKeys;
                     node.child[0] = siblingNode.child[tempIdx];
                     parentNode.key[midpointIdx] = siblingNode.key[tempIdx-1];
-                    parentNode.value[midpointIdx] = 
+                    parentNode.value[midpointIdx] =
                         siblingNode.value[tempIdx-1];
                     siblingNode.deleteKey(tempIdx-1);
                 }
@@ -879,10 +880,10 @@ class RecordStoreIndex {
     }
 
     /**
-     * Searches the tree starting with the given node for the given key.  The 
-     * node that contains the key or the node where the key belongs is loaded 
-     * into the given node object then the method returns.  If the key is in 
-     * the tree, the index of the key is returned.  If the key is not in the 
+     * Searches the tree starting with the given node for the given key.  The
+     * node that contains the key or the node where the key belongs is loaded
+     * into the given node object then the method returns.  If the key is in
+     * the tree, the index of the key is returned.  If the key is not in the
      * tree, the index where the key should be inserted is returned.
      *
      * @param node the root node of the tree to search for the key
@@ -892,7 +893,7 @@ class RecordStoreIndex {
      *
      * @return the index of the key or where the key belongs in the node
      */
-    private int findNodeWithKey(Node node, 
+    private int findNodeWithKey(Node node,
                                 int key) throws IOException {
         // find node with given key
         int i = 0;
@@ -1022,10 +1023,10 @@ class RecordStoreIndex {
         }
 
         /**
-         * Initialize this node with given offset.  Clear all key, value, 
+         * Initialize this node with given offset.  Clear all key, value,
          * and child values.
          *
-         * @param inp_offset the new offset of the node data 
+         * @param inp_offset the new offset of the node data
 	 * this node represents
          */
         void init(int inp_offset) {
@@ -1065,10 +1066,10 @@ class RecordStoreIndex {
         }
 
         /**
-         * Deletes the key, value, right child values from the node 
+         * Deletes the key, value, right child values from the node
          * at the given index.
          *
-         * @param index the index at which to remove the key, value, 
+         * @param index the index at which to remove the key, value,
          *              child values
          */
         void deleteKey(int index) {
@@ -1082,7 +1083,7 @@ class RecordStoreIndex {
         }
 
         /**
-         * Loads the node data at the given offset in the tree file into 
+         * Loads the node data at the given offset in the tree file into
          * this node object.
          *
          * @param inp_offset the offset to the node data to load
@@ -1100,7 +1101,7 @@ class RecordStoreIndex {
 
             // read the first child
             if (treeFile.read(buffer, 0, 4) != 4) {
-                throw new IOException("Could not read first child " + 
+                throw new IOException("Could not read first child " +
                                       inp_offset);
             }
             child[0] = RecordStoreUtil.getInt(buffer, 0);
@@ -1109,7 +1110,7 @@ class RecordStoreIndex {
             int i = 0;
             for (; i < NODE_ELEMENTS; i++) {
                 if (treeFile.read(buffer) != buffer.length) {
-                    throw new IOException("Could not read entire buffer " + 
+                    throw new IOException("Could not read entire buffer " +
                                           inp_offset);
                 }
 
@@ -1133,7 +1134,7 @@ class RecordStoreIndex {
         }
 
         /**
-         * Saves the node data in this node object to the given offset in the 
+         * Saves the node data in this node object to the given offset in the
          * tree file.
          *
          * @exception IOException if there is an error accessing the tree file
@@ -1167,7 +1168,7 @@ class RecordStoreIndex {
         public String toString() {
             String temp = "offset=" + offset + "\n" + child[0] + "\n";
             for (int i = 0; i < NODE_ELEMENTS+1; i++) {
-                temp += i + " " + key[i] + " " + 
+                temp += i + " " + key[i] + " " +
                     value[i] + " " + child[i+1] + "\n";
             }
 

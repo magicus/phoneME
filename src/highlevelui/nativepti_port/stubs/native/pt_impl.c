@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -51,7 +52,7 @@
 jint ptInitLibrary(const pcsl_string * lang) {
 
 // IMPL_NOTE: add implementation sample.
-//     javacall_result result = javacall_t9_init(); 
+//     javacall_result result = javacall_pti_init(); 
 //     return JAVACALL_SUCCEEDED(result);
 
     (void)lang;
@@ -69,7 +70,7 @@ jint ptInitLibrary(const pcsl_string * lang) {
  */
 jboolean ptClear(jint handle) {
     // IMPL_NOTE: add implementation sample.
-    //    javacall_result result = javacall_t9_clear_all((javacall_handle)handle);
+    //    javacall_result result = javacall_pti_clear_all((javacall_handle)handle);
 
     return handle > 0 ? KNI_TRUE : KNI_FALSE;
 }
@@ -129,9 +130,9 @@ jboolean ptAddKey(jint handle, jint keyCode) {
 
     (void)keyCode;
     
-    //    javacall_result result = javacall_t9_add_key(
+    //    javacall_result result = javacall_pti_add_key(
     //        (javacall_handle) handle, 
-    //        (javacall_t9_keycode) keyCode);
+    //        (javacall_pti_keycode) keyCode);
     return handle > 0 ? KNI_TRUE : KNI_FALSE;
 }
 
@@ -172,7 +173,7 @@ jboolean ptNextCompletionOption(jint handle, jchar *outString,
     (void)outString;
 
     
-    //    return javacall_t9_completion_get_next(
+    //    return javacall_pti_completion_get_next(
     //                    (javacall_handle)     handle, 
     //                    (javacall_unicode*)   outString, 
     //                                     outStringLen);
@@ -192,7 +193,7 @@ jboolean ptHasCompletionOption(jint handle) {
     // IMPL_NOTE: add implementation sample.
 
     (void)handle;
-    //    javacall_result result = javacall_t9_completion_has_next((javacall_handle) handle);
+    //    javacall_result result = javacall_pti_completion_has_next((javacall_handle) handle);
     //    return JAVACALL_SUCCEEDED(result);
     return KNI_FALSE;
 }
@@ -210,6 +211,6 @@ jboolean ptHasCompletionOption(jint handle) {
 jboolean ptRenewCompletionOptions(jint handle) {
     // IMPL_NOTE: add implementation sample.
 
-    //    javacall_result result = javacall_t9_completion_rewind((javacall_handle) handle);
+    //    javacall_result result = javacall_pti_completion_rewind((javacall_handle) handle);
     return handle > 0 ? KNI_TRUE : KNI_FALSE;
 }

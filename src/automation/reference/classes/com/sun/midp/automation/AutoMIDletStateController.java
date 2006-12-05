@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -33,7 +34,7 @@ import com.sun.midp.configurator.Constants;
 /**
  * Class controlling states of the MIDlets
  */
-final class AutoMIDletStateController 
+final class AutoMIDletStateController
     implements MIDletProxyListListener {
 
     /** MIDlet proxy list reference. */
@@ -44,27 +45,27 @@ final class AutoMIDletStateController
 
     /** The one and only AutoMIDletStateController instance */
     private static AutoMIDletStateController stateController = null;
-    
+
     /**
      * Private constructor to prevent direct creation of instances.
      */
     private AutoMIDletStateController() {
         midletProxyList = MIDletProxyList.getMIDletProxyList();
         midletProxyList.addListener(this);
-        
+
         midletsInfo = AutoMIDletInfoList.getMIDletInfoList();
     }
 
     /**
      * Starts MIDlet.
-     * 
+     *
      * @param midletDescriptor descriptor of MIDlet to start
      * @param args MIDlet's arguments
      * @throws throws RuntimeException if MIDlet couldn't be started
-     * @return AutoMIDletImpl instance representing started MIDlet or 
+     * @return AutoMIDletImpl instance representing started MIDlet or
      *         null if there was a problem starting MIDlet
      */
-    AutoMIDletImpl startMIDlet(AutoMIDletDescriptorImpl midletDescriptor, 
+    AutoMIDletImpl startMIDlet(AutoMIDletDescriptorImpl midletDescriptor,
             String[] args) {
 
         AutoMIDletImpl midlet = null;
@@ -75,7 +76,7 @@ final class AutoMIDletStateController
                 midletDescriptor.getSuiteDescriptor();
 
             // what is needed to start MIDlet
-            String suiteID = suite.getSuiteID();
+            int suiteID = suite.getSuiteID();
             String midletClassName = midletDescriptor.getMIDletClassName();
             String midletName = midletDescriptor.getMIDletName();
 
@@ -97,18 +98,19 @@ final class AutoMIDletStateController
                 }
             }
 
-            
+
             // create info for MIDlet to be started
             AutoMIDletInfo info = midletsInfo.addToList(
                     suiteID, midletClassName);
-            
+
             // initiate MIDlet starting
+            // IMPL_NOTE: add passing of memory quotas and VM profile name
             AmsUtil.startMidletInNewIsolate(
                     suiteID, midletClassName, midletName,
                     arg1, arg2, arg3);
 
             // wait for MIDlet to start
-            while (info.midletProxy == null && 
+            while (info.midletProxy == null &&
                    info.startError == false) {
                 try {
                     midletsInfo.wait();
@@ -117,7 +119,7 @@ final class AutoMIDletStateController
                 }
             }
 
-            // By now, either MIDlet is running, 
+            // By now, either MIDlet is running,
             // either there was a problem starting it
             if (info.startError) {
                 midletsInfo.removeFromList(info);
@@ -210,13 +212,13 @@ final class AutoMIDletStateController
      */
     synchronized static AutoMIDletStateController getMIDletStateController() {
         if (stateController == null) {
-            stateController = new AutoMIDletStateController(); 
+            stateController = new AutoMIDletStateController();
         }
 
         return stateController;
     }
-    
-    
+
+
     /**
      * MIDletProxyListListener interface implementation
      */
@@ -247,7 +249,7 @@ final class AutoMIDletStateController
         AutoMIDletImpl midlet = midletsInfo.findMIDlet(midletProxy);
 
         // notify AutoMIDletImpl about state change
-        if (midlet != null && 
+        if (midlet != null &&
             fieldID == MIDletProxyListListener.MIDLET_STATE) {
 
             switch (midletProxy.getMidletState()) {
@@ -277,7 +279,7 @@ final class AutoMIDletStateController
             if (midlet != null) {
                 midlet.stateChanged(AutoMIDletLifeCycleState.DESTROYED);
             }
-            
+
             // remove MIDlet info from our list as well
             midletsInfo.removeFromList(info);
         }
@@ -290,14 +292,14 @@ final class AutoMIDletStateController
      * @param suiteID Suite ID of the MIDlet
      * @param className Class name of the MIDlet
      * @param error start error code
-     */   
-    public void midletStartError(int externalAppID, String suiteID, 
+     */
+    public void midletStartError(int externalAppID, int suiteID,
             String className, int error) {
 
         synchronized (midletsInfo) {
-            AutoMIDletInfo info = 
+            AutoMIDletInfo info =
                 midletsInfo.findMIDletInfo(suiteID, className);
-            
+
             if (info != null) {
                 // set error flag and notify waiter
                 info.startError = true;

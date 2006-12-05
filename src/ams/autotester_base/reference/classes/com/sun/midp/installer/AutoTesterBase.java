@@ -1,53 +1,49 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.installer;
 
 import java.io.IOException;
 
+import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.lcdui.*;
-
 import javax.microedition.midlet.MIDlet;
 
 import com.sun.midp.i18n.Resource;
-
 import com.sun.midp.i18n.ResourceConstants;
 
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.MIDletInfo;
-
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 import com.sun.midp.security.Permissions;
 
 import com.sun.midp.log.Logging;
-
 import com.sun.midp.log.LogChannels;
-
-import com.sun.midp.util.Properties;
 
 /**
  * Installs/Updates a test suite, runs the first MIDlet in the suite in a loop
@@ -216,8 +212,6 @@ class AutoTesterBase extends MIDlet implements CommandListener,
      * Save the URL setting the user entered in to the urlTextBox.
      */
     void getURLTextAndTest() {
-        String temp;
-
         url = urlTextField.getString();
 
         if (url == null || url.length() == 0) {
@@ -250,8 +244,8 @@ class AutoTesterBase extends MIDlet implements CommandListener,
      */
     void startBackgroundTester() {
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
-        installer = Installer.getInstaller();
 
+        installer = new HttpInstaller();
         if (domain != null) {
             installer.setUnsignedSecurityDomain(domain);
         }
@@ -266,10 +260,10 @@ class AutoTesterBase extends MIDlet implements CommandListener,
     /**
      * Handles an installer exceptions.
      *
-     * @param suiteID ID of the suite being installed, can be null
+     * @param suiteId ID of the suite being installed, can be null
      * @param ex exception to handle
      */
-    void handleInstallerException(String suiteID, Throwable ex) {
+    void handleInstallerException(int suiteId, Throwable ex) {
         String message = null;
 
         if (ex instanceof InvalidJadException) {
@@ -278,12 +272,12 @@ class AutoTesterBase extends MIDlet implements CommandListener,
             /*
              * The server will signal the end of testing with not found
              * status. However print out the JAD not found error if this
-             * is the first download. (suiteID == null)
+             * is the first download. (suiteId == null)
              */
             int reason = ije.getReason();
             if ((reason != InvalidJadException.JAD_NOT_FOUND &&
                 reason != InvalidJadException.JAD_SERVER_NOT_FOUND) ||
-                    suiteID == null) {
+                    suiteId == MIDletSuite.UNUSED_SUITE_ID) {
                 message = "** Error installing suite (" + reason + "): " +
                           messageForInvalidJadException(ije);
             }
@@ -294,13 +288,22 @@ class AutoTesterBase extends MIDlet implements CommandListener,
         }
 
         if (message != null) {
-            long start = System.currentTimeMillis();
+            displayException(Resource.getString(ResourceConstants.ERROR),
+                             message);
 
-            displayException(Resource.getString
-					(ResourceConstants.ERROR),
-                                    message);
-            while ((System.currentTimeMillis() - start) <
-                   ALERT_TIMEOUT);
+            long start = System.currentTimeMillis();
+            long time_left = ALERT_TIMEOUT;
+
+            while (time_left > 0) {
+                try {
+                    Thread.sleep(time_left);
+                    time_left = 0;
+                } catch (InterruptedException ie) {
+                    long tmp = System.currentTimeMillis();
+                    time_left -= (tmp - start);
+                    start = tmp;
+                }
+            }
         }
     }
 
@@ -325,19 +328,19 @@ class AutoTesterBase extends MIDlet implements CommandListener,
      * Returns the class name of the first MIDlet of the newly installed
      * suite.
      *
-     * @param suiteID ID of the MIDlet Suite
+     * @param suiteId ID of the MIDlet Suite
      * @param midletSuiteStorage MIDlet suite storage to look up properties
      *
      * @return an object with the class name and display name of
      * the suite's MIDlet-1 property
      */
-    static MIDletInfo getFirstMIDletOfSuite(String suiteID,
+    static MIDletInfo getFirstMIDletOfSuite(int suiteId,
             MIDletSuiteStorage midletSuiteStorage) {
         MIDletSuite ms = null;
         String name = null;
 
         try {
-            ms = midletSuiteStorage.getMIDletSuite(suiteID, false);
+            ms = midletSuiteStorage.getMIDletSuite(suiteId, false);
             name = ms.getProperty("MIDlet-1");
         } catch (Exception e) {
             throw new RuntimeException("midlet properties corrupted");
@@ -541,6 +544,9 @@ class AutoTesterBase extends MIDlet implements CommandListener,
         case InvalidJadException.CA_DISABLED:
             return "The application can't be authorized because " +
                 ije.getExtraData() + " is disabled.";
+
+        case InvalidJadException.UNSUPPORTED_CHAR_ENCODING:
+            return "Unsupported character encoding: " + ije.getExtraData();
         }
 
         return ije.getMessage();

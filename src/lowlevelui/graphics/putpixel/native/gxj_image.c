@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,6 +28,7 @@
  * \file
  * Immutable image functions that needed to be implemented for each port.
  */
+#include <kni.h>
 #include <string.h>
 
 #include <midpMalloc.h>
@@ -621,11 +623,16 @@ create_transformed_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, 
          srcX++, destX+=xIncr, xCounter++) {
 
       if ( transform & TRANSFORM_INVERTED_AXES ) {
-        dest->pixelData[destX * dest->width + destY] =
-                   src->pixelData[srcYwidth /*srcY*src->width*/ + srcX];
+          dest->pixelData[destX * dest->width + destY] =
+            src->pixelData[srcYwidth /*srcY*src->width*/ + srcX];
+        dest->alphaData[destX * dest->width + destY] =
+            src->alphaData[srcYwidth /*srcY*src->width*/ + srcX];
+
       } else {
         dest->pixelData[destYwidth /*destY * dest->width*/ + destX] =
                    src->pixelData[srcYwidth /*srcY*src->width*/ + srcX];
+        dest->alphaData[destYwidth /*destY * dest->width*/ + destX] =
+            src->alphaData[srcYwidth /*srcY*src->width*/ + srcX];
       }
     } /*for x*/
   } /* for y */
@@ -730,13 +737,20 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
         newSrc.pixelData =
             (gxj_pixel_type *)midpMalloc(width * height * sizeof (gxj_pixel_type));
         if (newSrc.pixelData == NULL) {
-            REPORT_ERROR(LC_LOWUI, "Out of memory error, copyImageRegion\n");
+            REPORT_ERROR(LC_LOWUI, "Out of memory error, copyImageRegion (pixelData)\n"); 
+            return ; 
+        } 
+        newSrc.alphaData = 
+            (gxj_alpha_type *)midpMalloc(width * height * sizeof (gxj_alpha_type)); 
+        if (newSrc.alphaData == NULL) { 
+            midpFree(newSrc.pixelData); 
+            REPORT_ERROR(LC_LOWUI, "Out of memory error, copyImageRegion (Alpha)\n"); 
             return ;
         }
-
+        
         create_transformed_imageregion(src, &newSrc, x_src, y_src, width,
 				       height, transform);
-
+        
         /* set the new image as the source */
         src = &newSrc;
         x_src = 0;
@@ -833,6 +847,10 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
 
     if (newSrc.pixelData != NULL) {
         midpFree(newSrc.pixelData);
+    }
+
+    if (newSrc.alphaData != NULL) {
+        midpFree(newSrc.alphaData);
     }
 }
 

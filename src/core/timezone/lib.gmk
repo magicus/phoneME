@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -45,6 +46,14 @@ SUBSYSTEM_TIMEZONE_EXTRA_INCLUDES += \
 ifeq ($(PLATFORM), stubs)
     include $(TIMEZONE_DIR)/stubs/lib.gmk
 else
-    include $(TIMEZONE_DIR)/posix/lib.gmk   
+    ifeq ($(PLATFORM), wince)
+        include $(TIMEZONE_DIR)/stubs/lib.gmk
+    else
+        ifeq ($(PLATFORM), javacall)
+            include $(TIMEZONE_DIR)/$(PLATFORM)/lib.gmk
+        else
+            include $(TIMEZONE_DIR)/posix/lib.gmk
+        endif
+    endif
 endif
 

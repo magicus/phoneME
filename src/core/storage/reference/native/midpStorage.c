@@ -1,26 +1,27 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -29,20 +30,23 @@
  * Manage storage for internal API's.
  */
 /*
- * Functions in this file make file system calls that are 
- * unlikely to behave differently across platforms with Posix 
+ * Functions in this file make file system calls that are
+ * the same (similar) across platforms with Posix
  * library support.  Calls which are system dependent and may vary
- * across platforms are encapsulated by functions defined in the file 
+ * across platforms are encapsulated by functions defined in the file
  * storagePosix_md.h.
  */
 
 #include <string.h>
-#include <errno.h>
 
+#ifndef UNDER_CE
+#include <errno.h>
+#endif
+
+#include <midpUtilKni.h>
 #include <midpMalloc.h>
 #include <midpString.h>
 #include <midpStorage.h>
-#include <midpUtilKni.h>
 
 #include <midp_logging.h>
 #include <midpResourceLimit.h>
@@ -59,7 +63,7 @@ static const char* const OUT_OF_MEM_ERROR =
     "out of memory, cannot perform file operation";
 static const char* const NOT_EXIST_RENAME_ERROR =
     "The file to be renamed does not exist.";
-static const char* const FILE_LIMIT_ERROR = 
+static const char* const FILE_LIMIT_ERROR =
     "Resource limit exceeded for file handles";
 static const char* const STRING_CORRUPT_ERROR =
     "string data corrupt or invalid, cannot perform i/o operation";
@@ -90,8 +94,8 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(CONFIG_SUBDIR);
 
 
 /*
- * Porting note: <tt>DEFAULT_TOTAL_SPACE</tt> defines the 
- * default maximum space allotted for storage of MIDlet suites and their 
+ * Porting note: <tt>DEFAULT_TOTAL_SPACE</tt> defines the
+ * default maximum space allotted for storage of MIDlet suites and their
  * associated record stores on a platform.  This storage space may
  * be set to a value other than <tt>DEFAULT_STORAGE_SPACE</tt> using
  * the <tt>storageSetTotalSpace</tt> method or providing the configuration
@@ -99,11 +103,23 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(CONFIG_SUBDIR);
  */
 #define DEFAULT_TOTAL_SPACE (4 * 1024 * 1024) /* 4 Meg. */
 
+/*
+ * Number of the supported storages: 2 for internal and only one external.
+ * This value should be changed if more than one external storage is supported.
+ */
+#define MAX_STORAGE_NUM 2
+
 /* Local variables */
 static long totalSpace = DEFAULT_TOTAL_SPACE;
 
-static pcsl_string sRoot = PCSL_STRING_NULL_INITIALIZER;
-static pcsl_string configRoot = PCSL_STRING_NULL_INITIALIZER;
+static pcsl_string sRoot[MAX_STORAGE_NUM] = {
+    PCSL_STRING_NULL_INITIALIZER,
+    PCSL_STRING_NULL_INITIALIZER
+};
+static pcsl_string configRoot[MAX_STORAGE_NUM] = {
+    PCSL_STRING_NULL_INITIALIZER,
+    PCSL_STRING_NULL_INITIALIZER
+};
 static int storageInitDone = 0;
 
 #define MAX_ERROR_LEN 159
@@ -135,18 +151,19 @@ storageInitialize(char *midp_home) {
         return -1;
     }
 
-    if (PCSL_STRING_OK != pcsl_string_from_chars(midp_home, &sRoot)) {
+    /* set up a path to the internal storage */
+    if (PCSL_STRING_OK != pcsl_string_from_chars(midp_home, &sRoot[0])) {
         REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
         storageFinalize();
         return -1;
     }
 
     /* performance hint: predict buffer capacity */
-    pcsl_string_predict_size(&sRoot, pcsl_string_length(&sRoot) + 2
+    pcsl_string_predict_size(&sRoot[0], pcsl_string_length(&sRoot[0]) + 2
                                     + PCSL_STRING_LITERAL_LENGTH(APP_DIR));
-    if (PCSL_STRING_OK != pcsl_string_append_char(&sRoot, fsep)
-     || PCSL_STRING_OK != pcsl_string_append(&sRoot, &APP_DIR)
-     || PCSL_STRING_OK != pcsl_string_append_char(&sRoot, fsep)) {
+    if (PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)
+     || PCSL_STRING_OK != pcsl_string_append(&sRoot[0], &APP_DIR)
+     || PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)) {
         REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
         storageFinalize();
         return -1;
@@ -165,19 +182,19 @@ static int
 initializeConfigRoot(char* midp_home) {
     jchar fileSep = storageGetFileSeparator();
 
-    if (PCSL_STRING_OK != pcsl_string_from_chars(midp_home, &configRoot)) {
+    if (PCSL_STRING_OK != pcsl_string_from_chars(midp_home, &configRoot[0])) {
         return -1;
     }
 
     /* performance hint: predict buffer capacity */
-    pcsl_string_predict_size(&configRoot,
-                            pcsl_string_length(&configRoot)
+    pcsl_string_predict_size(&configRoot[0],
+                            pcsl_string_length(&configRoot[0])
                             + 2 + PCSL_STRING_LITERAL_LENGTH(CONFIG_SUBDIR));
 
-    if (PCSL_STRING_OK != pcsl_string_append_char(&configRoot, fileSep)
-     || PCSL_STRING_OK != pcsl_string_append(&configRoot, &CONFIG_SUBDIR)
-     || PCSL_STRING_OK != pcsl_string_append_char(&configRoot, fileSep)) {
-        pcsl_string_free(&configRoot);
+    if (PCSL_STRING_OK != pcsl_string_append_char(&configRoot[0], fileSep)
+     || PCSL_STRING_OK != pcsl_string_append(&configRoot[0], &CONFIG_SUBDIR)
+     || PCSL_STRING_OK != pcsl_string_append_char(&configRoot[0], fileSep)) {
+        pcsl_string_free(&configRoot[0]);
         return -1;
     }
 
@@ -203,8 +220,11 @@ storageSetTotalSpace(long space) {
  */
 void
 storageFinalize() {
-    pcsl_string_free(&sRoot);
-    pcsl_string_free(&configRoot);
+    int i;
+    for (i = 0; i < MAX_STORAGE_NUM; i++) {
+        pcsl_string_free(&sRoot[i]);
+        pcsl_string_free(&configRoot[i]);
+    }
     storageInitDone = 0;
     pcsl_file_finalize();
 }
@@ -218,12 +238,28 @@ storageFinalize() {
  * Since the lifetime of the returned object is from storageInitialize
  * until storageFinalize, you do not have to free the returned object.
  *
- * @return prefix used for all file names. It may be empty, but not
- *         PCSL_STRING_NULL
+ * @param storageId ID of the storage the root of which must be returned
+ *
+ * @return prefix used for all file names in the given storage.
+ *         It may be empty, but not PCSL_STRING_NULL.
  */
 const pcsl_string*
-storage_get_root() {
-    return &sRoot;
+storage_get_root(StorageIdType storageId) {
+    /*
+     * Our implementation supports only 2 storages: internal and one external.
+     * Change MAX_STORAGE_NUM value if you want to have more than one
+     * external storage. This will also require modification of the functions
+     * initializing and returning sRoot[<index>] and configRoot[<index>], namely
+     * storageInitialize(), storage_get_root() and storage_get_config_root().
+     */
+    pcsl_string* pRes;
+    if (storageId == INTERNAL_STORAGE_ID) {
+        pRes = &sRoot[0];
+    } else {
+        pRes = &sRoot[1];
+    }
+
+    return pRes;
 }
 
 /*
@@ -235,12 +271,21 @@ storage_get_root() {
  * Since the lifetime of the returned object is from initializeConfigRoot
  * until storageFinalize, you do not have to free the returned object.
  *
+ * @param storageId ID of the storage the config root of which must be returned
+ *
  * @return prefix used for all configuration file names. It may be empty,
  *         but not PCSL_STRING_NULL
  */
 const pcsl_string*
-storage_get_config_root() {
-    return &configRoot;
+storage_get_config_root(StorageIdType storageId) {
+    pcsl_string* pRes;
+    if (storageId == INTERNAL_STORAGE_ID) {
+        pRes = &configRoot[0];
+    } else {
+        pRes = &configRoot[1];
+    }
+
+    return pRes;
 }
 
 
@@ -280,7 +325,7 @@ storage_file_exists(const pcsl_string* filename_str) {
  */
 jchar
 storageGetFileSeparator() {
-	return (jchar)pcsl_file_getfileseparator();
+    return (jchar)pcsl_file_getfileseparator();
 }
 
 /*
@@ -289,7 +334,7 @@ storageGetFileSeparator() {
  */
 jchar
 storageGetPathSeparator() {
-	return (jchar)pcsl_file_getpathseparator();
+    return (jchar)pcsl_file_getpathseparator();
 }
 
 /*
@@ -312,10 +357,6 @@ storage_open(char** ppszError, const pcsl_string* filename_str, int ioMode) {
         DEBUGP2F("opening for read only %s\n", filename_str);
         flags |= PCSL_FILE_O_RDONLY;
     } else {
-        if (*ppszError != NULL) {
-            return -1;
-        }
-
         if (!storage_file_exists(filename_str)) {
             flags |= PCSL_FILE_O_CREAT;
         } else if (OPEN_READ_WRITE_TRUNCATE == ioMode) {
@@ -375,16 +416,16 @@ storageClose(char** ppszError, int handle) {
     *ppszError = NULL;
     status = pcsl_file_close((void *)handle);
 
-    REPORT_INFO2(LC_CORE, "storageClose on file_desc %d returns %d\n", 
+    REPORT_INFO2(LC_CORE, "storageClose on file_desc %d returns %d\n",
           handle, status);
 
     if (status < 0) {
         *ppszError = getLastError("storageClose()");
     }
 
-    /* File is successfully closed, decrement the count */ 
+    /* File is successfully closed, decrement the count */
     if (midpDecResourceCount(RSC_TYPE_FILE, 1) == 0) {
-        REPORT_INFO(LC_CORE, "FILE: resource"  
+        REPORT_INFO(LC_CORE, "FILE: resource"
                              " limit update error");
     }
 }
@@ -406,8 +447,8 @@ storageRead(char** ppszError, int handle, char* buffer, long length) {
     }
 
     bytesRead = pcsl_file_read((void *)handle, (unsigned char*)buffer, length);
-  
-    REPORT_INFO2(LC_CORE, "storageRead on fd %d res = %ld\n", 
+
+    REPORT_INFO2(LC_CORE, "storageRead on fd %d res = %ld\n",
           handle, bytesRead);
 
     if (-1 == bytesRead) {
@@ -422,7 +463,7 @@ storageRead(char** ppszError, int handle, char* buffer, long length) {
 
 /*
  * Write to an open file in storage. Will write all of the bytes in the
- * buffer or pass back an error. 
+ * buffer or pass back an error.
  *
  * If not successful *ppszError will set to point to an error string,
  * on success it will be set to NULL.
@@ -434,7 +475,7 @@ storageWrite(char** ppszError, int handle, char* buffer, long length) {
     *ppszError = NULL;
     bytesWritten = pcsl_file_write((void *)handle, (unsigned char*)buffer, length);
 
-    REPORT_INFO2(LC_CORE, "storageWrite on fd %d res = %ld\n", 
+    REPORT_INFO2(LC_CORE, "storageWrite on fd %d res = %ld\n",
           handle, bytesWritten);
 
     if (-1 == bytesWritten) {
@@ -481,10 +522,10 @@ void
 storagePosition(char** ppszError, int handle, long absolutePosition) {
     long newPosition;
 
-    newPosition = pcsl_file_seek((void *)handle, absolutePosition, 
+    newPosition = pcsl_file_seek((void *)handle, absolutePosition,
                                   PCSL_FILE_SEEK_SET);
 
-    REPORT_INFO2(LC_CORE, "storagePostion on fd %d res = %d\n", 
+    REPORT_INFO2(LC_CORE, "storagePostion on fd %d res = %d\n",
           handle, newPosition);
 
     if (-1 == newPosition) {
@@ -510,7 +551,7 @@ storageRelativePosition(char** ppszError, int handle, long offset) {
 
     newPosition = pcsl_file_seek((void *)handle, offset, PCSL_FILE_SEEK_CUR);
 
-    REPORT_INFO2(LC_CORE, "storageRelativePostion on fd %d res = %d\n", 
+    REPORT_INFO2(LC_CORE, "storageRelativePostion on fd %d res = %d\n",
          handle, newPosition);
 
     if (-1 == newPosition) {
@@ -524,7 +565,7 @@ storageRelativePosition(char** ppszError, int handle, long offset) {
 }
 
 /*
- * Return the size of an open file in storage. 
+ * Return the size of an open file in storage.
  *
  * If not successful *ppszError will set to point to an error string,
  * on success it will be set to NULL.
@@ -543,7 +584,7 @@ storageSizeOf(char** ppszError,  int handle) {
 }
 
 /*
- * Truncate the size of an open file in storage.  
+ * Truncate the size of an open file in storage.
  *
  * If not successful *ppszError will set to point to an error string,
  * on success it will be set to NULL.
@@ -566,17 +607,29 @@ storageTruncate(char** ppszError, int handle, long size) {
  * Return the amount of free bytes of file storage.
  * The maximum amount of free space is limited by the value set with
  * the <tt>storageSetTotalSpace</tt> method.
+ *
+ * @param storageId ID of the storage to check for free space
  */
-long
-storageGetFreeSpace() {
-    long freeSpace;
-    long usedSpace = pcsl_file_getusedspace(&sRoot);
-   
+jlong
+storage_get_free_space(StorageIdType storageId) {
+    jlong freeSpace;
+    jlong usedSpace;
+
+    if (storageId < 0 || storageId >= MAX_STORAGE_NUM) {
+        return 0; /* Invalid storage ID: no free space available */
+    }
+
+    usedSpace = pcsl_file_getusedspace(&sRoot[storageId]);
+
     if (usedSpace == -1) { /* PCSL error */
         return 0; /* No free space available */
     }
 
-    freeSpace = totalSpace - usedSpace;
+    if (totalSpace > usedSpace) {
+        freeSpace = totalSpace - usedSpace;
+    } else {
+        freeSpace = 0;
+    }
 
     REPORT_INFO1(LC_CORE, "Free space = %ld\n", freeSpace);
 
@@ -608,14 +661,14 @@ storage_delete_file(char** ppszError, const pcsl_string* filename_str) {
 }
 
 /*
- * Rename a file in storage. 
+ * Rename a file in storage.
  *
  * If not successful *ppszError will set to point to an error string,
  * on success it will be set to NULL.
  */
 void
 storage_rename_file(char** ppszError, const pcsl_string* oldFilename_str,
-                  const pcsl_string* newFilename_str) {
+                    const pcsl_string* newFilename_str) {
     int status;
     *ppszError = NULL;
 
@@ -699,10 +752,10 @@ storage_get_last_file_error(char* pszFunction, const pcsl_string* filename_str) 
 }
 
 /*
- * Returns the handle that represents the savedRootlength, savedDirectory 
+ * Returns the handle that represents the savedRootlength, savedDirectory
  * etc. This handle needs to be passed to storage_get_next_file_in_iterator()
- * in order to get the filename that matches with a given string. In 
- * order to clean-up the memory storageCloseFileIterator() must be 
+ * in order to get the filename that matches with a given string. In
+ * order to clean-up the memory storageCloseFileIterator() must be
  * called to close the handle properly.
  *
  * Returns NULL if memory allocation fails
@@ -721,8 +774,8 @@ storage_open_file_iterator(const pcsl_string* string_str)
 /*
  * Return the filename in storage that begins with a given string.
  * The order is defined by the underlying file system.
- * This function needs to be repeatedly called for all next 
- * occurrents of the file that begins with a given string. 
+ * This function needs to be repeatedly called for all next
+ * occurrents of the file that begins with a given string.
  *
  * Returns 0 on success, -1 otherwise
  *
@@ -785,7 +838,7 @@ storage_read_utf16_string(char** ppszError, int handle, pcsl_string* str) {
   }
 
   bytesRead = storageRead(ppszError, handle,
-			  (char*)tempStr, tempLen * sizeof (jchar));
+        (char*)tempStr, tempLen * sizeof (jchar));
   if (*ppszError != NULL) {
     /* do nothing: error code already there */
   } else if (bytesRead != (signed)(tempLen * sizeof (jchar))) {

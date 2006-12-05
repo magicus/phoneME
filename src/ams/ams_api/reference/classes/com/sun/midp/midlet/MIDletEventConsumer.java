@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,8 +25,6 @@
  */
 
 package com.sun.midp.midlet;
-
-import com.sun.midp.midlet.MIDletPeer;
 
 /**
  * This is the DisplayEventHandler/MIDletStateHandler contract for

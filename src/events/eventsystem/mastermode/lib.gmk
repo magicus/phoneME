@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -27,9 +28,9 @@
 # Module's PLATFORM Component Configuration file
 #
 ######################################################################
-
+ifeq ($(TARGET_VM), cldc_vm)
 vpath % $(SUBSYSTEM_EVENTS_DIR)/eventsystem/mastermode/native
-
 
 SUBSYSTEM_EVENTS_NATIVE_FILES += \
     midp_master_mode_events.c
+endif

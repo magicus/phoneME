@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -47,16 +48,18 @@
  *     or NULL if the data wasn't found in the cache
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_appmanager_MIDletSuiteInfo_loadCachedIcon() {
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteInfo_loadCachedIcon) {
 #if ENABLE_IMAGE_CACHE
+    SuiteIdType suiteID;
     int length;
     unsigned char *buffer = NULL;
-    KNI_StartHandles(3);
-    KNI_DeclareHandle(iconBytesArray);
-    GET_PARAMETER_AS_PCSL_STRING(1, suiteId)
-    GET_PARAMETER_AS_PCSL_STRING(2, iconName)
 
-    length = loadImageFromCache(&suiteId, &iconName, &buffer);
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(iconBytesArray);
+    suiteID = KNI_GetParameterAsInt(1);
+
+    GET_PARAMETER_AS_PCSL_STRING(2, iconName)
+    length = loadImageFromCache(suiteID, &iconName, &buffer);
     if (length != -1 && buffer != NULL) {
 
         // Create byte array object to return as result
@@ -70,7 +73,7 @@ Java_com_sun_midp_appmanager_MIDletSuiteInfo_loadCachedIcon() {
         midpFree(buffer);
     }
     RELEASE_PCSL_STRING_PARAMETER
-    RELEASE_PCSL_STRING_PARAMETER
+
     KNI_EndHandlesAndReturnObject(iconBytesArray);
 #else
     return NULL;

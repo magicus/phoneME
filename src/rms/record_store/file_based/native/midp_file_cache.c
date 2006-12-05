@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -30,12 +31,15 @@
 #include <midp_logging.h>
 #include <string.h>
 
-#define CHECK_ERROR(pszError)        if (pszError != (char*) NULL) { \
-                                    REPORT_ERROR(LC_RMS, "File cache error"); \
-                                    return; \
-                                }
+#define CHECK_ERROR(pszError) \
+    if (pszError != (char*) NULL) { \
+        REPORT_ERROR(LC_RMS, "File cache error"); \
+        return; \
+    }
 
-#define DATA(b)                (((char*)b)+sizeof(MidpFileCacheBlock))
+#define DATA(b) (((char*)b)+sizeof(MidpFileCacheBlock))
+
+#define UNINITIALIZED_CACHED_VALUE (-1)
 
 /* Cache for a single file */
 static MidpFileCache *mFileCache;
@@ -70,10 +74,26 @@ static int is_include(long x1, long s1, long x2, long s2) {
     return (x1 <= x2 && x1+s1 >= x2+s2);
 }
 
+/**
+ * Initializes mFileCache->cachedAvailableSpace with the number
+ * of available bytes on the storage defined by mFileCache->storageId.
+ */
+static void midp_init_cached_free_space() {
+    if (mFileCache) {
+        mFileCache->cachedAvailableSpace = storage_get_free_space(
+            mFileCache->storageId);
+    }
+}
+
 /* Upon success write, update file position, size and available space */
 static void updateCachedSizes(long lengthWritten) {
     mFileCache->cachedPosition += lengthWritten;
     if (mFileCache->cachedPosition > mFileCache->cachedFileSize) {
+        if (mFileCache->cachedAvailableSpace ==
+                UNINITIALIZED_CACHED_VALUE) {
+            midp_init_cached_free_space();
+        }
+
         mFileCache->cachedAvailableSpace -= mFileCache->cachedPosition -
                                             mFileCache->cachedFileSize;
         mFileCache->cachedFileSize = mFileCache->cachedPosition;
@@ -100,7 +120,7 @@ void uncachedWrite(char** ppszError, int handle, char *buffer, int length) {
  */
 static void midp_file_cache_finalize(char **ppszError, int stayOpen) {
     *ppszError = NULL;
-    
+
     if (mFileCache != NULL) {
         midp_file_cache_flush(ppszError, mFileCache->handle);
         /* Do no seek for the file that is either damaged or to be closed */
@@ -117,7 +137,7 @@ static void midp_file_cache_finalize(char **ppszError, int stayOpen) {
 /** A helper function for midp_file_cache_flush(). */
 static
 void midp_file_cache_flush_using_buffer(char** ppszError, int handle,
-                                      char* buf, long bufsize) {
+                                        char* buf, long bufsize) {
     MidpFileCacheBlock *b; /* current cache block */
     MidpFileCacheBlock *n; /* next cache block */
     MidpFileCacheBlock *q; /* first block not (yet) copied to the buffer,
@@ -224,7 +244,8 @@ void midp_file_cache_flush(char** ppszError, int handle) {
     } while(1);
 }
 
-int midp_file_cache_open(char** ppszError, const pcsl_string* filename, int ioMode) {
+int midp_file_cache_open(char** ppszError, StorageIdType storageId,
+                         const pcsl_string* filename, int ioMode) {
     int h;
     *ppszError = NULL;
     h = storage_open(ppszError, filename, ioMode);
@@ -234,8 +255,9 @@ int midp_file_cache_open(char** ppszError, const pcsl_string* filename, int ioMo
             mFileCache = (MidpFileCache *)midpMalloc(sizeof(MidpFileCache));
             mFileCache->handle = h;
             mFileCache->size = 0;
+            mFileCache->storageId = storageId;
             mFileCache->cachedPosition = 0;
-            mFileCache->cachedAvailableSpace = storageGetFreeSpace();
+            mFileCache->cachedAvailableSpace = UNINITIALIZED_CACHED_VALUE;
             mFileCache->cachedFileSize = storageSizeOf(ppszError, h);
             mFileCache->blocks = NULL;
         } else {
@@ -249,7 +271,7 @@ int midp_file_cache_open(char** ppszError, const pcsl_string* filename, int ioMo
 }
 
 void midp_file_cache_close(char** ppszError, int handle) {
-    char *pszErrorTmp = NULL; 
+    char *pszErrorTmp = NULL;
     *ppszError = NULL;
 
     if (mFileCache != NULL && mFileCache->handle == handle) {
@@ -258,7 +280,7 @@ void midp_file_cache_close(char** ppszError, int handle) {
     }
 
     storageClose(ppszError, handle);
-    
+
     if (*ppszError == NULL) {
         *ppszError = pszErrorTmp;
     } else {
@@ -425,19 +447,30 @@ long midp_file_cache_read(char** ppszError, int handle,
     return l;
 }
 
-long midp_file_cache_available_space(char** ppszError, int handle) {
+jlong midp_file_cache_available_space(char** ppszError, int handle,
+                                      StorageIdType storageId) {
+    /* Storage may have more then 2Gb space available so use 64-bit type */
+    jlong availSpace;
     *ppszError = NULL;
 
     if (mFileCache == NULL) {
-        return storageGetFreeSpace();
+        availSpace = storage_get_free_space(storageId);
     } else {
         if (mFileCache->handle != handle) {
             /* Flush current cache to storage before query for new space */
             midp_file_cache_flush(ppszError, mFileCache->handle);
-            mFileCache->cachedAvailableSpace = storageGetFreeSpace();
+            mFileCache->storageId = storageId;
+            mFileCache->cachedAvailableSpace = UNINITIALIZED_CACHED_VALUE;
         }
-        return mFileCache->cachedAvailableSpace;
+
+        if (mFileCache->cachedAvailableSpace == UNINITIALIZED_CACHED_VALUE) {
+            midp_init_cached_free_space();
+        }
+
+        availSpace = mFileCache->cachedAvailableSpace;
     }
+
+    return availSpace;
 }
 
 long midp_file_cache_sizeof(char** ppszError, int handle) {
@@ -457,14 +490,17 @@ void midp_file_cache_truncate(char** ppszError, int handle, long size) {
     CHECK_ERROR(*ppszError);
 
     storageTruncate(ppszError, handle, size);
-    
+
     if (*ppszError == NULL && mFileCache != NULL) {
         if (mFileCache->handle != handle) {
-            mFileCache->cachedAvailableSpace = storageGetFreeSpace();
+            mFileCache->cachedAvailableSpace = UNINITIALIZED_CACHED_VALUE;
         } else {
-            mFileCache->cachedAvailableSpace += mFileCache->cachedFileSize -
-                                                size;
-            mFileCache->cachedFileSize = size;
+            if (mFileCache->cachedAvailableSpace !=
+                    UNINITIALIZED_CACHED_VALUE) {
+                mFileCache->cachedAvailableSpace +=
+                    mFileCache->cachedFileSize - size;
+                mFileCache->cachedFileSize = size;
+            }
         }
     }
 }

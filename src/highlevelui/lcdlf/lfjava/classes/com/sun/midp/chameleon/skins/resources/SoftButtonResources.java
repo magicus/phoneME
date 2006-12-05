@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -64,14 +65,21 @@ public class SoftButtonResources {
         SoftButtonSkin.BUTTON_ANCHOR_Y = SkinResources.getNumbersSequence(
                 SkinPropertiesIDs.SOFTBTN_BUTTON_ANCHOR_Y);
                
-        SoftButtonSkin.BUTTON_ALIGN_X = SkinResources.getNumbersSequence(
+        int[] alignX = SkinResources.getNumbersSequence(
                 SkinPropertiesIDs.SOFTBTN_BUTTON_ALIGN_X);
-        
+        for (int i = 0; i < alignX.length; ++i) {
+            alignX[i] = SkinResources.resourceConstantsToGraphics(alignX[i]); 
+        }
+        SoftButtonSkin.BUTTON_ALIGN_X = alignX;
+                
         SoftButtonSkin.BUTTON_MAX_WIDTH = SkinResources.getNumbersSequence(
                 SkinPropertiesIDs.SOFTBTN_BUTTON_MAX_WIDTH);
         
-        SoftButtonSkin.BUTTON_SHD_ALIGN = SkinResources.getInt(
+        int shdAlign = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_BUTTON_SHD_ALIGN);
+        SoftButtonSkin.BUTTON_SHD_ALIGN = 
+            SkinResources.resourceConstantsToGraphics(shdAlign);
+
         SoftButtonSkin.COLOR_FG = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_COLOR_FG);
         SoftButtonSkin.COLOR_FG_SHD = SkinResources.getInt(

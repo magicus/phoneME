@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -50,6 +51,8 @@ import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+import com.sun.midp.security.SecurityInitializer;
 
 /**
  * This is the default "datagram://" protocol for J2ME that maps onto UDP.
@@ -57,9 +60,17 @@ import com.sun.midp.security.Permissions;
 public class Protocol implements UDPDatagramConnection,
     ConnectionBaseInterface {
 
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
     /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken;
-    
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
+
     /** Initialize the native network. */
     static {
         NetworkConnectionBase.initializeNativeNetwork();
@@ -72,21 +83,7 @@ public class Protocol implements UDPDatagramConnection,
     private final Object writerLock = new Object();
 
     /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class.
-     */
-    public static void initSecurityToken(SecurityToken token) {
-	if (classSecurityToken != null) {
-	    return;
-	}
-	
-	classSecurityToken = token;
-    }
-
-    /**
-     * Handle to native datagram socket object. This is set and get only by 
+     * Handle to native datagram socket object. This is set and get only by
      * native code.
      */
     private int nativeHandle = -1;
@@ -107,7 +104,7 @@ public class Protocol implements UDPDatagramConnection,
      * Check for the required permission and open a connection to a target.
      * This method can be used with permissions greater than
      * the current MIDlet suite.
-     * 
+     *
      * @param checkSecurity    true if security check is required
      * @param name             URL for the connection, without the
      *                         without the protocol part
@@ -119,10 +116,10 @@ public class Protocol implements UDPDatagramConnection,
      *                                        be found.
      * @exception IOException  If some other kind of I/O error occurs.
      */
-    private Connection openPrimCommon(boolean checkSecurity, String name, 
+    private Connection openPrimCommon(boolean checkSecurity, String name,
             int mode) throws IOException {
 
-        MIDletStateHandler stateHandler = 
+        MIDletStateHandler stateHandler =
             MIDletStateHandler.getMidletStateHandler();
         MIDletSuite midletSuite = stateHandler.getMIDletSuite();
 
@@ -136,7 +133,7 @@ public class Protocol implements UDPDatagramConnection,
          * URL.
          */
         if (url.path != null || url.query != null || url.fragment != null) {
-            throw new IllegalArgumentException("Malformed address " + name); 
+            throw new IllegalArgumentException("Malformed address " + name);
 
         }
 
@@ -156,8 +153,8 @@ public class Protocol implements UDPDatagramConnection,
          * decided by the system and the default address for
          * datagrams to be send is 'host':'port'
          *
-         * If 'host' and 'port' are omitted in 
-         * the name, then 
+         * If 'host' and 'port' are omitted in
+         * the name, then
          * the application is requesting a system assigned port
          * number.
          */
@@ -173,7 +170,7 @@ public class Protocol implements UDPDatagramConnection,
                 // Give back the connection to AMS
                 PushRegistryImpl.checkInConnectionInternal(
                     classSecurityToken, "datagram:" + name);
-                    
+
                 throw e;
             } catch (InterruptedException ie) {
                 throw new InterruptedIOException(
@@ -210,19 +207,17 @@ public class Protocol implements UDPDatagramConnection,
 
         default:
             throw new IllegalArgumentException("Illegal mode");
-        }       
+        }
 
-        byte[] asciiID = Util.toCString(
-                 (midletSuite == null) ? "internal" : midletSuite.getID());
-
-        open0(incomingPort, asciiID);
+        open0(incomingPort, midletSuite.getID());
         open = true;
+
         return this;
     }
 
     /**
-     * Open a connection to a target. This function would be used while 
-     * opening a dagaram connection from WMA. WMA version of datagram disables 
+     * Open a connection to a target. This function would be used while
+     * opening a dagaram connection from WMA. WMA version of datagram disables
      * the security check while opening a datagram connection
      *
      * <p>
@@ -241,7 +236,7 @@ public class Protocol implements UDPDatagramConnection,
      * @throws IOException if an I/O operation failed
      * @exception SecurityException if a caller is not authorized for UDP
      */
-    public Connection openPrim(SecurityToken token, String name, 
+    public Connection openPrim(SecurityToken token, String name,
                                int mode, boolean timeouts) throws IOException {
         token.checkIfPermissionAllowed(Permissions.UDP);
         return openPrimCommon(false, name, mode);
@@ -267,10 +262,10 @@ public class Protocol implements UDPDatagramConnection,
             throws IOException {
 
         // IMPL NOTE remove usage of nativeHandle from Java
-        if (nativeHandle != -1) { 
-            // This method should be called only once. 
-            throw new RuntimeException("Illegal state for operation"); 
-        } 
+        if (nativeHandle != -1) {
+            // This method should be called only once.
+            throw new RuntimeException("Illegal state for operation");
+        }
 
         return openPrimCommon(true, name, mode);
     }
@@ -315,10 +310,10 @@ public class Protocol implements UDPDatagramConnection,
      */
     public void send(Datagram dgram) throws IOException {
         /*
-         * Synchronization should be done for a writer lock and not for 
+         * Synchronization should be done for a writer lock and not for
          * the DatagramObject. For BSD based platforms, send on UDP sockets
          * are always synchronous(they never return IO_WOULDBLOCK). But having
-         * a writer lock even for UDP send, would ensure that no more than one 
+         * a writer lock even for UDP send, would ensure that no more than one
          * thread is performing write for the same socket(handle) at the same
          * time.
          */
@@ -365,7 +360,7 @@ public class Protocol implements UDPDatagramConnection,
                 if (locHost == null) {
                     throw new IOException("Missing host");
                 }
-            
+
                 if (locPort == -1) {
                     throw new IOException("Missing port");
                 }
@@ -419,9 +414,9 @@ public class Protocol implements UDPDatagramConnection,
         throws IOException {
 
         /*
-         * Synchronization should be done for a reader lock and not for 
-         * the DatagramObject. Reader lock would ensure that no 
-         * more than one thread is performing read for the same socket(handle) 
+         * Synchronization should be done for a reader lock and not for
+         * the DatagramObject. Reader lock would ensure that no
+         * more than one thread is performing read for the same socket(handle)
          * at the same time.
          */
         synchronized (readerLock) {
@@ -493,7 +488,7 @@ public class Protocol implements UDPDatagramConnection,
         if (open) {
             open = false;
 	    close0();
-        } 
+        }
     }
 
     /**
@@ -541,7 +536,7 @@ public class Protocol implements UDPDatagramConnection,
      * @return                 a new datagram
      * @exception IOException  if an I/O error occurs
      * @exception IllegalArgumentException if the length is negative or
-     *                         larger than the buffer, or if the address 
+     *                         larger than the buffer, or if the address
      *                         parameter is invalid
      */
     public Datagram newDatagram(int size, String addr) throws IOException {
@@ -594,7 +589,7 @@ public class Protocol implements UDPDatagramConnection,
      * @param  size            the length of the buffer to be allocated
      *                         for the datagram
      * @return                 a new datagram
-     * @exception IOException  if an I/O error occurs, or the connection 
+     * @exception IOException  if an I/O error occurs, or the connection
      *                         was closed
      * @exception IllegalArgumentException if the length is negative or
      *                         larger than the buffer, or if the address
@@ -633,10 +628,10 @@ public class Protocol implements UDPDatagramConnection,
      * Gets the local address to which the socket is bound.
      *
      * <P>The host address(IP number) that can be used to connect to this
-     * end of the socket connection from an external system. 
+     * end of the socket connection from an external system.
      * Since IP addresses may be dynamically assigned a remote application
      * will need to be robust in the face of IP number reassignment.</P>
-     * <P> The local hostname (if available) can be accessed from 
+     * <P> The local hostname (if available) can be accessed from
      * <code>System.getProperty("microedition.hostname")</code>
      * </P>
      *
@@ -665,13 +660,13 @@ public class Protocol implements UDPDatagramConnection,
      * Opens a datagram connection on the given port.
      *
      * @param inpPort port to listen on, or 0 to have one selected
-     * @param suiteID the ID of the current midlet suite
+     * @param suiteId the ID of the current midlet suite
      *
      * @exception IOException  if some other kind of I/O error occurs
      *  or if reserved by another suite
      */
-    private native void open0(int inpPort, byte[] suiteID)
-	throws IOException;
+    private native void open0(int inpPort, int suiteId)
+        throws IOException;
 
     /**
      * Sends a datagram.
@@ -684,9 +679,9 @@ public class Protocol implements UDPDatagramConnection,
      * @return number of bytes sent
      * @exception IOException  if an I/O error occurs
      */
-    private native int send0(int ipNumber, int inpPort, 
-				    byte[] buf, int off, int len)
-	throws IOException;
+    private native int send0(int ipNumber, int inpPort,
+                             byte[] buf, int off, int len)
+        throws IOException;
 
     /**
      * Receives a datagram.

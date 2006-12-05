@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,7 +24,7 @@
 # information or have any questions. 
 #
 
-LIB_DESCRIPTION=VM Services Library Implementation
+LIB_DESCRIPTION=VM Services Library CLDC_VM Implementation
 LIB_VERSION=1.0
 LIB_DEPENDENCIES=
 

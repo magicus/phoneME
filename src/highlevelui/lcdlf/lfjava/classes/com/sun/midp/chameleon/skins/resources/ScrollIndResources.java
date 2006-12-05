@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -56,6 +57,12 @@ public class ScrollIndResources {
                 SkinPropertiesIDs.SCROLL_COLOR_BG);
         ScrollIndSkin.COLOR_FG = SkinResources.getInt(
                 SkinPropertiesIDs.SCROLL_COLOR_FG);
+        ScrollIndSkin.COLOR_FRAME = SkinResources.getInt(
+                SkinPropertiesIDs.SCROLL_COLOR_FRAME);
+        ScrollIndSkin.COLOR_DN_ARROW = SkinResources.getInt(
+                SkinPropertiesIDs.SCROLL_COLOR_DN_ARROW);
+        ScrollIndSkin.COLOR_UP_ARROW = SkinResources.getInt(
+                SkinPropertiesIDs.SCROLL_COLOR_UP_ARROW);
 
         /*
         Uncomment if background/foreground images are used

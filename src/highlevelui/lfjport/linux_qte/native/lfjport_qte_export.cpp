@@ -1,5 +1,5 @@
 /*
- * @(#)lfjport_qte_export.cpp	1.7 06/05/26 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -30,6 +30,7 @@
 #include <qteapp_export.h>
 #include "lfjport_qte_mainwindow.h"
 #include <midp_logging.h>
+#include <midp_constants_data.h>
 
 /**
  * @file
@@ -38,6 +39,7 @@
  */
 
 static jboolean inFullScreenMode;
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -103,6 +105,32 @@ void lfjport_set_fullscreen_mode(jboolean mode) {
     ChameleonMIDPMainWindow::getMainWindow();
   mainWindow->setFullScreen(mode);
   inFullScreenMode = mode;
+}
+
+jboolean lfjport_reverse_orientation()
+{
+   return qteapp_get_mscreen()->reverse_orientation();
+}
+
+jboolean lfjport_get_reverse_orientation()
+{
+   return qteapp_get_mscreen()->get_reverse_orientation();
+}
+
+int lfjport_get_screen_width() {
+    if (inFullScreenMode) {
+        return qteapp_get_mscreen()->getDisplayFullWidth();
+    } else {
+        return qteapp_get_mscreen()->getDisplayWidth();
+    }
+}
+
+int lfjport_get_screen_height() {
+    if (inFullScreenMode) {
+        return qteapp_get_mscreen()->getDisplayFullHeight();
+    } else {
+        return qteapp_get_mscreen()->getDisplayHeight();
+    }
 }
 
 /**

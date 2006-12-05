@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_form.cpp	1.46 06/04/21 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -179,7 +179,20 @@ lfpport_form_get_scroll_position(int *pos)
 {
   PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
   TRACE_CI(pdMidpFormGetScrollPosition);
-  *pos = mscreen->scrollPosition();
+  *pos = mscreen->getScrollPosition();
+ 
+  return KNI_OK;
+}
+
+/**
+ * sets current scroll Y position
+ */
+extern "C" MidpError
+lfpport_form_set_scroll_position(int pos)
+{
+  PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+  TRACE_CI(pdMidpFormSetScrollPosition);
+  mscreen->setScrollPosition(pos);
  
   return KNI_OK;
 }

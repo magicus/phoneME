@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_patched.h	1.8 06/04/05
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -37,7 +37,7 @@
 #include <qpopupmenu.h>
 
 /**
- * Patch a bug in QPopupMenu::clear and QPopupMenu::removeItem.
+ * Patch a feature in QPopupMenu::clear and QPopupMenu::removeItem.
  */
 class PatchedQPopupMenu : public QPopupMenu {
 
@@ -53,19 +53,19 @@ public:
      * Patch default implementation by clearing current item index.
      */
     void clear() {
-	QPopupMenu::clear();
-	actItem = -1;
+        QPopupMenu::clear();
+        actItem = -1;
     }
 
     /**
      * Patch default implementation by updating current item index.
      */
     void removeItemAt(int index) {
-	QPopupMenu::removeItemAt(index);
+	    QPopupMenu::removeItemAt(index);
 
-	if (actItem >= (int)count()) {
-	    actItem = -1;
-	}
+        if (actItem >= (int)count()) {
+            actItem = -1;
+        }
     }
 };
 

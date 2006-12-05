@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -54,16 +55,23 @@
  *     initStorageRoot(V)Ljava/lang/String;
  * </pre>
  *
+ * @param storageId ID of the storage the root of which should be returned
+ *
  * @return path of the storage root
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_io_j2me_storage_File_initStorageRoot(void) {
+KNIDECL(com_sun_midp_io_j2me_storage_File_initStorageRoot) {
+    StorageIdType storageId;
+    const pcsl_string* storageRoot;
+
     KNI_StartHandles(1);
     KNI_DeclareHandle(string);
-    const pcsl_string* storageRoot = storage_get_root();;
+    storageId = KNI_GetParameterAsInt(1);
+
+    storageRoot = storage_get_root(storageId);
 
     if (pcsl_string_length(storageRoot) >= 0) {
-        midp_jstring_from_pcsl_string(storageRoot, string);
+        midp_jstring_from_pcsl_string(KNIPASSARGS storageRoot, string);
     } else {
         KNI_ReleaseHandle(string);
     }
@@ -78,16 +86,23 @@ Java_com_sun_midp_io_j2me_storage_File_initStorageRoot(void) {
  *     initConfigRoot(V)Ljava/lang/String;
  * </pre>
  *
+ * @param storageId ID of the storage the config root of which
+ * should be returned
+ *
  * @return path of the configuration root
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_io_j2me_storage_File_initConfigRoot(void) {
+KNIDECL(com_sun_midp_io_j2me_storage_File_initConfigRoot) {
+    StorageIdType storageId;
+    const pcsl_string * configRoot;
+
     KNI_StartHandles(1);
     KNI_DeclareHandle(string);
-    const pcsl_string * configRoot = storage_get_config_root();
+    storageId = KNI_GetParameterAsInt(1);
+    configRoot = storage_get_config_root(storageId);
 
     if (pcsl_string_length(configRoot) >= 0) {
-        midp_jstring_from_pcsl_string(configRoot, string);
+        midp_jstring_from_pcsl_string(KNIPASSARGS configRoot, string);
     } else {
         KNI_ReleaseHandle(string);
     }
@@ -107,7 +122,7 @@ Java_com_sun_midp_io_j2me_storage_File_initConfigRoot(void) {
  * @param newName The new name of the storage file
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_io_j2me_storage_File_renameStorage(void) {
+KNIDECL(com_sun_midp_io_j2me_storage_File_renameStorage) {
     char* pszError;
 
     KNI_StartHandles(2);
@@ -139,7 +154,7 @@ Java_com_sun_midp_io_j2me_storage_File_renameStorage(void) {
  *         exists, otherwise <tt>false</tt>
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_io_j2me_storage_File_storageExists(void) {
+KNIDECL(com_sun_midp_io_j2me_storage_File_storageExists) {
     int   ret = 0;
 
     KNI_StartHandles(1);
@@ -160,7 +175,7 @@ Java_com_sun_midp_io_j2me_storage_File_storageExists(void) {
  * @param filename The filename of the storage file to remove
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_io_j2me_storage_File_deleteStorage(void) {
+KNIDECL(com_sun_midp_io_j2me_storage_File_deleteStorage) {
     char* pszError;
 
     KNI_StartHandles(1);
@@ -184,10 +199,13 @@ Java_com_sun_midp_io_j2me_storage_File_deleteStorage(void) {
  *     availableStorage(V)I
  * </pre>
  *
+ * @param storageId ID of the storage to check for available space
+ *
  * @return the size of the remaining free storage space, in bytes
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_storage_File_availableStorage() {
-    KNI_ReturnInt((jint)storageGetFreeSpace());
+KNIDECL(com_sun_midp_io_j2me_storage_File_availableStorage) {
+    StorageIdType storageId = KNI_GetParameterAsInt(1);
+    KNI_ReturnInt((jlong)storage_get_free_space(storageId));
 }
 

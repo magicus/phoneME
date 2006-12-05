@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -41,6 +42,7 @@
 #include <midpError.h>
 #include <midpUtilKni.h>
 #include <midpMalloc.h>
+#include <suitestore_common.h>
 
 #ifndef MAX_MIDLET_NAME
 /** Maximum length of a hostname */
@@ -93,36 +95,32 @@ static void handlePushError(MIDP_ERROR error) {
  * </pre>
  *
  * @return <tt>true</tt> if the connection was successfully deleted.
- *         <tt>false</tt> if the connection was not found. 
+ *         <tt>false</tt> if the connection was not found.
  * @exception SecurityException if connection was found, but,
  *	   it belongs to another MIDlet suite.
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 Java_com_sun_midp_io_j2me_push_PushRegistryImpl_unregisterConnection0() {
     jboolean success = KNI_FALSE;
-    jchar* suiteId_data;
-    jint suiteId_len;
+    SuiteIdType suiteId;
     jchar* conn_data;
     jint conn_len;
     MIDP_ERROR error;
 
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(jSuiteId);
+    KNI_StartHandles(1);
     KNI_DeclareHandle(jConn);
 
-    KNI_GetParameterAsObject(1, jSuiteId);
-    suiteId_len = midp_jstring_to_address_and_length(jSuiteId,  &suiteId_data);
+    suiteId = KNI_GetParameterAsInt(1);
 
     KNI_GetParameterAsObject(2, jConn);
-    conn_len = midp_jstring_to_address_and_length(jConn,   &conn_data);
+    conn_len = midp_jstring_to_address_and_length(jConn, &conn_data);
 
     KNI_EndHandles();
 
-    if (suiteId_len <= NULL_LEN || conn_len <= NULL_LEN) {
+    if (conn_len <= NULL_LEN) {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     } else {
-        error = midpport_push_unregister_connection(suiteId_data,
-                                suiteId_len,
+        error = midpport_push_unregister_connection(suiteId,
                                 conn_data,
                                 conn_len);
         if (error == MIDP_ERROR_NONE) {
@@ -133,7 +131,6 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_unregisterConnection0() {
     }
 
     midpFree(conn_data);
-    midpFree(suiteId_data);
 
     KNI_ReturnBoolean(success);
 }
@@ -165,8 +162,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_unregisterConnection0() {
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_io_j2me_push_PushRegistryImpl_registerConnection0() {
 
-    jchar* suite_data;
-    jint suite_len;
+    SuiteIdType suiteId;
     jchar* conn_data;
     jint conn_len;
     jchar* midlet_data;
@@ -174,26 +170,24 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_registerConnection0() {
     jchar* filter_data;
     jint filter_len;
 
-    KNI_StartHandles(4);
-    KNI_DeclareHandle(jsuite);
+    KNI_StartHandles(3);
     KNI_DeclareHandle(jconn);
     KNI_DeclareHandle(jmidlet);
     KNI_DeclareHandle(jfilter);
 
-    KNI_GetParameterAsObject(1, jsuite);
+    suiteId = KNI_GetParameterAsInt(1);
     KNI_GetParameterAsObject(2, jconn);
     KNI_GetParameterAsObject(3, jmidlet);
     KNI_GetParameterAsObject(4, jfilter);
 
-    suite_len  = midp_jstring_to_address_and_length(jsuite,  &suite_data);
     conn_len   = midp_jstring_to_address_and_length(jconn,   &conn_data);
     midlet_len = midp_jstring_to_address_and_length(jmidlet, &midlet_data);
     filter_len = midp_jstring_to_address_and_length(jfilter, &filter_data);
 
     KNI_EndHandles();
 
-    if (suite_len <= NULL_LEN || conn_len <= NULL_LEN
-	|| midlet_len <= NULL_LEN || filter_len <= NULL_LEN) {
+    if (conn_len <= NULL_LEN || midlet_len <= NULL_LEN ||
+            filter_len <= NULL_LEN) {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     } else {
         MIDP_ERROR error;
@@ -206,17 +200,14 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_registerConnection0() {
         entry.filter		= filter_data;
         entry.filterLen		= filter_len;
 
-        error = midpport_push_register_connection(suite_data,
-                              suite_len,
+        error = midpport_push_register_connection(suiteId,
                               &entry);
-
         handlePushError(error);
     }
 
     midpFree(filter_data);
     midpFree(midlet_data);
     midpFree(conn_data);
-    midpFree(suite_data);
 
     KNI_ReturnVoid();
 }
@@ -238,40 +229,35 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_registerConnection0() {
 KNIEXPORT KNI_RETURNTYPE_LONG
 Java_com_sun_midp_io_j2me_push_PushRegistryImpl_registerAlarm0() {
 
-    jchar* suite_data;
-    jint suite_len;
+    SuiteIdType suiteId;
     jchar* midlet_data;
     jint midlet_len;
     jlong alarm;
     jlong lastalarm = 0;
 
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(jsuite);
+    KNI_StartHandles(1);
     KNI_DeclareHandle(jmidlet);
 
-    KNI_GetParameterAsObject(1, jsuite);
+    suiteId = KNI_GetParameterAsInt(1);
     KNI_GetParameterAsObject(2, jmidlet);
     alarm = KNI_GetParameterAsLong(3);
 
-    suite_len = midp_jstring_to_address_and_length(jsuite, &suite_data);
     midlet_len = midp_jstring_to_address_and_length(jmidlet, &midlet_data);
 
     KNI_EndHandles();
 
-    if (suite_len <= NULL_LEN || midlet_len <= NULL_LEN) {
+    if (midlet_len <= NULL_LEN) {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     } else {
-        MIDP_ERROR error = midpport_push_register_alarm(suite_data,
-                                suite_len,
+        MIDP_ERROR error = midpport_push_register_alarm(suiteId,
                                 midlet_data,
                                 midlet_len,
                                 alarm,
                                 &lastalarm);
-	handlePushError(error);
+        handlePushError(error);
     }
 
     midpFree(midlet_data);
-    midpFree(suite_data);
 
     KNI_ReturnLong(lastalarm);
 }
@@ -290,31 +276,25 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_registerAlarm0() {
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 Java_com_sun_midp_io_j2me_push_PushRegistryImpl_listEntries0() {
-    
-    jchar* suite_data;
-    jint suite_len;
+
+    SuiteIdType suiteId;
     jboolean available;
 
-    KNI_StartHandles(5);
+    KNI_StartHandles(4);
 
-    KNI_DeclareHandle(jsuite);
     KNI_DeclareHandle(jentries);
     KNI_DeclareHandle(jconn);
     KNI_DeclareHandle(jmidlet);
     KNI_DeclareHandle(jfilter);
 
-    KNI_GetParameterAsObject(1, jsuite);
+    suiteId = KNI_GetParameterAsInt(1);
     available = KNI_GetParameterAsBoolean(2);
 
-    suite_len = midp_jstring_to_address_and_length(jsuite, &suite_data);
-    if (suite_len <= NULL_LEN) {
-        KNI_ThrowNew(midpOutOfMemoryError, NULL);
-    } else {
+    {
         MIDP_PUSH_ENTRY* entries;
         jint size;
 
-        MIDP_ERROR error = midpport_push_list_entries(suite_data,
-                                  suite_len,
+        MIDP_ERROR error = midpport_push_list_entries(suiteId,
                                   available,
                                   &entries,
                                   &size);
@@ -341,27 +321,27 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_listEntries0() {
                           jfilter);
 
                     if (KNI_IsNullHandle(jconn)   ||
-                    KNI_IsNullHandle(jmidlet) ||
-                    KNI_IsNullHandle(jfilter))  {
-                    KNI_ThrowNew(midpOutOfMemoryError, NULL);
-                    break;
+                            KNI_IsNullHandle(jmidlet) ||
+                                KNI_IsNullHandle(jfilter))  {
+                        KNI_ThrowNew(midpOutOfMemoryError, NULL);
+                        break;
                     } else {
-                    KNI_SetObjectArrayElement(jentries, 3*i, jconn);
-                    KNI_SetObjectArrayElement(jentries, 3*i+1, jmidlet);
-                    KNI_SetObjectArrayElement(jentries, 3*i+2, jfilter);
+                        KNI_SetObjectArrayElement(jentries, 3*i, jconn);
+                        KNI_SetObjectArrayElement(jentries, 3*i+1, jmidlet);
+                        KNI_SetObjectArrayElement(jentries, 3*i+2, jfilter);
                     }
                 }
             }
-	    
+
             /* Free returned entry list */
             for (i = 0; i < size; i++) {
                 midpFree(entries[i].connection);
                 midpFree(entries[i].midlet);
                 midpFree(entries[i].filter);
             }
-	        midpFree(entries);
-	    }
-        midpFree(suite_data);
+            midpFree(entries);
+        }
     }
+
     KNI_EndHandlesAndReturnObject(jentries);
 }

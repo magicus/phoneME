@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -71,7 +72,12 @@ TOOL_SRCPATH := $(SUBSYSTEM_DIR)/security/common/classes
 TOOL_SRCPATH := $(TOOL_SRCPATH):$(SUBSYSTEM_DIR)/tool/configurator/classes
 TOOL_SRCPATH := $(TOOL_SRCPATH):$(SUBSYSTEM_DIR)/tool/jadtool/classes
 TOOL_SRCPATH := $(TOOL_SRCPATH):$(SUBSYSTEM_DIR)/tool/mekeytool/classes
+ifeq ($(USE_JSR_120), true)
 TOOL_SRCPATH := $(TOOL_SRCPATH):$(JSR_120_DIR)/src/tool/wmatool/classes
+ifeq ($(USE_JSR_205), true)
+TOOL_SRCPATH := $(TOOL_SRCPATH):$(JSR_205_DIR)/src/tool/wmatool/classes
+endif
+endif
 
 # Packages defined by the tools
 #
@@ -160,7 +166,7 @@ VERIFY_DOXYGEN_CMD:
 	   echo "ERROR: Please set DOXYGEN_CMD to point to your doxygen executable"; \
 	   /bin/false; \
 	fi;
-
+	
 # Style sheets and other configuration templates
 #
 DOXYGEN_SUPPORT_LIST += \
@@ -174,7 +180,6 @@ $(DOXYGEN_SUPPORT_LIST): $(DOXYGEN_DIR)/%: $(MIDP_DIR)/build/common/config/%
 	@(cp $< $@) $(LOG)
 
 $(PROJECT_DOXYGEN_SUPPORT_LIST): $(DOXYGEN_DIR)/%: $(PROJECT_MIDP_DIR)/build/common/config/%
-	@echo "PROJECT_MIDP_DIR $(PROJECT_MIDP_DIR)"
 	@(cp $< $@) $(LOG)
 
 $(DOXYGEN_CONFIG_FILE): $(DOXYGEN_DIR) $(DOXYGEN_CFG)
@@ -186,36 +191,19 @@ $(DOXYGEN_CONFIG_FILE): $(DOXYGEN_DIR) $(DOXYGEN_CFG)
 	    -e 'sz<PROJECT_VERSION>z$(PROJECT_VERSION)z' \
 	< $(DOXYGEN_CFG) > $@) $(LOG)
 
-# Filter out public API
-#
-ifeq ($(JAVADOC_INCLUDE_PUBLIC_API), true)
-JAVADOC_ALL_PACKAGES_FILTERED = \
-	$(JAVADOC_ALL_PACKAGES)
-
-MIDP_JAVADOC_PACKAGES_FILTERED = \
-	$(MIDP_JAVADOC_PACKAGES)
-else
-JAVADOC_ALL_PACKAGES_FILTERED = \
-	$(filter com.sun.%, $(JAVADOC_ALL_PACKAGES))
-
-MIDP_JAVADOC_PACKAGES_FILTERED = \
-	$(filter com.sun.%, $(MIDP_JAVADOC_PACKAGES))
-endif
-
-
 docs_doxy: VERIFY_DOXYGEN_CMD $(DOXYGEN_DIR) $(DOXYGEN_CONFIG_FILE) $(DOXYGEN_SUPPORT_LIST) $(PROJECT_DOXYGEN_SUPPORT_LIST)
 	@echo +++ $(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE) $(LOG_ONLY)
 	-@($(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE)) $(LOG)
 
 docs_javadoc: $(JAVADOC_HTML_DIR) run_configurator jpp $(JTWI_JAVA_FILES) $(MIDP_OUTPUT_DIR)/classes.zip
-	@echo +++ $(JAVADOC_CMD) $(JAVADOC_FLAGS) $(MIDP_JAVADOC_PACKAGES_FILTERED) $(JTWI_JAVA_FILES) $(LOG_ONLY)
-	@$(JAVADOC_CMD) $(JAVADOC_FLAGS) $(MIDP_JAVADOC_PACKAGES_FILTERED) $(JTWI_JAVA_FILES) $(LOG)
+	@echo +++ $(JAVADOC_CMD) $(JAVADOC_FLAGS) $(MIDP_JAVADOC_PACKAGES) $(JTWI_JAVA_FILES) $(LOG_ONLY)
+	@$(JAVADOC_CMD) $(JAVADOC_FLAGS) $(MIDP_JAVADOC_PACKAGES) $(JTWI_JAVA_FILES) $(LOG)
 	@$(remove_filelist) $(LOG)
 	@$(remove_generatedlist) $(LOG)
 
 docs_javadoc_all: $(JAVADOC_HTML_ALL_DIR) run_configurator jpp $(JTWI_JAVA_FILES) $(MIDP_OUTPUT_DIR)/classes.zip
-	@echo +++ $(JAVADOC_CMD) $(JAVADOC_ALL_FLAGS) $(JAVADOC_ALL_PACKAGES_FILTERED) $(JTWI_JAVA_FILES) $(LOG_ONLY)
-	@$(JAVADOC_CMD) $(JAVADOC_ALL_FLAGS) $(JAVADOC_ALL_PACKAGES_FILTERED) $(JTWI_JAVA_FILES) $(LOG)
+	@echo +++ $(JAVADOC_CMD) $(JAVADOC_ALL_FLAGS) $(JAVADOC_ALL_PACKAGES) $(JTWI_JAVA_FILES) $(LOG_ONLY)
+	@$(JAVADOC_CMD) $(JAVADOC_ALL_FLAGS) $(JAVADOC_ALL_PACKAGES) $(JTWI_JAVA_FILES) $(LOG)
 	@$(remove_filelist) $(LOG)
 	@$(remove_generatedlist) $(LOG)
 

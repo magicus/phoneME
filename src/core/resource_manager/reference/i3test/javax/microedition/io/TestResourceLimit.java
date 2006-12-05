@@ -1,4 +1,5 @@
 /*
+ * 	
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -49,14 +50,14 @@ public class TestResourceLimit extends TestCase {
             // Setup 
             while (openCount < Constants.TCP_CLI_AMS_LIMIT) {
                 sc[openCount] = (SocketConnection) Connector.open(
-                                    "socket://host.domain:80");
+                                    "socket://www.sun.com:80");
                 openCount++; 
             }
 
             // Actual Test
             try {
                 sc[openCount] = (SocketConnection) Connector.open(
-                                "socket://host.domain:80");
+                                "socket://www.sun.com:80");
                 openCount++;
             } catch (java.io.IOException io) {
                 exceptionThrown = true;

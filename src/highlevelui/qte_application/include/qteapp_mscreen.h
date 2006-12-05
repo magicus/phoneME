@@ -1,5 +1,5 @@
 /*
- * @(#)qteapp_mscreen.h	1.5 06/05/17
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -133,6 +133,16 @@ public:
     virtual void stopVM() = 0;
 
     /**
+     * Suspend VM. VM will not receive time slices until resumed.
+     */
+    virtual void suspendVM();
+
+    /**
+     * Resume VM to normal operation.
+     */
+    virtual void resumeVM();
+
+    /**
      * Resets native resources of the device when foreground is gained 
      * by a new Display.
      */
@@ -182,6 +192,23 @@ public:
      * Screen height currently available for Java.
      */
     virtual int getScreenHeight() const = 0;
+
+    virtual jboolean reverse_orientation() = 0;
+
+    virtual jboolean get_reverse_orientation() const = 0;
+
+    virtual ~MScreen(){ };
+
+protected:
+    /** Constructs an instance. */
+    MScreen();
+
+    /**
+     * A flag to determine whether the VM is currently suspended
+     * (should not receive time slices).
+     */
+    bool vm_suspended;
+
 };
 
 /* @} */

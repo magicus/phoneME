@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -51,5 +52,13 @@ public class MIDletProxyUtils {
      * @param mp MIDletProxy
      */
     public static void normalPriority(MIDletProxy mp) {
+    }
+
+    /**
+     * Makes nothing in case of SVM.
+     * @param mp not used
+     * @param mpl not used
+     */
+    static void terminateMIDletIsolate(MIDletProxy mp, MIDletProxyList mpl) {
     }
 }

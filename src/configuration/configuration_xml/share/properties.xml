@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration SYSTEM "./configuration.dtd">
 <!--
+		  
 
 		Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 		DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -17,6 +18,12 @@
 	  Scope="internal"
 	  Comment="Destroy MIDlet timeout"/>
 
+  <property Key="pauseAppTimeout"
+	  Value="2000"
+	  Scope="internal"
+	  Comment="Timeout in milliseconds for MIDlets to complete 
+                   pauseApp() execution within java stack pause"/>
+
   <property Key="system.jam_space"
 	  Value="1000000"
 	  Scope="internal"
@@ -32,9 +39,9 @@
 	  Comment="Default encoding for I18N processing."/>
       
   <!-- serial port buffering is on by default to support available() -->
-  <!-- property Key="com.sun.midp.io.j2me.comm.buffersize"
+  <property Key="com.sun.midp.io.j2me.comm.buffersize"
 				Value="256"
-				Scope="internal"/> -->
+				Scope="internal"/>
 
   <!-- TCP buffering is off by default -->
   <!-- property Key="com.sun.midp.io.j2me.socket.buffersize"
@@ -86,6 +93,37 @@
 	  Comment="If not 0, don't display start up errors in a
                   Java Alert."/>
       
+  <!-- Parser class names for push supported protocols -->
+  <property Key="btl2cap"
+	    Value="com.sun.midp.jsr82.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="btspp"
+	    Value="com.sun.midp.jsr82.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="btgoep"
+	    Value="com.sun.midp.jsr82.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="socket"
+	    Value="com.sun.midp.io.j2me.socket.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="datagram"
+	    Value="com.sun.midp.io.j2me.datagram.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="sip"
+	    Value="gov.nist.core.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="sips"
+	    Value="gov.nist.core.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="sms"
+	    Value="com.sun.midp.wma.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="cbs"
+	    Value="com.sun.midp.wma.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="mms"
+	    Value="com.sun.midp.io.j2me.mms.ProtocolPushImpl"
+	    Scope="internal"/>				
 <!-- SYSTEM PROPERTIES -->
 <!-- Visible from System.getProperty() -->
 
@@ -114,7 +152,7 @@
 		Value="ISO8859_1" 
 		Scope="system"/ -->
   <property Key="microedition.commports" 
-		Value="&quot;&quot;" 
+	    Value="COM1" 
 		Scope="system"/>
   <property Key="microedition.jtwi.version" 
 		Value="1.0" 

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -110,7 +111,14 @@ public abstract class Cipher {
             throw new NoSuchAlgorithmException(transformation);
         }
 
-        cipher.setChainingModeAndPadding(chainingMode, padding);
+        try {
+            cipher.setChainingModeAndPadding(chainingMode, padding);
+        } catch (IllegalArgumentException iae) {
+	    // throw NoSuchAlgorithmException if the chainingMode is invalid
+	    // (setChainingModeAndPadding() throws IllegalArgumentException
+	    // in this case)
+            throw new NoSuchAlgorithmException(transformation);
+	}
         
         return cipher;
     }

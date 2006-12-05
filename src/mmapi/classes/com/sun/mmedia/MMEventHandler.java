@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -35,9 +36,15 @@ import com.sun.midp.security.*;
 public class MMEventHandler {
 
     /**
-     * Security token to be set by MIDletSuiteLoader.
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
      */
-    private static SecurityToken classSecurityToken;
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
+    /** This class has a different security domain than the MIDlet suite */
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * The EventListener to receive the MM events.

@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -30,6 +31,7 @@ LIB_DEPENDENCIES=
 LIB_JAVA_FILES= \
     com/sun/midp/main/CommandState.java \
     com/sun/midp/main/DisplayController.java \
+    com/sun/midp/main/DisplayControllerListener.java \
     com/sun/midp/main/ExecuteMIDletEventListener.java \
     com/sun/midp/main/MIDletControllerEventConsumer.java \
     com/sun/midp/main/MIDletControllerEventListener.java \
@@ -37,7 +39,9 @@ LIB_JAVA_FILES= \
     com/sun/midp/main/MIDletProxy.java \
     com/sun/midp/main/MIDletProxyList.java \
     com/sun/midp/main/MIDletProxyListListener.java \
-    com/sun/midp/main/MIDletSuiteLoader.java
+    com/sun/midp/main/AbstractMIDletSuiteLoader.java \
+    com/sun/midp/main/MIDletSuiteLoader.java \
+    com/sun/midp/main/MIDletSuiteUtils.java
 
 LIB_NATIVE_FILES= \
     exitInternal.c \
@@ -49,7 +53,7 @@ LIB_NATIVE_FILES= \
     midpInflate.c \
     midpInit.c \
     midpMIDletProxyList.c \
-    midpMidletSuiteLoader.c \
+    midpMidletSuiteUtils.c \
     midpMidletSuiteVerifier.c \
     midp_run.c
 

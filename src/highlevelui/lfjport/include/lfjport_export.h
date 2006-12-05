@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -49,6 +50,28 @@ extern "C" {
  * Refresh the given area.  For double buffering purposes.
  */
 void lfjport_refresh(int x, int y, int w, int h);
+
+
+/**
+ * Change screen orientation flag
+ */
+jboolean lfjport_reverse_orientation();
+
+/**
+ * Get screen orientation flag
+ */
+jboolean lfjport_get_reverse_orientation();
+
+
+/**
+ * Return screen width
+ */
+int lfjport_get_screen_width();
+
+/**
+ *  Return screen height
+ */
+int lfjport_get_screen_height();
 
 /**
  * set the screen mode either to fullscreen or normal.

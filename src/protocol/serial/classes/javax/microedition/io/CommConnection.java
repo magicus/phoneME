@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -298,6 +299,7 @@ import java.io.OutputStream;
  * the connection.
  * The alternative is a trial and error approach with all available ports.
  * </P>
+ * @since MIDP 2.0
  */
 
 public interface CommConnection

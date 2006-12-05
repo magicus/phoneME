@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -46,7 +47,7 @@
  *   returns:     The keyCode associated with that action
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_javax_microedition_lcdui_KeyConverter_getKeyCode() {
+KNIDECL(javax_microedition_lcdui_KeyConverter_getKeyCode) {
     int gameAction = KNI_GetParameterAsInt(1);
 
     KNI_ReturnInt(keymap_get_key_code(gameAction));
@@ -63,7 +64,7 @@ Java_javax_microedition_lcdui_KeyConverter_getKeyCode() {
  *   returns:     The SYSTEM_KEY_ constant for this keyCode, or 0 if none
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_javax_microedition_lcdui_KeyConverter_getSystemKey() {
+KNIDECL(javax_microedition_lcdui_KeyConverter_getSystemKey) {
     int gameAction = KNI_GetParameterAsInt(1);
 
     KNI_ReturnInt(keymap_get_system_key(gameAction));
@@ -82,7 +83,7 @@ Java_javax_microedition_lcdui_KeyConverter_getSystemKey() {
  *                 available
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_javax_microedition_lcdui_KeyConverter_getKeyName() {
+KNIDECL(javax_microedition_lcdui_KeyConverter_getKeyName) {
     int   keyCode = KNI_GetParameterAsInt(1);
     char *keyName = keymap_get_key_name(keyCode);
 
@@ -114,7 +115,7 @@ Java_javax_microedition_lcdui_KeyConverter_getKeyName() {
  *   returns:     The abstract game action associated with the keyCode
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_javax_microedition_lcdui_KeyConverter_getGameAction() {
+KNIDECL(javax_microedition_lcdui_KeyConverter_getGameAction) {
     int keyCode = KNI_GetParameterAsInt(1);
 
     KNI_ReturnInt(keymap_get_game_action(keyCode));

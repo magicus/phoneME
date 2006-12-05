@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -39,6 +40,8 @@
 
 #include <kni.h>
 #include <midpString.h>
+#include <suitestore_common.h>
+#include <midp_runtime_info.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,17 +54,16 @@ extern "C" {
 
 /** The state for the MIDlet suite loader. */
 typedef struct _MIDPCommandState {
-
     /** status of the last command. */
     int status;
     /** the ID given to a suite to load. */
-    pcsl_string suiteID;
+    SuiteIdType suiteId;
     /** Class name of MIDlet. */
     pcsl_string midletClassName;
     /** Has the application manager MIDlet displayed the Java logo yet? */
     jboolean logoDisplayed;
     /** The ID of suite to load when there is no other queued. */
-    pcsl_string lastSuiteID;
+    SuiteIdType lastSuiteId;
     /** The MIDlet class name for the suite to load. */
     pcsl_string lastMidletClassName;
     /** The argument for a MIDlet in the suite, will be app property arg-0. */
@@ -70,7 +72,16 @@ typedef struct _MIDPCommandState {
     pcsl_string arg1;
     /** The argument for a MIDlet in the suite, will be app property arg-2. */
     pcsl_string arg2;
-
+    /**
+     * Name of the profile to set before starting the VM.
+     * IMPL_NOTE: currently this field is duplicated in runtimeInfo member
+     *            because the MidletRuntimeInfo structure is also used in
+     *            NAMS external API so its profileName member is declared
+     *            as jchar.
+     */
+    pcsl_string profileName;
+    /** Memory quotas to set before starting the VM. */
+    MidletRuntimeInfo runtimeInfo;
 } MIDPCommandState;
 
 /**

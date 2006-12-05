@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_inputmode.h	1.4 06/05/12 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -77,6 +77,7 @@ private:
 public:
     AbcKeyboardFilter();
     virtual bool filter(int unicode, int keycode, int modifiers, bool isPress, bool autoRepeat);
+    virtual ~AbcKeyboardFilter(){ };
 };
 
 #endif

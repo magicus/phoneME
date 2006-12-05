@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -34,8 +35,9 @@
 #include <jvm.h>
 #include <sni.h>
 #include <ROMStructs.h>
-#include <midpMidletSuiteLoader.h>
+#include <midpMidletSuiteUtils.h>
 #include <lfj_image_rom.h>
+#include <lcdlf_export.h>
 
 // IMPL_NOTE : Initialize this constant each time the vm restarts!
 
@@ -45,7 +47,7 @@ static int skinProperties = -1;
 #endif
  
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_chameleon_skins_resources_SkinResources_shareResourcePool() {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_shareResourcePool) {
 
 #if ENABLE_MULTIPLE_ISOLATES    
     KNI_StartHandles(1);
@@ -60,13 +62,13 @@ Java_com_sun_midp_chameleon_skins_resources_SkinResources_shareResourcePool() {
     }
     
     KNI_EndHandles();                                                                                                
-    KNI_ReturnVoid();
 #endif
+    KNI_ReturnVoid();
 
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_chameleon_skins_resources_SkinResources_shareSkinProperties() {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_shareSkinData) {
 
 #if ENABLE_MULTIPLE_ISOLATES    
     KNI_StartHandles(1);
@@ -81,13 +83,13 @@ Java_com_sun_midp_chameleon_skins_resources_SkinResources_shareSkinProperties() 
     }
     
     KNI_EndHandles();                                                                                                
-    KNI_ReturnVoid();
 #endif
+    KNI_ReturnVoid();
 
 }
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_chameleon_skins_resources_SkinResources_getSharedResourcePool() {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_getSharedResourcePool) {
     
 #if ENABLE_MULTIPLE_ISOLATES
     KNI_StartHandles(1);
@@ -97,13 +99,15 @@ Java_com_sun_midp_chameleon_skins_resources_SkinResources_getSharedResourcePool(
     }
     KNI_EndHandlesAndReturnObject(obj);
 #else
-    return NULL;
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(tempHandle);
+    KNI_EndHandlesAndReturnObject(tempHandle);
 #endif
 
 }
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_chameleon_skins_resources_SkinResources_getSharedSkinProperties() {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_getSharedSkinData) {
     
 #if ENABLE_MULTIPLE_ISOLATES
     KNI_StartHandles(1);
@@ -113,24 +117,15 @@ Java_com_sun_midp_chameleon_skins_resources_SkinResources_getSharedSkinPropertie
     }
     KNI_EndHandlesAndReturnObject(obj);
 #else
-    return NULL;
-#endif
-
-}
-
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_chameleon_skins_resources_SkinResources_isAmsIsolate() {
-   
-#if ENABLE_MULTIPLE_ISOLATES
-    KNI_ReturnBoolean(JVM_CurrentIsolateID() == midpGetAmsIsolateId());
-#else
-    KNI_ReturnBoolean(KNI_TRUE);
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(tempHandle);
+    KNI_EndHandlesAndReturnObject(tempHandle);
 #endif
 
 }
                                                                                                         
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_chameleon_skins_resources_SkinResources_ifLoadAllResources() {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_ifLoadAllResources) {
     
 #if ENABLE_MULTIPLE_ISOLATES
     // There is no need to load all images for non AMS
@@ -147,7 +142,7 @@ Java_com_sun_midp_chameleon_skins_resources_SkinResources_ifLoadAllResources() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_chameleon_skins_resources_LoadedSkinResources_finalize() {
+KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinResources_finalize) {
 #if ENABLE_MULTIPLE_ISOLATES
     if ((JVM_CurrentIsolateID() == midpGetAmsIsolateId()) &&
         (resourcePool >= 0)) {
@@ -155,10 +150,11 @@ Java_com_sun_midp_chameleon_skins_resources_LoadedSkinResources_finalize() {
         resourcePool = -1;
     }
 #endif
+    KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_chameleon_skins_resources_LoadedSkinProperties_finalize() {
+KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_finalize) {
 #if ENABLE_MULTIPLE_ISOLATES
     if ((JVM_CurrentIsolateID() == midpGetAmsIsolateId()) &&
         (skinProperties >= 0)) {
@@ -166,10 +162,11 @@ Java_com_sun_midp_chameleon_skins_resources_LoadedSkinProperties_finalize() {
         skinProperties = -1;
     }
 #endif
+    KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_chameleon_skins_resources_SkinResources_getRomizedImageDataArrayPtr() {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_getRomizedImageDataArrayPtr) {
     jint imageId = KNI_GetParameterAsInt(1);
     
     unsigned char* imageData;
@@ -179,7 +176,7 @@ Java_com_sun_midp_chameleon_skins_resources_SkinResources_getRomizedImageDataArr
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_chameleon_skins_resources_SkinResources_getRomizedImageDataArrayLength() {
+KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_getRomizedImageDataArrayLength) {
     jint imageId = KNI_GetParameterAsInt(1);
     
     unsigned char* imageData;

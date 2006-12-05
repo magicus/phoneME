@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -131,7 +132,7 @@ class CaForm extends Form implements CommandListener {
 
     /**
      * Construct a certificate form from a list of CA's.
-     * 
+     *
      * @param theParent Parent CaManager object
      * @param theDisplay parent Display object
      */
@@ -310,7 +311,7 @@ class CaForm extends Form implements CommandListener {
         a.setCommandListener(this);
         display.setCurrent(a);
     }
-        
+
     /** Save the enable status of Third Party certificate authorities. */
     private void save() {
         for (int i = 0; i < caList.size(); i++) {
@@ -337,15 +338,15 @@ class CaForm extends Form implements CommandListener {
      * @return list of suites
      */
     private void addSuitesAuthorizedBy(Ca ca, Vector suites) {
-        String[] suiteIDs = null;
+        int[] suiteIds = null;
         MIDletSuite midletSuite = null;
         InstallInfo installInfo = null;
 
-        suiteIDs = suiteStorage.getListOfSuites();
+        suiteIds = suiteStorage.getListOfSuites();
 
-        for (int i = 0; i < suiteIDs.length; i++) {
+        for (int i = 0; i < suiteIds.length; i++) {
             try {
-                midletSuite = suiteStorage.getMIDletSuite(suiteIDs[i], false);
+                midletSuite = suiteStorage.getMIDletSuite(suiteIds[i], false);
             } catch (Throwable t) {
                 continue;
             }

@@ -1,5 +1,6 @@
 #!/bin/sh
 #
+# 	
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,4 +25,4 @@
 # information or have any questions. 
 #
 DIR=${0%/*}
-cd $DIR; ./runMidlet_g internal com.sun.midp.installer.AutoTester $1 $2 $3;
+cd $DIR; ./runMidlet_g -1 com.sun.midp.installer.AutoTester $1 $2 $3;

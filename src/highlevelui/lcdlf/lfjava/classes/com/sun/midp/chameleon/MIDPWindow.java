@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,10 +26,11 @@
 
 package com.sun.midp.chameleon;
 
-import com.sun.midp.chameleon.*;
 import com.sun.midp.chameleon.layers.*;
 import com.sun.midp.chameleon.skins.*;
 import com.sun.midp.chameleon.skins.resources.*;
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
 
 import javax.microedition.lcdui.*;
 
@@ -39,14 +41,54 @@ import javax.microedition.lcdui.*;
  */
 public class MIDPWindow extends CWindow {
 
+    // The order of layers id is impotant during creation and updating
+
+    /** Id of layer containing the alert wash */
+    public static final int ALERT_WASH_LAYER = 0;
+
+    /** Id of layer containing the alert displayable */
+    public static final int ALERT_LAYER = 1;
+
+    /** Id of layer containing the mail */
+    public static final int WASH_LAYER = 2;
+    
+    /** Id of layer rendering the soft button controls */
+    public static final int BTN_LAYER = 3;
+
+    /** Id of layer containing the ticker of the current displayable */
+    public static final int TICKER_LAYER = 4;
+
+    /** Id of layer containing the title of the current displayable */
+    public static final int TITLE_LAYER = 5;
+
+    /** Id of layer containing the pti contents */
+    public static final int PTI_LAYER = 6;
+
+    /** Id of layer containing the current displayable's contents */
+    public static final int BODY_LAYER = 7;
+
+    /** Number of main layers*/
+    public static final int LAST_LAYER = 8;
+
     /** Used to call back into the Display class from this package */
     ChamDisplayTunnel tunnel;
 
+    // layout modes
     /**
-     * True, if the current displayable is occupying
-     * as much screen as possible
+     * Normal screen mode
      */
-    boolean hasFullScreen;
+    private static final int NORMAL_MODE         = 0;
+
+    /**
+     * Full screen mode when the current displayable
+     * is occupying as much screen as possible
+     */
+    private static final int FULL_SCR_MODE       = 1;
+
+    /**
+     * Current screen mode
+     */
+    int screenMode;
 
     /** Cache of screen commands */
     Command[] scrCmdCache;
@@ -66,32 +108,7 @@ public class MIDPWindow extends CWindow {
     /** Listener to notify when an item command is selected */
     ItemCommandListener itemCmdListener;
 
-    /** Layer containing the current displayable's contents */
-    BodyLayer bodyLayer;
-
-    /** Layer containing the pti contents */
-    PTILayer ptiLayer;
-
-    /** Layer containing the title of the current displayable */
-    TitleLayer titleLayer;
-
-    /** Layer containing the ticker of the current displayable */
-    TickerLayer tickerLayer;
-
-    /** Layer rendering the soft button controls */
-    SoftButtonLayer btnLayer;
-
-    /** The layer that displays alert */
-    AlertLayer alertLayer;
-
-    /** The layer which displays scroll indicators */
-    ScrollIndLayer scrollLayer;
-
-    /**
-     * The 'wash' layer which shades the background when the menu or
-     * an alert is visible
-     */
-    WashLayer washLayer;
+    CLayer[] mainLayers = new CLayer[LAST_LAYER];
 
     /** Determines whether area of the window has been changed */
     boolean sizeChangedOccured = false;
@@ -108,24 +125,9 @@ public class MIDPWindow extends CWindow {
 
         this.tunnel = tunnel;
 
-        bodyLayer = new BodyLayer(tunnel);
-        addLayer(bodyLayer);
-
-        titleLayer = new TitleLayer();
-        addLayer(titleLayer);
-
-        scrollLayer = new ScrollIndLayer();
-
-        btnLayer = new SoftButtonLayer(tunnel, scrollLayer);
-        addLayer(btnLayer);
-
-        addLayer(scrollLayer);
-
-        tickerLayer = new TickerLayer();
-        addLayer(tickerLayer);
-
-        washLayer = new WashLayer();
-        addLayer(washLayer);
+        for (int i = LAST_LAYER - 1; i >= 0; i-- ) {
+            createLayer(i);
+        }
     }
 
     /**
@@ -149,8 +151,8 @@ public class MIDPWindow extends CWindow {
      *              is no title.
      */
     public void setTitle(String title) {
-        titleLayer.setTitle(title);
-        setBodyBounds();
+        ((TitleLayer)mainLayers[TITLE_LAYER]).setTitle(title);
+        resize();
         requestRepaint();
     }
 
@@ -163,8 +165,8 @@ public class MIDPWindow extends CWindow {
      *              is no ticker.
      */
     public void setTicker(Ticker ticker) {
-        tickerLayer.setText((ticker != null) ? ticker.getString() : null);
-        setBodyBounds();
+        ((TickerLayer)mainLayers[TICKER_LAYER]).setText((ticker != null) ? ticker.getString() : null);
+        resize();
         requestRepaint();
     }
 
@@ -182,41 +184,25 @@ public class MIDPWindow extends CWindow {
      * @param height the preferred height of the new displayable
      */
     public void showDisplayable(Displayable displayable, int height) {
-        bodyLayer.dirty = true;
+        mainLayers[BODY_LAYER].opaque =  (displayable instanceof Canvas);
 
-        Ticker ticker = displayable.getTicker();
-
-        bodyLayer.opaque =  (displayable instanceof Canvas);
+        Ticker t = displayable.getTicker();
+        ((TickerLayer)mainLayers[TICKER_LAYER]).setText((t != null) ? t.getString() : null);
 
         if (displayable instanceof Alert) {
-	    bodyLayer.setVisible(false);
-            tickerLayer.toggleAlert(true);
-            btnLayer.toggleAlert(true);
-            if (alertLayer == null) {
-                alertLayer = new AlertLayer(tunnel);
-                addLayer(alertLayer);
-            }
-            alertLayer.setAlert(true, (Alert)displayable, height);
-            paintWash(true);
-        } else {
-	    bodyLayer.setVisible(true);
-            btnLayer.toggleAlert(false);
-            tickerLayer.toggleAlert(false);
-            titleLayer.setTitle(displayable.getTitle());
+            ((TickerLayer)mainLayers[TICKER_LAYER]).toggleAlert(true);
+            ((SoftButtonLayer)mainLayers[BTN_LAYER]).toggleAlert(true);
+            
+            ((AlertLayer)mainLayers[ALERT_LAYER]).setAlert(true, (Alert)displayable, height);
+            
             paintWash(false);
+            addLayer(mainLayers[ALERT_LAYER]);
+        } else {
+            ((TitleLayer)mainLayers[TITLE_LAYER]).setTitle(displayable.getTitle());
+	    mainLayers[BODY_LAYER].setVisible(true);
         }
 
-        setTicker(ticker);
-
-        setBodyBounds();
-        if (displayable instanceof Alert) {
-            // Special case. Normally we always repaint the title
-            // layer, but in the case of Alert, it has its own, so
-            // we override the standard behavior and make sure the
-            // title is not painted. The softbutton and ticker
-            // layers are used by Alert so we leave them alone.
-            titleLayer.dirty = false;
-        }
+        resize();
         requestRepaint();
     }
 
@@ -232,13 +218,17 @@ public class MIDPWindow extends CWindow {
      */
     public void hideDisplayable(Displayable displayable) {
         if (displayable instanceof Alert) {
-	    bodyLayer.setVisible(false);
-            tickerLayer.toggleAlert(false);
-            btnLayer.toggleAlert(false);
-            alertLayer.setVisible(false);
+            ((SoftButtonLayer)mainLayers[BTN_LAYER]).toggleAlert(false);
+            ((TickerLayer)mainLayers[TICKER_LAYER]).toggleAlert(false);
+            
+            ((AlertLayer)mainLayers[ALERT_LAYER]).setAlert(false, null, 0);
+            paintWash(false);
+            removeLayer(mainLayers[ALERT_LAYER]);
+        } else {
+            mainLayers[BODY_LAYER].setVisible(false);
         }
-
-        btnLayer.dismissMenu();
+        
+        ((SoftButtonLayer)mainLayers[BTN_LAYER]).dismissMenu();
 
         // Make sure that not of the popups are shown
         clearPopups();
@@ -251,7 +241,7 @@ public class MIDPWindow extends CWindow {
      * @return true if the system menu is up
      */
     public boolean systemMenuUp() {
-        return btnLayer.systemMenuUp();
+        return ((SoftButtonLayer)mainLayers[BTN_LAYER]).systemMenuUp();
     }
 
     /**
@@ -269,10 +259,10 @@ public class MIDPWindow extends CWindow {
      */
     public void repaintDisplayable(int x, int y, int w, int h) {
         // We mark the body layer as dirty
-        if (alertLayer != null && alertLayer.visible) {
-            alertLayer.addDirtyRegion(x, y, w, h);
+        if (mainLayers[ALERT_LAYER].visible) {
+            mainLayers[ALERT_LAYER].addDirtyRegion(x, y, w, h);
         } else {
-            bodyLayer.addDirtyRegion(x, y, w, h);
+            mainLayers[BODY_LAYER].addDirtyRegion(x, y, w, h);
         }
         requestRepaint();
     }
@@ -284,31 +274,30 @@ public class MIDPWindow extends CWindow {
      * which supercede those of the current displayable.
      *
      * @param layer the CLayer to add to this window
-     * @return the index of the new layer in the overall layer stack
+     * @return true if new layer was added, false otherwise
      */
-    public int addLayer(CLayer layer) {
-        int i = super.addLayer(layer);
+    public boolean addLayer(CLayer layer) {
+        boolean added = super.addLayer(layer);
 
-        if (i > 0 && layer instanceof PopupLayer) {
+        if (added && layer instanceof PopupLayer) {
             PopupLayer popup = (PopupLayer)layer;
             popup.dirty = true;
+            popup.visible = true;
 
             Command[] cmds = popup.getCommands();
             if (cmds != null) {
-                btnLayer.updateCommandSet(null, 0, null, cmds, cmds.length,
-                                          popup.getCommandListener());
+                ((SoftButtonLayer)mainLayers[BTN_LAYER]).updateCommandSet(
+                    null, 0, null, cmds, cmds.length,
+                    popup.getCommandListener());
             }
         }
 
-        if (i > 0 && layer instanceof PTILayer) {
-            ptiLayer = (PTILayer)layer;
-            setBodyBounds();
-            // move wash layer at the top
-            removeLayer(washLayer);
-            addLayer(washLayer);
+        if (added && layer instanceof PTILayer) {
+            mainLayers[PTI_LAYER] = (PTILayer)layer;
+            resize();
         }
 
-        return i;
+        return added;
     }
 
     /**
@@ -324,50 +313,28 @@ public class MIDPWindow extends CWindow {
      * @return true if the layer was able to be removed
      */
     public boolean removeLayer(CLayer layer) {
-        if (super.removeLayer(layer) && layer instanceof PopupLayer) {
-            if (layer == ptiLayer) {
-                ptiLayer = null;
-                setBodyBounds();
-            }
-
-            PopupLayer popup = (PopupLayer)layer;
-
-            if (popup instanceof MenuLayer) {
-                bodyLayer.addDirtyRegion();
-            }
-
-            // We need to mark lower layers as dirty now
-            CLayer l;
-            for (int i = 0; i < layers.size(); i++) {
-                l = (CLayer)layers.elementAt(i);
-                if (l.visible && l.intersectsRegion(popup.bounds)) {
-                    if (CGraphicsQ.DEBUG) {
-                        System.err.println(
-                            "Adding dirty region from popup to " + l.layerID);
-                    }
-                    l.addDirtyRegion(popup.bounds[X] - l.bounds[X],
-                                     popup.bounds[Y] - l.bounds[Y],
-                                     popup.bounds[W], popup.bounds[H]);
+        if (super.removeLayer(layer)) {
+            if (layer instanceof PopupLayer) {
+                if (layer == mainLayers[PTI_LAYER]) {
+                    mainLayers[PTI_LAYER] = null;
+                    resize();
                 }
-            }
 
-            // Now we update the command set with either the
-            // next top most popup or the original cached commands
-            PopupLayer p = getTopMostPopup();
-            if (p != null && p.getCommands() != null) {
-                Command[] cmds = p.getCommands();
-                btnLayer.updateCommandSet(null, 0,
-                                          null,
-                                          cmds, cmds.length,
-                                          p.getCommandListener());
-            } else {
-                btnLayer.updateCommandSet(itemCmdCache, itemCmdCount,
-                                          itemCmdListener,
-                                          scrCmdCache, scrCmdCount,
-                                          scrCmdListener);
-            }
+                // Now we update the command set with either the
+                // next top most popup or the original cached commands
+                PopupLayer p = getTopMostPopup();
+                if (p != null && p.getCommands() != null) {
+                    Command[] cmds = p.getCommands();
+                    ((SoftButtonLayer)mainLayers[BTN_LAYER]).updateCommandSet(
+                        null, 0, null, cmds, cmds.length, p.getCommandListener());
+                } else {
+                    ((SoftButtonLayer)mainLayers[BTN_LAYER]).updateCommandSet(
+                        itemCmdCache, itemCmdCount, itemCmdListener,
+                        scrCmdCache, scrCmdCount, scrCmdListener);
+                }
+            } // instanceof
             return true;
-        }
+        } // removeLayer
         return false;
     }
 
@@ -398,7 +365,7 @@ public class MIDPWindow extends CWindow {
         this.scrCmdCount = scrCmdCount;
         this.scrCmdListener = scrCmdListener;
 
-        btnLayer.updateCommandSet(itemCommands, itemCmdCount,
+        ((SoftButtonLayer)mainLayers[BTN_LAYER]).updateCommandSet(itemCommands, itemCmdCount,
                                   itemCmdListener,
                                   scrCommands, scrCmdCount,
                                   scrCmdListener);
@@ -413,9 +380,29 @@ public class MIDPWindow extends CWindow {
      * @param onOff true if the displayable should be in fullscreen mode
      */
     public void setFullScreen(boolean onOff) {
-        hasFullScreen = onOff;
-        setBodyBounds();
+        if (onOff) {
+            setMode(FULL_SCR_MODE);
+        } else {
+            setMode(NORMAL_MODE);
+        }
+    }
+
+    /**
+     * Update the current layout
+     */
+    public void updateLayout() {
+        resize();
         requestRepaint();
+    }
+
+    /**
+     * Changes layout mode.
+     *
+     * @param mode the mode to be set
+     */
+    private void setMode(int mode) {
+        screenMode = mode;
+        updateLayout();
     }
 
     /**
@@ -426,23 +413,41 @@ public class MIDPWindow extends CWindow {
      * @param onOff A flag indicating if the wash should be on or off
      */
     public void paintWash(boolean onOff) {
-	if (alertLayer != null && alertLayer.visible) {
-	    washLayer.setVisible(true);
-	    if (!onOff) {
-		tickerLayer.addDirtyRegion();
-		alertLayer.addDirtyRegion();
-	    }
-	} else {
-	    washLayer.setVisible(onOff);
-	    if (!onOff) {
-		tickerLayer.addDirtyRegion();
-		bodyLayer.addDirtyRegion();
-		titleLayer.addDirtyRegion();
-		if (ptiLayer != null) {
-                    ptiLayer.addDirtyRegion();
+	if (mainLayers[ALERT_LAYER].visible) {
+            addLayer(mainLayers[WASH_LAYER]);
+            if (onOff) {
+                addLayer(mainLayers[ALERT_WASH_LAYER]);
+            } else {
+                removeLayer(mainLayers[ALERT_WASH_LAYER]);
+
+                // IMPL_NOTES: interface has to be fixed 
+                ((BodyLayer)mainLayers[ALERT_LAYER]).setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
+                
+                // IMPL_NOTES: need to be removed as soon as removeLayer algorithm
+                // takes into account layers interaction
+                mainLayers[TICKER_LAYER].addDirtyRegion();
+                mainLayers[ALERT_LAYER].addDirtyRegion();
+            }
+        } else {
+            removeLayer(mainLayers[ALERT_WASH_LAYER]);
+            if (onOff) {
+                addLayer(mainLayers[WASH_LAYER]);
+            } else {
+                removeLayer(mainLayers[WASH_LAYER]);
+                
+                // IMPL_NOTES: interface has to be fixed 
+                ((BodyLayer)mainLayers[BODY_LAYER]).setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
+                
+                // IMPL_NOTES: need to be removed as soon as removeLayer algorithm
+                // takes into account layers interaction
+                mainLayers[TICKER_LAYER].addDirtyRegion();
+                mainLayers[TITLE_LAYER].addDirtyRegion();
+
+                if (mainLayers[PTI_LAYER] != null) {
+                    mainLayers[PTI_LAYER].addDirtyRegion();
                 }
-	    }
-	}
+            }
+        }
     }
 
     /**
@@ -451,7 +456,7 @@ public class MIDPWindow extends CWindow {
      * @return the command that's tied to the left soft button
      */
     public Command getSoftOne() {
-        return btnLayer.getSoftOne();
+        return ((SoftButtonLayer)mainLayers[BTN_LAYER]).getSoftOne();
     }
 
     /**
@@ -460,9 +465,19 @@ public class MIDPWindow extends CWindow {
      * @return the command array that's tied to the right soft button
      */
     public Command[] getSoftTwo() {
-        return btnLayer.getSoftTwo();
+        return ((SoftButtonLayer)mainLayers[BTN_LAYER]).getSoftTwo();
     }
 
+    /**
+     * Returns true if the point lies in the bounds of commnad layer
+     * @param x the "x" coordinate of the point
+     * @param y the "y" coordinate of the point
+     * @return true if the point lies in the bounds of commnad layer
+     */
+    public boolean belongToCmdLayers(int x, int y) {
+        return ((SoftButtonLayer)mainLayers[BTN_LAYER]).belongToCmdLayers(x,y);
+    }
+    
     /**
      * Set the current vertical scroll position and proportion.
      *
@@ -470,15 +485,10 @@ public class MIDPWindow extends CWindow {
      * @param scrollProportion vertical scroll proportion.
      */
     public void setVerticalScroll(int scrollPosition, int scrollProportion) {
-        // IMPL NOTE: add btnLayer.sysMenuUp()
-
-        if (alertLayer != null) {
-            scrollLayer.setVerticalScroll(alertLayer.visible, scrollPosition,
-                                          scrollProportion);
-        } else {
-            scrollLayer.setVerticalScroll(false, scrollPosition,
-                                          scrollProportion);
-        }
+        CLayer scrollable = mainLayers[ALERT_LAYER].isVisible() ?
+            mainLayers[ALERT_LAYER] : mainLayers[BODY_LAYER];
+        
+        ((BodyLayer)scrollable).setVerticalScroll(scrollPosition, scrollProportion);
     }
 
     /**
@@ -488,7 +498,7 @@ public class MIDPWindow extends CWindow {
      * @return the x anchor coordinate of the body layer
      */
     public int getBodyAnchorX() {
-        return bodyLayer.bounds[X];
+        return mainLayers[BODY_LAYER].bounds[X];
     }
 
     /**
@@ -498,7 +508,7 @@ public class MIDPWindow extends CWindow {
      * @return the y anchor coordinate of the body layer
      */
     public int getBodyAnchorY() {
-        return bodyLayer.bounds[Y];
+        return mainLayers[BODY_LAYER].bounds[Y];
     }
 
     /**
@@ -508,7 +518,7 @@ public class MIDPWindow extends CWindow {
      * @return the width of the body layer
      */
     public int getBodyWidth() {
-        return bodyLayer.bounds[W];
+        return mainLayers[BODY_LAYER].bounds[W];
     }
 
     /**
@@ -518,7 +528,20 @@ public class MIDPWindow extends CWindow {
      * @return the height of the body layer
      */
     public int getBodyHeight() {
-        return bodyLayer.bounds[H];
+        return mainLayers[BODY_LAYER].bounds[H];
+    }
+
+    /**
+     * Utility method to determine if the given point lies within
+     * the bounds of body layer. The point should be in the coordinate
+     * space of this layer's containing CWindow.
+     *
+     * @param x the "x" coordinate of the point
+     * @param y the "y" coordinate of the point
+     * @return true if the coordinate lies in the bounds of this layer
+     */
+    public boolean bodyContainsPoint(int x, int y) {
+        return mainLayers[BODY_LAYER].containsPoint(x, y);
     }
 
     /**
@@ -558,7 +581,7 @@ public class MIDPWindow extends CWindow {
      *         canvas can be rendered directly.
      */
     public boolean setGraphicsForCanvas(Graphics g) {
-        if (super.dirty || !bodyLayer.opaque) {
+        if (super.dirty || !mainLayers[BODY_LAYER].opaque) {
             return false;
         }
 
@@ -569,91 +592,66 @@ public class MIDPWindow extends CWindow {
         // Thus, for the first one, the clip can be set and then translated,
         // but in the second case, the translate must be done first and then
         // the clip set.
-        if (bodyLayer.dirtyBounds[X] == -1) {
-            g.setClip(bodyLayer.bounds[X], bodyLayer.bounds[Y],
-                      bodyLayer.bounds[W], bodyLayer.bounds[H]);
-            g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
+        if (mainLayers[BODY_LAYER].dirtyBounds[X] == -1) {
+            g.setClip(mainLayers[BODY_LAYER].bounds[X], mainLayers[BODY_LAYER].bounds[Y],
+                      mainLayers[BODY_LAYER].bounds[W], mainLayers[BODY_LAYER].bounds[H]);
+            g.translate(mainLayers[BODY_LAYER].bounds[X], mainLayers[BODY_LAYER].bounds[Y]);
         } else {
-            g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
-            g.setClip(bodyLayer.dirtyBounds[X], bodyLayer.dirtyBounds[Y],
-                      bodyLayer.dirtyBounds[W], bodyLayer.dirtyBounds[H]);
+            g.translate(mainLayers[BODY_LAYER].bounds[X], mainLayers[BODY_LAYER].bounds[Y]);
+            g.setClip(mainLayers[BODY_LAYER].dirtyBounds[X], mainLayers[BODY_LAYER].dirtyBounds[Y],
+                      mainLayers[BODY_LAYER].dirtyBounds[W], mainLayers[BODY_LAYER].dirtyBounds[H]);
         }
+        mainLayers[BODY_LAYER].cleanDirty();
 
         return true;
     }
 
     /**
-     * Internal method to establish the bounds of the body layer.
+     * Internal method to resize window and its content layers
+     * according to a size changes in the loaded skins.
      * This is important to re-calculate whenever things such as
      * titles, tickers, fullscreen mode, etc. change state.
      */
-    protected void setBodyBounds() {
-        int oldHeight = bodyLayer.bounds[H];
-        int oldWidth = bodyLayer.bounds[W];
-        int oldX = bodyLayer.bounds[X];
-        int oldY = bodyLayer.bounds[Y];
+    public void resize() {
+        super.resize();
 
-        if (hasFullScreen) {
-            bounds[H] = ScreenSkin.FULLHEIGHT;
-            titleLayer.visible = false;
-            tickerLayer.visible = false;
-            // Just hide soft button layer. Key input remains supported.
-            btnLayer.visible = false;
-        } else {
-            bounds[H] = ScreenSkin.HEIGHT;
-            titleLayer.visible = (titleLayer.getTitle() != null);
-            tickerLayer.visible = (tickerLayer.getText() != null);
-            btnLayer.visible = true;
+        int oldHeight = mainLayers[BODY_LAYER].bounds[H];
+        int oldWidth = mainLayers[BODY_LAYER].bounds[W];
+
+        switch (screenMode) {
+            case FULL_SCR_MODE:
+                // TODO: scroll arrows (bar? ) indicator has to be hidden?
+                mainLayers[TITLE_LAYER].visible = false;
+                mainLayers[TICKER_LAYER].visible = false;
+                mainLayers[BTN_LAYER].visible = 
+                    ((SoftButtonLayer)mainLayers[BTN_LAYER]).isInteractive();
+                break;
+            case NORMAL_MODE:
+                mainLayers[TITLE_LAYER].visible = 
+                    (((TitleLayer)mainLayers[TITLE_LAYER]).getTitle() != null);
+                mainLayers[TICKER_LAYER].visible = 
+                    (((TickerLayer)mainLayers[TICKER_LAYER]).getText() != null);
+                mainLayers[BTN_LAYER].visible = true;
+                break;
+            default:
+                Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,
+                    "MIDPWindow: screenMode=" + screenMode);
+                return;
         }
 
-        // IMPL NOTE: The below calculations don't take into account
-        // the placement of the ticker and title!!
-
-        bodyLayer.bounds[W] = bounds[W];
-        bodyLayer.bounds[H] = bounds[H];
-
-        if (btnLayer.visible) {
-            bodyLayer.bounds[H] -= btnLayer.bounds[H];
-            btnLayer.addDirtyRegion();
+        for (int i = 0; i < LAST_LAYER; i++) {
+            if (mainLayers[i] != null) {
+                mainLayers[i].update(mainLayers);
+            }
         }
 
-        scrollLayer.setAnchor();
-        scrollLayer.addDirtyRegion();
-
-        if (titleLayer.visible) {
-            bodyLayer.bounds[Y] = titleLayer.bounds[H];
-            bodyLayer.bounds[H] -= titleLayer.bounds[H];
-            titleLayer.addDirtyRegion();
-        } else {
-            bodyLayer.bounds[Y] = 0;
-        }
-
-        if (tickerLayer.visible) {
-            bodyLayer.bounds[H] -= tickerLayer.bounds[H];
-            tickerLayer.bounds[Y] = btnLayer.bounds[Y] - tickerLayer.bounds[H];
-            tickerLayer.addDirtyRegion();
-        }
-
-        if (ptiLayer != null && ptiLayer.isVisible()) {
-            bodyLayer.bounds[H] -= ptiLayer.bounds[H];
-            ptiLayer.bounds[Y] = bounds[H] - ptiLayer.bounds[H];
-            ptiLayer.bounds[Y] -= (btnLayer.visible ?
-                                   btnLayer.bounds[H] : 0) +
-                (tickerLayer.visible ?
-                 tickerLayer.bounds[H] : 0);
-            ptiLayer.addDirtyRegion();
-        }
-
-        if (bodyLayer.bounds[W] != oldWidth ||
-            bodyLayer.bounds[H] != oldHeight) {
+        if (mainLayers[BODY_LAYER].bounds[W] != oldWidth ||
+            mainLayers[BODY_LAYER].bounds[H] != oldHeight) {
+            setDirty();
             sizeChangedOccured = true;
-            bodyLayer.addDirtyRegion();
-        } else if ( bodyLayer.bounds[X] != oldX ||
-                bodyLayer.bounds[Y] != oldY) {
-            bodyLayer.addDirtyRegion();
         }
     }
-
+    
     /**
      * Internal method to clear all current popups. This occurs if a
      * change of displayable occurs, as all popups are treated as belonging
@@ -661,8 +659,9 @@ public class MIDPWindow extends CWindow {
      */
     protected void clearPopups() {
         synchronized (super.layers) {
-            for (int i = super.layers.size() - 1; i >= 0; i--) {
-                CLayer l = (CLayer)layers.elementAt(i);
+            for (CLayerElement le = super.layers.getTop();
+                    le != null; le = le.getLower()) {
+                CLayer l = le.getLayer();
                 if (l instanceof PopupLayer) {
                     removeLayer(l);
                 }
@@ -678,13 +677,49 @@ public class MIDPWindow extends CWindow {
      */
     public PopupLayer getTopMostPopup() {
         synchronized (super.layers) {
-            for (int i = super.layers.size() - 1; i >= 0; i--) {
-                if (super.layers.elementAt(i) instanceof PopupLayer) {
-                    return (PopupLayer)super.layers.elementAt(i);
+            for (CLayerElement le = super.layers.getTop();
+                    le != null; le = le.getLower()) {
+                CLayer l = le.getLayer();
+                if (l instanceof PopupLayer) {
+                    return (PopupLayer)l;
                 }
             }
         }
         return null;
+    }
+
+    /**
+     * create new layer by id and launch addLayer()
+     * @param id - layer id
+     */
+    private void createLayer(int id) {
+        switch (id) {
+            case PTI_LAYER:
+                break;
+            case TITLE_LAYER:
+                mainLayers[id] = new TitleLayer();
+                addLayer(mainLayers[id]);
+                break;
+            case TICKER_LAYER:
+                mainLayers[id] = new TickerLayer();
+                addLayer(mainLayers[id]);
+                break;
+            case BTN_LAYER:
+                mainLayers[id] = new SoftButtonLayer(tunnel);
+                addLayer(mainLayers[id]);
+                break;
+            case ALERT_LAYER:
+                mainLayers[id] = new AlertLayer(tunnel);
+                break;
+            case WASH_LAYER:
+            case ALERT_WASH_LAYER:
+                mainLayers[id] = new WashLayer();
+                break;
+            case BODY_LAYER:
+                mainLayers[id] = new BodyLayer(tunnel);
+                addLayer(mainLayers[id]);
+                break;
+        }
     }
 }
 

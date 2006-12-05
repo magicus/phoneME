@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_canvas.cpp	1.26 06/04/21 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

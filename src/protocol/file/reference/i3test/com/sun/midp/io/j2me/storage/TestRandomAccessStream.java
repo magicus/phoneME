@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -61,7 +62,7 @@ public class TestRandomAccessStream extends TestCase {
       }
       assertTrue(!exceptionThrown);
 
-      // The following exposes a bug:
+      // Need revisit:
       // IOException should be thrown at the attempt to set
       // position beyond the file size
       // Uncomment when fixed
@@ -75,7 +76,7 @@ public class TestRandomAccessStream extends TestCase {
       // }
       // assertTrue(exceptionThrown);
 
-      // The following exposes a bug:
+      // Need revisit:
       // IOException should be thrown at the attempt to truncate
       // an empty file
       // Uncomment when fixed

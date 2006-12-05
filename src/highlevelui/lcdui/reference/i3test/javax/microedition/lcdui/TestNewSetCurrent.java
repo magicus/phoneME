@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -135,8 +136,8 @@ public class TestNewSetCurrent extends TestCase {
      * having to deal with timing issues.
      */
     void dismiss(Alert alert) {
-        if (alert.isShown()) {
-            dpy.clearAlert(alert.returnScreen);
+        synchronized (Display.LCDUILock) {
+            alert.lDismiss();
         }
     }
 
@@ -462,7 +463,7 @@ public class TestNewSetCurrent extends TestCase {
 
         dismissWait(alert);
 
-        // This checks for the behavior reported as a bug in
+        // This checks for the behavior reported as a CR in
         // CR 6225060: after the alert is dismissed, current
         // returns to cv0.
         // checkCurrent("alert", alert, false);
@@ -594,16 +595,14 @@ public class TestNewSetCurrent extends TestCase {
                 }
             });
 
-        // IMPL NOTE: - there is a bug in the implementation!
-        // The setCurrent(cv1) call should supersede the
-        // alert, so cv0 should not return to be current
-        // when the alert is dismissed. The assertions below
-        // document the current behavior.
+        // The setCurrent(cv1) call supersedes the
+        // alert, so dismissing the alert should not
+        // return to cv0.
 
-        scl.await();
+        new SerialCallback(dpy).invokeAndWait();
         checkCurrent("alert", alert, false);
-        checkCurrent("cv0", cv0, true);
-        checkCurrent("cv1", cv1, false);
+        checkCurrent("cv0", cv0, false);
+        checkCurrent("cv1", cv1, true);
     }
 
     /**

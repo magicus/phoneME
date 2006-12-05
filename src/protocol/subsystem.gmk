@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -52,65 +53,74 @@ include $(SUBSYSTEM_PROTOCOL_DIR)/file/$(LIB_MAKE_FILE)
 # HTTP
 # Description: GCF HTTP protocol
 #####################################################################
-
+ifneq ($(TARGET_VM), cdc_hi)
 include $(SUBSYSTEM_PROTOCOL_DIR)/http/$(LIB_MAKE_FILE)
+endif
 
 #####################################################################
 # HTTPS
 # Description: GCF HTTPS protocol
 #####################################################################
-
+ifneq ($(TARGET_VM), cdc_hi)
 include $(SUBSYSTEM_PROTOCOL_DIR)/https/$(LIB_MAKE_FILE)
+endif
 
 #####################################################################
 # Serial
-# Description: GCF Serial (comm) protocol. Not supported
+# Description: GCF Serial (comm) protocol.
 #####################################################################
-
+ifneq ($(TARGET_VM), cdc_hi)
 include $(SUBSYSTEM_PROTOCOL_DIR)/serial/$(LIB_MAKE_FILE)
+endif
 
 #####################################################################
 # Serial port
 # Description: GCF Serial (comm) protocol porting layer
-#              implementation. Not supported
+#              implementation.
 #####################################################################
-
-#include $(SUBSYSTEM_PROTOCOL_DIR)/serial_port/$(LIB_MAKE_FILE)
+ifneq ($(TARGET_VM), cdc_hi)
+include $(SUBSYSTEM_PROTOCOL_DIR)/serial_port/$(LIB_MAKE_FILE)
+endif
 
 #####################################################################
 # TCP client sockets
 # Description: GCF TCP client socket protocol
 #####################################################################
-
+ifneq ($(TARGET_VM), cdc_hi)
 include $(SUBSYSTEM_PROTOCOL_DIR)/socket/$(LIB_MAKE_FILE)
+endif
 
 #####################################################################
 # Sockets platform layer notification
 # Description: Implementation of platform layer callbacks
 #####################################################################
-
+ifneq ($(TARGET_VM), cdc_hi)
 include $(SUBSYSTEM_PROTOCOL_DIR)/socket_notify/$(LIB_MAKE_FILE)
+endif
 
 #####################################################################
 # TCP server sockets
 # Description: GCF TCP server socket protocol
 #####################################################################
-
+ifneq ($(TARGET_VM), cdc_hi)
 include $(SUBSYSTEM_PROTOCOL_DIR)/ssocket/$(LIB_MAKE_FILE)
+endif
 
 #####################################################################
 # SSL
 # Description: GCF SSL protocol
 #####################################################################
-
+ifneq ($(TARGET_VM), cdc_hi)
 include $(SUBSYSTEM_PROTOCOL_DIR)/ssl/$(LIB_MAKE_FILE)
+endif
 
 #####################################################################
 # UDP
 # Description: GCF UDP protocol
 #####################################################################
-
+ifneq ($(TARGET_VM), cdc_hi)
 include $(SUBSYSTEM_PROTOCOL_DIR)/udp/$(LIB_MAKE_FILE)
+endif
 
 SUBSYSTEM_PROTOCOL_JAVA_FILES = $(SUBSYSTEM_GCF_JAVA_FILES) \
 	$(SUBSYSTEM_FILE_JAVA_FILES) \

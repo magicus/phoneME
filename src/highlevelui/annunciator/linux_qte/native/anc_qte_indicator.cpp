@@ -1,5 +1,5 @@
 /*
- * @(#)anc_qte_indicator.cpp	1.29 06/04/05 @(#)
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -53,7 +53,7 @@
  * and platform widget modules as we are waiting for
  * UI input.
  */
-extern "C" 
+extern "C"
 void anc_show_trusted_indicator(jboolean isTrusted) {
     IndicatorBar::setTrustedOn((bool)isTrusted);
 }
@@ -82,14 +82,14 @@ void anc_toggle_home_icon(jboolean isHomeOn) {
  *  This function is only valid if QT's COP and QWS is available.
  *
  *  @param mode if <code>mode</code> is:
- *              <code>BACKLIGHT_ON</code> - turn on the backlight  
- *              <code>BACKLIGHT_OFF</code> - turn off the backlight  
+ *              <code>BACKLIGHT_ON</code> - turn on the backlight
+ *              <code>BACKLIGHT_OFF</code> - turn off the backlight
  *              <code>BACKLIGHT_TOGGLE</code> - toggle the backlight
- *              <code>BACKLIGHT_IS_SUPPORTED<code> - do nothing  
- *              (this is used to determine if backlight control is 
- *              supported on a system without  changing the state of 
+ *              <code>BACKLIGHT_IS_SUPPORTED<code> - do nothing
+ *              (this is used to determine if backlight control is
+ *              supported on a system without  changing the state of
  *              the backlight.)
- *  @return <code>KNI_TRUE</code> if the system supports backlight 
+ *  @return <code>KNI_TRUE</code> if the system supports backlight
  *              control, or <code>KNI_FALSE</code> otherwise.
  */
 extern "C" jboolean
@@ -105,12 +105,12 @@ IndicatorBar* IndicatorBar::singleton; // = NULL
  * Construct a bar that shows indicators.
  */
 IndicatorBar::IndicatorBar(QWidget* parent) : QWidget(parent) {
-    
+
     // Set fixed size
     setFixedSize(FULLWIDTH, 18);
 
     QString qiconPath;
-    const pcsl_string * iconPath = storage_get_config_root();
+    const pcsl_string * iconPath = storage_get_config_root(INTERNAL_STORAGE_ID);
     jint iconPath_len = pcsl_string_length(iconPath);
     const jchar * iconPath_data = pcsl_string_get_utf16_data(iconPath);
 
@@ -153,7 +153,7 @@ IndicatorBar::~IndicatorBar() {
  * Override QWidget to paint indicators.
  */
 void IndicatorBar::paintEvent(QPaintEvent *e) {
-    
+
     // Paint background first
     QWidget::paintEvent(e);
 

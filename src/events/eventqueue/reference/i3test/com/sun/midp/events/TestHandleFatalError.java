@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -28,6 +29,7 @@ package com.sun.midp.events;
 import com.sun.midp.i3test.*;
 
 import com.sun.midp.main.*;
+import com.sun.midp.midlet.MIDletSuite;
 
 /**
  * Test that the if an event listener in an application isolate throws a
@@ -66,9 +68,11 @@ public class TestHandleFatalError extends TestCase
 
         proxyList.addListener(this);
 
-        if (MIDletSuiteLoader.execute("internal", TEST_MIDLET, "no name")) {
+        if (MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID,
+                TEST_MIDLET, "no name")) {
             // This is SVM mode, so cancel the execute and end the test.
-            MIDletSuiteLoader.execute(null, null, null);
+            MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID,
+                null, null);
             return;
         }
 
@@ -111,7 +115,7 @@ public class TestHandleFatalError extends TestCase
             return;
         }
     }
-    
+
     /**
      * Called when the state of a MIDlet in the list is updated.
      *
@@ -142,7 +146,7 @@ public class TestHandleFatalError extends TestCase
      * @param className Class name of the MIDlet
      * @param error start error code
      */
-    public void midletStartError(int externalAppId, String suiteId,
+    public void midletStartError(int externalAppId, int suiteId,
                                  String className, int error) {}
 }
 

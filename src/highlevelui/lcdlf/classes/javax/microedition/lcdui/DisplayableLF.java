@@ -1,4 +1,5 @@
 /*
+ * 	
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -231,4 +232,29 @@ interface DisplayableLF {
      * @param h the new height
      */    
     void uCallSizeChanged(int w, int h);
+
+    /**
+     * This method notify displayable to scroll its content 
+     *
+     * @param scrollType scrollType
+     * @param thumbPosition
+     */
+    void uCallScrollContent(int scrollType, int thumbPosition);
+
+    boolean uSetRotatedStatus (boolean newStatus);
+
+    /**
+     * Get the current vertical scroll position
+     *
+     * @return int The vertical scroll position on a scale of 0-100
+     */
+    int getVerticalScrollPosition();
+
+    /**
+     * Get the current vertical scroll proportion
+     *
+     * @return ing The vertical scroll proportion on a scale of 0-100
+     */
+    int getVerticalScrollProportion();
+
 }

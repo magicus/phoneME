@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_displayable.h	1.15 06/04/21 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

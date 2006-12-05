@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -51,6 +52,7 @@ import com.sun.midp.midlet.*;
 import com.sun.midp.midletsuite.*;
 
 import com.sun.midp.security.*;
+import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -272,17 +274,17 @@ public class AutoTesterMulti extends AutoTesterBase
             boolean retry = false;
             boolean hasSuite = true;
 
-            String suiteID = null;
-            String lastSuiteID = null;
+            int suiteId = MIDletSuite.UNUSED_SUITE_ID;
+            int lastSuiteId = MIDletSuite.UNUSED_SUITE_ID;
 
             MIDletInfo midletInfo;
             Isolate testIsolate;
 
             for (; loopCount != 0 && hasSuite; ) {
-                suiteID = installSuite(retry);
-                if (suiteID != null) {
-                    midletInfo = getFirstMIDletOfSuite(suiteID, storage);
-                    testIsolate = AmsUtil.startMidletInNewIsolate(suiteID,
+                suiteId = installSuite(retry);
+                if (suiteId != MIDletSuite.UNUSED_SUITE_ID) {
+                    midletInfo = getFirstMIDletOfSuite(suiteId, storage);
+                    testIsolate = AmsUtil.startMidletInNewIsolate(suiteId,
                             midletInfo.classname, midletInfo.name, null,
                             null, null);
 
@@ -292,7 +294,7 @@ public class AutoTesterMulti extends AutoTesterBase
                         loopCount -= 1;
                     }
 
-                    lastSuiteID = suiteID;
+                    lastSuiteId = suiteId;
 
                     // suite has been found, so URL isn't wrong.
                     // next time if there is no suite, do retries.
@@ -302,9 +304,10 @@ public class AutoTesterMulti extends AutoTesterBase
                 }
             }
 
-            if (midletSuiteStorage != null && lastSuiteID != null) {
+            if (midletSuiteStorage != null &&
+                    lastSuiteId != MIDletSuite.UNUSED_SUITE_ID) {
                 try {
-                    midletSuiteStorage.remove(lastSuiteID);
+                    midletSuiteStorage.remove(lastSuiteId);
                 } catch (Throwable ex) {
                     // ignore
                 }
@@ -317,21 +320,22 @@ public class AutoTesterMulti extends AutoTesterBase
          * @param retry if true, do a number of retries to
          * install a suite in case it hasn't been found.
          *
-         * @return suiteID if the suite has been installed
+         * @return suiteId if the suite has been installed
          */
-        private String installSuite(boolean retry) {
+        private int installSuite(boolean retry) {
             int maxRetries = retry? MAX_RETRIES : 1;
             int retryCount = 0;
-            String suiteID = null;
+            int suiteId = MIDletSuite.UNUSED_SUITE_ID;
 
             for (; retryCount < maxRetries; ++retryCount) {
                 try {
                     synchronized (installer) {
                         // force an overwrite and remove the RMS data
-                        suiteID = installer.installJad(url, true, true,
-                                installListener);
+                        suiteId = installer.installJad(url,
+                            Constants.INTERNAL_STORAGE_ID, true,
+                                true, installListener);
                     }
-                    return suiteID;
+                    return suiteId;
 
                 } catch (Throwable t) {
                     // if retrying, just ignore exception and wait,
@@ -342,12 +346,12 @@ public class AutoTesterMulti extends AutoTesterBase
                         } catch (Exception ex) {
                         }
                     } else {
-                        handleInstallerException(suiteID, t);
+                        handleInstallerException(suiteId, t);
                     }
                 }
             }
 
-            return null;
+            return MIDletSuite.UNUSED_SUITE_ID;
         }
     }
 }

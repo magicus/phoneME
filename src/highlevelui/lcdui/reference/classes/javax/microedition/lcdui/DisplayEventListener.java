@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -78,6 +79,8 @@ class DisplayEventListener implements EventListener {
         eventQueue.registerEventListener(EventTypes.PEER_CHANGED_EVENT, this);
         eventQueue.registerEventListener(EventTypes.FOREGROUND_NOTIFY_EVENT, 
 					 this);
+        eventQueue.registerEventListener(EventTypes.ROTATION_EVENT,this);
+
     }
 
     /**
@@ -156,7 +159,10 @@ class DisplayEventListener implements EventListener {
                 dc.handleDisplayForegroundNotifyEvent(
                         (nativeEvent.intParam1 != 0));
                 return;
-                
+
+            case EventTypes.ROTATION_EVENT:
+                dc.handleRotationEvent();
+                return;
             default:
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                     Logging.report(Logging.WARNING, LogChannels.LC_CORE,

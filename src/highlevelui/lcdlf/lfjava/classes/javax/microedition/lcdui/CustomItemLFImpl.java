@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -109,7 +110,6 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
      */
     public void lInvalidate() {
         lRequestInvalidate(true, true);
-        validRequestedSizes = false;
     }
 
     // JAVADOC COMMENT ELIDED
@@ -137,7 +137,7 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
      */
     public void uCallSizeRefresh() {
 
-        if (validRequestedSizes) {
+        if (isRequestedSizesValid()) {
             return;
         }
 
@@ -160,7 +160,7 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
             minimumHeight = mh;
             preferredWidth = pw;
             preferredHeight = ph;
-            validRequestedSizes = true;
+            cachedWidth = super.lGetAvailableWidth();
         }
     }
 
@@ -661,12 +661,6 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
 
     /** The CustomItem associated with this view */    
     private CustomItem customItem;
-
-    /**
-     * flag that indicates if the preferredHeight, preferredWidth, 
-     * minimumHeight, minimumWidth are valid. If not, need a new query.
-     */
-    private boolean validRequestedSizes; // default false
 
     /**
      * Cached preferred height when validRequestedSizes is true.

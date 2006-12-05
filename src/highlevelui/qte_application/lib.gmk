@@ -1,5 +1,5 @@
 #
-# @(#)lib.gmk	1.11 06/04/04 @(#)
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -44,7 +44,8 @@ vpath % $(SUBSYSTEM_APP_DIR)/reference/native
 SUBSYSTEM_APP_NATIVE_FILES += \
     qteapp_key.cpp \
     qteapp_export.cpp \
-    qteapp_mainwindow.cpp
+    qteapp_mainwindow.cpp \
+    qteapp_mscreen.cpp
 
 
 $(MIDP_OUTPUT_DIR)/moc_%.cpp: $(SUBSYSTEM_APP_DIR)/include/%.h

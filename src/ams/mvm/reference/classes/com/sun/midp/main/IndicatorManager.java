@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -35,7 +36,7 @@ public class IndicatorManager implements MIDletProxyListListener {
     private static IndicatorManager singleton;
 
     /** boolean flag that indicated home icon status */
-    private static boolean homeIconState; 
+    private static boolean homeIconState;
 
     /** Internal midletProxyList that is used to add listener */
     private static MIDletProxyList midletProxyList;
@@ -49,7 +50,7 @@ public class IndicatorManager implements MIDletProxyListListener {
     private static native void toggleHomeIcon0(boolean isHomeOn);
 
     /**
-     * IndicatorManager is a singleton. 
+     * IndicatorManager is a singleton.
      */
     private IndicatorManager() {
     }
@@ -68,13 +69,13 @@ public class IndicatorManager implements MIDletProxyListListener {
     }
 
     /**
-     * This method is called whenever home icon needs to be 
+     * This method is called whenever home icon needs to be
      * turned on/off
      *
      * @param newHomeIconState boolean flag to indicate status of home icon
      */
     private static void setHomeIconState(boolean newHomeIconState) {
-        if (homeIconState != newHomeIconState) {        
+        if (homeIconState != newHomeIconState) {
             homeIconState = newHomeIconState;
             toggleHomeIcon0(homeIconState);
         }
@@ -125,10 +126,8 @@ public class IndicatorManager implements MIDletProxyListListener {
      * @param className Class name of the MIDlet
      * @param error start error code
      */
-    public void midletStartError(int externalAppId, String suiteId,
+    public void midletStartError(int externalAppId, int suiteId,
                                  String className, int error) {
     }
 
-
 }
-

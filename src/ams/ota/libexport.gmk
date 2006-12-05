@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,4 +26,5 @@
 
 LIB_EXPORT_JAVA_FILES= \
     com/sun/midp/installer/GraphicalInstaller.java \
+    com/sun/midp/installer/SuiteVerifier.java \
     com/sun/midp/installer/OtaNotifier.java

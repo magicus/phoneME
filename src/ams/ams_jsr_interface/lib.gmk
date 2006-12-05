@@ -1,3 +1,4 @@
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -41,9 +42,14 @@ AMS_JSR_INTERFACE_DIR = $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/reference
 # Javadoc source path
 #MIDP_JAVADOC_SOURCEPATH += $(AMS_JSR_INTERFACE_DIR)/classes
 
+$(GENERATED_DIR)/classes/com/sun/midp/jsr/JSRInitializer.java: \
+    $(AMS_JSR_INTERFACE_DIR)/classes/com/sun/midp/jsr/JSRInitializer.jpp
+	@$(call runjpp,$^,$@)
+
 # Java files for the sub-system
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
+    $(GENERATED_DIR)/classes/com/sun/midp/jsr/JSRInitializer.java \
     $(AMS_JSR_INTERFACE_DIR)/classes/com/sun/midp/content/CHManager.java
 
 ifneq ($(USE_JSR_205), true)

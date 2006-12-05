@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -32,20 +33,20 @@
 #include <midpServices.h>
 #include <midpStorage.h>
 #include <midpJar.h>
-#include <suitestore_util.h>
+#include <suitestore_task_manager.h>
 #include <midp_constants_data.h>
 #include <gx_image.h>
 #include <midpUtilKni.h>
 
 /**
  * @file
- * 
- * Implements a cache for native images. 
+ *
+ * Implements a cache for native images.
  * <p>
- * All images are loaded from the Jar file, converted to the native platform 
- * representation, and stored as files. When an ImmutableImage is created then 
+ * All images are loaded from the Jar file, converted to the native platform
+ * representation, and stored as files. When an ImmutableImage is created then
  * loadCachedImage() is called to check if that particular image has been
- * cached, and if yes the native representation is loaded from the file. This 
+ * cached, and if yes the native representation is loaded from the file. This
  * significantly reduce the time spent instantiating an ImmutableImage.
  * <p>
  * Each cached image is stored with the following naming conventions:
@@ -55,7 +56,7 @@
  * All cache files are deleted when a suite is updated or removed.
  * <p>
  * This implementation contains a simple method for preventing cached images
- * to grab too much storage space: If the remaining space is below 
+ * to grab too much storage space: If the remaining space is below
  * IMAGE_CACHE_THRESHOLD or the last cached image couldn't be saved due
  * to lack of space, then the creating of the cache for this suite is
  * aborted and all already created files are deleted. This is not an
@@ -64,13 +65,32 @@
  * Note: Currently, only images ending with ".png" or ".PNG" are supported.
  */
 
-static pcsl_string globalSuiteId;
-static void *handle;
-static long remainingSpace;
+/**
+ * Holds the suite ID. It is initialized during createImageCache() call
+ * and used in png_action() to avoid passing an additional parameter to it
+ * because this function is called for each image entry in the suite's jar file.
+ */
+static SuiteIdType globalSuiteId;
 
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(TMP_EXT)
-    {'.', 't', 'm', 'p', '\0'}
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(TMP_EXT);
+/**
+ * Holds the storage ID where the cached images will be saved. It is initialized
+ * during createImageCache() call and used in png_action() to avoid passing
+ * an additional parameter to it.
+ */
+static StorageIdType globalStorageId;
+
+/**
+ * Handle to the opened jar file with the midlet suite. It is used to
+ * passing an additional parameter to png_action().
+ */
+static void *handle;
+
+/**
+ * Holds the amount of free space in the storage. It is initialized during
+ * createImageCache() call and used in png_action() to avoid passing
+ * an additional parameter to it.
+ */
+static long remainingSpace;
 
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(PNG_EXT1)
     {'.', 'p', 'n', 'g', '\0'}
@@ -81,7 +101,8 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(PNG_EXT2)
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(PNG_EXT2);
 
 /* Forward declaration */
-static int storeImageToCache(const pcsl_string * suiteId,
+static int storeImageToCache(SuiteIdType suiteId,
+                             StorageIdType storageId,
                              const pcsl_string * resName,
                              unsigned char *bufPtr, int len);
 
@@ -89,9 +110,9 @@ static int storeImageToCache(const pcsl_string * suiteId,
 /**
  * Tests if JAR entry is a PNG image, by name extension
  */
-jboolean png_filter(const pcsl_string * entry) {
+static jboolean png_filter(const pcsl_string * entry) {
 
-    if (pcsl_string_ends_with(entry, &PNG_EXT1) || 
+    if (pcsl_string_ends_with(entry, &PNG_EXT1) ||
         pcsl_string_ends_with(entry, &PNG_EXT2)) {
         return KNI_TRUE;
     }
@@ -102,7 +123,7 @@ jboolean png_filter(const pcsl_string * entry) {
 /**
  * Loads PNG image from JAR, decodes it and writes as native
  */
-jboolean png_action(const pcsl_string * entry) {
+static jboolean png_action(const pcsl_string * entry) {
     unsigned char *pngBufPtr = NULL;
     unsigned int pngBufLen = 0;
     unsigned char *nativeBufPtr = NULL;
@@ -111,24 +132,23 @@ jboolean png_action(const pcsl_string * entry) {
 
     do {
         pngBufLen = midpGetJarEntry(handle, entry, &pngBufPtr);
-	
-	if(gx_decode_data2cache(pngBufPtr, pngBufLen,
-	                        &nativeBufPtr, &nativeBufLen)
-	   != MIDP_ERROR_NONE) {
-	    break;
-	}
+
+        if (gx_decode_data2cache(pngBufPtr, pngBufLen,
+                &nativeBufPtr, &nativeBufLen) != MIDP_ERROR_NONE) {
+            break;
+        }
 
         /* Check if we can store this file in the remaining storage space */
         if (remainingSpace - IMAGE_CACHE_THRESHOLD < (long)nativeBufLen) {
-            break;   
+            break;
         }
 
         /* write native buffer to persistent store */
-        status = storeImageToCache(&globalSuiteId, entry,
-                                   nativeBufPtr, nativeBufLen);    
-    
+        status = storeImageToCache(globalSuiteId, globalStorageId, entry,
+                                   nativeBufPtr, nativeBufLen);
+
     } while (0);
-    
+
     if (status == 1) {
         remainingSpace -= nativeBufLen;
     }
@@ -139,7 +159,7 @@ jboolean png_action(const pcsl_string * entry) {
     if (pngBufPtr != NULL) {
         midpFree(pngBufPtr);
     }
-    
+
     return status;
 }
 
@@ -149,12 +169,12 @@ jboolean png_action(const pcsl_string * entry) {
  * @param  jarFileName   The name of the jar file
  * @param  filter        Pointer to filter function
  * @param  action        Pointer to action function
- * @return               1 if all was successful, <= 0 if some error 
+ * @return               1 if all was successful, <= 0 if some error
  */
-static int loadAndCacheJarFileEntries(const pcsl_string * jarFileName, 
-                                      jboolean (*filter)(const pcsl_string *), 
+static int loadAndCacheJarFileEntries(const pcsl_string * jarFileName,
+                                      jboolean (*filter)(const pcsl_string *),
                                       jboolean (*action)(const pcsl_string *)) {
-        
+
     int error = 0;
     int status = 0;
 
@@ -167,30 +187,31 @@ static int loadAndCacheJarFileEntries(const pcsl_string * jarFileName,
         return status;
     }
     status = midpIterateJarEntries(handle, filter, action);
-       
+
     midpCloseJar(handle);
     handle = NULL;
-    
+
     return status;
 }
 
 /**
  * Remove all the cached images associated with a suite.
  *
- * @param suiteId   Suite id
+ * @param suiteId   Suite ID
+ * @param storageId ID of the storage where to create the cache
 */
-static void deleteImageCache(const pcsl_string * suiteId) {
+static void deleteImageCache(SuiteIdType suiteId, StorageIdType storageId) {
     pcsl_string root;
     pcsl_string filename;
     char*  pszError;
     void*  handle = NULL;
     jint errorCode;
 
-    if (pcsl_string_is_null(suiteId)) {
+    if (suiteId == UNUSED_SUITE_ID) {
         return;
     }
 
-    errorCode = midp_suite_get_cached_resource_filename(suiteId,
+    errorCode = midp_suite_get_cached_resource_filename(suiteId, storageId,
                                                         &PCSL_STRING_EMPTY,
                                                         &root);
     if (errorCode != MIDP_ERROR_NONE) {
@@ -216,44 +237,49 @@ static void deleteImageCache(const pcsl_string * suiteId) {
 
         pcsl_string_free(&filename);
     }
-        
+
     storageCloseFileIterator(handle);
     pcsl_string_free(&root);
 }
 
 /**
- * Creates a cache of natives images by iterating over all png images in the jar 
- * file, loading each one, decoding it into native, and caching it persistent 
+ * Creates a cache of natives images by iterating over all png images in the jar
+ * file, loading each one, decoding it into native, and caching it persistent
  * store.
  *
- * @param suiteId   The suite id
+ * @param suiteId The suite ID
+ * @param storageId ID of the storage where to create the cache
  */
-void createImageCache(const pcsl_string * suiteId) {
-    
+void createImageCache(SuiteIdType suiteId, StorageIdType storageId) {
+
     pcsl_string jarFileName;
     int result;
     jint errorCode;
-    
-    if (pcsl_string_is_null(suiteId)) {
+
+    if (suiteId == UNUSED_SUITE_ID) {
         return;
     }
-    
-    /* This makes the code non-reentrant and unsafe for threads,
-       but that is ok */
-    globalSuiteId = *suiteId;
-        
-    /* 
+
+    /*
+     * This makes the code non-reentrant and unsafe for threads,
+     *  but that is ok
+     */
+    globalSuiteId   = suiteId;
+    globalStorageId = storageId;
+
+    /*
      * First, blow away any existing cache. Note: when a suite is
      * removed, midp_remove_suite() removes all files associated with
-     * a suite, including the cache, so we don't have to do it 
+     * a suite, including the cache, so we don't have to do it
      * explicitly.
      */
-    deleteImageCache(suiteId);
+    deleteImageCache(suiteId, storageId);
 
     /* Get the amount of space available at this point */
-    remainingSpace = storageGetFreeSpace();
+    remainingSpace = storage_get_free_space(storageId);
 
-    errorCode = midp_suite_get_class_path(suiteId, KNI_TRUE, &jarFileName);
+    errorCode = midp_suite_get_class_path(suiteId, storageId,
+                                          KNI_TRUE, &jarFileName);
 
     if (errorCode != MIDP_ERROR_NONE) {
         return;
@@ -261,60 +287,62 @@ void createImageCache(const pcsl_string * suiteId) {
 
     result = loadAndCacheJarFileEntries(&jarFileName,
         (jboolean (*)(const pcsl_string *))&png_filter,
-        (jboolean (*)(const pcsl_string *))&png_action);  
+        (jboolean (*)(const pcsl_string *))&png_action);
 
     /* If something went wrong then clean up anything that was created */
     if (result != 1) {
         REPORT_WARN1(LC_LOWUI,
             "Warning: image cache could not be created; Error: %d\n",
             result);
-        deleteImageCache(suiteId);
+        deleteImageCache(suiteId, storageId);
     }
- 
+
     pcsl_string_free(&jarFileName);
-        
+
 }
 
 /**
- * Store a native image to cache. 
+ * Store a native image to cache.
  *
  * @param suiteId    The suite id
+ * @param storageId ID of the storage where to create the cache
  * @param resName    The image resource name
  * @param bufPtr     The buffer with the image data
  * @param len        The length of the buffer
  * @return           1 if successful, 0 if not
  */
-static int storeImageToCache(const pcsl_string * suiteId,
-                             const pcsl_string * resName, 
+static int storeImageToCache(SuiteIdType suiteId, StorageIdType storageId,
+                             const pcsl_string * resName,
                              unsigned char *bufPtr, int len) {
-    
+
     int            handle = -1;
     char*          errmsg = NULL;
     pcsl_string    path;
     int status     = 1;
     int errorCode;
-    
-    if (pcsl_string_is_null(suiteId) || pcsl_string_is_null(resName) ||
+
+    if (suiteId == UNUSED_SUITE_ID || pcsl_string_is_null(resName) ||
         (bufPtr == NULL)) {
         return 0;
     }
-        
+
     /* Build the complete path */
     errorCode = midp_suite_get_cached_resource_filename(suiteId,
+                                                        storageId,
                                                         resName,
-							&path);
-    
+                                                        &path);
+
     if (errorCode != MIDP_ERROR_NONE) {
         return 0;
     }
-        
+
     /* Open the file */
     handle = storage_open(&errmsg, &path, OPEN_READ_WRITE_TRUNCATE);
     pcsl_string_free(&path);
     if (errmsg != NULL) {
         REPORT_WARN1(LC_LOWUI,"Warning: could not save cached image; %s\n",
 		     errmsg);
-      
+
 	storageFreeError(errmsg);
 	return 0;
     }
@@ -325,7 +353,7 @@ static int storeImageToCache(const pcsl_string * suiteId,
       status = 0;
       storageFreeError(errmsg);
     }
-                
+
     storageClose(&errmsg, handle);
 
     return status;
@@ -333,29 +361,29 @@ static int storeImageToCache(const pcsl_string * suiteId,
 
 
 /**
- * Loads a native image from cache, if present. 
+ * Loads a native image from cache, if present.
  *
  * @param suiteId    The suite id
  * @param resName    The image resource name
  * @param **bufPtr   Pointer where a buffer will be allocated and data stored
  * @return           -1 if failed, else length of buffer
  */
-int loadImageFromCache(const pcsl_string * suiteId, const pcsl_string * resName,
+int loadImageFromCache(SuiteIdType suiteId, const pcsl_string * resName,
                        unsigned char **bufPtr) {
-    
+
     int                len = -1;
     int                handle = -1;
     char*              errmsg = NULL;
     int                bytesRead;
     pcsl_string        path;
     pcsl_string        resNameFix;
-    jint               errorCode;
+    MIDPError          errorCode;
     pcsl_string_status res;
 
-    if (pcsl_string_is_null(suiteId) || pcsl_string_is_null(resName)) {
+    if (suiteId == UNUSED_SUITE_ID || pcsl_string_is_null(resName)) {
         return len;
     }
-    
+
     /* If resource starts with slash, remove it */
     if (pcsl_string_index_of(resName, (jint)'/') == 0) {
         jsize resNameLen = pcsl_string_length(resName);
@@ -366,17 +394,22 @@ int loadImageFromCache(const pcsl_string * suiteId, const pcsl_string * resName,
     if (PCSL_STRING_OK != res) {
         return len;
     }
-    
+
     do {
         /* Build path */
-	errorCode = midp_suite_get_cached_resource_filename(suiteId,
-                                                            &resNameFix,
-                                                            &path);
-        pcsl_string_free(&resNameFix);
-        if (errorCode != MIDP_ERROR_NONE) {
+        StorageIdType storageId;
+        errorCode = midp_suite_get_suite_storage(suiteId, &storageId);
+        if (errorCode != ALL_OK) {
             break;
         }
-        
+
+        errorCode = midp_suite_get_cached_resource_filename(suiteId,
+            storageId, &resNameFix, &path);
+        pcsl_string_free(&resNameFix);
+        if (errorCode != ALL_OK) {
+            break;
+        }
+
         /* Open file */
         handle = storage_open(&errmsg, &path, OPEN_READ);
         pcsl_string_free(&path);
@@ -411,7 +444,7 @@ int loadImageFromCache(const pcsl_string * suiteId, const pcsl_string * resName,
             midpFree(*bufPtr);
             break;
         }
-        
+
     } while (0);
 
     if (handle >= 0) {
@@ -420,5 +453,3 @@ int loadImageFromCache(const pcsl_string * suiteId, const pcsl_string * resName,
 
     return len;
 }
-
-

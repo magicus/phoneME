@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -471,6 +472,9 @@ public abstract class Displayable {
 
     /** True, if this Displayable is in full screen mode */
     boolean isInFullScreenMode; // = false
+
+    /** True, if this Displayable is rotated */
+    boolean isRotated; // = false
 
     /** The title for this Displayable */
     String title;

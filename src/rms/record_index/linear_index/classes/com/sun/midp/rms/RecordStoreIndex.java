@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -102,10 +103,10 @@ class RecordStoreIndex {
      * Constructor for creating an index object for the given Record Store.
      *
      * @param rs record store that this object indexes
-     * @param suiteID unique ID of the suite that owns the store
+     * @param suiteId unique ID of the suite that owns the store
      * @param recordStoreName a string to name the record store
      */
-    RecordStoreIndex(AbstractRecordStoreImpl rs, String suiteID, 
+    RecordStoreIndex(AbstractRecordStoreImpl rs, int suiteId,
                      String recordStoreName) throws IOException {
         recordStore = rs;
         dbFile = rs.getDbFile();
@@ -121,17 +122,17 @@ class RecordStoreIndex {
 
     /**
      * Deletes index filed of named record store. There is no index
-     * file in case of linear index implementation, thus makes 
+     * file in case of linear index implementation, thus makes
      * nothing.
      *
-     * Called from RecordStoreImpl where record store files need to 
+     * Called from RecordStoreImpl where record store files need to
      *     be deleted.
      *
-     * @param suiteID not used
+     * @param suiteId not used
      * @param recordStoreName not used
      * @return always <code>true</code>
      */
-    static boolean deleteIndex(String suiteID, String recordStoreName) {
+    static boolean deleteIndex(int suiteId, String recordStoreName) {
         return true;
     }
 
@@ -163,7 +164,7 @@ class RecordStoreIndex {
                 dbFile.seek(currentOffset);
 
                 // read the block header
-                if (dbFile.read(header) != 
+                if (dbFile.read(header) !=
                     AbstractRecordStoreImpl.BLOCK_HEADER_SIZE) {
                     // error reading header
                     break;
@@ -172,7 +173,7 @@ class RecordStoreIndex {
                 break;
             }
 
-           
+
             currentRecordId = RecordStoreUtil.getInt(header, 0);
             if (currentRecordId > 0) {
                 recordIDs[idx++] = currentRecordId;
@@ -186,7 +187,7 @@ class RecordStoreIndex {
     }
 
     /**
-     *  Finds the record header for the given record and returns the 
+     *  Finds the record header for the given record and returns the
      *  offset to the header.
      *
      * @param recordId the ID of the record to use in this operation
@@ -211,7 +212,7 @@ class RecordStoreIndex {
                 dbFile.seek(offset);
 
                 // read the block header
-                if (dbFile.read(header) != 
+                if (dbFile.read(header) !=
                     AbstractRecordStoreImpl.BLOCK_HEADER_SIZE) {
                     // did not find the recordId at the returned offset
                     // throw away the index then!
@@ -281,7 +282,7 @@ class RecordStoreIndex {
      * @param offsetFrom  offset in the file to start search from
      * @param offsetUpto  offset in the file to abandon search at
      * @return            the offset in the db file of the block, or
-     *                    -1 (INVALID_OFFSET) in place 
+     *                    -1 (INVALID_OFFSET) in place
      *                    of InvalidRecordIDException
      * @exception IOException
      * @exception InvalidRecordIDException
@@ -313,7 +314,7 @@ class RecordStoreIndex {
             dbFile.seek(currentOffset);
 
             // read the block header
-            if (dbFile.read(header) != 
+            if (dbFile.read(header) !=
                 AbstractRecordStoreImpl.BLOCK_HEADER_SIZE) {
                 // did not find the recordId
                 return INVALID_OFFSET; // have a chance to retry
@@ -353,9 +354,9 @@ class RecordStoreIndex {
 
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                           "getFreeBlock recordId = " + 
-                           RecordStoreUtil.getInt(header, 0) + 
-                           " numBytes = " + RecordStoreUtil.getInt(header, 4) + 
+                           "getFreeBlock recordId = " +
+                           RecordStoreUtil.getInt(header, 0) +
+                           " numBytes = " + RecordStoreUtil.getInt(header, 4) +
                            " targetSize = " + targetSize);
         }
 
@@ -365,7 +366,7 @@ class RecordStoreIndex {
             dbFile.seek(currentOffset);
 
             // read the block header
-            if (dbFile.read(header) != 
+            if (dbFile.read(header) !=
                 AbstractRecordStoreImpl.BLOCK_HEADER_SIZE) {
                 // did not find the recordId
                 throw new IOException();
@@ -385,7 +386,7 @@ class RecordStoreIndex {
             if (currentId < 0 && currentSize >= targetSize) {
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                     Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                                   "found free block at offset " + 
+                                   "found free block at offset " +
                                    currentOffset);
                 }
 
@@ -417,9 +418,9 @@ class RecordStoreIndex {
     void updateBlock(int blockOffset, byte[] header) throws IOException {
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                           "updateBlock recordId = " + 
-                           RecordStoreUtil.getInt(header, 0) + 
-                           " numBytes = " + RecordStoreUtil.getInt(header, 4) + 
+                           "updateBlock recordId = " +
+                           RecordStoreUtil.getInt(header, 0) +
+                           " numBytes = " + RecordStoreUtil.getInt(header, 4) +
                            " blockOffset = " + blockOffset);
         }
         int recordId = RecordStoreUtil.getInt(header, 0);
@@ -442,9 +443,9 @@ class RecordStoreIndex {
     void removeBlock(int blockOffset, byte[] header) throws IOException {
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
-                           "removeBlock recordId = " + 
-                           RecordStoreUtil.getInt(header, 0) + 
-                           " numBytes = " + RecordStoreUtil.getInt(header, 4) + 
+                           "removeBlock recordId = " +
+                           RecordStoreUtil.getInt(header, 0) +
+                           " numBytes = " + RecordStoreUtil.getInt(header, 4) +
                            " blockOffset = " + blockOffset);
         }
         // blocks get moved, LastSeenOffset may point into the middle

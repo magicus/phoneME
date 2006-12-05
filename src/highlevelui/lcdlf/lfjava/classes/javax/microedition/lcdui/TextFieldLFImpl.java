@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -43,6 +44,7 @@ import com.sun.midp.chameleon.layers.PTILayer;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.TextFieldSkin;
 import com.sun.midp.chameleon.skins.resources.TextFieldResources;
+import com.sun.midp.chameleon.skins.resources.PTIResources;
 
 
 import java.util.*;
@@ -148,6 +150,10 @@ class TextFieldLFImpl extends ItemLFImpl implements
     /** A TimerTask which will repaint scrolling text  on a repeated basis */
     protected TextScrollPainter textScrollPainter;
 
+    /** flag indicating the pointer press event is happened but release is
+        still not handled */
+    private boolean pressedIn = false;
+
     /**
      * Creates TextFieldLF for the passed in TextField.
      * @param tf The TextField associated with this TextFieldLF
@@ -156,6 +162,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         super(tf);
         
         TextFieldResources.load();
+        PTIResources.load();
         
         this.tf = tf;
         
@@ -348,6 +355,16 @@ class TextFieldLFImpl extends ItemLFImpl implements
         this.initialInputMode = characterSubset;
     }
 
+     /**
+      * Notifies item that it has been recently deleted
+      * Traverse out the textFieldLF. This implicitly remove the InputMode
+      * indicator and possibly the Predictive Text Input indicator from the
+      * screen.
+      */
+     public void itemDeleted() {
+         uCallTraverseOut();
+     }
+
     // CommandListener interface
     
     /**
@@ -442,6 +459,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * @param height The height available for the Item's content
      */
     void lPaintContent(Graphics g, int width, int height) {
+        //        System.out.println(" width=" + width +  " height =" + height);
         // Draw the TextField background region 
         if (editable) {
             if (TextFieldSkin.IMAGE_BG != null) {
@@ -855,7 +873,9 @@ class TextFieldLFImpl extends ItemLFImpl implements
         
         g.setClip(0, 0, w, h);
         
-        cursor = new TextCursor(cursor);
+        if (opChar != 0) {
+            cursor = new TextCursor(cursor);
+        }
         String str = getDisplayString(dca, opChar, constraints,
                                       cursor, true);
         
@@ -926,9 +946,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * @param input text to commit 
      */
     public void commit(String input) {
-        if (input == null) {
-            System.err.println(
-                "TextFieldLFImpl Warning: commited text is null!");
+        if (input == null || input.length() == 0) {
             return;
         }
 
@@ -938,19 +956,18 @@ class TextFieldLFImpl extends ItemLFImpl implements
             try {
                 cursor.visible = true;
                 DynamicCharacterArray in = tf.buffer;
-
+                
                 TextCursor newCursor =  new TextCursor(cursor);
                 for (int i = 0; i < input.length(); i++) {
-                    TextCursor currentCursor =  new TextCursor(newCursor);
                     String str = getDisplayString(in, input.charAt(i),
-                                                  tf.constraints,
-                                                  currentCursor, true);
+                                           tf.constraints,
+                                           newCursor, true);
                     in = new DynamicCharacterArray(str);
-                    newCursor = currentCursor;
                 }
 
                 if (bufferedTheSameAsDisplayed(tf.constraints)) {
-                    tf.setString(in.toString());
+                    tf.delete(0, tf.buffer.length());
+                    tf.insert(in.toString(), cursor.index);
                     cursor = newCursor;
                 } else if (tf.buffer.length() < tf.getMaxSize()) {
                     tf.insert(input, cursor.index);
@@ -1033,6 +1050,66 @@ class TextFieldLFImpl extends ItemLFImpl implements
     public void lCommitPendingInteraction() {
         // IMPL NOTE: fix needed? inputHandler.endComposition(false);
     }
+
+    /**
+     * Handle a pointer press event
+     *
+     * @param x pointer x coordinate
+     * @param y pointer y coordinate
+     */
+    void uCallPointerPressed(int x, int y) {
+        pressedIn = true;
+        super.uCallPointerPressed(x, y);
+    }
+
+    /**
+     * Handle a pointer released event
+     *
+     * @param x pointer x coordinate
+     * @param y pointer y coordinate
+     */
+    void uCallPointerReleased(int x, int y) {
+        // don't call super method because text field does not have the option 
+        // to activate the command assigned to this item by the pointer
+        if (pressedIn) {
+            int newId = getIndexAt(x, y);
+            if (newId >= 0 &&
+                newId <= tf.buffer.length() &&
+                newId != cursor.index) {
+                cursor.index = newId;
+                cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                lRequestPaint();
+            }
+
+            pressedIn = false;
+        }
+    }
+
+    /**
+     * Get character index at the pointer position
+     *
+     * @param x pointer x coordinate
+     * @param y pointer y coordinate
+     * @return the character index
+     */
+    protected int getIndexAt(int x, int y) {
+        int i = -1;
+        x -= contentBounds[X] +
+            TextFieldSkin.PAD_H +
+            xScrollOffset;
+        if (x >= 0) {
+            char[] data = tf.buffer.toCharArray();
+            for (i = 1; i <= tf.buffer.length(); i++) {
+                if (x <= ScreenSkin.FONT_INPUT_TEXT.charsWidth(data, 0, i)) {
+                    break;
+                }
+            }
+            i--;
+        }
+        
+        return i;
+    }
+
 
     /**
      * Handle a key press

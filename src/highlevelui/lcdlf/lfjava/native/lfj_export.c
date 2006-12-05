@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -43,6 +44,34 @@ extern "C" {
  */
 void lcdlf_refresh(int x, int y, int w, int h) {
   lfjport_refresh(x, y, w, h);
+}
+
+/**
+ * Change screen orientation flag
+ */
+jboolean lcdlf_reverse_orientation() {
+  return lfjport_reverse_orientation();
+}
+
+/**
+ * Get screen orientation flag
+ */
+jboolean lcdlf_get_reverse_orientation() {
+  return lfjport_get_reverse_orientation();
+}
+
+/**
+ * Return screen width
+ */
+int lcdlf_get_screen_width() {
+  return lfjport_get_screen_width();
+}
+
+/**
+ *  Return screen height
+ */
+int lcdlf_get_screen_height() {
+  return lfjport_get_screen_height();
 }
 
 /**

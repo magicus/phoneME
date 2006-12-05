@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -107,7 +108,7 @@ abstract class AutoSuiteDescriptorImpl
      *
      * @return suite ID as String
      */
-    abstract String getSuiteID();
+    abstract int getSuiteID();
 
     /**
      * Updates list of suite's MIDlets
@@ -122,7 +123,7 @@ abstract class AutoSuiteDescriptorImpl
      * @param storage suite's storage
      * @return suite descriptor
      */
-    final static AutoSuiteDescriptor getInstanceBySuiteID(String suiteID,
+    final static AutoSuiteDescriptor getInstanceBySuiteID(int suiteID,
             MIDletSuiteStorage storage)
         throws MIDletSuiteLockedException, MIDletSuiteCorruptedException {
 

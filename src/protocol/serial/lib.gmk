@@ -1,4 +1,5 @@
 #
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -33,6 +34,9 @@
 #
 ######################################################################
 
+#IMPL_NOTE - build subsystem on linux and javacall only
+ifneq ($(findstring $(TARGET_OS),linux javacall),)
+
 # Adds to global SUBSYSTEMS list
 #
 SUBSYSTEMS += serial
@@ -45,7 +49,7 @@ SUBSYSTEM_SERIAL_PACKAGES = \
 
 # Currently no files in the comm package included.
 MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_SERIAL_SOURCEPATH)
-#MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_SERIAL_PACKAGES)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_SERIAL_PACKAGES)
 
 GROUP_PROTOCOL_JAVADOC_PACKAGES += \
 	$(SUBSYSTEM_SERIAL_PACKAGES)
@@ -54,15 +58,25 @@ GROUP_PROTOCOL_JAVADOC_PACKAGES += \
 #
 vpath % $(SUBSYSTEM_DIR)/protocol/serial/reference/native
 
-SUBSYSTEM_SERIAL_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/protocol/serial/classes/javax/microedition/io/CommConnection.java
+# Jpp files that need pre-processing
+#
+$(GENERATED_DIR)/classes/com/sun/midp/io/j2me/comm/Protocol.java: $(SUBSYSTEM_DIR)/protocol/serial/reference/classes/com/sun/midp/io/j2me/comm/Protocol.jpp
+	@$(call runjpp,$^,$@)
 
-# This is commented out because the protocol is not supported.
-# CommConnection interface is included for signature compatibility.
-#    $(SUBSYSTEM_DIR)/protocol/serial/reference/classes/com/sun/midp/io/j2me/comm/Protocol.java
+# Java files for the ( serial ) module
+#
+SUBSYSTEM_SERIAL_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/protocol/serial/classes/javax/microedition/io/CommConnection.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/io/j2me/comm/Protocol.java
 
 # Native files for the ( serial ) module
 #
 
-#SUBSYSTEM_SERIAL_NATIVE_FILES += \
-# 	commProtocol.c
+SUBSYSTEM_SERIAL_NATIVE_FILES += \
+ 	commProtocol.c
+
+#IMPL_NOTE - build subsystem on linux and javacall only
+else
+display:
+	echo "Serial communication is not implemented yet for OS $(TARGET_OS)"
+endif

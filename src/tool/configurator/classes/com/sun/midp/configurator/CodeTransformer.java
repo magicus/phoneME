@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -173,7 +174,8 @@ public class CodeTransformer {
          * -xml:        XML file to transform.
          * -xsl:        XSL file to apply to given XML file.
          * -out:        Output file. If empty, output will be to stdout.
-         * -params:     Transformations parameters in form of "Name" "Value" pairs.
+         * -params:     Transformations parameters in form of "Name"
+	 *              "Value" pairs.
          * -help:       Print usage information
          * -debug:      Be verbose: print some debug info while running. 
          *
@@ -231,9 +233,16 @@ class CodeTransformerImpl {
         debug = dbg;
     }
     
+    /**
+     * Converts errors.
+     */    
     class TransformerErrorHandler 
         implements ErrorHandler {
             
+	/**
+	 * Handles errors.
+	 * @param e the parsing exception
+	 */
         public void error(SAXParseException e) 
             throws SAXParseException {
             reportError(e);
@@ -241,14 +250,26 @@ class CodeTransformerImpl {
             throw e;
         }
         
-        public void fatalError(SAXParseException e) {
+	/**
+	 * Handles fatal errors.
+	 * @param e the parsing exception
+	 */
+	public void fatalError(SAXParseException e) {
             reportError(e);
         }
  
+	/**
+	 * Handles warnings.
+	 * @param e the parsing exception
+	 */
         public void warning(SAXParseException e) {
             reportError(e);
         }
 
+	/**
+	 * Outputs diagnostic messages.
+	 * @param e the parsing exception
+	 */
         private void reportError(SAXParseException e) {
             String msg = e.getMessage();
             String location = e.getSystemId();
@@ -373,6 +394,11 @@ class CodeTransformerImpl {
         }
     }
 
+    /**
+     * Generates localized strings.
+     * @param doc the current  working file
+     * @param outDir the target output directory
+     */
     private void generateLocalizedStrings(Document doc, String outDir)
          throws Exception
     {
@@ -403,6 +429,8 @@ class CodeTransformerImpl {
      * Walk the XML tree to discover all <localized_string> elements,
      * collect them and write the data tables specific for each
      * locale to a pair of Java and C source files.
+     * @param n the current node to be processed
+     * @param className the name of the class to handle this node
      */
     private void processLocalizedStrings(Node n, String className) 
         throws Exception {
@@ -428,11 +456,15 @@ class CodeTransformerImpl {
         }
     }
 
+    /** Supported locales table. */
     Hashtable locales = new Hashtable();
 
     /**
      * Add one <localized_string> Element to the LocalizedStringSet of
      * the enclosing <localized_strings>.
+     * @param className the locales handler
+     * @param valueIndex key for this entry 
+     * @param value data for this entry
      */
     private void addLocalizedString(String className, 
             int valueIndex, String value)
@@ -459,12 +491,20 @@ class LocalizedStringSet {
     /** All localized strings for this locale */
     Vector strings;
 
-    /** constructor */
+    /**
+     * Default constructor.
+     * @param className class name of locale handler
+     */
     LocalizedStringSet(String className) {
         this.className = className;
         strings = new Vector(512);
     }
 
+    /**
+     * Stores the current entry.
+     * @param idx the key
+     * @param value the data
+     */
     void put(int idx, String value) { 
         if (strings.size() < idx + 1) {
             strings.setSize(idx + 1);
@@ -477,13 +517,22 @@ class LocalizedStringSet {
  * This class records related information about each localized string
  */
 class LocalizedString {
+    /**
+     * Constructor with initial data.
+     * @param i the key
+     * @param s the value
+     */
     LocalizedString(int i, String s) {
         this.index = i;
         this.string = s;
     }
+    /** The current search location. */
     int index;
+    /** The offset of the current item. */
     int offset;
+    /** The length of the table. */
     int length;
+    /** The data contents. */
     String string;
 }
 
@@ -493,12 +542,16 @@ class LocalizedString {
  * don't read from the localized string tables very often
  */
 class CSourceWriter {
+    /** The locale used. */
     LocalizedStringSet locale;
+    /** Output stream writer. */
     PrintWriter writer;
+    /** Array of strings to be processed. */
     LocalizedString strings[];
 
     /**
      * Sort all string data so they can be more easily compressed
+     * @return the sorted array
      */
     ArrayList sort() {
         ArrayList list = new ArrayList();
@@ -515,7 +568,17 @@ class CSourceWriter {
             list.add(strings[i]);
         }
 
+	/**
+	 * Sorting function.
+	 */
         Collections.sort(list, new Comparator() {
+		/**
+		 * Comparison method.
+		 * @param o1 left hand operand
+		 * @param o2 right hand operand
+		 * @return positive value if o2 is greater than o1,
+		 * negative is o1 is less than o2 and zero if the same
+		 */
             public int compare(Object o1, Object o2) {
                 LocalizedString r1 = (LocalizedString)o1;
                 LocalizedString r2 = (LocalizedString)o2;
@@ -529,6 +592,9 @@ class CSourceWriter {
     /**
      * Write the C source file that stores the local string data in a
      * compact data structure
+     * @param locale the target locale for comparison purposes
+     * @param filename the source for processing
+     * @param classname the locale handler
      */
     void writeCSource(LocalizedStringSet locale,
                       String filename, String classname) 
@@ -548,7 +614,7 @@ class CSourceWriter {
             int type = writeOptimizedArray();
             
             pl("KNI_RETURNTYPE_OBJECT");
-            pl("Java_com_sun_midp_l10n_" + classname + "_getContent() {");
+            pl("KNIDECL(com_sun_midp_l10n_" + classname + "_getContent) {");
             if (type != UNICODE) {
                 pl("    char stackbuffer[128];");
                 pl("    char *utf8; /*0-terminated*/");
@@ -591,7 +657,8 @@ class CSourceWriter {
 
     /**
      * Short-hand for printint a line into the output file
-     */
+      * @param s the string to output
+    */
     void pl(String s) {
         writer.println(s);
     }
@@ -599,6 +666,7 @@ class CSourceWriter {
     /**
      * Short-hand for printint a string  the output file (with a 12-space
      * prefix)
+     * @param s the string to output
      */
     void plx(String s) {
         writer.print("            ");
@@ -607,6 +675,7 @@ class CSourceWriter {
 
     /**
      * Short-hand for printint a string into the output file
+     * @param s the string to output
      */
     void p(String s) {
         writer.print(s);
@@ -621,6 +690,7 @@ class CSourceWriter {
     /**
      * Write the string data using UTF8 or UNICODE, depending on which
      * is smaller.
+     * @return the storage type 
      */
     int writeOptimizedArray() throws Throwable {
         // (1) Sort all strings and then merge them into a single String.
@@ -658,6 +728,8 @@ class CSourceWriter {
 
     /**
      * Tell which one of UT8 or UNICODE is smaller
+     * @param sbuf the string data to be processed
+     * @return the storage type
      */
     int getStorageType(StringBuffer sbuf) throws Throwable {
         boolean hasZero = false;
@@ -682,14 +754,16 @@ class CSourceWriter {
         return UNICODE;
     }
 
-
+    /** Hex digits for output. */
     static char digits[] = {
         '0', '1', '2', '3', '4', '5', '6', '7',
         '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
 
     /**
-     * print a hex number for the given character
+     * Prints a hex number for the given character.
+     * @param c the character to convert
+     * @param numdigits the output field width
      */
     void printHex(char c, int numdigits) {
         p("0x");
@@ -702,6 +776,7 @@ class CSourceWriter {
 
     /**
      * Write all the data in a UNICODE array
+     * @param sbuf the string data to be processed
      */
     void writeUNICODE(StringBuffer sbuf) {
         int STEP = 10;
@@ -722,6 +797,8 @@ class CSourceWriter {
 
     /**
      * Write all the data in a UTF8 array
+     * @param sbuf the string data to be processed
+     * @param list the data to be processed
      */
     void writeUTF8(StringBuffer sbuf, ArrayList list) throws Throwable {
         // Recompute the offset and length of each item
@@ -764,6 +841,10 @@ class CSourceWriter {
 
     /**
      * Equivalent of String.indexOf(), but works on a UTF8 byte array.
+     * @param needle the item to be found
+     * @param haystack the data to be searched
+     * @param end the limit of the search
+     * @return theindex of the found data or -1 if not found
      */
     int search(byte needle[], byte haystack[], int end) {
         int needleLen = needle.length;

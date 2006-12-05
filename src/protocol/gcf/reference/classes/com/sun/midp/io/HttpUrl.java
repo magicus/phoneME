@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -146,9 +147,11 @@ public class HttpUrl {
         int endOfHost;
         int startOfPort;
         int endOfPort;
+        int lastDot;
         int startOfDomain;
 
-        if (url.indexOf(' ') != -1) {
+        if (url.indexOf(' ') != -1 || url.indexOf('\r') != -1 || 
+            url.indexOf('\n') != -1 || url.indexOf('\u0007') != -1) {
             throw new IllegalArgumentException("Space character in URL");
         }
 
@@ -270,17 +273,35 @@ public class HttpUrl {
 
         // get the host
         host = authority.substring(0, endOfHost);
+        // the last char of the host must not be a minus sign or period
+        int hostLength = host.length();
+        if ((host.lastIndexOf('.') == hostLength - 1) 
+            || (host.lastIndexOf('-') == hostLength - 1)) {
+             throw new IllegalArgumentException("invalid host format");
+        } 
         
-        // find the machine and domain, if not host is not an IP address
-        if (Character.isDigit(host.charAt(0)) || host.charAt(0) == '[') {
+        // find the machine name and domain, if not host is not an IP address
+        if (host.charAt(0) == '[') {
+            // IP v6 address
+            return;
+        }
+
+        lastDot = host.lastIndexOf('.');
+        if (lastDot != -1 && host.length() > (lastDot + 1) &&
+            Character.isDigit(host.charAt(lastDot + 1))) {
+            // IP v4 address
             return;
         }
 
         startOfDomain = host.indexOf('.');
         if (startOfDomain != -1) {
             // do not include the "."
-            domain = host.substring(startOfDomain + 1, host.length());
-            machine = host.substring(0, startOfDomain);
+            startOfDomain++;
+            if (startOfDomain < host.length()) {
+                domain = host.substring(startOfDomain, host.length());
+            }
+
+            machine = host.substring(0, startOfDomain - 1);
         } else {
             machine = host;
         }

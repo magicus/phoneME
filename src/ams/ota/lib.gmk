@@ -1,3 +1,4 @@
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -48,6 +49,7 @@ MIDP_JAVADOC_SOURCEPATH += $(OTA_DIR)/classes
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(OTA_DIR)/classes/com/sun/midp/installer/DiscoveryApp.java \
+    $(OTA_DIR)/classes/com/sun/midp/installer/SuiteVerifier.java \
     $(OTA_DIR)/classes/com/sun/midp/installer/OtaNotifier.java \
     $(OTA_DIR)/classes/com/sun/midp/installer/GraphicalInstaller.java
 

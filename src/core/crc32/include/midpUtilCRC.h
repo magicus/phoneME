@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -63,7 +64,7 @@ extern "C" {
  * checked is complete instead of partial. The 
  * <tt>midpCRC32Finalize</tt> function is not re-entry safe, however.
  *
- * ##include &lt;midpUtilCRC.h&gt;
+ * ##include &lt;&gt;
  * @{
  */
 

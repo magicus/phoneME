@@ -2,6 +2,7 @@
 <!DOCTYPE configuration SYSTEM "./configuration.dtd">
 <!--
 
+
         Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 -->
@@ -88,20 +89,29 @@
             Comment="JSR180 module channel"/>
   <constant Type="int"
             Name="LC_EVENTS"
-            Value="9500"
+            Value="10500"
             Comment="Event queue module channel"/>
   <constant Type="int"
             Name="LC_STORAGE"
-            Value="10000"
+            Value="11000"
             Comment="File Storage module channel"/>
   <constant Type="int"
             Name="LC_PUSH"
-            Value="10500"
+            Value="11500"
             Comment="Push registry module channel"/>
+  <constant Type="int"
+            Name="LC_LIFECYCLE"
+            Value="12000"
+            Comment="Pause/Resume functionality channel"/>
 </constant_class>
 <!-- Memory limits -->
 <constant_class Package="com.sun.midp.configurator" Name="Constants"
                 Scope="public">
+  <constant Type="int"
+            Name="LOG_CURRENT"
+            Value="-1"
+            Comment="A value indicating that there is no need to change
+                    the current logging level."/>
   <constant Type="int"
             Name="LOG_INFORMATION"
             Value="0"
@@ -202,6 +212,11 @@
             Comment="MIDlet start error status, when system has exceeded
                      the maximum Isolate count."/>
   <constant Type="int"
+            Name="MIDLET_INSTALLER_RUNNING"
+            Value="-14"
+            Comment="MIDlet start error status, when that MIDlet is being 
+                     updated."/>
+  <constant Type="int"
             Name="MIDLET_APPID_NO_FOREGROUND"
             Value="0"
             Comment="Reserved external application id for setting
@@ -210,7 +225,8 @@
             Name="MAX_INSTALL_DELETE_NOTIFICATION_RETRIES"
             Value="5"
             Comment="Number of times an install or delete notification
-                    has to be retried by the notification manager"/>
+                    has to be retried by the notification manager.
+                    Check the specification for the minimal allowed value."/>
 </constant_class>
 </constants>
 </configuration>

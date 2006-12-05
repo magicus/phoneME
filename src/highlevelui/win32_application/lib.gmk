@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -39,5 +40,6 @@ SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(SUBSYSTEM_APP_DIR)/include
 vpath % $(SUBSYSTEM_APP_DIR)/reference/native
 
 SUBSYSTEM_APP_NATIVE_FILES += \
-    win32app_export.c \
-    staticGraphics.c
+    win32app_export.c
+all::
+	@(cp -f $(SUBSYSTEM_APP_DIR)/reference/native/res/*.bmp $(BINDIR)) $(LOG)

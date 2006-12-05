@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -55,7 +56,7 @@
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_lcdui_Display_refresh0() {
+KNIDECL(javax_microedition_lcdui_Display_refresh0) {
     int y2 = KNI_GetParameterAsInt(5);
     int x2 = KNI_GetParameterAsInt(4);
     int y1 = KNI_GetParameterAsInt(3);
@@ -100,7 +101,7 @@ Java_javax_microedition_lcdui_Display_refresh0() {
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_lcdui_Display_setFullScreen0() {
+KNIDECL(javax_microedition_lcdui_Display_setFullScreen0) {
     jboolean mode = KNI_GetParameterAsBoolean(2);
     jint displayId = KNI_GetParameterAsInt(1);
 
@@ -125,11 +126,43 @@ Java_javax_microedition_lcdui_Display_setFullScreen0() {
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_lcdui_Display_gainedForeground0() {
+KNIDECL(javax_microedition_lcdui_Display_gainedForeground0) {
     jint displayId = KNI_GetParameterAsInt(1);
 
     if (midpHasForeground(displayId)) {
       lcdlf_gained_foreground();
     }
     KNI_ReturnVoid();
+}
+
+/**
+ * Calls platform specific function to invert screen orientation flag
+ */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(javax_microedition_lcdui_Display_reverseOrientation0) {
+    jboolean res = 0;
+    res = lcdlf_reverse_orientation();
+    KNI_ReturnBoolean(res);
+}
+
+/**
+ * Calls platform specific function to invert screen orientation flag
+ */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(javax_microedition_lcdui_Display_getReverseOrientation0) {
+    jboolean res = 0;
+    res = lcdlf_get_reverse_orientation();
+    KNI_ReturnBoolean(res);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(javax_microedition_lcdui_Display_getScreenHeight0) {
+    int height = lcdlf_get_screen_height();
+    KNI_ReturnInt(height);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(javax_microedition_lcdui_Display_getScreenWidth0) {
+    int height = lcdlf_get_screen_width();
+    KNI_ReturnInt(height);
 }

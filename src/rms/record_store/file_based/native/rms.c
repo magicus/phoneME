@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -23,13 +24,15 @@
  * information or have any questions. 
  */
 
+#include "kni.h"
 #include "midp_file_cache.h"
 #include <midpStorage.h>
 #include <midpMalloc.h>
-#include <suitestore_util.h>
 #include <midpInit.h>
 #include <midpRMS.h>
 #include <midpUtilKni.h>
+#include <suitestore_rms.h>
+#include <limits.h> /* for LONG_MAX */
 
 /**
  * @file
@@ -41,8 +44,8 @@
  * <p>
  * In case of MVM, there is a potential issue of accessing the same record
  * store file by multiple isolates at the same time. In the following,
- * a sequential access to the RMS record store is implemented to maintain 
- * the data integrity in MVM. It is based on the assumption that two isolates 
+ * a sequential access to the RMS record store is implemented to maintain
+ * the data integrity in MVM. It is based on the assumption that two isolates
  * can share a single record store file but can not access it
  * simultaneously at the same time. If two isolates try to access
  * the same record store file at the same time, the later one will get a
@@ -52,24 +55,24 @@
  * <h3> Implementation Details </h3>
  * <p>
  * Native calls are serialized across isolates. In this
- * approach, a linked list is maintained for all open files in native 
- * code. Before opening or deleting any file, the isolate must verify if 
- * the file is already open or not. The calling isolate will receive a 
+ * approach, a linked list is maintained for all open files in native
+ * code. Before opening or deleting any file, the isolate must verify if
+ * the file is already open or not. The calling isolate will receive a
  * RecordStoreException if the file is already open.
  * </p>
  *
  * <p>
  * A linked list is maintained to store the locks for every
- * suiteID/recordStoreName as follows:
+ * suiteId/recordStoreName as follows:
  * </p>
  *
  * <p>
  * typedef struct _lockFileList { <br>
- *     &nbsp;&nbsp;&nbsp;pcsl_string suiteID; <br>
+ *     &nbsp;&nbsp;&nbsp;pcsl_string suiteId; <br>
  *     &nbsp;&nbsp;&nbsp;pcsl_string recordStoreName; <br>
  *     &nbsp;&nbsp;&nbsp;int handle; <br>
  *     &nbsp;&nbsp;&nbsp;_lockFileList* next; <br>
- *} lockFileList; 
+ *} lockFileList;
  * </p>
  *
  * <p>
@@ -77,102 +80,103 @@
  * </p>
  *
  * <p>
- * lockFileListPtr will always point to the head of the linked list. 
+ * lockFileListPtr will always point to the head of the linked list.
  * </p>
  *
  * <ol>
- * <h3> 
+ * <h3>
  * <li>
- * openRecordStore 
+ * openRecordStore
  * </li>
  * </h3>
  *
  * <p>
- * The peer implementation of openRecordStore() [RecordStoreImpl 
+ * The peer implementation of openRecordStore() [RecordStoreImpl
  * constructor] calls a native function, viz. openRecordStoreFile() in
  * RecordStoreFile.c. This function calls rmsdb_record_store_open() in rms.c.
  * The access to the recordstore file can be verified at this point.
  * </p>
  * <ol>
  * <li>
- * If the lockFileListPtr is NULL, the linked list is initialised and 
+ * If the lockFileListPtr is NULL, the linked list is initialised and
  * a node is added to the lockFileList.
  * </li>
  *
  * <li>
- * If (lockFileListPtr != NULL) , the linked list is searched for 
- * the node based on suiteID and recordStoreName. If the node is found, it means
+ * If (lockFileListPtr != NULL) , the linked list is searched for
+ * the node based on suiteId and recordStoreName. If the node is found, it means
  * that the file is already opened by another isolate and a RecordStoreException
- * is thrown to the calling isolate.  
+ * is thrown to the calling isolate.
  * </li>
  *
  * <li>
- * If (lockFileListPtr != NULL) and the node is not found for the 
- * corresponding suiteID and recordStoreName, then a new node will be 
+ * If (lockFileListPtr != NULL) and the node is not found for the
+ * corresponding suiteId and recordStoreName, then a new node will be
  * added to the linked list.
  * </li>
  * </ol>
  *
- * <h3> 
+ * <h3>
  * <li>
  * closeRecordStore
  * </li>
  * </h3>
  *
  * <p>
- * In this case, a node is searched in the linked list based on suiteID 
+ * In this case, a node is searched in the linked list based on suiteId
  * and recordStoreName. The node is just removed from the linked list.
  * </p>
  *
- * <h3> 
+ * <h3>
  * <li>
  * deleteRecordStore
  * </li>
  * </h3>
  *
  * <p>
- * In MVM mode, the record store file should not be deleted if it is in 
- * use by another isolate.  A node is searched in the linked list based 
- * on suiteID and recordStoreName. If (lockFileListPtr != NULL) and a node 
- * is found, a RecordStoreException in thrown to the calling isolate. 
+ * In MVM mode, the record store file should not be deleted if it is in
+ * use by another isolate.  A node is searched in the linked list based
+ * on suiteId and recordStoreName. If (lockFileListPtr != NULL) and a node
+ * is found, a RecordStoreException in thrown to the calling isolate.
  * </p>
  *
- * <h3> 
+ * <h3>
  * <li>
- * Important Notes 
+ * Important Notes
  * </li>
  * </h3>
  *
  * <ol>
  * <li>
- * The individual record operations like addRecord(), getRecord(), 
+ * The individual record operations like addRecord(), getRecord(),
  * setRecord() will not be affected due to the new locking mechanism.
  * </li>
  *
  * <li>
- * If the record store file is already in use by any isolate, the calling 
- * isolate will just receive an exception. There won't be any retries or 
+ * If the record store file is already in use by any isolate, the calling
+ * isolate will just receive an exception. There won't be any retries or
  * waiting mechanism till the record store file becomes available.
  * </li>
  *
  * <li>
  * There is very less probability of introducing memory leaks with this
- * mechanism. In normal scenario, every isolate closes the file after it 
- * is done with its read/write operations which will automatically flush 
- * the memory for the node. Note that native finalizer for RecordStoreFile 
- * also calls recordStoreClose() which in turn removes the node from 
+ * mechanism. In normal scenario, every isolate closes the file after it
+ * is done with its read/write operations which will automatically flush
+ * the memory for the node. Note that native finalizer for RecordStoreFile
+ * also calls recordStoreClose() which in turn removes the node from
  * the linked list.
- * </li> 
+ * </li>
  * </ol>
  *
  * </ol>
- * 
+ *
  ***/
 
 /** Easily recognize record store files in the file system */
 static const int DB_EXTENSION_INDEX = 0;
 static const int IDX_EXTENSION_INDEX = 1;
 
+/*
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START( DB_EXTENSION )
     {'.', 'd', 'b', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END( DB_EXTENSION );
@@ -180,6 +184,7 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END( DB_EXTENSION );
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START( IDX_EXTENSION )
     {'.', 'i', 'd', 'x', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END( IDX_EXTENSION );
+*/
 
 static const char* const FILE_LOCK_ERROR = "File is locked, can not open";
 
@@ -189,10 +194,10 @@ static const char* const FILE_LOCK_ERROR = "File is locked, can not open";
  * Maintain a linked list of nodes representing open files. If a node is present
  * in list, then it means that the file is opened by some isolate and no
  * other isolate can access it.
- * 
+ *
  */
 typedef struct _lockFileList {
-    pcsl_string suiteID;
+    SuiteIdType suiteId;
     pcsl_string recordStoreName;
     int handle;      //32-bit file handle, useful in close operation
     struct _lockFileList* next;
@@ -203,10 +208,10 @@ typedef lockFileList olockFileList;
 
 // Forward declarations for local functions
 
-static int recordStoreCreateLock(const pcsl_string * suiteID_str,
+static int recordStoreCreateLock(SuiteIdType suiteId,
                                  const pcsl_string * name_str, int handle);
 static void recordStoreDeleteLock(int handle);
-static lockFileList * findLockById(const pcsl_string * suiteID, const pcsl_string * name);
+static lockFileList * findLockById(SuiteIdType suiteId, const pcsl_string * name);
 
 
 /**
@@ -291,24 +296,26 @@ escaped_ascii_to_unicode(const pcsl_string* str, pcsl_string* result) {
  * <ul>
  *  <li>The native storage path for the desired MIDlet suite
  *  is acquired from the Scheduler.
- * 
- *  <li>The <code>filename</code> arg is converted into an ascii 
+ *
+ *  <li>The <code>filename</code> arg is converted into an ascii
  *  equivalent safe to use directly in the underlying
  *  file system and appended to the native storage path.  See the
- *  com.sun.midp.io.j2me.storage.File.unicodeToAsciiFilename() 
+ *  com.sun.midp.io.j2me.storage.File.unicodeToAsciiFilename()
  *  method for conversion details.
  *
- *  <li>Finally the extension number given by the extension parameter 
+ *  <li>Finally the extension number given by the extension parameter
  *  is appended to the file name.
- * <ul>  
- * @param suiteID ID of the MIDlet suite that owns the record store
+ * <ul>
+ * @param suiteId ID of the MIDlet suite that owns the record store
+ * @param storageId ID of the storage where the RMS will be located
  * @param name name of the record store
  * @param extension extension number to add to the end of the file name
  *
  * @return a unique identifier for this record store file
  */
 static MIDP_ERROR
-rmsdb_get_unique_id_path(const pcsl_string* suiteID, const pcsl_string* name,
+rmsdb_get_unique_id_path(SuiteIdType suiteId, StorageIdType storageId,
+                         const pcsl_string* name,
                          int extension, pcsl_string * res_path) {
     pcsl_string temp = PCSL_STRING_NULL;
     MIDP_ERROR midpErr;
@@ -316,14 +323,13 @@ rmsdb_get_unique_id_path(const pcsl_string* suiteID, const pcsl_string* name,
 
     *res_path = PCSL_STRING_NULL; // null in case of any error
 
-    if(pcsl_string_is_null(name))
-    {
+    if (pcsl_string_is_null(name)) {
         return MIDP_ERROR_ILLEGAL_ARGUMENT;
     }
 
-    midpErr = midp_suite_get_rms_filename(suiteID,
+    midpErr = midp_suite_get_rms_filename(suiteId, storageId,
                                           (extension == IDX_EXTENSION_INDEX
-                                          ? MIDP_RMS_IDX_EXT : MIDP_RMS_DG_EXT),
+                                          ? MIDP_RMS_IDX_EXT : MIDP_RMS_DB_EXT),
                                           name, res_path);
 
     if (midpErr != MIDP_ERROR_NONE) {
@@ -333,7 +339,8 @@ rmsdb_get_unique_id_path(const pcsl_string* suiteID, const pcsl_string* name,
     if (pcsl_string_is_null(res_path)) {
         /* Assume this is special case where the suite was not installed
            and create a filename from the ID. */
-        pcslErr = pcsl_string_cat(storage_get_root(),suiteID,&temp);
+        pcslErr = pcsl_string_cat(storage_get_root(storageId),
+            midp_suiteid2pcsl_string(suiteId), &temp);
         if (pcslErr != PCSL_STRING_OK || pcsl_string_is_null(&temp) ) {
             return MIDP_ERROR_FOREIGN;
         }
@@ -351,20 +358,31 @@ rmsdb_get_unique_id_path(const pcsl_string* suiteID, const pcsl_string* name,
  * Looks to see if the storage file for record store
  * identified by <code>uidPath</code> exists
  *
- * @param suiteID ID of the MIDlet suite that owns the record store
+ * @param suiteId ID of the MIDlet suite that owns the record store
  * @param name name of the record store
  * @param extension extension number to add to the end of the file name
  *
  * @return true if the file exists, false if it does not.
  */
-int rmsdb_record_store_exists(const pcsl_string* suiteID,
-                      const pcsl_string* name,
-                      int extension) {
+int rmsdb_record_store_exists(SuiteIdType suiteId,
+                              const pcsl_string* name,
+                              int extension) {
     pcsl_string filename;
     int intStatus;
+    StorageIdType storageId;
+    MIDPError status;
 
-    if (MIDP_ERROR_NONE
-           != rmsdb_get_unique_id_path(suiteID, name, extension, &filename)) {
+    /*
+     * IMPL Note: here is assumed that the record store is located in the same
+     * storage as the midlet suite. This may not be true.
+     */
+    status = midp_suite_get_suite_storage(suiteId, &storageId);
+    if (status != ALL_OK) {
+        return 0;
+    }
+
+    if (MIDP_ERROR_NONE != rmsdb_get_unique_id_path(suiteId,
+            storageId, name, extension, &filename)) {
         return 0;
     }
     if (pcsl_string_is_null(&filename)) {
@@ -373,6 +391,7 @@ int rmsdb_record_store_exists(const pcsl_string* suiteID,
 
     intStatus = storage_file_exists(&filename);
     pcsl_string_free(&filename);
+
     return 0 != intStatus;
 }
 
@@ -383,37 +402,49 @@ int rmsdb_record_store_exists(const pcsl_string* suiteID,
  * @param ppszError pointer to a string that will hold an error message
  *        if there is a problem, or null if the function is
  *        successful (This function sets <tt>ppszError</tt>'s value.)
- * @param suiteID ID of the MIDlet suite that owns the record store
+ * @param suiteId ID of the MIDlet suite that owns the record store
  * @param name name of the record store
  * @param extension extension number to add to the end of the file name
  *
- * @return 1 if successful 
+ * @return 1 if successful
  *         0 if an IOException occurred
- *        -1 if file is locked by another isolate 
+ *        -1 if file is locked by another isolate
  *        -2 if out of memory error occurs
- * 
+ *
  */
 int
 rmsdb_record_store_delete(char** ppszError,
-                          const pcsl_string* suiteID_str,
+                          SuiteIdType suiteId,
                           const pcsl_string* name_str,
                           int extension) {
+    StorageIdType storageId;
+    MIDPError status;
     pcsl_string filename_str;
     lockFileList* searchedNodePtr = NULL;
+
     *ppszError = NULL;
 
     if ((extension == DB_EXTENSION_INDEX)&&(lockFileListPtr != NULL)) {
-        //linked list is already initialised for a db file
-        searchedNodePtr = findLockById(suiteID_str, name_str);
+        /* linked list is already initialised for a db file */
+        searchedNodePtr = findLockById(suiteId, name_str);
         if (searchedNodePtr != NULL) {
-            //File is in use by another isolate
+            /* File is in use by another isolate */
             *ppszError = (char *)FILE_LOCK_ERROR;
             return -1;
         }
     }
 
-    if (MIDP_ERROR_NONE
-        != rmsdb_get_unique_id_path(suiteID_str, name_str, extension, &filename_str)) {
+    /*
+     * IMPL Note: here is assumed that the record store is located in the same
+     * storage as the midlet suite. This may not be true.
+     */
+    status = midp_suite_get_suite_storage(suiteId, &storageId);
+    if (status != ALL_OK) {
+        return 0;
+    }
+
+    if (MIDP_ERROR_NONE != rmsdb_get_unique_id_path(suiteId, storageId,
+            name_str, extension, &filename_str)) {
         return -2;
     }
     storage_delete_file(ppszError, &filename_str);
@@ -428,13 +459,13 @@ rmsdb_record_store_delete(char** ppszError,
 }
 
 /**
- * Returns the number of record stores owned by the 
+ * Returns the number of record stores owned by the
  * MIDlet suite.
  *
  * @param root storage root a MIDlet suite
  *
  * @return number of record stores or OUT_OF_MEM_LEN
- */ 
+ */
 static int
 rmsdb_get_number_of_record_stores_int(const pcsl_string* root) {
     pcsl_string filename;
@@ -464,21 +495,32 @@ rmsdb_get_number_of_record_stores_int(const pcsl_string* root) {
 }
 
 /**
- * Returns the number of record stores owned by the 
+ * Returns the number of record stores owned by the
  * MIDlet suite.
  *
- * @param suiteID ID of the MIDlet suite that owns the record store
+ * @param suiteId ID of the MIDlet suite that owns the record store
  *
  * @return number of record stores or OUT_OF_MEM_LEN
  */
 int
-rmsdb_get_number_of_record_stores(const pcsl_string* suiteID) {
+rmsdb_get_number_of_record_stores(SuiteIdType suiteId) {
     pcsl_string root = PCSL_STRING_NULL;
     int numberOfStores;
+    MIDPError status;
+    StorageIdType storageId;
 
-    jint error = midp_suite_get_rms_filename(suiteID, -1, &PCSL_STRING_EMPTY,
-                                             &root);
-    if (error != MIDP_ERROR_NONE) {
+    /*
+     * IMPL Note: here is assumed that the record store is located in the same
+     * storage as the midlet suite. This may not be true.
+     */
+    status = midp_suite_get_suite_storage(suiteId, &storageId);
+    if (status != ALL_OK) {
+        return OUT_OF_MEM_LEN;
+    }
+
+    status = midp_suite_get_rms_filename(suiteId, storageId, -1,
+                                         &PCSL_STRING_EMPTY, &root);
+    if (status != ALL_OK) {
       return OUT_OF_MEM_LEN;
     }
 
@@ -494,16 +536,16 @@ rmsdb_get_number_of_record_stores(const pcsl_string* suiteID) {
 }
 
 /**
- * Returns an array of the names of record stores owned by the 
+ * Returns an array of the names of record stores owned by the
  * MIDlet suite.
  *
- * @param suiteID
+ * @param suiteId
  * @param ppNames pointer to pointer that will be filled in with names
  *
  * @return number of record store names or OUT_OF_MEM_LEN
  */
 int
-rmsdb_get_record_store_list(const pcsl_string* suiteID, pcsl_string* *const ppNames) {
+rmsdb_get_record_store_list(SuiteIdType suiteId, pcsl_string* *const ppNames) {
     int numberOfStores;
     pcsl_string root;
     pcsl_string* pStores;
@@ -511,17 +553,27 @@ rmsdb_get_record_store_list(const pcsl_string* suiteID, pcsl_string* *const ppNa
     pcsl_string ascii_name = PCSL_STRING_NULL_INITIALIZER;
     int i;
     void* handle = NULL;
-    jint error;
-    //pcsl_string_status rc;
+    MIDPError status;
     int f_errc;
     pcsl_string_status s_errc;
+    StorageIdType storageId;
     /* IMPL_NOTE: how can we get it statically? */
     const int dbext_len = pcsl_string_length(&DB_EXTENSION);
 
     *ppNames = NULL;
 
-    error = midp_suite_get_rms_filename(suiteID, -1, &PCSL_STRING_EMPTY, &root);
-    if (error != MIDP_ERROR_NONE) {
+    /*
+     * IMPL Note: here is assumed that the record store is located in the same
+     * storage as the midlet suite. This may not be true.
+     */
+    status = midp_suite_get_suite_storage(suiteId, &storageId);
+    if (status != ALL_OK) {
+        return OUT_OF_MEM_LEN;
+    }
+
+    status = midp_suite_get_rms_filename(suiteId, storageId, -1,
+                                         &PCSL_STRING_EMPTY, &root);
+    if (status != ALL_OK) {
         return OUT_OF_MEM_LEN;
     }
 
@@ -550,7 +602,6 @@ rmsdb_get_record_store_list(const pcsl_string* suiteID, pcsl_string* *const ppNa
     for(i=0,f_errc=0,s_errc=0;;) {
         f_errc = storage_get_next_file_in_iterator(&root, handle, &filename);
         if (0 != f_errc) {
-        //|| pcsl_string_is_null(&filename)) {
             f_errc = 0;
             break;
         }
@@ -600,9 +651,9 @@ rmsdb_get_record_store_list(const pcsl_string* suiteID, pcsl_string* *const ppNa
  * @param id ID of the suite
  *
  * @return false if out of memory else true
- */ 
+ */
 int
-rmsdb_remove_record_stores_for_suite(const pcsl_string* id) {
+rmsdb_remove_record_stores_for_suite(SuiteIdType id) {
     int numberOfNames;
     pcsl_string* pNames;
     int i;
@@ -650,19 +701,19 @@ rmsdb_remove_record_stores_for_suite(const pcsl_string* id) {
 
     return result;
 }
-    
+
 /**
  * Returns true if the suite has created at least one record store.
  *
  * @param id ID of the suite
  *
  * @return true if the suite has at least one record store
- */ 
+ */
 int
-rmsdb_suite_has_rms_data(const pcsl_string* id) {
+rmsdb_suite_has_rms_data(SuiteIdType id) {
     /*
      * This is a public API which can be called without the VM running
-     * so we need automatically init anything needed, to make the 
+     * so we need automatically init anything needed, to make the
      * caller's code less complex.
      *
      * Initialization is performed in steps so that we do use any
@@ -689,12 +740,8 @@ rmsdb_suite_has_rms_data(const pcsl_string* id) {
  *         record store in bytes.
  */
 long
-rmsdb_get_new_record_store_space_available(const pcsl_string* id) {
-    char* pszError;
-
-    (void)id;                                     /* Avoid compiler warnings */
-    
-    return midp_file_cache_available_space(&pszError, -1);
+rmsdb_get_new_record_store_space_available(SuiteIdType id) {
+    return rmsdb_get_record_store_space_available(-1, id);
 }
 
 
@@ -702,7 +749,7 @@ rmsdb_get_new_record_store_space_available(const pcsl_string* id) {
  * Open a native record store file.
  *
  * @param ppszError where to put an I/O error
- * @param suiteID ID of the MIDlet suite that owns the record store
+ * @param suiteId ID of the MIDlet suite that owns the record store
  * @param name name of the record store
  * @param extension extension number to add to the end of the file name
  *
@@ -712,41 +759,57 @@ rmsdb_get_new_record_store_space_available(const pcsl_string* id) {
  */
 
 int
-rmsdb_record_store_open(char** ppszError, const pcsl_string * suiteID_str,
-                const pcsl_string * name_str, int extension) {
+rmsdb_record_store_open(char** ppszError, SuiteIdType suiteId,
+                        const pcsl_string * name_str, int extension) {
+    StorageIdType storageId;
+    MIDPError status;
     pcsl_string filename_str;
     int handle;
     lockFileList* searchedNodePtr = NULL;
     int addflag = 0;
+
     *ppszError = NULL;
 
-    if ((extension == DB_EXTENSION_INDEX)&&(lockFileListPtr != NULL)) {
-        //linked list is already initialised for a db file
-        searchedNodePtr = findLockById(suiteID_str, name_str);
+    if ((extension == DB_EXTENSION_INDEX) && (lockFileListPtr != NULL)) {
+        /* linked list is already initialised for a db file */
+        searchedNodePtr = findLockById(suiteId, name_str);
         if (searchedNodePtr != NULL) {
-            //File is already opened by another isolate, return an error
+            /* File is already opened by another isolate, return an error */
             *ppszError = (char *)FILE_LOCK_ERROR;
             return -2;
-        } else { //remember to add a node
+        } else { /* remember to add a node */
             addflag = 1;
         }
     }
 
-    if(MIDP_ERROR_NONE != rmsdb_get_unique_id_path(suiteID_str, name_str, extension, &filename_str)) {
+    /*
+     * IMPL Note: here is assumed that the record store is located in the same
+     * storage as the midlet suite. This may not be true.
+     */
+    status = midp_suite_get_suite_storage(suiteId, &storageId);
+    if (status != ALL_OK) {
+        return 0;
+    }
+
+    if (MIDP_ERROR_NONE != rmsdb_get_unique_id_path(suiteId, storageId,
+            name_str, extension, &filename_str)) {
         return -1;
     }
-    handle = midp_file_cache_open(ppszError, &filename_str, OPEN_READ_WRITE);
+    handle = midp_file_cache_open(ppszError, storageId,
+                                  &filename_str, OPEN_READ_WRITE);
 
     pcsl_string_free(&filename_str);
     if (*ppszError != NULL) {
         return -1;
     }
 
-    //Add the node only if it's a db file AND lockFileListPtr is NULL or
-    //addflag is 1
+    /*
+     * Add the node only if it's a db file AND lockFileListPtr is NULL or
+     * addflag is 1
+     */
     if ((extension == DB_EXTENSION_INDEX)&&
         ( (lockFileListPtr == NULL) || (addflag == 1)) ) {
-            if (recordStoreCreateLock(suiteID_str, name_str, handle) != 0) {
+            if (recordStoreCreateLock(suiteId, name_str, handle) != 0) {
                 return -1;
             }
     }
@@ -769,12 +832,38 @@ rmsdb_record_store_open(char** ppszError, const pcsl_string * suiteID_str,
  *         record store in bytes.
  */
 long
-rmsdb_get_record_store_space_available(int handle, const pcsl_string* id) {
+rmsdb_get_record_store_space_available(int handle, SuiteIdType id) {
+    /* Storage may have more then 2Gb space available so use 64-bit type */
+    jlong availSpace;
+    long availSpaceUpTo2Gb;
     char* pszError;
+    StorageIdType storageId;
+    MIDPError status;
 
-    (void)id;                                     /* Avoid compiler warnings */
+    (void)id; /* Avoid compiler warnings */
 
-    return midp_file_cache_available_space(&pszError, handle);
+    /*
+     * IMPL_NOTE: here we introduce a limitation that the suite's RMS
+     * must be located at the same storage as the midlet suite.
+     * This is done because the public RecordStore API doesn't support
+     * a storageId parameter.
+     * There is a plan to get rid of such limitation by introducing a
+     * function that will return a storage ID by the suite ID and RMS name.
+     */
+    status = midp_suite_get_suite_storage(id, &storageId);
+    if (status != ALL_OK) {
+        return 0; /* Error: report that no space is available */
+    }
+
+    availSpace = midp_file_cache_available_space(&pszError, handle, storageId);
+
+    /*
+     * Public RecordStore API uses Java int type for the available space
+     * so here we trim the real space to 2Gb limit.
+     */
+    availSpaceUpTo2Gb = (availSpace <= LONG_MAX) ? availSpace : LONG_MAX;
+
+    return availSpaceUpTo2Gb;
 }
 
 /**
@@ -787,13 +876,13 @@ rmsdb_get_record_store_space_available(int handle, const pcsl_string* id) {
  *
  * @param ppszError where to put an I/O error
  * @param handle handle to record store storage
- * @param pos position within the file to move the current_pos 
+ * @param pos position within the file to move the current_pos
  *        pointer to.
  */
 void recordStoreSetPosition(char** ppszError, int handle, int pos) {
     midp_file_cache_seek(ppszError, handle, pos);
 }
-  
+
 /**
  * Write to an open file in storage. Will write all of the bytes in the
  * buffer or pass back an error. Does not block.
@@ -810,7 +899,7 @@ void
 recordStoreWrite(char** ppszError, int handle, char* buffer, long length) {
     midp_file_cache_write(ppszError, handle, buffer, length);
 }
-    
+
 /**
  * Commit pending writes
  *
@@ -844,7 +933,7 @@ long
 recordStoreRead(char** ppszError, int handle, char* buffer, long length) {
     return midp_file_cache_read(ppszError, handle, buffer, length);
 }
-  
+
 /**
  * Close a storage object opened by rmsdb_record_store_open. Does no block.
  *
@@ -885,7 +974,7 @@ recordStoreClose(char** ppszError, int handle) {
  * @param size new size of the file
  */
 void
-recordStoreTruncate(char** ppszError,  int handle, long size) {
+recordStoreTruncate(char** ppszError, int handle, long size) {
     midp_file_cache_truncate(ppszError, handle, size);
 }
 
@@ -918,12 +1007,12 @@ recordStoreSizeOf(char** ppszError, int handle) {
 /**
  * Gets the amount of RMS storage on the device that this suite is using.
  *
- * @param suiteID  ID of the suite
+ * @param suiteId  ID of the suite
  *
  * @return number of bytes of storage the suite is using or OUT_OF_MEM_LEN
  */
 long
-rmsdb_get_rms_storage_size(const pcsl_string* suiteID) {
+rmsdb_get_rms_storage_size(SuiteIdType suiteId) {
     int numberOfNames;
     pcsl_string* pNames;
     int i;
@@ -932,7 +1021,7 @@ rmsdb_get_rms_storage_size(const pcsl_string* suiteID) {
     char* pszError;
     char* pszTemp;
 
-    numberOfNames = rmsdb_get_record_store_list(suiteID, &pNames);
+    numberOfNames = rmsdb_get_record_store_list(suiteId, &pNames);
     if (numberOfNames == OUT_OF_MEM_LEN) {
         return OUT_OF_MEM_LEN;
     }
@@ -942,8 +1031,8 @@ rmsdb_get_rms_storage_size(const pcsl_string* suiteID) {
     }
 
     for (i = 0; i < numberOfNames; i++) {
-        handle = rmsdb_record_store_open(&pszError, suiteID, &pNames[i],
-                                 DB_EXTENSION_INDEX);
+        handle = rmsdb_record_store_open(&pszError, suiteId, &pNames[i],
+                                         DB_EXTENSION_INDEX);
         if (pszError != NULL) {
             recordStoreFreeError(pszError);
             break;
@@ -965,23 +1054,24 @@ rmsdb_get_rms_storage_size(const pcsl_string* suiteID) {
     }
 
     free_pcsl_string_list(pNames, numberOfNames);
-    
+
     return used;
 }
 
 /*
  * Insert a new node to the front of the linked list
  *
- * @param suiteID : ID of the suite
+ * @param suiteId : ID of the suite
  * @param name : Name of the record store
  * @param handle : Handle of the opened file
  *
  * @return 0 if node is successfully inserted
  *  return  OUT_OF_MEM_LEN if memory allocation fails
- *      
+ *
  */
 static int
-recordStoreCreateLock(const pcsl_string * suiteID_str, const pcsl_string * name_str, int handle) {
+recordStoreCreateLock(SuiteIdType suiteId, const pcsl_string * name_str,
+                      int handle) {
     lockFileList* newNodePtr;
 
     newNodePtr = (lockFileList *)midpMalloc(sizeof(lockFileList));
@@ -989,17 +1079,11 @@ recordStoreCreateLock(const pcsl_string * suiteID_str, const pcsl_string * name_
         return OUT_OF_MEM_LEN;
     }
 
-    /*mg*/ /*IMPL_NOTE: check for error codes instead of null strings*/
-    pcsl_string_dup(suiteID_str, &newNodePtr->suiteID);
-    if (pcsl_string_is_null(&newNodePtr->suiteID)) {
-        midpFree(newNodePtr);
-        return OUT_OF_MEM_LEN;
-    }
+    newNodePtr->suiteId = suiteId;
 
-    /*mg*/ /*IMPL_NOTE: check for error codes instead of null strings*/
+    /*IMPL_NOTE: check for error codes instead of null strings*/
     pcsl_string_dup(name_str, &newNodePtr->recordStoreName);
     if (pcsl_string_is_null(&newNodePtr->recordStoreName)) {
-        pcsl_string_free(&newNodePtr->suiteID);
         midpFree(newNodePtr);
         return OUT_OF_MEM_LEN;
     }
@@ -1023,25 +1107,26 @@ recordStoreCreateLock(const pcsl_string * suiteID_str, const pcsl_string * name_
  * @param handle : handle of the file
  *
  */
-static void 
+static void
 recordStoreDeleteLock(int handle) {
     lockFileList* previousNodePtr;
     lockFileList* currentNodePtr = NULL;
 
-    //Very important to check that lockFileListPtr is NOT null as this function
-    //is invoked two times : once during close of a db file and again for
-    //deleting index file. The linked list node either does not exist or
-    //lockFileListPtr pointer is NULL during second call.
+    /*
+     * Very important to check that lockFileListPtr is NOT null as this function
+     * is invoked two times : once during close of a db file and again for
+     * deleting index file. The linked list node either does not exist or
+     * lockFileListPtr pointer is NULL during second call.
+     */
     if (lockFileListPtr == NULL) {
         return;
     }
 
-    //If it's first node, delete it and re-assign head pointer
+    /* If it's first node, delete it and re-assign head pointer */
     if (lockFileListPtr->handle == handle) {
         currentNodePtr = lockFileListPtr;
         lockFileListPtr = currentNodePtr->next;
         pcsl_string_free(&currentNodePtr->recordStoreName);
-        pcsl_string_free(&currentNodePtr->suiteID);
         midpFree(currentNodePtr);
         return;
     }
@@ -1054,11 +1139,10 @@ recordStoreDeleteLock(int handle) {
             }
     }
 
-    //Current node needs to be deleted
+    /* Current node needs to be deleted */
     if (currentNodePtr != NULL) {
         previousNodePtr->next = currentNodePtr->next;
         pcsl_string_free(&currentNodePtr->recordStoreName);
-        pcsl_string_free(&currentNodePtr->suiteID);
         midpFree(currentNodePtr);
     }
 }
@@ -1066,28 +1150,25 @@ recordStoreDeleteLock(int handle) {
 /*
  * Search for the node to the linked list
  *
- * @param suiteID : ID of the suite
+ * @param suiteId : ID of the suite
  * @param name : Name of the record store
  *
- * @return the searched node pointer if match exist for suiteID and
+ * @return the searched node pointer if match exist for suiteId and
  * recordStoreName
  *  return NULL if node does not exist
- *      
+ *
  */
-
 static lockFileList *
-findLockById(const pcsl_string * suiteID_str, const pcsl_string * name_str) {
+findLockById(SuiteIdType suiteId, const pcsl_string * name_str) {
     lockFileList* currentNodePtr;
 
     for (currentNodePtr = lockFileListPtr; currentNodePtr != NULL;
          currentNodePtr = currentNodePtr->next) {
-        if (pcsl_string_equals(&currentNodePtr->suiteID, suiteID_str)
-         && pcsl_string_equals(&currentNodePtr->recordStoreName, name_str)) {
+        if (currentNodePtr->suiteId == suiteId &&
+            pcsl_string_equals(&currentNodePtr->recordStoreName, name_str)) {
             return currentNodePtr;
         }
     }
 
     return NULL;
 }
-
-

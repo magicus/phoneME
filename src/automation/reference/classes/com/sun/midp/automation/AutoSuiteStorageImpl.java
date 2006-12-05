@@ -1,26 +1,27 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.automation;
@@ -29,6 +30,7 @@ import java.io.*;
 import java.util.*;
 import com.sun.midp.midletsuite.*;
 import com.sun.midp.installer.*;
+import com.sun.midp.configurator.Constants;
 
 /**
  * AutoSuiteStorage implementation
@@ -39,20 +41,19 @@ final class AutoSuiteStorageImpl extends AutoSuiteStorage {
 
     /** Suites installer */
     private Installer installer;
-    
+
     /** Vector containing decriptors of installed suites */
     private Vector installedSuites;
 
     /** The one and only class instance */
     private static AutoSuiteStorageImpl instance = null;
-    
-    
+
+
     /**
      * Private constructor: this class is singleton
      */
     private AutoSuiteStorageImpl() {
         storage = MIDletSuiteStorage.getMIDletSuiteStorage();
-        installer = AutoGetInstallerTunnel.getInstaller();
         installedSuites = new Vector();
     }
 
@@ -60,11 +61,11 @@ final class AutoSuiteStorageImpl extends AutoSuiteStorage {
      * Updates vector of installed suites
      */
     private void updateInstalledSuites() {
-        String[] suiteIDs; 
+        int[] suiteIDs;
 
         suiteIDs = storage.getListOfSuites();
         installedSuites = new Vector(suiteIDs.length);
-        
+
         for (int i = 0; i < suiteIDs.length; i++) {
             AutoSuiteDescriptor suite;
             try {
@@ -90,8 +91,8 @@ final class AutoSuiteStorageImpl extends AutoSuiteStorage {
 
         return instance;
     }
-    
-    
+
+
     /**
      * AutoSuiteStorage implementation
      */
@@ -100,21 +101,23 @@ final class AutoSuiteStorageImpl extends AutoSuiteStorage {
      * Installs suite from specified location.
      *
      * @param location URI pointing to suite jad/jar
-     * 
+     *
      * @return AutoSuiteDescriptor representing installed suit
      */
-    public AutoSuiteDescriptor installSuite(String location) 
-        throws IOException, MIDletSuiteLockedException, 
+    public AutoSuiteDescriptor installSuite(String location)
+        throws IOException, MIDletSuiteLockedException,
                MIDletSuiteCorruptedException, InvalidJadException,
                SecurityException {
 
         AutoSuiteDescriptor suite = null;
-        String suiteID;
+        int suiteID;
 
-        suiteID = installer.installJad(location, true, true, null);
-        suite = AutoSuiteDescriptorImpl.getInstanceBySuiteID(suiteID, 
+        installer = AutoGetInstallerTunnel.getInstaller(location);
+        suiteID = installer.installJad(location, Constants.INTERNAL_STORAGE_ID,
+            true, true, null);
+        suite = AutoSuiteDescriptorImpl.getInstanceBySuiteID(suiteID,
                 storage);
-        
+
         return suite;
     }
 
@@ -123,17 +126,17 @@ final class AutoSuiteStorageImpl extends AutoSuiteStorage {
      *
      * @param suite suite to uninstall
      */
-    public void uninstallSuite(AutoSuiteDescriptor suite) 
+    public void uninstallSuite(AutoSuiteDescriptor suite)
         throws MIDletSuiteLockedException, IllegalArgumentException {
-            
+
         AutoSuiteDescriptorImpl suiteImpl = (AutoSuiteDescriptorImpl)suite;
         suiteImpl.guaranteeSuiteValid("uninstallSuite");
 
         if (suiteImpl.isExternalSuite()) {
-            String suiteID = suiteImpl.getSuiteID();
+            int suiteID = suiteImpl.getSuiteID();
             storage.remove(suiteID);
         }
-        
+
         /** uninstalling suite makes it invalid */
         suiteImpl.invalidate();
     }
@@ -145,7 +148,7 @@ final class AutoSuiteStorageImpl extends AutoSuiteStorage {
      */
     public Vector getInstalledSuites() {
         updateInstalledSuites();
-        
+
         /** copy vector of installed suites into new vector */
         int totalSuites = installedSuites.size();
         Vector suites = new Vector(totalSuites);

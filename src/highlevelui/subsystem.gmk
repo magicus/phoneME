@@ -1,4 +1,5 @@
 #
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -100,6 +101,9 @@ else
     ifeq ($(USE_NATIVE_PTI), true)
        include $(SUBSYSTEM_HIGHUI_DIR)/nativepti_port/lib.gmk
     endif
+
+    # nim -- Native Input Mode support
+    include $(SUBSYSTEM_HIGHUI_DIR)/nim_port/lib.gmk
 endif
 
 #####################################################################
@@ -120,6 +124,14 @@ else
         else
              ifeq ($(PLATFORM), win32)
                   include $(SUBSYSTEM_HIGHUI_DIR)/win32_application/lib.gmk
+             else
+                  ifeq ($(PLATFORM), wince)
+                      include $(SUBSYSTEM_HIGHUI_DIR)/wince_application/lib.gmk
+                  else
+                       ifeq ($(PLATFORM), javacall)
+                            include $(SUBSYSTEM_HIGHUI_DIR)/javacall_application/lib.gmk
+                       endif                  
+                  endif             
              endif
         endif
     endif
@@ -205,6 +217,9 @@ SUBSYSTEM_HIGHUI_JAVA_FILES += $(SUBSYSTEM_PTI_JAVA_FILES)
 SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES += $(SUBSYSTEM_PTI_I3TEST_JAVA_FILES)
 SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_PTI_NATIVE_FILES)
 SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_PTI_EXTRA_INCLUDES)
+
+SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_NIM_NATIVE_FILES)
+SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_NIM_EXTRA_INCLUDES)
 
 endif
 

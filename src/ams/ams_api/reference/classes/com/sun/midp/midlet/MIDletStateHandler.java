@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -36,7 +37,7 @@ import com.sun.midp.lcdui.DisplayContainer;
 import com.sun.midp.lcdui.DisplayEventHandler;
 
 import com.sun.midp.main.MIDletControllerEventProducer;
-import com.sun.midp.main.MIDletSuiteLoader;
+import com.sun.midp.main.MIDletSuiteUtils;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
@@ -45,15 +46,16 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
 import com.sun.midp.content.CHManager;
+import com.sun.midp.suspend.SuspendSystem;
 
 /**
  * The MIDletStateHandler starts and controls MIDlets through the lifecycle
  * states.
- * MIDlets are created using its no-arg Constructor. Once created 
+ * MIDlets are created using its no-arg Constructor. Once created
  * a MIDlet is sequenced through the <code>ACTIVE</code>,
  * <code>PAUSED</code>, and <code>DESTROYED</code> states.
  * <p>
- * The MIDletStateHandler is a singleton for the suite being run and 
+ * The MIDletStateHandler is a singleton for the suite being run and
  * is retrieved with getMIDletStateHandler(). This allow the
  * MIDletStateHandler to be the anchor of trust internally for the MIDP API,
  * restricted methods can obtain the MIDletStateHandler for a MIDlet suite
@@ -68,11 +70,11 @@ import com.sun.midp.content.CHManager;
  * MIDletTunnel subclass class allow the MIDletStateHandler to hold the state
  * of the
  * MIDlet and to invoke methods on it.  The MIDletState instance is created
- * by the MIDlet when it is constructed. 
+ * by the MIDlet when it is constructed.
  * <p>
- * This implementation of the MIDletStateHandler introduces 
+ * This implementation of the MIDletStateHandler introduces
  * extra internal MIDlet states to allow processing of MIDlet
- * requested state changes in the control thread and serialized with 
+ * requested state changes in the control thread and serialized with
  * other state changes.  The additional states are:
  * <UL>
  * <LI> <code>ACTIVE_PENDING</code> - The MIDlet is still PAUSED but
@@ -108,9 +110,9 @@ public class MIDletStateHandler {
     /** array of MIDlets. */
     private MIDletPeer[] midlets;
     /** current number of MIDlets [0..n-1]. */
-    private int nmidlets;       
+    private int nmidlets;
     /**  next index to be scanned by selectForeground. */
-    private int scanIndex;      
+    private int scanIndex;
     /** display manager. */
     private DisplayEventHandler displayEventHandler;
     /** Cached reference to Active Displays Container. */
@@ -122,13 +124,13 @@ public class MIDletStateHandler {
     private static MIDletStateHandler stateHandler;
     /** This class has a different security domain than the application. */
     private static SecurityToken classSecurityToken;
-    
+
     /** Serializes the creation of MIDlets. */
     private static Object createMIDletLock = new Object();
 
     /** New MIDlet peer waiting for the next MIDlet created to claim it. */
     private static MIDletPeer newMidletPeer;
-    
+
 
     /**
      * Construct a new MIDletStateHandler object.
@@ -155,7 +157,7 @@ public class MIDletStateHandler {
     }
 
     /**
-     * Gets the MIDletStateHandler that manages the lifecycle states of 
+     * Gets the MIDletStateHandler that manages the lifecycle states of
      * MIDlets running in an Isolate.
      * <p>
      * If the instance of the MIDletStateHandler has already been created
@@ -200,7 +202,7 @@ public class MIDletStateHandler {
         DisplayContainer theDisplayContainer) {
 
         token.checkIfPermissionAllowed(Permissions.MIDP);
-        
+
         displayEventHandler = theDisplayEventHandler;
         midletControllerEventProducer = theMIDletControllerEventProducer;
         displayContainer = theDisplayContainer;
@@ -216,9 +218,9 @@ public class MIDletStateHandler {
      *   AMS permission.
      * @exception ClassNotFoundException is thrown, if the MIDlet main class is
      * not found
-     * @exception InstantiationException is thrown, if the MIDlet can not be 
+     * @exception InstantiationException is thrown, if the MIDlet can not be
      * created
-     * @exception IllegalAccessException is thrown, if the MIDlet is not 
+     * @exception IllegalAccessException is thrown, if the MIDlet is not
      * permitted to perform a specific operation
      */
     public void startMIDlet(String classname, String displayName) throws
@@ -238,9 +240,9 @@ public class MIDletStateHandler {
      *   AMS permission.
      * @exception ClassNotFoundException is thrown, if the MIDlet main class is
      * not found
-     * @exception InstantiationException is thrown, if the MIDlet can not be 
+     * @exception InstantiationException is thrown, if the MIDlet can not be
      * created
-     * @exception IllegalAccessException is thrown, if the MIDlet is not 
+     * @exception IllegalAccessException is thrown, if the MIDlet is not
      * permitted to perform a specific operation
      */
     public void startMIDlet(int externalAppId, String classname,
@@ -263,9 +265,9 @@ public class MIDletStateHandler {
      *   AMS permission.
      * @exception ClassNotFoundException is thrown, if the MIDlet main class is
      * not found
-     * @exception InstantiationException is thrown, if the MIDlet can not be 
+     * @exception InstantiationException is thrown, if the MIDlet can not be
      * created
-     * @exception IllegalAccessException is thrown, if the MIDlet is not 
+     * @exception IllegalAccessException is thrown, if the MIDlet is not
      * permitted to perform a specific operation
      */
     public void startMIDlet(SecurityToken token, String classname,
@@ -287,9 +289,9 @@ public class MIDletStateHandler {
      *   AMS permission.
      * @exception ClassNotFoundException is thrown, if the MIDlet main class is
      * not found
-     * @exception InstantiationException is thrown, if the MIDlet can not be 
+     * @exception InstantiationException is thrown, if the MIDlet can not be
      * created
-     * @exception IllegalAccessException is thrown, if the MIDlet is not 
+     * @exception IllegalAccessException is thrown, if the MIDlet is not
      * permitted to perform a specific operation
      */
     public void startMIDlet(SecurityToken token, int externalAppId,
@@ -323,7 +325,7 @@ public class MIDletStateHandler {
      */
     private void register(MIDlet midlet) {
         synchronized (this) {
-            MIDletPeer state = 
+            MIDletPeer state =
                 MIDletPeer.getMIDletPeer(classSecurityToken, midlet);
 
             /*
@@ -379,7 +381,7 @@ public class MIDletStateHandler {
             vmEndStartUp();
         }
     }
-    
+
     /**
      * Provides a object with a mechanism to retrieve
      * <code>MIDletSuite</code> being run.
@@ -406,9 +408,9 @@ public class MIDletStateHandler {
      *
      * @exception ClassNotFoundException is thrown, if the MIDlet main class is
      * not found
-     * @exception InstantiationException is thrown, if the MIDlet can not be 
+     * @exception InstantiationException is thrown, if the MIDlet can not be
      * created
-     * @exception IllegalAccessException is thrown, if the MIDlet is not 
+     * @exception IllegalAccessException is thrown, if the MIDlet is not
      * permitted to perform a specific operation
      */
     public void startSuite(MIDletSuite aMidletSuite, int externalAppId,
@@ -419,7 +421,7 @@ public class MIDletStateHandler {
         if (midletSuite != null) {
             throw new RuntimeException(
                 "There is already a MIDlet Suite running.");
-        
+
         }
 
         midletSuite = aMidletSuite;
@@ -436,15 +438,15 @@ public class MIDletStateHandler {
 
                 /*
                  * A MIDlet can change the MIDlet concurrently.
-                 * the MIDlet state handler this is used to 
-                 * synchronize these changes. However any calls to outside of 
-                 * this package should NOT be done holding 
+                 * the MIDlet state handler this is used to
+                 * synchronize these changes. However any calls to outside of
+                 * this package should NOT be done holding
                  * "this".
                  * For this reason there are 2 phases each with a switch
                  * statement to process a state.
                  *
                  * The state is obtained and changed before the work is
-                 * done so that when "this" is released to 
+                 * done so that when "this" is released to
                  * perform external calls for that state, any state change done
                  * by the MIDlet concurrently are not lost.
                  */
@@ -472,7 +474,7 @@ public class MIDletStateHandler {
                         } catch (InterruptedException e) {
 
                             if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                                Logging.report(Logging.WARNING, 
+                                Logging.report(Logging.WARNING,
                                                LogChannels.LC_AMS,
                                "InterruptedException during mutex wait");
                             }
@@ -497,7 +499,7 @@ public class MIDletStateHandler {
                     case MIDletPeer.DESTROYED:
                         unregister(curr);
                         break;
-                        
+
                     default:
                         throw new Error("Illegal MIDletPeer state " +
                                     curr.getState());
@@ -508,6 +510,7 @@ public class MIDletStateHandler {
                 switch (state) {
                 case MIDletPeer.ACTIVE_PENDING:
                     try {
+                        SuspendSystem.getInstance(classSecurityToken).resume();
                         curr.startApp();
                     } catch (Throwable ex) {
                         if (Logging.TRACE_ENABLED) {
@@ -523,7 +526,7 @@ public class MIDletStateHandler {
                      */
                     midletControllerEventProducer.sendMIDletActiveNotifyEvent(
                         curr.displayId);
-                    
+
                     break;
 
                 case MIDletPeer.PAUSE_PENDING:
@@ -537,12 +540,20 @@ public class MIDletStateHandler {
                         curr.setState(MIDletPeer.DESTROY_PENDING);
                         break;
                     }
-                    
+
                     /*
                      * The actual state of the MIDlet is already paused.
                      * But any notifications done after pauseApp() call.
                      */
                     midletControllerEventProducer.sendMIDletPauseNotifyEvent(
+                        curr.displayId);
+
+                    /*
+                     * IMPL_NOTE: it is now implied that MIDlet is always requested
+                     * to be paused together with all the suspendable resources.
+                     */
+                    SuspendSystem.getInstance(classSecurityToken).suspend();
+                    midletControllerEventProducer.sendMIDletRsPauseNotifyEvent(
                         curr.displayId);
                     break;
 
@@ -554,7 +565,7 @@ public class MIDletStateHandler {
                         curr.destroyApp(true);
                     } catch (MIDletStateChangeException ex) {
                         if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                            Logging.report(Logging.WARNING, 
+                            Logging.report(Logging.WARNING,
                                            LogChannels.LC_AMS,
                             "destroyApp  threw a MIDletStateChangeException");
                         }
@@ -599,7 +610,7 @@ public class MIDletStateHandler {
 
     /**
      * Checks if the named <code>MIDlet</code> has already been instantiated.
-     * @param name class name of <code>MIDlet</code> to test if 
+     * @param name class name of <code>MIDlet</code> to test if
      *             currently run
      * @return <code>true</code> if an instance of the MIDlet is already
      *     running
@@ -694,7 +705,7 @@ public class MIDletStateHandler {
     /**
      * Finds a MIDlet in the list by it class.
      * Only a single MIDlet of a class can be active at
-     * a time. 
+     * a time.
      * Must be called synchronized on "this".
      * @param m the MIDlet to find
      * @return the index in the array of MIDlets.
@@ -712,7 +723,7 @@ public class MIDletStateHandler {
     }
 
     /**
-     * Notifies MIDlet Controller in AMS Isolate that new midlet 
+     * Notifies MIDlet Controller in AMS Isolate that new midlet
      * has been created and (optinally) it wants to go to foreground.
      *
      * Shall be called by MIDletStateHandler or its MIDletPeers.
@@ -724,7 +735,7 @@ public class MIDletStateHandler {
      * @param displayName Name to show the user
      */
     private void notifyMidletCreated(MIDletPeer m, int externalAppId,
-            String suiteId, String className, String displayName) {
+            int suiteId, String className, String displayName) {
 
         midletControllerEventProducer.sendMIDletCreateNotifyEvent(
             externalAppId, m.displayId, suiteId, className, displayName);
@@ -732,7 +743,7 @@ public class MIDletStateHandler {
 
     /**
      * Removes the display of the given MIDlet from the list of active
-     * displays and aotifies Midlet Controller in AMS Isolate about midlet 
+     * displays and aotifies Midlet Controller in AMS Isolate about midlet
      * destruction.
      *
      * Shall be called by MIDletStateHandler or its MIDletPeers.
@@ -745,7 +756,7 @@ public class MIDletStateHandler {
         midletControllerEventProducer.sendMIDletDestroyNotifyEvent(
             m.displayId);
     }
-    
+
     /**
      * Creates a MIDlet.
      *
@@ -756,9 +767,9 @@ public class MIDletStateHandler {
      *
      * @exception ClassNotFoundException if the MIDlet class is
      * not found
-     * @exception InstantiationException if the MIDlet cannot be 
+     * @exception InstantiationException if the MIDlet cannot be
      * created
-     * @exception IllegalAccessException if the MIDlet is not 
+     * @exception IllegalAccessException if the MIDlet is not
      * permitted to perform a specific operation
      */
     private MIDlet createMIDlet(int externalAppId, String classname) throws
@@ -861,8 +872,8 @@ public class MIDletStateHandler {
      * isolate to allow VM to adjust internal parameters for better performance
      */
     static void vmBeginStartUp() {
-        MIDletSuiteLoader.vmBeginStartUp(
-            classSecurityToken, MIDletSuiteLoader.getIsolateId());
+        MIDletSuiteUtils.vmBeginStartUp(
+            classSecurityToken, MIDletSuiteUtils.getIsolateId());
     }
 
     /**
@@ -871,7 +882,7 @@ public class MIDletStateHandler {
      * startup time for better performance
      */
     static void vmEndStartUp() {
-        MIDletSuiteLoader.vmEndStartUp(
-            classSecurityToken, MIDletSuiteLoader.getIsolateId());
+        MIDletSuiteUtils.vmEndStartUp(
+            classSecurityToken, MIDletSuiteUtils.getIsolateId());
     }
 }

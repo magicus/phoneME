@@ -1,5 +1,5 @@
 #
-# @(#)Makefile	1.2 06/02/27 00:56:59
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

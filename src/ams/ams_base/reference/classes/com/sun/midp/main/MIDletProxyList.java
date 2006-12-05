@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -28,17 +29,17 @@ package com.sun.midp.main;
 import java.util.*;
 
 import com.sun.midp.events.EventQueue;
-import com.sun.midp.events.NativeEvent;
 
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+import com.sun.midp.security.SecurityInitializer;
 
-import com.sun.midp.log.Logging;
-import com.sun.midp.log.LogChannels;
-
+import com.sun.midp.suspend.SuspendTimer;
+import com.sun.midp.suspend.SuspendSystem;
 
 /**
  * Manages a list of MIDlet proxies, each proxy representing a running MIDlet
@@ -57,7 +58,7 @@ import com.sun.midp.log.LogChannels;
  *
  */
 public class MIDletProxyList implements MIDletControllerEventConsumer {
-   
+
     /** MIDletProxy added constant. */
     static final int PROXY_ADDED = 0;
 
@@ -86,21 +87,31 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     private boolean allPaused; // = false
 
     /**
+     * Class registered in SecurityInitializer that identifies this
+     * implementation permissions for accessing restricted API's
+     */
+    private static class SecurityTrusted implements ImplicitlyTrustedClass {}
+
+    /** Security token for provileged access to restricted API's. */
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
+
+    /**
      * Called by the MIDlet suite loader in AMS Isolate to intialize the
      * midletProxy list. Shall be called only by MIDletSuiteLoader's main().
      *
-     * @param theMIDletProxyList proxy list instance to be used 
-     *                           as MIDlet controller container 
+     * @param theMIDletProxyList proxy list instance to be used
+     *                           as MIDlet controller container
      *
      * Should only be called in the AMS Isolate.
      */
     static void initClass(MIDletProxyList theMIDletProxyList) {
 
         /*
-        TBD: the code below is commented until 
+        TBD: the code below is commented until
         the issue with non-static Logging.assertTrue
         will be fixed !
-        
+
         Logging.assertTrue(theMIDletProxyList != null,
                            "theMIDletProxyList must be non-null");
         Logging.assertTrue(midletProxyList == null,
@@ -146,7 +157,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     }
 
     /**
-     * Returns shutdown status 
+     * Returns shutdown status
      *
      * @return true if shutdown is in progress, else false
      */
@@ -154,18 +165,18 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
         return shutdownFlag;
     }
 
-    /** 
-     * Package private constructor. 
+    /**
+     * Package private constructor.
      * Shall be called from MIDletSuiteLoader's main()
      *
      * @param  eventQueue reference to the event queue
      */
     MIDletProxyList(EventQueue eventQueue) {
-        
+
         displayController = new DisplayController(this);
-        
+
         /* register event listener for events processed by MIDletProxyList */
-        new MIDletControllerEventListener(eventQueue, 
+        new MIDletControllerEventListener(eventQueue,
             (MIDletControllerEventConsumer)this);
     }
 
@@ -289,22 +300,22 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     }
 
     /**
-     * Find the MIDletProxy that has matching suiteID and classname.
+     * Find the MIDletProxy that has matching suiteId and classname.
      *
-     * @param suiteID the suiteID of the target application
+     * @param suiteId the suiteId of the target application
      * @param classname classname of the MIDlet
      *
      * @return a reference to the matching MIDletProxy or null if no match
      */
-    public MIDletProxy findMIDletProxy(String suiteID, String classname) {
+    public MIDletProxy findMIDletProxy(int suiteId, String classname) {
         synchronized (midletProxies) {
             for (int i = midletProxies.size() - 1; i >= 0; i--) {
                 MIDletProxy current = (MIDletProxy)midletProxies.elementAt(i);
 
-                if (current.getSuiteId().equals(suiteID) &&
-                   current.getClassName().equals(classname)) {
-                   return current;
-               }
+                if (current.getSuiteId() == suiteId &&
+                        current.getClassName().equals(classname)) {
+                    return current;
+                }
             }
         }
 
@@ -348,10 +359,10 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
         int midletExternalAppId,
         int midletIsolateId,
         int midletDisplayId,
-        String midletSuiteId,
-        String midletClassName, 
+        int midletSuiteId,
+        String midletClassName,
         String midletDisplayName) {
-            
+
         MIDletProxy midletProxy = findMIDletProxy(midletIsolateId,
                                                   midletDisplayId);
         if (midletProxy != null) {
@@ -372,7 +383,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
             midletIsolateId,
             midletDisplayId,
             midletSuiteId,
-            midletClassName, 
+            midletClassName,
             midletDisplayName,
             MIDletProxy.MIDLET_PAUSED);
 
@@ -395,7 +406,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     public void handleMIDletActiveNotifyEvent(
         int midletIsolateId,
         int midletDisplayId) {
-            
+
         MIDletProxy midletProxy = findMIDletProxy(midletIsolateId,
                                                   midletDisplayId);
         if (midletProxy == null) {
@@ -433,7 +444,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
         // MIDletProxy midletProxy) {
         int midletIsolateId,
         int midletDisplayId) {
-            
+
         MIDletProxy midletProxy = findMIDletProxy(midletIsolateId,
                                                   midletDisplayId);
         if (midletProxy == null) {
@@ -465,7 +476,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
         // MIDletProxy midletProxy) {
         int midletIsolateId,
         int midletDisplayId) {
-            
+
         MIDletProxy midletProxy = findMIDletProxy(midletIsolateId,
                                                   midletDisplayId);
         if (midletProxy == null) {
@@ -481,6 +492,30 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     }
 
     /**
+     * Handles notification event of MIDlet resources pause.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midletIsolateId isolate ID of the sending MIDlet
+     * @param midletDisplayId ID of the sending Display
+     */
+    public void handleMIDletRsPauseNotifyEvent(
+            int midletIsolateId,
+            int midletDisplayId) {
+        MIDletProxy midletProxy = findMIDletProxy(midletIsolateId,
+                                                  midletDisplayId);
+        if (midletProxy == null) {
+            /*
+             * There is nothing we can do for the other events
+             * if a proxy was not found.
+             */
+            return;
+        }
+
+        notifyListenersOfProxyUpdate(midletProxy,
+                MIDletProxyListListener.RESOURCES_SUSPENDED);
+    }
+
+    /**
      * Process a MIDlet destroy request event.
      * MIDletControllerEventConsumer I/F method.
      *
@@ -493,7 +528,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
         // MIDletProxy midletProxy) {
         int midletIsolateId,
         int midletDisplayId) {
-            
+
         MIDletProxy midletProxy = findMIDletProxy(midletIsolateId,
                                                   midletDisplayId);
         if (midletProxy == null) {
@@ -526,27 +561,49 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     /**
      * Process a PAUSE_ALL_EVENT.
      * MIDletControllerEventConsumer I/F method.
-     *
      */
     public void handlePauseAllEvent() {
+        SuspendTimer.start(this);
+
         if (!allPaused) {
             synchronized (midletProxies) {
                 MIDletProxy current;
 
                 for (int i = midletProxies.size() - 1; i >= 0; i--) {
                     current = (MIDletProxy)midletProxies.elementAt(i);
-
+                    SuspendSystem.getInstance(classSecurityToken).
+                            addSuspendDependency(current);
                     current.pauseMidlet();
                 }
             }
-         }
+        }
+
+        SuspendSystem.getInstance(classSecurityToken).suspend();
+
+    }
+
+    /**
+     * Finalizes PAUSE_ALL_EVENT processing after timeout for
+     * pausing MIDlets expires.
+     */
+    public void terminatePauseAll() {
+        synchronized (midletProxies) {
+            MIDletProxy current;
+
+            for (int i = midletProxies.size() - 1; i >= 0; i--) {
+                current = (MIDletProxy)midletProxies.elementAt(i);
+
+                current.terminateNotPausedMidlet();
+            }
+
+        }
     }
 
     /**
      * Process a SHUTDOWN_ALL_EVENT.
      * MIDletControllerEventConsumer I/F method.
      *
-     * It simply calls "shutdown()". In future it shall be merged with 
+     * It simply calls "shutdown()". In future it shall be merged with
      * "shutdown()" and substitute it.
      */
     public void handleDestroyAllEvent() {
@@ -564,7 +621,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     public void handleFatalErrorNotifyEvent(
         int midletIsolateId,
         int midletDisplayId) {
-            
+
         removeIsolateProxies(midletIsolateId);
         AmsUtil.terminateIsolate(midletIsolateId);
     }
@@ -634,7 +691,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
         int midletIsolateId,
         int midletDisplayId,
         boolean isAlert) {
-            
+
         MIDletProxy midletProxy = findMIDletProxy(midletIsolateId,
                                                   midletDisplayId);
         if (midletProxy == null) {
@@ -678,7 +735,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
         // MIDletProxy midletProxy) {
         int midletIsolateId,
         int midletDisplayId) {
-            
+
         MIDletProxy midletProxy = findMIDletProxy(midletIsolateId,
                                                   midletDisplayId);
         if (midletProxy == null) {
@@ -722,11 +779,10 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     public void handleDisplayPreemptStartEvent(
         int midletIsolateId,
         int midletDisplayId) {
-    
+
         MIDletProxy preempting = new MIDletProxy(this, 0,
-            midletIsolateId,
-            midletDisplayId, 
-            null, null, null, MIDletProxy.MIDLET_ACTIVE);
+            midletIsolateId, midletDisplayId, MIDletSuite.UNUSED_SUITE_ID,
+                null, null, MIDletProxy.MIDLET_ACTIVE);
 
         MIDletProxy nextForeground =
             displayController.startPreempting(preempting);
@@ -750,10 +806,10 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     public void handleDisplayPreemptStopEvent(
         int midletIsolateId,
         int midletDisplayId) {
-            
-        MIDletProxy nextForeground = 
+
+        MIDletProxy nextForeground =
             displayController.endPreempting(
-                midletIsolateId, 
+                midletIsolateId,
                 midletDisplayId);
 
         if (nextForeground != null) {
@@ -768,9 +824,9 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
      * MIDletControllerEventConsumer I/F method.
      *
      */
-    public void handleMIDletForegroundSelectEvent() {
-
-        MIDletProxy nextForeground = displayController.selectForeground();
+    public void handleMIDletForegroundSelectEvent(int onlyFromLaunched) {
+        MIDletProxy nextForeground = 
+            displayController.selectForeground(onlyFromLaunched == 1);
 
         if (nextForeground == foregroundMidlet) {
             return;
@@ -789,28 +845,28 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
      *
      * MIDletControllerEventConsumer I/F method.
      *
-     * @param originMIDletSuiteId ID of MIDlet from which 
-     *        to take forefround ownership away, 
-     * @param originMIDletClassName Name of MIDlet from which 
+     * @param originMIDletSuiteId ID of MIDlet from which
+     *        to take forefround ownership away,
+     * @param originMIDletClassName Name of MIDlet from which
      *        to take forefround ownership away
-     * @param targetMIDletSuiteId ID of MIDlet 
-     *        to give forefround ownership to, 
-     * @param targetMIDletClassName Name of MIDlet 
+     * @param targetMIDletSuiteId ID of MIDlet
+     *        to give forefround ownership to,
+     * @param targetMIDletClassName Name of MIDlet
      *        to give forefround ownership to
      */
     public void handleMIDletForegroundTransferEvent(
-        String originMIDletSuiteId,
+        int originMIDletSuiteId,
         String originMIDletClassName,
-        String targetMIDletSuiteId,
+        int targetMIDletSuiteId,
         String targetMIDletClassName) {
 
-        MIDletProxy origin = findMIDletProxy(originMIDletSuiteId, 
+        MIDletProxy origin = findMIDletProxy(originMIDletSuiteId,
                                              originMIDletClassName);
         if (origin == null) {
             return;
         }
         // See if the foreground can be handed to the target MIDlet
-        MIDletProxy target = findMIDletProxy(targetMIDletSuiteId, 
+        MIDletProxy target = findMIDletProxy(targetMIDletSuiteId,
                                              targetMIDletClassName);
         if (target != null) {
             target.setWantsForeground(true, false);
@@ -829,7 +885,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
                 MIDletProxyListListener.WANTS_FOREGROUND);
         }
     }
-    
+
     /**
      * Processes SET_FOREGROUND_BY_NAME_REQUEST event.
      * <p>
@@ -839,7 +895,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
      * @param className MIDlet's class name
      */
     public void handleSetForegroundByNameRequestEvent(
-        String suiteId,
+        int suiteId,
         String className) {
 
         MIDletProxy midletProxy = findMIDletProxy(suiteId, className);
@@ -847,10 +903,10 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
             setForegroundMIDlet(midletProxy);
         }
     }
-    
+
     /**
      * Process a MIDlet start error event.
-     * Notify from last to first added to allow the listener to 
+     * Notify from last to first added to allow the listener to
      * remove itself without causing a missed notification.
      *
      * MIDletControllerEventConsumer I/F method.
@@ -863,7 +919,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
      */
     public void handleMIDletStartErrorEvent(
         int midletExternalAppId,
-        String midletSuiteId, 
+        int midletSuiteId,
         String midletClassName,
         int error) {
 
@@ -924,7 +980,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
         }
 
         if (foregroundMidlet != null &&
-            (foregroundMidlet.getMidletState() != 
+            (foregroundMidlet.getMidletState() !=
             MIDletProxy.MIDLET_DESTROYED)) {
 	    /*
 	     * Background MIDlet will run with a lower priority
@@ -932,7 +988,6 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
             MIDletProxyUtils.minPriority(foregroundMidlet);
             foregroundMidlet.notifyMIDletHasForeground(false);
         }
-
         foregroundMidlet =
             displayController.foregroundMidletChanging(newForeground);
 
@@ -955,7 +1010,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
             notifyListenersOfProxyUpdate(foregroundMidlet,
                 MIDletProxyListListener.ALERT_WAITING);
         } else {
-            setForegroundInNativeState(MIDletSuiteLoader.getAmsIsolateId(),
+            setForegroundInNativeState(MIDletSuiteUtils.getAmsIsolateId(),
                                        -1);
         }
     }
@@ -998,12 +1053,12 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
      *
      * @return true if the MIDlet has been started
      */
-    public boolean isMidletInList(String id, String className) {
+    public boolean isMidletInList(int id, String className) {
         synchronized (midletProxies) {
             for (int i = midletProxies.size() - 1; i >= 0; i--) {
                 MIDletProxy current = (MIDletProxy)midletProxies.elementAt(i);
 
-                if (current.getSuiteId().equals(id) &&
+                if (current.getSuiteId() == id &&
                     current.getClassName().equals(className)) {
                     return true;
                 }
@@ -1016,7 +1071,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     /**
      * Notify the listeners of change in the size of the proxy list.
      *
-     * Notify from last to first added to allow the listener to 
+     * Notify from last to first added to allow the listener to
      * remove itself without causing a missed notification.
      *
      * @param midletProxy midletProxy that was added or removed in the list
@@ -1045,7 +1100,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
      * Notify the listeners of the midletProxy list that a proxy
      * has been updated.
      *
-     * Notify from last to first added to allow the listener to 
+     * Notify from last to first added to allow the listener to
      * remove itself without causing a missed notification.
      *
      * @param midletProxy midletProxy that changed in the list

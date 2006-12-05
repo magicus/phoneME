@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -599,7 +600,7 @@ pcsl_string_status midp_string_to_pcsl_string(const MidpString * midpString,
     } else if (length == 0) {
       *pcslString = PCSL_STRING_EMPTY;
     } else {
-      /* I am not sure what we should return in this case. */
+      /* need revisit: what we should return in this case. */
       /* A negative length means a run-time error. */
       *pcslString = PCSL_STRING_NULL;
     }

@@ -1,5 +1,5 @@
 /*
- * @(#)gxpportqt_graphics.cpp	1.57 06/04/05 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -39,7 +39,7 @@
  *
  * Graphics primitive functions for Linux QTE.
  *
- * gxpportqt_graphics.cpp contains all the implementation of primitive
+ *  contains all the implementation of primitive
  * graphics for Qt. 
  */
 
@@ -207,7 +207,7 @@ gxpport_fill_rect(int pixel, const jshort *clip,
 #if defined(OPTIMZATION) && defined(FILLRECT)
     if (!dst) {
 	// fill/clear the entire backbuffer
-	// \todo check for clip
+	// \Need revisit check for clip
         MScreen * mscreen = qteapp_get_mscreen();
 	QPixmap* buffer = mscreen->getBackBuffer();
 	if (buffer && 
@@ -221,7 +221,7 @@ gxpport_fill_rect(int pixel, const jshort *clip,
     }
 #endif
 
-    // WORKAROUND: A bug in Qt, even when clip is (x,y,x,y)
+    // WORKAROUND: A feature in Qt, even when clip is (x,y,x,y)
     // it will still draw something!
     if (clip && (clip[0]==clip[2] || clip[1]==clip[3])) return;
 

@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -286,7 +287,7 @@ public class ImageToRawTool {
             String inputFile = (String)images.elementAt(i);
             String fileName = new File(inputFile).getName();
             if (fileName.lastIndexOf('.') > 0) {
-                fileName = fileName.replaceFirst("\\..+$", ".raw");
+                fileName = fileName.replaceFirst("\\.[^.]*?$", ".raw");
             } else fileName += ".raw";
             String outputFile = imageToRawJob.outImagesDirName +
                     File.separator + fileName;

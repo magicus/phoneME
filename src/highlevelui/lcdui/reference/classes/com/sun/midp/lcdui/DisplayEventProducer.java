@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -52,7 +53,7 @@ import com.sun.midp.security.SecurityToken;
  *
  * It is assumed that only one object instance of this class (per isolate)
  * is created at (isolate) startup. 
- * All MIDP runtime subsystems that need to send events of supported types, 
+ * All MIDP stack subsystems that need to send events of supported types, 
  * must get a reference to an already created istance of this class. 
  * Typically, this instance should be passed as a constructor parameter.
  *

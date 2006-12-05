@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -103,7 +104,7 @@ public interface InputMode {
 
     /** The key code does not mean to be displayed */
     public static final int KEYCODE_INVISIBLE = -4;
-    
+
     /**
      * The key code is not handled by the input mode.
      * Most likely it is handled by the text component */

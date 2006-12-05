@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_mainwindow.cpp	1.44 06/06/08 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -94,6 +94,7 @@ PlatformMIDPMainWindow::PlatformMIDPMainWindow(QWidget *parent,
 
   ticker  = new Ticker(mwindow);
   mscreen = new PlatformMScreen(mwindow);
+  mscreen->init();
   cmd     = new CommandManager(this);
 
   box = new QVBoxLayout(mwindow, 1 /* border */, 1 /* space */);
@@ -108,8 +109,8 @@ PlatformMIDPMainWindow::PlatformMIDPMainWindow(QWidget *parent,
   setTitleBar(MAINWINDOW_TITLE);
 
   // Fix main window geometry
-  int WINDOW_HEIGHT = FULLHEIGHT + MENUBAR_HEIGHT;
-  setFixedSize(FULLWIDTH, WINDOW_HEIGHT);
+  int WINDOW_HEIGHT = mscreen->getDisplayFullHeight() + MENUBAR_HEIGHT;
+  setFixedSize(mscreen->getDisplayFullWidth(), WINDOW_HEIGHT);
 
   // Misc set-up
   ticker->setTickerString(QString::null);
@@ -133,6 +134,30 @@ PlatformMIDPMainWindow::PlatformMIDPMainWindow(QWidget *parent,
 PlatformMIDPMainWindow::~PlatformMIDPMainWindow() {
     finalizeMenus();
     killTimers();
+}
+
+void PlatformMIDPMainWindow::resize() {
+
+    // Delete the current layout, a must.
+    // otherwise, won't work.
+    ticker->hide();
+    delete box;
+
+    box = new QVBoxLayout(mwindow, 1 /* border */, 1 /* space */);
+
+    mscreen->setVScrollBarMode(QScrollView::Auto);
+    if (isFullScreen == TRUE) {
+        mscreen->setBufferSize(MScreen::fullScreenSize);
+    } else {
+        mscreen->setBufferSize(MScreen::normalScreenSize);
+    }
+    box->addWidget(mscreen);
+    box->addWidget(ticker);    
+
+    setCentralWidget(mwindow);
+    setFixedSize(mscreen->getDisplayFullWidth(), mscreen->getDisplayFullHeight() + MENUBAR_HEIGHT);
+    mscreen->setFocus();
+    ticker->show();
 }
 
 /**
@@ -159,6 +184,16 @@ void PlatformMIDPMainWindow::setTitleBar(const QString &title) {
 CommandManager* PlatformMIDPMainWindow::getMenu()
 {
     return cmd;
+}
+
+/**
+ * Override to notify Java of key press.
+ */
+void PlatformMIDPMainWindow::keyPressEvent(QKeyEvent *key)
+{
+    // return event to PlatformMScreen, wich is responsible
+    // for notifying java
+    mscreen->keyPressEvent(key);
 }
 
 /**
@@ -194,24 +229,31 @@ PlatformMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
 
         MIDP_EVENT_INITIALIZE(evt);
         
+#if ENABLE_MULTIPLE_ISOLATES
+        evt.type = MIDLET_DESTROY_REQUEST_EVENT;
+        evt.DISPLAY = gForegroundDisplayId;
+        evt.intParam1 = gForegroundIsolateId;
+        midpStoreEventAndSignalAms(evt);
+#else
         evt.type = DESTROY_MIDLET_EVENT;
-
         midpStoreEventAndSignalForeground(evt);
+#endif
 
-        ((QCloseEvent*)e)->ignore();
-
+        if (e->type() == QEvent::Close) {
+            ((QCloseEvent*)e)->ignore();
+        }
         return TRUE;
     }
 
     // Forward Home key presses to mscreen to resume apps
-    if (e->type() == QEvent::KeyPress) {
-	QKeyEvent *ke = (QKeyEvent *) e;
-
-	if (ke->key() == Qt::Key_F12) {
-	    mscreen->keyPressEvent(ke);
-	    ke->ignore();
-	    return TRUE;
-	}
+    if (e->type() == QEvent::KeyPress || e->type() == QEvent::Accel) {
+        QKeyEvent *ke = (QKeyEvent *) e;
+        if (ke->key() == Qt::Key_F12 ||
+            ke->key() == Qt::Key_Home) {
+            mscreen->keyPressEvent(ke);
+            ke->ignore();
+            return TRUE;
+        }
     }
 
     return QWidget::eventFilter(obj, e );
@@ -226,7 +268,7 @@ PlatformMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
 void PlatformMIDPMainWindow::setFullScreen(int fullscn) {
  
      if (fullscn && !isFullScreen) {
-	 showFullScreen();
+     showFullScreen();
      }
 
      if (!fullscn && isFullScreen) {
@@ -238,7 +280,7 @@ void PlatformMIDPMainWindow::setFullScreen(int fullscn) {
  * Show full screen more - in our case, it means no ticker.
  */
 void PlatformMIDPMainWindow::showFullScreen(void) {
-
+          
     isFullScreen = TRUE;
 
     ticker->hide();

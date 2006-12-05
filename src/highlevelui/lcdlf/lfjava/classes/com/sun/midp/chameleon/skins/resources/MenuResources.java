@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -50,18 +51,27 @@ public class MenuResources {
                 SkinPropertiesIDs.MENU_WIDTH);
         MenuSkin.HEIGHT = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_HEIGHT);
-        MenuSkin.ALIGN_X = SkinResources.getInt(
+
+        int alignX = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_ALIGN_X);
-        MenuSkin.ALIGN_Y = SkinResources.getInt(
+        MenuSkin.ALIGN_X = SkinResources.resourceConstantsToGraphics(alignX);
+
+        int alignY = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_ALIGN_Y);
+        MenuSkin.ALIGN_Y = SkinResources.resourceConstantsToGraphics(alignY);
+
         MenuSkin.TITLE_X = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_TITLE_X);
         MenuSkin.TITLE_Y = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_TITLE_Y);
         MenuSkin.TITLE_MAXWIDTH = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_TITLE_MAXWIDTH);
-        MenuSkin.TITLE_ALIGN = SkinResources.getInt(
+
+        int titleAlign = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_TITLE_ALIGN);
+        MenuSkin.TITLE_ALIGN = SkinResources.resourceConstantsToGraphics(
+                titleAlign);
+
         MenuSkin.MAX_ITEMS = SkinResources.getInt(
                 SkinPropertiesIDs.MENU_MAX_ITEMS);
         MenuSkin.ITEM_HEIGHT = SkinResources.getInt(

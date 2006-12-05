@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -35,6 +36,7 @@
  */
 
 static jboolean inFullScreenMode;
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,7 +98,8 @@ int lfjport_set_vertical_scroll(
  *             false for normal
  */
 void lfjport_set_fullscreen_mode(jboolean mode) {
-  inFullScreenMode = mode;
+    win32app_set_fullscreen_mode(mode);
+    inFullScreenMode = mode;
 }
 
 /**
@@ -112,6 +115,35 @@ jboolean lfjport_is_fullscreen_mode() {
  */
 void lfjport_gained_foreground() {
   REPORT_CALL_TRACE(LC_HIGHUI, "LF:STUB:gainedForeground()\n");
+}
+
+
+/**
+ * Change screen orientation flag
+ */
+jboolean lfjport_reverse_orientation() {
+    return win32app_reverse_orientation();
+}
+
+/**
+ * Get screen orientation flag
+ */
+jboolean lfjport_get_reverse_orientation() {
+    return win32app_get_reverse_orientation();
+}
+
+/**
+ * Return screen width
+ */
+int lfjport_get_screen_width() {
+    get_screen_width();
+}
+
+/**
+ *  Return screen height
+ */
+int lfjport_get_screen_height() {
+    get_screen_height();
 }
 
 #ifdef __cplusplus

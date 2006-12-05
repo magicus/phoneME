@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_displayable.cpp	1.21 06/04/21
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -37,6 +37,11 @@
 
 #include <qwidget.h>
 #include <qstring.h>
+#include <midpUtilKni.h>
+
+PCSL_DEFINE_ASCII_STRING_LITERAL_START(truncmark)
+{ 0x2026, 0 }
+PCSL_DEFINE_ASCII_STRING_LITERAL_END(truncmark);
 
 /** Title handling function pointer */
 extern "C" MidpError
@@ -45,6 +50,9 @@ displayable_set_title(MidpDisplayable* screenPtr, const pcsl_string* title) {
     (void)screenPtr;
     QString qtitle;
     pcsl_string2QString(*title, qtitle);
+    truncateQString(qtitle,
+            qteapp_get_main_window()->font(),
+            calculateCaptionWidth(qteapp_get_application()->mainWidget()));
     qteapp_get_main_window()->setCaption(qtitle);
 
     return KNI_OK;

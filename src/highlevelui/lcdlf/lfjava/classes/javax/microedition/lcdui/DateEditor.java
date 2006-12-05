@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -63,6 +64,14 @@ class DateEditor extends PopupLayer implements CommandListener {
         if (date != null) {
             editDate.setTime(date);
         }
+
+        month_bounds = new int[]{-1,-1,0,0}; //initialize the bounds(used for pointer input) with invalid values
+        year_bounds = new int[]{-1,-1,0,0};
+        hours_bounds = new int[]{-1,-1,0,0};
+        minutes_bounds = new int[]{-1,-1,0,0};
+        calendar_bounds = new int[]{-1,-1,0,0};
+        ampm_bounds = new int[]{-1,-1,0,0};
+        
         
         selectedDate = hilightedDate = editDate.get(Calendar.DATE);
         
@@ -202,6 +211,177 @@ class DateEditor extends PopupLayer implements CommandListener {
     }
 
     /**
+     * Handles pointer input to the popup layer.
+     *
+     * @param type the type of this key event (pressed, released)
+     * @param x x coordinate of pointer
+     * @param y y coordinate of pointer 
+     * @return true always, since popupLayers swallow all pointer events
+     */
+    public boolean pointerInput(int type, int x, int y) {
+        boolean consume = true;
+        switch (type) {
+        case EventConstants.PRESSED:
+            itemIndexWhenPressed = itemIndexAtPointerPosition(x,y);
+            switch (itemIndexWhenPressed) {
+            case AM_PM:
+                amHilighted = ( x - ampm_bounds[X] < 35);
+                break;
+            case CALENDAR:
+                pressedDate = getDateAtPointerPosition(x, y);
+                if (pressedDate > 0) {
+                    hilightedDate = pressedDate;
+                }
+                break;
+            case PRESS_OUT_OF_BOUNDS:
+                commandAction(cancel, lf.df.owner);
+                consume = false;
+                break;
+            }
+            if (itemIndexWhenPressed > 0 && focusOn != itemIndexWhenPressed) {
+                DEPopupLayer popup = null;
+                switch (focusOn) {
+                case MONTH_POPUP:
+                    popup = monthPopup;
+                    break;
+                case YEAR_POPUP:
+                    popup = yearPopup;
+                    break;
+                case HOURS_POPUP: 
+                    popup = hoursPopup;
+                    break;
+                case MINUTES_POPUP:
+                    popup = minutesPopup;
+                    break;
+                default:
+                    break;
+                }
+                if (popup != null && popup.open) {
+                    popup.hide();
+                }
+                
+                focusOn = itemIndexWhenPressed;
+                requestRepaint();
+            }
+            break;
+        case  EventConstants.RELEASED:
+            int itemIndexWhenReleased = itemIndexAtPointerPosition(x,y);
+            
+            if (itemIndexWhenPressed == itemIndexWhenReleased) {
+                if (itemIndexWhenPressed > 0) {
+                    if ( (itemIndexWhenPressed == AM_PM &&
+                          amHilighted == (x - ampm_bounds[X] < 35)) ||
+                         (itemIndexWhenPressed == CALENDAR &&
+                          pressedDate == getDateAtPointerPosition(x, y) &&
+                          pressedDate > 0) ||
+                         (itemIndexWhenPressed != AM_PM &&
+                          itemIndexWhenPressed != CALENDAR) ) {
+                        selectFired();
+                        if (itemIndexWhenPressed > 0) {
+                            focusOn = itemIndexWhenPressed;
+                            requestRepaint();
+                        }
+                    }
+                } 
+            }
+            if (itemIndexWhenReleased == PRESS_OUT_OF_BOUNDS) {
+                consume = false;
+            }
+
+            itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS; // remember to reset the variables
+            pressedDate = 0;
+            break;
+        }
+        return consume; 
+    }
+
+    /**
+     * Helper function to determine the date index at the x,y position
+     *
+     * @param x   pointer x coordinate
+     * @param y   pointer y coordinate
+     *              
+     * @return   0 (invalid value) or 1 - lastDay(valid value)
+     *               depends on the pointer position.
+     */
+    private int getDateAtPointerPosition(int x, int y) {
+        int dateAt = 0;
+        int transX = x - calendar_bounds[X];
+        int transY = y - calendar_bounds[Y];
+        int o = DateEditorSkin.IMAGE_CAL_BG.getWidth() / 7;
+        int rowH = 11;
+        //variable o, rowH, h is same as in paintCalendar()
+        int h = (int)(DateEditorSkin.IMAGE_DATES.getHeight() / 31); 
+        
+        if (transX >= 0 && transX <= calendar_bounds[W] &&
+            transY >= 0 && transY <= calendar_bounds[H] &&
+            transY >= h + 3) {
+            int row = (transY - h - 3)  / rowH;
+            int col = (transX - 1) / o;
+            int row_Day1 = 0;
+            int col_Day1 = dayOffset -1; //index from 0
+            
+            if (row != row_Day1 || col >= col_Day1) {
+                //index from 1
+                int dateAtPointer = (row - row_Day1) * 7 + (col - col_Day1) + 1; 
+                if (dateAtPointer <= lastDay) {
+                    dateAt = dateAtPointer;
+                }
+            }
+        }
+        return dateAt;
+    }
+
+    /**
+     * Helper function to determine the focusable area Index at the x,y position
+     *
+     * @param x x pointer coordinate
+     * @param y y pointer coordinate
+     * @return  focusable area index, can be PRESS_OUT_OF_BOUNDS,
+     * 0, MONTH_POPUP, YEAR_POPUP, HOURS_POPUP, MINUTES_POPUP,
+     * CALENDAR, or AM_PM, depends on the pointer position.
+     */
+    private int itemIndexAtPointerPosition(int x, int y) {
+        int area = PRESS_OUT_OF_BOUNDS;
+        if (containsPoint(x + this.bounds[X], y + this.bounds[Y])) {
+            if (x >= month_bounds[X] &&
+                x < month_bounds[X] + month_bounds[W] &&
+                y >= month_bounds[Y] &&
+                y < month_bounds[Y] + month_bounds[H]) {
+                area = MONTH_POPUP;
+            } else if (x >= year_bounds[X] &&
+                       x < year_bounds[X] + year_bounds[W] &&
+                       y >= year_bounds[Y] &&
+                       y < year_bounds[Y] + year_bounds[H]) {
+                area = YEAR_POPUP;
+            } else if (x >= hours_bounds[X] &&
+                       x < hours_bounds[X] + hours_bounds[W] &&
+                       y >= hours_bounds[Y] &&
+                       y < hours_bounds[Y] + hours_bounds[H]) {
+                area = HOURS_POPUP;
+            } else if (x > minutes_bounds[X] &&
+                       x < minutes_bounds[X] + minutes_bounds[W] &&
+                       y >= minutes_bounds[Y] &&
+                       y < minutes_bounds[Y] + minutes_bounds[H]) {
+                area = MINUTES_POPUP;
+            } else if (x >= calendar_bounds[X] &&
+                       x < calendar_bounds[X] + calendar_bounds[W] &&
+                       y >= calendar_bounds[Y] &&
+                       y < calendar_bounds[Y] + calendar_bounds[H]) {
+                area = CALENDAR;
+            } else if (x >= ampm_bounds[X] &&
+                       x < ampm_bounds[X] + ampm_bounds[W] &&
+                       y >= ampm_bounds[Y] &&
+                       y < ampm_bounds[Y] + ampm_bounds[H]) {
+                area = AM_PM;
+            } else {
+                area = 0;
+            }
+        }
+        return area; // Value 0: invaliad but inside one focusable area
+    }
+    
+    /**
      * Handle a command action.
      *
      * @param cmd The Command to handle
@@ -271,11 +451,10 @@ class DateEditor extends PopupLayer implements CommandListener {
      * Hide all sub-popups triggered by this date editor.
      */
     void hideAllPopups() {
-        ScreenLFImpl sLF = (ScreenLFImpl)lf.df.owner.getLF();
-        sLF.lGetCurrentDisplay().hidePopup(monthPopup);
-        sLF.lGetCurrentDisplay().hidePopup(yearPopup);
-        sLF.lGetCurrentDisplay().hidePopup(hoursPopup);
-        sLF.lGetCurrentDisplay().hidePopup(minutesPopup);
+        if (monthPopup != null) monthPopup.hide();
+        if (yearPopup != null) yearPopup.hide();
+        if (hoursPopup != null) hoursPopup.hide();
+        if (minutesPopup != null) minutesPopup.hide();
     }
 
     // *********** private ************ //
@@ -385,6 +564,11 @@ class DateEditor extends PopupLayer implements CommandListener {
                 g.setColor(DateEditorSkin.COLOR_TRAVERSE_IND);
                 g.drawRect(-2, -2, w + 3, h + 3);
             }
+            month_bounds[X] = g.getTranslateX() - this.bounds[X];
+            month_bounds[Y] = g.getTranslateY() - this.bounds[Y];
+            month_bounds[W]= w;
+            month_bounds[H]= h;
+            
             monthPopup.setElementSize(
                 w - 4, DateEditorSkin.FONT_POPUPS.getHeight());
             monthPopup.setBounds(g.getTranslateX(),
@@ -406,6 +590,11 @@ class DateEditor extends PopupLayer implements CommandListener {
                 g.setColor(DateEditorSkin.COLOR_TRAVERSE_IND);
                 g.drawRect(-2, -2, w + 3, h + 3);
             }
+            year_bounds[X] = g.getTranslateX() - this.bounds[X];
+            year_bounds[Y] = g.getTranslateY() - this.bounds[Y];
+            year_bounds[W]= w;
+            year_bounds[H]= h;
+            
             yearPopup.setElementSize(
                 w - 4, DateEditorSkin.FONT_POPUPS.getHeight());
             yearPopup.setBounds(g.getTranslateX(),
@@ -444,6 +633,11 @@ class DateEditor extends PopupLayer implements CommandListener {
                 g.setColor(DateEditorSkin.COLOR_TRAVERSE_IND);
                 g.drawRect(-2, -2, w + 3, h + 3);
             }
+            hours_bounds[X] = g.getTranslateX() - this.bounds[X];
+            hours_bounds[Y] = g.getTranslateY() - this.bounds[Y];
+            hours_bounds[W]= w;
+            hours_bounds[H]= h;
+
             hoursPopup.setElementSize(
                 w - 4, DateEditorSkin.FONT_POPUPS.getHeight());
             hoursPopup.setBounds(g.getTranslateX(),
@@ -453,9 +647,18 @@ class DateEditor extends PopupLayer implements CommandListener {
 
         g.setFont(DateEditorSkin.FONT_POPUPS);
         g.setColor(0);
-        g.drawString(Integer.toString(HOURS[hoursPopup.getSelectedIndex()]), 
+
+        int hour;
+        if (lf.CLOCK_USES_AM_PM) {
+            hour = editDate.get(Calendar.HOUR) == 0 ?
+                12 : editDate.get(Calendar.HOUR) % 12;
+        } else {
+            hour = editDate.get(Calendar.HOUR_OF_DAY);
+        }
+        
+        g.drawString(DateFieldLFImpl.twoDigits(hour),
                      3, 0, Graphics.LEFT | Graphics.TOP);
-                     
+        
         g.translate(34, 0);
         if (DateEditorSkin.IMAGE_TIME_BG != null) {
             g.drawImage(DateEditorSkin.IMAGE_TIME_BG, 0, 0,
@@ -466,6 +669,11 @@ class DateEditor extends PopupLayer implements CommandListener {
                 g.setColor(DateEditorSkin.COLOR_TRAVERSE_IND);
                 g.drawRect(-2, -2, w + 3, h + 3);
             }
+            minutes_bounds[X] = g.getTranslateX() - this.bounds[X];
+            minutes_bounds[Y] = g.getTranslateY() - this.bounds[Y];
+            minutes_bounds[W]= w;
+            minutes_bounds[H]= h;
+            
             minutesPopup.setElementSize(
                 w - 4, DateEditorSkin.FONT_POPUPS.getHeight());
             minutesPopup.setBounds(g.getTranslateX(),
@@ -550,6 +758,12 @@ class DateEditor extends PopupLayer implements CommandListener {
         }
         calendarBottomLimit = y;
         g.translate(-2, 0);
+
+        calendar_bounds[X] = g.getTranslateX() - this.bounds[X];
+        calendar_bounds[Y] = g.getTranslateY() - this.bounds[Y];
+        calendar_bounds[W]= DateEditorSkin.IMAGE_CAL_BG.getWidth();
+        //add rowH as the date may be written under the calendar bg.        
+        calendar_bounds[H]= DateEditorSkin.IMAGE_CAL_BG.getHeight() + rowH;
     }
     
     /**
@@ -588,6 +802,10 @@ class DateEditor extends PopupLayer implements CommandListener {
                                  (DateEditorSkin.IMAGE_RADIO[0].getHeight()/2),
                                  Graphics.VCENTER | Graphics.LEFT);
                 }
+                ampm_bounds[X] = g.getTranslateX() - this.bounds[X];
+                ampm_bounds[Y] = g.getTranslateY() - this.bounds[Y];
+                ampm_bounds[W] = 35 *2;
+                ampm_bounds[H] = DateEditorSkin.IMAGE_RADIO[0].getHeight();
             }
             
             g.translate(35, 0);
@@ -678,11 +896,9 @@ class DateEditor extends PopupLayer implements CommandListener {
         switch (focusOn) {
             case MONTH_POPUP:
                 if (!monthPopup.open) {
-                    sLF.lGetCurrentDisplay().showPopup(monthPopup);
-                    monthPopup.open = !monthPopup.open;
+                    monthPopup.show(sLF);
                     done = true;
                 } else {
-                    monthPopup.open = !monthPopup.open;
                     int month = monthPopup.getSelectedIndex();
                     lastDay = daysInMonth(month, editDate.get(Calendar.YEAR));
                     if (selectedDate > lastDay) {
@@ -690,14 +906,14 @@ class DateEditor extends PopupLayer implements CommandListener {
                         editDate.set(Calendar.DATE, 
                         selectedDate);
                     }
+                    monthPopup.setSelectedIndex(month);
                     editDate.set(Calendar.MONTH, month);
-                    sLF.lGetCurrentDisplay().hidePopup(monthPopup);
+                    monthPopup.hide();
                 }
                 break;
             case YEAR_POPUP:
                 if (!yearPopup.open) {
-                    sLF.lGetCurrentDisplay().showPopup(yearPopup);
-                    yearPopup.open = !yearPopup.open;
+                    yearPopup.show(sLF);
                     done = true;
                 } else {
                     int selectedIndex = yearPopup.getSelectedIndex();
@@ -712,7 +928,6 @@ class DateEditor extends PopupLayer implements CommandListener {
                         yearPopup.requestRepaint();
 
                     } else {
-                        yearPopup.open = !yearPopup.open;
                         int year = Integer.parseInt(YEARS[selectedIndex]);
                         lastDay = daysInMonth(
                                      editDate.get(Calendar.MONTH), year);
@@ -721,36 +936,37 @@ class DateEditor extends PopupLayer implements CommandListener {
                             editDate.set(Calendar.DATE, selectedDate);
                         }
 
+                        yearPopup.setSelectedIndex(selectedIndex);
                         editDate.set(Calendar.YEAR, year);
-                        sLF.lGetCurrentDisplay().hidePopup(yearPopup);
+                        yearPopup.hide();
                     }
                 }
                 break;
             case HOURS_POPUP:
                 if (!hoursPopup.open) {
-                    sLF.lGetCurrentDisplay().showPopup(hoursPopup);
-                    hoursPopup.open = !hoursPopup.open;
+                    hoursPopup.show(sLF);
                     done = true;
                 } else {
-                    hoursPopup.open = !hoursPopup.open;
-                    int hour = HOURS[hoursPopup.getSelectedIndex()];
+                    int selId = hoursPopup.getSelectedIndex();
+                    hoursPopup.setSelectedIndex(selId);
+                    int hour = HOURS[selId];
                     if ((lf.CLOCK_USES_AM_PM) && (!amSelected)) {
                         hour += 12;
                     }
                     editDate.set(Calendar.HOUR_OF_DAY, hour);
-                    sLF.lGetCurrentDisplay().hidePopup(hoursPopup);
+                    hoursPopup.hide();
                 }
                 break;
             case MINUTES_POPUP:
                 if (!minutesPopup.open) {
-                    sLF.lGetCurrentDisplay().showPopup(minutesPopup);
-                    minutesPopup.open = !minutesPopup.open;
+                    minutesPopup.show(sLF);
                     done = true;
                 } else {
-                    minutesPopup.open = !minutesPopup.open;
+                    int selId = minutesPopup.getSelectedIndex();
                     editDate.set(Calendar.MINUTE, 
-                                 MINUTES[minutesPopup.getSelectedIndex()]);
-                    sLF.lGetCurrentDisplay().hidePopup(minutesPopup);
+                                 MINUTES[selId]);
+                    minutesPopup.setSelectedIndex(selId);
+                    minutesPopup.hide(); 
                 }
                 break;
             case CALENDAR:
@@ -1267,9 +1483,6 @@ class DateEditor extends PopupLayer implements CommandListener {
     /** The day offset. */
     protected int dayOffset;
 
-    /** The state of the date editor popup (true=open/false=closed). */
-    boolean popUpOpen;
-
     /** The sub-popup layer used to select month value. */
     protected DEPopupLayer monthPopup;
 
@@ -1342,4 +1555,21 @@ class DateEditor extends PopupLayer implements CommandListener {
      * traversal calculations.
      */
     protected int dateHilightY;
+
+    /*pointer pressed outside of the Layer's bounds*/
+    final int PRESS_OUT_OF_BOUNDS = -1;
+
+    /*variable used in pointerInput handling,indicating focused area at pressed */
+    private int itemIndexWhenPressed = PRESS_OUT_OF_BOUNDS;
+
+    /* bounds(in this popupLayer's coordinate space) for each focusable area*/ 
+    private int month_bounds[];
+    private int year_bounds[];
+    private int hours_bounds[];
+    private int minutes_bounds[];
+    private int calendar_bounds[];
+    private int ampm_bounds[];
+
+    /*date index at pressed, may be valid value or invalid value 0*/
+    private int pressedDate;
 }

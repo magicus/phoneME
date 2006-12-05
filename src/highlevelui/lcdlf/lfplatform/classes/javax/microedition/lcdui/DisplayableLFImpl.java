@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -41,7 +42,17 @@ import com.sun.midp.configurator.Constants;
  * on platform widget.
  */
 abstract class DisplayableLFImpl implements DisplayableLF {
-    
+
+    /** Static initializer. */
+    static {
+        initialize0();
+    }
+
+    /**
+     * Native class initializer.
+     */
+    private static native void initialize0();
+
     /**
      * Creates <code>DisplayableLF</code> for the passed in 
      * <code>Displayable</code>.
@@ -51,11 +62,16 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      */
     DisplayableLFImpl(Displayable d) {
         owner = d;
-        // there is no way to create Displayable with a full screen mode set
+        // complex to create Displayable with a full screen mode set
         width  = Constants.NORMALWIDTH;
         height = Constants.NORMALHEIGHT;
     }
     
+    /**
+     * Native finalizer to delete native resources.
+     */
+    private native void finalize();
+
     // ************************************************************
     //  public methods - DisplayableLF interface implementation
     // ************************************************************
@@ -174,7 +190,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      * SYNC NOTE: Caller must hold LCDUILock around this call.
      */
     public void updateCommandSet() {
-        if (currentDisplay != null && currentDisplay.isShown(this)) {
+        if (state == SHOWN && currentDisplay != null) {
             currentDisplay.updateCommandSet();
         }
     }
@@ -244,16 +260,9 @@ abstract class DisplayableLFImpl implements DisplayableLF {
         int widthCopy, heightCopy;
         boolean requestRepaint = false;
 
+
         synchronized (Display.LCDUILock) {
 
-            if (mode) {
-                width = Constants.FULLWIDTH;
-                height = Constants.FULLHEIGHT;
-            } else {
-                width  = Constants.NORMALWIDTH;
-                height = Constants.NORMALHEIGHT;
-            }
-            
             if (lIsShown()) {
                 // currentDisplay is not null when lIsShown is true
                 currentDisplay.lSetFullScreen(mode);
@@ -267,8 +276,8 @@ abstract class DisplayableLFImpl implements DisplayableLF {
                 requestRepaint = true;
             }
 
-            widthCopy = width; 
-            heightCopy = height;
+            widthCopy = Display.getScreenWidth0(); 
+            heightCopy = Display.getScreenHeight0();
         }
 
         // This may call into app code, so do it outside LCDUILock
@@ -281,6 +290,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
             }
         }
     }
+
 
     /**
      * Prepare to show this LF on physical screen.
@@ -309,6 +319,12 @@ abstract class DisplayableLFImpl implements DisplayableLF {
         // This may call into app code, so do it outside LCDUILock
         if (widthCopy >= 0) {
             uCallSizeChanged(widthCopy, heightCopy);
+        } else {
+            synchronized (Display.LCDUILock) {
+                if (pendingInvalidate) {
+                    lRequestInvalidate();
+                }
+            }
         }
     }
 
@@ -329,7 +345,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
         // corresponding down is seen.
         sawPointerPress = sawKeyPress = false;
         
-        if (state == HIDDEN) {
+        if (state != SHOWN) {
             // Create native resource first
             // since the title and ticker may depend on it
             createNativeResource();
@@ -358,7 +374,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      *
      * @return int The vertical scroll position on a scale of 0-100
      */
-    int getVerticalScrollPosition() {
+    public int getVerticalScrollPosition() {
         // SYNC NOTE: return of atomic value
         return 0;
     }
@@ -368,20 +384,41 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      *
      * @return ing The vertical scroll proportion on a scale of 0-100
      */
-    int getVerticalScrollProportion() {
+    public int getVerticalScrollProportion() {
         // SYNC NOTE: return of atomic value
         return 100;
     }
 
     /**
      * Remove this <code>Displayable</code> from physical screen.
-     * This function simply calls lCallHide after holding LCDUILock.
+     * This function calls lCallHide after holding LCDUILock
+     * and sets this DisplayableLF to HIDDEN state.
      */
     public void uCallHide() {
         synchronized (Display.LCDUILock) {
             // Delete native resources and update ticker
             lCallHide();
+            // set state
+            state = HIDDEN;
         }
+    }
+
+    /**
+     * Some "system modal dialog" takes over physical screen 
+     * buffer and user input now or foreground is lost.
+     * This function calls lCallHide after holding LCDUILock
+     * and sets this DisplayableLF to FROZEN state.
+     */
+    public void uCallFreeze() {
+ //       uCallHide();
+
+        synchronized (Display.LCDUILock) {
+            // Delete native resources and update ticker
+            lCallHide();
+            // set state
+            state = FROZEN;
+        }
+
     }
 
     /**
@@ -389,10 +426,6 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      * The <code>Displayable</code> should unload any resource that 
      * was allocated. It is not required to clean the physical screen 
      * before this function returns.
-     * This function could be called while an LF is in "freeze" mode.
-     * It sets this DisplayableLFImpl to HIDDEN state.
-     *
-     * This function sets this DisplayableLF to HIDDEN state.
      */
     void lCallHide() {
         if (state == SHOWN) {
@@ -402,47 +435,6 @@ abstract class DisplayableLFImpl implements DisplayableLF {
         // Delete native resources
         deleteNativeResource();
         
-        state = HIDDEN;
-    }
-
-    /**
-     * While UI resources of this LF are created and visible already, stop any
-     * further updates to physical screen because some "system modal dialog"
-     * takes over physical screen buffer and user input now or
-     * foreground is lost.
-     * This function simply calls lCallFreeze after obtaining LCDUILock.
-     */
-    public void uCallFreeze() {
-        synchronized (Display.LCDUILock) {
-            lCallFreeze();
-        }
-    }
-
-    /**
-     * While UI resources of this LF are created and visible already, stop any
-     * further updates to physical screen because some "system modal dialog"
-     * takes over physical screen buffer and user input now or
-     * foreground is lost.
-     * Repaint and invalidate requests from this <code>DisplayableLF</code> 
-     * will be really scheduled into event queue. Instead, only dirty flag 
-     * is set.
-     * After a LF enters "freeze" mode, it can be resumed of visibility or 
-     * directly replaced by a new <code>Displayable</code>.
-     *
-     * If current Displayable changed while being in background then
-     * this DisplayableLF is changing state from HIDDEN into FROZEN and
-     * thus its native resources have to be created first.
-     *
-     * This function sets this DisplayableLFImpl to FROZEN state.
-     */
-    void lCallFreeze() {
-        if (state == SHOWN) {
-            updateNativeTicker(owner.ticker, null);
-        } else if (state == HIDDEN) {
-            createNativeResource();
-        }
-
-        state = FROZEN;
     }
 
     /**
@@ -451,7 +443,11 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      * Subclass should override to perform re-layout.
      * Default implementation does nothing.
      */
-    public void uCallInvalidate() { }
+    public void uCallInvalidate() {
+        synchronized (Display.LCDUILock) {
+            pendingInvalidate = false;
+        }
+    }
 
     /**
      * This method is used in repaint, in order to determine the translation
@@ -483,8 +479,10 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      * to {@link #INVALID_NATIVE_ID INVALID_NATIVE_ID}.
      */
     void deleteNativeResource() {
-        deleteNativeResource0(nativeId);
-        nativeId = INVALID_NATIVE_ID;
+        if (nativeId != INVALID_NATIVE_ID) {
+            deleteNativeResource0(nativeId);
+            nativeId = INVALID_NATIVE_ID;
+        }
     }
 
     /**
@@ -499,9 +497,38 @@ abstract class DisplayableLFImpl implements DisplayableLF {
             // If there is no Display, or if this Displayable is not
             // currently visible, we simply record the fact that the
             // size has changed
-            sizeChangeOccurred = (currentDisplay == null) || 
-                                 (!currentDisplay.isShown(this));
+            sizeChangeOccurred = (state != SHOWN);
+            /*
+             * sizeChangeOccurred is a boolean which (when true) indicates
+             * that sizeChanged() will be called at a later time. So, if it
+             * is false after calling super(), we go ahead and notify the
+             * Canvas now, rather than later
+             */
+
+            width = Display.getScreenWidth0();
+            height = Display.getScreenHeight0();
+
+            if (!sizeChangeOccurred) {
+                lRequestInvalidate();
+                synchronized (Display.calloutLock) {
+                    try {
+                        owner.sizeChanged(w, h);
+                    } catch (Throwable t) {
+                        Display.handleThrowable(t);
+                    }
+                }
+            }
         }
+    }
+
+    /**
+     * This method notify displayable to scroll its content 
+     *
+     * @param scrollType scrollType
+     * @param thumbPosition
+     */
+    public void uCallScrollContent(int scrollType, int thumbPosition) {
+        // by default nothing to do 
     }
 
     /**
@@ -605,6 +632,22 @@ abstract class DisplayableLFImpl implements DisplayableLF {
             break;
         }
     } // end of dsKeyEvent()
+
+    /**
+     * Set status of screen rotation
+     * @param newStatus
+     * @return
+     */
+    public boolean uSetRotatedStatus(boolean newStatus) {
+        synchronized (Display.LCDUILock) {
+            if (newStatus == owner.isRotated) {
+                return false;
+            } else {
+                owner.isRotated = newStatus;
+                return true;
+            }
+        }
+    }
 
     /**
      * Handle a key press.
@@ -716,7 +759,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      *               when it returns via uCallPaint()
      */
     void lRequestPaint(int x, int y, int width, int height, Object target) {
-        if (currentDisplay != null && currentDisplay.isShown(this)) {
+        if (lIsShown()) {
             // Note: Display will not let anyone but the current
             // Displayable schedule repaints
             currentDisplay.repaintImpl(this, 
@@ -735,6 +778,15 @@ abstract class DisplayableLFImpl implements DisplayableLF {
     }
     
     /**
+     * Request to paint all of this Displayable (without holding a lock).
+     */    
+    void uRequestPaint() {
+        synchronized (Display.LCDUILock) {
+            lRequestPaint();
+        }
+    }
+
+    /**
      * Repaint the whole <code>Displayable</code>.
      */
     void lRequestPaintContents() {
@@ -749,7 +801,8 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      * SYNC NOTE: Caller must hold LCDUILock around this call.
      */
     void lRequestInvalidate() {
-        if (currentDisplay != null && currentDisplay.isShown(this)) {
+        pendingInvalidate = true;
+        if (state == SHOWN && currentDisplay != null) {
             currentDisplay.invalidate();
         }
     }
@@ -920,7 +973,8 @@ abstract class DisplayableLFImpl implements DisplayableLF {
     // ************************************************************
     //  protected member variables - NOT ALLOWED in this class
     // ************************************************************
-    
+
+
     // ************************************************************
     //  package private member variables
     // ************************************************************
@@ -997,6 +1051,12 @@ abstract class DisplayableLFImpl implements DisplayableLF {
     // sets the key to 1 when the key is currently down
     private int currentKeyMask;
 
+    /**
+     * Used to indicate the invalidate is needed 
+     */
+    boolean pendingInvalidate;
+
+
     // ************************************************************
     //  Static initializer, constructor
     // ************************************************************
@@ -1035,8 +1095,6 @@ abstract class DisplayableLFImpl implements DisplayableLF {
 
     /** frozen state of DisplayableLF */
     final static int FROZEN = 2;
-
-
     // ************************************************************
     //  Native methods
     // ***********************************************************

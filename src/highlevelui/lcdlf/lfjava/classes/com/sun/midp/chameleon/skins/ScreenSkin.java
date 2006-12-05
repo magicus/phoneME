@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -45,15 +46,6 @@ public class ScreenSkin {
      * "normal" mode, ie, non-fullscreen
      */
     public static int HEIGHT;
-    
-    /**
-     * The overall height of the screen in fullscreen mode 
-     * available for use. This often is greater than HEIGHT
-     * due to utilizing screen area normally reserved for
-     * system status icons, like signal strength, battery, etc.
-     * This value may only be greater than or equal to HEIGHT.
-     */
-    public static int FULLHEIGHT;
     
     /**
      * This field corresponds to SCREEN_TEXT_ORIENT skin property.
@@ -133,6 +125,12 @@ public class ScreenSkin {
      */
     public static int BORDER_STYLE;
     
+    /**
+     * This field corresponds to SCREEN_SCROLL_AMOUNT skin property.
+     * See its comment for further details.
+     */
+    public static int SCROLL_AMOUNT;
+
     /**
      * This field corresponds to SCREEN_FONT_LABEL skin property.
      * See its comment for further details.

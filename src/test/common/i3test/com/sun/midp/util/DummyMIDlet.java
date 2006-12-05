@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -37,16 +38,16 @@ public class DummyMIDlet extends MIDlet {
     
     public void startApp() throws MIDletStateChangeException {
 	midlet = this;
-	// System.out.println("DummyMIDlet started");
+	// IMPL_NOTE: System.out.println("DummyMIDlet started");
     }
    
     public void pauseApp() {
-        // System.out.println("DummyMIDlet paused");
+        // IMPL_NOTE: System.out.println("DummyMIDlet paused");
     }
 
     public void destroyApp(boolean unconditional)
         throws MIDletStateChangeException {
 	midlet = null;
-        // System.out.println("DummyMIDlet destroyed");
+        // IMPL_NOTE: System.out.println("DummyMIDlet destroyed");
     }
 }

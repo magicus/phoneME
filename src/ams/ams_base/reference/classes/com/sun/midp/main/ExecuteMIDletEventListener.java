@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -25,8 +26,6 @@
 
 package com.sun.midp.main;
 
-import java.io.IOException;
-
 import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.Event;
 import com.sun.midp.events.NativeEvent;
@@ -38,14 +37,13 @@ import com.sun.midp.i18n.ResourceConstants;
 
 import com.sun.midp.lcdui.DisplayEventHandler;
 
-import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
-/** 
- * Handles execute MIDlet events. 
+/**
+ * Handles execute MIDlet events.
  */
 class ExecuteMIDletEventListener implements EventListener, Runnable {
     /** An internal security token. */
@@ -56,10 +54,10 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
 
     /** External app ID of an installed suite to execute. */
     private int externalAppId;
-    
+
     /** ID of an installed suite to execute. */
-    private String id;
-    
+    private int id;
+
     /** MIDlet class name of MIDlet to invoke. */
     private String midlet;
 
@@ -85,7 +83,7 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
      *
      */
     static void startListening(SecurityToken token,
-        DisplayEventHandler theDisplayEventHandler, 
+        DisplayEventHandler theDisplayEventHandler,
         EventQueue eventQueue) {
         classSecurityToken = token;
         displayEventHandler = theDisplayEventHandler;
@@ -102,7 +100,7 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
     /**
      * Initialize an ExecuteMIDletEventListener with arguments to execute.
      *
-     * 
+     *
      * @param externalAppId ID of MIDlet to invoke, given by an external
      *                      application manager
      * @param id ID of an installed suite
@@ -115,7 +113,7 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
      * @param arg2 if not null, this parameter will be available to the
      *             MIDlet as application property arg-2
      */
-    private ExecuteMIDletEventListener(int externalAppId, String id,
+    private ExecuteMIDletEventListener(int externalAppId, int id,
             String midlet, String displayName, String arg0, String arg1,
             String arg2) {
         this.externalAppId = externalAppId;
@@ -130,12 +128,12 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
     /**
      * Preprocess an event that is being posted to the event queue.
      * This implementation of the method always return true.
-     * 
+     *
      * @param event event being posted
      *
      * @param waitingEvent previous event of this type waiting in the
      *     queue to be processed
-     * 
+     *
      * @return true to allow the post to continue
      */
     public boolean preprocess(Event event, Event waitingEvent) {
@@ -165,14 +163,14 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
         try {
             // The execute MIDlet method may block
 	    NativeEvent event = (NativeEvent)genericEvent;
-	    ExecuteMIDletEventListener runnable = 
+	    ExecuteMIDletEventListener runnable =
 		new ExecuteMIDletEventListener(event.intParam1,
+					       event.intParam2,
 					       event.stringParam1,
 					       event.stringParam2,
 					       event.stringParam3,
 					       event.stringParam4,
-					       event.stringParam5,
-					       event.stringParam6);
+					       event.stringParam5);
             (new Thread(runnable)).start();
 	} catch (Throwable t) {
             Logging.trace(t, "Error creating a new Execute thread");
@@ -184,7 +182,7 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
      */
     public void run() {
         try {
-            MIDletSuiteLoader.executeWithArgs(classSecurityToken,
+            MIDletSuiteUtils.executeWithArgs(classSecurityToken,
                 externalAppId, id, midlet, displayName, arg0, arg1, arg2);
         } catch (Throwable t) {
             if (Logging.TRACE_ENABLED) {
@@ -192,7 +190,7 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
                     "Exception calling MIDletSuiteLoader.execute");
             }
 
-            MIDletSuiteLoader.displayException(displayEventHandler,
+            MIDletSuiteUtils.displayException(displayEventHandler,
                  Resource.getString(
                  ResourceConstants.AMS_MIDLETSUITELDR_CANT_EXE_NEXT_MIDLET) +
                              "\n\n" + t.getMessage());

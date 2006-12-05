@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -25,15 +26,9 @@
 
 package com.sun.midp.appmanager;
 
-import javax.microedition.io.*;
-import java.util.*;
-import java.io.*;
-
 import javax.microedition.midlet.*;
 
 import javax.microedition.lcdui.*;
-
-import javax.microedition.rms.*;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
@@ -46,13 +41,7 @@ import com.sun.midp.installer.*;
 
 import com.sun.midp.midletsuite.*;
 
-import com.sun.midp.security.*;
-
 import com.sun.midp.main.*;
-
-import javax.microedition.io.*;
-
-import com.sun.midp.io.j2me.storage.*;
 
 import com.sun.midp.io.j2me.push.*;
 
@@ -62,7 +51,7 @@ import com.sun.midp.configurator.Constants;
 /**
  * This is an implementation of the ApplicationManager interface
  * for the MVM mode of the VM running with only one midlet at time.
- * 
+ *
  * Application manager controls midlet life cycle:
  *    - installs, updates and removes midlets/midlet suites
  *    - launches and terminates midlets
@@ -75,7 +64,7 @@ public class SMMManager extends MIDlet
     /** Constant for the discovery application class name. */
     private static final String DISCOVERY_APP =
         "com.sun.midp.installer.DiscoveryApp";
- 
+
     /** Constant for the graphical installer class name. */
     private static final String INSTALLER =
         "com.sun.midp.installer.GraphicalInstaller";
@@ -100,7 +89,7 @@ public class SMMManager extends MIDlet
     private boolean allowMidletLaunch = true;
 
     /** ID of the suite to run. */
-    String suiteId;
+    int suiteId;
 
     /** Class name of the MIDlet to run. */
     String className;
@@ -138,14 +127,14 @@ public class SMMManager extends MIDlet
 
         /*
          * Listen to the MIDlet proxy list.
-         * this allows us to notify the Application Selector 
+         * this allows us to notify the Application Selector
          * of any changes whenever switch back to the AMS.
          */
         midletProxyList = MIDletProxyList.getMIDletProxyList();
         midletProxyList.addListener(this);
         midletProxyList.setDisplayController(
-            new SMMDisplayController(midletProxyList, "internal",
-                this.getClass().getName()));
+            new SMMDisplayController(midletProxyList,
+                MIDletSuite.INTERNAL_SUITE_ID, this.getClass().getName()));
 
         PushRegistryImpl.setMvmSingleMidletMode();
 
@@ -183,14 +172,15 @@ public class SMMManager extends MIDlet
      * destroys itself when requested.
      */
     public void destroyApp(boolean unconditional) {
-        GraphicalInstaller.saveSettings(null, "");
+        // IMPL_NOTE: remove this:
+        GraphicalInstaller.saveSettings(null, MIDletSuite.UNUSED_SUITE_ID);
 
         // Ending this MIDlet ends all others.
         midletProxyList.shutdown();
     }
 
     // ==============================================================
-    // ------ Implementation of the MIDletProxyListListener interface 
+    // ------ Implementation of the MIDletProxyListListener interface
 
     /**
      * Called when a MIDlet is added to the list.
@@ -228,7 +218,7 @@ public class SMMManager extends MIDlet
      * @param className Class name of the MIDlet
      * @param error start error code
      */
-    public void midletStartError(int externalAppId, String suiteId,
+    public void midletStartError(int externalAppId, int suiteId,
                                  String className, int error) {
         allowMidletLaunch = true;
         appManagerUI.notifyMidletStartError(suiteId, className, error);
@@ -244,7 +234,7 @@ public class SMMManager extends MIDlet
 
             appIsolate.waitForExit();
         } finally {
-            suiteId = null;
+            suiteId = MIDletSuite.UNUSED_SUITE_ID;
             className = null;
             displayName = null;
             arg0 = null;
@@ -257,17 +247,17 @@ public class SMMManager extends MIDlet
     // ===================================================================
     // ---- Implementation of the ApplicationManager interface ------------
 
-    /** 
-     * Discover and install a suite. 
+    /**
+     * Discover and install a suite.
      */
     public void installSuite() {
         try {
-            runMidlet("internal", DISCOVERY_APP,
+            runMidlet(MIDletSuite.INTERNAL_SUITE_ID, DISCOVERY_APP,
                 Resource.getString(ResourceConstants.INSTALL_APPLICATION));
-            
+
         } catch (Exception ex) {
             displayError.showErrorAlert(Resource.getString(
-                                  ResourceConstants.INSTALL_APPLICATION), 
+                                  ResourceConstants.INSTALL_APPLICATION),
                         ex, null, null);
         }
     }
@@ -275,7 +265,7 @@ public class SMMManager extends MIDlet
     /** Launch the CA manager. */
     public void launchCaManager() {
         try {
-            MIDletSuiteLoader.execute("internal", CA_MANAGER,
+            MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID, CA_MANAGER,
                 Resource.getString(ResourceConstants.CA_MANAGER_APP));
         } catch (Exception ex) {
             displayError.showErrorAlert(Resource.getString(
@@ -299,9 +289,9 @@ public class SMMManager extends MIDlet
         try {
             // Create an instance of the MIDlet class
             // All other initialization happens in MIDlet constructor
-            runMidlet(suiteInfo.id, midletToRun,
+            runMidlet(suiteInfo.suiteId, midletToRun,
                       suiteInfo.displayName);
-            
+
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
         }
@@ -314,9 +304,9 @@ public class SMMManager extends MIDlet
      */
     public void updateSuite(MIDletSuiteInfo suiteInfo) {
         try {
-            runMidlet("internal", INSTALLER,
-                      null, "U", suiteInfo.id, null);
-            
+            runMidlet(MIDletSuite.INTERNAL_SUITE_ID, INSTALLER,
+                      null, "U", String.valueOf(suiteInfo.suiteId), null);
+
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
         }
@@ -330,9 +320,9 @@ public class SMMManager extends MIDlet
     }
 
     /**
-     * Bring the midlet with the passed in midlet suite info to the 
+     * Bring the midlet with the passed in midlet suite info to the
      * foreground.
-     * 
+     *
      * @param suiteInfo information for the midlet to be put to foreground
      */
     public void moveToForeground(MIDletSuiteInfo suiteInfo) {}
@@ -340,7 +330,7 @@ public class SMMManager extends MIDlet
 
     /**
      * Exit the midlet with the passed in midlet suite info.
-     * 
+     *
      * @param suiteInfo information for the midlet to be terminated
      */
     public void exitMidlet(MIDletSuiteInfo suiteInfo) {}
@@ -356,7 +346,7 @@ public class SMMManager extends MIDlet
      * @param midlet class name of MIDlet to invoke
      * @param displayName name to display to the user
      */
-    private void runMidlet(String id, String midlet, String displayName) {
+    private void runMidlet(int id, String midlet, String displayName) {
         runMidlet(id, midlet, displayName, null, null, null);
     }
 
@@ -373,7 +363,7 @@ public class SMMManager extends MIDlet
      * @param arg2 if not null, this parameter will be available to the
      *             MIDlet as application property arg-2
      */
-    private void runMidlet(String id, String midlet,
+    private void runMidlet(int id, String midlet,
             String displayName, String arg0, String arg1, String arg2) {
         if (!allowMidletLaunch) {
             return;

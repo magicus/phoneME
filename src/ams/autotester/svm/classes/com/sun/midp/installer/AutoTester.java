@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -33,12 +34,14 @@ import com.sun.midp.i18n.Resource;
 
 import com.sun.midp.i18n.ResourceConstants;
 
-import com.sun.midp.main.MIDletSuiteLoader;
+import com.sun.midp.main.MIDletSuiteUtils;
 
 import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
+import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -75,7 +78,7 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
     /** Record ID of loopCount */
     private static final int LOOP_COUNT_RECORD_ID = 4;
     /** ID of installed test suite. */
-    String suiteID;
+    int suiteId;
 
     /**
      * Create and initialize a new auto tester MIDlet.
@@ -137,7 +140,7 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
             if (data != null && data.length > 0) {
                 bas = new ByteArrayInputStream(data);
                 dis = new DataInputStream(bas);
-                suiteID = dis.readUTF();
+                suiteId = dis.readInt();
             }
 
             data = settings.getRecord(LOOP_COUNT_RECORD_ID);
@@ -214,7 +217,7 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
             }
 
             bas.reset();
-            dos.writeUTF(suiteID);
+            dos.writeInt(suiteId);
             data = bas.toByteArray();
 
             if (newStore) {
@@ -274,16 +277,16 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
         if (loopCount != 0) {
             try {
                 // force an overwrite and remove the RMS data
-                suiteID = inp_installer.installJad(inp_url, true, true,
-						   installListener);
+                suiteId = inp_installer.installJad(inp_url,
+                    Constants.INTERNAL_STORAGE_ID, true, true, installListener);
 
-                midletInfo = getFirstMIDletOfSuite(suiteID,
+                midletInfo = getFirstMIDletOfSuite(suiteId,
                         midletSuiteStorage);
-                MIDletSuiteLoader.execute(suiteID,
+                MIDletSuiteUtils.execute(suiteId,
                         midletInfo.classname, midletInfo.name);
 
                 // We want auto tester MIDlet to run after the test is run.
-                MIDletSuiteLoader.setLastSuiteToRun(
+                MIDletSuiteUtils.setLastSuiteToRun(
                     MIDletStateHandler.getMidletStateHandler().
                     getMIDletSuite().getID(),
                     getClass().getName());
@@ -295,13 +298,14 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
                 notifyDestroyed();
                 return;
             } catch (Throwable t) {
-                handleInstallerException(suiteID, t);
+                handleInstallerException(suiteId, t);
             }
         }
 
-        if (midletSuiteStorage != null && suiteID != null) {
+        if (midletSuiteStorage != null &&
+                suiteId != MIDletSuite.UNUSED_SUITE_ID) {
             try {
-                midletSuiteStorage.remove(suiteID);
+                midletSuiteStorage.remove(suiteId);
             } catch (Throwable ex) {
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                     Logging.report(Logging.WARNING, LogChannels.LC_AMS,

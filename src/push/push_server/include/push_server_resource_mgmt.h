@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -37,7 +38,7 @@
  * 
  * @brief Push server functionality for resource-providing libraries.
  *
- * ##include &lt;push_server_resource_mgmt.h&gt;
+ * ##include &lt;&gt;
  *
  * @{
  */

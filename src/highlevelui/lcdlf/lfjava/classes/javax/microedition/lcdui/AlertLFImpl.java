@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -44,7 +45,7 @@ import com.sun.midp.chameleon.layers.AlertLayer;
  * See DisplayableLF for naming convention.
  */
 class AlertLFImpl extends ScreenLFImpl implements AlertLF {
-    
+
     /**
      * Creates an AlertLF for the passed in Alert instance.
      * @param a The Alert associated with this look &amp; feel
@@ -181,18 +182,6 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
     }
 
     /**
-     * Called by Alert when dismiss command is selected.
-     *
-     * @param returnScreen The Displayable to return to after this
-     *                     Alert is dismissed
-     */
-    public void lDismiss(Displayable returnScreen) {
-        if (currentDisplay != null && currentDisplay.isShown(this)) {
-            currentDisplay.clearAlert(returnScreen);
-        }
-    }
-
-    /**
      * This method is responsible for:
      * (1) Re-layout the contents
      * (2) setup the viewable/scroll position
@@ -211,6 +200,17 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
         }
         
         setVerticalScroll();
+    }
+
+    /**
+     * Notify return screen about screen size change
+     */
+    public void uCallSizeChanged(int w, int h) {
+        super.uCallSizeChanged(w,h);
+        Displayable returnScreen = alert.getReturnScreen();
+        if (returnScreen != null) {
+            (returnScreen.displayableLF).uCallSizeChanged(w,h);
+        }
     }
 
     /**
@@ -361,11 +361,8 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
         }
 
         g.translate(titlex, titley);
-        Text.paint(g, title, AlertSkin.FONT_TITLE, 
-                   AlertSkin.COLOR_TITLE, 0, 
-                   titlew, AlertSkin.FONT_TITLE.getHeight(), 0,
-                   Text.TRUNCATE, null);
-                   
+        Text.drawTruncString(g, title,
+                AlertSkin.FONT_TITLE, AlertSkin.COLOR_TITLE, titlew);
         g.translate(-titlex, -titley);
     }
     
@@ -713,6 +710,24 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
      */
     public int getDisplayableWidth() {
         return AlertSkin.WIDTH;
+    }
+
+    /**
+     * The maximum amount of scroll needed to see all the contents
+     * @return get the maximum scroll amount
+     */
+    protected int getMaxScroll() {
+        return maxScroll;
+    }
+    
+    /**
+     * This is the number of pixels left from the previous "page"
+     * when a page up or down occurs. The same value is used for line by
+     * line scrolling 
+     * @return the number of pixels. 
+     */
+    protected int getScrollAmount() {
+        return AlertSkin.SCROLL_AMOUNT;
     }
 
     

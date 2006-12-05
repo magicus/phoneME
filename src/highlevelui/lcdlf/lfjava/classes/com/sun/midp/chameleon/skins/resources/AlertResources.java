@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -56,17 +57,26 @@ public class AlertResources {
                 SkinPropertiesIDs.ALERT_HEIGHT);
         if (AlertSkin.HEIGHT == -1) {
             AlertSkin.HEIGHT = (int)(.75 * ScreenSkin.HEIGHT);
-        }            
-        AlertSkin.ALIGN_X = SkinResources.getInt(
+        }
+
+        int alignX = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_ALIGN_X);
-        AlertSkin.ALIGN_Y = SkinResources.getInt(
+        AlertSkin.ALIGN_X = SkinResources.resourceConstantsToGraphics(alignX);
+
+        int alignY = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_ALIGN_Y);
+        AlertSkin.ALIGN_Y = SkinResources.resourceConstantsToGraphics(alignY);
+
         AlertSkin.MARGIN_H = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_MARGIN_H);
         AlertSkin.MARGIN_V = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_MARGIN_V);
-        AlertSkin.TITLE_ALIGN = SkinResources.getInt(
+
+        int titleAlign = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_TITLE_ALIGN);
+        AlertSkin.TITLE_ALIGN = SkinResources.resourceConstantsToGraphics(
+                titleAlign);
+
         AlertSkin.TITLE_HEIGHT = SkinResources.getInt(
                 SkinPropertiesIDs.ALERT_TITLE_HEIGHT);
         AlertSkin.TITLE_MARGIN = SkinResources.getInt(

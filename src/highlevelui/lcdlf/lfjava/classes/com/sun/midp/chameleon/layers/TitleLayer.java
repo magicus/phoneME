@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -30,7 +31,6 @@ import com.sun.midp.chameleon.CLayer;
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.TitleSkin;
-import com.sun.midp.util.ResourceHandler;
 
 /**
  * A basic "title" layer. This layer holds a screens title information.
@@ -49,7 +49,6 @@ public class TitleLayer extends CLayer {
      */
     public TitleLayer() {
         super(TitleSkin.IMAGE_BG, TitleSkin.COLOR_BG);
-        this.layerID = "TitleLayer";
     }
 
     /**
@@ -60,11 +59,20 @@ public class TitleLayer extends CLayer {
     protected void initialize() {
         super.initialize();
 
+       setAnchor();
+    }
+
+    /**
+     * Sets the anchor constraints for rendering operation.
+     */
+    public void setAnchor() {
         bounds[X] = 0;
         bounds[Y] = 0;
         bounds[W] = ScreenSkin.WIDTH;
         bounds[H] = TitleSkin.HEIGHT;
+        titlex = 0;
     }
+
 
     /**
      * Set the title of this title layer.
@@ -136,47 +144,19 @@ public class TitleLayer extends CLayer {
         }
 
         g.translate(titlex, titley);
-        if (TitleSkin.COLOR_FG_SHD != TitleSkin.COLOR_FG) {
-            switch (TitleSkin.TEXT_SHD_ALIGN) {
-                case (Graphics.TOP | Graphics.LEFT):
-                    g.translate(-1, -1);
-                    Text.paint(g, title, TitleSkin.FONT, 
-                               TitleSkin.COLOR_FG_SHD, 0, 
-                               titlew, titleh, 0,
-                               Text.TRUNCATE, null);
-                    g.translate(1, 1);
-                    break;
-                case (Graphics.TOP | Graphics.RIGHT):
-                    g.translate(1, -1);
-                    Text.paint(g, title, TitleSkin.FONT, 
-                               TitleSkin.COLOR_FG_SHD, 0, 
-                               titlew, titleh, 0,
-                               Text.TRUNCATE, null);
-                    g.translate(-1, 1);
-                    break;
-                case (Graphics.BOTTOM | Graphics.LEFT):
-                    g.translate(-1, 1);
-                    Text.paint(g, title, TitleSkin.FONT, 
-                               TitleSkin.COLOR_FG_SHD, 0, 
-                               titlew, titleh, 0,
-                               Text.TRUNCATE, null);
-                    g.translate(1, -1);
-                    break;
-                case (Graphics.BOTTOM | Graphics.RIGHT):
-                default:
-                    g.translate(1, 1);
-                    Text.paint(g, title, TitleSkin.FONT, 
-                               TitleSkin.COLOR_FG_SHD, 0, 
-                               titlew, titleh, 0,
-                               Text.TRUNCATE, null);
-                    g.translate(-1, -1);
-                    break;                    
-            }
-        }
-        Text.paint(g, title, TitleSkin.FONT, 
-                   TitleSkin.COLOR_FG, 0, 
-                   titlew, titleh, 0,
-                   Text.TRUNCATE, null);
+        Text.drawTruncStringShadowed(g, title, TitleSkin.FONT, TitleSkin.COLOR_FG,
+                TitleSkin.COLOR_FG_SHD, TitleSkin.TEXT_SHD_ALIGN,
+                titlew);
         g.translate(-titlex, -titley);
     }
+
+    /**
+     * Update bounds of layer
+     * @param layers - current layer can be dependant on this parameter
+     */
+    public void update(CLayer[] layers) {
+        super.update(layers);
+        setAnchor();
+    }
+
 }

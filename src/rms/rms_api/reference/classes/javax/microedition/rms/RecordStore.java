@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -34,6 +35,7 @@ import com.sun.midp.rms.RecordStoreImpl;
 
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.ImplicitlyTrustedClass;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -125,7 +127,7 @@ public class RecordStore {
     private String recordStoreName;
 
     /** unique id for suite that owns this record store */
-    private String suiteID;
+    private int suiteId;
 
     /** number of open instances of this record store */
     private int opencount;
@@ -134,10 +136,18 @@ public class RecordStore {
     private java.util.Vector recordListener;
 
     /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
+    /**
      * The security token necessary to use RecordStoreImpl.
      * This is initialized in a static initialization block.
      */
-    private static SecurityToken classSecurityToken;
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /*
      * RecordStore Constructors
@@ -149,13 +159,13 @@ public class RecordStore {
      * is not declared (as private scope), Javadoc (and Java)
      * will assume a public constructor.
      *
-     * @param suiteID the ID of the suite that owns this record store
+     * @param suiteId the ID of the suite that owns this record store
      * @param recordStoreName the MIDlet suite unique name for the
      *          record store, consisting of between one and 32 Unicode
      *          characters inclusive.
      */
-    private RecordStore(String suiteID, String recordStoreName) {
-	this.suiteID = suiteID;
+    private RecordStore(int suiteId, String recordStoreName) {
+	this.suiteId = suiteId;
 	this.recordStoreName = recordStoreName;
         recordListener = new java.util.Vector(3);
     }
@@ -179,8 +189,8 @@ public class RecordStore {
      *          could not be found
      */
     public static void deleteRecordStore(String recordStoreName)
-        throws RecordStoreException, RecordStoreNotFoundException  {
-        String id = MIDletStateHandler.getMidletStateHandler().
+            throws RecordStoreException, RecordStoreNotFoundException  {
+        int id = MIDletStateHandler.getMidletStateHandler().
             getMIDletSuite().getID();
 
         if (recordStoreName == null || recordStoreName.length() == 0) {
@@ -193,7 +203,7 @@ public class RecordStore {
 	    int size = openRecordStores.size();
 	    for (int n = 0; n < size; n++) {
                 db = (RecordStore)openRecordStores.elementAt(n);
-                if (db.suiteID.equals(id) &&
+                if (db.suiteId == id &&
                         db.recordStoreName.equals(recordStoreName)) {
                     // cannot delete an open record store
                     throw new RecordStoreException("deleteRecordStore error:"
@@ -236,7 +246,7 @@ public class RecordStore {
         throws RecordStoreException, RecordStoreFullException,
         RecordStoreNotFoundException {
 
-        String id = MIDletStateHandler.getMidletStateHandler().
+        int id = MIDletStateHandler.getMidletStateHandler().
             getMIDletSuite().getID();
 
 	return doOpen(id, recordStoreName, createIfNecessary);
@@ -324,7 +334,7 @@ public class RecordStore {
                 }
 
                 try {
-                    String id = MIDletStateHandler.getMidletStateHandler().
+                    int id = MIDletStateHandler.getMidletStateHandler().
                         getMIDletSuite().getID();
                     RecordStoreImpl.deleteRecordStore(
                         classSecurityToken, id, recordStoreName);
@@ -399,9 +409,9 @@ public class RecordStore {
                                               String suiteName)
         throws RecordStoreException, RecordStoreNotFoundException {
 
-        String currentID = MIDletStateHandler.getMidletStateHandler().
+        int currentID = MIDletStateHandler.getMidletStateHandler().
             getMIDletSuite().getID();
-        String id;
+        int id;
         RecordStore recordStore;
 
         if (vendorName == null || suiteName == null) {
@@ -416,12 +426,12 @@ public class RecordStore {
 
         id = MIDletSuiteStorage.getSuiteID(vendorName, suiteName);
 
-        if (id == null) {
-          throw new RecordStoreNotFoundException();
+        if (id == MIDletSuite.UNUSED_SUITE_ID) {
+            throw new RecordStoreNotFoundException();
         }
 
         recordStore = doOpen(id, recordStoreName, false);
-        if ((!currentID.equals(id)) &&
+        if ((currentID != id) &&
                 (recordStore.peer.getAuthMode() == AUTHMODE_PRIVATE)) {
             recordStore.closeRecordStore();
             throw new SecurityException();
@@ -1059,10 +1069,10 @@ public class RecordStore {
      * <code>false</code> otherwise
      */
     private boolean isRecordStoreOwner() {
-        String currentID = MIDletStateHandler.getMidletStateHandler().
+        int currentId = MIDletStateHandler.getMidletStateHandler().
             getMIDletSuite().getID();
 
-        return suiteID.equals(currentID);
+        return (suiteId == currentId);
     }
 
     /**
@@ -1134,7 +1144,7 @@ public class RecordStore {
      * the record store is already open by a MIDlet in the MIDlet suite,
      * this method returns a reference to the same RecordStoreImpl object.
      *
-     * @param suiteID ID of the MIDlet suite that owns the record store
+     * @param suiteId ID of the MIDlet suite that owns the record store
      * @param recordStoreName the MIDlet suite unique name for the
      *          record store, consisting of between one and 32 Unicode
      *          characters inclusive.
@@ -1152,7 +1162,7 @@ public class RecordStore {
      * @exception IllegalArgumentException if
      *          recordStoreName is invalid
      */
-    private static RecordStore doOpen(String suiteID,
+    private static RecordStore doOpen(int suiteId,
 				      String recordStoreName,
 				      boolean createIfNecessary)
         throws RecordStoreException, RecordStoreFullException,
@@ -1176,7 +1186,7 @@ public class RecordStore {
 	    int size = openRecordStores.size();
 	    for (int n = 0; n < size; n++) {
 		recordStore = (RecordStore)openRecordStores.elementAt(n);
-		if (recordStore.suiteID.equals(suiteID) &&
+		if (recordStore.suiteId == suiteId &&
 		    recordStore.recordStoreName.equals(recordStoreName)) {
 		    recordStore.opencount++;  // increment the open count
 		    return recordStore;  // return ref to cached record store
@@ -1189,9 +1199,9 @@ public class RecordStore {
 	     * does not exists, a RecordStoreNotFoundException is
 	     * thrown.
 	     */
-	    recordStore = new RecordStore(suiteID, recordStoreName);
+	    recordStore = new RecordStore(suiteId, recordStoreName);
 	    recordStore.peer = RecordStoreImpl.openRecordStore(
-                classSecurityToken, suiteID, recordStoreName,
+                classSecurityToken, suiteId, recordStoreName,
                 createIfNecessary);
 
 	    /*
@@ -1230,23 +1240,14 @@ public class RecordStore {
         RecordStoreNotFoundException {
 
         RecordStore recordStore;
-        String suiteID = MIDletStateHandler.getMidletStateHandler().
+        int suiteId = MIDletStateHandler.getMidletStateHandler().
             getMIDletSuite().getID();
 
-        recordStore = new RecordStore(suiteID, recordStoreName);
+        recordStore = new RecordStore(suiteId, recordStoreName);
         recordStore.peer = RecordStoreImpl.openRecordStore(
-                           classSecurityToken, suiteID, recordStoreName,
+                           classSecurityToken, suiteId, recordStoreName,
                            false);
         recordStore.opencount = 1;
         return recordStore;
-    }
-
-    /**
-     * Initializes classSecurityToken.  This class must be initialized at a
-     * carefully prescribed time during system initialization.  See
-     * the SecurityInitializer class.
-     */
-    static {
-        classSecurityToken = SecurityInitializer.getSecurityToken();
     }
 }

@@ -1,4 +1,5 @@
 #
+#  
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -52,6 +53,8 @@ LIBS		+= user32.lib gdi32.lib kernel32.lib winmm.lib wsock32.lib
 LD_FLAGS 	+= -nologo -subsystem:console -machine:i386 -MAP \
 		  -incremental:no -verbose:LIB -nodefaultlib:libc.lib
 
+CREATE_LIB      = lib
+LIB_OUTPUT      = /OUT:
 
 ASM		= "$(_MASM_DIR$(MASM_DIR))$(MASM_DIR)/ml"
 ASM_FLAGS	+= /nologo /c /coff /Zi

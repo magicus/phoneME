@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -171,6 +172,23 @@ Java_javax_microedition_lcdui_FormLFImpl_getScrollPosition0() {
   }
   
   KNI_ReturnInt(pos);
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_javax_microedition_lcdui_FormLFImpl_setScrollPosition0() {
+
+  int pos;
+  MidpError err;
+
+  pos = KNI_GetParameterAsInt(1);
+  
+  err = lfpport_form_set_scroll_position(pos);
+  
+  if (err != KNI_OK) {
+    KNI_ThrowNew(midpOutOfMemoryError, NULL);
+  }
+  
+  KNI_ReturnVoid();
 }
 
 /*  private static native int getViewportHeight0 ( ) ; */

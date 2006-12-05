@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -79,6 +80,7 @@ public class UpgradeL10N {
         pl("<?xml version=\"1.0\" encoding=\"" + outEncoding + "\"?>");
         pl("<!DOCTYPE configuration SYSTEM \"../configuration.dtd\">");
         pl("<!--");
+        pl("         ");
         pl("");
         pl("  Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.");
         pl("  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");

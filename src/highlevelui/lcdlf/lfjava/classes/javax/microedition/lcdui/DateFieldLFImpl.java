@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -586,7 +587,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
     /**
      * Flag to signal the clock representation uses AM and PM notation.
      * This is dummy right now, and always set to true since there is
-     * no way to find out from the system if the clock is using a 
+     * not easy to find out from the system if the clock is using a 
      * 12-hour or 24-hour mode.
      */
     static final boolean CLOCK_USES_AM_PM = true;

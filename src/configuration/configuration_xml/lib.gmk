@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -85,7 +86,9 @@ INT_XML_FILES += \
 	$(INT_COMMON_XML_DIR)/properties.xml \
 	$(INT_COMMON_XML_DIR)/i18n_constants.xml \
 	$(INT_COMMON_XML_DIR)/l10n/en-US.xml \
-	$(INT_COMMON_XML_DIR)/chameleon/skin_constants.xml
+	$(INT_COMMON_XML_DIR)/chameleon/skin_constants.xml \
+	$(INT_COMMON_XML_DIR)/ams/suitestore_constants.xml \
+	$(INT_COMMON_XML_DIR)/storage_constants.xml
 
 # Project specific xml files
 INT_XML_FILES += \
@@ -210,6 +213,12 @@ GENERATE_CONSTANTS_H = \
 	-xsl $(INT_XSL_DIR)/constantsNative.xsl \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/midp_constants_data.h)`
 
+# transformation for generating .c file with String constants
+GENERATE_CONSTANTS_C = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/stringConstantsNative.xsl \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/midp_constants_data.c)`
+
 # transformation for generating Java files with constants
 INT_PACKAGES_NAMES = $(shell cat $(INT_PACKAGES_LIST_FILE))
 GENERATE_CONSTANTS_JAVA = \
@@ -251,6 +260,7 @@ define generate_configuration
 	@echo " ... generating configuration files"
 	@$(INT_INVOKE_TRANSFORMER) \
 		$(GENERATE_CONSTANTS_H) \
+		$(GENERATE_CONSTANTS_C) \
 		$(GENERATE_CONSTANTS_JAVA) \
 		$(GENERATE_PROPERTIES_CONFIGS) \
 		$(GENERATE_PROPERTIES_H) \
@@ -264,6 +274,16 @@ endef
 # 
 INT_CONFIGURATION_EXTRA_INCLUDES += \
 -I$(GENERATED_DIR) 
+
+# Native files
+#
+INT_CONFIGURATION_NATIVE_FILES += \
+	midp_constants_data.c
+
+$(OBJ_DIR)/midp_constants_data.o: $(GENERATED_DIR)/midp_constants_data.c
+	@echo " ... $@" $(LOG)
+	@echo +++ $(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG_ONLY)
+	@$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)	
 
 # Publish the variables to global Makefile
 #
@@ -295,4 +315,3 @@ SUBSYSTEM_CONFIGURATION_DEP_FILES += \
 	$(INT_XSL_DIR)/propertiesConfig.xsl
 SUBSYSTEM_CONFIGURATION_DEP_FILES += $(INT_FILES_LIST)
 SUBSYSTEM_CONFIGURATION_DEP_FILES += $(INT_XML_FILES)
-

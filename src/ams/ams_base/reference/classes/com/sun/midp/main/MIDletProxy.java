@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -25,11 +26,11 @@
 
 package com.sun.midp.main;
 
-import com.sun.midp.events.*;
-
 import com.sun.midp.midlet.MIDletEventProducer;
+import com.sun.midp.suspend.SuspendDependency;
 
 import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Represents the state of a running MIDlet and its Display so that objects
@@ -38,7 +39,7 @@ import java.util.Timer;
  * This class also provides methods for asynchronously changing a MIDlet's
  * state.
  */
-public class MIDletProxy {
+public class MIDletProxy implements SuspendDependency {
 
     /** Constant for active state of a MIDlet. */
     public static final int MIDLET_ACTIVE = 0;
@@ -62,7 +63,7 @@ public class MIDletProxy {
     private int displayId;
 
     /** ID of the suite the MIDlet belongs to. */
-    private String suiteId;
+    private int suiteId;
 
     /** Class name of the MIDlet. */
     private String className;
@@ -108,7 +109,7 @@ public class MIDletProxy {
      */
     static void initClass(
         MIDletEventProducer theMIDletEventProducer) {
-        
+
         midletEventProducer = theMIDletEventProducer;
     }
 
@@ -125,7 +126,7 @@ public class MIDletProxy {
      * @param  theMidletState MIDlet lifecycle state.
      */
     MIDletProxy(MIDletProxyList theParentList, int theExternalAppId,
-         int theIsolateId, int theDisplayId, String theSuiteId,
+         int theIsolateId, int theDisplayId, int theSuiteId,
          String theClassName, String theDisplayName, int theMidletState) {
 
         parent = theParentList;
@@ -171,7 +172,7 @@ public class MIDletProxy {
      *
      * @return ID of the MIDlet's suite
      */
-    public String getSuiteId() {
+    public int getSuiteId() {
         return suiteId;
     }
 
@@ -334,6 +335,15 @@ public class MIDletProxy {
     }
 
     /**
+     * Terminates ther MIDlet if it is neither paused nor destroyed.
+     */
+    public void terminateNotPausedMidlet() {
+        if (midletState != MIDLET_DESTROYED && midletState != MIDLET_PAUSED) {
+            MIDletProxyUtils.terminateMIDletIsolate(this, parent);
+        }
+    }
+
+    /**
      * Asynchronously change the MIDlet's state to destroyed.
      *
      * This method does NOT change the state in the proxy, but
@@ -348,7 +358,7 @@ public class MIDletProxy {
                 return;
             }
 
-            new MIDletDestroyTimer(this, parent);
+            MIDletDestroyTimer.start(this, parent);
 
             midletEventProducer.sendMIDletDestroyEvent(isolateId, displayId);
         }
@@ -419,19 +429,30 @@ public class MIDletProxy {
  * expires.  The timer will not work in SVM mode.
  */
 class MIDletDestroyTimer {
+    /** Timeout to let MIDlet destroy itself. */
+    private static final int TIMEOUT =
+        1000 * Configuration.getIntProperty("destoryMIDletTimeout", 5);
 
     /**
-     * Constructor to create a MIDletDestroyTimer
+     * Starts timer for the specified MIDlet (proxy) .
      *
-     * @param mp MIDletProxy
-     * @param mpl MIDletProxyList
+     * @param mp MIDletProxy to terminate if not destroyed in time
+     * @param mpl the MIDletProxyList
      */
-    public MIDletDestroyTimer(MIDletProxy mp, MIDletProxyList mpl) {
-        Timer t = new Timer();
-        mp.setTimer(t);
-        TerminateMIDlet ti = new TerminateMIDlet(mp, mpl);
-        int timeout =
-            Configuration.getIntProperty("destoryMIDletTimeout", 5);
-        t.schedule(ti, timeout * 1000);
+    static void start(final MIDletProxy mp, final MIDletProxyList mpl) {
+        Timer timer = new Timer();
+        mp.setTimer(timer);
+
+        TimerTask task = new TimerTask() {
+            /** Terminates MIDlet isolate and updates the proxy list. */
+            public void run() {
+                if (mp.getTimer() != null) {
+                    MIDletProxyUtils.terminateMIDletIsolate(mp, mpl);
+                }
+                cancel();
+            }
+        };
+
+        timer.schedule(task, TIMEOUT);
     }
 }

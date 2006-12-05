@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -375,7 +376,7 @@ public final class OtaNotifier {
      *
      * @param suiteId suite ID of the notification
      */
-    private static native void removeDeleteNotification(String suiteId);
+    private static native void removeDeleteNotification(int suiteId);
 
     /**
      * Adds an element to the install notification list.
@@ -383,7 +384,7 @@ public final class OtaNotifier {
      * @param suiteId suite the notification belongs to
      * @param url url to send the notification to
      */
-    private static native void addInstallNotification(String suiteId,
+    private static native void addInstallNotification(int suiteId,
                                                       String url);
 
     /**
@@ -396,14 +397,14 @@ public final class OtaNotifier {
      * @return true if the notification is found
      */
     private static native boolean getInstallNotificationForRetry(
-        String suiteId, PendingNotification dest);
+        int suiteId, PendingNotification dest);
 
     /**
      * Removes the element from the install notification list.
      *
      * @param suiteId suite ID of the notification
      */
-    private static native void removeInstallNotification(String suiteId);
+    private static native void removeInstallNotification(int suiteId);
 }
 
 /** Executes install reties in the background. */
@@ -442,7 +443,7 @@ final class PendingNotification {
     int retries;
 
     /** Suite this notification is for. */
-    String suiteId;
+    int suiteId;
 
     /** URL to post the notification to. */
     String url;

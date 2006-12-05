@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -38,14 +39,10 @@
 #ifndef _SERIAL_PORT_EXPORT_H_
 #define _SERIAL_PORT_EXPORT_H_
 
-#ifndef __P
-# ifdef __STDC__
-#  define __P(p) p
-# else
-#  define __P(p) ()
-# endif
-#endif /* __P */
-
+#include <pcsl_network.h>
+#include <midpError.h>
+#include <midp_libc_ext.h>
+#include <kni_globals.h>
 #define MAX_NAME_LEN 80
 
 /* COMM options */
@@ -62,16 +59,151 @@
  * of these prototypes)    
  *=======================================================================*/
 
-extern long openPortByNumber __P ((char** ppszError, long port, long baudRate, long options));
-extern long openPortByName __P ((char** ppszError, char* pszDeviceName, long baudRate, long options));
-extern void configurePort __P ((char** ppszError, int hPort, long baudRate, unsigned long options));
+char *getAvailableCommPorts(void);
 
-extern long readFromPort __P ((char** ppszError, long hPort, char* pBuffer, long nNumberOfBytesToRead));
+/**
+ * Open a serial port by system dependent device name.
+ *
+ * @param pszDeviceName device name of the port
+ * @param baudRate baud rate to set the port at
+ * @param options options for the serial port
+ * bit 0: 0 - 1 stop bit, 1 - 2 stop bits 
+ * bit 2-1: 00 - no parity, 01 - odd parity, 10 - even parity 
+ * bit 4: 0 - no auto RTS, 1 - set auto RTS 
+ * bit 5: 0 - no auto CTS, 1 - set auto CTS 
+ * bit 7-6: 01 - 7 bits per symbol, 11 - 8 bits per symbol 
+ * @param pHandle returns the connection handle; it is
+ *        set only when this function returns PCSL_NET_SUCCESS
+ * @param pContext filled by ptr to data for reinvocations
+ *
+ * @return PCSL_NET_SUCCESS for successful read operation;\n 
+ *       PCSL_NET_WOULDBLOCK if the operation would block,\n 
+ *       PCSL_NET_INTERRUPTED for an Interrupted IO Exception,\n
+ *       PCSL_NET_IOERROR for all other errors
+ */
+int openPortByNameStart(char* pszDeviceName, int baudRate,
+    int options, int *pHandle, void **pContext);
 
-extern long writeToPort __P ((char** ppszError, long hPort, char* pBuffer, long nNumberOfBytesToWrite));
+/**
+ * Open a serial port by system dependent device name.
+ *
+ * @param pszDeviceName device name of the port
+ * @param baudRate baud rate to set the port at
+ * @param options options for the serial port
+ * bit 0: 0 - 1 stop bit, 1 - 2 stop bits 
+ * bit 2-1: 00 - no parity, 01 - odd parity, 10 - even parity 
+ * bit 4: 0 - no auto RTS, 1 - set auto RTS 
+ * bit 5: 0 - no auto CTS, 1 - set auto CTS 
+ * bit 7-6: 01 - 7 bits per symbol, 11 - 8 bits per symbol 
+ * @param pHandle returns the connection handle; it is
+ *        set only when this function returns PCSL_NET_SUCCESS
+ * @param context ptr to data saved before sleeping
+ *
+ * @return PCSL_NET_SUCCESS for successful read operation;\n 
+ *       PCSL_NET_WOULDBLOCK if the operation would block,\n 
+ *       PCSL_NET_INTERRUPTED for an Interrupted IO Exception,\n
+ *       PCSL_NET_IOERROR for all other errors
+ */
+int openPortByNameFinish(char* pszDeviceName, int baudRate,
+    int options, int *pHandle, void *context);
 
-extern void closePort __P ((long hPort));
-extern void freePortError __P ((char* pszError));
+/**
+ * Configure a serial port optional parameters.
+ *
+ * @param hPort port number
+ * @param baudRate baudRate rate to set the port at
+ * @param options options for the serial port:
+ * bit 0: 0 - 1 stop bit, 1 - 2 stop bits 
+ * bit 2-1: 00 - no parity, 01 - odd parity, 10 - even parity 
+ * bit 4: 0 - no auto RTS, 1 - set auto RTS 
+ * bit 5: 0 - no auto CTS, 1 - set auto CTS 
+ * bit 7-6: 01 - 7 bits per symbol, 11 - 8 bits per symbol 
+ *
+ * @return PCSL_NET_SUCCESS for successful configure operation;\n 
+ *       PCSL_NET_IOERROR for any error
+ */
+int configurePort(int hPort, int baudRate, unsigned int options);
+
+/**
+ * Read from a serial port.
+ *
+ * @param hPort handle to a native serial port
+ * @param pBuffer I/O buffer
+ * @param nNumberOfBytesToRead length of data
+ * @param pBytesRead returns the number of bytes actually read; it is
+ *        set only when this function returns PCSL_NET_SUCCESS
+ * @param pContext filled by ptr to data for reinvocations
+ *
+ * @return PCSL_NET_SUCCESS for successful read operation;\n 
+ *       PCSL_NET_WOULDBLOCK if the operation would block,\n 
+ *       PCSL_NET_INTERRUPTED for an Interrupted IO Exception,\n
+ *       PCSL_NET_IOERROR for all other errors
+ */
+int readFromPortStart(int hPort, char* pBuffer, 
+    int nNumberOfBytesToRead, int* pBytesRead, void **pContext);
+
+/**
+ * Read from a serial port.
+ *
+ * @param hPort handle to a native serial port
+ * @param pBuffer I/O buffer
+ * @param nNumberOfBytesToRead length of data
+ * @param pBytesRead returns the number of bytes actually read; it is
+ *        set only when this function returns PCSL_NET_SUCCESS
+ * @param context ptr to data saved before sleeping
+ *
+ * @return PCSL_NET_SUCCESS for successful read operation;\n 
+ *       PCSL_NET_WOULDBLOCK if the operation would block,\n 
+ *       PCSL_NET_INTERRUPTED for an Interrupted IO Exception,\n
+ *       PCSL_NET_IOERROR for all other errors
+ */
+int readFromPortFinish(int hPort, char* pBuffer, 
+    int nNumberOfBytesToRead, int* pBytesRead, void *context);
+
+/**
+ * Write to a serial port without blocking.
+ *
+ * @param hPort handle to a native serial port
+ * @param pBuffer I/O buffer
+ * @param nNumberOfBytesToWrite length of data
+ * @param pBytesWritten returns the number of bytes written after
+ *        successful write operation; only set if this function returns
+ *        PCSL_NET_SUCCESS
+ * @param pContext filled by ptr to data for reinvocations
+ *
+ * @return PCSL_NET_SUCCESS for successful write operation;\n 
+ *       PCSL_NET_WOULDBLOCK if the operation would block,\n 
+ *       PCSL_NET_INTERRUPTED for an Interrupted IO Exception\n 
+ *       PCSL_NET_IOERROR for all other errors
+ */
+int writeToPortStart(int hPort, char* pBuffer,
+        int nNumberOfBytesToWrite, int* pBytesWritten, void **pContext);
+
+/**
+ * Write to a serial port without blocking.
+ *
+ * @param hPort handle to a native serial port
+ * @param pBuffer I/O buffer
+ * @param nNumberOfBytesToWrite length of data
+ * @param pBytesWritten returns the number of bytes written after
+ *        successful write operation; only set if this function returns
+ *        PCSL_NET_SUCCESS
+ * @param context ptr to data saved before sleeping
+ *
+ * @return PCSL_NET_SUCCESS for successful write operation;\n 
+ *       PCSL_NET_WOULDBLOCK if the operation would block,\n 
+ *       PCSL_NET_INTERRUPTED for an Interrupted IO Exception\n 
+ *       PCSL_NET_IOERROR for all other errors
+ */
+int writeToPortFinish(int hPort, char* pBuffer,
+        int nNumberOfBytesToWrite, int* pBytesWritten, void *context);
+
+/**
+ * Close a serial port.
+ *
+ * @param hPort handle to a native serial port
+ */
+void closePort(int hPort);
 
 #endif /* _SERIAL_PORT_EXPORT_H_ */
 

@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_choicegroup.h	1.52 06/04/17 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -511,6 +511,17 @@ class ListBody : public QListBox {
  * It's a extended QPushButton with a QPopupMenu.
  */
 class PopupBody : public QPushButton {
+ protected:
+
+  /** button text before truncation */
+  QString longText;
+
+  /** button text, truncated */
+  QString shortText;
+
+  /** button width to track resizing and redo truncation when necessary */
+  int oldWidth;
+
  public:
   /**
    * PopupBody constructor.
@@ -531,6 +542,16 @@ class PopupBody : public QPushButton {
    */
   QSize sizeHint() const;
 
+ /**
+  * Override setText to support text truncation
+  */
+  void setText(const QString & newText);
+
+ /**
+  * Override drawButton to support text truncation
+  */
+ virtual void drawButton( QPainter * p );
+
  protected:
   /**
    * Makes this item have focus, enabling any item-specific commands; in
@@ -543,7 +564,7 @@ class PopupBody : public QPushButton {
   void focusInEvent(QFocusEvent *event);
 
   /**
-   * Override to patch a bug in Qt that shows popup menu at 
+   * Override to patch a feature in Qt that shows popup menu at 
    * (0, 0) if triggered by key press, instead of mouse click.
    *
    * @param keyEvent key event to handle

@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -40,7 +41,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
     /**
      * Singleton <code>ImageDataFactory</code> instance.
      */
-    private static ImageDataFactory imageDataFactory = 
+    private static ImageDataFactory imageDataFactory =
         new ImageDataFactory();
 
     /**
@@ -101,10 +102,10 @@ class ImageDataFactory implements AbstractImageDataFactory {
      * @return the new immutable image
      */
     public ImageData createImmutableCopy(ImageData mutableSource) {
-        ImageData data = new ImageData(mutableSource.getWidth(), 
+        ImageData data = new ImageData(mutableSource.getWidth(),
                                        mutableSource.getHeight(),
                                        false);
-        
+
 
         // Duplicate mutable image contents
         try {
@@ -128,7 +129,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
      * Creates an immutable image from decoded image data obtained from the
      * named resource.  The name parameter is a resource name as defined by
      * {@link Class#getResourceAsStream(String)
-     * Class.getResourceAsStream(name)}.  The rules for resolving resource 
+     * Class.getResourceAsStream(name)}.  The rules for resolving resource
      * names are defined in the
      * <a href="../../../java/lang/package-summary.html">
      * Application Resource Files</a> section of the
@@ -222,26 +223,26 @@ class ImageDataFactory implements AbstractImageDataFactory {
      * @throws IllegalArgumentException if <code>imageData</code> is incorrectly
      * formatted or otherwise cannot be decoded
      */
-    public ImageData createImmutableImageData(byte[] imageBytes, 
-                                              int imageOffset, 
+    public ImageData createImmutableImageData(byte[] imageBytes,
+                                              int imageOffset,
                                               int imageLength) {
         ImageData data = new ImageData();
 
         // width, height and native data will be set below
         try {
-            createImmutableImageDecodeImage(data, imageBytes, imageOffset, 
+            createImmutableImageDecodeImage(data, imageBytes, imageOffset,
                                             imageLength);
         } catch(OutOfMemoryError e) {
             garbageCollectImages(false);
 
             try {
-                createImmutableImageDecodeImage(data, 
-                                                imageBytes, imageOffset, 
+                createImmutableImageDecodeImage(data,
+                                                imageBytes, imageOffset,
                                                 imageLength);
             } catch(OutOfMemoryError e2) {
                 garbageCollectImages(true);
 
-                createImmutableImageDecodeImage(data, imageBytes, imageOffset, 
+                createImmutableImageDecodeImage(data, imageBytes, imageOffset,
                                                 imageLength);
             }
         }
@@ -314,8 +315,8 @@ class ImageDataFactory implements AbstractImageDataFactory {
      *
      */
     public ImageData createImmutableImageData(ImageData dataSource,
-                                              int x, int y, 
-                                              int width, int height, 
+                                              int x, int y,
+                                              int width, int height,
                                               int transform) {
         ImageData dataDest;
 
@@ -327,25 +328,25 @@ class ImageDataFactory implements AbstractImageDataFactory {
 
         // Copy native data from the source region
         try {
-            createImmutableImageDataRegion(dataDest, dataSource, 
-                                           x, y, width, height, 
-                                           transform, 
+            createImmutableImageDataRegion(dataDest, dataSource,
+                                           x, y, width, height,
+                                           transform,
                                            dataSource.isMutable());
         } catch(OutOfMemoryError e) {
             garbageCollectImages(false);
 
             try {
                 createImmutableImageDataRegion(dataDest,
-                                               dataSource, 
-                                               x, y, width, height, 
-                                               transform, 
+                                               dataSource,
+                                               x, y, width, height,
+                                               transform,
                                                dataSource.isMutable());
             } catch(OutOfMemoryError e2) {
                 garbageCollectImages(true);
 
                 createImmutableImageDataRegion(dataDest, dataSource,
-                                               x, y, width, height, 
-                                               transform, 
+                                               x, y, width, height,
+                                               transform,
                                                dataSource.isMutable());
             }
         }
@@ -355,9 +356,9 @@ class ImageDataFactory implements AbstractImageDataFactory {
 
     /**
      * Creates an immutable image from decoded image data obtained from an
-     * <code>InputStream</code>.  This method blocks until all image data has 
-     * been read and decoded.  After this method completes (whether by 
-     * returning or by throwing an exception) the stream is left open and its 
+     * <code>InputStream</code>.  This method blocks until all image data has
+     * been read and decoded.  After this method completes (whether by
+     * returning or by throwing an exception) the stream is left open and its
      * current position is undefined.
      *
      * @param stream the name of the resource containing the image data
@@ -368,7 +369,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
      * cannot be loaded, or if the image data cannot be decoded
      *
      */
-    public ImageData createImmutableImageData(InputStream stream) 
+    public ImageData createImmutableImageData(InputStream stream)
       throws IOException {
         ImageData data = new ImageData();
 
@@ -451,21 +452,21 @@ class ImageDataFactory implements AbstractImageDataFactory {
 
         // create native image data below
         try {
-            createImmutableImageDecodeRGBImage(data, rgb, 
-                                               width, height, 
+            createImmutableImageDecodeRGBImage(data, rgb,
+                                               width, height,
                                                processAlpha);
         } catch(OutOfMemoryError e) {
             garbageCollectImages(false);
 
             try {
-                createImmutableImageDecodeRGBImage(data, rgb, 
-                                                   width, height, 
+                createImmutableImageDecodeRGBImage(data, rgb,
+                                                   width, height,
                                                    processAlpha);
             } catch(OutOfMemoryError e2) {
                 garbageCollectImages(true);
 
-                createImmutableImageDecodeRGBImage(data, rgb, 
-                                                   width, height, 
+                createImmutableImageDecodeRGBImage(data, rgb,
+                                                   width, height,
                                                    processAlpha);
             }
         }
@@ -475,19 +476,19 @@ class ImageDataFactory implements AbstractImageDataFactory {
 
     /**
      * Create a immutable image from romized image data.
-     * 
+     *
      * @param imageDataArrayPtr native pointer to image data as Java int
      * @param imageDataArrayLength length of image data array
      * @return the created image data
      * @throws IllegalArgumentException if the id is invalid
      */
-    public ImageData createImmutableImageData(int imageDataArrayPtr, 
+    public ImageData createImmutableImageData(int imageDataArrayPtr,
             int imageDataArrayLength) {
-        
+
         ImageData data = new ImageData();
-        
+
         // width, height and native image data will be set below
-        if (!loadRomizedImage(data, imageDataArrayPtr, 
+        if (!loadRomizedImage(data, imageDataArrayPtr,
                     imageDataArrayLength)) {
             throw new IllegalArgumentException();
         }
@@ -508,7 +509,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
                                                              String resName) {
         MIDletSuite midletSuite =
             MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-        String suiteId = midletSuite.getID();
+        int suiteId = midletSuite.getID();
 
         try {
             return loadAndCreateImmutableImageDataFromCache0(data,
@@ -518,13 +519,13 @@ class ImageDataFactory implements AbstractImageDataFactory {
 
             try {
                 return loadAndCreateImmutableImageDataFromCache0(data,
-                                                                 suiteId, 
+                                                                 suiteId,
                                                                  resName);
             } catch(OutOfMemoryError e2) {
                 garbageCollectImages(true);
 
                 return loadAndCreateImmutableImageDataFromCache0(data,
-                                                                 suiteId, 
+                                                                 suiteId,
                                                                  resName);
             }
         }
@@ -539,11 +540,11 @@ class ImageDataFactory implements AbstractImageDataFactory {
      *                data in a supported format
      * @throws IOException if there is an error with the stream
      */
-    private void getImageDataFromStream(ImageData data, InputStream istream) 
-        throws java.io.IOException 
+    private void getImageDataFromStream(ImageData data, InputStream istream)
+        throws java.io.IOException
     {
         int blocksize = 4096; // the size of blocks to read and allocate
-        
+
         /*
          * Allocate an array assuming available is correct.
          * Only reading an EOF is the real end of file
@@ -556,7 +557,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
         int length = 0;
 
         // TBD: Guard against an implementation with incorrect available
-        while ((l = istream.read(buffer, length, 
+        while ((l = istream.read(buffer, length,
                                  buffer.length-length)) != -1) {
             length += l;
             if (length == buffer.length) {
@@ -583,12 +584,12 @@ class ImageDataFactory implements AbstractImageDataFactory {
      * @param width The width of the new mutable image
      * @param height The height of the new mutable image
      */
-    private native void createMutableImageData(ImageData data, 
+    private native void createMutableImageData(ImageData data,
                                                int width, int height);
 
     /**
      * Native function to create an immutable copy of an image data.
-     * 
+     *
      * @param dest  The ImageData where to make a copy
      * @param source The Image to make a copy of, either mutable or immutable.
      */
@@ -597,7 +598,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
 
 
     /**
-     * Native function that creates an immutable image data from 
+     * Native function that creates an immutable image data from
      * a region of another image data, applying the given transform
      *
      * @param dataDest The ImageData to make a copy to
@@ -611,12 +612,12 @@ class ImageDataFactory implements AbstractImageDataFactory {
      *
      */
     private native void createImmutableImageDataRegion(ImageData dataDest,
-                                                       ImageData dataSource, 
+                                                       ImageData dataSource,
                                                        int x, int y,
-                                                       int width, int height, 
+                                                       int width, int height,
                                                        int transform,
                                                        boolean isMutable);
-                                             
+
 
     /**
      * Native function to decode an ImageData from a byte array
@@ -628,12 +629,12 @@ class ImageDataFactory implements AbstractImageDataFactory {
      * @throws IllegalArgumentException if the data cannot be decoded
      */
     private native void createImmutableImageDecodeImage(ImageData data,
-                                                        byte[] inputData, 
-                                                        int offset, 
+                                                        byte[] inputData,
+                                                        int offset,
                                                         int length);
-                                                        
+
     /**
-     * Native function to load native image data from cache and create 
+     * Native function to load native image data from cache and create
      * an immutable image.
      *
      * @param data      The ImageData object
@@ -642,8 +643,8 @@ class ImageDataFactory implements AbstractImageDataFactory {
      * @return          true if image was loaded and created, false otherwise
      */
     private native boolean loadAndCreateImmutableImageDataFromCache0(
-                           ImageData data, String suiteId, String resName);
-     
+                           ImageData data, int suiteId, String resName);
+
     /**
      * Native function to load an ImageData directly out of the rom image.
      *
@@ -653,14 +654,14 @@ class ImageDataFactory implements AbstractImageDataFactory {
      * @return true if the imaged data loading was successful,
      *         otherwise it returns false
      */
-    private native boolean loadRomizedImage(ImageData data, 
+    private native boolean loadRomizedImage(ImageData data,
             int imageDataArrayPtr, int imageDataArrayPtrLength);
-    
+
     /**
      * Native function to decode an ImageData from an array of RGB data
      *
      * @param data the ImageData object
-     * @param inputData an array of ARGB values that composes 
+     * @param inputData an array of ARGB values that composes
      *                  the image.
      * @param width the width of the image
      * @param height the height of the image
@@ -668,9 +669,9 @@ class ImageDataFactory implements AbstractImageDataFactory {
      *                     false if all pixels are fully opaque
      */
     private native void createImmutableImageDecodeRGBImage(ImageData data,
-                                                           int[] inputData, 
-                                                           int width, 
-                                                           int height, 
+                                                           int[] inputData,
+                                                           int width,
+                                                           int height,
                                                    boolean processAlpha);
     /**
      * Garbage collected to free native resources from zombie images.

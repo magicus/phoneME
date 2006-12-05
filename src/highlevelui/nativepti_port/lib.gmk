@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -40,5 +41,8 @@ PTI_PORT_DIR = $(SUBSYSTEM_HIGHUI_DIR)/$(PTI_PORT_NAME)
 # Export include files
 SUBSYSTEM_PTI_EXTRA_INCLUDES += -I$(PTI_PORT_DIR)/include
 
-# stubs implementation is used for all platforms 
-include $(PTI_PORT_DIR)/stubs/lib.gmk
+ifeq ($(PLATFORM), javacall)
+    include $(PTI_PORT_DIR)/javacall/lib.gmk
+else
+    include $(PTI_PORT_DIR)/stubs/lib.gmk
+endif

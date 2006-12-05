@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -26,34 +27,35 @@
 package com.sun.midp.automation;
 
 import com.sun.midp.midletsuite.*;
+import com.sun.midp.midlet.MIDletSuite;
 import java.util.*;
 import java.io.*;
 
 /**
  * AutoSuiteDescriptor implementation for internal suite
  */
-final class AutoInternalSuiteDescriptorImpl 
+final class AutoInternalSuiteDescriptorImpl
     extends AutoSuiteDescriptorImpl {
-    
+
     /** Name of the suite's MIDlet class */
     private String midletClassName;
 
     /** Suite ID for all internal suites */
-    static final String INTERNAL_SUITE_ID = "internal";
+    static final int INTERNAL_SUITE_ID = MIDletSuite.INTERNAL_SUITE_ID;
 
 
     /**
      * Constructor
-     * 
+     *
      * @param midletClassName name of the suite's MIDlet class
      * @param midletSuite internal MIDlet suite representation
      */
-    AutoInternalSuiteDescriptorImpl(String midletClassName, 
+    AutoInternalSuiteDescriptorImpl(String midletClassName,
             MIDletSuiteImpl midletSuite) {
         super(midletSuite);
-        
+
         this.midletClassName = midletClassName;
-        
+
         if (suiteName == null) {
             suiteName = midletClassName;
         }
@@ -64,22 +66,22 @@ final class AutoInternalSuiteDescriptorImpl
         }
     }
 
-    
+
     /**
      * Tests if this suite is external
-     *  
+     *
      * @return true, if this suite is external
      */
     boolean isExternalSuite() {
         return false;
     }
-    
+
     /**
      * Gets suite ID
      *
      * @return suite ID as String
      */
-    String getSuiteID() {
+    int getSuiteID() {
         return INTERNAL_SUITE_ID;
     }
 
@@ -90,7 +92,7 @@ final class AutoInternalSuiteDescriptorImpl
         suiteMIDlets = new Vector(totalMIDlets);
 
         AutoMIDletDescriptorImpl midlet = null;
-        midlet = new AutoMIDletDescriptorImpl(this, suiteName, 
+        midlet = new AutoMIDletDescriptorImpl(this, suiteName,
                 midletClassName);
         suiteMIDlets.addElement(midlet);
     }

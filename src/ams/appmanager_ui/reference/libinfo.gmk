@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -32,6 +33,7 @@ LIB_JAVA_FILES= \
     com/sun/midp/appmanager/AppSettings.java \
     com/sun/midp/appmanager/DisplayError.java \
     com/sun/midp/appmanager/MIDletSelector.java \
+    com/sun/midp/appmanager/MIDletSwitcher.java \
     com/sun/midp/appmanager/SplashScreen.java
 
 #

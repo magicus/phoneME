@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,11 +27,7 @@
 package com.sun.midp.chameleon;
 
 import com.sun.midp.chameleon.skins.ScreenSkin;
-import com.sun.midp.chameleon.skins.SoftButtonSkin;
-
-import com.sun.midp.chameleon.layers.MenuLayer;
-import com.sun.midp.chameleon.layers.AlertLayer;
-
+import com.sun.midp.chameleon.layers.BackgroundLayer;
 import javax.microedition.lcdui.*;
 import java.util.Vector;
 
@@ -66,22 +63,16 @@ public abstract class CWindow {
     protected boolean dirty;
 
     /**
-     * A Vector containing all the layers of this window.
+     * Ordered bi-directional list with all the layers of this window.
      */
-    protected Vector layers;
+    protected CLayerList layers;
 
-    /** 
-     * If this layer has a filled color background, 
-     * the 0xrrggbbaa value of that color 
-     */
-    protected int   bgColor;
-    
     /**
-     * The image to use as a background for this layer if this layer
-     * is not transparent and does not use a fill color.
+     * Background layer of this window, should be the bottom most layer
+     * of the window, can be invisible for transparent windows. 
      */
-    protected Image bgImage;
-    
+    protected BackgroundLayer bgLayer;
+
     /** Cache values for the clip rectangle */
     protected int cX, cY, cW, cH;
     
@@ -93,21 +84,36 @@ public abstract class CWindow {
     
     /** Cache value for the graphics foreground color */
     protected int color;
-
+    
     /**
      * Construct a new CWindow given the background image and color.
      * If the background image is null, the fill color will be used
-     * instead.
+     * instead. In the case null image and negative color are specified
+     * the window is considered to be transparent.
      *
      * @param bgImage the background image to use for the window background
-     * @param bgColor the background fill color to use for the window
-     *        background if the background image is null
+     * @param bgColor the background fill color in 0xrrggbbaa format to use
+     *          for the window background if the background image is null.
      */
     public CWindow(Image bgImage, int bgColor) {
-        this.bgImage = bgImage;
-        this.bgColor = bgColor;
-        
-        initialize();
+        bounds = new int[4];
+        bounds[X] = 0; bounds[Y] = 0;
+        bounds[W] = ScreenSkin.WIDTH;
+        bounds[H] = ScreenSkin.HEIGHT;
+
+        layers = new CLayerList();
+
+        /* Add the most bottom background layer */
+        bgLayer = new BackgroundLayer(bgImage, bgColor);
+        bgLayer.setBounds(0, 0, ScreenSkin.WIDTH, ScreenSkin.HEIGHT);
+        addLayer(bgLayer);
+    }
+
+    /** Resize window and its background according to updated skin values */
+    public void resize() {
+        bounds[W] = ScreenSkin.WIDTH;
+        bounds[H] = ScreenSkin.HEIGHT;
+        bgLayer.setBounds(0, 0, ScreenSkin.WIDTH, ScreenSkin.HEIGHT);
     }
 
     /**
@@ -117,25 +123,24 @@ public abstract class CWindow {
      * on top of previously added layers.
      *
      * @param layer the new layer to add to this window
-     * @return the z-index value of the added layer, or -1 if the
-     *         layer could not be added or was null
+     * @return true if new layer was added, false otherwise 
      */
-    public int addLayer(CLayer layer) {
+    public boolean addLayer(CLayer layer) {
         if (layer != null) {
             if (CGraphicsQ.DEBUG) {
-                System.err.println("Layer located at: " + 
-                    layer.bounds[X] + ", " + layer.bounds[Y]);
+                System.err.println("Add Layer: " + layer);
             }
             synchronized (layers) {
-                if (!layers.contains(layer)) {
+                if (layers.find(layer) == null) {
                     layer.owner = this;
-                    layers.addElement(layer);
+                    layers.addLayer(layer);
+                    layer.addDirtyRegion();
                     requestRepaint();
-                    return layers.size() - 1;
+                    return true;
                 }
             }
         }
-        return -1;
+        return false;
     }
 
     /**
@@ -149,21 +154,28 @@ public abstract class CWindow {
      * @return true if successful, false otherwise
      */
     public boolean removeLayer(CLayer layer) {
-        if (layer == null) {
-            return false;
+        if (layer != null) {
+            if (CGraphicsQ.DEBUG) {
+                System.err.println("Remove Layer: " + layer);
+            }
+            synchronized (layers) {
+                CLayerElement le = layers.find(layer);
+                if (le != null) {
+                    // IMPL NOTE: when a layer gets removed (or has its setVisible(false))
+                    // called, the parent window must loop through all the other
+                    // layers and mark them as dirty if they intersect with the
+                    // layer being removed (or having its visibility changed).
+                    layer.addDirtyRegion();
+                    sweepAndMarkDirtyLayer(le, true);
+
+                    layer.owner = null;
+                    requestRepaint();
+                    layers.removeLayerElement(le);
+                    return true;
+                }
+            }
         }
-        
-        synchronized (layers) {
-            layer.owner = null;
-            requestRepaint();
-            return layers.removeElement(layer);
-        }
-        
-        // NOTE There is a bug here.
-        // IMPL NOTE: when a layer gets removed (or has its setVisible(false))
-        // called, the parent window must loop through all the other
-        // layers and mark them as dirty if they intersect with the
-        // layer being removed (or having its visibility changed).
+        return false;
     }
 
     /**
@@ -180,10 +192,11 @@ public abstract class CWindow {
     public boolean keyInput(int type, int keyCode) {
         CLayer layer;
         synchronized (layers) {
-            for (int i = layers.size() - 1; i >= 0; i--) {
-                layer = (CLayer)layers.elementAt(i);
+            for (CLayerElement le = layers.getTop();
+                    le != null; le = le.getLower()) {
+                layer = le.getLayer();
                 if (layer.supportsInput &&
-                    layer.keyInput(type, keyCode))
+                        layer.keyInput(type, keyCode))
                 {
                     return true;
                 }
@@ -209,10 +222,11 @@ public abstract class CWindow {
     public boolean pointerInput(int type, int x, int y) {
         CLayer layer;
         synchronized (layers) {
-            for (int i = layers.size() - 1; i >= 0; i--) {
-                layer = (CLayer)layers.elementAt(i);
+            for (CLayerElement le = layers.getTop();
+                    le != null; le = le.getLower()) {
+                layer = le.getLayer();
                 if (layer.visible && layer.supportsInput &&
-                    layer.containsPoint(x, y))
+                    layer.handlePoint(x, y))
                 {
                     // If the layer is visible, supports input, and
                     // contains the point of the pointer press, we translate
@@ -240,8 +254,9 @@ public abstract class CWindow {
     public boolean methodInput(String str) {
         CLayer layer;
         synchronized (layers) {
-            for (int i = layers.size() - 1; i >= 0; i--) {
-                layer = (CLayer)layers.elementAt(i);
+            for (CLayerElement le = layers.getTop();
+                    le != null; le = le.getLower()) {
+                layer = le.getLayer();
                 if (layer.visible && layer.supportsInput &&
                     layer.methodInput(str))
                 {
@@ -253,10 +268,248 @@ public abstract class CWindow {
     }
 
     /**
-     * Request a repaint. This method MUST be overridden 
+     * Request a repaint. This method MUST be overridden
      * by subclasses to provide the implementation.
      */
     public abstract void requestRepaint();
+
+    /**
+     * Subtract this layer area from an underlying dirty regions.
+     * The method is designed to reduce dirty regions of a layres
+     * below the opaque visible layer.
+     *
+     * @param le layer list element
+     */
+    private void cleanLowerDirtyRegions(CLayerElement le) {
+        if (CGraphicsQ.DEBUG) {
+            System.err.println("Clean dirty regions under opaque layer: " +
+                le.getLayer());
+        }
+
+        CLayer l = le.getLayer();
+        for(CLayerElement le2 = le.getLower();
+                le2 != null; le2 = le2.getLower()) {
+            CLayer l2 = le2.getLayer();
+            if (l2.dirty) {
+                l2.subDirtyRegion(
+                    l.bounds[X] - l2.bounds[X],
+                    l.bounds[Y] - l2.bounds[Y],
+                    l.bounds[W], l.bounds[H]);
+            }
+        }
+    }
+
+    /**
+     * Propagate dirty region of the layer to other layers in the stack.
+     * The method should be called for dirty layers only.
+     * The dirty layer can be invisible in the case it has been
+     * hidden since the previous paint.
+     *
+     * IMPL_NOTE: The layer been removed or set to invisible state since
+     *   the previous paint is considered as "hidden", thus it should be
+     *   entirely dirty and must affect other visible layers accordingly.   
+     *
+     * @param le dirty layer element to be propagated to other layers
+     * @param hidden indicates whether the dirty layer has been hidden
+     *   since the previous repaint
+     * @return the highest layer element above le with modified dirty
+     *   region, or null if none
+     */
+    private CLayerElement sweepAndMarkDirtyLayer(
+            CLayerElement le, boolean hidden) {
+
+        if (CGraphicsQ.DEBUG) {
+            System.err.println("Sweep and mark dirty layer: " +
+                le.getLayer());
+        }
+
+        CLayer l2;
+        CLayerElement res = null;
+        CLayer l = le.getLayer();
+
+        // Prepare absolute dirty region coordinates of layer l
+        int dx = l.bounds[X];
+        int dy = l.bounds[Y];
+        int dh, dw;
+        if (l.dirtyBounds[X] == -1) {
+            dw = l.bounds[W];
+            dh = l.bounds[H];
+        } else {
+            dx += l.dirtyBounds[X];
+            dy += l.dirtyBounds[Y];
+            dw = l.dirtyBounds[W];
+            dh = l.dirtyBounds[H];
+        }
+
+        // Sweep dirty region to upper layers
+        for (CLayerElement le2 = le.getUpper();
+                le2 != null; le2 = le2.getUpper()) {
+            
+            l2 = le2.getLayer();
+            if (l2.visible) {
+                if (l2.addDirtyRegion(
+                        dx-l2.bounds[X], dy-l2.bounds[Y], dw, dh)) {
+                    // Remember the highest changed layer
+                    res = le2;
+                }
+            }
+        }
+
+        // Sweep non-opaque dirty region to undelying layers
+        if (!l.opaque || hidden) {
+            for (CLayerElement le2 = le.getLower();
+                    le2 != null; le2 = le2.getLower()) {
+
+                l2 = le2.getLayer();
+                if (l2.visible) {
+                    l2.addDirtyRegion(
+                        dx-l2.bounds[X], dy-l2.bounds[Y], dw, dh);
+                }
+            }
+
+            // A newly hidden layer should be dirty only for the first
+            // succeeded paint, it should be cleaned as soon as underlying
+            // layers are properly marked as dirty. 
+            if (hidden) {
+                l.cleanDirty();
+            }
+        }
+
+        return res;
+    }
+
+    // Heuristic Explanation: Any layer that needs painting also
+    // requires all layers below and above that region to be painted.
+    // This is required because layers may be transparent or even
+    // partially translucent - thus they require that all layers beneath
+    // and above them be repainted as well.
+
+    // To accomplish this we loop through the stack of layers from the top
+    // most to the bottom most. If a layer is "dirty" (has its dirty bit
+    // set), we find all layers that intersect with the dirty region and
+    // we mark that layer to be painted as well. If that layer is already
+    // marked to be painted and has its own dirty region, we union
+    // the existing region with the new region. If that layer does
+    // not have a dirty region, we simply set a new one. In the case a
+    // dirty region is modified for a higher layer been processed already
+    // we need to restart the loop from the modified layer.
+
+    // After doing this initial iteration, all layers will now be
+    // marked dirty where appropriate and have their individual dirty
+    // regions set. We then make another iteration from the bottom
+    // most layer to the top, painting the dirty region of each layer.
+
+    /**
+     * First Pass: We do sweep and mark of all layers requiring a repaint,
+     * the areas behind a visible opaque layers need no repaint
+     */
+    private void sweepAndMarkLayers() {
+        if (CGraphicsQ.DEBUG) {
+            System.err.println("[Sweep and mark layers]");
+        }
+
+        CLayer l;
+        CLayerElement changed;
+        CLayerElement le = layers.getTop();
+
+        while (le != null) {
+            l = le.getLayer();
+
+            if (l.visible && l.opaque) {
+                cleanLowerDirtyRegions(le);
+            }
+
+            // The dirty layer can be invisible, that means it
+            // has been hidden since the previous paint.
+            if (l.dirty) {
+                // In the case higher layer was changed we need to
+                // restart all the algorithm from the changed layer
+                changed = sweepAndMarkDirtyLayer(le, !l.visible);
+                if (changed != null) {
+                    if (CGraphicsQ.DEBUG) {
+                        System.err.println("Restart sweep and mark: " +
+                            changed.getLayer());
+                    }
+                    le = changed;
+                    changed = null;
+                    continue;
+                }
+            }
+            // Go to next lower layer
+            le = le.getLower();
+        }
+    }
+    
+    /**
+     * Second Pass: We sweep through the layers from the bottom to
+     * the top and paint each one that is marked as dirty
+     *
+     * @param g The graphics object to use to paint this window.
+     * @param refreshQ The custom queue which holds the set of refresh
+     *        regions needing to be blitted to the screen
+     */
+    private void paintLayers(Graphics g, CGraphicsQ refreshQ) {
+        if (CGraphicsQ.DEBUG) {
+            System.err.println("[Paint dirty layers]");
+        }
+
+        CLayer l;
+        for (CLayerElement le = layers.getBottom();
+                le != null; le = le.getUpper()) {
+            l = le.getLayer();
+            if (l.visible && l.dirty) {
+
+                // Prepare relative dirty region coordinates
+                // of the current layer
+                int dx, dy, dw, dh;
+                if (l.dirtyBounds[X] == -1) {
+                    // Whole layer is dirty
+                    dx = 0; dy = 0;
+                    dw = l.bounds[W];
+                    dh = l.bounds[H];
+                } else {
+                    dx = l.dirtyBounds[X];
+                    dy = l.dirtyBounds[Y];
+                    dw = l.dirtyBounds[W];
+                    dh = l.dirtyBounds[H];
+                }
+
+                // Before we call into the layer to paint, we
+                // translate the graphics context into the layer's
+                // coordinate space
+                g.translate(l.bounds[X], l.bounds[Y]);
+
+                if (CGraphicsQ.DEBUG) {
+                    System.err.println("Painting Layer: " + l);
+                    System.err.println("\tClip: " +
+                        dx + ", " + dy + ", " + dw + ", " + dh);
+                }
+
+                // Clip the graphics to only contain the dirty region of
+                // the layer (if the dirty region isn't set, clip to the
+                // whole layer contents).
+                g.clipRect(dx, dy, dw, dh);
+                refreshQ.queueRefresh(
+                    l.bounds[X] + dx, l.bounds[Y] + dy, dw, dh);
+                l.paint(g);
+
+                // We restore our graphics context to prepare
+                // for the next layer
+                g.translate(-g.getTranslateX(), -g.getTranslateY());
+                g.translate(tranX, tranY);
+
+                // We reset our clip to this window's bounds again.
+                g.setClip(bounds[X], bounds[Y], bounds[W], bounds[H]);
+
+                g.setFont(font);
+                g.setColor(color);
+            } else { // !(visible && dirty)
+                if (CGraphicsQ.DEBUG) {
+                    System.err.println("Skip Layer: " + l);
+                }
+            } // if
+        } // for
+    }
 
     /**
      * Paint this window. This method should not generally be overridden by
@@ -277,7 +530,7 @@ public abstract class CWindow {
         // likely need to be better atomic handling of the dirty state,
         // and layers becoming dirty and getting painted
         this.dirty = false;
-        
+
         // Store the clip, translate, font, color
         cX = g.getClipX();
         cY = g.getClipY();
@@ -289,200 +542,18 @@ public abstract class CWindow {
 
         font = g.getFont();
         color = g.getColor();
-    
+
         // We set the basic clip to the size of this window
         g.setClip(bounds[X], bounds[Y], bounds[W], bounds[H]);
-        
-        // Heuristic Explanation: Any layer that needs painting also
-        // requires all layers below that region to be painted. This is
-        // required because layers may be transparent or even partially
-        // translucent - thus they require that all layers beneath them
-        // be repainted as well.
-        
-        // To accomplish this we
-        // loop through the stack of layers from the top most to the 
-        // bottom most. If a layer is "dirty" (has its dirty bit set),
-        // we find all layers that intersect with the dirty region and we
-        // mark that layer to be painted as well. If that layer is already
-        // marked to be painted and has its own dirty region, we union
-        // the existing region with the new region. If that layer does
-        // not have a dirty region, we simply set a new one.
-        
-        // After doing this initial iteration, all layers will now be
-        // marked dirty where appropriate and have their individual dirty
-        // regions set. We then make another iteration from the bottom
-        // most layer to the top, painting the dirty region of each layer.
-        
-        CLayer l, l2;
+
         synchronized (layers) {
+            sweepAndMarkLayers();
+            paintLayers(g, refreshQ);
+        }
 
-            // First Pass : We do a sweep and mark of all layers requiring
-            // a repaint
-                      
-            for (int i = layers.size() - 1; i >= 0; i--) {
-                l = (CLayer)layers.elementAt(i);
-                if (l.visible && l.dirty) {
-                    // We find every layer in the stack that intersects
-                    // (if there is one) and make sure it is marked 
-                    // dirty as well.
-                    for (int j = layers.size() - 1; j >= 0; j--) {
-                        // We obviously skip the layer we're comparing to
-                        if (j == i) {
-                            continue;
-                        }
-                        
-                        l2 = (CLayer)layers.elementAt(j);
-                        
-                        // We only need to share dirty regions if the 
-                        // lower layer is in fact visible and intersects 
-                        // at all with the dirty layer
-                        if (l2.visible && l2.intersectsRegion(l.bounds)) {
-                            
-                            // We create a new dirty region for the background
-                            // layer by translating the upper layer's region
-                            // into the coordinate space of the lower layer.
-                            if (l.dirtyBounds[X] != -1) {
-                                
-                                if (!l2.intersectsRegion(l.dirtyBounds[X] + 
-                                                            l.bounds[X],
-                                                         l.dirtyBounds[Y] +
-                                                            l.bounds[Y],
-                                                         l.dirtyBounds[W],
-                                                         l.dirtyBounds[H])) 
-                                {
-                                    // Its possible that the two layers 
-                                    // intersect, but the dirty region in
-                                    // layer (l) does not intersect an area
-                                    // of layer (l2). If thats the
-                                    // case, just continue
-                                    continue;
-                                }
-                                
-                                l2.addDirtyRegion(l.dirtyBounds[X] + 
-                                                    l.bounds[X] - l2.bounds[X],
-                                                  l.dirtyBounds[Y] + 
-                                                    l.bounds[Y] - l2.bounds[Y],
-                                                  l.dirtyBounds[W], 
-                                                  l.dirtyBounds[H]);
-                            } else {
-                                l2.addDirtyRegion(l.bounds[X] - l2.bounds[X], 
-                                                  l.bounds[Y] - l2.bounds[Y], 
-                                                  l.bounds[W], l.bounds[H]);
-                            }
-                        } // if visible and intersects
-                    } // for
-                } // if (l.visible && l.dirty)
-            } // for
-            
-            // Second Pass : We sweep through the layers from the bottom to
-            // the top and paint the background behind every dirty region.
-            for (int i = 0; i < layers.size(); i++) {
-                l = (CLayer)layers.elementAt(i);
-                if (l.visible && l.dirty && !l.opaque) {
-                    // First, clip the graphics to only contain the dirty
-                    // region of the layer (if the dirty region isn't set,
-                    // clip to the whole layer contents).
-                    if (CGraphicsQ.DEBUG) {
-                        System.err.println("Painting background behind: " 
-                            + l.layerID);
-                    }
-                    if (l.dirtyBounds[X] == -1) {
-                        if (CGraphicsQ.DEBUG) {
-                            System.err.println("\tClip: " + l.bounds[X] +
-                                               ", " + l.bounds[Y] +
-                                               ", " + l.bounds[W] +
-                                               ", " + l.bounds[H]);
-                        }
-                        g.clipRect(l.bounds[X], l.bounds[Y], 
-                                   l.bounds[W], l.bounds[H]);
-                    } else {
-                        // The layer's dirty region is in its own coordinate
-                        // space. We've translated the graphics above so
-                        // we just set the clip.
-                        if (CGraphicsQ.DEBUG) {
-                            System.err.println("\tClip: " + 
-                                (l.dirtyBounds[X] + l.bounds[X]) +
-                                ", " + (l.dirtyBounds[Y] + l.bounds[Y]) +
-                                ", " + l.dirtyBounds[W] +
-                                ", " + l.dirtyBounds[H]);
-                        }
-                        g.clipRect(l.dirtyBounds[X] + l.bounds[X],
-                                   l.dirtyBounds[Y] + l.bounds[Y],
-                                   l.dirtyBounds[W], l.dirtyBounds[H]);
-                    }
-                    
-                    // We fill each dirty region we find with the background
-                    paintBackground(g);
-                    
-                    // We restore the clip and color
-                    g.setClip(bounds[X], bounds[Y], bounds[W], bounds[H]);
-                    g.setColor(color);                                      
-                } // if
-            } // for
-                    
-            // Third Pass : We sweep through the layers from the bottom to
-            // the top and paint each one that is marked as dirty
-            for (int i = 0; i < layers.size(); i++) {
-                l = (CLayer)layers.elementAt(i);
-                               
-                if (l.visible && l.dirty) {
-                    // Before we call into the layer to paint, we
-                    // translate the graphics context into the layer's
-                    // coordinate space
-                    g.translate(l.bounds[X], l.bounds[Y]);
-
-                    // First, clip the graphics to only contain the dirty
-                    // region of the layer (if the dirty region isn't set,
-                    // clip to the whole layer contents).
-                    if (CGraphicsQ.DEBUG) {
-                        System.err.println("Painting Layer: " + l.layerID);
-                    }
-                    if (l.dirtyBounds[X] == -1) {
-                        if (CGraphicsQ.DEBUG) {
-                            System.err.println("\tClip: 0, 0, " + l.bounds[W] 
-                                + ", " + l.bounds[H]);
-                        }
-                        g.clipRect(0, 0, l.bounds[W], l.bounds[H]);
-                        refreshQ.queueRefresh(l.bounds[X], l.bounds[Y], 
-                                               l.bounds[W], l.bounds[H]);
-                    } else {
-                        // The layer's dirty region is in its own coordinate
-                        // space, so we carefully offset by the layer's origin
-                        // when setting the clip
-                        if (CGraphicsQ.DEBUG) {
-                            System.err.println("\tClip: " + l.dirtyBounds[X] +
-                                               ", " + l.dirtyBounds[Y] +
-                                               ", " + l.dirtyBounds[W] +
-                                               ", " + l.dirtyBounds[H]);
-                        }
-                        g.clipRect(l.dirtyBounds[X], l.dirtyBounds[Y],
-                                   l.dirtyBounds[W], l.dirtyBounds[H]);
-                        refreshQ.queueRefresh(l.dirtyBounds[X] + l.bounds[X],
-                                               l.dirtyBounds[Y] + l.bounds[Y],
-                                               l.dirtyBounds[W],
-                                               l.dirtyBounds[H]);
-                    }
-                    
-                    l.paint(g);
-                        
-                    // We restore our graphics context to prepare
-                    // for the next layer
-                    g.translate(-g.getTranslateX(), -g.getTranslateY());
-                    g.translate(tranX, tranY);
-                    
-                    // We reset our clip to this window's bounds again.
-                    g.setClip(bounds[X], bounds[Y], bounds[W], bounds[H]);
-                   
-                    g.setFont(font);
-                    g.setColor(color);                                      
-                } // if
-            } // for
-            
-            // We restore the original clip. The original font, color, etc.
-            // have already been restored
-            g.setClip(cX, cY, cW, cH);   
-                 
-        } // sync
+        // We restore the original clip. The original font, color, etc.
+        // have already been restored
+        g.setClip(cX, cY, cW, cH);
     }
 
     /**
@@ -498,15 +569,8 @@ public abstract class CWindow {
      * @param bgColor if the image is null, use this color as a background
      *                fill color
      */
-    public void setBackground(Image bgImage, int bgColor) {
-        if (bgImage != null) {
-            this.bgImage = bgImage;
-        } else {
-            this.bgImage = null;
-            if (bgColor >= 0) {
-                this.bgColor = bgColor;
-            }
-        }
+    synchronized void setBackground(Image bgImage, int bgColor) {
+          bgLayer.setBackground(bgImage, bgColor);
     }
     
     /**
@@ -526,30 +590,6 @@ public abstract class CWindow {
         this.dirty = true;
     }
 
-    /**
-     * Initialize this window by allocating its bounds array and
-     * layers Vector.
-     */
-    protected void initialize() {
-        bounds = new int[4];
-        bounds[X] = 0;
-        bounds[Y] = 0;
-        bounds[W] = ScreenSkin.WIDTH;
-        bounds[H] = ScreenSkin.HEIGHT;
-
-        layers = new Vector();
-    }
-
-    /**
-     * Paint the background of this window
-     *
-     * @param g the graphics context to paint to
-     */
-    protected void paintBackground(Graphics g) {
-        CGraphicsUtil.paintBackground(g, bgImage, true, 
-                                      bgColor, bounds[W], bounds[H]);
-    }
-    
     /** Constant used to reference the '0' index of the bounds array */
     public static final int X = 0;
     
@@ -561,6 +601,5 @@ public abstract class CWindow {
     
     /** Constant used to reference the '3' index of the bounds array */
     public static final int H = 3;
-    
 }
 

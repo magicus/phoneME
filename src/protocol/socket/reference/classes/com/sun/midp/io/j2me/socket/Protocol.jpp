@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -44,10 +45,22 @@ import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.suspend.NetworkSubsystem;
+import com.sun.midp.suspend.Subsystem;
+import com.sun.midp.suspend.StateTransitionException;
 
 /** Connection to the J2ME socket API. */
 public class Protocol extends NetworkConnectionBase
-        implements SocketConnection {
+        implements SocketConnection, Subsystem {
+
+    /** Class registered in SecurityInitializer. */
+    private static class SecurityTrusted implements ImplicitlyTrustedClass {}
+
+    /**Security token for provileged access to internal API's. */
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /** Size of the read ahead buffer, default is no buffering. */
     private static int bufferSize;
@@ -92,6 +105,8 @@ public class Protocol extends NetworkConnectionBase
     public Protocol() {
         // use the default buffer size
         super(bufferSize);
+        NetworkSubsystem.getInstance(classSecurityToken).
+                registerSubsystem(this);
     }
 
     /**
@@ -179,6 +194,8 @@ public class Protocol extends NetworkConnectionBase
         if (url.path != null || url.query != null || url.fragment != null) {
             throw new IllegalArgumentException("Malformed address");
         }
+
+        NetworkSubsystem.getInstance(classSecurityToken).ensureActive();
 
         host = url.host;
         port = url.port;
@@ -302,7 +319,7 @@ public class Protocol extends NetworkConnectionBase
      * @param token either security token with special privileges if pecified 
      *        by caller or <code>null</code>
      *
-     * @exception IOInterruptedException if another thread interrupts the
+     * @exception InterruptedIOException if another thread interrupts the
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
@@ -611,6 +628,23 @@ public class Protocol extends NetworkConnectionBase
     public  int  getPort() throws IOException {
         ensureOpen();
         return getPort0(false); 
+    }
+
+    /**
+     * Perform actions required on system resume. Makes nothing.
+     * @throws StateTransitionException
+     */
+    public void resume() throws StateTransitionException {}
+
+    /**
+     * Disconnects connection within system suspend procedure.
+     */
+    public void suspend() {
+        try {
+            disconnect();
+        } catch (IOException e) {
+            // ignoring to proceed system pause
+        }
     }
 
     /**

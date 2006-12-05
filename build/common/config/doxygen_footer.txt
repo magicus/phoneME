@@ -18,7 +18,7 @@
           &nbsp;
         </td>
         <td class="go-right"><span class="copyright">Reference Documentation
-            <br>phoneME Feature project, Version MR1 </td>
+            <br>phoneME Feature project, Version 1.0 </td>
       </tr>
     </table>
 

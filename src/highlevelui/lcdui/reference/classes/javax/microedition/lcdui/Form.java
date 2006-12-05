@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -627,14 +628,13 @@ public class Form extends Screen {
      * @throws IndexOutOfBoundsException if <code>itemNum</code> is invalid
      */
     public void delete(int itemNum) {
+    	Item deletedItem;
         synchronized (Display.LCDUILock) {
             if (itemNum < 0 || itemNum >= numOfItems) {
                 throw new IndexOutOfBoundsException();
             }
 
-            Item deletedItem = items[itemNum];
-
-            deletedItem.lSetOwner(null);
+            deletedItem = items[itemNum];
 
             numOfItems--;
 
@@ -655,6 +655,8 @@ public class Form extends Screen {
             formLF.lDelete(itemNum, deletedItem);
 
         } // synchronized
+        
+        deletedItem.itemDeleted();
     }
 
     /**
@@ -664,13 +666,15 @@ public class Form extends Screen {
      *
      */
     public void deleteAll() {
+    	Item[] itemsCopy;
         synchronized (Display.LCDUILock) {
             if (numOfItems == 0) {
                 return;
             }
+            itemsCopy = new Item[numOfItems];
 
             for (int x = 0; x < numOfItems; x++) {
-                items[x].lSetOwner(null);
+                itemsCopy[x] = items[x];
                 items[x] = null;
             }
             if (items.length > GROW_SIZE) {
@@ -681,6 +685,10 @@ public class Form extends Screen {
             numOfItems = 0;
 
             formLF.lDeleteAll();
+        }
+        
+        for (int x = 0; x < itemsCopy.length; x++) {
+            itemsCopy[x].itemDeleted();
         }
     }
 

@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -161,10 +162,15 @@ public class MVMDisplayController extends DisplayController {
      * Called to process a select foreground event.
      * Returns the foreground selector MIDlet in the foreground.
      *
+     * @param onlyFromLaunched true if midlet should
+     *        be selected from the list of already launched midlets,
+     *        if false then possibility to launch midlet is needed.
      * @return Proxy of the next foreground MIDlet, may be the foreground
      *         MIDlet if the foreground should not change
      */
-    MIDletProxy selectForeground() {
+    MIDletProxy selectForeground(boolean onlyFromLaunchedList) {
+
+        notifyListenersOfSelectForeground(onlyFromLaunchedList);
         return getForegroundSelector();
     }
 

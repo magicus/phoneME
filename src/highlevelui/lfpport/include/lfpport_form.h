@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -90,6 +91,14 @@ MidpError lfpport_form_set_current_item(MidpItem* itemPtr, int yOffset);
  * @return an indication of success or the reason for failure
  */
 MidpError lfpport_form_get_scroll_position(int *pos);
+
+/**
+ * Sets the native peer's current "y" scroll position.
+ *
+ * @param pos new current "y" position on the form.
+ * 
+ */
+MidpError lfpport_form_set_scroll_position(int pos);
 
 /**
  * Gets the native peer's current viewport height.

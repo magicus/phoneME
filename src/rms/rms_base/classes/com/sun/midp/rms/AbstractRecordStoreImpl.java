@@ -1,5 +1,5 @@
 /*
- * @(#)AbstractRecordStoreImpl.java	1.5 06/04/05 @(#)
+ *
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -49,9 +49,9 @@ interface AbstractRecordStoreImpl {
      * 08-11 - Authmode and Writable state info
      * 12-15 - Next record ID to use (big endian)
      * 16-19 - Number of live records in the database (big endian)
-     * 20-23 - Database "version" - a monotonically increasing revision 
+     * 20-23 - Database "version" - a monotonically increasing revision
      *         number (big endian)
-     * 24-31 - Last modified (64-bit long, big endian, milliseconds since 
+     * 24-31 - Last modified (64-bit long, big endian, milliseconds since
      *         jan 1970)
      * 32-35 - Size of Data storage (big endian)
      * 36-39 - Size of Free storage (big endian)
@@ -87,7 +87,7 @@ interface AbstractRecordStoreImpl {
 
     /** pre initialized RecordStore header structure */
     static final byte[] DB_SIGNATURE = {
-        (byte)'m', (byte)'i', (byte)'d', (byte)'p', 
+        (byte)'m', (byte)'i', (byte)'d', (byte)'p',
         (byte)'-', (byte)'r', (byte)'m', (byte)'s'
     };
 
@@ -100,9 +100,9 @@ interface AbstractRecordStoreImpl {
      *    Second 4 bytes is the size of the data in the block
      *    The data immediately follows the header
      *    If the length of the data is not a multiple of 8 the data is padded
-     *  
+     *
      *  Things that need to be done by the header code
-     *  
+     *
      */
     /** Size of the block header */
     static final int BLOCK_HEADER_SIZE = 8;
@@ -275,9 +275,9 @@ interface AbstractRecordStoreImpl {
      * @exception SecurityException if the MIDlet has read-only access
      *          to the RecordStore
      */
-    int addRecord(byte[] data, int offset, int numBytes) 
-        throws RecordStoreNotOpenException, RecordStoreException, 
-               RecordStoreFullException;    
+    int addRecord(byte[] data, int offset, int numBytes)
+        throws RecordStoreNotOpenException, RecordStoreException,
+               RecordStoreFullException;
 
     /**
      * The record is deleted from the record store. The recordId for
@@ -293,8 +293,8 @@ interface AbstractRecordStoreImpl {
      * @exception SecurityException if the MIDlet has read-only access
      *          to the RecordStore
      */
-    void deleteRecord(int recordId) 
-        throws RecordStoreNotOpenException, InvalidRecordIDException, 
+    void deleteRecord(int recordId)
+        throws RecordStoreNotOpenException, InvalidRecordIDException,
                RecordStoreException;
 
     /**
@@ -312,9 +312,9 @@ interface AbstractRecordStoreImpl {
      * @exception RecordStoreException if a general record store
      *          exception occurs
      */
-    int getRecordSize(int recordId) 
-        throws RecordStoreNotOpenException, InvalidRecordIDException, 
-               RecordStoreException;    
+    int getRecordSize(int recordId)
+        throws RecordStoreNotOpenException, InvalidRecordIDException,
+               RecordStoreException;
 
     /**
      * Returns the data stored in the given record.
@@ -335,9 +335,9 @@ interface AbstractRecordStoreImpl {
      *          index <code>offset</code>
      * @see #setRecord
      */
-    int getRecord(int recordId, byte[] buffer, int offset) 
-        throws RecordStoreNotOpenException, InvalidRecordIDException, 
-               RecordStoreException;    
+    int getRecord(int recordId, byte[] buffer, int offset)
+        throws RecordStoreNotOpenException, InvalidRecordIDException,
+               RecordStoreException;
 
     /**
      * Returns a copy of the data stored in the given record.
@@ -354,8 +354,8 @@ interface AbstractRecordStoreImpl {
      *          record has no data, this method will return null.
      * @see #setRecord
      */
-    byte[] getRecord(int recordId) 
-        throws RecordStoreNotOpenException, InvalidRecordIDException, 
+    byte[] getRecord(int recordId)
+        throws RecordStoreNotOpenException, InvalidRecordIDException,
                RecordStoreException;
 
     /**
@@ -382,9 +382,9 @@ interface AbstractRecordStoreImpl {
      *          to the RecordStore
      * @see #getRecord
      */
-    void setRecord(int recordId, byte[] newData, 
-                          int offset, int numBytes) 
-        throws RecordStoreNotOpenException, InvalidRecordIDException, 
+    void setRecord(int recordId, byte[] newData,
+                          int offset, int numBytes)
+        throws RecordStoreNotOpenException, InvalidRecordIDException,
                RecordStoreException, RecordStoreFullException;
 
     /**
@@ -395,19 +395,19 @@ interface AbstractRecordStoreImpl {
      */
     int[] getRecordIDs();
 
-    /** 
-     * Returns data base file associated with this record store 
+    /**
+     * Returns data base file associated with this record store
      *
      * @return data base file
      */
     AbstractRecordStoreFile getDbFile();
 
-    /** 
-     * Creates data base index file associated with this record store 
+    /**
+     * Creates data base index file associated with this record store
      *
      * @return data base index file
      * @exception IOException if failed to create a file
      */
-    AbstractRecordStoreFile createIndexFile(String suiteID, String name)
+    AbstractRecordStoreFile createIndexFile(int suiteId, String name)
         throws IOException;
 }

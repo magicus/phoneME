@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_command.cpp	1.29 06/04/26
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -40,10 +40,12 @@
 #include <qlayout.h>
 #include <midpUtilKni.h>
 
-FocusAction::FocusAction(int accel, QWidget* parent)
-    : QAction(NULL, NULL, accel, parent, 0, FALSE) {
-    addTo(parent);
-    connect(this, SIGNAL(activated()), parent, SLOT(moveFocus()));
+int QPopupMenuExt::insertItemTrunc( const QString & text0, int id) {
+    QString text(text0);
+    truncateQString(text,
+       font(),
+       qteapp_get_application()->mainWidget()->width()-16);/*magic number*/
+    return insertItem(text,id);
 }
 
 /**
@@ -54,9 +56,9 @@ FocusAction::FocusAction(int accel, QWidget* parent)
 CommandManager::CommandManager(QWidget *parent)
     : QMenuBar(parent)
 {
-    actionMenu	= new PatchedQPopupMenu(parent);
-    goMenu	= new PatchedQPopupMenu(parent);
-    helpMenu	= new PatchedQPopupMenu(parent);
+    actionMenu	= new QPopupMenuExt(parent);
+    goMenu	= new QPopupMenuExt(parent);
+    helpMenu	= new QPopupMenuExt(parent);
 
     // Always have 'about' in help menu
     insertItem(HELP_MENUITEM_TEXT, helpMenu);
@@ -66,7 +68,12 @@ CommandManager::CommandManager(QWidget *parent)
     connect(goMenu, SIGNAL(activated(int)), SLOT(commandActivated(int)));
     connect(helpMenu, SIGNAL(activated(int)), SLOT(commandActivated(int)));
     
-    new FocusAction(MOVE_FOCUS, this);
+#ifndef QT_NO_ACCEL
+    QAccel* focusAccel = new QAccel(this, "focus-change accelerator");
+    focusAccel->connectItem(focusAccel->insertItem(MOVE_FOCUS, 0), 
+        this, SLOT(moveFocus()));
+#endif
+
 }
 
 /**
@@ -125,24 +132,24 @@ MidpError CommandManager::setCommands(MidpCommand* cmds, int numOfCmds) {
         } RELEASE_PCSL_STRING_DATA_AND_LENGTH
 
         if (cmds[i].type == COMMAND_TYPE_HELP) {
-            helpMenu->insertItem(text, cmds[i].id);
+            helpMenu->insertItemTrunc(text, cmds[i].id);
 
         } else if (cmds[i].type == COMMAND_TYPE_BACK
             || cmds[i].type == COMMAND_TYPE_OK
             || cmds[i].type == COMMAND_TYPE_CANCEL
             || cmds[i].type == COMMAND_TYPE_STOP) {
-            goMenu->insertItem(text, cmds[i].id);
+            goMenu->insertItemTrunc(text, cmds[i].id);
         } else {
-            actionMenu->insertItem(text, cmds[i].id);
+            actionMenu->insertItemTrunc(text, cmds[i].id);
         }
     }
 
     // Only add non-empty popup menus
     if (goMenu->count() > 0) {
-	insertItem(GO_MENUITEM_TEXT, goMenu, -1, 0);
+	    insertItem(GO_MENUITEM_TEXT, goMenu, -1, 0);
     }
     if (actionMenu->count() > 0) {
-	insertItem(ACTION_MENUITEM_TEXT, actionMenu, -1, 0);
+	    insertItem(ACTION_MENUITEM_TEXT, actionMenu, -1, 0);
     }
 
     return err;

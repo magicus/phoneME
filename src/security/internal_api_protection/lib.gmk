@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -54,4 +55,5 @@ $(GENERATED_DIR)/classes/com/sun/midp/security/SecurityInitializer.java: $(INTER
 SUBSYSTEM_SECURITY_JAVA_FILES += \
     $(INTERNAL_API_PROTECTION_DIR)/reference/classes/com/sun/midp/security/ImplicitlyTrustedClass.java \
     $(GENERATED_DIR)/classes/com/sun/midp/security/SecurityInitializer.java \
+    $(INTERNAL_API_PROTECTION_DIR)/reference/classes/com/sun/midp/security/SecurityInitializerImpl.java \
     $(INTERNAL_API_PROTECTION_DIR)/reference/classes/com/sun/midp/security/SecurityToken.java

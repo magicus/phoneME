@@ -1,5 +1,5 @@
 /*
- * @(#)MD2.h	1.6 05/09/27 @(#)
+ *   
  *
  * Portions Copyright  2003-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -89,9 +89,6 @@
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
- *
- * This program is released under the GPL with the additional exemption that 
- * compiling, linking, and/or using OpenSSL is allowed.
  */
 
 #ifndef HEADER_MD2_H

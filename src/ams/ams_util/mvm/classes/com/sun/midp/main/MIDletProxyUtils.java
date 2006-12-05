@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -83,5 +84,23 @@ public class MIDletProxyUtils {
             }
         }
         return null;
+    }
+
+    /**
+     * Terminates an isolate correspondent to the proxy given, resets
+     * proxy termination timer and invokes proper proxy list updates.
+     * Waits for termination completion.
+     * @param mp MIDlet proxy for the isolate to be terminated
+     * @param mpl the MIDlet proxy list
+     */
+    static void terminateMIDletIsolate(MIDletProxy mp, MIDletProxyList mpl) {
+        Isolate isolate = getIsolateFromId(mp.getIsolateId());
+         if (isolate != null) {
+            mp.setTimer(null);
+            isolate.exit(0);
+            // IMPL_NOTE: waiting for termination completion may be useless.
+            isolate.waitForExit();
+            mpl.removeIsolateProxies(mp.getIsolateId());
+        }
     }
 }

@@ -1,4 +1,5 @@
 /*
+ *    
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -334,7 +335,7 @@ public class X509Certificate implements Certificate {
      * invoking methods that access signature information, e.g. verify()
      * and getSigAlgName() can produce unexpected errors.
      * <P />
-     * @param ver        byte containing X.509 version
+     * @param ver        byte containing X.509 version starting a 0
      * @param rawSerialNumber byte array containing the serial number
      * @param sub        subject name
      * @param iss        issuer name
@@ -868,8 +869,7 @@ public class X509Certificate implements Certificate {
                     throw new IOException("Version info too long");
                 }
 
-                // Note: raw version number of 0 means version one
-                res.version = (byte) (res.enc[res.idx + (size - 1)] + 1);
+                res.version = (byte)(res.enc[res.idx + (size - 1)]);
                 res.idx += size;
             } else {
                 res.version = 1;  // No explicit version value

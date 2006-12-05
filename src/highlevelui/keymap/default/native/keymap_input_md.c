@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -95,7 +96,6 @@ static const Key Keys[] = {
  * game action.
  *
  * @param gameAction game action value
- * IMPL_NOTE:move to share platform
  */
 int 
 keymap_get_key_code(int gameAction)
@@ -140,7 +140,6 @@ keymap_get_key_code(int gameAction)
  * given key code.
  *
  * @param keyCode key code value
- * IMPL_NOTE:move to share platform
  */
 int 
 keymap_get_game_action(int keyCode)
@@ -201,7 +200,6 @@ keymap_get_game_action(int keyCode)
  * code.
  *
  * @param keyCode key code value
- * IMPL_NOTE:move to share platform
  */
 int
 keymap_get_system_key(int keyCode)
@@ -226,7 +224,6 @@ keymap_get_system_key(int keyCode)
  *
  * @return C pointer to char or NULL if the keyCode does not
  * correspond to any name.
- * IMPL_NOTE:move to share platform and change to loop through table Keys[]
  */
 char *
 keymap_get_key_name(int keyCode)

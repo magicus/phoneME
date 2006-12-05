@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -27,13 +28,14 @@ package com.sun.midp.rms;
 
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.i3test.*;
+import com.sun.midp.midlet.MIDletSuite;
 import java.io.IOException;
 
 /**
  * Test the global file resource limit by opening files up to and then past
- * the limit.  To open files, this test uses the RecordStoreFile class, which 
- * is a Java-based interface that's reasonably close to direct file access.  
- * RecordStoreFile is a private class inside com.sun.midp.rms, so that's why 
+ * the limit.  To open files, this test uses the RecordStoreFile class, which
+ * is a Java-based interface that's reasonably close to direct file access.
+ * RecordStoreFile is a private class inside com.sun.midp.rms, so that's why
  * this test resides in that package.
  */
 public class TestFileRscLimit extends TestCase {
@@ -42,7 +44,7 @@ public class TestFileRscLimit extends TestCase {
     static final int LIMIT = Constants.FILE_AMS_LIMIT;
 
     /** The suite name used when creating files. */
-    static final String SUITE = "internal";
+    static final int SUITE = MIDletSuite.INTERNAL_SUITE_ID;
 
     /** The file extension used when creating files. */
     static final int EXT = RecordStoreFile.DB_EXTENSION;
@@ -87,7 +89,7 @@ public class TestFileRscLimit extends TestCase {
     }
 
     /**
-     * Opens one more file than the global file resource limit and checks to 
+     * Opens one more file than the global file resource limit and checks to
      * see that the last one throws an exception.
      */
     void testFileHandlesRscLimit() throws IOException {

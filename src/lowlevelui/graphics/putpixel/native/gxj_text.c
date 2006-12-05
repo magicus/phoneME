@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -22,6 +23,8 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
+#include <kni.h>
 #include <midp_logging.h>
 
 #include <gxutl_graphics.h>
@@ -30,17 +33,40 @@
 #include "gxj_intern_putpixel.h"
 #include "gxj_intern_font_bitmap.h"
 
+
+/**
+ * @file
+ *
+ * given character code c, return the bitmap table where
+ * the encoding for this character is stored.
+ */
+static pfontbitmap selectFontBitmap(jchar c, pfontbitmap* pfonts) {
+    int i=1;
+    unsigned char c_hi = (c>>8) & 0xff;
+    unsigned char c_lo = c & 0xff;
+    do {
+        if ( c_hi == pfonts[i][FONT_CODE_RANGE_HIGH]
+          && c_lo >= pfonts[i][FONT_CODE_FIRST_LOW]
+          && c_lo <= pfonts[i][FONT_CODE_LAST_LOW]
+        ) {
+            return pfonts[i];
+        }
+        i++;
+    } while (i <= (int) pfonts[0]);
+    /* the first table must cover the range 0-nn */
+    return pfonts[1];
+}
+
 /**
  * @file
  *
  * putpixel primitive character drawing. 
  */
 unsigned char BitMask[8] = {0x80,0x40,0x20,0x10,0x8,0x4,0x2,0x1};
-
-static void drawChar(gxj_screen_buffer *sbuf, jchar c, 
+static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
 		     gxj_pixel_type pixelColor, int x, int y,
 		     int xSource, int ySource, int xLimit, int yLimit,
-		     unsigned char *fontbitmap, unsigned long mapLen, 
+		     pfontbitmap* pfonts,
 		     int fontWidth, int fontHeight) {
     int i;
     int j;
@@ -50,8 +76,14 @@ static void drawChar(gxj_screen_buffer *sbuf, jchar c,
     int bitOffset;
     unsigned long pixelIndex;
     unsigned char bitmapByte;
-    unsigned long firstPixelIndex =
-        (FONT_DATA * 8) + (c * fontHeight * fontWidth);
+    unsigned char const * const fontbitmap
+        = selectFontBitmap(c0,pfonts) + FONT_DATA;
+    jchar const c = (c0 & 0xff)  - fontbitmap[FONT_CODE_FIRST_LOW-FONT_DATA];
+    unsigned long mapLen =
+        ((fontbitmap[FONT_CODE_FIRST_LOW-FONT_DATA]
+        - fontbitmap[FONT_CODE_LAST_LOW-FONT_DATA]
+        + 1) * fontWidth * fontHeight + 7) >> 3;
+    unsigned long const firstPixelIndex = c * fontHeight * fontWidth;
 
     for (yDest = y, i = ySource; i < yLimit; i++, yDest++) {
         for (xDest = x, j = xSource; j < xLimit; j++, xDest++) {
@@ -110,7 +142,6 @@ gx_draw_chars(jint pixel, const jshort *clip,
     int width;
     int yLimit;
     int nCharsToSkip = 0;
-    int xCharSource;
     int widthRemaining;
     int yCharSource;
     int fontWidth;
@@ -139,9 +170,9 @@ gx_draw_chars(jint pixel, const jshort *clip,
         return;
     }
 
-    fontWidth = TheFontBitmap[FONT_WIDTH];
-    fontHeight = TheFontBitmap[FONT_HEIGHT];
-    fontDescent = TheFontBitmap[FONT_DESCENT];
+    fontWidth = FontBitmaps[1][FONT_WIDTH];
+    fontHeight = FontBitmaps[1][FONT_HEIGHT];
+    fontDescent = FontBitmaps[1][FONT_DESCENT];
 
     xDest = x;
     if (anchor & RIGHT) {
@@ -165,7 +196,6 @@ gx_draw_chars(jint pixel, const jshort *clip,
     yLimit = fontHeight;
 
     xStart = 0;
-    xCharSource = 0;
     yCharSource = 0;
 
     /*
@@ -234,9 +264,9 @@ gx_draw_chars(jint pixel, const jshort *clip,
         int startWidth = fontWidth - xStart;
 
         /* Clipped, draw the right part of the first char. */
-        drawChar(dest, charArray[nCharsToSkip], (gxj_pixel_type)pixel, xDest, yDest,
+        drawChar(dest, charArray[nCharsToSkip], GXJ_RGB24TORGB16(pixel), xDest, yDest,
                  xStart, yCharSource, fontWidth, yLimit,
-                 TheFontBitmap, sizeof (TheFontBitmap), fontWidth, fontHeight);
+                 FontBitmaps, fontWidth, fontHeight);
         nCharsToSkip++;
         xDest += startWidth;
         widthRemaining -= startWidth;
@@ -246,16 +276,16 @@ gx_draw_chars(jint pixel, const jshort *clip,
     for (i = nCharsToSkip; i < n && widthRemaining >= fontWidth;
          i++, xDest += fontWidth, widthRemaining -= fontWidth) {
 
-        drawChar(dest, charArray[i], (gxj_pixel_type)pixel, xDest, yDest,
+        drawChar(dest, charArray[i], GXJ_RGB24TORGB16(pixel), xDest, yDest,
                  0, yCharSource, fontWidth, yLimit,
-                 TheFontBitmap, sizeof (TheFontBitmap), fontWidth, fontHeight);
+                 FontBitmaps, fontWidth, fontHeight);
     }
 
     if (i < n && widthRemaining > 0) {
         /* Clipped, draw the left part of the last char. */
-        drawChar(dest, charArray[i], (gxj_pixel_type)pixel, xDest, yDest,
+        drawChar(dest, charArray[i], GXJ_RGB24TORGB16(pixel), xDest, yDest,
                  0, yCharSource, widthRemaining, yLimit,
-                 TheFontBitmap, sizeof (TheFontBitmap), fontWidth, fontHeight);
+                 FontBitmaps, fontWidth, fontHeight);
     }
 }
 
@@ -280,9 +310,9 @@ gx_get_fontinfo(int face, int style, int size,
     (void)size;
     (void)style;
 
-    *ascent  = TheFontBitmap[FONT_ASCENT];
-    *descent = TheFontBitmap[FONT_DESCENT];
-    *leading = TheFontBitmap[FONT_LEADING];
+    *ascent  = FontBitmaps[1][FONT_ASCENT];
+    *descent = FontBitmaps[1][FONT_DESCENT];
+    *leading = FontBitmaps[1][FONT_LEADING];
 }
 
 /**
@@ -316,5 +346,5 @@ gx_get_charswidth(int face, int style, int size,
     (void)style;
     (void)charArray;
 
-    return n * TheFontBitmap[FONT_WIDTH];
+    return n * FontBitmaps[1][FONT_WIDTH];
 }

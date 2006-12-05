@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -31,7 +32,7 @@ import com.sun.cldc.isolate.Isolate;
 
 
 
-/** 
+/**
  * Implements the mechanism to monitor MIDlet suites isolate.
  * The StartMIDletMonitor provides the isolate references at it gets
  * a MIDlet create notification from the MIDletProxyList. When an isolate
@@ -77,7 +78,7 @@ class IsolateMonitor implements MIDletProxyListListener {
     private IsolateMonitor() {
         isolates = new Hashtable();
         listeners = new Vector();
-	midletProxyList.addListener(this);
+        midletProxyList.addListener(this);
     }
 
     /**
@@ -145,7 +146,7 @@ class IsolateMonitor implements MIDletProxyListListener {
      * @param className Class name of the MIDlet
      * @param error start error code
      */
-    public void midletStartError(int externalAppId, String suiteId,
+    public void midletStartError(int externalAppId, int suiteId,
                                  String className, int error) {
     }
 
@@ -165,7 +166,7 @@ class IsolateMonitor implements MIDletProxyListListener {
 
             while (enum.hasMoreElements()) {
                 Isolate current = (Isolate)enum.nextElement();
-                
+
                 if (current == isolate) {
                     midletCount++;
                 }
@@ -173,7 +174,7 @@ class IsolateMonitor implements MIDletProxyListListener {
         }
 
         return midletCount == 1;
-    }        
+    }
 
     /**
      * Start a thread that will wait the MIDlet's isolate to terminate and
@@ -198,7 +199,7 @@ class IsolateMonitor implements MIDletProxyListListener {
      *
      * @param suiteId ID of the MIDlet suite
      */
-    void notifyListeners(String suiteId) {
+    void notifyListeners(int suiteId) {
         synchronized (listeners) {
             for (int i = 0; i < listeners.size(); i++) {
                 IsolateMonitorListener listener =

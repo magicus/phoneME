@@ -1,5 +1,5 @@
 /*
- * @(#)midp_eventqueue_md.cpp	1.9 04/12/01 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

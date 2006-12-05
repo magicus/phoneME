@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -1207,6 +1208,15 @@ public class TextField extends Item {
 	return true;
     }
     
+    /**
+     * Notify the item to the effect that it has been recently deleted.
+     * In addition to default action call TraverseOut for the TextField 
+     */
+     void itemDeleted() {
+         textFieldLF.itemDeleted();
+         super.itemDeleted();
+     }
+
     /**
      * The look&feel associated with this TextField. 
      * Set in the constructor.

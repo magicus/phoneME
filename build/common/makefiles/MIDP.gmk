@@ -1,5 +1,6 @@
 #
 #
+#
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -64,6 +65,7 @@ $(MIDP_OUTPUT_DIR)/classes.zip::
 # Additional configuration settings, by each subsystem
 #
 include $(MIDP_DIR)/build/common/makefiles/SubsystemDefs.gmk
+
 # I3 tests.
 #
 # Run through the .class file list and apply pattern matching and
@@ -118,14 +120,6 @@ $(MIDP_OUTPUT_DIR)/classes.zip:: $(I3_TEST_REPOSITORY)
 
 endif
 
-# Uncompressing compiled classes from jar archives
-$(MIDP_OUTPUT_DIR)/classes.zip::$(JTWI_JAR_FILES)
-	@echo " ... extracting classes from jar archives"
-	@if [ '!' -d $(CLASSBINDIR) ]; then \
-		mkdir -p $(CLASSBINDIR); \
-	 fi
-	@cd $(CLASSBINDIR) $(foreach jar, $(JTWI_JAR_FILES), && $(JAR_CMD) xf $(jar)) $(LOG)
-
 # ================================================================
 # Post-Java-Dependency-Search for classes.zip
 # Creates classes.zip
@@ -155,7 +149,7 @@ ifeq ($(TARGET_VM), cldc_vm)
 ROM_DEPS += $(MIDP_OUTPUT_DIR)/ROMImage.cpp
 else
 # cdc_dummies is defined in cdc_hi.gmk
-ROM_DEPS += cdc_dummies
+ROM_DEPS += cdc_dummies $(ROMSTRUCTS_H)
 endif
 
 rom: $(ROM_DEPS)

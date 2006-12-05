@@ -1,5 +1,6 @@
 
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -87,6 +88,8 @@ import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.ImplicitlyTrustedClass;
 
 import com.sun.midp.util.DateParser;
 import com.sun.midp.util.Properties;
@@ -105,10 +108,18 @@ public class Protocol extends ConnectionBaseAdapter
     /** How must extra room for the chunk terminator. */
     private static final int HTTP_OUTPUT_EXTRA_ROOM = 8;
 
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
     /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken;
-    
-    /** Default size for input buffer. */     
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
+
+    /** Default size for input buffer. */
     private static int inputBufferSize = 256;
     /** Default size for output buffer. */
     private static int outputBufferSize = 2048;
@@ -145,7 +156,7 @@ public class Protocol extends ConnectionBaseAdapter
         http_proxy = Configuration.getProperty("com.sun.midp.io.http.proxy");
         
         /*
-         * bug#4455443 - allows for configuration options to shut off 
+         * CR#4455443 - allows for configuration options to shut off 
          * the persistent connection feature for http 
          */
         String flag = 
@@ -194,20 +205,6 @@ public class Protocol extends ConnectionBaseAdapter
 
         outputDataSize = outputBufferSize - HTTP_OUTPUT_DATA_OFFSET -
                          HTTP_OUTPUT_EXTRA_ROOM;
-    }
-
-    /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class.
-     */
-    public static void initSecurityTokenStatically(SecurityToken token) {
-        if (classSecurityToken != null) {
-            return;
-        }
-        
-        classSecurityToken = token;
     }
 
     /** The protocol (or scheme) for the URL of the connection. */
@@ -1614,7 +1611,7 @@ public class Protocol extends ConnectionBaseAdapter
      *
      * @exception IOException is thrown if the connection cannot be opened
      */
-    private void startRequest() throws IOException {
+    void startRequest() throws IOException {
         if (streamConnection != null) {
             return;
         }
@@ -1700,7 +1697,7 @@ public class Protocol extends ConnectionBaseAdapter
         reqLine = new StringBuffer(256);
         
         /*
-         * HTTP RFC and bug#4402149,
+         * HTTP RFC and CR#4402149,
          * if there is no path then add a slash ("/").
          */
         filename = url.path;
@@ -1904,7 +1901,7 @@ public class Protocol extends ConnectionBaseAdapter
         
         /*
          * Ignore a continuation header and read the true headers again.
-         * (Bug# 4382226 discovered with Jetty HTTP 1.1 web server.
+         * (CR# 4382226 discovered with Jetty HTTP 1.1 web server.
          */
         if (responseCode == 100) {
             readResponseMessage(streamInput);
@@ -2232,7 +2229,7 @@ public class Protocol extends ConnectionBaseAdapter
             /**
              * Check the response header to see if the server would like
              * to close the connection.
-             * BUG#4492849
+             * CR#4492849
              */
             if ((key.equalsIgnoreCase("connection")) && 
                 (value.equalsIgnoreCase("close"))) {

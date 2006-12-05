@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -30,6 +31,7 @@
  * Can be used to support any timer alarms in the master mode.
  */
 
+#include <kni.h>
 #include <stdlib.h>
 #include <midpMalloc.h>
 #include <timer_queue.h>

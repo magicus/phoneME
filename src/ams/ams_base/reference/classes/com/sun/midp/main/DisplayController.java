@@ -1,4 +1,5 @@
 /*
+ *  
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -50,6 +51,9 @@ class DisplayController {
     /** Cache of the MIDlet proxy list reference. */
     protected MIDletProxyList midletProxyList;
 
+    /** What objects want to listen. */
+    private Vector listeners = new Vector(1, 1);
+
     /**
      * Construct a DisplayController with a reference to the ProxyList.
      *
@@ -57,6 +61,24 @@ class DisplayController {
      */
     protected DisplayController(MIDletProxyList theMIDletProxyList) {
         midletProxyList = theMIDletProxyList;
+    }
+
+    /**
+     * Add a listener.
+     *
+     * @param listener DisplayController listener
+     */
+    public void addListener(DisplayControllerListener listener) {
+        listeners.addElement(listener);
+    }
+
+    /**
+     * Remove a listener for DisplayController.
+     *
+     * @param listener DisplayController listener
+     */
+    public void removeListener(DisplayControllerListener listener) {
+        listeners.removeElement(listener);
     }
 
     /**
@@ -409,10 +431,31 @@ class DisplayController {
      * concurrently. In SVM mode the display controller returns
      * foreground MIDlet.
      *
+     * @param onlyFromLaunched true if midlet should
+     *        be selected from the list of already launched midlets,
+     *        if false then possibility to launch midlet is needed.
      * @return Proxy of the next foreground MIDlet, may be the foreground
      *         MIDlet if the foreground should not change
      */
-    MIDletProxy selectForeground() {
+    MIDletProxy selectForeground(boolean onlyFromLaunchedList) {
+        notifyListenersOfSelectForeground(onlyFromLaunchedList);
         return midletProxyList.getForegroundMIDlet();
+    }
+
+    /**
+     * Notify the listeners of the display controller that foreground
+     * selection ui should be launched.
+     *
+     * @param onlyFromLaunchedList true if midlet should
+     *        be selected from the list of already launched midlets,
+     *        if false then possibility to launch midlet is needed.
+     */
+    void notifyListenersOfSelectForeground(boolean onlyFromLaunchedList) {
+        for (int i = listeners.size() - 1; i >= 0; i--) {
+            DisplayControllerListener listener =
+                (DisplayControllerListener)listeners.elementAt(i);
+
+            listener.selectForeground(onlyFromLaunchedList);
+        }
     }
 }

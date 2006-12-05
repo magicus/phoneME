@@ -77,6 +77,13 @@ include $(SUBSYSTEM_CORE_DIR)/kni_util/$(LIB_MAKE_FILE)
 include $(SUBSYSTEM_CORE_DIR)/libc_ext/$(LIB_MAKE_FILE)
 
 #####################################################################
+# Logging Base library
+# Description: Common functions for all implementations of Logging
+#####################################################################
+
+include $(SUBSYSTEM_CORE_DIR)/log_base/$(LIB_MAKE_FILE)
+
+#####################################################################
 # Logging library
 # Description: Logging service
 #####################################################################
@@ -146,10 +153,17 @@ include $(SUBSYSTEM_CORE_DIR)/storage/$(LIB_MAKE_FILE)
 
 include $(SUBSYSTEM_CORE_DIR)/string/$(LIB_MAKE_FILE)
 
+#####################################################################
+# Suspend/Resume library
+# Description: Java stack suspend/resume functionality
+#####################################################################
+ifneq ($(TARGET_VM), cdc_hi)
+include $(SUBSYSTEM_CORE_DIR)/suspend_resume/$(LIB_MAKE_FILE)
+endif
 
 ####################################################################
 
-SUBSYSTEM_CORE_JAVA_FILES = \
+SUBSYSTEM_CORE_JAVA_FILES += \
     $(SUBSYSTEM_CRC32_JAVA_FILES) \
     $(SUBSYSTEM_GLOBAL_JAVA_FILES) \
     $(SUBSYSTEM_JAVAUTIL_JAVA_FILES) \
@@ -164,7 +178,8 @@ SUBSYSTEM_CORE_JAVA_FILES = \
     $(SUBSYSTEM_VMSERVICES_JAVA_FILES) \
     $(SUBSYSTEM_MEMORY_JAVA_FILES) \
     $(SUBSYSTEM_STORAGE_JAVA_FILES) \
-    $(SUBSYSTEM_STRING_JAVA_FILES)
+    $(SUBSYSTEM_STRING_JAVA_FILES) \
+    $(SUBSYSTEM_SUSPEND_RESUME_JAVA_FILES)
 
 SUBSYSTEM_CORE_I3TEST_JAVA_FILES = \
     $(SUBSYSTEM_CRC32_I3TEST_JAVA_FILES) \
@@ -181,7 +196,8 @@ SUBSYSTEM_CORE_I3TEST_JAVA_FILES = \
     $(SUBSYSTEM_VMSERVICES_I3TEST_JAVA_FILES) \
     $(SUBSYSTEM_MEMORY_I3TEST_JAVA_FILES) \
     $(SUBSYSTEM_STORAGE_I3TEST_JAVA_FILES) \
-    $(SUBSYSTEM_STRING_I3TEST_JAVA_FILES)
+    $(SUBSYSTEM_STRING_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_SUSPEND_RESUME_I3TEST_JAVA_FILES)
  
 SUBSYSTEM_CORE_NATIVE_FILES = \
     $(SUBSYSTEM_CRC32_NATIVE_FILES) \
@@ -198,7 +214,8 @@ SUBSYSTEM_CORE_NATIVE_FILES = \
     $(SUBSYSTEM_VMSERVICES_NATIVE_FILES) \
     $(SUBSYSTEM_MEMORY_NATIVE_FILES) \
     $(SUBSYSTEM_STORAGE_NATIVE_FILES) \
-    $(SUBSYSTEM_STRING_NATIVE_FILES)
+    $(SUBSYSTEM_STRING_NATIVE_FILES) \
+    $(SUBSYSTEM_SUSPEND_RESUME_NATIVE_FILES)
 
 SUBSYSTEM_CORE_EXTRA_INCLUDES = \
     $(SUBSYSTEM_CRC32_EXTRA_INCLUDES) \
@@ -215,9 +232,9 @@ SUBSYSTEM_CORE_EXTRA_INCLUDES = \
     $(SUBSYSTEM_VMSERVICES_EXTRA_INCLUDES) \
     $(SUBSYSTEM_MEMORY_EXTRA_INCLUDES) \
     $(SUBSYSTEM_STORAGE_EXTRA_INCLUDES) \
-    $(SUBSYSTEM_STRING_EXTRA_INCLUDES)
+    $(SUBSYSTEM_STRING_EXTRA_INCLUDES) \
+    $(SUBSYSTEM_SUSPEND_RESUME_EXTRA_INCLUDES)
 
- 
 SUBSYSTEM_CORE_EXTRA_CFLAGS = \
     $(SUBSYSTEM_CRC32_EXTRA_CFLAGS) \
     $(SUBSYSTEM_GLOBAL_EXTRA_CFLAGS) \
@@ -233,4 +250,5 @@ SUBSYSTEM_CORE_EXTRA_CFLAGS = \
     $(SUBSYSTEM_VMSERVICES_EXTRA_CFLAGS) \
     $(SUBSYSTEM_MEMORY_EXTRA_CFLAGS) \
     $(SUBSYSTEM_STORAGE_EXTRA_CFLAGS) \
-    $(SUBSYSTEM_STRING_EXTRA_CFLAGS)
+    $(SUBSYSTEM_STRING_EXTRA_CFLAGS) \
+    $(SUBSYSTEM_SUSPEND_RESUME_EXTRA_CFLAGS)

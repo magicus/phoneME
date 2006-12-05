@@ -1,4 +1,5 @@
 /*
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,48 +32,123 @@ import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
+import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 import com.sun.midp.util.ResourceHandler;
+
+import com.sun.midp.chameleon.layers.ScrollBarLayer;
+import com.sun.midp.chameleon.layers.ScrollArrowLayer;
+
 
 /**
  * A ScrollIndLayer is a region of the display used for showing scroll indicator
- * status arrows.  
- * IMPL NOTE: implement a scroll bar mode, so that scroll feedback can be provided
- *        via scroll indicators or a scroll bar
+ * status either as arrows or bar.  
  */
-public class ScrollIndLayer extends CLayer {
+public abstract class ScrollIndLayer extends CLayer {
+    /**
+     * Scrollbar operation types
+     */
+    public static final int SCROLL_NONE = 0;
+    public static final int SCROLL_LINEUP = 1;
+    public static final int SCROLL_LINEDOWN= 2;
+    public static final int SCROLL_PAGEUP = 3;
+    public static final int SCROLL_PAGEDOWN= 4;
+    public static final int SCROLL_THUMBTRACK= 5;
 
     /**
-     * IMPL NOTE:  Add parameters to support a scroll bar appearance mode, 
-     * where a scroll bar is drawn on the right side of the screen.
-     *
-     * The ScrollBar mode and ButtonBar-Indicator modes will be toggled
-     * with a mode flag set in our skin class.
-     */
+     * scrollIndArrow layer is just one for all scrollable layers.
+     * It is chached and shared between all layers
+     */ 
+    private static ScrollIndLayer scrollIndArrows;
 
+    /** Scrollable layer */ 
+    protected CLayer scrollable;
     /**
-     * True if up arrow is visible
-     */
-    protected boolean upViz;
-    
-    /**
-     * True if down arrow is visible
-     */
-    protected boolean downViz;
-    
-    /**
-     * True if special alert arrow indicators should be drawn instead of 
-     * the regular ones
+     * True if special alert indicator bar should be drawn instead of 
+     * the regular one
      */
     protected boolean alertMode;
 
     /**
-     * Construct a new ScrollIndLayer, visible, but transparent :)
+     * Scrolling listener.
+     * This layer is notified if the scroll indicator is changed
      */
-    public ScrollIndLayer() {
-        super((Image)null, -1);
-        super.setVisible(true);
-        this.layerID = "ScrollIndLayer";
-        super.setOpaque(false);
+    protected ScrollListener listener;
+
+    /**
+     * Set the current vertical scroll position and proportion.
+     *
+     * @param scrollPosition vertical scroll position.
+     * @param scrollProportion vertical scroll proportion.
+     */
+    public abstract void setVerticalScroll(int scrollPosition, 
+                                  int scrollProportion);
+    /**
+     * Calculate layer bounds depending on the scrollable
+     */
+    public abstract void setBounds();
+
+    /**
+     * Common constructor.
+     * @param layer the scrollable controlling the scrolling layer 
+     */
+    protected ScrollIndLayer(CLayer layer) {
+        super();
+        setOpaque(false);
+        setSupportsInput(true);
+        scrollable = layer;
+        alertMode = scrollable instanceof AlertLayer;
+    }
+
+    /**
+     * Additional constructor.
+     * @param layer the scrollable controlling the scrolling layer 
+     * @param listener the scrolling listener
+     */
+    public ScrollIndLayer(CLayer layer, ScrollListener listener) {
+        this(layer);
+        this.listener = listener;
+    }
+
+
+    /**
+     * Set new scrollable 
+     * @param layer new scrollable controlling the scrolling layer
+     * @return true if the scrollable is changed, false - otherwise
+     */
+    public boolean setScrollable(CLayer layer) {
+        boolean ret = scrollable != layer;
+        if (ret) {
+            setVisible(false);
+            scrollable = layer;
+            alertMode = scrollable instanceof AlertLayer;
+        }
+        return ret;
+    }
+    
+    /**
+     * Set new listener 
+     * @param newListener new scrolling listener
+     * @return true if the listener is changed, false - otherwise
+     */
+    public boolean setListener(ScrollListener newListener) {
+        boolean ret = listener != newListener;
+        if (ret) {
+            listener = newListener;
+            if (listener != null) {
+                listener.updateScrollIndicator();
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * Update bounds of layer
+     *
+     * @param layers - current layer can be dependant on this parameter
+     */
+    public void update(CLayer[] layers) {
+        super.update(layers);
+        setBounds();
     }
 
     /**
@@ -80,92 +156,24 @@ public class ScrollIndLayer extends CLayer {
      */
     protected void initialize() {
         super.initialize();
-        setAnchor();
-    }
-	
-    public void setAnchor() {
-        switch (ScrollIndSkin.MODE) {
-            case ScrollIndSkin.MODE_BAR:
-                // IMPL NOTE: Implement scroll bars
-                break;
-            case ScrollIndSkin.MODE_ARROWS:
-            default:
-                bounds[H] = SoftButtonSkin.HEIGHT;
-                if (ScrollIndSkin.IMAGE_UP != null) {
-                    bounds[W] = ScrollIndSkin.IMAGE_UP.getWidth();
-                    bounds[H] = (2 * ScrollIndSkin.IMAGE_UP.getHeight());
-                    bounds[Y] = SoftButtonSkin.HEIGHT - bounds[H];
-                    bounds[Y] = bounds[Y] / 3;
-                    bounds[H] += bounds[Y];
-                    bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT +
-                        bounds[Y];
-                } else {
-                    bounds[W] = ScrollIndSkin.WIDTH;
-                    bounds[Y] = 3;
-                }
-                bounds[X] = (ScreenSkin.WIDTH - bounds[W]) / 2;
-                break;
-        }
+        setBounds();
     }
 
-    /**
-     * Set the current vertical scroll position and proportion.
-     *
-     * @param alt_arrows true if alert indicators should be drawn
-     * @param scrollPosition vertical scroll position.
-     * @param scrollProportion vertical scroll proportion.
-     */
-    public void setVerticalScroll(boolean alt_arrows, int scrollPosition, 
-                                  int scrollProportion) 
-    {	
-        alertMode = alt_arrows;
-        boolean up = upViz;
-        boolean dn = downViz;
-        if (scrollProportion < 100) {
-            upViz = (scrollPosition > 0);
-            downViz = (scrollPosition < 100);
-        } else {
-            upViz = false;
-            downViz = false;
-        }
-        
-        if (up != upViz || dn != downViz) {
-            this.dirty = true;
-            requestRepaint();
-        }
-    }
-
-    /**
-     * Paint the scroll indicator.  The indicator arrows may be appear 
-     * individually
-     * or together, and may vary in appearance based on whether they appear
-     * in the normalsoft button region or an alert's softbutton region.
-     * The visible state is based on the state of the <code>alertMode</code>, 
-     * <code>upViz</code>, and <code>downViz</code> variables set by the
-     * <code>setVerticalScroll</code> method.
-     * @param g the graphics context to paint in
-     */
-    protected void paintBody(Graphics g) {
-        if (upViz) {
-            Image i = ScrollIndSkin.IMAGE_UP;
-            if (alertMode && ScrollIndSkin.IMAGE_AU_UP != null) {
-                i = ScrollIndSkin.IMAGE_AU_UP;
+    public static ScrollIndLayer getInstance(int type) {
+        ScrollIndLayer s = null;
+        switch (type) {
+        case ScrollIndResourcesConstants.MODE_ARROWS:
+            if (scrollIndArrows == null) {
+                scrollIndArrows = new ScrollArrowLayer(null, null);
             }
-            if (i != null) {
-                g.drawImage(i, 0, 0, Graphics.LEFT| Graphics.TOP);
-            }
+            s = scrollIndArrows;
+            break;
+        case ScrollIndResourcesConstants.MODE_BAR:
+            s = new ScrollBarLayer(null, null);
+            break;
+        default:
+            break;
         }
-        
-        if (downViz) {
-            Image i = ScrollIndSkin.IMAGE_DN;
-            if (alertMode && ScrollIndSkin.IMAGE_AU_DN != null) {
-                i = ScrollIndSkin.IMAGE_AU_DN;
-            }
-            if (i != null) {
-                g.drawImage(i, 0, 
-                    bounds[H] - ScrollIndSkin.IMAGE_DN.getHeight(),
-                    Graphics.LEFT | Graphics.TOP);
-            }
-        }
+        return s;
     }
 }

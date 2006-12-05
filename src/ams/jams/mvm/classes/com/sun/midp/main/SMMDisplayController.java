@@ -1,5 +1,6 @@
 /*
  *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -42,7 +43,7 @@ import java.util.*;
  */
 public class SMMDisplayController extends DisplayController {
     /** Suite ID of the last MIDlet in foreground. */
-    private String lastMidletSuiteId;
+    private int lastMidletSuiteId;
 
     /** Class name of the last MIDlet in foreground. */
     private String lastMidletClassName;
@@ -54,14 +55,14 @@ public class SMMDisplayController extends DisplayController {
      * Construct a DisplayController with a reference to the ProxyList.
      *
      * @param theMIDletProxyList reference to the MIDlet proxy list
-     * @param suiteID the suiteID of the last MIDlet in the foreground
+     * @param suiteId the suiteId of the last MIDlet in the foreground
      * @param classname classname of the last MIDlet in the foreground
      */
     public SMMDisplayController(MIDletProxyList theMIDletProxyList,
-                                String suiteID, String classname) {
+                                int suiteId, String classname) {
         super(theMIDletProxyList);
         midletProxyList = theMIDletProxyList;
-        lastMidletSuiteId = suiteID;
+        lastMidletSuiteId = suiteId;
         lastMidletClassName = classname;
     }
 

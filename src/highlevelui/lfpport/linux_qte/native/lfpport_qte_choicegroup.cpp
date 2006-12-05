@@ -1,5 +1,5 @@
 /*
- * @(#)lfpport_qte_choicegroup.cpp	1.102 06/04/17 @(#)
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -94,7 +94,7 @@ void drawElement(QPainter *p,
   }
 
   p->drawText(x + imgWidth, y, w - imgWidth, h, 
-	      fitPolicy == TEXT_WRAP_OFF ? 
+	      fitPolicy == TEXT_WRAP_OFF ?
 	          Qt::AlignLeft | Qt::AlignTop : 
                   Qt::AlignLeft | Qt::AlignTop | Qt::WordBreak, 
 	      string);
@@ -1701,6 +1701,7 @@ QFont *PopupElement::font() {
  */
 PopupBody::PopupBody(QWidget *parent) : QPushButton(parent) {
   setFocusPolicy(QWidget::StrongFocus);
+  oldWidth = -1;
 }
 
 /** Destruct a popup choicegroup body widget */
@@ -1724,7 +1725,7 @@ void PopupBody::focusInEvent(QFocusEvent *event) {
 }
 
 /**
- * Override to patch a bug in Qt that shows popup menu at 
+ * Override to patch a feature in Qt that shows popup menu at 
  * (0, 0) if triggered by key press, instead of mouse click.
  *
  * @param keyEvent key event to handle
@@ -1791,6 +1792,28 @@ QSize PopupBody::sizeHint() const {
 
   return size;
 }
+
+/**
+ * Override setText to support text truncation
+*/
+void PopupBody::setText(const QString &newText) {
+    QPushButton::setText(newText);
+    longText = shortText = newText;
+    oldWidth = -1;
+}
+
+/**
+ * Override drawButton to support text truncation
+*/
+void PopupBody::drawButton( QPainter * p ) {
+    if(oldWidth != width()) {
+        shortText = longText;
+        truncateQString(shortText, font(), width()-PAD_CHOICE_POPUP_BUTTON);
+        QPushButton::setText(shortText);
+        oldWidth = width();
+    }
+    QPushButton::drawButton(p);
+};
 
 /**
  * Construct a popup choicegroup widget.
@@ -2126,9 +2149,9 @@ void Popup::elementSelected(int id) {
     if (qPopup->idAt(i) == id) {
       popupElement = (PopupElement *)elements->at(i);
       if (popupElement != NULL) {
-	selectedIndex = i;
-	MidpFormItemPeerStateChanged(this, selectedIndex);
-	qButton->setText(popupElement->text());
+        selectedIndex = i;
+        MidpFormItemPeerStateChanged(this, selectedIndex);
+        qButton->setText(popupElement->text());
       }
       break;
     }

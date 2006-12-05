@@ -26,332 +26,228 @@
 package com.sun.midp.security;
 
 import com.sun.midp.lcdui.DisplayEventHandlerFactory;
-import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.log.Logging;
 
 /**
- * A utility class that initializes internal security.  Creates the internal
- * security token and distributes it to various packages around the system
- * that need it.
+ * A utility class that initializes internal security. Creates the internal
+ * security token and supports its distribution to various packages around
+ * the system that need it.
  * <p>
- * The security token is created here and is passed to static methods of
- * several implementation classes around the system.  These methods, typically
+ * The security token is created here and can be passed to various
+ * implementation classes around the system. There are two mechanisms
+ * to pass the token. The fastest way is to pass the security token to
+ * static methods of an implementation classes. These methods, typically
  * named <code>initSecurityToken()</code>, must each ensure they are called
- * only once.  This technique works for classes other than those in public API
- * packages (that is, java.* and javax.*).  This technique cannot be used for
- * class that reside in public API packages, since the initialization method
- * must be public and adding methods to public APIs is prohibited.  Instead,
- * the following alternative approach is used.
+ * only once. This technique works for classes other than those in public
+ * API packages (that is, java.* and javax.*). This technique cannot be
+ * used for class that reside in public API packages, since the
+ * initialization method must be public and adding methods to public APIs
+ * is prohibited. Also passing the token to lot of optional classes around
+ * the system will cause the classes loading and static initialization,
+ * which affects system performance and slowdowns system start up. That
+ * is why only a few core system classes are handed with security token
+ * over the explicit method call. For most of the other classes the
+ * following alternative approach is used.
  * <p>
- * The {@link #getSecurityToken()} method gives out the security token to
- * whomever calls it.  This method is disabled (through the use of the boolean
- * variable {@link #dispensingEnabled}) in order to prevent it from handling
- * out the token to any caller.  To get the security token into a public API
- * class, we arrange for a static initialization block in the API class to get
- * the security token by calling getSecurityToken().  We enable dispensing the
- * token and then name the API class with <code>Class.forName()</code> in
- * order to force static initialization.  This pulls security token into the
- * API class.  Finally, we disable the dispensing of the security token.
+ * Any implementation class trusted by the internal security system can
+ * request <code>SecurityInitializer</code> for security token. The check
+ * whether a requester class is really trusted can be implemented in a
+ * different ways, e.g. using static list of a trusted class names, or
+ * using more specific features of the VM. The need in the optimized
+ * implementation for the trusted classes check can be regarded at the
+ * product porting time.
  * <p>
- * The security of this technique requires no other threads to be running in
- * the system, and it also requires the API classes not to be initialized at
- * the time internal security is initialized.  This implies that internal
- * security must be initialized very early in the execution of the system.  It
- * also implies that the public API classes must not be initialized at build
- * time by the ROMizer and that they must be initialized at runtime.
+ * The approach with security token request on demand makes it possible
+ * for numerous optional subsystem to be not loaded and initialized
+ * until the very last moment when their functionality is really requested.
+ * <p>
+ * The important note about trusted classes check. In the case static list
+ * of trusted class names is used for the check, it is important to prevent
+ * ROMizer from these classes renaming at the build time. Otherwise security
+ * system won't be able to identify requester classes by class name.
  */
 public final class SecurityInitializer {
 
     /**
-     * Ensures that security initialization is done only once.
+     * Internal implementation of the SecurityInitializer logic common
+     * for other possible security initializer e.g. JSR specific ones.
      */
-    private static boolean initialized = false;
+    private static SecurityInitializerImpl impl;
 
     /**
-     * The primary security token for the system.
-     */
-    private static SecurityToken internalSecurityToken;
-
-    /**
-     * Set to <code>true</code> to allow {@link #getSecurityToken}
-     * will give out the security token.
-     */
-    private static boolean dispensingEnabled = false;
-
-    /**
-     * Creates the primary security token and distributes it to the
-     * Display class.  This method must be called very early during the
-     * initialization of the system, before anything occurs that might need
-     * the security token.  It also relies on the timing of class loading and
-     * initialization, so it must be called before some classes are loaded.
-     * It is used in isolates that don't run MIDlets.
+     * Request security token using trusted object instance.
+     * Note that the impossibility to create trusted objects
+     * for untrusted requesters is the only guarantee of
+     * secure tokens dispatching.
      *
-     * @return the newly created security token
-     * @throws SecurityException if it or init has already been called
-     * previously
+     * @param trusted object to check whether caller have the right to
+     *   request for security token
+     * @return in the case transferred object is really trusted for
+     *   SecurityInitializer the internal security token is returned,
+     *   otherwise SecurityException will be thrown
+     * @throws SecurityException in the case internal security system
+     *   is uninitialized or transfered trusted object in unknown to
+     *   <code>SecurityInitializer</code>
      */
-    public static SecurityToken initDisplay() {
-        if (initialized) {
-            throw new SecurityException();
-        }
-
-        initialized = true;
-
-        try {
-            /*
-             * As the first caller to create a token we can pass in null
-             * for the security token.
-             */
-            internalSecurityToken =
-                new SecurityToken(null,
-                    Permissions.forDomain(
-                        Permissions.MANUFACTURER_DOMAIN_BINDING));
-
-            // NOTE: The initialization of Display will forward on the
-            // initialization to Chameleon's SkinResources if Chameleon
-            // is being used
-            initSecurity("javax.microedition.lcdui.Display");
-        } catch (Throwable t) {
-            Logging.trace(t, "Unable to initialize security");
-            throw new RuntimeException(t.toString());
-        }
-
-        return internalSecurityToken;
+    public static SecurityToken requestToken(
+            ImplicitlyTrustedClass trusted) throws SecurityException {
+        return impl.requestToken(trusted);
     }
 
     /**
-     * Creates the primary security token and distributes it around the
-     * system.  This method must be called very early during the
-     * initialization of the system, before anything occurs that might need
-     * the security token.  It also relies on the timing of class loading and
-     * initialization, so it must be called before some classes are loaded.
-     *
-     * @return the newly created security token
-     * @throws SecurityException if it or initDisplay has already
-     * been called previously
+     * Explicitly init security token for core system classes
+     * in the fastest possible way. The other optional classes
+     * should request for security token on their own.
      */
-    public static SecurityToken init() {
+    public static void initSystem() {
+        SecurityToken internalSecurityToken =
+            impl.internalSecurityToken;
 
-        if (initialized) {
-            throw new SecurityException();
-        }
-
-        try {
-            initialized = true;
-
-            // As the first caller to create a token we can pass in null
-            // for the security token.
-            internalSecurityToken =
-                new SecurityToken(null,
-                    Permissions.forDomain(
-                        Permissions.MANUFACTURER_DOMAIN_BINDING));
-
-            SecurityHandler.initSecurityToken(internalSecurityToken);
-
-            com.sun.midp.midletsuite.MIDletSuiteStorage.initSecurityToken(
-                internalSecurityToken);
-            com.sun.midp.io.j2me.http.Protocol.initSecurityTokenStatically(
-                internalSecurityToken);
-            com.sun.midp.io.j2me.datagram.Protocol.initSecurityToken(
-                internalSecurityToken);
-
-            DisplayEventHandlerFactory.
-                initSecurityToken(internalSecurityToken);
-            com.sun.midp.midlet.MIDletPeer.initSecurityToken(
-                internalSecurityToken);
-            com.sun.midp.midlet.MIDletStateHandler.initSecurityToken(
-                internalSecurityToken);
-            com.sun.mmedia.MMEventHandler.initSecurityToken(
-                internalSecurityToken);
-            com.sun.midp.io.j2me.push.PushRegistryImpl.initSecurityToken(
-                    internalSecurityToken);
-
-            /*
-             * Conditional initializations for classes that may or may
-             * not be present.
-             */
-
-// #ifdef ENABLE_PUBLICKEYSTORE
-            initSecurityToken("com.sun.midp.publickeystore.WebPublicKeyStore");
-// #endif ENABLE_PUBLICKEYSTORE
-
-// #ifdef ENABLE_SSL
-            initSecurityToken("com.sun.midp.io.j2me.https.Protocol");
-            initSecurityToken("com.sun.midp.io.j2me.ssl.Protocol");
-// #endif ENABLE_SSL
-
-// #ifdef ENABLE_JSR_205
-            initSecurityToken("com.sun.midp.io.j2me.sms.Protocol");
-            initSecurityToken("com.sun.midp.io.j2me.cbs.Protocol");
-            initSecurityToken("com.sun.midp.io.j2me.mms.Protocol");
-// #endif ENABLE_JSR_205
-
-// #ifdef ENABLE_JSR_135
-            initSecurityToken("com.sun.mmedia.WavRecordCtrl");
-            initSecurityToken("com.sun.mmedia.protocol.FileConnectionSubstitute");
-// #endif ENABLE_JSR_135
-
-// #ifdef ENABLE_JSR_234
-            initSecurityToken("com.sun.mmedia.WavRecordCtrl");
-            initSecurityToken("com.sun.mmedia.protocol.FileConnectionSubstitute");
-// #endif ENABLE_JSR_234
-
-// #ifdef ENABLE_JSR_177
-            initSecurityToken("com.sun.midp.io.j2me.apdu.Protocol");
-            initSecurityToken("com.sun.satsa.acl.ACSlot");
-            initSecurityToken("com.sun.midp.io.j2me.jcrmi.Protocol");
-            initSecurityToken("com.sun.satsa.pki.PKIManager");
-// #endif ENABLE_JSR_177
-
-// #ifdef ENABLE_JSR_179
-            initSecurity("com.sun.j2me.location.LocationPersistentStorage");
-// #endif ENABLE_JSR_179
-
-// #ifdef ENABLE_JSR_180
-            initSecurityToken("com.sun.midp.io.j2me.sip.Protocol");
-            initSecurityToken("com.sun.midp.io.j2me.sips.Protocol");
-// #endif ENABLE_JSR_180
-
-// #ifdef ENABLE_JSR_75
-            initSecurityToken("com.sun.kvem.midp.pim.PIMDatabase");
-// #endif ENABLE_JSR_75
-
-// #ifdef ENABLE_JSR_82
-            initSecurityToken("com.sun.midp.jsr082.SecurityInitializer");
-// #endif ENABLE_JSR_82
-
-// #ifdef ENABLE_JSR_238
-            initSecurityToken("com.sun.midp.jsr238.SecurityInitializer");
-// #endif ENABLE_JSR_238
-            initSecurity("com.sun.j2me.global.NormalizationTableImpl");
-            initSecurity("com.sun.j2me.global.CollationElementTableImpl");
-
-            initSecurity("javax.microedition.rms.RecordStore");
-
-            initSecurity("javax.microedition.midlet.MIDlet");
-
-            // NOTE: The initialization of Display will forward on the
-            // initialization to Chameleon's SkinResources if Chameleon
-            // is being used
-
-            initSecurity("javax.microedition.lcdui.Display");
-
-// #ifdef ENABLE_JSR211
-            initSecurity("javax.microedition.content.Registry");
-            initSecurity("com.sun.midp.content.RegistryImpl");
-            initSecurity("com.sun.midp.content.InvocationImpl");
-// #endif ENABLE_JSR211
-
-// IMPL NOTE: PauseTest is temporarily disabled.
-//            // Pass the security token to the standalone pause test.
-//            initSecurity("com.sun.midp.internal.test.PauseTest");
-
-            // Pass the security token to the i3 test framework.
-
-// #ifdef ENABLE_I3_TEST
-            initSecurity("com.sun.midp.i3test.TestCase");
-// #endif ENABLE_I3_TEST
-
-// #ifdef ENABLE_JSR_75
-            initSecurity("javax.microedition.io.file.FileSystemEventHandler");
-// #endif ENABLE_JSR_75
-
-// #ifdef ENABLE_JSR_229
-            initSecurity("com.sun.j2me.payment.CldcPaymentModule");
-            initSecurity("com.sun.j2me.payment.CldcTransactionStoreImpl");
-// #endif ENABLE_JSR_229
-
-// #ifdef ENABLE_JSR_226
-            initSecurity("com.sun.perseus.platform.ResourceHandler");
-            initSecurity("com.sun.perseus.builder.DefaultFontFace");
-// #endif ENABLE_JSR_226
-
-        } catch (Throwable t) {
-            Logging.trace(t, "Unable to initialize security");
-            throw new RuntimeException(t.toString());
-        }
-
-        return internalSecurityToken;
-    }
-
-    /**
-     * Method to initialize an ImplicitlyTrusted class that may
-     * or may not be present. If the class can be found and
-     * and if an instance of ImplicitlyTrusted can be created it is
-     * called with the internal security token.
-     * ClassNotFoundExceptions to the class initialization are logged.
-     * Other exceptions related to creating an instance are thrown.
-     *
-     * @param classname the name of the class to initialize.
-     * @exception InstantiationException may be thrown by newInstance
-     * @exception IllegalAccessException may be thrown by newInstance
-     * @exception ClassCastException may be thrown if the class does
-     * not implement ImplicitlyTrustedClass
-     */
-    private static void initSecurityToken(String classname)
-            throws InstantiationException, IllegalAccessException
-    {
-        try {
-            ImplicitlyTrustedClass trusted = (ImplicitlyTrustedClass)
-                    Class.forName(classname).newInstance();
-            trusted.initSecurityToken(internalSecurityToken);
-        } catch (ClassNotFoundException e) {
-            if (Logging.TRACE_ENABLED) {
-                Logging.trace(e, "Unable to initialize security for " +
-                        classname);
-            }
-        }
-    }
-
-    /**
-     * Method to trigger the static initializer for a class.
-     * The {@link #dispensingEnabled} is enabled only for the
-     * duration of the class initialization to allow that static
-     * initializer to call {@link #getSecurityToken}.
-     * <p>
-     * ClassNotFoundExceptions are logged but other exceptions
-     * caused by class initialization are thrown.
-     * @param classname the name of the class to initialize.
-     */
-    private static void initSecurity(String classname) {
-        try {
-            /*
-            * Enable giving out the security token, force static
-            * initialization of named classes, then disable giving
-            * out the security token.  This allows the static initializers
-            * of the named classes to fetch the security token.
-            * ClassNotFoundException is ignored; these may occur
-            * if the class has been configured out of the system.
-            */
-            dispensingEnabled = true;
-            Class.forName(classname);
-        } catch (ClassNotFoundException e) {
-            if (Logging.TRACE_ENABLED) {
-                Logging.trace(e, "Class not found");
-            }
-        } finally {
-            dispensingEnabled = false;
-        }
-    }
-
-    /**
-     * Gets the internal security token.  This method is enabled only within a
-     * narrow window of time during initialization.
-     *
-     * @return the internal security token
-     * @throws SecurityException if handing out the token is disabled
-     */
-    public static SecurityToken getSecurityToken() {
-        if (dispensingEnabled) {
-            return internalSecurityToken;
-        } else {
-            throw new SecurityException();
-        }
+        com.sun.midp.security.SecurityHandler.initSecurityToken(
+            internalSecurityToken);
+        com.sun.midp.midletsuite.MIDletSuiteStorage.initSecurityToken(
+            internalSecurityToken);
+        DisplayEventHandlerFactory.initSecurityToken(
+            internalSecurityToken);
+        com.sun.midp.midlet.MIDletPeer.initSecurityToken(
+            internalSecurityToken);
+        com.sun.midp.midlet.MIDletStateHandler.initSecurityToken(
+            internalSecurityToken);
+        com.sun.midp.io.j2me.push.PushRegistryImpl.initSecurityToken(
+            internalSecurityToken);
     }
 
     /**
      * Prevents creation of any instances.
      */
     private SecurityInitializer() {
+    }
+
+    /**
+     * List of trusted class names known to internal security system.
+     * Using the instances of these classes it is possible to receive
+     * a security token, that means the developer of the classes is
+     * reposnsible for impossibility to create them for user.
+     */
+    final static private String[] trustedClasses = new String[] {
+
+        // A few public classes from javax.microedition package
+        // also need SecurityToken, but their interface can't be
+        // extended because of MIDP spec. The classes are requesting
+        // for a token on their own in static initializers.
+
+        // The main security token consumer causing security system
+        // initialization over SecurityToken request
+        "com.sun.midp.main.AbstractMIDletSuiteLoader$SecurityTrusted",
+
+        // #ifdef ENABLE_NATIVE_AMS
+        // The main security token consumer in the case of native AMS
+        "com.sun.midp.main.NativeAppManagerPeer$SecurityTrusted",
+        // #endif ENABLE_NATIVE_AMS
+
+        // IMPL_NOTE: The initialization of Display will forward on the
+        //   initialization to Chameleon's SkinResources if Chameleon
+        //   is being used
+        "javax.microedition.lcdui.Display$SecurityTrusted",
+
+        // #ifdef ENABLE_CHAMELEON
+        "com.sun.midp.chameleon.skins.resources.SkinResources$SecurityTrusted",
+        // #endif ENABLE_CHAMELEON
+
+        "javax.microedition.rms.RecordStore$SecurityTrusted",
+        "javax.microedition.midlet.MIDlet$SecurityTrusted",
+        "com.sun.midp.io.j2me.http.Protocol$SecurityTrusted",
+        "com.sun.midp.io.j2me.datagram.Protocol$SecurityTrusted",
+
+        // #ifdef ENABLE_SSL
+        "com.sun.midp.io.j2me.https.Protocol$SecurityTrusted",
+        "com.sun.midp.io.j2me.ssl.Protocol$SecurityTrusted",
+        // #endif ENABLE_SSL
+
+        // #ifdef ENABLE_JSR_120
+        "com.sun.midp.io.j2me.ProtocolBase$SecurityTrusted",
+        // #endif ENABLE_JSR_120
+
+        // #ifdef ENABLE_PUBLICKEYSTORE
+        "com.sun.midp.publickeystore.WebPublicKeyStore$SecurityTrusted",
+        // #endif ENABLE_PUBLICKEYSTORE
+
+        // #ifdef ENABLE_JSR_177
+        "com.sun.satsa.security.SecurityInitializer$SecurityTrusted",
+        // #endif ENABLE_JSR_177
+
+        // #ifdef ENABLE_JSR_179
+        "com.sun.j2me.location.LocationPersistentStorage$SecurityTrusted",
+        // #endif ENABLE_JSR_179
+
+        // #ifdef ENABLE_JSR_180
+        "com.sun.midp.io.j2me.sip.ProtocolBase$SecurityTrusted",
+        // #endif ENABLE_JSR_180
+
+        // #ifdef ENABLE_JSR_75
+        "com.sun.kvem.midp.pim.PIMDatabase$SecurityTrusted",
+        "javax.microedition.io.file.FileSystemEventHandlerBase$SecurityTrusted",
+        // #endif ENABLE_JSR_75
+
+        // #ifdef ENABLE_JSR_82
+        "com.sun.midp.jsr082.SecurityInitializer$SecurityTrusted",
+        // #endif ENABLE_JSR_82
+
+        // #ifdef ENABLE_JSR_238
+        "com.sun.midp.jsr238.SecurityInitializer$SecurityTrusted",
+        // #endif ENABLE_JSR_238
+
+        // #ifdef ENABLE_JSR_229
+        "com.sun.j2me.payment.CldcPaymentModule$SecurityTrusted",
+        "com.sun.j2me.payment.PaymentModule$SecurityTrusted",
+        // #endif ENABLE_JSR_229
+
+        // #ifdef ENABLE_JSR_226
+        "com.sun.perseus.platform.ResourceHandler$SecurityTrusted",
+        // #endif ENABLE_JSR_226
+
+        // #ifdef ENABLE_JSR211
+        "javax.microedition.content.Registry$SecurityTrusted",
+        "com.sun.midp.content.RegistryImpl$SecurityTrusted",
+        // #endif ENABLE_JSR211
+
+        // Pass the security token to the i3 test framework.
+        // #ifdef ENABLE_I3_TEST
+        "com.sun.midp.i3test.TestCase$SecurityTrusted",
+        "com.sun.midp.i3test.SelfTest$TestRequestSecurityToken$SecurityTrusted",
+        "com.sun.midp.suspend.test.TestUtil$SecurityTrusted",
+        // IMPL NOTE: PauseTest is temporarily disabled.
+        // Pass the security token to the standalone pause test.
+        // "com.sun.midp.internal.test.PauseTest",
+        // #endif ENABLE_I3_TEST
+
+        // MMAPI event handler stabbed in MIDP in the case of no JSR 135/234
+        "com.sun.mmedia.MMEventHandler$SecurityTrusted",
+
+        "com.sun.midp.suspend.AbstractSubsystem$SecurityTrusted",
+        "com.sun.midp.io.j2me.socket.Protocol$SecurityTrusted",
+        "com.sun.midp.main.MIDletProxyList$SecurityTrusted"
+    };
+
+    /**
+     * Creates the primary security token and internal imlementer object
+     * for core <code>SecurityInitializer</code> class.
+     */
+    static {
+        try {
+            // As the first caller to create a token we can pass in null
+            // for the security token.
+            SecurityToken internalSecurityToken =
+                new SecurityToken(null,
+                    Permissions.forDomain(
+                        Permissions.MANUFACTURER_DOMAIN_BINDING));
+
+            impl = new SecurityInitializerImpl(
+                internalSecurityToken, trustedClasses);
+
+        } catch (Throwable t) {
+            Logging.trace(t, "Fatal error while initializing security token");
+            throw new RuntimeException(t.toString());
+        }
     }
 }
