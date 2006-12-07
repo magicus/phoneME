@@ -163,7 +163,9 @@ endif
 endif
 
 MIDP_DEPS += $(ROM_DEPS) $(MMAPI_TARGET) $(OBJ_FILES) $(KDP_CMD) \
-             ams_resources all_tools
+             ams_resources all_tools not_yet_implemented
+
+not_yet_implemented::
 
 # If you're using a multi-CPU host, or if your MIDP_OUTPUT_DIR points
 # to a network filed system, use something like "make parallel NUM_JOBS=3".
