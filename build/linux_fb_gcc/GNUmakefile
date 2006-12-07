@@ -45,4 +45,7 @@ include Options.gmk
 # All rules are defined in shared makefiles
 include $(MIDP_DIR)/build/common/Top.gmk
 
-
+# DirectFB specific defines
+ifeq ($(USE_DIRECTFB), true)
+    include directfb.gmk
+endif

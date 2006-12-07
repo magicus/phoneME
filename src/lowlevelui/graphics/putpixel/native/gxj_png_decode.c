@@ -68,8 +68,8 @@ typedef struct _pngData {
     unsigned char  compress;     /* compression type, must be zero       */
     unsigned char  filter;       /* filter type, must be zero            */
     unsigned char  interlace;    /* interlacing: 0 (none) or 1 (adam7)   */
-    unsigned short lineBytes[7];
-    unsigned short passSize[7];
+    unsigned int   lineBytes[7];
+    unsigned int   passSize[7];
 } pngData;
 
 static unsigned long readHeader(imageSrcPtr, long, pngData *, unsigned long);

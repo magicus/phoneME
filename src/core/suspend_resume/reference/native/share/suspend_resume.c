@@ -161,7 +161,7 @@ void midp_resume() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended) {
+KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended0) {
     suspend_resources();
     KNI_ReturnVoid();
 }

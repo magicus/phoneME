@@ -84,7 +84,7 @@ import javax.microedition.lcdui.Displayable;
  * InputMode im = ...;
  * im.beginInput(inputModeHandler);
  *
- * String pendingInput = im.processKey([key code for 4]);
+ * int res = im.processKey([key code for 4]);
  * if (pendingInput == null) {
  *     // The InputMode could not process the key code
  * } else {
@@ -195,8 +195,10 @@ public interface InputMode {
      *
      * @param keyCode the keycode of the key which was input
      * @param longPress return true if it's long key press otherwise false
-     * @return true if the key was processed by this InputMode, false
-     *         otherwise.
+     * @return the key code if the key has been committed for the input, or
+     * KEYCODE_NONE if the key has not been habdled by the input mode, or
+     * KEYCODE_INVISIBLE if the key has been handled by the input mode but
+     * this key has not been displayed
      */
     public int processKey(int keyCode, boolean longPress) 
         throws IllegalStateException;

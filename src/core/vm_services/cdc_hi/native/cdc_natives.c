@@ -39,6 +39,10 @@
 #include <midpCommandState.h>
 #include <fbapp_export.h>
 
+#ifdef DIRECTFB
+#include <directfbapp_export.h>
+#endif
+
 /* IMPL_NOTE - CDC declarations */
 CVMInt64 CVMtimeMillis(void);
 
@@ -432,7 +436,8 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
          * At first we check for keyboard events. If this queue is empty
          * we wait 0.2s for pipe's events.
          */
-        if (!fbapp_event_is_waiting()) {
+        if (!directfbapp_event_is_waiting()) {
+            struct timeval timeout;        
             timeout.tv_sec = 0;
             timeout.tv_usec = 200000; /* wait 0.2 sec */
             /* When the timeout expires num_ready will contain 0 */
@@ -457,7 +462,7 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
         if (num_ready >= 0) {
 #ifdef DIRECTFB
             /* check if a keyboard event was received while we was waiting in the select */
-            if (keyboard_has_event || fbapp_event_is_waiting()) {
+            if (keyboard_has_event || directfbapp_event_is_waiting()) {
                 keyboard_has_event = 0;
 #else
             if (FD_ISSET(keyboardFd, &read_fds)) {
@@ -731,7 +736,7 @@ KNIDECL(com_sun_midp_events_EventQueue_sendShutdownEvent) {
     CVMdumpStack(&_ee->interpreterStack, 0, 0, 0);
 #endif
 #ifdef DIRECTFB
-    fbapp_close_window();
+    directfbapp_close_window();
 #endif
     exit(0);
     KNI_ReturnVoid();

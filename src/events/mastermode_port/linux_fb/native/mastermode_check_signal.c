@@ -80,6 +80,9 @@ jboolean checkForSocketPointerAndKeyboardSignal(MidpReentryData* pNewSignal,
     jlong sec, usec;
     struct timeval timeout;
 
+    int mouse_fd = fbapp_get_mouse_fd();
+    int keyboard_fd = fbapp_get_keyboard_fd();
+
     const SocketHandle* socketsList   = GetRegisteredSocketHandles();
 #ifdef ENABLE_JSR_82_SOCK
     const SocketHandle* btSocketsList = GetRegisteredBtSocketHandles();
@@ -89,16 +92,21 @@ jboolean checkForSocketPointerAndKeyboardSignal(MidpReentryData* pNewSignal,
     FD_ZERO(&write_fds);
     FD_ZERO(&except_fds);
 
-#ifndef DIRECTFB
-    /* Set keyboard descriptor for select */
-    FD_SET(fbapp_get_keyboard_fd(), &read_fds);
-    num_fds = fbapp_get_keyboard_fd() + 1;
-#endif /* DIRECTFB */
+    (void)pNewMidpEvent;
 
-    /* Set pointer descriptor for select */
-    FD_SET(fbapp_get_mouse_fd(), &read_fds);
-    if (num_fds <= fbapp_get_mouse_fd()) {
-        num_fds = fbapp_get_mouse_fd() + 1;
+    if (keyboard_fd != -1) {
+        /* Set keyboard descriptor for select */
+        FD_SET(keyboard_fd, &read_fds);
+        if (num_fds <= keyboard_fd) {
+            num_fds = keyboard_fd + 1;
+        }
+    }
+    if (mouse_fd != -1) {
+        /* Set pointer descriptor for select */
+        FD_SET(mouse_fd, &read_fds);
+        if (num_fds <= mouse_fd) {
+            num_fds = mouse_fd + 1;
+        }
     }
 
     /* Set the sockets to be checked during select */
@@ -124,18 +132,15 @@ jboolean checkForSocketPointerAndKeyboardSignal(MidpReentryData* pNewSignal,
     }
 
     if (num_ready > 0) {
-#ifndef DIRECTFB
-        if (FD_ISSET(fbapp_get_keyboard_fd(), &read_fds)) {
+        if (keyboard_fd != -1 && FD_ISSET(keyboard_fd, &read_fds)) {
             /* Handle keyboard event */
             REPORT_INFO(LC_CORE, "[checkForSocketPointerAndKeyboardSignal] keyboard signal detected");
             handleKey(pNewSignal, pNewMidpEvent);
-        } else if (FD_ISSET(fbapp_get_mouse_fd(), &read_fds)) {
+        } else if (mouse_fd != -1 && FD_ISSET(mouse_fd, &read_fds)) {
             /* Handle pointer event */
             REPORT_INFO(LC_CORE, "[checkForSocketPointerAndKeyboardSignal] pointer signal detected");
             handlePointer(pNewSignal, pNewMidpEvent);
-        } else 
-#endif /* DIRECTFB */
-        {
+        } else {
             REPORT_INFO(LC_CORE, "[checkForSocketPointerAndKeyboardSignal] socket signal detected");
             handleSockets(socketsList,
                           &read_fds, &write_fds, &except_fds, pNewSignal);
@@ -162,7 +167,7 @@ jboolean checkForSocketPointerAndKeyboardSignal(MidpReentryData* pNewSignal,
 jboolean checkForPendingKeySignal(MidpReentryData* pNewSignal,
     MidpEvent* pNewMidpEvent) {
 
-    if (hasPendingKeySignal) {
+    if (hasPendingKey()) {
         REPORT_INFO(LC_CORE, "[checkForPendingKeySignal] pending key detected");
         handleKey(pNewSignal, pNewMidpEvent);
         return KNI_TRUE;

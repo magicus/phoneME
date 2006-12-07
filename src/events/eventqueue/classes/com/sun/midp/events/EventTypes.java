@@ -297,4 +297,28 @@ public final class EventTypes {
      * MIDlet resources paused notification 
      */
     public static final int MIDLET_RS_PAUSED_NOTIFICATION = 45;
+    
+    /**
+     * Major ID for a MM DURATION UPDATED event. (Multimedia Event Extension)
+     */
+    public static final int MM_DURATION_EVENT = 46;
+
+    /* External Volume Changed */
+    public static final int MM_VOLUME_CHANGED_EVENT = 47;
+    
+    /**
+     * Multimedia Extended Events
+     * 
+     * 2. Recorder reach to size limit
+     * 3. Recorder error
+     * 4. Streaming buffering started
+     * 5. Streaming buffering stopped
+     * 6. General media error
+     */
+    public static final int MM_RECORD_LIMIT_EVENT = 48;
+    public static final int MM_RECORD_ERROR_EVENT = 49;
+    public static final int MM_BUFFERING_START_EVENT = 50;
+    public static final int MM_BUFFERING_STOP_EVENT = 51;
+    public static final int MM_GENERAL_ERROR_EVENT = 52;
+    
 }

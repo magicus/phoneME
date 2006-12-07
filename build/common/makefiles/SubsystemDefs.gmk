@@ -345,6 +345,15 @@ JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_211_NATIVE_FILES)
 EXTRA_INCLUDES          += $(SUBSYSTEM_JSR_211_EXTRA_INCLUDES)
 endif
 
+ifeq ($(USE_JSR_135), true)
+# JSR 135 MMAPI
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_135_JAVA_FILES)
+	$(appendjavafiles)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_135_NATIVE_FILES)
+endif
+
+
 
 # Media stuff, included if no external mmapi-pp bundle is used,
 # i.e. none of MIDP_USE_ABB,USE_JSR_135,USE_JSR_234 is set.

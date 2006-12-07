@@ -1153,7 +1153,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             if (resetToTop) {
                 traverseIndex = -1;
                 setScrollPosition0(0);
-           }
+            } 
 
             itemsCopy = new ItemLFImpl[numOfLFs];
             System.arraycopy(itemLFs, 0, itemsCopy, 0, numOfLFs);
@@ -1168,6 +1168,17 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             // update viewport height
             viewportHeight = getViewportHeight0();
 
+            // correct scroll position if any
+            if (viewable[HEIGHT] <= viewportHeight) {
+                // if viewable height is less than viewport
+                // height just reset viewable y
+                setScrollPosition0(0);
+            } else if (getScrollPosition0() > (viewable[HEIGHT] - viewportHeight)) {
+                // if viewable y exceeds the max value set it to the max
+                // height just reset viewable y
+                setScrollPosition0(viewable[HEIGHT] - viewportHeight);
+            }
+            
         } // synchronized
 
         uInitItemsInViewport(CustomItem.NONE, itemsCopy, traverseIndexCopy);

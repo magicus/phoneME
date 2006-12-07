@@ -41,6 +41,11 @@ import java.util.Vector;
  */
 public class SuspendSystem extends AbstractSubsystem {
     /**
+     * Listeners interested in suspend/resume operations.
+     */
+    private Vector listeners = new Vector(1, 2);
+
+    /**
      * Main subsystem that implements suspend actions for
      * whole MIDP system. It works in the AMS Isolate. There
      * is the only instance for all isolates.
@@ -57,10 +62,18 @@ public class SuspendSystem extends AbstractSubsystem {
         }
 
         /**
+         * Notifies of system suspend.
+         */
+        protected void suspended() {
+            super.suspended();
+            suspended0();
+        }
+
+        /**
          * Notifies native functionality that MIDP activities in java
          * have been suspended.
          */
-        protected native void suspended();
+        protected native void suspended0();
 
         /**
          * Recieves notifications on MIDlet updates and removes corresponding
@@ -162,6 +175,44 @@ public class SuspendSystem extends AbstractSubsystem {
             if (state == PAUSING && 0 == dependencies.size()) {
                 state = SUSPENDED;
                 suspended();
+            }
+        }
+    }
+
+    /**
+     * Registers a lisener interested in system suspend/resume operations.
+     * IMPL_NOTE: method for removing listeners is not needed currently.
+     *
+     * @param listener the listener to be added
+     */
+    public void addListener(SuspendSystemListener listener) {
+        synchronized (listeners) {
+            listeners.addElement(listener);
+        }
+    }
+
+    /**
+     * Notifies listeners of system suspend.
+     */
+    protected void suspended() {
+        synchronized (listeners) {
+            for (int i = listeners.size() - 1; i >= 0; i-- ) {
+                SuspendSystemListener listener =
+                        (SuspendSystemListener)listeners.elementAt(i);
+                listener.midpSuspended();
+            }
+        }
+    }
+
+    /**
+     * Notifies listeners of system resume.
+     */
+    protected void resumed() {
+        synchronized (listeners) {
+            for (int i = listeners.size() - 1; i >= 0; i-- ) {
+                SuspendSystemListener listener =
+                        (SuspendSystemListener)listeners.elementAt(i);
+                listener.midpResumed();
             }
         }
     }

@@ -134,7 +134,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
     }
 
     /**
-     * Scrolls to the passed in Item.
+     * Scrolls to the passed in Item. 
      * @param item The Item that should be shown on the screen.
      */
     private void lScrollToItem(Item item) {
@@ -157,7 +157,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         }
 
         itemLF = itemLFs[index];
-        
+
         // Ensure the item is visible
         if (!itemCompletelyVisible(itemLF)) {
             // We'll initially position at the bottom of the form,
@@ -169,7 +169,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                     viewable[Y] = itemLF.bounds[Y];
                 }
             }
-        }
+        } 
+
         if (index != traverseIndex) {
             // We record the present traverseItem because if it
             // is valid, we will have to call traverseOut() on that
@@ -186,6 +187,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             lRequestInvalidate();
         }
     }
+
 
     /**
      * Notifies look&feel object of an item deleted in the corresponding
@@ -290,11 +292,12 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             }
         }
 
-        if (traverseIndex > itemNum) {
-            traverseIndex--;
-        } else if (traverseIndex == itemNum) {
+        if (traverseIndex == itemNum) {
             lastTraverseItem = itemLFs[traverseIndex];
-            traverseIndex = -1;
+        }
+
+        if (traverseIndex >= 0 && traverseIndex >= itemNum) {
+            traverseIndex--;
         }
 
         numOfLFs--;
@@ -497,7 +500,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      */
     public void uCallShow() {
         super.uCallShow();
-
         uShowContents(true);
 
         synchronized (Display.LCDUILock) {
@@ -733,7 +735,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      */
     void uCallPointerPressed(int x, int y) {
         ItemLFImpl v = null;
-        
         synchronized (Display.LCDUILock) {
             if (numOfLFs == 0) {
                 return;
@@ -750,7 +751,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             x = (x + viewable[X]) - v.getInnerBounds(X);
             y = (y + viewable[Y]) - v.getInnerBounds(Y);
             v.uCallPointerPressed(x, y);
-            lScrollToItem(v.item);
+
+            synchronized (Display.LCDUILock) {
+                lScrollToItem(v.item);
+            }
         }
     }
 
@@ -914,12 +918,25 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                                                  viewport[HEIGHT],
                                                  viewable);
             }
-        
             if (resetToTop) {
                 traverseIndex = -1;
                 viewable[Y] = 0;
                 viewable[X] = 0;
+            } else {
+                // correct scroll position if any
+                if (viewable[HEIGHT] <= viewport[HEIGHT] ||
+                    viewable[Y] < 0) {
+                    // if viewable height is less than viewport
+                    // height just reset viewable y
+                    // if viewable y is less than 0 set it to 0 
+                    viewable[Y] = 0;
+                } else if (viewable[Y] > (viewable[HEIGHT] - viewport[HEIGHT])) {
+                    // if viewable y exceeds the max value set it to the max
+                    // height just reset viewable y
+                    viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
+                }
             }
+            
             
             itemsCopy = new ItemLFImpl[numOfLFs];
             System.arraycopy(itemLFs, 0, itemsCopy, 0, numOfLFs);
@@ -932,7 +949,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         //
         // SYNC NOTE: Since this may call into CustomItem.traverse/traverseOut,
         // call it outside LCDUILock
-        
+
+                
         uInitItemsInViewport(CustomItem.NONE, itemsCopy, traverseIndexCopy);
         if (initialTraverse) {
             updateCommandSet();
@@ -963,9 +981,9 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      */
     void uInitItemsInViewport(
         int dir, ItemLFImpl[] itemsCopy, int traverseIndexCopy) {
-
         // Create a copy of the current index for comparisons, below.
         if (itemsCopy.length == 0) {
+            setupScroll();
             return;
         }
         
@@ -994,53 +1012,61 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         if (dir == Canvas.UP && traverseIndexCopy == -1) {
             traverseIndexCopy = itemsCopy.length;
         }
-        
-        // If paging "down", we find the interactive item by moving
-        // left to right - this ensures we move line by line searching
-        // for an interactive item. When paging "up", we search from
-        // right to left.
-        int nextIndex = (dir == Canvas.DOWN || dir == CustomItem.NONE)
-            ? getNextInteractiveItem(
-                itemsCopy, Canvas.RIGHT, traverseIndexCopy)
-            : getNextInteractiveItem(
-                itemsCopy, Canvas.LEFT, traverseIndexCopy);
-        
-        if (traverseIndexCopy > -1 && traverseIndexCopy < itemsCopy.length) {
-            if (nextIndex != -1 && nextIndex != traverseIndexCopy) {
-                // It could be we need to traverse out of a current
-                // item before paging
-                itemsCopy[traverseIndexCopy].uCallTraverseOut();
-                synchronized (Display.LCDUILock) {
-                    traverseIndex = -1;  // reset real index
-                    traverseIndexCopy = traverseIndex;
-                }
-            }
-        } 
-        /*
-         * NOTE: between these two sync sections itemLFs[] & traverseIndex
-         * can change again ...
-         */
-        synchronized (Display.LCDUILock) {
-            if (itemsModified) { 
-                // SYNCHRONIZE itemLFs & itemsCopy, update traverseIndex ...
-                itemsCopy = lRefreshItems(
-                        itemsCopy, traverseIndexCopy, nextIndex);
-            } else if ((nextIndex > -1) && (nextIndex < numOfLFs)) {
-                traverseIndex = nextIndex;
-            }
-            traverseIndexCopy = traverseIndex;
-        }
 
-        if (traverseIndexCopy == -1 || traverseIndexCopy == itemsCopy.length) {
-            // If there is no traversable item on the current page,
-            // we simply return, and on the next 'traverse' we will
-            // perform a page scroll and repeat this method
-        } else {
+        if (traverseIndexCopy > -1 && traverseIndexCopy < itemsCopy.length) {
             // If there is a traversable item, we go ahead and traverse
             // to it. We do *not* scroll at all under these circumstances
             // because we have just performed a fresh page view (or scroll)
-            itemTraverse = 
+            itemTraverse = uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+        }           
+        if (!itemTraverse) {
+            // If paging "down", we find the interactive item by moving
+            // left to right - this ensures we move line by line searching
+            // for an interactive item. When paging "up", we search from
+            // right to left.
+            int nextIndex = (dir == Canvas.DOWN || dir == CustomItem.NONE)
+                ? getNextInteractiveItem(
+                                         itemsCopy, Canvas.RIGHT, traverseIndexCopy)
+                : getNextInteractiveItem(
+                                         itemsCopy, Canvas.LEFT, traverseIndexCopy);
+            
+            if (traverseIndexCopy > -1 && traverseIndexCopy < itemsCopy.length) {
+                if (nextIndex != -1 && nextIndex != traverseIndexCopy) {
+                    // It could be we need to traverse out of a current
+                    // item before paging
+                    itemsCopy[traverseIndexCopy].uCallTraverseOut();
+                    synchronized (Display.LCDUILock) {
+                        traverseIndex = -1;  // reset real index
+                        traverseIndexCopy = traverseIndex;
+                    }
+                }
+            } 
+            /*
+             * NOTE: between these two sync sections itemLFs[] & traverseIndex
+             * can change again ...
+             */
+            synchronized (Display.LCDUILock) {
+                if (itemsModified) { 
+                    // SYNCHRONIZE itemLFs & itemsCopy, update traverseIndex ...
+                    itemsCopy = lRefreshItems(
+                                              itemsCopy, traverseIndexCopy, nextIndex);
+                } else if ((nextIndex > -1) && (nextIndex < numOfLFs)) {
+                    traverseIndex = nextIndex;
+                }
+                traverseIndexCopy = traverseIndex;
+            }
+            
+            if (traverseIndexCopy == -1 || traverseIndexCopy == itemsCopy.length) {
+                // If there is no traversable item on the current page,
+                // we simply return, and on the next 'traverse' we will
+                // perform a page scroll and repeat this method
+            } else {
+                // If there is a traversable item, we go ahead and traverse
+                // to it. We do *not* scroll at all under these circumstances
+                // because we have just performed a fresh page view (or scroll)
+                itemTraverse = 
                     uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+            }
         }
          
         uRequestPaint(); // request to paint contents area                
@@ -1239,60 +1265,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                     continue;
                 }
                 
-                // If we've found a completely visible, interactive
-                // item, stop and traverse to it
-                if (itemCompletelyVisible(items[index])) {
+                if (itemPartiallyVisible(items[index])) {
                     break;
                 }
 
-                // If we've found a partially visible, interactive
-                // item, there is some special casing involved with
-                // how to scroll appropriately
-                if (itemPartiallyVisible(items[index])) {                
-                    if (dir == Canvas.RIGHT || dir == Canvas.DOWN) {
-                        
-                        // If we're paging down and the item's top
-                        // is at the top of the viewport, stop and
-                        // traverse to that item (its bigger than the
-                        // viewport
-                        if (items[index].bounds[Y] == viewable[Y]) {
-                            break;
-                        }
-                            
-                        // If we're paging down and the item's bottom
-                        // is the very last thing in the view, stop and
-                        // keep traversal on that item (item is bigger
-                        // than the viewport and we can go no further)
-                        if (items[index].bounds[Y] +
-                            items[index].bounds[HEIGHT] == 
-                                viewable[HEIGHT]) 
-                        {
-                            break;
-                        }
-                    } else if (dir == Canvas.LEFT || dir == Canvas.UP) {
-                        
-                        // If we're paging up and the item's bottom is the
-                        // very bottom of the viewport, stop and keep
-                        // traversal on that item (item is bigger than the
-                        // viewport and we start at the bottom)
-                        if (items[index].bounds[Y] +
-                            items[index].bounds[HEIGHT] == 
-                                viewable[HEIGHT]) 
-                        {
-                            break;
-                        }
-                        
-                        // If we're paging up and the item's top is at
-                        // the top of the viewport, stop and traverse
-                        // to that item (its bigger than the viewport
-                        // and we should show the top of it before leaving)
-                        if (items[index].bounds[Y] == viewable[Y] &&
-                            viewable[Y] == 0) 
-                        {
-                            break;
-                        }
-                    }
-                }                
             } // while                
         } catch (Throwable t) {
             if (Logging.REPORT_LEVEL <= Logging.WARNING) {
@@ -1482,7 +1458,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      *         in the given direction.
      */
     boolean uCallItemTraverse(ItemLFImpl item, int dir) {
-
+        boolean ret = false;
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
@@ -1504,10 +1480,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             // coordinate space
             visRect[X] += item.bounds[X];
             visRect[Y] += item.bounds[Y];
-            
-            return true;
+
+            ret = true;
         }
-        return false;
+        return ret;
     }
     
     /**
@@ -2206,6 +2182,5 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * while FormLF was in HIDDEN or FROZEN state.
      */
     Item pendingCurrentItem; // = null
-
 
 } // class FormLFImpl

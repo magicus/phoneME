@@ -370,7 +370,14 @@ public class Text {
 		    int diff = info.topVis - info.cursorLine;
 		    info.topVis -= diff;
 		}
-	    }
+                
+                if (info.topVis + info.visLines > info.numLines) {
+                    info.topVis = info.numLines - info.visLines;
+                }
+                
+	    } else {
+                info.topVis = 0;
+            }
             cursor.yOffset = info.topVis * fontHeight;
 	}
 	info.scrollX = info.scrollY = info.isModified = false;

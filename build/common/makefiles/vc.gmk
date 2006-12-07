@@ -47,7 +47,7 @@ CC_OUTPUT	= -Fo
 LD		= link
 LD_OUTPUT	= -out:
 LINKER_OUTPUT	= $(LD_OUTPUT)
-LIBS		+= user32.lib gdi32.lib kernel32.lib winmm.lib wsock32.lib
+LIBS		+= user32.lib gdi32.lib kernel32.lib winmm.lib wsock32.lib vfw32.lib
 
 
 LD_FLAGS 	+= -nologo -subsystem:console -machine:i386 -MAP \

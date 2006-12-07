@@ -837,7 +837,7 @@ abstract class ItemLFImpl implements ItemLF {
      * @see #getInteractionModes
      */
     void uCallPointerPressed(int x, int y) {
-        itemHasFocusWhenPressed = hasFocus;
+        itemWasPressed = true;
     }
     
     /**
@@ -851,11 +851,12 @@ abstract class ItemLFImpl implements ItemLF {
     void uCallPointerReleased(int x, int y) {
         x -= contentBounds[X];
         y -= contentBounds[Y];
-        if ( (x>= 0 && x <= contentBounds[WIDTH] && y>= 0 &&
+        if ( (x >= 0 && x <= contentBounds[WIDTH] && y >= 0 &&
               y <= contentBounds[HEIGHT]) &&
-             (itemHasFocusWhenPressed || item.owner.numCommands <= 1)) {
+             (itemWasPressed && (hasFocus || item.owner.numCommands <= 1))) {
             //should check the x,y is in item's content area
             uCallKeyPressed(Constants.KEYCODE_SELECT);
+            itemWasPressed = false;
         }
     }
     
@@ -1394,5 +1395,5 @@ abstract class ItemLFImpl implements ItemLF {
     boolean layoutDone; // = false
 
     /** true is the item has been focused before pointer down */
-    boolean itemHasFocusWhenPressed; // = false
+    boolean itemWasPressed; // = false
 }

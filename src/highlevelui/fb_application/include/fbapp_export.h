@@ -41,6 +41,8 @@
 
 #include <fbapp_device_type.h>
 #include <java_types.h>
+#include <midpEvents.h>
+#include <midpServices.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -77,43 +79,50 @@ extern jboolean fbapp_get_reverse_orientation();
 extern void fbapp_set_fullscreen_mode(int mode);
 
 /**
- * Returns the file descriptor for reading the keyboard. 
- */
-#ifndef DIRECTFB
-extern int fbapp_get_keyboard_fd();
-#else
-/**
- * Checks for events from keyboard. Gotten event must be retrieved 
- * by <code>fbapp_get_event</code>.
- */
-extern int fbapp_event_is_waiting();
-
-/**
- * Retrieves next event from queue. Must be called when 
- * <code>fbapp_event_is_waiting</code> returned true.
- */
-extern void fbapp_get_event(void*);
-
-/**
- * Closes application window.
- */
-extern void fbapp_close_window();
-
-#endif
-/**
  * Returns the file descriptor for reading the mouse. 
  */
 extern int fbapp_get_mouse_fd();
+
+/**
+  * Returns the file descriptor for reading the keyboard.
+  */
+extern int fbapp_get_keyboard_fd();
 
 /**
  * Returns the type of the frame buffer device.
  */
 extern int fbapp_get_fb_device_type();
 
+
+/**
+ * Map MIDP keycode value into proper MIDP event parameters
+ * and platform signal attributes to unblock Java threads
+ * waiting for this input event
+ *
+ * IMPL_NOTE: In general it is not specific for frame buffer application,
+ *   however applications of other type can use rather different events
+ *   mappings not based on MIDP keycodes or input keyboard events at all.
+ *
+ * @param pNewSignal reentry data to unblock threads waiting for a signal
+ * @param pNewMidpEvent a native MIDP event to be stored to Java event queue
+ * @param midpKeyCode MIDP keycode of the input event
+ * @param isPressed true if the key is pressed, false if released
+ * @param repeatedKeySupport true if MIDP should support repeated key
+ *   presses on its own, false if platform supports repeated keys itself
+ */
+extern void fbapp_map_keycode_to_event(
+    MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent,
+    int midpKeyCode, jboolean isPressed, jboolean repeatedKeySupport);
+
+/**
+ * Query frame buffer device for screen width
+ */ 
 extern int get_screen_width();
 
+/**
+ * Query frame buffer device for screen height
+ */ 
 extern int get_screen_height();
-
 
 #ifdef __cplusplus
 }

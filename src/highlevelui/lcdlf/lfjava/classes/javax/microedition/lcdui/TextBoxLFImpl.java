@@ -82,15 +82,46 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         cursor.index = tf.buffer.length(); // cursor at the end
         cursor.option = Text.PAINT_USE_CURSOR_INDEX;
 
-        myInfo.isModified = true;
-        myInfo.topVis = myInfo.numLines > myInfo.visLines ?
-            myInfo.numLines - myInfo.visLines : 0;
-        
-        // is much shorter
-        setVerticalScroll();
-        lRequestPaint();
+        myInfo.scrollY = myInfo.isModified = true;
+        updateTextInfo();
     }
 
+
+    /**
+     * Update text info if required
+     *
+     */
+    private void updateTextInfo() {
+        int w = contentBounds[WIDTH];
+        int h = contentBounds[HEIGHT];
+        // bounds are already initialized
+        if (w > 0 && h > 0) {
+            w -= 2 * TextFieldSkin.BOX_MARGIN + 2 * TextFieldSkin.PAD_H;
+            h -= ((2 * TextFieldSkin.BOX_MARGIN) +     
+                  (inputModeIndicator.getDisplayMode() != null ?
+                   Font.getDefaultFont().getHeight() : 0));
+            Text.updateTextInfo(tf.buffer.toString(),
+                                ScreenSkin.FONT_INPUT_TEXT,
+                                w, h, 0, Text.NORMAL,
+                                cursor, myInfo);
+            setVerticalScroll();
+            lRequestPaint();
+        }
+    }
+
+    /**
+     * Set new cursor position. Update text info if cursor position is changed
+     * @param pos new position
+     */
+    protected void setCaretPosition(int pos) {
+        int oldPos = cursor.index;
+        super.setCaretPosition(pos);
+        cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+        myInfo.scrollY |= (oldPos != cursor.index);
+        updateTextInfo();
+    }
+
+    
     /**
      * Notifies L&amps;F of a character insertion in the corresponding
      * TextBox.
@@ -100,16 +131,16 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
      * @param position the position at which insertion occurred
      */
     public void lInsert(char data[], int offset, int length, int position) {
-        if (data == null) {
-            return; // -au
+        if (data != null) {
+            if (editable) {
+                if (position <= cursor.index) {
+                    cursor.index += length;
+                    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                }
+            }
+            myInfo.isModified = myInfo.scrollY = true;
+            updateTextInfo();
         }
-        if (position <= cursor.index) {
-            cursor.index += length;
-            cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-        }
-        myInfo.isModified = true;
-        setVerticalScroll();
-        lRequestPaint();
     }
 
     /**
@@ -125,14 +156,15 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
      * specify a valid range within the contents of the <code>TextField</code>
      */
     public void lDelete(int offset, int length) {
-        if (cursor.index >= offset) {
-            int diff = cursor.index - offset;
-            cursor.index -= (diff < length) ? diff : length;
-            cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-        } 
-        myInfo.isModified = true;
-        setVerticalScroll();
-        lRequestPaint();
+        if (editable) {
+            if (cursor.index >= offset) {
+                int diff = cursor.index - offset;
+                cursor.index -= (diff < length) ? diff : length;
+                cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+            }
+        }
+        myInfo.isModified = myInfo.scrollY = true;
+        updateTextInfo();
     }
 
     /**
@@ -141,14 +173,14 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
      * @param maxSize - the new maximum size
      */
     public void lSetMaxSize(int maxSize) {
-        if (cursor.index >= maxSize) {
-            cursor.index = maxSize;
-            cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+        if (editable) {
+            if (cursor.index >= maxSize) {
+                cursor.index = maxSize;
+                cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+            }
         }
-        myInfo.isModified = true;
-        myInfo.topVis = 0;
-        setVerticalScroll();
-        lRequestPaint();
+        myInfo.isModified = myInfo.scrollY = true;
+        updateTextInfo();
     }
 
     /**
@@ -198,15 +230,9 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         
         String str = getDisplayString(dca, opChar, constraints,
                                       cursor, true);
+        info.isModified |= !bufferedTheSameAsDisplayed(tf.constraints);
 
-        // MARK: force the info flag to be modified to support the
-        // pending input text added in from the input method. 
-        // IMPL NOTE: modify it so that the getDisplayString() method updates
-        // this boolean if the pending input is non-null
-
-
-        info.isModified = true;
-        
+        // text info update is being processed only if isModified is true 
         Text.updateTextInfo(str, font, w, h, offset, options,
                             cursor, info);
 
@@ -219,7 +245,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
             getBufferString(new DynamicCharacterArray(str),
                             constraints, cursor, true);
         }
-       
+        
         // We'll double check our anchor point in case the Form
         // has scrolled and we need to update our InputModeLayer's
         // location on the screen
@@ -227,6 +253,8 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
             moveInputModeIndicator();
         }
 
+        // has to be moved to correct place. It's incorrect to change 
+        // the layer's dirty bounds in paint context 
         showPTPopup((int)0, cursor, w, h);
     }    
 
@@ -317,9 +345,10 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
             cursor.preferredX = cursor.x +
                 (myInfo.lineStart[myInfo.cursorLine] == cursor.index ?
                  ScreenSkin.FONT_INPUT_TEXT.charWidth(
-                                 tf.buffer.charAt(cursor.index)) :
+                                                      tf.buffer.charAt(cursor.index)) :
                  0);
         }
+        
 
         g.translate(-TextFieldSkin.BOX_MARGIN, -TextFieldSkin.BOX_MARGIN);
     }
@@ -444,10 +473,8 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 	    if (editable) {
                 cursor.y += ScreenSkin.FONT_INPUT_TEXT.getHeight() * lines;
                 cursor.option = Text.PAINT_GET_CURSOR_INDEX;
-                myInfo.scrollY = true;
-	    } 
-            setVerticalScroll();
-            lRequestPaint();
+	    }
+            updateTextInfo();
         }
     }
 
@@ -463,11 +490,8 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
             if (editable) {
                 cursor.y += (myInfo.topVis - oldTopVis) * ScreenSkin.FONT_INPUT_TEXT.getHeight();
                 cursor.option = Text.PAINT_GET_CURSOR_INDEX;
-                myInfo.scrollY = true;
             }
-            setVerticalScroll();
-            lRequestPaint();
-            
+            updateTextInfo();
         }
     }
 
@@ -490,11 +514,9 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
             if (editable) {
                 cursor.y += (myInfo.topVis - oldTopVis) * ScreenSkin.FONT_INPUT_TEXT.getHeight();
                 cursor.option = Text.PAINT_GET_CURSOR_INDEX;
-                myInfo.scrollY = true;
             }
-            
-            setVerticalScroll();
-            lRequestPaint();
+            myInfo.scrollY = true;
+            updateTextInfo();
         }
     }
 
@@ -516,12 +538,10 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 		if (cursor.index > 0) {
 		    cursor.index--;
 		    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-		    myInfo.scrollX = true;
-                    keyUsed = true; 
+		    myInfo.scrollX = keyUsed = true;
 		}
 	    } else {
-		myInfo.scroll(TextInfo.BACK);
-                keyUsed = true;
+		keyUsed = myInfo.scroll(TextInfo.BACK);
 	    }
 	    break;
 
@@ -531,12 +551,10 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 		if (cursor.index < tf.buffer.length()) {
 		    cursor.index++;
 		    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-		    myInfo.scrollX = true;
-                    keyUsed = true; 
+		    myInfo.scrollX = keyUsed = true;
 		}
 	    } else {
-		myInfo.scroll(TextInfo.FORWARD);
-                keyUsed = true; 
+		keyUsed = myInfo.scroll(TextInfo.FORWARD);
 	    }
 	    break;
 	    
@@ -546,14 +564,12 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 		cursor.y -= ScreenSkin.FONT_INPUT_TEXT.getHeight();
 		if (cursor.y > 0) {
 		    cursor.option = Text.PAINT_GET_CURSOR_INDEX;
-		    myInfo.scrollY = true;
-                    keyUsed = true;
+		    myInfo.scrollY = keyUsed = true;
 		} else { 
 		    cursor.y += ScreenSkin.FONT_INPUT_TEXT.getHeight();
 		}
 	    } else {
-		myInfo.scroll(TextInfo.BACK);
-                keyUsed = true;
+		keyUsed = myInfo.scroll(TextInfo.BACK);
 	    }
 	    break;
 
@@ -563,14 +579,12 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 		cursor.y += ScreenSkin.FONT_INPUT_TEXT.getHeight();
 		if (cursor.y <= myInfo.height) {
 		    cursor.option = Text.PAINT_GET_CURSOR_INDEX;
-		    myInfo.scrollY = true;
-                    keyUsed = true;
+		    myInfo.scrollY = keyUsed = true;
 		} else {
 		    cursor.y -= ScreenSkin.FONT_INPUT_TEXT.getHeight();
 		}
 	    } else {
-		myInfo.scroll(TextInfo.FORWARD);
-                keyUsed = true;
+		keyUsed = myInfo.scroll(TextInfo.FORWARD);
 	    }
 	    break;
 	default:
@@ -578,7 +592,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 	    break;
 	}
 
-        setVerticalScroll();
+        updateTextInfo();
         
         return keyUsed;
     }
