@@ -143,7 +143,7 @@ void CodeGenerator::load_task_mirror(Oop*klass, Value& statics_holder,
     Label class_is_initialized, need_init;
     // Can we make the flush conditional for  get/put static ?
     //  see if register usage cross compiled bytecode.
-    flush_frame();
+    flush_frame(JVM_SINGLE_ARG_CHECK);
     {
       // The marker cannot be treated as a constant value, as it would break
       // cross-compilation. Thus we load it from GP table.
@@ -179,7 +179,7 @@ void CodeGenerator::check_cib(Oop *klass JVM_TRAPS) {
   Label class_is_initialized, need_init;
   // IMPL_NOTE Cannot make the flush conditionally.
   //  see how this can be made conditional!
-  flush_frame();
+  flush_frame(JVM_SINGLE_ARG_CHECK);
 
   // add to the klass oop to get the address of the appropriate
   // task mirror table entry
@@ -4192,7 +4192,7 @@ void CodeGenerator::invoke(const Method* method,
                     signature().return_type(), is_native);
 
 #if ENABLE_WTK_PROFILER
-  flush_frame();
+  flush_frame(JVM_SINGLE_ARG_CHECK);
   call_vm((address)jprof_record_method_transition, T_VOID JVM_CHECK);
 #endif
 }
@@ -4298,7 +4298,7 @@ void CodeGenerator::invoke_virtual(Method* method, int vtable_index,
   adjust_for_invoke(size_of_parameters, return_type);
 
 #if ENABLE_WTK_PROFILER
-  flush_frame();
+  flush_frame(JVM_SINGLE_ARG_CHECK);
   call_vm((address)jprof_record_method_transition, T_VOID JVM_CHECK);
 #endif
 }
@@ -4388,7 +4388,7 @@ bind(lookup);
   adjust_for_invoke(parameters_size, return_type);
 
 #if ENABLE_WTK_PROFILER
-  flush_frame();
+  flush_frame(JVM_SINGLE_ARG_CHECK);
   call_vm((address)jprof_record_method_transition, T_VOID JVM_CHECK);
 #endif
 }
