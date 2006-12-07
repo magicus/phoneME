@@ -431,8 +431,8 @@ void ConstantPoolRewriter::rewrite_method(Method *method JVM_TRAPS) {
     if (!line_var_table.is_null() && !local_var_table.is_null()) {
       int i;
       int num_entries = local_var_table().count();
-      int new_code_size = new_method.code_size();
-      int old_code_size = method->code_size();
+      jushort new_code_size = new_method.code_size();
+      jushort old_code_size = method->code_size();
       jushort start_pc, code_length, new_code_length, new_pc;
       for (i = 0; i < num_entries; i++) {
         start_pc = local_var_table().start_pc(i);
@@ -444,8 +444,9 @@ void ConstantPoolRewriter::rewrite_method(Method *method JVM_TRAPS) {
         }
         if ((start_pc + code_length) == old_code_size) {
           if (old_code_size != new_code_size) {
-            GUARANTEE(new_code_size < new_pc, "Sanity");
-            local_var_table().set_code_length(i, new_code_size - new_pc);
+            GUARANTEE(new_pc < new_code_size, "Sanity");
+            local_var_table().set_code_length(i, 
+                (jushort)(new_code_size - new_pc));
             need_table = true;
           }
         } else {

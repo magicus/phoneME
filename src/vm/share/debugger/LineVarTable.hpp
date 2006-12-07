@@ -73,19 +73,18 @@ public:
     return is_byte_array();
   }
 
-  jshort start_pc(int index) {
+  jushort start_pc(int index) {
     GUARANTEE(((index * 3) + 1) < length(),
               "local var table: start_pc index out of range");
-    return (jshort)(is_compressed() ?
-                   (jshort)ubyte_at((index * 3) + 1) :
-                   short_at((index * 3) + 1));
+    return is_compressed() ? ubyte_at((index * 3) + 1) :
+                   ushort_at((index * 3) + 1);
   }
 
-  void set_start_pc(int index, jshort start_pc) {
+  void set_start_pc(int index, jushort start_pc) {
     GUARANTEE(((index * 3) + 1) < length(),
               "local var table: start_pc index out of range");
     GUARANTEE(is_short_array(), "Local variable table wrong type");
-    short_at_put((index * 3) + 1, start_pc);
+    ushort_at_put((index * 3) + 1, start_pc);
   }
 
   void set_start_pc(int index, jubyte start_pc) {
@@ -95,19 +94,18 @@ public:
     ubyte_at_put((index * 3) + 1, start_pc);
   }
 
-  jshort code_length(int index) {
+  jushort code_length(int index) {
     GUARANTEE(((index * 3) + 2) < length(),
               "local var table: code_length index out of range");
-    return (jshort)(is_compressed() ?
-                   (jshort)ubyte_at((index * 3) + 2) :
-                   short_at((index * 3) + 2));
+    return is_compressed() ? ubyte_at((index * 3) + 2) :
+                   ushort_at((index * 3) + 2);
   }
 
-  void set_code_length(int index, jshort code_length) {
+  void set_code_length(int index, jushort code_length) {
     GUARANTEE(((index * 3) + 2) < length(),
               "local var table: code_length index out of range");
     GUARANTEE(is_short_array(), "Local variable table wrong type");
-    short_at_put((index * 3) + 2, code_length);
+    ushort_at_put((index * 3) + 2, code_length);
   }
 
   void set_code_length(int index, jubyte code_length) {
@@ -117,19 +115,18 @@ public:
     ubyte_at_put((index * 3) + 2, code_length);
   }
 
-  jshort slot(int index) {
+  jushort slot(int index) {
     GUARANTEE((index * 3) < length(),
               "local var table: slot index out of range");
-    return (jshort)(is_compressed() ?
-                   (jshort)ubyte_at(index * 3) :
-                   short_at(index * 3));
+    return is_compressed() ? ubyte_at(index * 3) :
+                   ushort_at(index * 3);
   }
 
-  void set_slot(int index, jshort slot) {
+  void set_slot(int index, jushort slot) {
     GUARANTEE((index * 3) < length(),
               "local var table: slot index out of range");
     GUARANTEE(is_short_array(), "Local variable table wrong type");
-    short_at_put(index * 3, slot);
+    ushort_at_put(index * 3, slot);
   }
 
   void set_slot(int index, jubyte slot) {
@@ -154,15 +151,14 @@ public:
     return is_byte_array();
   }
 
-  jshort pc(int index) {
+  jushort pc(int index) {
     GUARANTEE((index * 2) < length(),
               "line number table pc index out of bounds");
-    return (jshort)(is_compressed() ?
-                   (jshort)ubyte_at(index * 2) :
-                   short_at(index * 2));
+    return is_compressed() ? ubyte_at(index * 2) :
+                   ushort_at(index * 2);
   }
 
-  void set_pc(int index, jshort start_pc) {
+  void set_pc(int index, jushort start_pc) {
     GUARANTEE((index * 2) < length(),
               "line number table pc index out of bounds");
     GUARANTEE(is_short_array(), "Line number table wrong type");
@@ -176,19 +172,18 @@ public:
     ubyte_at_put(index * 2, start_pc);
   }
 
-  jshort line_number(int index) {
+  jushort line_number(int index) {
     GUARANTEE(((index * 2) + 1) < length(),
               "line number table line_num index out of bounds");
-    return (jint)(is_compressed() ?
-                  (jshort)ubyte_at((index * 2) + 1) :
-                  short_at((index * 2) + 1));
+    return is_compressed() ? ubyte_at((index * 2) + 1) :
+                  short_at((index * 2) + 1);
   }
 
-  void set_line_number(int index, jshort line_num) {
+  void set_line_number(int index, jushort line_num) {
     GUARANTEE(((index * 2) + 1) < length(),
               "line number table line_num index out of bounds");
     GUARANTEE(is_short_array(), "Line number table wrong type");
-    short_at_put((index * 2) + 1, line_num);
+    ushort_at_put((index * 2) + 1, line_num);
   }
 
   void set_line_number(int index, jubyte line_num) {
