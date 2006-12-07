@@ -113,6 +113,8 @@ endif
 
 SUBSYSTEM_JSR_135_JAVA_FILES += $(MMHELPER_PATH)
 
+SUBSYSTEM_JSR_135_JAVA_FILES += $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMEventHandler.java 
+
 ifneq ($(ABB), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/core/javax/microedition/media/TimeBase.java \
