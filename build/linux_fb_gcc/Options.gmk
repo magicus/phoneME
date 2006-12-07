@@ -70,6 +70,9 @@ USE_RAW_AMS_IMAGES	= true
 USE_NATIVE_PTI		= false
 USE_PUTPIXEL		= true
 
+# DIRECTFB 
+USE_DIRECTFB		= false
+
 # DEBUG
 USE_DEBUG		= false
 USE_MIDP_MALLOC		= true
@@ -81,6 +84,7 @@ USE_VERBOSE_MAKE	= false
 USE_I3_TEST		= false
 USE_PORTING_DEMOS	= false
 USE_CONTROL_ARGS_FROM_JAD	= false
+USE_GCOV		= false
 
 # USE_SERVER_SOCKET
 USE_SERVER_SOCKET       = true
@@ -95,4 +99,4 @@ USE_FIXED		= false
 USE_VERIFY_ONCE         = false
 
 # Links
-USE_LINKS		= false
+USE_LINKS		= true

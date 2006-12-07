@@ -96,6 +96,7 @@ public abstract class AbstractSubsystem implements Subsystem {
             
                 resumeImpl();
                 state = ACTIVE;
+                resumed();
             }
         }
     }
@@ -146,8 +147,14 @@ public abstract class AbstractSubsystem implements Subsystem {
     protected void suspendImpl() {}
 
     /**
-     * Confirms subsystem has been finished. Listeners/waiters
+     * Confirms subsystem has been suspended. Listeners/waiters
      * can be invoked here.
      */
     void suspended() {}
+
+    /**
+     * Confirms subsystem has been resumed. Listeners/waiters
+     * can be invoked here.
+     */
+    void resumed() {}
 }

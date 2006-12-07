@@ -73,8 +73,8 @@ int midpInitialize() {
 #if MEASURE_STARTUP
     extern jlong Java_java_lang_System_currentTimeMillis();
     char msg[128];
-    sprintf(msg, "System Startup Time: Begin at %ld\n",
-            (long)Java_java_lang_System_currentTimeMillis());
+    sprintf(msg, "System Startup Time: Begin at %lld\n",
+            Java_java_lang_System_currentTimeMillis());
     pcsl_print(msg);
 #endif
 

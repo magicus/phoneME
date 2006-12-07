@@ -804,34 +804,10 @@ class TextFieldLFImpl extends ItemLFImpl implements
                                      int index,
                                      char opChar,
                                      DynamicCharacterArray out) {
-        //
-        // Handle password: if the constraints are ANY or NUMERIC
-        // we can just set all the characters to a *. otherwise,
-        // we must only change those characters which are not
-        // considered to be symbols
-        //
-        if ((constraints & TextField.CONSTRAINT_MASK) ==
-            TextField.ANY ||
-            (constraints & TextField.CONSTRAINT_MASK) ==
-            TextField.NUMERIC ||
-            (constraints & TextField.CONSTRAINT_MASK) ==
-            TextField.DECIMAL) {
-
-            for (int i = 0; i < dca.length(); i++) {
-                out.append('*');
-            }
-        } else {
-            for (int i = 0; i < dca.length(); i++) {
-                if (!inputSession.isSymbol(dca.charAt(i))) {
-                    // log("**"+dca.charAt(i)+" is symbol!");
-                    /* special request from customer */
-                    out.append('*');
-                } else {
-                    // log("**"+dca.charAt(i)+" is NOT symbol!");
-                    out.append(dca.charAt(i));
-                }
-            }
+        for (int i = 0; i < dca.length(); i++) {
+            out.append('*');
         }
+        
         if (opChar > 0 && dca.length() < tf.getMaxSize()) {
             out.insert(index++, opChar);
         }
@@ -865,9 +841,11 @@ class TextFieldLFImpl extends ItemLFImpl implements
                      int constraints,
                      Font font, 
                      int fgColor,
-                     int w, int h, int offset, 
-                     int options, TextCursor cursor) 
-    {
+                     int w,
+                     int h,
+                     int offset, 
+                     int options,
+                     TextCursor cursor) {
 
         int newXOffset = 0;
         
@@ -881,6 +859,14 @@ class TextFieldLFImpl extends ItemLFImpl implements
         
         newXOffset = Text.paintLine(g, str, font, fgColor, 
                                     w, h, cursor, offset);
+
+        // just correct cursor index if the charracter has
+        // been already committed 
+        if (str != null && str.length() > 0) {
+            getBufferString(new DynamicCharacterArray(str),
+                            constraints, cursor, true);
+        }
+
         
         // We'll double check our anchor point in case the Form
         // has scrolled and we need to update our InputModeLayer's
@@ -960,15 +946,16 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 TextCursor newCursor =  new TextCursor(cursor);
                 for (int i = 0; i < input.length(); i++) {
                     String str = getDisplayString(in, input.charAt(i),
-                                           tf.constraints,
-                                           newCursor, true);
+                                                  tf.constraints,
+                                                  newCursor, true);
                     in = new DynamicCharacterArray(str);
                 }
-
+                
+               
                 if (bufferedTheSameAsDisplayed(tf.constraints)) {
                     tf.delete(0, tf.buffer.length());
-                    tf.insert(in.toString(), cursor.index);
-                    cursor = newCursor;
+                    tf.insert(in.toString(), 0);
+                    setCaretPosition(newCursor.index);
                 } else if (tf.buffer.length() < tf.getMaxSize()) {
                     tf.insert(input, cursor.index);
                 }
@@ -976,7 +963,20 @@ class TextFieldLFImpl extends ItemLFImpl implements
             tf.notifyStateChanged();
         }
     }
-    
+
+    /**
+     * Set new cursor position
+     * @param pos new position
+     */
+    protected void setCaretPosition(int pos) {
+        cursor.index = pos;
+        if (cursor.index < 0) {
+            cursor.index = 0;
+        }
+        if (cursor.index > tf.buffer.length()) {
+            cursor.index = tf.buffer.length();
+        }
+    }
 
     /**
      * Check if the string in the text buffer is the same as the string that
@@ -986,7 +986,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      *
      * @return true if the the string is the same otherwise false
      */
-    private boolean bufferedTheSameAsDisplayed(int constraints) {
+    protected boolean bufferedTheSameAsDisplayed(int constraints) {
         return !((constraints & TextField.PASSWORD) == TextField.PASSWORD
             || (constraints & TextField.CONSTRAINT_MASK) ==
             TextField.PHONENUMBER);

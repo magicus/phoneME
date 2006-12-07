@@ -117,6 +117,7 @@ class LayoutManager {
             // keeping the anchorIndex up do date. When calling "updateBlock",
             // the index will jump directly to the next block, because we laid
             // out all the Items in that block.
+
             for (int index = 0; index < numOfLFs; index++) {
 
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -285,6 +286,13 @@ class LayoutManager {
                                LogChannels.LC_HIGHUI_FORM_LAYOUT,
                                "UPDATE_LAYOUT - DONE");
             }
+        }
+
+        // correct viewable area if required
+
+        // if there are no items in the form just reset viewable[HEIGHT]
+        if (numOfLFs == 0) {
+            viewable[HEIGHT] = 0;            
         }
     }
 

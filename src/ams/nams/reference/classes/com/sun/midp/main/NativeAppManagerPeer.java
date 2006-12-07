@@ -35,6 +35,8 @@ import com.sun.midp.security.*;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.suspend.SuspendSystemListener;
+import com.sun.midp.suspend.SuspendSystem;
 
 /**
  * This is an implementation of the native application manager peer
@@ -43,7 +45,8 @@ import com.sun.midp.configurator.Constants;
  * changes, but not this MIDlet.
  */
 public class NativeAppManagerPeer
-    implements MIDletProxyListListener, IsolateMonitorListener, EventListener {
+    implements MIDletProxyListListener, IsolateMonitorListener,
+        EventListener, SuspendSystemListener {
 
     /** If true, the main of this class has already been called. */
     static boolean alreadyCalled = false;
@@ -159,6 +162,8 @@ public class NativeAppManagerPeer
             new NativeDisplayControllerPeer(midletProxyList));
 
         IsolateMonitor.addListener(this);
+
+        SuspendSystem.getInstance(internalSecurityToken).addListener(this);
 
         eventQueue.registerEventListener(
             EventTypes.NATIVE_MIDLET_EXECUTE_REQUEST, this);
@@ -375,6 +380,26 @@ public class NativeAppManagerPeer
     // ------ End implementation of the EventListener interface
     // ==============================================================
 
+    // ==============================================================
+    // ------ Implementation of the SuspendSystemListener interface
+
+    /**
+     * Called if MIDP system has been suspended.
+     */
+    public void midpSuspended() {
+        notifySystemSuspended();
+    }
+
+    /**
+     * Called if MIDP system has been resumed.
+     */
+    public void midpResumed() {
+        notifySystemStart();
+    }
+
+    // ------ End implementation of the Listener interface
+    // ==============================================================
+
     /**
      * Notify the native application manager that the system had an error
      * starting.
@@ -385,6 +410,11 @@ public class NativeAppManagerPeer
      * Notify the native application manager of the system start up.
      */
     private static native void notifySystemStart();
+
+    /**
+     * Notifies native application manager on MIDP suspension.
+     */
+    private static native void notifySystemSuspended();
 
     /**
      * Notify the native application manager of the MIDlet creation.

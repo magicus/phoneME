@@ -398,6 +398,20 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifySystemStart(void) {
 }
 
 /**
+ * Notify the native application manager of the system suspension.
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_midp_main_NativeAppManagerPeer_notifySystemSuspended(void) {
+    NamsEventData eventData;
+
+    memset((char*)&eventData, 0, sizeof(NamsEventData));
+    eventData.state = MIDP_SYSTEM_STATE_SUSPENDED;
+    nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
+
+    KNI_ReturnVoid();
+}
+
+/**
  * Notify the native application manager of the MIDlet creation.
  *
  * @param externalAppId ID assigned by the external application manager

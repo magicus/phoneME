@@ -150,6 +150,9 @@ define verify_jsr_234_directory
     if [ "$(USE_JSR_234)" = "true" ]; then \
         $(verify_directory) ; \
     fi
+endef
+
+define verify_jsr_135_directory
     if [ "$(USE_JSR_135)" = "true" ]; then \
         $(verify_directory) ; \
     fi
@@ -287,6 +290,7 @@ BOOLEAN_OPTIONS = \
 	USE_MIDP_MALLOC \
 	USE_MULTIPLE_ISOLATES \
 	USE_DEBUG \
+	USE_GCOV \
 	USE_CLDC_RELEASE \
 	USE_NATIVE_PROFILER \
 	USE_NETWORK_INDICATOR \
@@ -406,6 +410,10 @@ JSR_230_DIR:
 JSR_234_DIR:
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_jsr_234_directory) $(LOG)
+
+JSR_135_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_jsr_135_directory) $(LOG)
 
 JSR_238_DIR:
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)

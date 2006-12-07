@@ -112,12 +112,20 @@ EXTRA_CFLAGS	+= -pg
 LD_FLAGS	+= -pg
 endif
 
+ifeq ($(USE_GCOV), true)
+EXTRA_CFLAGS	 += -O0 -fprofile-arcs -ftest-coverage
+EXTRA_CPPFLAGS	 += -O0 -fprofile-arcs -ftest-coverage
+LIBS	+= -lgcov
+endif
+
 ifeq ($(USE_DEBUG), true)
 EXTRA_CFLAGS	+= -g -D_DEBUG
 LD_FLAGS	+= -g
 else
+ifneq ($(USE_GCOV), true)
 EXTRA_CFLAGS	+= -O3 -fexpensive-optimizations
 EXTRA_CPPFLAGS	+= -fconserve-space
+endif
 ifeq ($(USE_NATIVE_PROFILER), false)
 EXTRA_CFLAGS	+= -s -fomit-frame-pointer
 endif

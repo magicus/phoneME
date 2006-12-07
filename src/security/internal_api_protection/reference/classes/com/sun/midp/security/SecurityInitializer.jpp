@@ -216,6 +216,7 @@ public final class SecurityInitializer {
         "com.sun.midp.i3test.TestCase$SecurityTrusted",
         "com.sun.midp.i3test.SelfTest$TestRequestSecurityToken$SecurityTrusted",
         "com.sun.midp.suspend.test.TestUtil$SecurityTrusted",
+        "com.sun.midp.services.SecurityTokenProvider$SecurityTrusted",
         // IMPL NOTE: PauseTest is temporarily disabled.
         // Pass the security token to the standalone pause test.
         // "com.sun.midp.internal.test.PauseTest",

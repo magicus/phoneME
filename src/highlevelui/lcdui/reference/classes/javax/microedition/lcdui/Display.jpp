@@ -1587,8 +1587,6 @@ public class Display {
      */
     void callScreenChange(Displayable da) {
 
-        System.out.println("callScreenChange");
-
         // Assert (da != null)
         // since the screen change event will not be posted if da == null
         DisplayableLF newCurrent = da.displayableLF;

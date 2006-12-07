@@ -44,12 +44,12 @@
 extern "C" {
 #endif
 
-enum {
+typedef enum {
     LINUX_FB_VERSATILE_INTEGRATOR,   /* ARM Versatile or Integrator dev board*/
     LINUX_FB_ZAURUS,                 /* Sharp Zaurus */
-    LINUX_FB_INTEL_MAINSTONE,         /* Intel MainStone dev board */
+    LINUX_FB_INTEL_MAINSTONE,        /* Intel MainStone dev board */
     LINUX_FB_OMAP730                 /* TI-Perseus2 OMAP730 */
-};
+} LinuxFbDeviceType ;
 
 #ifdef __cplusplus
 }

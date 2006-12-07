@@ -103,6 +103,7 @@ public class TextInfo {
 	lineEnd = tmpEnd;
     }
 
+
     /**
      * Scroll Up or down by one line if possible
      *
@@ -110,20 +111,36 @@ public class TextInfo {
      * @return true if scrolling happened, false if not
      */
     public boolean scroll(int dir) {
-	
+        return scroll(dir, 1);
+    }
+    
+    /**
+     * Scroll Up or down by one line if possible
+     *
+     * @param dir direction of scroll, FORWARD or BACK
+     * @param length how many lines to scroll    
+     * @return true if scrolling happened, false if not
+     */
+    public boolean scroll(int dir, int length) {
 	boolean rv = false;
 	
 	if (visLines < numLines) {
 	    switch (dir) {
 	    case FORWARD:
-		if ((topVis + visLines) < numLines) {
-		    topVis++;
-		    rv = true;
-		}
+                if (topVis + visLines < numLines) {
+                    topVis += length;
+                    if (topVis + visLines > numLines) {
+                        topVis = numLines - visLines;
+                    }
+                    rv = true;
+                }
 		break;
 	    case BACK:
 		if (topVis > 0) {
-		    topVis--;
+		    topVis -= length;
+                    if (topVis < 0) {
+                        topVis = 0;
+                    }
 		    rv = true;
 		}
 		break;
@@ -131,6 +148,7 @@ public class TextInfo {
 		// no-op
 	    }
 	}
+        scrollY |= rv;
 	return rv;
     }
     
@@ -162,6 +180,7 @@ public class TextInfo {
 		// no-op
 	    }
 	}
+        scrollY |= (topVis != oldTopVis);
 	return topVis - oldTopVis;
     }
 

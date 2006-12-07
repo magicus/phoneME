@@ -26,21 +26,20 @@
 
 /**
  * @file
- *
  * Key mappings for received key signals handling
  */
 
-#include <stdlib.h>
-#include <sys/time.h>
-#include <keymap_input.h>
-#include "mastermode_keymapping.h"
+#include <unistd.h>
 
-#if defined(ARM) || defined(DIRECTFB)
+#include <kni.h>
+#include <keymap_input.h>
+#include <midp_input_port.h>
+#include "fb_keymapping.h"
 
 KeyMapping *mapping = NULL;
-/**
- * Keyboard info for the ARM Versatile and Integrator boards
- */
+jboolean bitscale_mode = KNI_FALSE;
+
+/** Keyboard info for the ARM Versatile and Integrator boards */
 KeyMapping versatile_integrator_keys[] = {
     {KEY_0,      11,  139},
     {KEY_1,       2,  130},
@@ -49,7 +48,7 @@ KeyMapping versatile_integrator_keys[] = {
     {KEY_4,       5,  133},
     {KEY_5,       6,  134},
     {KEY_6,       7,  135},
-    {KEY_7,       8,  135},
+    {KEY_7,       8,  136},
     {KEY_8,       9,  137},
 
     {KEY_UP,    103,  231},
@@ -81,9 +80,7 @@ KeyMapping versatile_integrator_keys[] = {
     {KEY_INVALID, 0,    0},   // end of table
 };
 
-/*
- * Keyboard info for the Sharp Zaurus SL5500
- */
+/* Keyboard info for the Sharp Zaurus SL5500 */
 KeyMapping zaurus_sl5500_keys[] = {
     {'q',           0x11, 0x91},
     {'w',           0x17, 0x97},
@@ -175,5 +172,3 @@ KeyMapping omap_730_keys[] = {
     {KEY_INVALID,       2048,       0},    // Right side button
     {KEY_INVALID,       0,          0},     // end of table
 };
-
-#endif /* ARM || DIRECTFB */
