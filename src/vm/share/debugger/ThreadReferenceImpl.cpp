@@ -490,6 +490,13 @@ int ThreadReferenceImpl::get_frame_count(Frame fr) {
       e.caller_is(fr);
     } else if (fr.is_java_frame()) {
       JavaFrame jf = fr.as_JavaFrame();
+#if !ENABLE_ROM_JAVA_DEBUGGER
+      GUARANTEE(UseROM, "Sanity");
+      Method::Raw m = jf.method();
+      if (ROM::in_any_loaded_bundle(m.obj())) {
+        break;
+      }
+#endif 
       frame_count++;
       jf.caller_is(fr);
     } else {

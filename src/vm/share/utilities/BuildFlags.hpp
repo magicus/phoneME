@@ -745,6 +745,12 @@
 #endif
 #endif
 
+#if ENABLE_SYSTEM_CLASSES_DEBUG
+#if !ENABLE_ROM_JAVA_DEBUGGER
+#error "ENABLE_ROM_JAVA_DEBUGGER must be true for ENABLE_SYSTEM_CLASSES_DEBUG build"
+#endif
+#endif
+
 // If we have turned on java debugger support and we are building a monet
 // image then check for  ROM java debugger support so that binary images
 // are completely supported for debugging.  Specifically this turns on
