@@ -305,7 +305,7 @@ class VirtualStackFrame: public MixedOop {
 
   // Flush all cached or changed locations to memory. After this operation
   // no locations will be mapped in registers anymore.
-  void flush();
+  void flush(JVM_SINGLE_ARG_TRAPS);
 
   // A platform-dependent way of flushing the stack quickly. Currently
   // we do this on ARM only by using post/pre-indexing addressing modes

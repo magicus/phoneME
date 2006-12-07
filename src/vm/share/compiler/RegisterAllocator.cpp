@@ -315,12 +315,7 @@ Assembler::Register RegisterAllocator::spill(Assembler::Register* next_table, As
   do {
     next = next_table[next];
     // Check to see whether or not the register is available for spilling.
-#if ENABLE_INLINE
-    if ((!is_referenced(next)) && !(Compiler::current()->conforming_frame()->not_null() &&
-     Compiler::current()->conforming_frame()->is_mapping_something(next)) ){
-#else
     if (!is_referenced(next)) {
-#endif
       // Spill the register.
       spill(next);
       // Return the register.

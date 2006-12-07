@@ -585,9 +585,9 @@ void RawLocation::write_value(const Value& v) {
 void ConstantPool::resolve_helper_0(int index, Symbol* name, Symbol* signature,
                                     InstanceClass* klass, Symbol* klass_name
                                     JVM_TRAPS) {
-  int value, name_and_type_index, name_and_type_value;
-  int name_index, signature_index, class_index;
-  int len = length();
+  int value, name_and_type_value;
+  jushort name_and_type_index, name_index, signature_index, class_index;
+  jushort len = length();
 
   {
     AllocationDisabler shouldnt_allocate_in_this_block;
@@ -601,8 +601,8 @@ void ConstantPool::resolve_helper_0(int index, Symbol* name, Symbol* signature,
     }
 
     value = int_field(offset_from_index(index));
-    name_and_type_index = extract_high_jshort_from_jint(value);
-    class_index         = extract_low_jshort_from_jint (value);
+    name_and_type_index = extract_high_jushort_from_jint(value);
+    class_index         = extract_low_jushort_from_jint (value);
 
     // tag[name_and_type_index] must be NameAndType
     if (!is_within_bounds(name_and_type_index, len) ||
@@ -617,8 +617,8 @@ void ConstantPool::resolve_helper_0(int index, Symbol* name, Symbol* signature,
     }
 
     name_and_type_value = int_field(offset_from_index(name_and_type_index));
-    name_index      = extract_low_jshort_from_jint (name_and_type_value);
-    signature_index = extract_high_jshort_from_jint(name_and_type_value);
+    name_index      = extract_low_jushort_from_jint (name_and_type_value);
+    signature_index = extract_high_jushort_from_jint(name_and_type_value);
 
     // tag[name_index] must be UTF8
     if (!is_within_bounds(name_index, len) ||

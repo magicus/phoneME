@@ -1504,7 +1504,13 @@ CPP_OPT_FLAGS_product   = -O2 -Wuninitialized \
   ifneq ($(PROFILING), true)
   CPP_OPT_FLAGS_product+= -fomit-frame-pointer
   endif
+endif
 
+ifeq ($(USE_GCOV), true)
+   CPP_OPT_FLAGS_debug   = -O0 -fprofile-arcs -ftest-coverage -g
+   CPP_OPT_FLAGS_release = -O0 -fprofile-arcs -ftest-coverage
+   CPP_OPT_FLAGS_product = -O0 -fprofile-arcs -ftest-coverage
+   LINK_FLAGS	      	+= -lgcov
 endif
 
 # here C++ specific optimization flags
