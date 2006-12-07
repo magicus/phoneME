@@ -251,7 +251,7 @@ static int parseArray(const pcsl_string* src,
     while (n > 0) {
         if (*arr == NULL) {
             str = (pcsl_string*)pcsl_mem_calloc(n, sizeof(pcsl_string));
-            if (arr == NULL)
+            if (str == NULL)
                 break;
             *arr_len = n;
             *arr = str;

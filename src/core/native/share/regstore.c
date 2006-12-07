@@ -434,6 +434,7 @@ jsr211_result jsr211_fillHandler(const JSR211_CH* ch,
         result->buf = (jchar*)pcsl_mem_calloc(result->len, sizeof(jchar));
         if (result->buf == NULL) {
             result->len = 0;
+            KNI_ThrowNew(midpOutOfMemoryError, "No memory for handler data");
             return JSR211_FAILED;
         }
         appendSerializedCH(ch, result->buf);
@@ -451,13 +452,16 @@ jsr211_result jsr211_fillHandler(const JSR211_CH* ch,
     capacity = _BUF_GRAN_;                                      \
     buffer = (jchar*)pcsl_mem_malloc(capacity * sizeof(jchar)); \
     if (buffer == NULL) {                                       \
+        KNI_ThrowNew(midpOutOfMemoryError, "No memory for filled buffer"); \
         return JSR211_FAILED;                                   \
     }
+
 #define _ASSURE_BUFFER_(buffer, capacity, new_size)                 \
     if ((new_size) > capacity) {                                    \
         capacity = ((new_size) + _BUF_GRAN_ - 1) & _BUF_GRAN_MASK_; \
         buffer = (jchar*)pcsl_mem_realloc(buffer, capacity * sizeof(jchar)); \
         if (buffer == NULL) {                                       \
+            KNI_ThrowNew(midpOutOfMemoryError, "No memory for filled buffer"); \
             return JSR211_FAILED;                                   \
         }                                                           \
     }
@@ -525,6 +529,8 @@ jsr211_result jsr211_fillStringArray(const pcsl_string* strArr, int length,
 /**
  * Transforms prepared result buffer to jstring object and release memory of 
  * the allocated buffer.
+ * It is safe to call this function after detecting out-of-memory error
+ * provided that buf is set to _JSR211_RESULT_INITIALIZER_
  */
 static void result2string(_JSR211_INTERNAL_RESULT_BUFFER_* buf, jstring str) {
     if (buf->len > 0 && buf->buf != NULL) {
@@ -595,6 +601,8 @@ Java_com_sun_midp_content_RegistryStore_unregister0(void) {
 
     do {
         if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(idStr, &id)) {
+            KNI_ThrowNew(midpOutOfMemoryError, 
+                            "RegistryStore_unregister0 no memory for ID");
             break;
         }
         
@@ -623,17 +631,17 @@ Java_com_sun_midp_content_RegistryStore_findHandler0(void) {
     pcsl_string value = PCSL_STRING_NULL_INITIALIZER;
     JSR211_RESULT_CHARRAY result = _JSR211_RESULT_INITIALIZER_;
 
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(strObj);   // String object
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(callerObj);
+    KNI_DeclareHandle(valueObj);
 
     do {
-        KNI_GetParameterAsObject(1, strObj);   // callerId
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(strObj, &callerId)) {
-            break;
-        }
-
-        KNI_GetParameterAsObject(3, strObj);   // value
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(strObj, &value)) {
+        KNI_GetParameterAsObject(1, callerObj);
+        KNI_GetParameterAsObject(3, valueObj);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(callerObj, &callerId) ||
+            PCSL_STRING_OK != midp_jstring_to_pcsl_string(valueObj, &value)) {
+            KNI_ThrowNew(midpOutOfMemoryError, 
+                   "RegistryStore_register0 no memory for string arguments");
             break;
         }
 
@@ -644,9 +652,9 @@ Java_com_sun_midp_content_RegistryStore_findHandler0(void) {
 
     pcsl_string_free(&value);
     pcsl_string_free(&callerId);
-    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&result, strObj);
+    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&result, valueObj);
 
-    KNI_EndHandlesAndReturnObject(strObj);
+    KNI_EndHandlesAndReturnObject(valueObj);
 }
 
 /**
@@ -679,22 +687,21 @@ Java_com_sun_midp_content_RegistryStore_getByURL0(void) {
     pcsl_string action = PCSL_STRING_NULL_INITIALIZER;
     JSR211_RESULT_CH result = _JSR211_RESULT_INITIALIZER_;
 
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(strObj);   // String object
+    KNI_StartHandles(4);
+    KNI_DeclareHandle(callerObj);
+    KNI_DeclareHandle(urlObj);
+    KNI_DeclareHandle(actionObj);
+    KNI_DeclareHandle(resultObj);
 
     do {
-        KNI_GetParameterAsObject(1, strObj);   // callerId
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(strObj, &callerId)) {
-            break;
-        }
-
-        KNI_GetParameterAsObject(2, strObj);   // URL
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(strObj, &url)) {
-            break;
-        }
-
-        KNI_GetParameterAsObject(3, strObj);   // action
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(strObj, &action)) {
+        KNI_GetParameterAsObject(1, callerObj);
+        KNI_GetParameterAsObject(2, urlObj);
+        KNI_GetParameterAsObject(3, actionObj);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(callerObj, &callerId) ||
+            PCSL_STRING_OK != midp_jstring_to_pcsl_string(urlObj, &url) ||
+            PCSL_STRING_OK != midp_jstring_to_pcsl_string(actionObj, &action)) {
+            KNI_ThrowNew(midpOutOfMemoryError, 
+                   "RegistryStore_getByURL0 no memory for string arguments");
             break;
         }
 
@@ -704,9 +711,9 @@ Java_com_sun_midp_content_RegistryStore_getByURL0(void) {
     pcsl_string_free(&action);
     pcsl_string_free(&url);
     pcsl_string_free(&callerId);
-    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&result, strObj);
+    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&result, actionObj);
 
-    KNI_EndHandlesAndReturnObject(strObj);
+    KNI_EndHandlesAndReturnObject(actionObj);
 }
 
 /**
@@ -725,6 +732,8 @@ Java_com_sun_midp_content_RegistryStore_getValues0(void) {
     do {
         KNI_GetParameterAsObject(1, strObj);   // callerId
         if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(strObj, &callerId)) {
+            KNI_ThrowNew(midpOutOfMemoryError, 
+                   "RegistryStore_getValues0 no memory for string arguments");
             break;
         }
 
@@ -749,16 +758,17 @@ Java_com_sun_midp_content_RegistryStore_getHandler0(void) {
     pcsl_string id = PCSL_STRING_NULL_INITIALIZER;
     JSR211_RESULT_CH handler = _JSR211_RESULT_INITIALIZER_;
     
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(strObj);       /* string object */
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(callerObj);
+    KNI_DeclareHandle(handlerObj);
 
     do {
-        KNI_GetParameterAsObject(1, strObj); /* callerId */
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(strObj, &callerId)) {
-            break;
-        }
-        KNI_GetParameterAsObject(2, strObj); /* handlerId */
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(strObj, &id)) {
+        KNI_GetParameterAsObject(1, callerObj);
+        KNI_GetParameterAsObject(2, handlerObj);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(callerObj, &callerId) ||
+            PCSL_STRING_OK != midp_jstring_to_pcsl_string(handlerObj, &id)) {
+            KNI_ThrowNew(midpOutOfMemoryError, 
+                   "RegistryStore_getHandler0 no memory for string arguments");
             break;
         }
         mode = KNI_GetParameterAsInt(3);
@@ -768,9 +778,9 @@ Java_com_sun_midp_content_RegistryStore_getHandler0(void) {
 
     pcsl_string_free(&callerId);
     pcsl_string_free(&id);
-    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&handler, strObj);
+    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&handler, handlerObj);
 
-    KNI_EndHandlesAndReturnObject(strObj);
+    KNI_EndHandlesAndReturnObject(handlerObj);
 }
 
 /**
@@ -793,6 +803,8 @@ Java_com_sun_midp_content_RegistryStore_loadFieldValues0(void) {
         pcsl_string_free(&id);
         result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&result, strObj);
     } else {
+        KNI_ThrowNew(midpOutOfMemoryError, 
+                   "RegistryStore_loadFieldValues0 no memory for handler ID");
         KNI_ReleaseHandle(strObj);
     }
 
@@ -815,7 +827,8 @@ Java_com_sun_midp_content_RegistryStore_launch0(void) {
     if (PCSL_STRING_OK == midp_jstring_to_pcsl_string(idStr, &id)) {
         result = jsr211_execute_handler(&id);
     } else {
-        KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        KNI_ThrowNew(midpOutOfMemoryError, 
+                   "RegistryStore_launch0 no memory for handler ID");
         result = JSR211_LAUNCH_ERROR;
     }
 

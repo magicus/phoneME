@@ -271,27 +271,27 @@ static void init(jobject invocObj, jclass classObj) {
 
 #if REPORT_LEVEL <= LOG_CRITICAL
     if (urlFid == 0 ||
-    typeFid == 0 ||
-    actionFid == 0 ||
-    IDFid == 0 ||
-    statusFid == 0 ||
-    responseRequiredFid == 0 ||
-    tidFid == 0 ||
-    previousTidFid == 0 ||
-    suiteIdFid == 0 ||
-    classnameFid == 0 ||
-    invokingAuthorityFid == 0 ||
-    invokingAppNameFid == 0 ||
-    invokingSuiteIdFid == 0 ||
-    invokingClassnameFid == 0 ||
-    invokingIDFid == 0 ||
-    usernameFid == 0 ||
-    passwordFid == 0 ||
-    argumentsFid == 0 ||
-    argsLenFid == 0 ||
-    dataLenFid == 0 ||
-    dataFid == 0) {
-    REPORT_CRIT(LC_NONE, "invocStore.c: fieldID initialization failed");
+        typeFid == 0 ||
+        actionFid == 0 ||
+        IDFid == 0 ||
+        statusFid == 0 ||
+        responseRequiredFid == 0 ||
+        tidFid == 0 ||
+        previousTidFid == 0 ||
+        suiteIdFid == 0 ||
+        classnameFid == 0 ||
+        invokingAuthorityFid == 0 ||
+        invokingAppNameFid == 0 ||
+        invokingSuiteIdFid == 0 ||
+        invokingClassnameFid == 0 ||
+        invokingIDFid == 0 ||
+        usernameFid == 0 ||
+        passwordFid == 0 ||
+        argumentsFid == 0 ||
+        argsLenFid == 0 ||
+        dataLenFid == 0 ||
+        dataFid == 0) {
+        REPORT_CRIT(LC_NONE, "invocStore.c: fieldID initialization failed");
     }
 #endif
 }
@@ -332,67 +332,67 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
                      jobject tmp1, jobject tmp2) {
     jboolean ret = KNI_ENOMEM;    /* Assume failure */
     do {
-    /* On any error break out of this block */
-    int len;
-
-    KNI_GetObjectField(invocObj, urlFid, tmp1);
-    if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->url))
-        break;
-
-    KNI_GetObjectField(invocObj, typeFid, tmp1);
-    if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->type ))
-        break;
-
-    KNI_GetObjectField(invocObj, actionFid, tmp1);
-    if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->action ))
-        break;
-
-    KNI_GetObjectField(invocObj, IDFid, tmp1);
-    if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->ID))
-        break;
-
-    /*
-     * Copy the arguments if non-empty.
-     * Always keep the pointers safe so invocFree()
-     * can function correctly.
-     */
-    KNI_GetObjectField(invocObj, argumentsFid, tmp2);
-    len = (KNI_IsNullHandle(tmp2)? 0: KNI_GetArrayLength(tmp2));
-    if (len <= 0) {
-        invoc->argsLen = 0;
-        invoc->args = NULL;
-    } else {
-        pcsl_string* args;
-        args = (pcsl_string*)pcsl_mem_malloc(len * sizeof(pcsl_string));
-        if (args == NULL)
-        break;
-        invoc->argsLen = len;
-        invoc->args = args;
-        args += len;
-        while (len-- > 0) {
-        KNI_GetObjectArrayElement(tmp2, len, tmp1);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, --args))
+        /* On any error break out of this block */
+        int len;
+    
+        KNI_GetObjectField(invocObj, urlFid, tmp1);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->url))
             break;
+    
+        KNI_GetObjectField(invocObj, typeFid, tmp1);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->type ))
+            break;
+    
+        KNI_GetObjectField(invocObj, actionFid, tmp1);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->action ))
+            break;
+    
+        KNI_GetObjectField(invocObj, IDFid, tmp1);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->ID))
+            break;
+    
+        /*
+         * Copy the arguments if non-empty.
+         * Always keep the pointers safe so invocFree()
+         * can function correctly.
+         */
+        KNI_GetObjectField(invocObj, argumentsFid, tmp2);
+        len = (KNI_IsNullHandle(tmp2)? 0: KNI_GetArrayLength(tmp2));
+        if (len <= 0) {
+            invoc->argsLen = 0;
+            invoc->args = NULL;
+        } else {
+            pcsl_string* args;
+            args = (pcsl_string*)pcsl_mem_malloc(len * sizeof(pcsl_string));
+            if (args == NULL)
+                break;
+            invoc->argsLen = len;
+            invoc->args = args;
+            args += len;
+            while (len-- > 0) {
+                KNI_GetObjectArrayElement(tmp2, len, tmp1);
+                if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, --args))
+                    break;
+            }
         }
-    }
-
-    /* Copy any data from the Invocation to malloc's memory. */
-    KNI_GetObjectField(invocObj, dataFid, tmp2);
-    len = (KNI_IsNullHandle(tmp2)? 0: KNI_GetArrayLength(tmp2));
-    if (len <= 0) {
-        invoc->data = NULL;
-        invoc->dataLen = 0;
-    } else {
-        invoc->data = pcsl_mem_malloc(len);
-        if (invoc->data == NULL)
-        break;
-
-        KNI_GetRawArrayRegion(tmp2, 0, len, invoc->data);
-        invoc->dataLen = len;
-    }
-
-    /* Clear to indicate everything worked. */
-    ret = KNI_TRUE;
+    
+        /* Copy any data from the Invocation to malloc's memory. */
+        KNI_GetObjectField(invocObj, dataFid, tmp2);
+        len = (KNI_IsNullHandle(tmp2)? 0: KNI_GetArrayLength(tmp2));
+        if (len <= 0) {
+            invoc->data = NULL;
+            invoc->dataLen = 0;
+        } else {
+            invoc->data = pcsl_mem_malloc(len);
+            if (invoc->data == NULL)
+                break;
+    
+            KNI_GetRawArrayRegion(tmp2, 0, len, invoc->data);
+            invoc->dataLen = len;
+        }
+    
+        /* Clear to indicate everything worked. */
+        ret = KNI_TRUE;
     } while (0);
 
     return ret;
@@ -442,52 +442,52 @@ Java_com_sun_midp_content_InvocationStore_get0(void) {
     pcsl_string desiredClassname = PCSL_STRING_NULL_INITIALIZER;
 
     do {/* Block to break out of on exceptions */
-    /* Check if blocked invocation was cancelled. */
-    if (isThreadCancelled()) {
-        /* blocking is always false to cleanup and exit immediately */
-        break;
-    }
-
-    /* Get the desired blocking mode. */
-    blocking = KNI_GetParameterAsBoolean(getBlockingArg);
-
-    if (!isEmpty()) {
-        /* Queue is not empty, get InvocationImpl obj and init. */
-        KNI_GetParameterAsObject(getInvokeObjArg, invocObj);
-        init(invocObj, obj);
-
-        /* Get the desired type of invocation. */
-        mode = KNI_GetParameterAsInt(getModeArg);
-        if (mode == MODE_TID || 
-        mode == MODE_TID_NEXT ||
-        mode == MODE_TID_PREV) {
-        int tid = KNI_GetIntField(invocObj, tidFid);
-        if (tid != 0) {
-            match = invocFindTid(tid);
-        } else {
-            /* start with the root */
-            match = invocQueue;
-        }
-        if (match != NULL) {
-            /* Link to the next or previous depending on the mode. */
-            if (mode == MODE_TID_NEXT) {
-            match = match->flink;
-            } else if (mode == MODE_TID_PREV) {
-            match = match->blink;
-            }
-        }
-        } else {
-        desiredSuiteId = KNI_GetParameterAsInt(getSuiteIdArg);
-        KNI_GetParameterAsObject(getClassnameArg, classname);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(classname, 
-                                &desiredClassname)) {
-                    KNI_ThrowNew(midpOutOfMemoryError, 
-                      "InvocationStore_get0 no memory for [desiredClassname]");
+        /* Check if blocked invocation was cancelled. */
+        if (isThreadCancelled()) {
+            /* blocking is always false to cleanup and exit immediately */
             break;
         }
-        match = invocFind(desiredSuiteId, &desiredClassname, mode);
+    
+        /* Get the desired blocking mode. */
+        blocking = KNI_GetParameterAsBoolean(getBlockingArg);
+    
+        if (!isEmpty()) {
+            /* Queue is not empty, get InvocationImpl obj and init. */
+            KNI_GetParameterAsObject(getInvokeObjArg, invocObj);
+            init(invocObj, obj);
+    
+            /* Get the desired type of invocation. */
+            mode = KNI_GetParameterAsInt(getModeArg);
+            if (mode == MODE_TID || 
+                mode == MODE_TID_NEXT ||
+                mode == MODE_TID_PREV) {
+                int tid = KNI_GetIntField(invocObj, tidFid);
+                if (tid != 0) {
+                    match = invocFindTid(tid);
+                } else {
+                    /* start with the root */
+                    match = invocQueue;
+                }
+                if (match != NULL) {
+                    /* Link to the next or previous depending on the mode. */
+                    if (mode == MODE_TID_NEXT) {
+                        match = match->flink;
+                    } else if (mode == MODE_TID_PREV) {
+                        match = match->blink;
+                    }
+                }
+            } else {
+                desiredSuiteId = KNI_GetParameterAsInt(getSuiteIdArg);
+                KNI_GetParameterAsObject(getClassnameArg, classname);
+                if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(classname, 
+                                        &desiredClassname)) {
+                    KNI_ThrowNew(midpOutOfMemoryError, 
+                       "InvocationStore_get0 no memory for [desiredClassname]");
+                    break;
+                }
+                match = invocFind(desiredSuiteId, &desiredClassname, mode);
+            }
         }
-    }
     } while (KNI_FALSE);
 
     /* Always free strings allocated */
@@ -495,64 +495,64 @@ Java_com_sun_midp_content_InvocationStore_get0(void) {
 
     if (match != NULL) {
         StoredInvoc *invoc = match->invoc;
-    int st = copyOut(invoc, mode, invocObj, argsObj, obj);
-    switch (st) {
-    case 1:
-        /* If a match was found and successfully copied;
-         * do final set of actions on the Invocation selected.
-         */
-        switch (mode) {
-        case MODE_REQUEST:
-        if (invoc->status == STATUS_INIT) {
-            /* 
-             * Returning new request, change status to ACTIVE
-             * Keep this entry in the queue.
+        int st = copyOut(invoc, mode, invocObj, argsObj, obj);
+        switch (st) {
+        case 1:
+            /* If a match was found and successfully copied;
+             * do final set of actions on the Invocation selected.
              */
-            invoc->status = STATUS_ACTIVE;
-            KNI_SetIntField(invocObj, statusFid, invoc->status);
+            switch (mode) {
+            case MODE_REQUEST:
+                if (invoc->status == STATUS_INIT) {
+                    /* 
+                     * Returning new request, change status to ACTIVE
+                     * Keep this entry in the queue.
+                     */
+                    invoc->status = STATUS_ACTIVE;
+                    KNI_SetIntField(invocObj, statusFid, invoc->status);
+                }
+                break;
+            case MODE_RESPONSE:
+                if (invoc->status >= STATUS_OK &&
+                    invoc->status <= STATUS_INITIATED) {
+                    /*
+                     * Remove responses from the list and free.
+                     */
+                    removeEntry(match);
+                    invocFree(invoc);
+                }
+                break;
+            case MODE_LREQUEST:
+            case MODE_LRESPONSE:
+            case MODE_CLEANUP:
+            case MODE_TID:
+            case MODE_TID_NEXT:
+            case MODE_TID_PREV:
+            default:
+                /* No additional action */
+                break;
+            }
+            /* Returning an Invocation */
+            ret = 1;
+            break;
+        case 0:
+            /* Insufficient memory for strings. */
+            KNI_ThrowNew(midpOutOfMemoryError, "invocStore returning strings");
+            KNI_ReleaseHandle(invocObj);
+            ret = 0;
+            break;
+        case -1:
+            /* Either args array or data array is incorrect size. */
+            ret = -1;
         }
-        break;
-        case MODE_RESPONSE:
-        if (invoc->status >= STATUS_OK &&
-            invoc->status <= STATUS_INITIATED) {
-            /*
-             * Remove responses from the list and free.
-             */
-            removeEntry(match);
-            invocFree(invoc);
-        }
-        break;
-        case MODE_LREQUEST:
-        case MODE_LRESPONSE:
-        case MODE_CLEANUP:
-        case MODE_TID:
-        case MODE_TID_NEXT:
-        case MODE_TID_PREV:
-        default:
-        /* No additional action */
-        break;
-        }
-        /* Returning an Invocation */
-        ret = 1;
-        break;
-    case 0:
-        /* Insufficient memory for strings. */
-        KNI_ThrowNew(midpOutOfMemoryError, "invocStore returning strings");
-        KNI_ReleaseHandle(invocObj);
-        ret = 0;
-        break;
-    case -1:
-        /* Either args array or data array is incorrect size. */
-        ret = -1;
-    }
     } else {
-    /* No match found. */
-    /* If blocking, setup to block. */
-    if (blocking) {
-        blockThread();
-        /* Fall into the return to manage handles correctly */
-    }
-    ret = 0;
+        /* No match found. */
+        /* If blocking, setup to block. */
+        if (blocking) {
+            blockThread();
+            /* Fall into the return to manage handles correctly */
+        }
+        ret = 0;
     }
     KNI_EndHandles();
     KNI_ReturnInt(ret);
@@ -583,77 +583,77 @@ static int copyOut(StoredInvoc *invoc, int mode,
     KNI_GetObjectField(invocObj, dataFid, obj);
     datalen = KNI_GetArrayLength(obj);
     if (datalen != invoc->dataLen) {
-    /* Data array allocated by Java is not correct size. */
-    return -1;
+        /* Data array allocated by Java is not correct size. */
+        return -1;
     }
     KNI_GetObjectField(invocObj, argumentsFid, obj);
     arraylen = KNI_GetArrayLength(obj);
     if (arraylen != invoc->argsLen) {
-    /* Args array allocated by Java is not correct size. */
-    return -1;
+        /* Args array allocated by Java is not correct size. */
+        return -1;
     }
 
     /* Copy out all the string fields. */
     if (!(storeField(&invoc->url, invocObj, urlFid, obj) &&
-      storeField(&invoc->type, invocObj, typeFid, obj) &&
-      storeField(&invoc->action, invocObj, actionFid, obj) &&
-      storeField(&invoc->ID, invocObj, IDFid, obj) &&
-      storeField(&invoc->invokingClassname, 
-             invocObj, invokingClassnameFid, obj) &&
-      storeField(&invoc->invokingAuthority,
-             invocObj, invokingAuthorityFid, obj) &&
-      storeField(&invoc->invokingAppName,
-             invocObj, invokingAppNameFid, obj) &&
-      storeField(&invoc->invokingID,
-             invocObj, invokingIDFid, obj) &&
-      storeField(&invoc->username,
-             invocObj, usernameFid, obj) &&
-      storeField(&invoc->password,
-             invocObj, passwordFid, obj))) {
-    /* Some String allocation failed. */
-    return 0;
+          storeField(&invoc->type, invocObj, typeFid, obj) &&
+          storeField(&invoc->action, invocObj, actionFid, obj) &&
+          storeField(&invoc->ID, invocObj, IDFid, obj) &&
+          storeField(&invoc->invokingClassname, 
+                 invocObj, invokingClassnameFid, obj) &&
+          storeField(&invoc->invokingAuthority,
+                 invocObj, invokingAuthorityFid, obj) &&
+          storeField(&invoc->invokingAppName,
+                 invocObj, invokingAppNameFid, obj) &&
+          storeField(&invoc->invokingID,
+                 invocObj, invokingIDFid, obj) &&
+          storeField(&invoc->username,
+                 invocObj, usernameFid, obj) &&
+          storeField(&invoc->password,
+                 invocObj, passwordFid, obj))) {
+        /* Some String allocation failed. */
+        return 0;
     }
     KNI_SetIntField(invocObj, invokingSuiteIdFid, invoc->invokingSuiteId);
     /* See if the suite and classname are needed. */
     if (mode == MODE_TID || 
-    mode == MODE_TID_PREV ||
-    mode == MODE_TID_NEXT) {
-    if (!storeField(&invoc->classname, invocObj, classnameFid, obj)) {
-        /* A string allocation failed. */
-        return 0;
-    }
-        KNI_SetIntField(invocObj, suiteIdFid, invoc->suiteId);
+        mode == MODE_TID_PREV ||
+        mode == MODE_TID_NEXT) {
+        if (!storeField(&invoc->classname, invocObj, classnameFid, obj)) {
+            /* A string allocation failed. */
+            return 0;
+        }
+            KNI_SetIntField(invocObj, suiteIdFid, invoc->suiteId);
     }
 
     /* Return the arguments if any; array length already checked. */
     if (invoc->argsLen > 0) {
-    int ndx;
-    pcsl_string* args;
-
-    /* For each stored arg create a string and store in the array.
-     * No stored arg is null.  If a string cannot be created
-     * it is due to insufficient heap memory. 
-     */
-    KNI_GetObjectField(invocObj, argumentsFid, argsObj);
-    args = invoc->args;
-    for (ndx = 0; ndx < invoc->argsLen; ndx++, args++) {
-        if (!pcsl_string_is_null(args)) {
-            if (PCSL_STRING_OK != 
-                    midp_jstring_from_pcsl_string(args, obj)) {
-            /* String create failed; exit now. */
-            return 0;
+        int ndx;
+        pcsl_string* args;
+    
+        /* For each stored arg create a string and store in the array.
+         * No stored arg is null.  If a string cannot be created
+         * it is due to insufficient heap memory. 
+         */
+        KNI_GetObjectField(invocObj, argumentsFid, argsObj);
+        args = invoc->args;
+        for (ndx = 0; ndx < invoc->argsLen; ndx++, args++) {
+            if (!pcsl_string_is_null(args)) {
+                if (PCSL_STRING_OK != 
+                        midp_jstring_from_pcsl_string(args, obj)) {
+                    /* String create failed; exit now. */
+                    return 0;
+                }
+            } else {
+                KNI_ReleaseHandle(obj);
+            }
+            KNI_SetObjectArrayElement(argsObj, ndx, obj);
         }
-        } else {
-        KNI_ReleaseHandle(obj);
-        }
-        KNI_SetObjectArrayElement(argsObj, ndx, obj);
-    }
     }
 
     /* Return the data array if any; array length was already checked. */
     if (invoc->dataLen > 0) {
-    KNI_GetObjectField(invocObj, dataFid, obj);
-    KNI_SetRawArrayRegion(obj, 0, invoc->dataLen, invoc->data);
+        KNI_GetObjectField(invocObj, dataFid, obj);
+        KNI_SetRawArrayRegion(obj, 0, invoc->dataLen, invoc->data);
     }
 
     KNI_SetBooleanField(invocObj, responseRequiredFid,
@@ -698,27 +698,27 @@ Java_com_sun_midp_content_InvocationStore_listen0(void) {
 #define listenBlockingArg 4
 
     do {/* Block to break out of on exceptions */
-    /* Check if blocked invocation was cancelled. */
-    if (isThreadCancelled()) {
-        /* blocking is always false to cleanup and exit immediately */
-        break;
-    }
-
-    /* Get the desired blocking mode. */
-    blocking = KNI_GetParameterAsBoolean(listenBlockingArg);
-
-    if (!isEmpty()) {
-        /* Queue is not empty
-         * Need a string copy of the desired suiteID and classname
-         * to use for comparisons
-         */
-        desiredSuiteId = KNI_GetParameterAsInt(listenSuiteIdArg);
-
-            KNI_GetParameterAsObject(listenClassnameArg, classname);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(classname, 
-                           &desiredClassname)) {
-            KNI_ThrowNew(midpOutOfMemoryError, 
-                     "InvocationStore_listen0 no memory for [desiredClassname]");
+        /* Check if blocked invocation was cancelled. */
+        if (isThreadCancelled()) {
+            /* blocking is always false to cleanup and exit immediately */
+            break;
+        }
+    
+        /* Get the desired blocking mode. */
+        blocking = KNI_GetParameterAsBoolean(listenBlockingArg);
+    
+        if (!isEmpty()) {
+            /* Queue is not empty
+             * Need a string copy of the desired suiteID and classname
+             * to use for comparisons
+             */
+            desiredSuiteId = KNI_GetParameterAsInt(listenSuiteIdArg);
+    
+                KNI_GetParameterAsObject(listenClassnameArg, classname);
+            if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(classname, 
+                               &desiredClassname)) {
+                KNI_ThrowNew(midpOutOfMemoryError, 
+                    "InvocationStore_listen0 no memory for [desiredClassname]");
                 break;
             }
 
@@ -771,52 +771,52 @@ Java_com_sun_midp_content_InvocationStore_setListenNotify0(void) {
 #define listenModeArg 3
 
     do {/* Block to break out of on exceptions */
-    if (!isEmpty()) {
-        /* Queue is not empty
-         * Need a string copy of the desired suiteId and classname
-         * to use for comparisons
-         */
-        desiredSuiteId = KNI_GetParameterAsInt(listenSuiteIdArg);
-
-        KNI_GetParameterAsObject(listenClassnameArg, classname);
-        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(classname, 
-                           &desiredClassname)) {
-            KNI_ThrowNew(midpOutOfMemoryError, 
-            "InvocationStore_setListenNotify0 no memory for [desiredClassname]");
-            break;
-        }
-
-        /* Get the desired request mode. */
-        mode = KNI_GetParameterAsInt(listenModeArg);
-
-        /* Inspect the queue of Invocations and pick one that
-         * matches the suiteId and classname
-         */
-        for (link = invocQueue; link != NULL; link = link->flink) {
-            invoc = link->invoc;
-            /*
-             * If the status matches the request
-             * and the suite matches and the classname matches.
+        if (!isEmpty()) {
+            /* Queue is not empty
+             * Need a string copy of the desired suiteId and classname
+             * to use for comparisons
              */
-            if (mode == MODE_LREQUEST &&
-                invoc->status == STATUS_INIT) {
-                   /* This invocation is a match; check classname and suite below */
-            } else if (mode == MODE_LRESPONSE &&
-                   (invoc->status >= STATUS_OK &&
-                    invoc->status <= STATUS_INITIATED)) {
-                /* A pending response; check classname and suite below */
-            } else {
-                /* Not this invocation; on to the next */
-                continue;
+            desiredSuiteId = KNI_GetParameterAsInt(listenSuiteIdArg);
+    
+            KNI_GetParameterAsObject(listenClassnameArg, classname);
+            if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(classname, 
+                               &desiredClassname)) {
+                KNI_ThrowNew(midpOutOfMemoryError, 
+                "InvocationStore_setListenNotify0 no memory for [desiredClassname]");
+                break;
             }
-            /* Check if this is the right class and suite */
-            if (desiredSuiteId == invoc->suiteId &&
-                pcsl_string_equals(&desiredClassname, &invoc->classname)) {
-                /* Reset the flag so this Invocation will notify. */
-                invoc->notified = KNI_FALSE;
+    
+            /* Get the desired request mode. */
+            mode = KNI_GetParameterAsInt(listenModeArg);
+    
+            /* Inspect the queue of Invocations and pick one that
+             * matches the suiteId and classname
+             */
+            for (link = invocQueue; link != NULL; link = link->flink) {
+                invoc = link->invoc;
+                /*
+                 * If the status matches the request
+                 * and the suite matches and the classname matches.
+                 */
+                if (mode == MODE_LREQUEST &&
+                    invoc->status == STATUS_INIT) {
+                       /* This invocation is a match; check classname and suite below */
+                } else if (mode == MODE_LRESPONSE &&
+                       (invoc->status >= STATUS_OK &&
+                        invoc->status <= STATUS_INITIATED)) {
+                    /* A pending response; check classname and suite below */
+                } else {
+                    /* Not this invocation; on to the next */
+                    continue;
+                }
+                /* Check if this is the right class and suite */
+                if (desiredSuiteId == invoc->suiteId &&
+                    pcsl_string_equals(&desiredClassname, &invoc->classname)) {
+                    /* Reset the flag so this Invocation will notify. */
+                    invoc->notified = KNI_FALSE;
+                }
             }
         }
-    }
     } while (KNI_FALSE);
 
     /* TBD: MidpMalloc failure not reported; not found is returned */
@@ -856,75 +856,75 @@ Java_com_sun_midp_content_InvocationStore_put0(void) {
     init(invocObj, classObj);
 
     do {
-    /* On any error break out of this block */
-    /* Allocate a new zero'ed struct to save the values in */
-    invoc = (StoredInvoc*) pcsl_mem_calloc(1, sizeof (StoredInvoc));
-    if (invoc == NULL) {
-        KNI_ThrowNew(midpOutOfMemoryError, 
-                            "InvocationStore_put0 no memory for [invoc]");
-        break;
-    }
-
-    /* Assign a new transaction id and set it */
-    invoc->tid = invocNextTid();
-    KNI_SetIntField(invocObj, tidFid, invoc->tid);
-
-    /*
-     * Copy all the parameters to native
-     * Includes ID, type,url, action, args, data
-     */
-    if (!setParamsFromObj(invoc, invocObj, str, argsObj))
-        break;
-
-    invoc->previousTid = KNI_GetIntField(invocObj, previousTidFid);
-
-    invoc->status = KNI_GetIntField(invocObj, statusFid);
-    invoc->responseRequired =
-        KNI_GetBooleanField(invocObj, responseRequiredFid);
-
-    invoc->suiteId = KNI_GetIntField(invocObj, suiteIdFid);
-
-    KNI_GetObjectField(invocObj, classnameFid, str);
-    if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->classname))
-        break;
-
-    KNI_GetObjectField(invocObj, invokingAuthorityFid, str);
-    if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, 
-                                                &invoc->invokingAuthority))
-        break;
-
-    KNI_GetObjectField(invocObj, invokingAppNameFid, str);
-    if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, 
-                                                &invoc->invokingAppName))
-        break;
-
-    invoc->invokingSuiteId = KNI_GetIntField(invocObj, invokingSuiteIdFid);
-
-    KNI_GetObjectField(invocObj, invokingClassnameFid, str);
-    if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, 
-                                                &invoc->invokingClassname))
-        break;
-
-    KNI_GetObjectField(invocObj, invokingIDFid, str);
-    if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->invokingID))
-        break;
-
-    KNI_GetObjectField(invocObj, usernameFid, str);
-    if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->username))
-        break;
-
-    KNI_GetObjectField(invocObj, passwordFid, str);
-    if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->password))
-        break;
-
-    /* Insert the new Invocation at the end of the queue */
-    if (!invocPut(invoc))
-        break;
-
-    unblockWaitingThreads(STATUS_OK);
-
-    /* Clear to skip cleanup and throwing exception */
-    invoc = NULL;
+        /* On any error break out of this block */
+        /* Allocate a new zero'ed struct to save the values in */
+        invoc = (StoredInvoc*) pcsl_mem_calloc(1, sizeof (StoredInvoc));
+        if (invoc == NULL) {
+            KNI_ThrowNew(midpOutOfMemoryError, 
+                                "InvocationStore_put0 no memory for [invoc]");
+            break;
+        }
+    
+        /* Assign a new transaction id and set it */
+        invoc->tid = invocNextTid();
+        KNI_SetIntField(invocObj, tidFid, invoc->tid);
+    
+        /*
+         * Copy all the parameters to native
+         * Includes ID, type,url, action, args, data
+         */
+        if (KNI_TRUE != setParamsFromObj(invoc, invocObj, str, argsObj))
+            break;
+    
+        invoc->previousTid = KNI_GetIntField(invocObj, previousTidFid);
+    
+        invoc->status = KNI_GetIntField(invocObj, statusFid);
+        invoc->responseRequired =
+            KNI_GetBooleanField(invocObj, responseRequiredFid);
+    
+        invoc->suiteId = KNI_GetIntField(invocObj, suiteIdFid);
+    
+        KNI_GetObjectField(invocObj, classnameFid, str);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->classname))
+            break;
+    
+        KNI_GetObjectField(invocObj, invokingAuthorityFid, str);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, 
+                                                    &invoc->invokingAuthority))
+            break;
+    
+        KNI_GetObjectField(invocObj, invokingAppNameFid, str);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, 
+                                                    &invoc->invokingAppName))
+            break;
+    
+        invoc->invokingSuiteId = KNI_GetIntField(invocObj, invokingSuiteIdFid);
+    
+        KNI_GetObjectField(invocObj, invokingClassnameFid, str);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, 
+                                                    &invoc->invokingClassname))
+            break;
+    
+        KNI_GetObjectField(invocObj, invokingIDFid, str);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->invokingID))
+            break;
+    
+        KNI_GetObjectField(invocObj, usernameFid, str);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->username))
+            break;
+    
+        KNI_GetObjectField(invocObj, passwordFid, str);
+        if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->password))
+            break;
+    
+        /* Insert the new Invocation at the end of the queue */
+        if (!invocPut(invoc))
+            break;
+    
+        unblockWaitingThreads(STATUS_OK);
+    
+        /* Clear to skip cleanup and throwing exception */
+        invoc = NULL;
     } while (0);
 
     if (invoc != NULL) {
@@ -1059,7 +1059,7 @@ Java_com_sun_midp_content_InvocationStore_setParams0(void) {
     link = invocFindTid(tid);
     if (link != NULL) {
         invoc = link->invoc;
-        if (!setParamsFromObj(invoc, invocObj, obj1, obj2)) {
+        if (KNI_TRUE != setParamsFromObj(invoc, invocObj, obj1, obj2)) {
             KNI_ThrowNew(midpOutOfMemoryError,
                  "invocStore.c: setParam0() allocation failed");
         }
@@ -1382,8 +1382,8 @@ static void blockThread() {
      */
     MidpReentryData* p = (MidpReentryData*)(SNI_GetReentryData(NULL));
     if (p == NULL) {
-    p = (MidpReentryData*)
-        (SNI_AllocateReentryData(sizeof (MidpReentryData)));
+        p = (MidpReentryData*)
+            (SNI_AllocateReentryData(sizeof (MidpReentryData)));
     }
     p->waitingFor = JSR211_SIGNAL;
     p->status = JSR211_INVOKE_OK;
@@ -1395,7 +1395,7 @@ static void blockThread() {
  */
 static jboolean isThreadCancelled() {
     MidpReentryData* p = 
-    (MidpReentryData*)(SNI_GetReentryData(NULL));
+        (MidpReentryData*)(SNI_GetReentryData(NULL));
     return (p != NULL && p->status == JSR211_INVOKE_CANCELLED);
 }
 
@@ -1422,15 +1422,15 @@ static void unblockWaitingThreads(int newStatus) {
         if (p == NULL) {
             continue;
         }
-    if (p->waitingFor == JSR211_SIGNAL && 
-        (p->status | status_mask) != 0) {
-        JVMSPI_ThreadID id = blocked_threads[i].thread_id;
-
-        if (id != NULL) {
-        p->status = st;
-        SNI_UnblockThread(id);
+        if (p->waitingFor == JSR211_SIGNAL && 
+            (p->status | status_mask) != 0) {
+            JVMSPI_ThreadID id = blocked_threads[i].thread_id;
+    
+            if (id != NULL) {
+                p->status = st;
+                SNI_UnblockThread(id);
+            }
         }
-    }
     }
 }
 
@@ -1475,11 +1475,10 @@ StoredInvoc* jsr211_get_invocation(const pcsl_string* handlerID) {
     for (curr = invocQueue; curr != NULL; curr = curr->flink) {
         if (pcsl_string_equals(handlerID, &curr->invoc->ID)) {
             if (curr->invoc->status == STATUS_INIT) {
-            return curr->invoc;
+                return curr->invoc;
             }
         }
     }
 
     return NULL;
 }
-
