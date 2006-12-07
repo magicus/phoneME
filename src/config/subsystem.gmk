@@ -489,6 +489,7 @@ JAVACARD_CLASSES = $(MIDP_OUTPUT_DIR)/javacard_classes
 SAT_SCRIPT_PATH = $(JAVACARD_CLASSES)/jcscripts
 STUBS_PATH = $(JAVACARD_CLASSES)/stubs
 JCRMIC_PROPERTIES = com/sun/satsa/jcrmic/jcrmic.properties
+JCRMIC_MANIFEST_FILE = jcrmic.manifest
 JCRMIC_ARCHIVE = jcrmic.jar
 
 # i3test for jsr 177
@@ -549,7 +550,8 @@ jcrmic: $(JAVACARD_CLASSES) $(BINDIR)
 	@echo " ..." $@
 	@$(JAVAC_CMD) -d $(JAVACARD_CLASSES) $(JCRMIC_SOURCES)
 	@cp -f $(JSR_177_DIR)/src/tool/jcrmic/$(JCRMIC_PROPERTIES) $(JAVACARD_CLASSES)/$(JCRMIC_PROPERTIES)
-	@(cd $(JAVACARD_CLASSES) ; $(JAR_CMD) cf $(JCRMIC_ARCHIVE) com/sun/satsa/jcrmic )
+	@cp -f $(JSR_177_DIR)/src/tool/jcrmic/$(JCRMIC_MANIFEST_FILE) $(JAVACARD_CLASSES)/$(JCRMIC_MANIFEST_FILE)
+	@(cd $(JAVACARD_CLASSES) ; $(JAR_CMD) cfm $(JCRMIC_ARCHIVE) $(JCRMIC_MANIFEST_FILE) com/sun/satsa/jcrmic )
 	@mv $(JAVACARD_CLASSES)/$(JCRMIC_ARCHIVE) $(BINDIR)/$(JCRMIC_ARCHIVE)
 
 ifeq ($(USE_JSR_177_EMULATOR), true)
