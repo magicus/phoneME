@@ -251,7 +251,7 @@ public class DirectPlayer extends BasicPlayer
 
         // Get current isolate ID to support MVM
         // in case of SVM it will return AMS isolate ID
-        int isolateId = MIDletSuiteLoader.getIsolateId();
+        int isolateId = MIDletSuiteUtils.getIsolateId();
 
         if (source != null) {
             hNative = nInit(isolateId, pID, mimeType, source.getLocator(), contentLength);

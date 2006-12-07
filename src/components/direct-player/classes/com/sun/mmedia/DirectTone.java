@@ -60,7 +60,7 @@ public final class DirectTone extends DirectPlayer implements ToneControl {
     protected void doRealize() throws MediaException {
 
         // Get current isolate ID to support MVM
-        int isolateId = MIDletSuiteLoader.getIsolateId();
+        int isolateId = MIDletSuiteUtils.getIsolateId();
         
         // Init native library
         if (this.source == null) {
