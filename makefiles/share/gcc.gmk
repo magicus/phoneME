@@ -53,12 +53,24 @@ LD_OUTPUT=-o
 
 LIB_EXT=.a
 
-ifeq ($(USE_DEBUG), true)
-CFLAGS=-g -c
-else
-CFLAGS=-c -O3 -fexpensive-optimizations
+CFLAGS=-c
+
+ifeq ($(USE_GCOV), true)
+CFLAGS   += -O0 -fprofile-arcs -ftest-coverage
 endif
+
+ifeq ($(USE_DEBUG), true)
+CFLAGS+=-g
+else
+ifneq ($(USE_GCOV), true)
+CFLAGS+=-O3 -fexpensive-optimizations
+endif
+endif
+
 LD_FLAGS=
+ifeq ($(USE_GCOV), true)
+LD_FLAGS += -lgcov
+endif
 
 ifeq ($(PCSL_CPU), arm)
 CFLAGS   += -DARM
