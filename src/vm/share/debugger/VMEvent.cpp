@@ -504,6 +504,14 @@ extern "C" {
      */
     JavaFrame frame(thread);
     GUARANTEE(frame.is_java_frame(), "single step not in JavaFrame!");
+#if !ENABLE_ROM_JAVA_DEBUGGER    
+    // Don't allow step events if we are in a ROM method
+    GUARANTEE(UseROM, "Sanity");
+    Method::Raw m = frame.method();    
+    if (ROM::in_any_loaded_bundle(m.obj())) {
+      return;
+    }
+#endif
     offset = frame.bci();
     StepModifier::Fast sm = thread->step_info();
     if (sm.is_null()) {
