@@ -823,7 +823,7 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
 
   if (_debugger_active) {
     // deoptimize and let interpreter code handle it
-    frame->flush();
+    frame->flush(JVM_SINGLE_ARG_CHECK);
     // Do it the hard way.
     gen->call_vm(exception_thrower(), T_VOID JVM_CHECK);
     return;
@@ -838,7 +838,7 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
       Oop::Raw null_obj;
       exception.set_obj(&null_obj);
     } else {
-      frame->flush();
+      frame->flush(JVM_SINGLE_ARG_CHECK);
       gen->call_vm(exception_allocator(get_rte()), T_OBJECT JVM_CHECK);       
       exception.set_register(
               RegisterAllocator::allocate(Assembler::return_register));
@@ -877,7 +877,7 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
       gen->throw_simple_exception(get_rte() JVM_NO_CHECK_AT_BOTTOM);
     } else {
       // There may be monitors.  Do it the hard way.
-      frame->flush();
+      frame->flush(JVM_SINGLE_ARG_CHECK);
       gen->call_vm(exception_thrower(), T_VOID JVM_NO_CHECK_AT_BOTTOM);
     }
   }

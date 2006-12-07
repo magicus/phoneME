@@ -182,18 +182,18 @@ class ConstantPool: public Oop {
                           InstanceClass *sender_class, 
                           InstanceClass *declaring_class JVM_TRAPS);
 
-  jshort extract_high_jshort_at(int index) const {
+  jushort extract_high_jushort_at(int index) const {
     GUARANTEE(tag_at(index).is_short_pair(), "Corrupted constant pool");
-    return extract_high_jshort_from_jint(int_field(offset_from_index(index)));
+    return extract_high_jushort_from_jint(int_field(offset_from_index(index)));
   }
-  jshort extract_low_jshort_at(int index) const {
+  jushort extract_low_jushort_at(int index) const {
     GUARANTEE(tag_at(index).is_short_pair(), "Corrupted constant pool");
-    return extract_low_jshort_from_jint(int_field(offset_from_index(index)));
+    return extract_low_jushort_from_jint(int_field(offset_from_index(index)));
   }
 
   BasicType resolved_field_type_at(int index, int& offset) const {
     GUARANTEE(tag_at(index).is_resolved_field(), "Corrupted constant pool");
-    offset = extract_high_jshort_at(index);
+    offset = extract_high_jushort_at(index);
     return ConstantTag::resolved_field_type(tag_value_at(index));
   }
 
@@ -201,8 +201,8 @@ class ConstantPool: public Oop {
   {
     GUARANTEE(tag_at(index).is_resolved_field(), "Corrupted constant pool");
     jint value = int_field(offset_from_index(index));
-    offset   = extract_high_jshort_from_jint(value);
-    class_id = extract_low_jshort_from_jint(value);
+    offset   = extract_high_jushort_from_jint(value);
+    class_id = extract_low_jushort_from_jint(value);
     return ConstantTag::resolved_field_type(tag_value_at(index));
   }
 
@@ -226,8 +226,8 @@ class ConstantPool: public Oop {
                                     int& class_id) const {
     GUARANTEE(tag_at(index).is_resolved_interface_method(),
               "Corrupt constant pool");
-    itable_index = extract_low_jshort_at(index);
-    class_id  = extract_high_jshort_at(index);
+    itable_index = extract_low_jushort_at(index);
+    class_id  = extract_high_jushort_at(index);
   }
 
   // Resolves the MethodRef at index to a fixed method
@@ -402,16 +402,14 @@ class ConstantPool: public Oop {
   {
     tag_at_put(index, JVM_CONSTANT_Fieldref);
     int_field_put(offset_from_index(index), 
-              construct_jint_from_jshorts((jshort) name_and_type_index,
-              (jshort) class_index));
+              construct_jint_from_jushorts(name_and_type_index, class_index));
   }
 
   void method_at_put(int index, jushort class_index, jushort name_and_type_index)
   {
     tag_at_put(index, JVM_CONSTANT_Methodref);
     int_field_put(offset_from_index(index),
-              construct_jint_from_jshorts((jshort) name_and_type_index,
-              (jshort) class_index));
+              construct_jint_from_jushorts(name_and_type_index, class_index));
   }
 
   void interface_method_at_put(int index, jushort class_id, 
@@ -419,16 +417,14 @@ class ConstantPool: public Oop {
   {
     tag_at_put(index, JVM_CONSTANT_InterfaceMethodref);
     int_field_put(offset_from_index(index), 
-              construct_jint_from_jshorts((jshort) name_and_type_index,
-              (jshort) class_id));
+              construct_jint_from_jushorts(name_and_type_index, class_id));
   }
 
   void name_and_type_at_put(int index, jushort name_index, 
                             jushort signature_index) {
     tag_at_put(index, JVM_CONSTANT_NameAndType);
     int_field_put(offset_from_index(index),
-                  construct_jint_from_jshorts((jshort) signature_index,
-                  (jshort) name_index));
+                  construct_jint_from_jushorts(signature_index, name_index));
   }
 
   // may be either static or non-static field
@@ -438,7 +434,7 @@ class ConstantPool: public Oop {
     tag_at_put(index, 
                (jubyte)((is_static ? JVM_CONSTANT_ResolvedStaticBooleanFieldref : JVM_CONSTANT_ResolvedBooleanFieldref) + type - T_BOOLEAN));
     int_field_put(offset_from_index(index),
-           construct_jint_from_jshorts((jshort) offset, (jshort) class_id));
+           construct_jint_from_jushorts(offset, class_id));
   }
 
 
@@ -447,7 +443,7 @@ class ConstantPool: public Oop {
     tag_at_put(index, 
          (jubyte)(JVM_CONSTANT_ResolvedBooleanVirtualMethod + type - T_BOOLEAN));
     int_field_put(offset_from_index(index),
-         construct_jint_from_jshorts((jshort) class_id, (jshort) vtable_index));
+         construct_jint_from_jushorts(class_id, vtable_index));
   }
 
   void resolved_interface_method_at_put(int index, jushort vtable_index, 
@@ -455,7 +451,7 @@ class ConstantPool: public Oop {
     tag_at_put(index, 
        (jubyte)(JVM_CONSTANT_ResolvedBooleanInterfaceMethod + type - T_BOOLEAN));
     int_field_put(offset_from_index(index),
-       construct_jint_from_jshorts((jshort) class_id, (jshort) vtable_index));
+       construct_jint_from_jushorts(class_id, vtable_index));
   }
 
   // Lookup for entries consisting of (name_index, signature_index)

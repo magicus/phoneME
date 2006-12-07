@@ -1177,6 +1177,19 @@ inline jint construct_jint_from_jshorts(jshort high, jshort low) {
   return ((jint)high<<16) | low;
 }
 
+inline jushort extract_low_jushort_from_jint(jint x) {
+  return (jushort)(x & 0xffff);
+}
+
+inline jushort extract_high_jushort_from_jint(jint x) {
+  return (jushort)((x >> 16) & 0xffff);
+}
+
+inline jint construct_jint_from_jushorts(jushort high, jushort low) {
+  return ((jint)high<<16) | low;
+}
+
+
 #define _IGNORE_ME_(x)
 #define CURRENT_HAS_PENDING_EXCEPTION (jvm_fast_globals.current_pending_exception)
 

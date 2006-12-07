@@ -80,8 +80,8 @@ BasicType ConstantPool::resolved_virtual_method_at(int index, int& vtable_index,
                                                    int& class_id) const {
   GUARANTEE(tag_at(index).is_resolved_virtual_method(), 
             "Corrupt constant pool");
-  vtable_index = extract_low_jshort_at(index);
-  class_id  = extract_high_jshort_at(index);
+  vtable_index = extract_low_jushort_at(index);
+  class_id  = extract_high_jushort_at(index);
   return ConstantTag::resolved_virtual_method_type(tag_value_at(index));
 }
 
@@ -676,7 +676,7 @@ void ConstantPool::resolve_invoke_interface_at(InstanceClass *sender_class,
 int ConstantPool::klass_ref_index_at(int index JVM_TRAPS) {
   int offset = offset_from_checked_index(index JVM_ZCHECK(offset));
   jint ref_index = int_field(offset);
-  jint class_index = extract_low_jshort_from_jint(ref_index);
+  jint class_index = extract_low_jushort_from_jint(ref_index);
   cp_check_0(check_klass_at(class_index));
   GUARANTEE(class_index != 0, "sanity for JVM_ZCHECK");
   return class_index;
@@ -684,7 +684,7 @@ int ConstantPool::klass_ref_index_at(int index JVM_TRAPS) {
 
 int ConstantPool::name_ref_index_at(int index JVM_TRAPS) {
   jint ref_index = name_and_type_at(index JVM_ZCHECK(ref_index));
-  jint name_index = extract_low_jshort_from_jint(ref_index);
+  jint name_index = extract_low_jushort_from_jint(ref_index);
   cp_check_0(is_within_bounds(name_index) &&
              ConstantTag::is_utf8(tag_value_at(name_index)));
   GUARANTEE(name_index != 0, "sanity for JVM_ZCHECK");
@@ -693,7 +693,7 @@ int ConstantPool::name_ref_index_at(int index JVM_TRAPS) {
 
 int ConstantPool::signature_ref_index_at(int index JVM_TRAPS)  {
   jint ref_index = name_and_type_at(index JVM_ZCHECK(ref_index));
-  jint signature_index = extract_high_jshort_from_jint(ref_index);
+  jint signature_index = extract_high_jushort_from_jint(ref_index);
   cp_check_0(is_within_bounds(signature_index) &&
              ConstantTag::is_utf8(tag_value_at(signature_index)));
   GUARANTEE(signature_index != 0, "sanity for JVM_ZCHECK");
@@ -1202,8 +1202,8 @@ void ConstantPool::check_quickened_field_access(int index,
 {
 
   juint value = value32_at(index);
-  jint offset   = extract_high_jshort_from_jint(value);
-  jint class_id = extract_low_jshort_from_jint(value);
+  jint offset   = extract_high_jushort_from_jint(value);
+  jint class_id = extract_low_jushort_from_jint(value);
 
   InstanceClass::Raw klass = Universe::class_from_id(class_id);
   TypeArray::Raw fields = klass().fields();

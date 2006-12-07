@@ -395,10 +395,10 @@ void ConstantPoolRewriter::rewrite_method(Method *method JVM_TRAPS) {
     if (!line_var_table.is_null() && !line_num_table.is_null()) {
       int i;
       int num_entries = line_num_table().count();
-      jshort old_pc, new_pc;
+      jushort old_pc, new_pc;
       for (i = 0; i < num_entries; i++) {
         old_pc = line_num_table().pc(i);
-        new_pc = (jshort)_new_bytecode_address.ushort_at(old_pc);
+        new_pc = _new_bytecode_address.ushort_at(old_pc);
         if (old_pc != new_pc) {
           need_table = true;
           line_num_table().set_pc(i, new_pc);
@@ -433,7 +433,7 @@ void ConstantPoolRewriter::rewrite_method(Method *method JVM_TRAPS) {
       int num_entries = local_var_table().count();
       int new_code_size = new_method.code_size();
       int old_code_size = method->code_size();
-      jshort start_pc, code_length, new_code_length, new_pc;
+      jushort start_pc, code_length, new_code_length, new_pc;
       for (i = 0; i < num_entries; i++) {
         start_pc = local_var_table().start_pc(i);
         code_length = local_var_table().code_length(i);
@@ -444,8 +444,8 @@ void ConstantPoolRewriter::rewrite_method(Method *method JVM_TRAPS) {
         }
         if ((start_pc + code_length) == old_code_size) {
           if (old_code_size != new_code_size) {
-            local_var_table().set_code_length(i,
-                              (jshort)(new_code_size - new_pc));
+            GUARANTEE(new_code_size < new_pc, "Sanity");
+            local_var_table().set_code_length(i, new_code_size - new_pc);
             need_table = true;
           }
         } else {
@@ -1025,8 +1025,8 @@ juint ConstantPoolRewriter::hashcode_for_method_ref(ConstantPool *orig_cp,
   int type = tag.value();
   jint value32 = orig_cp->value32_at(i);  
 
-  jint table_index = extract_low_jshort_from_jint(value32);
-  jint class_id    = extract_high_jshort_from_jint(value32);
+  jint table_index = extract_low_jushort_from_jint(value32);
+  jint class_id    = extract_high_jushort_from_jint(value32);
 
   InstanceClass::Raw klass = Universe::class_from_id(class_id);
   Symbol::Raw klass_name = klass().name();
@@ -1044,8 +1044,8 @@ juint ConstantPoolRewriter::hashcode_for_field_ref(ConstantPool *orig_cp,
 
   int type = tag.value();
   jint value32 = orig_cp->value32_at(i);
-  jint offset   = extract_high_jshort_from_jint(value32);
-  jint class_id = extract_low_jshort_from_jint(value32);
+  jint offset   = extract_high_jushort_from_jint(value32);
+  jint class_id = extract_low_jushort_from_jint(value32);
 
   InstanceClass::Raw klass = Universe::class_from_id(class_id);
   Symbol::Raw klass_name = klass().name();

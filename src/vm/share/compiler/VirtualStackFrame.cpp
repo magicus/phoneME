@@ -525,7 +525,7 @@ void VirtualStackFrame::dirtify(Assembler::Register reg) {
 }
 #endif
 
-void VirtualStackFrame::flush() {
+void VirtualStackFrame::flush(JVM_SINGLE_ARG_TRAPS) {
   bool quick_flush_possible = flush_quick();
   if (!quick_flush_possible) {
     if (stack_pointer() < virtual_stack_pointer()) {
@@ -551,6 +551,8 @@ void VirtualStackFrame::flush() {
       }
     }
   }
+
+  code_generator()->flush_epilogue(JVM_SINGLE_ARG_CHECK);
 
   // Mark all the literals as being junk
   clear_literals();
@@ -3097,7 +3099,7 @@ void PreserveVirtualStackFrameState::save(JVM_SINGLE_ARG_TRAPS) {
   // More immediates that need to be flushed
   saved_frame()->clear_literals();
   // flush the frame
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
 }
 
 void PreserveVirtualStackFrameState::restore() {

@@ -55,7 +55,7 @@ void CodeGenerator::load_task_mirror(Oop*klass, Value& statics_holder,
     Label class_is_initialized, need_init;
     // Can we make the flush conditional for  get/put static ?
     //  see if register usage cross compiled bytecode.
-    frame()->flush();
+    frame()->flush(JVM_SINGLE_ARG_CHECK);
     // The marker is at the start of the heap or in ROM text, so it can be
     // treated as a constant value for the cib test.
     cmpl(statics_holder.lo_register(), (int)_task_class_init_marker);
@@ -89,7 +89,7 @@ void CodeGenerator::check_cib(Oop* klass JVM_TRAPS){
   Label class_is_initialized, need_init;
   // IMPL_NOTE: Cannot make the flush conditionally.
   //  see how this can be made conditional!
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
   
   { // Scope for task_mirror_value. Use destroy explicitly if you remove this.
     Value task_mirror_value(T_OBJECT);
@@ -132,6 +132,12 @@ bool CodeGenerator::unchecked_arraycopy(BasicType type JVM_TRAPS) {
   return false;
 }
 #endif
+
+void CodeGenerator::bytecode_prolog() {
+}
+
+void CodeGenerator::flush_epilogue(JVM_SINGLE_ARG_TRAPS) {
+}
 
 void CodeGenerator::save_state(CompilerState *compiler_state) {
   BinaryAssembler::save_state(compiler_state);
@@ -422,7 +428,7 @@ void CodeGenerator::method_entry(Method* method JVM_TRAPS) {
     get_thread(eax);
     testl(Address(eax, Thread::status_offset()), THREAD_STEPPING);
     jcc(zero, not_stepping);
-    frame()->flush();
+    frame()->flush(JVM_SINGLE_ARG_CHECK);
     // Call the runtime system.
     call_vm((address) handle_single_step, T_VOID JVM_CHECK);
     bind(not_stepping);
@@ -781,7 +787,7 @@ void CodeGenerator::throw_simple_exception(int rte JVM_TRAPS) {
 
 void CodeGenerator::monitor_enter(Value& object JVM_TRAPS) {
   // For now we flush before calling the compiler monitor enter stub.
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
 
   // Make sure the object is in register eax.
   if (object.lo_register() != eax) {
@@ -794,7 +800,7 @@ void CodeGenerator::monitor_enter(Value& object JVM_TRAPS) {
 
 void CodeGenerator::monitor_exit(Value& object JVM_TRAPS) {
   // For now we flush before calling the compiler monitor exit stub.
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
 
   // Make sure the object is in register eax.
   if (object.lo_register() != eax) {
@@ -811,7 +817,7 @@ void CodeGenerator::unlock_activation(JVM_SINGLE_ARG_TRAPS) {
   GUARANTEE(method()->access_flags().is_synchronized(), "Sanity check");
   GUARANTEE(ROM::is_synchronized_method_allowed(method()), "sanity");
 
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
   call_from_compiled_code((address)shared_unlock_synchronized_method
                           JVM_NO_CHECK_AT_BOTTOM);
 }
@@ -934,7 +940,7 @@ void CodeGenerator::new_object(Value& result, JavaClass* klass JVM_TRAPS) {
   GUARANTEE(size.is_fixed(), "Size must be fixed in order to do allocation");
 
   // Do flushing, and remember to unmap.
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
 
   // Handle finalization by going slow-case for objects with finalizers.
   if (klass->has_finalizer()) {
@@ -968,7 +974,7 @@ void CodeGenerator::new_object_array(Value& result, JavaClass* element_class,
   frame()->push(length);
 
   // Flush the virtual stack frame.
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
 
   // Get the prototypical near object from the klass and put it into register
   // ebx
@@ -993,7 +999,7 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
   frame()->push(length);
 
   // Do flushing, and remember to unmap.
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
 
   // Figure out which class to use.
   TypeArrayClass* array_class = Universe::as_TypeArrayClass(type);
@@ -1028,7 +1034,7 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
 
 void CodeGenerator::new_multi_array(Value& result JVM_TRAPS) {
   // Do flushing, and remember to unmap.
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
 
   // Call the runtime system.
   call_vm((address) multianewarray, T_ARRAY JVM_CHECK);
@@ -1955,7 +1961,7 @@ void CodeGenerator::imul(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
 
 void CodeGenerator::idiv_helper(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
   // For now we flush before calling the compiler div stub.
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
 
   // If eax is the divisor make sure we do not overwrite the value before
   // using it.
@@ -2166,7 +2172,7 @@ void CodeGenerator::lrsb(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
 
 void CodeGenerator::runtime_long_op(Value& result, Value& op1, Value& op2,
                                     bool check_zero, address routine JVM_TRAPS) {
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
   if (check_zero) {
     GUARANTEE(op2.stack_type() == T_LONG, "Sanity");
     if (op2.in_register() || (op2.is_immediate() && op2.as_long() == 0)) {
@@ -2313,7 +2319,7 @@ void CodeGenerator::invoke(const Method* method,
   BinaryAssembler::Address adr(0);
 
   // Flush the virtual stack frame and an unmap everything.
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
   verify_fpu();
 
   // Put the method into register ebx.
@@ -2362,7 +2368,7 @@ void CodeGenerator::invoke_virtual(Method* method, int vtable_index,
   int size_of_parameters = method->size_of_parameters();
 
   // Flush the virtual stack frame and unmap everything.
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
   verify_fpu();
 
   // Get the receiver.
@@ -2403,7 +2409,7 @@ void CodeGenerator::invoke_interface(JavaClass* klass, int itable_index,
                                      BasicType return_type JVM_TRAPS) {
   UsingFastOops fast_oops;
   // Flush the virtual stack frame and an unmap everything.
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
   verify_fpu();
 
   // Load the receiver into register edx.
@@ -2673,7 +2679,7 @@ bind(ok2);
 
 void CodeGenerator::init_static_array(Value& array JVM_TRAPS) {  
   // Flush the virtual stack frame.
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
 
   movl(edi, array.lo_register());
 

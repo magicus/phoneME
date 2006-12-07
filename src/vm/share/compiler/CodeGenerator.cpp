@@ -46,8 +46,8 @@ void CodeGenerator::store_to_location(Value& value, jint index) {
   store_to_address(value, type, address);
 }
 
-void CodeGenerator::flush_frame() {
-  frame()->flush();
+void CodeGenerator::flush_frame(JVM_SINGLE_ARG_TRAPS) {
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
 }
 
 #ifndef ARM
@@ -143,7 +143,7 @@ void CodeGenerator::go_to_interpreter(JVM_SINGLE_ARG_TRAPS) {
   Compiler::closure()->terminate_compilation();
 
   // Flush the frame.
-  flush_frame();
+  flush_frame(JVM_SINGLE_ARG_CHECK);
 
   // Call the deoptimize VM routine.
   call_vm((address) deoptimize, T_VOID JVM_NO_CHECK_AT_BOTTOM);
@@ -173,7 +173,7 @@ void CodeGenerator::uncommon_trap(JVM_SINGLE_ARG_TRAPS) {
   Compiler::closure()->terminate_compilation();
 
   // Flush the frame.
-  flush_frame();
+  flush_frame(JVM_SINGLE_ARG_CHECK);
 
   // Call the uncommon trap VM routine.
   call_vm((address) ::uncommon_trap, T_VOID JVM_NO_CHECK_AT_BOTTOM);
