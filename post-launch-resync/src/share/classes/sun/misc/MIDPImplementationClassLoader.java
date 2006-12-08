@@ -52,19 +52,16 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
     private HashSet allowedClasses; /* the classes we can lookup in system */
     private PermissionCollection perms;
     private ClassLoader parent;
-    private ClassLoader helper;
 
     public MIDPImplementationClassLoader(
 	URL base[],
 	String allowedParentClasses[],
 	PermissionCollection pc,
-	ClassLoader helper,
 	ClassLoader parent)
     {
 	super(base);
 	myBase = base;
 	perms = pc;
-	this.helper = helper;
 	this.parent = parent;
 	hashAllowedParentClasses(allowedParentClasses);
     }
@@ -117,7 +114,6 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
     {
 	Class resultClass;
 	classname = classname.intern();
-	/*DEBUG boolean helperClass = false; */
 	resultClass = findLoadedClass(classname);
 	if (resultClass == null){
 	    try {
@@ -127,16 +123,7 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
 		resultClass = null;
 	    }
 	}
-	if (resultClass == null && helper != null){
-	    try {
-		resultClass = helper.loadClass(classname); // from ROM
-		/*DEBUG System.out.println("MIDPImplementationClassLoader: helper found class "+classname);  */
-		/*DEBUG helperClass=true; */
-	    }catch(Exception e){
-		/*DEBUG e.printStackTrace(); */
-		resultClass = null;
-	    }
-	}
+	
 	if (resultClass == null){
 	    try {
 		resultClass = super.findClass(classname); // from URLClassLoader
@@ -148,7 +135,6 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
 	if (resultClass == null)
 	    throw new ClassNotFoundException(classname);
 	if (resolve){
-	    /*DEBUG if(helperClass) System.out.println("resolving "+classname); */
 	    resolveClass(resultClass);
 	}
 	/*DEBUG if(helperClass){
