@@ -1,5 +1,5 @@
 /*
- * @(#)AbstractTypeListNode.java	1.11 06/10/10
+ * @(#)AbstractTypeListNode.java	1.12 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -44,7 +44,7 @@ abstract class AbstractTypeListNode extends AbstractNamedNode {
         if (components.size() == 0) {
             writer.println("<dd>(None)");
         } else {
-            writer.println("<dd><table border=1 cellpadding=3 cellspacing=0 width=\"90%\"><tr>");
+            writer.println("<dd><table border=1 cellpadding=3 cellspacing=0 width=\"90%\" summary=\"\"><tr>");
             for (int i = maxStructIndent; i > 0; --i) {
                 writer.print("<th width=\"4%\">");
             }

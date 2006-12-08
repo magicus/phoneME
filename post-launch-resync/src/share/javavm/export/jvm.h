@@ -1,5 +1,5 @@
 /*
- * @(#)jvm.h	1.10 06/10/10
+ * @(#)jvm.h	1.11 06/10/27
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -44,7 +44,7 @@
 #include "javavm/jdk-export/jvm.h"
 #include "javavm/include/jvm2cvm.h"
 
-/* This was added for JVMDI and JVMPI support of starting "system
+/* This was added for JVMTI and JVMPI support of starting "system
    threads" -- threads for which the main function is a raw C
    function. nativeFunc must not be NULL, If the nativeFuncArg
    argument is non-NULL, it must be allocated on the heap by the

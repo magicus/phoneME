@@ -1,5 +1,5 @@
 /*
- * @(#)StringReferenceImpl.c	1.17 06/10/10
+ * @(#)StringReferenceImpl.c	1.18 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,30 +23,35 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <string.h>
 
-#include "StringReferenceImpl.h"
 #include "util.h"
+#include "StringReferenceImpl.h"
 #include "inStream.h"
 #include "outStream.h"
 
 static jboolean 
 value(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    char *utf;
-    jstring string = inStream_readStringRef(in);
+    JNIEnv *env;
+    jstring string;
+    
+    env = getEnv();
+    
+    string = inStream_readStringRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    WITH_LOCAL_REFS(env, 1);
+    WITH_LOCAL_REFS(env, 1) {
 
-    utf = (char *)(*env)->GetStringUTFChars(env, string, NULL);
-    outStream_writeString(out, utf);
-    (*env)->ReleaseStringUTFChars(env, string, utf);
+        char *utf;
+        
+        utf = (char *)JNI_FUNC_PTR(env,GetStringUTFChars)(env, string, NULL);
+        (void)outStream_writeString(out, utf);
+        JNI_FUNC_PTR(env,ReleaseStringUTFChars)(env, string, utf);
 
-    END_WITH_LOCAL_REFS(env);
+    } END_WITH_LOCAL_REFS(env);
+    
     return JNI_TRUE;
 }
 

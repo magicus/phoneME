@@ -1,5 +1,5 @@
 /*
- * @(#)ObjectReferenceImpl.c	1.30 06/10/10
+ * @(#)ObjectReferenceImpl.c	1.31 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,34 +23,39 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include "ObjectReferenceImpl.h"
+
 #include "util.h"
+#include "ObjectReferenceImpl.h"
 #include "commonRef.h"
 #include "inStream.h"
 #include "outStream.h"
-#include "JDWP.h"
 
 static jboolean 
 referenceType(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    jbyte tag;
-    jclass clazz;
-
-    jobject object = inStream_readObjectRef(in);
+    JNIEnv *env;
+    jobject object;
+    
+    env = getEnv();
+    
+    object = inStream_readObjectRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    WITH_LOCAL_REFS(env, 1);
+    WITH_LOCAL_REFS(env, 1) {
 
-    clazz = (*env)->GetObjectClass(env, object);
-    tag = referenceTypeTag(clazz);
+        jbyte tag;
+        jclass clazz;
+        
+        clazz = JNI_FUNC_PTR(env,GetObjectClass)(env, object);
+        tag = referenceTypeTag(clazz);
 
-    outStream_writeByte(out, tag);
-    WRITE_LOCAL_REF(env, out, clazz);
+        (void)outStream_writeByte(out, tag);
+        (void)outStream_writeObjectRef(env, out, clazz);
 
-    END_WITH_LOCAL_REFS(env);
+    } END_WITH_LOCAL_REFS(env);
+    
     return JNI_TRUE;
 }
 
@@ -62,63 +67,64 @@ getValues(PacketInputStream *in, PacketOutputStream *out)
 }
 
 
-static jint
+static jvmtiError
 readFieldValue(JNIEnv *env, PacketInputStream *in, jclass clazz,
                jobject object, jfieldID field, char *signature)
 {
     jvalue value;
-    jint error = JVMDI_ERROR_NONE;
+    jvmtiError error;
 
     switch (signature[0]) {
-        case JDWP_Tag_ARRAY:
-        case JDWP_Tag_OBJECT:
-            value.l = inStream_readObjectRef(in);
-            (*env)->SetObjectField(env, object, field, value.l);
+        case JDWP_TAG(ARRAY):
+        case JDWP_TAG(OBJECT):
+            value.l = inStream_readObjectRef(env, in);
+            JNI_FUNC_PTR(env,SetObjectField)(env, object, field, value.l);
             break;
         
-        case JDWP_Tag_BYTE:
+        case JDWP_TAG(BYTE):
             value.b = inStream_readByte(in);
-            (*env)->SetByteField(env, object, field, value.b);
+            JNI_FUNC_PTR(env,SetByteField)(env, object, field, value.b);
             break;
 
-        case JDWP_Tag_CHAR:
+        case JDWP_TAG(CHAR):
             value.c = inStream_readChar(in);
-            (*env)->SetCharField(env, object, field, value.c);
+            JNI_FUNC_PTR(env,SetCharField)(env, object, field, value.c);
             break;
 
-        case JDWP_Tag_FLOAT:
+        case JDWP_TAG(FLOAT):
             value.f = inStream_readFloat(in);
-            (*env)->SetFloatField(env, object, field, value.f);
+            JNI_FUNC_PTR(env,SetFloatField)(env, object, field, value.f);
             break;
 
-        case JDWP_Tag_DOUBLE:
+        case JDWP_TAG(DOUBLE):
             value.d = inStream_readDouble(in);
-            (*env)->SetDoubleField(env, object, field, value.d);
+            JNI_FUNC_PTR(env,SetDoubleField)(env, object, field, value.d);
             break;
 
-        case JDWP_Tag_INT:
+        case JDWP_TAG(INT):
             value.i = inStream_readInt(in);
-            (*env)->SetIntField(env, object, field, value.i);
+            JNI_FUNC_PTR(env,SetIntField)(env, object, field, value.i);
             break;
 
-        case JDWP_Tag_LONG:
+        case JDWP_TAG(LONG):
             value.j = inStream_readLong(in);
-            (*env)->SetLongField(env, object, field, value.j);
+            JNI_FUNC_PTR(env,SetLongField)(env, object, field, value.j);
             break;
 
-        case JDWP_Tag_SHORT:
+        case JDWP_TAG(SHORT):
             value.s = inStream_readShort(in);
-            (*env)->SetShortField(env, object, field, value.s);
+            JNI_FUNC_PTR(env,SetShortField)(env, object, field, value.s);
             break;
 
-        case JDWP_Tag_BOOLEAN:
+        case JDWP_TAG(BOOLEAN):
             value.z = inStream_readBoolean(in);
-            (*env)->SetBooleanField(env, object, field, value.z);
+            JNI_FUNC_PTR(env,SetBooleanField)(env, object, field, value.z);
             break;
     }
 
-    if ((*env)->ExceptionOccurred(env)) {
-        error = JVMDI_ERROR_INTERNAL;
+    error = JVMTI_ERROR_NONE;
+    if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
+        error = AGENT_ERROR_JNI_EXCEPTION;
     }
     
     return error;
@@ -127,72 +133,104 @@ readFieldValue(JNIEnv *env, PacketInputStream *in, jclass clazz,
 static jboolean 
 setValues(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    jint i;
-    jfieldID field;
-    char *signature;
+    JNIEnv *env;
     jint count;
-    jint error = JVMDI_ERROR_NONE;
-    jclass clazz;
-
-    jobject object = inStream_readObjectRef(in);
+    jvmtiError error;
+    jobject object;
+    
+    env = getEnv();
+    
+    object = inStream_readObjectRef(env, in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
     count = inStream_readInt(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    WITH_LOCAL_REFS(env, count + 1);
-
-    clazz = (*env)->GetObjectClass(env, object);
+    error = JVMTI_ERROR_NONE;
     
-    for (i = 0; (i < count) && 
-                (error == JVMDI_ERROR_NONE) &&
-                !inStream_error(in); i++) {
-        field = inStream_readFieldID(in);
+    WITH_LOCAL_REFS(env, count + 1) {
 
-        error = fieldSignature(clazz, field, &signature);
-        if (error == JVMDI_ERROR_NONE) {
-            error = readFieldValue(env, in, clazz, object, field, signature);
-            jdwpFree(signature);
+        jclass clazz;
+        
+        clazz = JNI_FUNC_PTR(env,GetObjectClass)(env, object);
+        
+        if (clazz != NULL ) {
+        
+            int i;
+            
+            for (i = 0; (i < count) && !inStream_error(in); i++) {
+                
+                jfieldID field;
+                char *signature = NULL;
+                
+                field = inStream_readFieldID(in);
+                if (inStream_error(in))
+                    break;
+
+                error = fieldSignature(clazz, field, NULL, &signature, NULL);
+                if (error != JVMTI_ERROR_NONE) {
+                    break;
+                }
+
+                error = readFieldValue(env, in, clazz, object, field, signature);
+                jvmtiDeallocate(signature);
+                
+                if (error != JVMTI_ERROR_NONE) {
+                    break;
+                }
+            }
         }
 
-    }
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        }
+    
+    } END_WITH_LOCAL_REFS(env);
 
-    END_WITH_LOCAL_REFS(env);
-
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
-    }
     return JNI_TRUE;
 }
 
 static jboolean 
 monitorInfo(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    jint error;
-    JVMDI_monitor_info info;
-    jint i;
-
-    jobject object = inStream_readObjectRef(in);
+    JNIEnv *env;
+    jobject object;
+    
+    env = getEnv();
+    
+    object = inStream_readObjectRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    error = jvmdi->GetMonitorInfo(object, &info);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
-        return JNI_TRUE;
-    }
+    WITH_LOCAL_REFS(env, 1) {
 
-    WRITE_GLOBAL_REF(env, out, info.owner);
-    outStream_writeInt(out, info.entry_count);
-    outStream_writeInt(out, info.waiter_count);
-    for (i = 0; i < info.waiter_count; i++) {
-        WRITE_GLOBAL_REF(env, out, info.waiters[i]);
-    }
-
-    jdwpFree(info.waiters);
+        jvmtiError error;
+        jvmtiMonitorUsage info;
+        
+        (void)memset(&info, 0, sizeof(info));
+        error = JVMTI_FUNC_PTR(gdata->jvmti,GetObjectMonitorUsage)
+                        (gdata->jvmti, object, &info);
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            int i;
+            (void)outStream_writeObjectRef(env, out, info.owner);
+            (void)outStream_writeInt(out, info.entry_count);
+            (void)outStream_writeInt(out, info.waiter_count);
+            for (i = 0; i < info.waiter_count; i++) {
+                (void)outStream_writeObjectRef(env, out, info.waiters[i]);
+            }
+        }
+    
+        if (info.waiters != NULL )
+            jvmtiDeallocate(info.waiters);
+        
+    } END_WITH_LOCAL_REFS(env);
+    
     return JNI_TRUE;
 }
 
@@ -205,15 +243,17 @@ invokeInstance(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 disableCollection(PacketInputStream *in, PacketOutputStream *out)
 {
-    jlong id = inStream_readObjectID(in);
-    jint error;
+    jlong id;
+    jvmtiError error;
+    
+    id = inStream_readObjectID(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     error = commonRef_pin(id);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
     }
 
     return JNI_TRUE;
@@ -222,15 +262,17 @@ disableCollection(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 enableCollection(PacketInputStream *in, PacketOutputStream *out)
 {
-    jint error;
-    jlong id = inStream_readObjectID(in);
+    jvmtiError error;
+    jlong id;
+    
+    id = inStream_readObjectID(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     error = commonRef_unpin(id);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
     }
 
     return JNI_TRUE;
@@ -239,28 +281,79 @@ enableCollection(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 isCollected(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
     jobject ref;
-    jlong id = inStream_readObjectID(in);
+    jlong id;
+    JNIEnv *env;
 
+    env = getEnv();
+    id = inStream_readObjectID(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (id == NULL_OBJECT_ID) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_OBJECT);
+        outStream_setError(out, JDWP_ERROR(INVALID_OBJECT));
         return JNI_TRUE;
     }
 
-    ref = commonRef_idToRef(id);
-    outStream_writeBoolean(out, (jboolean)(ref == NULL));
+    ref = commonRef_idToRef(env, id);
+    (void)outStream_writeBoolean(out, (jboolean)(ref == NULL));
 
-    (*env)->DeleteGlobalRef(env, ref);
+    commonRef_idToRef_delete(env, ref);
 
     return JNI_TRUE;
 }
 
-void *ObjectReference_Cmds[] = { (void *)0x9
+
+static jboolean
+referringObjects(PacketInputStream *in, PacketOutputStream *out)
+{
+    jobject object;
+    jint    maxReferrers;
+    JNIEnv *env;
+
+    env = getEnv();
+
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));                    
+        return JNI_TRUE;
+    }
+
+    object = inStream_readObjectRef(env,in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+
+    maxReferrers = inStream_readInt(in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+
+    WITH_LOCAL_REFS(env, 1) {
+        jvmtiError   error;
+        ObjectBatch  referrerBatch;
+        
+        error = objectReferrers(object, &referrerBatch, maxReferrers);
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            int kk;
+            
+            (void)outStream_writeInt(out, referrerBatch.count);
+            for (kk = 0; kk < referrerBatch.count; kk++) {
+                jobject ref;
+
+                ref = referrerBatch.objects[kk];
+                (void)outStream_writeByte(out, specificTypeKey(env, ref));
+                (void)outStream_writeObjectRef(env, out, ref);
+            }
+            jvmtiDeallocate(referrerBatch.objects);
+        }
+    } END_WITH_LOCAL_REFS(env);
+    return JNI_TRUE;
+}
+
+void *ObjectReference_Cmds[] = { (void *)10
     ,(void *)referenceType
     ,(void *)getValues
     ,(void *)setValues
@@ -270,4 +363,5 @@ void *ObjectReference_Cmds[] = { (void *)0x9
     ,(void *)disableCollection
     ,(void *)enableCollection
     ,(void *)isCollected
+    ,(void *)referringObjects
     };

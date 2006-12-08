@@ -1,5 +1,5 @@
 /*
- * @(#)bag.h	1.13 06/10/10
+ * @(#)bag.h	1.14 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,8 +24,8 @@
  * information or have any questions. 
  */
 
-#ifndef _JBUG_BAG_H_
-#define _JBUG_BAG_H_
+#ifndef JDWP_BAG_H
+#define JDWP_BAG_H
 
 #include <jni.h>
 
@@ -34,22 +34,6 @@
  */
 
 struct bag;
-
-#ifdef __linux__
-/*
- * This lets us run under linux where our bag* functions are
- * colliding with the ones defined in the VM. The real solution is to avoid
- * exporting symbols like this.
- */
-#define bagCreateBag     jdwp_bagCreateBag
-#define bagDup           jdwp_bagDup
-#define bagDestroyBag    jdwp_bagDestroyBag
-#define bagFind          jdwp_bagFind
-#define bagAdd           jdwp_bagAdd
-#define bagDelete        jdwp_bagDelete
-#define bagDeleteAll     jdwp_bagDeleteAll
-#define bagEnumerateOver jdwp_bagEnumerateOver
-#endif
 
 /* Must be used to create a bag.  itemSize is the size
  * of the items stored in the bag. initialAllocation is a hint
@@ -103,4 +87,4 @@ typedef jboolean (*bagEnumerateFunction)(void *item, void *arg);
 jboolean bagEnumerateOver(struct bag *theBag, 
                         bagEnumerateFunction func, void *arg);
 
-#endif /* !_JAVASOFT_BAG_H_ */
+#endif

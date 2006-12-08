@@ -1,5 +1,5 @@
 /*
- * @(#)standardHandlers.c	1.7 06/10/10
+ * @(#)standardHandlers.c	1.8 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -28,25 +28,21 @@
  *
  * The default event request handler functions
  */
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 
-#include <jvmdi.h>
+#include "util.h"
 #include "eventHandler.h"
 #include "threadControl.h"
 #include "eventHelper.h"
 #include "classTrack.h"
-#include "JDWP.h"
-#include "util.h"
 
+#include "standardHandlers.h"
 
 static void 
-handleClassPrepare(JNIEnv *env, JVMDI_Event *event,
+handleClassPrepare(JNIEnv *env, EventInfo *evinfo,
                    HandlerNode *node,
                    struct bag *eventBag)
 {
-    jthread thread = event->u.class_event.thread;
+    jthread thread = evinfo->thread;
 
     /* We try hard to avoid class loads/prepares in debugger
      * threads, but it is still possible for them to happen (most
@@ -71,148 +67,119 @@ handleClassPrepare(JNIEnv *env, JVMDI_Event *event,
      *    alternative of suspending no threads.  
      */
     if (threadControl_isDebugThread(thread)) { 
-        event->u.class_event.thread = NULL;
-        if (node->suspendPolicy == JDWP_SuspendPolicy_EVENT_THREAD) {
-            node->suspendPolicy = JDWP_SuspendPolicy_ALL;
+        evinfo->thread = NULL;
+        if (node->suspendPolicy == JDWP_SUSPEND_POLICY(EVENT_THREAD)) {
+            node->suspendPolicy = JDWP_SUSPEND_POLICY(ALL);
         }
     }
-    eventHelper_recordEvent(event, node->handlerID, 
+    eventHelper_recordEvent(evinfo, node->handlerID, 
                             node->suspendPolicy, eventBag);
 }
 
 static void 
-handleClassPrepareTracking(JNIEnv *env, JVMDI_Event *event,
-                           HandlerNode *node, 
-                           struct bag *eventBag)
-{
-    jclass clazz = event->u.class_event.clazz;
-
-    /* Record that the prepare occurred for class tracking
-     * purposes.  
-     */
-    classTrack_addPreparedClass(env, clazz);
-}
-
-
-static void 
-handleClassUnload(JNIEnv *env, JVMDI_Event *event,
+handleGarbageCollectionFinish(JNIEnv *env, EventInfo *evinfo,
                   HandlerNode *node,
                   struct bag *eventBag)
 {
-    JDI_ASSERT_MSG(JNI_FALSE, "Should never call handleClassUnload");
+    JDI_ASSERT_MSG(JNI_FALSE, "Should never call handleGarbageCollectionFinish");
 }
 
 static void 
-handleFrameEvent(JNIEnv *env, JVMDI_Event *event,
+handleFrameEvent(JNIEnv *env, EventInfo *evinfo,
                  HandlerNode *node,
                  struct bag *eventBag)
 {
     /*
      * The frame id that comes with this event is very transient.
-     * We can't send the frameID to the helper thread because it
+     * We can't send the frame to the helper thread because it
      * might be useless by the time the helper thread can use it 
      * (if suspend policy is NONE). So, get the needed info from 
      * the frame and then use a special command to the helper
      * thread.
      */
     
-    jclass clazz;
     jmethodID method;
     jlocation location;
-    JVMDI_frame_event_data *eventData = &event->u.frame;
-    jint error;
-    
-    error = threadControl_getFrameLocation(eventData->thread, 
-                                           eventData->frame,
-                                           &clazz, &method, 
-                                           &location);
-    if (error == JVMDI_ERROR_NONE) {
-        (*env)->DeleteGlobalRef(env, clazz);
-    } else {
+    jvmtiError error;
+    FrameNumber fnum = 0;
+    jvalue returnValue;
+
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetFrameLocation)
+            (gdata->jvmti, evinfo->thread, fnum, &method, &location);
+    if (error != JVMTI_ERROR_NONE) {
         location = -1;
     }
+    returnValue = evinfo->u.method_exit.return_value;
 
     eventHelper_recordFrameEvent(node->handlerID, 
                                  node->suspendPolicy,
-                                 (jbyte)event->kind, 
-                                 eventData->thread, 
-                                 eventData->clazz, 
-                                 eventData->method, 
-                                 location, eventBag);
-}
-
-static void 
-handleUserDefined(JNIEnv *env, JVMDI_Event *event,
-                  HandlerNode *node, 
-                  struct bag *eventBag)
-{
+                                 evinfo->ei, 
+                                 evinfo->thread, 
+                                 evinfo->clazz, 
+                                 evinfo->method, 
+                                 location, 
+                                 node->needReturnValue,
+                                 returnValue, 
+                                 eventBag);
 }
 
 static void  
-genericHandler(JNIEnv *env, JVMDI_Event *event,
+genericHandler(JNIEnv *env, EventInfo *evinfo,
                HandlerNode *node,  
                struct bag *eventBag)
 { 
-    eventHelper_recordEvent(event, node->handlerID, node->suspendPolicy, 
+    eventHelper_recordEvent(evinfo, node->handlerID, node->suspendPolicy, 
                             eventBag); 
 }
 
 HandlerFunction
-standardHandlers_defaultHandler(jint kind) 
+standardHandlers_defaultHandler(EventIndex ei) 
 {
-    switch (kind) {
-        case JVMDI_EVENT_BREAKPOINT:
-        case JVMDI_EVENT_EXCEPTION:
-        case JVMDI_EVENT_FIELD_ACCESS:
-        case JVMDI_EVENT_FIELD_MODIFICATION:
-        case JVMDI_EVENT_SINGLE_STEP:
-        case JVMDI_EVENT_THREAD_START:
-        case JVMDI_EVENT_THREAD_END:
-        case JVMDI_EVENT_VM_DEATH: 
+    switch (ei) {
+        case EI_BREAKPOINT:
+        case EI_EXCEPTION:
+        case EI_FIELD_ACCESS:
+        case EI_FIELD_MODIFICATION:
+        case EI_SINGLE_STEP:
+        case EI_THREAD_START:
+        case EI_THREAD_END:
+        case EI_VM_DEATH:
+        case EI_MONITOR_CONTENDED_ENTER:
+        case EI_MONITOR_CONTENDED_ENTERED:
+        case EI_MONITOR_WAIT:
+        case EI_MONITOR_WAITED:
             return &genericHandler;
 
-        case JVMDI_EVENT_USER_DEFINED: 
-            return &handleUserDefined;
-
-        case JVMDI_EVENT_CLASS_PREPARE: 
+        case EI_CLASS_PREPARE: 
             return &handleClassPrepare;
 
-        case JVMDI_EVENT_CLASS_UNLOAD: 
-            return &handleClassUnload;
+        case EI_GC_FINISH: 
+            return &handleGarbageCollectionFinish;
 
-        case JVMDI_EVENT_METHOD_ENTRY:
-        case JVMDI_EVENT_METHOD_EXIT:
+        case EI_METHOD_ENTRY:
+        case EI_METHOD_EXIT:
             return &handleFrameEvent;
 
         default:
-            ERROR_MESSAGE_EXIT("Attempt to install handler for invalid event");
+            /* This NULL will trigger a AGENT_ERROR_INVALID_EVENT_TYPE */
             return NULL;
     }
 }
 
 void 
-standardHandlers_onConnect()
+standardHandlers_onConnect(void)
 {
     jboolean installed;
 
     /* always report VMDeath to a connected debugger */
-    installed = (eventHandler_createInternal(
-        JVMDI_EVENT_VM_DEATH, genericHandler) != NULL);
+    installed = (eventHandler_createPermanentInternal(
+                        EI_VM_DEATH, genericHandler) != NULL);
     if (!installed) {
-        ERROR_MESSAGE_EXIT(
-            "Unable to install VM Death event handler");
-    }
-    /* for class tracking need internal class prepare handler */
-    installed = (eventHandler_createInternal(
-        JVMDI_EVENT_CLASS_PREPARE, 
-        handleClassPrepareTracking) != NULL);
-    if (!installed) {
-        ERROR_MESSAGE_EXIT(
-     "Unable to install Class Prepare tracking event handler");
+        EXIT_ERROR(AGENT_ERROR_INVALID_EVENT_TYPE,"Unable to install VM Death event handler");
     }
 }
 
 void 
-standardHandlers_onDisconnect()
+standardHandlers_onDisconnect(void)
 {
 }

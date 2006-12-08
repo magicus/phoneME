@@ -1,5 +1,5 @@
 /*
- * @(#)sysSocket.h	1.10 06/10/10
+ * @(#)sysSocket.h	1.12 06/10/26
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -27,30 +27,59 @@
 #ifndef _JAVASOFT_WIN32_SOCKET_MD_H
 
 #include <jni.h>
+#include <sys/types.h>
 #include "sys.h"
 #include "socket_md.h"
 
+#ifdef _LP64
+typedef unsigned int    U_SOCKINT32;
+typedef int             SOCKINT32;
+#else /* _LP64 */
+typedef unsigned long   U_SOCKINT32;
+typedef long            SOCKINT32;
+#endif /* _LP64 */
+
+#define DBG_POLLIN		1
+#define DBG_POLLOUT		2
+
+#define DBG_EINPROGRESS		-150
+#define DBG_ETIMEOUT		-200
+
 int dbgsysSocketClose(int fd);
-long dbgsysSocketAvailable(int fd, long *pbytes);
+SOCKINT32 dbgsysSocketAvailable(int fd, SOCKINT32 *pbytes);
 int dbgsysConnect(int fd, struct sockaddr *him, int len);
+int dbgsysFinishConnect(int fd, long timeout);
 int dbgsysAccept(int fd, struct sockaddr *him, int *len);
 int dbgsysSendTo(int fd, char *buf, int len, int flags, struct sockaddr *to,
 	      int tolen);
 int dbgsysRecvFrom(int fd, char *buf, int nbytes, int flags,
                 struct sockaddr *from, int *fromlen);
-int dbgsysListen(int fd, long count);
+int dbgsysListen(int fd, SOCKINT32 count);
 int dbgsysRecv(int fd, char *buf, int nBytes, int flags);
 int dbgsysSend(int fd, char *buf, int nBytes, int flags);
-int dbgsysTimeout(int fd, long timeout); 
+int dbgsysTimeout(int fd, SOCKINT32 timeout); 
 struct hostent *dbgsysGetHostByName(char *hostname);
 int dbgsysSocket(int domain, int type, int protocol);
 int dbgsysBind(int fd, struct sockaddr *name, int namelen);
 int dbgsysSetSocketOption(int fd, jint cmd, jboolean on, jvalue value);
-unsigned long dbgsysHostToNetworkLong(unsigned long hostlong);
+U_SOCKINT32 dbgsysInetAddr(const char* cp);
+U_SOCKINT32 dbgsysHostToNetworkLong(U_SOCKINT32 hostlong);
 unsigned short dbgsysHostToNetworkShort(unsigned short hostshort);
-unsigned long dbgsysNetworkToHostLong(unsigned long netlong);
+U_SOCKINT32 dbgsysNetworkToHostLong(U_SOCKINT32 netlong);
 unsigned short dbgsysNetworkToHostShort(unsigned short netshort);
 int dbgsysGetSocketName(int fd, struct sockaddr *him, int *len);
+int dbgsysConfigureBlocking(int fd, jboolean blocking);
+int dbgsysPoll(int fd, jboolean rd, jboolean wr, long timeout);
+int dbgsysGetLastIOError(char *buf, jint size);
+long dbgsysCurrentTimeMillis();
+
+/*
+ * TLS support
+ */
+int dbgsysTlsAlloc();
+void dbgsysTlsFree(int index);
+void dbgsysTlsPut(int index, void *value);
+void* dbgsysTlsGet(int index);
 
 #endif
 

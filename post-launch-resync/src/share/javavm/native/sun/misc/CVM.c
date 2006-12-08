@@ -1,5 +1,5 @@
 /*
- * @(#)CVM.c	1.80 06/10/10
+ * @(#)CVM.c	1.82 06/10/30
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -54,8 +54,8 @@
 #ifdef CVM_XRUN
 #include "javavm/include/xrun.h"
 #endif
-#ifdef CVM_JVMDI
-#include "javavm/include/jvmdi_jni.h"
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmti_jni.h"
 #endif
 
 #ifdef CVM_DEBUG_ASSERTS
@@ -456,10 +456,10 @@ CNIsun_misc_CVM_freeClinit(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			   CVMMethodBlock **p_mb)
 {
     /*
-     * Both JVMDI and JVMPI require that the jmd for the clinit
+     * Both JVMTI and JVMPI require that the jmd for the clinit
      * not be freed.
      */
-#if !defined(CVM_JVMDI) && !defined(CVM_JVMPI)
+#if !defined(CVM_JVMTI) && !defined(CVM_JVMPI)
     CVMClassBlock* cb = CVMgcUnsafeClassRef2ClassBlock(ee, &arguments[0].j.r);
     CVMMethodBlock* clinitmb;
     CVMJavaMethodDescriptor* jmd;
@@ -754,7 +754,7 @@ CNIResultCode
 CNIsun_misc_CVM_setDebugEvents(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
 {
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     ee->debugEventsEnabled = arguments[0].j.i;
 #endif
     return CNI_VOID;
@@ -1190,12 +1190,15 @@ CNIResultCode
 CNIsun_misc_CVM_xdebugSet(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			  CVMMethodBlock **p_mb)
 {
-#ifdef CVM_JVMDI
-    CVMglobals.jvmdiDebuggingEnabled = CVM_TRUE;
-    CVMjvmdiInstrumentJNINativeInterface();
-    arguments[0].j.i = CVM_TRUE;
-#else
     arguments[0].j.i = CVM_FALSE;
+#ifdef CVM_JVMTI
+    /*
+     * NOTE: JVMTI doesn't use -Xdebug so this is actually set in
+     * jvmtiEnv.c CVMcreateJvmti()
+     */
+    CVMglobals.jvmtiDebuggingEnabled = CVM_TRUE;
+    CVMjvmtiInstrumentJNINativeInterface();
+    arguments[0].j.i = CVM_TRUE;
 #endif
 
     return CNI_SINGLE;

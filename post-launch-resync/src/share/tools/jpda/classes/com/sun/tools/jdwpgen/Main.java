@@ -1,5 +1,5 @@
 /*
- * @(#)Main.java	1.10 06/10/10
+ * @(#)Main.java	1.11 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -38,7 +38,7 @@ class Main {
     static void usage() {
         System.err.println();
         System.err.println(
-            "java Main <spec_input> -jvmdi <jvmdi.h> <options>...");
+            "java Main <spec_input> <options>...");
         System.err.println();
         System.err.println("Options:");
         System.err.println("-doc <doc_output>");
@@ -49,7 +49,6 @@ class Main {
 
     public static void main(String args[]) throws IOException {
         Reader reader = null;
-        Reader jvmdiReader = null;
         PrintWriter doc = null;
         PrintWriter jdi = null;
         PrintWriter include = null;
@@ -65,8 +64,6 @@ class Main {
                     jdi = new PrintWriter(new FileWriter(fn));
                 } else if (arg.equals("-include")) {
                     include = new PrintWriter(new FileWriter(fn));
-                } else if (arg.equals("-jvmdi")) {
-                    jvmdiReader = new FileReader(fn);
                 } else {
                     System.err.println("Invalid option: " + arg);
                     usage();
@@ -81,12 +78,6 @@ class Main {
             usage();
         }
         
-        if (jvmdiReader != null) {
-            new JVMDIParse(jvmdiReader);
-        } else {
-            System.err.println("-jvmdi must be specified");
-            usage();
-        }
         Parse parse = new Parse(reader);
         RootNode root = parse.items(); 
         root.parentAndExtractComments();

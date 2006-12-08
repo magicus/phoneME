@@ -1,5 +1,5 @@
 /*
- * @(#)eventHelper.c	1.44 06/10/10
+ * @(#)eventHelper.c	1.45 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,15 +23,11 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <string.h>
-#include <jvmdi.h>
 
-#include "JDWP.h"
+#include "util.h"
 #include "outStream.h"
 #include "eventHandler.h"
 #include "threadControl.h"
-#include "util.h"
-#include "debugInit.h"
 #include "invoker.h"
 
 /*
@@ -50,9 +46,9 @@
 #define COMMAND_SINGLE_FRAME_EVENT              13
 
 typedef struct EventCommandSingle {
-    jbyte suspendPolicy;
+    jbyte suspendPolicy; /* NOTE: Must be the first field */
     jint id;
-    JVMDI_Event event;
+    EventInfo info;
 } EventCommandSingle;
 
 typedef struct UnloadCommandSingle {
@@ -61,13 +57,16 @@ typedef struct UnloadCommandSingle {
 } UnloadCommandSingle;
 
 typedef struct FrameEventCommandSingle {
-    jbyte suspendPolicy;
+    jbyte suspendPolicy; /* NOTE: Must be the first field */
     jint id;
-    jbyte kind;
+    EventIndex ei;
     jthread thread;
     jclass clazz;
     jmethodID method;
     jlocation location;
+    char typeKey;         /* Not used for method entry events */
+                          /* If typeKey is 0, then no return value is needed */
+    jvalue returnValue;   /* Not used for method entry events */
 } FrameEventCommandSingle;
 
 typedef struct CommandSingle {
@@ -84,8 +83,8 @@ typedef struct ReportInvokeDoneCommand {
 } ReportInvokeDoneCommand;
 
 typedef struct ReportVMInitCommand {
+    jbyte suspendPolicy; /* NOTE: Must be the first field */
     jthread thread;
-    jbyte suspendPolicy;
 } ReportVMInitCommand;
 
 typedef struct SuspendThreadCommand {
@@ -93,7 +92,7 @@ typedef struct SuspendThreadCommand {
 } SuspendThreadCommand;
 
 typedef struct ReportEventCompositeCommand {
-    jbyte suspendPolicy;
+    jbyte suspendPolicy; /* NOTE: Must be the first field */
     jint eventCount;
     CommandSingle singleCommand[1]; /* variable length */
 } ReportEventCompositeCommand;
@@ -105,6 +104,7 @@ typedef struct HelperCommand {
     jbyte sessionID;
     struct HelperCommand *next;
     union {
+        /* NOTE: Each of the structs below must have the same first field */
         ReportEventCompositeCommand reportEventComposite;
         ReportInvokeDoneCommand     reportInvokeDone;
         ReportVMInitCommand         reportVMInit;
@@ -119,16 +119,17 @@ typedef struct {
 } CommandQueue;
 
 static CommandQueue commandQueue;
-static JVMDI_RawMonitor commandQueueLock;
-static JVMDI_RawMonitor commandCompleteLock;
-static JVMDI_RawMonitor blockCommandLoopLock;
-static jint maxQueueSize = 50 * 1024; /* %comment gordonh014 */
+static jrawMonitorID commandQueueLock;
+static jrawMonitorID commandCompleteLock;
+static jrawMonitorID blockCommandLoopLock;
+static jint maxQueueSize = 50 * 1024; /* TO DO: Make this configurable */
 static jboolean holdEvents;
-static jboolean shutdown = JNI_FALSE;
+static jboolean shutdownEvents = JNI_FALSE;
 static jint currentQueueSize = 0;
 static jint currentSessionID;
 
-#define JVMDIKind_to_JDWPEvent(kind) ((jbyte)(kind))
+static void saveEventInfoRefs(JNIEnv *env, EventInfo *evinfo);
+static void tossEventInfoRefs(JNIEnv *env, EventInfo *evinfo);
 
 static jint 
 commandSize(HelperCommand *command) 
@@ -139,10 +140,19 @@ commandSize(HelperCommand *command)
          * One event is accounted for in the Helper Command. If there are
          * more, add to size here. 
          */
-        size += (sizeof(CommandSingle) * 
+        /*LINTED*/
+        size += ((int)sizeof(CommandSingle) * 
                      (command->u.reportEventComposite.eventCount - 1));
     }
     return size;
+}
+
+static void
+freeCommand(HelperCommand *command)
+{
+    if ( command == NULL )
+        return;
+    jvmtiDeallocate(command);
 }
 
 static void
@@ -152,6 +162,7 @@ enqueueCommand(HelperCommand *command,
     static jboolean vmDeathReported = JNI_FALSE;
     CommandQueue *queue = &commandQueue;
     jint size = commandSize(command);
+    
     command->done = JNI_FALSE;
     command->waiting = wait;
     command->next = NULL;
@@ -160,6 +171,7 @@ enqueueCommand(HelperCommand *command,
     while (size + currentQueueSize > maxQueueSize) {
         debugMonitorWait(commandQueueLock);
     }
+    log_debugee_location("enqueueCommand(): HelperCommand being processed", NULL, NULL, 0);
     if (vmDeathReported) {
         /* send no more events after VMDeath and don't wait */
         wait = JNI_FALSE;
@@ -183,9 +195,10 @@ enqueueCommand(HelperCommand *command,
     if (wait) {
         debugMonitorEnter(commandCompleteLock);
         while (!command->done) {
+            log_debugee_location("enqueueCommand(): HelperCommand wait", NULL, NULL, 0);
             debugMonitorWait(commandCompleteLock);
         }
-        jdwpFree(command);
+        freeCommand(command);
         debugMonitorExit(commandCompleteLock);
     }
 }
@@ -196,15 +209,16 @@ completeCommand(HelperCommand *command)
     if (command->waiting) {
         debugMonitorEnter(commandCompleteLock);
         command->done = JNI_TRUE;
+        log_debugee_location("completeCommand(): HelperCommand done waiting", NULL, NULL, 0);
         debugMonitorNotifyAll(commandCompleteLock);
         debugMonitorExit(commandCompleteLock);
     } else {
-        jdwpFree(command);
+        freeCommand(command);
     }
 }
 
 static HelperCommand *
-dequeueCommand() 
+dequeueCommand(void)
 {
     HelperCommand *command = NULL;
     CommandQueue *queue = &commandQueue;
@@ -213,14 +227,12 @@ dequeueCommand()
     debugMonitorEnter(commandQueueLock);
 
     while (command == NULL) {
-        while (holdEvents || (queue->head == NULL && !shutdown)) {
+        while (holdEvents || (queue->head == NULL && !shutdownEvents)) {
             debugMonitorWait(commandQueueLock);
         }
-    
-	if (shutdown) {
-	    break;
-	}
-
+        if (shutdownEvents) {
+          break;
+        }
         JDI_ASSERT(queue->head);
         command = queue->head;
         queue->head = command->next;
@@ -228,12 +240,15 @@ dequeueCommand()
             queue->tail = NULL;
         }
     
+        log_debugee_location("dequeueCommand(): command being dequeued", NULL, NULL, 0);
+        
         size = commandSize(command);
         /*
          * Immediately close out any commands enqueued from a 
          * previously attached debugger. 
          */
         if (command->sessionID != currentSessionID) {
+            log_debugee_location("dequeueCommand(): command session removal", NULL, NULL, 0);
             completeCommand(command);
             command = NULL;
         }
@@ -267,108 +282,110 @@ void eventHelper_releaseEvents(void)
 }
 
 static void 
-writeSingleStepEvent(JNIEnv *env, PacketOutputStream *out, JVMDI_Event *event)
+writeSingleStepEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
-    JVMDI_single_step_event_data *eventData = &event->u.single_step;
-
-    WRITE_GLOBAL_REF(env, out, eventData->thread);
-    writeCodeLocation(out, eventData->clazz, eventData->method, eventData->location);
+    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
 }
 
 static void 
-writeBreakpointEvent(JNIEnv *env, PacketOutputStream *out, JVMDI_Event *event)
+writeBreakpointEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
-    JVMDI_breakpoint_event_data *eventData = &event->u.breakpoint;
-
-    WRITE_GLOBAL_REF(env, out, eventData->thread);
-    writeCodeLocation(out, eventData->clazz, eventData->method, eventData->location);
+    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
 }
 
 static void 
-writeFieldAccessEvent(JNIEnv *env, PacketOutputStream *out, JVMDI_Event *event)
+writeFieldAccessEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
-    JVMDI_field_access_event_data *eventData = &event->u.field_access;
     jbyte fieldClassTag;
 
-    fieldClassTag = referenceTypeTag(eventData->field_clazz);
+    fieldClassTag = referenceTypeTag(evinfo->u.field_access.field_clazz);
 
-    WRITE_GLOBAL_REF(env, out, eventData->thread);
-    writeCodeLocation(out, eventData->clazz, eventData->method, eventData->location);
-    outStream_writeByte(out, fieldClassTag);
-    WRITE_GLOBAL_REF(env, out, eventData->field_clazz);
-    outStream_writeFieldID(out, eventData->field);
-    outStream_writeObjectTag(out, eventData->object);
-    WRITE_GLOBAL_REF(env, out, eventData->object);
+    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
+    (void)outStream_writeByte(out, fieldClassTag);
+    (void)outStream_writeObjectRef(env, out, evinfo->u.field_access.field_clazz);
+    (void)outStream_writeFieldID(out, evinfo->u.field_access.field);
+    (void)outStream_writeObjectTag(env, out, evinfo->object);
+    (void)outStream_writeObjectRef(env, out, evinfo->object);
 }
 
 static void 
 writeFieldModificationEvent(JNIEnv *env, PacketOutputStream *out, 
-                            JVMDI_Event *event)
+                            EventInfo *evinfo)
 {
-    JVMDI_field_modification_event_data *eventData = 
-                                     &event->u.field_modification;
     jbyte fieldClassTag;
 
-    fieldClassTag = referenceTypeTag(eventData->field_clazz);
+    fieldClassTag = referenceTypeTag(evinfo->u.field_modification.field_clazz);
 
-    WRITE_GLOBAL_REF(env, out, eventData->thread);
-    writeCodeLocation(out, eventData->clazz, eventData->method, eventData->location);
-    outStream_writeByte(out, fieldClassTag);
-    WRITE_GLOBAL_REF(env, out, eventData->field_clazz);
-    outStream_writeFieldID(out, eventData->field);
-    outStream_writeObjectTag(out, eventData->object);
-    WRITE_GLOBAL_REF(env, out, eventData->object);
-    outStream_writeValue(env, out, (jbyte)eventData->signature_type, 
-                         eventData->new_value);
+    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
+    (void)outStream_writeByte(out, fieldClassTag);
+    (void)outStream_writeObjectRef(env, out, evinfo->u.field_modification.field_clazz);
+    (void)outStream_writeFieldID(out, evinfo->u.field_modification.field);
+    (void)outStream_writeObjectTag(env, out, evinfo->object);
+    (void)outStream_writeObjectRef(env, out, evinfo->object);
+    (void)outStream_writeValue(env, out, (jbyte)evinfo->u.field_modification.signature_type, 
+                         evinfo->u.field_modification.new_value);
 }
 
 static void 
-writeExceptionEvent(JNIEnv *env, PacketOutputStream *out, JVMDI_Event *event)
+writeExceptionEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
-    JVMDI_exception_event_data *eventData = &event->u.exception;
-
-    WRITE_GLOBAL_REF(env, out, eventData->thread);
-    writeCodeLocation(out, eventData->clazz, eventData->method, eventData->location);
-    outStream_writeObjectTag(out, eventData->exception);
-    WRITE_GLOBAL_REF(env, out, eventData->exception);
-    writeCodeLocation(out, eventData->catch_clazz, 
-                      eventData->catch_method, eventData->catch_location);
+    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
+    (void)outStream_writeObjectTag(env, out, evinfo->object);
+    (void)outStream_writeObjectRef(env, out, evinfo->object);
+    writeCodeLocation(out, evinfo->u.exception.catch_clazz, 
+                      evinfo->u.exception.catch_method, evinfo->u.exception.catch_location);
 }
 
 static void 
-writeThreadEvent(JNIEnv *env, PacketOutputStream *out, JVMDI_Event *event)
+writeThreadEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
-    JVMDI_thread_change_event_data *eventData = &event->u.thread_change;
-
-    WRITE_GLOBAL_REF(env, out, eventData->thread);
+    (void)outStream_writeObjectRef(env, out, evinfo->thread);
 }
 
 static void 
-writeClassEvent(JNIEnv *env, PacketOutputStream *out, JVMDI_Event *event)
+writeMonitorEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
-    JVMDI_class_event_data *eventData = &event->u.class_event;
-    jclass clazz = eventData->clazz;
+    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    (void)outStream_writeObjectTag(env, out, evinfo->object);
+    (void)outStream_writeObjectRef(env, out, evinfo->object);
+    writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
+    if (evinfo->ei == EI_MONITOR_WAIT) {
+        (void)outStream_writeLong(out, evinfo->u.monitor.timeout);
+    } else  if (evinfo->ei == EI_MONITOR_WAITED) {
+        (void)outStream_writeBoolean(out, evinfo->u.monitor.timed_out);
+    }
+}
+
+static void 
+writeClassEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
+{
     jbyte classTag;
     jint status;
-    char *signature;
+    char *signature = NULL;
+    jvmtiError error;
 
-    classTag = referenceTypeTag(clazz);
-    signature = classSignature(clazz);
-    if (signature == NULL) {
-        ALLOC_ERROR_EXIT();
+    classTag = referenceTypeTag(evinfo->clazz);
+    error = classSignature(evinfo->clazz, &signature, NULL);
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error,"signature");
     }
-    status = classStatus(clazz);
+    status = classStatus(evinfo->clazz);
 
-    WRITE_GLOBAL_REF(env, out, eventData->thread);
-    outStream_writeByte(out, classTag);
-    WRITE_GLOBAL_REF(env, out, clazz);
-    outStream_writeString(out, signature);
-    outStream_writeInt(out, status);
-    jdwpFree(signature);
+    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    (void)outStream_writeByte(out, classTag);
+    (void)outStream_writeObjectRef(env, out, evinfo->clazz);
+    (void)outStream_writeString(out, signature);
+    (void)outStream_writeInt(out, map2jdwpClassStatus(status));
+    jvmtiDeallocate(signature);
 }
 
 static void 
-writeVMDeathEvent(JNIEnv *env, PacketOutputStream *out, JVMDI_Event *event)
+writeVMDeathEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
 }
 
@@ -376,61 +393,83 @@ static void
 handleEventCommandSingle(JNIEnv *env, PacketOutputStream *out, 
                            EventCommandSingle *command)
 {
-    JVMDI_Event *event = &command->event;
+    EventInfo *evinfo = &command->info;
 
-    outStream_writeByte(out, JVMDIKind_to_JDWPEvent(event->kind));
-    outStream_writeInt(out, command->id);
+    (void)outStream_writeByte(out, eventIndex2jdwp(evinfo->ei));
+    (void)outStream_writeInt(out, command->id);
 
-    switch (event->kind) {
-        case JVMDI_EVENT_SINGLE_STEP:  
-            writeSingleStepEvent(env, out, event);
+    switch (evinfo->ei) {
+        case EI_SINGLE_STEP:  
+            writeSingleStepEvent(env, out, evinfo);
             break;
-        case JVMDI_EVENT_BREAKPOINT:   
-            writeBreakpointEvent(env, out, event);
+        case EI_BREAKPOINT:   
+            writeBreakpointEvent(env, out, evinfo);
             break;
-        case JVMDI_EVENT_FIELD_ACCESS:    
-            writeFieldAccessEvent(env, out, event);
+        case EI_FIELD_ACCESS:    
+            writeFieldAccessEvent(env, out, evinfo);
             break;
-        case JVMDI_EVENT_FIELD_MODIFICATION:    
-            writeFieldModificationEvent(env, out, event);
+        case EI_FIELD_MODIFICATION:    
+            writeFieldModificationEvent(env, out, evinfo);
             break;
-        case JVMDI_EVENT_EXCEPTION:    
-            writeExceptionEvent(env, out, event);
+        case EI_EXCEPTION:    
+            writeExceptionEvent(env, out, evinfo);
             break;
-        case JVMDI_EVENT_THREAD_START:
-        case JVMDI_EVENT_THREAD_END:   
-            writeThreadEvent(env, out, event);
+        case EI_THREAD_START:
+        case EI_THREAD_END:   
+            writeThreadEvent(env, out, evinfo);
             break;
-        case JVMDI_EVENT_CLASS_LOAD:   
-        case JVMDI_EVENT_CLASS_PREPARE:   
-            writeClassEvent(env, out, event);
+        case EI_CLASS_LOAD:   
+        case EI_CLASS_PREPARE:   
+            writeClassEvent(env, out, evinfo);
             break;
-        case JVMDI_EVENT_VM_DEATH:
-            writeVMDeathEvent(env, out, event);
+        case EI_MONITOR_CONTENDED_ENTER:
+        case EI_MONITOR_CONTENDED_ENTERED:
+        case EI_MONITOR_WAIT:
+        case EI_MONITOR_WAITED:
+            writeMonitorEvent(env, out, evinfo);
+            break;
+        case EI_VM_DEATH:
+            writeVMDeathEvent(env, out, evinfo);
             break;
         default:
-            ERROR_MESSAGE_EXIT("Reporting invalid JVMDI event kind");
+            EXIT_ERROR(AGENT_ERROR_INVALID_EVENT_TYPE,"unknown event index");
+            break;
     }
+    tossEventInfoRefs(env, evinfo);
 }
 
 static void 
 handleUnloadCommandSingle(JNIEnv* env, PacketOutputStream *out, 
                            UnloadCommandSingle *command) 
 {
-    outStream_writeByte(out, JDWP_EVENT(CLASS_UNLOAD));
-    outStream_writeInt(out, command->id);
-    outStream_writeString(out, command->classSignature);
-    jdwpFree(command->classSignature);
+    (void)outStream_writeByte(out, JDWP_EVENT(CLASS_UNLOAD));
+    (void)outStream_writeInt(out, command->id);
+    (void)outStream_writeString(out, command->classSignature);
+    jvmtiDeallocate(command->classSignature);
+    command->classSignature = NULL;
 }
 
 static void 
 handleFrameEventCommandSingle(JNIEnv* env, PacketOutputStream *out, 
                               FrameEventCommandSingle *command) 
 {
-    outStream_writeByte(out, command->kind);
-    outStream_writeInt(out, command->id);
-    WRITE_GLOBAL_REF(env, out, command->thread);
+    if (command->typeKey) {
+        (void)outStream_writeByte(out, JDWP_EVENT(METHOD_EXIT_WITH_RETURN_VALUE));
+    } else {
+        (void)outStream_writeByte(out, eventIndex2jdwp(command->ei));
+    }
+    (void)outStream_writeInt(out, command->id);
+    (void)outStream_writeObjectRef(env, out, command->thread);
     writeCodeLocation(out, command->clazz, command->method, command->location);
+    if (command->typeKey) {
+        (void)outStream_writeValue(env, out, command->typeKey, command->returnValue);
+        if (isObjectTag(command->typeKey) &&
+            command->returnValue.l != NULL) {
+            tossGlobalRef(env, &(command->returnValue.l));
+        }
+    }
+    tossGlobalRef(env, &(command->thread));
+    tossGlobalRef(env, &(command->clazz));
 }
 
 static void
@@ -438,10 +477,10 @@ suspendWithInvokeEnabled(jbyte policy, jthread thread)
 {
     invoker_enableInvokeRequests(thread);
 
-    if (policy == JDWP_SuspendPolicy_ALL) {
-        threadControl_suspendAll();
+    if (policy == JDWP_SUSPEND_POLICY(ALL)) {
+        (void)threadControl_suspendAll();
     } else {
-        threadControl_suspendThread(thread, JNI_FALSE);
+        (void)threadControl_suspendThread(thread, JNI_FALSE);
     }
 }
 
@@ -453,7 +492,7 @@ handleReportEventCompositeCommand(JNIEnv *env,
     jint count = recc->eventCount;
     jint i;
 
-    if (recc->suspendPolicy != JDWP_SuspendPolicy_NONE) {
+    if (recc->suspendPolicy != JDWP_SUSPEND_POLICY(NONE)) {
         /* must determine thread to interrupt before writing */
         /* since writing destroys it */
         jthread thread = NULL;
@@ -461,7 +500,7 @@ handleReportEventCompositeCommand(JNIEnv *env,
             CommandSingle *single = &(recc->singleCommand[i]);
             switch (single->singleKind) {
                 case COMMAND_SINGLE_EVENT:
-                    thread = eventThread(&single->u.eventCommand.event);
+                    thread = single->u.eventCommand.info.thread;
                     break;
                 case COMMAND_SINGLE_FRAME_EVENT:
                     thread = single->u.frameEventCommand.thread;
@@ -473,17 +512,17 @@ handleReportEventCompositeCommand(JNIEnv *env,
         }
 
         if (thread == NULL) { 
-            threadControl_suspendAll();
+            (void)threadControl_suspendAll();
         } else {
             suspendWithInvokeEnabled(recc->suspendPolicy, thread);
         }
     }
 
-    outStream_initCommand(&out, uniqueID(), FLAGS_None, 
+    outStream_initCommand(&out, uniqueID(), 0x0,
                           JDWP_COMMAND_SET(Event), 
                           JDWP_COMMAND(Event, Composite));
-    outStream_writeByte(&out, recc->suspendPolicy);
-    outStream_writeInt(&out, count);
+    (void)outStream_writeByte(&out, recc->suspendPolicy);
+    (void)outStream_writeInt(&out, count);
 
     for (i = 0; i < count; i++) {
         CommandSingle *single = &(recc->singleCommand[i]);
@@ -511,7 +550,7 @@ static void
 handleReportInvokeDoneCommand(JNIEnv* env, ReportInvokeDoneCommand *command) 
 {
     invoker_completeInvokeRequest(command->thread);
-    (*env)->DeleteGlobalRef(env, command->thread);
+    tossGlobalRef(env, &(command->thread));
 }
 
 static void
@@ -519,24 +558,25 @@ handleReportVMInitCommand(JNIEnv* env, ReportVMInitCommand *command)
 {
     PacketOutputStream out;
 
-    if (command->suspendPolicy == JDWP_SuspendPolicy_ALL) {
-        threadControl_suspendAll();
-    } else if (command->suspendPolicy == JDWP_SuspendPolicy_EVENT_THREAD) {
-        threadControl_suspendThread(command->thread, JNI_FALSE);
+    if (command->suspendPolicy == JDWP_SUSPEND_POLICY(ALL)) {
+        (void)threadControl_suspendAll();
+    } else if (command->suspendPolicy == JDWP_SUSPEND_POLICY(EVENT_THREAD)) {
+        (void)threadControl_suspendThread(command->thread, JNI_FALSE);
     }
 
-    outStream_initCommand(&out, uniqueID(), FLAGS_None, 
+    outStream_initCommand(&out, uniqueID(), 0x0,
                           JDWP_COMMAND_SET(Event), 
                           JDWP_COMMAND(Event, Composite));
-    outStream_writeByte(&out, command->suspendPolicy);
-    outStream_writeInt(&out, 1);   /* Always one component */
-    outStream_writeByte(&out, JDWP_EventKind_VM_INIT);
-    outStream_writeInt(&out, 0);    /* Not in response to an event req. */
+    (void)outStream_writeByte(&out, command->suspendPolicy);
+    (void)outStream_writeInt(&out, 1);   /* Always one component */
+    (void)outStream_writeByte(&out, JDWP_EVENT(VM_INIT));
+    (void)outStream_writeInt(&out, 0);    /* Not in response to an event req. */
 
-    WRITE_GLOBAL_REF(env, &out, command->thread);
+    (void)outStream_writeObjectRef(env, &out, command->thread);
 
     outStream_sendCommand(&out);
     outStream_destroy(&out);
+    /* Why aren't we tossing this: tossGlobalRef(env, &(command->thread)); */
 }
 
 static void
@@ -546,8 +586,8 @@ handleSuspendThreadCommand(JNIEnv* env, SuspendThreadCommand *command)
      * For the moment, there's  nothing that can be done with the 
      * return code, so we don't check it here. 
      */
-    threadControl_suspendThread(command->thread, JNI_TRUE);
-    (*env)->DeleteGlobalRef(env, command->thread);
+    (void)threadControl_suspendThread(command->thread, JNI_TRUE);
+    tossGlobalRef(env, &(command->thread));
 }
 
 static void
@@ -568,7 +608,8 @@ handleCommand(JNIEnv *env, HelperCommand *command)
             handleSuspendThreadCommand(env, &command->u.suspendThread);
             break; 
         default:
-            ERROR_MESSAGE_EXIT("Invalid Event Helper Command");
+            EXIT_ERROR(AGENT_ERROR_INVALID_EVENT_TYPE,"Event Helper Command");
+            break;
     }
 }
 
@@ -594,7 +635,7 @@ static jboolean blockCommandLoop = JNI_FALSE;
  * VirtualMachineImpl.c: resume() to be called.
  */
 static void
-doBlockCommandLoop() {
+doBlockCommandLoop(void) {
     debugMonitorEnter(blockCommandLoopLock);
     while (blockCommandLoop == JNI_TRUE) {
         debugMonitorWait(blockCommandLoopLock);
@@ -610,7 +651,7 @@ doBlockCommandLoop() {
 static jboolean
 needBlockCommandLoop(HelperCommand *cmd) {
     if (cmd->commandKind == COMMAND_REPORT_EVENT_COMPOSITE
-    && cmd->u.reportEventComposite.suspendPolicy == JDWP_SuspendPolicy_ALL) {
+    && cmd->u.reportEventComposite.suspendPolicy == JDWP_SUSPEND_POLICY(ALL)) {
         debugMonitorEnter(blockCommandLoopLock);
         blockCommandLoop = JNI_TRUE;
         debugMonitorExit(blockCommandLoopLock);
@@ -626,7 +667,7 @@ needBlockCommandLoop(HelperCommand *cmd) {
  * VirtualMachineImpl.c: resume() to resume commandLoop().
  */
 void
-unblockCommandLoop() {
+unblockCommandLoop(void) {
     debugMonitorEnter(blockCommandLoopLock);
     blockCommandLoop = JNI_FALSE;
     debugMonitorNotifyAll(blockCommandLoopLock);
@@ -636,10 +677,10 @@ unblockCommandLoop() {
 /*
  * The event helper thread. Dequeues commands and processes them.
  */
-static void 
-commandLoop(void *unused) 
+static void JNICALL
+commandLoop(jvmtiEnv* jvmti_env, JNIEnv* jni_env, void* arg)
 {
-    JNIEnv *env = getEnv();
+    LOG_MISC(("Begin command loop thread"));
 
     while (JNI_TRUE) {
         HelperCommand *command = dequeueCommand();
@@ -649,25 +690,29 @@ commandLoop(void *unused)
              * handleCommand() to prevent any races.
              */
             jboolean doBlock = needBlockCommandLoop(command);
-            handleCommand(env, command);
+            log_debugee_location("commandLoop(): command being handled", NULL, NULL, 0);
+            handleCommand(jni_env, command);
             completeCommand(command);
             /* if we just finished a suspend-all cmd, then we block here */
             if (doBlock) {
                 doBlockCommandLoop();
             }
         } else {
-	    JDI_ASSERT(shutdown);
-	    break;
-	}
+          JDI_ASSERT(shutdownEvents);
+          break;
+        }
     }
+    /* This loop never ends, even as connections come and go with server=y */
 }
 
 void 
 eventHelper_initialize(jbyte sessionID)
 {
+    jvmtiStartFunction func;
+    
     currentSessionID = sessionID;
     holdEvents = JNI_FALSE;
-    shutdown = JNI_FALSE;
+    shutdownEvents = JNI_FALSE;
     commandQueue.head = NULL;
     commandQueue.tail = NULL;
 
@@ -676,10 +721,11 @@ eventHelper_initialize(jbyte sessionID)
     blockCommandLoopLock = debugMonitorCreate("JDWP Event Block CommandLoop Monitor");
 
     /* Start the event handler thread */
-    spawnNewThread(commandLoop, NULL, "JDWP Event Helper Thread");
+    func = &commandLoop;
+    (void)spawnNewThread(func, NULL, "JDWP Event Helper Thread");
 }
 
-void
+void 
 eventHelper_reset(jbyte newSessionID)
 {
     debugMonitorEnter(commandQueueLock);
@@ -694,7 +740,7 @@ eventHelper_shutdown(void)
 {
     debugMonitorEnter(commandQueueLock);
     holdEvents = JNI_FALSE;
-    shutdown = JNI_TRUE;
+    shutdownEvents = JNI_TRUE;
     debugMonitorNotifyAll(commandQueueLock);
     debugMonitorExit(commandQueueLock);
 }
@@ -704,117 +750,137 @@ eventHelper_shutdown(void)
  * held by suspended threads.
  */
 void 
-eventHelper_lock() 
+eventHelper_lock(void)
 {
     debugMonitorEnter(commandQueueLock);
     debugMonitorEnter(commandCompleteLock);
 }
 
 void 
-eventHelper_unlock() 
+eventHelper_unlock(void)
 {
     debugMonitorExit(commandCompleteLock);
     debugMonitorExit(commandQueueLock);
 }
 
-
-/*
- * For events handled in a separate thread, the local refs must be converted to
- * global refs. These functions manage that conversion.
- */
+/* Change all references to global in the EventInfo struct */
 static void 
-makeRefsGlobal(JNIEnv *env, JVMDI_Event *event)
+saveEventInfoRefs(JNIEnv *env, EventInfo *evinfo)
 {
-    (*env)->ExceptionClear(env);
+    jthread *pthread;
+    jclass *pclazz;
+    jobject *pobject;
+    jthread thread;
+    jclass clazz;
+    jobject object;
+    char sig;
+    
+    JNI_FUNC_PTR(env,ExceptionClear)(env);
 
-    switch (event->kind) {
-        case JVMDI_EVENT_SINGLE_STEP:
-            event->u.single_step.thread = (*env)->NewGlobalRef(env, event->u.single_step.thread);
-            event->u.single_step.clazz = (*env)->NewGlobalRef(env, event->u.single_step.clazz);
-            break;
+    if ( evinfo->thread != NULL ) {
+        pthread = &(evinfo->thread);
+        thread = *pthread;
+        *pthread = NULL;
+        saveGlobalRef(env, thread, pthread);
+    }
+    if ( evinfo->clazz != NULL ) {
+        pclazz = &(evinfo->clazz);
+        clazz = *pclazz;
+        *pclazz = NULL;
+        saveGlobalRef(env, clazz, pclazz);
+    }
+    if ( evinfo->object != NULL ) {
+        pobject = &(evinfo->object);
+        object = *pobject;
+        *pobject = NULL;
+        saveGlobalRef(env, object, pobject);
+    }
     
-        case JVMDI_EVENT_BREAKPOINT:
-            event->u.breakpoint.thread = (*env)->NewGlobalRef(env, event->u.breakpoint.thread);
-            event->u.breakpoint.clazz = (*env)->NewGlobalRef(env, event->u.breakpoint.clazz);
-            break;
-    
-        case JVMDI_EVENT_FRAME_POP:
-            event->u.frame.thread = (*env)->NewGlobalRef(env, event->u.frame.thread);
-            break;
-    
-        case JVMDI_EVENT_FIELD_MODIFICATION: {
-            char sig = event->u.field_modification.signature_type;
-            event->u.field_modification.thread = (*env)->NewGlobalRef(env, event->u.field_modification.thread);
-            event->u.field_modification.clazz = (*env)->NewGlobalRef(env, event->u.field_modification.clazz);
-            event->u.field_modification.field_clazz = (*env)->NewGlobalRef(env, event->u.field_modification.field_clazz);
-            event->u.field_modification.object = (*env)->NewGlobalRef(env, event->u.field_modification.object);
-            if ((sig == JDWP_Tag_ARRAY) || (sig == JDWP_Tag_OBJECT)) {
-                /* an object type */
-                event->u.field_modification.new_value.l =  
-                    (*env)->NewGlobalRef(
-                        env, 
-                        event->u.field_modification.new_value.l);
+    switch (evinfo->ei) {
+        case EI_FIELD_MODIFICATION: 
+            if ( evinfo->u.field_modification.field_clazz != NULL ) {
+                pclazz = &(evinfo->u.field_modification.field_clazz);
+                clazz = *pclazz;
+                *pclazz = NULL;
+                saveGlobalRef(env, clazz, pclazz);
+            }
+            sig = evinfo->u.field_modification.signature_type;
+            if ((sig == JDWP_TAG(ARRAY)) || (sig == JDWP_TAG(OBJECT))) {
+                if ( evinfo->u.field_modification.new_value.l != NULL ) {
+                    pobject = &(evinfo->u.field_modification.new_value.l);
+                    object = *pobject;
+                    *pobject = NULL;
+                    saveGlobalRef(env, object, pobject);
+                }
             }
             break;
-        }
-    
-        case JVMDI_EVENT_FIELD_ACCESS:
-            event->u.field_access.thread = (*env)->NewGlobalRef(env, event->u.field_access.thread);
-            event->u.field_access.clazz = (*env)->NewGlobalRef(env, event->u.field_access.clazz);
-            event->u.field_access.field_clazz = (*env)->NewGlobalRef(env, event->u.field_access.field_clazz);
-            event->u.field_access.object = (*env)->NewGlobalRef(env, event->u.field_access.object);  /* STATIC ??? */
+        case EI_FIELD_ACCESS:
+            if ( evinfo->u.field_access.field_clazz != NULL ) {
+                pclazz = &(evinfo->u.field_access.field_clazz);
+                clazz = *pclazz;
+                *pclazz = NULL;
+                saveGlobalRef(env, clazz, pclazz);
+            }
             break;
-    
-        case JVMDI_EVENT_EXCEPTION:
-            event->u.exception.thread = (*env)->NewGlobalRef(env, event->u.exception.thread);
-            event->u.exception.clazz = (*env)->NewGlobalRef(env, event->u.exception.clazz);
-            event->u.exception.exception = (*env)->NewGlobalRef(env, event->u.exception.exception);
-            event->u.exception.catch_clazz = (*env)->NewGlobalRef(env, event->u.exception.catch_clazz);
+        case EI_EXCEPTION:
+            if ( evinfo->u.exception.catch_clazz != NULL ) {
+                pclazz = &(evinfo->u.exception.catch_clazz);
+                clazz = *pclazz;
+                *pclazz = NULL;
+                saveGlobalRef(env, clazz, pclazz);
+            }
             break;
-    
-        case JVMDI_EVENT_EXCEPTION_CATCH:
-            event->u.exception_catch.thread = (*env)->NewGlobalRef(env, event->u.exception.thread);
-            event->u.exception_catch.clazz = (*env)->NewGlobalRef(env, event->u.exception.clazz);
-            event->u.exception_catch.exception = (*env)->NewGlobalRef(env, event->u.exception.exception);
-            break;
-    
-        case JVMDI_EVENT_USER_DEFINED:
-            event->u.user.object = (*env)->NewGlobalRef(env, event->u.user.object);
-            break;
-    
-        case JVMDI_EVENT_THREAD_START:
-        case JVMDI_EVENT_THREAD_END:
-            event->u.thread_change.thread = (*env)->NewGlobalRef(env, event->u.thread_change.thread);
-            break;
-    
-        case JVMDI_EVENT_METHOD_ENTRY:
-        case JVMDI_EVENT_METHOD_EXIT:   
-            event->u.frame.thread = 
-                (*env)->NewGlobalRef(env, event->u.frame.thread);
-            event->u.frame.clazz = 
-                (*env)->NewGlobalRef(env, event->u.frame.clazz);
-            break;
-
-        case JVMDI_EVENT_CLASS_LOAD:
-        case JVMDI_EVENT_CLASS_PREPARE:
-            event->u.class_event.thread = (*env)->NewGlobalRef(env, event->u.class_event.thread);
-            event->u.class_event.clazz = (*env)->NewGlobalRef(env, event->u.class_event.clazz);
-            break;
-    
-        case JVMDI_EVENT_CLASS_UNLOAD:
-            /*
-             * We shouldn't ever try to create global refs for this event.
-             */
+        default:
             break;
     }
 
-    if ((*env)->ExceptionOccurred(env)) {
-        ERROR_MESSAGE_EXIT("Unable to create global references for event processing");
+    if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
+        EXIT_ERROR(AGENT_ERROR_INVALID_EVENT_TYPE,"ExceptionOccurred");
+    }
+}
+
+static void 
+tossEventInfoRefs(JNIEnv *env, EventInfo *evinfo)
+{
+    char sig;
+    if ( evinfo->thread != NULL ) {
+        tossGlobalRef(env, &(evinfo->thread));
+    }
+    if ( evinfo->clazz != NULL ) {
+        tossGlobalRef(env, &(evinfo->clazz));
+    }
+    if ( evinfo->object != NULL ) {
+        tossGlobalRef(env, &(evinfo->object));
+    }
+    switch (evinfo->ei) {
+        case EI_FIELD_MODIFICATION: 
+            if ( evinfo->u.field_modification.field_clazz != NULL ) {
+                tossGlobalRef(env, &(evinfo->u.field_modification.field_clazz));
+            }
+            sig = evinfo->u.field_modification.signature_type;
+            if ((sig == JDWP_TAG(ARRAY)) || (sig == JDWP_TAG(OBJECT))) {
+                if ( evinfo->u.field_modification.new_value.l != NULL ) {
+                    tossGlobalRef(env, &(evinfo->u.field_modification.new_value.l));
+                }
+            }
+            break;
+        case EI_FIELD_ACCESS:
+            if ( evinfo->u.field_access.field_clazz != NULL ) {
+                tossGlobalRef(env, &(evinfo->u.field_access.field_clazz));
+            }
+            break;
+        case EI_EXCEPTION:
+            if ( evinfo->u.exception.catch_clazz != NULL ) {
+                tossGlobalRef(env, &(evinfo->u.exception.catch_clazz));
+            }
+            break;
+        default:
+            break;
     }
 }
 
 struct bag *
-eventHelper_createEventBag()
+eventHelper_createEventBag(void)
 {
     return bagCreateBag(sizeof(CommandSingle), 5 /* events */ );
 }
@@ -836,18 +902,18 @@ enumForCombinedSuspendPolicy(void *cv, void *arg)
             thisPolicy = command->u.frameEventCommand.suspendPolicy;
             break;
         default:
-            thisPolicy = JDWP_SuspendPolicy_NONE;
+            thisPolicy = JDWP_SUSPEND_POLICY(NONE);
     }
     /* Expand running policy value if this policy demands it */
-    if (*policy == JDWP_SuspendPolicy_NONE) {
+    if (*policy == JDWP_SUSPEND_POLICY(NONE)) {
         *policy = thisPolicy;
-    } else if (*policy == JDWP_SuspendPolicy_EVENT_THREAD) {
-        *policy = (thisPolicy == JDWP_SuspendPolicy_ALL)? 
+    } else if (*policy == JDWP_SUSPEND_POLICY(EVENT_THREAD)) {
+        *policy = (thisPolicy == JDWP_SUSPEND_POLICY(ALL))? 
                         thisPolicy : *policy;
     }
 
     /* Short circuit if we reached maximal suspend policy */
-    if (*policy == JDWP_SuspendPolicy_ALL) {
+    if (*policy == JDWP_SUSPEND_POLICY(ALL)) {
         return JNI_FALSE;
     } else {
         return JNI_TRUE;
@@ -863,7 +929,7 @@ enumForVMDeath(void *cv, void *arg)
     jboolean *reportingVMDeath = arg;
 
     if (command->singleKind == COMMAND_SINGLE_EVENT) {
-        if (command->u.eventCommand.event.kind == JVMDI_EVENT_VM_DEATH) {
+        if (command->u.eventCommand.info.ei == EI_VM_DEATH) {
             *reportingVMDeath = JNI_TRUE;
             return JNI_FALSE;
         }
@@ -880,7 +946,7 @@ static jboolean
 enumForCopyingSingles(void *command, void *tv)
 {
     struct singleTracker *tracker = (struct singleTracker *)tv;
-    memcpy(&tracker->recc->singleCommand[tracker->index++], 
+    (void)memcpy(&tracker->recc->singleCommand[tracker->index++], 
            command, 
            sizeof(CommandSingle));
     return JNI_TRUE;
@@ -890,9 +956,10 @@ jbyte
 eventHelper_reportEvents(jbyte sessionID, struct bag *eventBag)
 {
     int size = bagSize(eventBag);
-    jbyte suspendPolicy = JDWP_SuspendPolicy_NONE;
+    jbyte suspendPolicy = JDWP_SUSPEND_POLICY(NONE);
     jboolean reportingVMDeath = JNI_FALSE;
     jboolean wait;
+    int command_size;
      
     HelperCommand *command;
     ReportEventCompositeCommand *recc;
@@ -901,10 +968,14 @@ eventHelper_reportEvents(jbyte sessionID, struct bag *eventBag)
     if (size == 0) {
         return suspendPolicy;
     }
-    bagEnumerateOver(eventBag, enumForCombinedSuspendPolicy, &suspendPolicy);
-    bagEnumerateOver(eventBag, enumForVMDeath, &reportingVMDeath);
+    (void)bagEnumerateOver(eventBag, enumForCombinedSuspendPolicy, &suspendPolicy);
+    (void)bagEnumerateOver(eventBag, enumForVMDeath, &reportingVMDeath);
 
-    command = jdwpAlloc(sizeof(HelperCommand) + (sizeof(CommandSingle)*size));
+    /*LINTED*/
+    command_size = (int)(sizeof(HelperCommand) + 
+                         sizeof(CommandSingle)*(size-1));
+    command = jvmtiAllocate(command_size);
+    (void)memset(command, 0, command_size);
     command->commandKind = COMMAND_REPORT_EVENT_COMPOSITE;
     command->sessionID = sessionID;
     recc = &command->u.reportEventComposite;
@@ -912,27 +983,27 @@ eventHelper_reportEvents(jbyte sessionID, struct bag *eventBag)
     recc->eventCount = size;
     tracker.recc = recc;
     tracker.index = 0;
-    bagEnumerateOver(eventBag, enumForCopyingSingles, &tracker);
+    (void)bagEnumerateOver(eventBag, enumForCopyingSingles, &tracker);
 
     /*
      * We must wait if this thread (the event thread) is to be 
      * suspended or if the VM is about to die. (Waiting in the latter
      * case ensures that we get the event out before the process dies.)
      */
-    wait = (jboolean)((suspendPolicy != JDWP_SuspendPolicy_NONE) || 
+    wait = (jboolean)((suspendPolicy != JDWP_SUSPEND_POLICY(NONE)) || 
                       reportingVMDeath);
     enqueueCommand(command, wait, reportingVMDeath);
     return suspendPolicy;
 }
 
 void 
-eventHelper_recordEvent(JVMDI_Event *event, jint id, jbyte suspendPolicy,
+eventHelper_recordEvent(EventInfo *evinfo, jint id, jbyte suspendPolicy,
                          struct bag *eventBag)
 {
     JNIEnv *env = getEnv();
     CommandSingle *command = bagAdd(eventBag);
     if (command == NULL) {
-        ALLOC_ERROR_EXIT();
+        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"badAdd(eventBag)");
     }
 
     command->singleKind = COMMAND_SINGLE_EVENT;
@@ -943,8 +1014,8 @@ eventHelper_recordEvent(JVMDI_Event *event, jint id, jbyte suspendPolicy,
      * Copy the event into the command so that it can be used 
      * asynchronously by the event helper thread.
      */
-    memcpy(&command->u.eventCommand.event, event, sizeof(*event));
-    makeRefsGlobal(env, &command->u.eventCommand.event);
+    (void)memcpy(&command->u.eventCommand.info, evinfo, sizeof(*evinfo));
+    saveEventInfoRefs(env, &command->u.eventCommand.info);
 }
 
 void 
@@ -952,7 +1023,7 @@ eventHelper_recordClassUnload(jint id, char *signature, struct bag *eventBag)
 {
     CommandSingle *command = bagAdd(eventBag);
     if (command == NULL) {
-        ALLOC_ERROR_EXIT();
+        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"bagAdd(eventBag)");
     }
     command->singleKind = COMMAND_SINGLE_UNLOAD;
     command->u.unloadCommand.id = id;
@@ -960,29 +1031,49 @@ eventHelper_recordClassUnload(jint id, char *signature, struct bag *eventBag)
 }
 
 void 
-eventHelper_recordFrameEvent(jint id, jbyte suspendPolicy, jbyte kind,
+eventHelper_recordFrameEvent(jint id, jbyte suspendPolicy, EventIndex ei,
                              jthread thread, jclass clazz, 
                              jmethodID method, jlocation location,
+                             int needReturnValue,
+                             jvalue returnValue,
                              struct bag *eventBag)
 {
     JNIEnv *env = getEnv();
     FrameEventCommandSingle *frameCommand;
     CommandSingle *command = bagAdd(eventBag);
+    jvmtiError err = JVMTI_ERROR_NONE;
     if (command == NULL) {
-        ALLOC_ERROR_EXIT();
+        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"bagAdd(eventBag)");
     }
 
     command->singleKind = COMMAND_SINGLE_FRAME_EVENT;
     frameCommand = &command->u.frameEventCommand;
     frameCommand->suspendPolicy = suspendPolicy;
     frameCommand->id = id;
-    frameCommand->kind = kind;
-    frameCommand->thread = (*env)->NewGlobalRef(env, thread);
-    frameCommand->clazz = (*env)->NewGlobalRef(env, clazz);
+    frameCommand->ei = ei;
+    saveGlobalRef(env, thread, &(frameCommand->thread));
+    saveGlobalRef(env, clazz, &(frameCommand->clazz));
     frameCommand->method = method;
     frameCommand->location = location;
-    if ((frameCommand->thread == NULL) || (frameCommand->clazz == NULL)) {
-        ALLOC_ERROR_EXIT();
+    if (needReturnValue) {
+        err = methodReturnType(method, &frameCommand->typeKey);
+        JDI_ASSERT(err == JVMTI_ERROR_NONE);
+
+        /*
+         * V or B C D F I J S Z L <classname> ;    [ ComponentType
+         */
+        if (isObjectTag(frameCommand->typeKey) &&
+            returnValue.l != NULL) {
+            saveGlobalRef(env, returnValue.l, &(frameCommand->returnValue.l));
+        } else {
+            frameCommand->returnValue = returnValue;
+        }
+    } else {
+      /* This is not a JDWP METHOD_EXIT_WITH_RETURN_VALUE request,
+       * so signal this by setting typeKey = 0 which is not
+       * a legal typekey.
+       */
+       frameCommand->typeKey = 0;
     }
 }
 
@@ -990,38 +1081,33 @@ void
 eventHelper_reportInvokeDone(jbyte sessionID, jthread thread)
 {
     JNIEnv *env = getEnv();
-    HelperCommand *command = jdwpAlloc(sizeof(*command));
+    HelperCommand *command = jvmtiAllocate(sizeof(*command));
     if (command == NULL) {
-        ALLOC_ERROR_EXIT();
+        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"HelperCommand");
     }
+    (void)memset(command, 0, sizeof(*command));
     command->commandKind = COMMAND_REPORT_INVOKE_DONE;
     command->sessionID = sessionID;
-    command->u.reportInvokeDone.thread = (*env)->NewGlobalRef(env, thread);
-    if (command->u.reportInvokeDone.thread == NULL) {
-        ERROR_MESSAGE_EXIT("Unable to create global reference for invocation completion");
-    }
+    saveGlobalRef(env, thread, &(command->u.reportInvokeDone.thread));
     enqueueCommand(command, JNI_TRUE, JNI_FALSE);
 }
 
 /*
  * This, currently, cannot go through the normal event handling code
- * because the JVMDI event does not contain a thread.
+ * because the JVMTI event does not contain a thread.
  */
 void 
-eventHelper_reportVMInit(jbyte sessionID, jthread thread, jbyte suspendPolicy)
+eventHelper_reportVMInit(JNIEnv *env, jbyte sessionID, jthread thread, jbyte suspendPolicy)
 {
-    JNIEnv *env = getEnv();
-    HelperCommand *command = jdwpAlloc(sizeof(*command));
+    HelperCommand *command = jvmtiAllocate(sizeof(*command));
     if (command == NULL) {
-        ALLOC_ERROR_EXIT();
+        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"HelperCommmand");
     }
+    (void)memset(command, 0, sizeof(*command));
     command->commandKind = COMMAND_REPORT_VM_INIT;
     command->sessionID = sessionID;
-    command->u.reportVMInit.thread = (*env)->NewGlobalRef(env, thread);
+    saveGlobalRef(env, thread, &(command->u.reportVMInit.thread));
     command->u.reportVMInit.suspendPolicy = suspendPolicy;
-    if (command->u.reportVMInit.thread == NULL) {
-        ERROR_MESSAGE_EXIT("Unable to create global reference for vm init");
-    }
     enqueueCommand(command, JNI_TRUE, JNI_FALSE);
 }
 
@@ -1029,16 +1115,14 @@ void
 eventHelper_suspendThread(jbyte sessionID, jthread thread)
 {
     JNIEnv *env = getEnv();
-    HelperCommand *command = jdwpAlloc(sizeof(*command));
+    HelperCommand *command = jvmtiAllocate(sizeof(*command));
     if (command == NULL) {
-        ALLOC_ERROR_EXIT();
+        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"HelperCommmand");
     }
+    (void)memset(command, 0, sizeof(*command));
     command->commandKind = COMMAND_SUSPEND_THREAD;
     command->sessionID = sessionID;
-    command->u.suspendThread.thread = (*env)->NewGlobalRef(env, thread);
-    if (command->u.suspendThread.thread == NULL) {
-        ERROR_MESSAGE_EXIT("Unable to create global reference for thread suspension");
-    }
+    saveGlobalRef(env, thread, &(command->u.suspendThread.thread));
     enqueueCommand(command, JNI_TRUE, JNI_FALSE);
 }
 

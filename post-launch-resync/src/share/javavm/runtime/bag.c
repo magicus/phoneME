@@ -1,5 +1,5 @@
 /*
- * @(#)bag.c	1.13 06/10/10
+ * @(#)bag.c	1.14 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -27,7 +27,7 @@
 
 /* General routines for manipulating a bag data structure */
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 
 #include "javavm/include/clib.h"
 #include "javavm/include/bag.h"
@@ -148,4 +148,4 @@ CVMbagEnumerateOver(struct CVMBag *theBag,
     return CVM_TRUE;
 }
 
-#endif /* CVM_JVMDI */
+#endif /* CVM_JVMTI */

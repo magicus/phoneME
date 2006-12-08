@@ -1,5 +1,5 @@
 /*
- * @(#)outStream.h	1.18 06/10/10
+ * @(#)outStream.h	1.19 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,27 +23,34 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#ifndef OUTSTREAM_H
-#define OUTSTREAM_H
+
+#ifndef JDWP_OUTSTREAM_H
+#define JDWP_OUTSTREAM_H
 
 #include "typedefs.h"
-#undef GetMonitorInfo
-#include <jni.h>
-#include <jvmdi.h>
+
 #include "transport.h"
+#include "FrameID.h"
 
 struct bag;
 
 #define INITIAL_SEGMENT_SIZE   300
 #define MAX_SEGMENT_SIZE     10000
 
+typedef struct PacketData {
+    int length;
+    jbyte *data;
+    struct PacketData *next;
+} PacketData;
+
 typedef struct PacketOutputStream {
     jbyte *current;
     jint left;
     struct PacketData *segment;
-    jint error;
+    struct PacketData firstSegment;
+    jvmtiError error;
     jboolean sent;
-    struct Packet packet;
+    jdwpPacket packet;
     jbyte initialSegment[INITIAL_SEGMENT_SIZE];
     struct bag *ids;
 } PacketOutputStream;
@@ -55,43 +62,32 @@ void outStream_initReply(PacketOutputStream *stream, jint id);
 jint outStream_id(PacketOutputStream *stream);
 jbyte outStream_command(PacketOutputStream *stream);
 
-jint outStream_writeBoolean(PacketOutputStream *stream, jboolean val);
-jint outStream_writeByte(PacketOutputStream *stream, jbyte val);
-jint outStream_writeChar(PacketOutputStream *stream, jchar val);
-jint outStream_writeShort(PacketOutputStream *stream, jshort val);
-jint outStream_writeInt(PacketOutputStream *stream, jint val);
-jint outStream_writeLong(PacketOutputStream *stream, jlong val);
-jint outStream_writeFloat(PacketOutputStream *stream, jfloat val);
-jint outStream_writeDouble(PacketOutputStream *stream, jdouble val);
-jint outStream_writeObjectRef(PacketOutputStream *stream, jobject val);
-jint outStream_writeObjectTag(PacketOutputStream *stream, jobject val);
-jint outStream_writeClassID(PacketOutputStream *stream, jclass val);
-jint outStream_writeFrameID(PacketOutputStream *stream, jframeID val);
-jint outStream_writeMethodID(PacketOutputStream *stream, jmethodID val);
-jint outStream_writeFieldID(PacketOutputStream *stream, jfieldID val);
-jint outStream_writeLocation(PacketOutputStream *stream, jlocation val);
-
-#define WRITE_LOCAL_REF(env, stream, ref) \
-    outStream_writeObjectRef(stream, ref)
-#define WRITE_GLOBAL_REF(env, stream, ref) \
-    do {                                   \
-        outStream_writeObjectRef(stream, ref); \
-        if (ref) (*env)->DeleteGlobalRef(env, ref); \
-        ref = (jobject)(intptr_t)-1;  \
-    } while (0)
-
-jint outStream_writeByteArray(PacketOutputStream*stream, jint length, jbyte *bytes);
-jint outStream_writeString(PacketOutputStream *stream, char *string);
-void outStream_writeValue(JNIEnv *env, struct PacketOutputStream *out, 
+jdwpError outStream_writeBoolean(PacketOutputStream *stream, jboolean val);
+jdwpError outStream_writeByte(PacketOutputStream *stream, jbyte val);
+jdwpError outStream_writeChar(PacketOutputStream *stream, jchar val);
+jdwpError outStream_writeShort(PacketOutputStream *stream, jshort val);
+jdwpError outStream_writeInt(PacketOutputStream *stream, jint val);
+jdwpError outStream_writeLong(PacketOutputStream *stream, jlong val);
+jdwpError outStream_writeFloat(PacketOutputStream *stream, jfloat val);
+jdwpError outStream_writeDouble(PacketOutputStream *stream, jdouble val);
+jdwpError outStream_writeObjectRef(JNIEnv *env, PacketOutputStream *stream, jobject val);
+jdwpError outStream_writeObjectTag(JNIEnv *env, PacketOutputStream *stream, jobject val);
+jdwpError outStream_writeFrameID(PacketOutputStream *stream, FrameID val);
+jdwpError outStream_writeMethodID(PacketOutputStream *stream, jmethodID val);
+jdwpError outStream_writeFieldID(PacketOutputStream *stream, jfieldID val);
+jdwpError outStream_writeLocation(PacketOutputStream *stream, jlocation val);
+jdwpError outStream_writeByteArray(PacketOutputStream*stream, jint length, jbyte *bytes);
+jdwpError outStream_writeString(PacketOutputStream *stream, char *string);
+jdwpError outStream_writeValue(JNIEnv *env, struct PacketOutputStream *out, 
                           jbyte typeKey, jvalue value);
-jint outStream_skipBytes(PacketOutputStream *stream, jint count);
+jdwpError outStream_skipBytes(PacketOutputStream *stream, jint count);
 
-jint outStream_error(PacketOutputStream *stream);
-void outStream_setError(PacketOutputStream *stream, jint error);
+jdwpError outStream_error(PacketOutputStream *stream);
+void outStream_setError(PacketOutputStream *stream, jdwpError error);
 
 void outStream_sendReply(PacketOutputStream *stream);
 void outStream_sendCommand(PacketOutputStream *stream);
 
 void outStream_destroy(PacketOutputStream *stream);
 
-#endif /* OUTSTREAM_H */
+#endif

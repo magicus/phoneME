@@ -1,5 +1,5 @@
 /*
- * @(#)debugLoop.h	1.20 06/10/10
+ * @(#)debugLoop.h	1.21 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,5 +23,12 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-void debugLoop_run(void);
 
+#ifndef JDWP_DEBUGLOOP_H
+#define JDWP_DEBUGLOOP_H
+
+void debugLoop_initialize(void);
+void debugLoop_run(void);
+void debugLoop_sync(void);
+
+#endif

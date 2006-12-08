@@ -1,5 +1,5 @@
 /*
- * @(#)ClassTypeImpl.c	1.32 06/10/10
+ * @(#)ClassTypeImpl.c	1.33 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,125 +23,150 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <stdlib.h>
 
-#include "ClassTypeImpl.h"
 #include "util.h"
+#include "ClassTypeImpl.h"
 #include "inStream.h"
 #include "outStream.h"
-#include "JDWP.h"
 
 static jboolean 
 superclass(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    jclass superclass;
-    jclass clazz = inStream_readClassRef(in);
+    JNIEnv *env;
+    jclass clazz;
+    
+    env = getEnv();
+    
+    clazz = inStream_readClassRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    WITH_LOCAL_REFS(env, 1);
+    WITH_LOCAL_REFS(env, 1) {
 
-    superclass = (*env)->GetSuperclass(env,clazz);
-    WRITE_LOCAL_REF(env, out, superclass);
+        jclass superclass;
+        
+        superclass = JNI_FUNC_PTR(env,GetSuperclass)(env,clazz);
+        (void)outStream_writeObjectRef(env, out, superclass);
 
-    END_WITH_LOCAL_REFS(env);
+    } END_WITH_LOCAL_REFS(env);
+    
     return JNI_TRUE;
 }
 
-static jint
+static jdwpError
 readStaticFieldValue(JNIEnv *env, PacketInputStream *in, jclass clazz,
                      jfieldID field, char *signature)
 {
     jvalue value;
-    jint error = JVMDI_ERROR_NONE;
+    jdwpError serror = JDWP_ERROR(NONE);
 
     switch (signature[0]) {
-        case JDWP_Tag_ARRAY:
-        case JDWP_Tag_OBJECT:
-            value.l = inStream_readObjectRef(in);
-            (*env)->SetStaticObjectField(env, clazz, field, value.l);
+        case JDWP_TAG(ARRAY):
+        case JDWP_TAG(OBJECT):
+            value.l = inStream_readObjectRef(env, in);
+            JNI_FUNC_PTR(env,SetStaticObjectField)(env, clazz, field, value.l);
             break;
         
-        case JDWP_Tag_BYTE:
+        case JDWP_TAG(BYTE):
             value.b = inStream_readByte(in);
-            (*env)->SetStaticByteField(env, clazz, field, value.b);
+            JNI_FUNC_PTR(env,SetStaticByteField)(env, clazz, field, value.b);
             break;
 
-        case JDWP_Tag_CHAR:
+        case JDWP_TAG(CHAR):
             value.c = inStream_readChar(in);
-            (*env)->SetStaticCharField(env, clazz, field, value.c);
+            JNI_FUNC_PTR(env,SetStaticCharField)(env, clazz, field, value.c);
             break;
 
-        case JDWP_Tag_FLOAT:
+        case JDWP_TAG(FLOAT):
             value.f = inStream_readFloat(in);
-            (*env)->SetStaticFloatField(env, clazz, field, value.f);
+            JNI_FUNC_PTR(env,SetStaticFloatField)(env, clazz, field, value.f);
             break;
 
-        case JDWP_Tag_DOUBLE:
+        case JDWP_TAG(DOUBLE):
             value.d = inStream_readDouble(in);
-            (*env)->SetStaticDoubleField(env, clazz, field, value.d);
+            JNI_FUNC_PTR(env,SetStaticDoubleField)(env, clazz, field, value.d);
             break;
 
-        case JDWP_Tag_INT:
+        case JDWP_TAG(INT):
             value.i = inStream_readInt(in);
-            (*env)->SetStaticIntField(env, clazz, field, value.i);
+            JNI_FUNC_PTR(env,SetStaticIntField)(env, clazz, field, value.i);
             break;
 
-        case JDWP_Tag_LONG:
+        case JDWP_TAG(LONG):
             value.j = inStream_readLong(in);
-            (*env)->SetStaticLongField(env, clazz, field, value.j);
+            JNI_FUNC_PTR(env,SetStaticLongField)(env, clazz, field, value.j);
             break;
 
-        case JDWP_Tag_SHORT:
+        case JDWP_TAG(SHORT):
             value.s = inStream_readShort(in);
-            (*env)->SetStaticShortField(env, clazz, field, value.s);
+            JNI_FUNC_PTR(env,SetStaticShortField)(env, clazz, field, value.s);
             break;
 
-        case JDWP_Tag_BOOLEAN:
+        case JDWP_TAG(BOOLEAN):
             value.z = inStream_readBoolean(in);
-            (*env)->SetStaticBooleanField(env, clazz, field, value.z);
+            JNI_FUNC_PTR(env,SetStaticBooleanField)(env, clazz, field, value.z);
             break;
     }
 
-    if ((*env)->ExceptionOccurred(env)) {
-        error = JVMDI_ERROR_INTERNAL;
+    if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
+        serror = JDWP_ERROR(INTERNAL);
     }
     
-    return error;
+    return serror;
 }
 
 static jboolean 
 setValues(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    jint i;
-    jfieldID field;
-    char *signature;
+    JNIEnv *env;
     jint count;
-    jint error = JVMDI_ERROR_NONE;
-
-    jclass clazz = inStream_readClassRef(in);
+    jclass clazz;
+    
+    env = getEnv();
+    
+    clazz = inStream_readClassRef(env, in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
     count = inStream_readInt(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    WITH_LOCAL_REFS(env, count);
+    WITH_LOCAL_REFS(env, count) {
 
-    for (i = 0; (i < count) && (error == JVMDI_ERROR_NONE); i++) {
-        field = inStream_readFieldID(in);
+        int i;
+        
+        for (i = 0; i < count; i++) {
+            
+            jfieldID field;
+            char *signature = NULL;
+            jvmtiError error;
+            jdwpError serror;
+            
+            field = inStream_readFieldID(in);
+            if (inStream_error(in)) {
+                break;
+            }
 
-        error = fieldSignature(clazz, field, &signature);
-        if (error == JVMDI_ERROR_NONE) {
-            error = readStaticFieldValue(env, in, clazz, 
-                                         field, signature);
-            jdwpFree(signature);
+            error = fieldSignature(clazz, field, NULL, &signature, NULL);
+            if (error != JVMTI_ERROR_NONE) {
+                break;
+            }
+            
+            serror = readStaticFieldValue(env, in, clazz, field, signature);
+            
+            jvmtiDeallocate(signature);
+            
+            if ( serror != JDWP_ERROR(NONE) ) {
+                break;
+            }
+            
         }
-    }
 
-    END_WITH_LOCAL_REFS(env);
+    } END_WITH_LOCAL_REFS(env);
+    
     return JNI_TRUE;
 }
 
@@ -150,40 +175,6 @@ invokeStatic(PacketInputStream *in, PacketOutputStream *out)
 {
     return sharedInvoke(in, out);
 }
-
-/* Now done on front end 
-static jboolean 
-validateObjectAssignments(PacketInputStream *in, PacketOutputStream *out)
-{
-    JNIEnv *env = getEnv();
-    jint i;
-
-    jclass clazz = inStream_readClassRef(in);
-    jint count = inStream_readInt(in);
-    if (inStream_error(in)) {
-        return JNI_TRUE;
-    }
-
-    outStream_writeInt(out, count);
-    for (i = 0; i < count; i++) {
-        jint result;
-        jobject object;
-        char *signature = inStream_readString(in);
-        if (signature == NULL) {
-            outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-            return JNI_TRUE;
-        }
-        object = inStream_readObjectRef(in);
-        if (inStream_error(in)) {
-            return JNI_TRUE;
-        }
-        result = validateAssignment(clazz, object, signature);
-        outStream_writeInt(out, result);
-        jdwpFree(signature);
-    }
-
-    return JNI_TRUE;
-} */
 
 void *ClassType_Cmds[] = { (void *)0x4
     ,(void *)superclass

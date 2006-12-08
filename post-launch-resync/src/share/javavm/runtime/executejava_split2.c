@@ -1,5 +1,5 @@
 /*
- * @(#)executejava_split2.c	1.76 06/10/10
+ * @(#)executejava_split2.c	1.77 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -46,8 +46,8 @@
 #include "javavm/include/porting/int.h"
 #include "javavm/include/porting/jni.h"
 
-#ifdef CVM_JVMDI
-#include "javavm/include/jvmdi_impl.h"
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmti_impl.h"
 #include "generated/offsets/java_lang_Thread.h"
 #endif
 
@@ -357,19 +357,19 @@ CVMdumpStats()
 #define UPDATE_INSTRUCTION_COUNT(opcode)
 #endif
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 /* NOTE: This macro must be called AFTER the PC has been
-   incremented. CVMjvmdiNotifyDebuggerOfSingleStep may cause a
+   incremented. CVMjvmtiNotifyDebuggerOfSingleStep may cause a
    breakpoint opcode to get inserted at the current PC to allow the
    debugger to coalesce single-step events. Therefore, we need to
-   refetch the opcode after calling out to JVMDI. */
-#define JVMDI_SINGLE_STEPPING(opcodeVar)				\
+   refetch the opcode after calling out to JVMTI. */
+#define JVMTI_SINGLE_STEPPING(opcodeVar)				\
 {									\
-    if (ee->jvmdiSingleStepping && CVMjvmdiThreadEventsEnabled(ee)) {	\
+    if (ee->jvmtiSingleStepping && CVMjvmtiThreadEventsEnabled(ee)) {	\
 	DECACHE_PC(frame);						\
 	DECACHE_TOS(frame);						\
 	CVMD_gcSafeExec(ee, {						\
-	    CVMjvmdiNotifyDebuggerOfSingleStep(ee, pc);			\
+	    CVMjvmtiNotifyDebuggerOfSingleStep(ee, pc);			\
 	});								\
 	/* Refetch opcode. See above. */				\
 	opcodeVar = *pc;						\
@@ -377,17 +377,17 @@ CVMdumpStats()
     }									\
 }
 
-#define JVMDI_WATCHING_FIELD_ACCESS(location)				\
-    if (CVMglobals.jvmdiWatchingFieldAccess) {				\
+#define JVMTI_WATCHING_FIELD_ACCESS(location)				\
+    if (CVMglobals.jvmtiWatchingFieldAccess) {				\
 	DECACHE_PC(frame);						\
 	DECACHE_TOS(frame);						\
 	CVMD_gcSafeExec(ee, {						\
-	    CVMjvmdiNotifyDebuggerOfFieldAccess(ee, location, fb);	\
+	    CVMjvmtiNotifyDebuggerOfFieldAccess(ee, location, fb);	\
 	});								\
     }
 
-#define JVMDI_WATCHING_FIELD_MODIFICATION(location, isDoubleWord, isRef)      \
-   if (CVMglobals.jvmdiWatchingFieldModification) {			      \
+#define JVMTI_WATCHING_FIELD_MODIFICATION(location, isDoubleWord, isRef)      \
+   if (CVMglobals.jvmtiWatchingFieldModification) {			      \
        jvalue val;							      \
        DECACHE_PC(frame);						      \
        DECACHE_TOS(frame);						      \
@@ -404,15 +404,15 @@ CVMdumpStats()
 	   val.i = STACK_INT(-1);					      \
        }								      \
        CVMD_gcSafeExec(ee, {						      \
-	   CVMjvmdiNotifyDebuggerOfFieldModification(			      \
+	   CVMjvmtiNotifyDebuggerOfFieldModification(			      \
 	       ee, location, fb, val);					      \
        });								      \
    }
 
 #else
-#define JVMDI_SINGLE_STEPPING(opc)
-#define JVMDI_WATCHING_FIELD_ACCESS(location)
-#define JVMDI_WATCHING_FIELD_MODIFICATION(location, isDoubleWord, isRef)
+#define JVMTI_SINGLE_STEPPING(opc)
+#define JVMTI_WATCHING_FIELD_ACCESS(location)
+#define JVMTI_WATCHING_FIELD_MODIFICATION(location, isDoubleWord, isRef)
 
 #endif
 
@@ -611,7 +611,7 @@ CVMdumpStats()
 #ifdef CVM_USELABELS
 #define CONTINUE_NEXT(opc)			\
 	UPDATE_INSTRUCTION_COUNT(opc);		\
-        JVMDI_SINGLE_STEPPING(opc);		\
+        JVMTI_SINGLE_STEPPING(opc);		\
 	goto *nextLabel;
 
 #define CONTINUE {					\
@@ -623,7 +623,7 @@ CVMdumpStats()
 #ifdef CVM_PREFETCH_OPCODE
 #define CONTINUE_NEXT(opc)			\
 	UPDATE_INSTRUCTION_COUNT(opc);		\
-        JVMDI_SINGLE_STEPPING(opc);		\
+        JVMTI_SINGLE_STEPPING(opc);		\
 	continue;
 
 #define CONTINUE {				\
@@ -633,7 +633,7 @@ CVMdumpStats()
 #else
 #define CONTINUE_NEXT(opc)			\
 	UPDATE_INSTRUCTION_COUNT(opc);		\
-        JVMDI_SINGLE_STEPPING(opc);		\
+        JVMTI_SINGLE_STEPPING(opc);		\
 	continue;
 
 #define CONTINUE {				\
@@ -697,7 +697,7 @@ CVMdumpStats()
  */
 #undef CHECK_PENDING_REQUESTS
 #ifdef CVM_REMOTE_EXCEPTIONS_SUPPORTED
-/* %comment hideya001 */
+/* %comment h001 */
 #define CHECK_PENDING_REQUESTS(ee) \
 	(CVMD_gcSafeCheckRequest(ee) || CVMremoteExceptionOccurred(ee))
 #else
@@ -909,12 +909,12 @@ CVMgcUnsafeExecuteJavaMethodQuick(CVMExecEnv* ee, CVMUint8* pc,
 #endif
 #endif
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     if (*pc == opc_breakpoint) {
 	CVMUint32 opcode0;
 	
 	CVMD_gcSafeExec(ee, {
-	    opcode0 = CVMjvmdiGetBreakpointOpcode(ee, pc, CVM_FALSE);
+	    opcode0 = CVMjvmtiGetBreakpointOpcode(ee, pc, CVM_FALSE);
 	});
         REEXECUTE_BYTECODE(opcode0);
     }
@@ -1713,7 +1713,7 @@ skip_prefetch:
 	CASE_NT(opc_agetstatic_quick)
 	CASE(opc_getstatic_quick) {
 	    CVMFieldBlock* fb = CVMcpGetFb(cp, GET_INDEX(pc+1));
-	    JVMDI_WATCHING_FIELD_ACCESS(NULL)
+	    JVMTI_WATCHING_FIELD_ACCESS(NULL)
 	    STACK_INFO(0) = CVMfbStaticField(ee, fb);
 	    TRACE(("\t%s #%d %C.%F[%d] (0x%X) ==>\n",
 		   CVMopnames[*pc], GET_INDEX(pc+1), CVMfbClassBlock(fb), fb, 
@@ -1724,7 +1724,7 @@ skip_prefetch:
 	CASE_NT(opc_aputstatic_quick)
 	CASE(opc_putstatic_quick) {
 	    CVMFieldBlock* fb = CVMcpGetFb(cp, GET_INDEX(pc+1));
-	    JVMDI_WATCHING_FIELD_MODIFICATION(NULL, CVM_FALSE, CVMfbIsRef(fb));
+	    JVMTI_WATCHING_FIELD_MODIFICATION(NULL, CVM_FALSE, CVMfbIsRef(fb));
 	    CVMfbStaticField(ee, fb) = STACK_INFO(-1);
 	    TRACE(("\t%s #%d (0x%X) ==> %C.%F[%d]\n",
 		   CVMopnames[*pc], GET_INDEX(pc+1), STACK_INT(-1), 
@@ -1740,7 +1740,7 @@ skip_prefetch:
 	    CVMFieldBlock* fb = CVMcpGetFb(cp, GET_INDEX(pc+1));
 	    CVMClassBlock* cb = CVMfbClassBlock(fb);
 	    INIT_CLASS_IF_NEEDED(ee, cb);
-	    JVMDI_WATCHING_FIELD_ACCESS(NULL)
+	    JVMTI_WATCHING_FIELD_ACCESS(NULL)
 	    STACK_INFO(0) = CVMfbStaticField(ee, fb);
 	    TRACE(("\t%s #%d %C.%F[%d] (0x%X) ==>\n",
 		   CVMopnames[*pc], GET_INDEX(pc+1), cb, fb, 
@@ -1753,7 +1753,7 @@ skip_prefetch:
 	    CVMFieldBlock* fb = CVMcpGetFb(cp, GET_INDEX(pc+1));
 	    CVMClassBlock* cb = CVMfbClassBlock(fb);
 	    INIT_CLASS_IF_NEEDED(ee, cb);
-	    JVMDI_WATCHING_FIELD_MODIFICATION(NULL, CVM_FALSE, CVMfbIsRef(fb));
+	    JVMTI_WATCHING_FIELD_MODIFICATION(NULL, CVM_FALSE, CVMfbIsRef(fb));
 	    CVMfbStaticField(ee, fb) = STACK_INFO(-1);
 	    TRACE(("\t%s #%d (0x%X) ==> %C.%F[%d]\n",
 		   CVMopnames[*pc], GET_INDEX(pc+1), STACK_INT(-1), 
@@ -1853,7 +1853,7 @@ skip_prefetch:
 	    CVMInt16 offset = CVMgetInt16(pc + 1);
 	    TRACE(("\t%s %#x (offset=%d)\n",CVMopnames[*pc],
 		   pc + offset, offset));
-	    /* %comment hideya002 */
+	    /* %comment h002 */
 	    UPDATE_PC_AND_TOS_AND_CONTINUE_WITH_BACKWARDS_CHECK(offset, 0);
 	}
 
@@ -2067,7 +2067,7 @@ skip_prefetch:
 	ASMLABEL(label_handleReturn);
 	{
 #undef RETURN_OPCODE
-#if (defined(CVM_JVMDI) || defined(CVM_JVMPI))
+#if (defined(CVM_JVMTI) || defined(CVM_JVMPI))
 #define RETURN_OPCODE return_opcode
 	    CVMUint32 return_opcode;
 	    /* We might gc, so flush state. */
@@ -2348,14 +2348,14 @@ return_to_compiled:
 	    }
 #endif /* CVM_JVMPI */
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 	    /* %comment kbr001 */
 	    /* Decache all curently uncached interpreter state */
-	    if (CVMjvmdiThreadEventsEnabled(ee)) {
+	    if (CVMjvmtiThreadEventsEnabled(ee)) {
 		DECACHE_PC(frame);
 		DECACHE_TOS(frame);
 		CVMD_gcSafeExec(ee, {
-		    CVMjvmdiNotifyDebuggerOfFramePush(ee);
+		    CVMjvmtiNotifyDebuggerOfFramePush(ee);
 		});
 	    }
 #endif
@@ -2428,7 +2428,7 @@ return_to_compiled:
 	    CVMInt32 offset = CVMgetInt32(pc + 1);
 	    TRACE(("\t%s %#x (offset=%d)\n", CVMopnames[*pc],
 		   pc + offset, offset));
-	    /* %comment hideya002 */
+	    /* %comment h002 */
 	    UPDATE_PC_AND_TOS_AND_CONTINUE_WITH_BACKWARDS_CHECK(offset, 0);
 	}
 
@@ -2637,7 +2637,7 @@ return_to_compiled:
 	CASE(opc_getstatic2_quick) {
 	    CVMUint32 cpIndex = GET_INDEX(pc + 1);
 	    CVMFieldBlock* fb = CVMcpGetFb(cp, cpIndex);
-	    JVMDI_WATCHING_FIELD_ACCESS(NULL)
+	    JVMTI_WATCHING_FIELD_ACCESS(NULL)
 	    CVMmemCopy64(&STACK_INFO(0).raw, &CVMfbStaticField(ee, fb).raw);
 	    TRACE(("\t%s #%d %C.%F[%d] ((0x%X,0x%X) ==>\n",
 		   CVMopnames[*pc], GET_INDEX(pc+1), CVMfbClassBlock(fb), fb,
@@ -2648,7 +2648,7 @@ return_to_compiled:
 	CASE(opc_putstatic2_quick) {
 	    CVMUint32 cpIndex = GET_INDEX(pc + 1);
 	    CVMFieldBlock* fb = CVMcpGetFb(cp, cpIndex);
-	    JVMDI_WATCHING_FIELD_MODIFICATION(NULL, CVM_TRUE, CVM_FALSE);
+	    JVMTI_WATCHING_FIELD_MODIFICATION(NULL, CVM_TRUE, CVM_FALSE);
 	    CVMmemCopy64(&CVMfbStaticField(ee, fb).raw, &STACK_INFO(-2).raw);
 	    TRACE(("\t%s #%d (0x%X,0x%X) ==> %C.%F[%d]\n",
 		   CVMopnames[*pc], GET_INDEX(pc+1), 
@@ -2662,7 +2662,7 @@ return_to_compiled:
 	    CVMFieldBlock* fb = CVMcpGetFb(cp, cpIndex);
 	    CVMClassBlock* cb = CVMfbClassBlock(fb);
 	    INIT_CLASS_IF_NEEDED(ee, cb);
-	    JVMDI_WATCHING_FIELD_ACCESS(NULL)
+	    JVMTI_WATCHING_FIELD_ACCESS(NULL)
 	    CVMmemCopy64(&STACK_INFO(0).raw, &CVMfbStaticField(ee, fb).raw);
 	    TRACE(("\t%s #%d %C.%F[%d] ((0x%X,0x%X) ==>\n",
 		   CVMopnames[*pc], GET_INDEX(pc+1), cb, fb,
@@ -2675,7 +2675,7 @@ return_to_compiled:
 	    CVMFieldBlock* fb = CVMcpGetFb(cp, cpIndex);
 	    CVMClassBlock* cb = CVMfbClassBlock(fb);
 	    INIT_CLASS_IF_NEEDED(ee, cb);
-	    JVMDI_WATCHING_FIELD_MODIFICATION(NULL, CVM_TRUE, CVM_FALSE);
+	    JVMTI_WATCHING_FIELD_MODIFICATION(NULL, CVM_TRUE, CVM_FALSE);
 	    CVMmemCopy64(&CVMfbStaticField(ee, fb).raw, &STACK_INFO(-2).raw);
 	    TRACE(("\t%s #%d (0x%X,0x%X) ==> %C.%F[%d]\n",
 		   CVMopnames[*pc], GET_INDEX(pc+1), 
@@ -2719,7 +2719,7 @@ return_to_compiled:
 	/* return from a jsr or jsr_w */
 
         CASE(opc_ret) {
-	    /* %comment hideya002 */
+	    /* %comment h002 */
 	    if (CHECK_PENDING_REQUESTS(ee)) {
 		goto handle_pending_request;
 	    }
@@ -2730,14 +2730,14 @@ return_to_compiled:
 
 	/* debugger breakpoint */
         CASE(opc_breakpoint) {
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 	    CVMUint32 opcode0;
 	    
 	    TRACE(("\tbreakpoint\n"));
 	    DECACHE_PC(frame);
 	    DECACHE_TOS(frame);
 	    CVMD_gcSafeExec(ee, {
-		opcode0 = CVMjvmdiGetBreakpointOpcode(ee, pc, CVM_TRUE);
+		opcode0 = CVMjvmtiGetBreakpointOpcode(ee, pc, CVM_TRUE);
 	    });
 	    REEXECUTE_BYTECODE(opcode0);
 #else

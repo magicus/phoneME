@@ -1,5 +1,5 @@
 /*
- * @(#)classcreate.c	1.194 06/10/10
+ * @(#)classcreate.c	1.195 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -45,9 +45,6 @@
 #include "javavm/export/jvm.h"
 #ifdef CVM_SPLIT_VERIFY
 #include "javavm/include/split_verify.h"
-#endif
-#ifdef CVM_JVMDI
-#include "javavm/include/jvmdi_impl.h"
 #endif
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
@@ -217,7 +214,7 @@ CVMclassSetupClassLoaderRoot(CVMExecEnv* ee, CVMClassBlock* cb,
  * are 4 of them:
  *   1. classGlobalRoots - used by gc to keep all loaded classes live
  *      when doing partial gc.
- *   2. class table - used by gc and jvmdi. Akin to JDK bin_classes.
+ *   2. class table - used by gc and jvmti. Akin to JDK bin_classes.
  *   3. loader cache - cache of <Class,ClassLoader> pairs used to speed
  *      up class lookups.
  *   4. ClassLoader - each ClassLoader maintains a private database of

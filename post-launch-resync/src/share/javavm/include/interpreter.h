@@ -1,5 +1,5 @@
 /*
- * @(#)interpreter.h	1.252 06/10/10
+ * @(#)interpreter.h	1.255 06/10/30
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -47,6 +47,9 @@
 #include "javavm/include/lvm/lvm.h"
 #endif /* %end lvm */
 
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
+#endif
 
 #define CVMJAVAPKG "java/lang/"
 
@@ -212,9 +215,12 @@ struct CVMExecEnv {
     CVMUint32 criticalCount;
 
     CVMBool hasPostedExitEvents;
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     CVMBool debugEventsEnabled;
-    CVMBool jvmdiSingleStepping;
+    CVMBool jvmtiSingleStepping;
+    JvmtiEventEnabled _jvmtiThreadEventEnabled;
+    /* NOTE: first pass at JVMTI support has only one global environment */
+    /*   JvmtiEnv *_jvmti_env; */
 #endif
 #ifdef CVM_JVMPI
     CVMProfiledMonitor *blockingLockEntryMonitor;
@@ -285,7 +291,7 @@ typedef struct {
      * and deallocating the global root. */
     CVMThreadICell* threadICell;
     /* This function pointer must be NULL for all Java threads (i.e.,
-     * those started by a call to JVM_StartThread). The JVMDI and
+     * those started by a call to JVM_StartThread). The JVMTI and
      * JVMPI, however, need to be able to create "system threads",
      * which are arbitrary function pointers which execute in the
      * context of an CVMExecEnv, so they can make JNI calls. */
@@ -921,7 +927,7 @@ CVMframeIterateIsInlined(CVMFrameIterator *iter);
 CVMBool
 CVMframeIterateHandlesExceptions(CVMFrameIterator *iter);
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 CVMBool
 CVMframeIterateCanHaveJavaCatchClause(CVMFrameIterator *iter);
 #endif
@@ -1136,7 +1142,7 @@ CVMquickenOpcode(CVMExecEnv* ee, CVMUint8* pc,
  * no locking is needed. Contention for this lock is very low, so a global
  * lock is appropriate.
  *
- * You can only use this lock in non-jvmdi builds. Otherwise the
+ * You can only use this lock in non-jvmti builds. Otherwise the
  * debuggerLock should be used. No lock is needed if there is no
  * classloading support.
  */
@@ -1350,7 +1356,7 @@ CVMsyncReturnHelper(CVMExecEnv *ee, CVMFrame *frame, CVMObjectICell *objICell,
 		    CVMBool areturn);
 
 /*
- * Common code for handling jvmdi and jvmpi events during method return.
+ * Common code for handling jvmti and jvmpi events during method return.
  * Returns the return opcode (fixed up if it was an opc_breakpoint).
  */
 CVMUint32

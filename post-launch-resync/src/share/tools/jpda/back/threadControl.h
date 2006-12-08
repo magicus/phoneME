@@ -1,5 +1,5 @@
 /*
- * @(#)threadControl.h	1.39 06/10/10
+ * @(#)threadControl.h	1.40 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,7 +23,10 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <jni.h>
+
+#ifndef JDWP_THREADCONTROL_H
+#define JDWP_THREADCONTROL_H
+
 #include "stepControl.h"
 #include "invoker.h"
 #include "bag.h"
@@ -35,37 +38,44 @@ void threadControl_detachInvokes(void);
 void threadControl_onHook(void);
 void threadControl_onConnect(void);
 void threadControl_onDisconnect(void);
+void threadControl_joinAllDebugThreads(void);
+
+jvmtiError threadControl_popFrames(jthread thread, FrameNumber fnum);
+
 struct bag *threadControl_onEventHandlerEntry(jbyte sessionID, 
-                                              jint kind, jthread thread);
-void threadControl_onEventHandlerExit(jint kind, jthread thread, struct bag *);
+                  EventIndex ei, jthread thread, jobject currentException);
+void threadControl_onEventHandlerExit(EventIndex ei, jthread thread, struct bag *);
 
 
-jint threadControl_suspendThread(jthread thread, jboolean deferred);
-jint threadControl_resumeThread(jthread thread, jboolean do_unblock);
-jint threadControl_suspendCount(jthread thread, jint *count);
+jvmtiError threadControl_suspendThread(jthread thread, jboolean deferred);
+jvmtiError threadControl_resumeThread(jthread thread, jboolean do_unblock);
+jvmtiError threadControl_suspendCount(jthread thread, jint *count);
 
-jint threadControl_suspendAll(void);
-jint threadControl_resumeAll(void);
+jvmtiError threadControl_suspendAll(void);
+jvmtiError threadControl_resumeAll(void);
 
 StepRequest *threadControl_getStepRequest(jthread);
 InvokeRequest *threadControl_getInvokeRequest(jthread);
 
 jboolean threadControl_isDebugThread(jthread thread);
-jint threadControl_addDebugThread(jthread thread);
-jint threadControl_removeDebugThread(jthread thread);
-void threadControl_joinAllDebugThreads(void);
+jvmtiError threadControl_addDebugThread(jthread thread);
 
-jint threadControl_applicationThreadStatus(jthread thread, jint *threadStatus, jint *suspendStatus);
-jint threadControl_interrupt(jthread thread);
-jint threadControl_stop(jthread thread, jobject throwable);
+jvmtiError threadControl_applicationThreadStatus(jthread thread, jdwpThreadStatus *pstatus, jint *suspendStatus);
+jvmtiError threadControl_interrupt(jthread thread);
+jvmtiError threadControl_stop(jthread thread, jobject throwable);
 
-jint threadControl_setEventMode(jint mode, jint event, jthread thread);
-jint threadControl_getInstructionStepMode(jthread thread);
+jvmtiError threadControl_setEventMode(jvmtiEventMode mode, EventIndex ei, jthread thread);
+jvmtiEventMode threadControl_getInstructionStepMode(jthread thread);
 
-jint threadControl_getFrameLocation(jthread thread, jframeID frame,
-                      jclass *clazz, jmethodID *method, jlocation *location);
 jthread threadControl_currentThread(void);
 void threadControl_setPendingInterrupt(jthread thread);
+void threadControl_clearCLEInfo(JNIEnv *env, jthread thread);
+jboolean threadControl_cmpCLEInfo(JNIEnv *env, jthread thread, jclass clazz,
+                                  jmethodID method, jlocation location);
+void threadControl_saveCLEInfo(JNIEnv *env, jthread thread, EventIndex ei,
+                               jclass clazz, jmethodID method,
+                               jlocation location);
+jlong threadControl_getFrameGeneration(jthread thread);
 
-
+#endif
 

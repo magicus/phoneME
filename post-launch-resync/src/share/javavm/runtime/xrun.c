@@ -111,7 +111,7 @@ void CVMXrunProcessTable(CVMXrunTable *Xrun_table, JNIEnv *env, JavaVM *vm)
     free(Xrun_table->table);
 }
 
-/* %comment: kbr036 */
+/* %comment: k036 */
 
 /* This takes in the entire -Xrun string and takes care of 
  * loading the library, 

@@ -1,5 +1,5 @@
 /*
- * @(#)debugDispatch.c	1.34 06/10/10
+ * @(#)debugDispatch.c	1.35 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,12 +23,10 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <stdlib.h>
 
+#include "util.h"
 #include "transport.h"
 #include "debugDispatch.h"
-#include "util.h"
-#include "JDWP.h"
 #include "VirtualMachineImpl.h"
 #include "ReferenceTypeImpl.h"
 #include "ClassTypeImpl.h"
@@ -44,22 +42,25 @@
 #include "ArrayReferenceImpl.h"
 #include "EventRequestImpl.h"
 #include "StackFrameImpl.h"
+#include "typedefs.h"
 
 static void **l1Array;
 
 void 
-debugDispatch_initialize()
+debugDispatch_initialize(void)
 {
     /*
      * Create the level-one (CommandSet) dispatch table.
      * Zero the table so that unknown CommandSets do not
      * cause random errors.
      */
-    l1Array = jdwpClearedAlloc((JDWP_HIGHEST_COMMAND_SET+1) * sizeof(void *));
+    l1Array = jvmtiAllocate((JDWP_HIGHEST_COMMAND_SET+1) * sizeof(void *));
 
     if (l1Array == NULL) {
-        ALLOC_ERROR_EXIT();
+        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"command set array");
     }
+
+    (void)memset(l1Array, 0, (JDWP_HIGHEST_COMMAND_SET+1) * sizeof(void *));
 
     /*
      * Create the level-two (Command) dispatch tables to the
@@ -84,7 +85,7 @@ debugDispatch_initialize()
 }
 
 void
-debugDispatch_reset()
+debugDispatch_reset(void)
 {
 }
 
@@ -104,7 +105,8 @@ debugDispatch_getHandler(int cmdSet, int cmd)
      * is greater than the nummber of commands (the first
      * element) in the CommandSet, indicate this is invalid.
      */
-    if (l2Array == NULL || cmd > (int)l2Array[0]) {
+    /*LINTED*/
+    if (l2Array == NULL || cmd > (int)(intptr_t)(void*)l2Array[0]) {
         return NULL;
     }
 

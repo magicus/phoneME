@@ -1,5 +1,5 @@
 /*
- * @(#)CVMWriter.java	1.152	06/10/10
+ * @(#)CVMWriter.java	1.153	06/10/27
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -443,7 +443,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	 * and reusing prior definitions -- there are so many dimensions it doesn't
 	 * see worthwhile.
 	 * In fact, the only reason this is not an anonimous structure is the
-	 * case where it has to be writable and initialized, for JVMDI.
+	 * case where it has to be writable and initialized, for JVMTI.
 	 */
 	if ( ! impureCode ){
 	    // this might as well be static since there will be

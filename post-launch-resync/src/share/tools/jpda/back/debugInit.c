@@ -1,5 +1,5 @@
 /*
- * @(#)debugInit.c	1.49 06/10/10
+ * @(#)debugInit.c	1.50 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,12 +23,10 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "jvmdi.h"
+
+#include <ctype.h>
+
 #include "util.h"
-#include "debugInit.h"
 #include "commonRef.h"
 #include "debugDispatch.h"
 #include "eventHandler.h"
@@ -37,22 +35,37 @@
 #include "stepControl.h"
 #include "transport.h"
 #include "classTrack.h"
-#include "VirtualMachineImpl.h"
+#include "debugLoop.h"
 #include "bag.h"
-#include "JDWP.h"
 #include "invoker.h"
-#include "version.h"
 
-static JVMDI_RawMonitor initMonitor;
+/* How the options get to OnLoad: */
+#define XDEBUG "-Xdebug"
+#define XRUN "-Xrunjdwp"
+#define AGENTLIB "-agentlib:jdwp"
+
+/* Debug version defaults */
+#ifdef DEBUG
+    #define DEFAULT_ASSERT_ON           JNI_TRUE
+    #define DEFAULT_ASSERT_FATAL        JNI_TRUE
+    #define DEFAULT_LOGFILE             "jdwp.log"
+#else
+    #define DEFAULT_ASSERT_ON           JNI_FALSE
+    #define DEFAULT_ASSERT_FATAL        JNI_FALSE
+    #define DEFAULT_LOGFILE             NULL
+#endif
+
+static jboolean vmInitialized;
+static jrawMonitorID initMonitor;
 static jboolean initComplete;
 static jbyte currentSessionID; 
 
 /*
- * Options set through the JVM_OnLoad options string. All of these values
+ * Options set through the OnLoad options string. All of these values
  * are set once at VM startup and never reset. 
  */
 static jboolean isServer = JNI_FALSE;     /* Listens for connecting debuggers? */
-static jboolean isStrict = JNI_FALSE;     /* Strict reading of JVMDI spec? */
+static jboolean isStrict = JNI_FALSE;     /* Unused */
 static jboolean useStandardAlloc = JNI_FALSE;  /* Use standard malloc/free? */
 static struct bag *transports;            /* of TransportSpec */
 
@@ -62,15 +75,12 @@ static jboolean initOnUncaught = JNI_FALSE; /* init when uncaught exc thrown */
 
 static char *launchOnInit = NULL;           /* launch this app during init */
 static jboolean suspendOnInit = JNI_TRUE;   /* suspend all app threads after init */
-static char *names;                         /* strings derived from OnLoad options */
+static jboolean dopause = JNI_FALSE;        /* pause for debugger attach */
+static jboolean docoredump = JNI_FALSE;     /* core dump on exit */
+static char *logfile = NULL;                /* Name of logfile (if logging) */
+static unsigned logflags = 0;               /* Log flags */
 
-#ifdef DEBUG
-jboolean assertOn = JNI_TRUE;               /* check assertions */
-jboolean assertFatal = JNI_TRUE;            /* if an assertion occurs it is fatal */
-#else
-jboolean assertOn = JNI_FALSE;              /* check assertions */
-jboolean assertFatal = JNI_FALSE;           /* if an assertion occurs it is fatal */
-#endif
+static char *names;                         /* strings derived from OnLoad options */
 
 /*
  * Elements of the transports bag
@@ -78,144 +88,298 @@ jboolean assertFatal = JNI_FALSE;           /* if an assertion occurs it is fata
 typedef struct TransportSpec {
     char *name;
     char *address;
-    jboolean loaded;
-    void *cookie;
+    long timeout;
 } TransportSpec;
 
 /*
  * Forward Refs
  */
-static void initialEventHook(JNIEnv *env, JVMDI_Event *event);
-static void initialize(JNIEnv *env, JVMDI_Event *triggeringEvent);
+static void JNICALL cbEarlyVMInit(jvmtiEnv*, JNIEnv *, jthread);
+static void JNICALL cbEarlyVMDeath(jvmtiEnv*, JNIEnv *);
+static void JNICALL cbEarlyException(jvmtiEnv*, JNIEnv *, 
+            jthread, jmethodID, jlocation, jobject, jmethodID, jlocation);
+
+static void initialize(JNIEnv *env, jthread thread, EventIndex triggering_ei);
 static jboolean parseOptions(char *str);
 
 /*
  * Phase 1: Initial load.
  *
- * JVM_OnLoad is called by the VM immediately after the back-end
+ * OnLoad is called by the VM immediately after the back-end
  * library is loaded. We can do very little in this function since 
  * the VM has not completed initialization. So, we parse the JDWP
- * options and set up a simple initial event hook for JVMDI events. 
- * When a triggering event occurs, that hook will begin debugger initialization.
+ * options and set up a simple initial event callbacks for JVMTI events. 
+ * When a triggering event occurs, that callback will begin debugger initialization.
  */
-static jint 
-setInitialNotificationMode(void)
+
+/* Get a static area to hold the Global Data */
+static BackendGlobalData *
+get_gdata(void)
 {
-    #define SET_MODE(mode, type) { \
-            jint error = threadControl_setEventMode(mode, type, NULL); \
-            if (error != JVMDI_ERROR_NONE) { \
-                return error; \
-            } \
-    }
-    jint mode;
-
-    /* SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_SINGLE_STEP); */
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_BREAKPOINT);    
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_FRAME_POP);     
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_USER_DEFINED);  
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_CLASS_PREPARE); 
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_CLASS_UNLOAD);  
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_CLASS_LOAD);    
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_FIELD_ACCESS);       
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_FIELD_MODIFICATION); 
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_EXCEPTION_CATCH);    
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_METHOD_ENTRY);       
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_METHOD_EXIT); 
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_THREAD_START);  
-    SET_MODE(JVMDI_DISABLE, JVMDI_EVENT_THREAD_END);    
-
-    SET_MODE(JVMDI_ENABLE, JVMDI_EVENT_VM_DEATH);           
-    SET_MODE(JVMDI_ENABLE, JVMDI_EVENT_VM_INIT);            
-    if (initOnUncaught || (initOnException != NULL)) {
-        mode = JVMDI_ENABLE;
-    } else {
-        mode = JVMDI_DISABLE;
-    }
-    SET_MODE(mode, JVMDI_EVENT_EXCEPTION);
-    return JVMDI_ERROR_NONE;
-
-    #undef SET_MODE
+    static BackendGlobalData s;
+    (void)memset(&s, 0, sizeof(BackendGlobalData));
+    return &s;
 }
 
-static jvmdiError
-jvmdiAlloc(jlong size, jbyte **bufferPtr)
+static jvmtiError
+set_event_notification(jvmtiEventMode mode, EventIndex ei)
 {
-    void *buffer;
+    jvmtiError error; 
+    error = JVMTI_FUNC_PTR(gdata->jvmti,SetEventNotificationMode)
+                (gdata->jvmti, mode, eventIndex2jvmti(ei), NULL);
+    if (error != JVMTI_ERROR_NONE) {
+        ERROR_MESSAGE(("JDWP unable to configure initial JVMTI event %s: %s(%d)",
+                    eventText(ei), jvmtiErrorText(error), error));
+    }
+    return error;
+}
 
-    /*
-     * Our malloc impls can't handle full jlongs
+/* Logic to determine JVMTI version compatibility */
+static jboolean
+compatible_versions(jint major_runtime,     jint minor_runtime,
+                    jint major_compiletime, jint minor_compiletime)
+{
+#if 1 /* FIXUP: We allow version 0 to be compatible with anything */
+    /* Special check for FCS of 1.0. */
+    if ( major_runtime == 0 || major_compiletime == 0 ) {
+        return JNI_TRUE;
+    }
+#endif
+    /* Runtime major version must match. */
+    if ( major_runtime != major_compiletime ) {
+        return JNI_FALSE;
+    }
+    /* Runtime minor version must be >= the version compiled with. */
+    if ( minor_runtime < minor_compiletime ) {
+        return JNI_FALSE;
+    }
+    /* Assumed compatible */
+    return JNI_TRUE;
+}
+
+/* OnLoad startup:
+ *   Returning JNI_ERR will cause the java_g VM to core dump, be careful. 
+ */
+jint
+onLoadX(JavaVM *vm, char *options, void *reserved) 
+{
+    jvmtiError error;
+    jvmtiCapabilities needed_capabilities;
+    jvmtiCapabilities potential_capabilities;
+    jint              jvmtiCompileTimeMajorVersion;
+    jint              jvmtiCompileTimeMinorVersion;
+    jint              jvmtiCompileTimeMicroVersion;
+
+    /* See if it's already loaded */
+    if ( gdata!=NULL && gdata->isLoaded==JNI_TRUE ) {
+        ERROR_MESSAGE(("Cannot load this JVM TI agent twice, check your java command line for duplicate jdwp options."));
+        return JNI_ERR;
+    }
+
+    /* If gdata is defined and the VM died, why are we here? */
+    if ( gdata!=NULL && gdata->vmDead ) {
+        ERROR_MESSAGE(("JDWP unable to load, VM died"));
+        return JNI_ERR;
+    }
+    
+    /* Get global data area */
+    gdata = get_gdata();
+    if (gdata == NULL) {
+        ERROR_MESSAGE(("JDWP unable to allocate memory"));
+        return JNI_ERR;
+    }
+    gdata->isLoaded = JNI_TRUE;
+
+    /* Start filling in gdata */
+    gdata->jvm = vm;
+    vmInitialized = JNI_FALSE;
+    gdata->vmDead = JNI_FALSE;
+
+    /* Npt and Utf function init */
+    NPT_INITIALIZE(&(gdata->npt), NPT_VERSION, NULL);
+    if (gdata->npt == NULL) {
+        ERROR_MESSAGE(("JDWP: unable to initialize NPT library"));
+        return JNI_ERR;
+    }
+    gdata->npt->utf = (gdata->npt->utfInitialize)(NULL);
+    if (gdata->npt->utf == NULL) {
+        ERROR_MESSAGE(("JDWP: UTF function initialization failed"));
+        return JNI_ERR;
+    }
+
+    /* Get the JVMTI Env, IMPORTANT: Do this first! For jvmtiAllocate(). */
+    error = JVM_FUNC_PTR(vm,GetEnv)
+                (vm, (void **)&(gdata->jvmti), JVMTI_VERSION_1);
+    if (error != JNI_OK) {   
+        ERROR_MESSAGE(("JDWP unable to access JVMTI Version 1 (0x%x)," 
+                         " is your J2SE a 1.5 or newer version?"
+                         " JNIEnv's GetEnv() returned %d", 
+                         JVMTI_VERSION_1, error));
+        forceExit(1); /* Kill entire process, no core dump */
+    }
+
+    /* Check to make sure the version of jvmti.h we compiled with
+     *      matches the runtime version we are using.
      */
-    if ((size >> 32) != 0) {
-        return JVMDI_ERROR_OUT_OF_MEMORY;
+    jvmtiCompileTimeMajorVersion  = ( JVMTI_VERSION & JVMTI_VERSION_MASK_MAJOR )
+                                        >> JVMTI_VERSION_SHIFT_MAJOR;
+    jvmtiCompileTimeMinorVersion  = ( JVMTI_VERSION & JVMTI_VERSION_MASK_MINOR )
+                                        >> JVMTI_VERSION_SHIFT_MINOR;
+    jvmtiCompileTimeMicroVersion  = ( JVMTI_VERSION & JVMTI_VERSION_MASK_MICRO )
+                                        >> JVMTI_VERSION_SHIFT_MICRO;
+    
+    /* Check for compatibility */
+    if ( !compatible_versions(jvmtiMajorVersion(), jvmtiMinorVersion(),
+                jvmtiCompileTimeMajorVersion, jvmtiCompileTimeMinorVersion) ) {
+        
+        ERROR_MESSAGE(("This jdwp native library will not work with this VM's "
+                       "version of JVMTI (%d.%d.%d), it needs JVMTI %d.%d[.%d].",
+                       jvmtiMajorVersion(), 
+                       jvmtiMinorVersion(), 
+                       jvmtiMicroVersion(),
+                       jvmtiCompileTimeMajorVersion, 
+                       jvmtiCompileTimeMinorVersion,
+                       jvmtiCompileTimeMicroVersion));
+        
+        /* Do not let VM get a fatal error, we don't want a core dump here. */
+        forceExit(1); /* Kill entire process, no core dump wanted */
     }
 
-    buffer = jdwpAlloc((jint)size);
-    if (buffer == NULL) {
-        return JVMDI_ERROR_OUT_OF_MEMORY;
-    } else {
-        *bufferPtr = buffer;
-        return JVMDI_ERROR_NONE;
+    /* Parse input options */
+    if (!parseOptions(options)) {
+        /* No message necessary, should have been printed out already */
+        /* Do not let VM get a fatal error, we don't want a core dump here. */
+        forceExit(1); /* Kill entire process, no core dump wanted */
     }
-}
 
-static jvmdiError
-jvmdiFree(jbyte *buffer)
-{
-    jdwpFree(buffer);
-    return JVMDI_ERROR_NONE;
+    LOG_MISC(("Onload: %s", options));
+
+    /* Get potential capabilities */
+    (void)memset(&potential_capabilities,0,sizeof(potential_capabilities));
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetPotentialCapabilities)
+                (gdata->jvmti, &potential_capabilities);
+    if (error != JVMTI_ERROR_NONE) {
+        ERROR_MESSAGE(("JDWP unable to get potential JVMTI capabilities: %s(%d)",
+                        jvmtiErrorText(error), error));
+        return JNI_ERR;
+    }
+    
+    /* Fill in ones that we must have */
+    (void)memset(&needed_capabilities,0,sizeof(needed_capabilities));
+    needed_capabilities.can_access_local_variables              = 1;
+    needed_capabilities.can_generate_single_step_events         = 1;
+    needed_capabilities.can_generate_exception_events           = 1;
+    needed_capabilities.can_generate_frame_pop_events           = 1;
+    needed_capabilities.can_generate_breakpoint_events          = 1;
+    needed_capabilities.can_suspend                             = 1;
+    needed_capabilities.can_generate_method_entry_events        = 1;
+    needed_capabilities.can_generate_method_exit_events         = 1;
+    /*    needed_capabilities.can_generate_garbage_collection_events  = 1; */
+    needed_capabilities.can_maintain_original_method_order      = 1;
+    needed_capabilities.can_generate_monitor_events             = 1;
+    /*    needed_capabilities.can_tag_objects                         = 1; */
+   
+    /* And what potential ones that would be nice to have */ 
+    needed_capabilities.can_force_early_return
+                = potential_capabilities.can_force_early_return;
+    needed_capabilities.can_generate_field_modification_events  
+                = potential_capabilities.can_generate_field_modification_events;
+    needed_capabilities.can_generate_field_access_events        
+                = potential_capabilities.can_generate_field_access_events;
+    needed_capabilities.can_get_bytecodes                       
+                = potential_capabilities.can_get_bytecodes;
+    needed_capabilities.can_get_synthetic_attribute             
+                = potential_capabilities.can_get_synthetic_attribute;
+    needed_capabilities.can_get_owned_monitor_info              
+                = potential_capabilities.can_get_owned_monitor_info;
+    needed_capabilities.can_get_current_contended_monitor       
+                = potential_capabilities.can_get_current_contended_monitor;
+    needed_capabilities.can_get_monitor_info                    
+                = potential_capabilities.can_get_monitor_info;
+    needed_capabilities.can_pop_frame                           
+                = potential_capabilities.can_pop_frame;
+    needed_capabilities.can_redefine_classes                    
+                = potential_capabilities.can_redefine_classes;
+    needed_capabilities.can_redefine_any_class                  
+                = potential_capabilities.can_redefine_any_class;
+    needed_capabilities.can_get_owned_monitor_stack_depth_info                  
+        = potential_capabilities.can_get_owned_monitor_stack_depth_info;
+    needed_capabilities.can_get_constant_pool
+                = potential_capabilities.can_get_constant_pool;
+    {
+      /*        needed_capabilities.can_get_source_debug_extension      = 1; */
+        needed_capabilities.can_get_source_file_name            = 1;
+        needed_capabilities.can_get_line_numbers                = 1;
+        needed_capabilities.can_signal_thread                   
+                = potential_capabilities.can_signal_thread;
+    }
+
+    /* Add the capabilities */
+    error = JVMTI_FUNC_PTR(gdata->jvmti,AddCapabilities)
+                (gdata->jvmti, &needed_capabilities);
+    if (error != JVMTI_ERROR_NONE) {
+        ERROR_MESSAGE(("JDWP unable to get necessary JVMTI capabilities."));
+        forceExit(1); /* Kill entire process, no core dump wanted */
+    }
+
+    /* Initialize event number mapping tables */
+    eventIndexInit();
+
+    /* Set the initial JVMTI event notifications */
+    error = set_event_notification(JVMTI_ENABLE, EI_VM_DEATH);
+    if (error != JVMTI_ERROR_NONE) {
+        return JNI_ERR;
+    }
+    error = set_event_notification(JVMTI_ENABLE, EI_VM_INIT);
+    if (error != JVMTI_ERROR_NONE) {
+        return JNI_ERR;
+    }
+    if (initOnUncaught || (initOnException != NULL)) {
+        error = set_event_notification(JVMTI_ENABLE, EI_EXCEPTION);
+        if (error != JVMTI_ERROR_NONE) {
+            return JNI_ERR;
+        }
+    }
+
+    /* Set callbacks just for 3 functions */
+    (void)memset(&(gdata->callbacks),0,sizeof(gdata->callbacks));
+    gdata->callbacks.VMInit             = &cbEarlyVMInit;
+    gdata->callbacks.VMDeath            = &cbEarlyVMDeath;
+    gdata->callbacks.Exception  = &cbEarlyException;
+    error = JVMTI_FUNC_PTR(gdata->jvmti,SetEventCallbacks)
+                (gdata->jvmti, &(gdata->callbacks), sizeof(gdata->callbacks));
+    if (error != JVMTI_ERROR_NONE) {
+        ERROR_MESSAGE(("JDWP unable to set JVMTI event callbacks: %s(%d)",
+                        jvmtiErrorText(error), error));
+        return JNI_ERR;
+    }
+    
+    LOG_MISC(("OnLoad: DONE"));
+    return JNI_OK;
 }
 
 JNIEXPORT jint JNICALL 
 JVM_OnLoad(JavaVM *vm, char *options, void *reserved) 
 {
-    jint error;
-
-    if (!parseOptions(options)) {
-        return -1;
-    }
-
-    /*
-     * Immediately set the two global function table pointers
-     */
-    jvm = vm;
-    error = (*vm)->GetEnv(vm, (void **)(void *)&jvmdi, JVMDI_VERSION_1);
-    if (error != JNI_OK) {   
-        if (error == JVMDI_ERROR_ACCESS_DENIED) {
-            fprintf(stderr, "JDWP not initialized properly.  Add -Xdebug to command line\n");
-        } else {
-            fprintf(stderr, "JDWP unable to access JVMDI Version 1\n");
-        }
-        return -1;
-    }
-
-    error = setInitialNotificationMode();
-    if (error != JVMDI_ERROR_NONE) {
-        fprintf(stderr, "JDWP unable to configure JVMDI events\n");
-        return -1;
-    }
-
-    error = jvmdi->SetAllocationHooks(jvmdiAlloc, jvmdiFree);
-    if (error != JVMDI_ERROR_NONE) {
-        fprintf(stderr, "JDWP unable to set JVMDI allocation hooks\n");
-        return -1;
-    }
-
-    error = jvmdi->SetEventHook(initialEventHook);
-    if (error != JVMDI_ERROR_NONE) {
-        fprintf(stderr, "JDWP unable to register for JVMDI events\n");
-        return -1;
-    }
-    return 0;
+  return onLoadX(vm, options, reserved);
 }
+
+
+JNIEXPORT jint JNICALL 
+Agent_OnLoad(JavaVM *vm, char *options, void *reserved) 
+{
+  return onLoadX(vm, options, reserved);
+}
+
 
 /*
  * Phase 2: Initial events. Phase 2 consists of waiting for the 
  * event that triggers full initialization. Under normal circumstances 
- * (initOnStartup == TRUE) this is the JVMDI_EVENT_VM_INIT event. 
+ * (initOnStartup == TRUE) this is the JVMTI_EVENT_VM_INIT event. 
  * Otherwise, we delay initialization until the app throws a 
  * particular exception. The triggering event invokes 
  * the bulk of the initialization, including creation of threads and 
- * monitors, transport setup, and installation of a new event hook which
+ * monitors, transport setup, and installation of a new event callback which
  * handles the complete set of events.
  *
  * Since the triggering event comes in on an application thread, some of the 
@@ -227,89 +391,141 @@ JVM_OnLoad(JavaVM *vm, char *options, void *reserved)
 
 /*
  * Wait for a triggering event; then kick off debugger 
- * initialization. A different event hook will be installed by 
+ * initialization. A different event callback will be installed by 
  * debugger initialization, and this function will not be called
  * again.
  */
-static void 
-initialEventHook(JNIEnv *env, JVMDI_Event *event) 
+    
+    /*
+     * TO DO: Decide whether we need to protect this code with 
+     * a lock. It might be too early to create a monitor safely (?).
+     */
+
+static void JNICALL
+cbEarlyVMInit(jvmtiEnv *jvmti_env, JNIEnv *env, jthread thread) 
 {
-    static jboolean vmInitialized = JNI_FALSE;
+    LOG_CB(("cbEarlyVMInit"));
+    if ( gdata->vmDead ) {
+        EXIT_ERROR(AGENT_ERROR_INTERNAL,"VM dead at VM_INIT time");
+    }
+    if (initOnStartup)
+        initialize(env, thread, EI_VM_INIT);
+    vmInitialized = JNI_TRUE;
+    LOG_MISC(("END cbEarlyVMInit"));
+}
+
+static void
+disposeEnvironment(jvmtiEnv *jvmti_env)
+{
+    jvmtiError error;
+    
+    error = JVMTI_FUNC_PTR(jvmti_env,DisposeEnvironment)(jvmti_env);
+    if ( error == JVMTI_ERROR_MUST_POSSESS_CAPABILITY ) 
+        error = JVMTI_ERROR_NONE;  /* NOTE: FIXUP when JVMTI has disposeEnv */
+    /* What should error return say? */
+    if (error != JVMTI_ERROR_NONE) {
+        ERROR_MESSAGE(("JDWP unable to dispose of JVMTI environment: %s(%d)",
+                        jvmtiErrorText(error), error));
+    }
+    gdata->jvmti = NULL;
+}
+
+static void JNICALL
+cbEarlyVMDeath(jvmtiEnv *jvmti_env, JNIEnv *env) 
+{
+    LOG_CB(("cbEarlyVMDeath"));
+    if ( gdata->vmDead ) {
+        EXIT_ERROR(AGENT_ERROR_INTERNAL,"VM died more than once");
+    }
+    disposeEnvironment(jvmti_env);
+    gdata->jvmti = NULL;
+    gdata->jvm = NULL;
+    gdata->vmDead = JNI_TRUE;
+    LOG_MISC(("END cbEarlyVMDeath"));
+}
+
+static void JNICALL
+cbEarlyException(jvmtiEnv *jvmti_env, JNIEnv *env, 
+        jthread thread, jmethodID method, jlocation location, 
+        jobject exception, 
+        jmethodID catch_method, jlocation catch_location)
+{
+    jvmtiError error;
+    jthrowable currentException;
+
+    LOG_CB(("cbEarlyException: thread=%p", thread));
+    
+    if ( gdata->vmDead ) {
+        EXIT_ERROR(AGENT_ERROR_INTERNAL,"VM dead at initial Exception event");
+    }
+    if (!vmInitialized)  {
+        LOG_MISC(("VM is not initialized yet"));
+        return;
+    }
 
     /*
-     * %comment gordonh007
+     * We want to preserve any current exception that might get wiped
+     * out during event handling (e.g. JNI calls). We have to rely on
+     * space for the local reference on the current frame because
+     * doing a PushLocalFrame here might itself generate an exception. 
      */
-    switch (event->kind) {
-        case JVMDI_EVENT_VM_INIT: {
-            /*
-             * Create a lock for use by the allocator.
-             */
-            JVMDI_RawMonitor allocLock;
-            jint error = jvmdi->CreateRawMonitor("JDWP Alloc Lock", &allocLock);
-            if (error != JVMDI_ERROR_NONE) {
-                ERROR_MESSAGE_EXIT("JDWP unable to create allocator lock\n");
-            }
-            util_setAllocLock(allocLock);
-            vmInitialized = JNI_TRUE;
+    
+    currentException = JNI_FUNC_PTR(env,ExceptionOccurred)(env);
+    JNI_FUNC_PTR(env,ExceptionClear)(env);
+
+    if (initOnUncaught && catch_method == NULL) {
         
-            if (initOnStartup) {
-                initialize(env, event);
-                return;
+        LOG_MISC(("Initializing on uncaught exception"));
+        initialize(env, thread, EI_EXCEPTION);
+    
+    } else if (initOnException != NULL) {
+        
+        jclass clazz;
+ 
+        /* Get class of exception thrown */     
+        clazz = JNI_FUNC_PTR(env,GetObjectClass)(env, exception);
+        if ( clazz != NULL ) {
+            char *signature = NULL;
+            /* initing on throw, check */
+            error = classSignature(clazz, &signature, NULL);
+            LOG_MISC(("Checking specific exception: looking for %s, got %s",
+                        initOnException, signature));
+            if ( (error==JVMTI_ERROR_NONE) && 
+                (strcmp(signature, initOnException) == 0)) {
+                LOG_MISC(("Initializing on specific exception"));
+                initialize(env, thread, EI_EXCEPTION);
+            } else {
+                error = AGENT_ERROR_INTERNAL; /* Just to cause restore */
             }
-            break;
+	    if ( signature != NULL ) {
+                jvmtiDeallocate(signature);
+	    }
+        } else {
+            error = AGENT_ERROR_INTERNAL; /* Just to cause restore */
         }
-
-        case JVMDI_EVENT_EXCEPTION: {
-            char *signature;
-            jclass clazz;
-            jvmdiError error;
-
-            if (vmInitialized) {
-                /*
-                 * We want to preserve any current exception that might get wiped
-                 * out during event handling (e.g. JNI calls). We have to rely on
-                 * space for the local reference on the current frame because
-                 * doing a PushLocalFrame here might itself generate an exception. 
-                 */
-                jthrowable currentException = (*env)->ExceptionOccurred(env);
-                (*env)->ExceptionClear(env);
-    
-                if (initOnUncaught && event->u.exception.catch_clazz == NULL) {
-                    initialize(env, event);
-                    return;
-                }
-    
-                if (initOnException == NULL) {
-                    /* Not initing on throw, skip check below */
-                    return;
-                }
-    
-                clazz = (*env)->GetObjectClass(env, event->u.exception.exception);
-                error = jvmdi->GetClassSignature(clazz, &signature);
-                if ((error == JVMDI_ERROR_NONE) && (signature != NULL) && 
-                    (strcmp(signature, initOnException) == 0)) {
-                    initialize(env, event);
-                    return;
-                }
-    
-                /*
-                 * Restore exception state from before hook call
-                 */
-                if (currentException != NULL) {
-                    (*env)->Throw(env, currentException);
-                } else {
-                    (*env)->ExceptionClear(env);
-                }
+        
+        /* If initialize didn't happen, we need to restore things */
+        if ( error != JVMTI_ERROR_NONE ) {
+            /*
+             * Restore exception state from before callback call
+             */
+            LOG_MISC(("No initialization, didn't find right exception"));
+            if (currentException != NULL) {
+                JNI_FUNC_PTR(env,Throw)(env, currentException);
+            } else {
+                JNI_FUNC_PTR(env,ExceptionClear)(env);
             }
-
-            break;
         }
+    
     }
+    
+    LOG_MISC(("END cbEarlyException"));
+
 }
 
 typedef struct EnumerateArg {
     jboolean isServer;
-    jint error;
+    jdwpError error;
     jint startCount;
 } EnumerateArg;
 
@@ -318,36 +534,37 @@ startTransport(void *item, void *arg)
 {
     TransportSpec *transport = item;
     EnumerateArg *enumArg = arg;
-    jint error;
+    jdwpError serror;
 
-    error = transport_startTransport(enumArg->isServer, transport->name,
-                                     transport->address, &transport->cookie);
-    if (error != JDWP_ERROR(NONE)) {
-        fprintf(stderr, "Transport %s failed to initialize, rc = %d.\n",
-                transport->name, error);
-        enumArg->error = error;
+    LOG_MISC(("Begin startTransport"));
+    serror = transport_startTransport(enumArg->isServer, transport->name,
+                                     transport->address, transport->timeout);
+    if (serror != JDWP_ERROR(NONE)) {
+        ERROR_MESSAGE(("JDWP Transport %s failed to initialize, %s(%d)",
+                transport->name, jdwpErrorText(serror), serror));
+        enumArg->error = serror;
     } else {
         /* (Don't overwrite any previous error) */
 
         enumArg->startCount++;
     }
 
+    LOG_MISC(("End startTransport"));
+    
     return JNI_TRUE;   /* Always continue, even if there was an error */
 }
 
 static jboolean
-stopTransport(void *item, void *arg) 
+stopTransport() 
 {
-    TransportSpec *transport = item;
-    transport_stopTransport(transport->cookie);
+    transport_stopTransport();
     return JNI_TRUE;
 }
 
 static jboolean
-unloadTransport(void *item, void *arg) 
+unloadTransport() 
 {
-    TransportSpec *transport = item;
-    transport_unloadTransport(transport->cookie);
+    transport_unloadTransport();
     return JNI_TRUE;
 }
 
@@ -357,6 +574,7 @@ signalInitComplete(void)
     /*
      * Initialization is complete
      */
+    LOG_MISC(("signal initialization complete"));
     debugMonitorEnter(initMonitor);
     initComplete = JNI_TRUE;
     debugMonitorNotifyAll(initMonitor);
@@ -367,7 +585,7 @@ signalInitComplete(void)
  * Determine if  initialization is complete.
  */
 jboolean 
-debugInit_isInitComplete() 
+debugInit_isInitComplete(void) 
 {
     return initComplete;
 }
@@ -376,7 +594,7 @@ debugInit_isInitComplete()
  * Wait for all initialization to complete.
  */
 void 
-debugInit_waitInitComplete() 
+debugInit_waitInitComplete(void) 
 {
     debugMonitorEnter(initMonitor);
     while (!initComplete) {
@@ -385,33 +603,96 @@ debugInit_waitInitComplete()
     debugMonitorExit(initMonitor);
 }
 
+/* All process exit() calls come from here */
+void
+forceExit(int exit_code)
+{
+    /* make sure the transport is closed down before we exit() */
+    transport_close();
+    exit(exit_code);
+}
+
+/* All JVM fatal error exits lead here (e.g. we need to kill the VM). */
+static void
+jniFatalError(JNIEnv *env, const char *msg, jvmtiError error, int exit_code)
+{
+    JavaVM *vm;
+    char buf[512];
+    
+    gdata->vmDead = JNI_TRUE;
+    if ( msg==NULL )
+        msg = "UNKNOWN REASON";
+    vm = gdata->jvm;
+    if ( env==NULL && vm!=NULL ) {
+      jint rc = (*((*vm)->GetEnv))(vm, (void *)&env, JNI_VERSION_1_2);
+        if (rc != JNI_OK ) {
+            env = NULL;
+        }
+    }
+    if ( error != JVMTI_ERROR_NONE ) {
+        (void)snprintf(buf, sizeof(buf), "JDWP %s, jvmtiError=%s(%d)",
+                    msg, jvmtiErrorText(error), error);
+    } else {
+        (void)snprintf(buf, sizeof(buf), "JDWP %s", buf);
+    }
+    if (env != NULL) {
+        (*((*env)->FatalError))(env, buf);
+    } else {
+        /* Should rarely ever reach here, means VM is really dead */
+        print_message(stderr, "ERROR: JDWP: ", "\n",
+                "Can't call JNI FatalError(NULL, \"%s\")", buf);
+    }
+    forceExit(exit_code);
+}
+
 /*
  * Initialize debugger back end modules
  */              
 static void 
-initialize(JNIEnv *env, JVMDI_Event *triggeringEvent) 
-{   
+initialize(JNIEnv *env, jthread thread, EventIndex triggering_ei) 
+{
+    jvmtiError error;
     EnumerateArg arg;
-    struct bag *initEventBag;
     jbyte suspendPolicy;
 
-    JDI_ASSERT(triggeringEvent != NULL);
-
+    LOG_MISC(("Begin initialize()"));
     currentSessionID = 0;
     initComplete = JNI_FALSE;
 
-    /* Remove initial event hook */
-    jvmdi->SetEventHook(NULL);
+    if ( gdata->vmDead ) {
+        EXIT_ERROR(AGENT_ERROR_INTERNAL,"VM dead at initialize() time");
+    }
+    
+    /* Turn off the initial JVMTI event notifications */
+    error = set_event_notification(JVMTI_DISABLE, EI_EXCEPTION);
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error, "unable to disable JVMTI event notification");
+    }
+    error = set_event_notification(JVMTI_DISABLE, EI_VM_INIT);
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error, "unable to disable JVMTI event notification");
+    }
+    error = set_event_notification(JVMTI_DISABLE, EI_VM_DEATH);
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error, "unable to disable JVMTI event notification");
+    }
+    
+    /* Remove initial event callbacks */
+    (void)memset(&(gdata->callbacks),0,sizeof(gdata->callbacks));
+    error = JVMTI_FUNC_PTR(gdata->jvmti,SetEventCallbacks)
+                (gdata->jvmti, &(gdata->callbacks), sizeof(gdata->callbacks));
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error, "unable to clear JVMTI callbacks");
+    }
 
     commonRef_initialize();
-    util_initialize();
+    util_initialize(env);
     threadControl_initialize();
     stepControl_initialize();
     invoker_initialize();
     debugDispatch_initialize();
-    version_initialize();
-    classTrack_initialize();
-    VirtualMachine_initialize();
+    classTrack_initialize(env);
+    debugLoop_initialize();
 
     initMonitor = debugMonitorCreate("JDWP Initialization Monitor");
 
@@ -423,8 +704,8 @@ initialize(JNIEnv *env, JVMDI_Event *triggeringEvent)
     arg.error = JDWP_ERROR(NONE);
     arg.startCount = 0;
 
-    transport_initialize(env);
-    bagEnumerateOver(transports, startTransport, &arg);
+    transport_initialize();
+    (void)bagEnumerateOver(transports, startTransport, &arg);
 
     /*
      * Exit with an error only if 
@@ -434,29 +715,43 @@ initialize(JNIEnv *env, JVMDI_Event *triggeringEvent)
     if ((arg.error != JDWP_ERROR(NONE)) && 
         (arg.startCount == 0) && 
         initOnStartup) {
-        (*env)->FatalError(env, "No transports initialized");
+        EXIT_ERROR(map2jvmtiError(arg.error), "No transports initialized");
     }
 
     eventHandler_initialize(currentSessionID);
 
     signalInitComplete();
 
-    suspendPolicy = suspendOnInit ? JDWP_SuspendPolicy_ALL 
-                                  : JDWP_SuspendPolicy_NONE;
-    if (triggeringEvent->kind == JVMDI_EVENT_VM_INIT) {
-        jthread thread = currentThread();
-        eventHelper_reportVMInit(currentSessionID, thread, suspendPolicy);
-        (*env)->DeleteGlobalRef(env, thread);
+    transport_waitForConnection();
+    
+    suspendPolicy = suspendOnInit ? JDWP_SUSPEND_POLICY(ALL) 
+                                  : JDWP_SUSPEND_POLICY(NONE);
+    if (triggering_ei == EI_VM_INIT) {
+        LOG_MISC(("triggering_ei == EI_VM_INIT"));
+        eventHelper_reportVMInit(env, currentSessionID, thread, suspendPolicy);
     } else {
         /*
-         * %comment gordonh008
+         * TO DO: Not a good way of getting the triggering event to the 
+         * just-attached debugger. It would be nice to make this a little 
+         * cleaner. There is also a race condition where other events 
+         * can get in the queue (from other not-yet-suspended threads) 
+         * before this one does. (Also need to handle allocation error below?)
          */
+        EventInfo info;
+        struct bag *initEventBag;
+        LOG_MISC(("triggering_ei != EI_VM_INIT"));
         initEventBag = eventHelper_createEventBag();
-        eventHelper_recordEvent(triggeringEvent, 0, 
-                                suspendPolicy, initEventBag);
-        eventHelper_reportEvents(currentSessionID, initEventBag);
+        (void)memset(&info,0,sizeof(info));
+        info.ei = triggering_ei;
+        eventHelper_recordEvent(&info, 0, suspendPolicy, initEventBag);
+        (void)eventHelper_reportEvents(currentSessionID, initEventBag);
+        bagDestroyBag(initEventBag);
     }
 
+    if ( gdata->vmDead ) {
+        EXIT_ERROR(AGENT_ERROR_INTERNAL,"VM dead before initialize() completes");
+    }
+    LOG_MISC(("End initialize()"));
 }
 
 /*
@@ -464,23 +759,24 @@ initialize(JNIEnv *env, JVMDI_Event *triggeringEvent)
  * debugger can connect properly later.
  */
 void 
-debugInit_reset(jboolean shutdown)
+debugInit_reset(JNIEnv *env, jboolean shutdown)
 {
     EnumerateArg arg;
 
+    LOG_MISC(("debugInit_reset() beginning"));
+    
     currentSessionID++;
     initComplete = JNI_FALSE;
 
     eventHandler_reset(currentSessionID);
     transport_reset();
-    VirtualMachine_reset();
-    version_reset();
     debugDispatch_reset();
     invoker_reset();
     stepControl_reset();
     threadControl_reset();
     util_reset();
-    commonRef_reset();
+    commonRef_reset(env);
+    classTrack_reset();
 
     /*
      * If this is a server, we are now ready to accept another connection.
@@ -491,20 +787,27 @@ debugInit_reset(jboolean shutdown)
         arg.isServer = JNI_TRUE;
         arg.error = JDWP_ERROR(NONE);
         arg.startCount = 0;
-        bagEnumerateOver(transports, startTransport, &arg);
+        (void)bagEnumerateOver(transports, startTransport, &arg);
+        
+        signalInitComplete();
+        
+        transport_waitForConnection();
+    } else {
+        signalInitComplete(); /* Why? */
     }
-    signalInitComplete();
+
+    LOG_MISC(("debugInit_reset() completed."));
 }
 
 
 char *
-debugInit_launchOnInit()
+debugInit_launchOnInit(void)
 {
     return launchOnInit;
 }
 
 jboolean
-debugInit_suspendOnInit()
+debugInit_suspendOnInit(void)
 {
     return suspendOnInit;
 }
@@ -512,18 +815,6 @@ debugInit_suspendOnInit()
 /*
  * code below is shamelessly swiped from hprof.
  */
-typedef struct {
-    char *name;
-    jboolean *ptr;
-} binary_switch_t;
-
-static binary_switch_t binary_switches[] = {
-    {"suspend", &suspendOnInit},
-    {"server", &isServer},
-    {"strict", &isStrict},
-    {"onuncaught", &initOnUncaught},
-    {"stdalloc", &useStandardAlloc}
-};
 
 static int 
 get_tok(char **src, char *buf, int buflen, char sep)
@@ -548,37 +839,151 @@ get_tok(char **src, char *buf, int buflen, char sep)
 static void 
 printUsage(void)
 {
-     fprintf(stdout,
-	     "\n"
-	     "-Xrunjdwp usage: -Xrunjdwp:[help]|[<option>=<value>, ...]\n"
-	     "\n"
-	     "Option Name and Value\t\tDescription\t\t\tDefault\n"
-	     "---------------------\t\t-----------\t\t\t-------\n"
-	     "suspend=y|n\t\t\twait on startup?\t\ty\n"
-	     "transport=<name>\t\ttransport spec\t\t\tnone\n"
-	     "address=<listen/attach address>\ttransport spec\t\t\t\"\"\n"
-	     "server=y|n\t\t\tlisten for debugger?\t\tn\n"
-	     "launch=<command line>\t\trun debugger on event\t\tnone\n"
-	     "onthrow=<exception name>\tdebug on throw\t\t\tnone\n"
-	     "onuncaught=y|n\t\t\tdebug on any uncaught?\t\tn\n"
-	     "strict=y|n\t\t\tskip JVMDI bug workarounds?\tn\n"
-	     "stdalloc=y|n\t\t\tUse C Runtime malloc/free?\tn\n"
-	     "\n"
-	     "Example: java -Xrunjdwp:transport=dt_socket,address=localhost:8000\n\n");
+     TTY_MESSAGE((
+ "               Java Debugger JDWP Agent Library\n"
+ "               --------------------------------\n"
+ "\n"
+ "  (see http://java.sun.com/products/jpda for more information)\n" 
+ "\n"
+ "jdwp usage: java " AGENTLIB "=[help]|[<option>=<value>, ...]\n"
+ "\n"
+ "Option Name and Value            Description                       Default\n"
+ "---------------------            -----------                       -------\n"
+ "suspend=y|n                      wait on startup?                  y\n"
+ "transport=<name>                 transport spec                    none\n"
+ "address=<listen/attach address>  transport spec                    \"\"\n"
+ "server=y|n                       listen for debugger?              n\n"
+ "launch=<command line>            run debugger on event             none\n"
+ "onthrow=<exception name>         debug on throw                    none\n"
+ "onuncaught=y|n                   debug on any uncaught?            n\n"
+ "timeout=<timeout value>          for listen/attach in milliseconds n\n"
+ "mutf8=y|n                        output modified utf-8             n\n"
+ "quiet=y|n                        control over terminal messages    n\n"
+ "\n"
+ "Obsolete Options\n"
+ "----------------\n"
+ "strict=y|n\n"
+ "stdalloc=y|n\n"
+ "\n"
+ "Examples\n"
+ "--------\n"
+ "  - Using sockets connect to a debugger at a specific address:\n"
+ "    java " AGENTLIB "=transport=dt_socket,address=localhost:8000 ...\n"
+ "  - Using sockets listen for a debugger to attach:\n"
+ "    java " AGENTLIB "=transport=dt_socket,server=y,suspend=y ...\n"
+ "\n"
+ "Notes\n"
+ "-----\n"
+ "  - A timeout value of 0 (the default) is no timeout.\n"
+ "\n"
+ "Warnings\n"
+ "--------\n"
+ "  - The older " XRUN " interface can still be used, but will be removed in\n"
+ "    a future release, for example:\n"
+ "        java " XDEBUG " " XRUN ":[help]|[<option>=<value>, ...]\n"
+    ));
+
+#ifdef DEBUG
+     
+     TTY_MESSAGE((
+ "\n"
+ "Debugging Options            Description                       Default\n"
+ "-----------------            -----------                       -------\n"
+ "pause=y|n                    pause to debug PID                n\n"
+ "coredump=y|n                 coredump at exit                  n\n"
+ "errorexit=y|n                exit on any error                 n\n"
+ "logfile=filename             name of log file                  none\n"
+ "logflags=flags               log flags (bitmask)               none\n"
+ "                               JVM calls     = 0x001\n"
+ "                               JNI calls     = 0x002\n"
+ "                               JVMTI calls   = 0x004\n"
+ "                               misc events   = 0x008\n"
+ "                               step logs     = 0x010\n"
+ "                               locations     = 0x020\n"
+ "                               callbacks     = 0x040\n"
+ "                               errors        = 0x080\n"
+ "                               everything    = 0xfff\n"
+ "debugflags=flags             debug flags (bitmask)           none\n"
+ "                               USE_ITERATE_THROUGH_HEAP 0x01\n"
+ "\n"
+ "Environment Variables\n"
+ "---------------------\n"
+ "_JAVA_JDWP_OPTIONS\n"
+ "    Options can be added externally via this environment variable.\n"
+ "    Anything contained in it will get a comma prepended to it (if needed),\n"
+ "    then it will be added to the end of the options supplied via the\n"
+ "    " XRUN " or " AGENTLIB " command line option.\n"
+    ));
+
+#endif
+ 
+
+
 }
 
-jboolean checkAddress(void *bagItem, void *arg)
+static jboolean checkAddress(void *bagItem, void *arg)
 {
     TransportSpec *spec = (TransportSpec *)bagItem;
     if (spec->address == NULL) {
-        fprintf(stderr, "ERROR: Non-server transport %s must have a connection "
-                "address specified through the 'address=' option\n", spec->name);
+        ERROR_MESSAGE(("JDWP Non-server transport %s must have a connection "
+                "address specified through the 'address=' option", 
+                spec->name));
         return JNI_FALSE;
     } else {
         return JNI_TRUE;
     }
 }
-             
+
+static  char *
+add_to_options(char *options, char *new_options)
+{
+    size_t originalLength;
+    char *combinedOptions;
+
+    /*
+     * Allocate enough space for both strings and
+     * comma in between.
+     */
+    originalLength = strlen(options);
+    combinedOptions = jvmtiAllocate((jint)originalLength + 1 +
+                                (jint)strlen(new_options) + 1);
+    if (combinedOptions == NULL) {
+        return NULL;
+    }
+
+    (void)strcpy(combinedOptions, options);
+    (void)strcat(combinedOptions, ",");
+    (void)strcat(combinedOptions, new_options);
+
+    return combinedOptions;
+}
+
+static jboolean
+get_boolean(char **pstr, jboolean *answer)
+{
+    char buf[80];
+    *answer = JNI_FALSE;
+    /*LINTED*/
+    if (get_tok(pstr, buf, (int)sizeof(buf), ',')) {
+        if (strcmp(buf, "y") == 0) {
+            *answer = JNI_TRUE;
+            return JNI_TRUE;
+        } else if (strcmp(buf, "n") == 0) {
+            *answer = JNI_FALSE;
+            return JNI_TRUE;
+        }
+    }
+    return JNI_FALSE;
+}
+
+/* atexit() callback */
+static void
+atexit_finish_logging(void)
+{
+    /* Normal exit(0) (not _exit()) may only reach here */
+    finish_logging(0);  /* Only first call matters */
+}
+
 static jboolean 
 parseOptions(char *options)
 {
@@ -587,119 +992,114 @@ parseOptions(char *options)
     char *current;
     int length;
     char *str;
+    char *errmsg;
 
+    /* Set defaults */
+    gdata->assertOn     = DEFAULT_ASSERT_ON;
+    gdata->assertFatal  = DEFAULT_ASSERT_FATAL;
+    logfile             = DEFAULT_LOGFILE;
+    /* Options being NULL will end up being an error. */
     if (options == NULL) {
         options = "";
     }
 
-    /*
-     * At this point during initialization, we haven't determined which 
-     * allocator to use. For the allocations that take place here, we set
-     * things up to use the regular malloc. These buffers are never freed;
-     * if that changes, proper steps will need to be taken to free them
-     * with the right allocator.
-     */
+    /* Check for "help" BEFORE we add any environmental settings */
+    if ((strcmp(options, "help")) == 0) {
+        printUsage();
+        forceExit(0); /* Kill entire process, no core dump wanted */
+    }
+
+    /* These buffers are never freed */
     {
         char *envOptions;
-        jboolean savedStandardAlloc = useStandardAlloc;
-        useStandardAlloc = JNI_TRUE;
     
         /*
          * Add environmentally specified options.
          */
         envOptions = getenv("_JAVA_JDWP_OPTIONS");
         if (envOptions != NULL) {
-            int originalLength;
-            char *combinedOptions;
-
-            fprintf(stderr, "Picked up _JAVA_JDWP_OPTIONS: %s\n", envOptions);
-
-            /*
-             * Allocate enough space for both strings and
-             * comma in between.
-             */
-            originalLength = strlen(options);
-            combinedOptions = jdwpAlloc(originalLength + 1 +
-                                        strlen(envOptions) + 1);
-            if (combinedOptions == NULL) {
-                fprintf(stderr, "JDWP unable to allocate memory\n");
-                return -1;
+            options = add_to_options(options, envOptions);
+            if ( options==NULL ) {
+                EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"options");
             }
-
-            strcpy(combinedOptions, options);
-            strcat(combinedOptions, ",");
-            strcat(combinedOptions, envOptions);
-
-            options = combinedOptions;
         }
 
         /*
          * Allocate a buffer for names derived from option strings. It should
          * never be longer than the original options string itself.
+         * Also keep a copy of the options in gdata->options.
          */
-        length = strlen(options);
-        names = jdwpAlloc(length + 1); 
+        length = (int)strlen(options);
+        gdata->options = jvmtiAllocate(length + 1); 
+        if (gdata->options == NULL) {
+            EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"options");
+        }
+        (void)strcpy(gdata->options, options);
+        names = jvmtiAllocate(length + 1); 
         if (names == NULL) {
-            fprintf(stderr, "JDWP unable to allocate memory\n");
-            return -1;
+            EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"options");
         }
     
         transports = bagCreateBag(sizeof(TransportSpec), 3);
         if (transports == NULL) {
-            fprintf(stderr, "ERROR: unable to allocate memory.\n");
-            return JNI_FALSE;
+            EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"transports");
         }
     
-        useStandardAlloc = savedStandardAlloc;
-        /* Back to default allocator */
     }
 
     current = names;
     end = names + length;
     str = options;
 
-    if ((strcmp(str, "help")) == 0) {
-        printUsage();
-        /*
-         * This is the only silent way to exit. We need a jvmdi->exit.
-         */
-        exit(0);
-    }
-
     while (*str) {
         char buf[100];
-        if (!get_tok(&str, buf, sizeof(buf), '=')) {
-            goto bad_option;
+        /*LINTED*/
+        if (!get_tok(&str, buf, (int)sizeof(buf), '=')) {
+            goto syntax_error;
         }
         if (strcmp(buf, "transport") == 0) {
             currentTransport = bagAdd(transports);
-            if (!get_tok(&str, current, end - current, ',')) {
-                goto bad_option;
+            /*LINTED*/
+            if (!get_tok(&str, current, (int)(end - current), ',')) {
+                goto syntax_error;
             }
             currentTransport->name = current;
             current += strlen(current) + 1;
         } else if (strcmp(buf, "address") == 0) {
             if (currentTransport == NULL) {
-                fprintf(stderr, "ERROR: address specified without transport.\n");
-                goto bad_option_no_msg;
+                errmsg = "address specified without transport";
+                goto bad_option_with_errmsg;
             }
-            if (!get_tok(&str, current, end - current, ',')) {
-                goto bad_option;
+            /*LINTED*/
+            if (!get_tok(&str, current, (int)(end - current), ',')) {
+                goto syntax_error;
             }
             currentTransport->address = current;
-            currentTransport = NULL;
+            current += strlen(current) + 1;
+        } else if (strcmp(buf, "timeout") == 0) {
+            if (currentTransport == NULL) {
+                errmsg = "timeout specified without transport";
+                goto bad_option_with_errmsg;
+            }
+            /*LINTED*/
+            if (!get_tok(&str, current, (int)(end - current), ',')) {
+                goto syntax_error;
+            }
+            currentTransport->timeout = atol(current);
             current += strlen(current) + 1;
         } else if (strcmp(buf, "launch") == 0) {
-            if (!get_tok(&str, current, end - current, ',')) {
-                goto bad_option;
+            /*LINTED*/
+            if (!get_tok(&str, current, (int)(end - current), ',')) {
+                goto syntax_error;
             }
             launchOnInit = current;
             current += strlen(current) + 1;
         } else if (strcmp(buf, "onthrow") == 0) {
             /* Read class name and convert in place to a signature */
             *current = 'L';
-            if (!get_tok(&str, current + 1, end - current - 1, ',')) {
-                goto bad_option;
+            /*LINTED*/
+            if (!get_tok(&str, current + 1, (int)(end - current - 1), ',')) {
+                goto syntax_error;
             }
             initOnException = current;
             while (*current != '\0') {
@@ -711,65 +1111,118 @@ parseOptions(char *options)
             *current++ = ';';
             *current++ = '\0';
         } else if (strcmp(buf, "assert") == 0) {
-            if (!get_tok(&str, current, end - current, ',')) {
-                goto bad_option;
+            /*LINTED*/
+            if (!get_tok(&str, current, (int)(end - current), ',')) {
+                goto syntax_error;
             }
             if (strcmp(current, "y") == 0) {
-                assertOn = JNI_TRUE;
-                assertFatal = JNI_FALSE;
+                gdata->assertOn = JNI_TRUE;
+                gdata->assertFatal = JNI_FALSE;
             } else if (strcmp(current, "fatal") == 0) {
-                assertOn = JNI_TRUE;
-                assertFatal = JNI_TRUE;
+                gdata->assertOn = JNI_TRUE;
+                gdata->assertFatal = JNI_TRUE;
             } else if (strcmp(current, "n") == 0) {
-                assertOn = JNI_FALSE;
-                assertFatal = JNI_FALSE;
+                gdata->assertOn = JNI_FALSE;
+                gdata->assertFatal = JNI_FALSE;
             } else {
-                goto bad_option;
+                goto syntax_error;
             }
             current += strlen(current) + 1;
+        } else if (strcmp(buf, "pause") == 0) {
+            if ( !get_boolean(&str, &dopause) ) {
+                goto syntax_error;
+            }
+            if ( dopause ) {
+                do_pause();
+            }
+        } else if (strcmp(buf, "coredump") == 0) {
+            if ( !get_boolean(&str, &docoredump) ) {
+                goto syntax_error;
+            }
+        } else if (strcmp(buf, "errorexit") == 0) {
+            if ( !get_boolean(&str, &(gdata->doerrorexit)) ) {
+                goto syntax_error;
+            }
+        } else if (strcmp(buf, "exitpause") == 0) {
+            errmsg = "The exitpause option removed, use -XX:OnError";
+            goto bad_option_with_errmsg;
+        } else if (strcmp(buf, "precrash") == 0) {
+            errmsg = "The precrash option removed, use -XX:OnError";
+            goto bad_option_with_errmsg;
+        } else if (strcmp(buf, "logfile") == 0) {
+            /*LINTED*/
+            if (!get_tok(&str, current, (int)(end - current), ',')) {
+                goto syntax_error;
+            }
+            logfile = current;
+            current += strlen(current) + 1;
+        } else if (strcmp(buf, "logflags") == 0) {
+            /*LINTED*/
+            if (!get_tok(&str, current, (int)(end - current), ',')) {
+                goto syntax_error;
+            }
+            /*LINTED*/
+            logflags = (unsigned)strtol(current, NULL, 0);
+        } else if (strcmp(buf, "debugflags") == 0) {
+            /*LINTED*/
+            if (!get_tok(&str, current, (int)(end - current), ',')) {
+                goto syntax_error;
+            }
+            /*LINTED*/
+            gdata->debugflags = (unsigned)strtol(current, NULL, 0);
+        } else if ( strcmp(buf, "suspend")==0 ) {
+            if ( !get_boolean(&str, &suspendOnInit) ) {
+                goto syntax_error;
+            }
+        } else if ( strcmp(buf, "server")==0 ) {
+            if ( !get_boolean(&str, &isServer) ) {
+                goto syntax_error;
+            }
+        } else if ( strcmp(buf, "strict")==0 ) { /* Obsolete, but accept it */
+            if ( !get_boolean(&str, &isStrict) ) {
+                goto syntax_error;
+            }
+        } else if ( strcmp(buf, "quiet")==0 ) { 
+            if ( !get_boolean(&str, &(gdata->quiet)) ) {
+                goto syntax_error;
+            }
+        } else if ( strcmp(buf, "onuncaught")==0 ) {
+            if ( !get_boolean(&str, &initOnUncaught) ) {
+                goto syntax_error;
+            }
+        } else if ( strcmp(buf, "mutf8")==0 ) {
+            if ( !get_boolean(&str, &(gdata->modifiedUtf8)) ) {
+                goto syntax_error;
+            }
+        } else if ( strcmp(buf, "stdalloc")==0 ) { /* Obsolete, but accept it */
+            if ( !get_boolean(&str, &useStandardAlloc) ) {
+                goto syntax_error;
+            }
         } else {
-            int i;
-            int n_switches = 
-            sizeof(binary_switches) / sizeof(binary_switch_t); 
-            for (i = 0; i < n_switches; i++) {
-                if (strcmp(binary_switches[i].name, buf) == 0) {
-                    if (!get_tok(&str, buf, sizeof(buf), ',')) {
-                        goto bad_option;
-                    }
-                    if (strcmp(buf, "y") == 0) {
-                        *(binary_switches[i].ptr) = JNI_TRUE;
-                    } else if (strcmp(buf, "n") == 0) {
-                        *(binary_switches[i].ptr) = JNI_FALSE;
-                    } else {
-                        goto bad_option;
-                    }
-                    break;
-                }
-            }
-            if (i >= n_switches) {
-                goto bad_option;
-            }
+            goto syntax_error;
         }
     }
 
+    /* Setup logging now */
+    if ( logfile!=NULL ) {
+        setup_logging(logfile, logflags);
+        (void)atexit(&atexit_finish_logging);
+    }
+    
     if (bagSize(transports) == 0) {
-        fprintf(stderr, "ERROR: No transport specified.\n");
-        goto bad_option_no_msg;
+        errmsg = "no transport specified";
+        goto bad_option_with_errmsg;
     }
 
     /*
-     * %comment gordonh009
+     * TO DO: Remove when multiple transports are allowed. (replace with
+     * check below.
      */
     if (bagSize(transports) > 1) {
-        fprintf(stderr, "ERROR: Multiple transports are not supported in this release.\n");
-        goto bad_option_no_msg;
+        errmsg = "multiple transports are not supported in this release";
+        goto bad_option_with_errmsg;
     }
 
-
-    /*if (!isServer && (bagSize(transports) > 1)) {
-        fprintf(stderr, "ERROR: Only 1 transport allowed with \"server=n\" option.\n");
-        goto bad_option_no_msg;
-    }*/
 
     if (!isServer) {
         jboolean specified = bagEnumerateOver(transports, checkAddress, NULL);
@@ -791,40 +1244,99 @@ parseOptions(char *options)
              * suboption, so it is an error if user did not
              * provide one.
              */
-            fprintf(stderr, "ERROR: missing JDWP suboption.  Specify "
-                    "launch=<command line> when using onthrow or onuncaught suboption\n");
-            return JNI_FALSE;
+            errmsg = "Specify launch=<command line> when using onthrow or onuncaught suboption";
+            goto bad_option_with_errmsg;
         }
     }
 
     return JNI_TRUE;
 
-    bad_option:
-    fprintf(stderr, "ERROR: bad JDWP option\n");
-    bad_option_no_msg:
-    fprintf(stderr, "Invalid JDWP options: %s\n", options);
+syntax_error:
+    ERROR_MESSAGE(("JDWP option syntax error: %s=%s", AGENTLIB, options));
+    return JNI_FALSE;
+   
+bad_option_with_errmsg:
+    ERROR_MESSAGE(("JDWP %s: %s=%s", errmsg, AGENTLIB, options));
+    return JNI_FALSE;
+    
+bad_option_no_msg:
+    ERROR_MESSAGE(("JDWP %s: %s=%s", "invalid option", AGENTLIB, options));
     return JNI_FALSE;
 }
 
-jboolean 
-debugInit_isStrict(void)
+/* All normal exit doors lead here */
+void
+debugInit_exit(jvmtiError error, const char *msg)
 {
-    return isStrict;
+    int exit_code = 0;
+
+    /* Pick an error code */
+    if ( error != JVMTI_ERROR_NONE ) {
+        exit_code = 1;
+        if ( docoredump ) {
+            finish_logging(exit_code);
+            abort();
+        }
+    }
+    if ( msg==NULL ) {
+        msg = "";
+    }
+
+    LOG_MISC(("Exiting with error %s(%d): %s", jvmtiErrorText(error), error, msg));
+
+    gdata->vmDead = JNI_TRUE;
+    
+    /* Let's try and cleanup the JVMTI, if we even have one */
+    if ( gdata->jvmti != NULL ) {
+        /* Dispose of jvmti (gdata->jvmti becomes NULL) */
+        disposeEnvironment(gdata->jvmti);
+    }
+
+    /* Finish up logging. We reach here if JDWP is doing the exiting. */
+    finish_logging(exit_code);  /* Only first call matters */
+    
+    /* Let's give the JNI a FatalError if non-exit 0, which is historic way */
+    if ( exit_code != 0 ) {
+        JNIEnv *env = NULL;
+        jniFatalError(env, msg, error, exit_code);
+    }
+
+    /* Last chance to die, this kills the entire process. */
+    forceExit(exit_code);
 }
 
-jboolean 
-debugInit_useStandardAlloc(void)
+JNIEXPORT jint JNICALL
+onUnloadX(JavaVM *vm)
 {
-    return useStandardAlloc;
+    gdata->isLoaded = JNI_FALSE;
+    stopTransport();
+    eventHelper_shutdown();
+    threadControl_joinAllDebugThreads();
+    /* Remove initial event callbacks */
+    (void)memset(&(gdata->callbacks),0,sizeof(gdata->callbacks));
+    JVMTI_FUNC_PTR(gdata->jvmti,SetEventCallbacks)
+                (gdata->jvmti, &(gdata->callbacks), sizeof(gdata->callbacks));
+    unloadTransport();
+    return JNI_OK;
 }
-
 
 JNIEXPORT void JNICALL 
 JVM_OnUnload(JavaVM *vm)
 {
-    bagEnumerateOver(transports, stopTransport, NULL);
-    eventHelper_shutdown();
-    threadControl_joinAllDebugThreads();
-    jvmdi->SetEventHook(NULL);
-    bagEnumerateOver(transports, unloadTransport, NULL);
+  onUnloadX(vm);
+}
+JNIEXPORT void JNICALL 
+Agent_OnUnload(JavaVM *vm)
+{
+    
+
+    /* Cleanup, but make sure VM is alive before using JNI, and
+     *   make sure JVMTI environment is ok before deallocating
+     *   memory allocated through JVMTI, which all of it is.
+     */
+    
+    /*
+     * Close transport before exit
+     */
+  onUnloadX(vm);
 }

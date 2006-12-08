@@ -1,5 +1,5 @@
 /*
- * @(#)jni_impl.h	1.38 06/10/10
+ * @(#)jni_impl.h	1.39 06/10/27
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -112,7 +112,7 @@ CVMdestroyJNIJavaVM(CVMJNIJavaVM *);
 
 /* NOTE: This function should ONLY be called by routines whose
    task it is to instrument the JNI vector somehow (currently only
-   CVMjvmdiInstrumentJNINativeInterface, though if we incorporated the
+   CVMjvmtiInstrumentJNINativeInterface, though if we incorporated the
    "checked" version of the JNI, that would need to call this as
    well). Note that this returns a non-const version of the vector
    with the intent that it will be mutated, so it can't be declared
@@ -123,7 +123,7 @@ CVMjniGetInstrumentableJNINativeInterface();
 /*
  * Prototypes for JNI routines. These are only for use by other parts
  * of the VM. The intent is to eliminate multiple versions of the JNI
- * vector for JVMDI and the "checked" JNI interface, if that is later
+ * vector for JVMTI and the "checked" JNI interface, if that is later
  * incorporated. Instead, there is one JNI function vector, possibly
  * instrumented. These instrumented routines will call the underlying,
  * implementing JNI routines directly, rather than going through

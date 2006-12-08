@@ -21,7 +21,7 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional  
 # information or have any questions. 
 #
-# @(#)Makefile	1.9 06/10/10
+# @(#)Makefile	1.10 06/10/25
 #
 #
 
@@ -30,7 +30,7 @@
 CVM_OPTIMIZED=false
 CVM_PRELOAD_LIB=false
 CVM_DEBUG=false
-CVM_JVMDI=false
+CVM_JVMTI=false
 CVM_JVMPI=false
 CVM_JIT=false
 J2ME_CLASSLIB=cdc
@@ -52,7 +52,7 @@ Class/%.class: Jsrc/%.java
 
 build: compile
 	@echo "..... Building CVM"
-	(cd $(CVM_PREFIX)/build/$(CVM_TARGET); $(MAKE) JDK_HOME=$(JDK_HOME) CVM_TEST_GENERATION_GC=true CVM_DEBUG=$(CVM_DEBUG) CVM_OPTIMIZED=$(CVM_OPTIMIZED) CVM_PRELOAD_LIB=$(CVM_PRELOAD_LIB) CVM_JVMDI=$(CVM_JVMDI) CVM_JVMPI=$(CVM_JVMPI) CVM_JIT=$(CVM_JIT) J2ME_CLASSLIB=$(J2ME_CLASSLIB))
+	(cd $(CVM_PREFIX)/build/$(CVM_TARGET); $(MAKE) JDK_HOME=$(JDK_HOME) CVM_TEST_GENERATION_GC=true CVM_DEBUG=$(CVM_DEBUG) CVM_OPTIMIZED=$(CVM_OPTIMIZED) CVM_PRELOAD_LIB=$(CVM_PRELOAD_LIB) CVM_JVMTI=$(CVM_JVMTI) CVM_JVMPI=$(CVM_JVMPI) CVM_JIT=$(CVM_JIT) J2ME_CLASSLIB=$(J2ME_CLASSLIB))
 
 run:
 	@cp Defs.mk RULES

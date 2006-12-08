@@ -1,5 +1,5 @@
 /*
- * @(#)classTrack.c	1.9 06/10/10
+ * @(#)classTrack.c	1.10 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -41,13 +41,13 @@
  * a new table, any that remain in the old table have been
  * unloaded.
  */
-#include <stdlib.h>
-#include "jvmdi.h"
+
+#include "util.h"
 #include "bag.h"
 #include "classTrack.h"
-#include "util.h"
 
-#define HASH_SLOT_COUNT 263    /* Prime which eauals 4k+3 for some k */
+/* ClassTrack hash table slot count */
+#define CT_HASH_SLOT_COUNT 263    /* Prime which eauals 4k+3 for some k */
 
 typedef struct KlassNode {
     jclass klass;            /* weak global reference */
@@ -68,7 +68,7 @@ static jint
 hashKlass(jclass klass) 
 {
     jint hashCode = objectHashCode(klass);
-    return abs(hashCode) % HASH_SLOT_COUNT;
+    return abs(hashCode) % CT_HASH_SLOT_COUNT;
 }
 
 /*
@@ -85,7 +85,7 @@ transferClass(JNIEnv *env, jclass klass, KlassNode **newTable) {
     
     /* Search the node list of the current table for klass */
     for (nodePtr = head; node = *nodePtr, node != NULL; nodePtr = &(node->next)) {
-        if ((*env)->IsSameObject(env, klass, node->klass)) {
+        if (isSameObject(env, klass, node->klass)) {
             /* Match found transfer node */
 
             /* unlink from old list */
@@ -105,9 +105,9 @@ transferClass(JNIEnv *env, jclass klass, KlassNode **newTable) {
      * Assert that the above is true.
      */
 /**** the HotSpot VM doesn't create prepare events for some internal classes ***
-    JDI_ASSERT_MSG((classStatus(klass) & JVMDI_CLASS_STATUS_PREPARED) == 0 && 
-                   !isArrayClass(klass),
-                   classSignature(klass));
+    JDI_ASSERT_MSG((classStatus(klass) & 
+                (JVMTI_CLASS_STATUS_PREPARED|JVMTI_CLASS_STATUS_ARRAY))==0,
+               classSignature(klass));
 ***/
 }
 
@@ -122,10 +122,10 @@ deleteTable(JNIEnv *env, KlassNode *oldTable[])
     jint slot;
 
     if (signatures == NULL) {
-        ALLOC_ERROR_EXIT();
+        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"signatures");
     }
 
-    for (slot = 0; slot < HASH_SLOT_COUNT; slot++) {
+    for (slot = 0; slot < CT_HASH_SLOT_COUNT; slot++) {
         KlassNode *node = oldTable[slot];
         
         while (node != NULL) {
@@ -135,19 +135,19 @@ deleteTable(JNIEnv *env, KlassNode *oldTable[])
             /* Add signature to the signature bag */
             sigSpot = bagAdd(signatures);   
             if (sigSpot == NULL) {
-                ALLOC_ERROR_EXIT();
+                EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"signature bag");
             }
             *sigSpot = node->signature;
             
             /* Free weak ref and the node itself */
-            (*env)->DeleteWeakGlobalRef(env, node->klass);
+            JNI_FUNC_PTR(env,DeleteWeakGlobalRef)(env, node->klass);
             next = node->next;
-            jdwpFree(node);
+            jvmtiDeallocate(node);
 
             node = next;
         }
     }
-    jdwpFree(oldTable);
+    jvmtiDeallocate(oldTable);
 
     return signatures;
 }
@@ -161,31 +161,45 @@ deleteTable(JNIEnv *env, KlassNode *oldTable[])
 struct bag *
 classTrack_processUnloads(JNIEnv *env)
 {
-    KlassNode **newTable = jdwpClearedAlloc(HASH_SLOT_COUNT * sizeof(KlassNode *));
-    jint classCount;    
-    jclass *classes;
-    jint i;
+    KlassNode **newTable;
     struct bag *unloadedSignatures;
 
+    unloadedSignatures = NULL;
+    newTable = jvmtiAllocate(CT_HASH_SLOT_COUNT * sizeof(KlassNode *));
     if (newTable == NULL) {
-        ALLOC_ERROR_EXIT();
-    }
-    if ((classes = allLoadedClasses(&classCount)) == NULL) {
-        jdwpFree(newTable);
-        ALLOC_ERROR_EXIT();
-    }
+        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY, "classTrack table");
+    } else {
+        
+        (void)memset(newTable, 0, CT_HASH_SLOT_COUNT * sizeof(KlassNode *));
+        
+        WITH_LOCAL_REFS(env, 2000) {
 
-    /* Transfer each current class into the new table */
-    for (i=0; i<classCount; i++) {
-        jclass klass = classes[i];
-        transferClass(env, klass, newTable);
-        (*env)->DeleteGlobalRef(env, klass);
-    }
-    jdwpFree(classes);
+            jint classCount;    
+            jclass *classes;
+            jvmtiError error;
+            int i;
+            
+            error = allLoadedClasses(&classes, &classCount);
+            if ( error != JVMTI_ERROR_NONE ) {
+                jvmtiDeallocate(newTable);
+                EXIT_ERROR(error,"loaded classes");
+            } else {
 
-    /* Delete old table, install new one */
-    unloadedSignatures = deleteTable(env, table);
-    table = newTable;
+                /* Transfer each current class into the new table */
+                for (i=0; i<classCount; i++) {
+                    jclass klass = classes[i];
+                    transferClass(env, klass, newTable);
+                }
+                jvmtiDeallocate(classes);
+
+                /* Delete old table, install new one */
+                unloadedSignatures = deleteTable(env, table);
+                table = newTable;
+            }
+        
+        } END_WITH_LOCAL_REFS(env)
+    
+    }
 
     return unloadedSignatures;
 }
@@ -200,29 +214,31 @@ classTrack_addPreparedClass(JNIEnv *env, jclass klass)
     jint slot = hashKlass(klass);
     KlassNode **head = &table[slot];
     KlassNode *node;
+    jvmtiError error;
 
-    if (assertOn) {
+    if (gdata->assertOn) {
         /* Check this is not a duplicate */
         for (node = *head; node != NULL; node = node->next) {
-            if ((*env)->IsSameObject(env, klass, node->klass)) {
+            if (isSameObject(env, klass, node->klass)) {
                 JDI_ASSERT_FAILED("Attempting to insert duplicate class");
                 break;
             }
         }
     }
        
-    node = jdwpAlloc(sizeof(KlassNode));
+    node = jvmtiAllocate(sizeof(KlassNode));
     if (node == NULL) {
-        ALLOC_ERROR_EXIT();
+        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"KlassNode");
     }
-    if ((node->signature = classSignature(klass)) == NULL) {
-        jdwpFree(node);
-        ALLOC_ERROR_EXIT();
+    error = classSignature(klass, &(node->signature), NULL);
+    if (error != JVMTI_ERROR_NONE) {
+        jvmtiDeallocate(node);
+        EXIT_ERROR(error,"signature");
     }
-    if ((node->klass = (*env)->NewWeakGlobalRef(env, klass)) == NULL) {
-        jdwpFree(node->signature);
-        jdwpFree(node);
-        ALLOC_ERROR_EXIT();
+    if ((node->klass = JNI_FUNC_PTR(env,NewWeakGlobalRef)(env, klass)) == NULL) {
+        jvmtiDeallocate(node->signature);
+        jvmtiDeallocate(node);
+        EXIT_ERROR(AGENT_ERROR_NULL_POINTER,"NewWeakGlobalRef");
     }
 
     /* Insert the new node */
@@ -234,31 +250,47 @@ classTrack_addPreparedClass(JNIEnv *env, jclass klass)
  * Called once to build the initial prepared class hash table.
  */
 void
-classTrack_initialize()
+classTrack_initialize(JNIEnv *env)
 {
-    JNIEnv *env = getEnv();
-    jint classCount;    
-    jclass *classes = allLoadedClasses(&classCount);
-    jint i;
+    WITH_LOCAL_REFS(env, 2000) {
+        
+        jint classCount;    
+        jclass *classes;
+        jvmtiError error;
+        jint i;
 
-    if (classes == NULL) {
-        ALLOC_ERROR_EXIT();
-    }
-    table = jdwpClearedAlloc(HASH_SLOT_COUNT * sizeof(KlassNode *));
-    if (table == NULL) {
-        jdwpFree(classes);
-        ALLOC_ERROR_EXIT();
-    }
-    for (i=0; i<classCount; i++) {
-        jclass klass = classes[i];
-
-        /* Filter out unprepared classes (arrays may or
-         * may not be marked as prepared) */
-        jboolean preped = (classStatus(klass) & JVMDI_CLASS_STATUS_PREPARED) != 0;
-        if (preped || isArrayClass(klass)) {
-            classTrack_addPreparedClass(env, klass);
+        error = allLoadedClasses(&classes, &classCount);
+        if ( error == JVMTI_ERROR_NONE ) {
+            table = jvmtiAllocate(CT_HASH_SLOT_COUNT * sizeof(KlassNode *));
+            if (table != NULL) {
+                (void)memset(table, 0, CT_HASH_SLOT_COUNT * sizeof(KlassNode *));
+                for (i=0; i<classCount; i++) {
+                    jclass klass = classes[i];
+                    jint status;
+                    jint wanted =
+                        (JVMTI_CLASS_STATUS_PREPARED|JVMTI_CLASS_STATUS_ARRAY);
+                    
+                    /* We only want prepared classes and arrays */
+                    status = classStatus(klass);
+                    if ( (status & wanted) != 0 ) {
+                        classTrack_addPreparedClass(env, klass);
+                    }
+                }
+            } else {
+              jvmtiDeallocate(classes);
+              EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"KlassNode");
+            }
+            jvmtiDeallocate(classes);
+        } else {
+            EXIT_ERROR(error,"loaded classes array");
         }
-        (*env)->DeleteGlobalRef(env, klass);
-    }
-    jdwpFree(classes);
-}    
+    
+    } END_WITH_LOCAL_REFS(env)
+
+}
+
+void
+classTrack_reset(void)
+{
+}
+

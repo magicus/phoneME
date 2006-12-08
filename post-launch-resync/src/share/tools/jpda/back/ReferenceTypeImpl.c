@@ -1,5 +1,5 @@
 /*
- * @(#)ReferenceTypeImpl.c	1.44 06/10/10
+ * @(#)ReferenceTypeImpl.c	1.45 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,11 +23,9 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <stdlib.h>
-#include <string.h>
 
-#include "ReferenceTypeImpl.h"
 #include "util.h"
+#include "ReferenceTypeImpl.h"
 #include "inStream.h"
 #include "outStream.h"
 
@@ -35,36 +33,81 @@
 static jboolean 
 signature(PacketInputStream *in, PacketOutputStream *out)
 {
-    char *signature;    
-    jclass clazz = inStream_readClassRef(in);
+    char *signature = NULL;    
+    jclass clazz;
+    jvmtiError error;
+    
+    clazz = inStream_readClassRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    signature = classSignature(clazz);
-
-    if (signature == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
+    error = classSignature(clazz, &signature, NULL);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
 
-    outStream_writeString(out, signature);
-    jdwpFree(signature);
+    (void)outStream_writeString(out, signature);
+    jvmtiDeallocate(signature);
+    
+    return JNI_TRUE;
+}
+
+static jboolean
+signatureWithGeneric(PacketInputStream *in, PacketOutputStream *out)
+{
+  /* Returns both the signature and the generic signature */
+    char *signature = NULL;
+    char *genericSignature = NULL;    
+    jclass clazz;
+    jvmtiError error;
+    
+    clazz = inStream_readClassRef(getEnv(), in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    error = classSignature(clazz, &signature, &genericSignature);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
+        return JNI_TRUE;
+    }
+
+    (void)outStream_writeString(out, signature);
+    writeGenericSignature(out, genericSignature);
+    jvmtiDeallocate(signature);
+    if (genericSignature != NULL) {
+      jvmtiDeallocate(genericSignature);
+    }
+
+    
     return JNI_TRUE;
 }
 
 static jboolean 
 getClassLoader(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    jclass clazz = inStream_readClassRef(in);
+    jclass clazz;
     jobject loader;
+    jvmtiError error;
+    JNIEnv *env;
+
+    env = getEnv();
+ 
+    clazz = inStream_readClassRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    loader = classLoader(clazz);
-    WRITE_GLOBAL_REF(env, out, loader);
+    WITH_LOCAL_REFS(env, 1) {
+
+      error = classLoader(clazz, &loader);
+      if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
+      } else {
+        (void)outStream_writeObjectRef(env, out, loader);
+      }
+    } END_WITH_LOCAL_REFS(env);
     return JNI_TRUE;
 }
 
@@ -72,168 +115,326 @@ static jboolean
 modifiers(PacketInputStream *in, PacketOutputStream *out)
 {
     jint modifiers;
-    jclass clazz = inStream_readClassRef(in);
+    jclass clazz;
+    jvmtiError error;
+    
+    clazz = inStream_readClassRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    modifiers = classModifiers(clazz);
-    outStream_writeInt(out, modifiers);
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetClassModifiers)
+                (gdata->jvmti, clazz, &modifiers);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
+        return JNI_TRUE;
+    }
+    
+    (void)outStream_writeInt(out, modifiers);
+    
     return JNI_TRUE;
 }
 
 static void 
-writeMethodInfo(PacketOutputStream *out, jclass clazz, jmethodID methodID)
+writeMethodInfo(PacketOutputStream *out, jclass clazz, jmethodID method,
+                int outputGenerics)
 {
-    char *name;
-    char *signature;
+    char *name = NULL;
+    char *signature = NULL;
+    char *genericSignature = NULL;
     jint modifiers;
-    jint error;
-    jboolean isSynthetic = JNI_FALSE;
+    jvmtiError error;
+    jboolean isSynthetic;
     
-    /* 
-     * Check for synthetic. If the query is not supported, we assume
-     * it is not synthetic.
-     */
-    error = jvmdi->IsMethodSynthetic(clazz, methodID, &isSynthetic);
-    if ((error != JVMDI_ERROR_NONE) && 
-        (error != JVMDI_ERROR_NOT_IMPLEMENTED)) {
-        outStream_setError(out, error);
+    error = isMethodSynthetic(method, &isSynthetic);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return;
     }
 
-    if ((error = jvmdi->GetMethodModifiers(clazz, methodID, &modifiers)
-         != JVMDI_ERROR_NONE) ||
-        (error = jvmdi->GetMethodName(clazz, methodID, &name, &signature)
-         != JVMDI_ERROR_NONE)) {
-        outStream_setError(out, error);
+    error = methodModifiers(method, &modifiers);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
+        return;
+    }
+    
+    error = methodSignature(method, &name, &signature, &genericSignature);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return;
     }
 
     if (isSynthetic) {
         modifiers |= MOD_SYNTHETIC;
     }
-    outStream_writeMethodID(out, methodID);
-    outStream_writeString(out, name);
-    outStream_writeString(out, signature);
-    outStream_writeInt(out, modifiers);
-    jdwpFree(name);
-    jdwpFree(signature);
+    (void)outStream_writeMethodID(out, method);
+    (void)outStream_writeString(out, name);
+    (void)outStream_writeString(out, signature);
+    if (outputGenerics == 1) {
+        writeGenericSignature(out, genericSignature);
+    }
+    (void)outStream_writeInt(out, modifiers);
+    jvmtiDeallocate(name);
+    jvmtiDeallocate(signature);
+    if (genericSignature != NULL) {
+      jvmtiDeallocate(genericSignature);
+    }
 }
 
 static jboolean 
-methods(PacketInputStream *in, PacketOutputStream *out)
+methods1(PacketInputStream *in, PacketOutputStream *out,
+         int outputGenerics)
 {
-    jint methodCount;
-    jmethodID *methods;
     int i;
-
-    jclass clazz = inStream_readClassRef(in);
+    jclass clazz;
+    jint methodCount = 0;
+    jmethodID *methods = NULL;
+    jvmtiError error;
+    
+    clazz = inStream_readClassRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    if (isArrayClass(clazz)) {
-        outStream_writeInt(out, 0);   /* no methods in an array */
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetClassMethods)
+                (gdata->jvmti, clazz, &methodCount, &methods);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
 
-    if ((classStatus(clazz) & JVMDI_CLASS_STATUS_PREPARED) == 0) {
-        outStream_setError(out, JVMDI_ERROR_CLASS_NOT_PREPARED);
-        return JNI_TRUE;
-    }
-
-    methods = declaredMethods(clazz, &methodCount);
-    if (methods == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-        return JNI_TRUE;
-    }
-
-    outStream_writeInt(out, methodCount);
+    (void)outStream_writeInt(out, methodCount);
     for (i = 0; (i < methodCount) && !outStream_error(out); i++) {
-        writeMethodInfo(out, clazz, methods[i]);
+        writeMethodInfo(out, clazz, methods[i], outputGenerics);
     }
 
     /* Free methods array */
-    jdwpFree(methods);
+    if ( methods != NULL ) {
+        jvmtiDeallocate(methods);
+    }
+    return JNI_TRUE;
+}
+
+static jboolean 
+methods(PacketInputStream *in, PacketOutputStream *out,
+         int outputGenerics)
+{
+    return methods1(in, out, 0);
+}
+
+static jboolean
+methodsWithGeneric(PacketInputStream *in, PacketOutputStream *out) 
+{
+    return methods1(in, out, 1);
+}
+
+
+
+static jboolean
+instances(PacketInputStream *in, PacketOutputStream *out) 
+{
+    jint maxInstances;
+    jclass clazz;
+    JNIEnv *env;
+
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));                    
+        return JNI_TRUE;
+    }
+
+    env = getEnv();
+    clazz = inStream_readClassRef(env, in);
+    maxInstances = inStream_readInt(in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+        
+    WITH_LOCAL_REFS(env, 1) {
+        jvmtiError   error;
+        ObjectBatch  batch;
+        
+        error = classInstances(clazz, &batch, maxInstances);
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            int kk;
+            jbyte typeKey;
+
+            (void)outStream_writeInt(out, batch.count);
+            if (batch.count > 0) {
+                /* 
+                 * They are all instances of this class and will all have 
+                 * the same typeKey, so just compute it once.
+                 */
+                typeKey = specificTypeKey(env, batch.objects[0]);
+
+                for (kk = 0; kk < batch.count; kk++) {
+                  jobject inst;
+
+                  inst = batch.objects[kk];
+                  (void)outStream_writeByte(out, typeKey);
+                  (void)outStream_writeObjectRef(env, out, inst);
+                }
+            }
+            jvmtiDeallocate(batch.objects);
+        }
+    } END_WITH_LOCAL_REFS(env);
+
+    return JNI_TRUE;
+}
+
+static jboolean
+getClassVersion(PacketInputStream *in, PacketOutputStream *out) 
+{
+    jclass clazz;
+    jvmtiError error;
+    jint majorVersion;
+    jint minorVersion;
+    
+    clazz = inStream_readClassRef(getEnv(), in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+
+    error = JVMTI_FUNC_PTR(gdata->jvmti, GetClassVersionNumbers)
+                (gdata->jvmti, clazz, &minorVersion, &majorVersion);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
+        return JNI_TRUE;
+    }
+ 
+    (void)outStream_writeInt(out, majorVersion);
+    (void)outStream_writeInt(out, minorVersion);
+
+    return JNI_TRUE;
+}
+
+static jboolean
+getConstantPool(PacketInputStream *in, PacketOutputStream *out)
+{
+
+    jclass clazz;
+    jvmtiError error;
+    jint cpCount;
+    jint cpByteCount;
+    unsigned char* cpBytesPtr;
+    
+    
+    clazz = inStream_readClassRef(getEnv(), in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+
+    /* Initialize assuming no bytecodes and no error */
+    error         = JVMTI_ERROR_NONE;
+    cpCount       = 0;
+    cpByteCount   = 0;
+    cpBytesPtr    = NULL;
+
+    
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetConstantPool)
+                (gdata->jvmti, clazz, &cpCount, &cpByteCount, &cpBytesPtr);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
+    } else {
+        (void)outStream_writeInt(out, cpCount);
+        (void)outStream_writeByteArray(out, cpByteCount, (jbyte *)cpBytesPtr);
+        jvmtiDeallocate(cpBytesPtr);
+    }
+    
     return JNI_TRUE;
 }
 
 static void
-writeFieldInfo(PacketOutputStream *out, jclass clazz, jfieldID fieldID)
+writeFieldInfo(PacketOutputStream *out, jclass clazz, jfieldID fieldID,
+               int outputGenerics)
 {
     char *name;
-    char *signature;
+    char *signature = NULL;
+    char *genericSignature = NULL;
     jint modifiers;
-    jboolean isSynthetic = JNI_FALSE;
-    jint error;
+    jboolean isSynthetic;
+    jvmtiError error;
     
-    /* 
-     * Check for synthetic. If the query is not supported, we assume
-     * it is not synthetic.
-     */
-    error = jvmdi->IsFieldSynthetic(clazz, fieldID, &isSynthetic);
-    if ((error != JVMDI_ERROR_NONE) && 
-        (error != JVMDI_ERROR_NOT_IMPLEMENTED)) {
-        outStream_setError(out, error);
+    error = isFieldSynthetic(clazz, fieldID, &isSynthetic);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return;
     }
 
-    if ((error = jvmdi->GetFieldModifiers(clazz, fieldID, &modifiers)
-         != JVMDI_ERROR_NONE) ||
-        (error = jvmdi->GetFieldName(clazz, fieldID, &name, &signature)
-         != JVMDI_ERROR_NONE)) {
-        outStream_setError(out, error);
+    error = fieldModifiers(clazz, fieldID, &modifiers);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return;
     }
-
+    
+    error = fieldSignature(clazz, fieldID, &name, &signature, &genericSignature);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
+        return;
+    }
     if (isSynthetic) {
         modifiers |= MOD_SYNTHETIC;
     }
-    outStream_writeFieldID(out, fieldID);
-    outStream_writeString(out, name);
-    outStream_writeString(out, signature);
-    outStream_writeInt(out, modifiers);
-    jdwpFree(name);
-    jdwpFree(signature);
+    (void)outStream_writeFieldID(out, fieldID);
+    (void)outStream_writeString(out, name);
+    (void)outStream_writeString(out, signature);
+    if (outputGenerics == 1) {
+        writeGenericSignature(out, genericSignature);
+    }
+    (void)outStream_writeInt(out, modifiers);
+    jvmtiDeallocate(name);
+    jvmtiDeallocate(signature);
+    if (genericSignature != NULL) {
+      jvmtiDeallocate(genericSignature);
+    }
 }
 
 static jboolean 
-fields(PacketInputStream *in, PacketOutputStream *out)
+fields1(PacketInputStream *in, PacketOutputStream *out, int outputGenerics)
 {
-    jint fieldCount;
-    jfieldID *fields;
     int i;
-
-    jclass clazz = inStream_readClassRef(in);
+    jclass clazz;
+    jint fieldCount = 0;
+    jfieldID *fields = NULL;
+    jvmtiError error;
+    
+    clazz = inStream_readClassRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    if (isArrayClass(clazz)) {
-        outStream_writeInt(out, 0);   /* no fields in an array */
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetClassFields)
+                (gdata->jvmti, clazz, &fieldCount, &fields);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
 
-    if ((classStatus(clazz) & JVMDI_CLASS_STATUS_PREPARED) == 0) {
-        outStream_setError(out, JVMDI_ERROR_CLASS_NOT_PREPARED);
-        return JNI_TRUE;
-    }
-
-    fields = declaredFields(clazz, &fieldCount);
-    if (fields == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-        return JNI_TRUE;
-    }
-
-    outStream_writeInt(out, fieldCount);
+    (void)outStream_writeInt(out, fieldCount);
     for (i = 0; (i < fieldCount) && !outStream_error(out); i++) {
-        writeFieldInfo(out, clazz, fields[i]);
+        writeFieldInfo(out, clazz, fields[i], outputGenerics);
     }
 
     /* Free fields array */
-    jdwpFree(fields);
+    if ( fields != NULL ) {
+        jvmtiDeallocate(fields);
+    }
     return JNI_TRUE;
+}
+
+
+static jboolean 
+fields(PacketInputStream *in, PacketOutputStream *out)
+{
+    return fields1(in, out, 0);
+}
+
+static jboolean
+fieldsWithGeneric(PacketInputStream *in, PacketOutputStream *out) 
+{
+    return fields1(in, out, 1);
+
 }
 
 static jboolean 
@@ -247,20 +448,23 @@ static jboolean
 sourceFile(PacketInputStream *in, PacketOutputStream *out)
 {
     char *fileName;    
-    jint error;
-    jclass clazz = inStream_readClassRef(in);
+    jvmtiError error;
+    jclass clazz;
+    
+    clazz = inStream_readClassRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    error = jvmdi->GetSourceFileName(clazz, &fileName);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetSourceFileName)
+                (gdata->jvmti, clazz, &fileName);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
 
-    outStream_writeString(out, fileName);
-    jdwpFree(fileName);
+    (void)outStream_writeString(out, fileName);
+    jvmtiDeallocate(fileName);
     return JNI_TRUE;
 }
 
@@ -268,26 +472,61 @@ static jboolean
 sourceDebugExtension(PacketInputStream *in, PacketOutputStream *out)
 {
     char *extension;    
-    jint error;
-    jclass clazz = inStream_readClassRef(in);
+    jvmtiError error;
+    jclass clazz;
+    
+    clazz = inStream_readClassRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     error = getSourceDebugExtension(clazz, &extension);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
 
-    outStream_writeString(out, extension);
-    jdwpFree(extension);
+    (void)outStream_writeString(out, extension);
+    jvmtiDeallocate(extension);
     return JNI_TRUE;
 }
 
 static jboolean 
 nestedTypes(PacketInputStream *in, PacketOutputStream *out)
 {
+    JNIEnv *env;
+    jclass clazz;
+    
+    env = getEnv();
+    
+    clazz = inStream_readClassRef(env, in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+
+    WITH_LOCAL_REFS(env, 1) {
+    
+        jvmtiError error;
+        jint count;
+        jclass *nested;
+    
+        error = allNestedClasses(clazz, &nested, &count);
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            int i;
+            (void)outStream_writeInt(out, count);
+            for (i = 0; i < count; i++) {
+                (void)outStream_writeByte(out, referenceTypeTag(nested[i]));
+                (void)outStream_writeObjectRef(env, out, nested[i]);
+            }
+            if ( nested != NULL ) {
+                jvmtiDeallocate(nested);
+            }
+        }
+    
+    } END_WITH_LOCAL_REFS(env);
+
     return JNI_TRUE;
 }
 
@@ -295,51 +534,65 @@ static jboolean
 getClassStatus(PacketInputStream *in, PacketOutputStream *out)
 {
     jint status;
-    jclass clazz = inStream_readClassRef(in);
+    jclass clazz;
+    
+    clazz = inStream_readClassRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     status = classStatus(clazz);
-    outStream_writeInt(out, status);
+    (void)outStream_writeInt(out, map2jdwpClassStatus(status));
     return JNI_TRUE;
 }
 
 static jboolean 
 interfaces(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    jint interfaceCount;
-    jint i;
-    jclass *interfaces;
-    jclass clazz = inStream_readClassRef(in);
+    JNIEnv *env;
+    jclass clazz;
+    
+    env = getEnv();
+    
+    clazz = inStream_readClassRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    if ((classStatus(clazz) & JVMDI_CLASS_STATUS_PREPARED) == 0) {
-        outStream_setError(out, JVMDI_ERROR_CLASS_NOT_PREPARED);
-        return JNI_TRUE;
-    }
+    WITH_LOCAL_REFS(env, 500) {
 
-    interfaces = implementedInterfaces(clazz, &interfaceCount);
-    if (interfaces == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        outStream_writeInt(out, interfaceCount);
-        for (i = 0; i < interfaceCount; i++) {
-            WRITE_GLOBAL_REF(env, out, interfaces[i]);
+        jvmtiError error;
+        jint interfaceCount;
+        jclass *interfaces;
+    
+        error = allInterfaces(clazz, &interfaces, &interfaceCount);
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            int i;
+            
+            (void)outStream_writeInt(out, interfaceCount);
+            for (i = 0; i < interfaceCount; i++) {
+              outStream_writeObjectRef(env, out, interfaces[i]);
+            }
+            if ( interfaces != NULL ) {
+                jvmtiDeallocate(interfaces);
+            }
         }
-        jdwpFree(interfaces);
-    }
+    
+    } END_WITH_LOCAL_REFS(env);
+
     return JNI_TRUE;
 }
 
 static jboolean 
 classObject(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    jclass clazz = inStream_readClassRef(in);
+    jclass clazz;
+    JNIEnv *env;
+    
+    env = getEnv();
+    clazz = inStream_readClassRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
@@ -348,19 +601,14 @@ classObject(PacketInputStream *in, PacketOutputStream *out)
      * In our implementation, the reference type id is the same as the
      * class object id, so we bounce it right back.
      *
-     * (Both inStream and WRITE_GLOBAL_REF) delete their global references
-     * so we need to create a new one to write.)
      */
-    clazz = (*env)->NewGlobalRef(env, clazz);
-    if (clazz == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        WRITE_GLOBAL_REF(env, out, clazz);
-    }
+    
+    (void)outStream_writeObjectRef(env, out, clazz);
+    
     return JNI_TRUE;
 }
 
-void *ReferenceType_Cmds[] = { (void *)12
+void *ReferenceType_Cmds[] = { (void *)18
     ,(void *)signature
     ,(void *)getClassLoader
     ,(void *)modifiers
@@ -373,5 +621,11 @@ void *ReferenceType_Cmds[] = { (void *)12
     ,(void *)interfaces
     ,(void *)classObject
     ,(void *)sourceDebugExtension
+    ,(void *)signatureWithGeneric
+    ,(void *)fieldsWithGeneric
+    ,(void *)methodsWithGeneric
+    ,(void *)instances
+    ,(void *)getClassVersion
+    ,(void *)getConstantPool
 };
 

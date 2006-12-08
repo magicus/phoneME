@@ -1743,7 +1743,7 @@ CVMreflectMethodBlockToNewJavaMethod(CVMExecEnv* ee,
 				     CVMMethodBlock* mb,
 				     CVMObjectICell* result)
 {
-    /* %comment kbr003 */
+    /* %comment k003 */
     if (CVMmbIsSpecial(mb))
 	CVMreflectNewJavaLangReflectConstructor(ee, mb, result);
     else

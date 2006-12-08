@@ -1,5 +1,5 @@
 /*
- * @(#)classTrack.h	1.5 06/10/10
+ * @(#)classTrack.h	1.6 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,6 +24,9 @@
  * information or have any questions. 
  */
 
+#ifndef JDWP_CLASSTRACK_H
+#define JDWP_CLASSTRACK_H
+
 /* 
  * Called after class unloads have occurred.  
  * The signatures of classes which were unloaded are returned.
@@ -41,5 +44,13 @@ classTrack_addPreparedClass(JNIEnv *env, jclass klass);
  * Initialize class tracking.
  */
 void
-classTrack_initialize();
+classTrack_initialize(JNIEnv *env);
+
+/*
+ * Reset class tracking.
+ */
+void
+classTrack_reset(void);
+
+#endif
 

@@ -1,5 +1,5 @@
 /*
- * @(#)socket_md.c	1.2 06/10/10
+ * @(#)socket_md.c	1.3 06/10/26
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,12 +25,23 @@
  *
  */
 
-
+#include<stdlib.h>
+#include<stdio.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/time.h>
+#include <pthread.h>
+#include <sys/poll.h>
+
 #include "socket_md.h"
 #include "sysSocket.h"
 
@@ -55,6 +66,18 @@ dbgsysConnect(int fd, struct sockaddr *name, int namelen) {
     return connect(fd, name, namelen);
 }
 
+int
+dbgsysFinishConnect(int fd, long timeout) {
+    int rv = dbgsysPoll(fd, 0, 1, timeout);
+    if (rv == 0) {
+	return DBG_ETIMEOUT;
+    }
+    if (rv > 0) {
+	return 0;
+    }
+    return rv;
+}
+
 /*
  * Work around problem where we may block in accept after socket
  * has been closed.
@@ -65,7 +88,7 @@ dbgsysAccept(int fd, struct sockaddr *name, int *namelen)
     int result;
     fcntl(fd, F_SETFL, O_NONBLOCK);
     while (1) {
-	result = accept(fd, name, (socklen_t*)namelen);
+      result = accept(fd, name, (socklen_t *)namelen);
 	if (result == -1 && errno == EAGAIN) {
 	    (void) waitForInput(fd);
 	} else {
@@ -79,7 +102,7 @@ dbgsysAccept(int fd, struct sockaddr *name, int *namelen)
 int
 dbgsysRecvFrom(int fd, char *buf, int nBytes,
                   int flags, struct sockaddr *from, int *fromlen) {
-    return recvfrom(fd, buf, nBytes, flags, from, (socklen_t*)fromlen);
+  return recvfrom(fd, buf, nBytes, flags, from, (socklen_t*)fromlen);
 }
 
 int
@@ -124,6 +147,11 @@ dbgsysBind(int fd, struct sockaddr *name, int namelen) {
     return bind(fd, name, namelen);
 }
 
+UINT32
+dbgsysInetAddr(const char* cp) {
+    return (UINT32)inet_addr(cp);
+}
+
 unsigned long
 dbgsysHostToNetworkLong(unsigned long hostlong) {
     return htonl(hostlong);
@@ -136,7 +164,7 @@ dbgsysNetworkToHostShort(unsigned short netshort) {
 
 int
 dbgsysGetSocketName(int fd, struct sockaddr *name, int *namelen) {
-    return getsockname(fd, name, (socklen_t*)namelen);
+  return getsockname(fd, name, (socklen_t*)namelen);
 }
 
 unsigned long
@@ -191,3 +219,88 @@ dbgsysSetSocketOption(int fd, jint cmd, jboolean on, jvalue value)
     }
     return SYS_OK;
 }
+
+int
+dbgsysConfigureBlocking(int fd, jboolean blocking) {
+    int flags = fcntl(fd, F_GETFL);
+
+    if ((blocking == JNI_FALSE) && !(flags & O_NONBLOCK)) {
+        return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    }
+    if ((blocking == JNI_TRUE) && (flags & O_NONBLOCK)) {
+        return fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
+    }
+    return 0;
+}
+
+int
+dbgsysPoll(int fd, jboolean rd, jboolean wr, long timeout) {
+    struct pollfd fds[1];
+    int rv;
+
+    fds[0].fd = fd;
+    fds[0].events = 0;
+    if (rd) {
+        fds[0].events |= POLLIN;
+    }
+    if (wr) {
+        fds[0].events |= POLLOUT;
+    }
+    fds[0].revents = 0;
+
+    rv = poll(&fds[0], 1, timeout);
+    if (rv >= 0) {
+        rv = 0;
+        if (fds[0].revents & POLLIN) {
+            rv |= DBG_POLLIN;
+        }
+        if (fds[0].revents & POLLOUT) {
+	    rv |= DBG_POLLOUT;
+        }
+    }
+    return rv;
+}
+
+int
+dbgsysGetLastIOError(char *buf, jint size) {
+    char *msg = strerror(errno);
+    strncpy(buf, msg, size-1);
+    buf[size-1] = '\0';  
+    return 0;
+}
+
+#ifdef __linux__
+int
+dbgsysTlsAlloc() {
+    pthread_key_t key;
+    if (pthread_key_create(&key, NULL)) {
+        perror("pthread_key_create");
+        exit(-1);
+    }
+    return (int)key;
+}
+
+void
+dbgsysTlsFree(int index) {
+    pthread_key_delete((pthread_key_t)index);
+}
+
+void
+dbgsysTlsPut(int index, void *value) {
+    pthread_setspecific((pthread_key_t)index, value) ;
+}
+
+void *
+dbgsysTlsGet(int index) {
+    return pthread_getspecific((pthread_key_t)index);
+}
+
+#endif
+
+long
+dbgsysCurrentTimeMillis() {
+    struct timeval t;
+    gettimeofday(&t, 0);
+    return ((jlong)t.tv_sec) * 1000 + (jlong)(t.tv_usec/1000);
+}
+

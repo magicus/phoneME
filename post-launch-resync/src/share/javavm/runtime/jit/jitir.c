@@ -1,5 +1,5 @@
 /*
- * @(#)jitir.c	1.315 06/10/10
+ * @(#)jitir.c	1.316 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -6945,7 +6945,7 @@ translateRange(CVMJITCompilationContext* con,
 	   break;
  	}
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
         case opc_breakpoint: {
 	    /* This should have been discovered during block discovery */
 	    CVMassert(CVM_FALSE);

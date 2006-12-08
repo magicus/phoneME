@@ -1,5 +1,5 @@
 /*
- * @(#)standardHandlers.h	1.5 06/10/10
+ * @(#)standardHandlers.h	1.6 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,9 +23,16 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
+#ifndef JDWP_STANDARDHANDLERS_H
+#define JDWP_STANDARDHANDLERS_H
+
 #include "eventHandler.h"
 
-HandlerFunction standardHandlers_defaultHandler(jint kind);
+HandlerFunction standardHandlers_defaultHandler(EventIndex ei);
 
 void standardHandlers_onConnect(void);
 void standardHandlers_onDisconnect(void);
+
+#endif
+

@@ -1,5 +1,5 @@
 /*
- * @(#)util_md.h	1.10 06/10/10
+ * @(#)util_md.h	1.11 06/10/26
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -30,6 +30,11 @@ typedef unsigned __int64 UNSIGNED_JLONG;
 typedef unsigned long UNSIGNED_JINT;
 
 #define	MAXPATHLEN _MAX_PATH
+
+/* Needed on Windows because names seem to be hidden in stdio.h. */
+
+#define snprintf        _snprintf
+#define vsnprintf       _vsnprintf
 
 #define JDWP_ONLOAD_SYMBOLS   {"_JDWP_OnLoad@16", "JDWP_OnLoad"}
 
