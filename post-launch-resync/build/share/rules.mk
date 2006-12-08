@@ -419,7 +419,7 @@ CVM_BUILD_DEFS_FLAGS += \
 	$(foreach flag,$(strip $(CVM_FLAGS)), "$(flag)=$($(flag))\n")
 
 CVM_BUILD_DEFS_VARS += \
-	$(foreach flag,$(strip $(CVM_BUILD_DEF_VARS)), $(flag) '$($(flag))')
+	$(foreach flag,$(strip $(CVM_BUILD_DEF_VARS)), '$(flag)	$($(flag))')
 
 $(CVM_BUILD_DEFS_H): $(wildcard ${CVM_BUILD_TOP}/../share/id*.mk)
 	@echo ... generating $@
@@ -432,15 +432,8 @@ $(CVM_BUILD_DEFS_H): $(wildcard ${CVM_BUILD_TOP}/../share/id*.mk)
 		printf "\t\"%s\" %c\n" "$$s" '\\' ; \
 	done >> $@ 
 	@echo >> $@
-	@typeset -i doDefine=1 ; \
-	for s in  $(CVM_BUILD_DEFS_VARS) ; do \
-		if [[ $$doDefine -eq 1 ]] ; then \
-			doDefine=0 ; \
-			printf "#define %s\t" $$s ; \
-		else \
-			doDefine=1 ; \
-			printf "%s\n" "$$s" ; \
-		fi ; \
+	@for s in  $(CVM_BUILD_DEFS_VARS) ; do \
+		printf "#define %s\n" "$$s" ; \
 	done >> $@
 	@echo >> $@
 	@echo "#endif /* _BUILD_DEFS_H */" >> $@
