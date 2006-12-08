@@ -1,6 +1,4 @@
 #
-# @(#)defs_jump.mk	1.3 06/10/25
-# 
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -83,6 +81,18 @@ JUMP_INCLUDES  += \
 JUMP_OBJECTS            += \
 	jump_messaging.o
 
+#
+# Any native code for the stand-alone jump native library goes here
+# 
+JUMP_NATIVE_LIBRARY_OBJECTS            += \
+	jump_messaging.o
+
+JUMP_NATIVE_LIBRARY_PATHNAME = $(JUMP_OUTPUT_DIR)/$(LIB_PREFIX)jumpmesg$(LIB_POSTFIX)
+
+#
+# Make sure this shared library gets built
+#
+CLASSLIB_DEPS += $(JUMP_NATIVE_LIBRARY_PATHNAME)
 
 #
 # Get any platform specific dependencies of any kind.
@@ -95,6 +105,8 @@ JUMP_OBJECTS            += \
 #
 # Finally modify CVM variables w/ all the JUMP items
 #
+JUMP_NATIVE_LIB_OBJS     = $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(JUMP_NATIVE_LIBRARY_OBJECTS))
+CVM_CVMC_OBJECTS        += $(JUMP_NATIVE_LIB_OBJS)
 CVM_OBJECTS             += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(JUMP_OBJECTS))
 CVM_SRCDIRS             += $(JUMP_SRCDIRS)
 CVM_INCLUDES            += $(JUMP_INCLUDES)
