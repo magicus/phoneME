@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.BufferedReader;
 import java.util.Vector;
+import java.net.MalformedURLException;
 
 public final
 class MIDPConfig{
@@ -182,7 +183,7 @@ class MIDPConfig{
     }
 
     public static MIDPImplementationClassLoader
-    newMIDPImplementationClassLoader(URL urls[]){
+    newMIDPImplementationClassLoader(File files[]){
         /* The MIDPImplementationClassLoader already exist. Throw an
          * exception.
          */
@@ -191,8 +192,18 @@ class MIDPConfig{
                 "The MIDPImplementationClassLoader is already created");
         }
 
+        URL urls[] = new URL[files.length];
 	String permittedClasses[];
         PermissionCollection perms = new Permissions();
+
+        for (int i = 0; i < files.length; i++) {
+            try {
+                urls[i] = files[i].toURL();
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
 
 	perms.add(new java.security.AllPermission());
 	//DEBUG System.out.println(
@@ -206,7 +217,6 @@ class MIDPConfig{
 				urls, permittedClasses, perms,
 				null);
 	return midpImplCL;
-
     }
 
     /*
