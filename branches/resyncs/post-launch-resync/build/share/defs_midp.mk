@@ -106,6 +106,9 @@ CVM_JCC_INPUT		+= $(MIDP_CLASSESZIP)
 CVM_CNI_CLASSES += \
 	com.sun.cdc.i18n.j2me.Conv \
 	com.sun.midp.appmanager.MIDletSuiteInfo \
+	com.sun.midp.chameleon.input.InputModeFactory \
+	com.sun.midp.chameleon.input.NativeInputMode \
+	com.sun.midp.chameleon.skins.resources.LoadedSkinData \
 	com.sun.midp.chameleon.skins.resources.LoadedSkinProperties \
 	com.sun.midp.chameleon.skins.resources.LoadedSkinResources \
 	com.sun.midp.chameleon.skins.resources.SkinResources \
@@ -122,20 +125,25 @@ CVM_CNI_CLASSES += \
 	com.sun.midp.l10n.LocalizedStringsBase \
 	com.sun.midp.lcdui.DisplayDeviceAccess \
 	com.sun.midp.log.Logging \
+	com.sun.midp.log.LoggingBase \
 	com.sun.midp.main.CDCInit \
 	com.sun.midp.main.CommandState \
 	com.sun.midp.main.Configuration \
 	com.sun.midp.main.MIDletAppImageGenerator \
 	com.sun.midp.main.MIDletProxyList \
 	com.sun.midp.main.MIDletSuiteLoader \
+	com.sun.midp.main.MIDletSuiteUtils \
 	com.sun.midp.main.MIDletSuiteVerifier \
 	com.sun.midp.midlet.MIDletPeer \
 	com.sun.midp.midletsuite.InstallInfo \
 	com.sun.midp.midletsuite.MIDletSuiteImpl \
+	com.sun.midp.midletsuite.MIDletSuiteInfo \
 	com.sun.midp.midletsuite.MIDletSuiteStorage \
 	com.sun.midp.midletsuite.SuiteProperties \
 	com.sun.midp.midletsuite.SuiteSettings \
 	com.sun.midp.midletsuite.SuiteSettings \
+	com.sun.midp.pause.PauseSystem \
+	'com.sun.midp.pause.PauseSystem$$MIDPSystem' \
 	com.sun.midp.rms.RecordStoreFactory \
 	com.sun.midp.rms.RecordStoreFile \
 	com.sun.midp.rms.RecordStoreUtil \
