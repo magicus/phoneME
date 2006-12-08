@@ -198,7 +198,11 @@ public class RFC2253Name {
                 }
 
             } else {
-                value = TLV.createUTF8String(s);
+                if (id.equals("DC")) {
+                    value = TLV.createIA5String(s);
+                } else {
+                    value = TLV.createUTF8String(s);
+                }
             }
 
             TLV tv = TLV.createSequence();

@@ -304,6 +304,31 @@ public class TLV {
     }
 
     /**
+     * Creates TLV object of type IA5 string.
+     * @param s string value
+     * @throws TLVException if illegal string has been provided
+     * @return new object
+     */
+    public static TLV createIA5String(String s)  throws TLVException {
+        int len = s.length();
+        
+        if (len == 0) {
+            return new TLV(TLV.IA5STR_TYPE, new byte[] {});
+        }
+        byte[] b = new byte[len];
+        
+        for (int i = 0; i < len; i++) {
+            char c = s.charAt(i);
+            if (c >= 0 && c <= 127) {
+                b[i] = (byte)c;
+            } else {
+                throw new TLVException("Illegal string for IA5:" + s);
+            }
+        }
+        return new TLV(TLV.IA5STR_TYPE, b);
+    }
+
+    /**
      * Creates TLV object of type integer.
      * @param value value
      * @return new object
