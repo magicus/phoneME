@@ -1,5 +1,5 @@
 /*
- * @(#)outStream.c	1.26 06/10/10
+ * @(#)outStream.c	1.27 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,9 +24,6 @@
  * information or have any questions. 
  */
 
-#include <string.h>
-#include <assert.h>
-
 #include "util.h"
 #include "stream.h"
 #include "outStream.h"
@@ -34,24 +31,25 @@
 #include "transport.h"
 #include "commonRef.h"
 #include "bag.h"
-#include "JDWP.h"
+#include "FrameID.h"
 
 #define INITIAL_ID_ALLOC  50
+#define SMALLEST(a, b) ((a) < (b)) ? (a) : (b)
 
 static void
 commonInit(PacketOutputStream *stream)
 {
     stream->current = &stream->initialSegment[0];
     stream->left = sizeof(stream->initialSegment);
-    stream->segment = &stream->packet.type.cmd.data;
+    stream->segment = &stream->firstSegment;
     stream->segment->length = 0;
     stream->segment->data = &stream->initialSegment[0];
     stream->segment->next = NULL;
-    stream->error = JVMDI_ERROR_NONE;
+    stream->error = JDWP_ERROR(NONE);
     stream->sent = JNI_FALSE;
     stream->ids = bagCreateBag(sizeof(jlong), INITIAL_ID_ALLOC);
     if (stream->ids == NULL) {
-        stream->error = JVMDI_ERROR_OUT_OF_MEMORY;
+        stream->error = JDWP_ERROR(OUT_OF_MEMORY);
     }
 }
 
@@ -80,8 +78,8 @@ outStream_initReply(PacketOutputStream *stream, jint id)
      * Reply-specific initialization
      */
     stream->packet.type.reply.id = id;
-    stream->packet.type.reply.errorCode = REPLY_NoError;
-    stream->packet.type.cmd.flags = FLAGS_Reply;
+    stream->packet.type.reply.errorCode = 0x0;
+    stream->packet.type.cmd.flags = (jbyte)JDWPTRANSPORT_FLAGS_REPLY;
 }
 
 jint 
@@ -94,11 +92,11 @@ jbyte
 outStream_command(PacketOutputStream *stream)
 {
     /* Only makes sense for commands */
-    JDI_ASSERT(!(stream->packet.type.cmd.flags & FLAGS_Reply));
+    JDI_ASSERT(!(stream->packet.type.cmd.flags & JDWPTRANSPORT_FLAGS_REPLY));
     return stream->packet.type.cmd.cmd;
 }
 
-static jint 
+static jdwpError 
 writeBytes(PacketOutputStream *stream, void *source, int size)
 {
     jbyte *bytes = (jbyte *)source;
@@ -109,13 +107,13 @@ writeBytes(PacketOutputStream *stream, void *source, int size)
     while (size > 0) {
         jint count;
         if (stream->left == 0) {
-            jint segSize = MIN(2 * stream->segment->length, MAX_SEGMENT_SIZE);
-            jbyte *newSeg = jdwpAlloc(segSize);
-            struct PacketData *newHeader = jdwpAlloc(sizeof(*newHeader));
+            jint segSize = SMALLEST(2 * stream->segment->length, MAX_SEGMENT_SIZE);
+            jbyte *newSeg = jvmtiAllocate(segSize);
+            struct PacketData *newHeader = jvmtiAllocate(sizeof(*newHeader));
             if ((newSeg == NULL) || (newHeader == NULL)) {
-                jdwpFree(newSeg);
-                jdwpFree(newHeader);
-                stream->error = JVMDI_ERROR_OUT_OF_MEMORY;
+                jvmtiDeallocate(newSeg);
+                jvmtiDeallocate(newHeader);
+                stream->error = JDWP_ERROR(OUT_OF_MEMORY);
                 return stream->error;
             }
             newHeader->length = 0;
@@ -126,80 +124,80 @@ writeBytes(PacketOutputStream *stream, void *source, int size)
             stream->current = newHeader->data;
             stream->left = segSize;
         }
-        count = MIN(size, stream->left);
-        memcpy(stream->current, bytes, count);
+        count = SMALLEST(size, stream->left);
+        (void)memcpy(stream->current, bytes, count);
         stream->current += count;
         stream->left -= count;
         stream->segment->length += count;
         size -= count;
         bytes += count;
     }
-    return JVMDI_ERROR_NONE;
+    return JDWP_ERROR(NONE);
 }
 
-jint 
+jdwpError 
 outStream_writeBoolean(PacketOutputStream *stream, jboolean val)
 {
     jbyte byte = (val != 0) ? 1 : 0;
     return writeBytes(stream, &byte, sizeof(byte));
 }
 
-jint 
+jdwpError 
 outStream_writeByte(PacketOutputStream *stream, jbyte val)
 {
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jint 
+jdwpError 
 outStream_writeChar(PacketOutputStream *stream, jchar val)
 {
     val = HOST_TO_JAVA_CHAR(val);
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jint 
+jdwpError 
 outStream_writeShort(PacketOutputStream *stream, jshort val)
 {
     val = HOST_TO_JAVA_SHORT(val);
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jint 
+jdwpError 
 outStream_writeInt(PacketOutputStream *stream, jint val)
 {
     val = HOST_TO_JAVA_INT(val);
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jint 
+jdwpError 
 outStream_writeLong(PacketOutputStream *stream, jlong val)
 {
     val = HOST_TO_JAVA_LONG(val);
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jint 
+jdwpError 
 outStream_writeFloat(PacketOutputStream *stream, jfloat val)
 {
     val = HOST_TO_JAVA_FLOAT(val);
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jint 
+jdwpError 
 outStream_writeDouble(PacketOutputStream *stream, jdouble val)
 {
     val = HOST_TO_JAVA_DOUBLE(val);
     return writeBytes(stream, &val, sizeof(val));
 }
 
-jint 
-outStream_writeObjectTag(PacketOutputStream *stream, jobject val)
+jdwpError 
+outStream_writeObjectTag(JNIEnv *env, PacketOutputStream *stream, jobject val)
 {
-    return outStream_writeByte(stream, specificTypeKey(val));
+    return outStream_writeByte(stream, specificTypeKey(env, val));
 }
 
-jint 
-outStream_writeObjectRef(PacketOutputStream *stream, jobject val)
+jdwpError 
+outStream_writeObjectRef(JNIEnv *env, PacketOutputStream *stream, jobject val)
 {
     jlong id;
     jlong *idPtr;
@@ -212,17 +210,17 @@ outStream_writeObjectRef(PacketOutputStream *stream, jobject val)
         id = NULL_OBJECT_ID;
     } else {
         /* Convert the object to an object id */
-        id = commonRef_refToID(val);
+        id = commonRef_refToID(env, val);
         if (id == NULL_OBJECT_ID) {
-            stream->error = JVMDI_ERROR_OUT_OF_MEMORY;
+            stream->error = JDWP_ERROR(OUT_OF_MEMORY);
             return stream->error;
         }
 
         /* Track the common ref in case we need to release it on a future error */
         idPtr = bagAdd(stream->ids);
         if (idPtr == NULL) {
-            commonRef_release(id);
-            stream->error = JVMDI_ERROR_OUT_OF_MEMORY;
+            commonRef_release(env, id);
+            stream->error = JDWP_ERROR(OUT_OF_MEMORY);
             return stream->error;
         } else {
             *idPtr = id;
@@ -235,171 +233,241 @@ outStream_writeObjectRef(PacketOutputStream *stream, jobject val)
     return writeBytes(stream, &id, sizeof(id));
 }
 
-jint 
-outStream_writeClassRef(PacketOutputStream *stream, jclass val)
-{
-    return outStream_writeObjectRef(stream, val);
-}
-
-jint 
-outStream_writeFrameID(PacketOutputStream *stream, jframeID val)
+jdwpError 
+outStream_writeFrameID(PacketOutputStream *stream, FrameID val)
 {
     /*
      * Not good - we're writing a pointer as a jint.  Need
-     * to write as a jlong if sizeof(jframeID) == 8.
+     * to write as a jlong if sizeof(FrameID) == 8.
      */
-#ifdef CVM_64
-    assert(sizeof(jframeID) == sizeof(jlong));
-    return outStream_writeLong(stream, (jlong)val);
-#else
-    return outStream_writeInt(stream, (jint)val);
-#endif
+    if (sizeof(FrameID) == 8) {
+        /*LINTED*/
+        return outStream_writeLong(stream, (jlong)val);
+    } else {
+        /*LINTED*/
+        return outStream_writeInt(stream, (jint)val);
+    } 
 }
 
-jint 
+jdwpError 
 outStream_writeMethodID(PacketOutputStream *stream, jmethodID val)
 {
     /*
      * Not good - we're writing a pointer as a jint.  Need
      * to write as a jlong if sizeof(jmethodID) == 8.
      */
-#ifdef CVM_64
-    assert(sizeof(jmethodID) == sizeof(jlong));
-    return outStream_writeLong(stream, (jlong)val);
-#else
-    return outStream_writeInt(stream, (jint)val);
-#endif
+    if (sizeof(jmethodID) == 8) {
+        /*LINTED*/
+        return outStream_writeLong(stream, (jlong)(intptr_t)val);
+    } else {
+        /*LINTED*/
+        return outStream_writeInt(stream, (jint)(intptr_t)val);
+    }
 }
 
-jint 
+jdwpError 
 outStream_writeFieldID(PacketOutputStream *stream, jfieldID val)
 {
     /*
      * Not good - we're writing a pointer as a jint.  Need
      * to write as a jlong if sizeof(jfieldID) == 8.
      */
-#ifdef CVM_64
-    assert(sizeof(jfieldID) == sizeof(jlong));
-    return outStream_writeLong(stream, (jlong)val);
-#else
-    return outStream_writeInt(stream, (jint)val);
-#endif
+    if (sizeof(jfieldID) == 8) {
+        /*LINTED*/
+        return outStream_writeLong(stream, (jlong)(intptr_t)val);
+    } else {
+        /*LINTED*/
+        return outStream_writeInt(stream, (jint)(intptr_t)val);
+    }
 }
 
-jint 
+jdwpError 
 outStream_writeLocation(PacketOutputStream *stream, jlocation val)
 {
     return outStream_writeLong(stream, (jlong)val);
 }
 
-jint 
+jdwpError 
 outStream_writeByteArray(PacketOutputStream*stream, jint length, 
                          jbyte *bytes)
 {
-    outStream_writeInt(stream, length);
+    (void)outStream_writeInt(stream, length);
     return writeBytes(stream, bytes, length);
 }
 
-jint 
+jdwpError 
 outStream_writeString(PacketOutputStream *stream, char *string)
 {
-    jint length = strlen(string);
-    outStream_writeInt(stream, length);
-    return writeBytes(stream, (jbyte *)string, length);
+    jdwpError error;
+    jint      length;
+   
+    /* Options utf8=y/n controls if we want Standard UTF-8 or Modified */
+    if ( gdata->modifiedUtf8 ) {
+        length = (int)strlen(string);
+        (void)outStream_writeInt(stream, length);
+        error = writeBytes(stream, (jbyte *)string, length);
+    } else {
+        jint      new_length;
+        
+        length = (int)strlen(string);
+        new_length = (gdata->npt->utf8mToUtf8sLength)
+                            (gdata->npt->utf, (jbyte*)string, length);
+        if ( new_length == length ) {
+            (void)outStream_writeInt(stream, length);
+            error = writeBytes(stream, (jbyte *)string, length);
+        } else {
+            char *new_string;
+            
+            new_string = jvmtiAllocate(new_length+1);
+            (gdata->npt->utf8mToUtf8s)
+                            (gdata->npt->utf, (jbyte*)string, length, 
+                             (jbyte*)new_string, new_length);
+            (void)outStream_writeInt(stream, new_length);
+            error = writeBytes(stream, (jbyte *)new_string, new_length);
+            jvmtiDeallocate(new_string);
+        }
+    }
+    return error;
 }
 
-void 
+jdwpError 
 outStream_writeValue(JNIEnv *env, PacketOutputStream *out, 
                      jbyte typeKey, jvalue value)
 {
-    if (typeKey == JDWP_Tag_OBJECT) {
-        outStream_writeByte(out, specificTypeKey(value.l));
+    if (typeKey == JDWP_TAG(OBJECT)) {
+        (void)outStream_writeByte(out, specificTypeKey(env, value.l));
     } else {
-        outStream_writeByte(out, typeKey);
+        (void)outStream_writeByte(out, typeKey);
     }
     if (isObjectTag(typeKey)) {
-        WRITE_GLOBAL_REF(env, out, value.l);
+        (void)outStream_writeObjectRef(env, out, value.l);
     } else {
         switch (typeKey) {
-            case JDWP_Tag_BYTE:
-                outStream_writeByte(out, value.b);
-                break;
+            case JDWP_TAG(BYTE):
+                return outStream_writeByte(out, value.b);
     
-            case JDWP_Tag_CHAR:
-                outStream_writeChar(out, value.c);
-                break;
+            case JDWP_TAG(CHAR):
+                return outStream_writeChar(out, value.c);
     
-            case JDWP_Tag_FLOAT:
-                outStream_writeFloat(out, value.f);
-                break;
+            case JDWP_TAG(FLOAT):
+                return outStream_writeFloat(out, value.f);
     
-            case JDWP_Tag_DOUBLE:
-                outStream_writeDouble(out, value.d);
-                break;
+            case JDWP_TAG(DOUBLE):
+                return outStream_writeDouble(out, value.d);
     
-            case JDWP_Tag_INT:
-                outStream_writeInt(out, value.i);
-                break;
+            case JDWP_TAG(INT):
+                return outStream_writeInt(out, value.i);
     
-            case JDWP_Tag_LONG:
-                outStream_writeLong(out, value.j);
-                break;
+            case JDWP_TAG(LONG):
+                return outStream_writeLong(out, value.j);
     
-            case JDWP_Tag_SHORT:
-                outStream_writeShort(out, value.s);
-                break;
+            case JDWP_TAG(SHORT):
+                return outStream_writeShort(out, value.s);
     
-            case JDWP_Tag_BOOLEAN:
-                outStream_writeBoolean(out, value.z);
-                break;
+            case JDWP_TAG(BOOLEAN):
+                return outStream_writeBoolean(out, value.z);
     
-            case JDWP_Tag_VOID:  /* happens with function return values */   
+            case JDWP_TAG(VOID):  /* happens with function return values */   
                 /* write nothing */
-                break;
+                return JDWP_ERROR(NONE);
 
             default:
-                ERROR_MESSAGE_EXIT("Invalid type key");
+                EXIT_ERROR(AGENT_ERROR_INVALID_OBJECT,"Invalid type key");
+                break;
         }
     }
+    return JDWP_ERROR(NONE);
 }
 
-jint 
+jdwpError 
 outStream_skipBytes(PacketOutputStream *stream, jint count)
 {
     int i;
     for (i = 0; i < count; i++) {
-        outStream_writeByte(stream, 0);
+        (void)outStream_writeByte(stream, 0);
     }
     return stream->error;
 }
 
-jint 
+jdwpError 
 outStream_error(PacketOutputStream *stream)
 {
     return stream->error;
 }
 
 void 
-outStream_setError(PacketOutputStream *stream, jint error)
+outStream_setError(PacketOutputStream *stream, jdwpError error)
 {
-    if (!stream->error) {
+    if (stream->error == JDWP_ERROR(NONE)) {
         stream->error = error;
+        LOG_MISC(("outStream_setError error=%s(%d)", jdwpErrorText(error), error));
     }
+}
+
+static jint
+outStream_send(PacketOutputStream *stream) {
+
+    jint rc;
+    jint len = 0;
+    PacketData *segment;
+    jbyte *data, *posP;
+
+    /*
+     * If there's only 1 segment then we just send the 
+     * packet. 
+     */
+    if (stream->firstSegment.next == NULL) {
+        stream->packet.type.cmd.len = 11 + stream->firstSegment.length;
+        stream->packet.type.cmd.data = stream->firstSegment.data;
+        rc = transport_sendPacket(&stream->packet);
+        return rc;
+    }
+
+    /*
+     * Multiple segments
+     */
+    len = 0; 
+    segment = (PacketData *)&(stream->firstSegment);
+    do {
+        len += segment->length;
+        segment = segment->next;
+    } while (segment != NULL); 
+
+    data = jvmtiAllocate(len);
+    if (data == NULL) {
+        return JDWP_ERROR(OUT_OF_MEMORY);
+    }
+
+    posP = data;
+    segment = (PacketData *)&(stream->firstSegment);
+    while (segment != NULL) {
+        (void)memcpy(posP, segment->data, segment->length);
+        posP += segment->length;
+        segment = segment->next;
+    }
+
+    stream->packet.type.cmd.len = 11 + len;
+    stream->packet.type.cmd.data = data;
+    rc = transport_sendPacket(&stream->packet);
+    stream->packet.type.cmd.data = NULL;
+    jvmtiDeallocate(data); 
+
+    return rc;
 }
 
 void 
 outStream_sendReply(PacketOutputStream *stream)
 {
-    jint error;
+    jint rc;
     if (stream->error) {
         /*
          * Don't send any collected stream data on an error reply
          */
-        stream->packet.type.reply.data.length = 0;
+        stream->packet.type.reply.len = 0;
         stream->packet.type.reply.errorCode = (jshort)stream->error;
     } 
-    error = transport_sendPacket(&stream->packet);
-    if (error == 0) {
+    rc = outStream_send(stream);
+    if (rc == 0) {
         stream->sent = JNI_TRUE;
     }
 }
@@ -407,10 +475,10 @@ outStream_sendReply(PacketOutputStream *stream)
 void 
 outStream_sendCommand(PacketOutputStream *stream)
 {
-    jint error;
+    jint rc;
     if (!stream->error) {
-        error = transport_sendPacket(&stream->packet);
-        if (error == 0) {
+        rc = outStream_send(stream);
+        if (rc == 0) {
             stream->sent = JNI_TRUE;
         }
     } 
@@ -421,7 +489,7 @@ static jboolean
 releaseID(void *elementPtr, void *arg) 
 {
     jlong *idPtr = elementPtr;
-    commonRef_release(*idPtr);
+    commonRef_release(getEnv(), *idPtr);
     return JNI_TRUE;
 }
 
@@ -431,15 +499,15 @@ outStream_destroy(PacketOutputStream *stream)
     struct PacketData *next;
 
     if (stream->error || !stream->sent) {
-        bagEnumerateOver(stream->ids, releaseID, NULL);
+        (void)bagEnumerateOver(stream->ids, releaseID, NULL);
     }
 
-    next = stream->packet.type.cmd.data.next;
+    next = stream->firstSegment.next;
     while (next != NULL) {
         struct PacketData *p = next;
         next = p->next;
-        jdwpFree(p->data);
-        jdwpFree(p);
+        jvmtiDeallocate(p->data);
+        jvmtiDeallocate(p);
     }
     bagDestroyBag(stream->ids);
 }

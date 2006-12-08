@@ -1,5 +1,5 @@
 /*
- * @(#)interpreter.c	1.408 06/10/10
+ * @(#)interpreter.c	1.409 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -64,8 +64,8 @@
 #include "javavm/include/reflect.h"
 #endif
 
-#ifdef CVM_JVMDI
-#include "javavm/include/jvmdi_impl.h"
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
 #endif
 
 #ifdef CVM_JVMPI
@@ -464,7 +464,6 @@ CVMinitExecEnv(CVMExecEnv* ee, CVMExecEnv* targetEE,
 #endif
 
     targetEE->threadState = CVM_THREAD_RUNNING;
-
     return CVM_TRUE;
 
  failed:
@@ -515,7 +514,6 @@ CVMdestroyExecEnv(CVMExecEnv* ee)
 	    CVMtcsDestroy(CVM_TCSTATE(ee, i));
 	}
     }
-
     {
 #ifdef CVM_DEBUG
 	CVMlocalExceptionICell(ee) = NULL;
@@ -1043,7 +1041,7 @@ CVMFrameGCScannerFunc * const CVMframeScanners[CVM_NUM_FRAMETYPES] =
 /*
  * Return the pc of the exception handler for the specified exception.
  */
-/* NOTE: this is needed by JVMDI, so was made nonstatic */
+/* NOTE: this is needed by JVMTI, so was made nonstatic */
 CVMUint8*
 CVMgcSafeFindPCForException(CVMExecEnv* ee, CVMFrameIterator* iter, 
 			    CVMClassBlock* exceptionClass, CVMUint8* pc)
@@ -1279,8 +1277,8 @@ CVMgcUnsafeHandleException(CVMExecEnv* ee, CVMFrame* frame,
 		}
 	    }
 	}
-#ifdef CVM_JVMDI
-	/** The JVMDI spec is unclear about whether the frame
+#ifdef CVM_JVMTI
+	/** The JVMTI spec is unclear about whether the frame
 	    pop event is sent just before or just after the
 	    frame is popped. The JDK implementation sends the
 	    event just before the frame is popped. */
@@ -1288,9 +1286,9 @@ CVMgcUnsafeHandleException(CVMExecEnv* ee, CVMFrame* frame,
 	    be done before the frame is popped, and that no
 	    local variable slots should have been overwritten
 	    by the return value. */
-	if (CVMjvmdiThreadEventsEnabled(ee)) {
+	if (CVMjvmtiThreadEventsEnabled(ee)) {
 	    CVMD_gcSafeExec(ee, {
-		CVMjvmdiNotifyDebuggerOfFramePop(ee);
+            CVMjvmtiNotifyDebuggerOfFramePop(ee, CVM_TRUE, (jlong)0);
 	    });
 	}
 #endif
@@ -1629,7 +1627,7 @@ CVMframeIterateHandlesExceptions(CVMFrameIterator *iter)
     return !CVMframeIsTransition(iter->frame);
 }
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 CVMBool
 CVMframeIterateCanHaveJavaCatchClause(CVMFrameIterator *iter)
 {
@@ -1742,10 +1740,10 @@ again:
 	   the contents of this frame: */
 	frame->topOfStack = base + CVMcmdCapacity(cmd);
 	CVMassert(CVMframeIsCompiled(frame));
-#if defined(CVM_JVMDI)
+#ifdef CVM_JVMTI
 	/* NOTE: The default implementation below will result in junk
 	   appearing in the stack frame.  Need to set it to the proper
-	   topOfStack value if we ever support JVMPI or JVMDI with JITed
+	   topOfStack value if we ever support JVMPI or JVMTI with JITed
 	   code. */
 	CVMassert(CVM_FALSE);
 #endif
@@ -2657,7 +2655,7 @@ CVMlocksForGCAcquire(CVMExecEnv* ee)
 
     CVMsysMutexLock(ee, &CVMglobals.threadLock);
     CVMsysMutexLock(ee, &CVMglobals.classTableLock);
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     CVMsysMutexLock(ee, &CVMglobals.debuggerLock),
 #endif
     CVMsysMutexLock(ee, &CVMglobals.globalRootsLock);
@@ -2681,7 +2679,7 @@ CVMlocksForGCRelease(CVMExecEnv* ee)
     CVMsysMutexUnlock(ee, &CVMglobals.typeidLock);
     CVMsysMutexUnlock(ee, &CVMglobals.weakGlobalRootsLock);
     CVMsysMutexUnlock(ee, &CVMglobals.globalRootsLock);
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     CVMsysMutexUnlock(ee, &CVMglobals.debuggerLock),
 #endif
     CVMsysMutexUnlock(ee, &CVMglobals.classTableLock);
@@ -3255,9 +3253,9 @@ CVMexit(int status)
 {
     CVMExecEnv *ee = CVMgetEE();
     CVMpostThreadExitEvents(ee);
-#ifdef CVM_JVMDI
-    if (CVMjvmdiEventsEnabled()) {
-	CVMjvmdiNotifyDebuggerOfVmExit(ee);
+#ifdef CVM_JVMTI
+    if (CVMjvmtiEventsEnabled()) {
+	CVMjvmtiNotifyDebuggerOfVmExit(ee);
 	ee->debugEventsEnabled = CVM_FALSE;
     }
 #endif
@@ -3425,11 +3423,11 @@ CVMassertHook(const char *filename, int lineno, const char *expr) {
                       lineno, filename, expr);
 #if 0 && defined(CVMJIT_SIMPLE_SYNC_METHODS) && defined(CVM_DEBUG)
     CVMconsolePrintf("%C.%M\n",
-		     CVMmbClassBlock(CVMglobals.jit.currentSimpleSyncMB),
-		     CVMglobals.jit.currentSimpleSyncMB);
+                     CVMmbClassBlock(CVMglobals.jit.currentSimpleSyncMB),
+                     CVMglobals.jit.currentSimpleSyncMB);
     CVMconsolePrintf("%C.%M\n",
-		     CVMmbClassBlock(CVMglobals.jit.currentMB),
-		     CVMglobals.jit.currentMB);
+                     CVMmbClassBlock(CVMglobals.jit.currentMB),
+                     CVMglobals.jit.currentMB);
 #endif
 
 #ifdef CVM_DEBUG_DUMPSTACK
@@ -3950,27 +3948,27 @@ CVMsyncReturnHelper(CVMExecEnv *ee, CVMFrame *frame, CVMObjectICell *retICell,
 }
 
 /*
- * Register return events with jvmdi and jvmpi. Return the current opcode,
+ * Register return events with jvmti and jvmpi. Return the current opcode,
  * which will be the same as the pc[0] passed in unless it is a breakpoint.
  */
-#if (defined(CVM_JVMDI) || defined(CVM_JVMPI))
+#if (defined(CVM_JVMTI) || defined(CVM_JVMPI))
 
 CVMUint32
 CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8* pc,
 		       CVMObjectICell* resultCell)
 {
-    CVMBool jvmdiThreadEventsEnabled = CVM_FALSE;
+    CVMBool jvmtiThreadEventsEnabled = CVM_FALSE;
     CVMBool jvmpiEventMethodExitIsEnabled = CVM_FALSE;
     CVMUint32 return_opcode = pc[0];
 
-#ifdef CVM_JVMDI
-    jvmdiThreadEventsEnabled = CVMjvmdiThreadEventsEnabled(ee);
+#ifdef CVM_JVMTI
+    jvmtiThreadEventsEnabled = CVMjvmtiThreadEventsEnabled(ee);
 #endif
 #ifdef CVM_JVMPI
     jvmpiEventMethodExitIsEnabled = CVMjvmpiEventMethodExitIsEnabled();
 #endif
 
-    /** The JVMDI spec is unclear about whether the frame pop
+    /** The JVMTI spec is unclear about whether the frame pop
 	event is sent just before or just after the frame is
 	popped. The JDK implementation sends the event just
 	before the frame is popped. (NOTE: putting in
@@ -3979,51 +3977,57 @@ CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8* pc,
 	be done before the frame is popped, and that no
 	local variable slots should have been overwritten
 	by the return value. */
-    if (jvmdiThreadEventsEnabled || jvmpiEventMethodExitIsEnabled) {
-#ifdef CVM_JVMDI
-	if (return_opcode == opc_breakpoint) {
+    if (jvmtiThreadEventsEnabled || jvmpiEventMethodExitIsEnabled) {
+#ifdef CVM_JVMTI
+      if (return_opcode == opc_breakpoint) {
 	    CVMD_gcSafeExec(ee, {
-		return_opcode = CVMjvmdiGetBreakpointOpcode(ee, pc, CVM_TRUE);
-	    });
-	}
+            return_opcode = CVMjvmtiGetBreakpointOpcode(ee, pc, CVM_FALSE);
+          });
+      }
 #endif
-	/* 
-	 * If we are returning a reference result, then we must save away
-	 * the result in a place where gc will find it and restore later.
-	 */
-	if (return_opcode == opc_areturn) {
+      /* 
+       * If we are returning a reference result, then we must save away
+       * the result in a place where gc will find it and restore later.
+       */
+      if (return_opcode == opc_areturn) {
 	    CVMassert(CVMID_icellIsNull(CVMmiscICell(ee)));
 	    CVMID_icellSetDirect(ee, CVMmiscICell(ee),
-				 CVMID_icellDirect(ee, resultCell));
-	}
+                             CVMID_icellDirect(ee, resultCell));
+      }
     	
-#ifdef CVM_JVMDI
-	if (jvmdiThreadEventsEnabled) {
+#ifdef CVM_JVMTI
+      if (jvmtiThreadEventsEnabled) {
+	CVMID_localrootBeginGcUnsafe(ee) {
+	  CVMID_localrootDeclareGcUnsafe(CVMObjectICell, __result);
+	  CVMID_icellAssignDirect(ee, __result, resultCell);
+
 	    CVMD_gcSafeExec(ee, {
-		CVMjvmdiNotifyDebuggerOfFramePop(ee);
-	    });
-	}
+            CVMjvmtiNotifyDebuggerOfFramePop(ee, CVM_FALSE,
+                                             (jlong)((jint)resultCell));
+          });
+	} CVMID_localrootEndGcUnsafe();
+      }
 #endif
 #ifdef CVM_JVMPI
-	if (jvmpiEventMethodExitIsEnabled) {
+      if (jvmpiEventMethodExitIsEnabled) {
 	    /* NOTE: JVMPI will become GC safe when calling the
 	     * profiling agent: */
 	    CVMjvmpiPostMethodExitEvent(ee);
-	}
+      }
 #endif
 
-	/* Restore the return result if it is a refrence type. */
-	if (return_opcode == opc_areturn) {
+      /* Restore the return result if it is a refrence type. */
+      if (return_opcode == opc_areturn) {
 	    CVMID_icellSetDirect(ee, resultCell,
-				 CVMID_icellDirect(ee, CVMmiscICell(ee)));
+                             CVMID_icellDirect(ee, CVMmiscICell(ee)));
 	    CVMID_icellSetNull(CVMmiscICell(ee));
-	}
+      }
     }
 
     return return_opcode;
 }
 
-#endif /* (defined(CVM_JVMDI) || defined(CVM_JVMPI)) */
+#endif /* (defined(CVM_JVMTI) || defined(CVM_JVMPI)) */
 
 CVMBool
 CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
@@ -4123,11 +4127,11 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
     }
 #endif /* CVM_JVMPI */
 
-#ifdef CVM_JVMDI
-    /* %comment kbr001 */
-    if (CVMjvmdiThreadEventsEnabled(ee)) {
+#ifdef CVM_JVMTI
+    /* %comment k001 */
+    if (CVMjvmtiThreadEventsEnabled(ee)) {
 	CVMD_gcSafeExec(ee, {
-	    CVMjvmdiNotifyDebuggerOfFramePush(ee);
+	    CVMjvmtiNotifyDebuggerOfFramePush(ee);
 	});
     }
 #endif
@@ -4153,8 +4157,8 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
     CVMassert(ee->criticalCount == 0);
     TRACE_METHOD_RETURN(frame);
 
-#ifdef CVM_JVMDI
-    /** The JVMDI spec is unclear about whether the frame
+#ifdef CVM_JVMTI
+    /** The JVMTI spec is unclear about whether the frame
 	pop event is sent just before or just after the
 	frame is popped. The JDK implementation sends the
 	event just before the frame is popped. Also,
@@ -4162,9 +4166,10 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
 	be done before the frame is popped, and that no
 	local variable slots should have been overwritten
 	by the return value. */
-    if (CVMjvmdiThreadEventsEnabled(ee)) {
+    if (CVMjvmtiThreadEventsEnabled(ee)) {
 	CVMD_gcSafeExec(ee, {
-	    CVMjvmdiNotifyDebuggerOfFramePop(ee);
+      CVMjvmtiNotifyDebuggerOfFramePop(ee, CVM_FALSE,
+               (jlong)returnCode);
 	});
     }
 #endif
@@ -4508,9 +4513,9 @@ CVMpostThreadStartEvents(CVMExecEnv *ee)
         CVMjvmpiPostThreadStartEvent(ee, CVMcurrentThreadICell(ee));
 #endif /* CVM_JVMPI */
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     /* This will work for getting thread start/stop
-       notification for Java threads, but when we support JVMDI's
+       notification for Java threads, but when we support JVMTI's
        "RunDebugThread" or JVMPI's "CreateSystemThread" then it's
        likely this function won't be called from CVMthreadCreate. The
        specs aren't precise about whether these events are generated
@@ -4520,8 +4525,8 @@ CVMpostThreadStartEvents(CVMExecEnv *ee)
        implementing RunDebugThread/CreateSystemThread to ensure the
        events get generated. */
 
-    if (CVMjvmdiEventsEnabled()) {
-	CVMjvmdiNotifyDebuggerOfThreadStart(ee, CVMcurrentThreadICell(ee));
+    if (CVMjvmtiEventsEnabled()) {
+	CVMjvmtiNotifyDebuggerOfThreadStart(ee, CVMcurrentThreadICell(ee));
     }
 #endif
 
@@ -4535,9 +4540,9 @@ void
 CVMpostThreadExitEvents(CVMExecEnv *ee)
 {
     if (!ee->hasPostedExitEvents) {
-#ifdef CVM_JVMDI
-	if (CVMjvmdiEventsEnabled()) {
-	    CVMjvmdiNotifyDebuggerOfThreadEnd(ee, CVMcurrentThreadICell(ee));
+#ifdef CVM_JVMTI
+	if (CVMjvmtiEventsEnabled()) {
+	    CVMjvmtiNotifyDebuggerOfThreadEnd(ee, CVMcurrentThreadICell(ee));
 	}
 #endif
 

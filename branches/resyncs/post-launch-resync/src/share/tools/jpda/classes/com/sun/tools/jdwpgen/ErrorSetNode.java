@@ -1,5 +1,5 @@
 /*
- * @(#)ErrorSetNode.java	1.7 06/10/10
+ * @(#)ErrorSetNode.java	1.8 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -45,7 +45,7 @@ class ErrorSetNode extends AbstractSimpleNode {
         if (components.size() == 0) {
             writer.println("<dd>(None)");
         } else {
-            writer.println("<dd><table border=1 cellpadding=3 cellspacing=0 width=\"90%\">");
+            writer.println("<dd><table border=1 cellpadding=3 cellspacing=0 width=\"90%\" summary=\"\">");
         for (Iterator it = components.iterator(); it.hasNext();) {
             ((Node)it.next()).document(writer);
         }

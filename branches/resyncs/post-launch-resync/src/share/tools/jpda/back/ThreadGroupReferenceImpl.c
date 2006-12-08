@@ -1,5 +1,5 @@
 /*
- * @(#)ThreadGroupReferenceImpl.c	1.21 06/10/10
+ * @(#)ThreadGroupReferenceImpl.c	1.22 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,89 +23,116 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <string.h>
 
-#include "ThreadGroupReferenceImpl.h"
 #include "util.h"
+#include "ThreadGroupReferenceImpl.h"
 #include "inStream.h"
 #include "outStream.h"
 
 static jboolean 
 name(PacketInputStream *in, PacketOutputStream *out) 
 {
-    JNIEnv *env = getEnv();
-    JVMDI_thread_group_info info;
-
-    jthreadGroup group = inStream_readThreadGroupRef(in);
+    JNIEnv *env;
+    jthreadGroup group;
+    
+    env = getEnv();
+    
+    group = inStream_readThreadGroupRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    threadGroupInfo(group, &info);
-    outStream_writeString(out, info.name);
+    WITH_LOCAL_REFS(env, 5) {
 
-    (*env)->DeleteGlobalRef(env, info.parent);
-    jdwpFree(info.name);
+        jvmtiThreadGroupInfo info;
+
+        (void)memset(&info, 0, sizeof(info));
+        threadGroupInfo(group, &info);
+        (void)outStream_writeString(out, info.name);
+        if ( info.name != NULL )
+            jvmtiDeallocate(info.name);
+    
+    } END_WITH_LOCAL_REFS(env);
+    
     return JNI_TRUE;
 }
 
 static jboolean 
 parent(PacketInputStream *in, PacketOutputStream *out) 
 {
-    JNIEnv *env = getEnv();
-    JVMDI_thread_group_info info;
-
-    jthreadGroup group = inStream_readThreadGroupRef(in);
+    JNIEnv *env;
+    jthreadGroup group;
+    
+    env = getEnv();
+    
+    group = inStream_readThreadGroupRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    threadGroupInfo(group, &info);
-    WRITE_GLOBAL_REF(env, out, info.parent);
+    WITH_LOCAL_REFS(env, 5) {
 
-    jdwpFree(info.name);
+        jvmtiThreadGroupInfo info;
+        
+        (void)memset(&info, 0, sizeof(info));
+        threadGroupInfo(group, &info);
+        (void)outStream_writeObjectRef(env, out, info.parent);
+        if ( info.name != NULL )
+            jvmtiDeallocate(info.name);
+
+    } END_WITH_LOCAL_REFS(env);
+    
     return JNI_TRUE;
 }
 
 static jboolean 
 children(PacketInputStream *in, PacketOutputStream *out) 
 {
-     jint error;
-     jint i;
-     jint threadCount;
-     jint groupCount;
-     jthread *theThreads;
-     jthread *theGroups;
-     JNIEnv *env = getEnv();
- 
-     jthreadGroup group = inStream_readThreadGroupRef(in);
+     JNIEnv *env;
+     jthreadGroup group;
+     
+     env = getEnv();
+    
+     group = inStream_readThreadGroupRef(env, in);
      if (inStream_error(in)) {
          return JNI_TRUE;
      }
  
-     error = jvmdi->GetThreadGroupChildren(group,
-                                          &threadCount,&theThreads,
-                                          &groupCount, &theGroups);
-     if (error != JVMDI_ERROR_NONE) {
-         outStream_setError(out, error);
-         return JNI_TRUE;
-     }
+     WITH_LOCAL_REFS(env, 5) {
+     
+         jvmtiError error;
+         jint threadCount;
+         jint groupCount;
+         jthread *theThreads;
+         jthread *theGroups;
+         
+         error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadGroupChildren)(gdata->jvmti, group,
+                                              &threadCount,&theThreads,
+                                              &groupCount, &theGroups);
+         if (error != JVMTI_ERROR_NONE) {
+             outStream_setError(out, map2jdwpError(error));
+         } else {
 
+             int i;
+             
+             /* Squish out all of the debugger-spawned threads */
+             threadCount = filterDebugThreads(theThreads, threadCount);
+          
+             (void)outStream_writeInt(out, threadCount);
+             for (i = 0; i < threadCount; i++) {
+               outStream_writeObjectRef(env, out, theThreads[i]);
+             }
+             (void)outStream_writeInt(out, groupCount);
+             for (i = 0; i < groupCount; i++) {
+               outStream_writeObjectRef(env, out, theGroups[i]);
+             }
 
-     /* Squish out all of the debugger-spawned threads */
-     threadCount = filterDebugThreads(theThreads, threadCount);
-  
-     outStream_writeInt(out, threadCount);
-     for (i = 0; i < threadCount; i++) {
-         WRITE_GLOBAL_REF(env, out, theThreads[i]);
-     }
-     outStream_writeInt(out, groupCount);
-     for (i = 0; i < groupCount; i++) {
-         WRITE_GLOBAL_REF(env, out, theGroups[i]);
-     }
+             jvmtiDeallocate(theGroups);
+             jvmtiDeallocate(theThreads);
+         }
 
-     jdwpFree(theGroups);
-     jdwpFree(theThreads);
+     } END_WITH_LOCAL_REFS(env);
+
      return JNI_TRUE;
 }
 

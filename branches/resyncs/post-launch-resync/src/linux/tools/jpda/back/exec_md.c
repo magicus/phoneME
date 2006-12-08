@@ -1,5 +1,5 @@
 /*
- * @(#)exec_md.c	1.6 06/10/10
+ * @(#)exec_md.c	1.7 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -32,6 +32,10 @@
 #include "sys.h"
 #include "util.h"
   
+#ifdef CVM_JVMTI
+#define jdwpAlloc jvmtiAllocate
+#define jdwpFree jvmtiDeallocate
+#endif
 
 static char *skipWhitespace(char *p) {
     while ((*p != '\0') && isspace(*p)) {
@@ -78,8 +82,7 @@ dbgsysExec(char *cmdLine)
         p = skipWhitespace(p);
     }
 
-    /* calloc null terminates for us */
-    argv = calloc((argc + 1) * sizeof(char *), 1);
+    argv = jdwpAlloc((argc + 1) * sizeof(char *));
     if (argv == 0) {
         jdwpFree(args);
         return SYS_NOMEM;

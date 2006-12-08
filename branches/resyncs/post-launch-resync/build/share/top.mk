@@ -1,4 +1,4 @@
-# @(#)top.mk	1.37 06/10/20
+# @(#)top.mk	1.38 06/10/26
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -96,10 +96,10 @@
 #     NOTE: This option is not supported on the ARM port and will result in
 #     build errors if set true.
 #
-# CVM_JVMDI default: false
-#     Build a VM that supports the Java debugger. This option is not
-#     supported with CVM_JIT=true. When set true, there will be a significant
-#     degradation of performance.
+# CVM_JVMTI default: false
+#     Build a VM that supports the new JVMTI debugger/profiler interface.
+#     This option is not supported with CVM_JIT=true. When set true, there
+#     will be a significant degradation of performance.
 #
 # CVM_JVMPI default: false
 #     Build a VM that supports the Java profiler. This option is not
@@ -257,8 +257,7 @@
 #
 # CVM_XRUN default: false
 #     Build a VM which supports the -Xrun command line option for loading
-#     native libraries. Defaults to true if either CVM_JVMDI or CVM_JVMPI
-#     are true.
+#     native libraries. Defaults to true if CVM_JVMPI is true.
 #
 # CVM_INTERPRETER_LOOP: Standard
 #     Specify which interpreter loop imlementation to use. Allowed values

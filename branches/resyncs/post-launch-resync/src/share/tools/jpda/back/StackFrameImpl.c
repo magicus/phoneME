@@ -1,5 +1,5 @@
 /*
- * @(#)StackFrameImpl.c	1.32 06/10/10
+ * @(#)StackFrameImpl.c	1.33 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,202 +23,219 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <stdlib.h>
-#include <string.h>
 
-#include "StackFrameImpl.h"
 #include "util.h"
+#include "StackFrameImpl.h"
 #include "inStream.h"
 #include "outStream.h"
-#include "JDWP.h"
 #include "threadControl.h"
-#include "popFrames.h"
+#include "FrameID.h"
 
-static jint
-validateFrame(jthread thread, jframeID frame)
+static jdwpError
+validateThreadFrame(jthread thread, FrameID frame)
 {
-    /*
-     * Some implementations of JVMDI (notably classic) can crash
-     * and burn if the frame id is stale, so we validate the frame
-     * beforehand even though it does cost some.
-     */
-    jframeID candidate;
-
-    jint error = jvmdi->GetCurrentFrame(thread, &candidate);
-    if (error != JVMDI_ERROR_NONE) {
-        return error;
+    jvmtiError error;
+    jdwpError  serror;
+    jint count;
+    error = threadControl_suspendCount(thread, &count);
+    if ( error == JVMTI_ERROR_NONE ) {
+        if ( count > 0 ) {
+            serror = validateFrameID(thread, frame);
+        } else {
+            serror = JDWP_ERROR(THREAD_NOT_SUSPENDED);
+        }
+    } else {
+        serror =  map2jdwpError(error);
     }
-
-    while ((error == JVMDI_ERROR_NONE) && (frame != candidate)) {
-        error = jvmdi->GetCallerFrame(candidate, &candidate);
-    }
-
-    /*
-     * End of stack means the frame is not valid
-     */
-    if (error == JVMDI_ERROR_NO_MORE_FRAMES) {
-        error = JVMDI_ERROR_INVALID_FRAMEID;
-    }
-
-    /*
-     * Note that its possible for some other thread to resume the 
-     * thread here and make a validated frame become invalid. 
-     * This is a hole, that we can't currently close because
-     * JVMDI SuspendThread does not prevent app threads from resuming
-     * the threads it suspends. For this reason, front end implementations
-     * should avoid using invalid frames as much as possible.
-     */
-    return error;
+    return serror;
 }
-static jint 
-writeVariableValue(PacketOutputStream *out, 
-                   jframeID frame, jint slot, jbyte typeKey)
+
+static jdwpError 
+writeVariableValue(JNIEnv *env, PacketOutputStream *out, jthread thread,
+                   FrameNumber fnum, jint slot, jbyte typeKey)
 {
-    jint error;
+    jvmtiError error;
     jvalue value;
-    JNIEnv *env = getEnv();
 
     if (isObjectTag(typeKey)) {
-        error = jvmdi->GetLocalObject(frame, slot, &value.l);
-        if (error != JVMDI_ERROR_NONE) {
-            outStream_setError(out, error);
-        } else {
-            outStream_writeByte(out, specificTypeKey(value.l));
-            WRITE_GLOBAL_REF(env, out, value.l);
-        }
+        
+        WITH_LOCAL_REFS(env, 1) {
+            
+            error = JVMTI_FUNC_PTR(gdata->jvmti,GetLocalObject)
+                        (gdata->jvmti, thread, fnum, slot, &value.l);
+            
+            if (error != JVMTI_ERROR_NONE) {
+                outStream_setError(out, map2jdwpError(error));
+            } else {
+                (void)outStream_writeByte(out, specificTypeKey(env, value.l));
+                (void)outStream_writeObjectRef(env, out, value.l);
+            }
+        
+        } END_WITH_LOCAL_REFS(env);
+    
     } else {
         /*
          * For primitive types, the type key is bounced back as is.
          */
-        outStream_writeByte(out, typeKey);
+        (void)outStream_writeByte(out, typeKey);
         switch (typeKey) {
-            case JDWP_Tag_BYTE: {
+            case JDWP_TAG(BYTE): {
                     jint intValue;
-                    error = jvmdi->GetLocalInt(frame, slot, &intValue);
-                    outStream_writeByte(out, (jbyte)intValue);
+                    error = JVMTI_FUNC_PTR(gdata->jvmti,GetLocalInt)
+                                (gdata->jvmti, thread, fnum, slot, &intValue);
+                    (void)outStream_writeByte(out, (jbyte)intValue);
                     break;
                 }
     
-            case JDWP_Tag_CHAR: {
+            case JDWP_TAG(CHAR): {
                     jint intValue;
-                    error = jvmdi->GetLocalInt(frame, slot, &intValue);
-                    outStream_writeChar(out, (jchar)intValue);
+                    error = JVMTI_FUNC_PTR(gdata->jvmti,GetLocalInt)
+                                (gdata->jvmti, thread, fnum, slot, &intValue);
+                    (void)outStream_writeChar(out, (jchar)intValue);
                     break;
                 }
     
-            case JDWP_Tag_FLOAT:
-                error = jvmdi->GetLocalFloat(frame, slot, &value.f);
-                outStream_writeFloat(out, value.f);
+            case JDWP_TAG(FLOAT):
+                error = JVMTI_FUNC_PTR(gdata->jvmti,GetLocalFloat)
+                                (gdata->jvmti, thread, fnum, slot, &value.f);
+                (void)outStream_writeFloat(out, value.f);
                 break;
     
-            case JDWP_Tag_DOUBLE:
-                error = jvmdi->GetLocalDouble(frame, slot, &value.d);
-                outStream_writeDouble(out, value.d);
+            case JDWP_TAG(DOUBLE):
+                error = JVMTI_FUNC_PTR(gdata->jvmti,GetLocalDouble)
+                                (gdata->jvmti, thread, fnum, slot, &value.d);
+                (void)outStream_writeDouble(out, value.d);
                 break;
     
-            case JDWP_Tag_INT:
-                error = jvmdi->GetLocalInt(frame, slot, &value.i);
-                outStream_writeInt(out, value.i);
+            case JDWP_TAG(INT):
+                error = JVMTI_FUNC_PTR(gdata->jvmti,GetLocalInt)
+                                (gdata->jvmti, thread, fnum, slot, &value.i);
+                (void)outStream_writeInt(out, value.i);
                 break;
     
-            case JDWP_Tag_LONG:
-                error = jvmdi->GetLocalLong(frame, slot, &value.j);
-                outStream_writeLong(out, value.j);
+            case JDWP_TAG(LONG):
+                error = JVMTI_FUNC_PTR(gdata->jvmti,GetLocalLong)
+                                (gdata->jvmti, thread, fnum, slot, &value.j);
+                (void)outStream_writeLong(out, value.j);
                 break;
     
-            case JDWP_Tag_SHORT: {
+            case JDWP_TAG(SHORT): {
                 jint intValue;
-                error = jvmdi->GetLocalInt(frame, slot, &intValue);
-                outStream_writeShort(out, (jshort)intValue);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,GetLocalInt)
+                                (gdata->jvmti, thread, fnum, slot, &intValue);
+                (void)outStream_writeShort(out, (jshort)intValue);
                 break;
             }
     
-            case JDWP_Tag_BOOLEAN:{
+            case JDWP_TAG(BOOLEAN):{
                 jint intValue;
-                error = jvmdi->GetLocalInt(frame, slot, &intValue);
-                outStream_writeBoolean(out, (jboolean)intValue);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,GetLocalInt)
+                                (gdata->jvmti, thread, fnum, slot, &intValue);
+                (void)outStream_writeBoolean(out, (jboolean)intValue);
                 break;
             }
     
             default:
-                error = JDWP_Error_INVALID_TAG;
-                break;
+                return JDWP_ERROR(INVALID_TAG);
         }
     }
 
-    return error;
+    return map2jdwpError(error);
 }
 
-static jint
-readVariableValue(JNIEnv *env, PacketInputStream *in, 
-                  jframeID frame, jint slot, jbyte typeKey)
+static jdwpError
+readVariableValue(JNIEnv *env, PacketInputStream *in, jthread thread,
+                  FrameNumber fnum, jint slot, jbyte typeKey)
 {
-    jint error;
+    jvmtiError error;
     jvalue value;
 
     if (isObjectTag(typeKey)) {
-        value.l = inStream_readObjectRef(in);
-        error = jvmdi->SetLocalObject(frame, slot, value.l);
+        
+        value.l = inStream_readObjectRef(env, in);
+        
+        error = JVMTI_FUNC_PTR(gdata->jvmti,SetLocalObject)
+                        (gdata->jvmti, thread, fnum, slot, value.l);
+    
     } else {
         switch (typeKey) {
-            case JDWP_Tag_BYTE:
+            case JDWP_TAG(BYTE):
                 value.b = inStream_readByte(in);
-                error = jvmdi->SetLocalInt(frame, slot, value.b);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,SetLocalInt)
+                                (gdata->jvmti, thread, fnum, slot, value.b);
                 break;
     
-            case JDWP_Tag_CHAR:
+            case JDWP_TAG(CHAR):
                 value.c = inStream_readChar(in);
-                error = jvmdi->SetLocalInt(frame, slot, value.c);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,SetLocalInt)
+                                (gdata->jvmti, thread, fnum, slot, value.c);
                 break;
     
-            case JDWP_Tag_FLOAT:
+            case JDWP_TAG(FLOAT):
                 value.f = inStream_readFloat(in);
-                error = jvmdi->SetLocalFloat(frame, slot, value.f);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,SetLocalFloat)
+                                (gdata->jvmti, thread, fnum, slot, value.f);
                 break;
     
-            case JDWP_Tag_DOUBLE:
+            case JDWP_TAG(DOUBLE):
                 value.d = inStream_readDouble(in);
-                error = jvmdi->SetLocalDouble(frame, slot, value.d);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,SetLocalDouble)
+                                (gdata->jvmti, thread, fnum, slot, value.d);
                 break;
     
-            case JDWP_Tag_INT:
+            case JDWP_TAG(INT):
                 value.i = inStream_readInt(in);
-                error = jvmdi->SetLocalInt(frame, slot, value.i);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,SetLocalInt)
+                                (gdata->jvmti, thread, fnum, slot, value.i);
                 break;
     
-            case JDWP_Tag_LONG:
+            case JDWP_TAG(LONG):
                 value.j = inStream_readLong(in);
-                error = jvmdi->SetLocalLong(frame, slot, value.j);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,SetLocalLong)
+                                (gdata->jvmti, thread, fnum, slot, value.j);
                 break;
     
-            case JDWP_Tag_SHORT:
+            case JDWP_TAG(SHORT):
                 value.s = inStream_readShort(in);
-                error = jvmdi->SetLocalInt(frame, slot, value.s);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,SetLocalInt)
+                                (gdata->jvmti, thread, fnum, slot, value.s);
                 break;
     
-            case JDWP_Tag_BOOLEAN:
+            case JDWP_TAG(BOOLEAN):
                 value.z = inStream_readBoolean(in);
-                error = jvmdi->SetLocalInt(frame, slot, value.z);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,SetLocalInt)
+                                (gdata->jvmti, thread, fnum, slot, value.z);
                 break;
     
             default:
-                error = JDWP_Error_INVALID_TAG;
-                break;
+                return JDWP_ERROR(INVALID_TAG);
         }
     }
 
-    return error;
+    return map2jdwpError(error);
 }
 
 static jboolean 
 getValues(PacketInputStream *in, PacketOutputStream *out)
 {
-    jint i;
-    jint error;
-
-    jthread thread = inStream_readThreadRef(in);
-    jframeID frame = inStream_readFrameID(in);
-    jint variableCount = inStream_readInt(in);
+    JNIEnv *env;
+    int i;
+    jdwpError serror;
+    jthread thread;
+    FrameID frame;
+    jint variableCount;
+    
+    env = getEnv();
+    
+    thread = inStream_readThreadRef(env, in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    frame = inStream_readFrameID(in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    variableCount = inStream_readInt(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
@@ -226,37 +243,57 @@ getValues(PacketInputStream *in, PacketOutputStream *out)
     /*
      * Validate the frame id
      */
-    error = validateFrame(thread, frame);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    serror = validateThreadFrame(thread, frame);
+    if (serror != JDWP_ERROR(NONE)) {
+        outStream_setError(out, serror);
         return JNI_TRUE;
     }
-
-    outStream_writeInt(out, variableCount);
+    
+    (void)outStream_writeInt(out, variableCount);
     for (i = 0; (i < variableCount) && !outStream_error(out); i++) {
-        jint error;
-        jint slot = inStream_readInt(in);
-        jbyte typeKey = inStream_readByte(in);
+        jint slot;
+        jbyte typeKey;
+        FrameNumber fnum;
 
-        error = writeVariableValue(out, frame, slot, typeKey);
-        if (error != JVMDI_ERROR_NONE) {
-            outStream_setError(out, error);
-            return JNI_TRUE;
+        slot = inStream_readInt(in);
+        if (inStream_error(in))
+            break;
+        typeKey = inStream_readByte(in);
+        if (inStream_error(in))
+            break;
+        
+        fnum = getFrameNumber(frame);
+        serror = writeVariableValue(env, out, thread, fnum, slot, typeKey);
+        if (serror != JDWP_ERROR(NONE)) {
+            outStream_setError(out, serror);
+            break;
         }
     }
+    
     return JNI_TRUE;
 }
 
 static jboolean 
 setValues(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
+    JNIEnv *env;
     jint i;
-    jint error = JVMDI_ERROR_NONE;
-
-    jthread thread = inStream_readThreadRef(in);
-    jframeID frame = inStream_readFrameID(in);
-    jint variableCount = inStream_readInt(in);
+    jdwpError serror;
+    jthread thread;
+    FrameID frame;
+    jint variableCount;
+    
+    env = getEnv();
+    
+    thread = inStream_readThreadRef(env, in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    frame = inStream_readFrameID(in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    variableCount = inStream_readInt(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
@@ -264,23 +301,35 @@ setValues(PacketInputStream *in, PacketOutputStream *out)
     /*
      * Validate the frame id
      */
-    error = validateFrame(thread, frame);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    serror = validateThreadFrame(thread, frame);
+    if (serror != JDWP_ERROR(NONE)) {
+        outStream_setError(out, serror);
         return JNI_TRUE;
     }
+    
+    for (i = 0; (i < variableCount) && !inStream_error(in); i++) {
+        
+        jint slot;
+        jbyte typeKey;
+        FrameNumber fnum;
+        
+        slot = inStream_readInt(in);
+        if (inStream_error(in)) {
+            return JNI_TRUE;
+        }
+        typeKey = inStream_readByte(in);
+        if (inStream_error(in)) {
+            return JNI_TRUE;
+        }
 
-    for (i = 0; (i < variableCount) &&
-                (error == JVMDI_ERROR_NONE) &&
-                !inStream_error(in); i++) {
-        jint slot = inStream_readInt(in);
-        jbyte typeKey = inStream_readByte(in);
-
-        error = readVariableValue(env, in, frame, slot, typeKey);
+        fnum = getFrameNumber(frame);
+        serror = readVariableValue(env, in, thread, fnum, slot, typeKey);
+        if (serror != JDWP_ERROR(NONE))
+            break;
     }
 
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (serror != JDWP_ERROR(NONE)) {
+        outStream_setError(out, serror);
     }
 
     return JNI_TRUE;
@@ -289,16 +338,19 @@ setValues(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 thisObject(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    jint error;
-    jclass clazz;
-    jmethodID method;
-    jlocation location;
-    jint modifiers;
-    jobject thisObject;
+    JNIEnv *env;
+    jdwpError serror;
+    jthread thread;
+    FrameID frame;
 
-    jthread thread = inStream_readThreadRef(in);
-    jframeID frame = inStream_readFrameID(in);
+    env = getEnv();
+    
+    thread = inStream_readThreadRef(env, in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    
+    frame = inStream_readFrameID(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
@@ -306,57 +358,73 @@ thisObject(PacketInputStream *in, PacketOutputStream *out)
     /*
      * Validate the frame id
      */
-    error = validateFrame(thread, frame);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    serror = validateThreadFrame(thread, frame);
+    if (serror != JDWP_ERROR(NONE)) {
+        outStream_setError(out, serror);
         return JNI_TRUE;
     }
 
-    /* 
-     * Find out if the given frame is for a static or native method.
-     */
-    error = threadControl_getFrameLocation(thread, frame, &clazz, &method, &location);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
-        return JNI_TRUE;
-    }
+    WITH_LOCAL_REFS(env, 2) {
+            
+        jvmtiError error;
+        jmethodID method;
+        jlocation location;
+        FrameNumber fnum;
+        
+        /* 
+         * Find out if the given frame is for a static or native method.
+         */
+        fnum = getFrameNumber(frame);
+        error = JVMTI_FUNC_PTR(gdata->jvmti,GetFrameLocation)
+                (gdata->jvmti, thread, fnum, &method, &location);
+        if (error == JVMTI_ERROR_NONE) {
 
-    error = jvmdi->GetMethodModifiers(clazz, method, &modifiers);
+            jint modifiers;
+            
+            error = methodModifiers(method, &modifiers);
+            if (error == JVMTI_ERROR_NONE) {
 
-    (*env)->DeleteGlobalRef(env, clazz);
-
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
-        return JNI_TRUE;
-    }
-
-    /*
-     * Return null for static or native methods; otherwise, the JVM
-     * spec guarantees that "this" is in slot 0
-     */
-    if (modifiers & (MOD_STATIC | MOD_NATIVE)) {
-        thisObject = NULL;
-    } else {
-        error = jvmdi->GetLocalObject(frame, 0, &thisObject);
-        if (error != JVMDI_ERROR_NONE) {
-            outStream_setError(out, error);
-            return JNI_TRUE;
+                jobject this_object;
+                
+                /*
+                 * Return null for static or native methods; otherwise, the JVM
+                 * spec guarantees that "this" is in slot 0
+                 */
+                if (modifiers & (MOD_STATIC | MOD_NATIVE)) {
+                    this_object = NULL;
+                    (void)outStream_writeByte(out, specificTypeKey(env, this_object));
+                    (void)outStream_writeObjectRef(env, out, this_object);
+                } else {
+                    error = JVMTI_FUNC_PTR(gdata->jvmti,GetLocalObject)
+                                (gdata->jvmti, thread, fnum, 0, &this_object);
+                    if (error == JVMTI_ERROR_NONE) {
+                        (void)outStream_writeByte(out, specificTypeKey(env, this_object));
+                        (void)outStream_writeObjectRef(env, out, this_object);
+                    }
+                }
+            
+            }
         }
-    }
-
-    outStream_writeByte(out, specificTypeKey(thisObject));
-    WRITE_GLOBAL_REF(env, out, thisObject);
+        serror = map2jdwpError(error);
+    
+    } END_WITH_LOCAL_REFS(env);
+    
+    if (serror != JDWP_ERROR(NONE))
+        outStream_setError(out, serror);
+    
     return JNI_TRUE;
 }
 
 static jboolean 
 popFrames(PacketInputStream *in, PacketOutputStream *out) 
 {
-    jint error;
+    jvmtiError error;
+    jdwpError serror;
     jthread thread;
-    jframeID frame;
-
-    thread = inStream_readThreadRef(in);
+    FrameID frame;
+    FrameNumber fnum;
+    
+    thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
@@ -369,20 +437,22 @@ popFrames(PacketInputStream *in, PacketOutputStream *out)
     /*
      * Validate the frame id
      */
-    error = validateFrame(thread, frame);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    serror = validateThreadFrame(thread, frame);
+    if (serror != JDWP_ERROR(NONE)) {
+        outStream_setError(out, serror);
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
 
-    error = popFrames_pop(thread, frame);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    fnum = getFrameNumber(frame);
+    error = threadControl_popFrames(thread, fnum);
+    if (error != JVMTI_ERROR_NONE) {
+        serror = map2jdwpError(error);
+        outStream_setError(out, serror);
     }
     return JNI_TRUE;
 }

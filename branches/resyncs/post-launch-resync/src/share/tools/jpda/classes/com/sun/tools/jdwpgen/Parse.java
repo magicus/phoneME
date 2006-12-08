@@ -1,5 +1,5 @@
 /*
- * @(#)Parse.java	1.13 06/10/10
+ * @(#)Parse.java	1.14 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -62,7 +62,6 @@ class Parse {
         kindMap.put("Alt", new AltNode());
         kindMap.put("ConstantSet", new ConstantSetNode());
         kindMap.put("Constant", new ConstantNode());
-        kindMap.put("JVMDI", new JVMDINode());
         kindMap.put("int", new IntTypeNode());
         kindMap.put("long", new LongTypeNode());
         kindMap.put("boolean", new BooleanTypeNode());

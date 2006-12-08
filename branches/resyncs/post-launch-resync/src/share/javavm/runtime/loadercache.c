@@ -1,5 +1,5 @@
 /*
- * @(#)loadercache.c	1.45 06/10/10
+ * @(#)loadercache.c	1.46 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -1100,7 +1100,7 @@ CVMloaderCacheDump(CVMExecEnv* ee)
 }
 #endif /* CVM_DEBUG */
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 /*
  * Enumerate the loader cache.
  */

@@ -1,5 +1,5 @@
 /*
- * @(#)ArrayReferenceImpl.c	1.27 06/10/10
+ * @(#)ArrayReferenceImpl.c	1.28 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,15 +23,11 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-#include "ArrayReferenceImpl.h"
 #include "util.h"
+#include "ArrayReferenceImpl.h"
 #include "inStream.h"
 #include "outStream.h"
-#include "JDWP.h"
 
 static jboolean 
 length(PacketInputStream *in, PacketOutputStream *out)
@@ -39,31 +35,52 @@ length(PacketInputStream *in, PacketOutputStream *out)
     JNIEnv *env = getEnv();
     jsize arrayLength;
 
-    jarray  array = inStream_readArrayRef(in);
+    jarray  array = inStream_readArrayRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    arrayLength = (*env)->GetArrayLength(env, array);
-    outStream_writeInt(out, arrayLength);
+    arrayLength = JNI_FUNC_PTR(env,GetArrayLength)(env, array);
+    (void)outStream_writeInt(out, arrayLength);
     return JNI_TRUE;
+}
+
+static void *
+newComponents(PacketOutputStream *out, jint length, size_t nbytes)
+{
+    void *ptr = NULL;
+    
+    if ( length > 0 ) {
+        ptr = jvmtiAllocate(length*((jint)nbytes));
+        if ( ptr == NULL ) {
+            outStream_setError(out, JDWP_ERROR(OUT_OF_MEMORY));
+        } else {
+            (void)memset(ptr, 0, length*nbytes);
+        }
+    }
+    return ptr;
+}
+
+static void
+deleteComponents(void *ptr)
+{
+    jvmtiDeallocate(ptr);
 }
 
 static void
 writeBooleanComponents(JNIEnv *env, PacketOutputStream *out, 
                     jarray array, jint index, jint length)
 {
-    jint i;
-    jint bufferSize = length * sizeof(jboolean);
-    jboolean *components = jdwpAlloc(bufferSize);
-    if (components == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        (*env)->GetBooleanArrayRegion(env, array, index, length, components);
+    jboolean *components;
+    
+    components = newComponents(out, length, sizeof(jboolean));
+    if (components != NULL) {
+        jint i;
+        JNI_FUNC_PTR(env,GetBooleanArrayRegion)(env, array, index, length, components);
         for (i = 0; i < length; i++) {
-            outStream_writeBoolean(out, components[i]);
+            (void)outStream_writeBoolean(out, components[i]);
         }
-        jdwpFree(components);
+        deleteComponents(components);
     }
 }
 
@@ -71,17 +88,16 @@ static void
 writeByteComponents(JNIEnv *env, PacketOutputStream *out, 
                     jarray array, jint index, jint length)
 {
-    jint i;
-    jint bufferSize = length * sizeof(jbyte);
-    jbyte *components = jdwpAlloc(bufferSize);
-    if (components == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        (*env)->GetByteArrayRegion(env, array, index, length, components);
+    jbyte *components;
+    
+    components = newComponents(out, length, sizeof(jbyte));
+    if (components != NULL) {
+        jint i;
+        JNI_FUNC_PTR(env,GetByteArrayRegion)(env, array, index, length, components);
         for (i = 0; i < length; i++) {
-            outStream_writeByte(out, components[i]);
+            (void)outStream_writeByte(out, components[i]);
         }
-        jdwpFree(components);
+        deleteComponents(components);
     }
 }
 
@@ -89,17 +105,16 @@ static void
 writeCharComponents(JNIEnv *env, PacketOutputStream *out, 
                     jarray array, jint index, jint length)
 {
-    jint i;
-    jint bufferSize = length * sizeof(jchar);
-    jchar *components = jdwpAlloc(bufferSize);
-    if (components == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        (*env)->GetCharArrayRegion(env, array, index, length, components);
+    jchar *components;
+    
+    components = newComponents(out, length, sizeof(jchar));
+    if (components != NULL) {
+        jint i;
+        JNI_FUNC_PTR(env,GetCharArrayRegion)(env, array, index, length, components);
         for (i = 0; i < length; i++) {
-            outStream_writeChar(out, components[i]);
+            (void)outStream_writeChar(out, components[i]);
         }
-        jdwpFree(components);
+        deleteComponents(components);
     }
 }
 
@@ -107,17 +122,16 @@ static void
 writeShortComponents(JNIEnv *env, PacketOutputStream *out, 
                     jarray array, jint index, jint length)
 {
-    jint i;
-    jint bufferSize = length * sizeof(jshort);
-    jshort *components = jdwpAlloc(bufferSize);
-    if (components == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        (*env)->GetShortArrayRegion(env, array, index, length, components);
+    jshort *components;
+    
+    components = newComponents(out, length, sizeof(jshort));
+    if (components != NULL) {
+        jint i;
+        JNI_FUNC_PTR(env,GetShortArrayRegion)(env, array, index, length, components);
         for (i = 0; i < length; i++) {
-            outStream_writeShort(out, components[i]);
+            (void)outStream_writeShort(out, components[i]);
         }
-        jdwpFree(components);
+        deleteComponents(components);
     }
 }
 
@@ -125,17 +139,16 @@ static void
 writeIntComponents(JNIEnv *env, PacketOutputStream *out, 
                     jarray array, jint index, jint length)
 {
-    jint i;
-    jint bufferSize = length * sizeof(jint);
-    jint *components = jdwpAlloc(bufferSize);
-    if (components == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        (*env)->GetIntArrayRegion(env, array, index, length, components);
+    jint *components;
+    
+    components = newComponents(out, length, sizeof(jint));
+    if (components != NULL) {
+        jint i;
+        JNI_FUNC_PTR(env,GetIntArrayRegion)(env, array, index, length, components);
         for (i = 0; i < length; i++) {
-            outStream_writeInt(out, components[i]);
+            (void)outStream_writeInt(out, components[i]);
         }
-        jdwpFree(components);
+        deleteComponents(components);
     }
 }
 
@@ -143,17 +156,16 @@ static void
 writeLongComponents(JNIEnv *env, PacketOutputStream *out, 
                     jarray array, jint index, jint length)
 {
-    jint i;
-    jint bufferSize = length * sizeof(jlong);
-    jlong *components = jdwpAlloc(bufferSize);
-    if (components == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        (*env)->GetLongArrayRegion(env, array, index, length, components);
+    jlong *components;
+    
+    components = newComponents(out, length, sizeof(jlong));
+    if (components != NULL) {
+        jint i;
+        JNI_FUNC_PTR(env,GetLongArrayRegion)(env, array, index, length, components);
         for (i = 0; i < length; i++) {
-            outStream_writeLong(out, components[i]);
+            (void)outStream_writeLong(out, components[i]);
         }
-        jdwpFree(components);
+        deleteComponents(components);
     }
 }
 
@@ -161,17 +173,16 @@ static void
 writeFloatComponents(JNIEnv *env, PacketOutputStream *out, 
                     jarray array, jint index, jint length)
 {
-    jint i;
-    jint bufferSize = length * sizeof(jfloat);
-    jfloat *components = jdwpAlloc(bufferSize);
-    if (components == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        (*env)->GetFloatArrayRegion(env, array, index, length, components);
+    jfloat *components;
+    
+    components = newComponents(out, length, sizeof(jfloat));
+    if (components != NULL) {
+        jint i;
+        JNI_FUNC_PTR(env,GetFloatArrayRegion)(env, array, index, length, components);
         for (i = 0; i < length; i++) {
-            outStream_writeFloat(out, components[i]);
+            (void)outStream_writeFloat(out, components[i]);
         }
-        jdwpFree(components);
+        deleteComponents(components);
     }
 }
 
@@ -179,17 +190,16 @@ static void
 writeDoubleComponents(JNIEnv *env, PacketOutputStream *out, 
                     jarray array, jint index, jint length)
 {
-    jint i;
-    jint bufferSize = length * sizeof(jdouble);
-    jdouble *components = jdwpAlloc(bufferSize);
-    if (components == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        (*env)->GetDoubleArrayRegion(env, array, index, length, components);
+    jdouble *components;
+    
+    components = newComponents(out, length, sizeof(jdouble));
+    if (components != NULL) {
+        jint i;
+        JNI_FUNC_PTR(env,GetDoubleArrayRegion)(env, array, index, length, components);
         for (i = 0; i < length; i++) {
-            outStream_writeDouble(out, components[i]);
+            (void)outStream_writeDouble(out, components[i]);
         }
-        jdwpFree(components);
+        deleteComponents(components);
     }
 }
 
@@ -197,125 +207,139 @@ static void
 writeObjectComponents(JNIEnv *env, PacketOutputStream *out, 
                     jarray array, jint index, jint length)
 {
-    int i;
-    jobject component;
 
-    WITH_LOCAL_REFS(env, length);
+    WITH_LOCAL_REFS(env, length) {
 
-    for (i = 0; i < length; i++) {
-        component = (*env)->GetObjectArrayElement(env, array, index + i);
-        if ((*env)->ExceptionOccurred(env)) {
-            /* cleared by caller */
-            break;
+        int i;
+        jobject component;
+        
+        for (i = 0; i < length; i++) {
+            component = JNI_FUNC_PTR(env,GetObjectArrayElement)(env, array, index + i);
+            if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
+                /* cleared by caller */
+                break;
+            }
+            (void)outStream_writeByte(out, specificTypeKey(env, component));
+            (void)outStream_writeObjectRef(env, out, component);
         }
-        outStream_writeByte(out, specificTypeKey(component));
-        WRITE_LOCAL_REF(env, out, component);
-    }
 
-    END_WITH_LOCAL_REFS(env);
+    } END_WITH_LOCAL_REFS(env);
 }
 
 static jboolean 
 getValues(PacketInputStream *in, PacketOutputStream *out)
 {
     JNIEnv *env = getEnv();
-    char *signature;
-    char *componentSignature;
-    jclass arrayClass;
     jint arrayLength;
-    jbyte typeKey;
-    jarray array = inStream_readArrayRef(in);
-    jint index = inStream_readInt(in);
-    jint length = inStream_readInt(in);
+    jarray array;
+    jint index;
+    jint length;
+    
+    array = inStream_readArrayRef(env, in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    index = inStream_readInt(in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    length = inStream_readInt(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    arrayLength = (*env)->GetArrayLength(env, array);
+    arrayLength = JNI_FUNC_PTR(env,GetArrayLength)(env, array);
 
     if (length == -1) {
         length = arrayLength - index;
     }
 
     if ((index < 0) || (index > arrayLength - 1)) {
-        outStream_setError(out, JDWP_Error_INVALID_INDEX);
+        outStream_setError(out, JDWP_ERROR(INVALID_INDEX));
         return JNI_TRUE;
     }
 
     if ((length < 0) || (length + index > arrayLength)) {
-        outStream_setError(out, JDWP_Error_INVALID_LENGTH);
+        outStream_setError(out, JDWP_ERROR(INVALID_LENGTH));
         return JNI_TRUE;
     }
 
-    WITH_LOCAL_REFS(env, 1);
+    WITH_LOCAL_REFS(env, 1) {
 
-    arrayClass = (*env)->GetObjectClass(env, array);
-    signature = classSignature(arrayClass);
-    if (signature == NULL) {
-        goto err;
-    }
-    componentSignature = &signature[1];
-    typeKey = componentSignature[0];
-
-    outStream_writeByte(out, typeKey);
-    outStream_writeInt(out, length);
-
-    if (isObjectTag(typeKey)) {
-        writeObjectComponents(env, out, array, index, length);
-    } else {
-        switch (typeKey) {
-            case JDWP_Tag_BYTE:
-                writeByteComponents(env, out, array, index, length);
-                break;
-    
-            case JDWP_Tag_CHAR:
-                writeCharComponents(env, out, array, index, length);
-                break;
-    
-            case JDWP_Tag_FLOAT:
-                writeFloatComponents(env, out, array, index, length);
-                break;
-    
-            case JDWP_Tag_DOUBLE:
-                writeDoubleComponents(env, out, array, index, length);
-                break;
-    
-            case JDWP_Tag_INT:
-                writeIntComponents(env, out, array, index, length);
-                break;
-    
-            case JDWP_Tag_LONG:
-                writeLongComponents(env, out, array, index, length);
-                break;
-    
-            case JDWP_Tag_SHORT:
-                writeShortComponents(env, out, array, index, length);
-                break;
-    
-            case JDWP_Tag_BOOLEAN:
-                writeBooleanComponents(env, out, array, index, length);
-                break;
-    
-            default:
-                outStream_setError(out, JDWP_Error_INVALID_TAG);
-                break;
+        jclass arrayClass;
+        char *signature = NULL;
+        char *componentSignature;
+        jbyte typeKey;
+        jvmtiError error;
+        
+        arrayClass = JNI_FUNC_PTR(env,GetObjectClass)(env, array);
+        error = classSignature(arrayClass, &signature, NULL);
+        if (error != JVMTI_ERROR_NONE) {
+            goto err;
         }
-    }
+        componentSignature = &signature[1];
+        typeKey = componentSignature[0];
 
-    jdwpFree(signature);
+        (void)outStream_writeByte(out, typeKey);
+        (void)outStream_writeInt(out, length);
 
-err:
-    END_WITH_LOCAL_REFS(env);
+        if (isObjectTag(typeKey)) {
+            writeObjectComponents(env, out, array, index, length);
+        } else {
+            switch (typeKey) {
+                case JDWP_TAG(BYTE):
+                    writeByteComponents(env, out, array, index, length);
+                    break;
+        
+                case JDWP_TAG(CHAR):
+                    writeCharComponents(env, out, array, index, length);
+                    break;
+        
+                case JDWP_TAG(FLOAT):
+                    writeFloatComponents(env, out, array, index, length);
+                    break;
+        
+                case JDWP_TAG(DOUBLE):
+                    writeDoubleComponents(env, out, array, index, length);
+                    break;
+        
+                case JDWP_TAG(INT):
+                    writeIntComponents(env, out, array, index, length);
+                    break;
+        
+                case JDWP_TAG(LONG):
+                    writeLongComponents(env, out, array, index, length);
+                    break;
+        
+                case JDWP_TAG(SHORT):
+                    writeShortComponents(env, out, array, index, length);
+                    break;
+        
+                case JDWP_TAG(BOOLEAN):
+                    writeBooleanComponents(env, out, array, index, length);
+                    break;
+        
+                default:
+                    outStream_setError(out, JDWP_ERROR(INVALID_TAG));
+                    break;
+            }
+        }
 
-    if ((*env)->ExceptionOccurred(env)) {
-        outStream_setError(out, JVMDI_ERROR_INTERNAL);
-        (*env)->ExceptionClear(env);
+        jvmtiDeallocate(signature);
+
+    err:;
+
+    } END_WITH_LOCAL_REFS(env);
+
+    if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
+        outStream_setError(out, JDWP_ERROR(INTERNAL));
+        JNI_FUNC_PTR(env,ExceptionClear)(env);
     } 
 
     return JNI_TRUE;
 }
 
-static jint 
+static jdwpError 
 readBooleanComponents(JNIEnv *env, PacketInputStream *in, 
                    jarray array, int index, int length)
 {
@@ -324,12 +348,12 @@ readBooleanComponents(JNIEnv *env, PacketInputStream *in,
 
     for (i = 0; (i < length) && !inStream_error(in); i++) {
         component = inStream_readBoolean(in);
-        (*env)->SetBooleanArrayRegion(env, array, index + i, 1, &component);
+        JNI_FUNC_PTR(env,SetBooleanArrayRegion)(env, array, index + i, 1, &component);
     }
     return inStream_error(in);
 }
 
-static jint 
+static jdwpError 
 readByteComponents(JNIEnv *env, PacketInputStream *in, 
                    jarray array, int index, int length)
 {
@@ -338,12 +362,12 @@ readByteComponents(JNIEnv *env, PacketInputStream *in,
 
     for (i = 0; (i < length) && !inStream_error(in); i++) {
         component = inStream_readByte(in);
-        (*env)->SetByteArrayRegion(env, array, index + i, 1, &component);
+        JNI_FUNC_PTR(env,SetByteArrayRegion)(env, array, index + i, 1, &component);
     }
     return inStream_error(in);
 }
 
-static jint 
+static jdwpError 
 readCharComponents(JNIEnv *env, PacketInputStream *in, 
                    jarray array, int index, int length)
 {
@@ -352,12 +376,12 @@ readCharComponents(JNIEnv *env, PacketInputStream *in,
 
     for (i = 0; (i < length) && !inStream_error(in); i++) {
         component = inStream_readChar(in);
-        (*env)->SetCharArrayRegion(env, array, index + i, 1, &component);
+        JNI_FUNC_PTR(env,SetCharArrayRegion)(env, array, index + i, 1, &component);
     }
     return inStream_error(in);
 }
 
-static jint 
+static jdwpError 
 readShortComponents(JNIEnv *env, PacketInputStream *in, 
                    jarray array, int index, int length)
 {
@@ -366,12 +390,12 @@ readShortComponents(JNIEnv *env, PacketInputStream *in,
 
     for (i = 0; (i < length) && !inStream_error(in); i++) {
         component = inStream_readShort(in);
-        (*env)->SetShortArrayRegion(env, array, index + i, 1, &component);
+        JNI_FUNC_PTR(env,SetShortArrayRegion)(env, array, index + i, 1, &component);
     }
     return inStream_error(in);
 }
 
-static jint 
+static jdwpError 
 readIntComponents(JNIEnv *env, PacketInputStream *in, 
                    jarray array, int index, int length)
 {
@@ -380,12 +404,12 @@ readIntComponents(JNIEnv *env, PacketInputStream *in,
 
     for (i = 0; (i < length) && !inStream_error(in); i++) {
         component = inStream_readInt(in);
-        (*env)->SetIntArrayRegion(env, array, index + i, 1, &component);
+        JNI_FUNC_PTR(env,SetIntArrayRegion)(env, array, index + i, 1, &component);
     }
     return inStream_error(in);
 }
 
-static jint 
+static jdwpError 
 readLongComponents(JNIEnv *env, PacketInputStream *in, 
                    jarray array, int index, int length)
 {
@@ -394,12 +418,12 @@ readLongComponents(JNIEnv *env, PacketInputStream *in,
 
     for (i = 0; (i < length) && !inStream_error(in); i++) {
         component = inStream_readLong(in);
-        (*env)->SetLongArrayRegion(env, array, index + i, 1, &component);
+        JNI_FUNC_PTR(env,SetLongArrayRegion)(env, array, index + i, 1, &component);
     }
     return inStream_error(in);
 }
 
-static jint 
+static jdwpError 
 readFloatComponents(JNIEnv *env, PacketInputStream *in, 
                    jarray array, int index, int length)
 {
@@ -408,12 +432,12 @@ readFloatComponents(JNIEnv *env, PacketInputStream *in,
 
     for (i = 0; (i < length) && !inStream_error(in); i++) {
         component = inStream_readFloat(in);
-        (*env)->SetFloatArrayRegion(env, array, index + i, 1, &component);
+        JNI_FUNC_PTR(env,SetFloatArrayRegion)(env, array, index + i, 1, &component);
     }
     return inStream_error(in);
 }
 
-static jint 
+static jdwpError 
 readDoubleComponents(JNIEnv *env, PacketInputStream *in, 
                    jarray array, int index, int length)
 {
@@ -422,31 +446,30 @@ readDoubleComponents(JNIEnv *env, PacketInputStream *in,
 
     for (i = 0; (i < length) && !inStream_error(in); i++) {
         component = inStream_readDouble(in);
-        (*env)->SetDoubleArrayRegion(env, array, index + i, 1, &component);
+        JNI_FUNC_PTR(env,SetDoubleArrayRegion)(env, array, index + i, 1, &component);
     }
     return inStream_error(in);
 }
 
 
-static jint 
+static jdwpError 
 readObjectComponents(JNIEnv *env, PacketInputStream *in, 
                    jarray array, int index, int length)
                    /* char *componentSignature) */
 {
     int i;
-    jint error = JVMDI_ERROR_NONE;
 
     for (i = 0; i < length; i++) {
-        jobject object = inStream_readObjectRef(in);
+        jobject object = inStream_readObjectRef(env, in);
 
-        (*env)->SetObjectArrayElement(env, array, index + i, object);
-        if ((*env)->ExceptionOccurred(env)) {
+        JNI_FUNC_PTR(env,SetObjectArrayElement)(env, array, index + i, object);
+        if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
             /* caller will clear */
             break;
         }
     }
 
-    return error;
+    return JDWP_ERROR(NONE);
 }
 
 
@@ -454,102 +477,113 @@ static jboolean
 setValues(PacketInputStream *in, PacketOutputStream *out)
 {
     JNIEnv *env = getEnv();
-    char *signature;
-    char *componentSignature;
-    jclass arrayClass;
-    jint error = JVMDI_ERROR_NONE;
+    jdwpError serror = JDWP_ERROR(NONE);
     int arrayLength;
-
-    jarray array = inStream_readArrayRef(in);
-    jint index = inStream_readInt(in);
-    jint length = inStream_readInt(in);
+    jarray array;
+    jint index;
+    jint length;
+    
+    array = inStream_readArrayRef(env, in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    index = inStream_readInt(in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    length = inStream_readInt(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
     
-    arrayLength = (*env)->GetArrayLength(env, array);
+    arrayLength = JNI_FUNC_PTR(env,GetArrayLength)(env, array);
 
     if ((index < 0) || (index > arrayLength - 1)) {
-        outStream_setError(out, JDWP_Error_INVALID_INDEX);
+        outStream_setError(out, JDWP_ERROR(INVALID_INDEX));
         return JNI_TRUE;
     }
 
     if ((length < 0) || (length + index > arrayLength)) {
-        outStream_setError(out, JDWP_Error_INVALID_LENGTH);
+        outStream_setError(out, JDWP_ERROR(INVALID_LENGTH));
         return JNI_TRUE;
     }
 
-    WITH_LOCAL_REFS(env, 1);
+    WITH_LOCAL_REFS(env, 1)  {
 
-    arrayClass = (*env)->GetObjectClass(env, array);
-    signature = classSignature(arrayClass);
-    if (signature == NULL) {
-        goto err;
-    }
-    componentSignature = &signature[1];
+        jclass arrayClass;
+        char *signature = NULL;
+        char *componentSignature;
+        jvmtiError error;
+        
+        arrayClass = JNI_FUNC_PTR(env,GetObjectClass)(env, array);
+        error = classSignature(arrayClass, &signature, NULL);
+        if (error != JVMTI_ERROR_NONE) {
+            goto err;
+        }
+        componentSignature = &signature[1];
 
-    switch (componentSignature[0]) {
-        case JDWP_Tag_OBJECT:
-        case JDWP_Tag_ARRAY:
-            error = readObjectComponents(env, in, array, index, length);
-                                       /* componentSignature); */
-            break;
+        switch (componentSignature[0]) {
+            case JDWP_TAG(OBJECT):
+            case JDWP_TAG(ARRAY):
+                serror = readObjectComponents(env, in, array, index, length);
+                break;
 
-        case JDWP_Tag_BYTE:
-            error = readByteComponents(env, in, array, index, length);
-            break;
+            case JDWP_TAG(BYTE):
+                serror = readByteComponents(env, in, array, index, length);
+                break;
 
-        case JDWP_Tag_CHAR:
-            error = readCharComponents(env, in, array, index, length);
-            break;
+            case JDWP_TAG(CHAR):
+                serror = readCharComponents(env, in, array, index, length);
+                break;
 
-        case JDWP_Tag_FLOAT:
-            error = readFloatComponents(env, in, array, index, length);
-            break;
+            case JDWP_TAG(FLOAT):
+                serror = readFloatComponents(env, in, array, index, length);
+                break;
 
-        case JDWP_Tag_DOUBLE:
-            error = readDoubleComponents(env, in, array, index, length);
-            break;
+            case JDWP_TAG(DOUBLE):
+                serror = readDoubleComponents(env, in, array, index, length);
+                break;
 
-        case JDWP_Tag_INT:
-            error = readIntComponents(env, in, array, index, length);
-            break;
+            case JDWP_TAG(INT):
+                serror = readIntComponents(env, in, array, index, length);
+                break;
 
-        case JDWP_Tag_LONG:
-            error = readLongComponents(env, in, array, index, length);
-            break;
+            case JDWP_TAG(LONG):
+                serror = readLongComponents(env, in, array, index, length);
+                break;
 
-        case JDWP_Tag_SHORT:
-            error = readShortComponents(env, in, array, index, length);
-            break;
+            case JDWP_TAG(SHORT):
+                serror = readShortComponents(env, in, array, index, length);
+                break;
 
-        case JDWP_Tag_BOOLEAN:
-            error = readBooleanComponents(env, in, array, index, length);
-            break;
+            case JDWP_TAG(BOOLEAN):
+                serror = readBooleanComponents(env, in, array, index, length);
+                break;
 
-        default:
-            {
-                char buf[200];
-                sprintf(buf, "Invalid array component signature: %s", componentSignature);
-                ERROR_MESSAGE_EXIT(buf);
-            }
-            break;
-    }
+            default:
+                {
+                    ERROR_MESSAGE(("Invalid array component signature: %s",
+                                        componentSignature));
+                    EXIT_ERROR(AGENT_ERROR_INVALID_OBJECT,NULL);
+                }
+                break;
+        }
 
-    jdwpFree(signature);
+        jvmtiDeallocate(signature);
 
-err:
-    END_WITH_LOCAL_REFS(env);
+    err:;
 
-    if ((*env)->ExceptionOccurred(env)) {
+    } END_WITH_LOCAL_REFS(env);
+
+    if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
         /*
-         * %comment gordonh004
+         * TO DO: Check exception type
          */
-        error = JVMDI_ERROR_TYPE_MISMATCH;
-        (*env)->ExceptionClear(env);
+        serror = JDWP_ERROR(TYPE_MISMATCH);
+        JNI_FUNC_PTR(env,ExceptionClear)(env);
     }
 
-    outStream_setError(out, error);
+    outStream_setError(out, serror);
     return JNI_TRUE;
 }
 

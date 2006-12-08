@@ -1,5 +1,5 @@
 /*
- * @(#)stackmaps.c	1.110 06/10/10
+ * @(#)stackmaps.c	1.111 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -47,8 +47,8 @@
 #include "javavm/include/porting/int.h"
 #include "javavm/include/porting/system.h"
 
-#ifdef CVM_JVMDI
-#include "javavm/include/jvmdi_impl.h"
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
 #endif
 
 #ifdef CVM_DEBUG
@@ -273,7 +273,7 @@ mapVarno(CVMStackmapContext * con, int varNo, CVMUint8 * pc );
 static CVMBool
 CVMstackmapAnalyze( CVMStackmapContext *con );
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 static CVMUint32
 getOpcodeLength(CVMStackmapContext* con, CVMUint8* pc)
 {
@@ -283,7 +283,7 @@ getOpcodeLength(CVMStackmapContext* con, CVMUint8* pc)
     if (*pc == opc_breakpoint) {
 	/* Find the length of the original opcode, so we can
 	   skip over it by the appropriate amount */
-	CVMOpcode instr = CVMjvmdiGetBreakpointOpcode(con->ee, pc, CVM_FALSE);
+	CVMOpcode instr = CVMjvmtiGetBreakpointOpcode(con->ee, pc, CVM_FALSE);
 	*pc = instr;
 	opLen = CVMopcodeGetLength(pc);
 	*pc = opc_breakpoint;
@@ -899,17 +899,17 @@ CVMstackmapFindBasicBlocks(CVMStackmapContext* con)
 	}
 
         /* JVMPI needs this in order to support instruction tracing: */
-#if (!defined(CVM_JVMDI) && !defined(CVM_JVMPI_TRACE_INSTRUCTION))
+#if (!defined(CVM_JVMTI) && !defined(CVM_JVMPI_TRACE_INSTRUCTION))
 	/*
 	 * We counted the potential backwards branches. Now count the
 	 * other GC points.
 	 */
 	if (CVMbcAttr(instr, GCPOINT) ||
 	    (con->doConditionalGcPoints && CVMbcAttr(instr, COND_GCPOINT)))
-#else /* JVMDI and/or CVM_JVMPI_TRACE_INSTRUCTION */
+#else /* JVMTI and/or CVM_JVMPI_TRACE_INSTRUCTION */
 	/* Mark all instructions as GC points because a thread can be
 	   suspended anywhere.  */
-#endif /* (!defined(CVM_JVMDI) && !defined(CVM_JVMPI_TRACE_INSTRUCTION)) */
+#endif /* (!defined(CVM_JVMPI_TRACE_INSTRUCTION)) */
 	CVMstackmapMarkGCPoint(con, gcPointsBitmap, (CVMUint16)(pc - codeBegin));
 
 	/*
@@ -1389,10 +1389,10 @@ CVMstackmapFieldKind(CVMStackmapContext* con, CVMUint8* pc,
 #ifdef CVM_DEBUG_ASSERTS
     {
         CVMOpcode instr = (CVMOpcode)*pc;
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
         if (instr == opc_breakpoint) {
 	    /* Must get the original byte-code: */
-	    instr = CVMjvmdiGetBreakpointOpcode(con->ee, pc, CVM_FALSE);
+	    instr = CVMjvmtiGetBreakpointOpcode(con->ee, pc, CVM_FALSE);
 	}
 #endif
         CVMassert(instr == opc_getfield || instr == opc_getstatic ||
@@ -1481,10 +1481,10 @@ CVMstackmapHandleMethodRefFromCode(CVMStackmapContext* con,
 {
     CVMUint32 cpIdx;
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     CVMassert(CVMbcAttr(*pc, INVOCATION) ||
         (((CVMOpcode)*pc == opc_breakpoint) &&
-         CVMbcAttr(CVMjvmdiGetBreakpointOpcode(con->ee, pc, CVM_FALSE),
+         CVMbcAttr(CVMjvmtiGetBreakpointOpcode(con->ee, pc, CVM_FALSE),
                    INVOCATION)));
 #else
     CVMassert(CVMbcAttr(*pc, INVOCATION));
@@ -1666,7 +1666,7 @@ CVMstackmapInterpretOne(CVMStackmapContext* con,
 {
     CVMOpcode instr = (CVMOpcode)*pc;
     CVMassert(topOfStack >= 0);
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     /* Just in case we have to re-do the instruction due to a breakpoint */
  interpretInstr:
 #endif
@@ -2478,9 +2478,9 @@ CVMstackmapInterpretOne(CVMStackmapContext* con,
 	    topOfStack -= pc[2]; /* Discard args */
 	    break;
         case opc_breakpoint:
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 	    /* Must get the original byte-code and re-do */
-	    instr = CVMjvmdiGetBreakpointOpcode(con->ee, pc, CVM_FALSE);
+	    instr = CVMjvmtiGetBreakpointOpcode(con->ee, pc, CVM_FALSE);
 	    goto interpretInstr;
 #endif
         default:
@@ -3418,7 +3418,7 @@ CVMstackmapJSRScan( CVMMethodBlock *mb ){
 	    hasSwitch = CVM_TRUE;
 	    break;
 	}
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 	/* This should not happen before a class is first used */
 	CVMassert(*pc != opc_breakpoint);
 #endif

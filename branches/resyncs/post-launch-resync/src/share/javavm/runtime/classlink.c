@@ -1,5 +1,5 @@
 /*
- * @(#)classlink.c	1.110 06/10/10
+ * @(#)classlink.c	1.111 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -38,8 +38,8 @@
 #include "javavm/include/stackmaps.h"
 #include "javavm/include/limits.h"
 #include "generated/javavm/include/opcodes.h"
-#ifdef CVM_JVMDI
-#include "javavm/include/jvmdi_impl.h"
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
 #endif
 #ifdef CVM_JIT
 #include "javavm/include/ccm_runtime.h"
@@ -210,9 +210,9 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb)
 
     CVMcbSetRuntimeFlag(cb, ee, LINKED);
 
-#ifdef CVM_JVMDI
-    if (CVMjvmdiEventsEnabled()) {
-	CVMjvmdiNotifyDebuggerOfClassPrepare(ee, CVMcbJavaInstance(cb));
+#ifdef CVM_JVMTI
+    if (CVMjvmtiEventsEnabled()) {
+	CVMjvmtiNotifyDebuggerOfClassPrepare(ee, CVMcbJavaInstance(cb));
     }
 #endif
 

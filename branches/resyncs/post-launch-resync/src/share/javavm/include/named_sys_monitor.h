@@ -1,5 +1,5 @@
 /*
- * @(#)named_sys_monitor.h	1.9 06/10/10
+ * @(#)named_sys_monitor.h	1.11 06/10/27
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -29,25 +29,25 @@
 #define _INCLUDED_NAMED_SYS_MONITOR_H
 
 /* NOTE: This module defines the CVMNamedSysMonitor which is currently solely
-         used by the JVMDI and JVMPI APIs.  CVMNamedSysMonitor inherits from
+         used by the JVMTI and JVMPI APIs.  CVMNamedSysMonitor inherits from
          CVMProfiledMonitor (which is defined in sync.h), and adds a name
          field.
 */
 
-#if (defined(CVM_JVMDI) || defined(CVM_JVMPI))
+#if (defined(CVM_JVMTI) || defined(CVM_JVMPI))
 
 #include "javavm/include/indirectmem.h"
 #include "javavm/include/sync.h"
 
 /*=============================================== class CVMNamedSysMonitor ==*/
 
-/* Purpose: "raw" named object-less monitor for the use of JVMDI & JVMPI. */
+/* Purpose: "raw" named object-less monitor for the use of JVMTI & JVMPI. */
 /* NOTE: Make sure to use CVMnamedSysMonitorComputeSize() to compute the
          amount of memory in bytes to be allocated for this monitor.  This is
          necessary because the name of the monitor is stored immediately after
          the monitor part.  This allows the needed memory to be allocated in
          one single request and simplifies the handling of "Out of Memory"
-         errors by JVMDI & JVMPI.
+         errors by JVMTI & JVMPI.
 */
 /* NOTE: The CVMNamedSysMonitor implementation describes the following
          abstraction:
@@ -173,6 +173,6 @@ void CVMnamedSysMonitorDestroy(CVMNamedSysMonitor *self);
 #define CVMcastNamedSysMonitor2ProfiledMonitor(self) \
     ((CVMProfiledMonitor *)(&(self)->_super))
 
-#endif /* (defined(CVM_JVMDI) || defined(CVM_JVMPI)) */
+#endif /* (defined(CVM_JVMTI) || defined(CVM_JVMPI)) */
 
 #endif /* _INCLUDED_NAMED_SYS_MONITOR_H */

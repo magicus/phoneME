@@ -1,5 +1,5 @@
 /*
- * @(#)socket_md.c	1.14 06/10/10
+ * @(#)socket_md.c	1.16 06/10/26
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -43,6 +43,64 @@
 
 #include "sysSocket.h"
 #include "socketTransport.h"
+/*
+ * Table of Windows Sockets errors, the specific exception we
+ * throw for the error, and the error text.
+ *
+ * Note that this table excludes OS dependent errors.
+ */
+static struct {
+    int errCode;
+    const char *errString;
+} const winsock_errors[] = {
+    { WSAEPROVIDERFAILEDINIT,	"Provider initialization failed (check %SystemRoot%)" },
+    { WSAEACCES, 		"Permission denied" },
+    { WSAEADDRINUSE, 		"Address already in use" },
+    { WSAEADDRNOTAVAIL, 	"Cannot assign requested address" },
+    { WSAEAFNOSUPPORT,		"Address family not supported by protocol family" },
+    { WSAEALREADY,		"Operation already in progress" },
+    { WSAECONNABORTED,		"Software caused connection abort" },
+    { WSAECONNREFUSED,		"Connection refused" },
+    { WSAECONNRESET,		"Connection reset by peer" },
+    { WSAEDESTADDRREQ,		"Destination address required" },
+    { WSAEFAULT,		"Bad address" },
+    { WSAEHOSTDOWN,		"Host is down" },
+    { WSAEHOSTUNREACH,		"No route to host" },
+    { WSAEINPROGRESS,		"Operation now in progress" },
+    { WSAEINTR,			"Interrupted function call" },
+    { WSAEINVAL,		"Invalid argument" },
+    { WSAEISCONN,		"Socket is already connected" },
+    { WSAEMFILE,		"Too many open files" },
+    { WSAEMSGSIZE,		"The message is larger than the maximum supported by the underlying transport" },
+    { WSAENETDOWN,		"Network is down" },
+    { WSAENETRESET,		"Network dropped connection on reset" },
+    { WSAENETUNREACH,		"Network is unreachable" },
+    { WSAENOBUFS,		"No buffer space available (maximum connections reached?)" },
+    { WSAENOPROTOOPT,		"Bad protocol option" },
+    { WSAENOTCONN,		"Socket is not connected" },
+    { WSAENOTSOCK,		"Socket operation on nonsocket" },
+    { WSAEOPNOTSUPP,		"Operation not supported" },
+    { WSAEPFNOSUPPORT,		"Protocol family not supported" },
+    { WSAEPROCLIM,		"Too many processes" },
+    { WSAEPROTONOSUPPORT,	"Protocol not supported" },
+    { WSAEPROTOTYPE,		"Protocol wrong type for socket" },
+    { WSAESHUTDOWN,		"Cannot send after socket shutdown" },
+    { WSAESOCKTNOSUPPORT,	"Socket type not supported" },
+    { WSAETIMEDOUT,		"Connection timed out" },
+    { WSATYPE_NOT_FOUND,	"Class type not found" },
+    { WSAEWOULDBLOCK,		"Resource temporarily unavailable" },
+    { WSAHOST_NOT_FOUND,	"Host not found" },
+    { WSA_NOT_ENOUGH_MEMORY,	"Insufficient memory available" },
+    { WSANOTINITIALISED,	"Successful WSAStartup not yet performed" },
+    { WSANO_DATA,		"Valid name, no data record of requested type" },
+    { WSANO_RECOVERY,		"This is a nonrecoverable error" },
+    { WSASYSNOTREADY,		"Network subsystem is unavailable" },
+    { WSATRY_AGAIN,		"Nonauthoritative host not found" },
+    { WSAVERNOTSUPPORTED,	"Winsock.dll version out of range" },
+    { WSAEDISCON,		"Graceful shutdown in progress" },
+    { WSA_OPERATION_ABORTED,	"Overlapped operation aborted" },
+};
+
 
 /* GetProcAddress takes a Unicode function name parameter on Windows CE.
  * The same function on Windows NT uses ASCII.
@@ -129,7 +187,7 @@ static bool_t winsock2Available = FALSE;
  * breach.  Blue screen.  Ugly.
  *
  * So, in initSockTable we look for Winsock 2, and if we find it we
- * assign wsasenddisconnectfn function pointer. When we close, we
+ * assign wsassendisconnectfn function pointer. When we close, we
  * first check to see if it's bound, and if it is, we call it. Winsock
  * 2 will always be there on NT, and we recommend that win95 user
  * install it.
@@ -275,7 +333,7 @@ initSockFnTable() {
  * function pointer table, but our pointer should still be good.
  */
 int
-dbgsysListen(int fd, long count) {
+dbgsysListen(int fd, SOCKINT32 count) {
     int (PASCAL FAR *listenfn)();
     if ((listenfn = sockfnptrs[FN_LISTEN]) == NULL) {
         initSockFnTable();
@@ -295,6 +353,40 @@ dbgsysConnect(int fd, struct sockaddr *name, int namelen) {
     sysAssert(sockfnptrs_initialized == TRUE);
     sysAssert(connectfn != NULL);
     return (*connectfn)(fd, name, namelen);
+}
+
+int dbgsysFinishConnect(int fd, long timeout) {
+    int rv;
+    struct timeval t;
+    fd_set wr, ex;
+
+    t.tv_sec = timeout / 1000;
+    t.tv_usec = (timeout % 1000) * 1000;
+
+    FD_ZERO(&wr);
+    FD_ZERO(&ex);
+    FD_SET((unsigned int)fd, &wr);
+    FD_SET((unsigned int)fd, &ex);
+
+    rv = select(fd+1, 0, &wr, &ex, &t);
+    if (rv == 0) {
+	return SYS_ERR;	    /* timeout */
+    }
+
+    /*
+     * Check if there was an error - this is preferable to check if
+     * the socket is writable because some versions of Windows don't
+     * report a connected socket as being writable.
+     */
+    if (!FD_ISSET(fd, &ex)) {
+	return SYS_OK;		   
+    }
+
+    /*
+     * Unable to establish connection - to get the reason we must
+     * call getsockopt.
+     */
+    return SYS_ERR;
 }
 
 int
@@ -429,7 +521,7 @@ int dbgsysSocketClose(int fd) {
  * ready, 0 if it timed out, -1 on error, -2 if interrupted (although
  * interruption isn't implemented yet).  Timeout in milliseconds.  */
 int
-dbgsysTimeout(int fd, long timeout) {
+dbgsysTimeout(int fd, SOCKINT32 timeout) {
     int res;
     fd_set tbl;
     struct timeval t;
@@ -449,8 +541,8 @@ dbgsysTimeout(int fd, long timeout) {
     return res;
 }
 
-long
-dbgsysSocketAvailable(int fd, long *pbytes)
+SOCKINT32
+dbgsysSocketAvailable(int fd, SOCKINT32 *pbytes)
 {
     int (PASCAL FAR *socketfn)();
     if ((socketfn = sockfnptrs[FN_SOCKETAVAILABLE]) == NULL) {
@@ -475,8 +567,13 @@ dbgsysBind(int fd, struct sockaddr *name, int namelen) {
     return (*socketfn)(fd, name, namelen);
 }
 
-unsigned long
-dbgsysHostToNetworkLong(unsigned long hostlong) {
+U_SOCKINT32 
+dbgsysInetAddr(const char* cp) {
+    return (UINT32)inet_addr(cp);
+}
+
+U_SOCKINT32
+dbgsysHostToNetworkLong(U_SOCKINT32 hostlong) {
     int (PASCAL FAR *socketfn)();
     if ((socketfn = sockfnptrs[FN_HTONL]) == NULL) {
         initSockFnTable();
@@ -510,8 +607,8 @@ dbgsysGetSocketName(int fd, struct sockaddr *name, int *namelen) {
     return (*socketfn)(fd, name, namelen);
 }
 
-unsigned long
-dbgsysNetworkToHostLong(unsigned long netlong) {
+U_SOCKINT32
+dbgsysNetworkToHostLong(U_SOCKINT32 netlong) {
     int (PASCAL FAR *socketfn)();
     if ((socketfn = sockfnptrs[FN_NTOHL]) == NULL) {
         initSockFnTable();
@@ -587,4 +684,123 @@ dbgsysSetSocketOption(int fd, jint cmd, jboolean on, jvalue value)
     return SYS_OK;
 }
 
+int dbgsysConfigureBlocking(int fd, jboolean blocking) {
+    u_long argp;
+    int result = 0;
+
+    if (blocking == JNI_FALSE) {
+        argp = 1;
+    } else {
+        argp = 0;
+    }
+    result = ioctlsocket(fd, FIONBIO, &argp);
+    if (result == SOCKET_ERROR) {
+	return SYS_ERR;
+    } else {
+	return SYS_OK;
+    }
+}
+
+int 
+dbgsysPoll(int fd, jboolean rd, jboolean wr, long timeout) {
+    int rv;
+    struct timeval t;
+    fd_set rd_tbl, wr_tbl;
+
+    t.tv_sec = timeout / 1000;
+    t.tv_usec = (timeout % 1000) * 1000;
+
+    FD_ZERO(&rd_tbl);
+    if (rd) {
+	FD_SET((unsigned int)fd, &rd_tbl);
+    }
+
+    FD_ZERO(&wr_tbl);
+    if (wr) {
+	FD_SET((unsigned int)fd, &wr_tbl);
+    }
+
+    rv = select(fd+1, &rd_tbl, &wr_tbl, 0, &t);
+    if (rv >= 0) {
+	rv = 0;
+	if (FD_ISSET(fd, &rd_tbl)) {
+	    rv |= DBG_POLLIN;
+	}
+	if (FD_ISSET(fd, &wr_tbl)) {
+	    rv |= DBG_POLLOUT;
+	}
+    }
+    return rv;
+}
+
+int 
+dbgsysGetLastIOError(char *buf, jint size) {
+    int table_size = sizeof(winsock_errors) /
+		     sizeof(winsock_errors[0]);
+    int i;
+    int error = WSAGetLastError();
+
+    /*
+     * Check table for known winsock errors
+     */
+    i=0;
+    while (i < table_size) {
+	if (error == winsock_errors[i].errCode) {
+	    break;
+        }
+	i++;
+    }
+
+    if (i < table_size) {
+	strcpy(buf, winsock_errors[i].errString);
+    } else {
+	sprintf(buf, "winsock error %d", error);
+    }
+    return 0;
+}
+
+int 
+dbgsysTlsAlloc() {
+    return TlsAlloc();
+}
+
+void
+dbgsysTlsFree(int index) {
+    TlsFree(index);
+}
+
+void 
+dbgsysTlsPut(int index, void *value) {
+    TlsSetValue(index, value);
+}
+
+void *
+dbgsysTlsGet(int index) {
+    return TlsGetValue(index);
+}
+
+#define FT2INT64(ft) \
+        ((long)(ft).dwHighDateTime << 32 | (long)(ft).dwLowDateTime)
+
+long
+dbgsysCurrentTimeMillis() {
+    static long fileTime_1_1_70 = 0;	/* midnight 1/1/70 */
+    SYSTEMTIME st0;
+    FILETIME   ft0;
+
+    /* initialize on first usage */
+    if (fileTime_1_1_70 == 0) {
+        memset(&st0, 0, sizeof(st0));
+        st0.wYear  = 1970;
+        st0.wMonth = 1;
+        st0.wDay   = 1;
+        SystemTimeToFileTime(&st0, &ft0);
+        fileTime_1_1_70 = FT2INT64(ft0);
+    }
+
+    GetSystemTime(&st0);
+    SystemTimeToFileTime(&st0, &ft0);
+
+    return (FT2INT64(ft0) - fileTime_1_1_70) / 10000;
+}
 

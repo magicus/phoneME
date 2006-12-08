@@ -21,7 +21,7 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional  
 # information or have any questions. 
 #
-# @(#)jcc.mk	1.115 06/10/24
+# @(#)jcc.mk	1.116 06/10/27
 #
 
 #
@@ -155,7 +155,7 @@ ifeq ($(CVM_DEBUG_CLASSINFO), true)
 CVM_JCC_OPTIONS += -g
 endif
 # Allow breakpoints in ROMized code
-ifeq ($(CVM_JVMDI), true)
+ifeq ($(CVM_JVMTI), true)
 CVM_JCC_OPTIONS += -imageAttribute noPureCode
 endif
 

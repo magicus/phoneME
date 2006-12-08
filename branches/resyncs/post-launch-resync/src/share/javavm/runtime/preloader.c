@@ -1,5 +1,5 @@
 /*
- * @(#)preloader.c	1.112 06/10/10
+ * @(#)preloader.c	1.113 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -900,7 +900,7 @@ CVMpreloaderVerifyGCMap(const CVMClassBlock* cb)
  * Iterate over all preloaded classes,
  * and call 'callback' on each class.
  */
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMDI) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMTI) || defined(CVM_JVMPI)
 void
 CVMpreloaderIterateAllClasses(CVMExecEnv* ee, 
 			      CVMClassCallbackFunc callback,

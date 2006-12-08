@@ -1,5 +1,5 @@
 #
-# @(#)defs.mk	1.512 06/10/25
+# @(#)defs.mk	1.515 06/10/31
 # 
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -163,14 +163,19 @@ else
 	override CDC_10 = false
 endif
 
-# We need to check this here because the CVM_JVMDI option overrides many
+# For backwards compatibility of sorts, we migrate CVM_JVMDI to CVM_JVMTI
+CVM_JVMTI               ?= $(CVM_JVMDI)
+
+# We need to check this here because the CVM_JVMTI option overrides many
 # others that follows through CVM_DEBUG:
-ifeq ($(CVM_JVMDI), true)
+ifeq ($(CVM_JVMTI), true)
         override CVM_DEBUG_CLASSINFO = true
         override CVM_JAVAC_DEBUG = true
+	override CVM_AGENTLIB = true
 	override CVM_XRUN = true
         override CVM_THREAD_SUSPENSION = true
 endif
+
 
 ifeq ($(CVM_CLASSLIB_JCOV), true)
         override CVM_JVMPI = true
@@ -203,7 +208,7 @@ CVM_INSPECTOR		?= $(CVM_DEBUG)
 CVM_JAVAC_DEBUG		?= $(CVM_DEBUG)
 CVM_VERIFY_HEAP		?= false
 CVM_JIT                 ?= false
-CVM_JVMDI               ?= false
+CVM_JVMTI               ?= false
 CVM_JVMPI               ?= false
 CVM_JVMPI_TRACE_INSTRUCTION ?= $(CVM_JVMPI)
 CVM_THREAD_SUSPENSION   ?= false
@@ -256,7 +261,7 @@ CVM_JIT_USE_FP_HARDWARE ?= false
 # NOTE: CVM_INTERPRETER_LOOP can be set to "Split", "Aligned", or "Standard"
 
 CVM_CLASSLOADING	?= true
-CVM_NO_LOSSY_OPCODES    ?= $(CVM_JVMDI)
+CVM_NO_LOSSY_OPCODES    ?= $(CVM_JVMTI)
 CVM_REFLECT		?= true
 CVM_SERIALIZATION	?= true
 CVM_DYNAMIC_LINKING	?= true
@@ -266,6 +271,7 @@ CVM_INSTRUCTION_COUNTING?= false
 CVM_NO_CODE_COMPACTION	?= false
 CVM_INTERPRETER_LOOP    ?= Standard
 CVM_XRUN		?= false
+CVM_AGENTLIB		?= false
 CVM_CLASSLIB_JCOV       ?= false
 CVM_EMBEDDED_HOOK	?= false
 
@@ -507,8 +513,11 @@ endif
 ifeq ($(CVM_XRUN), true)
 	CVM_DEFINES      += -DCVM_XRUN
 endif
-ifeq ($(CVM_JVMDI), true)
-	CVM_DEFINES      += -DCVM_JVMDI
+ifeq ($(CVM_AGENTLIB), true)
+	CVM_DEFINES      += -DCVM_AGENTLIB
+endif
+ifeq ($(CVM_JVMTI), true)
+	CVM_DEFINES      += -DCVM_JVMTI
 	CVM_DYNAMIC_LINKING = true
 	override CVM_NO_LOSSY_OPCODES = true
 endif
@@ -523,7 +532,7 @@ ifeq ($(CVM_JVMPI_TRACE_INSTRUCTION), true)
         override CVM_NO_CODE_COMPACTION = true
         CVM_DEFINES      += -DCVM_JVMPI_TRACE_INSTRUCTION
 endif
-# NOTE: The CVM_THREAD_SUSPENSION option must only be checked after the JVMDI
+# NOTE: The CVM_THREAD_SUSPENSION option must only be checked after the JVMTI
 # and JVMPI have been checked because those options can override it.
 ifeq ($(CVM_THREAD_SUSPENSION), true)
 	CVM_DEFINES      += -DCVM_THREAD_SUSPENSION
@@ -535,7 +544,7 @@ endif
 ifeq ($(CVM_INSTRUCTION_COUNTING), true)
 	CVM_DEFINES      += -DCVM_INSTRUCTION_COUNTING
 endif
-# make sure we check CVM_DYNAMIC_LINKING after checking CVM_JVMDI, CVM_JVMPI,
+# make sure we check CVM_DYNAMIC_LINKING after checking CVM_JVMTI, CVM_JVMPI,
 # and CVM_CLASSLOADING.
 ifeq ($(CVM_DYNAMIC_LINKING), true)
 	CVM_DEFINES      += -DCVM_DYNAMIC_LINKING
@@ -694,7 +703,8 @@ CVM_FLAGS += \
 	CVM_GCCHOICE \
 	CVM_NO_CODE_COMPACTION \
 	CVM_XRUN \
-	CVM_JVMDI \
+	CVM_AGENTLIB \
+	CVM_JVMTI \
 	CVM_JVMPI \
 	CVM_JVMPI_TRACE_INSTRUCTION \
 	CVM_THREAD_SUSPENSION \
@@ -843,7 +853,8 @@ CVM_DEBUG_DUMPSTACK_CLEANUP_ACTION 	= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_INSPECTOR_CLEANUP_ACTION	 	= $(CVM_DEBUG_CLASSINFO_CLEANUP_ACTION)
 CVM_VERIFY_HEAP_CLEANUP_ACTION 		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_XRUN_CLEANUP_ACTION			= $(CVM_DEFAULT_CLEANUP_ACTION)
-CVM_JVMDI_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_AGENTLIB_CLEANUP_ACTION			= $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_JVMTI_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_JVMPI_CLEANUP_ACTION                = \
         $(CVM_DEFAULT_CLEANUP_ACTION)     \
         $(CVM_DEBUG_CLASSINFO_CLEANUP_ACTION)
@@ -1656,10 +1667,12 @@ CVM_SHAREOBJS_LOOP += \
 	executejava_standard.o
 endif
 
-ifeq ($(CVM_JVMDI), true)
+ifeq ($(CVM_JVMTI), true)
 CVM_SHAREOBJS_SPACE += \
-	jvmdi.o \
-	jvmdi_jni.o \
+	jvmtiCapabilities.o \
+	jvmtiEnv.o \
+	jvmtiExport.o \
+	jvmti_jni.o \
 	bag.o
 endif
 
@@ -1672,6 +1685,11 @@ endif
 ifeq ($(CVM_XRUN), true)
 CVM_SHAREOBJS_SPACE += \
 	xrun.o 
+endif
+
+ifeq ($(CVM_AGENTLIB), true)
+CVM_SHAREOBJS_SPACE += \
+	agentlib.o
 endif
 
 ifeq ($(CVM_USE_MEM_MGR), true)

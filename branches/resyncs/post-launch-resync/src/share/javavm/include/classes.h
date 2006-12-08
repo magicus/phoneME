@@ -1,5 +1,5 @@
 /*
- * @(#)classes.h	1.282 06/10/10
+ * @(#)classes.h	1.284 06/10/27
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -1698,7 +1698,7 @@ typedef void (*CVMStackCallbackFunc)( CVMObject**, void*);
  * Iterate over all classes, both romized and dynamically loaded,
  * and call 'callback' on each class.
  */
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMDI) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMTI) || defined(CVM_JVMPI)
 extern void
 CVMclassIterateAllClasses(CVMExecEnv* ee, 
 			  CVMClassCallbackFunc callback,
@@ -1722,7 +1722,7 @@ CVMclassTableFreeAllClasses(CVMExecEnv* ee);
 /*
  * Class table functions. The class table is a simple database of all
  * dynamically loaded classes. It is used by gc to scan dynamically loaded
- * classes and is also needed by jvmdi to get a list of all loaded classes.
+ * classes and is also needed by jvmti to get a list of all loaded classes.
  * In both cases CVMclassIterateDynamicallyLoadedClasses() is used to
  * iterate over the class table.
  */
@@ -1797,7 +1797,7 @@ extern void
 CVMloaderCacheDump(CVMExecEnv* ee);
 #endif /* CVM_DEBUG */
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 
 typedef struct {
     int index;

@@ -1,5 +1,5 @@
 /*
- * @(#)stepControl.c	1.54 06/10/10
+ * @(#)stepControl.c	1.55 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,97 +23,34 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <stdio.h>
-#include <jvmdi.h>
+
+#include "util.h"
 #include "stepControl.h"
 #include "eventHandler.h"
 #include "eventHelper.h"
 #include "threadControl.h"
-#include "util.h"
-#include "JDWP.h"
 #include "SDE.h"
 
-static JVMDI_RawMonitor stepLock;
-
-/*
- * Useful for debugging
- */
-/*
-static void printFrame(JNIEnv *env, char *prefix, jthread thread)
-{
-    jclass clazz;
-    jmethodID method;
-    jlocation location;
-    jint error;
-    char *csig;
-    char *mname;
-    char *msig;
-    JVMDI_thread_info info;
-    jint frameCount;
-    jframeID frame;
-
-    error = jvmdi->GetCurrentFrame(thread, &frame);
-    if (error != JVMDI_ERROR_NONE) {
-        return;
-    }
-
-
-    error = jvmdi->GetFrameLocation(frame, &clazz, &method, &location);
-    if (error != JVMDI_ERROR_NONE) {
-        return;
-    }
-
-    error = jvmdi->GetFrameCount(thread, &frameCount);
-    if (error != JVMDI_ERROR_NONE) {
-        return;
-    }
-
-    error = jvmdi->GetClassSignature(clazz, &csig);
-    if (error != JVMDI_ERROR_NONE) {
-        return;
-    }
-
-    error = jvmdi->GetMethodName(clazz, method, &mname, &msig);
-    if (error != JVMDI_ERROR_NONE) {
-        return;
-    }
-
-    error = jvmdi->GetThreadInfo(thread, &info);
-    if (error != JVMDI_ERROR_NONE) {
-        return;
-    }
-
-    fprintf(stderr, "%sthread=%s,method=%s.%s,location=%d,depth=%d\n",
-            prefix, info.name, csig, mname, (int)location, frameCount);
-
-
-    jdwpFree(info.name);
-    jdwpFree(csig);
-    jdwpFree(msig);
-    jdwpFree(mname);
-    (*env)->DeleteGlobalRef(env,info.thread_group);
-    if (info.context_class_loader != NULL) {
-        (*env)->DeleteGlobalRef(env,info.context_class_loader);
-    }
-    (*env)->DeleteGlobalRef(env,clazz);
-}
-*/
+static jrawMonitorID stepLock;
 
 static jint
-getStackDepth(jthread thread)
+getFrameCount(jthread thread)
 {
-    jint count;
-    jint error = frameCount(thread, &count);
-    if (error != JVMDI_ERROR_NONE) {
-        ERROR_CODE_EXIT(error);
+    jint count = 0;
+    jvmtiError error;
+    
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetFrameCount)
+                    (gdata->jvmti, thread, &count);
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error, "getting frame count");
     }
     return count;
 }
 
 /*                                                              
- * Most enabling/disabling of JVMDI events happens implicitly through 
+ * Most enabling/disabling of JVMTI events happens implicitly through 
  * the inserting and freeing of handlers for those events. Stepping is
- * different because requested steps are usually not identical to JVMDI steps. 
+ * different because requested steps are usually not identical to JVMTI steps. 
  * They usually require multiple events step, and otherwise, before they 
  * complete. While a step request is pending, we may need to temporarily
  * disable and re-enable stepping, but we can't just remove the handlers
@@ -125,43 +62,80 @@ getStackDepth(jthread thread)
 static void 
 enableStepping(jthread thread)
 {
-    jint error = threadControl_setEventMode(JVMDI_ENABLE, 
-                                            JVMDI_EVENT_SINGLE_STEP,
+    jvmtiError error;
+    
+    LOG_STEP(("enableStepping: thread=%p", thread));
+    
+    error = threadControl_setEventMode(JVMTI_ENABLE, EI_SINGLE_STEP,
                                             thread);
-    if (error != JVMDI_ERROR_NONE) {
-        ERROR_CODE_EXIT(error);
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error, "enabling single step");
     }
 }
 
 static void 
 disableStepping(jthread thread)
 {
-    jint error = threadControl_setEventMode(JVMDI_DISABLE, 
-                                            JVMDI_EVENT_SINGLE_STEP,
+    jvmtiError error;
+    
+    LOG_STEP(("disableStepping: thread=%p", thread));
+    
+    error = threadControl_setEventMode(JVMTI_DISABLE, EI_SINGLE_STEP,
                                             thread);
-    if (error != JVMDI_ERROR_NONE) {
-        ERROR_CODE_EXIT(error);
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error, "disabling single step");
+    }
+}
+
+static jvmtiError
+getFrameLocation(jthread thread,
+        jclass *pclazz, jmethodID *pmethod, jlocation *plocation)
+{
+    jvmtiError error;
+    
+    *pclazz = NULL;
+    *pmethod = NULL;
+    *plocation = -1;
+    
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetFrameLocation)
+            (gdata->jvmti, thread, 0, pmethod, plocation);
+    if (error == JVMTI_ERROR_NONE && *pmethod!=NULL ) {
+        /* This also serves to verify that the methodID is valid */
+        error = methodClass(*pmethod, pclazz);
+    }
+    return error;
+}       
+
+static void
+getLineNumberTable(jmethodID method, jint *pcount, 
+                jvmtiLineNumberEntry **ptable)
+{
+    jvmtiError error;
+    
+    *pcount = 0;
+    *ptable = NULL;
+
+    /* If the method is native or obsolete, don't even ask for the line table */
+    if ( isMethodObsolete(method) || isMethodNative(method)) {
+        return;
+    }
+    
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetLineNumberTable)
+                (gdata->jvmti, method, pcount, ptable);
+    if (error != JVMTI_ERROR_NONE) {
+        *pcount = 0;
     }
 }
 
 static jint 
-findLineNumber(JNIEnv *env, jthread thread, jframeID frame, 
-               JVMDI_line_number_entry *lines, jint count) 
+findLineNumber(jthread thread, jlocation location,
+               jvmtiLineNumberEntry *lines, jint count) 
 {
-    int i;
     jint line = -1;
-    jclass clazz;
-    jmethodID method;
-    jlocation location;
-    jint error;
 
-    error = threadControl_getFrameLocation(thread, frame, 
-                                  &clazz, &method, &location);
-    if (error == JVMDI_ERROR_NONE) {
-        (*env)->DeleteGlobalRef(env,clazz);
-    }
-    if ((error == JVMDI_ERROR_NONE) && (location != -1)) {
+    if (location != -1) {
         if (count > 0) {
+            jint i;
             /* any preface before first line is assigned to first line */
             for (i=1; i<count; i++) {
                 if (location < lines[i].start_location) {
@@ -170,65 +144,39 @@ findLineNumber(JNIEnv *env, jthread thread, jframeID frame,
             }
             line = lines[i-1].line_number;
         }
-    } else {
-        ERROR_EXIT("Unable to get frame location", error);
     }
-
     return line;
 }
 
 static jboolean
-hasLineNumbers(JNIEnv *env, jframeID frame)
+hasLineNumbers(jmethodID method)
 {
-    jclass clazz;
-    jmethodID method;
-    jlocation location;
-    jint error;
     jint count;
-    JVMDI_line_number_entry *table;
-
-    /* Safe to use, despite 4215724, because returned location not used */
-    error = jvmdi->GetFrameLocation(frame, &clazz, &method, &location);
-    if (error != JVMDI_ERROR_NONE) {
-        ERROR_EXIT("Unable to get frame location", error);
+    jvmtiLineNumberEntry *table;
+    
+    getLineNumberTable(method, &count, &table);
+    if ( count == 0 ) {
+        return JNI_FALSE;
+    } else {
+        jvmtiDeallocate(table);
     }
-
-    error = jvmdi->GetLineNumberTable(clazz, method, &count, &table);
-    if (error == JVMDI_ERROR_NONE) {
-        convertLineNumberTable(env, clazz, &count, &table);
-        if (count == 0) {
-            /* had line numbers, but they don't exist in default stratum */
-            error = JVMDI_ERROR_ABSENT_INFORMATION;
-        }
-        jdwpFree(table);
-    }
-
-    (*env)->DeleteGlobalRef(env, clazz);
-
-    return (error == JVMDI_ERROR_NONE);
+    return JNI_TRUE;
 }
 
-
-static jint
+static jvmtiError
 initState(JNIEnv *env, jthread thread, StepRequest *step)
 {
-    jint error;
-    jframeID frame;
-    jclass clazz;
-    jmethodID method;
-    jlocation location;
+    jvmtiError error;
 
     /*
      * Initial values that may be changed below
      */
     step->fromLine = -1;
-    step->lineEntryCount = 0;
     step->fromNative = JNI_FALSE; 
     step->frameExited = JNI_FALSE;
-    step->fromStackDepth = getStackDepth(thread);
+    step->fromStackDepth = getFrameCount(thread);
 
-    error = jvmdi->GetCurrentFrame(thread, &frame);
-    if (error == JVMDI_ERROR_NO_MORE_FRAMES) {
+    if (step->fromStackDepth <= 0) {
         /*
          * If there are no stack frames, treat the step as though
          * from a native frame. This is most likely to occur at the 
@@ -236,92 +184,93 @@ initState(JNIEnv *env, jthread thread, StepRequest *step)
          * so we need to do something intelligent.
          */
         step->fromNative = JNI_TRUE;
-        return JVMDI_ERROR_NONE;
-    } else if (error != JVMDI_ERROR_NONE) {
-        return error;
+        return JVMTI_ERROR_NONE;
     }
-
-    /*error = jvmdi->GetMethodModifiers(clazz, method, &modifiers);
-    if (error != JVMDI_ERROR_NONE) {
-        goto done;
-    }
-    step->fromNative = modifiers & MOD_NATIVE;*/
-
 
     /*
      * Try to get a notification on frame pop. If we're in an opaque frame
      * we won't be able to, but we can use other methods to detect that
      * a native frame has exited.
      *
-     * %comment gordonh017
+     * TO DO: explain the need for this notification.
      */
-    error = jvmdi->NotifyFramePop(frame);
-    if (error == JVMDI_ERROR_OPAQUE_FRAME) {
+    error = JVMTI_FUNC_PTR(gdata->jvmti,NotifyFramePop)
+                (gdata->jvmti, thread, 0);
+    if (error == JVMTI_ERROR_OPAQUE_FRAME) {
         step->fromNative = JNI_TRUE;
-        error = JVMDI_ERROR_NONE;
+        error = JVMTI_ERROR_NONE;
         /* continue without error */
-        
-    } else if (error == JVMDI_ERROR_DUPLICATE) {
-        error = JVMDI_ERROR_NONE;
+    } else if (error == JVMTI_ERROR_DUPLICATE) {
+        error = JVMTI_ERROR_NONE;
         /* Already being notified, continue without error */
-        
-    } else if (error != JVMDI_ERROR_NONE) {
+    } else if (error != JVMTI_ERROR_NONE) {
         return error;
     }
 
+    LOG_STEP(("initState(): frame=%d", step->fromStackDepth));
+    
     /*
      * Note: we can't undo the frame pop notify, so
      * we'll just have to let the handler ignore it if 
      * there are any errors below.
      */
 
-    if (step->granularity == JDWP_StepSize_LINE) {
-        error = threadControl_getFrameLocation(thread, frame, 
-                                      &clazz, &method, &location);
-        if (error != JVMDI_ERROR_NONE) {
-            return error;
-        }
-    
-        if (step->lineEntries != NULL) {
-            /* free line entries from previous round */
-            jdwpFree(step->lineEntries);
-            step->lineEntries = NULL;
-        }
-
-        if (location != -1) {
-            /* An error here does not get returned to caller, we can continue */
-            jint lineError = jvmdi->GetLineNumberTable(clazz, method, 
-                                             &step->lineEntryCount, 
-                                             &step->lineEntries);
-            if (lineError == JVMDI_ERROR_NONE) {
-                convertLineNumberTable(env, clazz,
-                                       &step->lineEntryCount, 
-                                       &step->lineEntries);
-                step->fromLine = findLineNumber(env, thread, frame,
+    if (step->granularity == JDWP_STEP_SIZE(LINE) ) {
+        
+        LOG_STEP(("initState(): Begin line step"));
+        
+        WITH_LOCAL_REFS(env, 1) {
+            
+            jclass clazz;
+            jmethodID method;
+            jlocation location;
+            
+            error = getFrameLocation(thread, &clazz, &method, &location);
+            if (error == JVMTI_ERROR_NONE) {
+                /* Clear out previous line table only if we changed methods */
+                if ( method != step->method ) {
+                    step->lineEntryCount = 0;
+                    if (step->lineEntries != NULL) {
+                        jvmtiDeallocate(step->lineEntries);
+                        step->lineEntries = NULL;
+                    }
+                    step->method = method;
+                    getLineNumberTable(step->method, 
+                                 &step->lineEntryCount, &step->lineEntries);
+                    if (step->lineEntryCount > 0) {
+                        convertLineNumberTable(env, clazz, 
+                                &step->lineEntryCount, &step->lineEntries);
+                    }
+                }
+                step->fromLine = findLineNumber(thread, location,
                                      step->lineEntries, step->lineEntryCount);
             }
-        }
-        (*env)->DeleteGlobalRef(env,clazz);
-    }
+        
+        } END_WITH_LOCAL_REFS(env);
     
+    }
+   
     return error;
 }
 
-/* %comment gordonh018 */
+/*
+ * TO DO: The step handlers (handleFrameChange and handleStep can 
+ * be broken down and made simpler now that we can install and de-install event
+ * handlers. 
+ */
 static void 
-handleFramePopEvent(JNIEnv *env, JVMDI_Event *event, 
+handleFramePopEvent(JNIEnv *env, EventInfo *evinfo, 
                     HandlerNode *node, 
                     struct bag *eventBag)
 {
     StepRequest *step;
-    jthread thread = event->u.frame.thread;
+    jthread thread = evinfo->thread;
 
-    debugMonitorEnter(stepLock);
+    stepControl_lock();
 
-    /*printFrame(env, "FP:",thread);*/
     step = threadControl_getStepRequest(thread);
     if (step == NULL) {
-        ERROR_CODE_EXIT(JVMDI_ERROR_INVALID_THREAD);
+        EXIT_ERROR(AGENT_ERROR_INVALID_THREAD, "getting step request");
     }
 
     if (step->pending) {
@@ -329,19 +278,27 @@ handleFramePopEvent(JNIEnv *env, JVMDI_Event *event,
          * Note: current depth is reported as *before* the pending frame
          * pop. 
          */
-        jint currentDepth = getStackDepth(thread);
-        jint fromDepth = step->fromStackDepth;
+        jint currentDepth;
+        jint fromDepth;
+        jint afterPopDepth;
+        
+        currentDepth = getFrameCount(thread);
+        fromDepth = step->fromStackDepth;
+        afterPopDepth = currentDepth-1;
+            
+        LOG_STEP(("handleFramePopEvent: BEGIN fromDepth=%d, currentDepth=%d",
+                        fromDepth, currentDepth));
 
         /*
          * If we are exiting the original stepping frame, record that 
          * fact here. Once the next step event comes in, we can safely
          * stop stepping there. 
          */
-        if (fromDepth > currentDepth - 1) {
+        if (fromDepth > afterPopDepth ) {
             step->frameExited = JNI_TRUE;
         }
 
-        if (step->depth == JDWP_StepDepth_OVER) {
+        if (step->depth == JDWP_STEP_DEPTH(OVER)) {
             /*
              * Either 
              * 1) the original stepping frame is about to be popped
@@ -375,43 +332,48 @@ handleFramePopEvent(JNIEnv *env, JVMDI_Event *event,
              * step-over can be stopped. 
              *
              */
+            LOG_STEP(("handleFramePopEvent: starting singlestep, depth==OVER"));
             enableStepping(thread);
-        } else if ((step->depth == JDWP_StepDepth_OUT) && (fromDepth > currentDepth - 1)) {
+        } else if (step->depth == JDWP_STEP_DEPTH(OUT) && 
+                   fromDepth > afterPopDepth) {
             /*
              * The original stepping frame is about to be popped. Step
              * until we reach the next safe place to stop.
              */
+            LOG_STEP(("handleFramePopEvent: starting singlestep, depth==OUT && fromDepth > afterPopDepth (%d>%d)",fromDepth, afterPopDepth));
             enableStepping(thread);
-        } else if ((step->methodEnterHandlerNode != NULL) && (fromDepth >= currentDepth - 1)) {
+        } else if (step->methodEnterHandlerNode != NULL && 
+                   fromDepth >= afterPopDepth) {
             /*
              * We installed a method entry event handler as part of a 
              * step into operation. We've popped back to the original
              * stepping frame without finding a place to stop.
              * Resume stepping in the original frame.
              */
+            LOG_STEP(("handleFramePopEvent: starting singlestep, have methodEnter handler && depth==OUT && fromDepth >= afterPopDepth (%d>%d)",fromDepth, afterPopDepth));
             enableStepping(thread);
-            eventHandler_free(step->methodEnterHandlerNode);
+            (void)eventHandler_free(step->methodEnterHandlerNode);
             step->methodEnterHandlerNode = NULL;
         }
+        LOG_STEP(("handleFramePopEvent: finished"));
     }
 
-    debugMonitorExit(stepLock);
+    stepControl_unlock();
 }
 
 static void 
-handleExceptionCatchEvent(JNIEnv *env, JVMDI_Event *event, 
+handleExceptionCatchEvent(JNIEnv *env, EventInfo *evinfo, 
                           HandlerNode *node,
                           struct bag *eventBag)
 {
     StepRequest *step;
-    jthread thread = event->u.exception_catch.thread;
+    jthread thread = evinfo->thread;
 
-    debugMonitorEnter(stepLock);
+    stepControl_lock();
 
-    /*printFrame(env, "EC:", thread);*/
     step = threadControl_getStepRequest(thread);
     if (step == NULL) {
-        ERROR_CODE_EXIT(JVMDI_ERROR_INVALID_THREAD);
+        EXIT_ERROR(AGENT_ERROR_INVALID_THREAD, "getting step request");
     }
 
     if (step->pending) {
@@ -419,9 +381,12 @@ handleExceptionCatchEvent(JNIEnv *env, JVMDI_Event *event,
          *  Determine where we are on the call stack relative to where
          *  we started.
          */
-        jint currentDepth = getStackDepth(thread);
+        jint currentDepth = getFrameCount(thread);
         jint fromDepth = step->fromStackDepth;
 
+        LOG_STEP(("handleExceptionCatchEvent: fromDepth=%d, currentDepth=%d",
+                        fromDepth, currentDepth));
+        
         /*
          * If we are exiting the original stepping frame, record that 
          * fact here. Once the next step event comes in, we can safely
@@ -431,20 +396,23 @@ handleExceptionCatchEvent(JNIEnv *env, JVMDI_Event *event,
             step->frameExited = JNI_TRUE;
         }
 
-        if ((step->depth == JDWP_StepDepth_OVER) && (fromDepth >= currentDepth)) {
+        if (step->depth == JDWP_STEP_DEPTH(OVER) && 
+            fromDepth >= currentDepth) {
             /*
              * Either the original stepping frame is done, 
              * or a called method has returned (during which we had stepping
              * disabled). In either case we must resume stepping.
              */
             enableStepping(thread);
-        } else if ((step->depth == JDWP_StepDepth_OUT) && (fromDepth > currentDepth)) {
+        } else if (step->depth == JDWP_STEP_DEPTH(OUT) && 
+                   fromDepth > currentDepth) {
             /*
              * The original stepping frame is done. Step
              * until we reach the next safe place to stop.
              */
             enableStepping(thread);
-        } else if ((step->methodEnterHandlerNode != NULL) && (fromDepth >= currentDepth)) {
+        } else if (step->methodEnterHandlerNode != NULL && 
+                   fromDepth >= currentDepth) {
             /*
              * We installed a method entry event handler as part of a 
              * step into operation. We've popped back to the original
@@ -452,102 +420,112 @@ handleExceptionCatchEvent(JNIEnv *env, JVMDI_Event *event,
              * Resume stepping in the original frame.
              */
             enableStepping(thread);
-            eventHandler_free(step->methodEnterHandlerNode);
+            (void)eventHandler_free(step->methodEnterHandlerNode);
             step->methodEnterHandlerNode = NULL;
         }
     }
 
-    debugMonitorExit(stepLock);
+    stepControl_unlock();
 }
 
 static void 
-handleMethodEnterEvent(JNIEnv *env, JVMDI_Event *event, 
+handleMethodEnterEvent(JNIEnv *env, EventInfo *evinfo, 
                        HandlerNode *node,
                        struct bag *eventBag)
 {
     StepRequest *step;
-    jint error;
-    jthread thread = event->u.frame.thread;
-    jframeID frame;
+    jthread thread;
 
-    debugMonitorEnter(stepLock);
+    thread = evinfo->thread;
+    
+    stepControl_lock();
 
-    /*printFrame(env, "ME:",thread);*/
     step = threadControl_getStepRequest(thread);
     if (step == NULL) {
-        ERROR_CODE_EXIT(JVMDI_ERROR_INVALID_THREAD);
+        EXIT_ERROR(AGENT_ERROR_INVALID_THREAD, "getting step request");
     }
 
     if (step->pending) {
+        jclass    clazz;
+        jmethodID method;
+        char     *classname;
+
+        LOG_STEP(("handleMethodEnterEvent: thread=%p", thread));
+        
+        clazz     = evinfo->clazz;
+        method    = evinfo->method;
+        classname = getClassname(clazz);
+        
         /*
          * This handler is relevant only to step into
          */
-        JDI_ASSERT(step->depth == JDWP_StepDepth_INTO);
+        JDI_ASSERT(step->depth == JDWP_STEP_DEPTH(INTO));
     
-        error = jvmdi->GetCurrentFrame(thread, &frame);
-        if (error != JVMDI_ERROR_NONE) {
-            ERROR_CODE_EXIT(error);
-        }
-
-        if (((step->granularity != JDWP_StepSize_LINE) || hasLineNumbers(env, frame)) 
-              && !eventFilter_predictFiltering(step->stepHandlerNode, frame)) {
+        if (    (!eventFilter_predictFiltering(step->stepHandlerNode, 
+                                               clazz, classname))
+             && (   step->granularity != JDWP_STEP_SIZE(LINE) 
+                 || hasLineNumbers(method) ) ) {
             /*
              * We've found a suitable method in which to stop. Step
              * until we reach the next safe location to complete the step->,
              * and we can get rid of the method entry handler.
              */
             enableStepping(thread);
-            eventHandler_free(step->methodEnterHandlerNode);
-            step->methodEnterHandlerNode = NULL;
+            if ( step->methodEnterHandlerNode != NULL ) {
+                (void)eventHandler_free(step->methodEnterHandlerNode);
+                step->methodEnterHandlerNode = NULL;
+            }
         }
+        jvmtiDeallocate(classname);
+        classname = NULL;
     }
 
-    debugMonitorExit(stepLock);
+    stepControl_unlock();
 }
 
 static void 
-completeStep(JNIEnv *env, JVMDI_Event *event, StepRequest *step)
+completeStep(JNIEnv *env, jthread thread, StepRequest *step)
 {
-    jthread thread = event->u.single_step.thread;
-    jint error;
+    jvmtiError error;
 
     /*
      * We've completed a step; reset state for the next one, if any
      */
 
+    LOG_STEP(("completeStep: thread=%p", thread));
+    
     if (step->methodEnterHandlerNode != NULL) {
-        eventHandler_free(step->methodEnterHandlerNode);
+        (void)eventHandler_free(step->methodEnterHandlerNode);
         step->methodEnterHandlerNode = NULL;
     }
 
     error = initState(env, thread, step);
-    if (error != JVMDI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) {
         /*
          * None of the initState errors should happen after one step
          * has successfully completed. 
          */
-        ERROR_CODE_EXIT(error);
+        EXIT_ERROR(error, "initializing step state");
     }
 }
 
 jboolean 
-stepControl_handleStep(JNIEnv *env, JVMDI_Event *event)
+stepControl_handleStep(JNIEnv *env, jthread thread, 
+                       jclass clazz, jmethodID method)
 {
+    jboolean completed = JNI_FALSE;
     StepRequest *step;
-    jframeID frame;
-    jint line;
     jint currentDepth;
     jint fromDepth;
-    jthread thread = event->u.single_step.thread;
-    jboolean completed = JNI_FALSE;
-    jint error;
+    jvmtiError error;
+    char *classname;
 
-    debugMonitorEnter(stepLock);
+    classname = NULL;
+    stepControl_lock();
 
-    /*printFrame(env, "ST:",thread);*/
     step = threadControl_getStepRequest(thread);
     if (step == NULL) {
-        ERROR_CODE_EXIT(JVMDI_ERROR_INVALID_THREAD);
+        EXIT_ERROR(AGENT_ERROR_INVALID_THREAD, "getting step request");
     }
 
     /*
@@ -557,12 +535,16 @@ stepControl_handleStep(JNIEnv *env, JVMDI_Event *event)
         goto done;
     }
 
+    LOG_STEP(("stepControl_handleStep: thread=%p", thread));
+    
     /*
      * We never filter step into instruction. It's always over on the 
      * first step event.
      */
-    if ((step->depth == JDWP_StepDepth_INTO) && (step->granularity == JDWP_StepSize_MIN)) {
+    if (step->depth == JDWP_STEP_DEPTH(INTO) && 
+        step->granularity == JDWP_STEP_SIZE(MIN)) {
         completed = JNI_TRUE;
+        LOG_STEP(("stepControl_handleStep: completed, into min"));
         goto done;
     }
 
@@ -572,6 +554,7 @@ stepControl_handleStep(JNIEnv *env, JVMDI_Event *event)
      */
     if (step->frameExited) {
         completed = JNI_TRUE;
+        LOG_STEP(("stepControl_handleStep: completed, frame exited"));
         goto done;
     }
 
@@ -579,10 +562,10 @@ stepControl_handleStep(JNIEnv *env, JVMDI_Event *event)
      *  Determine where we are on the call stack relative to where
      *  we started.
      */
-    currentDepth = getStackDepth(thread);
+    currentDepth = getFrameCount(thread);
     fromDepth = step->fromStackDepth;
 
-    if (currentDepth < fromDepth) {
+    if (fromDepth > currentDepth) {
         /*
          * We have returned from the caller. There are cases where 
          * we don't get frame pop notifications
@@ -590,21 +573,17 @@ stepControl_handleStep(JNIEnv *env, JVMDI_Event *event)
          * this code will be reached. Complete the step->
          */
         completed = JNI_TRUE;
-        goto done;
-    } else if (currentDepth > fromDepth) {
-        error = jvmdi->GetCurrentFrame(thread, &frame);
-        if (error != JVMDI_ERROR_NONE) {
-            ERROR_CODE_EXIT(error);
-        }
-
+        LOG_STEP(("stepControl_handleStep: completed, fromDepth>currentDepth(%d>%d)", fromDepth, currentDepth));
+    } else if (fromDepth < currentDepth) {
         /* We have dropped into a called method. */
-        if ((step->depth == JDWP_StepDepth_INTO) &&
-            hasLineNumbers(env, frame) &&
-            !eventFilter_predictFiltering(step->stepHandlerNode, frame)) {
+        if (   step->depth == JDWP_STEP_DEPTH(INTO) 
+            && (!eventFilter_predictFiltering(step->stepHandlerNode, clazz, 
+                                          (classname = getClassname(clazz))))
+            && hasLineNumbers(method) ) {
 
             /* Stepped into a method with lines, so we're done */
             completed = JNI_TRUE;
-            goto done;
+            LOG_STEP(("stepControl_handleStep: completed, fromDepth<currentDepth(%d<%d) and into method with lines", fromDepth, currentDepth));
         } else {
             /*
              * We need to continue, but don't want the overhead of step
@@ -615,24 +594,27 @@ stepControl_handleStep(JNIEnv *env, JVMDI_Event *event)
              */
             disableStepping(thread);
 
-            if (step->depth == JDWP_StepDepth_INTO) {
+            if (step->depth == JDWP_STEP_DEPTH(INTO)) {
                 step->methodEnterHandlerNode =
                     eventHandler_createInternalThreadOnly(
-                                       JVMDI_EVENT_METHOD_ENTRY, 
+                                       EI_METHOD_ENTRY, 
                                        handleMethodEnterEvent, thread);
                 if (step->methodEnterHandlerNode == NULL) {
-                    ERROR_MESSAGE_EXIT("Unable to install event handler");
+                    EXIT_ERROR(AGENT_ERROR_INVALID_EVENT_TYPE,
+                                "installing event method enter handler");
                 }
             }
 
-            error = jvmdi->NotifyFramePop(frame);
-            if (error == JVMDI_ERROR_DUPLICATE) {
-                error = JVMDI_ERROR_NONE;
-            } else if (error != JVMDI_ERROR_NONE) {
-                ERROR_CODE_EXIT(error);
+            error = JVMTI_FUNC_PTR(gdata->jvmti,NotifyFramePop)
+                        (gdata->jvmti, thread, 0);
+            if (error == JVMTI_ERROR_DUPLICATE) {
+                error = JVMTI_ERROR_NONE;
+            } else if (error != JVMTI_ERROR_NONE) {
+                EXIT_ERROR(error, "setting up notify frame pop");
             }
-            goto done;
         }
+        jvmtiDeallocate(classname);
+        classname = NULL;
     } else {
         /*
          * We are at the same stack depth where stepping started.
@@ -640,21 +622,37 @@ stepControl_handleStep(JNIEnv *env, JVMDI_Event *event)
          * steps we must check to see whether we've moved to a 
          * different line.
          */
-        if (step->granularity == JDWP_StepSize_MIN) {
+        if (step->granularity == JDWP_STEP_SIZE(MIN)) {
             completed = JNI_TRUE;
-            goto done;
+            LOG_STEP(("stepControl_handleStep: completed, fromDepth==currentDepth(%d) and min", fromDepth));
         } else {
-            error = jvmdi->GetCurrentFrame(thread, &frame);
-            if (error != JVMDI_ERROR_NONE) {
-                ERROR_CODE_EXIT(error);
-            }
             if (step->fromLine != -1) {
-                line = findLineNumber(env, thread, frame,
+                jint line = -1;
+                jlocation location;
+                jmethodID method;
+                WITH_LOCAL_REFS(env, 1) {
+                    jclass clazz;
+                    error = getFrameLocation(thread, 
+                                        &clazz, &method, &location);
+                    if ( isMethodObsolete(method)) {
+                        method = NULL;
+                        location = -1;
+                    }
+                    if (error != JVMTI_ERROR_NONE || location == -1) {
+                        EXIT_ERROR(error, "getting frame location");
+                    }
+                    if ( method == step->method ) {
+                        LOG_STEP(("stepControl_handleStep: checking line location"));
+                        log_debugee_location("stepControl_handleStep: checking line loc",
+                                thread, method, location);
+                        line = findLineNumber(thread, location,
                                       step->lineEntries, step->lineEntryCount);
-                if (line != step->fromLine) {
-                    completed = JNI_TRUE;
-                }
-                goto done;
+                    }
+                    if (line != step->fromLine) {
+                        completed = JNI_TRUE;
+                        LOG_STEP(("stepControl_handleStep: completed, fromDepth==currentDepth(%d) and different line", fromDepth));
+                    }
+                } END_WITH_LOCAL_REFS(env);
             } else {
                 /*
                  * This is a rare case. We have stepped from a location
@@ -671,15 +669,16 @@ stepControl_handleStep(JNIEnv *env, JVMDI_Event *event)
                  * and complete the step immediately.
                  */
                 completed = JNI_TRUE;
-                goto done;
+                LOG_STEP(("stepControl_handleStep: completed, fromDepth==currentDepth(%d) and no line", fromDepth));
             }
         }
+        LOG_STEP(("stepControl_handleStep: finished"));
     }
 done:
     if (completed) {
-        completeStep(env, event, step);
+        completeStep(env, thread, step);
     }
-    debugMonitorExit(stepLock);
+    stepControl_unlock();
     return completed;
 }
 
@@ -695,54 +694,87 @@ stepControl_reset(void)
 {
 }
 
-void
-initEvents(JNIEnv *env, jthread thread, StepRequest *step)
+/*
+ * Reset step control request stack depth and line number.
+ */
+void 
+stepControl_resetRequest(jthread thread) 
+{
+
+    StepRequest *step;
+    jvmtiError error;
+
+    LOG_STEP(("stepControl_resetRequest: thread=%p", thread));
+    
+    stepControl_lock();
+
+    step = threadControl_getStepRequest(thread);
+   
+    if (step != NULL) {
+        JNIEnv *env;
+        env = getEnv();
+        error = initState(env, thread, step);
+        if (error != JVMTI_ERROR_NONE) {
+            EXIT_ERROR(error, "initializing step state");
+        }
+    } else {
+        EXIT_ERROR(AGENT_ERROR_INVALID_THREAD, "getting step request");
+    }
+
+    stepControl_unlock();
+}
+
+static void
+initEvents(jthread thread, StepRequest *step)
 {
     /* Need to install frame pop handler and exception catch handler when
-     * single-stepping is enabled (i.e. step-into or step-over/step-out when fromStackDepth > 0).
+     * single-stepping is enabled (i.e. step-into or step-over/step-out 
+     * when fromStackDepth > 0).
      */
-    if (step->depth == JDWP_StepDepth_INTO || step->fromStackDepth > 0) {
+    if (step->depth == JDWP_STEP_DEPTH(INTO) || step->fromStackDepth > 0) {
         /*
-         * %comment gordonh019
+         * TO DO: These might be able to applied more selectively to 
+         * boost performance.
          */
         step->catchHandlerNode = eventHandler_createInternalThreadOnly(
-                                     JVMDI_EVENT_EXCEPTION_CATCH, 
+                                     EI_EXCEPTION_CATCH, 
                                      handleExceptionCatchEvent, 
                                      thread);
         step->framePopHandlerNode = eventHandler_createInternalThreadOnly(
-                                        JVMDI_EVENT_FRAME_POP, 
+                                        EI_FRAME_POP, 
                                         handleFramePopEvent, 
                                         thread);
     
-        if ((step->catchHandlerNode == NULL) || 
-            (step->framePopHandlerNode == NULL)) {
-            ERROR_MESSAGE_EXIT("Unable to install event handlers");
+        if (step->catchHandlerNode == NULL || 
+            step->framePopHandlerNode == NULL) {
+            EXIT_ERROR(AGENT_ERROR_INVALID_EVENT_TYPE,
+                        "installing step event handlers");
         }
 
     }
     /*
      * Initially enable stepping:
      * 1) For step into, always
-     * 2) For step over, unless right after the VM_INIT or line stepping
-     *    from a method without line  numbers
+     * 2) For step over, unless right after the VM_INIT.
+     *    Enable stepping for STEP_MIN or STEP_LINE with or without line numbers.
+     *    If the class is redefined then non EMCP methods may not have line
+     *    number info. So enable line stepping for non line number so that it
+     *    behaves like STEP_MIN/STEP_OVER.
      * 3) For step out, only if stepping from native, except right after VM_INIT
      *
      * (right after VM_INIT, a step->over or out is identical to running 
      * forever)
      */
     switch (step->depth) {
-        case JDWP_StepDepth_INTO:
+        case JDWP_STEP_DEPTH(INTO):
             enableStepping(thread);
             break;
-        case JDWP_StepDepth_OVER:
-            if ((step->fromStackDepth > 0) && 
-                !((step->granularity == JDWP_StepSize_LINE) && 
-                  !step->fromNative && 
-                  (step->fromLine == -1))) {
-                enableStepping(thread);
+        case JDWP_STEP_DEPTH(OVER):
+            if (step->fromStackDepth > 0 && !step->fromNative ) {
+              enableStepping(thread);
             }
             break;
-        case JDWP_StepDepth_OUT:
+        case JDWP_STEP_DEPTH(OUT):
             if (step->fromNative &&
                 (step->fromStackDepth > 0)) {
                 enableStepping(thread);
@@ -753,27 +785,32 @@ initEvents(JNIEnv *env, jthread thread, StepRequest *step)
     }
 }
 
-jint 
-stepControl_beginStep(jthread thread, jint size, jint depth, 
+jvmtiError 
+stepControl_beginStep(JNIEnv *env, jthread thread, jint size, jint depth, 
                       HandlerNode *node) 
 {
     StepRequest *step;
-    jint error;
-    jint error2;
-    JNIEnv *env = getEnv();
+    jvmtiError error;
+    jvmtiError error2;
 
+    LOG_STEP(("stepControl_beginStep: thread=%p,size=%d,depth=%d", 
+                        thread, size, depth));
+    
     eventHandler_lock(); /* for proper lock order */
-    debugMonitorEnter(stepLock);
+    stepControl_lock();
 
     step = threadControl_getStepRequest(thread);
     if (step == NULL) {
-        error = JVMDI_ERROR_INVALID_THREAD;
+        error = AGENT_ERROR_INVALID_THREAD;
+        /* Normally not getting a StepRequest struct pointer is a fatal error
+         *   but on a beginStep, we just return an error code.
+         */
     } else {
         /*
          * In case the thread isn't already suspended, do it again.
          */
         error = threadControl_suspendThread(thread, JNI_FALSE);
-        if (error == JVMDI_ERROR_NONE) {
+        if (error == JVMTI_ERROR_NONE) {
             /*
              * Overwrite any currently executing step.
              */
@@ -784,26 +821,27 @@ stepControl_beginStep(jthread thread, jint size, jint depth,
             step->methodEnterHandlerNode = NULL;
             step->stepHandlerNode = node;
             error = initState(env, thread, step);
-            if (error == JVMDI_ERROR_NONE) {
-                initEvents(env, thread, step);
+            if (error == JVMTI_ERROR_NONE) {
+                initEvents(thread, step);
             }
             /* false means it is not okay to unblock the commandLoop thread */
             error2 = threadControl_resumeThread(thread, JNI_FALSE);
-            if ((error2 != JVMDI_ERROR_NONE) &&(error == JVMDI_ERROR_NONE)) {
+            if (error2 != JVMTI_ERROR_NONE && error == JVMTI_ERROR_NONE) {
                 error = error2;
             }
 
             /*
              * If everything went ok, indicate a step is pending.
              */
-            if (error == JVMDI_ERROR_NONE) {
+            if (error == JVMTI_ERROR_NONE) {
                 step->pending = JNI_TRUE;
             }
+        } else {
+            EXIT_ERROR(error, "stepControl_beginStep: cannot suspend thread");
         }
-
     }
 
-    debugMonitorExit(stepLock);
+    stepControl_unlock();
     eventHandler_unlock();
 
     return error;
@@ -814,36 +852,56 @@ static void
 clearStep(jthread thread, StepRequest *step)
 {
     if (step->pending) {
+        
         disableStepping(thread);
-        eventHandler_free(step->catchHandlerNode);
-        eventHandler_free(step->framePopHandlerNode);
-        eventHandler_free(step->methodEnterHandlerNode);
-        step->pending = JNI_FALSE;
-        if (step->lineEntries != NULL) {
-            jdwpFree(step->lineEntries);
-            step->lineEntries = NULL;
+        if ( step->catchHandlerNode != NULL ) {
+            (void)eventHandler_free(step->catchHandlerNode);
+            step->catchHandlerNode = NULL;
         }
+        if ( step->framePopHandlerNode!= NULL ) {
+            (void)eventHandler_free(step->framePopHandlerNode);
+            step->framePopHandlerNode = NULL;
+        }
+        if ( step->methodEnterHandlerNode != NULL ) {
+            (void)eventHandler_free(step->methodEnterHandlerNode);
+            step->methodEnterHandlerNode = NULL;
+        }
+        step->pending = JNI_FALSE;
+        
+        /* 
+         * Warning: Do not clear step->method, step->lineEntryCount, 
+         *          or step->lineEntries here, they will likely 
+         *          be needed on the next step. 
+         */
+    
     }
 }
 
-jint 
+jvmtiError 
 stepControl_endStep(jthread thread) 
 {
     StepRequest *step;
-    jint error;
+    jvmtiError error;
 
+    LOG_STEP(("stepControl_endStep: thread=%p", thread));
+    
     eventHandler_lock(); /* for proper lock order */
-    debugMonitorEnter(stepLock);
+    stepControl_lock();
 
     step = threadControl_getStepRequest(thread);
     if (step != NULL) {
         clearStep(thread, step);
-        error = JVMDI_ERROR_NONE;
+        error = JVMTI_ERROR_NONE;
     } else {
-        error = JVMDI_ERROR_INVALID_THREAD;
+        /* If the stepRequest can't be gotten, then this thread no longer
+         *   exists, just return, don't die here, this is normal at
+         *   termination time. Return JVMTI_ERROR_NONE so the thread Ref
+         *   can be tossed.
+         */
+         error = JVMTI_ERROR_NONE;
     }
 
-    debugMonitorExit(stepLock);
+    stepControl_unlock();
     eventHandler_unlock();
 
     return error;
@@ -852,17 +910,18 @@ stepControl_endStep(jthread thread)
 void 
 stepControl_clearRequest(jthread thread, StepRequest *step)
 {
+    LOG_STEP(("stepControl_clearRequest: thread=%p", thread));
     clearStep(thread, step);
 }
 
 void
-stepControl_lock()
+stepControl_lock(void)
 {
     debugMonitorEnter(stepLock);
 }
 
 void
-stepControl_unlock()
+stepControl_unlock(void)
 {
     debugMonitorExit(stepLock);
 }

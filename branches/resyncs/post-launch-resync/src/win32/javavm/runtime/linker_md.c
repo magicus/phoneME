@@ -1,5 +1,5 @@
 /*
- * @(#)linker_md.c	1.14 06/10/10
+ * @(#)linker_md.c	1.16 06/10/30
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -49,6 +49,38 @@
 #ifdef _WIN32_WINNT
 #include "javavm/include/winntUtil.h"
 #endif
+
+/*
+ * Build a machine dependent library name out of a path and file name.
+ */
+void
+CVMdynlinkbuildLibName(char *holder, int holderlen, const char *pname,
+                       char *fname)
+{
+    const int pnamelen = pname ? strlen(pname) : 0;
+    const char c = (pnamelen > 0) ? pname[pnamelen-1] : 0;
+    char *suffix;
+
+#ifdef DEBUG   
+    suffix = "_g";
+#else
+    suffix = "";
+#endif 
+
+    /* Quietly truncates on buffer overflow. Should be an error. */
+    if (pnamelen + strlen(fname) + 10 > (unsigned int)holderlen) {
+        *holder = '\0';
+        return;
+    }
+
+    if (pnamelen == 0) {
+        sprintf(holder, "lib%s%s.dll", fname, suffix);
+    } else if (c == ':' || c == '\\') {
+        sprintf(holder, "lib%s%s%s.dll", pname, fname, suffix);
+    } else {
+        sprintf(holder, "%s\\lib%s%s.dll", pname, fname, suffix);
+    }
+}
 
 void *
 CVMdynlinkOpen(const void *absolutePathName)

@@ -1,5 +1,5 @@
 #
-# @(#)rules.mk	1.173 06/10/24
+# @(#)rules.mk	1.175 06/10/27
 # 
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -894,8 +894,8 @@ bin: all
 ifeq ($(MAKELEVEL), 0)
 
 ifeq ($(CVM_JIT),true)
-ifeq ($(CVM_JVMDI),true)
-$(error JVMDI is not supported in JIT builds. Use CVM_JIT=false.)
+ifeq ($(CVM_JVMTI),true)
+$(error JVMTI is not supported in JIT builds. Use CVM_JIT=false.)
 endif
 ifeq ($(CVM_JVMPI),true)
 $(warning JVMPI is not fully supported in JIT builds. Programs may not behave properly.)

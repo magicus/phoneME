@@ -1,5 +1,5 @@
 /*
- * @(#)ClassLoaderReferenceImpl.c	1.12 06/10/10
+ * @(#)ClassLoaderReferenceImpl.c	1.13 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,8 +23,9 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include "ClassLoaderReferenceImpl.h"
+
 #include "util.h"
+#include "ClassLoaderReferenceImpl.h"
 #include "inStream.h"
 #include "outStream.h"
 
@@ -32,35 +33,41 @@ static jboolean
 visibleClasses(PacketInputStream *in, PacketOutputStream *out)
 {
     JNIEnv *env = getEnv();
-    jint error;
-    jint count;
-    jclass *classes;
-    int i;
-
-    jobject loader = inStream_readClassLoaderRef(in);
+    jobject loader;
+    
+    loader = inStream_readClassLoaderRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    error = jvmdi->GetClassLoaderClasses(loader, &count, &classes);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
-        return JNI_TRUE;
-    }
+    WITH_LOCAL_REFS(env, 2000) {
+        
+        jvmtiError error;
+        jint count;
+        jclass *classes;
+        int i;
+    
+        error = allClassLoaderClasses(loader, &classes, &count);
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            (void)outStream_writeInt(out, count);
+            for (i = 0; i < count; i++) {
+                jbyte tag;
+                jclass clazz;
 
-    outStream_writeInt(out, count);
-    for (i = 0; i < count; i++) {
-        jbyte tag;
-        jclass clazz;
+                clazz = classes[i];
+                tag = referenceTypeTag(clazz);
 
-        clazz = classes[i];
-        tag = referenceTypeTag(clazz);
+                (void)outStream_writeByte(out, tag);
+                outStream_writeObjectRef(env, out, clazz);
+            }
+        }
 
-        outStream_writeByte(out, tag);
-        WRITE_GLOBAL_REF(env, out, clazz);
-    }
-
-    jdwpFree(classes);
+        if ( classes != NULL )
+            jvmtiDeallocate(classes);
+     
+     } END_WITH_LOCAL_REFS(env);
 
     return JNI_TRUE;
 }

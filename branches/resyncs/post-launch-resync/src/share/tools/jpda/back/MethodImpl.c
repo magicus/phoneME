@@ -1,5 +1,5 @@
 /*
- * @(#)MethodImpl.c	1.32 06/10/10
+ * @(#)MethodImpl.c	1.33 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,156 +23,188 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <stdlib.h>
-#include <string.h>
 
-#include "MethodImpl.h"
 #include "util.h"
+#include "MethodImpl.h"
 #include "inStream.h"
 #include "outStream.h"
-#include "JDWP.h"
 
 static jboolean 
 lineTable(PacketInputStream *in, PacketOutputStream *out)
 {
-    jint error;
-    jint count;
-    JVMDI_line_number_entry *table;
+    jvmtiError error;
+    jint count = 0;
+    jvmtiLineNumberEntry *table = NULL;
     jmethodID method;
     jlocation firstCodeIndex;
     jlocation lastCodeIndex;
     jboolean isNative;
 
-    jclass clazz = inStream_readClassRef(in);
+    /* JVMDI needed the class, but JVMTI does not so we ignore it */
+    (void)inStream_readClassRef(getEnv(), in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
     method = inStream_readMethodID(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     /*
-     * JVMDI behavior for the calls below is unspecified for native 
+     * JVMTI behavior for the calls below is unspecified for native 
      * methods, so we must check explicitly.
      */
-    error = jvmdi->IsMethodNative(clazz, method, &isNative);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
-        return JNI_TRUE;
-    }
-
+    isNative = isMethodNative(method);
     if (isNative) {
         outStream_setError(out, JDWP_ERROR(NATIVE_METHOD));
         return JNI_TRUE;
     }
 
-    error = jvmdi->GetMethodLocation(clazz, method, &firstCodeIndex,
-                                     &lastCodeIndex);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    error = methodLocation(method, &firstCodeIndex, &lastCodeIndex);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
-    outStream_writeLocation(out, firstCodeIndex);
-    outStream_writeLocation(out, lastCodeIndex);
+    (void)outStream_writeLocation(out, firstCodeIndex);
+    (void)outStream_writeLocation(out, lastCodeIndex);
 
-    error = jvmdi->GetLineNumberTable(clazz, method, &count, &table);
-    if (error == JVMDI_ERROR_ABSENT_INFORMATION) {
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetLineNumberTable)
+                (gdata->jvmti, method, &count, &table);
+    if (error == JVMTI_ERROR_ABSENT_INFORMATION) {
         /* 
          * Indicate no line info with an empty table. The code indices
          * are still useful, so we don't want to return an error
          */
-        outStream_writeInt(out, 0);
-    } else if (error == JVMDI_ERROR_NONE) {
+        (void)outStream_writeInt(out, 0);
+    } else if (error == JVMTI_ERROR_NONE) {
         jint i;
-        outStream_writeInt(out, count);
+        (void)outStream_writeInt(out, count);
         for (i = 0; (i < count) && !outStream_error(out); i++) {
-            outStream_writeLocation(out, table[i].start_location);
-            outStream_writeInt(out, table[i].line_number);
+            (void)outStream_writeLocation(out, table[i].start_location);
+            (void)outStream_writeInt(out, table[i].line_number);
         }
-        jdwpFree(table);
+        jvmtiDeallocate(table);
     } else {
-        outStream_setError(out, error);
+        outStream_setError(out, map2jdwpError(error));
     }
     return JNI_TRUE;
 }
 
+
 static jboolean 
-variableTable(PacketInputStream *in, PacketOutputStream *out)
+doVariableTable(PacketInputStream *in, PacketOutputStream *out, 
+                int outputGenerics)
 {
-    jint error;
+    jvmtiError error;
     jint count;
-    JVMDI_local_variable_entry *table;
+    jvmtiLocalVariableEntry *table;
     jmethodID method;
     jint argsSize;
     jboolean isNative;
 
-    jclass clazz = inStream_readClassRef(in);
+    /* JVMDI needed the class, but JVMTI does not so we ignore it */
+    (void)inStream_readClassRef(getEnv(), in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
     method = inStream_readMethodID(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     /*
-     * JVMDI behavior for the calls below is unspecified for native 
+     * JVMTI behavior for the calls below is unspecified for native 
      * methods, so we must check explicitly.
      */
-    error = jvmdi->IsMethodNative(clazz, method, &isNative);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
-        return JNI_TRUE;
-    }
-
+    isNative = isMethodNative(method);
     if (isNative) {
         outStream_setError(out, JDWP_ERROR(NATIVE_METHOD));
         return JNI_TRUE;
     }
 
-    error = jvmdi->GetArgumentsSize(clazz, method, &argsSize);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetArgumentsSize)
+                (gdata->jvmti, method, &argsSize);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
 
-    error = jvmdi->GetLocalVariableTable(clazz, method, &count, &table);
-    if (error == JVMDI_ERROR_NONE) {
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetLocalVariableTable)
+                (gdata->jvmti, method, &count, &table);
+    if (error == JVMTI_ERROR_NONE) {
         jint i;
-        outStream_writeInt(out, argsSize);
-        outStream_writeInt(out, count);
+        (void)outStream_writeInt(out, argsSize);
+        (void)outStream_writeInt(out, count);
         for (i = 0; (i < count) && !outStream_error(out); i++) {
-            JVMDI_local_variable_entry *entry = &table[i];
-            outStream_writeLocation(out, entry->start_location);
-            outStream_writeString(out, entry->name);
-            outStream_writeString(out, entry->signature);
-            outStream_writeInt(out, entry->length);
-            outStream_writeInt(out, entry->slot);
+            jvmtiLocalVariableEntry *entry = &table[i];
+            (void)outStream_writeLocation(out, entry->start_location);
+            (void)outStream_writeString(out, entry->name);
+            (void)outStream_writeString(out, entry->signature);
+            if (outputGenerics == 1) {
+                writeGenericSignature(out, entry->generic_signature);
+            }  
+            (void)outStream_writeInt(out, entry->length);
+            (void)outStream_writeInt(out, entry->slot);
 
-            jdwpFree(entry->name);
-            jdwpFree(entry->signature);
+            jvmtiDeallocate(entry->name);
+            jvmtiDeallocate(entry->signature);
+            if (entry->generic_signature != NULL) {
+              jvmtiDeallocate(entry->generic_signature);
+            }
         }
 
-        jdwpFree(table);
+        jvmtiDeallocate(table);
     } else {
-        outStream_setError(out, error);
+        outStream_setError(out, map2jdwpError(error));
     }
     return JNI_TRUE;
 }
 
+
+static jboolean 
+variableTable(PacketInputStream *in, PacketOutputStream *out) {
+    return doVariableTable(in, out, 0);
+}
+
+static jboolean 
+variableTableWithGenerics(PacketInputStream *in, PacketOutputStream *out) {
+    return doVariableTable(in, out, 1);
+}
+
+
 static jboolean 
 bytecodes(PacketInputStream *in, PacketOutputStream *out)
 {
-    jint error;
-    jbyte *bytecodes;
+    jvmtiError error;
+    unsigned char * bcp;
     jint bytecodeCount;
-    jclass clazz = inStream_readClassRef(in);
-    jmethodID method = inStream_readMethodID(in);
+    jmethodID method;
+    
+    /* JVMDI needed the class, but JVMTI does not so we ignore it */
+    (void)inStream_readClassRef(getEnv(), in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    method = inStream_readMethodID(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    error = jvmdi->GetBytecodes(clazz, method, &bytecodeCount, &bytecodes);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    /* Initialize assuming no bytecodes and no error */
+    error         = JVMTI_ERROR_NONE;
+    bytecodeCount = 0;
+    bcp           = NULL;
+
+    /* Only non-native methods have bytecodes, don't even ask if native. */
+    if ( !isMethodNative(method) ) {
+        error = JVMTI_FUNC_PTR(gdata->jvmti,GetBytecodes)
+                    (gdata->jvmti, method, &bytecodeCount, &bcp);
+    }
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
     } else {
-        outStream_writeByteArray(out, bytecodeCount, bytecodes);
-        jdwpFree(bytecodes);
+        (void)outStream_writeByteArray(out, bytecodeCount, (jbyte *)bcp);
+        jvmtiDeallocate(bcp);
     }
     
     return JNI_TRUE;
@@ -181,27 +213,29 @@ bytecodes(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 isObsolete(PacketInputStream *in, PacketOutputStream *out)
 {
-    jint error;
     jboolean isObsolete;
-    jclass clazz = inStream_readClassRef(in);
-    jmethodID method = inStream_readMethodID(in);
+    jmethodID method;
+    
+    /* JVMDI needed the class, but JVMTI does not so we ignore it */
+    (void)inStream_readClassRef(getEnv(), in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    method = inStream_readMethodID(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    error = jvmdi->IsMethodObsolete(clazz, method, &isObsolete);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
-    } else {
-        outStream_writeBoolean(out, isObsolete);
-    }
+    isObsolete = isMethodObsolete(method);
+    (void)outStream_writeBoolean(out, isObsolete);
     
     return JNI_TRUE;
 }
 
-void *Method_Cmds[] = { (void *)0x4
+void *Method_Cmds[] = { (void *)0x5
     ,(void *)lineTable
     ,(void *)variableTable
     ,(void *)bytecodes
     ,(void *)isObsolete
+    ,(void *)variableTableWithGenerics
 };

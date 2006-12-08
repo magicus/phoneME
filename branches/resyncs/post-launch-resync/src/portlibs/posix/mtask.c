@@ -1,5 +1,5 @@
 /*
- * @(#)mtask.c	1.37 06/10/10
+ * @(#)mtask.c	1.38 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -289,9 +289,9 @@ setupRequest(JNIEnv*env, int argc, char** argv,
     /* And record the socket to be used for communication with the parent */
     CVMmtaskServerCommSocket(env, commSocket);
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     if (clientId != 0) {
-	CVMmtaskJvmdiInit(env);
+	CVMmtaskJvmtiInit(env);
     }
 #endif
 
