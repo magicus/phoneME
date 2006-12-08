@@ -145,12 +145,14 @@ class MIDPConfig{
      */
     public static MIDPImplementationClassLoader
     newMIDPImplementationClassLoader(String midpJarNames[]){
+        /* The MIDPImplementationClassLoader already exist. Throw an
+         * exception.
+         */
         if (midpImplCL != null) {
             throw new InternalError(
                 "The MIDPImplementationClassLoader is already created");
         }
 
-	ClassLoader romClassLoader;
 	String permittedClasses[];
 	URL midpBase[] = new URL[midpJarNames.length];
 	PermissionCollection perms = new Permissions();
@@ -158,8 +160,7 @@ class MIDPConfig{
 	    try {
 		midpBase[i] = new URL("file://".concat(midpJarNames[i]));
 	    }catch(java.io.IOException e){
-		// DEBUG
-		System.err.println("initMidpImplementation URL Creation:");
+		// DEBUG System.err.println("initMidpImplementation URL Creation:");
 		e.printStackTrace();
 		// END DEBUG
 		return null;
@@ -167,37 +168,35 @@ class MIDPConfig{
 	}
 	perms.add(new java.security.AllPermission());
 	//DEBUG System.out.println("Constructing MIDPImplementationClassLoader with permissions "+perms);
-	romClassLoader = new AuxPreloadClassLoader(perms, 
-				ClassLoader.getSystemClassLoader());
 	permittedClasses = getPermittedClasses();
 	if (permittedClasses == null){
 	    // there was some problem in reading the file
 	    return null;
 	}
+         
 	midpImplCL = new MIDPImplementationClassLoader(
 				midpBase, permittedClasses, perms,
-				romClassLoader,
-				ClassLoader.getSystemClassLoader());
+				null);
 	return midpImplCL;
 
     }
 
     public static MIDPImplementationClassLoader
     newMIDPImplementationClassLoader(URL urls[]){
+        /* The MIDPImplementationClassLoader already exist. Throw an
+         * exception.
+         */
         if (midpImplCL != null) {
             throw new InternalError(
                 "The MIDPImplementationClassLoader is already created");
         }
 
-	ClassLoader romClassLoader;
 	String permittedClasses[];
         PermissionCollection perms = new Permissions();
 
 	perms.add(new java.security.AllPermission());
 	//DEBUG System.out.println(
         //  "Constructing MIDPImplementationClassLoader with permissions "+perms);
-	romClassLoader = new AuxPreloadClassLoader(perms, 
-				ClassLoader.getSystemClassLoader());
 	permittedClasses = getPermittedClasses();
 	if (permittedClasses == null){
 	    // there was some problem in reading the file
@@ -205,8 +204,7 @@ class MIDPConfig{
 	}
 	midpImplCL = new MIDPImplementationClassLoader(
 				urls, permittedClasses, perms,
-				romClassLoader,
-				ClassLoader.getSystemClassLoader());
+				null);
 	return midpImplCL;
 
     }
