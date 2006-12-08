@@ -63,6 +63,7 @@ JUMP_IMPL_CLASSESZIP	= $(JUMP_OUTPUT_DIR)/jump-impl.jar
 
 JUMP_SRCDIRS           += \
 	$(JUMP_SRCDIR)/share/api/native \
+	$(JUMP_SRCDIR)/share/impl/isolate/native
 
 # Add as necessary
 #	$(JUMP_SRCDIR)/share/impl/<component>/native \
@@ -79,7 +80,8 @@ JUMP_INCLUDES  += \
 # Any shared native code goes here.
 # 
 JUMP_OBJECTS            += \
-	jump_messaging.o
+	jump_messaging.o \
+	jump_isolate_impl.o \
 
 #
 # Any native code for the stand-alone jump native library goes here
