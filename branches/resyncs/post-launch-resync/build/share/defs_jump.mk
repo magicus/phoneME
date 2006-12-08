@@ -35,7 +35,7 @@ ifeq ($(CVM_INCLUDE_JUMP),true)
 # JUMP defs
 #
 export JAVA_HOME	= $(JDK_HOME)
-JUMP_ANT_OPTIONS        += -Ddist.dir=$(CVM_JUMP_BUILDDIR)
+JUMP_ANT_OPTIONS        += -Ddist.dir=$(CVM_JUMP_BUILDDIR) -Dcdc.dir=${CDC_DIST_DIR} 
 # The default JUMP component location
 JUMP_DIR		?= $(CVM_TOP)/../jump/trunk
 ifeq ($(wildcard $(JUMP_DIR)/build/build.xml),)
@@ -46,6 +46,9 @@ JUMP_SRCDIR             = $(JUMP_DIR)/src
 
 ifeq ($(CVM_TERSEOUTPUT), false)
 CVM_ANT_OPTIONS         += -v
+endif
+ifneq ($(CVM_DEBUG), true)
+CVM_ANT_OPTIONS         += -Ddebug=false
 endif
 
 #
