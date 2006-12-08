@@ -238,12 +238,15 @@ CVM_INCLUDE_COMMCONNECTION ?= false
 CVM_INCLUDE_MIDP	?= false
 CVM_INCLUDE_JUMP	?= false
 ifeq ($(CVM_INCLUDE_MIDP), true)
-override CVM_KNI	= true
+override CVM_KNI        = true
+override CVM_DUAL_STACK = true
+else
+CVM_KNI                 ?= false
+CVM_DUAL_STACK          ?= false
 endif
 ifeq ($(CVM_INCLUDE_JUMP), true)
 override CVM_MTASK	= true
 endif
-CVM_DUAL_STACK		?= false
 CVM_SPLIT_VERIFY	?= false
 
 CVM_JIT_REGISTER_LOCALS	?= true
