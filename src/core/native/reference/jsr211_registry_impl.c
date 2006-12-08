@@ -304,6 +304,8 @@ static int read_string_array(int* array_size, pcsl_string** strings) {
     for (current_string = *strings; bytes_read < array_len; current_string++) {
       bytes_read += read_string(current_string);
     }
+  } else {
+    *array_size = 0;
   }
 
   return bytes_read;
@@ -357,7 +359,7 @@ static int position_field(int fld_num) {
  */
 static int compare_string(const pcsl_string* search_key, 
                         jsr211_boolean case_sensitive, find_condition cond) {
-  pcsl_string string;
+  pcsl_string string = PCSL_STRING_NULL_INITIALIZER;
   int compare_result;
   int exact_result, first_result;
   int equal_count, string_len;
@@ -548,7 +550,7 @@ static long find_next_by_suite(int suite) {
  * @return operation result
  */
 static jsr211_result open_table_file(int write) {
-  pcsl_string fileName = PCSL_STRING_NULL;
+  pcsl_string fileName = PCSL_STRING_NULL_INITIALIZER;
   int io_mode = OPEN_READ | (write ? OPEN_WRITE : 0);
 
   if (PCSL_STRING_OK !=
@@ -816,7 +818,7 @@ jsr211_result jsr211_get_handler_field(const pcsl_string* id,
   /* reading field */
   position_field(CHR_INDEX((int)(field_id)));
   read_string_array(&result_len, &buf);
-  if (buf != NULL) {
+  if (result_len > 0) {
     jsr211_fillStringArray(buf, result_len, result);
     free_pcsl_string_list(buf, result_len);
   }
@@ -967,7 +969,7 @@ jsr211_result jsr211_get_all(const pcsl_string* caller_id, jsr211_field field,
                         /*OUT*/ JSR211_RESULT_STRARRAY* result) {
   long current_position;
   int found_num, access, current_size;
-  pcsl_string *res_buffer;
+  pcsl_string *res_buffer = NULL;
   pcsl_string *current_result, *last;
   int chr = CHR_INDEX((int)(field));
   int isString;
@@ -1010,20 +1012,22 @@ jsr211_result jsr211_get_all(const pcsl_string* caller_id, jsr211_field field,
         }
       }
       else {
-        pcsl_string *array_res, *results, *last_res;
-        int array_length;
+        pcsl_string *array_res = NULL, *results, *last_res;
+        int array_length = 0;
 
         read_string_array(&array_length, &array_res);
-        for (results = array_res, last_res = array_res + array_length;
-             results < last_res && current_result < last;
-             results++) {
-          if (!findStringInArray(res_buffer, current_result - res_buffer, 
+        if (array_length > 0) {
+            for (results = array_res, last_res = array_res + array_length;
+                 results < last_res && current_result < last;
+                 results++) {
+              if (!findStringInArray(res_buffer, current_result - res_buffer, 
                                                                     results)) {
-            *(current_result++) = *results;
-            *results = PCSL_STRING_NULL;
-          }
+                *(current_result++) = *results;
+                *results = PCSL_STRING_NULL;
+              }
+            }
+            free_pcsl_string_list(array_res, array_length);
         }
-        free_pcsl_string_list(array_res, array_length);
       }
     }
     
