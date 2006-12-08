@@ -1036,30 +1036,7 @@ BUNDLE_PRODUCT_NAME0 = $(subst $(space),_,$(J2ME_PRODUCT_NAME))
 BUNDLE_PRODUCT_NAME1 = $(subst /,_,$(BUNDLE_PRODUCT_NAME0))
 BUNDLE_PRODUCT_NAME  = $(subst $(TM),$(empty),$(BUNDLE_PRODUCT_NAME1))
 
-BUNDLE_VERSION	= $(subst -,_,$(J2ME_BUILD_VERSION_STRING))
-BUNDLE_TARGET	= $(subst -,_,$(CVM_TARGET))
-
-BINARY_BUNDLE_NAME	= \
-	$(BUNDLE_PRODUCT_NAME)-$(BUNDLE_VERSION)-$(BUNDLE_TARGET)-bin
-BINARY_BUNDLE_DIRNAME	= $(BINARY_BUNDLE_NAME)
-
-# Location of legal documents in case JAVAME_LEGAL_DIR is not set.
-JAVAME_LEGAL_REPOSITORY = https://phoneme.dev.java.net/svn/phoneme/legal
-
-# Add the svn revison number to BINARY_BUNDLE_NAME and BINARY_BUNDLE_DIRNAME
-# if requested.
-BINARY_BUNDLE_APPEND_REVISION ?= true
-ifeq ($(BINARY_BUNDLE_APPEND_REVISION),true)
-ifneq ($(wildcard .svn),.svn)
-REVISION_NUMBER = UNKNOWN
-else
-REVISION_NUMBER = \
-     $(shell svn info | grep "Revision:" | sed -e 's/Revision: \(.*\)/\1/')
-endif
-override BINARY_BUNDLE_NAME := $(BINARY_BUNDLE_NAME)-rev$(REVISION_NUMBER)
-override BINARY_BUNDLE_DIRNAME := $(BINARY_BUNDLE_DIRNAME)-rev$(REVISION_NUMBER)
-endif
-
+BINARY_BUNDLE = $(INSTALLDIR)/$(BUNDLE_PRODUCT_NAME)-$(J2ME_BUILD_VERSION_STRING)-$(CVM_TARGET).tar.gz
 
 #
 # Java source directories. 
