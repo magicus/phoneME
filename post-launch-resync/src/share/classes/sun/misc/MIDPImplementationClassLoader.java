@@ -90,13 +90,19 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
 
 
     private Class
-    loadFromParent(String classname, boolean restrict)
+    loadFromParent(String classname, boolean resolve, boolean restrict)
 					throws ClassNotFoundException
     {
 	// make sure classname is on the list.
-	if (restrict && !allowedClasses.contains(classname))
+	if (restrict && !allowedClasses.contains(classname)) {
 	    return null;
-	return parent.loadClass(classname);
+        }
+
+        /* Call java.lang.ClassLoader(classname, resolve),
+         * which uses the NULL classLoader to load
+         * class if parent is null, or calls parent.loadClass()
+         * when the parent is not null. */
+        return super.loadClass(classname, resolve);
     }
 
     public Class
@@ -115,7 +121,7 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
 	resultClass = findLoadedClass(classname);
 	if (resultClass == null){
 	    try {
-		resultClass = loadFromParent(classname, restrict);
+		resultClass = loadFromParent(classname, resolve, restrict);
 	    }catch(Exception e){
 		/*DEBUG e.printStackTrace(); */
 		resultClass = null;
