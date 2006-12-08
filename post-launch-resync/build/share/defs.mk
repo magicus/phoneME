@@ -981,9 +981,7 @@ endif
 #
 ifeq ($(CVM_DUAL_STACK), true)
     CVM_SHAREOBJS_SPACE += \
-	MemberFilter.o \
-	AuxPreloadClassLoader.o \
-	auxPreloader.o
+	MemberFilter.o
     CVM_MIDPFILTERCONFIG = $(CVM_LIBDIR)/MIDPFilterConfig.txt
     CVM_MIDPCLASSLIST    = $(CVM_LIBDIR)/MIDPPermittedClasses.txt
     CVM_MIDPDIR          = $(CVM_TOP)/src/share/lib
