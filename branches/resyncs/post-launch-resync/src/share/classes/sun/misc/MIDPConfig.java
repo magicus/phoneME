@@ -42,6 +42,9 @@ import java.util.Vector;
 
 public final
 class MIDPConfig{
+    /* The MIDP library classloader */
+    private static MIDPImplementationClassLoader midpImplCL;
+
     public static String MIDPVersion = "2.0";
     public static String CLDCVersion = "1.1";
     /*
@@ -137,10 +140,16 @@ class MIDPConfig{
      *
      * We trust these classes, so grant them all permissions.
      */
+    /* NOTE: this should be removed once the MIDP code is fixed to
+     * use the newMIDPImplementationClassLoader(URL[]) API.
+     */
     public static MIDPImplementationClassLoader
     newMIDPImplementationClassLoader(String midpJarNames[]){
+        if (midpImplCL != null) {
+            throw new InternalError(
+                "The MIDPImplementationClassLoader is already created");
+        }
 
-	MIDPImplementationClassLoader midpImplementation;
 	ClassLoader romClassLoader;
 	String permittedClasses[];
 	URL midpBase[] = new URL[midpJarNames.length];
@@ -165,11 +174,40 @@ class MIDPConfig{
 	    // there was some problem in reading the file
 	    return null;
 	}
-	midpImplementation = new MIDPImplementationClassLoader(
+	midpImplCL = new MIDPImplementationClassLoader(
 				midpBase, permittedClasses, perms,
 				romClassLoader,
 				ClassLoader.getSystemClassLoader());
-	return midpImplementation;
+	return midpImplCL;
+
+    }
+
+    public static MIDPImplementationClassLoader
+    newMIDPImplementationClassLoader(URL urls[]){
+        if (midpImplCL != null) {
+            throw new InternalError(
+                "The MIDPImplementationClassLoader is already created");
+        }
+
+	ClassLoader romClassLoader;
+	String permittedClasses[];
+        PermissionCollection perms = new Permissions();
+
+	perms.add(new java.security.AllPermission());
+	//DEBUG System.out.println(
+        //  "Constructing MIDPImplementationClassLoader with permissions "+perms);
+	romClassLoader = new AuxPreloadClassLoader(perms, 
+				ClassLoader.getSystemClassLoader());
+	permittedClasses = getPermittedClasses();
+	if (permittedClasses == null){
+	    // there was some problem in reading the file
+	    return null;
+	}
+	midpImplCL = new MIDPImplementationClassLoader(
+				urls, permittedClasses, perms,
+				romClassLoader,
+				ClassLoader.getSystemClassLoader());
+	return midpImplCL;
 
     }
 
@@ -247,7 +285,7 @@ class MIDPConfig{
      * This is less useful than the usual version, which grants the permissions
      * we plan on granting to MIDlets.
      */
-    public static MIDletClassLoader
+    private static MIDletClassLoader
     newMIDletClassLoader(
 	String midPath[], MemberFilter mf, PermissionCollection perms,
 	MIDPImplementationClassLoader implClassLdr)
@@ -273,27 +311,34 @@ class MIDPConfig{
 	return myClassLoader;
     }
 
-
     /*
-     * Use the default midlet permission collection.
+     * This version allows the caller to specify a set of permissions.
+     * The parent classloader is the MIDPImplementationClassLoader.
      */
     public static MIDletClassLoader
     newMIDletClassLoader(
-	String midPath[], MemberFilter mf, MIDPImplementationClassLoader implClassLdr)
+	String midPath[], PermissionCollection perms)
     {
-	return newMIDletClassLoader(midPath, mf, midletPermissions, implClassLdr);
+        return newMIDletClassLoader(midPath,
+                                    newMemberFilter(),
+                                    perms,
+                                    midpImplCL);
     }
 
     /*
-     * Use the default midlet permission collection.
+     * Use the default midlet permission collection. The parent classloader
+     * is the MIDPImplementationClassLoader.
      */
     public static MIDletClassLoader
-    newMIDletClassLoader(
-	String midPath[], MIDPImplementationClassLoader implClassLdr)
+    newMIDletClassLoader(String midPath[])
     {
+        if (midpImplCL == null) {
+            throw new InternalError(
+	        "Need to create the parent MIDPImplementationClassLoader first");
+        }
 	return newMIDletClassLoader(midPath,
                                     newMemberFilter(),
                                     midletPermissions,
-                                    implClassLdr);
+                                    midpImplCL);
     }
 }
