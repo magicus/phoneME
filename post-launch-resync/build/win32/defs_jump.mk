@@ -27,8 +27,8 @@ JUMP_SRCDIRS            += \
 	$(JUMP_SRCDIR)/$(TARGET_OS)/impl/os/native \
 
 JUMP_INCLUDES           += \
-	-I$(JUMP_SRCDIR)/$(TARGET_OS)/api/native/include \
-	-I$(JUMP_SRCDIR)/$(TARGET_OS)/impl/os/native/include \
+	-I$(call POSIX2HOST,$(JUMP_SRCDIR)/$(TARGET_OS)/api/native/include) \
+	-I$(call POSIX2HOST,$(JUMP_SRCDIR)/$(TARGET_OS)/impl/os/native/include) \
 
 JUMP_OBJECTS            += \
 	jump_os_win32.o \
