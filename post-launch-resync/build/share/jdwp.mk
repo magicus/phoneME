@@ -239,7 +239,7 @@ $(JDWPGEN_CLASS) : $(CVM_JDWP_SHAREROOT)/classes/$(JDWPGENPKGDIR)/Main.java
 		$<
 
 $(CVM_JDWP_BUILD_TOP)/JDWPCommands.h : $(JDWPGEN_CLASS)
-	$(CVM_JAVA) -classpath $(CVM_JDWP_CLASSES) \
+	$(CVM_JAVA) -Xbootclasspath/p:$(CVM_JDWP_CLASSES) \
 		$(JDWPGEN).Main $(JDWP_SPEC) \
 	    -include $@
 

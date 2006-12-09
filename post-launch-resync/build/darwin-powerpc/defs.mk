@@ -22,9 +22,14 @@
 # information or have any questions. 
 #
 # @(#)defs.mk	1.11 06/10/10
+
 #
 # defs for darwin-powerpc target
 #
+
+# Needed for JVMTI suport. Seems to be automatically included on
+# other platforms.
+LINK_ARCH_LIBS += -liconv
 
 CVM_TARGETOBJS_SPEED += \
 	invokeNative_powerpc_darwin.o  \

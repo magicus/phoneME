@@ -147,9 +147,9 @@ dbgsysBind(int fd, struct sockaddr *name, int namelen) {
     return bind(fd, name, namelen);
 }
 
-UINT32
+U_SOCKINT32
 dbgsysInetAddr(const char* cp) {
-    return (UINT32)inet_addr(cp);
+    return (U_SOCKINT32)inet_addr(cp);
 }
 
 unsigned long
@@ -269,7 +269,6 @@ dbgsysGetLastIOError(char *buf, jint size) {
     return 0;
 }
 
-#ifdef __linux__
 int
 dbgsysTlsAlloc() {
     pthread_key_t key;
@@ -294,8 +293,6 @@ void *
 dbgsysTlsGet(int index) {
     return pthread_getspecific((pthread_key_t)index);
 }
-
-#endif
 
 long
 dbgsysCurrentTimeMillis() {
