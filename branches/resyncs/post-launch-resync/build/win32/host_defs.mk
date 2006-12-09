@@ -28,6 +28,8 @@ ifeq ($(HOST_OS), Interix)
 DOS2UNIX	= dos2unix.exe
 WIN2POSIX_CMD	= chgpath
 WIN2POSIX	= $(shell chgpath "$(1)")
+HOST2POSIX      = $(WIN2POSIX)
+POSIX2HOST      = $(shell chgpath "$(1)")
 CHKWINPATH	= $(shell test -d "`chgpath \"$(1)\"`" 2>&1 && echo $(1))
 CVM_JAVAC	= javac.exe
 CVM_JAVAH	= javah.exe
@@ -39,6 +41,8 @@ WIN2POSIX_CMD	= cygpath
 WIN2POSIX	= $(shell cygpath "$(1)")
 POSIX2WIN	= $(shell cygpath -m "$(1)")
 CHKWINPATH	= $(shell ls -d "$(1)" 2>&1)
+HOST2POSIX      = $(WIN2POSIX)
+POSIX2HOST      = $(POSIX2WIN)
 endif
 
 #
@@ -153,16 +157,16 @@ LINKEXE_CMD	= $(AT)$(TARGET_LINK) $(LINKEXE_FLAGS) /out:$@ $^ \
 # commands for running the tools
 #
 CCC_CMD		= $(AT)$(TARGET_CCC) $(1) /Fo$(2) $(3)
-CCC_CMD_SPEED	= $(call CCC_CMD,$(CFLAGS_SPEED) $(CCCFLAGS),$@,$<)
-CCC_CMD_SPACE	= $(call CCC_CMD,$(CFLAGS_SPACE) $(CCCFLAGS),$@,$<)
+CCC_CMD_SPEED	= $(call CCC_CMD,$(CFLAGS_SPEED) $(CCCFLAGS),$(call POSIX2HOST,$@),$(call POSIX2HOST,$<))
+CCC_CMD_SPACE	= $(call CCC_CMD,$(CFLAGS_SPACE) $(CCCFLAGS),$(call POSIX2HOST,$@),$(call POSIX2HOST,$<))
 
 CC_CMD		= $(AT)$(TARGET_CC) $(1) /Fo$(2) $(3)
-CC_CMD_SPEED	= $(call CC_CMD,$(CFLAGS_SPEED),$@,$<)
-CC_CMD_SPACE	= $(call CC_CMD,$(CFLAGS_SPACE),$@,$<)
-CC_CMD_LOOP	= $(call CC_CMD,$(CFLAGS_LOOP) ,$@,$<)
-CC_CMD_FDLIB	= $(call CC_CMD,$(CFLAGS_FDLIB),$@,$<)
+CC_CMD_SPEED	= $(call CC_CMD,$(CFLAGS_SPEED),$(call POSIX2HOST,$@),$(call POSIX2HOST,$<))
+CC_CMD_SPACE	= $(call CC_CMD,$(CFLAGS_SPACE),$(call POSIX2HOST,$@),$(call POSIX2HOST,$<))
+CC_CMD_LOOP	= $(call CC_CMD,$(CFLAGS_LOOP) ,$(call POSIX2HOST,$@),$(call POSIX2HOST,$<))
+CC_CMD_FDLIB	= $(call CC_CMD,$(CFLAGS_FDLIB),$(call POSIX2HOST,$@),$(call POSIX2HOST,$<))
 
-LINK_CMD	= $(AT)$(TARGET_LINK) $(LINKFLAGS) /out:$@ $^ $(LINKLIBS)
+LINK_CMD	= $(AT)$(TARGET_LINK) $(LINKFLAGS) /out:$(call POSIX2HOST,$@) $^ $(LINKLIBS)
 
-SO_CC_CMD	= $(AT)$(TARGET_CC) $(SO_CFLAGS) /Fo$@ $<
-SO_LINK_CMD	= $(AT)$(TARGET_LD) $(SO_LINKFLAGS) /out:$@ $^ $(SO_LINKLIBS)
+SO_CC_CMD	= $(AT)$(TARGET_CC) $(SO_CFLAGS) /Fo$(call POSIX2HOST,$@) $(call POSIX2HOST,$<)
+SO_LINK_CMD	= $(AT)$(TARGET_LD) $(SO_LINKFLAGS) /out:$(call POSIX2HOST,$@) $^ $(SO_LINKLIBS)

@@ -2001,6 +2001,13 @@ JAVAC_CMD	= $(CVM_JAVAC) $(JAVAC_OPTIONS)
 JAVA_CLASSPATH += $(LIB_CLASSESDIR)
 
 #
+# Functions for converting between host paths and POSIX paths
+# For POSIX platforms, this is a no-op
+#
+HOST2POSIX = $(1)
+POSIX2HOST = $(1)
+
+#
 # Include target makfiles last.
 #
 # NOTE: the target defs.mk were switched to come after the
