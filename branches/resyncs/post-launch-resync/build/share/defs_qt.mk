@@ -166,16 +166,16 @@ PROFILE_INCLUDES += \
 	-I$(QT_TARGET_INCLUDE_DIR) \
 	-I$(QT_TARGET_INCLUDE_DIR)/qt
 
-# Specify the appropriate QTLIB
+# Specify the appropriate QT_LIBRARY
 ifeq ($(QTEMBEDDED), true)
-QTLIB		?= qte
+QT_LIBRARY	?= qte
 CVM_DEFINES	+= -DQWS
 else
 ifeq ($(QT_NEED_THREAD_SUPPORT), true)
-QTLIB		?= qt-mt
+QT_LIBRARY	?= qt-mt
 CVM_DEFINES += -DQT_THREAD_SUPPORT
 else
-QTLIB		?= qt
+QT_LIBRARY	?= qt
 endif
 endif
 
@@ -195,7 +195,7 @@ ifneq ($(QTEMBEDDED), true)
   endif # QT_VERSION
 
   # figure out, how to link with qt
-  ifeq ($(wildcard $(QT_TARGET_LIB_DIR)/lib$(QTLIB).a), $(QT_TARGET_LIB_DIR)/lib$(QTLIB).a)
+  ifeq ($(wildcard $(QT_TARGET_LIB_DIR)/lib$(QT_LIBRARY).a), $(QT_TARGET_LIB_DIR)/lib$(QT_LIBRARY).a)
     QT_STATIC_LINK ?= true
   else
     QT_STATIC_LINK ?= false
@@ -212,7 +212,7 @@ ifneq ($(QTEMBEDDED), true)
 endif # QTEMBEDDED
 
 # Add all QT related libraries to AWT_LIB_LIBS
-AWT_LIB_LIBS ?= $(QT_LIB_LIBS) -L$(QT_TARGET_LIB_DIR) -l$(QTLIB) -lstdc++
+AWT_LIB_LIBS ?= $(QT_LIB_LIBS) -L$(QT_TARGET_LIB_DIR) -l$(QT_LIBRARY) -lstdc++
 
 # stuff related to running on Qtopia
 ifeq ($(QTOPIA), true)
