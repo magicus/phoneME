@@ -71,7 +71,8 @@ PCSL_MAKE_OPTIONS 	?=
 export JDK_DIR		= $(JDK_HOME)
 TARGET_VM		= cdc_hi
 MIDP_DIR		?= $(CVM_TOP)/../midp
-ifeq ($(wildcard $(MIDP_DIR)/src),)
+MIDP_DEFS_JCC_MK	= $(MIDP_DIR)/build/common/cdc_vm/defs_jcc.mk
+ifeq ($(wildcard $(MIDP_DEFS_JCC_MK)),)
 $(error MIDP_DIR must point to a MIDP directory)
 endif
 MIDP_MAKEFILE_DIR 	?= build/linux_fb_gcc
@@ -108,52 +109,12 @@ MIDP_LIBS 		?= \
 LINKLIBS 		+= $(MIDP_LIBS)
 endif
 
+-include $(MIDP_DEFS_JCC_MK)
 # Add MIDP classes to JCC input list so they can be romized.
 ifeq ($(CVM_PRELOAD_LIB), true)
 CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSESZIP)
 
-CVM_CNI_CLASSES += \
-	com.sun.cdc.i18n.j2me.Conv \
-	com.sun.midp.appmanager.MIDletSuiteInfo \
-	com.sun.midp.chameleon.input.InputModeFactory \
-	com.sun.midp.chameleon.input.NativeInputMode \
-	com.sun.midp.chameleon.layers.SoftButtonLayer \
-	com.sun.midp.chameleon.skins.resources.LoadedSkinData \
-	com.sun.midp.chameleon.skins.resources.LoadedSkinProperties \
-	com.sun.midp.chameleon.skins.resources.LoadedSkinResources \
-	com.sun.midp.chameleon.skins.resources.SkinResources \
-	com.sun.midp.crypto.MD2 \
-	com.sun.midp.crypto.MD5 \
-	com.sun.midp.crypto.SHA \
-	com.sun.midp.events.EventQueue \
-	com.sun.midp.events.NativeEventMonitor \
-	com.sun.midp.installer.JarReader \
-	com.sun.midp.installer.OtaNotifier \
-	com.sun.midp.io.j2me.push.PushRegistryImpl \
-	com.sun.midp.io.j2me.storage.File \
-	com.sun.midp.io.j2me.storage.RandomAccessStream \
-	com.sun.midp.l10n.LocalizedStringsBase \
-	com.sun.midp.lcdui.DisplayDeviceAccess \
-	com.sun.midp.log.Logging \
-	com.sun.midp.log.LoggingBase \
-	com.sun.midp.main.CDCInit \
-	com.sun.midp.main.CdcMIDletSuiteLoader \
-	com.sun.midp.main.Configuration \
-	com.sun.midp.midletsuite.InstallInfo \
-	com.sun.midp.midletsuite.MIDletSuiteImpl \
-	com.sun.midp.midletsuite.MIDletSuiteStorage \
-	com.sun.midp.midletsuite.SuiteProperties \
-	com.sun.midp.midletsuite.SuiteSettings \
-	com.sun.midp.rms.RecordStoreFactory \
-	com.sun.midp.rms.RecordStoreFile \
-	com.sun.midp.rms.RecordStoreUtil \
-	javax.microedition.lcdui.Display \
-	javax.microedition.lcdui.Font \
-	javax.microedition.lcdui.game.GameCanvas \
-	javax.microedition.lcdui.Graphics \
-	javax.microedition.lcdui.Image \
-	javax.microedition.lcdui.ImageDataFactory \
-	javax.microedition.lcdui.KeyConverter
+CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
 endif
 
 endif
