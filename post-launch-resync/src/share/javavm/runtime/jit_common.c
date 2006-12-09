@@ -998,7 +998,13 @@ new_mb:
 		ee->invokeMb = NULL;
 
 		/* Invoke the compiled method */
-                if ((CVMUint8*)cmd >= CVMglobals.jit.codeCacheDecompileStart) {
+                if ((CVMUint8*)cmd >= CVMglobals.jit.codeCacheDecompileStart
+#ifdef CVM_AOT
+	            && !((CVMUint8*)cmd >= CVMglobals.jit.codeCacheAOTStart &&
+                         (CVMUint8*)cmd < CVMglobals.jit.codeCacheAOTEnd)
+#endif
+                   )
+                {
 		    CVMcmdEntryCount(cmd)++;
                 }
 		mb = CVMinvokeCompiled(ee, CVMgetCompiledFrame(frame));
@@ -1711,28 +1717,32 @@ CVMjitCompileAOTCode(CVMExecEnv* ee)
     JNIEnv* env = CVMexecEnv2JniEnv(ee);
     jstring jmlist;
 
-    if (CVMglobals.jit.aotMethodList == NULL) {
-        const CVMProperties *sprops = CVMgetProperties();
-        CVMglobals.jit.aotMethodList = 
-            (char*)malloc(strlen(sprops->library_path) +
-                          strlen("/methodsList.txt") + 
-                          1);
+    if (CVMglobals.jit.codeCacheAOTCodeExist) {
+        CVMJITinitializeAOTCode();
+    } else {
         if (CVMglobals.jit.aotMethodList == NULL) {
+            const CVMProperties *sprops = CVMgetProperties();
+            CVMglobals.jit.aotMethodList = 
+                (char*)malloc(strlen(sprops->library_path) +
+                              strlen("/methodsList.txt") + 
+                              1);
+            if (CVMglobals.jit.aotMethodList == NULL) {
+                return;
+            }
+            *CVMglobals.jit.aotMethodList = '\0';
+            strcat(CVMglobals.jit.aotMethodList, sprops->library_path);
+            strcat(CVMglobals.jit.aotMethodList, "/methodsList.txt");
+        }
+
+        jmlist = (*env)->NewStringUTF(env, CVMglobals.jit.aotMethodList);
+        if ((*env)->ExceptionOccurred(env)) {
             return;
         }
-        *CVMglobals.jit.aotMethodList = '\0';
-        strcat(CVMglobals.jit.aotMethodList, sprops->library_path);
-        strcat(CVMglobals.jit.aotMethodList, "/methodsList.txt");
-    }
 
-    jmlist = (*env)->NewStringUTF(env, CVMglobals.jit.aotMethodList);
-    if ((*env)->ExceptionOccurred(env)) {
-        return;
+        CVMjniCallStaticVoidMethod(env,
+            CVMcbJavaInstance(CVMsystemClass(sun_mtask_Warmup)),
+            CVMglobals.sun_mtask_Warmup_runit, NULL, jmlist);
     }
-
-    CVMjniCallStaticVoidMethod(env,
-        CVMcbJavaInstance(CVMsystemClass(sun_mtask_Warmup)),
-        CVMglobals.sun_mtask_Warmup_runit, NULL, jmlist);
 }
 #endif
 

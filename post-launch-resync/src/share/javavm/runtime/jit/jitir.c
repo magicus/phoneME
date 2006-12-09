@@ -2696,9 +2696,23 @@ doInstanceFieldWrite(CVMJITCompilationContext* con,
 static CVMBool
 checkInitNeeded(CVMJITCompilationContext *con, CVMClassBlock *cb)
 {
-    CVMBool needCheckInit = CVMcbCheckInitNeeded(cb, con->ee);
+#if defined(CVM_AOT) && !defined(CVM_MTASK)
+    /*
+     * Always generate CHECKINIT for AOT code because we can't
+     * guarantee that the class has already initialized when
+     * AOT code is executed in subsequent runs. No need to do
+     * this for MTASK because we know clinit will be run
+     * by the warmup process in subsequent runs.
+     */
+    if (CVMglobals.jit.isPrecompiling) {
+        return CVM_TRUE;
+    } else
+#endif
+    {
+        CVMBool needCheckInit = CVMcbCheckInitNeeded(cb, con->ee);
   
-    return needCheckInit;
+        return needCheckInit;
+    }
 }
 
 /*
