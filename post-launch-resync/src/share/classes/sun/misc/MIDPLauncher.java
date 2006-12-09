@@ -23,6 +23,11 @@
  * information or have any questions. 
  */
 
+/*
+ * This is a standalone launcher that launches MIDP using
+ * the MIDPImplementationClassLoader.
+ */
+
 package sun.misc;
 
 import java.lang.reflect.Method;
@@ -58,7 +63,7 @@ public final class MIDPLauncher {
                 for (j = 0; j < num; j++) {
                     midppath[j] = new File(components.nextToken());
                 }
-                args[i-1] = args[i] = "";
+                args[i-1] = args[i] = null;
                 numMainArgs -= 2;
             } else if (arg.equals("-suitepath")) {
                 suitepathString = args[++i];
@@ -69,7 +74,7 @@ public final class MIDPLauncher {
                 for (j = 0; j < num; j++) {
                     suitePath[j] = components.nextToken();
 	        }
-                args[i-1] = args[i] = "";
+                args[i-1] = args[i] = null;
                 numMainArgs -= 2;
             }
         }
@@ -78,7 +83,7 @@ public final class MIDPLauncher {
         int k = 0;
         mainArgs = new String[numMainArgs];
         for (j = 0; j < args.length; j++) {
-            if (!args[j].equals("")) {
+            if (args[j] != null) {
                 mainArgs[k++] = args[j];
 	    }
 	}
