@@ -32,6 +32,8 @@ JUMP_INCLUDES           += \
 
 JUMP_OBJECTS            += \
 	jump_os_linux.o \
+	jump_os_process_linux.o
 
 JUMP_NATIVE_LIBRARY_OBJECTS            += \
-	jump_os_linux.o
+	jump_os_linux.o \
+	jump_os_process_linux.o
