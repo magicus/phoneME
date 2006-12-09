@@ -362,6 +362,9 @@ $(J2ME_CLASSLIB):: jsrclasses
 endif
 $(J2ME_CLASSLIB):: testclasses $(CVM_TEST_CLASSESZIP)
 $(J2ME_CLASSLIB):: democlasses $(CVM_DEMO_CLASSESJAR)
+ifeq ($(CVM_INCLUDE_JUMP), true)
+$(J2ME_CLASSLIB):: jumptargets
+endif
 $(J2ME_CLASSLIB):: headers $(CVM_ROMJAVA_LIST)
 $(J2ME_CLASSLIB):: $(CLASSLIB_DEPS)
 $(J2ME_CLASSLIB):: aotdeps
