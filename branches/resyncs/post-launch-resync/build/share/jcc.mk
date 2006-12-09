@@ -147,6 +147,7 @@ CVM_JCC_INPUT += $(CVM_BUILDTIME_CLASSESZIP)
 # out of the jar file
 #
 ifeq ($(CVM_PRELOAD_TEST), true)
+CVM_JCC_INPUT += -cl:sys
 CVM_JCC_INPUT += $(KBENCH_JAR)
 CVM_JCC_INPUT += $(CVM_TEST_CLASSESZIP)
 endif
@@ -163,11 +164,12 @@ endif
 # romjava.c files
 ###########
 
-$(CVM_ROMJAVA_LIST): $(CVM_JCC_INPUT) $(CVM_JCC_DEPEND)
+CVM_JCC_INPUT_FILES = $(filter-out -%,$(CVM_JCC_INPUT))
+
+$(CVM_ROMJAVA_LIST): $(CVM_JCC_INPUT_FILES) $(CVM_JCC_DEPEND)
 	@echo "jcc romjava.c files"
-	$(AT)export CLASSPATH; \
-	CLASSPATH=$(CVM_JCC_CLASSPATH); \
-	$(CVM_JAVA) -Xmx128m JavaCodeCompact $(CVM_JCC_OPTIONS) \
+	$(CVM_JAVA) -cp $(CVM_JCC_CLASSPATH) -Xmx128m JavaCodeCompact \
+		$(CVM_JCC_OPTIONS) \
 		-maxSegmentSize $(CVM_ROMJAVA_CLASSES_PER_FILE) \
 		-o $(CVM_ROMJAVA_CPATTERN) $(CVM_JCC_INPUT)
 

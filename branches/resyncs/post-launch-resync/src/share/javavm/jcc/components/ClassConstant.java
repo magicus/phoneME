@@ -1,5 +1,5 @@
 /*
- * @(#)ClassConstant.java	1.14 06/10/10
+ * @(#)ClassConstant.java	1.15 06/10/21
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -57,6 +57,15 @@ class ClassConstant extends ConstantObject
 	name = n;
 	nSlots = 1;
 	resolved = true;
+    }
+
+    public ClassConstant( ClassInfo ci ){
+	tag = Const.CONSTANT_CLASS;
+	theClass = ci;
+	name = new UnicodeConstant(ci.className);
+	nSlots = 1;
+	resolved = true;
+	didLookup = true;
     }
 
     // Read from constant pool.
@@ -120,10 +129,11 @@ class ClassConstant extends ConstantObject
 
     public ClassInfo find(){
 	if ( !didLookup ){
-	    boolean useAltTable;
-	    useAltTable = (containingClass==null) ? false : 
-						    containingClass.altNametable;
-	    theClass = ClassTable.lookupClass(name.string, useAltTable);
+	    ClassLoader loader = null;
+	    if (containingClass != null) {
+		loader = containingClass.loader;
+	    }
+	    theClass = ClassTable.lookupClass(name.string, loader);
 	    didLookup = true;
 	}
 	return theClass; // which may be null

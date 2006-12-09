@@ -1,5 +1,5 @@
 /*
- * @(#)MethodInfo.java	1.49 06/10/10
+ * @(#)MethodInfo.java	1.51 06/10/22
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -81,8 +81,8 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
      * begins with the following byte.
      * Entries of value -1 are ignored.
      */
-    public int		ldcInstructions[];
-    public int		wideConstantRefInstructions[];
+    private int		ldcInstructions[];
+    private int		wideConstantRefInstructions[];
     public boolean      hasCheckinits = false;
 
     // Keep track of any list of methods to be excluded during
@@ -351,7 +351,7 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
     }
 
 
-    public void findConstantReferences() throws DataFormatException {
+    private void findConstantReferences() throws DataFormatException {
 	if ( code == null ) return; // no code, no references.
 	int 	ldc[]  = new int[ code.length / 2 ];
 	int 	wide[] = new int[ code.length / 3 ];
@@ -467,7 +467,7 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
     }
 
 
-    public int opcodeLength (int pc) { 
+    public int opcodeLength (int pc) {
         int old_pc;
 	int opcode = (int)code[pc]&0xff;
         switch (opcode) {
@@ -504,7 +504,10 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 	Attribute.countConstantReferences( methodAttributes, isRelocatable );
 	Attribute.countConstantReferences( codeAttributes, isRelocatable );
 	if ( code == null ) return; // no code, no relocation
-	if ( ldcInstructions != null ){
+	if (ldcInstructions == null){
+	    findConstantReferences();
+	}
+	{
 	    int list[] = ldcInstructions;
 	    int n = list.length;
 	    for (int i = 0; i < n; i++){
@@ -513,7 +516,7 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 		table[ (int)code[loc+1]&0xff ].incReference();
 	    }
 	}
-	if ( wideConstantRefInstructions != null ){
+	{
 	    int list[] = wideConstantRefInstructions;
 	    int n = list.length;
 	    for (int i = 0; i < n; i++){
@@ -932,7 +935,10 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
     public void
     relocateConstantReferences( ConstantObject table[] ) throws DataFormatException {
 	if ( code == null ) return; // no code, no relocation
-	if ( ldcInstructions != null ){
+	if (ldcInstructions == null){
+	    findConstantReferences();
+	}
+	{
 	    int list[] = ldcInstructions;
 	    int n = list.length;
 	    for (int i = 0; i < n; i++){
@@ -949,7 +955,7 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 		code[j] = (byte)v;
 	    }
 	}
-	if ( wideConstantRefInstructions != null ){
+	{
 	    int list[] = wideConstantRefInstructions;
 	    int n = list.length;
 	    for (int i = 0; i < n; i++){
@@ -1638,8 +1644,22 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
         return super.name.string+super.type.string;
     }
 
+    public int[] getLdcInstructions() {
+	if (ldcInstructions == null){
+	    findConstantReferences();
+	}
+	return ldcInstructions;
+    }
+
+    public int[] getWideConstantRefInstructions() {
+	if (wideConstantRefInstructions == null){
+	    findConstantReferences();
+	}
+	return wideConstantRefInstructions;
+    }
+
     /*
-     * Ietrate through code and create the array class for anewarray opcode
+     * Iterate through code and create the array class for anewarray opcode
      * and friends.
      */
     public void collectArrayForAnewarray(ConstantObject constantPool[], String clname) {
@@ -1695,7 +1715,7 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
                     for (int di = 0; di < dimensions; di++) {
                         cname = "["+ cname;
                     }
-                    vm.ArrayClassInfo.collectArrayClass(cname, false, false, clname);
+                    vm.ArrayClassInfo.collectArrayClass(cname, false);
                 }
                 
 	    default: 
@@ -1704,4 +1724,5 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 	    }
 	}
     }
+
 }

@@ -1276,6 +1276,58 @@ CNIsun_misc_CVM_xdebugSet(CVMExecEnv* ee, CVMStackVal32 *arguments,
     return CNI_SINGLE;
 }
 
+#include "javavm/include/localroots.h"
+#include "jni_util.h"
+
+
+CNIResultCode
+CNIsun_misc_CVM_00024Preloader_getClassLoaderNames(CVMExecEnv* ee,
+    CVMStackVal32 *arguments,
+    CVMMethodBlock **p_mb)
+{
+    CNIResultCode result = CNI_SINGLE;
+
+    CVMID_localrootBeginGcUnsafe(ee) {
+	CVMID_localrootDeclareGcUnsafe(CVMObjectICell, namesICell);
+
+	CVMD_gcSafeExec(ee, {
+	    JNIEnv* env = CVMexecEnv2JniEnv(ee);
+	    if ((*env)->PushLocalFrame(env, 16) == JNI_OK) {
+
+		jstring names = JNU_NewStringPlatform(env,
+		    CVMpreloaderGetClassLoaderNames(ee));
+
+		if ((*env)->ExceptionOccurred(env)) {
+		    result = CNI_EXCEPTION;
+		} else {
+		    CVMID_icellAssign(ee, namesICell, names);
+		}
+
+		(*env)->PopLocalFrame(env, NULL);
+	    }
+	});
+
+	if (result != CNI_EXCEPTION) {
+	    CVMID_icellAssignDirect(ee, &arguments[0].j.r, namesICell);
+	}
+
+    } CVMID_localrootEndGcUnsafe();
+
+    return result;
+}
+
+CNIResultCode
+CNIsun_misc_CVM_00024Preloader_registerClassLoader0(CVMExecEnv* ee,
+    CVMStackVal32 *arguments,
+    CVMMethodBlock **p_mb)
+{
+    CVMpreloaderRegisterClassLoaderUnsafe(ee,
+	arguments[0].j.i, /* index */
+	&arguments[1].j.r /* cl */
+    );
+    return CNI_VOID;
+}
+
 #if 1
 
 /*

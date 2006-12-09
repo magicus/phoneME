@@ -1,5 +1,5 @@
 /*
- * @(#)CoreImageWriter.java	1.21 06/10/10
+ * @(#)CoreImageWriter.java	1.22 06/10/22
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -62,18 +62,22 @@ interface CoreImageWriter {
 	 *		 true: otherwise.
 	 */
 
-    boolean writeClasses();
+    boolean writeClasses(boolean doWrite);
 	/*
 	 * Write class and other data structures to output file.
+         * Parameter:
+         *      doWrite: actually write the output file
 	 * Return value: false: any error was encountered. See printError.
 	 *		 true: otherwise.
 	 */
 
-    boolean writeClasses( ConstantPool sharedconsts );
+    boolean writeClasses( ConstantPool sharedconsts, boolean doWrite );
         /*
          * Write class and other data structures to output file.
          * Parameter:
          *      sharedconsts: shared constant pool for all classes
+         * Parameter:
+         *      doWrite: actually write the output file
          * Return value: false: any error was encountered. See printError.
          *               true: otherwise.   
          */

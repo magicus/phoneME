@@ -52,6 +52,28 @@ static void
 CVMpreloaderVerifyGCMaps();
 #endif
 
+extern const char *CVMROMClassLoaderNames;
+extern CVMAddr * const CVMROMClassLoaderRefs;
+extern const int CVMROMNumClassLoaders;
+
+const char *
+CVMpreloaderGetClassLoaderNames(CVMExecEnv *ee)
+{
+    return CVMROMClassLoaderNames;
+}
+
+void
+CVMpreloaderRegisterClassLoaderUnsafe(CVMExecEnv *ee, CVMInt32 index,
+    CVMClassLoaderICell *loader)
+{
+    CVMInt32 clIndex = index * 2;
+    CVMInt32 pdIndex = clIndex + 1;
+    CVMObjectICell *refStatics = (CVMObjectICell *)CVMROMClassLoaderRefs;
+    CVMassert(index < CVMROMNumClassLoaders);
+    CVMID_icellAssignDirect(ee, &refStatics[clIndex], loader);
+    (void)pdIndex;
+}
+
 /*
  * Look up class by name. Only used from debuggers.
  */
@@ -64,12 +86,12 @@ CVMpreloaderLookup(const char* className)
     if (typeID == CVM_TYPEID_ERROR) {
 	return NULL; /* not in type table, so don't bother looking. */
     }
-    return CVMpreloaderLookupFromType(typeID);
+    return CVMpreloaderLookupFromType(CVMgetEE(), typeID, NULL);
 }
 #endif
 
-CVMClassBlock*
-CVMpreloaderLookupFromType(CVMClassTypeID typeID)
+static CVMClassBlock *
+CVMpreloaderLookupFromType0(CVMClassTypeID typeID)
 {
     CVMClassTypeID i, lowest, highbound;
 
@@ -144,6 +166,22 @@ CVMpreloaderLookupFromType(CVMClassTypeID typeID)
      * Fell out of while loop.
      * not in table.
      */
+    return NULL;
+}
+
+CVMClassBlock*
+CVMpreloaderLookupFromType(CVMExecEnv *ee,
+    CVMClassTypeID typeID, CVMClassLoaderICell *loader)
+{
+    CVMBool match;
+    CVMClassBlock *cb = CVMpreloaderLookupFromType0(typeID);
+    if (cb == NULL) {
+	return cb;
+    }
+    CVMID_icellSameObjectNullCheck(ee, loader, CVMcbClassLoader(cb), match);
+    if (match) {
+	return cb;
+    }
     return NULL;
 }
 
