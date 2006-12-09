@@ -3289,7 +3289,7 @@ initializeThreadObjects(JNIEnv* env)
 #endif
 
 #ifdef CVM_JVMTI
-#define CVM_JVMTI_OPTIONS "[-Xdebug] [-Xagentlib] "
+#define CVM_JVMTI_OPTIONS "[-agentlib | -agentpath] "
     /* XRUN_OPTIONS is setup below */
 #else
 #define CVM_JVMTI_OPTIONS
