@@ -122,10 +122,41 @@ ENTRY1 ( CVMCCMruntimeGCRendezvousGlue )
          * patched with a nop so we can skip it.
          */
 #if defined(CVM_JIT_COPY_CCMCODE_TO_CODECACHE) && defined(CVMJIT_PATCH_BASED_GC_CHECKS)
+	/* If CVM_AOT or CVM_MTASK is enabled, we use trap based gc check
+	 * for precompiled code and patch based gc check for dynamic
+	 * compiled code. For precompiled code, don't adjust the lr since
+	 * they are not using patch based gc check. */
+#ifdef CVM_MTASK
+	/* If lr<CVMJITcodeCacheDecompileStart, it's pre-compiled code.
+	 * Don't adjust lr. */
+	IMPORT(CVMJITcodeCacheDecompileStart)
+	ldr	a2, =CVMJITcodeCacheDecompileStart
+	ldr	a2, [a2]
+	ldr	a2, [a2]
+	cmp	lr, a2
+	blo	gcNoRetAddrAdjust
+#endif
+#ifdef CVM_AOT
+	/* If lr>=CVMJITcodeCacheAOTStart and lr<CVMJITcodeCacheAOTEnd, then
+	 * we are in AOT code. Don't adjust lr. */
+	IMPORT(CVMJITcodeCacheAOTEnd)
+	IMPORT(CVMJITcodeCacheAOTStart)
+	ldr	a2, =CVMJITcodeCacheAOTEnd
+	ldr	a2, [a2]
+	ldr	a2, [a2]
+	cmp	lr, a2
+	blo	gcNoRetAddrAdjust
+	ldr	a2,  =CVMJITcodeCacheAOTStart
+	ldr	a2, [a2]
+	ldr	a2, [a2]
+	cmp	lr, a2
+	bhs	gcNoRetAddrAdjust
+#endif	
 	sub	lr, lr, #4    /* we want to return to the patch point */
 #endif
 	ENTRY ( CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue )
 ENTRY1 ( CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue )
+LABEL(gcNoRetAddrAdjust)
 	CALL_HELPER_AND_PASS_EE(CVMCCMruntimeGCRendezvous)
 
 /* Throw various well known exceptions */
@@ -341,21 +372,28 @@ ENTRY1 ( CVMCCMruntimeRunClassInitializerGlue )
 	 * a branch around the call to the helper. The ldr may be the
 	 * first instruction of a block, which means we may also try to
 	 * patch it when doing a gc-rendezvous. */
-
-#ifdef CVM_AOT
 	/* We don't want to patch pre-compiled code through. */
+#ifdef CVM_MTASK
+	IMPORT(CVMJITcodeCacheDecompileStart)
+	ldr	a2, =CVMJITcodeCacheDecompileStart
+	ldr	a2, [a2]
+	ldr	a2, [a2]
+	cmp	lr, a2
+	movlo	pc, lr
+#endif
+#ifdef CVM_AOT
 	IMPORT(CVMJITcodeCacheAOTEnd)
 	IMPORT(CVMJITcodeCacheAOTStart)
 	ldr	a2, =CVMJITcodeCacheAOTEnd
 	ldr	a2, [a2]
 	ldr	a2, [a2]
 	cmp	lr, a2
-	bcs	doPatch
+	bhs	doPatch
 	ldr	a2,  =CVMJITcodeCacheAOTStart
 	ldr	a2, [a2]
 	ldr	a2, [a2]
 	cmp	lr, a2
-	movcs	pc, lr
+	movhs	pc, lr
 #endif
 
 LABEL(doPatch)	
