@@ -114,7 +114,7 @@ NESTED(CVMJITgoNative, CONSTANT_CVMCCExecEnv_size, ra)
 #endif
 	swc1	$20, framesize+frameoffset+off_f20(sp)
 	swc1	$21, framesize+frameoffset+off_f21(sp)
-	swc1	$23, framesize+frameoffset+off_f22(sp)
+	swc1	$22, framesize+frameoffset+off_f22(sp)
 	swc1	$23, framesize+frameoffset+off_f23(sp)
 	swc1	$24, framesize+frameoffset+off_f24(sp)
 	swc1	$25, framesize+frameoffset+off_f25(sp)
