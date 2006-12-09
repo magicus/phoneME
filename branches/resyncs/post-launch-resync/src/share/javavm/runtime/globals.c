@@ -98,9 +98,12 @@ void** const CVMJITcodeCacheAOTEnd =
         (void**)&CVMglobals.jit.codeCacheAOTEnd;
 #endif
 
+#ifdef CVM_JIT
 /* Pointer to CVMglobals.jit.codeCacheDecompileStart */
 void** const CVMJITcodeCacheDecompileStart = 
         (void**)&CVMglobals.jit.codeCacheDecompileStart;
+#endif
+
 /*
  * Capacities for the class table of dynamcially loaded classes.
  * NOTE: these values also used for the class global roots stack.
