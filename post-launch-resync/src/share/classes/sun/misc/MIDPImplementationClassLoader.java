@@ -1,5 +1,5 @@
 /*
- * @(#)MIDPImplementationClassLoader.java	1.11 06/10/10
+ * @(#)MIDPImplementationClassLoader.java	1.13 06/11/07
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -64,6 +64,8 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
 	perms = pc;
 	this.parent = parent;
 	hashAllowedParentClasses(allowedParentClasses);
+	// Register in case classes were preloaded
+	CVM.Preloader.registerClassLoader("midp", this);
     }
 
     private void

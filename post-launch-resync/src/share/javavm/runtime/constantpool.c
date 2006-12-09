@@ -1,5 +1,5 @@
 /*
- * @(#)constantpool.c	1.52 06/10/10
+ * @(#)constantpool.c	1.53 06/10/22
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -187,7 +187,7 @@ CVMprivate_cpResolveEntryWithoutClassLoading(CVMExecEnv* ee,
 	/*
 	 * If the current class loader is the systemClassLoader, then that
 	 * allows us to do preloader lookups and do loadcache lookups
-	 * using the NULL class loaders. This is because we know that the
+	 * using the NULL class loader. This is because we know that the
 	 * systemClassLoader always defers to the NULL class loader first.
 	 * This helps us to resolve java.* and sun.* classes that are
 	 * loaded, but haven't been referenced by the application yet.
@@ -198,15 +198,16 @@ CVMprivate_cpResolveEntryWithoutClassLoading(CVMExecEnv* ee,
 	}
 
 	/*
-	 * If the classloader is NULL or the class is primitive or the class
+	 * If the the class is primitive or the class
 	 * is a primitive array, then we can do a preloader lookup first.
 	 */
-	if (currLoader == NULL || isSystemClassLoader ||
-	    CVMtypeidIsPrimitive(classID) || 
+	if (CVMtypeidIsPrimitive(classID) || 
 	    (CVMtypeidIsArray(classID) &&
-	     CVMtypeidIsPrimitive(CVMtypeidGetArrayBasetype(classID)))) {
-	    cb = CVMpreloaderLookupFromType(classID);
+	     CVMtypeidIsPrimitive(CVMtypeidGetArrayBasetype(classID))))
+	{
+	    cb = CVMpreloaderLookupFromType(ee, classID, NULL);
 	} 
+
 	if (cb == NULL) {
 	    CVMBool needLoaderCacheUpdate = CVM_FALSE;
 	    CVM_LOADERCACHE_LOCK(ee);

@@ -48,12 +48,28 @@ CVMpreloaderLookup(const char* className);
 #endif
 
 /*
+ * Return list of ROMized ClassLoader names.
+ */
+const char *
+CVMpreloaderGetClassLoaderNames(CVMExecEnv *ee);
+
+/*
+ * Register ROMized ClassLoader object.
+ */
+void
+CVMpreloaderRegisterClassLoaderUnsafe(CVMExecEnv *ee, CVMInt32 index,
+    CVMClassLoaderICell *loader);
+
+
+/*
  * Returns the cb of the romized class with the specified CVMClassTypeID.
  * This excludes VM-defined primitive types, such as "int" (though if a
  * user managed to define an "int" class, that would be fine).
  */
+
 extern CVMClassBlock*
-CVMpreloaderLookupFromType(CVMClassTypeID classType);
+CVMpreloaderLookupFromType(CVMExecEnv *ee,
+    CVMClassTypeID typeID, CVMObjectICell *loader);
 
 /*
  * Only for lookup of primitive VM-defined types, by type name.

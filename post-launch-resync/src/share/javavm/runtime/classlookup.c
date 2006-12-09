@@ -1,5 +1,5 @@
 /*
- * @(#)classlookup.c	1.90 06/10/10
+ * @(#)classlookup.c	1.91 06/10/22
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -75,11 +75,9 @@ CVMclassLookupClassWithoutLoading(CVMExecEnv* ee, CVMClassTypeID typeID,
      * First, see if it is a preloaded class, since they may not be in
      * the loader cache yet.
      */
-    if (loader == NULL) {
-	cb = CVMpreloaderLookupFromType(typeID);
-	if (cb != NULL) {
-	    return cb;
-	}
+    cb = CVMpreloaderLookupFromType(ee, typeID, loader);
+    if (cb != NULL) {
+	return cb;
     }
 
     /* See if it is in the loader cache */
@@ -227,8 +225,9 @@ CVMclassLookupFromClassLoader(CVMExecEnv* ee,
      */
     if (loader == NULL || CVMtypeidIsPrimitive(typeID) || 
 	(CVMtypeidIsArray(typeID) &&
-	 CVMtypeidIsPrimitive(CVMtypeidGetArrayBasetype(typeID)))) {
-	cb = CVMpreloaderLookupFromType(typeID);
+	 CVMtypeidIsPrimitive(CVMtypeidGetArrayBasetype(typeID))))
+    {
+	cb = CVMpreloaderLookupFromType(ee, typeID, NULL);
 	if (cb != NULL) {
 	    /* 
 	     * If the class was preloaded then make sure it

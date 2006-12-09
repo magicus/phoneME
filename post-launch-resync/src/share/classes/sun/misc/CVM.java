@@ -1,5 +1,5 @@
 /*
- * @(#)CVM.java	1.114 06/10/10
+ * @(#)CVM.java	1.116 06/11/07
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -36,6 +36,7 @@ import java.util.jar.Attributes;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.io.File;
+import java.util.StringTokenizer;
 
 public final class CVM {
     /** WARNING! NO STATIC INITIALIZER IS ALLOWED IN THIS CLASS!
@@ -822,10 +823,37 @@ public final class CVM {
     //
     public native static boolean xdebugSet();
 
+    static class Preloader {
+	//
+	// Register ClassLoader for ROMized classes
+	//
+	public static boolean registerClassLoader(String name, ClassLoader cl) {
+	    String preloadedClassLoaders = getClassLoaderNames();
+	    if (preloadedClassLoaders == null) {
+		return false;
+	    }
+	    int classLoaderIndex = 0;
+	    StringTokenizer st = new StringTokenizer(preloadedClassLoaders, ",");
+	    while (st.hasMoreTokens()) {
+		if (name.equals(st.nextToken())) {
+		    registerClassLoader0(classLoaderIndex, cl);
+		    return true;
+		}
+		++classLoaderIndex;
+	    }
+	    return false;
+	}
+
+	private native static String getClassLoaderNames();
+	private native static void registerClassLoader0(int clIndex,
+	    ClassLoader cl);
+    };
+
     //
     // Intrinsics for faster synchronization of simple methods. There
     // are strict limitations on how and when they used.
     //
     public native static boolean simpleLockGrab(Object lockObj);
     public native static void simpleLockRelease(Object lockObj);
+
 }

@@ -1,5 +1,5 @@
 /*
- * @(#)UnicodeConstant.java	1.12 06/10/10
+ * @(#)UnicodeConstant.java	1.13 06/10/21
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -31,6 +31,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import consts.Const;
 import util.ValidationException;
+import jcc.Util;
 
 
 // Class that represents a CONSTANT_UTF8 in a classfile's
@@ -40,7 +41,7 @@ public
 class UnicodeConstant extends ConstantObject
 {
     public String string;
-    public String UTFstring;
+    private String UTFstring;
     public int	  stringTableOffset;	// used by in-core output writers
     public boolean isSuffix = false;    // used by in-core output writers
 
@@ -112,6 +113,23 @@ class UnicodeConstant extends ConstantObject
 
     public String toString() {
 	return string;
+    }
+
+    public void createUTF() {
+        if (UTFstring == null ){
+           UTFstring = Util.unicodeToUTF( string );
+        }
+    }
+
+    public String toUTF() {
+        if (UTFstring == null ){
+           UTFstring = Util.unicodeToUTF( string );
+        }
+        return UTFstring;
+    }
+
+    public String getUTF() {
+        return UTFstring;
     }
 
     public boolean isResolved(){ return true; }

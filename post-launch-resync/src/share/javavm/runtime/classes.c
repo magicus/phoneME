@@ -61,11 +61,6 @@ CVMclassGetArrayOfWithNoClassCreation(CVMExecEnv* ee, CVMClassBlock* elemCb)
 	CVMClassLoaderICell* loader = CVMcbClassLoader(elemCb);
 	CVMClassBlock* arrayCb = NULL;
 
-	/* romized classes aren't always in the loaderCache */
-	if (loader == NULL) {
-	    arrayCb = CVMpreloaderLookupFromType(arrayID);
-	}
-
 	if (arrayCb == NULL) {
 	    CVM_LOADERCACHE_LOCK(ee);
 	    arrayCb = CVMloaderCacheLookup(ee, arrayID, loader);

@@ -774,12 +774,20 @@ CVMloaderCacheLookupWithProtectionDomain(CVMExecEnv* ee,
     CVMLoaderCacheEntry* entry;
 
     loader = CVMloaderCacheGetGlobalRootFromLoader(ee, loader);
-    entry  = CVMglobals.loaderCache[HASH_INDEX(classID, loader)];
 
     CVMtraceClassLookup(("LC: loader cache lookup <0x%x,%!C>\n",
 			 loader, classID));
 
+    {
+	CVMClassBlock *cb = CVMpreloaderLookupFromType(ee, classID, loader);
+	if (cb != NULL) {
+	    return cb;
+	}
+    }
+
     CVM_LOADERCACHE_ASSERT_LOCKED(ee);
+
+    entry  = CVMglobals.loaderCache[HASH_INDEX(classID, loader)];
 
     while (entry) {
 	CVMClassBlock* cb = entry->cb;

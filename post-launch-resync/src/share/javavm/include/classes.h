@@ -1337,10 +1337,10 @@ enum {
 #endif
 
 #ifdef CVM_CLASSLOADING
-#define CVM_INIT_CLASSLOADING_FIELDS \
-    0, 0,    /* classLoader and protectionDomain */
+#define CVM_INIT_CLASSLOADING_FIELDS(cl, pd) \
+    cl, pd,    /* classLoader and protectionDomain */
 #else
-#define CVM_INIT_CLASSLOADING_FIELDS 
+#define CVM_INIT_CLASSLOADING_FIELDS(cl, pd)
 #endif
 
 /*
@@ -1354,7 +1354,9 @@ enum {
 			access_flags, runtime_flags, lvm_class_index,	\
 			instance_size, javaInstance, clinitEE,		\
 			checkedExceptions, sourceFileName,		\
-			methodTablePtr, innerClassesInfo)	       	\
+			methodTablePtr,					\
+			classLoader, protectionDomain,			\
+			innerClassesInfo)				\
 			{{gcMap}, classname,                 		\
 			  {(CVMClassBlock*)superclass},			\
 			  {(CVMConstantPool*)constantpool},		\
@@ -1367,7 +1369,8 @@ enum {
 			  instance_size, 0,				\
 			  (CVMClassICell*)javaInstance,			\
 			  CVM_INIT_NAMESTRING(classnameString)		\
-			  CVM_INIT_CLASSLOADING_FIELDS                  \
+			  CVM_INIT_CLASSLOADING_FIELDS(classLoader,	\
+			    protectionDomain)				\
 			  {clinitEE}, (CVMUint16*)checkedExceptions,	\
 			  CVM_INIT_SOURCEFILENAME(sourceFileName)	\
 			  (CVMMethodBlock**)methodTablePtr,		\

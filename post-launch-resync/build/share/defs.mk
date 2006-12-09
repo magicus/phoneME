@@ -1269,6 +1269,7 @@ endif
 CVM_CNI_CLASSES += sun.io.ByteToCharISO8859_1 \
 		   sun.io.CharToByteISO8859_1 \
 		   sun.misc.CVM \
+		   'sun.misc.CVM$$Preloader' \
 		   java.security.AccessController \
 		   java.lang.reflect.Constructor \
 		   java.lang.reflect.Field \
