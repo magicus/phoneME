@@ -1121,6 +1121,78 @@ done:
 }
 
 CNIResultCode
+CNIsun_misc_CVM_agentlibSupported(CVMExecEnv* ee,
+			      CVMStackVal32 *arguments,
+			      CVMMethodBlock **p_mb)
+{
+#ifdef CVM_AGENTLIB
+    arguments[0].j.i = CVM_TRUE;
+#else
+    arguments[0].j.i = CVM_FALSE;
+#endif
+
+    return CNI_SINGLE;
+}
+
+CNIResultCode
+CNIsun_misc_CVM_agentlibInitialize(CVMExecEnv* ee,
+			      CVMStackVal32 *arguments,
+			      CVMMethodBlock **p_mb)
+{
+#ifdef CVM_AGENTLIB
+    CVMJavaInt numArgs = arguments[0].j.i;
+    
+    if (CVMAgentInitTable(&CVMglobals.agentonUnloadTable, numArgs)) {
+	arguments[0].j.i = CVM_TRUE;
+    } else {
+	arguments[0].j.i = CVM_FALSE;
+    }
+#else
+    arguments[0].j.i = CVM_FALSE;
+#endif
+
+    return CNI_SINGLE;
+}
+
+CNIResultCode
+CNIsun_misc_CVM_agentlibProcess(CVMExecEnv* ee, CVMStackVal32 *arguments,
+			    CVMMethodBlock **p_mb)
+{
+    jobject agentArgStr  = &arguments[0].j.r;
+
+    char* agentArg = CVMconvertJavaStringToCString(ee, agentArgStr);
+    CVMBool result = CVM_FALSE;
+
+    if (agentArg == NULL) {
+	result = CVM_FALSE;
+    } else {
+#ifdef CVM_AGENTLIB
+	JNIEnv* env = CVMexecEnv2JniEnv(ee);
+	CVMAgentlibArg_t agentlibArgument;
+	agentlibArgument.is_absolute = CVM_FALSE;
+	agentlibArgument.str = agentArg;
+	if (!strncmp(agentArg, "-agentpath:", 11)) {
+	    agentlibArgument.is_absolute = CVM_TRUE;
+	}
+	CVMD_gcSafeExec(ee, {
+		if ((*env)->PushLocalFrame(env, 16) == JNI_OK) {
+		    result = CVMAgentHandleArgument(&CVMglobals.agentonUnloadTable,
+						    env,
+						    &agentlibArgument);
+		    (*env)->PopLocalFrame(env, NULL);
+		}
+	    });
+#else
+	result = CVM_FALSE;
+#endif
+	free(agentArg);
+    }
+
+    arguments[0].j.i = result;
+    return CNI_SINGLE;
+}
+
+CNIResultCode
 CNIsun_misc_CVM_xrunSupported(CVMExecEnv* ee,
 			      CVMStackVal32 *arguments,
 			      CVMMethodBlock **p_mb)
