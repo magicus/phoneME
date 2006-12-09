@@ -869,13 +869,71 @@ $(CVM_POLICY_BUILD): $(CVM_POLICY_SRC)
 # Rule for building binary bundle
 ################################################
 
+#
+# To build the binary bundle, just add the "bin" target to your make command.
+# You will also need to set some of the following options:
+#
+# - JAVAME_LEGAL_DIR: directory containing legal documents. If not set,
+#	the makefiles will automatically do an svn checkout of the files
+#	from the respository. This will result in a password prompt if you
+# 	haven't already authenticated with the repository.
+# - BINARY_BUNDLE_NAME: name of the binary bundle, excluding .zip
+#	extension.
+# - BINARY_BUNDLE_DIRNAME: directory name the binary bundle will unzip
+# 	into. Defaults to $(BINARY_BUNDLE_NAME).
+# - BINARY_BUNDLE_APPEND_REVISION: Defaults to true. Appends the repository
+#	revision number to the end of BINARY_BUNDLE_NAME and 
+#	BINARY_BUNDLE_DIRNAME
+#
+
+# Make sure the "legal" directory is available if set.
+ifneq ($(JAVAME_LEGAL_DIR),,)
+ifneq ($(JAVAME_LEGAL_DIR),$(wildcard $(JAVAME_LEGAL_DIR)))
+$(error JAVAME_LEGAL_DIR must be set to "legal" directory. The respository can be found at https://phoneme.dev.java.net/svn/phoneme/legal.)
+endif
+endif
+
+# Patterns that we want to bundle. BINARY_BUNDLE_PATTERNS can be appended
+# to from other component makefiles if necssary.
+BINARY_BUNDLE_PATTERNS += \
+	$(CVM_BINDIR)/* \
+	$(CVM_LIBDIR)/* \
+	$(CVM_DEMO_CLASSESJAR) \
+	$(CVM_TEST_CLASSESZIP) \
+	$(CVM_BUILD_TOP)/legal
+
+# Replace $(CVM_BUILD_TOP) with $(BINARY_BUNDLE_NAME)
+BINARY_BUNDLE_PATTERNS := \
+	$(patsubst $(CVM_BUILD_TOP)%,$(BINARY_BUNDLE_DIRNAME)%,$(BINARY_BUNDLE_PATTERNS))
+
 .PHONY : bin
 bin: all
 	@echo ">>>Making binary bundle ..."
-	@mkdir -p $(INSTALLDIR)
-	@echo "$(BINARY_BUNDLE)"
-	tar -cvzf $(BINARY_BUNDLE) \
-		bin/* lib/* democlasses.jar testclasses.zip btclasses.zip
+	@echo "	BINARY_BUNDLE_APPEND_REVISION = $(BINARY_BUNDLE_APPEND_REVISION)"
+	@echo "	BINARY_BUNDLE_NAME	= $(BINARY_BUNDLE_NAME)"
+	@echo "	BINARY_BUNDLE_DIRNAME	= $(BINARY_BUNDLE_DIRNAME)"
+	@echo "	JAVAME_LEGAL_DIR	= $(JAVAME_LEGAL_DIR)"
+	@echo "	JAVAME_LEGAL_REPOSITORY = $(JAVAME_LEGAL_REPOSITORY)"
+
+	$(AT)mkdir -p $(INSTALLDIR)
+	$(AT)rm -rf $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
+	$(AT)mkdir -p $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
+	$(AT)ln -ns $(CVM_BUILD_TOP)/* $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
+	$(AT)rm -rf $(INSTALLDIR)/$(BINARY_BUNDLE_NAME).zip
+
+ifneq ($(JAVAME_LEGAL_DIR),)
+	$(AT)ln -ns $(JAVAME_LEGAL_DIR) $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
+else
+	svn checkout $(JAVAME_LEGAL_REPOSITORY) $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)/legal
+endif
+
+	$(AT)cp $(CVM_BUILDTIME_CLASSESZIP) $(CVM_LIBDIR)/
+
+	$(AT)(cd $(INSTALLDIR); \
+	 $(ZIP) -r -q - $(BINARY_BUNDLE_PATTERNS) -x */.svn/*) \
+		> $(INSTALLDIR)/$(BINARY_BUNDLE_NAME).zip;
+	$(AT)rm -rf $(INSTALLDIR)/$(BINARY_BUNDLE_DIRNAME)
+	@echo "<<<Finished binary bundle" ;
 
 ################################################
 # Include target makfiles last
