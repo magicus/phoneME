@@ -79,6 +79,13 @@ public abstract class ProtocolBase extends ConnectionBase implements InputConnec
        throw new RuntimeException();
     }
 
+    /*
+     * throws SecurityException if MIDP permission check fails 
+     * nothing to do for CDC
+    */
+    protected void checkMIDPPermission(String name, String params, int mode) {
+        return;
+    }    
 
     /**
      * @param name the target of the connection
@@ -89,12 +96,15 @@ public abstract class ProtocolBase extends ConnectionBase implements InputConnec
         openMode = mode;
         int semi = name.indexOf(';');
         if(semi == -1) {
+            checkMIDPPermission(name, null, mode);
              return open0(name, "", mode);
         } else {
              if(name.endsWith(";")) {
                  throw new IllegalArgumentException("Bad options "+name);
              }
-             return open0(name.substring(0, semi), name.substring(semi+1), mode);
+             String params = name.substring(semi+1);
+             checkMIDPPermission(name, params, mode);
+             return open0(name.substring(0, semi), params, mode);
         }
     }
 
