@@ -1,5 +1,5 @@
 /*
- * @(#)ClassClass.java	1.52 06/10/10
+ * @(#)ClassClass.java	1.55 06/11/07
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -90,23 +90,29 @@ ClassClass {
 	Enumeration classlist = ClassTable.elements();
 	while( classlist.hasMoreElements() ){
 	    ClassInfo e =  (ClassInfo)classlist.nextElement();
-	    if (e.vmClass == null) insertClassElement( e );
+	    if (e.vmClass == null) {
+		insertClassElement( e );
+	    }
+	}
+	// "cindex" is the current class count, as counted
+	// by insertClassElement().  See if a class was not
+	// added for some reason.
+	if (cvector.length != cindex) {
+	    throw new InternalError("class vector size "
+		+ cindex + " not " + cvector.length);
 	}
 	return cvector;
     }
 
-    public static void appendClassElement( ClassInfo c ){
-	// foo. Have a cvector in place, must now 
-	// add a new entry at the end. "c" is it.
-	if ( cvector == null ) return; // ...never mind
-	ClassClass[] oldCvector = cvector;
-	cvector = new ClassClass[ cindex+1 ];
-	System.arraycopy( oldCvector, 0, cvector,0, cindex );
-	cvector[ cindex ] = classFactory.newVMClass( c );
-    }
-
     public static boolean hasClassVector(){
 	return cvector != null;
+    }
+
+    public static void destroyClassVector(){
+	for (int i = 0; i < cvector.length; ++i) {
+	    cvector[i].ci.vmClass = null;
+	}
+	cvector = null;
     }
 
     /**

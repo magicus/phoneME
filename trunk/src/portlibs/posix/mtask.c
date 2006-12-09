@@ -47,84 +47,17 @@
 #include "portlibs/ansi_c/java.h"
 #include "portlibs/posix/mtask.h"
 
+#include <jump_messaging.h>
+#include <dirent.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include "porting/JUMPMessageQueue.h"
+#include "porting/JUMPProcess.h"
+
 #include "zip_util.h"
 
-static CVMUint32
-getNumTokens(const char *string)
-{
-    const char *strPtr;
-    CVMUint32 numEntries;
-
-    numEntries = 0;
-    strPtr = string;
-    while (strPtr != NULL) {
-	numEntries++;
-	strPtr = strchr(strPtr, ' ');
-	if (strPtr != NULL) {
-	    strPtr ++;
-	}
-    }
-    return numEntries;
-}
-
 /*
- * Given a message that encodes command line arguments, extract
- * tokens in the form of argc, argv[]
- */
-static void
-tokenizeArgs(const char *message, int *argcPtr, char ***argvPtr)
-{
-    const char *mptr;
-    const char *mptr2;
-    int argc;
-    char** argv;
-    CVMUint32 numTokens;
-    CVMBool done;
-    
-    numTokens = getNumTokens(message);
-    argv = (char**)calloc(numTokens, sizeof(char*));
-    argc = 0;
-    /*
-    fprintf(stderr, "TOKENIZING INTO %d TOKENS: \"%s\"\n",
-	    numTokens, message);
-    */
-    mptr = message;
-    done = CVM_FALSE;
-    while (!done) {
-	int len;
-	
-	mptr2 = strchr(mptr, ' ');
-	if (mptr2 == NULL) {
-	    mptr2 = mptr + strlen(mptr);
-	    done = CVM_TRUE;
-	}
-	/* Extract current token */
-	len = mptr2 - mptr;
-	/* Make it into a token. */
-	argv[argc] = (char*)malloc(len + 1);
-	strncpy(argv[argc], mptr, len);
-	argv[argc][len] = '\0'; /* terminate */
-	/*
-	  fprintf(stderr, "\tTOKEN: \"%s\"\n", argv[argc]);
-	*/
-	argc++;
-	/* Skip all white space */
-	while(isspace(*mptr2)) {
-	    mptr2++;
-	}
-
-	mptr = mptr2;
-	if (*mptr == '\0') {
-	    /* Nothing more to tokenize */
-	    done = CVM_TRUE;
-	}
-    }
-    *argcPtr = argc;
-    *argvPtr = argv;
-}
-
-/*
- * Free the resulting (argc, argv[]) set returned by tokenizeArgs()
+ * Free (argc, argv[]) set
  */
 static void
 freeArgs(int argc, char** argv)
@@ -138,117 +71,9 @@ freeArgs(int argc, char** argv)
     }
     free(argv);
 }
-/* Return the next line. Read from connfd */
-static char*
-readRequestLine(int connfd)
-{
-#define READ_BUF_LEN 4096
-    char buf[READ_BUF_LEN];
-    char* bufPtr;
-    char* bufEnd;
-    int numread;
-    CVMBool whiteSpace;
-    
-    /* Byte-by-byte read to get \n terminated
-       strings. */
-    bufPtr = buf;
-    bufEnd = &buf[READ_BUF_LEN];
-    bufEnd--; /* Allow for \0 termination of overflowed strings */
-    /* All white space until proven otherwise */
-    whiteSpace = CVM_TRUE;
-    while ((numread = read(connfd, bufPtr, 1)) > 0) {
-	assert(bufPtr < bufEnd);
-#if 0
-	{
-	    bufPtr[1] = '\0';
-	    fprintf(stderr, "\tREADER read '%s' (%d)\n",
-		    bufPtr,
-		    *bufPtr);
-	}
-#endif
-	if (!isspace(*bufPtr)) {
-#if 0
-	    bufPtr[1] = '\0';
-	    fprintf(stderr, "SETTING WHITE SPACE TO FALSE DUE TO \"%s\" (%d)",
-		    bufPtr, *bufPtr);
-#endif
-	    whiteSpace = CVM_FALSE;
-	}
-	/* Return any <CR> or <NL>-terminated non-white-space lines */
-	if ((*bufPtr == '\n') || (*bufPtr == '\r')) {
-	    if (!whiteSpace) {
-		*bufPtr = '\0';
-		/* Terminate, duplicate and return */
-		/* The command processor frees this duplicate */
-		return strdup(buf);
-	    } else {
-#if 0
- 		fprintf(stderr, "ALL WHITE SPACE, continuing to read\n");
-#endif
-		/* Reset buffer */
-		bufPtr = buf;
-	    }
-	} else {
-	    bufPtr += numread;
-	}
-	
-	if (bufPtr >= bufEnd) {
-	    *bufPtr = '\0';
-	    fprintf(stderr, "WARNING: Out of buffer space\n");
-	    return strdup(buf);
-	}
-    }
-    if (numread == -1) {
-	fprintf(stderr, "Read error, pid=%d\n", (int)getpid());
-	perror("read");
-    }
-    /* Connection lost or EOF */
-    return NULL;
-}
-
-static char* 
-readRequestLineWithTimeout(int connfd, int timeout)
-{
-    fd_set rfds;
-    struct timeval tv;
-    int retval;
-    int intr = 0;  /* Has select() been interrupted? */
-
-    FD_ZERO(&rfds);
-    FD_SET(connfd, &rfds);
-    
-    do {
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
-	
-	retval = select(connfd + 1, &rfds, NULL, NULL, &tv);
-	/* Don't rely on the value of tv now! */
-
-	if (retval == -1) {
-	    perror("select()");
-	    if (errno == EINTR) {
-/* 		fprintf(stderr, "Select interrupted, trying again\n"); */
-		intr = 1;
-	    } else {
-		return NULL;
-	    }
-	} else if (retval > 0) {
-	    /* Data is available now */
-	    assert(FD_ISSET(connfd, &rfds));
-	    return readRequestLine(connfd);
-	} else {
-	    /* Timeout */
-	    fprintf(stderr, "TIMEOUT: No data within %d seconds.\n", timeout);
-	    return NULL;
-	}
-    } while (intr);
-
-    return NULL;
-}
 
 static void
-setupRequest(JNIEnv*env, int argc, char** argv, 
-	     CVMInt32 commSocket, CVMInt32 clientId)
+setupRequest(JNIEnv*env, int argc, char** argv, CVMInt32 clientId)
 {
     char* appclasspathStr = NULL;
     char* bootclasspathStr = NULL;
@@ -286,9 +111,6 @@ setupRequest(JNIEnv*env, int argc, char** argv,
     /* Record the client ID */
     CVMmtaskClientId(env, clientId);
 
-    /* And record the socket to be used for communication with the parent */
-    CVMmtaskServerCommSocket(env, commSocket);
-
 #ifdef CVM_JVMDI
     if (clientId != 0) {
 	CVMmtaskJvmdiInit(env);
@@ -314,77 +136,7 @@ setupRequest(JNIEnv*env, int argc, char** argv,
 
 }
 
-/*
- * Initialize a server waiting on a given port
- *
- * Return fd of the server.
- */
-static int
-serverListen(JNIEnv* env, CVMUint16 port)
-{
-    int s, retval;
-    struct sockaddr_in sin;
-    int true = 1;
-    
-    /* Fill in the Internet address we will be listening on:
-       Use localhost, and the given port */
-    sin.sin_family = AF_INET;
-    sin.sin_port = htons(port);
-    sin.sin_addr.s_addr = htonl(INADDR_ANY);
-    
-    /* Create a TCP socket */
-    s = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (s < 0) {
-	perror("Socket create failed");
-	exit(1);
-    }
-    /* Don't let the socket linger across re-starts of the server */
-    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &true, sizeof true);
-
-    /* Bind it to a local address at port JPORT */
-    retval = bind(s, (struct sockaddr*)&sin, sizeof sin);
-    if (retval < 0) {
-	perror("Bind failed");
-	exit(1);
-    }
-    
-    /* Listen */
-    retval = listen(s, 5);
-    if (retval < 0) {
-	perror("Listen failed");
-	exit(1);
-    }
-
-    /* Listening succeeded, so record this port number */
-    CVMmtaskServerPort(env, port);
-
-    return s;
-}
-
 static void child(int sig);
-
-static int
-serverAcceptConnection(JNIEnv* env, int serverfd)
-{
-    int connfd;
-    struct sockaddr_in peer;
-    int peerLen = sizeof(peer);
-    int intr = 0;
-    
-    do {
-	connfd = accept(serverfd, (struct sockaddr*)&peer, &peerLen);
-	if (connfd != -1) {
-	    /* fprintf(stderr, "Connection received from %s:%d\n",
-	       inet_ntoa(peer.sin_addr), ntohs(peer.sin_port)); */
-	} else {
-	    if (errno == EINTR) {
-		intr = 1;
-	    }
-	    perror("Accept");
-	}
-    } while (intr);
-    return connfd;
-}
 
 /*
  * Task management 
@@ -392,8 +144,6 @@ serverAcceptConnection(JNIEnv* env, int serverfd)
 typedef struct _TaskRec {
     int pid;
     char* command;
-    int commSocket;
-    FILE* commSocketOutFp;
 
     /* testing mode specific snapshot of prefix */
     char* testingModeFilePrefixSnapshot;
@@ -408,7 +158,7 @@ static TaskRec* taskList = NULL;
 static int reapChildrenFlag = 0;
 
 static int executivePid = -1;
-static int executiveCommFd = -1;
+static int amExecutive = 0;
 static char* executiveTestingModeFilePrefixSnapshot = NULL;
 
 /*
@@ -427,12 +177,21 @@ dumpTaskOneWithFp(TaskRec* task, FILE *fp, int verbose)
 {
     if (verbose) {
 	fprintf(fp, 
-		 "[Task pid=%d, command=\"%s\"(0x%x), comm=%d]\n",
+		 "[Task pid=%d, command=\"%s\"(0x%x)]\n",
 		 task->pid, task->command, 
-		 (unsigned int)task->command, task->commSocket);
+		 (unsigned int)task->command);
     } else {
 	fprintf(fp, "PID=%d COMMAND=\"%s\"\n", task->pid, task->command);
     }
+}
+
+static void 
+dumpTaskIntoMessage(JUMPOutgoingMessage m, TaskRec* task)
+{
+    char str[256];
+    
+    snprintf(str, 256, "PID=%d COMMAND=\"%s\"", task->pid, task->command);
+    jumpMessageAddString(m, str);
 }
 
 static void
@@ -448,7 +207,6 @@ freeTask(TaskRec* task)
     fprintf(stderr, "FREEING TASK: ");
     dumpTaskOne(task);
     
-    close(task->commSocket);
     free(task->command);
     if (task->testingModeFilePrefixSnapshot != NULL) {
 	free(task->testingModeFilePrefixSnapshot);
@@ -556,6 +314,65 @@ printExitStatusString(FILE* out, int status)
     } 
 }
 
+static void
+cleanMessageQueuesOf(int cpid)
+{
+    struct dirent* ptr;
+    DIR* dir;
+    char prefix[40];
+    char filename[60];
+    int prefixLen;
+    
+    snprintf(prefix, 40, "jump-mq-%d-", cpid);
+    prefixLen = strlen(prefix);
+    
+    dir = opendir("/tmp");
+    if (dir == NULL) {
+	perror("opendir");
+	return;
+    }
+    
+    while ((ptr = readdir(dir)) != NULL) {
+  	if (!strcmp(ptr->d_name, ".") || !strcmp(ptr->d_name, "..")) {
+	    continue;
+	}
+	if (!strncmp(ptr->d_name, prefix, prefixLen)) {
+	    key_t k;
+	    int mq;
+	    
+	    snprintf(filename, 60, "/tmp/%s", ptr->d_name);
+	    printf("Exiting process %d has message queue %s\n",
+		   cpid, filename);
+	    if ((k = ftok(filename, 'Q')) == -1) {
+		perror("ftok");
+		continue;
+	    } else {
+		printf("  key=%d\n", k);
+	    }
+	    if ((mq = msgget(k, 0)) == -1) {
+		perror("msgget");
+		continue;
+	    } else {
+		printf("  mq=%d\n", mq);
+	    }
+	    if (msgctl(mq, IPC_RMID, NULL) == -1) {
+		perror("mq remove");
+		continue;
+	    } else {
+		printf("  removed mq %d\n", mq);
+	    }
+	    
+	    if (remove(filename) == -1) {
+		perror("mq file delete");
+		continue;
+	    } else {
+		printf("  removed file %s\n", filename);
+	    }
+	}
+    }
+    closedir(dir);
+}
+
 /*
  * The signal handler indicated there are children to reap. Do it.
  * Return last status reaped.
@@ -575,7 +392,13 @@ doReapChildren(ServerState* state, int options)
 	/* This had better be one of ours */
 	assert((executivePid == cpid) || (findTaskFromPid(cpid) != NULL));
 
-	fprintf(stderr, "Reaping child process %d, ", cpid);
+	fprintf(stderr, "Reaping child process %d\n", cpid);
+
+	/* TODO: Should this be part of the porting layer? 
+	   Or is the fact that we are using the mtask.c code indicative
+	   of Linux already? */
+	cleanMessageQueuesOf(cpid);
+	
 	printExitStatusString(stderr, status);
 	fprintf(stderr, "\t user time %ld.%02d sec\n",
 		ru.ru_utime.tv_sec,
@@ -635,10 +458,8 @@ doReapChildren(ServerState* state, int options)
 	    }
 	}
 	if (executivePid == cpid) {
-	    close(executiveCommFd);
 	    /* Get rid of all traces */
 	    executivePid = -1;
-	    executiveCommFd = -1;
 	    if (executiveTestingModeFilePrefixSnapshot != NULL) {
 		free(executiveTestingModeFilePrefixSnapshot);
 		executiveTestingModeFilePrefixSnapshot = NULL;
@@ -660,8 +481,7 @@ reapChildren(ServerState* state)
  * A new task has been created 
  */
 static int
-addTask(JNIEnv* env, ServerState* state,
-	int taskPid, char* command, int commSocket)
+addTask(JNIEnv* env, ServerState* state, int taskPid, char* command)
 {
     TaskRec* task;
 
@@ -670,10 +490,7 @@ addTask(JNIEnv* env, ServerState* state,
 	return JNI_FALSE;
     }
     task->pid = taskPid;
-    task->command = strdup(command);
-    task->commSocket = commSocket;
-    assert(task->commSocket > 2);
-    task->commSocketOutFp = makeLineBufferedStream(commSocket);
+    task->command = command;
     /* Take a snapshot of the testing mode prefix here */
     if (state->isTestingMode) {
 	task->testingModeFilePrefixSnapshot =
@@ -687,12 +504,6 @@ addTask(JNIEnv* env, ServerState* state,
     } else {
 	task->testingModeFilePrefixSnapshot = NULL;
     }
-    if (task->commSocketOutFp == NULL) {
-	perror("fdopen");
-	free(task->command);
-	free(task);
-	return JNI_FALSE;
-    }
 #if 0
     fprintf(stderr, "Added task=0x%x: [pid=%d, \"%s\"(0x%x)]\n",
 	    task, taskPid, task->command, (unsigned int)task->command);
@@ -704,134 +515,6 @@ addTask(JNIEnv* env, ServerState* state,
     return JNI_TRUE;
 }
 
-/* Sequence numbers for outgoing messages */
-static CVMUint32 messageId = 1;
-
-/*
- * Send message.
- * If isSync == true, wait for response, and return it.
- * For any problems, return NULL
- */
-static char*
-sendMessageToTask(TaskRec* task, char* message, int isSync)
-{
-    int retval;
-    CVMUint32 thisMessageId = messageId++;
-    char thisMessageIdStr[11];
-
-    sprintf(thisMessageIdStr, "%d", thisMessageId);
-    /* Write to per-task socket */
-    retval = fprintf(task->commSocketOutFp, "%s/%s\n",
-		     message, thisMessageIdStr);
-    if (retval <= 0) {
-	return NULL;
-    }
-    if (isSync) {
-	do {
-	    char* line = readRequestLineWithTimeout(task->commSocket, 6);
-	    char* id;
-	    if (line == NULL) {
-		/* Timed out or peer closed some other bad thing happened. 
-		   Return failure */
-		return NULL;
-	    }
-	    id = strchr(line, '/');
-	    if (id == NULL) {
-		/* No '/' in the response -- bad! */
-		fprintf(stderr, "MTASK: Illegal response=%s\n", line);
-		return NULL;
-	    }
-	    /* Split id and line */
-	    *id = '\0';
-	    id = id+1;
-/* 	    fprintf(stderr, "MTASK: Response=%s, ID=%s\n", line, id); */
-	    if (!strcmp(id, thisMessageIdStr)) {
-		/* We found the matching id. Return this line */
-		return line;
-	    } else {
-		fprintf(stderr, "MTASK: IGNORE old response=\"%s\", ID=%s\n", 
-			line, id);
-	    }
-	} while(1);
-    } else {
-	return "<success>";
-    }
-}
-
-static CVMBool
-sendMessageToTaskWithBinaryResponse(TaskRec* task, char* message)
-{
-    char* buf = sendMessageToTask(task, message, 1);
-    
-    if (buf != NULL) {
-	/*fprintf(stderr, "Read response=[%s]\n", buf);*/
-	if (buf[0] == '0') {
-	    return CVM_FALSE;
-	} else {
-	    return CVM_TRUE;
-	}
-    }
-    return CVM_FALSE;
-}
-
-static CVMBool
-broadcastToAll(char* message)
-{
-    TaskRec* task;
-    CVMBool result = CVM_TRUE;
-    
-    for (task = taskList; task != NULL; task = task->next) {
-	if (!sendMessageToTask(task, message, 0)) {
-	    result = CVM_FALSE;
-	}
-    }
-    return result;
-}
-
-/*
- * Send a message, expect true/false response
- */
-static CVMBool
-sendMessageWithBinaryResponse(int taskPid, char* message)
-{
-    TaskRec* task;
-    task = findTaskFromPid(taskPid);
-    if (task == NULL) {
-	return CVM_FALSE;
-    }
-    return sendMessageToTaskWithBinaryResponse(task, message);
-}
-
-/*
- * Send a message, expect true/false response
- */
-static char*
-sendMessageWithResponse(int taskPid, char* message)
-{
-    TaskRec* task;
-    task = findTaskFromPid(taskPid);
-    if (task == NULL) {
-	return NULL;
-    }
-    return sendMessageToTask(task, message, 1);
-}
-
-#if 0
-/*
- * Send a message, do not expect a response
- */
-CVMBool
-sendMessage(int taskPid, char* message)
-{
-    TaskRec* task;
-    task = findTaskFromPid(taskPid);
-    if (task == NULL) {
-	return CVM_FALSE;
-    }
-    return sendMessageToTask(task, message, 0) != NULL;
-}
-#endif
-
 static CVMBool
 killTaskFromTaskRec(TaskRec* task)
 {
@@ -842,8 +525,6 @@ killTaskFromTaskRec(TaskRec* task)
      */
     return sendMessageToTask(task, "EXIT");
 #else
-    close(task->commSocket);
-    
     if (kill(task->pid, SIGKILL) == -1) {
 	perror("kill");
 	return CVM_FALSE;
@@ -882,16 +563,7 @@ killAllTasks()
 static void
 closeAllFdsExcept(int fd)
 {
-    TaskRec* task;
-    
-    for (task = taskList; task != NULL; task = task->next) {
-	assert(task->commSocket != fd);
-	close(task->commSocket);
-    }
-    if (executiveCommFd != -1) {
-	assert(executiveCommFd != fd);
-	close(executiveCommFd);
-    }
+    /* nothing to do */
 }
 
 static int
@@ -908,21 +580,30 @@ numberOfTasks()
 }
 
 /*
- * List tasks
+ * multi-string response to caller, packaged as
+ * return message.
  */
 static void
-dumpTasks(JNIEnv* env, FILE *connfp)
+dumpTasksAsResponse(JUMPMessage command)
 {
+    JUMPOutgoingMessage m;
+    JUMPMessageStatusCode code;
+    
     TaskRec* task;
     int numTasks;
     
+    m = jumpMessageNewOutgoingByRequest(command);
+
     numTasks = numberOfTasks();
-    fprintf(connfp, "MULTILINE %d\n", numTasks);
+
+    jumpMessageAddInt(m, numTasks);
     
     for (task = taskList; task != NULL; task = task->next) {
-	dumpTaskOneWithFp(task, connfp, 0);   /* Brief printout to caller */
+	dumpTaskIntoMessage(m, task);   /* Brief printout to caller */
 	dumpTaskOne(task);                    /* Verbose printout to console */
     }
+
+    jumpMessageSendAsyncResponse(m, &code);
 }
 
 /* 
@@ -995,6 +676,97 @@ restartSystemThreads(JNIEnv* env, ServerState* state)
     return JNI_TRUE;
 }
 
+static void
+dumpMessage(JUMPMessage m, char* intro)
+{
+    JUMPMessageReader r;
+    JUMPPlatformCString* strings;
+    uint32 len, i;
+    
+    jumpMessageReaderInit(&r, m);
+    strings = jumpMessageGetStringArray(&r, &len);
+    printf("%s\n", intro);
+    for (i = 0; i < len; i++) {
+	printf("    \"%s\"\n", strings[i]);
+    }
+}
+
+static char*
+oneString(JUMPMessage m)
+{
+    char* string;
+    JUMPMessageReader r;
+    JUMPPlatformCString* strings;
+    uint32 len, i;
+    
+    string = (char*)calloc(1024, 1);
+    jumpMessageReaderInit(&r, m);
+    strings = jumpMessageGetStringArray(&r, &len);
+    for (i = 0; i < len; i++) {
+	strcat(string, strings[i]);
+	strcat(string, " ");
+    }
+    return string;
+}
+
+static JUMPMessage
+readRequestMessage()
+{
+    JUMPMessage in;
+    
+    in = jumpMessageWaitFor("mvm/server", 0);
+    dumpMessage(in, "Server received:");
+    return in;
+}
+
+/*
+ * Uniform response message from server to caller.
+ * Always a string array for now
+ */
+static void
+respondWith(JUMPMessage command, char* str)
+{
+    JUMPOutgoingMessage m;
+    JUMPMessageStatusCode code;
+    JUMPPlatformCString strs[1];
+    
+    m = jumpMessageNewOutgoingByRequest(command);
+    strs[0] = (JUMPPlatformCString)str;
+    jumpMessageAddStringArray(m, strs, 1);
+    jumpMessageSendAsyncResponse(m, &code);
+}
+
+static void
+respondWith2(JUMPMessage command, char* format, int v)
+{
+    char str[256];
+    
+    snprintf(str, 256, format, v);
+    respondWith(command, str);
+}
+
+static void
+respondWith2s(JUMPMessage command, char* format, char* arg)
+{
+    char str[256];
+    
+    snprintf(str, 256, format, arg);
+    respondWith(command, str);
+}
+
+static void
+tokenizeArgs(JUMPMessage m, int* argc, char*** argv)
+{
+    JUMPMessageReader r;
+    JUMPPlatformCString* strings;
+    uint32 len;
+    
+    jumpMessageReaderInit(&r, m);
+    strings = jumpMessageGetStringArray(&r, &len);
+    *argc = len;
+    *argv = (char**)strings;
+}
+
 /*
  * A JVM server. Sleep waiting for new requests. As new ones come in,
  * fork off a process to handle each and go back to sleep. 
@@ -1005,13 +777,9 @@ restartSystemThreads(JNIEnv* env, ServerState* state)
 static jboolean
 waitForNextRequest(JNIEnv* env, ServerState* state)
 {
-    char* command = NULL;
+    JUMPMessage command = NULL;
     CVMBool done;
-    int   serverfd;
-    int   connfd;
-    FILE *connfp;
     int   childrenExited = 0; /* No one has exited yet */
-    CVMBool  isSync = CVM_FALSE;
     
     done = CVM_FALSE;
     /* 
@@ -1020,38 +788,16 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
      * touch the fd that was passed in.
      */
     assert(state->initialized);
-    serverfd = state->serverfd;
-    connfd = state->connfd;
-    connfp = state->connfp;
     
     while (!done) {
 	int argc;
 	char** argv;
 	int pid;
 	
-	/* Sleep waiting for requests. When a request comes in, extract
-	   arguments, fork and execute request */
-	if (connfd == -1) {
-	    connfd = serverAcceptConnection(env, serverfd);
-	    state->connfd = connfd;
-	    /* If the server runs into problems accepting a connection
-	       it should exit */
-	    if (connfd == -1) {
-		exit(1);
-	    }
-	    connfp = state->connfp = makeLineBufferedStream(connfd);
-	    if (connfp == NULL) {
-		perror("fdopen");
-		exit(1);
-	    }
-	}
-	
 	/* Accepted a connection. Now accept commands from this 
 	   connection */
-	command = readRequestLine(connfd);
+	command = readRequestMessage();
 	while (command != NULL) {
-	    int appSockets[2];
-	    
 	    tokenizeArgs(command, &argc, &argv);
 	    /*
 	     * Check for children to reap before each command
@@ -1064,39 +810,29 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    }
     
 	    if (!strcmp(argv[0], "JEXIT")) {
-		close(connfd);
-		close(serverfd);
+		respondWith(command, "YES");
+		jumpMessageShutdown();
 		/* Simply exit here. That's what JEXIT is supposed to do. */
 		exit(0);
-	    } else if (!strcmp(argv[0], "QUIT")) {
-		/* QUIT this connection */
-		/* Don't forget to free up all the (argc, argv[]) mem. */
-		freeArgs(argc, argv);
-		free(command);
-		/* Make sure */
-		argc = 0;
-		argv = NULL;
-		command = NULL;
-		break;
 	    } else if (!strcmp(argv[0], "SETENV")) {
 		/* set environment variable */
 		if (argc != 2) {
-#define SETENV_USAGE   "Usage: SETENV <keyValuePair>\n"
-#define SETENV_SUCCESS "SETENV succeeded\n"
-		    fprintf(connfp, SETENV_USAGE);
+#define SETENV_USAGE   "Usage: SETENV <keyValuePair>"
+#define SETENV_SUCCESS "SETENV succeeded"
+		    respondWith(command, SETENV_USAGE);
 		} else {
 		    char* pair;
 		    pair = strdup(argv[1]);
 		    
 		    if (pair == NULL) {
 			/* setenv failed */
-			fprintf(connfp, SETENV_USAGE);
+			respondWith(command, SETENV_USAGE);
 		    } else {
 			char* name = pair;
 			char* value = strchr(pair, '=');
 			if (value == NULL) {
 			    /* setenv failed */
-			    fprintf(connfp, SETENV_USAGE);
+			    respondWith(command, SETENV_USAGE);
 			} else {
 			    *value = '\0';
 			    value++;
@@ -1110,7 +846,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 				putenv(name);
 #endif
 				/* setenv succeeded */
-				fprintf(connfp, SETENV_SUCCESS);
+				respondWith(command, SETENV_SUCCESS);
 			    } else {
 				/* setenv */
 #ifdef __linux__
@@ -1120,10 +856,10 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 				if (putenv(name) == 0) {
 #endif
 				    /* setenv succeeded */
-				    fprintf(connfp, SETENV_SUCCESS);
+				    respondWith(command, SETENV_SUCCESS);
 				} else {
 				    /* setenv failed */
-				    fprintf(connfp, SETENV_USAGE);
+				    respondWith(command, SETENV_USAGE);
 				}
 			    }
 			}
@@ -1133,12 +869,12 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		   makes a copy of the arguments. So I don't know
 		   whether I can free the strdup'ed argv[1].
 		   Be conservative and retain it here. */
-		freeArgs(argc, argv);
+		    freeArgs(argc, argv);
 		/* Make sure */
 		argc = 0;
 		argv = NULL;
 		free(command);
-		command = readRequestLine(connfd);
+		command = readRequestMessage();
 		continue;
 	    } else if (!strcmp(argv[0], "LIST")) {
 		/* Don't forget to free up all the (argc, argv[]) mem. */
@@ -1146,9 +882,9 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		/* Make sure */
 		argc = 0;
 		argv = NULL;
-		dumpTasks(env, connfp);
-		free(command);
-		command = readRequestLine(connfd);
+		dumpTasksAsResponse(command);
+		jumpMessageFree(command);
+		command = readRequestMessage();
 		continue;
 	    } else if (!strcmp(argv[0], "CHILDREN_EXITED")) {
 		/* Don't forget to free up all the (argc, argv[]) mem. */
@@ -1158,33 +894,33 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		argv = NULL;
 		if (childrenExited) {
 		    childrenExited = 0;
-		    fprintf(connfp, "YES\n");
+		    respondWith(command, "YES");
 		} else {
-		    fprintf(connfp, "NO\n");
+		    respondWith(command, "NO");
 		}
-		free(command);
-		command = readRequestLine(connfd);
+		jumpMessageFree(command);
+		command = readRequestMessage();
 		continue;
 	    } else if (!strcmp(argv[0], "KILLALL") ||
 		       !strcmp(argv[0], "KILLEMALL")) {
-#define KILLALL_SUCCESS "KILL succeeded\n"
+#define KILLALL_SUCCESS "KILL succeeded"
 		killAllTasks();
 		/* Kill succeeded. Say so */
-		fprintf(connfp, KILLALL_SUCCESS);
+		respondWith(command, KILLALL_SUCCESS);
 		/* Don't forget to free up all the (argc, argv[]) mem. */
 		freeArgs(argc, argv);
 		/* Make sure */
 		argc = 0;
 		argv = NULL;
-		free(command);
-		command = readRequestLine(connfd);
+		jumpMessageFree(command);
+		command = readRequestMessage();
 		continue;
 	    } else if (!strcmp(argv[0], "KILL")) {
 		/* KILL a given task */
 		if (argc != 2) {
-#define KILL_USAGE   "Usage: KILL <taskId>\n"
-#define KILL_SUCCESS "KILL succeeded\n"
-		    fprintf(connfp, KILL_USAGE);
+#define KILL_USAGE   "Usage: KILL <taskId>"
+#define KILL_SUCCESS "KILL succeeded"
+		    respondWith(command, KILL_USAGE);
 		} else {
 		    char* pidStr = argv[1];
 		    /* Try to convert to integer */
@@ -1192,14 +928,14 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		    
 		    if (pid == -1) {
 			/* Bad integer */
-			fprintf(connfp, KILL_USAGE);
+			respondWith(command, KILL_USAGE);
 		    } else if (!killTask(pid)) {
 			/* Kill failed for some reason */
 			/* Just make a best effort here */
-			fprintf(connfp, KILL_USAGE);
+			respondWith(command, KILL_USAGE);
 		    } else {
 			/* Kill succeeded. Say so */
-			fprintf(connfp, KILL_SUCCESS);
+			respondWith(command, KILL_SUCCESS);
 		    }
 		}
 		
@@ -1207,50 +943,24 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		/* Make sure */
 		argc = 0;
 		argv = NULL;
-		free(command);
-		command = readRequestLine(connfd);
+		jumpMessageFree(command);
+		command = readRequestMessage();
 		continue;
-	    } else if (!strcmp(argv[0], "BROADCAST")) {
-		/* BROADCAST to all launched apps */
-		if (argc != 2) {
-#define BROADCAST_USAGE   "Usage: BROADCAST <message>\n"
-#define BROADCAST_SUCCESS "BROADCAST succeeded\n"
-		    fprintf(connfp, BROADCAST_USAGE);
-		} else {
-		    char* message = argv[1];
-		    
-		    if (!broadcastToAll(message)) {
-			/* Broadcast failed for some reason */
-			/* Just make a best effort here */
-			fprintf(connfp, BROADCAST_USAGE);
-		    } else {
-			/* Broadcast succeeded. Say so */
-			fprintf(connfp, BROADCAST_SUCCESS);
-		    }
-		}
-		
-		freeArgs(argc, argv);
-		/* Make sure */
-		argc = 0;
-		argv = NULL;
-		free(command);
-		command = readRequestLine(connfd);
-		continue;
-	    }  else if (!strcmp(argv[0], "TESTING_MODE")) {
+	    } else if (!strcmp(argv[0], "TESTING_MODE")) {
 		/* Set up testing mode, with a file prefix */
 		if (argc != 2) {
-#define TESTING_MODE_USAGE   "Usage: TESTING_MODE <prefix>\n"
-#define TESTING_MODE_SUCCESS "TESTING_MODE succeeded\n"
-		    fprintf(connfp, TESTING_MODE_USAGE);
+#define TESTING_MODE_USAGE   "Usage: TESTING_MODE <prefix>"
+#define TESTING_MODE_SUCCESS "TESTING_MODE succeeded"
+		    respondWith(command, TESTING_MODE_USAGE);
 		} else {
 		    char* prefix = argv[1];
 		    
 		    state->isTestingMode = JNI_TRUE;
 		    state->testingModeFilePrefix = strdup(prefix);
 		    if (state->testingModeFilePrefix == NULL) {
-			fprintf(connfp, TESTING_MODE_USAGE);
+			respondWith(command, TESTING_MODE_USAGE);
 		    } else {
-			fprintf(connfp, TESTING_MODE_SUCCESS);
+			respondWith(command, TESTING_MODE_SUCCESS);
 		    }
 		}
 		
@@ -1258,84 +968,16 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		/* Make sure */
 		argc = 0;
 		argv = NULL;
-		free(command);
-		command = readRequestLine(connfd);
-		continue;
-	    } else if (!strcmp(argv[0], "MESSAGE")) {
-		if (argc != 3) {
-#define MESSAGE_USAGE   "Usage: MESSAGE <taskId> <message>\n"
-#define MESSAGE_SUCCESS "MESSAGE succeeded\n"
-		    fprintf(connfp, MESSAGE_USAGE);
-		} else {
-		    char* pidStr = argv[1];
-		    char* message = argv[2];
-		    /* Try to convert to integer */
-		    CVMInt32 pid = CVMoptionToInt32(pidStr);
-		    
-		    if (pid == -1) {
-			/* Bad integer */
-			fprintf(connfp, MESSAGE_USAGE);
-		    } else if (!sendMessageWithBinaryResponse(pid, message)) {
-			/* Message failed for some reason */
-			/* Just make a best effort here */
-			fprintf(connfp, MESSAGE_USAGE);
-		    } else {
-			/* Message succeeded. Say so */
-			fprintf(connfp, MESSAGE_SUCCESS);
-		    }
-		}
-		
-		freeArgs(argc, argv);
-		/* Make sure */
-		argc = 0;
-		argv = NULL;
-		free(command);
-		command = readRequestLine(connfd);
-		continue;
-	    } else if (!strcmp(argv[0], "MESSAGE_RESPONSE")) {
-		if (argc != 3) {
-#define MESSAGE_RESPONSE_USAGE   "Usage: MESSAGE_RESPONSE <taskId> <message>\n"
-#define MESSAGE_RESPONSE_SUCCESS "MESSAGE_RESPONSE succeeded\n"
-		    fprintf(connfp, MESSAGE_RESPONSE_USAGE);
-		} else {
-		    char* pidStr = argv[1];
-		    char* message = argv[2];
-		    char* response = NULL;
-		    /* Try to convert to integer */
-		    CVMInt32 pid = CVMoptionToInt32(pidStr);
-		    
-		    if (pid == -1) {
-			/* Bad integer */
-			response = NULL;
-		    } else {
-			response = sendMessageWithResponse(pid, message);
-		    }
-		    if (response == NULL) {
-			/* Message failed for some reason */
-			/* Just make a best effort here */
-			fprintf(connfp, MESSAGE_RESPONSE_USAGE);
-		    } else {
-			/* Message succeeded. Return response */
-			fprintf(connfp, "%s\n", response);
-		    }
-		}
-		
-		freeArgs(argc, argv);
-		/* Make sure */
-		argc = 0;
-		argv = NULL;
-		free(command);
-		command = readRequestLine(connfd);
+		jumpMessageFree(command);
+		command = readRequestMessage();
 		continue;
 	    } else if (!strcmp(argv[0], "S")) {
 		/* Always return a response to the connection. */
-		fprintf(connfp, "SOURCING \"%s\"\n", command);
-		/* .. and to the server console */
-		fprintf(stderr, "SOURCING \"%s\"\n", command);
-		free(command);
+		dumpMessage(command, "SOURCING:");
+		jumpMessageFree(command);
 		command = NULL;
 		/* In the parent process, setup request and return to caller */
-		setupRequest(env, argc, argv, -1, 0);
+		setupRequest(env, argc, argv, 0);
 		/* Make sure */
 		argc = 0;
 		argv = NULL;
@@ -1344,21 +986,34 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    } else if (argv[0][0] != 'J') { /* Not equal to "J*" */
 		/* If the command is not J, then it is not recognized. */
 		/* Read next line and re-process. */
-		fprintf(connfp, "Illegal command \"%s\"\n", argv[0]);
+		respondWith2s(command, "Illegal command \"%s\"", argv[0]);
 		/* Don't forget to free up all the (argc, argv[]) mem. */
 		freeArgs(argc, argv);
 		/* Make sure */
 		argc = 0;
 		argv = NULL;
-		free(command);
-		command = readRequestLine(connfd);
+		jumpMessageFree(command);
+		command = readRequestMessage();
 		continue;
 	    }
-	    fprintf(stderr, "Executing new command: \"%s\"\n", command);
+	    {
+		char* str = oneString(command);
+		
+		fprintf(stderr, "Executing new command: \"%s\"\n", str);
+		free(str);
+	    }
+	    
+	    if (!strcmp(argv[0], "JDETACH")) {
+		amExecutive = CVM_TRUE;
+	    }
+#if 0
+	    /* How to do sync? */
 	    if (!strcmp(argv[0], "JSYNC")) {
 		isSync = CVM_TRUE;
 	    }
-#if 0
+#endif
+
+#if 1
 	    {
 		int j;
 		for(j = 0; j < argc; j++) {
@@ -1367,20 +1022,15 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    }
 #endif
 
-	    /* OK, we are ready to fork. Let's create a socketpair() for
-	       this particular application so we can communicate with it */
-	    if (socketpair(AF_UNIX, SOCK_STREAM, 0, appSockets) == -1) {
-		perror("socketpair");
-		exit(1);
-	    }
-#if 0
-	    fprintf(stderr, "SOCKETPAIR() = (%d, %d)\n",
-		    appSockets[0], appSockets[1]);
-#endif
-	    
 	    /* Fork off a process, and handle the request */
 	    if ((pid = fork()) == 0) {
-		int mypid = getpid();
+		int mypid;
+
+		/* Make sure each launched process knows the id of the
+		   executive */
+		jumpProcessSetExecutiveId(executivePid);
+		
+		mypid = getpid();
 		/* Child process */
 #ifdef CVM_TIMESTAMPING
 		if (!CVMmtaskTimeStampReinitialize(env)) {
@@ -1389,11 +1039,9 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		    exit(1);
 		}
 #endif		
-		close(appSockets[1]); /* Close the parent part of the
-					 socket pair */
 		/* Make sure all the fd's we inherit from the parent
 		   get freed up */
-		closeAllFdsExcept(appSockets[0]);
+		closeAllFdsExcept(-1);
 		
 		if (state->isTestingMode) {
 		    char* prefix = state->testingModeFilePrefix;
@@ -1412,67 +1060,57 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 			close(outfd);
 			close(errfd);
 		    }
-		} else if (isSync) {
+		} 
+		
+#if 0
+		/* how to do sync? */
+                else if (isSync) {
 		    /* If we are in JSYNC execution, route stdout
 		       and stderr back where the request came from */
 		    dup2(connfd, 1);
 		    dup2(connfd, 2);
 		}
-
+#endif
+		
 		/* First, make sure that the child PID is communicated
 		   to the client connection. */
-		fprintf(connfp, "CHILD PID=%d\n", mypid);
-
+		respondWith2(command, "CHILD PID=%d", mypid);
+		
 		/* No need for the connections in the child */
-		state->connfd = -1;
-		state->connfp = NULL;
-		fclose(connfp);
-		close(serverfd);
-		free(command);
-
+		jumpMessageFree(command);
+		
 		/* We need these threads in the child */
 		if (!restartSystemThreads(env, state)) {
 		    exit(1);
 		}
 		
 		/* In the child process, setup request and return to caller */
-		setupRequest(env, argc, argv, appSockets[0], mypid);
+		setupRequest(env, argc, argv, mypid);
 		/* Make sure */
 		argc = 0;
 		argv = NULL;
 		return JNI_FALSE;
 	    } else if (pid == -1) {
+		amExecutive = CVM_FALSE;
 		perror("Fork");
 		freeArgs(argc, argv);
-		free(command);
-		isSync = CVM_FALSE;
+		jumpMessageFree(command);
 	    } else {
+		amExecutive = CVM_FALSE;
 		fprintf(stderr, "SPAWNED OFF PID=%d\n", pid);
-		close(appSockets[0]); /* Close the child part of the
-					 socket pair */
-		
 		/* Add this new task into our "database" unless
 		   launching via JDETACH */
 		if (!strcmp(argv[0], "JDETACH")) {
 		    /* Remember this as a special pid. */
 		    executivePid = pid;
-		    executiveCommFd = appSockets[1];
 		    if (state->isTestingMode) {
 			executiveTestingModeFilePrefixSnapshot =
 			    strdup(state->testingModeFilePrefix);
 		    }
 		} else {
-		    addTask(env, state, pid, command, appSockets[1]);
+		    addTask(env, state, pid, oneString(command));
 		}
-		/*
-		 * If we are launching an xlet, wait for the launch to
-		 * complete
-		 */
-		if (!strcmp(argv[0], "JXLET")) {
-		    /* Tell target JVM to wait for xlet initialization */
-		    sendMessageWithBinaryResponse(pid, "WAIT_FOR_LAUNCH");
-		}
-		free(command);
+		jumpMessageFree(command);
 		/* The child is executing this command. The parent
 		   can free the arguments */
 		/* Don't forget to free up all the (argc, argv[]) mem. */
@@ -1480,6 +1118,8 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		/* Don't free 'command' here, since it's been put in
 		   the task structure. We'll free it when we free the
 		   task */
+#if 0
+		/* Is there a good way to do sync? */
 		if (isSync) {
 		    /* Wait for child to exit */
 		    int status = doReapChildren(state, 0);
@@ -1489,17 +1129,16 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		    command = NULL;
 		    continue;
 		}
+#endif
 	    }
-	    command = readRequestLine(connfd);
+	    command = readRequestMessage();
 	}
-
+	
 	/* fprintf(stderr, "Quitting this connection, waiting for new one\n"); */
-	    
-	/* No commands. Close connfd and loop back */
-	fclose(connfp);
-	connfd = state->connfd = -1;
-	connfp = state->connfp = NULL;
+	
     }
+    jumpMessageShutdown();
+    
     /* Parent exits? Should sleep until the last child exits */
     exit(0);
 }
@@ -1526,16 +1165,29 @@ MTASKnextRequest(ServerState *state)
 	    return 0;
 	}
     } else {
+	/* In child */
+	/* We first have to see if we are launched by JDETACH */
+	/* If so, we don't call JUMPIsolateProcessImpl.start() */
 	jmethodID createListenerID;
-	jclass listenerClass = (*env)->FindClass(env, "sun/mtask/Listener");
+	jclass listenerClass;
+	if (amExecutive) {
+	    printf("In the executive, NOT launching JUMPIsolateProcessImpl\n");
+	    /* We are the executive -- don't try to act like an isolate */
+	    return 1;
+	}
+	
+	listenerClass = (*env)->FindClass(env, "com/sun/jumpimpl/isolate/jvmprocess/JUMPIsolateProcessImpl");
 
-	if (listenerClass == NULL) {
+	if ((listenerClass == NULL) ||
+	    (*env)->ExceptionOccurred(env)) {
 	    return 0;
 	}
 	createListenerID =
 	    (*env)->GetStaticMethodID(env, listenerClass,
-				      "createListener",
+				      "start",
 				      "()V");
+	assert(createListenerID != NULL);
+	
 	if (createListenerID == NULL) {
 	    (*env)->DeleteLocalRef(env, listenerClass);
 	    return 0;
@@ -1563,28 +1215,12 @@ int
 MTASKserverInitialize(ServerState* state,
     CVMParsedSubOptions* serverOpts,
     JNIEnv* env, jclass cvmClass)
-{
-#define DEFAULT_JPORT_NUM 7777
-    CVMUint32 serverPort = DEFAULT_JPORT_NUM;
-    CVMBool stdIo = CVM_FALSE;
+{    
     const char* clist = CVMgetParsedSubOption(serverOpts, "initClasses");
     const char* mlist = CVMgetParsedSubOption(serverOpts, "precompileMethods");
-    /* First see if a port has been set explicitly */
-    const char* portStr = CVMgetParsedSubOption(serverOpts, "port");
-    if (portStr == NULL) {
-	const char* stdioStr = CVMgetParsedSubOption(serverOpts, "stdio");
-	if (stdioStr != NULL) {
-	    stdIo = CVM_TRUE;
-	}
-    } else {
-	CVMInt32 port = CVMoptionToInt32(portStr);
-	if (port >= 0xffff || port < 0) {
-	    fprintf(stderr, "Invalid port %s, using default: %d\n",
-		    portStr, DEFAULT_JPORT_NUM);
-	} else {
-	    serverPort = port;
-	}
-    }
+    
+    jumpMessageStart();
+    
     /*
      * Set these up while server is being initialized.
      * This way we don't have to look up these JNI ID's again.
@@ -1615,19 +1251,14 @@ MTASKserverInitialize(ServerState* state,
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGCHLD, &sa, NULL);
     }
-
-    if (stdIo) {
-	fprintf(stderr, "Starting mTASK server to listen on stdin .... ");
-	state->serverfd = -1;
-	state->connfd = 0;
-	state->connfp = stdout;
-    } else {
-	fprintf(stderr, "Starting mTASK server to listen on port %d  .... ",
-		serverPort);
-	state->serverfd = serverListen(env, serverPort);
-	state->connfd = -1;
-	state->connfp = NULL;
+    
+    {
+	extern void jumpProcessSetServerPid(int);
+	jumpProcessSetServerPid(getpid());
     }
+    
+    fprintf(stderr, "Starting mTASK server at pid=%d  .... ", getpid());
+
     state->env = env;
     state->cvmClass = cvmClass;
     state->initialized = JNI_TRUE;

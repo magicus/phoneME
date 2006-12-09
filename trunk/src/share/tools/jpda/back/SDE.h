@@ -1,5 +1,5 @@
 /*
- * @(#)SDE.h	1.5 06/10/10
+ * @(#)SDE.h	1.6 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,10 +24,20 @@
  * information or have any questions. 
  */
 
+#ifndef JDWP_SDE_H
+#define JDWP_SDE_H
+
 void
 convertLineNumberTable(JNIEnv *env, jclass clazz,
                        jint *entryCountPtr, 
-                       JVMDI_line_number_entry **tablePtr);
+                       jvmtiLineNumberEntry **tablePtr);
 
 void
 setGlobalStratumId(char *id);
+
+/* Return 1 if p1 matches  any source name for clazz, else 0 */
+int searchAllSourceNames(JNIEnv *env, 
+                         jclass clazz,
+                         char * pattern);
+#endif
+

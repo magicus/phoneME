@@ -1,5 +1,5 @@
 /*
- * @(#)globals.c	1.199 06/10/10
+ * @(#)globals.c	1.200 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -54,8 +54,8 @@
 #include "javavm/include/clib.h"
 #include "javavm/include/porting/memory.h"
 
-#ifdef CVM_JVMDI
-#include "javavm/include/jvmdi_jni.h"
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmti_jni.h"
 #endif
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
@@ -96,6 +96,12 @@ void** const CVMJITcodeCacheAOTStart =
 /* Pointer to CVMglobals.jit.codeCacheAOTEnd */
 void** const CVMJITcodeCacheAOTEnd = 
         (void**)&CVMglobals.jit.codeCacheAOTEnd;
+#endif
+
+#ifdef CVM_JIT
+/* Pointer to CVMglobals.jit.codeCacheDecompileStart */
+void** const CVMJITcodeCacheDecompileStart = 
+        (void**)&CVMglobals.jit.codeCacheDecompileStart;
 #endif
 
 /*
@@ -189,13 +195,13 @@ static const CVMGlobalSysMutexEntry globalSysMutexes[] = {
     CVM_SYSMUTEX_ENTRY(classTableLock, "class table lock"),
     CVM_SYSMUTEX_ENTRY(loaderCacheLock, "loader cache lock"),
     /* NOTE: This is not a leaf mutex. It must remain below the global
-       roots lock since a couple of the JVMDI routines allocate and
+       roots lock since a couple of the JVMTI routines allocate and
        deallocate global roots while holding the debugger lock. In
        addition, others of them perform indirect memory accesses while
        holding the debugger lock, so if we ever had a lock associated
        with those accesses it would need to have a higher rank (less
        importance) than this one. */
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     CVM_SYSMUTEX_ENTRY(debuggerLock, "debugger lock"),
 #endif
     /*
@@ -788,18 +794,18 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
 
     /* NOTE: This is theoretically where the "checked" version of the
        JNI would be installed if we had it in our source tree.  Here,
-       if JVMDI is present, we replace some functions in the JNI
-       interface with the JVMDI's instrumented versions, which will
+       if JVMTI is present, we replace some functions in the JNI
+       interface with the JVMTI's instrumented versions, which will
        call back into the debugger if native code uses the JNI to set
        or get a field. */
 
     /* NOTE: this should come BEFORE the first call to CVMinitExecEnv.
        This mutates the global JNI vector which later gets pointed to
        by the various execution environments. */
-#ifdef CVM_JVMDI
-    gs->jvmdiDebuggingEnabled = options->debugging;
-    if (gs->jvmdiDebuggingEnabled) {
-	CVMjvmdiInstrumentJNINativeInterface();
+#ifdef CVM_JVMTI
+    gs->jvmtiDebuggingEnabled = options->debugging;
+    if (gs->jvmtiDebuggingEnabled) {
+	CVMjvmtiInstrumentJNINativeInterface();
     }
 #endif    
 
@@ -1122,9 +1128,9 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     gs->fullShutdown = CVM_TRUE;
 #endif
 
-#ifdef CVM_JVMDI
-    /* jvmdi global variables initialization */
-    CVMjvmdiStaticsInit(&gs->jvmdiStatics);
+#ifdef CVM_JVMTI
+    /* jvmti global variables initialization */
+    CVMjvmtiStaticsInit(&gs->jvmtiStatics);
 #endif
 
 #ifdef CVM_JVMPI
@@ -1276,9 +1282,9 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
     }
 #endif
 
-#ifdef CVM_JVMDI
-    /* Free jvmdi global variables */
-    CVMjvmdiStaticsDestroy(&gs->jvmdiStatics);
+#ifdef CVM_JVMTI
+    /* Free jvmti global variables */
+    CVMjvmtiStaticsDestroy(&gs->jvmtiStatics);
 #endif
 
     CVMdestroyJNIStatics();

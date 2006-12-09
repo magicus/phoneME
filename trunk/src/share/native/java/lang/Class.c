@@ -1,5 +1,5 @@
 /*
- * @(#)Class.c	1.125 06/10/10
+ * @(#)Class.c	1.127 06/10/30
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -401,11 +401,11 @@ Java_java_lang_Class_addToLoaderCache(JNIEnv *env, jclass cls, jobject loader)
 JNIEXPORT void JNICALL
 Java_java_lang_Class_notifyClassLoaded(JNIEnv *env, jclass cls)
 {
-#if defined(CVM_JVMPI) || defined(CVM_JVMDI) || \
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI) ||   \
     (defined(CVM_JIT) && defined(CVMJIT_INTRINSICS))
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
     CVMClassBlock* cb = gcSafeRef2Class(ee, cls);
-#endif /* defined(CVM_JVMPI) || defined(CVM_JVMDI) || defined(CVM_JIT) */
+#endif /* defined(CVM_JVMPI) || defined(CVM_JVMTI) || defined(CVM_JIT) */
 #if defined(CVM_JIT) && defined(CVMJIT_INTRINSICS)
     CVMJITintrinsicScanForIntrinsicMethods(ee, cb);
 #endif
@@ -414,11 +414,11 @@ Java_java_lang_Class_notifyClassLoaded(JNIEnv *env, jclass cls)
 	CVMjvmpiPostClassLoadEvent(ee, cb);
     }
 #endif /* CVM_JVMPI */
-#ifdef CVM_JVMDI
-    if (CVMjvmdiEventsEnabled()) {
-	CVMjvmdiNotifyDebuggerOfClassLoad(ee, CVMcbJavaInstance(cb));
+#ifdef CVM_JVMTI
+    if (CVMjvmtiEventsEnabled()) {
+	CVMjvmtiNotifyDebuggerOfClassLoad(ee, CVMcbJavaInstance(cb));
     }
-#endif /* CVM_JVMDI */
+#endif /* CVM_JVMTI */
 }
 
 JNIEXPORT jboolean JNICALL

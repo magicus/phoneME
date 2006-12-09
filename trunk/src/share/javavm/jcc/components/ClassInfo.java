@@ -1,5 +1,5 @@
 /*
- * @(#)ClassInfo.java	1.46 06/10/10
+ * @(#)ClassInfo.java	1.48 06/10/22
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -89,6 +89,8 @@ class ClassInfo
     // Innerclass attribute accessed.
     public InnerClassAttribute	innerClassAttr;
 
+    public ClassLoader		loader;
+
     public vm.ClassClass	vmClass; // used by in-core output writers
 
     public Vector		allInterfaces;
@@ -99,7 +101,7 @@ class ClassInfo
 
     public int			flags;
     public static final int	INCLUDE_ALL = 1;
-    public boolean		altNametable;
+    public int			group;
     
     public static int finalizerID = Str2ID.sigHash.getID(
 						/*NOI18N*/"finalize", /*NOI18N*/"()V" );
@@ -201,8 +203,7 @@ class ClassInfo
 			// capture the name between the L and the ;
 			stringname = stringname.substring(
 					lindex+1, stringname.length()-1);
-			if (ClassTable.lookupClass(stringname, altNametable)
-							    != null){
+			if (loader.lookupClass(stringname) != null){
 			    continue; // found it.
 			}
 		    }
@@ -705,14 +706,6 @@ class ClassInfo
     }
 
     public boolean
-    findReferences(){
-	for ( int i = 0; i < methods.length; i++ ){
-	    methods[i].findConstantReferences();
-	}
-	return true;
-    }
-
-    public boolean
     countReferences( boolean isRelocatable ){
 	if (isRelocatable){
 	    thisClass.incReference();
@@ -928,8 +921,7 @@ class ClassInfo
 		    ok = false;
 		}
 	    } else {
-		ClassInfo s = ClassTable.lookupClass(
-				c.superClass.name.string, c.altNametable);
+		ClassInfo s = c.loader.lookupClass(c.superClass.name.string);
 		if ( s == null ){
 		    log.println(Localizer.getString("classinfo.class_is_missing_parent", c.className, c.superClass.name.string ));
 		    ok = false;

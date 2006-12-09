@@ -1,5 +1,5 @@
 /*
- * @(#)threads.h	1.30 06/10/10
+ * @(#)threads.h	1.31 06/10/27
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -64,13 +64,13 @@ extern void CVMthreadSetPriority(CVMThreadID *thread, CVMInt32 prio);
 
 /*
  * Suspend a thread, according to the semantics of Thread.suspend()
- * (which has been deprecated) or JVMDI SuspendThread().
+ * (which has been deprecated) or JVMTI SuspendThread().
  */
 extern void CVMthreadSuspend(CVMThreadID *thread);
 
 /*
  * Resume a suspended thread, according to the semantics of Thread.resume()
- * (which has been deprecated) or JVMDI ResumeThread().
+ * (which has been deprecated) or JVMTI ResumeThread().
  */
 extern void CVMthreadResume(CVMThreadID *thread);
 

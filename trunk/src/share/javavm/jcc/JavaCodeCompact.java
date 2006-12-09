@@ -1,5 +1,5 @@
 /*
- * @(#)JavaCodeCompact.java	1.93 06/10/10
+ * @(#)JavaCodeCompact.java	1.96 06/11/07
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -43,11 +43,12 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.Vector;
+import components.ClassLoader;
 
 public class JavaCodeCompact extends LinkerUtil {
     int	         verbosity = 0;
     //ConstantPool classNameConstants = new ConstantPool();
-    Set		undefinedClassNames = new HashSet();
+    Set		 undefinedClassNames;
     ClassFileFinder  searchPath;
     String	 firstFileName;
     String	 outName;
@@ -68,6 +69,7 @@ public class JavaCodeCompact extends LinkerUtil {
     ClassnameFilterList nativeTypes = new ClassnameFilterList();
     ClassnameFilterList extraHeaders = new ClassnameFilterList();
     int		maxSegmentSize = -1;
+    boolean	firstTimeOnly = true;
 
     private void
     fileFound( String fname ){
@@ -97,8 +99,8 @@ public class JavaCodeCompact extends LinkerUtil {
 		rdr.readZip(fileName, classesProcessed);
 	    } else { 
 		rdr.readFile(fileName, classesProcessed);
-		fileFound(fileName);
 	    }
+	    fileFound(fileName);
 	} catch ( IOException e ){
 	    System.out.println(Localizer.getString("javacodecompact.could_not_read_file", fileName));
 	    e.printStackTrace();
@@ -121,13 +123,12 @@ public class JavaCodeCompact extends LinkerUtil {
     }
 
     /*
-     * Do set subtraction to find the unresolved class names.
+     * Find the unresolved class names.
      * Make a list of them, as java Strings.
      */
     public String[]
     unresolvedClassNames(){
 	int nUndefined;
-	undefinedClassNames.removeAll(ClassTable.setOfClassnames());
 	nUndefined = undefinedClassNames.size();
 	if (nUndefined == 0)
 	    return null;
@@ -143,7 +144,7 @@ public class JavaCodeCompact extends LinkerUtil {
     boolean noCodeCompaction = false;
 
     private boolean
-    processOptions( String clist[] ){
+    processOptions( String clist[] ) throws Exception {
 	boolean success = true;
 	Vector classesThisRead = new Vector();
 
@@ -170,8 +171,10 @@ public class JavaCodeCompact extends LinkerUtil {
 	    } else if ( clist[i].equals(/*NOI18N*/"-o")  ){
 		outName =  clist[ ++i ];
 	    } else if ( clist[i].equals(/*NOI18N*/"-classpath")  ){
-		if ( searchPath == null )
+		if ( searchPath == null ) {
 		    searchPath = new ClassFileFinder();
+		    ClassTable.setSearchPath(searchPath);
+		}
 		searchPath.addToSearchPath( clist[ ++i ] );
 	    } else if ( clist[i].equals(/*NOI18N*/"-arch") ){
 		String archArg = clist[ ++i ];
@@ -217,19 +220,6 @@ public class JavaCodeCompact extends LinkerUtil {
 		    System.err.println(Localizer.getString("javacodecompact.invalid_max_segment_size"));
 		    success = false;
 		}
-	    } else if ( clist[i].equals("-altNametable") ){
-		/*
-		 * Read them all in as usual, but mark them as special.
-		 */
-		classesThisRead.clear();
-		Enumeration classEnum;
-		if (!readFile( clist[++i], classesThisRead )){
-		    success = false;
-		    // but keep going to process rest of options anyway.
-		    continue;
-		}
-		ClassTable.enterClasses(classesThisRead.elements(), true);
-		classesProcessed.addAll(classesThisRead);
 	    } else if ( clist[i].equals("-validate") ){
 		// validate data structures before writing output
 		validate = true;
@@ -238,14 +228,46 @@ public class JavaCodeCompact extends LinkerUtil {
                 readExcludeFile(clist[++i]);
             } else if (clist[i].equals("-allowUnresolved")){
 		unresolvedOk = true;
-	    } else { 
+            } else if (clist[i].startsWith("-cl:")){
+		process(false);
+		searchPath = null;
+		// user classloader
+		String arg = clist[i].substring("-cl:".length());
+		String name;
+		ClassLoader parent = null;
+		int sepIndex = arg.indexOf(':');
+		if (sepIndex > 0) {
+		    name = arg.substring(0, sepIndex);
+		    String parentName =
+			arg.substring(sepIndex + 1, arg.length());
+		    parent = ClassTable.getClassLoader(parentName);
+		    if (parent == null) {
+			/* parent classloader not defined */
+			System.err.println(Localizer.getString("javacodecompact.parent_classloader_not_defined", parentName) );
+			return false;
+		    }
+		} else {
+		    name = arg;
+		    parent = ClassTable.getClassLoader();
+		}
+		if (ClassTable.getClassLoader(name) != null) {
+		    /* classloader name already used */
+		    System.err.println(Localizer.getString("javacodecompact.classloader_already_defined", name) );
+		    return false;
+		}
+		ClassLoader l = new components.ClassLoader(name, parent);
+		ClassTable.setClassLoader(l);
+	    } else {
 		classesThisRead.clear();
 		if (!readFile( clist[i], classesThisRead )){
 		    success = false;
 		    // but keep going to process rest of options anyway.
 		}
 		classesProcessed.addAll(classesThisRead);
-		ClassTable.enterClasses(classesThisRead.elements(), false);
+		ClassTable.init(verbosity);
+		if (!ClassTable.enterClasses(classesThisRead.elements())) {
+		    success = false;
+		}
 	    }
 	}
 
@@ -255,43 +277,73 @@ public class JavaCodeCompact extends LinkerUtil {
 	return success;
     }
 
-    private boolean process( String clist[] ) throws Exception {
+    private boolean loadClass(ClassLoader cl, String classname,
+	Vector oneClass) throws Exception
+    {
+	ClassLoader parent = cl.getParent();
+	if (parent != null) {
+	    if (loadClass(parent, classname, oneClass)) {
+		return true;
+	    }
+	}
+	ClassFileFinder searchPath = cl.getSearchPath();
+	int nfound = rdr.readClass(classname, searchPath, oneClass);
 
-	if (! processOptions( clist )){
-	    // malformed command-line argument or file read error
+	if (nfound == 1) {
+	    // Add class to the appropriate classloader
+	    ClassInfo ci = (ClassInfo)oneClass.elementAt(0);
+
+	    if (!ClassTable.enterClass(ci, cl)) {
+		throw new Exception();
+	    }
+	    return true;
+	} else {
 	    return false;
 	}
-	makeOutfileName();
+    }
 
+    private boolean doClosure() {
 	// do closure on references until none remain.
-	findUnresolvedClassNames(classesProcessed.elements());
 	while ( true ){
+	    undefinedClassNames = new HashSet();
+	    findUnresolvedClassNames(classesProcessed.elements());
 	    String unresolved[] = unresolvedClassNames();
 	    if (unresolved == null)
 		break; // none left!
 	    int nfound = 0;
 	    Vector processedThisTime = new Vector();
-	    if (searchPath != null ){
-		for( int i=0; i < unresolved.length; i++){
-		    nfound += rdr.readClass(unresolved[i], searchPath,
-					    processedThisTime);
+	    for( int i=0; i < unresolved.length; i++){
+		try {
+		    Vector oneClass = new Vector();
+		    loadClass(ClassTable.getClassLoader(), unresolved[i],
+			oneClass);
+		    processedThisTime.addAll(oneClass);
+		} catch (Exception e) {
+		    return false;
 		}
-		ClassTable.enterClasses(processedThisTime.elements(), false);
 	    }
 	    if ( nfound == 0 ){
 		// the list now contains things which could
-		// not ever be resolved. Print it out for
-		// information and go on.
+		// not ever be resolved.  Print it out for
+		// information and continue processing, in
+		// case unresolvedOk is set.
 		unresolved = unresolvedClassNames(); // recalculate
 		break; // Give up trying to resolve.
 	    }
-	    findUnresolvedClassNames(processedThisTime.elements());
 	    classesProcessed.addAll(processedThisTime);
 	}
+	return true;
+    }
 
+    private boolean process(boolean doWrite) throws Exception {
 
-	nclasses = ClassTable.size();
+	// do closure on references until none remain.
+	if (!doClosure()) {
+	    return false;
+	}
+
 	ClassInfo c[] = ClassTable.allClasses();
+	nclasses = c.length;
 
 	if (verbosity != 0) System.out.println(Localizer.getString(
 		"javacodecompact.resolving_superclass_hierarchy") );
@@ -299,19 +351,23 @@ public class JavaCodeCompact extends LinkerUtil {
 	    return false; // missing superclass is a fatal error.
 	}
 	for (int i = 0; i < nclasses; i++){
-	    if (verbosity != 0) System.out.println(Localizer.getString(
-		    "javacodecompact.building_tables_for_class",
-		    c[i].className));
-	    c[i].buildFieldtable();
-	    c[i].buildMethodtable();
-	}
-
-	for ( int i = 0; i < nclasses; i++ ){
-	    c[i].findReferences();
+	    if (!(c[i] instanceof PrimitiveClassInfo) &&
+		!(c[i] instanceof ArrayClassInfo))
+	    {
+		if (verbosity != 0) System.out.println(Localizer.getString(
+			"javacodecompact.building_tables_for_class",
+			c[i].className));
+		c[i].buildFieldtable();
+		c[i].buildMethodtable();
+	    }
 	}
 
         // Warn if fields or methods marked for exclusion were not found
         checkExcludedClassEntries();
+
+	if (!doWrite) {
+	    return true;
+	}
 
 	// now write the output
 	if (verbosity != 0) System.out.println(Localizer.getString(
@@ -324,21 +380,43 @@ public class JavaCodeCompact extends LinkerUtil {
 	    writeCStubs( c, nclasses );
 	}
 
-	return writeROMFile( outName, c, romAttributes );
+	boolean good = true;
+	if (firstTimeOnly) {
+	    // For CVM, make sure that all arrays of basic types
+	    // are instantiated!
+	    good = instantiateBasicArrayClasses(verbosity > 1);
+	    firstTimeOnly = false;
+	}
 
+	if (!prepareClasses(c) || !good) {
+	    return false;
+	}
+
+	if (doWrite) {
+	    makeOutfileName();
+	}
+
+	good = writeROMFile( outName, c, romAttributes, doWrite );
+
+	ClassClass.destroyClassVector();
+
+	return good;
     }
 
     public static void main( String clist[] ){
-	boolean success;
+	boolean success = false;
 	try {
 	    try {
-		success = new JavaCodeCompact().process( clist );
+                JavaCodeCompact jcc = new JavaCodeCompact();
+		// malformed command-line argument or file read error?
+		if (jcc.processOptions( clist )){
+		    success = jcc.process(true);
+		}
 	    }finally{
 		System.out.flush();
 		System.err.flush();
 	    }
 	}catch (Throwable t){
-	    success = false;
 	    t.printStackTrace();
 	}
 	if (!success){
@@ -351,6 +429,22 @@ public class JavaCodeCompact extends LinkerUtil {
     /*
      * ALL THIS IS FOR ROMIZATION
      */
+
+    public boolean instantiateBasicArrayClasses(boolean verbose)
+    {
+	boolean good = true;
+	// For CVM, make sure that all arrays of basic types
+	// are instantiated!
+	String basicArray[] = { "[C", "[S", "[Z", "[I", "[J", "[F", "[D", "[B", 
+		"[Ljava/lang/Object;" // not strictly basic.
+	};
+	for ( int ino = 0; ino < basicArray.length; ino++ ){
+	    if (!ArrayClassInfo.collectArrayClass(basicArray[ino], verbose)) {
+		good = false;
+	    }
+	}
+	return good;
+    }
 
     /*
      * Iterate through all known classes.
@@ -365,22 +459,11 @@ public class JavaCodeCompact extends LinkerUtil {
     {
 	int nclasses = classTable.length;
 	boolean good = true;
-	// For CVM, make sure that all arrays of basic types
-	// are instantiated!
-	String basicArray[] = { "[C", "[S", "[Z", "[I", "[J", "[F", "[D", "[B", 
-		"[Ljava/lang/Object;" // not strictly basic.
-	};
-	for ( int ino = 0; ino < basicArray.length; ino++ ){
-	    if ( !vm.ArrayClassInfo.collectArrayClass( basicArray[ino], false, verbose, null)){
-		good = false;
-	    }
-	}
 
 	// Now dredge through all class constant pools.
 	for ( int cno = 0; cno < nclasses; cno++ ){
 	    ClassInfo c = classTable[cno];
 	    ConstantObject ctable[] = c.constants;
-	    boolean altNametable = c.altNametable;
 	    if ( ctable == null ) continue;
 	    int n = ctable.length;
 	    for( int i = 1; i < n; i++ ){
@@ -393,7 +476,7 @@ public class JavaCodeCompact extends LinkerUtil {
 		    if (cc.isResolved()){
 			continue; // not interesting
 		    }
-		    if (!vm.ArrayClassInfo.collectArrayClass(cname, altNametable, verbose, c.className)){
+		    if (!vm.ArrayClassInfo.collectArrayClass(cname, verbose)) {
 			good = false;
 		    }
 		    cc.forget(); // forget the fact that we couldn't find it
@@ -465,25 +548,15 @@ public class JavaCodeCompact extends LinkerUtil {
 	}
     }
 
+    ConstantPool sharedConstant = null;
+
     private boolean
-    writeROMFile(
-	String outName,
-	ClassInfo classTable[],
-	Vector attributes) throws Exception
+    prepareClasses(ClassInfo classTable[]) throws Exception
     {
-	boolean good = true;
-	ConstantPool sharedConstant = null;
 	UnresolvedReferenceList missingObjects = new UnresolvedReferenceList();
 	boolean anyMissingConstants = false;
 
-	//
-	// did arg parsing.
-	// now do work.
-	//
-
-	good = instantiateArrayClasses( classTable, verbosity>1 );
-	PrimitiveClassInfo.init(verbosity > 1);
-
+	boolean good = instantiateArrayClasses( classTable, verbosity>1 );
 	// is better to have this after instantiating Array classes, I think.
 	ClassClass classes[] = finalizeClasses();
 	int	   totalclasses = classes.length;
@@ -533,8 +606,9 @@ public class JavaCodeCompact extends LinkerUtil {
 	    }
 	}
 
-	for (int i = 0; i < totalclasses; i++) 
+	for (int i = 0; i < totalclasses; i++) {
             classes[i].ci.relocateAndPackCode(noCodeCompaction);
+	}
 
 	if ( ! good ) return false;
 	if ( validate ){
@@ -543,7 +617,16 @@ public class JavaCodeCompact extends LinkerUtil {
 	    }
 	    validateClasses(classes, sharedConstant);
 	}
+	return true;
+    }
 
+    private boolean
+    writeROMFile(
+	String outName,
+	ClassInfo classTable[],
+	Vector attributes,
+	boolean doWrite) throws Exception
+    {
 	CoreImageWriter w;
 
 	{
@@ -583,15 +666,17 @@ public class JavaCodeCompact extends LinkerUtil {
 	    }
 	}
 
-	if (! w.open(outName)){
+	if (doWrite && ! w.open(outName)){
 	    w.printError(System.out);
 	    return false;
 	} else {
-	    good = w.writeClasses(sharedConstant);
+	    boolean good = w.writeClasses(sharedConstant, doWrite);
 	    w.printSpaceStats(System.out);
-	    w.close();
+	    if (doWrite) {
+		w.close();
+	    }
+	    return good;
 	}
-	return good;
     }
 
     /*
@@ -693,7 +778,7 @@ public class JavaCodeCompact extends LinkerUtil {
 	}
     }
 
-    // This function updates the reference count and puts all constanst
+    // This function updates the reference count and puts all constants
     // associated with a ClassInfo to the shared constant pool.
     private void mergeConstantsIntoSharedPool(ClassInfo cinfo, 
 					      ConstantPool cp) {

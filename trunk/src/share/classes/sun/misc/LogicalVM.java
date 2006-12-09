@@ -1,5 +1,5 @@
 /*
- * @(#)LogicalVM.java	1.7 06/10/10
+ * @(#)LogicalVM.java	1.8 06/10/27
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -66,7 +66,7 @@ import java.util.Vector;
  *   Instead of going down the route to replicate the interned string 
  *   table in the VM, we just share the object and replicate its monitor 
  *   per LVM.
- * - None of JVMDI, JVMPI, RMI nor Personal[Basis]Profile work has done yet.
+ * - None of JVMTI, JVMPI, RMI nor Personal[Basis]Profile work has done yet.
  */
 
 /*

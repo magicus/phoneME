@@ -1,5 +1,5 @@
 /*
- * @(#)PrimitiveClassInfo.java	1.15 06/10/10
+ * @(#)PrimitiveClassInfo.java	1.16 06/10/22
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -44,6 +44,8 @@ class PrimitiveClassInfo extends ClassInfo {
     public int elementsize;
     public int typecode;
 
+    private static ClassConstant jloCC;
+
     private PrimitiveClassInfo(String name, char signature, int typecode,
 			       int slotsize, int elementsize, 
 			       boolean verbosity) 
@@ -52,9 +54,9 @@ class PrimitiveClassInfo extends ClassInfo {
         UnicodeConstant uc = new UnicodeConstant(name); // a mere formality. not in a const pool!
 	className = name;
 	thisClass = new ClassConstant(uc);
-	superClassInfo = ClassTable.lookupClass("java/lang/Object",
-						false);
-	superClass = superClassInfo.thisClass;
+//	superClassInfo = ClassTable.lookupClass("java/lang/Object");
+//	superClass = superClassInfo.thisClass;
+	superClass = jloCC;
 	this.signature = signature;
 	this.typecode = typecode;
 	this.slotsize = slotsize;
@@ -63,10 +65,13 @@ class PrimitiveClassInfo extends ClassInfo {
 	constants = new ConstantObject[0];
 	methods = new MethodInfo[0];
 	fields  = new FieldInfo[0];
-	ClassTable.enterClass(this);
+	ClassTable.enterPrimitiveClass(this);
     }
 
     public static void init(boolean v) { 
+
+	UnicodeConstant jloUC = new UnicodeConstant("java/lang/Object");
+	jloCC = new ClassConstant(jloUC);
 
         (new PrimitiveClassInfo("void",    
 	       Const.SIGC_VOID,    Const.T_VOID,    0, 0, v)).countReferences(false);
@@ -92,4 +97,9 @@ class PrimitiveClassInfo extends ClassInfo {
         return /*NOI18N*/"primitiveClass_" + 
 	     Util.convertToClassName(className);
     }
+
+    public void buildFieldtable() {}
+
+    public void buildMethodtable() {}
+
 }

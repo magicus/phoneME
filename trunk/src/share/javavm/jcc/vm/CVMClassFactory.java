@@ -1,5 +1,5 @@
 /*
- * @(#)CVMClassFactory.java	1.21 06/10/10
+ * @(#)CVMClassFactory.java	1.22 06/10/22
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -61,7 +61,7 @@ public class CVMClassFactory implements VMClassFactory, Comparator {
 
     private static void
     setType( String name, int value ){
-	ClassInfo ci = ClassTable.lookupClass(name, false);
+	ClassInfo ci = ClassTable.lookupClass(name);
 	ClassClass cc;
 	if ( (ci == null) || ( ( cc = ci.vmClass ) == null) ){
 	    throw new Error("Lookup failed for primitive class "+name);
@@ -75,27 +75,9 @@ public class CVMClassFactory implements VMClassFactory, Comparator {
 	// we'll find out soon enough.
 	ClassClass allClasses[] = ClassClass.getClassVector( null );
 	int n = allClasses.length;
-	boolean foundAltNametable = false;
 	for ( int i = 0; i < n; i++ ){
 	    CVMClass cvmc = (CVMClass) allClasses[i];
-	    if (cvmc.ci.altNametable){
-		foundAltNametable = true;
-		continue; // do this entry after all the others
-	    }
 	    cvmc.classId = CVMDataType.lookupClassname(CVMWriter.getUTF(cvmc.ci.thisClass.name));
-	}
-	if (foundAltNametable){
-	    /* found some classes that have to be done after all the others,
-	     * so that their id numbers are larger.
-	     * Do these now.
-	     */
-	    for ( int i = 0; i < n; i++ ){
-		CVMClass cvmc = (CVMClass) allClasses[i];
-		if (cvmc.ci.altNametable){
-		    cvmc.classId = CVMDataType.lookupClassname(
-				CVMWriter.getUTF(cvmc.ci.thisClass.name));
-		}
-	    }
 	}
     }
 

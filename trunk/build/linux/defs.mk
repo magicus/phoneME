@@ -78,6 +78,29 @@ CVM_TARGETOBJS_SPACE += \
 	java_props_md.o \
 	memory_md.o \
 
+#
+# On linux, CVM_INCLUDE_JUMP=true if and only if CVM_MTASK=true
+#
+ifeq ($(CVM_INCLUDE_JUMP), true)
+override CVM_MTASK	= true
+endif
+ifeq ($(CVM_MTASK), true)
+override CVM_INCLUDE_JUMP = true
+endif
+
+ifeq ($(CVM_MTASK), true)
+CVM_SRCDIRS += \
+	$(CVM_SHAREROOT)/native/sun/mtask
+CVM_DEFINES   += -DCVM_MTASK
+CVM_SHAREOBJS_SPACE += \
+	mtask.o \
+	Listener.o
+CLASSLIB_CLASSES += \
+	sun.mtask.Warmup \
+	sun.mtask.AppModelManager \
+	sun.mtask.Listener
+endif
+
 ifeq ($(CVM_USE_MEM_MGR), true)
 CVM_TARGETOBJS_SPACE += \
 	mem_mgr_md.o

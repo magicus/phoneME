@@ -1,5 +1,5 @@
 /*
- * @(#)JDWP.h	1.32 06/10/10
+ * @(#)JDWP.h	1.33 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,6 +23,10 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
+#ifndef JDWP_JDWP_H
+#define JDWP_JDWP_H
+
 #include "JDWPCommands.h"
 
 /*                         
@@ -37,8 +41,32 @@
            JDWP_EventRequest_Set_Out_modifiers_Modifier_ ## name
 #define JDWP_EVENT(name) \
            JDWP_EventKind_ ## name 
-#define JDWP_ERROR(name) JDWP_Error_ ## name
-
+#define JDWP_THREAD_STATUS(name) \
+           JDWP_ThreadStatus_ ## name 
+#define JDWP_SUSPEND_STATUS(name) \
+           JDWP_SuspendStatus_SUSPEND_STATUS_ ## name 
+#define JDWP_CLASS_STATUS(name) \
+           JDWP_ClassStatus_ ## name 
+#define JDWP_TYPE_TAG(name) \
+           JDWP_TypeTag_ ## name 
+#define JDWP_TAG(name) \
+           JDWP_Tag_ ## name 
+#define JDWP_STEP_DEPTH(name) \
+           JDWP_StepDepth_ ## name 
+#define JDWP_STEP_SIZE(name) \
+           JDWP_StepSize_ ## name 
+#define JDWP_SUSPEND_POLICY(name) \
+           JDWP_SuspendPolicy_ ## name 
+#define JDWP_INVOKE_OPTIONS(name) \
+           JDWP_InvokeOptions_INVOKE_ ## name 
+#define JDWP_ERROR(name) \
+           JDWP_Error_ ## name
 #define JDWP_HIGHEST_COMMAND_SET 17
 #define JDWP_REQUEST_NONE        -1
 
+/* This typedef helps keep the event and error types straight. */
+typedef unsigned short jdwpError;
+typedef unsigned char  jdwpEvent;
+typedef jint           jdwpThreadStatus;
+
+#endif

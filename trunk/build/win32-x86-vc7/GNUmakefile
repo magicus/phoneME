@@ -44,7 +44,7 @@ CVM_JIT_REGISTER_LOCALS ?= false
 # The following are all for the benefit of win32/defs.mk
 SDK_DIR			?= C:/Program Files/Microsoft Visual Studio .NET 2003/Vc7
 VC_PATH			= $(call WIN2POSIX,$(SDK_DIR))
-PLATFORM_SDK_DIR	= C:/Program Files/Microsoft Platform SDK
+PLATFORM_SDK_DIR	?= C:/Program Files/Microsoft Platform SDK
 PLATFORM_SDK_PATH 	= $(call WIN2POSIX,$(PLATFORM_SDK_DIR))
 PLATFORM_TOOLS_PATH	= $(VC_PATH)/Bin
 COMMON_TOOLS_PATH	= $(PLATFORM_SDK_PATH)/Bin

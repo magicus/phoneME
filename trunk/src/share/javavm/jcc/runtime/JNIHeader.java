@@ -1,5 +1,5 @@
 /*
- * @(#)JNIHeader.java	1.20 06/10/10
+ * @(#)JNIHeader.java	1.21 06/10/22
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -41,8 +41,6 @@ public class JNIHeader extends HeaderDump{
     public JNIHeader( ){
 	super( '_' );
     }
-
-    boolean currClassAltNametable;
 
     class ParamTypeGenerator extends util.SignatureIterator {
 	String	returnType;
@@ -110,7 +108,7 @@ public class JNIHeader extends HeaderDump{
 
     boolean
     isThrowable( String classname ){
-	ClassInfo c = ClassTable.lookupClass(classname, currClassAltNametable);
+	ClassInfo c = ClassTable.lookupClass(classname);
 	if ( c == null ){
 	    System.err.println(Localizer.getString("jniheader.cannot_find_class", classname));
 	    return false;
@@ -208,7 +206,6 @@ public class JNIHeader extends HeaderDump{
 	boolean didWork;
 	o = outfile;
 	className = c.className;
-	currClassAltNametable = c.altNametable;
 	prolog();
 	didWork = generateConsts( Util.convertToClassName( c.className ), c.fields );
 	didWork |= generateNatives( c.methods, true );
@@ -221,7 +218,6 @@ public class JNIHeader extends HeaderDump{
 	boolean didWork;
 	o = outfile;
 	className = c.className;
-	currClassAltNametable = c.altNametable;
 	didWork = generateNatives( c.methods, false );
 	return didWork;
     }

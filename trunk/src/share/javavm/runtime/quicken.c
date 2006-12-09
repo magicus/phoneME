@@ -1,5 +1,5 @@
 /*
- * @(#)quicken.c	1.56 06/10/10
+ * @(#)quicken.c	1.57 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -38,8 +38,8 @@
 #include "javavm/include/bcattr.h"
 #include "javavm/include/indirectmem.h"
 
-#ifdef CVM_JVMDI
-#include "javavm/include/jvmdi_impl.h"
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
 #endif
 
 /*
@@ -82,14 +82,14 @@ CVMopcodeWasQuickened(CVMExecEnv* ee, CVMUint8* p_opcode, CVMUint8* pc)
      * under the global CODE_LOCK microlock.
      */
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     if (*pc == opc_breakpoint) {
 	/* If the original opcode is an opc_breakpoint, then we need call
 	 * the debugger to get the real opcode and make sure that it
 	 * hasn't been quickened already.
 	 */
 	CVMUint8 breakpointOpcode =
-	    CVMjvmdiGetBreakpointOpcode(ee, pc, CVM_FALSE);
+	    CVMjvmtiGetBreakpointOpcode(ee, pc, CVM_FALSE);
 	*p_opcode = breakpointOpcode;  /* alway return updated opcode */
     } else {
 	*p_opcode = *pc;  /* alway return updated opcode */
@@ -133,7 +133,7 @@ CVMopcodeWasQuickened(CVMExecEnv* ee, CVMUint8* p_opcode, CVMUint8* pc)
  *    CVM_QUICKEN_ALREADY_QUICKENED
  *        someone else already raced us to it
  *            OR 
- *        in the JVMDI case, the instruction stream is already
+ *        in the JVMTI case, the instruction stream is already
  *        updated in CVMquickenOpcode().
  *    CVM_QUICKEN_ERROR
  *        an error occurred, exception pending
@@ -173,7 +173,7 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 	 * wasn't quickened then the cpIndex is good. If the opcode
 	 * has been quickened, then we don't care about cpIndex.
 	 */
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 	CVM_DEBUGGER_LOCK(ee);
 #else
 	CVM_CODE_LOCK(ee);
@@ -195,7 +195,7 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 
     /* release the CVM_CODE_LOCK if necessary */
     if (clobbersCpIndex) {
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 	CVM_DEBUGGER_UNLOCK(ee);
 #else
 	CVM_CODE_UNLOCK(ee);
@@ -536,7 +536,7 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 	 * Write out the new instruction. 
 	 */
 	quickening[0] = newOpcode;	/* newOpcode is known by now */ 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 	/*
 	 * Don't let *pc change to an opc_breakpoint while we are trying
 	 * to determine its current status.
@@ -563,7 +563,7 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 	    CVM_WRITE_CODE_BYTE(pc, 0, newOpcode);
 	} else {
 	    /* notify debugger of new opcode at breakpoint */
-	    CVMjvmdiSetBreakpointOpcode(ee, pc, newOpcode);
+	    CVMjvmtiSetBreakpointOpcode(ee, pc, newOpcode);
 	}
 	if (changesOperands) {
 	    CVM_CODE_UNLOCK(ee);
@@ -571,7 +571,7 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 
 	CVM_DEBUGGER_UNLOCK(ee);
 	return CVM_QUICKEN_ALREADY_QUICKENED;
-#else /* CVM_JVMDI */
+#else /* CVM_JVMTI */
 	if (changesOperands) {
 	    quickening[1] = operand1;
 	    quickening[2] = operand2;
@@ -579,7 +579,7 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 	} else {
 	    return CVM_QUICKEN_SUCCESS_OPCODE_ONLY;
 	}
-#endif /* CVM_JVMDI */
+#endif /* CVM_JVMTI */
 
     }
 }
@@ -614,7 +614,7 @@ CVMquickenOpcode(CVMExecEnv* ee, CVMUint8* pc, CVMConstantPool* cp,
 	 *    CVM_QUICKEN_ALREADY_QUICKENED
 	 *        someone else already raced us to it
 	 *            OR 
-	 *        in the JVMDI case, the instruction stream is already
+	 *        in the JVMTI case, the instruction stream is already
 	 *        updated in CVMquickenOpcode().
 	 *    CVM_QUICKEN_ERROR
 	 *        an error occurred, exception pending
@@ -630,8 +630,8 @@ CVMquickenOpcode(CVMExecEnv* ee, CVMUint8* pc, CVMConstantPool* cp,
 					 clobbersCpIndex);
 	newOpcode = quickening[0];
     });
-#ifdef CVM_JVMDI
-    /* These two should never happen with JVMDI. CVMquickenOpcode()
+#ifdef CVM_JVMTI
+    /* These two should never happen with JVMTI. CVMquickenOpcode()
      * should take care of updating the instruction stream
      */
     CVMassert(retCode != CVM_QUICKEN_SUCCESS_OPCODE_AND_OPERANDS);
@@ -647,7 +647,7 @@ CVMquickenOpcode(CVMExecEnv* ee, CVMUint8* pc, CVMConstantPool* cp,
      * (See bug #4353843)
      */
     switch (retCode) {
-#ifndef CVM_JVMDI
+#ifndef CVM_JVMTI
         case CVM_QUICKEN_SUCCESS_OPCODE_ONLY: {
 	    CVM_WRITE_CODE_BYTE(pc, 0, newOpcode);
 	    retCode = CVM_QUICKEN_ALREADY_QUICKENED;

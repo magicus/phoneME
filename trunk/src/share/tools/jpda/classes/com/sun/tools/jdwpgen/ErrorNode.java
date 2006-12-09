@@ -1,5 +1,5 @@
 /*
- * @(#)ErrorNode.java	1.8 06/10/10
+ * @(#)ErrorNode.java	1.9 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

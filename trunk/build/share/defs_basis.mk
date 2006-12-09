@@ -393,8 +393,8 @@ CLASSLIB_CLASSES += \
         java.awt.AWTKeyStroke \
         java.awt.event.WindowFocusListener \
 
-# mTASK specific basis classes
-ifeq ($(CVM_MTASK), true)
+# JUMP specific basis classes
+ifeq ($(CVM_INCLUDE_JUMP), true)
 CLASSLIB_CLASSES += \
    		sun.mtask.xlet.XletFrame \
    		sun.mtask.xlet.PXletRunner \
@@ -414,7 +414,7 @@ CLASSLIB_CLASSES += \
 endif
 
 ifeq ($(EXCLUDE_XLET_RUNNER), false)
-ifeq ($(CVM_MTASK), false)
+ifeq ($(CVM_INCLUDE_JUMP), false)
 CLASSLIB_CLASSES += \
 		com.sun.xlet.ToplevelFrame \
 		com.sun.xlet.XletClassLoader \
@@ -532,7 +532,7 @@ CVM_DEMO_CLASSES += \
 	IXCDemo.ixcXlets.serverXlet.PlaneImpl \
 	IXCDemo.ixcXlets.serverXlet.PlaneServer 
 
-ifneq ($(CVM_MTASK), true)
+ifneq ($(CVM_INCLUDE_JUMP), true)
 CVM_DEMO_CLASSES += \
 	IXCDemo.IXCMain 
 endif

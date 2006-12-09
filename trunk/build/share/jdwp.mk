@@ -21,7 +21,7 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional  
 # information or have any questions. 
 #
-# @(#)jdwp.mk	1.16 06/10/24
+# @(#)jdwp.mk	1.18 06/10/26
 #
 
 #
@@ -56,12 +56,16 @@ CVM_JDWP_INCLUDES  += \
         -I$(CVM_SHAREROOT)/javavm/export \
 	-I$(CVM_JDWP_TARGETROOT)/back \
 	-I$(CVM_JDWP_SHAREROOT)/back \
+	-I$(CVM_JDWP_SHAREROOT)/back/export \
+	-I$(CVM_JDWP_SHAREROOT)/back/npt \
+	-I$(CVM_JDWP_SHAREROOT)/back/npt/$(TARGET_OS) \
 	-I$(CVM_JDWP_SHAREROOT)/transport/export \
 	-I$(CVM_JDWP_TARGETROOT)/transport/$(CVM_JDWP_TRANSPORT) \
 	-I$(CVM_JDWP_BUILD_TOP)
 
 ifeq ($(CVM_DEBUG), true)
 CVM_JDWP_DEFINES += -DDEBUG
+CVM_JDWP_DEFINES +=  -DJDWP_LOGGING
 endif
 
 JPDA_NO_DLALLOC = true
@@ -84,6 +88,7 @@ CVM_JDWP_SHAREOBJS += \
 	ClassObjectReferenceImpl.o \
 	EventRequestImpl.o \
 	FieldImpl.o \
+	FrameID.o \
 	MethodImpl.o \
 	ObjectReferenceImpl.o \
 	ReferenceTypeImpl.o \
@@ -99,20 +104,23 @@ CVM_JDWP_SHAREOBJS += \
 	debugDispatch.o \
 	debugInit.o \
 	debugLoop.o \
+	error_messages.o \
 	eventFilter.o \
 	eventHandler.o \
 	eventHelper.o \
 	inStream.o \
 	invoker.o \
+	log_messages.o \
+	npt.o \
 	outStream.o \
-	popFrames.o \
 	standardHandlers.o \
 	stepControl.o \
 	stream.o \
 	threadControl.o \
 	transport.o \
+	utf.o \
+	utf_md.o \
 	util.o \
-	version.o \
 	linker_md.o \
 	exec_md.o
 
@@ -127,6 +135,8 @@ CVM_JDWP_OBJECTS  = $(patsubst %.o,$(CVM_JDWP_OBJDIR)/%.o,$(CVM_JDWP_OBJECTS0))
 
 CVM_JDWP_SRCDIRS  = \
 	$(CVM_JDWP_SHAREROOT)/back \
+	$(CVM_JDWP_SHAREROOT)/back/npt \
+	$(CVM_JDWP_SHAREROOT)/back/npt/$(TARGET_OS) \
 	$(CVM_JDWP_SHAREROOT)/transport \
 	$(CVM_JDWP_SHAREROOT)/transport/$(CVM_JDWP_TRANSPORT) \
 	$(CVM_JDWP_TARGETROOT)/back \
@@ -140,8 +150,9 @@ CVM_JDWP_FLAGS += \
         CVM_SYMBOLS \
         CVM_OPTIMIZED \
         CVM_DEBUG \
-        CVM_JVMDI \
+        CVM_JVMTI \
         CVM_DYNAMIC_LINKING \
+
 
 CVM_JDWP_FLAGS0 = $(foreach flag, $(CVM_JDWP_FLAGS), $(flag).$($(flag)))
 
@@ -160,7 +171,7 @@ tool-clean: jdwp-clean
 jdwp-clean:
 	$(CVM_JDWP_CLEANUP_ACTION)
 
-ifeq ($(CVM_JVMDI), true)
+ifeq ($(CVM_JVMTI), true)
     jdwp_build_list = jdwp_initbuild \
 	    $(CVM_JDWP_BUILD_TOP)/JDWPCommands.h \
 	    $(CVM_JDWP_LIBDIR)/$(CVM_JDWP_LIB) \
@@ -228,10 +239,9 @@ $(JDWPGEN_CLASS) : $(CVM_JDWP_SHAREROOT)/classes/$(JDWPGENPKGDIR)/Main.java
 		$<
 
 $(CVM_JDWP_BUILD_TOP)/JDWPCommands.h : $(JDWPGEN_CLASS)
-	$(CVM_JAVA) -classpath $(CVM_JDWP_CLASSES) \
+	$(CVM_JAVA) -Xbootclasspath/p:$(CVM_JDWP_CLASSES) \
 		$(JDWPGEN).Main $(JDWP_SPEC) \
-                -jvmdi $(CVM_TOP)/src/share/javavm/export/jvmdi.h \
-                -include $@
+	    -include $@
 
 $(CVM_JDWP_OBJDIR)/%.o: %.c
 	@echo "... $@"

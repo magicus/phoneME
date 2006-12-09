@@ -1,5 +1,5 @@
 #
-# @(#)rules.mk	1.173 06/10/24
+# @(#)rules.mk	1.175 06/10/27
 # 
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -362,6 +362,9 @@ $(J2ME_CLASSLIB):: jsrclasses
 endif
 $(J2ME_CLASSLIB):: testclasses $(CVM_TEST_CLASSESZIP)
 $(J2ME_CLASSLIB):: democlasses $(CVM_DEMO_CLASSESJAR)
+ifeq ($(CVM_INCLUDE_JUMP), true)
+$(J2ME_CLASSLIB):: jumptargets
+endif
 $(J2ME_CLASSLIB):: headers $(CVM_ROMJAVA_LIST)
 $(J2ME_CLASSLIB):: $(CLASSLIB_DEPS)
 $(J2ME_CLASSLIB):: aotdeps
@@ -448,6 +451,8 @@ $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo "CVM_DEFINES = $(CVM_DEFINES)" >> $@
 	$(AT) echo "J2ME_CLASSLIB = $(J2ME_CLASSLIB)" >> $@
 	$(AT) echo "CVM_MTASK = $(CVM_MTASK)" >> $@
+	$(AT) echo "CVM_INCLUDE_JUMP = $(CVM_INCLUDE_JUMP)" >> $@
+	$(AT) echo "JUMP_DIR = $(JUMP_DIR)" >> $@
 	$(AT) echo "CVM_PRELOAD_LIB = $(CVM_PRELOAD_LIB)" >> $@
 	$(AT) echo "CCFLAGS_SPEED = $(CCFLAGS_SPEED)" >> $@
 	$(AT) echo "" >> $@
@@ -952,8 +957,8 @@ endif
 ifeq ($(MAKELEVEL), 0)
 
 ifeq ($(CVM_JIT),true)
-ifeq ($(CVM_JVMDI),true)
-$(error JVMDI is not supported in JIT builds. Use CVM_JIT=false.)
+ifeq ($(CVM_JVMTI),true)
+$(error JVMTI is not supported in JIT builds. Use CVM_JIT=false.)
 endif
 ifeq ($(CVM_JVMPI),true)
 $(warning JVMPI is not fully supported in JIT builds. Programs may not behave properly.)

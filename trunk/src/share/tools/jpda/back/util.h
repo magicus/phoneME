@@ -1,5 +1,5 @@
 /*
- * @(#)util.h	1.72 06/10/10
+ * @(#)util.h   1.95 05/03/08
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,24 +23,246 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <jni.h>
-#include <jvmdi.h>
-#include "util_md.h"
-#ifndef JPDA_NO_DLALLOC
-#include "dlAlloc.h"
+
+#ifndef JDWP_UTIL_H
+#define JDWP_UTIL_H
+
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdarg.h>
+
+#ifdef DEBUG
+    /* Just to make sure these interfaces are not used here. */
+    #undef free
+    #define free(p) Do not use this interface.
+    #undef malloc
+    #define malloc(p) Do not use this interface.
+    #undef calloc
+    #define calloc(p) Do not use this interface.
+    #undef realloc
+    #define realloc(p) Do not use this interface.
+    #undef strdup
+    #define strdup(p) Do not use this interface.
 #endif
 
-#define MIN(a, b) ((a) < (b)) ? (a) : (b)
-     
+#include "log_messages.h"
+#include "vm_interface.h"
+#include "JDWP.h"
+#include "util_md.h"
+#include "error_messages.h"
+#include "debugInit.h"
+
+/* Get access to Native Platform Toolkit functions */
+#include "npt/npt.h"
+
+/* Definition of a CommonRef tracked by the backend for the frontend */
+typedef struct RefNode {
+    jlong        seqNum;        /* ID of reference, also key for hash table */
+    jobject      ref;           /* could be strong or weak */
+    struct RefNode *next;       /* next RefNode* in bucket chain */
+    struct RefNode *nextByRef;
+    jint         count;         /* count of references */
+    jboolean     isStrong;      /* true means this is a string reference */
+} RefNode;
+
+
+/* Value of a NULL ID */
+#define NULL_OBJECT_ID  ((jlong)0)
+
 /*
  * Globals used throughout the back end
  */
-extern JavaVM *jvm;
-extern JVMDI_Interface_1 *jvmdi;
-extern jboolean vmDead;
+
+typedef jint FrameNumber;
+
+typedef struct {
+    jvmtiEnv *jvmti;
+    JavaVM   *jvm;
+    volatile jboolean vmDead; /* Once VM is dead it stays that way - don't put in init */
+    jboolean assertOn;
+    jboolean assertFatal;
+    jboolean doerrorexit;
+    jboolean modifiedUtf8;
+    jboolean quiet;
+
+    /* Debug flags (bit mask) */
+    int      debugflags;
+
+    /* Possible debug flags */
+    #define USE_ITERATE_THROUGH_HEAP 0X001
+
+    char * options;
+
+    jclass              classClass;
+    jclass              threadClass;
+    jclass              threadGroupClass;
+    jclass              classLoaderClass;
+    jclass              stringClass;
+    jclass              systemClass;
+    jmethodID           threadConstructor;
+    jmethodID           threadSetDaemon;
+    jmethodID           threadCurrentThread;
+    jmethodID           systemGetProperty;
+    jmethodID           setProperty;
+    jthreadGroup        systemThreadGroup;
+    jobject             agent_properties;
+    
+    jint                cachedJvmtiVersion;
+    jvmtiCapabilities   cachedJvmtiCapabilities;
+    jboolean            haveCachedJvmtiCapabilities;
+    jvmtiEventCallbacks callbacks;
+
+    /* Various property values we should grab on initialization */
+    char* property_java_version;          /* UTF8 java.version */
+    char* property_java_vm_name;          /* UTF8 java.vm.name */
+    char* property_java_vm_info;          /* UTF8 java.vm.info */
+    char* property_java_class_path;       /* UTF8 java.class.path */
+    char* property_sun_boot_class_path;   /* UTF8 sun.boot.class.path */
+    char* property_sun_boot_library_path; /* UTF8 sun.boot.library.path */
+    char* property_java_library_path;     /* UTF8 java.library.path */
+    char* property_path_separator;        /* UTF8 path.separator */
+    char* property_user_dir;              /* UTF8 user.dir */
+
+    unsigned log_flags;
+
+    /* The Native Platform Toolkit access */
+    NptEnv *npt;
+
+    /* Common References static data */
+    jrawMonitorID refLock;
+    jlong         nextSeqNum;
+    RefNode     **objectsByID;
+    int           objectsByIDsize;
+    int           objectsByIDcount;
+
+     /* Indication that the agent has been loaded */
+     jboolean isLoaded;
+
+} BackendGlobalData;
+
+extern BackendGlobalData * gdata;
 
 /*
- * JNI signature constants, beyond those defined in JDWP_Tag_*
+ * Event Index for handlers
+ */
+
+typedef enum {
+        EI_min                  =  1,
+        
+        EI_SINGLE_STEP          =  1,
+        EI_BREAKPOINT           =  2,
+        EI_FRAME_POP            =  3,
+        EI_EXCEPTION            =  4,
+        EI_THREAD_START         =  5,
+        EI_THREAD_END           =  6,
+        EI_CLASS_PREPARE        =  7,
+        EI_GC_FINISH            =  8,
+        EI_CLASS_LOAD           =  9,
+        EI_FIELD_ACCESS         = 10,
+        EI_FIELD_MODIFICATION   = 11,
+        EI_EXCEPTION_CATCH      = 12,
+        EI_METHOD_ENTRY         = 13,
+        EI_METHOD_EXIT          = 14,
+        EI_MONITOR_CONTENDED_ENTER = 15,
+        EI_MONITOR_CONTENDED_ENTERED = 16,
+        EI_MONITOR_WAIT         = 17,
+        EI_MONITOR_WAITED       = 18,
+        EI_VM_INIT              = 19,
+        EI_VM_DEATH             = 20,
+        EI_max                  = 20
+} EventIndex;
+
+/* Agent errors that might be in a jvmtiError for JDWP or internal.
+ *    (Done this way so that compiler allows it's use as a jvmtiError)
+ */
+#define _AGENT_ERROR(x)                 ((jvmtiError)(JVMTI_ERROR_MAX+64+x))
+#define AGENT_ERROR_INTERNAL                    _AGENT_ERROR(1)
+#define AGENT_ERROR_VM_DEAD                     _AGENT_ERROR(2)
+#define AGENT_ERROR_NO_JNI_ENV                  _AGENT_ERROR(3)
+#define AGENT_ERROR_JNI_EXCEPTION               _AGENT_ERROR(4)
+#define AGENT_ERROR_JVMTI_INTERNAL              _AGENT_ERROR(5)
+#define AGENT_ERROR_JDWP_INTERNAL               _AGENT_ERROR(6)
+#define AGENT_ERROR_NOT_CURRENT_FRAME           _AGENT_ERROR(7)
+#define AGENT_ERROR_OUT_OF_MEMORY               _AGENT_ERROR(8)
+#define AGENT_ERROR_INVALID_TAG                 _AGENT_ERROR(9)
+#define AGENT_ERROR_ALREADY_INVOKING            _AGENT_ERROR(10)
+#define AGENT_ERROR_INVALID_INDEX               _AGENT_ERROR(11)
+#define AGENT_ERROR_INVALID_LENGTH              _AGENT_ERROR(12)
+#define AGENT_ERROR_INVALID_STRING              _AGENT_ERROR(13)
+#define AGENT_ERROR_INVALID_CLASS_LOADER        _AGENT_ERROR(14)
+#define AGENT_ERROR_INVALID_ARRAY               _AGENT_ERROR(15)
+#define AGENT_ERROR_TRANSPORT_LOAD              _AGENT_ERROR(16)
+#define AGENT_ERROR_TRANSPORT_INIT              _AGENT_ERROR(17)
+#define AGENT_ERROR_NATIVE_METHOD               _AGENT_ERROR(18)
+#define AGENT_ERROR_INVALID_COUNT               _AGENT_ERROR(19)
+#define AGENT_ERROR_INVALID_FRAMEID             _AGENT_ERROR(20)
+#define AGENT_ERROR_NULL_POINTER                _AGENT_ERROR(21)
+#define AGENT_ERROR_ILLEGAL_ARGUMENT            _AGENT_ERROR(22)
+#define AGENT_ERROR_INVALID_THREAD              _AGENT_ERROR(23)
+#define AGENT_ERROR_INVALID_EVENT_TYPE          _AGENT_ERROR(24)
+#define AGENT_ERROR_INVALID_OBJECT              _AGENT_ERROR(25)
+#define AGENT_ERROR_NO_MORE_FRAMES              _AGENT_ERROR(26)
+
+/* Combined event information */
+
+typedef struct {
+    
+    EventIndex  ei;
+    jthread     thread;
+    jclass      clazz;
+    jmethodID   method;
+    jlocation   location;
+    jobject     object; /* possibly an exception or user object */
+    
+    union {
+    
+        /* ei = EI_FIELD_ACCESS */
+        struct {
+            jclass      field_clazz;
+            jfieldID    field;
+        } field_access;
+
+        /* ei = EI_FIELD_MODIFICATION */
+        struct {
+            jclass      field_clazz;
+            jfieldID    field;
+            char        signature_type;
+            jvalue      new_value;
+        } field_modification;
+
+        /* ei = EI_EXCEPTION */
+        struct {
+            jclass      catch_clazz;
+            jmethodID   catch_method;
+            jlocation   catch_location;
+        } exception;
+
+        /* ei = EI_METHOD_EXIT */
+        struct {
+            jvalue      return_value;
+        } method_exit;
+        
+        /* For monitor wait events */
+        union {
+            /* ei = EI_MONITOR_WAIT */
+            jlong timeout;
+            /* ei = EI_MONITOR_WAITED */
+            jboolean timed_out;
+        } monitor;
+    } u;
+
+} EventInfo;
+
+/* Structure to hold dynamic array of objects */
+typedef struct ObjectBatch {
+    jobject *objects;
+    jint     count;
+} ObjectBatch;
+
+/*
+ * JNI signature constants, beyond those defined in JDWP_TAG(*)
  */
 #define SIGNATURE_BEGIN_ARGS    '('
 #define SIGNATURE_END_ARGS      ')'
@@ -68,40 +290,41 @@ extern jboolean vmDead;
 /*
  * jlong conversion macros
  */
-#define jlong_zero	 ((jlong) 0)
-#define jlong_one	 ((jlong) 1)
+#define jlong_zero       ((jlong) 0)
+#define jlong_one        ((jlong) 1)
 
 #define jlong_to_ptr(a)  ((void*)(a))
 #define ptr_to_jlong(a)  ((jlong)(a))
 #define jint_to_jlong(a) ((jlong)(a))
 #define jlong_to_jint(a) ((jint)(a))
 
+
 /*
  * util funcs
  */
-void util_initialize();   
-void util_reset();
+void util_initialize(JNIEnv *env);   
+void util_reset(void);
 
 struct PacketInputStream;
 struct PacketOutputStream;
 
 jint uniqueID(void); 
 jbyte referenceTypeTag(jclass clazz);
-jbyte specificTypeKey(jobject object);
+jbyte specificTypeKey(JNIEnv *env, jobject object);
 jboolean isObjectTag(jbyte tag);
-jint spawnNewThread(void (*func)(void *), void *arg, char *name);
-void eventThreadAndClass(JVMDI_Event *event, jthread *thread, jclass *clazz);
-jthread eventThread(JVMDI_Event *event);
-jclass eventClass(JVMDI_Event *event);
-jobject eventInstance(JVMDI_Event *event);
+jvmtiError spawnNewThread(jvmtiStartFunction func, void *arg, char *name);
 void convertSignatureToClassname(char *convert);
 void writeCodeLocation(struct PacketOutputStream *out, jclass clazz, 
                        jmethodID method, jlocation location);
 
+jvmtiError classInstances(jclass klass, ObjectBatch *instances, int maxInstances);
+jvmtiError classInstanceCounts(jint classCount, jclass *classes, jlong *counts);
+jvmtiError objectReferrers(jobject obj, ObjectBatch *referrers, int maxObjects);
+
 /*
  * Command handling helpers shared among multiple command sets
  */
-jint filterDebugThreads(jthread *threads, int count);
+int filterDebugThreads(jthread *threads, int count);
 
 
 void sharedGetFieldValues(struct PacketInputStream *in, 
@@ -110,8 +333,14 @@ void sharedGetFieldValues(struct PacketInputStream *in,
 jboolean sharedInvoke(struct PacketInputStream *in,
                       struct PacketOutputStream *out);
 
-jvmdiError fieldSignature(jclass clazz, jfieldID field, char **sigPtr);
-/*jvmdiError variableSignature(jframeID frame, jint slot, char **sigPtr);*/
+jvmtiError fieldSignature(jclass, jfieldID, char **, char **, char **);
+jvmtiError fieldModifiers(jclass, jfieldID, jint *);
+jvmtiError methodSignature(jmethodID, char **, char **, char **);
+jvmtiError methodReturnType(jmethodID, char *);
+jvmtiError methodModifiers(jmethodID, jint *);
+jvmtiError methodClass(jmethodID, jclass *);
+jvmtiError methodLocation(jmethodID, jlocation*, jlocation*);
+jvmtiError classLoader(jclass, jobject *);
 
 /*
  * Thin wrappers on top of JNI
@@ -123,122 +352,86 @@ jboolean isThreadGroup(jobject object);
 jboolean isString(jobject object);
 jboolean isClassLoader(jobject object);
 jboolean isArray(jobject object);
-void exitWithError(char *, char *, int, char *, jint);
-void exitWithJVMDIError(jvmdiError error);
-char *getPropertyCString(char *propertyName);
 
 /*
- * This calls into java; do not use after startup.
+ * Thin wrappers on top of JVMTI
  */
-jthread currentThread(void);
+jvmtiError jvmtiGetCapabilities(jvmtiCapabilities *caps);
+jint jvmtiMajorVersion(void);
+jint jvmtiMinorVersion(void);
+jint jvmtiMicroVersion(void);
+jvmtiError getSourceDebugExtension(jclass clazz, char **extensionPtr);
+jboolean canSuspendResumeThreadLists(void);
 
-/*
- * Thin wrappers on top of JVMDI
- */
-jint jvmdiVersion(void);
-jint jvmdiMajorVersion(void);
-jint jvmdiMinorVersion(void);
-jboolean canGetSourceDebugExtension(void);
-int getSourceDebugExtension(jclass clazz, char **extensionPtr);
-
-JVMDI_RawMonitor debugMonitorCreate(char *name);
-void debugMonitorEnter(JVMDI_RawMonitor theLock);
-void debugMonitorExit(JVMDI_RawMonitor theLock);
-void debugMonitorWait(JVMDI_RawMonitor theLock);
-void debugMonitorTimedWait(JVMDI_RawMonitor theLock, jlong millis);
-void debugMonitorNotify(JVMDI_RawMonitor theLock);
-void debugMonitorNotifyAll(JVMDI_RawMonitor theLock);
-void debugMonitorDestroy(JVMDI_RawMonitor theLock);
+jrawMonitorID debugMonitorCreate(char *name);
+void debugMonitorEnter(jrawMonitorID theLock);
+void debugMonitorExit(jrawMonitorID theLock);
+void debugMonitorWait(jrawMonitorID theLock);
+void debugMonitorTimedWait(jrawMonitorID theLock, jlong millis);
+void debugMonitorNotify(jrawMonitorID theLock);
+void debugMonitorNotifyAll(jrawMonitorID theLock);
+void debugMonitorDestroy(jrawMonitorID theLock);
 
 jthread *allThreads(jint *count);
-void threadInfo(jthread thread, JVMDI_thread_info *info);
 
-jthreadGroup *topThreadGroups(jint *count);
-void threadGroupInfo(jthreadGroup, JVMDI_thread_group_info *info);
+void threadGroupInfo(jthreadGroup, jvmtiThreadGroupInfo *info);
 
-char *classSignature(jclass);
+char *getClassname(jclass);
+jvmtiError classSignature(jclass, char**, char**);
 jint classStatus(jclass);
-jint classModifiers(jclass);
-jobject classLoader(jclass);
-jmethodID *declaredMethods(jclass, jint *count);
-jfieldID *declaredFields(jclass, jint *count);
-jclass *implementedInterfaces(jclass, jint *count);
-jboolean isArrayClass(jclass);
-jboolean isInterface(jclass);
-jboolean isMethodNative(jclass, jmethodID);
+void writeGenericSignature(struct PacketOutputStream *, char *);
+jboolean isMethodNative(jmethodID);
+jboolean isMethodObsolete(jmethodID);
+jvmtiError isMethodSynthetic(jmethodID, jboolean*);
+jvmtiError isFieldSynthetic(jclass, jfieldID, jboolean*);
+
+jboolean isSameObject(JNIEnv *env, jobject o1, jobject o2);
 
 jint objectHashCode(jobject);
 
-jclass *allLoadedClasses(jint *count);
-jclass *loadedClasses(jobject classLoader, jint *count);
+jvmtiError allInterfaces(jclass clazz, jclass **ppinterfaces, jint *count);
+jvmtiError allLoadedClasses(jclass **ppclasses, jint *count);
+jvmtiError allClassLoaderClasses(jobject loader, jclass **ppclasses, jint *count);
+jvmtiError allNestedClasses(jclass clazz, jclass **ppnested, jint *pcount);
 
-jint frameCount(jthread thread,  jint *count);
+void setAgentPropertyValue(JNIEnv *env, char *propertyName, char* propertyValue);
 
-void freeGlobalRefs(jobject *refs, jint count);
-void freeGlobalRefsPartial(jobject *refs, jint startIndex, jint count);
+void *jvmtiAllocate(jint numBytes);
+void jvmtiDeallocate(void *buffer);
 
-void util_setAllocLock(JVMDI_RawMonitor lock);
+void             eventIndexInit(void);
+jdwpEvent        eventIndex2jdwp(EventIndex i);
+jvmtiEvent       eventIndex2jvmti(EventIndex i);
+EventIndex       jdwp2EventIndex(jdwpEvent eventType);
+EventIndex       jvmti2EventIndex(jvmtiEvent kind);
 
-#ifdef JDWP_ALLOC_TRACE
-void *jdwpAllocReal(jint numBytes);
-void jdwpFreeReal(void *buffer);
-void *jdwpAllocTrace(char *fn, int ln, jint numBytes);
-void jdwpFreeTrace(char *fn, int ln, void *buffer);
-#define jdwpAlloc(nb) jdwpAllocTrace(__FILE__, __LINE__, nb)
-#define jdwpFree(buf) jdwpFreeTrace(__FILE__, __LINE__, buf)
-#else
-void *jdwpAlloc(jint numBytes);
-void jdwpFree(void *buffer);
-#endif
-void *jdwpClearedAlloc(jint numBytes);
-void *jdwpRealloc(void *original, jint newSize);
-char *jdwpStrdup(char *);
+jvmtiError       map2jvmtiError(jdwpError);
+jdwpError        map2jdwpError(jvmtiError);
+jdwpThreadStatus map2jdwpThreadStatus(jint state);
+jint             map2jdwpSuspendStatus(jint state);
+jint             map2jdwpClassStatus(jint);
 
-void util_lock(void);
-void util_unlock(void);
+void log_debugee_location(const char *func, 
+                jthread thread, jmethodID method, jlocation location);
+
 /*
  * Local Reference management. The two macros below are used 
  * throughout the back end whenever space for JNI local references
  * is needed in the current frame. 
  */
-#define WITH_LOCAL_REFS(env, number) \
-    createLocalRefSpace(env, number); {
-#define END_WITH_LOCAL_REFS(env) \
-    (*env)->PopLocalFrame(env, NULL); }
 
 void createLocalRefSpace(JNIEnv *env, jint capacity);
 
-#define ERROR_EXIT(message, code) \
-    exitWithError(__FILE__, __DATE__, __LINE__, (message), (code))  
-                                           \
-#define ERROR_MESSAGE_EXIT(message) ERROR_EXIT(message, 0)
-#define ERROR_CODE_EXIT(code) ERROR_EXIT("Unexpected error", code)
-#define ALLOC_ERROR_EXIT()    ERROR_MESSAGE_EXIT("Allocation failure")
+#define WITH_LOCAL_REFS(env, number) \
+    createLocalRefSpace(env, number); \
+    { /* BEGINNING OF WITH SCOPE */
 
-extern jboolean assertOn;
-extern jboolean assertFatal;
+#define END_WITH_LOCAL_REFS(env) \
+        JNI_FUNC_PTR(env,PopLocalFrame)(env, NULL); \
+    } /* END OF WITH SCOPE */
 
-void jdiAssertionFailed(char *fileName, int lineNumber, char *msg);
+void saveGlobalRef(JNIEnv *env, jobject obj, jobject *pobj);
+void tossGlobalRef(JNIEnv *env, jobject *pobj);
 
-#define JDI_ASSERT(expression)  \
-do {                            \
-    if (assertOn && !(expression)) {		\
-        jdiAssertionFailed(__FILE__, __LINE__, #expression); \
-    }					        \
-} while (0)
-
-#define JDI_ASSERT_MSG(expression, msg)  \
-do {                            \
-    if (assertOn && !(expression)) {		\
-        jdiAssertionFailed(__FILE__, __LINE__, msg); \
-    }					        \
-} while (0)
-
-#define JDI_ASSERT_FAILED(msg)  \
-   jdiAssertionFailed(__FILE__, __LINE__, msg)
-
-
-
-    
-
+#endif
 

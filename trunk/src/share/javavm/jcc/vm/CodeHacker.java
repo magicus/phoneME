@@ -1,5 +1,5 @@
 /*
- * @(#)CodeHacker.java	1.40 06/10/10
+ * @(#)CodeHacker.java	1.41 06/10/22
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -70,7 +70,7 @@ class CodeHacker {
     public CodeHacker( boolean lossless, boolean jitOn, boolean v ){
 	verbose = v;
 	log = System.err;
-	java_lang_Object = ClassTable.lookupClass("java/lang/Object", false);
+	java_lang_Object = ClassTable.lookupClass("java/lang/Object");
 	if ( java_lang_Object == null ){
 	    log.println(Localizer.getString(
 		"codehacker.lookup_failed", "", "java.lang.Object"));
@@ -227,7 +227,7 @@ class CodeHacker {
 
     private boolean quickenCode( MethodInfo m, ConstantObject c[] ) throws DataFormatException {
 	byte code[] = m.code;
-	int list[] = m.ldcInstructions;
+	int list[] = m.getLdcInstructions();
 	ConstantObject		co;
 	FieldConstant		fc;
 	MethodConstant		mc;
@@ -264,7 +264,7 @@ class CodeHacker {
 		}
 	    }
 	}
-	list = m.wideConstantRefInstructions;
+	list = m.getWideConstantRefInstructions();
 	if ( list != null ){
 	    MethodInfo[] tList = null;
 	    int tli = 0;		// index into tList

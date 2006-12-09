@@ -1,5 +1,5 @@
 /*
- * @(#)jvm.c	1.285 06/10/10
+ * @(#)jvm.c	1.288 06/10/30
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -52,8 +52,8 @@
 #endif
 #include "generated/javavm/include/build_defs.h"
 
-#ifdef CVM_JVMDI
-#include "javavm/include/jvmdi_impl.h"
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
 #endif
 
 #ifdef CVM_JVMPI
@@ -1911,11 +1911,11 @@ JVM_RunNativeThread(JNIEnv *env, jobject thisObj)
 #endif
     ee->nativeRunInfo = NULL;
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     ee->debugEventsEnabled = CVM_TRUE;
 #endif
     (*nativeFunc)(arg);
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     ee->debugEventsEnabled = CVM_FALSE;
 #endif
 }
@@ -1958,17 +1958,17 @@ JVM_StartThread(JNIEnv *env, jobject thisObj, jint priority)
     }
 
     if (info == NULL) {
-	/* Normal thread */
-	info = (CVMThreadStartInfo *)malloc(sizeof(CVMThreadStartInfo));
-	if (info == NULL) {
+      /* Normal thread */
+      info = (CVMThreadStartInfo *)malloc(sizeof(CVMThreadStartInfo));
+      if (info == NULL) {
 #ifdef CVM_DEBUG
 	    msg = "malloc failed";
 #endif
-	    goto out_of_memory;
-	}
-	info->nativeFunc = NULL;
-	info->nativeFuncArg = NULL;
-	info->started = 0;
+ 	    goto out_of_memory;
+      }
+      info->nativeFunc = NULL;
+      info->nativeFuncArg = NULL;
+      info->started = 0;
     }
     if (!CVMmutexInit(&info->parentLock)) {
 #ifdef CVM_DEBUG
@@ -2022,6 +2022,13 @@ JVM_StartThread(JNIEnv *env, jobject thisObj, jint priority)
 	    goto out_of_memory2;
 	}
     }
+#ifdef CVM_JVMTI
+    if (info->nativeFunc == NULL) {
+      /* "Normal" thread vs. system thread */
+      /* NOTE: First pass JVMTI support has only one global environment */
+      /*      targetEE->_jvmti_env = ee->_jvmti_env; */
+    }
+#endif
 
     info->ee = targetEE;
 

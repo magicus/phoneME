@@ -1,5 +1,5 @@
 /*
- * @(#)ThreadReferenceImpl.c	1.61 06/10/10
+ * @(#)ThreadReferenceImpl.c	1.62 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,59 +23,75 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <string.h>
-#include <stdlib.h>
 
-#include "ThreadReferenceImpl.h"
 #include "util.h"
+#include "ThreadReferenceImpl.h"
 #include "eventHandler.h"
 #include "threadControl.h"
 #include "inStream.h"
 #include "outStream.h"
-#include "JDWP.h"
+#include "FrameID.h"
 
 static jboolean 
 name(PacketInputStream *in, PacketOutputStream *out) 
 {
-    JNIEnv *env = getEnv();
-    JVMDI_thread_info info;
-    jthread thread = inStream_readThreadRef(in);
+    JNIEnv *env;
+    jthread thread;
+
+    env = getEnv();
+    
+    thread = inStream_readThreadRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
 
-    threadInfo(thread, &info);
-    outStream_writeString(out, info.name);
+    WITH_LOCAL_REFS(env, 3) {
+        
+        jvmtiThreadInfo info;
+        jvmtiError error;
+        
+        (void)memset(&info, 0, sizeof(info));
 
-    (*env)->DeleteGlobalRef(env, info.thread_group);
-    if (info.context_class_loader != NULL) {
-        (*env)->DeleteGlobalRef(env, info.context_class_loader);
-    }
-    jdwpFree(info.name);
+        error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadInfo)
+                                (gdata->jvmti, thread, &info);
+        
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            (void)outStream_writeString(out, info.name);
+        }
+        
+        if ( info.name != NULL )
+            jvmtiDeallocate(info.name);
+    
+    } END_WITH_LOCAL_REFS(env);
+    
     return JNI_TRUE;
 }
 
 static jboolean 
 suspend(PacketInputStream *in, PacketOutputStream *out) 
 {
-    jint error;
-    jthread thread = inStream_readThreadRef(in);
+    jvmtiError error;
+    jthread thread;
+    
+    thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
     error = threadControl_suspendThread(thread, JNI_FALSE);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
     }
     return JNI_TRUE;
 }
@@ -83,21 +99,23 @@ suspend(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 resume(PacketInputStream *in, PacketOutputStream *out) 
 {
-    jint error;
-    jthread thread = inStream_readThreadRef(in);
+    jvmtiError error;
+    jthread thread;
+    
+    thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
 
     /* true means it is okay to unblock the commandLoop thread */
     error = threadControl_resumeThread(thread, JNI_TRUE);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
     }
     return JNI_TRUE;
 }
@@ -105,73 +123,88 @@ resume(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 status(PacketInputStream *in, PacketOutputStream *out) 
 {
-    jint threadStatus;
-    jint suspendStatus;
-    jint error;
-    jthread thread = inStream_readThreadRef(in);
+    jdwpThreadStatus threadStatus;
+    jint statusFlags;
+    jvmtiError error;
+    jthread thread;
+    
+    thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
 
     error = threadControl_applicationThreadStatus(thread, &threadStatus, 
-                                                          &suspendStatus);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+                                                          &statusFlags);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
-    outStream_writeInt(out, threadStatus);
-
-    /* 
-     * Mask off at-breakpoint status which is not passed back to front
-     * end since it is not necessarily accurate at that level.
-     */
-    outStream_writeInt(out, suspendStatus & ~JVMDI_SUSPEND_STATUS_BREAK);
+    (void)outStream_writeInt(out, threadStatus);
+    (void)outStream_writeInt(out, statusFlags);
     return JNI_TRUE;
 }
 
 static jboolean 
 threadGroup(PacketInputStream *in, PacketOutputStream *out) 
 {
-    JNIEnv *env = getEnv();
-    JVMDI_thread_info info;
-    jthread thread = inStream_readThreadRef(in);
+    JNIEnv *env;
+    jthread thread;
+    
+    env = getEnv();
+    
+    thread = inStream_readThreadRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
 
-    threadInfo(thread, &info);
-    WRITE_GLOBAL_REF(env, out, info.thread_group);
+    WITH_LOCAL_REFS(env, 3) {
+
+        jvmtiThreadInfo info;
+        jvmtiError error;
     
-    if (info.context_class_loader != NULL) {
-        (*env)->DeleteGlobalRef(env, info.context_class_loader);
-    }
-    jdwpFree(info.name);
+        (void)memset(&info, 0, sizeof(info));
+        
+        error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadInfo)
+                                (gdata->jvmti, thread, &info);
+        
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            (void)outStream_writeObjectRef(env, out, info.thread_group);
+        } 
+        
+        if ( info.name!=NULL )
+            jvmtiDeallocate(info.name);
+    
+    } END_WITH_LOCAL_REFS(env);
+
     return JNI_TRUE;
 }
 
 static jboolean 
 validateSuspendedThread(PacketOutputStream *out, jthread thread)
 {
-    jint error;
+    jvmtiError error;
     jint count;
+    
     error = threadControl_suspendCount(thread, &count);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_FALSE;
     }
 
     if (count == 0) {
-        outStream_setError(out, JVMDI_ERROR_THREAD_NOT_SUSPENDED);
+        outStream_setError(out, JDWP_ERROR(THREAD_NOT_SUSPENDED));
         return JNI_FALSE;
     }
 
@@ -181,20 +214,31 @@ validateSuspendedThread(PacketOutputStream *out, jthread thread)
 static jboolean 
 frames(PacketInputStream *in, PacketOutputStream *out) 
 {
-    jint error;
-    jint i;
+    jvmtiError error;
+    FrameNumber fnum;
     jint count;
-    jframeID frame;
+    JNIEnv *env;
+    jthread thread;
+    jint startIndex;
+    jint length;
 
-    jthread thread = inStream_readThreadRef(in);
-    jint startIndex = inStream_readInt(in);
-    jint length = inStream_readInt(in);
+    env = getEnv();
+    
+    thread = inStream_readThreadRef(env, in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    startIndex = inStream_readInt(in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    length = inStream_readInt(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
 
@@ -202,9 +246,10 @@ frames(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    error = frameCount(thread, &count);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetFrameCount)
+                        (gdata->jvmti, thread, &count);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
 
@@ -213,53 +258,56 @@ frames(PacketInputStream *in, PacketOutputStream *out)
     }
 
     if (length == 0) {
-        outStream_writeInt(out, 0);
+        (void)outStream_writeInt(out, 0);
         return JNI_TRUE;
     }
 
     if ((startIndex < 0) || (startIndex > count - 1)) {
-        outStream_setError(out, JDWP_Error_INVALID_INDEX);
+        outStream_setError(out, JDWP_ERROR(INVALID_INDEX));
         return JNI_TRUE;
     }
 
     if ((length < 0) || (length + startIndex > count)) {
-        outStream_setError(out, JDWP_Error_INVALID_LENGTH);
+        outStream_setError(out, JDWP_ERROR(INVALID_LENGTH));
         return JNI_TRUE;
     }
 
-    outStream_writeInt(out, length);
-    error = jvmdi->GetCurrentFrame(thread, &frame);
-    i = 0;
-    while ((i < startIndex + length) && (error == JVMDI_ERROR_NONE)) { 
-        if (i >= startIndex) {
+    (void)outStream_writeInt(out, length);
+    
+    for(fnum = startIndex ; fnum < startIndex+length ; fnum++ ) {
+    
+        WITH_LOCAL_REFS(env, 1) {
+           
             jclass clazz;
             jmethodID method;
             jlocation location;
-    
-            /* Get location info for the frame */
-            error = threadControl_getFrameLocation(thread, frame, 
-                                          &clazz, &method, &location);
-            if (error == JVMDI_ERROR_OPAQUE_FRAME) {
+
+            /* Get location info */
+            error = JVMTI_FUNC_PTR(gdata->jvmti,GetFrameLocation)
+                (gdata->jvmti, thread, fnum, &method, &location);
+            if (error == JVMTI_ERROR_OPAQUE_FRAME) {
+                clazz = NULL;
                 location = -1L;
-                error = JVMDI_ERROR_NONE;
-            } else if (error != JVMDI_ERROR_NONE) {
-                break;
+                error = JVMTI_ERROR_NONE;
+            } else if ( error == JVMTI_ERROR_NONE ) {
+                error = methodClass(method, &clazz);
+                if ( error == JVMTI_ERROR_NONE ) {
+                    FrameID frame;
+                    frame = createFrameID(thread, fnum);
+                    (void)outStream_writeFrameID(out, frame);
+                    writeCodeLocation(out, clazz, method, location);
+                }
             }
-
-            outStream_writeFrameID(out, frame);
-            writeCodeLocation(out, clazz, method, location);
-        } 
-        error = jvmdi->GetCallerFrame(frame, &frame);
-        i++;
+        
+        } END_WITH_LOCAL_REFS(env);
+        
+        if (error != JVMTI_ERROR_NONE)
+            break;
+        
     }
 
-    /* ignore the final out-of-frames error */
-    if ((i == startIndex + length) && (error == JVMDI_ERROR_NO_MORE_FRAMES)) {
-        error = JVMDI_ERROR_NONE;
-    }
-
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
     }
     return JNI_TRUE;
 }
@@ -267,16 +315,17 @@ frames(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 getFrameCount(PacketInputStream *in, PacketOutputStream *out) 
 {
-    jint error;
+    jvmtiError error;
     jint count;
+    jthread thread;
 
-    jthread thread = inStream_readThreadRef(in);
+    thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
 
@@ -284,12 +333,13 @@ getFrameCount(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    error = frameCount(thread, &count);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetFrameCount)
+                        (gdata->jvmti, thread, &count);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
-    outStream_writeInt(out, count);
+    (void)outStream_writeInt(out, count);
 
     return JNI_TRUE;
 }
@@ -297,18 +347,18 @@ getFrameCount(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 ownedMonitors(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    jint error;
-    JVMDI_owned_monitor_info info;
-    jint i;
-
-    jthread thread = inStream_readThreadRef(in);
+    JNIEnv *env;
+    jthread thread;
+    
+    env = getEnv();
+    
+    thread = inStream_readThreadRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
 
@@ -316,37 +366,48 @@ ownedMonitors(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    error = jvmdi->GetOwnedMonitorInfo(thread, &info);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
-        return JNI_TRUE;
-    }
+    WITH_LOCAL_REFS(env, 1) {
+        
+        jvmtiError error;
+        jint count = 0;
+        jobject *monitors = NULL;
+        
+        error = JVMTI_FUNC_PTR(gdata->jvmti,GetOwnedMonitorInfo)
+                                (gdata->jvmti, thread, &count, &monitors);
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            int i;
+            (void)outStream_writeInt(out, count);
+            for (i = 0; i < count; i++) {
+                jobject monitor = monitors[i];
+                (void)outStream_writeByte(out, specificTypeKey(env, monitor));
+                (void)outStream_writeObjectRef(env, out, monitor);
+            }
+        }
+        if (monitors != NULL)
+            jvmtiDeallocate(monitors);
 
-    outStream_writeInt(out, info.owned_monitor_count);
-    for (i = 0; i < info.owned_monitor_count; i++) {
-        jobject monitor = info.owned_monitors[i];
-        outStream_writeByte(out, specificTypeKey(monitor));
-        WRITE_GLOBAL_REF(env, out, monitor);
-    }
-
-    jdwpFree(info.owned_monitors);
+    } END_WITH_LOCAL_REFS(env);
+    
     return JNI_TRUE;
 }
 
 static jboolean 
 currentContendedMonitor(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    jobject monitor;
-    jint error;
-
-    jthread thread = inStream_readThreadRef(in);
+    JNIEnv *env;
+    jthread thread;
+    
+    env = getEnv();
+    
+    thread = inStream_readThreadRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
 
@@ -354,35 +415,52 @@ currentContendedMonitor(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    error = jvmdi->GetCurrentContendedMonitor(thread, &monitor);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
-        return JNI_TRUE;
-    }
-
-    outStream_writeByte(out, specificTypeKey(monitor));
-    WRITE_GLOBAL_REF(env, out, monitor);
+    WITH_LOCAL_REFS(env, 1) {
+        
+        jobject monitor;
+        jvmtiError error;
+        
+        error = JVMTI_FUNC_PTR(gdata->jvmti,GetCurrentContendedMonitor)
+                                (gdata->jvmti, thread, &monitor);
+        
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            (void)outStream_writeByte(out, specificTypeKey(env, monitor));
+            (void)outStream_writeObjectRef(env, out, monitor);
+        }
+    
+    } END_WITH_LOCAL_REFS(env);
+    
     return JNI_TRUE;
 }
 
 static jboolean 
 stop(PacketInputStream *in, PacketOutputStream *out) 
 {
-    jint error;
-    jthread thread = inStream_readThreadRef(in);
-    jobject throwable = inStream_readObjectRef(in);
+    jvmtiError error;
+    jthread thread;
+    jobject throwable;
+    JNIEnv *env;
+    
+    env = getEnv();
+    thread = inStream_readThreadRef(env, in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    throwable = inStream_readObjectRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
 
     error = threadControl_stop(thread, throwable);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
     }
     return JNI_TRUE;
 }
@@ -390,20 +468,22 @@ stop(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 interrupt(PacketInputStream *in, PacketOutputStream *out) 
 {
-    jint error;
-    jthread thread = inStream_readThreadRef(in);
+    jvmtiError error;
+    jthread thread;
+    
+    thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
 
     error = threadControl_interrupt(thread);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
     }
     return JNI_TRUE;
 }
@@ -411,29 +491,181 @@ interrupt(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 suspendCount(PacketInputStream *in, PacketOutputStream *out) 
 {
-    jint error;
+    jvmtiError error;
     jint count;
-    jthread thread = inStream_readThreadRef(in);
+    jthread thread;
+    
+    thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
     if (threadControl_isDebugThread(thread)) {
-        outStream_setError(out, JVMDI_ERROR_INVALID_THREAD);
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
 
     error = threadControl_suspendCount(thread, &count);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
 
-    outStream_writeInt(out, count);
+    (void)outStream_writeInt(out, count);
     return JNI_TRUE;
 }
 
-void *ThreadReference_Cmds[] = { (void *)12,
+static jboolean 
+ownedMonitorsWithStackDepth(PacketInputStream *in, PacketOutputStream *out)
+{
+    JNIEnv *env;
+    jthread thread;
+    
+    thread = inStream_readThreadRef(getEnv(), in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+
+    if (threadControl_isDebugThread(thread)) {
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
+        return JNI_TRUE;
+    }
+
+    if (!validateSuspendedThread(out, thread)) {
+        return JNI_TRUE;
+    }
+
+    env = getEnv();
+    
+    WITH_LOCAL_REFS(env, 1) {
+        
+        jvmtiError error = JVMTI_ERROR_NONE;
+        jint count = 0;
+        jvmtiMonitorStackDepthInfo *monitors=NULL;
+        
+        error = JVMTI_FUNC_PTR(gdata->jvmti,GetOwnedMonitorStackDepthInfo)
+                                (gdata->jvmti, thread, &count, &monitors);
+
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            int i;
+            (void)outStream_writeInt(out, count);
+            for (i = 0; i < count; i++) {
+                jobject monitor = monitors[i].monitor;
+                (void)outStream_writeByte(out, specificTypeKey(env, monitor));
+                (void)outStream_writeObjectRef(getEnv(), out, monitor);
+                (void)outStream_writeInt(out,monitors[i].stack_depth);
+            }
+        }
+        if (monitors != NULL) {
+            jvmtiDeallocate(monitors);
+        }
+
+    } END_WITH_LOCAL_REFS(env);
+    
+    return JNI_TRUE;
+}
+
+static jboolean 
+forceEarlyReturn(PacketInputStream *in, PacketOutputStream *out) 
+{
+    JNIEnv *env;
+    jthread thread;
+    jvalue value;
+    jbyte typeKey;
+    jvmtiError error;
+
+    env = getEnv();
+    thread = inStream_readThreadRef(env, in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+
+    if (threadControl_isDebugThread(thread)) {
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
+        return JNI_TRUE;
+    }
+
+    typeKey = inStream_readByte(in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+
+    if (isObjectTag(typeKey)) {
+        value.l = inStream_readObjectRef(env, in);
+        error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnObject)
+                        (gdata->jvmti, thread, value.l);
+    } else {
+        switch (typeKey) {
+            case JDWP_TAG(VOID):
+                error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnVoid)
+                                (gdata->jvmti, thread);
+                break;
+            case JDWP_TAG(BYTE):
+                value.b = inStream_readByte(in);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnInt)
+                                (gdata->jvmti, thread, value.b);
+                break;
+    
+            case JDWP_TAG(CHAR):
+                value.c = inStream_readChar(in);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnInt)
+                                (gdata->jvmti, thread, value.c);
+                break;
+    
+            case JDWP_TAG(FLOAT):
+                value.f = inStream_readFloat(in);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnFloat)
+                                (gdata->jvmti, thread, value.f);
+                break;
+    
+            case JDWP_TAG(DOUBLE):
+                value.d = inStream_readDouble(in);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnDouble)
+                                (gdata->jvmti, thread, value.d);
+                break;
+    
+            case JDWP_TAG(INT):
+                value.i = inStream_readInt(in);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnInt)
+                                (gdata->jvmti, thread, value.i);
+                break;
+    
+            case JDWP_TAG(LONG):
+                value.j = inStream_readLong(in);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnLong)
+                                (gdata->jvmti, thread, value.j);
+                break;
+    
+            case JDWP_TAG(SHORT):
+                value.s = inStream_readShort(in);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnInt)
+                                (gdata->jvmti, thread, value.s);
+                break;
+    
+            case JDWP_TAG(BOOLEAN):
+                value.z = inStream_readBoolean(in);
+                error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnInt)
+                                (gdata->jvmti, thread, value.z);
+                break;
+    
+            default:
+              error = JDWP_ERROR(INVALID_TAG);
+              break;
+        }
+    }
+    {
+      jdwpError serror = map2jdwpError(error);
+      if (serror != JDWP_ERROR(NONE)) {
+        outStream_setError(out, serror);
+      }
+    }
+    return JNI_TRUE;
+}
+
+
+void *ThreadReference_Cmds[] = { (void *)14,
     (void *)name,
     (void *)suspend,
     (void *)resume,
@@ -445,7 +677,7 @@ void *ThreadReference_Cmds[] = { (void *)12,
     (void *)currentContendedMonitor,
     (void *)stop,
     (void *)interrupt,
-    (void *)suspendCount
+    (void *)suspendCount,
+    (void *)ownedMonitorsWithStackDepth,
+    (void *)forceEarlyReturn
     };
-
-

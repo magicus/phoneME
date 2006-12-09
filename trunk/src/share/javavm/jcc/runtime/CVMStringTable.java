@@ -1,5 +1,5 @@
 /*
- * @(#)CVMStringTable.java	1.37 06/10/10
+ * @(#)CVMStringTable.java	1.38 06/10/22
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -120,7 +120,7 @@ public class CVMStringTable extends vm.StringTable {
     public int writeStrings(CCodeWriter out, String tableName ) {
 	String dataName = tableName+"_data";
 
-	ClassInfo charArrayClass = ClassTable.lookupClass("[C", false);
+	ClassInfo charArrayClass = ClassTable.lookupClass("[C");
 	if ( charArrayClass == null ){
 	    System.err.println(Localizer.getString("javacodecompact.cannot_find_array_of_char"));
 	    return 0;

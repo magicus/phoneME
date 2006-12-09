@@ -1,5 +1,5 @@
 /*
- * @(#)commonRef.h	1.16 06/10/10
+ * @(#)commonRef.h	1.17 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,22 +23,24 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <jni.h>
 
-#define NULL_OBJECT_ID ((jlong)0)
+#ifndef JDWP_COMMONREF_H
+#define JDWP_COMMONREF_H
 
 void commonRef_initialize(void);            
-void commonRef_reset(void);            
+void commonRef_reset(JNIEnv *env);            
 
-jlong commonRef_refToID(jobject ref);
-jobject commonRef_idToRef(jlong id);
-jint commonRef_pin(jlong id);
-jint commonRef_unpin(jlong id);
-void commonRef_releaseMultiple(jlong id, jint refCount);
-void commonRef_release(jlong id);
+jlong commonRef_refToID(JNIEnv *env, jobject ref);
+jobject commonRef_idToRef(JNIEnv *env, jlong id);
+void commonRef_idToRef_delete(JNIEnv *env, jobject ref);
+jvmtiError commonRef_pin(jlong id);
+jvmtiError commonRef_unpin(jlong id);
+void commonRef_releaseMultiple(JNIEnv *env, jlong id, jint refCount);
+void commonRef_release(JNIEnv *env, jlong id);
 void commonRef_compact(void);
 
 void commonRef_lock(void);
 void commonRef_unlock(void);
 
+#endif
 

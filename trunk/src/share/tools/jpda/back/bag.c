@@ -1,5 +1,5 @@
 /*
- * @(#)bag.c	1.12 06/10/10
+ * @(#)bag.c	1.13 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,9 +26,8 @@
 
 /* General routines for manipulating a bag data structure */
 
-#include <string.h>
-#include "bag.h"
 #include "util.h"
+#include "bag.h"
 
 struct bag {
     void *items;    /* hold items in bag, must align on itemSize */
@@ -39,14 +38,14 @@ struct bag {
 
 struct bag * 
 bagCreateBag(int itemSize, int initialAllocation) {   
-    struct bag *theBag = (struct bag *)jdwpAlloc(sizeof(struct bag));
+    struct bag *theBag = (struct bag *)jvmtiAllocate(sizeof(struct bag));
     if (theBag == NULL) {
         return NULL;
     }
     itemSize = (itemSize + 7) & ~7;    /* fit 8 byte boundary */
-    theBag->items = jdwpAlloc(initialAllocation * itemSize);
+    theBag->items = jvmtiAllocate(initialAllocation * itemSize);
     if (theBag->items == NULL) {
-        jdwpFree(theBag);
+        jvmtiDeallocate(theBag);
         return NULL;
     }
     theBag->used = 0;
@@ -62,7 +61,7 @@ bagDup(struct bag *oldBag)
                                       oldBag->allocated);
     if (newBag != NULL) {
         newBag->used = oldBag->used;
-        memcpy(newBag->items, oldBag->items, newBag->used * newBag->itemSize);
+        (void)memcpy(newBag->items, oldBag->items, newBag->used * newBag->itemSize);
     }
     return newBag;
 }
@@ -71,8 +70,8 @@ void
 bagDestroyBag(struct bag *theBag) 
 {
     if (theBag != NULL) {
-        jdwpFree(theBag->items);
-        jdwpFree(theBag);
+        jvmtiDeallocate(theBag->items);
+        jvmtiDeallocate(theBag);
     }
 }
 
@@ -84,6 +83,7 @@ bagFind(struct bag *theBag, void *key)
     char *itemsEnd = items + (itemSize * theBag->used);
     
     for (; items < itemsEnd; items += itemSize) {
+        /*LINTED*/
         if (*((void**)items) == key) {
             return items;
         }
@@ -101,16 +101,20 @@ bagAdd(struct bag *theBag)
 
     /* if there are no unused slots reallocate */
     if (theBag->used >= allocated) {
+        void *new_items;
         allocated *= 2;
-        items = jdwpRealloc(items, allocated * itemSize);
-        if (items == NULL) {
+        new_items = jvmtiAllocate(allocated * itemSize);
+        if (new_items == NULL) {
             return NULL;
         }
+        (void)memcpy(new_items, items, (theBag->used) * itemSize);
+        jvmtiDeallocate(items);
+        items = new_items;
         theBag->allocated = allocated;
         theBag->items = items;
     }
     ret = ((char *)items) + (itemSize * (theBag->used)++);
-    memset(ret, 0, itemSize);
+    (void)memset(ret, 0, itemSize);
     return ret;
 }
     
@@ -123,7 +127,7 @@ bagDelete(struct bag *theBag, void *condemned)
     void *tailItem = ((char *)items) + (used * itemSize);
     
     if (condemned != tailItem) {
-        memcpy(condemned, tailItem, itemSize);
+        (void)memcpy(condemned, tailItem, itemSize);
     }
 }
 

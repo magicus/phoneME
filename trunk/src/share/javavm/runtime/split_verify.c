@@ -1,5 +1,5 @@
 /*
- * @(#)split_verify.c	1.6 06/10/13
+ * @(#)split_verify.c	1.7 06/10/25
  */
 /*
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
@@ -3518,11 +3518,11 @@ CVMsplitVerifyRewriteStackMapsAsPointerMaps(VfyContext* cntxt){
 static int
 Vfy_getOpcode(VfyContext* cntxt, IPINDEX ip) {
     int opcode = Vfy_getUByte(cntxt, ip);
-#if CVM_JVMDI
+#if CVM_JVMTI
     if (opcode == opc_breakpoint) {
 	CVMExecEnv* ee = cntxt->ee;
 	CVMD_gcSafeExec(ee, {
-	    opcode = CVMjvmdiGetBreakpointOpcode(ee, ip, CVM_TRUE);
+	    opcode = CVMjvmtiGetBreakpointOpcode(ee, ip, CVM_TRUE);
 	});
     }
 #else

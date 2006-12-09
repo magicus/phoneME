@@ -1,5 +1,5 @@
 /*
- * @(#)mtask.h	1.13 06/10/10
+ * @(#)mtask.h	1.14 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -52,9 +52,9 @@ CVMmtaskClientId(JNIEnv* env, CVMInt32 clientId);
 extern void
 CVMmtaskServerPort(JNIEnv* env, CVMInt32 serverPort);
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 extern void
-CVMmtaskJvmdiInit(JNIEnv* env);
+CVMmtaskJvmtiInit(JNIEnv* env);
 #endif
 
 #ifdef CVM_JVMPI

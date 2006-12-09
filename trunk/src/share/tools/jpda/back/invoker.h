@@ -1,5 +1,5 @@
 /*
- * @(#)invoker.h	1.14 06/10/10
+ * @(#)invoker.h	1.15 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,10 +23,9 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <jni.h>
 
-#ifndef INVOKER_H
-#define INVOKER_H
+#ifndef JDWP_INVOKER_H
+#define JDWP_INVOKER_H
 
 /* Invoke types */
 
@@ -47,6 +46,7 @@ typedef struct InvokeRequest {
     jmethodID method;
     jobject instance;    /* for INVOKE_INSTANCE only */
     jvalue *arguments;
+    jint argumentCount;
     char *methodSignature;
     /* Output */
     jvalue returnValue;  /* if no exception, for all but INVOKE_CONSTRUCTOR */
@@ -61,18 +61,15 @@ void invoker_lock(void);
 void invoker_unlock(void);
 
 void invoker_enableInvokeRequests(jthread thread);
-jint invoker_requestInvoke(jbyte invokeType, jbyte options, jint id,
+jvmtiError invoker_requestInvoke(jbyte invokeType, jbyte options, jint id,
                            jthread thread, jclass clazz, jmethodID method,
-                           jobject instance, jvalue *arguments);
-
+                           jobject instance, 
+                           jvalue *arguments, jint argumentCount);
 jboolean invoker_doInvoke(jthread thread);
 
 void invoker_completeInvokeRequest(jthread thread);
 jboolean invoker_isPending(jthread thread);
 void invoker_detach(InvokeRequest *request);
-
-void eventHandler_lock(void);
-void eventHandler_unlock(void);
 
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * @(#)debugDispatch.h	1.17 06/10/10
+ * @(#)debugDispatch.h	1.18 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,7 +24,8 @@
  * information or have any questions. 
  */
 
-struct CmdPacket;
+#ifndef JDWP_DEBUGDISPATCH_H
+#define JDWP_DEBUGDISPATCH_H
 
 /*
  * Type of all command handler functions. First argument is the 
@@ -41,4 +42,4 @@ void debugDispatch_initialize(void);
 void debugDispatch_reset(void);
 CommandHandler debugDispatch_getHandler(int cmdSet, int cmd) ;
 
-
+#endif

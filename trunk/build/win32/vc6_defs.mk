@@ -28,4 +28,4 @@
 
 include ../win32/vc_defs.mk
 
-CFLAGS += -GX
+CFLAGS += /EHsc

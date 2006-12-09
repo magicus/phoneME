@@ -1,5 +1,5 @@
 /*
- * @(#)version.c	1.11 06/10/10
+ * @(#)version.c	1.13 06/10/27
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -49,7 +49,7 @@ static Property properties[] = {
     {NULL,         NULL}
 };
 
-jboolean strict;     /* Use strict interpretation of JVMDI */
+jboolean strict;     /* Use strict interpretation of JVMTI */
 
 void
 version_initialize()
@@ -130,7 +130,7 @@ jboolean
 version_supportsEventOrdering()
 {
     /*
-     * Assume JVMDI event ordering is supported unless using a VM
+     * Assume JVMTI event ordering is supported unless using a VM
      * known to have critical bugs in that area.
      */
 

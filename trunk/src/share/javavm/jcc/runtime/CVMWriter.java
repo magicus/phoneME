@@ -1,5 +1,5 @@
 /*
- * @(#)CVMWriter.java	1.152	06/10/10
+ * @(#)CVMWriter.java	1.153	06/10/27
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -402,10 +402,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
     }
 
     public static String getUTF( UnicodeConstant u ){
-	if (u.UTFstring == null ){
-	   u.UTFstring = Util.unicodeToUTF( u.string );
-	}
-	return u.UTFstring;
+	return u.toUTF();
     }
 
     /*
@@ -443,7 +440,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	 * and reusing prior definitions -- there are so many dimensions it doesn't
 	 * see worthwhile.
 	 * In fact, the only reason this is not an anonimous structure is the
-	 * case where it has to be writable and initialized, for JVMDI.
+	 * case where it has to be writable and initialized, for JVMTI.
 	 */
 	if ( ! impureCode ){
 	    // this might as well be static since there will be
@@ -1515,6 +1512,18 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	/* write out the methodTablePtr. */
 	classOut.println("    " + methodTableName + ",");
 
+	/* write out the ClassLoader and ProtectionDomain */
+	int id = c.ci.loader.getID();
+	if (id != 0) {
+	    int clIDOff = 1; // first cl ID (boot == 0)
+	    int off = clRefOff + (id - clIDOff) * 2;
+	    classOut.println("    (CVMClassLoaderICell *)" +
+		"STATIC_STORE_ADDRESS(" + off + "), " +
+		"(CVMObjectICell *)" +
+		"STATIC_STORE_ADDRESS(" + (off + 1) + "),");
+	} else {
+	    classOut.println("    0, 0,");
+	}
 
 	/* write out the InnerClassesInfo */
 	if (c.ci.innerClassAttr != null) {
@@ -1522,7 +1531,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 			     "_Classblock.innerClassesCount),");
 	    writeInnerClasses(c);
 	} else {
-	    classOut.println("    0),");
+	    classOut.println("    0)");
 	}
 
 	classOut.println("};");
@@ -1731,6 +1740,8 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	}
     }
 
+    private int clRefOff;
+
     /*
      * Merge the static store for all classes into one area.
      * Sort static cells, refs first, and assign offsets.
@@ -1745,6 +1756,9 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	 * Index of a class that doesn't have <clinit> is always 0.
 	 * The 0th entry is reserved for it. */
 	int maxClinitIdx = 1;
+
+	int maxClIdx = 0;
+
 	/*
 	 * Count all statics.
 	 * Count refs, and count number of words.
@@ -1759,6 +1773,11 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 		maxClinitIdx++;
 	    }
 	}
+
+	int ncl = components.ClassTable.getNumClassLoaders();
+	nRef += ncl * 2;
+	nStaticWords += ncl * 2;
+
 	/*
 	 * Assign offsets and at the same time
 	 * record any initial values.
@@ -1769,6 +1788,16 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 
 	ConstantObject staticInitialValue[] = new ConstantObject[nStaticWords];
 	short          staticInitialSize[]  = new short[nStaticWords];
+
+	clRefOff = refOff;
+	for ( int i = 0; i < ncl; ++i) {
+	    staticInitialValue[refOff] = null;
+	    staticInitialSize[refOff] = 1;
+	    ++refOff;
+	    staticInitialValue[refOff] = null;
+	    staticInitialSize[refOff] = 1;
+	    ++refOff;
+	}
 
 	for ( int cno = 0; cno < nclass; cno++ ){
 	    CVMClass c = (CVMClass)(cvec[cno]);
@@ -2768,12 +2797,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	boolean  foundFirstNonPrimitive = false;
 	int	 firstNonPrimitive = 0;
 	int n = (classes == null) ? 0 : classes.length;
-	ClassTable classTable[] = new ClassTable[]
-				{ new ClassTable(n, ""), new ClassTable(n, "Aux") };
-	final int CORE_CLASSES = 0;
-	final int ALT_CLASSES = 1;
-	ClassTable thisTable;
-
+	ClassTable classTable = new ClassTable(n, "");
 	globalHeaderOut.println(
 	    "    struct java_lang_Class CVM_ROMClassBlocks["
 	    +String.valueOf(n)+"];");
@@ -2786,17 +2810,12 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	    int hashCode = 0;
 	    CVMClass c = classes[i];
 	    int classid = c.classid();
-	    thisTable = classTable[c.ci.altNametable ? ALT_CLASSES : CORE_CLASSES];
-	    thisTable.addClass(c);
+	    classTable.addClass(c);
 	}
 	auxOut.println("const CVMClassBlock * const CVM_ROMClassblocks[] = {" );
-	for (int i = CORE_CLASSES; i <= ALT_CLASSES; i++ ){
-	    classTable[i].writeClasslist();
-	}
+	classTable.writeClasslist();
 	auxOut.println("};" );
-	for (int i = CORE_CLASSES; i <= ALT_CLASSES; i++ ){
-	    classTable[i].writeClasslistInfo();
-	}
+	classTable.writeClasslistInfo();
 	 
 	//
 	// array of stack map indirect cells
@@ -2812,7 +2831,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	auxOut.println("};");
     }
     
-    public boolean writeClasses(ConstantPool sharedconsts){
+    public boolean writeClasses(ConstantPool sharedconsts, boolean doWrite){
 
 	// getClassVector sorts the classes with
 	// super before sub, for reasonable processing without recursion.
@@ -2856,78 +2875,92 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	// gutted out for now...
 	if ( doShared ) processStrings( sharedConstantsArray );
 
-	if (verbose)
+	if (verbose && doWrite) {
 	    System.out.println(Localizer.getString("cwriter.writing_classes"));
+	}
 	try {
 	    //mungeAllIDsAndWriteExternals(classes);
 	    for ( int i = 0; i < nClasses; i++ ){
 		classProcessStrings( classes[i].ci, doShared );
 	    }
-	    instantiateAllStrings();
-	    CVMInterfaceMethodTable.writeInterfaceTables(classes, auxOut, headerOut);
-	    int nStaticWords = writeStaticStore( classes );
-	    if (doShared) {
-		// Dump the shared constant pool
-		writeConstants(sharedConstantsArray, 
-			       sharedConstantPoolName,
-			       true /* export c.p. ref */);
-	    }
 
-	    /* The number of necessary slots for clinitEE + 1.
-	     * Index of a class that doesn't have <clinit> is always 0.
-	     * The 0th entry is reserved for it. */
-	    int	maxClinitIdx = 1;
-	    /*
-	     * First off, check compression opportunities. Look over all
-	     * methods to see variations
-	     */
-	    for ( int i = 0; i < nClasses; i++ ){
-		CVMClass c = classes[i];
-		analyzeMethodsForCompression( c );
-	    }
-	    //
-	    // Sort in order of decreasing refcount
-	    //
-	    methStats.sort();
-	    //
-	    // This is shared between our segments
-	    //
-	    methStats.dump(auxOut);
-	    /*
-	     * Now do the writing 
-	     */
-	    for ( int i = 0; i < nClasses; i++ ){
-		CVMClass c = classes[i];
-		int clinitIdx = c.hasStaticInitializer ? maxClinitIdx++ : 0;
-		writeClass( i, c, clinitIdx, nStaticWords );
-		if ( segmentedOutput && ( curClasses++ >= maxClasses) ){
-		    curClasses = 0;
-		    openNextClassFile();
+	    if (doWrite) {
+		instantiateAllStrings();
+		CVMInterfaceMethodTable.writeInterfaceTables(classes,
+		    auxOut, headerOut);
+		int nStaticWords = writeStaticStore( classes );
+		if (doShared) {
+		    // Dump the shared constant pool
+		    writeConstants(sharedConstantsArray, 
+				   sharedConstantPoolName,
+				   true /* export c.p. ref */);
 		}
+
+		/* The number of necessary slots for clinitEE + 1.
+		 * Index of a class that doesn't have <clinit> is always 0.
+		 * The 0th entry is reserved for it. */
+		int	maxClinitIdx = 1;
+		/*
+		 * First off, check compression opportunities. Look over all
+		 * methods to see variations
+		 */
+		for ( int i = 0; i < nClasses; i++ ){
+		    CVMClass c = classes[i];
+		    analyzeMethodsForCompression( c );
+		}
+		//
+		// Sort in order of decreasing refcount
+		//
+		methStats.sort();
+		//
+		// This is shared between our segments
+		//
+		methStats.dump(auxOut);
+		/*
+		 * Now do the writing 
+		 */
+		for ( int i = 0; i < nClasses; i++ ){
+		    CVMClass c = classes[i];
+		    int clinitIdx = c.hasStaticInitializer ? maxClinitIdx++ : 0;
+		    writeClass( i, c, clinitIdx, nStaticWords );
+		    if ( segmentedOutput && ( curClasses++ >= maxClasses) ){
+			curClasses = 0;
+			openNextClassFile();
+		    }
+		}
+		writeClassList();
+
+		writeCVMNameAndTypeTables();
+
+		/* Write method invokeCost array */
+		writeMethodInvokeCostArray();
+
+		initInfo.write( auxOut, "struct CVM_preloaderInitTriple",
+				   "CVM_preloaderInitMap");
+		initInfoForMBs.write( auxOut, "void* const",
+				   "CVM_preloaderInitMapForMbs");
+
+		auxOut.println("const char *CVMROMClassLoaderNames = \"" +
+		    components.ClassTable.getClassLoaderNames() + "\";");
+		auxOut.println("CVMAddr * const CVMROMClassLoaderRefs = " +
+		    "STATIC_STORE_ADDRESS(" + clRefOff + ");");
+		auxOut.println("const int CVMROMNumClassLoaders = " +
+		    components.ClassTable.getNumClassLoaders() + ";");
 	    }
-	    writeClassList();
-
-	    writeCVMNameAndTypeTables();
-
-            /* Write method invokeCost array */
-            writeMethodInvokeCostArray();
-
-	    initInfo.write( auxOut, "struct CVM_preloaderInitTriple",
-			       "CVM_preloaderInitMap");
-	    initInfoForMBs.write( auxOut, "void* const",
-			       "CVM_preloaderInitMapForMbs");
 	} catch ( java.io.IOException e ){
 	    failureMode = e;
 	    formatError = true;
 	} finally { 
-	    classOut.flush();
-	    headerOut.flush();
+	    if (doWrite) {
+		classOut.flush();
+		headerOut.flush();
+	    }
 	}
-	return (!formatError) && (! classOut.checkError()) && (! headerOut.checkError());
+	return (!formatError) && (!doWrite || ((! classOut.checkError()) && (! headerOut.checkError())));
     }
 
-    public boolean writeClasses() {
-	return writeClasses(null);
+    public boolean writeClasses(boolean doWrite) {
+	return writeClasses(null, doWrite);
     }
 
 

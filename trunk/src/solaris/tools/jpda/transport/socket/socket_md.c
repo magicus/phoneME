@@ -1,5 +1,5 @@
 /*
- * @(#)socket_md.c	1.10 06/10/10
+ * @(#)socket_md.c	1.11 06/10/26
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -26,7 +26,24 @@
  */
 
 
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/time.h>
+#ifdef __solaris__
+#include <thread.h>
+#endif
+#ifdef __linux__
+#include <pthread.h>
+#include <sys/poll.h>
+#endif
+
 #include "socket_md.h"
 #include "sysSocket.h"
 
@@ -37,12 +54,38 @@ dbgsysListen(int fd, long count) {
 
 int
 dbgsysConnect(int fd, struct sockaddr *name, int namelen) {
-    return connect(fd, name, namelen);
+    int rv = connect(fd, name, namelen);
+    if (rv < 0 && errno == EINPROGRESS) {
+      return DBG_EINPROGRESS;
+    } else {
+      return rv;
+    }
+}
+
+int
+dbgsysFinishConnect(int fd, long timeout) {
+    int rv = dbgsysPoll(fd, 0, 1, timeout);
+    if (rv == 0) {
+      return DBG_ETIMEOUT;
+    }
+    if (rv > 0) {
+      return 0;
+    }
+    return rv;
 }
 
 int
 dbgsysAccept(int fd, struct sockaddr *name, int *namelen) {
-    return accept(fd, name, namelen);
+    int rv; 
+    for (;;) {
+      rv = accept(fd, name, namelen);
+      if (rv >= 0) {
+	    return rv;
+      }
+      if (errno != ECONNABORTED) {
+	    return rv;
+      }
+    }
 }
 
 int
@@ -89,6 +132,11 @@ int dbgsysSocketClose(int fd) {
 int
 dbgsysBind(int fd, struct sockaddr *name, int namelen) {
     return bind(fd, name, namelen);
+}
+
+UINT32
+dbgsysInetAddr(const char* cp) {
+    return (UINT32)inet_addr(cp);
 }
 
 unsigned long
@@ -159,4 +207,90 @@ dbgsysSetSocketOption(int fd, jint cmd, jboolean on, jvalue value)
     return SYS_OK;
 }
 
+
+int
+dbgsysConfigureBlocking(int fd, jboolean blocking) {
+    int flags = fcntl(fd, F_GETFL);
+
+    if ((blocking == JNI_FALSE) && !(flags & O_NONBLOCK)) {
+        return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    }
+    if ((blocking == JNI_TRUE) && (flags & O_NONBLOCK)) {
+        return fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
+    }
+    return 0;
+}
+
+int
+dbgsysPoll(int fd, jboolean rd, jboolean wr, long timeout) {
+    struct pollfd fds[1];
+    int rv;
+
+    fds[0].fd = fd;
+    fds[0].events = 0;
+    if (rd) {
+        fds[0].events |= POLLIN;
+    }
+    if (wr) {
+        fds[0].events |= POLLOUT;
+    }
+    fds[0].revents = 0;
+
+    rv = poll(&fds[0], 1, timeout);
+    if (rv >= 0) {
+        rv = 0;
+        if (fds[0].revents & POLLIN) {
+            rv |= DBG_POLLIN;
+        }
+        if (fds[0].revents & POLLOUT) {
+	    rv |= DBG_POLLOUT;
+        }
+    }
+    return rv;
+}
+
+int
+dbgsysGetLastIOError(char *buf, jint size) {
+    char *msg = strerror(errno);
+    strncpy(buf, msg, size-1);
+    buf[size-1] = '\0';  
+    return 0;
+}
+
+#ifdef __solaris__
+int
+dbgsysTlsAlloc() {
+    thread_key_t tk;
+    if (thr_keycreate(&tk, NULL)) {
+  	perror("thr_keycreate");
+	exit(-1);
+    }
+    return (int)tk;
+}
+
+void
+dbgsysTlsFree(int index) {
+   /* no-op */
+}
+
+void
+dbgsysTlsPut(int index, void *value) {
+    thr_setspecific((thread_key_t)index, value) ;
+}
+
+void *
+dbgsysTlsGet(int index) {
+    void* r = NULL;
+    thr_getspecific((thread_key_t)index, &r);
+    return r;
+}
+
+#endif
+
+long
+dbgsysCurrentTimeMillis() {
+    struct timeval t;
+    gettimeofday(&t, 0);
+    return ((jlong)t.tv_sec) * 1000 + (jlong)(t.tv_usec/1000);
+}
 

@@ -1,5 +1,5 @@
 /*
- * @(#)preloader.h	1.74 06/10/10
+ * @(#)preloader.h	1.75 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -48,12 +48,28 @@ CVMpreloaderLookup(const char* className);
 #endif
 
 /*
+ * Return list of ROMized ClassLoader names.
+ */
+const char *
+CVMpreloaderGetClassLoaderNames(CVMExecEnv *ee);
+
+/*
+ * Register ROMized ClassLoader object.
+ */
+void
+CVMpreloaderRegisterClassLoaderUnsafe(CVMExecEnv *ee, CVMInt32 index,
+    CVMClassLoaderICell *loader);
+
+
+/*
  * Returns the cb of the romized class with the specified CVMClassTypeID.
  * This excludes VM-defined primitive types, such as "int" (though if a
  * user managed to define an "int" class, that would be fine).
  */
+
 extern CVMClassBlock*
-CVMpreloaderLookupFromType(CVMClassTypeID classType);
+CVMpreloaderLookupFromType(CVMExecEnv *ee,
+    CVMClassTypeID typeID, CVMObjectICell *loader);
 
 /*
  * Only for lookup of primitive VM-defined types, by type name.
@@ -106,7 +122,7 @@ CVMpreloaderInitInvokeCost();
 /*
  * Iterate over all preloaded classes, and call 'callback' on each class.
  */
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMDI) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMTI) || defined(CVM_JVMPI)
 extern void
 CVMpreloaderIterateAllClasses(CVMExecEnv* ee, 
 			      CVMClassCallbackFunc callback,

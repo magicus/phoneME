@@ -1,5 +1,5 @@
 /*
- * @(#)CVMClass.java	1.33 06/10/10
+ * @(#)CVMClass.java	1.34 06/10/22
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -99,7 +99,7 @@ CVMClass extends ClassClass implements Const, CVMConst, CVMTypeCode {
 		     */
 		    if (aci.baseType != Const.T_CLASS) {
 			myNativeName = "manufacturedArrayOf"+
-			    aci.baseName;
+			    aci.getNativeName();
 		    } else if (aci.baseClass.find().superClassInfo == null) {
 			myNativeName = "manufacturedArrayOfObject";
 		    } else {

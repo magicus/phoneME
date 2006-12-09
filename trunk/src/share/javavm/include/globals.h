@@ -1,5 +1,5 @@
 /*
- * @(#)globals.h	1.167 06/10/10
+ * @(#)globals.h	1.170 06/10/30
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -39,10 +39,13 @@
 #include "javavm/include/jni_impl.h"
 #include "javavm/include/packages.h"
 #include "javavm/include/utils.h"
-#include "javavm/include/jvmdi_impl.h"
+#include "javavm/include/jvmtiExport.h"
 #include "javavm/include/jvmpi_impl.h"
 #ifdef CVM_XRUN
 #include "javavm/include/xrun.h"
+#endif
+#ifdef CVM_AGENTLIB
+#include "javavm/include/agentlib.h"
 #endif
 #ifdef CVM_INSPECTOR
 #include "javavm/include/inspector.h"
@@ -87,7 +90,7 @@ struct CVMOptions {
 #ifdef CVM_TRACE_ENABLED
     const char *traceFlagsStr;
 #endif
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     CVMBool debugging;
 #endif
 #ifdef CVM_CLASSLOADING
@@ -253,7 +256,7 @@ struct CVMGlobalState {
     CVMSysMutex nullClassLoaderLock; /* The NULL classloader lock */
 #endif
     
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     CVMSysMutex debuggerLock;
 #endif
 
@@ -455,14 +458,14 @@ struct CVMGlobalState {
     CVMPackage* packages[CVM_PKGINFO_HASHSIZE];
     CVMUint16   numPackages;
 
-#ifdef CVM_JVMDI
-    CVMBool jvmdiDebuggingEnabled;
+#ifdef CVM_JVMTI
+    CVMBool jvmtiDebuggingEnabled;
     /* are one or more fields being watched?
      * these flags are accessed by the interpreter to determine if
-     * jvmdi should be notified.
+     * jvmti should be notified.
      */
-    CVMBool jvmdiWatchingFieldAccess; /* set ONLY by jvmdi.c */
-    CVMBool jvmdiWatchingFieldModification; /* set ONLY by jvmdi.c */
+    CVMBool jvmtiWatchingFieldAccess; /* set ONLY by jvmt */
+    CVMBool jvmtiWatchingFieldModification; /* set ONLY by jvmti */
 #endif
 
 #ifdef CVM_JVMPI
@@ -548,10 +551,18 @@ struct CVMGlobalState {
      */
     CVMXrunTable onUnloadTable;
 #endif
-
+#ifdef CVM_AGENTLIB
+    /*
+     * A list to keep track of shared native library loaded by the
+     * -agentlib/-agentpath command argument. It contains the shared library
+     * object handle and the function pointer of calling Agent_OnUnLoad at VM
+     * exit.
+     */
+    CVMAgentTable agentonUnloadTable;
+#endif
     /*
      * exit_procs contains exitHandle() function pointer to exit 
-     *            JVMDI event at VM exit.
+     *            JVMTI event at VM exit.
      */
     exit_procPtr exit_procs;
 
@@ -572,9 +583,9 @@ struct CVMGlobalState {
        queue. */
     CVMObject* deferredWeakrefsToAddToPending;
 
-#ifdef CVM_JVMDI
-    /* JVMDI-specific globally defined static variables */
-    JVMDI_Static jvmdiStatics;
+#ifdef CVM_JVMTI
+    /* JVMTI-specific globally defined static variables */
+    JVMTI_Static jvmtiStatics;
 #endif
 
 #if defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION)

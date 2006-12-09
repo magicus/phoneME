@@ -1,5 +1,5 @@
 /*
- * @(#)common_exceptions.h	1.39 06/10/10
+ * @(#)common_exceptions.h	1.40 06/10/27
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -48,7 +48,7 @@ extern CVMThrowFunc CVMthrowUnsupportedClassVersionError;
 extern CVMThrowFunc CVMthrowVerifyError;
 #endif
 
-/* NOTE: CVM_CLASSLOADING and CVM_JVMDI both imply
+/* NOTE: CVM_CLASSLOADING and CVM_JVMTI both imply
    CVM_DYNAMIC_LINKING is defined; see build/share/defs.mk. */
 #ifdef CVM_DYNAMIC_LINKING
 extern CVMThrowFunc CVMthrowUnsatisfiedLinkError;

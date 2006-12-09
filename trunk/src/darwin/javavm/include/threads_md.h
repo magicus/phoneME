@@ -1,5 +1,5 @@
 /*
- * @(#)threads_md.h	1.31 06/10/10
+ * @(#)threads_md.h	1.32 06/10/27
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -47,7 +47,7 @@
  * However, they probably aren't necessary. The main use is in sync_md.c
  * to make sure pending io calls on a closed fd are cancelled. This was
  * originally done for linux, but doesn't appear to be necessary for darwin.
- * The other use is by CVMthreadSuspend, which id only used by jvmdi and
+ * The other use is by CVMthreadSuspend, which id only used by jvmti and
  * jvmpi, which aren't really that important. In any case, starting with
  * MacOS 10.2, pthread_kill is supported, so we could conditionally add
  * support if necessary.

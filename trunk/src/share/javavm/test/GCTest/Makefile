@@ -21,7 +21,7 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional  
 # information or have any questions. 
 #
-# @(#)Makefile	1.12 06/10/10
+# @(#)Makefile	1.13 06/10/25
 #
 #
 
@@ -31,7 +31,7 @@
 CVM_OPTIMIZED=false
 CVM_PRELOAD_LIB=false
 CVM_DEBUG=false
-CVM_JVMDI=false
+CVM_JVMTI=false
 CVM_JVMPI=false
 CVM_JIT=false
 J2ME_CLASSLIB=cdc
@@ -44,7 +44,7 @@ build:
 	@chmod +x build.sh
 	@./build.sh 2>&1 | tee build.$(CVM_TARGET).log
 	@echo "..... Building CVM"
-	(cd $(CVM_PREFIX)/build/$(CVM_TARGET); $(MAKE) JDK_HOME=$(JDK_HOME) JDK_HOME=$(JDK_HOME) CVM_TEST_GC=true CVM_DEBUG=$(CVM_DEBUG) CVM_OPTIMIZED=$(CVM_OPTIMIZED) CVM_PRELOAD_LIB=$(CVM_PRELOAD_LIB) CVM_JVMDI=$(CVM_JVMDI) CVM_JVMPI=$(CVM_JVMPI) CVM_JIT=$(CVM_JIT) J2ME_CLASSLIB=$(J2ME_CLASSLIB))
+	(cd $(CVM_PREFIX)/build/$(CVM_TARGET); $(MAKE) JDK_HOME=$(JDK_HOME) JDK_HOME=$(JDK_HOME) CVM_TEST_GC=true CVM_DEBUG=$(CVM_DEBUG) CVM_OPTIMIZED=$(CVM_OPTIMIZED) CVM_PRELOAD_LIB=$(CVM_PRELOAD_LIB) CVM_JVMTI=$(CVM_JVMTI) CVM_JVMPI=$(CVM_JVMPI) CVM_JIT=$(CVM_JIT) J2ME_CLASSLIB=$(J2ME_CLASSLIB))
 
 run:
 	@chmod +x run.sh

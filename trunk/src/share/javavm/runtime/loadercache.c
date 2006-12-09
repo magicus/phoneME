@@ -1,5 +1,5 @@
 /*
- * @(#)loadercache.c	1.45 06/10/10
+ * @(#)loadercache.c	1.46 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -774,12 +774,20 @@ CVMloaderCacheLookupWithProtectionDomain(CVMExecEnv* ee,
     CVMLoaderCacheEntry* entry;
 
     loader = CVMloaderCacheGetGlobalRootFromLoader(ee, loader);
-    entry  = CVMglobals.loaderCache[HASH_INDEX(classID, loader)];
 
     CVMtraceClassLookup(("LC: loader cache lookup <0x%x,%!C>\n",
 			 loader, classID));
 
+    {
+	CVMClassBlock *cb = CVMpreloaderLookupFromType(ee, classID, loader);
+	if (cb != NULL) {
+	    return cb;
+	}
+    }
+
     CVM_LOADERCACHE_ASSERT_LOCKED(ee);
+
+    entry  = CVMglobals.loaderCache[HASH_INDEX(classID, loader)];
 
     while (entry) {
 	CVMClassBlock* cb = entry->cb;
@@ -1100,7 +1108,7 @@ CVMloaderCacheDump(CVMExecEnv* ee)
 }
 #endif /* CVM_DEBUG */
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 /*
  * Enumerate the loader cache.
  */

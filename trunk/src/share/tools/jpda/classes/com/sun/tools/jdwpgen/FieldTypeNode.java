@@ -1,5 +1,5 @@
 /*
- * @(#)FieldTypeNode.java	1.10 06/10/10
+ * @(#)FieldTypeNode.java	1.11 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
