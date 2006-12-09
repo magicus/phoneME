@@ -4135,13 +4135,14 @@ jvmti_GetPhase(jvmtiEnv* env,
 static jvmtiError JNICALL
 jvmti_DisposeEnvironment(jvmtiEnv* jvmtienv) {
 
+  jvmtiCapabilities *cap;
   JvmtiEnv* jvmti_env =
 	(JvmtiEnv*)((int)jvmtienv - CVMoffsetof(JvmtiEnv, _jvmti_external));
   if (!jvmti_env->_is_valid) {
 	return JVMTI_ERROR_INVALID_ENVIRONMENT;
   }
 
-  jvmtiCapabilities *cap = get_capabilities(jvmti_env);
+  cap = get_capabilities(jvmti_env);
   relinquish_capabilities(cap, cap, cap);
   CVMdestroyJvmti(jvmti_env);
   return JVMTI_ERROR_NONE;
