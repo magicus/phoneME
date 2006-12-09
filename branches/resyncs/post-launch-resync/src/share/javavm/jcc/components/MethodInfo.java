@@ -1701,19 +1701,20 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 	    case opc_multianewarray:
 	    case opc_anewarray_quick:
      	    case opc_multianewarray_quick:
-                int dimensions;
-                if (opcode == opc_anewarray || opcode == opc_anewarray_quick) {
-                    dimensions = 1;
-                } else {
-                    dimensions = shortAt(code, i+2);
-                }
                 index = shortAt(code, i+1);
                 ConstantObject co = constantPool[index];
                 if (co instanceof ClassConstant) {
                     ClassConstant cc = (ClassConstant)co;
-                    String cname= "L"+cc.name.string+";";
-                    for (int di = 0; di < dimensions; di++) {
-                        cname = "["+ cname;
+		    String cname = cc.name.string;
+                    /* Construct the name of the array. For multianewarray, the
+                     * resolved constant should already be the array class with
+                     * correct dimensions. */
+                    if (opcode == opc_anewarray || opcode == opc_anewarray_quick) {
+                        if (cname.startsWith("[")) {
+                            cname = "[" + cname;
+			} else {
+                            cname = "[L"+ cname +";";
+			}
                     }
                     vm.ArrayClassInfo.collectArrayClass(cname, false);
                 }
