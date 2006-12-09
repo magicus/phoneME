@@ -94,15 +94,18 @@ public final class MIDPLauncher {
 
         /* Load MIDletSuiteLoader using MIDPImplementationClassLoader
          * and invoke it's main() method. */
+	String loaderName = null;
         try {
-            Class suiteloader = midpImplCL.loadClass(
-                "com.sun.midp.main.MIDletSuiteLoader");
+            loaderName = System.getProperty(
+                "com.sun.midp.mainClass.name",
+                "com.sun.midp.main.CdcMIDletSuiteLoader");
+            Class suiteloader = midpImplCL.loadClass(loaderName);
             Class loaderArgs[] = {mainArgs.getClass()};
             Method mainMethod = suiteloader.getMethod("main", loaderArgs);
             Object args2[] = {mainArgs};
             mainMethod.invoke(null, args2);
         } catch (ClassNotFoundException ce) {
-            System.err.println("Can't find MIDletSuiteLoader");
+            System.err.println("Can't find " + loaderName);
         } catch (NoSuchMethodException ne) {
             System.err.println("Can't access MIDletSuiteLoader main()");
         } catch (IllegalAccessException ie) {
