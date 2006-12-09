@@ -90,6 +90,7 @@ ifeq ($(CVM_DEBUG), true)
 USE_DEBUG		= true
 endif
 
+MIDP_CLASSESZIP_DEPS	=
 MIDP_CLASSESZIP		= $(MIDP_OUTPUT_DIR)/classes.zip
 
 RUNMIDLET		= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/runMidlet$(DEBUG_POSTFIX)
