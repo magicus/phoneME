@@ -30,7 +30,13 @@ ifeq ($(CVM_INCLUDE_JUMP),true)
 printconfig::
 	@echo "JUMP_DIR           = $(JUMP_DIR)"
 
-$(CVM_ROMJAVA_LIST): $(JUMP_API_CLASSESZIP) $(JUMP_IMPL_CLASSESZIP)
+jumptargets: $(JUMP_API_CLASSESZIP) $(JUMP_IMPL_CLASSESZIP)
+
+$(CVM_BUILD_DEFS_MK)::
+	$(AT) echo updating $@ [from rules_jump.mk]
+	$(AT) echo "# JUMP specific exports" >> $@
+	$(AT) echo "JUMP_API_CLASSESZIP = $(JUMP_API_CLASSESZIP)" >> $@
+	$(AT) echo "" >> $@
 
 #
 # For now we are forcing a jump build because we can't deduce dependencies
@@ -41,9 +47,13 @@ $(JUMP_API_CLASSESZIP): $(JUMP_DEPENDENCIES) force_jump_build
 	$(AT)echo "Building jump api's ..."
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml build-api javadoc-api)
 
-$(JUMP_IMPL_CLASSESZIP): $(JUMP_API_CLASSESZIP) force_jump_build
+$(JUMP_IMPL_CLASSESZIP): $(JUMP_API_CLASSESZIP) $(MIDP_CLASSESZIP) force_jump_build
 	$(AT)echo "Building jump implementation ..."
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml build-impl)
+
+$(JUMP_NATIVE_LIBRARY_PATHNAME) :: $(JUMP_NATIVE_LIB_OBJS)
+	@echo "Linking $@"
+	$(SO_LINK_CMD)
 
 force_jump_build:
 

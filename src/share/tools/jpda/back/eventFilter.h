@@ -1,5 +1,5 @@
 /*
- * @(#)eventFilter.h	1.5 06/10/10
+ * @(#)eventFilter.h	1.6 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,54 +24,56 @@
  * information or have any questions. 
  */
 
-#ifndef _EVENT_FILTER_H
-#define _EVENT_FILTER_H
+#ifndef JDWP_EVENTFILTER_H
+#define JDWP_EVENTFILTER_H
 
-#include <jni.h>
-#include <jvmdi.h>
 #include "eventHandler.h"
 
 /***** filter set-up *****/
 
-jint eventFilter_setConditionalFilter(HandlerNode *node,
+jvmtiError eventFilter_setConditionalFilter(HandlerNode *node,
                                       jint index, jint exprID);
-jint eventFilter_setCountFilter(HandlerNode *node,
+jvmtiError eventFilter_setCountFilter(HandlerNode *node,
                                 jint index, jint count);
-jint eventFilter_setThreadOnlyFilter(HandlerNode *node,
+jvmtiError eventFilter_setThreadOnlyFilter(HandlerNode *node,
                                      jint index, jthread thread);
-jint eventFilter_setLocationOnlyFilter(HandlerNode *node,
+jvmtiError eventFilter_setLocationOnlyFilter(HandlerNode *node,
                                        jint index, 
                                        jclass clazz, 
                                        jmethodID method, 
                                        jlocation location);
-jint eventFilter_setFieldOnlyFilter(HandlerNode *node,
+jvmtiError eventFilter_setFieldOnlyFilter(HandlerNode *node,
                                     jint index, 
                                     jclass clazz, 
                                     jfieldID field);
-jint eventFilter_setClassOnlyFilter(HandlerNode *node,
+jvmtiError eventFilter_setClassOnlyFilter(HandlerNode *node,
                                     jint index, 
                                     jclass clazz);
-jint eventFilter_setExceptionOnlyFilter(HandlerNode *node,
+jvmtiError eventFilter_setExceptionOnlyFilter(HandlerNode *node,
                                         jint index, 
                                         jclass exceptionClass, 
                                         jboolean caught, 
                                         jboolean uncaught);
-jint eventFilter_setInstanceOnlyFilter(HandlerNode *node,
+jvmtiError eventFilter_setInstanceOnlyFilter(HandlerNode *node,
                                        jint index, 
                                        jobject object);
-jint eventFilter_setClassMatchFilter(HandlerNode *node,
+jvmtiError eventFilter_setClassMatchFilter(HandlerNode *node,
                                      jint index, 
                                      char *classPattern);
-jint eventFilter_setClassExcludeFilter(HandlerNode *node,
+jvmtiError eventFilter_setClassExcludeFilter(HandlerNode *node,
                                        jint index, 
                                        char *classPattern);
-jint eventFilter_setStepFilter(HandlerNode *node,
+jvmtiError eventFilter_setStepFilter(HandlerNode *node,
                                jint index, 
                                jthread thread, 
                                jint size, jint depth);
+jvmtiError eventFilter_setSourceNameMatchFilter(HandlerNode *node, 
+                                                jint index, 
+                                                char *sourceNamePattern);
 
 /***** misc *****/
 
-jboolean eventFilter_predictFiltering(HandlerNode *node, jframeID frame);
+jboolean eventFilter_predictFiltering(HandlerNode *node, jclass clazz, char *classname);
+jboolean isBreakpointSet(jclass clazz, jmethodID method, jlocation location);
 
 #endif /* _EVENT_FILTER_H */

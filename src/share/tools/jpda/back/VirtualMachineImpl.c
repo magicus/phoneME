@@ -1,5 +1,5 @@
 /*
- * @(#)VirtualMachineImpl.c	1.85 06/10/19
+ * @(#)VirtualMachineImpl.c     1.100 05/03/08
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,75 +23,70 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
+#include "util.h"
 #include "VirtualMachineImpl.h"
 #include "commonRef.h"
 #include "inStream.h"
 #include "outStream.h"
-#include "util.h"
 #include "eventHandler.h"
 #include "eventHelper.h"
 #include "threadControl.h"
-#include "JDWP.h"
-#include "version.h"
 #include "SDE.h"
+#include "FrameID.h"
 
 static char *versionName = "Java Debug Wire Protocol";
 static int majorVersion = 1;  /* JDWP major version */
 static int minorVersion = 4;  /* JDWP minor version */
 
-/* retrieved on init - defaults in-case of failure to init */
-static char *classpath_property = "";
-static char *bootclasspath_property = "";
-static char path_separator_property = ';';
-static char *user_dir_property = "";
-static char *vm_info_property = "";
-    
 static jboolean 
 version(PacketInputStream *in, PacketOutputStream *out)
 {
     char buf[500];
     char *vmName;
     char *vmVersion;
+    char *vmInfo;
     
-    if (vmDead) {
-        outStream_setError(out, JDWP_Error_VM_DEAD);                    
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));                    
         return JNI_TRUE;
     }
 
-    vmVersion = version_vmVersion();
+    vmVersion = gdata->property_java_version;
     if (vmVersion == NULL) {
         vmVersion = "<unknown>";
     }
-    vmName = version_vmName();
+    vmName = gdata->property_java_vm_name;
     if (vmName == NULL) {
         vmName = "<unknown>";
+    }
+    vmInfo = gdata->property_java_vm_info;
+    if (vmInfo == NULL) {
+        vmInfo = "<unknown>";
     }
 
     /*
      * Write the descriptive version information
      */
-    sprintf(buf, "%s version %d.%d\nJVM Debug Interface version %d.%d\n"
+    (void)snprintf(buf, sizeof(buf),
+                "%s version %d.%d\nJVM Debug Interface version %d.%d\n"
                  "JVM version %s (%s, %s)",
                   versionName, majorVersion, minorVersion, 
-                  jvmdiMajorVersion(), jvmdiMinorVersion(),
-                  vmVersion, vmName, vm_info_property);
-    outStream_writeString(out, buf);
+                  jvmtiMajorVersion(), jvmtiMinorVersion(),
+                  vmVersion, vmName, vmInfo);
+    (void)outStream_writeString(out, buf);
 
     /*
      * Write the JDWP version numbers
      */
-    outStream_writeInt(out, majorVersion);
-    outStream_writeInt(out, minorVersion);
+    (void)outStream_writeInt(out, majorVersion);
+    (void)outStream_writeInt(out, minorVersion);
 
     /*
      * Write the VM version and name
      */
-    outStream_writeString(out, vmVersion);
-    outStream_writeString(out, vmName);
+    (void)outStream_writeString(out, vmVersion);
+    (void)outStream_writeString(out, vmName);
 
     return JNI_TRUE;
 }
@@ -100,215 +95,308 @@ static jboolean
 classesForSignature(PacketInputStream *in, PacketOutputStream *out) 
 {
     JNIEnv *env;
-    jint classCount;
-    jint i;
-    jclass *theClasses;
     char *signature;
-    char *candidate;
 
-    if (vmDead) {
-        outStream_setError(out, JDWP_Error_VM_DEAD);                    
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));                    
         return JNI_TRUE;
     }
 
-    env = getEnv();
     signature = inStream_readString(in);
     if (signature == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
+        outStream_setError(out, JDWP_ERROR(OUT_OF_MEMORY));
         return JNI_TRUE;
     }
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    theClasses = allLoadedClasses(&classCount);
-    if (theClasses == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        /* Count classes in theClasses which match signature */
-        int matchCount = 0;
-        /* Count classes written to the JDWP connection */
-        int writtenCount = 0;
+    env = getEnv();
 
-        for (i=0; i<classCount; i++) {
-            jclass clazz = theClasses[i];
-            jint status = classStatus(clazz);
+    WITH_LOCAL_REFS(env, 2000) {
+    
+        jint classCount;
+        jclass *theClasses;
+        jvmtiError error;
+        
+        error = allLoadedClasses(&theClasses, &classCount);
+        if ( error == JVMTI_ERROR_NONE ) {
+            /* Count classes in theClasses which match signature */
+            int matchCount = 0;
+            /* Count classes written to the JDWP connection */
+            int writtenCount = 0;
+            int i;
 
-            /* Filter out unprepared classes (arrays may or
-             * may not be marked as prepared) */
-            if (((status & JVMDI_CLASS_STATUS_PREPARED) == 0)
-                      && !isArrayClass(clazz)) {
-                continue;
+            for (i=0; i<classCount; i++) {
+                jclass clazz = theClasses[i];
+                jint status = classStatus(clazz);
+                char *candidate_signature = NULL;
+                jint wanted = 
+                    (JVMTI_CLASS_STATUS_PREPARED|JVMTI_CLASS_STATUS_ARRAY|
+                     JVMTI_CLASS_STATUS_PRIMITIVE);
+
+                /* We want prepared classes, primitives, and arrays only */
+                if ((status & wanted) == 0) {
+                    continue;
+                }
+
+                error = classSignature(clazz, &candidate_signature, NULL);
+                if (error != JVMTI_ERROR_NONE) {
+                  break;
+                }
+                if (strcmp(candidate_signature, signature) == 0) {
+                    /* Float interesting classes (those that
+                     * are matching and are prepared) to the
+                     * beginning of the array. 
+                     */
+                    theClasses[i] = theClasses[matchCount];
+                    theClasses[matchCount++] = clazz;
+                }
+                jvmtiDeallocate(candidate_signature);
             }
-            candidate = classSignature(clazz);
-            if (candidate == NULL) {
-                freeGlobalRefs(theClasses, classCount);
-                jdwpFree(signature);
-                outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-                return JNI_TRUE;
+            
+            /* At this point matching prepared classes occupy
+             * indicies 0 thru matchCount-1 of theClasses.
+             */
+
+            if ( error ==  JVMTI_ERROR_NONE ) {
+                (void)outStream_writeInt(out, matchCount);
+                for (; writtenCount < matchCount; writtenCount++) {
+                    jclass clazz = theClasses[writtenCount];
+                    jint status = classStatus(clazz);
+                    jbyte tag = referenceTypeTag(clazz);
+                    (void)outStream_writeByte(out, tag);
+                    outStream_writeObjectRef(env, out, clazz);
+                    (void)outStream_writeInt(out, map2jdwpClassStatus(status));
+                    /* No point in continuing if there's an error */
+                    if (outStream_error(out)) {
+                        break;
+                    }
+                }
             }
-            if (strcmp(candidate, signature) == 0) {
-                /* Float interesting classes (those that
-                 * are matching and are prepared) to the
-                 * beginning of the array. 
-                 * Do a swap so that uninteresting classes
-                 * (at the end of the array) can properly
-                 * have their global references deleted.
-                 */
-                theClasses[i] = theClasses[matchCount];
-                theClasses[matchCount++] = clazz;
-            }
-            jdwpFree(candidate);
         }
-        /* At this point matching prepared classes occupy
-         * indicies 0 thru matchCount-1 of theClasses.
-         * Indicies matchCount thru classCount-1 of 
-         * theClasses will not be written but remain there
-         * so they can be deleted by deleteRefArray() below.
-         */
 
-        outStream_writeInt(out, matchCount);
-        for (; writtenCount < matchCount; writtenCount++) {
-            jclass clazz = theClasses[writtenCount];
-            jint status = classStatus(clazz);
-            jbyte tag = referenceTypeTag(clazz);
-            outStream_writeByte(out, tag);
-            WRITE_GLOBAL_REF(env, out, clazz);
-            outStream_writeInt(out, status);
-
-            /* No point in continuing if there's an error */
-            if (outStream_error(out)) {
-                break;
-            }
+        if ( error != JVMTI_ERROR_NONE ) {
+            outStream_setError(out, map2jdwpError(error));
         }
-        /* All written classes have their global ref
-         * freed in the WRITE_GLOBAL_REF; The rest,
-         * there because of failure termination and/or
-         * because they do not match or are not prepared,
-         * must be freed.
-         */
-        freeGlobalRefsPartial(theClasses, writtenCount, classCount);
+        
+    } END_WITH_LOCAL_REFS(env);
+        
+    jvmtiDeallocate(signature);
+    
+    return JNI_TRUE;
+}
+
+static jboolean 
+allClasses1(PacketInputStream *in, PacketOutputStream *out, int outputGenerics)
+{
+    JNIEnv *env;
+
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));                    
+        return JNI_TRUE;
     }
-    jdwpFree(signature);
+
+    env = getEnv();
+
+    WITH_LOCAL_REFS(env, 2000) {
+        
+        jint classCount;
+        jclass *theClasses;
+        jvmtiError error;
+    
+        error = allLoadedClasses(&theClasses, &classCount);
+        if ( error != JVMTI_ERROR_NONE ) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            /* Count classes in theClasses which are prepared */
+            int prepCount = 0;
+            /* Count classes written to the JDWP connection */
+            int writtenCount = 0;  
+            int i;
+
+            for (i=0; i<classCount; i++) {
+                jclass clazz = theClasses[i];
+                jint status = classStatus(clazz);
+                jint wanted = 
+                    (JVMTI_CLASS_STATUS_PREPARED|JVMTI_CLASS_STATUS_ARRAY);
+
+                /* We want prepared classes and arrays only */
+                if ((status & wanted) != 0) {
+                    /* Float interesting classes (those that
+                     * are prepared) to the beginning of the array. 
+                     */
+                    theClasses[i] = theClasses[prepCount];
+                    theClasses[prepCount++] = clazz;
+                }
+            }
+        
+            /* At this point prepared classes occupy
+             * indicies 0 thru prepCount-1 of theClasses.
+             */
+
+            (void)outStream_writeInt(out, prepCount);
+            for (; writtenCount < prepCount; writtenCount++) {
+                char *signature = NULL;
+                char *genericSignature = NULL;
+                jclass clazz = theClasses[writtenCount];
+                jint status = classStatus(clazz);
+                jbyte tag = referenceTypeTag(clazz);
+                jvmtiError error;
+
+                error = classSignature(clazz, &signature, &genericSignature);
+                if (error != JVMTI_ERROR_NONE) {
+                    outStream_setError(out, map2jdwpError(error));
+                    break;
+                }
+
+                (void)outStream_writeByte(out, tag);
+                outStream_writeObjectRef(env, out, clazz);
+                (void)outStream_writeString(out, signature);
+                if (outputGenerics == 1) {
+                    writeGenericSignature(out, genericSignature);
+                }
+
+                (void)outStream_writeInt(out, map2jdwpClassStatus(status));
+                jvmtiDeallocate(signature);
+                if (genericSignature != NULL) {
+                  jvmtiDeallocate(genericSignature);
+                }
+
+                /* No point in continuing if there's an error */
+                if (outStream_error(out)) {
+                    break;
+                }
+            }
+        }
+    
+    } END_WITH_LOCAL_REFS(env);
+    
     return JNI_TRUE;
 }
 
 static jboolean 
 allClasses(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env;
-    jint classCount;
-    jint i;
-    jclass *theClasses;
+    return allClasses1(in, out, 0);
+}
 
-    if (vmDead) {
-        outStream_setError(out, JDWP_Error_VM_DEAD);                    
+static jboolean 
+allClassesWithGeneric(PacketInputStream *in, PacketOutputStream *out)
+{
+    return allClasses1(in, out, 1);
+}
+
+  /***********************************************************/
+
+
+static jboolean
+instanceCounts(PacketInputStream *in, PacketOutputStream *out)
+{
+    jint classCount;
+    jclass *classes;
+    JNIEnv *env;
+    int ii;
+
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));                    
         return JNI_TRUE;
     }
 
-    env = getEnv();
-    theClasses = allLoadedClasses(&classCount);
-    if (theClasses == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        /* Count classes in theClasses which are prepared */
-        int prepCount = 0;
-        /* Count classes written to the JDWP connection */
-        int writtenCount = 0;  
+    classCount = inStream_readInt(in);
 
-        for (i=0; i<classCount; i++) {
-            jclass clazz = theClasses[i];
-            jint status = classStatus(clazz);
-
-            /* Filter out unprepared classes (arrays may or
-             * may not be marked as prepared) */
-            if (((status & JVMDI_CLASS_STATUS_PREPARED) != 0)
-                      || isArrayClass(clazz)) {
-                /* Float interesting classes (those that
-                 * are prepared) to the beginning of the array. 
-                 * Do a swap so that uninteresting classes
-                 * (at the end of the array) can properly
-                 * have their global references deleted.
-                 */
-                theClasses[i] = theClasses[prepCount];
-                theClasses[prepCount++] = clazz;
-            }
-        }
-        /* At this point prepared classes occupy
-         * indicies 0 thru prepCount-1 of theClasses.
-         * Indicies prepCount thru classCount-1 of 
-         * theClasses will not be written but remain there
-         * so they can be deleted by deleteRefArray() below.
-         */
-
-        outStream_writeInt(out, prepCount);
-        for (; writtenCount < prepCount; writtenCount++) {
-            char *signature;
-            jclass clazz = theClasses[writtenCount];
-            jint status = classStatus(clazz);
-            jbyte tag = referenceTypeTag(clazz);
-
-            signature = classSignature(clazz);
-            if (signature == NULL) {
-                outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-                break;
-            }
-
-            outStream_writeByte(out, tag);
-            WRITE_GLOBAL_REF(env, out, clazz);
-            outStream_writeString(out, signature);
-            outStream_writeInt(out, status);
-            jdwpFree(signature);
-
-            /* No point in continuing if there's an error */
-            if (outStream_error(out)) {
-                break;
-            }
-        }
-        /* All written classes have their global ref
-         * freed in the WRITE_GLOBAL_REF; The rest,
-         * there because of failure termination and/or
-         * because they are not prepared, must be freed.
-         */
-        freeGlobalRefsPartial(theClasses, writtenCount, classCount);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
     }
+    if (classCount == 0) {
+        (void)outStream_writeInt(out, 0);
+        return JNI_TRUE;
+    }
+    if (classCount < 0) {
+        outStream_setError(out, JDWP_ERROR(ILLEGAL_ARGUMENT));
+        return JNI_TRUE;
+    }
+    env = getEnv();
+    classes = jvmtiAllocate(classCount * (int)sizeof(jclass));
+    for (ii = 0; ii < classCount; ii++) {
+        jdwpError errorCode;
+        classes[ii] = inStream_readClassRef(env, in);
+        errorCode = inStream_error(in);
+        if (errorCode != JDWP_ERROR(NONE)) {
+            /*
+             * A class could have been unloaded/gc'd so
+             * if we get an error, just ignore it and keep 
+             * going.  An instanceCount of 0 will be returned.
+             */
+            if (errorCode == JDWP_ERROR(INVALID_OBJECT) ||
+                errorCode == JDWP_ERROR(INVALID_CLASS)) {
+                inStream_clearError(in);
+                classes[ii] = NULL;
+                continue;
+            }
+            jvmtiDeallocate(classes);
+            return JNI_TRUE;
+        }
+    }
+
+    WITH_LOCAL_REFS(env, 1) {
+        jlong      *counts;
+        jvmtiError error;
+        
+        counts = jvmtiAllocate(classCount * (int)sizeof(jlong));
+        /* Iterate over heap getting info on these classes */
+        error = classInstanceCounts(classCount, classes, counts);
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            (void)outStream_writeInt(out, classCount);
+            for (ii = 0; ii < classCount; ii++) {
+                (void)outStream_writeLong(out, counts[ii]);
+            }
+        }
+        jvmtiDeallocate(counts);
+    } END_WITH_LOCAL_REFS(env);
+    jvmtiDeallocate(classes);
     return JNI_TRUE;
 }
 
 static jboolean 
 redefineClasses(PacketInputStream *in, PacketOutputStream *out) 
 {
-    JNIEnv *env;
-    JVMDI_class_definition *classDefs;
-    JVMDI_class_definition *currClassDef;
+    jvmtiClassDefinition *classDefs;
     jboolean ok = JNI_TRUE;
-    int classCount;
-    int i;
+    jint classCount;
+    jint i;
+    JNIEnv *env;
 
-    if (vmDead) {
+    if (gdata->vmDead) {
         /* quietly ignore */                
         return JNI_TRUE;
     }
 
-    env = getEnv();
     classCount = inStream_readInt(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
-    classDefs = jdwpAlloc(classCount * 
-                          sizeof(JVMDI_class_definition));
-    if (classDefs == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
+    if ( classCount == 0 ) {
         return JNI_TRUE;
     }
-   
-    for (i = 0, currClassDef = classDefs; 
-                   i < classCount; 
-                   ++i, ++currClassDef) {
+    /*LINTED*/
+    classDefs = jvmtiAllocate(classCount*(int)sizeof(jvmtiClassDefinition));
+    if (classDefs == NULL) {
+        outStream_setError(out, JDWP_ERROR(OUT_OF_MEMORY));
+        return JNI_TRUE;
+    }
+    /*LINTED*/
+    (void)memset(classDefs, 0, classCount*sizeof(jvmtiClassDefinition));
+  
+    env = getEnv();
+    for (i = 0; i < classCount; ++i) {
         int byteCount;
-        jbyte *bytes;
-        jclass clazz = inStream_readClassRef(in);
-
+        unsigned char * bytes;
+        jclass clazz;
+        
+        clazz = inStream_readClassRef(env, in);
         if (inStream_error(in)) {
             ok = JNI_FALSE;
             break;
@@ -318,45 +406,50 @@ redefineClasses(PacketInputStream *in, PacketOutputStream *out)
             ok = JNI_FALSE;
             break;
         }
-        bytes = jdwpAlloc(byteCount);
+        if ( byteCount <= 0 ) {
+            outStream_setError(out, JDWP_ERROR(INVALID_CLASS_FORMAT));
+            ok = JNI_FALSE;
+            break;
+        }
+        bytes = (unsigned char *)jvmtiAllocate(byteCount);
         if (bytes == NULL) {
-            outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
+            outStream_setError(out, JDWP_ERROR(OUT_OF_MEMORY));
             ok = JNI_FALSE;
             break;
         }        
-        inStream_readBytes(in, byteCount, bytes);
+        (void)inStream_readBytes(in, byteCount, (jbyte *)bytes);
         if (inStream_error(in)) {
             ok = JNI_FALSE;
             break;
         }
 
-        currClassDef->clazz = clazz;
-        currClassDef->class_byte_count = byteCount;
-        currClassDef->class_bytes = bytes;
+        classDefs[i].klass = clazz;
+        classDefs[i].class_byte_count = byteCount;
+        classDefs[i].class_bytes = bytes;
     }
     
     if (ok == JNI_TRUE) {
-        jint error;
+        jvmtiError error;
 
-        error = jvmdi->RedefineClasses(classCount, classDefs);
-        if (error != JVMDI_ERROR_NONE) {
-            outStream_setError(out, error);
-            ok = JNI_FALSE;
+        error = JVMTI_FUNC_PTR(gdata->jvmti,RedefineClasses)
+                        (gdata->jvmti, classCount, classDefs);
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
         } else {
             /* zap our BP info */
-            for (i = 0, currClassDef = classDefs; i < classCount; 
-                                               ++i, ++currClassDef) {
-                eventHandler_freeClassBreakpoints(currClassDef->clazz);
+            for ( i = 0 ; i < classCount; i++ ) {
+                eventHandler_freeClassBreakpoints(classDefs[i].klass);
             }
         }
     }
 
     /* free up allocated memory */
-    for (--currClassDef; currClassDef >= classDefs; 
-         --currClassDef) {
-        jdwpFree(currClassDef->class_bytes);
+    for ( i = 0 ; i < classCount; i++ ) {
+        if ( classDefs[i].class_bytes != NULL ) {
+            jvmtiDeallocate((void*)classDefs[i].class_bytes);
+        }
     }
-    jdwpFree(classDefs);
+    jvmtiDeallocate(classDefs);
 
     return JNI_TRUE;
 }
@@ -366,7 +459,7 @@ setDefaultStratum(PacketInputStream *in, PacketOutputStream *out)
 {
     char *stratumId;
 
-    if (vmDead) {
+    if (gdata->vmDead) {
         /* quietly ignore */                
         return JNI_TRUE;
     }
@@ -386,58 +479,72 @@ static jboolean
 getAllThreads(PacketInputStream *in, PacketOutputStream *out)
 {
     JNIEnv *env;
-    jint threadCount;
-    jint i;
-    jthread *theThreads;
-
-    if (vmDead) {
-        outStream_setError(out, JDWP_Error_VM_DEAD);                    
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));                    
         return JNI_TRUE;
     }
 
     env = getEnv();
-    theThreads = allThreads(&threadCount);
-    if (theThreads == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        /* Squish out all of the debugger-spawned threads */
-        threadCount = filterDebugThreads(theThreads, threadCount);
-        
-        outStream_writeInt(out, threadCount);
-        for (i = 0; i <threadCount; i++) {
-            WRITE_GLOBAL_REF(env, out, theThreads[i]);
-        }
 
-        jdwpFree(theThreads);
-    } 
+    WITH_LOCAL_REFS(env, 400) {
+        int i;
+        jint threadCount;
+        jthread *theThreads;
+        
+        theThreads = allThreads(&threadCount);
+        if (theThreads == NULL) {
+            outStream_setError(out, JDWP_ERROR(OUT_OF_MEMORY));
+        } else {
+            /* Squish out all of the debugger-spawned threads */
+            threadCount = filterDebugThreads(theThreads, threadCount);
+            
+            (void)outStream_writeInt(out, threadCount);
+            for (i = 0; i <threadCount; i++) {
+                (void)outStream_writeObjectRef(env, out, theThreads[i]);
+            }
+
+            jvmtiDeallocate(theThreads);
+        }
+    } END_WITH_LOCAL_REFS(env);
     return JNI_TRUE;
 }
 
 static jboolean 
 topLevelThreadGroups(PacketInputStream *in, PacketOutputStream *out)
 {
-    jint groupCount;
-    jthreadGroup *groups;
+    JNIEnv *env;
 
-    if (vmDead) {
-        outStream_setError(out, JDWP_Error_VM_DEAD);                    
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));                    
         return JNI_TRUE;
     }
 
-    groups = topThreadGroups(&groupCount);
-    if (groups == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        JNIEnv *env = getEnv();
-        int i;
+    env = getEnv();
 
-        outStream_writeInt(out, groupCount);
-        for (i = 0; i < groupCount; i++) {
-            WRITE_GLOBAL_REF(env, out, groups[i]);
+    WITH_LOCAL_REFS(env, 1) {
+        
+        jvmtiError error;
+        jint groupCount;
+        jthreadGroup *groups;
+        
+        groups = NULL;
+        error = JVMTI_FUNC_PTR(gdata->jvmti,GetTopThreadGroups)
+                    (gdata->jvmti, &groupCount, &groups);
+        if (error != JVMTI_ERROR_NONE) {
+            outStream_setError(out, map2jdwpError(error));
+        } else {
+            int i;
+
+            (void)outStream_writeInt(out, groupCount);
+            for (i = 0; i < groupCount; i++) {
+                (void)outStream_writeObjectRef(env, out, groups[i]);
+            }
+
+            jvmtiDeallocate(groups);
         }
+    
+    } END_WITH_LOCAL_REFS(env);
 
-        jdwpFree(groups);
-    }
     return JNI_TRUE;
 }
 
@@ -450,21 +557,26 @@ dispose(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 idSizes(PacketInputStream *in, PacketOutputStream *out)
 {
-    outStream_writeInt(out, sizeof(jfieldID));    /* fields */
-    outStream_writeInt(out, sizeof(jmethodID));   /* methods */
-    outStream_writeInt(out, sizeof(jlong));       /* objects */
-    outStream_writeInt(out, sizeof(jlong));       /* referent types */
-    outStream_writeInt(out, sizeof(jframeID));    /* frames */
+    (void)outStream_writeInt(out, sizeof(jfieldID));    /* fields */
+    (void)outStream_writeInt(out, sizeof(jmethodID));   /* methods */
+    (void)outStream_writeInt(out, sizeof(jlong));       /* objects */
+    (void)outStream_writeInt(out, sizeof(jlong));       /* referent types */
+    (void)outStream_writeInt(out, sizeof(FrameID));    /* frames */
     return JNI_TRUE;
 }
 
 static jboolean 
 suspend(PacketInputStream *in, PacketOutputStream *out)
 {
-    jint error = vmDead? JDWP_Error_VM_DEAD : threadControl_suspendAll();
-
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    jvmtiError error;
+    
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));
+        return JNI_TRUE;
+    }
+    error = threadControl_suspendAll();
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
     }
     return JNI_TRUE;
 }
@@ -472,9 +584,15 @@ suspend(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 resume(PacketInputStream *in, PacketOutputStream *out)
 {
-    jint error = vmDead? JDWP_Error_VM_DEAD : threadControl_resumeAll();
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    jvmtiError error;
+    
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));
+        return JNI_TRUE;
+    }
+    error = threadControl_resumeAll();
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
     }
     return JNI_TRUE;
 }
@@ -482,9 +600,10 @@ resume(PacketInputStream *in, PacketOutputStream *out)
 static jboolean 
 doExit(PacketInputStream *in, PacketOutputStream *out)
 {
-    jint exitCode = inStream_readInt(in);
+    jint exitCode;
     
-    if (vmDead) {
+    exitCode = inStream_readInt(in);
+    if (gdata->vmDead) {
         /* quietly ignore */                
         return JNI_FALSE;
     }
@@ -495,10 +614,7 @@ doExit(PacketInputStream *in, PacketOutputStream *out)
     } 
     outStream_sendReply(out);
 
-    /*
-     * %comment gordonh005
-     */
-    exit(exitCode);
+    forceExit(exitCode);
 
     /* Shouldn't get here */
     JDI_ASSERT(JNI_FALSE);
@@ -512,163 +628,143 @@ static jboolean
 createString(PacketInputStream *in, PacketOutputStream *out)
 {
     JNIEnv *env;
-    jstring string;
     char *cstring;
 
-    if (vmDead) {
-        outStream_setError(out, JDWP_Error_VM_DEAD);                    
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));                    
         return JNI_TRUE;
     }
 
-    env = getEnv();
     cstring = inStream_readString(in);
     if (cstring == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
+        outStream_setError(out, JDWP_ERROR(OUT_OF_MEMORY));
         return JNI_TRUE;
     }
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    WITH_LOCAL_REFS(env, 1);
+    env = getEnv();
+    
+    WITH_LOCAL_REFS(env, 1) {
 
-    string = (*env)->NewStringUTF(env, cstring);
-    if ((*env)->ExceptionOccurred(env)) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        WRITE_LOCAL_REF(env, out, string);
-    } 
-    END_WITH_LOCAL_REFS(env);
+        jstring string;
+        
+        string = JNI_FUNC_PTR(env,NewStringUTF)(env, cstring);
+        if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
+            outStream_setError(out, JDWP_ERROR(OUT_OF_MEMORY));
+        } else {
+            (void)outStream_writeObjectRef(env, out, string);
+        } 
+    
+    } END_WITH_LOCAL_REFS(env);
 
-    jdwpFree(cstring);
+    jvmtiDeallocate(cstring);
+    
     return JNI_TRUE;
 }
 
 static jboolean 
 capabilities(PacketInputStream *in, PacketOutputStream *out)
 {
-    JVMDI_capabilities caps;
-    jint error = vmDead? JDWP_Error_VM_DEAD : jvmdi->GetCapabilities(&caps);
+    jvmtiCapabilities caps;
+    jvmtiError error;
 
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));
+        return JNI_TRUE;
+    }
+    error = jvmtiGetCapabilities(&caps);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
 
-    outStream_writeBoolean(out, (jboolean)caps.can_watch_field_modification);
-    outStream_writeBoolean(out, (jboolean)caps.can_watch_field_access);
-    outStream_writeBoolean(out, (jboolean)caps.can_get_bytecodes);
-    outStream_writeBoolean(out, (jboolean)caps.can_get_synthetic_attribute);
-    outStream_writeBoolean(out, (jboolean)caps.can_get_owned_monitor_info);
-    outStream_writeBoolean(out, (jboolean)caps.can_get_current_contended_monitor);
-    outStream_writeBoolean(out, (jboolean)caps.can_get_monitor_info);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_generate_field_modification_events);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_generate_field_access_events);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_bytecodes);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_synthetic_attribute);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_owned_monitor_info);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_current_contended_monitor);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_monitor_info);
     return JNI_TRUE;
 }
 
 static jboolean 
 capabilitiesNew(PacketInputStream *in, PacketOutputStream *out)
 {
-    JVMDI_capabilities caps;
-    jint error = vmDead? JDWP_Error_VM_DEAD : jvmdi->GetCapabilities(&caps);
+    jvmtiCapabilities caps;
+    jvmtiError error;
 
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
+    if (gdata->vmDead) {
+        outStream_setError(out, JDWP_ERROR(VM_DEAD));
+        return JNI_TRUE;
+    }
+    error = jvmtiGetCapabilities(&caps);
+    if (error != JVMTI_ERROR_NONE) {
+        outStream_setError(out, map2jdwpError(error));
         return JNI_TRUE;
     }
 
-    outStream_writeBoolean(out, (jboolean)caps.can_watch_field_modification);
-    outStream_writeBoolean(out, (jboolean)caps.can_watch_field_access);
-    outStream_writeBoolean(out, (jboolean)caps.can_get_bytecodes);
-    outStream_writeBoolean(out, (jboolean)caps.can_get_synthetic_attribute);
-    outStream_writeBoolean(out, (jboolean)caps.can_get_owned_monitor_info);
-    outStream_writeBoolean(out, (jboolean)caps.can_get_current_contended_monitor);
-    outStream_writeBoolean(out, (jboolean)caps.can_get_monitor_info);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_generate_field_modification_events);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_generate_field_access_events);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_bytecodes);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_synthetic_attribute);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_owned_monitor_info);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_current_contended_monitor);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_monitor_info);
 
     /* new since JDWP version 1.4 */
-    outStream_writeBoolean(out, (jboolean)caps.can_redefine_classes);
-    outStream_writeBoolean(out, (jboolean)caps.can_add_method);
-    outStream_writeBoolean(out, (jboolean)caps.can_unrestrictedly_redefine_classes);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_redefine_classes);
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE /* can_add_method */ );
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE /* can_unrestrictedly_redefine_classes */ );
     /* 11: canPopFrames */
-    outStream_writeBoolean(out, (jboolean)caps.can_pop_frame);
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_pop_frame);
     /* 12: canUseInstanceFilters */
-    outStream_writeBoolean(out, (jboolean)JNI_TRUE);
-    /* 13: canGetSourceDebugExtension */
-    outStream_writeBoolean(out, canGetSourceDebugExtension());
+    (void)outStream_writeBoolean(out, (jboolean)JNI_TRUE);
+    /* 13: canGetSourceDebugExtension */ 
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_source_debug_extension);
     /* 14: canRequestVMDeathEvent */
-    outStream_writeBoolean(out, (jboolean)JNI_TRUE);
+    (void)outStream_writeBoolean(out, (jboolean)JNI_TRUE);
     /* 15: canSetDefaultStratum */
-    outStream_writeBoolean(out, (jboolean)JNI_TRUE);
-
+    (void)outStream_writeBoolean(out, (jboolean)JNI_TRUE);
+    /* 16: canGetInstanceInfo */
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_tag_objects);
+    /* 17: canRequestMonitorEvents */
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_generate_monitor_events); 
+    /* 18: canGetMonitorFrameInfo */
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_owned_monitor_stack_depth_info); 
     /* remaining reserved */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 16 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 17 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 18 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 19 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 20 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 21 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 22 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 23 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 24 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 25 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 26 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 27 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 28 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 29 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 30 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 31 */
-    outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 32 */
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 19 */
+    /* 20 Can get constant pool information */
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_get_constant_pool);
+    /* 21 Can force early return */
+    (void)outStream_writeBoolean(out, (jboolean)caps.can_force_early_return);
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 22 */
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 23 */
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 24 */
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 25 */
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 26 */
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 27 */
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 28 */
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 29 */
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 30 */
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 31 */
+    (void)outStream_writeBoolean(out, (jboolean)JNI_FALSE); /* 32 */
     return JNI_TRUE;
-}
-
-#define NULL_CHECK(e) if (((e) == 0) || (*env)->ExceptionOccurred(env)) return
-
-/*
- * Set classpath, bootclasspath and path separator properties.
- * Called when back-end is initialized.
- */
-void
-VirtualMachine_initialize(void)
-{
-    char *value;
-
-    value = getPropertyCString("java.class.path");
-    if (value != NULL) {
-        classpath_property = value;
-    }
-
-    value = getPropertyCString("sun.boot.class.path");
-    if (value != NULL) {
-        bootclasspath_property = value;
-    }
-
-    value = getPropertyCString("path.separator");
-    if (value != NULL) {
-        path_separator_property = value[0];
-        jdwpFree(value);
-    }
-
-    value = getPropertyCString("user.dir");
-    if (value != NULL) {
-        user_dir_property = value;
-    }
-
-    value = getPropertyCString("java.vm.info");
-    if (value != NULL) {
-        vm_info_property = value;
-    }
-}
-
-void
-VirtualMachine_reset(void)
-{
 }
 
 static int 
 countPaths(char *string) {
     int cnt = 1; /* always have one */
     char *pos = string;
+    char *ps;
 
-    while ((pos = strchr(pos, path_separator_property)) != NULL) {
+    ps = gdata->property_path_separator;
+    if ( ps == NULL ) {
+        ps = ";";
+    }
+    while ((pos = strchr(pos, ps[0])) != NULL) {
         ++cnt;
         ++pos;
     }
@@ -677,16 +773,41 @@ countPaths(char *string) {
 
 static void 
 writePaths(PacketOutputStream *out, char *string) {
-    char *pos = string;
-    char *newPos;
+    char *pos;
+    char *ps;
+    char *buf;
+    int   npaths;
+    int   i;
 
-    outStream_writeInt(out, countPaths(string));
+    buf = jvmtiAllocate((int)strlen(string)+1);
+    
+    npaths = countPaths(string);
+    (void)outStream_writeInt(out, npaths);
 
-    while ((newPos = strchr(pos, path_separator_property)) != NULL) {
-        outStream_writeByteArray(out, newPos-pos, (jbyte *)pos);
-        pos = newPos + 1;
+    ps = gdata->property_path_separator;
+    if ( ps == NULL ) {
+        ps = ";";
     }
-    outStream_writeByteArray(out, strlen(pos), (jbyte *)pos);
+
+    pos = string;
+    for ( i = 0 ; i < npaths ; i++ ) {
+        char *psPos;
+        int   plen;
+        
+        psPos = strchr(pos, ps[0]);
+        if ( psPos == NULL ) {
+            plen = (int)strlen(pos);
+        } else {
+            plen = (int)(psPos-pos);
+            psPos++;
+        }
+        (void)memcpy(buf, pos, plen);
+        buf[plen] = 0;
+        (void)outStream_writeString(out, buf);
+        pos = psPos;
+    }
+    
+    jvmtiDeallocate(buf);
 }
 
 
@@ -694,9 +815,25 @@ writePaths(PacketOutputStream *out, char *string) {
 static jboolean 
 classPaths(PacketInputStream *in, PacketOutputStream *out)
 {
-    outStream_writeString(out, user_dir_property);
-    writePaths(out, classpath_property);
-    writePaths(out, bootclasspath_property);
+    char *ud;
+    char *bp;
+    char *cp;
+
+    ud = gdata->property_user_dir;
+    if ( ud == NULL ) {
+        ud = "";
+    }
+    cp = gdata->property_java_class_path;
+    if ( cp == NULL ) {
+        cp = "";
+    }
+    bp = gdata->property_sun_boot_class_path;
+    if ( bp == NULL ) {
+        bp = "";
+    }
+    (void)outStream_writeString(out, ud);
+    writePaths(out, cp);
+    writePaths(out, bp);
     return JNI_TRUE;
 }
 
@@ -707,8 +844,9 @@ disposeObjects(PacketInputStream *in, PacketOutputStream *out)
     int refCount;
     jlong id;
     int requestCount;
+    JNIEnv *env;
 
-    if (vmDead) {
+    if (gdata->vmDead) {
         /* quietly ignore */                
         return JNI_TRUE;
     }
@@ -718,13 +856,14 @@ disposeObjects(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
+    env = getEnv();
     for (i = 0; i < requestCount; i++) {
         id = inStream_readObjectID(in);
         refCount = inStream_readInt(in);
         if (inStream_error(in)) {
             return JNI_TRUE;
         }
-        commonRef_releaseMultiple(id, refCount);
+        commonRef_releaseMultiple(env, id, refCount);
     }
 
     return JNI_TRUE;
@@ -744,7 +883,7 @@ releaseEvents(PacketInputStream *in, PacketOutputStream *out)
     return JNI_TRUE;
 }
 
-void *VirtualMachine_Cmds[] = { (void *)19
+void *VirtualMachine_Cmds[] = { (void *)21
     ,(void *)version
     ,(void *)classesForSignature
     ,(void *)allClasses
@@ -764,5 +903,7 @@ void *VirtualMachine_Cmds[] = { (void *)19
     ,(void *)capabilitiesNew
     ,(void *)redefineClasses
     ,(void *)setDefaultStratum
+    ,(void *)allClassesWithGeneric
+    ,(void *)instanceCounts
 };
 

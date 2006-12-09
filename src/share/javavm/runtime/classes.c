@@ -1,5 +1,5 @@
 /*
- * @(#)classes.c	1.99 06/10/10
+ * @(#)classes.c	1.100 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -60,11 +60,6 @@ CVMclassGetArrayOfWithNoClassCreation(CVMExecEnv* ee, CVMClassBlock* elemCb)
 	    CVMtypeidIncrementArrayDepth(ee, CVMcbClassName(elemCb), 1);
 	CVMClassLoaderICell* loader = CVMcbClassLoader(elemCb);
 	CVMClassBlock* arrayCb = NULL;
-
-	/* romized classes aren't always in the loaderCache */
-	if (loader == NULL) {
-	    arrayCb = CVMpreloaderLookupFromType(arrayID);
-	}
 
 	if (arrayCb == NULL) {
 	    CVM_LOADERCACHE_LOCK(ee);
@@ -295,7 +290,7 @@ CVMclassGetFieldBlock(const CVMClassBlock* cb, const CVMFieldTypeID tid,
  * Iterate over all classes, both romized and dynamically loaded,
  * and call 'callback' on each class.
  */
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMDI) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMTI) || defined(CVM_JVMPI)
 void
 CVMclassIterateAllClasses(CVMExecEnv* ee, 
 			  CVMClassCallbackFunc callback,

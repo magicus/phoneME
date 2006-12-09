@@ -1,5 +1,5 @@
 /*
- * @(#)debugInit.h	1.19 06/10/10
+ * @(#)debugInit.h	1.20 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,17 +23,25 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
+#ifndef JDWP_DEBUGINIT_H
+#define JDWP_DEBUGINIT_H
+
 void debugInit_waitInitComplete(void);
 jboolean debugInit_isInitComplete(void);
-
-JavaVM *debugInit_getJavaVM(void);
 
 /*
  * Access to debug options
  */
 char *debugInit_launchOnInit(void);
 jboolean debugInit_suspendOnInit(void);
-jboolean debugInit_isStrict(void);
-jboolean debugInit_useStandardAlloc(void);
 
-void debugInit_reset(jboolean shutdown);
+void debugInit_reset(JNIEnv *env, jboolean);
+void debugInit_exit(jvmtiError, const char *);
+void forceExit(int);
+
+JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *, char *, void *); 
+JNIEXPORT void JNICALL Agent_OnUnload(JavaVM *); 
+
+#endif
+

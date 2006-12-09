@@ -1,5 +1,5 @@
 /*
- * @(#)invoker.c	1.28 06/10/10
+ * @(#)invoker.c	1.29 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,37 +23,32 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <stdio.h>
-#include <jvmdi.h>
-#include <jni.h> 
-#include <string.h>
 
+#include "util.h"
 #include "invoker.h"
 #include "eventHandler.h"
 #include "threadControl.h"
 #include "outStream.h"
-#include "util.h"
-#include "JDWP.h"
 
-static JVMDI_RawMonitor invokerLock;
+static jrawMonitorID invokerLock;
 
 void 
-invoker_initialize() 
+invoker_initialize(void)
 {
     invokerLock = debugMonitorCreate("JDWP Invocation Lock");
 }
 
 void 
-invoker_reset() 
+invoker_reset(void)
 {
 }
 
-void invoker_lock()
+void invoker_lock(void)
 {
     debugMonitorEnter(invokerLock);
 }
 
-void invoker_unlock()
+void invoker_unlock(void)
 {
     debugMonitorExit(invokerLock);
 }
@@ -75,11 +70,11 @@ nextArgumentTypeTag(void **cursor)
 
     if (*tagPtr != SIGNATURE_END_ARGS) {
         /* Skip any array modifiers */
-        while (*tagPtr == JDWP_Tag_ARRAY) {
+        while (*tagPtr == JDWP_TAG(ARRAY)) {
             tagPtr++;
         }
         /* Skip class name */
-        if (*tagPtr == JDWP_Tag_OBJECT) {
+        if (*tagPtr == JDWP_TAG(OBJECT)) {
             tagPtr = strchr(tagPtr, SIGNATURE_END_CLASS) + 1;
             JDI_ASSERT(tagPtr);
         } else {
@@ -104,117 +99,138 @@ firstArgumentTypeTag(char *signature, void **cursor)
 /*
  * Note: argument refs may be destroyed on out-of-memory error 
  */
-static jint
-createGlobalRefs(JNIEnv *env, InvokeRequest *request) {
+static jvmtiError
+createGlobalRefs(JNIEnv *env, InvokeRequest *request) 
+{
+    jvmtiError error;
     jclass clazz = NULL;
     jobject instance = NULL;
-    jint argIndex = 0;
+    jint argIndex;
     jbyte argumentTag;
     jvalue *argument;
     void *cursor;
+    jobject *argRefs = NULL;
 
-    clazz = (*env)->NewGlobalRef(env, request->clazz);
-    if (clazz == NULL) {
-        goto handleError;
+    error = JVMTI_ERROR_NONE;
+    
+    if ( request->argumentCount > 0 ) {
+        /*LINTED*/
+        argRefs = jvmtiAllocate((jint)(request->argumentCount*sizeof(jobject)));
+        if ( argRefs==NULL ) {
+            error = AGENT_ERROR_OUT_OF_MEMORY;
+        } else {
+            /*LINTED*/
+            (void)memset(argRefs, 0, request->argumentCount*sizeof(jobject));
+        }
+    }
+    
+    if ( error == JVMTI_ERROR_NONE ) {
+        saveGlobalRef(env, request->clazz, &clazz);
+        if (clazz == NULL) {
+            error = AGENT_ERROR_OUT_OF_MEMORY;
+        }
     }
 
-    if (request->instance != NULL) {
-        instance = (*env)->NewGlobalRef(env, request->instance);
+    if ( error == JVMTI_ERROR_NONE && request->instance != NULL ) {
+        saveGlobalRef(env, request->instance, &instance);
         if (instance == NULL) {
-            goto handleError;
+            error = AGENT_ERROR_OUT_OF_MEMORY;
         }
     }
 
-    argumentTag = firstArgumentTypeTag(request->methodSignature, &cursor);
-    argument = request->arguments;
-    while (argumentTag != SIGNATURE_END_ARGS) {
-        if ((argumentTag == JDWP_Tag_OBJECT) ||
-            (argumentTag == JDWP_Tag_ARRAY)) {
-            /* Create a global ref for any non-null argument */
-            if (argument->l != NULL) {
-                argument->l = (*env)->NewGlobalRef(env, argument->l);
-                if (argument->l == NULL) {
-                    goto handleError;
-                }
-            }
-        }
-        argument++;
-        argIndex++;
-        argumentTag = nextArgumentTypeTag(&cursor);
-    }
-
-    request->clazz = clazz;
-    request->instance = instance;
-
-    return JVMDI_ERROR_NONE;
-
-handleError:
-    {
-        int i;
-        (*env)->DeleteGlobalRef(env, clazz);
-        (*env)->DeleteGlobalRef(env, instance);
-
+    if ( error == JVMTI_ERROR_NONE && argRefs!=NULL ) {
+        argIndex = 0;
         argumentTag = firstArgumentTypeTag(request->methodSignature, &cursor);
         argument = request->arguments;
-        i = 0;
-        while ((argumentTag != SIGNATURE_END_ARGS) && (i < argIndex)) {
-            if ((argumentTag == JDWP_Tag_OBJECT) ||
-                (argumentTag == JDWP_Tag_ARRAY)) {
-                /* Delete global ref for any non-null argument */
+        while (argumentTag != SIGNATURE_END_ARGS) {
+            if ( argIndex > request->argumentCount ) {
+                break;
+            }
+            if ((argumentTag == JDWP_TAG(OBJECT)) ||
+                (argumentTag == JDWP_TAG(ARRAY))) {
+                /* Create a global ref for any non-null argument */
                 if (argument->l != NULL) {
-                    (*env)->DeleteGlobalRef(env, argument->l);
+                    saveGlobalRef(env, argument->l, &argRefs[argIndex]);
+                    if (argRefs[argIndex] == NULL) {
+                        error = AGENT_ERROR_OUT_OF_MEMORY;
+                        break;
+                    }
                 }
             }
             argument++;
-            i++;
+            argIndex++;
             argumentTag = nextArgumentTypeTag(&cursor);
         }
-        return JVMDI_ERROR_OUT_OF_MEMORY;
     }
-}
 
-/* Unused:
-static void
-deleteGlobalRefs(JNIEnv *env, InvokeRequest *request) {
-    jbyte argumentTag;
-    jvalue *argument;
-    void *cursor;
+#ifdef FIXUP /* Why isn't this an error? */
+    /* Make sure the argument count matches */
+    if ( error == JVMTI_ERROR_NONE && argIndex != request->argumentCount ) {
+        error = AGENT_ERROR_INVALID_COUNT;
+    }
+#endif
 
-    (*env)->DeleteGlobalRef(env, request->clazz);
-    (*env)->DeleteGlobalRef(env, request->instance);
-
-    argumentTag = firstArgumentTypeTag(request->methodSignature, &cursor);
-    argument = request->arguments;
-    while (argumentTag != SIGNATURE_END_ARGS) {
-        if ((argumentTag == JDWP_Tag_OBJECT) ||
-            (argumentTag == JDWP_Tag_ARRAY)) {
-            (*env)->DeleteGlobalRef(env, argument->l);
+    /* Finally, put the global refs into the request if no errors */
+    if ( error == JVMTI_ERROR_NONE ) {
+        request->clazz = clazz;
+        request->instance = instance;
+        if ( argRefs!=NULL ) {
+            argIndex = 0;
+            argumentTag = firstArgumentTypeTag(request->methodSignature, &cursor);
+            argument = request->arguments;
+            while ( argIndex < request->argumentCount ) {
+                if ((argumentTag == JDWP_TAG(OBJECT)) ||
+                    (argumentTag == JDWP_TAG(ARRAY))) {
+                    argument->l = argRefs[argIndex];
+                }
+                argument++;
+                argIndex++;
+                argumentTag = nextArgumentTypeTag(&cursor);
+            }
+            jvmtiDeallocate(argRefs);
         }
-        argumentTag = nextArgumentTypeTag(&cursor);
-        argument++;
+        return JVMTI_ERROR_NONE;
+    
+    } else {
+        /* Delete global references */
+        if ( clazz != NULL ) {
+            tossGlobalRef(env, &clazz);
+        }
+        if ( instance != NULL ) {
+            tossGlobalRef(env, &instance);
+        }
+        if ( argRefs!=NULL ) {
+            for ( argIndex=0; argIndex < request->argumentCount; argIndex++ ) {
+                if ( argRefs[argIndex] != NULL ) {
+                    tossGlobalRef(env, &argRefs[argIndex]);
+                }
+            }
+            jvmtiDeallocate(argRefs);
+        }
     }
+    
+    return error;
 }
-*/
 
-static jint
+static jvmtiError
 fillInvokeRequest(JNIEnv *env, InvokeRequest *request,
                   jbyte invokeType, jbyte options, jint id,
                   jthread thread, jclass clazz, jmethodID method, 
-                  jobject instance, jvalue *arguments)
+                  jobject instance, 
+                  jvalue *arguments, jint argumentCount)
 {
-    jint error;
-    char *name;
+    jvmtiError error;
     if (!request->available) {
         /*
          * Thread is not at a point where it can invoke.
          */
-        return JVMDI_ERROR_INVALID_THREAD;
+        return AGENT_ERROR_INVALID_THREAD;
     }
     if (request->pending) {
         /*
          * Pending invoke
          */
-        return JDWP_Error_ALREADY_INVOKING;
+        return AGENT_ERROR_ALREADY_INVOKING;
     }
 
     request->invokeType = invokeType;
@@ -225,6 +241,8 @@ fillInvokeRequest(JNIEnv *env, InvokeRequest *request,
     request->method = method;
     request->instance = instance;
     request->arguments = arguments;
+    request->arguments = arguments;
+    request->argumentCount = argumentCount;
 
     request->returnValue.j = 0;
     request->exception = 0;
@@ -232,12 +250,10 @@ fillInvokeRequest(JNIEnv *env, InvokeRequest *request,
     /*
      * Squirrel away the method signature
      */
-    error = jvmdi->GetMethodName(clazz, method, &name, 
-                                      &request->methodSignature);
-    if (error != JVMDI_ERROR_NONE) {
+    error = methodSignature(method, NULL, &request->methodSignature,  NULL);
+    if (error != JVMTI_ERROR_NONE) {
         return error;
     }
-    jdwpFree(name);
 
     /*
      * The given references for class and instance are not guaranteed
@@ -245,14 +261,14 @@ fillInvokeRequest(JNIEnv *env, InvokeRequest *request,
      * here.
      */
     error = createGlobalRefs(env, request);
-    if (error != JVMDI_ERROR_NONE) {
-        jdwpFree(request->methodSignature);
+    if (error != JVMTI_ERROR_NONE) {
+        jvmtiDeallocate(request->methodSignature);
         return error;
     }
 
     request->pending = JNI_TRUE;
     request->available = JNI_FALSE;
-    return JVMDI_ERROR_NONE;
+    return JVMTI_ERROR_NONE;
 }
 
 void
@@ -264,35 +280,37 @@ invoker_enableInvokeRequests(jthread thread)
 
     request = threadControl_getInvokeRequest(thread);
     if (request == NULL) {
-        ERROR_CODE_EXIT(JVMDI_ERROR_INVALID_THREAD);
+        EXIT_ERROR(AGENT_ERROR_INVALID_THREAD, "getting thread invoke request");
     }
 
     request->available = JNI_TRUE;
 }
 
-jint 
+jvmtiError 
 invoker_requestInvoke(jbyte invokeType, jbyte options, jint id,
                       jthread thread, jclass clazz, jmethodID method, 
-                      jobject instance, jvalue *arguments)
+                      jobject instance, 
+                      jvalue *arguments, jint argumentCount)
 {
     JNIEnv *env = getEnv();
     InvokeRequest *request;
-    jint error = JVMDI_ERROR_NONE;
+    jvmtiError error = JVMTI_ERROR_NONE;
 
     debugMonitorEnter(invokerLock);
     request = threadControl_getInvokeRequest(thread);
     if (request != NULL) {
         error = fillInvokeRequest(env, request, invokeType, options, id,
-                                  thread, clazz, method, instance, arguments); 
+                                  thread, clazz, method, instance, 
+                                  arguments, argumentCount); 
     }
     debugMonitorExit(invokerLock);
 
-    if (error == JVMDI_ERROR_NONE) {
-        if (options & JDWP_InvokeOptions_INVOKE_SINGLE_THREADED) {
+    if (error == JVMTI_ERROR_NONE) {
+        if (options & JDWP_INVOKE_OPTIONS(SINGLE_THREADED) ) {
             /* true means it is okay to unblock the commandLoop thread */
-            threadControl_resumeThread(thread, JNI_TRUE);
+            (void)threadControl_resumeThread(thread, JNI_TRUE);
         } else {
-            threadControl_resumeAll();
+            (void)threadControl_resumeAll();
         }
     }
 
@@ -303,109 +321,100 @@ static void
 invokeConstructor(JNIEnv *env, InvokeRequest *request)
 {
     jobject object;
-    object = (*env)->NewObjectA(env, request->clazz,
+    object = JNI_FUNC_PTR(env,NewObjectA)(env, request->clazz,
                                      request->method, 
                                      request->arguments);
+    request->returnValue.l = NULL;
     if (object != NULL) {
-        object = (*env)->NewGlobalRef(env, object);
-        if (object == NULL) {
-            ERROR_MESSAGE_EXIT("Unable to create global reference");
-        }
+        saveGlobalRef(env, object, &(request->returnValue.l));
     }
-    request->returnValue.l = object;
 }
 
 static void 
 invokeStatic(JNIEnv *env, InvokeRequest *request)
 {
     switch(returnTypeTag(request->methodSignature)) {
-        case JDWP_Tag_OBJECT:
-        case JDWP_Tag_ARRAY: {
+        case JDWP_TAG(OBJECT):
+        case JDWP_TAG(ARRAY): {
             jobject object;
-            object = (*env)->CallStaticObjectMethodA(env,
+            object = JNI_FUNC_PTR(env,CallStaticObjectMethodA)(env,
                                        request->clazz,
                                        request->method,
                                        request->arguments);
+            request->returnValue.l = NULL;
             if (object != NULL) {
-                object = (*env)->NewGlobalRef(env, object);
-                if (object == NULL) {
-                    ERROR_MESSAGE_EXIT("Unable to create global reference");
-                }
+                saveGlobalRef(env, object, &(request->returnValue.l));
             }
-            request->returnValue.l = object;
             break;
         }
 
 
-        case JDWP_Tag_BYTE:
-            request->returnValue.b = (*env)->CallStaticByteMethodA(env,
+        case JDWP_TAG(BYTE):
+            request->returnValue.b = JNI_FUNC_PTR(env,CallStaticByteMethodA)(env,
                                                        request->clazz,
                                                        request->method,
                                                        request->arguments);
             break;
 
-        case JDWP_Tag_CHAR:
-            request->returnValue.c = (*env)->CallStaticCharMethodA(env,
+        case JDWP_TAG(CHAR):
+            request->returnValue.c = JNI_FUNC_PTR(env,CallStaticCharMethodA)(env,
                                                        request->clazz,
                                                        request->method,
                                                        request->arguments);
             break;
 
-        case JDWP_Tag_FLOAT:
-            request->returnValue.f = (*env)->CallStaticFloatMethodA(env,
+        case JDWP_TAG(FLOAT):
+            request->returnValue.f = JNI_FUNC_PTR(env,CallStaticFloatMethodA)(env,
                                                        request->clazz,
                                                        request->method,
                                                        request->arguments);
             break;
 
-        case JDWP_Tag_DOUBLE:
-            request->returnValue.d = (*env)->CallStaticDoubleMethodA(env,
+        case JDWP_TAG(DOUBLE):
+            request->returnValue.d = JNI_FUNC_PTR(env,CallStaticDoubleMethodA)(env,
                                                        request->clazz,
                                                        request->method,
                                                        request->arguments);
             break;
 
-        case JDWP_Tag_INT:
-            request->returnValue.i = (*env)->CallStaticIntMethodA(env,
+        case JDWP_TAG(INT):
+            request->returnValue.i = JNI_FUNC_PTR(env,CallStaticIntMethodA)(env,
                                                        request->clazz,
                                                        request->method,
                                                        request->arguments);
             break;
 
-        case JDWP_Tag_LONG:
-            request->returnValue.j = (*env)->CallStaticLongMethodA(env,
+        case JDWP_TAG(LONG):
+            request->returnValue.j = JNI_FUNC_PTR(env,CallStaticLongMethodA)(env,
                                                        request->clazz,
                                                        request->method,
                                                        request->arguments);
             break;
 
-        case JDWP_Tag_SHORT:
-            request->returnValue.s = (*env)->CallStaticShortMethodA(env,
+        case JDWP_TAG(SHORT):
+            request->returnValue.s = JNI_FUNC_PTR(env,CallStaticShortMethodA)(env,
                                                        request->clazz,
                                                        request->method,
                                                        request->arguments);
             break;
 
-        case JDWP_Tag_BOOLEAN:
-            request->returnValue.z = (*env)->CallStaticBooleanMethodA(env,
+        case JDWP_TAG(BOOLEAN):
+            request->returnValue.z = JNI_FUNC_PTR(env,CallStaticBooleanMethodA)(env,
                                                        request->clazz,
                                                        request->method,
                                                        request->arguments);
             break;
 
-        case JDWP_Tag_VOID:
-            (*env)->CallStaticVoidMethodA(env,
+        case JDWP_TAG(VOID):
+            JNI_FUNC_PTR(env,CallStaticVoidMethodA)(env,
                                           request->clazz,
                                           request->method,
                                           request->arguments);
             break;
 
         default:
-        {
-            char buf[200];
-            sprintf(buf, "Invalid method signature: %s", request->methodSignature);
-            ERROR_MESSAGE_EXIT(buf);
-        }
+            EXIT_ERROR(AGENT_ERROR_NULL_POINTER,"Invalid method signature");
+            break;
     }
 }
 
@@ -413,92 +422,86 @@ static void
 invokeVirtual(JNIEnv *env, InvokeRequest *request)
 {
     switch(returnTypeTag(request->methodSignature)) {
-        case JDWP_Tag_OBJECT:
-        case JDWP_Tag_ARRAY: {
+        case JDWP_TAG(OBJECT):
+        case JDWP_TAG(ARRAY): {
             jobject object;
-            object = (*env)->CallObjectMethodA(env,
+            object = JNI_FUNC_PTR(env,CallObjectMethodA)(env,
                                  request->instance,
                                  request->method,
                                  request->arguments);
+            request->returnValue.l = NULL;
             if (object != NULL) {
-                object = (*env)->NewGlobalRef(env, object);
-                if (object == NULL) {
-                    ERROR_MESSAGE_EXIT("Unable to create global reference");
-                }
+                saveGlobalRef(env, object, &(request->returnValue.l));
             }
-            request->returnValue.l = object;
             break;
         }
 
-        case JDWP_Tag_BYTE:
-            request->returnValue.b = (*env)->CallByteMethodA(env,
+        case JDWP_TAG(BYTE):
+            request->returnValue.b = JNI_FUNC_PTR(env,CallByteMethodA)(env,
                                                  request->instance,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_CHAR:
-            request->returnValue.c = (*env)->CallCharMethodA(env,
+        case JDWP_TAG(CHAR):
+            request->returnValue.c = JNI_FUNC_PTR(env,CallCharMethodA)(env,
                                                  request->instance,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_FLOAT:
-            request->returnValue.f = (*env)->CallFloatMethodA(env,
+        case JDWP_TAG(FLOAT):
+            request->returnValue.f = JNI_FUNC_PTR(env,CallFloatMethodA)(env,
                                                  request->instance,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_DOUBLE:
-            request->returnValue.d = (*env)->CallDoubleMethodA(env,
+        case JDWP_TAG(DOUBLE):
+            request->returnValue.d = JNI_FUNC_PTR(env,CallDoubleMethodA)(env,
                                                  request->instance,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_INT:
-            request->returnValue.i = (*env)->CallIntMethodA(env,
+        case JDWP_TAG(INT):
+            request->returnValue.i = JNI_FUNC_PTR(env,CallIntMethodA)(env,
                                                  request->instance,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_LONG:
-            request->returnValue.j = (*env)->CallLongMethodA(env,
+        case JDWP_TAG(LONG):
+            request->returnValue.j = JNI_FUNC_PTR(env,CallLongMethodA)(env,
                                                  request->instance,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_SHORT:
-            request->returnValue.s = (*env)->CallShortMethodA(env,
+        case JDWP_TAG(SHORT):
+            request->returnValue.s = JNI_FUNC_PTR(env,CallShortMethodA)(env,
                                                  request->instance,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_BOOLEAN:
-            request->returnValue.z = (*env)->CallBooleanMethodA(env,
+        case JDWP_TAG(BOOLEAN):
+            request->returnValue.z = JNI_FUNC_PTR(env,CallBooleanMethodA)(env,
                                                  request->instance,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_VOID:
-            (*env)->CallVoidMethodA(env,
+        case JDWP_TAG(VOID):
+            JNI_FUNC_PTR(env,CallVoidMethodA)(env,
                                     request->instance,
                                     request->method,
                                     request->arguments);
             break;
 
         default:
-        {
-            char buf[200];
-            sprintf(buf, "Invalid method signature: %s", request->methodSignature);
-            ERROR_MESSAGE_EXIT(buf);
-        }
+            EXIT_ERROR(AGENT_ERROR_NULL_POINTER,"Invalid method signature");
+            break;
     }
 }
 
@@ -506,90 +509,87 @@ static void
 invokeNonvirtual(JNIEnv *env, InvokeRequest *request)
 {
     switch(returnTypeTag(request->methodSignature)) {
-        case JDWP_Tag_OBJECT:
-        case JDWP_Tag_ARRAY: {
+        case JDWP_TAG(OBJECT):
+        case JDWP_TAG(ARRAY): {
             jobject object;
-            object = (*env)->CallNonvirtualObjectMethodA(env,
+            object = JNI_FUNC_PTR(env,CallNonvirtualObjectMethodA)(env,
                                            request->instance,
                                            request->clazz,
                                            request->method,
                                            request->arguments);
+            request->returnValue.l = NULL;
             if (object != NULL) {
-                object = (*env)->NewGlobalRef(env, object);
-                if (object == NULL) {
-                    ERROR_MESSAGE_EXIT("Unable to create global reference");
-                }
+                saveGlobalRef(env, object, &(request->returnValue.l));
             }
-            request->returnValue.l = object;
             break;
         }
 
-        case JDWP_Tag_BYTE:
-            request->returnValue.b = (*env)->CallNonvirtualByteMethodA(env,
+        case JDWP_TAG(BYTE):
+            request->returnValue.b = JNI_FUNC_PTR(env,CallNonvirtualByteMethodA)(env,
                                                  request->instance,
                                                  request->clazz,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_CHAR:
-            request->returnValue.c = (*env)->CallNonvirtualCharMethodA(env,
+        case JDWP_TAG(CHAR):
+            request->returnValue.c = JNI_FUNC_PTR(env,CallNonvirtualCharMethodA)(env,
                                                  request->instance,
                                                  request->clazz,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_FLOAT:
-            request->returnValue.f = (*env)->CallNonvirtualFloatMethodA(env,
+        case JDWP_TAG(FLOAT):
+            request->returnValue.f = JNI_FUNC_PTR(env,CallNonvirtualFloatMethodA)(env,
                                                  request->instance,
                                                  request->clazz,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_DOUBLE:
-            request->returnValue.d = (*env)->CallNonvirtualDoubleMethodA(env,
+        case JDWP_TAG(DOUBLE):
+            request->returnValue.d = JNI_FUNC_PTR(env,CallNonvirtualDoubleMethodA)(env,
                                                  request->instance,
                                                  request->clazz,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_INT:
-            request->returnValue.i = (*env)->CallNonvirtualIntMethodA(env,
+        case JDWP_TAG(INT):
+            request->returnValue.i = JNI_FUNC_PTR(env,CallNonvirtualIntMethodA)(env,
                                                  request->instance,
                                                  request->clazz,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_LONG:
-            request->returnValue.j = (*env)->CallNonvirtualLongMethodA(env,
+        case JDWP_TAG(LONG):
+            request->returnValue.j = JNI_FUNC_PTR(env,CallNonvirtualLongMethodA)(env,
                                                  request->instance,
                                                  request->clazz,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_SHORT:
-            request->returnValue.s = (*env)->CallNonvirtualShortMethodA(env,
+        case JDWP_TAG(SHORT):
+            request->returnValue.s = JNI_FUNC_PTR(env,CallNonvirtualShortMethodA)(env,
                                                  request->instance,
                                                  request->clazz,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_BOOLEAN:
-            request->returnValue.z = (*env)->CallNonvirtualBooleanMethodA(env,
+        case JDWP_TAG(BOOLEAN):
+            request->returnValue.z = JNI_FUNC_PTR(env,CallNonvirtualBooleanMethodA)(env,
                                                  request->instance,
                                                  request->clazz,
                                                  request->method,
                                                  request->arguments);
             break;
 
-        case JDWP_Tag_VOID:
-            (*env)->CallNonvirtualVoidMethodA(env,
+        case JDWP_TAG(VOID):
+            JNI_FUNC_PTR(env,CallNonvirtualVoidMethodA)(env,
                                     request->instance,
                                     request->clazz,
                                     request->method,
@@ -597,11 +597,8 @@ invokeNonvirtual(JNIEnv *env, InvokeRequest *request)
             break;
 
         default:
-        {
-            char buf[200];
-            sprintf(buf, "Invalid method signature: %s", request->methodSignature);
-            ERROR_MESSAGE_EXIT(buf);
-        }
+            EXIT_ERROR(AGENT_ERROR_NULL_POINTER,"Invalid method signature");
+            break;
     }
 }
 
@@ -618,7 +615,7 @@ invoker_doInvoke(jthread thread)
 
     request = threadControl_getInvokeRequest(thread);
     if (request == NULL) {
-        ERROR_CODE_EXIT(JVMDI_ERROR_INVALID_THREAD);
+        EXIT_ERROR(AGENT_ERROR_INVALID_THREAD, "getting thread invoke request");
     }
 
     request->available = JNI_FALSE;
@@ -635,37 +632,38 @@ invoker_doInvoke(jthread thread)
 
     env = getEnv(); 
 
-    WITH_LOCAL_REFS(env, 2);   /* 1 for obj return values, 1 for exception */
+    WITH_LOCAL_REFS(env, 2) {  /* 1 for obj return values, 1 for exception */
 
-    (*env)->ExceptionClear(env);
+        jobject exception;
+        
+        JNI_FUNC_PTR(env,ExceptionClear)(env);
 
-    switch (request->invokeType) {
-        case INVOKE_CONSTRUCTOR:
-            invokeConstructor(env, request);
-            break;
-        case INVOKE_STATIC:
-            invokeStatic(env, request);
-            break;
-        case INVOKE_INSTANCE:
-            if (request->options & JDWP_InvokeOptions_INVOKE_NONVIRTUAL) {
-                invokeNonvirtual(env, request);
-            } else {
-                invokeVirtual(env, request);
-            }
-            break;
-        default:
-            JDI_ASSERT(JNI_FALSE);
-    }
-    request->exception = (*env)->ExceptionOccurred(env);
-    if (request->exception) {
-        request->exception = (*env)->NewGlobalRef(env, request->exception);
-        if (request->exception == NULL) {
-            ERROR_MESSAGE_EXIT("Unable to create global reference");
+        switch (request->invokeType) {
+            case INVOKE_CONSTRUCTOR:
+                invokeConstructor(env, request);
+                break;
+            case INVOKE_STATIC:
+                invokeStatic(env, request);
+                break;
+            case INVOKE_INSTANCE:
+                if (request->options & JDWP_INVOKE_OPTIONS(NONVIRTUAL) ) {
+                    invokeNonvirtual(env, request);
+                } else {
+                    invokeVirtual(env, request);
+                }
+                break;
+            default:
+                JDI_ASSERT(JNI_FALSE);
         }
-        (*env)->ExceptionClear(env);
-    }
+        request->exception = NULL;
+        exception = JNI_FUNC_PTR(env,ExceptionOccurred)(env);
+        if (exception != NULL) {
+            JNI_FUNC_PTR(env,ExceptionClear)(env);
+            saveGlobalRef(env, exception, &(request->exception));
+        }
 
-    END_WITH_LOCAL_REFS(env);
+    } END_WITH_LOCAL_REFS(env);
+    
     return JNI_TRUE;
 }
 
@@ -674,21 +672,26 @@ invoker_completeInvokeRequest(jthread thread)
 {
     JNIEnv *env = getEnv();
     PacketOutputStream out;
-    jbyte tag = 0;
-    jobject exc = NULL;
+    jbyte tag;
+    jobject exc;
     jvalue returnValue;
-    jint id = 0;
+    jint id;
     InvokeRequest *request;
     jboolean detached;
      
     JDI_ASSERT(thread);
 
+    /* Prevent gcc errors on uninitialized variables. */
+    tag = 0;
+    exc = NULL;
+    id  = 0;
+    
     eventHandler_lock(); /* for proper lock order */
     debugMonitorEnter(invokerLock);
 
     request = threadControl_getInvokeRequest(thread);
     if (request == NULL) {
-        ERROR_CODE_EXIT(JVMDI_ERROR_INVALID_THREAD);
+        EXIT_ERROR(AGENT_ERROR_INVALID_THREAD, "getting thread invoke request");
     }
 
     JDI_ASSERT(request->pending);
@@ -700,10 +703,10 @@ invoker_completeInvokeRequest(jthread thread)
 
     detached = request->detached;
     if (!detached) {
-        if (request->options & JDWP_InvokeOptions_INVOKE_SINGLE_THREADED) {
-            threadControl_suspendThread(thread, JNI_FALSE);
+        if (request->options & JDWP_INVOKE_OPTIONS(SINGLE_THREADED)) {
+            (void)threadControl_suspendThread(thread, JNI_FALSE);
         } else {
-            threadControl_suspendAll();
+            (void)threadControl_suspendAll();
         }
 
         if (request->invokeType == INVOKE_CONSTRUCTOR) {
@@ -711,7 +714,7 @@ invoker_completeInvokeRequest(jthread thread)
              * Although constructors technically have a return type of 
              * void, we return the object created.
              */
-            tag = specificTypeKey(request->returnValue.l);
+            tag = specificTypeKey(env, request->returnValue.l);
         } else {
             tag = returnTypeTag(request->methodSignature);
         }
@@ -729,9 +732,9 @@ invoker_completeInvokeRequest(jthread thread)
 
     if (!detached) {
         outStream_initReply(&out, id);
-        outStream_writeValue(env, &out, tag, returnValue);
-        outStream_writeObjectTag(&out, exc);
-        WRITE_GLOBAL_REF(env, &out, exc);
+        (void)outStream_writeValue(env, &out, tag, returnValue);
+        (void)outStream_writeObjectTag(env, &out, exc);
+        (void)outStream_writeObjectRef(env, &out, exc);
         outStream_sendReply(&out);
     }
 }
@@ -744,7 +747,7 @@ invoker_isPending(jthread thread)
     JDI_ASSERT(thread);
     request = threadControl_getInvokeRequest(thread);
     if (request == NULL) {
-        ERROR_CODE_EXIT(JVMDI_ERROR_INVALID_THREAD);
+        EXIT_ERROR(AGENT_ERROR_INVALID_THREAD, "getting thread invoke request");
     }
     return request->pending;
 }

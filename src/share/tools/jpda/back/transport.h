@@ -1,5 +1,5 @@
 /*
- * @(#)transport.h	1.17 06/10/10
+ * @(#)transport.h	1.18 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,22 +23,23 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include "transportSPI.h"
-#include <jni.h>
 
-void transport_lock(void);
-void transport_unlock(void);
+#ifndef JDWP_TRANSPORT_H
+#define JDWP_TRANSPORT_H
 
-void transport_initialize(JNIEnv *env);
+#include "jdwpTransport.h"
+
+void transport_initialize(void);
 void transport_reset(void);
-jint transport_startTransport(jboolean isServer, char *name, char *address,
-			      void **cookiePtr);
-void transport_stopTransport(void *);
-void transport_unloadTransport(void *);
+void transport_stopTransport(void);
+void transport_unloadTransport(void);
+jdwpError transport_startTransport(jboolean isServer, char *name, char *address, long timeout);
 
-void transport_connectionInitiated(struct Transport *t);
-jint transport_handshake(void);
-jint transport_receivePacket(Packet *);
-jint transport_sendPacket(Packet *);
+jint transport_receivePacket(jdwpPacket *);
+jint transport_sendPacket(jdwpPacket *);
+jboolean transport_is_open(void);
+void transport_waitForConnection(void);
 void transport_close(void);
+
+#endif
 

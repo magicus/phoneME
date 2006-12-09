@@ -1,5 +1,5 @@
 /*
- * @(#)eventHandlerRestricted.h	1.6 06/10/10
+ * @(#)eventHandlerRestricted.h	1.7 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,6 +23,10 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
+#ifndef JDWP_EVENTHANDLERRESTRICTED_H
+#define JDWP_EVENTHANDLERRESTRICTED_H
+
 /**
  * eventHandler functionality restricted to use only by it's
  * component - eventFilter.
@@ -31,7 +35,7 @@
 typedef jboolean (*IteratorFunction)(JNIEnv *env,
                                      HandlerNode *node, 
                                      void *arg);
-jboolean eventHandlerRestricted_iterator(jint kind,
+jboolean eventHandlerRestricted_iterator(EventIndex ei,
                               IteratorFunction func, void *arg);
 
 /* HandlerNode data has three components:
@@ -59,3 +63,6 @@ typedef struct EventHandlerRestricted_HandlerNode_ {
     HandlerNode                 hn;
     EventHandlerPrivate_Data    private_ehpd;
 } EventHandlerRestricted_HandlerNode;
+
+#endif
+

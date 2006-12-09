@@ -1,5 +1,5 @@
 /*
- * @(#)MIDPImplementationClassLoader.java	1.11 06/10/10
+ * @(#)MIDPImplementationClassLoader.java	1.13 06/11/07
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -52,21 +52,20 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
     private HashSet allowedClasses; /* the classes we can lookup in system */
     private PermissionCollection perms;
     private ClassLoader parent;
-    private ClassLoader helper;
 
     public MIDPImplementationClassLoader(
 	URL base[],
 	String allowedParentClasses[],
 	PermissionCollection pc,
-	ClassLoader helper,
 	ClassLoader parent)
     {
 	super(base);
 	myBase = base;
 	perms = pc;
-	this.helper = helper;
 	this.parent = parent;
 	hashAllowedParentClasses(allowedParentClasses);
+	// Register in case classes were preloaded
+	CVM.Preloader.registerClassLoader("midp", this);
     }
 
     private void
@@ -90,13 +89,19 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
 
 
     private Class
-    loadFromParent(String classname, boolean restrict)
+    loadFromParent(String classname, boolean resolve, boolean restrict)
 					throws ClassNotFoundException
     {
 	// make sure classname is on the list.
-	if (restrict && !allowedClasses.contains(classname))
+	if (restrict && !allowedClasses.contains(classname)) {
 	    return null;
-	return parent.loadClass(classname);
+        }
+
+        /* Call java.lang.ClassLoader(classname, resolve),
+         * which uses the NULL classLoader to load
+         * class if parent is null, or calls parent.loadClass()
+         * when the parent is not null. */
+        return super.loadClass(classname, resolve);
     }
 
     public Class
@@ -111,26 +116,16 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
     {
 	Class resultClass;
 	classname = classname.intern();
-	/*DEBUG boolean helperClass = false; */
 	resultClass = findLoadedClass(classname);
 	if (resultClass == null){
 	    try {
-		resultClass = loadFromParent(classname, restrict);
+		resultClass = loadFromParent(classname, resolve, restrict);
 	    }catch(Exception e){
 		/*DEBUG e.printStackTrace(); */
 		resultClass = null;
 	    }
 	}
-	if (resultClass == null && helper != null){
-	    try {
-		resultClass = helper.loadClass(classname); // from ROM
-		/*DEBUG System.out.println("MIDPImplementationClassLoader: helper found class "+classname);  */
-		/*DEBUG helperClass=true; */
-	    }catch(Exception e){
-		/*DEBUG e.printStackTrace(); */
-		resultClass = null;
-	    }
-	}
+	
 	if (resultClass == null){
 	    try {
 		resultClass = super.findClass(classname); // from URLClassLoader
@@ -142,7 +137,6 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
 	if (resultClass == null)
 	    throw new ClassNotFoundException(classname);
 	if (resolve){
-	    /*DEBUG if(helperClass) System.out.println("resolving "+classname); */
 	    resolveClass(resultClass);
 	}
 	/*DEBUG if(helperClass){

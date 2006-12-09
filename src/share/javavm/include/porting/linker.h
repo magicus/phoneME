@@ -1,5 +1,5 @@
 /*
- * @(#)linker.h	1.15 06/10/10
+ * @(#)linker.h	1.18 06/10/30
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -48,12 +48,20 @@
  */
 
 /*
+ * create a string for the dynamic lib open call by adding the
+ * appropriate pre and extensions to a filename and the path
+ */
+void
+CVMdynlinkbuildLibName(char *holder, int holderlen, const char *pname,
+                       char *fname);
+
+/*
  * Dynamically link in a shared object. This takes a platform-
  * dependent, absolute pathname to the DSO. Calling code is
  * responsible for constructing this name. (We have yet to determine
  * how this will be done both for user libraries, which have the
  * properties java.library.path and java.path.separator available, and
- * system or "JVM helper" libraries like the JVMDI/JDWP backend, which
+ * system or "JVM helper" libraries like the JVMTI/JDWP backend, which
  * must be loaded before the VM is initialized.) Returns an abstract
  * "handle" to the shared object which must be used for later symbol
  * queries, or NULL if an error occurred. (sysLoadLibrary in the JDK)

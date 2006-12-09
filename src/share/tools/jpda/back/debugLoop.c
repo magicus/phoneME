@@ -1,5 +1,5 @@
 /*
- * @(#)debugLoop.c	1.39 06/10/10
+ * @(#)debugLoop.c	1.40 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,40 +23,34 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
 
-#include <jvmdi.h>
 #include "util.h"
 #include "transport.h"
 #include "debugLoop.h"
 #include "debugDispatch.h"
 #include "standardHandlers.h"
-#include "commonRef.h"
 #include "inStream.h"
 #include "outStream.h"
-#include "JDWP.h"
 #include "threadControl.h"
-#include "debugInit.h"
 
 
-static void reader(void *);
-static void enqueue(struct Packet *p);
-static jboolean dequeue(struct Packet *p);
+static void JNICALL reader(jvmtiEnv* jvmti_env, JNIEnv* jni_env, void* arg);
+static void enqueue(jdwpPacket *p);
+static jboolean dequeue(jdwpPacket *p);
 static void notifyTransportError(void);
 
 struct PacketList {
-    struct Packet packet;
+    jdwpPacket packet;
     struct PacketList *next;
 };
 
 static volatile struct PacketList *cmdQueue;
-static JVMDI_RawMonitor cmdQueueLock;
+static jrawMonitorID cmdQueueLock;
+static jrawMonitorID resumeLock;
 static jboolean transportError;
 
 static jboolean
-lastCommand(struct CmdPacket *cmd)
+lastCommand(jdwpCmdPacket *cmd)
 {
     if ((cmd->cmdSet == JDWP_COMMAND_SET(VirtualMachine)) &&
         ((cmd->cmd == JDWP_COMMAND(VirtualMachine, Dispose)) ||
@@ -66,15 +60,41 @@ lastCommand(struct CmdPacket *cmd)
         return JNI_FALSE;
     }
 }
+
+static jboolean
+resumeCommand(jdwpCmdPacket *cmd)
+{
+    if ( (cmd->cmdSet == JDWP_COMMAND_SET(VirtualMachine)) &&
+         (cmd->cmd == JDWP_COMMAND(VirtualMachine, Resume)) ) {
+        return JNI_TRUE;
+    } else {
+        return JNI_FALSE;
+    }
+}
+
+void
+debugLoop_initialize(void)
+{
+    resumeLock = debugMonitorCreate("JDWP Resume Lock");
+}
+
+void
+debugLoop_sync(void)
+{
+    debugMonitorEnter(resumeLock);
+    debugMonitorExit(resumeLock);
+}
+
 /*
  * This is where all the work gets done.
  */
   
 void
-debugLoop_run()
+debugLoop_run(void)
 {
     jboolean shouldListen;
-    struct Packet p;
+    jdwpPacket p;
+    jvmtiStartFunction func;
     
     /* Initialize all statics */
     /* We may be starting a new connection after an error */
@@ -84,7 +104,8 @@ debugLoop_run()
 
     shouldListen = JNI_TRUE;
 
-    spawnNewThread(reader, NULL, "JDWP Command Reader");
+    func = &reader;
+    (void)spawnNewThread(func, NULL, "JDWP Command Reader");
 
     standardHandlers_onConnect();
     threadControl_onConnect();
@@ -95,16 +116,16 @@ debugLoop_run()
             break;
         }
 
-        if (p.type.cmd.flags & FLAGS_Reply) {
+        if (p.type.cmd.flags & JDWPTRANSPORT_FLAGS_REPLY) {
             /*
              * Its a reply packet.
              */
-            
+           continue; 
         } else {
             /*
              * Its a cmd packet.
              */
-            struct CmdPacket *cmd = &p.type.cmd;
+            jdwpCmdPacket *cmd = &p.type.cmd;
             PacketInputStream in;
             PacketOutputStream out;
             CommandHandler func;
@@ -115,10 +136,23 @@ debugLoop_run()
              */
             jboolean replyToSender = JNI_TRUE; 
 
+            /*
+             * For VirtualMachine.Resume commands we hold the resumeLock
+             * while executing and replying to the command. This ensures
+             * that a Resume after VM_DEATH will be allowed to complete
+             * before the thread posting the VM_DEATH continues VM
+             * termination.
+             */
+            if (resumeCommand(cmd)) {
+                debugMonitorEnter(resumeLock);
+            }
+
             /* Initialize the input and output streams */
             inStream_init(&in, p);
             outStream_initReply(&out, inStream_id(&in));
 
+            LOG_MISC(("Command set %d, command %d", cmd->cmdSet, cmd->cmd));
+            
             func = debugDispatch_getHandler(cmd->cmdSet,cmd->cmd);
             if (func == NULL) {
                 /* we've never heard of this, so I guess we
@@ -126,15 +160,14 @@ debugLoop_run()
                  * Handle gracefully for future expansion
                  * and platform / vendor expansion.
                  */
-                outStream_setError(&out, 
-                                   JDWP_Error_NOT_IMPLEMENTED);
-            } else if (vmDead && 
+                outStream_setError(&out, JDWP_ERROR(NOT_IMPLEMENTED));
+            } else if (gdata->vmDead && 
              ((cmd->cmdSet) != JDWP_COMMAND_SET(VirtualMachine))) {
                 /* Protect the VM from calls while dead.
                  * VirtualMachine cmdSet quietly ignores some cmds
                  * after VM death, so, it sends it's own errors.
                  */
-                outStream_setError(&out, JDWP_Error_VM_DEAD);
+                outStream_setError(&out, JDWP_ERROR(VM_DEAD));
             } else {
                 /* Call the command handler */
                 replyToSender = func(&in, &out);
@@ -146,6 +179,13 @@ debugLoop_run()
                     outStream_setError(&out, inStream_error(&in));
                 } 
                 outStream_sendReply(&out);
+            }
+
+            /*
+             * Release the resumeLock as the reply has been posted.
+             */
+            if (resumeCommand(cmd)) {
+                debugMonitorExit(resumeLock);
             }
 
             inStream_destroy(&in);
@@ -164,35 +204,39 @@ debugLoop_run()
      */
     transport_close();
     debugMonitorDestroy(cmdQueueLock);
-    debugInit_reset(transportError);
+
+    /* Reset for a new connection to this VM if it's still alive */
+    if ( ! gdata->vmDead ) {
+      debugInit_reset(getEnv(), transportError);
+    }
 }
 
-static void 
-reader(void *unused)
+/* Command reader */
+static void JNICALL
+reader(jvmtiEnv* jvmti_env, JNIEnv* jni_env, void* arg)
 {
-    struct Packet packet;
-    struct CmdPacket *cmd;
+    jdwpPacket packet;
+    jdwpCmdPacket *cmd;
     jboolean shouldListen = JNI_TRUE;
 
+    LOG_MISC(("Begin reader thread"));
+
     while (shouldListen) {
-        jint error;
+        jint rc;
+        
+        rc = transport_receivePacket(&packet);
 
-        error = transport_receivePacket(&packet);
-
-        /* Is it a valid packet? */
-        if (error != 0) {
-	    if (errno != EBADF) {
-		perror("transport_receivePacket");
-		fprintf(stderr,"Transport error, error code = %d (%d)\n",
-		    error, errno);
-	    }
+        /* I/O error or EOF */
+        if (rc != 0 || (rc == 0 && packet.type.cmd.len == 0)) {
             shouldListen = JNI_FALSE;
             notifyTransportError();
         } else {
             cmd = &packet.type.cmd;
+            
+            LOG_MISC(("Command set %d, command %d", cmd->cmdSet, cmd->cmd));
 
             /* 
-             * We still need to deal with high priority
+             * NOTE: We need to deal with high priority
              * packets and queue flushes!
              */
             enqueue(&packet);
@@ -200,29 +244,28 @@ reader(void *unused)
             shouldListen = !lastCommand(cmd);
         }
     }
+    LOG_MISC(("End reader thread"));
 }
 
 /*
  * The current system for queueing packets is highly
  * inefficient, and should be rewritten! It'd be nice
- * to avoid any additional mallocs.
+ * to avoid any additional memory allocations.
  */
 
 static void 
-enqueue(struct Packet *packet)
+enqueue(jdwpPacket *packet)
 {
     struct PacketList *pL;
     struct PacketList *walker;
 
-    pL = jdwpAlloc((size_t)sizeof(struct PacketList));
+    pL = jvmtiAllocate((jint)sizeof(struct PacketList));
     if (pL == NULL) {
-        ALLOC_ERROR_EXIT();
+        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"packet list");
     }
 
     pL->packet = *packet;
     pL->next = NULL;
-
-    /*fprintf(stderr,"Starting packet enqueue.\n");*/
 
     debugMonitorEnter(cmdQueueLock);
 
@@ -238,21 +281,16 @@ enqueue(struct Packet *packet)
     }
 
     debugMonitorExit(cmdQueueLock);
-
-    /*fprintf(stderr,"Done with packet enqueue.\n");*/
 }
 
 static jboolean 
-dequeue(Packet *packet) {
+dequeue(jdwpPacket *packet) {
     struct PacketList *node = NULL;
-
-    /*fprintf(stderr,"Starting packet dequeue.\n");*/
 
     debugMonitorEnter(cmdQueueLock); 
 
     while (!transportError && (cmdQueue == NULL)) {
         debugMonitorWait(cmdQueueLock);
-        /*fprintf(stderr,"dequeue got notify!\n");*/
     }
 
     if (cmdQueue != NULL) {
@@ -261,17 +299,15 @@ dequeue(Packet *packet) {
     }
     debugMonitorExit(cmdQueueLock);
 
-    /*fprintf(stderr,"Done with packet dequeue.\n");*/
-
     if (node != NULL) {
         *packet = node->packet;
-        jdwpFree(node);
+        jvmtiDeallocate(node);
     }
     return (node != NULL);
 }
 
 static void 
-notifyTransportError() {
+notifyTransportError(void) {
     debugMonitorEnter(cmdQueueLock); 
     transportError = JNI_TRUE;
     debugMonitorNotify(cmdQueueLock);

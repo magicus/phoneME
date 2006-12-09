@@ -1,5 +1,5 @@
 /*
- * @(#)named_sys_monitor.c	1.11 06/10/10
+ * @(#)named_sys_monitor.c	1.12 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -30,7 +30,7 @@
 #include "javavm/include/named_sys_monitor.h"
 #include "javavm/include/clib.h"
 
-#if (defined(CVM_JVMDI) || defined(CVM_JVMPI))
+#if (defined(CVM_JVMTI) || defined(CVM_JVMPI))
 
 /*=============================================== class CVMNamedSysMonitor ==*/
 

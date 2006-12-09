@@ -1,27 +1,27 @@
 /*
- * @(#)linker_md.c	1.14 06/10/10
+ * @(#)linker_md.c  1.16 06/10/30
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
- *   
- * This program is free software; you can redistribute it and/or  
- * modify it under the terms of the GNU General Public License version  
- * 2 only, as published by the Free Software Foundation.   
- *   
- * This program is distributed in the hope that it will be useful, but  
- * WITHOUT ANY WARRANTY; without even the implied warranty of  
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
- * General Public License version 2 for more details (a copy is  
- * included at /legal/license.txt).   
- *   
- * You should have received a copy of the GNU General Public License  
- * version 2 along with this work; if not, write to the Free Software  
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
- * 02110-1301 USA   
- *   
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
- * Clara, CA 95054 or visit www.sun.com if you need additional  
- * information or have any questions. 
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
  *
  */
 #ifdef WINCE
@@ -50,6 +50,38 @@
 #include "javavm/include/winntUtil.h"
 #endif
 
+/*
+ * Build a machine dependent library name out of a path and file name.
+ */
+void
+CVMdynlinkbuildLibName(char *holder, int holderlen, const char *pname,
+                       char *fname)
+{
+    const int pnamelen = pname ? strlen(pname) : 0;
+    const char c = (pnamelen > 0) ? pname[pnamelen-1] : 0;
+    char *suffix;
+
+#ifdef DEBUG
+    suffix = "_g";
+#else
+    suffix = "";
+#endif
+
+    /* Quietly truncates on buffer overflow. Should be an error. */
+    if (pnamelen + strlen(fname) + 10 > (unsigned int)holderlen) {
+        *holder = '\0';
+        return;
+    }
+
+    if (pnamelen == 0) {
+        sprintf(holder, "lib%s%s.dll", fname, suffix);
+    } else if (c == ':' || c == '\\') {
+        sprintf(holder, "lib%s%s%s.dll", pname, fname, suffix);
+    } else {
+        sprintf(holder, "%s\\lib%s%s.dll", pname, fname, suffix);
+    }
+}
+
 void *
 CVMdynlinkOpen(const void *absolutePathName)
 {
@@ -57,41 +89,50 @@ CVMdynlinkOpen(const void *absolutePathName)
 
     if (absolutePathName == NULL) {
 
-	hh = LoadLibrary(TEXT("cvmi.dll"));
+  hh = LoadLibrary(TEXT("cvmi.dll"));
 
     } else {
 #ifdef UNICODE
-	WCHAR *wc = createWCHAR(absolutePathName);
-	hh = LoadLibrary(wc);
+  WCHAR *wc;
+  char *pathName = (char *)absolutePathName;
+
+/* wince doesn't like the path to a dll so provide the library name */
+#ifdef WINCE
+  pathName = strrchr(pathName, '\\');
+  pathName++;  /* Skip the backslash in the name */
+#endif
+
+  wc = createWCHAR(pathName);
+  hh = LoadLibrary(wc);
 #else
-	char *wc = (char *)absolutePathName;
-	hh = LoadLibraryA(wc);
+  char *wc = (char *)absolutePathName;
+  hh = LoadLibraryA(wc);
 #endif
 #ifdef CVM_DEBUG
-	if (hh == NULL) {
-	    LPVOID lpMsgBuf;
-	    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-			  FORMAT_MESSAGE_FROM_SYSTEM |
-			  FORMAT_MESSAGE_IGNORE_INSERTS,
-			  NULL,
-			  GetLastError(),
-			  0, /* default language */
-			  (LPTSTR) &lpMsgBuf,
-			  0,
-			  NULL);
-	    
-	    MessageBox(NULL, 
-		       (LPCTSTR) lpMsgBuf, 
-		       TEXT("Error"), 
-		       MB_OK | MB_ICONINFORMATION);
+  if (hh == NULL) {
+      LPVOID lpMsgBuf;
+      FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        GetLastError(),
+        0, /* default language */
+        (LPTSTR) &lpMsgBuf,
+        0,
+        NULL);
 
-	    LocalFree(lpMsgBuf);
+      MessageBox(NULL,
+           (LPCTSTR) lpMsgBuf,
+           TEXT("Error"),
+           MB_OK | MB_ICONINFORMATION);
 
-	    /* DWORD err = GetLastError(); */
-	}
+      LocalFree(lpMsgBuf);
+
+      /* DWORD err = GetLastError(); */
+  }
 #endif
 #ifdef UNICODE
-	free(wc);
+  free(wc);
 #endif
     }
     return hh;
@@ -120,7 +161,7 @@ CVMdynlinkClose(void *dsoHandle)
 /* Basically copied from the JDK */
 CVMBool
 CVMdynlinkBuildLibName(void *holder, int holderlen,
-		       void *pname, void *fname)
+           void *pname, void *fname)
 {
     const int pnamelen = pname ? strlen(pname) : 0;
     char *suffix;
@@ -135,15 +176,15 @@ CVMdynlinkBuildLibName(void *holder, int holderlen,
 
     if (pnamelen == 0) {
 #ifndef WINCE
-	sprintf((char *) holder, "%s%s%s%s",
-	    JNI_LIB_PREFIX, (char *) fname, (char *) suffix, JNI_LIB_SUFFIX);
+  sprintf((char *) holder, "%s%s%s%s",
+      JNI_LIB_PREFIX, (char *) fname, (char *) suffix, JNI_LIB_SUFFIX);
 #else
-	sprintf((char *) holder, "/%s%s%s%s",
-	    JNI_LIB_PREFIX, (char *) fname, (char *) suffix, JNI_LIB_SUFFIX);
+  sprintf((char *) holder, "/%s%s%s%s",
+      JNI_LIB_PREFIX, (char *) fname, (char *) suffix, JNI_LIB_SUFFIX);
 #endif
     } else {
         sprintf((char *) holder, "%s/%s%s%s%s",
-		    (char *) pname, JNI_LIB_PREFIX, (char *) fname, (char *) suffix, JNI_LIB_SUFFIX);
+        (char *) pname, JNI_LIB_PREFIX, (char *) fname, (char *) suffix, JNI_LIB_SUFFIX);
     }
     return CVM_TRUE;
 }

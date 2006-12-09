@@ -1,6 +1,4 @@
 #
-# @(#)defs_jump.mk	1.3 06/10/25
-# 
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -35,7 +33,7 @@ ifeq ($(CVM_INCLUDE_JUMP),true)
 # JUMP defs
 #
 export JAVA_HOME	= $(JDK_HOME)
-JUMP_ANT_OPTIONS        += -Ddist.dir=$(CVM_JUMP_BUILDDIR)
+JUMP_ANT_OPTIONS        += -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) -Dcdc.dir=$(call POSIX2HOST,${CDC_DIST_DIR})
 # The default JUMP component location
 JUMP_DIR		?= $(CVM_TOP)/../jump/trunk
 ifeq ($(wildcard $(JUMP_DIR)/build/build.xml),)
@@ -46,6 +44,9 @@ JUMP_SRCDIR             = $(JUMP_DIR)/src
 
 ifeq ($(CVM_TERSEOUTPUT), false)
 CVM_ANT_OPTIONS         += -v
+endif
+ifneq ($(CVM_DEBUG), true)
+CVM_ANT_OPTIONS         += -Ddebug=false
 endif
 
 #
@@ -62,13 +63,16 @@ JUMP_IMPL_CLASSESZIP	= $(JUMP_OUTPUT_DIR)/jump-impl.jar
 
 JUMP_SRCDIRS           += \
 	$(JUMP_SRCDIR)/share/api/native \
+	$(JUMP_SRCDIR)/share/impl/isolate/native \
+	$(JUMP_SRCDIR)/share/impl/os/native
 
 # Add as necessary
 #	$(JUMP_SRCDIR)/share/impl/<component>/native \
 #
 
 JUMP_INCLUDES  += \
-	-I$(JUMP_SRCDIR)/share/api/native/include \
+	-I$(call POSIX2HOST,$(JUMP_SRCDIR)/share/api/native/include) \
+	-I$(call POSIX2HOST,$(JUMP_SRCDIR)/share/impl/os/native/include) \
 
 # Add as necessary
 #	-I$(JUMP_SRCDIR)/share/impl/<component>/native/include \
@@ -78,8 +82,22 @@ JUMP_INCLUDES  += \
 # Any shared native code goes here.
 # 
 JUMP_OBJECTS            += \
+	jump_os_impl.o \
+	jump_messaging.o \
+	jump_isolate_impl.o \
+
+#
+# Any native code for the stand-alone jump native library goes here
+# 
+JUMP_NATIVE_LIBRARY_OBJECTS            += \
 	jump_messaging.o
 
+JUMP_NATIVE_LIBRARY_PATHNAME = $(JUMP_OUTPUT_DIR)/$(LIB_PREFIX)jumpmesg$(LIB_POSTFIX)
+
+#
+# Make sure this shared library gets built
+#
+CLASSLIB_DEPS += $(JUMP_NATIVE_LIBRARY_PATHNAME)
 
 #
 # Get any platform specific dependencies of any kind.
@@ -92,9 +110,13 @@ JUMP_OBJECTS            += \
 #
 # Finally modify CVM variables w/ all the JUMP items
 #
+JUMP_NATIVE_LIB_OBJS     = $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(JUMP_NATIVE_LIBRARY_OBJECTS))
+CVM_CVMC_OBJECTS        += $(JUMP_NATIVE_LIB_OBJS)
 CVM_OBJECTS             += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(JUMP_OBJECTS))
 CVM_SRCDIRS             += $(JUMP_SRCDIRS)
 CVM_INCLUDES            += $(JUMP_INCLUDES)
+
+MIDP_CLASSESZIP_DEPS += $(JUMP_API_CLASSESZIP)
 
 #
 # In case we build any libraries that we want the cvm binary to use

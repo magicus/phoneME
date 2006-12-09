@@ -1,5 +1,5 @@
 /*
- * @(#)CVM.java	1.114 06/10/10
+ * @(#)CVM.java	1.116 06/11/07
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -36,6 +36,7 @@ import java.util.jar.Attributes;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.io.File;
+import java.util.StringTokenizer;
 
 public final class CVM {
     /** WARNING! NO STATIC INITIALIZER IS ALLOWED IN THIS CLASS!
@@ -86,6 +87,7 @@ public final class CVM {
 
 	String pathSeparator = System.getProperty("path.separator", ":");
 	ArrayList xrunArgs = new ArrayList();
+	ArrayList agentlibArgs = new ArrayList();
 
 	for (int i = 0; i < args.length; i++) {
 
@@ -107,10 +109,23 @@ public final class CVM {
 	    } else if (args[i].startsWith("-showversion")) {
 		Version.print(true); // Long version
 		// continue with VM execution
+            } else if (args[i].startsWith("-Xnoagent")) {
+		// eat this old jdb launching option
+                // continue with VM execution
 	    } else if (args[i].startsWith("-Xtrace:")) {
 		String traceArg = args[i].substring(8);
 		int debugFlags = Integer.decode(traceArg).intValue();
 		CVM.setDebugFlags(debugFlags);
+		// continue with VM execution
+	    } else if (args[i].startsWith("-agentlib") ||
+		       args[i].startsWith("-agentpath")) {
+		if (!agentlibSupported()) {
+		    System.err.println("-agentlib, -agentpath not supported");
+		    usage(nativeOptions);
+		    parseStatus = ARG_PARSE_ERR;
+		    return parseStatus;
+		}
+		agentlibArgs.add(args[i]);
 		// continue with VM execution
 	    } else if (args[i].startsWith("-Xrun")) {
 		if (!xrunSupported()) {
@@ -304,6 +319,22 @@ public final class CVM {
 	}
 
 	savedNativeOptions = nativeOptions;
+
+	//
+	// Handle agentlib options
+	//
+	if (agentlibArgs.size() > 0) {
+	    if (!agentlibInitialize(agentlibArgs.size())) {
+		return ARG_PARSE_ERR;
+	    }
+	    
+	    Object[] agentOpts = agentlibArgs.toArray();
+	    for (int j = 0; j < agentOpts.length; j++) {
+		if (!agentlibProcess((String)agentOpts[j])) {
+		    return ARG_PARSE_ERR;
+		}
+	    }
+	}
 
 	//
 	// Handle Xrun options
@@ -757,6 +788,22 @@ public final class CVM {
     public native static boolean parseAssertionOptions(String xgcArg);
 
     //
+    // Is -agentlib, -agentpath supported?
+    //
+    public native static boolean agentlibSupported();
+
+    //
+    // Initialize agentlib processing
+    //
+    public native static boolean agentlibInitialize(int numOptions);
+
+    //
+    // Process agentlib option
+    //
+    public native static boolean agentlibProcess(String agentArg);
+
+ 
+    //
     // Is -Xrun supported?
     //
     public native static boolean xrunSupported();
@@ -776,10 +823,37 @@ public final class CVM {
     //
     public native static boolean xdebugSet();
 
+    static class Preloader {
+	//
+	// Register ClassLoader for ROMized classes
+	//
+	public static boolean registerClassLoader(String name, ClassLoader cl) {
+	    String preloadedClassLoaders = getClassLoaderNames();
+	    if (preloadedClassLoaders == null) {
+		return false;
+	    }
+	    int classLoaderIndex = 0;
+	    StringTokenizer st = new StringTokenizer(preloadedClassLoaders, ",");
+	    while (st.hasMoreTokens()) {
+		if (name.equals(st.nextToken())) {
+		    registerClassLoader0(classLoaderIndex, cl);
+		    return true;
+		}
+		++classLoaderIndex;
+	    }
+	    return false;
+	}
+
+	private native static String getClassLoaderNames();
+	private native static void registerClassLoader0(int clIndex,
+	    ClassLoader cl);
+    };
+
     //
     // Intrinsics for faster synchronization of simple methods. There
     // are strict limitations on how and when they used.
     //
     public native static boolean simpleLockGrab(Object lockObj);
     public native static void simpleLockRelease(Object lockObj);
+
 }

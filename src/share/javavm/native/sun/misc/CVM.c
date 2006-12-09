@@ -1,5 +1,5 @@
 /*
- * @(#)CVM.c	1.80 06/10/10
+ * @(#)CVM.c	1.82 06/10/30
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -54,8 +54,8 @@
 #ifdef CVM_XRUN
 #include "javavm/include/xrun.h"
 #endif
-#ifdef CVM_JVMDI
-#include "javavm/include/jvmdi_jni.h"
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmti_jni.h"
 #endif
 
 #ifdef CVM_DEBUG_ASSERTS
@@ -456,10 +456,10 @@ CNIsun_misc_CVM_freeClinit(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			   CVMMethodBlock **p_mb)
 {
     /*
-     * Both JVMDI and JVMPI require that the jmd for the clinit
+     * Both JVMTI and JVMPI require that the jmd for the clinit
      * not be freed.
      */
-#if !defined(CVM_JVMDI) && !defined(CVM_JVMPI)
+#if !defined(CVM_JVMTI) && !defined(CVM_JVMPI)
     CVMClassBlock* cb = CVMgcUnsafeClassRef2ClassBlock(ee, &arguments[0].j.r);
     CVMMethodBlock* clinitmb;
     CVMJavaMethodDescriptor* jmd;
@@ -754,7 +754,7 @@ CNIResultCode
 CNIsun_misc_CVM_setDebugEvents(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
 {
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
     ee->debugEventsEnabled = arguments[0].j.i;
 #endif
     return CNI_VOID;
@@ -1121,6 +1121,78 @@ done:
 }
 
 CNIResultCode
+CNIsun_misc_CVM_agentlibSupported(CVMExecEnv* ee,
+			      CVMStackVal32 *arguments,
+			      CVMMethodBlock **p_mb)
+{
+#ifdef CVM_AGENTLIB
+    arguments[0].j.i = CVM_TRUE;
+#else
+    arguments[0].j.i = CVM_FALSE;
+#endif
+
+    return CNI_SINGLE;
+}
+
+CNIResultCode
+CNIsun_misc_CVM_agentlibInitialize(CVMExecEnv* ee,
+			      CVMStackVal32 *arguments,
+			      CVMMethodBlock **p_mb)
+{
+#ifdef CVM_AGENTLIB
+    CVMJavaInt numArgs = arguments[0].j.i;
+    
+    if (CVMAgentInitTable(&CVMglobals.agentonUnloadTable, numArgs)) {
+	arguments[0].j.i = CVM_TRUE;
+    } else {
+	arguments[0].j.i = CVM_FALSE;
+    }
+#else
+    arguments[0].j.i = CVM_FALSE;
+#endif
+
+    return CNI_SINGLE;
+}
+
+CNIResultCode
+CNIsun_misc_CVM_agentlibProcess(CVMExecEnv* ee, CVMStackVal32 *arguments,
+			    CVMMethodBlock **p_mb)
+{
+    jobject agentArgStr  = &arguments[0].j.r;
+
+    char* agentArg = CVMconvertJavaStringToCString(ee, agentArgStr);
+    CVMBool result = CVM_FALSE;
+
+    if (agentArg == NULL) {
+	result = CVM_FALSE;
+    } else {
+#ifdef CVM_AGENTLIB
+	JNIEnv* env = CVMexecEnv2JniEnv(ee);
+	CVMAgentlibArg_t agentlibArgument;
+	agentlibArgument.is_absolute = CVM_FALSE;
+	agentlibArgument.str = agentArg;
+	if (!strncmp(agentArg, "-agentpath:", 11)) {
+	    agentlibArgument.is_absolute = CVM_TRUE;
+	}
+	CVMD_gcSafeExec(ee, {
+		if ((*env)->PushLocalFrame(env, 16) == JNI_OK) {
+		    result = CVMAgentHandleArgument(&CVMglobals.agentonUnloadTable,
+						    env,
+						    &agentlibArgument);
+		    (*env)->PopLocalFrame(env, NULL);
+		}
+	    });
+#else
+	result = CVM_FALSE;
+#endif
+	free(agentArg);
+    }
+
+    arguments[0].j.i = result;
+    return CNI_SINGLE;
+}
+
+CNIResultCode
 CNIsun_misc_CVM_xrunSupported(CVMExecEnv* ee,
 			      CVMStackVal32 *arguments,
 			      CVMMethodBlock **p_mb)
@@ -1190,15 +1262,70 @@ CNIResultCode
 CNIsun_misc_CVM_xdebugSet(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			  CVMMethodBlock **p_mb)
 {
-#ifdef CVM_JVMDI
-    CVMglobals.jvmdiDebuggingEnabled = CVM_TRUE;
-    CVMjvmdiInstrumentJNINativeInterface();
-    arguments[0].j.i = CVM_TRUE;
-#else
     arguments[0].j.i = CVM_FALSE;
+#ifdef CVM_JVMTI
+    /*
+     * NOTE: JVMTI doesn't use -Xdebug so this is actually set in
+     * jvmtiEnv.c CVMcreateJvmti()
+     */
+    CVMglobals.jvmtiDebuggingEnabled = CVM_TRUE;
+    CVMjvmtiInstrumentJNINativeInterface();
+    arguments[0].j.i = CVM_TRUE;
 #endif
 
     return CNI_SINGLE;
+}
+
+#include "javavm/include/localroots.h"
+#include "jni_util.h"
+
+
+CNIResultCode
+CNIsun_misc_CVM_00024Preloader_getClassLoaderNames(CVMExecEnv* ee,
+    CVMStackVal32 *arguments,
+    CVMMethodBlock **p_mb)
+{
+    CNIResultCode result = CNI_SINGLE;
+
+    CVMID_localrootBeginGcUnsafe(ee) {
+	CVMID_localrootDeclareGcUnsafe(CVMObjectICell, namesICell);
+
+	CVMD_gcSafeExec(ee, {
+	    JNIEnv* env = CVMexecEnv2JniEnv(ee);
+	    if ((*env)->PushLocalFrame(env, 16) == JNI_OK) {
+
+		jstring names = JNU_NewStringPlatform(env,
+		    CVMpreloaderGetClassLoaderNames(ee));
+
+		if ((*env)->ExceptionOccurred(env)) {
+		    result = CNI_EXCEPTION;
+		} else {
+		    CVMID_icellAssign(ee, namesICell, names);
+		}
+
+		(*env)->PopLocalFrame(env, NULL);
+	    }
+	});
+
+	if (result != CNI_EXCEPTION) {
+	    CVMID_icellAssignDirect(ee, &arguments[0].j.r, namesICell);
+	}
+
+    } CVMID_localrootEndGcUnsafe();
+
+    return result;
+}
+
+CNIResultCode
+CNIsun_misc_CVM_00024Preloader_registerClassLoader0(CVMExecEnv* ee,
+    CVMStackVal32 *arguments,
+    CVMMethodBlock **p_mb)
+{
+    CVMpreloaderRegisterClassLoaderUnsafe(ee,
+	arguments[0].j.i, /* index */
+	&arguments[1].j.r /* cl */
+    );
+    return CNI_VOID;
 }
 
 #if 1

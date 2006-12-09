@@ -1,5 +1,5 @@
 /*
- * @(#)stream.c	1.11 06/10/10
+ * @(#)stream.c	1.12 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,8 +23,9 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
+#include "util.h" /* Needed for linux, do not remove */
 #include "stream.h"
-#include "util.h"
 
 #if CVM_ENDIANNESS == CVM_LITTLE_ENDIAN
 
@@ -52,10 +53,10 @@ jdouble
 stream_encodeDouble(jdouble d)
 {
     union {
-	jdouble d;
-	jlong l;
+        jdouble d;
+        jlong l;
 #if CVM_ENDIANNESS != CVM_DOUBLE_ENDIANNESS
-	jint i[2];
+        jint i[2];
 #endif
     } sD;
 
@@ -102,3 +103,4 @@ stream_encodeDouble(jdouble d)
 
 #endif /* (CVM_ENDIANNESS == CVM_LITTLE_ENDIAN) || \
           (CVM_ENDIANNESS != CVM_DOUBLE_ENDIANNESS) */
+

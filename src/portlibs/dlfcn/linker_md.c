@@ -1,5 +1,5 @@
 /*
- * @(#)linker_md.c	1.18 06/10/10
+ * @(#)linker_md.c	1.20 06/10/30
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -33,6 +33,36 @@
 #include <dlfcn.h>
 #include <assert.h>
 #include <stdlib.h>
+
+/*
+ * create a string for the dynamic lib open call by adding the
+ * appropriate pre and extensions to a filename and the path
+ */
+void
+CVMdynlinkbuildLibName(char *holder, int holderlen, const char *pname,
+                       char *fname)
+{
+    const int pnamelen = pname ? strlen(pname) : 0;
+    char *suffix;
+
+#ifdef CVM_DEBUG   
+    suffix = "_g";
+#else
+    suffix = "";
+#endif 
+
+    /* Quietly truncate on buffer overflow.  Should be an error. */
+    if (pnamelen + strlen(fname) + 10 > holderlen) {
+        *holder = '\0';
+        return;
+    }
+
+    if (pnamelen == 0) {
+        sprintf(holder, "lib%s%s.so", fname, suffix);
+    } else {
+        sprintf(holder, "%s/lib%s%s.so", pname, fname, suffix);
+    }
+}
 
 void *
 CVMdynlinkOpen(const void *absolutePathName)

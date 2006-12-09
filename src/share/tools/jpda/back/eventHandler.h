@@ -1,5 +1,5 @@
 /*
- * @(#)eventHandler.h	1.39 06/10/10
+ * @(#)eventHandler.h	1.40 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,11 +24,9 @@
  * information or have any questions. 
  */
 
-#ifndef _EVENT_HANDLER_H
-#define _EVENT_HANDLER_H
+#ifndef JDWP_EVENTHANDLER_H
+#define JDWP_EVENTHANDLER_H
 
-#include <jni.h>
-#include <jvmdi.h>
 #include "bag.h"
 
 typedef jint HandlerID;
@@ -36,23 +34,26 @@ typedef jint HandlerID;
 /* structure is read-only for users */
 typedef struct HandlerNode_ {    
     HandlerID handlerID;
-    jbyte kind;
+    EventIndex ei;
     jbyte suspendPolicy;
-    /* private members follow */
+    jboolean permanent;
+    int needReturnValue;
 } HandlerNode;
 
 typedef void (*HandlerFunction)(JNIEnv *env,
-                                JVMDI_Event *event, 
+                                EventInfo *evinfo, 
                                 HandlerNode *node, 
                                 struct bag *eventBag);
 
 /***** HandlerNode create = alloc + install *****/
 
-HandlerNode *eventHandler_alloc(jint filterCount, jbyte kind, 
+HandlerNode *eventHandler_alloc(jint filterCount, EventIndex ei, 
                                 jbyte suspendPolicy);
-jint eventHandler_installExternal(HandlerNode *node);
-HandlerNode *eventHandler_createInternal(jbyte kind, HandlerFunction func);
-HandlerNode *eventHandler_createInternalThreadOnly(jbyte kind, 
+HandlerID eventHandler_allocHandlerID(void);
+jvmtiError eventHandler_installExternal(HandlerNode *node);
+HandlerNode *eventHandler_createPermanentInternal(EventIndex ei, 
+                                                  HandlerFunction func);
+HandlerNode *eventHandler_createInternalThreadOnly(EventIndex ei, 
                                                    HandlerFunction func,
                                                    jthread thread);
 HandlerNode *eventHandler_createInternalBreakpoint(HandlerFunction func,
@@ -63,9 +64,9 @@ HandlerNode *eventHandler_createInternalBreakpoint(HandlerFunction func,
 
 /***** HandlerNode free *****/
 
-jint eventHandler_freeAll(jint kind);
-jint eventHandler_freeByID(jint kind, HandlerID handlerID);
-jint eventHandler_free(HandlerNode *node);
+jvmtiError eventHandler_freeAll(EventIndex ei);
+jvmtiError eventHandler_freeByID(EventIndex ei, HandlerID handlerID);
+jvmtiError eventHandler_free(HandlerNode *node);
 void eventHandler_freeClassBreakpoints(jclass clazz);
 
 /***** HandlerNode manipulation *****/
@@ -76,10 +77,4 @@ void eventHandler_reset(jbyte sessionID);
 void eventHandler_lock(void);
 void eventHandler_unlock(void);
 
-/***** event redirection *****/
-typedef jboolean (*EventRedirectHook)(JVMDI_Event *event, 
-                                      jthread thread);
-extern jthread redirectedEventThread;
-extern EventRedirectHook redirectedEventFunction;
-
-#endif /* _EVENT_HANDLER_H */
+#endif /* _EVENTHANDLER_H */

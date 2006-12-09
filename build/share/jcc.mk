@@ -21,7 +21,7 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional  
 # information or have any questions. 
 #
-# @(#)jcc.mk	1.115 06/10/24
+# @(#)jcc.mk	1.116 06/10/27
 #
 
 #
@@ -147,15 +147,16 @@ CVM_JCC_INPUT += $(CVM_BUILDTIME_CLASSESZIP)
 # out of the jar file
 #
 ifeq ($(CVM_PRELOAD_TEST), true)
-CVM_JCC_INPUT += $(KBENCH_JAR)
-CVM_JCC_INPUT += $(CVM_TEST_CLASSESZIP)
+CVM_JCC_CL_INPUT += -cl:sys
+CVM_JCC_CL_INPUT += $(KBENCH_JAR)
+CVM_JCC_CL_INPUT += $(CVM_TEST_CLASSESZIP)
 endif
 
 ifeq ($(CVM_DEBUG_CLASSINFO), true)
 CVM_JCC_OPTIONS += -g
 endif
 # Allow breakpoints in ROMized code
-ifeq ($(CVM_JVMDI), true)
+ifeq ($(CVM_JVMTI), true)
 CVM_JCC_OPTIONS += -imageAttribute noPureCode
 endif
 
@@ -163,13 +164,15 @@ endif
 # romjava.c files
 ###########
 
-$(CVM_ROMJAVA_LIST): $(CVM_JCC_INPUT) $(CVM_JCC_DEPEND)
+CVM_JCC_INPUT_FILES = $(filter-out -%,$(CVM_JCC_INPUT))
+
+$(CVM_ROMJAVA_LIST): $(CVM_JCC_INPUT_FILES) $(CVM_JCC_DEPEND)
 	@echo "jcc romjava.c files"
-	$(AT)export CLASSPATH; \
-	CLASSPATH=$(CVM_JCC_CLASSPATH); \
-	$(CVM_JAVA) -Xmx128m JavaCodeCompact $(CVM_JCC_OPTIONS) \
+	$(CVM_JAVA) -cp $(CVM_JCC_CLASSPATH) -Xmx128m JavaCodeCompact \
+		$(CVM_JCC_OPTIONS) \
 		-maxSegmentSize $(CVM_ROMJAVA_CLASSES_PER_FILE) \
-		-o $(CVM_ROMJAVA_CPATTERN) $(CVM_JCC_INPUT)
+		-o $(CVM_ROMJAVA_CPATTERN) $(CVM_JCC_INPUT) \
+		$(CVM_JCC_CL_INPUT)
 
 ###########
 # romjava.o  is made by compiling all the .c files and linking the result

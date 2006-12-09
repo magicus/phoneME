@@ -1,5 +1,5 @@
 /*
- * @(#)ArrayTypeImpl.c	1.22 06/10/10
+ * @(#)ArrayTypeImpl.c	1.23 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,14 +23,11 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#include <stdlib.h>
-#include <string.h>
 
 #include "ArrayTypeImpl.h"
 #include "util.h"
 #include "inStream.h"
 #include "outStream.h"
-#include "JDWP.h"
 
 /*
  * Determine the component class by looking thru all classes for
@@ -39,7 +36,7 @@
  *     If the component type is a reference type, C is marked as having
  *     been defined by the defining class loader of the component type.
  */
-static jint 
+static jdwpError 
 getComponentClass(JNIEnv *env, jclass arrayClass, char *componentSignature, 
                 jclass *componentClassPtr) 
 {
@@ -47,183 +44,200 @@ getComponentClass(JNIEnv *env, jclass arrayClass, char *componentSignature,
     jclass *classes;
     jint count;
     jclass componentClass = NULL;
-    jint error = JVMDI_ERROR_NONE;
+    jdwpError serror;
+    jvmtiError error;
 
-    arrayClassLoader = classLoader(arrayClass);
-    classes = allLoadedClasses(&count);
-    if (classes == NULL) {
-        error = JVMDI_ERROR_OUT_OF_MEMORY;
+    serror = JDWP_ERROR(NONE);
+    
+    error = classLoader(arrayClass, &arrayClassLoader);
+    if (error != JVMTI_ERROR_NONE) {
+        return map2jdwpError(error);
+    }
+    
+    error = allLoadedClasses(&classes, &count);
+    if (error != JVMTI_ERROR_NONE) {
+        serror = map2jdwpError(error);
     } else {
         int i;
         for (i = 0; (i < count) && (componentClass == NULL); i++) {
-            char *signature;
+            char *signature = NULL;
             jclass clazz = classes[i];
             jboolean match;
+            jvmtiError error;
 
             /* signature must match */
-            signature = classSignature(clazz);
-            if (signature == NULL) {
-                error = JVMDI_ERROR_OUT_OF_MEMORY;
+            error = classSignature(clazz, &signature, NULL);
+            if (error != JVMTI_ERROR_NONE) {
+                serror = map2jdwpError(error);
                 break;
             }
             match = strcmp(signature, componentSignature) == 0;
-            jdwpFree(signature);
+            jvmtiDeallocate(signature);
 
             /* if signature matches, get class loader to check if
              * it matches 
              */
             if (match) {
-                jobject loader = classLoader(clazz);
-                match = (*env)->IsSameObject(env, loader, 
-                                             arrayClassLoader);
-                (*env)->DeleteGlobalRef(env, loader);
+                jobject loader;
+                error = classLoader(clazz, &loader);
+                if (error != JVMTI_ERROR_NONE) {
+                    return map2jdwpError(error);
+                }
+                match = isSameObject(env, loader, arrayClassLoader);
             }
 
             if (match) {
                 componentClass = clazz;
             } else {
-                (*env)->DeleteGlobalRef(env, clazz);
             }
         }
-        /* delete the remaining global refs (classes) */
-        for (; i < count; i++) {
-            jclass clazz = classes[i];
-            (*env)->DeleteGlobalRef(env, clazz);
-        }
-        jdwpFree(classes);
+        jvmtiDeallocate(classes);
 
         *componentClassPtr = componentClass;
     }
-    (*env)->DeleteGlobalRef(env, arrayClassLoader);
 
-    if (error == JVMDI_ERROR_NONE && componentClass == NULL) {
+    if (serror == JDWP_ERROR(NONE) && componentClass == NULL) {
         /* per JVM spec, component class is always loaded 
          * before array class, so this should never occur.
          */
-        error = JVMDI_ERROR_NOT_FOUND;
+        serror = JDWP_ERROR(NOT_FOUND);
     }
 
-    return error;
+    return serror;
 }
 
 static void
 writeNewObjectArray(JNIEnv *env, PacketOutputStream *out, 
-                 jclass arrayClass, jint size, char *componentSignature) {
+                 jclass arrayClass, jint size, char *componentSignature)
+{
 
-    jarray array;
-    jclass componentClass = NULL;
+    WITH_LOCAL_REFS(env, 2000) {
 
-    jint error = getComponentClass(env, arrayClass, 
+        jarray array;
+        jclass componentClass = NULL;
+        jdwpError serror;
+        
+        serror = getComponentClass(env, arrayClass, 
                                        componentSignature, &componentClass);
-    if (error != JVMDI_ERROR_NONE) {
-        outStream_setError(out, error);
-        return;
-    }
+        if (serror != JDWP_ERROR(NONE)) {
+            outStream_setError(out, serror);
+        } else {
 
-    WITH_LOCAL_REFS(env, 1);
+            array = JNI_FUNC_PTR(env,NewObjectArray)(env, size, componentClass, 0);
+            if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
+                JNI_FUNC_PTR(env,ExceptionClear)(env);
+                array = NULL;
+            }
 
-    array = (*env)->NewObjectArray(env, size, componentClass, 0);
-    if ((*env)->ExceptionOccurred(env)) {
-        (*env)->ExceptionClear(env);
-        array = NULL;
-    }
+            if (array == NULL) {
+                outStream_setError(out, JDWP_ERROR(OUT_OF_MEMORY));
+            } else {
+                (void)outStream_writeByte(out, specificTypeKey(env, array));
+                (void)outStream_writeObjectRef(env, out, array);
+            }
+        }
 
-    if (array == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        outStream_writeByte(out, specificTypeKey(array));
-        WRITE_LOCAL_REF(env, out, array);
-    }
-
-    (*env)->DeleteGlobalRef(env, componentClass);
-
-    END_WITH_LOCAL_REFS(env);
+    } END_WITH_LOCAL_REFS(env);
 }
 
 static void
 writeNewPrimitiveArray(JNIEnv *env, PacketOutputStream *out, 
-                       jclass arrayClass, jint size, char *componentSignature) {
+                       jclass arrayClass, jint size, char *componentSignature) 
+{
 
-    jarray array = NULL;
+    WITH_LOCAL_REFS(env, 1) {
 
-    WITH_LOCAL_REFS(env, 1);
+        jarray array = NULL;
 
-    switch (componentSignature[0]) {
-        case JDWP_Tag_BYTE:
-            array = (*env)->NewByteArray(env, size);
-            break;
+        switch (componentSignature[0]) {
+            case JDWP_TAG(BYTE):
+                array = JNI_FUNC_PTR(env,NewByteArray)(env, size);
+                break;
 
-        case JDWP_Tag_CHAR:
-            array = (*env)->NewCharArray(env, size);
-            break;
+            case JDWP_TAG(CHAR):
+                array = JNI_FUNC_PTR(env,NewCharArray)(env, size);
+                break;
 
-        case JDWP_Tag_FLOAT:
-            array = (*env)->NewFloatArray(env, size);
-            break;
+            case JDWP_TAG(FLOAT):
+                array = JNI_FUNC_PTR(env,NewFloatArray)(env, size);
+                break;
 
-        case JDWP_Tag_DOUBLE:
-            array = (*env)->NewDoubleArray(env, size);
-            break;
+            case JDWP_TAG(DOUBLE):
+                array = JNI_FUNC_PTR(env,NewDoubleArray)(env, size);
+                break;
 
-        case JDWP_Tag_INT:
-            array = (*env)->NewIntArray(env, size);
-            break;
+            case JDWP_TAG(INT):
+                array = JNI_FUNC_PTR(env,NewIntArray)(env, size);
+                break;
 
-        case JDWP_Tag_LONG:
-            array = (*env)->NewLongArray(env, size);
-            break;
+            case JDWP_TAG(LONG):
+                array = JNI_FUNC_PTR(env,NewLongArray)(env, size);
+                break;
 
-        case JDWP_Tag_SHORT:
-            array = (*env)->NewShortArray(env, size);
-            break;
+            case JDWP_TAG(SHORT):
+                array = JNI_FUNC_PTR(env,NewShortArray)(env, size);
+                break;
 
-        case JDWP_Tag_BOOLEAN:
-            array = (*env)->NewBooleanArray(env, size);
-            break;
+            case JDWP_TAG(BOOLEAN):
+                array = JNI_FUNC_PTR(env,NewBooleanArray)(env, size);
+                break;
 
-        default:
-            outStream_setError(out, JVMDI_ERROR_TYPE_MISMATCH);
-            break;
-    }
+            default:
+                outStream_setError(out, JDWP_ERROR(TYPE_MISMATCH));
+                break;
+        }
 
-    if ((*env)->ExceptionOccurred(env)) {
-        (*env)->ExceptionClear(env);
-        array = NULL;
-    }
+        if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
+            JNI_FUNC_PTR(env,ExceptionClear)(env);
+            array = NULL;
+        }
 
-    if (array == NULL) {
-        outStream_setError(out, JVMDI_ERROR_OUT_OF_MEMORY);
-    } else {
-        outStream_writeByte(out, specificTypeKey(array));
-        WRITE_LOCAL_REF(env, out, array);
-    }
+        if (array == NULL) {
+            outStream_setError(out, JDWP_ERROR(OUT_OF_MEMORY));
+        } else {
+            (void)outStream_writeByte(out, specificTypeKey(env, array));
+            (void)outStream_writeObjectRef(env, out, array);
+        }
 
-    END_WITH_LOCAL_REFS(env);
+    } END_WITH_LOCAL_REFS(env);
 }
 
 static jboolean 
 newInstance(PacketInputStream *in, PacketOutputStream *out)
 {
-    JNIEnv *env = getEnv();
-    char *arraySignature;
+    JNIEnv *env;
+    char *signature = NULL;
     char *componentSignature;
-    jclass arrayClass = inStream_readClassRef(in);
-    jint size = inStream_readInt(in);
+    jclass arrayClass;
+    jint size;
+    jvmtiError error;
+    
+    env = getEnv();
+    
+    arrayClass = inStream_readClassRef(env, in);
+    if (inStream_error(in)) {
+        return JNI_TRUE;
+    }
+    size = inStream_readInt(in);
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
 
-    arraySignature = classSignature(arrayClass);
-    componentSignature = &arraySignature[1];
+    error = classSignature(arrayClass, &signature, NULL);
+    if ( error != JVMTI_ERROR_NONE ) {
+        outStream_setError(out, map2jdwpError(error));
+        return JNI_FALSE;
+    }
+    componentSignature = &signature[1];
 
-    if ((componentSignature[0] == JDWP_Tag_OBJECT) || 
-        (componentSignature[0] == JDWP_Tag_ARRAY)) {
+    if ((componentSignature[0] == JDWP_TAG(OBJECT)) || 
+        (componentSignature[0] == JDWP_TAG(ARRAY))) {
         writeNewObjectArray(env, out, arrayClass, size, componentSignature);
     } else {
         writeNewPrimitiveArray(env, out, arrayClass, size, componentSignature);
     }
 
-    jdwpFree(arraySignature);
+    jvmtiDeallocate(signature);
     return JNI_TRUE;
 }
 

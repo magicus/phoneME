@@ -1,5 +1,5 @@
 /*
- * @(#)bcutils.c	1.22 06/10/10
+ * @(#)bcutils.c	1.23 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -66,7 +66,7 @@ disassembleRangeWithIndentation(CVMMethodBlock* mb,
 static void
 indent(CVMUint32 level);
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
 static CVMUint32
 getOpcodeLength(CVMExecEnv* ee, CVMUint8* pc)
 {
@@ -76,7 +76,7 @@ getOpcodeLength(CVMExecEnv* ee, CVMUint8* pc)
     if (*pc == opc_breakpoint) {
 	/* Find the length of the original opcode, so we can
 	   skip over it by the appropriate amount */
-	CVMOpcode instr = CVMjvmdiGetBreakpointOpcode(ee, pc, CVM_FALSE);
+	CVMOpcode instr = CVMjvmtiGetBreakpointOpcode(ee, pc, CVM_FALSE);
 	*pc = instr;
 	opLen = CVMopcodeGetLength(pc);
 	*pc = opc_breakpoint;

@@ -1,5 +1,5 @@
 /*
- * @(#)stream.h	1.13 06/10/10
+ * @(#)stream.h	1.14 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,6 +23,10 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
+#ifndef JDWP_STREAM_H
+#define JDWP_STREAM_H
+
 #include <jni.h>
 #include "javavm/include/porting/endianness.h"
 
@@ -80,4 +84,4 @@ jdouble stream_encodeDouble(jdouble d);
 #define JAVA_TO_HOST_FLOAT(x)  HOST_TO_JAVA_FLOAT(x) 
 #define JAVA_TO_HOST_DOUBLE(x) HOST_TO_JAVA_DOUBLE(x)
 
-
+#endif

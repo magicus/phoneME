@@ -1,5 +1,5 @@
 /*
- * @(#)stepControl.h	1.23 06/10/10
+ * @(#)stepControl.h	1.24 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,11 +23,10 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#ifndef STEP_CONTROL_H
-#define STEP_CONTROL_H
 
-#include <jni.h>
-#include <jvmdi.h>
+#ifndef JDWP_STEPCONTROL_H
+#define JDWP_STEPCONTROL_H
+
 #include "eventFilter.h"
 #include "eventHandler.h"
 
@@ -42,7 +41,8 @@ typedef struct {
     jboolean fromNative;
     jint fromStackDepth;     /* for all but STEP_INTO STEP_INSTRUCTION */
     jint fromLine;           /* for granularity == STEP_LINE */
-    JVMDI_line_number_entry *lineEntries;       /* STEP_LINE */
+    jmethodID method;   /* Where line table came from. */
+    jvmtiLineNumberEntry *lineEntries;       /* STEP_LINE */
     jint lineEntryCount;     /* for granularity == STEP_LINE */
 
     HandlerNode *stepHandlerNode;
@@ -54,15 +54,16 @@ typedef struct {
 
 void stepControl_initialize(void);
 void stepControl_reset(void);
-void stepControl_OnHook(void);
 
-jboolean stepControl_handleStep(JNIEnv *env, JVMDI_Event *event);
+jboolean stepControl_handleStep(JNIEnv *env, jthread thread, 
+                                jclass clazz, jmethodID method);
 
-jint stepControl_beginStep(jthread thread, jint size, jint depth,
-                           HandlerNode *node);
-jint stepControl_endStep(jthread thread);
+jvmtiError stepControl_beginStep(JNIEnv *env, jthread thread, 
+                                jint size, jint depth, HandlerNode *node);
+jvmtiError stepControl_endStep(jthread thread);
 
 void stepControl_clearRequest(jthread thread, StepRequest *step);
+void stepControl_resetRequest(jthread thread);
 
 void stepControl_lock(void);
 void stepControl_unlock(void);

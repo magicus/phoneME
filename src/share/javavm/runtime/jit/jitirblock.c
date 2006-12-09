@@ -1,5 +1,5 @@
 /*
- * @(#)jitirblock.c	1.96 06/10/10
+ * @(#)jitirblock.c	1.97 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -369,7 +369,7 @@ CVMJITirblockFindAllNormalLabels(CVMJITCompilationContext* con)
 	CVMOpcode instr = *pc;
         CVMUint32 instrLen = CVMopcodeGetLength(pc);
 
-#ifdef CVM_JVMDI
+#ifdef CVM_JVMTI
         if (instr == opc_breakpoint) {
 	    CVMJITerror(con, CANNOT_COMPILE_NOW,
 			"opc_breakpoint not supported");

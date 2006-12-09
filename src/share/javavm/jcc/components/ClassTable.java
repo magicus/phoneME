@@ -1,5 +1,5 @@
 /*
- * @(#)ClassTable.java	1.4 06/10/10
+ * @(#)ClassTable.java	1.9 06/11/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -38,13 +38,23 @@ import java.util.Vector;
 
 /*
  * The symbol table for classes.
- * Currently contains two distince tables: the main table
- * and the alternate table.
- * The choice of which table to insert a class in depends
- * on the altNametable flag in the ClassInfo.flags field.
- * The choice of lookup depends on the useAltTable flag.
- * If the alt table is searched, it is searched before the
- * main table, which is searched if the entry was not in the alt.
+ *
+ * At any time there is only one classloader for the classes being 
+ * processed.  The current classloader is maintained by the
+ * ClassTable class. The only way to change the classloader is by calling
+ * ClassTable.setClassLoader(), which happens when '-cl' option is seen.
+ *
+ * Example: btclasses.zip -cl:sys testclasses.zip
+ *
+ * The initial classloader is the boot classloader.  The
+ * default parent for a new classloader is the previous classloader.
+ * Classes are searched according to the classloader hierarchy.
+ * Unresolved classes will be searched for in the search path specified
+ * by -classpath.  Any classes found will be belong to the classloader
+ * that was in effect when the search path was specified.
+ *
+ * Example:
+ * btclasses.zip -classpath btdep.zip -cl:sys app.jar -classpath appdep.zip
  */
 
 public
@@ -56,20 +66,71 @@ class ClassTable
      * we read them. They can be looked up using lookupClass,
      * which will take a classname string as parameter.
      */
-    static Hashtable mainClasstable = new Hashtable();
-    static Hashtable altClasstable  = new Hashtable();
+    static Vector allClasses = new Vector();
+    static ClassLoader bootLoader = new ClassLoader("boot", null);
+    static ClassLoader loader = bootLoader;
+    static Hashtable loaders = new Hashtable();
+    static Hashtable classTable = loader.classes;
+    static String classLoaderNames = "";
+    static int numClassLoaders = 0;
+
+    static {
+	loaders.put("boot", bootLoader);		// ID 0
+	allClasses = new Vector();
+    }
+
+    private static boolean primitivesDone = false;
+
+    public static void init(int verbosity) {
+	if (!primitivesDone) {
+	    vm.PrimitiveClassInfo.init(verbosity > 1);
+	    primitivesDone = true;
+	}
+    }
+
+    // Set search path for current classloader
+    public static void
+    setSearchPath(ClassFileFinder searchPath) {
+	loader.setSearchPath(searchPath);
+    }
+
+    public static void
+    setClassLoader(ClassLoader l) {
+	loader = l;
+	classTable = loader.classes;
+	loaders.put(l.name, l);
+	if (classLoaderNames.length() == 0) {
+	    classLoaderNames = l.name;
+	} else {
+	    classLoaderNames = classLoaderNames + "," + l.name;
+	}
+	++numClassLoaders;
+    }
+
+    public static int
+    getNumClassLoaders() {
+	return numClassLoaders;
+    }
+
+    public static String
+    getClassLoaderNames() {
+	return classLoaderNames;
+    }
+
+    public static ClassLoader
+    getClassLoader() {
+	return loader;
+    }
+
+    public static ClassLoader
+    getClassLoader(String name) {
+	return (ClassLoader)loaders.get(name);
+    }
 
     public static boolean
-    enterClass(ClassInfo c){
-	Hashtable classtable;
-	String    className = c.className;
-	// check to see if a class of this name is already there...
-	classtable = c.altNametable ? altClasstable : mainClasstable;
-	if (classtable.containsKey( className )){
-	    System.err.println(Localizer.getString("classtable.class_table_already_contains", className));
-	    return false;
-	}
-	classtable.put( className, c );
+    enterClass(ClassInfo c, ClassLoader l){
+	l.enterClass(c);
+	String className = c.className;
 	// Make sure a classvector hasn't been created yet.
 	// (used to add, now we just assert that it isn't necessary).
 	if (vm.ClassClass.hasClassVector()){
@@ -77,38 +138,65 @@ class ClassTable
 				className));
 	    return false;
 	}
+	allClasses.add(c);
 	return true;
     }
 
     public static boolean
-    enterClasses(Enumeration e, boolean useAltTable){
+    enterClass(ClassInfo c){
+	if (!(c instanceof vm.ArrayClassInfo)) {
+	    return enterClass(c, loader);
+	} else {
+	    return enterClass(c, c.loader);
+	}
+    }
+
+    private static Hashtable sigToPrimitive = new Hashtable();
+
+    public static boolean
+    enterPrimitiveClass(vm.PrimitiveClassInfo pci) {
+	boolean success = enterClass(pci, bootLoader);
+	if (success) {
+	    sigToPrimitive.put(new Character(pci.signature), pci);
+	}
+	return success;
+    }
+
+    public static vm.PrimitiveClassInfo
+    lookupPrimitiveClass(char sig){
+	return (vm.PrimitiveClassInfo)sigToPrimitive.get(new Character(sig));
+    }
+
+    public static boolean
+    enterClasses(Enumeration e){
+	// This is one place where we could restrict user
+	// classloaders from defining java.*, sun.*, etc.
+	// classes
 	while(e.hasMoreElements()){
 	    ClassInfo c = (ClassInfo)(e.nextElement());
-	    c.altNametable = useAltTable;
-	    if (!enterClass(c))
+	    if (!enterClass(c)) {
 		return false;
+	    }
 	}
 	return true;
     }
 
     public static ClassInfo
-    lookupClass(String key, boolean useAltTable){
-	Object result;
-	if (useAltTable){
-	    result = altClasstable.get(key);
-	    if (result != null)
-		return (ClassInfo)result;
-	}
-	return (ClassInfo)mainClasstable.get(key);
+    lookupClass(String key){
+	return loader.lookupClass(key);
+    }
+
+    public static ClassInfo
+    lookupClass(String key, ClassLoader l){
+	return l.lookupClass(key);
     }
 
     public static int size(){
-	return mainClasstable.size() + altClasstable.size();
+	return allClasses.size();
     }
 
     public static Enumeration elements(){
-	return new TupleEnumeration(mainClasstable.elements(),
-				    altClasstable.elements());
+	return allClasses.elements();
     }
 
     public static ClassInfo[]
@@ -121,11 +209,6 @@ class ClassTable
 	    ary[i] = (ClassInfo) classEnum.nextElement();
 	}
 	return ary;
-    }
-
-    public static Set setOfClassnames(){
-	// this one is a problem. 
-	return mainClasstable.keySet();
     }
 
 }

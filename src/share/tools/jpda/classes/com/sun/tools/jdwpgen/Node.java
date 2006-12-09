@@ -1,5 +1,5 @@
 /*
- * @(#)Node.java	1.12 06/10/10
+ * @(#)Node.java	1.13 06/10/25
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

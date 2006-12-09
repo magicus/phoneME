@@ -49,7 +49,7 @@ public class Protocol extends ConnectionBase
      * throws SecurityException if MIDP permission check fails 
      * nothing to do for CDC
     */
-    protected void checkMIDPPermission(String host, int port) {
+    protected void checkMIDPPermission(int port) {
         return;
     }    
     
@@ -94,7 +94,7 @@ public class Protocol extends ConnectionBase
 
             /* Get the port number */
             port = Integer.parseInt(name);
-            //checkMIDPPermission(hostAddress, port);
+            checkMIDPPermission(port);
             /* Open the socket: inbound server */
             ssocket = new ServerSocket(port);
         } catch(NumberFormatException x) {

@@ -1,5 +1,5 @@
 /*
- * @(#)ArrayClassInfo.java	1.28 06/10/10
+ * @(#)ArrayClassInfo.java	1.30 06/10/22
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -48,12 +48,10 @@ class ArrayClassInfo extends ClassInfo {
     public int    	 arrayClassNumber;
     public int    	 depth;
     public int    	 baseType;
-    public String        baseName;
     public ClassConstant baseClass;
     public int           elemClassAccess;
     public ClassConstant subarrayClass;
     
-
     /*
      * Given signature s,
      * fill in
@@ -70,72 +68,44 @@ class ArrayClassInfo extends ClassInfo {
 	switch( c ){
 	case Const.SIGC_INT:
 	    baseType = Const.T_INT;
-	    baseName = "Int";
-	    baseClass = new ClassConstant(new UnicodeConstant("int"));
 	    elemClassAccess = Const.ACC_PUBLIC;
 	    break;
 	case Const.SIGC_LONG:
 	    baseType = Const.T_LONG;
-	    baseName = "Long";
-	    baseClass = new ClassConstant(new UnicodeConstant("long"));
 	    elemClassAccess = Const.ACC_PUBLIC;
 	    break;
 	case Const.SIGC_FLOAT:
 	    baseType = Const.T_FLOAT;
-	    baseName = "Float";
-	    baseClass = new ClassConstant(new UnicodeConstant("float"));
 	    elemClassAccess = Const.ACC_PUBLIC;
 	    break;
 	case Const.SIGC_DOUBLE:
 	    baseType = Const.T_DOUBLE;
-	    baseName = "Double";
-	    baseClass = new ClassConstant(new UnicodeConstant("double"));
 	    elemClassAccess = Const.ACC_PUBLIC;
 	    break;
 	case Const.SIGC_BOOLEAN:
 	    baseType = Const.T_BOOLEAN;
-	    baseName = "Boolean";
-	    baseClass = new ClassConstant(new UnicodeConstant("boolean"));
 	    elemClassAccess = Const.ACC_PUBLIC;
 	    break;
 	case Const.SIGC_BYTE:
 	    baseType = Const.T_BYTE;
-	    baseName = "Byte";
-	    baseClass = new ClassConstant(new UnicodeConstant("byte"));
 	    elemClassAccess = Const.ACC_PUBLIC;
 	    break;
 	case Const.SIGC_CHAR:
 	    baseType = Const.T_CHAR;
-	    baseName = "Char";
-	    baseClass = new ClassConstant(new UnicodeConstant("char"));
 	    elemClassAccess = Const.ACC_PUBLIC;
 	    break;
 	case Const.SIGC_SHORT:
 	    baseType = Const.T_SHORT;
-	    baseName = "Short";
-	    baseClass = new ClassConstant(new UnicodeConstant("short"));
 	    elemClassAccess = Const.ACC_PUBLIC;
 	    break;
 	case Const.SIGC_CLASS:
 	    baseType = Const.T_CLASS;	    
-	    int start = ++index;
-	    while (s.charAt(index) != Const.SIGC_ENDCLASS) {
-		index++;
-	    }
-
-	    baseClass = new ClassConstant(
-		new UnicodeConstant( s.substring( start, index ) ) 
-	    );
 	    ClassInfo baseClassInfo = baseClass.find();
-	    if (baseClassInfo != null) {
-		// The base class' access should propagate to all arrays with
-		// that base class, so elemClassAccess really is equivalent
-		// to the the access flags of the base class
-		elemClassAccess = baseClassInfo.access;
-		altNametable = baseClassInfo.altNametable;
-	    } else {
-		elemClassAccess = Const.ACC_PUBLIC;
-	    }
+	    
+	    // The base class' access should propagate to all arrays with
+	    // that base class, so elemClassAccess really is equivalent
+	    // to the the access flags of the base class
+	    elemClassAccess = baseClassInfo.access;
 	    break;
 
 	default:
@@ -144,34 +114,65 @@ class ArrayClassInfo extends ClassInfo {
 	// For CVM, we want to know the sub-class, which is different from
 	// the base class.
 	if ( depth > 1 ){
-	    subarrayClass = new ClassConstant( new UnicodeConstant( s.substring(1) ) );
+	    // sub-classes have already been entered
+	    ClassInfo ci = ClassTable.lookupClass(s.substring(1));
+	    subarrayClass = new ClassConstant(ci);
 	} else if ( depth == 1 ) {
 	    subarrayClass = baseClass;
 	}
     }
 
-
-    public ArrayClassInfo( boolean v, String s ) throws DataFormatException {
+    public ArrayClassInfo( boolean v, String s, ClassConstant base )
+	throws DataFormatException
+    {
 	super(v);
 	constants = new ConstantObject[0];
 	arrayClassNumber = nFake++;
-	fillInTypeInfo( s );
+	baseClass = base;
 	className = s;
 	thisClass = new ClassConstant( new UnicodeConstant( s ) );
-	superClassInfo = ClassTable.lookupClass("java/lang/Object", false);
+	superClassInfo = ClassTable.lookupClass("java/lang/Object");
 	superClass = superClassInfo.thisClass;
 	access = Const.ACC_FINAL|Const.ACC_ABSTRACT;
-	access |= (elemClassAccess & Const.ACC_PUBLIC);
 	methods = new MethodInfo[0];
 	fields  = new FieldInfo[0];
+	fillInTypeInfo( s );
+	access |= (elemClassAccess & Const.ACC_PUBLIC);
     }
 
     protected String createGenericNativeName() { 
         return /*NOI18N*/"fakeArray" + arrayClassNumber;
     }
 
-    public  static boolean
-	collectArrayClass(String cname, boolean altNametable, boolean verbose, String refClass)
+    public void buildFieldtable() {}
+
+    public void buildMethodtable() {}
+
+    public String getNativeName() {
+	switch ( baseType ) {
+	case Const.T_INT:
+	    return "Int";
+	case Const.T_LONG:
+	    return "Long";
+	case Const.T_FLOAT:
+	    return "Float";
+	case Const.T_DOUBLE:
+	    return "Double";
+	case Const.T_BOOLEAN:
+	    return "Boolean";
+	case Const.T_BYTE:
+	    return "Byte";
+	case Const.T_CHAR:
+	    return "Char";
+	case Const.T_SHORT:
+	    return "Short";
+	default:
+	    return "ERROR";
+	}
+    }
+
+    public static boolean
+	collectArrayClass(String cname, boolean verbose)
     {
 	// cname is the name of an array class
 	// make sure it doesn't exist ( it won't if it came from a 
@@ -184,32 +185,50 @@ class ArrayClassInfo extends ClassInfo {
 
 	boolean good = true;
 	int lastBracket = cname.lastIndexOf('[');
+	ClassInfo bci = null;
 	if ( lastBracket < cname.length()-2 ){
 	    // it is a [[[[[Lsomething;
 	    // isolate the something and see if its defined.
 	    String baseClass = cname.substring( lastBracket+2, cname.length()-1 );
-	    if ( ClassTable.lookupClass(baseClass, altNametable) == null ){
+	    bci = ClassTable.lookupClass(baseClass);
+	    if ( bci == null ){
 		// base class not defined. punt this.
-		if ( verbose == true ){
+		if ( verbose ){
 		    System.out.println(Localizer.getString("javacodecompact.array_class_not_instantiated", cname, baseClass ) );
-                }
+		}
 		return good;
 	    }
+	} else {
+	    String baseClass = cname.substring( lastBracket+1, cname.length());
+	    bci = ClassTable.lookupPrimitiveClass(baseClass.charAt(0));
+	    if ( bci == null ){
+		// base class not defined. punt this.
+System.out.println(Localizer.getString("javacodecompact.array_class_not_instantiated", cname, baseClass ) );
+		if ( verbose ){
+		    System.out.println(Localizer.getString("javacodecompact.array_class_not_instantiated", cname, baseClass ) );
+		}
+//		return false;
+	    }
 	}
-	do {
-	    if ( ClassTable.lookupClass(cname, altNametable) != null ){
+	components.ClassLoader l = bci.loader;
+	ClassConstant bcc = new ClassConstant(bci);
+	// enter sub-classes first
+	for (int i = lastBracket; i >= 0; --i) {
+	    String aname = cname.substring(i);
+	    ClassInfo ci = ClassTable.lookupClass(aname);
+	    if ( ci != null ){
 		continue; // this one exists. But subclasses may not, so keep going.
 	    }
 	    try {
-		ClassInfo newArray = new ArrayClassInfo(verbose, cname);
-		newArray.altNametable = altNametable;
-		ClassTable.enterClass(newArray);
+		ClassInfo newArray = new ArrayClassInfo(verbose, aname, bcc);
+		ClassTable.enterClass(newArray, l);
 	    } catch ( DataFormatException e ){
 		e.printStackTrace();
 		good = false;
 		break; // out of do...while
 	    }
-	} while ( (cname = cname.substring(1) ).charAt(0) == Const.SIGC_ARRAY );
+	}
 	return good;
     }
+
 }

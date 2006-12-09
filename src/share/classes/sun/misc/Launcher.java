@@ -1,5 +1,5 @@
 /*
- * @(#)Launcher.java	1.50 06/10/10
+ * @(#)Launcher.java	1.52 06/11/07
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -148,6 +148,9 @@ public class Launcher {
 		"Could not create application class loader");
 	}
 
+	// Register in case application classes were ROMized
+	CVM.Preloader.registerClassLoader("sys", loader);
+
 	// Also set the context class loader for the primordial thread.
 	Thread.currentThread().setContextClassLoader(loader);
 
@@ -227,6 +230,8 @@ public class Launcher {
 	public ExtClassLoader(File[] dirs) throws IOException {
 	    super(getExtURLs(dirs), null, factory);
 	    this.dirs = dirs;
+	    // Register in case ext classes were ROMized
+	    CVM.Preloader.registerClassLoader("ext", this);
 	}
 
 	/*
