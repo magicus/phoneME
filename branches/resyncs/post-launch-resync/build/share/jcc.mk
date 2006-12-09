@@ -171,7 +171,8 @@ $(CVM_ROMJAVA_LIST): $(CVM_JCC_INPUT_FILES) $(CVM_JCC_DEPEND)
 	$(CVM_JAVA) -cp $(CVM_JCC_CLASSPATH) -Xmx128m JavaCodeCompact \
 		$(CVM_JCC_OPTIONS) \
 		-maxSegmentSize $(CVM_ROMJAVA_CLASSES_PER_FILE) \
-		-o $(CVM_ROMJAVA_CPATTERN) $(CVM_JCC_INPUT)
+		-o $(CVM_ROMJAVA_CPATTERN) $(CVM_JCC_INPUT) \
+		$(CVM_JCC_CL_INPUT)
 
 ###########
 # romjava.o  is made by compiling all the .c files and linking the result
