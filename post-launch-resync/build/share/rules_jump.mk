@@ -30,7 +30,7 @@ ifeq ($(CVM_INCLUDE_JUMP),true)
 printconfig::
 	@echo "JUMP_DIR           = $(JUMP_DIR)"
 
-$(CVM_ROMJAVA_LIST): $(JUMP_API_CLASSESZIP) $(JUMP_IMPL_CLASSESZIP)
+jumptargets: $(JUMP_API_CLASSESZIP) $(JUMP_IMPL_CLASSESZIP)
 
 $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo updating $@ [from rules_jump.mk]
