@@ -36,20 +36,22 @@ SNI_NewArrayImpl(CVMExecEnv* ee,
 {
     CVMClassBlock* arrayCb;
 
-    if (type == SNI_OBJECT_ARRAY) {
-        arrayCb = CVMclassGetArrayOf(ee,
-                      CVMsystemClass(java_lang_Object));
-        type = CVM_T_CLASS;
-    } else if (type == SNI_STRING_ARRAY) {
-        arrayCb = CVMclassGetArrayOf(ee,
-                      CVMsystemClass(java_lang_String));
-        type = CVM_T_CLASS;
-    } else {
-        CVMassert(SNI_BOOLEAN_ARRAY <= type <= SNI_LONG_ARRAY);
-        arrayCb = (CVMClassBlock*)CVMbasicTypeArrayClassblocks[type];
-    }
-    CVMID_allocNewArray(ee, type, arrayCb,
-                        size, arrayHandle);
+    CVMD_gcSafeExec(ee, {
+        if (type == SNI_OBJECT_ARRAY) {
+            arrayCb = CVMclassGetArrayOf(ee,
+                          CVMsystemClass(java_lang_Object));
+            type = CVM_T_CLASS;
+        } else if (type == SNI_STRING_ARRAY) {
+            arrayCb = CVMclassGetArrayOf(ee,
+                          CVMsystemClass(java_lang_String));
+            type = CVM_T_CLASS;
+        } else {
+            CVMassert(SNI_BOOLEAN_ARRAY <= type <= SNI_LONG_ARRAY);
+            arrayCb = (CVMClassBlock*)CVMbasicTypeArrayClassblocks[type];
+        }
+        CVMID_allocNewArray(ee, type, arrayCb,
+                            size, arrayHandle);
+    });
 }
 
 KNIEXPORT void
@@ -58,10 +60,12 @@ SNI_NewObjectArrayImpl(CVMExecEnv* ee,
                        jarray arrayHandle)
 {
     CVMClassBlock* elementCb = CVMjniGcUnsafeRef2Class(ee, elementType);
-    CVMClassBlock* arrayCb = CVMclassGetArrayOf(ee, elementCb);
-    if (arrayCb == NULL) {
-        return; /* exception already throw */
-    }
-    CVMID_allocNewArray(ee, CVM_T_CLASS, arrayCb,
-                        size, arrayHandle);
+    CVMD_gcSafeExec(ee, {
+        CVMClassBlock* arrayCb = CVMclassGetArrayOf(ee, elementCb);
+        if (arrayCb == NULL) {
+            return; /* exception already throw */
+        }
+        CVMID_allocNewArray(ee, CVM_T_CLASS, arrayCb,
+                            size, arrayHandle);
+    });
 }
