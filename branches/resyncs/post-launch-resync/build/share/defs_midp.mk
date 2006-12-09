@@ -33,6 +33,7 @@ ifeq ($(CVM_INCLUDE_MIDP),true)
 
 # Include target specific makefiles first
 -include ../$(TARGET_CPU_FAMILY)/defs_midp.mk
+-include ../$(TARGET_OS)/defs_midp.mk
 
 # MDIP requires Foundation.
 ifeq ($(J2ME_CLASSLIB), cdc)
@@ -46,7 +47,7 @@ endif
 ifeq ($(CVM_USE_NATIVE_TOOLS), false)
 GNU_TOOLS_DIR		?=$(CVM_TARGET_TOOLS_DIR)/../$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)-$(TARGET_OS)
 export GNU_TOOLS_DIR
-GNU_TOOLS_BINDIR	= $(CVM_TARGET_TOOLS_PREFIX)
+GNU_TOOLS_BINDIR	?= $(CVM_TARGET_TOOLS_PREFIX)
 endif
 
 #
@@ -57,10 +58,12 @@ PCSL_DIR		?= $(CVM_TOP)/../pcsl
 ifeq ($(wildcard $(PCSL_DIR)/donuts),)
 $(error PCSL_DIR must point to a PCSL directory)
 endif
-export PCSL_OUTPUT_DIR	= $(CVM_MIDP_BUILDDIR)/pcsl_fb
-PCSL_TARGET		= $(TARGET_OS)_$(TARGET_CPU)
-PCSL_PLATFORM		= $(PCSL_TARGET)_gcc
-NETWORK_MODULE		= bsd/generic
+PCSL_OUTPUT_DIR	?= $(CVM_MIDP_BUILDDIR)/pcsl_fb
+export PCSL_OUTPUT_DIR
+PCSL_TARGET		?= $(TARGET_OS)_$(TARGET_CPU)
+PCSL_PLATFORM		?= $(PCSL_TARGET)_gcc
+NETWORK_MODULE		?= bsd/generic
+PCSL_MAKE_OPTIONS 	?=
 
 #
 # MIDP defs
@@ -71,7 +74,10 @@ MIDP_DIR		?= $(CVM_TOP)/../midp
 ifeq ($(wildcard $(MIDP_DIR)/src),)
 $(error MIDP_DIR must point to a MIDP directory)
 endif
-export MIDP_OUTPUT_DIR	= $(CVM_MIDP_BUILDDIR)/midp_fb
+MIDP_MAKEFILE_DIR 	?= build/linux_fb_gcc
+MIDP_OUTPUT_DIR	?= $(CVM_MIDP_BUILDDIR)/midp_fb
+export MIDP_OUTPUT_DIR
+
 USE_SSL			?= false
 USE_RESTRICTED_CRYPTO	?= false
 VERIFY_BUILD_ENV	?= 
@@ -80,7 +86,6 @@ USE_QT_FB		?= false
 USE_DIRECTFB		?= false
 # The MIDP makefiles should be fixed to not require CLDC_DIST_DIR for CDC build.
 export CLDC_DIST_DIR	= $(CDC_DIST_DIR)
-USE_SSL			?= false
 USE_CONFIGURATOR	?= true
 ifeq ($(CVM_TERSEOUTPUT), false)
 USE_VERBOSE_MAKE	?= true
@@ -91,13 +96,16 @@ USE_DEBUG		= true
 endif
 
 MIDP_CLASSESZIP_DEPS	=
-MIDP_CLASSESZIP		= $(MIDP_OUTPUT_DIR)/classes.zip
+MIDP_CLASSESZIP		?= $(MIDP_OUTPUT_DIR)/classes.zip
 
-RUNMIDLET		= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/runMidlet$(DEBUG_POSTFIX)
-MIDP_OBJECTS		= $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/*.o
+RUNMIDLET		?= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/runMidlet$(DEBUG_POSTFIX)
+MIDP_OBJECTS		?= $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/*.o
 ifeq ($(CVM_PRELOAD_LIB), true)
 CVM_OBJECTS		+= $(MIDP_OBJECTS)
-LINKLIBS 		+= -L$(PCSL_OUTPUT_DIR)/$(PCSL_TARGET)/lib -lpcsl_file -lpcsl_memory -lpcsl_network -lpcsl_print -lpcsl_string
+MIDP_LIBS 		?= \
+        -L$(PCSL_OUTPUT_DIR)/$(PCSL_TARGET)/lib -lpcsl_file \
+        -lpcsl_memory -lpcsl_network -lpcsl_print -lpcsl_string
+LINKLIBS 		+= $(MIDP_LIBS)
 endif
 
 # Add MIDP classes to JCC input list so they can be romized.
@@ -141,7 +149,6 @@ CVM_CNI_CLASSES += \
 	com.sun.midp.midletsuite.MIDletSuiteInfo \
 	com.sun.midp.midletsuite.MIDletSuiteStorage \
 	com.sun.midp.midletsuite.SuiteProperties \
-	com.sun.midp.midletsuite.SuiteSettings \
 	com.sun.midp.midletsuite.SuiteSettings \
 	com.sun.midp.pause.PauseSystem \
 	'com.sun.midp.pause.PauseSystem$$MIDPSystem' \

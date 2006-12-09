@@ -115,7 +115,21 @@ CCFLAGS += $(MT_FLAGS)
 
 ifeq ($(CVM_DLL),true)
 CVM_IMPL_LIB	= $(CVM_BUILD_SUBDIR_NAME)/bin/cvmi.lib
+
+ifeq ($CVM_PRELOAD_LIB,true)
 LINKFLAGS	= /implib:$(CVM_IMPL_LIB) /export:jio_snprintf $(SO_LINKFLAGS)
+else
+LINKFLAGS	= /implib:$(CVM_IMPL_LIB) $(SO_LINKFLAGS) /export:jio_snprintf \
+            /export:CVMexpandStack /export:CVMtimeMillis \
+            /export:CVMIDprivate_allocateLocalRootUnsafe /export:CVMglobals \
+            /export:CVMsystemPanic /export:CVMcsRendezvous /export:CVMconsolePrintf
+            
+ifeq ($(CVM_DEBUG), true)
+LINKFLAGS	+= /export:CVMassertHook /export:CVMdumpStack
+endif
+
+endif            
+
 else
 LINKFLAGS	=
 endif

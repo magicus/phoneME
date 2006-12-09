@@ -31,7 +31,17 @@
 #   all:          both of the above
 #
 # Options - defaults in parenthesis:
-#   J2ME_CLASSLIB(cdc): profile to build source bundle for
+#   J2ME_CLASSLIB(cdc): profile to build source bundle for.
+#   JAVAME_LEGAL_DIR: directory containing legal documents. If not set,
+#   	the makefiles will automatically do an svn checkout of the files.
+#   	from the respository. This will result in a password prompt if you
+#   	haven't already authenticated with the repository.
+#   SRC_BUNDLE_NAME: name of the source bundle, excluding .zip extension.
+#	Defaults to $(J2ME_CLASSLIB)-src
+#   SRC_BUNDLE_DIRNAME: directory name the source bundle will unzip
+# 	into. Defaults to $(SRC_BUNDLE_NAME).
+#   SRC_BUNDLE_APPEND_REVISION(true): Appends the repository
+#	revision number to the end of SRC_BUNDLE_NAME.
 #   BUNDLE_PORTS: OS/CPU ports to include (see below)
 #   CVM_PRODUCT(oi): "oi" or "ri".
 #   INCLUDE_JIT: true for oi builds. false for ri builds.
@@ -71,8 +81,22 @@ CVM_TOP 	?= ../..
 INSTALLDIR	= $(CVM_TOP)/install
 ZIP		= zip
 
-J2ME_CLASSLIB	= cdc
-J2ME_PRODUCT_NAME = $(J2ME_CLASSLIB)
+J2ME_CLASSLIB		= cdc
+SRC_BUNDLE_NAME		= $(J2ME_CLASSLIB)-src
+SRC_BUNDLE_DIRNAME 	= $(SRC_BUNDLE_NAME)
+
+# Add the svn revison number to SRC_BUNDLE_NAME if requested.
+SRC_BUNDLE_APPEND_REVISION = true
+ifeq ($(SRC_BUNDLE_APPEND_REVISION),true)
+ifneq ($(wildcard .svn),.svn)
+REVISION_NUMBER = UNKNOWN
+else
+REVISION_NUMBER = \
+     $(shell svn info | grep "Revision:" | sed -e 's/Revision: \(.*\)/\1/')
+override SRC_BUNDLE_NAME := $(SRC_BUNDLE_NAME)-rev$(REVISION_NUMBER)
+override SRC_BUNDLE_DIRNAME := $(SRC_BUNDLE_DIRNAME)-rev$(REVISION_NUMBER)
+endif
+endif
 
 CVM_PRODUCT = oi
 INCLUDE_DUALSTACK	= false
@@ -194,46 +218,46 @@ SRCDIR_PATTERNS += \
 	javavm
 
 BUNDLE_INCLUDE_LIST += \
-	$(J2ME_PRODUCT_NAME)/src/portlibs \
-	$(J2ME_PRODUCT_NAME)/build/portlibs/* \
-	$(J2ME_PRODUCT_NAME)/build/share/jcc.mk \
-	$(J2ME_PRODUCT_NAME)/src/share/tools/GenerateCurrencyData \
-	$(J2ME_PRODUCT_NAME)/src/share/tools/javazic \
-	$(J2ME_PRODUCT_NAME)/src/share/lib/security \
+	src/portlibs \
+	build/portlibs/* \
+	build/share/jcc.mk \
+	src/share/tools/GenerateCurrencyData \
+	src/share/tools/javazic \
+	src/share/lib/security \
 	$(foreach os,$(BUNDLE_OS_PORTS), \
-		$(J2ME_PRODUCT_NAME)/src/$(os)/bin) \
+		src/$(os)/bin) \
 	$(foreach os,$(BUNDLE_OS_PORTS) share, \
-		$(J2ME_PRODUCT_NAME)/src/$(os)/tools/hprof) \
+		src/$(os)/tools/hprof) \
 	$(foreach os,$(BUNDLE_OS_PORTS) share, \
-		$(J2ME_PRODUCT_NAME)/src/$(os)/tools/jpda) \
+		src/$(os)/tools/jpda) \
 	$(foreach os,$(BUNDLE_OS_PORTS), \
-		$(J2ME_PRODUCT_NAME)/src/$(os)/lib/tzmappings) \
+		src/$(os)/lib/tzmappings) \
 	$(foreach os,$(BUNDLE_OS_PORTS), \
-		$(J2ME_PRODUCT_NAME)/src/$(os)/lib/content-types.properties)
+		src/$(os)/lib/content-types.properties)
 
 # need to include special java.security for zaurus
 
 ifeq ($(findstring linux-arm-zaurus,$(BUNDLE_DEVICE_PORTS)),linux-arm-zaurus)
 BUNDLE_INCLUDE_LIST += \
-	$(J2ME_PRODUCT_NAME)/src/linux-arm-zaurus/lib/security/java.security
+	src/linux-arm-zaurus/lib/security/java.security
 endif
 
 # For Windows Build
 ifeq ($(findstring win32,$(BUNDLE_OS_PORTS)),win32)
 BUNDLE_INCLUDE_LIST +=				\
-	$(J2ME_PRODUCT_NAME)/build/win32/ppc*_defs.mk \
-	$(J2ME_PRODUCT_NAME)/build/win32/*wince*.mk \
-	$(J2ME_PRODUCT_NAME)/build/win32/vc*_defs.mk \
-	$(J2ME_PRODUCT_NAME)/build/win32/host_defs.mk 
+	build/win32/ppc*_defs.mk \
+	build/win32/*wince*.mk \
+	build/win32/vc*_defs.mk \
+	build/win32/host_defs.mk 
 endif
 
 # For Symbian Build
 ifeq ($(findstring symbian,$(BUNDLE_OS_PORTS)),symbian)
 BUNDLE_INCLUDE_LIST +=				\
-	$(J2ME_PRODUCT_NAME)/build/symbian/fix_project.pl \
-	$(J2ME_PRODUCT_NAME)/build/symbian/root.sh \
-	$(J2ME_PRODUCT_NAME)/build/symbian/winsim.mk \
-	$(J2ME_PRODUCT_NAME)/src/symbian/lib/cvm_exports*
+	build/symbian/fix_project.pl \
+	build/symbian/root.sh \
+	build/symbian/winsim.mk \
+	src/symbian/lib/cvm_exports*
 endif
 
 # dual stack
@@ -241,7 +265,7 @@ endif
 ifeq ($(INCLUDE_DUALSTACK), true)
 
 BUNDLE_INCLUDE_LIST += \
-	$(J2ME_PRODUCT_NAME)/src/share/lib/MIDP*
+	src/share/lib/MIDP*
 
 else
 
@@ -276,7 +300,7 @@ endif
 ifeq ($(INCLUDE_JIT), true)
 
 BUNDLE_INCLUDE_LIST += \
-	$(J2ME_PRODUCT_NAME)/build/share/jcs.mk \
+	build/share/jcs.mk \
 
 else
 
@@ -303,8 +327,8 @@ endif
 ifeq ($(INCLUDE_MTASK), true)
 
 BUNDLE_INCLUDE_LIST += \
-	$(J2ME_PRODUCT_NAME)/build/share/cvmc.mk \
-	$(J2ME_PRODUCT_NAME)/src/share/tools/cvmc \
+	build/share/cvmc.mk \
+	src/share/tools/cvmc \
 
 # Add every build/<os>/cvmc.mk file
 BUNDLE_INCLUDE_LIST += \
@@ -328,8 +352,8 @@ SRCDIR_PATTERNS += \
 	native
 
 BUNDLE_INCLUDE_LIST += \
-	$(J2ME_PRODUCT_NAME)/build/share/*_zoneinfo.mk \
-	$(J2ME_PRODUCT_NAME)/test/share/cdc
+	build/share/*_zoneinfo.mk \
+	test/share/cdc
 
 # foundation
 
@@ -342,7 +366,7 @@ SRCDIR_PATTERNS += \
 	foundation
 
 BUNDLE_INCLUDE_LIST += \
-	$(J2ME_PRODUCT_NAME)/test/share/foundation
+	test/share/foundation
 
 endif
 
@@ -356,14 +380,14 @@ BUILDDIR_PATTERNS += \
 	*_basis_qt.mk
 
 BUNDLE_INCLUDE_LIST += \
-	$(J2ME_PRODUCT_NAME)/test/share/basis \
-	$(J2ME_PRODUCT_NAME)/src/share/basis/lib/security \
-	$(J2ME_PRODUCT_NAME)/src/share/basis/demo \
-	$(J2ME_PRODUCT_NAME)/src/share/basis/native/image/jpeg \
-	$(J2ME_PRODUCT_NAME)/src/share/basis/native/image/gif \
-	$(J2ME_PRODUCT_NAME)/src/share/basis/classes/common \
-	$(J2ME_PRODUCT_NAME)/src/share/basis/native/awt/qt \
-	$(J2ME_PRODUCT_NAME)/src/share/basis/classes/awt/qt
+	test/share/basis \
+	src/share/basis/lib/security \
+	src/share/basis/demo \
+	src/share/basis/native/image/jpeg \
+	src/share/basis/native/image/gif \
+	src/share/basis/classes/common \
+	src/share/basis/native/awt/qt \
+	src/share/basis/classes/awt/qt
 
 endif
 
@@ -379,30 +403,30 @@ BUILDDIR_PATTERNS += \
 	*_personal_qt.mk
 
 BUNDLE_INCLUDE_LIST += \
-	$(J2ME_PRODUCT_NAME)/test/share/basis \
-	$(J2ME_PRODUCT_NAME)/src/share/basis/demo \
-	$(J2ME_PRODUCT_NAME)/src/share/basis/native/image/jpeg \
-	$(J2ME_PRODUCT_NAME)/src/share/basis/native/image/gif \
-	$(J2ME_PRODUCT_NAME)/src/share/basis/classes/common
+	test/share/basis \
+	src/share/basis/demo \
+	src/share/basis/native/image/jpeg \
+	src/share/basis/native/image/gif \
+	src/share/basis/classes/common
 
 BUNDLE_INCLUDE_LIST += \
-	$(J2ME_PRODUCT_NAME)/test/share/personal \
-	$(J2ME_PRODUCT_NAME)/src/share/personal/demo \
-	$(J2ME_PRODUCT_NAME)/src/share/personal/lib/security \
-	$(J2ME_PRODUCT_NAME)/src/share/personal/classes/awt/peer_based/java \
-	$(J2ME_PRODUCT_NAME)/src/share/personal/classes/awt/peer_based/sun/awt/*.java \
-	$(J2ME_PRODUCT_NAME)/src/share/personal/classes/awt/peer_based/sun/awt/peer \
-	$(J2ME_PRODUCT_NAME)/src/share/personal/classes/awt/peer_based/sun/awt/image \
-	$(J2ME_PRODUCT_NAME)/src/share/personal/classes/awt/peer_based/sun/awt/qt \
-	$(J2ME_PRODUCT_NAME)/src/share/personal/classes/common \
-	$(J2ME_PRODUCT_NAME)/src/share/personal/native/sun/awt/common \
-	$(J2ME_PRODUCT_NAME)/src/share/personal/native/awt/qt \
+	test/share/personal \
+	src/share/personal/demo \
+	src/share/personal/lib/security \
+	src/share/personal/classes/awt/peer_based/java \
+	src/share/personal/classes/awt/peer_based/sun/awt/*.java \
+	src/share/personal/classes/awt/peer_based/sun/awt/peer \
+	src/share/personal/classes/awt/peer_based/sun/awt/image \
+	src/share/personal/classes/awt/peer_based/sun/awt/qt \
+	src/share/personal/classes/common \
+	src/share/personal/native/sun/awt/common \
+	src/share/personal/native/awt/qt \
 	$(foreach os,$(BUNDLE_OS_PORTS), \
-		$(J2ME_PRODUCT_NAME)/src/$(os)/personal/native/sun/audio) \
+		src/$(os)/personal/native/sun/audio) \
 
 ifeq ($(findstring linux-arm-zaurus,$(BUNDLE_DEVICE_PORTS)),linux-arm-zaurus)
 BUNDLE_INCLUDE_LIST +=				\
-	$(J2ME_PRODUCT_NAME)/src/linux-arm-zaurus/personal/qt
+	src/linux-arm-zaurus/personal/qt
 else
 EXCLUDE_PATTERNS += \
 	*/demo/zaurus*
@@ -414,7 +438,24 @@ endif
 
 ifeq ($(findstring vxworks,$(BUNDLE_OS_PORTS)),vxworks)
 BUNDLE_INCLUDE_LIST +=				\
-	$(J2ME_PRODUCT_NAME)/build/vxworks/target
+	build/vxworks/target
+endif
+
+######################
+# legal files
+######################
+
+# The OSS repository legal directory
+BUNDLE_INCLUDE_LIST += legal
+
+# Location of legal documents in case JAVAME_LEGAL_DIR is not set.
+JAVAME_LEGAL_REPOSITORY = https://phoneme.dev.java.net/svn/phoneme/legal
+
+# Make sure the "legal" directory is available if set.
+ifneq ($(JAVAME_LEGAL_DIR),,)
+ifneq ($(JAVAME_LEGAL_DIR),$(wildcard $(JAVAME_LEGAL_DIR)))
+$(error JAVAME_LEGAL_DIR must be set to "legal" directory. The respository can be found at https://phoneme.dev.java.net/svn/phoneme/legal.)
+endif
 endif
 
 ########################
@@ -425,26 +466,30 @@ endif
 BUNDLE_INCLUDE_LIST += \
 	$(foreach pat, $(BUILDDIR_PATTERNS), \
 	  $(addsuffix /$(pat), \
-	    $(J2ME_PRODUCT_NAME)/build/share \
-	    $(addprefix $(J2ME_PRODUCT_NAME)/build/,$(BUNDLE_DEVICE_PORTS)) \
-	    $(addprefix $(J2ME_PRODUCT_NAME)/build/,$(BUNDLE_PLATFORM_PORTS)) \
-	    $(addprefix $(J2ME_PRODUCT_NAME)/build/,$(BUNDLE_OS_PORTS)) \
-	    $(addprefix $(J2ME_PRODUCT_NAME)/build/,$(BUNDLE_CPU_PORTS)))) \
+	    build/share \
+	    $(addprefix build/,$(BUNDLE_DEVICE_PORTS)) \
+	    $(addprefix build/,$(BUNDLE_PLATFORM_PORTS)) \
+	    $(addprefix build/,$(BUNDLE_OS_PORTS)) \
+	    $(addprefix build/,$(BUNDLE_CPU_PORTS)))) \
 
 # Add every src directory pattern 
 BUNDLE_INCLUDE_LIST += \
 	$(foreach pat, $(SRCDIR_PATTERNS), \
 	  $(addsuffix /$(pat), \
-	    $(J2ME_PRODUCT_NAME)/src/share \
-	    $(addprefix $(J2ME_PRODUCT_NAME)/src/,$(BUNDLE_PLATFORM_PORTS)) \
-	    $(addprefix $(J2ME_PRODUCT_NAME)/src/,$(BUNDLE_OS_PORTS)) \
-	    $(addprefix $(J2ME_PRODUCT_NAME)/src/,$(BUNDLE_CPU_PORTS)))) \
+	    src/share \
+	    $(addprefix src/,$(BUNDLE_PLATFORM_PORTS)) \
+	    $(addprefix src/,$(BUNDLE_OS_PORTS)) \
+	    $(addprefix src/,$(BUNDLE_CPU_PORTS)))) \
+
+# Prefix $(SRC_BUNDLE_DIRNAME) to all names in BUNDLE_INCLUDE_LIST
+BUNDLE_INCLUDE_LIST := \
+	 $(patsubst %,$(SRC_BUNDLE_DIRNAME)/%,$(BUNDLE_INCLUDE_LIST))
+
+BUNDLE_INCLUDE_LIST := $(sort $(BUNDLE_INCLUDE_LIST))
 
 ################################################
 # Rules for building source bundles
 ################################################
-
-BUNDLE_INCLUDE_LIST := $(sort $(BUNDLE_INCLUDE_LIST))
 
 FEATURE_LIST += J2ME_CLASSLIB \
 	CVM_PRODUCT \
@@ -459,6 +504,13 @@ FEATURE_LIST_WITH_VALUES += \
 
 lib-src: src.zip
 src.zip::
+	@echo ">>>FLAGS:"
+	@echo "	SRC_BUNDLE_APPEND_REVISION = $(SRC_BUNDLE_APPEND_REVISION)"
+	@echo "	SRC_BUNDLE_NAME		= $(SRC_BUNDLE_NAME)"
+	@echo "	SRC_BUNDLE_DIRNAME	= $(SRC_BUNDLE_DIRNAME)"
+	@echo "	JAVAME_LEGAL_DIR	= $(JAVAME_LEGAL_DIR)"
+	@echo "	JAVAME_LEGAL_REPOSITORY = $(JAVAME_LEGAL_REPOSITORY)"
+
 	@echo ">>>Making "$@" for the following devices:"
 	@for s in "$(BUNDLE_DEVICE_PORTS)" ; do \
 		printf "\t%s\n" $$s; \
@@ -480,16 +532,22 @@ src.zip::
 		printf "\t%s\n" "$$formattedF" ; \
 	done
 
-	rm -rf $(INSTALLDIR)/$(J2ME_CLASSLIB)
-	mkdir -p $(INSTALLDIR)/$(J2ME_CLASSLIB)
-	ln -ns $(CVM_TOP)/* $(INSTALLDIR)/$(J2ME_CLASSLIB)
-	rm -rf $(INSTALLDIR)/$(J2ME_CLASSLIB)-src.zip
+	rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
+	mkdir -p $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
+	ln -ns $(CVM_TOP)/* $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
+	rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip
+
+ifneq ($(JAVAME_LEGAL_DIR),)
+	ln -ns $(JAVAME_LEGAL_DIR) $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
+else
+	svn checkout $(JAVAME_LEGAL_REPOSITORY) $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)/legal
+endif
 
 	(cd $(INSTALLDIR); \
 	 $(ZIP) -r -q - $(BUNDLE_INCLUDE_LIST) \
 		-x $(EXCLUDE_PATTERNS)) \
-		> $(INSTALLDIR)/$(J2ME_CLASSLIB)-src.zip;
-	rm -rf $(INSTALLDIR)/$(J2ME_CLASSLIB)
+		> $(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip;
+	rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
 	@echo "<<<Finished "$@" ..." ;
 
 #######
