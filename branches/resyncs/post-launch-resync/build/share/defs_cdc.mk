@@ -400,7 +400,7 @@ endif
 # %end lvm
 
 # These need to be romized to keep PMVM happy
-ifeq ($(CVM_MTASK), true)
+ifeq ($(CVM_INCLUDE_JUMP), true)
 CVM_BUILDTIME_CLASSES += \
    sun.io.ByteToCharUTF8 \
    java.io.ExpiringCache \
@@ -408,13 +408,6 @@ CVM_BUILDTIME_CLASSES += \
    sun.net.www.protocol.jar.JarURLConnection \
    sun.net.www.protocol.jar.JarFileFactory \
    sun.net.www.protocol.jar.URLJarFile
-endif
-
-ifeq ($(CVM_MTASK), true)
-CLASSLIB_CLASSES += \
-   sun.mtask.Warmup \
-   sun.mtask.AppModelManager \
-   sun.mtask.Listener
 endif
 
 ifeq ($(CVM_AOT), true)
@@ -492,7 +485,7 @@ CLASSLIB_CLASSES += \
    com.sun.cdc.i18n.StreamReader \
    com.sun.cdc.i18n.StreamWriter
 
-ifneq ($(CVM_MTASK), true)
+ifneq ($(CVM_INCLUDE_JUMP), true)
 CLASSLIB_CLASSES += \
    sun.io.ByteToCharUTF8 \
    sun.net.www.protocol.jar.Handler \

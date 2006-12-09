@@ -248,9 +248,6 @@ else
 CVM_KNI                 ?= false
 CVM_DUAL_STACK          ?= false
 endif
-ifeq ($(CVM_INCLUDE_JUMP), true)
-override CVM_MTASK	= true
-endif
 CVM_SPLIT_VERIFY	?= false
 
 CVM_JIT_REGISTER_LOCALS	?= true
@@ -583,9 +580,6 @@ ifeq ($(CVM_LVM), true)
 	CVM_DEFINES   += -DCVM_LVM -DCVM_REMOTE_EXCEPTIONS_SUPPORTED
 endif
 # %end lvm
-ifeq ($(CVM_MTASK), true)
-	CVM_DEFINES   += -DCVM_MTASK
-endif
 ifeq ($(CVM_AOT), true)
 	CVM_DEFINES   += -DCVM_AOT
 endif
@@ -1133,11 +1127,6 @@ CVM_SRCDIRS    += \
 	$(CVM_SHAREROOT)/native/java/util/zip/zlib-1.1.3 \
 	$(CVM_SHAREROOT)/native/sun/misc \
 
-ifeq ($(CVM_MTASK), true)
-CVM_SRCDIRS += \
-	$(CVM_SHAREROOT)/native/sun/mtask
-endif
-
 ifeq ($(CVM_LVM), true)
 CVM_SRCDIRS += \
 	$(CVM_SHAREROOT)/javavm/runtime/lvm
@@ -1553,12 +1542,6 @@ CVM_TEST_CLASSES += \
 
 endif
 # %end lvm
-
-ifeq ($(CVM_MTASK), true)
-CVM_SHAREOBJS_SPACE += \
-	mtask.o \
-	Listener.o
-endif
 
 #
 # Objects to build
