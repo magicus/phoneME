@@ -1215,11 +1215,12 @@ int
 MTASKserverInitialize(ServerState* state,
     CVMParsedSubOptions* serverOpts,
     JNIEnv* env, jclass cvmClass)
-{
-    jumpMessageStart();
-    
+{    
     const char* clist = CVMgetParsedSubOption(serverOpts, "initClasses");
     const char* mlist = CVMgetParsedSubOption(serverOpts, "precompileMethods");
+    
+    jumpMessageStart();
+    
     /*
      * Set these up while server is being initialized.
      * This way we don't have to look up these JNI ID's again.
