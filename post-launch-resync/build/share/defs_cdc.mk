@@ -502,7 +502,8 @@ ifeq ($(CVM_DUAL_STACK), true)
 	sun.misc.MemberFilterConfig \
 	sun.misc.MIDPImplementationClassLoader \
 	sun.misc.MIDPConfig \
-	sun.misc.MIDletClassLoader
+	sun.misc.MIDletClassLoader \
+	sun.misc.MIDPLauncher
 endif
 
 #

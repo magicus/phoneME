@@ -110,7 +110,7 @@ endif
 
 # Add MIDP classes to JCC input list so they can be romized.
 ifeq ($(CVM_PRELOAD_LIB), true)
-CVM_JCC_INPUT		+= $(MIDP_CLASSESZIP)
+CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSESZIP)
 
 CVM_CNI_CLASSES += \
 	com.sun.cdc.i18n.j2me.Conv \
