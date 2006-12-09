@@ -116,6 +116,8 @@ CVM_OBJECTS             += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(JUMP_OBJECTS))
 CVM_SRCDIRS             += $(JUMP_SRCDIRS)
 CVM_INCLUDES            += $(JUMP_INCLUDES)
 
+MIDP_CLASSESZIP_DEPS += $(JUMP_API_CLASSESZIP)
+
 #
 # In case we build any libraries that we want the cvm binary to use
 #
