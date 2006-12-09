@@ -448,6 +448,8 @@ $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo "CVM_DEFINES = $(CVM_DEFINES)" >> $@
 	$(AT) echo "J2ME_CLASSLIB = $(J2ME_CLASSLIB)" >> $@
 	$(AT) echo "CVM_MTASK = $(CVM_MTASK)" >> $@
+	$(AT) echo "CVM_INCLUDE_JUMP = $(CVM_INCLUDE_JUMP)" >> $@
+	$(AT) echo "JUMP_DIR = $(JUMP_DIR)" >> $@
 	$(AT) echo "CVM_PRELOAD_LIB = $(CVM_PRELOAD_LIB)" >> $@
 	$(AT) echo "CCFLAGS_SPEED = $(CCFLAGS_SPEED)" >> $@
 	$(AT) echo "" >> $@
