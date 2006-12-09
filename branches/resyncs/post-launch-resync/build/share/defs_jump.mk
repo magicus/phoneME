@@ -63,7 +63,8 @@ JUMP_IMPL_CLASSESZIP	= $(JUMP_OUTPUT_DIR)/jump-impl.jar
 
 JUMP_SRCDIRS           += \
 	$(JUMP_SRCDIR)/share/api/native \
-	$(JUMP_SRCDIR)/share/impl/isolate/native
+	$(JUMP_SRCDIR)/share/impl/isolate/native \
+	$(JUMP_SRCDIR)/share/impl/os/native
 
 # Add as necessary
 #	$(JUMP_SRCDIR)/share/impl/<component>/native \
@@ -71,6 +72,7 @@ JUMP_SRCDIRS           += \
 
 JUMP_INCLUDES  += \
 	-I$(JUMP_SRCDIR)/share/api/native/include \
+	-I$(JUMP_SRCDIR)/share/impl/os/native/include \
 
 # Add as necessary
 #	-I$(JUMP_SRCDIR)/share/impl/<component>/native/include \
@@ -80,6 +82,7 @@ JUMP_INCLUDES  += \
 # Any shared native code goes here.
 # 
 JUMP_OBJECTS            += \
+	jump_os_impl.o \
 	jump_messaging.o \
 	jump_isolate_impl.o \
 

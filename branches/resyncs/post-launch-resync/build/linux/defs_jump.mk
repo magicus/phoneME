@@ -26,15 +26,12 @@
 
 JUMP_SRCDIRS            += \
 	$(JUMP_SRCDIR)/$(TARGET_OS)/api/native \
-	$(JUMP_SRCDIR)/$(TARGET_OS)/impl/os/native \
 
 JUMP_INCLUDES           += \
 	-I$(JUMP_SRCDIR)/$(TARGET_OS)/api/native/include \
-	-I$(JUMP_SRCDIR)/$(TARGET_OS)/impl/os/native/include \
 
 JUMP_OBJECTS            += \
 	jump_os_linux.o \
-	jump_os_impl_linux.o \
 
 JUMP_NATIVE_LIBRARY_OBJECTS            += \
 	jump_os_linux.o
