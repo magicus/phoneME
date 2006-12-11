@@ -198,6 +198,7 @@ public class BodyLayer extends CLayer
             } else {
                 owner.removeLayer(scrollInd);
             }
+            owner.resize();
         }
     }
 
@@ -245,6 +246,9 @@ public class BodyLayer extends CLayer
 
         if (scrollInd != null) {
             scrollInd.update(layers);
+            if (scrollInd.isVisible()) {
+                bounds[W] -= scrollInd.bounds[W];
+            }
         }
     }
 }
