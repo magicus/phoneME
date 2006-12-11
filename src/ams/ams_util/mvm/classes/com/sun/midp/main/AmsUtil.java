@@ -240,6 +240,12 @@ public class AmsUtil {
             classpath[0] = "";
         }
 
+        String isolateClassPath = System.getProperty("IsolateClassPath");
+        String[] classpathext = null;
+        if (null != isolateClassPath) {
+            classpathext = new String[] {isolateClassPath};
+        }
+
         try {
             StartMIDletMonitor app = StartMIDletMonitor.okToStart(id, midlet);
             if (app == null) {
@@ -249,7 +255,7 @@ public class AmsUtil {
 
             isolate =
                 new Isolate("com.sun.midp.main.AppIsolateMIDletSuiteLoader",
-                    args, classpath);
+                    args, classpath, classpathext);
             app.setIsolate(isolate);
         } catch (Throwable t) {
             t.printStackTrace();
