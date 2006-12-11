@@ -159,17 +159,21 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         itemLF = itemLFs[index];
 
         // Ensure the item is visible
-        if (!itemCompletelyVisible(itemLF)) {
-            // We'll initially position at the bottom of the form,
-            // then adjust upward to the top corner of the item
-            // if necessary
-            if (itemLF.bounds[Y] > viewable[Y]) {
-                viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
-                if (itemLF.bounds[Y] < viewable[Y]) {
-                    viewable[Y] = itemLF.bounds[Y];
-                }
-            }
-        } 
+         boolean C1 = itemLF.bounds[Y] < viewable[Y];
+         boolean C2 = itemLF.bounds[Y] + itemLF.bounds[HEIGHT] > viewable[Y] + viewport[HEIGHT];
+         if ( C1 && !C2) {
+             viewable[Y] = itemLF.bounds[Y];
+         } else if ( C2 && !C1) {
+             viewable[Y] = itemLF.bounds[Y] + itemLF.bounds[HEIGHT] - viewport[HEIGHT];
+         }
+
+         if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
+             viewable[Y] = viewable[HEIGHT] - viewable[HEIGHT];
+         }
+
+         if (viewable[Y] < 0) {
+             viewable[Y] = 0;
+         }
 
         if (index != traverseIndex) {
             // We record the present traverseItem because if it
@@ -886,7 +890,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
                            "\nFormLFImpl: uShowContents()");
-        }
+        }        
 
         synchronized (Display.LCDUILock) {
             if (firstShown) {
