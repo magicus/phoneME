@@ -240,7 +240,7 @@ public class AmsUtil {
             classpath[0] = "";
         }
 
-        String isolateClassPath = System.getProperty("IsolateClassPath");
+        String isolateClassPath = System.getProperty("classpathext");
         String[] classpathext = null;
         if (null != isolateClassPath) {
             classpathext = new String[] {isolateClassPath};

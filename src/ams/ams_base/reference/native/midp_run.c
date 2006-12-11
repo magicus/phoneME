@@ -532,6 +532,26 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
     (void)debugOption;
 #endif
 
+    // store class path as system variable for another isolates
+    if (NULL != classPathExt) {
+        char* argv[1];
+        const char* prefix = "-Dclasspathext=";
+        const char* suffix = classPathExt;
+        argv[0] = midpMalloc(sizeof(prefix) + strlen(suffix));
+        if (NULL != argv[0]) {
+            char* cp =argv[0] ;
+            while (*prefix != 0) {
+                *cp++ = *prefix++;
+            }
+            do {
+                *cp++ = *suffix;
+            } while (*suffix++ != 0);
+            (void)JVM_ParseOneArg(1, argv);
+            midpFree(argv[0]);
+        }
+    }
+
+
     do {
         MIDP_ERROR status = MIDP_ERROR_NONE;
 
@@ -884,6 +904,35 @@ int midpRunMainClass(JvmPathChar *classPath,
     if (midpInitCallback(VM_LEVEL, midpInitializeUI, midpFinalizeUI) != 0) {
         REPORT_WARN(LC_CORE, "Out of memory during init of VM.\n");
         return MIDP_ERROR_STATUS;
+    }
+
+    // store class path as system variable for another isolates
+    {
+        if (NULL != classPath) {
+            char* argv[1];
+            const char* prefix = "-Dclasspathext=";
+            const JvmPathChar* suffix = classPath;
+            int pathLen = 0;
+            while (*suffix++ != 0) {
+                pathLen++;
+            }
+            // restore
+            suffix = classPath ;
+
+            argv[0] = midpMalloc(sizeof(prefix) + pathLen);
+            if (NULL != argv[0]) {
+                char* cp =argv[0] ;
+                while (*prefix != 0) {
+                    *cp++ = *prefix++;
+                }
+                do {
+                    // simple conversion
+                    *cp++ = (char)*suffix;
+                } while (*suffix++ != 0);
+                (void)JVM_ParseOneArg(1, argv);
+                midpFree(argv[0]);
+            }
+        }
     }
 
     /*
