@@ -153,14 +153,14 @@ endif
 # Non-preloaded classes except for test classes
 ifneq ($(CVM_PRELOAD_LIB), true)
 $(LIB_CLASSESDIR)/%.class: %.java
-	@echo $? >>$(CVM_BUILD_TOP)/.libclasses.list
+	@echo $(call POSIX2HOST,$?) >>$(CVM_BUILD_TOP)/.libclasses.list
 	@echo $(subst /,.,$*) >>$(CVM_BUILD_TOP)/.javahclasses.list
 	@touch $(CVM_BUILD_TOP)/.libclasses 
 endif
 
 # preloaded classes except for test classes
 $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
-	@echo $? >>$(CVM_BUILD_TOP)/.btclasses.list
+	@echo $(call POSIX2HOST,$?) >>$(CVM_BUILD_TOP)/.btclasses.list
 	@touch $(CVM_BUILD_TOP)/.btclasses
 
 # TODO: Build a jsr jar file and have a rule that makes the jar file
@@ -179,12 +179,12 @@ $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
 
 # Test classes
 $(CVM_TEST_CLASSESDIR)/%.class: %.java
-	@echo $? >>$(CVM_BUILD_TOP)/.testclasses.list
+	@echo $(call POSIX2HOST,$?) >>$(CVM_BUILD_TOP)/.testclasses.list
 	@touch $(CVM_BUILD_TOP)/.testclasses
 
 # demo classes
 $(CVM_DEMO_CLASSESDIR)/%.class: %.java
-	@echo $? >>$(CVM_BUILD_TOP)/.democlasses.list
+	@echo $(call POSIX2HOST,$?) >>$(CVM_BUILD_TOP)/.democlasses.list
 	@touch $(CVM_BUILD_TOP)/.democlasses
 
 #
@@ -214,11 +214,11 @@ PS := "$(JDK_PATH_SEP)"
 
 # Convert list of Java source directories to colon-separated paths
 JAVACLASSES_SRCPATH = \
-	$(subst $(space),$(PS),$(strip $(JAVA_SRCDIRS)))
+	$(subst $(space),$(PS),$(call MPOSIX2HOST,$(strip $(JAVA_SRCDIRS))))
 TESTCLASSES_SRCPATH = \
-	$(subst $(space),$(PS),$(strip $(CVM_TESTCLASSES_SRCDIRS)))
+	$(subst $(space),$(PS),$(call MPOSIX2HOST,$(strip $(CVM_TESTCLASSES_SRCDIRS))))
 CVM_DEMOCLASSES_SRCPATH = \
-	$(subst $(space),$(PS),$(strip $(CVM_DEMOCLASSES_SRCDIRS)))
+	$(subst $(space),$(PS),$(call MPOSIX2HOST,$(strip $(CVM_DEMOCLASSES_SRCDIRS))))
 
 # Convert list of classpath entries to colon-separated path
 JAVACLASSES_CLASSPATH = $(subst $(space),$(PS),$(strip $(JAVA_CLASSPATH)))
