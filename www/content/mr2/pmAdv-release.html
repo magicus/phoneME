@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html><head>
+
+
+ <link rel="stylesheet" type="text/css" href="how-to2_files/print.html" media="print">
+ <script src="how-to2_files/tigris.html" type="text/javascript"></script>
+ <!-- ------- ORIGINAL CODE --------------------------- -->
+ <!--<head>
+ <style type="text/css"> 
+ /* <![CDATA[ */
+ @import "/branding/css/tigris.css";
+ @import "/branding/css/inst.css";
+ /* ]]> */
+ </style>
+ <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
+ <script src="/branding/scripts/tigris.js" type="text/javascript"></script> -->
+
+
+  
+                                                     <title>
+        Getting Started with phoneME Advanced
+    </title>
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+ <meta http-equiv="Content-Style-Type" content="text/css" />
+ <meta name="version" content="3.5.1.19.8" />
+ <style type="text/css">
+<!--
+a:link {
+	text-decoration: none;
+}
+a:visited {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+a:active {
+	text-decoration: none;
+}
+-->
+</style></head>
+ 
+ 
+<body  class="composite">
+  
+<table border="0" cellspacing="0" cellpadding="4" width="100%" id="main">
+<tr>
+ <td id="midcol">
+ 
+ 
+<!-- 
+ ===============================================================================
+    IGNORE EVERYTHING ABOVE THIS AREA.  *   START EDITING BELOW 
+ ===============================================================================
+ -->
+ 
+ 
+<!--BEGIN * PAGE TITLE -->
+<div id="projecthome" class="app"> 
+<h1><font color="#E76F00"><i>phoneME Advanced</i> MR2 Release Notes</font></h1>
+<!--END * PAGE TITLE -->
+
+<p>
+<hr size="1" noshade>
+<h2>Features</h2>
+<p>
+phoneME Advanced MR2 software is an optimized Java ME stack with full support for CDC and its profiles.
+<p>
+<ul>
+<li>
+Connected Device Configuration, version 1.1.2
+<p>
+<li>
+Foundation Profile, version 1.1.2
+<p>
+<li>
+Personal Basis Profile, version 1.1.2
+</ul>
+<p>
+phoneME Advanced MR2 is in the early stages of development.
+This <b>development</b> release of MR2 represents the basic foundation
+from which the project will evolve.
+For more information on the expected feature set
+and direction of phoneME Advanced technology,
+see the phoneME Advanced MR2 Software
+<a href="https://phoneme.dev.java.net/content/phoneme_advanced_r2.html">
+Release Description</a>.
+<p>
+<hr size="1" noshade>
+<h2>Binary Archives</h2>
+<p>
+As a convenience,
+phoneME Advanced releases provide prebuilt binary Zip archives in the 
+<a href="https://phoneme.dev.java.net/downloads_page.html">
+phoneME Project Downloads</a> page.
+The distribution archive actually contains two sub-archives,
+each of which contains an executable CDC Java runtime environment for Linux/x86.
+<p>
+<blockquote>
+<pre>
+% mkdir phoneme-advanced-<i>rel</i>
+% cd phoneme-advanced-<i>rel</i>
+% unzip phoneme_advanced-<i>rel</i>-bin-b06-linux-<i>date</i>.zip
+Archive:  phoneme_advanced-<i>rel</i>-bin-b06-linux-<i>date</i>.zip
+ extracting: phoneme_advanced-<i>rel</i>-pbp-bin-b06-linux-<i>date</i>.zip
+ extracting: phoneme_advanced-<i>rel</i>-pp-bin-b06-linux-<i>date</i>.zip
+</pre>
+</blockquote>
+<p>
+Then unpack one of these archives:
+<p>
+<blockquote>
+<pre>
+% mkdir PBP
+% mv phoneme_advanced-<i>rel</i>-pbp-bin-b06-linux-<i>date</i>.zip PBP
+% cd PBP
+% unzip phoneme_advanced-<i>rel</i>-pbp-bin-b06-linux-<i>date</i>.zip PBP
+</pre>
+</blockquote>
+<p>
+See
+<a href="pmAdv-buildhost.html">CDC Build System: Host Environment</a>
+and the 
+<a href="http://java.sun.com/javame/reference/docs/cdc_runtime_guide.pdf">
+<i>CDC Runtime Guide</i></a>,
+for information how to use the CDC Java runtime environment.
+
+<hr size="1" noshade>
+<h2>Known Issues</h2>
+<p>
+<b>The font path may need to be explicitly set on openSUSE 10.1 systems.</b>
+To check the font path on the openSUSE 10.1 system, use the following command:
+<p>
+<blockquote>
+<pre>
+% xset q
+</pre>
+</blockquote>
+<p>
+To able to display correctly on an openSUSE 10.1 system
+the font path should at least contain the following:
+<p>
+<blockquote>
+<pre>
+/usr/X11R6/lib/X11/fonts/misc:unscaled
+/usr/X11R6/lib/X11/fonts/75dpi
+/usr/X11R6/lib/X11/fonts/uni
+/usr/X11R6/lib/X11/fonts/truetype/
+</pre>
+</blockquote>
+<p>
+To set the font path
+<p>
+<blockquote>
+<pre>
+% xset +fp <Path>
+</pre>
+</blockquote>
