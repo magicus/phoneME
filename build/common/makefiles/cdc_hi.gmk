@@ -161,21 +161,6 @@ oldrom:
 	@cd ${BTCLASSES}; jar cvf ${BTCLASSES_ZIP} .
 	@ls -l ${BTCLASSES_ZIP}
 
-JTWI_NATIVE_FILES += cdc_natives.c
-
-SUBSYSTEM_CORE_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/ams/ams_base/reference/classes/com/sun/midp/main/CDCInit.java 
-
-#    $(SUBSYSTEM_DIR)/ams/ota/reference/classes/com/sun/midp/installer/HelloWorld.java
-
-#
-# Include com.sun.mtask.midlet.PMidletManager class if CVM_MTASK is enabled
-#
-ifeq ($(CVM_MTASK), true)
-SUBSYSTEM_CORE_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/ams/ams_base/reference/classes/com/sun/mtask/midlet/PMidletManager.java
-endif
-
 # The CDC build cannot compile the following files yet. 
 cdc_dummies:
 	@mkdir -p $(GENERATED_DIR)

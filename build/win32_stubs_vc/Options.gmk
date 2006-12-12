@@ -80,6 +80,7 @@ USE_VERBOSE_MAKE	= false
 USE_I3_TEST		= false
 USE_PORTING_DEMOS	= true
 USE_CONTROL_ARGS_FROM_JAD	= false
+USE_GCOV		= false
 
 # SERVER SOCKET
 USE_SERVER_SOCKET       = true
@@ -94,4 +95,4 @@ USE_FIXED		= false
 USE_VERIFY_ONCE         = false
 
 # Links
-USE_LINKS		= false
+USE_LINKS		= true

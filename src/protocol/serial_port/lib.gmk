@@ -48,6 +48,9 @@ ifneq ($(findstring $(TARGET_OS),linux javacall),)
 
 include $(SUBSYSTEM_DIR)/protocol/serial_port/$(TARGET_OS)/lib.gmk
 else
-display:
-	echo "Serial communication is not implemented yet for OS $(TARGET_OS)"
+
+not_yet_implemented:: serial_port_not_yet_implemented
+
+serial_port_not_yet_implemented:
+	echo "Serial port communication is not implemented yet for OS $(TARGET_OS)"
 endif

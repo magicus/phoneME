@@ -34,6 +34,7 @@ _ADS_GMK_        =
 
 # Suffix
 LIB_SUFFIX      = .lib
+SHARED_LIB_SUFFIX = .lib
 OBJ_SUFFIX      = .o
 
 # GCC

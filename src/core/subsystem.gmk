@@ -158,7 +158,18 @@ include $(SUBSYSTEM_CORE_DIR)/string/$(LIB_MAKE_FILE)
 # Description: Java stack suspend/resume functionality
 #####################################################################
 ifneq ($(TARGET_VM), cdc_hi)
-include $(SUBSYSTEM_CORE_DIR)/suspend_resume/$(LIB_MAKE_FILE)
+  include $(SUBSYSTEM_CORE_DIR)/suspend_resume/$(LIB_MAKE_FILE)
+endif
+
+#####################################################################
+# Services library
+# Description: Services Framework
+#####################################################################
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+ifeq ($(USE_LINKS), true)
+include $(SUBSYSTEM_CORE_DIR)/services/$(LIB_MAKE_FILE)
+endif
 endif
 
 ####################################################################
@@ -179,7 +190,8 @@ SUBSYSTEM_CORE_JAVA_FILES += \
     $(SUBSYSTEM_MEMORY_JAVA_FILES) \
     $(SUBSYSTEM_STORAGE_JAVA_FILES) \
     $(SUBSYSTEM_STRING_JAVA_FILES) \
-    $(SUBSYSTEM_SUSPEND_RESUME_JAVA_FILES)
+    $(SUBSYSTEM_SUSPEND_RESUME_JAVA_FILES) \
+    $(SUBSYSTEM_SERVICES_JAVA_FILES)
 
 SUBSYSTEM_CORE_I3TEST_JAVA_FILES = \
     $(SUBSYSTEM_CRC32_I3TEST_JAVA_FILES) \
@@ -197,7 +209,8 @@ SUBSYSTEM_CORE_I3TEST_JAVA_FILES = \
     $(SUBSYSTEM_MEMORY_I3TEST_JAVA_FILES) \
     $(SUBSYSTEM_STORAGE_I3TEST_JAVA_FILES) \
     $(SUBSYSTEM_STRING_I3TEST_JAVA_FILES) \
-    $(SUBSYSTEM_SUSPEND_RESUME_I3TEST_JAVA_FILES)
+    $(SUBSYSTEM_SUSPEND_RESUME_I3TEST_JAVA_FILES) \
+    $(SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES)    
  
 SUBSYSTEM_CORE_NATIVE_FILES = \
     $(SUBSYSTEM_CRC32_NATIVE_FILES) \

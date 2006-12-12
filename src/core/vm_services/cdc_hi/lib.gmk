@@ -45,4 +45,6 @@ vpath % $(VM_SERVICES_DIR)/cdc_hi/native
 endif
 
 SUBSYSTEM_VMSERVICES_NATIVE_FILES += \
+  cdc_natives.c
+
 

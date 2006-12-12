@@ -219,27 +219,20 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
     boolean lCallTraverse(int dir, int viewportWidth, int viewportHeight,
                          int[] visRect) {
 
-        super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
-
+        boolean ret = false;
         // If we have no elements, or if the user pressed left/right,
         // don't bother with the visRect and just return false
-        if (cg.numOfEls == 0) {
-            return false;
-        }
+        if (cg.numOfEls > 0) {
 
-        // If we are a closed popup, don't bother with the visRect
-        // and return true on the initial traverse, false on subsequent
-        // traverses
-        if (!popUpOpen) {
-            if (!traversedIn) {
-                traversedIn = true;
-                return true;
-            } else {
-                return false;
+            // If we are a closed popup, don't bother with the visRect
+            // and return true on the initial traverse, false on subsequent
+            // traverses
+            if (popUpOpen) {
+                ret = super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
             }
         }
-
-        return true;
+        
+        return ret;
     }
 
     /**
@@ -250,55 +243,46 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      * @return true if traverse event was handled, false - otherwise
      */
     boolean traverseInPopup(int dir, int viewportWidth, int viewportHeight) {
-
-        if (!popUpOpen) {
-            return false;
-        }
-
-        if (cg.numOfEls == 1) {
-            return true;
-        }
-
-        if (dir == Canvas.UP) {
-            if (hilightedIndex > 0) {
+        boolean ret = false;
+        if (popUpOpen) {
+            if (cg.numOfEls > 1) {
+                int prevIndex = hilightedIndex;
                 int hilightY = 0;
-                for (int i = 0; i < hilightedIndex; i++) {
-                    hilightY += elHeights[i];
+                switch (dir) {
+                case Canvas.UP:
+                    if (hilightedIndex > 0) {
+                        hilightedIndex--;
+                    } else {
+                        hilightedIndex = cg.numOfEls - 1;
+                    }
+                    break;
+                case Canvas.DOWN:
+                    if (hilightedIndex < (cg.numOfEls - 1)) {
+                        hilightedIndex++;
+                    } else {
+                        hilightedIndex = 0;
+                    }
+                    break;
+                default:
+                    break;
                 }
-                hilightedIndex--;
-                hilightY -= elHeights[hilightedIndex];
-                if (hilightY < viewable[Y]) {
-                    viewable[Y] -= (viewable[Y] - hilightY);
+                
+                if (ret = prevIndex != hilightedIndex) {
+                    for (int i = 0; i < hilightedIndex; i++) {
+                        hilightY += elHeights[i];
+                    }
+                    int y2= hilightY + elHeights[hilightedIndex];
+                    
+                    if (hilightY < viewable[Y]) {
+                        viewable[Y] = hilightY;
+                    } else if (y2 > viewable[Y] + viewportHeight) {
+                        viewable[Y] = y2 - viewportHeight;
+                    }
+                    lRequestPaint();
                 }
-            } else {
-                // jump to the last element
-                hilightedIndex = cg.numOfEls - 1;
-                viewable[Y] = viewable[HEIGHT] - viewportHeight;
-            }
-            lRequestPaint();
-
-        } else if (dir == Canvas.DOWN) {
-            if (hilightedIndex < (cg.numOfEls - 1)) {
-                int hilightY = 0;
-                for (int i = 0; i < hilightedIndex; i++) {
-                    hilightY += elHeights[i];
-                }
-                hilightY += elHeights[hilightedIndex];
-                hilightedIndex++;
-                if (hilightY + elHeights[hilightedIndex]>
-                    viewable[Y] + viewportHeight) {
-                    viewable[Y] += hilightY + elHeights[hilightedIndex] -
-                        (viewable[Y] + viewportHeight);
-                }
-            } else {
-                // jump to the first element
-                hilightedIndex = 0;
-                viewable[Y] = 0;
-            }
-            lRequestPaint();
-        }
-
-        return true;
+            } 
+        } // popus is opened
+        return ret;
     }
 
     /**
@@ -423,6 +407,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      * @param y the y coordinate of the pointer down
      */
     void uCallPointerPressed(int x, int y) {
+        itemWasPressed = true;
         itemSelectedWhenPressed = false;
         if (popUpOpen) {
             // popupLayer.
@@ -438,6 +423,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             } else {
                 hilightedIndex = 0;
                 popupLayer.hide();
+                uRequestPaint();
             }
         }
     }
@@ -449,6 +435,9 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      * @param y the x coordinate of the pointer up
      */
     void uCallPointerReleased(int x, int y) {
+        if (!itemWasPressed)
+            return;
+        
         if (popUpOpen) {
             // do not dismiss the popup until a new selection is made.
             int i = getIndexByPointer(x, y);
@@ -460,12 +449,12 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                                 // close the popup as cancel
                                 Constants.KEYCODE_RIGHT);
             }
-        } else {
-            if (super.itemContainsPointer(x + bounds[X], y + bounds[Y])) {
-                uCallKeyPressed(Constants.KEYCODE_SELECT);
-            }
+        } else if (super.itemContainsPointer(x + bounds[X], y + bounds[Y])) {
+            uCallKeyPressed(Constants.KEYCODE_SELECT);
         }
         itemSelectedWhenPressed = false;
+        itemWasPressed = false;
+
     }
 
     /**
@@ -559,7 +548,8 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                                            viewport[HEIGHT])) {
                         // the viewable[Y] is correct after traverseInPopup() calls,
                         // but we should update scroll position
-                        updatePopupLayer(viewable[Y]); 
+                        updateScrollIndicator();
+                        requestRepaint();
                         return true;
                     }
                 }
@@ -877,7 +867,6 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 }
             } 
             
-            addDirtyRegion();
             requestRepaint();
             updateScrollIndicator();
         }

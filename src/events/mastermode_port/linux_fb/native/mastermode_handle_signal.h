@@ -85,19 +85,13 @@ void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent);
 void handlePointer(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent);
     
 /**
- * Handle a timer created for repeated keypress and schedule a new one.
+ * An input devices can produce bit-based keyboard events. Thus single
+ * native event can produce several MIDP ones. This function detects
+ * whether are one or more key bits still not converted into MIDP events
  *
- * @param pNewSignal        reentry data to unblock threads waiting for a signal
- * @param pNewMidpEvent     a native MIDP event to be stored to Java event queue
+ * @return true when pending key exists, false otherwise
  */
-void handleRepeatedKeyTimer(MidpReentryData* pNewSignal,
-    MidpEvent* pNewMidpEvent, TimerHandle *timer);
-
-
-/* OMAP730 keyboard events are bit-based. Thus single native event can produce
-   several MIDP ones. This flag indicates there are one or more key bits still
-   not converted into MIDP events */
-extern jboolean hasPendingKeySignal;
+jboolean hasPendingKey();
 
 #ifdef __cplusplus
 } /* extern C */

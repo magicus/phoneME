@@ -36,8 +36,11 @@
 #include <keymap_input.h>
 
 #include <lcdlf_export.h>
-#include <midpCommandState.h>
 #include <fbapp_export.h>
+
+#ifdef DIRECTFB
+#include <directfbapp_export.h>
+#endif
 
 /* IMPL_NOTE - CDC declarations */
 CVMInt64 CVMtimeMillis(void);
@@ -188,7 +191,6 @@ midpFinalizeUI(void) {
     lcdlf_ui_finalize();
 
     //IMPL_NOTE: pushclose();
-    finalizeCommandState();
 
     //FinalizeEvents();
 
@@ -231,6 +233,7 @@ KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
     midpSetHomeDir(cbuff);
     if (midpInitialize() != 0) {
         printf("midpInitialize() failed\n");
+
     }
 
     if (midpInitCallback(VM_LEVEL, midpInitializeUI, midpFinalizeUI) != 0) {
@@ -432,7 +435,8 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
          * At first we check for keyboard events. If this queue is empty
          * we wait 0.2s for pipe's events.
          */
-        if (!fbapp_event_is_waiting()) {
+        if (!directfbapp_event_is_waiting()) {
+            struct timeval timeout;        
             timeout.tv_sec = 0;
             timeout.tv_usec = 200000; /* wait 0.2 sec */
             /* When the timeout expires num_ready will contain 0 */
@@ -457,7 +461,7 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
         if (num_ready >= 0) {
 #ifdef DIRECTFB
             /* check if a keyboard event was received while we was waiting in the select */
-            if (keyboard_has_event || fbapp_event_is_waiting()) {
+            if (keyboard_has_event || directfbapp_event_is_waiting()) {
                 keyboard_has_event = 0;
 #else
             if (FD_ISSET(keyboardFd, &read_fds)) {
@@ -481,9 +485,11 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
                     KNI_SetIntField(eventObj, intParam4FieldID,
                                     newMidpEvent.intParam4);
 
-                    printf("Gotten key%s: %d\n",
+#ifdef CVM_DEBUG
+                    printf("Got key%s: %d\n",
                            (newMidpEvent.ACTION == PRESSED) ? "down" : "up",
                            newMidpEvent.CHR);
+#endif
                     done = 1;
                 }
             }
@@ -696,7 +702,6 @@ DUMMY(CNIcom_sun_midp_io_j2me_push_PushRegistryImpl_checkInByHandle0)
 DUMMY(CNIcom_sun_midp_io_j2me_push_PushRegistryImpl_list0)
 DUMMY(CNIcom_sun_midp_io_j2me_push_PushRegistryImpl_delAllForSuite0)
 
-DUMMY(CNIcom_sun_midp_main_CommandState_exitInternal)
 DUMMY(CNIcom_sun_midp_crypto_MD5_nativeUpdate)
 DUMMY(CNIcom_sun_midp_crypto_MD5_nativeFinal)
 DUMMY(CNIcom_sun_midp_crypto_MD2_nativeUpdate)
@@ -715,23 +720,19 @@ DUMMY(CNIcom_sun_cdc_i18n_j2me_Conv_charToByte)
 DUMMY(CNIcom_sun_cdc_i18n_j2me_Conv_sizeOfByteInUnicode)
 DUMMY(CNIcom_sun_cdc_i18n_j2me_Conv_sizeOfUnicodeInByte)
 
-DUMMY(CNIcom_sun_midp_pause_PauseSystem_00024MIDPSystem_paused)
-
-void CNIcom_sun_midp_io_j2me_push_PushRegistryImpl_poll0() {
-    for (;;) {sleep(1);}
-}
-
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_events_EventQueue_sendShutdownEvent) {
     (void) _arguments;
     (void) _p_mb;
+#ifdef CVM_DEBUG
     printf("EventQueue_sendShutdownEvent\n");
+#endif
     //CVMdumpAllThreads();
 #if ENABLE_DEBUG
     CVMdumpStack(&_ee->interpreterStack, 0, 0, 0);
 #endif
 #ifdef DIRECTFB
-    fbapp_close_window();
+    directfbapp_close_window();
 #endif
     exit(0);
     KNI_ReturnVoid();
@@ -755,8 +756,9 @@ DUMMY(midpStoreEventAndSignalForeground)
 
 int getCurrentIsolateId() {return 0;}
 
+int midpGetAmsIsolateId() {return 0;}
+
 /* IMPL_NOTE - removed duplicate
- * int midpGetAmsIsolateId() {return 0;}
  * DUMMY(midp_getCurrentThreadId)
  */
 

@@ -102,6 +102,14 @@ public interface DisplayAccess {
     // void resumePainting();
 
     /**
+     * Get the class name of the MIDlet that owns this display.
+     * DisplayAccess I/F method.
+     *
+     * @return name of the MIDlet that owns this Display
+     */
+    public String getNameOfOwner();
+
+    /**
      * Get the ID of this display.
      *
      * @return Display ID
@@ -118,16 +126,16 @@ public interface DisplayAccess {
     public void setDisplayId(int newId);
 
     /**
-     * Get the MIDletEventConsumer associated with this display.
-     *
-     * @return Consumer of midlet events that go through this display
-     */
-    public MIDletEventConsumer getMIDletEventConsumer();
-
-    /**
      * Get the DisplayEventConsumer associated with this display.
      *
      * @return Consumer of midlet events that go through this display
      */
     public DisplayEventConsumer getDisplayEventConsumer();
+
+    /**
+     * Get the ForegroundEventConsumer associated with this display.
+     *
+     * @return Consumer of foreground events that go through this display
+     */
+    public ForegroundEventConsumer getForegroundEventConsumer();
 }

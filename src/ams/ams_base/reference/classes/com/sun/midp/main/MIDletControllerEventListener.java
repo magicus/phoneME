@@ -74,6 +74,10 @@ class MIDletControllerEventListener implements EventListener {
         eventQueue.registerEventListener(
             EventTypes.MIDLET_RS_PAUSED_NOTIFICATION, this);
         eventQueue.registerEventListener(
+            EventTypes.MIDLET_RESUME_REQUEST, this);
+        eventQueue.registerEventListener(
+            EventTypes.DISPLAY_CREATED_NOTIFICATION, this);
+        eventQueue.registerEventListener(
             EventTypes.FOREGROUND_REQUEST_EVENT, this);
         eventQueue.registerEventListener(
             EventTypes.BACKGROUND_REQUEST_EVENT, this);
@@ -175,50 +179,63 @@ class MIDletControllerEventListener implements EventListener {
                 return;
 
             case EventTypes.PREEMPT_EVENT:
-                if (nativeEvent.intParam2 != 0)
+                if (nativeEvent.intParam2 != 0) {
                     midletControllerEventConsumer.
                         handleDisplayPreemptStartEvent(
                             nativeEvent.intParam1,
                             nativeEvent.intParam4);
-                else
+                } else {
                     midletControllerEventConsumer.
                         handleDisplayPreemptStopEvent(
                             nativeEvent.intParam1,
                             nativeEvent.intParam4);
+                }
+
                 return;
 
             case EventTypes.MIDLET_CREATED_NOTIFICATION:
                 midletControllerEventConsumer.handleMIDletCreateNotifyEvent(
                     nativeEvent.intParam1,
+                    nativeEvent.stringParam1,
                     nativeEvent.intParam2,
                     nativeEvent.intParam3,
-                    nativeEvent.intParam4,
-                    nativeEvent.stringParam1,
                     nativeEvent.stringParam2);
                 return;
 
             case EventTypes.MIDLET_ACTIVE_NOTIFICATION:
                 midletControllerEventConsumer.handleMIDletActiveNotifyEvent(
                     nativeEvent.intParam1,
-                    nativeEvent.intParam4);
+                    nativeEvent.stringParam1);
                 return;
 
             case EventTypes.MIDLET_PAUSED_NOTIFICATION:
                 midletControllerEventConsumer.handleMIDletPauseNotifyEvent(
                     nativeEvent.intParam1,
-                    nativeEvent.intParam4);
+                    nativeEvent.stringParam1);
                 return;
 
             case EventTypes.MIDLET_DESTROYED_NOTIFICATION:
                 midletControllerEventConsumer.handleMIDletDestroyNotifyEvent(
                     nativeEvent.intParam1,
-                    nativeEvent.intParam4);
+                    nativeEvent.stringParam1);
                 return;
+
+            case EventTypes.MIDLET_RESUME_REQUEST:
+                midletControllerEventConsumer.handleMIDletResumeRequestEvent(
+                    nativeEvent.intParam1,
+                    nativeEvent.stringParam1);
 
             case EventTypes.MIDLET_RS_PAUSED_NOTIFICATION:
                 midletControllerEventConsumer.handleMIDletRsPauseNotifyEvent(
                     nativeEvent.intParam1,
-                    nativeEvent.intParam4);
+                    nativeEvent.stringParam1);
+                return;
+
+            case EventTypes.DISPLAY_CREATED_NOTIFICATION:
+                midletControllerEventConsumer.handleDisplayCreateNotifyEvent(
+                    nativeEvent.intParam1,
+                    nativeEvent.intParam2,
+                    nativeEvent.stringParam1);
                 return;
 
             case EventTypes.FOREGROUND_REQUEST_EVENT:
@@ -239,8 +256,8 @@ class MIDletControllerEventListener implements EventListener {
             case EventTypes.MIDLET_START_ERROR_EVENT:
                 midletControllerEventConsumer.handleMIDletStartErrorEvent(
                     nativeEvent.intParam1,
-                    nativeEvent.intParam2,
                     nativeEvent.stringParam1,
+                    nativeEvent.intParam2,
                     nativeEvent.intParam3);
                 return;
 
@@ -263,11 +280,6 @@ class MIDletControllerEventListener implements EventListener {
                     nativeEvent.intParam1,
                     nativeEvent.intParam4);
                 return;
-
-            case EventTypes.MIDLET_RESUME_REQUEST:
-                midletControllerEventConsumer.handleMIDletResumeRequestEvent(
-                    nativeEvent.intParam1,
-                    nativeEvent.intParam4);
 
             default:
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {

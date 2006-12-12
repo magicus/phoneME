@@ -182,7 +182,6 @@ public class MIDletSuiteStorage {
 
         MIDletSuiteInfo msi = new MIDletSuiteInfo(id);
         getMIDletSuiteInfoImpl0(id, msi);
-        msi.loadIcon(this);
 
         return msi;
     }

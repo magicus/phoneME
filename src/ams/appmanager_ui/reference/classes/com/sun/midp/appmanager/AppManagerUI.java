@@ -45,6 +45,7 @@ import com.sun.midp.payment.PAPICleanUp;
 
 import java.io.*;
 import javax.microedition.rms.*;
+import java.util.*;
 
 /**
  * The Graphical MIDlet selector Screen.
@@ -123,9 +124,21 @@ class AppManagerUI extends Form
 
     /**
      * The image used to draw background for the midlet representation.
+     * IMPL NOTE: it is assumed that background image is larger or equal
+     * than all other images that are painted over it
      */
     private static final Image ICON_BG =
         GraphicalInstaller.getImageFromInternalStorage("_ch_hilight_bg");
+
+    /**
+     * Cashed background image width.
+     */
+    private static final int bgIconW = ICON_BG.getWidth();
+
+    /**
+     * Cashed background image height.
+     */
+    private static final int bgIconH = ICON_BG.getHeight();
 
     /**
      * The icon used to display that user attention is requested
@@ -172,8 +185,8 @@ class AppManagerUI extends Form
     /**
      * Cashed truncation mark
      */
-    private static final String truncationMark =
-        Resource.getString(ResourceConstants.TRUNCATION_MARK);
+    private static final char truncationMark =
+        Resource.getString(ResourceConstants.TRUNCATION_MARK).charAt(0);
 
 
     /** Command object for "Exit" command for splash screen. */
@@ -263,7 +276,7 @@ class AppManagerUI extends Form
     private long lastDisplayChange;
 
     /** MIDlet to be removed after confirmation screen was accepted */
-    private MIDletSuiteInfo removeMsi;
+    private RunningMIDletSuiteInfo removeMsi;
 
     /**
      * There are several Application Manager
@@ -420,7 +433,7 @@ class AppManagerUI extends Form
      * @param item the Item the command was on.
      */
     public void commandAction(Command c, Item item) {
-        MIDletSuiteInfo msi = ((MidletCustomItem)item).msi;
+        RunningMIDletSuiteInfo msi = ((MidletCustomItem)item).msi;
         if (msi == null) {
             return;
         }
@@ -697,7 +710,7 @@ class AppManagerUI extends Form
      */
     private void updateContent() {
         int[] suiteIds;
-        MIDletSuiteInfo msi = null;
+        RunningMIDletSuiteInfo msi = null;
         boolean newlyAdded;
 
         suiteIds = midletSuiteStorage.getListOfSuites();
@@ -710,7 +723,7 @@ class AppManagerUI extends Form
         if (msi == null || msi.midletToRun == null ||
             !msi.midletToRun.equals(DISCOVERY_APP)) {
 
-            msi = new MIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
+            msi = new RunningMIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
                 DISCOVERY_APP,
                 Resource.getString(ResourceConstants.INSTALL_APPLICATION),
                 true) {
@@ -745,7 +758,7 @@ class AppManagerUI extends Form
 
             if (msi == null || msi.midletToRun == null ||
                 !msi.midletToRun.equals(CA_MANAGER)) {
-                msi = new MIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
+                msi = new RunningMIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
                   CA_MANAGER,
                   Resource.getString(ResourceConstants.CA_MANAGER_APP), true);
                 append(msi);
@@ -764,8 +777,11 @@ class AppManagerUI extends Form
             }
 
             try {
-                MIDletSuiteInfo suiteInfo =
+                MIDletSuiteInfo temp =
                     midletSuiteStorage.getMIDletSuiteInfo(suiteIds[lowest]);
+
+                RunningMIDletSuiteInfo suiteInfo =
+                    new RunningMIDletSuiteInfo(temp, midletSuiteStorage);
 
                 newlyAdded = true;
                 for (int k = 0; k < size(); k++) {
@@ -815,7 +831,7 @@ class AppManagerUI extends Form
      * @param suiteInfo the midlet suite info
      *                  of the recently started midlet
      */
-    private void append(MIDletSuiteInfo suiteInfo) {
+    private void append(RunningMIDletSuiteInfo suiteInfo) {
 
         MidletCustomItem ci = new MidletCustomItem(suiteInfo);
 
@@ -851,11 +867,11 @@ class AppManagerUI extends Form
      * @param suiteInfo the midlet suite info of a recently removed MIDlet
      */
     private void remove(MIDletSuiteInfo suiteInfo) {
-        MIDletSuiteInfo msi;
+        RunningMIDletSuiteInfo msi;
 
         // the last item in AppSelector is time
         for (int i = 0; i < size(); i++) {
-            msi = (MIDletSuiteInfo)((MidletCustomItem)get(i)).msi;
+            msi = (RunningMIDletSuiteInfo)((MidletCustomItem)get(i)).msi;
             if (msi == suiteInfo) {
                 PAPICleanUp.removeMissedTransaction(suiteInfo.suiteId);
                 if (msi.proxy != null) {
@@ -912,7 +928,7 @@ class AppManagerUI extends Form
      *
      * @param suiteInfo information for suite to remove
      */
-    private void confirmRemove(MIDletSuiteInfo suiteInfo) {
+    private void confirmRemove(RunningMIDletSuiteInfo suiteInfo) {
         Form confirmForm;
         StringBuffer temp = new StringBuffer(40);
         Item item;
@@ -1177,6 +1193,16 @@ class AppManagerUI extends Form
         display.setCurrent(alert);
     }
 
+    /** A Timer which will handle firing repaints of the ScrollPainter */
+    protected static Timer textScrollTimer;
+
+    /** Text auto-scrolling parameters */
+    private static int SCROLL_RATE = 250;
+
+    private static int SCROLL_DELAY = 500;
+
+    private static int SCROLL_SPEED = 10;
+
     /**
      * Inner class used to display a running midlet in the AppSelector.
      * MidletCustomItem consists of an icon and name associated with the
@@ -1191,12 +1217,19 @@ class AppManagerUI extends Form
          * @param msi The MIDletSuiteInfo for which representation has
          *            to be created
          */
-        MidletCustomItem(MIDletSuiteInfo msi) {
+        MidletCustomItem(RunningMIDletSuiteInfo msi) {
             super(null);
             this.msi = msi;
             icon = msi.icon;
-            text = msi.displayName;
-            msiNameWidth = ICON_FONT.stringWidth(msi.displayName);
+            text = msi.displayName.toCharArray();
+            textLen = msi.displayName.length();
+            truncWidth = ICON_FONT.charWidth(truncationMark);
+            truncated = false;
+            if (textScrollTimer == null) {
+                textScrollTimer = new Timer();
+            }
+            xScrollOffset = 0;
+
         }
 
         /**
@@ -1250,30 +1283,12 @@ class AppManagerUI extends Form
          * @param h The current height of this Item
          */
         protected void sizeChanged(int w, int h) {
-            text = msi.displayName;
-            if (text != null) {
-                int widthForText = w - ITEM_PAD - ICON_BG.getWidth();
-                if ((widthForText <= 0) || (text.length() == 0)) {
-                    text = null;
-                } else if (msiNameWidth > widthForText) {
-                    // We need to trancate msi display name and append
-                    // truncation mark. The display name is expected
-                    // to be not very long, so we just cat off one by one
-                    // characters from the end of the string
-
-                    int widthForName = widthForText - ICON_FONT.stringWidth(truncationMark);
-
-                    if (widthForName > 0) {
-                        text = text.substring(0, text.length()-1);
-                        char[] textChars = text.toCharArray();
-                        int end = textChars.length - 1;
-                        for (; ICON_FONT.charsWidth(textChars, 0, end) > widthForName; end--);
-                        text = text.substring(0, end).concat(truncationMark);
-                    } else {
-                        text = truncationMark;
-                    }
-                }
-            }
+            width = w;
+            height = h;
+            int widthForText = w - ITEM_PAD - ICON_BG.getWidth();
+            int msiNameWidth = ICON_FONT.charsWidth(text, 0, textLen);
+            scrollWidth = msiNameWidth - widthForText + w/5;
+            truncated = msiNameWidth > widthForText;
         }
 
         /** 
@@ -1286,53 +1301,109 @@ class AppManagerUI extends Form
          * @param h The height available to this Item
          */
         protected void paint(Graphics g, int w, int h) {
+            int cX = g.getClipX();
+            int cY = g.getClipY();
+            int cW = g.getClipWidth();
+            int cH = g.getClipHeight();
 
-            width = w;  // icom width + label width
-            height = h;
-
-            if (hasFocus) {
-                g.drawImage(ICON_BG, 0, (height - ICON_BG.getHeight())/2,
-                            Graphics.TOP | Graphics.LEFT);
-            }
-
-            if (icon != null) {
-                g.drawImage(icon, (ICON_BG.getWidth() - icon.getWidth())/2,
-                            (ICON_BG.getHeight() - icon.getHeight())/2,
-                            Graphics.TOP | Graphics.LEFT);
-            }
-
-            // Draw special icon if user attention is requested and
-            // that midlet needs to be brought into foreground by the user
-            if (msi.proxy != null && msi.proxy.isAlertWaiting()) {
-                g.drawImage(FG_REQUESTED,
-                            ICON_BG.getWidth() - FG_REQUESTED.getWidth(), 0,
-                            Graphics.TOP | Graphics.LEFT);
-            }
-
-            if (!msi.enabled) {
-                // indicate that this suite is disabled
-                g.drawImage(DISABLED_IMAGE, 
-                            (ICON_BG.getWidth() - DISABLED_IMAGE.getWidth())/2,
-                            (ICON_BG.getHeight() - DISABLED_IMAGE.getHeight())/2,
-                            Graphics.TOP | Graphics.LEFT);
-            }
-
-            if (text != null &&
-                height > ICON_FONT.getHeight()) {
-
-                int color;
-                if (msi.proxy == null) {
-                    color = hasFocus ? ICON_HL_TEXT : ICON_TEXT;
-                } else {
-                    color = hasFocus ?
-                            ICON_RUNNING_HL_TEXT : ICON_RUNNING_TEXT;
+            if ((cW + cX) > bgIconW) {
+                if (text != null && h > ICON_FONT.getHeight()) {
+    
+                    int color;
+                    if (msi.proxy == null) {
+                        color = hasFocus ? ICON_HL_TEXT : ICON_TEXT;
+                    } else {
+                        color = hasFocus ?
+                                ICON_RUNNING_HL_TEXT : ICON_RUNNING_TEXT;
+                    }
+    
+                    g.setColor(color);
+                    g.setFont(ICON_FONT);
+    
+    
+                    boolean truncate = (xScrollOffset == 0) && truncated;
+    
+                    g.setClip(bgIconW + ITEM_PAD, 0, 
+                        truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD : w, h);
+                    g.drawChars(text, 0, textLen, 
+                        bgIconW + ITEM_PAD + xScrollOffset, (h - ICON_FONT.getHeight())/2, 
+                            Graphics.LEFT | Graphics.TOP);
+                    g.setClip(cX, cY, cW, cH);
+    
+                    if (truncate) {
+                        g.drawChar(truncationMark, w - truncWidth, 
+                            (h - ICON_FONT.getHeight())/2, Graphics.LEFT | Graphics.TOP);
+                    }
+    
                 }
+            } 
 
-                g.setColor(color);
-                g.setFont(ICON_FONT);
-                g.drawString(text,
-                    ICON_BG.getWidth() + ITEM_PAD,  (height - ICON_FONT.getHeight())/2,
-                    Graphics.LEFT | Graphics.TOP);
+            if (cX < bgIconW) {
+                if (hasFocus) {
+                    g.drawImage(ICON_BG, 0, (h - bgIconH)/2,
+                                Graphics.TOP | Graphics.LEFT);
+                }
+    
+                if (icon != null) {
+                    g.drawImage(icon, (bgIconW - icon.getWidth())/2,
+                                (bgIconH - icon.getHeight())/2,
+                                Graphics.TOP | Graphics.LEFT);
+                }
+    
+                // Draw special icon if user attention is requested and
+                // that midlet needs to be brought into foreground by the user
+                if (msi.proxy != null && msi.proxy.isAlertWaiting()) {
+                    g.drawImage(FG_REQUESTED,
+                                bgIconW - FG_REQUESTED.getWidth(), 0,
+                                Graphics.TOP | Graphics.LEFT);
+                }
+    
+                if (!msi.enabled) {
+                    // indicate that this suite is disabled
+                    g.drawImage(DISABLED_IMAGE, 
+                                (bgIconW - DISABLED_IMAGE.getWidth())/2,
+                                (bgIconH - DISABLED_IMAGE.getHeight())/2,
+                                Graphics.TOP | Graphics.LEFT);
+                }
+            }
+
+        }
+
+        /**
+        * Start the scrolling of the text
+        */
+        protected void startScroll() {
+            if (!hasFocus || !truncated) {
+                return;
+            }
+            stopScroll();
+            textScrollPainter = new TextScrollPainter();
+            textScrollTimer.schedule(textScrollPainter, SCROLL_DELAY, SCROLL_RATE);
+        }
+        
+        /**
+        * Stop the scrolling of the text
+        */
+        protected void stopScroll() {
+            if (textScrollPainter == null) {
+                return;
+            }
+            xScrollOffset = 0;
+            textScrollPainter.cancel();
+            textScrollPainter = null;
+            repaint(bgIconW, 0, width, height);
+        }
+        
+        /**
+        * Called repeatedly to animate a side-scroll effect for text
+        */
+        protected void repaintScrollText() {
+            if (-xScrollOffset < scrollWidth) {
+                xScrollOffset -= SCROLL_SPEED;
+                repaint(bgIconW, 0, width, height);
+            } else {
+                // already scrolled to the end of text
+                stopScroll(); 
             }
         }
 
@@ -1352,7 +1423,6 @@ class AppManagerUI extends Form
         protected boolean traverse(int dir,
                                    int viewportWidth, int viewportHeight,
                                    int visRect_inout[]) {
-
             // entirely visible and hasFocus
             if (hasFocus) {
                 // entirely visible and has focus => transfer focus
@@ -1374,6 +1444,8 @@ class AppManagerUI extends Form
             visRect_inout[2] = width;
             visRect_inout[3] = height;
 
+            startScroll();
+            
             return true;
         }
 
@@ -1398,6 +1470,7 @@ class AppManagerUI extends Form
          */
         protected void traverseOut() {
             hasFocus = false;
+            stopScroll();
         }
 
         /**
@@ -1449,6 +1522,40 @@ class AppManagerUI extends Form
             }
         }
 
+        /** A TimerTask which will repaint scrolling text  on a repeated basis */
+        protected TextScrollPainter textScrollPainter;
+
+        /**
+        * Width of the scroll area for text
+        */
+        protected int scrollWidth;
+
+        /**
+        * If text is truncated
+        */
+        boolean truncated;
+
+        /**
+        * pixel offset to the start of the text field  (for example,  if 
+        * xScrollOffset is -60 it means means that the text in this 
+        * text field is scrolled 60 pixels left of the left edge of the
+        * text field)
+        */
+        protected int xScrollOffset;
+
+        /**
+        * Helper class used to repaint scrolling text 
+        * if needed.
+        */
+        private class TextScrollPainter extends TimerTask {
+            /**
+            * Repaint the item text
+            */
+            public final void run() {
+                repaintScrollText();
+            }
+        }
+
         /** True if this MidletCustomItem has focus, and false - otherwise */
         boolean hasFocus; // = false;
 
@@ -1456,18 +1563,21 @@ class AppManagerUI extends Form
         AppManagerUI owner; // = false
 
         /** The MIDletSuiteInfo associated with this MidletCustomItem */
-        MIDletSuiteInfo msi; // = null
+        RunningMIDletSuiteInfo msi; // = null
 
         /** The width of this MidletCustomItem */
         int width; // = 0
         /** The height of this MIDletSuiteInfo */
         int height; // = 0
 
-        /** Cashed width of the MIDletSuiteInfo' display name */
-        int msiNameWidth;
-  
+        /** Cashed width of the truncation mark */
+        int truncWidth;
+
         /** The text of this MidletCustomItem */
-        String text;  
+        char[] text;
+  
+        /** Length of the text */
+        int textLen;
 
         /**
          * The icon to be used to draw this midlet representation.
@@ -1477,3 +1587,4 @@ class AppManagerUI extends Form
         Command default_command; // = null
     }
 }
+

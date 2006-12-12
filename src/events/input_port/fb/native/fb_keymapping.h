@@ -24,37 +24,26 @@
  * information or have any questions. 
  */
 
-#ifndef _MASTERMODE_KEYMAPPING_H_
-#define _MASTERMODE_KEYMAPPING_H_
+#ifndef _FB_KEYMAPPING_H_
+#define _FB_KEYMAPPING_H_
 
 /**
  * @file
- *
  * Key mappings for received key signals handling
  */
+
+#include <java_types.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define MD_KEY_HOME       (KEY_MACHINE_DEP)
-#define MD_KEY_SWITCH_APP (KEY_MACHINE_DEP - 1)
-
-#if defined(ARM) || defined(DIRECTFB)
 /** Map MIDP keyss and platform dependent key up/down codes */
 typedef struct _KeyMapping {
     int midp_keycode;
     unsigned raw_keydown;
     unsigned raw_keyup;
 } KeyMapping;
-
-/** Platform dependent structure to get keyboard event data */
-typedef struct _InputEvent {
-    struct timeval time;
-    unsigned short type;
-    unsigned short code;
-    unsigned value;
-} InputEvent;
 
 /** Keyboard info for the ARM Versatile and Integrator boards */
 extern KeyMapping versatile_integrator_keys[];
@@ -72,5 +61,17 @@ extern KeyMapping omap_730_keys[];
 /** Active key mapping to handle received keyboard signals */
 extern KeyMapping *mapping;
 
-#endif /* ARM || DIRECTFB */
-#endif /* _MASTERMODE_KEYMAPPING_H_ */
+/**
+ * Indicates whether input device generates bitscale value
+ * for each new input event, so changed bits are to be analyzed
+ * to know what the keys are pressed or released. Otherwise each
+ * keycode generaed by input device is treated as a single key
+ * press or release
+ */
+extern jboolean bitscale_mode;
+
+#ifdef __cplusplus
+} /* extern C */
+#endif
+
+#endif /* _FB_KEYMAPPING_H_ */

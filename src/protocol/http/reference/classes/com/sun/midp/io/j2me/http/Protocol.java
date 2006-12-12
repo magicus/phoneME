@@ -49,7 +49,7 @@ package com.sun.midp.io.j2me.http;
  * supported for HTTP1.1 connections - otherwise the connections will be
  * closed and disregarded after its done (HTTP1.0 behavior).
  *
- * <p> This class extends the ConnectionBaseAdapter where Connector type
+ * <p> This class extends the MIDPConnectionBaseAdapter where Connector type
  * objects (like this) use various features. Output and Input streams are
  * created and managed in the adapter class.
  *
@@ -79,7 +79,9 @@ import javax.microedition.io.ConnectionNotFoundException;
 
 import com.sun.midp.main.Configuration;
 
-import com.sun.midp.io.ConnectionBaseAdapter;
+/* FIXME - CDC replacement. */
+import com.sun.midp.io.MIDPConnectionBaseAdapter;
+// import com.sun.midp.io.ConnectionBaseAdapter;
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.NetworkConnectionBase;
 
@@ -98,7 +100,8 @@ import com.sun.midp.util.Properties;
  * This class implements the necessary functionality
  * for an HTTP connection.
  */
-public class Protocol extends ConnectionBaseAdapter 
+public class Protocol extends MIDPConnectionBaseAdapter 
+// public class Protocol extends ConnectionBaseAdapter 
     implements HttpConnection  {
 
     /** HTTP version string to use with all outgoing HTTP requests. */

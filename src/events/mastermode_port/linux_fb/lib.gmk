@@ -38,5 +38,4 @@ vpath % $(SUBSYSTEM_EVENTS_DIR)/mastermode_port/linux_fb/native
 SUBSYSTEM_EVENTS_NATIVE_FILES += \
     mastermode_export.c \
     mastermode_check_signal.c \
-    mastermode_handle_signal.c \
-    mastermode_keymapping.c
+    mastermode_handle_signal.c

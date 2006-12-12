@@ -36,7 +36,8 @@ import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.io.Base64;
 
-import com.sun.midp.io.j2me.http.Protocol;
+/* FIXME - temporary disable HTTP for CDC builds. */
+// import com.sun.midp.io.j2me.http.Protocol;
 
 import com.sun.midp.midlet.MIDletSuite;
 
@@ -162,7 +163,8 @@ public final class OtaNotifier {
         /*
          * Delay any processing so that startup time is not effected.
          */
-        new Thread(new InstallRetryHandler(token, suite)).start();
+	/* FIXME - temporary disable for CDC builds. */
+	//  new Thread(new InstallRetryHandler(token, suite)).start();
     }
 
     /**
@@ -188,10 +190,38 @@ public final class OtaNotifier {
             return;
         }
 
-        try {
-            Protocol httpConnection = new Protocol();
+        /*
+	 * Following is changed to use GCF to remove direct reference to
+	 * com.sun.midp.io.j2me.http.Protocol.
+	 * FIXME: check if security is still working properly.
+	 *
+	 * try {
+	 *  com.sun.midp.io.j2me.http.Protocol httpConnection =
+	 *         new com.sun.midp.io.j2me.http.Protocol();
+	 *
+	 *  httpConnection.openPrim(token, notification.url);
+	 *
+	 *
+	 *  HttpConnection httpConnection =
+	 *     (HttpConnection)Connector.open(notification.url);
+	 *  postMsgBackToProvider(SUCCESS_MSG, httpConnection, null, null);
+	 *  removeInstallNotification(notification.suiteId);
+	 * } catch (Throwable t) {
+	 * if (notification.retries >=
+	 *      Constants.MAX_INSTALL_DELETE_NOTIFICATION_RETRIES) {
+	 *      removeInstallNotification(notification.suiteId);
+	 *  }
+	 * }
+	 */
 
-            httpConnection.openPrim(token, notification.url);
+        try {
+            HttpConnection httpConnection =
+		(HttpConnection)Connector.open(notification.url);
+
+	    /* FIXME - temporary CDC disable. */
+	    //  Protocol httpConnection = new Protocol();
+	    //  httpConnection.openPrim(token, notification.url);
+
             postMsgBackToProvider(SUCCESS_MSG, httpConnection, null, null);
             removeInstallNotification(notification.suiteId);
         } catch (Throwable t) {

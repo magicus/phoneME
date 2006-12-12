@@ -33,7 +33,10 @@
 
 #include <string.h>
 
+#include <jvmconfig.h>
 #include <kni.h>
+#include <jvmspi.h>
+#include <jvm.h>
 #include <sni.h>
 #include <ROMStructs.h>
 #include <commonKNIMacros.h>
@@ -50,40 +53,39 @@
 #endif /* MAX_MIDLET_NAME */
 
 /** Check error code and throw exceptions */
-static void handlePushError(MIDP_ERROR error) {
-
-	switch (error) {
-
-	case MIDP_ERROR_NONE:
-	    /* Success. Return quietly */
-	    break;
-
-	case MIDP_ERROR_ILLEGAL_ARGUMENT:
-	    KNI_ThrowNew(midpIllegalArgumentException, NULL);
-	    break;
-
-	case MIDP_ERROR_UNSUPPORTED:
-	    KNI_ThrowNew(midpConnectionNotFoundException, NULL);
-	    break;
-
-	case MIDP_ERROR_OUT_OF_RESOURCE:
-	case MIDP_ERROR_PUSH_CONNECTION_IN_USE:
-	    KNI_ThrowNew(midpIOException, NULL);
-	    break;
-
-	case MIDP_ERROR_AMS_MIDLET_NOT_FOUND:
-	case MIDP_ERROR_AMS_SUITE_NOT_FOUND:
-	    KNI_ThrowNew(midpClassNotFoundException, NULL);
-	    break;
-
-	case MIDP_ERROR_PERMISSION_DENIED:
-	    KNI_ThrowNew(midpSecurityException, NULL);
-	    break;
-
-	default:
-	    KNI_ThrowNew(midpRuntimeException, NULL);
-	    break;
-	}
+#define handlePushError(X) { \
+	switch (X) { \
+ \
+	case MIDP_ERROR_NONE: \
+	    /* Success. Return quietly */ \
+	    break; \
+ \
+	case MIDP_ERROR_ILLEGAL_ARGUMENT: \
+	    KNI_ThrowNew(midpIllegalArgumentException, NULL); \
+	    break; \
+ \
+	case MIDP_ERROR_UNSUPPORTED: \
+	    KNI_ThrowNew(midpConnectionNotFoundException, NULL); \
+	    break; \
+ \
+	case MIDP_ERROR_OUT_OF_RESOURCE: \
+	case MIDP_ERROR_PUSH_CONNECTION_IN_USE: \
+	    KNI_ThrowNew(midpIOException, NULL); \
+	    break; \
+ \
+	case MIDP_ERROR_AMS_MIDLET_NOT_FOUND: \
+	case MIDP_ERROR_AMS_SUITE_NOT_FOUND: \
+	    KNI_ThrowNew(midpClassNotFoundException, NULL); \
+	    break; \
+ \
+	case MIDP_ERROR_PERMISSION_DENIED: \
+	    KNI_ThrowNew(midpSecurityException, NULL); \
+	    break; \
+ \
+	default: \
+	    KNI_ThrowNew(midpRuntimeException, NULL); \
+	    break; \
+	} \
 }
 
 /**
@@ -100,7 +102,7 @@ static void handlePushError(MIDP_ERROR error) {
  *	   it belongs to another MIDlet suite.
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_unregisterConnection0() {
+KNIDECL(com_sun_midp_io_j2me_push_PushRegistryImpl_unregisterConnection0) {
     jboolean success = KNI_FALSE;
     SuiteIdType suiteId;
     jchar* conn_data;
@@ -160,7 +162,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_unregisterConnection0() {
  *              have permission to register a connection
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_registerConnection0() {
+KNIDECL(com_sun_midp_io_j2me_push_PushRegistryImpl_registerConnection0) {
 
     SuiteIdType suiteId;
     jchar* conn_data;
@@ -227,7 +229,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_registerConnection0() {
  *         previosly registered alarm.
  */
 KNIEXPORT KNI_RETURNTYPE_LONG
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_registerAlarm0() {
+KNIDECL(com_sun_midp_io_j2me_push_PushRegistryImpl_registerAlarm0) {
 
     SuiteIdType suiteId;
     jchar* midlet_data;
@@ -275,7 +277,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_registerAlarm0() {
  *		(connection, midlet, filter)
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_listEntries0() {
+KNIDECL(com_sun_midp_io_j2me_push_PushRegistryImpl_listEntries0) {
 
     SuiteIdType suiteId;
     jboolean available;

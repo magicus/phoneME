@@ -53,12 +53,16 @@ JADTOOL_MAIN_CLASS    = com.sun.midp.jadtool.JadTool
 JADTOOL_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/JadTool.manifest
 JADTOOL_JAR_FILE      = $(BINDIR)/JadTool.jar
 
-# Configurator jar file name
+# Configurator jar and manifest file names
 #
+CONFIGURATOR_MAIN_CLASS    = com.sun.midp.configurator.CodeTransformer
+CONFIGURATOR_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/Configurator.manifest
 CONFIGURATOR_JAR_FILE = $(BINDIR)/Configurator.jar
 
-# Skin romization tool jar file name
+# Skin romization tool jar and manifest file names
 #
+SKINROMIZATION_MAIN_CLASS    = com.sun.midp.skinromization.SkinRomizer
+SKINROMIZATION_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/SkinRomizationTool.manifest
 SKINROMIZATION_JAR_FILE = $(BINDIR)/SkinRomizationTool.jar
 
 # Image to raw converter jar file name
@@ -174,7 +178,7 @@ $(JADTOOL_MANIFEST_FILE):
 
 # Configurator (jar rules)
 #
-$(CONFIGURATOR_JAR_FILE): $(MODULE_TOOL_CONFIGURATOR_JAVA_FILES)
+$(CONFIGURATOR_JAR_FILE): $(MODULE_TOOL_CONFIGURATOR_JAVA_FILES) $(CONFIGURATOR_MANIFEST_FILE)
 	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
 		mkdir -p $(TOOLS_CLASS_DIR); \
 	fi
@@ -188,14 +192,19 @@ $(CONFIGURATOR_JAR_FILE): $(MODULE_TOOL_CONFIGURATOR_JAVA_FILES)
 		$(MODULE_TOOL_CONFIGURATOR_JAVA_FILES)) $(LOG)
 	@echo " ... $@ " $(LOG)
 	@echo +++ cd $(TOOLS_CLASS_DIR)\; $(JAR_CMD) \
-		cf $(CONFIGURATOR_JAR_FILE) \
+		cfm $(CONFIGURATOR_JAR_FILE) $(CONFIGURATOR_MANIFEST_FILE) \
 		com/sun/midp/configurator $(LOG_ONLY)
-	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cf $(CONFIGURATOR_JAR_FILE) \
-		com/sun/midp/configurator) $(LOG)
+	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(CONFIGURATOR_JAR_FILE) \
+		$(CONFIGURATOR_MANIFEST_FILE) com/sun/midp/configurator) $(LOG)
+
+$(CONFIGURATOR_MANIFEST_FILE): 
+	@echo " ... $@ " $(LOG)
+	@(echo "Main-Class: com.sun.midp.configurator.CodeTransformer" > $@) $(LOG)
+
 
 # Skin romization tool (jar rules)
 #
-$(SKINROMIZATION_JAR_FILE): $(MODULE_TOOL_SKINROMIZATION_JAVA_FILES)
+$(SKINROMIZATION_JAR_FILE): $(MODULE_TOOL_SKINROMIZATION_JAVA_FILES) $(SKINROMIZATION_MANIFEST_FILE)
 	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
 		mkdir -p $(TOOLS_CLASS_DIR); \
 	fi
@@ -209,10 +218,15 @@ $(SKINROMIZATION_JAR_FILE): $(MODULE_TOOL_SKINROMIZATION_JAVA_FILES)
 		$(MODULE_TOOL_SKINROMIZATION_JAVA_FILES)) $(LOG)
 	@echo " ... $@ " $(LOG)
 	@echo +++ cd $(TOOLS_CLASS_DIR)\; $(JAR_CMD) \
-		cf $(SKINROMIZATION_JAR_FILE) \
+		cfm $(SKINROMIZATION_JAR_FILE) $(SKINROMIZATION_MANIFEST_FILE) \
 		com/sun/midp/skinromization $(LOG_ONLY)
-	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cf $(SKINROMIZATION_JAR_FILE) \
-		com/sun/midp/skinromization) $(LOG)
+	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(SKINROMIZATION_JAR_FILE) \
+		$(SKINROMIZATION_MANIFEST_FILE) com/sun/midp/skinromization) $(LOG)
+
+$(SKINROMIZATION_MANIFEST_FILE): 
+	@echo " ... $@ " $(LOG)
+	@(echo "Main-Class: com.sun.midp.skinromization.SkinRomizer" > $@) $(LOG)
+
 
 # Image to raw converter (jar rules)
 #

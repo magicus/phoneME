@@ -33,70 +33,56 @@ public class NativeInputMode implements InputMode {
 
     /** this index selects in the function state data array
      *  the integer result returned from an interface function */
-    private final static int STATE_CALLBACK_RES = 0;
+    private final int STATE_CALLBACK_RES = 0;
     /** this index selects in the function state data array
      *  the integer id of interface function to be called */
-    private final static int STATE_FUNC_TOKEN = 1;
+    private final int STATE_FUNC_TOKEN = 1;
     /** this index selects in the function state data array
      *  the integer id of the next state to be entered */
-    private final static int STATE_NEXT_STATE = 2;
+    private final int STATE_NEXT_STATE = 2;
     /** this index selects in the function state data array
      *  the integer argument for an interface function */
-    private final static int STATE_INT_ARG = 3;
+    private final int STATE_INT_ARG = 3;
     /** this index selects in the function state data array
      *  the value to be returned as a result of the enclosing Java function */
-    private final static int STATE_FINAL_RES = 4;
+    private final int STATE_FINAL_RES = 4;
     /** this index selects in the function state data array
      *  the value to be internally used by native function */
-    private final static int STATE_INTERNAL = 5;
+    private final int STATE_INTERNAL = 5;
     /** this index selects in the function state data array
      *  the value to be internally used by native function */
-    private final static int STATE_INTERNAL_EXT = 6;
+    private final int STATE_INTERNAL_EXT = 6;
     /** the number of integer elements in the function state data array */
-    private final static int STATE_DATA_ARRAY_SIZE = 7;
+    private final int STATE_DATA_ARRAY_SIZE = 7;
 
     /** this value, when stored as stateArgs[STATE_FUNC_TOKEN],
      *  tells the executeMediatorCommand function
      * to perform no action with the mediator */
-    private final static int MEDIATOR_NOOP = 0;
+    private final int MEDIATOR_NOOP = 0;
     /** this value, when stored as stateArgs[STATE_FUNC_TOKEN],
      *  tells the executeMediatorCommand function
      * to perform the mediator.commit(String) function */
-    private final static int MEDIATOR_COMMIT = 1;
+    private final int MEDIATOR_COMMIT = 1;
     /** this value, when stored as stateArgs[STATE_FUNC_TOKEN],
      *  tells the executeMediatorCommand function
      * to perform the mediator.clear(int) function */
-    private final static int MEDIATOR_CLEAR = 2;
+    private final int MEDIATOR_CLEAR = 2;
     /** this value, when stored as stateArgs[STATE_FUNC_TOKEN],
      *  tells the executeMediatorCommand function
      * to perform the mediator.subInputModeChanged() function */
-    private final static int MEDIATOR_SUBINPUTMODECHANGED = 3;
+    private final int MEDIATOR_SUBINPUTMODECHANGED = 3;
     /** this value, when stored as stateArgs[STATE_FUNC_TOKEN],
      *  tells the executeMediatorCommand function
      * to perform the mediator.inputModeCompleted() function */
-    private final static int MEDIATOR_INPUTMODECOMPLETED = 4;
+    private final int MEDIATOR_INPUTMODECOMPLETED = 4;
     /** this value, when stored as stateArgs[STATE_FUNC_TOKEN],
      *  tells the executeMediatorCommand function
      * to perform the mediator.isClearKey(int) function */
-    private final static int MEDIATOR_ISCLEARKEY = 5;
+    private final int MEDIATOR_ISCLEARKEY = 5;
     /** this value, when stored as stateArgs[STATE_FUNC_TOKEN],
      *  tells the executeMediatorCommand function
      * to perform the mediator.getAvailableSize() function */
-    private final static int MEDIATOR_GETAVAILABLESIZE = 6;
-
-    /**
-     * This constant limits the number of times a native function may
-     * ask the corresponding Java wrapper function to execute a mediator
-     * function and re-invoke the native functions after that.
-     * Violation of this limit will result in an exception.
-     * (A function that need be native but need to call Java functions is
-     * implemented as a state machine; the Java wrapper function calls
-     * the native function and the Java functions as many times as necessary,
-     * provided that the limit MAX_STATE_MACHINE_ITERATIONS is not violated.)
-     */
-    private final int MAX_STATE_MACHINE_ITERATIONS
-            = 32767; // must not restrict functionality,
-                     // but must detect infinite loops
+    private final int MEDIATOR_GETAVAILABLESIZE = 6;
 
     /** constructor; the real initialization is done
      * in the initialize(int) function */
@@ -114,7 +100,11 @@ public class NativeInputMode implements InputMode {
     /**
      * Finalizer. Free the data structures allocated in initialize(int).
      */
+// #ifdef ENABLE_CDC
+    protected native void finalize();
+// #else
     private native void finalize();
+// #endif
 
     /**
      * Input method identifier. For a given platform, this class may
@@ -203,13 +193,14 @@ public class NativeInputMode implements InputMode {
     public int processKey(int keyCode, boolean longPress)
         throws IllegalStateException {
         int iterationCount = 0;
+        final int maxIterations = 32767;
         final int clearKeyFlag =
             mediator == null ? -1 :
             mediator.isClearKey(keyCode) ? 1 : 0;
         int[] stateArgs = new int[STATE_DATA_ARRAY_SIZE];
         String stringArg;
         do {
-            if (iterationCount++ > MAX_STATE_MACHINE_ITERATIONS) {
+            if (iterationCount++ > maxIterations) {
                 throw new RuntimeException("too many iterations inside processKey()");
             }
             stringArg = processKey0(keyCode, longPress, clearKeyFlag,stateArgs);
@@ -290,35 +281,10 @@ public class NativeInputMode implements InputMode {
     }
 
     /**
-     * This function is repeatedly called
-     * by procesKey(int keyCode, boolean longPress)
-     * to process the given key code as input.
+     * Process the given key code as input.
      *
-     * This function implements the functionality of processKey, but
-     * when it needs to call some mediator function, it stores the current
-     * state into stateArgs  and returns; processKey calls the necessary
-     * interface function and calls processKey0 again.
-     *
-     * Since the function processKey is a callback invoked when a key
-     * is pressed, it is recommended to finish key processing as soon
-     * as possible. The number of times the function processKey0() may
-     * be called before the function processKey() returns is limited
-     * by the constant MAX_STATE_MACHINE_ITERATIONS, but it does not
-     * mean that it is ok to use so many iterations.
-     *
-     * stateArgs[STATE_CALLBACK_RES] -- mediator function result. <br>
-     * stateArgs[STATE_FUNC_TOKEN] -- the mediator function id. <br>
-     * stateArgs[STATE_NEXT_STATE] -- the integer id of the next state,
-     *      the processKey repeats calling processKey0
-     *      until this value becomes zero. <br>
-     * stateArgs[STATE_INT_ARG] -- int argument for the mediator function,
-     *                              if required. <br>
-     * stateArgs[STATE_FINAL_RES] -- the result to be returned
-     *      by processKey. <br>
-     * stateArgs[STATE_INTERNAL] -- may be used by native code implementing
-     *                              processKey0. <br>
-     * stateArgs[STATE_INTERNAL_EXT] -- may be used by native code
-     *                              implementing processKey0. <br>
+     * This method will return true if the key was processed successfully,
+     * false otherwise.
      *
      * @param keyCode the keycode of the key which was input
      * @param longPress return true if it's long key press otherwise false
@@ -330,8 +296,7 @@ public class NativeInputMode implements InputMode {
      * @return the string argument to be passed to the mediator function,
      *         or null.
      */
-    protected native String processKey0(int keyCode, boolean longPress,
-                                        int isClearKey, int[] stateArgs)
+    protected native String processKey0(int keyCode, boolean longPress, int isClearKey, int[] stateArgs)
         throws IllegalStateException;
 
     /**

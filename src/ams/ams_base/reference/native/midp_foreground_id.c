@@ -27,7 +27,7 @@
 #include <midp_foreground_id.h>
 
 /** Isolate ID of current foreground MIDlet. */
-int gForegroundIsolateId;
+int gForegroundIsolateId = 0;
 
 /** Display ID of current foreground MIDlet. */
-int gForegroundDisplayId;
+int gForegroundDisplayId = 0;

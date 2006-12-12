@@ -60,11 +60,11 @@ import javax.microedition.io.*;
  * <p align="center">
  * <b>Class Relationship Diagram</b></p>
  * <p align="center">
- * <img src="doc-files/ConnectionBaseAdapter.gif" border=0></p>
+ * <img src="doc-files/MIDPConnectionBaseAdapter.gif" border=0></p>
  *
  * @version 3.0 9/1/2000
  */
-public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
+public abstract class MIDPConnectionBaseAdapter implements ConnectionBaseInterface,
     StreamConnection {
 
     /** Flag indicating if the connection is open. */
@@ -145,8 +145,8 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
         if (maxIStreams == 0) {
             throw new IOException("no more input streams available");
         }
-
-        i = new BaseInputStream(this);
+	
+        i = new MIDPBaseInputStream(this);
         maxIStreams--;
         iStreams++;
         return i;
@@ -178,7 +178,7 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
             throw new IOException("no more output streams available");
         }
 
-        o = new BaseOutputStream(this);
+        o = new MIDPBaseOutputStream(this);
         maxOStreams--;
         oStreams++;
         return o;
@@ -321,7 +321,7 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
      * written that have been buffered by the connection,
      * should immediately be written to their intended destination.
      * <p>
-     * The <code>flush</code> method of <code>ConnectionBaseAdapter</code>
+     * The <code>flush</code> method of <code>MIDPConnectionBaseAdapter</code>
      * does nothing.
      *
      * @exception  IOException  if an I/O error occurs.
@@ -334,7 +334,7 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
      * <code>reset</code> methods.
      *
      * <p> The <code>markSupported</code> method of
-     * <code>ConnectionBaseAdapter</code> returns <code>false</code>.
+     * <code>MIDPConnectionBaseAdapter</code> returns <code>false</code>.
      *
      * <p> Subclasses should override this method if they support own mark/reset
      * functionality.
@@ -355,7 +355,7 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
      * stream at the last marked position so that subsequent reads re-read
      * the same bytes.
      *
-     * <p> The <code>mark</code> method of <code>ConnectionBaseAdapter</code>
+     * <p> The <code>mark</code> method of <code>MIDPConnectionBaseAdapter</code>
      *  does nothing.
      *
      * <p> Subclasses should override this method if they support own mark/reset
@@ -371,7 +371,7 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
      * Repositions input stream for a connection to the position at the time the
      * <code>mark</code> method was last called on this input stream.
      *
-     * <p> The method <code>reset</code> for <code>ConnectionBaseAdapter</code>
+     * <p> The method <code>reset</code> for <code>MIDPConnectionBaseAdapter</code>
      * class does nothing and always throws an <code>IOException</code>.
      *
      * <p> Subclasses should override this method if they support own mark/reset
@@ -391,10 +391,10 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
 /**
  * Input stream for the connection
  */
-class BaseInputStream extends InputStream {
+class MIDPBaseInputStream extends InputStream {
 
     /** Pointer to the connection. */
-    private ConnectionBaseAdapter parent;
+    private MIDPConnectionBaseAdapter parent;
 
     /** Buffer for single char reads. */
     byte[] buf = new byte[1];
@@ -420,13 +420,13 @@ class BaseInputStream extends InputStream {
     boolean isReadFromBuffer = false;
 
     /**
-     * Constructs a BaseInputStream for a ConnectionBaseAdapter.
+     * Constructs a MIDPBaseInputStream for a MIDPConnectionBaseAdapter.
      *
      * @param parent pointer to the connection object
      *
      * @exception  IOException  if an I/O error occurs.
      */
-    BaseInputStream(ConnectionBaseAdapter parent) throws IOException {
+    MIDPBaseInputStream(MIDPConnectionBaseAdapter parent) throws IOException {
         this.parent = parent;
     }
 
@@ -448,7 +448,7 @@ class BaseInputStream extends InputStream {
      * another thread.
      *
      * <p>The <code>available</code> method always returns <code>0</code> if
-     * {@link ConnectionBaseAdapter#available()} is
+     * {@link MIDPConnectionBaseAdapter#available()} is
      * not overridden by the subclass.
      *
      * @return     the number of bytes that can be read from this input stream
@@ -621,8 +621,6 @@ class BaseInputStream extends InputStream {
             parent.closeInputStream();
             parent = null;
         }
-	// free buffer used by mark/reset operations if it was allocated
-	markBuf = null;
     }
 
     /**
@@ -630,12 +628,12 @@ class BaseInputStream extends InputStream {
      * <code>reset</code> methods.
      *
      * <p>The <code>markSupported</code> method of
-     * <code>BaseInputStream</code> returns <code>true</code>.
+     * <code>MIDPBaseInputStream</code> returns <code>true</code>.
      *
      * @return  always <code>true</code>
      *
-     * @see     BaseInputStream#mark(int)
-     * @see     BaseInputStream#reset()
+     * @see     MIDPBaseInputStream#mark(int)
+     * @see     MIDPBaseInputStream#reset()
      * @see     java.io.InputStream#markSupported()
      * @see     java.io.InputStream#mark(int)
      * @see     java.io.InputStream#reset()
@@ -662,7 +660,7 @@ class BaseInputStream extends InputStream {
      *
      * @param   readlimit   the maximum limit of bytes that can be read before
      *                      the mark position becomes invalid.
-     * @see     BaseInputStream#reset()
+     * @see     MIDPBaseInputStream#reset()
      * @see     java.io.InputStream#reset()
      * @see     java.io.InputStream#mark(int)
      */
@@ -714,7 +712,7 @@ class BaseInputStream extends InputStream {
      * @exception  IOException  if this stream has not been marked or if the
      *                          mark has been invalidated;
      *                          or if the stream is closed
-     * @see     BaseInputStream#mark(int)
+     * @see     MIDPBaseInputStream#mark(int)
      * @see     java.io.InputStream#mark(int)
      * @see     java.io.InputStream#reset(int)
      * @see     java.io.IOException
@@ -740,20 +738,20 @@ class BaseInputStream extends InputStream {
 /**
  * Output stream for the connection
  */
-class BaseOutputStream extends OutputStream {
+class MIDPBaseOutputStream extends OutputStream {
 
     /** Pointer to the connection */
-    ConnectionBaseAdapter parent;
+    MIDPConnectionBaseAdapter parent;
 
     /** Buffer for single char writes */
     byte[] buf = new byte[1];
 
     /**
-     * Constructs a BaseOutputStream for an ConnectionBaseAdapter.
+     * Constructs a MIDPBaseOutputStream for an MIDPConnectionBaseAdapter.
      *
      * @param p parent connection
      */
-    BaseOutputStream(ConnectionBaseAdapter p) {
+    MIDPBaseOutputStream(MIDPConnectionBaseAdapter p) {
         parent = p;
     }
 

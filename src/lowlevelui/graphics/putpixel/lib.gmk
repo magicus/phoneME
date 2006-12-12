@@ -57,6 +57,7 @@ SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
 
 # Native files for putpixel module
 SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
+    gxj_screen_buffer.c \
     gxj_image_decode.c \
     gxj_png_decode.c \
     gxj_imagedatafactory_kni.c \

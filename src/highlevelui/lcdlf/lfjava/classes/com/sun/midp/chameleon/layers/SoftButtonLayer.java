@@ -1,27 +1,27 @@
 /*
- *  
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.layers;
@@ -151,7 +151,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * Internal variables for the paint loop.
      */
     protected int buttonx, buttony, buttonw, buttonh;
-    
+
     /**
      * True if user is interacting with the layer
      */
@@ -565,7 +565,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                 soft2[0] instanceof SubMenuCommand) {
                 subMenu = (SubMenuCommand) soft2[0];
             }
-            
+
             if (soft2.length > 1 ||
                 subMenu != null) {
                 if (menuLayer == null) {
@@ -644,7 +644,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      */
     protected void sortCommands(Command[] cmds, int num) {
         // The number of commands is small, so we use a simple
-        // Insertion sort that requires little heap        
+        // Insertion sort that requires little heap
         for (int i = 1; i < num; i++) {
             for (int j = i; j > 0; j--) {
                 if (compare(cmds[j], cmds[j - 1]) < 0) {
@@ -707,6 +707,9 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         setAnchor();
     }
 
+    static native void setNativeSoftButton(int index, String label);
+    static native void setNativePopupMenu(Command[] soft2);
+
     /**
      * Renders the soft button layer.
      *
@@ -714,8 +717,20 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      */
     protected void paintBody(Graphics g) {
 
-        g.setFont(SoftButtonSkin.FONT);
+        if (SoftButtonSkin.HEIGHT == 0) {
+            if (soft2 != null && soft2.length > 1) {
+                // soft2.length == 1 means we don't need a popup menu.
+                setNativePopupMenu(soft2);
+            } else {
+                setNativePopupMenu(null);
+            }
+            for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
+                setNativeSoftButton(i, labels[i]);
+            }
+            return;
+        }
 
+        g.setFont(SoftButtonSkin.FONT);
 
         for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
             if (labels[i] == null) {
@@ -770,7 +785,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
 
     /**
      * Returns true if the point lies in the bounds of commnad layers
-     * subset like buttons, menu, submenu 
+     * subset like buttons, menu, submenu
      * @param x the "x" coordinate of the point
      * @param y the "y" coordinate of the point
      * @return true if the point lies in the bounds of commnad layers
@@ -778,14 +793,14 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      */
     public boolean belongToCmdLayers(int x, int y) {
         return containsPoint(x,y) ||
-            (menuLayer != null && 
+            (menuLayer != null &&
              (menuLayer.containsPoint(x,y) ||
               (menuLayer.cascadeMenu != null &&
                menuLayer.cascadeMenu.containsPoint(x,y))
               )
              );
     }
-        
+
     /**
      * Update bounds of layer
      *
