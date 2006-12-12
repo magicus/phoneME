@@ -79,8 +79,12 @@ LIB_SUFFIX      = .a
 OBJ_SUFFIX      = o
 
 # Same defines when used as either TARGET or HOST COMPILER
+ifndef USE_GCC 
 USE_GCC		= true
+endif
+ifndef GCC_VERSION
 GCC_VERSION	=
+endif
 
 CC		= $(GNU_TOOLS_BINDIR)gcc$(GCC_VERSION)
 CPP		= $(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
