@@ -383,15 +383,14 @@ static int compare_string(const pcsl_string* search_key,
   }
 
   equal_count = compare_result - 1;
-  first_result = (equal_count == pcsl_string_utf16_length(search_key)) 
-                 || exact_result;
+  first_result = (equal_count == string_len) || exact_result;
 
   if (cond == find_first) {
-    return compare_result == 0 || equal_count == string_len;
+    return first_result;
   }
 
   if (cond == find_test) {
-    return first_result || (equal_count == string_len);
+    return first_result || equal_count == pcsl_string_utf16_length(search_key);
   }
   return 0;
 }
@@ -445,7 +444,7 @@ static int check_access(const pcsl_string* caller_id, long current_position,
     }
     else {
       storageRelativePosition(&io_error_message, table_file, -2 * (long)sizeof(int));
-      access_ok = compare_array(caller_id, find_first, JSR211_TRUE);
+      access_ok = compare_array(caller_id, JSR211_TRUE, find_first);
     }
   }
   else {
