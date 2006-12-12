@@ -711,9 +711,9 @@ Java_com_sun_midp_content_RegistryStore_getByURL0(void) {
     pcsl_string_free(&action);
     pcsl_string_free(&url);
     pcsl_string_free(&callerId);
-    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&result, actionObj);
+    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&result, resultObj);
 
-    KNI_EndHandlesAndReturnObject(actionObj);
+    KNI_EndHandlesAndReturnObject(resultObj);
 }
 
 /**
