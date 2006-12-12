@@ -327,6 +327,7 @@ javacall_result javacall_lcd_init(void) {
         setUpOffsets(JAVACALL_FALSE);
         inFullScreenMode = JAVACALL_FALSE;
         penAreDragging = JAVACALL_FALSE;
+        initialized = JAVACALL_TRUE;
     }
 
     return JAVACALL_OK;
@@ -890,7 +891,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
  **  with ENABLE_PEN_EVENT_NOTIFICATION defined, you should also modify constants.xml
  **  in midp workspace in order to pass related tck cases.
  **/
-//#define ENABLE_PEN_EVENT_NOTIFICATION 1
+#define ENABLE_PEN_EVENT_NOTIFICATION 1
 
 #ifdef ENABLE_PEN_EVENT_NOTIFICATION
         midpScreen_bounds.x = x_offset;
@@ -1204,12 +1205,8 @@ void CreateEmulatorWindow() {
     printf("[CreateEmulatorWindow] Window size %dx%d\n",width, height);
     sprintf(caption, "+%d Sun Anycall", _phonenum);
 
-    if(initialized) {
-        return;
-    } else {
-        initialized = JAVACALL_TRUE;
-    }
-
+    (void) javacall_lcd_init();
+    
     wndclass.cbSize        = sizeof (wndclass) ;
     wndclass.style         = CS_HREDRAW | CS_VREDRAW ;
     wndclass.lpfnWndProc   = WndProc ;
