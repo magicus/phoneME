@@ -75,7 +75,7 @@ endif
 # possible values are "bsd/qte", "bsd/generic", "winsock", "stubs"
 # and "sos"
 ifndef NETWORK_MODULE
-NETWORK_MODULE = bsd/qte
+NETWORK_MODULE = bsd/generic
 endif
 
 #possible values are "stdout", "file", "stubs"
