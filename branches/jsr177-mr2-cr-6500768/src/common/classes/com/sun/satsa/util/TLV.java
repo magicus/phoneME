@@ -310,7 +310,7 @@ public class TLV {
      * @return new object
      */
     public static TLV createIA5String(String s)  throws TLVException {
-        int len = s.length();
+        int len = (s == null ? 0 : s.length());
         
         if (len == 0) {
             return new TLV(TLV.IA5STR_TYPE, new byte[] {});
