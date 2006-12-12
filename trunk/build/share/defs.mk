@@ -2007,6 +2007,7 @@ JAVA_CLASSPATH += $(LIB_CLASSESDIR)
 HOST2POSIX = $(1)
 POSIX2HOST = $(1)
 
+MPOSIX2HOST = $(foreach element,$(1),$(call POSIX2HOST,$(element)))
 #
 # Include target makfiles last.
 #
