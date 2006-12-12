@@ -536,16 +536,11 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
     if (NULL != classPathExt) {
         char* argv[1];
         const char* prefix = "-Dclasspathext=";
-        const char* suffix = classPathExt;
-        argv[0] = midpMalloc(sizeof(prefix) + strlen(suffix));
+        argv[0] = midpMalloc(sizeof(prefix) + strlen(classPathExt));
         if (NULL != argv[0]) {
-            char* cp =argv[0] ;
-            while (*prefix != 0) {
-                *cp++ = *prefix++;
-            }
-            do {
-                *cp++ = *suffix;
-            } while (*suffix++ != 0);
+            memcpy(argv[0], prefix, sizeof(prefix));
+            // copy extention + trailing zero
+            memcpy(argv[0] + sizeof(prefix), classPathExt, strlen(classPathExt) + 1);
             (void)JVM_ParseOneArg(1, argv);
             midpFree(argv[0]);
         }
@@ -913,18 +908,17 @@ int midpRunMainClass(JvmPathChar *classPath,
             const char* prefix = "-Dclasspathext=";
             const JvmPathChar* suffix = classPath;
             int pathLen = 0;
+            // can't use strlen because JvmPathChar is conditionally defined
             while (*suffix++ != 0) {
                 pathLen++;
             }
             // restore
             suffix = classPath ;
-
             argv[0] = midpMalloc(sizeof(prefix) + pathLen);
             if (NULL != argv[0]) {
                 char* cp =argv[0] ;
-                while (*prefix != 0) {
-                    *cp++ = *prefix++;
-                }
+                memcpy(cp, prefix, sizeof(prefix));
+                // can't use memcpy because JvmPathChar is conditionally defined
                 do {
                     // simple conversion
                     *cp++ = (char)*suffix;
