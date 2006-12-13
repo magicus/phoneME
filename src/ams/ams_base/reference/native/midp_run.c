@@ -901,34 +901,6 @@ int midpRunMainClass(JvmPathChar *classPath,
         return MIDP_ERROR_STATUS;
     }
 
-    // store class path as system variable for another isolates
-    {
-        if (NULL != classPath) {
-            char* argv[1];
-            const char* prefix = "-Dclasspathext=";
-            const JvmPathChar* suffix = classPath;
-            int pathLen = 0;
-            // can't use strlen because JvmPathChar is conditionally defined
-            while (*suffix++ != 0) {
-                pathLen++;
-            }
-            // restore
-            suffix = classPath ;
-            argv[0] = midpMalloc(sizeof(prefix) + pathLen);
-            if (NULL != argv[0]) {
-                char* cp =argv[0] ;
-                memcpy(cp, prefix, sizeof(prefix));
-                // can't use memcpy because JvmPathChar is conditionally defined
-                do {
-                    // simple conversion
-                    *cp++ = (char)*suffix;
-                } while (*suffix++ != 0);
-                (void)JVM_ParseOneArg(1, argv);
-                midpFree(argv[0]);
-            }
-        }
-    }
-
     /*
      * The VM can exit abruptly with a status of zero or -1.
      * But our Java Main returns a specific positive code,
