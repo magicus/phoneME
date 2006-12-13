@@ -1359,8 +1359,9 @@ class AppManagerUI extends Form
     
                     boolean truncate = (xScrollOffset == 0) && truncated;
     
-                    g.setClip(bgIconW + ITEM_PAD, 0, 
-                        truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD : w, h);
+                    g.clipRect(bgIconW + ITEM_PAD, 0, 
+                        truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD : 
+                                   w - bgIconW - 2 * ITEM_PAD, h);
                     g.drawChars(text, 0, textLen, 
                         bgIconW + ITEM_PAD + xScrollOffset, (h - ICON_FONT.getHeight())/2, 
                             Graphics.LEFT | Graphics.TOP);
