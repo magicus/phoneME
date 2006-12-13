@@ -536,7 +536,7 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
     if (NULL != classPathExt) {
         char* argv[1];
         const char* prefix = "-Dclasspathext=";
-        argv[0] = midpMalloc(sizeof(prefix) + strlen(classPathExt));
+        argv[0] = midpMalloc(sizeof(prefix) + strlen(classPathExt) + 1);
         if (NULL != argv[0]) {
             memcpy(argv[0], prefix, sizeof(prefix));
             // copy extention + trailing zero
