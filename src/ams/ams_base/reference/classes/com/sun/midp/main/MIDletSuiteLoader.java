@@ -29,7 +29,7 @@ package com.sun.midp.main;
 import com.sun.midp.midlet.*;
 import com.sun.midp.jsr.JSRInitializer;
 import com.sun.midp.automation.AutomationInitializer;
-import com.sun.midp.io.j2me.push.PushRegistryImpl;
+import com.sun.midp.io.j2me.push.PushRegistryInternal;
 import com.sun.midp.content.CHManager;
 import com.sun.midp.wma.WMACleanupMonitor;
 import com.sun.midp.configurator.Constants;
@@ -105,7 +105,7 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
             eventQueue, midletControllerEventProducer);
 
         // Start inbound connection watcher thread.
-	PushRegistryImpl.startListening();
+        PushRegistryInternal.startListening();
 
         // Initialize the Content Handler Monitor of MIDlet exits
         CHManager.getManager(internalSecurityToken).initCleanupMonitor(

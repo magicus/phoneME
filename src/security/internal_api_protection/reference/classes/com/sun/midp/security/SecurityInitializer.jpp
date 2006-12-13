@@ -107,7 +107,7 @@ public final class SecurityInitializer {
             internalSecurityToken);
         com.sun.midp.midletsuite.MIDletSuiteStorage.initSecurityToken(
             internalSecurityToken);
-        com.sun.midp.io.j2me.push.PushRegistryImpl.initSecurityToken(
+        com.sun.midp.io.j2me.push.PushRegistryInternal.initSecurityToken(
             internalSecurityToken);
     }
 
