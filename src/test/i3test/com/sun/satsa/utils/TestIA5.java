@@ -114,6 +114,23 @@ public class TestIA5 extends TestCase {
                     equal(name.getDERData(), testTwoResult));
     }
     
+    private void testThree() {
+        String nameInfo = 
+         "cn=Certificate, OID.0.9.2342.19200300.100.1.25=www, dc=sun, dc=com";
+        TLV name;
+        boolean ok = true;
+
+        try {
+            name = new TLV(RFC2253Name.toDER(nameInfo), 0);
+        } catch (TLVException e) {
+            name = null;
+            ok = false;
+        }
+        assertTrue("Invalid name", ok);
+        assertTrue("Bad DER result", name != null && 
+                    equal(name.getDERData(), testOneResult));
+    }
+    
     /**
      * Run tests.
      */
@@ -124,6 +141,9 @@ public class TestIA5 extends TestCase {
             
             declare("testTwo");
             testTwo();
+            
+            declare("testThree");
+            testThree();
         }
         catch (Throwable t) {
             fail("" + t);
@@ -147,126 +167,6 @@ public class TestIA5 extends TestCase {
         }
         return true;
     }
-
-   /**
-     * IMPL_NOTE delete
-     * Prints the a TLV structure, recursing down for constructed types.
-     * @param tlv the TLV structure to be printed
-     * /
-    public static void print(TLV tlv) {
-        print(System.out, 0, tlv);
-    }
-
-    /**
-     * IMPL_NOTE delete
-     * Prints the a TLV structure, recursing down for constructed types.
-     * @param out output stream
-     * @param tlv the TLV structure to be printed
-     * /
-    private static void print(PrintStream out, TLV tlv) {
-        print(out, 0, tlv);
-    }
-
-    /**
-     * IMPL_NOTE delete
-     * Prints the a TLV structure, recursing down for constructed types.
-     * @param out output stream
-     * @param level what level this TLV is at
-     * @param tlv the TLV structure to be printed
-     * /
-    private static void print(PrintStream out, int level, TLV tlv) {
-
-        for (int i = 0; i < level; i++) {
-            out.print("    ");
-        }
-        if (tlv == null) {
-            out.println("(null)");
-            return;
-        }
-
-        byte[] buffer;
-
-        if (tlv.data != null) {
-            buffer = tlv.data;
-        } else {
-            buffer = tlv.getDERData();
-        }
-
-        if (true) {
-            out.print(hex(tlv.type) + 
-                "," + hex(tlv.length) + ",");
-            if (tlv.child == null) {
-                for (int i = tlv.valueOffset; 
-                            i < tlv.length + tlv.valueOffset; i++) {
-                    out.print(hex(buffer[i]) + ",");
-                }
-                out.println();
-            } else {
-                out.println();
-                print(out, level + 1, tlv.child);
-            }
-        } else {
-            if (tlv.child == null) {
-                out.print("Type: 0x" + Integer.toHexString(tlv.type) +
-                                 " length: " + tlv.length + " value: ");
-                if (tlv.type == TLV.PRINTSTR_TYPE ||
-                    tlv.type == TLV.TELETEXSTR_TYPE ||
-                    tlv.type == TLV.UTF8STR_TYPE ||
-                    tlv.type == TLV.IA5STR_TYPE ||
-                    tlv.type == TLV.UNIVSTR_TYPE) {
-                    try {
-                        out.print(new String(buffer, 
-                                    tlv.valueOffset, tlv.length, Utils.utf8));
-                    } catch (UnsupportedEncodingException e) {
-                        // ignore
-                    }
-                } else if (tlv.type == TLV.OID_TYPE) {
-                    out.print(Utils.OIDtoString(buffer, 
-                                                tlv.valueOffset, tlv.length));
-                } else {
-                    out.print(Utils.hexNumber(buffer, 
-                                                tlv.valueOffset, tlv.length));
-                }
-    
-                out.println();
-            } else {
-                if (tlv.type == TLV.SET_TYPE) {
-                    out.print("Set:");
-                } else {
-                    out.print("Sequence:");
-                }
-    
-                out.println("  (0x" + Integer.toHexString(tlv.type) +
-                                 " " + tlv.length + ")");
-    
-                print(out, level + 1, tlv.child);
-            }
-        }
-
-        if (tlv.next != null) {
-            print(out, level, tlv.next);
-        }
-    }
-
-    /**
-     * IMPL_NOTE delete
-     * Converts integer value into hex representation
-     * @param value the value
-     * @return a string which contains result
-     * /
-    private static String hex(int value) {
-        String ret = "";
-        value &= 0xff;
-        if (value > 127) {
-            ret += "(byte)";
-        }
-        ret += "0x";
-        if (value < 16) {
-            ret += "0";
-        }
-        return ret + Integer.toHexString(value);
-    }
-/*  */
 
 }
 
