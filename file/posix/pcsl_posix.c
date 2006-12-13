@@ -87,7 +87,7 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle)
         creationMode = DEFAULT_FILE_CREATION_MODE;
     }
 
-    fd = open(pszOsFilename, flags, creationMode);
+    fd = open((char*)pszOsFilename, flags, creationMode);
 
     pcsl_string_release_utf8_data(pszOsFilename, fileName);
 
@@ -141,7 +141,7 @@ int pcsl_file_unlink(const pcsl_string * fileName)
       return -1;
     }
 
-    status = unlink(pszOsFilename);
+    status = unlink((char*)pszOsFilename);
 
     pcsl_string_release_utf8_data(pszOsFilename, fileName);
     
@@ -218,7 +218,7 @@ int pcsl_file_exist(const pcsl_string * fileName)
       return 0;
     }
  
-    status = stat(pszOsFilename, &stat_buf);
+    status = stat((char*)pszOsFilename, &stat_buf);
 
     pcsl_string_release_utf8_data(pszOsFilename, fileName);
 
@@ -254,7 +254,7 @@ int pcsl_file_rename(const pcsl_string * oldName, const pcsl_string * newName) {
 	return -1;
       } 
 
-      if (rename(pszOldFilename, pszNewFilename) < 0) {
+      if (rename((char*)pszOldFilename, (char*)pszNewFilename) < 0) {
         status = -1;
       } else {
         status = 0;
@@ -315,7 +315,7 @@ long pcsl_file_getusedspace(const pcsl_string * dirName)
     size = 0;
 
     {
-      if (pcsl_string_convert_to_utf8(dirName, filename, sizeof(filename), NULL)
+      if (pcsl_string_convert_to_utf8(dirName, (jbyte*)filename, sizeof(filename), NULL)
 	  != PCSL_STRING_OK) {
 	pcsl_file_closedir(dir);
 	return 0;
@@ -388,7 +388,7 @@ int pcsl_file_getnextentry(void *handle, const pcsl_string * string,
 	return -1;
       }
 
-      matchLen = strlen(pszMatch);
+      matchLen = strlen((char*)pszMatch);
 
       /* find the first match file not "." or ".." */
 
@@ -400,7 +400,7 @@ int pcsl_file_getnextentry(void *handle, const pcsl_string * string,
             continue;
         }
 
-        if (strncmp(pszFilename, pszMatch, matchLen) == 0) {
+        if (strncmp(pszFilename, (char*)pszMatch, matchLen) == 0) {
             break;
         }
       }
@@ -416,7 +416,7 @@ int pcsl_file_getnextentry(void *handle, const pcsl_string * string,
       len = strlen(pszFilename);
 
       if (len >= 0) {
-	if (pcsl_string_convert_from_utf8(pszFilename, len, &returnVal) != PCSL_STRING_OK) {
+	if (pcsl_string_convert_from_utf8((jbyte*)pszFilename, len, &returnVal) != PCSL_STRING_OK) {
 	  return -1;
 	}
 
@@ -460,7 +460,7 @@ void* pcsl_file_opendir(const pcsl_string * dirName)
       return NULL;
     }
 
-    dir = opendir(pszOsFilename);
+    dir = opendir((char*)pszOsFilename);
 
     pcsl_string_release_utf8_data(pszOsFilename, dirName);
 

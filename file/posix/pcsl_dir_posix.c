@@ -56,7 +56,7 @@ int pcsl_file_is_directory(const pcsl_string * path)
       return -1;
     }
  
-    status = stat(pszName, &stat_buf);
+    status = stat((char*)pszName, &stat_buf);
 
     pcsl_string_release_utf8_data(pszName, path);
 
@@ -81,7 +81,7 @@ int pcsl_file_mkdir(const pcsl_string * dirName)
       return -1;
     }
 
-    res = mkdir(pszOsDirName, DEFAULT_DIR_CREATION_MODE);
+    res = mkdir((char*)pszOsDirName, DEFAULT_DIR_CREATION_MODE);
 
     pcsl_string_release_utf8_data(pszOsDirName, dirName);
     
@@ -100,7 +100,7 @@ int pcsl_file_rmdir(const pcsl_string * dirName)
       return -1;
     }
 
-    status = rmdir(pszDirName);
+    status = rmdir((char*)pszDirName);
 
     pcsl_string_release_utf8_data(pszDirName, dirName);
 
@@ -121,7 +121,7 @@ long pcsl_file_getfreesize(const pcsl_string * path)
       return -1;
     }
     
-    status = statvfs(pszPath, &sbuf);
+    status = statvfs((char*)pszPath, &sbuf);
     if (status == 0)
     {
         freeBytes = sbuf.f_bsize * sbuf.f_bavail;
@@ -146,7 +146,7 @@ long pcsl_file_gettotalsize(const pcsl_string * path)
       return -1;
     }
     
-    status = statvfs(pszPath, &sbuf);
+    status = statvfs((char*)pszPath, &sbuf);
     if (status == 0)
     {
         totalBytes = sbuf.f_bsize * sbuf.f_blocks;
@@ -174,7 +174,7 @@ int pcsl_file_get_attribute(const pcsl_string * fileName, int type, int* result)
     
     *result = 0;
     
-    status = stat(pszName, &sbuf);
+    status = stat((char*)pszName, &sbuf);
 
     pcsl_string_release_utf8_data(pszName, fileName);
         
@@ -218,7 +218,7 @@ int pcsl_file_set_attribute(const pcsl_string * fileName, int type, int value)
       return -1;
     }
 
-    status = stat(pszName, &sbuf);    
+    status = stat((char*)pszName, &sbuf);    
         
     while (status == 0)
     {        
@@ -257,7 +257,7 @@ int pcsl_file_set_attribute(const pcsl_string * fileName, int type, int value)
             break;
         }
 
-        status = chmod(pszName, newmode);        
+        status = chmod((char*)pszName, newmode);        
         if (status != -1) {
             result = 0;
         }
@@ -283,7 +283,7 @@ int pcsl_file_get_time(const pcsl_string * fileName, int type, long* result)
     
     *result = 0;
     
-    status = stat(pszName, &sbuf);
+    status = stat((char*)pszName, &sbuf);
 
     pcsl_string_release_utf8_data(pszName, fileName);
         

@@ -25,6 +25,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <pcsl_file.h>
 #include <pcsl_memory.h>

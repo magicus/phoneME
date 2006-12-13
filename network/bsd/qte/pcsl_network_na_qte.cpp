@@ -35,7 +35,7 @@
 
 #include <pcsl_network_na.h>
 #include <pcsl_network_qte.h>
-#include <iostream.h>
+#include <iostream> /* <iostream.h> is unstandard and deprecated */
 
 #ifdef __cplusplus
 extern "C" {
