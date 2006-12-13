@@ -418,6 +418,22 @@ midpFinalizeUI(void) {
     midpUnregisterAmsIsolateId();
 }
 
+static void   __putClassPathExtToSysProperty(char* classPathExt);{
+    // store class path as system variable for another isolates
+    if (NULL != classPathExt) {
+        char* argv[1];
+        const char* prefix = "-Dclasspathext=";
+        argv[0] = midpMalloc(sizeof(prefix) + strlen(classPathExt) + 1);
+        if (NULL != argv[0]) {
+            memcpy(argv[0], prefix, sizeof(prefix));
+            // copy extention + trailing zero
+            memcpy(argv[0] + sizeof(prefix), classPathExt, strlen(classPathExt) + 1);
+            (void)JVM_ParseOneArg(1, argv);
+            midpFree(argv[0]);
+        }
+    }
+}
+
 /**
  * Runs the given MIDlet from the specified MIDlet suite with the
  * given arguments. Up to 3 arguments will be made available to
@@ -532,20 +548,7 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
     (void)debugOption;
 #endif
 
-    // store class path as system variable for another isolates
-    if (NULL != classPathExt) {
-        char* argv[1];
-        const char* prefix = "-Dclasspathext=";
-        argv[0] = midpMalloc(sizeof(prefix) + strlen(classPathExt) + 1);
-        if (NULL != argv[0]) {
-            memcpy(argv[0], prefix, sizeof(prefix));
-            // copy extention + trailing zero
-            memcpy(argv[0] + sizeof(prefix), classPathExt, strlen(classPathExt) + 1);
-            (void)JVM_ParseOneArg(1, argv);
-            midpFree(argv[0]);
-        }
-    }
-
+    __putClassPathExtToSysProperty(classPathExt);
 
     do {
         MIDP_ERROR status = MIDP_ERROR_NONE;
