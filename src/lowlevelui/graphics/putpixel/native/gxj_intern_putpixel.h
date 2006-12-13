@@ -34,6 +34,13 @@
  */
 #define PRIM_CLIPPING        1
 
+#define RPIXEL(_x,_y,_sbuf_width) \
+    ((_sbuf_width)-(_y)), (_x)
+
+#define RCLIP(_clip,_sbuf_width) { \
+    RPIXEL((_clip)[0], (_clip)[1], (_sbuf_width)), \
+    RPIXEL((_clip)[2], (_clip)[3], (_sbuf_width)) }
+
 #if ENABLE_BOUNDS_CHECKS
 #define CHECK_SBUF_CLIP_BOUNDS(_sbuf,_clip) \
   do { \

@@ -33,13 +33,6 @@
 #include "gxj_intern_putpixel.h"
 #include "gxj_intern_image.h"
 
-#define RPIXEL(_x,_y,_sbuf_width) \
-    ((_sbuf_width)-(_y)), (_x)
-
-#define RCLIP(_clip,_sbuf_width) { \
-    RPIXEL((_clip)[0], (_clip)[1], (_sbuf_width)), \
-    RPIXEL((_clip)[2], (_clip)[3], (_sbuf_width)) }
-
 /**
  * @file
  *
@@ -99,11 +92,8 @@ gx_copy_area(const jshort *clip,
         int sbuf_width = sbuf->width;
         jshort rclip[] = RCLIP(clip, sbuf_width);
         copy_imageregion(
-            sbuf, sbuf, rclip,
-            RPIXEL(x_dest, y_dest, sbuf_width),
-            height, width,
-            RPIXEL(x_src, y_src, sbuf_width),
-            0);
+            sbuf, sbuf, rclip, RPIXEL(x_dest, y_dest, sbuf_width),
+            height, width, RPIXEL(x_src, y_src, sbuf_width), 0);
     }
 }
 

@@ -89,16 +89,9 @@ void resizeScreenBuffer(int width, int height) {
 
 
 /** Refresh screen with offscreen buffer content */
-void refreshScreenNormal(int x1, int y1, int x2, int y2) {
+void refreshScreen(int x1, int y1, int x2, int y2) {
     gxj_system_screen_buffer.pixelData =
         (gxj_pixel_type *)directfbapp_refresh(x1, y1, x2, y2);
-}
-
-/** Refresh screen with offscreen buffer content */
-void refreshScreenRotated(int x1, int y1, int x2, int y2) {
-    // TODO: Stubbed implementation
-    (void)x1; (void)x2;
-    (void)y1; (void)y2;
 }
 
 /** Free allocated resources and restore system state */

@@ -88,9 +88,7 @@ void initScreenBuffer(int width, int height) {
   * depending on the current screen mode
   */
 void reverseScreenOrientation() {
-    int width = gxj_system_screen_buffer.width;
-    gxj_system_screen_buffer.width = gxj_system_screen_buffer.height;
-    gxj_system_screen_buffer.height = width;
+    gxj_rotate_screen_buffer();
 }
 
 /** On i386, connect to the QVFB virtual frame buffer */
@@ -184,7 +182,7 @@ void resizeScreenBuffer(int width, int height) {
 }
 
 /** Refresh screen with offscreen bufer content */
-void refreshScreenNormal(int x1, int y1, int x2, int y2) {
+void refreshScreen(int x1, int y1, int x2, int y2) {
     // QVFB feature: a number of bytes per line can be different from
     // screenWidth * pixelSize, so lineStep should be used instead.
     int lineStep = hdr->lineStep / sizeof(gxj_pixel_type);
@@ -216,50 +214,6 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
         memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
         src += sysWidth;
         dst += dstWidth;
-    }
-
-    hdr->dirty_x1 = 0;
-    hdr->dirty_y1 = 0;
-    hdr->dirty_x2 = hdr->width;
-    hdr->dirty_y2 = hdr->height;
-    hdr->is_dirty = 1;
-}
-
-/** Refresh rotated screen with offscreen bufer content */
-void refreshScreenRotated(int x1, int y1, int x2, int y2) {
-
-    gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
-    gxj_pixel_type *dst = (gxj_pixel_type *)qvfbPixels;
-    int srcWidth, srcHeight;
-    int dstWidth =  hdr->lineStep / sizeof(gxj_pixel_type);
-    int dstHeight = hdr->height;
-
-    // System screen buffer geometry
-    int sysWidth = gxj_system_screen_buffer.width;
-    int sysHeight = gxj_system_screen_buffer.height;
-
-    srcWidth = x2 - x1;
-    srcHeight = y2 - y1;
-
-    if (sysWidth < dstHeight || sysHeight < dstWidth) {
-            // We are drawing into a frame buffer that's larger than what MIDP
-            // needs. Center it.
-            dst += (dstHeight - sysWidth) / 2 * dstWidth;
-            dst += ((dstWidth - sysHeight) / 2);
-        }
-
-    dst += y1 + (sysWidth - x2 - 1) * dstWidth;
-    src += x2-1 + y1 * sysWidth;
-
-    while( x2-- > x1) {
-        int y;
-        for (y = y1; y < y2; y++) {
-            *dst++ = *src;
-            src += sysWidth;
-         }
-
-         dst += dstWidth - srcHeight;
-         src += -1 - srcHeight * sysWidth;
     }
 
     hdr->dirty_x1 = 0;

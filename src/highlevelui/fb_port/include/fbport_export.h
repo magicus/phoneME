@@ -60,10 +60,7 @@ extern void reverseScreenOrientation();
 extern void resizeScreenBuffer(int width, int height);
 
 /** Refresh screen with offscreen bufer content */
-extern void refreshScreenNormal(int x1, int y1, int x2, int y2);
-
-/** Refresh rotated screen with offscreen bufer content */
-extern void refreshScreenRotated(int x1, int y1, int x2, int y2);
+extern void refreshScreen(int x1, int y1, int x2, int y2);
 
 /** Return file descriptor of keyboard device, or -1 in none */
 extern int getKeyboardFd();

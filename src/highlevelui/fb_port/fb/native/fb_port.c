@@ -287,7 +287,7 @@ void resizeScreenBuffer(int width, int height) {
 }
 
 /** Refresh screen from offscreen buffer */
-void refreshScreenNormal(int x1, int y1, int x2, int y2) {
+void refreshScreen(int x1, int y1, int x2, int y2) {
     gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
     gxj_pixel_type *dst = (gxj_pixel_type*)fb.data;
     int srcWidth, srcHeight;
@@ -334,43 +334,6 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
             src += sysWidth;
             dst += dstWidth;
         }
-    }
-}
-
-/** Refresh rotated screen with offscreen buffer content */
-void refreshScreenRotated(int x1, int y1, int x2, int y2) {
-    gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
-    gxj_pixel_type *dst = (gxj_pixel_type*)fb.data;
-    int srcWidth, srcHeight;
-    int dstWidth = fb.width;
-    int dstHeight = fb.height;
-
-    // System screen buffer geometry
-    int sysWidth = gxj_system_screen_buffer.width;
-    int sysHeight = gxj_system_screen_buffer.height;
-
-    srcWidth = x2 - x1;
-    srcHeight = y2 - y1;
-
-    if (sysWidth < dstHeight || sysHeight < dstWidth) {
-            // We are drawing into a frame buffer that's larger than what MIDP
-            // needs. Center it.
-            dst += (dstHeight - sysWidth) / 2 * dstWidth;
-            dst += ((dstWidth - sysHeight) / 2);
-        }
-
-    dst += y1 + (sysWidth - x2 - 1) * dstWidth;
-    src += x2-1 + y1 * sysWidth;
-
-    while( x2-- > x1) {
-        int y;
-        for (y = y1; y < y2; y++) {
-            *dst++ = *src;
-            src += sysWidth;
-         }
-
-         dst += dstWidth - srcHeight;
-         src += -1 - srcHeight * sysWidth;
     }
 }
 
