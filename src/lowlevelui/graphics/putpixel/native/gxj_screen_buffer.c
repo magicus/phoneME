@@ -107,9 +107,8 @@ void gxj_reset_screen_buffer() {
  * landscape to portrait mode and vice versa.
  */
 void gxj_rotate_screen_buffer() {
-    int width = gxj_system_screen_buffer.width;
-    gxj_system_screen_buffer.width = gxj_system_screen_buffer.height;
-    gxj_system_screen_buffer.height = width;
+    gxj_system_screen_buffer.rotated =
+        !gxj_system_screen_buffer.rotated;
 }
 
 /** Free memory allocated for screen buffer */

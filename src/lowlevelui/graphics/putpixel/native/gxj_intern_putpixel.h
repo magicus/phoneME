@@ -35,14 +35,24 @@
 #define PRIM_CLIPPING        1
 
 #if ENABLE_BOUNDS_CHECKS
-#define CHECK_SBUF_CLIP_BOUNDS(_sbuf, clip) \
+#define CHECK_SBUF_CLIP_BOUNDS(_sbuf,_clip) \
   do { \
    (_sbuf)->g = NULL; \
-   if ((clip[0] < 0) || (clip[0] > (_sbuf)->width) || \
-       (clip[1] < 0) || (clip[1] > (_sbuf)->height) || \
-       (clip[2] < 0) || (clip[2] > (_sbuf)->width) || \
-       (clip[3] < 0) || (clip[3] > (_sbuf)->height)) \
-      reportToLog(LOG_CRITICAL, LC_LOWUI, "Clip outside gxj_screen_buffer at file %s, line %d, clipX1=%d,clipY1=%d,clipX2=%d,clipY2=%d,width=%d,height=%d\n",__FILE__,__LINE__,clip[0],clip[1],clip[2],clip[3],(_sbuf)->width,(_sbuf)->height); \
+   if ((_clip[0] < 0) || (_clip[0] > (_sbuf)->width) || \
+       (_clip[1] < 0) || (_clip[1] > (_sbuf)->height) || \
+       (_clip[2] < 0) || (_clip[2] > (_sbuf)->width) || \
+       (_clip[3] < 0) || (_clip[3] > (_sbuf)->height)) \
+      reportToLog(LOG_CRITICAL, LC_LOWUI, "Clip outside gxj_screen_buffer at file %s, line %d, clipX1=%d,clipY1=%d,clipX2=%d,clipY2=%d,width=%d,height=%d\n",__FILE__,__LINE__,_clip[0],_clip[1],_clip[2],_clip[3],(_sbuf)->width,(_sbuf)->height); \
+  } \
+  } while (0)
+#define CHECK_SBUF_RCLIP_BOUNDS(_sbuf,_clip) \
+  do { \
+   (_sbuf)->g = NULL; \
+   if ((_clip[0] < 0) || (_clip[0] > (_sbuf)->height) || \
+       (_clip[1] < 0) || (_clip[1] > (_sbuf)->width) || \
+       (_clip[2] < 0) || (_clip[2] > (_sbuf)->height) || \
+       (_clip[3] < 0) || (_clip[3] > (_sbuf)->width)) \
+      reportToLog(LOG_CRITICAL, LC_LOWUI, "Rotated clip outside gxj_screen_buffer at file %s, line %d, clipX1=%d,clipY1=%d,clipX2=%d,clipY2=%d,width=%d,height=%d\n",__FILE__,__LINE__,_clip[0],_clip[1],_clip[2],_clip[3],(_sbuf)->width,(_sbuf)->height); \
   } \
   } while (0)
 #define CHECK_XY_CLIP(_sbuf,_x,_y) \
@@ -84,7 +94,8 @@
       reportToLog(LOG_CRITICAL, LC_LOWUI, "Pointer outside gxj_screen_buffer at file %s, line %d, clipX1=%d,clipY1=%d,clipX2=%d,clipY2=%d,width=%d,height=%d,x=%d,y=%d\n",__FILE__,__LINE__,((_sbuf)->g)->clipX1,((_sbuf)->g)->clipY1,((_sbuf)->g)->clipX2,((_sbuf)->g)->clipY2,(_sbuf)->width,(_sbuf)->height,(_x),(_y)); \
   } while (0)
 #else
-#define CHECK_SBUF_CLIP_BOUNDS(_sbuf, _graphics)
+#define CHECK_SBUF_CLIP_BOUNDS(_sbuf,_clip)
+#define CHECK_SBUF_RCLIP_BOUNDS(_sbuf,_clip)
 #define CHECK_XY_CLIP(_sbuf,_x,_y)
 #define CHECK_PTR_CLIP(_sbuf,_ptr)
 #define CHECK_LLPTR_CLIP(_sbuf,_ptr)

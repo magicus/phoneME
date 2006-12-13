@@ -33,6 +33,13 @@
 #include "gxj_intern_putpixel.h"
 #include "gxj_intern_image.h"
 
+#define RPIXEL(_x,_y,_sbuf_width) \
+    ((_sbuf_width)-(_y)), (_x)
+
+#define RCLIP(_clip,_sbuf_width) { \
+    RPIXEL((_clip)[0], (_clip)[1], (_sbuf_width)), \
+    RPIXEL((_clip)[2], (_clip)[3], (_sbuf_width)) }
+
 /**
  * @file
  *
@@ -48,17 +55,28 @@ void
 gx_fill_triangle(int color, const jshort *clip, 
 		  const java_imagedata *dst, int dotted, 
                   int x1, int y1, int x2, int y2, int x3, int y3) {
-  gxj_screen_buffer screen_buffer;
-  gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
-  sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+    gxj_screen_buffer screen_buffer;
+    gxj_screen_buffer *sbuf =
+        gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
+    sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
-  REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_triangle()\n");
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_triangle()\n");
 
-  /* Surpress unused parameter warnings */
-  (void)dotted;
+    /* Surpress unused parameter warnings */
+    (void)dotted;
 
-  fill_triangle(sbuf, GXJ_RGB24TORGB16(color), 
-		clip, x1, y1, x2, y2, x3, y3);
+    if (!sbuf->rotated) {
+        fill_triangle(sbuf, GXJ_RGB24TORGB16(color),
+            clip, x1, y1, x2, y2, x3, y3);
+    } else {
+        int sbuf_width = sbuf->width;
+        jshort rclip[] = RCLIP(clip, sbuf_width);
+        fill_triangle(
+            sbuf, GXJ_RGB24TORGB16(color), rclip,
+            RPIXEL(x1, y1, sbuf_width),
+            RPIXEL(x2, y2, sbuf_width),
+            RPIXEL(y3, x3, sbuf_width));
+    }
 }
 
 /**
@@ -68,126 +86,96 @@ void
 gx_copy_area(const jshort *clip, 
 	      const java_imagedata *dst, int x_src, int y_src, 
               int width, int height, int x_dest, int y_dest) {
-  gxj_screen_buffer screen_buffer;
-  gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
-  sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
-  copy_imageregion(sbuf, sbuf, clip, x_dest, y_dest, width, height,
-		   x_src, y_src, 0);
+    gxj_screen_buffer screen_buffer;
+    gxj_screen_buffer *sbuf =
+        gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
+    sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+
+    if (!sbuf->rotated) {
+        copy_imageregion(sbuf, sbuf, clip,
+            x_dest, y_dest, width, height, x_src, y_src, 0);
+    } else {
+        int sbuf_width = sbuf->width;
+        jshort rclip[] = RCLIP(clip, sbuf_width);
+        copy_imageregion(
+            sbuf, sbuf, rclip,
+            RPIXEL(x_dest, y_dest, sbuf_width),
+            height, width,
+            RPIXEL(x_src, y_src, sbuf_width),
+            0);
+    }
 }
 
-/**
- * Draw image in RGB format
- */
+/** Draw image in RGB format */
 void
 gx_draw_rgb(const jshort *clip, 
 	     const java_imagedata *dst, jint *rgbData, 
              jint offset, jint scanlen, jint x, jint y, 
              jint width, jint height, jboolean processAlpha) {
-  int a, b;
+    int a, b;
+    int sbufWidth;
 
-  int dataRowIndex = 0;
-  int sbufRowIndex = 0;
+    int dataRowIndex = 0;
+    int sbufRowIndex = 0;
+    int sbufColIndex = 0;
 
-  gxj_screen_buffer screen_buffer;
-  const jshort clipX1 = clip[0];
-  const jshort clipY1 = clip[1];
-  const jshort clipX2 = clip[2];
-  const jshort clipY2 = clip[3];
-  gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
-  sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+    gxj_screen_buffer screen_buffer;
+    const jshort clipX1 = clip[0];
+    const jshort clipY1 = clip[1];
+    const jshort clipX2 = clip[2];
+    const jshort clipY2 = clip[3];
+    gxj_screen_buffer *sbuf =
+        gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
+    sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+    sbufWidth = sbuf->width;
 
-  sbufRowIndex = y * sbuf->width;
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_rgb()\n");
 
-  REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_rgb()\n");
-  
-  CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
-
-  // P(a, b) = rgbData[offset + (a - x) + (b - y) * scanlength]
-  // x <= a < x + width
-  // y <= b < y + height
-
-  if (processAlpha) {
-    for (b = y; b < y + height;
-                b++, dataRowIndex += scanlen, sbufRowIndex += sbuf->width ) {
-      if (b >= clipY2)
-        return;
-      if (b <  clipY1)
-        continue;
-      for (a = x; a < x + width; a++) {
-        int value = rgbData[offset + (a - x) + dataRowIndex];
-
-        if ((value & 0xff000000) == 0xff000000) {
-          int idx = sbufRowIndex + a;
-
-          if (a >= clipX2) {
-            break;
-	  }
-
-          if (a <  clipX1) {
-            /*
-             *  JAVA_TRACE("drawRGB:A OutOfBounds %d   %d %d %d %d\n", idx, 
-             *             a, b, sbuf->width, sbuf->height);
-             */
-          } else {
-            CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
-            sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
-          }
-        } else {
-
-          int idx = sbufRowIndex + a;
-
-          if (a >= clipX2) {
-            break; 
-	  }
-
-          if (a <  clipX1) {
-            /*
-             *  JAVA_TRACE("drawRGB:A OutOfBounds %d   %d %d %d %d\n", idx, 
-             *             a, b, sbuf->width, sbuf->height);
-             */
-          } else {
-
-            unsigned int xA = 
-                GXJ_XAAA8888_FROM_ARGB8888((unsigned int)value);
-
-            unsigned int XAInv = 
-                (unsigned int)(((unsigned int)(0xFFFFFFFF)) - xA);
-
-            CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
-
-            sbuf->pixelData[idx] = 
-                GXJ_RGB24TORGB16((xA & value) |
-                                 (XAInv & GXJ_RGB16TORGB24(sbuf->pixelData[idx])));
-
-          }
-        }
-      }
+    if (!sbuf->rotated) {
+        CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
+        sbufRowIndex = y * sbufWidth;
+    } else {
+        CHECK_SBUF_RCLIP_BOUNDS(sbuf, clip);
+        sbufColIndex = x * sbufWidth + (sbufWidth - y);
     }
-  } else {
+
     for (b = y; b < y + height;
-                b++, dataRowIndex += scanlen, sbufRowIndex += sbuf->width) {
-      if (b >= clipY2)
-        return;
-      if (b <  clipY1)
-        continue;
-      for (a = x; a < x + width; a++) {
-        int value = rgbData[offset + (a - x) + dataRowIndex];
-        int idx = sbufRowIndex + a;
-        if (a >= clipX2)
-          break;
-        if (a <  clipX1) {
-          /*
-           * JAVA_TRACE("drawRGB OutOfBounds %d   %d %d %d %d\n", idx, 
-           *            a, b, sbuf->width, sbuf->height);
-           */
-        } else {
-          CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
-          sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
-        }
-      }
-    }
-  }
+        b++, dataRowIndex += scanlen,
+        (!sbuf->rotated) ?
+            sbufRowIndex += sbufWidth :
+            sbufColIndex--) {
+
+        if (b >= clipY2) return;
+        if (b <  clipY1) continue;
+
+        for (a = x; a < x + width; a++) {
+
+            int value = rgbData[offset + (a - x) + dataRowIndex];
+            int idx = (!sbuf->rotated) ?
+                (sbufRowIndex + a) :
+                (sbufColIndex + (a - x) * sbufWidth) ;
+
+            if (a >= clipX2) break;
+            if (a < clipX1) {
+                // JAVA_TRACE("drawRGB:A OutOfBounds %d   %d %d %d %d\n", idx,
+                //     a, b, sbuf->width, sbuf->height);
+            } else {
+                CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
+                if (!processAlpha || ((value & 0xff000000) == 0xff000000)) {
+                    sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
+                } else {
+                    unsigned int xA =
+                        GXJ_XAAA8888_FROM_ARGB8888((unsigned int)value);
+                    unsigned int XAInv =
+                        (unsigned int)(((unsigned int)(0xFFFFFFFF)) - xA);
+                    sbuf->pixelData[idx] =
+                        GXJ_RGB24TORGB16((xA & value) |
+                            (XAInv & GXJ_RGB16TORGB24(sbuf->pixelData[idx])));
+                }
+            }
+        } /* loop by rgb data columns */
+    } /* loop by rgb data rows */
 }
 
 /**
@@ -200,31 +188,35 @@ gx_get_displaycolor(int color) {
 
     REPORT_CALL_TRACE1(LC_LOWUI, "gx_getDisplayColor(%d)\n", color);
 
-    /*
-     * JAVA_TRACE("color %x  -->  %x\n", color, newColor);
-     */
+    // JAVA_TRACE("color %x  -->  %x\n", color, newColor);
 
     return newColor;
 }
 
-
-/**
- * Draw a line between two points (x1,y1) and (x2,y2).
- */
+/** Draw a line between two points (x1, y1) and (x2, y2) */
 void
 gx_draw_line(int color, const jshort *clip, 
-	      const java_imagedata *dst, int dotted, 
-              int x1, int y1, int x2, int y2)
-{
-  int lineStyle = (dotted ? DOTTED : SOLID);
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
-  gxj_screen_buffer screen_buffer;
-  gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
-  sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
-  
-  REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_line()\n");
-  
-  draw_clipped_line(sbuf, pixelColor, lineStyle, clip, x1, y1, x2, y2);
+        const java_imagedata *dst, int dotted,
+        int x1, int y1, int x2, int y2) {
+
+    int lineStyle = (dotted ? DOTTED : SOLID);
+    gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
+    gxj_screen_buffer screen_buffer;
+    gxj_screen_buffer *sbuf =
+        gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
+    sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_line()\n");
+
+    if (!sbuf->rotated) {
+        draw_clipped_line(sbuf, pixelColor, lineStyle, clip, x1, y1, x2, y2);
+    } else {
+        int sbuf_width = sbuf->width;
+        jshort rclip[] = RCLIP(clip, sbuf_width);
+        draw_clipped_line(sbuf, pixelColor, lineStyle, rclip,
+            RPIXEL(x1, y1, sbuf_width),
+            RPIXEL(x2, y2, sbuf_width));
+    }
 }
 
 /**
@@ -236,38 +228,45 @@ gx_draw_line(int color, const jshort *clip,
  */
 void 
 gx_draw_rect(int color, const jshort *clip, 
-	      const java_imagedata *dst, int dotted, 
-              int x, int y, int width, int height)
-{
+        const java_imagedata *dst, int dotted,
+        int x, int y, int width, int height) {
 
-  int lineStyle = (dotted ? DOTTED : SOLID);
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
-  gxj_screen_buffer screen_buffer;
-  gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
-  sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+    int lineStyle = (dotted ? DOTTED : SOLID);
+    gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
+    gxj_screen_buffer screen_buffer;
+    gxj_screen_buffer *sbuf =
+        gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
+    sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
-  REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_rect()\n");
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_rect()\n");
 
-  draw_roundrect(pixelColor, clip, sbuf, lineStyle, x,  y, 
-		 width, height, 0, 0, 0);
+    if (!sbuf->rotated) {
+        draw_roundrect(pixelColor, clip, sbuf, lineStyle,
+            x,  y, width, height, 0, 0, 0);
+    } else {
+        int sbuf_width = sbuf->width;
+        jshort rclip[] = RCLIP(clip, sbuf_width);
+        draw_roundrect(pixelColor, rclip, sbuf, lineStyle,
+            RPIXEL(x, y, sbuf_width), height, width, 0, 0, 0);
+    }
 }
 
-
 #if (UNDER_ADS || UNDER_CE) || (defined(__GNUC__) && defined(ARM))
-extern void fast_pixel_set(unsigned * mem, unsigned value, int number_of_pixels);
+extern void fast_pixel_set(
+    unsigned * mem, unsigned value, int number_of_pixels);
 #else
-void fast_pixel_set(unsigned * mem, unsigned value, int number_of_pixels)
-{
-   int i;
-   gxj_pixel_type* pBuf = (gxj_pixel_type*)mem;
-
-   for (i = 0; i < number_of_pixels; ++i) {
-      *(pBuf + i) = (gxj_pixel_type)value;
-   }
+void fast_pixel_set(unsigned * mem, unsigned value, int number_of_pixels) {
+    int i;
+    gxj_pixel_type* pBuf = (gxj_pixel_type*)mem;
+    for (i = 0; i < number_of_pixels; ++i) {
+        *(pBuf + i) = (gxj_pixel_type)value;
+    }
 }
 #endif
 
-void fastFill_rect(unsigned short color, gxj_screen_buffer *sbuf, int x, int y, int width, int height, int cliptop, int clipbottom) {
+static void fast_fill_rect(unsigned short color, gxj_screen_buffer *sbuf,
+        int x, int y, int width, int height, int cliptop, int clipbottom) {
+
 	int screen_horiz=sbuf->width;
 	unsigned short* raster;
 
@@ -292,29 +291,45 @@ void fastFill_rect(unsigned short color, gxj_screen_buffer *sbuf, int x, int y, 
  */
 void 
 gx_fill_rect(int color, const jshort *clip, 
-	      const java_imagedata *dst, int dotted, 
-              int x, int y, int width, int height) {
+        const java_imagedata *dst, int dotted,
+        int x, int y, int width, int height) {
 
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
-  gxj_screen_buffer screen_buffer;
-  const jshort clipX1 = clip[0];
-  const jshort clipY1 = clip[1];
-  const jshort clipX2 = clip[2];
-  const jshort clipY2 = clip[3];
-  gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
-  sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+    gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
+    gxj_screen_buffer screen_buffer;
 
+    const jshort clipX1 = clip[0];
+    const jshort clipY1 = clip[1];
+    const jshort clipX2 = clip[2];
+    const jshort clipY2 = clip[3];
 
-  if ((clipX1==0)&&(clipX2==sbuf->width)&&(dotted!=DOTTED)) {
-    fastFill_rect(pixelColor, sbuf, x, y, width, height, clipY1, clipY2 );
-    return;
-  }
+    int sbuf_width;
+    gxj_screen_buffer *sbuf =
+        gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
+    sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+    sbuf_width = sbuf->width;
 
-  
-  REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_rect()\n");
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_rect()\n");
 
-  draw_roundrect(pixelColor, clip, sbuf, dotted?DOTTED:SOLID, 
-		 x, y, width, height, 1, 0, 0);
+    if (!sbuf->rotated) {
+        if ((clipX1 == 0) && (clipX2 == sbuf_width) && (dotted != DOTTED)) {
+            fast_fill_rect(pixelColor, sbuf,
+                x, y, width, height, clipY1, clipY2);
+            return;
+        } else {
+            draw_roundrect(pixelColor, clip, sbuf, (dotted? DOTTED: SOLID),
+                x, y, width, height, 1, 0, 0);
+        }
+    } else {
+        if ((clipY1 == 0) && (clipY2 == sbuf_width) && (dotted != DOTTED)) {
+            fast_fill_rect(pixelColor, sbuf,
+                RPIXEL(x, y, sbuf_width), height, width, clipX1, clipX2);
+            return;
+        } else {
+            jshort rclip[] = RCLIP(clip, sbuf_width);
+            draw_roundrect(pixelColor, rclip, sbuf, (dotted? DOTTED: SOLID),
+                RPIXEL(x, y, sbuf_width), height, width, 1, 0, 0);
+        }
+    }
 }
 
 /**
@@ -323,22 +338,31 @@ gx_fill_rect(int color, const jshort *clip,
  */
 void 
 gx_draw_roundrect(int color, const jshort *clip, 
-		   const java_imagedata *dst, int dotted, 
-                   int x, int y, int width, int height,
-                   int arcWidth, int arcHeight)
-{
-  int lineStyle = (dotted?DOTTED:SOLID);
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
-  gxj_screen_buffer screen_buffer;
-  gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
-  sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+        const java_imagedata *dst, int dotted,
+        int x, int y, int width, int height,
+        int arcWidth, int arcHeight) {
 
-  REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_roundrect()\n");
+    int lineStyle = (dotted?DOTTED:SOLID);
+    gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
+    gxj_screen_buffer screen_buffer;
+    gxj_screen_buffer *sbuf =
+        gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
+    sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
-  //API of the draw_roundrect requests radius of the arc at the four
-  draw_roundrect(pixelColor, clip, sbuf, lineStyle, 
-		 x, y, width, height,
-		 0, arcWidth >> 1, arcHeight >> 1);
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_roundrect()\n");
+
+    if (!sbuf->rotated) {
+        //API of the draw_roundrect requests radius of the arc at the four
+        draw_roundrect(pixelColor, clip, sbuf, lineStyle,
+            x, y, width, height, 0, arcWidth >> 1, arcHeight >> 1);
+    } else {
+        int sbuf_width = sbuf->width;
+        jshort rclip[] = RCLIP(clip, sbuf_width);
+        //API of the draw_roundrect requests radius of the arc at the four
+        draw_roundrect(pixelColor, rclip, sbuf, lineStyle,
+            RPIXEL(x, y, sbuf_width), height, width, 0,
+            arcHeight >> 1, arcWidth >> 1);
+    }
 }
 
 /**
@@ -347,21 +371,31 @@ gx_draw_roundrect(int color, const jshort *clip,
  */
 void 
 gx_fill_roundrect(int color, const jshort *clip, 
-		   const java_imagedata *dst, int dotted, 
-                   int x, int y, int width, int height,
-                   int arcWidth, int arcHeight)
-{
-  int lineStyle = (dotted?DOTTED:SOLID);
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
-  gxj_screen_buffer screen_buffer;
-  gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
-  sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+        const java_imagedata *dst, int dotted,
+        int x, int y, int width, int height,
+        int arcWidth, int arcHeight) {
 
-  REPORT_CALL_TRACE(LC_LOWUI, "gx_fillround_rect()\n");
+    int lineStyle = (dotted?DOTTED:SOLID);
+    gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
+    gxj_screen_buffer screen_buffer;
+    gxj_screen_buffer *sbuf =
+        gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
+    sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
-  draw_roundrect(pixelColor, clip, sbuf, lineStyle, 
-		 x,  y,  width,  height,
-		 1, arcWidth >> 1, arcHeight >> 1);
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_fillround_rect()\n");
+
+    if (!sbuf->rotated) {
+        //API of the draw_roundrect requests radius of the arc at the four
+        draw_roundrect(pixelColor, clip, sbuf, lineStyle,
+            x, y, width, height, 1, arcWidth >> 1, arcHeight >> 1);
+    } else {
+        int sbuf_width = sbuf->width;
+        jshort rclip[] = RCLIP(clip, sbuf_width);
+        //API of the draw_roundrect requests radius of the arc at the four
+        draw_roundrect(pixelColor, rclip, sbuf, lineStyle,
+            RPIXEL(x, y, sbuf_width), height, width, 1,
+            arcHeight >> 1, arcWidth >> 1);
+    }
 }
 
 /**
@@ -375,18 +409,29 @@ gx_fill_roundrect(int color, const jshort *clip,
  */
 void 
 gx_draw_arc(int color, const jshort *clip, 
-	     const java_imagedata *dst, int dotted, 
-             int x, int y, int width, int height,
-             int startAngle, int arcAngle)
-{
-  int lineStyle = (dotted?DOTTED:SOLID);
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
-  gxj_screen_buffer screen_buffer;
-  gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
-  sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+    const java_imagedata *dst, int dotted,
+    int x, int y, int width, int height,
+    int startAngle, int arcAngle) {
 
-  draw_arc(pixelColor, clip, sbuf, lineStyle, x, y, 
-	   width, height, 0, startAngle, arcAngle);
+    int lineStyle = (dotted?DOTTED:SOLID);
+    gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
+    gxj_screen_buffer screen_buffer;
+    gxj_screen_buffer *sbuf =
+        gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
+    sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_arc()\n");
+
+    if (!sbuf->rotated) {
+        draw_arc(pixelColor, clip, sbuf, lineStyle, x, y,
+            width, height, 0, startAngle, arcAngle);
+    } else {
+        int sbuf_width = sbuf->width;
+        jshort rclip[] = RCLIP(clip, sbuf_width);
+        draw_arc(pixelColor, rclip, sbuf, lineStyle,
+            RPIXEL(x, y, sbuf_width), height, width, 0,
+            (startAngle + 270) % 360, (arcAngle + 270) % 360);
+    }
 }
 
 /**
@@ -397,21 +442,29 @@ gx_draw_arc(int color, const jshort *clip,
  */
 void 
 gx_fill_arc(int color, const jshort *clip, 
-	     const java_imagedata *dst, int dotted, 
-             int x, int y, int width, int height,
-             int startAngle, int arcAngle)
-{
-  int lineStyle = (dotted?DOTTED:SOLID);
-  gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
-  gxj_screen_buffer screen_buffer;
-  gxj_screen_buffer *sbuf = 
-      gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
-  sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+        const java_imagedata *dst, int dotted,
+        int x, int y, int width, int height,
+        int startAngle, int arcAngle) {
 
-  REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_arc()\n");
+    int lineStyle = (dotted?DOTTED:SOLID);
+    gxj_pixel_type pixelColor = GXJ_RGB24TORGB16(color);
+    gxj_screen_buffer screen_buffer;
+    gxj_screen_buffer *sbuf =
+        gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
+    sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
-  draw_arc(pixelColor, clip, sbuf, lineStyle, 
-	   x, y, width, height, 1, startAngle, arcAngle);
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_arc()\n");
+
+    if (!sbuf->rotated) {
+        draw_arc(pixelColor, clip, sbuf, lineStyle, x, y,
+            width, height, 1, startAngle, arcAngle);
+    } else {
+        int sbuf_width = sbuf->width;
+        jshort rclip[] = RCLIP(clip, sbuf_width);
+        draw_arc(pixelColor, rclip, sbuf, lineStyle,
+            RPIXEL(x, y, sbuf_width), height, width, 1,
+            (startAngle + 270) % 360, (arcAngle + 270) % 360);
+    }
 }
 
 /**

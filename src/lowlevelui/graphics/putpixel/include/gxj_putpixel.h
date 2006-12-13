@@ -62,12 +62,13 @@ typedef unsigned char gxj_alpha_type;
 
 /** Screen buffer definition */
 typedef struct _gxj_screen_buffer {
-    int width;	/**< width in pixel */
-    int height;	/**< height in pixel */
-    gxj_pixel_type *pixelData; /**< pointer to array of pixel data */
-    gxj_alpha_type *alphaData; /**< pointer to array of alpha data */
+    int width;	/** width in pixel */
+    int height;	/** height in pixel */
+    int rotated; /** rotation mode: 0 - normal, 1 - rotated */ 
+    gxj_pixel_type *pixelData; /** pointer to array of pixel data */
+    gxj_alpha_type *alphaData; /** pointer to array of alpha data */
 #if ENABLE_BOUNDS_CHECKS
-    java_graphics *g; /**< Associated Graphics object */
+    java_graphics *g; /** Associated Graphics object */
 #endif
 } gxj_screen_buffer;
 
