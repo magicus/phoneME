@@ -418,16 +418,16 @@ midpFinalizeUI(void) {
     midpUnregisterAmsIsolateId();
 }
 
-static void   __putClassPathExtToSysProperty(char* classPathExt);{
+static void   __putClassPathExtToSysProperty(char* classPathExt) {
     // store class path as system variable for another isolates
     if (NULL != classPathExt) {
         char* argv[1];
-        const char* prefix = "-Dclasspathext=";
-        argv[0] = midpMalloc(sizeof(prefix) + strlen(classPathExt) + 1);
+        const char prefix[] = "-Dclasspathext=";
+        argv[0] = midpMalloc(sizeof(prefix) + strlen(classPathExt));
         if (NULL != argv[0]) {
             memcpy(argv[0], prefix, sizeof(prefix));
             // copy extention + trailing zero
-            memcpy(argv[0] + sizeof(prefix), classPathExt, strlen(classPathExt) + 1);
+            memcpy(argv[0] + sizeof(prefix) - 1, classPathExt, strlen(classPathExt) + 1);
             (void)JVM_ParseOneArg(1, argv);
             midpFree(argv[0]);
         }
