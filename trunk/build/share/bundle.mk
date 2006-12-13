@@ -93,8 +93,8 @@ REVISION_NUMBER = UNKNOWN
 else
 REVISION_NUMBER = \
      $(shell svn info | grep "Revision:" | sed -e 's/Revision: \(.*\)/\1/')
-override SRC_BUNDLE_NAME := $(SRC_BUNDLE_NAME)-rev$(REVISION_NUMBER)
 override SRC_BUNDLE_DIRNAME := $(SRC_BUNDLE_DIRNAME)-rev$(REVISION_NUMBER)
+override SRC_BUNDLE_NAME := $(SRC_BUNDLE_NAME)-rev$(REVISION_NUMBER)
 endif
 endif
 
