@@ -90,12 +90,15 @@ void lcdlf_gained_foreground() {
   lfpport_gained_foreground();
 }
 
-
 /**
  * Initializes the window system.
+ *
+ * @return <tt>0</tt> upon successful initialization, or
+ *         <tt>other value</tt> otherwise
  */
-void lcdlf_ui_init() {
+int lcdlf_ui_init() {
   lfpport_ui_init();
+  return 0;
 }
 
 /**

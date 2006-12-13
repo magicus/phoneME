@@ -46,8 +46,11 @@ extern "C" {
 
 /**
  * Initializes the javacall native resources.
+ *
+ * @return <tt>0</tt> upon successful initialization, or
+ *         <tt>other value</tt> otherwise
  */
-extern void jcapp_init();
+extern int jcapp_init();
 
 /**
  * Finalize the javacall native resources.
