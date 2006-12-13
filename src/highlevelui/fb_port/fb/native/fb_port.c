@@ -295,13 +295,13 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     int dstHeight = fb.height;
 
     // System screen buffer geometry
-    int sysWidth = gxj_system_screen_buffer.width;
-    int sysHeight = gxj_system_screen_buffer.height;
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
 
     if (linuxFbDeviceType == LINUX_FB_OMAP730) {
         // Needed by the P2 board
         // Max screen size is 176x220 but can only display 176x208
-        dstHeight = sysHeight;
+        dstHeight = bufHeight;
     }
 
     // Make sure the copied lines are 4-byte aligned for faster memcpy
@@ -314,11 +314,11 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
 
-    if (sysWidth < dstWidth || sysHeight < dstHeight) {
+    if (bufWidth < dstWidth || bufHeight < dstHeight) {
         // We are drawing into a frame buffer that's larger than what MIDP
         // needs. Center it.
-        dst += ((dstHeight - sysHeight) / 2) * dstWidth;
-        dst += (dstWidth - sysWidth) / 2;
+        dst += ((dstHeight - bufHeight) / 2) * dstWidth;
+        dst += (dstWidth - bufWidth) / 2;
     }
 
     if (srcWidth == dstWidth && srcHeight == dstHeight &&
@@ -326,12 +326,12 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
         // copy the entire screen with one memcpy
         memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type) * srcHeight);
     } else {
-        src += y1 * sysWidth + x1;
+        src += y1 * bufWidth + x1;
         dst += y1 * dstWidth + x1;
 
         for (; y1 < y2; y1++) {
             memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
-            src += sysWidth;
+            src += bufWidth;
             dst += dstWidth;
         }
     }
@@ -345,32 +345,37 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     int dstWidth = fb.width;
     int dstHeight = fb.height;
 
+    int y;
+    int srcDec;
+    int dstInc;
+
     // System screen buffer geometry
-    int sysWidth = gxj_system_screen_buffer.width;
-    int sysHeight = gxj_system_screen_buffer.height;
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
 
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
 
-    if (sysWidth < dstHeight || sysHeight < dstWidth) {
+    if (bufWidth < dstHeight || bufHeight < dstWidth) {
             // We are drawing into a frame buffer that's larger than what MIDP
             // needs. Center it.
-            dst += (dstHeight - sysWidth) / 2 * dstWidth;
-            dst += ((dstWidth - sysHeight) / 2);
+            dst += (dstHeight - bufWidth) / 2 * dstWidth;
+            dst += ((dstWidth - bufHeight) / 2);
         }
 
-    dst += y1 + (sysWidth - x2 - 1) * dstWidth;
-    src += x2-1 + y1 * sysWidth;
+    dst += y1 + (bufWidth - x2 - 1) * dstWidth;
+    src += x2-1 + y1 * bufWidth;
 
-    while( x2-- > x1) {
-        int y;
+    srcDec = srcHeight * bufWidth + 1; // decrement for src pointer at the end of column
+    dstInc = dstWidth - srcHeight;     // increment for dst pointer at the end of line
+
+    while(x2-- > x1) {
         for (y = y1; y < y2; y++) {
             *dst++ = *src;
-            src += sysWidth;
+            src += bufWidth;
          }
-
-         dst += dstWidth - srcHeight;
-         src += -1 - srcHeight * sysWidth;
+         dst += dstInc;
+         src -= srcDec;
     }
 }
 

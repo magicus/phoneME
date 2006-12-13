@@ -88,9 +88,7 @@ void initScreenBuffer(int width, int height) {
   * depending on the current screen mode
   */
 void reverseScreenOrientation() {
-    int width = gxj_system_screen_buffer.width;
-    gxj_system_screen_buffer.width = gxj_system_screen_buffer.height;
-    gxj_system_screen_buffer.height = width;
+    gxj_rotate_screen_buffer();
 }
 
 /** On i386, connect to the QVFB virtual frame buffer */
@@ -103,8 +101,8 @@ void connectFrameBuffer() {
     char *env;
 
     // System screen buffer geometry
-    int sysWidth = gxj_system_screen_buffer.width;
-    int sysHeight = gxj_system_screen_buffer.height;
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
 
     if ((env = getenv("QWS_DISPLAY")) != NULL) {
         displayId = atoi(env + 1); /* skip the leading colon */
@@ -138,9 +136,9 @@ void connectFrameBuffer() {
     fprintf(stderr, "QVFB info: %dx%d, depth=%d\n",
            hdr->width, hdr->height, hdr->depth);
 
-    if (hdr->width < sysWidth || hdr->height < sysHeight) {
+    if (hdr->width < bufWidth || hdr->height < bufHeight) {
         fprintf(stderr, "QVFB screen too small. Need %dx%d\n",
-               sysWidth, sysHeight);
+               bufWidth, bufHeight);
         exit(1);
     }
     if (hdr->depth != 16) {
@@ -195,26 +193,26 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     int srcWidth = x2 - x1;
 
     // System screen buffer geometry
-    int sysWidth = gxj_system_screen_buffer.width;
-    int sysHeight = gxj_system_screen_buffer.height;
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
 
     REPORT_CALL_TRACE4(LC_HIGHUI, "LF:fbapp_refresh(%3d, %3d, %3d, %3d )\n",
                        x1, y1, x2, y2);
 
     // center the LCD output area
-    if (hdr->width > sysWidth) {
-        dst += (hdr->width - sysWidth) / 2;
+    if (hdr->width > bufWidth) {
+        dst += (hdr->width - bufWidth) / 2;
     }
-    if (hdr->height > sysHeight) {
-        dst += (hdr->height - sysHeight) * lineStep / 2;
+    if (hdr->height > bufHeight) {
+        dst += (hdr->height - bufHeight) * lineStep / 2;
     }
 
-    src += y1 * sysWidth + x1;
+    src += y1 * bufWidth + x1;
     dst += y1 * dstWidth + x1;
 
     for (; y1 < y2; y1++) {
         memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
-        src += sysWidth;
+        src += bufWidth;
         dst += dstWidth;
     }
 
@@ -235,31 +233,36 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     int dstHeight = hdr->height;
 
     // System screen buffer geometry
-    int sysWidth = gxj_system_screen_buffer.width;
-    int sysHeight = gxj_system_screen_buffer.height;
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
+
+    int y;
+    int srcDec;
+    int dstInc;
 
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
 
-    if (sysWidth < dstHeight || sysHeight < dstWidth) {
+    if (bufWidth < dstHeight || bufHeight < dstWidth) {
             // We are drawing into a frame buffer that's larger than what MIDP
             // needs. Center it.
-            dst += (dstHeight - sysWidth) / 2 * dstWidth;
-            dst += ((dstWidth - sysHeight) / 2);
+            dst += (dstHeight - bufWidth) / 2 * dstWidth;
+            dst += ((dstWidth - bufHeight) / 2);
         }
 
-    dst += y1 + (sysWidth - x2 - 1) * dstWidth;
-    src += x2-1 + y1 * sysWidth;
+    dst += y1 + (bufWidth - x2 - 1) * dstWidth;
+    src += x2-1 + y1 * bufWidth;
 
-    while( x2-- > x1) {
-        int y;
+    srcDec = srcHeight * bufWidth + 1; // decrement for src pointer at the end of column
+    dstInc = dstWidth - srcHeight;     // increment for dst pointer at the end of line
+
+    while(x2-- > x1) {
         for (y = y1; y < y2; y++) {
             *dst++ = *src;
-            src += sysWidth;
+            src += bufWidth;
          }
-
-         dst += dstWidth - srcHeight;
-         src += -1 - srcHeight * sysWidth;
+         dst += dstInc;
+         src -= srcDec;
     }
 
     hdr->dirty_x1 = 0;
