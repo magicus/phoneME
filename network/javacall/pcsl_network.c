@@ -218,8 +218,7 @@ pcsl_network_init_finish(void) {
  */
 int
 pcsl_network_error(void *handle) {
-    (void)handle;
-    return 0;
+    return javacall_network_error(handle);
 }
 
 /**
