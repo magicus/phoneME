@@ -99,7 +99,7 @@ ASM_FLAGS	= -W
 ASM_OUTPUT	= -o
 ASMGEN_OPTIONS	+= +GenerateGNUCode
 
-ifneq ($(TARGET_VM), cdc_hi)
+ifneq ($(TARGET_VM), cdc_vm)
 # CDC port is not yet clear of warnings.
 EXTRA_CFLAGS	+= -Werror
 endif

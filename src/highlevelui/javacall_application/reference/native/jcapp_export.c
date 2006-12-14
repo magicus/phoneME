@@ -41,31 +41,40 @@ gxj_screen_buffer gxj_system_screen_buffer;
  * command manager.
  */
 
-
-void jcapp_get_screen_buffer() {
+int jcapp_get_screen_buffer() {
      javacall_lcd_color_encoding_type color_encoding;
      gxj_system_screen_buffer.alphaData = NULL;
      gxj_system_screen_buffer.pixelData = 
          javacall_lcd_get_screen (JAVACALL_LCD_SCREEN_PRIMARY,
                                   &gxj_system_screen_buffer.width,
                                   &gxj_system_screen_buffer.height,
-                                  &color_encoding);
-
-     if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {
-        REPORT_CRIT(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
-     };                                 
+                                  &color_encoding);                                
+     if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {        
+	return -2;
+     }; 
+                     
 }
 
 
-void jcapp_init() {
+int jcapp_init() {
  
     if (!JAVACALL_SUCCEEDED(javacall_lcd_init ()))
-        return;
+        return -1;
  
-    jcapp_get_screen_buffer();
+    /**
+     *   NOTE: Only JAVACALL_LCD_COLOR_RGB565 encoding is supported by phoneME 
+     *     implementation. Other values are reserved for future  use. Returning
+     *     the buffer in other encoding will result in application termination.
+     */
+    if (jcapp_get_screen_buffer() == -2) {
+        REPORT_ERROR(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
+        return -2;
+    }    
+    
     memset (gxj_system_screen_buffer.pixelData, 0, 
             gxj_system_screen_buffer.width * gxj_system_screen_buffer.height 
             * sizeof (gxj_pixel_type));
+    return 0;
 }
 
 /**
@@ -108,6 +117,7 @@ jboolean jcapp_reverse_orientation() {
     jboolean res = javacall_lcd_reverse_orientation(); 
     jcapp_get_screen_buffer(); 
     return res; 
+    return KNI_FALSE;
 }
 
 /**
