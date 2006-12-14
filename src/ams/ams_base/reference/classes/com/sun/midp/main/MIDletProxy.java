@@ -26,7 +26,10 @@
 
 package com.sun.midp.main;
 
+import com.sun.midp.lcdui.DisplayEventProducer;
+
 import com.sun.midp.midlet.MIDletEventProducer;
+
 import com.sun.midp.suspend.SuspendDependency;
 
 import java.util.Timer;
@@ -49,6 +52,9 @@ public class MIDletProxy implements SuspendDependency {
 
     /** Constant for destroyed state of a MIDlet. */
     public static final int MIDLET_DESTROYED = 2;
+
+    /** Cached reference to the DisplayEventProducer. */
+    private static DisplayEventProducer displayEventProducer;
 
     /** Cached reference to the MIDletEventProducer. */
     private static MIDletEventProducer midletEventProducer;
@@ -80,6 +86,9 @@ public class MIDletProxy implements SuspendDependency {
     /** True if the MIDlet want's its Display in the foreground. */
     private boolean wantsForegroundState;
 
+    /** True if the MIDlet has the foreground at least once. */
+    private boolean requestedForeground;
+
     /** The display that is preempting this MIDlet. */
     private MIDletProxy preempting;
 
@@ -105,11 +114,14 @@ public class MIDletProxy implements SuspendDependency {
      * Initialize the MIDletProxy class. Should only be called by the
      * MIDletProxyList.
      *
+     * @param  theDisplayEventProducer reference to the event producer
      * @param  theMIDletEventProducer reference to the event producer
      */
     static void initClass(
+        DisplayEventProducer theDisplayEventProducer,
         MIDletEventProducer theMIDletEventProducer) {
 
+        displayEventProducer = theDisplayEventProducer;
         midletEventProducer = theMIDletEventProducer;
     }
 
@@ -119,20 +131,18 @@ public class MIDletProxy implements SuspendDependency {
      * @param  theParentList parent MIDlet proxy list
      * @param  theExternalAppId ID of given by an external application manager
      * @param  theIsolateId ID of the Isolate the MIDlet is running in.
-     * @param  theDisplayId ID of the MIDlet's Display
      * @param  theSuiteId   ID of the suite MIDlet
      * @param  theClassName Class name of the MIDlet
      * @param  theDisplayName Display name of the MIDlet to show the user
      * @param  theMidletState MIDlet lifecycle state.
      */
     MIDletProxy(MIDletProxyList theParentList, int theExternalAppId,
-         int theIsolateId, int theDisplayId, int theSuiteId,
+         int theIsolateId, int theSuiteId,
          String theClassName, String theDisplayName, int theMidletState) {
 
         parent = theParentList;
         externalId = theExternalAppId;
         isolateId = theIsolateId;
-        displayId = theDisplayId;
         suiteId = theSuiteId;
         className = theClassName;
         displayName = theDisplayName;
@@ -156,6 +166,15 @@ public class MIDletProxy implements SuspendDependency {
      */
     public int getIsolateId() {
         return isolateId;
+    }
+
+    /**
+     * Sets the ID of the MIDlet's Display.
+     *
+     * @param ID of the MIDlet's Display
+     */
+    void setDisplayId(int id) {
+        displayId = id;
     }
 
     /**
@@ -228,6 +247,7 @@ public class MIDletProxy implements SuspendDependency {
         wantsForegroundState = newWantsForeground;
 
         if (newWantsForeground) {
+            requestedForeground = true;
             alertWaiting = isAlert;
         } else {
             alertWaiting = false;
@@ -241,6 +261,17 @@ public class MIDletProxy implements SuspendDependency {
      */
     public boolean wantsForeground() {
         return wantsForegroundState;
+    }
+
+    /**
+     * Check if the MIDlet has not set a displayable in its display.
+     * Used by foreground selector to determine if it the MIDlet it is
+     * about to put in the foreground will draw the screen.
+     *
+     * @return true if the MIDlet has no displayable.
+     */
+    public boolean noDisplayable() {
+        return !requestedForeground;
     }
 
     /**
@@ -316,7 +347,7 @@ public class MIDletProxy implements SuspendDependency {
      */
     public void activateMidlet() {
         if (midletState != MIDLET_DESTROYED) {
-            midletEventProducer.sendMIDletActivateEvent(isolateId, displayId);
+            midletEventProducer.sendMIDletActivateEvent(isolateId, className);
         }
     }
 
@@ -330,7 +361,7 @@ public class MIDletProxy implements SuspendDependency {
      */
     public void pauseMidlet() {
         if (midletState != MIDLET_DESTROYED) {
-            midletEventProducer.sendMIDletPauseEvent(isolateId, displayId);
+            midletEventProducer.sendMIDletPauseEvent(isolateId, className);
         }
     }
 
@@ -360,7 +391,7 @@ public class MIDletProxy implements SuspendDependency {
 
             MIDletDestroyTimer.start(this, parent);
 
-            midletEventProducer.sendMIDletDestroyEvent(isolateId, displayId);
+            midletEventProducer.sendMIDletDestroyEvent(isolateId, className);
         }
     }
 
@@ -380,10 +411,10 @@ public class MIDletProxy implements SuspendDependency {
     void notifyMIDletHasForeground(boolean hasForeground) {
         if (hasForeground) {
             alertWaiting = false;
-            midletEventProducer.sendDisplayForegroundNotifyEvent(
+            displayEventProducer.sendDisplayForegroundNotifyEvent(
                 isolateId, displayId);
         } else {
-            midletEventProducer.sendDisplayBackgroundNotifyEvent(
+            displayEventProducer.sendDisplayBackgroundNotifyEvent(
                 isolateId, displayId);
         }
     }
@@ -419,6 +450,7 @@ public class MIDletProxy implements SuspendDependency {
             ", display id = " + displayId +
             ", midlet state = " + midletState +
             ", wantsForeground = " + wantsForegroundState +
+            ", requestedForeground = " + requestedForeground +
             "\n    alertWaiting = " + alertWaiting;
     }
 }

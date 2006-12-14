@@ -87,10 +87,6 @@ class CommandState {
     int lastSuiteId;
     /** The MIDlet class name for the suite to load. */
     String lastMidletClassName;
-    /** The argument for a last MIDlet, will be app property arg-0. */
-    String lastArg0;
-    /** The argument for a last MIDlet, will be app property arg-1. */
-    String lastArg1;
     /** The argument for a MIDlet in the suite, will be app property arg-0. */
     String arg0;
     /** The argument for a MIDlet in the suite, will be app property arg-1. */
@@ -124,5 +120,27 @@ class CommandState {
      */
     void save() {
         saveCommandState(this);
+    }
+
+    /**
+     * Returns the string form of this object.
+     *
+     * @return displayable string representation of this object
+     */
+    public String toString() {
+        return "CommandState:" +
+            "\n  status: " + status +
+            "\n  suite ID: " + suiteId +
+            "\n  class name: " + midletClassName +
+            "\n  logo displayed: " + logoDisplayed +
+            "\n  last suite ID: " + lastSuiteId +
+            "\n  last MIDlet class name: " + lastMidletClassName +
+            "\n  arg 0: " + arg0 +
+            "\n  arg 1: " + arg1 +
+            "\n  arg 2: " + arg2 +
+            "\n  memory reserved: " + memoryReserved +
+            "\n  memory total: " + memoryTotal +
+            "\n  priority:" + priority +
+            "\n  profile name: " + profileName;
     }
 }

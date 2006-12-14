@@ -198,7 +198,7 @@ public class TestNewSetCurrent extends TestCase {
      * Creates the test MIDlet and get its display.
      */
     void init() throws Throwable {
-        dpy = new StubDisplay(getSecurityToken());
+        dpy = new StubDisplay();
         scl = new LiveTraceCallback();
         dpy.liveTracer.add(Display.LTR_SCREENCHANGE_DONE, scl);
     }

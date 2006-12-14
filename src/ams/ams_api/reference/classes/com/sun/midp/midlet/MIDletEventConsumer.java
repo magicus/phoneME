@@ -38,7 +38,7 @@ package com.sun.midp.midlet;
  * TBD: method and parameter lists of the I/F is preliminary 
  * and is a subject for changes.
  *
- * TBD: Implementor of this I/F shall be instnace specific, 
+ * TBD: Implementor of this I/F shall be instance specific, 
  * and thus will be able to obtain all IDs itself. 
  * normally I/F implementor shall be associated with MIDlet,
  * i.e. implemented by MIDletPeer.
@@ -65,22 +65,4 @@ public interface MIDletEventConsumer {
      * Destroys a MIDlet.
      */
     public void handleMIDletDestroyEvent();
-
-    /*
-     * Foreground Display Management Events:
-     *
-     * FOREGROUND_NOTIFY_EVENT
-     *
-     * TBD: maybe move to DisplayEventConsumer or to a separate Consumer ?
-     *
-     */    
-    /*
-     * Notifies MIDlet that it has been moved to foreground.
-     */
-    // public void handleDisplayForegroundNotifyEvent();
-    /*
-     * Notifies MIDlet that it has been moved to background.
-     */
-    // public void handleDisplayBackgroundNotifyEvent();
-    
 }

@@ -25,8 +25,8 @@
  */
 
 package com.sun.midp.installer;
-
-import com.sun.cldchi.jvm.JVM;
+// FIXME CDC disabled
+// import com.sun.cldchi.jvm.JVM;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.i18n.Resource;
@@ -234,6 +234,7 @@ public class SuiteVerifier extends MIDlet implements CommandListener {
 
         /** Verify in background all classes within a JAR */
         public void run() {
+	    /* FIXME CDC disable
             int status = JVM.verifyJar(jarPath, CHUNK_SIZE);
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -262,6 +263,7 @@ public class SuiteVerifier extends MIDlet implements CommandListener {
             }
 
             parent.exit(true);
+	    */
         }
     }
 }

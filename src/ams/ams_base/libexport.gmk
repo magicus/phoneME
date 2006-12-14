@@ -34,7 +34,9 @@ LIB_EXPORT_JAVA_FILES= \
     com/sun/midp/main/MIDletProxyList.java \
     com/sun/midp/main/MIDletProxyListListener.java \
     com/sun/midp/main/MIDletSuiteLoader.java \
-    com/sun/midp/main/MIDletSuiteUtils.java
+    com/sun/midp/main/MIDletSuiteUtils.java \
+    com/sun/midp/main/AbstractMIDletSuiteLoader.java \
+    com/sun/midp/main/CldcMIDletSuiteLoader.java
 
 LIB_HEADER_FILES= \
     imageCache.h \

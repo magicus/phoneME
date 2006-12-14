@@ -90,7 +90,7 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
     /**
      * Append launched suite info to the list.
      */
-    synchronized void append(MIDletSuiteInfo msi) {
+    synchronized void append(RunningMIDletSuiteInfo msi) {
         checkInfoArraySize();
         minfo[mcount++] = msi;
         append(msi.displayName, msi.icon);

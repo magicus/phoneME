@@ -45,26 +45,21 @@ prev_midlet_args="0"
 
 while :
 do
-  #install and remove any output lines that do not have a "["
+  # Extract the midlet arguments from the "[id class]" installer output
   install_output=`./runMidlet -1 com.sun.midp.scriptutil.HttpJadInstaller \
-    $* | sed "/\[/!d"`
+    $* | sed -e "/\[/!d;s/\[//;s/\]//"`
 
-  #remove any text before and including the [
-  install_output=${install_output#*[}
-
-  #to get the final arg string remove any text after and including the ]
-  midlet_args=${install_output%]*}
-
-  #if the args are blank the install failed and we done
-  if [ "x${midlet_args}" = "x" ] 
-  then
-    break
+  # When installation is not successful, cleanup and exit.
+  if [ "x${install_output}" = "x" ] ; then 
+     break
   fi
 
-  ./runMidlet $midlet_args
+  # Run the midlet specified.
+  ./runMidlet $install_output
 
-  prev_midlet_args=$midlet_args
+  prev_midlet_args=$install_output
 done
 
+# Remove the last installed suite
 ./runMidlet -1 com.sun.midp.scriptutil.SuiteRemover ${prev_midlet_args}
 

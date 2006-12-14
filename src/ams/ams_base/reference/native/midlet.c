@@ -54,7 +54,7 @@
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_midp_midlet_MIDletPeer_dispatchPlatformRequest) {
+KNIDECL(com_sun_midp_main_CldcPlatformRequest_dispatchPlatformRequest) {
     jsize urlLen;
     char* pszUrl;
     jchar* temp;

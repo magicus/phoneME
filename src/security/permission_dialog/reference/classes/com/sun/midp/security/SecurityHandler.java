@@ -416,7 +416,7 @@ public final class SecurityHandler {
 }
 
 /** Implements security permission dialog. */
-class PermissionDialog implements CommandListener, MIDletEventConsumer {
+class PermissionDialog implements CommandListener {
     /** Caches the display manager reference. */
     private DisplayEventHandler displayEventHandler;
 
@@ -497,7 +497,7 @@ class PermissionDialog implements CommandListener, MIDletEventConsumer {
         alert.addCommand(noCmd);
         alert.addCommand(yesCmd);
         alert.setCommandListener(this);
-        preemptToken = displayEventHandler.preemptDisplay(this, alert, true);
+        preemptToken = displayEventHandler.preemptDisplay(alert, true);
     }
 
     /**
@@ -556,34 +556,6 @@ class PermissionDialog implements CommandListener, MIDletEventConsumer {
             return;
         }
 
-        setAnswer(false);
-    }
-
-    /**
-     * Pause the current foreground MIDlet and return to the
-     * AMS or "selector" to possibly run another MIDlet in the
-     * currently active suite.
-     * <p>
-     * This is not apply to the security dialog.
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletPauseEvent() {}
-
-    /**
-     * Start the currently paused state.
-     * <p>
-     * This is not apply to the security dialog.
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletActivateEvent() {}
-
-    /**
-     * Destroy the MIDlet given midlet.
-     * <p>
-     * This is not apply to the security dialog.
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletDestroyEvent() {
         setAnswer(false);
     }
 }

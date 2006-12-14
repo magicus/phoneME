@@ -47,18 +47,6 @@ public class MIDletSuiteUtils {
     /** The class name of the last MIDlet to run. */
     static String lastMidletToRun;
 
-    /**
-     * If not null, this will be available to the last MIDlet to run as
-     * application property arg-0.
-     */
-    static String arg0ForLastMidlet;
-
-    /**
-     * If not null, this will be available to the last MIDlet to run as
-     * application property arg-1.
-     */
-    static String arg1ForLastMidlet;
-
     /** The unique ID of the next MIDlet suite to run. */
     static int nextMidletSuiteToRun;
 
@@ -373,7 +361,7 @@ public class MIDletSuiteUtils {
      * @exception SecurityException if the caller does not have permission
      *   to manage midlets
      */
-    public static void setLastSuiteToRun(int id, String midlet, String arg0, String arg1) {
+    public static void setLastSuiteToRun(int id, String midlet) {
 
         MIDletSuite midletSuite =
             MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
@@ -385,8 +373,6 @@ public class MIDletSuiteUtils {
 
         lastMidletSuiteToRun = id;
         lastMidletToRun = midlet;
-        arg0ForLastMidlet = arg0;
-        arg1ForLastMidlet = arg1;
     }
 
     /**

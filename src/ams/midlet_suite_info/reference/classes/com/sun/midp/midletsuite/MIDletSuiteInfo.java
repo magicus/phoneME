@@ -27,13 +27,8 @@
 package com.sun.midp.midletsuite;
 
 import com.sun.midp.main.*;
-import com.sun.midp.installer.*;
-import javax.microedition.lcdui.*;
+
 import com.sun.midp.configurator.Constants;
-
-import com.sun.midp.log.Logging;
-import com.sun.midp.log.LogChannels;
-
 
 /** Simple attribute storage for MIDlet suites */
 public class MIDletSuiteInfo {
@@ -47,8 +42,6 @@ public class MIDletSuiteInfo {
     public String midletToRun = null;
     /** Is this single MIDlet MIDlet suite. */
     public int numberOfMidlets = 0;
-    /** Proxy if running. It is set from AppManagerUI.java. */
-    public MIDletProxy proxy = null;
     /** Is this suite enabled. */
     public boolean enabled = false;
     /** Is this suite trusted. */
@@ -57,8 +50,6 @@ public class MIDletSuiteInfo {
     public boolean preinstalled = false;
     /** Icon's name for this suite. */
     public String iconName = null;
-    /** Icon for this suite. */
-    public Image icon = null;
 
     /**
      * Constructs a MIDletSuiteInfo object for a suite.
@@ -82,7 +73,6 @@ public class MIDletSuiteInfo {
         suiteId = theID;
         midletToRun = theMidletToRun;
         displayName = theDisplayName;
-        icon = getDefaultSingleSuiteIcon();
         enabled = isEnabled;
     }
 
@@ -91,13 +81,10 @@ public class MIDletSuiteInfo {
      *
      * @param theID ID the system has for this suite
      * @param theMidletSuite MIDletSuite information
-     * @param mss the midletSuite storage
      */
-    public MIDletSuiteInfo(int theID, MIDletSuiteImpl theMidletSuite,
-                           MIDletSuiteStorage mss) {
+    public MIDletSuiteInfo(int theID, MIDletSuiteImpl theMidletSuite) {
         init(theID, theMidletSuite);
 
-        icon = getIcon(theID, theMidletSuite.getProperty("MIDlet-Icon"), mss);
         numberOfMidlets = theMidletSuite.getNumberOfMIDlets();
 
         if (numberOfMidlets == 1) {
@@ -105,14 +92,6 @@ public class MIDletSuiteInfo {
                 new MIDletInfo(theMidletSuite.getProperty("MIDlet-1"));
 
             midletToRun = midlet.classname;
-
-            if (icon == null) {
-                icon = getIcon(theID, midlet.icon, mss);
-            }
-        }
-
-        if (icon == null) {
-            icon = getDefaultSingleSuiteIcon();
         }
     }
 
@@ -146,69 +125,6 @@ public class MIDletSuiteInfo {
     }
 
     /**
-     * Loads an icon for this suite.
-     *
-     * @param mss the midletSuite storage
-     */
-    public void loadIcon(MIDletSuiteStorage mss) {
-        if (iconName != null) {
-            icon = getIcon(suiteId, iconName, mss);
-        }
-
-        if (icon == null) {
-            if (numberOfMidlets == 1) {
-                icon = getDefaultSingleSuiteIcon();
-            } else {
-                icon = getDefaultMultiSuiteIcon();
-            }
-        }
-    }
-
-    /**
-     * Gets suite icon either from image cache, or from the suite jar.
-     *
-     * @param suiteId the suite id that system has for this suite
-     * @param iconName the name of the file where the icon is
-     *     stored in the JAR
-     * @param mss The midletSuite storage
-     * @return Image provided by the application with
-     *     the passed in iconName
-     */
-    public static Image getIcon(int theID, String iconName,
-            MIDletSuiteStorage mss) {
-        byte[] iconBytes;
-
-        if (iconName == null) {
-            return null;
-        }
-
-        try {
-            /* Search for icon in the image cache */
-            iconBytes = loadCachedIcon(theID, iconName);
-            if (iconBytes == null) {
-                /* Search for icon in the suite JAR */
-                iconBytes = JarReader.readJarEntry(
-                    mss.getMidletSuiteJarPath(theID), iconName);
-            }
-            if (iconBytes == null) {
-                if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                    Logging.report(Logging.WARNING, LogChannels.LC_AMS,
-                        "getIcon: iconBytes == null");
-                }
-                return null;
-            }
-            return Image.createImage(iconBytes, 0, iconBytes.length);
-
-        } catch (Throwable t) {
-            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                Logging.report(Logging.WARNING, LogChannels.LC_AMS,
-                    "getIcon threw an " + t.getClass());
-            }
-            return null;
-        }
-    }
-
-    /**
      * Returns a string representation of the MIDletSuiteInfo object.
      * For debug only.
      */
@@ -216,73 +132,6 @@ public class MIDletSuiteInfo {
         StringBuffer b = new StringBuffer();
         b.append("id = " + suiteId);
         b.append(", midletToRun = " + midletToRun);
-        b.append(", proxy = " + proxy);
         return b.toString();
-    }
-
-    /**
-     * Compares this MIDletSuiteInfo with the passed in MIDletProxy.
-     * Returns true if both belong to the same suite and
-     * if current proxy or midetToRun points to the same class as
-     * in the passed in MIDletProxy.
-     * @param midlet The MIDletProxy to compare with
-     * @return true if The MIDletSuiteInfo points to the same midlet as
-     *         the MIDletProxy, false - otherwise
-     */
-    public boolean equals(MIDletProxy midlet) {
-        if (suiteId == midlet.getSuiteId()) {
-            if (proxy != null) {
-                return proxy == midlet;
-            }
-
-            if (midletToRun != null) {
-                return midletToRun.equals(midlet.getClassName());
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Loads suite icon data from image cache.
-     *
-     * @param suiteId the ID of suite the icon belongs to
-     * @param iconName the name of the icon to be loaded
-     * @return cached image data if available, otherwise null
-     */
-    private static native byte[] loadCachedIcon(int suiteId, String iconName);
-
-    /** Cache of the suite icon. */
-    private static Image multiSuiteIcon;
-
-    /** Cache of the single suite icon. */
-    private static Image singleSuiteIcon;
-
-    /**
-     * Gets the single MIDlet suite icon from storage.
-     *
-     * @return icon image
-     */
-    private static Image getDefaultSingleSuiteIcon() {
-        if (singleSuiteIcon == null) {
-            singleSuiteIcon = GraphicalInstaller.
-                getImageFromInternalStorage("_ch_single");
-        }
-        return singleSuiteIcon;
-    }
-
-    /**
-     * Gets the MIDlet suite icon from storage.
-     *
-     * @return icon image
-     */
-    private static Image getDefaultMultiSuiteIcon() {
-        if (multiSuiteIcon == null) {
-            multiSuiteIcon = GraphicalInstaller.
-                getImageFromInternalStorage("_ch_suite");
-        }
-        return multiSuiteIcon;
     }
 }

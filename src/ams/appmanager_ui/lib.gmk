@@ -52,7 +52,21 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppManagerUI.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/AppSettings.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/DisplayError.java \
+    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/HeadlessAlert.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/MIDletSelector.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/MIDletSwitcher.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/SplashScreen.java \
+    $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/RunningMIDletSuiteInfo.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/CaManager.java
+
+# vpath for sub-system
+#
+vpath % \
+    $(APPMANAGER_UI_DIR)/native
+
+## Native files for common module
+#
+SUBSYSTEM_AMS_NATIVE_FILES += \
+    runningmidletsuiteinfo_kni.c
+
+
