@@ -148,7 +148,7 @@ ROM_DEPS += $(BINDIR) $(OBJ_DIR) jpp build_classes
 ifeq ($(TARGET_VM), cldc_vm)
 ROM_DEPS += $(MIDP_OUTPUT_DIR)/ROMImage.cpp
 else
-# cdc_dummies is defined in cdc_vm.gmk
+# cdc_dummies is defined in cdc_hi.gmk
 ROM_DEPS += cdc_dummies $(ROMSTRUCTS_H)
 endif
 

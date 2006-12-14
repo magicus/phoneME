@@ -77,9 +77,6 @@ SUBSYSTEM_SERIAL_NATIVE_FILES += \
 
 #IMPL_NOTE - build subsystem on linux and javacall only
 else
-
-not_yet_implemented:: serial_not_yet_implemented
-
-serial_not_yet_implemented:
-	@echo "Serial communication is not implemented yet for OS $(TARGET_OS)"
+display:
+	echo "Serial communication is not implemented yet for OS $(TARGET_OS)"
 endif

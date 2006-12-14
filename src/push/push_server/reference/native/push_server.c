@@ -1107,6 +1107,7 @@ char *pushfindfd(int fd) {
     char *alarmentry = NULL;
     // char *ipnumber = NULL;
     char ipAddress[MAX_HOST_LENGTH];
+    struct in_addr addr;
     int status;
     unsigned char ipBytes[MAX_ADDR_LENGTH];
     void *context = NULL;
@@ -1176,8 +1177,9 @@ char *pushfindfd(int fd) {
                 /** Set the raw IP address */
                 memcpy(&(pushp->dg->ipAddress), ipBytes, MAX_ADDR_LENGTH);
 
+                memcpy(&addr.s_addr, ipBytes, sizeof(addr.s_addr));
                 memset(ipAddress, '\0', MAX_HOST_LENGTH);
-                strcpy(ipAddress, pcsl_inet_ntoa(&ipBytes));
+                strcpy(ipAddress, pcsl_inet_ntoa(&addr));
 
                 /* Datagram and Socket connections use the IP filter. */
                 if (checkfilter(pushp->filter, ipAddress)) {

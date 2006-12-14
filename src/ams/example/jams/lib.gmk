@@ -144,7 +144,7 @@ $(OBJ_DIR)/resources.res: $(CEDIR)/resources.rc $(CEDIR)/resources.h
 		
 
 $(OBJ_DIR)/gxj_graphics_asm_wince.o: \
-	$(MIDP_DIR)/src/lowlevelui/graphics/putpixel/native/gxj_graphics_asm_wince.s
+	$(MIDP_DIR)/src/lowlevelui/platform_graphics_port/wince/gxj_graphics_asm_wince.s
 	$(ASM) -o $@ $<
 
 endif
@@ -160,50 +160,6 @@ $(BINDIR)/runMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ
 SUBSYSTEM_AMS_EXECUTABLES = \
     $(BINDIR)/runMidlet$(g)$(p)$(EXE)
 
-endif
-
-ifeq ($(TARGET_VM), cdc_vm)
-
-CVM_BOOTCLASSPATH=-Xbootclasspath/a:${MIDP_OUTPUT_DIR}/classes.zip
-
-ifeq ($(CVM_PRELOAD_LIB), true)
-#
-# This is a ROMized build. MIDP natives are linked into CVM executable. No
-# need to create a separate libmidp.so.
-#
-
-$(BINDIR)/runMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
-	@rm -f $@
-	@echo " ... creating script $@ " $(LOG)
-	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
-	$(CVM_BOOTCLASSPATH) \
-        -Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
-        -Dmicroedition.profiles=MIDP-2.0 \
-        '$$VMARGS' \
-        com.sun.midp.main.MIDletSuiteLoader '$$*' > $@
-	$(A)chmod a+x $@
-
-else
-#
-# Create a libmidp.so for non-ROMized build.
-#
-
-$(BINDIR)/libmidp$(g)$(p).so: $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
-	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) -shared $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES) $(LIBS))` $(LOG)
-
-$(BINDIR)/runMidlet$(g)$(p)$(EXE): $(BINDIR)/libmidp$(g)$(p).so
-	@rm -f $@
-	@echo " ... creating script $@ " $(LOG)
-	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
-	$(CVM_BOOTCLASSPATH) \
-	-Dsun.midp.library.name=midp$(p) \
-        -Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
-        -Dmicroedition.profiles=MIDP-2.0 \
-        '$$VMARGS' \
-        com.sun.midp.main.MIDletSuiteLoader '$$*' > $@
-	$(A)chmod a+x $@
-endif
 endif
 
 # Other platforms like stubs don't need scripts
@@ -240,11 +196,6 @@ ifdef INCLUDE_SHELL_SCRIPTS
   endif
 
   USE_SCRIPT_UTILS = true
-
-  ifeq ($(TARGET_VM), cdc_vm)
-    SUBSYSTEM_AMS_EXECUTABLES += \
-      $(BINDIR)/autotest.sh
-  endif
 
   ifeq ($(USE_I3_TEST), true)
     SUBSYSTEM_AMS_EXECUTABLES += $(BINDIR)/i3test$(g)$(BAT)

@@ -48,7 +48,7 @@ public class TickerLayer extends CLayer {
     /**
      * A Timer which will handle firing repaints of the TickerPainter
      */
-    protected Timer tickerTimer;
+    private Timer tickerTimer;
 
     /**
      * A TimerTask which will repaint the Ticker on a repeated basis
@@ -57,6 +57,13 @@ public class TickerLayer extends CLayer {
 
     public TickerLayer() {
         super(TickerSkin.IMAGE_BG, TickerSkin.COLOR_BG);
+    }
+
+    private Timer getTimer() {
+	if (tickerTimer == null) {
+	    tickerTimer = new Timer();
+	}
+	return tickerTimer;
     }
 
     public void toggleAlert(boolean alertUp) {
@@ -87,6 +94,10 @@ public class TickerLayer extends CLayer {
                 bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
                         bounds[H];
         }
+
+	/* FIXME CDC disabled. */
+	//      tickerTimer = new Timer();
+
     }
 
     public void setText(String text) {
@@ -151,7 +162,10 @@ public class TickerLayer extends CLayer {
 
         stopTicker();
         tickerPainter = new TickerPainter();
-        tickerTimer.schedule(tickerPainter, 0, TickerSkin.RATE);
+	/* FIXME - CDC replacement. */
+	//        tickerTimer.schedule(tickerPainter, 0, TickerSkin.RATE);
+	Timer timer = getTimer();
+        timer.schedule(tickerPainter, 0, TickerSkin.RATE);
     }
 
     /**

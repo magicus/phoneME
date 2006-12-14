@@ -132,7 +132,6 @@ public class HttpJadInstaller extends MIDlet implements Runnable {
      * suite.
      *
      * @param suiteId ID of the MIDlet Suite
-     * @param midletSuiteStorage MIDlet suite storage to look up properties
      *
      * @return an object with the class name and display name of
      * the suite's MIDlet-1 property

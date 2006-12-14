@@ -46,7 +46,7 @@ import com.sun.midp.log.*;
  * In MVM mode it only handles the first MIDlet suite isolate which is used
  * by the MIDP AMS and other internal MIDlets.
  */
-public class MIDletSuiteLoader extends AbstractMIDletSuiteLoader {
+public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
 
     /** Command state of the MIDlet suite loader */
     protected CommandState state;
@@ -80,8 +80,8 @@ public class MIDletSuiteLoader extends AbstractMIDletSuiteLoader {
     }
 
     /** Creates environment objects needed to AMS task */
-    protected void createSuiteEnvionment() {
-        super.createSuiteEnvionment();
+    protected void createSuiteEnvironment() {
+        super.createSuiteEnvironment();
 
         midletEventProducer = new MIDletEventProducer(
             internalSecurityToken, eventQueue);
@@ -105,7 +105,7 @@ public class MIDletSuiteLoader extends AbstractMIDletSuiteLoader {
             eventQueue, midletControllerEventProducer);
 
         // Start inbound connection watcher thread.
-        PushRegistryImpl.startListening();
+	PushRegistryImpl.startListening();
 
         // Initialize the Content Handler Monitor of MIDlet exits
         CHManager.getManager(internalSecurityToken).initCleanupMonitor(
@@ -128,7 +128,7 @@ public class MIDletSuiteLoader extends AbstractMIDletSuiteLoader {
         AmsUtil.initClass(
             midletProxyList, midletControllerEventProducer);
 
-        MIDletProxy.initClass(midletEventProducer);
+        MIDletProxy.initClass(displayEventProducer, midletEventProducer);
         MIDletProxyList.initClass(midletProxyList);
 
         // Listen for start MIDlet requests from the other isolates
@@ -139,22 +139,6 @@ public class MIDletSuiteLoader extends AbstractMIDletSuiteLoader {
 
         // Init gloabal systems common for all isolates
         initGlobalSystems();
-        
-        // Restore command state transfered to MIDlet suite loader
-        state = CommandState.getCommandState();
-
-        // Init internal state from the restored command state
-        externalAppId = 0;
-        suiteId = state.suiteId;
-        midletDisplayName = null;
-        midletClassName = state.midletClassName;
-        args = new String[] {
-            state.arg0, state.arg1, state.arg2};
-
-        // Release command state argument references
-        state.arg0 = null;
-        state.arg1 = null;
-        state.arg2 = null;
     }
 
     /**
@@ -227,8 +211,6 @@ public class MIDletSuiteLoader extends AbstractMIDletSuiteLoader {
 
                 state.lastSuiteId = MIDletSuiteUtils.lastMidletSuiteToRun;
                 state.lastMidletClassName = MIDletSuiteUtils.lastMidletToRun;
-                state.lastArg0 = MIDletSuiteUtils.arg0ForLastMidlet;
-                state.lastArg1 = MIDletSuiteUtils.arg1ForLastMidlet;
             }
 
             // Check to see if we need to run a selected suite next
@@ -252,14 +234,10 @@ public class MIDletSuiteLoader extends AbstractMIDletSuiteLoader {
 
                 state.suiteId = state.lastSuiteId;
                 state.midletClassName = state.lastMidletClassName;
-                state.arg0 = state.lastArg0;
-                state.arg1 = state.lastArg1;
 
                 /* Avoid an endless loop. */
                 state.lastSuiteId = MIDletSuite.UNUSED_SUITE_ID;
                 state.lastMidletClassName = null;
-                state.lastArg0 = null;
-                state.lastArg1 = null;
 
                 /*
                  * This could an bad JAD from an auto test suite,
@@ -285,41 +263,8 @@ public class MIDletSuiteLoader extends AbstractMIDletSuiteLoader {
      * @param exceptionMsg the message text
      */
     protected void displayException(String exceptionMsg) {
-
         MIDletSuiteUtils.displayException(
             displayEventHandler, exceptionMsg);
-    }
-
-    /**
-     * Gets AMS error message ID by generic error code
-     *
-     * @param errorCode generic error code
-     * @return AMS error ID
-     */
-    protected int getErrorMessageId(int errorCode) {
-        switch (errorCode) {
-            case Constants.MIDLET_SUITE_DISABLED:
-                return ResourceConstants.
-                    AMS_MIDLETSUITELDR_MIDLETSUITE_DISABLED;
-            case Constants.MIDLET_SUITE_NOT_FOUND:
-                return ResourceConstants.
-                    AMS_MIDLETSUITELDR_MIDLETSUITE_NOTFOUND;
-            case Constants.MIDLET_CLASS_NOT_FOUND:
-                return ResourceConstants.
-                    AMS_MIDLETSUITELDR_CANT_LAUNCH_MISSING_CLASS;
-            case Constants.MIDLET_INSTANTIATION_EXCEPTION:
-                return ResourceConstants.
-                    AMS_MIDLETSUITELDR_CANT_LAUNCH_ILL_OPERATION;
-            case Constants.MIDLET_ILLEGAL_ACCESS_EXCEPTION:
-                return ResourceConstants.
-                    AMS_MIDLETSUITELDR_CANT_LAUNCH_ILL_OPERATION;
-            case Constants.MIDLET_OUT_OF_MEM_ERROR:
-                return ResourceConstants.
-                    AMS_MIDLETSUITELDR_QUIT_OUT_OF_MEMORY;
-            default:
-                return ResourceConstants.
-                    AMS_MIDLETSUITELDR_UNEXPECTEDLY_QUIT;
-        }
     }
 
     /**
@@ -385,14 +330,39 @@ public class MIDletSuiteLoader extends AbstractMIDletSuiteLoader {
      * Initializes internal security and any other AMS classes related
      * classes before starting the MIDlet.
      *
-     * @param args not used, a {@link CommandState} object is obtained
-     *             using a native method instead of the argument.
+     * @param args not used,
+     *             a {@link CommandState} object is obtained and
+     *             used for arguments
      */
     public static void main(String args[]) {
-        new MIDletSuiteLoader().runMIDletSuite();
+        try {
+            MIDletSuiteLoader loader = new MIDletSuiteLoader();
+
+            loader.runMIDletSuite();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
     }
 
-    /** This class is not meant to be instantiated. */
+    /**
+     * Creates class instance and gets suite parameters
+     * from the persistent {@link CommandState} object.
+     */
     private MIDletSuiteLoader() {
+        // Restore command state transfered to MIDlet suite loader
+        state = CommandState.getCommandState();
+
+        // Init internal state from the restored command state
+        externalAppId = 0;
+        midletDisplayName = null;
+        args = new String[] {
+               state.arg0, state.arg1, state.arg2};
+        suiteId = state.suiteId;
+        midletClassName = state.midletClassName;
+
+        // Release command state argument references
+        state.arg0 = null;
+        state.arg1 = null;
+        state.arg2 = null;
     }
 }

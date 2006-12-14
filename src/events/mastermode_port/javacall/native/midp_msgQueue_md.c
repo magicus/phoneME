@@ -80,8 +80,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type    = MIDP_PEN_EVENT;
         pNewMidpEvent->ACTION  = event->data.penEvent.type;
         pNewMidpEvent->X_POS   = event->data.penEvent.x;
-        pNewMidpEvent->Y_POS   = event->data.penEvent.y;
-        break;
+        pNewMidpEvent->X_POS   = event->data.penEvent.y;
     case MIDP_JC_EVENT_SOCKET:
         pNewSignal->waitingFor = event->data.socketEvent.waitingFor;
             pNewSignal->descriptor = (int)event->data.socketEvent.handle;

@@ -78,52 +78,54 @@ extern "C" {
 #define MIDP_PEER_CHANGED_EVENT         8
 #define MIDP_CALL_SERIALLY_EVENT        9
 #define FOREGROUND_NOTIFY_EVENT         10
-#define ACTIVATE_MIDLET_EVENT           11
-#define PAUSE_MIDLET_EVENT              12
-#define DESTROY_MIDLET_EVENT            13
-#define SHUTDOWN_EVENT                  14
-#define ACTIVATE_ALL_EVENT              15
-#define PAUSE_ALL_EVENT                 16
-#define MIDLET_CREATED_NOTIFICATION     17
-#define MIDLET_ACTIVE_NOTIFICATION      18
-#define MIDLET_PAUSED_NOTIFICATION      19
-#define MIDLET_DESTROYED_NOTIFICATION   20
-#define FOREGROUND_REQUEST_EVENT        21
-#define BACKGROUND_REQUEST_EVENT        22
-#define SELECT_FOREGROUND_EVENT         23
-#define PREEMPT_EVENT                   24
-#define MIDLET_START_ERROR_EVENT        25
-#define EXECUTE_MIDLET_EVENT            26
-#define MIDLET_DESTROY_REQUEST_EVENT    27
-#define FOREGROUND_TRANSFER_EVENT       28
-#define EVENT_QUEUE_SHUTDOWN            29
-#define FATAL_ERROR_NOTIFICATION        30
+#define BACKGROUND_NOTIFY_EVENT         11
+#define ACTIVATE_MIDLET_EVENT           12
+#define PAUSE_MIDLET_EVENT              13
+#define DESTROY_MIDLET_EVENT            14
+#define SHUTDOWN_EVENT                  15
+#define ACTIVATE_ALL_EVENT              16
+#define PAUSE_ALL_EVENT                 17
+#define MIDLET_CREATED_NOTIFICATION     18
+#define MIDLET_ACTIVE_NOTIFICATION      19
+#define MIDLET_PAUSED_NOTIFICATION      20
+#define MIDLET_DESTROYED_NOTIFICATION   21
+#define DISPLAY_CREATED_NOTIFICATION    22
+#define FOREGROUND_REQUEST_EVENT        23
+#define BACKGROUND_REQUEST_EVENT        24
+#define SELECT_FOREGROUND_EVENT         25
+#define PREEMPT_EVENT                   26
+#define MIDLET_START_ERROR_EVENT        27
+#define EXECUTE_MIDLET_EVENT            28
+#define MIDLET_DESTROY_REQUEST_EVENT    29
+#define FOREGROUND_TRANSFER_EVENT       30
+#define EVENT_QUEUE_SHUTDOWN            31
+#define FATAL_ERROR_NOTIFICATION        32
 
 /* JSR-135 events */
-#define MM_EOM_EVENT                    31
-#define MM_SAT_EVENT                    32
-#define MM_TONEEOM_EVENT                33
+#define MM_EOM_EVENT                    33
+#define MM_SAT_EVENT                    34
+#define MM_TONEEOM_EVENT                35
 
 /* JSR-75 events */
-#define FC_DISKS_CHANGED_EVENT          34
+#define FC_DISKS_CHANGED_EVENT          36
 
-#define TEST_EVENT                      35
+#define TEST_EVENT                      37
 
-#define MIDLET_RESUME_REQUEST           36
+#define MIDLET_RESUME_REQUEST           38
 
-#define NATIVE_MIDLET_EXECUTE_REQUEST   37
-#define NATIVE_MIDLET_RESUME_REQUEST    38
-#define NATIVE_MIDLET_PAUSE_REQUEST     40
-#define NATIVE_MIDLET_DESTROY_REQUEST   41
-#define NATIVE_SET_FOREGROUND_REQUEST   42
+#define NATIVE_MIDLET_EXECUTE_REQUEST   39
+#define NATIVE_MIDLET_RESUME_REQUEST    40
+#define NATIVE_MIDLET_PAUSE_REQUEST     41
+#define NATIVE_MIDLET_DESTROY_REQUEST   42
+#define NATIVE_SET_FOREGROUND_REQUEST   43
 
 /* Automation API events */
-#define SET_FOREGROUND_BY_NAME_REQUEST  43
+#define SET_FOREGROUND_BY_NAME_REQUEST  44
 
-#define ROTATION_EVENT       44
+#define ROTATION_EVENT       45
 
 /* MIDlet resources paused notification */
-#define MIDLET_RS_PAUSED_NOTIFICATION   45
+#define MIDLET_RS_PAUSED_NOTIFICATION   46
 
 /** @} */
 

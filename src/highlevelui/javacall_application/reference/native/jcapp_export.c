@@ -43,15 +43,12 @@ gxj_screen_buffer gxj_system_screen_buffer;
 
 /**
  * Initializes the Javacall native resources.
- *
- * @return <tt>0</tt> upon successful initialization, or
- *         <tt>other value</tt> otherwise
  */
-int jcapp_init() {
+void jcapp_init() {
     javacall_lcd_color_encoding_type color_encoding;
 
     if (!JAVACALL_SUCCEEDED(javacall_lcd_init ()))
-        return -1;
+        return;
 
     gxj_system_screen_buffer.alphaData = NULL;
     gxj_system_screen_buffer.pixelData = 
@@ -59,19 +56,13 @@ int jcapp_init() {
                                  &gxj_system_screen_buffer.width,
                                  &gxj_system_screen_buffer.height,
                                  &color_encoding);
-/**
- *   NOTE: Only JAVACALL_LCD_COLOR_RGB565 encoding is supported by phoneME 
- *     implementation. Other values are reserved for future  use. Returning
- *     the buffer in other encoding will result in application termination.
- */
+
     if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {
-        REPORT_ERROR(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
-	return -2;
+        REPORT_CRIT(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
     };
     memset (gxj_system_screen_buffer.pixelData, 0, 
             gxj_system_screen_buffer.width * gxj_system_screen_buffer.height 
             * sizeof (gxj_pixel_type));
-    return 0;
 }
 
 /**
@@ -118,7 +109,6 @@ void jcapp_set_fullscreen_mode(jboolean mode) {
  */
 jboolean jcapp_reverse_orientation() {
     /* NOTE: need to implement */
-    return KNI_FALSE;
 }
 
 /**

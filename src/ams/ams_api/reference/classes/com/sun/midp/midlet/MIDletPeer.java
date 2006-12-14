@@ -26,26 +26,10 @@
 
 package com.sun.midp.midlet;
 
-import java.io.IOException;
-
-import javax.microedition.io.Connection;
 import javax.microedition.io.ConnectionNotFoundException;
-import javax.microedition.io.Connector;
-import javax.microedition.io.HttpConnection;
-
-import javax.microedition.lcdui.Display;
 
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
-
-import com.sun.midp.io.Util;
-
-import com.sun.midp.lcdui.DisplayAccess;
-import com.sun.midp.lcdui.DisplayEventHandler;
-
-import com.sun.midp.main.Configuration;
-import com.sun.midp.main.MIDletControllerEventProducer;
-import com.sun.midp.main.MIDletSuiteUtils;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
@@ -68,20 +52,6 @@ import com.sun.midp.log.LogChannels;
  */
 
 public class MIDletPeer implements MIDletEventConsumer {
-
-    /** Class name of the installer use for plaformRequest. */
-    static final String INSTALLER_CLASS =
-        "com.sun.midp.installer.GraphicalInstaller";
-
-    /** Media-Type for valid application descriptor files. */
-    static final String JAD_MT = "text/vnd.sun.j2me.app-descriptor";
-
-    /** Media-Type for valid Jar file. */
-    static final String JAR_MT_1 = "application/java";
-
-    /** Media-Type for valid Jar file. */
-    static final String JAR_MT_2 = "application/java-archive";
-
     /*
      * Implementation state; the states are in priority order.
      * That is, a higher number indicates a preference to be
@@ -120,55 +90,34 @@ public class MIDletPeer implements MIDletEventConsumer {
      */
     static final int DESTROYED = 5;
 
-    /** This class has a different security domain than the application. */
-    private static SecurityToken classSecurityToken;
-
-    /** Cached reference to the MIDletControllerEventProducer. */
-    private static MIDletControllerEventProducer midletControllerEventProducer;
-
     /** The controller of MIDlets. */
     private static MIDletStateHandler midletStateHandler;
 
-    /**
-     * The controller of Displays.
-     */
-    private static DisplayEventHandler displayEventHandler;
+    /** The call when a MIDlet's state changes. */
+    private static MIDletStateListener midletStateListener;
+
+    /** Handles platform requests. */
+    private static PlatformRequest platformRequest;
 
     /** The MIDletTunnel implementation from javax.microedition.midlet */
     private static MIDletTunnel tunnel;
 
     /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class
-     */
-    public static void initSecurityToken(SecurityToken token) {
-        if (classSecurityToken == null) {
-            classSecurityToken = token;
-        }
-    }
-
-    /**
      * Initialize the MIDletPeer class. Should only be called by the
      * MIDletPeerList (MIDletStateHandler).
      *
-     * @param token security token for initilaization
-     * @param  theDisplayEventHandler the display event handler
-     * @param  theMIDletStateHandler the midlet state handler
-     * @param theMIDletControllerEventProducer event producer
+     * @param theMIDletStateHandler the midlet state handler
+     * @param theMIDletStateListener the midlet state listener
+     * @param thePlatformRequestHandler the platform request handler
      */
-    public static void initClass(
-        SecurityToken token,
-        DisplayEventHandler theDisplayEventHandler,
+    static void initClass(
         MIDletStateHandler theMIDletStateHandler,
-        MIDletControllerEventProducer theMIDletControllerEventProducer) {
+        MIDletStateListener theMIDletStateListener,
+        PlatformRequest thePlatformRequestHandler) {
 
-        token.checkIfPermissionAllowed(Permissions.MIDP);
-
-        displayEventHandler = theDisplayEventHandler;
         midletStateHandler = theMIDletStateHandler;
-        midletControllerEventProducer = theMIDletControllerEventProducer;
+        midletStateListener = theMIDletStateListener;
+        platformRequest = thePlatformRequestHandler;
     }
 
     /**
@@ -188,14 +137,11 @@ public class MIDletPeer implements MIDletEventConsumer {
      * Returns the MIDletPeer object corresponding to the given
      * midlet instance.
      *
-     * @param token security token for authorizing the caller
      * @param m the midlet instance
      *
      * @return MIDletPeer instance associate with m
      */
-    public static MIDletPeer getMIDletPeer(SecurityToken token, MIDlet m) {
-        token.checkIfPermissionAllowed(Permissions.MIDP);
-
+    static MIDletPeer getMIDletPeer(MIDlet m) {
         return tunnel.getMIDletPeer(m);
     }
 
@@ -205,44 +151,21 @@ public class MIDletPeer implements MIDletEventConsumer {
     private int state;
 
     /**
-     * The DisplayAccessor for this MIDlet.
-     */
-    protected DisplayAccess accessor;
-
-    /**
-     * The Display for this MIDlet.
-     */
-    protected Display display;
-
-    /**
-     * ID of the Display for this MIDlet.
-     */
-    protected int displayId;
-
-    /**
      * The MIDlet for which this is the state.
      */
     protected MIDlet midlet;
 
     /**
-     * Creates a MIDlet's peer which is registered the MIDletStateHandler
-     * and DisplayEventHandler.
+     * Creates a MIDlet's peer which is registered the MIDletStateHandler.
      * Shall be called only from MIDletStateHandler.
-     *
+     * <p>
      * The peer MIDlet field is set later when the MIDlet's constructor calls
      * newMidletState.
+     *
+     * @param peerClassName class name of the peer MIDlet
      */
-    MIDletPeer() {
+    MIDletPeer(String peerClassName) {
         state = ACTIVE_PENDING;        // So it will be made active soon
-
-        // Force the creation of the Display
-        accessor = displayEventHandler.createDisplay(classSecurityToken, this);
-        display = accessor.getDisplay();
-        displayId = accessor.getDisplayId();
-
-        if (midletStateHandler.getMIDletSuite().isTrusted()) {
-            accessor.setTrustedIcon(classSecurityToken, true);
-        }
     }
 
     /**
@@ -252,15 +175,6 @@ public class MIDletPeer implements MIDletEventConsumer {
      */
     public MIDlet getMIDlet() {
         return midlet;
-    }
-
-    /**
-     * Get the Display for this MIDlet.
-     *
-     * @return the Display of this MIDlet.
-     */
-    public Display getDisplay() {
-        return display;
     }
 
     /**
@@ -348,8 +262,8 @@ public class MIDletPeer implements MIDletEventConsumer {
 
         // do work after releasing the lock
         if (oldState == ACTIVE) {
-            midletControllerEventProducer.sendMIDletPauseNotifyEvent(
-                displayId);
+            midletStateListener.midletPaused(getMIDletSuite(),
+                getMIDlet().getClass().getName());
         }
     }
 
@@ -378,7 +292,8 @@ public class MIDletPeer implements MIDletEventConsumer {
      */
 
     public final void resumeRequest() {
-        midletControllerEventProducer.sendMIDletResumeRequest(displayId);
+        midletStateListener.resumeRequest(getMIDletSuite(),
+            getMIDlet().getClass().getName());
     }
 
     /**
@@ -450,170 +365,9 @@ public class MIDletPeer implements MIDletEventConsumer {
      */
     public final boolean platformRequest(String URL)
             throws ConnectionNotFoundException {
-        if ("".equals(URL)) {
-            if (Configuration.getIntProperty(
-                    "useJavaInstallerForPlaformRequest", 0) != 0) {
-                /*
-                 * This is request to try to cancel the last request.
-                 *
-                 * If the next MIDlet to run is the installer then it can be
-                 * cancelled.
-                 */
-                if (INSTALLER_CLASS.equals(
-                    MIDletSuiteUtils.getNextMIDletToRun())) {
-                    /*
-                     * Try to cancel the installer midlet. Note this call only
-                     * works now because suite are not run concurrently and
-                     * must be queued to be run after this MIDlet is
-                     * destroyed.
-                     * This cancel code can be remove when the installer is
-                     * runs concurrently with this suite.
-                     */
-                    MIDletSuiteUtils.execute(classSecurityToken,
-                        MIDletSuite.UNUSED_SUITE_ID, null, null);
-                    return false;
-                }
-            }
 
-            /*
-             * Give the platform a chance to cancel the request.
-             * Note: if the application was launched already this will
-             * not have any effect.
-             */
-            dispatchPlatformRequest("");
-            return false;
-        }
-
-        /*
-         * Remove this "if", when not using the Installer MIDlet,
-         * or the native installer will not be launched.
-         */
-        if (Configuration.getIntProperty(
-                "useJavaInstallerForPlaformRequest", 0) != 0) {
-            if (isMidletSuiteUrl(URL)) {
-                return dispatchMidletSuiteUrl(URL);
-            }
-        }
-
-        return dispatchPlatformRequest(URL);
+        return platformRequest.dispatch(URL);
     }
-
-    /**
-     * Find out if the given URL is a JAD or JAR HTTP URL by performing a
-     * HTTP head request and checking the MIME type.
-     *
-     * @param url The URL for to check
-     *
-     * @return true if the URL points to a MIDlet suite
-     */
-
-    private boolean isMidletSuiteUrl(String url) {
-        Connection conn = null;
-        HttpConnection httpConnection = null;
-        String profile;
-        int space;
-        String configuration;
-        String locale;
-        int responseCode;
-        String mediaType;
-
-        try {
-            conn = Connector.open(url, Connector.READ);
-        } catch (IllegalArgumentException e) {
-            return false;
-        } catch (IOException e) {
-            return false;
-        }
-
-        try {
-            if (!(conn instanceof HttpConnection)) {
-                // only HTTP or HTTPS are supported
-                return false;
-            }
-
-            httpConnection = (HttpConnection)conn;
-
-            httpConnection.setRequestMethod(HttpConnection.HEAD);
-
-            httpConnection.setRequestProperty("Accept", "*/*");
-
-            profile = System.getProperty("microedition.profiles");
-            space = profile.indexOf(' ');
-            if (space != -1) {
-                profile = profile.substring(0, space);
-            }
-
-            configuration = System.getProperty("microedition.configuration");
-            httpConnection.setRequestProperty("User-Agent",
-                "Profile/" + profile + " Configuration/" + configuration);
-
-            httpConnection.setRequestProperty("Accept-Charset",
-                                              "UTF-8, ISO-8859-1");
-
-            /* locale can be null */
-            locale = System.getProperty("microedition.locale");
-            if (locale != null) {
-                httpConnection.setRequestProperty("Accept-Language", locale);
-            }
-
-            responseCode = httpConnection.getResponseCode();
-
-            if (responseCode != HttpConnection.HTTP_OK) {
-                return false;
-            }
-
-            mediaType = Util.getHttpMediaType(httpConnection.getType());
-            if (mediaType == null) {
-                return false;
-            }
-
-            if (mediaType.equals(JAD_MT) || mediaType.equals(JAR_MT_1) ||
-                    mediaType.equals(JAR_MT_2)) {
-                return true;
-            }
-
-            return false;
-        } catch (IOException ioe) {
-            return false;
-        } finally {
-            try {
-                conn.close();
-            } catch (Exception e) {
-                if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                    Logging.report(Logging.WARNING, LogChannels.LC_AMS,
-                                  "Exception while closing  connection");
-                }
-            }
-        }
-    }
-
-    /**
-     * Dispatches the a JAD or JAD HTTP URL to the Graphical Installer.
-     *
-     * @param url The URL to dispatch
-     *
-     * @return true if the MIDlet suite MUST first exit before the
-     * content can be fetched.
-     */
-    private boolean dispatchMidletSuiteUrl(String url) {
-        return MIDletSuiteUtils.executeWithArgs(classSecurityToken,
-            MIDletSuite.INTERNAL_SUITE_ID, INSTALLER_CLASS,
-                "MIDlet Suite Installer", "I", url, null);
-    }
-
-    /**
-     * Passes the URL to the native handler.
-     *
-     * @param url The URL for the platform to load.
-     *
-     * @return true if the MIDlet suite MUST first exit before the
-     * content can be fetched.
-     *
-     * @exception ConnectionNotFoundException if
-     * the platform cannot handle the URL requested.
-     */
-    public native final boolean dispatchPlatformRequest(String url) throws
-        ConnectionNotFoundException;
 
     /**
      * Change the state and notify.

@@ -121,6 +121,12 @@ class TextFieldLFImpl extends ItemLFImpl implements
     protected boolean usePreferredX = true;
 
     /**
+     * cached size[] structure, or null size has been invalidated
+     * and needs to be re-computed
+     */
+    protected int[] cachedSize = null;
+
+    /**
      * pixel offset to the start of the text field  (for example,  if 
      * xScrollOffset is -60 it means means that the text in this 
      * text field is scrolled 60 pixels left of the left edge of the
@@ -257,6 +263,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * @param maxSize - the new maximum size
      */
     public void lSetMaxSize(int maxSize) {
+        cachedSize = null; // contentSize has changed, so flush cache
         int max = tf.getMaxSize();
         if (cursor.index > max) {
             cursor.index = max;
@@ -321,6 +328,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         // the current text, causing the text to be set empty,
         // or changed to "password", causing it to change width
         // Request relayout to based on updated contentSize
+        cachedSize = null;
         if (item.owner == null) {
             return; // because owner is null, we just return.
         }
@@ -401,16 +409,22 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * @param availableWidth The width available for this Item
      */
     void lGetContentSize(int size[], int availableWidth) {
-       Font f = ScreenSkin.FONT_INPUT_TEXT;
-       size[HEIGHT] = f.getHeight() + (2 * TextFieldSkin.PAD_V);
-       size[WIDTH] = f.charWidth('W') * tf.buffer.capacity() +
-            (2 * TextFieldSkin.PAD_H);
-       if (size[WIDTH] > availableWidth) {
-            size[WIDTH] = availableWidth;
-       }
-
+        if (cachedSize == null) {
+            Font f = ScreenSkin.FONT_INPUT_TEXT;
+            size[HEIGHT] = f.getHeight() + (2 * TextFieldSkin.PAD_V);
+            size[WIDTH] = f.charWidth('W') * tf.buffer.capacity() +
+                (2 * TextFieldSkin.PAD_H);
+            if (size[WIDTH] > availableWidth) {
+                size[WIDTH] = availableWidth;
+            }
+            cachedSize = new int[] { 0, 0, size[WIDTH], size[HEIGHT] };
+        } else { // use cached size here
+            size[WIDTH] = cachedSize[WIDTH];
+            size[HEIGHT] = cachedSize[HEIGHT];
+        }
+        
         // update scrollWidth used in scrolling UE text
-        scrollWidth = size[WIDTH] - (2 * TextFieldSkin.PAD_H) - 1;
+        scrollWidth = cachedSize[WIDTH] - (2 * TextFieldSkin.PAD_H) - 1;
     }
 
     /**

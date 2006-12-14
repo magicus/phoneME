@@ -625,18 +625,14 @@ create_transformed_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, 
       if ( transform & TRANSFORM_INVERTED_AXES ) {
           dest->pixelData[destX * dest->width + destY] =
             src->pixelData[srcYwidth /*srcY*src->width*/ + srcX];
-        if (src->alphaData != NULL) {
-            dest->alphaData[destX * dest->width + destY] =
-                src->alphaData[srcYwidth /*srcY*src->width*/ + srcX];
-        }
+        dest->alphaData[destX * dest->width + destY] =
+            src->alphaData[srcYwidth /*srcY*src->width*/ + srcX];
 
       } else {
         dest->pixelData[destYwidth /*destY * dest->width*/ + destX] =
                    src->pixelData[srcYwidth /*srcY*src->width*/ + srcX];
-        if (src->alphaData != NULL) {
-            dest->alphaData[destYwidth /*destY * dest->width*/ + destX] =
-                src->alphaData[srcYwidth /*srcY*src->width*/ + srcX];
-        }
+        dest->alphaData[destYwidth /*destY * dest->width*/ + destX] =
+            src->alphaData[srcYwidth /*srcY*src->width*/ + srcX];
       }
     } /*for x*/
   } /* for y */
@@ -743,15 +739,13 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
         if (newSrc.pixelData == NULL) {
             REPORT_ERROR(LC_LOWUI, "Out of memory error, copyImageRegion (pixelData)\n"); 
             return ; 
-        }
-        if (src->alphaData != NULL) {
-            newSrc.alphaData =
-                (gxj_alpha_type *)midpMalloc(width * height * sizeof (gxj_alpha_type));
-            if (newSrc.alphaData == NULL) {
-                midpFree(newSrc.pixelData);
-                REPORT_ERROR(LC_LOWUI, "Out of memory error, copyImageRegion (Alpha)\n");
-                return ;
-            }
+        } 
+        newSrc.alphaData = 
+            (gxj_alpha_type *)midpMalloc(width * height * sizeof (gxj_alpha_type)); 
+        if (newSrc.alphaData == NULL) { 
+            midpFree(newSrc.pixelData); 
+            REPORT_ERROR(LC_LOWUI, "Out of memory error, copyImageRegion (Alpha)\n"); 
+            return ;
         }
         
         create_transformed_imageregion(src, &newSrc, x_src, y_src, width,

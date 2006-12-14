@@ -66,10 +66,6 @@ typedef struct _MIDPCommandState {
     SuiteIdType lastSuiteId;
     /** The MIDlet class name for the suite to load. */
     pcsl_string lastMidletClassName;
-    /** The argument for a last MIDlet, will be app property arg-0. */
-    pcsl_string lastArg0;
-    /** The argument for a last MIDlet, will be app property arg-1. */
-    pcsl_string lastArg1;
     /** The argument for a MIDlet in the suite, will be app property arg-0. */
     pcsl_string arg0;
     /** The argument for a MIDlet in the suite, will be app property arg-1. */

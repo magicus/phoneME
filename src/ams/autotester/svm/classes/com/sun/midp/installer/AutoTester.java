@@ -289,7 +289,7 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
                 MIDletSuiteUtils.setLastSuiteToRun(
                     MIDletStateHandler.getMidletStateHandler().
                     getMIDletSuite().getID(),
-                    getClass().getName(), null, null);
+                    getClass().getName());
 
                 if (loopCount > 0) {
                     loopCount -= 1;

@@ -65,7 +65,7 @@ SUBSYSTEM_SECURITY_JAVA_FILES += \
 #
 # CDC/Foundation already provides following classes. Don't include them
 # in MIDP.
-ifneq ($(TARGET_VM), cdc_vm)
+ifneq ($(TARGET_VM), cdc_hi)
 SUBSYSTEM_SECURITY_JAVA_FILES += \
     $(PKI_DIR)/reference/classes/javax/microedition/pki/Certificate.java \
     $(PKI_DIR)/reference/classes/javax/microedition/pki/CertificateException.java

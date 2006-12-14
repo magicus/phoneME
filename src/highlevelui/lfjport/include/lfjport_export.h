@@ -87,11 +87,8 @@ void lfjport_gained_foreground();
 
 /**
  * Initializes the window system.
- *
- * @return <tt>0</tt> upon successful initialization, or
- *         <tt>other value</tt> otherwise
  */
-int lfjport_ui_init();
+void lfjport_ui_init();
 
 /**
  * Finalize the window system.

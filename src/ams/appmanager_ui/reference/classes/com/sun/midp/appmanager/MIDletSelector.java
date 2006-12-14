@@ -175,7 +175,7 @@ final class MIDletSelector implements CommandListener {
             for (int i = 0; i < mcount; i++) {
                 Image icon = null;
                 if (minfo[i].icon != null) {
-                    icon = MIDletSuiteInfo.getIcon(suiteInfo.suiteId,
+                    icon = RunningMIDletSuiteInfo.getIcon(suiteInfo.suiteId,
                         minfo[i].icon, mss);
                 }
 

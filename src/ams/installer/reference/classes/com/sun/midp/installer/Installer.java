@@ -183,7 +183,7 @@ public abstract class Installer {
     /**
      * Constructor of the Installer.
      */
-    protected Installer() {
+    public Installer() {
         state = getInstallState();
         verifier = new VerifierImpl(state);
 
@@ -2009,18 +2009,29 @@ public abstract class Installer {
      *          version number. false otherwise
      */
     private static boolean matchVersion(String name1, String name2) {
-        String base1 = name1.substring(0, name1.indexOf('-'));
-        String base2 = name2.substring(0, name1.indexOf('-'));
+        int dash1 = name1.indexOf('-');
 
-        if (base1.equals(base2)) {
-            String ver1 = name1.substring(name1.indexOf('-') + 1,
-                                          name1.length());
-            String ver2 = name2.substring(name2.indexOf('-') + 1,
-                                          name2.length());
-            return (vercmp(ver1, ver2) >= 0);
-        } else {
+        if (dash1 < 0) {
             return false;
         }
+
+        int dash2 = name2.indexOf('-');
+
+        if (dash2 < 0) {
+            return false;
+        }
+
+        String base1 = name1.substring(0, dash1);
+        String base2 = name2.substring(0, dash2);
+
+        if (!base1.equals(base2)) {
+            return false;
+        }
+
+        String ver1 = name1.substring(dash1 + 1, name1.length());
+        String ver2 = name2.substring(dash2 + 1, name2.length());
+
+        return (vercmp(ver1, ver2) >= 0);
     }
 
     /**
@@ -2078,10 +2089,15 @@ public abstract class Installer {
         if (supportedProfiles == null) {
             int start;
             int nextSpace = -1;
-            // need to call trim to remove trailing spaces
             String meProfiles =
-                System.getProperty(MICROEDITION_PROFILES).trim();
+                System.getProperty(MICROEDITION_PROFILES);
+            if (meProfiles == null || meProfiles.length() == 0) {
+                throw new RuntimeException(
+                    "system property microedition.profiles not set");
+            }
             supportedProfiles = new Vector();
+            // need to call trim to remove trailing spaces
+            meProfiles = meProfiles.trim();
 
             for (; ; ) {
                 start = nextSpace + 1;
