@@ -59,4 +59,9 @@ public interface JUMPWindowingModule extends JUMPModule {
      * Returns the new foreground window
      */
     public JUMPWindow nextWindow();
+
+    /** 
+     * Find JUMPWindow instace from window ID
+     */
+    public JUMPWindow idToWindow(long id);
 }

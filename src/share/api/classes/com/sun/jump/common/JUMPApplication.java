@@ -1,33 +1,34 @@
 /*
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.jump.common;
 
-//import java.util.ResourceBundle;
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.net.URL;
 import com.sun.jump.common.JUMPContent;
+import java.util.Iterator;
 
 /**
  * A representation of executable application content in the jump environment.
@@ -36,127 +37,108 @@ import com.sun.jump.common.JUMPContent;
  * an application properly.
  */
 public class JUMPApplication
-    implements java.io.Serializable, JUMPContent
-{
-    /**
-     * The type of this JUMPApplication - XLET, MIDLET or MAIN?
-     */
-    public JUMPAppModel appType;
-
-    /*
-    * App type in String, for serialization
-    */
-    //private String appTypeInString;
-
-    protected String  initialClass = null; // class to execute
-    protected URL     iconPath = null; // path to icon for display
-    protected String  title = null; // application title
-    protected URL     classpath = null; // specified classpath, if any
+        implements java.io.Serializable, JUMPContent {
+    
     protected HashMap props = null; // additional properties
-
-    // ResourceBundle for localization
-    // protected ResourceBundle rb;
-
+    
+    public static final String ICONPATH_KEY = "JUMPApplication_iconPath";
+    public static final String TITLE_KEY = "JUMPApplication_title";
+    public static final String APPMODEL_KEY = "JUMPApplication_appModel";
+    
     /**
      * Create an instance of an application.
-     * @param clazz The class name of the application
-     * @param classpath The path to the application
      * @param title The application's title, can be null
-     * @param iconPath The location of the application's icon in, can be null 
+     * @param iconPath The location of the application's icon in, can be null
      * @param type The application's type
      */
-    public JUMPApplication( String clazz, URL classpath, 
-                           String title, URL iconPath, 
-                           JUMPAppModel type  )
-    {
-        this.initialClass = clazz;
-        this.classpath = classpath;
-        this.title = title;
-        this.iconPath = iconPath;
-        this.appType = type;
-        //this.appTypeInString = type.toString();
+    public JUMPApplication(String title, URL iconPath, JUMPAppModel type) {
+        addProperty(TITLE_KEY, title);
+        addProperty(ICONPATH_KEY, iconPath.getFile());
+        addProperty(APPMODEL_KEY, type.getName());
+    }
+    
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("[app type=\""+getAppType()+"\",");
+        sb.append(" iconPath=\""+getIconPath()+"\",");
+        sb.append(" title=\""+getTitle()+"\",");
+        sb.append(" props=["+getPropsAsString()+"] ]");
+        return sb.toString();
+    }
+    
+    private String getPropsAsString() {
+        if (props == null) {
+            return "null";
+        }
+        
+        StringBuffer sb = new StringBuffer();
+        for (Iterator i = getPropertyNames(); i.hasNext(); ) {
+            String name = (String)i.next();
+            String value = getProperty(name);
+            sb.append(name+"="+value+", ");
+        }
+        return sb.toString();
     }
 
     /**
      * Determine the type of this application.
-     * 
+     *
      * @return One of JUMPApplication's defined application types,
      *         as defined in JUMPAppModel.
      */
-    public JUMPAppModel getAppType()
-    {
-        return appType;
+    public JUMPAppModel getAppType() {
+        String type = getProperty(APPMODEL_KEY);
+        if (type.equals(JUMPAppModel.XLET.getName())) {
+            return JUMPAppModel.XLET;
+        } else if (type.equals(JUMPAppModel.MAIN.getName())) {
+            return JUMPAppModel.MAIN;
+        } else if (type.equals(JUMPAppModel.MIDLET.getName())) {
+            return JUMPAppModel.MIDLET;
+        }
+        return null;
     }
-
-    /**
-     * Validate the application and make sure that it is
-     * internally consistent.
-     * @throws SyntaxException In case of inconsistency.
-     */
-    //public void check() throws SyntaxException
-    //{
-    //    return;
-    //}
-
+    
     /**
      * Get the application's title.
      * @return The application's title.
      */
-    public String getTitle()
-    {
-        return title;
+    public String getTitle() {
+        return getProperty(TITLE_KEY);
     }
-
+    
     /**
      * Set the application's title.
      *
      */
-    public void setTitle( String title )
-    {
-        this.title = title;
+    public void setTitle( String title ) {
+        addProperty(TITLE_KEY, title);
         return;
     }
-
+    
     /**
      * Get the path to the application's icon.
      * @return A URL defining the path to the icon in
      *         the downloaded content.
      */
-    public URL getIconPath()
-    {
-        return iconPath;
+    public URL getIconPath() {
+        String file = getProperty(ICONPATH_KEY);
+        URL url = null;
+        try {
+            url = new URL("file", null, file);
+        } catch (MalformedURLException ex) {
+            ex.printStackTrace();
+        }
+        return url;
     }
-
+    
     /**
      * Set the path to the application's icon.
      */
-    public void setIconPath( URL path )
-    {
-        this.iconPath = path;
+    public void setIconPath( URL path ) {
+        addProperty(ICONPATH_KEY, path.getFile());
         return;
     }
-
-    /**
-     * Get the application's main class.
-     * @return A String indicating the application's
-     *         initial class, or <code>null</code> if
-     *         there is no initial class.
-     */
-    public String getInitialClass()
-    {
-        return initialClass;
-    }
-
-    /**
-     * Get the applications's specified classpath
-     * @return A String indicating the application's specified classpath,
-     *         or <code>null</code> if one is not specified
-     */
-    public URL getClasspath()
-    {
-        return classpath;
-    }
-
+    
     /**
      * Add a key/value pair to the application's list
      * of properties.
@@ -167,19 +149,17 @@ public class JUMPApplication
      */
     public void addProperty( String key, String value ) //throws SyntaxException
     {
-        if ( key == null || value == null )
-        {
+        if ( key == null || value == null ) {
             throw new NullPointerException("null key or value");
         }
-        if ( props == null )
-        {
+        if ( props == null ) {
             props = new HashMap();
         }
         props.put( key, value );
-
+        
         return;
     }
-
+    
     /**
      * Get a key/value pair to the application's list
      * of properties.
@@ -189,45 +169,29 @@ public class JUMPApplication
      */
     public String getProperty( String key ) //throws SyntaxException
     {
-        if ( props != null )
-        {
+        if ( props != null ) {
             return (String) props.get(key);
         }
-   
+        
         return null;
     }
-
+    
     /**
-     * Returns the names of this JUMPApplication's property entries as an 
-     * Iterator of String objects, or an empty Iterator if 
+     * Returns the names of this JUMPApplication's property entries as an
+     * Iterator of String objects, or an empty Iterator if
      * the JUMPApplication have no properties associated.
      */
-    public java.util.Iterator getPropertyNames() {
-        if ( props != null )
-        {
+    public Iterator getPropertyNames() {
+        if ( props != null ) {
             return props.keySet().iterator();
         }
-
+        
         return null;
     }
-
+    
     public String getContentType() {
-	return "Application";
+        return "Application";
     }
-
-    /*
-     * Validate the application type.
-     *  better to move to JUMPAppModel class?
-     */
-//    private void checkAppType( JUMPAppModel type )// throws SyntaxException
-//    {
-//        if ( type != JUMPAppModel.MAIN &&
-//             type != JUMPAppModel.XLET &&
-//             type != JUMPAppModel.MAIN )
-//        {
-//            throw new RuntimeException( rb.getString( "InvalidAppType" ) );
-//        }
-//        return;
-//    }
+    
 }
 

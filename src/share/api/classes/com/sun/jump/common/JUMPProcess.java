@@ -26,10 +26,7 @@
 
 package com.sun.jump.common;
 
-import com.sun.jump.messagequeue.JUMPIncomingQueue;
-import com.sun.jump.messagequeue.JUMPMessagable;
-import com.sun.jump.messagequeue.JUMPMessage;
-import com.sun.jump.messagequeue.JUMPOutgoingQueue;
+import com.sun.jump.message.JUMPMessagable;
 
 /**
  * <code>JUMPProcess</code> abstracts an OS process which runs the JUMP 
@@ -37,32 +34,5 @@ import com.sun.jump.messagequeue.JUMPOutgoingQueue;
  */
 public interface JUMPProcess extends JUMPMessagable {
     public int getProcessId();
-    
-    /**
-     * A messagable component has a queue for incoming messages
-     */
-    public JUMPIncomingQueue getIncomingQueue();
 
-    /**
-     * A messagable component has a queue for outgoing messages
-     */
-    public JUMPOutgoingQueue getOutgoingQueue();
-    
-    /**
-     * Creates a new <Code>JUMPMessage</code> for the message type and the
-     * data (payload) specified. The sender of the message is automatically
-     * filled in by the <Code>JUMPProcess</code> implementation.
-     * 
-     * @throws java.lang.IllegalArgumentException if the data is not a
-     *         byte[], String or java.io.Serializable.
-     */
-    public JUMPMessage newMessage(String mesgType, Object data);
-    
-    /**
-     * Create a new <code>JUMPMessage</code> as a response to the request
-     * message passed. The sender of the message is automatically
-     * filled in by the <Code>JUMPProcess</code> implementation.
-     */
-    public JUMPMessage newMessage(JUMPMessage requestMessage,
-        String mesgType, Object data);
 }

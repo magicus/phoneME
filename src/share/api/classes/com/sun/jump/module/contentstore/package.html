@@ -39,6 +39,7 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
   This package consists of classes that provides the core abstractions for
   a content store. A content store uses a <Code>JUMPStore</code> to persist the
   content store data.
+
   <p>
   The following sample code shows, how a store can be implemented on a 
   filesystem. Every node that does not contain <code>JUMPData</code> is
@@ -47,9 +48,11 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
   data.properties file contains the following information.
   <b>data-name,data-type,data-value</b>
   <pre>
+
   public class FileStoreImpl implements JUMPStore {
 
      public void createDataNode(String uri, JUMPData jumpData) {
+
         // get the full path of the file that holds the data for the
         // uri passed.
         File file = uriToDataFile(uri);
@@ -74,6 +77,7 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
         // if the uri parameter represents a data node.
    
         if (!isDataFile(uri)) {
+
             // This URI represents non-leaf node.
             // .... then do something to create a JUMPNode representing a List,
             // and return it.
@@ -98,6 +102,17 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
         File file = uriToFile(uri);
         file.delete();
      }
+
+     public void updateNode(String uri, JUMPData jumpData) {
+        // check if the node represented by the uri exists and is data.
+        if (!isDataFile(uri) || !exists(uri) ) {
+           throw new java.io.IOException("Update failed"); 
+        }
+ 
+        // delete the old node and create a node with the new data.
+        deleteNode(uri);
+        createDataNode(uri, jumpData);
+     }
    
      private String createMarshalledData(String dataname, JUMPData data) {
         // Create a representation of JUMPData's content to be written out to the file.
@@ -105,26 +120,6 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
         // come up with a String representation of the JUMPData content that works the
         // opposite way of createUnmarshalledData.  The returned type, String, is also
         // just for the implementation example, and can also be in any other format.
-
-        // In this example, every data node is represented by a single property file,
-        // as described before this class definition.  Thus, this method might return
-        // a String denoting "data-name, data-type, data-value".
-
-        String datatype;
-        String datavalue;
-
-        int format = data.getFormat();
-
-        switch(format) {
-            case (FORMAT_BOOLEAN) :
-               datatype = boolean;	
-               datavalue = new Boolean(data.getBooleanValue()).toString();
-               break;
-            case (FORMAT_BYTES) :
-                 .....
-        }
-
-        return dataname + ", " + datatype + ", " + datavalue;
      }
 
      private JUMPData createUnmarshalledData(String marshalledData) {
@@ -172,7 +167,7 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
             storeHandle.getNode(ROOT_URI+"/"+name+"/iconPath");
           app.setIconPath(appNode.getString());
           
-          // indicate that we dont need the store any more
+          // indicate that we do not need the store any more
           closeStore(storeHandle);
           return app;
       }

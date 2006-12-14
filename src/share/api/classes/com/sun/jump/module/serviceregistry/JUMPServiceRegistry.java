@@ -28,9 +28,9 @@ package com.sun.jump.module.serviceregistry;
 
 import com.sun.jump.module.JUMPModule;
 
-import java.rmi.Remote;
-import java.rmi.RemoteException;
-import java.rmi.NotBoundException;
+////import java.rmi.Remote;
+//import java.rmi.RemoteException;
+//import java.rmi.NotBoundException;
 
 /**
  * <code>JUMPServiceRepository</code> represents a registry of services
@@ -40,6 +40,10 @@ import java.rmi.NotBoundException;
 
 public interface JUMPServiceRegistry extends JUMPModule {
 
+    static class Remote 
+    {
+    }
+    
     /**
      * Registers a service under a given name to the registry, and make it
      * available for other JUMP processes.

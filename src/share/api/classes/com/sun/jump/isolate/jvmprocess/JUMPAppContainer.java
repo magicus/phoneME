@@ -27,9 +27,10 @@
 package com.sun.jump.isolate.jvmprocess;
 
 import com.sun.jump.common.JUMPWindow;
-import com.sun.jump.messagequeue.JUMPMessage;
-import com.sun.jump.messagequeue.JUMPMessageHandler;
+import com.sun.jump.message.JUMPMessage;
+import com.sun.jump.message.JUMPMessageHandler;
 
+import com.sun.jump.common.JUMPApplication;
 
 /**
  * <code>JUMPAppContainer</code> defines the application container. 
@@ -50,9 +51,9 @@ public abstract class JUMPAppContainer implements JUMPMessageHandler {
     }
     
     /**
-     * Start the application specific by the class name.
+     * Start the application specific by the JUMPApplication object.
      */
-    public abstract int startApp(String className, String[] args);
+    public abstract int startApp(JUMPApplication app, String[] args);
     
     public abstract void pauseApp(int appId);
     

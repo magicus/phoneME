@@ -26,26 +26,34 @@
 
 package com.sun.jump.command;
 
+import com.sun.jump.message.JUMPMessage;
+
 /**
  * <code>JUMPRequest</code> encapsulates the request command.
  */
 public class JUMPRequest extends JUMPCommand {
-   
     
-    
-    public static JUMPRequest newInstance(String id) {
-        return new JUMPRequest(id, null);
+    /**
+     * Creates a new instance of <code>JUMPRequest</code> by deserializing
+     * the data from the <code>JUMPMessage</code>
+     */
+    public static JUMPCommand fromMessage(JUMPMessage message) {
+	return JUMPCommand.fromMessage(message, JUMPRequest.class);
+    }
+
+    //
+    // A private constructor when the request is to be filled in
+    // by deserialization from a message
+    //
+    private JUMPRequest(String messageType){
+        super(messageType, "", null);
     }
     
-    public static JUMPRequest newInstance(String id, String[] args){
-        return new JUMPRequest(id, args);
+    public JUMPRequest(String messageType, String id){
+        super(messageType, id, null);
     }
     
-    private JUMPRequest(String id){
-        this(id, null);
-    }
-    
-    private JUMPRequest(String id, String[] args){
-        super(id, args);
+    public JUMPRequest(String messageType, String id, String[] args){
+        super(messageType, id, args);
     }
 }

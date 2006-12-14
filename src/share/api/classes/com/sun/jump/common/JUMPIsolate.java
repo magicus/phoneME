@@ -26,7 +26,7 @@
 
 package com.sun.jump.common;
 
-import com.sun.jump.messagequeue.JUMPMessagable;
+import com.sun.jump.message.JUMPMessagable;
 
 /**
  * <code>JUMPIsolate</code> defines the common funtionality of an
@@ -39,11 +39,11 @@ public interface JUMPIsolate extends JUMPMessagable {
     public int getIsolateId();
 
     /**
-     * Destroy the isolate. The isolate should not be referenced after 
-     * this call.
+     * Kill the isolate. The isolate should not be referenced after 
+     * this call. 
      *
-     * @param force <code>true</code> means forcefully destroy the isolate
+     * @param force <code>true</code> means forcefully kill the isolate
      *        and <code>false</code> indicates a best-effort.
      */
-    public void destroy(boolean force);
+    public void kill(boolean force);
 }

@@ -27,9 +27,7 @@
 package com.sun.jump.executive;
 
 import com.sun.jump.common.JUMPProcess;
-import com.sun.jump.messagequeue.JUMPIncomingQueue;
-import com.sun.jump.messagequeue.JUMPMessage;
-import com.sun.jump.messagequeue.JUMPOutgoingQueue;
+import com.sun.jump.message.JUMPMessagingService;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,47 +39,29 @@ import java.util.Map;
  * 
  * @see com.sun.jump.module.JUMPModule
  */
-public class JUMPExecutive implements JUMPProcess {
+public abstract class JUMPExecutive
+    implements JUMPProcess, JUMPMessagingService {
+
     private static JUMPExecutive INSTANCE = null;
     
     protected Map moduleFactoryMap = null;
     
     /**
-     * Returns the singleton executive instance. If an alternate implementaion
-     * should be returned, then a system property containing the classname of
-     * the subclass of <code>JUMPExecutive</code> must be set. If such a
-     * property is not set, then a default implementation will be provided.
+     * Returns the singleton executive instance.
      */ 
-    public static synchronized JUMPExecutive getInstance() {
-        if ( INSTANCE == null ) {
-            // get the concrete executive classname from the environment
-            // and instantiate that.
-            String className = null;
-            if ( className != null ) {
-                try {
-                    INSTANCE = (JUMPExecutive)
-                        Class.forName(className).newInstance();
-                    
-                } catch (ClassNotFoundException ex) {
-                    ex.printStackTrace();
-                } catch (InstantiationException ex) {
-                    ex.printStackTrace();
-                } catch (IllegalAccessException ex) {
-                    ex.printStackTrace();
-                }
-            }
-            if ( INSTANCE == null ){
-                INSTANCE = new JUMPExecutive();
-            }
-            INSTANCE.initialize();
-        }
-        return INSTANCE;
+    public static JUMPExecutive getInstance() {
+	return INSTANCE;
     }
     
     /**
      * Creates a new instance of JUMPExecutive
      */
     protected  JUMPExecutive() {
+        synchronized (JUMPExecutive.class){
+            if ( INSTANCE == null ) {
+                INSTANCE = this;
+            }
+        }
         this.moduleFactoryMap = new HashMap();
     }
     
@@ -93,25 +73,9 @@ public class JUMPExecutive implements JUMPProcess {
      */
     protected void initialize() {
     }
-
-    public int getProcessId() {
-        return 0;
-    }
-
-    public JUMPIncomingQueue getIncomingQueue() {
-        return null;
-    }
-
-    public JUMPOutgoingQueue getOutgoingQueue() {
-        return null;
-    }
-
-    public JUMPMessage newMessage(String mesgType, Object data) {
-        return null;
-    }
-
-    public JUMPMessage newMessage(JUMPMessage requestMessage, 
-        String mesgType, Object data) {
-        return null;
-    }
+    
+    /**
+     * Gets the User input manager configured with the executive.
+     */
+    public abstract JUMPUserInputManager getUserInputManager();
 }

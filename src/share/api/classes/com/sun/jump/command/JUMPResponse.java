@@ -26,6 +26,8 @@
 
 package com.sun.jump.command;
 
+import com.sun.jump.message.JUMPMessage;
+
 /**
  * <code>JUMPResponse</code> encapsulates the response command
  */
@@ -39,31 +41,28 @@ public class JUMPResponse extends JUMPCommand {
      */
     public static final String ID_DATA         = "Data";
     
-    
-    public static final JUMPResponse Success  = new JUMPResponse(ID_SUCCESS);
-    public static final JUMPResponse Failure  = new JUMPResponse(ID_FAILURE);
-    
-    public static JUMPResponse newInstance(String id) {
-        return new JUMPResponse(id, null);
-    }
-    
-    public static JUMPResponse newInstance(String id, String[] args){
-        return new JUMPResponse(id, args);
-    }
-    
     /**
-     * Return an uninitialized <code>JUMPResponse</code>, which can later be
-     * initialized by calling <code>JUMPCommand.deserialize()</code>
+     * Creates a new instance of <code>JUMPResponse</code> by deserializing
+     * the data from the <code>JUMPMessage</code>
      */
-    public static JUMPResponse newInstance() {
-        return new JUMPResponse(null, null);
+    public static JUMPResponse fromMessage(JUMPMessage message) {
+	return (JUMPResponse)JUMPCommand.fromMessage(message,
+						     JUMPResponse.class);
+    }
+
+    //
+    // A private constructor when the request is to be filled in
+    // by deserialization from a message
+    //
+    private JUMPResponse(String messageType){
+        super(messageType, "", null);
     }
     
-    private JUMPResponse(String id){
-        this(id, null);
+    public JUMPResponse(String messageType, String id){
+        super(messageType, id, null);
     }
     
-    private JUMPResponse(String id, String[] args){
-        super(id, args);
+    public JUMPResponse(String messageType, String id, String[] args){
+        super(messageType, id, args);
     }
 }

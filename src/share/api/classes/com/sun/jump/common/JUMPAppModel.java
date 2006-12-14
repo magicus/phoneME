@@ -46,6 +46,22 @@ public class JUMPAppModel implements Serializable {
         this.model = model;
     }
     
+    public String getName() {
+	return this.model;
+    }
+    
+    public static JUMPAppModel fromName(String name) {
+	if (name.equals("xlet")) {
+	    return XLET;
+	} else if (name.equals("midlet")) {
+	    return MIDLET;
+	} else if (name.equals("main")) {
+	    return MAIN;
+	} else {
+	    return null;
+	}
+    }
+    
     public String toString(){
         return this.model;
     }

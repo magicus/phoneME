@@ -32,6 +32,12 @@ import java.util.Iterator;
  * <code>JUMPNode</code> abstracts the interface to access the data
  * stored in the store. Every node has a name and an URI that serves as the
  * unique identifier for the node that is part of the store.
+ * <p>
+ * The implementation of <code>JUMPNode</code> is not expected to be 
+ * synchronized.  Therefore it is a calling application's responsibility to
+ * ensure any synchronization in case of concurrent access.
+ * The behaviour of <code>JUMPNode</code> implementation is undefined  
+ * if a node is modified while there is another reference to this node. 
  */
 public interface JUMPNode {
     /**

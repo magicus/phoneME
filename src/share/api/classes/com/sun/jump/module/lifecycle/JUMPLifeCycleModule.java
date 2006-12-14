@@ -26,25 +26,44 @@
 
 package com.sun.jump.module.lifecycle;
 
-import com.sun.jump.executive.JUMPIsolateRuntime;
+import com.sun.jump.executive.JUMPIsolateProxy;
 import com.sun.jump.module.JUMPModule;
 import com.sun.jump.common.JUMPAppModel;
+import com.sun.jump.common.JUMPProcessProxy;
 
 /**
  * <code>JUMPLifeCycleModule</code> is an executive module that performs
  * application lifecycle operations.
  */
 public interface JUMPLifeCycleModule extends JUMPModule {
-    public JUMPIsolateRuntime newIsolate(JUMPAppModel model);
+    /**
+     * Create new isolate conforming to <code>model</code>
+     */
+    public JUMPIsolateProxy newIsolate(JUMPAppModel model);
+
+    /** 
+     * Create new native process
+     */
+    public JUMPProcessProxy newProcess();
+    
+    /** 
+     * Register existing native process
+     */
+    public void registerProcess(JUMPProcessProxy process);
     
     /**
      * Returns the <code>JUMPIsolate</code> associated with the isolate id.
      * It returns <Code>null</code> if no such isolate is found.
      */
-    public JUMPIsolateRuntime getIsolate(int isolateId);
+    public JUMPIsolateProxy getIsolate(int isolateId);
     
     /**
      * Returns all the active and running isolates.
      */
-    public JUMPIsolateRuntime[] getActiveIsolates();
+    public JUMPIsolateProxy[] getActiveIsolates();
+
+    /**
+     * Returns all the active and running native processes.
+     */
+    public JUMPProcessProxy[] getProcesses();
 }

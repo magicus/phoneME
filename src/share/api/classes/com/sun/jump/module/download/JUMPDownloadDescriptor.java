@@ -26,7 +26,7 @@
 
 package com.sun.jump.module.download;
 
-import java.util.Vector;
+import java.util.Properties;
 
 /**
  * <code>JUMPDownloadDescriptor</code> contains the metadata associated with
@@ -124,7 +124,7 @@ public abstract class JUMPDownloadDescriptor {
      * A vector of applications contained in this media
      * object.
      */
-    protected Vector applications = null;
+    protected Properties applications[] = null;
 
     /**
      * The mimetype of a data object.
@@ -140,13 +140,13 @@ public abstract class JUMPDownloadDescriptor {
      * An indicator of whether the media object is
      * a library.
      */
-    protected boolean isLibrary = false;
+    protected boolean isLibraryType = false;
 
     /**
      * An indicator of whether the media object
      * is a native executable.
      */
-    protected boolean isNative = false;
+    protected boolean isNativeType = false;
 
     /**
      * The download application protocol used.
@@ -218,7 +218,7 @@ public abstract class JUMPDownloadDescriptor {
         return classpath;
     }
 
-    public Vector getApplications() {
+    public Properties[] getApplications() {
         return applications;
     }
 
@@ -230,12 +230,12 @@ public abstract class JUMPDownloadDescriptor {
         return href;
     }
 
-    public boolean isIsLibrary() {
-        return isLibrary;
+    public boolean isLibrary() {
+        return isLibraryType;
     }
 
-    public boolean isIsNative() {
-        return isNative;
+    public boolean isNative() {
+        return isNativeType;
     }
 
     public String getSchema() {

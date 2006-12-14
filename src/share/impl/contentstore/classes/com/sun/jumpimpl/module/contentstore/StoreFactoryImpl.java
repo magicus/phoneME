@@ -32,11 +32,21 @@ import java.util.Map;
 
 public class StoreFactoryImpl extends JUMPStoreFactory {
 
+   private JUMPStore filestore;
+   private Map initdata;
+  
+
    public void load(Map map) {
-       System.err.println("***StoreFactoryImpl load() unimplemented**");
+       initdata = map;
    }
+
    public void unload() {
-       System.err.println("***StoreFactoryImpl unload() unimplemented**");
+       synchronized(this) {
+           if (filestore != null) {
+              filestore.unload();
+              filestore = null;
+           }
+       }
    }
 
     /**
@@ -55,6 +65,13 @@ public class StoreFactoryImpl extends JUMPStoreFactory {
         if (!(storeType.equals(JUMPStoreFactory.TYPE_FILE)))
            throw new IllegalArgumentException("StoreType is not TYPE_FILE");
 
-        return new FileStoreImpl();
+        synchronized(this) {
+           if (filestore == null) {
+              filestore = new FileStoreImpl();   
+              filestore.load(initdata);
+           }
+        }
+
+        return filestore;
     }
 }

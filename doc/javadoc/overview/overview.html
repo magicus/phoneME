@@ -103,12 +103,12 @@ to access them.
 <h4>JUMP isolates</h4>
 
 <p>Isolated JVM instances are called <i>JUMP isolates</i>.
-A {@link com.sun.jump.executive.JUMPIsolateRuntime} object
+A {@link com.sun.jump.executive.JUMPIsolateProxy} object
 encapsulates the state of a running isolate and can be used to control its
 lifecycle. A JUMP isolate can be paused or running at any given time. The JUMP
 executive can affect isolate lifecycle using the {@link
-com.sun.jump.executive.JUMPIsolateRuntime#pauseApp} and {@link
-com.sun.jump.executive.JUMPIsolateRuntime#resumeApp} methods. The JUMP isolate can also
+com.sun.jump.executive.JUMPIsolateProxy#pauseApp} and {@link
+com.sun.jump.executive.JUMPIsolateProxy#resumeApp} methods. The JUMP isolate can also
 request lifecycle changes from the JUMP executive. The lifecycle module (interface {@link
 com.sun.jump.module.lifecycle.JUMPLifeCycleModule} is used to perform
 application lifecycle operations. It can create new isolates, and manage
@@ -127,57 +127,30 @@ com.sun.jump.common.JUMPAppModel} specific view.
 
 <h4>Communication between executive and isolates</h4>
 
-<p>The JUMP executive can communicate with JUMP isolates (and vice-versa)
-using a messaging abstraction of a <i>message queue</i>. The message queue 
-abstraction consists of 
-<ul>
-    <li>an Incoming queue (defined in {@link com.sun.jump.messagequeue.JUMPIncomingQueue}) from which 
-messages ({@link com.sun.jump.messagequeue.JUMPMessage}) can be read</li>
-    <li>an Outgoing queue (defined in {@link com.sun.jump.messagequeue.JUMPOutgoingQueue}) which 
-is used to send messages ({@link com.sun.jump.messagequeue.JUMPMessage})
-    </li>
-</ul>
-and is identified by an address, called as the mailbox address. 
-<p>
-{@link com.sun.jump.messagequeue.JUMPMessageDispatcher} dispatches incoming 
-messages arriving on the {@link com.sun.jump.messagequeue.JUMPIncomingQueue}.
-
-<p>Each isolate gets its mailboxes from 
-{@link com.sun.jump.isolate.jvmprocess.JUMPIsolateProcess} class and the 
-modules in the executive gets access to the mailboxes from 
-{@link com.sun.jump.executive.JUMPExecutive}.
-
-<p>The protocol of communication between JUMP isolates is expressed via
-specific messages called {@link
-com.sun.jump.command.JUMPCommand}'s. The executive sends a {@link
-com.sun.jump.command.JUMPRequest} command, serialized to 
-a <Code>JUMPMessage</code>, and gets a
-{@link com.sun.jump.command.JUMPResponse} command in return. 
-
-<p>Here's how a sample request-response sequence occurs:
+<p>Here's how a sample request-response sequence occurs. In this case
+an isolate is sending a message to the executive process:
 
 <blockquote>
 <pre>
+static boolean requestResponse() {
+    JUMPIsolateProcess myProc = JUMPIsolateProcess.getInstance();
+    JUMPProcessProxy execProc = myProc.getExecutiveProcess();
+    String mType = "message/test";
 
-boolean
-sendCommandTo(JUMPIsolateRuntime isolate) {
-    JUMPRequest request = JUMPExecutiveLifecycleRequest.Activate;
+    JUMPRequest r = new JUMPRequest(mType, new String[] {"a", "b"});
+    JUMPOutgoingMessage m = r.toMessage(myProc);
 
-    // Turn request into a message
-    JUMPMessage message = request.serialize();
-    JUMPMessage responseMessage = null;
+    JUMPMessage responseMessage;
     try {
-        responseMessage = isolate.sendMessage(message, 1000L);
+        responseMessage = execProc.sendMessage(m, 0L);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
     }
-    catch (JUMPTimedOutException toe) {
-        // do something for the timeout case
-    }
-
-    // Deserialize the response Message to a response.
-    JUMPResponse response = JUMPResponse.newInstance(responseMessage);
-    if (response.getCommandId() == JUMPResponse.ID_SUCCESS) {
+    JUMPResponse response = JUMPResponse.fromMessage(responseMessage);
+    if (response.getCommandId().equals(JUMPResponse.ID_SUCCESS)) {
         return true;
-    } else if (response.getCommandId() == JUMPResponse.ID_FAILURE) {
+    } else if (response.getCommandId().equals(JUMPResponse.ID_FAILURE)) {
         return false;
     } else {
         // Unknown ID

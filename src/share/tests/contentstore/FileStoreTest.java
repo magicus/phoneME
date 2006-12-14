@@ -21,14 +21,19 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+
 import java.io.*;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
  
 import com.sun.jump.module.contentstore.*;
 
-public class FileStoreTest {
+public class FileStoreTest extends JUMPContentStoreSubClass {
+
+    // data URIs for tests to use.
     static String[] sampleDataUris = {
        "./Apps/Amark/title",
        "./Apps/Amark/size",
@@ -49,82 +54,139 @@ public class FileStoreTest {
        //new JUMPData(System.getProperties())
     };
 
+    // list URIs for tests to use.
     static String[] sampleListUris = {
        "./Apps/Amark",
        "./Apps/Amark/data"
     };
+
+    // The directory name which "." of this content store will be using.
+    String repositoryRoot = "repository";
 
     public static void main(String[] args) {
        new FileStoreTest();
     }
 
     public FileStoreTest() {
+       setupTest();
 
-       // This one line should be called by the executive, but doing it here for time being.
+       new Thread() { 
+          public void run() { runTest(); }
+       }.start();
+    }
+
+    void setupTest() { 
+
+       // This one line should be called by the executive in real impl
        new com.sun.jumpimpl.module.contentstore.StoreFactoryImpl();
 
-       JUMPStore store = JUMPStoreFactory.getInstance().getModule(JUMPStoreFactory.TYPE_FILE);
-       String repositoryRoot = "repository";
-       // test setup, make a repository root 
+       // test setup, make a repository root if it doesn't exist
        File file = new File(repositoryRoot);
        if (!file.exists()) { 
           System.out.println(repositoryRoot + " directory not found");  
-          System.out.println("Creating " + repositoryRoot + " dir to be used for the store's root"); 
+          System.out.println("Creating " + file.getAbsolutePath() + " directory to be used for the storeHandle's root"); 
+          System.out.println("The directory will be removed at VM exit");
           file.mkdirs();
+          file.deleteOnExit();
        }
 
-       // These three lines below should have happened in the executive setup,
-       // but for the testing purpose, emulating load() call here.
-       HashMap map = new HashMap();
-       map.put("cdcams.repository", repositoryRoot);
-       store.load(map);
-       // end of store setup.
-   
-       System.out.println("Got a type of JUMPStore: " + store);
+       // Done with the setup.
+    }
 
-       // first, try to create list nodes.
-       for (int i = 0; i < sampleListUris.length; i++) {
-          store.createNode(sampleListUris[i]);
-       }
 
-       // then, create all data nodes.
-       for (int i = 0; i < sampleDataUris.length; i++) {
-          store.createDataNode(sampleDataUris[i], datas[i]);
-       }
+    void runTest() { 
 
-       // get back all the data nodes we just created and compare with original nodes.
+       System.out.println("Starting the test run");
+
+       // Get the store handle from the JUMPContentStoreSubClass. 
+       JUMPStoreHandle storeHandle = openStore(true);
+
+       System.out.println("Got a type of JUMPStore: " + storeHandle);
+
+       try {
+           // first, try to create list nodes.
+           for (int i = 0; i < sampleListUris.length; i++) {
+              storeHandle.createNode(sampleListUris[i]);
+           }
+
+           // then, create all data nodes.
+           for (int i = 0; i < sampleDataUris.length; i++) {
+              storeHandle.createDataNode(sampleDataUris[i], datas[i]);
+           }
+
+       // get back all the data nodes we just created and check the data content.
        System.out.println("All data created, testing equality");
        for (int i = 0; i < sampleDataUris.length; i++) {
-          JUMPData data = ((JUMPNode.Data)store.getNode(sampleDataUris[i])).getData();
+          JUMPData data = ((JUMPNode.Data)storeHandle.getNode(sampleDataUris[i])).getData();
           if (!data.equals(datas[i])) 
              System.out.println("node mismatch: " + data + "," + datas[i]);
        }
 
-       // try get the listing of the store.
-       JUMPNode.List dirnode = (JUMPNode.List) store.getNode(".");
+           // get the listing of all nodes starting at the root.
+           JUMPNode.List dirnode = (JUMPNode.List) storeHandle.getNode(".");
 
-       System.out.println("List of store content");
-       printChildren(dirnode, "   ");
+           System.out.println("List of storeHandle content");
+           printChildren(dirnode, "   ");
 
-       // now, delete everything.
-       System.out.println("Delete all");
-       for (int i = 0; i < sampleListUris.length; i++) {
-          System.out.println("Deletion successful? " + store.deleteNode(sampleListUris[i]));
+           // try updating a node content.
+           System.out.println("Testing update of storeHandle content");
+           storeHandle.updateDataNode(sampleDataUris[0], datas[1]);
+           JUMPData data = ((JUMPNode.Data)storeHandle.getNode(sampleDataUris[0])).getData();
+           if (!data.equals(datas[1]))
+             System.out.println("update failed : " + data + "," + datas[1]);
+
+           // now, delete all list nodes.
+           System.out.println("Delete all");
+           for (int i = 0; i < sampleListUris.length; i++) {
+               storeHandle.deleteNode(sampleListUris[i]);
+           }
+
+           System.out.println("List of storeHandle content");
+           printChildren(dirnode, "   ");
+       }
+       catch (IOException ioe) {
+           System.out.println("IOException was thrown!");
+           ioe.printStackTrace(System.out);
        }
 
-       System.out.println("List of store content");
-       printChildren(dirnode, "   ");
+       System.out.println("Closing the store");
+       closeStore(storeHandle);
 
-       System.out.println("Test done, exiting");
+       System.out.println("Done.");
     }
 
-    void printChildren(JUMPNode.List list, String tab) {
-       for (Iterator itn = list.getChildren(); itn.hasNext(); ) {
-           JUMPNode node = (JUMPNode) itn.next();
-           System.out.println(tab + node);
-           if (node != null && !node.containsData()) 
-              printChildren((JUMPNode.List)node, tab + "   ");
+
+    // Recursively print all the nodes in the tree.
+    void printChildren(JUMPNode jumpNode, String tab) {
+       if (jumpNode != null) {
+          System.out.println(tab + jumpNode);
+          if (jumpNode instanceof JUMPNode.List) {
+             JUMPNode.List list = (JUMPNode.List) jumpNode;
+             for (Iterator itn = list.getChildren(); itn.hasNext(); ) {
+                JUMPNode node = (JUMPNode) itn.next();
+                printChildren(node, tab + "   ");
+             }
+          }
        }
-      
     }
+}
+
+class JUMPContentStoreSubClass extends JUMPContentStore {
+                                                                                  
+   protected JUMPStore getStore() {
+      JUMPStore store = JUMPStoreFactory.getInstance().getModule(
+                                 JUMPStoreFactory.TYPE_FILE);
+                                                                                  
+      // These three lines below should have happened in the executive setup,
+      // but for the testing purpose, emulating load() call here.
+      HashMap map = new HashMap();
+      map.put("installer.repository", "repository");
+      store.load(map);
+      // end of store setup.
+                                                                                  
+      return store;
+   }
+                                                                                  
+   public void load(Map map) {}
+   public void unload() {}
 }

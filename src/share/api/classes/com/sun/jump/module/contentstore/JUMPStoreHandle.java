@@ -26,6 +26,8 @@
 
 package com.sun.jump.module.contentstore;
 
+import java.io.IOException;
+
 /**
  * <code>JUMPStoreHandle</code> is a handle to perform operations on
  * a <code>JUMPStore</code>. Instances of handles are acquired by calling
@@ -50,34 +52,75 @@ public class JUMPStoreHandle {
     public boolean isReadOnly() {
         return !this.exclusive;
     }
-    
+
     /**
-     * Create a node that can contain some data.
+     * See {@link JUMPStore#createDataNode(String, JUMPData)}. This method
+     * would throw a runtime exception if it is called on a non-exclusive
+     * handle.
+     *
+     *
+     * @exception IOException if the underlying <code>JUMPStore.createDataNode(String, JUMPData)</code> causes <code>IOException</code>
+     * @exception JUMPStoreRuntimeException if the handle is in non-executive mode.
      */
-    public void createDataNode(String uri, JUMPData data) {
-        this.store.createDataNode(uri, data);
+    public void createDataNode(String uri, JUMPData data) throws IOException {
+        if (isExclusive())
+           this.store.createDataNode(uri, data);
+        else
+            throw new JUMPStoreRuntimeException("Access Denied");
     }
     
     /**
-     * Create a node that can contain other nodes.
+     * See {@link JUMPStore#createNode(String)}. This method
+     * would throw a runtime exception if it is called on a non-exclusive
+     * handle.
+     *
+     * @exception IOException if the underlying <code>JUMPStore.createNode(String) </code>causes <code>IOException</code>
+     * @exception JUMPStoreRuntimeException if the handle is in non-executive mode.
      */
-    public void createNode(String uri) {
-        this.store.createNode(uri);
+    public void createNode(String uri) throws IOException {
+        if (isExclusive())
+           this.store.createNode(uri);
+        else
+            throw new JUMPStoreRuntimeException("Access Denied");
     }
     
     /**
-     * Returns the node that is bound to the URI or null if no such node
-     * exists.
+     * See {@link JUMPStore#getNode(String)}.
+     *
+     * @exception IOException if the underlying <code>JUMPStore.getNode(String)</code> causes <code>IOException</code>
      */
-    public JUMPNode getNode(String uri) {
+    public JUMPNode getNode(String uri) throws IOException {
         return this.store.getNode(uri);
     }
     
     /**
-     * Delete the node pointed to by the URI. If there are child nodes under
-     * this uri, then they are deleted as well.
+     * See {@link JUMPStore#deleteNode(String)}. This method
+     * would throw a runtime exception if it is called on a non-exclusive
+     * handle.
+     *
+     * @exception IOException if the underlying <code>JUMPStore.deleteNode(String)</code> causes <code>IOException</code>
+     * @exception JUMPStoreRuntimeException if the handle is in non-executive mode.
      */
-    public void deleteNode(String uri) {
-        this.store.deleteNode(uri);
+    public void deleteNode(String uri) throws IOException {
+        if (isExclusive())
+            this.store.deleteNode(uri);
+        else 
+            throw new JUMPStoreRuntimeException("Access Denied");
+    }
+    
+    /**
+     * See {@link JUMPStore#updateDataNode(String, JUMPData)}. This method
+     * would throw a runtime exception if it is called on a non-exclusive
+     * handle.
+     *
+     * @exception IOException if the underlying <code>JUMPStore.updateDataNode(String, JUMPData)</code> causes <code>IOException</code>
+     * @exception JUMPStoreRuntimeException if the handle is in non-executive mode.
+     */
+    public void updateDataNode(String uri, JUMPData data) 
+       throws IOException {
+        if (isExclusive())
+           this.store.updateDataNode(uri, data);
+        else
+            throw new JUMPStoreRuntimeException("Access Denied");
     }
 }

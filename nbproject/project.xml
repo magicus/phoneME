@@ -19,22 +19,22 @@ Microsystems, phoneME and Java are trademarks or registered trademarks of Sun
 Microsystems, Inc. in the U.S. and other countries.
 
 
-Copyright 2006 Sun Microsystems, Inc. Tous droits réservés.
+Copyright 2006 Sun Microsystems, Inc. Tous droits rÃ©servÃ©s.
 
-Sun Microsystems, Inc. détient les droits de propriété intellectuels relatifs à
-la technologie incorporée dans le produit qui est décrit dans ce document. En
-particulier, et ce sans limitation, ces droits de propriété intellectuelle
-peuvent inclure un ou plus des brevets américains listés à l'adresse
-http://www.sun.com/patents et un ou les brevets supplémentaires ou les
+Sun Microsystems, Inc. dÃ©tient les droits de propriÃ©tÃ© intellectuels relatifs Ã 
+la technologie incorporÃ©e dans le produit qui est dÃ©crit dans ce document. En
+particulier, et ce sans limitation, ces droits de propriÃ©tÃ© intellectuelle
+peuvent inclure un ou plus des brevets amÃ©ricains listÃ©s Ã  l'adresse
+http://www.sun.com/patents et un ou les brevets supplÃ©mentaires ou les
 applications de brevet en attente aux Etats - Unis et dans les autres pays.
 
 L'utilisation est soumise aux termes du contrat de licence.
 
-Cette distribution peut comprendre des composants développés par des tierces
+Cette distribution peut comprendre des composants dÃ©veloppÃ©s par des tierces
 parties.
 
 Sun, Sun Microsystems, phoneME et Java sont des marques de fabrique ou des
-marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
+marques dÃ©posÃ©es de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
 -->
 <project xmlns="http://www.netbeans.org/ns/project/1">
     <type>org.netbeans.modules.ant.freeform</type>
@@ -56,11 +56,31 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
                     <type>java</type>
                     <location>src/share/impl/contentstore/classes</location>
                 </source-folder>
+                <source-folder>
+                    <label>classes_impl_pushregistry</label>
+                    <type>java</type>
+                    <location>src/share/impl/pushregistry/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>classes_impl_download</label>
+                    <type>java</type>
+                    <location>src/share/impl/download/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>classes_impl_installer</label>
+                    <type>java</type>
+                    <location>src/share/impl/installer/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>native_api</label>
+                    <type>java</type>
+                    <location>src/share/api/native</location>
+                </source-folder>
             </folders>
             <ide-actions>
                 <action name="build">
                     <script>${ant.script}</script>
-                    <target>dist</target>
+                    <target>all</target>
                 </action>
                 <action name="javadoc">
                     <script>${ant.script}</script>
@@ -73,9 +93,21 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
                 <action name="rebuild">
                     <script>${ant.script}</script>
                     <target>clean</target>
-                    <target>dist</target>
+                    <target>all</target>
                 </action>
             </ide-actions>
+            <export>
+                <type>jar</type>
+                <location>dist/lib/jump-api.jar</location>
+                <script>${ant.script}</script>
+                <build-target>all</build-target>
+            </export>
+            <export>
+                <type>jar</type>
+                <location>dist/lib/jump-impl.jar</location>
+                <script>${ant.script}</script>
+                <build-target>all</build-target>
+            </export>
             <view>
                 <items>
                     <source-folder style="packages">
@@ -86,6 +118,22 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
                         <label>classes_impl_contentstore</label>
                         <location>src/share/impl/contentstore/classes</location>
                     </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_impl_pushregistry</label>
+                        <location>src/share/impl/pushregistry/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_impl_download</label>
+                        <location>src/share/impl/download/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_impl_installer</label>
+                        <location>src/share/impl/installer/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>native_api</label>
+                        <location>src/share/api/native</location>
+                    </source-folder>
                     <source-file>
                         <location>${ant.script}</location>
                     </source-file>
@@ -95,14 +143,21 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
                     <ide-action name="javadoc"/>
                     <ide-action name="clean"/>
                     <ide-action name="rebuild"/>
+                    <ide-action name="debug"/>
                 </context-menu>
             </view>
             <subprojects/>
         </general-data>
-        <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/1">
+        <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/2">
             <compilation-unit>
                 <package-root>src/share/api/classes</package-root>
                 <package-root>src/share/impl/contentstore/classes</package-root>
+                <package-root>src/share/impl/pushregistry/classes</package-root>
+                <package-root>src/share/impl/download/classes</package-root>
+                <package-root>src/share/impl/installer/classes</package-root>
+                <package-root>src/share/api/native</package-root>
+                <built-to>dist/lib/jump-api.jar</built-to>
+                <built-to>dist/lib/jump-impl.jar</built-to>
                 <source-level>1.4</source-level>
             </compilation-unit>
         </java-data>

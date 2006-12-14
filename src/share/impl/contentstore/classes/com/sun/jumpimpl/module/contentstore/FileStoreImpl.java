@@ -41,14 +41,18 @@ import java.util.Properties;
 
 import com.sun.jump.module.contentstore.*;
 
-public class FileStoreImpl implements JUMPStore {
+public class FileStoreImpl extends JUMPStore {
 
    //HashMap jumpNodeLists = new HashMap(); // uri, JUMPNode.List
+
+   boolean verbose = false;
 
    public void load(Map map) {
 
        Object basedir;
-       if (map != null && (basedir = map.get("cdcams.repository")) != null) {
+       if ((basedir = System.getProperty("installer.repository")) != null) { 
+          setStoreRoot((String)basedir);
+       } else if (map != null && (basedir = map.get("installer.repository")) != null) {
           setStoreRoot((String)basedir);
        } else { 
           setStoreRoot(".");
@@ -56,15 +60,13 @@ public class FileStoreImpl implements JUMPStore {
    }
 
    public void unload() {
-       System.err.println("***FileStoreImpl unload() unimplemented**");
    }
 
-   public void createDataNode(String uri, JUMPData jumpData) {
-      try {
-         writeToFile(uriToDataFile(uri), jumpData);
-      } catch (IOException e) {
-         e.printStackTrace(); // need to do something about exceptions
-      }
+   public void createDataNode(String uri, JUMPData jumpData) throws IOException {
+      File file = uriToDataFile(uri);
+      File parentFile = file.getParentFile();
+
+      writeToFile(file, jumpData);
    }
 
    public void createNode(String uri) {
@@ -72,7 +74,7 @@ public class FileStoreImpl implements JUMPStore {
       file.mkdirs();
    }                  
 
-   public JUMPNode getNode(String uri) {
+   public JUMPNode getNode(String uri) throws IOException {
       // getNode(String) needs to return what the createDataNode() above store
       // if the uri parameter represents a data node.
    
@@ -101,16 +103,23 @@ public class FileStoreImpl implements JUMPStore {
              }
 
          } catch (IOException e) {
-             e.printStackTrace(); // need to do something about exceptions
+             if (verbose)
+                System.err.println(e); // need to do something about exceptions
          }
       }
 
       return null;
    }
 
-   public boolean deleteNode(String uri) {
+    protected void updateDataNode (String uri, JUMPData data) 
+       throws IOException {
+          createDataNode(uri, data);
+    }
+
+
+   public void deleteNode(String uri) {
       File file = uriToListFile(uri);
-      return deleteFile(file, true);
+      deleteFile(file, true);
    }
 
    // deletes everything under this file
@@ -290,10 +299,12 @@ public class FileStoreImpl implements JUMPStore {
               children = new ArrayList();
               File file = uriToListFile(uri);
               String[] names = file.list();
-              for (int i = 0; i < names.length; i++) {
-                 JUMPNode node = getNode(uri + File.separatorChar + names[i]);
-                 if (node != null)
-                    children.add(node);
+              for (int i = 0; names != null && i < names.length; i++) {
+                 try {
+                    JUMPNode node = getNode(uri + File.separatorChar + names[i]);
+                    if (node != null)
+                        children.add(node);
+                 } catch (IOException e) {}
               }
           //}
           return children.iterator();

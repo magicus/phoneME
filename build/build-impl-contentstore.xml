@@ -22,21 +22,13 @@ Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 Clara, CA 95054 or visit www.sun.com if you need additional
 information or have any questions. 
 -->
-<project basedir="." default="all" name="jump-impl-store">
+<project basedir="." default="compile-contentstore-module" name="jump-impl-contentstore">
 
-  <property name="s.share.impl.dir" value="${s.share.dir}/impl/contentstore"/>
-
-  <target name="all" depends="compile-contentstore-module"/>
-  
   <target name="compile-contentstore-module">
-      <javac destdir="${d.classes.dir}"
-             srcdir="${s.share.impl.dir}/classes"
-           source="1.4"
-           deprecation="true"
-           target="1.4"
-           debug="true">
+      <jump.javac 
+             srcdir="${s.share.impl.dir}/contentstore/classes">
            <include name="com/sun/jumpimpl/module/contentstore/*.java" />
-    </javac>
+      </jump.javac>
   </target>
 
 </project>

@@ -1,152 +1,99 @@
 <?xml version="1.0"?>
-<!-- 
+<!--
 Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License version
-2 only, as published by the Free Software Foundation. 
+2 only, as published by the Free Software Foundation.
 
 This program is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 General Public License version 2 for more details (a copy is
-included at /legal/license.txt). 
+included at /legal/license.txt).
 
 You should have received a copy of the GNU General Public License
 version 2 along with this work; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-02110-1301 USA 
+02110-1301 USA
 
 Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 Clara, CA 95054 or visit www.sun.com if you need additional
-information or have any questions. 
+information or have any questions.
 -->
-<project basedir="." default="dist" name="jump">
+
+<project basedir="." default="all" name="jump">
+
+  <import file="build-api.xml"/>
+  <import file="build-impl.xml"/>
+  <import file="defs-tools.xml"/>
+
   <property name="ws.dir" value="${basedir}/.."/>
   <property name="src.dir" value="${ws.dir}/src"/>
   <property name="s.share.dir" value="${src.dir}/share"/>
   <property name="s.share.api.dir" value="${s.share.dir}/api"/>
+  <property name="s.share.impl.dir" value="${s.share.dir}/impl"/>
   <property name="doc.dir" value="${ws.dir}/doc"/>
-  
+
   <property name="dist.dir" value="${ws.dir}/dist"/>
   <property name="d.classes.dir" value="${dist.dir}/classes"/>
   <property name="d.lib.dir" value="${dist.dir}/lib"/>
+  <property name="d.gen.dir" value="${dist.dir}/generated"/>
   <property name="d.doc.dir" value="${dist.dir}/doc"/>
   <property name="d.apidoc.dir" value="${d.doc.dir}/api"/>
 
   <property name="api.jar" value="jump-api.jar"/>
   <property name="impl.jar" value="jump-impl.jar"/>
 
+  <property name="debug" value="true"/>
+
+  <!-- Expect the location of CDC build to be provided from outside-->
+  <available file="${cdc.dir}/btclasses.zip" type="file"
+             property="cdc.classes.available"/>
+
+  <target name="all" depends="build-api, build-impl, javadoc-api"/>
+
+  <!-- init target -->
+  <target name="init" depends="make-dist-dirs, set-properties, set-tools">
+  </target>
+
   <!-- make distribution directories -->
   <target name="make-dist-dirs">
     <mkdir dir="${dist.dir}"/>
     <mkdir dir="${d.classes.dir}"/>
     <mkdir dir="${d.lib.dir}"/>
+    <mkdir dir="${d.gen.dir}"/>
     <mkdir dir="${d.doc.dir}"/>
     <mkdir dir="${d.apidoc.dir}"/>
   </target>
-  
-  <!-- init target -->
-  <target name="init" depends="make-dist-dirs, read-properties">
-  </target>
 
-  <target name="read-properties">
+  <target name="set-properties" depends="set-bootclasspath-jdk, set-bootclasspath-cdc">
      <property file="user.build.properties"/>
      <property file="build.properties"/>
   </target>
 
-  <target name="doc" depends="build-api">
-    <javadoc destdir="${d.apidoc.dir}"
-             author="false"
-             version="true"
-             access="private"
-             use="true" 
-             packagenames="javax.*,com.sun.*"
-             overview="${doc.dir}/javadoc/overview/overview.html"
-             windowtitle="JUMP API">
-     <sourcepath>
-       <pathelement location="${s.share.api.dir}/classes"/>
-     </sourcepath>
-     
-     <group title="JUMP Infrastructure Packages">
-        <package name="com.sun.jump.command*"/>
-        <package name="com.sun.jump.messagequeue*"/>
-        <package name="com.sun.jump.common*"/>
-        <package name="com.sun.jump.porting*"/>
-     </group>
-     <group title="JUMP Executive Packages">
-        <package name="com.sun.jump.executive*" />
-     </group>
-     <group title="JUMP Module Packages">
-        <package name="com.sun.jump.module*" /> 
-     </group>
-     <group title="JUMP Process VM Isolate Packages">
-        <package name="com.sun.jump.isolate.jvmprocess*" />
-     </group>
-    </javadoc>
-    <!-- copy the javadoc stylesheet -->
-    <copy file="${doc.dir}/javadoc/stylesheet-2005.css"
-          tofile="${d.apidoc.dir}/stylesheet.css"
-          overwrite="true"/>
-    <!-- copy the overview images -->
-    <!--
-    <copy todir="${d.apidoc.dir}/images">
-      <fileset dir="${doc.dir}/javadoc/overview/images" />
-    </copy>
-    -->
-  </target>
-  
-  <target name="build-api" depends="init">
-      <javac destdir="${d.classes.dir}"
-             srcdir="${s.share.api.dir}/classes"
-           source="1.4"
-           deprecation="true"
-           target="1.4"
-           debug="true">
-      </javac>
-
-     <jar destfile="${d.lib.dir}/${api.jar}" update="true"
-         basedir="${d.classes.dir}"
-         includes="com/sun/jump/**/*.class"/>
-
-     <antcall target="build-impl"/>
+  <target name="set-bootclasspath-jdk" unless="cdc.classes.available">
+    <presetdef name="javac.base">
+       <javac/>
+    </presetdef>
   </target>
 
-  <target name="build-impl" depends="build-impl-modules">
-     <jar destfile="${d.lib.dir}/${impl.jar}" update="true"
-         basedir="${d.classes.dir}"
-         includes="com/sun/jumpimpl/**/*.class" />
+  <target name="set-bootclasspath-cdc" if="cdc.classes.available">
+    <presetdef name="javac.base">
+       <javac>
+          <bootclasspath>
+             <fileset dir="${cdc.dir}">
+                  <include name="btclasses.zip"/>
+                  <include name="lib/*.jar"/>
+             </fileset>
+          </bootclasspath>
+       </javac>
+    </presetdef>
   </target>
 
-
-  <target name="build-impl-modules" if="modules">
-     <pathconvert property="modules.antfiles">
-        <path path="${modules}"/>
-           <mapper>
-              <chainedmapper>
-                 <flattenmapper/> <!-- remove dir from path -->
-                 <filtermapper>
-                    <tokenfilter delimoutput=","> <!-- output still seperated by comma -->
-                    <!-- separate list into individual modules -->
-                       <stringtokenizer delims=","/> <!-- separate by comma -->
-                          <replaceregex pattern="(.*)" replace="build-impl-\1.xml"/> <!-- add ".xml" to each -->
-                    </tokenfilter>
-                 </filtermapper>
-               </chainedmapper>
-          </mapper>
-     </pathconvert>
-
-      <subant inheritAll="true">
-         <filelist dir="." files="${modules.antfiles}"/>
-      </subant>
-  </target>
-
-  <target name="dist" depends="doc">
-  </target>
-  
-  <target name="clean" depends="init">
+  <target name="clean">
       <delete dir="${dist.dir}"/>
   </target>
-  
+
 </project>

@@ -38,12 +38,15 @@ import com.sun.jump.module.JUMPModule;
  * the subclasses of this class is a JUMP module.
  */
 public abstract class JUMPContentStore implements JUMPModule {
-    
+
+    private static int exclusiveAccess = 0;
+    private static int readAccess = 0;
+    private static Object  lock = new Object();
+
     /**
      * Creates a new instance of JUMPContentStore
      */
     protected JUMPContentStore() {
-        
     }
     
     /**
@@ -61,18 +64,47 @@ public abstract class JUMPContentStore implements JUMPModule {
      * access mutable operations can be performed on the store, whereas
      * in read-only mode, only immutable operations can be performed. This
      * method ensures that there can only be a single component that can
-     * be in exclsuive mode. The caller blocks till the store is accessible
+     * be in exclusuive mode. The caller blocks till the store is accessible
      * with the requested access.
      */
     protected JUMPStoreHandle openStore(boolean accessExclusive) {
-        return null;
+        if (accessExclusive) {
+           synchronized (lock) {
+              while (exclusiveAccess > 0 || readAccess > 0) {
+                 try {
+                    // Wait until closeStore is called... 
+                    lock.wait();
+                 } catch (InterruptedException e) {}
+              }
+              exclusiveAccess++;
+              return new JUMPStoreHandle(getStore(), accessExclusive);
+           }
+        } else {  // read-only
+           synchronized(lock) {
+              if (exclusiveAccess > 0) {
+                 try {
+                    // Wait until closeStore is called... 
+                    lock.wait();
+                 } catch (InterruptedException e) {}
+              }
+              readAccess++;
+              return new JUMPStoreHandle(getStore(), accessExclusive);
+           }
+        }
     }
     
     /**
-     * Called to indicate that the content store does not accesses the store
+     * Called to indicate that the content store does not access the store
      * anymore.
      */
     protected void closeStore(JUMPStoreHandle storeHandle) {
-        
+        synchronized (lock) {
+           if (storeHandle.isExclusive()) {
+              exclusiveAccess--;
+           } else {
+              readAccess--;
+           }
+           lock.notifyAll(); // Notify all threads waiting at openStore()
+        }
     }
 }

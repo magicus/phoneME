@@ -26,19 +26,23 @@
 
 package com.sun.jump.command;
 
+import com.sun.jump.message.JUMPMessage;
+import com.sun.jump.message.JUMPMessageReader;
+import com.sun.jump.message.JUMPOutgoingMessage;
+
 /**
  * <code>JUMPExecutiveLifecycleRequest</code> defines all the lifecycle 
  * related requests that originate from the <Code>JUMPExecutive</code>
  */
-public interface JUMPExecutiveLifecycleRequest {
+public class JUMPExecutiveLifecycleRequest extends JUMPRequest {
     /** 
      * Initialize the target isolate
      * <ol>
      *   <li>args[0] - {@link com.sun.jump.common.JUMPAppModel}</li>
      * </ol>
-     * Synchronous request. expects a 
-     * {@link com.sun.jump.command.JUMPResponse#Success} or 
-     * {@link com.sun.jump.command.JUMPResponse#Failure}
+     * Synchronous request.
+     * <p>Expects a {@link com.sun.jump.command.JUMPResponse#ID_SUCCESS} or 
+     * {@link com.sun.jump.command.JUMPResponse#ID_FAILURE}</p>
      */
     public static final String ID_INIT_ISOLATE       = "InitIsolate";
     
@@ -48,8 +52,8 @@ public interface JUMPExecutiveLifecycleRequest {
      *   <li>args[0] - <code>true</code> means <b>best effort</b> and 
      *                 <code>false</code> means <b>unconditional</b>
      * </ol>
-     * {@link com.sun.jump.command.JUMPResponse#Success} or 
-     * {@link com.sun.jump.command.JUMPResponse#Failure}
+     * {@link com.sun.jump.command.JUMPResponse#ID_SUCCESS} or 
+     * {@link com.sun.jump.command.JUMPResponse#ID_FAILURE}
      */
     public static final String ID_DESTROY_ISOLATE    = "DestroyIsolate";
     
@@ -67,7 +71,7 @@ public interface JUMPExecutiveLifecycleRequest {
      *   <li>args[0] - Application Id</li>
      * </ol>
      * or 
-     * {@link com.sun.jump.command.JUMPResponse#Failure}
+     * {@link com.sun.jump.command.JUMPResponse#ID_FAILURE}
      */
     public static final String ID_START_APP      = "StartApp";
     
@@ -76,9 +80,9 @@ public interface JUMPExecutiveLifecycleRequest {
      * <ol>
      *   <li>args[0] - App Id</li>
      * </ol>
-     * Synchronous request. expects a 
-     * {@link com.sun.jump.command.JUMPResponse#Success} or 
-     * {@link com.sun.jump.command.JUMPResponse#Failure}
+     * Synchronous request.
+     * <p>Expects a {@link com.sun.jump.command.JUMPResponse#ID_SUCCESS} or 
+     * {@link com.sun.jump.command.JUMPResponse#ID_FAILURE}</p>
      */
     public static final String ID_PAUSE_APP      = "PauseApp";
     
@@ -87,9 +91,9 @@ public interface JUMPExecutiveLifecycleRequest {
      * <ol>
      *   <li>args[0] - App Id</li>
      * </ol>
-     * Synchronous request. expects a 
-     * {@link com.sun.jump.command.JUMPResponse#Success} or 
-     * {@link com.sun.jump.command.JUMPResponse#Failure}
+     * Synchronous request. 
+     * <p>Expects a {@link com.sun.jump.command.JUMPResponse#ID_SUCCESS} or 
+     * {@link com.sun.jump.command.JUMPResponse#ID_FAILURE}</p>
      */
     public static final String ID_RESUME_APP    = "ResumeApp";
     
@@ -109,7 +113,7 @@ public interface JUMPExecutiveLifecycleRequest {
      *   <li>args[N] - windows id</li>
      * </ol>
      * or 
-     * {@link com.sun.jump.command.JUMPResponse#Failure}
+     * {@link com.sun.jump.command.JUMPResponse#ID_FAILURE}
      */
     public static final String ID_GET_APP_WINDOWS  = "GetAppWindows";
     
@@ -121,15 +125,24 @@ public interface JUMPExecutiveLifecycleRequest {
      *                 <code>false</code> means <b>unconditional</b>
      * </ol>
      * Synchronous request. expects a
-     * {@link com.sun.jump.command.JUMPResponse#Success} or 
-     * {@link com.sun.jump.command.JUMPResponse#Failure}
+     * {@link com.sun.jump.command.JUMPResponse#ID_SUCCESS} or 
+     * {@link com.sun.jump.command.JUMPResponse#ID_FAILURE}
      */
     public static final String ID_DESTROY_APP    = "DestroyApp";
     
     
-    public static final JUMPRequest PauseApp   = 
-        JUMPRequest.newInstance(ID_PAUSE_APP);
-    public static final JUMPRequest ResumeApp  = 
-        JUMPRequest.newInstance(ID_RESUME_APP);
-    
+    /**
+     * Create a new lifecycle request on an app
+     * @param id The id of the lifecycle request
+     * @param args arguments
+     */
+    public JUMPExecutiveLifecycleRequest(String id, String[] args) {
+	super("executive/lifecycle", id, args);
+    }
+
+    public static JUMPCommand fromMessage(JUMPMessage message) {
+	return JUMPCommand.fromMessage(message,
+				       JUMPExecutiveLifecycleRequest.class);
+    }
+
 }

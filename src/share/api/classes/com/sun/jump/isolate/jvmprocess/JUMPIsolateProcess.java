@@ -29,11 +29,9 @@ package com.sun.jump.isolate.jvmprocess;
 import com.sun.jump.common.JUMPAppModel;
 import com.sun.jump.common.JUMPProcess;
 import com.sun.jump.common.JUMPIsolate;
-import com.sun.jump.messagequeue.JUMPIncomingQueue;
-import com.sun.jump.messagequeue.JUMPMessagable;
-import com.sun.jump.messagequeue.JUMPMessage;
-import com.sun.jump.messagequeue.JUMPOutgoingQueue;
-import java.rmi.Remote;
+import com.sun.jump.common.JUMPProcessProxy;
+import com.sun.jump.message.JUMPMessagingService;
+//import java.rmi.Remote;
 
 /**
  * <code>JVMIsolateVM</code> encapsulates an isolate that is implemented
@@ -43,60 +41,43 @@ import java.rmi.Remote;
  * the system libraries as well as the application running within the
  * container.
  */
-public class JUMPIsolateProcess implements JUMPProcess, JUMPIsolate {
+public abstract class JUMPIsolateProcess
+    implements JUMPProcess, JUMPIsolate, JUMPMessagingService {
     
-    private static JUMPIsolateProcess instance = null;
+    private static JUMPIsolateProcess INSTANCE = null;
     
     public synchronized static JUMPIsolateProcess getInstance() {
-        if ( instance == null )
-            instance = new JUMPIsolateProcess();
-        return instance;
+        return INSTANCE;
     }
     
-    /** Creates a new instance of JVMIsolateVM */
-    private JUMPIsolateProcess() {
+    /** Creates a new instance of JUMPIsolateProcess */
+    protected JUMPIsolateProcess() {
+        synchronized (JUMPIsolateProcess.class){
+            if ( INSTANCE == null ) {
+                INSTANCE = this;
+            }
+        }
     }
     
-    public Remote getRemoteService(String serviceName) {
-        return null;
-    }
+    //public Remote getRemoteService(String serviceName) {
+    //  return null;
+    //}
     
     /**
-     * Returns the executive's messagable interface so that the Isolate
+     * Returns the executive process interface so that the Isolate
      * can send messages to the executive.
      */
-    public JUMPMessagable getExecutiveMessagable() {
-        return null;
-    }
-
-    public int getProcessId() {
-        return 0; 
-    }
-
-    public JUMPIncomingQueue getIncomingQueue() {
-        return null;
-    }
-
-    public JUMPOutgoingQueue getOutgoingQueue() {
-        return null;
-    }
+    public abstract JUMPProcessProxy getExecutiveProcess();
 
     public int getIsolateId() {
         return this.getProcessId();
     }
 
-    public JUMPMessage newMessage(String mesgType, Object data) {
-        return null;
-    }
-
-    public JUMPMessage newMessage(JUMPMessage requestMessage, 
-        String mesgType, Object data) {
-        return null;
-    }
+    /**
+     * Get app model running in this isolate process
+     */
+    public abstract JUMPAppModel getAppModel();
 
     public void initialize(JUMPAppModel appModel) {
-    }
-    
-    public void destroy(boolean force) {
     }
 }
