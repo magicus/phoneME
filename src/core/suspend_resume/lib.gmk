@@ -38,11 +38,6 @@ LIB_SET += $(SUSPEND_RESUME_LIB)
 
 SUSPEND_RESUME_DIR = $(SUBSYSTEM_CORE_DIR)/$(SUSPEND_RESUME_LIB)
 
-
-############################################################
-# Native files under SUSPEND_RESUME subsystem
-############################################################
-
 SUBSYSTEM_CORE_EXTRA_INCLUDES += \
     -I$(SUSPEND_RESUME_DIR)/include
 
