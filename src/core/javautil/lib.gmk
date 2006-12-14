@@ -59,7 +59,7 @@ SUBSYSTEM_JAVAUTIL_JAVA_FILES += \
 
 # CDC/Foundation already provides following classes. Don't include them
 # in MIDP.
-ifneq ($(TARGET_VM), cdc_hi)
+ifneq ($(TARGET_VM), cdc_vm)
 SUBSYSTEM_JAVAUTIL_JAVA_FILES += \
     $(JAVAUTIL_DIR)/reference/classes/java/util/Timer.java \
     $(JAVAUTIL_DIR)/reference/classes/java/util/TimerTask.java \
