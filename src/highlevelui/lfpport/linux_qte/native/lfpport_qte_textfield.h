@@ -232,10 +232,9 @@ public :
      * Update text contents.
      *
      * @param text new text contents
-     * @param cursorPosition cursor position after updating the contents
      * @return status of this call
      */
-    MidpError setString(const QString &text, int cursorPosition);
+    MidpError setString(const QString &text);
 
     /**
      * Get the current text contents.

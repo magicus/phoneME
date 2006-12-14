@@ -49,9 +49,9 @@ TextFieldBody::TextFieldBody(QWidget *parent)
 
 /** Set cursor position in one dimension manner. */
 void TextFieldBody::setCursorPosition(int position) {
-    if (position <= 0) {
+    if (position < 0) {
 	home(FALSE);
-    } else if (position >= length()) {
+    } else if (position > length()) {
 	end(FALSE);
     } else {
 	/* Iterate each line's length */
@@ -61,7 +61,7 @@ void TextFieldBody::setCursorPosition(int position) {
 		QMultiLineEdit::setCursorPosition(line, position);
 		return;
 	    }
-	    position -= numChars + 1; /* EOL is counted as one char */
+            position -= numChars + 1; /* EOL is counted as one char */
 	}
     }
     /* Should not reach here */
@@ -263,20 +263,19 @@ void TextFieldBody::setTextQuietly(const QString &s) {
 TextField::TextField(QWidget *parent, const QString &label, int layout,
 		     const QString &text, int maxSize,
 		     int constraints, const QString &inputMode)
-	: Item(parent, label, layout)
+    : Item(parent, label, layout)
 {
     /* Suppress unused-parameter warning */
     (void)inputMode;
 
     qedit = new TextFieldBody(this);
     qedit->setMaxLength(maxSize);
-    qedit->setWordWrap(QMultiLineEdit::WidgetWidth);
 
     setConstraints(constraints);
     
     /* The text will be validated by constraints above */
-    qedit->setTextQuietly(text);
-
+    setString(text);
+ 
     setFocusPolicy(QWidget::StrongFocus);
 
     /* Delegate focus to MultiLineEdit */
@@ -291,8 +290,13 @@ TextField::~TextField() {
 }
 
 /** Implement virtual function (defined in lfpport_qte_item.h) */
-void TextField::bodyResize(int w, int h){
-  qedit->resize(w, h);
+void TextField::bodyResize(int w, int h) {
+    // keep the old cursor position
+    int oldPos = qedit->getCursorPosition();
+    qedit->resize(w, h);
+    qedit->setWordWrap(QMultiLineEdit::WidgetWidth);
+    // try to set the cursor at the old position
+    qedit->setCursorPosition(oldPos);
 }
 
 void TextField::bodyRelocate(int x, int y) {
@@ -357,9 +361,9 @@ bool TextField::bodyCanBeOnSameLine(int bodyHeight) {
  * Set the text content of current TextField.
  */
 MidpError
-TextField::setString(const QString &text, int cursorPosition) {
+TextField::setString(const QString &text) {
     qedit->setTextQuietly(text);
-    qedit->setCursorPosition(cursorPosition);
+    qedit->setCursorPosition(qedit->isReadOnly() ? 0 : qedit->length());
     return KNI_OK;
 }
 
@@ -442,7 +446,7 @@ lfpport_textfield_create(MidpItem* itemPtr, MidpDisplayable* formPtr,
     pcsl_string2QString(*label, qlabel);
     pcsl_string2QString(*text, qtext);
     pcsl_string2QString(*inputMode, qinputMode);
-		    		
+
     /* Fill in MidpItem structure */
     itemPtr->widgetPtr = 
       new TextField((formPtr == INVALID_NATIVE_ID
@@ -455,7 +459,6 @@ lfpport_textfield_create(MidpItem* itemPtr, MidpDisplayable* formPtr,
 		    qinputMode);
 
     initItemPtr(itemPtr, formPtr);
-
     return KNI_OK;
 }
 
@@ -469,7 +472,8 @@ lfpport_textfield_set_string(MidpItem* itemPtr, const pcsl_string* text)
     QString qtext;
 
     pcsl_string2QString(*text, qtext);
-    return ((TextField *)itemPtr->widgetPtr)->setString(qtext, pcsl_string_length(text));
+    
+    return ((TextField *)itemPtr->widgetPtr)->setString(qtext);
 }
 
 /**

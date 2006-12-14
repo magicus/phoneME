@@ -157,7 +157,7 @@ include $(SUBSYSTEM_CORE_DIR)/string/$(LIB_MAKE_FILE)
 # Suspend/Resume library
 # Description: Java stack suspend/resume functionality
 #####################################################################
-ifneq ($(TARGET_VM), cdc_hi)
+ifneq ($(TARGET_VM), cdc_vm)
 include $(SUBSYSTEM_CORE_DIR)/suspend_resume/$(LIB_MAKE_FILE)
 endif
 
