@@ -103,6 +103,10 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;
         pNewSignal->descriptor = event->data.pushEvent.alarmHandle;
         break;
+    case MIDP_JC_EVENT_ROTATION:
+        pNewSignal->waitingFor = UI_SIGNAL;
+        pNewMidpEvent->type    = ROTATION_EVENT;
+        break;
 
 #ifdef ENABLE_JSR_75
     case JSR75_FC_JC_EVENT_ROOTCHANGED:

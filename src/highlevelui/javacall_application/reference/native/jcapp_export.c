@@ -41,25 +41,28 @@ gxj_screen_buffer gxj_system_screen_buffer;
  * command manager.
  */
 
-/**
- * Initializes the Javacall native resources.
- */
-void jcapp_init() {
-    javacall_lcd_color_encoding_type color_encoding;
 
+void jcapp_get_screen_buffer() {
+     javacall_lcd_color_encoding_type color_encoding;
+     gxj_system_screen_buffer.alphaData = NULL;
+     gxj_system_screen_buffer.pixelData = 
+         javacall_lcd_get_screen (JAVACALL_LCD_SCREEN_PRIMARY,
+                                  &gxj_system_screen_buffer.width,
+                                  &gxj_system_screen_buffer.height,
+                                  &color_encoding);
+
+     if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {
+        REPORT_CRIT(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
+     };                                 
+}
+
+
+void jcapp_init() {
+ 
     if (!JAVACALL_SUCCEEDED(javacall_lcd_init ()))
         return;
-
-    gxj_system_screen_buffer.alphaData = NULL;
-    gxj_system_screen_buffer.pixelData = 
-        javacall_lcd_get_screen (JAVACALL_LCD_SCREEN_PRIMARY,
-                                 &gxj_system_screen_buffer.width,
-                                 &gxj_system_screen_buffer.height,
-                                 &color_encoding);
-
-    if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {
-        REPORT_CRIT(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
-    };
+ 
+    jcapp_get_screen_buffer();
     memset (gxj_system_screen_buffer.pixelData, 0, 
             gxj_system_screen_buffer.width * gxj_system_screen_buffer.height 
             * sizeof (gxj_pixel_type));
@@ -92,43 +95,38 @@ void jcapp_refresh(int x1, int y1, int x2, int y2)
  * @param mode true for full screen mode
  *             false for normal
  */
-void jcapp_set_fullscreen_mode(jboolean mode) {
-    javacall_lcd_color_encoding_type color_encoding;
+void jcapp_set_fullscreen_mode(jboolean mode) {    
 
     javacall_lcd_set_full_screen_mode(mode);
-    gxj_system_screen_buffer.alphaData = NULL;
-    gxj_system_screen_buffer.pixelData = 
-        javacall_lcd_get_screen (JAVACALL_LCD_SCREEN_PRIMARY,
-                                 &gxj_system_screen_buffer.width,
-                                 &gxj_system_screen_buffer.height,
-                                 &color_encoding);
+    jcapp_get_screen_buffer();
 }
 
 /**
  * Change screen orientation flag
  */
 jboolean jcapp_reverse_orientation() {
-    /* NOTE: need to implement */
+    jboolean res = javacall_lcd_reverse_orientation(); 
+    jcapp_get_screen_buffer(); 
+    return res; 
 }
 
 /**
  * Get screen orientation flag
  */
 jboolean jcapp_get_reverse_orientation() {
-    /* NOTE: need to implement */
-    return KNI_FALSE;
+    return javacall_lcd_get_reverse_orientation();
 }
 
 /**
  * Return screen width
  */
 int jcapp_get_screen_width() {
-    return gxj_system_screen_buffer.width;   
+    return javacall_lcd_get_screen_width();   
 }
 
 /**
  *  Return screen height
  */
 int jcapp_get_screen_height() {
-    return gxj_system_screen_buffer.height;
+    return javacall_lcd_get_screen_height();
 }
