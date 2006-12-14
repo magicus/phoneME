@@ -318,7 +318,12 @@ CVMJITmarkCodeBuffer()
      * point will not saved as AOT code.
      */
     CVMJITcodeCachePersist(&CVMglobals.jit);
+#ifndef CVM_MTASK
+    /* If CVM_MTASK is enabled, isPrecompiling is set to
+     * false in the clild VM.
+     */
     CVMglobals.jit.isPrecompiling = CVM_FALSE;
+#endif
 #endif
 }
 
