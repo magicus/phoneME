@@ -108,20 +108,8 @@ setupRequest(JNIEnv*env, int argc, char** argv, CVMInt32 clientId)
 	exit(1);
     }
 
-    /* Record the client ID */
-    CVMmtaskClientId(env, clientId);
-
-#ifdef CVM_JVMDI
-    if (clientId != 0) {
-	CVMmtaskJvmdiInit(env);
-    }
-#endif
-
-#ifdef CVM_JVMPI
-    if (clientId != 0) {
-	CVMmtaskJvmpiInit(env);
-    }
-#endif
+    /* Initialize child VM */
+    CVMmtaskReinitializeChildVM(env, clientId);
 
     /* Free up the (argc,arv[]) and jInitArgs that we have built */
     ANSIfreeJinitArgs(clientArgs);

@@ -40,27 +40,17 @@ extern void
 CVMmtaskServerCommSocket(JNIEnv* env, CVMInt32 commSocket);
 
 /*
- * Notify the child process of its client ID that will be recognized
- * by mTASK 
+ * Initialize child VM. The client ID is recorded by the
+ * child process.
  */
 extern void
-CVMmtaskClientId(JNIEnv* env, CVMInt32 clientId);
+CVMmtaskReinitializeChildVM(JNIEnv* env, CVMInt32 clientId);
 
 /*
  * Record the port number which the server is listening to
  */
 extern void
 CVMmtaskServerPort(JNIEnv* env, CVMInt32 serverPort);
-
-#ifdef CVM_JVMTI
-extern void
-CVMmtaskJvmtiInit(JNIEnv* env);
-#endif
-
-#ifdef CVM_JVMPI
-extern void
-CVMmtaskJvmpiInit(JNIEnv* env);
-#endif
 
 #if defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION)
 extern void

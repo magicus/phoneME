@@ -3448,48 +3448,10 @@ CVMmtaskServerCommSocket(JNIEnv* env, CVMInt32 commSocket)
     CVMglobals.commFd = commSocket;
 }
 
-void
-CVMmtaskClientId(JNIEnv* env, CVMInt32 clientId)
+static void
+mtaskJvmtiInit(JNIEnv* env)
 {
-    CVMglobals.clientId = clientId;
-}
-
-void
-CVMmtaskServerPort(JNIEnv* env, CVMInt32 serverPort)
-{
-    CVMglobals.serverPort = serverPort;
-}
-
-#ifdef CVM_TIMESTAMPING
-jboolean
-CVMmtaskTimeStampReinitialize(JNIEnv* env) 
-{
-    CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
-
-    if (!CVMtimeStampFinishup(ee)) {
-	return JNI_FALSE;
-    }
-    CVMtimeStampWallClkInit();
-    if (!CVMtimeStampStart(ee)) {
-	return JNI_FALSE;
-    }
-
-    return JNI_TRUE;
-}
-
-jboolean
-CVMmtaskTimeStampRecord(JNIEnv* env, const char* loc, int pos) 
-{
-    CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
-
-    return CVMtimeStampRecord(ee, loc, pos);
-}    
-#endif
-
 #ifdef CVM_JVMTI
-void
-CVMmtaskJvmtiInit(JNIEnv* env)
-{
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
     if (CVMjvmtiEventsEnabled()) {
 	CVMjvmtiNotifyDebuggerOfVmInit(ee);    
@@ -3515,13 +3477,13 @@ CVMmtaskJvmtiInit(JNIEnv* env)
 	    exit(1);
 	}
     }
-}
 #endif
+}
 
-#ifdef CVM_JVMPI
-void
-CVMmtaskJvmpiInit(JNIEnv* env)
+static void
+mtaskJvmpiInit(JNIEnv* env)
 {
+#ifdef CVM_JVMPI
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
 
     CVMjvmpiPostStartUpEvents(ee);
@@ -3544,7 +3506,61 @@ CVMmtaskJvmpiInit(JNIEnv* env)
 	exit(1);
     }
 #endif
+#endif
 }
+
+void
+CVMmtaskReinitializeChildVM(JNIEnv* env, CVMInt32 clientId)
+{
+    CVMglobals.clientId = clientId;
+
+    if (clientId != 0) {
+#ifdef CVM_JIT
+        /*
+         * Set CVMglobals.jit.isPrecompiling to false to allow
+         * patch enabled code being generated in child process.
+         */
+        CVMglobals.jit.isPrecompiling = CVM_FALSE;
+#endif
+
+        mtaskJvmtiInit(env);
+
+        mtaskJvmpiInit(env);
+    }
+}
+
+void
+CVMmtaskServerPort(JNIEnv* env, CVMInt32 serverPort)
+{
+    CVMglobals.serverPort = serverPort;
+}
+
+
+
+#ifdef CVM_TIMESTAMPING
+jboolean
+CVMmtaskTimeStampReinitialize(JNIEnv* env) 
+{
+    CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
+
+    if (!CVMtimeStampFinishup(ee)) {
+	return JNI_FALSE;
+    }
+    CVMtimeStampWallClkInit();
+    if (!CVMtimeStampStart(ee)) {
+	return JNI_FALSE;
+    }
+
+    return JNI_TRUE;
+}
+
+jboolean
+CVMmtaskTimeStampRecord(JNIEnv* env, const char* loc, int pos) 
+{
+    CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
+
+    return CVMtimeStampRecord(ee, loc, pos);
+}    
 #endif
 
 #if defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION)
