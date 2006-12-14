@@ -210,6 +210,25 @@ javacall_result javacall_lcd_flush(void);
  */
 javacall_result javacall_lcd_flush_partial(int ystart, int yend);
 
+/**
+  * Reverse flag of rotation
+  */
+javacall_bool javacall_lcd_reverse_orientation();
+ 
+/**
+  * Get flag of rotation
+  */
+javacall_bool javacall_lcd_get_reverse_orientation();
+  
+/**
+  * Return width of screen
+  */
+int javacall_lcd_get_screen_width();
+ 
+/**
+  * Return height of screen
+  */
+int javacall_lcd_get_screen_height();
 
 /** @} */
 
