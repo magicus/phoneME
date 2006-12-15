@@ -44,9 +44,10 @@ ReturnOop Java_com_sun_cldc_isolate_Isolate_currentIsolate0() {
   return Task::current()->primary_isolate_obj();
 }
 
-// private native void addToSeenIsolates();
-void Java_com_sun_cldc_isolate_Isolate_addToSeenIsolates() {
+// private native void registerNewIsolate();
+void Java_com_sun_cldc_isolate_Isolate_registerNewIsolate() {
   IsolateObj::Raw isolate_obj = GET_PARAMETER_AS_OOP(0);
+  isolate_obj().assign_unique_id();
   Task::current()->add_to_seen_isolates(&isolate_obj);
 }
 
@@ -84,9 +85,12 @@ void Java_com_sun_cldc_isolate_Isolate_nativeStart(JVM_SINGLE_ARG_TRAPS) {
     
     if( saved.is_null() ) {
       ObjectHeap::reset_task_memory_usage(id);
+      Task::cleanup_unstarted_task(id);
+      isolate().terminate(-1 JVM_NO_CHECK_AT_BOTTOM);
       return;
-    }        
+    }
   }
+
   // save current thread pointer, no non-raw handles please!
   Thread::Raw current = Thread::current();
   Thread::set_current(&saved);
@@ -119,11 +123,12 @@ void Java_com_sun_cldc_isolate_Isolate_nativeStart(JVM_SINGLE_ARG_TRAPS) {
     // task mirrors may not be setup etc.  We just tear down the new isolate
     // and return an exception to the parent.
     Task::Fast task = Task::get_task(id);
+    IsolateObj::Fast isolate = GET_PARAMETER_AS_OOP(0);
     Thread::Fast thrd = &saved();
     GUARANTEE(!task.is_null(), "Task should not be null at this point");
-    task().stop_unstarted_task(-1 JVM_NO_CHECK);
     task().set_status(Task::TASK_STOPPED);
     task().set_thread_count(0);
+    isolate().terminate(-1 JVM_NO_CHECK);
     saved = thrd;       // GC may have happened. Reload.
   }
   if (has_exception) {
@@ -187,11 +192,7 @@ void Java_com_sun_cldc_isolate_Isolate_stop(JVM_SINGLE_ARG_TRAPS) {
 
   switch (isolate_obj().status()) {
   case Task::TASK_NEW:
-    // Change state of task to stopped and notify listeners
-    isolate_obj().set_is_terminated(1);
-    isolate_obj().set_saved_exit_code(exit_code);
-    isolate_obj().notify_all_waiters(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
-
+    isolate_obj().terminate(exit_code JVM_NO_CHECK_AT_BOTTOM);
     // Isolate was never started, so no threads to kill.
     break;
 

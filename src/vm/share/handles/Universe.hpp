@@ -166,6 +166,7 @@ public:
 
 private:
   static void init_task_list(JVM_SINGLE_ARG_TRAPS);
+  static void create_first_task(const JvmPathChar* classpath JVM_TRAPS);
   static void allocate_bootstrap_thread(void);
   static bool bootstrap_with_rom(const JvmPathChar* classpath);
 
@@ -735,7 +736,10 @@ private:
   }
 #endif
 #if ENABLE_ISOLATES
-  static ReturnOop copy_strings_to_symbols(OopDesc* string_array JVM_TRAPS);
+  // IMPL_NOTE: maybe create a special iterator for the functions below?
   static ReturnOop copy_strings_to_byte_arrays(OopDesc* string_array JVM_TRAPS);
+  static ReturnOop copy_strings_to_char_arrays(OopDesc* string_array JVM_TRAPS);
+  static ReturnOop make_strings_from_char_arrays(OopDesc* string_array JVM_TRAPS);
+  static ReturnOop deep_copy(Oop* obj JVM_TRAPS);
 #endif
 };
