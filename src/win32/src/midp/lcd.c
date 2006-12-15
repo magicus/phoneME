@@ -148,7 +148,8 @@ static void drawEmulatorScreen(javacall_bool fullscreen);
 static void paintVerticalScroll(HDC hdc, int scrollPosition,
                                 int scrollProportion);
 static void invalidateLCDScreen(int x1, int y1, int x2, int y2);
-static void RefreshScreen(int x1, int y1, int x2, int y2);
+static void RefreshScreenNormal(int x1, int y1, int x2, int y2);  
+static void RefreshScreenRotate(int x1, int y1, int x2, int y2);
 static int mapKey(WPARAM wParam, LPARAM lParam);
 
 #ifdef SKINS_MENU_SUPPORTED
@@ -241,6 +242,8 @@ static int bottomBarHeight;
 static int paintHeight;
 static int x_offset = X_SCREEN_OFFSET;
 static int y_offset;
+
+static javacall_bool reverse_orientation;
 
 /* key definitons */
 typedef struct _Rectangle {
@@ -460,8 +463,11 @@ javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
  * @return <tt>1</tt> on success, <tt>0</tt> on failure or invalid screen
  */
 javacall_result javacall_lcd_flush() {
-    RefreshScreen(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-
+    if (reverse_orientation) { 
+        RefreshScreenRotate(0, 0, DISPLAY_HEIGHT, DISPLAY_WIDTH); 
+    } else { 
+        RefreshScreenNormal(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT); 
+    } 
     return JAVACALL_OK;
 }
 
@@ -484,7 +490,11 @@ javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int ystart,
                                                         int yend) {
 
     //RefreshScreen(0,ystart, DISPLAY_WIDTH, yend);
-    RefreshScreen(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    if (reverse_orientation) {         
+         RefreshScreenRotate(0,0, DISPLAY_HEIGHT, DISPLAY_WIDTH); 
+    } else { 
+         RefreshScreenNormal(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT); 
+    }
 
     return JAVACALL_OK;
 }
@@ -827,18 +837,21 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         {
         /* Impl note: to send pause and resume notifications */
             static int isPaused;
-            if(VK_F3 == wParam) {
+            if(VK_F4 == wParam) {
                 if(!isPaused) {
                     javanotify_pause();
                 } else {
                     javanotify_resume();
-                }
+                } 
                 isPaused =!isPaused;
                 break;
         /* HOME key is used for switching tasks. */
             } else if(VK_HOME == wParam) {
                 javanotify_switchforeground();
                 break;
+            /* F3 key used for rotation. */ 
+            } else if(VK_F3 == wParam) {                 
+                    javanotify_rotation();
             }
         }
     case WM_KEYUP:
@@ -1080,8 +1093,8 @@ static void setupMutex() {
  * Initializes the screen back buffer
  */
 static void initScreenBuffer(int w, int h) {
-    VRAM.width = w;
-    VRAM.height = h;
+    VRAM.width = javacall_lcd_get_screen_width(); 
+    VRAM.height = DISPLAY_HEIGHT;
     VRAM.hdc = (javacall_pixel*)malloc(w*h*sizeof(javacall_pixel));
     if(VRAM.hdc == NULL) {
         javacall_print("initScreenBuffer: VRAM allocation failed");
@@ -1480,7 +1493,7 @@ static int mapKey(WPARAM wParam, LPARAM lParam) {
 /**
  *
  */
-static void RefreshScreen(int x1, int y1, int x2, int y2) {
+static void RefreshScreenNormal(int x1, int y1, int x2, int y2) {
     int x;
     int y;
     int width;
@@ -1588,6 +1601,153 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
 
     invalidateLCDScreen(x1, y1, x2, y2);
     UpdateWindow(hMainWindow);
+}
+
+/**
+  * Utility function to request logical screen to be painted
+  * to the physical screen when screen is in rotated mode. 
+  * @param x1 top-left x coordinate of the area to refresh
+  * @param y1 top-left y coordinate of the area to refresh
+  * @param x2 bottom-right x coordinate of the area to refresh
+  * @param y2 bottom-right y coordinate of the area to refresh
+  */
+  void RefreshScreenRotate(int x1, int y1, int x2, int y2) {
+    int x;
+    int y;
+    int width;
+    int height;    
+    javacall_pixel* pixels = VRAM.hdc;
+    javacall_pixel pixel;
+    int r;
+    int g;
+    int b;
+    unsigned char *destBits;
+    unsigned char *destPtr;
+    int count;
+  
+    HDC            hdcMem;
+    HBITMAP        destHBmp;
+    BITMAPINFO     bi;
+    HGDIOBJ        oobj;
+    HDC hdc;
+      
+    if (x1 < 0) {
+        x1 = 0;
+    }
+ 
+    if (y1 < 0) {
+        y1 = 0;
+    }
+  
+    if (x2 <= x1 || y2 <= y1) {
+        return;
+    }
+  
+    if (x2 > VRAM.width) {
+        x2 = VRAM.width;
+    }
+  
+    if (y2 > VRAM.height) {
+        y2 = VRAM.height;
+    }    
+  
+    x = x1;
+    y = y1;
+    width = x2 - x1;
+    height = y2 - y1;
+  
+    bi.bmiHeader.biSize          = sizeof(bi.bmiHeader);
+    bi.bmiHeader.biWidth         = height;
+    bi.bmiHeader.biHeight        = -width;
+    bi.bmiHeader.biPlanes        = 1;
+    bi.bmiHeader.biBitCount      = sizeof (long) * 8;
+    bi.bmiHeader.biCompression   = BI_RGB;
+    bi.bmiHeader.biSizeImage     = width * height * sizeof (long);
+    bi.bmiHeader.biXPelsPerMeter = 0;
+    bi.bmiHeader.biYPelsPerMeter = 0;
+    bi.bmiHeader.biClrUsed       = 0;
+    bi.bmiHeader.biClrImportant  = 0;
+  
+    hdc = getBitmapDC(NULL);
+  
+    hdcMem = CreateCompatibleDC(hdc);
+ 
+      
+  
+    destHBmp = CreateDIBSection (hdcMem, &bi, DIB_RGB_COLORS, &destBits,
+                                   NULL, 0);
+  
+    if (destBits != NULL) {
+        oobj = SelectObject(hdcMem, destHBmp);
+  
+        SelectObject(hdcMem, oobj);
+  
+        destPtr = destBits;
+ 
+        pixels += (TOP_BAR_HEIGHT*DISPLAY_WIDTH-1) + x2-1 + y1 * javacall_lcd_get_screen_width();
+  
+        for (x = x2; x > x1; x--) {
+  
+        int y;
+ 
+        for (y = y1; y < y2; y++) {            
+             r = GET_RED_FROM_PIXEL(*pixels);
+             g = GET_GREEN_FROM_PIXEL(*pixels);
+             b = GET_BLUE_FROM_PIXEL(*pixels);            
+             *destPtr++ = b;
+             *destPtr++ = g;
+             *destPtr++ = r;            
+             destPtr += sizeof(long) - 3*sizeof(*destPtr);
+             pixels += javacall_lcd_get_screen_width();
+        }
+        pixels += -1 - height * javacall_lcd_get_screen_width();         
+  
+      }    
+ 
+      SetDIBitsToDevice(hdc, y, javacall_lcd_get_screen_width() - width - x, height, width, 0, 0, 0,
+                           width, destBits, &bi, DIB_RGB_COLORS);
+ }
+  
+      DeleteObject(oobj);
+      DeleteObject(destHBmp);
+      DeleteDC(hdcMem);
+      releaseBitmapDC(hdc);
+  
+      invalidateLCDScreen(x1, y1, x1 + height, y1 + width);
+      UpdateWindow(hMainWindow);
+  }
+ 
+ 
+ 
+javacall_bool javacall_lcd_reverse_orientation() {
+      reverse_orientation = !reverse_orientation;    
+      VRAM.width = javacall_lcd_get_screen_width();
+      VRAM.height = DISPLAY_HEIGHT;
+      return reverse_orientation;
+}
+ 
+javacall_bool javacall_lcd_get_reverse_orientation() {
+     return reverse_orientation;
+}
+  
+int javacall_lcd_get_screen_height() {
+     if (reverse_orientation) {
+         return DISPLAY_WIDTH;
+     } else {
+         if(inFullScreenMode) {
+          return DISPLAY_HEIGHT;
+         } else {
+          return DISPLAY_HEIGHT - TOP_BAR_HEIGHT;
+         }
+     }
+}
+  
+int javacall_lcd_get_screen_width() {
+     if (reverse_orientation) {
+         return DISPLAY_HEIGHT;
+     } else {
+         return DISPLAY_WIDTH;
+     }
 }
 
 /*

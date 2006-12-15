@@ -144,7 +144,21 @@ javacall_result javacall_lcd_flush_partial(int ystart, int yend){
     return JAVACALL_FAIL;
 }
     
-
+javacall_bool javacall_lcd_reverse_orientation() {
+    return JAVACALL_FALSE;
+}
+ 
+javacall_bool javacall_lcd_get_reverse_orientation() {
+    return JAVACALL_FALSE;
+}
+  
+int javacall_lcd_get_screen_width() {
+    return 0;
+}
+ 
+int javacall_lcd_get_screen_height() {
+    return 0;
+}
     
 #ifdef __cplusplus
 } //extern "C"
