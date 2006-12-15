@@ -4725,7 +4725,7 @@ void* JVM_SetHeapLimit(void *new_heap_limit) {
 #if USE_DEBUG_PRINTING
 // Find all pointers in the heap that points to the given object.
 void ObjectHeap::find(OopDesc *target, bool verbose_owner) {
-  for (OopDesc**ptr = _heap_start; ptr < _inline_allocation_top; ptr++) {
+  for (OopDesc** ptr = _heap_start; ptr < _inline_allocation_top; ptr++) {
     if (*ptr == target) {
       OopDesc *owner = ObjectHeap::slow_object_start(ptr);
       int offset = DISTANCE(owner, ptr);
@@ -4758,7 +4758,7 @@ bool ObjectHeap::check_reach_root(OopDesc *n, ObjectHeap::ReachLink *stack,
   int max = Universe::__number_of_persistent_handles;
   for (int i=0; i<max; i++) {
     if (persistent_handles[i] == n) {
-      tty->print_cr("persistent_handles[%d]", i);
+      tty->print_cr("0x%08x <- persistent_handles[%d]", n, i);
       found = true;
       break;
     }
@@ -4768,7 +4768,7 @@ bool ObjectHeap::check_reach_root(OopDesc *n, ObjectHeap::ReachLink *stack,
     Oop *o = (Oop *)_last_handle;
     while (o != NULL) {
       if (o->obj()== n) {
-        tty->print_cr("[stack_handle: 0x%08x ]", o);
+        tty->print_cr("0x%08x <- [stack_handle: 0x%08x ]", n, o);
         found = true;
         break;
       }
@@ -4778,12 +4778,12 @@ bool ObjectHeap::check_reach_root(OopDesc *n, ObjectHeap::ReachLink *stack,
 
   if (!found) {
     if (n == Thread::current()->obj()) {
-      tty->print_cr("current_thread");
+      tty->print_cr("0x%08x <- current_thread", n);
       found = true;
     }
   }
 
-  if (found) {
+  if (found && stack != NULL) {
     Verbose++;
     for (;;) {
       Oop::Raw oop = n;

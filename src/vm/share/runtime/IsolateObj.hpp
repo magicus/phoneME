@@ -37,7 +37,8 @@ public:
     inner name(void) const { return kind##_field(name##_offset()); }          \
     void set_##name(outer value) { kind##_field_put(name##_offset(), value);}
 
-  #define INT_FIELD(name, index)      FIELD(name, index, int, jint, const jint)
+  #define INT_FIELD(name, index)   FIELD(name, index, int, jint, const jint)
+  #define LONG_FIELD(name, index)  FIELD(name, index, long, jlong, const jlong)
   #define OBJ_FIELD(name, index, type) FIELD(name, index, obj, ReturnOop, type*)
   #define STATIC_FIELD(name, index, kind, inner, outer)                       \
     static int static_##name##_offset() {                                     \
@@ -54,23 +55,23 @@ public:
      STATIC_FIELD(name, index, int, jint, const jint)
 
 
-  INT_FIELD( priority,          0 )
-  OBJ_FIELD( next,              1, IsolateObj )
-  OBJ_FIELD( unique_id,         2, String     )
-  INT_FIELD( is_terminated,     3 )
-  INT_FIELD( saved_exit_code,   4 )
-  OBJ_FIELD( main_class,        5, ObjArray   )
-  OBJ_FIELD( main_args,         6, ObjArray   )
-  OBJ_FIELD( app_classpath,         7, ObjArray   )  
-  OBJ_FIELD( hidden_packages,   8, ObjArray   )
-  OBJ_FIELD( restricted_packages, 9, ObjArray   )
-  OBJ_FIELD( sys_classpath,  10, ObjArray   )
-  INT_FIELD( memory_reserve,    11 )
-  INT_FIELD( memory_limit,      12 )
-  INT_FIELD( api_access_init,  13 )
-  INT_FIELD( connect_debugger, 14)
-  INT_FIELD( use_verifier,     15)
-  INT_FIELD( profile_id,       16 )  
+  INT_FIELD ( priority,             0 )
+  OBJ_FIELD ( next,                 1, IsolateObj )
+  LONG_FIELD( unique_id,            2 )
+  INT_FIELD ( is_terminated,        4 )
+  INT_FIELD ( saved_exit_code,      5 )
+  OBJ_FIELD ( main_class,           6, String     )
+  OBJ_FIELD ( main_args,            7, ObjArray   )
+  OBJ_FIELD ( app_classpath,        8, ObjArray   )
+  OBJ_FIELD ( sys_classpath,        9, ObjArray   )
+  OBJ_FIELD ( hidden_packages,     10, ObjArray   )
+  OBJ_FIELD ( restricted_packages, 11, ObjArray   )
+  INT_FIELD ( memory_reserve,      12 )
+  INT_FIELD ( memory_limit,        13 )
+  INT_FIELD ( api_access_init,     14 )
+  INT_FIELD ( connect_debugger,    15 )
+  INT_FIELD ( use_verifier,        16 )
+  INT_FIELD ( profile_id,          17 )  
 
   STATIC_INT_FIELD( api_access, 0 )
 
@@ -86,12 +87,18 @@ public:
   void static_int_field_put(int offset, const jint value);
 
   void notify_all_waiters(JVM_SINGLE_ARG_TRAPS);
+  void terminate(int exit_code JVM_TRAPS);
 
   bool is_equivalent_to(const IsolateObj *other) const {
     return unique_id() == other->unique_id();
   }
 
   void mark_equivalent_isolates_as_terminated(JVM_SINGLE_ARG_TRAPS);
+
+  void assign_unique_id() {
+    static jlong _global_unique_id = 0;
+    return set_unique_id(++_global_unique_id);
+  }
 
   // Returns the task represented by this IsolateObj. Returns NULL if this
   // IsolateObj represents a task that has not been started or has been

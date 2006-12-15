@@ -356,7 +356,6 @@ public:
   void forward_stop(int ecode, int ereason JVM_TRAPS);
   void terminate_current_isolate(Thread *THREAD JVM_TRAPS);
   void stop(int exit_code, int exit_reason JVM_TRAPS);
-  void stop_unstarted_task(int exit_code JVM_TRAPS);
   void set_hint(int hint, int param);
 
   void suspend();
@@ -373,7 +372,6 @@ public:
   static bool is_suspended_task(int task_id);
 
   bool load_main_class(Thread *thread JVM_TRAPS);
-  static ReturnOop deep_copy(Oop *obj JVM_TRAPS);
 
   int task_id( void ) const {
     return int_field(task_id_offset());
@@ -381,8 +379,6 @@ public:
   void set_task_id(int id) {
     int_field_put(task_id_offset(), id);
   }
-
-  ReturnOop isolate();
 
   // obtaining startup state info
   ReturnOop args();
@@ -453,6 +449,7 @@ public:
 
   // Clean up on task termination
   static void cleanup_terminated_task(int task_id JVM_TRAPS);
+  static void cleanup_unstarted_task(int task_id);
 
   bool is_terminating( void ) const {
     return (int_field(is_terminating_offset()) != 0);

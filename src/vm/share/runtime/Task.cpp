@@ -150,23 +150,20 @@ bool Task::init_first_task(JVM_SINGLE_ARG_TRAPS) {
   UsingFastOops fast_oops;
   ObjArray::Fast task_list = Universe::task_list();
   GUARANTEE(!task_list.is_null(), "Task list didn't get initialized");
-
-  // create first task, task 0 reserved for system use
   Task::Fast task = task_list().obj_at(Task::FIRST_TASK);
   GUARANTEE(!task.is_null(), "Task 1 didn't get allocated");
+  GUARANTEE(task.equals(Task::current()), "Must be in first task");
+
   fast_bootstrap(JVM_SINGLE_ARG_CHECK_0);
+
   IsolateObj::Fast isolate_obj =
       Universe::new_instance(Universe::isolate_class() JVM_CHECK_0);
   isolate_obj().set_memory_reserve(ReservedMemory);
   isolate_obj().set_memory_limit(TotalMemory);
-  {
-    String::Raw unique_id = Universe::new_string("", 0 JVM_CHECK_0);
-    isolate_obj().set_unique_id(&unique_id);
-  }
-  {
-    ObjArray::Raw classpath = task().app_classpath();
-    isolate_obj().set_app_classpath(&classpath);
-  }
+  isolate_obj().assign_unique_id();
+  ObjArray::Raw cp = Universe::make_strings_from_char_arrays(
+      task().app_classpath() JVM_OZCHECK(cp));
+  isolate_obj().set_app_classpath(&cp);
   isolate_obj().set_use_verifier(UseVerifier);
 
   task().set_primary_isolate_obj(isolate_obj());
@@ -179,15 +176,12 @@ bool Task::init_first_task(JVM_SINGLE_ARG_TRAPS) {
   task().set_profile_id(Universe::profile_id());
 #endif
 
-  Universe::set_current_task(FIRST_TASK);
   return true;
 }
 
 ReturnOop Task::create_task(const int id, IsolateObj* isolate JVM_TRAPS) {
   UsingFastOops fast_oops;
 
-  // Allocate stuff ahead of task id assignment to avoid cleanup code
-  // in case of failures.
   // Allocate and set java.lang.Thread mirror for current thread
   Thread::Fast new_thread = Thread::allocate(JVM_SINGLE_ARG_CHECK_0);
   {
@@ -198,31 +192,36 @@ ReturnOop Task::create_task(const int id, IsolateObj* isolate JVM_TRAPS) {
     thread_obj().set_priority(ThreadObj::PRIORITY_NORMAL);
   }
 
-  // These objects MUST BE allocated prior to the task to avoid
-  // partial initialization and incomplete task termination problems
-  // due to possible OOME
-  ObjArray::Fast priority_queue =
-    Universe::new_obj_array( ThreadObj::NUM_PRIORITY_SLOTS + 1
-      JVM_OZCHECK(priority_queue) );
-  ObjArray::Fast hidden_packages =
-    Universe::copy_strings_to_byte_arrays( isolate->hidden_packages()
-      JVM_OZCHECK(hidden_packages) );
-  ObjArray::Fast restricted_packages =
-    Universe::copy_strings_to_byte_arrays( isolate->restricted_packages()
-      JVM_OZCHECK(restricted_packages) );
-
   Task::Fast task = allocate_task(id JVM_CHECK_0);
-  GUARANTEE(!Universe::java_lang_Class_class()->is_null(),
-             "Mirror class not initialized");
-  task().set_priority_queue(priority_queue);
-  task().set_hidden_packages(hidden_packages);
-  task().set_restricted_packages(restricted_packages);
-  task().set_primary_isolate_obj(isolate);
+  TaskContext temporarily_switch_task(id);
+
+  ObjArray::Fast array;
+  array = Universe::copy_strings_to_byte_arrays(isolate->hidden_packages()
+                                                JVM_OZCHECK(array));
+  task().set_hidden_packages(array);
+  array = Universe::copy_strings_to_byte_arrays(isolate->restricted_packages()
+                                                JVM_OZCHECK(array));
+  task().set_restricted_packages(array);
+  array = Universe::copy_strings_to_char_arrays(isolate->sys_classpath()
+                                                JVM_OZCHECK(array));
+
+  task().set_sys_classpath(&array);
+  array = Universe::copy_strings_to_char_arrays(isolate->app_classpath()
+                                                JVM_OZCHECK(array));
+  task().set_app_classpath(&array);
+  array = Universe::new_obj_array(ThreadObj::NUM_PRIORITY_SLOTS + 1
+                                  JVM_OZCHECK(array));
+  task().set_priority_queue(&array);
   task().set_priority(isolate->priority());
+  IsolateObj::Fast primary_isolate = isolate->duplicate(
+    JVM_SINGLE_ARG_OZCHECK(primary_isolate));
+  task().set_primary_isolate_obj(&primary_isolate);
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   task().set_profile_id(isolate->profile_id()); // Set current active profile
 #endif
   
+  GUARANTEE(!Universe::java_lang_Class_class()->is_null(),
+             "Mirror class not initialized");
 
   new_thread().set_task_id(id);
   // start will only get an exception before adding thread to global list
@@ -251,26 +250,8 @@ void Task::start_task(Thread *thread JVM_TRAPS) {
   // to stop waiting.
   IsolateObj::Fast isolate_obj = task().primary_isolate_obj();
   isolate_obj().notify_all_waiters(JVM_SINGLE_ARG_CHECK);
-
-  { // Transfer the value from the instance field to the static field
-    const int api_access = isolate_obj().api_access_init();
-    isolate_obj().set_api_access(api_access);
-  }
-
-  // Allocate space for the classpath in using new task's quota
-  ObjArray::Fast orig_classpath = isolate_obj().app_classpath();
-  ObjArray::Fast copy_classpath = deep_copy(&orig_classpath JVM_CHECK);
-  task().set_app_classpath(&copy_classpath);
-
-  // Allocate space for the classpath in using new task's quota
-  ObjArray::Fast orig_sys_classpath = isolate_obj().sys_classpath();
-  ObjArray::Fast copy_sys_classpath;
-  if (orig_sys_classpath.is_null()) {
-    copy_sys_classpath = Universe::new_obj_array(0 JVM_CHECK);
-  } else {
-    copy_sys_classpath = deep_copy(&orig_sys_classpath JVM_CHECK);
-  }  
-  task().set_sys_classpath(&copy_sys_classpath);
+  // Transfer the value from the instance field to the static field
+  isolate_obj().set_api_access(isolate_obj().api_access_init());
 
 #if USE_BINARY_IMAGE_LOADER
   task().link_dynamic(JVM_SINGLE_ARG_CHECK);
@@ -285,50 +266,6 @@ void Task::start_task(Thread *thread JVM_TRAPS) {
           JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
   }
 #endif
-}
-
-ReturnOop Task::deep_copy(Oop *obj JVM_TRAPS) {
-  if (obj->is_obj_array()) {
-    UsingFastOops fast_oops;
-    ObjArray::Fast orig(obj);
-    ObjArray::Fast copy = Universe::new_obj_array(orig().length() JVM_CHECK_0);
-    Oop::Fast element;
-    for (int i=0; i<orig().length(); i++) {
-      element = orig().obj_at(i);
-      if (element.not_null()) {
-        ReturnOop o = deep_copy(&element JVM_CHECK_0);
-        copy().obj_at_put(i, o);
-      }
-    }
-    return copy.obj();
-  } else if (obj->is_char_array()) {
-    UsingFastOops fast_oops;
-    TypeArray::Fast orig(obj);
-    TypeArray::Fast copy= Universe::new_char_array(orig().length() JVM_CHECK_0);
-    TypeArray::array_copy(&orig, 0, &copy, 0, orig().length());
-    return copy.obj();
-  } else if (obj->is_string()) {
-    UsingFastOops fast_oops;
-    String::Fast orig(obj);
-    String::Fast copy = Universe::new_instance(Universe::string_class()
-                                               JVM_CHECK_0);
-    int orig_offset = orig().offset();
-    int orig_count  = orig().count();
-    TypeArray::Fast orig_value(orig().value());
-    TypeArray::Fast copy_value = Universe::new_char_array(orig_count
-                                                          JVM_CHECK_0);
-    TypeArray::array_copy(&orig_value, orig_offset, &copy_value, 0,
-                          orig_count);
-    
-    copy().set_value(&copy_value);
-    copy().set_count(orig_count);
-    copy().set_offset(0);
-
-    return copy.obj();
-  } else {
-    SHOULD_NOT_REACH_HERE();
-    return NULL;
-  }
 }
 
 int Task::allocate_task_id(JVM_SINGLE_ARG_TRAPS) {
@@ -397,27 +334,10 @@ ReturnOop Task::allocate_task(int id JVM_TRAPS) {
 // Upcall the stopping method of an isolate to set it to the stopping state
 // and produce stopping events.
 void Task::forward_stop(int ecode, int ereason JVM_TRAPS) {
-  if (status() >= TASK_STOPPING) {
-    return;
-  }
-  // We used to call up to java to Isolate.stop() but that eventually
-  // just turned into a native call so why bother with the upcall??
   GUARANTEE(status() != TASK_NEW, "stopping unstarted task");
-  switch (status()) {
-  case TASK_NEW:
-    // Change state of task to stopped and notify listeners
-    stop_unstarted_task(ecode JVM_NO_CHECK_AT_BOTTOM);
-    break;
-
-  case TASK_STARTED:
+  if (status() == TASK_STARTED) {
     stop(ecode, ereason JVM_NO_CHECK_AT_BOTTOM);
-    break;
-
-  default:
-    // OK to call stop() multiple times. Just ignore it.
-    break;
   }
-  return;
 }
 
 void Task::stop(int exit_code, int exit_reason JVM_TRAPS) {
@@ -448,18 +368,6 @@ void Task::stop(int exit_code, int exit_reason JVM_TRAPS) {
 
   // Here we set the special thread back to NULL just in case it was set.
   clear_special_thread();
-}
-
-void Task::stop_unstarted_task(int exit_code JVM_TRAPS) {
-  UsingFastOops fast_oops;
-
-  IsolateObj::Fast isolate_obj = primary_isolate_obj();
-
-  isolate_obj().set_is_terminated(1);
-  isolate_obj().set_saved_exit_code(exit_code);
-  isolate_obj().notify_all_waiters(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
-
-  // Isolate was never started, so no threads to kill.
 }
 
 void Task::cleanup_terminated_task(int id JVM_TRAPS) {
@@ -574,6 +482,15 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
 #endif
 }
 
+void Task::cleanup_unstarted_task(int task_id) {
+  TaskList::Raw tlist = Universe::task_list();
+  GUARANTEE(!tlist.is_null(), "No task list");
+  if (tlist().obj_at(task_id) != NULL) {
+    tlist().obj_at_clear(task_id);
+    _num_tasks--;
+  }
+}
+
 void Task::terminate_current_isolate(Thread *thread JVM_TRAPS) {
   thread->must_be_current_thread();
   GUARANTEE(status() == TASK_STOPPING || exit_reason() == IMPLICIT_EXIT,
@@ -674,8 +591,7 @@ bool Task::load_main_class(Thread *new_thread JVM_TRAPS) {
   // Create a delayed activation for the main method
   EntryActivation::Fast entry =
     Universe::new_entry_activation(&main_method, 1 JVM_CHECK_0);
-  ObjArray::Fast arguments = args();
-  arguments = deep_copy(&arguments JVM_CHECK_0);
+  ObjArray::Raw arguments = args();
   entry().obj_at_put(0, &arguments);
   new_thread->append_pending_entry(&entry);
 
