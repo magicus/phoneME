@@ -27,6 +27,6 @@ setlocal
 
 %~d0
 chdir %~p0
-runMidlet -1 com.sun.midp.i3test.Framework %*
+runMidlet internal com.sun.midp.i3test.Framework %*
 
 endlocal

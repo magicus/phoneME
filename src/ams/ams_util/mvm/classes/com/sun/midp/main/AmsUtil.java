@@ -1,27 +1,27 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.main;
@@ -157,7 +157,7 @@ public class AmsUtil {
             startMidletCommon(midletSuiteStorage, externalAppId, id, midlet,
                               displayName, arg0, arg1, arg2,
                               memoryReserved, memoryTotal, priority,
-                              profileName);
+                              profileName, null);
         } catch (Throwable t) {
             /*
              * This method does not throw exceptions for start errors,
@@ -181,15 +181,17 @@ public class AmsUtil {
      *             MIDlet as application property arg-1
      * @param arg2 if not null, this parameter will be available to the
      *             MIDlet as application property arg-2
+     * @param systemLibs libraries that should be added to the class path
      *
      * @return Isolate that the MIDlet suite was started in
      */
     public static Isolate startMidletInNewIsolate(int id, String midlet,
-            String displayName, String arg0, String arg1, String arg2) {
+            String displayName, String arg0, String arg1, String arg2,
+            String systemLibs) {
         // Note: getMIDletSuiteStorage performs an AMS permission check
         return startMidletCommon(MIDletSuiteStorage.getMIDletSuiteStorage(),
             0, id, midlet, displayName, arg0, arg1, arg2,
-            -1, -1, Isolate.MIN_PRIORITY - 1, null);
+            -1, -1, Isolate.MIN_PRIORITY - 1, null, systemLibs);
     }
 
     /**
@@ -218,6 +220,7 @@ public class AmsUtil {
      *                 &lt;= 0 if not used
      * @param profileName name of the profile to set for the new isolate;
      *                    null if not used
+     * @param systemLibs libraries that should be added to the class path
      *
      * @return Isolate that the MIDlet suite was started in;
      *             <code>null</code> if the MIDlet is already running
@@ -226,7 +229,7 @@ public class AmsUtil {
             midletSuiteStorage, int externalAppId, int id, String midlet,
             String displayName, String arg0, String arg1, String arg2,
             int memoryReserved, int memoryTotal,
-            int priority, String profileName) {
+            int priority, String profileName, String systemLibs) {
         Isolate isolate;
         String[] args = {Integer.toString(id), midlet, displayName, arg0,
                          arg1, arg2, Integer.toString(externalAppId)};
@@ -240,7 +243,8 @@ public class AmsUtil {
             classpath[0] = "";
         }
 
-        String isolateClassPath = System.getProperty("classpathext");
+        String isolateClassPath = (systemLibs != null) ? systemLibs :
+            System.getProperty("classpathext");
         String[] classpathext = null;
         if (null != isolateClassPath) {
             classpathext = new String[] {isolateClassPath};

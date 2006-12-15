@@ -36,7 +36,7 @@
 #include <suitestore_task_manager.h>
 
 #if ENABLE_MULTIPLE_ISOLATES
-#define MIDP_HEAP_REQUIREMENT (4 * 1024 * 1024)
+#define MIDP_HEAP_REQUIREMENT (MAX_ISOLATES * 1024 * 1024)
 #else
 #define MIDP_HEAP_REQUIREMENT (1280 * 1024)
 #endif
@@ -95,7 +95,7 @@ main(int argc, char** commandlineArgs) {
     int debugOption = MIDP_NO_DEBUG;
     char *progName = commandlineArgs[0];
     char* midpHome = NULL;
-    char* additionalPath;
+    char* additionalPath = NULL;
     SuiteIdType* pSuites = NULL;
     int numberOfSuites = 0;
 
@@ -147,9 +147,6 @@ main(int argc, char** commandlineArgs) {
     if (midpRemoveOptionFlag("-loop", argv, &argc) != NULL) {
         repeatMidlet = 1;
     }
-
-    /* additionalPath gets appended to the classpath */
-    additionalPath = midpRemoveCommandOption("-classpathext", argv, &argc);
 
     if (argc == 1) {
         REPORT_ERROR(LC_AMS, "Too few arguments given.");
@@ -259,6 +256,17 @@ main(int argc, char** commandlineArgs) {
             suiteId = INTERNAL_SUITE_ID;
 
             /* IMPL_NOTE: consider handling of other IDs. */
+
+            if (strcmp(argv[1], "internal")) {
+                /*
+                 * If the argument is not a suite ID, it might be a full
+                 * path to the midlet suite's jar file.
+                 * In this case this path is added to the classpath and
+                 * the suite is run without installation (it is useful
+                 * for internal test and development purposes).
+                 */
+                additionalPath = argv[1];
+            }
         }
 
         if (pcsl_string_is_null(&classname)) {

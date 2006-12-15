@@ -26,4 +26,4 @@
 #
 DIR=${0%/*}
 cd $DIR
-exec ./runMidlet -1 com.sun.midp.i3test.Framework "$@"
+exec ./runMidlet internal com.sun.midp.i3test.Framework "$@"

@@ -32,4 +32,4 @@ if [ $1X = X ]; then
 fi
 
 DIR=${0%/*}
-cd $DIR; ./runMidlet_g -1 com.sun.midp.scriptutil.CommandLineInstaller I $1 $2;
+cd $DIR; ./runMidlet_g internal com.sun.midp.scriptutil.CommandLineInstaller I $1 $2;

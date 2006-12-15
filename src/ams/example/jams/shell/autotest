@@ -25,4 +25,4 @@
 # information or have any questions. 
 #
 DIR=${0%/*}
-cd $DIR; ./runMidlet -1 com.sun.midp.installer.AutoTester $1 $2 $3;
+cd $DIR; ./runMidlet internal com.sun.midp.installer.AutoTester "$*";

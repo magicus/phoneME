@@ -27,5 +27,5 @@
 DIR=${0%/*}
 cd $DIR
 
-./runMidlet -1 com.sun.midp.scriptutil.SuiteLister
+./runMidlet internal com.sun.midp.scriptutil.SuiteLister
 

@@ -27,6 +27,6 @@ setlocal
 
 %~d0
 chdir %~p0
-runMidlet_g -1 com.sun.midp.installer.AutoTester %1 %2 %3
+runMidlet_g internal com.sun.midp.installer.AutoTester "%*"
 
 endlocal
