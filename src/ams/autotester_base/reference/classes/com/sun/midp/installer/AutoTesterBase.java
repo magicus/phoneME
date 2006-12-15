@@ -113,18 +113,22 @@ class AutoTesterBase extends MIDlet implements CommandListener,
             url = args[0];
             if (args.length > 1) {
                 boolean hasLoopCount = false;
+                int nextArgIdx = 2;
 
                 // this can be domain or loop count
                 try {
                     loopCount = Integer.parseInt(args[1]);
                     hasLoopCount = true;
                 } catch (NumberFormatException e) {
-                    // then its domain
-                    domain = args[1];
+                    // then its domain or "-syslibs"
+                    if (!"-syslibs".equals(args[1])) {
+                        domain = args[1];
+                    } else {
+                        nextArgIdx = 1;
+                    }
                 }
 
-                if (args.length > 2) {
-                    int nextArgIdx = 2;
+                if (args.length > nextArgIdx) {
                     if (!hasLoopCount) {
                         try {
                             loopCount = Integer.parseInt(args[2]);
@@ -142,7 +146,7 @@ class AutoTesterBase extends MIDlet implements CommandListener,
                     }
                 }
             }
-        }
+        } // end if (args != null)
     }
 
     /**
@@ -595,7 +599,7 @@ class AutoTesterBase extends MIDlet implements CommandListener,
                 argsVector.insertElementAt(arg, argsNum++);
                 break;
             }
-        } // while (idx >= 0);
+        }
 
         // convert the vector to array of strings
         String[] args = new String[argsVector.size()];

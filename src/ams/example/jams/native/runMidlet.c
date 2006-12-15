@@ -53,7 +53,7 @@ extern char* midpFixMidpHome(char *cmd);
 /** Usage text for the run MIDlet executable. */
 static const char* const runUsageText =
 "\n"
-"Usage: runMidlet [<VM args>] [-debug] [-loop] [-classpathext <path>]\n"
+"Usage: runMidlet [<VM args>] [-debug] [-loop]\n"
 "           (<suite number> | <suite ID>)\n"
 "           [<classname of MIDlet to run> [<arg0> [<arg1> [<arg2>]]]]\n"
 "         Run a MIDlet of an installed suite. If the classname\n"
