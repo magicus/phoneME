@@ -36,9 +36,13 @@
 
 /**
  * Initializes the lfjport_ui_ native resources.
+ *
+ * @return <tt>0</tt> upon successful initialization, or
+ *         <tt>other value</tt> otherwise
  */
-void lfjport_ui_init() {
+int lfjport_ui_init() {
     REPORT_CALL_TRACE(LC_HIGHUI, "LF:STUB:lfjport_ui_init()\n");
+    return 0;
 }
 
 /**

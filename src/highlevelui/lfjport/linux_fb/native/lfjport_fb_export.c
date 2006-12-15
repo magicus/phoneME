@@ -43,10 +43,14 @@ extern "C" {
 
 /**
  * Initializes the LCDUI native resources.
+ *
+ * @return <tt>0</tt> upon successful initialization, or
+ *         <tt>other value</tt> otherwise
  */
-void lfjport_ui_init() {
+int lfjport_ui_init() {
   inFullScreenMode = KNI_FALSE;
   fbapp_init();
+  return 0;
 }
 
 /**

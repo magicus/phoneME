@@ -123,6 +123,6 @@ include $(SUBSYSTEM_AMS_DIR)/example/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
 endif
 endif
 
-ifeq ($(TARGET_VM), cdc_hi)
+ifeq ($(TARGET_VM), cdc_vm)
 include $(SUBSYSTEM_AMS_DIR)/cdc_application/lib.gmk
 endif
