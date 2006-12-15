@@ -116,7 +116,7 @@
 
   <integer
         Key="SCROLL_MODE"
-      Value="ScrollIndSkin.MODE_ARROWS"/>
+      Value="ScrollIndSkin.MODE_BAR"/>
 
   <integer
         Key="SCROLL_WIDTH"
