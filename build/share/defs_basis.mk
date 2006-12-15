@@ -36,11 +36,12 @@
 # check the target-specific makefiles to set this
 #
 AWT_IMPLEMENTATION ?= qt
+AWT_IMPLEMENTATION_DIR ?= ../..
 
 #
 # Include awt implementation makefiles for the profile.
 #
-include ../share/defs_$(J2ME_CLASSLIB)_$(AWT_IMPLEMENTATION).mk
+include $(AWT_IMPLEMENTATION_DIR)/build/share/defs_$(J2ME_CLASSLIB)_$(AWT_IMPLEMENTATION).mk
 
 #
 # JPEG_LIB_LIBS. Don't override it if the target defs_basis.mk set it.
