@@ -2462,25 +2462,6 @@ public class Display {
         }
 
         /**
-         * Set the trusted icon for this Display. When ever this display is in
-         * the foreground the given icon will be displayed in the area
-         * reserved
-         * for the trusted icon. Only callers with the internal MIDP
-         * permission can use this method.
-         * DisplayAccess I/F method.
-         *
-         * @param token security token of the call that has internal MIDP
-         *              permission
-         * @param drawTrusted true to draw the trusted icon
-         */
-        public void setTrustedIcon(SecurityToken token, boolean drawTrusted) {
-
-            token.checkIfPermissionAllowed(Permissions.MIDP);
-
-            drawTrustedIcon0(displayId, drawTrusted);
-        }
-
-        /**
          * Get the class name of the MIDlet that owns this display.
          * DisplayAccess I/F method.
          *
