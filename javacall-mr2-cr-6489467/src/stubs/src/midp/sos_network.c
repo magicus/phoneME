@@ -459,7 +459,7 @@ javacall_result javacall_network_init(void) {
 * See javacall_network.h for definition.
 */ 
 int javacall_network_error(void */*handle*/) {
-    return JAVACALL_FAIL;
+    return 0;
 }
 
 /**
