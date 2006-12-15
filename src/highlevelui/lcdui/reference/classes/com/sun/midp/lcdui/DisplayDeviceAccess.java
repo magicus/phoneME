@@ -40,9 +40,7 @@ public class DisplayDeviceAccess {
     /** 
      * The Timer to service TimerTasks. 
      */
-    /* FIXME CDC replacement. */
-    private static Timer timerService = null;
-    //    private static Timer timerService = new Timer();
+    private static Timer timerService = new Timer();
 
     /** 
      * A TimerTask. 
@@ -81,12 +79,6 @@ public class DisplayDeviceAccess {
      */
     private boolean isLit = false;
 
-    private static Timer getTimer() {
-	if (timerService == null) {
-	    timerService = new Timer();
-	}
-	return timerService;
-    }
 
     /**
      * Requests a flashing effect for the device's backlight.
@@ -124,14 +116,12 @@ public class DisplayDeviceAccess {
      * @param duration the number of milliseconds the timer should be run
      */
     private void setTimer(int displayId, int duration) {
-	Timer timer = getTimer();
         cancelTimer();
         try {
             task = new TimerClient(displayId);
             /* flash every <tt>BLINK_RATE</tt> miliseconds */
             flashCount = duration / BLINK_RATE;
-            timer.schedule(task, BLINK_RATE, BLINK_RATE);
-	    //    timerService.schedule(task, BLINK_RATE, BLINK_RATE);
+            timerService.schedule(task, BLINK_RATE, BLINK_RATE);
         } catch (IllegalStateException e) {
             cancelTimer();
         }
