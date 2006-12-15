@@ -62,7 +62,7 @@ import java.util.Vector;
  *    list, install, uninstall
  *
  * Usage:
- *   <cvm> -Dinstaller.repository=<repository dir> <options> -cp <classpath> com.sun.jumpimpl.module.installer.JUMPInstallerTool -command <command>
+ *   <cvm> -Dinstaller.repository=<repository dir> -cp <classpath> com.sun.jumpimpl.module.installer.JUMPInstallerTool <options> -command <command>
  *     <command> can currently be list, install, and uninstall
  *     <options> can be none or any of the following:
  *        -ProvisioningServerURL <url of provisioning server>
@@ -129,7 +129,7 @@ public class JUMPInstallerTool {
      * @param hash properties
      */
     public JUMPInstallerTool(Hashtable hash) {
-        this.ProvisioningServer = (String)hash.get("ProvisioningServer");
+        this.ProvisioningServer = (String)hash.get("ProvisioningServerURL");
         this.OMAdiscoverURL = (String)hash.get("OMAdiscoverURL");
         this.MIDPdiscoverURL = (String)hash.get("MIDPdiscoverURL");
         this.Command = (String)hash.get("Command");
