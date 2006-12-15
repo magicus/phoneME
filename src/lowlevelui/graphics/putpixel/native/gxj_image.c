@@ -965,9 +965,9 @@ void gx_render_image(const java_imagedata * srcImageDataPtr,
     draw_image(psrcSBuf, pdstSBuf, clip, x, y);
   } else {
     // Non optimal rotated image drawing
-    int pdstSBufWidth = pdstSBuf->width;
-    jshort rclip[] = RCLIP(clip, pdstSBufWidth);
-    draw_imageregion(psrcSBuf, pdstSBuf, rclip, RPIXEL(x, y, pdstSBufWidth),
+    int pdstSBufHeight = pdstSBuf->height;
+    jshort rclip[] = RCLIP(clip, pdstSBufHeight);
+    draw_imageregion(psrcSBuf, pdstSBuf, rclip, RPIXEL(x, y, pdstSBufHeight),
         psrcSBuf->width, psrcSBuf->height, 0, 0, TRANS_ROT270);
   }
 

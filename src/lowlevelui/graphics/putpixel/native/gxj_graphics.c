@@ -62,13 +62,13 @@ gx_fill_triangle(int color, const jshort *clip,
         fill_triangle(sbuf, GXJ_RGB24TORGB16(color),
             clip, x1, y1, x2, y2, x3, y3);
     } else {
-        int sbuf_width = sbuf->width;
-        jshort rclip[] = RCLIP(clip, sbuf_width);
+        int sbuf_height = sbuf->height;
+        jshort rclip[] = RCLIP(clip, sbuf_height);
         fill_triangle(
             sbuf, GXJ_RGB24TORGB16(color), rclip,
-            RPIXEL(x1, y1, sbuf_width),
-            RPIXEL(x2, y2, sbuf_width),
-            RPIXEL(y3, x3, sbuf_width));
+            RPIXEL(x1, y1, sbuf_height),
+            RPIXEL(x2, y2, sbuf_height),
+            RPIXEL(y3, x3, sbuf_height));
     }
 }
 
@@ -89,11 +89,11 @@ gx_copy_area(const jshort *clip,
         copy_imageregion(sbuf, sbuf, clip,
             x_dest, y_dest, width, height, x_src, y_src, 0);
     } else {
-        int sbuf_width = sbuf->width;
-        jshort rclip[] = RCLIP(clip, sbuf_width);
+        int sbuf_height = sbuf->height;
+        jshort rclip[] = RCLIP(clip, sbuf_height);
         copy_imageregion(
-            sbuf, sbuf, rclip, RPIXEL(x_dest, y_dest, sbuf_width),
-            height, width, RPIXEL(x_src, y_src, sbuf_width), 0);
+            sbuf, sbuf, rclip, RPIXEL(x_dest, y_dest, sbuf_height),
+            height, width, RPIXEL(x_src, y_src, sbuf_height), 0);
     }
 }
 
@@ -105,6 +105,7 @@ gx_draw_rgb(const jshort *clip,
              jint width, jint height, jboolean processAlpha) {
     int a, b;
     int sbufWidth;
+    int sbufHeight;
 
     int dataRowIndex = 0;
     int sbufRowIndex = 0;
@@ -119,6 +120,7 @@ gx_draw_rgb(const jshort *clip,
         gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
     sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
     sbufWidth = sbuf->width;
+    sbufHeight = sbuf->height;
 
     REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_rgb()\n");
 
@@ -127,14 +129,14 @@ gx_draw_rgb(const jshort *clip,
         sbufRowIndex = y * sbufWidth;
     } else {
         CHECK_SBUF_RCLIP_BOUNDS(sbuf, clip);
-        sbufColIndex = x * sbufWidth + (sbufWidth - y);
+        sbufColIndex = (sbufHeight - x) * sbufWidth + y;
     }
 
     for (b = y; b < y + height;
         b++, dataRowIndex += scanlen,
         (!sbuf->rotated) ?
             sbufRowIndex += sbufWidth :
-            sbufColIndex--) {
+            sbufColIndex++) {
 
         if (b >= clipY2) return;
         if (b <  clipY1) continue;
@@ -144,7 +146,7 @@ gx_draw_rgb(const jshort *clip,
             int value = rgbData[offset + (a - x) + dataRowIndex];
             int idx = (!sbuf->rotated) ?
                 (sbufRowIndex + a) :
-                (sbufColIndex + (a - x) * sbufWidth) ;
+                (sbufColIndex - (a - x) * sbufWidth) ;
 
             if (a >= clipX2) break;
             if (a < clipX1) {
@@ -201,11 +203,11 @@ gx_draw_line(int color, const jshort *clip,
     if (!sbuf->rotated) {
         draw_clipped_line(sbuf, pixelColor, lineStyle, clip, x1, y1, x2, y2);
     } else {
-        int sbuf_width = sbuf->width;
-        jshort rclip[] = RCLIP(clip, sbuf_width);
+        int sbuf_height = sbuf->height;
+        jshort rclip[] = RCLIP(clip, sbuf_height);
         draw_clipped_line(sbuf, pixelColor, lineStyle, rclip,
-            RPIXEL(x1, y1, sbuf_width),
-            RPIXEL(x2, y2, sbuf_width));
+            RPIXEL(x1, y1, sbuf_height),
+            RPIXEL(x2, y2, sbuf_height));
     }
 }
 
@@ -234,10 +236,10 @@ gx_draw_rect(int color, const jshort *clip,
         draw_roundrect(pixelColor, clip, sbuf, lineStyle,
             x,  y, width, height, 0, 0, 0);
     } else {
-        int sbuf_width = sbuf->width;
-        jshort rclip[] = RCLIP(clip, sbuf_width);
+        int sbuf_height = sbuf->height;
+        jshort rclip[] = RCLIP(clip, sbuf_height);
         draw_roundrect(pixelColor, rclip, sbuf, lineStyle,
-            RPIXEL(x, y, sbuf_width), height, width, 0, 0, 0);
+            RPIXEL(x, y, sbuf_height), height, width, 0, 0, 0);
     }
 }
 
@@ -293,10 +295,12 @@ gx_fill_rect(int color, const jshort *clip,
     const jshort clipY2 = clip[3];
 
     int sbuf_width;
+    int sbuf_height;
     gxj_screen_buffer *sbuf =
         gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
     sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
     sbuf_width = sbuf->width;
+    sbuf_height = sbuf->height;
 
     REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_rect()\n");
 
@@ -315,9 +319,9 @@ gx_fill_rect(int color, const jshort *clip,
                 RPIXEL(x, y, sbuf_width), height, width, clipX1, clipX2);
             return;
         } else {
-            jshort rclip[] = RCLIP(clip, sbuf_width);
+            jshort rclip[] = RCLIP(clip, sbuf_height);
             draw_roundrect(pixelColor, rclip, sbuf, (dotted? DOTTED: SOLID),
-                RPIXEL(x, y, sbuf_width), height, width, 1, 0, 0);
+                RPIXEL(x, y, sbuf_height), height, width, 1, 0, 0);
         }
     }
 }
@@ -346,11 +350,11 @@ gx_draw_roundrect(int color, const jshort *clip,
         draw_roundrect(pixelColor, clip, sbuf, lineStyle,
             x, y, width, height, 0, arcWidth >> 1, arcHeight >> 1);
     } else {
-        int sbuf_width = sbuf->width;
-        jshort rclip[] = RCLIP(clip, sbuf_width);
+        int sbuf_height = sbuf->height;
+        jshort rclip[] = RCLIP(clip, sbuf_height);
         //API of the draw_roundrect requests radius of the arc at the four
         draw_roundrect(pixelColor, rclip, sbuf, lineStyle,
-            RPIXEL(x, y, sbuf_width), height, width, 0,
+            RPIXEL(x, y, sbuf_height), height, width, 0,
             arcHeight >> 1, arcWidth >> 1);
     }
 }
@@ -379,11 +383,11 @@ gx_fill_roundrect(int color, const jshort *clip,
         draw_roundrect(pixelColor, clip, sbuf, lineStyle,
             x, y, width, height, 1, arcWidth >> 1, arcHeight >> 1);
     } else {
-        int sbuf_width = sbuf->width;
-        jshort rclip[] = RCLIP(clip, sbuf_width);
+        int sbuf_height = sbuf->height;
+        jshort rclip[] = RCLIP(clip, sbuf_height);
         //API of the draw_roundrect requests radius of the arc at the four
         draw_roundrect(pixelColor, rclip, sbuf, lineStyle,
-            RPIXEL(x, y, sbuf_width), height, width, 1,
+            RPIXEL(x, y, sbuf_height), height, width, 1,
             arcHeight >> 1, arcWidth >> 1);
     }
 }
@@ -416,10 +420,10 @@ gx_draw_arc(int color, const jshort *clip,
         draw_arc(pixelColor, clip, sbuf, lineStyle, x, y,
             width, height, 0, startAngle, arcAngle);
     } else {
-        int sbuf_width = sbuf->width;
-        jshort rclip[] = RCLIP(clip, sbuf_width);
+        int sbuf_height = sbuf->height;
+        jshort rclip[] = RCLIP(clip, sbuf_height);
         draw_arc(pixelColor, rclip, sbuf, lineStyle,
-            RPIXEL(x, y, sbuf_width), height, width, 0,
+            RPIXEL(x, y, sbuf_height), height, width, 0,
             (startAngle + 270) % 360, (arcAngle + 270) % 360);
     }
 }
@@ -449,10 +453,10 @@ gx_fill_arc(int color, const jshort *clip,
         draw_arc(pixelColor, clip, sbuf, lineStyle, x, y,
             width, height, 1, startAngle, arcAngle);
     } else {
-        int sbuf_width = sbuf->width;
-        jshort rclip[] = RCLIP(clip, sbuf_width);
+        int sbuf_height = sbuf->height;
+        jshort rclip[] = RCLIP(clip, sbuf_height);
         draw_arc(pixelColor, rclip, sbuf, lineStyle,
-            RPIXEL(x, y, sbuf_width), height, width, 1,
+            RPIXEL(x, y, sbuf_height), height, width, 1,
             (startAngle + 270) % 360, (arcAngle + 270) % 360);
     }
 }
