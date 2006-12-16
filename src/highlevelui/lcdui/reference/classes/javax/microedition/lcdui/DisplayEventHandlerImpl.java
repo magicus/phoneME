@@ -209,10 +209,10 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
                 foregroundController.stopPreempting(
                     preemptingDisplay.getDisplayId());
 
-                preemptingDisplay = null;
-
                 displayContainer.removeDisplay(
                     preemptingDisplay.getNameOfOwner());
+
+                preemptingDisplay = null;
 
                 // A midlet may be waiting to preempt
                 this.notify();
