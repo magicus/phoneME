@@ -35,6 +35,12 @@ import com.sun.jump.message.JUMPOutgoingMessage;
  * related requests that originate from the <Code>JUMPExecutive</code>
  */
 public class JUMPExecutiveLifecycleRequest extends JUMPRequest {
+    private byte[] appBytes = null;
+    
+    public byte[] getAppBytes() {
+	return appBytes;
+    }
+    
     /** 
      * Initialize the target isolate
      * <ol>
@@ -130,19 +136,62 @@ public class JUMPExecutiveLifecycleRequest extends JUMPRequest {
      */
     public static final String ID_DESTROY_APP    = "DestroyApp";
     
+    public static final String MESSAGE_TYPE = "mvm/client";
     
+    //
+    // To be filled in when de-serializing
+    //
+    protected JUMPExecutiveLifecycleRequest() {
+	super(MESSAGE_TYPE, null, null);
+    }
+
     /**
      * Create a new lifecycle request on an app
      * @param id The id of the lifecycle request
      * @param args arguments
      */
     public JUMPExecutiveLifecycleRequest(String id, String[] args) {
-	super("executive/lifecycle", id, args);
+	super(MESSAGE_TYPE, id, args);
+    }
+
+    /**
+     * Create a new lifecycle request on an app
+     * @param id The id of the lifecycle request
+     * @param appBytes the serialized form of an application
+     * @param args arguments
+     */
+    public JUMPExecutiveLifecycleRequest(String id, byte[] appBytes, 
+					 String[] args) {
+	super(MESSAGE_TYPE, id, args);
+	this.appBytes = appBytes;
     }
 
     public static JUMPCommand fromMessage(JUMPMessage message) {
 	return JUMPCommand.fromMessage(message,
 				       JUMPExecutiveLifecycleRequest.class);
     }
+
+    /**
+     * For subclasses to use to initialize any fields
+     * using <code>JUMPMessage.get*</code> methods.
+     */
+    protected void deserializeFrom(JUMPMessageReader message) {
+	// First deserialize any shared fields
+	super.deserializeFrom(message);
+	// And now lifecycle request specific fields
+	this.appBytes = message.getByteArray();
+    }
+
+    /**
+     * For subclasses to use to put data in a message
+     * using <code>JUMPOutgoingMessage.add*</code> methods.
+     */
+    protected void serializeInto(JUMPOutgoingMessage message) {
+	// First deserialize any shared fields
+	super.serializeInto(message);
+	// And now lifecycle request specific fields
+	message.addByteArray(this.appBytes);
+    }
+
 
 }

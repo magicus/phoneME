@@ -153,7 +153,7 @@ public abstract class JUMPMessage {
 	JUMPMessageReader r = new JUMPMessageReader(this, MESSAGE_DATA_OFFSET);
 	this.id = r.getInt();
 	this.responseId = r.getInt();
-	this.sender = deserializeMessageSender(r.getInt());
+	readMessageSender(r.getInt());
 	this.returnType = r.getUTF();	
 	this.type = r.getUTF();	
 	// Update the offsets to point past the header
@@ -167,6 +167,6 @@ public abstract class JUMPMessage {
 	messageDataOffset = messageMarkOffset;
     }
 
-    protected abstract JUMPMessagable deserializeMessageSender(int id);
+    protected abstract void readMessageSender(int id);
     protected abstract JUMPMessageResponseSender getMessageSender();
 }

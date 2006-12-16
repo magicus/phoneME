@@ -30,38 +30,40 @@ import com.sun.jump.message.JUMPMessagable;
 import com.sun.jump.message.JUMPOutgoingMessage;
 import com.sun.jump.message.JUMPTimedOutException;
 
+import com.sun.jump.os.JUMPOSInterface;
+
 /**
  * Process oriented messages, assuming JUMPProcessProxyImpl message peers.
  */
 public class MessageImpl {
+    public static JUMPOSInterface os = JUMPOSInterface.getInstance();
+    public static int mypid = os.getProcessID();
+    
     public static class Message extends JUMPMessage {
+	private int senderPid;
+	
 	public Message(byte[] rawBytes) {
 	    super(rawBytes);
 	}
 	
-	protected JUMPMessagable deserializeMessageSender(int id) {
-	    return JUMPProcessProxyImpl.createProcessProxyImpl(id);
+	protected void readMessageSender(int id) {
+	    this.senderPid = id;
 	}
 	
 	protected JUMPMessageResponseSender getMessageSender() {
-	    return (JUMPMessageResponseSender)this.sender;
+	    return JUMPProcessProxyImpl.getProcessProxyImpl(this.senderPid);
 	}
-	
     }
 
     public static class OutgoingMessage extends JUMPOutgoingMessage {
-	protected JUMPMessagable deserializeMessageSender(int id) {
-	    return JUMPProcessProxyImpl.createProcessProxyImpl(id);
-	}
-	
 	protected JUMPMessageResponseSender getMessageSender() {
-	    return (JUMPMessageResponseSender)this.sender;
+	    return (JUMPMessageResponseSender)sender;
 	}
 	
         public OutgoingMessage(JUMPMessagable sender,
-				  String type,
-				  String returnType,
-				  int responseId) {
+			       String type,
+			       String returnType,
+			       int responseId) {
             super(sender, type, returnType, responseId);
         }
 

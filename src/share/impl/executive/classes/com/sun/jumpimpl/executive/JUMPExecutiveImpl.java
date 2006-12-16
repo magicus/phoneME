@@ -132,6 +132,11 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
 		    JUMPApplication app = (JUMPApplication)content[i];
 		    System.err.println("App["+i+"] = "+app);
 		}
+		int appid = ip.startApp((JUMPApplication)content[0], null);
+		System.err.println("Executive started app="+appid);
+	    } else {
+		System.err.println("No content available");
+		System.exit(1);
 	    }
 	}
 

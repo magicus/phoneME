@@ -27,10 +27,12 @@
 package com.sun.jumpimpl.isolate.jvmprocess;
 
 import com.sun.jump.isolate.jvmprocess.JUMPIsolateProcess;
+import com.sun.jump.isolate.jvmprocess.JUMPAppContainer;
 import com.sun.jump.common.JUMPAppModel;
 import com.sun.jump.common.JUMPProcess;
 import com.sun.jump.common.JUMPIsolate;
 import com.sun.jump.common.JUMPProcessProxy;
+import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.message.JUMPMessagingService;
 import com.sun.jump.message.JUMPMessageDispatcher;
 import com.sun.jump.message.JUMPOutgoingMessage;
@@ -41,8 +43,11 @@ import com.sun.jump.os.JUMPOSInterface;
 import com.sun.jumpimpl.process.JUMPProcessProxyImpl;
 import com.sun.jumpimpl.process.RequestSenderHelper;
 import com.sun.jump.command.JUMPIsolateLifecycleRequest;
+import com.sun.jump.command.JUMPExecutiveLifecycleRequest;
+import com.sun.jump.command.JUMPCommand;
 import com.sun.jump.command.JUMPRequest;
 import com.sun.jump.command.JUMPResponse;
+import com.sun.jump.command.JUMPResponseInteger;
 
 import sun.misc.ThreadRegistry;
 
@@ -53,6 +58,7 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
     private JUMPProcessProxy        execProcess;
     private JUMPMessageDispatcher   disp;
     private JUMPAppModel            appModel;
+    private JUMPAppContainer        appContainer;
 
     protected JUMPIsolateProcessImpl() {
 	super();
@@ -157,6 +163,7 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 	System.err.println("Setting app model to "+appModel);
 	this.appModel = appModel;
 	// FIXME: Create container for 'appModel'
+	this.appContainer = null;
     }
 
     private void createListenerThread()
@@ -182,17 +189,53 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
     //
     void processMessage(JUMPMessage in) 
     {
-	JUMPMessageReader reader = new JUMPMessageReader(in);
-	System.err.println("Incoming client message:");
-	String[] responseStrings = reader.getUTFArray();
-	for (int j = 0; j < responseStrings.length; j++) {
-	    System.err.println("    \""+responseStrings[j]+"\"");
-	}
+	JUMPOutgoingMessage responseMessage;
 	JUMPMessageResponseSender returnTo = in.getSender();
-	JUMPOutgoingMessage m = newOutgoingMessage(in);
-	m.addUTFArray(new String[] {"SUCCESS"});
+	
+	JUMPCommand raw = JUMPRequest.fromMessage(in);
+	String id = raw.getCommandId();
+	// Now let's figure out the type
+	if (id.equals(JUMPExecutiveLifecycleRequest.ID_START_APP)) {
+	    JUMPExecutiveLifecycleRequest elr = (JUMPExecutiveLifecycleRequest)
+		JUMPExecutiveLifecycleRequest.fromMessage(in);
+	    byte[] barr = elr.getAppBytes();
+	    JUMPApplication app = JUMPApplication.fromByteArray(barr);
+	    String[] args = elr.getArgs();
+	    System.err.println("START_APP("+app+")");
+	    // The message is telling us to start an application
+	    // int appId = appContainer.startApp(app, args);
+	    int appId = 1234;
+	    // Now wrap this appid in a message and return it
+	    JUMPResponseInteger resp;
+	    if (appId != -1) {
+		resp = new JUMPResponseInteger(in.getType(), 
+					       JUMPResponseInteger.ID_SUCCESS,
+					       appId);
+	    } else {
+		resp = new JUMPResponseInteger(in.getType(), 
+					       JUMPResponseInteger.ID_FAILURE,
+					       -1);
+	    }
+	    //
+	    // Now convert JUMPResponse to a message in response
+	    // to the incoming message
+	    //
+	    responseMessage = resp.toMessageInResponseTo(in, this);
+	} else {
+	    // Assumption of default message
+	    // A utf array, expecting a generic JUMPResponse
+	    JUMPMessageReader reader = new JUMPMessageReader(in);
+	    System.err.println("Incoming client message:");
+	    String[] responseStrings = reader.getUTFArray();
+	    for (int j = 0; j < responseStrings.length; j++) {
+		System.err.println("    \""+responseStrings[j]+"\"");
+	    }
+	    responseMessage = newOutgoingMessage(in);
+	    responseMessage.addUTFArray(new String[] {"SUCCESS"});
+	}
+
 	try {
-	    returnTo.sendResponseMessage(m);
+	    returnTo.sendResponseMessage(responseMessage);
 	} catch (Throwable e) {
 	    e.printStackTrace();
 	}

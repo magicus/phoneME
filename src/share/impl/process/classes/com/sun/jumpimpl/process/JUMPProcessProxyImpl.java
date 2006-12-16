@@ -55,7 +55,9 @@ public class JUMPProcessProxyImpl implements JUMPProcessProxy, JUMPMessagingServ
 	this.processId = processId;
 	// Register this instance
 	Integer pidObj = new Integer(processId);
-	proxyMap.put(pidObj, this);
+	synchronized(JUMPProcessProxyImpl.class) {
+	    proxyMap.put(pidObj, this);
+	}
     }
     
     /*

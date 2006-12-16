@@ -25,10 +25,12 @@
 package com.sun.jump.common;
 
 import java.net.MalformedURLException;
-import java.util.HashMap;
+import java.util.Properties;
 import java.net.URL;
 import com.sun.jump.common.JUMPContent;
-import java.util.Iterator;
+import java.util.Enumeration;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 
 /**
  * A representation of executable application content in the jump environment.
@@ -39,7 +41,7 @@ import java.util.Iterator;
 public class JUMPApplication
         implements java.io.Serializable, JUMPContent {
     
-    protected HashMap props = null; // additional properties
+    protected Properties props = null; // additional properties
     
     public static final String ICONPATH_KEY = "JUMPApplication_iconPath";
     public static final String TITLE_KEY = "JUMPApplication_title";
@@ -57,6 +59,45 @@ public class JUMPApplication
         addProperty(APPMODEL_KEY, type.getName());
     }
     
+    /**
+     * Create an instance of an application from a Properties object
+     * @param props The properties that correspond to this application
+     */
+    private JUMPApplication(Properties props) {
+	this.props = props;
+    }
+    
+    /**
+     * Create a binary representation of this JUMPApplication object
+     */
+    public byte[] toByteArray() 
+    {
+	try {
+	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	    props.store(baos, "");
+	    return baos.toByteArray();
+	} catch (Throwable e) {
+	    e.printStackTrace();
+	    return null;
+	}
+    }
+    
+    /**
+     * Create a JUMPApplication from its binary representation
+     */
+    public static JUMPApplication fromByteArray(byte[] propBytes) 
+    {
+	try {
+	    Properties p = new Properties();
+	    ByteArrayInputStream bais = new ByteArrayInputStream(propBytes);
+	    p.load(bais);
+	    return new JUMPApplication(p);
+	} catch (Throwable e) {
+	    e.printStackTrace();
+	    return null;
+	}
+    }
+    
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("[app type=\""+getAppType()+"\",");
@@ -72,8 +113,8 @@ public class JUMPApplication
         }
         
         StringBuffer sb = new StringBuffer();
-        for (Iterator i = getPropertyNames(); i.hasNext(); ) {
-            String name = (String)i.next();
+        for (Enumeration e = getPropertyNames(); e.hasMoreElements(); ) {
+            String name = (String)e.nextElement();
             String value = getProperty(name);
             sb.append(name+"="+value+", ");
         }
@@ -153,7 +194,7 @@ public class JUMPApplication
             throw new NullPointerException("null key or value");
         }
         if ( props == null ) {
-            props = new HashMap();
+            props = new Properties();
         }
         props.put( key, value );
         
@@ -178,12 +219,12 @@ public class JUMPApplication
     
     /**
      * Returns the names of this JUMPApplication's property entries as an
-     * Iterator of String objects, or an empty Iterator if
+     * Enumeration of String objects, or an empty Enumeration if
      * the JUMPApplication have no properties associated.
      */
-    public Iterator getPropertyNames() {
+    public Enumeration getPropertyNames() {
         if ( props != null ) {
-            return props.keySet().iterator();
+            return props.keys();
         }
         
         return null;

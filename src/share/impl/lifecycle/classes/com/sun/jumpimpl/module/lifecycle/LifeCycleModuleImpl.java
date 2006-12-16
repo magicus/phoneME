@@ -66,8 +66,24 @@ public class LifeCycleModuleImpl
      */
     public JUMPIsolateProxy newIsolate(JUMPAppModel model) {
 	String[] args = new String[] { model.getName() };
+	// The following is inherently racy, but it is handled properly.
+	// 
+	// 1) The process is created
+	// 2) The representative JUMPIsolateProxyImpl is created.
+	//
+	// Between #1 and #2, the "initialized" message might come in
+	// from the newly created process, and will be looking for the isolate
+	// object JUMPIsolateProxyImpl that matches the pid. If the instance
+	// is not registered yet, we have a problem.
+	//
+	// The solution is to have the message handler and newIsolate()
+	// race to register the isolate object for the pid.
+	// One of them will always win out, and there will still be
+	// only one isolate object for each pid.
+	//
         int pid = JUMPOSInterface.getInstance().createProcess(args);
-        JUMPIsolateProxyImpl isolate = new JUMPIsolateProxyImpl(pid);
+        JUMPIsolateProxyImpl isolate =
+	    JUMPIsolateProxyImpl.registerIsolate(pid);
         isolates.add(isolate);
 	//
 	// Wait until isolate is initialized (it will send us a message
@@ -107,26 +123,7 @@ public class LifeCycleModuleImpl
      * It returns <Code>null</code> if no such isolate is found.
      */
     public JUMPIsolateProxy getIsolate(int isolateId) {
-	//
-	// Get the registered process proxy for this isolate id (pid)
-	// This happens automatically when the isolate is launched
-	// and the JUMPIsolateProxyImpl object is created
-	//
-	JUMPProcessProxyImpl ppi = 
-	    JUMPProcessProxyImpl.getProcessProxyImpl(isolateId);
-	if (ppi == null) {
-	    return null;
-	}
-	if (ppi instanceof JUMPIsolateProxyImpl) {
-	    return (JUMPIsolateProxyImpl)ppi;
-	} else {
-	    //
-	    // This is probably a fatal error. We should not
-	    // have another registered JUMPProcessProxyImpl for this pid
-	    // that is not a JUMPIsolateProxyImpl instance
-	    //
-	}
-	return null;
+	return JUMPIsolateProxyImpl.getRegisteredIsolate(isolateId);
     }
     
     /**
@@ -188,19 +185,14 @@ public class LifeCycleModuleImpl
 	// requires that getIsolate() be available both on the client
 	// and the executive side.
 	//
-	// Also FIXME: This call will not find a matching JUMPIsolateProxyImpl
-	// unless the lifecycle module created this isolate. This might be
-	// possible to fix. For example, we might want to have newly created
-	// isolates register themselves with the executive first, which
-	// would make sure ipi is never null.
-	//
-        JUMPIsolateProxyImpl ipi = 
-	    (JUMPIsolateProxyImpl)getIsolate(request.getIsolateId());
-        
 	String initId = JUMPIsolateLifecycleRequest.ID_ISOLATE_INITIALIZED;
 	int initState = JUMPIsolateLifecycleRequest.ISOLATE_STATE_INITIALIZED;
 	
         if (requestId.equals(initId)) {
+	    // Construction 
+	    JUMPIsolateProxyImpl ipi = 
+		JUMPIsolateProxyImpl.registerIsolate(request.getIsolateId());
+
 	    //
 	    // Make sure proxy reflects state reached by the isolate. 
 	    // Caller is waiting on this.

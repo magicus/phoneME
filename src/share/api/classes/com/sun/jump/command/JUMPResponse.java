@@ -51,6 +51,13 @@ public class JUMPResponse extends JUMPCommand {
     }
 
     //
+    // To be filled in when de-serializing
+    //
+    protected JUMPResponse() {
+	super();
+    }
+
+    //
     // A private constructor when the request is to be filled in
     // by deserialization from a message
     //

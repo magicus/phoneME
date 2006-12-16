@@ -98,9 +98,9 @@ import com.sun.jump.message.JUMPOutgoingMessage;
  * </pre>
  */
 public abstract class JUMPCommand {
-    private String messageType;
-    private String id;
-    private String[] data;
+    protected String messageType;
+    protected String id;
+    protected String[] data;
 
     /**
      * Creates a new instance of JUMPCommand
@@ -116,7 +116,7 @@ public abstract class JUMPCommand {
     }
     
     //
-    // To be filled in when serializing
+    // To be filled in when de-serializing
     //
     protected JUMPCommand() {
     }

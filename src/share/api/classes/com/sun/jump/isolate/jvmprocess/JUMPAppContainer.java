@@ -61,7 +61,7 @@ public abstract class JUMPAppContainer implements JUMPMessageHandler {
     
     public abstract void destroyApp(int appId, boolean force);
     
-    public abstract JUMPWindow getAppWindows(int appId);
+    public abstract JUMPWindow[] getAppWindows(int appId);
     
     public void handleMessage(JUMPMessage message) {
         // call the methods by unpacking the message contents

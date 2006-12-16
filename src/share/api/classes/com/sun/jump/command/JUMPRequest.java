@@ -42,6 +42,13 @@ public class JUMPRequest extends JUMPCommand {
     }
 
     //
+    // To be filled in when de-serializing
+    //
+    protected JUMPRequest() {
+	super();
+    }
+
+    //
     // A private constructor when the request is to be filled in
     // by deserialization from a message
     //
@@ -55,5 +62,10 @@ public class JUMPRequest extends JUMPCommand {
     
     public JUMPRequest(String messageType, String id, String[] args){
         super(messageType, id, args);
+    }
+    
+    public String[] getArgs() 
+    {
+	return this.getCommandData();
     }
 }

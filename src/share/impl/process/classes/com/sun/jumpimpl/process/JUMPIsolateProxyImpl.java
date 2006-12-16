@@ -30,6 +30,7 @@ import com.sun.jump.command.JUMPResponse;
 import com.sun.jump.command.JUMPExecutiveLifecycleRequest;
 import com.sun.jumpimpl.process.JUMPProcessProxyImpl;
 
+import com.sun.jump.executive.JUMPExecutive;
 import com.sun.jump.command.JUMPIsolateLifecycleRequest;
 
 public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIsolateProxy {
@@ -77,10 +78,44 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
     public JUMPIsolateProxyImpl(int pid) {
 	super(pid);
         isolateId = pid;
-        requestSender = new RequestSenderHelper(this);
+        requestSender = new RequestSenderHelper(JUMPExecutive.getInstance()); 
 	setIsolateState(JUMPIsolateLifecycleRequest.ISOLATE_STATE_CREATED);
     }
 
+    public static JUMPIsolateProxyImpl registerIsolate(int pid) 
+    {
+	//
+	// Synchronize on the JUMPProcessProxyImpl class which does
+	// process instance registration.
+	//
+	synchronized(JUMPProcessProxyImpl.class) {
+	    JUMPIsolateProxyImpl ipi = getRegisteredIsolate(pid);
+	    if (ipi == null) {
+		// The constructor registers the instance as well.
+		return new JUMPIsolateProxyImpl(pid);
+	    } else {
+		return ipi;
+	    }
+	}
+    }
+    
+    public static JUMPIsolateProxyImpl getRegisteredIsolate(int pid) 
+    {
+	//
+	// Synchronize on the JUMPProcessProxyImpl class which does
+	// process instance registration.
+	//
+	synchronized(JUMPProcessProxyImpl.class) {
+	    JUMPProcessProxyImpl ppi = 
+		JUMPProcessProxyImpl.getProcessProxyImpl(pid);
+	    if ((ppi != null) && (ppi instanceof JUMPIsolateProxyImpl)) {
+		return (JUMPIsolateProxyImpl)ppi;
+	    } else {
+		return null;
+	    }
+	}
+    }
+    
     public int getState(int appId) {
         throw new UnsupportedOperationException();
     }
@@ -103,8 +138,13 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
     }
     
     public int startApp(JUMPApplication app, String[] args) {
-        // TODO: serialize app: can we wrap Serializable-s in messages?
-        throw new UnsupportedOperationException();
+        return
+            requestSender.sendRequestWithIntegerResponse(
+                this,
+                new JUMPExecutiveLifecycleRequest(
+                    JUMPExecutiveLifecycleRequest.ID_START_APP,
+		    app.toByteArray(),
+		    args));
     }
 
     public void pauseApp(int appId) {

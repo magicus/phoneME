@@ -33,7 +33,7 @@ import com.sun.jump.message.JUMPTimedOutException;
 import java.io.IOException;
 import com.sun.jump.command.JUMPRequest;
 import com.sun.jump.command.JUMPResponse;
-
+import com.sun.jump.command.JUMPResponseInteger;
 
 /**
  * Helper class to handle request/response exchange.
@@ -62,23 +62,62 @@ public class RequestSenderHelper {
         throw new IllegalArgumentException(); // FIXME: throw exception or System.exit(1)?
     }
 
+    private int
+    handleIntegerResponse(JUMPResponseInteger rint) {
+	String id = rint.getCommandId();
+	if (id.equals(JUMPResponseInteger.ID_SUCCESS)) {
+	    // Return the data in the message
+	    return rint.getInt();
+	} else if (id.equals(JUMPResponse.ID_FAILURE)) {
+	    return -1;
+	}
+
+        throw new IllegalArgumentException(); // FIXME: throw exception or System.exit(1)?
+    }
+
     /**
-     * Send outgoing request and get a response
+     * Send outgoing request and get a response message
      */
-    public JUMPResponse
-    sendRequest(JUMPMessageSender target, JUMPRequest request) {
-        JUMPResponse response = null;
+    private JUMPMessage
+    sendRequestWork(JUMPMessageSender target, JUMPRequest request) {
         try {
             JUMPOutgoingMessage m = request.toMessage(host);
             JUMPMessage         r = target.sendMessage(m, DEFAULT_TIMEOUT);
 
-            response = JUMPResponse.fromMessage(r);
+	    return r;
         } catch(JUMPTimedOutException e) {
             e.printStackTrace();
         } catch(IOException e) {
             e.printStackTrace();
         }
-        return response;
+        return null;
+    }
+
+    /**
+     * Send outgoing request and get a response
+     */
+    public JUMPResponse
+    sendRequest(JUMPMessageSender target, JUMPRequest request) {
+	JUMPMessage r = sendRequestWork(target, request);
+	if (r == null) {
+	    return null;
+	}
+	return JUMPResponse.fromMessage(r);
+    }
+
+    /**
+     * Send outgoing request and get a response
+     */
+    public int
+    sendRequestWithIntegerResponse(JUMPMessageSender target, 
+				   JUMPRequest request) {
+	JUMPMessage r = sendRequestWork(target, request);
+	if (r == null) {
+	    return -1;
+	}
+	JUMPResponseInteger rint = 
+	    (JUMPResponseInteger)JUMPResponseInteger.fromMessage(r);
+	return handleIntegerResponse(rint);
     }
 
     /**

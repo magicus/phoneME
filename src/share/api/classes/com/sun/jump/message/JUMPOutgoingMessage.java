@@ -34,6 +34,7 @@ import com.sun.jump.os.JUMPOSInterface;
  * with data.
  */
 public abstract class JUMPOutgoingMessage extends JUMPMessage {
+    protected JUMPMessagable sender;
     private int MESSAGE_DATA_INITIAL_SIZE = 512;
     /* offset just past header in message, for sanity checking by native
        side */
@@ -144,7 +145,11 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
 	// This code assumes ASCII (and so does the native layer)
 	// Example implementation in DataOutputStream.writeUTF().
 	//
-	addByteArray(getBytes(s));
+	if (s == null) {
+	    addByteArray(null);
+	} else {
+	    addByteArray(getBytes(s));
+	}
     }
 
     public void addByteArray(byte[] barr) {
@@ -176,4 +181,10 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
     }
 
     protected abstract int serializeMessagable(JUMPMessagable messagable);
+
+    // This should not be happening for an outgoing message constructed
+    // with a sender
+    protected void readMessageSender(int id) {
+    }
+	
 }
