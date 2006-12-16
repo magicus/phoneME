@@ -1,6 +1,4 @@
 /*
- * %W% %E%
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -24,9 +22,10 @@
  * information or have any questions. 
  */
 
-package com.sun.jump.module.serviceregistry;
+package com.sun.jumpimpl.module.serviceregistry;
 
 import com.sun.jump.module.JUMPModule;
+import com.sun.jump.module.serviceregistry.JUMPServiceRegistry;
 
 import java.rmi.Remote;
 import java.rmi.AlreadyBoundException;
@@ -34,15 +33,22 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.AccessException;
 
-/**
- * <code>JUMPServiceRepository</code> represents a registry of services
- * in which processes in JUMP system can register and let others to use
- * in the form of lightweight remote method invocation (RMI).
- */
+import javax.microedition.xlet.ixc.IxcRegistry;
+import javax.microedition.xlet.ixc.StubException;
 
-public interface JUMPServiceRegistry extends JUMPModule {
+import java.util.Map;
 
+public class ServiceRegistryImpl implements JUMPServiceRegistry {
     
+    public void load(Map map) {}
+    public void unload() {}
+
+    private IxcRegistry registry;
+
+    public ServiceRegistryImpl(IxcRegistry registry) {
+       this.registry = registry;
+    }
+
     /**
      * Registers a service under a given name to the registry, and make it
      * available for other JUMP processes.
@@ -52,30 +58,36 @@ public interface JUMPServiceRegistry extends JUMPModule {
      * @throws RemoteException if the service object is not well-formed.
      **/
      public void registerService(String name, Remote service) 
-        throws RemoteException, AlreadyBoundException; 
+        throws RemoteException, AlreadyBoundException {
+           registry.bind(name, service);
+     }
 
     /**
      * Removes a service with a given name from the registry.
      * A wrapper for IxcRegistry.unbind(String)
      *
      * @throws NotBoundException if the name is not found in this registry.
-     * @throws AccessException if the name is bound not by the caller.
      **/
-     public void unregisterService(String name) throws NotBoundException, AccessException; 
+     public void unregisterService(String name) throws NotBoundException, AccessException {
+          registry.unbind(name);
+     }
 
     /**
      * Gets a service from the registry under a given name.
      * A wrapper for IxcRegistry.lookup(name)
      *
      * @throws NotBoundException if the name is not found in this registry.
-     * @throws RemoteException if the service retrieval fails.
      **/
-     public Remote lookup(String name) throws NotBoundException, RemoteException;
+     public Remote lookup(String name) throws NotBoundException, RemoteException {
+          return registry.lookup(name);
+     }
 
     /**
      * Provides a list of service names currently available in this registry.
      * A wrapper for IxcRegistry.list()
      **/
-     public String[] listRegisteredServices(); 
+     public String[] listRegisteredServices() {
+          return registry.list();
+     }
 
 }

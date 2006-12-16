@@ -29,21 +29,21 @@ package com.sun.jump.module.serviceregistry;
 import com.sun.jump.module.JUMPModuleFactory;
 
 /**
- * <code>JUMPRegistryFactory</code> is a factory for <code>JUMPServiceRegistry</code>.
+ * <code>JUMPServiceRegistryFactory</code> is a factory for <code>JUMPServiceRegistry</code>.
  */
-public abstract class JUMPRegistryFactory extends JUMPModuleFactory {
+public abstract class JUMPServiceRegistryFactory extends JUMPModuleFactory {
     
-    private static JUMPRegistryFactory INSTANCE = null;
+    private static JUMPServiceRegistryFactory INSTANCE = null;
     
-    public static JUMPRegistryFactory getInstance() {
+    public static JUMPServiceRegistryFactory getInstance() {
         return INSTANCE;
     }
     
     /**
-     * Creates a new instance of JUMPRegistryFactory
+     * Creates a new instance of JUMPServiceRegistryFactory
      */
-    protected JUMPRegistryFactory() {
-        synchronized (JUMPRegistryFactory.class){
+    protected JUMPServiceRegistryFactory() {
+        synchronized (JUMPServiceRegistryFactory.class){
             if ( INSTANCE == null ) {
                 INSTANCE = this;
             }
