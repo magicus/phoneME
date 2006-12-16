@@ -1012,13 +1012,16 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 
 	    /* Fork off a process, and handle the request */
 	    if ((pid = fork()) == 0) {
-		int mypid;
+		int mypid = getpid();
 
 		/* Make sure each launched process knows the id of the
 		   executive */
-		jumpProcessSetExecutiveId(executivePid);
+                if (amExecutive) {
+                    jumpProcessSetExecutiveId(mypid);
+                } else {
+                    jumpProcessSetExecutiveId(executivePid);
+                }
 		
-		mypid = getpid();
 		/* Child process */
 #ifdef CVM_TIMESTAMPING
 		if (!CVMmtaskTimeStampReinitialize(env)) {
