@@ -33,9 +33,6 @@ import java.rmi.registry.Registry;
 import java.util.Hashtable;
 import javax.microedition.xlet.XletContext;
 
-//import com.sun.xlet.ixc.IxcRegistryImpl;
-//import com.sun.xlet.mvmixc.MvmIxcRegistryImpl;
-
 /**
  * <code>IXCRegistry</code> is the bootstrap mechanism for obtaining
  * references to remote objects residing in other Xlets executing on
@@ -60,7 +57,7 @@ public abstract class IxcRegistry implements Registry {
     static Method  getRegistryImplMethod = null;
 
     static String svmIxcRegistryName = "com.sun.xlet.ixc.IxcRegistryImpl"; 
-    static String mvmIxcRegistryName = "com.sun.xlet.mvmixc.MvmIxcRegistryImpl";
+    static String mvmIxcRegistryName = "com.sun.jumpimpl.ixc.JumpIxcRegistryImpl";
 
     /**
      * Returns the Inter-Xlet Communication registry.
