@@ -97,7 +97,7 @@ public:
 
   void assign_unique_id() {
     static jlong _global_unique_id = 0;
-    return set_unique_id(++_global_unique_id);
+    set_unique_id(++_global_unique_id);
   }
 
   // Returns the task represented by this IsolateObj. Returns NULL if this
