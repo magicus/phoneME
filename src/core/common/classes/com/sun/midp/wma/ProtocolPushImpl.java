@@ -69,7 +69,6 @@ public class ProtocolPushImpl extends ProtocolPush {
      */
     public void checkRegistration(String connection, String midlet,
                                   String filter) {
-        checkIIPFilter(filter);
     }
 
     /**
