@@ -54,9 +54,16 @@ public class JUMPApplication
      * @param type The application's type
      */
     public JUMPApplication(String title, URL iconPath, JUMPAppModel type) {
+                
         addProperty(TITLE_KEY, title);
-        addProperty(ICONPATH_KEY, iconPath.getFile());
-        addProperty(APPMODEL_KEY, type.getName());
+        
+        if (iconPath != null) {
+            addProperty(ICONPATH_KEY, iconPath.getFile());
+        }
+        
+        if (type != null) {
+            addProperty(APPMODEL_KEY, type.getName());
+        }
     }
     
     /**
