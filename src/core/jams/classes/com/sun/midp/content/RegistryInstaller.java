@@ -27,6 +27,7 @@
 package com.sun.midp.content;
 
 import java.util.Vector;
+import java.util.Enumeration;
 
 import javax.microedition.content.ContentHandlerException;
 import javax.microedition.content.ActionNameMap;
@@ -47,12 +48,11 @@ final class RegistryInstaller {
     /** Attribute suffix for ContentHandler visibility attribute. */
     private static final String CH_ACCESS_SUFFIX = "-Access";
 
+    /** Parced handlers to be installed. */
+    private Vector instHandlers;
 
-    /**
-     * Private constructor to prevent any instances.
-     */
-    private RegistryInstaller() {
-    }
+    /** Old handlers to be removed. */
+    private Vector remHandlers;
 
     /**
      * Parse the ContentHandler attributes and check for errors.
@@ -66,11 +66,9 @@ final class RegistryInstaller {
      * <li> Find any current registrations
      * <li> Remove current dynamic registrations from set to be removed
      * <li> Check and resolve any conflicts between static and curr dynamic
-     * <li> Return set of handlers to be added and removed
-     *      for registration step.
      * </ul>
      * @param appl the AppProxy context with one or more applications
-     * @return a vector of ContentHandlerImpl instances parsed from the props.
+     * @return number of handlers prepared for installation.
      * @exception IllegalArgumentException if there is no classname field,
      *   or if there are more than five comma separated fields on the line.
      * @exception NullPointerException if missing components
@@ -78,34 +76,99 @@ final class RegistryInstaller {
      * @exception ClassNotFoundException if an application class cannot be found
      * @exception SecurityException if not allowed to register
      */
-    static Vector preInstall(AppProxy appl)
+    int preInstall(AppProxy appl)
         throws ContentHandlerException, ClassNotFoundException
     {
-        // Uninstall any handler with the same suiteId
+        int i, j, sz;
         int suiteId = appl.getStorageId();
-        uninstallAll(suiteId, true);
+        ContentHandlerImpl[] chs;
 
         /*
          * Check for any CHAPI attributes;
          * if so, then the MIDlet suite must have permission.
          */
-        Vector newhandlers = parseAttributes(appl);
-        /* For each new registration */
-        for (int i = 0; i < newhandlers.size(); i++) {
-            ContentHandlerImpl handler =
-                (ContentHandlerImpl)newhandlers.elementAt(i);
+        remHandlers = new Vector();
+        instHandlers = parseAttributes(appl);
 
-            // test if ID is valid
-            if (!RegistryStore.testId(handler.getID())) {
-                throw new ContentHandlerException("ID would be ambiguous",
+        /*
+         * Remove all static registrations.
+         */
+        chs = RegistryStore.forSuite(suiteId);
+        sz = (chs == null? 0: chs.length);
+        for (i = 0; i < sz; i++) {
+            if (chs[i] == null)
+                continue;
+            if (chs[i].registrationMethod != 
+                                    ContentHandlerImpl.REGISTERED_STATIC) {
+                // Verify dynamic handler.
+                try {
+                    // is it a valid application?
+                    appl.verifyApplication(chs[i].classname);
+                    // is there new handler to replace this one?
+                    for (j = 0; j < instHandlers.size(); j++) {
+                        ContentHandlerImpl handler =
+                            (ContentHandlerImpl)instHandlers.elementAt(j);
+                        if (handler.classname.equals(chs[i].classname)) {
+                            throw new Throwable("Replace dynamic handler");
+                        }
+                    }
+                    // The handler remains.
+                    continue;
+                } catch(Throwable t) {
+                    // Pass down to remove handler
+                }
+            }
+
+            // Remove handler -- either [static] or [replaced] or [invalid]
+            remHandlers.addElement(chs[i]);
+            chs[i] = null;
+        }
+
+        /* Verify new registrations */
+        for (i = 0; i < instHandlers.size(); i++) {
+            ContentHandlerImpl handler =
+                (ContentHandlerImpl)instHandlers.elementAt(i);
+
+            // Verify ID ...
+            // ... look through Registry
+            ContentHandlerImpl[] conf = RegistryStore.findConflicted(handler.ID);
+            if (conf != null) {
+                for (j = 0; j < conf.length; j++) {
+                    if (conf[j].storageId != suiteId || !willRemove(conf[j].ID))
+                        throw new ContentHandlerException(
+                            "Content Handler ID: "+handler.ID,
                           ContentHandlerException.AMBIGUOUS);
+                }
+            }
+
+            // ... look through newbies
+            j = i;
+            while (j-- > 0) {
+                ContentHandlerImpl other =
+                    (ContentHandlerImpl)instHandlers.elementAt(j);
+                if (handler.ID.startsWith(other.ID) ||
+                    other.ID.startsWith(handler.ID)) {
+                        throw new ContentHandlerException(
+                            "Content Handler ID: "+handler.ID,
+                          ContentHandlerException.AMBIGUOUS);
+                }
             }
 
             // Check permissions for each new handler
             appl.checkRegisterPermission("register");
         }
 
-        return newhandlers;
+        return instHandlers.size();
+    }
+
+    private boolean willRemove(String ID) {
+        Enumeration en = remHandlers.elements();
+        while (en.hasMoreElements()) {
+            ContentHandlerImpl handler = (ContentHandlerImpl) en.nextElement();
+            if (handler.ID.equals(ID))
+                return true;
+        }
+        return false;
     }
 
     /**
@@ -323,33 +386,25 @@ final class RegistryInstaller {
      * Performs static installation (registration) the application
      * to handle the specified type and to provide a set of actions.
      *
-     * @param handlers a Vector of ContentHandlerImpl objects
-     * to be added to Registry database.
      * @exception InvalidJadException if there is a content handlers
      * IDs conflict
      */
-    static void install(Vector handlers) throws InvalidJadException {
-        for (int i = 0; i < handlers.size(); i++) {
+    void install() {
+        int i, sz;
+
+        // Remove static and conflicted handlers.
+        sz = (remHandlers == null? 0: remHandlers.size());
+        for (i = 0; i < sz; i++) {
             ContentHandlerImpl handler =
-                                 (ContentHandlerImpl)handlers.elementAt(i);
-            ContentHandlerImpl test = RegistryStore.getHandler(null, 
-                                handler.getID(), RegistryStore.SEARCH_TEST);
-            if (test != null) {
-                // if the same handler was not removed - just reinstall it
-                if (!handler.getID().equals(test.getID())
-                    || test.registrationMethod != 
-                                           ContentHandlerImpl.REGISTERED_STATIC
-                    || !test.classname.equals(handler.classname)
-                    || test.storageId != handler.storageId) {
-                    while (i-- > 0) {
-                      ContentHandlerImpl tmpHandler =
-                                     (ContentHandlerImpl)handlers.elementAt(i);
-                      RegistryStore.unregister(tmpHandler.getID());
-                    }
-                    throw new InvalidJadException(
-                                InvalidJadException.CONTENT_HANDLER_CONFLICT);
-                }
-            }
+                                 (ContentHandlerImpl)remHandlers.elementAt(i);
+            RegistryStore.unregister(handler.getID());
+        }
+
+        // Install new handlers.
+        sz = (instHandlers == null? 0: instHandlers.size());
+        for (i = 0; i < sz; i++) {
+            ContentHandlerImpl handler =
+                                 (ContentHandlerImpl)instHandlers.elementAt(i);
             RegistryStore.register(handler);
             if (AppProxy.LOG_INFO) {
                 AppProxy.getCurrent().logInfo("Register: " +

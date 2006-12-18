@@ -279,6 +279,7 @@ static int read_string(pcsl_string* string) {
   string_data = (jchar*)JSR211_MALLOC(string_len);
   storageRead(&io_error_message, table_file, (char*)string_data, string_len);
   pcsl_string_convert_from_utf16(string_data, string_len/sizeof(jchar), string);
+  JSR211_FREE(string_data);
 
   return string_len + sizeof(int);
 }
@@ -738,6 +739,7 @@ jsr211_result jsr211_unregister_handler(const pcsl_string* handler_id) {
   storageRead(&io_error_message, table_file, buffer, buffer_size);
   storagePosition(&io_error_message, table_file, current_position);
   storageWrite(&io_error_message, table_file, buffer, buffer_size);
+  JSR211_FREE(buffer);
   storageTruncate(&io_error_message, table_file, current_position + 
                                                                    buffer_size);
   
@@ -764,8 +766,7 @@ jsr211_result jsr211_get_handler(const pcsl_string* caller_id,
                         const pcsl_string* id, jsr211_search_flag mode,
                         /*OUT*/ JSR211_RESULT_CH* handler) {
   JSR211_CH ch;
-  find_condition cond = mode == JSR211_SEARCH_TEST?     find_test:
-                        mode == JSR211_SEARCH_PREFIX?   find_first:
+  find_condition cond = mode == JSR211_SEARCH_PREFIX?   find_first:
                                                         find_exact; 
 
   if (open_table_file(0) != JSR211_OK) {
@@ -856,6 +857,8 @@ jsr211_result jsr211_find_handler(const pcsl_string* caller_id,
     case JSR211_FIELD_SUFFIXES:
         case_sens = JSR211_FALSE;
         break;
+    case JSR211_FIELD_ID:
+        cond = find_test;
     case JSR211_FIELD_ACTIONS:
         case_sens = JSR211_TRUE;
         break;
