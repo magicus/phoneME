@@ -38,7 +38,7 @@ printconfig::
 #
 # Include AWT implementation rules.
 #
-include ../share/rules_$(J2ME_CLASSLIB)_$(AWT_IMPLEMENTATION).mk
+include $(AWT_IMPLEMENTATION_DIR)/build/share/rules_$(J2ME_CLASSLIB)_$(AWT_IMPLEMENTATION).mk
 
 # Include profile specific gunit rules, if it exists
 ifeq ($(CVM_GUNIT_TESTS), true)

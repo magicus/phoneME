@@ -69,7 +69,7 @@ PCSL_MAKE_OPTIONS 	?=
 # MIDP defs
 #
 export JDK_DIR		= $(JDK_HOME)
-TARGET_VM		= cdc_hi
+TARGET_VM		= cdc_vm
 MIDP_DIR		?= $(CVM_TOP)/../midp
 MIDP_DEFS_JCC_MK	= $(MIDP_DIR)/build/common/cdc_vm/defs_jcc.mk
 ifeq ($(wildcard $(MIDP_DEFS_JCC_MK)),)
