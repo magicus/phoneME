@@ -318,6 +318,19 @@ testclasses:: .delete.testclasses.list .report.testclasses.list $(TEST_CLASS_FIL
 
 democlasses:: .delete.democlasses.list .report.democlasses.list $(DEMO_CLASS_FILES) .compile.democlasses
 
+#
+# Unit-testing related targets
+#  these targets are double-colon ones to ease populating.
+#
+
+.PHONY: build-unittests
+build-unittests::
+	$(AT)echo "Building cdc unit-tests ..."
+
+.PHONY: run-unittests
+run-unittests:: build-unittests
+	$(AT)echo "Running cdc unit-tests ..."
+
 # if jarfilename is specified, put jsrclasses in jar file
 ifeq ($(OP_JAR_FILENAME),)
 jsrclasses:: .compile.jsrclasses
