@@ -110,7 +110,7 @@ VM_INCLUDES += -I$(CDC_DIST_DIR)/include -I$(CDC_DIR)/src \
                -I$(CDC_DIR)/src/$(HOST_OS)-$(CDC_TARGET_CPU) \
                -I$(CDC_DIR)/src/$(CDC_TARGET_CPU) \
 	             -I$(MIDP_OUTPUT_DIR) \
-               -I$(MIDP_DIR)/src/core/vm_services/cdc_hi/native
+               -I$(MIDP_DIR)/src/core/vm_services/cdc_vm/native
 
 ifeq ($(USE_QT_FB), true)
 VM_INCLUDES += -I$(QTOPIA_SDK_DIR)/include -I$(QTOPIA_SDK_DIR)/include/qpe

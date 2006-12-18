@@ -78,6 +78,8 @@ public class Manager extends MIDlet implements ApplicationManager {
     /** UI to display error alerts. */
     private DisplayError displayError;
 
+    /** Application Selector Screen. */
+    private AppManagerUI managerUI;
 
     /**
      * Create and initialize a new Manager MIDlet.
@@ -87,13 +89,32 @@ public class Manager extends MIDlet implements ApplicationManager {
 
         GraphicalInstaller.initSettings();
 
-	first = (getAppProperty("logo-displayed") == null);
+        first = (getAppProperty("logo-displayed") == null);
 
-	Display display = Display.getDisplay(this);
-	displayError = new DisplayError(display);
+        Display display = Display.getDisplay(this);
+        displayError = new DisplayError(display);
 
-	// AppManagerUI will be set to be current at the end of its constructor
-        new AppManagerUI(this, display, displayError, first);
+        // Get arguments to create AppManagerUI
+        String suiteIdStr = getAppProperty("arg-0");
+        int suiteId = MIDletSuite.UNUSED_SUITE_ID;
+        try {
+            suiteId = Integer.parseInt(suiteIdStr);
+        } catch (NumberFormatException e) {
+            suiteId = MIDletSuite.UNUSED_SUITE_ID;
+        }
+
+        if (suiteId != MIDletSuite.UNUSED_SUITE_ID) {
+            MIDletSuiteInfo sui = new MIDletSuiteInfo(suiteId);
+            if (suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+                // For internal suites midlet class name should be specified
+                sui.midletToRun = getAppProperty("arg-1");
+            }
+            // AppManagerUI will be set to be current at the end of its constructor
+            managerUI = new AppManagerUI(this, display, displayError, first, sui);
+        } else {
+            // AppManagerUI will be set to be current at the end of its constructor
+            managerUI = new AppManagerUI(this, display, displayError, first, null);
+        }
 
         if (first) {
             first = false;
@@ -132,9 +153,7 @@ public class Manager extends MIDlet implements ApplicationManager {
              * needed now because suites are not run concurrently and must
              * be queued to be run after this MIDlet is destroyed.
              */
-            MIDletSuiteUtils.setLastSuiteToRun(MIDletStateHandler.
-                 getMidletStateHandler().getMIDletSuite().getID(),
-                 getClass().getName());
+            updateLastSuiteToRun();
         }
     }
 
@@ -268,10 +287,28 @@ public class Manager extends MIDlet implements ApplicationManager {
      */
     private void yieldForNextMidlet() {
         // We want this MIDlet to run after the next MIDlet is run.
-        MIDletSuiteUtils.setLastSuiteToRun(MIDletStateHandler.
-            getMidletStateHandler().getMIDletSuite().getID(),
-            getClass().getName());
+        updateLastSuiteToRun();
         destroyApp(false);
         notifyDestroyed();
+    }
+
+    /**
+     * Set this MIDlet to run after the next MIDlet is run.
+     */
+    private void updateLastSuiteToRun() {
+        MIDletSuiteInfo msi = managerUI.getSelectedMIDletSuiteInfo();
+        if (msi == null) {
+            MIDletSuiteUtils.setLastSuiteToRun(MIDletStateHandler.
+                    getMidletStateHandler().getMIDletSuite().getID(),
+                    getClass().getName(), null, null);
+        } else {
+            String midletToRun = null;
+            if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+                midletToRun = msi.midletToRun;
+            }
+            MIDletSuiteUtils.setLastSuiteToRun(MIDletStateHandler.
+                    getMidletStateHandler().getMIDletSuite().getID(),
+                    getClass().getName(), String.valueOf(msi.suiteId), midletToRun);
+        }
     }
 }

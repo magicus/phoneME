@@ -38,7 +38,7 @@ ifeq ($(USE_NATIVE_AMS), true)
   USE_NATIVE_PUSH=true
 endif
 
-ifeq ($(TARGET_VM), cdc_hi)
+ifeq ($(TARGET_VM), cdc_vm)
   USE_NATIVE_PUSH=true
 endif
 

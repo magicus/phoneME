@@ -39,12 +39,11 @@
 ############################################################
 
 ifeq ($(TARGET_OS), wince)
-vpath % $(VM_SERVICES_DIR)/cdc_hi/native/wince
+vpath % $(VM_SERVICES_DIR)/cdc_vm/native/wince
 else
-vpath % $(VM_SERVICES_DIR)/cdc_hi/native
+vpath % $(VM_SERVICES_DIR)/cdc_vm/native
 endif
 
 SUBSYSTEM_VMSERVICES_NATIVE_FILES += \
   cdc_natives.c
-
 

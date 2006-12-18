@@ -146,7 +146,7 @@ public class SMMManager extends MIDlet
 	displayError = new DisplayError(display);
 
 	// AppSelector will be set to be current at the end of its constructor
-        appManagerUI = new AppManagerUI(this, display, displayError, first);
+        appManagerUI = new AppManagerUI(this, display, displayError, first, null);
 
         if (first) {
             first = false;
