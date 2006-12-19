@@ -70,7 +70,7 @@ build-unittests:: $(J2ME_CLASSLIB)
 	$(AT)echo "Building jump unit-tests ..."
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(BUILD_UNITTEST_ANT_OPTIONS) -f build/build.xml only-build-unittests)
 
-run-unittests::
+run-unittests:: build-unittests
 	$(AT)echo "Running jump unit-tests ..."
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(RUN_UNITTEST_ANT_OPTIONS) -f build/build.xml only-run-unittests)
 
