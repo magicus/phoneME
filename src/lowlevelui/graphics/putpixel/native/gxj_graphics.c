@@ -85,16 +85,8 @@ gx_copy_area(const jshort *clip,
         gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
     sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
-    if (!sbuf->rotated) {
-        copy_imageregion(sbuf, sbuf, clip,
+    copy_imageregion(sbuf, sbuf, clip,
             x_dest, y_dest, width, height, x_src, y_src, 0);
-    } else {
-        int sbuf_height = sbuf->height;
-        jshort rclip[] = RCLIP(clip, sbuf_height);
-        copy_imageregion(
-            sbuf, sbuf, rclip, RPIXEL(x_dest, y_dest, sbuf_height),
-            height, width, RPIXEL(x_src, y_src, sbuf_height), 0);
-    }
 }
 
 /** Draw image in RGB format */
