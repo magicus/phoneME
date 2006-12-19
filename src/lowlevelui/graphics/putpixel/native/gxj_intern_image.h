@@ -121,9 +121,6 @@ extern
 "C"
 #endif
 
-void blit(const gxj_screen_buffer *src, int xSrc, int ySrc,
-    int width, int height, gxj_screen_buffer *dst, int transform);
-
 void draw_imageregion(gxj_screen_buffer *imageBuf,
 		      gxj_screen_buffer *gBuf,
 		      const jshort *clip,

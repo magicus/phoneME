@@ -737,6 +737,124 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
     KNI_ReturnVoid();
 }
 
+#define PIXEL gxj_pixel_type
+#define ALPHA gxj_alpha_type
+
+void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc,
+               const int srcYInc, const int srcXStart,
+               PIXEL *dst, const int w, const int h) {
+    int x, srcX;
+    PIXEL *dstPtrEnd = dst + (h * w );
+
+    (void)srcLineW; /* Surpress unused warning */
+
+    for (; dst < dstPtrEnd; dst += w, src += srcYInc) {
+        for (x = 0, srcX = srcXStart; x < w; srcX += srcXInc) {
+            // printf("%d = %d\n", ((dst+x)-dstData), (src+srcX)-srcData);
+            dst[x++] = src[srcX];
+        }
+    }
+}
+
+void pixelAndAlphaCopy(PIXEL *src, const int srcLineW, const int srcXInc,
+                       const int srcYInc, const int srcXStart, PIXEL *dst,
+                       const int w, const int h,
+                       const ALPHA *srcAlpha, ALPHA *dstAlpha) {
+    int x, srcX;
+    PIXEL *dstPtrEnd = dst + (h * w );
+
+    (void)srcLineW; /* Surpress unused warning */
+
+    for (; dst < dstPtrEnd; dst += w, src += srcYInc,
+        dstAlpha += w, srcAlpha += srcYInc) {
+        for (x = 0, srcX = srcXStart; x < w; srcX += srcXInc) {
+            // printf("%d = %d\n", ((dst+x)-dstData), (src+srcX)-srcData);
+            dstAlpha[x] = srcAlpha[srcX];
+            dst[x++] = src[srcX];
+        }
+    }
+}
+
+void blit(const gxj_screen_buffer *src, int xSrc, int ySrc, int width, int height,
+          gxj_screen_buffer *dst, int transform) {
+    PIXEL *srcPtr = NULL;
+    int srcXInc=0, srcYInc=0, srcXStart=0;
+
+    switch (transform) {
+    case TRANS_NONE:
+        srcPtr = (src->pixelData) + (ySrc * src->width + xSrc);
+        srcYInc = src->width;
+        srcXStart = 0;
+        srcXInc = 1;
+        break;
+    case TRANS_MIRROR_ROT180:
+        srcPtr = (src->pixelData) + ((ySrc + height - 1) * src->width + xSrc);
+        srcYInc = -(src->width);
+        srcXStart = 0;
+        srcXInc = 1;
+        break;
+    case TRANS_MIRROR:
+        srcPtr = (src->pixelData) + (ySrc * src->width + xSrc);
+        srcYInc = src->width;
+        srcXStart = width - 1;
+        srcXInc = -1;
+        break;
+    case TRANS_ROT180:
+        srcPtr = (src->pixelData) + ((ySrc + height - 1) * src->width + xSrc);
+        srcYInc = -(src->width);
+        srcXStart = width - 1;
+        srcXInc = -1;
+        break;
+    case TRANS_MIRROR_ROT270:
+        srcPtr = (src->pixelData) + (ySrc * src->width + xSrc);
+        srcYInc = 1;
+        srcXStart = 0;
+        srcXInc = src->width;
+        break;
+    case TRANS_ROT90:
+        srcPtr = (src->pixelData) + ((ySrc + height - 1) * src->width + xSrc);
+        srcYInc = 1;
+        srcXStart = 0;
+        srcXInc = -(src->width);
+        break;
+    case TRANS_ROT270:
+        srcPtr = (src->pixelData) + (ySrc * src->width + xSrc + width - 1);
+        srcYInc = -1;
+        srcXStart = 0;
+        srcXInc = src->width;
+        break;
+    case TRANS_MIRROR_ROT90:
+        srcPtr = (src->pixelData) + ((ySrc + height - 1) * src->width + xSrc);
+        srcYInc = -1;
+        srcXStart = width - 1;
+        srcXInc = -(src->width);
+        break;
+    }
+
+    if (transform & TRANSFORM_INVERTED_AXES) {
+        if (src->alphaData == NULL) {
+            pixelCopy(srcPtr, src->width, srcXInc, srcYInc, srcXStart,
+                      dst->pixelData, height, width);
+        } else {
+            ALPHA *srcAlpha = src->alphaData + (srcPtr - src->pixelData);
+            pixelAndAlphaCopy(srcPtr, src->width, srcXInc, srcYInc,
+                              srcXStart,
+                              dst->pixelData, height, width, srcAlpha,
+                              dst->alphaData);
+        }
+    } else {
+        if (src->alphaData == NULL) {
+            pixelCopy(srcPtr, src->width, srcXInc, srcYInc, srcXStart,
+                      dst->pixelData, width, height);
+        } else {
+            ALPHA *srcAlpha = src->alphaData + (srcPtr - src->pixelData);
+            pixelAndAlphaCopy(srcPtr, src->width, srcXInc, srcYInc, srcXStart,
+                              dst->pixelData, width, height,
+                              srcAlpha, dst->alphaData);
+        }
+    }
+}
+
 /**
  * Copies the region of the specified <tt>ImageData</tt> to
  * the specified <tt>ImageData</tt> object.
