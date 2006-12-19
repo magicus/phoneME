@@ -483,12 +483,13 @@ public class MIDPWindow extends CWindow {
      *
      * @param scrollPosition vertical scroll position.
      * @param scrollProportion vertical scroll proportion.
+     * @return true if set vertical scroll occues
      */
-    public void setVerticalScroll(int scrollPosition, int scrollProportion) {
+    public boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
         CLayer scrollable = mainLayers[ALERT_LAYER].isVisible() ?
             mainLayers[ALERT_LAYER] : mainLayers[BODY_LAYER];
         
-        ((BodyLayer)scrollable).setVerticalScroll(scrollPosition, scrollProportion);
+        return ((BodyLayer)scrollable).setVerticalScroll(scrollPosition, scrollProportion);
     }
 
     /**

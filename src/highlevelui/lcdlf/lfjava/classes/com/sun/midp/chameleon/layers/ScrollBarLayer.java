@@ -420,19 +420,4 @@ public class ScrollBarLayer extends ScrollIndLayer {
         }
         return ret;
     }
-
-    /**
-     * Update bounds of layer
-     *
-     * @param layers - current layer can be dependant on this parameter
-     */
-    public void update(CLayer[] layers) {
-        super.update(layers);
-        if (visible && scrollable != null) {
-            int[] newBounds = scrollable.getBounds();
-            newBounds[W] -= bounds[W];
-            scrollable.setBounds(newBounds[X], newBounds[Y],
-                                 newBounds[W], newBounds[H]);
-        }
-    }
 }
