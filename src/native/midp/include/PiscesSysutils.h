@@ -48,7 +48,11 @@ void     setMemErrorFlag();
 #define PISCESsin(x) jvm_sin((x))
 #define PISCEScos(x) jvm_cos((x))
 
-typedef unsigned long long ulong64;
+#ifdef _MSC_VER
+typedef unsigned __int64    ulong64;
+#else
+typedef unsigned long long  ulong64;
+#endif
 
 // a definition for assert(). Does nothing!
 #define assert(z)
