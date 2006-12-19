@@ -104,14 +104,17 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
                                 ScreenSkin.FONT_INPUT_TEXT,
                                 w, h, 0, Text.NORMAL,
                                 cursor, myInfo);
-            setVerticalScroll();
-            lRequestPaint();
+            if (setVerticalScroll()) {
+                lRequestInvalidate(true,true);
+            } else {
+                lRequestPaint();
+            }
         }
     }
 
     /**
      * Set new cursor position. Update text info if cursor position is changed
-     * @param pos new position
+     * @param pos new position                                                                        
      */
     protected void setCaretPosition(int pos) {
         int oldPos = cursor.index;
@@ -232,10 +235,6 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
                                       cursor, true);
         info.isModified |= !bufferedTheSameAsDisplayed(tf.constraints);
 
-        // text info update is being processed only if isModified is true 
-        Text.updateTextInfo(str, font, w, h, offset, options,
-                            cursor, info);
-
         Text.paintText(info, g, str, font, fgColor, 0xffffff - fgColor,
                        w, h, offset, options, cursor);
         
@@ -267,6 +266,8 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
      * @param availableWidth The width available for this Item
      */
     void lGetContentSize(int size[], int availableWidth) {
+        int oldWidth = size[WIDTH];
+        int oldHeight = size[HEIGHT];
         try {
             // We size to the maximum allowed, minus the padding
             // defined in the skin.
@@ -283,6 +284,10 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
             size[WIDTH] = 100;
             size[HEIGHT] = 100;
             // IMPL NOTE: Log this as an error
+        }
+        if (oldHeight != size[HEIGHT] || oldWidth != size[WIDTH]) {
+            myInfo.scrollY = myInfo.isModified = true;
+            updateTextInfo();
         }
     }
 
@@ -404,15 +409,16 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
     /**
      * Used internally to set the vertical scroll position
      */
-    void setVerticalScroll() {
+    boolean setVerticalScroll() {
         ScreenLFImpl lf = null;
         if (tf != null &&
             tf.owner != null &&
             (lf = (ScreenLFImpl)tf.owner.getLF()) != null &&
             myInfo != null) {
-            lf.setVerticalScroll(myInfo.getScrollPosition(),
+            return lf.setVerticalScroll(myInfo.getScrollPosition(),
                                  myInfo.getScrollProportion());          
         }
+        return false;
     }
 
     /**

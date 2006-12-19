@@ -362,6 +362,9 @@ public class MenuLayer extends ScrollablePopupLayer {
      * Aligns the menu to the current screen.
      */ 
     protected void alignMenu() {
+        
+        bounds[W] = MenuSkin.WIDTH;
+
         switch (MenuSkin.ALIGN_X) {
             case Graphics.LEFT:
                 bounds[X] = 0;
@@ -519,7 +522,6 @@ public class MenuLayer extends ScrollablePopupLayer {
      * @param layers - current layer can be dependant on this parameter
      */
     public void update(CLayer[] layers) {
-        super.update(layers);
         alignMenu();
         if (owner != null && cascadeMenuUp) {
             cascadeMenu.update(layers);
@@ -527,6 +529,7 @@ public class MenuLayer extends ScrollablePopupLayer {
                 showSubMenu(selI);
             }
         }
+        super.update(layers);
     }
 
     /**
