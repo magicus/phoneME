@@ -41,13 +41,19 @@ import sun.misc.CVM;
 //
 public class Warmup
 {
-    private static String classNamesFile = null;
-    private static String memberNamesFile = null;
-    private static ClassLoader warmupClassLoader =
-	ClassLoader.getSystemClassLoader(); // The system class loader
+    private static String classNamesFileString = null;
+    private static String memberNamesFileString = null;
+    private static String classNamesFiles[] = null;
+    private static String memberNamesFiles[] = null;
+    private static ClassLoader currClassLoader = null;
+    private static ClassLoader midpClassLoader = null;
+    private static String midpPathString =
+        System.getProperty("sun.midp.home.path", "midp/midp_fb") + "/classes.zip";
+    private static File midpPath[] = null;
 
-    private static boolean verbose = (System.getProperty("cdcams.verbose") != null) &&
-        (System.getProperty("cdcams.verbose").toLowerCase().equals("true"));
+    private static boolean verbose = 
+        (System.getProperty("cdcams.verbose") != null) &&
+         (System.getProperty("cdcams.verbose").toLowerCase().equals("true"));
 	
     //
     // The entry point of the warm-up program
@@ -57,18 +63,20 @@ public class Warmup
     public static void main(String[] args)
     {
 	processOptions(args);
-	runit(classNamesFile, memberNamesFile);
+	runit(classNamesFileString, memberNamesFileString);
     }
     
     private static void processOptions(String[] args)
     {
-	classNamesFile = null;
-	memberNamesFile = null;
+	classNamesFileString = null;
+	memberNamesFileString = null;
 	for (int i = 0; i < args.length; i++) {
 	    if (args[i].equals("-initClasses")) {
-		classNamesFile = args[++i];
+		classNamesFileString = args[++i];
+                classNamesFiles = split(classNamesFileString);
 	    } else if (args[i].equals("-precompileMethods")) {
-		memberNamesFile = args[++i];
+		memberNamesFileString = args[++i];
+                memberNamesFiles = split(memberNamesFileString);
 	    } else {
                 if (verbose) {
 		    System.err.println("UNRECOGNIZED OPTION \""+args[i]+"\"");
@@ -76,13 +84,77 @@ public class Warmup
 	    }
 	}
     }
-    
+
+    //
+    // Set current classloader, which is used to load warmup classes.
+    //
+    private static void setCurrClassLoader(String loaderString)
+        throws IOException
+    {
+        String clname = loaderString.substring(12);
+        if (clname == null || clname.equals("")) {
+            /* The current classloader is the null ClassLoader */
+            currClassLoader = null;
+        } else if (clname.equals("sun.misc.Launcher$AppClassLoader")) {
+            /* The current classloader is the AppClassLoader */
+            currClassLoader = ClassLoader.getSystemClassLoader();
+        } else if (clname.equals("sun.misc.MIDPImplementationClassLoader")) {
+            if (midpClassLoader == null) {
+                if (midpPath == null) {
+                    StringTokenizer mp = new StringTokenizer(midpPathString,
+                        System.getProperty("path.separator", ":"));
+                    int num = mp.countTokens();
+                    midpPath = new File[num];
+                    for (int i = 0; i < num; i++) {
+                        midpPath[i] = new File(mp.nextToken());
+                    }
+                }
+                /*
+                 * Create the MIDPImplementationClassLoader.
+                 * Use reflection to avoid hard-coded references
+                 * to dual-stack APIs, which are conditionally 
+                 * included.
+                 */
+                try {
+                    Class midpconfig = Class.forName("sun.misc.MIDPConfig");
+                    Class args[] = {midpPath.getClass()};
+                    Method newMIDPCL = midpconfig.getMethod(
+			"newMIDPImplementationClassLoader", args);
+                    Object args2[] = {midpPath};
+                    midpClassLoader = (ClassLoader)newMIDPCL.invoke(null, args2);
+		} catch(ClassNotFoundException ce) {
+                    throw new IOException("Cannot find required classloader: " + clname);
+		} catch(NoSuchMethodException me) {
+                    me.printStackTrace();
+                    throw new IOException("Cannot find required classloader: " + clname);
+                } catch(IllegalAccessException ie) {
+                    ie.printStackTrace();
+                    throw new IOException("Cannot find required classloader: " + clname);
+		} catch(InvocationTargetException ite) {
+                    ite.printStackTrace();
+                    throw new IOException("Cannot find required classloader: " + clname);
+                }
+	    }
+            currClassLoader = midpClassLoader;
+        } else {
+            throw new IOException("unrecognized classloader: "+ clname);
+        }
+
+        if (verbose) {
+            System.err.println("Set " + currClassLoader +
+                               " as the current classloader");
+        }
+    }
+
     //
     // Read a list of elements and return it as a String[]
     //
     private static String[] readElements(BufferedReader inReader)
 	throws IOException
     {
+        /* Reset currClassLoader for the new list */
+        currClassLoader = null;
+
 	java.util.Vector v = new java.util.Vector();
 	java.io.StreamTokenizer in;
 	in = new StreamTokenizer(inReader);
@@ -93,7 +165,15 @@ public class Warmup
 	in.commentChar('#');
 
 	while (in.nextToken() != java.io.StreamTokenizer.TT_EOF){
-	    v.addElement(in.sval);
+            if (in.sval.startsWith("CLASSLOADER=")) {
+                /* CLASSLOADER indicates which classloader should
+                 * be used to load classes in the list.
+                 */
+                setCurrClassLoader(in.sval);
+            } else {
+                /* Add class name */
+	        v.addElement(in.sval);
+	    }
 	}
 
 	int n = v.size();
@@ -106,7 +186,7 @@ public class Warmup
 	Class c = null;
 	try {
 	    // Load and maybe initialize class
-            c = Class.forName(className, init, warmupClassLoader);
+            c = Class.forName(className, init, currClassLoader);
 	} catch (ClassNotFoundException e){
 	    return null;
 	}
@@ -122,35 +202,51 @@ public class Warmup
 	return getClassFromName(className, false);
     }
 
-    private static boolean processClasses(BufferedReader in)
+    //
+    // Read class or method list from file.
+    //
+    private static String[] readLists(String fileName)
     {
-	String[] classes = null;
+        String[] list = null;
+        BufferedReader in;
 	
 	try {
-	    classes = readElements(in);
+            in = new BufferedReader(new FileReader(fileName));
+	    list = readElements(in);
+            if (verbose) {
+	        System.err.println("read from " + fileName + " done...");
+            }
+            in.close();
+            return list;
 	} catch (IOException e) {
             if (verbose) {
-	        System.err.println("IO Exception: "+e);
+                System.err.println("read from "+ fileName + " failed...");
             }
 	    e.printStackTrace();
-	    return false;
+            return null;
 	}
-	
+    }
+
+    //
+    // Initialize classes from the list.
+    //
+    private static boolean processClasses(String classes[])
+    {
         if (verbose) {
 	    System.err.println("CLASSES TO INITIALIZE");
         }
 
-	for (int i = 0; i < classes.length; i++) {
-	    // Load and initialize class
-            /* System.err.print((i+1)+":\t "); */
-	    Class cl = getClassFromName(classes[i], true);
-	    if (cl == null) {
-                if (verbose) {
-		    System.err.println("\nCould not find class "+classes[i]);
-                }
-		return false;
-	    } else {
-                /* System.err.println("cl="+cl); */
+        if (classes != null) {
+	    for (int i = 0; i < classes.length; i++) {
+	        // Load and initialize class
+	        Class cl = getClassFromName(classes[i], true);
+                //DEBUG: System.err.println((i+1)+":\t "+cl);
+	        if (cl == null) {
+                    if (verbose) {
+		        System.err.println("\nCould not find class "+classes[i]);
+                    }
+		    return false;
+		}
 	    }
 	}
 	return true;
@@ -165,47 +261,49 @@ public class Warmup
     // If we see a method name, we parse it, and then pass it on to
     // JIT.compileMethod().
     //
-    private static boolean processPrecompilation(BufferedReader in)
+    private static boolean processPrecompilation(String[] memberNameFiles)
     {
-	String[] methods = null;
-	
+        int i;
+
 	if (!CVM.isCompilerSupported()) {
             if (verbose) {
 	        System.err.println("Compiler not supported, cannot precompile");
             }
 	    return false;
 	}
-	
-	try {
-	    methods = readElements(in);
-	} catch (IOException e) {
-            if (verbose) {
-	        System.err.println("IO Exception: "+e);
-            }
-	    e.printStackTrace();
-	    return false;
-	}
-	mLineNo = 1;
 
         // initialized AOT code
         CVM.initializeAOTCode();
-	
-	for (int i = 0; i < methods.length; i++) {
-	    // Parse and precompile
-	    // Upon error, fail and return.
-	    if (!parseAndPrecompileMethods(methods[i])) {
-	        CVM.markCodeBuffer(); // mark shared codecache
-		return false;
-	    }
+
+        for (i = 0; i < memberNamesFiles.length; i++) {
+            if (verbose) {
+                System.err.println("membersFile=" + memberNamesFiles[i]);
+                System.err.println("reading methods...");
+            }
+            String methods[] = readLists(memberNamesFiles[i]);
+
+            // Parse and precompile
+            if (methods != null) {
+	        for (int j = 0; j < methods.length; j++) {
+	            // Upon error, fail and return.
+	            if (!parseAndPrecompileMethods(methods[j])) {
+	                CVM.markCodeBuffer(); // mark shared codecache
+			CVM.initializeJITPolicy();
+		        return false;
+	            }
+                }
+            }
         }
-        CVM.markCodeBuffer(); // mark shared codecache
+
+        // mark shared codecache
+        CVM.markCodeBuffer();
 
         // initialize JIT policy
         CVM.initializeJITPolicy();
 	return true;
     }
     
-    static private int mLineNo;
+    static private int mLineNo = 1;
     private static boolean parseAndPrecompileMethods(String s)
     {
 	// First off replace all '/' by '.'. This saves us the trouble
@@ -266,7 +364,7 @@ public class Warmup
                 }
 		return false;
 	    } else {
-                /* System.err.println(mLineNo+":\t"+m); */
+                //DEBUG: System.err.println(mLineNo+":\t"+m); 
 		mLineNo++;
 		if (!JIT.compileMethod(m, false)) {
                     if (verbose) {
@@ -321,7 +419,7 @@ public class Warmup
 	
 	if (parentClass == null) {
             if (verbose) {
-	        System.err.println("Class "+parentClass+" not found");
+	        System.err.println("Class "+className+" not found");
             }  
 	    return null;
 	}
@@ -453,61 +551,69 @@ public class Warmup
 	return args;
     }
 
-    public static void runit(String classNamesFile, String memberNamesFile)
+    //
+    // Split path string into separate String components.
+    //
+    private static String[] split(String pathString)
     {
-	BufferedReader classesIn = null;
-	BufferedReader membersIn = null;
-	
-	try {
-	    FileReader clinreader, meminreader;
+        if (pathString != null) {
+            StringTokenizer components = new StringTokenizer(pathString,
+                System.getProperty("path.separator", ":"));
+            int num = components.countTokens();
+            String paths[] = new String[num];
+            for (int i = 0; i < num; i++) {
+		 paths[i] = components.nextToken();
+	    }
+	    return paths;
+        } else {
+	    return null;
+	}
+    }
 
-	    // List of class names
-	    if (classNamesFile != null) {
-		clinreader = new FileReader(classNamesFile);
-		classesIn = new BufferedReader(clinreader);
+    public static void runit(String cnfs, String mnfs)
+    {
+        int i;
+
+        // Class name lists
+        if (cnfs != null && !cnfs.equals(classNamesFileString)) {
+            classNamesFileString = cnfs;
+            classNamesFiles = split(cnfs);
+	}
+        if (classNamesFiles != null) {
+            String[] classlist;
+            for (i = 0; i < classNamesFiles.length; i++) {
                 if (verbose) {
-                    System.err.println("classesIn=" + classesIn);
-                    System.err.println("classesFile=" + classNamesFile);
-                    System.err.println("processing classes...");
+                    System.err.println("classesFile=" + classNamesFiles[i]);
+                    System.err.println("reading classes...");
                 }
-	        if (processClasses(classesIn)) {
+                classlist = readLists(classNamesFiles[i]);
+                if (processClasses(classlist)) {
                     if (verbose) {
-		        System.err.println("processing classes done...");
+	                System.err.println("processing classes done...");
                     }
-	        } else {
+                } else {
                     if (verbose) {
-		        System.err.println("processing classes failed...");
+                        System.err.println("processing classes failed...");
                     }
-	        }
-                classesIn.close();
+                }
 	    }
+	}
 	    
-	    // List of method names
-	    if (memberNamesFile != null) {
-		meminreader = new FileReader(memberNamesFile);
-		membersIn = new BufferedReader(meminreader);
+        // Method lists
+        if (mnfs != null && !mnfs.equals(memberNamesFileString)) {
+            memberNamesFileString = mnfs;
+            memberNamesFiles = split(mnfs);
+	}
+        if (memberNamesFiles != null) {
+	    if (processPrecompilation(memberNamesFiles)) {
                 if (verbose) {
-                    System.err.println("membersIn=" + membersIn);
-                    System.err.println("membersFile=" + memberNamesFile);
-                    System.err.println("processing methods...");
+	            System.err.println("processing methods done...");
                 }
-	        if (processPrecompilation(membersIn)) {
-                    if (verbose) {
-		        System.err.println("processing methods done...");
-                    }
-	        } else {
-                    if (verbose) {
-		        System.err.println("processing methods failed...");
-                    }
-	        }
-                membersIn.close();
+            } else {
+                if (verbose) {
+                    System.err.println("processing methods failed...");
+                }
 	    }
-	} catch (IOException e) {
-            if (verbose) {
-	        System.err.println("IO Exception: "+e);
-            }
-	    e.printStackTrace();
-	    return;
 	}
     }
 }
