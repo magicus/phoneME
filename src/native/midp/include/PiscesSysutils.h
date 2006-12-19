@@ -26,13 +26,13 @@
 #ifndef PISCES_SYSUTILS_H
 #define PISCES_SYSUTILS_H
 
-// for PISCESmalloc
+/* for PISCESmalloc */
 #include <pcsl_memory.h>
 
-// for memcpy
+/* for memcpy */
 #include <string.h>
 
-// for sqrt, sin, cos
+/* for sqrt, sin, cos */
 #include <jvm.h>
 
 jboolean readAndClearMemErrorFlag();
@@ -54,7 +54,7 @@ typedef unsigned __int64    ulong64;
 typedef unsigned long long  ulong64;
 #endif
 
-// a definition for assert(). Does nothing!
+/* a definition for assert(). Does nothing! */
 #define assert(z)
 
 #define ASSERT_ALLOC(memptr) \
@@ -75,4 +75,4 @@ typedef unsigned long long  ulong64;
         return NULL;                 \
     }
 
-#endif //PISCES_SYSUTILS_H
+#endif /* PISCES_SYSUTILS_H */
