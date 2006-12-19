@@ -120,7 +120,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         int oldPos = cursor.index;
         super.setCaretPosition(pos);
         cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-        myInfo.scrollY |= (oldPos != cursor.index);
+        myInfo.isModified = myInfo.scrollY |= (oldPos != cursor.index);
         updateTextInfo();
     }
 
@@ -234,6 +234,8 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         String str = getDisplayString(dca, opChar, constraints,
                                       cursor, true);
         info.isModified |= !bufferedTheSameAsDisplayed(tf.constraints);
+        
+        Text.updateTextInfo(str, font, w, h, offset, options, cursor, info);
 
         Text.paintText(info, g, str, font, fgColor, 0xffffff - fgColor,
                        w, h, offset, options, cursor);
@@ -521,7 +523,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
                 cursor.y += (myInfo.topVis - oldTopVis) * ScreenSkin.FONT_INPUT_TEXT.getHeight();
                 cursor.option = Text.PAINT_GET_CURSOR_INDEX;
             }
-            myInfo.scrollY = true;
+            myInfo.isModified = myInfo.scrollY = true;
             updateTextInfo();
         }
     }
@@ -544,7 +546,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 		if (cursor.index > 0) {
 		    cursor.index--;
 		    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-		    myInfo.scrollX = keyUsed = true;
+		    myInfo.isModified = myInfo.scrollX = keyUsed = true;
 		}
 	    } else {
 		keyUsed = myInfo.scroll(TextInfo.BACK);
@@ -557,7 +559,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 		if (cursor.index < tf.buffer.length()) {
 		    cursor.index++;
 		    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-		    myInfo.scrollX = keyUsed = true;
+		    myInfo.isModified = myInfo.scrollX = keyUsed = true;
 		}
 	    } else {
 		keyUsed = myInfo.scroll(TextInfo.FORWARD);
@@ -570,7 +572,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 		cursor.y -= ScreenSkin.FONT_INPUT_TEXT.getHeight();
 		if (cursor.y > 0) {
 		    cursor.option = Text.PAINT_GET_CURSOR_INDEX;
-		    myInfo.scrollY = keyUsed = true;
+		    myInfo.isModified = myInfo.scrollY = keyUsed = true;
 		} else { 
 		    cursor.y += ScreenSkin.FONT_INPUT_TEXT.getHeight();
 		}
@@ -585,7 +587,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 		cursor.y += ScreenSkin.FONT_INPUT_TEXT.getHeight();
 		if (cursor.y <= myInfo.height) {
 		    cursor.option = Text.PAINT_GET_CURSOR_INDEX;
-		    myInfo.scrollY = keyUsed = true;
+		    myInfo.isModified = myInfo.scrollY = keyUsed = true;
 		} else {
 		    cursor.y -= ScreenSkin.FONT_INPUT_TEXT.getHeight();
 		}
