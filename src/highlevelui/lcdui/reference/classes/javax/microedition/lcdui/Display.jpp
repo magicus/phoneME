@@ -1717,6 +1717,7 @@ public class Display {
         // #else
         // Does nothing since Platform Form widget manages
 	// scrolling internally
+	return false;
         // #endif ENABLE_CHAMELEON
     }
 
