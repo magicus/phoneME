@@ -50,6 +50,8 @@
 #define CT_COLOR    0x02
 #define CT_ALPHA    0x04
 
+#include <stdio.h>
+
 typedef struct _imgDst {
   imageDstData   super;
   gxj_screen_buffer*           vdc;
@@ -73,9 +75,7 @@ extern void unclipped_blit(unsigned short *dstRaster, int dstSpan,
 			   unsigned short *srcRaster, int srcSpan,
 			   int height, int width, gxj_screen_buffer * dst);
 
-extern void faster_copy_rotated(short *src, short *dst,
-               int x1, int x2, int y1, int y2,
-               int bufWidth, int dstInc, int srcDec);
+#define LC_LOWUI_STR "<level:1> <channel:2000> "
 
 /**
  * Renders the contents of the specified mutable image
@@ -99,25 +99,25 @@ draw_image(gxj_screen_buffer *imageSBuf,
   const jshort clipY2 = clip[3];
 
   REPORT_CALL_TRACE(LC_LOWUI, "LF:draw_image()\n");
+  printf(LC_LOWUI_STR "draw_image() at (%d, %d), clip [%d, %d, %d, %d]\n",
+    x_dest, y_dest, clipX1, clipY1, clipX2, clipY2);
 
   CHECK_SBUF_CLIP_BOUNDS(destSBuf, clip);
 
-  if (imageSBuf->alphaData == NULL) {
+  if (!destSBuf->rotated && imageSBuf->alphaData == NULL) {
     if (x_dest >= clipX1 && y_dest >= clipY1 &&
        (x_dest + imageSBuf->width) <= clipX2 &&
        (y_dest + imageSBuf->height) <= clipY2) {
       unclipped_blit(&destSBuf->pixelData[y_dest*destSBuf->width+x_dest],
-		    destSBuf->width<<1,
-		    &imageSBuf->pixelData[0], imageSBuf->width<<1,
-		    imageSBuf->height, imageSBuf->width<<1,destSBuf);
+          destSBuf->width<<1,
+          &imageSBuf->pixelData[0], imageSBuf->width<<1,
+          imageSBuf->height, imageSBuf->width<<1,destSBuf);
     } else {
       clipped_blit(destSBuf, x_dest, y_dest, imageSBuf, clip);
     }
   } else {
-    copy_imageregion(imageSBuf, destSBuf,
-		     clip, x_dest, y_dest,
-		     imageSBuf->width, imageSBuf->height,
-		     0, 0, 0);
+    copy_imageregion(imageSBuf, destSBuf, clip, x_dest, y_dest,
+        imageSBuf->width, imageSBuf->height, 0, 0, 0);
   }
 }
 
@@ -150,8 +150,8 @@ draw_imageregion(gxj_screen_buffer *imageSBuf,
 
   CHECK_SBUF_CLIP_BOUNDS(dstSBuf, clip);
 
-  copy_imageregion(imageSBuf, dstSBuf,
-                  clip, x_dest, y_dest, width, height, x_src, y_src, transform);
+  copy_imageregion(imageSBuf, dstSBuf, clip, x_dest, y_dest,
+      width, height, x_src, y_src, transform);
 }
 
 /**
@@ -648,6 +648,145 @@ create_transformed_imageregion(
   } /* for y */
 }
 
+/** Get screen buffer width and height regarding its rotation state */
+static void get_screen_buffer_size(
+        gxj_screen_buffer* buf, int *width, int *height) {
+    if (!buf->rotated) {
+        *width = buf->width;
+        *height = buf->height;
+    } else {
+        *width = buf->height;
+        *height = buf->width;
+    }
+}
+
+static void copy_pixeldata_with_alpha(
+        gxj_pixel_type *src_pixel, gxj_alpha_type *src_alpha,
+        gxj_pixel_type *dest_pixel) {
+
+    int r1, g1, b1, a2, a3, r2, b2, g2;
+    if ((*src_alpha) == 0xFF) {
+        *dest_pixel = *src_pixel;
+    } else if (*src_alpha > 0x3) {
+        r1 = (*src_alpha >> 11);
+        g1 = ((*src_alpha >> 5) & 0x3F);
+        b1 = (*src_alpha & 0x1F);
+
+        r2 = (*dest_pixel >> 11);
+        g2 = ((*dest_pixel >> 5) & 0x3F);
+        b2 = (*dest_pixel & 0x1F);
+
+        a2 = *src_alpha >> 2;
+        a3 = *src_alpha >> 3;
+
+        r1 = (r1 * a3 + r2 * (31 - a3)) >> 5;
+        g1 = (g1 * a2 + g2 * (63 - a2)) >> 6;
+        b1 = (b1 * a3 + b2 * (31 - a3)) >> 5;
+
+        *dest_pixel = (gxj_pixel_type)((r1 << 11) | (g1 << 5) | (b1));
+    }
+}
+
+/**
+ * Copy data of the source image with no alpha channel
+ * to the destination image
+ */
+static void copy_imagedata_normal(gxj_screen_buffer* src, gxj_screen_buffer* dest,
+        jint x_src, jint y_src, jint width, jint height,
+        jint x_dest, jint y_dest) {
+
+    int rowsCopied;
+    gxj_pixel_type* limit;
+    jboolean alpha = (src->alphaData != NULL);
+
+    int srcOffset = (y_src * src->width) + x_src;
+    gxj_pixel_type* pDest = dest->pixelData + (y_dest * dest->width) + x_dest;
+    gxj_pixel_type* pSrc = src->pixelData;
+    gxj_alpha_type* pSrcAlpha = src->alphaData;
+
+    int destWidthDiff = dest->width - width;
+    int srcWidthDiff = src->width - width;
+
+    printf(LC_LOWUI_STR "copy_imagedata_normal(), [%d, %d, %d, %d] to (%d, %d)\n",
+        x_src, y_src, width, height, x_dest, y_dest);
+
+    for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
+        for (limit = pDest + width; pDest < limit; pDest++, srcOffset++) {
+            CHECK_PTR_CLIP(dest, pDest);
+            if (!alpha) {
+                *pDest = *(pSrc + srcOffset);
+            } else {
+                copy_pixeldata_with_alpha(pSrc + srcOffset,
+                    pSrcAlpha + srcOffset, pDest);
+            }
+        }
+        pDest += destWidthDiff ;
+        srcOffset += srcWidthDiff;
+    }
+}
+
+/**
+ * Copy data of the source image with no alpha channel
+ * to the destination image
+ */
+static void copy_imagedata_rotated(
+        gxj_screen_buffer* src, gxj_screen_buffer* dest,
+        jint x_src, jint y_src, jint width, jint height,
+        jint x_dest, jint y_dest) {
+
+    int i, j;
+    jboolean alpha = (src->alphaData != NULL);
+
+    int destWidth = dest->width;
+    int destHeight = dest->height;
+    int srcWidth = src->width;
+
+    // IMPL_NOTE: Start copying from the right upper corner of
+    //    the source image and move down and left by source image pixels
+    int srcOffset = (y_src * srcWidth) + (x_src + width) - 1;
+    gxj_pixel_type* pSrc = src->pixelData;
+    gxj_alpha_type* pSrcAlpha = src->alphaData;
+    gxj_pixel_type* pDest = dest->pixelData +
+        (destHeight-(x_dest + width)) * destWidth + y_dest;
+
+    int srcDec = height * srcWidth + 1;
+    int dstInc = destWidth - height;
+
+    printf(LC_LOWUI_STR "copy_imagedata_rotated(), [%d, %d, %d, %d] to (%d, %d)\n",
+        x_src, y_src, width, height, x_dest, y_dest);
+
+    i = width;
+    while(i-- > 0) {
+        for (j = 0; j < height; j++) {
+            if (!alpha) {
+                *pDest = *pSrc;
+            } else {
+                copy_pixeldata_with_alpha(pSrc + srcOffset,
+                    pSrcAlpha + srcOffset, pDest);
+            }
+            srcOffset += srcWidth;
+            pDest++;
+         }
+         pDest += dstInc;
+         srcOffset -= srcDec;
+    }
+}
+
+static void copy_imagedata(
+        gxj_screen_buffer* src, gxj_screen_buffer* dest,
+        jint x_src, jint y_src, jint width, jint height,
+        jint x_dest, jint y_dest) {
+
+    jboolean rotated = (!src->rotated && dest->rotated);
+    if (!rotated) {
+        copy_imagedata_normal(src, dest, x_src, y_src,
+            width, height, x_dest, y_dest);
+    } else {
+        copy_imagedata_rotated(src, dest, x_src, y_src,
+            width, height, x_dest, y_dest);
+    }
+}
+
 /**
  * Renders the contents of the specified region of this
  * mutable image onto the destination specified.
@@ -664,6 +803,7 @@ create_transformed_imageregion(
  * @param y_src               y-coord of the region
  * @param transform           transform to be applied to the region
  */
+
 void
 copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const
         jshort *clip, jint x_dest, jint y_dest, jint width, jint height,
@@ -676,11 +816,12 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const
     int clipY2 = clip[3];
     gxj_screen_buffer newSrc;
 
-    int destWidth = dest->width;
-    int destHeigth = dest->height;
+    int srcWidth, srcHeight, destWidth, destHeight;
+    get_screen_buffer_size(src, &srcWidth, &srcHeight);
+    get_screen_buffer_size(dest, &destWidth, &destHeight);
 
-    int srcWidth = src->width;
-    int srcHeigth = src->height;
+    printf(LC_LOWUI_STR "copy_imageregion(), [%d, %d, %d, %d] to (%d, %d)\n",
+        x_src, y_src, width, height, x_dest, y_dest);
 
     // Don't let a bad clip origin into the clip code or the may be
     // over or under writes of the destination buffer.
@@ -706,7 +847,7 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const
         y_src = 0;
     }
 
-    diff = (x_src + width) - srcWwidth;
+    diff = (x_src + width) - srcWidth;
     if (diff > 0) width -= diff;
 
     diff = (y_src + height) - srcHeight;
@@ -716,7 +857,6 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const
         /* Nothing to do. */
         return;
     }
-
 
     // check if the source and destination are the same image,
     // or a transform is needed
@@ -753,8 +893,10 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const
 
         if (transform & TRANSFORM_INVERTED_AXES) {
             // exchange the width and height
-            width = srcWidth = src->width;
-            height = srcHeight = src->height;
+            get_screen_buffer_size(
+                src, &srcWidth, &srcHeight);
+            width = srcWidth;
+            height = srcHeight;
         }
     }
 
@@ -784,13 +926,8 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const
     }
 
     if (width > 0) {
-        if (src->alphaData == NULL) {
-            copy_imagedata_no_alpha(src, dest, x_src, y_src,
-                width, height, x_dest, y_dest);
-        } else {
-            copy_imagedata_with_alpha(src, dest, x_src, y_src,
-                width, height, x_dest, y_dest);
-        }
+        copy_imagedata(
+            src, dest, x_src, y_src, width, height, x_dest, y_dest);
     }
 
     if (newSrc.pixelData != NULL) {
@@ -799,112 +936,6 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const
 
     if (newSrc.alphaData != NULL) {
         midpFree(newSrc.alphaData);
-    }
-}
-
-/**
-  * Copy data of the source image with no alpha channel
-  * to the destination image
-  */
-void copy_imagedata_no_alpha(gxj_screen_buffer* src, gxj_screen_buffer* dest,
-        jint x_src, jint y_src, jint width, jint height,
-        jint x_dest, jint y_dest) {
-
-    int rowsCopied;
-    gxj_pixel_type* limit;
-
-    gxj_pixel_type* pDest = dest->pixelData + (y_dest * dest->width) + x_dest;
-    gxj_pixel_type* pSrc = src->pixelData + (y_src * src->width) + x_src;
-    int destWidthDiff = dest->width - width;
-    int srcWidthDiff = src->width - width;
-
-    for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
-        for (limit = pDest + width; pDest < limit; pDest++, pSrc++) {
-            CHECK_PTR_CLIP(dest, pDest);
-            *pDest = *pSrc;
-        }
-        pDest += destWidthDiff ;
-        pSrc += srcWidthDiff;
-    }
-}
-
-/**
-  * Copy data of the source image with alpha channel 
-  * to the destination image
-  */
-void copy_imagedata_with_alpha(
-        gxj_screen_buffer* src, gxj_screen_buffer* dest,
-        jint x_src, jint y_src, jint width, jint height,
-        jint x_dest, jint y_dest) {
-
-
-    int rowsCopied;
-    gxj_pixel_type* limit;
-    int r1, g1, b1, a2, a3, r2, b2, g2;
-    unsigned char *pSrcAlpha = src->alphaData + (y_src * src->width) + x_src;
-
-    gxj_pixel_type* pDest = dest->pixelData + (y_dest * dest->width) + x_dest;
-    gxj_pixel_type* pSrc = src->pixelData + (y_src * src->width) + x_src;
-    int destWidthDiff = dest->width - width;
-    int srcWidthDiff = src->width - width;
-
-    /* copy the source to the destination */
-    for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
-        for (limit = pDest + width; pDest < limit; pDest++, pSrc++, pSrcAlpha++) {
-            if ((*pSrcAlpha) == 0xFF) {
-                CHECK_PTR_CLIP(dest, pDest);
-                *pDest = *pSrc;
-            }
-            else if (*pSrcAlpha > 0x3) {
-                r1 = (*pSrc >> 11);
-                g1 = ((*pSrc >> 5) & 0x3F);
-                b1 = (*pSrc & 0x1F);
-
-                r2 = (*pDest >> 11);
-                g2 = ((*pDest >> 5) & 0x3F);
-                b2 = (*pDest & 0x1F);
-
-                a2 = *pSrcAlpha >> 2;
-                a3 = *pSrcAlpha >> 3;
-
-                r1 = (r1 * a3 + r2 * (31 - a3)) >> 5;
-                g1 = (g1 * a2 + g2 * (63 - a2)) >> 6;
-                b1 = (b1 * a3 + b2 * (31 - a3)) >> 5;
-
-                *pDest = (gxj_pixel_type)((r1 << 11) | (g1 << 5) | (b1));
-            }
-        }
-
-        pDest += destWidthDiff;
-        pSrc += srcWidthDiff;
-        pSrcAlpha += srcWidthDiff;
-    }
-}
-
-
-/**
-  * Copy data of the source image with no alpha channel
-  * to the destination image
-  */
-void copy_rotated_imagedata(gxj_screen_buffer* src, gxj_screen_buffer* dest, 
-        jint x_src, jint y_src, jint width, jint height,
-        jint x_dest, jint y_dest) {
-
-    int rowsCopied;
-    gxj_pixel_type* limit;
-
-    gxj_pixel_type* pDest = dest->pixelData + (y_dest * dest->width) + x_dest;
-    gxj_pixel_type* pSrc = src->pixelData + (y_src * src->width) + x_src;
-    int destWidthDiff = dest->width - width;
-    int srcWidthDiff = src->width - width;
-
-    for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
-        for (limit = pDest + width; pDest < limit; pDest++, pSrc++) {
-            CHECK_PTR_CLIP(dest, pDest);
-            *pDest = *pSrc;
-        }
-        pDest += destWidthDiff ;
-        pSrc += srcWidthDiff;
     }
 }
 
@@ -1029,28 +1060,4 @@ extern void gx_render_imageregion(const java_imagedata * srcImageDataPtr,
 		     width, height,
 		     x_src, y_src,
 		     transform);
-}
-
-void faster_copy_rotated(short *src, short *dst,
-        int x1, int x2, int y1, int y2,
-        int bufWidth, int dstInc, int srcDec) {
-
-    int y;
-    while(x2 > x1) {
-        src--;
-        x2 -= 2;
-        for (y = y1; y < y2; y += 2) {
-            unsigned a = *(unsigned*)src;
-            src += bufWidth;
-            unsigned b = *(unsigned*)src;
-            src += bufWidth;
-
-            *(unsigned*)dst = (b & 0xffff0000) | (a >> 16);
-            *(unsigned*)(dst+(y2-y1)) = (b << 16) | (a & 0x0000ffff);
-
-            dst += 2;
-        }
-        dst += dstInc + (y2-y1);
-        src -= srcDec;
-    }
 }
