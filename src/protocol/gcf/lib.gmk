@@ -82,7 +82,7 @@ SUBSYSTEM_GCF_JAVA_FILES += \
 # BufferedConnectionAdapter and NetworkConnectionBase exist in CDC. Exclude the
 # duplicate classes for MIDP on CDC build.
 #
-ifneq ($(TARGET_VM), cdc_hi)
+ifneq ($(TARGET_VM), cdc_vm)
 SUBSYSTEM_GCF_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/BufferedConnectionAdapter.java \
     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/NetworkConnectionBase.java

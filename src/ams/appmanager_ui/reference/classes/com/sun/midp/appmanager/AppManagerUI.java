@@ -302,9 +302,12 @@ class AppManagerUI extends Form
      * @param display - The display instance associated with the manager
      * @param first - true if this is the first time AppSelector is being
      *                shown
+     * @param msi - MidletSuiteInfo that should be selected. For the internal 
+     *              suites midletToRun should be set, for the other suites 
+     *              suiteId is enough to find the corresponding item.
      */
     AppManagerUI(ApplicationManager manager, Display display,
-                 DisplayError displayError, boolean first) {
+                 DisplayError displayError, boolean first, MIDletSuiteInfo ms) {
         super(null);
 
         try {
@@ -340,6 +343,27 @@ class AppManagerUI extends Form
                 askUserIfLaunchMidlet();
             } else {
                 display.setCurrent(this);
+                if (ms != null) {
+                    // Find item to select
+                    if (ms.suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
+                        for (int i = 0; i < size(); i++) {
+                            MidletCustomItem mi = (MidletCustomItem)get(i);
+                            if ((mi.msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID)
+                                && (mi.msi.midletToRun.equals(ms.midletToRun))) {
+                                display.setCurrentItem(mi); 
+                                break;
+                            }
+                        }
+                    } else {
+                        for (int i = 0; i < size(); i++) {
+                            MidletCustomItem mi = (MidletCustomItem)get(i);
+                            if (mi.msi.suiteId == ms.suiteId) {
+                                display.setCurrentItem(mi); 
+                                break;
+                            }
+                        }
+                    }
+                } // ms != null
             }
         }
     }
@@ -357,6 +381,21 @@ class AppManagerUI extends Form
         } else {
             display.setCurrent(this);
         }
+    }
+
+    /**
+     * Called to determine MidletSuiteInfo of the selected Item.
+     *
+     * @return currently selected MidletSuiteInfo
+     */
+    public MIDletSuiteInfo getSelectedMIDletSuiteInfo() {
+        for (int i = 0; i < size(); i++) {
+            MidletCustomItem ci = (MidletCustomItem)get(i);
+            if (ci.hasFocus) {
+                return ci.msi;
+            }
+        }
+        return null;
     }
 
     /**
@@ -1323,8 +1362,9 @@ class AppManagerUI extends Form
     
                     boolean truncate = (xScrollOffset == 0) && truncated;
     
-                    g.setClip(bgIconW + ITEM_PAD, 0, 
-                        truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD : w, h);
+                    g.clipRect(bgIconW + ITEM_PAD, 0, 
+                        truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD : 
+                                   w - bgIconW - 2 * ITEM_PAD, h);
                     g.drawChars(text, 0, textLen, 
                         bgIconW + ITEM_PAD + xScrollOffset, (h - ICON_FONT.getHeight())/2, 
                             Graphics.LEFT | Graphics.TOP);

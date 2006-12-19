@@ -495,7 +495,6 @@ display:
 		"$(JDK_DIR)" `$(JDK_DIR)/bin/java -version < /dev/null 2>&1 | awk -F'"' '{ print $$2 }' | head -1` $(LOG)
 	@echo   "TARGET_VM             = ""$(TARGET_VM)" $(LOG)
 	@echo   "MIDP_DIR              = ""$(MIDP_DIR)" $(LOG)
-	@echo   "TARGET_VM             = ""$(TARGET_VM)" $(LOG)
 	@echo   "PROJECT_MIDP_DIR      = ""$(PROJECT_MIDP_DIR)" $(LOG)
 	@echo   "CLDC_DIST_DIR         = ""$(CLDC_DIST_DIR)" $(LOG)
 	@echo   "JSR_75_DIR            = ""$(JSR_75_DIR)" $(LOG)

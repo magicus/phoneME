@@ -92,7 +92,7 @@ $(BINDIR)/runMidlet$(g)$(p)$(EXE): $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
 endif
 
 ifdef INCLUDE_SHELL_SCRIPTS
-ifeq ($(TARGET_VM), cdc_hi)
+ifeq ($(TARGET_VM), cdc_vm)
   SUBSYSTEM_AMS_EXECUTABLES += \
     $(BINDIR)/autotest.sh
 endif

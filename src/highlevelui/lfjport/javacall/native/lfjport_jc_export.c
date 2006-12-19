@@ -37,9 +37,12 @@
 
 /**
  * Initializes the lfjport_ui_ native resources.
+ *
+ * @return <tt>0</tt> upon successful initialization, or
+ *         <tt>other value</tt> otherwise
  */
-void lfjport_ui_init() {
-    jcapp_init ();
+int lfjport_ui_init() {
+    return jcapp_init ();
 }
 
 /**
