@@ -130,9 +130,9 @@ PROFILE_SRCDIRS_NATIVE += \
 	$(CVM_SHAREROOT)/basis/native/image/jpeg \
 	$(CVM_SHAREROOT)/basis/native/image/jpeg/lib 
 
-PROFILE_INCLUDES  += \
-	-I$(CVM_SHAREROOT)/basis/native/image/gif \
-	-I$(CVM_SHAREROOT)/basis/native/image/jpeg/lib 
+PROFILE_INCLUDE_DIRS += \
+	$(CVM_SHAREROOT)/basis/native/image/gif \
+	$(CVM_SHAREROOT)/basis/native/image/jpeg/lib 
 
 #
 # Basis shared class directories
@@ -541,6 +541,7 @@ endif
 #
 # Stuff to export. Do this before including defs_foundation.mk
 #
+CVM_INCLUDE_DIRS	+= $(PROFILE_INCLUDE_DIRS)
 CVM_INCLUDES 		+= $(PROFILE_INCLUDES)
 CVM_SRCDIRS		+= $(PROFILE_SRCDIRS_NATIVE)
 
