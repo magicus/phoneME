@@ -81,9 +81,7 @@ typedef enum {
  */
 typedef enum {
     JAVACALL_CHAPI_SEARCH_EXACT  = 0,   /** Search by exact match with ID */
-    JAVACALL_CHAPI_SEARCH_PREFIX = 1,   /** Search by prefix of given value */
-    JAVACALL_CHAPI_SEARCH_TEST   = 2    /** Search by prefix of given value
-                                             or tested handler ID. */
+    JAVACALL_CHAPI_SEARCH_PREFIX = 1    /** Search by prefix of given value */
 } javacall_chapi_search_flag;
 
 
@@ -248,8 +246,9 @@ javacall_result javacall_chapi_unregister_handler(
  *
  * @param caller_id calling application identifier
  * @param key search field id. Valid keys are: <ul> 
- *   <li>JSR211_FIELD_TYPES, <li>JSR211_FIELD_SUFFIXES, 
- *   <li>JSR211_FIELD_ACTIONS. </ul>
+ *   <li>JAVACALL_CHAPI_FIELD_TYPES, <li>JAVACALL_CHAPI_FIELD_SUFFIXES, 
+ *   <li>JAVACALL_CHAPI_FIELD_ACTIONS. </ul>
+ * The special case of JAVACALL_CHAPI_FIELD_ID is used for testing new handler ID.
  * @param value search value
  * @param result the buffer for Content Handlers result array. 
  *  <br>Use the @link javautil_chapi_appendHandler() javautil_chapi_appendHandler function to fill this structure.
@@ -294,8 +293,8 @@ javacall_result javacall_chapi_handler_by_URL(
 
 /**
  * Returns all found values for specified field. Tha allowed fields are: <ul>
- *    <li> JSR211_FIELD_ID, <li> JSR211_FIELD_TYPES, <li> JSR211_FIELD_SUFFIXES,
- *    <li> and JSR211_FIELD_ACTIONS. </ul>
+ *    <li> JAVACALL_CHAPI_FIELD_ID, <li> JAVACALL_CHAPI_FIELD_TYPES, <li> JAVACALL_CHAPI_FIELD_SUFFIXES,
+ *    <li> and JAVACALL_CHAPI_FIELD_ACTIONS. </ul>
  * Values should be selected only from handlers accessible for given caller_id.
  *
  * @param caller_id calling application identifier.
@@ -318,7 +317,7 @@ javacall_result javacall_chapi_get_all(
  *
  * @param caller_id calling application identifier.
  * @param id handler ID.
- * @param flag indicating whether exact, prefixed or test search mode should be 
+ * @param flag indicating whether exact or prefixed search mode should be 
  * performed.
  * @param handler output value - requested handler.
  *  <br>Use the @link javautil_chapi_fillHandler() javautil_chapi_fillHandler function to fill this structure.
@@ -332,9 +331,9 @@ javacall_result javacall_chapi_get_handler(
 
 /**
  * Loads the handler's data field. Allowed fields are: <UL>
- *  <LI> JSR211_FIELD_TYPES, <LI> JSR211_FIELD_SUFFIXES, 
- *  <LI> JSR211_FIELD_ACTIONS, <LI> JSR211_FIELD_LOCALES, 
- *  <LI> JSR211_FIELD_ACTION_MAP, <LI> and JSR211_FIELD_ACCESSES. </UL>
+ *  <LI> JAVACALL_CHAPI_FIELD_TYPES, <LI> JAVACALL_CHAPI_FIELD_SUFFIXES, 
+ *  <LI> JAVACALL_CHAPI_FIELD_ACTIONS, <LI> JAVACALL_CHAPI_FIELD_LOCALES, 
+ *  <LI> JAVACALL_CHAPI_FIELD_ACTION_MAP, <LI> and JAVACALL_CHAPI_FIELD_ACCESSES. </UL>
  *
  * @param id requested handler ID.
  * @param field_id requested field.

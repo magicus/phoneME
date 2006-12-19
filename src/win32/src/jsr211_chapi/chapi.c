@@ -711,8 +711,9 @@ javacall_result javacall_chapi_unregister_handler(
  *
  * @param caller_id calling application identifier
  * @param key search field id. Valid keys are: <ul> 
- *   <li>JSR211_FIELD_TYPES, <li>JSR211_FIELD_SUFFIXES, 
- *   <li>JSR211_FIELD_ACTIONS. </ul>
+ *   <li>JAVACALL_CHAPI_FIELD_TYPES, <li>JAVACALL_CHAPI_FIELD_SUFFIXES, 
+ *   <li>JAVACALL_CHAPI_FIELD_ACTIONS. </ul>
+ * The special case of JAVACALL_CHAPI_FIELD_ID is used for testing new handler ID.
  * @param value search value
  * @param result the buffer for Content Handlers result array. 
  *  <br>Use the @link javautil_chapi_appendHandler() javautil_chapi_appendHandler function to fill this structure.
@@ -739,6 +740,7 @@ javacall_result javacall_chapi_find_handler(
         case JAVACALL_CHAPI_FIELD_SUFFIXES:
             mode = 1;   // case-insensitive
             break;
+        case JAVACALL_CHAPI_FIELD_ID:
         case JAVACALL_CHAPI_FIELD_ACTIONS:
             mode = 0;   // case-sensitive
             break;
@@ -761,18 +763,30 @@ javacall_result javacall_chapi_find_handler(
             continue;
         }
 
-        n = readArray(&reg, key, &buf);
-        if (n < 0) {
-            status = JAVACALL_FAIL;
-            break;
-        }
-
-        for (ptr = buf; n > 0; ptr += sz, n--) {
-            sz = *ptr++;
-            if (sz == value_sz &&
-                ((mode == 0 && CHAPI_ISEQUAL(ptr, value, sz)) ||
-                (mode > 0 && CHAPI_ISEQUAL_I(ptr, value, sz)))) {
-                    break;
+        if (key == JAVACALL_CHAPI_FIELD_ID) {
+            sz = readString(&reg, JAVACALL_CHAPI_FIELD_ID, &buf);
+            if (sz < 0) {
+                status = JAVACALL_FAIL;
+                break;
+            }
+            if (sz > value_sz) {
+                sz = value_sz;
+            }
+            n = (CHAPI_ISEQUAL(buf, value, sz)? 1: 0);
+        } else {
+            n = readArray(&reg, key, &buf);
+            if (n < 0) {
+                status = JAVACALL_FAIL;
+                break;
+            }
+    
+            for (ptr = buf; n > 0; ptr += sz, n--) {
+                sz = *ptr++;
+                if (sz == value_sz &&
+                    ((mode == 0 && CHAPI_ISEQUAL(ptr, value, sz)) ||
+                    (mode > 0 && CHAPI_ISEQUAL_I(ptr, value, sz)))) {
+                        break;
+                }
             }
         }
 
@@ -874,8 +888,8 @@ javacall_result javacall_chapi_handler_by_URL(
 
 /**
  * Returns all found values for specified field. Tha allowed fields are: <ul>
- *    <li> JSR211_FIELD_ID, <li> JSR211_FIELD_TYPES, <li> JSR211_FIELD_SUFFIXES,
- *    <li> and JSR211_FIELD_ACTIONS. </ul>
+ *    <li> JAVACALL_CHAPI_FIELD_ID, <li> JAVACALL_CHAPI_FIELD_TYPES, <li> JAVACALL_CHAPI_FIELD_SUFFIXES,
+ *    <li> and JAVACALL_CHAPI_FIELD_ACTIONS. </ul>
  * Values should be selected only from handlers accessible for given caller_id.
  *
  * @param caller_id calling application identifier.
@@ -965,7 +979,7 @@ javacall_result javacall_chapi_get_all(
  *
  * @param caller_id calling application identifier.
  * @param id handler ID.
- * @param flag indicating whether exact, prefixed or test search mode should be 
+ * @param flag indicating whether exact or prefixed search mode should be 
  * performed.
  * @param handler output value - requested handler.
  *  <br>Use the @link javautil_chapi_fillHandler() javautil_chapi_fillHandler function to fill this structure.
@@ -1006,29 +1020,18 @@ javacall_result javacall_chapi_get_handler(
             break;
         }
 
-        if (test_sz != id_sz) {
-            switch (mode) {
-                case JAVACALL_CHAPI_SEARCH_TEST:
-                    if (test_sz > id_sz)
-                        test_sz = id_sz;
-                    break;
-                case JAVACALL_CHAPI_SEARCH_PREFIX:
-                    if (test_sz < id_sz)
-                        break;
-                default:
-                    test_sz = -1;
+        if (test_sz == id_sz ||
+            (mode == JAVACALL_CHAPI_SEARCH_PREFIX && test_sz < id_sz)) {
+            if (CHAPI_ISEQUAL(id, test, test_sz)) {
+                status = loadHandler(&reg, &id_, &id_sz, &suit, &suit_sz, 
+                                                    &clas, &clas_sz, &flag);
+                if (status == JAVACALL_OK) {
+                    status = javautil_chapi_fillHandler(id_, id_sz, 
+                                suit, suit_sz, clas, clas_sz, flag, result);
+                }
+                CLEAN_HANDLER(id_, suit, clas, flag);
+                found = JAVACALL_TRUE;
             }
-        }
-
-        if (test_sz > 0 && CHAPI_ISEQUAL(id, test, test_sz)) {
-            status = loadHandler(&reg, &id_, &id_sz, &suit, &suit_sz, 
-                                                &clas, &clas_sz, &flag);
-            if (status == JAVACALL_OK) {
-                status = javautil_chapi_fillHandler(id_, id_sz, 
-                            suit, suit_sz, clas, clas_sz, flag, result);
-            }
-            CLEAN_HANDLER(id_, suit, clas, flag);
-            found = JAVACALL_TRUE;
         }
 
         javacall_free(test);
@@ -1043,9 +1046,9 @@ javacall_result javacall_chapi_get_handler(
 
 /**
  * Loads the handler's data field. Allowed fields are: <UL>
- *  <LI> JSR211_FIELD_TYPES, <LI> JSR211_FIELD_SUFFIXES, 
- *  <LI> JSR211_FIELD_ACTIONS, <LI> JSR211_FIELD_LOCALES, 
- *  <LI> JSR211_FIELD_ACTION_MAP, <LI> and JSR211_FIELD_ACCESSES. </UL>
+ *  <LI> JAVACALL_CHAPI_FIELD_TYPES, <LI> JAVACALL_CHAPI_FIELD_SUFFIXES, 
+ *  <LI> JAVACALL_CHAPI_FIELD_ACTIONS, <LI> JAVACALL_CHAPI_FIELD_LOCALES, 
+ *  <LI> JAVACALL_CHAPI_FIELD_ACTION_MAP, <LI> and JAVACALL_CHAPI_FIELD_ACCESSES. </UL>
  *
  * @param id requested handler ID.
  * @param field_id requested field.
