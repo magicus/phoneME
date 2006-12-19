@@ -70,12 +70,12 @@ JUMP_SRCDIRS           += \
 #	$(JUMP_SRCDIR)/share/impl/<component>/native \
 #
 
-JUMP_INCLUDES  += \
-	-I$(call POSIX2HOST,$(JUMP_SRCDIR)/share/api/native/include) \
-	-I$(call POSIX2HOST,$(JUMP_SRCDIR)/share/impl/os/native/include) \
+JUMP_INCLUDE_DIRS  += \
+	$(JUMP_SRCDIR)/share/api/native/include \
+	$(JUMP_SRCDIR)/share/impl/os/native/include \
 
 # Add as necessary
-#	-I$(JUMP_SRCDIR)/share/impl/<component>/native/include \
+#	$(JUMP_SRCDIR)/share/impl/<component>/native/include \
 #
 
 #
@@ -114,7 +114,7 @@ JUMP_NATIVE_LIB_OBJS     = $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(JUMP_NATIVE_LIBRAR
 CVM_CVMC_OBJECTS        += $(JUMP_NATIVE_LIB_OBJS)
 CVM_OBJECTS             += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(JUMP_OBJECTS))
 CVM_SRCDIRS             += $(JUMP_SRCDIRS)
-CVM_INCLUDES            += $(JUMP_INCLUDES)
+CVM_INCLUDE_DIRS        += $(JUMP_INCLUDE_DIRS)
 
 MIDP_CLASSESZIP_DEPS += $(JUMP_API_CLASSESZIP)
 

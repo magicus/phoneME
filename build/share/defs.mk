@@ -332,7 +332,7 @@ ifneq ($(strip $(OPT_PKGS)),)
     OPT_PKGS_LIST  := $(subst $(comma),$(space),$(OPT_PKGS))
     OPT_PKGS_NAME  := $(subst $(space),,_$(subst $(comma),_,$(OPT_PKGS)))
     OPT_PKGS_DEFS_FILES := $(foreach PKG,$(OPT_PKGS_LIST),\
-      $(firstword $(value $(shell echo ${patsubst %,%_DIR,${PKG}} | tr [:lower:] [:upper:])) ../..)/build/share/defs_$(PKG)_pkg.mk)
+      $(firstword $(value $(shell echo ${patsubst %,%_DIR,${PKG}} | tr '[:lower:]' '[:upper:]')) ../..)/build/share/defs_$(PKG)_pkg.mk)
   endif
   OPT_PKGS_RULES_FILES := $(subst /defs_,/rules_,$(OPT_PKGS_DEFS_FILES))
   OPT_PKGS_ID_FILES := $(subst /defs_,/id_,$(OPT_PKGS_DEFS_FILES))
@@ -1099,8 +1099,8 @@ endif
 ifeq ($(CVM_TEST_GENERATION_GC), true)
     CVM_SRCDIRS += \
 	$(CVM_SHAREROOT)/javavm/test/GenerationGCTest/Csrc 
-    CVM_INCLUDES  += \
-	-I$(CVM_SHAREROOT)/javavm/test/GenerationGCTest/Include 
+    CVM_INCLUDE_DIRS  += \
+	$(CVM_SHAREROOT)/javavm/test/GenerationGCTest/Include 
     CVM_SHAREOBJS_SPACE += \
 	BarrierTest.o
 endif
@@ -1179,9 +1179,9 @@ endif
 #
 # C include directories
 #
-CVM_INCLUDES   += \
-	-I$(CVM_SHAREROOT) \
-	-I$(CVM_BUILD_TOP) \
+CVM_INCLUDE_DIRS  += \
+	$(CVM_SHAREROOT) \
+	$(CVM_BUILD_TOP) \
 
 #
 # These are for the convenience of external code like
@@ -1190,16 +1190,16 @@ CVM_INCLUDES   += \
 # only need these for those .c files, but gnumake
 # doesn't support target-specific macros.
 #
-CVM_INCLUDES  += \
-	-I$(CVM_SHAREROOT)/javavm/export \
-	-I$(CVM_SHAREROOT)/native/common \
-	-I$(CVM_SHAREROOT)/native/java/lang \
-	-I$(CVM_SHAREROOT)/native/java/lang/fdlibm/include \
-	-I$(CVM_SHAREROOT)/native/java/net \
-	-I$(CVM_SHAREROOT)/native/java/io \
-	-I$(CVM_SHAREROOT)/native/java/util/zip \
-	-I$(CVM_SHAREROOT)/native/java/util/zip/zlib-1.1.3 \
-	-I$(CVM_DERIVEDROOT)/jni \
+CVM_INCLUDE_DIRS  += \
+	$(CVM_SHAREROOT)/javavm/export \
+	$(CVM_SHAREROOT)/native/common \
+	$(CVM_SHAREROOT)/native/java/lang \
+	$(CVM_SHAREROOT)/native/java/lang/fdlibm/include \
+	$(CVM_SHAREROOT)/native/java/net \
+	$(CVM_SHAREROOT)/native/java/io \
+	$(CVM_SHAREROOT)/native/java/util/zip \
+	$(CVM_SHAREROOT)/native/java/util/zip/zlib-1.1.3 \
+	$(CVM_DERIVEDROOT)/jni \
 
 ifneq ($(KBENCH_JAR),)
 CVM_TEST_JARFILES += $(KBENCH_JAR)
@@ -1963,6 +1963,11 @@ endif
 ifeq ($(CVM_GCOV), true)
 CCFLAGS   	+= -fprofile-arcs -ftest-coverage
 endif
+
+# CVM_INCLUDE_DIRS is a list of directories. This list needs to be
+# converted to a list of compiler parameters, with paths in host form:
+CVM_INCLUDES    += \
+	$(foreach dir,$(CVM_INCLUDE_DIRS),-I$(call POSIX2HOST,$(dir)))
 
 CPPFLAGS 	+= $(CVM_DEFINES) $(CVM_INCLUDES)
 CFLAGS_SPEED   	= $(CFLAGS) $(CCFLAGS_SPEED) $(CPPFLAGS)
