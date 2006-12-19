@@ -46,14 +46,17 @@ $(CVM_BUILD_DEFS_MK)::
 $(JUMP_API_CLASSESZIP): $(JUMP_DEPENDENCIES) force_jump_build
 	$(AT)echo "Building jump api's ..."
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml build-api javadoc-api)
+	$(AT)cp $@ $(CVM_LIBDIR)
 
 $(JUMP_IMPL_CLASSESZIP): $(JUMP_API_CLASSESZIP) $(MIDP_CLASSESZIP) force_jump_build
 	$(AT)echo "Building jump implementation ..."
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml build-impl)
+	$(AT)cp $@ $(CVM_LIBDIR)
 
 $(JUMP_NATIVE_LIBRARY_PATHNAME) :: $(JUMP_NATIVE_LIB_OBJS)
 	@echo "Linking $@"
 	$(SO_LINK_CMD)
+	$(AT)cp $@ $(CVM_LIBDIR)
 
 force_jump_build:
 
