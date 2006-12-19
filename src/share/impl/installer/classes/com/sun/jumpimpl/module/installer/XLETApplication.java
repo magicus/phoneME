@@ -56,7 +56,9 @@ public class XLETApplication extends JUMPApplication {
         super(title, iconPath, JUMPAppModel.XLET);
         this.repositoryDir = repositoryDir;
         addProperty(INITIAL_CLASS_KEY, clazz);
-        addProperty(CLASSPATH_KEY, repositoryDir + classpath.getFile());
+        if (classpath != null) {
+            addProperty(CLASSPATH_KEY, repositoryDir + classpath.getFile());
+        }
         addProperty(BUNDLE_KEY, bundle);
     }
     
@@ -81,7 +83,9 @@ public class XLETApplication extends JUMPApplication {
      * @param classpath the classpath value
      */
     public void setClasspath(URL classpath) {
-        addProperty(CLASSPATH_KEY, repositoryDir + classpath.getFile());
+        if (classpath != null) {
+            addProperty(CLASSPATH_KEY, repositoryDir + classpath.getFile());
+        }
     }
     
     /**
