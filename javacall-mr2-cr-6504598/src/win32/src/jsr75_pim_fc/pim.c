@@ -74,11 +74,11 @@ static wchar_t topDir[]         = {'.', '.', 0};
 static wchar_t fileSeparator[]  = {'\\', 0};
 static wchar_t pimDBDir[]       = {'\\', 'P', 'I', 'M', 'd', 'b', '\\', 0};
 static wchar_t pimContactDir[]  = {'c', 'o', 'n', 't', 'a', 'c', 't', 's', 0};
-static wchar_t pimContactDef[]  = {'C', 'o', 'n', 't', 'a', 'c', 't', 's', 0};
+static wchar_t pimContactDef[]  = {'D', 'e', 'f', 'a', 'u', 'l', 't', '_', 'c', 'o', 'n', 't', 'a', 'c', 't', 0};
 static wchar_t pimEventsDir[]   = {'e', 'v', 'e', 'n', 't', 's', 0};
-static wchar_t pimEventsDef[]   = {'E', 'v', 'e', 'n', 't', 's', 0};
+static wchar_t pimEventsDef[]   = {'D', 'e', 'f', 'a', 'u', 'l', 't', '_', 'e', 'v', 'e', 'n', 't', 0};
 static wchar_t pimTodoDir[]     = {'t', 'o', 'd', 'o', 0};
-static wchar_t pimTodoDef[]     = {'T', 'o', ' ', 'D', 'o', 0};
+static wchar_t pimTodoDef[]     = {'D', 'e', 'f', 'a', 'u', 'l', 't', '_', 't', 'o', 'd', 'o', 0};
 static wchar_t categoriesFile[] = {'c', 'a', 't', 'e', 'g', 'o', 'r', 'i', 'e', 's', '.', 't', 'x', 't', 0};
 static wchar_t categoryDelim    = {','};
 
