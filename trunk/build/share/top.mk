@@ -342,15 +342,24 @@ ifeq ($(CVM_REBUILD),true)
 endif
 
 # Need to initialize J2ME_CLASSLIB before "all" rule below"
-ifeq ($(CVM_INCLUDE_MIDP),true)
-ifeq ($(J2ME_CLASSLIB), cdc)
-override J2ME_CLASSLIB	= foundation
-else
-J2ME_CLASSLIB		?= foundation
-endif
-else
 J2ME_CLASSLIB		?= cdc
-endif
+
+# JUMP requires at least basis
+ifeq ($(CVM_INCLUDE_JUMP),true)
+   ifeq ($(J2ME_CLASSLIB), cdc)
+      override J2ME_CLASSLIB = basis
+   endif
+   ifeq ($(J2ME_CLASSLIB), foundation)
+      override J2ME_CLASSLIB = basis
+   endif
+endif   # CVM_INCLUDE_JUMP
+
+# MIDP requires at least foundation
+ifeq ($(CVM_INCLUDE_MIDP),true)
+   ifeq ($(J2ME_CLASSLIB), cdc)
+      override J2ME_CLASSLIB = foundation
+   endif
+endif # CVM_INCLUDE_MIDP
 
 # need setup "all" rule before pulling in any JSR makefiles with rules
 all:: printconfig $(J2ME_CLASSLIB) tools
