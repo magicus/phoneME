@@ -38,15 +38,29 @@ LIB_SET += $(SUSPEND_RESUME_LIB)
 
 SUSPEND_RESUME_DIR = $(SUBSYSTEM_CORE_DIR)/$(SUSPEND_RESUME_LIB)
 
-SUBSYSTEM_CORE_EXTRA_INCLUDES += \
-    -I$(SUSPEND_RESUME_DIR)/include
 
-vpath % $(SUSPEND_RESUME_DIR)/reference/native
+############################################################
+# Native files under SUSPEND_RESUME subsystem
+############################################################
 
-SUBSYSTEM_CORE_NATIVE_FILES += \
-    suspend_resume.c
+SUBSYSTEM_SUSPEND_RESUME_EXTRA_INCLUDES += \
+    -I$(SUSPEND_RESUME_DIR)/include \
+    -I$(SUSPEND_RESUME_DIR)/reference/native/share
 
-SUBSYSTEM_CORE_JAVA_FILES += \
+vpath % $(SUSPEND_RESUME_DIR)/reference/native/share
+
+#IMPL_NOTE: does not meet subsystem decoupling concepts
+ifeq ($(PLATFORM), linux_qte)
+    vpath % $(SUSPEND_RESUME_DIR)/reference/native/slavemode
+else
+    vpath % $(SUSPEND_RESUME_DIR)/reference/native/mastermode
+endif
+
+SUBSYSTEM_SUSPEND_RESUME_NATIVE_FILES += \
+    suspend_resume.c \
+    suspend_resume_vm.cpp
+
+SUBSYSTEM_SUSPEND_RESUME_JAVA_FILES += \
     $(SUSPEND_RESUME_DIR)/reference/classes/com/sun/midp/suspend/Subsystem.java \
     $(SUSPEND_RESUME_DIR)/reference/classes/com/sun/midp/suspend/AbstractSubsystem.java \
     $(SUSPEND_RESUME_DIR)/reference/classes/com/sun/midp/suspend/SuspendSystem.java \
@@ -58,13 +72,14 @@ SUBSYSTEM_CORE_JAVA_FILES += \
 
 ifeq ($(USE_I3_TEST), true)
     vpath % $(SUSPEND_RESUME_DIR)/reference/i3test/com/sun/midp/suspend
-    SUBSYSTEM_CORE_NATIVE_FILES += \
+    SUBSYSTEM_SUSPEND_RESUME_NATIVE_FILES += \
         native.c
 
-    SUBSYSTEM_CORE_JAVA_FILES += \
+    SUBSYSTEM_SUSPEND_RESUME_JAVA_FILES += \
         $(SUSPEND_RESUME_DIR)/reference/i3test/com/sun/midp/suspend/test/TestUtil.java
 
-    SUBSYSTEM_CORE_I3TEST_JAVA_FILES += \
+    SUBSYSTEM_SUSPEND_RESUME_I3TEST_JAVA_FILES += \
         $(SUSPEND_RESUME_DIR)/reference/i3test/com/sun/midp/suspend/TestDummy.java \
         $(SUSPEND_RESUME_DIR)/reference/i3test/com/sun/midp/suspend/TestConnectionSuspend.java
 endif
+
