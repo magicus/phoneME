@@ -151,8 +151,9 @@ public class MIDPWindow extends CWindow {
      *              is no title.
      */
     public void setTitle(String title) {
-        ((TitleLayer)mainLayers[TITLE_LAYER]).setTitle(title);
-        resize();
+        if (((TitleLayer)mainLayers[TITLE_LAYER]).setTitle(title)) {
+            resize();
+        }
         requestRepaint();
     }
 
@@ -165,8 +166,9 @@ public class MIDPWindow extends CWindow {
      *              is no ticker.
      */
     public void setTicker(Ticker ticker) {
-        ((TickerLayer)mainLayers[TICKER_LAYER]).setText((ticker != null) ? ticker.getString() : null);
-        resize();
+        if (((TickerLayer)mainLayers[TICKER_LAYER]).setText((ticker != null) ? ticker.getString() : null)) {
+            resize();
+        }
         requestRepaint();
     }
 
