@@ -84,27 +84,21 @@ import com.sun.cdc.io.*;
 public class Connector {
 
     /*
-     * Implementation notes:
-     *
-     * The open parameter is used for
-     * dynamically constructing a class name in one of 3 the forms:
-     *
-     * 1. com.sun.cdc.io.j2me.{protocol}.Protocol
-     *    (default)
-     *
-     * 2. com.sun.midp.io.j2me.{protocol}.Protocol
-     *    (if "MIDP is present in the system property
-     *     microedition.profiles)
-     *
-     * 3. {protocolpath}.j2me.{protocol}.Protocol
-     *    (if system property javax.microedition.io.Connector.protocolpath
-     *     is present)
-     *
+     * Implementation notes: The open parameter is used for
+     * dynamically constructing a class name in the form:
+     * <p>
+     * <code>com.sun.cdc.io.{platform}.{protocol}.Protocol</code>
+     * <p>
+     * The platform name is derived from the system by looking for the system property "j2me.platform".
+     * If this property key is not found or the associated class is not present then one of two default
+     * directories are used. These are called "j2me" and "j2se". If the property "j2me.configuration"
+     * is non-null then "j2me" is used (it is the assumed default).
+     * <p>
      * The protocol name is derived from the parameter string
      * describing the target of the connection. This takes the from:
-     *
-     *   {protocol}:[{target}][ {params}]
-     *
+     * <p>
+     * <code> {protocol}:[{target}][ {params}] </code>
+     * <p>
      * The protocol name is used for dynamically finding the
      * appropriate protocol implementation class.  This information
      * is stripped from the target name that is given as a parameter
@@ -152,33 +146,30 @@ public class Connector {
      * Class initializer.
      */
     static {
+        
+        String platformTemp = null;
+        
+        try {
 
-	String profileTemp = null;
-	
-	try {
-             /*
-              * Check to see if there is a property override for the dynamic
-              * building of class root.
-              */
+            /* Find out if we are running on a J2ME system */
+            if (System.getProperty("microedition.configuration") != null) {
+                j2me = true;
+            }
+
+            /* Set up the library class root path */
+            /* This may vary from one CLDC implementation to another */
             classRoot = System.getProperty("javax.microedition.io.Connector.protocolpath");
             if (classRoot == null) {
-                /* Find out if we are running on a MIDP system */
-                profileTemp = System.getProperty("microedition.profiles");
-                if (profileTemp != null) {
-                    if (profileTemp.indexOf("MIDP") != -1) {
-                        classRoot = "com.sun.midp.io";
-                    }
-                }
+                    classRoot = "com.sun.cdc.io";
             }
+
         } catch (java.security.AccessControlException e) {
             // If running with SecurityManager, set these defaults
-                platform = DEFAULT_PLATFORM;
+            j2me = true;
+            platform = DEFAULT_PLATFORM;
+            classRoot = "com.sun.cdc.io";
         }
-        finally {
-            if (classRoot == null) {
-                classRoot = "com.sun.cdc.io";
-            }
-        }
+
     }
 
     /**
