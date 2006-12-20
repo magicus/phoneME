@@ -649,7 +649,7 @@ create_transformed_imageregion(
 }
 
 /** Get screen buffer width and height regarding its rotation state */
-static void get_screen_buffer_size(
+void get_screen_buffer_geometry(
         gxj_screen_buffer* buf, int *width, int *height) {
     if (!buf->rotated) {
         *width = buf->width;
@@ -759,7 +759,7 @@ static void copy_imagedata_rotated(
     while(i-- > 0) {
         for (j = 0; j < height; j++) {
             if (!alpha) {
-                *pDest = *pSrc;
+                *pDest = *(pSrc + srcOffset);
             } else {
                 copy_pixeldata_with_alpha(pSrc + srcOffset,
                     pSrcAlpha + srcOffset, pDest);
@@ -778,6 +778,8 @@ static void copy_imagedata(
         jint x_dest, jint y_dest) {
 
     jboolean rotated = (!src->rotated && dest->rotated);
+    printf(LC_LOWUI_STR "copy_imagedata(), rotated states src: %d, dest: %d\n",
+        src->rotated, dest->rotated);
     if (!rotated) {
         copy_imagedata_normal(src, dest, x_src, y_src,
             width, height, x_dest, y_dest);
@@ -817,8 +819,8 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const
     gxj_screen_buffer newSrc;
 
     int srcWidth, srcHeight, destWidth, destHeight;
-    get_screen_buffer_size(src, &srcWidth, &srcHeight);
-    get_screen_buffer_size(dest, &destWidth, &destHeight);
+    get_screen_buffer_geometry(src, &srcWidth, &srcHeight);
+    get_screen_buffer_geometry(dest, &destWidth, &destHeight);
 
     printf(LC_LOWUI_STR "copy_imageregion(), [%d, %d, %d, %d] to (%d, %d)\n",
         x_src, y_src, width, height, x_dest, y_dest);
@@ -893,7 +895,7 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const
 
         if (transform & TRANSFORM_INVERTED_AXES) {
             // exchange the width and height
-            get_screen_buffer_size(
+            get_screen_buffer_geometry(
                 src, &srcWidth, &srcHeight);
             width = srcWidth;
             height = srcHeight;

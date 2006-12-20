@@ -91,9 +91,9 @@ printPcslStringWithMessageImpl(char* message, const pcsl_string* pstr) {
     }
 
     if (pcsl_string_length(pstr) > 0) {
-        const char* msg = pcsl_string_get_utf8_data(pstr);
+        const jbyte* msg = pcsl_string_get_utf8_data(pstr);
         if (msg) {
-            reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s: %s", tag, msg);
+            reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s: %s", tag, (const char *)msg);
             pcsl_string_release_utf8_data(msg, pstr);
         } else {
             reportToLog(LOG_INFORMATION, LC_MIDPSTRING,
@@ -139,9 +139,9 @@ printPcslStringImpl(const pcsl_string* pstr) {
         return;
     }
     if (pcsl_string_length(pstr) > 0) {
-        const char* msg = pcsl_string_get_utf8_data(pstr);
+        const jbyte* msg = pcsl_string_get_utf8_data(pstr);
         if (msg) {
-	        reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s", msg);
+	        reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s", (const char *)msg);
             pcsl_string_release_utf8_data(msg, pstr);
         } else {
             reportToLog(LOG_INFORMATION, LC_MIDPSTRING,

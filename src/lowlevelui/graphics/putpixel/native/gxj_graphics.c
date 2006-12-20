@@ -85,6 +85,8 @@ gx_copy_area(const jshort *clip,
         gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
     sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
+    REPORT_CALL_TRACE(LC_LOWUI, "gx_copy_area()\n");
+    
     copy_imageregion(sbuf, sbuf, clip,
             x_dest, y_dest, width, height, x_src, y_src, 0);
 }
@@ -231,7 +233,7 @@ gx_draw_rect(int color, const jshort *clip,
         int sbuf_height = sbuf->height;
         jshort rclip[] = RCLIP(clip, sbuf_height);
         draw_roundrect(pixelColor, rclip, sbuf, lineStyle,
-            RPIXEL(x, y, sbuf_height), height, width, 0, 0, 0);
+            y, sbuf_height-(x+width), height, width, 0, 0, 0);
     }
 }
 
@@ -300,7 +302,6 @@ gx_fill_rect(int color, const jshort *clip,
         if ((clipX1 == 0) && (clipX2 == sbuf_width) && (dotted != DOTTED)) {
             fast_fill_rect(pixelColor, sbuf,
                 x, y, width, height, clipY1, clipY2);
-            return;
         } else {
             draw_roundrect(pixelColor, clip, sbuf, (dotted? DOTTED: SOLID),
                 x, y, width, height, 1, 0, 0);
@@ -308,12 +309,11 @@ gx_fill_rect(int color, const jshort *clip,
     } else {
         if ((clipY1 == 0) && (clipY2 == sbuf_width) && (dotted != DOTTED)) {
             fast_fill_rect(pixelColor, sbuf,
-                RPIXEL(x, y, sbuf_width), height, width, clipX1, clipX2);
-            return;
+                y, sbuf_height-(x+width), height, width, clipX1, clipX2);
         } else {
             jshort rclip[] = RCLIP(clip, sbuf_height);
             draw_roundrect(pixelColor, rclip, sbuf, (dotted? DOTTED: SOLID),
-                RPIXEL(x, y, sbuf_height), height, width, 1, 0, 0);
+                y, sbuf_height-(x+width), height, width, 1, 0, 0);
         }
     }
 }
@@ -346,7 +346,7 @@ gx_draw_roundrect(int color, const jshort *clip,
         jshort rclip[] = RCLIP(clip, sbuf_height);
         //API of the draw_roundrect requests radius of the arc at the four
         draw_roundrect(pixelColor, rclip, sbuf, lineStyle,
-            RPIXEL(x, y, sbuf_height), height, width, 0,
+            y, sbuf_height-(x+width), height, width, 0,
             arcHeight >> 1, arcWidth >> 1);
     }
 }
@@ -379,7 +379,7 @@ gx_fill_roundrect(int color, const jshort *clip,
         jshort rclip[] = RCLIP(clip, sbuf_height);
         //API of the draw_roundrect requests radius of the arc at the four
         draw_roundrect(pixelColor, rclip, sbuf, lineStyle,
-            RPIXEL(x, y, sbuf_height), height, width, 1,
+            y, sbuf_height-(x+width), height, width, 1,
             arcHeight >> 1, arcWidth >> 1);
     }
 }
@@ -415,7 +415,7 @@ gx_draw_arc(int color, const jshort *clip,
         int sbuf_height = sbuf->height;
         jshort rclip[] = RCLIP(clip, sbuf_height);
         draw_arc(pixelColor, rclip, sbuf, lineStyle,
-            RPIXEL(x, y, sbuf_height), height, width, 0,
+            y, sbuf_height-(x+width), height, width, 0,
             (startAngle + 270) % 360, (arcAngle + 270) % 360);
     }
 }
@@ -442,13 +442,15 @@ gx_fill_arc(int color, const jshort *clip,
     REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_arc()\n");
 
     if (!sbuf->rotated) {
+        
+
         draw_arc(pixelColor, clip, sbuf, lineStyle, x, y,
             width, height, 1, startAngle, arcAngle);
     } else {
         int sbuf_height = sbuf->height;
         jshort rclip[] = RCLIP(clip, sbuf_height);
         draw_arc(pixelColor, rclip, sbuf, lineStyle,
-            RPIXEL(x, y, sbuf_height), height, width, 1,
+            y, sbuf_height-(x+width), height, width, 1,
             (startAngle + 270) % 360, (arcAngle + 270) % 360);
     }
 }

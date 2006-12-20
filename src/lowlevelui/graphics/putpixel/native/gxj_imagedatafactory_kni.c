@@ -74,6 +74,7 @@ gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
 	return NULL;
     }
 
+    sbuf->rotated = 0;
     sbuf->width  = img->width;
     sbuf->height = img->height;
 

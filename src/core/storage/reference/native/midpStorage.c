@@ -81,10 +81,10 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(CONFIG_SUBDIR);
 
 #if REPORT_LEVEL <= LOG_INFORMATION
 #define DEBUGP2F(x, y) { \
-    const char* pszTemp = pcsl_string_get_utf8_data(y); \
+    const char* pszTemp = (const char *)pcsl_string_get_utf8_data(y); \
         if (pszTemp != NULL) { \
             REPORT_INFO1(LC_CORE, x, pszTemp); \
-            pcsl_string_release_utf8_data(pszTemp,y); \
+            pcsl_string_release_utf8_data((const jbyte *)pszTemp,y); \
         } \
     }
 

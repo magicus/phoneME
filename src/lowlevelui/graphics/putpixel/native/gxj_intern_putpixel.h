@@ -38,8 +38,8 @@
     (_y), ((_sbuf_height)-(_x))
 
 #define RCLIP(_clip,_sbuf_height) { \
-    RPIXEL((_clip)[0], (_clip)[1], (_sbuf_height)), \
-    RPIXEL((_clip)[2], (_clip)[3], (_sbuf_height)) }
+    (_clip)[1], ((_sbuf_height)-(_clip)[2]), \
+    (_clip)[3], ((_sbuf_height)-(_clip)[0]) }
 
 #if ENABLE_BOUNDS_CHECKS
 #define CHECK_SBUF_CLIP_BOUNDS(_sbuf,_clip) \
@@ -184,5 +184,8 @@ void draw_roundrect(gxj_pixel_type color, const jshort *clip,
                     int lineStyle, int x, int y,
 		    int width, int height,
 		    int filled, int arcWidth, int arcHeight);
+
+void get_screen_buffer_geometry(gxj_screen_buffer *sbuf,
+                                int* width, int* height);
 
 #endif /* _MIDPINTERN_PUTPIXEL_H_ */

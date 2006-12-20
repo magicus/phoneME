@@ -99,7 +99,11 @@ static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
 
             /* we don't draw "background" pixels, only foreground */
             if ((bitmapByte & BitMask[bitOffset]) != 0) {
-                PRIMDRAWPIXEL(sbuf, pixelColor, xDest, yDest);
+                if (!sbuf->rotated) {
+                    PRIMDRAWPIXEL(sbuf, pixelColor, xDest, yDest);
+                } else {
+                    PRIMDRAWPIXEL(sbuf, pixelColor, yDest, sbuf->height - xDest);
+                }
             }
         }
     }
@@ -144,6 +148,8 @@ gx_draw_chars(jint pixel, const jshort *clip,
     int nCharsToSkip = 0;
     int widthRemaining;
     int yCharSource;
+    int destWidth;
+    int destHeight;
     int fontWidth;
     int fontHeight;
     int fontDescent;
@@ -156,6 +162,7 @@ gx_draw_chars(jint pixel, const jshort *clip,
     gxj_screen_buffer *dest = 
       gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
     dest = (gxj_screen_buffer *)getScreenBuffer(dest);
+    get_screen_buffer_geometry(dest, &destWidth, &destHeight);
 
     REPORT_CALL_TRACE(LC_LOWUI, "LCDUIdrawChars()\n");
 
@@ -212,12 +219,12 @@ gx_draw_chars(jint pixel, const jshort *clip,
         clipY1 = 0;
     }
 
-    diff = clipX2 - dest->width;
+    diff = clipX2 - destWidth;
     if (diff > 0) {
         clipX2 -= diff;
     }
 
-    diff = clipY2 - dest->height;
+    diff = clipY2 - destHeight;
     if (diff > 0) {
         clipY2 -= diff;
     }
