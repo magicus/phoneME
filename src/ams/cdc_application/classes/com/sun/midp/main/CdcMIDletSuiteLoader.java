@@ -368,6 +368,16 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
     }
 
     /**
+     * Called after a MIDlet pauses itself. In this case pauseApp has
+     * not been called.
+     *
+     * @param suite reference to the loaded suite
+     * @param className class name of the MIDlet
+     */
+    public void midletPausedItself(MIDletSuite suite, String className) {
+    }
+
+    /**
      * Called when a MIDlet calls MIDlet resume request.
      *
      * @param suite reference to the loaded suite

@@ -451,7 +451,7 @@ public class MIDletStateHandler {
                         break;
 
                     case MIDletPeer.PAUSE_PENDING:
-                        // The display manager wants the MIDlet paused
+                        // The system wants the MIDlet paused
                         curr.setStateWithoutNotify(MIDletPeer.PAUSED);
                         break;
 

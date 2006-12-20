@@ -262,7 +262,7 @@ public class MIDletPeer implements MIDletEventConsumer {
 
         // do work after releasing the lock
         if (oldState == ACTIVE) {
-            midletStateListener.midletPaused(getMIDletSuite(),
+            midletStateListener.midletPausedItself(getMIDletSuite(),
                 getMIDlet().getClass().getName());
         }
     }
