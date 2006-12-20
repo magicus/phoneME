@@ -267,6 +267,9 @@ ifeq ($(INCLUDE_DUALSTACK), true)
 BUNDLE_INCLUDE_LIST += \
 	src/share/lib/MIDP*
 
+BUILDDIR_PATTERNS += \
+       *_midp.mk
+
 else
 
 EXCLUDE_PATTERNS += 			\
@@ -328,7 +331,10 @@ ifeq ($(INCLUDE_MTASK), true)
 
 BUNDLE_INCLUDE_LIST += \
 	build/share/cvmc.mk \
-	src/share/tools/cvmc \
+	src/share/tools/cvmc  
+
+BUILDDIR_PATTERNS += \
+       *_jump.mk 
 
 # Add every build/<os>/cvmc.mk file
 BUNDLE_INCLUDE_LIST += \
