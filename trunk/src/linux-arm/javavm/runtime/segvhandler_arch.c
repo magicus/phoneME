@@ -334,6 +334,26 @@ linuxSegvHandlerInit(void)
     int i;
     int result = 0;
     
+    /* The AAPCS check has nothing to do with signals, this is merely
+       the only existing arm-specific code where we can check that the
+       setting of -DAAPCS at build matches the calling and alignment
+       convention.  Even so, the check will be done only if this code
+       is actually compiled, e.g., CVM_JIT=true.  If AAPCS is in use,
+       doubles are 8-byte aligned, otherwise they are 4-byte
+       aligned. */
+
+    if (offsetof(struct { int i; double d; }, d) == 8) {
+#if !defined(AAPCS)
+	CVMpanic("AAPCS calling convention used;"
+		 " compilation must use -DAAPCS.\n");
+#endif
+    } else {
+#if defined(AAPCS)
+	CVMpanic("AAPCS calling convention not used;"
+		 " compilation must not use -DAAPCS.\n");
+#endif
+    }
+
     cvmSignalInstalling = CVM_TRUE;
 
     for (i = 0; result != -1 && i < (sizeof signals / sizeof signals[0]); ++i){
