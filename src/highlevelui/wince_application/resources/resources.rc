@@ -30,12 +30,6 @@
 #include "resources.h"               /* Program-specific stuff */
 #include <midp_constants_data.h>
 
-#if ENABLE_MULTIPLE_ISOLATES
-3  ICON "dukemvm.ico"
-#else
-3  ICON "duke.ico"
-#endif
-
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_EMPTY    ""
