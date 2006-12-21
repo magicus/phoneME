@@ -1,0 +1,207 @@
+/*
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+
+package com.sun.jumpimpl.module.pushregistry;
+
+import com.sun.jumpimpl.module.pushregistry.persistence.Store;
+import java.io.IOException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import javax.microedition.io.ConnectionNotFoundException;
+
+/**
+ * Registry that manages alarms.
+ *
+ * <p>
+ * NB: this class is not thread-safe and should be guarded
+ * </p>
+ */
+public final class AlarmRegistry {
+    /** Lifecycle management adapter interface. */
+    public static interface LifecycleAdapter {
+        /**
+         * Launches the given <code>MIDlet</code>.
+         *
+         * @param midletSuiteID <code>MIDlet suite</code> ID
+         * @param midlet <code>MIDlet</code> class name
+         */
+        void launchMidlet(int midletSuiteID, String midlet);
+    }
+
+    /** Timer to track alarms. */
+    private final Timer timer;
+
+    /** Map of registered alarms. */
+    private final Map alarms;
+
+    /** Store to save alarm info. */
+    private final Store store;
+
+    /** Lifecycle adapter implementation. */
+    private final LifecycleAdapter lifecycleAdapter;
+
+    /**
+     * Constructs an alarm registry.
+     *
+     * @param store persistent store to save alarm info into
+     * @param lifecycleAdapter adapter to launch <code>MIDlet</code>
+     */
+    public AlarmRegistry(
+            final Store store,
+            final LifecycleAdapter lifecycleAdapter) {
+        this.timer = new Timer();
+        this.alarms = new HashMap();
+        this.store = store;
+        this.lifecycleAdapter = lifecycleAdapter;
+    }
+
+    /**
+     * Registers an alarm.
+     *
+     * @param midletSuiteID <code>MIDlet suite</code> ID
+     * @param midlet <code>MIDlet</code> class name
+     * @param time alarm time
+     *
+     * @throws ConnectionNotFoundException if for any reason alarm cannot be
+     *  scheduled
+     *
+     * @return previous alarm time or 0 if none
+     */
+    long registerAlarm(
+            final int midletSuiteID,
+            final String midlet,
+            final long time) throws ConnectionNotFoundException {
+        final MIDletInfo midletInfo = new MIDletInfo(midletSuiteID, midlet);
+
+        final TimerTask oldTask = (TimerTask) alarms.get(midletInfo);
+        long oldTime = 0L;
+        if (oldTask != null) {
+            oldTime = oldTask.scheduledExecutionTime();
+            oldTask.cancel(); // Safe to ignore return
+        }
+
+        try {
+            store.addAlarm(midletSuiteID, midlet, time);
+        } catch (IOException ioe) {
+            /*
+             * RFC: looks like optimal strategy, but we might simply ignore it
+             * (cf. Irbis push_server.c)
+             */
+            throw new ConnectionNotFoundException();
+        }
+
+        final Date date = new Date(time);
+        final TimerTask newTask = new TimerTask() {
+            public void run() {
+                // NB: need to keep triggered alarms to follow the spec
+                try {
+                    store.removeAlarm(midletSuiteID, midlet);
+                } catch (IOException _) {
+                    // The best thing I can do
+                }
+                lifecycleAdapter.launchMidlet(midletSuiteID, midlet);
+            }
+        };
+        alarms.put(midletInfo, newTask);
+        timer.schedule(newTask, date);
+        /*
+         * RFC: according to <code>Timer</code> spec, <quote>if the time is in
+         * the past, the task is scheduled for immediate execution</quote>.
+         * I hope it's MIDP complaint
+         */
+
+        return oldTime;
+    }
+
+    /**
+     * Disposes an alarm registry.
+     *
+     * <p>
+     * This method is needed as <code>Timer</code> creates non daemon thread
+     * which would prevent the app from exit.
+     * </p>
+     */
+    public void dispose() {
+        timer.cancel();
+        alarms.clear();
+    }
+
+    /** Unique identification for <code>MIDlet</code>. */
+    private static final class MIDletInfo {
+        /*
+         * Might go away if better way to bundle both <code>MIDlet suite</code>
+         * and <code>MIDlet</code> class name into one piece of data will be
+         * found (e.g. appId, but there might be some complications with
+         * persistent store and install/uninstall).
+         *
+         * And most probably such class can be shared.
+         */
+
+        /** <code>MIDlet suite</code> ID. */
+        public final int midletSuiteID;
+
+        /** <code>MIDlet</code> class name. */
+        public final String midlet;
+
+        /**
+         * Constructs an instance.
+         *
+         * @param midletSuiteID <code>MIDlet suite</code> ID
+         * @param midlet <code>MIDlet</code> class name
+         */
+        public MIDletInfo(final int midletSuiteID, final String midlet) {
+            this.midletSuiteID = midletSuiteID;
+            this.midlet = midlet;
+        }
+
+        /**
+         * Implements <code>Object.hashCode</code>.
+         *
+         * @return hash code
+         */
+        public int hashCode() {
+            return midletSuiteID + midlet.hashCode();
+        }
+
+        /**
+         * Implements <code>Object.equals</code>.
+         *
+         * @param obj object to compare with
+         *
+         * @return <code>true</code> iff equal
+         */
+        public boolean equals(final Object obj) {
+            if (!(obj instanceof MIDletInfo)) {
+                return false;
+            }
+
+            final MIDletInfo rhs = (MIDletInfo) obj;
+            return (midletSuiteID == rhs.midletSuiteID)
+                && midlet.equals(rhs.midlet);
+        }
+    }
+}
