@@ -286,6 +286,14 @@ void resizeScreenBuffer(int width, int height) {
     }
 }
 
+#define RRECT(_x1,_y1,_x2,_y2,_sbuf_height) { \
+    int _z = (_x1); \
+    (_x1) = (_y1); \
+    (_y1) = (_sbuf_height)-(_x2); \
+    (_x2) = (_y2); \
+    (_y2) = (_sbuf_height)-(_z); \
+}
+
 /** Refresh screen from offscreen buffer */
 void refreshScreen(int x1, int y1, int x2, int y2) {
     gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
@@ -302,6 +310,10 @@ void refreshScreen(int x1, int y1, int x2, int y2) {
         // Needed by the P2 board
         // Max screen size is 176x220 but can only display 176x208
         dstHeight = sysHeight;
+    }
+
+    if (gxj_system_screen_buffer.rotated) {
+        RRECT(x1, y1, x2, y2, bufHeight);
     }
 
     // Make sure the copied lines are 4-byte aligned for faster memcpy

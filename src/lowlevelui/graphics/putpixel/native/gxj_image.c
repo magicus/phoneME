@@ -75,8 +75,6 @@ extern void unclipped_blit(unsigned short *dstRaster, int dstSpan,
 			   unsigned short *srcRaster, int srcSpan,
 			   int height, int width, gxj_screen_buffer * dst);
 
-#define LC_LOWUI_STR "<level:1> <channel:2000> "
-
 /**
  * Renders the contents of the specified mutable image
  * onto the destination specified.
@@ -99,8 +97,6 @@ draw_image(gxj_screen_buffer *imageSBuf,
   const jshort clipY2 = clip[3];
 
   REPORT_CALL_TRACE(LC_LOWUI, "LF:draw_image()\n");
-  printf(LC_LOWUI_STR "draw_image() at (%d, %d), clip [%d, %d, %d, %d]\n",
-    x_dest, y_dest, clipX1, clipY1, clipX2, clipY2);
 
   CHECK_SBUF_CLIP_BOUNDS(destSBuf, clip);
 
@@ -707,9 +703,6 @@ static void copy_imagedata_normal(gxj_screen_buffer* src, gxj_screen_buffer* des
     int destWidthDiff = dest->width - width;
     int srcWidthDiff = src->width - width;
 
-    printf(LC_LOWUI_STR "copy_imagedata_normal(), [%d, %d, %d, %d] to (%d, %d)\n",
-        x_src, y_src, width, height, x_dest, y_dest);
-
     for (rowsCopied = 0; rowsCopied < height; rowsCopied++) {
         for (limit = pDest + width; pDest < limit; pDest++, srcOffset++) {
             CHECK_PTR_CLIP(dest, pDest);
@@ -752,9 +745,6 @@ static void copy_imagedata_rotated(
     int srcDec = height * srcWidth + 1;
     int dstInc = destWidth - height;
 
-    printf(LC_LOWUI_STR "copy_imagedata_rotated(), [%d, %d, %d, %d] to (%d, %d)\n",
-        x_src, y_src, width, height, x_dest, y_dest);
-
     i = width;
     while(i-- > 0) {
         for (j = 0; j < height; j++) {
@@ -778,8 +768,6 @@ static void copy_imagedata(
         jint x_dest, jint y_dest) {
 
     jboolean rotated = (!src->rotated && dest->rotated);
-    printf(LC_LOWUI_STR "copy_imagedata(), rotated states src: %d, dest: %d\n",
-        src->rotated, dest->rotated);
     if (!rotated) {
         copy_imagedata_normal(src, dest, x_src, y_src,
             width, height, x_dest, y_dest);
@@ -821,9 +809,6 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const
     int srcWidth, srcHeight, destWidth, destHeight;
     get_screen_buffer_geometry(src, &srcWidth, &srcHeight);
     get_screen_buffer_geometry(dest, &destWidth, &destHeight);
-
-    printf(LC_LOWUI_STR "copy_imageregion(), [%d, %d, %d, %d] to (%d, %d)\n",
-        x_src, y_src, width, height, x_dest, y_dest);
 
     // Don't let a bad clip origin into the clip code or the may be
     // over or under writes of the destination buffer.
