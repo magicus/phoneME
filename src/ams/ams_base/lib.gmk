@@ -60,7 +60,8 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/MIDletProxyListListener.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/MIDletSuiteLoader.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/MIDletSuiteUtils.java \
-    $(AMS_BASE_DIR)/classes/com/sun/midp/main/AbstractMIDletSuiteLoader.java
+    $(AMS_BASE_DIR)/classes/com/sun/midp/main/AbstractMIDletSuiteLoader.java \
+    $(AMS_BASE_DIR)/classes/com/sun/midp/main/MIDletSuiteExceptionListener.java
 
 # vpath for sub-system
 #
