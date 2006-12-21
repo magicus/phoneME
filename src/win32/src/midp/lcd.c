@@ -357,7 +357,7 @@ javacall_result javacall_lcd_finalize(void) {
             TlsFree(tlsId);
         }
     }
-
+    
     if(VRAM.hdc != NULL) {
         free(VRAM.hdc);
         VRAM.hdc = NULL;
@@ -423,10 +423,10 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
             *colorEncoding = JAVACALL_LCD_COLOR_RGB565;
         }
 
-        if(inFullScreenMode) {
+        if(inFullScreenMode || reverse_orientation) {
             return VRAM.hdc;
-        } else {
-            return VRAM.hdc + DISPLAY_WIDTH*TOP_BAR_HEIGHT;
+        } else {			
+            return VRAM.hdc + javacall_lcd_get_screen_width()*TOP_BAR_HEIGHT;
         }
     }
 
@@ -683,6 +683,7 @@ static LRESULT CALLBACK
 WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     static int penDown = JAVACALL_FALSE;
     int x, y;
+//    int ins_x, ins_y;
     int i;
     PAINTSTRUCT ps;
     HDC hdc;
@@ -906,16 +907,28 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
  **/
 #define ENABLE_PEN_EVENT_NOTIFICATION 1
 
-#ifdef ENABLE_PEN_EVENT_NOTIFICATION
+#ifdef ENABLE_PEN_EVENT_NOTIFICATION        
         midpScreen_bounds.x = x_offset;
         midpScreen_bounds.y = y_offset;
         midpScreen_bounds.width = VRAM.width;
         midpScreen_bounds.height = (inFullScreenMode? VRAM.height: VRAM.height - TOP_BAR_HEIGHT);
 
+//        if (reverse_orientation) {
+//            ins_x = javacall_lcd_get_screen_width() - y + y_offset;
+//            ins_y = x - x_offset;
+//        } else {
+//            ins_x = x-x_offset;
+            
+//        }
+
         if(iMsg == WM_LBUTTONDOWN && INSIDE(x, y, midpScreen_bounds) ) {
             penAreDragging = JAVACALL_TRUE;
             SetCapture(hwnd);
-            javanotify_pen_event(x-x_offset, y-y_offset, JAVACALL_PENPRESSED);
+            if (reverse_orientation) {
+                javanotify_pen_event(javacall_lcd_get_screen_width() - y + y_offset, x - x_offset, JAVACALL_PENPRESSED);                
+            } else {
+                javanotify_pen_event(x-x_offset, y-y_offset, JAVACALL_PENPRESSED);
+            }
             return 0;
         }
         if(iMsg == WM_LBUTTONUP && (INSIDE(x, y, midpScreen_bounds) ||  penAreDragging == JAVACALL_TRUE)) {
@@ -923,12 +936,20 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 penAreDragging = JAVACALL_FALSE;
                 ReleaseCapture();
             }
-            javanotify_pen_event(x-x_offset, y-y_offset, JAVACALL_PENRELEASED);
+            if (reverse_orientation) {
+                javanotify_pen_event(javacall_lcd_get_screen_width() - y + y_offset, x - x_offset, JAVACALL_PENRELEASED);                
+            } else {
+                javanotify_pen_event(x-x_offset, y-y_offset, JAVACALL_PENRELEASED);
+            }
             return 0;
         }
         if(iMsg == WM_MOUSEMOVE) {
-            if(penAreDragging == JAVACALL_TRUE) {
-                javanotify_pen_event(x-x_offset, y-y_offset, JAVACALL_PENDRAGGED);
+            if(penAreDragging == JAVACALL_TRUE) {                
+                if (reverse_orientation) {
+                    javanotify_pen_event(javacall_lcd_get_screen_width() - y + y_offset, x - x_offset, JAVACALL_PENDRAGGED);                
+                } else {
+                    javanotify_pen_event(x-x_offset, y-y_offset, JAVACALL_PENDRAGGED);
+                }
             }
             return 0;
         }
@@ -1684,7 +1705,9 @@ static void RefreshScreenNormal(int x1, int y1, int x2, int y2) {
   
         destPtr = destBits;
  
-        pixels += (TOP_BAR_HEIGHT*DISPLAY_WIDTH-1) + x2-1 + y1 * javacall_lcd_get_screen_width();
+        //pixels += (TOP_BAR_HEIGHT*DISPLAY_WIDTH-1) + x2-1 + y1 * javacall_lcd_get_screen_width();
+
+		pixels +=  x2-1 + y1 * javacall_lcd_get_screen_width();
   
         for (x = x2; x > x1; x--) {
   
