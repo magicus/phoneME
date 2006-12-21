@@ -22,7 +22,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional 
  * information or have any questions. 
  */
- 
+
 
 /**
  * @file PiscesUtil.h 
@@ -117,8 +117,10 @@
  * length maxLen.  Discard old contents.
  */
 #define SHRINK(array, type, maxLen) do { \
-  if (array##_length > (maxLen)) { \
-    PISCESfree(array); \
+  if (array == NULL || array##_length > (maxLen)) { \
+    if(array != NULL && array##_length > (maxLen)) { \
+        PISCESfree(array); \
+    } \
     array = my_malloc(type, (maxLen)); \
   } \
 } while (0)

@@ -22,7 +22,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional 
  * information or have any questions. 
  */
- 
+
 
 /**
  *  \file PiscesRenderer.inl
@@ -49,7 +49,6 @@
 #define INVALID_INTERNAL_COLOR 8
 
 
-#define INVALID_RENDERER_SURFACE 16
 #define INVALID_COMPOSITE_DEPENDED_ROUTINES 32
 #define INVALID_PAINT_DEPENDED_ROUTINES 64
 
@@ -999,6 +998,17 @@ updateInternalColor(Renderer* rdr) {
         rdr->_cblue = 0;
         rdr->_calpha = 0;
         
+        rdr->_rendererState &= ~INVALID_INTERNAL_COLOR;
+        return;
+    }
+    
+    // for PBP-TCK test compliance - api.java_awt.alphaComposite.FieldSrcConst
+    if (rdr->_compositeAlpha == 0.0f || rdr->_oalpha == 0) {
+        rdr->_cred = 0;
+        rdr->_cgreen = 0;
+        rdr->_cblue = 0;
+        
+        rdr->_calpha = 0;
         rdr->_rendererState &= ~INVALID_INTERNAL_COLOR;
         return;
     }

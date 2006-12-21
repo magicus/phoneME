@@ -133,6 +133,8 @@
 #define NUM_ALPHA_ROWS 8
 #define MIN_QUAD_OPT_WIDTH (100 << 16)
 
+#define INVALID_RENDERER_SURFACE 16
+
 /**
  * @defgroup CycleMethods Gradient cycle methods
  * Gradient cycle methods. Specifies wheteher to repeat gradient fill in cycle 
@@ -463,6 +465,9 @@ typedef struct _Renderer {
 
 }
 Renderer;
+
+#define INVALIDATE_RENDERER_SURFACE(rdr)        \
+        (rdr)->_rendererState |= INVALID_RENDERER_SURFACE;
 
 void prenderer_moveTo(Pipeline* pipeline, jint x0, jint y0);
 void prenderer_lineJoin(Pipeline* pipeline);
