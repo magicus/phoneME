@@ -390,8 +390,11 @@ midpInitializeUI(void) {
         return -1;
     }
 
-    lcdlf_ui_init();
-    return 0;
+    if (0 == lcdlf_ui_init()) {
+        return 0;
+    } else {
+        return -1;
+    }
 }
 
 /**
