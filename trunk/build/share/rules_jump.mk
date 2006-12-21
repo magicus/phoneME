@@ -60,4 +60,21 @@ $(JUMP_NATIVE_LIBRARY_PATHNAME) :: $(JUMP_NATIVE_LIB_OBJS)
 
 force_jump_build:
 
+#
+# JUMP unit testing
+#
+# NB: due to quirks of Ant 1.6.x JUnit3.8.1 jar should be added into ant libs
+#
+
+BUILD_UNITTEST_ANT_OPTIONS := $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -Djunit3.8.1.jar=$(JUNIT_JAR)
+RUN_UNITTEST_ANT_OPTIONS := $(BUILD_UNITTEST_ANT_OPTIONS) -lib $(JUNIT_JAR)
+
+build-unittests:: $(J2ME_CLASSLIB)
+	$(AT)echo "Building jump unit-tests ..."
+	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(BUILD_UNITTEST_ANT_OPTIONS) -f build/build.xml only-build-unittests)
+
+run-unittests:: build-unittests
+	$(AT)echo "Running jump unit-tests ..."
+	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(RUN_UNITTEST_ANT_OPTIONS) -f build/build.xml only-run-unittests)
+
 endif
