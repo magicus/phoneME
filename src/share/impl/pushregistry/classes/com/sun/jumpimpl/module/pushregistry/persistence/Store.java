@@ -23,14 +23,13 @@
  */
 package com.sun.jumpimpl.module.pushregistry.persistence;
 
-import com.sun.jump.module.contentstore.JUMPData;
-import com.sun.jump.module.contentstore.JUMPNode;
 import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import com.sun.jump.module.pushregistry.JUMPConnectionInfo;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 /**
@@ -51,49 +50,20 @@ import java.util.Vector;
  * Another option might be to remove the file.</p>
  */
 public final class Store {
-    /**
-     * Representation of all connections registered for
-     * a <code>MIDlet suite</code>.
-     */
-    public static class MIDletSuiteConnections {
-        /**
-         * ID of MIDlet suite.
-         */
-        public final int midletSuiteID;
+    /** PushRegistry root dir. */
+    private static final String ROOT_DIR = "./PushRegistry/";
 
-        /**
-         * Connections for the given <code>MIDlet suite</code>.
-         */
-        public final JUMPConnectionInfo[] connections;
+    /** Dir to store connections. */
+    static final String CONNECTIONS_DIR = ROOT_DIR + "connections";
 
-        /**
-         * Creates a suite connection info.
-         *
-         * @param midletSuiteID <code>MIDlet suite</code> id
-         * @param connections suite connections
-         */
-        MIDletSuiteConnections(
-                final int midletSuiteID,
-                final JUMPConnectionInfo[] connections) {
-            this.midletSuiteID = midletSuiteID;
-            this.connections = connections;
-        }
-    }
+    /** Dir to store alarms. */
+    static final String ALARMS_DIR = ROOT_DIR + "alarms";
 
-    /**
-     * Reference to the JUMP store to use.
-     */
-    private final JUMPStoreHandle store;
+    /** PushRegistry connections. */
+    private final AppSuiteDataStore connectionsStore;
 
-    /**
-     * Root URI for <code>PushRegistry</code> persistent data.
-     */
-    private static final String ROOT_URI = "./PushRegistry";
-
-    /**
-     * Radix to encode MIDlet suite IDs.
-     */
-    private static final int RADIX = 16;
+    /** PushRegistry alarms. */
+    private final AppSuiteDataStore alarmsStore;
 
     /**
      * Constructor.
@@ -101,45 +71,50 @@ public final class Store {
      * @param storeHandle JUMP store to use
      */
     public Store(final JUMPStoreHandle storeHandle) {
-        this.store = storeHandle;
+        connectionsStore = new AppSuiteDataStore(
+                storeHandle, CONNECTIONS_DIR, CONNECTIONS_CONVERTER);
+
+        alarmsStore = new AppSuiteDataStore(
+                storeHandle, ALARMS_DIR, ALARMS_CONVERTER);
     }
 
     /**
-     * Gets all registered connections.
+     * Reads all the data.
      *
-     * @return Array with registered connections (this value is
-     * <strong>guaranteed</strong> to be not <code>null</code>).
-     *
-     * @throws IOException if internal structure of data is broken
+     * @throws IOException if the content store failed
      */
-    public MIDletSuiteConnections [] getConnections() throws IOException {
-        final Vector connections = new Vector();
+    public void readData() throws IOException {
+        connectionsStore.readData();
+        alarmsStore.readData();
+    }
 
-        final JUMPNode.List connectionNodes
-                = (JUMPNode.List) store.getNode(ROOT_URI);
+    /** Connections consumer. */
+    public static interface ConnectionsConsumer {
+        /**
+         * COnsumes app suite connections.
+         *
+         * @param suiteId app suite ID
+         * @param connections app suite connections
+         */
+        void consume(int suiteId, JUMPConnectionInfo [] connections);
+    }
 
-        // TBD: if it's impossible to ensure at deployment time existance of
-        //  root dir, I should create one lazily
-        // assert connectionNodes != null : "PushRegistry root dir is missing";
-        for (Iterator it = connectionNodes.getChildren(); it.hasNext();) {
-            final JUMPNode.Data elem = (JUMPNode.Data) it.next();
-            final Vector suiteConnections = getNodeConnections(elem);
-            if (suiteConnections.isEmpty()) {
-                continue;
-            }
-            final int suiteId = convertNameToId(elem.getName());
-
-            final JUMPConnectionInfo [] cns = new
-                    JUMPConnectionInfo[suiteConnections.size()];
-            suiteConnections.toArray(cns);
-
-            connections.add(new MIDletSuiteConnections(suiteId, cns));
-        }
-
-        final MIDletSuiteConnections [] result = new
-                MIDletSuiteConnections[connections.size()];
-        connections.toArray(result);
-        return result;
+    /**
+     * Lists all registered connections.
+     *
+     * @param connectionsLister connection lister
+     */
+    public synchronized void listConnections(
+            final ConnectionsConsumer connectionsLister) {
+        connectionsStore.listData(new AppSuiteDataStore.DataConsumer() {
+           public void consume(final int suiteId, final Object suiteData) {
+               final Vector v = (Vector) suiteData;
+               final JUMPConnectionInfo [] cns
+                       = new JUMPConnectionInfo[v.size()];
+               v.toArray(cns);
+               connectionsLister.consume(suiteId, cns);
+           }
+        });
     }
 
     /**
@@ -155,18 +130,16 @@ public final class Store {
      *
      * @throws IOException if the content store failed to perform operation
      */
-    public void addConnection(
+    public synchronized void addConnection(
             final int midletSuiteID,
-            final JUMPConnectionInfo connection) throws IOException {
-        updateNode(midletSuiteID,
-                new Updater() {
-                    public Vector update(final JUMPNode.Data node) {
-                        final Vector connections = (node == null)
-                            ? new Vector() : getNodeConnections(node);
-                        connections.add(connection);
-                        return connections;
-                    }
-        });
+            final JUMPConnectionInfo connection)
+            throws IOException {
+        Vector cns = (Vector) connectionsStore.getSuiteData(midletSuiteID);
+        if (cns == null) {
+            cns = new Vector();
+        }
+        cns.add(connection);
+        connectionsStore.updateSuiteData(midletSuiteID, cns);
     }
 
     /**
@@ -182,15 +155,12 @@ public final class Store {
      *
      * @throws IOException if the content store failed to perform operation
      */
-    public void addFreshConnections(
+    public synchronized void addConnections(
             final int midletSuiteID,
             final JUMPConnectionInfo[] connections)
             throws IOException {
-        final String nodeUri = makeURI(midletSuiteID);
-        final JUMPData data = new
-                JUMPData(ToString.listToString(Arrays.asList(connections)));
-
-        store.createDataNode(nodeUri, data);
+        final Vector cns = new Vector(Arrays.asList(connections));
+        connectionsStore.updateSuiteData(midletSuiteID, cns);
     }
 
     /**
@@ -210,20 +180,18 @@ public final class Store {
      *
      * @throws IOException if the content store failed to perform operation
      */
-    public void removeConnection(
+    public synchronized void removeConnection(
             final int midletSuiteID,
-            final JUMPConnectionInfo connection) throws IOException {
-        updateNode(midletSuiteID,
-                new Updater() {
-            public Vector update(final JUMPNode.Data node) {
-                // assert node != null :
-                // "Removing connection from the suite without connections";
-                final Vector connections = getNodeConnections(node);
-                // assert connections != null : "Internal invariant broken";
-                connections.remove(connection);
-                return connections;
-            }
-        });
+            final JUMPConnectionInfo connection)
+            throws IOException {
+        Vector cns = (Vector) connectionsStore.getSuiteData(midletSuiteID);
+        // assert cns != null : "cannot be null";
+        cns.remove(connection);
+        if (!cns.isEmpty()) {
+            connectionsStore.updateSuiteData(midletSuiteID, cns);
+        } else {
+            connectionsStore.removeSuiteData(midletSuiteID);
+        }
     }
 
 
@@ -240,95 +208,88 @@ public final class Store {
      * @param midletSuiteID ID of <code>MIDlet suite</code> to remove
      *   connections for
      *
-     * @throws IOException if the content store failed to perform operation
+     * @throws IOException if the content store failed
      */
-    public void removeSuiteConnections(final int midletSuiteID)
+    public synchronized void removeConnections(final int midletSuiteID)
             throws IOException {
-        store.deleteNode(makeURI(midletSuiteID));
+        connectionsStore.removeSuiteData(midletSuiteID);
     }
 
-    /**
-     * Forms an URI for the suite.
-     *
-     * @param suiteId <code>MIDlet suite</code> ID to form URI for
-     *
-     * @return URI
-     */
-    private static String makeURI(final int suiteId) {
-        return ROOT_URI + "/" + Integer.toString(suiteId, RADIX);
-    }
-
-    /**
-     * Converts a name into <code>MIDlet suite</code> ID.
-     *
-     * @param name Name to convert
-     *
-     * @return <code>MIDlet suite</code> ID
-     */
-    private static int convertNameToId(final String name) {
-        return Integer.valueOf(name, RADIX).intValue();
-    }
-
-    /**
-     * Gets all the connections for the node.
-     *
-     * @param elem Node to fetch connections for
-     *
-     * @return vector of connections
-     */
-    private static Vector getNodeConnections(final JUMPNode.Data elem) {
-        return ToString.stringToVector(elem.getData().getStringValue());
-    }
-
-    /**
-     * General node mutator interface.
-     */
-    private static interface Updater {
+    /** Alarms lister. */
+    public static interface AlarmsConsumer {
         /**
-         * Updates a node.
+         * Lists app suite alarms.
          *
-         * @param node Node to update
-         *
-         * @return new data for this node
+         * @param suiteId app suite ID
+         * @param alarms app suite alatms
          */
-        Vector update(JUMPNode.Data node);
+        void consume(int suiteId, Map alarms);
     }
 
     /**
-     * Updates a node.
+     * Lists all alarms.
      *
-     * @param midletSuiteID <code>MIDlet suite</code> ID of suite to update
-     * @param updater An object that would update the node
-     *
-     * @throws IOException if content store operation fails
+     * @param alarmsLister connection lister
      */
-    private void updateNode(
+    public synchronized void listAlarms(final AlarmsConsumer alarmsLister) {
+        alarmsStore.listData(new AppSuiteDataStore.DataConsumer() {
+           public void consume(final int suiteId, final Object suiteData) {
+               alarmsLister.consume(suiteId, (Map) suiteData);
+           }
+        });
+    }
+
+    /**
+     * Adds an alarm.
+     *
+     * @param midletSuiteID <code>MIDlet suite</code> to add alarm for
+     * @param midlet <code>MIDlet</code> class name
+     * @param time alarm time
+     *
+     * @throws IOException if the content store failed
+     */
+    public synchronized void addAlarm(
             final int midletSuiteID,
-            final Updater updater) throws IOException {
-        final String nodeUri = makeURI(midletSuiteID);
-        final JUMPNode.Data node = (JUMPNode.Data) store.getNode(nodeUri);
+            final String midlet,
+            final long time)
+            throws IOException {
+        HashMap as = (HashMap) alarmsStore.getSuiteData(midletSuiteID);
+        if (as == null) {
+            as = new HashMap();
+        }
+        as.put(midlet, new Long(time));
+        alarmsStore.updateSuiteData(midletSuiteID, as);
+    }
 
-        final boolean doesNodeExist = (node != null);
-        final JUMPData data = new
-                JUMPData(ToString.listToString(updater.update(node)));
-
-        if (doesNodeExist) {
-            store.updateDataNode(nodeUri, data);
+    /**
+     * Removes an alarm.
+     *
+     * @param midletSuiteID <code>MIDlet suite</code> to remove alarm for
+     * @param midlet <code>MIDlet</code> class name
+     *
+     * @throws IOException if the content store failed
+     */
+    public synchronized void removeAlarm(
+            final int midletSuiteID,
+            final String midlet)
+            throws IOException {
+        final HashMap as = (HashMap) alarmsStore.getSuiteData(midletSuiteID);
+        // assert as != null;
+        as.remove(midlet);
+        if (!as.isEmpty()) {
+            alarmsStore.updateSuiteData(midletSuiteID, as);
         } else {
-            store.createDataNode(nodeUri, data);
+            alarmsStore.removeSuiteData(midletSuiteID);
         }
     }
 
-    /**
-     * Utility class to convert a <code>Vector</code> of
-     * <code>JUMPConnectionInfo</code> into a string and vice verse.
-     */
-    private static final class ToString {
-        /**
-         * Hides a constructor.
-         */
-        private ToString() { }
+    /** Connections converter. */
+    private static final AppSuiteDataStore.DataConverter CONNECTIONS_CONVERTER
+            = new ConnectionConverter();
 
+    /** Implements conversion interface for connections. */
+    private static final class ConnectionConverter
+            implements AppSuiteDataStore.DataConverter {
         /**
          * Separator to use.
          *
@@ -345,15 +306,14 @@ public final class Store {
         static final int N_STRINGS_PER_RECORD = 3;
 
         /**
-         * Converts a <code>List</code> of <code>JUMPConnectionInfo</code>
+         * Converts a <code>Vector</code> of <code>JUMPConnectionInfo</code>
          *  into a string.
          *
-         * @param connections list to convert
+         * @param data data to convert
          * @return string with all connections
-         *
-         * <p>TBD: unittests</p>
          */
-        static String listToString(final List connections) {
+        public String dataToString(final Object data) {
+            final Vector connections = (Vector) data;
             if (connections == null) {
                 throw new
                         IllegalArgumentException("connections vector is null");
@@ -378,7 +338,7 @@ public final class Store {
          * @param string string to convert
          * @return <code>Vector</code> of connections
          */
-        static Vector stringToVector(final String string) {
+        public Object stringToData(final String string) {
             if (string == null) {
                 throw new IllegalArgumentException("string is null");
             }
@@ -405,7 +365,7 @@ public final class Store {
          * @return <code>Vector</code> of strings splitted by
          *  <code>SEPARATOR</code>
          */
-        private static Vector splitString(final String string) {
+        private Vector splitString(final String string) {
             Vector v = new Vector();
             int start = 0;
             while (true) {
@@ -416,6 +376,70 @@ public final class Store {
                 }
                 v.add(string.substring(start, i));
                 start = i + 1;
+            }
+        }
+    };
+
+    /** Alarms converter. */
+    private static final AppSuiteDataStore.DataConverter ALARMS_CONVERTER
+            = new AlarmsConverter();
+
+    /** Implements conversion interface for alarms. */
+    private static final class AlarmsConverter
+            implements AppSuiteDataStore.DataConverter {
+        /** Char to seprate midlet class name from time. */
+        private static final char FIELD_SEP = ':';
+
+        /**
+         * Converts data into a string.
+         *
+         * @param data data to convert
+         *
+         * @return string representation
+         */
+        public String dataToString(final Object data) {
+            final Map m = (Map) data;
+
+            final StringBuffer sb = new StringBuffer();
+            for (Iterator it = m.entrySet().iterator(); it.hasNext();) {
+                final Map.Entry entry = (Map.Entry) it.next();
+                final String midlet = (String) entry.getKey();
+                final Long time = (Long) entry.getValue();
+                sb.append(midlet);
+                sb.append(FIELD_SEP);
+                sb.append(time);
+                sb.append('\n');
+            }
+
+            return sb.toString();
+        }
+
+        /**
+         * Converts a string into data.
+         *
+         * @param s string to convert
+         *
+         * @return data
+         */
+        public Object stringToData(final String s) {
+            final HashMap data = new HashMap();
+            int pos = 0;
+            for (;;) {
+                final int p = s.indexOf('\n', pos);
+                if (p == -1) {
+                    // assert pos == s.length() - 1 : "unprocessed chars!";
+                    return data;
+                }
+                final String record = s.substring(pos, p);
+
+                // Parse record
+                final int sepPos = record.indexOf(FIELD_SEP);
+                // assert sepPos != -1 : "wrong record";
+                final String midlet = record.substring(0, sepPos);
+                final String timeString = record.substring(sepPos + 1);
+                data.put(midlet, Long.valueOf(timeString));
+
+                pos = p + 1;
             }
         }
     }

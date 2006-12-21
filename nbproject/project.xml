@@ -76,6 +76,11 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pay
                     <type>java</type>
                     <location>src/share/api/native</location>
                 </source-folder>
+                <source-folder>
+                    <label>classes_tests</label>
+                    <type>java</type>
+                    <location>src/share/tests/classes</location>
+                </source-folder>
             </folders>
             <ide-actions>
                 <action name="build">
@@ -94,6 +99,10 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pay
                     <script>${ant.script}</script>
                     <target>clean</target>
                     <target>all</target>
+                </action>
+                <action name="test">
+                    <script>${ant.script}</script>
+                    <target>run-unittests</target>
                 </action>
             </ide-actions>
             <export>
@@ -134,6 +143,10 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pay
                         <label>native_api</label>
                         <location>src/share/api/native</location>
                     </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_tests</label>
+                        <location>src/share/tests/classes</location>
+                    </source-folder>
                     <source-file>
                         <location>${ant.script}</location>
                     </source-file>
@@ -143,7 +156,7 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pay
                     <ide-action name="javadoc"/>
                     <ide-action name="clean"/>
                     <ide-action name="rebuild"/>
-                    <ide-action name="debug"/>
+                    <ide-action name="test"/>
                 </context-menu>
             </view>
             <subprojects/>
@@ -151,13 +164,44 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pay
         <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/2">
             <compilation-unit>
                 <package-root>src/share/api/classes</package-root>
+                <built-to>dist/lib/jump-api.jar</built-to>
+                <built-to>dist/lib/jump-impl.jar</built-to>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+            <compilation-unit>
                 <package-root>src/share/impl/contentstore/classes</package-root>
+                <built-to>dist/lib/jump-api.jar</built-to>
+                <built-to>dist/lib/jump-impl.jar</built-to>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+            <compilation-unit>
                 <package-root>src/share/impl/pushregistry/classes</package-root>
+                <built-to>dist/lib/jump-api.jar</built-to>
+                <built-to>dist/lib/jump-impl.jar</built-to>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+            <compilation-unit>
                 <package-root>src/share/impl/download/classes</package-root>
+                <built-to>dist/lib/jump-api.jar</built-to>
+                <built-to>dist/lib/jump-impl.jar</built-to>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+            <compilation-unit>
                 <package-root>src/share/impl/installer/classes</package-root>
+                <built-to>dist/lib/jump-api.jar</built-to>
+                <built-to>dist/lib/jump-impl.jar</built-to>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+            <compilation-unit>
                 <package-root>src/share/api/native</package-root>
                 <built-to>dist/lib/jump-api.jar</built-to>
                 <built-to>dist/lib/jump-impl.jar</built-to>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+            <compilation-unit>
+                <package-root>src/share/tests/classes</package-root>
+                <unit-tests/>
+                <classpath mode="compile">dist/lib/jump-api.jar:dist/lib/jump-impl.jar</classpath>
                 <source-level>1.4</source-level>
             </compilation-unit>
         </java-data>
