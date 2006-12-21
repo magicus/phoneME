@@ -711,7 +711,7 @@ public class MIDletStateHandler {
                 throw new SecurityException("Recusive MIDlet creation");
             }
 
-            newMidletPeer = new MIDletPeer(classname);
+            newMidletPeer = new MIDletPeer();
 
             /*
              * newMidlet peer will be set to null by the MIDlet class

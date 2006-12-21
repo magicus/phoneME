@@ -75,13 +75,8 @@ int midpInitialize() {
 #if MEASURE_STARTUP
     extern jlong Java_java_lang_System_currentTimeMillis();
     char msg[128];
-#if ENABLE_CDC
     sprintf(msg, "System Startup Time: Begin at %lld\n",
             Java_java_lang_System_currentTimeMillis());
-#else
-    sprintf(msg, "System Startup Time: Begin at %lld\n",
-	    (long long)Java_java_lang_System_currentTimeMillis());
-#endif
     pcsl_print(msg);
 #endif
 

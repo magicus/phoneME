@@ -161,10 +161,8 @@ public class MIDletPeer implements MIDletEventConsumer {
      * <p>
      * The peer MIDlet field is set later when the MIDlet's constructor calls
      * newMidletState.
-     *
-     * @param peerClassName class name of the peer MIDlet
      */
-    MIDletPeer(String peerClassName) {
+    MIDletPeer() {
         state = ACTIVE_PENDING;        // So it will be made active soon
     }
 

@@ -52,7 +52,14 @@
 #define MAX_MIDLET_NAME 256
 #endif /* MAX_MIDLET_NAME */
 
-/** Check error code and throw exceptions */
+/**
+ * Check error code and throw exceptions.
+ * <p>
+ * This must be a macro because it contains a call
+ * to KNI_ThrowNew, which for the CDC VM is a macro
+ * that references a variable declared in the 
+ * KNIDECL macro.
+ */
 #define handlePushError(X) { \
 	switch (X) { \
  \

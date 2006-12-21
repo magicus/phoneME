@@ -60,6 +60,8 @@ MIDPCommandState* midpGetCommandState() {
         MidpCommandState.suiteId = UNUSED_SUITE_ID;
         MidpCommandState.lastSuiteId = UNUSED_SUITE_ID;
         MidpCommandState.lastMidletClassName = PCSL_STRING_NULL;
+        MidpCommandState.lastArg0 = PCSL_STRING_NULL;
+        MidpCommandState.lastArg1 = PCSL_STRING_NULL;
         MidpCommandState.arg0 = PCSL_STRING_NULL;
         MidpCommandState.arg1 = PCSL_STRING_NULL;
         MidpCommandState.arg2 = PCSL_STRING_NULL;
@@ -85,6 +87,8 @@ MIDPCommandState* midpGetCommandState() {
 void finalizeCommandState(void) {
     pcsl_string_free(&MidpCommandState.midletClassName);
     pcsl_string_free(&MidpCommandState.lastMidletClassName);
+    pcsl_string_free(&MidpCommandState.lastArg0);
+    pcsl_string_free(&MidpCommandState.lastArg1);
     pcsl_string_free(&MidpCommandState.arg0);
     pcsl_string_free(&MidpCommandState.arg1);
     pcsl_string_free(&MidpCommandState.arg2);
@@ -133,6 +137,10 @@ KNIDECL(com_sun_midp_main_CommandState_restoreCommandState) {
     KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "lastMidletClassName",
                                   &MidpCommandState.lastMidletClassName,
                                   string);
+    KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "lastArg0",
+                                  &MidpCommandState.lastArg0, string);
+    KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "lastArg1",
+                                  &MidpCommandState.lastArg1, string);
     KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "arg0",
                                   &MidpCommandState.arg0, string);
     KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "arg1",
@@ -190,6 +198,10 @@ KNIDECL(com_sun_midp_main_CommandState_saveCommandState) {
         KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "lastMidletClassName",
                                    &MidpCommandState.lastMidletClassName,
                                    string);
+        KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "lastArg0",
+                                   &MidpCommandState.lastArg0, string);
+        KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "lastArg1",
+                                   &MidpCommandState.lastArg1, string);
         KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "arg0",
                                    &MidpCommandState.arg0, string);
         KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "arg1",

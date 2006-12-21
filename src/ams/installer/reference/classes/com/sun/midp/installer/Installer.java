@@ -183,7 +183,7 @@ public abstract class Installer {
     /**
      * Constructor of the Installer.
      */
-    public Installer() {
+    Installer() {
         state = getInstallState();
         verifier = new VerifierImpl(state);
 
