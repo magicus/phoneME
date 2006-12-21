@@ -28,8 +28,7 @@ import com.sun.jump.common.JUMPApplication;
 
 /**
  * <code>JUMPApplicationProxy</code> encapsulates the information of the running 
- * application on the exectutive side, and associates it with the containing isolateProxy and 
- * running JUMPApplication, and the application ID.
+ * application on the exectutive side.
  *
  * The <Code>JUMPIsolateProxy</code> is responsible for creating and returning
  * <Code>JUMPApplicationProxy</code> objects.
@@ -37,12 +36,12 @@ import com.sun.jump.common.JUMPApplication;
 public interface JUMPApplicationProxy {
 
     /**
-     * Returns the JUMPApplication this proxy is accociated with.
+     * Returns the <code>JUMPApplication</code> this proxy is associated with.
      */
     public JUMPApplication getApplication();
 
     /**
-     * Returns the isolateProxy proxy this application is running in.
+     * Returns the <code>JUMPIsolateProxy</code> in which this application is running in.
      */
     public JUMPIsolateProxy getIsolateProxy();
 
@@ -62,7 +61,7 @@ public interface JUMPApplicationProxy {
      * Destroys the application associated with this 
      * <code>JUMPApplicationProxy</code>.
      **/
-    public void destoryApp();
+    public void destroyApp();
 
     /** 
      * Returns the state of the application associated with this 

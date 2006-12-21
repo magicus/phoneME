@@ -45,26 +45,6 @@ import com.sun.jump.message.JUMPMessageSender;
  */
 public interface JUMPIsolateProxy extends JUMPIsolate, JUMPMessageSender {
 
-//    /**
-//     * Returns the state of the application associated with <i>appId</i>
-//     * running in the Isolate.
-//     */
-//    public int getState(int appId);
-//
-//    /**
-//     * Start the application specified. The method returns
-//     * after the application has started successfully. If for some reason
-//     * the application cannot be started exceptions are thrown.
-//     *
-//     * @return a unique ID identifying the application on the Isolate.
-//     */
-//    public int startApp(JUMPApplication app, String[] args);
-//
-//    public void pauseApp(int appId);
-//
-//    public void resumeApp(int appId);
-//
-//    public void destroyApp(int appId);
     /**
      * Start the application specified. The method returns
      * after the application has started successfully. If for some reason

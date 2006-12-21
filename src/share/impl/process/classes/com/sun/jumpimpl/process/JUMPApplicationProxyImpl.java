@@ -111,7 +111,7 @@ public class JUMPApplicationProxyImpl implements JUMPApplicationProxy {
      * Destroys the application associated with this
      * <code>JUMPApplicationProxy</code>.
      **/
-    public void destoryApp() {
+    public void destroyApp() {
         JUMPResponse response =
             requestSender.sendRequest(
                 isolateProxy,
