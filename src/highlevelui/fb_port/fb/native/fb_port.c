@@ -303,13 +303,13 @@ void refreshScreen(int x1, int y1, int x2, int y2) {
     int dstHeight = fb.height;
 
     // System screen buffer geometry
-    int sysWidth = gxj_system_screen_buffer.width;
-    int sysHeight = gxj_system_screen_buffer.height;
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
 
     if (linuxFbDeviceType == LINUX_FB_OMAP730) {
         // Needed by the P2 board
         // Max screen size is 176x220 but can only display 176x208
-        dstHeight = sysHeight;
+        dstHeight = bufHeight;
     }
 
     if (gxj_system_screen_buffer.rotated) {
@@ -326,11 +326,11 @@ void refreshScreen(int x1, int y1, int x2, int y2) {
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
 
-    if (sysWidth < dstWidth || sysHeight < dstHeight) {
+    if (bufWidth < dstWidth || bufHeight < dstHeight) {
         // We are drawing into a frame buffer that's larger than what MIDP
         // needs. Center it.
-        dst += ((dstHeight - sysHeight) / 2) * dstWidth;
-        dst += (dstWidth - sysWidth) / 2;
+        dst += ((dstHeight - bufHeight) / 2) * dstWidth;
+        dst += (dstWidth - bufWidth) / 2;
     }
 
     if (srcWidth == dstWidth && srcHeight == dstHeight &&
@@ -338,12 +338,12 @@ void refreshScreen(int x1, int y1, int x2, int y2) {
         // copy the entire screen with one memcpy
         memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type) * srcHeight);
     } else {
-        src += y1 * sysWidth + x1;
+        src += y1 * bufWidth + x1;
         dst += y1 * dstWidth + x1;
 
         for (; y1 < y2; y1++) {
             memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
-            src += sysWidth;
+            src += bufWidth;
             dst += dstWidth;
         }
     }
