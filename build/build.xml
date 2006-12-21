@@ -27,6 +27,7 @@ information or have any questions.
 
   <import file="build-api.xml"/>
   <import file="build-impl.xml"/>
+  <import file="build-tests.xml"/>
   <import file="defs-tools.xml"/>
 
   <property name="ws.dir" value="${basedir}/.."/>
@@ -34,6 +35,7 @@ information or have any questions.
   <property name="s.share.dir" value="${src.dir}/share"/>
   <property name="s.share.api.dir" value="${s.share.dir}/api"/>
   <property name="s.share.impl.dir" value="${s.share.dir}/impl"/>
+  <property name="s.share.tests.dir" value="${s.share.dir}/tests"/>
   <property name="doc.dir" value="${ws.dir}/doc"/>
 
   <property name="dist.dir" value="${ws.dir}/dist"/>

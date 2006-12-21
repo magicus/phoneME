@@ -47,7 +47,7 @@ final class OTAPushRegistry implements JUMPPushRegistry {
         }
 
         try {
-            store.addFreshConnections(midletSuiteId, connections);
+            store.addConnections(midletSuiteId, connections);
         } catch (IOException _) {
             /*
              * Best effort to cleanup the store, therefore no
@@ -66,7 +66,7 @@ final class OTAPushRegistry implements JUMPPushRegistry {
          */
         pushServer.uninstallConnections(midletSuiteId);
         try {
-            store.removeSuiteConnections(midletSuiteId);
+            store.removeConnections(midletSuiteId);
         } catch (IOException _) {
             return false;
         }
