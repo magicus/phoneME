@@ -28,6 +28,7 @@ import com.sun.jumpimpl.module.pushregistry.persistence.Store;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -37,7 +38,7 @@ import javax.microedition.io.ConnectionNotFoundException;
  * Registry that manages alarms.
  *
  * <p>
- * NB: this class is not thread-safe and should be guarded
+ * NOTE: this class is not thread-safe and should be guarded
  * </p>
  */
 public final class AlarmRegistry {
@@ -80,6 +81,28 @@ public final class AlarmRegistry {
     }
 
     /**
+     * Reads alarms from the persistent store and registers them.
+     *
+     * <p>
+     * NOTE: the store should be initialized with <code>readStore</code>
+     * method.
+     * </p>
+     */
+    public void readAlarms() throws IOException {
+        store.listAlarms(new Store.AlarmsConsumer() {
+            public void consume(final int midletSuiteID, final Map alarms) {
+                for (Iterator it = alarms.entrySet().iterator(); it.hasNext();) {
+                    final Map.Entry entry = (Map.Entry) it.next();
+                    final String midlet = (String) entry.getKey();
+                    final Long time = (Long) entry.getValue();
+                    scheduleAlarm(new MIDletInfo(midletSuiteID, midlet),
+                            time.longValue());
+                }
+            }
+        });
+    }
+
+    /**
      * Registers an alarm.
      *
      * @param midletSuiteID <code>MIDlet suite</code> ID
@@ -91,7 +114,7 @@ public final class AlarmRegistry {
      *
      * @return previous alarm time or 0 if none
      */
-    long registerAlarm(
+    public long registerAlarm(
             final int midletSuiteID,
             final String midlet,
             final long time) throws ConnectionNotFoundException {
@@ -114,16 +137,30 @@ public final class AlarmRegistry {
             throw new ConnectionNotFoundException();
         }
 
+        scheduleAlarm(midletInfo, time);
+
+        return oldTime;
+    }
+
+    /**
+     * Scheduleds an alarm.
+     *
+     * @param midletInfo registration info
+     * @param time alarm time
+     */
+    private void scheduleAlarm(final MIDletInfo midletInfo, final long time) {
         final Date date = new Date(time);
         final TimerTask newTask = new TimerTask() {
             public void run() {
-                // NB: need to keep triggered alarms to follow the spec
+                // NOTE: need to keep triggered alarms to follow the spec
                 try {
-                    store.removeAlarm(midletSuiteID, midlet);
+                    store.removeAlarm(midletInfo.midletSuiteID,
+                            midletInfo.midlet);
                 } catch (IOException _) {
                     // The best thing I can do
                 }
-                lifecycleAdapter.launchMidlet(midletSuiteID, midlet);
+                lifecycleAdapter.launchMidlet(midletInfo.midletSuiteID,
+                        midletInfo.midlet);
             }
         };
         alarms.put(midletInfo, newTask);
@@ -133,8 +170,6 @@ public final class AlarmRegistry {
          * the past, the task is scheduled for immediate execution</quote>.
          * I hope it's MIDP complaint
          */
-
-        return oldTime;
     }
 
     /**
