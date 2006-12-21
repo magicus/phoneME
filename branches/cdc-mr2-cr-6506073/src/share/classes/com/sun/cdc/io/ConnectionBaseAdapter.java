@@ -823,16 +823,18 @@ class BaseInputStream extends InputStream {
             parent.mark(readlimit);
         } else {
             byte[] oldBuf = markBuf;
-            markBuf = new byte[readlimit];
 
             // copy relevant data from old buffer if any
             if (isReadFromBuffer) {
                 int oldDataSize = markSize - markPos;
-                int copySize = (readlimit > oldDataSize) ?
-                    oldDataSize : readlimit;
-                System.arraycopy(oldBuf, markPos, markBuf, 0, copySize);
-                markSize = copySize;
+                if (readlimit < oldDataSize) {
+                    readlimit = oldDataSize;
+                }
+                markBuf = new byte[readlimit];
+                System.arraycopy(oldBuf, markPos, markBuf, 0, oldDataSize);
+                markSize = oldDataSize;
             } else {
+                markBuf = new byte[readlimit];
                 markSize = 0;
             }
             markPos = 0;
