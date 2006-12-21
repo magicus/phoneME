@@ -168,7 +168,7 @@ KeyMapping omap_730_keys[] = {
     {KEY_ASTERISK,      268435456,  0},
     {KEY_POUND,         65536,      0},
     {KEY_SCREEN_ROT,    512,        0},    // Left side down button
-    {MD_KEY_SWITCH_APP, 1024,       0},    // Left side up button
-    {KEY_INVALID,       2048,       0},    // Right side button
+    {MD_KEY_SWITCH_APP, 2048,       0},    // Right side button
+    {KEY_INVALID,       1024,       0},    // Left side up button
     {KEY_INVALID,       0,          0},     // end of table
 };

@@ -27,7 +27,6 @@
 package com.sun.midp.installer;
 
 import java.io.IOException;
-import java.util.Vector;
 
 import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.lcdui.*;
@@ -95,8 +94,6 @@ class AutoTesterBase extends MIDlet implements CommandListener,
     Installer installer;
     /** How many iterations to run the suite */
     int loopCount = -1;
-    /** Additional libraries that should be added to the classpath */
-    String systemLibs;
 
     /** The InstallListener to use when creating the Installer. */
     protected InstallListener installListener;
@@ -107,46 +104,35 @@ class AutoTesterBase extends MIDlet implements CommandListener,
     AutoTesterBase() {
         display = Display.getDisplay(this);
 
-        String[] args = parseArgs(getAppProperty("arg-0"));
+        // The arg-<n> properties are generic command arguments
+        url = getAppProperty("arg-0");
+        if (url != null) {
+            // URL given as a argument, look for a domain arg and then start
+            String arg1 = getAppProperty("arg-1");
 
-        if (args != null) {
-            url = args[0];
-            if (args.length > 1) {
-                boolean hasLoopCount = false;
-                int nextArgIdx = 2;
-
+            boolean hasLoopCount = false;
+            if (arg1 != null) {
                 // this can be domain or loop count
                 try {
-                    loopCount = Integer.parseInt(args[1]);
+                    loopCount = Integer.parseInt(arg1);
                     hasLoopCount = true;
                 } catch (NumberFormatException e) {
-                    // then its domain or "-syslibs"
-                    if (!"-syslibs".equals(args[1])) {
-                        domain = args[1];
-                    } else {
-                        nextArgIdx = 1;
-                    }
+                    // then its domain
+                    domain = arg1;
                 }
 
-                if (args.length > nextArgIdx) {
-                    if (!hasLoopCount) {
+                if (!hasLoopCount) {
+                    String arg2 = getAppProperty("arg-2");
+                    if (arg2 != null) {
                         try {
-                            loopCount = Integer.parseInt(args[2]);
-                            nextArgIdx = 3;
+                            loopCount = Integer.parseInt(arg2);
                         } catch (NumberFormatException e) {
                             // just ignore
                         }
                     }
-
-                    // the rest may be "-syslibs <list>"
-                    if (args.length > nextArgIdx + 1) {
-                        if ("-syslibs".equals(args[nextArgIdx])) {
-                            systemLibs = args[nextArgIdx + 1];
-                        }
-                    }
                 }
             }
-        } // end if (args != null)
+        }
     }
 
     /**
@@ -564,49 +550,5 @@ class AutoTesterBase extends MIDlet implements CommandListener,
         }
 
         return ije.getMessage();
-    }
-
-    /**
-     * Splits a line of arguments given as one string into array of strings,
-     * per one argument in each array cell.
-     *
-     * @param args string to parse
-     *
-     * @return array of arguments
-     */
-    private String[] parseArgs(String arg) {
-        if (arg == null) {
-            return null;
-        }
-
-        arg = arg.trim();
-        if ("".equals(arg)) {
-            return null;
-        }
-
-        Vector argsVector = new Vector(5);
-        String nextArg = arg;
-        int argsNum = 0;
-        int idx;
-
-        while (true) {
-            idx = arg.indexOf(' ');
-            if (idx >= 0) {
-                nextArg = arg.substring(0, idx);
-                argsVector.insertElementAt(nextArg, argsNum++);
-                arg = arg.substring(idx + 1, arg.length());
-            } else {
-                argsVector.insertElementAt(arg, argsNum++);
-                break;
-            }
-        }
-
-        // convert the vector to array of strings
-        String[] args = new String[argsVector.size()];
-        for(int i = 0; i < argsVector.size(); i++) {
-            args[i] = (String)argsVector.elementAt(i);
-        }
-
-        return args;
     }
 }

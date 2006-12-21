@@ -227,6 +227,8 @@ public class MIDletSuiteLoader extends AbstractMIDletSuiteLoader {
 
                 state.lastSuiteId = MIDletSuiteUtils.lastMidletSuiteToRun;
                 state.lastMidletClassName = MIDletSuiteUtils.lastMidletToRun;
+                state.lastArg0 = MIDletSuiteUtils.arg0ForLastMidlet;
+                state.lastArg1 = MIDletSuiteUtils.arg1ForLastMidlet;
             }
 
             // Check to see if we need to run a selected suite next
@@ -250,10 +252,14 @@ public class MIDletSuiteLoader extends AbstractMIDletSuiteLoader {
 
                 state.suiteId = state.lastSuiteId;
                 state.midletClassName = state.lastMidletClassName;
+                state.arg0 = state.lastArg0;
+                state.arg1 = state.lastArg1;
 
                 /* Avoid an endless loop. */
                 state.lastSuiteId = MIDletSuite.UNUSED_SUITE_ID;
                 state.lastMidletClassName = null;
+                state.lastArg0 = null;
+                state.lastArg1 = null;
 
                 /*
                  * This could an bad JAD from an auto test suite,

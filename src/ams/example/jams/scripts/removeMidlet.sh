@@ -33,5 +33,5 @@ then
   exit
 fi
 
-./runMidlet internal com.sun.midp.scriptutil.SuiteRemover $1
+./runMidlet -1 com.sun.midp.scriptutil.SuiteRemover $1
 

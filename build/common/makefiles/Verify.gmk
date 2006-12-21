@@ -236,7 +236,7 @@ define verify_pcsl_network_module
 	if ! grep "^\#define NETWORK_MODULE[[:space:]]\+$(2)" \
     	  $(PCSL_TARGET_DIR)/inc/pcsl_config.h > /dev/null; then \
 	    echo 'ERROR: Mismatching PCSL networking module, should be "$(2)"'; \
-    	    exit -1; \
+    	     \
 	fi; \
     fi    	    
 endef

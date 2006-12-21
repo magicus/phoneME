@@ -390,8 +390,10 @@ midpInitializeUI(void) {
         return -1;
     }
 
-    lcdlf_ui_init();
-    return 0;
+    if (0 == lcdlf_ui_init())
+        return 0;
+    else
+        return -1;
 }
 
 /**
@@ -416,22 +418,6 @@ midpFinalizeUI(void) {
      * midpInitializeUI() function.
      */
     midpUnregisterAmsIsolateId();
-}
-
-static void   __putClassPathExtToSysProperty(char* classPathExt) {
-    // store class path as system variable for another isolates
-    if (NULL != classPathExt) {
-        char* argv[1];
-        const char prefix[] = "-Dclasspathext=";
-        argv[0] = midpMalloc(sizeof(prefix) + strlen(classPathExt));
-        if (NULL != argv[0]) {
-            memcpy(argv[0], prefix, sizeof(prefix));
-            // copy extention + trailing zero
-            memcpy(argv[0] + sizeof(prefix) - 1, classPathExt, strlen(classPathExt) + 1);
-            (void)JVM_ParseOneArg(1, argv);
-            midpFree(argv[0]);
-        }
-    }
 }
 
 /**
@@ -547,8 +533,6 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
 #else
     (void)debugOption;
 #endif
-
-    __putClassPathExtToSysProperty(classPathExt);
 
     do {
         MIDP_ERROR status = MIDP_ERROR_NONE;

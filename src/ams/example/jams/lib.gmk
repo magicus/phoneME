@@ -162,7 +162,7 @@ SUBSYSTEM_AMS_EXECUTABLES = \
 
 endif
 
-ifeq ($(TARGET_VM), cdc_hi)
+ifeq ($(TARGET_VM), cdc_vm)
 
 CVM_BOOTCLASSPATH=-Xbootclasspath/a:${MIDP_OUTPUT_DIR}/classes.zip
 
@@ -241,7 +241,7 @@ ifdef INCLUDE_SHELL_SCRIPTS
 
   USE_SCRIPT_UTILS = true
 
-  ifeq ($(TARGET_VM), cdc_hi)
+  ifeq ($(TARGET_VM), cdc_vm)
     SUBSYSTEM_AMS_EXECUTABLES += \
       $(BINDIR)/autotest.sh
   endif

@@ -78,15 +78,18 @@ public class TitleLayer extends CLayer {
      * Set the title of this title layer.
      *
      * @param title the text to draw as the title
+     * @return true if visability of layer was changed
      */
-    public void setTitle(String title) {
+    public boolean setTitle(String title) {
+        boolean oldVisible = this.visible;
         this.title = title;
 
-        this.visible = (title != null);
         this.dirty = true;
-        
+        this.visible = (title != null);
+
         // force a re-calc of the text anchor location
         titlex = 0;
+        return (oldVisible != this.visible);
     }
 
     /**

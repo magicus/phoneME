@@ -122,6 +122,9 @@ public class ScrollablePopupLayer extends PopupLayer
         super.update(layers);
         if (scrollInd != null) {
             scrollInd.update(layers);
+            if (scrollInd.isVisible()) {
+                bounds[W] -= scrollInd.bounds[W];
+            }
         }
     }
     

@@ -66,5 +66,5 @@ do
   prev_midlet_args=$midlet_args
 done
 
-./runMidlet internal com.sun.midp.scriptutil.SuiteRemover ${prev_midlet_args}
+./runMidlet -1 com.sun.midp.scriptutil.SuiteRemover ${prev_midlet_args}
 

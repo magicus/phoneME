@@ -35,6 +35,6 @@ goto :EOF
 :run_midlet
 %~d0
 chdir %~p0
-runMidlet internal com.sun.midp.scriptutil.CommandLineInstaller I %1 %2
+runMidlet -1 com.sun.midp.scriptutil.CommandLineInstaller I %1 %2
 
 endlocal

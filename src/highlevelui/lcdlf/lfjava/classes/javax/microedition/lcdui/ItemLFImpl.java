@@ -179,7 +179,14 @@ abstract class ItemLFImpl implements ItemLF {
      * @param label the new label string
      */
     public void lSetLabel(String label) {
-        lRequestInvalidate(true, true);
+        int[] oldBounds = new int[]{labelBounds[X],labelBounds[Y],labelBounds[WIDTH],labelBounds[HEIGHT]};
+        lGetLabelSize(labelBounds, lGetAvailableWidth());
+        if (labelBounds[X] == oldBounds[X] && labelBounds[Y] == oldBounds[Y] &&
+                labelBounds[WIDTH] == oldBounds[WIDTH] && labelBounds[HEIGHT] == oldBounds[HEIGHT]) {
+            lRequestPaint(labelBounds[X],labelBounds[Y],labelBounds[WIDTH],labelBounds[HEIGHT]);
+        } else {
+            lRequestInvalidate(true,true);
+        }
     }
 
     /**

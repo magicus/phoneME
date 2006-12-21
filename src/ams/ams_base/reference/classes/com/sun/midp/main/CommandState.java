@@ -87,6 +87,10 @@ class CommandState {
     int lastSuiteId;
     /** The MIDlet class name for the suite to load. */
     String lastMidletClassName;
+    /** The argument for a last MIDlet, will be app property arg-0. */
+    String lastArg0;
+    /** The argument for a last MIDlet, will be app property arg-1. */
+    String lastArg1;
     /** The argument for a MIDlet in the suite, will be app property arg-0. */
     String arg0;
     /** The argument for a MIDlet in the suite, will be app property arg-1. */
