@@ -473,6 +473,64 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
      */
     protected void flush() throws IOException {
     }
+
+    /**
+     * Tests if input stream for a connection supports the <code>mark</code> and
+     * <code>reset</code> methods.
+     *
+     * <p> The <code>markSupported</code> method of
+     * <code>ConnectionBaseAdapter</code> returns <code>false</code>.
+     *
+     * <p> Subclasses should override this method if they support own mark/reset
+     * functionality.
+     *
+     * @return  <code>true</code> if input stream for this connection supports
+     *           the <code>mark</code> and <code>reset</code> methods;
+     *           <code>false</code> otherwise.
+     * @see     java.io.InputStream#mark(int)
+     * @see     java.io.InputStream#reset()
+     */
+    public boolean markSupported() {
+        return false;
+    }
+
+    /**
+     * Marks the current position in input stream for a connection.
+     * A subsequent call to the <code>reset</code> method repositions this
+     * stream at the last marked position so that subsequent reads re-read
+     * the same bytes.
+     *
+     * <p> The <code>mark</code> method of <code>ConnectionBaseAdapter</code>
+     *  does nothing.
+     *
+     * <p> Subclasses should override this method if they support own mark/reset
+     * functionality.
+     *
+     * @param   readlimit   the maximum limit of bytes that can be read before
+     *                      the mark position becomes invalid.
+     * @see     java.io.InputStream#reset()
+     */
+    public synchronized void mark(int readlimit) {}
+
+    /**
+     * Repositions input stream for a connection to the position at the time the
+     * <code>mark</code> method was last called on this input stream.
+     *
+     * <p> The method <code>reset</code> for <code>ConnectionBaseAdapter</code>
+     * class does nothing and always throws an <code>IOException</code>.
+     *
+     * <p> Subclasses should override this method if they support own mark/reset
+     * functionality.
+     *
+     * @exception  IOException  if this stream has not been marked or if the
+     *                          mark has been invalidated.
+     * @see     java.io.InputStream#reset()
+     * @see     java.io.InputStream#mark(int)
+     * @see     java.io.IOException
+     */
+    public synchronized void reset() throws IOException {
+        throw new IOException("mark/reset not supported");
+    }
 }
 
 /**
@@ -485,6 +543,26 @@ class BaseInputStream extends InputStream {
 
     /** Buffer for single char reads */
     byte[] buf = new byte[1];
+
+    /**
+      * Buffer for mark/reset funtionality support.
+      * <code>null</code> value indicates <code>mark</code> was not called or
+      * <code>readlimit</code> value of the last <code>mark</code> was exceeded.
+      */
+    byte[] markBuf = null;
+
+    /** The size of data stored in <code>markBuf</code>. */
+    int markSize = 0;
+
+    /** Current position in <code>markBuf</code> to read data from. */
+    int markPos = 0;
+
+    /**
+     * Indicates whether <code>reset</code> method was called.
+     * If so, data is read from <code>markBuf</code> buffer,
+     * otherwise via <code>parent.readBytes</code> method.
+     */
+    boolean isReadFromBuffer = false;
 
     /**
      * Constructs a BaseInputStream for a ConnectionBaseAdapter.
@@ -613,7 +691,68 @@ class BaseInputStream extends InputStream {
          */
         test = b[off] + b[len - 1] + b[off + len - 1];
 
-        return parent.readBytes(b, off, len);
+        // use parent's mark/reset functionality
+        // if the parent supports the own one
+        if (parent.markSupported()) {
+            return parent.readBytes(b, off, len);
+        }
+
+        // read data from mark buffer if reset method was called
+        if (isReadFromBuffer) {
+            int dataSize = markSize - markPos;
+            if (dataSize > 0) {
+                int copySize = (dataSize > len) ? len : dataSize;
+                System.arraycopy(markBuf, markPos, b, off, copySize);
+                markPos += copySize;
+
+                // read data directly from the stream
+                // if size of data in the buffer is not enough
+                int readSize = 0;
+                if (copySize < len) {
+                    readSize = parent.readBytes(
+                        b, off + copySize, len - copySize);
+
+                    // check if eos is reached
+                    if (readSize == -1) {
+                        readSize = 0;
+                    } else {
+                        // check the mark buffer overflow
+                        if (markSize + readSize > markBuf.length) {
+                            markBuf = null;
+                        // cache the data in the mark buffer
+                        } else {
+                            System.arraycopy(
+                                b, off + copySize, markBuf, markSize, readSize);
+                            markSize += readSize;
+                        }
+                    }
+
+                    isReadFromBuffer = false;
+                }
+
+                return copySize + readSize;
+            } else {
+                isReadFromBuffer = false;
+            }
+        }
+
+        int readSize = parent.readBytes(b, off, len);
+
+        // fill mark buffer if exists
+        if (markBuf != null) {
+            if (readSize > 0) {
+                // check the mark buffer overflow
+                if (markSize + readSize > markBuf.length) {
+                    markBuf = null;
+                    // cache the data in the mark buffer
+                } else {
+                    System.arraycopy(b, off, markBuf, markSize, readSize);
+                    markSize += readSize;
+                }
+            }
+        }
+
+        return readSize;
     }
 
     /**
@@ -626,6 +765,120 @@ class BaseInputStream extends InputStream {
         if (parent != null) {
             parent.closeInputStream();
             parent = null;
+        }
+	// free buffer used by mark/reset operations if it was allocated
+	markBuf = null;
+    }
+
+    /**
+     * Tests if this input stream supports the <code>mark</code> and
+     * <code>reset</code> methods.
+     *
+     * <p>The <code>markSupported</code> method of
+     * <code>BaseInputStream</code> returns <code>true</code>.
+     *
+     * @return  always <code>true</code>
+     *
+     * @see     BaseInputStream#mark(int)
+     * @see     BaseInputStream#reset()
+     * @see     java.io.InputStream#markSupported()
+     * @see     java.io.InputStream#mark(int)
+     * @see     java.io.InputStream#reset()
+     */
+    public boolean markSupported() {
+        return true;
+    }
+
+    /**
+     * Marks the current position in this input stream. A subsequent call to
+     * the <code>reset</code> method repositions this stream at the last marked
+     * position so that subsequent reads re-read the same bytes.
+     *
+     * <p> The <code>readlimit</code> arguments tells this input stream to
+     * allow that many bytes to be read before the mark position gets
+     * invalidated.
+     *
+     * <p> The stream remembers all the bytes read after the call to
+     * <code>mark</code> and stands ready to supply those same bytes again
+     * if and whenever the method <code>reset</code> is called.
+     *  However, the stream is not required to remember any data at all if more
+     * than <code>readlimit</code> bytes are read from the stream before
+     * <code>reset</code> is called.
+     *
+     * @param   readlimit   the maximum limit of bytes that can be read before
+     *                      the mark position becomes invalid.
+     * @see     BaseInputStream#reset()
+     * @see     java.io.InputStream#reset()
+     * @see     java.io.InputStream#mark(int)
+     */
+    public synchronized void mark(int readlimit) {
+        // check whether the stream is closed
+        if (parent == null) {
+            return;
+        }
+
+        // use parent's mark/reset functionality
+        // if the parent supports the own one
+        if (parent.markSupported()) {
+            parent.mark(readlimit);
+        } else {
+            byte[] oldBuf = markBuf;
+
+            // copy relevant data from old buffer if any
+            if (isReadFromBuffer) {
+                int oldDataSize = markSize - markPos;
+                if (readlimit < oldDataSize) {
+                    readlimit = oldDataSize;
+                }
+                markBuf = new byte[readlimit];
+                System.arraycopy(oldBuf, markPos, markBuf, 0, oldDataSize);
+                markSize = oldDataSize;
+            } else {
+                markBuf = new byte[readlimit];
+                markSize = 0;
+            }
+            markPos = 0;
+        }
+    }
+
+    /**
+     * Repositions this stream to the position at the time the
+     * <code>mark</code> method was last called on this input stream.
+     *
+     * <p> If the method <code>mark</code> has not been called since
+     * the stream was created, or the number of bytes read from the stream
+     * since <code>mark</code> was last called is larger than the argument
+     * to <code>mark</code> at that last call, then an
+     * <code>IOException</code> is thrown.
+     *
+     * <p> If such an <code>IOException</code> is not thrown, then the
+     * stream is reset to a state such that all the bytes read since the
+     * most recent call to <code>mark</code> will be resupplied
+     * to subsequent callers of the <code>read</code> method, followed by
+     * any bytes that otherwise would have been the next input data as of
+     * the time of the call to <code>reset</code>.
+     *
+     * @exception  IOException  if this stream has not been marked or if the
+     *                          mark has been invalidated;
+     *                          or if the stream is closed
+     * @see     BaseInputStream#mark(int)
+     * @see     java.io.InputStream#mark(int)
+     * @see     java.io.InputStream#reset(int)
+     * @see     java.io.IOException
+     */
+    public synchronized void reset() throws IOException {
+        ensureOpen();
+
+        // use parent's mark/reset functionality
+        // if the parent supports the own one
+        if (parent.markSupported()) {
+            parent.reset();
+        } else {
+            if (markBuf == null) {
+                throw new IOException("Invalid mark position");
+            }
+            markPos = 0;
+            isReadFromBuffer = true;
         }
     }
 }
