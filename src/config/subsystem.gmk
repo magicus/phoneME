@@ -115,11 +115,11 @@ EXTRA_INCLUDES		+= $(SUBSYSTEM_JSR_234_EXTRA_INCLUDES)
 source_bundle:: jsr_234_source_bundle
 
 # Create JSR 234 source in subdir 'jsr234/'
-JSR_234_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr234/linux-abb
+JSR_234_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/midp_abb
 
 # Copy and filter JSR 234 source in JSR_234_SOURCE_OUTPUT_DIR
 jsr_234_source_bundle: SOURCE_OUTPUT_DIR
-	@echo " ... JSR 234 source bundle" $(LOG)
+	@echo " ... MIDP ABB source bundle" $(LOG)
 	@$(call re_src_filter,$(JSR_234_DIR),$(JSR_234_SOURCE_OUTPUT_DIR),src)
 
 $(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_234_JAVA_FILES)
