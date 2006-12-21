@@ -29,6 +29,42 @@
 
 #include <PiscesDefs.h>
 
+//Color models - supported surfaces 
+/** 
+ * @defgroup SurfaceTypes Surface types supported in PISCES
+ * Surface type. There are many color models used in computer graphics. This is
+ * because of finite color count, that can be displayed on different graphic-
+ * cards/displays.    
+ * 
+ * @def TYPE_INT_RGB
+ * @ingroup SurfaceTypes 
+ * Surface type TYPE_INT_RGB. There is one byte for every
+ * RGB component. Data are stored in array of int. There is no native alpha
+ * support in this model.
+ * @def TYPE_INT_ARGB
+ * @ingroup SurfaceTypes
+ * Surface type TYPE_INT_ARGB. There is one byte for every RGB component and 
+ * alpha. Data are stored in array of int.   
+ * @def TYPE_INT_ARGB_PRE
+ * @ingroup SurfaceTypes 
+ * Surface type TYPE_INT_ARGB_PRE. Every color component is premultiplied by its
+ * alpha value. Four bytes are used to store one pixel value.
+ * @def TYPE_USHORT_565_RGB
+ * @ingroup SurfaceTypes 
+ * Surface type TYPE_USHORT_565_RGB. This color model uses 2 bytes to store
+ * RGB color. 5bits for Red and Blue component and 6 bits for Green component.
+ * We use unsigned short array to store the data.
+ * @def TYPE_BYTE_GRAY
+ * @ingroup SurfaceTypes 
+ * Surface type TYPE_BYTE_GRAY. This color model uses 256 grades of shade to
+ * view data. We use one byte to represent one pixel.        
+ */
+#define TYPE_INT_RGB 1
+#define TYPE_INT_ARGB 2
+#define TYPE_INT_ARGB_PRE 3
+#define TYPE_USHORT_565_RGB 8
+#define TYPE_BYTE_GRAY 10
+
 #define CORRECT_DIMS(_surface, _x, _y, _w, _h, _x1, _y1) \
   if (_x < 0) {   \
     _x1 -= _x;    \
@@ -40,17 +76,23 @@
     _h += _y;     \
     _y = 0;       \
   }               \
-  if ((_x + _w) > _surface->width) {  \
-    _w = _surface->width - _x;        \
+  if ((_x + _w) > (_surface)->width) {  \
+    _w = (_surface)->width - _x;        \
   }                                   \
-  if ((_y + _h) > _surface->height) { \
-    _h = _surface->height - _y;       \
+  if ((_y + _h) > (_surface)->height) { \
+    _h = (_surface)->height - _y;       \
   }
 
 typedef struct _Surface {
-  jint width;
-  jint height;
-  jint* data;
+    jint width;
+    jint height;
+  
+    jint offset;
+    jint scanlineStride;
+    jint pixelStride;
+
+    jint imageType;
+    void* data;
 } Surface;
 
 #endif

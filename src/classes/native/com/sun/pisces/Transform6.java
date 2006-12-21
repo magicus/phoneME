@@ -27,6 +27,10 @@
 package com.sun.pisces;
 
 public class Transform6 extends Transform4 {
+    static {
+        PiscesLibrary.load();
+    }
+    
     public int m02, m12;
 
     public Transform6() {

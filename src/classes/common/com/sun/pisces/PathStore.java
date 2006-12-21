@@ -23,7 +23,6 @@
  * information or have any questions. 
  */
 
-
 package com.sun.pisces;
 
 public class PathStore extends PathSink implements PathSource {

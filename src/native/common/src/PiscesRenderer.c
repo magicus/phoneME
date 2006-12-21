@@ -33,31 +33,31 @@ static void addEdge(Renderer* rdr, jint x0, jint y0, jint x1, jint y1);
 
 void
 prenderer_moveTo(Pipeline* pipeline, jint x0, jint y0) {
-  Renderer *rdr = (Renderer*)pipeline->param;
+    Renderer *rdr = (Renderer*)pipeline->param;
 
-  rdr->_sx0 = rdr->_x0 = x0;
-  rdr->_sy0 = rdr->_y0 = y0;
-  rdr->_lastOrientation = 0;  
+    rdr->_sx0 = rdr->_x0 = x0;
+    rdr->_sy0 = rdr->_y0 = y0;
+    rdr->_lastOrientation = 0;
 }
 
 void
 prenderer_lineTo(Pipeline* pipeline, jint x1, jint y1) {
-  lineToImpl((Renderer*)pipeline->param, x1, y1);
+    lineToImpl((Renderer*)pipeline->param, x1, y1);
 }
 
 void
 prenderer_close(Pipeline* pipeline) {
-  jint orientation;
-  Renderer *rdr = (Renderer*)pipeline->param;
+    jint orientation;
+    Renderer *rdr = (Renderer*)pipeline->param;
 
-  orientation = rdr->_lastOrientation;
-  if (rdr->_y0 != rdr->_sy0) {
-    orientation = (rdr->_y0 < rdr->_sy0) ? 1 : -1;
-  }
-  if (orientation != rdr->_firstOrientation) {
-    ++rdr->_flips;
-  }
-	lineToImpl(rdr, rdr->_sx0, rdr->_sy0);
+    orientation = rdr->_lastOrientation;
+    if (rdr->_y0 != rdr->_sy0) {
+        orientation = (rdr->_y0 < rdr->_sy0) ? 1 : -1;
+    }
+    if (orientation != rdr->_firstOrientation) {
+        ++rdr->_flips;
+    }
+    lineToImpl(rdr, rdr->_sx0, rdr->_sy0);
 }
 
 void
@@ -74,74 +74,74 @@ prenderer_end(Pipeline* pipeline) {
     // do nothing
 }
 
-static void 
+static void
 lineToImpl(Renderer* rdr, jint x1, jint y1) {
-  jint orientation;
+    jint orientation;
 
-  // Ignore horizontal lines
-  // Next line will count flip
-  if (rdr->_y0 == y1) {
+    // Ignore horizontal lines
+    // Next line will count flip
+    if (rdr->_y0 == y1) {
+        rdr->_x0 = x1;
+        return;
+    }
+
+    orientation = (rdr->_y0 < y1) ? 1 : -1;
+    if (rdr->_lastOrientation == 0) {
+        rdr->_firstOrientation = orientation;
+    } else if (orientation != rdr->_lastOrientation) {
+        ++rdr->_flips;
+    }
+    rdr->_lastOrientation = orientation;
+
+    // Bias Y by 1 ULP so endpoints never lie on a scanline
+    addEdge(rdr, rdr->_x0, rdr->_y0 | 0x1, x1, y1 | 0x1);
+
     rdr->_x0 = x1;
-    return;
-  }
-
-  orientation = (rdr->_y0 < y1) ? 1 : -1;
-  if (rdr->_lastOrientation == 0) {
-    rdr->_firstOrientation = orientation;
-  } else if (orientation != rdr->_lastOrientation) {
-    ++rdr->_flips;
-  }
-  rdr->_lastOrientation = orientation;
-
-  // Bias Y by 1 ULP so endpoints never lie on a scanline
-  addEdge(rdr, rdr->_x0, rdr->_y0 | 0x1, x1, y1 | 0x1);
-
-  rdr->_x0 = x1;
-  rdr->_y0 = y1;
+    rdr->_y0 = y1;
 }
 
-static void 
+static void
 addEdge(Renderer* rdr, jint x0, jint y0, jint x1, jint y1) {
-  jint orientation;
-  jint eminY, emaxY;
+    jint orientation;
+    jint eminY, emaxY;
 
-  jint newLen = rdr->_edgeIdx + 5;
-  REALLOC(rdr->_edges, jint, newLen, rdr->_edges_length * 2);
-  ASSERT_ALLOC(rdr->_edges);
+    jint newLen = rdr->_edgeIdx + 5;
+    REALLOC(rdr->_edges, jint, newLen, rdr->_edges_length * 2);
+    ASSERT_ALLOC(rdr->_edges);
 
-  orientation = 1;
-  if (y0 > y1) {
-    jint tmp = y0;
-    y0 = y1;
-    y1 = tmp;
+    orientation = 1;
+    if (y0 > y1) {
+        jint tmp = y0;
+        y0 = y1;
+        y1 = tmp;
 
-    orientation = -1;
-  }
+        orientation = -1;
+    }
 
-  // Skip edges that don't cross a subsampled scanline
-  eminY = ((y0 + rdr->_HYSTEP) & rdr->_YMASK);
-  emaxY = ((y1 - rdr->_HYSTEP) & rdr->_YMASK);
-  if (eminY > emaxY) {
-    return;
-  }
+    // Skip edges that don't cross a subsampled scanline
+    eminY = ((y0 + rdr->_HYSTEP) & rdr->_YMASK);
+    emaxY = ((y1 - rdr->_HYSTEP) & rdr->_YMASK);
+    if (eminY > emaxY) {
+        return;
+    }
 
-  if (orientation == -1) {
-    jint tmp = x0;
-    x0 = x1;
-    x1 = tmp;
-  }
+    if (orientation == -1) {
+        jint tmp = x0;
+        x0 = x1;
+        x1 = tmp;
+    }
 
-  rdr->_edges[rdr->_edgeIdx++] = x0;
-  rdr->_edges[rdr->_edgeIdx++] = y0;
-  rdr->_edges[rdr->_edgeIdx++] = x1;
-  rdr->_edges[rdr->_edgeIdx++] = y1;
-  rdr->_edges[rdr->_edgeIdx++] = orientation;
+    rdr->_edges[rdr->_edgeIdx++] = x0;
+    rdr->_edges[rdr->_edgeIdx++] = y0;
+    rdr->_edges[rdr->_edgeIdx++] = x1;
+    rdr->_edges[rdr->_edgeIdx++] = y1;
+    rdr->_edges[rdr->_edgeIdx++] = orientation;
 
-  // Update Y bounds of primitive
-  if (y0 < rdr->_edgeMinY) {
-    rdr->_edgeMinY = y0;
-  }
-  if (y1 > rdr->_edgeMaxY) {
-    rdr->_edgeMaxY = y1;
-  }
+    // Update Y bounds of primitive
+    if (y0 < rdr->_edgeMinY) {
+        rdr->_edgeMinY = y0;
+    }
+    if (y1 > rdr->_edgeMaxY) {
+        rdr->_edgeMaxY = y1;
+    }
 }

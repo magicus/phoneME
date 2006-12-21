@@ -22,7 +22,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional 
  * information or have any questions. 
  */
-
+ 
 
 package com.sun.pisces;
 
@@ -38,8 +38,8 @@ public final class GraphicsSurfaceDestination implements SurfaceDestination {
     
     public void drawSurface(Surface ps, int srcX, int srcY, 
             int dstX, int dstY, int width, int height, float opacity) {
-        if (ps instanceof NativeSurface) {
-            drawSurfaceImpl(g, (NativeSurface)ps, srcX, srcY, 
+        if (ps instanceof AbstractSurface) {
+            drawSurfaceImpl(g, (AbstractSurface)ps, srcX, srcY, 
                     dstX, dstY, width, height, opacity);
             return;
         }
@@ -84,7 +84,7 @@ public final class GraphicsSurfaceDestination implements SurfaceDestination {
 
     private native void initialize();
     
-    private static native void drawSurfaceImpl(Graphics g, NativeSurface ps, 
+    private static native void drawSurfaceImpl(Graphics g, AbstractSurface ps, 
             int srcX, int srcY, int dstX, int dstY, 
             int width, int height, float opacity);
     

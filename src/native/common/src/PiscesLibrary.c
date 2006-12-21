@@ -32,29 +32,29 @@
 static jboolean alreadyInitialized = XNI_FALSE;
 static jboolean initializationResult;
 
-jboolean 
+jboolean
 pisces_moduleInitialize() {
-  if (alreadyInitialized) {
-    return initializationResult;
-  }
-  alreadyInitialized = XNI_TRUE;
-  if (!piscesmath_moduleInitialize() ||
-      !piscesutil_moduleInitialize()) {
-    piscesmath_moduleFinalize();
-    piscesutil_moduleFinalize();
-    initializationResult = XNI_FALSE;
-    return XNI_FALSE;
-  }  
-  
-  initializationResult = XNI_TRUE;
-  return XNI_TRUE;
+    if (alreadyInitialized) {
+        return initializationResult;
+    }
+    alreadyInitialized = XNI_TRUE;
+    if (!piscesmath_moduleInitialize() ||
+            !piscesutil_moduleInitialize()) {
+        piscesmath_moduleFinalize();
+        piscesutil_moduleFinalize();
+        initializationResult = XNI_FALSE;
+        return XNI_FALSE;
+    }
+
+    initializationResult = XNI_TRUE;
+    return XNI_TRUE;
 }
 
-void 
+void
 pisces_moduleFinalize() {
-  if (alreadyInitialized) {
-    piscesmath_moduleFinalize();
-    piscesutil_moduleFinalize();
-    alreadyInitialized = XNI_FALSE;    
-  }
+    if (alreadyInitialized) {
+        piscesmath_moduleFinalize();
+        piscesutil_moduleFinalize();
+        alreadyInitialized = XNI_FALSE;
+    }
 }

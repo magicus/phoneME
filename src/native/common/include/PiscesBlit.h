@@ -30,29 +30,65 @@
 #include <PiscesDefs.h>
 #include <PiscesRenderer.h>
 
-#define COMPOSITE_SRC_OVER 1
+void fillRectClear(Renderer* rdr,
+                   void *data, int imageType,
+                   jint imageOffset,
+                   jint imageScanlineStride,
+                   jint imagePixelStride,
+                   jint scrOrient,
+                   jint width, jint height,
+                   jint x0, jint y0, jint x1, jint y1,
+                   jint cred, jint cgreen, jint cblue);
+
+void fillRectSrc(Renderer* rdr,
+                 void *data, int imageType,
+                 jint imageOffset,
+                 jint imageScanlineStride,
+                 jint imagePixelStride,
+                 jint scrOrient,
+                 jint width, jint height,
+                 jint x0, jint y0, jint x1, jint y1,
+                 jint cred, jint cgreen, jint cblue);
 
 void fillRectSrcOver(Renderer* rdr,
-    void *data, int imageType,
-    jint imageOffset,
-    jint imageScanlineStride,
-    jint imagePixelStride,
-    jint scrOrient,
-    jint width, jint height,
-    jint x0, jint y0, jint x1, jint y1,
-    jint cred, jint cgreen, jint cblue);
+                     void *data, int imageType,
+                     jint imageOffset,
+                     jint imageScanlineStride,
+                     jint imagePixelStride,
+                     jint scrOrient,
+                     jint width, jint height,
+                     jint x0, jint y0, jint x1, jint y1,
+                     jint cred, jint cgreen, jint cblue);
 
 void genLinearGradientPaint(Renderer *rdr, jint height);
 void genRadialGradientPaint(Renderer *rdr, jint height);
 void genTexturePaint(Renderer *rdr, jint height);
 
+void blitClearInt(Renderer *rdr, jint height);
+void blitClear565(Renderer *rdr, jint height);
+void blitClear8(Renderer *rdr, jint height);
+
+void blitSrc888(Renderer *rdr, jint height);
+void blitSrc8888_pre(Renderer *rdr, jint height);
+void blitSrc8888(Renderer *rdr, jint height);
+void blitSrc565(Renderer *rdr, jint height);
+void blitSrc8(Renderer *rdr, jint height);
+
+void blitPTSrc888(Renderer *rdr, jint height);
+void blitPTSrc8888(Renderer *rdr, jint height);
+void blitPTSrc8888_pre(Renderer *rdr, jint height);
+void blitPTSrc565(Renderer *rdr, jint height);
+void blitPTSrc8(Renderer *rdr, jint height);
+
 void blitSrcOver888(Renderer *rdr, jint height);
 void blitSrcOver8888(Renderer *rdr, jint height);
+void blitSrcOver8888_pre(Renderer *rdr, jint height);
 void blitSrcOver565(Renderer *rdr, jint height);
 void blitSrcOver8(Renderer *rdr, jint height);
 
 void blitPTSrcOver888(Renderer *rdr, jint height);
 void blitPTSrcOver8888(Renderer *rdr, jint height);
+void blitPTSrcOver8888_pre(Renderer *rdr, jint height);
 void blitPTSrcOver565(Renderer *rdr, jint height);
 void blitPTSrcOver8(Renderer *rdr, jint height);
 

@@ -1,5 +1,5 @@
 /*
- *
+ * 
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
  *  
@@ -22,15 +22,15 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional 
  * information or have any questions. 
  */
+ 
+ 
 package com.sun.pisces;
 
-import com.sun.midp.main.Configuration;
-
-/**
- *
- * @version 
- */
-public final class PiscesRenderer extends PathSink {
+public final class PiscesRenderer extends PathSink 
+        implements NativeFinalization {
+    static {
+        PiscesLibrary.load();
+    }
 
     private static boolean messageShown = false;
 
@@ -39,6 +39,9 @@ public final class PiscesRenderer extends PathSink {
     public static final int ARC_PIE = 2;
     
     long nativePtr = 0L;
+    final AbstractSurface surface;
+
+    private final NativeFinalizer finalizer;
         
     static {
         String strValue;
@@ -75,7 +78,7 @@ public final class PiscesRenderer extends PathSink {
     /**
      * Creates a renderer that will write into a given pixel array.
      *
-     * @param data an <code>int</code> or <code>short</code> array
+     * @param data the destination surface
      * where pixel data should be written.
      * @param width the width of the pixel array.
      * @param height the height of the pixel array.
@@ -90,22 +93,24 @@ public final class PiscesRenderer extends PathSink {
     public PiscesRenderer(Object data, int width, int height,
                           int offset, int scanlineStride, int pixelStride,
                           int type) {
+        this((AbstractSurface)data);
+    }
+
+    public PiscesRenderer(AbstractSurface surface) {
         if (!messageShown) {
             System.out.println("Using Pisces Renderer (native version)");
         }
-        
-        if (!(data instanceof NativeSurface)) {
-            throw new IllegalArgumentException();
-        }
 
-        initialize((NativeSurface)data, type);
+        this.finalizer = NativeFinalizer.createInstance(this);
+        this.surface = surface;
+        initialize();
         messageShown = true;
     }
 
     private static native void staticInitialize(int strokeXBias, 
             int strokeYBias);
 
-    private native void initialize(NativeSurface surface, int imageType);
+    private native void initialize();
     
     public native void setAntialiasing(boolean antialiasingOn);
 
@@ -114,23 +119,27 @@ public final class PiscesRenderer extends PathSink {
     /**
      * Sets the current paint color.
      *
-     * @red a value between 0 and 255.
-     * @green a value between 0 and 255.
-     * @blue a value between 0 and 255.
-     * @alpha a value between 0 and 255.
+     * @param red a value between 0 and 255.
+     * @param green a value between 0 and 255.
+     * @param blue a value between 0 and 255.
+     * @param alpha a value between 0 and 255.
      */
     public native void setColor(int red, int green, int blue, int alpha);
 
     /**
      * Sets the current paint color.  An alpha value of 255 is used.
      *
-     * @red a value between 0 and 255.
-     * @green a value between 0 and 255.
-     * @blue a value between 0 and 255.
+     * @param red a value between 0 and 255.
+     * @param green a value between 0 and 255.
+     * @param blue a value between 0 and 255.
      */
     public void setColor(int red, int green, int blue) {
         setColor(red, green, blue, 255);
     }
+    
+    public native void setCompositeRule(int compositeRule);
+
+    public native void setComposite(int compositeRule, float alpha);
 
     int[] gcm_fractions = null;
     int[] gcm_rgba = null;
@@ -194,6 +203,29 @@ public final class PiscesRenderer extends PathSink {
                               gradientTransform);
     }
 
+    /**
+     * Java2D-style linear gradient creation. The color changes proportionally
+     * between point P0 (color0) nad P1 (color1). Cycle method constants are
+     * defined in GradientColorMap (CYCLE_*).          
+     *
+     * @param x0 x coordinate of point P0
+     * @param y0 y coordinate of point P0     
+     * @param color0 color of P0
+     * @param x1 x coordinate of point P1
+     * @param y1 y coordinate of point P1     
+     * @param color1 color of P1
+     * @param cycleMethod type of cycling of the gradient (NONE, REFLECT, REPEAT)
+     *          
+     */
+    public void setLinearGradient(int x0, int y0, int color0, 
+                                  int x1, int y1, int color1,
+                                  int cycleMethod) {
+      int[] fractions = {0x0000, 0x10000};
+      int[] rgba = {color0, color1};
+      Transform6 ident = new Transform6(1 << 16, 0, 0, 1 << 16, 0, 0);
+      setLinearGradient(x0, y0, x1, y1, fractions, rgba, cycleMethod, ident);
+    }
+
     private native void setRadialGradientImpl(int cx, int cy, int fx, int fy,
                                               int radius,
                                               int[] colors,
@@ -209,10 +241,6 @@ public final class PiscesRenderer extends PathSink {
         setRadialGradientImpl(cx, cy, fx, fy, radius,
                               gradientColorMap.colors, cycleMethod,
                               gradientTransform);
-    }
-
-    public void setTextureOpacity(float opacity) {
-	notImplemented();
     }
 
     public void setTexture(int imageType,
@@ -372,8 +400,8 @@ public final class PiscesRenderer extends PathSink {
     
     public native void clearRect(int x, int y, int w, int h);
 
-    private native void finalize();
-
     public native void setPathData(float[] data, byte[] commands, 
             int nCommands);
+
+    public native void nativeFinalize();
 }

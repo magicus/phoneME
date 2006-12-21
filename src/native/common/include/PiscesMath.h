@@ -34,6 +34,7 @@
 #define PISCES_PI ((jint)(PI_DOUBLE*65536.0))
 #define PISCES_TWO_PI ((jint)(2.0*PI_DOUBLE*65536.0))
 #define PISCES_PI_OVER_TWO ((jint)((PI_DOUBLE/2.0)*65536.0))
+#define PISCES_SQRT_TWO ((jint)(1.414213562373095*65536.0))
 
 jboolean piscesmath_moduleInitialize();
 void piscesmath_moduleFinalize();

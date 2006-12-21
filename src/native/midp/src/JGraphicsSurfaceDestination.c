@@ -23,11 +23,12 @@
  * information or have any questions. 
  */
 
+
 #include <PiscesDefs.h>
 #include <PiscesUtil.h>
 #include <PiscesSurface.h>
 #include <KNIUtil.h>
-#include <JNativeSurface.h>
+#include <JAbstractSurface.h>
 
 #include <pcsl_memory.h>
 
@@ -37,10 +38,10 @@
 #include <sni.h>
 #include <commonKNIMacros.h>
 
-static jboolean pisces_drawRGB(jobject graphicsHandle, 
-                               jint* argb, jint scanLength, 
-                               jint x, jint y, 
-                               jint width, jint height, 
+static jboolean pisces_drawRGB(jobject graphicsHandle,
+                               jint* argb, jint scanLength,
+                               jint x, jint y,
+                               jint width, jint height,
                                jfloat opacity);
 
 static void premulOpacity(jint* srcArray, jint scanLength,
@@ -48,15 +49,15 @@ static void premulOpacity(jint* srcArray, jint scanLength,
                           jfloat opacity,
                           jint* dstArray);
 
-KNIEXPORT KNI_RETURNTYPE_VOID 
+KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_GraphicsSurfaceDestination_initialize() {
-  
-    /* don't do anything here (see the throw above)! */
-  
-    KNI_ReturnVoid();
-}  
 
-KNIEXPORT KNI_RETURNTYPE_VOID 
+    /* don't do anything here (see the throw above)! */
+
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_GraphicsSurfaceDestination_drawSurfaceImpl() {
     KNI_StartHandles(2);
     KNI_DeclareHandle(graphicsHandle);
@@ -75,37 +76,40 @@ Java_com_sun_pisces_GraphicsSurfaceDestination_drawSurfaceImpl() {
     KNI_GetParameterAsObject(1, graphicsHandle);
     KNI_GetParameterAsObject(2, surfaceHandle);
 
-    surface = surface_get(surfaceHandle);
+    surface = &surface_get(surfaceHandle)->super;
 
     CORRECT_DIMS(surface, srcX, srcY, width, height, dstX, dstY);
 
     if ((width > 0) && (height > 0) && (opacity > 0)) {
+        jboolean retVal;
 
-        jboolean retVal = 
-            pisces_drawRGB(graphicsHandle, 
-                           surface->data + srcY * surface->width + srcX, 
-                           surface->width, 
-                           dstX, dstY, 
+        ACQUIRE_SURFACE(surface, surfaceHandle);
+        retVal =
+            pisces_drawRGB(graphicsHandle,
+                           (jint*)surface->data + srcY * surface->width + srcX,
+                           surface->width,
+                           dstX, dstY,
                            width,
-                           height, 
+                           height,
                            opacity);
+        RELEASE_SURFACE(surface, surfaceHandle);
 
-        if(KNI_FALSE == retVal) {
-            KNI_ThrowNew("java/lang/RuntimeError", 
+        if (KNI_FALSE == retVal) {
+            KNI_ThrowNew("java/lang/RuntimeError",
                          "Renderer error : drawRGB failed.");
         }
     }
-  
+
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
 
-KNIEXPORT KNI_RETURNTYPE_VOID 
+KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_GraphicsSurfaceDestination_drawRGBImpl() {
     KNI_StartHandles(2);
     KNI_DeclareHandle(graphicsHandle);
     KNI_DeclareHandle(arrayHandle);
-  
+
     jint offset     = KNI_GetParameterAsInt(3);
     jint scanLength = KNI_GetParameterAsInt(4);
     jint x          = KNI_GetParameterAsInt(5);
@@ -113,24 +117,24 @@ Java_com_sun_pisces_GraphicsSurfaceDestination_drawRGBImpl() {
     jint width      = KNI_GetParameterAsInt(7);
     jint height     = KNI_GetParameterAsInt(8);
     jfloat opacity  = KNI_GetParameterAsFloat(9);
-  
+
     KNI_GetParameterAsObject(1, graphicsHandle);
     KNI_GetParameterAsObject(2, arrayHandle);
 
     if ((width > 0) && (height > 0) && (opacity > 0)) {
-	jint* tempArray;
+        jint* tempArray;
 
-	SNI_BEGIN_RAW_POINTERS;
+        SNI_BEGIN_RAW_POINTERS;
 
-	tempArray = &JavaIntArray(arrayHandle)[offset];
-	    
-	pisces_drawRGB(graphicsHandle, tempArray, scanLength,
-		       x, y, width,
-		       height, opacity);
+        tempArray = &JavaIntArray(arrayHandle)[offset];
 
-	SNI_END_RAW_POINTERS;
+        pisces_drawRGB(graphicsHandle, tempArray, scanLength,
+                       x, y, width,
+                       height, opacity);
+
+        SNI_END_RAW_POINTERS;
     }
-  
+
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
@@ -141,10 +145,10 @@ Java_com_sun_pisces_GraphicsSurfaceDestination_drawRGBImpl() {
  * Translates by destination Graphics object's translation before drawing.
  *
  */
-static jboolean pisces_drawRGB(jobject graphicsHandle, 
-                               jint* argb, jint scanLength, 
-                               jint x, jint y, 
-                               jint width, jint height, 
+static jboolean pisces_drawRGB(jobject graphicsHandle,
+                               jint* argb, jint scanLength,
+                               jint x, jint y,
+                               jint width, jint height,
                                jfloat opacity) {
 
     jboolean retVal = KNI_FALSE; //assume failure
@@ -161,20 +165,21 @@ static jboolean pisces_drawRGB(jobject graphicsHandle,
         } else {
 
             /* Premultiply the alpha value in the pixels with opacity */
-            /* IMPL_NOTE : this is ineffcient and allocates memory. Make efficient. */
+            /* IMPL_NOTE : this is ineffcient and allocates memory. 
+               Make efficient. */
             premulOpacity(argb, scanLength,
                           width, height,
                           opacity,
                           tempArray);
 
-            gx_draw_rgb(clip, 
-                        GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(graphicsHandle), 
-                        tempArray, 
+            gx_draw_rgb(clip,
+                        GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(graphicsHandle),
+                        tempArray,
                         0,
-                        scanLength, 
-                        x + GXAPI_GET_GRAPHICS_PTR(graphicsHandle)->transX, 
-                        y + GXAPI_GET_GRAPHICS_PTR(graphicsHandle)->transY, 
-                        width, height, 
+                        scanLength,
+                        x + GXAPI_GET_GRAPHICS_PTR(graphicsHandle)->transX,
+                        y + GXAPI_GET_GRAPHICS_PTR(graphicsHandle)->transY,
+                        width, height,
                         KNI_TRUE);
 
             pcsl_mem_free(tempArray);
@@ -183,14 +188,14 @@ static jboolean pisces_drawRGB(jobject graphicsHandle,
         }
 
     } else {
-        gx_draw_rgb(clip, 
-                    GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(graphicsHandle), 
-                    argb, 
+        gx_draw_rgb(clip,
+                    GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(graphicsHandle),
+                    argb,
                     0,
-                    scanLength, 
-                    x + GXAPI_GET_GRAPHICS_PTR(graphicsHandle)->transX, 
-                    y + GXAPI_GET_GRAPHICS_PTR(graphicsHandle)->transY, 
-                    width, height, 
+                    scanLength,
+                    x + GXAPI_GET_GRAPHICS_PTR(graphicsHandle)->transX,
+                    y + GXAPI_GET_GRAPHICS_PTR(graphicsHandle)->transY,
+                    width, height,
                     KNI_TRUE);
 
         retVal = KNI_TRUE;
@@ -204,7 +209,7 @@ static jboolean pisces_drawRGB(jobject graphicsHandle,
  * Premultiplies the pixels in ARGB8888 srcArray
  * by the value opacity 0<=opacity<=1.0
  * and writes the output into the ARGB8888 dstArray
- * 
+ *
  */
 static void premulOpacity(jint* srcArray, jint scanLength,
                           jint width, jint height,

@@ -23,7 +23,6 @@
  * information or have any questions. 
  */
 
-
 package com.sun.pisces;
 
 import java.io.DataInputStream;

@@ -22,33 +22,62 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional 
  * information or have any questions. 
  */
+ 
 
+/**
+ * @file PiscesTransform.h
+ * Struct declarations of PISCES transformation matrixes.
+ */ 
 
 #ifndef PISCES_TRANSFORM_H
 #define PISCES_TRANSFORM_H
 
 #include <PiscesDefs.h>
 
+/**
+ * @struct _Transform4
+ * Declaration of PISCES 2x2 transformation matrix.
+ * \typedef Transform4
+ * Typedef to struct _Transform4. 
+ */     
 typedef struct _Transform4 {
-  jint m00;
-  jint m01;
-  jint m10;
-  jint m11;
+    jint m00;
+    jint m01;
+    jint m10;
+    jint m11;
+}
+Transform4;
 
-} Transform4;
+/**
+ * @struct _Transform6
+ * Declaration of PISCES transformation matrix structure. Matrix is in 
+ * normalized homogenous coordinates. This is convenient because we can
+ * make compound transformations by matrix multiplication of basic 
+ * transformation matrices (translation, scale and symmetry, rotation).   
+ * Because third row is always (0,0,1), we keep members of first two rows only 
+ * (2-rows x 3-columns).
+ * \typedef Transform6
+ * Typedef to struct _Transform6. 
+ */
+typedef struct _Transform6 {         
+    jint m00;
+    jint m01;
+    jint m10;     
+    jint m11;              
+    jint m02;              
+    jint m12;
+}
 
-typedef struct _Transform6 {
-  jint m00;
-  jint m01;
-  jint m10;
-  jint m11;
-  jint m02;
-  jint m12;
+Transform6;
+/* See implementation or documentation on comments. */ 
+void pisces_transform_assign(Transform6* transformD, 
+                             const Transform6* transformS);
 
-} Transform6;
-
-void pisces_transform_assign(Transform6* transformD, const Transform6* transformS);
+/* See implementation or documentation on comments. */                             
 void pisces_transform_invert(Transform6* transform);
-void pisces_transform_multiply(Transform6* transformD, const Transform6* transformS);
+
+/* See implementation or documentation on comments. */
+void pisces_transform_multiply(Transform6* transformD, 
+                               const Transform6* transformS);
 
 #endif
