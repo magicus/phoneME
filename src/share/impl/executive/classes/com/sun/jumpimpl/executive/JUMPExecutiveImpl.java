@@ -29,6 +29,7 @@ package com.sun.jumpimpl.executive;
 import com.sun.jump.executive.JUMPExecutive;
 import com.sun.jump.executive.JUMPUserInputManager;
 import com.sun.jump.executive.JUMPIsolateProxy;
+import com.sun.jump.executive.JUMPApplicationProxy;
 import com.sun.jump.message.JUMPMessagingService;
 import com.sun.jump.message.JUMPMessageDispatcher;
 import com.sun.jump.message.JUMPOutgoingMessage;
@@ -132,8 +133,8 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
 		    JUMPApplication app = (JUMPApplication)content[i];
 		    System.err.println("App["+i+"] = "+app);
 		}
-		int appid = ip.startApp((JUMPApplication)content[0], null);
-		System.err.println("Executive started app="+appid);
+		JUMPApplicationProxy appProxy = ip.startApp((JUMPApplication)content[0], null);
+		System.err.println("Executive started app="+appProxy);
 	    } else {
 		System.err.println("No content available");
 		System.exit(1);
