@@ -181,6 +181,14 @@ void resizeScreenBuffer(int width, int height) {
     }
 }
 
+#define RRECT(_x1,_y1,_x2,_y2,_sbuf_height) { \
+    int _z = (_x1); \
+    (_x1) = (_y1); \
+    (_y1) = (_sbuf_height)-(_x2); \
+    (_x2) = (_y2); \
+    (_y2) = (_sbuf_height)-(_z); \
+}
+
 /** Refresh screen with offscreen bufer content */
 void refreshScreen(int x1, int y1, int x2, int y2) {
     // QVFB feature: a number of bytes per line can be different from
@@ -189,30 +197,34 @@ void refreshScreen(int x1, int y1, int x2, int y2) {
     int dstWidth =  hdr->lineStep / sizeof(gxj_pixel_type);//, dstHeight = hdr->height;
     gxj_pixel_type *dst  = (gxj_pixel_type *)qvfbPixels;
     gxj_pixel_type *src  = gxj_system_screen_buffer.pixelData;
-
-    int srcWidth = x2 - x1;
+    int srcWidth;
 
     // System screen buffer geometry
-    int sysWidth = gxj_system_screen_buffer.width;
-    int sysHeight = gxj_system_screen_buffer.height;
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
 
     REPORT_CALL_TRACE4(LC_HIGHUI, "LF:fbapp_refresh(%3d, %3d, %3d, %3d )\n",
                        x1, y1, x2, y2);
 
-    // center the LCD output area
-    if (hdr->width > sysWidth) {
-        dst += (hdr->width - sysWidth) / 2;
-    }
-    if (hdr->height > sysHeight) {
-        dst += (hdr->height - sysHeight) * lineStep / 2;
+    if (gxj_system_screen_buffer.rotated) {
+        RRECT(x1, y1, x2, y2, bufHeight);
     }
 
-    src += y1 * sysWidth + x1;
+    // center the LCD output area
+    if (hdr->width > bufWidth) {
+        dst += (hdr->width - bufWidth) / 2;
+    }
+    if (hdr->height > bufHeight) {
+        dst += (hdr->height - bufHeight) * lineStep / 2;
+    }
+
+    src += y1 * bufWidth + x1;
     dst += y1 * dstWidth + x1;
 
+    srcWidth = x2 - x1;
     for (; y1 < y2; y1++) {
         memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
-        src += sysWidth;
+        src += bufWidth;
         dst += dstWidth;
     }
 

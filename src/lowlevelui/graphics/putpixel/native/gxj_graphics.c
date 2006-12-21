@@ -39,6 +39,9 @@
  * putpixel primitive graphics. 
  */
 
+#include <stdio.h>
+#define LC_LOWUI_STR "<level:1> <channel:2000> "
+
 /**
  * Draw triangle
  *
@@ -297,6 +300,8 @@ gx_fill_rect(int color, const jshort *clip,
     sbuf_height = sbuf->height;
 
     REPORT_CALL_TRACE(LC_LOWUI, "gx_fill_rect()\n");
+    printf(LC_LOWUI_STR "clip area: [%d, %d, %d, %d]\n",
+        clipX1, clipY1, clipX2, clipY2);
 
     if (!sbuf->rotated) {
         if ((clipX1 == 0) && (clipX2 == sbuf_width) && (dotted != DOTTED)) {

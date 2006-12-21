@@ -41,6 +41,14 @@
     (_clip)[1], ((_sbuf_height)-(_clip)[2]), \
     (_clip)[3], ((_sbuf_height)-(_clip)[0]) }
 
+#define RRECT(_x1,_y1,_x2,_y2,_sbuf_height) { \
+    int _z = (_x1); \
+    (_x1) = (_y1); \
+    (_y1) = (_sbuf_height)-(_x2); \
+    (_x2) = (_y2); \
+    (_y2) = (_sbuf_height)-(_z); \
+}
+
 #if ENABLE_BOUNDS_CHECKS
 #define CHECK_SBUF_CLIP_BOUNDS(_sbuf,_clip) \
   do { \
