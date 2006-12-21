@@ -158,24 +158,17 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
 
         itemLF = itemLFs[index];
 
-        // Ensure the item is visible
-         boolean C1 = itemLF.bounds[Y] < viewable[Y];
-         boolean C2 = itemLF.bounds[Y] + itemLF.bounds[HEIGHT] > viewable[Y] + viewport[HEIGHT];
-         if ( C1 && !C2) {
-             viewable[Y] = itemLF.bounds[Y];
-         } else if ( C2 && !C1) {
-             viewable[Y] = itemLF.bounds[Y] + itemLF.bounds[HEIGHT] - viewport[HEIGHT];
-         }
-
-         if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
-             viewable[Y] = viewable[HEIGHT] - viewable[HEIGHT];
-         }
-
-         if (viewable[Y] < 0) {
-             viewable[Y] = 0;
-         }
-
         if (index != traverseIndex) {
+        
+            // Ensure the item is visible
+            if (!itemCompletelyVisible(itemLF)) {
+                viewable[Y] = itemLF.bounds[Y];
+                
+                if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
+                    viewable[Y] = viewable[HEIGHT] - viewable[HEIGHT];
+                }
+            }
+            
             // We record the present traverseItem because if it
             // is valid, we will have to call traverseOut() on that
             // item when we process the invalidate call.
@@ -189,6 +182,15 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             // be traversed to when the invalidate occurs
             traverseIndex = itemLF.shouldSkipTraverse() ? -1 : index;
             lRequestInvalidate();
+        } else {
+            // Ensure the item is visible
+            if (!itemPartiallyVisible(itemLF)) {
+                viewable[Y] = itemLF.bounds[Y];
+                
+                if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
+                    viewable[Y] = viewable[HEIGHT] - viewable[HEIGHT];
+                }
+            }
         }
     }
 
@@ -1473,9 +1475,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         // Whether the item performs an internal traversal or not,
         // it has the current input focus
         item.hasFocus = true;
-
         setVisRect(item, visRect);
-            
+
         // Call traverse() outside LCDUILock
         if (item.uCallTraverse(dir,
                                viewport[WIDTH], viewport[HEIGHT], visRect)) {
