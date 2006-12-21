@@ -609,7 +609,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
 	default:
 	    // for safety/completeness.
-            Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI_FORM_LAYOUT,
+            Logging.report(Logging.WARNING, LogChannels.LC_HIGHUI_FORM_LAYOUT,
                 "FormLFImpl: notifyType=" + notifyType);
 	    break;
 	}
@@ -641,13 +641,6 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             if (newFocus != null) {
                 itemTraverse = 
                     uCallItemTraverse(newFocus, CustomItem.NONE);
-                
-                if (itemTraverse) {
-                    // We may have to scroll to accommodate the new
-                    // traversal location 
-                    scrollForBounds(CustomItem.NONE, visRect);
-                }
-
             }
             updateCommandSet();
             // call paint for custom items
@@ -1267,7 +1260,6 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         // current page
         int nextIndex = 
                 getNextInteractiveItem(itemsCopy, dir, traverseIndexCopy);
-        int scrollPos = getScrollPosition0();
 
         if (nextIndex != -1) {
             // NOTE: In traverse(), if there is a "next" interactive
@@ -1313,6 +1305,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                         uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
             }
             
+            int scrollPos = getScrollPosition0();
             // There is a special case when traversing to the very last
             // item on a Form
             if (traverseIndexCopy == (itemsCopy.length - 1) && 
@@ -1366,6 +1359,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             // if we do, then traverse out of the current item and 
             // scroll the page
             
+            int scrollPos = getScrollPosition0();
             if ((dir == Canvas.LEFT || dir == Canvas.UP) && scrollPos > 0) {
                 // Special case. We're at the top-most interactive item, but
                 // its internal traversal doesn't allow the very top to be
@@ -1849,7 +1843,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                 // been just removed from this Form since we
                 // are outside LCDUILock. Check again.
                 if (item.nativeId != INVALID_NATIVE_ID) {
-                    setCurrentItem0(nativeId, item.nativeId, 0);
+                    setCurrentItem0(nativeId, item.nativeId, visRect[Y]);
                 }
             }
 
