@@ -37,7 +37,7 @@
 static jboolean vmSuspendMode = KNI_TRUE;
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_suspend_test_TestUtil_setNoVMSuspendMode() {
+KNIDECL(com_sun_midp_suspend_test_TestUtil_setNoVMSuspendMode) {
     REPORT_INFO(LC_LIFECYCLE, "TestUtil_setNoVMSuspendMode()");
     if (vmSuspendMode) {
         vmSuspendMode = KNI_FALSE;
@@ -47,7 +47,7 @@ Java_com_sun_midp_suspend_test_TestUtil_setNoVMSuspendMode() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_suspend_test_TestUtil_setVMSuspendMode() {
+KNIDECL(com_sun_midp_suspend_test_TestUtil_setVMSuspendMode) {
     REPORT_INFO(LC_LIFECYCLE, "TestUtil_setVMSuspendMode()");
     if (!vmSuspendMode) {
         vmSuspendMode = KNI_TRUE;
@@ -57,21 +57,21 @@ Java_com_sun_midp_suspend_test_TestUtil_setVMSuspendMode() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_suspend_test_TestUtil_resumeMidp() {
+KNIDECL(com_sun_midp_suspend_test_TestUtil_resumeMidp) {
     REPORT_INFO(LC_LIFECYCLE, "TestUtil_resumeMidp()");
     sr_resume_timeout = RESUME_NOW_TIMEOUT;
     KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_suspend_test_TestUtil_suspendMidp() {
+KNIDECL(com_sun_midp_suspend_test_TestUtil_suspendMidp) {
     REPORT_INFO(LC_LIFECYCLE, "TestUtil_suspendMidp()");
     midp_suspend();
     KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_suspend_test_TestUtil_suspendAndResumeMidp() {
+KNIDECL(com_sun_midp_suspend_test_TestUtil_suspendAndResumeMidp) {
     REPORT_INFO(LC_LIFECYCLE, "TestUtil_suspendMidp()");
     midp_suspend();
     sr_resume_timeout = KNI_GetParameterAsInt(1);
