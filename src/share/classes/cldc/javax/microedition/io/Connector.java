@@ -83,29 +83,29 @@ import com.sun.cdc.io.*;
 
 public class Connector {
 
-/*
- * Implementation notes: The open parameter is used for
- * dynamically constructing a class name in the form:
- * <p>
- * <code>com.sun.cdc.io.{platform}.{protocol}.Protocol</code>
- * <p>
- * The platform name is derived from the system by looking for the system property "j2me.platform".
- * If this property key is not found or the associated class is not present then one of two default
- * directories are used. These are called "j2me" and "j2se". If the property "j2me.configuration"
- * is non-null then "j2me" is used (it is the assumed default).
- * <p>
- * The protocol name is derived from the parameter string
- * describing the target of the connection. This takes the from:
- * <p>
- * <code> {protocol}:[{target}][ {params}] </code>
- * <p>
- * The protocol name is used for dynamically finding the
- * appropriate protocol implementation class.  This information
- * is stripped from the target name that is given as a parameter
- * to the open() method. In order to avoid problems with illegal
- * class file names, all the '-' characters in the protocol name
- * are automatically converted into '_' characters.
- */
+    /*
+     * Implementation notes: The open parameter is used for
+     * dynamically constructing a class name in the form:
+     * <p>
+     * <code>com.sun.cdc.io.{platform}.{protocol}.Protocol</code>
+     * <p>
+     * The platform name is derived from the system by looking for the system property "j2me.platform".
+     * If this property key is not found or the associated class is not present then one of two default
+     * directories are used. These are called "j2me" and "j2se". If the property "j2me.configuration"
+     * is non-null then "j2me" is used (it is the assumed default).
+     * <p>
+     * The protocol name is derived from the parameter string
+     * describing the target of the connection. This takes the from:
+     * <p>
+     * <code> {protocol}:[{target}][ {params}] </code>
+     * <p>
+     * The protocol name is used for dynamically finding the
+     * appropriate protocol implementation class.  This information
+     * is stripped from the target name that is given as a parameter
+     * to the open() method. In order to avoid problems with illegal
+     * class file names, all the '-' characters in the protocol name
+     * are automatically converted into '_' characters.
+     */
 
     /**
      * Access mode READ.
@@ -146,15 +146,15 @@ public class Connector {
      * Class initializer.
      */
     static {
+        
+        String platformTemp = null;
+        
+        try {
 
-	String platformTemp = null;
-	
-	try {
-  	    
-	    /* Find out if we are running on a J2ME system */
-	    if (System.getProperty("microedition.configuration") != null) {
-		j2me = true;
-	    }
+            /* Find out if we are running on a J2ME system */
+            if (System.getProperty("microedition.configuration") != null) {
+                j2me = true;
+            }
 
             /* Set up the library class root path */
             /* This may vary from one CLDC implementation to another */
@@ -163,7 +163,7 @@ public class Connector {
                     classRoot = "com.sun.cdc.io";
             }
 
-	} catch (java.security.AccessControlException e) {
+        } catch (java.security.AccessControlException e) {
             // If running with SecurityManager, set these defaults
             j2me = true;
             platform = DEFAULT_PLATFORM;

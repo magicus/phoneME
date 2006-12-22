@@ -110,6 +110,23 @@ INCLUDE_JIT		= true
 INCLUDE_MTASK		= true
 endif
 
+# If mtask is enabled, include up to basis.
+ifeq ($(INCLUDE_MTASK), true)
+ifeq ($(J2ME_CLASSLIB), cdc)
+override J2ME_CLASSLIB		= basis
+endif
+ifeq ($(J2ME_CLASSLIB), foundation)
+override J2ME_CLASSLIB		= basis
+endif
+endif
+
+# If dualstack is enabled, include up to foundation.
+ifeq ($(INCLUDE_DUALSTACK), true)
+ifeq ($(J2ME_CLASSLIB), cdc)
+override J2ME_CLASSLIB		= foundation
+endif
+endif 
+
 ifeq ($(J2ME_CLASSLIB),foundation)
 INCLUDE_foundation = true
 endif
@@ -267,6 +284,9 @@ ifeq ($(INCLUDE_DUALSTACK), true)
 BUNDLE_INCLUDE_LIST += \
 	src/share/lib/MIDP*
 
+BUILDDIR_PATTERNS += \
+       *_midp.mk
+
 else
 
 EXCLUDE_PATTERNS += 			\
@@ -328,7 +348,10 @@ ifeq ($(INCLUDE_MTASK), true)
 
 BUNDLE_INCLUDE_LIST += \
 	build/share/cvmc.mk \
-	src/share/tools/cvmc \
+	src/share/tools/cvmc  
+
+BUILDDIR_PATTERNS += \
+       *_jump.mk 
 
 # Add every build/<os>/cvmc.mk file
 BUNDLE_INCLUDE_LIST += \
