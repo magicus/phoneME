@@ -47,6 +47,11 @@ public final class AlarmRegistry {
         /**
          * Launches the given <code>MIDlet</code>.
          *
+         * <p>
+         * NOTE: implementation should be thread-safe as several
+         * invocations of the method can be performed in parallel.
+         * </p>
+         *
          * @param midletSuiteID <code>MIDlet suite</code> ID
          * @param midlet <code>MIDlet</code> class name
          */
@@ -143,6 +148,36 @@ public final class AlarmRegistry {
     }
 
     /**
+     * Removes alarms for the given suite.
+     *
+     * @param midletSuiteID ID of the suite to remove alarms for
+     */
+    public void removeSuiteAlarms(final int midletSuiteID) {
+        for (Iterator it = alarms.entrySet().iterator(); it.hasNext();) {
+            final Map.Entry entry = (Map.Entry) it.next();
+            final MIDletInfo midletInfo = (MIDletInfo) entry.getKey();
+            if (midletInfo.midletSuiteID == midletSuiteID) {
+                // No need to care about retval
+                ((TimerTask) entry.getValue()).cancel();
+                removeAlarm(midletInfo);
+            }
+        }
+    }
+
+    /**
+     * Disposes an alarm registry.
+     *
+     * <p>
+     * This method is needed as <code>Timer</code> creates non daemon thread
+     * which would prevent the app from exit.
+     * </p>
+     */
+    public void dispose() {
+        timer.cancel();
+        alarms.clear();
+    }
+
+    /**
      * Scheduleds an alarm.
      *
      * @param midletInfo registration info
@@ -152,13 +187,7 @@ public final class AlarmRegistry {
         final Date date = new Date(time);
         final TimerTask newTask = new TimerTask() {
             public void run() {
-                alarms.remove(midletInfo);
-                try {
-                    store.removeAlarm(midletInfo.midletSuiteID,
-                            midletInfo.midlet);
-                } catch (IOException _) {
-                    // The best thing I can do
-                }
+                removeAlarm(midletInfo);
                 lifecycleAdapter.launchMidlet(midletInfo.midletSuiteID,
                         midletInfo.midlet);
             }
@@ -173,16 +202,17 @@ public final class AlarmRegistry {
     }
 
     /**
-     * Disposes an alarm registry.
+     * Removes an alarm associated info.
      *
-     * <p>
-     * This method is needed as <code>Timer</code> creates non daemon thread
-     * which would prevent the app from exit.
-     * </p>
+     * @param midletInfo defines <code>MIDlet</code> to remove alarm for
      */
-    public void dispose() {
-        timer.cancel();
-        alarms.clear();
+    private void removeAlarm(final MIDletInfo midletInfo) {
+        alarms.remove(midletInfo);
+        try {
+            store.removeAlarm(midletInfo.midletSuiteID, midletInfo.midlet);
+        } catch (IOException _) {
+            // The best thing I can do
+        }
     }
 
     /** Unique identification for <code>MIDlet</code>. */
