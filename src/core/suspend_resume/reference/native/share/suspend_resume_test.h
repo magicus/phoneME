@@ -33,9 +33,6 @@
  */
 extern long sr_resume_timeout;
 
-/** Timeout value identifying that timeout is not set. */
-#define UNINITIALIZED_TIMEOUT (-1)
-
 /** Default timeout value. */
 #define DEFAULT_TIMEOUT 5000
 
