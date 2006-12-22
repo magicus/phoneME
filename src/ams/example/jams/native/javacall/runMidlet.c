@@ -355,7 +355,7 @@ void JavaTask(void) {
 
         if (midpInitializeMemory(-1) != 0) {
             REPORT_CRIT(LC_CORE,"JavaTask() >> midpInitializeMemory()  Not enough memory.\n");
-            return;
+            break;
         }
         REPORT_INFO(LC_CORE,"JavaTask() >> memory initialized.\n");
 
@@ -363,7 +363,6 @@ void JavaTask(void) {
             (unsigned char *)binaryBuffer, binaryBufferMaxLen, &outEventLen);
 
         if (!JAVACALL_SUCCEEDED(res)) {
-            /* do something error !!! */
             REPORT_ERROR(LC_CORE,"JavaTask() >> Error javacall_event_receive()\n");
             continue;
         }
@@ -385,6 +384,8 @@ void JavaTask(void) {
             javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED,
                                              JAVACALL_OK);
             midpHandleStartTckEvent(event->data.startTckEvent);
+
+            JavaTaskIsGoOn = JAVACALL_FALSE;
             break;
 
         case MIDP_JC_EVENT_START_INSTALL:
@@ -392,6 +393,8 @@ void JavaTask(void) {
             javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED,
                                              JAVACALL_OK);
             midpHandleStartInstallEvent(event->data.lifecycleEvent);
+
+            JavaTaskIsGoOn = JAVACALL_FALSE;
             break;
 
         case MIDP_JC_EVENT_START_ARBITRARY_ARG:
@@ -399,6 +402,8 @@ void JavaTask(void) {
             javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED,
                                              JAVACALL_OK);
             midpHandleStartArbitraryArgEvent(event->data.startMidletArbitraryArgEvent);
+
+            JavaTaskIsGoOn = JAVACALL_FALSE;
             break;
 
         case MIDP_JC_EVENT_END:
@@ -457,7 +462,7 @@ midpHandleStartTckEvent(midp_jc_event_start_tck startTckEvent) {
     javacall_result res;
 
     argv[argc++] = "runMidlet";
-    argv[argc++] = "internal";
+    argv[argc++] = "-1";
     argv[argc++] = "com.sun.midp.installer.AutoTester";
 
     if(strcmp(startTckEvent.urlAddress, "none") != 0) {
@@ -474,8 +479,6 @@ midpHandleStartTckEvent(midp_jc_event_start_tck startTckEvent) {
         argv[argc++] = "maximum";
     }
 
-    setSystemProperty("tck_mode", "true");
-    
     res = runMidlet(argc, argv);
 
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
@@ -492,12 +495,15 @@ midpHandleStartInstallEvent(midp_jc_event_lifecycle startInstallEvent) {
     javacall_result res;
 
     argv[argc++] = "runMidlet";
-    argv[argc++] = "internal";
+    argv[argc++] = "-1";
     argv[argc++] = "com.sun.midp.installer.GraphicalInstaller";
     argv[argc++] = "I";
     argv[argc++] = startInstallEvent.urlAddress;
 
     res = runMidlet(argc, argv);
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
+                                     (res == 1) ? JAVACALL_OK: JAVACALL_FAIL);
 
     return res;
 }
@@ -507,6 +513,9 @@ midpHandleStartArbitraryArgEvent(midp_jc_event_start_arbitrary_arg startArbitrar
     javacall_result res;
 
     res = runMidlet(startArbitraryArgEvent.argc, startArbitraryArgEvent.argv);
+
+    javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
+                                     (res == 1) ? JAVACALL_OK: JAVACALL_FAIL);
 
     return res;
 }
