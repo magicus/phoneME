@@ -93,7 +93,7 @@ public final class AlarmRegistry {
      * method.
      * </p>
      */
-    public void readAlarms() throws IOException {
+    public void readAlarms() {
         store.listAlarms(new Store.AlarmsConsumer() {
             public void consume(final int midletSuiteID, final Map alarms) {
                 for (Iterator it = alarms.entrySet().iterator(); it.hasNext();) {
