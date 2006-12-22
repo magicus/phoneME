@@ -95,8 +95,8 @@ public final class AlarmRegistry {
      */
     public void readAlarms() {
         store.listAlarms(new Store.AlarmsConsumer() {
-            public void consume(final int midletSuiteID, final Map alarms) {
-                for (Iterator it = alarms.entrySet().iterator(); it.hasNext();) {
+            public void consume(final int midletSuiteID, final Map suiteAlarms) {
+                for (Iterator it = suiteAlarms.entrySet().iterator(); it.hasNext();) {
                     final Map.Entry entry = (Map.Entry) it.next();
                     final String midlet = (String) entry.getKey();
                     final Long time = (Long) entry.getValue();
@@ -153,13 +153,15 @@ public final class AlarmRegistry {
      * @param midletSuiteID ID of the suite to remove alarms for
      */
     public void removeSuiteAlarms(final int midletSuiteID) {
-        for (Iterator it = alarms.entrySet().iterator(); it.hasNext();) {
-            final Map.Entry entry = (Map.Entry) it.next();
-            final MIDletInfo midletInfo = (MIDletInfo) entry.getKey();
-            if (midletInfo.midletSuiteID == midletSuiteID) {
-                // No need to care about retval
-                ((TimerTask) entry.getValue()).cancel();
-                removeAlarm(midletInfo);
+        synchronized (alarms) {
+            for (Iterator it = alarms.entrySet().iterator(); it.hasNext();) {
+                final Map.Entry entry = (Map.Entry) it.next();
+                final MIDletInfo midletInfo = (MIDletInfo) entry.getKey();
+                if (midletInfo.midletSuiteID == midletSuiteID) {
+                    // No need to care about retval
+                    ((TimerTask) entry.getValue()).cancel();
+                    removeAlarm(midletInfo);
+                }
             }
         }
     }
@@ -174,7 +176,9 @@ public final class AlarmRegistry {
      */
     public void dispose() {
         timer.cancel();
-        alarms.clear();
+        synchronized (alarms) {
+            alarms.clear();
+        }
     }
 
     /**
@@ -192,7 +196,9 @@ public final class AlarmRegistry {
                         midletInfo.midlet);
             }
         };
-        alarms.put(midletInfo, newTask);
+        synchronized (alarms) {
+            alarms.put(midletInfo, newTask);
+        }
         timer.schedule(newTask, date);
         /*
          * RFC: according to <code>Timer</code> spec, <quote>if the time is in
@@ -207,7 +213,9 @@ public final class AlarmRegistry {
      * @param midletInfo defines <code>MIDlet</code> to remove alarm for
      */
     private void removeAlarm(final MIDletInfo midletInfo) {
-        alarms.remove(midletInfo);
+        synchronized (alarms) {
+            alarms.remove(midletInfo);
+        }
         try {
             store.removeAlarm(midletInfo.midletSuiteID, midletInfo.midlet);
         } catch (IOException _) {
