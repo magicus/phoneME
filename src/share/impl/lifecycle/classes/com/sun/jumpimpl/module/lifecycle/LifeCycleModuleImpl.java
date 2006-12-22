@@ -26,6 +26,7 @@
 
 package com.sun.jumpimpl.module.lifecycle;
 
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
@@ -146,7 +147,12 @@ public class LifeCycleModuleImpl
 	    }
         }
         
-        return (JUMPIsolateProxy[]) activeIsolates.toArray();
+        JUMPIsolateProxy isolates[] = new JUMPIsolateProxy[activeIsolates.size()];
+        int j = 0;
+        for (Enumeration e = activeIsolates.elements(); e.hasMoreElements() ; j++) {
+            isolates[j] = (JUMPIsolateProxy)e.nextElement();
+        }
+        return isolates;
     }
     
     /**
