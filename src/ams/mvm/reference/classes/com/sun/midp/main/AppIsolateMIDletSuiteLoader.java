@@ -116,7 +116,7 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
     /** Reports suite task error event system */
     protected void reportError(int errorCode) {
         midletControllerEventProducer.sendMIDletStartErrorEvent(
-            externalAppId, suiteId, midletClassName,
+            suiteId, midletClassName, externalAppId,
             errorCode);
     }
 

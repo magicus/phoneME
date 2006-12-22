@@ -49,7 +49,7 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
     /**
      * MIDlet information, class, name, icon; one per MIDlet.
      */
-    private MIDletSuiteInfo[] minfo;
+    private RunningMIDletSuiteInfo[] minfo;
     
     /** Number of reserved elements in minfo array. */
     private final int pitch = 4;
@@ -74,13 +74,14 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
      * @param manager the parent application manager
      * @param display the Display
      */
-    MIDletSwitcher(AppManagerUI managerUI, ApplicationManager manager, Display display) {
+    MIDletSwitcher(AppManagerUI managerUI, ApplicationManager manager,
+                   Display display) {
         super("", Choice.IMPLICIT);
         this.manager = manager;
         this.managerUI = managerUI;
         this.display = display;
         mcount = 0;
-        minfo = new MIDletSuiteInfo[Constants.MAX_ISOLATES];
+        minfo = new RunningMIDletSuiteInfo[Constants.MAX_ISOLATES];
 
         setSelectCommand(fgCmd);
         setFitPolicy(TEXT_WRAP_OFF);
@@ -122,7 +123,8 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
      */
     private void checkInfoArraySize() {
         if ((mcount+pitch < minfo.length) || (mcount >= minfo.length)) { 
-            MIDletSuiteInfo[] n = new MIDletSuiteInfo[mcount+pitch];
+            RunningMIDletSuiteInfo[] n =
+                new RunningMIDletSuiteInfo[mcount+pitch];
             System.arraycopy(minfo, 0, n, 0, mcount);
             minfo = n;
         }

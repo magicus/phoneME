@@ -1198,7 +1198,7 @@ class AppManagerUI extends Form
      * @param msi a structure with information about the midlet suite
      * that must be launched
      */
-    private void launchMidlet(MIDletSuiteInfo msi) {
+    private void launchMidlet(RunningMIDletSuiteInfo msi) {
         if (msi.hasSingleMidlet()) {
             manager.launchSuite(msi, msi.midletToRun);
             display.setCurrent(this);
