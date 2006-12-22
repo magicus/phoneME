@@ -69,12 +69,19 @@ force_jump_build:
 BUILD_UNITTEST_ANT_OPTIONS := $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -Djunit3.8.1.jar=$(JUNIT_JAR)
 RUN_UNITTEST_ANT_OPTIONS := $(BUILD_UNITTEST_ANT_OPTIONS) -lib $(JUNIT_JAR)
 
+# Quick check of JUNIT_JAR validity
+define check_JUNIT_JAR
+	$(AT)(jar tf $(JUNIT_JAR) &> /dev/null || (echo "JUNIT_JAR appears to be invalid or missing: [$(JUNIT_JAR)]" ; exit -1))
+endef
+
 build-unittests::
 	$(AT)echo "Building jump unit-tests ..."
+	$(check_JUNIT_JAR)
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(BUILD_UNITTEST_ANT_OPTIONS) -f build/build.xml only-build-unittests)
 
 run-unittests::
 	$(AT)echo "Running jump unit-tests ..."
+	$(check_JUNIT_JAR)
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(RUN_UNITTEST_ANT_OPTIONS) -f build/build.xml only-run-unittests)
 
 endif
