@@ -147,12 +147,7 @@ public class LifeCycleModuleImpl
 	    }
         }
         
-        JUMPIsolateProxy isolates[] = new JUMPIsolateProxy[activeIsolates.size()];
-        int j = 0;
-        for (Enumeration e = activeIsolates.elements(); e.hasMoreElements() ; j++) {
-            isolates[j] = (JUMPIsolateProxy)e.nextElement();
-        }
-        return isolates;
+        return (JUMPIsolateProxy[]) activeIsolates.toArray(new JUMPIsolateProxy[]{});        
     }
     
     /**
