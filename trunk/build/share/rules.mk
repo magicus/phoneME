@@ -328,7 +328,7 @@ build-unittests::
 	$(AT)echo "Building cdc unit-tests ..."
 
 .PHONY: run-unittests
-run-unittests:: build-unittests
+run-unittests::
 	$(AT)echo "Running cdc unit-tests ..."
 
 # if jarfilename is specified, put jsrclasses in jar file
