@@ -189,8 +189,9 @@ public class BodyLayer extends CLayer
      *
      * @param scrollPosition vertical scroll position.
      * @param scrollProportion vertical scroll proportion.
+     * @return true if set vertical scroll occues
      */
-    public void setVerticalScroll(int scrollPosition, int scrollProportion) {
+    public boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
         if (scrollInd != null && owner != null)  {
             scrollInd.setVerticalScroll(scrollPosition, scrollProportion);
             if (scrollInd.isVisible()) {
@@ -198,7 +199,9 @@ public class BodyLayer extends CLayer
             } else {
                 owner.removeLayer(scrollInd);
             }
+            return true;
         }
+        return false;
     }
 
 

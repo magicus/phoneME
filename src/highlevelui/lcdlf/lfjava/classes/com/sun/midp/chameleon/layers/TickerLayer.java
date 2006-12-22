@@ -100,7 +100,13 @@ public class TickerLayer extends CLayer {
 
     }
 
-    public void setText(String text) {
+    /**
+     * Set the ticker of this ticker layer.
+     * @param text
+     * @return * @return true if visability of layer was changed
+     */
+    public boolean setText(String text) {
+        boolean oldVisable = super.visible;
         synchronized (this) {
             this.text = text;
             super.visible = (text != null && text.trim().length() > 0);
@@ -108,6 +114,7 @@ public class TickerLayer extends CLayer {
             textLen = (text == null) ? 0 : TickerSkin.FONT.stringWidth(text);
             this.dirty = true;
         }
+        return (oldVisable != super.visible);
     }
 
     public String getText() {

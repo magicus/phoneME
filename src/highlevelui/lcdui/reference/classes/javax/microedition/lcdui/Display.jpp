@@ -1695,15 +1695,17 @@ public class Display {
      *
      * @param scrollPosition vertical scroll position.
      * @param scrollProportion vertical scroll proportion.
+     * @return true if set vertical scroll occues
      */
-    void setVerticalScroll(int scrollPosition, int scrollProportion) {
+    boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
         // #ifdef ENABLE_CHAMELEON
         // Establish the scroll properties in Chameleon
         // This call will not result in any call into application code
-        window.setVerticalScroll(scrollPosition, scrollProportion);
+        return window.setVerticalScroll(scrollPosition, scrollProportion);
         // #else
         // Does nothing since Platform Form widget manages
 	// scrolling internally
+	return false;
         // #endif ENABLE_CHAMELEON
     }
 

@@ -46,12 +46,12 @@
  * Converts the given <code>jobject</code> to a pointer of the given
  * type.
  */
-#define unhand(__type, __ptr)  (*((__type**)(__ptr)))
+#define unhand(__type, __ptr)  (*((__type**)(void*)(__ptr)))
 
 /**
  * Converts the given pointer to a <code>jobject</code>.
  */
-#define hand(__ptr)  (((jobject)&(__ptr)))
+#define hand(__ptr)  (((jobject)(void*)&(__ptr)))
 
 /* Macros to handle primitive array types */
 /**

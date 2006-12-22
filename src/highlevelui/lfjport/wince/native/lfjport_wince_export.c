@@ -44,9 +44,10 @@ extern "C" {
 /**
  * Initializes the LCDUI native resources.
  */
-void lfjport_ui_init() {
+int lfjport_ui_init() {
   inFullScreenMode = KNI_FALSE;
   winceapp_init();
+  return 0;
 }
 
 /**
