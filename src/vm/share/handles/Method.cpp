@@ -165,6 +165,15 @@ ReturnOop Method::constants() const {
     return (ReturnOop)_rom_constant_pool;
   }
 #endif
+
+#if defined(AZZERT) && !USE_SOURCE_IMAGE_GENERATOR
+  if (holder_id() != 0xFFFF) {
+    InstanceClass::Raw holder_class = holder();
+    ConstantPool::Raw class_constants = holder_class().constants();
+    ConstantPool::Raw method_constants = obj_field(constants_offset());
+    GUARANTEE(class_constants().equals(method_constants()), "Sanity");
+  }
+#endif
   return obj_field(constants_offset());
 }
 

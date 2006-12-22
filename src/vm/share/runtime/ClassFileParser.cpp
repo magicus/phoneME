@@ -1063,6 +1063,9 @@ ReturnOop ClassFileParser::parse_method(ClassParserState *state, ConstantPool* c
   // All sizing information for a Method is finally available, now create it.
   Method::Fast m = Universe::new_method(code_length, access_flags JVM_CHECK_0);
 
+  // set to an illegal value to catch accesses
+  m().set_holder_id(0xFFFF);
+
   // Fill in information from fixed part (access_flags already set)
   m().set_constants(cp);
   m().set_name_index(name_index);
@@ -1071,8 +1074,6 @@ ReturnOop ClassFileParser::parse_method(ClassParserState *state, ConstantPool* c
 #if ENABLE_ROM_JAVA_DEBUGGER
   m().set_line_var_table(&line_var_table);
 #endif
-  // set to an illegal value to catch accesses
-  m().set_holder_id(0xFFFF);
 
 #if  ENABLE_JVMPI_PROFILE 
   // Set the current compiled method ID. 

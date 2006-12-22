@@ -534,7 +534,7 @@ extern "C" {
 
     jushort index = method.get_Java_u2_index_at(bci + 1);
     InstanceClass::Fast sender_class = method.holder();
-    ConstantPool::Fast cp = sender_class().constants();
+    ConstantPool::Fast cp = method.constants();
     InstanceClass::Fast dummy_declaring_class; // not used
     int offset;
 
@@ -578,7 +578,7 @@ extern "C" {
     jushort index = method.get_java_ushort(bci + 1);
 
     InstanceClass::Fast sender_class = method.holder();
-    ConstantPool::Fast cp = sender_class().constants();
+    ConstantPool::Fast cp = method.constants();
     InstanceClass::Fast declaring_class;
     int offset;
 
