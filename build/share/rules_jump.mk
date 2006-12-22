@@ -63,7 +63,7 @@ force_jump_build:
 #
 # JUMP unit testing
 #
-# NB: due to quirks of Ant 1.6.x JUnit3.8.1 jar should be added into ant libs
+# NOTE: due to quirks of Ant 1.6.x JUnit3.8.1 jar should be added into ant libs
 #
 
 BUILD_UNITTEST_ANT_OPTIONS := $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -Djunit3.8.1.jar=$(JUNIT_JAR)
