@@ -152,7 +152,7 @@ public final class AlarmRegistry {
         final Date date = new Date(time);
         final TimerTask newTask = new TimerTask() {
             public void run() {
-                // NOTE: need to keep triggered alarms to follow the spec
+                alarms.remove(midletInfo);
                 try {
                     store.removeAlarm(midletInfo.midletSuiteID,
                             midletInfo.midlet);
