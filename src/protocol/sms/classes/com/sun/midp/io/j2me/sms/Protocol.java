@@ -368,6 +368,8 @@ public class Protocol extends ProtocolBase {
 	} catch (InterruptedIOException ex) {
             length = 0;
             throw new InterruptedIOException("MessageConnection is closed");
+        } catch (IOException ex) {
+            io2InterruptedIOExc(ex, "receiving");
 	} finally {
 	    if (length < 0) {
 		throw new InterruptedIOException("Connection closed error");
@@ -489,11 +491,15 @@ public class Protocol extends ProtocolBase {
             throw new IllegalArgumentException("Message type not supported");
 	}
 
-        int status = send0(connHandle, messageType,
+        try {
+            send0(connHandle, messageType,
                            url.host,
                            url.port,
 			   sourcePort,
                            msgBuffer);
+        } catch (IOException ex) {
+            io2InterruptedIOExc(ex, "sending");
+        }
     }
 
     /**
@@ -989,7 +995,7 @@ public class Protocol extends ProtocolBase {
                                     String host,
 				    int destPort,
 				    int sourcePort,
-				    byte[] message);
+				    byte[] message) throws IOException;
 
     /**
      * Receives SMS message

@@ -234,12 +234,29 @@ public abstract class ProtocolBase implements MessageConnection,
 
     /**
      * Ensures that the connection is open.
-     * @exception InterruptedIOException if the connection is closed
+     * @exception IOException if the connection is closed
      */
-    public void ensureOpen() throws InterruptedIOException {
+    public void ensureOpen() throws IOException {
 	if (!open) {
-	    throw new InterruptedIOException("Connection closed");
+	    throw new IOException("Connection closed");
 	}
+    }
+
+    /**
+     * Generates InterruptedIOException when connection is closed.
+     * @param ex input IOException
+     * @param name name of operation: sending or receiving
+     * @exception IOException if the connection is not closed
+     */
+    protected void io2InterruptedIOExc(IOException ex, String name) 
+        throws IOException, InterruptedIOException {
+        try {
+            ensureOpen();
+        } catch (IOException ioe) {
+            throw new InterruptedIOException("Connection closed " +
+                                         "during " + name);
+        }
+        throw ex;
     }
 
     /**
@@ -311,9 +328,9 @@ public abstract class ProtocolBase implements MessageConnection,
         /* Kill listener when need */
         if (needStopReceiver) {
             String save_appID = getAppID();
-            setAppID(null);
             /* Close thread without deregistering */
             close00(connHandle, 0);
+            setAppID(null);
             try {
                 m_listenerThread.join();
             } catch (InterruptedException ie) {
