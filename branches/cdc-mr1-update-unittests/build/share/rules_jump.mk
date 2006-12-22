@@ -69,11 +69,11 @@ force_jump_build:
 BUILD_UNITTEST_ANT_OPTIONS := $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -Djunit3.8.1.jar=$(JUNIT_JAR)
 RUN_UNITTEST_ANT_OPTIONS := $(BUILD_UNITTEST_ANT_OPTIONS) -lib $(JUNIT_JAR)
 
-build-unittests:: $(J2ME_CLASSLIB)
+build-unittests::
 	$(AT)echo "Building jump unit-tests ..."
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(BUILD_UNITTEST_ANT_OPTIONS) -f build/build.xml only-build-unittests)
 
-run-unittests:: build-unittests
+run-unittests::
 	$(AT)echo "Running jump unit-tests ..."
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(RUN_UNITTEST_ANT_OPTIONS) -f build/build.xml only-run-unittests)
 
