@@ -39,7 +39,7 @@
 /**
  * Stack resume timeout. Test purposes only.
  */
-long sr_resume_timeout = UNINITIALIZED_TIMEOUT;
+long sr_resume_timeout = DEFAULT_TIMEOUT;
 
 /**  Java stack state from suspend/resume point of view. */
 static jboolean sr_state = SR_INVALID;
@@ -108,6 +108,9 @@ SRState midp_getSRState() {
 
 void suspend_resources() {
     SuspendableResource *cur;
+
+    REPORT_INFO(LC_LIFECYCLE, "suspend_resources()");
+
     for (cur = sr_resources; NULL != cur; cur = cur->next) {
         SWITCH_STATE(cur, SR_ACTIVE, cur->suspend, SR_SUSPENDED);
     }
@@ -116,6 +119,8 @@ void suspend_resources() {
 void resume_resources() {
     SuspendableResource *cur;
     SuspendableResource *prev = NULL;
+
+    REPORT_INFO(LC_LIFECYCLE, "resume_resources()");
 
     for (cur = sr_resources; NULL != cur; prev = cur, cur = cur->next) {
         SWITCH_STATE(cur, SR_SUSPENDED, cur->resume, SR_ACTIVE);
@@ -128,6 +133,8 @@ void resume_resources() {
 }
 
 void midp_suspend() {
+    REPORT_INFO(LC_LIFECYCLE, "midp_suspend()");
+
     /* suspend request may arrive while system is not initialized */
     sr_initSystem();
 
@@ -142,10 +149,13 @@ void midp_suspend() {
         }
 
         sr_state = SR_SUSPENDED;
+        REPORT_INFO(LC_LIFECYCLE, "midp_suspend(): midp suspended");
     }
 }
 
 void midp_resume() {
+    REPORT_INFO(LC_LIFECYCLE, "midp_resume()");
+
     if (SR_SUSPENDED == sr_state) {
         resume_resources();
 
@@ -157,6 +167,7 @@ void midp_resume() {
         }
 
         sr_state = SR_ACTIVE;
+        REPORT_INFO(LC_LIFECYCLE, "midp_resume(): midp resumed");
     }
 }
 
@@ -232,18 +243,19 @@ jboolean midp_checkAndResume() {
  * standard timeout after been suspended.
  */
 jboolean midp_checkResumeRequest() {
-    static long lastSuspendStart;
+    static long lastSuspendStart = -1;
     long time_passed;
     jboolean result = KNI_FALSE;
 
-    if (sr_resume_timeout == UNINITIALIZED_TIMEOUT) {
+    if (lastSuspendStart == -1) {
+        REPORT_INFO(LC_LIFECYCLE, "midp_checkResumeRequest(): init timeout");
         lastSuspendStart = midp_getCurrentTime();
-        sr_resume_timeout = DEFAULT_TIMEOUT;
     }
 
     time_passed = midp_getCurrentTime() - lastSuspendStart;
     if (time_passed >= sr_resume_timeout) {
-        sr_resume_timeout = UNINITIALIZED_TIMEOUT;
+        lastSuspendStart = -1;
+        sr_resume_timeout = DEFAULT_TIMEOUT;
         result = KNI_TRUE;
     }
 
