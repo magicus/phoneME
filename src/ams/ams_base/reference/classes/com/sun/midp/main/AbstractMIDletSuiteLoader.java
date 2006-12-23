@@ -298,6 +298,12 @@ abstract class AbstractMIDletSuiteLoader {
         init();
 
         try {
+            // Regard resource policy for the suite task
+            if (!allocateReservedResources()) {
+                reportError(Constants.MIDLET_RESOURCE_LIMIT);
+                return;
+            }
+
             /*
              * Prepare MIDlet suite environment, classes that only need
              * the isolate ID can be create here.
@@ -328,12 +334,6 @@ abstract class AbstractMIDletSuiteLoader {
 
             if (!midletSuite.isEnabled()) {
                 reportError(Constants.MIDLET_SUITE_DISABLED);
-                return;
-            }
-
-            // Regard resource policy for the suite task
-            if (!allocateReservedResources()) {
-                reportError(Constants.MIDLET_RESOURCE_LIMIT);
                 return;
             }
 
