@@ -26,6 +26,7 @@
 
 package com.sun.midp.main;
 
+import com.sun.midp.lcdui.ForegroundEventProducer;
 import com.sun.midp.midlet.*;
 import com.sun.midp.jsr.JSRInitializer;
 import com.sun.midp.automation.AutomationInitializer;
@@ -54,10 +55,13 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
     /** Disable startup error alerts, uninitialized by default */
     protected int disableAlerts = -1;
 
-    /** MIDlet state events producer needed to AMS */
+    /** MIDlet state event producer needed by AMS */
     protected MIDletEventProducer midletEventProducer;
 
-    /** List of MIDlet proxies needed to AMS */
+    /** Foreground event producer needed by AMS. */
+    protected static ForegroundEventProducer foregroundEventProducer;
+
+    /** List of MIDlet proxies needed by AMS */
     protected MIDletProxyList midletProxyList;
 
     /**
@@ -83,8 +87,8 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
     protected void createSuiteEnvironment() {
         super.createSuiteEnvironment();
 
-        midletEventProducer = new MIDletEventProducer(
-            internalSecurityToken, eventQueue);
+        midletEventProducer = new MIDletEventProducer(eventQueue);
+        foregroundEventProducer = new ForegroundEventProducer(eventQueue);
         midletProxyList = new MIDletProxyList(eventQueue);
     }
 
@@ -128,7 +132,7 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
         AmsUtil.initClass(
             midletProxyList, midletControllerEventProducer);
 
-        MIDletProxy.initClass(displayEventProducer, midletEventProducer);
+        MIDletProxy.initClass(foregroundEventProducer, midletEventProducer);
         MIDletProxyList.initClass(midletProxyList);
 
         // Listen for start MIDlet requests from the other isolates

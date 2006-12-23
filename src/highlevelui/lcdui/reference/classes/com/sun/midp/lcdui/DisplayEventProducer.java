@@ -188,40 +188,5 @@ public class DisplayEventProducer {
         eventQueue.post(
             LCDUIEvent.createItemEvent(src, LCDUIEvent.ITEM_SIZE_REFRESH));
     }
-
-    /**
-     * Called to process a change a display's foreground/background status.
-     *
-     * @param midletIsolateId ID of the target isolate (where to send event)
-     * @param midletDisplayId ID of the target display
-     */
-    public void sendDisplayForegroundNotifyEvent(
-        int midletIsolateId, 
-        int midletDisplayId) {
-
-        NativeEvent event =
-            new NativeEvent(EventTypes.FOREGROUND_NOTIFY_EVENT);
-
-        event.intParam4 = midletDisplayId;
-        
-        eventQueue.sendNativeEventToIsolate(event, midletIsolateId);
-    }
-
-    /**
-     * Called to process a change a display's foreground/background status.
-     *
-     * @param midletIsolateId ID of the target isolate (where to send event)
-     * @param midletDisplayId ID of the target display
-     */
-    public void sendDisplayBackgroundNotifyEvent(
-        int midletIsolateId, 
-        int midletDisplayId) {
-        NativeEvent event =
-            new NativeEvent(EventTypes.BACKGROUND_NOTIFY_EVENT);
-
-        event.intParam4 = midletDisplayId;
-        
-        eventQueue.sendNativeEventToIsolate(event, midletIsolateId);
-    }
 }
 
