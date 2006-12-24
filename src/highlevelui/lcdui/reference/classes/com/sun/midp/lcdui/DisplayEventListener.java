@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package javax.microedition.lcdui;
+package com.sun.midp.lcdui;
 
 import com.sun.midp.configurator.Constants;
 
@@ -45,7 +45,7 @@ import com.sun.midp.log.LogChannels;
 /**
  * Listener for LCDUI events (user inputs, etc).
  */
-class DisplayEventListener implements EventListener {
+public class DisplayEventListener implements EventListener {
 
     /** Active displays. */
     private DisplayContainer displayContainer;
@@ -59,7 +59,7 @@ class DisplayEventListener implements EventListener {
      * @param theEventQueue the event queue
      * @param theDisplayContainer container for display objects
      */
-    DisplayEventListener(
+    public DisplayEventListener(
         EventQueue theEventQueue, 
         DisplayContainer theDisplayContainer) {
             
@@ -77,10 +77,7 @@ class DisplayEventListener implements EventListener {
         eventQueue.registerEventListener(EventTypes.PEN_EVENT, this);
         eventQueue.registerEventListener(EventTypes.COMMAND_EVENT, this);
         eventQueue.registerEventListener(EventTypes.PEER_CHANGED_EVENT, this);
-        eventQueue.registerEventListener(EventTypes.FOREGROUND_NOTIFY_EVENT, 
-					 this);
         eventQueue.registerEventListener(EventTypes.ROTATION_EVENT,this);
-
     }
 
     /**
@@ -105,16 +102,15 @@ class DisplayEventListener implements EventListener {
      */
     public void process(Event event) {
         NativeEvent nativeEvent = (NativeEvent)event;
-        /*
-         * Find DisplayAccess instance by nativeEvent.intParam4
-         * and (if not null) call DisplayAccess methods ...
-         */
-        DisplayAccess da = displayContainer.findDisplayById(
-            nativeEvent.intParam4);
 
-        if (da != null) {
-            DisplayEventConsumer dc = da.getDisplayEventConsumer();
-            
+        /*
+         * Find DisplayEventConsumer instance by nativeEvent.intParam4
+         * and (if not null) call DisplayEventConsumer methods ...
+         */
+        DisplayEventConsumer dc =
+            displayContainer.findDisplayEventConsumer(nativeEvent.intParam4);
+
+        if (dc != null) {
             switch (event.getType()) {
             case EventTypes.KEY_EVENT:
                 if (nativeEvent.intParam1 == EventConstants.IME) {
@@ -153,16 +149,10 @@ class DisplayEventListener implements EventListener {
 
                 return;
 
-            case EventTypes.FOREGROUND_NOTIFY_EVENT:
-                // TBD: split into 2 separate methods: one for 
-                // foreground, another for background ...
-                dc.handleDisplayForegroundNotifyEvent(
-                        (nativeEvent.intParam1 != 0));
-                return;
-
             case EventTypes.ROTATION_EVENT:
                 dc.handleRotationEvent();
                 return;
+
             default:
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                     Logging.report(Logging.WARNING, LogChannels.LC_CORE,

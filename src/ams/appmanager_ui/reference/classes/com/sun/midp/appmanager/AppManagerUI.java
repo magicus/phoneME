@@ -276,7 +276,7 @@ class AppManagerUI extends Form
     private long lastDisplayChange;
 
     /** MIDlet to be removed after confirmation screen was accepted */
-    private MIDletSuiteInfo removeMsi;
+    private RunningMIDletSuiteInfo removeMsi;
 
     /**
      * There are several Application Manager
@@ -302,12 +302,13 @@ class AppManagerUI extends Form
      * @param display - The display instance associated with the manager
      * @param first - true if this is the first time AppSelector is being
      *                shown
-     * @param msi - MidletSuiteInfo that should be selected. For the internal 
-     *              suites midletToRun should be set, for the other suites 
-     *              suiteId is enough to find the corresponding item.
+     * @param ms - MidletSuiteInfo that should be selected. For the internal 
+     *             suites midletToRun should be set, for the other suites 
+     *             suiteId is enough to find the corresponding item.
      */
     AppManagerUI(ApplicationManager manager, Display display,
-                 DisplayError displayError, boolean first, MIDletSuiteInfo ms) {
+                 DisplayError displayError, boolean first,
+                 MIDletSuiteInfo ms) {
         super(null);
 
         try {
@@ -388,7 +389,7 @@ class AppManagerUI extends Form
      *
      * @return currently selected MidletSuiteInfo
      */
-    public MIDletSuiteInfo getSelectedMIDletSuiteInfo() {
+    public RunningMIDletSuiteInfo getSelectedMIDletSuiteInfo() {
         for (int i = 0; i < size(); i++) {
             MidletCustomItem ci = (MidletCustomItem)get(i);
             if (ci.hasFocus) {
@@ -472,7 +473,7 @@ class AppManagerUI extends Form
      * @param item the Item the command was on.
      */
     public void commandAction(Command c, Item item) {
-        MIDletSuiteInfo msi = ((MidletCustomItem)item).msi;
+        RunningMIDletSuiteInfo msi = ((MidletCustomItem)item).msi;
         if (msi == null) {
             return;
         }
@@ -749,7 +750,7 @@ class AppManagerUI extends Form
      */
     private void updateContent() {
         int[] suiteIds;
-        MIDletSuiteInfo msi = null;
+        RunningMIDletSuiteInfo msi = null;
         boolean newlyAdded;
 
         suiteIds = midletSuiteStorage.getListOfSuites();
@@ -762,7 +763,7 @@ class AppManagerUI extends Form
         if (msi == null || msi.midletToRun == null ||
             !msi.midletToRun.equals(DISCOVERY_APP)) {
 
-            msi = new MIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
+            msi = new RunningMIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
                 DISCOVERY_APP,
                 Resource.getString(ResourceConstants.INSTALL_APPLICATION),
                 true) {
@@ -797,7 +798,7 @@ class AppManagerUI extends Form
 
             if (msi == null || msi.midletToRun == null ||
                 !msi.midletToRun.equals(CA_MANAGER)) {
-                msi = new MIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
+                msi = new RunningMIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
                   CA_MANAGER,
                   Resource.getString(ResourceConstants.CA_MANAGER_APP), true);
                 append(msi);
@@ -816,8 +817,11 @@ class AppManagerUI extends Form
             }
 
             try {
-                MIDletSuiteInfo suiteInfo =
+                MIDletSuiteInfo temp =
                     midletSuiteStorage.getMIDletSuiteInfo(suiteIds[lowest]);
+
+                RunningMIDletSuiteInfo suiteInfo =
+                    new RunningMIDletSuiteInfo(temp, midletSuiteStorage);
 
                 newlyAdded = true;
                 for (int k = 0; k < size(); k++) {
@@ -867,7 +871,7 @@ class AppManagerUI extends Form
      * @param suiteInfo the midlet suite info
      *                  of the recently started midlet
      */
-    private void append(MIDletSuiteInfo suiteInfo) {
+    private void append(RunningMIDletSuiteInfo suiteInfo) {
 
         MidletCustomItem ci = new MidletCustomItem(suiteInfo);
 
@@ -902,12 +906,12 @@ class AppManagerUI extends Form
      *
      * @param suiteInfo the midlet suite info of a recently removed MIDlet
      */
-    private void remove(MIDletSuiteInfo suiteInfo) {
-        MIDletSuiteInfo msi;
+    private void remove(RunningMIDletSuiteInfo suiteInfo) {
+        RunningMIDletSuiteInfo msi;
 
         // the last item in AppSelector is time
         for (int i = 0; i < size(); i++) {
-            msi = (MIDletSuiteInfo)((MidletCustomItem)get(i)).msi;
+            msi = (RunningMIDletSuiteInfo)((MidletCustomItem)get(i)).msi;
             if (msi == suiteInfo) {
                 PAPICleanUp.removeMissedTransaction(suiteInfo.suiteId);
                 if (msi.proxy != null) {
@@ -964,7 +968,7 @@ class AppManagerUI extends Form
      *
      * @param suiteInfo information for suite to remove
      */
-    private void confirmRemove(MIDletSuiteInfo suiteInfo) {
+    private void confirmRemove(RunningMIDletSuiteInfo suiteInfo) {
         Form confirmForm;
         StringBuffer temp = new StringBuffer(40);
         Item item;
@@ -1194,7 +1198,7 @@ class AppManagerUI extends Form
      * @param msi a structure with information about the midlet suite
      * that must be launched
      */
-    private void launchMidlet(MIDletSuiteInfo msi) {
+    private void launchMidlet(RunningMIDletSuiteInfo msi) {
         if (msi.hasSingleMidlet()) {
             manager.launchSuite(msi, msi.midletToRun);
             display.setCurrent(this);
@@ -1253,7 +1257,7 @@ class AppManagerUI extends Form
          * @param msi The MIDletSuiteInfo for which representation has
          *            to be created
          */
-        MidletCustomItem(MIDletSuiteInfo msi) {
+        MidletCustomItem(RunningMIDletSuiteInfo msi) {
             super(null);
             this.msi = msi;
             icon = msi.icon;
@@ -1600,7 +1604,7 @@ class AppManagerUI extends Form
         AppManagerUI owner; // = false
 
         /** The MIDletSuiteInfo associated with this MidletCustomItem */
-        MIDletSuiteInfo msi; // = null
+        RunningMIDletSuiteInfo msi; // = null
 
         /** The width of this MidletCustomItem */
         int width; // = 0

@@ -329,9 +329,9 @@ public class AmsUtil {
             }
 
             midletControllerEventProducer.sendMIDletStartErrorEvent(
-                externalAppId,
                 id,
                 midlet,
+                externalAppId,
                 errorCode);
 
             throw new RuntimeException(msg);

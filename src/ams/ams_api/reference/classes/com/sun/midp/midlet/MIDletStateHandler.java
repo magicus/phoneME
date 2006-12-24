@@ -26,27 +26,14 @@
 
 package com.sun.midp.midlet;
 
-import javax.microedition.lcdui.Image;
-
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
-
-import com.sun.midp.installer.OtaNotifier;
-
-import com.sun.midp.lcdui.DisplayContainer;
-import com.sun.midp.lcdui.DisplayEventHandler;
-
-import com.sun.midp.main.MIDletControllerEventProducer;
-import com.sun.midp.main.MIDletSuiteUtils;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
-
-import com.sun.midp.content.CHManager;
-import com.sun.midp.suspend.SuspendSystem;
 
 /**
  * The MIDletStateHandler starts and controls MIDlets through the lifecycle
@@ -92,38 +79,32 @@ import com.sun.midp.suspend.SuspendSystem;
  * the MIDlet to make the change.
  * <p>
  * When a MIDlet's state is changed to <code>ACTIVE</code>,
- * <code>PAUSED</code>, or <code>DESTROYED</code> the DisplayEventHandler
+ * <code>PAUSED</code>, or <code>DESTROYED</code> the MIDlet state listener
  * is notified of the change, which in turn sends the notification onto
- * the MIDletProxyList.
+ * the central AMS.
  *
  * @see MIDlet
  * @see MIDletPeer
- * @see DisplayEventHandler
- * @see MIDletProxy
- * @see MIDletProxyList
- * @see DisplayController
+ * @see MIDletLoader
+ * @see MIDletStateHandler
  */
 
 public class MIDletStateHandler {
     /** the current MIDlet suite. */
     private MIDletSuite midletSuite;
+    /** loads the MIDlets from a suite's JAR in a VM specific way. */
+    private MIDletLoader midletLoader;
     /** array of MIDlets. */
     private MIDletPeer[] midlets;
     /** current number of MIDlets [0..n-1]. */
     private int nmidlets;
     /**  next index to be scanned by selectForeground. */
     private int scanIndex;
-    /** display manager. */
-    private DisplayEventHandler displayEventHandler;
-    /** Cached reference to Active Displays Container. */
-    private DisplayContainer displayContainer;
-    /** Cached reference to the MIDletControllerEventProducer. */
-    private MIDletControllerEventProducer midletControllerEventProducer;
 
     /** The event handler of all MIDlets in an Isolate. */
     private static MIDletStateHandler stateHandler;
-    /** This class has a different security domain than the application. */
-    private static SecurityToken classSecurityToken;
+    /** The listener for the state of all MIDlets in an Isolate. */
+    private static MIDletStateListener listener;
 
     /** Serializes the creation of MIDlets. */
     private static Object createMIDletLock = new Object();
@@ -140,20 +121,6 @@ public class MIDletStateHandler {
 
         // start with 5 empty slots, we will add more if needed
         midlets = new MIDletPeer[5];
-    }
-
-    /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class
-     */
-    public static void initSecurityToken(SecurityToken token) {
-        if (classSecurityToken != null) {
-            return;
-        }
-
-        classSecurityToken = token;
     }
 
     /**
@@ -191,21 +158,23 @@ public class MIDletStateHandler {
      * Initializes MIDlet State Handler.
      *
      * @param token security token for initilaization
-     * @param theDisplayEventHandler display event handler
-     * @param theMIDletControllerEventProducer event producer
-     * @param theDisplayContainer container for display objects
+     * @param theMIDletStateListener processes MIDlet states in a
+     *                               VM specific way
+     * @param theMIDletLoader loads a MIDlet in a VM specific way
+     * @param thePlatformRequestHandler the platform request handler
      */
     public void initMIDletStateHandler(
         SecurityToken token,
-        DisplayEventHandler theDisplayEventHandler,
-        MIDletControllerEventProducer theMIDletControllerEventProducer,
-        DisplayContainer theDisplayContainer) {
+        MIDletStateListener theMIDletStateListener,
+        MIDletLoader theMidletLoader,
+        PlatformRequest thePlatformRequestHandler) {
 
-        token.checkIfPermissionAllowed(Permissions.MIDP);
+        token.checkIfPermissionAllowed(Permissions.AMS);
 
-        displayEventHandler = theDisplayEventHandler;
-        midletControllerEventProducer = theMIDletControllerEventProducer;
-        displayContainer = theDisplayContainer;
+        listener = theMIDletStateListener;
+        midletLoader = theMidletLoader;
+
+        MIDletPeer.initClass(this, listener, thePlatformRequestHandler);
     }
 
     /**
@@ -325,8 +294,7 @@ public class MIDletStateHandler {
      */
     private void register(MIDlet midlet) {
         synchronized (this) {
-            MIDletPeer state =
-                MIDletPeer.getMIDletPeer(classSecurityToken, midlet);
+            MIDletPeer state = MIDletPeer.getMIDletPeer(midlet);
 
             /*
              * If a MIDlet of the same class is already running
@@ -372,14 +340,8 @@ public class MIDletStateHandler {
            throws ClassNotFoundException, InstantiationException,
            IllegalAccessException {
 
-        try {
-            vmBeginStartUp();
-            register(createMIDlet(externalAppId, classname));
-            OtaNotifier.retryInstallNotification(classSecurityToken,
-                midletSuite);
-        } finally {
-            vmEndStartUp();
-        }
+        listener.midletPreStart(getMIDletSuite(), classname);
+        register(createMIDlet(externalAppId, classname));
     }
 
     /**
@@ -420,7 +382,7 @@ public class MIDletStateHandler {
 
         if (midletSuite != null) {
             throw new RuntimeException(
-                "There is already a MIDlet Suite running.");
+                 "There is already a MIDlet Suite running.");
 
         }
 
@@ -476,7 +438,8 @@ public class MIDletStateHandler {
                             if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                                 Logging.report(Logging.WARNING,
                                                LogChannels.LC_AMS,
-                               "InterruptedException during mutex wait");
+                                               "InterruptedException " +
+                                               "during mutex wait");
                             }
                         }
 
@@ -488,7 +451,7 @@ public class MIDletStateHandler {
                         break;
 
                     case MIDletPeer.PAUSE_PENDING:
-                        // The display manager wants the MIDlet paused
+                        // The system wants the MIDlet paused
                         curr.setStateWithoutNotify(MIDletPeer.PAUSED);
                         break;
 
@@ -502,7 +465,7 @@ public class MIDletStateHandler {
 
                     default:
                         throw new Error("Illegal MIDletPeer state " +
-                                    curr.getState());
+                                        curr.getState());
                     }
                 }
 
@@ -510,7 +473,9 @@ public class MIDletStateHandler {
                 switch (state) {
                 case MIDletPeer.ACTIVE_PENDING:
                     try {
-                        SuspendSystem.getInstance(classSecurityToken).resume();
+                        listener.preActivated(getMIDletSuite(),
+                            curr.getMIDlet().getClass().getName());
+                       
                         curr.startApp();
                     } catch (Throwable ex) {
                         if (Logging.TRACE_ENABLED) {
@@ -524,9 +489,8 @@ public class MIDletStateHandler {
                      * The actual state of the MIDlet is already active.
                      * But any notifications done after startApp call.
                      */
-                    midletControllerEventProducer.sendMIDletActiveNotifyEvent(
-                        curr.displayId);
-
+                    listener.midletActivated(getMIDletSuite(),
+                        curr.getMIDlet().getClass().getName());
                     break;
 
                 case MIDletPeer.PAUSE_PENDING:
@@ -545,16 +509,9 @@ public class MIDletStateHandler {
                      * The actual state of the MIDlet is already paused.
                      * But any notifications done after pauseApp() call.
                      */
-                    midletControllerEventProducer.sendMIDletPauseNotifyEvent(
-                        curr.displayId);
+                    listener.midletPaused(getMIDletSuite(),
+                        curr.getMIDlet().getClass().getName());
 
-                    /*
-                     * IMPL_NOTE: it is now implied that MIDlet is always requested
-                     * to be paused together with all the suspendable resources.
-                     */
-                    SuspendSystem.getInstance(classSecurityToken).suspend();
-                    midletControllerEventProducer.sendMIDletRsPauseNotifyEvent(
-                        curr.displayId);
                     break;
 
                 case MIDletPeer.DESTROY_PENDING:
@@ -567,7 +524,8 @@ public class MIDletStateHandler {
                         if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                             Logging.report(Logging.WARNING,
                                            LogChannels.LC_AMS,
-                            "destroyApp  threw a MIDletStateChangeException");
+                                           "destroyApp  threw a " +
+                                           "MIDletStateChangeException");
                         }
                     } catch (Throwable ex) {
                         if (Logging.TRACE_ENABLED) {
@@ -577,7 +535,8 @@ public class MIDletStateHandler {
                     break;
 
                 case MIDletPeer.DESTROYED:
-                    notifyMidletDestroyed(curr);
+                    listener.midletDestroyed(getMIDletSuite(),
+                        curr.getMIDlet().getClass().getName());
                     break;
                 }
             } catch (Throwable ex) {
@@ -586,9 +545,6 @@ public class MIDletStateHandler {
                 }
             }
         }
-
-        // shutdown any preempting
-        displayEventHandler.donePreempting(null);
     }
 
     /**
@@ -629,25 +585,28 @@ public class MIDletStateHandler {
         return found;
     }
 
-    /**
-     * This abstracts internal from display manager and avoids the
-     * need for the display manager to reference the MIDletStateHandler
-     * directly,
-     * allowing for the future possiblity of have multiple MIDlet state
-     * handlers but one display manager.
-     * <p>
-     * This method will check the suite for the MIDP permission.
-     *
-     * @return trusted MIDlet icon for this device
-     */
-    public Image getTrustedMIDletIcon() {
-        MIDletSuite suite = getMIDletSuite();
 
-        if (suite != null) {
-            suite.checkIfPermissionAllowed(Permissions.MIDP);
+    /**
+     * Gets MIDlet event consumer of the named <code>MIDlet</code>.
+     *
+     * @param token security token for authorizing the caller
+     * @param name class name of <code>MIDlet</code>
+     *
+     * @return reference of the MIDlet event consumer
+     */
+    public MIDletEventConsumer getMIDletEventConsumer(SecurityToken token,
+                                                      String name) {
+        token.checkIfPermissionAllowed(Permissions.AMS);
+
+        synchronized (this) {
+            for (int i = 0; i < nmidlets; i++) {
+                if (midlets[i].getMIDlet().getClass().getName().equals(name)) {
+                    return midlets[i];
+                }
+            }
         }
 
-        return displayEventHandler.getTrustedMIDletIcon();
+        return null;
     }
 
     /**
@@ -723,41 +682,6 @@ public class MIDletStateHandler {
     }
 
     /**
-     * Notifies MIDlet Controller in AMS Isolate that new midlet
-     * has been created and (optinally) it wants to go to foreground.
-     *
-     * Shall be called by MIDletStateHandler or its MIDletPeers.
-     *
-     * @param m MIDlet to activate
-     * @param externalAppId ID of given by an external application manager
-     * @param suiteId ID of the MIDlet suite
-     * @param className Class name of the MIDlet
-     * @param displayName Name to show the user
-     */
-    private void notifyMidletCreated(MIDletPeer m, int externalAppId,
-            int suiteId, String className, String displayName) {
-
-        midletControllerEventProducer.sendMIDletCreateNotifyEvent(
-            externalAppId, m.displayId, suiteId, className, displayName);
-    }
-
-    /**
-     * Removes the display of the given MIDlet from the list of active
-     * displays and aotifies Midlet Controller in AMS Isolate about midlet
-     * destruction.
-     *
-     * Shall be called by MIDletStateHandler or its MIDletPeers.
-     *
-     * @param m MIDlet to deactivate
-     */
-    private void notifyMidletDestroyed(MIDletPeer m) {
-
-        displayContainer.removeDisplay(m.accessor);
-        midletControllerEventProducer.sendMIDletDestroyNotifyEvent(
-            m.displayId);
-    }
-
-    /**
      * Creates a MIDlet.
      *
      * @param externalAppId ID of given by an external application manager
@@ -775,7 +699,6 @@ public class MIDletStateHandler {
     private MIDlet createMIDlet(int externalAppId, String classname) throws
            ClassNotFoundException, InstantiationException,
            IllegalAccessException {
-        Class midletClass;
         MIDlet midlet = null;
         MIDletPeer localMidletPeerRef;
 
@@ -787,17 +710,6 @@ public class MIDletStateHandler {
             if (newMidletPeer != null) {
                 throw new SecurityException("Recusive MIDlet creation");
             }
-
-            midletClass = Class.forName(classname);
-            if (!Class.forName(
-                    "javax.microedition.midlet.MIDlet").isAssignableFrom(
-                    midletClass)) {
-                throw new InstantiationException("Class not a MIDlet");
-            }
-
-            // Do ContentHandler initialization for this MIDlet
-            CHManager.getManager(classSecurityToken).
-                midletInit(getMIDletSuite().getID(), classname);
 
             newMidletPeer = new MIDletPeer();
 
@@ -812,13 +724,12 @@ public class MIDletStateHandler {
                  * We can send a MIDlet create event because the peer that
                  * the AMS uses has been created.
                  */
-                notifyMidletCreated(
-                    newMidletPeer, externalAppId,
-                    getMIDletSuite().getID(), classname,
-                    getMIDletSuite().getMIDletName(classname));
+                listener.midletCreated(getMIDletSuite(), classname,
+                                       externalAppId);
 
                 try {
-                    midlet = (MIDlet)midletClass.newInstance();
+                    midlet = midletLoader.newInstance(getMIDletSuite(),
+                                                      classname);
                     return midlet;
                 } finally {
                     if (midlet == null) {
@@ -826,7 +737,7 @@ public class MIDletStateHandler {
                          * The MIDlet was not constructed, send destroy
                          * notification to remove the peer from any lists.
                          */
-                        notifyMidletDestroyed(localMidletPeerRef);
+                        listener.midletDestroyed(getMIDletSuite(), classname);
                     }
                 }
             } finally {
@@ -865,24 +776,5 @@ public class MIDletStateHandler {
             temp.midlet = m;
             return temp;
         }
-    }
-
-    /**
-     * Sends hint to VM about begin of a MIDlet startup phase within current
-     * isolate to allow VM to adjust internal parameters for better performance
-     */
-    static void vmBeginStartUp() {
-        MIDletSuiteUtils.vmBeginStartUp(
-            classSecurityToken, MIDletSuiteUtils.getIsolateId());
-    }
-
-    /**
-     * Sends hint to VM about end of a MIDlet startup phase within current
-     * isolate to allow VM to restore its internal parameters changed for
-     * startup time for better performance
-     */
-    static void vmEndStartUp() {
-        MIDletSuiteUtils.vmEndStartUp(
-            classSecurityToken, MIDletSuiteUtils.getIsolateId());
     }
 }

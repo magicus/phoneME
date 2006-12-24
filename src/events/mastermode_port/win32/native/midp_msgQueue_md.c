@@ -76,12 +76,12 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
             if (timeout > 0) {
                 if (SetTimer(win32app_get_window_handle(), EVENT_TIMER_ID,
                        (UINT)timeout, NULL) == 0) {
-                    // Timer already exists from last time.
+                    /* Timer already exists from last time. */
                     KillTimer(win32app_get_window_handle(), EVENT_TIMER_ID);
                     
                     if (SetTimer(win32app_get_window_handle(), EVENT_TIMER_ID,
                                  (UINT)timeout, NULL) == 0) {
-                        // Can't set up the timer so do not block.
+                        /* Can't set up the timer so do not block. */
                         return;
                     }
                 }

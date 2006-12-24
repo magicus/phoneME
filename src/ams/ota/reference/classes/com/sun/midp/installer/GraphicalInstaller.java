@@ -44,6 +44,8 @@ import com.sun.midp.i18n.ResourceConstants;
 
 import com.sun.midp.configurator.Constants;
 
+import com.sun.midp.main.TrustedMIDletIcon;
+
 import com.sun.midp.midlet.*;
 
 import com.sun.midp.midletsuite.*;
@@ -1292,9 +1294,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             infoForm = new Form(Resource.getString(
                           ResourceConstants.AMS_AUTHORIZATION_INFO));
 
-            infoForm.append(new ImageItem(null,
-                MIDletStateHandler.getMidletStateHandler().
-                    getTrustedMIDletIcon(),
+            infoForm.append(new ImageItem(null, TrustedMIDletIcon.getIcon(),
                 ImageItem.LAYOUT_NEWLINE_BEFORE |
                 ImageItem.LAYOUT_CENTER |
                 ImageItem.LAYOUT_NEWLINE_AFTER, null));

@@ -31,6 +31,8 @@ import javax.microedition.lcdui.*;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
+import com.sun.midp.main.TrustedMIDletIcon;
+
 import com.sun.midp.midlet.*;
 
 import com.sun.midp.midletsuite.*;
@@ -38,6 +40,7 @@ import com.sun.midp.midletsuite.*;
 import com.sun.midp.io.j2me.push.*;
 
 import com.sun.midp.installer.*;
+
 import com.sun.midp.configurator.Constants;
 
 /**
@@ -196,8 +199,7 @@ public class AppInfo extends Form {
             append(item);
 
             if (midletSuite.isTrusted()) {
-                append(new ImageItem(null, MIDletStateHandler.
-                    getMidletStateHandler().getTrustedMIDletIcon(),
+                append(new ImageItem(null, TrustedMIDletIcon.getIcon(),
                     ImageItem.LAYOUT_DEFAULT, null));
                 temp = Resource.getString
                           (ResourceConstants.AMS_MGR_TRUSTED);

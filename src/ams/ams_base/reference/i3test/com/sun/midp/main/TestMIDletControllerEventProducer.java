@@ -26,11 +26,14 @@
 
 package com.sun.midp.main;
 
-import com.sun.midp.events.StubEventQueue;
+import com.sun.midp.events.EventQueue;
 import com.sun.midp.events.Event;
 import com.sun.midp.events.EventTypes;
+import com.sun.midp.events.ListenerTestEventQueue;
 import com.sun.midp.events.NativeEvent;
+
 import com.sun.midp.i3test.TestCase;
+
 import com.sun.midp.security.SecurityToken;
 
 import java.util.Random;
@@ -41,7 +44,8 @@ import java.util.Random;
  * implement the mapping between specific data and generic event fields (e.g.,
  * intParam1 or stringParam2) which is important to test.
  */
-public class TestMIDletControllerEventProducer extends TestCase {
+public class TestMIDletControllerEventProducer extends TestCase
+    implements MIDletControllerEventConsumer {
 
     private SecurityToken token;
 
@@ -62,9 +66,61 @@ public class TestMIDletControllerEventProducer extends TestCase {
     int amsIsolateId;
     int displayId;
     int displayId2;
+    int externalId;
+    int errorCode;
 
-    StubEventQueue queue;
+    EventQueue queue;
     MIDletControllerEventProducer producer;
+    MIDletControllerEventListener listener;
+
+    /**
+     * Runs all tests. If a test throw a NullPointerException,
+     * the most likely cause is that the listener has not registered with
+     * the event queue for that event type.
+     */
+    public void runTests() throws Throwable {
+        token = getSecurityToken();
+
+        setUp();
+
+        declare("testMIDletStartErrorEvent");
+        testMIDletStartErrorEvent();
+
+        declare("testMIDletCreateNotifyEvent");
+        testMIDletCreateNotifyEvent();
+
+        declare("testMIDletActiveNotifyEvent");
+        testMIDletActiveNotifyEvent();
+
+        declare("testMIDletPauseNotifyEvent");
+        testMIDletPauseNotifyEvent();
+
+        declare("testMIDletDestroyNotifyEvent");
+        testMIDletDestroyNotifyEvent();
+
+        declare("testMIDletResumeRequest");
+        testMIDletResumeRequest();
+
+        declare("testMIDletDestroyRequestEvent");
+        testMIDletDestroyRequestEvent();
+
+        declare("testMIDletForegroundTransferEvent");
+        testMIDletForegroundTransferEvent();
+
+        declare("testDisplayCreateNotifyEvent");
+        testDisplayCreateNotifyEvent();
+
+        declare("testDisplayForegroundRequestEvent");
+        testDisplayForegroundRequestEvent();
+
+        declare("testDisplayBackgroundRequestEvent");
+        testDisplayBackgroundRequestEvent();
+
+        declare("testDisplayPreemptEvents");
+        testDisplayPreemptEvents();
+
+        tearDown();
+    }
 
     /**
      * Initializes the test fixture with random data, creates the stub event
@@ -75,10 +131,13 @@ public class TestMIDletControllerEventProducer extends TestCase {
         amsIsolateId = rand.nextInt();
         displayId = rand.nextInt();
         displayId2 = rand.nextInt();
+        externalId = rand.nextInt();
+        errorCode = rand.nextInt();
 
-        queue = new StubEventQueue();
-        producer = new MIDletControllerEventProducer(token, queue,
+        queue = new ListenerTestEventQueue();
+        producer = new MIDletControllerEventProducer(queue,
             amsIsolateId, currentIsolateId);
+        listener = new MIDletControllerEventListener(queue, this);
     }
 
     /**
@@ -88,132 +147,50 @@ public class TestMIDletControllerEventProducer extends TestCase {
         queue = null;
         producer = null;
     }
-
-    /**
-     * Utility method to check the stub event queue's log to ensure that it
-     * contains exactly one native event.  Returns this event.
-     */
-    NativeEvent checkSingleNativeEvent() {
-        Event[] log = queue.getEventLog();
-        assertEquals("log should have one event", 1, log.length);
-        assertTrue("event should be native event",
-            log[0] instanceof NativeEvent);
-        NativeEvent nev = (NativeEvent)log[0];
-        return nev;
-    }
-
-    /**
-     * Utility method to check the stub event queue's log to ensure that it
-     * contains exactly numEvents native events.  Returns an array containing
-     * exactly that number of native events.
-     */
-    NativeEvent[] checkNativeEvents(int numEvents) {
-        Event[] log = queue.getEventLog();
-        assertEquals("log should have " + numEvents + " events",
-            numEvents, log.length);
-
-        for (int i = 0; i < log.length; i++) {
-            assertTrue("log[" + i + "] should be a native event",
-                log[i] instanceof NativeEvent);
-        }
-
-        NativeEvent nlog[] = new NativeEvent[log.length];
-        System.arraycopy(log, 0, nlog, 0, log.length);
-        return nlog;
-    }
-
     // the actual tests
-
-    /**
-     * Tests putting events into the stub event queue and retrieving them.
-     */
-    void testStubEventQueue() {
-        Event ev0 = new Event(0);
-        Event ev1 = new Event(1);
-        Event ev2 = new Event(2);
-
-        queue.post(ev0);
-        queue.post(ev1);
-        queue.post(ev2);
-
-        Event[] log = queue.getEventLog();
-
-        assertEquals(3, log.length);
-        assertSame(ev0, log[0]);
-        assertSame(ev1, log[1]);
-        assertSame(ev2, log[2]);
-    }
 
     /**
      * Tests sendMIDletStartErrorEvent().
      */
     void testMIDletStartErrorEvent() {
-        producer.sendMIDletStartErrorEvent(1, SUITE_ID, CLASS_NAME, 1);
-
-        NativeEvent nev = checkSingleNativeEvent();
-
-        assertEquals(EventTypes.MIDLET_START_ERROR_EVENT, nev.getType());
-        assertEquals(1, nev.intParam1);
-        assertEquals(1, nev.intParam2);
-        assertEquals(String.valueOf(SUITE_ID), nev.stringParam1);
-        assertEquals(CLASS_NAME, nev.stringParam2);
+        producer.sendMIDletStartErrorEvent(SUITE_ID, CLASS_NAME, externalId,
+                                           errorCode);
     }
 
     /**
      * Tests sendMIDletCreateNotifyEvent().
      */
     void testMIDletCreateNotifyEvent() {
-        producer.sendMIDletCreateNotifyEvent(1, displayId, SUITE_ID,
-            CLASS_NAME, DISPLAY_NAME);
-
-        NativeEvent nev = checkSingleNativeEvent();
-
-        assertEquals(EventTypes.MIDLET_CREATED_NOTIFICATION, nev.getType());
-        assertEquals(currentIsolateId, nev.intParam1);
-        assertEquals(1, nev.intParam2);
-        assertEquals(displayId, nev.intParam4);
-        assertEquals(String.valueOf(SUITE_ID), nev.stringParam1);
-        assertEquals(CLASS_NAME, nev.stringParam2);
-        assertEquals(DISPLAY_NAME, nev.stringParam3);
+        producer.sendMIDletCreateNotifyEvent(SUITE_ID, CLASS_NAME,
+                                             externalId, DISPLAY_NAME);
     }
 
     /**
      * Tests sendMIDletActiveNotifyEvent().
      */
     void testMIDletActiveNotifyEvent() {
-        producer.sendMIDletActiveNotifyEvent(displayId);
-
-        NativeEvent nev = checkSingleNativeEvent();
-
-        assertEquals(EventTypes.MIDLET_ACTIVE_NOTIFICATION, nev.getType());
-        assertEquals(currentIsolateId, nev.intParam1);
-        assertEquals(displayId, nev.intParam4);
+        producer.sendMIDletActiveNotifyEvent(SUITE_ID, CLASS_NAME);
     }
 
     /**
      * Tests sendMIDletPauseNotifyEvent().
      */
     void testMIDletPauseNotifyEvent() {
-        producer.sendMIDletPauseNotifyEvent(displayId);
-
-        NativeEvent nev = checkSingleNativeEvent();
-
-        assertEquals(EventTypes.MIDLET_PAUSED_NOTIFICATION, nev.getType());
-        assertEquals(currentIsolateId, nev.intParam1);
-        assertEquals(displayId, nev.intParam4);
+        producer.sendMIDletPauseNotifyEvent(SUITE_ID, CLASS_NAME);
     }
 
     /**
      * Tests sendMIDletDestroyNotifyEvent().
      */
     void testMIDletDestroyNotifyEvent() {
-        producer.sendMIDletDestroyNotifyEvent(displayId);
+        producer.sendMIDletDestroyNotifyEvent(SUITE_ID, CLASS_NAME);
+    }
 
-        NativeEvent nev = checkSingleNativeEvent();
-
-        assertEquals(EventTypes.MIDLET_DESTROYED_NOTIFICATION, nev.getType());
-        assertEquals(currentIsolateId, nev.intParam1);
-        assertEquals(displayId, nev.intParam4);
+    /**
+     * Tests sendMIDletResumeRequest().
+     */
+    void testMIDletResumeRequest() {
+        producer.sendMIDletResumeRequest(SUITE_ID, CLASS_NAME);
     }
 
     /**
@@ -221,12 +198,6 @@ public class TestMIDletControllerEventProducer extends TestCase {
      */
     void testMIDletDestroyRequestEvent() {
         producer.sendMIDletDestroyRequestEvent(displayId);
-
-        NativeEvent nev = checkSingleNativeEvent();
-
-        assertEquals(EventTypes.MIDLET_DESTROY_REQUEST_EVENT, nev.getType());
-        assertEquals(currentIsolateId, nev.intParam1);
-        assertEquals(displayId, nev.intParam4);
     }
 
     /**
@@ -235,34 +206,20 @@ public class TestMIDletControllerEventProducer extends TestCase {
     void testMIDletForegroundTransferEvent() {
         producer.sendMIDletForegroundTransferEvent(
             SUITE_ID, CLASS_NAME, TARGET_SUITE_ID, TARGET_CLASS_NAME);
+    }
 
-        NativeEvent nev = checkSingleNativeEvent();
-
-        assertEquals(EventTypes.FOREGROUND_TRANSFER_EVENT, nev.getType());
-        assertEquals(String.valueOf(SUITE_ID), nev.stringParam1);
-        assertEquals(CLASS_NAME, nev.stringParam2);
-        assertEquals(String.valueOf(TARGET_SUITE_ID), nev.stringParam3);
-        assertEquals(TARGET_CLASS_NAME, nev.stringParam4);
+    /**
+     * Tests sendDisplayCreateNotifyEvent().
+     */
+    void testDisplayCreateNotifyEvent() {
+        producer.sendDisplayCreateNotifyEvent(displayId, CLASS_NAME);
     }
 
     /**
      * Tests sendDisplayForegroundRequestEvent().
      */
     void testDisplayForegroundRequestEvent() {
-        producer.sendDisplayForegroundRequestEvent(displayId, false);
-        producer.sendDisplayForegroundRequestEvent(displayId2, true);
-
-        NativeEvent nev[] = checkNativeEvents(2);
-
-        assertEquals(EventTypes.FOREGROUND_REQUEST_EVENT, nev[0].getType());
-        assertEquals(currentIsolateId, nev[0].intParam1);
-        assertEquals(displayId, nev[0].intParam4);
-        assertEquals(0, nev[0].intParam2); // false
-
-        assertEquals(EventTypes.FOREGROUND_REQUEST_EVENT, nev[1].getType());
-        assertEquals(currentIsolateId, nev[1].intParam1);
-        assertEquals(displayId2, nev[1].intParam4);
-        assertEquals(1, nev[1].intParam2); // true
+        producer.sendDisplayForegroundRequestEvent(displayId, true);
     }
 
     /**
@@ -270,12 +227,6 @@ public class TestMIDletControllerEventProducer extends TestCase {
      */
     void testDisplayBackgroundRequestEvent() {
         producer.sendDisplayBackgroundRequestEvent(displayId);
-
-        NativeEvent nev = checkSingleNativeEvent();
-
-        assertEquals(EventTypes.BACKGROUND_REQUEST_EVENT, nev.getType());
-        assertEquals(currentIsolateId, nev.intParam1);
-        assertEquals(displayId, nev.intParam4);
     }
 
     /**
@@ -285,81 +236,343 @@ public class TestMIDletControllerEventProducer extends TestCase {
     void testDisplayPreemptEvents() {
         producer.sendDisplayPreemptStartEvent(displayId);
         producer.sendDisplayPreemptStopEvent(displayId2);
+    }
 
-        NativeEvent nev[] = checkNativeEvents(2);
+    /**
+     * Process a MIDlet start error event.
+     * Notify from last to first added to allow the listener to
+     * remove itself without causing a missed notification.
+     *
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midletSuiteId ID of the MIDlet suite
+     * @param midletClassName Class name of the MIDlet
+     * @param midletExternalAppId ID of given by an external application
+     *                            manager
+     * @param error start error code
+     */
+    public void handleMIDletStartErrorEvent(
+        int midletSuiteId,
+        String midletClassName,
+        int midletExternalAppId,
+        int error) {
 
-        assertEquals(EventTypes.PREEMPT_EVENT, nev[0].getType());
-        assertEquals(currentIsolateId, nev[0].intParam1);
-        assertEquals(-1, nev[0].intParam2); // true
-        assertEquals(displayId, nev[0].intParam4);
+        assertEquals(SUITE_ID, midletSuiteId);
+        assertEquals(CLASS_NAME, midletClassName);
+        assertEquals(externalId, midletExternalAppId);
+        assertEquals(errorCode, error);
+    }
 
-        assertEquals(EventTypes.PREEMPT_EVENT, nev[1].getType());
-        assertEquals(currentIsolateId, nev[1].intParam1);
-        assertEquals(0, nev[1].intParam2); // false
-        assertEquals(displayId2, nev[1].intParam4);
+    /**
+     * Process a MIDlet created notification.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midletSuiteId ID of the MIDlet suite
+     * @param midletClassName Class name of the MIDlet
+     * @param midletIsolateId isolate ID of the sending MIDlet
+     * @param midletExternalAppId ID of given by an external application
+     *                            manager
+     * @param midletDisplayName name to show the user
+     */
+    public void handleMIDletCreateNotifyEvent(
+        int midletSuiteId,
+        String midletClassName,
+        int midletIsolateId,
+        int midletExternalAppId,
+        String midletDisplayName) {
+
+        assertEquals(SUITE_ID, midletSuiteId);
+        assertEquals(CLASS_NAME, midletClassName);
+        assertEquals(currentIsolateId, midletIsolateId);
+        assertEquals(externalId, midletExternalAppId);
+        assertEquals(DISPLAY_NAME, midletDisplayName);
+    }
+
+    /**
+     * Process a MIDlet active notification
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * TBD: param midletProxy proxy with information about MIDlet
+     *
+     * @param midletSuiteId ID of the MIDlet suite
+     * @param midletClassName Class name of the MIDlet
+     */
+    public void handleMIDletActiveNotifyEvent(
+        int midletSuiteId,
+        String midletClassName) {
+
+        assertEquals(SUITE_ID, midletSuiteId);
+        assertEquals(CLASS_NAME, midletClassName);
+    }
+
+    /**
+     * Process a MIDlet paused notification.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * TBD: param midletProxy proxy with information about MIDlet
+     *
+     * @param midletSuiteId ID of the MIDlet suite
+     * @param midletClassName Class name of the MIDlet
+     */
+    public void handleMIDletPauseNotifyEvent(
+        int midletSuiteId,
+        String midletClassName) {
+
+        assertEquals(SUITE_ID, midletSuiteId);
+        assertEquals(CLASS_NAME, midletClassName);
+    }
+
+    /**
+     * Process a MIDlet destroyed event.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midletSuiteId ID of the MIDlet suite
+     * @param midletClassName Class name of the MIDlet
+     */
+    public void handleMIDletDestroyNotifyEvent(
+        int midletSuiteId,
+        String midletClassName) {
+
+        assertEquals(SUITE_ID, midletSuiteId);
+        assertEquals(CLASS_NAME, midletClassName);
     }
 
 
     /**
-     * Runs all tests.
+     * Processes a MIDLET_RESUME_REQUEST event.
+     *
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midletSuiteId ID of the MIDlet suite
+     * @param midletClassName Class name of the MIDlet
      */
-    public void runTests() throws Throwable {
-        token = getSecurityToken();
+    public void handleMIDletResumeRequestEvent(int midletSuiteId,
+                                               String midletClassName) {
 
-        declare("testStubEventQueue");
-        setUp();
-        testStubEventQueue();
-        tearDown();
-
-        declare("testMIDletStartErrorEvent");
-        setUp();
-        testMIDletStartErrorEvent();
-        tearDown();
-
-        declare("testMIDletCreateNotifyEvent");
-        setUp();
-        testMIDletCreateNotifyEvent();
-        tearDown();
-
-        declare("testMIDletActiveNotifyEvent");
-        setUp();
-        testMIDletActiveNotifyEvent();
-        tearDown();
-
-        declare("testMIDletPauseNotifyEvent");
-        setUp();
-        testMIDletPauseNotifyEvent();
-        tearDown();
-
-        declare("testMIDletDestroyNotifyEvent");
-        setUp();
-        testMIDletDestroyNotifyEvent();
-        tearDown();
-
-        declare("testMIDletDestroyRequestEvent");
-        setUp();
-        testMIDletDestroyRequestEvent();
-        tearDown();
-
-        declare("testMIDletForegroundTransferEvent");
-        setUp();
-        testMIDletForegroundTransferEvent();
-        tearDown();
-
-        declare("testDisplayForegroundRequestEvent");
-        setUp();
-        testDisplayForegroundRequestEvent();
-        tearDown();
-
-        declare("testDisplayBackgroundRequestEvent");
-        setUp();
-        testDisplayBackgroundRequestEvent();
-        tearDown();
-
-        declare("testDisplayPreemptEvents");
-        setUp();
-        testDisplayPreemptEvents();
-        tearDown();
+        assertEquals(SUITE_ID, midletSuiteId);
+        assertEquals(CLASS_NAME, midletClassName);
     }
 
+    /**
+     * Handles notification event of MIDlet resources pause.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midletSuiteId ID of the MIDlet suite
+     * @param midletClassName Class name of the MIDlet
+     */
+    public void handleMIDletRsPauseNotifyEvent(
+        int midletSuiteId,
+        String midletClassName) {
+
+        assertEquals(SUITE_ID, midletSuiteId);
+        assertEquals(CLASS_NAME, midletClassName);
+    }
+
+    /**
+     * Process a MIDlet destroy request event.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midletIsolateId isolate ID of the sending Display
+     * @param midletDisplayId ID of the sending Display
+     */
+    public void handleMIDletDestroyRequestEvent(
+        int midletIsolateId,
+        int midletDisplayId) {
+
+        assertEquals(currentIsolateId, midletIsolateId);
+        assertEquals(displayId, midletDisplayId);
+    }
+
+    /**
+     * Process an ACTIVATE_ALL_EVENT.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     */
+    public void handleActivateAllEvent() {
+        assertTrue(true);
+    }
+
+
+    /**
+     * Process a PAUSE_ALL_EVENT.
+     * MIDletControllerEventConsumer I/F method.
+     */
+    public void handlePauseAllEvent() {
+        assertTrue(true);
+    }
+
+    /**
+     * Process a SHUTDOWN_ALL_EVENT.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * It simply calls "shutdown()". In future it shall be merged with
+     * "shutdown()" and substitute it.
+     */
+    public void handleDestroyAllEvent() {
+        assertTrue(true);
+    }
+
+    /**
+     * Processes FATAL_ERROR_NOTIFICATION.
+     *
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midletIsolateId isolate ID of the sending isolate
+     * @param midletDisplayId ID of the sending Display
+     */
+    public void handleFatalErrorNotifyEvent(
+        int midletIsolateId,
+        int midletDisplayId) {
+
+        assertEquals(currentIsolateId, midletIsolateId);
+        assertEquals(displayId, midletDisplayId);
+    }
+
+    /**
+     * Process a Display created notification.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midletIsolateId isolate ID of the sending Display
+     * @param midletDisplayId ID of the sending Display
+     * @param midletClassName Class name of the MIDlet that owns the display
+     */
+    public void handleDisplayCreateNotifyEvent(
+        int midletIsolateId,
+        int midletDisplayId,
+        String midletClassName) {
+
+        assertEquals(currentIsolateId, midletIsolateId);
+        assertEquals(displayId, midletDisplayId);
+        assertEquals(CLASS_NAME, midletClassName);
+    }
+
+    /**
+     * Process a foreground request event.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midletIsolateId isolate ID of the sending Display
+     * @param midletDisplayId ID of the sending Display
+     * @param isAlert true if the current displayable is an Alert
+     */
+    public void handleDisplayForegroundRequestEvent(
+        int midletIsolateId,
+        int midletDisplayId,
+        boolean isAlert) {
+
+        assertEquals(currentIsolateId, midletIsolateId);
+        assertEquals(displayId, midletDisplayId);
+        assertTrue(isAlert);
+    }
+
+    /**
+     * Process a background request event.
+     * MIDletControllerEventConsumer I/F method.
+     *
+     *
+     * @param midletIsolateId isolate ID of the sending Display
+     * @param midletDisplayId ID of the sending Display
+     */
+    public void handleDisplayBackgroundRequestEvent(
+        int midletIsolateId,
+        int midletDisplayId) {
+
+        assertEquals(currentIsolateId, midletIsolateId);
+        assertEquals(displayId, midletDisplayId);
+    }
+
+    /**
+     * Process a "display preempt start" event.
+     * <p>
+     * Set the foreground to a given display if a certain display
+     * has the foreground. Used to start preempting.
+     *
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midletIsolateId isolate ID of the sending Display
+     * @param midletDisplayId ID of the sending Display
+     */
+    public void handleDisplayPreemptStartEvent(
+        int midletIsolateId,
+        int midletDisplayId) {
+
+        assertEquals(currentIsolateId, midletIsolateId);
+        assertEquals(displayId, midletDisplayId);
+    }
+
+    /**
+     * Process a "display preempt stop" event.
+     * <p>
+     * Set the foreground to a given display if a certain display
+     * has the foreground. Used to end preempting.
+     *
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param midletIsolateId isolate ID of the sending Display
+     * @param midletDisplayId ID of the sending Display
+     */
+    public void handleDisplayPreemptStopEvent(
+        int midletIsolateId,
+        int midletDisplayId) {
+
+        assertEquals(currentIsolateId, midletIsolateId);
+        assertEquals(displayId2, midletDisplayId);
+    }
+
+    /**
+     * Process a select foreground event by putting the foreground selector
+     * MIDlet in the foreground.
+     *
+     * MIDletControllerEventConsumer I/F method.
+     *
+     */
+    public void handleMIDletForegroundSelectEvent(int onlyFromLaunched) {
+    }
+
+    /**
+     * Process an event to transition the foreground from a current display
+     * to a target MIDlet by ID and classname. If the source display
+     * does not currently own the foreground the request is ignored.
+     * If the target MIDlet is found in the active list then it it set
+     * as the foreground. If not found, then it should be added as
+     * the next display to get the foreground (when it asks).
+     *
+     * MIDletControllerEventConsumer I/F method.
+     *
+     * @param originMIDletSuiteId ID of MIDlet from which
+     *        to take forefround ownership away,
+     * @param originMIDletClassName Name of MIDlet from which
+     *        to take forefround ownership away
+     * @param targetMIDletSuiteId ID of MIDlet
+     *        to give forefround ownership to,
+     * @param targetMIDletClassName Name of MIDlet
+     *        to give forefround ownership to
+     */
+    public void handleMIDletForegroundTransferEvent(
+        int originMIDletSuiteId,
+        String originMIDletClassName,
+        int targetMIDletSuiteId,
+        String targetMIDletClassName) {
+
+        assertEquals(SUITE_ID, originMIDletSuiteId);
+        assertEquals(CLASS_NAME, originMIDletClassName);
+
+        assertEquals(TARGET_SUITE_ID, targetMIDletSuiteId);
+        assertEquals(TARGET_CLASS_NAME, targetMIDletClassName);
+    }
+
+    /**
+     * Processes SET_FOREGROUND_BY_NAME_REQUEST event.
+     * <p>
+     * Set specified MIDlet to foreground.
+     *
+     * @param midletSuiteId MIDlet's suite ID
+     * @param midletClassName MIDlet's class name
+     */
+    public void handleSetForegroundByNameRequestEvent(
+        int midletSuiteId,
+        String midletClassName) {
+
+        assertEquals(SUITE_ID, midletSuiteId);
+        assertEquals(CLASS_NAME, midletClassName);
+    }
 }
