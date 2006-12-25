@@ -138,9 +138,15 @@ ifdef INCLUDE_SHELL_SCRIPTS
 	@chmod +x $@
 
   $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/jams/$(VM_MODE)/batch/%
+	@echo " ... installing $@"
 	@cp -f $< $@
 	@chmod +x $@
 
+  $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/example/jams/batch/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+	    
   SUBSYSTEM_AMS_EXECUTABLES += \
     $(BINDIR)/listMidlets.sh \
     $(BINDIR)/removeMidlet.sh
