@@ -305,12 +305,9 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     }
 
     // Make sure the copied lines are 4-byte aligned for faster memcpy
-    if ((x1 & 2) == 1) {
-        x1 -= 1;
-    }
-    if ((x2 & 2) == 1) {
-        x2 += 1;
-    }
+    if ((x1 & 1) == 1) x1 -= 1;
+    if ((x2 & 1) == 1) x2 += 1;
+    
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
 
@@ -337,6 +334,51 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     }
 }
 
+// IMPL_NOTE ASSUMPTIONS:
+//   1) Off-screen buffer is aligned by word bound
+//   2) Off-screen buffer width is equal to screen device width
+//   3) Target buffer is aligned by word bound
+//   4) Target device width is even, thus all pixels of a screen
+//      column are aligned, or not aligned simultaneously
+void fast_copy_rotated(short *src, short *dst,
+        int x1, int y1, int x2, int y2,
+        int bufWidth, int dstWidth, int dstInc, int srcDec) {
+
+  int y;
+  while(x2 > x1) {
+    src--;
+    x2 -= 2;
+    for (y = y1; y < y2; y += 2) {
+
+      unsigned a = *(unsigned*)src;
+      src += bufWidth;
+      unsigned b = *(unsigned*)src;
+      src += bufWidth;
+      *(unsigned*)dst = (b & 0xffff0000) | (a >> 16);
+      *(unsigned*)(dst + dstWidth) = (b << 16) | (a & 0x0000ffff);
+      dst += 2;
+    }
+    dst += dstInc + dstWidth;
+    src -= srcDec;
+  }
+}
+
+void simple_copy_rotated(short *src, short *dst,
+        int x1, int y1, int x2, int y2,
+		int bufWidth, int dstWidth, int dstInc, int srcDec) {
+		
+    int y;
+    (void)dstWidth;
+    while(x2-- > x1) {
+        for (y = y1; y < y2; y++) {
+            *dst++ = *src;
+            src += bufWidth;
+         }
+         dst += dstInc;
+         src -= srcDec;
+    }
+}
+
 /** Refresh rotated screen with offscreen buffer content */
 void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
@@ -345,13 +387,24 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     int dstWidth = fb.width;
     int dstHeight = fb.height;
 
-    int y;
     int srcDec;
     int dstInc;
 
     // System screen buffer geometry
     int bufWidth = gxj_system_screen_buffer.width;
     int bufHeight = gxj_system_screen_buffer.height;
+
+    if (linuxFbDeviceType == LINUX_FB_OMAP730) {
+        // Needed by the P2 board
+        // Max screen size is 176x220 but can only display 176x208
+        dstHeight = bufWidth;
+    }
+
+    // Make sure the copied lines are 4-byte aligned for faster memcpy
+    if ((x1 & 1) == 1) x1 -= 1;
+    if ((x2 & 1) == 1) x2 += 1;
+    if ((y1 & 1) == 1) y1 -= 1;
+    if ((y2 & 1) == 1) y2 += 1;
 
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
@@ -369,14 +422,8 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     srcDec = srcHeight * bufWidth + 1; // decrement for src pointer at the end of column
     dstInc = dstWidth - srcHeight;     // increment for dst pointer at the end of line
 
-    while(x2-- > x1) {
-        for (y = y1; y < y2; y++) {
-            *dst++ = *src;
-            src += bufWidth;
-         }
-         dst += dstInc;
-         src -= srcDec;
-    }
+    fast_copy_rotated(src, dst, x1, y1, x2, y2,
+        bufWidth, dstWidth, dstInc, srcDec);
 }
 
 /** Frees allocated resources and restore system state */
