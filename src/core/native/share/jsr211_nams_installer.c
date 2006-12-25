@@ -418,7 +418,7 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
     MidpProperties mp; /* attribute values source */
     MidpProperties *testMp = NULL;  /* test for matching if needed */
     JSR211_content_handler *ptr;
-    JSR211_RESULT_CH testHnd = { NULL, 0 };
+    JSR211_RESULT_CHARRAY testHnd = { NULL, 0 };
 
     if (nHandlers != 0) {
         return -1;  /* Suite installation might be only once in the NAMS. */
@@ -502,8 +502,8 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
         if (res < 0)
             break;
 
-        jsr211_get_handler(&PCSL_STRING_NULL, &ptr->id,
-                                            JSR211_SEARCH_TEST, &testHnd);
+        jsr211_find_handler(&PCSL_STRING_NULL, JSR211_FIELD_ID, &ptr->id,
+                                            &testHnd);
         if (testHnd.buf != NULL) {
             // -- Content handler conflicts with other handlers
             jsr211_errCode = 938;

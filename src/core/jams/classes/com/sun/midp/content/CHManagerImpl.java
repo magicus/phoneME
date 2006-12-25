@@ -67,8 +67,8 @@ public class CHManagerImpl
     extends com.sun.midp.content.CHManager
     implements MIDletProxyListListener
 {
-    /** Set of new handlers to be installed for this application. */
-    private Vector newhandlers;
+    /** Installed handlers accumulator. */
+    private RegistryInstaller regInstaller;
 
     /** The Invocation in progress for an install. */
     private Invocation installInvoc;
@@ -89,17 +89,10 @@ public class CHManagerImpl
      * Register any content handlers parsed from the JAD/Manifest
      * attributes.
      */
-    public void install() throws InvalidJadException {
-        // Insert new handlers, if any
-        if (newhandlers != null && newhandlers.size() > 0) {
-            RegistryInstaller.install(newhandlers);
-        }
-        if (Logging.TRACE_ENABLED) {
-            for (int i = 0; i < newhandlers.size(); i++) {
-                ContentHandler ch = (ContentHandler)newhandlers.elementAt(i);
-                Logging.report(Logging.INFORMATION, 0,
-                    "Registering content handler " + ch.getAppName());
-            }
+    public void install() {
+        if (regInstaller != null) {
+            regInstaller.install();
+            regInstaller = null; // Let GC take it.
         }
     }
 
@@ -133,8 +126,8 @@ public class CHManagerImpl
 	try {
 	    AppBundleProxy bundle =
 		new AppBundleProxy(installer, state, msuite, authority);
-	    newhandlers = RegistryInstaller.preInstall(bundle);
-
+            regInstaller = new RegistryInstaller();
+            regInstaller.preInstall(bundle);
 	} catch (IllegalArgumentException ill) {
 	    throw new InvalidJadException(
 			  InvalidJadException.INVALID_CONTENT_HANDLER,
@@ -208,6 +201,7 @@ public class CHManagerImpl
 	    handler.finish(installInvoc,
 			   success ? Invocation.OK : Invocation.CANCELLED);
             installInvoc = null;
+            regInstaller = null; // Double-clean.
         }
     }
 

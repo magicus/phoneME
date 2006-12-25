@@ -254,6 +254,7 @@ jsr211_result jsr211_unregister_handler(const pcsl_string* handler_id) {
  * @param key search field id. Valid keys are: <ul> 
  *   <li>JSR211_FIELD_TYPES, <li>JSR211_FIELD_SUFFIXES, 
  *   <li>JSR211_FIELD_ACTIONS. </ul>
+ * The special case of JSR211_FIELD_ID is used for testing new handler ID.
  * @param value search value
  * @param result the buffer for Content Handlers result array. 
  *  <br>Use @link jsr211_fillHandlerArray function to fill this structure.

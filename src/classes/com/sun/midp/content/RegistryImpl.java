@@ -483,21 +483,11 @@ public final class RegistryImpl {
 
             ContentHandlerImpl conflict = checkConflicts(handler);
             if (conflict != null) {
-                if (conflict.registrationMethod !=
-                                    ContentHandlerImpl.REGISTERED_DYNAMIC) {
-                    throw new IllegalArgumentException(
-        "Dynamic registration can not replace statically registered handler");
-            }
                 unregister(classname);
-            } else {
-                if (!RegistryStore.testId(handler.getID())) {
-                    throw new ContentHandlerException("ID would be ambiguous",
-                          ContentHandlerException.AMBIGUOUS);
-                }
             }
 
             RegistryStore.register(handler);
-            register(handler);
+            setServer(handler);
 
             if (AppProxy.LOG_INFO) {
                 appl.logInfo("Register: " + classname +
@@ -506,20 +496,6 @@ public final class RegistryImpl {
 
             return handler;
         }
-    }
-
-    /**
-     * Register a content handler with all the internal data structures.
-     * Does NOT post notifications to other interested parties.
-     * @param handler the ContentHandlerImpl to register.
-     */
-    private static void register(ContentHandlerImpl handler) {
-
-       // Update the RegistryImpl, if any, this is a server for
-       RegistryImpl impl = (RegistryImpl)registries.get(handler.classname);
-       if (impl != null) {
-           impl.handlerImpl = handler;
-       }
     }
 
     /**
@@ -551,20 +527,27 @@ public final class RegistryImpl {
      *  need to be removed to register the new ContentHandler
      */
     static ContentHandlerImpl checkConflicts(ContentHandlerImpl handler)
+                throws ContentHandlerException
     {
-        ContentHandler[] handlers = RegistryStore.forSuite(handler.storageId);
-
+        ContentHandlerImpl[] handlers = RegistryStore.findConflicted(handler.ID);
         ContentHandlerImpl existing = null;
-        int size = handlers.length;
-        for (int i = 0; i < size; i++) {
-            ContentHandlerImpl curr = (ContentHandlerImpl)handlers[i];
 
-            // Is this the same classname being replaced?
-            if (handler.classname.equals(curr.classname)) {
-                existing = curr;
-                break;
+        if (handlers != null) {
+            switch (handlers.length) {
+                case 0:
+                    break;
+                case 1:
+                    if (handler.classname.equals(handlers[0].classname)) {
+                        existing = handlers[0];
+                        break;
+                    }
+                default:
+                    throw new ContentHandlerException(
+                        "ID would be ambiguous: " + handler.ID,
+                        ContentHandlerException.AMBIGUOUS);
             }
         }
+
         return existing;
     }
 
@@ -649,7 +632,11 @@ public final class RegistryImpl {
             if (reg != null) {
                 curr = reg.getServer();
             } else {
-                curr = findHandler(application.getStorageId(), classname);
+                try {
+                    curr = RegistryStore.getHandler(application.getStorageId(), classname);
+                } catch (IllegalArgumentException iae) {
+                    // Empty class name falls down without further processing.
+                }
             }
 
             if (curr != null) {
@@ -1226,24 +1213,6 @@ public final class RegistryImpl {
     }
 
     /**
-     * Find a handler by suiteId and classname.
-     *
-     * @param storageId the storageId of the suite
-     * @param classname the application classname
-     * @return the registered handler or null
-     */
-    static ContentHandlerImpl findHandler(int storageId, String classname) {
-        ContentHandler[] handlers = RegistryStore.forSuite(storageId);
-        for (int i = 0; i < handlers.length; i++) {
-            ContentHandlerImpl curr = (ContentHandlerImpl)handlers[i];
-            if (classname.equals(curr.classname)) {
-                return curr;
-            }
-        }
-        return null;
-    }
-
-    /**
      * Gets the registered content handler for the
      * application class of this RegistryImpl.
      *
@@ -1274,7 +1243,7 @@ public final class RegistryImpl {
             String classname = appl.getClassname();
             int storageId = appl.getStorageId();
 
-            ContentHandlerImpl handler = findHandler(storageId, classname);
+            ContentHandlerImpl handler = RegistryStore.getHandler(storageId, classname);
 
             if (handler != null) {
                 handler.appname = appl.getApplicationName();

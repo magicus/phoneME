@@ -166,10 +166,10 @@ public class TestRegReadWrite extends TestCase {
                     chArr == null || chArr.length == 0);
 
     // search by partial ID
-    chTst = RegistryStore.getHandler(caller, ch.ID + ch.ID.substring(0, 3), 
-                                                    RegistryStore.SEARCH_TEST);
-    if (chTst != null) {
-        assertEquals("Verify handler ID after partial search", ch.ID, chTst.ID);
+    chArr = RegistryStore.findHandler(caller, RegistryStore.FIELD_ID,
+                                        ch.ID + ch.ID.substring(0, 3));
+    if (chArr != null && chArr.length == 1) {
+        assertEquals("Verify handler ID after partial search", ch.ID, chArr[0].ID);
     } else {
         fail("Verify handler ID after search by cut ID");
     }
@@ -188,16 +188,16 @@ public class TestRegReadWrite extends TestCase {
 
 
     // testId
-    b = RegistryStore.testId(ch.ID);
+    b = testId(ch.ID);
     assertFalse("Verify test equal ID", b);
 
-    b = RegistryStore.testId(ch.ID.substring(0, 3));
+    b = testId(ch.ID.substring(0, 3));
     assertFalse("Verify test prefixed ID", b);
 
-    b = RegistryStore.testId(ch.ID+"qqq");
+    b = testId(ch.ID+"qqq");
     assertFalse("Verify test prefixing ID", b);
 
-    b = RegistryStore.testId("qqq"+ch.ID);
+    b = testId("qqq"+ch.ID);
     assertTrue("Verify test good ID", b);
 
     // load handler
@@ -217,6 +217,12 @@ public class TestRegReadWrite extends TestCase {
     assertTrue("Verify right handler is unregistered "+
                 "/CHECK: if JSR 211 database has the correct format!/", b);
 }
+
+    private boolean testId(String ID) {
+        ContentHandlerImpl[] arr = 
+            RegistryStore.findHandler(null, RegistryStore.FIELD_ID, ID);
+        return arr == null || arr.length == 0;
+    }
 
     /**
      * Compare two Content Handlers.

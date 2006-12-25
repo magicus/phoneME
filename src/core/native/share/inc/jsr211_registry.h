@@ -134,9 +134,7 @@ typedef enum {
  */
 typedef enum {
     JSR211_SEARCH_EXACT  = 0,        /** Search by exact match with ID */
-    JSR211_SEARCH_PREFIX = 1,        /** Search by prefix of given value */
-    JSR211_SEARCH_TEST   = 2         /** Search by prefix of given value
-                                             or tested handler ID. */
+    JSR211_SEARCH_PREFIX = 1         /** Search by prefix of given value */
 } jsr211_search_flag;
 
 /**
@@ -293,6 +291,7 @@ jsr211_result jsr211_unregister_handler(const pcsl_string* handler_id);
  * @param key search field id. Valid keys are: <ul> 
  *   <li>JSR211_FIELD_TYPES, <li>JSR211_FIELD_SUFFIXES, 
  *   <li>JSR211_FIELD_ACTIONS. </ul>
+ * The special case of JSR211_FIELD_ID is used for testing new handler ID.
  * @param value search value
  * @param result the buffer for Content Handlers result array. 
  *  <br>Use @link jsr211_fillHandlerArray function to fill this structure.
@@ -352,7 +351,7 @@ jsr211_result jsr211_get_all(const pcsl_string* caller_id, jsr211_field field,
  *
  * @param caller_id calling application identifier.
  * @param id handler ID.
- * @param mode flag indicating whether exact, prefixed or test search should be 
+ * @param mode flag indicating whether exact or prefixed search should be 
  * performed according to @link JSR211_SEARCH_MODE constants.
  * @param handler output value - requested handler.
  *  <br>Use @link jsr211_fillHandler function to fill this structure.
