@@ -834,7 +834,7 @@ endif
 
 CPP_DEF_FLAGS          += -DWIN32 -D_WINDOWS
 CPP_DEF_FLAGS          += $(CPP_DEF_FLAGS_$(BUILD))
-CPP_DEF_FLAGS          += /Zm200 /W3 /nologo  \
+CPP_DEF_FLAGS          += /W3 /nologo  \
                           $(SAVE_TEMPS_CFLAGS) \
                           $(ENABLE_CFLAGS) \
                           $(ROMIZING_CFLAGS) \
