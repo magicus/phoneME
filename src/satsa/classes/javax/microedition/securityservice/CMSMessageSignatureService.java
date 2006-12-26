@@ -28,9 +28,8 @@ package javax.microedition.securityservice;
 
 import javax.microedition.securityservice.CMSMessageSignatureServiceException;
 import javax.microedition.pki.UserCredentialManagerException;
-import com.sun.midp.security.*;
 
-import com.sun.midp.main.Configuration;
+import com.sun.j2me.main.Configuration;
 
 /**
  * Provides signature services for cryptographic messages.

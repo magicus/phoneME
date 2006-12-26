@@ -30,8 +30,8 @@ import java.util.Calendar;
 import java.util.TimeZone;
 import com.sun.satsa.util.*;
 
-import com.sun.midp.i18n.Resource;
-import com.sun.midp.i18n.ResourceConstants;
+import com.sun.j2me.i18n.Resource;
+import com.sun.j2me.i18n.ResourceConstants;
 
 /**
  * This class represents WIM certificate.

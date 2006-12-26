@@ -26,17 +26,15 @@
 
 package com.sun.satsa.pki;
 
-import com.sun.midp.io.j2me.storage.File;
-import com.sun.midp.io.j2me.storage.RandomAccessStream;
+import com.sun.j2me.app.AppPackage;
+import com.sun.j2me.dialog.Dialog;
+import com.sun.j2me.dialog.MessageDialog;
+import com.sun.j2me.io.FileAccess;
+import com.sun.j2me.security.SatsaPermission;
 import com.sun.midp.io.j2me.apdu.APDUManager;
-import com.sun.midp.i18n.Resource;
-import com.sun.midp.i18n.ResourceConstants;
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.main.Configuration;
-import com.sun.midp.configurator.Constants;
-import com.sun.midp.security.ImplicitlyTrustedClass;
-import com.sun.midp.security.SecurityToken;
-import com.sun.satsa.security.SecurityInitializer;
+import com.sun.j2me.i18n.Resource;
+import com.sun.j2me.i18n.ResourceConstants;
+import com.sun.j2me.main.Configuration;
 import com.sun.satsa.util.*;
 
 import javax.microedition.io.Connector;
@@ -47,7 +45,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Vector;
-import com.sun.midp.security.Permissions;
 
 /**
  * This class provides implementation of methods defined by
@@ -63,17 +60,6 @@ public class PKIManager {
     public static final int AUTHENTICATE_STRING    = 1;
     /** Signature operation identifier. */
     public static final int SIGN_STRING            = 2;
-
-    /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
-     */
-    static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
-
-    /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken =
-        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * Storage name for identifiers of public keys for which
@@ -146,7 +132,7 @@ public class PKIManager {
             for (int i = 0; i < slotCount; i++) {
 
                 WIMApplication w = WIMApplication.getInstance(
-                        classSecurityToken, i, securityElementID, false);
+                        i, securityElementID, false);
                 if (w == null) {
                     continue;
                 }
@@ -165,8 +151,8 @@ public class PKIManager {
 
             if (securityElementPrompt != null) {
                 try {
-                    if (MessageDialog.showMessage(classSecurityToken,
-                        Resource.getString(ResourceConstants
+                    if (MessageDialog.showMessage(
+                            Resource.getString(ResourceConstants
 					   .JSR177_WIM_NOT_FOUND),
                         securityElementPrompt,
                         true) != -1) {
@@ -225,7 +211,7 @@ public class PKIManager {
         // ask user
 
         try {
-            if (MessageDialog.showMessage(classSecurityToken,
+            if (MessageDialog.showMessage(
                 Resource.getString(ResourceConstants.AMS_CONFIRMATION),
                 Resource.getString(ResourceConstants.JSR177_CERTIFICATE_STORED) +
                 "\n\n" + 
@@ -249,7 +235,7 @@ public class PKIManager {
         for (int i = 0; i < slotCount; i++) {
 
             WIMApplication w = WIMApplication.getInstance(
-                    classSecurityToken, i, null, false);
+                    i, null, false);
 
             if (w == null) {
                 continue;
@@ -336,7 +322,7 @@ public class PKIManager {
             for (int i = 0; i < slotCount; i++) {
 
                 WIMApplication w = WIMApplication.getInstance(
-                       classSecurityToken, i, securityElementID, false);
+                       i, securityElementID, false);
                 if (w == null) {
                     continue;
                 }
@@ -360,7 +346,7 @@ public class PKIManager {
 
             if (securityElementPrompt != null) {
                 try {
-                    if (MessageDialog.showMessage(classSecurityToken,
+                    if (MessageDialog.showMessage(
                             Resource.getString(
                                 ResourceConstants.JSR177_WIM_NOT_FOUND),
                             securityElementPrompt,
@@ -403,8 +389,8 @@ public class PKIManager {
         // protected by MIDP permissions
         if (action == AUTHENTICATE_DATA) { 
             try {
-                MIDletStateHandler.getMidletStateHandler().getMIDletSuite().
-                        checkForPermission(Permissions.SIGN_SERVICE, null);
+                AppPackage.getInstance().
+                        checkForPermission(SatsaPermission.SIGN_SERVICE);
             } catch (InterruptedException ie) {
                 throw new SecurityException(
                     "Interrupted while trying to ask the user permission");
@@ -435,8 +421,7 @@ public class PKIManager {
         if (action != AUTHENTICATE_DATA) {
             try {
                 if (MessageDialog
-		    .showMessage(classSecurityToken,
-				 Resource
+		    .showMessage(Resource
 				 .getString(ResourceConstants
 					    .JSR177_CONFIRM_SIGNATURE),
 				 Resource
@@ -460,7 +445,7 @@ public class PKIManager {
             for (int i = 0; i < slotCount; i++) {
 
                 WIMApplication w = WIMApplication.getInstance(
-                                     classSecurityToken, i, null, true);
+                                     i, null, true);
                 if (w == null) {
                     continue;
                 }
@@ -475,7 +460,7 @@ public class PKIManager {
 
             if (securityElementPrompt != null) {
                 try {
-                    if (MessageDialog.showMessage(classSecurityToken,
+                    if (MessageDialog.showMessage(
                         Resource.getString(ResourceConstants
 					   .JSR177_WIM_NOT_FOUND),
                         securityElementPrompt, true) != -1) {
@@ -504,19 +489,18 @@ public class PKIManager {
 
         Vector CSRs = new Vector();
 
-    	String storeName = File.getStorageRoot(
-	    Constants.INTERNAL_STORAGE_ID) + CSR_ID_FILE;
-    	RandomAccessStream storage =
-                new RandomAccessStream(classSecurityToken);
+    	String storeName = FileAccess.getStorageRoot(
+	    FileAccess.INTERNAL_STORAGE_ID) + CSR_ID_FILE;
+    	FileAccess storage = FileAccess.getInstance(storeName);
         DataInputStream dis;
 
         try {
-            storage.connect(storeName, Connector.READ);
+            storage.connect(Connector.READ);
             dis = new DataInputStream(storage.openInputStream());
         } catch (IOException ioe) {
 
             try {
-                storage.connect(storeName, Connector.READ_WRITE);
+                storage.connect(Connector.READ_WRITE);
                 DataOutputStream dos = storage.openDataOutputStream();
                 dos.writeInt(0);
                 dos.flush();
@@ -558,14 +542,14 @@ public class PKIManager {
             return;
         }
 
-        String storeName = File.getStorageRoot(
-	    Constants.INTERNAL_STORAGE_ID) + CSR_ID_FILE;
-        RandomAccessStream storage =
-                new RandomAccessStream(classSecurityToken);
+        String storeName = FileAccess.getStorageRoot(
+	    FileAccess.INTERNAL_STORAGE_ID) + CSR_ID_FILE;
+        FileAccess storage = FileAccess.getInstance(storeName);
+
         DataOutputStream dos;
 
         try {
-            storage.connect(storeName, Connector.WRITE);
+            storage.connect(Connector.WRITE);
             dos = storage.openDataOutputStream();
             int len = CSRs.size();
             dos.writeInt(len);

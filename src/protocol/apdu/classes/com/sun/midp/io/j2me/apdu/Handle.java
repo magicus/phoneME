@@ -26,8 +26,6 @@
 
 package com.sun.midp.io.j2me.apdu;
 
-import com.sun.midp.security.SecurityToken;
-
 /**
  * This class represents a handle for APDU connection.
  */
@@ -41,8 +39,6 @@ public class Handle {
     Cad cad;
     /** Is this connection opened? */
     boolean opened;
-    /** Security token used by this connection. */
-    public SecurityToken token;
     /** FCI received from selected application. */
     public byte[] FCI;
 
@@ -70,11 +66,10 @@ public class Handle {
      * @param channel channel number
      * @param token security token
      */
-    Handle(int slot, int channel, SecurityToken token) {
+    Handle(int slot, int channel) {
 
         this.slot = slot;
         this.channel = channel;
-        this.token = token;
         cad = APDUManager.cads[slot];
         FCI = cad.getFCI();
         opened = true;

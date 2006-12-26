@@ -26,10 +26,9 @@
 
 package com.sun.midp.io.j2me.apdu;
 
-import com.sun.midp.security.SecurityToken;
 import javax.microedition.io.*;
 import com.sun.cardreader.*;
-import com.sun.midp.main.Configuration;
+import com.sun.j2me.main.Configuration;
 
 import java.io.*;
 
@@ -78,12 +77,11 @@ public class APDUManager {
      * IOException.
      *
      * @param slot Slot number
-     * @param securityToken Security token for this class
      * @return new connection handle
      * @exception IOException when SIM is not present or
      * connection cannot be established with the card.
      */
-    static Handle openSATConnection(int slot, SecurityToken securityToken)
+    static Handle openSATConnection(int slot)
         throws IOException {
         
         Handle h = null;
@@ -106,7 +104,7 @@ if (false) {
         synchronized (sync[slot]) {
             try {
                 if (cads[slot] == null) {
-                    cads[slot] = new Cad(slot, securityToken);
+                    cads[slot] = new Cad(slot);
                 }
             } catch (IOException e) {
                 freeResources(slot);
@@ -141,8 +139,7 @@ if (false) {
                 if (ok) {
                     try {
                         h = new Handle(slot,
-                            cads[slot].selectApplication(true, apdu),
-                            securityToken);
+                            cads[slot].selectApplication(true, apdu));
                     } catch (IOException e) {
                         if (cads[slot].isAlive()) {
                             cads[slot].clean();
@@ -158,7 +155,7 @@ if (false) {
                 if (!cads[slot].isAlive()) {
                     throw new ConnectionNotFoundException("SIM not found");
                 }
-                h = new Handle(slot, 0, securityToken);
+                h = new Handle(slot, 0);
             }
             satHandle = h; // Save handle created for SAT connection
             return h;
@@ -174,13 +171,11 @@ if (false) {
      *
      * @param apdu The APDU that will be used for opening
      * @param slot Slot number
-     * @param securityToken Security token for this class
      * @return new connection handle
      * @exception IOException when a card is not present or
      * connection cannot be established with the card.
      */
-    public static Handle openACLConnection(byte[] apdu, int slot, 
-                SecurityToken securityToken)
+    public static Handle openACLConnection(byte[] apdu, int slot) 
         throws IOException {
         
         Handle h = null;
@@ -189,7 +184,7 @@ if (false) {
         
         try {
             if (cads[slot] == null) {
-                cads[slot] = new Cad(slot, securityToken);
+                cads[slot] = new Cad(slot);
             }
         } catch (IOException e) {
             freeResources(slot);
@@ -197,8 +192,7 @@ if (false) {
         }
         try {
             return new Handle(slot,
-                   cads[slot].selectApplication(true, apdu),
-                   securityToken);
+                   cads[slot].selectApplication(true, apdu));
         } catch (IOException e) {
             if (cads[slot].isAlive()) {
                 cads[slot].clean();
@@ -224,18 +218,17 @@ if (false) {
      * @param slot contains the information regarding the slot the has
      * the card containing the application with which connection needs
      * to be established
-     * @param securityToken Security token for this class
      * @return new connection handle
      * @exception IOException when selection is not successful
      */
-    public static Handle selectApplication(byte[] selectAPDU, int slot,
-                  SecurityToken securityToken) throws IOException {
+    public static Handle selectApplication(byte[] selectAPDU, int slot)
+                     throws IOException {
 
         init();
         synchronized (sync[slot]) {
             try {
                 if (cads[slot] == null) {
-                    cads[slot] = new Cad(slot, securityToken);
+                    cads[slot] = new Cad(slot);
                 }
             } catch (IOException e) {
                 freeResources(slot);
@@ -243,8 +236,7 @@ if (false) {
             }
             try {
                 return new Handle(slot,
-                        cads[slot].selectApplication(false, selectAPDU),
-                        securityToken);
+                        cads[slot].selectApplication(false, selectAPDU));
             } catch (IOException e) {
                 if (cads[slot].isAlive()) {
                     cads[slot].clean();
@@ -260,14 +252,13 @@ if (false) {
     /**
      * Initializes ACL for the slot.
      * @param slot The slot number
-     * @param securityToken Security token for this class
      */
-    public static void initACL(int slot, SecurityToken securityToken) {
+    public static void initACL(int slot) {
         try {
             init();
             synchronized (sync[slot]) {
                 if (cads[slot] == null) {
-                    cads[slot] = new Cad(slot, securityToken);
+                    cads[slot] = new Cad(slot);
                 }
                 cads[slot].initACL();
             }
@@ -365,7 +356,7 @@ if (false) {
 
             if (cads[h.slot] == null) {
                 try {
-                    cads[h.slot] = new Cad(h.slot, h.token);
+                    cads[h.slot] = new Cad(h.slot);
                 } catch (IOException e) {
                     throw e;
                 }

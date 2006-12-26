@@ -27,8 +27,7 @@
 package com.sun.cardreader;
 
 import java.io.IOException;
-import com.sun.midp.security.*;
-import com.sun.midp.main.Configuration;
+import com.sun.j2me.main.Configuration;
 
 /**
  * This is an internal class to hold a device configuration records.
@@ -132,7 +131,7 @@ public class SlotFactory {
      * @throws IOException If CardSlot creation failed
      * @throws CardDeviceException If something wrong with the configuration
      */
-    public static CardSlot getCardSlot(int slot, SecurityToken securityToken)
+    public static CardSlot getCardSlot(int slot)
 	throws IOException, CardDeviceException {
 
         synchronized (initialized) {
@@ -160,7 +159,7 @@ public class SlotFactory {
                 }
                     
                 int localSlot = slot - device.getStartSlotNumber();
-                slots[slot] = new CardSlot(device, localSlot, securityToken);
+                slots[slot] = new CardSlot(device, localSlot);
 
                 return slots[slot];
             }

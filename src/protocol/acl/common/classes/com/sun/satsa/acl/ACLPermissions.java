@@ -26,7 +26,6 @@
 
 package com.sun.satsa.acl;
 
-import com.sun.midp.security.SecurityToken;
 import java.util.Vector;
 import java.lang.SecurityException;
 
@@ -154,16 +153,15 @@ public class ACLPermissions {
 
     /**
      * Requests the user to enter the PIN value(s).
-     * @param securityToken class security token.
      * @param action PIN operation identifier.
      * @return null if operation was cancelled or the array that contains
      * byte array(s) with PIN value(s).
      */
-    public Object[] enterPIN(SecurityToken securityToken, int action) {
+    public Object[] enterPIN(int action) {
 
         PINEntryDialog dialog;
         try {
-            dialog = new PINEntryDialog(securityToken, action, attr1,
+            dialog = new PINEntryDialog(action, attr1,
                                         attr2);
         } catch (InterruptedException e) {
             throw new SecurityException("Interrupted");

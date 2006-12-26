@@ -150,7 +150,6 @@ GROUP_DOC_ALL += \
 JSR_177_COMMON = $(JSR_177_DIR)/src/common
 
 MODULE_SATSA_COMMON_JAVA_FILES = \
-    $(JSR_177_COMMON)/classes/com/sun/satsa/security/SecurityInitializer.java \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/PKCS15File.java \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/AODF.java \
     $(JSR_177_COMMON)/classes/com/sun/satsa/util/pkcs15/DODF.java \
@@ -170,7 +169,6 @@ MODULE_SATSA_COMMON_JAVA_FILES = \
     $(JSR_177_DIR)/src/satsa/classes/javax/microedition/securityservice/CMSMessageSignatureService.java \
     $(JSR_177_DIR)/src/satsa/classes/javax/microedition/securityservice/CMSMessageSignatureServiceException.java \
     $(JSR_177_DIR)/src/satsa/classes/javax/microedition/apdu/APDUConnection.java \
-    $(JSR_177_DIR)/src/satsa/classes/java/lang/UnsupportedOperationException.java \
     $(JSR_177_DIR)/src/satsa/classes/javacard/framework/service/ServiceException.java \
     $(JSR_177_DIR)/src/satsa/classes/javacard/framework/ISOException.java \
     $(JSR_177_DIR)/src/satsa/classes/javacard/framework/APDUException.java \
@@ -182,12 +180,18 @@ MODULE_SATSA_COMMON_JAVA_FILES = \
     $(JSR_177_DIR)/src/satsa/classes/javacard/framework/UserException.java \
     $(JSR_177_DIR)/src/satsa/classes/javacard/security/CryptoException.java
 
+ifeq ($(TARGET_VM),cldc_vm)
+MODULE_SATSA_COMMON_JAVA_FILES += \
+    $(JSR_177_COMMON)/classes/com/sun/satsa/security/SecurityInitializer.java \
+    $(JSR_177_DIR)/src/satsa/classes/java/lang/UnsupportedOperationException.java
+
 # Same classes are included in JSR 172 as well.
 # Avoid double inclusion.
 ifneq ($(USE_JSR_172), true)
 MODULE_SATSA_COMMON_JAVA_FILES += \
     $(JSR_177_DIR)/src/satsa/classes/java/rmi/Remote.java \
     $(JSR_177_DIR)/src/satsa/classes/java/rmi/RemoteException.java
+endif
 endif
 
 JSR_177_ACL_COMMON_DIR = $(JSR_177_DIR)/src/protocol/acl/common
@@ -328,8 +332,6 @@ MODULE_SATSA_JCRMI_JAVA_FILES = \
 
 MODULE_SATSA_PKI_JAVA_FILES = \
     $(JSR_177_DIR)/src/pki/classes/com/sun/satsa/pki/Certificate.java \
-    $(JSR_177_DIR)/src/pki/classes/com/sun/satsa/pki/Dialog.java \
-    $(JSR_177_DIR)/src/pki/classes/com/sun/satsa/pki/MessageDialog.java \
     $(JSR_177_DIR)/src/pki/classes/com/sun/satsa/pki/PKIManager.java \
     $(JSR_177_DIR)/src/pki/classes/com/sun/satsa/pki/PrivateKey.java \
     $(JSR_177_DIR)/src/pki/classes/com/sun/satsa/pki/RFC2253Name.java \
@@ -337,6 +339,23 @@ MODULE_SATSA_PKI_JAVA_FILES = \
     $(JSR_177_DIR)/src/pki/classes/com/sun/satsa/pki/WimFileSystem.java \
     $(JSR_177_DIR)/src/pki/classes/com/sun/satsa/pki/WIMApplication.java
 
+ifeq ($(TARGET_VM),cldc_vm)
+MODULE_SATSA_PKI_JAVA_FILES += \
+    $(JSR_177_DIR)/src/pki/classes/com/sun/satsa/pki/Dialog.java \
+    $(JSR_177_DIR)/src/pki/classes/com/sun/satsa/pki/MessageDialog.java
+endif
+
+MODULE_SATSA_CRYPTO_JAVA_FILES += \
+    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/BadPaddingException.java \
+    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/Cipher.java \
+    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/IllegalBlockSizeException.java \
+    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/NoSuchPaddingException.java \
+    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/ShortBufferException.java \
+    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/spec/SecretKeySpec.java \
+    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/spec/IvParameterSpec.java \
+    $(JSR_177_DIR)/src/crypto/classes/com/sun/satsa/crypto/RSAPublicKey.java
+
+ifeq ($(TARGET_VM),cldc_vm)
 MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/satsa/classes/java/security/Signature.java \
     $(JSR_177_DIR)/src/satsa/classes/java/security/Key.java \
@@ -354,15 +373,8 @@ MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/satsa/classes/java/security/spec/EncodedKeySpec.java \
     $(JSR_177_DIR)/src/satsa/classes/java/security/spec/InvalidKeySpecException.java \
     $(JSR_177_DIR)/src/satsa/classes/java/security/spec/X509EncodedKeySpec.java \
-    $(JSR_177_DIR)/src/satsa/classes/java/security/spec/AlgorithmParameterSpec.java \
-    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/BadPaddingException.java \
-    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/Cipher.java \
-    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/IllegalBlockSizeException.java \
-    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/NoSuchPaddingException.java \
-    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/ShortBufferException.java \
-    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/spec/SecretKeySpec.java \
-    $(JSR_177_DIR)/src/satsa/classes/javax/crypto/spec/IvParameterSpec.java \
-    $(JSR_177_DIR)/src/crypto/classes/com/sun/satsa/crypto/RSAPublicKey.java
+    $(JSR_177_DIR)/src/satsa/classes/java/security/spec/AlgorithmParameterSpec.java
+endif
 
 JCRMIC_SOURCES = \
     $(JSR_177_DIR)/src/tool/jcrmic/com/sun/satsa/jcrmic/classfile/attributes/JAttribute.java \

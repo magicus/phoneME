@@ -26,39 +26,42 @@
 
 package com.sun.satsa.acl;
 
-import com.sun.midp.lcdui.DisplayEventHandler;
-import com.sun.midp.lcdui.DisplayEventHandlerFactory;
-import com.sun.midp.security.SecurityToken;
+import com.sun.j2me.i18n.Resource;
+import com.sun.j2me.i18n.ResourceConstants;
 
-import com.sun.midp.i18n.Resource;
-import com.sun.midp.i18n.ResourceConstants;
-
-import com.sun.midp.midlet.MIDletEventConsumer;
-import com.sun.midp.midlet.MIDletPeer;
-
-import javax.microedition.lcdui.*;
+//import com.sun.midp.lcdui.DisplayEventHandler;
+//import com.sun.midp.lcdui.DisplayEventHandlerFactory;
+//import com.sun.midp.security.SecurityToken;
+//
+//import com.sun.midp.i18n.Resource;
+//import com.sun.midp.i18n.ResourceConstants;
+//
+//import com.sun.midp.midlet.MIDletEventConsumer;
+//import com.sun.midp.midlet.MIDletPeer;
+//
+//import javax.microedition.lcdui.*;
 
 
 /** Implements PIN entry dialog. */
-public class PINEntryDialog implements CommandListener {
+public class PINEntryDialog /*implements CommandListener */{
 
     /** Answer that indicates that the dialog was cancelled. */
     private static final int CANCELLED = -1;
     /** Answer that indicates successful completion. */
     private static final int CONFIRMED = 1;
 
-    /** Caches the display manager reference. */
-    private DisplayEventHandler displayEventHandler;
-
-    /** Command object for "OK" command. */
-    private Command okCmd = 
-	new Command(Resource.getString(ResourceConstants.OK),
-		    Command.OK, 1);
-
-    /** Command object for "Cancel" command. */
-    private Command cancelCmd =
-	new Command(Resource.getString(ResourceConstants.CANCEL),
-		    Command.CANCEL, 1);
+//    /** Caches the display manager reference. */
+//    private DisplayEventHandler displayEventHandler;
+//
+//    /** Command object for "OK" command. */
+//    private Command okCmd = 
+//	new Command(Resource.getString(ResourceConstants.OK),
+//		    Command.OK, 1);
+//
+//    /** Command object for "Cancel" command. */
+//    private Command cancelCmd =
+//	new Command(Resource.getString(ResourceConstants.CANCEL),
+//		    Command.CANCEL, 1);
 
     /** Holds the preempt token so the form can end. */
     private Object preemptToken;
@@ -66,10 +69,10 @@ public class PINEntryDialog implements CommandListener {
     /** Holds the answer to the security question. */
     private int answer = CANCELLED;
 
-    /** PIN entry text field. */
-    private TextField tf1;
-    /** PIN entry text field. */
-    private TextField tf2;
+//    /** PIN entry text field. */
+//    private TextField tf1;
+//    /** PIN entry text field. */
+//    private TextField tf2;
     /** Attributes of the 1st PIN. */
     private PINAttributes pin1;
     /** Attributes of the 2nd PIN. */
@@ -91,7 +94,7 @@ public class PINEntryDialog implements CommandListener {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public PINEntryDialog(SecurityToken token, int action,
+    public PINEntryDialog(int action,
                           PINAttributes attr1, PINAttributes attr2)
             throws InterruptedException {
 
@@ -146,34 +149,34 @@ public class PINEntryDialog implements CommandListener {
             }
         }
 
-        Form form = new Form(title);
-
-        int flags = TextField.PASSWORD;
-        if (pin1.isNumeric()) {
-            flags |= TextField.NUMERIC;
-        }
-        tf1  = new TextField(label1, "", pin1.getMaxLength(), flags);
-        form.append(tf1);
-
-        if (pin2 != null) {
-
-            flags = TextField.SENSITIVE | TextField.NON_PREDICTIVE;
-            if (pin2.isNumeric()) {
-                flags |= TextField.NUMERIC;
-            }
-            tf2  = new TextField(label2, "", pin2.getMaxLength(), flags);
-            form.append(tf2);
-
-        }
-
-        form.addCommand(cancelCmd);
-        form.addCommand(okCmd);
-        form.setCommandListener(this);
-	if (displayEventHandler  == null) {
-	    displayEventHandler = DisplayEventHandlerFactory
-		.getDisplayEventHandler(token);
-	}
-        preemptToken = displayEventHandler.preemptDisplay(form, true);
+//        Form form = new Form(title);
+//
+//        int flags = TextField.PASSWORD;
+//        if (pin1.isNumeric()) {
+//            flags |= TextField.NUMERIC;
+//        }
+//        tf1  = new TextField(label1, "", pin1.getMaxLength(), flags);
+//        form.append(tf1);
+//
+//        if (pin2 != null) {
+//
+//            flags = TextField.SENSITIVE | TextField.NON_PREDICTIVE;
+//            if (pin2.isNumeric()) {
+//                flags |= TextField.NUMERIC;
+//            }
+//            tf2  = new TextField(label2, "", pin2.getMaxLength(), flags);
+//            form.append(tf2);
+//
+//        }
+//
+//        form.addCommand(cancelCmd);
+//        form.addCommand(okCmd);
+//        form.setCommandListener(this);
+//	if (displayEventHandler  == null) {
+//	    displayEventHandler = DisplayEventHandlerFactory
+//		.getDisplayEventHandler(token);
+//	}
+//        preemptToken = displayEventHandler.preemptDisplay(form, true);
     }
 
     /**
@@ -205,28 +208,28 @@ public class PINEntryDialog implements CommandListener {
     private void setAnswer(int theAnswer) {
         synchronized (this) {
             answer = theAnswer;
-            displayEventHandler.donePreempting(preemptToken);
+//            displayEventHandler.donePreempting(preemptToken);
             notify();
         }
 
     }
 
-    /**
-     * Respond to a command issued on form.
-     * @param c command activiated by the user
-     * @param s the Displayable the command was on.
-     */
-    public void commandAction(Command c, Displayable s) {
-        if (c == okCmd) {
-            if (! checkInput()) {
-                return;
-            }
-            setAnswer(CONFIRMED);
-        } else {
-            setAnswer(CANCELLED);
-        }
-
-    }
+//    /**
+//     * Respond to a command issued on form.
+//     * @param c command activiated by the user
+//     * @param s the Displayable the command was on.
+//     */
+//    public void commandAction(Command c, Displayable s) {
+//        if (c == okCmd) {
+//            if (! checkInput()) {
+//                return;
+//            }
+//            setAnswer(CONFIRMED);
+//        } else {
+//            setAnswer(CANCELLED);
+//        }
+//
+//    }
 
     /**
      * Verifies that the values entered are acceptable.
@@ -234,20 +237,20 @@ public class PINEntryDialog implements CommandListener {
      */
     private boolean checkInput() {
 
-        if (tf1.getString().trim().equals("")) {
-            return false;
-        }
-
-        data1 = pin1.transform(tf1.getString());
+//        if (tf1.getString().trim().equals("")) {
+//            return false;
+//        }
+//
+//        data1 = pin1.transform(tf1.getString());
         if (data1 == null) {
             // PIN can't be formatted, pass empty PIN to update counter
             data1 = new byte[8];
         }
 
         if (pin2 != null) {
-            data2 = pin2.transform(tf2.getString());
+//            data2 = pin2.transform(tf2.getString());
             if (data2 == null) {
-                tf2.setString("");
+//                tf2.setString("");
                 return false;
             }
         } else {

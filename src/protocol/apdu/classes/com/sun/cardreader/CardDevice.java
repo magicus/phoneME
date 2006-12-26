@@ -27,7 +27,6 @@
 package com.sun.cardreader;
 
 import java.io.IOException;
-import com.sun.midp.security.*;
 
 /**
  * This class represents card device abstraction.
@@ -91,7 +90,7 @@ public abstract class CardDevice {
      * @param token Security token for this slot
      * @throws IOException If slot opening failed.
      */
-    public void openSlot(int slot, SecurityToken token) throws IOException {
+    public void openSlot(int slot) throws IOException {
     }
     
     /**

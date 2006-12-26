@@ -28,7 +28,6 @@ package com.sun.cardreader;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import com.sun.midp.security.*;
 
 /**
  * This class represents card slot abstraction.
@@ -43,11 +42,6 @@ public class CardSlot {
      * Local slot number (inside the device).
      */
     private int slotNumber;
-
-    /**
-     * Security token for this slot.
-     */
-    SecurityToken securityToken;
 
     /**
      * Indicates that the slot has been opened.
@@ -85,14 +79,12 @@ public class CardSlot {
      *
      * @param device Card device for which the slot is created
      * @param slot Local device slot number
-     * @param token Security token for this slot
      * @throws IOException If slot creation failed.
      */
-    public CardSlot(CardDevice device, int slot, SecurityToken token)
+    public CardSlot(CardDevice device, int slot)
 	throws IOException {
         this.device = device;
         this.slotNumber = slot;
-        this.securityToken = token;
         opened = false;
         cardChanged = true;
         isAliveAPDU = new byte[] {0, 0x70, (byte) 0x80, 0};
@@ -363,7 +355,7 @@ public class CardSlot {
         boolean openedSuccessfuly = false;
         if (!opened) {
             try {
-                device.openSlot(slotNumber, securityToken);
+                device.openSlot(slotNumber);
                 openedSuccessfuly = true;
                 device.selectSlot(slotNumber);
                 device.reset();

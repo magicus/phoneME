@@ -26,6 +26,8 @@
 
 package com.sun.midp.io.j2me.jcrmi;
 
+import com.sun.j2me.app.AppPackage;
+import com.sun.j2me.security.SatsaPermission;
 import java.io.*;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -34,22 +36,15 @@ import javax.microedition.io.StreamConnection;
 import javax.microedition.jcrmi.JavaCardRMIConnection;
 import javax.microedition.jcrmi.RemoteStub;
 
-import com.sun.cldc.io.ConnectionBaseInterface;
+import com.sun.j2me.io.ConnectionBaseInterface;
 import com.sun.midp.crypto.MessageDigest;
 import com.sun.midp.crypto.GeneralSecurityException;
 import com.sun.midp.io.j2me.apdu.APDUManager;
 import com.sun.midp.io.j2me.apdu.Handle;
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midletsuite.MIDletSuiteImpl;
-import com.sun.midp.security.ImplicitlyTrustedClass;
-import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.Permissions;
 import com.sun.satsa.acl.ACLPermissions;
 import com.sun.satsa.acl.AccessControlManager;
 import com.sun.satsa.acl.JCRMIPermissions;
 import com.sun.satsa.util.Utils;
-import com.sun.satsa.security.SecurityInitializer;
 import javacard.framework.*;
 import javacard.framework.service.ServiceException;
 
@@ -59,17 +54,6 @@ import javacard.framework.service.ServiceException;
 public class Protocol
     implements JavaCardRMIConnection, ConnectionBaseInterface,
 	       StreamConnection {
-
-    /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
-     */
-    static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
-
-    /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken =
-        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * Size of APDU buffer.
@@ -144,11 +128,9 @@ public class Protocol
     public Connection openPrim(String name, int mode, boolean timeouts)
             throws IOException {
 
-        MIDletSuite midletSuite =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-
+        AppPackage appPackage = AppPackage.getInstance();
         try {
-            midletSuite.checkForPermission(Permissions.JCRMI_CONNECTION, null);
+            appPackage.checkForPermission(SatsaPermission.JCRMI_CONNECTION);
         } catch (InterruptedException ie) {
             throw new InterruptedIOException(
                 "Interrupted while trying to ask the user permission");
@@ -168,15 +150,13 @@ public class Protocol
 
         APDUManager.checkSlotNumber(slotInfo);
         // get card application selected
-         APDUManager.initACL(slotInfo, classSecurityToken);
+         APDUManager.initACL(slotInfo);
          verifier = AccessControlManager
                 .getJCRMIPermissions(slotInfo,
                 APDUBuffer,
-                ((MIDletSuiteImpl)midletSuite)
-                .getInstallInfo().getCA());
+                appPackage.getCA());
 
-         h = APDUManager.selectApplication(APDUBuffer, slotInfo,
-                                              classSecurityToken);
+         h = APDUManager.selectApplication(APDUBuffer, slotInfo);
 
         connectionOpen = true;
 
@@ -1041,7 +1021,7 @@ public class Protocol
         String method = null;
         method = verifier.preparePIN(pinID, uPinID, action,
                                     internalReference.getClassName());
-        Object[] pins = verifier.enterPIN(classSecurityToken, action);
+        Object[] pins = verifier.enterPIN(action);
 
         if (pins == null) {
             return PINENTRY_CANCELLED;
