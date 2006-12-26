@@ -29,6 +29,8 @@ package com.sun.midp.midlet;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
+import com.sun.midp.main.MIDletSuiteExceptionListener;
+
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
@@ -364,6 +366,7 @@ public class MIDletStateHandler {
      * If the foreground MIDlet changes from the ACTIVE_FOREGROUND state
      * it automatically looses the foreground and and new one is selected.
      *
+     * @param exceptionHandler the handler for midlet execution exceptions.
      * @param aMidletSuite the current midlet suite
      * @param externalAppId ID of given by an external application manager
      * @param classname name of MIDlet class
@@ -375,9 +378,9 @@ public class MIDletStateHandler {
      * @exception IllegalAccessException is thrown, if the MIDlet is not
      * permitted to perform a specific operation
      */
-    public void startSuite(MIDletSuite aMidletSuite, int externalAppId,
-           String classname) throws
-           ClassNotFoundException, InstantiationException,
+    public void startSuite(MIDletSuiteExceptionListener exceptionHandler,
+           MIDletSuite aMidletSuite, int externalAppId, String classname)
+           throws ClassNotFoundException, InstantiationException,
            IllegalAccessException {
 
         if (midletSuite != null) {
@@ -482,6 +485,7 @@ public class MIDletStateHandler {
                             Logging.trace(ex, "startApp threw an Exception");
                         }
                         curr.setState(MIDletPeer.DESTROY_PENDING);
+                        exceptionHandler.handleException(ex);
                         break;
                     }
 
@@ -502,6 +506,7 @@ public class MIDletStateHandler {
                         }
 
                         curr.setState(MIDletPeer.DESTROY_PENDING);
+                        exceptionHandler.handleException(ex);
                         break;
                     }
 
@@ -527,10 +532,12 @@ public class MIDletStateHandler {
                                            "destroyApp  threw a " +
                                            "MIDletStateChangeException");
                         }
+                        exceptionHandler.handleException(ex);
                     } catch (Throwable ex) {
                         if (Logging.TRACE_ENABLED) {
                             Logging.trace(ex, "destroyApp threw an Exception");
                         }
+                        exceptionHandler.handleException(ex);
                     }
                     break;
 
@@ -543,6 +550,7 @@ public class MIDletStateHandler {
                 if (Logging.TRACE_ENABLED) {
                     Logging.trace(ex, "Exception in startSuite");
                 }
+                exceptionHandler.handleException(ex);
             }
         }
     }

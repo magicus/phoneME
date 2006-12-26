@@ -284,7 +284,7 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
      * @param errorCode generic error code
      * @param details text with error details
      */
-    protected void reportErrorImpl(int errorCode, String details) {
+    protected void reportError(int errorCode, String details) {
         state.status = errorCode;
 
         // Initialize display alerts state on first error handling
@@ -307,32 +307,6 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
         if (Logging.REPORT_LEVEL <= Logging.ERROR) {
             Logging.report(Logging.ERROR, LogChannels.LC_CORE, errorMsg);
         }
-    }
-
-    /**
-     * Implements abstract base class method to report
-     * an error with no extra details
-     *
-     * @param errorCode generic error code to report
-     */
-    protected void reportError(int errorCode) {
-        reportErrorImpl(errorCode, null);
-    }
-
-    /**
-     * Handles exceptions happened during MIDlet suite execution
-     * @param t exception instance
-     */
-    protected void handleException(Throwable t) {
-        t.printStackTrace();
-        int errorCode = getErrorCode(t);
-
-        if (Logging.TRACE_ENABLED) {
-            Logging.trace(t,
-                "Exception caught in MIDletSuiteLoader");
-        }
-
-        reportErrorImpl(errorCode, t.getMessage());
     }
 
     /**

@@ -28,7 +28,6 @@ package com.sun.midp.main;
 
 import com.sun.cldc.isolate.Isolate;
 import com.sun.midp.security.Permissions;
-import com.sun.midp.log.Logging;
 
 /**
  * The first class loaded in an application Isolate by the MIDP AMS to
@@ -113,24 +112,16 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
         return allocateReservedResources0();
     }
 
-    /** Reports suite task error event system */
-    protected void reportError(int errorCode) {
+    /**
+     * Posts suite task error to event system.
+     *
+     * @param errorCode the error code to report
+     * @param details text with error details
+     */
+    protected void reportError(int errorCode, String details) {
         midletControllerEventProducer.sendMIDletStartErrorEvent(
             suiteId, midletClassName, externalAppId,
             errorCode);
-    }
-
-    /** Handles suite task exceptions */
-    protected void handleException(Throwable t) {
-        t.printStackTrace();
-        int errorCode = getErrorCode(t);
-
-        if (Logging.TRACE_ENABLED) {
-            Logging.trace(t,
-                "Exception caught in AppIsolateMIDletSuiteLoader");
-        }
-
-        reportError(errorCode);
     }
 
     /** Exits suite loader Isolate with proper exit code. */
