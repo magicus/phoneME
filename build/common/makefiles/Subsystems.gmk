@@ -404,3 +404,10 @@ endif
 endif
 endif
 
+#####################################################################
+# (Extra) JPEG lib
+# Description: JPEG
+#####################################################################
+ifeq ($(USE_JPEG), true)
+include $(JPEG_DIR)/$(SUBSYSTEM_MAKE_FILE)
+endif
