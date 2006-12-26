@@ -26,16 +26,17 @@
 
 package com.sun.satsa.pki;
 
+import com.sun.j2me.dialog.Dialog;
+import com.sun.j2me.dialog.MessageDialog;
 import com.sun.midp.io.j2me.apdu.APDUManager;
 import com.sun.midp.io.j2me.apdu.Handle;
-import com.sun.midp.security.SecurityToken;
 import com.sun.satsa.acl.ACLPermissions;
 import com.sun.satsa.acl.PINAttributes;
 import com.sun.satsa.acl.PINEntryDialog;
 import com.sun.satsa.util.*;
 
-import com.sun.midp.i18n.Resource;
-import com.sun.midp.i18n.ResourceConstants;
+import com.sun.j2me.i18n.Resource;
+import com.sun.j2me.i18n.ResourceConstants;
 
 import javax.microedition.pki.UserCredentialManager;
 import javax.microedition.pki.UserCredentialManagerException;
@@ -59,11 +60,6 @@ class WIMApplication {
     static final int CANCEL  = 2;
     /** Operation result constant. */
     static final int ERROR   = 3;
-
-    /**
-     * This class has a different security domain than the MIDlet
-     * suite */
-    private SecurityToken securityToken;
 
     /** INS byte for APDU command. */
     private static final byte INS_VERIFY    = (byte) 0x20;
@@ -183,16 +179,16 @@ class WIMApplication {
      * @param readOnly if true WIM data can be protected
      * @return WIMApplication object or null.
      */
-    public static WIMApplication getInstance(SecurityToken token,
-            int slotNum, String securityElementID, boolean readOnly) {
+    public static WIMApplication getInstance(int slotNum,
+                        String securityElementID, boolean readOnly) {
 
         for (int i = 0; i < selectAPDUs.length; i++) {
 
             Handle h;
-            APDUManager.initACL(slotNum, token);
+            APDUManager.initACL(slotNum);
             try {
                 h = APDUManager.selectApplication(
-                        selectAPDUs[i], (byte) slotNum, token);
+                        selectAPDUs[i], (byte) slotNum);
             } catch (IOException e) {
                 continue;
             }
@@ -214,7 +210,6 @@ class WIMApplication {
     private WIMApplication(Handle h) {
         this.apdu = new Connection(h);
         files = new WimFileSystem(apdu);
-        securityToken = h.token;
     }
 
     /**
@@ -753,8 +748,7 @@ class WIMApplication {
             if (status == PIN_BLOCKED) {
                 try {
                     MessageDialog
-			.showMessage(securityToken,
-				     Resource.getString(ResourceConstants
+			.showMessage(Resource.getString(ResourceConstants
 							.ERROR),
 				     Resource
 				     .getString(ResourceConstants
@@ -768,8 +762,7 @@ class WIMApplication {
             // verification is required
             PINEntryDialog dialog;
             try {
-                dialog = new PINEntryDialog(securityToken,
-                        ACLPermissions.CMD_VERIFY,
+                dialog = new PINEntryDialog(ACLPermissions.CMD_VERIFY,
                         pin, null);
             } catch (InterruptedException e) {
                 return PIN_CANCELLED;
@@ -799,8 +792,7 @@ class WIMApplication {
 
             try {
                 MessageDialog
-		    .showMessage(securityToken,
-				 Resource
+		    .showMessage(Resource
 				 .getString(ResourceConstants
 					    .ERROR),
 				 Resource
@@ -850,7 +842,7 @@ class WIMApplication {
         }
 
         try {
-            if (MessageDialog.showMessage(securityToken,
+            if (MessageDialog.showMessage(
                 Resource.getString(ResourceConstants.AMS_CONFIRMATION),
                 Resource.getString(ResourceConstants.
                     JSR177_CERTIFICATE_GENERATED) +
@@ -1093,7 +1085,7 @@ class WIMApplication {
 
         if (nonRepudiation) {
             // must create new PIN
-            String[] pinInfo = MessageDialog.enterNewPIN(securityToken);
+            String[] pinInfo = MessageDialog.enterNewPIN();
             if (pinInfo == null) {
                 return -1;
             }
@@ -1658,7 +1650,7 @@ class WIMApplication {
         }
 
         try {
-            if (MessageDialog.showMessage(securityToken,
+            if (MessageDialog.showMessage(
                 Resource.getString(ResourceConstants.AMS_CONFIRMATION),
                 Resource.getString(ResourceConstants
                        .JSR177_CERTIFICATE_DELETED) +
@@ -2453,7 +2445,7 @@ class WIMApplication {
                 // if only one chain is found show certificate label to
                 // the user
 
-                if (MessageDialog.showMessage(securityToken,
+                if (MessageDialog.showMessage(
                         Resource.getString(ResourceConstants
 					   .AMS_CONFIRMATION),
                         Resource.getString(ResourceConstants
@@ -2464,7 +2456,7 @@ class WIMApplication {
             } else {
                 // if more than one chain is found ask user to choose
                 // one of them
-                chainIndex = MessageDialog.chooseItem(securityToken,
+                chainIndex = MessageDialog.chooseItem(
                         Resource.getString(ResourceConstants
 					   .JSR177_SELECT_CERTIFICATE),
                         Resource.getString(ResourceConstants

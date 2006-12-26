@@ -29,7 +29,7 @@ package javax.microedition.pki;
 import javax.microedition.securityservice.CMSMessageSignatureServiceException;
 import javax.microedition.pki.UserCredentialManagerException;
 
-import com.sun.midp.main.Configuration;
+import com.sun.j2me.main.Configuration;
 
 /**
  * This class provides functionality for user credential management

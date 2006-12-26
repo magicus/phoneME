@@ -27,7 +27,6 @@
 
 package com.sun.midp.io.j2me.apdu;
 
-import com.sun.midp.security.SecurityToken;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import javax.microedition.io.ConnectionNotFoundException;
@@ -94,10 +93,10 @@ class Cad {
      * @throws IOException if there any problems in opening the socket or
      * streams or powering up the card.
      */
-    Cad(int slot, SecurityToken securityToken) throws IOException {
+    Cad(int slot) throws IOException {
         
         try {
-            cardSlot = SlotFactory.getCardSlot(slot, securityToken);
+            cardSlot = SlotFactory.getCardSlot(slot);
             if (cardSlot == null) {
                 throw new IOException("Slot factory could not create a slot");
             }

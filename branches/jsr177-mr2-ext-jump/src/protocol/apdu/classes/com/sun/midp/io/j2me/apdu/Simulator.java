@@ -27,11 +27,13 @@
 package  com.sun.midp.io.j2me.apdu;
 
 import com.sun.cardreader.*;
+import com.sun.j2me.io.ConnectionBaseAdapter;
+import com.sun.j2me.io.PrivilegedConnector;
 import java.io.IOException;
-import com.sun.midp.security.*;
 import java.util.*;
 import java.io.*;
-import com.sun.midp.main.Configuration;
+import javax.microedition.io.Connection;
+import com.sun.j2me.main.Configuration;
 
 /**
  * This class provides virtual device driving the simulator.
@@ -56,8 +58,8 @@ public class Simulator extends com.sun.cardreader.CardDevice {
      * Socket connection to connect with the Java Card reference
      * implementation.
      */
-    private com.sun.midp.io.j2me.socket.Protocol[] conn = 
-                new com.sun.midp.io.j2me.socket.Protocol[0];
+    private Connection[] conn = 
+                new Connection[0];
 
     /**
      * Number of slots supported by the simulator.
@@ -133,7 +135,7 @@ public class Simulator extends com.sun.cardreader.CardDevice {
             this.in = new InputStream[this.slotCount];
             this.out = new OutputStream[this.slotCount];
             this.conn = 
-                new com.sun.midp.io.j2me.socket.Protocol[this.slotCount];
+                new Connection[this.slotCount];
 
             for (int i = 0; i < list.size(); i++) {
                 String s = (String) list.elementAt(i);
@@ -190,7 +192,7 @@ public class Simulator extends com.sun.cardreader.CardDevice {
             
             try {
                 if (this.conn[slot] != null) {
-                    com.sun.midp.io.j2me.socket.Protocol tmp = this.conn[slot];
+                    Connection tmp = this.conn[slot];
                     this.conn[slot] = null;
                     tmp.close();
                 }
@@ -246,7 +248,7 @@ public class Simulator extends com.sun.cardreader.CardDevice {
      * @param token Security token
      * @throws IOException If slot opening failed.
      */
-    public void openSlot(int slot, SecurityToken token) throws IOException {
+    public void openSlot(int slot) throws IOException {
         // IMPL_NOTE: The CREF starts very slow. TCK's port checking is not enough:
         // the CREF can accept connection a little later than port 
         // is not available. Two seconds is enough on my computer
@@ -255,12 +257,13 @@ public class Simulator extends com.sun.cardreader.CardDevice {
         } catch (InterruptedException ie) {} // ignored
 
         // Here we open socket to the simulator
-        this.conn[slot] = new com.sun.midp.io.j2me.socket.Protocol();
         String url = "//" + this.hosts[slot] + ":" + this.ports[slot];
         try {
-            this.conn[slot].openPrim(token, url);
-            this.in[slot] = this.conn[slot].openInputStream();
-            this.out[slot] = this.conn[slot].openOutputStream();
+            this.conn[slot] = PrivilegedConnector.openPrim(url);
+            this.in[slot] = ((ConnectionBaseAdapter)this.
+                                    conn[slot]).openInputStream();
+            this.out[slot] = ((ConnectionBaseAdapter)this.
+                                    conn[slot]).openOutputStream();
         } catch (IOException ie) {
             throw new IOException("Cannot open '" + url + "':" + ie);
         }

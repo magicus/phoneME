@@ -31,27 +31,13 @@ import java.util.Vector;
 import com.sun.satsa.util.*;
 
 import com.sun.satsa.util.pkcs15.*;
-import com.sun.satsa.security.SecurityInitializer;
 import com.sun.midp.io.j2me.apdu.*;
-import com.sun.midp.security.ImplicitlyTrustedClass;
-import com.sun.midp.security.SecurityToken;
 
 import javax.microedition.io.ConnectionNotFoundException;
 /**
  * This class represent the ACL Card slot abstraction
  */
 public class ACSlot{
-
-    /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
-     */
-    static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
-
-    /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken =
-        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * Value of OID from the spceification (A.4.2.1 Location of Access
@@ -155,8 +141,7 @@ public class ACSlot{
         boolean isDIR = false;
         try {
             /* attempt to select the MF file */
-            h = APDUManager.openACLConnection(selectMF, slotNumber,
-                    classSecurityToken);
+            h = APDUManager.openACLConnection(selectMF, slotNumber);
             byte[] res = APDUManager.exchangeAPDU(h, selectDIR);
             if (Utils.getShort(res, 0) == FILE_NOT_FOUND) {
                 throw new ConnectionNotFoundException("DIR is not found");
@@ -166,8 +151,7 @@ public class ACSlot{
             /* DIR is not found */
             try {
                 /* attempt to select the PKCS15 application */
-                h = APDUManager.openACLConnection(selectPKCSApp,
-                        slotNumber, classSecurityToken);
+                h = APDUManager.openACLConnection(selectPKCSApp, slotNumber);
                 isDIR = false;
             } catch (ConnectionNotFoundException ce1) {
                 /* PKCS15Application is not found */
