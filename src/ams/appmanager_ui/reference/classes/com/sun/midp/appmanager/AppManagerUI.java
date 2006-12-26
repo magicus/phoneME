@@ -3,25 +3,25 @@
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.appmanager;
@@ -34,6 +34,7 @@ import com.sun.midp.installer.*;
 import com.sun.midp.main.*;
 import com.sun.midp.midletsuite.*;
 import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.io.j2me.push.PushRegistryImpl;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
@@ -351,7 +352,7 @@ class AppManagerUI extends Form
                             MidletCustomItem mi = (MidletCustomItem)get(i);
                             if ((mi.msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID)
                                 && (mi.msi.midletToRun.equals(ms.midletToRun))) {
-                                display.setCurrentItem(mi); 
+                                display.setCurrentItem(mi);
                                 break;
                             }
                         }
@@ -359,7 +360,7 @@ class AppManagerUI extends Form
                         for (int i = 0; i < size(); i++) {
                             MidletCustomItem mi = (MidletCustomItem)get(i);
                             if (mi.msi.suiteId == ms.suiteId) {
-                                display.setCurrentItem(mi); 
+                                display.setCurrentItem(mi);
                                 break;
                             }
                         }
@@ -921,6 +922,8 @@ class AppManagerUI extends Form
                     try {
                         if (suiteInfo != null) {
                             midletSuiteStorage.remove(suiteInfo.suiteId);
+                            PushRegistryImpl.unregisterConnections(
+                                suiteInfo.suiteId);
                         }
                     } catch (Throwable t) {
                         if (t instanceof MIDletSuiteLockedException) {
@@ -1289,7 +1292,7 @@ class AppManagerUI extends Form
          *         in the App Selector Screen.
          */
         protected int getMinContentHeight() {
-            return ICON_BG.getHeight() > ICON_FONT.getHeight() ? 
+            return ICON_BG.getHeight() > ICON_FONT.getHeight() ?
                 ICON_BG.getHeight() : ICON_FONT.getHeight();
         }
 
@@ -1312,11 +1315,11 @@ class AppManagerUI extends Form
          *         in the App Selector Screen.
          */
         protected int getPrefContentHeight(int width) {
-            return ICON_BG.getHeight() > ICON_FONT.getHeight() ? 
+            return ICON_BG.getHeight() > ICON_FONT.getHeight() ?
                 ICON_BG.getHeight() : ICON_FONT.getHeight();
         }
 
-        /** 
+        /**
          * On size change event we define the item's text
          * according to item's new width
          * @param w The current width of this Item
@@ -1331,7 +1334,7 @@ class AppManagerUI extends Form
             truncated = msiNameWidth > widthForText;
         }
 
-        /** 
+        /**
          * Paints the content of a midlet representation in
          * the App Selector Screen.
          * Note that icon representing that foreground was requested
@@ -1348,7 +1351,7 @@ class AppManagerUI extends Form
 
             if ((cW + cX) > bgIconW) {
                 if (text != null && h > ICON_FONT.getHeight()) {
-    
+
                     int color;
                     if (msi.proxy == null) {
                         color = hasFocus ? ICON_HL_TEXT : ICON_TEXT;
@@ -1356,41 +1359,41 @@ class AppManagerUI extends Form
                         color = hasFocus ?
                                 ICON_RUNNING_HL_TEXT : ICON_RUNNING_TEXT;
                     }
-    
+
                     g.setColor(color);
                     g.setFont(ICON_FONT);
-    
-    
+
+
                     boolean truncate = (xScrollOffset == 0) && truncated;
-    
-                    g.clipRect(bgIconW + ITEM_PAD, 0, 
-                        truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD : 
+
+                    g.clipRect(bgIconW + ITEM_PAD, 0,
+                        truncate ? w - truncWidth - bgIconW - 2 * ITEM_PAD :
                                    w - bgIconW - 2 * ITEM_PAD, h);
-                    g.drawChars(text, 0, textLen, 
-                        bgIconW + ITEM_PAD + xScrollOffset, (h - ICON_FONT.getHeight())/2, 
+                    g.drawChars(text, 0, textLen,
+                        bgIconW + ITEM_PAD + xScrollOffset, (h - ICON_FONT.getHeight())/2,
                             Graphics.LEFT | Graphics.TOP);
                     g.setClip(cX, cY, cW, cH);
-    
+
                     if (truncate) {
-                        g.drawChar(truncationMark, w - truncWidth, 
+                        g.drawChar(truncationMark, w - truncWidth,
                             (h - ICON_FONT.getHeight())/2, Graphics.LEFT | Graphics.TOP);
                     }
-    
+
                 }
-            } 
+            }
 
             if (cX < bgIconW) {
                 if (hasFocus) {
                     g.drawImage(ICON_BG, 0, (h - bgIconH)/2,
                                 Graphics.TOP | Graphics.LEFT);
                 }
-    
+
                 if (icon != null) {
                     g.drawImage(icon, (bgIconW - icon.getWidth())/2,
                                 (bgIconH - icon.getHeight())/2,
                                 Graphics.TOP | Graphics.LEFT);
                 }
-    
+
                 // Draw special icon if user attention is requested and
                 // that midlet needs to be brought into foreground by the user
                 if (msi.proxy != null && msi.proxy.isAlertWaiting()) {
@@ -1398,10 +1401,10 @@ class AppManagerUI extends Form
                                 bgIconW - FG_REQUESTED.getWidth(), 0,
                                 Graphics.TOP | Graphics.LEFT);
                 }
-    
+
                 if (!msi.enabled) {
                     // indicate that this suite is disabled
-                    g.drawImage(DISABLED_IMAGE, 
+                    g.drawImage(DISABLED_IMAGE,
                                 (bgIconW - DISABLED_IMAGE.getWidth())/2,
                                 (bgIconH - DISABLED_IMAGE.getHeight())/2,
                                 Graphics.TOP | Graphics.LEFT);
@@ -1421,7 +1424,7 @@ class AppManagerUI extends Form
             textScrollPainter = new TextScrollPainter();
             textScrollTimer.schedule(textScrollPainter, SCROLL_DELAY, SCROLL_RATE);
         }
-        
+
         /**
         * Stop the scrolling of the text
         */
@@ -1434,7 +1437,7 @@ class AppManagerUI extends Form
             textScrollPainter = null;
             repaint(bgIconW, 0, width, height);
         }
-        
+
         /**
         * Called repeatedly to animate a side-scroll effect for text
         */
@@ -1444,7 +1447,7 @@ class AppManagerUI extends Form
                 repaint(bgIconW, 0, width, height);
             } else {
                 // already scrolled to the end of text
-                stopScroll(); 
+                stopScroll();
             }
         }
 
@@ -1486,7 +1489,7 @@ class AppManagerUI extends Form
             visRect_inout[3] = height;
 
             startScroll();
-            
+
             return true;
         }
 
@@ -1577,15 +1580,15 @@ class AppManagerUI extends Form
         boolean truncated;
 
         /**
-        * pixel offset to the start of the text field  (for example,  if 
-        * xScrollOffset is -60 it means means that the text in this 
+        * pixel offset to the start of the text field  (for example,  if
+        * xScrollOffset is -60 it means means that the text in this
         * text field is scrolled 60 pixels left of the left edge of the
         * text field)
         */
         protected int xScrollOffset;
 
         /**
-        * Helper class used to repaint scrolling text 
+        * Helper class used to repaint scrolling text
         * if needed.
         */
         private class TextScrollPainter extends TimerTask {
@@ -1616,7 +1619,7 @@ class AppManagerUI extends Form
 
         /** The text of this MidletCustomItem */
         char[] text;
-  
+
         /** Length of the text */
         int textLen;
 
