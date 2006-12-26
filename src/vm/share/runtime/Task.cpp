@@ -419,10 +419,12 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
 
     _num_tasks--;
 
-    // at this point we must switch the current_task_id to an active task if
-    // one exists.  If no tasks exist at this point the VM will exit soon
-    // after we return to lightweight_thread_exit
-    {
+    // _current_thread == NULL means the current task is being terminated,
+    // _current_thread != NULL means the newly created task is being cleaned
+    if (_current_thread == NULL) {
+      // at this point we must switch the current_task_id to an active task if
+      // one exists.  If no tasks exist at this point the VM will exit soon
+      // after we return to lightweight_thread_exit
       const int len = tlist().length();
       for( int i = 0;; ) {
         if( ++i >= len ) {

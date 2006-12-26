@@ -407,6 +407,7 @@
 #define SystemDictionary  JVMSystemDictionary
 #define SystemOutStream  JVMSystemOutStream
 #define Task  JVMTask
+#define TaskAllocationContext  JVMTaskAllocationContext
 #define TaskContext  JVMTaskContext
 #define TaskContextSave  JVMTaskContextSave
 #define TaskDesc  JVMTaskDesc
@@ -553,7 +554,7 @@ class SymbolDesc;
 class SymbolStream;
 class SymbolTable;
 class Task;                 // Used by ENABLE_ISOLATES only
-class JVMTask;              // Used by ENABLE_ISOLATES only
+class TaskAllocationContext;
 class TaskContext;
 class TaskMirror;           // Used by ENABLE_ISOLATES only
 class TaskMirrorDesc;       // Used by ENABLE_ISOLATES only

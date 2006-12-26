@@ -2307,26 +2307,22 @@ ReturnOop Universe::make_strings_from_char_arrays(OopDesc* chars JVM_TRAPS) {
   return result;
 }
 
-ReturnOop Universe::deep_copy(Oop* obj JVM_TRAPS) {
-  if (obj->is_null()) {
+ReturnOop Universe::deep_copy(OopDesc* obj JVM_TRAPS) {
+  if (obj == NULL) {
     return NULL;
   } else if (obj->is_obj_array()) {
     UsingFastOops fast_oops;
-    ObjArray::Fast orig(obj);
+    ObjArray::Fast orig = obj;
     const int length = orig().length();
     ObjArray::Fast copy = new_obj_array(length JVM_OZCHECK(copy));
-    Oop::Fast element;
     for (int i = 0; i < length; i++) {
-      element = orig().obj_at(i);
-      if (element.not_null()) {
-        Oop::Raw o = deep_copy(&element JVM_OZCHECK(o));
-        copy().obj_at_put(i, &o);
-      }
+      OopDesc* p = deep_copy(orig().obj_at(i) JVM_CHECK_0); // can be NULL
+      copy().obj_at_put(i, p);
     }
     return copy.obj();
   } else if (obj->is_string()) {
     UsingFastOops fast_oops;
-    String::Fast orig(obj);
+    String::Fast orig = obj;
     const int offset = orig().offset();
     const int length = orig().count();
     TypeArray::Fast orig_value = orig().value();

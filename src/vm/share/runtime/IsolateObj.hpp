@@ -39,7 +39,11 @@ public:
 
   #define INT_FIELD(name, index)   FIELD(name, index, int, jint, const jint)
   #define LONG_FIELD(name, index)  FIELD(name, index, long, jlong, const jlong)
-  #define OBJ_FIELD(name, index, type) FIELD(name, index, obj, ReturnOop, type*)
+
+  #define OBJ_FIELD(name, index, type) \
+    FIELD(name, index, obj, ReturnOop, type*)                                 \
+    void set_##name(OopDesc* value) { obj_field_put(name##_offset(), value);}
+
   #define STATIC_FIELD(name, index, kind, inner, outer)                       \
     static int static_##name##_offset() {                                     \
          return TaskMirror::static_field_start() + index * sizeof(jint);      \

@@ -71,16 +71,14 @@ ReturnOop IsolateObj::duplicate(JVM_SINGLE_ARG_TRAPS) const {
   dup().set_profile_id( profile_id() );
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
 
-  {
-    String::Raw mc = main_class();
-    mc = Universe::deep_copy(&mc JVM_CHECK_0);
-    dup().set_main_class(&mc);
-  }
-  {
-    ObjArray::Raw ma = main_args();
-    ma = Universe::deep_copy(&ma JVM_CHECK_0);
-    dup().set_main_args(&ma);
-  }
+  OopDesc* p;
+  // Do not use JVM_ZCHECK because result can be NULL
+  p = Universe::deep_copy(main_class() JVM_CHECK_0);
+  dup().set_main_class(p);
+  p = Universe::deep_copy(main_args() JVM_CHECK_0);
+  dup().set_main_args(p);
+  p = Universe::deep_copy(app_classpath() JVM_CHECK_0);
+  dup().set_app_classpath(p);
 
   return dup.obj();
 }

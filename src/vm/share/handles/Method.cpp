@@ -56,7 +56,10 @@ int Method::vtable_index() const {
 
 inline bool Method::resume_compilation(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_ISOLATES
-  TaskContext tmp(Compiler::suspended_compiler_state()->task_id());
+  // IMPL_NOTE: The behaviour should be changed!
+  // It is impossible to allocate anything in Java Heap during compilation
+  // (except objects in CompilerArea)
+  TaskAllocationContext tmp(Compiler::suspended_compiler_state()->task_id());
 #endif
   bool status = (bool)Compiler::resume_compilation(this JVM_MUST_SUCCEED);
   return status;

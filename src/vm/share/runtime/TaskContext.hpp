@@ -75,7 +75,6 @@ public:
 
 class TaskContext : public TaskContextSave {
   void init(int task_id);
-  void dispose();
 public:
 
   TaskContext(int task_id) {init(task_id);}
@@ -99,4 +98,17 @@ public:
   static void set_mirror_list(ObjArray *ml);
 
   friend class Universe;
+};
+
+class TaskAllocationContext : public TaskContext {
+#if ENABLE_ISOLATES
+public:
+  TaskAllocationContext(int task_id) : TaskContext(task_id) {
+    ObjectHeap::on_task_switch(task_id);
+  }
+
+  ~TaskAllocationContext() {
+    ObjectHeap::on_task_switch(_prev_task_id);
+  }
+#endif
 };
