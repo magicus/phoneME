@@ -32,7 +32,7 @@
 
 SUBSYSTEMS += jsr135
 
-include $(JSR_135_DIR)/src/config/config.$(TARGET_PLATFORM)
+-include $(JSR_135_DIR)/src/config/config.$(TARGET_PLATFORM)
 include $(JSR_135_DIR)/src/config/features.defs
 
 # Specify romizer configuration file for the MMAPI
@@ -235,3 +235,13 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	KNIDirectMIDIControl.c
 endif
 
+# Append JSR 135 source bundle creation to target
+source_bundle:: jsr_135_source_bundle
+
+# Create JSR 135 source in subdir 'jsr135/'
+JSR_135_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr135
+
+# Copy and filter JSR 135 source in JSR_135_SOURCE_OUTPUT_DIR
+jsr_135_source_bundle: JSR_135_DIR SOURCE_OUTPUT_DIR
+	@echo " ... JSR 135 source bundle" $(LOG)
+	@$(call re_src_filter,$(JSR_135_DIR),$(JSR_135_SOURCE_OUTPUT_DIR),src)
