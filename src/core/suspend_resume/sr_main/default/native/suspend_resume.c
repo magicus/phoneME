@@ -26,20 +26,15 @@
 
 #include <suspend_resume.h>
 #include <suspend_resume_vm.h>
+#include <suspend_resume_port.h>
 #include <midpEvents.h>
 #include <midpEventUtil.h>
 #include <midpInit.h>
 #include <midpMalloc.h>
 #include <midpError.h>
-#include <midpServices.h>
 
 /* Only required for default (testing) port. See midp_checkResumeRequest(). */
 #include <suspend_resume_test.h>
-
-/**
- * Stack resume timeout. Test purposes only.
- */
-long sr_resume_timeout = DEFAULT_TIMEOUT;
 
 /**  Java stack state from suspend/resume point of view. */
 static jboolean sr_state = SR_INVALID;
@@ -236,28 +231,4 @@ jboolean midp_checkAndResume() {
     }
 
     return res;
-}
-
-/**
- * This implementation causes java stack to resume after
- * standard timeout after been suspended.
- */
-jboolean midp_checkResumeRequest() {
-    static long lastSuspendStart = -1;
-    long time_passed;
-    jboolean result = KNI_FALSE;
-
-    if (lastSuspendStart == -1) {
-        REPORT_INFO(LC_LIFECYCLE, "midp_checkResumeRequest(): init timeout");
-        lastSuspendStart = midp_getCurrentTime();
-    }
-
-    time_passed = midp_getCurrentTime() - lastSuspendStart;
-    if (time_passed >= sr_resume_timeout) {
-        lastSuspendStart = -1;
-        sr_resume_timeout = DEFAULT_TIMEOUT;
-        result = KNI_TRUE;
-    }
-
-    return result;
 }

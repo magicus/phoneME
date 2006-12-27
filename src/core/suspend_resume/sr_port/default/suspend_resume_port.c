@@ -25,6 +25,8 @@
  */
 
 #include <suspend_resume_port.h>
+#include <midp_logging.h>
+#include <midpServices.h>
 
 /* Only required for default (testing) port. See midp_checkResumeRequest(). */
 #include <suspend_resume_test.h>
