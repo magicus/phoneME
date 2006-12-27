@@ -35,9 +35,16 @@
 #
 ######################################################################
 
+
 ifndef JWC_WORK_SPACE
 JWC_WORK_SPACE=$(MIDP_DIR)
 endif
+
+# Definitions exported from an earlier build (if specified)
+ifdef VAR_IMPORT_FROM
+include $(VAR_IMPORT_FROM)
+endif
+
 
 include $(JWC_WORK_SPACE)/build/common/TopDefs.gmk
 
@@ -95,6 +102,10 @@ include $(MIDP_DIR)/build/common/makefiles/Docs.gmk
 
 # Release bundle targets
 include $(MIDP_DIR)/build/common/makefiles/Release.gmk
+
+
+# export of makefile variable values
+include $(MIDP_DIR)/build/common/makefiles/varexport.gmk
 
 # Build AMS executables after everything else ae built
 # This additional build targets must be defined after all includes

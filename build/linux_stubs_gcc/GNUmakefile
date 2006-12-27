@@ -67,6 +67,11 @@ TARGET_CPU		= i386
 TARGET_COMPILER		= gcc
 TARGET_VM		= cldc_vm
 
+# file/directory name separator ( / or \\\\ )
+# if the file separator is backslash, double-quoting is needed,
+# that is, you need to write "\\\\" (four backslashes) for "\" (one backslash)
+FN_SEP=/
+
 # Workspace directory
 MIDP_DIR		= $(CURDIR)/../..
 
