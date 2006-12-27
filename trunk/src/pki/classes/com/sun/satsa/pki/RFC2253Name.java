@@ -115,6 +115,8 @@ public class RFC2253Name {
             return new RFC2253Name(name).encode().getDERData();
         } catch (TLVException tlve) {
             throw new IllegalArgumentException(name);
+        } catch (StringIndexOutOfBoundsException siobe) {
+            throw new IllegalArgumentException(name);
         } catch (IllegalArgumentException iae) {
             throw new IllegalArgumentException(name);
         }
@@ -131,6 +133,8 @@ public class RFC2253Name {
         try {
             return new RFC2253Name(name).encode();
         } catch (TLVException e) {
+            throw new IllegalArgumentException(name);
+        } catch (StringIndexOutOfBoundsException siobe) {
             throw new IllegalArgumentException(name);
         } catch (IllegalArgumentException iae) {
             throw new IllegalArgumentException(name);
