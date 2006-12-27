@@ -37,9 +37,7 @@ define re_src_filter
 		(for i in $(3); do mkdir -p $(2)/$$i; svn export --force -q $(1)/$$i $(2)/$$i; done); \
 	else \
 		mkdir -p $(2); \
-		(cd $(1); \
-		find $(3) -type f \
-		| tar cf - -T -) | tar xf - -C $(2) ; \
+		(for i in $(3); do cp -rp $(1)/$$i $(2)/; done); \
 	fi
 endef
 
