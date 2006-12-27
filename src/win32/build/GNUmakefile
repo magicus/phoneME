@@ -99,7 +99,8 @@ JAVAUTIL_INCLUDE_DIR = ../../utils/inc
 MIDP_IMPL_INCLUDE_DIR = ../src/midp
 
 ifeq ($(USE_JSR_135),true)
-include $(JSR_135_DIR)/javacall_impl.gmk
+PROJECT_JSR_135_DIR ?= $(JSR_135_DIR)
+include $(PROJECT_JSR_135_DIR)/javacall_impl.gmk
 endif
 
 
@@ -128,6 +129,7 @@ CFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
 CPPFLAGS+= -I$(JAVACALL_OUTPUT_INCLUDE_DIR)
 CPPFLAGS+= -I$(JAVAUTIL_INCLUDE_DIR)
 CPPFLAGS+= -I$(MIDP_IMPL_INCLUDE_DIR) 
+CPPFLAGS+= $(addprefix -I, $(ADDITIONAL_INCLUDE_DIRS))
 CPPFLAGS+= -DWIN32
 CPPFLAGS+= $(HIDDEN_DEP_FEATURES_DEF)
 
@@ -157,5 +159,5 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(IMPL_OBJECTS)) \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS))
 	@echo "...Generating Library: $@"
-	@$(AR) -out:$@ $(ARFLAGS) `cygpath -m $^`
+	@$(AR) -out:$@ $(ARFLAGS) `cygpath -m $^` $(ADDITIONAL_LIBS)
 
