@@ -633,6 +633,13 @@ help:
 
 #----------------------------------------------------------------------
 #
+# function and target for source bundle
+#
+#----------------------------------------------------------------------
+include ../share/release.make
+
+#----------------------------------------------------------------------
+#
 # These built-in GNU-make rules for SCCS are troublesome, especially
 # we don't have functioning SCCS on Windows. By declaring them here
 # without a command, these built-in rules are cancelled.
