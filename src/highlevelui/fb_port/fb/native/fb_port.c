@@ -63,6 +63,7 @@
 #include <fbapp_device_type.h>
 #include <fbapp_export.h>
 #include "fb_port.h"
+#include <fbport_export.h>
 
 /** @def PERROR Prints diagnostic message. */
 #define PERROR(msg) REPORT_ERROR2(0, "%s: %s", msg, strerror(errno))
@@ -340,32 +341,33 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
 //   3) Target buffer is aligned by word bound
 //   4) Target device width is even, thus all pixels of a screen
 //      column are aligned, or not aligned simultaneously
-void fast_copy_rotated(short *src, short *dst,
+void fast_copy_rotated0(short *src, short *dst,
         int x1, int y1, int x2, int y2,
-        int bufWidth, int dstWidth, int dstInc, int srcDec) {
+        int bufWidth, int dstWidth, int srcInc, int dstInc) {
 
   int y;
+  unsigned a, b;
   while(x2 > x1) {
     src--;
     x2 -= 2;
     for (y = y1; y < y2; y += 2) {
+      a = *(unsigned*)src;
+      src += bufWidth;
+      b = *(unsigned*)src;
+      src += bufWidth;
 
-      unsigned a = *(unsigned*)src;
-      src += bufWidth;
-      unsigned b = *(unsigned*)src;
-      src += bufWidth;
       *(unsigned*)dst = (b & 0xffff0000) | (a >> 16);
       *(unsigned*)(dst + dstWidth) = (b << 16) | (a & 0x0000ffff);
       dst += 2;
     }
     dst += dstInc + dstWidth;
-    src -= srcDec;
+    src += srcInc;
   }
 }
 
-void simple_copy_rotated(short *src, short *dst,
+void simple_copy_rotated0(short *src, short *dst,
         int x1, int y1, int x2, int y2,
-		int bufWidth, int dstWidth, int dstInc, int srcDec) {
+		int bufWidth, int dstWidth, int srcInc, int dstInc) {
 		
     int y;
     (void)dstWidth;
@@ -375,19 +377,21 @@ void simple_copy_rotated(short *src, short *dst,
             src += bufWidth;
          }
          dst += dstInc;
-         src -= srcDec;
+         src += srcInc;
     }
 }
 
 /** Refresh rotated screen with offscreen buffer content */
-void refreshScreenRotated(int x1, int y1, int x2, int y2) {
+void refreshScreenRotated0(int x1, int y1, int x2, int y2,
+        fcopy_rotated copy_rotated) {
+
     gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
     gxj_pixel_type *dst = (gxj_pixel_type*)fb.data;
     int srcWidth, srcHeight;
     int dstWidth = fb.width;
     int dstHeight = fb.height;
 
-    int srcDec;
+    int srcInc;
     int dstInc;
 
     // System screen buffer geometry
@@ -419,11 +423,154 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     dst += y1 + (bufWidth - x2 - 1) * dstWidth;
     src += x2-1 + y1 * bufWidth;
 
-    srcDec = srcHeight * bufWidth + 1; // decrement for src pointer at the end of column
-    dstInc = dstWidth - srcHeight;     // increment for dst pointer at the end of line
+    srcInc = -(srcHeight * bufWidth + 1); // decrement for src pointer at the end of column
+    dstInc = dstWidth - srcHeight;        // increment for dst pointer at the end of line
 
-    fast_copy_rotated(src, dst, x1, y1, x2, y2,
-        bufWidth, dstWidth, dstInc, srcDec);
+    copy_rotated(src, dst, x1, y1, x2, y2,
+        bufWidth, dstWidth, srcInc, dstInc);
+}
+
+void simple_copy_rotated1(short *src, short *dst,
+        int x1, int y1, int x2, int y2,
+		int bufWidth, int dstWidth, int srcInc, int dstInc) {
+
+    int x;
+    (void)bufWidth;
+    while(y1++ < y2) {
+        for (x = x1; x < x2; x++) {
+            *dst = *src++;
+            dst -= dstWidth;
+         }
+         dst += dstInc;
+         src += srcInc;
+    }
+}
+
+// IMPL_NOTE ASSUMPTIONS:
+//   1) Off-screen buffer is aligned by word bound
+//   2) Off-screen buffer width is equal to screen device width
+//   3) Target buffer is aligned by word bound
+//   4) Target device width is even, thus all pixels of a screen
+//      column are aligned, or not aligned simultaneously
+void fast_copy_rotated1(short *src, short *dst,
+        int x1, int y1, int x2, int y2,
+        int bufWidth, int dstWidth, int srcInc, int dstInc) {
+
+  int x;
+  unsigned a, b;
+  while(y1 < y2) {
+    y1 += 2;
+    for (x = x1; x < x2; x += 2) {
+      a = *(unsigned*)src;
+      b = *(unsigned*)(src + bufWidth);
+      src += 2;
+      
+      *(unsigned*)dst = (b << 16) | (a & 0x0000ffff);
+      dst -= dstWidth;
+      *(unsigned*)dst = (b & 0xffff0000) | (a >> 16);
+      dst -= dstWidth;
+    }
+    dst += dstInc + 1;
+    src += srcInc + bufWidth;
+  }
+}
+
+// IMPL_NOTE ASSUMPTIONS:
+//   1) Off-screen buffer is aligned by word bound
+//   2) Off-screen buffer width is equal to screen device width
+//   3) Target buffer is aligned by word bound
+//   4) Target device width is even, thus all pixels of a screen
+//      column are aligned, or not aligned simultaneously
+void fast_copy_rotated11(short *src, short *dst,
+        int x1, int y1, int x2, int y2,
+        int bufWidth, int dstWidth, int srcInc, int dstInc) {
+
+  int x;
+  int x22 = x2 - ((x2-x1) % 4);
+  unsigned long long a, b;
+
+  const unsigned long long _1 = 0xffff;
+  const unsigned long long _2 = _1 << 16;
+  const unsigned long long _3 = _1 << 32;
+  const unsigned long long _4 = _1 << 48;
+
+  while(y1 < y2) {
+    y1 += 2;
+    // Copy by 4x2 blocks
+    for (x = x1; x < x22; x += 4) {
+      a = *(unsigned long long *)src;
+      b = *(unsigned long long *)(src + bufWidth);
+      src += 4;
+
+      *(unsigned long long *)dst = ((b & _3) << 16) | (a & _3) | ((b & _1) << 16) | (a & _1);
+      dst -= dstWidth;
+      *(unsigned*)dst = (b & _4) | ((a & _4) >> 16) | (b & _2) | ((a & _2) >> 16);
+      dst -= dstWidth;
+    }
+    // Copy rest by 2x2 blocks
+    for (x = x22; x < x2; x += 2) {
+      a = *(unsigned*)src;
+      b = *(unsigned*)(src + bufWidth);
+      src += 2;
+
+      *(unsigned*)dst = (b << 16) | (a & 0x0000ffff);
+      dst -= dstWidth;
+      *(unsigned*)dst = (b & 0xffff0000) | (a >> 16);
+      dst -= dstWidth;
+    }
+    dst += dstInc + 1;
+    src += srcInc + bufWidth;
+  }
+}
+
+
+/** Refresh rotated screen with offscreen buffer content */
+void refreshScreenRotated1(int x1, int y1, int x2, int y2,
+        fcopy_rotated copy_rotated) {
+
+    gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
+    gxj_pixel_type *dst = (gxj_pixel_type*)fb.data;
+    int srcWidth, srcHeight;
+    int dstWidth = fb.width;
+    int dstHeight = fb.height;
+
+    int srcInc;
+    int dstInc;
+
+    // System screen buffer geometry
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
+
+    if (linuxFbDeviceType == LINUX_FB_OMAP730) {
+        // Needed by the P2 board
+        // Max screen size is 176x220 but can only display 176x208
+        dstHeight = bufWidth;
+    }
+
+    // Make sure the copied lines are 4-byte aligned for faster memcpy
+    if ((x1 & 1) == 1) x1 -= 1;
+    if ((x2 & 1) == 1) x2 += 1;
+    if ((y1 & 1) == 1) y1 -= 1;
+    if ((y2 & 1) == 1) y2 += 1;
+
+    srcWidth = x2 - x1;
+    srcHeight = y2 - y1;
+
+    if (bufWidth < dstHeight || bufHeight < dstWidth) {
+            // We are drawing into a frame buffer that's larger than what MIDP
+            // needs. Center it.
+            dst += (dstHeight - bufWidth) / 2 * dstWidth;
+            dst += ((dstWidth - bufHeight) / 2);
+        }
+
+    src += x1 + y1 * bufWidth;
+    dst += y1 + (bufWidth - x1) * dstWidth;
+
+    srcInc = bufWidth - srcWidth;      // increment for src pointer at the end of row
+    dstInc = srcWidth * dstWidth + 1;  // increment for dst pointer at the end of column
+
+    copy_rotated(src, dst, x1, y1, x2, y2,
+        bufWidth, dstWidth, srcInc, dstInc);
 }
 
 /** Frees allocated resources and restore system state */
