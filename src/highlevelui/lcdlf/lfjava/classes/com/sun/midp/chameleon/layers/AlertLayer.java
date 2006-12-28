@@ -149,6 +149,9 @@ public class AlertLayer extends BodyLayer {
         }
         if (scrollInd != null) {
             scrollInd.update(layers);
+            if (scrollInd.isVisible()) {
+                bounds[W] -= scrollInd.bounds[W];
+            }
         }
     }
 }
