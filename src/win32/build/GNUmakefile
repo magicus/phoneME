@@ -122,6 +122,16 @@ LOCAL_CFLAGS_debug = -Gm -GX -Zi -Od -D_DEBUG -D_MBCS -D_LIB -YX -FD -GZ -W3
 LOCAL_CFLAGS=-ML -GX -O2 -D_MBCS -D_LIB /YX -FD -W3  
 
 
+ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
+    define fixcygpath_m
+    echo $(1)
+    endef
+else
+    define fixcygpath_m
+    echo $(1) | xargs -n1 cygpath -m
+    endef
+endif
+
 
 CXXFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
 CFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
@@ -157,5 +167,5 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(IMPL_OBJECTS)) \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS))
 	@echo "...Generating Library: $@"
-	@$(AR) -out:$@ $(ARFLAGS) `cygpath -m $^`
+	@$(AR) -out:`$(call fixcygpath_m, $@)` $(ARFLAGS) `$(call fixcygpath_m, $^)`
 
