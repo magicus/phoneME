@@ -24,7 +24,6 @@
  * information or have any questions.
  */
 
-#include <suspend_resume.h>
 #include <suspend_resume_vm.h>
 #include <qteapp_export.h>
 

@@ -33,17 +33,8 @@
 #include <midpMalloc.h>
 #include <midpError.h>
 
-/* Only required for default (testing) port. See midp_checkResumeRequest(). */
-#include <suspend_resume_test.h>
-
 /**  Java stack state from suspend/resume point of view. */
 static jboolean sr_state = SR_INVALID;
-
-/**
- * Testing purposes only. Used for fake implementation of
- * midp_checkResumeRequest().
- */
-#define SUSPEND_TIMEOUT 10000
 
 /**
  * Resources list record for a resource to  be processed by
