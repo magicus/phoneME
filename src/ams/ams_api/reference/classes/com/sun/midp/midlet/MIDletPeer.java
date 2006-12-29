@@ -63,12 +63,12 @@ public class MIDletPeer implements MIDletEventConsumer {
     /**
      * State of the MIDlet is Paused; it should be quiescent
      */
-    static final int PAUSED = 0;
+    public static final int PAUSED = 0;
 
     /**
      * State of the MIDlet is Active
      */
-    static final int ACTIVE = 1;
+    public static final int ACTIVE = 1;
 
     /**
      * State of the MIDlet when resumed by the display manager
@@ -88,7 +88,7 @@ public class MIDletPeer implements MIDletEventConsumer {
     /**
      * State of the MIDlet is Destroyed
      */
-    static final int DESTROYED = 5;
+    public static final int DESTROYED = 5;
 
     /** The controller of MIDlets. */
     private static MIDletStateHandler midletStateHandler;

@@ -162,7 +162,7 @@ public class MIDletStateHandler {
      * @param token security token for initilaization
      * @param theMIDletStateListener processes MIDlet states in a
      *                               VM specific way
-     * @param theMIDletLoader loads a MIDlet in a VM specific way
+     * @param theMidletLoader loads a MIDlet in a VM specific way
      * @param thePlatformRequestHandler the platform request handler
      */
     public void initMIDletStateHandler(
@@ -784,5 +784,14 @@ public class MIDletStateHandler {
             temp.midlet = m;
             return temp;
         }
+    }
+
+    /**
+     * Retrieves current state of the MIDlet given.
+     * @param midlet the MIDlet of interest
+     * @return the MIDlet state as defined in MIDletPeer class
+     */
+    public static int getMIDletState(MIDlet midlet) {
+        return MIDletPeer.getMIDletPeer(midlet).getState();
     }
 }
