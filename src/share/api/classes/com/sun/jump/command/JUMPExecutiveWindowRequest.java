@@ -38,7 +38,7 @@ import com.sun.jump.message.JUMPOutgoingMessage;
  * related requests that originate from the <Code>JUMPExecutive</code>
  */
 public class JUMPExecutiveWindowRequest extends JUMPRequest {
-    private long windowId;
+    private int windowId;
 
     /**
      * Type of <code>JUMPMessage</code> corresponding
@@ -93,7 +93,7 @@ public class JUMPExecutiveWindowRequest extends JUMPRequest {
 	// First deserialize any shared fields
 	super.deserializeFrom(message);
 	// And now window specific fields
-	this.windowId = message.getLong();
+	this.windowId = message.getInt();
     }
 
     /**
@@ -103,11 +103,15 @@ public class JUMPExecutiveWindowRequest extends JUMPRequest {
     protected void serializeInto(JUMPOutgoingMessage message) {
 	super.serializeInto(message);
 	// And now window specific fields
-	message.addLong(this.windowId);
+	message.addInt(this.windowId);
     }
 
     public static JUMPCommand fromMessage(JUMPMessage message) {
 	return JUMPCommand.fromMessage(message,
 				       JUMPExecutiveWindowRequest.class);
+    }
+    
+    public int getWindowId() {
+        return windowId;
     }
 }

@@ -140,6 +140,10 @@ public class JUMPIsolateLifecycleRequest extends JUMPRequest {
 	return isolateId;
     }
     
+    public int getAppId() {
+        return appId;
+    }
+    
     /** 
      * For subclasses to use to initialize any fields
      * using <code>JUMPMessage.get*</code> methods.

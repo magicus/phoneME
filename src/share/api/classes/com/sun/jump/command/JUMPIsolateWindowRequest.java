@@ -37,8 +37,8 @@ import com.sun.jump.message.JUMPOutgoingMessage;
  * related requests that originate from the <Code>JUMPIsolate</code>
  */
 public class JUMPIsolateWindowRequest extends JUMPRequest {
-    private long windowId;
-    private int  isolateId;
+    private int windowId;
+    private int isolateId;
 
     /**
      * Type of <code>JUMPMessage</code> corresponding
@@ -72,16 +72,22 @@ public class JUMPIsolateWindowRequest extends JUMPRequest {
 	super(MESSAGE_TYPE, id, args);
     }
 
-    private JUMPIsolateWindowRequest() {
+    JUMPIsolateWindowRequest() {
 	super(MESSAGE_TYPE, null, null);
     }
 
-    public JUMPIsolateWindowRequest(String id,
-				    JUMPWindow window,
-				    JUMPIsolate isolate) {
+    public JUMPIsolateWindowRequest(String id, int windowId, int isolateId) {
 	this(id, null);
-	this.windowId = window.getId();
-	this.isolateId = isolate.getIsolateId();
+	this.windowId = windowId;
+	this.isolateId = isolateId;
+    }
+    
+    public int getWindowId() {
+        return windowId;
+    }
+    
+    public int getIsolateId() {
+        return isolateId;
     }
 
     /**
@@ -92,7 +98,7 @@ public class JUMPIsolateWindowRequest extends JUMPRequest {
 	// First deserialize any shared fields
 	super.deserializeFrom(message);
 	// And now window request specific fields
-	this.windowId = message.getLong();
+	this.windowId = message.getInt();
 	this.isolateId = message.getInt();
     }
 
@@ -103,7 +109,7 @@ public class JUMPIsolateWindowRequest extends JUMPRequest {
     protected void serializeInto(JUMPOutgoingMessage message) {
 	super.serializeInto(message);
 	// And now window request specific fields
-	message.addLong(this.windowId);
+	message.addInt(this.windowId);
 	message.addInt(this.isolateId);
     }
 

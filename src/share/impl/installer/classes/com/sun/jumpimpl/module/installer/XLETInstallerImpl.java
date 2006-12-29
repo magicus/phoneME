@@ -71,7 +71,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
     /**
      * The filename extention for application descriptor files.
      */
-    private final static String APP_DESCRIPTOR_EXTENSION = ".app";
+    private final static String APP_DESCRIPTOR_EXTENSION = ".properties";
     /**
      * The name of the directory to hold XLET and Main applications
      */

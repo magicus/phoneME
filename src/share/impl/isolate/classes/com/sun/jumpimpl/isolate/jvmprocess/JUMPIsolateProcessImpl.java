@@ -123,6 +123,7 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
      * listener.
      */
     public static void start() {
+        System.loadLibrary("jumpmesg");
 	// Initialize os interface
 	new com.sun.jumpimpl.os.JUMPOSInterfaceImpl();
 
@@ -163,7 +164,36 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 	System.err.println("Setting app model to "+appModel);
 	this.appModel = appModel;
 	// FIXME: Create container for 'appModel'
-	this.appContainer = null;
+        
+
+class SimpleAppContainer extends JUMPAppContainer {
+
+    public int startApp(JUMPApplication app, String[] args) {
+        try {
+                Class.forName(app.getProperty("MAINApplication_initialClass")).newInstance();
+                return 123456;
+        } catch(Exception e) {
+                e.printStackTrace();
+        }
+        return -1;
+    }
+    
+    public void pauseApp(int appId) {
+    }
+    
+    public void resumeApp(int appId) {
+    }
+    
+    public void destroyApp(int appId, boolean force) {
+    }
+    
+    public com.sun.jump.common.JUMPWindow[] getAppWindows(int appId) {
+        return null;
+    }
+}
+            
+	this.appContainer = new SimpleAppContainer();
+        new com.sun.jumpimpl.module.windowing.WindowingIsolateModule(this);
     }
 
     private void createListenerThread()
@@ -203,8 +233,8 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 	    String[] args = elr.getArgs();
 	    System.err.println("START_APP("+app+")");
 	    // The message is telling us to start an application
-	    // int appId = appContainer.startApp(app, args);
-	    int appId = 1234;
+	    int appId = appContainer.startApp(app, args);
+	    //int appId = 1234;
 	    // Now wrap this appid in a message and return it
 	    JUMPResponseInteger resp;
 	    if (appId != -1) {

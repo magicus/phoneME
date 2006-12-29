@@ -52,6 +52,63 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
     private Vector              windows;
     private RequestSenderHelper requestSender;
 
+
+    private void
+    setForeground(JUMPWindow window, boolean notifyIsolate) {
+        if(window == null) {
+            throw new IllegalArgumentException();
+        }
+
+        WindowImpl oldFgWindow = (WindowImpl)getForeground();
+        if(oldFgWindow != window && oldFgWindow != null) {
+            setBackground(oldFgWindow, notifyIsolate);
+        }
+
+        if(notifyIsolate) {
+            JUMPResponse response =
+                requestSender.sendRequest(
+                    (JUMPIsolateProxy)window.getIsolate(),
+                    new JUMPExecutiveWindowRequest(
+                        JUMPExecutiveWindowRequest.ID_FOREGROUND, window));
+            if(!requestSender.handleBooleanResponse(response)) {
+                return;
+            }
+        }
+
+        synchronized(lock) {
+            if(windows.contains(window)) {
+                ((WindowImpl)window).setState(JUMPWindow.FOREGROUND_STATE);
+                windows.remove(window);
+                windows.add(window);
+            }
+        }
+    }
+
+    private void
+    setBackground(JUMPWindow window, boolean notifyIsolate) {
+        if(window == null) {
+            throw new IllegalArgumentException();
+        }
+
+        if(notifyIsolate) {
+            JUMPResponse response =
+                requestSender.sendRequest(
+                    (JUMPIsolateProxy)window.getIsolate(),
+                    new JUMPExecutiveWindowRequest(
+                        JUMPExecutiveWindowRequest.ID_BACKGROUND, window));
+            if(!requestSender.handleBooleanResponse(response)) {
+                return;
+            }
+        }
+
+        synchronized(lock) {
+            if(windows.contains(window) && (windows.size() > 1)) {
+                ((WindowImpl)window).setState(JUMPWindow.BACKGROUND_STATE);
+            }
+        }
+    }
+
+
     WindowingModuleImpl() {
         requestSender   =
             new RequestSenderHelper(JUMPExecutive.getInstance());
@@ -67,8 +124,35 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
         }
     }
 
+
     public void
     handleMessage(JUMPMessage message) {
+        if(JUMPIsolateWindowRequest.MESSAGE_TYPE.equals(message.getType())) {
+            JUMPIsolateWindowRequest msg =
+                (JUMPIsolateWindowRequest)
+                    JUMPIsolateWindowRequest.fromMessage(message);
+
+            WindowImpl window =
+                WindowImpl.getWindow(msg.getIsolateId(), msg.getWindowId());
+
+            synchronized(lock) {
+                if(!windows.contains(window)) {
+                    window.setState(JUMPWindow.BACKGROUND_STATE);
+                    windows.add(0, window);
+                }
+            }
+
+            if(JUMPIsolateWindowRequest.ID_REQUEST_FOREGROUND.equals(
+                msg.getCommandId())) {
+
+                setForeground(window, false);
+            }
+            else if(JUMPIsolateWindowRequest.ID_REQUEST_BACKGROUND.equals(
+                msg.getCommandId())) {
+
+                setBackground(window, false);
+            }
+        }
     }
 
     public void
@@ -107,59 +191,12 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
 
     public void
     setForeground(JUMPWindow window) {
-        if(window == null) {
-            throw new IllegalArgumentException();
-        }
-
-        JUMPResponse response =
-            requestSender.sendRequest(
-                (JUMPIsolateProxy)window.getIsolate(),
-                new JUMPExecutiveWindowRequest(
-                    JUMPExecutiveWindowRequest.ID_FOREGROUND, window));
-        if(!requestSender.handleBooleanResponse(response)) {
-            return;
-        }
-
-        synchronized(lock) {
-            if(windows.contains(window)) {
-                WindowImpl oldFgWindow = (WindowImpl)getForeground();
-                if(oldFgWindow != window) {
-                    ((WindowImpl)window).setState(
-                        JUMPWindow.FOREGROUND_STATE);
-                    oldFgWindow.setState(JUMPWindow.BACKGROUND_STATE);
-                    windows.remove(window);
-                    windows.add(window);
-
-                    setBackground(oldFgWindow);
-                }
-            }
-        }
+        setForeground(window, true);
     }
 
     public void
     setBackground(JUMPWindow window) {
-        if(window == null) {
-            throw new IllegalArgumentException();
-        }
-
-        JUMPResponse response =
-            requestSender.sendRequest(
-                (JUMPIsolateProxy)window.getIsolate(),
-                new JUMPExecutiveWindowRequest(
-                    JUMPExecutiveWindowRequest.ID_BACKGROUND, window));
-        if(!requestSender.handleBooleanResponse(response)) {
-            return;
-        }
-
-        synchronized(lock) {
-            if(windows.contains(window) && (windows.size() > 1)) {
-                ((WindowImpl)window).setState(JUMPWindow.BACKGROUND_STATE);
-                if(windows.lastElement() == window) {
-                    setForeground(
-                        (WindowImpl)windows.elementAt(windows.size() - 2));
-                }
-            }
-        }
+        setBackground(window, true);
     }
 
     public JUMPWindow

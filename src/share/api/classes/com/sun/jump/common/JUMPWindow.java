@@ -43,7 +43,7 @@ public abstract class JUMPWindow {
     /**
      * Returns an ID for the window
      */
-    public abstract long getId();
+    public abstract int getId();
 
     /** 
      * Return the isolate that this window runs in
