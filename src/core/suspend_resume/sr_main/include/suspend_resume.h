@@ -93,10 +93,19 @@ extern SuspendResumeProc SR_EMPTY_PROC;
 
 /**
  * Requests java stack to release resources and suspend.
- * To resume the stack it is required to pas control to it and provide
- * conditions for midp_checkResumeRequest() to return KNI_TRUE.
+ * When the stack s suspended, there are two ways of requesting the stack
+ * to resume. One is to pass control to midp_checkAndResume() and provide
+ * midp_checkResumeRequest() to return KNI_TRUE. Another one is to simply
+ * call midp_resume(). The ways are logically equivalent but one of them may 
+ * be more convenent on a port to a particular patform.
  */
 extern void midp_suspend();
+
+/**
+ * Requests java stack to resume normal processing restoring resources
+ * where possible.
+ */
+extern void midp_resume();
 
 /**
  * Checks if there is a request for java stack to resume normal operation.
