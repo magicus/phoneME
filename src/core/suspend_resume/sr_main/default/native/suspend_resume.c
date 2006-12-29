@@ -32,6 +32,7 @@
 #include <midpInit.h>
 #include <midpMalloc.h>
 #include <midpError.h>
+#include <midpNativeThread.h>
 
 /**  Java stack state from suspend/resume point of view. */
 static jboolean sr_state = SR_INVALID;
@@ -222,4 +223,20 @@ jboolean midp_checkAndResume() {
     }
 
     return res;
+}
+
+void midp_waitWhileSuspended() {
+    while (SR_SUSPENDED == midp_getSRState()) {
+        midp_checkAndResume();
+        if (!vm.isSuspended) {
+            break;
+        }
+
+        /* IMPL_NOTE: Sleep delay 1 here means 1 second since
+         * midp_sleepNativeThread() takes seconds. Beter solution
+         * is rewriting midp_sleepNativeThread() for it to take
+         * milliseconds and use SR_RESUME_CHECK_TIMEOUT here.
+         */
+        midp_sleepNativeThread(1);
+    }
 }

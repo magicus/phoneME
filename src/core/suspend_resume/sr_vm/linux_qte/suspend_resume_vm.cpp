@@ -52,9 +52,3 @@ MIDPError resume_vm(void *resource) {
 
     return ALL_OK;
 }
-
-/**
- * Stubbed. This function is only called in master mode.
- */
-extern "C"
-void midp_waitWhileSuspended() {}
