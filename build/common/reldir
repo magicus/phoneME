@@ -159,7 +159,10 @@ function commonroot(first, second,    drv)
     second = appendslash(second);
 
     while(second!=first) {
-    	if(length(second)>length(first)) {
+	# concatenation with a null string is a workaround for a bug
+	# (on some systems, the reported length does not change 
+	# as the string changes)
+    	if(length("" second)>length("" first)) {
 	    sub(/\/[^\/]*\/$/,"/",second);
 	} else {
 	    sub(/\/[^\/]*\/$/,"/",first);
@@ -173,8 +176,8 @@ function commonroot(first, second,    drv)
 function sureissubdir(subdir,parentdir) {
     subdir = stripdir(appendslash(subdir));
     parentdir = stripdir(appendslash(parentdir));
-    return parentdir==substr(subdir,1,length(parentdir)) \
-        && substr(subdir,1+length(parentdir))!~/\.\.\//;
+    return parentdir==substr(subdir,1,length("" parentdir)) \
+        && substr(subdir,1+length("" parentdir))!~/\.\.\//;
 }
 
 
@@ -209,7 +212,7 @@ function reldir(targetpath,base,    root,relpath,fromroot)
     }
 
     # relative path from root to targetpath
-    fromroot = substr(targetpath,length(root)+1,length(targetpath)-length(root));
+    fromroot = substr(targetpath,length("" root)+1,length("" targetpath)-length("" root));
     
     relpath = relpath fromroot;
     return relpath;
