@@ -105,7 +105,10 @@ include $(MIDP_DIR)/build/common/makefiles/Release.gmk
 
 
 # export of makefile variable values
+ifdef DO_NOT_USE
+# disable temporarily as it seem to cause build crash on select environment
 include $(MIDP_DIR)/build/common/makefiles/varexport.gmk
+endif
 
 # Build AMS executables after everything else ae built
 # This additional build targets must be defined after all includes
