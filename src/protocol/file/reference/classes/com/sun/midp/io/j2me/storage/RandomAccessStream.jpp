@@ -37,14 +37,11 @@ import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
-/* FIXME CDC replacement. */
-import com.sun.midp.io.MIDPConnectionBaseAdapter;
-// import com.sun.midp.io.ConnectionBaseAdapter;
+import com.sun.midp.io.ConnectionBaseAdapter;
 import com.sun.midp.io.Util;
 
 /** A secure storage file stream that can be repositioned. */
-public class RandomAccessStream extends MIDPConnectionBaseAdapter {
-// public class RandomAccessStream extends ConnectionBaseAdapter {
+public class RandomAccessStream extends ConnectionBaseAdapter {
     /** Signals the native code to open a truncated file for read-write. */
     public static final int READ_WRITE_TRUNCATE = -(Connector.READ_WRITE);
 
