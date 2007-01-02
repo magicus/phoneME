@@ -236,7 +236,7 @@ define verify_pcsl_network_module
 	if ! grep "^\#define NETWORK_MODULE[[:space:]]\+$(2)" \
     	  $(PCSL_TARGET_DIR)/inc/pcsl_config.h > /dev/null; then \
 	    echo 'ERROR: Mismatching PCSL networking module, should be "$(2)"'; \
-    	     \
+    	    exit -1; \
 	fi; \
     fi    	    
 endef
@@ -495,6 +495,7 @@ display:
 	@echo   "" $(LOG)
 	@printf "JDK_DIR               = %s    (v%s)\n" \
 		"$(JDK_DIR)" `$(JDK_DIR)/bin/java -version < /dev/null 2>&1 | awk -F'"' '{ print $$2 }' | head -1` $(LOG)
+	@echo   "TARGET_VM             = ""$(TARGET_VM)" $(LOG)
 	@echo   "MIDP_DIR              = ""$(MIDP_DIR)" $(LOG)
 	@echo   "PROJECT_MIDP_DIR      = ""$(PROJECT_MIDP_DIR)" $(LOG)
 	@echo   "CLDC_DIST_DIR         = ""$(CLDC_DIST_DIR)" $(LOG)
