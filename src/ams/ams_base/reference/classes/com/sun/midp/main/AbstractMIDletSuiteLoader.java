@@ -38,7 +38,8 @@ import com.sun.midp.log.*;
  * for both SVM and MVM modes. All the differences of SVM & MVM modes are
  * designed as virtual or abstract methods.
  */
-abstract class AbstractMIDletSuiteLoader {
+abstract class AbstractMIDletSuiteLoader
+	implements MIDletSuiteExceptionListener {
 
     /** The ID of the MIDlte suite task Isolate */
     protected int isolateId;
@@ -65,8 +66,7 @@ abstract class AbstractMIDletSuiteLoader {
      * Inner class to request security token from SecurityInitializer.
      * SecurityInitializer should be able to check this inner class name.
      */
-    static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
+    static private class SecurityTrusted implements ImplicitlyTrustedClass {}
 
     /** This class has a different security domain than the MIDlet suite */
     protected static SecurityToken internalSecurityToken =
@@ -117,18 +117,26 @@ abstract class AbstractMIDletSuiteLoader {
     /** Starts and controls MIDlets through the lifecycle states. */
     protected MIDletStateHandler midletStateHandler;
 
-    /** The event listener for LCDUI events */
+    /** The event listener for LCDUI events. */
     protected LCDUIEventListener lcduiEventListener;
 
     /**
-     * Reports an error detected during MIDlet suite invocation
+     * Reports an error detected during MIDlet suite invocation.
      * @param errorCode the error code to report
      */
-    protected abstract void reportError(int errorCode);
+    protected abstract void reportError(int errorCode, String details);
+    
+    /**
+     * Reports an error detected during MIDlet suite invocation.
+     * @param errorCode the error code to report
+     */
+    protected void reportError(int errorCode) {
+        reportError(errorCode, null);
+    }
 
     /**
      * Allocates resources for a suite execution according to
-     * global resource policy
+     * global resource policy.
      *
      * @return true in the case resources were successfully allocated,
      *   false otherwise
@@ -232,10 +240,10 @@ abstract class AbstractMIDletSuiteLoader {
     }
 
     /**
-     * Handles exception occurred during MIDlet suite execution
+     * Handles exception occurred during MIDlet suite execution.
      * @param t exception instance
      */
-    protected abstract void handleException(Throwable t);
+    public abstract void handleException(Throwable t);
 
     /** Restricts suite access to internal API */
     protected void restrictAPIAccess() {
@@ -248,7 +256,7 @@ abstract class AbstractMIDletSuiteLoader {
      */
     protected void startSuite() throws Exception {
         midletStateHandler.startSuite(
-            midletSuite, externalAppId, midletClassName);
+            this, midletSuite, externalAppId, midletClassName);
     }
 
     /** Closes suite and unlock native suite locks */
@@ -298,6 +306,12 @@ abstract class AbstractMIDletSuiteLoader {
         init();
 
         try {
+            // Regard resource policy for the suite task
+            if (!allocateReservedResources()) {
+                reportError(Constants.MIDLET_RESOURCE_LIMIT);
+                return;
+            }
+
             /*
              * Prepare MIDlet suite environment, classes that only need
              * the isolate ID can be create here.
@@ -328,12 +342,6 @@ abstract class AbstractMIDletSuiteLoader {
 
             if (!midletSuite.isEnabled()) {
                 reportError(Constants.MIDLET_SUITE_DISABLED);
-                return;
-            }
-
-            // Regard resource policy for the suite task
-            if (!allocateReservedResources()) {
-                reportError(Constants.MIDLET_RESOURCE_LIMIT);
                 return;
             }
 

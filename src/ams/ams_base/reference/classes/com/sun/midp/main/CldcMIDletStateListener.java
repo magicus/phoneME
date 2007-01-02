@@ -150,6 +150,7 @@ class CldcMIDletStateListener implements MIDletStateListener {
     public void midletPaused(MIDletSuite suite, String className) {
         midletControllerEventProducer.sendMIDletPauseNotifyEvent(
             suite.getID(), className);
+
         /*
          * IMPL_NOTE: it is now implied that MIDlet is always
          * requested to be paused together with all the
@@ -160,6 +161,18 @@ class CldcMIDletStateListener implements MIDletStateListener {
          */
         SuspendSystem.getInstance(classSecurityToken).suspend();
         midletControllerEventProducer.sendMIDletRsPauseNotifyEvent(
+            suite.getID(), className);
+    }
+
+    /**
+     * Called after a MIDlet pauses itself. In this case pauseApp has
+     * not been called.
+     *
+     * @param suite reference to the loaded suite
+     * @param className class name of the MIDlet
+     */
+    public void midletPausedItself(MIDletSuite suite, String className) {
+        midletControllerEventProducer.sendMIDletPauseNotifyEvent(
             suite.getID(), className);
     }
 

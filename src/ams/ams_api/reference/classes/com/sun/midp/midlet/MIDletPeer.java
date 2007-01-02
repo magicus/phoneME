@@ -63,12 +63,12 @@ public class MIDletPeer implements MIDletEventConsumer {
     /**
      * State of the MIDlet is Paused; it should be quiescent
      */
-    static final int PAUSED = 0;
+    public static final int PAUSED = 0;
 
     /**
      * State of the MIDlet is Active
      */
-    static final int ACTIVE = 1;
+    public static final int ACTIVE = 1;
 
     /**
      * State of the MIDlet when resumed by the display manager
@@ -88,7 +88,7 @@ public class MIDletPeer implements MIDletEventConsumer {
     /**
      * State of the MIDlet is Destroyed
      */
-    static final int DESTROYED = 5;
+    public static final int DESTROYED = 5;
 
     /** The controller of MIDlets. */
     private static MIDletStateHandler midletStateHandler;
@@ -161,10 +161,8 @@ public class MIDletPeer implements MIDletEventConsumer {
      * <p>
      * The peer MIDlet field is set later when the MIDlet's constructor calls
      * newMidletState.
-     *
-     * @param peerClassName class name of the peer MIDlet
      */
-    MIDletPeer(String peerClassName) {
+    MIDletPeer() {
         state = ACTIVE_PENDING;        // So it will be made active soon
     }
 
@@ -262,7 +260,7 @@ public class MIDletPeer implements MIDletEventConsumer {
 
         // do work after releasing the lock
         if (oldState == ACTIVE) {
-            midletStateListener.midletPaused(getMIDletSuite(),
+            midletStateListener.midletPausedItself(getMIDletSuite(),
                 getMIDlet().getClass().getName());
         }
     }

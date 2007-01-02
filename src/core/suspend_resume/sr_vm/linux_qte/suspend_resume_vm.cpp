@@ -24,7 +24,6 @@
  * information or have any questions.
  */
 
-#include <suspend_resume.h>
 #include <suspend_resume_vm.h>
 #include <qteapp_export.h>
 
@@ -53,9 +52,3 @@ MIDPError resume_vm(void *resource) {
 
     return ALL_OK;
 }
-
-/**
- * Stubbed. This function is only called in master mode.
- */
-extern "C"
-void midp_waitWhileSuspended() {}

@@ -77,6 +77,7 @@ public class DisplayEventListener implements EventListener {
         eventQueue.registerEventListener(EventTypes.PEN_EVENT, this);
         eventQueue.registerEventListener(EventTypes.COMMAND_EVENT, this);
         eventQueue.registerEventListener(EventTypes.PEER_CHANGED_EVENT, this);
+        eventQueue.registerEventListener(EventTypes.ROTATION_EVENT,this);
     }
 
     /**
@@ -146,6 +147,10 @@ public class DisplayEventListener implements EventListener {
                     nativeEvent.intParam2,
                     nativeEvent.intParam3);
 
+                return;
+
+            case EventTypes.ROTATION_EVENT:
+                dc.handleRotationEvent();
                 return;
 
             default:

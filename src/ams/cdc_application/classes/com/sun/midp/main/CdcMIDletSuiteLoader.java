@@ -213,7 +213,7 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      * @param errorCode generic error code
      * @param details text with error details
      */
-    protected void reportErrorImpl(int errorCode, String details) {
+    protected void reportError(int errorCode, String details) {
         String errorMsg = getErrorMessage(errorCode);
         if (details != null) {
             errorMsg += "\n\n" + details;
@@ -228,29 +228,19 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
     }
 
     /**
-     * Implements abstract base class method to report
-     * an error with no extra details
-     *
-     * @param errorCode generic error code to report
-     */
-    protected void reportError(int errorCode) {
-        reportErrorImpl(errorCode, null);
-    }
-
-    /**
-     * Handles exceptions happened during MIDlet suite execution
+     * Handles exceptions happened during MIDlet suite execution.
      * @param t exception instance
      */
-    protected void handleException(Throwable t) {
+    public void handleException(Throwable t) {
         t.printStackTrace();
         int errorCode = getErrorCode(t);
 
         if (Logging.TRACE_ENABLED) {
             Logging.trace(t,
-                "Exception caught in MIDletSuiteLoader");
+                "Exception caught in CdcMIDletSuiteLoader");
         }
 
-        reportErrorImpl(errorCode, t.getMessage());
+        reportError(errorCode, t.getMessage());
     }
 
     /**
@@ -365,6 +355,16 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      * @param className class name of the MIDlet
      */
     public void midletPaused(MIDletSuite suite, String className) {
+    }
+
+    /**
+     * Called after a MIDlet pauses itself. In this case pauseApp has
+     * not been called.
+     *
+     * @param suite reference to the loaded suite
+     * @param className class name of the MIDlet
+     */
+    public void midletPausedItself(MIDletSuite suite, String className) {
     }
 
     /**

@@ -207,4 +207,15 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
                     AMS_MIDLETSUITELDR_UNEXPECTEDLY_QUIT;
         }
     }
+    
+    /**
+     * Handles exception occurred during MIDlet suite execution.
+     * @param t exception instance
+     */
+    public void handleException(Throwable t) {
+        t.printStackTrace();
+        int errorCode = getErrorCode(t);
+
+        reportError(errorCode, t.getMessage());
+    }
 }

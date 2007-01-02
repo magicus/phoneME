@@ -24,46 +24,44 @@
  * information or have any questions.
  */
 
-#include <suspend_resume.h>
-#include <suspend_resume_vm.h>
-#include <midpNativeThread.h>
+#include <suspend_resume_port.h>
+#include <midp_logging.h>
+#include <midpServices.h>
+
+/* Only required for default (testing) port. See midp_checkResumeRequest(). */
+#include <suspend_resume_test.h>
 
 /**
- * Default implementation of suspending routine for the VM.
+ * Stack resume timeout. Test purposes only.
  */
-extern "C"
-MIDPError suspend_vm(void *resource) {
-    VM *vm = (VM*) resource;
-    vm->isSuspended = KNI_TRUE;
-
-    return ALL_OK;
-}
+long sr_resume_timeout = DEFAULT_TIMEOUT;
 
 /**
- * Default implementation of resuming routine for the VM.
+ * Testing purposes only. Used for fake implementation of
+ * midp_checkResumeRequest().
  */
-extern "C"
-MIDPError resume_vm(void *resource) {
-    VM *vm = (VM*) resource;
-    vm->isSuspended = KNI_FALSE;
+#define SUSPEND_TIMEOUT 10000
 
-    return ALL_OK;
-}
+/**
+ * This implementation causes java stack to resume after
+ * standard timeout after having been suspended.
+ */
+jboolean midp_checkResumeRequest() {
+    static long lastSuspendStart = -1;
+    long time_passed;
+    jboolean result = KNI_FALSE;
 
-
-extern "C"
-void midp_waitWhileSuspended() {
-    while (SR_SUSPENDED == midp_getSRState()) {
-        midp_checkAndResume();
-        if (!vm.isSuspended) {
-            break;
-        }
-
-        /* IMPL_NOTE: Sleep delay 1 here means 1 second since
-         * midp_sleepNativeThread() takes seconds. Beter solution
-         * is rewriting midp_sleepNativeThread() for it to take
-         * milliseconds and use SR_RESUME_CHECK_TIMEOUT here.
-         */
-        midp_sleepNativeThread(1);
+    if (lastSuspendStart == -1) {
+        REPORT_INFO(LC_LIFECYCLE, "midp_checkResumeRequest(): init timeout");
+        lastSuspendStart = midp_getCurrentTime();
     }
+
+    time_passed = midp_getCurrentTime() - lastSuspendStart;
+    if (time_passed >= sr_resume_timeout) {
+        lastSuspendStart = -1;
+        sr_resume_timeout = DEFAULT_TIMEOUT;
+        result = KNI_TRUE;
+    }
+
+    return result;
 }

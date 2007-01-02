@@ -30,11 +30,41 @@ import com.sun.midp.security.ImplicitlyTrustedClass;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.suspend.SuspendSystem;
+import com.sun.midp.midlet.MIDletPeer;
+import com.sun.midp.midlet.MIDletStateHandler;
+
+import javax.microedition.midlet.MIDlet;
 
 /**
  * Utilities for suspend/resume testing.
  */
 public class TestUtil {
+    /** Utilities for getting MIDlet state. */
+    public static class MidletState {
+        /** MIDlet state can not be determined. */
+        public static final int UNKNOWN = 0;
+        /** Paused state. */
+        public static final int PAUSED = 1;
+        /** Active state. */
+        public static final int ACTIVE = 2;
+        /** Destroyed state. */
+        public static final int DESTROYED = 3;
+        /**
+         * Retrieves current MIDlet state.
+         * @param midlet the MIDlet to get state for.
+         * @return one of UNKNOWN, PAUSED, ACTIVE, DESTROYED
+         */
+        public static int get(MIDlet midlet) {
+            int state = MIDletStateHandler.getMIDletState(midlet);
+            switch (state) {
+                case MIDletPeer.PAUSED: return PAUSED;
+                case MIDletPeer.ACTIVE: return ACTIVE;
+                case MIDletPeer.DESTROYED: return DESTROYED;
+                default: return UNKNOWN;
+            }
+        }
+    }
+
     /** Class registered in SecurityInitializer. */
     private static class SecurityTrusted implements ImplicitlyTrustedClass {}
 

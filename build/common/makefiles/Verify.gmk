@@ -482,6 +482,8 @@ display:
 	@echo   "MIDP Build Configuration" $(LOG)
 	@echo   "========================" $(LOG)
 	@echo   "" $(LOG)
+	@echo   "VAR_IMPORT_FROM       = ""$(VAR_IMPORT_FROM)" $(LOG)
+	@echo   "" $(LOG)
 	@$(foreach v, $(BOOLEAN_OPTIONS), \
 		printf "%-21s = %s\n" "$(v)" "$($(v))" $(LOG);)
 	@echo   "" $(LOG)

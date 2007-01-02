@@ -892,7 +892,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
                            "\nFormLFImpl: uShowContents()");
-        }
+        }        
 
         synchronized (Display.LCDUILock) {
             if (firstShown) {
@@ -1870,7 +1870,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 return true;
             default:
                 // for safety/completeness, don't scroll.
-                Logging.report(Logging.ERROR, 
+                Logging.report(Logging.WARNING, 
                     LogChannels.LC_HIGHUI_FORM_LAYOUT,
                     "FormLFImpl: bounds, dir=" + dir);
                 break;

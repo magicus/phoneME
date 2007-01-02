@@ -84,17 +84,9 @@ public class MIDletEventProducer {
     /**
      * Construct a new MIDletEventProducer.
      *
-     * @param  token security token that controls instance creation.
      * @param  theEventQueue An event queue where new events will be posted.
      */
-    public MIDletEventProducer(SecurityToken token, EventQueue theEventQueue) {
-        
-        /**
-         * token must have AMS permissions 
-         *(primary user of this object is AMS's MIDletProxyList & MIDletProxy) 
-         */
-        token.checkIfPermissionAllowed(Permissions.AMS);
-        
+    public MIDletEventProducer(EventQueue theEventQueue) {
         eventQueue = theEventQueue;
     }
 

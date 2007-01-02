@@ -214,6 +214,40 @@ MIDP_ERROR midpport_suite_close_properties(jint propHandle) {
 
 
 /**
+ * Java interface for midp_suiteid2pcsl_string().
+ *
+ * @param suiteId unique ID of the suite
+ *
+ * @return string representation of the given suiteId
+ */
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_suiteIdToString) {
+    pcsl_string nullStr = PCSL_STRING_NULL_INITIALIZER;
+    const pcsl_string* pPcslStrSuiteId = &nullStr;
+    int suiteId;
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(hStrSuiteId);
+    /* assert(sizeof(SuiteIdType) == sizeof(jint)); */
+    suiteId = KNI_GetParameterAsInt(1);
+
+    pPcslStrSuiteId = midp_suiteid2pcsl_string(suiteId);
+
+    do {
+        GET_PCSL_STRING_DATA_AND_LENGTH(pPcslStrSuiteId)
+        if (PCSL_STRING_PARAMETER_ERROR(pPcslStrSuiteId)) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        } else {
+            KNI_NewString(pPcslStrSuiteId_data, pPcslStrSuiteId_len,
+                          hStrSuiteId);
+        }
+        RELEASE_PCSL_STRING_DATA_AND_LENGTH
+    } while (0);
+
+    KNI_EndHandlesAndReturnObject(hStrSuiteId);
+}
+
+/**
  * Get the application binary image path for a suite.
  *
  * @param suiteId unique ID of the suite
@@ -231,7 +265,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMidletSuiteAppImagePath) 
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(tempHandle);
-    // assert(sizeof(SuiteIdType) == sizeof(jint));
+    /* assert(sizeof(SuiteIdType) == sizeof(jint)); */
     suiteId = KNI_GetParameterAsInt(1);
 
     do {
@@ -382,7 +416,7 @@ KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_suiteExists) {
     jboolean exists = KNI_FALSE;
     int status;
-    // assert(sizeof(SuiteIdType) == sizeof(jint));
+    /* assert(sizeof(SuiteIdType) == sizeof(jint)); */
     SuiteIdType suiteId = KNI_GetParameterAsInt(1);
 
     status = midp_suite_exists(suiteId);
@@ -499,7 +533,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_createSuiteID) {
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getStorageUsed) {
     int used = 0;
-    // assert(sizeof(SuiteIdType) == sizeof(jint));
+    /* assert(sizeof(SuiteIdType) == sizeof(jint)); */
     SuiteIdType suiteId = KNI_GetParameterAsInt(1);
     used = midp_get_suite_storage_size(suiteId);
 
@@ -1275,12 +1309,12 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
             &suiteData.varSuiteData.suiteVendor, tmpHandle);
         KNI_SAVE_INT_FIELD(javaInstallInfo, clazz, "expectedJarSize",
                            suiteData.jarSize);
-        KNI_GetObjectField(javaInstallInfo, 
+        KNI_GetObjectField(javaInstallInfo,
 			   midp_get_field_id(KNIPASSARGS clazz,
             "authPath", "[Ljava/lang/String;"), authPathObj);
         installInfo.authPathLen = KNI_GetArrayLength(authPathObj);
 
-        KNI_GetObjectField(javaInstallInfo, 
+        KNI_GetObjectField(javaInstallInfo,
 			   midp_get_field_id(KNIPASSARGS clazz,
             "verifyHash", "[B"), verifyHashObj);
         suiteData.jarHashLen = KNI_GetArrayLength(verifyHashObj);
@@ -1296,7 +1330,7 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
                                suiteSettings.enabled);
         suiteData.isEnabled = suiteSettings.enabled;
 
-        KNI_GetObjectField(javaSuiteSettings, 
+        KNI_GetObjectField(javaSuiteSettings,
 			   midp_get_field_id(KNIPASSARGS clazz,
             "permissions", "[B"), permissionsObj);
 

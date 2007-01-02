@@ -26,6 +26,7 @@
 
 package com.sun.midp.main;
 
+import com.sun.midp.lcdui.ForegroundEventProducer;
 import com.sun.midp.midlet.*;
 import com.sun.midp.jsr.JSRInitializer;
 import com.sun.midp.automation.AutomationInitializer;
@@ -54,10 +55,13 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
     /** Disable startup error alerts, uninitialized by default */
     protected int disableAlerts = -1;
 
-    /** MIDlet state events producer needed to AMS */
+    /** MIDlet state event producer needed by AMS */
     protected MIDletEventProducer midletEventProducer;
 
-    /** List of MIDlet proxies needed to AMS */
+    /** Foreground event producer needed by AMS. */
+    protected static ForegroundEventProducer foregroundEventProducer;
+
+    /** List of MIDlet proxies needed by AMS */
     protected MIDletProxyList midletProxyList;
 
     /**
@@ -83,8 +87,8 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
     protected void createSuiteEnvironment() {
         super.createSuiteEnvironment();
 
-        midletEventProducer = new MIDletEventProducer(
-            internalSecurityToken, eventQueue);
+        midletEventProducer = new MIDletEventProducer(eventQueue);
+        foregroundEventProducer = new ForegroundEventProducer(eventQueue);
         midletProxyList = new MIDletProxyList(eventQueue);
     }
 
@@ -128,7 +132,7 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
         AmsUtil.initClass(
             midletProxyList, midletControllerEventProducer);
 
-        MIDletProxy.initClass(displayEventProducer, midletEventProducer);
+        MIDletProxy.initClass(foregroundEventProducer, midletEventProducer);
         MIDletProxyList.initClass(midletProxyList);
 
         // Listen for start MIDlet requests from the other isolates
@@ -280,7 +284,7 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
      * @param errorCode generic error code
      * @param details text with error details
      */
-    protected void reportErrorImpl(int errorCode, String details) {
+    protected void reportError(int errorCode, String details) {
         state.status = errorCode;
 
         // Initialize display alerts state on first error handling
@@ -303,32 +307,6 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
         if (Logging.REPORT_LEVEL <= Logging.ERROR) {
             Logging.report(Logging.ERROR, LogChannels.LC_CORE, errorMsg);
         }
-    }
-
-    /**
-     * Implements abstract base class method to report
-     * an error with no extra details
-     *
-     * @param errorCode generic error code to report
-     */
-    protected void reportError(int errorCode) {
-        reportErrorImpl(errorCode, null);
-    }
-
-    /**
-     * Handles exceptions happened during MIDlet suite execution
-     * @param t exception instance
-     */
-    protected void handleException(Throwable t) {
-        t.printStackTrace();
-        int errorCode = getErrorCode(t);
-
-        if (Logging.TRACE_ENABLED) {
-            Logging.trace(t,
-                "Exception caught in MIDletSuiteLoader");
-        }
-
-        reportErrorImpl(errorCode, t.getMessage());
     }
 
     /**

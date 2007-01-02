@@ -28,7 +28,6 @@ package javax.microedition.lcdui;
 
 import java.io.InputStream;
 import java.io.IOException;
-import javax.microedition.lcdui.game.Sprite;
 
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midlet.MIDletStateHandler;

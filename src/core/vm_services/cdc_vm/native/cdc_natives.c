@@ -233,6 +233,7 @@ KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
     midpSetHomeDir(cbuff);
     if (midpInitialize() != 0) {
         printf("midpInitialize() failed\n");
+
     }
 
     if (midpInitCallback(VM_LEVEL, midpInitializeUI, midpFinalizeUI) != 0) {
@@ -754,6 +755,7 @@ DUMMY(pushdeletesuite)
 DUMMY(midpStoreEventAndSignalForeground)
 
 int getCurrentIsolateId() {return 0;}
+
 int midpGetAmsIsolateId() {return 0;}
 
 /* IMPL_NOTE - removed duplicate
