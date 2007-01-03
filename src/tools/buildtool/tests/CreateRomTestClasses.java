@@ -139,6 +139,7 @@ public class CreateRomTestClasses {
             "mps/HiddenClass",
             "mps/hidden",
             "vm/cpu/share/CodeGenerator/InitStaticArrayTest",
+            "vm/share/compiler/BytecodeCompileClosure/A",
         };
         static final String include_infixes[] = {
             "/SNI_",
