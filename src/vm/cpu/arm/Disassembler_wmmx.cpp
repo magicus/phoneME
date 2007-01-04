@@ -35,8 +35,10 @@
 
 #include "incls/_precompiled.incl"
 
-#if !ENABLE_THUMB_COMPILER && USE_COMPILER_DISASSEMBLER
-#ifndef PRODUCT
+#if !ENABLE_THUMB_COMPILER 
+
+#if !defined(PRODUCT) || USE_COMPILER_DISASSEMBLER
+
 #include "incls/_Disassembler_wmmx.cpp.incl"
 
 #if ENABLE_XSCALE_WMMX_INSTRUCTIONS
@@ -756,6 +758,7 @@ void Disassembler::emit_wmmx_instruction(int instr) {
   }
 }
 #endif // ENABLE_XSCALE_WMMX_INSTRUCTIONS
-#endif // PRODUCT
 
-#endif /*#if !ENABLE_THUMB_COMPILER && USE_COMPILER_DISASSEMBLER */
+#endif // !defined(PRODUCT) || USE_COMPILER_DISASSEMBLER
+
+#endif /*#if !ENABLE_THUMB_COMPILER */

@@ -96,12 +96,15 @@ class Globals {
   static PRODUCT_CONST JVMFlag* find_flag(char* name);
 
 #ifndef PRODUCT
+  static void verify();
+#endif
+
+#if USE_DEBUG_PRINTING
   static void print_flags();
   static void print_flags(void *st);
   static void print_build_options();
   static void print_build_options(void *st);
   static void print_error_codes();
-  static void verify();
   static bool match_flag(const char *flag_name, const char *pattern);
 #endif
 
@@ -297,13 +300,6 @@ private:
   develop(bool, DumpVSFInComments, false,                                   \
           "Dump the VirtualStackFrames in compiler comments")               \
                                                                             \
-  develop(bool, Verbose, false,                                             \
-          "Print additional debugging information")                         \
-                                                                            \
-  develop(bool, VerbosePointers, true,                                      \
-          "Print value of pointers in debugging information (ignored "      \
-          "if Verbose=0")                                                   \
-                                                                            \
   develop(bool, AbortOnInfiniteWait, false,                                 \
           "Abort the VM if all threads are waiting forever")                \
                                                                             \
@@ -339,12 +335,6 @@ private:
                                                                             \
   develop(bool, PrintObjectHistogramData, false,                            \
           "Print a log for computing the object histogram")                 \
-                                                                            \
-  develop(bool, PrintLongFrames, false,                                     \
-          "Print locals and expression stack when printing frames")         \
-                                                                            \
-  develop(bool, PrintExtraLongFrames, false,                                \
-          "Print very detailed information when printing frames")           \
                                                                             \
   develop(bool, Deterministic, false,                                       \
           "Make VM behave more deterministically")                          \
@@ -538,6 +528,19 @@ private:
                                                                             \
        op(bool, PrintCompiledCodeAsYouGo, false,                            \
           "Prints the native code for all compiled methods")                \
+                                                                            \
+       op(bool, PrintLongFrames, false,                                     \
+          "Print locals and expression stack when printing frames")         \
+                                                                            \
+       op(bool, PrintExtraLongFrames, false,                                \
+          "Print very detailed information when printing frames")           \
+                                                                            \
+       op(bool, Verbose, false,                                             \
+          "Print additional debugging information")                         \
+                                                                            \
+       op(bool, VerbosePointers, true,                                      \
+          "Print value of pointers in debugging information (ignored "      \
+          "if Verbose=0")                                                   \
                                                                             \
        op(bool, TraceMethodInlining, false,                                 \
           "Trace method inlining (only for ENABLE_INLINE)")                 \
@@ -796,11 +799,11 @@ private:
 #endif
 
 #if ENABLE_TTY_TRACE
-#define   TTY_TRACE_RUNTIME_FLAGS(always, develop) \
-        __TTY_TRACE_RUNTIME_FLAGS(develop, develop)
+#define   TTY_TRACE_RUNTIME_FLAGS(always, develop, product) \
+        __TTY_TRACE_RUNTIME_FLAGS(product, product)
 #else
-#define   TTY_TRACE_RUNTIME_FLAGS(always, develop) \
-        __TTY_TRACE_RUNTIME_FLAGS(always, develop)
+#define   TTY_TRACE_RUNTIME_FLAGS(always, develop, product) \
+        __TTY_TRACE_RUNTIME_FLAGS(develop, develop)
 #endif
 
 #if !ENABLE_REMOTE_TRACER
@@ -946,7 +949,7 @@ private:
       JVMPI_PROFILE_RUNTIME_FLAGS(develop, product)        \
       JVMPI_PROFILE_VERIFY_RUNTIME_FLAGS(develop, product) \
       CPU_VARIANT_RUNTIME_FLAGS(develop, product)          \
-      TTY_TRACE_RUNTIME_FLAGS(always, develop)
+      TTY_TRACE_RUNTIME_FLAGS(always, develop, product)
 
 /*
  * Macros for declaring globals variables that can be modified by

@@ -743,9 +743,7 @@ public:
 
   bool is_overloaded() const;
 
-#ifdef PRODUCT
-  void print_name_on_tty() const PRODUCT_RETURN;
-#else
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   void print_name_on_tty() const {
     print_name_on(tty);
   }
@@ -766,9 +764,11 @@ public:
   void print_bytecodes(Stream* st, int start, int end, bool include_nl = true,
                        bool verbose = true);
   static void iterate_oopmaps(oopmaps_doer do_map, void* param);
+#else
+  void print_name_on_tty() const PRODUCT_RETURN;
 #endif
 
-#if !defined(PRODUCT) || ENABLE_PERFORMANCE_COUNTERS
+#if !defined(PRODUCT) || ENABLE_PERFORMANCE_COUNTERS || ENABLE_TTY_TRACE
   void print_name_to(char *buffer, int length);
 #endif
 

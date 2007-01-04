@@ -691,11 +691,8 @@ void ObjectHeap::finalize( FinalizerConsDesc** list ) {
   }
 }
 
-#if ENABLE_PERFORMANCE_COUNTERS
+#if ENABLE_PERFORMANCE_COUNTERS || ENABLE_TTY_TRACE
 jlong     ObjectHeap::_internal_collect_start_time;
-#endif
-
-#if ENABLE_PERFORMANCE_COUNTERS || USE_DEBUG_PRINTING
 size_t    ObjectHeap::_old_gen_size_before;
 size_t    ObjectHeap::_young_gen_size_before;
 #endif
@@ -1279,7 +1276,7 @@ bool ObjectHeap::create() {
     }
   }
 
-#ifndef PRODUCT
+#if !defined (PRODUCT) || ENABLE_TTY_TRACE
   int regular_space_min = min_heap_size;
 #endif
 
@@ -2120,7 +2117,7 @@ inline void ObjectHeap::compute_new_object_locations() {
         prev_last_dead = last_dead;
         last_dead = NULL;
       }
-#ifndef PRODUCT
+#if ENABLE_TTY_TRACE
       if (TraceGC) {
         if (split_space && _collection_area_start != _heap_start) {
           int alt_delta = DISTANCE(old_generation_end, young_generation_start);
@@ -2414,7 +2411,7 @@ void ObjectHeap::write_barrier_oops_update_moving_object_interior_pointers(
     if (instance_size > 0) {
       // This is a common case: (non-array) Java object instance. In-line
       // OopDesc::oops_do_for() to make it run faster.
-#ifndef PRODUCT
+#if ENABLE_TTY_TRACE
       if (TraceGC) {
         TTY_TRACE_CR(("TraceGC: 0x%x => 0x%x updating interior",
                       p, destination));
@@ -2448,7 +2445,7 @@ void ObjectHeap::write_barrier_oops_update_moving_object_interior_pointers(
     } else if (instance_size != InstanceSize::size_execution_stack) {
       // Handle relative offsets in compiled method separately. Must
       // be done before we update the interior pointers.
-#ifndef PRODUCT
+#if ENABLE_TTY_TRACE
       if (TraceGC) {
         TTY_TRACE_CR(("TraceGC: 0x%x => 0x%x updating interior",
                       p, destination));
@@ -2612,7 +2609,7 @@ void ObjectHeap::full_collect(JVM_SINGLE_ARG_TRAPS) {
             Universe::interned_string_near()->obj(), "must be the same");
 }
 
-#ifndef PRODUCT
+#if ENABLE_TTY_TRACE
 void print_size(Stream* st, size_t size) {
   st->print("%dK", size/1024);
 }
@@ -3018,7 +3015,7 @@ inline void ObjectHeap::internal_collect_prologue(size_t min_free_after_collecti
     PERFORMANCE_COUNTER_INCREMENT(num_of_full_gc, 1);
   }
 
-#if USE_DEBUG_PRINTING
+#if ENABLE_TTY_TRACE
   if (TraceGC) {
 #if ENABLE_PERFORMANCE_COUNTERS
     TTY_TRACE_CR(("TraceGC: Starting GC #%d", jvm_perf_count.num_of_gc));
@@ -3080,7 +3077,7 @@ inline void ObjectHeap::setup_marking_stack(void) {
 inline void ObjectHeap::internal_collect_epilogue(bool is_full_collect, 
                                            bool reuse_young_generation) {
   (void)reuse_young_generation;
-#if ENABLE_PERFORMANCE_COUNTERS || USE_DEBUG_PRINTING
+#if ENABLE_PERFORMANCE_COUNTERS || ENABLE_TTY_TRACE
   size_t old_gen_size_after =
       DISTANCE(_heap_start, _old_generation_end);
   size_t young_gen_size_after =
@@ -3096,7 +3093,7 @@ inline void ObjectHeap::internal_collect_epilogue(bool is_full_collect,
   PERFORMANCE_COUNTER_SET_MAX(max_gc_hrticks, elapsed);
 #endif
 
-#if USE_DEBUG_PRINTING
+#if ENABLE_TTY_TRACE
   if (VerboseGC || TraceGC) {
     if (is_full_collect) {
       TTY_TRACE(("[full  GC <"));
@@ -3936,7 +3933,7 @@ void ObjectHeap::compact_and_move_compiler_area(const int compiler_area_shift) {
 #if ENABLE_COMPILER
   EnforceRuntimeJavaStackDirection enfore_java_stack_direction;
 
-#ifndef PRODUCT
+#if ENABLE_TTY_TRACE
   const size_t old_compiler_area_size = compiler_area_size();
   const size_t old_used_compiler_area = compiler_area_used();
   const int old_num_compiled_methods = count_compiled_methods();
@@ -3979,7 +3976,7 @@ void ObjectHeap::compact_and_move_compiler_area(const int compiler_area_shift) {
   }
   _is_gc_active = false;
 
-#ifndef PRODUCT
+#if ENABLE_TTY_TRACE
   const size_t new_compiler_area_size = compiler_area_size();
   const size_t new_used_compiler_area = compiler_area_used();
   if (VerboseGC ||
@@ -4147,10 +4144,6 @@ void ObjectHeap::verify_layout() {
 }
 
 
-void ObjectHeap::save_java_stack_snapshot() {
-  ::save_java_stack_snapshot();
-}
-
 bool ObjectHeap::contains_live(OopDesc** target) {
   if (_heap_start <= target && target < _inline_allocation_top) {
     return true;
@@ -4196,99 +4189,6 @@ OopDesc* ObjectHeap::slow_object_start(OopDesc** target) {
   }
   return NULL;
 }
-
-#if USE_DEBUG_PRINTING
-void ObjectHeap::print(Stream* st) {
-  st->print_cr("Object heap       [0x%x,0x%x), %d bytes", 
-                                   _heap_start, _heap_top,
-                                   int(_heap_top) - int(_heap_start));
-  st->print_cr("total/free bytes    [%d,%d]", total_memory(), free_memory());
-  st->print_cr("- Collection area   [0x%x,0x%x, 0x%x)",
-    _collection_area_start, _inline_allocation_top, _inline_allocation_end);
-  st->print_cr("- Compiler area     [0x%x,0x%x, 0x%x)",
-    _compiler_area_start, _compiler_area_top, compiler_area_end());
-  st->print_cr("- Large object area [0x%x,0x%x, 0x%x)",
-    LargeObject::start(), LargeObject::bottom(), LargeObject::end());
-  st->print_cr("Min marking stack   [0x%x,0x%x)", _heap_top, _bitvector_start);
-  st->print_cr("Bit vector          [0x%x,0x%x), %d bytes",
-                                  _bitvector_start, _slices_start,
-                                  int(_slices_start) - int(_bitvector_start));
-  st->print_cr("Slices start      0x%x",        _slices_start);
-  st->print_cr("Slice size        %d",          _slice_size);
-  st->print_cr("Number of slices  %d (=%d bytes)", _nof_slices,
-                                               _nof_slices * sizeof(OopDesc*));
-  if (Verbose) {
-    for (size_t i = 0; i < _nof_slices; i++) {
-      st->print_cr("- Slice[%4d] 0x%x", i, _slices_start[i]);
-    }
-  }
-  print_task_usage(st);
-}
-
-void ObjectHeap::print_task_usage(Stream *st) {
-#if ENABLE_ISOLATES
-  if (VerboseGC || TraceGC || TraceHeapSize) {
-    ForTask(task) {
-      st->print_cr("Task %2d usage %d", task, _task_info[task].usage);
-      if (!Universe::before_main()) {
-        Task::Raw t = Task::get_task(task);
-        if (!t.is_null()) {
-          st->print_cr("   Task string count %d", t().string_table_count());
-          st->print_cr("   Task symbol count %d", t().symbol_table_count());
-        }
-      }
-    }
-  }
-#else
-  (void)st;
-#endif
-}
-
-class PrintObjects : public ObjectHeapVisitor {
-public:
-  PrintObjects(Stream* st) { _st = st;}
-  virtual void do_obj(Oop* obj) {
-#if ENABLE_ISOLATES
-    if (obj->is_boundary()) {
-      OopDesc *n = obj->klass();
-      for (int i=0; i<MAX_TASKS; i++) {
-        if (n == Universe::boundary_near_list()->obj_at(i)) {
-          _st->print("^^^^^^^^^^^^^^^^^^[task %d]^^^^^^^^^^^^^^^ ", i);
-          break;
-        }
-      }
-    }
-#endif
-    int size = obj->object_size();
-    _st->print("0x%x (%d) ", obj->obj(), size);
-    obj->print_value_on(_st);
-    _st->cr();
-  }
-private:
-  Stream* _st;
-};
-
-void ObjectHeap::print_all_objects(const JvmPathChar *file_name) {
-  FileStream file(file_name);
-  print_all_objects(&file);
-}
-
-void ObjectHeap::print_all_objects(Stream *st) {
-  PrintObjects closure(st);
-  ObjectHeap::iterate(&closure);
-}
-
-class PrintClasses : public ObjectHeapVisitor {
-  virtual void do_obj(Oop* obj) {
-    if (obj->is_instance_class()) obj->print();
-  }
-};
-
-void ObjectHeap::print_all_classes() {
-  PrintClasses closure;
-  ObjectHeap::iterate(&closure);
-}
-#endif // USE_DEBUG_PRINTING
 
 void ObjectHeap::verify_bitvector_alignment(OopDesc** p) {
   GUARANTEE_R((size_t) p % (BitsPerByte * BytesPerWord) == 0,
@@ -4619,10 +4519,6 @@ int ObjectHeap::jvm_garbage_collect(int flags, int requested_free_bytes) {
   return avail;
 }
 
-#if ENABLE_ISOLATES
-  #undef ForTask
-#endif
-
 extern "C" int JVM_GarbageCollect(int flags, int requested_free_bytes) {
   return ObjectHeap::jvm_garbage_collect(flags, requested_free_bytes);
 }
@@ -4722,7 +4618,103 @@ void* JVM_SetHeapLimit(void *new_heap_limit) {
 
 #endif // USE_SET_HEAP_LIMIT
 
-#if USE_DEBUG_PRINTING
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+
+void ObjectHeap::save_java_stack_snapshot() {
+  ::save_java_stack_snapshot();
+}
+
+void ObjectHeap::print(Stream* st) {
+  st->print_cr("Object heap       [0x%x,0x%x), %d bytes", 
+                                   _heap_start, _heap_top,
+                                   int(_heap_top) - int(_heap_start));
+  st->print_cr("total/free bytes    [%d,%d]", total_memory(), free_memory());
+  st->print_cr("- Collection area   [0x%x,0x%x, 0x%x)",
+    _collection_area_start, _inline_allocation_top, _inline_allocation_end);
+  st->print_cr("- Compiler area     [0x%x,0x%x, 0x%x)",
+    _compiler_area_start, _compiler_area_top, compiler_area_end());
+  st->print_cr("- Large object area [0x%x,0x%x, 0x%x)",
+    LargeObject::start(), LargeObject::bottom(), LargeObject::end());
+  st->print_cr("Min marking stack   [0x%x,0x%x)", _heap_top, _bitvector_start);
+  st->print_cr("Bit vector          [0x%x,0x%x), %d bytes",
+                                  _bitvector_start, _slices_start,
+                                  int(_slices_start) - int(_bitvector_start));
+  st->print_cr("Slices start      0x%x",        _slices_start);
+  st->print_cr("Slice size        %d",          _slice_size);
+  st->print_cr("Number of slices  %d (=%d bytes)", _nof_slices,
+                                               _nof_slices * sizeof(OopDesc*));
+  if (Verbose) {
+    for (size_t i = 0; i < _nof_slices; i++) {
+      st->print_cr("- Slice[%4d] 0x%x", i, _slices_start[i]);
+    }
+  }
+  print_task_usage(st);
+}
+
+void ObjectHeap::print_task_usage(Stream *st) {
+#if ENABLE_ISOLATES
+  if (VerboseGC || TraceGC || TraceHeapSize) {
+    ForTask(task) {
+      st->print_cr("Task %2d usage %d", task, _task_info[task].usage);
+      if (!Universe::before_main()) {
+        Task::Raw t = Task::get_task(task);
+        if (!t.is_null()) {
+          st->print_cr("   Task string count %d", t().string_table_count());
+          st->print_cr("   Task symbol count %d", t().symbol_table_count());
+        }
+      }
+    }
+  }
+#else
+  (void)st;
+#endif
+}
+
+class PrintObjects : public ObjectHeapVisitor {
+public:
+  PrintObjects(Stream* st) { _st = st;}
+  virtual void do_obj(Oop* obj) {
+#if ENABLE_ISOLATES
+    if (obj->is_boundary()) {
+      OopDesc *n = obj->klass();
+      for (int i=0; i<MAX_TASKS; i++) {
+        if (n == Universe::boundary_near_list()->obj_at(i)) {
+          _st->print("^^^^^^^^^^^^^^^^^^[task %d]^^^^^^^^^^^^^^^ ", i);
+          break;
+        }
+      }
+    }
+#endif
+    int size = obj->object_size();
+    _st->print("0x%x (%d) ", obj->obj(), size);
+    obj->print_value_on(_st);
+    _st->cr();
+  }
+private:
+  Stream* _st;
+};
+
+void ObjectHeap::print_all_objects(const JvmPathChar *file_name) {
+  FileStream file(file_name);
+  print_all_objects(&file);
+}
+
+void ObjectHeap::print_all_objects(Stream *st) {
+  PrintObjects closure(st);
+  ObjectHeap::iterate(&closure);
+}
+
+class PrintClasses : public ObjectHeapVisitor {
+  virtual void do_obj(Oop* obj) {
+    if (obj->is_instance_class()) obj->print();
+  }
+};
+
+void ObjectHeap::print_all_classes() {
+  PrintClasses closure;
+  ObjectHeap::iterate(&closure);
+}
+
 // Find all pointers in the heap that points to the given object.
 void ObjectHeap::find(OopDesc *target, bool verbose_owner) {
   for (OopDesc** ptr = _heap_start; ptr < _inline_allocation_top; ptr++) {
@@ -4847,4 +4839,9 @@ void ObjectHeap::reach(OopDesc *target) {
   tty->print_cr("0x%08x doesn't seem to be reachable", target);
   return;
 }
+
+#endif // !defined(PRODUCT) || ENABLE_TTY_TRACE
+
+#if ENABLE_ISOLATES
+  #undef ForTask
 #endif

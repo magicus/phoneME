@@ -35,7 +35,7 @@
 
 #if ENABLE_COMPILER
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 static void decode_instruction(Stream* st, short* addr, int offset) {
   Disassembler(st).disasm(addr, *addr, offset);
@@ -77,7 +77,7 @@ void CompiledMethod::print_code_on(Stream* st) {
   }
 }
 
-#endif // !PRODUCT
+#endif // !defined(PRODUCT) || ENABLE_TTY_TRACE
 #endif // ENABLE_COMPILER
 
 #if ENABLE_ROM_GENERATOR

@@ -383,7 +383,7 @@ void Compiler::oops_do( void do_oop(OopDesc**) ) {
 }
 
 void Compiler::terminate ( OopDesc* result ) {
-#ifndef PRODUCT
+#if ENABLE_TTY_TRACE
   if (PrintCompilation) {
     if (result != NULL) {
       TTY_TRACE_CR(("<done %d>", ((CompiledMethodDesc*)result)->object_size()));
@@ -477,11 +477,13 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
   _callinfo_writer.initialize(current_compiled_method());
 #endif
 
-#if USE_COMPILER_COMMENTS && ENABLE_PERFORMANCE_COUNTERS
+#if USE_COMPILER_COMMENTS
   if (PrintCompilation || PrintCompiledCode || PrintCompiledCodeAsYouGo) {
+#if ENABLE_PERFORMANCE_COUNTERS
     if (VerbosePointers) {
       tty->print("#%d: ", jvm_perf_count.num_of_compilations);
     }
+#endif
     tty->print("(bci=%d) Compiling ", 
                closure()->active_bci());
     method()->print_name_on(tty);
@@ -908,7 +910,7 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
     INCREMENT_COMPILER_PERFORMANCE_COUNTER(relocation, relocation_size);
     result = current_compiled_method();
     result().shrink(code_size, relocation_size);
-#ifndef PRODUCT
+#if ENABLE_TTY_TRACE
     if( Verbose || PrintCompilation ) {
       if (VerbosePointers) {
         TTY_TRACE_CR((" [compiled method (0x%x) size=%d, code=%d, reloc=%d, "
@@ -947,7 +949,7 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
     CompiledMethodCache::insert( (CompiledMethodDesc*) result().obj() );
   }
 
-#ifndef PRODUCT
+#if ENABLE_TTY_TRACE
   if( PrintCompiledCode ) {
     if ( OptimizeCompiledCodeVerbose ) {
       tty->print_cr("After Optimization:");
@@ -1111,7 +1113,7 @@ inline void Compiler::optimize_code( JVM_SINGLE_ARG_TRAPS ) {
         TTY_TRACE_CR(( "Code optimization FAILED - out of memory" ));
       }
     }
-#if ENABLE_PERFORMANCE_COUNTERS
+#if ENABLE_TTY_TRACE
     opt_timer.stop();
     if( result().not_null() ) {
       if( PrintCompilation ) {

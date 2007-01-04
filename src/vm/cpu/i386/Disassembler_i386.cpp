@@ -32,7 +32,9 @@
 
 #include "incls/_precompiled.incl"
 
-#if !defined(PRODUCT) && ENABLE_COMPILER
+#if ENABLE_COMPILER
+
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 #include "incls/_Disassembler_i386.cpp.incl"
 
@@ -2089,4 +2091,6 @@ const struct instable x86_disassembler::opFP7[8] = {
                INVALID,
 };
 
-#endif // !defined(PRODUCT) && ENABLE_COMPILER
+#endif // !defined(PRODUCT) || ENABLE_TTY_TRACE
+
+#endif // ENABLE_COMPILER

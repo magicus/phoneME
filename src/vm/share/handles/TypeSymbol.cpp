@@ -509,7 +509,7 @@ BasicType TypeSymbol::object_basic_type_at(int index) const {
 }
 
 #if !defined(PRODUCT) || ENABLE_WTK_PROFILER || ENABLE_PERFORMANCE_COUNTERS \
-   || ENABLE_JVMPI_PROFILE || USE_AOT_COMPILATION
+   || ENABLE_JVMPI_PROFILE || USE_AOT_COMPILATION || USE_DEBUG_PRINTING
    // Print the type at the given index
 int TypeSymbol::print_type_at(Stream* st, int index) {
   juint byte0 = byte_at(index);

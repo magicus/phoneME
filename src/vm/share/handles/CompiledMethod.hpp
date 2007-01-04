@@ -132,7 +132,7 @@ public:
   int generate_fieldmap(TypeArray* field_map);
 #endif
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   void print_code_on(Stream* st);
   void print_code_on(Stream* st, jint start, jint end);  // x86
   void print_comment_for(int code_offset, Stream* st);

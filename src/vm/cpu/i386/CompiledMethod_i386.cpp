@@ -29,7 +29,7 @@
 
 #if ENABLE_COMPILER
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 int DisassemblerEnv::code_offset(address target) { 
   int result = target - _code->entry();

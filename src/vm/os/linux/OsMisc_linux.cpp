@@ -55,7 +55,7 @@ const JvmPathChar *OsMisc_get_classpath() {
   return classpath;
 }
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_DEBUG_PRINTING
 
 const char *OsMisc_jlong_format_specifier() {
   return "%lld";

@@ -306,7 +306,7 @@ class ClassInfo: public Oop {
     return sizeof(ClassInfoDesc);
   }
 
-#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR
+#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || ENABLE_TTY_TRACE
   // used by romizer
   int itable_end_offset() const {
     return ushort_field(object_size_offset());

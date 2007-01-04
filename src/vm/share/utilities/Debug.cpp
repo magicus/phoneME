@@ -425,25 +425,6 @@ void new_pss() {
   tty->print_cr("[Finished dumping all threads]");
 }
 
-// Print stack, using guessed_fp as the starting address for guessing the fp.
-// This is useful when we're inside compiled code or interpreter where
-// the fp is not stored in Thread::current().
-void psg(address guessed_fp) {
-  Thread* current = Thread::current();
-
-  BasicOop::disable_on_stack_check();
-
-  Frame frame(current, guessed_fp);
-  if (!frame.is_valid_guessed_frame()) {
-    tty->print_cr("cannot print stack (unable to guess fp from 0x%x)", 
-                  guessed_fp);
-  } else {
-    current->trace_stack_from(&frame, tty);
-  }
-
-  BasicOop::enable_on_stack_check();
-}
-
 extern "C" void pss() {
   DebugHandleMarker debug_handle_marker;
 
@@ -477,101 +458,6 @@ extern "C" void pss() {
   }
 }
 
-typedef struct {
-  int used;                    // 0 if we have reached the end
-  int bci;
-  OopDesc *compiled_method;    // NULL if the frame is an interpreted frame
-  OopDesc *method;
-  char name[128];
-} SavedJavaStackFrame;
-
-static SavedJavaStackFrame saved_java_stack[40];
-
-void save_java_stack_snapshot() {
-#if !ENABLE_ISOLATES
-  // This code does not work in MVM -- it really should switch the task
-  // first before examing the callstack of a task.
-  EnforceRuntimeJavaStackDirection enfore_java_stack_direction;
-
-  jvm_memset(saved_java_stack, 0, sizeof(saved_java_stack));
-  int index = 0;
-  int max = ARRAY_SIZE(saved_java_stack);
-
-  Thread *thread = Thread::current();
-  if (thread->is_null()) {
-    return;
-  }
-  if (thread->last_java_fp() == NULL || thread->last_java_sp() == NULL) {
-    return;
-  }
-  {
-#if ENABLE_ISOLATES
-    // We must switch to the context of the task
-    TaskGCContext tmp(thread->task_id());
-#endif
-    Frame fr(Thread::current());
-    while (index < max) {
-      if (fr.is_entry_frame()) {
-        if (fr.as_EntryFrame().is_first_frame()) {
-          break;
-        }
-        fr.as_EntryFrame().caller_is(fr);
-      } else {
-        SavedJavaStackFrame *saved = &saved_java_stack[index++];
-        JavaFrame java_frame = fr.as_JavaFrame();
-        
-        Method method = java_frame.method();
-        method.print_name_to(saved->name, sizeof(saved->name));
-        
-        saved->used = 1;
-        saved->bci = java_frame.bci();
-        saved->method = method.obj();
-        
-#if ENABLE_COMPILER
-        if (java_frame.is_compiled_frame()) {
-          saved->compiled_method = java_frame.compiled_method();
-        }
-#endif
-
-        java_frame.caller_is(fr);
-      }
-    }
-  }
-#endif
-}
-
-void psgc() {
-  if (!Frame::in_gc_state()) {
-    tty->print_cr("Not in GC state, the saved Java stack snapshot "
-                  "may be stale");
-  }
-  tty->print_cr("Stack trace [");
-
-  int index = 0;
-  int max = ARRAY_SIZE(saved_java_stack);
-  
-  while (index < max) {
-    SavedJavaStackFrame *saved = &saved_java_stack[index++];
-    if (!saved->used) {
-      break;
-    }
-    tty->print("    [%d] %s", index, saved->name);
-    tty->fill_to(50);
-    tty->print(" bci =%3d", saved->bci);
-    if (saved->compiled_method) {
-      tty->print(" compiled", saved->bci);
-    }
-    if (Verbose) {
-      tty->cr();
-      tty->print("        Method = 0x%x", saved->method);
-      if (saved->compiled_method) {
-        tty->print(", CompiledMethod = 0x%x", saved->compiled_method);
-      }
-    }
-    tty->cr();
-  }
-  tty->print_cr("]");
-}
 
 
 /// Dump a TypeArray that would appear as ClassInfoDesc::_local_interfaces
@@ -682,6 +568,125 @@ extern "C" void compiler_tracer(address pc) {
 #endif // ENABLE_COMPILER
 
 #endif // !PRODUCT
+
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+
+// Print stack, using guessed_fp as the starting address for guessing the fp.
+// This is useful when we're inside compiled code or interpreter where
+// the fp is not stored in Thread::current().
+void psg(address guessed_fp) {
+  Thread* current = Thread::current();
+
+  BasicOop::disable_on_stack_check();
+
+  Frame frame(current, guessed_fp);
+  if (!frame.is_valid_guessed_frame()) {
+    tty->print_cr("cannot print stack (unable to guess fp from 0x%x)", 
+                  guessed_fp);
+  } else {
+    current->trace_stack_from(&frame, tty);
+  }
+
+  BasicOop::enable_on_stack_check();
+}
+
+typedef struct {
+  int used;                    // 0 if we have reached the end
+  int bci;
+  OopDesc *compiled_method;    // NULL if the frame is an interpreted frame
+  OopDesc *method;
+  char name[128];
+} SavedJavaStackFrame;
+
+static SavedJavaStackFrame saved_java_stack[40];
+
+void save_java_stack_snapshot() {
+#if !ENABLE_ISOLATES
+  // This code does not work in MVM -- it really should switch the task
+  // first before examing the callstack of a task.
+  EnforceRuntimeJavaStackDirection enfore_java_stack_direction;
+
+  jvm_memset(saved_java_stack, 0, sizeof(saved_java_stack));
+  int index = 0;
+  int max = ARRAY_SIZE(saved_java_stack);
+
+  Thread *thread = Thread::current();
+  if (thread->is_null()) {
+    return;
+  }
+  if (thread->last_java_fp() == NULL || thread->last_java_sp() == NULL) {
+    return;
+  }
+  {
+#if ENABLE_ISOLATES
+    // We must switch to the context of the task
+    TaskGCContext tmp(thread->task_id());
+#endif
+    Frame fr(Thread::current());
+    while (index < max) {
+      if (fr.is_entry_frame()) {
+        if (fr.as_EntryFrame().is_first_frame()) {
+          break;
+        }
+        fr.as_EntryFrame().caller_is(fr);
+      } else {
+        SavedJavaStackFrame *saved = &saved_java_stack[index++];
+        JavaFrame java_frame = fr.as_JavaFrame();
+        
+        Method method = java_frame.method();
+        method.print_name_to(saved->name, sizeof(saved->name));
+        
+        saved->used = 1;
+        saved->bci = java_frame.bci();
+        saved->method = method.obj();
+        
+#if ENABLE_COMPILER
+        if (java_frame.is_compiled_frame()) {
+          saved->compiled_method = java_frame.compiled_method();
+        }
+#endif
+
+        java_frame.caller_is(fr);
+      }
+    }
+  }
+#endif
+}
+
+void psgc() {
+  if (!Frame::in_gc_state()) {
+    tty->print_cr("Not in GC state, the saved Java stack snapshot "
+                  "may be stale");
+  }
+  tty->print_cr("Stack trace [");
+
+  int index = 0;
+  int max = ARRAY_SIZE(saved_java_stack);
+  
+  while (index < max) {
+    SavedJavaStackFrame *saved = &saved_java_stack[index++];
+    if (!saved->used) {
+      break;
+    }
+    tty->print("    [%d] %s", index, saved->name);
+    tty->fill_to(50);
+    tty->print(" bci =%3d", saved->bci);
+    if (saved->compiled_method) {
+      tty->print(" compiled", saved->bci);
+    }
+    if (Verbose) {
+      tty->cr();
+      tty->print("        Method = 0x%x", saved->method);
+      if (saved->compiled_method) {
+        tty->print(", CompiledMethod = 0x%x", saved->compiled_method);
+      }
+    }
+    tty->cr();
+  }
+  tty->print_cr("]");
+}
+
+#endif
 
 #if ENABLE_PRODUCT_PRINT_STACK && defined(PRODUCT)
 

@@ -79,7 +79,7 @@ struct JVMFlag {
   void set_int(int value) const { *((int*) addr) = value; }
 
 #if USE_DEBUG_PRINTING
-  void print_on(Stream* st) {
+  void print_on(Stream* st) const {
     st->print("%-6s %-40s = ", type, name);
     if (is_bool()) {
       st->print("%-10s", get_bool() ? "true" : "false");
@@ -246,11 +246,13 @@ bool Globals::parse_argument(char* arg) {
 void Globals::verify() {
   // Check consistency
 }
+#endif // PRODUCT
 
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 int __cdecl compare_flags(const void* a, const void* b) {
   return jvm_strcmp((*((JVMFlag**) a))->name, (*((JVMFlag**) b))->name);
 }
-#endif // PRODUCT
+#endif 
 
 #if USE_DEBUG_PRINTING
 void Globals::print_flags() {
@@ -266,8 +268,8 @@ void Globals::print_flags(void *_st) {
   }
 
   // Sort flags alphabetically by name
-  JVMFlag** array = 
-      NEW_GLOBAL_HEAP_ARRAY(JVMFlag*, length, "Global flags sorting");
+  const JVMFlag** array = 
+      NEW_GLOBAL_HEAP_ARRAY(const JVMFlag*, length, "Global flags sorting");
   for (int index = 0; index < length; index++) {
     array[index] = &flagTable[index];
   }

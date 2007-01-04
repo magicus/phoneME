@@ -64,9 +64,14 @@ class BinaryAssembler: public Macros {
   }
 
  public:
-  NOT_PRODUCT(virtual) PRODUCT_STATIC void emit(int instr) {
+#if defined(PRODUCT) && !USE_COMPILER_COMMENTS
+  static
+#else
+  virtual
+#endif
+  void emit(int instr) {
     // emit instruction
-#ifndef PRODUCT      
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
     if (PrintCompiledCodeAsYouGo) { 
        Disassembler d(tty);
        tty->print("%d:\t", instance()->_code_offset);
@@ -78,9 +83,12 @@ class BinaryAssembler: public Macros {
     emit_raw(instr);
   }
 
-  PRODUCT_STATIC void emit_int(int instr) {
+#if defined(PRODUCT) && !USE_COMPILER_COMMENTS
+  static
+#endif 
+  void emit_int(int instr) {
     // emit instruction
-#ifndef PRODUCT      
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
     if (PrintCompiledCodeAsYouGo) { 
        tty->print("%d:\t", _code_offset);
        tty->print_cr("0x%08x\t", instr);
@@ -90,9 +98,12 @@ class BinaryAssembler: public Macros {
   }
 
 #if ENABLE_EMBEDDED_CALLINFO
-  PRODUCT_STATIC void emit_ci(CallInfo info) {
+#if defined(PRODUCT) && !USE_COMPILER_COMMENTS
+  static
+#endif 
+  void emit_ci(CallInfo info) {
     // emit call info
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
     if (PrintCompiledCodeAsYouGo) { 
        tty->print("%d:\t", _code_offset);
        tty->print("0x%08x\t", info.raw());
@@ -383,7 +394,7 @@ protected:
   public:
     static ReturnOop allocate(const Oop* oop, int imm32 JVM_TRAPS);
       
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
     void print_value_on(Stream*s);
 #endif
   };
@@ -514,8 +525,8 @@ public:
     return 0; 
   } 
 
-#if USE_COMPILER_COMMENTS
-  NOT_PRODUCT(virtual) void comment(const char* /*str*/, ...) PRODUCT_RETURN;
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
+  NOT_PRODUCT(virtual) void comment(const char* /*str*/, ...);
 #else
   NOT_PRODUCT(virtual) void comment(const char* /*str*/, ...) {}
 #endif
@@ -603,10 +614,10 @@ private:
   int                      _code_offset_to_desperately_force_literals;  
 };
 
-#ifdef PRODUCT
+#if defined(PRODUCT) && !USE_COMPILER_COMMENTS
 inline void Assembler::emit(int instr) {
   BinaryAssembler::emit_int(instr);
 }
-#endif
+#endif // defined(PRODUCT) && !USE_COMPILER_COMMENTS
 
 #endif /* !ENABLE_THUMB_COMPILER && ENABLE_COMPILER*/

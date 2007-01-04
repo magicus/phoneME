@@ -787,7 +787,7 @@ bool Thread::has_user_frames_until(int num_frames) {
   return false;
 }
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 void Thread::iterate_oopmaps(oopmaps_doer do_map, void *param) {
 #if USE_OOP_VISITOR
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, next);

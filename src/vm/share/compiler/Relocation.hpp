@@ -194,13 +194,13 @@ class RelocationReader: public RelocationStream {
   bool is_compressed_vsf()  const { return kind() == compressed_vsf_type;  }
   bool is_checkpoint_info() const { return kind() == tick_checkpoint_type; }
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   Kind kind_at(int pc_offset);
   void print_current(Stream* st, bool verbose=false);
   void print(Stream *st, bool verbose=false);
 #endif
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE
   static int code_length(CompiledMethod* cm);
 #endif
 };

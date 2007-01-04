@@ -317,6 +317,9 @@ void Signature::verify_tables() {
   }
 }
 
+#endif //!PRODUCT
+
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 void Signature::print_parameters_on(Stream* st) {
   print_decoded_on(st);
@@ -326,4 +329,4 @@ void Signature::print_return_type_on(Stream* st) {
   print_type_at(st, 2);
 }
 
-#endif //!PRODUCT
+#endif //!PRODUCT || ENABLE_TTY_TRACE

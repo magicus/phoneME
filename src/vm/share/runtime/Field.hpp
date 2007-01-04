@@ -137,7 +137,7 @@ class Field : public StackObj {
   jushort        _offset;
 };
 
-#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR
+#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || USE_DEBUG_PRINTING
 
 /** \class OriginalField
     The class is similar to Field, except it operates on the original

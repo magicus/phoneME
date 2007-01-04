@@ -365,7 +365,8 @@ void Os::initialize() {
 void Os::dispose() {
 }
 
-#if (ENABLE_PERFORMANCE_COUNTERS || ENABLE_PROFILER || ENABLE_WTK_PROFILER)
+#if (ENABLE_PERFORMANCE_COUNTERS || ENABLE_PROFILER || ENABLE_WTK_PROFILER \
+     || ENABLE_TTY_TRACE)
 
 jlong Os::elapsed_counter() {
   *PROFILER_ATTACHED_REG = 0;

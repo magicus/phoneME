@@ -124,62 +124,7 @@ bool BasicOop::rom_contains(OopDesc *p) {
 }
 #endif
 
-#ifndef PRODUCT
-
-void BasicOop::iterate(OopVisitor* visitor) {
-#if USE_OOP_VISITOR
-  // klass
-  if (ROM::system_text_contains(obj())) {
-    // Don't have a header, let's just print garbage
-    NamedField id("klass (skipped)", true);
-    visitor->do_int(&id, klass_offset(), true);
-  } else {
-    NamedField id("klass", true);
-    visitor->do_oop(&id, klass_offset(), true);
-  }
-#endif
-}
-
-void BasicOop::iterate_one_oopmap_entry(BasicType type, void *param,
-                                        const char *name, size_t offset, 
-                                        int flags)
-{
-#if USE_OOP_VISITOR
-  (void)flags;
-  OopVisitor* visitor = (OopVisitor*)param;
-  NamedField id(name, true);
-
-  switch (type) {
-  case T_BOOLEAN:
-    visitor->do_bool(&id, offset, true);
-    break;
-  case T_CHAR:
-    visitor->do_byte(&id, offset, true);
-    break;
-  case T_FLOAT:
-    visitor->do_float(&id, offset, true);
-    break;
-  case T_DOUBLE:
-    visitor->do_double(&id, offset, true);
-    break;
-  case T_BYTE:
-    visitor->do_byte(&id, offset, true);
-    break;
-  case T_SHORT:
-    visitor->do_short(&id, offset, true);
-    break;
-  case T_INT:
-    visitor->do_int(&id, offset, true);
-    break;
-  case T_LONG:
-    visitor->do_long(&id, offset, true);
-    break;
-  case T_OBJECT:
-    visitor->do_oop(&id, offset, true);
-    break;
-  }
-#endif
-}
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 #if USE_OOP_VISITOR
 class OopDispatcher : public StackObj {
@@ -456,7 +401,222 @@ void OopDispatcher::dispatch() {
 
   }
 }
+#endif
 
+#if USE_DEBUG_PRINTING
+class PrintDispatcher : public OopDispatcher {
+ public:
+  PrintDispatcher(BasicOop* obj, Stream* st) : OopDispatcher(obj) {
+    this->st = st;
+  }
+
+ private:
+  Stream* st;
+  virtual void do_null() {
+    st->print("null");
+  }
+  virtual void do_generic(Oop* obj, const char *type) {
+    (void)obj;
+    st->print("%s", type);
+  }
+  virtual void do_instance(Instance* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_type_array(TypeArray* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_obj_array(ObjArray* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_constant_pool(ConstantPool* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_method(Method* obj) {
+    st->print("Method ");
+    obj->print_name_on(st);
+  }
+  virtual void do_symbol(Symbol* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_symbol_class(FarClass* obj) {
+    do_generic(obj, "The Symbol Class");
+  }
+  virtual void do_method_class(FarClass* obj) {
+    do_generic(obj, "The Method Class");;
+  }
+  virtual void do_instance_class(InstanceClass* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_obj_array_class(ObjArrayClass* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_type_array_class(TypeArrayClass* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_constant_pool_class(FarClass* obj) {
+    do_generic(obj, "The ConstantPool Class");
+  }
+  virtual void do_near(Near* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_obj_near(ObjNear* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_java_near(JavaNear* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_generic_near_class(NearClass* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_java_near_class(NearClass* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_obj_near_class(NearClass* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_instance_class_class(FarClass* obj) {
+    do_generic(obj, "The Instance ClassClass");
+  }
+  virtual void do_type_array_class_class(FarClass* obj) {
+    do_generic(obj, "The Type Array ClassClass");
+  }
+  virtual void do_obj_array_class_class(FarClass* obj) {
+    do_generic(obj, "The Object Array ClassClass");
+  }
+  virtual void do_meta_class(FarClass* obj) {
+    do_generic(obj, "The MetaClass");
+  }
+  virtual void do_string(String* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_java_lang_Class(JavaClassObj* obj) {
+    obj->print_value_on(st);
+  }
+#if USE_COMPILER_STRUCTURES
+  virtual void do_compiled_method(CompiledMethod* obj) {
+    obj->print_value_on(st);
+  }
+#endif
+  virtual void do_compiled_method_class(FarClass* obj) {
+    do_generic(obj, "The CompiledMethod Class");
+  }
+  virtual void do_entry_activation(EntryActivation* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_execution_stack(ExecutionStack* obj) {
+    obj->print_value_on(st);
+  }
+  virtual void do_class_info(ClassInfo* obj) {
+    obj->print_value_on(st);
+  }
+};
+#endif // USE_DEBUG_PRINTING
+
+void BasicOop::print_value_on(Stream* st) {
+#if USE_DEBUG_PRINTING
+  DebugHandleMarker debug_handle_marker;
+
+  if (is_null()) {
+    st->print("null");
+    return;
+  }
+  if (Verbose && VerbosePointers) {
+    st->print("(0x%lx) ", obj());
+  }
+  if (!check_valid_for_print(st)) {
+    return;
+  }
+  if (klass() == NULL) {
+    st->print("Unknown object (klass == NULL)");
+    return;
+  }
+  if (blueprint() == NULL) {
+    st->print("Unknown object (blueprint == NULL)");
+    return;
+  }
+  PrintDispatcher pd(this, st);
+  pd.dispatch();
+#endif
+}
+
+bool BasicOop::check_valid_for_print(Stream* st) {
+  if (!ObjectHeap::contains_live(obj()) && !ROM::in_any_loaded_bundle(obj())) {
+    st->print("[Invalid object 0x%08x]", obj());
+    return false;
+  } else {
+    return true;
+  }
+}
+
+#endif
+
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+
+void BasicOop::iterate(OopVisitor* visitor) {
+#if USE_OOP_VISITOR
+  // klass
+  if (ROM::system_text_contains(obj())) {
+    // Don't have a header, let's just print garbage
+    NamedField id("klass (skipped)", true);
+    visitor->do_int(&id, klass_offset(), true);
+  } else {
+    NamedField id("klass", true);
+    visitor->do_oop(&id, klass_offset(), true);
+  }
+#endif
+}
+
+void BasicOop::iterate_one_oopmap_entry(BasicType type, void *param,
+                                        const char *name, size_t offset, 
+                                        int flags)
+{
+#if USE_OOP_VISITOR
+  (void)flags;
+  OopVisitor* visitor = (OopVisitor*)param;
+  NamedField id(name, true);
+
+  switch (type) {
+  case T_BOOLEAN:
+    visitor->do_bool(&id, offset, true);
+    break;
+  case T_CHAR:
+    visitor->do_byte(&id, offset, true);
+    break;
+  case T_FLOAT:
+    visitor->do_float(&id, offset, true);
+    break;
+  case T_DOUBLE:
+    visitor->do_double(&id, offset, true);
+    break;
+  case T_BYTE:
+    visitor->do_byte(&id, offset, true);
+    break;
+  case T_SHORT:
+    visitor->do_short(&id, offset, true);
+    break;
+  case T_INT:
+    visitor->do_int(&id, offset, true);
+    break;
+  case T_LONG:
+    visitor->do_long(&id, offset, true);
+    break;
+  case T_OBJECT:
+    visitor->do_oop(&id, offset, true);
+    break;
+  }
+#endif
+}
+
+bool BasicOop::is_boundary() const {
+  GUARANTEE(not_null(), "Cannot ask for type of NULL");
+  return obj()->is_boundary();
+}
+
+#endif
+
+#ifndef PRODUCT
+
+#if USE_OOP_VISITOR
 class VisitDispatcher : public OopDispatcher {
  public:
   VisitDispatcher(BasicOop* obj, OopVisitor* visitor) : OopDispatcher(obj) {
@@ -597,142 +757,6 @@ void BasicOop::visit(OopVisitor* visitor) {
   vd.dispatch();
 
   visitor->epilogue();
-#endif
-}
-
-#if USE_DEBUG_PRINTING
-class PrintDispatcher : public OopDispatcher {
- public:
-  PrintDispatcher(BasicOop* obj, Stream* st) : OopDispatcher(obj) {
-    this->st = st;
-  }
-
- private:
-  Stream* st;
-  virtual void do_null() {
-    st->print("null");
-  }
-  virtual void do_generic(Oop* obj, const char *type) {
-    (void)obj;
-    st->print("%s", type);
-  }
-  virtual void do_instance(Instance* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_type_array(TypeArray* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_obj_array(ObjArray* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_constant_pool(ConstantPool* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_method(Method* obj) {
-    st->print("Method ");
-    obj->print_name_on(st);
-  }
-  virtual void do_symbol(Symbol* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_symbol_class(FarClass* obj) {
-    do_generic(obj, "The Symbol Class");
-  }
-  virtual void do_method_class(FarClass* obj) {
-    do_generic(obj, "The Method Class");;
-  }
-  virtual void do_instance_class(InstanceClass* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_obj_array_class(ObjArrayClass* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_type_array_class(TypeArrayClass* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_constant_pool_class(FarClass* obj) {
-    do_generic(obj, "The ConstantPool Class");
-  }
-  virtual void do_near(Near* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_obj_near(ObjNear* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_java_near(JavaNear* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_generic_near_class(NearClass* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_java_near_class(NearClass* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_obj_near_class(NearClass* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_instance_class_class(FarClass* obj) {
-    do_generic(obj, "The Instance ClassClass");
-  }
-  virtual void do_type_array_class_class(FarClass* obj) {
-    do_generic(obj, "The Type Array ClassClass");
-  }
-  virtual void do_obj_array_class_class(FarClass* obj) {
-    do_generic(obj, "The Object Array ClassClass");
-  }
-  virtual void do_meta_class(FarClass* obj) {
-    do_generic(obj, "The MetaClass");
-  }
-  virtual void do_string(String* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_java_lang_Class(JavaClassObj* obj) {
-    obj->print_value_on(st);
-  }
-#if USE_COMPILER_STRUCTURES
-  virtual void do_compiled_method(CompiledMethod* obj) {
-    obj->print_value_on(st);
-  }
-#endif
-  virtual void do_compiled_method_class(FarClass* obj) {
-    do_generic(obj, "The CompiledMethod Class");
-  }
-  virtual void do_entry_activation(EntryActivation* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_execution_stack(ExecutionStack* obj) {
-    obj->print_value_on(st);
-  }
-  virtual void do_class_info(ClassInfo* obj) {
-    obj->print_value_on(st);
-  }
-};
-#endif // USE_DEBUG_PRINTING
-
-void BasicOop::print_value_on(Stream* st) {
-#if USE_DEBUG_PRINTING
-  DebugHandleMarker debug_handle_marker;
-
-  if (is_null()) {
-    st->print("null");
-    return;
-  }
-  if (Verbose && VerbosePointers) {
-    st->print("(0x%lx) ", obj());
-  }
-  if (!check_valid_for_print(st)) {
-    return;
-  }
-  if (klass() == NULL) {
-    st->print("Unknown object (klass == NULL)");
-    return;
-  }
-  if (blueprint() == NULL) {
-    st->print("Unknown object (blueprint == NULL)");
-    return;
-  }
-  PrintDispatcher pd(this, st);
-  pd.dispatch();
 #endif
 }
 
@@ -995,11 +1019,6 @@ bool BasicOop::is_task() const {
   return obj()->is_task();
 }
 
-bool BasicOop::is_boundary() const {
-  GUARANTEE(not_null(), "Cannot ask for type of NULL");
-  return obj()->is_boundary();
-}
-
 bool BasicOop::is_java_oop() const {
   GUARANTEE(not_null(), "Cannot ask for type of NULL");
   return obj()->is_instance() || obj()->is_type_array()
@@ -1026,15 +1045,6 @@ ReturnOop BasicOop::klass() const {
     return ROM::text_klass_of(_obj);
   }
   return obj_field(klass_offset());
-}
-
-bool BasicOop::check_valid_for_print(Stream* st) {
-  if (!ObjectHeap::contains_live(obj()) && !ROM::in_any_loaded_bundle(obj())) {
-    st->print("[Invalid object 0x%08x]", obj());
-    return false;
-  } else {
-    return true;
-  }
 }
 
 bool BasicOop::check_valid_for_print_cr(Stream* st) {

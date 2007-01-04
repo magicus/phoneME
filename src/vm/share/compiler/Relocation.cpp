@@ -372,7 +372,7 @@ void RelocationReader::skip_callinfo() {
 }
 #endif // ENABLE_APPENDED_CALLINFO
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 void RelocationReader::print_current(Stream* st, bool verbose) {
 #if USE_DEBUG_PRINTING
@@ -441,7 +441,7 @@ void RelocationReader::print(Stream* st, bool verbose) {
 #endif
 
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE
 int RelocationReader::code_length(CompiledMethod* cm) { 
   RelocationReader stream(cm);
   while (!stream.at_end()) { 

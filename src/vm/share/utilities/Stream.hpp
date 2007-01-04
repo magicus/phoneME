@@ -64,7 +64,6 @@ class Stream: public GlobalObj {
   void vprint(const char *format, va_list argptr);
   void vprint_cr(const char* format, va_list argptr);
   virtual void print_raw(const char* /*str*/) JVM_PURE_VIRTUAL;
-  void put(char ch);
   inline void sp() {
     this->print_raw(" ");
   }
@@ -83,23 +82,11 @@ class Stream: public GlobalObj {
   virtual void reset() {}
   virtual int current_position() { return 0; }
   
-#ifndef PRODUCT
 public:
-  void inc() { _indentation++; };
-  void dec() { _indentation--; };
-  void dec_cr() { dec(); cr(); }
-  void inc_cr() { inc(); cr(); }
-  // indentation
-  void indent(); 
-  int  indentation() const    { return _indentation; }
-  void set_indentation(int i) { _indentation = i;    }
-
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   // sizing
   int width()    const { return _width;    }
   int position() const { return _position; }
-
-  // flushing
-  virtual void flush() {}
 
   void print_double(double d) {
     jdouble_accessor tmp;
@@ -117,6 +104,22 @@ public:
     }
   }
 
+  void put(char ch);
+#endif
+
+#ifndef PRODUCT
+  void inc() { _indentation++; };
+  void dec() { _indentation--; };
+  void dec_cr() { dec(); cr(); }
+  void inc_cr() { inc(); cr(); }
+  // indentation
+  void indent(); 
+  int  indentation() const    { return _indentation; }
+  void set_indentation(int i) { _indentation = i;    }
+
+  // flushing
+  virtual void flush() {}
+
   // Print a hex number with 8 digits, including leading zeros.
   void print_hex8(int n);
   void print_hex8(address a) {
@@ -132,7 +135,9 @@ public:
 
 extern Stream* tty;        // tty output
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_MEMORY_PROFILER || ENABLE_WTK_PROFILER || ENABLE_PERFORMANCE_COUNTERS || ENABLE_PROFILER || ENABLE_DYNAMIC_NATIVE_METHODS
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_MEMORY_PROFILER \
+    || ENABLE_WTK_PROFILER || ENABLE_PERFORMANCE_COUNTERS || ENABLE_PROFILER \
+    || ENABLE_DYNAMIC_NATIVE_METHODS || ENABLE_TTY_TRACE
 
 class FileStreamState {
 public:

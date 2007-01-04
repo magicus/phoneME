@@ -56,7 +56,7 @@ friend struct OpcodeInfo;
   // assembler) exists, and then the call is statically bound. In all
   // other modes, this is a virtual call so we can have both the text
   // and binary output with the same build.
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
   virtual void emit(int instr) JVM_PURE_VIRTUAL_1_PARAM(instr);
 #else
   inline static void emit(int instr);

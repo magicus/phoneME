@@ -31,7 +31,9 @@
 #include "incls/_precompiled.incl"
 #include "incls/_Disassembler_arm.cpp.incl"
 
-#if !ENABLE_THUMB_COMPILER && USE_COMPILER_DISASSEMBLER
+#if !ENABLE_THUMB_COMPILER
+
+#if !defined(PRODUCT) || USE_COMPILER_DISASSEMBLER
 
 void Disassembler::emit_unknown(int instr, const char* comment) {
   if (GenerateGNUCode) {
@@ -904,5 +906,6 @@ void Disassembler::unknown_vfp_instr(int instr) {
 }
 #endif
 
+#endif // !defined(PRODUCT) || USE_COMPILER_DISASSEMBLER
 
-#endif /*#if !ENABLE_THUMB_COMPILER && USE_COMPILER_DISASSEMBLER */
+#endif /*#if !ENABLE_THUMB_COMPILER */

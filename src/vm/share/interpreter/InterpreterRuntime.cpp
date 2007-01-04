@@ -984,7 +984,7 @@ extern "C" {
   }
 #endif
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   static long trace_bcs = 0;
 
   void trace_bytecode() {
@@ -1032,7 +1032,7 @@ extern "C" {
     }
     trace_bcs++;
   }
-#endif // PRODUCT
+#endif // !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 #ifndef PRODUCT
   void verify_stack() {

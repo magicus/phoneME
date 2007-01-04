@@ -206,10 +206,17 @@ class AccessFlags {
   }
 
   // Printing/debugging
+#if USE_DEBUG_PRINTING
+  void print_to_buffer(char* /*buff*/, int /*type*/) const;
+  void p() const;
+  static void print_definitions();
+  static void print_definitions(int /*type*/);
+#else
   void print_to_buffer(char* /*buff*/, int /*type*/) const PRODUCT_RETURN;
   void p() const PRODUCT_RETURN;
   static void print_definitions() PRODUCT_RETURN;
   static void print_definitions(int /*type*/) PRODUCT_RETURN;
+#endif
 
   enum {
       CLASS_FLAGS  = 0x01,

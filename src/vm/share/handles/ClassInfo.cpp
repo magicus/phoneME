@@ -183,7 +183,7 @@ void ClassInfo::iterate_oopmaps(oopmaps_doer do_map, void* param) {
 
 #endif /* #ifndef PRODUCT*/
 
-#if USE_OOP_VISITOR || USE_BINARY_IMAGE_GENERATOR
+#if USE_OOP_VISITOR || USE_BINARY_IMAGE_GENERATOR || ENABLE_TTY_TRACE
 void ClassInfo::iterate_tables(OopROMVisitor* visitor) {
   int index = 0;
   if (vtable_length() > 0) {

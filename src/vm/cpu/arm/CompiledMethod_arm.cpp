@@ -232,7 +232,7 @@ void Compiler::unpatch_checkpoints() {
 }
 #endif // ENABLE_CODE_PATCHING
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 #if USE_DEBUG_PRINTING
 static void decode_instruction(Stream* st, int* addr, int offset) {

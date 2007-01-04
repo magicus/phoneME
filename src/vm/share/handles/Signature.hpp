@@ -45,7 +45,7 @@ public:
 
   static BasicType parse_type(Symbol* signature, int& position);
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   void print_return_type_on(Stream* st);
   void print_parameters_on(Stream* st);
 #endif

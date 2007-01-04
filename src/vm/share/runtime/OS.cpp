@@ -122,7 +122,7 @@ void DefaultStream::print_raw(const char* s) {
   }
 
 
-#if !defined(PRODUCT) || ENABLE_PROFILER
+#if !defined(PRODUCT) || ENABLE_PROFILER || ENABLE_TTY_TRACE
   while (true) {
     char ch = *s++;
     if (ch == 0) {

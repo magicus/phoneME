@@ -701,6 +701,7 @@ int ConstantPool::signature_ref_index_at(int index JVM_TRAPS)  {
 }
 
 #ifndef PRODUCT
+
 void ConstantPool::trace_no_such_method_error(InstanceClass* sender_class,
                                               InstanceClass* receiver_class,
                                               Symbol* name, Symbol* signature){
@@ -724,6 +725,10 @@ void ConstantPool::trace_no_such_method_error(InstanceClass* sender_class,
     }
   }
 }
+
+#endif
+
+#ifndef PRODUCT
 
 void ConstantPool::iterate(OopVisitor* visitor) {
 #if USE_DEBUG_PRINTING
@@ -870,45 +875,6 @@ void ConstantPool::iterate_oopmaps(oopmaps_doer do_map, void* param) {
   OOPMAP_ENTRY_4(do_map, param, T_OBJECT, tags);
 }
 
-void ConstantPool::print_value_on(Stream* st) {
-  st->print("ConstantPool");
-}
-
-// This method is called by the Romizer to fully
-// resolve all the constant pool entries.
-void ConstantPool::fully_resolve(JVM_SINGLE_ARG_TRAPS) {
-  int i;
-
-  for (i = 0; i < length(); i++) {
-    ConstantTag tag = tag_at(i);
-    switch (tag.value()) {
-    case JVM_CONSTANT_UnresolvedString:
-      // We should have resolved all the strings during class loading,
-      // except those in the genesis classes (e.g.,
-      // "String index out of range: " in the
-      // StringIndexOutOfBoundsException class.
-      string_at(i JVM_CHECK);
-      break;
-
-    case JVM_CONSTANT_UnresolvedClass:
-      klass_at(i JVM_CHECK);
-      break;
-
-    default:
-      // Ignore these entries.
-      //
-      // At this point, the ROMOptimizer is already executed so all of
-      // these types of entries should have already be resolved. The only
-      // exceptions are those Method/Field/Interface refs that are never
-      // used by any romized bytecodes -- in this case, these entries will
-      // be eliminated by ConstantPoolRewriter, so we can ignore them
-      // here.
-      break;
-    }
-  }
-}
-
-#ifndef PRODUCT
 bool ConstantPool::needs_name_and_type_entries() {
   int i;
 
@@ -924,7 +890,14 @@ bool ConstantPool::needs_name_and_type_entries() {
 
   return false;
 }
+
 #endif
+
+#if !defined(PRODUCT) || USE_DEBUG_PRINTING
+
+void ConstantPool::print_value_on(Stream* st) {
+  st->print("ConstantPool");
+}
 
 #if USE_DEBUG_PRINTING
 // Note: the comment is returned in a static buffer, so its value is valid
@@ -1139,7 +1112,7 @@ void ConstantPool::print_interface_method_ref_on(Stream* st, int index
 }
 
 
-#endif /* #ifndef PRODUCT*/
+#endif /* #if !defined(PRODUCT) || USE_DEBUG_PRINTING */
 
 #if ENABLE_ROM_GENERATOR
 // generate a map of all the field types in this object

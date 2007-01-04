@@ -181,7 +181,7 @@ void native_integer_toString_entry()               {}
 void shared_call_vm_oop_return()                   {}
 #endif
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_DEBUG_PRINTING
 jlong interpreter_bytecode_counters[1];
 jlong interpreter_pair_counters[1];
 #endif

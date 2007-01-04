@@ -27,7 +27,7 @@
 # include "incls/_precompiled.incl"
 # include "incls/_Debug_arm.cpp.incl"
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 void ps() {
   Thread* current = Thread::current();

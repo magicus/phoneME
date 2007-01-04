@@ -27,7 +27,7 @@
 # include "incls/_precompiled.incl"
 # include "incls/_Debug_c.cpp.incl"
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 extern "C" bool update_java_pointers();
 extern "C" void revert_java_pointers();

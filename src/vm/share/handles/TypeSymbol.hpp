@@ -58,7 +58,7 @@ public:
   static ReturnOop parse_array_class_name(Symbol *external_name JVM_TRAPS);
 
 #if !defined(PRODUCT) || ENABLE_WTK_PROFILER || ENABLE_PERFORMANCE_COUNTERS \
-     || ENABLE_JVMPI_PROFILE || USE_AOT_COMPILATION
+     || ENABLE_JVMPI_PROFILE || USE_AOT_COMPILATION || USE_DEBUG_PRINTING
   void print_decoded_on(Stream* st);
   int print_type_at(Stream* st, int index);
 #else

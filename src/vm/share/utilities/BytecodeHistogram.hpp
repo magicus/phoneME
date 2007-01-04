@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_DEBUG_PRINTING
 
 extern "C" {
   extern jlong interpreter_bytecode_counters[];

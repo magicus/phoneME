@@ -160,20 +160,24 @@ public:
   static int klass_offset() { return FIELD_OFFSET(OopDesc, _klass); }
   void set_klass(BasicOop* value) { obj_field_put(klass_offset(), value); }
 
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+  void print_value_on(Stream* st);
+  void iterate(OopVisitor* visitor);
+  static void iterate_one_oopmap_entry(BasicType type, void *param, 
+                                       const char *name, size_t offset, 
+                                       int flags);
+
+  bool check_valid_for_print(Stream* st);
+  bool check_valid_for_print_cr(Stream* st);
+#endif
+
 #ifndef PRODUCT
   ReturnOop klass() const;
-  void print_value_on(Stream* st);
   void visit(OopVisitor* visitor);
-  void iterate(OopVisitor* visitor);
 
   void p();
   void print_on(Stream* st);
   void print_rom_definition_on(Stream* st); // used by romizer
-  static void iterate_one_oopmap_entry(BasicType type, void *param, 
-                                       const char *name, size_t offset, 
-                                       int flags);
-  bool check_valid_for_print(Stream* st);
-  bool check_valid_for_print_cr(Stream* st);
 #else
   ReturnOop klass() const { return obj_field(klass_offset()); }
 #endif

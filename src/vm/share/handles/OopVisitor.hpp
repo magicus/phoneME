@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR
+#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || ENABLE_TTY_TRACE
 
 class VisitorField : public StackObj {
  public:
@@ -105,7 +105,7 @@ class NamedField : public VisitorField {
 
 #endif
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_DEBUG_PRINTING
 class OopVisitor : public OopROMVisitor {
  public:
 

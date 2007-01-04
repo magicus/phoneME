@@ -51,7 +51,7 @@ void OsMisc_flush_icache(address start, int size) {
   FlushInstructionCache(thread_process, 0, 0);
 }
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_DEBUG_PRINTING
 
 const char *OsMisc_jlong_format_specifier() {
   return "%I64d";

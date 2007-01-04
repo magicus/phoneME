@@ -26,7 +26,7 @@
 
 #include "incls/_precompiled.incl"
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 #include "incls/_Disassembler_thumb.cpp.incl"
 
 const char *Disassembler::_eol_comments = NULL;
@@ -488,4 +488,4 @@ int Disassembler::disasm(short* addr, short instr, int instr_offset) {
   return num_half_words;
 }
 
-#endif // PRODUCT
+#endif // !defined(PRODUCT) || ENABLE_TTY_TRACE

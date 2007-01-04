@@ -67,7 +67,7 @@ void OsMisc_flush_icache(address start, int size) {
   FlushInstructionCache(thread_process, start, size);
 }
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_DEBUG_PRINTING
 
 const char *OsMisc_jlong_format_specifier() {
   return "%I64d";
@@ -77,7 +77,7 @@ const char *OsMisc_julong_format_specifier() {
   return "%I64u";
 }
 
-#endif // PRODUCT
+#endif 
 
 #if ENABLE_PAGE_PROTECTION
 void OsMisc_page_protect() {

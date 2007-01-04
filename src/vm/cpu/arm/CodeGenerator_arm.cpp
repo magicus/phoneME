@@ -1400,7 +1400,7 @@ bool CodeGenerator::fold_arithmetic(Value& result,
     const Bytecodes::Code next_code = mth->bytecode_at(next_bci);
 
     if (next_code == Bytecodes::_iadd) {
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
       if (GenerateCompilerComments) {
         FixedArrayOutputStream output;
         Verbose++; // force callee names to be printed out, etc.

@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 class DisassemblerEnv {
 private:
@@ -53,4 +53,4 @@ public:
 
 address disasm(address addr, DisassemblerEnv* env);
 
-#endif // PRODUCT
+#endif // !defined(PRODUCT) || ENABLE_TTY_TRACE

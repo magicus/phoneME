@@ -2101,7 +2101,7 @@ void BytecodeCompileClosure::bytecode_prolog(JVM_SINGLE_ARG_TRAPS) {
 
   __ bytecode_prolog();
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
   if (GenerateCompilerComments) {
     FixedArrayOutputStream output;
     Verbose++; // force callee names to be printed out, etc.

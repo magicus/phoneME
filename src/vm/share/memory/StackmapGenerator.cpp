@@ -1233,7 +1233,7 @@ void StackmapGenerator::print_map_internal(const char *name, int index,
 
 #endif // PRODUCT
 
-#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR
+#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || USE_DEBUG_PRINTING
 
 bool StackmapChecker::is_redundant(Method* method,
 				   int stackmap_index JVM_TRAPS) {

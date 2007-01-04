@@ -655,8 +655,8 @@ void BinaryAssembler::CodeInterleaver::flush() {
   _assembler->_interleaver = NULL;
 }
 
-#ifndef PRODUCT
-#if USE_COMPILER_COMMENTS
+#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
+
 void BinaryAssembler::comment(const char* fmt, ...) {
   JVM_VSNPRINTF_TO_BUFFER(fmt, buffer, 1024);
 
@@ -666,7 +666,6 @@ void BinaryAssembler::comment(const char* fmt, ...) {
     _relocation.emit_comment(_code_offset, buffer);
   }
 }
-#endif
 
 void BinaryAssembler::LiteralPoolElement::print_value_on(Stream*s) {
 #if USE_COMPILER_COMMENTS
@@ -692,7 +691,7 @@ void BinaryAssembler::LiteralPoolElement::print_value_on(Stream*s) {
 #endif
 }
 
-#endif // PRODUCT
+#endif // !defined(PRODUCT) || USE_COMPILER_COMMENTS
 
 #if ENABLE_NPCE
 bool BinaryAssembler::is_branch_instr(jint offset) {

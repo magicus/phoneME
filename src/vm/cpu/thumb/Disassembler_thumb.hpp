@@ -25,7 +25,7 @@
  */
 
 #if ENABLE_THUMB_COMPILER
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 
 /*
@@ -82,6 +82,6 @@ class Disassembler: public StackObj {
   }
 };
 
-#endif // PRODUCT
+#endif // !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 #endif /*#if ENABLE_THUMB_COMPILER*/

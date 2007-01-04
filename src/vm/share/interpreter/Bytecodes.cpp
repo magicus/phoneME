@@ -53,7 +53,7 @@
 // Note: For bytecodes with variable length, the format string is the
 // empty string.
 
-#if USE_DEBUG_PRINTING
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 #define def(name, length, format, wide_length, wide_format, flags) \
   { _ ## name, #name, (jbyte)length, format, (jushort)(wide_length|flags), \
     wide_format }
@@ -409,7 +409,7 @@ void Bytecodes::verify() {
 #if USE_DEBUG_PRINTING
 void Bytecodes::print_definitions() {
   int value = 0;
-  for (BytecodeData* p = data; p->_name != NULL; p++) {
+  for (const BytecodeData* p = data; p->_name != NULL; p++) {
     if (value < 16) {
       tty->print("    %3d  0x0%x", value, value);
     } else {

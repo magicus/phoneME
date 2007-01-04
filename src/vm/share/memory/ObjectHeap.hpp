@@ -537,6 +537,21 @@ public:
     int parent;
   };
 
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+  static void print(Stream* = tty);
+  static void print_all_objects(Stream* = tty);
+  static void print_all_objects(const JvmPathChar* /*file*/);
+  static void print_all_classes();
+  static void print_task_usage(Stream* = tty);
+  static void dump_histogram_data();
+  static void save_java_stack_snapshot();
+  static void find(OopDesc* /*target*/, bool /*is_verbose*/);
+  static void reach(OopDesc* /*target*/);
+  static bool check_reach_root(OopDesc* /*n*/, ReachLink* /*stack*/,
+                               int /*parent*/);
+  static bool reach_seen(OopDesc* /*n*/, ReachLink* /*stack*/,
+                         int /*endstack*/);
+#else
   static void print(Stream* = tty) PRODUCT_RETURN;
   static void print_all_objects(Stream* = tty) PRODUCT_RETURN;
   static void print_all_objects(const JvmPathChar* /*file*/) PRODUCT_RETURN;
@@ -550,6 +565,7 @@ public:
                                int /*parent*/) PRODUCT_RETURN0;
   static bool reach_seen(OopDesc* /*n*/, ReachLink* /*stack*/,
                          int /*endstack*/) PRODUCT_RETURN0;
+#endif
 
   // Counting
   static int count_objects();
@@ -925,7 +941,7 @@ private:
   static OopDesc** _saved_compiler_area_top_quick;
 #endif
 
-#if ENABLE_PERFORMANCE_COUNTERS || USE_DEBUG_PRINTING
+#if ENABLE_PERFORMANCE_COUNTERS || ENABLE_TTY_TRACE
   static jlong  _internal_collect_start_time;
   static size_t _old_gen_size_before;
   static size_t _young_gen_size_before;

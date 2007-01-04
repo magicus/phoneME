@@ -38,7 +38,7 @@ const JvmPathChar *OsMisc_get_classpath();
 // flush at least [start, start + size[ (may flush complete icache)
 void OsMisc_flush_icache(address start, int size);
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_DEBUG_PRINTING
   const char *OsMisc_jlong_format_specifier();  // IMPL_NOTE this is not portable
   const char *OsMisc_julong_format_specifier(); // IMPL_NOTE this is not portable
 #endif

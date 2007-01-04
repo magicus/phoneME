@@ -227,7 +227,7 @@ private:
   jubyte tag_value_at(int index);
 };
 
-#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR
+#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || USE_DEBUG_PRINTING
 
 class StackmapChecker : public StackmapGenerator {
 public:

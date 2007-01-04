@@ -478,7 +478,7 @@ class Bytecodes: public AllStatic {
   }
 #endif 
  
-#ifndef PRODUCT
+#if !defined (PRODUCT) || ENABLE_TTY_TRACE
   static const char* name(Code code) { 
     check(code); 
 #if USE_DEBUG_PRINTING
@@ -519,7 +519,7 @@ private:
 #endif // PRODUCT
 
   struct BytecodeData {
-#if USE_DEBUG_PRINTING
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
     int         _index; // For verifying table
     const char* _name;  // name of the bytecode
     jbyte       _length; 

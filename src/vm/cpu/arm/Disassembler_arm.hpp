@@ -30,7 +30,7 @@
 
 #if !ENABLE_THUMB_COMPILER
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_COMPILER_DISASSEMBLER
 
 class Disassembler: public StackObj {
  private:
@@ -101,17 +101,12 @@ class Disassembler: public StackObj {
 
   // usage
   enum { NO_OFFSET = -1 };
-#if USE_COMPILER_DISASSEMBLER
   static const char* reg_name(Assembler::Register  reg);
   void disasm(int* addr, int instr, int instr_offset = NO_OFFSET);
-#else
-  void disasm(int*, int, int = NO_OFFSET) {}
-  static const char* reg_name(Assembler::Register) {return "";}
-#endif
 
   typedef Assembler::Register Register;
 };
 
-#endif // PRODUCT
+#endif // !defined(PRODUCT) || USE_COMPILER_DISASSEMBLER
 
 #endif /*#if !ENABLE_THUMB_COMPILER*/

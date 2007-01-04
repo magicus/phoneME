@@ -2418,7 +2418,7 @@ jushort Method::ushort_at(jint bci) {
   return Bytes::get_Java_u2((address)field_base(bc_offset_for(bci)));
 }
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || USE_DEBUG_PRINTING
 // Is this method overloaded in its holder class?
 bool Method::is_overloaded() const {
   InstanceClass::Raw h = holder();
@@ -2457,7 +2457,7 @@ bool Method::is_overloaded() const {
 }
 #endif
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 void Method::iterate(OopVisitor* visitor) {
 #if USE_OOP_VISITOR
@@ -2635,7 +2635,7 @@ void Method::print_name_on(Stream* st, bool long_output) const {
 }
 #endif //PRODUCT
 
-#if !defined(PRODUCT) || ENABLE_PERFORMANCE_COUNTERS
+#if !defined(PRODUCT) || ENABLE_PERFORMANCE_COUNTERS || ENABLE_TTY_TRACE
 // Print name to a 0-terminated char buffer. max_length includes the trailing 0
 void Method::print_name_to(char *buffer, int max_length) {
 #if USE_DEBUG_PRINTING
@@ -2787,7 +2787,7 @@ int Method::generate_fieldmap(TypeArray* field_map) {
 
 #endif /* #if ENABLE_ROM_GENERATOR*/
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 void Method::print_bytecodes(Stream* st, int start, int end, bool include_nl,
                              bool verbose) {

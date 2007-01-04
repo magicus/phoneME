@@ -109,7 +109,7 @@ extern "C" {
   // has_Interpreter, has_FloatingPoint, has_TraceBytecodes
   jint assembler_loop_type = 0x1 + 0x40 + 0x4;
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_DEBUG_PRINTING
   jlong interpreter_pair_counters[Bytecodes::number_of_java_codes *
                                   Bytecodes::number_of_java_codes];
   jlong interpreter_bytecode_counters[Bytecodes::number_of_java_codes];
@@ -4590,7 +4590,7 @@ int jvm_memcmp(const void *s1, const void *s2, int n) {
 }
 #endif
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 // These are to allow stack walking, e.g. ps(), even when executing bytecodes
 bool update_java_pointers() {
   if (g_jfp == NULL || g_jsp == NULL) {

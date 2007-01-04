@@ -619,7 +619,7 @@ class Thread: public Oop {
   void gc_epilogue(void);
 
   // Printing and debugging support.
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   void trace_stack(Stream *st);
   void trace_stack_from(Frame* frame, Stream* st);
   void print_value() { print_value_on(tty); }

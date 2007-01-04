@@ -27,7 +27,7 @@
 #include "incls/_precompiled.incl"
 #include "incls/_OopVisitor.cpp.incl"
 
-#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR
+#if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || ENABLE_TTY_TRACE
 #include <ctype.h>
 
 void NamedField::print_on(Stream* st) {

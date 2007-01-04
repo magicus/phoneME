@@ -261,12 +261,12 @@ class ConstantPool: public Oop {
   bool resolve_virtual_method_at(int index JVM_TRAPS);
 
   void iterate(OopVisitor*) PRODUCT_RETURN;
-  void print_value_on(Stream*) PRODUCT_RETURN;
   void fully_resolve(JVM_SINGLE_ARG_TRAPS) PRODUCT_RETURN;
   static void iterate_oopmaps(oopmaps_doer /*do_map*/, void* /*param*/)
                               PRODUCT_RETURN;
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_DEBUG_PRINTING
+  void print_value_on(Stream*);
   void print_entry_on(Stream* st, int index JVM_TRAPS);
   void print_class_on(Stream* st, int index JVM_TRAPS);
   void print_field_ref_on(Stream* st, int index JVM_TRAPS);
@@ -276,6 +276,8 @@ class ConstantPool: public Oop {
   void print_verbose_field_on(Stream* st, InstanceClass *klass, 
                               int offset, bool is_static);
   char* comment_text(int index);
+#else
+  void print_value_on(Stream*) {}
 #endif
 
  private:

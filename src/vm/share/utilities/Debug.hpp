@@ -235,6 +235,25 @@ private:
 
 };
 
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+
+// Print stack of current thread
+extern void ps();
+
+// Print stack, using guess_fp as the starting address for guessing the fp.
+// This is useful when we're inside compiled code or interpreter where
+// the fp is not stored in Thread::current().
+extern void psg(address guess_fp);
+
+// Print the stack while we're inside the GC
+extern void psgc();
+
+// The GC call this function immediately before collection, so that we
+// can print the stack even when GC is active.
+extern void save_java_stack_snapshot();
+
+#endif
+
 // Debug helper functions
 #ifndef PRODUCT
 
@@ -252,21 +271,6 @@ extern void dis();
 
 // Print object heap
 extern void oh();
-
-// Print stack of current thread
-extern void ps();
-
-// Print stack, using guess_fp as the starting address for guessing the fp.
-// This is useful when we're inside compiled code or interpreter where
-// the fp is not stored in Thread::current().
-extern void psg(address guess_fp);
-
-// Print the stack while we're inside the GC
-extern void psgc();
-
-// The GC call this function immediately before collection, so that we
-// can print the stack even when GC is active.
-extern void save_java_stack_snapshot();
 
 // Print stack of all threads
 extern void new_pss();

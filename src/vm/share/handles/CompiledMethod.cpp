@@ -114,7 +114,7 @@ void CompiledMethod::flush_icache() {
   OsMisc_flush_icache(entry(), size());
 }
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 void CompiledMethod::print_comment_for(int code_offset, Stream* st) {
 #if USE_DEBUG_PRINTING
   bool emit_blank_line = true;
@@ -639,7 +639,7 @@ bool CallInfoRecord::oop_tag_at(int index) const {
 
 #endif // ENABLE_COMPILER
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || USE_DEBUG_PRINTING
 
 void CompiledMethod::iterate(OopVisitor* visitor) {
 #if USE_OOP_VISITOR
