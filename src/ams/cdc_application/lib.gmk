@@ -95,6 +95,6 @@ ifdef INCLUDE_SHELL_SCRIPTS
   SUBSYSTEM_AMS_EXECUTABLES += \
     $(BINDIR)/runMidlet \
     $(BINDIR)/autotest.sh \
-    $(BINDIR)/installMidlet.sh
+    $(BINDIR)/installMidlet
 endif
 
