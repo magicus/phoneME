@@ -148,7 +148,6 @@ endif
 DYN_NATIVES_DIR = dyn_natives
 
 _build_dyn_native_jars: tests.jar
-ifeq ($(os_family), linux)
 ifeq ($(ENABLE_ISOLATES), true)
 	@if test ! -d $(DYN_NATIVES_DIR); then \
 		mkdir $(DYN_NATIVES_DIR); \
@@ -158,7 +157,7 @@ ifeq ($(ENABLE_ISOLATES), true)
 	@touch $@
 	$(JAR) -cfM0 $(DYN_NATIVES_DIR)/app_cp.jar -C testclasses dynamic_natives/MainCls.class -C testclasses dynamic_natives/restricted_package/Cls.class -C testclasses dynamic_natives/hidden_package/Cls.class
 	@touch $@ 
-
+ifeq ($(os_family), linux)
 	@cp $(JVMWorkSpace)/src/tests/dynamic_natives/lib.c $(DYN_NATIVES_DIR) 
 	@gcc -fPIC -I$(BuildSpace)/linux_i386/dist/include/ -DLINUX -c dyn_natives/lib.c  -o dyn_natives/lib.obj
 	@gcc -shared -o dyn_natives/lib.so dyn_natives/lib.obj
