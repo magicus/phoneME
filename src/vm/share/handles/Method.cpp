@@ -167,7 +167,7 @@ ReturnOop Method::constants() const {
 #endif
 
 #if defined(AZZERT) && !USE_SOURCE_IMAGE_GENERATOR
-  if (holder_id() != 0xFFFF) {
+  if (holder_id() != 0xFFFF && !is_abstract()) {
     InstanceClass::Raw holder_class = holder();
     ConstantPool::Raw class_constants = holder_class().constants();
     ConstantPool::Raw method_constants = obj_field(constants_offset());
