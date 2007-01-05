@@ -121,6 +121,13 @@ extern "C" void init_jvm_chunk_manager();
 void* Os::loadLibrary(const char* libName) {
   char full_lib_name[MAX_PATH];
   char lib_ext[] = {'.','s','o','\0'};
+  if (strlen(libName) + strlen(lib_ext) >= MAX_PATH) {
+#if ENABLE_TTY_TRACE
+    tty->print_cr("Library name is too long. %d chars maximum!", MAX_PATH - strlen(lib_ext) - 1);
+    tty->print_cr("Library name %s",libName);
+#endif
+    return 0;
+  }
   strcpy(full_lib_name, libName);
   strcat(full_lib_name, lib_ext);  
   return dlopen(full_lib_name, RTLD_LAZY);
