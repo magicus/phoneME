@@ -1,0 +1,88 @@
+#  
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+############################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+############################################################
+
+# Add to global SUBSYSTEMS list
+#
+SUBSYSTEMS += graphics_api
+
+
+# Local module directory
+GRAPHICS_API_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics_api/reference
+
+
+# Java files for the sub-system
+#
+SUBSYSTEM_GRAPHICSAPI_JAVA_FILES += \
+    $(GRAPHICS_API_DIR)/classes/javax/microedition/lcdui/Font.java \
+    $(GRAPHICS_API_DIR)/classes/javax/microedition/lcdui/Graphics.java \
+    $(GRAPHICS_API_DIR)/classes/javax/microedition/lcdui/Image.java \
+    $(GRAPHICS_API_DIR)/classes/javax/microedition/lcdui/game/Sprite.java \
+    $(GRAPHICS_API_DIR)/classes/javax/microedition/lcdui/game/TiledLayer.java
+
+# vpath for sub-system
+#
+vpath % \
+    $(GRAPHICS_API_DIR)/native
+
+# Include path for the sub-system
+#
+ifeq ($(PLATFORM), wince)
+
+SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_DIR)/lowlevelui/graphics_api/include \
+    -I$(SUBSYSTEM_DIR)/lowlevelui/graphics/putpixel/native
+
+else
+
+SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_DIR)/lowlevelui/graphics_api/include
+
+endif
+
+# I3test files
+#
+ifeq ($(USE_I3_TEST), true)
+
+SUBSYSTEM_GRAPHICSAPI_I3TEST_JAVA_FILES = \
+    $(GRAPHICS_API_DIR)/i3test/javax/microedition/lcdui/TestGraphicsClipping.java
+
+endif
+
+# Native files for common module
+#
+SUBSYSTEM_GRAPHICSAPI_NATIVE_FILES += \
+    gxapi_font_kni.c \
+    gxapi_graphics_kni.c \
+    gxapi_image_kni.c
+
