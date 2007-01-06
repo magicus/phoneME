@@ -42,6 +42,7 @@ LIB_SET += $(INT_SUBSYSTEM_CONFIGURATION_NAME)
 # The name of the file containing names of configuration xml files
 # (all names listed there are relative to this file directory)
 SUBSYSTEM_CONFIGURATION_FILES_LIST = files.lst
+SUBSYSTEM_CONFIGURATION_TARGET_CPU_FILES_LIST = files_${TARGET_CPU}.lst
 
 # directory containing XSL files used to transform XML files 
 # into .c, .h, and .java files
@@ -71,6 +72,7 @@ INT_CHAMROM_LIST_FILE = $(GENERATED_DIR)/chamrom.lst
 
 # path to XML files list
 INT_FILES_LIST = $(INT_XML_DIR)/$(SUBSYSTEM_CONFIGURATION_FILES_LIST)
+INT_TARGET_CPU_FILES_LIST = $(wildcard $(INT_XML_DIR)/$(SUBSYSTEM_CONFIGURATION_TARGET_CPU_FILES_LIST))
 
 # These are the main class of these tools
 #
@@ -78,6 +80,11 @@ INT_TRANSFORMER_MAIN_CLASS = com.sun.midp.configurator.CodeTransformer
 
 # Configurator input files from list file
 INT_XML_FILES_BASE_NAMES := $(shell grep -v ^\# $(INT_FILES_LIST))
+
+ifneq ($(INT_TARGET_CPU_FILES_LIST), )
+INT_XML_FILES_BASE_NAMES += $(shell grep -v ^\# $(INT_TARGET_CPU_FILES_LIST)); 
+endif
+
 INT_XML_FILES := $(addprefix $(INT_XML_DIR)/, $(INT_XML_FILES_BASE_NAMES))
 
 # Input files common for all platfroms
