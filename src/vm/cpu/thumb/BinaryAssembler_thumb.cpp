@@ -413,16 +413,60 @@ void BinaryAssembler::ldr_oop(Register rd, const Oop* oop, Condition cond) {
     b(skip_mov, not_cond(cond));
     mov_imm(rd, zero);
     bind(skip_mov);
-  } else if (GenerateROMImage && oop->is_instance_class()) {
-    NearLabel skip_mov;
-    b(skip_mov, not_cond(cond));
-    int class_id = ((InstanceClass*)oop)->class_id();
-    get_class_list_base(rd);
-    ldr(rd, rd, class_id * sizeof(OopDesc*));
-    bind(skip_mov);
-  } else {
-    ldr_literal(rd, oop, 0, cond);
+  } 
+
+#if USE_AOT_COMPILATION  
+  /*
+   * Try to avoid direct reference from AOT-compiled method to Java heap.
+   * This allows AOT-compiled methods to stay in TEXT area of ROMImage.cpp.
+   */
+  if (GenerateROMImage && !ROM::system_contains(oop->obj())) {
+    bool load_class = false;
+    bool load_near = false;
+
+    if (oop->is_java_class()) {
+      load_class = true;
+    }
+    else if (oop->is_java_near()) {
+      JavaClass::Raw klass = oop->klass();
+      if (oop->equals(klass().prototypical_near())) {
+        load_class = true;
+        load_near = true;
+      }
+    }
+
+    if (load_class) {
+      NearLabel skip_mov;
+      b(skip_mov, not_cond(cond));
+
+      JavaClass::Raw klass;
+      if (oop->is_java_near()) {
+        klass = oop->klass();
+      } else {
+        klass = oop;
+      }
+
+      int class_id = klass().class_id();
+      get_class_list_base(rd, always);
+      int offset = class_id * sizeof(OopDesc*);
+
+      RegisterAllocator::reference(rd);
+      GUARANTEE((offset & WordAlignmentMask) == 0, 
+                "Offset must be word-aligned");
+      ldr(rd, rd, offset);
+
+      if (load_near) {
+        ldr(rd, rd, InstanceClass::prototypical_near_offset());
+      }
+      RegisterAllocator::dereference(rd);
+
+      bind(skip_mov);
+      return;
+    }
   }
+#endif
+
+  ldr_literal(rd, oop, 0, cond);
 }
 
 extern "C" { 
