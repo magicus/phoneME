@@ -1151,6 +1151,11 @@ void ObjectHeap::dispose() {
 }
 
 bool ObjectHeap::create() {
+#if USE_SET_HEAP_LIMIT
+  GUARANTEE(HeapMin <= HeapCapacity, "sanity check");
+  HeapMin = HeapCapacity;
+#endif 
+
 #if !ENABLE_COMPILER
   // safety measure
   CompilerAreaPercentage = 0;
@@ -1344,10 +1349,6 @@ bool ObjectHeap::create() {
     OsMisc_flush_icache(_glue_code, copy_size);
   }
 #endif
-#if USE_SET_HEAP_LIMIT
-  GUARANTEE(HeapMin <= HeapCapacity, "sanity check");
-  HeapMin = HeapCapacity;
-#endif 
 
   return true;
 }
