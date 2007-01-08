@@ -28,9 +28,7 @@ import com.sun.midp.midlet.*;
 import com.sun.midp.security.*;
 import com.sun.midp.events.EventQueue;
 import com.sun.midp.lcdui.*;
-import com.sun.midp.midletsuite.*;
 import com.sun.midp.configurator.Constants;
-import com.sun.midp.installer.InternalMIDletSuiteImpl;
 import com.sun.midp.log.*;
 
 /**
@@ -40,7 +38,8 @@ import com.sun.midp.log.*;
  * for both SVM and MVM modes. All the differences of SVM & MVM modes are
  * designed as virtual or abstract methods.
  */
-abstract class AbstractMIDletSuiteLoader {
+abstract class AbstractMIDletSuiteLoader
+	implements MIDletSuiteExceptionListener {
 
     /** The ID of the MIDlte suite task Isolate */
     protected int isolateId;
@@ -67,8 +66,7 @@ abstract class AbstractMIDletSuiteLoader {
      * Inner class to request security token from SecurityInitializer.
      * SecurityInitializer should be able to check this inner class name.
      */
-    static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
+    static private class SecurityTrusted implements ImplicitlyTrustedClass {}
 
     /** This class has a different security domain than the MIDlet suite */
     protected static SecurityToken internalSecurityToken =
@@ -76,9 +74,6 @@ abstract class AbstractMIDletSuiteLoader {
 
     /** Event queue instance created for this MIDlet suite execution */
     protected EventQueue eventQueue;
-
-    /** Cached reference to MIDlet suite storage */
-    protected MIDletSuiteStorage midletSuiteStorage;
 
     /**
      * MIDlet suite instance created and properly initialized for
@@ -89,11 +84,17 @@ abstract class AbstractMIDletSuiteLoader {
     // The MIDlet suite environment contains a set of event-related
     // objects needed for each MIDlet suite execution.
 
-    /** Event producer to send MIDlet state events to the AMS isolate. */
-    protected MIDletControllerEventProducer midletControllerEventProducer;
+    /** Foreground Controller adapter. */
+    protected ForegroundController foregroundController;
 
     /** Event producer for various screen change events. */
     protected DisplayEventProducer displayEventProducer;
+
+    /**
+     * Provides interface for display preemption, creation and other
+     * functionality that can not be publicly added to a javax package.
+     */
+    protected DisplayEventListener displayEventListener;
 
     /** Event producer for all repaint events. */
     protected RepaintEventProducer repaintEventProducer;
@@ -116,21 +117,26 @@ abstract class AbstractMIDletSuiteLoader {
     /** Starts and controls MIDlets through the lifecycle states. */
     protected MIDletStateHandler midletStateHandler;
 
-    /** Listener for MIDlet related events (state changes, etc). */
-    protected MIDletEventListener midletEventListener;
-
-    /** The event listener for LCDUI events */
+    /** The event listener for LCDUI events. */
     protected LCDUIEventListener lcduiEventListener;
 
     /**
-     * Reports an error detected during MIDlet suite invocation
+     * Reports an error detected during MIDlet suite invocation.
      * @param errorCode the error code to report
      */
-    protected abstract void reportError(int errorCode);
+    protected abstract void reportError(int errorCode, String details);
+    
+    /**
+     * Reports an error detected during MIDlet suite invocation.
+     * @param errorCode the error code to report
+     */
+    protected void reportError(int errorCode) {
+        reportError(errorCode, null);
+    }
 
     /**
      * Allocates resources for a suite execution according to
-     * global resource policy
+     * global resource policy.
      *
      * @return true in the case resources were successfully allocated,
      *   false otherwise
@@ -158,13 +164,6 @@ abstract class AbstractMIDletSuiteLoader {
 
     /** Core initialization of a MIDlet suite loader */
     protected void init() {
-
-        isolateId = MIDletSuiteUtils.getIsolateId();
-        amsIsolateId = MIDletSuiteUtils.getAmsIsolateId();
-
-        // Hint VM of startup beginning
-        MIDletSuiteUtils.vmBeginStartUp(isolateId);
-
         // Init security tokens for core subsystems
         SecurityInitializer.initSystem();
 
@@ -179,46 +178,48 @@ abstract class AbstractMIDletSuiteLoader {
 
     /**
      * Creates all needed objects of a MIDlet suite environment, but
-     * not initialize them. It is mostly event-related objects, however
-     * subclasses can extend the environment with more specific parts
+     * only initialization that is done, will be to pass other created objects,
+     * and the current and AMS isolate IDs. It is mostly event-related
+     * objects, however subclasses can extend the environment with more
+     * specific parts
      */
-    protected void createSuiteEnvionment() {
-        midletControllerEventProducer =
-            new MIDletControllerEventProducer(
-                internalSecurityToken,
-                eventQueue,
-                amsIsolateId,
-                isolateId);
+    protected void createSuiteEnvironment() {
+        displayEventHandler =
+            DisplayEventHandlerFactory.getDisplayEventHandler(
+               internalSecurityToken);
 
         displayEventProducer =
             new DisplayEventProducer(
-                internalSecurityToken,
                 eventQueue);
 
         repaintEventProducer =
             new RepaintEventProducer(
-                internalSecurityToken,
                 eventQueue);
 
         displayContainer = new DisplayContainer(
             internalSecurityToken, isolateId);
 
-        displayEventHandler =
-            DisplayEventHandlerFactory.getDisplayEventHandler(
-                internalSecurityToken);
+        /*
+         * Because the display handler is implemented in a javax
+         * package it cannot created outside of the package, so
+         * we have to get it after the static initializer of display the class
+         * has been run and then hook up its objects.
+         */
+        displayEventHandler.initDisplayEventHandler(
+            eventQueue,
+            displayEventProducer,
+            foregroundController,
+            repaintEventProducer,
+            displayContainer);
+
+        displayEventListener = new DisplayEventListener(
+            eventQueue,
+            displayContainer);
 
         /* Bad style of type casting, but DisplayEventHandlerImpl
          * implements both DisplayEventHandler & ItemEventConsumer IFs */
         itemEventConsumer =
             (ItemEventConsumer)displayEventHandler;
-
-        midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-
-        midletEventListener = new MIDletEventListener(
-            internalSecurityToken,
-            eventQueue,
-            displayContainer);
 
         lcduiEventListener = new LCDUIEventListener(
             internalSecurityToken,
@@ -230,34 +231,19 @@ abstract class AbstractMIDletSuiteLoader {
      * Does all initialization for already created objects of a MIDlet suite
      * environment. Subclasses can also extend the initialization with
      * various global system initializations needed for all suites.
+     * The MIDlet suite has been created at this point, so it can be
+     * used to initialize any per suite data.
      */
     protected void initSuiteEnvironment() {
-        displayEventHandler.initDisplayEventHandler(
-            internalSecurityToken,
-            eventQueue,
-            displayEventProducer,
-            midletControllerEventProducer,
-            repaintEventProducer,
-            displayContainer);
-
-        MIDletPeer.initClass(
-            internalSecurityToken,
-            displayEventHandler,
-            midletStateHandler,
-            midletControllerEventProducer);
-
-        midletStateHandler.initMIDletStateHandler(
-            internalSecurityToken,
-            displayEventHandler,
-            midletControllerEventProducer,
-            displayContainer);
+        displayEventHandler.initSuiteData(
+            midletSuite.isTrusted());
     }
 
     /**
-     * Handles exception occurred during MIDlet suite execution
+     * Handles exception occurred during MIDlet suite execution.
      * @param t exception instance
      */
-    protected abstract void handleException(Throwable t);
+    public abstract void handleException(Throwable t);
 
     /** Restricts suite access to internal API */
     protected void restrictAPIAccess() {
@@ -269,10 +255,8 @@ abstract class AbstractMIDletSuiteLoader {
      * @throws Exception can be thrown during execution
      */
     protected void startSuite() throws Exception {
-        // Hint VM of startup finish
-        MIDletSuiteUtils.vmEndStartUp(isolateId);
         midletStateHandler.startSuite(
-            midletSuite, externalAppId, midletClassName);
+            this, midletSuite, externalAppId, midletClassName);
     }
 
     /** Closes suite and unlock native suite locks */
@@ -300,57 +284,21 @@ abstract class AbstractMIDletSuiteLoader {
     protected abstract void exitLoader();
 
     /**
-     * Creates MIDlet suite instance by suite ID
+     * Creates MIDlet suite instance by suite ID, the 
+     *
+     * @return MIDlet suite to load
      *
      * @throws Exception in the case MIDlet suite can not be
      *   created because of a security reasons or some problems
      *   related to suite storage
      */
-    protected void createMIDletSuite() throws Exception {
-        if (suiteId == MIDletSuite.INTERNAL_SUITE_ID) {
-            // assume a class name of a MIDlet in the classpath
-            midletSuite = InternalMIDletSuiteImpl.create(
-                midletDisplayName,
-                suiteId);
-        } else {
-            midletSuiteStorage = MIDletSuiteStorage.
-                getMIDletSuiteStorage(internalSecurityToken);
-
-            midletSuite = midletSuiteStorage.getMIDletSuite(
-                suiteId, false);
-
-            Logging.initLogSettings(suiteId);
-        }
-    }
-
-    /**
-     * Gets error code by exception type
-     *
-     * @param t exception instance
-     * @return error code
-     */
-    protected int getErrorCode(Throwable t) {
-        if (t instanceof ClassNotFoundException) {
-            return Constants.MIDLET_CLASS_NOT_FOUND;
-        } else if (t instanceof InstantiationException) {
-            return Constants.MIDLET_INSTANTIATION_EXCEPTION;
-        } else if (t instanceof IllegalAccessException) {
-            return Constants.MIDLET_ILLEGAL_ACCESS_EXCEPTION;
-        } else if (t instanceof OutOfMemoryError) {
-            return Constants.MIDLET_OUT_OF_MEM_ERROR;
-        } else if (t instanceof MIDletSuiteLockedException) {
-            return Constants.MIDLET_INSTALLER_RUNNING;
-        } else {
-            return Constants.MIDLET_CONSTRUCTOR_FAILED;
-        }
-    }
+    protected abstract MIDletSuite createMIDletSuite() throws Exception;
 
     /**
      * Inits MIDlet suite runtime environment and start a MIDlet
      * suite with it
      */
     protected void runMIDletSuite() {
-
         // WARNING: Don't add any calls before this!
         //
         // The core init of a MIDlet suite task should be able
@@ -358,33 +306,51 @@ abstract class AbstractMIDletSuiteLoader {
         init();
 
         try {
-            // Prepare MIDlet suite environment
-            createSuiteEnvionment();
-            initSuiteEnvironment();
-
             // Regard resource policy for the suite task
             if (!allocateReservedResources()) {
                 reportError(Constants.MIDLET_RESOURCE_LIMIT);
                 return;
             }
+
+            /*
+             * Prepare MIDlet suite environment, classes that only need
+             * the isolate ID can be create here.
+             */
+            createSuiteEnvironment();
+
+            /* Check to see that all of the core object are created. */
+            if (foregroundController == null ||
+                displayEventProducer == null ||
+                repaintEventProducer == null ||
+                displayContainer == null ||
+                displayEventHandler == null ||
+                itemEventConsumer == null ||
+                lcduiEventListener == null ||
+                midletStateHandler == null) {
+
+                throw new
+                    RuntimeException("Suite environment not complete.");
+            }
+
             // Create suite instance ready for start
-            createMIDletSuite();
+            midletSuite = createMIDletSuite();
+
             if (midletSuite == null) {
                 reportError(Constants.MIDLET_SUITE_NOT_FOUND);
                 return;
             }
+
             if (!midletSuite.isEnabled()) {
                 reportError(Constants.MIDLET_SUITE_DISABLED);
                 return;
             }
 
-            // Disable class verification in the case MIDlet suite classes
-            // were successfully verified during the installation
-            if (Constants.VERIFY_ONCE) {
-                if (midletSuite.isVerified()) {
-                    MIDletSuiteVerifier.useClassVerifier(false);
-                }
-            }
+            /*
+             * Now that we have the suite and reserved its resources
+             * we can initialize any classes that need MIDlet Suite
+             * information.
+             */
+            initSuiteEnvironment();
 
             // Export suite arguments as properties, so well
             // set any other properties to control a suite

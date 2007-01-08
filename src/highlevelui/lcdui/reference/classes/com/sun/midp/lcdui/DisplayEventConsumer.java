@@ -156,28 +156,6 @@ public interface DisplayEventConsumer {
     
     
     /*
-     * FOREGROUND/BACKGROUND DIsPLAY MANAGEMENT EVENTS
-     *
-     * FOREGROUND_NOTIFY - produced by MIDletEventProducer
-     *
-     * TBD: move to a separate Consumer ?
-     */
-    
-    /**
-     * Called by event delivery when MIDlet Controller (in AMS Isolate) 
-     * notifies MIdlet and its display that there is a change in its foreground
-     * status (it has been moved to foreground or background).
-     *
-     * TBD: split into 2 methods: for foreground & background
-     *
-     * @param foreground A flag indicating the new foreground status.
-     *                   true if the Display should be put in
-     *                   the foreground, 
-     *                   false - in the background.
-     */
-    void handleDisplayForegroundNotifyEvent(boolean foreground);
-
-    /*
      * ITEM EVENTS - not associated with a particular Display.
      *
      * ITEM_CHANGED/STATE_CHANGE

@@ -67,13 +67,10 @@ public class RepaintEventProducer implements EventListener {
     /**
      * The constructor LCDUI repaint events handler.
      *
-     * @param  token security token that controls instance creation.
      * @param theEventQueue the event queue
      */
-    public RepaintEventProducer(
-        SecurityToken token, EventQueue theEventQueue) {
+    public RepaintEventProducer(EventQueue theEventQueue) {
         
-        token.checkIfPermissionAllowed(Permissions.MIDP);
         eventQueue = theEventQueue;
 
         pooledEvent1 = RepaintEvent.createRepaintEvent(null, 0, 0, 0, 0, null);

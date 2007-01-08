@@ -45,13 +45,10 @@ MIDP_JAVADOC_SOURCEPATH += $(MIDLET_SUITE_INFO_DIR)/classes$(PATHSEP)$(SUBSYSTEM
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(MIDLET_SUITE_INFO_DIR)/classes/com/sun/midp/midletsuite/MIDletSuiteInfo.java
-
 # vpath for sub-system
 #
 vpath % \
     $(MIDLET_SUITE_INFO_DIR)/native
 
-# Native files for common module
-#
-SUBSYSTEM_AMS_NATIVE_FILES += \
-    midletsuiteinfo_kni.c
+
+

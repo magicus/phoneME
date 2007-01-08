@@ -45,8 +45,6 @@ $(GENERATED_DIR)/classes/com/sun/midp/midletsuite/MIDletSuiteImpl.java: \
 
 # Java files for (common) module 
 SUBSYSTEM_AMS_JAVA_FILES += \
-    $(INTERNAL_API_DIR)/classes/com/sun/midp/midlet/MIDletSuite.java \
-    \
     $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/MIDletInfo.java \
     $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/InstallInfo.java \
     $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/SuiteProperties.java \

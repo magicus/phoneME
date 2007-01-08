@@ -31,7 +31,6 @@
  * defined in midp_logging.h and implemented in logging.c
  */
 
-#include <stdio.h>
 #include <kni.h>
 #include <midpError.h>
 #include <midpString.h>

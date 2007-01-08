@@ -24,6 +24,7 @@
  * information or have any questions.
  */
 
+#include <kni.h>
 #include <string.h>
 #include <midpMalloc.h>
 #include <midpAMS.h>
@@ -31,8 +32,9 @@
 #include <midp_properties_port.h>
 #include <midpInit.h>
 #include <suitestore_common.h>
+#if !ENABLE_CDC
 #include <suspend_resume.h>
-
+#endif
 #if MEASURE_STARTUP
 #include <stdio.h>
 #include <pcsl_print.h>
@@ -164,8 +166,9 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
 
             // initializing suspend/resume system first, other systems may then
             // register their resources there.
+#if !ENABLE_CDC
             sr_initSystem();
-
+#endif
             err = storageInitialize(midpHome);
             if (err == 0) {
                 status = midp_suite_storage_init();
@@ -247,8 +250,9 @@ void midpFinalize() {
     midp_suite_storage_cleanup();
 
     /** Now it makes no sense to process suspend/resume requests. */
+#if !ENABLE_CDC
     sr_finalizeSystem();
-
+#endif
     if (initLevel > MEM_LEVEL) {
         /* Cleanup native code resources on exit */
         finalizeConfig();

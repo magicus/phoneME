@@ -416,9 +416,12 @@ public final class SecurityHandler {
 }
 
 /** Implements security permission dialog. */
-class PermissionDialog implements CommandListener, MIDletEventConsumer {
+class PermissionDialog implements CommandListener {
     /** Caches the display manager reference. */
     private DisplayEventHandler displayEventHandler;
+
+    /** Permission Alert. */
+    private Alert alert;
 
     /** Command object for "Yes" command. */
     private Command yesCmd =
@@ -466,12 +469,13 @@ class PermissionDialog implements CommandListener, MIDletEventConsumer {
             int question, String app, String resource, String extraValue)
             throws InterruptedException {
         String[] substitutions = {app, resource, extraValue};
-        Alert alert = new Alert(Resource.getString(title, substitutions));
         String iconFilename;
         RandomAccessStream stream;
         byte[] rawPng;
         Image icon;
         String configRoot = File.getConfigRoot(Constants.INTERNAL_STORAGE_ID);
+
+        alert = new Alert(Resource.getString(title, substitutions));
 
         displayEventHandler =
             DisplayEventHandlerFactory.getDisplayEventHandler(token);
@@ -497,7 +501,7 @@ class PermissionDialog implements CommandListener, MIDletEventConsumer {
         alert.addCommand(noCmd);
         alert.addCommand(yesCmd);
         alert.setCommandListener(this);
-        preemptToken = displayEventHandler.preemptDisplay(this, alert, true);
+        preemptToken = displayEventHandler.preemptDisplay(alert, true);
     }
 
     /**
@@ -537,6 +541,21 @@ class PermissionDialog implements CommandListener, MIDletEventConsumer {
         synchronized (this) {
             answer = theAnswer;
 
+            /*
+             * Since this may be the only display, clear the alert,
+             * so the user will not be confused by alert text still
+             * displaying.
+             *
+             * The case should happen when running TCK test MIDlets in
+             * SVM mode.
+             */
+            alert.setTitle(null);
+            alert.setString(null);
+            alert.setImage(null);
+            alert.addCommand(new Command("", 1, 1));
+            alert.removeCommand(noCmd);
+            alert.removeCommand(yesCmd);
+
             displayEventHandler.donePreempting(preemptToken);
 
             notify();
@@ -556,34 +575,6 @@ class PermissionDialog implements CommandListener, MIDletEventConsumer {
             return;
         }
 
-        setAnswer(false);
-    }
-
-    /**
-     * Pause the current foreground MIDlet and return to the
-     * AMS or "selector" to possibly run another MIDlet in the
-     * currently active suite.
-     * <p>
-     * This is not apply to the security dialog.
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletPauseEvent() {}
-
-    /**
-     * Start the currently paused state.
-     * <p>
-     * This is not apply to the security dialog.
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletActivateEvent() {}
-
-    /**
-     * Destroy the MIDlet given midlet.
-     * <p>
-     * This is not apply to the security dialog.
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletDestroyEvent() {
         setAnswer(false);
     }
 }

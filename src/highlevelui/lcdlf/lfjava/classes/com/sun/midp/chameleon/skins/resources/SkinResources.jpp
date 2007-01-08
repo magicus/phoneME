@@ -31,7 +31,10 @@ import com.sun.midp.log.*;
 import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.ScreenSkin;
+
+// #ifndef ENABLE_CDC
 import com.sun.midp.main.MIDletSuiteUtils;
+// #endif
 
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Font;
@@ -83,7 +86,7 @@ public class SkinResources {
      * True, if skin is being loaded in AMS Isolate in MVM case,
      * false otherwise. Always true in SVM case.
      */
-    private static boolean isAmsIsolate = false;
+    private static boolean isAmsIsolate = true;
 
     /**
      * This class needs no real constructor, but its here as 'public'
@@ -121,7 +124,10 @@ public class SkinResources {
 
         resources = null;
         skinData = null;
+
+// #ifndef ENABLE_CDC
         isAmsIsolate = MIDletSuiteUtils.isAmsIsolate();
+// #endif
 
         if (reload) {
             if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {

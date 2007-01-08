@@ -32,7 +32,6 @@ import com.sun.midp.events.Event;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
-import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Item;
 
