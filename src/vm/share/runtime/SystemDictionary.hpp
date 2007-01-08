@@ -34,32 +34,37 @@ enum ResolveMode {
 };
 
 class LoaderContext {
-public:
-  Symbol* class_name;
-  FailureMode fail_mode;
-  ResolveMode resolve_mode;
-  Buffer *buf;
-  bool is_system_class;
+#define FIELD_ACCESSORS(type, name) \
+private: \
+  type _##name; \
+public: \
+  type name() {return _##name ;} \
+  void set_##name(type name) {_##name = name ;}
 
+  FIELD_ACCESSORS(Symbol*, class_name)
+  FIELD_ACCESSORS(FailureMode, fail_mode)
+  FIELD_ACCESSORS(ResolveMode, resolve_mode)
+  FIELD_ACCESSORS(Buffer*, buf)
+  FIELD_ACCESSORS(bool, is_system_class)  
+#undef FIELD_ACCESSORS
+
+public:
   LoaderContext(Symbol* class_name,
                 FailureMode fail_mode = ExceptionOnFailure,
                 ResolveMode resolve_mode = FullResolve,
                 Buffer *bufp = NULL) {
-    this->class_name = class_name;
-    this->fail_mode = fail_mode;
-    this->resolve_mode = resolve_mode;
-    this->buf = bufp;
-    is_system_class = false;
+    _class_name = class_name;
+    _fail_mode = fail_mode;
+    _resolve_mode = resolve_mode;
+    _buf = bufp;
+    _is_system_class = false;
   }
-//  bool is_system_class_loader() {
-//    return true;
-//  }
   LoaderContext(Symbol* class_name, FailureMode fail_mode, 
                 LoaderContext *copy_from) {
-    this->class_name = class_name;
-    this->fail_mode = fail_mode;
-    this->resolve_mode = copy_from->resolve_mode;
-    this->buf = NULL;
+    _class_name = class_name;
+    _fail_mode = fail_mode;
+    _resolve_mode = copy_from->_resolve_mode;
+    _buf = NULL;
   }
 #ifndef PRODUCT
   void print_on(Stream *st);

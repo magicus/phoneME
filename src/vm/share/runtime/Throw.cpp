@@ -220,14 +220,14 @@ void Throw::class_not_found(Symbol* class_name, FailureMode fail_mode
 void Throw::class_not_found(LoaderContext *loader_ctx JVM_TRAPS) {
   if (Universe::before_main()) {
      TTY_TRACE(("class not found: "));
-     loader_ctx->class_name->print_symbol_on(tty);
+     loader_ctx->class_name()->print_symbol_on(tty);
      tty->cr();
      JVM_FATAL(main_class_not_found);
   }
   UsingFastOops fast_oops;
-  String::Fast str = Universe::new_string(loader_ctx->class_name JVM_CHECK);
+  String::Fast str = Universe::new_string(loader_ctx->class_name() JVM_CHECK);
   Throwable::Fast error;
-  if (loader_ctx->fail_mode == ErrorOnFailure) {
+  if (loader_ctx->fail_mode() == ErrorOnFailure) {
 #if !ENABLE_CLDC_11
     str = add_message_prefix("NoClassDefFoundError", &str JVM_MUST_SUCCEED);
 #endif

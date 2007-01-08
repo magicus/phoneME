@@ -964,7 +964,7 @@ ReturnOop ClassFileParser::parse_method(ClassParserState *state, ConstantPool* c
     // shared_lock_synchronized_method() on ARM assume that the method
     // cannot belong to String so that it can skip a few checks for interned
     // Strings.
-    GUARANTEE_R(!_loader_ctx->class_name->equals(Symbols::java_lang_String())||
+    GUARANTEE_R(!_loader_ctx->class_name()->equals(Symbols::java_lang_String())||
                 !access_flags.is_synchronized(),
                 "No String methods can be synchronized");
     cpf_check_0(
@@ -1606,7 +1606,8 @@ bool ClassFileParser::parse_class_0(ClassParserState *stack JVM_TRAPS) {
   // Access flags
   AccessFlags access_flags;
   jint flags = get_u2(JVM_SINGLE_ARG_CHECK_0);
-  state().set_access_flags(flags);
+  //preloaded flag might be already set!
+  state().set_access_flags(state().access_flags() | flags);
   access_flags.set_flags(flags & JVM_RECOGNIZED_CLASS_MODIFIERS);
   if (access_flags.is_interface()) {
     cpf_check_0(access_flags.is_abstract() && !access_flags.is_final(), 
@@ -1698,9 +1699,8 @@ ReturnOop ClassFileParser::parse_class(ClassParserState *stack JVM_TRAPS) {
 ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAPS) {
   UsingFastOops fast_oops;
   check_for_circular_class_parsing(stack JVM_CHECK_0);
-
+  
   ClassParserState::Fast state = stack->top();
-
   if (state().stage() == 0) {
     bool resolved = ClassFileParser::parse_class_0(stack JVM_CHECK_0);
     state().set_stage(1);
@@ -1714,7 +1714,8 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
   set_buffer_position(state().buffer_pos());
   AccessFlags access_flags;
   access_flags.set_flags(state().access_flags() & 
-                         JVM_RECOGNIZED_CLASS_MODIFIERS);
+                         (JVM_RECOGNIZED_CLASS_MODIFIERS | JVM_ACC_PRELOADED));
+
   Symbol::Fast class_name = name();
   Symbol::Fast super_class_name;
   InstanceClass::Fast super_class;
@@ -1791,9 +1792,6 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
     access_flags.set_is_hidden();
   }
 #endif
-  if (_loader_ctx->is_system_class) {
-    access_flags.set_is_preloaded();
-  }
   // Iterate over fields again and compute correct offsets.  The
   // relative offset (starting at zero) was temporarily stored in the
   // offset slot.

@@ -83,23 +83,23 @@ ReturnOop SystemDictionary::find_class_in_dictionary(ObjArray *dictionary,
                                  LoaderContext *loader_ctx, 
                                  bool lookup_only) {
 
-  juint hash_value = loader_ctx->class_name->hash();
+  juint hash_value = loader_ctx->class_name()->hash();
   for (InstanceClass::Raw cl = bucket_for(dictionary, hash_value); 
        !cl.is_null(); 
        cl = cl().next()) {
     Symbol::Raw name = cl().name();
-    if (loader_ctx->class_name->equals(&name)) {
+    if (loader_ctx->class_name()->equals(&name)) {
       // class match 
       if (lookup_only) {
         // return the class immediately for lookups only
         return cl;
       } 
     } else { 
-      GUARANTEE(!loader_ctx->class_name->matches(&name), "symbols misuse!");
+      GUARANTEE(!loader_ctx->class_name()->matches(&name), "symbols misuse!");
       // no match found
       continue;
     }
-    if (cl().is_fake_class() && loader_ctx->resolve_mode != SemiResolve) {
+    if (cl().is_fake_class() && loader_ctx->resolve_mode() != SemiResolve) {
       continue;
     }
 
@@ -132,18 +132,18 @@ ReturnOop SystemDictionary::find_class_or_null(Symbol *class_name) {
 ReturnOop SystemDictionary::fetch_buffer(LoaderContext *loader_ctx JVM_TRAPS) {
   UsingFastOops fast_oops;
   FileDecoder::Fast fd = 
-    ClassPathAccess::open_entry(loader_ctx->class_name, true JVM_CHECK_0);
+    ClassPathAccess::open_entry(loader_ctx->class_name(), true JVM_CHECK_0);
 
   if (fd.not_null()) {
     if (UseROM && 
-        ClassFileParser::is_package_restricted(loader_ctx->class_name) 
+        ClassFileParser::is_package_restricted(loader_ctx->class_name()) 
         && !(fd().flags() & SYSTEM_CLASSPATH)) {
-      Throw::class_not_found(loader_ctx->class_name, ErrorOnFailure 
+      Throw::class_not_found(loader_ctx->class_name(), ErrorOnFailure 
                              JVM_THROW_0);
     }
     Buffer::Raw result = fd().read_completely(JVM_SINGLE_ARG_CHECK_0);
     if (result.not_null()) {
-      loader_ctx->is_system_class = fd().flags() & SYSTEM_CLASSPATH;      
+      loader_ctx->set_is_system_class(fd().flags() & SYSTEM_CLASSPATH);      
       return result;
     }
   }
@@ -153,13 +153,13 @@ ReturnOop SystemDictionary::fetch_buffer(LoaderContext *loader_ctx JVM_TRAPS) {
   if (bad_classes.not_null()) {
     for (int i=0; i<bad_classes().length(); i++) {
       Symbol::Raw name = bad_classes().obj_at(i);
-      if (name.equals(loader_ctx->class_name)) {
+      if (name.equals(loader_ctx->class_name())) {
         /*
          * This class had generate a ClassFormatError during Monet
          * conversion. The TCK requires us to throw an Error, not
          * ClassNoDefFoundException. 
          */
-        loader_ctx->fail_mode = ErrorOnFailure;
+        loader_ctx->set_fail_mode(ErrorOnFailure);
       }
     }
   }
@@ -172,10 +172,10 @@ ReturnOop SystemDictionary::load_system_class(LoaderContext *loader_ctx JVM_TRAP
   UsingFastOops fast_oops;
 
   ClassParserState::Fast state = 
-      ClassParserState::allocate(loader_ctx->class_name JVM_CHECK_0);
+      ClassParserState::allocate(loader_ctx->class_name() JVM_CHECK_0);
   // optimization, if we have a buffer loaded already for this class, then use it
-  if (loader_ctx->buf != NULL) {
-    state().set_buffer(loader_ctx->buf);
+  if (loader_ctx->buf() != NULL) {
+    state().set_buffer(loader_ctx->buf());
   }
   // Initialize the class loading stack so that it contains one element
   ClassParserState::Fast stack;
@@ -191,7 +191,7 @@ ReturnOop SystemDictionary::load_system_class(LoaderContext *loader_ctx JVM_TRAP
     
     FailureMode fail_mode;
     if (stack().next() == NULL) {
-      fail_mode = loader_ctx->fail_mode;
+      fail_mode = loader_ctx->fail_mode();
     } else {
       // Always throw an error if we're loading a class which
       // loader_ctx->class_name depends on.
@@ -231,6 +231,9 @@ ReturnOop SystemDictionary::load_system_class(LoaderContext *loader_ctx JVM_TRAP
       if (buffer.is_null()) {
           buffer = fetch_buffer(&top_ctx JVM_CHECK_0);
           cur_class().set_buffer(&buffer);
+          if (top_ctx.is_system_class()) {
+            cur_class().set_access_flags(cur_class().access_flags() | JVM_ACC_PRELOADED);            
+          }
       }
 
       // Parse the class at the top of the stack. If it refers to some
@@ -273,7 +276,7 @@ void SystemDictionary::insert(LoaderContext *loader_ctx,
   Symbol::Raw name = instance_class->name();
   juint hash_value = name().hash();
 
-  if (loader_ctx->resolve_mode != SemiResolve) {
+  if (loader_ctx->resolve_mode() != SemiResolve) {
     // A fake class may have been installed. Must replace it.
     InstanceClass::Raw ic = bucket_for(&dictionary, hash_value);
     InstanceClass::Raw last = ic;
@@ -372,12 +375,12 @@ ReturnOop
 SystemDictionary::resolve_array_class(LoaderContext *loader_ctx JVM_TRAPS) {
   UsingFastOops fast_oops;
   ArrayClass::Fast ac = 
-    TypeSymbol::array_class_for_encoded_name(loader_ctx->class_name);
+    TypeSymbol::array_class_for_encoded_name(loader_ctx->class_name());
   if (ac.is_null()) {
     return NULL;
   }
 
-  if (loader_ctx->resolve_mode == FullResolve) {
+  if (loader_ctx->resolve_mode() == FullResolve) {
     JavaClass::Raw klass = ac.obj();
     for (;;) {
       if (klass().is_type_array_class()) {
@@ -388,7 +391,7 @@ SystemDictionary::resolve_array_class(LoaderContext *loader_ctx JVM_TRAPS) {
         if (ic().is_fake_class()) {
           UsingFastOops fast_oops2;
           Symbol::Fast name = ic().name();
-          LoaderContext ctx(&name, loader_ctx->fail_mode, loader_ctx);
+          LoaderContext ctx(&name, loader_ctx->fail_mode(), loader_ctx);
           SystemDictionary::resolve(&ctx JVM_CHECK_0);
         }
         break;
@@ -417,7 +420,7 @@ ReturnOop SystemDictionary::create_fake_class(LoaderContext *loader_ctx JVM_TRAP
   AccessFlags flags = klass_info().access_flags();
   flags.set_is_fake_class();
   klass_info().set_access_flags(flags);
-  klass_info().set_name(loader_ctx->class_name);
+  klass_info().set_name(loader_ctx->class_name());
   // ROMizer uses a fake class to represent a missing class.
   // We need to fully initialize this object, so that an application with 
   // a missing class is ROMized successfully and fails with an appropriate
@@ -444,7 +447,7 @@ ReturnOop SystemDictionary::create_fake_class(LoaderContext *loader_ctx JVM_TRAP
 
 ReturnOop SystemDictionary::resolve(LoaderContext *loader_ctx JVM_TRAPS) {
   UsingFastOops fast_oops;
-  if (!loader_ctx->class_name->is_valid_class_name()) {
+  if (!loader_ctx->class_name()->is_valid_class_name()) {
     Throw::class_not_found(loader_ctx JVM_THROW_0);
   }
 
@@ -458,7 +461,7 @@ ReturnOop SystemDictionary::resolve(LoaderContext *loader_ctx JVM_TRAPS) {
   if (!ic.is_null()) {
     return ic;
   }
-  if (loader_ctx->resolve_mode == SemiResolve) {
+  if (loader_ctx->resolve_mode() == SemiResolve) {
      return create_fake_class(loader_ctx JVM_NO_CHECK_AT_BOTTOM);
   }
 
@@ -489,16 +492,16 @@ ReturnOop SystemDictionary::resolve(LoaderContext *loader_ctx JVM_TRAPS) {
 void LoaderContext::print_on(Stream *st) {
 #if USE_DEBUG_PRINTING
   st->print("class_name   = ");
-  if (class_name) {
-    class_name->print_symbol_on(st);
+  if (_class_name) {
+    _class_name->print_symbol_on(st);
     st->cr();
   } else {
     st->print_cr("NULL");
   }
-  st->print("resolve_mode = %s", resolve_mode == FullResolve ?
+  st->print("resolve_mode = %s", _resolve_mode == FullResolve ?
                                  "FullResolve" : "SemiResolve");
 
-  st->print("fail_mode    = %s", fail_mode == ExceptionOnFailure ?
+  st->print("fail_mode    = %s", _fail_mode == ExceptionOnFailure ?
                                  "ExceptionOnFailure" : "ErrorOnFailure");
 #endif
 }

@@ -41,10 +41,10 @@ class ClassFileParser: public StackObj {
     _buffer            = buffer;
     set_buffer_position(0);
     _loader_ctx        = loader_ctx;
-    _name              = loader_ctx->class_name;
+    _name              = loader_ctx->class_name();
 #ifdef USE_CLASS_LOADER
-    _class_loader      = loader_ctx->class_loader;
-    _protection_domain = loader_ctx->protection_domain;
+    _class_loader      = loader_ctx->_class_loader;
+    _protection_domain = loader_ctx->_protection_domain;
 #endif
 
     // Push this on the static class file parser list
