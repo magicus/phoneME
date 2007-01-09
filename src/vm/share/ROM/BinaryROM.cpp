@@ -536,6 +536,27 @@ void ROMBundle::preload( const JvmPathChar class_path[] ) {
       for(; class_path[count] != 0 && 
           class_path[count] != OsFile_path_separator_char; count++) {
       }
+      if (count >= NAME_BUFFER_SIZE) {
+#if ENABLE_TTY_TRACE
+        jvm_memcpy(new_class_path, class_path + start, 
+            (NAME_BUFFER_SIZE-1) * sizeof(JvmPathChar));
+        new_class_path[NAME_BUFFER_SIZE-1] = 0;
+        tty->print_cr("bundle name:%s is too long to be loaded. Skipped.", new_class_path);
+#endif
+#if ENABLE_LIB_IMAGES
+        _preloaded_handles[bundle_num] = NULL;
+        _preloaded_lengths[bundle_num] = 0;                  
+        start += count;      
+        if (class_path[start] == OsFile_path_separator_char) start++;
+        bundle_num++;
+        continue;
+#else
+        _preloaded_handle = NULL;
+        _preloaded_length = 0;
+        final_length = 0;
+        break;
+#endif      
+      }
       jvm_memcpy(new_class_path, class_path + start, 
                 count * sizeof(JvmPathChar));
       new_class_path[count] = 0;
