@@ -57,7 +57,7 @@ import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.Util;
 
-import com.sun.midp.io.j2me.push.PushRegistryImpl;
+import com.sun.midp.io.j2me.push.PushRegistryInternal;
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
 import com.sun.midp.io.j2me.storage.File;
 
@@ -368,7 +368,7 @@ public abstract class Installer {
         state.midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
         /* Disable push interruptions during install. */
-        PushRegistryImpl.enablePushLaunch(false);
+        PushRegistryInternal.enablePushLaunch(false);
 
         try {
             state.startTime = System.currentTimeMillis();
@@ -456,7 +456,7 @@ public abstract class Installer {
                 }
             }
 
-            PushRegistryImpl.enablePushLaunch(true);
+            PushRegistryInternal.enablePushLaunch(true);
         }
 
         return info.id;
@@ -2205,7 +2205,7 @@ public abstract class Installer {
         byte[] curLevels = settings.getPermissions();
 
         if (state.isPreviousVersion) {
-            PushRegistryImpl.unregisterConnections(info.id);
+            PushRegistryInternal.unregisterConnections(info.id);
         }
 
         for (int i = 1; ; i++) {
@@ -2229,11 +2229,11 @@ public abstract class Installer {
 
             /* Register the new push connection string. */
             try {
-                PushRegistryImpl.registerConnectionInternal(null, state,
+                PushRegistryInternal.registerConnectionInternal(null, state,
                     conn, midlet, filter, false);
             } catch (Exception e) {
                 /* If already registered, abort the installation. */
-                PushRegistryImpl.unregisterConnections(info.id);
+                PushRegistryInternal.unregisterConnections(info.id);
 
                 if (state.isPreviousVersion) {
                     // put back the old ones, removed above
@@ -2328,7 +2328,7 @@ public abstract class Installer {
 
             /* Register the new push connection string. */
             try {
-                PushRegistryImpl.registerConnectionInternal(null,
+                PushRegistryInternal.registerConnectionInternal(null,
                     state, conn, midlet, filter, true);
             } catch (IOException e) {
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {
