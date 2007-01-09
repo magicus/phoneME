@@ -66,16 +66,25 @@ create_output_dirs: $(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) $(JAVA
 
 copy_include_files: create_output_dirs $(JAVACALL_INCLUDE_TARGET_FILES_SET)
 
-source_bundle: $(JAVACALL_OUTPUT_DIR)
+source_bundle: source_bundle_verify
 	@echo  ... javacall source bundle; \
-	SB_DIR=$(JAVACALL_OUTPUT_DIR)/javacall; \
+	SB_DIR=$(SOURCE_OUTPUT_DIR)/javacall; \
 	if [ -d "$(JAVACALL_INCLUDE_DIR)/../.svn" ]; then \
+		mkdir -p $$SB_DIR; \
 		svn export --force -q "$(JAVACALL_INCLUDE_DIR)/../." $$SB_DIR; \
 	else \
 		mkdir -p $$SB_DIR; \
 		cp -rp "$(JAVACALL_INCLUDE_DIR)/../src" $$SB_DIR; \
 		cp -rp "$(JAVACALL_INCLUDE_DIR)/../include" $$SB_DIR; \
 	fi
+
+source_bundle_verify:
+	@$(A)if [ -z "$(SOURCE_OUTPUT_DIR)" ]; then \
+	    echo '==========================================================';\
+	    echo 'SOURCE_OUTPUT_DIR must be set.';\
+	    echo '==========================================================';\
+	    exit -1; \
+	fi;
 
 clean:
 	@rm -rf $(JAVACALL_OUTPUT_DIR)
