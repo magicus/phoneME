@@ -104,14 +104,12 @@ to access them.
 
 <p>Isolated JVM instances are called <i>JUMP isolates</i>.
 A {@link com.sun.jump.executive.JUMPIsolateProxy} object
-encapsulates the state of a running isolate and can be used to control its
-lifecycle. A JUMP isolate can be paused or running at any given time. The JUMP
-executive can affect isolate lifecycle using the {@link
-com.sun.jump.executive.JUMPIsolateProxy#pauseApp} and {@link
-com.sun.jump.executive.JUMPIsolateProxy#resumeApp} methods. The JUMP isolate can also
+encapsulates the state of a running isolate and returns an instance of a {@link com.sun.jump.executive.JUMPApplicationProxy} that can be used to control its
+lifecycle of a corresponding {@link com.sun.jump.common.JUMPApplication} running inside the active isolate.  Each JUMP isolate contains one to many {@link com.sun.jump.common.JUMPApplication} objects.  The JUMP executive can affect application lifecycle using the {@link com.sun.jump.executive.JUMPApplicationProxy#pauseApp} and {@link
+com.sun.jump.executive.JUMPApplicationProxy#resumeApp} methods. The JUMP isolate can also
 request lifecycle changes from the JUMP executive. The lifecycle module (interface {@link
 com.sun.jump.module.lifecycle.JUMPLifeCycleModule} is used to perform
-application lifecycle operations. It can create new isolates, and manage
+isolate lifecycle operations. It can create new isolates, and manage
 currently running isolates.
 
 <p>Each JUMP isolate gets a set of abstractions that allow it to use the JUMP

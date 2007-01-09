@@ -29,6 +29,7 @@ package com.sun.jumpimpl.module.windowing;
 import com.sun.me.gci.windowsystem.GCIDisplay;
 import com.sun.me.gci.windowsystem.GCIScreenWidget;
 import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
+import com.sun.me.gci.windowsystem.event.GCIEventManager;
 import com.sun.me.gci.surface.GCIDrawingSurface;
 
 import java.lang.reflect.Field;
@@ -153,6 +154,19 @@ class GraphicsEnvironment extends GCIGraphicsEnvironment {
         isRenderingSuspended() {
             return impl.isRenderingSuspended();
         }
+
+        public void requestBackground() {
+            impl.requestBackground();
+        }
+
+        public void requestForeground() {
+            impl.requestForeground();
+        }
+
+        public Object getEventTarget() {
+            return impl.getEventTarget();
+        }
+
     }
 
 
@@ -212,14 +226,14 @@ class GraphicsEnvironment extends GCIGraphicsEnvironment {
     public void
     startEventLoop() {
         if(listener != null && listener.canStartEventLoop()) {
-            impl.startEventLoop();
+            impl.getEventManager().startEventLoop();
         }
     }
 
     public void
     stopEventLoop() {
         if(listener != null && listener.canStopEventLoop()) {
-            impl.stopEventLoop();
+            impl.getEventManager().stopEventLoop();
         }
     }
 
@@ -249,5 +263,9 @@ class GraphicsEnvironment extends GCIGraphicsEnvironment {
     public int
     getDisplayNumber(Object surface) {
         return impl.getDisplayNumber(surface);
+    }
+
+    public GCIEventManager getEventManager() {
+        return impl.getEventManager();
     }
 }

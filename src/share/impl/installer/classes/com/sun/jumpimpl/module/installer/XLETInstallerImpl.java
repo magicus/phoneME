@@ -27,7 +27,7 @@ package com.sun.jumpimpl.module.installer;
 import com.sun.jump.common.JUMPAppModel;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.executive.JUMPExecutive;
-import com.sun.jump.executive.JUMPUserInputManager;
+//import com.sun.jump.executive.JUMPUserInputManager;
 import com.sun.jump.module.contentstore.JUMPContentStore;
 import com.sun.jump.module.contentstore.JUMPData;
 import com.sun.jump.module.contentstore.JUMPNode;
@@ -103,7 +103,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
      */
     protected JUMPStore getStore() {
         JUMPStore store = JUMPStoreFactory.getInstance().getModule(JUMPStoreFactory.TYPE_FILE);
-
+        
         // These three lines below should have happened in the executive setup,
         // but for the testing purpose, emulating load() call here.
         if (JUMPExecutive.getInstance() == null) {
@@ -155,7 +155,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             // default to the current directory
             repositoryDir = '.' + fileSeparator;
         }
-
+        
         // Get the store handle from the JUMPContentStoreSubClass.
         storeHandle = openStore(true);
         
@@ -175,7 +175,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        
         closeStore(storeHandle);
     }
     
@@ -292,7 +292,9 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             ex.printStackTrace();
             try {
                 storeHandle.deleteNode(parentDir);
-            } catch (IOException e) {} //nothing to do!
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return null;
         }
         
@@ -563,7 +565,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         
         // make a unique file name if we don't want to overwrite
         // current contents with the same name.
-        iconFilePath = createUniquePathName(REPOSITORY_ICONS_DIRNAME + fileSeparator + iconFileName);
+        iconFilePath = createUniquePathName(repositoryDir + REPOSITORY_ICONS_DIRNAME + fileSeparator + iconFileName);
         
         try {
             
@@ -578,9 +580,12 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             
             byte[] buffer = copyBuffer(zis, size);
             
-            JUMPData jarData = new JUMPData(buffer);
-            storeHandle.createDataNode(iconFilePath, jarData);
-            return iconFilePath;
+            File f = new File(iconFilePath);
+            FileOutputStream fos = new FileOutputStream(f);
+            fos.write(buffer);
+            fos.close();
+            
+            return iconFileName;
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -620,41 +625,20 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             return null;
         }
         
-        String testPath = original;
-        
         // First, check if the original name is unique
-        JUMPNode testNode = null;
-        try {
-            testNode = storeHandle.getNode(testPath);
-        } catch (IOException e) {
-            trace("Exception in getNode(): " + e.toString());
-        }
-        
-        // if testNode is null, it is unique... otherwise continue
-        while ((testNode != null) && (NUM < LIMIT)) {
-            
-            // Add the EXTRA to the filename
+        String testPath = original;
+        File testPathFile = new File(testPath);
+        while (testPathFile.exists() && NUM < LIMIT) {
             String EXTRA = '(' + Integer.toString(NUM) + ')';
+            testPath = pathToExtention + EXTRA + extention;
+            testPathFile = new File(testPath);
             
-            String testFileName = fileName + EXTRA + extention;
-            
-            // Get the parent directory
-            fileSeparatorIndex = pathToExtention.lastIndexOf(fileSeparator);
-            String parentDir = pathToExtention.substring(0, fileSeparatorIndex);
-            
-            // Need to change the parent directory of the file also
-            // if this is a jarfile
-            if (testPath.endsWith(".jar")) {
-                testPath = parentDir + EXTRA + fileSeparator + testFileName;
-                
-            } else {
-                testPath = parentDir + fileSeparator + testFileName;
-            }
-            testNode = null;
-            try {
-                testNode = storeHandle.getNode(testPath);
-            } catch (IOException e) {
-                trace("Exception in getNode(): " + e.toString());
+            // Need to change the parent directory of the file if this
+            // is a jarfile
+            if (testPath.endsWith(".jar")){
+                String parentPath = testPathFile.getParent();
+                testPath = parentPath + EXTRA + '/' + fileName + EXTRA + extention;
+                testPathFile = new File(testPath);
             }
             NUM++;
         }
@@ -815,7 +799,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         
         // Check to see that the jar file exists, and if so, start
         // removing things.
-        File jarFile = new File(repositoryDir + jarPath);
+        File jarFile = new File(jarPath);
         if (jarFile != null && jarFile.exists()) {
             boolean jarFileDelete = false;
             boolean jarFileParentDirDelete = false;
@@ -857,7 +841,6 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         if (storeHandle == null) {
             return false;
         }
-        //boolean rv =  storeHandle.deleteNode(uri);
         try {
             storeHandle.deleteNode(uri);
         } catch (IOException e) {
@@ -873,18 +856,19 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
      * @return boolean value indicating success or failure
      */
     private boolean removeIcon(URL iconURL) {
-        storeHandle = openStore(true);
-        if (storeHandle == null) {
+        String iconFileName = repositoryDir + REPOSITORY_ICONS_DIRNAME + fileSeparator + iconURL.getFile();
+        File iconFile = new File(iconFileName);
+        if (iconFile != null && iconFile.exists()) {
+            try {
+                iconFile.delete();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+        } else {
             return false;
         }
-        try {
-            storeHandle.deleteNode(iconURL.getPath());
-        } catch (IOException e) {
-            return false;
-        }
-        closeStore(storeHandle);
         return true;
-        
     }
     
     /**

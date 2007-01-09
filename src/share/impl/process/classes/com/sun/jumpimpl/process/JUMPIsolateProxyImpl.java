@@ -31,6 +31,7 @@ import com.sun.jump.command.JUMPExecutiveLifecycleRequest;
 import com.sun.jumpimpl.process.JUMPProcessProxyImpl;
 
 import com.sun.jump.executive.JUMPExecutive;
+import com.sun.jump.executive.JUMPApplicationProxy;
 import com.sun.jump.command.JUMPIsolateLifecycleRequest;
 
 public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIsolateProxy {
@@ -116,10 +117,6 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
 	}
     }
     
-    public int getState(int appId) {
-        throw new UnsupportedOperationException();
-    }
-
     /**
      * Set isolate state to a new state, and notify all listeners
      */
@@ -137,44 +134,14 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
 	return this.state;
     }
     
-    public int startApp(JUMPApplication app, String[] args) {
-        return
-            requestSender.sendRequestWithIntegerResponse(
+    public JUMPApplicationProxy startApp(JUMPApplication app, String[] args) {
+        int appID = requestSender.sendRequestWithIntegerResponse(
                 this,
                 new JUMPExecutiveLifecycleRequest(
                     JUMPExecutiveLifecycleRequest.ID_START_APP,
 		    app.toByteArray(),
 		    args));
-    }
-
-    public void pauseApp(int appId) {
-        JUMPResponse response =
-            requestSender.sendRequest(
-                this,
-                new JUMPExecutiveLifecycleRequest(
-                    JUMPExecutiveLifecycleRequest.ID_PAUSE_APP,
-                    new String[] { Integer.toString(appId) }));
-        requestSender.handleBooleanResponse(response);
-    }
-
-    public void resumeApp(int appId) {
-        JUMPResponse response =
-            requestSender.sendRequest(
-                this,
-                new JUMPExecutiveLifecycleRequest(
-                    JUMPExecutiveLifecycleRequest.ID_RESUME_APP,
-                    new String[] { Integer.toString(appId) }));
-        requestSender.handleBooleanResponse(response);
-    }
-
-    public void destroyApp(int appId) {
-        JUMPResponse response =
-            requestSender.sendRequest(
-                this,
-                new JUMPExecutiveLifecycleRequest(
-                    JUMPExecutiveLifecycleRequest.ID_DESTROY_APP,
-                    new String[] { Integer.toString(appId), "true" }));
-        requestSender.handleBooleanResponse(response);
+        return new JUMPApplicationProxyImpl(app, appID, this);
     }
 
     public int
@@ -191,5 +158,9 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
                     JUMPExecutiveLifecycleRequest.ID_DESTROY_ISOLATE,
                     new String[] { Boolean.toString(force) }));
         requestSender.handleBooleanResponse(response);
+    }
+
+    RequestSenderHelper getRequestSender() {
+        return requestSender;
     }
 }
