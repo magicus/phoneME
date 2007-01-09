@@ -1045,3 +1045,11 @@ void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber
 
     midp_jc_event_send(&e);
 }
+
+void /* OPTIONAL */ javanotify_rotation() {
+     midp_jc_event_union e;
+     int length;
+  
+     e.eventType = MIDP_JC_EVENT_ROTATION;    
+     midp_jc_event_send(&e);
+}

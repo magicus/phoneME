@@ -30,16 +30,14 @@ import java.io.*;
 
 /**
  * This class adds read buffering to the
- * <code>MIDPConnectionBaseAdapter</code>.
+ * <code>ConnectionBaseAdapter</code>.
  * <p>
  * Implements {@link InputStream#available()}, however a subclass must
  * specify a buffer size greater than 0 and override
  * {@link #readBytesNonBlocking(byte[], int, int)} in order to for available
  * to work properly.
  */
-/* FIXME CDC replacement. */
-public abstract class BufferedConnectionAdapter extends MIDPConnectionBaseAdapter {
-    // public abstract class BufferedConnectionAdapter extends ConnectionBaseAdapter {
+public abstract class BufferedConnectionAdapter extends ConnectionBaseAdapter {
 
     /**
      * The end of file flag.
@@ -149,7 +147,7 @@ public abstract class BufferedConnectionAdapter extends MIDPConnectionBaseAdapte
      * returns -1.
      * <p>
      * The <code>readBytesNonBlocking</code> method of
-     * <code>MIDPConnectionBaseAdapter</code> does nothing and returns 0.
+     * <code>ConnectionBaseAdapter</code> does nothing and returns 0.
      *
      * @param      b     the buffer into which the data is read.
      * @param      off   the start offset in array <code>b</code>

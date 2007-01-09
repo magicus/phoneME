@@ -34,7 +34,7 @@ public interface MIDletStateListener {
      * @param suite reference to the loaded suite
      * @param className class name of the MIDlet to be created
      */
-    public void midletPreStart(MIDletSuite suite, String className);
+    void midletPreStart(MIDletSuite suite, String className);
 
     /**
      * Called after a MIDlet is successfully created.
@@ -43,7 +43,7 @@ public interface MIDletStateListener {
      * @param className Class name of the MIDlet
      * @param externalAppId ID of given by an external application manager
      */
-    public void midletCreated(MIDletSuite suite, String className,
+    void midletCreated(MIDletSuite suite, String className,
                               int externalAppId);
 
     /**
@@ -52,7 +52,7 @@ public interface MIDletStateListener {
      * @param suite reference to the loaded suite
      * @param className class name of the MIDlet
      */
-    public void preActivated(MIDletSuite suite, String className);
+    void preActivated(MIDletSuite suite, String className);
 
     /**
      * Called after a MIDlet is successfully activated. This is after
@@ -61,7 +61,7 @@ public interface MIDletStateListener {
      * @param suite reference to the loaded suite
      * @param className class name of the MIDlet
      */
-    public void midletActivated(MIDletSuite suite, String className);
+    void midletActivated(MIDletSuite suite, String className);
 
     /**
      * Called after a MIDlet is successfully paused.
@@ -69,7 +69,16 @@ public interface MIDletStateListener {
      * @param suite reference to the loaded suite
      * @param className class name of the MIDlet
      */
-    public void midletPaused(MIDletSuite suite, String className);
+    void midletPaused(MIDletSuite suite, String className);
+
+    /**
+     * Called after a MIDlet pauses itself. In this case pauseApp has
+     * not been called.
+     *
+     * @param suite reference to the loaded suite
+     * @param className class name of the MIDlet
+     */
+    void midletPausedItself(MIDletSuite suite, String className);
 
     /**
      * Called when a MIDlet calls MIDlet resume request.
@@ -77,7 +86,7 @@ public interface MIDletStateListener {
      * @param suite reference to the loaded suite
      * @param className class name of the MIDlet
      */
-    public void resumeRequest(MIDletSuite suite, String className);
+    void resumeRequest(MIDletSuite suite, String className);
 
     /**
      * Called after a MIDlet is successfully destroyed.
@@ -85,5 +94,5 @@ public interface MIDletStateListener {
      * @param suite reference to the loaded suite
      * @param className class name of the MIDlet
      */
-    public void midletDestroyed(MIDletSuite suite, String className);
+    void midletDestroyed(MIDletSuite suite, String className);
 }

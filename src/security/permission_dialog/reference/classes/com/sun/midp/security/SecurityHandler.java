@@ -420,6 +420,9 @@ class PermissionDialog implements CommandListener {
     /** Caches the display manager reference. */
     private DisplayEventHandler displayEventHandler;
 
+    /** Permission Alert. */
+    private Alert alert;
+
     /** Command object for "Yes" command. */
     private Command yesCmd =
         new Command(Resource.getString(ResourceConstants.YES),
@@ -466,12 +469,13 @@ class PermissionDialog implements CommandListener {
             int question, String app, String resource, String extraValue)
             throws InterruptedException {
         String[] substitutions = {app, resource, extraValue};
-        Alert alert = new Alert(Resource.getString(title, substitutions));
         String iconFilename;
         RandomAccessStream stream;
         byte[] rawPng;
         Image icon;
         String configRoot = File.getConfigRoot(Constants.INTERNAL_STORAGE_ID);
+
+        alert = new Alert(Resource.getString(title, substitutions));
 
         displayEventHandler =
             DisplayEventHandlerFactory.getDisplayEventHandler(token);
@@ -536,6 +540,21 @@ class PermissionDialog implements CommandListener {
     private void setAnswer(boolean theAnswer) {
         synchronized (this) {
             answer = theAnswer;
+
+            /*
+             * Since this may be the only display, clear the alert,
+             * so the user will not be confused by alert text still
+             * displaying.
+             *
+             * The case should happen when running TCK test MIDlets in
+             * SVM mode.
+             */
+            alert.setTitle(null);
+            alert.setString(null);
+            alert.setImage(null);
+            alert.addCommand(new Command("", 1, 1));
+            alert.removeCommand(noCmd);
+            alert.removeCommand(yesCmd);
 
             displayEventHandler.donePreempting(preemptToken);
 

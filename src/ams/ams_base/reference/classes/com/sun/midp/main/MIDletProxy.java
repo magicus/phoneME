@@ -26,7 +26,7 @@
 
 package com.sun.midp.main;
 
-import com.sun.midp.lcdui.DisplayEventProducer;
+import com.sun.midp.lcdui.ForegroundEventProducer;
 
 import com.sun.midp.midlet.MIDletEventProducer;
 
@@ -53,8 +53,8 @@ public class MIDletProxy implements SuspendDependency {
     /** Constant for destroyed state of a MIDlet. */
     public static final int MIDLET_DESTROYED = 2;
 
-    /** Cached reference to the DisplayEventProducer. */
-    private static DisplayEventProducer displayEventProducer;
+    /** Cached reference to the ForegroundEventProducer. */
+    private static ForegroundEventProducer foregroundEventProducer;
 
     /** Cached reference to the MIDletEventProducer. */
     private static MIDletEventProducer midletEventProducer;
@@ -114,14 +114,14 @@ public class MIDletProxy implements SuspendDependency {
      * Initialize the MIDletProxy class. Should only be called by the
      * MIDletProxyList.
      *
-     * @param  theDisplayEventProducer reference to the event producer
+     * @param  theForegroundEventProducer reference to the event producer
      * @param  theMIDletEventProducer reference to the event producer
      */
     static void initClass(
-        DisplayEventProducer theDisplayEventProducer,
+        ForegroundEventProducer theForegroundEventProducer,
         MIDletEventProducer theMIDletEventProducer) {
 
-        displayEventProducer = theDisplayEventProducer;
+        foregroundEventProducer = theForegroundEventProducer;
         midletEventProducer = theMIDletEventProducer;
     }
 
@@ -411,10 +411,10 @@ public class MIDletProxy implements SuspendDependency {
     void notifyMIDletHasForeground(boolean hasForeground) {
         if (hasForeground) {
             alertWaiting = false;
-            displayEventProducer.sendDisplayForegroundNotifyEvent(
+            foregroundEventProducer.sendDisplayForegroundNotifyEvent(
                 isolateId, displayId);
         } else {
-            displayEventProducer.sendDisplayBackgroundNotifyEvent(
+            foregroundEventProducer.sendDisplayBackgroundNotifyEvent(
                 isolateId, displayId);
         }
     }

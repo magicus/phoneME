@@ -1695,15 +1695,17 @@ public class Display {
      *
      * @param scrollPosition vertical scroll position.
      * @param scrollProportion vertical scroll proportion.
+     * @return true if set vertical scroll occues
      */
-    void setVerticalScroll(int scrollPosition, int scrollProportion) {
+    boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
         // #ifdef ENABLE_CHAMELEON
         // Establish the scroll properties in Chameleon
         // This call will not result in any call into application code
-        window.setVerticalScroll(scrollPosition, scrollProportion);
+        return window.setVerticalScroll(scrollPosition, scrollProportion);
         // #else
         // Does nothing since Platform Form widget manages
 	// scrolling internally
+	return false;
         // #endif ENABLE_CHAMELEON
     }
 
@@ -2459,25 +2461,6 @@ public class Display {
                 screenGraphics.reset(reg[0], reg[1], reg[2], reg[3]);
                 refresh0(displayId, x, y, x2, y2);
             }
-        }
-
-        /**
-         * Set the trusted icon for this Display. When ever this display is in
-         * the foreground the given icon will be displayed in the area
-         * reserved
-         * for the trusted icon. Only callers with the internal MIDP
-         * permission can use this method.
-         * DisplayAccess I/F method.
-         *
-         * @param token security token of the call that has internal MIDP
-         *              permission
-         * @param drawTrusted true to draw the trusted icon
-         */
-        public void setTrustedIcon(SecurityToken token, boolean drawTrusted) {
-
-            token.checkIfPermissionAllowed(Permissions.MIDP);
-
-            drawTrustedIcon0(displayId, drawTrusted);
         }
 
         /**

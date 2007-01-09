@@ -293,7 +293,11 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
             evt.type = SELECT_FOREGROUND_EVENT;
             midpStoreEventAndSignalAms(evt);
         }
+#ifdef QT_KEYPAD_MODE
+    } else if (key->key() == Qt::Key_Flip) {
+#else
     } else if (key->key() == Qt::Key_F4) {
+#endif
         if (!key->isAutoRepeat()) {
             MidpEvent evt;
             MIDP_EVENT_INITIALIZE(evt);

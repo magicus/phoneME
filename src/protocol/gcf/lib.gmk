@@ -60,9 +60,7 @@ MIDP_JAVADOC_ALL += \
 #
 vpath % $(SUBSYSTEM_DIR)/protocol/gcf/reference/native
 
-# FIXME CDC replacement.
-$(GENERATED_DIR)/classes/com/sun/midp/io/MIDPConnectionBaseAdapter.java: $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/MIDPConnectionBaseAdapter.jpp
-# $(GENERATED_DIR)/classes/com/sun/midp/io/ConnectionBaseAdapter.java: $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/ConnectionBaseAdapter.jpp
+$(GENERATED_DIR)/classes/com/sun/midp/io/ConnectionBaseAdapter.java: $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/ConnectionBaseAdapter.jpp
 	@$(call runjpp,$^,$@)
 
 
@@ -70,23 +68,11 @@ $(GENERATED_DIR)/classes/com/sun/midp/io/MIDPConnectionBaseAdapter.java: $(SUBSY
 #
 SUBSYSTEM_GCF_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/HttpUrl.java \
-    $(GENERATED_DIR)/classes/com/sun/midp/io/MIDPConnectionBaseAdapter.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/io/ConnectionBaseAdapter.java \
     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/Util.java \
     $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/Base64.java \
-
-#    $(GENERATED_DIR)/classes/com/sun/midp/io/ConnectionBaseAdapter.java \
-#    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/NetworkConnectionBase.java \
-#    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/BufferedConnectionAdapter.java
-
-#
-# BufferedConnectionAdapter and NetworkConnectionBase exist in CDC. Exclude the
-# duplicate classes for MIDP on CDC build.
-#
-ifneq ($(TARGET_VM), cdc_vm)
-SUBSYSTEM_GCF_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/BufferedConnectionAdapter.java \
-    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/NetworkConnectionBase.java
-endif
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/NetworkConnectionBase.java \
+    $(SUBSYSTEM_DIR)/protocol/gcf/reference/classes/com/sun/midp/io/BufferedConnectionAdapter.java
 
 # Native files for the ( gcf ) library
 #

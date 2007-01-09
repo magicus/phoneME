@@ -111,13 +111,14 @@ class ScreenLFImpl extends DisplayableLFImpl {
      *                         render scrollbars to indicate scrollability
      *                         to the user.
      */
-    void setVerticalScroll(int scrollPosition, int scrollProportion) {
+    boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
         this.vScrollPosition = scrollPosition;
         this.vScrollProportion = scrollProportion;
             
         if (lIsShown()) {
-            currentDisplay.setVerticalScroll(scrollPosition, scrollProportion);
+            return currentDisplay.setVerticalScroll(scrollPosition, scrollProportion);
         }
+        return false;
     }
     
     /**

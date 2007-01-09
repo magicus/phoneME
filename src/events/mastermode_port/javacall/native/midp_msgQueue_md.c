@@ -81,7 +81,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->ACTION  = event->data.penEvent.type;
         pNewMidpEvent->X_POS   = event->data.penEvent.x;
         pNewMidpEvent->Y_POS   = event->data.penEvent.y;
-        break;
+	break;
     case MIDP_JC_EVENT_SOCKET:
         pNewSignal->waitingFor = event->data.socketEvent.waitingFor;
             pNewSignal->descriptor = (int)event->data.socketEvent.handle;
@@ -103,6 +103,10 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     case MIDP_JC_EVENT_PUSH:
         pNewSignal->waitingFor = PUSH_ALARM_SIGNAL;
         pNewSignal->descriptor = event->data.pushEvent.alarmHandle;
+        break;
+    case MIDP_JC_EVENT_ROTATION:
+        pNewSignal->waitingFor = UI_SIGNAL;
+        pNewMidpEvent->type    = ROTATION_EVENT;
         break;
 
 #ifdef ENABLE_JSR_75

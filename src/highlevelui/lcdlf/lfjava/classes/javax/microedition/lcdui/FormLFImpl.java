@@ -158,20 +158,17 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
 
         itemLF = itemLFs[index];
 
-        // Ensure the item is visible
-        if (!itemCompletelyVisible(itemLF)) {
-            // We'll initially position at the bottom of the form,
-            // then adjust upward to the top corner of the item
-            // if necessary
-            if (itemLF.bounds[Y] > viewable[Y]) {
-                viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
-                if (itemLF.bounds[Y] < viewable[Y]) {
-                    viewable[Y] = itemLF.bounds[Y];
+        if (index != traverseIndex) {
+        
+            // Ensure the item is visible
+            if (!itemCompletelyVisible(itemLF)) {
+                viewable[Y] = itemLF.bounds[Y];
+                
+                if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
+                    viewable[Y] = viewable[HEIGHT] - viewable[HEIGHT];
                 }
             }
-        } 
-
-        if (index != traverseIndex) {
+            
             // We record the present traverseItem because if it
             // is valid, we will have to call traverseOut() on that
             // item when we process the invalidate call.
@@ -185,6 +182,15 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             // be traversed to when the invalidate occurs
             traverseIndex = itemLF.shouldSkipTraverse() ? -1 : index;
             lRequestInvalidate();
+        } else {
+            // Ensure the item is visible
+            if (!itemPartiallyVisible(itemLF)) {
+                viewable[Y] = itemLF.bounds[Y];
+                
+                if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
+                    viewable[Y] = viewable[HEIGHT] - viewable[HEIGHT];
+                }
+            }
         }
     }
 
@@ -886,7 +892,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
                            "\nFormLFImpl: uShowContents()");
-        }
+        }        
 
         synchronized (Display.LCDUILock) {
             if (firstShown) {
@@ -1469,9 +1475,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         // Whether the item performs an internal traversal or not,
         // it has the current input focus
         item.hasFocus = true;
-
         setVisRect(item, visRect);
-            
+
         // Call traverse() outside LCDUILock
         if (item.uCallTraverse(dir,
                                viewport[WIDTH], viewport[HEIGHT], visRect)) {
@@ -1865,7 +1870,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 return true;
             default:
                 // for safety/completeness, don't scroll.
-                Logging.report(Logging.ERROR, 
+                Logging.report(Logging.WARNING, 
                     LogChannels.LC_HIGHUI_FORM_LAYOUT,
                     "FormLFImpl: bounds, dir=" + dir);
                 break;
