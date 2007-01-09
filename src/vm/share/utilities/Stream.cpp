@@ -123,11 +123,15 @@ void ByteArrayOutputStream::print_raw(const char *c) {
   if (_array == NULL) {
     _array_size = length + 1000;
     _array = (char *)jvm_malloc(_array_size);
+    GUARANTEE( _array ,  "failed to alloc initial buffer" ) ;
+    if (_array == NULL) return;
   }
   if (length + _current_size + 1 > _array_size) {
     // Expand array acapacity if necessary
     int new_array_size = length + _current_size + 1000;
     char *new_array = (char *)jvm_malloc(new_array_size);
+    GUARANTEE( new_array,  "failed to expand buffer" ) ;
+    if (new_array == NULL) return;
     jvm_memcpy(new_array, _array, _array_size);
     jvm_free(_array);
     _array = new_array;
