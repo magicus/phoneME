@@ -91,8 +91,10 @@
 /* IAI-06 */
 /*
  * Faster version of CVMCCMruntimeIDiv. Uses CLZ. Needs ARM5 or later.
+ * You can add more #defines to this list as newer ones become available.
  */
-#if !defined(__ARM_ARCH_4__) && !defined(__ARM_ARCH_4T__)
+#if defined(__ARM_ARCH_5__)  || defined(__ARM_ARCH_5T__) || \
+    defined(__ARM_ARCH_5E__) || defined(__ARM_ARCH_5TE__)
 #define IAI_IDIV
 #endif
 
