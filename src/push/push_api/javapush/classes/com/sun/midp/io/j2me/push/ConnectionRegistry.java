@@ -82,6 +82,9 @@ public final class ConnectionRegistry
     /** MIDlet proxy list reference. */
     private MIDletProxyList midletProxyList;
 
+    /** Cached reference to the midlet suite storage instance. */
+    private static MIDletSuiteStorage storage;
+
     /**
      * Start listening for push notifications. Will throw a security
      * exception if called by any thing other than the MIDletSuiteLoader.
@@ -104,6 +107,11 @@ public final class ConnectionRegistry
         midletProxyList =
             MIDletProxyList.getMIDletProxyList(classSecurityToken);
         midletProxyList.addListener(this);
+
+        if (storage == null) {
+            storage = MIDletSuiteStorage.getMIDletSuiteStorage(
+                classSecurityToken);
+        }
     }
 
     /**
@@ -170,14 +178,18 @@ public final class ConnectionRegistry
         }
 
         try {
+            /*
+             * IMPL_NOTE: here it's assumed that when a suiteId is converted
+             * to string the padding zeroes are placed _before_ the value,
+             * for ex., suiteId 3 is converted into "00000003".
+             * MIDletSuiteStorage.stringToSuiteId() API should be added later.
+             */
             id = Integer.parseInt(strSuiteId);
         } catch (NumberFormatException nfe) {
             id = MIDletSuite.UNUSED_SUITE_ID;
         }
 
         try {
-            MIDletSuiteStorage storage;
-
             /*
              * Check to see if the MIDlet is already started.
              */
@@ -189,8 +201,6 @@ public final class ConnectionRegistry
                 return;
             }
 
-            storage =
-                MIDletSuiteStorage.getMIDletSuiteStorage(classSecurityToken);
             next = storage.getMIDletSuite(id, false);
             if (next == null) {
                 if (conn != null) {
@@ -429,7 +439,7 @@ public final class ConnectionRegistry
         byte[] asciiRegistration = Util.toCString(connection
                   + "," + midlet
                   + "," + filter
-                  + "," + String.valueOf(midletSuite.getID()));
+                  + "," + storage.suiteIdToString(midletSuite.getID()));
 
         if (add0(asciiRegistration) == -1) {
             // in case of Bluetooth URL, unregistration within Bluetooth
@@ -457,7 +467,8 @@ public final class ConnectionRegistry
             String connection) {
 
         byte[] asciiRegistration = Util.toCString(connection);
-        byte[] asciiStorage = Util.toCString(String.valueOf(midletSuite.getID()));
+        byte[] asciiStorage = Util.toCString(
+            storage.suiteIdToString(midletSuite.getID()));
         int ret =  del0(asciiRegistration, asciiStorage);
         if (ret == -2) {
             throw new SecurityException("wrong suite");
@@ -545,7 +556,7 @@ public final class ConnectionRegistry
         String connections = null;
         byte[] connlist;
 
-        nativeID = Util.toCString(new Integer(id).toString());
+        nativeID = Util.toCString(storage.suiteIdToString(id));
         connlist = new byte[512];
 
         if (list0(nativeID, available, connlist, 512) == 0) {
@@ -693,7 +704,7 @@ public final class ConnectionRegistry
 
         byte[] asciiName = Util.toCString(midlet + ","
                   + time + ","
-                  + midletSuite.getID());
+                  + storage.suiteIdToString(midletSuite.getID()));
         return addAlarm0(asciiName, time);
     }
 
@@ -755,7 +766,7 @@ public final class ConnectionRegistry
     /**
      * Native connection registry add alarm function.
      * @param midlet string to register
-     * @param time see #registerAlarm
+     * @param time
      * @return 0 if unregistered, otherwise the time of the previous
      *         registered alarm
      */
