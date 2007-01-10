@@ -84,6 +84,32 @@ public final class PushRegistryImpl {
     }
 
     /**
+     * Checks AMS permission.
+     *
+     * @param midletSuite <code>MIDlet</code> suite to check against
+     */
+    private static void checkAMSPermission(final MIDletSuite midletSuite) {
+        // TBD: Unify (if possible) security mechanisms
+        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+    }
+
+    /**
+     * Checks Push permission.
+     *
+     * @param midletSuite <code>MIDlet</code> suite to check against
+     */
+    private static void checkPushPermission(final MIDletSuite midletSuite) 
+            throws IOException {
+        // TBD: Unify (if possible) security mechanisms
+        try {
+            midletSuite.checkForPermission(Permissions.PUSH, null);
+        } catch (InterruptedException ie) {
+            throw new InterruptedIOException(
+              "Interrupted while trying to ask the user permission");
+        }
+    }
+
+    /**
      * Register a dynamic connection with the
      * application management software. Once registered,
      * the dynamic connection acts just like a
@@ -152,14 +178,8 @@ public final class PushRegistryImpl {
         /*
          * Check permissions.
          */
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
-
-        try {
-            midletSuite.checkForPermission(Permissions.PUSH, null);
-        } catch (InterruptedException ie) {
-            throw new InterruptedIOException(
-              "Interrupted while trying to ask the user permission");
-        }
+        checkAMSPermission(midletSuite);
+        checkPushPermission(midletSuite);
 
         ConnectionRegistry.registerConnection(midletSuite, c, midlet, filter);
     }
@@ -206,7 +226,8 @@ public final class PushRegistryImpl {
         if (midletSuite == null) {
             return null;
         }
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        // RFC: do we really need this check here?
+        // checkAMSPermission(midletSuite);
 
         return ConnectionRegistry.listConnections(midletSuite, available);
     }
@@ -296,7 +317,7 @@ public final class PushRegistryImpl {
         }
 
         checkMidlet(midletSuite, midlet);
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        checkAMSPermission(midletSuite);
 
         return ConnectionRegistry.registerAlarm(midletSuite, midlet, time);
     }
