@@ -1,0 +1,12 @@
+public class MainApp
+{
+
+    public static void main(String args[]) {
+
+        A.status();
+        B.status();
+        midp.MIDP.status();
+    }
+
+
+}
