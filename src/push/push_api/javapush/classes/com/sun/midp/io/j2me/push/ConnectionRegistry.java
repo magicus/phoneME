@@ -439,7 +439,7 @@ public final class ConnectionRegistry
         byte[] asciiRegistration = Util.toCString(connection
                   + "," + midlet
                   + "," + filter
-                  + "," + storage.suiteIdToString(midletSuite.getID()));
+                  + "," + suiteIdToString(midletSuite));
 
         if (add0(asciiRegistration) == -1) {
             // in case of Bluetooth URL, unregistration within Bluetooth
@@ -467,8 +467,7 @@ public final class ConnectionRegistry
             String connection) {
 
         byte[] asciiRegistration = Util.toCString(connection);
-        byte[] asciiStorage = Util.toCString(
-            storage.suiteIdToString(midletSuite.getID()));
+        byte[] asciiStorage = Util.toCString(suiteIdToString(midletSuite));
         int ret =  del0(asciiRegistration, asciiStorage);
         if (ret == -2) {
             throw new SecurityException("wrong suite");
@@ -556,7 +555,7 @@ public final class ConnectionRegistry
         String connections = null;
         byte[] connlist;
 
-        nativeID = Util.toCString(storage.suiteIdToString(id));
+        nativeID = Util.toCString(suiteIdToString(id));
         connlist = new byte[512];
 
         if (list0(nativeID, available, connlist, 512) == 0) {
@@ -704,10 +703,32 @@ public final class ConnectionRegistry
 
         byte[] asciiName = Util.toCString(midlet + ","
                   + time + ","
-                  + storage.suiteIdToString(midletSuite.getID()));
+                  + suiteIdToString(midletSuite));
         return addAlarm0(asciiName, time);
     }
 
+    /**
+      * Converts <code>MIDlet</code> suite ID into a string.
+      *
+      * @param midletSuite <code>MIDlet</code> suite to convert ID of
+      * @return string representation
+      */
+    private static String suiteIdToString(final int suiteId) {
+        // assert storage != null; // Listener should be started before
+        return storage.suiteIdToString(suiteId);
+    }
+      
+    /**
+      * Converts <code>MIDlet</code> suite ID into a string.
+      *
+      * @param midletSuite <code>MIDlet</code> suite to convert ID of
+      * @return string representation
+      */
+    private static String suiteIdToString(final MIDletSuite midletSuite) {
+        // assert midletSuite != null;
+        return suiteIdToString(midletSuite.getID());
+    }
+      
     /**
      * Sets the flag which indicates that the AMS is operating in MVM
      * single MIDlet mode.
