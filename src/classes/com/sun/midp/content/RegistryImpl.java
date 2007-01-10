@@ -548,6 +548,10 @@ public final class RegistryImpl {
             }
         }
 
+        if (existing == null) {
+            existing = RegistryStore.getHandler(handler.storageId, handler.classname);
+        }
+
         return existing;
     }
 
