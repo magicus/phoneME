@@ -187,54 +187,13 @@ static void clipRect(int *x1, int *y1, int *x2, int *y2) {
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-
-extern jlong Java_java_lang_System_currentTimeMillis();
-extern void refreshScreenRotated0(int x1, int y1, int x2, int y2, fcopy_rotated f);
-extern void refreshScreenRotated1(int x1, int y1, int x2, int y2, fcopy_rotated f);
-extern void fast_copy_rotated0(short *src, short *dst, int x1, int y1, int x2, int y2, int bufWidth, int dstWidth, int srcInc, int dstInc);
-extern void fast_copy_rotated1(short *src, short *dst, int x1, int y1, int x2, int y2, int bufWidth, int dstWidth, int srcInc, int dstInc);
-extern void fast_copy_rotated11(short *src, short *dst, int x1, int y1, int x2, int y2, int bufWidth, int dstWidth, int srcInc, int dstInc);
-extern void simple_copy_rotated0(short *src, short *dst, int x1, int y1, int x2, int y2, int bufWidth, int dstWidth, int srcInc, int dstInc);
-extern void simple_copy_rotated1(short *src, short *dst, int x1, int y1, int x2, int y2, int bufWidth, int dstWidth, int srcInc, int dstInc);
-
-#define START_MEASURE_REFRESH {\
-    int i; \
-    jlong time = Java_java_lang_System_currentTimeMillis(); \
-    for (i = 0; i < 100; i++) {
-
-#define END_MEASURE_REFRESH(msg) \
-    } \
-    time = Java_java_lang_System_currentTimeMillis() - time; \
-    printf("%s: refresh [%d, %d - %d, %d], %lld msec per 100 times\n", \
-        msg, x1, y1, x2, y2, time); \
-}
-
-
-#include <stdio.h>
 void fbapp_refresh(int x1, int y1, int x2, int y2) {
-
-  clipRect(&x1, &y1, &x2, &y2);
-  if (!reverse_orientation) {
-    START_MEASURE_REFRESH
-      refreshScreenNormal(x1, y1, x2, y2);
-    END_MEASURE_REFRESH("Normal")
-  } else {
-    START_MEASURE_REFRESH
-      refreshScreenRotated0(x1, y1, x2, y2, simple_copy_rotated0);
-    END_MEASURE_REFRESH("Rotated simple 0")
-    START_MEASURE_REFRESH
-      refreshScreenRotated1(x1, y1, x2, y2, simple_copy_rotated1);
-    END_MEASURE_REFRESH("Rotated simple 1")
-    START_MEASURE_REFRESH
-      refreshScreenRotated0(x1, y1, x2, y2, fast_copy_rotated0);
-    END_MEASURE_REFRESH("Rotated fast 0")
-    START_MEASURE_REFRESH
-      refreshScreenRotated1(x1, y1, x2, y2, fast_copy_rotated1);
-    END_MEASURE_REFRESH("Rotated fast 1")
-    START_MEASURE_REFRESH
-      refreshScreenRotated1(x1, y1, x2, y2, fast_copy_rotated1);
-    END_MEASURE_REFRESH("Rotated fast 11")
-  }
+    clipRect(&x1, &y1, &x2, &y2);
+    if (!reverse_orientation) {
+        refreshScreenNormal(x1, y1, x2, y2);
+    } else {
+        refreshScreenRotated(x1, y1, x2, y2);
+    }
 }
 
 /**

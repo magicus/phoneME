@@ -48,9 +48,9 @@ extern void initScreenBuffer(int width, int height);
 extern void finalizeFrameBuffer();
 
 /**
-  * Change screen orientation to landscape or portrait,
-  * depending on the current screen mode
-  */
+ * Change screen orientation to landscape or portrait,
+ * depending on the current screen mode
+ */
 extern void reverseScreenOrientation();
 
 /**
@@ -64,10 +64,6 @@ extern void refreshScreenNormal(int x1, int y1, int x2, int y2);
 
 /** Refresh rotated screen with offscreen bufer content */
 extern void refreshScreenRotated(int x1, int y1, int x2, int y2);
-
-typedef void (*fcopy_rotated)(short *src, short *dst,
-        int x1, int y1, int x2, int y2,
-        int bufWidth, int dstWidth, int srcInc, int dstInc);
 
 /** Return file descriptor of keyboard device, or -1 in none */
 extern int getKeyboardFd();
