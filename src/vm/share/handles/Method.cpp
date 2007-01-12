@@ -56,7 +56,10 @@ int Method::vtable_index() const {
 
 inline bool Method::resume_compilation(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_ISOLATES
-  TaskContext tmp(Compiler::suspended_compiler_state()->task_id());
+  // IMPL_NOTE: It is not usual to allocate anything in general Heap
+  // (not CompilerArea) during compilation, but in this case only
+  // a few OopCons objects can be created, and that is considered to be OK
+  TaskAllocationContext tmp(Compiler::suspended_compiler_state()->task_id());
 #endif
   bool status = (bool)Compiler::resume_compilation(this JVM_MUST_SUCCEED);
   return status;
@@ -166,7 +169,8 @@ ReturnOop Method::constants() const {
   }
 #endif
 
-#if defined(AZZERT)
+#if defined(AZZERT) && NOT_CURRENTLY_USED
+  // IMPL_NOTE: currently this doesn't work during task termination
   if (!GenerateROMImage && (holder_id() != 0xFFFF) && !is_abstract()) {
     InstanceClass::Raw holder_class = holder();
     ConstantPool::Raw class_constants = holder_class().constants();

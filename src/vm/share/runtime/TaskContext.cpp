@@ -197,7 +197,7 @@ void TaskContext::set_current_task(int task_id) {
     _global_context._current_task_id = task_id;
 #if USE_BINARY_IMAGE_LOADER
     ROM::on_task_switch(task_id);
-#endif  
+#endif
   }
   GUARANTEE(task.not_null(), "task must be alive");
   //update list bases

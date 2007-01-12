@@ -740,6 +740,6 @@ private:
   static ReturnOop copy_strings_to_byte_arrays(OopDesc* string_array JVM_TRAPS);
   static ReturnOop copy_strings_to_char_arrays(OopDesc* string_array JVM_TRAPS);
   static ReturnOop make_strings_from_char_arrays(OopDesc* string_array JVM_TRAPS);
-  static ReturnOop deep_copy(Oop* obj JVM_TRAPS);
+  static ReturnOop deep_copy(OopDesc* obj JVM_TRAPS);
 #endif
 };

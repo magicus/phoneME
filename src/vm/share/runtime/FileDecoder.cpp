@@ -84,6 +84,9 @@ int FileDecoder::get_bytes(ArrayPointer* destination, int count JVM_TRAPS) {
   JarFileParser::Fast jfp = get_jar_parser_if_needed(JVM_SINGLE_ARG_CHECK_0);
   (void)jfp;
 
+  if (count > bytes_remain()) {
+    count = bytes_remain();
+  }
   int result = !is_inflater() ?
     get_bytes_raw(destination->base_address(), count) :
     ((Inflater*) this)->get_bytes(destination, count JVM_NO_CHECK_AT_BOTTOM);
