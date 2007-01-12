@@ -5109,9 +5109,8 @@ bool CodeGenerator::arraycopy(JVM_SINGLE_ARG_TRAPS) {
           return false;
         }
       } else if (src_class_id != 0) {
-        if (!src_class().is_array_class()) {
-          return false;
-        } else if (src.is_exact_type() || src_class().is_final_type()) {
+        if (src_class().is_array_class() &&
+            (src.is_exact_type() || src_class().is_final_type())) {
           clear_nth_bit(checks, SRC_TYPE_CHECK);
           
           // Determine array element type
@@ -5123,11 +5122,12 @@ bool CodeGenerator::arraycopy(JVM_SINGLE_ARG_TRAPS) {
                       "Must be an object array class");
             array_element_type = T_OBJECT;
           }
+        } else {
+          return false;
         }
       } else if (dst_class_id != 0) {
-        if (!dst_class().is_array_class()) {
-          return false;
-        } else if (dst.is_exact_type() || dst_class().is_final_type()) {
+        if (dst_class().is_array_class() &&
+            (dst.is_exact_type() || dst_class().is_final_type())) {
           clear_nth_bit(checks, DST_TYPE_CHECK);
 
           // Determine array element type
@@ -5139,6 +5139,8 @@ bool CodeGenerator::arraycopy(JVM_SINGLE_ARG_TRAPS) {
                       "Must be an object array class");
             array_element_type = T_OBJECT;
           }
+        } else {
+          return false;
         }
       } else {
         // No type info available. Go to slow case

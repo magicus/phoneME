@@ -144,10 +144,6 @@ void JVMSPI_DisplayUsage(char* message) {
   P("    -verbose    : Enable verbose output");
   P("    -? -help    : Print this help message");
 
-#if ENABLE_PROFILER
-  P("    -profile    : Print execution time profile");
-#endif
-
 #if ENABLE_ROM_GENERATOR || ENABLE_INTERPRETER_GENERATOR
   P("    -convert    : Create binary rom image of application classes");
   P("    -romoutputfile");

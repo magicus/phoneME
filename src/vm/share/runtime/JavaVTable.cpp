@@ -29,10 +29,6 @@
 #include "incls/_precompiled.incl"
 #include "incls/_JavaVTable.cpp.incl"
 
-int JavaVTable::base_vtable_size() {
-  return 3;
-}
-
 // this function computes the vtable size.
 void JavaVTable::compute_vtable_size(int& vtable_length,
                               InstanceClass* super,

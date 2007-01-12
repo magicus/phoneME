@@ -424,15 +424,15 @@ private:
 #define JVMPI_PROFILE_VERIFY_RUNTIME_FLAGS(develop, product)
 #endif
 
-// If ENABLE_PROFILER, support -profile also for product build
+// If ENABLE_PROFILER, support +UseProfiler also for product build
 #if ENABLE_PROFILER
 #define PROFILER_RUNTIME_FLAGS(develop, product)                            \
   product(bool, UseProfiler, false,                                         \
-          "Use execution time profiler (see -profile)")
+          "Use execution time profiler")
 #else
 #define PROFILER_RUNTIME_FLAGS(develop, product)                            \
   develop(bool, UseProfiler, false,                                         \
-          "Use execution time profiler (see -profile)")
+          "Use execution time profiler")
 #endif
 
 /*

@@ -39,8 +39,6 @@
  *
  * -classpath <OR> -cp  Set search path for application classes and resources
  * -verbose             Enable verbose output
- * -profile             Print execution time profile after execution
- *                      (not available in product builds)
  * -int                 Execute code in pure interpreter mode (no compilation)
  * -comp                Execute code in pure compiler mode (no interpretation)
  *
@@ -287,11 +285,6 @@ int Arguments::parse_one_arg(int argc, char** argv) {
       JVMSPI_Exit(1);
       ::jvm_exit(1);
     }
-  }
-#endif
-#if ENABLE_PROFILER
-  else if (jvm_strcmp(argv[0], "-profile") == 0) {
-    UseProfiler = true;
   }
 #endif
 #if ENABLE_REMOTE_TRACER

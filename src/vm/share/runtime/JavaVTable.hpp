@@ -37,7 +37,10 @@ class JavaVTable : public AllStatic {
                            Symbol* classname);
 
   // returns the vtable size of java.lang.Object
-  static int base_vtable_size();
+  static int base_vtable_size() {
+    return ENABLE_REFLECTION ? 4 : 3;
+  }
+
  private:
 };
 

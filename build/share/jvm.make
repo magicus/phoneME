@@ -175,12 +175,12 @@ ROM_CONFIG_FILE = $(WorkSpace)/src/vm/cldctest_rom.cfg
 endif
 
 ifdef ROM_GEN_CLASSPATH_APPEND
-ROM_GEN_CLASSPATH = $(CLDC_ZIP):$(ROM_GEN_CLASSPATH_APPEND)
+ROM_GEN_CLASSPATH = $(CLDC_ZIP)$(PATHSEP)$(ROM_GEN_CLASSPATH_APPEND)
 else
 ROM_GEN_CLASSPATH = $(CLDC_ZIP)
 endif
 
-ROM_GEN_ARG         += $(ROM_GEN_FLAGS) =HeapCapacity8M
+ROM_GEN_ARG         += $(ROM_GEN_FLAGS) =HeapCapacity16M
 ROM_GEN_ARG         += -romconfig $(ROM_CONFIG_FILE)
 ROM_GEN_ARG         += -romincludepath $(WorkSpace)/src/vm
 ROM_GEN_ARG         += +RewriteROMConstantPool

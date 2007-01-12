@@ -85,7 +85,7 @@ bool Method::compile(int active_bci, bool resume JVM_TRAPS) {
     return true;
   }
 
-  if (code_size() > MaxMethodToCompile) {
+  if (code_size() > MaxMethodToCompile && !GenerateROMImage) {
     if (Verbose) {
       TTY_TRACE(("Method too big to compile: "));
       print_name_on_tty();

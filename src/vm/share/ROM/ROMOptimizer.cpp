@@ -1050,7 +1050,7 @@ void ROMOptimizer::fill_interface_implementation_cache(JVM_SINGLE_ARG_TRAPS) {
     UsingFastOops fast;
     JavaClass::Fast java_cls = Universe::class_from_id(i);
 
-    if (!java_cls().is_instance_class()) {
+    if (java_cls().is_fake_class() || !java_cls().is_instance_class()) {
       continue;
     }
 
