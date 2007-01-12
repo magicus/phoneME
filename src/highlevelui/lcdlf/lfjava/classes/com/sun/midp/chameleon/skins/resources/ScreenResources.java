@@ -50,11 +50,6 @@ public class ScreenResources {
             return;
         }
 
-        // These 3 values come from the underlying system and get compiled
-        // into MIDP stack using the constants.xml and generator
-        ScreenSkin.WIDTH =  Display.getScreenWidth0(); //Constants.CHAM_WIDTH;
-        ScreenSkin.HEIGHT = Display.getScreenHeight0(); //Constants.CHAM_HEIGHT;
-
         int textOrient = SkinResources.getInt(
                 SkinPropertiesIDs.SCREEN_TEXT_ORIENT);
         ScreenSkin.TEXT_ORIENT = SkinResources.resourceConstantsToGraphics(
