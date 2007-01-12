@@ -160,13 +160,22 @@ public class JVM {
     private native static boolean createAppImage0();
 
     /**
-     * This method is used by the source romizer to create ROMImage.cp.
+     * This method is used by the source romizer to create ROMImage.cpp.
      *
      * @exception Error if the romization process fails for any reason.
      */
     private native static void createSysImage()
          throws Error;
 
+    /**
+     * This method is used to load binary library into the VM. 
+     * It allows to call native function implementations from this library.
+     *
+     * @param libName name of the library WITHOUT EXTENSION. It was made to make 
+     *        java code platform-independent.
+     *
+     * @exception Error if the VM fails to load the library with this name.
+     */
     public native static void loadLibrary(String libName)
          throws Error;
 
