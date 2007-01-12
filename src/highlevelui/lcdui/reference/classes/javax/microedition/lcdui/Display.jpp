@@ -565,6 +565,7 @@ public class Display {
 
         chamImageTunnel = new ChamImageTunnel();
         SkinResources.initImageTunnel(chamImageTunnel);
+        SkinResources.setScreenSize(WIDTH, HEIGHT);
 
         // IMPL_NOTE: In the MVM mode it's important to do the first
         //   skin resources loading from the AMS isolate, since they
@@ -605,7 +606,9 @@ public class Display {
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
 
+        // #ifdef ENABLE_CHAMELEON
         SkinResources.initDisplayAccess(accessor);
+        // #endif ENABLE_CHAMELEON
 
         /** create DisplayEventConsumer I/F implementor */
         consumer = new DisplayEventConsumerImpl();
@@ -2203,9 +2206,9 @@ public class Display {
 
     private native boolean getReverseOrientation0();
 
-    private static native int getScreenWidth0();
+    static native int getScreenWidth0();
 
-    private static native int getScreenHeight0();
+    static native int getScreenHeight0();
 
     /**
      * Play an Alert sound.
@@ -2398,7 +2401,7 @@ public class Display {
         * @return Display width.
         */
         public int getDisplayWidth() {
-          return Display.this.WIDTH;
+          return Display.WIDTH;
         }
     
         /**
@@ -2406,7 +2409,7 @@ public class Display {
         * @return Display height.
         */
         public int getDisplayHeight() {
-          return Display.this.HEIGHT;
+          return Display.HEIGHT;
         }
 
         /**
