@@ -394,12 +394,17 @@ blitClearInt(Renderer *rdr, jint height) {
     jint *minTouched = rdr->_minTouched;
     jint *maxTouched = rdr->_maxTouched;
 
+    jint width = rdr->_alphaWidth;
+
     for (j = 0; j < height; j++) {
         minX = minTouched[j];
         maxX = maxTouched[j];
         iidx = imageOffset + minX * imagePixelStride;
 
         w = (maxX >= minX) ? (maxX - minX + 1) : 0;
+        if ((w > 0) && (w + minX > width)) {
+            w = width - minX;
+        }
         
         my_clear_mem((intData+iidx), w * sizeof(jint));
         
