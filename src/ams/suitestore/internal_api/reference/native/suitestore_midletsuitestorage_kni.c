@@ -1310,13 +1310,13 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
         KNI_SAVE_INT_FIELD(javaInstallInfo, clazz, "expectedJarSize",
                            suiteData.jarSize);
         KNI_GetObjectField(javaInstallInfo,
-			   midp_get_field_id(KNIPASSARGS clazz,
-            "authPath", "[Ljava/lang/String;"), authPathObj);
+                           midp_get_field_id(KNIPASSARGS clazz,
+                               "authPath", "[Ljava/lang/String;"), authPathObj);
         installInfo.authPathLen = KNI_GetArrayLength(authPathObj);
 
         KNI_GetObjectField(javaInstallInfo,
-			   midp_get_field_id(KNIPASSARGS clazz,
-            "verifyHash", "[B"), verifyHashObj);
+                           midp_get_field_id(KNIPASSARGS clazz,
+                               "verifyHash", "[B"), verifyHashObj);
         suiteData.jarHashLen = KNI_GetArrayLength(verifyHashObj);
 
         /* 2 - from javaSuiteSettings object */
@@ -1331,8 +1331,8 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
         suiteData.isEnabled = suiteSettings.enabled;
 
         KNI_GetObjectField(javaSuiteSettings,
-			   midp_get_field_id(KNIPASSARGS clazz,
-            "permissions", "[B"), permissionsObj);
+                           midp_get_field_id(KNIPASSARGS clazz,
+                               "permissions", "[B"), permissionsObj);
 
         suiteSettings.permissionsLen = KNI_GetArrayLength(permissionsObj);
 
@@ -1475,6 +1475,9 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMIDletSuiteInfoImpl0) {
 
         KNI_RESTORE_PCSL_STRING_FIELD(msi, clazz, "displayName",
             &(pData->varSuiteData.displayName), tmpHandle);
+
+        KNI_RESTORE_PCSL_STRING_FIELD(msi, clazz, "iconName",
+            &(pData->varSuiteData.iconName), tmpHandle);
 
         KNI_RESTORE_PCSL_STRING_FIELD(msi, clazz, "midletToRun",
             &(pData->varSuiteData.midletClassName), tmpHandle);

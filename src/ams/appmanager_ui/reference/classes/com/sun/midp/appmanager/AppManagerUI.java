@@ -303,8 +303,8 @@ class AppManagerUI extends Form
      * @param display - The display instance associated with the manager
      * @param first - true if this is the first time AppSelector is being
      *                shown
-     * @param ms - MidletSuiteInfo that should be selected. For the internal 
-     *             suites midletToRun should be set, for the other suites 
+     * @param ms - MidletSuiteInfo that should be selected. For the internal
+     *             suites midletToRun should be set, for the other suites
      *             suiteId is enough to find the corresponding item.
      */
     AppManagerUI(ApplicationManager manager, Display display,
@@ -835,10 +835,10 @@ class AppManagerUI extends Form
                         if (mci.msi.enabled != isEnabled) {
                             mci.msi.enabled = isEnabled;
 
-                            // MIDlet suite being disabled
+                            // MIDlet suite being enabled
                             if (isEnabled) {
                                 mci.setDefaultCommand(launchCmd);
-                            } else { // MIDlet suite is being enabled
+                            } else { // MIDlet suite is being disabled
 
                                 if (mci.msi.proxy == null) { // Not running
                                     mci.removeCommand(launchCmd);
@@ -848,6 +848,25 @@ class AppManagerUI extends Form
                                 // running MIDlets will continue to run
                                 // even when disabled
                             }
+                        }
+
+                        // Update all information about the suite;
+                        // if the suite's icon was changed, reload it.
+                        String oldIconName = mci.msi.iconName;
+                        int oldNumberOfMidlets = mci.msi.numberOfMidlets;
+                        MIDletProxy oldProxy = mci.msi.proxy;
+
+                        mci.msi = suiteInfo;
+                        mci.msi.proxy = oldProxy;
+
+                        if ((suiteInfo.iconName != null &&
+                                !suiteInfo.iconName.equals(oldIconName)) ||
+                            (suiteInfo.iconName == null &&
+                                suiteInfo.numberOfMidlets != oldNumberOfMidlets)
+                        ) {
+                            mci.msi.icon = null;
+                            mci.msi.loadIcon(midletSuiteStorage);
+                            mci.icon = mci.msi.icon;
                         }
 
                         break;
