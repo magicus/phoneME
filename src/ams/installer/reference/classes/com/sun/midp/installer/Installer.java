@@ -1480,7 +1480,15 @@ public abstract class Installer {
 
         /* this will parse any kind of URL, not only Http */
         HttpUrl parsedUrl = new HttpUrl(url);
-        return parsedUrl.path;
+        String path = parsedUrl.path;
+
+        if (path != null) {
+            if (path.charAt(0) == '/') {
+                path = path.substring (1, path.length ());
+            }
+        }
+
+        return path;
     }
 
     /**
