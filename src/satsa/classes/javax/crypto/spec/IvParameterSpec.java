@@ -32,7 +32,7 @@
 
 package javax.crypto.spec;
 
-import com.sun.midp.crypto.Util;
+import com.sun.j2me.crypto.Util;
 
 import java.security.spec.AlgorithmParameterSpec;
 

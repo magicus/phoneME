@@ -85,7 +85,7 @@ public abstract class MessageDigest  {
         try {
             return new MessageDigestImpl(algorithm,
                 com.sun.midp.crypto.MessageDigest.getInstance(algorithm));
-        } catch (com.sun.midp.crypto.NoSuchAlgorithmException e) {
+        } catch (com.sun.j2me.crypto.NoSuchAlgorithmException e) {
             throw new NoSuchAlgorithmException(e.getMessage());
         }
     }
