@@ -1345,10 +1345,10 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
                            suiteData.numberOfMidlets);
         KNI_SAVE_PCSL_STRING_FIELD(javaSuiteData, clazz, "displayName",
             &suiteData.varSuiteData.displayName, tmpHandle);
-        KNI_SAVE_PCSL_STRING_FIELD(javaSuiteData, clazz, "midletToRun",
-            &suiteData.varSuiteData.midletClassName, tmpHandle);
         KNI_SAVE_PCSL_STRING_FIELD(javaSuiteData, clazz, "iconName",
             &suiteData.varSuiteData.iconName, tmpHandle);
+        KNI_SAVE_PCSL_STRING_FIELD(javaSuiteData, clazz, "midletToRun",
+            &suiteData.varSuiteData.midletClassName, tmpHandle);
 
         /* fill in arrays */
         exceptionThrown = 0; /* no more KNI macro bellow */
