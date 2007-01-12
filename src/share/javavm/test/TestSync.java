@@ -283,11 +283,37 @@ public class TestSync
     static TestSyncT2Locker t2 = locker;
 
     public static void main(String[] args) throws Exception {
-        long maxReentryCount;
+        long maxReentryCount = 0;
         boolean runLargeReentryLockingTest = false;
+	boolean needToTestUnstructuredLocks = false;
+	int usedArg = -1;
         try {
-            maxReentryCount = Long.parseLong(args[0]);
-            runLargeReentryLockingTest = true;
+	    // Check for the "testUnstructuredLocks" arg:
+	    for (int i = 0; i < args.length; i++) {
+		// NOTE: JDK 1.4's javac generate a catch block that catches
+		// the same IllegalMonitorStateException that it throws. See
+		// bug reports at
+		// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6271353 and
+		// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4414101.
+		// However, the javac team has determined this to not be a bug
+		// due to various reasons. But in CVM's case, this unfortunately
+		// results in an infinite loop due to CVM supporting unstructured
+		// locks.  For now, we disable these tests by default for
+		// convenience.
+		if (args[i].equals("testUnstructuredLocks")) {
+		    needToTestUnstructuredLocks = true;
+		    usedArg = i;
+		    break;
+		}
+	    }
+	    // Check for the "maxReentryCount" arg:
+	    for (int i = 0; i < args.length; i++) {
+		if (i != usedArg) {
+		    maxReentryCount = Long.parseLong(args[0]);
+		    runLargeReentryLockingTest = true;
+		}
+	    }
+
         } catch (Exception e) {
             maxReentryCount = 0;
             runLargeReentryLockingTest = false;
@@ -297,8 +323,10 @@ public class TestSync
         locker.init();
 
         testHoldsLock();
-        testExcessMonitorExit();
-        testExcessMonitorEnter();
+	if (needToTestUnstructuredLocks) {
+	    testExcessMonitorExit();
+	    testExcessMonitorEnter();
+	}
         if (runLargeReentryLockingTest) {
             testLargeReentryLocking(maxReentryCount);
         }
