@@ -435,7 +435,10 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     if (linuxFbDeviceType == LINUX_FB_OMAP730) {
         // Needed by the P2 board
         // Max screen size is 176x220 but can only display 176x208
+        // Since the rotated refresh is started from the left lower
+        // corner of the screen, we need to skip two bottom lines
         dstHeight = bufWidth;
+        dst -= dstWidth * 2;
     }
 
     // Make sure the copied lines are 4-byte aligned for faster memcpy
