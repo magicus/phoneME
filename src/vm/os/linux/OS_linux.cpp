@@ -130,7 +130,13 @@ void* Os::loadLibrary(const char* libName) {
   }
   strcpy(full_lib_name, libName);
   strcat(full_lib_name, lib_ext);  
-  return dlopen(full_lib_name, RTLD_LAZY);
+  void* result = dlopen(full_lib_name, RTLD_LAZY);
+#if ENABLE_TTY_TRACE
+  if (result == NULL)  {
+    tty->print_cr("Failed to load library %s !",full_lib_name);
+  }
+#endif
+  return result;
 }
 void* Os::getSymbol(void* handle, const char* name) {
   return dlsym(handle,name);

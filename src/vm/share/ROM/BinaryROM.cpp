@@ -533,8 +533,8 @@ void ROMBundle::preload( const JvmPathChar class_path[] ) {
     DECLARE_STATIC_BUFFER(JvmPathChar, new_class_path, NAME_BUFFER_SIZE);
     while (class_path[start]) {    
       int count = 0;
-      for(; class_path[count] != 0 && 
-          class_path[count] != OsFile_path_separator_char; count++) {
+      for(; class_path[start+count] != 0 && 
+          class_path[start+count] != OsFile_path_separator_char; count++) {
       }
       if (count >= NAME_BUFFER_SIZE) {
 #if ENABLE_TTY_TRACE

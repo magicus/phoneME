@@ -477,13 +477,21 @@ void Java_com_sun_cldchi_jvm_JVM_loadLibrary(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_DYNAMIC_NATIVE_METHODS
   void* handle;
   if(Universe::dynamic_lib_handles()->is_null()) {
+    const int task = ObjectHeap::start_system_allocation();
     *Universe::dynamic_lib_handles() = Universe::new_int_array(4 JVM_NO_CHECK);
+    ObjectHeap::finish_system_allocation(task);
+    JVM_DELAYED_CHECK;
   }
 
   int length = Universe::dynamic_lib_handles()->length(); 
   if(Universe::dynamic_lib_count == length) {
-    *Universe::dynamic_lib_handles() 
-      = Universe::new_int_array(length + 4 JVM_NO_CHECK);
+    const int task = ObjectHeap::start_system_allocation();
+    TypeArray::Raw new_array = Universe::new_int_array(length + 4 JVM_NO_CHECK);
+    ObjectHeap::finish_system_allocation(task);
+    JVM_DELAYED_CHECK;
+    TypeArray::array_copy(Universe::dynamic_lib_handles(), 0, &new_array, 0, length);
+    *Universe::dynamic_lib_handles() = new_array;
+    
   }
 
   UsingFastOops fast_oops;
