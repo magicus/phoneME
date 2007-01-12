@@ -31,14 +31,14 @@ import com.sun.j2me.security.SatsaPermission;
 import java.io.*;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 import javax.microedition.io.Connection;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.jcrmi.JavaCardRMIConnection;
 import javax.microedition.jcrmi.RemoteStub;
 
 import com.sun.j2me.io.ConnectionBaseInterface;
-import com.sun.midp.crypto.MessageDigest;
-import com.sun.midp.crypto.GeneralSecurityException;
 import com.sun.midp.io.j2me.apdu.APDUManager;
 import com.sun.midp.io.j2me.apdu.Handle;
 import com.sun.satsa.acl.ACLPermissions;
