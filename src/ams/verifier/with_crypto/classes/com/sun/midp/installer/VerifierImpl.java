@@ -209,6 +209,9 @@ public class VerifierImpl implements Verifier {
      * Authenticate the chain and set the cpCert field to the provider's
      * certificate if the CA is known.
      *
+     * IMPL_NOTE: in the case of erroneous certificate chains the last
+     *            chain error will be thrown.
+     *
      * @param chainNum the number of the chain
      *
      * @return 1 if the CA of the chain is known, 0 if not, -1 if the
