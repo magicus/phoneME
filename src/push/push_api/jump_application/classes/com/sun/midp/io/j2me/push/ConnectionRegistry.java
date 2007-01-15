@@ -39,6 +39,25 @@ public final class ConnectionRegistry {
     private ConnectionRegistry() { }
 
     /**
+     * Checks AMS permission.
+     *
+     * @param midletSuite <code>MIDlet</code> suite to check against
+     */
+    static void checkAMSPermission(final MIDletSuite midletSuite) {
+        // TBD: implement security checks
+    }
+
+    /**
+     * Checks Push permission.
+     *
+     * @param midletSuite <code>MIDlet</code> suite to check against
+     */
+    static void checkPushPermission(final MIDletSuite midletSuite) 
+            throws IOException {
+        // TBD: implement security checks
+    }
+
+    /**
      * Registers a connection.
      *
      * <p>

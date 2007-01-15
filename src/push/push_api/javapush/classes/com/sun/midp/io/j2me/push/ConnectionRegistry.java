@@ -27,6 +27,7 @@
 package com.sun.midp.io.j2me.push;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 
 import java.util.Enumeration;
 
@@ -58,9 +59,8 @@ public final class ConnectionRegistry
      */
     static final int PUSH_OPT_WHEN_ONLY_APP = 1;
 
-    // TBD: remove when PushRegistryInternal is dropped
     /** This class has a different security domain than the MIDlet suite. */
-    static SecurityToken classSecurityToken;
+    private static SecurityToken classSecurityToken;
 
     /**
      * Flag to control when push launching is permitted.
@@ -332,6 +332,44 @@ public final class ConnectionRegistry
         byte[] asciiClassName = Util.toCString(className);
 
         checkInByMidlet0(suiteId, asciiClassName);
+    }
+
+    /**
+     * Initializes the security token for this class, so it can
+     * perform actions that a normal MIDlet Suite cannot.
+     *
+     * @param token security token for this class.
+     */
+    public static void initSecurityToken(SecurityToken token) {
+        if (classSecurityToken == null) {
+            classSecurityToken = token;
+        }
+    }
+
+    /**
+     * Checks AMS permission.
+     *
+     * @param midletSuite <code>MIDlet</code> suite to check against
+     */
+    static void checkAMSPermission(final MIDletSuite midletSuite) {
+        // TBD: Unify (if possible) security mechanisms
+        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+    }
+
+    /**
+     * Checks Push permission.
+     *
+     * @param midletSuite <code>MIDlet</code> suite to check against
+     */
+    static void checkPushPermission(final MIDletSuite midletSuite) 
+            throws IOException {
+        // TBD: Unify (if possible) security mechanisms
+        try {
+            midletSuite.checkForPermission(Permissions.PUSH, null);
+        } catch (InterruptedException ie) {
+            throw new InterruptedIOException(
+              "Interrupted while trying to ask the user permission");
+        }
     }
 
     /**

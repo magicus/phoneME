@@ -26,7 +26,6 @@
 
 package com.sun.midp.io.j2me.push;
 
-import java.io.InterruptedIOException;
 import java.io.IOException;
 
 import javax.microedition.io.ConnectionNotFoundException;
@@ -89,8 +88,7 @@ public final class PushRegistryImpl {
      * @param midletSuite <code>MIDlet</code> suite to check against
      */
     private static void checkAMSPermission(final MIDletSuite midletSuite) {
-        // TBD: Unify (if possible) security mechanisms
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        ConnectionRegistry.checkAMSPermission(midletSuite);
     }
 
     /**
@@ -100,13 +98,7 @@ public final class PushRegistryImpl {
      */
     private static void checkPushPermission(final MIDletSuite midletSuite) 
             throws IOException {
-        // TBD: Unify (if possible) security mechanisms
-        try {
-            midletSuite.checkForPermission(Permissions.PUSH, null);
-        } catch (InterruptedException ie) {
-            throw new InterruptedIOException(
-              "Interrupted while trying to ask the user permission");
-        }
+        ConnectionRegistry.checkPushPermission(midletSuite);
     }
 
     /**

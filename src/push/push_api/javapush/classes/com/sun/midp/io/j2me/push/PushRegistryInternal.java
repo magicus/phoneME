@@ -122,9 +122,7 @@ public final class PushRegistryInternal {
      * @param token security token for this class.
      */
     public static void initSecurityToken(SecurityToken token) {
-        if (ConnectionRegistry.classSecurityToken == null) {
-            ConnectionRegistry.classSecurityToken = token;
-        }
+        ConnectionRegistry.initSecurityToken(token);
     }
 
     /**
