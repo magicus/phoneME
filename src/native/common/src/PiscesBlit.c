@@ -1847,7 +1847,7 @@ blitPTSrcOver8888_pre(Renderer *rdr, jint height) {
 
             cval = paint[aidx];
             
-            aa = alphaMap[palpha];
+            aa = alphaMap[(cval >> 24) & 0xff];
 
             /* Scale combined alpha into [0, MAX_ALPHA] */
             aval = (aa * (*a & 0xff) * MAX_ALPHA + denom2) / denom;
