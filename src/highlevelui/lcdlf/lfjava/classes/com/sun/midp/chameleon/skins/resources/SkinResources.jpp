@@ -531,8 +531,8 @@ public class SkinResources {
      */
     public static void adjustScreen() {
 
-        ScreenSkin.WIDTH = displayAccess.getDisplayWidth();
-        ScreenSkin.HEIGHT = displayAccess.getDisplayHeight();
+        setScreenSize(displayAccess.getDisplayWidth(), 
+                      displayAccess.getDisplayHeight());
         SoftButtonResources.load(true);
         AlertResources.load(true);
     }

@@ -28,6 +28,7 @@ package com.sun.midp.chameleon.skins.resources;
 
 import com.sun.midp.chameleon.skins.SkinPropertiesIDs;
 import com.sun.midp.chameleon.skins.ScreenSkin;
+import com.sun.midp.log.*;
 
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Font;
@@ -48,6 +49,13 @@ public class ScreenResources {
     public static void load(boolean reload) {
         if (init && !reload) {
             return;
+        }
+
+        if ((ScreenSkin.WIDTH <= 0) || (ScreenSkin.HEIGHT <= 0)) {
+            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                Logging.report(Logging.WARNING, LogChannels.LC_HIGHUI,
+                        "Screen dimentions not set.");
+            }
         }
 
         int textOrient = SkinResources.getInt(
