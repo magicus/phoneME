@@ -54,7 +54,7 @@ protected:
      * @param col column number of the insertion point
      * @return true if this insertion is allowed by current input constraints
      */
-    bool TextFieldBody::validate(const QString &s, int line, int col);
+    bool validate(const QString &s, int line, int col);
 
    /**
     * Makes this item have focus, enabling any item-specific commands; in

@@ -395,11 +395,6 @@ public class ScrollBarLayer extends ScrollIndLayer {
     public void setVisible(boolean visible) {
         boolean oldVisible = isVisible();
         super.setVisible(visible);
-        if (oldVisible != visible && scrollable != null) {
-            int[] newBounds = scrollable.getBounds();
-            newBounds[W] += visible ? -bounds[W] : bounds[W];
-            scrollable.setBounds(newBounds[X], newBounds[Y], newBounds[W], newBounds[H]);
-        }
     }
     
     /**
@@ -419,20 +414,5 @@ public class ScrollBarLayer extends ScrollIndLayer {
             scrollType = SCROLL_NONE;
         }
         return ret;
-    }
-
-    /**
-     * Update bounds of layer
-     *
-     * @param layers - current layer can be dependant on this parameter
-     */
-    public void update(CLayer[] layers) {
-        super.update(layers);
-        if (visible && scrollable != null) {
-            int[] newBounds = scrollable.getBounds();
-            newBounds[W] -= bounds[W];
-            scrollable.setBounds(newBounds[X], newBounds[Y],
-                                 newBounds[W], newBounds[H]);
-        }
     }
 }

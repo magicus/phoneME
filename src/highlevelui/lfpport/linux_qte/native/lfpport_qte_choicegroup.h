@@ -355,7 +355,7 @@ class ChoiceButton : public QButton {
    *
    * @param check whether it should be shown as selected
    */
-  void ChoiceButton::setChecked( bool check ) { setOn( check ); }
+  void setChecked( bool check ) { setOn( check ); }
 
   /**
    * Override QButton to calculate size based on its contents.

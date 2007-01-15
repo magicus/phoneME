@@ -26,7 +26,7 @@
 
 package javax.microedition.lcdui;
 
-import com.sun.midp.main.MIDletControllerEventProducer;
+import com.sun.midp.lcdui.ForegroundController;
 import com.sun.midp.security.SecurityToken;
 
 public class StubDisplay extends Display {
@@ -34,10 +34,12 @@ public class StubDisplay extends Display {
     /**
      * Creates a simple stub display and tells it that it is in the 
      * foreground.
+     *
+     * @param ownerName class name of the MIDlet that owns this Display
      */
-    public StubDisplay() {
-        super(null);
-        consumer.handleDisplayForegroundNotifyEvent(true);
+    public StubDisplay(String ownerName) {
+        super(ownerName);
+        foregroundConsumer.handleDisplayForegroundNotifyEvent();
     }
 
     /**
@@ -46,62 +48,34 @@ public class StubDisplay extends Display {
      * certain display actions (such as setCurrent) from flooding the AMS 
      * event queue with foreground-change requests.
      */
-    public StubDisplay(SecurityToken token) {
-        super(null);
-        midletControllerEventProducer = new StubProducer(token);
-        consumer.handleDisplayForegroundNotifyEvent(true);
+    public StubDisplay() {
+        super("StubDisplay");
+        foregroundController = new StubController();
+        foregroundConsumer.handleDisplayForegroundNotifyEvent();
     }
 
     /**
-     * A stub midlet controller event producer. Stubs out all the
-     * event-sending methods.
+     * A stub foreground controller event producer. Stubs out all the
+     * methods.
      */
-    class StubProducer extends MIDletControllerEventProducer {
+    class StubController implements ForegroundController {
 
-        public StubProducer(SecurityToken token) {
-            super(token, null, 0, 0);
-        }
-
-        public void sendMIDletStartErrorEvent(
-            int midletExternalAppId,
-            String midletSuiteId, 
-            String midletClassName,
-            int error) {
+        StubController() {
         }
 
-        public void sendMIDletCreateNotifyEvent(
-            int midletExternalAppId,
-            int midletDisplayId, 
-            String midletSuiteId,
-            String midletClassName, 
-            String midletDisplayName) {
+        public void registerDisplay(int displayId, String ownerClassName) {
         }
 
-        public void sendMIDletActiveNotifyEvent(int midletDisplayId) {
+        public void requestForeground(int displayId, boolean isAlert) {
         }
 
-        public void sendMIDletPauseNotifyEvent(int midletDisplayId) {
+        public void requestBackground(int displayId) {
         }
 
-        public void sendMIDletDestroyNotifyEvent(int midletDisplayId) {
+        public void startPreempting(int displayId) {
         }
 
-        public void sendMIDletDestroyRequestEvent(int midletDisplayId) {
-        }
-        
-        public void sendMIDletForegroundTransferEvent(
-            String originMIDletSuiteId,
-            String originMIDletClassName,
-            String targetMIDletSuiteId,
-            String targetMIDletClassName) {
-        }
-
-        public void sendSetForegroundByNameRequestEvent(String suiteId, 
-            String className) {
-        }
-    
-        public void sendDisplayForegroundRequestEvent(int midletDisplayId,
-            boolean isAlert) {
+        public void stopPreempting(int displayId) {
         }
 
         public void sendDisplayBackgroundRequestEvent(int midletDisplayId) {
@@ -112,9 +86,5 @@ public class StubDisplay extends Display {
 
         public void sendDisplayPreemptStopEvent(int midletDisplayId) {
         }
-
-        public void sendMIDletResumeRequest(int midletDisplayId) {
-        }
     }
-
 }

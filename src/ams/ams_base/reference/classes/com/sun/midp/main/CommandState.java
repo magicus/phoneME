@@ -125,4 +125,26 @@ class CommandState {
     void save() {
         saveCommandState(this);
     }
+
+    /**
+     * Returns the string form of this object.
+     *
+     * @return displayable string representation of this object
+     */
+    public String toString() {
+        return "CommandState:" +
+            "\n  status: " + status +
+            "\n  suite ID: " + suiteId +
+            "\n  class name: " + midletClassName +
+            "\n  logo displayed: " + logoDisplayed +
+            "\n  last suite ID: " + lastSuiteId +
+            "\n  last MIDlet class name: " + lastMidletClassName +
+            "\n  arg 0: " + arg0 +
+            "\n  arg 1: " + arg1 +
+            "\n  arg 2: " + arg2 +
+            "\n  memory reserved: " + memoryReserved +
+            "\n  memory total: " + memoryTotal +
+            "\n  priority:" + priority +
+            "\n  profile name: " + profileName;
+    }
 }

@@ -28,6 +28,7 @@ package com.sun.midp.lcdui;
 
 import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.NativeEvent;
 
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
@@ -51,16 +52,16 @@ import com.sun.midp.security.SecurityToken;
  * If a given event type merges a set of logically different subtypes, 
  * this class shall provide separate methods for these subtypes.
  *
- * It is assumed that only one object instance of this class (per isolate)
- * is created at (isolate) startup. 
+ * It is assumed that only one object instance of this class
+ * is initialized with the system event that is created at (isolate) startup. 
+ *
+ * This class only operates on the event queue given to it during
+ * construction, the class does not obtain any restricted object itself,
+ * so it does not need protection.
+ *
  * All MIDP stack subsystems that need to send events of supported types, 
  * must get a reference to an already created istance of this class. 
  * Typically, this instance should be passed as a constructor parameter.
- *
- * For security reasons constructor is not public. 
- * Use createXXXProducer(...) method, 
- * protected by security, to create and object instance of this class
- * from a different package.
  *
  * Class is NOT final to allow debug/profile/test/automation subsystems
  * to change, substitute, complement default "event sending" functionality :
@@ -84,14 +85,11 @@ public class DisplayEventProducer {
     /**
      * Construct a new DisplayEventProducer.
      *
-     * @param  token security token that controls instance creation.
      * @param  theEventQueue An event queue where new events will be posted.
      */
     public DisplayEventProducer(
-        SecurityToken token, 
         EventQueue theEventQueue) {
             
-        token.checkIfPermissionAllowed(Permissions.MIDP);
         eventQueue = theEventQueue;
     }
 

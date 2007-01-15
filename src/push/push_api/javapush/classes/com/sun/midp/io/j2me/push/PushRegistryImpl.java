@@ -3,25 +3,25 @@
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.io.j2me.push;
@@ -86,6 +86,9 @@ public class PushRegistryImpl
     /** MIDlet proxy list reference. */
     private MIDletProxyList midletProxyList;
 
+    /** Cached reference to the midlet suite storage instance. */
+    private static MIDletSuiteStorage storage;
+
     /**
      * Start listening for push notifications. Will throw a security
      * exception if called by any thing other than the MIDletSuiteLoader.
@@ -108,6 +111,11 @@ public class PushRegistryImpl
         midletProxyList =
             MIDletProxyList.getMIDletProxyList(classSecurityToken);
         midletProxyList.addListener(this);
+
+        if (storage == null) {
+            storage = MIDletSuiteStorage.getMIDletSuiteStorage(
+                classSecurityToken);
+        }
     }
 
     /**
@@ -174,14 +182,18 @@ public class PushRegistryImpl
         }
 
         try {
+            /*
+             * IMPL_NOTE: here it's assumed that when a suiteId is converted
+             * to string the padding zeroes are placed _before_ the value,
+             * for ex., suiteId 3 is converted into "00000003".
+             * MIDletSuiteStorage.stringToSuiteId() API should be added later.
+             */
             id = Integer.parseInt(strSuiteId);
         } catch (NumberFormatException nfe) {
             id = MIDletSuite.UNUSED_SUITE_ID;
         }
 
         try {
-            MIDletSuiteStorage storage;
-
             /*
              * Check to see if the MIDlet is already started.
              */
@@ -193,8 +205,6 @@ public class PushRegistryImpl
                 return;
             }
 
-            storage =
-                MIDletSuiteStorage.getMIDletSuiteStorage(classSecurityToken);
             next = storage.getMIDletSuite(id, false);
             if (next == null) {
                 if (conn != null) {
@@ -517,7 +527,7 @@ public class PushRegistryImpl
         byte[] asciiRegistration = Util.toCString(connection
                   + "," + midlet
                   + "," + filter
-                  + "," + String.valueOf(id));
+                  + "," + storage.suiteIdToString(id));
 
         if (add0(asciiRegistration) == -1) {
             // in case of Bluetooth URL, unregistration within Bluetooth
@@ -551,7 +561,8 @@ public class PushRegistryImpl
         MIDletSuite current = midletStateHandler.getMIDletSuite();
 
         byte[] asciiRegistration = Util.toCString(connection);
-        byte[] asciiStorage = Util.toCString(String.valueOf(current.getID()));
+        byte[] asciiStorage = Util.toCString(
+            storage.suiteIdToString(current.getID()));
         int ret =  del0(asciiRegistration, asciiStorage);
         if (ret == -2) {
             throw new SecurityException("wrong suite");
@@ -681,7 +692,7 @@ public class PushRegistryImpl
             token.checkIfPermissionAllowed(Permissions.AMS);
         }
 
-        nativeID = Util.toCString(new Integer(id).toString());
+        nativeID = Util.toCString(storage.suiteIdToString(id));
         connlist = new byte[512];
 
         if (list0(nativeID, available, connlist, 512) == 0) {
@@ -861,7 +872,7 @@ public class PushRegistryImpl
         if (current != null) {
             byte[] asciiName = Util.toCString(midlet + ","
                       + time + ","
-                      + current.getID());
+                      + storage.suiteIdToString(current.getID()));
             return addAlarm0(asciiName, time);
         }
 

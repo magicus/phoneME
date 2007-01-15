@@ -578,8 +578,11 @@ abstract public class Item {
      */
     public void setLayout(int layout) {
         synchronized (Display.LCDUILock) {
+            int oldLayout = this.layout;
             setLayoutImpl(layout);
-            itemLF.lSetLayout(layout);
+            if (oldLayout != this.layout) {
+                itemLF.lSetLayout(layout);
+            }
         }
     }
 

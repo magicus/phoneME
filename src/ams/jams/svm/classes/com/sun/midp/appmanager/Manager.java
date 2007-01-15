@@ -201,7 +201,8 @@ public class Manager extends MIDlet implements ApplicationManager {
      * @param suiteInfo information for suite to launch
      * @param midletToRun class name of the MIDlet to launch
      */
-    public void launchSuite(MIDletSuiteInfo suiteInfo, String midletToRun) {
+    public void launchSuite(RunningMIDletSuiteInfo suiteInfo,
+                            String midletToRun) {
 
         if (Constants.MEASURE_STARTUP) {
             System.err.println("Application Startup Time: Begin at "
@@ -233,7 +234,7 @@ public class Manager extends MIDlet implements ApplicationManager {
      *
      * @param suiteInfo information for suite to update
      */
-    public void updateSuite(MIDletSuiteInfo suiteInfo) {
+    public void updateSuite(RunningMIDletSuiteInfo suiteInfo) {
         MIDletStateHandler midletStateHandler =
             MIDletStateHandler.getMidletStateHandler();
         MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
@@ -266,7 +267,7 @@ public class Manager extends MIDlet implements ApplicationManager {
      *
      * @param suiteInfo information for the midlet to be put to foreground
      */
-    public void moveToForeground(MIDletSuiteInfo suiteInfo) {}
+    public void moveToForeground(RunningMIDletSuiteInfo suiteInfo) {}
 
 
     /**
@@ -274,7 +275,7 @@ public class Manager extends MIDlet implements ApplicationManager {
      *
      * @param suiteInfo information for the midlet to be terminated
      */
-    public void exitMidlet(MIDletSuiteInfo suiteInfo) {}
+    public void exitMidlet(RunningMIDletSuiteInfo suiteInfo) {}
 
     // ==============================================================
     // ----------------- PRIVATE methods ---------------------------

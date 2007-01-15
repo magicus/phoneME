@@ -55,6 +55,7 @@ ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_EVENTS_I3TEST_JAVA_FILES += \
     $(EVENT_QUEUE_DIR)/reference/i3test/com/sun/midp/events/InstrumentedEventListener.java \
     $(EVENT_QUEUE_DIR)/reference/i3test/com/sun/midp/events/StubEventQueue.java \
+    $(EVENT_QUEUE_DIR)/reference/i3test/com/sun/midp/events/ListenerTestEventQueue.java \
     $(EVENT_QUEUE_DIR)/reference/i3test/com/sun/midp/events/TestEventQueue.java \
     $(EVENT_QUEUE_DIR)/reference/i3test/com/sun/midp/events/TestNativeEventPool.java
 

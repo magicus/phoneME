@@ -54,7 +54,7 @@ final class MIDletSelector implements CommandListener {
     /**
      * Information needed to display a list of MIDlets.
      */
-    private MIDletSuiteInfo suiteInfo;
+    private RunningMIDletSuiteInfo suiteInfo;
     /**
      * The Display.
      */
@@ -102,7 +102,7 @@ final class MIDletSelector implements CommandListener {
      * @param theParentDisplayable the parent's displayable
      * @param theManager the parent application manager
      */
-    MIDletSelector(MIDletSuiteInfo theSuiteInfo, Display theDisplay,
+    MIDletSelector(RunningMIDletSuiteInfo theSuiteInfo, Display theDisplay,
                    Displayable theParentDisplayable,
                    ApplicationManager theManager) throws Throwable {
 
@@ -175,7 +175,7 @@ final class MIDletSelector implements CommandListener {
             for (int i = 0; i < mcount; i++) {
                 Image icon = null;
                 if (minfo[i].icon != null) {
-                    icon = MIDletSuiteInfo.getIcon(suiteInfo.suiteId,
+                    icon = RunningMIDletSuiteInfo.getIcon(suiteInfo.suiteId,
                         minfo[i].icon, mss);
                 }
 

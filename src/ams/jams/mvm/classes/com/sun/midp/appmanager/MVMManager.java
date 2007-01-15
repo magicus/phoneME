@@ -80,9 +80,11 @@ public class MVMManager extends MIDlet
     /** MIDlet proxy list reference. */
     private MIDletProxyList midletProxyList;
 
-   /** UI to display error alerts. */
+    /** UI to display error alerts. */
     private DisplayError displayError;
 
+    /** UI to display headless MIDlet alerts. */
+    private HeadlessAlert headlessAlert;
 
     /**
      * Create and initialize a new MVMManager MIDlet.
@@ -129,9 +131,11 @@ public class MVMManager extends MIDlet
 
         Display display = Display.getDisplay(this);
         displayError = new DisplayError(display);
+        headlessAlert = new HeadlessAlert(display);
 
         // AppManagerUI will be set to be current at the end of its constructor
-        appManagerUI = new AppManagerUI(this, display, displayError, first, null);
+        appManagerUI = new AppManagerUI(this, display, displayError, first,
+                                        null);
 
         if (first) {
             first = false;
@@ -264,7 +268,8 @@ public class MVMManager extends MIDlet
      * @param suiteInfo information for suite to launch
      * @param midletToRun class name of the MIDlet to launch
      */
-    public void launchSuite(MIDletSuiteInfo suiteInfo, String midletToRun) {
+    public void launchSuite(RunningMIDletSuiteInfo suiteInfo,
+                            String midletToRun) {
 
         if (Constants.MEASURE_STARTUP) {
             System.err.println("Application Startup Time: Begin at "
@@ -285,7 +290,7 @@ public class MVMManager extends MIDlet
      *
      * @param suiteInfo information for suite to update
      */
-    public void updateSuite(MIDletSuiteInfo suiteInfo) {
+    public void updateSuite(RunningMIDletSuiteInfo suiteInfo) {
         /*
          * Setting arg 0 to "U" signals that arg 1 is a suite ID for updating.
          */
@@ -313,9 +318,26 @@ public class MVMManager extends MIDlet
      *
      * @param suiteInfo information for the midlet to be put to foreground
      */
-    public void moveToForeground(MIDletSuiteInfo suiteInfo) {
+    public void moveToForeground(RunningMIDletSuiteInfo suiteInfo) {
         try {
+
+            if (Constants.MEASURE_STARTUP) {
+                System.err.println("Switch To Foreground Time: Begin at " +
+                    System.currentTimeMillis());
+            }
+
             if (suiteInfo != null) {
+                if (suiteInfo.proxy.noDisplayable()) {
+                    /*
+                     * This MIDlet has not set a displayable,
+                     * but the user is trying to put it in the foreground,
+                     * we don't want put a non-drawing display in the
+                     * foreground, so warn the user.
+                     */
+                    headlessAlert.show(suiteInfo.proxy);
+                    return;
+                }
+
                 midletProxyList.setForegroundMIDlet(suiteInfo.proxy);
             }
 
@@ -330,7 +352,7 @@ public class MVMManager extends MIDlet
      *
      * @param suiteInfo information for the midlet to be terminated
      */
-    public void exitMidlet(MIDletSuiteInfo suiteInfo) {
+    public void exitMidlet(RunningMIDletSuiteInfo suiteInfo) {
         try {
             if (suiteInfo != null) {
                 suiteInfo.proxy.destroyMidlet();

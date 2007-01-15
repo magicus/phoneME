@@ -1,27 +1,27 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  *
  */
 
@@ -49,14 +49,14 @@ import org.xml.sax.SAXException;
 class Transformation {
     /** XML file name to apply transformation to */
     public String xmlFileName = "";
-    
+
     /** XSL files to be applied */
     public String xslFileName = null;
-    
+
     /** Transformation parameters: names */
     public Vector xslParamNames = new Vector();
 
-    /** Transformation parameters: values */   
+    /** Transformation parameters: values */
     public Vector xslparamValues = new Vector();
 
     /** Output file name */
@@ -67,24 +67,24 @@ class Transformation {
 }
 
 
-/** 
- *  Driver class with main(). Parses command line arguments and invokes 
+/**
+ *  Driver class with main(). Parses command line arguments and invokes
  *  CodeTransformerImpl instance that does all the transformation work.
  */
 public class CodeTransformer {
     /** Transformer that does actual transformation */
     private static CodeTransformerImpl transformer = null;
-    
+
     /** Transformations to perform */
     private static Vector transformations = new Vector();
-    
+
     /** Print debug output while running */
     private static boolean debug = false;
-    
+
     /** Print usage info and exit */
-    private static boolean printHelp = false;   
-   
-    
+    private static boolean printHelp = false;
+
+
     /**
      * Main method
      *
@@ -97,10 +97,10 @@ public class CodeTransformer {
                 printHelp();
                 return;
             }
-            
+
             transformer = new CodeTransformerImpl(debug);
             for (int i = 0; i < transformations.size(); ++i) {
-                Transformation tr = 
+                Transformation tr =
                     (Transformation)transformations.elementAt(i);
                 transformer.transform(tr);
             }
@@ -115,7 +115,7 @@ public class CodeTransformer {
     }
 
     /**
-     * Parse command line arguments, adding Transformation objects to 
+     * Parse command line arguments, adding Transformation objects to
      * <tt>transformations</tt> vector for each trnasformation specified.
      *
      * @param args command line arguments
@@ -158,10 +158,10 @@ public class CodeTransformer {
             } else if (arg.equals("-debug")) {
                 debug = true;
             } else {
-                throw new IllegalArgumentException("invalid option \"" 
+                throw new IllegalArgumentException("invalid option \""
                         + args[i] + "\"");
             }
-        }        
+        }
     }
 
     /**
@@ -175,23 +175,23 @@ public class CodeTransformer {
          * -xsl:        XSL file to apply to given XML file.
          * -out:        Output file. If empty, output will be to stdout.
          * -params:     Transformations parameters in form of "Name"
-	 *              "Value" pairs.
+   *              "Value" pairs.
          * -help:       Print usage information
-         * -debug:      Be verbose: print some debug info while running. 
+         * -debug:      Be verbose: print some debug info while running.
          *
-         * In order to improve performance, CodeTransformer is capable of 
+         * In order to improve performance, CodeTransformer is capable of
          * doing multiple transformations per invokation. -out option marks
-         * the end of arguments for single transformation. All arguments 
+         * the end of arguments for single transformation. All arguments
          * after it belongs to next transformation(s).
          */
         System.err.println("Usage: java -jar "
             + "com.sun.midp.configurator.CodeTransformer "
-            + "[-validate] " 
-            + "-xml <localXMLFile> " 
+            + "[-validate] "
+            + "-xml <localXMLFile> "
             + "-xsl <localXSLFile> "
             + "-params <paramName> <paramValue>... "
             + "-out <localOutputFile> "
-            + "-xml <localXMLFile> " 
+            + "-xml <localXMLFile> "
             + "... "
             + "[-debug] "
             + "[-help]");
@@ -204,10 +204,10 @@ public class CodeTransformer {
  */
 class CodeTransformerImpl {
     /** Factory constructing Transformer objects */
-    private TransformerFactory transformerFactory = 
+    private TransformerFactory transformerFactory =
         TransformerFactory.newInstance();
-    
-    /** 
+
+    /**
      * Since most of transformations are applied to the same XML file,
      * we don't want to load it on each transformation, so we cache last
      * used XML file as DOMSource
@@ -217,11 +217,11 @@ class CodeTransformerImpl {
     /** Last document used */
     private Document lastDoc = null;
     /** File name of the last used source */
-    private String lastSourceFileName = null; 
+    private String lastSourceFileName = null;
 
     /** Be verbose: print some debug info while running */
     private boolean debug = false;
-    
+
 
     /**
      * Constructor
@@ -232,62 +232,62 @@ class CodeTransformerImpl {
     {
         debug = dbg;
     }
-    
+
     /**
      * Converts errors.
-     */    
-    class TransformerErrorHandler 
+     */
+    class TransformerErrorHandler
         implements ErrorHandler {
-            
-	/**
-	 * Handles errors.
-	 * @param e the parsing exception
-	 */
-        public void error(SAXParseException e) 
+
+  /**
+   * Handles errors.
+   * @param e the parsing exception
+   */
+        public void error(SAXParseException e)
             throws SAXParseException {
             reportError(e);
             // rethrow exception to stop processing on first error
             throw e;
         }
-        
-	/**
-	 * Handles fatal errors.
-	 * @param e the parsing exception
-	 */
-	public void fatalError(SAXParseException e) {
+
+  /**
+   * Handles fatal errors.
+   * @param e the parsing exception
+   */
+  public void fatalError(SAXParseException e) {
             reportError(e);
         }
- 
-	/**
-	 * Handles warnings.
-	 * @param e the parsing exception
-	 */
+
+  /**
+   * Handles warnings.
+   * @param e the parsing exception
+   */
         public void warning(SAXParseException e) {
             reportError(e);
         }
 
-	/**
-	 * Outputs diagnostic messages.
-	 * @param e the parsing exception
-	 */
+  /**
+   * Outputs diagnostic messages.
+   * @param e the parsing exception
+   */
         private void reportError(SAXParseException e) {
             String msg = e.getMessage();
             String location = e.getSystemId();
             int line = e.getLineNumber();
-            
+
             System.err.print("Error: URI=" + location);
             System.err.println(" Line=" + line + ": " + msg);
         }
     }
-    
+
     /**
      * Do the actual transformation
-     * 
+     *
      * @param tr transformation to perform
      */
-    public void transform(Transformation tr) 
+    public void transform(Transformation tr)
         throws Exception {
-        
+
         if (debug) {
             System.err.println("xml file: " + tr.xmlFileName);
             System.err.println("out file: " + tr.outFileName);
@@ -297,13 +297,13 @@ class CodeTransformerImpl {
         // source XML file
         DOMSource source = null;
         Document doc;
-        if (lastSource != null && 
+        if (lastSource != null &&
                 lastSourceFileName.equals(tr.xmlFileName)) {
             source = lastSource;
             doc = lastDoc;
         } else {
             // load XML file as DOM tree
-            DocumentBuilderFactory domFactory = 
+            DocumentBuilderFactory domFactory =
                 DocumentBuilderFactory.newInstance();
 
             if (tr.validate) {
@@ -313,7 +313,7 @@ class CodeTransformerImpl {
 
             domBuilder.setErrorHandler(new TransformerErrorHandler());
             doc = domBuilder.parse(new File(tr.xmlFileName));
-                
+
             // make source from it
             source = new DOMSource(doc);
         }
@@ -351,15 +351,15 @@ class CodeTransformerImpl {
             }
 
             // create Transformer that will aply stylesheet
-            StreamSource xslFile = new 
+            StreamSource xslFile = new
                 StreamSource(new File(tr.xslFileName));
-            Transformer transformer = 
+            Transformer transformer =
                 transformerFactory.newTransformer(xslFile);
 
             // pass parameters to Transformer
             for (int j = 0; j < tr.xslParamNames.size(); ++j) {
                 transformer.setParameter(
-                    (String)tr.xslParamNames.elementAt(j), 
+                    (String)tr.xslParamNames.elementAt(j),
                     tr.xslparamValues.elementAt(j));
             }
 
@@ -373,7 +373,7 @@ class CodeTransformerImpl {
      *
      * @param fullFileName Full path to the file to be created. If directory
      * in which file is to be created doesn't exists, it will be created
-     * @exception IOException is thrown if directory couldn't be created 
+     * @exception IOException is thrown if directory couldn't be created
      */
     private void makeDirectoryTree(String fullFileName) throws IOException {
         if (debug == true) {
@@ -422,7 +422,7 @@ class CodeTransformerImpl {
             writer.println("    native static String getContent(int index);");
             writer.println("}");
             writer.close();
-        }        
+        }
     }
 
     /**
@@ -432,7 +432,7 @@ class CodeTransformerImpl {
      * @param n the current node to be processed
      * @param className the name of the class to handle this node
      */
-    private void processLocalizedStrings(Node n, String className) 
+    private void processLocalizedStrings(Node n, String className)
         throws Exception {
         if (n.getNodeName().equals("localized_strings") &&
             (n instanceof Element)) {
@@ -446,7 +446,7 @@ class CodeTransformerImpl {
             String value = e.getAttribute("Value");
             // we use key value as index
             int valueIndex = Integer.parseInt(e.getAttribute("KeyValue"));
-            
+
             addLocalizedString(className, valueIndex, value);
         }
 
@@ -463,10 +463,10 @@ class CodeTransformerImpl {
      * Add one <localized_string> Element to the LocalizedStringSet of
      * the enclosing <localized_strings>.
      * @param className the locales handler
-     * @param valueIndex key for this entry 
+     * @param valueIndex key for this entry
      * @param value data for this entry
      */
-    private void addLocalizedString(String className, 
+    private void addLocalizedString(String className,
             int valueIndex, String value)
         throws Exception
     {
@@ -505,7 +505,7 @@ class LocalizedStringSet {
      * @param idx the key
      * @param value the data
      */
-    void put(int idx, String value) { 
+    void put(int idx, String value) {
         if (strings.size() < idx + 1) {
             strings.setSize(idx + 1);
         }
@@ -568,17 +568,17 @@ class CSourceWriter {
             list.add(strings[i]);
         }
 
-	/**
-	 * Sorting function.
-	 */
+  /**
+   * Sorting function.
+   */
         Collections.sort(list, new Comparator() {
-		/**
-		 * Comparison method.
-		 * @param o1 left hand operand
-		 * @param o2 right hand operand
-		 * @return positive value if o2 is greater than o1,
-		 * negative is o1 is less than o2 and zero if the same
-		 */
+    /**
+     * Comparison method.
+     * @param o1 left hand operand
+     * @param o2 right hand operand
+     * @return positive value if o2 is greater than o1,
+     * negative is o1 is less than o2 and zero if the same
+     */
             public int compare(Object o1, Object o2) {
                 LocalizedString r1 = (LocalizedString)o1;
                 LocalizedString r2 = (LocalizedString)o2;
@@ -597,7 +597,7 @@ class CSourceWriter {
      * @param classname the locale handler
      */
     void writeCSource(LocalizedStringSet locale,
-                      String filename, String classname) 
+                      String filename, String classname)
          throws IOException
     {
         this.locale = locale;
@@ -612,8 +612,8 @@ class CSourceWriter {
 
         try {
             int type = writeOptimizedArray();
-            
-            pl("KNI_RETURNTYPE_OBJECT");
+
+            pl("KNIEXPORT KNI_RETURNTYPE_OBJECT");
             pl("KNIDECL(com_sun_midp_l10n_" + classname + "_getContent) {");
             if (type != UNICODE) {
                 pl("    char stackbuffer[128];");
@@ -651,7 +651,7 @@ class CSourceWriter {
         } catch (Throwable t) {
             t.printStackTrace();
         }
- 
+
         writer.close();
     }
 
@@ -690,7 +690,7 @@ class CSourceWriter {
     /**
      * Write the string data using UTF8 or UNICODE, depending on which
      * is smaller.
-     * @return the storage type 
+     * @return the storage type
      */
     int writeOptimizedArray() throws Throwable {
         // (1) Sort all strings and then merge them into a single String.
@@ -879,8 +879,8 @@ class CSourceWriter {
         for (int i=0; i<strings.length; i++) {
             LocalizedString r = strings[i];
             if (r == null) {
-                System.err.println("Warning: resource index " + i + 
-                                   " not defined in class " + 
+                System.err.println("Warning: resource index " + i +
+                                   " not defined in class " +
                                    locale.className);
             } else {
                 if (maxOffset < r.offset) {

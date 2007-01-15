@@ -836,15 +836,20 @@ class TextFieldLFImpl extends ItemLFImpl implements
         int newXOffset = 0;
         
         g.setClip(0, 0, w, h);
-        
+
         if (opChar != 0) {
             cursor = new TextCursor(cursor);
         }
         String str = getDisplayString(dca, opChar, constraints,
                                       cursor, true);
-        
-        newXOffset = Text.paintLine(g, str, font, fgColor, 
-                                    w, h, cursor, offset);
+
+        if (hasFocus) {
+            newXOffset = Text.paintLine(g, str, font, fgColor,
+                                        w, h, cursor, offset);
+        } else {
+            Text.drawTruncString(g, str, font, fgColor, w);
+            newXOffset = 0;
+        }
 
         // just correct cursor index if the charracter has
         // been already committed 

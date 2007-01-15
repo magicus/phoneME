@@ -29,12 +29,6 @@ package javax.microedition.lcdui;
 /* This is used to implement the communication between MIDlet and Display */
 import javax.microedition.midlet.MIDlet;
 
-import com.sun.midp.main.MIDletControllerEventProducer;
-import com.sun.midp.midlet.MIDletEventConsumer;
-import com.sun.midp.midlet.MIDletPeer;
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
-
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.Permissions;
@@ -393,8 +387,17 @@ public class Display {
     /** Current display height. */
     static int HEIGHT;
 
+    /**
+     * True, if this displays need to draw the trusted icon
+     * in the top status bar.
+     */
+    static boolean drawSuiteTrustedIcon;
+
     /** ID of this Display. */
     int displayId;
+
+    /** Class name of the MIDlet that owns this Display. */
+    String nameOfOwner;
 
     /** If the current display mode is known. 
      * We don't know it before the lSetFullScreen is
@@ -422,6 +425,9 @@ public class Display {
     /** Display event consumer helper class. */
     DisplayEventConsumerImpl consumer;
 
+    /** Foreground event consumer helper class. */
+    ForegroundEventConsumerImpl foregroundConsumer;
+
     // #ifdef ENABLE_CHAMELEON
     /** Chameleon Display tunnel helper class */
     ChamDisplayTunnel cham_tunnel;
@@ -429,11 +435,8 @@ public class Display {
     int[] region;
     // #endif ENABLE_CHAMELEON
 
-    /** Consumer of midlet lifecycle events. */
-    MIDletEventConsumer midletEventConsumer;
-
     /** Producer of midlet lifecycle events. */
-    MIDletControllerEventProducer midletControllerEventProducer;
+    ForegroundController foregroundController;
 
     /** Display event handler with private methods. */
     /* private */ static DisplayEventHandlerImpl displayEventHandlerImpl;
@@ -452,9 +455,9 @@ public class Display {
     /** Device Access manager. */
     private static DisplayDeviceAccess deviceAccess;
 
-    /** Cached reference to the MIDletControllerEventProducer. */
-    private static MIDletControllerEventProducer
-        defaultMidletControllerEventProducer;
+    /** Cached reference to the ForegroundController. */
+    private static ForegroundController
+        defaultForegroundController;
 
     /** Producer for Display events. */
     private static DisplayEventProducer displayEventProducer;
@@ -467,15 +470,6 @@ public class Display {
 
     /** About abstract command. */
     private static Command aboutCommand;
-
-    /** Command to terminate a headless midlet */
-    private static Command exitCommand;
-
-    /** Command to bring a headless midlet into the background state */
-
-    // #ifdef ENABLE_MULTIPLE_ISOLATES
-    private static Command okCommand;
-    // #endif ENABLE_MULTIPLE_ISOLATES
 
     /** Device <code>Graphics</code> associated with this Display. */
     private Graphics screenGraphics;
@@ -520,10 +514,7 @@ public class Display {
      * of an alert. Note that this variable is not cleared after screen change
      * processing completes. When the system is quiescent, pendingCurrent will
      * equal current. When there is a screen-change event in the queue,
-     * pendingCurrent will generally differ from current. This is not true
-     * in the following special case: if the application hasn't called
-     * setCurrent, current may point to a headlessAlert but pendingCurrent
-     * will be null.
+     * pendingCurrent will generally differ from current.
      */
     private DisplayableLF pendingCurrent;
 
@@ -574,6 +565,7 @@ public class Display {
 
         chamImageTunnel = new ChamImageTunnel();
         SkinResources.initImageTunnel(chamImageTunnel);
+        SkinResources.setScreenSize(WIDTH, HEIGHT);
 
         // IMPL_NOTE: In the MVM mode it's important to do the first
         //   skin resources loading from the AMS isolate, since they
@@ -600,49 +592,51 @@ public class Display {
         aboutCommand = new Command(Resource.getString(ResourceConstants.ABOUT),
                                    Command.HELP, 3);
         aboutCommand.setInternalID(EventConstants.ABOUT_REQUESTED);
-
-        exitCommand = new Command(Resource.getString(ResourceConstants.EXIT),
-                                  Command.EXIT, 1);
-        // #ifdef ENABLE_MULTIPLE_ISOLATES
-        okCommand = new Command(Resource.getString(ResourceConstants.OK),
-                                Command.OK, 2);
-        // #endif ENABLE_MULTIPLE_ISOLATES
     }
 
 
     /**
      * Initializes the display with an accessor helper class.
      *
-     * @param c MIDletEventConsumer I/F implementor
+     * @param ownerName class name of the MIDlet that owns this Display
      */
-    Display(MIDletEventConsumer c) {
-        midletEventConsumer = c;
+    Display(String ownerName) {
+        nameOfOwner = ownerName;
 
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
 
+        // #ifdef ENABLE_CHAMELEON
+        SkinResources.initDisplayAccess(accessor);
+        // #endif ENABLE_CHAMELEON
+
         /** create DisplayEventConsumer I/F implementor */
         consumer = new DisplayEventConsumerImpl();
+
+        /** create ForegroundEventConsumer I/F implementor */
+        foregroundConsumer = new ForegroundEventConsumerImpl();
 
         /*
          * Initialize midlet controller event producer from the default.
          * This is useful so that subclasses can override the producer for
          * testing purposes.
          */
-        midletControllerEventProducer = defaultMidletControllerEventProducer;
+        foregroundController = defaultForegroundController;
 
-        /** register display in container and unique Id for it
-         * ID is set inside DisplayContainer.addDisplay()
-         * in DisplayAcccess.setdisplayId() call.
-         * Thus explicit displayId assignment here is redundant.
+        /*
+         * Register the display in container and get a unique ID for it
+         * the ID is set inside DisplayContainer.addDisplay() using the
+         * DisplayAcccess.setDisplayId() method.
          */
-        /* displayId = */ displayContainer.addDisplay(accessor);
+        displayContainer.addDisplay(accessor);
+
+        foregroundController.registerDisplay(displayId, nameOfOwner);
 
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     WIDTH,
                                                     HEIGHT);
 
-        drawTrustedIcon0(displayId, false);
+        drawTrustedIcon0(displayId, drawSuiteTrustedIcon);
 
         // #ifdef ENABLE_CHAMELEON
         graphicsQ = new CGraphicsQ();
@@ -656,21 +650,32 @@ public class Display {
      * Initializes the display class. Shall be called only from
      * displayEventHandlerImpl initialization methods.
      *
-     * @param theMIDletControllerEventProducer producer for midlet events
+     * @param theForegroundController producer for midlet events
      * @param theDisplayEventProducer producer for display events
      * @param theRepaintEventProducer producer for repaint events
      */
     static void initClass(
-        MIDletControllerEventProducer theMIDletControllerEventProducer,
+        ForegroundController theForegroundController,
         DisplayEventProducer theDisplayEventProducer,
         RepaintEventProducer theRepaintEventProducer,
         DisplayContainer theDisplayContainer) {
 
-        defaultMidletControllerEventProducer =
-            theMIDletControllerEventProducer;
+        defaultForegroundController =
+            theForegroundController;
         displayEventProducer = theDisplayEventProducer;
         repaintEventProducer = theRepaintEventProducer;
         displayContainer = theDisplayContainer;
+    }
+
+    /**
+     * Initialize per suite data of the display class. Shall be called only
+     * from displayEventHandlerImpl initialization methods.
+     *
+     * @param drawTrustedIcon true, to draw the trusted icon in the upper
+     *                status bar for every display of this suite
+     */
+    static void initSuiteData(boolean drawTrustedIcon) {
+        drawSuiteTrustedIcon = drawTrustedIcon;
     }
 
 /*
@@ -687,22 +692,16 @@ public class Display {
      * @throws NullPointerException if <code>m</code> is <code>null</code>
      */
     public static Display getDisplay(MIDlet m) {
-        MIDletPeer ms;
-        Display d;
+        String owner = m.getClass().getName();
+        DisplayAccess da = displayContainer.findDisplayByOwner(owner);
 
-        synchronized (LCDUILock) {
-            // Find or create if necessary the Display
-            ms = MIDletPeer.getMIDletPeer(classSecurityToken, m);
-            if (ms != null) {
-                d = ms.getDisplay();
-                if (d != null) {
-                    return d;
-                }
-            }
-
-            throw new
-                IllegalStateException("No display created for given MIDlet");
+        if (da != null) {
+            return da.getDisplay();
         }
+       
+        Display display = new Display(owner);
+
+        return display;
     }
 
     /**
@@ -837,11 +836,15 @@ public class Display {
      */
     public Displayable getCurrent() {
         synchronized (LCDUILock) {
-            return (current == null)
-                    ? ((transitionCurrent == null)
-                            ? null : transitionCurrent.lGetDisplayable())
-                    : (isHeadless(current)
-                            ? null : current.lGetDisplayable());
+            if (current != null) {
+                return current.lGetDisplayable();
+            }
+
+            if (transitionCurrent != null) {
+                return transitionCurrent.lGetDisplayable();
+            }
+
+            return null;
         }
     }
 
@@ -968,31 +971,24 @@ public class Display {
                 /*
                  * This implicitly goes back to the current screen, or to a
                  * pending screen, if there is one. We disallow stacking of
-                 * alerts by throwing IAE. Exceptions to this rule: if the
-                 * pending screen is the headless alert, or if this alert is
-                 * the same one that is pending.
+                 * alerts by throwing IAE.
                  *
                  * Existing midlets may be intolerant of the rule that throws
                  * IAE if alerts are stacked. One approach that would allow
                  * this is to have the second alert inherit the return screen
                  * from the first alert.
                  */
-                if (pendingCurrent == null) {
-                    ((Alert)nextDisplayable).setReturnScreen(
-                        getHeadlessDisplayable());
-                } else if (nextDisplayable
-                           == pendingCurrent.lGetDisplayable()) {
-                    // do nothing; this case is allowed
-                } else {
-                    Displayable returnScreen =
-                        pendingCurrent.lGetDisplayable();
+                if (pendingCurrent != null) {
+                    if (nextDisplayable != pendingCurrent.lGetDisplayable()) {
+                        Displayable returnScreen =
+                            pendingCurrent.lGetDisplayable();
 
-                    if (!isHeadless(pendingCurrent)
-                        && returnScreen instanceof Alert) {
-                        throw new IllegalArgumentException();
+                        if (returnScreen instanceof Alert) {
+                            throw new IllegalArgumentException();
+                        }
+
+                        ((Alert)nextDisplayable).setReturnScreen(returnScreen);
                     }
-
-                    ((Alert)nextDisplayable).setReturnScreen(returnScreen);
                 }
             }
 
@@ -1428,8 +1424,7 @@ public class Display {
                  * foreground. *** No real screen change is needed. ***
                  * Just request AMS to put this display in the background.
                  */
-                midletControllerEventProducer.
-                     sendDisplayBackgroundRequestEvent(displayId);
+                foregroundController.requestBackground(displayId);
             }
 
             return;
@@ -1440,16 +1435,14 @@ public class Display {
                 // A non-alert or null was replaced by an alert
                 wantsForeground = WANTS_FOREGROUND_FOR_ALERT;
 
-                midletControllerEventProducer.
-                    sendDisplayForegroundRequestEvent(displayId, true);
+                foregroundController.requestForeground(displayId, true);
             }
         } else {
             if (wantsForeground != WANTS_FOREGROUND) {
                 // An alert or null was replaced by non-alert
                 wantsForeground = WANTS_FOREGROUND;
 
-                midletControllerEventProducer.
-                    sendDisplayForegroundRequestEvent(displayId, false);
+                foregroundController.requestForeground(displayId, false);
             }
         }
 
@@ -1707,15 +1700,17 @@ public class Display {
      *
      * @param scrollPosition vertical scroll position.
      * @param scrollProportion vertical scroll proportion.
+     * @return true if set vertical scroll occues
      */
-    void setVerticalScroll(int scrollPosition, int scrollProportion) {
+    boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
         // #ifdef ENABLE_CHAMELEON
         // Establish the scroll properties in Chameleon
         // This call will not result in any call into application code
-        window.setVerticalScroll(scrollPosition, scrollProportion);
+        return window.setVerticalScroll(scrollPosition, scrollProportion);
         // #else
         // Does nothing since Platform Form widget manages
 	// scrolling internally
+	return false;
         // #endif ENABLE_CHAMELEON
     }
 
@@ -2211,9 +2206,9 @@ public class Display {
 
     private native boolean getReverseOrientation0();
 
-    public static native int getScreenWidth0();
+    static native int getScreenWidth0();
 
-    public static native int getScreenHeight0();
+    static native int getScreenHeight0();
 
     /**
      * Play an Alert sound.
@@ -2402,6 +2397,22 @@ public class Display {
         }
 
         /**
+        * Called to get current display width.
+        * @return Display width.
+        */
+        public int getDisplayWidth() {
+          return Display.WIDTH;
+        }
+    
+        /**
+        * Called to get current display height.
+        * @return Display height.
+        */
+        public int getDisplayHeight() {
+          return Display.HEIGHT;
+        }
+
+        /**
          * Called to get key mask of all the keys that were pressed.
          * DisplayAccess I/F method.
          *
@@ -2474,22 +2485,13 @@ public class Display {
         }
 
         /**
-         * Set the trusted icon for this Display. When ever this display is in
-         * the foreground the given icon will be displayed in the area
-         * reserved
-         * for the trusted icon. Only callers with the internal MIDP
-         * permission can use this method.
+         * Get the class name of the MIDlet that owns this display.
          * DisplayAccess I/F method.
          *
-         * @param token security token of the call that has internal MIDP
-         *              permission
-         * @param drawTrusted true to draw the trusted icon
+         * @return name of the MIDlet that owns this Display
          */
-        public void setTrustedIcon(SecurityToken token, boolean drawTrusted) {
-
-            token.checkIfPermissionAllowed(Permissions.MIDP);
-
-            drawTrustedIcon0(displayId, drawTrusted);
+        public String getNameOfOwner() {
+            return Display.this.nameOfOwner;
         }
 
         /**
@@ -2501,6 +2503,7 @@ public class Display {
         public int getDisplayId() {
             return Display.this.displayId;
         }
+
         /**
          * Sets the ID of this display.
          * Shall be called only from DisplayContainer.addDisplay() during
@@ -2514,16 +2517,6 @@ public class Display {
         }
 
         /**
-         * Get the MIDletEventConsumer associated with this display.
-         * DisplayAccess I/F method.
-         *
-         * @return Consumer of midlet events that go through this display
-         */
-        public MIDletEventConsumer getMIDletEventConsumer() {
-            return Display.this.midletEventConsumer;
-        }
-
-        /**
          * Get the DisplayEventConsumer associated with this display.
          * DisplayAccess I/F method.
          *
@@ -2531,6 +2524,16 @@ public class Display {
          */
         public DisplayEventConsumer getDisplayEventConsumer() {
             return Display.this.consumer;
+        }
+
+        /**
+         * Get the ForegroundEventConsumer associated with this display.
+         * DisplayAccess I/F method.
+         *
+         * @return Consumer of foreground events that go through this display
+         */
+        public ForegroundEventConsumer getForegroundEventConsumer() {
+            return Display.this.foregroundConsumer;
         }
     } // END DisplayAccessImpl Class
 
@@ -2911,42 +2914,28 @@ public class Display {
             // repaintEventProducer.serviceRepaints();
             getCallSerially();
         }
+    } // END DisplayEventConsumerImpl Class
+
+    /** This is nested inside Display so that it can see the private fields. */
+    class ForegroundEventConsumerImpl implements ForegroundEventConsumer {
 
         /**
-         * Called by event delivery when MIDlet Controller (in AMS Isolate)
-         * notifies MIdlet and its display that there is a change in its foreground
-         * status (it has been moved to foreground or background).
-         * DisplayEventConsumer I/F method.
+         * Called by event delivery when the display manager (in AMS Isolate) 
+         * notifies a display that it has been moved to the foreground.
+         *
+         * ForegroundEventConsumer I/F method.
          *
          * This should not be called while
          * holding the LCDUILock.
-         *
-         * TBD: split into 2 methods: for foreground & background
-         *
-         * @param foreground A flag indicating the new foreground status.
-         *                   true if the Display should be put in
-         *                   the foreground,
-         *                   false - in the background.
          */
-        public void handleDisplayForegroundNotifyEvent(boolean foreground) {
+        public void handleDisplayForegroundNotifyEvent() {
             // A copy of current LF object
-            DisplayableLF currentCopy = current;
+            DisplayableLF currentCopy;
             synchronized (LCDUILock) {
-                if (hasForeground == foreground) {
+                if (hasForeground) {
                     return;
                 }
 
-                if (current == null) {
-                    /*
-                     * Unlike normal displayable switching, when switching to
-                     * the headless displayable, don't set wantsForeground to
-                     * true. Instead, force it to be current.
-                     * IMPL NOTE: this probably leaves the headless
-                     * displayable in the incorrect state.
-                     */
-                    current = getHeadlessDisplayable().displayableLF;
-                    current.lSetDisplay(Display.this);
-                }
                 currentCopy = current;
                 // When foreground-background state changes we loose control
                 // under the current display mode on the device
@@ -2957,170 +2946,117 @@ public class Display {
             // SYNC NOTE: for Canvas and CustomItem, dsHide/Show() will
             // call into app functions like hide/showNotify().
             // So we call it outside LCDUILock.
-            if (foreground) {
-                // Notify current to allocate resource and show.
-                // NOTE: currentCopy should never be null. If the current
-                // midlet has not set a displayable, it should be set to
-                // the headless midlet alert
-                if (currentCopy != null) {
-                    currentCopy.uCallShow();
-                    // #ifdef ENABLE_CHAMELEON
-                    // Notify Chameleon that this displayable is being shown.
-                    // This call will not result in any call into
-                    // application code
-                    window.showDisplayable(
-                        currentCopy.lGetDisplayable(),
-                        currentCopy.lGetDisplayable().getHeight());
-                    // #endif ENABLE_CHAMELEON
-                }
+            // Notify current to allocate resource and show.
+            if (currentCopy != null) {
+                currentCopy.uCallShow();
+                // #ifdef ENABLE_CHAMELEON
+                // Notify Chameleon that this displayable is being shown.
+                // This call will not result in any call into
+                // application code
+                window.showDisplayable(
+                    currentCopy.lGetDisplayable(),
+                    currentCopy.lGetDisplayable().getHeight());
+                // #endif ENABLE_CHAMELEON
+            }
 
-                synchronized (LCDUILock) {
+            synchronized (LCDUILock) {
 
-                    // Update hasForeground after uCallShow to allow
-                    // isShown() to return false unitl now
-                    hasForeground = true;
+                // Update hasForeground after uCallShow to allow
+                // isShown() to return false unitl now
+                hasForeground = true;
 
-                    gainedForeground0(displayId);
+                gainedForeground0(displayId);
 
-                    // #ifndef ENABLE_CHAMELEON
-                    // NOTE: Chameleon does not need to do any screen erasing
-                    // because its paint engine will automatically clear
-                    // the screen (assuming there is a displayable to show).
-                    // If the midlet is headless, the headlessAlert
-                    // will be shown to alert the user.
-                    /*
-                     * Clear the screen, because the last display
-                     * could have a displayable smaller than
-                     * the current display.
-                     */
-                    screenGraphics.reset(0, 0, Display.WIDTH, Display.HEIGHT);
-                    screenGraphics.setColor(Constants.ERASE_COLOR);
-                    screenGraphics.fillRect(0, 0,
-                                            Display.WIDTH, Display.HEIGHT);
-                    // #endif ENABLE_CHAMELEON
+                // #ifndef ENABLE_CHAMELEON
+                // NOTE: Chameleon does not need to do any screen erasing
+                // because its paint engine will automatically clear
+                // the screen (assuming there is a displayable to show).
+                /*
+                 * Clear the screen, because the last display
+                 * could have a displayable smaller than
+                 * the current display.
+                 */
+                screenGraphics.reset(0, 0, Display.WIDTH, Display.HEIGHT);
+                screenGraphics.setColor(Constants.ERASE_COLOR);
+                screenGraphics.fillRect(0, 0,
+                                        Display.WIDTH, Display.HEIGHT);
+                // #endif ENABLE_CHAMELEON
 
-                    // update the command set after uCallShow()
-                    // in which new screen commands could be created and
-                    // current Item could be set.
-                    updateCommandSet();
+                // update the command set after uCallShow()
+                // in which new screen commands could be created and
+                // current Item could be set.
+                updateCommandSet();
 
-                    // reset the vibrator and blacklight
-                    vibrate0(displayId, 0);
-                    deviceAccess.flashBacklight(displayId, 0);
+                // reset the vibrator and blacklight
+                vibrate0(displayId, 0);
+                deviceAccess.flashBacklight(displayId, 0);
 
-                    // draw correct trusted icon
-                    MIDletStateHandler msHandler =
-                        MIDletStateHandler.getMidletStateHandler();
-                    MIDletSuite midletSuite = msHandler.getMIDletSuite();
-                    if (midletSuite != null) {
-                        drawTrustedIcon0(displayId, midletSuite.isTrusted());
-                    } else {
-                        drawTrustedIcon0(displayId, false);
-                    }
-
-                    // uCallShow does the rest of the settings:
-                    // scroll indicators,
-                    // correct screen mode (full or normal)
-
-                } // synchronized
+                // draw correct trusted icon
+                drawTrustedIcon0(displayId, drawSuiteTrustedIcon);
 
 
-                // SYNC NOTE: The implementation of dsPaint() could call
-                // out to MIDlet's paint() function. So we have to call it
-                // outside LCDUILock. dsPaint will use LCDUILock to lock
-                // around its internal handling.
-                callPaint(0, 0, Display.WIDTH, Display.HEIGHT, null);
+                // uCallShow does the rest of the settings:
+                // scroll indicators,
+                // correct screen mode (full or normal)
 
-                if (Constants.MEASURE_STARTUP) {
-                    if (current != null) {
-                        System.err.println("Startup Time: End at "
-                                           +System.currentTimeMillis());
-                    }
-                }
-            } else {
-                synchronized (Display.LCDUILock) {
-                    // Update hasForeground after uCallFreeze to allow
-                    // isShown() to return false unitl now
-                    hasForeground = false;
-                }
+            } // synchronized
 
-                // Notify current screen to freeze its resource
-                if (currentCopy != null) {
-                    // #ifdef ENABLE_CHAMELEON
-                    // Notify Chameleon that the current displayable is being hidden
-                    // This call will not result in any call into application code
-                    window.hideDisplayable(currentCopy.lGetDisplayable());
-                    // #endif ENABLE_CHAMELEON
-                    currentCopy.uCallFreeze();
+
+            // SYNC NOTE: The implementation of dsPaint() could call
+            // out to MIDlet's paint() function. So we have to call it
+            // outside LCDUILock. dsPaint will use LCDUILock to lock
+            // around its internal handling.
+            callPaint(0, 0, Display.WIDTH, Display.HEIGHT, null);
+
+            if (Constants.MEASURE_STARTUP) {
+                if (current != null) {
+                    System.err.println("Startup Time: End at "
+                                       +System.currentTimeMillis());
                 }
             }
         }
-    } // END DisplayEventConsumerImpl Class
 
+        /**
+         * Called by event delivery when the display manager (in AMS Isolate) 
+         * notifies a display that it has been moved to the background.
+         *
+         * ForegroundEventConsumer I/F method.
+         *
+         * This should not be called while
+         * holding the LCDUILock.
+         */
+        public void handleDisplayBackgroundNotifyEvent() {
+            // A copy of current LF object
+            DisplayableLF currentCopy;
 
-    /**
-     * Returns a Displayable to be shown for a midlet is brought
-     * into foreground but that midlet does not set displayable to
-     * a non-null object.
-     *
-     * @return displayable object to be displayed for a headless midlet
-     */
-    private Displayable getHeadlessDisplayable() {
-        return new HeadlessAlert();
-    }
-
-    /**
-     * Returns a boolean indicating whether the given displayableLF is the LF
-     * for the special headless Displayable.
-     */
-    private boolean isHeadless(DisplayableLF dlf) {
-        return (dlf.lGetDisplayable() instanceof HeadlessAlert);
-    }
-
-    // ************** inner class Headless Alert *****************
-
-    /**
-     * HeadlessAlert is shown when a midlet is brought in foreground and
-     * that midlet did not setCurrent to a non-null Displayable.
-     */
-    class HeadlessAlert extends Alert {
-
-        HeadlessAlert() {
-            super(null,
-                  Resource.getString(ResourceConstants.LCDUI_DISPLAY_HEADLESS),
-	          null, AlertType.INFO);
-            setTimeout(Alert.FOREVER);
-            addCommand(exitCommand);
-            // #ifdef ENABLE_MULTIPLE_ISOLATES
-            addCommand(okCommand);
-            // #endif ENABLE_MULTIPLE_ISOLATES
-
-            setCommandListener(new CommandListener(){
-                public void commandAction(Command c, Displayable d) {
-                    if (c == exitCommand) {
-                        /**
-                         * We need to destroy current midlet -
-                         * the owner of this alert:
-                         * to generate MIDLET_DESTROY_REQUEST
-                         * event for a given midlet to MIDlet Controller
-                         * in AMS Isolate.
-                         */
-                        Display.this.midletControllerEventProducer.
-                            sendMIDletDestroyRequestEvent(
-                            Display.this.displayId);
-
-                    }
-                    // #ifdef ENABLE_MULTIPLE_ISOLATES
-                    else if (c == okCommand) {
-                        Display.this.midletControllerEventProducer.
-                            sendDisplayBackgroundRequestEvent(
-                            Display.this.displayId);
-                    }
-                    // #endif ENABLE_MULTIPLE_ISOLATES
+            synchronized (LCDUILock) {
+                if (!hasForeground) {
+                    return;
                 }
-            });
+
+                currentCopy = current;
+
+                // Update hasForeground after uCallFreeze to allow
+                // isShown() to return false unitl now
+                hasForeground = false;
+            }
+
+            // SYNC NOTE: for Canvas and CustomItem, dsHide/Show() will
+            // call into app functions like hide/showNotify().
+            // So we call it outside LCDUILock.
+
+            // Notify current screen to freeze its resource
+            if (currentCopy != null) {
+                // #ifdef ENABLE_CHAMELEON
+                // Notify Chameleon that the current displayable is being
+                // hidden
+                // This call will not result in any call into application code
+                window.hideDisplayable(currentCopy.lGetDisplayable());
+                // #endif ENABLE_CHAMELEON
+                currentCopy.uCallFreeze();
+            }
         }
-    }
+    } // END ForegroundEventConsumerImpl Class
 
     // *************** tracing support ***************
 

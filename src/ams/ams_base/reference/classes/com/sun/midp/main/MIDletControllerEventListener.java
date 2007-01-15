@@ -36,6 +36,7 @@ import com.sun.midp.events.EventListener;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
+import com.sun.midp.configurator.Constants;
 
 /**
  * Provides initial event processing for MIDletProxyList.
@@ -73,6 +74,10 @@ class MIDletControllerEventListener implements EventListener {
             EventTypes.MIDLET_DESTROYED_NOTIFICATION, this);
         eventQueue.registerEventListener(
             EventTypes.MIDLET_RS_PAUSED_NOTIFICATION, this);
+        eventQueue.registerEventListener(
+            EventTypes.MIDLET_RESUME_REQUEST, this);
+        eventQueue.registerEventListener(
+            EventTypes.DISPLAY_CREATED_NOTIFICATION, this);
         eventQueue.registerEventListener(
             EventTypes.FOREGROUND_REQUEST_EVENT, this);
         eventQueue.registerEventListener(
@@ -154,6 +159,24 @@ class MIDletControllerEventListener implements EventListener {
                 return;
 
             case EventTypes.SELECT_FOREGROUND_EVENT:
+
+                if (Constants.MEASURE_STARTUP) {
+
+                    // IMPL_NOTE: Usually MIDlet is explicitly switched to
+                    // background on a native event, e.g. HOME key pressing.
+                    // The native event handling is correct place to count
+                    // the time of background switching from. However, native
+                    // events handling is platform dependent, and in this way
+                    // we have to instrument lot of platform code. That's why
+                    // we selected this place as the the first shared place
+                    // to start the measuring from. The measured time is
+                    // less than the time experienced by user by the time to
+                    // map native event to MIDP SELECT_FOREGROUND_EVENT
+
+                    System.err.println("Switch To Background Time: Begin at " +
+                        System.currentTimeMillis());
+                }
+
                 midletControllerEventConsumer.
                     handleMIDletForegroundSelectEvent(nativeEvent.intParam1);
                 return;
@@ -175,50 +198,63 @@ class MIDletControllerEventListener implements EventListener {
                 return;
 
             case EventTypes.PREEMPT_EVENT:
-                if (nativeEvent.intParam2 != 0)
+                if (nativeEvent.intParam2 != 0) {
                     midletControllerEventConsumer.
                         handleDisplayPreemptStartEvent(
                             nativeEvent.intParam1,
                             nativeEvent.intParam4);
-                else
+                } else {
                     midletControllerEventConsumer.
                         handleDisplayPreemptStopEvent(
                             nativeEvent.intParam1,
                             nativeEvent.intParam4);
+                }
+
                 return;
 
             case EventTypes.MIDLET_CREATED_NOTIFICATION:
                 midletControllerEventConsumer.handleMIDletCreateNotifyEvent(
                     nativeEvent.intParam1,
+                    nativeEvent.stringParam1,
                     nativeEvent.intParam2,
                     nativeEvent.intParam3,
-                    nativeEvent.intParam4,
-                    nativeEvent.stringParam1,
                     nativeEvent.stringParam2);
                 return;
 
             case EventTypes.MIDLET_ACTIVE_NOTIFICATION:
                 midletControllerEventConsumer.handleMIDletActiveNotifyEvent(
                     nativeEvent.intParam1,
-                    nativeEvent.intParam4);
+                    nativeEvent.stringParam1);
                 return;
 
             case EventTypes.MIDLET_PAUSED_NOTIFICATION:
                 midletControllerEventConsumer.handleMIDletPauseNotifyEvent(
                     nativeEvent.intParam1,
-                    nativeEvent.intParam4);
+                    nativeEvent.stringParam1);
                 return;
 
             case EventTypes.MIDLET_DESTROYED_NOTIFICATION:
                 midletControllerEventConsumer.handleMIDletDestroyNotifyEvent(
                     nativeEvent.intParam1,
-                    nativeEvent.intParam4);
+                    nativeEvent.stringParam1);
                 return;
+
+            case EventTypes.MIDLET_RESUME_REQUEST:
+                midletControllerEventConsumer.handleMIDletResumeRequestEvent(
+                    nativeEvent.intParam1,
+                    nativeEvent.stringParam1);
 
             case EventTypes.MIDLET_RS_PAUSED_NOTIFICATION:
                 midletControllerEventConsumer.handleMIDletRsPauseNotifyEvent(
                     nativeEvent.intParam1,
-                    nativeEvent.intParam4);
+                    nativeEvent.stringParam1);
+                return;
+
+            case EventTypes.DISPLAY_CREATED_NOTIFICATION:
+                midletControllerEventConsumer.handleDisplayCreateNotifyEvent(
+                    nativeEvent.intParam1,
+                    nativeEvent.intParam2,
+                    nativeEvent.stringParam1);
                 return;
 
             case EventTypes.FOREGROUND_REQUEST_EVENT:
@@ -239,8 +275,8 @@ class MIDletControllerEventListener implements EventListener {
             case EventTypes.MIDLET_START_ERROR_EVENT:
                 midletControllerEventConsumer.handleMIDletStartErrorEvent(
                     nativeEvent.intParam1,
-                    nativeEvent.intParam2,
                     nativeEvent.stringParam1,
+                    nativeEvent.intParam2,
                     nativeEvent.intParam3);
                 return;
 
@@ -263,11 +299,6 @@ class MIDletControllerEventListener implements EventListener {
                     nativeEvent.intParam1,
                     nativeEvent.intParam4);
                 return;
-
-            case EventTypes.MIDLET_RESUME_REQUEST:
-                midletControllerEventConsumer.handleMIDletResumeRequestEvent(
-                    nativeEvent.intParam1,
-                    nativeEvent.intParam4);
 
             default:
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {

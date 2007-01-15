@@ -27,7 +27,6 @@
 package com.sun.midp.lcdui;
 
 import javax.microedition.lcdui.*;
-import com.sun.midp.midlet.MIDletEventConsumer;
 import com.sun.midp.events.EventQueue;
 
 import com.sun.midp.log.Logging;
@@ -37,7 +36,7 @@ import com.sun.midp.log.LogChannels;
  * Display a preempting alert and wait for the user to acknowledge it.
  */
 public class SystemAlert extends Alert
-    implements CommandListener, MIDletEventConsumer {
+    implements CommandListener {
 
     /** Preempt token for displaying errors. */
     private Object preemptToken;
@@ -61,13 +60,14 @@ public class SystemAlert extends Alert
         super(title, text, image, type);
 
         setTimeout(Alert.FOREVER);
+
         setCommandListener(this);
 
         this.displayEventHandler = displayEventHandler;
 
         try {
             preemptToken =
-                displayEventHandler.preemptDisplay(this, this, true);
+                displayEventHandler.preemptDisplay(this, true);
         } catch (Throwable e) {
             if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                 Logging.report(Logging.WARNING, LogChannels.LC_CORE,
@@ -114,35 +114,6 @@ public class SystemAlert extends Alert
      * @param s the Displayable the command was on.
      */
     public void commandAction(Command c, Displayable s) {
-        dismiss();
-    }
-
-    /**
-     * Pause the current foreground MIDlet and return to the
-     * AMS or "selector" to possibly run another MIDlet in the
-     * currently active suite.
-     * <p>
-     * This will end the error alert.
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletPauseEvent() {
-        dismiss();
-    }
- 
-    /**
-     * Start the currently suspended state. This is not apply to
-     * the error alert.
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletActivateEvent() {}
- 
-    /**
-     * Destroy the MIDlet given midlet.
-     * <p>
-     * This is will end error alert.
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletDestroyEvent() {
         dismiss();
     }
 }

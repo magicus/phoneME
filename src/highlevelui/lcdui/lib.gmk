@@ -71,6 +71,10 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEvent.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventProducer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventConsumer.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventListener.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ForegroundEventProducer.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ForegroundEventConsumer.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ForegroundEventListener.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/RepaintEvent.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/RepaintEventProducer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEventListener.java \
@@ -81,6 +85,7 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventHandlerFactory.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DynamicCharacterArray.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDeviceAccess.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ForegroundController.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/SystemAlert.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/LayerManager.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameCanvas.java \
@@ -110,7 +115,6 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Alert.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/CustomItem.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/ItemCommandListener.java \
-    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/DisplayEventListener.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/DisplayEventHandlerImpl.java
 
 # I3 Test file for this library

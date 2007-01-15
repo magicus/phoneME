@@ -32,9 +32,6 @@ import com.sun.midp.events.EventQueue;
 import com.sun.midp.events.EventListener;
 import com.sun.midp.events.NativeEvent;
 
-import com.sun.midp.lcdui.DisplayContainer;
-import com.sun.midp.lcdui.DisplayAccess;
-
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
@@ -46,29 +43,35 @@ import com.sun.midp.log.LogChannels;
  *
  */
 public class MIDletEventListener implements EventListener {
-
-    /** Active displays. */
-    private DisplayContainer displayContainer;
-    
     /** Cached reference to the MIDP event queue. */
     private EventQueue eventQueue;
+
+    /** The controller of MIDlets. */
+    private MIDletStateHandler midletStateHandler;
+
+    /** This class has a different security domain than the application. */
+    private static SecurityToken classSecurityToken;
 
     /**
      * The constructor for the default event handler for LCDUI.
      *
-     * @param  token security token that controls instance creation.
+     * @param  token security token that has AMS permission to
+     *         use restricted MIDlet state handler methods
+     * @param theMIDletStateHandler the midlet state handler
      * @param theEventQueue the event queue
-     * @param theDisplayContainer container for display objects
      */
     public MIDletEventListener(
         SecurityToken token,
-        EventQueue theEventQueue, 
-        DisplayContainer theDisplayContainer) {
+        MIDletStateHandler theMIDletStateHandler,
+        EventQueue theEventQueue) {
             
-        token.checkIfPermissionAllowed(Permissions.MIDP);
-        
+        token.checkIfPermissionAllowed(Permissions.AMS);
+
+        classSecurityToken = token;
+
+        midletStateHandler = theMIDletStateHandler;
+
         eventQueue = theEventQueue;
-        displayContainer = theDisplayContainer;
 
         /*
          * All events handled by this object are of NativeEventClass
@@ -80,7 +83,8 @@ public class MIDletEventListener implements EventListener {
         eventQueue.registerEventListener(EventTypes.ACTIVATE_MIDLET_EVENT, 
 					this);
         eventQueue.registerEventListener(EventTypes.PAUSE_MIDLET_EVENT, this);
-        eventQueue.registerEventListener(EventTypes.DESTROY_MIDLET_EVENT, this);
+        eventQueue.registerEventListener(EventTypes.DESTROY_MIDLET_EVENT,
+                                         this);
     }
 
     /**
@@ -105,17 +109,12 @@ public class MIDletEventListener implements EventListener {
      */
     public void process(Event event) {
         NativeEvent nativeEvent = (NativeEvent)event;
-        /*
-         * Find DisplayAccess instance by nativeEvent.intParam4
-         * and (if not null) call DisplayAccess methods ...
-         */
-        DisplayAccess da = displayContainer.findDisplayById(
-            nativeEvent.intParam4);
 
-        if (da != null) {
-            MIDletEventConsumer midletEventConsumer = 
-                    da.getMIDletEventConsumer();
-            
+        MIDletEventConsumer midletEventConsumer =
+            midletStateHandler.getMIDletEventConsumer(classSecurityToken,
+                nativeEvent.stringParam1);
+
+        if (midletEventConsumer != null) {
             switch (event.getType()) {
                 
             case EventTypes.ACTIVATE_MIDLET_EVENT:
