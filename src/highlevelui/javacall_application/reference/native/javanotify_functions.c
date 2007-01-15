@@ -131,20 +131,21 @@ void javanotify_pen_event(int x, int y, javacall_penevent_type type) {
  */
 void javanotify_start(void) {
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO(LC_CORE,"javanotify_start() >>\n");
 
-    e.eventType = MIDP_JC_EVENT_START_MIDLET;
-    e.data.startMidletEvent.suiteID = "internal";
-    e.data.startMidletEvent.classname = 
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = 
 #if ENABLE_MULTIPLE_ISOLATES
     "com.sun.midp.appmanager.MVMManager";
 #else
     "com.sun.midp.appmanager.Manager";
 #endif
-    e.data.startMidletEvent.arg0 = NULL;
-    e.data.startMidletEvent.arg1 = NULL;
-    e.data.startMidletEvent.arg2 = NULL;
 
     midp_jc_event_send(&e);
 }
@@ -161,21 +162,39 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
 
     int length;
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO2(LC_CORE,"javanotify_start_tck() >> tckUrl=%s, domain_type=%d \n",tckUrl,domain_type);
 
-    e.eventType = MIDP_JC_EVENT_START_TCK;
-    length = strlen(tckUrl);
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
-    if (length < BINARY_BUFFER_MAX_LEN) {
-        memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
-        memcpy(urlAddress, tckUrl, length);
-        e.data.startTckEvent.urlAddress = urlAddress;
-        e.data.startTckEvent.domain = domain_type;
-	midp_jc_event_send(&e);
-    } else {
-        /* IMPL_NOTE: decide what to do in case of an error */
-    }
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.installer.AutoTester";
+
+    length = strlen(tckUrl);
+    if (length >= BINARY_BUFFER_MAX_LEN)
+        return;
+    
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    memcpy(urlAddress, tckUrl, length);
+    if(strcmp(urlAddress, "none") != 0)
+        data->argv[data->argc++] = urlAddress;
+
+
+    if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
+        data->argv[data->argc++] = "untrusted";
+    } else if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
+        data->argv[data->argc++] = "trusted";
+    } else if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
+        data->argv[data->argc++] = "minimum";
+    } else if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
+        data->argv[data->argc++] = "maximum";
+    } else
+        return;
+
+    midp_jc_event_send(&e);
 }
 
 /**
@@ -189,15 +208,21 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
  */
 void javanotify_start_i3test(char* arg1, char* arg2) {
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO2(LC_CORE,"javanotify_start_i3test() >> %s %s\n",arg1,arg2);
 
-    e.eventType = MIDP_JC_EVENT_START_MIDLET;
-    e.data.startMidletEvent.suiteID = "internal";
-    e.data.startMidletEvent.classname = "com.sun.midp.i3test.Framework";
-    e.data.startMidletEvent.arg0 = arg1;
-    e.data.startMidletEvent.arg1 = arg2;
-    e.data.startMidletEvent.arg1 = NULL;
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.i3test.Framework";
+    if (NULL != arg1) {
+        data->argv[data->argc++] = arg1;
+        if (NULL != arg2)
+            data->argv[data->argc++] = arg2;
+    }
 
     midp_jc_event_send(&e);
 }
@@ -214,16 +239,25 @@ void javanotify_start_i3test(char* arg1, char* arg2) {
  */
 void javanotify_start_handler(char* handlerID, char* url, char* action) {
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
-	REPORT_INFO3(LC_CORE,"javanotify_start_handler() >> %s %s %s\n", 
-	                                                handlerID, url, action);
+    REPORT_INFO3(LC_CORE,"javanotify_start_handler() >> %s %s %s\n", 
+		 handlerID, url, action);
 
-    e.eventType = MIDP_JC_EVENT_START_MIDLET;
-    e.data.startMidletEvent.suiteID = "internal";
-    e.data.startMidletEvent.classname = "com.sun.midp.content.Invoker";
-    e.data.startMidletEvent.arg0 = handlerID;
-    e.data.startMidletEvent.arg1 = url;
-    e.data.startMidletEvent.arg2 = action;
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.content.Invoker";
+    if (NULL != handlerID) {
+        data->argv[data->argc++] = handlerID;
+        if (NULL != url) {
+            data->argv[data->argc++] = url;
+            if (NULL != action)
+                data->argv[data->argc++] = action;
+        }
+    }
 
     midp_jc_event_send(&e);
 }
@@ -251,19 +285,27 @@ void javanotify_start_handler(char* handlerID, char* url, char* action) {
 void javanotify_install_midlet(const char *httpUrl) {
     int length;
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO1(LC_CORE,"javanotify_install_midlet() >> httpUrl=%s\n",httpUrl);
 
-    e.eventType = MIDP_JC_EVENT_START_INSTALL;
-    e.data.lifecycleEvent.silentInstall = 0;
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.installer.GraphicalInstaller";
+    data->argv[data->argc++] = "I";
 
     length = strlen(httpUrl);
-    if (length < BINARY_BUFFER_MAX_LEN) {
-        memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
-        memcpy(urlAddress, httpUrl, length);
-        e.data.lifecycleEvent.urlAddress = urlAddress;
-	midp_jc_event_send(&e);
-    }
+    if (length >= BINARY_BUFFER_MAX_LEN)
+        return;
+
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    memcpy(urlAddress, httpUrl, length);
+    data->argv[data->argc++] = urlAddress;
+
+    midp_jc_event_send(&e);
 }
 
 /**
@@ -288,18 +330,26 @@ void javanotify_install_midlet(const char *httpUrl) {
 void javanotify_install_midlet_from_filesystem(const javacall_utf16 * jadFilePath,
                                                int jadFilePathLen, int userWasAsked) {
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO(LC_CORE,"javanotify_install_midlet_from_filesystem() >>\n");
 
-    e.eventType = MIDP_JC_EVENT_START_INSTALL;
-    e.data.lifecycleEvent.silentInstall = userWasAsked;
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
-    if (jadFilePathLen < BINARY_BUFFER_MAX_LEN) {
-        memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
-        unicodeToNative(jadFilePath, jadFilePathLen, (unsigned char *) urlAddress, BINARY_BUFFER_MAX_LEN);
-        e.data.lifecycleEvent.urlAddress = urlAddress;
-	midp_jc_event_send(&e);
-    }
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.installer.CommandLineInstaller";
+    data->argv[data->argc++] = "I";
+
+    if (jadFilePathLen >= BINARY_BUFFER_MAX_LEN)
+        return;
+
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    unicodeToNative(jadFilePath, jadFilePathLen, (unsigned char *) urlAddress, BINARY_BUFFER_MAX_LEN);
+    data->argv[data->argc++] = urlAddress;
+
+    midp_jc_event_send(&e);
 }
 
 /**
