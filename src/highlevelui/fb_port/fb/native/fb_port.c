@@ -358,7 +358,7 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
  * @param srcInc source pointer increment at the end of source row
  * @param dstInc dest pointer increment at the end of source row
  */
-void fast_copy_rotated(short *src, short *dst, int x1, int y1, int x2, int y2,
+static void fast_copy_rotated(short *src, short *dst, int x1, int y1, int x2, int y2,
         int bufWidth, int dstWidth, int srcInc, int dstInc) {
 
   int x;
@@ -401,7 +401,7 @@ void fast_copy_rotated(short *src, short *dst, int x1, int y1, int x2, int y2,
  * @param srcInc source pointer increment at the end of source row
  * @param dstInc dest pointer increment at the end of source row
  */
-void simple_copy_rotated(short *src, short *dst, int x1, int y1, int x2, int y2,
+static void simple_copy_rotated(short *src, short *dst, int x1, int y1, int x2, int y2,
 		int bufWidth, int dstWidth, int srcInc, int dstInc) {
 
     int x;
