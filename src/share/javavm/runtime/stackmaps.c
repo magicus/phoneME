@@ -4452,15 +4452,21 @@ CVMstackmapRewriteMethodForConflicts(CVMStackmapContext* con)
     CVMJavaMethodDescriptor* oldJmd = con->jmd;
     CVMUint32 newJMDAllocationSize;
     CVMUint8* newCode;
+    /* currentPCMap holds the adjustments this function makes. */
     CVMstackmapPCMap *currentPCMap;
     struct CVMJavaMethodExtension * extension;
 
 #ifdef CVM_JVMPI_TRACE_INSTRUCTION
-    CVMstackmapPCMap *newPCMap = NULL;
+    /* If a jmd's method has been rewritten then the jmd's memory
+       includes a PCMap.
+       oldPCMap points to oldJmd's PCMap, or NULL if it doesn't have one.
+       newPCMap points to newJmd's PCMap.
+       When we're done, oldPCMap and currentPCMap will be merged to
+       newPCMap and currentPCMap will be freed, unless oldPCMap is
+       NULL in which case we just point currentPCMap to newPCMap and
+       fill it in directly as we go along. */
     CVMstackmapPCMap *oldPCMap = NULL;
-
-    /* NOTE: Content(newPCMap) = Content(oldPCMap) + Content(currentPCMap).
-       See notes in CVMstackmapMergePCMaps() for details. */
+    CVMstackmapPCMap *newPCMap;
 
     if (CVMjmdFlags(oldJmd) & CVM_JMD_DID_REWRITE) {
         oldPCMap = CVMstackmapGetJmdPCMap(oldJmd);
@@ -4504,11 +4510,12 @@ CVMstackmapRewriteMethodForConflicts(CVMStackmapContext* con)
         newPCMapSize = computePCMapSize(newExpansionPoints);
         size = CVMalign4(newJMDAllocationSize) + newPCMapSize;
         newJmd = calloc(1, size);
-        if (newJmd != NULL) {
-            newPCMap =
-                (CVMstackmapPCMap *)((char *)newJmd + size - newPCMapSize);
-            initializePCMap(newPCMap, newExpansionPoints);
+        if (newJmd == NULL) {
+            throwError(con, CVM_MAP_OUT_OF_MEMORY);
         }
+        newPCMap = (CVMstackmapPCMap *)((char *)newJmd + size - newPCMapSize);
+        initializePCMap(newPCMap, newExpansionPoints);
+
         if (oldPCMap == NULL) {
             /* If we have no oldPCMap info to merge in, then let the new PCMap
                be the current PCMap (saves us from having to copy it over
@@ -4516,18 +4523,25 @@ CVMstackmapRewriteMethodForConflicts(CVMStackmapContext* con)
             currentPCMap = newPCMap;
         } else {
             currentPCMap = allocatePCMap(nExpansionPoints);
+            if (currentPCMap == NULL) {
+                free(newJmd);
+                throwError(con, CVM_MAP_OUT_OF_MEMORY);
+            }
         }
     }
 #else
     newJmd = (CVMJavaMethodDescriptor *)calloc(1, newJMDAllocationSize );
+    if (newJmd == NULL) {
+        throwError(con, CVM_MAP_OUT_OF_MEMORY);
+    }
     /* Allocate and initialize the current PCMap: */
     currentPCMap = allocatePCMap(nExpansionPoints);
+    if (currentPCMap == NULL) {
+        free(newJmd);
+        throwError(con, CVM_MAP_OUT_OF_MEMORY);
+    }
 #endif
 
-    /* Abort if we fail to allocate the needed memory: */
-    if ((newJmd == 0) || (currentPCMap == 0)) {
-	throwError(con, CVM_MAP_OUT_OF_MEMORY);
-    }
     /*
      * First copy the CVMJavaMethodDescriptor struct.
      */
@@ -4584,7 +4598,7 @@ CVMstackmapRewriteMethodForConflicts(CVMStackmapContext* con)
 	    }
 	}
     }
-    if (currentPCMap != NULL){
+    {
         struct CVMstackmapPCMapEntry *m = currentPCMap->map;
 	int i;
 	CVMconsolePrintf("    Code expansion points:\n");
@@ -4660,12 +4674,9 @@ CVMstackmapRewriteMethodForConflicts(CVMStackmapContext* con)
 	      (CVMAddr)&extension->originalJmd);
 
 #ifdef CVM_JVMPI_TRACE_INSTRUCTION
-    if (oldPCMap != NULL && currentPCMap != NULL) {
-#else
-    if (currentPCMap != NULL) {
+    if (oldPCMap != NULL)
 #endif
         free(currentPCMap);
-    }
 }
 
 /*

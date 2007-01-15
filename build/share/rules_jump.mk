@@ -45,8 +45,13 @@ $(CVM_BUILD_DEFS_MK)::
 #
 $(JUMP_API_CLASSESZIP): $(JUMP_DEPENDENCIES) force_jump_build
 	$(AT)echo "Building jump api's ..."
-	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml build-api javadoc-api)
+	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml build-api)
 	$(AT)cp $@ $(CVM_LIBDIR)
+
+.PHONY: javadoc-api
+javadoc-api:
+	$(AT)echo "Building Javadoc for jump api's ..."
+	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml javadoc-api)
 
 $(JUMP_IMPL_CLASSESZIP): $(JUMP_API_CLASSESZIP) $(MIDP_CLASSESZIP) force_jump_build
 	$(AT)echo "Building jump implementation ..."

@@ -193,14 +193,37 @@ CVMJITdebugInitMethodList(CVMExecEnv *ee, CVMJITMethodList *list)
             methodname = p;
             methodID =
                 CVMtypeidNewMethodIDFromNameAndSig(ee, methodname, signame);
+	    if (methodID == CVM_TYPEID_ERROR) {
+		CVMconsolePrintf("WARNING: CVMJITdebugInitMethodList failed "
+				 "to lookup methodID for %s\n",
+				 entries[i].fullMethodName);
+		free(clazzname);
+		clazzname = NULL;
+	    }
             free(signame);
         }
 
-        clazzID = CVMtypeidNewClassID(ee, clazzname, strlen(clazzname));
-        entries[i].clazzID = clazzID;
-        entries[i].methodID = methodID;
-
-        free(clazzname);
+	clazzID = CVM_TYPEID_ERROR;
+	if (clazzname != NULL) {
+	    clazzID = CVMtypeidNewClassID(ee, clazzname, strlen(clazzname));
+	    if (clazzID == CVM_TYPEID_ERROR) {
+		CVMconsolePrintf("WARNING: CVMJITdebugInitMethodList failed "
+				 "to lookup classID for %s\n",
+				 entries[i].fullMethodName);
+	    }
+	    free(clazzname);
+	}
+	entries[i].clazzID = clazzID;
+	entries[i].methodID = methodID;
+#if 0
+	if (clazzID != CVM_TYPEID_ERROR) {
+	    CVMconsolePrintf("Added(%d): %s\n", i, entries[i].fullMethodName);
+	    CVMconsolePrintf("\tclass:  %!C\n", clazzID);
+	    if (methodID != CVM_TYPEID_ERROR) {
+		CVMconsolePrintf("\tmethod: %!M\n", methodID);
+	    }
+	}
+#endif
     }
     list->hasBeenInitialized = CVM_TRUE;
 }
