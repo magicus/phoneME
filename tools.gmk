@@ -1,0 +1,72 @@
+#
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+######################################################################
+# Tools Component Configuration file
+#
+######################################################################
+
+
+# Configurator paths and file names
+#
+CONFIGURATOR_PACKAGE     = com.sun.configurator
+CONFIGURATOR_MAIN_CLASS  = $(CONFIGURATOR_PACKAGE).CodeTransformer
+CONFIGURATOR_JAVA_FILES  = $(TOOLS_DIR)/configurator/classes/$(subst .,/,$(CONFIGURATOR_MAIN_CLASS)).java
+CONFIGURATOR_CLASS_FILES = $(TOOLS_OUTPUT_DIR)/$(subst .,/,$(CONFIGURATOR_MAIN_CLASS)).class
+
+JPP_JAVA_FILES  = $(TOOLS_DIR)/jpp/Jpp.java
+JPP_CLASS_FILES = $(TOOLS_OUTPUT_DIR)/Jpp.class
+
+# Directory for tools class files
+#
+$(TOOLS_OUTPUT_DIR):
+	@mkdir -p $@
+
+# Java pre-processor build rule
+#
+$(JPP_CLASS_FILES): $(TOOLS_OUTPUT_DIR) $(JPP_JAVA_FILES)
+	@echo " ... building Jpp"
+	@($(JAVAC_CMD) -g -d $(TOOLS_OUTPUT_DIR) $(JPP_JAVA_FILES))
+
+# Configurator build rule
+#
+$(CONFIGURATOR_CLASS_FILES): $(TOOLS_OUTPUT_DIR) $(CONFIGURATOR_JAVA_FILES)
+	@echo " ... building Configurator"
+	@($(JAVAC_CMD) -g -d $(TOOLS_OUTPUT_DIR) $(CONFIGURATOR_JAVA_FILES))
+
+# Append tools source bundle creation to target
+source_bundle:: tools_source_bundle
+
+# Copy and filter tools source in TOOLS_OUTPUT_DIR/src
+tools_source_bundle: $(TOOLS_OUTPUT_DIR)
+	@echo " ... tools source bundle"; \
+	SB_DIR=$(TOOLS_OUTPUT_DIR)/src; \
+	if [ -d "$(TOOLS_DIR)/.svn" ]; then \
+		svn export --force -q "$(TOOLS_DIR)" $$SB_DIR; \
+	else \
+		mkdir -p $$SB_DIR; \
+		cp -rp "$(TOOLS_DIR)/*" $$SB_DIR; \
+	fi
+
+clean::
+	@rm -rf $(TOOLS_OUTPUT_DIR)
