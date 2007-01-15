@@ -386,22 +386,23 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
     public boolean keyInput(int type, int keyCode) {
         // SoftButtonLayer absorbs all soft button events,
         // but only functions on a 'press' event
+        boolean ret = false;
         if (keyCode == EventConstants.SOFT_BUTTON1) {
             if (type == EventConstants.PRESSED) {
                 setInteractive(soft1 != null);
+                ret = true;
             } else if (type == EventConstants.RELEASED) {
-                soft1();
+                ret = soft1();
             }
-            return true;
         } else if (keyCode == EventConstants.SOFT_BUTTON2) {
             if (type == EventConstants.PRESSED) {
                 setInteractive((soft2 != null) || menuUP);
+                ret = true;
             } else if (type == EventConstants.RELEASED) {
-                soft2();
+                ret = soft2();
             }
-            return true;
         }
-        return false;
+        return ret;
     }
 
     /**
@@ -457,7 +458,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             return;
         }
         dismissMenu();
-        commandAction(cmd);
+        processCommand(cmd);
     }
 
     /**
@@ -531,16 +532,18 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
 
     /**
      * Soft button 1 handler.
+     * @return true if command was processed, false otherwise
      */
-    protected void soft1() {
+    protected boolean soft1() {
         if (menuUP) {
             dismissMenu();
             subMenu = null;
             requestRepaint();
             setButtonLabels();
             setInteractive(false);
+            return true;
         } else {
-            commandAction(soft1);
+            return processCommand(soft1);
         }
     }
 
@@ -558,8 +561,10 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
 
     /**
      * Soft button 2 handler.
+     * @return true if command was processed, false otherwise
      */
-    protected void soft2() {
+    protected boolean soft2() {
+        boolean ret = false;
         if (soft2 != null) {
             if (soft2.length == 1 &&
                 soft2[0] instanceof SubMenuCommand) {
@@ -583,34 +588,47 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                 }
                 
                 requestRepaint();
+
+                ret = true;
             } else if (soft2.length == 1) {
                 // command action
-                commandAction(soft2[0]);
+                ret = processCommand(soft2[0]);
             }
         }
+        return ret;
     }
 
     /**
-     * Command action callback for submenu commands.
+     * Processes commands.
      *
      * @param cmd the selected command
+     * @return true if command was processed, false otherwise
      */
-    protected void commandAction(Command cmd) {
+    protected boolean processCommand(Command cmd) {
 
         setInteractive(false);
 
         if (tunnel == null || cmd == null) {
-            return;
+            return false;
         }
 
+        boolean ret = false;
         if (subMenu != null) {
             subMenu.notifyListener(cmd);
             subMenu = null;
+            ret = true;
         } else if (isItemCommand(cmd)) {
-            tunnel.callItemListener(cmd, itemListener);
+            if (itemListener != null) {
+                tunnel.callItemListener(cmd, itemListener);
+                ret = true;
+            }
         } else {
-            tunnel.callScreenListener(cmd, scrListener);
+            if (scrListener != null) {
+                tunnel.callScreenListener(cmd, scrListener);
+                ret = true;
+            }
         }
+        return ret;
     }
 
     /**
