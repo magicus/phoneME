@@ -97,6 +97,14 @@ ifneq ($(CVM_PRELOAD_LIB), true)
 	$(AT)cp $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/libmidp$(LIB_POSTFIX) $(CVM_LIBDIR)
 endif
 
+build-unittests::
+	$(AT)echo "Building midp unit-tests ..."
+	$(AT)echo "Unittests should have been built as part of binary build"
+
+run-unittests::
+	$(AT)echo "Running midp unit-tests ..."
+	$(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/i3test
+
 force_midp_build:
 
 endif
