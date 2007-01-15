@@ -66,8 +66,13 @@ SUBSYSTEM_TEST_I3TEST_JAVA_FILES := \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/LiveTraceCallback.java \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/LiveTraceListener.java \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/SerialCallback.java \
-    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/test/TestSemaphore.java \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/i3test/TestCompWildcard.java
+
+ifeq ($(TARGET_VM), cldc_vm)
+# Add CLDC specific tests
+SUBSYSTEM_TEST_I3TEST_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/test/TestSemaphore.java
+endif
 
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
     SUBSYSTEM_TEST_I3TEST_JAVA_FILES += \

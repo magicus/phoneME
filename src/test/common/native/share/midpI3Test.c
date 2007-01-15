@@ -55,7 +55,7 @@ static jint refSemContinue = -1;  /* ref ID for the semContinue semaphore */
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_i3test_IsolateSynch_init0(void) {
+KNIDECL(com_sun_midp_i3test_IsolateSynch_init0) {
     if (refSemReady != -1 || refSemContinue != -1) {
 	KNI_ThrowNew("java/lang/IllegalStateException", NULL);
 	KNI_ReturnVoid();
@@ -87,7 +87,7 @@ Java_com_sun_midp_i3test_IsolateSynch_init0(void) {
  * getSemReady0(V)Lcom/sun/cldc/util/Semaphore;
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_i3test_IsolateSynch_getSemReady0() {
+KNIDECL(com_sun_midp_i3test_IsolateSynch_getSemReady0) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(sem);
     if (refSemReady == -1) {
@@ -104,7 +104,7 @@ Java_com_sun_midp_i3test_IsolateSynch_getSemReady0() {
  * getSemContinue0(V)Lcom/sun/cldc/util/Semaphore;
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_i3test_IsolateSynch_getSemContinue0() {
+KNIDECL(com_sun_midp_i3test_IsolateSynch_getSemContinue0) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(sem);
     if (refSemContinue == -1) {
@@ -120,7 +120,7 @@ Java_com_sun_midp_i3test_IsolateSynch_getSemContinue0() {
  * fini0(V)V
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_i3test_IsolateSynch_fini0() {
+KNIDECL(com_sun_midp_i3test_IsolateSynch_fini0) {
     if (refSemReady != -1) {
 	SNI_DeleteReference(refSemReady);
 	refSemReady = -1;
