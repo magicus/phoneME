@@ -651,7 +651,7 @@ public class PushRegistry {
 	        IOException {
 
 	PushRegistryImpl
-	    .registerConnection(connection, midlet, filter);
+           .registerConnection(connection, midlet, filter);
     }
 
     /**
@@ -685,37 +685,7 @@ public class PushRegistry {
      *       <em>host</em> and <em>port number</em> identification
      */
     public static String[] listConnections(boolean available) {
-        String connections = PushRegistryImpl.listConnections(available);
-
-        if (connections == null) {
-            return new String[0];
-        }
-
-        /* Count the commas in the returned string */
-        int count = 0;
-        int offset = 0;
-		
-        do {
-            offset = connections.indexOf(',', offset + 1);
-            count ++;
-        } while (offset > 0); 
-		
-        /* Now parse out the connections for easier access by caller. */
-        String[] ret = new String[count];
-        int start = 0;
-        for (int i = 0; i < count; i++) {
-            offset = connections.indexOf(',', start);
-            if (offset > 0) {
-                /* Up to the next comma */
-                ret[i] = connections.substring(start, offset);
-            } else {
-                /* From the last comma to the end of the string. */
-                ret[i] = connections.substring(start);
-            }		
-            start = offset + 1;
-        }
-
-        return ret;
+        return PushRegistryImpl.listConnections(available);
     }
 
     /**
@@ -799,7 +769,6 @@ public class PushRegistry {
 	// Delegate to implementation class for native registration
 	return 	PushRegistryImpl.registerAlarm(midlet, time);
     }
- 
 }
 
 
