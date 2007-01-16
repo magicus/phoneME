@@ -108,7 +108,27 @@ public final class PushRegistryInternal {
                                                   String filter,
                                                   boolean bypassChecks)
         throws ClassNotFoundException, IOException {
-        // TBD: think of it
+
+        if (token == null) {
+            // RFC: why we fetch current when we have midletSuite already?
+            MIDletSuite current =
+                MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
+
+            if (current != null) {
+                current.checkIfPermissionAllowed(Permissions.AMS);
+            }
+        } else {
+            token.checkIfPermissionAllowed(Permissions.AMS);
+        }
+
+        if (!bypassChecks) {
+            ConnectionRegistry.checkPushPermission(midletSuite);
+
+            ProtocolPush.getInstance(connection).checkRegistration(connection, midlet, filter);
+
+            PushRegistryImpl.checkMidlet(midletSuite, midlet);
+        }
+
         ConnectionRegistry.registerConnectionInternal(
                 token, midletSuite,
                 connection, midlet, filter,

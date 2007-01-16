@@ -67,7 +67,7 @@ public final class PushRegistryImpl {
      * @throws ClassNotFoundException if there is no such <code>MIDlet</code>
      *  in <code>midletSuite</code>
      */
-    private static void checkMidlet(
+    static void checkMidlet(
             final MIDletSuite midletSuite,
             final String midlet)
             throws ClassNotFoundException {
