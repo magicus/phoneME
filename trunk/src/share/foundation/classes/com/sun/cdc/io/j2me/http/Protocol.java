@@ -42,7 +42,6 @@ import javax.microedition.io.StreamConnection;
 import javax.microedition.io.HttpConnection;
 import javax.microedition.io.Connector;
 import javax.microedition.io.ConnectionNotFoundException;
-import com.sun.cdc.io.InternalConnector;
 
 import com.sun.cdc.io.ConnectionBase;
 import com.sun.cdc.io.DateParser;
@@ -724,7 +723,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     protected StreamConnection connectSocket() throws IOException {
-        StreamConnection conn=null;
+        com.sun.cdc.io.j2me.socket.Protocol conn = null;
         
         // Check for illegal empty string for host
         if (host.equals("")) {
@@ -735,17 +734,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         // ConnectionNotFoundException
         try {
 
+            conn = new com.sun.cdc.io.j2me.socket.Protocol();
             // Open socket connection
             if (http_proxy == null) {
-                conn = 
-                    (StreamConnection)InternalConnector.openInternal
-                    ("socket://" + host + ":" + port, 
-                     Connector.READ_WRITE, false);
+                conn.openPrim("//" + host + ":" + port , Connector.READ_WRITE,false);
             } else{
-                conn = (StreamConnection)
-                    InternalConnector.openInternal("socket://" + http_proxy, 
-                                                   Connector.READ_WRITE, 
-                                                   false );
+                conn.openPrim("//" + http_proxy, Connector.READ_WRITE,false);
             }
         } catch (java.net.ConnectException e) {
             // Convert ConnectException to ConnectionNotFoundException
