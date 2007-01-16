@@ -247,7 +247,16 @@ class AutoTesterBase extends MIDlet implements CommandListener,
 
         installer = new HttpInstaller();
         if (domain != null) {
-            installer.setUnsignedSecurityDomain(domain);
+            String additionalPermissions = null;
+            int index = domain.indexOf(":");
+            int len = domain.length();
+
+            if (index > 0 && index + 1 < len) {
+                additionalPermissions = domain.substring(index + 1, len);
+                domain = domain.substring(0, index);
+            }
+
+            installer.setUnsignedSecurityDomain(domain, additionalPermissions);
         }
 
         new Thread(this).start();
