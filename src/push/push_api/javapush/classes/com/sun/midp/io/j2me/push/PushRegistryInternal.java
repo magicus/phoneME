@@ -109,6 +109,10 @@ public final class PushRegistryInternal {
                                                   boolean bypassChecks)
         throws ClassNotFoundException, IOException {
 
+        if (filter == null) {
+            throw new IllegalArgumentException("filter is null");
+        }
+
         if (token == null) {
             // RFC: why we fetch current when we have midletSuite already?
             MIDletSuite current =
@@ -124,9 +128,9 @@ public final class PushRegistryInternal {
         if (!bypassChecks) {
             ConnectionRegistry.checkPushPermission(midletSuite);
 
-            ProtocolPush.getInstance(connection).checkRegistration(connection, midlet, filter);
-
             PushRegistryImpl.checkMidlet(midletSuite, midlet);
+
+            ConnectionRegistry.checkRegistration(Connection.parse(connection), midlet, filter);
         }
 
         ConnectionRegistry.registerConnectionInternal(
