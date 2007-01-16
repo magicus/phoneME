@@ -46,7 +46,7 @@ SUBSYSTEM_CONFIGURATION_FILES_LIST = files.lst
 # directory containing XSL files used to transform XML files 
 # into .c, .h, and .java files
 INT_XSL_DIR = \
-	$(SUBSYSTEM_DIR)/tool/configurator/xsl
+	$(TOOLS_DIR)/configurator/xsl
 
 # directory containing XML files listed in SUBSYSTEM_CONFIGURATION_FILES_LIST 
 INT_XML_DIR = \
@@ -74,7 +74,7 @@ INT_FILES_LIST = $(INT_XML_DIR)/$(SUBSYSTEM_CONFIGURATION_FILES_LIST)
 
 # These are the main class of these tools
 #
-INT_TRANSFORMER_MAIN_CLASS = com.sun.midp.configurator.CodeTransformer
+INT_TRANSFORMER_MAIN_CLASS = $(CONFIGURATOR_MAIN_CLASS)
 
 # Configurator input files from list file
 INT_XML_FILES_BASE_NAMES := $(shell grep -v ^\# $(INT_FILES_LIST))
@@ -120,7 +120,7 @@ INT_XML_FILES += $(INT_XML_DIR)/skin.xml
 
 # Command for invoking transformer
 INT_INVOKE_TRANSFORMER = \
-	$(JAVA_CMD) -classpath $(TOOLS_CLASSPATH) \
+	$(JAVA_CMD) -classpath $(TOOLS_OUTPUT_DIR) \
 	$(INT_TRANSFORMER_MAIN_CLASS)
 
 

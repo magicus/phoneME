@@ -53,9 +53,10 @@ JADTOOL_MAIN_CLASS    = com.sun.midp.jadtool.JadTool
 JADTOOL_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/JadTool.manifest
 JADTOOL_JAR_FILE      = $(BINDIR)/JadTool.jar
 
+include $(TOOLS_DIR)/tools.gmk
+
 # Configurator jar and manifest file names
 #
-CONFIGURATOR_MAIN_CLASS    = com.sun.midp.configurator.CodeTransformer
 CONFIGURATOR_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/Configurator.manifest
 CONFIGURATOR_JAR_FILE = $(BINDIR)/Configurator.jar
 
@@ -71,14 +72,10 @@ IMAGE2RAW_MAIN_CLASS    = com.sun.midp.imageutil.ImageToRawTool
 IMAGE2RAW_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/ImageToRawTool.manifest
 IMAGE2RAW_JAR_FILE = $(BINDIR)/ImageToRawTool.jar
 
-# Java Pre-Processor
-#
-JPP_JAVA_FILE		= $(TOOL_DIR)/jpp/Jpp.java
-
 # Macro to pre-process Jpp file into Java file
 # runjpp(<input_jpp_file>, <output_java_file>)
 define runjpp
-    $(JAVA_CMD) -classpath $(TOOLS_CLASSPATH) Jpp $(JPP_DEFS) -o `$(call fixcygpath,$(2))` `$(call fixcygpath,$(1))`
+    $(JAVA_CMD) -classpath $(TOOLS_OUTPUT_DIR) Jpp $(JPP_DEFS) -o `$(call fixcygpath,$(2))` `$(call fixcygpath,$(1))`
 endef
 
 # Targets
@@ -171,25 +168,18 @@ $(JADTOOL_MANIFEST_FILE): $(TOOLS_CLASS_DIR)
 
 # Configurator (jar rules)
 #
-$(CONFIGURATOR_JAR_FILE): $(TOOLS_CLASS_DIR) $(MODULE_TOOL_CONFIGURATOR_JAVA_FILES) $(CONFIGURATOR_MANIFEST_FILE)
-	@echo " ... building Configurator " $(LOG)
+$(CONFIGURATOR_JAR_FILE): $(TOOLS_CLASS_DIR) $(CONFIGURATOR_CLASS_FILES) $(CONFIGURATOR_MANIFEST_FILE)
 	@mkdir -p $(BINDIR) $(LOG)
-	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
-		-classpath "$(TOOLS_CLASSPATH)" \
-		$(MODULE_TOOL_CONFIGURATOR_JAVA_FILES) $(LOG_ONLY)
-	@($(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
-		-classpath "$(TOOLS_CLASSPATH)" \
-		$(MODULE_TOOL_CONFIGURATOR_JAVA_FILES)) $(LOG)
 	@echo " ... $@ " $(LOG)
-	@echo +++ cd $(TOOLS_CLASS_DIR)\; $(JAR_CMD) \
+	@echo +++ cd $(TOOLS_OUTPUT_DIR)\; $(JAR_CMD) \
 		cfm $(CONFIGURATOR_JAR_FILE) $(CONFIGURATOR_MANIFEST_FILE) \
-		com/sun/midp/configurator $(LOG_ONLY)
-	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(CONFIGURATOR_JAR_FILE) \
-		$(CONFIGURATOR_MANIFEST_FILE) com/sun/midp/configurator) $(LOG)
+		$(subst .,/,$(CONFIGURATOR_PACKAGE)) $(LOG_ONLY)
+	@(cd $(TOOLS_OUTPUT_DIR); $(JAR_CMD) cfm $(CONFIGURATOR_JAR_FILE) \
+		$(CONFIGURATOR_MANIFEST_FILE) $(subst .,/,$(CONFIGURATOR_PACKAGE))) $(LOG)
 
 $(CONFIGURATOR_MANIFEST_FILE): $(TOOLS_CLASS_DIR)
 	@echo " ... $@ " $(LOG)
-	@(echo "Main-Class: com.sun.midp.configurator.CodeTransformer" > $@) $(LOG)
+	@(echo "Main-Class: $(CONFIGURATOR_MAIN_CLASS)" > $@) $(LOG)
 
 
 # Skin romization tool (jar rules)
@@ -252,14 +242,7 @@ endef
     
 # Java Pre-processor
 #
-jpp:	$(TOOLS_CLASS_DIR) $(TOOLS_CLASS_DIR)/Jpp.class
-
-$(TOOLS_CLASS_DIR)/Jpp.class: $(JPP_JAVA_FILE)
-	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
-		mkdir -p $(TOOLS_CLASS_DIR); \
-	fi
-	@echo " ... building Jpp" $(LOG)
-	@$(JAVAC_CMD) -d $(TOOLS_CLASS_DIR) $^ $(LOG)
+jpp: $(JPP_CLASS_FILES)
 
 # For Cygwin
 #

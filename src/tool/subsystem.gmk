@@ -39,12 +39,11 @@ SUBSYSTEMS += tool
 
 # This specifies the option you choose for this build 
 #
-SUBSYSTEM_TOOL_MODULES = keytool jadtool configurator imageutil skinromization
+SUBSYSTEM_TOOL_MODULES = keytool jadtool imageutil skinromization
 
 INT_KEYTOOL_DIR = $(SUBSYSTEM_DIR)/tool/mekeytool/classes/com/sun/midp/mekeytool
 INT_KEYSTORE_DIR = $(SUBSYSTEM_DIR)/security/publickeystore/reference/classes/com/sun/midp/publickeystore
 INT_JADTOOL_DIR = $(SUBSYSTEM_DIR)/tool/jadtool/classes/com/sun/midp/jadtool
-INT_CONFIGURATOR_DIR = $(SUBSYSTEM_DIR)/tool/configurator/classes/com/sun/midp/configurator
 INT_AMS_DIR = $(SUBSYSTEM_DIR)/ams/installer/reference/classes
 INT_JAVAUTIL_DIR = $(SUBSYSTEM_DIR)/core/javautil/reference/classes
 INT_IMAGEUTIL_DIR = $(SUBSYSTEM_DIR)/tool/imageutil/classes/com/sun/midp/imageutil
@@ -76,11 +75,6 @@ MODULE_TOOL_JADTOOL_JAVA_FILES = \
 	$(INT_AMS_DIR)/com/sun/midp/installer/JadProperties.java \
 	$(INT_AMS_DIR)/com/sun/midp/installer/InvalidJadException.java
 
-
-# Java files for the ( configurator ) module
-#
-MODULE_TOOL_CONFIGURATOR_JAVA_FILES = \
-	$(INT_CONFIGURATOR_DIR)/CodeTransformer.java
 
 # Java files for the ( image to raw converter tool ) module
 #
