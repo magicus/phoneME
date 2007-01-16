@@ -137,7 +137,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 #endif
 
     case MIDP_JC_EVENT_MULTIMEDIA:
-#if ENABLE_MMAPI
+#if ENABLE_JSR_135
         pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
         pNewSignal->status = JAVACALL_OK;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
@@ -153,19 +153,19 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
                 break;
 
             case JAVACALL_EVENT_MEDIA_RECORD_SIZE_LIMIT:
-                pNewMidpEvent->type = MM_RECORD_LIMIT;
+                pNewMidpEvent->type = MM_RECORD_LIMIT_EVENT;
                 break;
 
             case JAVACALL_EVENT_MEDIA_RECORD_ERROR:
-                pNewMidpEvent->type = MM_RECORD_ERROR;
+                pNewMidpEvent->type = MM_RECORD_ERROR_EVENT;
                 break;
 
             case JAVACALL_EVENT_MEDIA_BUFFERING_STARTED:
-                pNewMidpEvent->type = MM_BUFFERING_START;
+                pNewMidpEvent->type = MM_BUFFERING_START_EVENT;
                 break;
 
             case JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED:
-                pNewMidpEvent->type = MM_BUFFERING_STOP;
+                pNewMidpEvent->type = MM_BUFFERING_STOP_EVENT;
                 break;
 
             case JAVACALL_EVENT_MEDIA_DURATION_UPDATED:
@@ -173,7 +173,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
                 break;
     
             case JAVACALL_EVENT_MEDIA_VOLUME_CHANGED:
-                pNewMidpEvent->type = MM_VOLUME_CHANGED;
+                pNewMidpEvent->type = MM_VOLUME_CHANGED_EVENT;
                 /* Set to current isolate ID and special player ID to 
                    send this event to all of players in this isolate */
                 pNewMidpEvent->MM_PLAYER_ID = -2; //playerId
@@ -181,7 +181,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
                 break;
 
             case JAVACALL_EVENT_MEDIA_ERROR:
-                pNewMidpEvent->type = MM_GENERAL_ERROR;
+                pNewMidpEvent->type = MM_GENERAL_ERROR_EVENT;
                 break;
 
                 /* Unblock blocked Java thread by calling snapshot method */
@@ -204,6 +204,31 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
                 pNewMidpEvent->MM_DATA);
 #endif
         break;
+#if ENABLE_JSR_234
+    case MIDP_JC_EVENT_ADVANCED_MULTIMEDIA:
+        pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
+        pNewSignal->status = JAVACALL_OK;
+        pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
+        pNewMidpEvent->MM_DATA = event->data.multimediaEvent.data;
+        pNewMidpEvent->ISOLATE = event->data.multimediaEvent.isolateId;
+
+        switch(event->data.multimediaEvent.mediaType) {
+            case JAVACALL_EVENT_AMMS_MEDIA_PROCESSOR_COMPLETED:
+                pNewMidpEvent->type = AMMS_MP_COMPLETED_EVENT; 
+            break;
+            case JAVACALL_EVENT_AMMS_MEDIA_PROCESSOR_ERROR:
+                pNewMidpEvent->type = AMMS_MP_ACTION_ERROR_EVENT;
+            break;
+        }
+
+        REPORT_CALL_TRACE4(LC_NONE, "[jsr234 event] External event recevied %d %d %d %d\n",
+            pNewMidpEvent->type, 
+            event->data.multimediaEvent.isolateId, 
+            pNewMidpEvent->MM_PLAYER_ID, 
+            pNewMidpEvent->MM_DATA);
+
+        break;
+#endif
 #ifdef ENABLE_JSR_179
     case JSR179_LOCATION_JC_EVENT:
         pNewSignal->waitingFor = JSR179_LOCATION_SIGNAL;

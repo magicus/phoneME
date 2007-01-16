@@ -316,6 +316,18 @@ midp_resetEvents(void) {
 }
 
 /**
+ *  Store MIDP event to all of VM threads
+ */ 
+void
+StoreMIDPEventInAllVmThread(MidpEvent event) {
+    int isolateId;
+
+    for (isolateId = 0;isolateId < MAX_ISOLATES; ++isolateId) {
+        StoreMIDPEventInVmThread(event, isolateId);
+    }
+}   
+
+/**
  * Enqueues an event to be processed by the Java event thread for a given
  * Isolate, but is only safe to call in the VM thread. Any other threads
  * should call StoreMIDPEvent. 

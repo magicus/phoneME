@@ -122,10 +122,21 @@ extern "C" {
 /* Automation API events */
 #define SET_FOREGROUND_BY_NAME_REQUEST  44
 
-#define ROTATION_EVENT       45
+#define ROTATION_EVENT                  45
 
 /* MIDlet resources paused notification */
 #define MIDLET_RS_PAUSED_NOTIFICATION   46
+
+#define MM_DURATION_EVENT               47
+#define MM_VOLUME_CHANGED_EVENT         48
+#define MM_RECORD_LIMIT_EVENT           49
+#define MM_RECORD_ERROR_EVENT           50
+#define MM_BUFFERING_START_EVENT        51
+#define MM_BUFFERING_STOP_EVENT         52
+#define MM_GENERAL_ERROR_EVENT          53
+/** JSR-234 javacall events */ 
+#define AMMS_MP_COMPLETED_EVENT         54
+#define AMMS_MP_ACTION_ERROR_EVENT      55
 
 /** @} */
 
@@ -143,7 +154,16 @@ extern "C" {
 #define COMMAND intParam1
 #define SYSTEM_EVENT_ID intParam1
 #define DISPLAY intParam4
+#define MM_PLAYER_ID intParam1
+#define ISOLATE      intParam3
+#define MM_DATA      intParam2
 /** @} */
+
+/**
+ *  Store MIDP event to all of VM threads
+ */ 
+void
+StoreMIDPEventInAllVmThread(MidpEvent event);
 
 /**
  * Store an event to post to the Java platform event queue

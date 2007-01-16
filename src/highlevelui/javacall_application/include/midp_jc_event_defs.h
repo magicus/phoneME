@@ -62,6 +62,9 @@ extern "C" {
 #ifdef ENABLE_JSR_179
 #include "javacall_location.h"
 #endif /* ENABLE_JSR_179 */
+#if ENABLE_JSR_234
+#include <javacall_multimedia_advanced.h>
+#endif /* ENABLE_JSR_234 */
 #include <javacall_security.h>
 
 
@@ -108,6 +111,9 @@ typedef enum {
 #if ENABLE_MULTIPLE_ISOLATES
     MIDP_JC_EVENT_SWITCH_FOREGOUND     ,
 #endif /*ENABLE_MULTIPLE_ISOLATES*/
+#ifdef ENABLE_JSR_234
+    MIDP_JC_EVENT_ADVANCED_MULTIMEDIA  ,
+#endif /*ENABLE_JSR_234*/
     JSR75_FC_JC_EVENT_ROOTCHANGED      , 
     MIDP_JC_EVENT_ROTATION
 } midp_jc_event_type;

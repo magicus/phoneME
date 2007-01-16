@@ -334,6 +334,10 @@ public final class EventTypes {
     public static final int MM_BUFFERING_STOP_EVENT = 52;
     public static final int MM_GENERAL_ERROR_EVENT = 53;
     
+    /** Sent by native, when media processor completed processing */ 
+    public static final int AMMS_MP_COMPLETED_EVENT  = 54;
+    /** Sent by native, when media processor stopped because of error */ 
+    public static final int AMMS_MP_ACTION_ERROR_EVENT  = 55;
     
     
 }

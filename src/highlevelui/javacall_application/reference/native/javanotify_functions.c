@@ -795,7 +795,7 @@ void javanotify_datagram_event(javacall_datagram_callback_type type,
 void javanotify_on_media_notification(javacall_media_notification_type type,
                                       javacall_int64 playerId,
                                       void *data) {
-#if ENABLE_MMAPI
+#if ENABLE_JSR_135
     extern int g_currentPlayer;
 
     midp_jc_event_union e;
@@ -815,6 +815,32 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
     midp_jc_event_send(&e);
 #endif
 }
+
+#if ENABLE_JSR_234
+/**
+ * Post native advanced multimedia event to Java event handler
+ * 
+ * @param type          Event type
+ * @param playerId      Player ID that came from javacall_media_create function
+ * @param data          Data for this event type
+ */
+void javanotify_on_amms_notification(javacall_amms_notification_type type,
+                                     javacall_int64 processorId,
+                                     void *data) {
+    midp_jc_event_union e;
+
+    e.eventType = MIDP_JC_EVENT_ADVANCED_MULTIMEDIA;
+    e.data.multimediaEvent.mediaType = type;
+    e.data.multimediaEvent.isolateId = (int)((processorId >> 32) & 0xFFFF);
+    e.data.multimediaEvent.playerId = (int)(processorId & 0xFFFF);
+    e.data.multimediaEvent.data = (int) data;
+
+    REPORT_INFO1(LC_NONE, 
+            "[javanotify_on_amms_notification] type=%d\n", type);
+
+    midp_jc_event_send(&e);
+}
+#endif
 
 /**
  * The implementation call this callback notify function when image decode done
