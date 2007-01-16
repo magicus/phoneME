@@ -79,70 +79,70 @@ static int display_status_track[NAMS_STORAGE_SIZE];
 */
 
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_main_NamsStorage_getNotifierIsolateId(void) {
+KNIDECL(com_sun_midp_main_NamsStorage_getNotifierIsolateId) {
    KNI_ReturnInt(namsNotifierIsolateId);
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_main_NamsStorage_getMIDletState(void) {
+KNIDECL(com_sun_midp_main_NamsStorage_getMIDletState) {
    jint appId = KNI_GetParameterAsInt(1);
    KNI_ReturnInt(midlet_state[appId]);
 }
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_main_NamsStorage_getDisplayStatus(void) {
+KNIDECL(com_sun_midp_main_NamsStorage_getDisplayStatus) {
    jint appId = KNI_GetParameterAsInt(1);
    KNI_ReturnBoolean(display_status[appId]);
 }
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_main_NamsStorage_getDisplayChangeRequest(void) {
+KNIDECL(com_sun_midp_main_NamsStorage_getDisplayChangeRequest) {
    jint appId = KNI_GetParameterAsInt(1);
    KNI_ReturnBoolean(display_change_request[appId]);
 }
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_main_NamsStorage_getMIDletStateTrack(void) {
+KNIDECL(com_sun_midp_main_NamsStorage_getMIDletStateTrack) {
    jint appId = KNI_GetParameterAsInt(1);
    KNI_ReturnBoolean(midlet_state_track[appId]);
 }
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_main_NamsStorage_getDisplayStatusTrack(void) {
+KNIDECL(com_sun_midp_main_NamsStorage_getDisplayStatusTrack) {
    jint appId = KNI_GetParameterAsInt(1);
    KNI_ReturnBoolean(display_status_track[appId]);
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_NamsStorage_setMIDletState(void) {
+KNIDECL(com_sun_midp_main_NamsStorage_setMIDletState) {
    jint appId = KNI_GetParameterAsInt(1);
    jint value = KNI_GetParameterAsInt(2);
    midlet_state[appId] = value;
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_NamsStorage_setDisplayStatus(void) {
+KNIDECL(com_sun_midp_main_NamsStorage_setDisplayStatus) {
    jint appId = KNI_GetParameterAsInt(1);
    jboolean value = KNI_GetParameterAsBoolean(2);
    display_status[appId] = value;
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_NamsStorage_setDisplayChangeRequest(void) {
+KNIDECL(com_sun_midp_main_NamsStorage_setDisplayChangeRequest) {
    jint appId = KNI_GetParameterAsInt(1);
    jboolean value = KNI_GetParameterAsBoolean(2);
    display_change_request[appId] = value;
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_NamsStorage_setMIDletStateTrack(void) {
+KNIDECL(com_sun_midp_main_NamsStorage_setMIDletStateTrack) {
    jint appId = KNI_GetParameterAsInt(1);
    jboolean value = KNI_GetParameterAsBoolean(2);
    midlet_state_track[appId] = value;
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_NamsStorage_setDisplayStatusTrack(void) {
+KNIDECL(com_sun_midp_main_NamsStorage_setDisplayStatusTrack) {
    jint appId = KNI_GetParameterAsInt(1);
    jboolean value = KNI_GetParameterAsBoolean(2);
    display_status_track[appId] = value;
@@ -153,7 +153,7 @@ Java_com_sun_midp_main_NamsStorage_setDisplayStatusTrack(void) {
     native void initNamsNotifier(int isolateId);
 */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_NamsNotifier_initNamsNotifier(void) {
+KNIDECL(com_sun_midp_main_NamsNotifier_initNamsNotifier) {
     namsNotifierIsolateId = KNI_GetParameterAsInt(1);
 }
 
@@ -457,7 +457,7 @@ void initNams(void) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_main_NamsManager_initNamsManager(void) {
+KNIDECL(com_sun_midp_main_NamsManager_initNamsManager) {
     namsManagerIsolateId = KNI_GetParameterAsInt(1);
 
     /* request foreground for NamsManager */
@@ -465,21 +465,21 @@ Java_com_sun_midp_main_NamsManager_initNamsManager(void) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_main_NamsManager_findNextEmptyMIDlet() {
+KNIDECL(com_sun_midp_main_NamsManager_findNextEmptyMIDlet() {
     jint appId = KNI_GetParameterAsInt(1);
 
      KNI_ReturnInt(findNextEmptyMIDlet(appId));
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_main_NamsManager_findNextForegroundMIDlet(void) {
+KNIDECL(com_sun_midp_main_NamsManager_findNextForegroundMIDlet) {
     jint appId = KNI_GetParameterAsInt(1);
 
      KNI_ReturnInt(findNextForegroundMIDlet(appId));
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_main_NamsManager_getForegroundAppId(void) {
+KNIDECL(com_sun_midp_main_NamsManager_getForegroundAppId) {
      KNI_ReturnInt(fgAppId);
 }
 
