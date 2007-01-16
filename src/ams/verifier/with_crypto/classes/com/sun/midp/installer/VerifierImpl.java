@@ -162,10 +162,20 @@ public class VerifierImpl implements Verifier {
     private void findProviderCert() throws InvalidJadException {
         int chain;
         int result;
+        InvalidJadException pendingException = null;
 
         for (chain = 1; ; chain++) {
             // sets the authPath and cpCert
-            result = checkCertChain(chain);
+            try {
+                result = checkCertChain(chain);
+            } catch (InvalidJadException ije) {
+                // According to the spec, if some chain is invalid and
+                // the next chain exists, it should also be verified;
+                // the first valid chain should be used for the jar
+                // verification.
+                pendingException = ije;
+                continue;
+            }
 
             if (result == 1) {
                 // we found the good chain
@@ -176,6 +186,10 @@ public class VerifierImpl implements Verifier {
                 // chain not found, done
                 break;
             }
+        }
+
+        if (pendingException != null) {
+            throw pendingException;
         }
 
         if (chain == 1) {
@@ -194,6 +208,9 @@ public class VerifierImpl implements Verifier {
      * CA. Set the authPath field to names of the auth chain in any case.
      * Authenticate the chain and set the cpCert field to the provider's
      * certificate if the CA is known.
+     *
+     * IMPL_NOTE: in the case of erroneous certificate chains the last
+     *            chain error will be thrown.
      *
      * @param chainNum the number of the chain
      *
