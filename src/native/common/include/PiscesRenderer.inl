@@ -1077,8 +1077,8 @@ updateSurfaceDependedRoutines(Renderer* rdr) {
             rdr->_bl_PT_SourceOver = blitPTSrcOver888;
             rdr->_bl_Source = blitSrc888;
             rdr->_bl_PT_Source = blitPTSrc888;
-            rdr->_bl_Clear = blitClearInt;
-            rdr->_bl_PT_Clear = blitClearInt;
+            rdr->_bl_Clear = blitSrc888;
+            rdr->_bl_PT_Clear = blitSrc888;
             rdr->_clearRect = clearRect8888;
             break;
         case TYPE_INT_ARGB:
@@ -1086,8 +1086,8 @@ updateSurfaceDependedRoutines(Renderer* rdr) {
             rdr->_bl_PT_SourceOver = blitPTSrcOver8888;
             rdr->_bl_Source = blitSrc8888;
             rdr->_bl_PT_Source = blitPTSrc8888;
-            rdr->_bl_Clear = blitClearInt;
-            rdr->_bl_PT_Clear = blitClearInt;
+            rdr->_bl_Clear = blitSrc8888;
+            rdr->_bl_PT_Clear = blitSrc8888;
             rdr->_clearRect = clearRect8888;
             break;
         case TYPE_INT_ARGB_PRE:
@@ -1095,8 +1095,8 @@ updateSurfaceDependedRoutines(Renderer* rdr) {
             rdr->_bl_PT_SourceOver = blitPTSrcOver8888_pre;
             rdr->_bl_Source = blitSrc8888_pre;
             rdr->_bl_PT_Source = blitPTSrc8888_pre;
-            rdr->_bl_Clear = blitClearInt;
-            rdr->_bl_PT_Clear = blitClearInt;
+            rdr->_bl_Clear = blitSrc8888_pre;
+            rdr->_bl_PT_Clear = blitSrc8888_pre;
             rdr->_clearRect = clearRect8888;
             break;  
         case TYPE_USHORT_565_RGB:
@@ -1104,8 +1104,8 @@ updateSurfaceDependedRoutines(Renderer* rdr) {
             rdr->_bl_PT_SourceOver = blitPTSrcOver565;
             rdr->_bl_Source = blitSrc565;
             rdr->_bl_PT_Source = blitPTSrc565;
-            rdr->_bl_Clear = blitClear565;
-            rdr->_bl_PT_Clear = blitClear565;
+            rdr->_bl_Clear = blitSrc565;
+            rdr->_bl_PT_Clear = blitSrc565;
             rdr->_clearRect = clearRect565;
             break;
         case TYPE_BYTE_GRAY:
@@ -1113,8 +1113,8 @@ updateSurfaceDependedRoutines(Renderer* rdr) {
             rdr->_bl_PT_SourceOver = blitPTSrcOver8;
             rdr->_bl_Source = blitSrc8;
             rdr->_bl_PT_Source = blitPTSrc8;
-            rdr->_bl_Clear = blitClear8;
-            rdr->_bl_PT_Clear = blitClear8;
+            rdr->_bl_Clear = blitSrc8;
+            rdr->_bl_PT_Clear = blitSrc8;
             rdr->_clearRect = clearRect8;
             break;  
         default:

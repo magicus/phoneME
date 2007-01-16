@@ -64,10 +64,6 @@ void genLinearGradientPaint(Renderer *rdr, jint height);
 void genRadialGradientPaint(Renderer *rdr, jint height);
 void genTexturePaint(Renderer *rdr, jint height);
 
-void blitClearInt(Renderer *rdr, jint height);
-void blitClear565(Renderer *rdr, jint height);
-void blitClear8(Renderer *rdr, jint height);
-
 void blitSrc888(Renderer *rdr, jint height);
 void blitSrc8888_pre(Renderer *rdr, jint height);
 void blitSrc8888(Renderer *rdr, jint height);
