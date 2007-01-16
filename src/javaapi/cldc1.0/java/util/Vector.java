@@ -489,7 +489,7 @@ class Vector {
      */
     public synchronized void insertElementAt(Object obj, int index) {
         int newcount = elementCount + 1;
-        if (index >= newcount) {
+        if (index < 0 || index >= newcount) {
             throw new ArrayIndexOutOfBoundsException(
 /* #ifdef VERBOSE_EXCEPTIONS */
 /// skipped                       index + " > " + elementCount
