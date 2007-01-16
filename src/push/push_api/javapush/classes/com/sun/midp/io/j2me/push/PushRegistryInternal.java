@@ -130,9 +130,9 @@ public final class PushRegistryInternal {
         }
 
         ConnectionRegistry.registerConnectionInternal(
-                token, midletSuite,
+                midletSuite,
                 connection, midlet, filter,
-                bypassChecks);
+                !bypassChecks);
     }
 
     /**

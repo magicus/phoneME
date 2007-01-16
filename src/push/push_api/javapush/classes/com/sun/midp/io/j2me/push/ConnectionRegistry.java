@@ -396,8 +396,8 @@ public final class ConnectionRegistry
             Connection connection, String midlet, String filter)
         throws ClassNotFoundException, IOException {
 
-        registerConnectionInternal(classSecurityToken, midletSuite,
-                            connection.getConnection(), midlet, filter, false);
+        registerConnectionInternal(midletSuite,
+                            connection.getConnection(), midlet, filter, true);
     }
 
     /**
@@ -433,7 +433,6 @@ public final class ConnectionRegistry
      * This method bypasses the class loader specific checks
      * needed by the <code>Installer</code>.
      *
-     * @param token security token of the calling class, can be null
      * @param midletSuite MIDlet suite for the suite registering,
      *                   the suite only has to implement isRegistered,
      *                   checkForPermission, and getID.
@@ -445,7 +444,8 @@ public final class ConnectionRegistry
      *               when new external data is available
      * @param filter a connection URL string indicating which senders
      *               are allowed to cause the MIDlet to be launched
-     * @param bypassChecks if true, bypass the permission checks,
+     * @param registerConnection if true, don't register a connection with a
+     *         protocol,
      *         used by the installer when redo old connections during an
      *         aborted update
      *
@@ -457,15 +457,15 @@ public final class ConnectionRegistry
      *
      * @see #unregisterConnection
      */
-    static void registerConnectionInternal(SecurityToken token,
-                                                  MIDletSuite midletSuite,
-                                                  String connection,
-                                                  String midlet,
-                                                  String filter,
-                                                  boolean bypassChecks)
+    static void registerConnectionInternal(
+            final MIDletSuite midletSuite,
+            final String connection,
+            final String midlet,
+            final String filter,
+            final boolean registerConnection)
         throws ClassNotFoundException, IOException {
 
-        if (!bypassChecks) {
+        if (registerConnection) {
             /*
              * No need to register connection when bypassChecks: restoring
              * RFC: why add0 below?
@@ -484,7 +484,6 @@ public final class ConnectionRegistry
             // PushRegistry was already performed by add0()
             throw new IOException("Connection already registered");
         }
-
     }
 
     /**
