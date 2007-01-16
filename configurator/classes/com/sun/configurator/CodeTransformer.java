@@ -28,7 +28,7 @@
 /**
  * Transforms a XML file according given XSL file.
  */
-package com.sun.midp.configurator;
+package com.sun.configurator;
 
 import java.io.*;
 import java.util.*;
