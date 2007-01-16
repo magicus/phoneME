@@ -118,6 +118,9 @@ class DateEditor extends PopupLayer implements CommandListener {
      * @param y the y-coordinate of the popup layer location
      */
     public void setLocation(int x, int y) {
+        if (!initialized) {
+            init();
+        }
         bounds[X] = x;
         bounds[Y] = y;
         bounds[H] = DateEditorSkin.HEIGHT;
@@ -167,9 +170,6 @@ class DateEditor extends PopupLayer implements CommandListener {
      * @param g The graphics context to paint to
      */
     public void paintBody(Graphics g) {
-        if (!initialized) {
-            init();
-        }
         setDayOffset();
         lastDay = daysInMonth(editDate.get(Calendar.MONTH),
             editDate.get(Calendar.YEAR));
