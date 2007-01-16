@@ -27,6 +27,10 @@
 ######################################################################
 
 
+ifndef TOOLS_OUTPUT_DIR
+TOOLS_OUTPUT_DIR=$(TOOLS_DIR)/output
+endif
+
 # Configurator paths and file names
 #
 CONFIGURATOR_PACKAGE     = com.sun.configurator
