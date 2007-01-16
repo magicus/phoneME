@@ -64,6 +64,14 @@
 #include <fbapp_export.h>
 #include "fb_port.h"
 
+/**
+ * By default use fast copying of rotated pixel data.
+ * The assumptions required by fast copying implementation are supposed.
+ */
+#ifndef ENABLE_FAST_COPY_ROTATED
+#define ENABLE_FAST_COPY_ROTATED    1
+#endif
+
 /** @def PERROR Prints diagnostic message. */
 #define PERROR(msg) REPORT_ERROR2(0, "%s: %s", msg, strerror(errno))
 
@@ -334,6 +342,7 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     }
 }
 
+#if ENABLE_FAST_COPY_ROTATED
 /**
  * Fast rotated copying of screen buffer area to the screen memory.
  * The copying is optimized for 32bit architecture with read caching
@@ -379,6 +388,7 @@ static void fast_copy_rotated(short *src, short *dst, int x1, int y1, int x2, in
   }
 }
 
+#else /* ENABLE_FAST_COPY_ROTATED */
 /**
  * Simple rotated copying of screen buffer area to the screen memory.
  * Source data is traversed by lines to benefit from read caching,
@@ -414,6 +424,7 @@ static void simple_copy_rotated(short *src, short *dst, int x1, int y1, int x2, 
          src += srcInc;
     }
 }
+#endif /* ENABLE_FAST_COPY_ROTATED */
 
 /** Refresh rotated screen with offscreen buffer content */
 void refreshScreenRotated(int x1, int y1, int x2, int y2) {
@@ -462,8 +473,13 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     srcInc = bufWidth - srcWidth;      // increment for src pointer at the end of row
     dstInc = srcWidth * dstWidth + 1;  // increment for dst pointer at the end of column
 
+#if ENABLE_FAST_COPY_ROTATED
     fast_copy_rotated(src, dst, x1, y1, x2, y2,
         bufWidth, dstWidth, srcInc, dstInc);
+#else
+    simple_copy_rotated(src, dst, x1, y1, x2, y2,
+        bufWidth, dstWidth, srcInc, dstInc);
+#endif
 }
 
 /** Frees allocated resources and restore system state */
