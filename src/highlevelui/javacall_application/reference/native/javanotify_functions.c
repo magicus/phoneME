@@ -339,7 +339,7 @@ void javanotify_install_midlet_from_filesystem(const javacall_utf16 * jadFilePat
     data->argc = 0;
     data->argv[data->argc++] = "runMidlet";
     data->argv[data->argc++] = "-1";
-    data->argv[data->argc++] = "com.sun.midp.installer.CommandLineInstaller";
+    data->argv[data->argc++] = "com.sun.midp.scriptutil.CommandLineInstaller";
     data->argv[data->argc++] = "I";
 
     if (jadFilePathLen >= BINARY_BUFFER_MAX_LEN)
