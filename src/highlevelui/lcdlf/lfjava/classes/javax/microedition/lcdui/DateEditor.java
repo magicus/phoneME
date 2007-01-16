@@ -166,7 +166,10 @@ class DateEditor extends PopupLayer implements CommandListener {
      *
      * @param g The graphics context to paint to
      */
-    public void paintBody(Graphics g) {        
+    public void paintBody(Graphics g) {
+        if (!initialized) {
+            init();
+        }
         setDayOffset();
         lastDay = daysInMonth(editDate.get(Calendar.MONTH),
             editDate.get(Calendar.YEAR));
@@ -420,10 +423,6 @@ class DateEditor extends PopupLayer implements CommandListener {
      */
     void show() {
 
-        if (!initialized) {
-            init();
-        }
-
         // refresh the edit date to value stored in DateField each time
         editDate = Calendar.getInstance();
         Date date = lf.df.getDate();
@@ -463,9 +462,6 @@ class DateEditor extends PopupLayer implements CommandListener {
      * Hide all sub-popups triggered by this date editor.
      */
     void hideAllPopups() {
-        if (!initialized) {
-            init();
-        }
         if (monthPopup != null) monthPopup.hide();
         if (yearPopup != null) yearPopup.hide();
         if (hoursPopup != null) hoursPopup.hide();
