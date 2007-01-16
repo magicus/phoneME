@@ -156,8 +156,13 @@
     if (pc[0] == o) {				\
         TRACE(a);				\
     }
+#define TRACEIFW(o, a)				\
+    if (pc[1] == o) {				\
+        TRACE(a);				\
+    }
 #else
 #define TRACEIF(o, a)
+#define TRACEIFW(o, a)
 #endif
 
 /* 
@@ -1298,44 +1303,44 @@ CVMwideHelper(CVMExecEnv* ee, CVMSlotVal32* locals, CVMFrame* frame)
         case opc_iload:
         case opc_fload:
 	    STACK_SLOT(0) = locals[reg]; 
-	    TRACEIF(opc_iload, ("\tiload_w locals[%d](%d) =>\n", 
-				reg, STACK_INT(0)));
-	    TRACEIF(opc_aload, ("\taload_w locals[%d](%0x%x) =>\n", 
-				reg, STACK_OBJECT(0)));
-	    TRACEIF(opc_fload, ("\tfload_w locals[%d](%f) =>\n",
-				reg, STACK_FLOAT(0)));
+	    TRACEIFW(opc_iload, ("\tiload_w locals[%d](%d) =>\n", 
+				 reg, STACK_INT(0)));
+	    TRACEIFW(opc_aload, ("\taload_w locals[%d](0x%x) =>\n", 
+				 reg, STACK_OBJECT(0)));
+	    TRACEIFW(opc_fload, ("\tfload_w locals[%d](%f) =>\n",
+				 reg, STACK_FLOAT(0)));
 	    UPDATE_PC_AND_TOS(4, 1);
 	    break;
         case opc_lload:
         case opc_dload:
 	    CVMmemCopy64(&STACK_INFO(0).raw, &locals[reg].j.raw);
-	    TRACEIF(opc_lload, ("\tlload_w locals[%d](%s) =>\n",
-				reg, GET_LONGCSTRING(STACK_LONG(0))));
-	    TRACEIF(opc_dload, ("\tdload_w locals[%d](%f) =>\n",
-				reg, STACK_DOUBLE(0)));
+	    TRACEIFW(opc_lload, ("\tlload_w locals[%d](%s) =>\n",
+				 reg, GET_LONGCSTRING(STACK_LONG(0))));
+	    TRACEIFW(opc_dload, ("\tdload_w locals[%d](%f) =>\n",
+				 reg, STACK_DOUBLE(0)));
 	    UPDATE_PC_AND_TOS(4, 2);
 	    break;
         case opc_istore:
         case opc_astore:
         case opc_fstore:
 	    locals[reg] = STACK_SLOT(-1);
-	    TRACEIF(opc_istore,
-		    ("\tistore_w %d ==> locals[%d]\n",
-		     STACK_INT(-1), reg));
-	    TRACEIF(opc_astore, ("\tastore_w 0x%x => locals[%d]\n",
-                                 STACK_OBJECT(-1), reg));
-	    TRACEIF(opc_fstore,
-		    ("\tfstore_w %f ==> locals[%d]\n",
-		     STACK_FLOAT(-1), reg));
+	    TRACEIFW(opc_istore,
+		     ("\tistore_w %d ==> locals[%d]\n",
+		      STACK_INT(-1), reg));
+	    TRACEIFW(opc_astore, ("\tastore_w 0x%x => locals[%d]\n",
+				  STACK_OBJECT(-1), reg));
+	    TRACEIFW(opc_fstore,
+		     ("\tfstore_w %f ==> locals[%d]\n",
+		      STACK_FLOAT(-1), reg));
 	    UPDATE_PC_AND_TOS(4, -1);
 	    break;
         case opc_lstore:
         case opc_dstore:
 	    CVMmemCopy64(&locals[reg].j.raw, &STACK_INFO(-2).raw);
-	    TRACEIF(opc_lstore, ("\tlstore_w %s => locals[%d]\n",
-                                 GET_LONGCSTRING(STACK_LONG(-2)), reg));
-	    TRACEIF(opc_dstore, ("\tdstore_w %f => locals[%d]\n",
-                                 STACK_DOUBLE(-2), reg));
+	    TRACEIFW(opc_lstore, ("\tlstore_w %s => locals[%d]\n",
+				  GET_LONGCSTRING(STACK_LONG(-2)), reg));
+	    TRACEIFW(opc_dstore, ("\tdstore_w %f => locals[%d]\n",
+				  STACK_DOUBLE(-2), reg));
 	    UPDATE_PC_AND_TOS(4, -2);
 	    break;
         case opc_iinc: {
