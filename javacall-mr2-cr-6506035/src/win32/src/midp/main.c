@@ -188,9 +188,20 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
                                                  (const javacall_utf16*)argv[2],
                                                  strlen(argv[2]));
         */
+        char *path;
+        int pathLen;
+        int i;
+        javacall_utf16 utf16Path[256];
+
         javacall_print("main() Starting Graphical Installer from file\n");
         javacall_print("main() Calling to Graphical Installer from URL\n");
-        javanotify_install_midlet(argv[2]);
+
+        path = argv[2];
+        pathLen = strlen (path);
+        for (i=0; i < pathLen; i++) {
+            utf16Path[i] = path[i];
+        }
+        javanotify_install_midlet_from_filesystem (utf16Path, pathLen, 0);
 
     } else if ((argc == 4) && (strcmp(argv[1], "install_wap") == 0)) {
         {
