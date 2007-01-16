@@ -341,6 +341,17 @@ public class MIDPWindow extends CWindow {
     }
 
     /**
+     * Return bounds of BodyLayer currently
+     * @return array of bounds
+     */
+    public int[] getBodyLayerBounds() {
+        int[] innerBounds = new int[4];
+        System.arraycopy(((BodyLayer)mainLayers[BODY_LAYER]).bounds,0,innerBounds,0,4);
+        return innerBounds;
+
+    }
+
+    /**
      * Update this MIDPWindow's current command set to match the
      * current displayable and possibly item selection.
      *

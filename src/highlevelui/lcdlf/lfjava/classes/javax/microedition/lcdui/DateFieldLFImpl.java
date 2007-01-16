@@ -59,6 +59,9 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
         DateEditorResources.load();
 
         df = dateField;
+         if (editor == null) {
+            editor = new DateEditor(this);
+        }
     }
     
     // *****************************************************
@@ -224,7 +227,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                 DateFieldSkin.COLOR_BG);
         }
         
-        if (hasFocus && !popUpOpen) {
+        if (hasFocus && !editor.isPopupOpen()) {
             // hilight the background
             g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
             g.fillRect(1, 2, width - 2, height - 3);
@@ -302,6 +305,10 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                      0, 0, Graphics.LEFT | Graphics.TOP);
         
         g.translate(-DateFieldSkin.PAD_H, -DateFieldSkin.PAD_V);
+        if (editor.isPopupOpen() && editor.isSizeChanged()) {
+            setLocation();
+            editor.setSizeChanged(false);
+        }
     }
 
     /**
@@ -336,7 +343,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
 
         super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
         
-        if (!popUpOpen) {
+        if (!editor.isPopupOpen()) {
             if (!traversedIn) {
                 traversedIn = true;
                 return true;
@@ -351,8 +358,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
     void lCallTraverseOut() {
         super.lCallTraverseOut();
         traversedIn = false;
-        if (popUpOpen) {
-            popUpOpen = !popUpOpen;
+        if (editor.isPopupOpen()) {
             editor.hideAllPopups();
             getCurrentDisplay().hidePopup(editor);
         }
@@ -368,45 +374,60 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
             return;
         }
         
-        if (editor == null) {
-            editor = new DateEditor(this);
-        }
-        
-        synchronized (Display.LCDUILock) {	
-            if (!popUpOpen) {
-                ScreenLFImpl sLF = (ScreenLFImpl)df.owner.getLF();
-                // decide where to show popup: above, below or in 
-                // the middle of the screen (if both above/below don't
-                // work out)
-                
-                int x = getInnerBounds(X) - sLF.viewable[X] + 
-                    contentBounds[X];
-                int y = getInnerBounds(Y) - sLF.viewable[Y] + 
-                    contentBounds[Y];
-                
-                if (DateEditorSkin.HEIGHT < 
-                    (sLF.viewport[HEIGHT] -  y - contentBounds[HEIGHT])) 
-                {  
-                    // can fit below
-                    y =  y + contentBounds[HEIGHT];
-                } else if (DateEditorSkin.HEIGHT < y) {  
-                    // can fit above
-                    y -= DateEditorSkin.HEIGHT;
-                } else {  
-                    // fit in the middle of screen
-                    y = (sLF.viewport[HEIGHT] / 2) - 
-                        (DateEditorSkin.HEIGHT / 2);
-                }
-                editor.setLocation(x, y);
+        synchronized (Display.LCDUILock) {
+            if (!editor.isPopupOpen()) {
+                setLocation();
                 editor.show();
-                popUpOpen = !popUpOpen;		
-            } else {                
-                popUpOpen = !popUpOpen;
+            } else {
                 editor.hideAllPopups();
                 getCurrentDisplay().hidePopup(editor);                
             }	    
         } // synchronized
         uRequestPaint();
+    }
+
+    /**
+     * Set location of popup layer
+     */
+    private void setLocation() {
+        ScreenLFImpl sLF = (ScreenLFImpl)df.owner.getLF();
+        // decide where to show popup: above, below or in
+        // the middle of the screen (if both above/below don't
+        // work out)
+
+        int[] avalibleBounds = sLF.lGetCurrentDisplay().getBodyLayerBounds();
+
+        int x = bounds[X] + contentBounds[X] + DateFieldSkin.PAD_V;
+        int y = bounds[Y] + contentBounds[Y];
+
+        if (y - DateEditorSkin.HEIGHT >= 0) {
+            // can fit above
+            y -= DateEditorSkin.HEIGHT - DateFieldSkin.PAD_V - avalibleBounds[Y];
+        } else if (y + contentBounds[HEIGHT] + DateEditorSkin.HEIGHT < avalibleBounds[HEIGHT]) {
+            // can fit below
+            y += contentBounds[HEIGHT] + 2 * DateFieldSkin.PAD_V - avalibleBounds[Y];
+        } else {
+            // fit in the middle of screen
+            y = avalibleBounds[Y] + (avalibleBounds[HEIGHT] / 2) -
+                (DateEditorSkin.HEIGHT / 2);
+        }
+        
+        editor.setLocation(x, y);
+    }
+
+
+
+    /**
+     * Called by the system to indicate the size available to this Item
+     * has changed
+     *
+     * @param w the new width of the item's content area
+     * @param h the new height of the item's content area
+     */
+    void uCallSizeChanged(int w, int h) {
+        synchronized (Display.LCDUILock) {
+            editor.setSizeChanged(true);
+        }
     }
 
     /**
@@ -616,9 +637,5 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
      * The editor for this DateField.
      */
     DateEditor editor = null;
-    
-    /**
-     * The state of the date editor popup (Default: false = closed).
-     */
-    private boolean popUpOpen;
+
 }

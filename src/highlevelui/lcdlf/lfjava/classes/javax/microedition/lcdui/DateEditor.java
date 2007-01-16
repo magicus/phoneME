@@ -56,7 +56,12 @@ class DateEditor extends PopupLayer implements CommandListener {
     public DateEditor(DateFieldLFImpl lf) {
         super(DateEditorSkin.IMAGE_BG, DateEditorSkin.COLOR_BG);
         this.lf = lf;
-        
+    }
+
+    /**
+     * Initialize Date editor
+     */
+    public void init() {
         mode = lf.df.mode;
         initialized = lf.df.initialized;
         editDate = Calendar.getInstance();
@@ -71,15 +76,15 @@ class DateEditor extends PopupLayer implements CommandListener {
         minutes_bounds = new int[]{-1,-1,0,0};
         calendar_bounds = new int[]{-1,-1,0,0};
         ampm_bounds = new int[]{-1,-1,0,0};
-        
-        
+
+
         selectedDate = hilightedDate = editDate.get(Calendar.DATE);
-        
+
         if (editDate.get(Calendar.AM_PM) == Calendar.AM) {
             amSelected = true;
             amHilighted = true;
         }
-        
+
         switch (mode) {
             case DateField.DATE:
                 focusOn = MONTH_POPUP;
@@ -101,11 +106,11 @@ class DateEditor extends PopupLayer implements CommandListener {
                                "DateEditor constructor, mode=" +mode);
                 break;
         }
-        
+
         setCommands(commands);
         setCommandListener(this);
     }
-      
+
     /**
      * Sets the location of the popup layer.
      *
@@ -414,6 +419,11 @@ class DateEditor extends PopupLayer implements CommandListener {
      * Show the date editor popup.
      */
     void show() {
+
+        if (!initialized) {
+            init();
+        }
+
         // refresh the edit date to value stored in DateField each time
         editDate = Calendar.getInstance();
         Date date = lf.df.getDate();
@@ -442,6 +452,8 @@ class DateEditor extends PopupLayer implements CommandListener {
                                "DateEditor.show(), mode=" +mode);
                 break;
         }
+
+        popUpOpen = true;
         
         ScreenLFImpl sLF = (ScreenLFImpl)lf.df.owner.getLF();
         sLF.lGetCurrentDisplay().showPopup(this);
@@ -451,10 +463,14 @@ class DateEditor extends PopupLayer implements CommandListener {
      * Hide all sub-popups triggered by this date editor.
      */
     void hideAllPopups() {
+        if (!initialized) {
+            init();
+        }
         if (monthPopup != null) monthPopup.hide();
         if (yearPopup != null) yearPopup.hide();
         if (hoursPopup != null) hoursPopup.hide();
         if (minutesPopup != null) minutesPopup.hide();
+        popUpOpen = false;
     }
 
     // *********** private ************ //
@@ -1265,7 +1281,42 @@ class DateEditor extends PopupLayer implements CommandListener {
         }
         editDate.setTime(save);
     }
-    
+
+    /**
+     * Return sizeChanged flag
+     *
+     * @return true if size change iccurs
+     */
+    public boolean isSizeChanged() {
+        return sizeChanged;
+    }
+
+    /**
+     * Set sizeChanged flag
+     *
+     * @param true if size change iccurs
+     */
+    public void setSizeChanged(boolean sizeChanged) {
+        this.sizeChanged = sizeChanged;
+    }
+
+    /**
+     * Return Popup layer flag
+     *
+     * @return true if popup Layer is shown
+     */
+    public boolean isPopupOpen() {
+        return popUpOpen;
+    }
+
+    /**
+     * Set popup Layer flag
+     *
+     * @param true if popup Layer is shown
+     */
+    public void setPopupOpen(boolean popUpOpen) {
+        this.popUpOpen = popUpOpen;
+    }
 
     // *********** attributes ************* //
 
@@ -1572,4 +1623,12 @@ class DateEditor extends PopupLayer implements CommandListener {
 
     /*date index at pressed, may be valid value or invalid value 0*/
     private int pressedDate;
+
+    /**
+     * The state of the date editor popup (Default: false = closed).
+     */
+    private boolean popUpOpen;
+
+    // True if size of screen was changed
+    private boolean sizeChanged;
 }
