@@ -44,7 +44,7 @@ public class RSAPublicKey implements PublicKey {
     private static byte[] RSA_OID = {0x2A, (byte) 0x86, 0x48, (byte)0x86,
                                      (byte)0xF7, 0x0D, 0x01, 0x01, 0x01};
     /** Key object. */
-    private com.sun.midp.crypto.RSAPublicKey key;
+    private com.sun.j2me.crypto.RSAPublicKey key;
 
     /** Key length in bytes. */
     private int keyLen;
@@ -116,7 +116,7 @@ public class RSAPublicKey implements PublicKey {
 
             t = t.next;
 
-            key = new com.sun.midp.crypto.RSAPublicKey(data, offset, len,
+            key = new com.sun.j2me.crypto.RSAPublicKey(data, offset, len,
                       data, t.valueOffset, t.length);
         } catch (InvalidKeySpecException ikse) {
             throw ikse;
@@ -131,7 +131,7 @@ public class RSAPublicKey implements PublicKey {
      * Returns key object.
      * @return key object
      */
-    public com.sun.midp.crypto.RSAPublicKey getKey() {
+    public com.sun.j2me.crypto.RSAPublicKey getKey() {
         return key;
     }
 

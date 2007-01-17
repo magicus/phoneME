@@ -26,7 +26,7 @@
 
 package java.security.spec;
 
-import com.sun.midp.crypto.Util;
+import com.sun.j2me.crypto.Util;
 
 /**
  * This class represents a public key in encoded format.

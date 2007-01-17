@@ -26,11 +26,10 @@
 
 package com.sun.satsa.util;
 
-import com.sun.midp.crypto.GeneralSecurityException;
-import com.sun.midp.crypto.MessageDigest;
-
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 
 import java.util.*;
 import java.io.PrintStream;
