@@ -941,6 +941,58 @@ public abstract class Installer {
     }
 
     /**
+     * If some additional (i.e. that are not listed in jad) permissions must
+     * be allowed, add them to the value of MIDlet-Permissions attribute.
+     */
+    private void applyExtraPermissions() {
+        if (additionalPermissions != null) {
+            String newPermissions = state.jadProps.getProperty(
+                MIDletSuite.PERMISSIONS_PROP);
+
+            if (newPermissions != null && newPermissions.length() > 0) {
+                newPermissions += ",";
+            }
+
+            if ("all".equals(additionalPermissions)) {
+                int i;
+                byte[] domainPermissions = Permissions.forDomain(
+                    info.domain)[Permissions.MAX_LEVELS];
+
+                newPermissions = "";
+
+                for (i = 0; i < Permissions.NUMBER_OF_PERMISSIONS - 1; i++) {
+                    if (domainPermissions[i] != Permissions.NEVER) {
+                        newPermissions += Permissions.getName(i) + ",";
+                    }
+                }
+
+                // the same for the last permission, but without ","
+                if (domainPermissions[i] != Permissions.NEVER) {
+                    newPermissions += Permissions.getName(i);
+                }
+            } else {
+                newPermissions += additionalPermissions;
+            }
+
+            state.jadProps.setProperty(MIDletSuite.PERMISSIONS_PROP,
+                        newPermissions);
+
+            /*
+             * If the Midlet-Permissions attribute presents in there
+             * manifest, it must be the same as in jad because the suite
+             * is trusted.
+             */
+            String jarPermissions = state.jarProps.getProperty(
+                MIDletSuite.PERMISSIONS_PROP);
+
+            if (jarPermissions != null) {
+                state.jarProps.setProperty(MIDletSuite.PERMISSIONS_PROP,
+                                           newPermissions);
+            }
+        }
+    }
+
+    /**
      * Checks the permissions and store the suite.
      *
      * @exception IOException is thrown, if an I/O error occurs during
@@ -1010,52 +1062,7 @@ public abstract class Installer {
                  * This is needed by the AutoTester: sometimes it is required
                  * to allow some permissions even if they are not listed in jad.
                  */
-                if (additionalPermissions != null) {
-                    String newPermissions = state.jadProps.getProperty(
-                        MIDletSuite.PERMISSIONS_PROP);
-
-                    if (newPermissions != null && newPermissions.length() > 0) {
-                        newPermissions += ",";
-                    }
-
-                    if ("all".equals(additionalPermissions)) {
-                        int i;
-                        byte[] domainPermissions = Permissions.forDomain(
-                            info.domain)[Permissions.MAX_LEVELS];
-
-                        newPermissions = "";
-
-                        for (i = 0; i < Permissions.NUMBER_OF_PERMISSIONS - 1;
-                                i++) {
-                            if (domainPermissions[i] != Permissions.NEVER) {
-                                newPermissions += Permissions.getName(i) + ",";
-                            }
-                        }
-
-                        // the same for the last permission, but without ","
-                        if (domainPermissions[i] != Permissions.NEVER) {
-                            newPermissions += Permissions.getName(i);
-                        }
-                    } else {
-                        newPermissions += additionalPermissions;
-                    }
-
-                    state.jadProps.setProperty(MIDletSuite.PERMISSIONS_PROP,
-                        newPermissions);
-
-                    /*
-                     * If the Midlet-Permissions attribute presents in there
-                     * manifest, it must be the same as in jad because the suite
-                     * is trusted.
-                     */
-                    String jarPermissions = state.jarProps.getProperty(
-                        MIDletSuite.PERMISSIONS_PROP);
-
-                    if (jarPermissions != null) {
-                        state.jarProps.setProperty(MIDletSuite.PERMISSIONS_PROP,
-                                                   newPermissions);
-                    }
-                }
+                applyExtraPermissions();
 
                 settings.setPermissions(getInitialPermissions(info.domain));
             }

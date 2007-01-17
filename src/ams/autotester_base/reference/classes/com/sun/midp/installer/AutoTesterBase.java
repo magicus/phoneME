@@ -54,7 +54,12 @@ import com.sun.midp.log.LogChannels;
  *   <li>arg-0: URL for the test suite
  *   <li>arg-1: Used to override the default domain used when installing
  *    an unsigned suite. The default is maximum to allow the runtime API tests
- *    be performed automatically without tester interaction.
+ *    be performed automatically without tester interaction. The domain name
+ *    may be followed by a colon and a list of permissions that must be allowed
+ *    even if they are not listed in the MIDlet-Permissions attribute in the
+ *    application descriptor file. Instead of the list a keyword "all" can be
+ *    specified indicating that all permissions must be allowed, for example:
+ *    operator:all.
  * </ol>
  * <p>
  * If arg-0 is not given then a form will be used to query the tester for
