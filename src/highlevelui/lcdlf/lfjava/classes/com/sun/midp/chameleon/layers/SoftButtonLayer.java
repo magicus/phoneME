@@ -392,28 +392,24 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                 if (isSoft1Active()) {
                     setInteractive(true);
                     ret = true;
-System.err.println("Soft1 is active, eating press");
                 }
             } else if (type == EventConstants.RELEASED) {
                 if (isSoft1Active()) {
                     soft1();
                     ret = true;
                 }
-System.err.println("Soft1() returned " + ret);
             }
         } else if (keyCode == EventConstants.SOFT_BUTTON2) {
             if (type == EventConstants.PRESSED) {
                 if (isSoft2Active()) {
                     setInteractive(true);
                     ret = true;
-System.err.println("Soft2 is active, eating press");
                 }
             } else if (type == EventConstants.RELEASED) {
                 if (isSoft2Active()) {
                     soft2();
                     ret = true;
                 }
-System.err.println("Soft2() returned " + ret);
             }
         }
         return ret;
