@@ -1014,7 +1014,8 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     public void setForegroundMIDlet(MIDletProxy newForeground) {
         if (newForeground != null &&
             (newForeground.getMidletState() == MIDletProxy.MIDLET_DESTROYED ||
-            newForeground == foregroundMidlet)) {
+            newForeground == foregroundMidlet ||
+            newForeground.noDisplay())) {
             return;
         }
 
