@@ -43,6 +43,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.events.NativeEventMonitor \
         com.sun.midp.installer.JarReader \
         com.sun.midp.installer.OtaNotifier \
+	com.sun.midp.io.NetworkConnectionBase \
         com.sun.midp.io.j2me.push.PushRegistryImpl \
         com.sun.midp.io.j2me.storage.File \
         com.sun.midp.io.j2me.storage.RandomAccessStream \

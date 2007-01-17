@@ -497,6 +497,7 @@ class DEPopupLayer extends ScrollablePopupLayer {
      */
     public void updateScrollIndicator() {
         if (scrollInd != null) {
+            scrollInd.update(null);
             if (sbVisible) {
                 scrollInd.setVerticalScroll(
                                             startIndex * 100 / (numElements - elementsToFit),

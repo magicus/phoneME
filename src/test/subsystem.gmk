@@ -55,7 +55,7 @@ endif
 
 # Java files for actual tests
 #
-SUBSYSTEM_TEST_I3TEST_JAVA_FILES := \
+SUBSYSTEM_TEST_I3TEST_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/Baton.java \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/DummyMIDlet.java \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/DummyMIDlet2.java \
@@ -66,8 +66,12 @@ SUBSYSTEM_TEST_I3TEST_JAVA_FILES := \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/LiveTraceCallback.java \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/LiveTraceListener.java \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/util/SerialCallback.java \
-    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/test/TestSemaphore.java \
     $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/i3test/TestCompWildcard.java
+
+ifeq ($(TARGET_VM), cldc_vm)
+SUBSYSTEM_TEST_I3TEST_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/test/TestSemaphore.java 
+endif
 
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
     SUBSYSTEM_TEST_I3TEST_JAVA_FILES += \
@@ -96,8 +100,10 @@ SUBSYSTEM_TEST_JAVA_FILES += \
 
 # Native files and vpath
 #
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
 
 vpath % $(SUBSYSTEM_DIR)/test/common/native/share
 
 SUBSYSTEM_TEST_NATIVE_FILES = \
     midpI3Test.c
+endif

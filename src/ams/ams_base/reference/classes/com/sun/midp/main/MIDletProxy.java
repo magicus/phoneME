@@ -264,8 +264,17 @@ public class MIDletProxy implements SuspendDependency {
     }
 
     /**
+     * Check if the MIDlet has not created its display.
+     *
+     * @return true if the MIDlet has no display.
+     */
+    public boolean noDisplay() {
+        return displayId == 0;
+    }
+
+    /**
      * Check if the MIDlet has not set a displayable in its display.
-     * Used by foreground selector to determine if it the MIDlet it is
+     * Used by foreground selector to determine if the MIDlet it is
      * about to put in the foreground will draw the screen.
      *
      * @return true if the MIDlet has no displayable.
