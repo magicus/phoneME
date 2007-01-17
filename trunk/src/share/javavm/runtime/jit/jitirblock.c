@@ -376,10 +376,6 @@ CVMJITirblockFindAllNormalLabels(CVMJITCompilationContext* con)
 	}
 #endif
 
-	if (instr == opc_wide) {
-	    instr = pc[1];
-	}
-
         if (CVMbcAttr(instr, RETURN)) {
 	    /*
 	     * Inline methods return by branches to a special end block,
@@ -388,9 +384,7 @@ CVMJITirblockFindAllNormalLabels(CVMJITCompilationContext* con)
 	    if (pc + instrLen < codeEnd && con->mc->compilationDepth > 0) {
 		CVMJITirblockNewLabelForPC(con, codeEnd - codeBegin);
 	    }
-	}
-
-        if (CVMbcAttr(instr, BRANCH)) {
+	} else if (CVMbcAttr(instr, BRANCH)) {
 	    /* Branches are unconditional GC points. If there is
 	       any refinement to be done on this selection, let
 	       the back-end handle it */
@@ -488,6 +482,10 @@ CVMJITirblockFindAllNormalLabels(CVMJITCompilationContext* con)
 		    CVMgetUint16(pc+2) == 0)) {
 	    /* looks like we can't trust locals[0] to be "this" */
 	    mc->removeNullChecksOfLocal_0 = CVM_FALSE;
+	}
+
+	if (instr == opc_wide) {
+	    instr = pc[1];
 	}
 
 	if (CVMbcAttr(instr, GCPOINT)) {
