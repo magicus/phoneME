@@ -31,6 +31,7 @@ import com.sun.midp.log.*;
 import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.ScreenSkin;
+import com.sun.midp.lcdui.DisplayAccess;
 
 // #ifndef ENABLE_CDC
 import com.sun.midp.main.MIDletSuiteUtils;
@@ -83,6 +84,11 @@ public class SkinResources {
     private static ImageTunnel imageTunnel;
 
     /**
+     * Display access helper class.
+     */
+    private static DisplayAccess displayAccess;
+
+    /**
      * True, if skin is being loaded in AMS Isolate in MVM case,
      * false otherwise. Always true in SVM case.
      */
@@ -107,6 +113,26 @@ public class SkinResources {
         if (imageTunnel == null) {
             imageTunnel = tunnel;
         }
+    }
+
+    /**
+     * This method is called by the Display class to initialize
+     * Display access tunnel class.
+     */
+    public static void initDisplayAccess(DisplayAccess access) {
+        displayAccess = access;
+    }
+
+    /**
+     * This is method to be called before loadSkin to define the screen 
+     * size while static initialization because no Display was created yet
+     * and there is no DisplayAccessor at that stage.
+     * @param width screen width
+     * @param height screen height
+     */
+    public static void setScreenSize(int width, int height) {
+        ScreenSkin.WIDTH = width;
+        ScreenSkin.HEIGHT = height;
     }
 
     /**
@@ -505,8 +531,8 @@ public class SkinResources {
      */
     public static void adjustScreen() {
 
-        ScreenSkin.WIDTH = Display.getScreenWidth0();
-        ScreenSkin.HEIGHT = Display.getScreenHeight0();
+        setScreenSize(displayAccess.getDisplayWidth(), 
+                      displayAccess.getDisplayHeight());
         SoftButtonResources.load(true);
         AlertResources.load(true);
     }

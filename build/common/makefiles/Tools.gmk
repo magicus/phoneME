@@ -91,10 +91,7 @@ $(TOOLS_CLASS_DIR):
 	@echo " ... $@ " $(LOG)
 	@(mkdir -p $(TOOLS_CLASS_DIR)) $(LOG)
 
-$(KEYTOOL_JAR_FILE): $(MODULE_TOOL_KEYTOOL_JAVA_FILES) $(KEYTOOL_MANIFEST_FILE)
-	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
-		mkdir -p $(TOOLS_CLASS_DIR); \
-	fi
+$(KEYTOOL_JAR_FILE): $(TOOLS_CLASS_DIR) $(MODULE_TOOL_KEYTOOL_JAVA_FILES) $(KEYTOOL_MANIFEST_FILE)
 	@echo " ... building MEKeyTool " $(LOG)
 	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
 		-classpath "$(TOOLS_CLASSPATH)" \
@@ -112,7 +109,7 @@ $(KEYTOOL_JAR_FILE): $(MODULE_TOOL_KEYTOOL_JAVA_FILES) $(KEYTOOL_MANIFEST_FILE)
 		com/sun/midp/publickeystore com/sun/midp/mekeytool) $(LOG)
 	@(cp -f $(TOOLS_CLASS_DIR)/MEKeyTool.jar $(KEYTOOL_JAR_FILE)) $(LOG)
 
-$(KEYTOOL_MANIFEST_FILE): 
+$(KEYTOOL_MANIFEST_FILE): $(TOOLS_CLASS_DIR)
 	@echo " ... $@ " $(LOG)
 	@(echo "Main-Class: com.sun.midp.mekeytool.MEKeyTool" > $@) $(LOG)
 
@@ -149,10 +146,7 @@ $(BINDIR)/j2se_test_keystore.bin: $(KEYTOOL_KEYSTORE_FILE)
 	@(cp -f $(KEYTOOL_KEYSTORE_FILE) $(BINDIR)) $(LOG)
 	@(cp -f $(KEYTOOL_README_FILE) $(BINDIR)) $(LOG)
 
-$(JADTOOL_JAR_FILE): $(MODULE_TOOL_JADTOOL_JAVA_FILES) $(JADTOOL_MANIFEST_FILE)
-	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
-		mkdir -p $(TOOLS_CLASS_DIR); \
-	fi
+$(JADTOOL_JAR_FILE): $(TOOLS_CLASS_DIR) $(MODULE_TOOL_JADTOOL_JAVA_FILES) $(JADTOOL_MANIFEST_FILE)
 	@echo " ... building JadTool " $(LOG)
 	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
 		-classpath "$(TOOLS_CLASSPATH)" \
@@ -170,18 +164,14 @@ $(JADTOOL_JAR_FILE): $(MODULE_TOOL_JADTOOL_JAVA_FILES) $(JADTOOL_MANIFEST_FILE)
 		com/sun/midp/util/Properties.class com/sun/midp/jadtool) $(LOG)
 	@(cp -f $(TOOLS_CLASS_DIR)/JadTool.jar $(JADTOOL_JAR_FILE)) $(LOG)
 
-$(JADTOOL_MANIFEST_FILE): 
-	@mkdir -p $(TOOLS_CLASS_DIR) $(LOG)
+$(JADTOOL_MANIFEST_FILE): $(TOOLS_CLASS_DIR)
 	@echo " ... $@ " $(LOG)
 	@(echo "Main-Class: com.sun.midp.jadtool.JadTool" > $@) $(LOG)
 
 
 # Configurator (jar rules)
 #
-$(CONFIGURATOR_JAR_FILE): $(MODULE_TOOL_CONFIGURATOR_JAVA_FILES) $(CONFIGURATOR_MANIFEST_FILE)
-	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
-		mkdir -p $(TOOLS_CLASS_DIR); \
-	fi
+$(CONFIGURATOR_JAR_FILE): $(TOOLS_CLASS_DIR) $(MODULE_TOOL_CONFIGURATOR_JAVA_FILES) $(CONFIGURATOR_MANIFEST_FILE)
 	@echo " ... building Configurator " $(LOG)
 	@mkdir -p $(BINDIR) $(LOG)
 	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
@@ -197,17 +187,14 @@ $(CONFIGURATOR_JAR_FILE): $(MODULE_TOOL_CONFIGURATOR_JAVA_FILES) $(CONFIGURATOR_
 	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(CONFIGURATOR_JAR_FILE) \
 		$(CONFIGURATOR_MANIFEST_FILE) com/sun/midp/configurator) $(LOG)
 
-$(CONFIGURATOR_MANIFEST_FILE): 
+$(CONFIGURATOR_MANIFEST_FILE): $(TOOLS_CLASS_DIR)
 	@echo " ... $@ " $(LOG)
 	@(echo "Main-Class: com.sun.midp.configurator.CodeTransformer" > $@) $(LOG)
 
 
 # Skin romization tool (jar rules)
 #
-$(SKINROMIZATION_JAR_FILE): $(MODULE_TOOL_SKINROMIZATION_JAVA_FILES) $(SKINROMIZATION_MANIFEST_FILE)
-	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
-		mkdir -p $(TOOLS_CLASS_DIR); \
-	fi
+$(SKINROMIZATION_JAR_FILE): $(TOOLS_CLASS_DIR) $(MODULE_TOOL_SKINROMIZATION_JAVA_FILES) $(SKINROMIZATION_MANIFEST_FILE)
 	@echo " ... building SkinRomizationTool " $(LOG)
 	@mkdir -p $(BINDIR) $(LOG)
 	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
@@ -230,10 +217,7 @@ $(SKINROMIZATION_MANIFEST_FILE):
 
 # Image to raw converter (jar rules)
 #
-$(IMAGE2RAW_JAR_FILE): $(MODULE_TOOL_IMAGE2RAW_JAVA_FILES) $(IMAGE2RAW_MANIFEST_FILE)
-	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
-		mkdir -p $(TOOLS_CLASS_DIR); \
-	fi
+$(IMAGE2RAW_JAR_FILE): $(TOOLS_CLASS_DIR) $(MODULE_TOOL_IMAGE2RAW_JAVA_FILES) $(IMAGE2RAW_MANIFEST_FILE)
 	@echo " ... building ImageToRawTool " $(LOG)
 	@mkdir -p $(BINDIR) $(LOG)
 	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
@@ -251,8 +235,7 @@ $(IMAGE2RAW_JAR_FILE): $(MODULE_TOOL_IMAGE2RAW_JAVA_FILES) $(IMAGE2RAW_MANIFEST_
 		ImageToRawTool.manifest \
 		com/sun/midp/imageutil) $(LOG)
 
-$(IMAGE2RAW_MANIFEST_FILE): 
-	@mkdir -p $(TOOLS_CLASS_DIR) $(LOG)
+$(IMAGE2RAW_MANIFEST_FILE): $(TOOLS_CLASS_DIR)
 	@echo " ... $@ " $(LOG)
 	@(echo "Main-Class: com.sun.midp.imageutil.ImageToRawTool" > $@) $(LOG)
 
