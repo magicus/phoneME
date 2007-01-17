@@ -32,53 +32,87 @@ extern "C" {
 Implementation of low-level porting API for JSR 238 (MI18N).
 */
 
+
 /**
  * Gets the number of supported locales for string collation.
- *
- * @return the number of supported locales or 0 if something is wrong
+ * @param count_out pointer to integer that recieves
+ *					the number of supported locales
+ * @return JAVACALL_OK if all done successfuly, 
+ *         JAVACALL_FAIL otherwise
  */
-int javacall_mi18n_get_collation_locales_count() {
-    return 0;
+javacall_result javacall_mi18n_get_collation_locales_count(/*OUT*/int* count_out){
+	(void)count_out;
+    return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /**
- * Gets a locale name for string collation for the index.
+ * Gets a locale name for collation for the index.
  *
- * @param loc    buffer for the locale
- * @param len    buffer length
- * @param index  index of the locale
- * @return JAVACALL_OK on success, JAVACALL_FAIL otherwise
+ * @param locale_index  index of the locale.
+ * @param locale_name_out  buffer for the locale.
+ * @param plen	pointer to integer initially containing the buffer length
+ *				and receiving length of result string in wchars including terminating zero, 
+ * @return JAVACALL_OK if all done successfuly, 
+ *         JAVACALL_NOT_IMPLEMENTED otherwise
  */
-javacall_result javacall_mi18n_get_collation_locale(char* loc, int len, int index) {
-    /* Suppress unused parameter warnings */
-    (void)loc;
-    (void)index;
+javacall_result javacall_mi18n_get_collation_locale_name(int locale_index, javacall_utf16* locale_name_out,
+							 /*IN|OUT*/int* plen){
+	(void)locale_index;
+	(void)locale_name_out;
+	(void)plen;
+    return JAVACALL_NOT_IMPLEMENTED;
+}
 
-    return JAVACALL_FAIL;
+/**
+ * Gets locale index used for collation formatting by the given miroedition.locale name.
+ *
+ * @param loc    utf16 string containing requested locale name or null for neutral locale
+ * @param index_out	pointer to integer receiving index of requested locale,
+ * @return JAVACALL_OK if all done successfuly, 
+ *         JAVACALL_NOT_IMPLEMENTED otherwise
+ * @note If neutral (empty string) locale is supported it must have index 0
+ */
+javacall_result javacall_mi18n_get_collation_locale_index(const javacall_utf16* locale, /*OUT*/int* index_out){
+	(void)locale;
+	(void)index_out;
+    return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /**
  * Compare two strings.
  *
- * @param s1            first string to compare
- * @param len1          length of the the first string
- * @param s2            second string to compare
- * @param len2          length of the second string
- * @param locale_index  index of the locale
- * @param level         level of collation
- * @return negative if s1 belongs before s2, 0 if the strings are equal, positive if s1 belongs after s2
+ * @param locale_index  index of the locale.
+ *						NEUTRAL_LOCALE_INDEX (0) for neutral locale
+ * @param s1            first utf16 string to compare.
+ * @param len1          length of the the first string.
+ * @param s2            second utf16 string to compare.
+ * @param len2          length of the second string.
+ * @param level         level of collation:
+ *							1. alphabetic ordering
+ *							2. diacritic ordering
+ *							3. case ordering
+ *							15. identical comparision
+ * @param result_out	pointer to integer receiving comparision result: 
+						negative if s1 belongs before s2,
+						0 if the strings are equal, 
+ *						positive if s1 belongs after s2.
+ * @return JAVACALL_OK if all done successfuly, 
+ *         JAVACALL_NOT_IMPLEMENTED otherwise
  */
-int javacall_mi18n_compare_strings(char* s1, int len1, char* s2, 
-                                   int len2, int locale_index, int level) {
-    /* Suppress unused parameter warnings */
-    (void)s1;
-    (void)len1;
-    (void)s2;
-    (void)len2;
-    (void)locale_index;
-    (void)level;
-
-    return 0;
+javacall_result javacall_mi18n_compare_strings(int locale_index, 
+								   const javacall_utf16* s1, int len1,
+								   const javacall_utf16* s2, int len2,
+								   int level,
+								   int* result_out)
+{
+	(void)locale_index;
+	(void)s1;
+	(void)len1;
+	(void)s2;
+	(void)len2;
+	(void)level;
+	(void)result_out;
+    return JAVACALL_NOT_IMPLEMENTED;
 }
 
 #ifdef __cplusplus
