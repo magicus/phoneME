@@ -23,6 +23,7 @@
  * information or have any questions. 
  */
 
+
 #ifndef PISCES_SYSUTILS_H
 #define PISCES_SYSUTILS_H
 
@@ -43,6 +44,8 @@ void     setMemErrorFlag();
 #define PISCESfree(x) pcsl_mem_free((x))
 #define PISCEScalloc(x, y) pcsl_mem_calloc((x), (y))
 #define PISCESrealloc(x,y) pcsl_mem_realloc((x), (y))
+
+#define PISCESclear_mem(buffer,count) memset(buffer,0,count)
 
 #define PISCESsqrt(x) jvm_sqrt((x))
 #define PISCESsin(x) jvm_sin((x))

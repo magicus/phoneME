@@ -40,71 +40,71 @@ jint* _Pisces_convert8To6 = NULL;
 jint PISCES_STROKE_X_BIAS;
 jint PISCES_STROKE_Y_BIAS;
 
-jboolean 
+jboolean
 piscesutil_moduleInitialize() {
-  if (_Pisces_convert8To5 == NULL) {
-    jint i;
-    jint* convert8To5; 
-    jint* convert8To6;
+    if (_Pisces_convert8To5 == NULL) {
+        jint i;
+        jint* convert8To5;
+        jint* convert8To6;
 
-    convert8To5 = (jint*)PISCESmalloc(256*sizeof(jint));
-    ASSERT_ALLOC_BOOLEAN(convert8To5);
+        convert8To5 = (jint*)PISCESmalloc(256*sizeof(jint));
+        ASSERT_ALLOC_BOOLEAN(convert8To5);
 
-    convert8To6 = (jint*)PISCESmalloc(256*sizeof(jint));
-    ASSERT_ALLOC_BOOLEAN(convert8To6);
+        convert8To6 = (jint*)PISCESmalloc(256*sizeof(jint));
+        ASSERT_ALLOC_BOOLEAN(convert8To6);
 
-    if ((convert8To5 == NULL) ||
-        (convert8To6 == NULL)) {
-        if (convert8To5 != NULL) {
-          PISCESfree(convert8To5);
+        if ((convert8To5 == NULL) ||
+                (convert8To6 == NULL)) {
+            if (convert8To5 != NULL) {
+                PISCESfree(convert8To5);
+            }
+            if (convert8To6 != NULL) {
+                PISCESfree(convert8To6);
+            }
+            return XNI_FALSE;
         }
-        if (convert8To6 != NULL) {
-          PISCESfree(convert8To6);
+        for (i = 0; i < 256; i++) {
+            convert8To5[i] = (i*31 + 127)/255;
+            convert8To6[i] = (i*63 + 127)/255;
         }
-        return XNI_FALSE;
+
+        _Pisces_convert8To5 = convert8To5;
+        _Pisces_convert8To6 = convert8To6;
     }
-    for (i = 0; i < 256; i++) {
-      convert8To5[i] = (i*31 + 127)/255;
-      convert8To6[i] = (i*63 + 127)/255;
-    }
-    
-    _Pisces_convert8To5 = convert8To5;
-    _Pisces_convert8To6 = convert8To6;
-  }
-  
-  return XNI_TRUE;
+
+    return XNI_TRUE;
 }
 
-void 
+void
 piscesutil_moduleFinalize() {
-  my_free(_Pisces_convert8To5);
-  my_free(_Pisces_convert8To6);
-  _Pisces_convert8To5 = NULL;
-  _Pisces_convert8To6 = NULL;
+    my_free(_Pisces_convert8To5);
+    my_free(_Pisces_convert8To6);
+    _Pisces_convert8To5 = NULL;
+    _Pisces_convert8To6 = NULL;
 }
 
-void 
+void
 piscesutil_setStrokeBias(jint xbias, jint ybias) {
-  PISCES_STROKE_X_BIAS = xbias;
-  PISCES_STROKE_Y_BIAS = ybias;
+    PISCES_STROKE_X_BIAS = xbias;
+    PISCES_STROKE_Y_BIAS = ybias;
 }
 
-jlong 
+jlong
 PointerToJLong(void *ptr) {
 #ifdef POINTER_32
-  // Avoid a compiler warning
-  return (jlong)((jint) ptr);
+    // Avoid a compiler warning
+    return (jlong)((jint) ptr);
 #else
-  return (jlong) ptr;
+    return (jlong) ptr;
 #endif
 }
 
-void* 
+void*
 JLongToPointer(jlong ptr) {
 #ifdef POINTER_32
-  // Avoid a compiler warning
-  return (void *)((jint) ptr);
+    // Avoid a compiler warning
+    return (void *)((jint) ptr);
 #else
-  return (void *) ptr;
+    return (void *) ptr;
 #endif
 }

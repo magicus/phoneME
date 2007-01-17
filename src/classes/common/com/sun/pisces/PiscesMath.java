@@ -37,6 +37,7 @@ public class PiscesMath {
     public static final int PI = (int)(Math.PI*65536.0);
     public static final int TWO_PI = (int)(2.0*Math.PI*65536.0);
     public static final int PI_OVER_TWO = (int)((Math.PI/2.0)*65536.0);
+    public static final int SQRT_TWO = (int)(Math.sqrt(2.0)*65536.0);
 
     static {
         sintab = new int[SINTAB_ENTRIES + 1];

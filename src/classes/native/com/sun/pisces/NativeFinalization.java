@@ -26,24 +26,6 @@
 
 package com.sun.pisces;
 
-public final class NativeSurface extends AbstractSurface {
-    public NativeSurface(int width, int height) {
-        this(TYPE_INT_ARGB, width, height);
-    }
-
-    public NativeSurface(int dataType, int width, int height) {
-        switch (dataType) {
-            case TYPE_INT_RGB:
-                break;
-            case TYPE_INT_ARGB:
-                break;
-            default:
-                throw new IllegalArgumentException("Data type not supported "
-                        + " for " + NativeSurface.class.getName());
-        }
-    
-        initialize(dataType, width, height);
-    }
-
-    private native void initialize(int dataType, int width, int height);
+interface NativeFinalization {
+    public void nativeFinalize();
 }

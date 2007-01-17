@@ -254,7 +254,6 @@ public class Renderer extends RendererBase {
     }
 
     public void moveTo(int x0, int y0) {
-        // debug
         // System.out.println("Renderer: moveTo " + x0/65536.0 + " " + y0/65536.0);
 	this.sx0 = this.x0 = x0;
 	this.sy0 = this.y0 = y0;

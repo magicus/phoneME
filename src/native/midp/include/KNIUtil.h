@@ -30,15 +30,16 @@
 #include <PiscesDefs.h>
 
 typedef struct _FieldDesc {
-  const char* name;
-  const char* signature;
+    const char* name;
+    const char* signature;
 
-} FieldDesc;
+}
+FieldDesc;
 
-jboolean initializeFieldIds(jfieldID* dest, 
-    jclass classHandle, const FieldDesc* fields);
+jboolean initializeFieldIds(jfieldID* dest,
+                            jclass classHandle, const FieldDesc* fields);
 
-jboolean initializeStaticFieldIds(jfieldID* dest, 
-    jclass classHandle, const FieldDesc* fields);
+jboolean initializeStaticFieldIds(jfieldID* dest,
+                                  jclass classHandle, const FieldDesc* fields);
 
 #endif

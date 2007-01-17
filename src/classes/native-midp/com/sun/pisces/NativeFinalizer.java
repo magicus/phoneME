@@ -26,24 +26,37 @@
 
 package com.sun.pisces;
 
-public final class NativeSurface extends AbstractSurface {
-    public NativeSurface(int width, int height) {
-        this(TYPE_INT_ARGB, width, height);
-    }
-
-    public NativeSurface(int dataType, int width, int height) {
-        switch (dataType) {
-            case TYPE_INT_RGB:
-                break;
-            case TYPE_INT_ARGB:
-                break;
-            default:
-                throw new IllegalArgumentException("Data type not supported "
-                        + " for " + NativeSurface.class.getName());
-        }
+class NativeFinalizer {
+    private NativeFinalization guardedObject;
     
-        initialize(dataType, width, height);
+    private static final class RendererNativeFinalizer extends NativeFinalizer {
+        public RendererNativeFinalizer(PiscesRenderer renderer) {
+            super(renderer);
+        }
+        
+        private native void finalize();
+    };
+
+    private static final class SurfaceNativeFinalizer extends NativeFinalizer {
+        public SurfaceNativeFinalizer(AbstractSurface surface) {
+            super(surface);
+        }
+        
+        private native void finalize();
+    };
+    
+    private NativeFinalizer(NativeFinalization forObject) {
+        guardedObject = forObject;
+        initialize();
     }
 
-    private native void initialize(int dataType, int width, int height);
+    public static NativeFinalizer createInstance(PiscesRenderer renderer) {
+        return new RendererNativeFinalizer(renderer);
+    }
+
+    public static NativeFinalizer createInstance(AbstractSurface surface) {
+        return new SurfaceNativeFinalizer(surface);
+    }
+    
+    private native final void initialize();
 }

@@ -23,11 +23,13 @@
  * information or have any questions. 
  */
 
-package com.sun.pisces;
 
-public interface PathSource {
+#ifndef JPISCESRENDERER_H
+#define JPISCESRENDERER_H
 
-    void produce(PathSink consumer);
+#include <PiscesRenderer.h>
 
-}
+Renderer* renderer_get(jobject objectHandle);
+void renderer_finalize(jobject objectHandle);
 
+#endif

@@ -35,7 +35,11 @@ public abstract class RendererBase extends LineSink {
 
     public static final int WIND_EVEN_ODD = 0;
     public static final int WIND_NON_ZERO = 1;
-
+    
+    public static final int COMPOSITE_CLEAR    = 0;
+    public static final int COMPOSITE_SRC      = 1;
+    public static final int COMPOSITE_SRC_OVER = 2;
+    
     /**
      * Constant indicating 8/8/8 RGB pixel data stored in an
      * <code>int</code> array.
@@ -47,6 +51,12 @@ public abstract class RendererBase extends LineSink {
      * <code>int</code> array.
      */
     public static final int TYPE_INT_ARGB = 2;
+
+    /**
+     * Constant indicating 8/8/8/8 ARGB alpha-premultiplied pixel data stored 
+     * in a <code>int</code> array.
+     */
+    public static final int TYPE_INT_ARGB_PRE = 3;
 
     /**
      * Constant indicating 5/6/5 RGB pixel data stored in an
