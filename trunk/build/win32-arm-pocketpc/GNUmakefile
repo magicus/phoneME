@@ -38,7 +38,7 @@ LINKEXE_ARCH_FLAGS	= \
 	/subsystem:windowsce,3.00 /MACHINE:ARM /stack:0x010000
 
 # Description of the VC win32 platform.
-# The following are all for the benefit of win32/defs.mk
+# The following are all for the benefit of win32/wince_defs.mk
 PLATFORM		= Pocket PC 2002
 PLATFORM_OS		= wce300
 PLATFORM_INCLUDE_DIRS	= include mfc/include atl/include
