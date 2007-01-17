@@ -38,6 +38,15 @@ typedef struct _registers_4 {
 	unsigned int r3;
 } registers_4;
 
+typedef struct _dotted_draw_state { /* the draw state */
+    int solidcount; /* how many dots are drawn in the solid fragment */
+    int emptycount; /* how many dots are skipped in the empty fragment */
+    int drawing;    /* are we drawing (1) or skipping (0) now? */
+} dotted_draw_state;
+
+static const dotted_draw_state HALF_STROKE = { DOTTED_SOLID_SIZE/2, 0, TRUE };
+static const dotted_draw_state START_STROKE = { 0, 0, TRUE };
+
 int aTangents[91] = {
   /*        _0    _1    _2    _3    _4    _5     _6     _7     _8     _9  */
   /* 0_ */  0,    17,   35,   52,   70,   87,    105,   123,   141,   158,
@@ -52,8 +61,8 @@ int aTangents[91] = {
   /* 9_ */  MAXINT32
   };
 
-// degrees must be between 0 and 360
-// returns abs(int(tan(degrees) * 1000))
+/* degrees must be between 0 and 360
+ * returns abs(int(tan(degrees) * 1000)) */
 static int
 absIntTan1000(int degrees)
 {
@@ -114,32 +123,32 @@ absIntTan1000(int degrees)
 static
 void
 drawDottedPixel(gxj_screen_buffer *sbuf, gxj_pixel_type color,
-    int x, int y, int *solid, int *empty, int *draw) {
+    int x, int y, dotted_draw_state * dds) {
 
-  if (*solid >= DOTTED_SOLID_SIZE) {
-    *draw = FALSE;
-    *solid = 0;
+  if (dds->solidcount >= DOTTED_SOLID_SIZE) {
+    dds->drawing = FALSE;
+    dds->solidcount = 0;
   } else { 
-    if (*empty >= DOTTED_EMPTY_SIZE) {
-      *draw = TRUE;
-      *empty = 0;
+    if (dds->emptycount >= DOTTED_EMPTY_SIZE) {
+      dds->drawing = TRUE;
+      dds->emptycount = 0;
     }
   }
 
-  if (*draw) {
+  if (dds->drawing) {
     PRIMDRAWPIXEL(sbuf, color, x, y);
-    ++(*solid);
+    ++(dds->solidcount);
   } else {
-    ++(*empty);
+    ++(dds->emptycount);
   }
 }
 
 #define SWAP(_x,_y)	do {_x ^= _y; _y ^= _x; _x ^= _y;} while (0)
 
-// all line drawing routines, including prim routines,
-// draw both endpoints.  if replacing these routines by
-// system routines which don't draw the second endpoint,
-// remember to add one to x2 and y2
+/* all line drawing routines, including prim routines,
+ * draw both endpoints.  if replacing these routines by
+ * system routines which don't draw the second endpoint,
+ * remember to add one to x2 and y2 */
 
 /**
  * draw pixels from <x1,y1) through (x1,y2)
@@ -292,7 +301,7 @@ primDrawHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
  */
 static void
 drawDottedVertLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
-    int x1, int y1, int x2, int y2, int solid, int empty, int draw) {
+    int x1, int y1, int x2, int y2, dotted_draw_state dds) {
 
   int y;
   /* Surpress unused parameter warnings */
@@ -305,7 +314,7 @@ drawDottedVertLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
   y2 = (y2 < 0) ? 0 : ((y2 >= sbuf->height) ? sbuf->height-1 : y2);
 #endif
   for (y = y1; y <= y2; ++y) {
-    drawDottedPixel(sbuf, color, x1, y, &solid, &empty, &draw);
+    drawDottedPixel(sbuf, color, x1, y, &dds);
   }
 }
 
@@ -316,7 +325,7 @@ drawDottedVertLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
  */
 static void
 drawDottedHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
-    int x1, int y1, int x2, int y2, int solid, int empty, int draw) {
+    int x1, int y1, int x2, int y2, dotted_draw_state dds) {
 
   int x;
   /* Surpress unused parameter warnings */
@@ -329,7 +338,7 @@ drawDottedHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
   x2 = (x2 < 0) ? 0 : ((x2 >= sbuf->width) ? sbuf->width-1 : x2);
 #endif
   for (x = x1; x <= x2; ++x) {
-    drawDottedPixel(sbuf, color, x, y1, &solid, &empty, &draw);
+    drawDottedPixel(sbuf, color, x, y1, &dds);
   }
 }
 
@@ -341,8 +350,7 @@ static void
 primDrawDottedVertLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     int x1, int y1, int x2, int y2) {
 
-  drawDottedVertLine(sbuf, color, x1, y1, x2, y2, 0,
-    DOTTED_EMPTY_SIZE, TRUE);
+  drawDottedVertLine(sbuf, color, x1, y1, x2, y2, START_STROKE);
 }
 
 /**
@@ -353,8 +361,7 @@ static void
 primDrawDottedHorzLine(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     int x1, int y1, int x2, int y2) {
 
-  drawDottedHorzLine(sbuf, color, x1, y1, x2, y2, 0,
-    DOTTED_EMPTY_SIZE, TRUE);
+  drawDottedHorzLine(sbuf, color, x1, y1, x2, y2, START_STROKE);
 }
 
 #define REFLECT    16 /* ymajor octants (2/3/6/7) mapped to xmajor (1/4/5/8) */
@@ -407,51 +414,51 @@ SetUpClippedLineParams(int *x1, int *y1, int x2, int y2,
   int ret = INSIDE;
   int tmp, remainder, error;
 
-  // empty clip test
+  /* empty clip test */
   if ((clipX1 > clipX2) || (clipY1 > clipY2))
     return OUTSIDE;
-  // start clip testing X axis
+  /* start clip testing X axis */
   if (lineX1 < lineX2) {
     if ((lineX1 > clipX2) || (lineX2 < clipX1))
       return OUTSIDE;
-    // line is in octant 1,2,7 or 8
+    /* line is in octant 1,2,7 or 8 */
     *adjIncX = 1;
   } else {
     if ((lineX2 > clipX2) || (lineX1 < clipX1))
       return OUTSIDE;
-    // line is in octant 3,4,5, or 6
+    /* line is in octant 3,4,5, or 6 */
     *adjIncX = -1;
     lineX1 = -lineX1; lineX2 = -lineX2;
     clipX1 = -clipX1; clipX2 = -clipX2;
     SWAP(clipX1, clipX2);
   }
-  // start clip testing Y axis
+  /* start clip testing Y axis */
   if (lineY1 < lineY2) {
     if ((lineY1 > clipY2) || (lineY2 < clipY1))
       return OUTSIDE;
-    // line is in octant 1 or 2
+    /* line is in octant 1 or 2 */
     *adjIncY = 1;
   } else {
     if ((lineY2 > clipY2) || (lineY1 < clipY1))
       return OUTSIDE;
-    // line is in octant 7 or 8
+    /* line is in octant 7 or 8 */
     *adjIncY = -1;
     lineY1 = -lineY1; lineY2 = -lineY2;
     clipY1 = -clipY1; clipY2 = -clipY2;
     SWAP(clipY1, clipY2);
   }
-  // line has been rotated into octant 1 or 2
-  // now calculate the bresenham terms
+  /* line has been rotated into octant 1 or 2
+   * now calculate the bresenham terms */
   deltaX = lineX2 - lineX1;
   deltaY = lineY2 - lineY1;
   if (deltaX < deltaY) {
-    // line is in octant 2, reflect into octant 1
+    /* line is in octant 2, reflect into octant 1 */
     ret |= REFLECT;
     SWAP(lineX1,lineY1); SWAP(lineX2,lineY2); SWAP(deltaX,deltaY);
     SWAP(clipX1,clipY1); SWAP(clipX2,clipY2); SWAP(*adjIncX,*adjIncY);
   }
   if (deltaX == 0) {
-    // point at x1, y1
+    /* point at x1, y1 */
     return POINT;
   }
   if (deltaY == 0) {
@@ -463,13 +470,13 @@ SetUpClippedLineParams(int *x1, int *y1, int x2, int y2,
     error = -1;
     goto SimpleClipTail;
   }
-  // IMPL_NOTE: Adjust error by bias (per octant 0/-1)
-  // to produce symetric line patterns
+  /* IMPL_NOTE: Adjust error by bias (per octant 0/-1)
+   * to produce symetric line patterns */
   deltaXtimes2 = 2*deltaX; deltaYtimes2 = 2*deltaY;
   lineX = lineX1; lineY = lineY1;
   error = deltaYtimes2 - deltaX;
   lineEnd = lineX2;
-  // determine where line enters clip
+  /* determine where line enters clip */
   if (lineY1 < clipY1) {
     ret |= CLIPPED;
     tmp = deltaXtimes2*(clipY1-lineY1)-deltaX;
@@ -502,12 +509,12 @@ SetUpClippedLineParams(int *x1, int *y1, int x2, int y2,
     }
   }
 ClipTail:
-  // clip the tail of the line
+  /* clip the tail of the line */
   if (lineY2 > clipY2) {
     tmp = deltaXtimes2*(clipY2-lineY1)+deltaX;
     lineEnd = lineX1+tmp/deltaYtimes2;
     remainder = tmp%deltaYtimes2;
-    if (remainder == 0) // direct hit on pixel
+    if (remainder == 0) /* direct hit on pixel */
       lineEnd -= 1;
   }
   deltaXtimes2 -= deltaYtimes2;
@@ -515,7 +522,7 @@ SimpleClipTail:
   if (lineEnd > clipX2)
     lineEnd = clipX2;
   lineEnd += 1;
-  // reflect line coordinates back into original quadrant
+  /* reflect line coordinates back into original quadrant */
   if (*adjIncY < 0)
     lineY = -lineY;
   if (*adjIncX < 0) {
@@ -567,7 +574,7 @@ draw_clipped_line(gxj_screen_buffer *sbuf, gxj_pixel_type color,
   int xyEnd;
   int ret;
   int *ptrX, *ptrY;
-  int draw, solid, empty;       // for lineStyle == DOTTED
+  dotted_draw_state dds; /* for lineStyle == DOTTED */
   int x0 = x1;
   int y0 = y1;
 
@@ -600,9 +607,9 @@ draw_clipped_line(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       primDrawHorzLine(sbuf, color, *ptrX, *ptrY, xyEnd-adjIncX, *ptrY);
       return;
     }
-    // The combination of adjIncX/adjIncY (+1 or -1)
-    // and REFLECT allow us to use the single octant
-    // version of the loop for all octants.
+    /* The combination of adjIncX/adjIncY (+1 or -1)
+     * and REFLECT allow us to use the single octant
+     * version of the loop for all octants. */
     while (x1 != xyEnd) {
       PRIMDRAWPIXEL(sbuf, color, *ptrX, *ptrY);
       if (decision >= 0) {
@@ -614,19 +621,19 @@ draw_clipped_line(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     }
     return;
   }
-  draw = TRUE; solid = 0; empty = 0;
+  dds = START_STROKE;
   if (ret & CLIPPED) {
-    // compute the offset into pattern compensating for clip
-    solid = (ret & REFLECT) ? y1 - y0 :  x1 - x0;
-    if (solid < 0)
-      solid = -solid;
-    solid %= (DOTTED_SOLID_SIZE+DOTTED_EMPTY_SIZE);
-    if (solid > DOTTED_SOLID_SIZE) {
-      draw = FALSE; empty = solid-DOTTED_SOLID_SIZE; solid = 0;
+    /* compute the offset into pattern compensating for clip */
+    dds.solidcount = (ret & REFLECT) ? y1 - y0 :  x1 - x0;
+    if (dds.solidcount < 0)
+      dds.solidcount = -dds.solidcount;
+    dds.solidcount %= (DOTTED_SOLID_SIZE+DOTTED_EMPTY_SIZE);
+    if (dds.solidcount >= DOTTED_SOLID_SIZE) {
+      dds.drawing = FALSE; dds.emptycount = dds.solidcount-DOTTED_SOLID_SIZE; dds.solidcount = 0;
     }
   }
   while (x1 != xyEnd) {
-    drawDottedPixel(sbuf, color, *ptrX, *ptrY, &solid, &empty, &draw);
+    drawDottedPixel(sbuf, color, *ptrX, *ptrY, &dds);
     if (decision >= 0) {
       y1 += adjIncY; decision -= incrY;
     } else {
@@ -689,7 +696,7 @@ drawClippedHorzLine(const jshort *clip, gxj_screen_buffer *sbuf,
  * Evaluate dotted stroke parameters for the point distant
  * from the current one by specified number of pixels.
  * The current point is presented with its stroke state,
- * i.e. with solid, empty & draw values
+ * i.e. with dds structure (solidcount, emptycount & drawing).
  *
  * Note, that stroke can be either solid, or empty line,
  * while unstroke is considered as a line of the opposite type,
@@ -703,7 +710,7 @@ drawClippedHorzLine(const jshort *clip, gxj_screen_buffer *sbuf,
  *   opposite type than the current point has, this parameter will
  *   refer to number of pixels already drawn in the distant stroke,
  *   otherwise it will refer to 0.
- * @param draw refers to the stroke type of the current point,
+ * @param drawing refers to the stroke type of the current point,
  *   on return refers to the stroke type of the distant point
  * @param DOTTED_STROKE_SIZE fixed stroke size of the current stroke type
  * @param DOTTED_UNSTROKE_SIZE fixed size of the stroke type opposite
@@ -711,14 +718,14 @@ drawClippedHorzLine(const jshort *clip, gxj_screen_buffer *sbuf,
  */
 static void
 SetUpDottedStrokeParamsByPixels(int nPixels,
-    /*INOUT*/ int *stroke, /*OUT*/ int *unstroke, /*INOUT*/ int *draw,
+    /*INOUT*/ int *stroke, /*OUT*/ int *unstroke, /*INOUT*/ int *drawing,
     const int DOTTED_STROKE_SIZE, const int DOTTED_UNSTROKE_SIZE) {
 
   if (nPixels > DOTTED_STROKE_SIZE - *stroke) {
     int offset = (nPixels - DOTTED_STROKE_SIZE + *stroke) %
       (DOTTED_STROKE_SIZE + DOTTED_UNSTROKE_SIZE);
     if (offset < DOTTED_UNSTROKE_SIZE) {
-      *draw = !(*draw);
+      *drawing = !(*drawing);
       *unstroke = offset;
       *stroke = 0;
     } else {
@@ -734,16 +741,16 @@ SetUpDottedStrokeParamsByPixels(int nPixels,
 /**
  * Init dotted stroke params for the point distant from
  * the current point by specified number of pixels.
- * The current point state is presented by solid, empty, draw.
+ * The current point state is presented by dds.
  */
 static void
-SetUpDottedParamsByPixels(int nPixels, int *solid, int *empty, int *draw) {
+SetUpDottedParamsByPixels(int nPixels, dotted_draw_state * dds) {
 
-    if (*draw) {
-      SetUpDottedStrokeParamsByPixels(nPixels, solid, empty, draw,
+    if (dds->drawing) {
+      SetUpDottedStrokeParamsByPixels(nPixels, &dds->solidcount,  &dds->emptycount,  &dds->drawing,
           DOTTED_SOLID_SIZE, DOTTED_EMPTY_SIZE);
     } else {
-      SetUpDottedStrokeParamsByPixels(nPixels, empty, solid, draw,
+      SetUpDottedStrokeParamsByPixels(nPixels,  &dds->emptycount,  &dds->solidcount,  &dds->drawing,
           DOTTED_EMPTY_SIZE, DOTTED_SOLID_SIZE);
     }
 }
@@ -756,7 +763,7 @@ SetUpDottedParamsByPixels(int nPixels, int *solid, int *empty, int *draw) {
 static void
 drawClippedDottedVertLine(const jshort *clip, gxj_screen_buffer *sbuf,
     gxj_pixel_type color, int x1, int y1, int x2, int y2,
-    int solid, int empty, int draw) {
+    dotted_draw_state dds) {
 
   const jshort clipX1 = clip[0];
   const jshort clipY1 = clip[1];
@@ -768,12 +775,12 @@ drawClippedDottedVertLine(const jshort *clip, gxj_screen_buffer *sbuf,
       x2 <  clipX1 || x1 >= clipX2)
     return;
   if (y1 < clipY1) {
-    SetUpDottedParamsByPixels(clipY1 - y1, &solid, &empty, &draw);
+    SetUpDottedParamsByPixels(clipY1 - y1, &dds);
     y1 = clipY1;
   }
   y2 = (y2 >= clipY2) ? clipY2-1 : y2;
   CHECK_XY_CLIP(sbuf, x1, y1); CHECK_XY_CLIP(sbuf, x1, y2);
-  drawDottedVertLine(sbuf, color, x1, y1, x1, y2, solid, empty, draw);
+  drawDottedVertLine(sbuf, color, x1, y1, x1, y2, dds);
 }
 
 /**
@@ -784,7 +791,7 @@ drawClippedDottedVertLine(const jshort *clip, gxj_screen_buffer *sbuf,
 static void
 drawClippedDottedHorzLine(const jshort *clip, gxj_screen_buffer *sbuf,
     gxj_pixel_type color, int x1, int y1, int x2, int y2,
-    int solid, int empty, int draw) {
+    dotted_draw_state dds) {
 
   const jshort clipX1 = clip[0];
   const jshort clipY1 = clip[1];
@@ -796,12 +803,12 @@ drawClippedDottedHorzLine(const jshort *clip, gxj_screen_buffer *sbuf,
       y1 <  clipY1 || y1 >= clipY2)
     return;
   if (x1 < clipX1) {
-    SetUpDottedParamsByPixels(clipX1 - x1, &solid, &empty, &draw);
+    SetUpDottedParamsByPixels(clipX1 - x1, &dds);
     x1 = clipX1;
   }
   x2 = (x2 >= clipX2) ? clipX2-1 : x2;
   CHECK_XY_CLIP(sbuf, x1, y1); CHECK_XY_CLIP(sbuf, x2, y1);
-  drawDottedHorzLine(sbuf, color, x1, y1, x2, y1, solid, empty, draw);
+  drawDottedHorzLine(sbuf, color, x1, y1, x2, y1, dds);
 }
 
 /**
@@ -1005,13 +1012,13 @@ drawClippedRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
   }
 
   if (filled) {
-    // check that it's still there after clipping
+    /* check that it's still there after clipping */
     if ((x1 > x2) || (y1 > y2)) {
       return;
     }
     primDrawFilledRect(sbuf, color, x1, y1, x2, y2);
   } else {
-    // have we been clipped out of existence?
+    /* have we been clipped out of existence? */
     if (((x1 > x) && (x2 < x2UnClipped) &&
          (y1 > y) && (y2 < y2UnClipped)) ||
         (x1 > x2) ||
@@ -1019,7 +1026,7 @@ drawClippedRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       return;
     }
 
-    // is the left side still there?
+    /* is the left side still there? */
     if (x1 == x) {
       if (lineStyle == DOTTED) {
         primDrawDottedVertLine(sbuf, color, x1, y1, x1, y2);
@@ -1027,7 +1034,7 @@ drawClippedRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
         primDrawVertLine(sbuf, color, x1, y1, x1, y2);
       }
     }
-    // is the top still there?
+    /* is the top still there? */
     if (y1 == y) {
       if (lineStyle == DOTTED) {
         primDrawDottedHorzLine(sbuf, color, x1, y1, x2, y1);
@@ -1035,7 +1042,7 @@ drawClippedRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
         primDrawHorzLine(sbuf, color, x1, y1, x2, y1);
       }
     }
-    // is the left side still there?
+    /* is the left side still there? */
     if (x2 == x2UnClipped) {
       if (lineStyle == DOTTED) {
         primDrawDottedVertLine(sbuf, color, x2, y1, x2, y2);
@@ -1043,7 +1050,7 @@ drawClippedRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
         primDrawVertLine(sbuf, color, x2, y1, x2, y2);
       }
     }
-    // and how about the bottom?
+    /* and how about the bottom? */
     if (y2 == y2UnClipped) {
       if (lineStyle == DOTTED) {
         primDrawDottedHorzLine(sbuf, color, x1, y2, x2, y2);
@@ -1054,26 +1061,28 @@ drawClippedRect(gxj_screen_buffer *sbuf, gxj_pixel_type color,
   }
 }
 
-// IMPL_NOTE easy optimization is to break drawSymmetricPixels into
-// separate routines for the different cases, then use function pointers
-// to call the appropriate one
-//
-// IMPL_NOTE another one is to make the params to drawSymmetricPixels
-// sit in a struct and just pass the
-// pointer to the struct instead of all the params - this will probably
-// help, depending on number of references
-//
-// taking xOrigin and yOrigin as the origin in Windows coordinates, and
-// x, y as Cartesian coordinates, this draws the Windows points for all
-// 4 quadrants.
-// (remember that in Windows bigger y goes down, opposite of Cartesian)
-// this function is not used for filled partial or filled clipped arcs 
-// it is used for all non-filled arcs, and unclipped,full filled arcs
+/* IMPL_NOTE easy optimization is to break drawSymmetricPixels into
+   separate routines for the different cases, then use function pointers
+   to call the appropriate one
+
+   IMPL_NOTE another one is to make the params to drawSymmetricPixels
+   sit in a struct and just pass the
+   pointer to the struct instead of all the params - this will probably
+   help, depending on number of references
+
+   taking xOrigin and yOrigin as the origin in Windows coordinates, and
+   x, y as Cartesian coordinates, this draws the Windows points for all
+   4 quadrants.
+   (remember that in Windows bigger y goes down, opposite of Cartesian)
+   this function is not used for filled partial or filled clipped arcs
+   it is used for all non-filled arcs, and unclipped,full filled arcs.
+
+   dds is used only if lineStyle == DOTTED */
 static void
 drawSymmetricPixels(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     int lineStyle, int filled, const jshort *clip, int startRatio,
     int startQuadrant, int endRatio, int endQuadrant,
-    int quadrantStatus[4], int *solid, int *empty, int *draw,
+    int quadrantStatus[4], dotted_draw_state * dds,
     int xOrigin, int yOrigin, int evenXOffset, int evenYOffset,
     int x, int y) {
 
@@ -1094,10 +1103,10 @@ drawSymmetricPixels(gxj_screen_buffer *sbuf, gxj_pixel_type color,
   x2 = xOrigin - x - evenXOffset;
   y2 = yOrigin + y + evenYOffset;
 
-  // check for case of unclipped, complete ellipse
+  /* check for case of unclipped, complete ellipse */
   if (startQuadrant == -1) {
   }
-  // take care of unfilled partial or clipped (or both) arc
+  /* take care of unfilled partial or clipped (or both) arc */
   else {
     if (x == 0) {       
       curRatio = MAXINT32;
@@ -1105,7 +1114,7 @@ drawSymmetricPixels(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       curRatio = (y * 1000) / x;
     }
 
-    // this is for an unfilled,  partial or clipped (or both) arc 
+    /* this is for an unfilled,  partial or clipped (or both) arc  */
             
     if (((quadrantStatus[0] & QUADRANT_STATUS_FULL_ARC) ||
          ((quadrantStatus[0] & QUADRANT_STATUS_PARTIAL_ARC) &&
@@ -1132,8 +1141,7 @@ drawSymmetricPixels(gxj_screen_buffer *sbuf, gxj_pixel_type color,
           (x1 < clipX2) &&
           (y1 < clipY2)))) {
       if (lineStyle == DOTTED) {
-        drawDottedPixel(sbuf, color, x1, y1,
-            &(solid[0]), &(empty[0]), &(draw[0]));
+        drawDottedPixel(sbuf, color, x1, y1, &dds[0]);
       } else {
         PRIMDRAWPIXEL(sbuf, color, x1, y1);
       }
@@ -1163,8 +1171,7 @@ drawSymmetricPixels(gxj_screen_buffer *sbuf, gxj_pixel_type color,
           (x2 < clipX2) &&
           (y1 < clipY2)))) {
       if (lineStyle == DOTTED) {
-        drawDottedPixel(sbuf, color, x2, y1,
-            &(solid[1]), &(empty[1]), &(draw[1]));
+        drawDottedPixel(sbuf, color, x2, y1, &dds[1]);
       } else {
         PRIMDRAWPIXEL(sbuf, color, x2, y1);
       }
@@ -1194,8 +1201,7 @@ drawSymmetricPixels(gxj_screen_buffer *sbuf, gxj_pixel_type color,
           (x2 < clipX2) &&
           (y2 < clipY2)))) {
       if (lineStyle == DOTTED) {
-        drawDottedPixel(sbuf, color, x2, y2,
-            &(solid[2]), &(empty[2]), &(draw[2]));
+        drawDottedPixel(sbuf, color, x2, y2, &dds[2]);
       } else {
         PRIMDRAWPIXEL(sbuf, color, x2, y2);
       }
@@ -1225,8 +1231,7 @@ drawSymmetricPixels(gxj_screen_buffer *sbuf, gxj_pixel_type color,
           (x1 < clipX2) &&
           (y2 < clipY2)))) {
       if (lineStyle == DOTTED) {
-        drawDottedPixel(sbuf, color, x1, y2,
-            &(solid[3]), &(empty[3]), &(draw[3]));
+        drawDottedPixel(sbuf, color, x1, y2, &dds[3]);
       } else {
         PRIMDRAWPIXEL(sbuf, color, x1, y2);
       }
@@ -1245,8 +1250,8 @@ SetUpEllipseParams(int x1, int y1, int x2, int y2,
     (*evenYOffset) = ((y2 - y1) % 2) == 0 ? 0 : 1;
     (*a2) = (*a)*(*a);
     (*b2) = (*b)*(*b);
-    // x and y are cartesian coordinates around the origin (0, 0)
-    // other coordinates are Windows style 
+    /* x and y are cartesian coordinates around the origin (0, 0)
+     * other coordinates are Windows style  */
 
     (*S) = (*a2)*(1-2*(*b)) + 2*(*b2);
     (*T) = (*b2) - 2*(*a2)*(2*(*b)-1);
@@ -1275,51 +1280,49 @@ GetNextEllipsePoint(int a2, int b2, int *S, int *T, int *x, int *y) {
 
 static void
 SetUpDottedLineParams(int nPixels, int evenXOffset, int evenYOffset,
-    int *solid, int *empty, int *draw) {
+    dotted_draw_state * dds) {
 
     int offset;
     int nPixelsTwoQuadrants;
 
     nPixelsTwoQuadrants = (2 * nPixels) + ((evenYOffset == 0) ? -1 : 0);
 
-    // 1st quadrant starts drawing the pattern from the beginning
-    solid[0] = 0;
-    empty[0] = DOTTED_EMPTY_SIZE;
-    draw[0] = TRUE;
+    /* 1st quadrant starts drawing the pattern from the beginning */
+    dds[0] = START_STROKE;
 
-    // the following is the magic formula for figuring out how to draw
-    // the fourth quadrant backwards so that when it's done it meets
-    // the first quadrant in such a way that it continues the dotted
-    // line pattern cleanly
+    /* the following is the magic formula for figuring out how to draw
+     * the fourth quadrant backwards so that when it's done it meets
+     * the first quadrant in such a way that it continues the dotted
+     * line pattern cleanly */
     offset = (DOTTED_SOLID_SIZE - nPixelsTwoQuadrants) %
         (DOTTED_SOLID_SIZE + DOTTED_EMPTY_SIZE);
     if (offset < 0) {
-        // Really need to just remember proper mod operator!
+        /* Really need to just remember proper mod operator! */
         offset += (DOTTED_SOLID_SIZE + DOTTED_EMPTY_SIZE);
     }
-    solid[3] = (offset >= DOTTED_SOLID_SIZE) ? DOTTED_SOLID_SIZE : offset;
-    empty[3] = (offset >= DOTTED_SOLID_SIZE) ? offset - DOTTED_SOLID_SIZE :
+    dds[3].solidcount = (offset >= DOTTED_SOLID_SIZE) ? DOTTED_SOLID_SIZE : offset;
+    dds[3].emptycount = (offset >= DOTTED_SOLID_SIZE) ? offset - DOTTED_SOLID_SIZE :
         DOTTED_EMPTY_SIZE;
-    draw[3] = solid[3] < DOTTED_SOLID_SIZE;
+    dds[3].drawing = dds[3].solidcount < DOTTED_SOLID_SIZE;
 
-    // same idea for making drawing of third quadrant match the adjacent 
-    // part of the pattern in the fourth quadrant
+    /* same idea for making drawing of third quadrant match the adjacent
+     * part of the pattern in the fourth quadrant */
     offset = nPixelsTwoQuadrants % (DOTTED_SOLID_SIZE + DOTTED_EMPTY_SIZE);
     offset += ((evenXOffset == 0) ? -1 : 0);
-    solid[2] = (offset >= DOTTED_SOLID_SIZE) ? DOTTED_SOLID_SIZE : offset;
-    empty[2] = (offset >= DOTTED_SOLID_SIZE) ? offset - DOTTED_SOLID_SIZE :
+    dds[2].solidcount = (offset >= DOTTED_SOLID_SIZE) ? DOTTED_SOLID_SIZE : offset;
+    dds[2].emptycount = (offset >= DOTTED_SOLID_SIZE) ? offset - DOTTED_SOLID_SIZE :
         DOTTED_EMPTY_SIZE;
-    draw[2] = solid[3] < DOTTED_SOLID_SIZE;
+    dds[2].drawing = dds[3].solidcount < DOTTED_SOLID_SIZE;
 
-    // same idea for meeting of second and first quadrants
+    /* same idea for meeting of second and first quadrants */
     offset = DOTTED_SOLID_SIZE + ((evenXOffset == 0) ? -1 : 0);
-    solid[1] = (offset >= DOTTED_SOLID_SIZE) ? DOTTED_SOLID_SIZE : offset;
-    empty[1] = (offset >= DOTTED_SOLID_SIZE) ? offset - DOTTED_SOLID_SIZE :
+    dds[1].solidcount = (offset >= DOTTED_SOLID_SIZE) ? DOTTED_SOLID_SIZE : offset;
+    dds[1].emptycount = (offset >= DOTTED_SOLID_SIZE) ? offset - DOTTED_SOLID_SIZE :
         DOTTED_EMPTY_SIZE;
-    draw[1] = solid[3] < DOTTED_SOLID_SIZE;
+    dds[1].drawing = dds[3].solidcount < DOTTED_SOLID_SIZE;
 
-    // alas, the meeting of the second and third
-    // quadrants can't be made exact
+    /* alas, the meeting of the second and third
+     * quadrants can't be made exact */
 }
 
 static int
@@ -1393,8 +1396,8 @@ GetArcHelperParams(int x, int y, int w, int h,
     x2 = x + w;
     y2 = y + h;
 
-    // only need some of these params, but for
-    // now haven't separated out the code
+    /* only need some of these params, but for
+     * now haven't separated out the code */
     SetUpEllipseParams(x, y, x2, y2, &a, &b, &a2, &b2, &S, &T,
                        &xCenter, &yCenter, &evenXOffset, &evenYOffset);
     
@@ -1415,7 +1418,7 @@ GetArcHelperParams(int x, int y, int w, int h,
       *endRatio = 0;
     }
     
-    // now check each quadrant's status
+    /* now check each quadrant's status */
     quadrantStatus[0] = getQuadrantStatus(1, xCenter, y, x2, yCenter, clip, 
         *startRatio, *startQuadrant, *endRatio, *endQuadrant);
     quadrantStatus[1] = getQuadrantStatus(2, x, y, xCenter, yCenter, clip, 
@@ -1443,10 +1446,10 @@ SetUpArcEndPoints(int x, int y, int w, int h,
     int boundary_x1 = 0, boundary_x2 = 0, boundary_x3 = 0, boundary_x4 = 0;
     int boundary_y1 = 0, boundary_y2 = 0, boundary_y3 = 0, boundary_y4 = 0;
 
-    // we need to set up start and end points for partial, filled arcs
-    // we do this by getting 4 pairs of coordinates, right before and
-    // after each exact start and end point, and afterwards choosing
-    // the correct two pairs depending on which quadrant they're in
+    /* we need to set up start and end points for partial, filled arcs
+     * we do this by getting 4 pairs of coordinates, right before and
+     * after each exact start and end point, and afterwards choosing
+     * the correct two pairs depending on which quadrant they're in */
 
     boundary_x1 = -1;
     boundary_x3 = -1;
@@ -1477,7 +1480,7 @@ SetUpArcEndPoints(int x, int y, int w, int h,
       GetNextEllipsePoint(a2, b2, &S, &T, &x_point, &y_point);
     }
 
-    // first establish where the start and end points of the partial arc are
+    /* first establish where the start and end points of the partial arc are */
     if ((startQuadrant == 1) || (startQuadrant == 3)) {        
       *start_x = boundary_x1;
       *start_y = boundary_y1;
@@ -1536,11 +1539,9 @@ drawClippedOutlineArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     int xCenter, yCenter;
     int curRatio;
     int evenXOffset, evenYOffset;
-    int solid[4], empty[4], draw[4]; // for dotted lines
+    dotted_draw_state dds[4]; /* used for dotted lines only */
     int x_point, y_point;
-    draw[3] = 0;
-    draw[2] = 0;
-    draw[1] = 0;
+
     CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
 
     SetUpEllipseParams(x, y, x + w, y + h, &a, &b, &a2, &b2,
@@ -1548,7 +1549,7 @@ drawClippedOutlineArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
 
     if (lineStyle == DOTTED) {
       SetUpDottedLineParams(nPixelsInQuadrant, evenXOffset,
-          evenYOffset, solid, empty, draw);
+          evenYOffset, dds);
     }
 
     x_point = 0;
@@ -1558,7 +1559,7 @@ drawClippedOutlineArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
 
       drawSymmetricPixels(sbuf, color, lineStyle, 0, clip,
           startRatio, startQuadrant, endRatio, endQuadrant,
-          quadrantStatus, solid, empty, draw,
+          quadrantStatus, dds,
           xCenter, yCenter, evenXOffset, evenYOffset,
           x_point, y_point);
 
@@ -1566,8 +1567,8 @@ drawClippedOutlineArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     }
 }
 
-// drawFilledRightTriangle is called with the two points that aren't the
-// square corner the corner is located at x2, y1
+/* drawFilledRightTriangle is called with the two points that aren't the
+ * square corner the corner is located at x2, y1 */
 static void
 drawFilledRightTriangle(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     const jshort *clip, int x1, int y1, int x2, int y2) {
@@ -1627,7 +1628,7 @@ fill_triangle(gxj_screen_buffer *sbuf, gxj_pixel_type color,
 
     CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
 
-    // sort axis points (y1<=y2<=y3)
+    /* sort axis points (y1<=y2<=y3) */
     if (y1 > y2) {
       SWAP(y1, y2); SWAP(x1, x2);
     }
@@ -1637,7 +1638,7 @@ fill_triangle(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     if (y2 > y3) {
       SWAP(y2, y3); SWAP(x2, x3);
     }
-    // compute dx,dy and step directions
+    /* compute dx,dy and step directions */
     signDXa = 1;
     if ((dxa = x2 - x1) < 0) {
       dxa = -dxa; signDXa = -1;
@@ -1656,8 +1657,8 @@ fill_triangle(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     }
     dyc = y3 - y2;
 
-    // look for edge case horizontal line
-    // (sort above and triangle angles allow simple test)
+    /* look for edge case horizontal line
+     * (sort above and triangle angles allow simple test) */
     if (/* dya == 0 && */ dyb == 0 /* && dyc == 0 */) {
       draw_clipped_line(sbuf, color, 0 /*lineStyle*/, clip,
                       x1, y1, x2, y2);
@@ -1665,13 +1666,13 @@ fill_triangle(gxj_screen_buffer *sbuf, gxj_pixel_type color,
                       x2, y2, x3, y3);
       return;
     }
-    // y2 not checked because of sort on y1,y2,y3
+    /* y2 not checked because of sort on y1,y2,y3 */
     if ((y1 >= clipY1) && (y1 < clipY2) &&
         (y3 >= clipY1) && (y3 < clipY2) &&
         (x1 >= clipX1) && (x1 < clipX2) &&
         (x2 >= clipX1) && (x2 < clipX2) &&
         (x3 >= clipX1) && (x3 < clipX2)) {
-      // handle first edge x1,y1->x2,y2
+      /* handle first edge x1,y1->x2,y2 */
       int xa = x1; int xb = x1;
       int xFRACTa = 0; int xFRACTb = 0;
 
@@ -1681,11 +1682,11 @@ fill_triangle(gxj_screen_buffer *sbuf, gxj_pixel_type color,
         STEPx(xa,xFRACTa,dxa,dya,signDXa);
         STEPx(xb,xFRACTb,dxb,dyb,signDXb);
       }
-      // handle second edge x2,y2->x3,y3
+      /* handle second edge x2,y2->x3,y3 */
       xa = x2;
       xFRACTa = 0;
-      // handle edge case (STEPx cannot take dyc == 0)
-      // bottom of triangle is horizontal
+      /* handle edge case (STEPx cannot take dyc == 0)
+       * bottom of triangle is horizontal */
       if (dyc == 0) {
         CHECK_XY_CLIP(sbuf, x2, y1+y); CHECK_XY_CLIP(sbuf, x3, y1+y);
         primDrawHorzLine(sbuf, color, x2, y1 + y, x3, y1 + y);
@@ -1699,38 +1700,38 @@ fill_triangle(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       }
     return;
     }
-//clip:
+/*clip: */
     {
-      // handle first edge x1,y1->x2,y2
+      /* handle first edge x1,y1->x2,y2 */
       int xa = x1; int xb = x1;
       int xFRACTa = 0; int xFRACTb = 0;
 
       for (y=0; y < dya; y++) {
-        // don't draw outside the clip
+        /* don't draw outside the clip */
         if (y1 + y < clipY1) {
-          // above the clip
+          /* above the clip */
           goto nextStepTop;
         }
         if (y1 + y >= clipY2) {
-          // below the clip
+          /* below the clip */
           goto done;
         }
-        { // complication is xa,xb are not ordered and cannot be swapped
+        { /* complication is xa,xb are not ordered and cannot be swapped */
           int xaChanged, xbChanged;
           if ((xaChanged = (xa < clipX1)))
             xa = clipX1;
           if ((xbChanged = (xb < clipX1)))
             xb = clipX1;
-          if (xaChanged && xbChanged)  // both to left
+          if (xaChanged && xbChanged)  /* both to left */
             goto nextStepTop;
 
-          if ((xaChanged = !xaChanged))  // toggle changed
+          if ((xaChanged = !xaChanged))  /* toggle changed */
             if ((xaChanged = (xa >= clipX2)))
               xa = clipX2-1;
           if ((xbChanged = !xbChanged))
             if ((xbChanged = (xb >= clipX2)))
               xb = clipX2-1;
-          if (xaChanged && xbChanged)  // both to right
+          if (xaChanged && xbChanged)  /* both to right */
             goto nextStepTop;
         }
         CHECK_XY_CLIP(sbuf, xa, y1+y); CHECK_XY_CLIP(sbuf, xb, y1+y);
@@ -1739,11 +1740,11 @@ nextStepTop:
         STEPx(xa,xFRACTa,dxa,dya,signDXa);
         STEPx(xb,xFRACTb,dxb,dyb,signDXb);
       }
-      // handle second edge x2,y2->x3,y3
+      /* handle second edge x2,y2->x3,y3 */
       xa = x2;
       xFRACTa = 0;
-      // handle edge case (STEPx cannot take dyc == 0)
-      // bottom of triangle is horizontal
+      /* handle edge case (STEPx cannot take dyc == 0)
+       * bottom of triangle is horizontal */
       if (dyc == 0) {
         if ((clipY1 < (y1 + y)) || ((y1 + y) >= clipY2) ||
             (clipX1 < (x2    )) || ((x2    ) >= clipX2) ||
@@ -1754,31 +1755,31 @@ nextStepTop:
         goto done;
       }
       for (y=dya; y <= dyb; y++) {
-        // don't draw outside the clip
+        /* don't draw outside the clip */
         if (y1 + y < clipY1) {
-          // above the clip
+          /* above the clip */
           goto nextStepBottom;
         }
         if (y1 + y >= clipY2) {
-          // below the clip
+          /* below the clip */
           goto done;
         }
-        { // complication is xa,xb are not ordered and cannot be swapped
+        { /* complication is xa,xb are not ordered and cannot be swapped */
           int xaChanged, xbChanged;
           if ((xaChanged = (xa < clipX1)))
             xa = clipX1;
           if ((xbChanged = (xb < clipX1)))
             xb = clipX1;
-          if (xaChanged && xbChanged)  // both to left
+          if (xaChanged && xbChanged)  /* both to left */
             goto nextStepBottom;
 
-          if ((xaChanged = !xaChanged))  // toggle (changed)
+          if ((xaChanged = !xaChanged))  /* toggle (changed) */
             if ((xaChanged = (xa >= clipX2)))
               xa = clipX2-1;
           if ((xbChanged = !xbChanged))
             if ((xbChanged = (xb >= clipX2)))
               xb = clipX2-1;
-          if (xaChanged && xbChanged)  // both to right
+          if (xaChanged && xbChanged)  /* both to right */
             goto nextStepBottom;
         }
         CHECK_XY_CLIP(sbuf, xa, y1+y); CHECK_XY_CLIP(sbuf, xb, y1+y);
@@ -1820,9 +1821,9 @@ drawClippedFilledArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     SetUpEllipseParams(x, y, x + w, y + h, &a, &b, &a2, &b2, &S, &T,
         &xCenter, &yCenter, &evenXOffset, &evenYOffset);
 
-    // now check for fully clipped quadrants or quadrants outside of the arc
-    // we won't be drawing them, so we won't check them on every pixel
-    // Also - draw the triangles in the quadrants which are partially filled
+    /* now check for fully clipped quadrants or quadrants outside of the arc
+     * we won't be drawing them, so we won't check them on every pixel
+     * Also - draw the triangles in the quadrants which are partially filled */
     nQuadrantsToDraw = 0;
     for (i = 0; i < 4; ++i) {
       if ((quadrantStatus[i] & QUADRANT_STATUS_NO_ARC) ||
@@ -1838,8 +1839,8 @@ drawClippedFilledArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
                  (startRatio <= endRatio)) ||
                  (((curQuadrant == 2) || (curQuadrant == 4)) &&
                    (startRatio >= endRatio)))) {
-            // need to make sure that the first point
-            // is the one further from the x-axis
+            /* need to make sure that the first point
+             * is the one further from the x-axis */
             if (curQuadrant == 1) {
               fill_triangle(sbuf, color, clip, 
 			    end_x1, end_y1, start_x1, start_y1, 
@@ -1859,7 +1860,7 @@ drawClippedFilledArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
             }
           } else {
             if (curQuadrant == startQuadrant) {
-              // draw the appropriate triangle
+              /* draw the appropriate triangle */
               if (curQuadrant == 1) {
                 drawFilledRightTriangle(sbuf, color, clip,
                     start_x1, start_y1, xCenter, yCenter);
@@ -1876,7 +1877,7 @@ drawClippedFilledArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
               }
             }
             if (curQuadrant == endQuadrant) {
-              // draw the appropriate triangle
+              /* draw the appropriate triangle */
               if (curQuadrant == 1) {
                 drawFilledRightTriangle(sbuf, color, clip,
                     xCenter, yCenter, end_x1, end_y1);
@@ -1897,10 +1898,10 @@ drawClippedFilledArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
       }
     }
 
-    // now we loop through the ellipse co-ordinates again
-    // and finish drawing what's left of the arcs after the triangles
-    // we already did SetUpEllipseParams above and didn't use
-    // the variables which change
+    /* now we loop through the ellipse co-ordinates again
+     * and finish drawing what's left of the arcs after the triangles
+     * we already did SetUpEllipseParams above and didn't use
+     * the variables which change */
     x_point = 0;
     y_point = b;
     while (y_point >= 0) {
@@ -1922,13 +1923,13 @@ drawClippedFilledArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
             draw_clipped_line(sbuf, color, SOLID, clip, 
                 point_x2, point_y2, point_x2, yCenter + evenYOffset);
           } else {
-            // (curQuadrant == 4)
+            /* (curQuadrant == 4) */
             draw_clipped_line(sbuf, color, SOLID, clip, 
                 point_x1, point_y2, point_x1, yCenter + evenYOffset);
           }
         } else {
-          // must be partial arc
-          // case of pie slice fully inside quadrant
+          /* must be partial arc
+           * case of pie slice fully inside quadrant */
           if ((curQuadrant == startQuadrant) &&
               (curQuadrant == endQuadrant) &&
               ((((curQuadrant == 1) || (curQuadrant == 3)) &&
@@ -1958,7 +1959,7 @@ drawClippedFilledArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
               }
             }
           } else {
-            // case of pie slice overlapping end of quadrant
+            /* case of pie slice overlapping end of quadrant */
             if ((curQuadrant == startQuadrant) &&
                ((((curQuadrant == 1) || (curQuadrant == 3)) &&
                ((x_point <= start_x) && (y_point >= start_y))) ||
@@ -1980,11 +1981,11 @@ drawClippedFilledArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
                     point_x1, point_y2, point_x1, yCenter + evenYOffset);
               }
             }
-            // case of pie slice overlapping beginning of quadrant
-            // not that this is not mutually exclusive with the previous
-            // case of a pie slice overlapping the end of the quadrant.
-            // For example, the slice which starts at 60 and ends at 10
-            // (an "inverse" pie slice)
+            /* case of pie slice overlapping beginning of quadrant
+             * not that this is not mutually exclusive with the previous
+             * case of a pie slice overlapping the end of the quadrant.
+             * For example, the slice which starts at 60 and ends at 10
+             * (an "inverse" pie slice) */
 
 	    if ((curQuadrant == endQuadrant) &&
                ((((curQuadrant == 1) || (curQuadrant == 3)) &&
@@ -2212,7 +2213,7 @@ static void
 drawClippedDottedPixels(gxj_screen_buffer *sbuf, const jshort *clip,
     int quadrant, int xCenter, int yCenter, int x, int y,
 	int evenXOffset, int evenYOffset, gxj_pixel_type color,
-	int *solid, int *empty, int *draw) {
+	dotted_draw_state * dds) {
 
   int     x1, y1;
 
@@ -2220,7 +2221,7 @@ drawClippedDottedPixels(gxj_screen_buffer *sbuf, const jshort *clip,
   y1 = yCenter + ((quadrant == 1 || quadrant == 4) ? -y : (y + evenYOffset));
 
   if (clip == NULL) {
-    drawDottedPixel(sbuf, color, x1, y1, solid, empty, draw);
+    drawDottedPixel(sbuf, color, x1, y1, dds);
   } else {
     const jshort clipX1 = clip[0];
     const jshort clipY1 = clip[1];
@@ -2229,7 +2230,7 @@ drawClippedDottedPixels(gxj_screen_buffer *sbuf, const jshort *clip,
 
     if (clipX1 <= x1 && x1 < clipX2 &&
         clipY1 <= y1 && y1 < clipY2)
-      drawDottedPixel(sbuf, color, x1, y1, solid, empty, draw);
+      drawDottedPixel(sbuf, color, x1, y1, dds);
   }
 }
 
@@ -2314,9 +2315,7 @@ drawCompleteDottedEllipse(gxj_screen_buffer *sbuf, const jshort *clip,
   int     quadrant;
   int     nPixelsPerQuadrant = 0;
   int     nPixels = 0;
-  int     solid = 0;
-  int     empty = 0;
-  int     draw;
+  dotted_draw_state dds = START_STROKE;
 
   ret = SetUpEllipseParameters(x, y, width, height, &a, &b,
           &evenXOffset, &evenYOffset, &xCenter, &yCenter,
@@ -2332,7 +2331,7 @@ drawCompleteDottedEllipse(gxj_screen_buffer *sbuf, const jshort *clip,
   }
   for (quadrant = 1; quadrant <= 4; quadrant++) {
     /*
-       adjust solid, empty, draw at change of quadrant
+       adjust dds at change of quadrant
        Since this algorthim always works by increasing X and Y
        we use reflection for the other three quadrants and
        we move the offset into the pattern to compensate
@@ -2342,40 +2341,40 @@ drawCompleteDottedEllipse(gxj_screen_buffer *sbuf, const jshort *clip,
        of the on segment.
     */
     switch (quadrant) {
-      /* first quadrant is increasing X and increasing Y */
-      /* run pattern forward 0 to nPixelsPerQuadrant */
+      /* first quadrant is increasing X and increasing Y
+       * run pattern forward 0 to nPixelsPerQuadrant */
       case 1:
-        solid = 0;
+        dds.solidcount = 0;
       break;
-      /* second quadrant is increasing X and decreasing Y */
-      /* run pattern backwards 2*nPixelsPerQuadrant to nPixelsPerQuadrant */
+      /* second quadrant is increasing X and decreasing Y
+       * run pattern backwards 2*nPixelsPerQuadrant to nPixelsPerQuadrant */
       case 2:
         nPixelsPerQuadrant = nPixels;
-        solid = (nPixelsPerQuadrant<<1) + DOTTED_SOLID_SIZE;
+        dds.solidcount = (nPixelsPerQuadrant<<1) + DOTTED_SOLID_SIZE;
         /* adjust for odd (Y) axis offsets */
-        solid -= (1-evenYOffset);
+        dds.solidcount -= (1-evenYOffset);
       break;
-      /* third quadrant is decreasing X and decreasing Y */
-      /* run pattern forward 2*nPixelsPerQuadrant to 3*nPixelsPerQuadrant */
+      /* third quadrant is decreasing X and decreasing Y
+       * run pattern forward 2*nPixelsPerQuadrant to 3*nPixelsPerQuadrant */
       case 3:
-        solid = (nPixelsPerQuadrant<<1);
+        dds.solidcount = (nPixelsPerQuadrant<<1);
         /* adjust for odd (X and Y) axis offsets */
-        solid -= (1-evenXOffset) + (1-evenYOffset);
+        dds.solidcount -= (1-evenXOffset) + (1-evenYOffset);
       break;
-      /* forth quadrant is increasing X and decreasing Y */
-      /* run pattern backwards 4*nPixelsPerQuadrant to 3*nPixelsPerQuadrant */
+      /* forth quadrant is increasing X and decreasing Y
+       * run pattern backwards 4*nPixelsPerQuadrant to 3*nPixelsPerQuadrant */
       case 4:
-        solid = (nPixelsPerQuadrant<<2) + DOTTED_SOLID_SIZE;
+        dds.solidcount = (nPixelsPerQuadrant<<2) + DOTTED_SOLID_SIZE;
         /* adjust for current and previous odd (X and Y) axis offsets */
-        solid -= ((1-evenXOffset)<<1) + ((1-evenYOffset)<<1);
+        dds.solidcount -= ((1-evenXOffset)<<1) + ((1-evenYOffset)<<1);
       break;
     }
-    draw = TRUE;
-    if (solid < 0)
-      solid = -solid;
-    solid %= (DOTTED_SOLID_SIZE+DOTTED_EMPTY_SIZE);
-    if (solid > DOTTED_SOLID_SIZE) {
-      draw = FALSE; empty = solid-DOTTED_SOLID_SIZE; solid = 0;
+    dds.drawing = TRUE;
+    if (dds.solidcount < 0)
+      dds.solidcount = -dds.solidcount;
+    dds.solidcount %= (DOTTED_SOLID_SIZE+DOTTED_EMPTY_SIZE);
+    if (dds.solidcount >= DOTTED_SOLID_SIZE) {
+      dds.drawing = FALSE; dds.emptycount = dds.solidcount-DOTTED_SOLID_SIZE; dds.solidcount = 0;
     }
     x = 0;
     y = b;
@@ -2385,7 +2384,7 @@ drawCompleteDottedEllipse(gxj_screen_buffer *sbuf, const jshort *clip,
     /* X axis major region */
     while (decision <= ySlope) {
       drawClippedDottedPixels(sbuf, clip, quadrant, xCenter, yCenter, x, y,
-		    evenXOffset, evenYOffset, color, &solid, &empty, &draw);
+		    evenXOffset, evenYOffset, color, &dds);
       nPixels += 1;
       if (decision > 0) {
 	decision -= ySlope;
@@ -2401,7 +2400,7 @@ drawCompleteDottedEllipse(gxj_screen_buffer *sbuf, const jshort *clip,
         (aSquaredTwo - bSquaredTwo) - (xSlope + ySlope)) >> 1;
     while (y >= 0) {
       drawClippedDottedPixels(sbuf, clip, quadrant, xCenter, yCenter, x, y,
-		    evenXOffset, evenYOffset, color, &solid, &empty, &draw);
+		    evenXOffset, evenYOffset, color, &dds);
       nPixels += 1;
       if (decision <= 0) {
 	decision += xSlope;
@@ -2492,7 +2491,7 @@ draw_arc(gxj_pixel_type color, const jshort *clip, gxj_screen_buffer *sbuf,
   
   CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
 
-  // first special case arcs so squishes that they are lines
+  /* first special case arcs so squishes that they are lines */
   if ((width < 2) || (height < 2)) {
     if (width < 2) {
       width = 0;
@@ -2512,14 +2511,14 @@ draw_arc(gxj_pixel_type color, const jshort *clip, gxj_screen_buffer *sbuf,
       drawClippedHorzLine(clip, sbuf, color, x, y, x + width, y);
     }
   }
-  // here we take care of normal size arcs
+  /* here we take care of normal size arcs */
   else if (arcAngle != 0) {
     const jshort clipX1 = clip[0];
     const jshort clipY1 = clip[1];
     const jshort clipX2 = clip[2];
     const jshort clipY2 = clip[3];
 
-    // first calc normalized startAngle and end Angle
+    /* first calc normalized startAngle and end Angle */
     if ((arcAngle > 360) || (arcAngle < -360)) {
       startAngle = 0;
       endAngle = 0;
@@ -2540,8 +2539,8 @@ draw_arc(gxj_pixel_type color, const jshort *clip, gxj_screen_buffer *sbuf,
       endAngle   %= 360;
     }
     
-    // now check for case of complete ellipse, 
-    // which we will draw optimized
+    /* now check for case of complete ellipse,
+     * which we will draw optimized */
     if (startAngle == endAngle) {
       if ((x >= clipX1) &&
          ((x + width) < clipX2) &&
@@ -2785,7 +2784,7 @@ static void
 drawClippedFourWayDottedRoundRectPixels(gxj_screen_buffer *sbuf,
     const jshort *clip, int xOrigin, int yOrigin, int x, int y,
     int width, int height, int arcWidth, int arcHeight,
-    gxj_pixel_type color, int *solid, int *empty, int *draw) {
+    gxj_pixel_type color, dotted_draw_state * dds) {
 
   int     x1 = xOrigin + arcWidth - x;
   int     y1 = yOrigin + arcHeight - y;
@@ -2795,25 +2794,17 @@ drawClippedFourWayDottedRoundRectPixels(gxj_screen_buffer *sbuf,
   if (clip == NULL) {
     /* Draw rect sides */
     if (y == arcHeight && x == 0) {
-      drawDottedHorzLine(sbuf, color, x1, y1, x2, y1,
-          solid[0], empty[0], draw[0]);
-      drawDottedHorzLine(sbuf, color, x1, y2, x2, y2,
-          solid[2], empty[2], draw[2]);
+      drawDottedHorzLine(sbuf, color, x1, y1, x2, y1, dds[0]);
+      drawDottedHorzLine(sbuf, color, x1, y2, x2, y2, dds[2]);
     } else if (x == arcWidth && y == 0) {
-      drawDottedVertLine(sbuf, color, x1, y1, x1, y2,
-          solid[0], empty[0], draw[0]);
-      drawDottedVertLine(sbuf, color, x2, y1, x2, y2,
-          solid[1], empty[1], draw[1]);
+      drawDottedVertLine(sbuf, color, x1, y1, x1, y2, dds[0]);
+      drawDottedVertLine(sbuf, color, x2, y1, x2, y2, dds[1]);
     }
     /* Draw rect corners */
-    drawDottedPixel(sbuf, color, x1, y1,
-        &(solid[0]), &(empty[0]), &(draw[0]));
-    drawDottedPixel(sbuf, color, x2, y1,
-        &(solid[1]), &(empty[1]), &(draw[1]));
-    drawDottedPixel(sbuf, color, x1, y2,
-        &(solid[2]), &(empty[2]), &(draw[2]));
-    drawDottedPixel(sbuf, color, x2, y2,
-        &(solid[3]), &(empty[3]), &(draw[3]));
+    drawDottedPixel(sbuf, color, x1, y1, &(dds[0]));
+    drawDottedPixel(sbuf, color, x2, y1, &(dds[1]));
+    drawDottedPixel(sbuf, color, x1, y2, &(dds[2]));
+    drawDottedPixel(sbuf, color, x2, y2, &(dds[3]));
 
   } else {
     const jshort clipX1 = clip[0];
@@ -2835,42 +2826,38 @@ drawClippedFourWayDottedRoundRectPixels(gxj_screen_buffer *sbuf,
       if (y == arcHeight && x == 0) {
         if (y1Inside) {
           drawClippedDottedHorzLine(clip, sbuf, color,
-            x1, y1, x2, y1, solid[0], empty[0], draw[0]);
+            x1, y1, x2, y1, dds[0]);
         }
         if (y2Inside) {
           drawClippedDottedHorzLine(clip, sbuf, color,
-            x1, y2, x2, y2, solid[2], empty[2], draw[2]);
+            x1, y2, x2, y2, dds[2]);
         }
       } else if (x == arcWidth && y == 0) {
         if (x1Inside) {
           drawClippedDottedVertLine(clip, sbuf, color,
-            x1, y1, x1, y2, solid[0], empty[0], draw[0]);
+            x1, y1, x1, y2, dds[0]);
         }
         if (x2Inside) {
           drawClippedDottedVertLine(clip, sbuf, color,
-            x2, y1, x2, y2, solid[1], empty[1], draw[1]);
+            x2, y1, x2, y2, dds[1]);
         }
       }
 
       /* Draw rect corners */
       if (y1Inside) {
         if (x1Inside) {
-          drawDottedPixel(sbuf, color, x1, y1,
-            &(solid[0]), &(empty[0]), &(draw[0]));
+          drawDottedPixel(sbuf, color, x1, y1, &(dds[0]));
         }
         if (x2Inside) {
-          drawDottedPixel(sbuf, color, x2, y1,
-            &(solid[1]), &(empty[1]), &(draw[1]));
+          drawDottedPixel(sbuf, color, x2, y1, &(dds[1]));
         }
       }
       if (y2Inside) {
         if (x1Inside) {
-          drawDottedPixel(sbuf, color, x1, y2,
-            &(solid[2]), &(empty[2]), &(draw[2]));
+          drawDottedPixel(sbuf, color, x1, y2, &(dds[2]));
         }
         if (x2Inside) {
-          drawDottedPixel(sbuf, color, x2, y2,
-            &(solid[3]), &(empty[3]), &(draw[3]));
+          drawDottedPixel(sbuf, color, x2, y2, &(dds[3]));
         }
       }
     }
@@ -2879,7 +2866,7 @@ drawClippedFourWayDottedRoundRectPixels(gxj_screen_buffer *sbuf,
 
 static void
 SetUpDottedRoundRectParams(int x, int y, int width, int height,
-        int arcWidth, int arcHeight, int *solid, int *empty, int *draw)
+        int arcWidth, int arcHeight, dotted_draw_state * dds)
 {
     int nPixels;
     int horzLinePixels = width - 2*arcWidth;
@@ -2890,27 +2877,22 @@ SetUpDottedRoundRectParams(int x, int y, int width, int height,
     /* 0-th quadrant starts drawing the pattern from the half
      * stroke in the left upper corner moving counter-clockwise;
      * also initialize here stroke states for other quadrants */
-    solid[0] = solid[1] = solid[2] = solid[3] = DOTTED_SOLID_SIZE/2;
-    empty[0] = empty[1] = empty[2] = empty[3] = 0;
-    draw[0] = draw[1] = draw[2] = draw[3] = TRUE;
+    dds[0] = dds[1] = dds[2] = dds[3] = HALF_STROKE;
 
     /* 1-st quadrant starts drawing in
      * the right upper corner moving clockwise */
     nPixels = horzLinePixels;
-    SetUpDottedParamsByPixels(nPixels,
-        &(solid[1]), &(empty[1]), &(draw[1]));
+    SetUpDottedParamsByPixels(nPixels, &(dds[1]));
 
     /* 2-nd quadrant starts drawing the pattern in
      * the left bottom corner moving clockwise */
     nPixels = vertLinePixels + 2*nPixelsInArc;
-    SetUpDottedParamsByPixels(nPixels,
-        &(solid[2]), &(empty[2]), &(draw[2]));
+    SetUpDottedParamsByPixels(nPixels, &(dds[2]));
 
     /* 3-rd quadrant starts drawing in
      * the right bottom corner moving counter-clockwise */
     nPixels = vertLinePixels + 2*nPixelsInArc + horzLinePixels;
-    SetUpDottedParamsByPixels(nPixels,
-        &(solid[3]), &(empty[3]), &(draw[3]));
+    SetUpDottedParamsByPixels(nPixels, &(dds[3]));
 }
 
 static void
@@ -2918,7 +2900,7 @@ drawCompleteDottedRoundRect(gxj_screen_buffer * sbuf, const jshort *clip,
     gxj_pixel_type color, int x, int y, int width, int height,
     int arcWidth, int arcHeight) {
 
-  int     solid[4], empty[4], draw[4];
+  dotted_draw_state dds[4];
   int     aSquared, bSquared;
   int     twoAsquared, twoBsquared;
   int     fourAsquared, fourBsquared;
@@ -2941,7 +2923,7 @@ drawCompleteDottedRoundRect(gxj_screen_buffer * sbuf, const jshort *clip,
   }
 
   SetUpDottedRoundRectParams(x, y, width, height,
-      arcWidth, arcHeight, solid, empty, draw);
+      arcWidth, arcHeight, dds);
 
   x = 0;
   y = arcHeight;
@@ -2949,8 +2931,7 @@ drawCompleteDottedRoundRect(gxj_screen_buffer * sbuf, const jshort *clip,
   /* X axis major region */
   while (decision <= ySlope) {
     drawClippedFourWayDottedRoundRectPixels(sbuf, clip, xOrigin, yOrigin,
-        x, y, width, height, arcWidth, arcHeight, color,
-        solid, empty, draw);
+        x, y, width, height, arcWidth, arcHeight, color, dds);
     if (decision > 0) {
       decision -= ySlope;
       y -= 1;
@@ -2965,8 +2946,7 @@ drawCompleteDottedRoundRect(gxj_screen_buffer * sbuf, const jshort *clip,
       (aSquaredTwo - bSquaredTwo) - (xSlope + ySlope)) >> 1;
   while (y >= 0) {
     drawClippedFourWayDottedRoundRectPixels(sbuf, clip, xOrigin, yOrigin,
-        x, y, width, height, arcWidth, arcHeight, color,
-        solid, empty, draw);
+        x, y, width, height, arcWidth, arcHeight, color, dds);
 
     if (decision <= 0) {
       decision += xSlope;
@@ -3073,10 +3053,10 @@ draw_roundrect(gxj_pixel_type color, const jshort *clip,
   x2 = x + width;
   y2 = y + height;
 
-  // first do non-rounded rectangles
+  /* first do non-rounded rectangles */
   if ((arcWidth == 0) || (arcHeight == 0)) {
-    // check for unclipped
-    // note that degenerate cases of lines will be inefficiently drawn
+    /* check for unclipped
+     * note that degenerate cases of lines will be inefficiently drawn */
 
     if ((x >= clipX1) &&
         (x2 < clipX2) &&
@@ -3090,13 +3070,13 @@ draw_roundrect(gxj_pixel_type color, const jshort *clip,
         primDrawSolidRect(sbuf, color, x, y, x2, y2);
       }
     }
-    // clipped, non-rounded rectangles
+    /* clipped, non-rounded rectangles */
     else {
       drawClippedRect(sbuf, color, lineStyle, filled, clip,
           x, y, width, height);
     }
   }
-  // rounded rects
+  /* rounded rects */
   else {
     if ((x >= clipX1) &&
         (x2 < clipX2) &&

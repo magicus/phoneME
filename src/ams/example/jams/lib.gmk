@@ -204,8 +204,8 @@ endif
 
 ifeq ($(USE_SCRIPT_UTILS), true)
   SUBSYSTEM_AMS_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/ams/example/jams/classes/com/sun/midp/scriptutil/HttpJadInstaller.java \
+#    $(SUBSYSTEM_DIR)/ams/example/jams/classes/com/sun/midp/scriptutil/HttpJadInstaller.java \
     $(SUBSYSTEM_DIR)/ams/example/jams/classes/com/sun/midp/scriptutil/SuiteLister.java \
-    $(SUBSYSTEM_DIR)/ams/example/jams/classes/com/sun/midp/scriptutil/SuiteRemover.java \
-    $(SUBSYSTEM_DIR)/ams/example/jams/classes/com/sun/midp/scriptutil/CommandLineInstaller.java
+    $(SUBSYSTEM_DIR)/ams/example/jams/classes/com/sun/midp/scriptutil/SuiteRemover.java 
+#    $(SUBSYSTEM_DIR)/ams/example/jams/classes/com/sun/midp/scriptutil/CommandLineInstaller.java
 endif
