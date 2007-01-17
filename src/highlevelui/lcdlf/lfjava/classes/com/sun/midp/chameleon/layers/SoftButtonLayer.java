@@ -384,8 +384,11 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      *         otherwise false.
      */
     public boolean keyInput(int type, int keyCode) {
-        // SoftButtonLayer absorbs all soft button events,
-        // but only functions on a 'press' event
+        // IMPL NOTE: SoftButtonLayer absorbs soft button 
+        // event only if corresponding soft button is "active".
+        // For further clarification please refer to
+        // isSoft1Active() and isSoft2Active() methods.
+
         boolean ret = false;
         if (keyCode == EventConstants.SOFT_BUTTON1) {
             if (type == EventConstants.PRESSED) {
@@ -603,11 +606,20 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
     }
 
     /**
-     * Determines if soft button 2 hase active commands.
+     * Determines if soft button 2 will be processed by the layer.
+     * Called by keyInput to determin if the corresponding key event 
+     * should be absorbed by SoftButtonLayer.
      *
      * @return true if soft2 command can be processed, false otherwise
      */
     protected boolean isSoft2Active() {
+        // IMPL NOTE: when MIDPWindow is not in full screen mode, we absorb
+        // all key events reserved for the delivery of commands
+        if (!((MIDPWindow)owner).isInFullScreenMode()) {
+            return true;
+        }
+
+        // for full screen mode we should check if soft key is useful
         if (soft2 != null) {
             if (soft2.length == 1 &&
                 soft2[0] instanceof SubMenuCommand) {
@@ -626,11 +638,20 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
     }
 
     /**
-     * Determines if soft button 1 hase active command.
+     * Determines if soft button 1 will be processed by the layer.
+     * Called by keyInput to determin if the corresponding key event 
+     * should be absorbed by SoftButtonLayer.
      *
      * @return true if soft1 command can be processed, false otherwise
      */
     protected boolean isSoft1Active() {
+        // IMPL NOTE: when MIDPWindow is not in full screen mode, we absorb
+        // all key events reserved for the delivery of commands
+        if (!((MIDPWindow)owner).isInFullScreenMode()) {
+            return true;
+        }
+
+        // for full screen mode we should check if soft key is useful
         if (menuUP) {
             return true;
         } else {
