@@ -32,12 +32,16 @@
 
 package javax.crypto;
 
-import java.security.*;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
 import java.security.spec.*;
 
-import javax.crypto.spec.*;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
-import com.sun.satsa.crypto.*;
+import com.sun.satsa.crypto.RSAPublicKey;
 
 /**
  * This class provides the functionality of a cryptographic cipher for
@@ -95,14 +99,14 @@ public class Cipher {
     public static final int DECRYPT_MODE = 2;
 
     /** Cipher implementation object. */
-    private com.sun.midp.crypto.Cipher cipher;
+    private com.sun.j2me.crypto.Cipher cipher;
 
     /**
      * Creates a Cipher object.
      * @param cipher cipher implementation
      * of algorithm is being used
      */
-    private Cipher(com.sun.midp.crypto.Cipher cipher) {
+    private Cipher(com.sun.j2me.crypto.Cipher cipher) {
         this.cipher = cipher;
     }
 
@@ -129,10 +133,10 @@ public class Cipher {
 
         try {
             return new
-                Cipher(com.sun.midp.crypto.Cipher.getInstance(transformation));
-        } catch (com.sun.midp.crypto.NoSuchAlgorithmException e) {
+                Cipher(com.sun.j2me.crypto.Cipher.getInstance(transformation));
+        } catch (com.sun.j2me.crypto.NoSuchAlgorithmException e) {
             throw new NoSuchAlgorithmException(e.getMessage());
-        } catch (com.sun.midp.crypto.NoSuchPaddingException e) {
+        } catch (com.sun.j2me.crypto.NoSuchPaddingException e) {
             throw new NoSuchPaddingException(e.getMessage());
         }
     }
@@ -217,13 +221,13 @@ public class Cipher {
     public final void init(int opmode, Key key, AlgorithmParameterSpec params)
         throws InvalidKeyException, InvalidAlgorithmParameterException {
 
-        com.sun.midp.crypto.Key cipherKey;
-        com.sun.midp.crypto.CryptoParameter cryptoParameter;
+        Key cipherKey;
+        com.sun.j2me.crypto.CryptoParameter cryptoParameter;
 
         if (opmode == DECRYPT_MODE) {
-            opmode = com.sun.midp.crypto.Cipher.DECRYPT_MODE;
+            opmode = com.sun.j2me.crypto.Cipher.DECRYPT_MODE;
         } else if (opmode == ENCRYPT_MODE) {
-            opmode = com.sun.midp.crypto.Cipher.ENCRYPT_MODE;
+            opmode = com.sun.j2me.crypto.Cipher.ENCRYPT_MODE;
         } else {
             throw new IllegalArgumentException("Wrong operation mode");
         }
@@ -232,7 +236,7 @@ public class Cipher {
             SecretKeySpec temp = (SecretKeySpec)key;
             byte[] secret = key.getEncoded();
 
-            cipherKey = new com.sun.midp.crypto.SecretKey(
+            cipherKey = new com.sun.j2me.crypto.SecretKey(
                             secret, 0, secret.length, key.getAlgorithm());
         } else if (key instanceof RSAPublicKey) {
             RSAPublicKey temp = (RSAPublicKey)key;
@@ -247,7 +251,7 @@ public class Cipher {
         } else if (params instanceof IvParameterSpec) {
             byte[] iv = ((IvParameterSpec)params).getIV();
 
-            cryptoParameter = new com.sun.midp.crypto.IvParameter(
+            cryptoParameter = new com.sun.j2me.crypto.IvParameter(
                                   iv, 0, iv.length);
         } else {
             throw new InvalidAlgorithmParameterException();
@@ -255,9 +259,9 @@ public class Cipher {
 
         try {
              cipher.init(opmode, cipherKey, cryptoParameter);
-        } catch (com.sun.midp.crypto.InvalidKeyException e) {
+        } catch (com.sun.j2me.crypto.InvalidKeyException e) {
             throw new InvalidKeyException(e.getMessage());
-        } catch (com.sun.midp.crypto.InvalidAlgorithmParameterException e) {
+        } catch (com.sun.j2me.crypto.InvalidAlgorithmParameterException e) {
             throw new InvalidAlgorithmParameterException(e.getMessage());
         }
     }
@@ -306,7 +310,7 @@ public class Cipher {
         try {
             return cipher.update(input, inputOffset, inputLen, output,
                                  outputOffset);
-        } catch (com.sun.midp.crypto.ShortBufferException e) {
+        } catch (com.sun.j2me.crypto.ShortBufferException e) {
             throw new ShortBufferException(e.getMessage());
         }
     }
@@ -372,11 +376,11 @@ public class Cipher {
         try {
             return cipher.doFinal(input, inputOffset, inputLen,
                                   output, outputOffset);
-        } catch (com.sun.midp.crypto.ShortBufferException e) {
+        } catch (com.sun.j2me.crypto.ShortBufferException e) {
             throw new ShortBufferException(e.getMessage());
-        } catch (com.sun.midp.crypto.IllegalBlockSizeException e) {
+        } catch (com.sun.j2me.crypto.IllegalBlockSizeException e) {
             throw new IllegalBlockSizeException(e.getMessage());
-        } catch (com.sun.midp.crypto.BadPaddingException e) {
+        } catch (com.sun.j2me.crypto.BadPaddingException e) {
             throw new BadPaddingException(e.getMessage());
         }
     }
