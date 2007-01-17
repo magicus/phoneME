@@ -1397,6 +1397,14 @@ public class Display {
         // This call will not result in any call into application code
         window.removeLayer(popup);
     }
+
+    /**
+     * return bounds of BodyLayer currently
+     * @return array of bounds
+     */
+    int[] getBodyLayerBounds() {
+        return window.getBodyLayerBounds();
+    }
     // #endif ENABLE_CHAMELEON
 
     /**
