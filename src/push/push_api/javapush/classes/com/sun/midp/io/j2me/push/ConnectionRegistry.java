@@ -27,7 +27,6 @@
 package com.sun.midp.io.j2me.push;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 
 import java.util.Enumeration;
 
@@ -352,8 +351,7 @@ public final class ConnectionRegistry
      * @param midletSuite <code>MIDlet</code> suite to check against
      */
     static void checkAMSPermission(final MIDletSuite midletSuite) {
-        // TBD: Unify (if possible) security mechanisms
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        classSecurityToken.checkIfPermissionAllowed(Permissions.AMS);
     }
 
     /**
@@ -362,14 +360,8 @@ public final class ConnectionRegistry
      * @param midletSuite <code>MIDlet</code> suite to check against
      */
     static void checkPushPermission(final MIDletSuite midletSuite) 
-            throws IOException {
-        // TBD: Unify (if possible) security mechanisms
-        try {
-            midletSuite.checkForPermission(Permissions.PUSH, null);
-        } catch (InterruptedException ie) {
-            throw new InterruptedIOException(
-              "Interrupted while trying to ask the user permission");
-        }
+            throws InterruptedException {
+        midletSuite.checkForPermission(Permissions.PUSH, null);
     }
 
     /**
@@ -537,6 +529,7 @@ public final class ConnectionRegistry
      *         <code>false</code> the connection was not registered.
      * @see #unregisterConnection
      */
+    // TBD: remove token (if possible)
     static boolean checkInConnectionInternal(SecurityToken token,
                                                     String connection) {
         int ret;

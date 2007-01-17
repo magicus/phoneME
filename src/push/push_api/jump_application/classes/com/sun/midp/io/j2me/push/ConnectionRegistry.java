@@ -53,7 +53,7 @@ public final class ConnectionRegistry {
      * @param midletSuite <code>MIDlet</code> suite to check against
      */
     static void checkPushPermission(final MIDletSuite midletSuite) 
-            throws IOException {
+            throws InterruptedException {
         // TBD: implement security checks
     }
 

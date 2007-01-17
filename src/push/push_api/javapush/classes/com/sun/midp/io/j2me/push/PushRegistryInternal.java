@@ -27,6 +27,7 @@
 package com.sun.midp.io.j2me.push;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
@@ -126,7 +127,12 @@ public final class PushRegistryInternal {
         }
 
         if (!bypassChecks) {
-            ConnectionRegistry.checkPushPermission(midletSuite);
+            try {
+                ConnectionRegistry.checkPushPermission(midletSuite);
+            } catch (InterruptedException ie) {
+                throw new InterruptedIOException(
+                    "Interrupted while trying to ask the user permission");
+            }
 
             PushRegistryImpl.checkMidlet(midletSuite, midlet);
 
