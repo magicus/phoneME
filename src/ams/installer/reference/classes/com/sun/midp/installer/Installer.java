@@ -1088,21 +1088,12 @@ public abstract class Installer {
              * if there an error, but may not remove the temp jar file.
              */
             MIDletInfo midletInfo = state.getMidletInfo();
-            String midletClassNameToRun = null, iconName;
+            String midletClassNameToRun = null, iconName = null;
             MIDletSuiteInfo msi;
-
-            iconName = state.getAppProperty("MIDlet-Icon");
-            if (iconName != null) {
-                iconName.trim();
-            }
 
             if (midletInfo != null) {
                 midletClassNameToRun = midletInfo.classname;
-                if (iconName == null) {
-                    // If an icon for the suite is not specified,
-                    // use the first midlet's icon.
-                    iconName = midletInfo.icon;
-                }
+                iconName = midletInfo.icon;
             }
 
             msi = new MIDletSuiteInfo(info.id);

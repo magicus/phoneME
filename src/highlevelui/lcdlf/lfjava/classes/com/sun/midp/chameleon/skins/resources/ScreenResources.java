@@ -28,7 +28,6 @@ package com.sun.midp.chameleon.skins.resources;
 
 import com.sun.midp.chameleon.skins.SkinPropertiesIDs;
 import com.sun.midp.chameleon.skins.ScreenSkin;
-import com.sun.midp.log.*;
 
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Font;
@@ -51,12 +50,10 @@ public class ScreenResources {
             return;
         }
 
-        if ((ScreenSkin.WIDTH <= 0) || (ScreenSkin.HEIGHT <= 0)) {
-            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                Logging.report(Logging.WARNING, LogChannels.LC_HIGHUI,
-                        "Screen dimentions not set.");
-            }
-        }
+        // These 3 values come from the underlying system and get compiled
+        // into MIDP stack using the constants.xml and generator
+        ScreenSkin.WIDTH =  Display.getScreenWidth0(); //Constants.CHAM_WIDTH;
+        ScreenSkin.HEIGHT = Display.getScreenHeight0(); //Constants.CHAM_HEIGHT;
 
         int textOrient = SkinResources.getInt(
                 SkinPropertiesIDs.SCREEN_TEXT_ORIENT);

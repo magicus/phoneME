@@ -76,68 +76,119 @@ gx_copy_area(const jshort *clip,
 		   x_src, y_src, 0);
 }
 
-/** Draw image in RGB format */
+/**
+ * Draw image in RGB format
+ */
 void
-gx_draw_rgb(const jshort *clip,
-	     const java_imagedata *dst, jint *rgbData,
-             jint offset, jint scanlen, jint x, jint y,
+gx_draw_rgb(const jshort *clip, 
+	     const java_imagedata *dst, jint *rgbData, 
+             jint offset, jint scanlen, jint x, jint y, 
              jint width, jint height, jboolean processAlpha) {
-    int a, b;
-    int sbufWidth;
+  int a, b;
 
-    int dataRowIndex = 0;
-    int sbufRowIndex = 0;
+  int dataRowIndex = 0;
+  int sbufRowIndex = 0;
 
-    gxj_screen_buffer screen_buffer;
-    const jshort clipX1 = clip[0];
-    const jshort clipY1 = clip[1];
-    const jshort clipX2 = clip[2];
-    const jshort clipY2 = clip[3];
-    gxj_screen_buffer *sbuf =
-        gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
-    sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
-    sbufWidth = sbuf->width;
+  gxj_screen_buffer screen_buffer;
+  const jshort clipX1 = clip[0];
+  const jshort clipY1 = clip[1];
+  const jshort clipX2 = clip[2];
+  const jshort clipY2 = clip[3];
+  gxj_screen_buffer *sbuf = gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
+  sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
 
-    REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_rgb()\n");
+  sbufRowIndex = y * sbuf->width;
 
-    CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
-    sbufRowIndex = y * sbufWidth;
+  REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_rgb()\n");
+  
+  CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
 
+  // P(a, b) = rgbData[offset + (a - x) + (b - y) * scanlength]
+  // x <= a < x + width
+  // y <= b < y + height
+
+  if (processAlpha) {
     for (b = y; b < y + height;
-        b++, dataRowIndex += scanlen,
-        sbufRowIndex += sbufWidth) {
+                b++, dataRowIndex += scanlen, sbufRowIndex += sbuf->width ) {
+      if (b >= clipY2)
+        return;
+      if (b <  clipY1)
+        continue;
+      for (a = x; a < x + width; a++) {
+        int value = rgbData[offset + (a - x) + dataRowIndex];
 
-        if (b >= clipY2) return;
-        if (b <  clipY1) continue;
+        if ((value & 0xff000000) == 0xff000000) {
+          int idx = sbufRowIndex + a;
 
-        for (a = x; a < x + width; a++) {
+          if (a >= clipX2) {
+            break;
+	  }
 
-            int value = rgbData[offset + (a - x) + dataRowIndex];
-            int idx = sbufRowIndex + a;
+          if (a <  clipX1) {
+            /*
+             *  JAVA_TRACE("drawRGB:A OutOfBounds %d   %d %d %d %d\n", idx, 
+             *             a, b, sbuf->width, sbuf->height);
+             */
+          } else {
+            CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
+            sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
+          }
+        } else {
 
-            if (a >= clipX2) break;
-            if (a < clipX1) {
-                // JAVA_TRACE("drawRGB:A OutOfBounds %d   %d %d %d %d\n", idx,
-                //     a, b, sbuf->width, sbuf->height);
-            } else {
-                CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
-                if (!processAlpha || ((value & 0xff000000) == 0xff000000)) {
-                    sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
-                } else {
-                    unsigned int xA =
-                        GXJ_XAAA8888_FROM_ARGB8888((unsigned int)value);
-                    unsigned int XAInv =
-                        (unsigned int)(((unsigned int)(0xFFFFFFFF)) - xA);
-                    sbuf->pixelData[idx] =
-                        GXJ_RGB24TORGB16((xA & value) |
-                            (XAInv & GXJ_RGB16TORGB24(sbuf->pixelData[idx])));
-                }
-            }
-        } /* loop by rgb data columns */
-    } /* loop by rgb data rows */
+          int idx = sbufRowIndex + a;
+
+          if (a >= clipX2) {
+            break; 
+	  }
+
+          if (a <  clipX1) {
+            /*
+             *  JAVA_TRACE("drawRGB:A OutOfBounds %d   %d %d %d %d\n", idx, 
+             *             a, b, sbuf->width, sbuf->height);
+             */
+          } else {
+
+            unsigned int xA = 
+                GXJ_XAAA8888_FROM_ARGB8888((unsigned int)value);
+
+            unsigned int XAInv = 
+                (unsigned int)(((unsigned int)(0xFFFFFFFF)) - xA);
+
+            CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
+
+            sbuf->pixelData[idx] = 
+                GXJ_RGB24TORGB16((xA & value) |
+                                 (XAInv & GXJ_RGB16TORGB24(sbuf->pixelData[idx])));
+
+          }
+        }
+      }
+    }
+  } else {
+    for (b = y; b < y + height;
+                b++, dataRowIndex += scanlen, sbufRowIndex += sbuf->width) {
+      if (b >= clipY2)
+        return;
+      if (b <  clipY1)
+        continue;
+      for (a = x; a < x + width; a++) {
+        int value = rgbData[offset + (a - x) + dataRowIndex];
+        int idx = sbufRowIndex + a;
+        if (a >= clipX2)
+          break;
+        if (a <  clipX1) {
+          /*
+           * JAVA_TRACE("drawRGB OutOfBounds %d   %d %d %d %d\n", idx, 
+           *            a, b, sbuf->width, sbuf->height);
+           */
+        } else {
+          CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
+          sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
+        }
+      }
+    }
+  }
 }
-
-
 
 /**
  * Obtain the color that will be final shown 

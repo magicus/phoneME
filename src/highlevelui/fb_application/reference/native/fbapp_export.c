@@ -188,11 +188,29 @@ static void clipRect(int *x1, int *y1, int *x2, int *y2) {
  * @param y2 bottom-right y coordinate of the area to refresh
  */
 void fbapp_refresh(int x1, int y1, int x2, int y2) {
+
     clipRect(&x1, &y1, &x2, &y2);
-    if (!reverse_orientation) {
-        refreshScreenNormal(x1, y1, x2, y2);
-    } else {
+
+    /* TODO: No branching is needed indeed, it is
+     *   enough to regard rotation state and call
+     *   ported implementations of screen refresh
+     */
+
+    switch (linuxFbDeviceType) {
+    case LINUX_FB_ZAURUS:
+#if 0
         refreshScreenRotated(x1, y1, x2, y2);
+#endif
+        break;
+    case LINUX_FB_INTEL_MAINSTONE:
+    case LINUX_FB_VERSATILE_INTEGRATOR:
+    case LINUX_FB_OMAP730:
+    default:
+         if (reverse_orientation) {
+            refreshScreenRotated(x1, y1, x2, y2);
+         } else {
+            refreshScreenNormal(x1, y1, x2, y2);
+         }
     }
 }
 

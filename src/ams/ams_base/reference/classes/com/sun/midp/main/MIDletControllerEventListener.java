@@ -36,7 +36,6 @@ import com.sun.midp.events.EventListener;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
-import com.sun.midp.configurator.Constants;
 
 /**
  * Provides initial event processing for MIDletProxyList.
@@ -159,24 +158,6 @@ class MIDletControllerEventListener implements EventListener {
                 return;
 
             case EventTypes.SELECT_FOREGROUND_EVENT:
-
-                if (Constants.MEASURE_STARTUP) {
-
-                    // IMPL_NOTE: Usually MIDlet is explicitly switched to
-                    // background on a native event, e.g. HOME key pressing.
-                    // The native event handling is correct place to count
-                    // the time of background switching from. However, native
-                    // events handling is platform dependent, and in this way
-                    // we have to instrument lot of platform code. That's why
-                    // we selected this place as the the first shared place
-                    // to start the measuring from. The measured time is
-                    // less than the time experienced by user by the time to
-                    // map native event to MIDP SELECT_FOREGROUND_EVENT
-
-                    System.err.println("Switch To Background Time: Begin at " +
-                        System.currentTimeMillis());
-                }
-
                 midletControllerEventConsumer.
                     handleMIDletForegroundSelectEvent(nativeEvent.intParam1);
                 return;

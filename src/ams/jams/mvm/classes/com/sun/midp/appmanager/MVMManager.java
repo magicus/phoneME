@@ -320,12 +320,6 @@ public class MVMManager extends MIDlet
      */
     public void moveToForeground(RunningMIDletSuiteInfo suiteInfo) {
         try {
-
-            if (Constants.MEASURE_STARTUP) {
-                System.err.println("Switch To Foreground Time: Begin at " +
-                    System.currentTimeMillis());
-            }
-
             if (suiteInfo != null) {
                 if (suiteInfo.proxy.noDisplayable()) {
                     /*

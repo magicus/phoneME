@@ -48,9 +48,9 @@ extern void initScreenBuffer(int width, int height);
 extern void finalizeFrameBuffer();
 
 /**
- * Change screen orientation to landscape or portrait,
- * depending on the current screen mode
- */
+  * Change screen orientation to landscape or portrait,
+  * depending on the current screen mode
+  */
 extern void reverseScreenOrientation();
 
 /**
