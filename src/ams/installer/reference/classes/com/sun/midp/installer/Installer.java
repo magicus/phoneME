@@ -1026,9 +1026,16 @@ public abstract class Installer {
                 postInstallMsgBackToProvider(
                     OtaNotifier.AUTHORIZATION_FAILURE_MSG);
 
+                /*
+                 * state.previousInstallInfo.authPath can be null in the case
+                 * if the previously installed suite was not signed but its
+                 * domain was set to some trusted one by AutoTester using
+                 * setUnsignedSecurityDomain().
+                 */
                 throw new InvalidJadException(
                     InvalidJadException.TRUSTED_OVERWRITE_FAILURE,
-                        state.previousInstallInfo.authPath[0]);
+                        state.previousInstallInfo.authPath != null ?
+                            state.previousInstallInfo.authPath[0] : "");
             }
 
             /*
