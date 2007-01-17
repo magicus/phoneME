@@ -24,7 +24,7 @@ information or have any questions.
 -->
 <project name="AppManager" default="compile-linux-x86" basedir=".">
     <description>
-         Builds CDC on either Linux/x86 or Linux/ARM.
+         Builds CDC on either Linux/x86 or Linux/ARM (*** in hinkmond sandbox).
     </description>
 
     <!-- Clean target to clean a linux-x86-suse build -->
