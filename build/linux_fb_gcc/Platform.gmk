@@ -45,6 +45,11 @@ TARGET_CPU		= i386
 endif
 TARGET_COMPILER		= gcc
 TARGET_VM		= cldc_vm
+ifdef DEVICE
+TARGET_DEVICE		= $(DEVICE)
+else
+TARGET_DEVICE		= x86
+endif
 
 # file/directory name separator ( / or \\\\ )
 # if the file separator is backslash, double-quoting is needed,

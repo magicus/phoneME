@@ -7,4 +7,4 @@
 # list of files with constants/properties
 # all file names there are relative to this file's directory
 
-constants_arm.xml
+constants_omap730.xml

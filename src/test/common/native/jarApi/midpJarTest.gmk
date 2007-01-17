@@ -39,6 +39,8 @@ OS = linux
 
 CPU = i386
 
+DEVICE = x86
+
 OS_CFLAGS = -DLINUX 
 
 INCLUDES = \

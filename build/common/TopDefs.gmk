@@ -31,3 +31,6 @@ ifndef CPU
 CPU                    = $(TARGET_CPU)
 endif
 VM                     = $(TARGET_VM)
+ifndef DEVICE
+DEVICE                    = $(TARGET_DEVICE)
+endif

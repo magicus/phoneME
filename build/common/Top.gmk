@@ -30,8 +30,8 @@
 # Following variables should have been set before including this file:
 #
 # HOST_PLATFORM,   HOST_OS,   HOST_CPU,   HOST_COMPILER
-# TARGET_PLATFORM, TARGET_OS, TARGET_CPU, TARGET_COMPILER, TARGET_VM
-# MIDP_DIR MIDP_OUTPUT_DIR
+# TARGET_PLATFORM, TARGET_OS, TARGET_CPU, TARGET_DEVICE, TARGET_COMPILER,
+# TARGET_VM, MIDP_DIR MIDP_OUTPUT_DIR
 #
 ######################################################################
 

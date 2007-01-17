@@ -45,3 +45,8 @@ TARGET_CPU		  = i386
 endif
 TARGET_COMPILER	= evc
 TARGET_VM		    = cdc_vm
+ifdef DEVICE
+TARGET_DEVICE		= $(DEVICE)
+else
+TARGET_DEVICE		= x86
+endif
