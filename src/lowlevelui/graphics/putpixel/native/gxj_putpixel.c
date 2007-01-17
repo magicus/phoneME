@@ -2315,7 +2315,7 @@ drawCompleteDottedEllipse(gxj_screen_buffer *sbuf, const jshort *clip,
   int     quadrant;
   int     nPixelsPerQuadrant = 0;
   int     nPixels = 0;
-  dotted_draw_state dds;
+  dotted_draw_state dds = START_STROKE;
 
   ret = SetUpEllipseParameters(x, y, width, height, &a, &b,
           &evenXOffset, &evenYOffset, &xCenter, &yCenter,

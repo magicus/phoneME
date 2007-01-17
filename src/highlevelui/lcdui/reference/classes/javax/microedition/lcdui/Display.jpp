@@ -565,6 +565,7 @@ public class Display {
 
         chamImageTunnel = new ChamImageTunnel();
         SkinResources.initImageTunnel(chamImageTunnel);
+        SkinResources.setScreenSize(WIDTH, HEIGHT);
 
         // IMPL_NOTE: In the MVM mode it's important to do the first
         //   skin resources loading from the AMS isolate, since they
@@ -604,6 +605,10 @@ public class Display {
 
         /** create DisplayAccess I/F implementor */
         accessor = new DisplayAccessImpl();
+
+        // #ifdef ENABLE_CHAMELEON
+        SkinResources.initDisplayAccess(accessor);
+        // #endif ENABLE_CHAMELEON
 
         /** create DisplayEventConsumer I/F implementor */
         consumer = new DisplayEventConsumerImpl();
@@ -1391,6 +1396,14 @@ public class Display {
         // Remove a layer from the Chameleon layer stack.
         // This call will not result in any call into application code
         window.removeLayer(popup);
+    }
+
+    /**
+     * return bounds of BodyLayer currently
+     * @return array of bounds
+     */
+    int[] getBodyLayerBounds() {
+        return window.getBodyLayerBounds();
     }
     // #endif ENABLE_CHAMELEON
 
@@ -2201,9 +2214,9 @@ public class Display {
 
     private native boolean getReverseOrientation0();
 
-    public static native int getScreenWidth0();
+    static native int getScreenWidth0();
 
-    public static native int getScreenHeight0();
+    static native int getScreenHeight0();
 
     /**
      * Play an Alert sound.
@@ -2389,6 +2402,22 @@ public class Display {
         public Display getDisplay() {
             // return display;
             return Display.this;
+        }
+
+        /**
+        * Called to get current display width.
+        * @return Display width.
+        */
+        public int getDisplayWidth() {
+          return Display.WIDTH;
+        }
+    
+        /**
+        * Called to get current display height.
+        * @return Display height.
+        */
+        public int getDisplayHeight() {
+          return Display.HEIGHT;
         }
 
         /**
