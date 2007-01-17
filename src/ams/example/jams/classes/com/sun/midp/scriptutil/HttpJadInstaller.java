@@ -87,7 +87,8 @@ public class HttpJadInstaller extends MIDlet implements Runnable {
                 domain = domain.substring(0, index);
             }
 
-            installer.setUnsignedSecurityDomain(domain, additionalPermissions);
+            installer.setUnsignedSecurityDomain(domain);
+            installer.setExtraPermissions(additionalPermissions);
         }
 
         new Thread(this).start();

@@ -256,7 +256,8 @@ class AutoTesterBase extends MIDlet implements CommandListener,
                 domain = domain.substring(0, index);
             }
 
-            installer.setUnsignedSecurityDomain(domain, additionalPermissions);
+            installer.setUnsignedSecurityDomain(domain);
+            installer.setExtraPermissions(additionalPermissions);
         }
 
         new Thread(this).start();

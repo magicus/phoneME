@@ -1830,15 +1830,10 @@ public abstract class Installer {
     }
 
     /**
-     * Sets security domain for unsigned suites. The default is untrusted.
-     * Can only be called by JAM for testing.
-     *
-     * @param domain name of a security domain
-     * @param allowedPermissions list of permissions that must be allowed even
-     * if they are absent from the jad file; "all" to allow all permissions
+     * Checks if the calling suite has Permissions.MIDP permission.
+     * If not, the SecurityException is thrown.
      */
-    public void setUnsignedSecurityDomain(String domain,
-            String allowedPermissions) {
+    private void checkMidpPermission() {
         MIDletSuite midletSuite = MIDletStateHandler.
             getMidletStateHandler().getMIDletSuite();
 
@@ -1846,9 +1841,32 @@ public abstract class Installer {
         if (midletSuite != null) {
             midletSuite.checkIfPermissionAllowed(Permissions.MIDP);
         }
+    }
 
+    /**
+     * Sets security domain for unsigned suites. The default is untrusted.
+     * Can only be called by JAM for testing.
+     *
+     * @param domain name of a security domain
+     * @param allowedPermissions list of permissions that must be allowed even
+     * if they are absent from the jad file; "all" to allow all permissions
+     */
+    public void setUnsignedSecurityDomain(String domain) {
+        checkMidpPermission();
         unsignedSecurityDomain = domain;
-        additionalPermissions = allowedPermissions;
+    }
+
+    /**
+     * Sets the permissions that must be allowed not depending on their
+     * presence in the application descriptor file.
+     * Can only be called by JAM for testing.
+     *
+     * @param extraPermissions list of permissions that must be allowed even
+     * if they are absent from the jad file; "all" to allow all permissions
+     */
+    public void setExtraPermissions(String extraPermissions) {
+        checkMidpPermission();
+        additionalPermissions = extraPermissions;
     }
 
     /**
