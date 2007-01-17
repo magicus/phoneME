@@ -307,7 +307,6 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
         g.translate(-DateFieldSkin.PAD_H, -DateFieldSkin.PAD_V);
         if (editor.isPopupOpen() && editor.isSizeChanged()) {
             setLocation();
-            editor.setSizeChanged(false);
         }
     }
 
@@ -398,20 +397,19 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
         int[] avalibleBounds = sLF.lGetCurrentDisplay().getBodyLayerBounds();
 
         int x = bounds[X] + contentBounds[X] + DateFieldSkin.PAD_V;
-        int y = bounds[Y] + contentBounds[Y];
+        int y = bounds[Y] + contentBounds[Y];        
 
         if (y - DateEditorSkin.HEIGHT >= 0) {
             // can fit above
             y -= DateEditorSkin.HEIGHT - DateFieldSkin.PAD_V - avalibleBounds[Y];
-        } else if (y + contentBounds[HEIGHT] + DateEditorSkin.HEIGHT < avalibleBounds[HEIGHT]) {
+        } else if (y + contentBounds[HEIGHT] + DateEditorSkin.HEIGHT + 2 * DateFieldSkin.PAD_V < avalibleBounds[HEIGHT]) {
             // can fit below
-            y += contentBounds[HEIGHT] + 2 * DateFieldSkin.PAD_V - avalibleBounds[Y];
+            y += contentBounds[HEIGHT] + 2 * DateFieldSkin.PAD_V + avalibleBounds[Y];
         } else {
             // fit in the middle of screen
             y = avalibleBounds[Y] + (avalibleBounds[HEIGHT] / 2) -
                 (DateEditorSkin.HEIGHT / 2);
         }
-        
         editor.setLocation(x, y);
     }
 
@@ -426,7 +424,8 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
      */
     void uCallSizeChanged(int w, int h) {
         synchronized (Display.LCDUILock) {
-            editor.setSizeChanged(true);
+            editor.setSizeChanged();
+
         }
     }
 

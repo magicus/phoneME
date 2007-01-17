@@ -26,6 +26,7 @@
 
 #include <suspend_resume_vm.h>
 #include <midpNativeThread.h>
+#include <suspend_resume.h>        
 
 /**
  * Default implementation of suspending routine for the VM.

@@ -109,6 +109,7 @@ class DateEditor extends PopupLayer implements CommandListener {
 
         setCommands(commands);
         setCommandListener(this);
+        isIitialized = true;
     }
 
     /**
@@ -118,7 +119,7 @@ class DateEditor extends PopupLayer implements CommandListener {
      * @param y the y-coordinate of the popup layer location
      */
     public void setLocation(int x, int y) {
-        if (!initialized) {
+        if (!isIitialized) {
             init();
         }
         bounds[X] = x;
@@ -146,7 +147,11 @@ class DateEditor extends PopupLayer implements CommandListener {
         } else if (bounds[X] < 0) {
             bounds[X] = 0;
         }
-        
+
+        if (sizeChanged) {
+            callSizeChanged();
+        }
+        sizeChanged = false;
     }
 
     /**
@@ -563,6 +568,7 @@ class DateEditor extends PopupLayer implements CommandListener {
      * @param g The Graphics object to paint to
      */
     protected void drawDateComponents(Graphics g) {
+
         nextX = (mode == DateField.DATE) ? 10 : 4;
         nextY = 5;
         
@@ -586,6 +592,7 @@ class DateEditor extends PopupLayer implements CommandListener {
             monthPopup.setBounds(g.getTranslateX(),
                                  g.getTranslateY() + h,
                                  w, DateEditorSkin.HEIGHT_POPUPS);
+            monthPopup.updateScrollIndicator();
         }
         g.setFont(DateEditorSkin.FONT_POPUPS);
         g.setColor(0);
@@ -612,6 +619,7 @@ class DateEditor extends PopupLayer implements CommandListener {
             yearPopup.setBounds(g.getTranslateX(),
                                  g.getTranslateY() + h,
                                  w, DateEditorSkin.HEIGHT_POPUPS);
+            yearPopup.updateScrollIndicator();
         }
 
         g.setFont(DateEditorSkin.FONT_POPUPS);
@@ -655,6 +663,7 @@ class DateEditor extends PopupLayer implements CommandListener {
             hoursPopup.setBounds(g.getTranslateX(),
                                  g.getTranslateY() + h,
                                  w, DateEditorSkin.HEIGHT_POPUPS);
+            hoursPopup.updateScrollIndicator();
         }
 
         g.setFont(DateEditorSkin.FONT_POPUPS);
@@ -691,6 +700,7 @@ class DateEditor extends PopupLayer implements CommandListener {
             minutesPopup.setBounds(g.getTranslateX(),
                                    g.getTranslateY() + h,
                                    w, DateEditorSkin.HEIGHT_POPUPS);
+            minutesPopup.updateScrollIndicator();
         }
 
         g.setFont(DateEditorSkin.FONT_POPUPS);
@@ -906,6 +916,7 @@ class DateEditor extends PopupLayer implements CommandListener {
         boolean done = false;
         ScreenLFImpl sLF = (ScreenLFImpl)lf.df.owner.getLF();
         switch (focusOn) {
+
             case MONTH_POPUP:
                 if (!monthPopup.open) {
                     monthPopup.show(sLF);
@@ -1292,8 +1303,8 @@ class DateEditor extends PopupLayer implements CommandListener {
      *
      * @param true if size change iccurs
      */
-    public void setSizeChanged(boolean sizeChanged) {
-        this.sizeChanged = sizeChanged;
+    public void setSizeChanged() {
+        this.sizeChanged = true;
     }
 
     /**
@@ -1312,6 +1323,13 @@ class DateEditor extends PopupLayer implements CommandListener {
      */
     public void setPopupOpen(boolean popUpOpen) {
         this.popUpOpen = popUpOpen;
+    }
+
+    public void callSizeChanged() {
+        if (monthPopup != null) monthPopup.updateScrollIndicator();
+        if (yearPopup != null) yearPopup.updateScrollIndicator();
+        if (hoursPopup != null) hoursPopup.updateScrollIndicator();
+        if (minutesPopup != null) minutesPopup.updateScrollIndicator();        
     }
 
     // *********** attributes ************* //
@@ -1627,4 +1645,7 @@ class DateEditor extends PopupLayer implements CommandListener {
 
     // True if size of screen was changed
     private boolean sizeChanged;
+
+    // True if Date Edidor is initialized
+    private boolean isIitialized;
 }
