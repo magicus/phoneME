@@ -108,6 +108,7 @@ public class FileInstaller extends Installer {
                                jarOutputStream.openOutputStream(), CHUNK_SIZE);
 
         jarInputStream.close();
+        jarOutputStream.disconnect();
 
         return jarSize;
     }

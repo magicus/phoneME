@@ -69,10 +69,6 @@ extern "C" {
 
 typedef enum {
     MIDP_JC_EVENT_KEY                  =100,
-    MIDP_JC_EVENT_START                ,
-    MIDP_JC_EVENT_START_TCK            ,
-    MIDP_JC_EVENT_START_INSTALL        ,
-    MIDP_JC_EVENT_START_MIDLET         ,
     MIDP_JC_EVENT_START_ARBITRARY_ARG  ,
     MIDP_JC_EVENT_END                  ,
     MIDP_JC_EVENT_KILL                 ,
@@ -129,24 +125,6 @@ typedef struct {
     javacall_key             key; /* '0'-'9','*','# */
     javacall_keypress_type  keyEventType; /* presed, released, repeated ... */
 } midp_jc_event_key;
-
-typedef struct {
-    char* urlAddress;
-    int silentInstall;
-} midp_jc_event_lifecycle;  /* start, end, kill, pause, resume, install */
-
-typedef struct {
-    char* urlAddress;
-    javacall_lifecycle_tck_domain  domain;
-} midp_jc_event_start_tck;
-
-typedef struct {
-    char* suiteID;
-    char* classname;
-    char* arg0;
-    char* arg1;
-    char *arg2;
-} midp_jc_event_start_midlet;
 
 typedef struct {
     int   argc;
@@ -256,9 +234,6 @@ typedef struct {
     midp_jc_event_type                     eventType;
     union {
         midp_jc_event_key                  keyEvent;
-        midp_jc_event_lifecycle            lifecycleEvent;
-        midp_jc_event_start_tck            startTckEvent;
-        midp_jc_event_start_midlet         startMidletEvent;
         midp_jc_event_start_arbitrary_arg  startMidletArbitraryArgEvent;
         midp_jc_event_socket               socketEvent;
         midp_jc_event_network              networkEvent;
