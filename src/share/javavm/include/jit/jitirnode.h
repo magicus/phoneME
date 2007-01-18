@@ -331,7 +331,9 @@ typedef enum CVMJITCondition {
  */
 #define CVMJITBINOP_ALLOCATION                    0x01 /* is allocation */
 #define CVMJITCMPOP_UNORDERED_LT 		  0x02
+#define CVMJITBINOP_VOLATILE_FIELD                0x04
 #define CVMJITBINOP_ARITHMETIC                    0x08 /* No side effects */
+
 /*
  * Association with a read operation or a write operation or both
  * Required to identify what we intend to do with INDEX nodes.
@@ -351,6 +353,7 @@ typedef enum CVMJITCondition {
  *	      clinit for LVM or non-LVM.
  */
 #define CVMJITUNOP_ALLOCATION                     0x01 /* is allocation */
+#define CVMJITUNOP_VOLATILE_FIELD                 0x04
 #define CVMJITUNOP_CLASSINIT			  0x08 
 #define CVMJITUNOP_CLASSINIT_LVM		  0x10 
 #define CVMJITUNOP_ARITHMETIC                     0x08 /* No side effects */

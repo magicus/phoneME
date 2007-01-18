@@ -478,6 +478,25 @@ CVMCCMruntimeResolveStaticMethodBlockAndClinit(CVMCCExecEnv *ccee,
                                                CVMUint16 cpIndex,
                                                CVMMethodBlock **cachedConstant);
 
+/* Purpose: Performs an atomic 64-bit putstatic. */
+/* Type: STATE_NOT_FLUSHED THROWS_NONE */
+void CVMCCMruntimePutstatic64Volatile(CVMJavaLong value, void *staticField);
+
+/* Purpose: Performs an atomic 64-bit getstatic. */
+/* Type: STATE_NOT_FLUSHED THROWS_NONE */
+CVMJavaLong CVMCCMruntimeGetstatic64Volatile(void *staticField);
+
+/* Purpose: Performs an atomic 64-bit putfield. */
+/* Type: STATE_NOT_FLUSHED THROWS_NONE */
+void CVMCCMruntimePutfield64Volatile(CVMJavaLong value,
+				     CVMObject *obj,
+				     CVMJavaInt fieldByteOffset);
+
+/* Purpose: Performs an atomic 64-bit getfield. */
+/* Type: STATE_NOT_FLUSHED THROWS_NONE */
+CVMJavaLong CVMCCMruntimeGetfield64Volatile(CVMObject *obj,
+					    CVMJavaInt fieldByteOffset);
+
 /* Purpose: Perform monitor enter. */
 /* Type: STATE_FLUSHED THROWS_MULTIPLE */
 void
@@ -576,6 +595,10 @@ typedef enum CVMCCMStatsTag {
     CVMCCM_STATS_CVMCCMruntimeResolveGetstaticFieldBlockAndClinit,
     CVMCCM_STATS_CVMCCMruntimeResolvePutstaticFieldBlockAndClinit,
     CVMCCM_STATS_CVMCCMruntimeResolveStaticMethodBlockAndClinit,
+    CVMCCM_STATS_CVMCCMruntimePutstatic64Volatile,
+    CVMCCM_STATS_CVMCCMruntimeGetstatic64Volatile,
+    CVMCCM_STATS_CVMCCMruntimePutfield64Volatile,
+    CVMCCM_STATS_CVMCCMruntimeGetfield64Volatile,
     CVMCCM_STATS_CVMCCMruntimeMonitorEnter,
     CVMCCM_STATS_CVMCCMruntimeMonitorExit,
     CVMCCM_STATS_CVMCCMruntimeGCRendezvous,

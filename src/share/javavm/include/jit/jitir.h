@@ -52,8 +52,9 @@ CVMJITcompileOptimizeIR(CVMJITCompilationContext* con);
 #define CVMJIT_TYPEID_32BITS          (CVM_TYPEID_LAST_PREDEFINED_TYPE + 1)
 #define CVMJIT_TYPEID_64BITS          (CVM_TYPEID_LAST_PREDEFINED_TYPE + 2)
 #define CVMJIT_TYPEID_ADDRESS         (CVM_TYPEID_LAST_PREDEFINED_TYPE + 3)
-/* UBYTE is an unsiged byte */
+/* UBYTE is an unsigned byte */
 #define CVMJIT_TYPEID_UBYTE           (CVM_TYPEID_LAST_PREDEFINED_TYPE + 4)
+#define CVMJIT_TYPEID_LAST_PREDEFINED_TYPE      CVMJIT_TYPEID_UBYTE
 
 #define CVMJITirIsSingleWordTypeTag(typeTag)	\
     (typeTag != CVMJIT_TYPEID_64BITS &&		\

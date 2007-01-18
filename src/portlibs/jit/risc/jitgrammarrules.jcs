@@ -45,6 +45,7 @@
 %leaf LOCAL64 // Java 2-word local
 %unary STATIC32 // Java 1-word static
 %unary STATIC64 // Java 2-word static
+%unary STATIC64VOL // Java 2-word volatile static
 
 //
 // this represents the first evaluation of a 1-word CSE
@@ -132,6 +133,7 @@
 %binary FIELDREFOBJ     // object ref field of object
 %binary FIELDREF32	// one-word field of object
 %binary FIELDREF64	// two-word field of object
+%binary FIELDREF64VOL	// two-word volatile field of object
 
 %binary ISEQUENCE_R
 %binary LSEQUENCE_R
@@ -373,6 +375,28 @@ root: ASSIGN STATIC64 reg32 reg64 : 20 : : : : {
         CVMJITaddCodegenComment((con,
             "putstatic(staticFieldAddr, value{L|D})"));
         setStaticField(con, CVMRM_INT_REGS(con), CVMCPU_STR64_OPCODE);
+    };
+
+// Purpose: STATIC64VOL(staticFieldSpec) = value64.
+root: ASSIGN STATIC64VOL reg32 reg64 : 90 : SET_AVOID_C_CALL($$); :
+    SET_TARGET2($$, ARG3, ARG1) : : {
+	CVMRMResource* rhs = popResource(con);
+	CVMRMResource* lhs = popResource(con);
+
+	/* Swap the arguments because the runtime helper function will expect
+	   the 64-bit source value to come first followed by the static field
+	   address: */
+	pushResource(con, rhs);
+	pushResource(con, lhs);
+
+        CVMJITprintCodegenComment(("Do volatile putstatic:"));
+        CVMJITaddCodegenComment((con, "call CVMCCMruntimePutstatic64Volatile"));
+        CVMJITsetSymbolName((con, "CVMCCMruntimePutstatic64Volatile"));
+        CVMJITstatsRecordInc(con, CVMJIT_STATS_CVMCCMruntimePutstatic64Volatile);
+
+	/* Call the helper function: */
+        longBinaryHelper2(con, (void*)CVMCCMruntimePutstatic64Volatile, $$,
+			  CVM_FALSE);
     };
 
 aluRhs: ICONST_32 : 0 : : : : {
@@ -1082,6 +1106,16 @@ reg64: FETCH64 STATIC64 reg32 : 20 : : : : {
             "value{L|D} = getstatic(staticFieldAddr);"));
         getStaticField(con, CVMRM_INT_REGS(con),
 		       $$, GET_REGISTER_GOALS, CVMCPU_LDR64_OPCODE, 2);
+    };
+
+// Purpose: value64 = FETCH64(STATIC64VOL(staticFieldSpec))
+reg64: FETCH64 STATIC64VOL reg32 : 90 : SET_AVOID_C_CALL($$); :
+    SET_TARGET1($$, ARG1); : : {
+        CVMJITprintCodegenComment(("Do volatile getstatic:"));
+        CVMJITaddCodegenComment((con, "call CVMCCMruntimeGetstatic64Volatile"));
+        CVMJITsetSymbolName((con, "CVMCCMruntimeGetstatic64Volatile"));
+        CVMJITstatsRecordInc(con, CVMJIT_STATS_CVMCCMruntimeGetstatic64Volatile);
+        unaryHelper(con, (void*)CVMCCMruntimeGetstatic64Volatile, $$, ARG1, 2);
     };
 
 reg32: EXCEPTION_OBJECT : 0 : : : : {
@@ -4124,6 +4158,26 @@ reg64: FETCH64 FIELDREF64 reg32 memSpec : 10 :
 		   GET_REGISTER_GOALS, CVMCPU_LDR64_OPCODE, 2);
     };
 
+// Purpose: value = FETCH64(FIELDREF64VOL(obj,fieldOffset))
+reg64: FETCH64 FIELDREF64VOL reg32 reg32 : 90 :
+    SET_AVOID_C_CALL($$); : SET_TARGET2($$, ARG1, ARG2); : : {
+	CVMRMResource *fieldOffset;
+
+	/* Note: we need to do the NULL check for this object reference because
+	   the CCM helper can't do it: */
+	fieldOffset = popResource(con); /* Leave the objRes on the stack. */
+	doNullCheck(con, NULL, ARG1, ARG2);
+	pushResource(con, fieldOffset); /* Put back the fieldOffset. */
+
+	/* Now do the get field: */
+        CVMJITprintCodegenComment(("Do volatile getfield:"));
+        CVMJITaddCodegenComment((con, "call CVMCCMruntimeGetfield64Volatile"));
+        CVMJITsetSymbolName((con, "CVMCCMruntimeGetfield64Volatile"));
+        CVMJITstatsRecordInc(con, CVMJIT_STATS_CVMCCMruntimeGetfield64Volatile);
+        binaryHelper(con, (void*)CVMCCMruntimeGetfield64Volatile, $$,
+		     CVM_FALSE, 2, 2);
+    };
+
 %{
 
 #if (CVM_GCCHOICE == CVM_GC_GENERATIONAL)
@@ -4399,6 +4453,58 @@ root: ASSIGN FIELDREF64 reg32 memSpec reg64 : 10 :
         CVMJITaddCodegenComment((con,
             "putfield(obj, fieldOffset, value{L|D});"));
         setField(con, CVMRM_INT_REGS(con), CVMCPU_STR64_OPCODE);
+    };
+
+// Purpose: ASSIGN(FIELDREF64VOL(obj,fieldOffset), value64)
+root: ASSIGN FIELDREF64VOL reg32 reg32 reg64 : 90 :
+    SET_AVOID_C_CALL($$); : PUTFIELD_INHERITANCE(con, $$);
+    SET_TARGET3_WO_INHERITANCE($$, ARG3, ARG4, ARG1); : : {
+
+	CVMRMResource* value = popResource(con);
+	CVMRMResource* fieldOffset = popResource(con);
+	CVMRMResource* obj; /* Leave the obj on the stack for the null check. */
+
+	/* Note: we need to do the NULL check for this object reference because
+	   the CCM helper can't do it: */
+	doNullCheck(con, NULL, ARG3, ARG1|ARG2|ARG4);
+
+	/* Now do the put field: */
+	obj = popResource(con); /* OK, to pop the obj now. */
+
+	value = CVMRMpinResourceSpecific(CVMRM_INT_REGS(con),
+					 value, CVMCPU_ARG1_REG);
+	obj = CVMRMpinResourceSpecific(CVMRM_INT_REGS(con),
+				       obj, CVMCPU_ARG3_REG);
+	fieldOffset = CVMRMpinResourceSpecific(CVMRM_INT_REGS(con),
+					       fieldOffset, CVMCPU_ARG4_REG);
+
+	/* Spill the outgoing registers if necessary: */
+	CVMRMminorSpill(con, ARG1|ARG2|ARG3|ARG4);
+
+#ifdef CVMCPU_HAS_64BIT_REGISTERS
+	/* Shuffle the 64-bit arg first: */
+	CVMCPUemitMoveTo64BitRegister(con, CVMCPU_ARG1_REG, CVMCPU_ARG1_REG);
+	/* Shuffle the remaining 32-bit args: */
+	CVMCPUemitMoveRegister(con, CVMCPU_MOV_OPCODE,
+			       CVMCPU_ARG2_REG, CVMCPU_ARG3_REG,
+			       CVMJIT_NOSETCC);
+	CVMCPUemitMoveRegister(con, CVMCPU_MOV_OPCODE,
+			       CVMCPU_ARG3_REG, CVMCPU_ARG4_REG,
+			       CVMJIT_NOSETCC);
+#endif
+
+        CVMJITprintCodegenComment(("Do volatile putfield:"));
+        CVMJITaddCodegenComment((con, "call CVMCCMruntimePutfield64Volatile"));
+        CVMJITsetSymbolName((con, "CVMCCMruntimePutfield64Volatile"));
+        CVMJITstatsRecordInc(con, CVMJIT_STATS_CVMCCMruntimePutfield64Volatile);
+
+	CVMCPUemitAbsoluteCall(con, (void*)CVMCCMruntimePutfield64Volatile,
+			       CVMJIT_CPDUMPOK, CVMJIT_CPBRANCHOK);
+	
+	/* Release resources and publish the result: */
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), value);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), obj);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), fieldOffset);
     };
 
 %{
@@ -5353,8 +5459,13 @@ reg32: METHOD_BLOCK : 10 : : : : {
 	pushResource(con, dest);
     };
 
-// Purpose: Return object after null-checking
-reg32: NULLCHECK reg32 : 20 : : : : {
+%{
+
+/* Purpose: Emits code to do a NULL check of an object reference. */
+static void doNullCheck(CVMJITCompilationContext *con,
+			CVMJITIRNodePtr thisNode,
+			CVMRMregset target, CVMRMregset avoid)
+{
 #ifdef CVMJIT_TRAP_BASED_NULL_CHECKS
     /* 
      * The NULL check is performed by doing a fake read using the pointer.
@@ -5365,14 +5476,18 @@ reg32: NULLCHECK reg32 : 20 : : : : {
 
 	CVMRMsynchronizeJavaLocals(con);
 
-	/* We are going to load into this register */
-	scratch = CVMRMgetResource(CVMRM_INT_REGS(con),
-				   CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
-	
 	/* Get the resource for the object to be NULL-checked */
 	objRes = popResource(con);
-	CVMRMpinResource(CVMRM_INT_REGS(con), objRes, GET_REGISTER_GOALS);
+	CVMRMpinResource(CVMRM_INT_REGS(con), objRes, target, avoid);
 
+	/* We are going to load into this register.
+	   NOTE: We allocate the scratch after pinning the objRes because we
+	         don't want to make sure that the objRes gets targetted to the
+		 desired register first.
+	*/
+	scratch = CVMRMgetResource(CVMRM_INT_REGS(con),
+				   CVMRM_ANY_SET, avoid, 1);
+	
 	CVMJITaddCodegenComment((con,
 				 trapCheckComments[CVMJITIR_NULL_POINTER]));
 	
@@ -5383,18 +5498,21 @@ reg32: NULLCHECK reg32 : 20 : : : : {
             0);
 
 	/* We are done with the NULL check side effect. Pass the object on */
-	CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), objRes, $$);
+	if (thisNode != NULL) {
+	    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), objRes, thisNode);
+	} else {
+	    CVMRMunpinResource(CVMRM_INT_REGS(con), objRes);
+	}
 	CVMRMrelinquishResource(CVMRM_INT_REGS(con), scratch);
 	pushResource(con, objRes);
 #else
 	CVMRMResource* objRes;
 
 	CVMRMsynchronizeJavaLocals(con);
-	CVMJITaddCodegenComment((con, "NULL check"));
 
 	/* Get the resource for the object to be NULL-checked */
 	objRes = popResource(con);
-	CVMRMpinResource(CVMRM_INT_REGS(con), objRes, GET_REGISTER_GOALS);
+	CVMRMpinResource(CVMRM_INT_REGS(con), objRes, target, avoid);
 
 	/* Compare to NULL */
         CVMCPUemitCompareConstant(con, CVMCPU_CMP_OPCODE, CVMCPU_COND_EQ,
@@ -5407,10 +5525,20 @@ reg32: NULLCHECK reg32 : 20 : : : : {
 	CVMJITcsBeginBlock(con);
 
 	/* We are done with the NULL check side effect. Pass the object on */
-	CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), objRes, $$);
-	CVMRMunpinResource(CVMRM_INT_REGS(con), objRes);
+	if (thisNode != NULL) {
+	    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), objRes, thisNode);
+	} else {
+	    CVMRMunpinResource(CVMRM_INT_REGS(con), objRes);
+	}
 	pushResource(con, objRes);
 #endif
+}
+
+%}
+
+// Purpose: Return object after null-checking
+reg32: NULLCHECK reg32 : 20 : : : : {
+        doNullCheck(con, $$, GET_REGISTER_GOALS);
     };
     
 // Purpose: mb = FETCH_MB_FROM_VTABLE(GET_VTBL(object), methodOffset)

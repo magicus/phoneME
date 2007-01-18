@@ -189,7 +189,6 @@ hashtab dictionary;
 	return WORD;
 	}
 
-
 <Cstmt>.|\n	{
 	yylval.charp = scan_cstmt( yytext[0], ';' );
 	if (DEBUG(SCAN))
@@ -242,6 +241,29 @@ hashtab dictionary;
 		fputc( c, output_file );
 		col += 1;
 	}
+	}
+
+<Normal>. {
+	if (DEBUG(SCAN))
+	    printf("<NL(illegal characters)>\n");
+
+	fprintf(stderr, "Illegal characters at #line %d \"%s\":\n   \"%c",
+		curlineno, input_name, yytext[0]);
+	fflush(stderr);
+	/* Consume the whole line of text after this: */
+	for(;;) {
+	    int c = input();
+	    if (c == '\n') {
+		break;
+	    }
+	    fputc(c, stderr);
+	}
+	fprintf(stderr, "\"\n");
+	fflush(stderr);
+
+	/* Note: to abort instead of continuing with the parsing, call
+	   cleanup(1).  For now, we want to allow JCS to continue parsing. */
+	return NL; /* illegal characters */
 	}
 
 %%

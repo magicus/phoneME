@@ -102,7 +102,6 @@ CVMJITgetMassagedIROpcode(CVMJITCompilationContext *con, CVMJITIRNode* ip)
 #endif
     case CVMJIT_FETCH:
     case CVMJIT_INTRINSIC:
-    case CVMJIT_STATIC_FIELD_REF:
     case CVMJIT_RETURN_VALUE:
     doFoldingIntoInt:
 	/* cases where we fold all 32-bit operations into the int type */
@@ -154,10 +153,29 @@ CVMJITgetMassagedIROpcode(CVMJITCompilationContext *con, CVMJITIRNode* ip)
         }
         return fulltag;
 
+    case CVMJIT_STATIC_FIELD_REF:
+	/* We fold volatile 64-bit field refs into special nodes in order to ensure
+	   the atomicity of 64-bit accesses: */
+	if (typetag == CVM_TYPEID_LONG || typetag == CVM_TYPEID_DOUBLE) {
+	    if (CVMJITirnodeUnaryNodeIs(ip, VOLATILE_FIELD)) {
+		fulltag = fulltag & ~CVMJIT_TYPE_MASK;
+		return fulltag | CVMJITCG_TYPEID_64BITS_VOLATILE;
+	    }	    
+        }
+        goto doFoldingIntoInt;
+
     case CVMJIT_FIELD_REF:
+	/* We fold volatile 64-bit field refs into special nodes in order to ensure
+	   the atomicity of 64-bit accesses: */
+	if (typetag == CVM_TYPEID_LONG || typetag == CVM_TYPEID_DOUBLE) {
+	    if (CVMJITirnodeBinaryNodeIs(ip, VOLATILE_FIELD)) {
+		fulltag = fulltag & ~CVMJIT_TYPE_MASK;
+		return fulltag | CVMJITCG_TYPEID_64BITS_VOLATILE;
+	    }	    
+        }
         /* We do not fold object ref fields because they need special treatment
            e.g. memory write barriers: */
-        if (typetag != CVM_TYPEID_OBJ) {
+	if (typetag != CVM_TYPEID_OBJ) {
             goto doFoldingIntoInt;
         }
         return fulltag;
