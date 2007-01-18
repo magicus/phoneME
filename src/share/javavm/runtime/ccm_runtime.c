@@ -38,6 +38,7 @@
 #include "javavm/include/interpreter.h"
 #include "javavm/include/limits.h"
 #include "javavm/include/stacks.h"
+#include "javavm/include/sync.h"
 #include "javavm/include/utils.h"
 
 #include "javavm/include/ccm_runtime.h"
@@ -1701,6 +1702,79 @@ CVMCCMruntimeResolveStaticMethodBlockAndClinit(CVMCCExecEnv *ccee,
        over to the VM's compiled code manager. */
     cb = CVMmbClassBlock(mb);
     return CVMCCMruntimeRunClassInitializer(ccee, ee, cb);
+}
+#endif
+
+#ifndef CVMCCM_HAVE_PLATFORM_SPECIFIC_PUTSTATIC_64_VOLATILE
+/* Purpose: Performs an atomic 64-bit putstatic. */
+/* Type: STATE_NOT_FLUSHED THROWS_NONE */
+void CVMCCMruntimePutstatic64Volatile(CVMJavaLong value, void *staticField)
+{
+    CVMExecEnv *ee = CVMgetEE();
+
+    CVMCCMstatsInc(ee, CVMCCM_STATS_CVMCCMruntimePutstatic64Volatile);
+    CVMassert(staticField != NULL);
+
+    CVM_ACCESS_VOLATILE_LOCK(ee);
+    CVMmemCopy64(staticField, (void *)&value);
+    CVM_ACCESS_VOLATILE_UNLOCK(ee);
+}
+#endif
+
+#ifndef CVMCCM_HAVE_PLATFORM_SPECIFIC_GETSTATIC_64_VOLATILE
+/* Purpose: Performs an atomic 64-bit getstatic. */
+/* Type: STATE_NOT_FLUSHED THROWS_NONE */
+CVMJavaLong CVMCCMruntimeGetstatic64Volatile(void *staticField)
+{
+    CVMExecEnv *ee = CVMgetEE();
+    CVMJavaLong result;
+
+    CVMCCMstatsInc(ee, CVMCCM_STATS_CVMCCMruntimeGetstatic64Volatile);
+    CVMassert(staticField != NULL);
+
+    CVM_ACCESS_VOLATILE_LOCK(ee);
+    CVMmemCopy64((void *)&result, staticField);
+    CVM_ACCESS_VOLATILE_UNLOCK(ee);
+    return result;
+}
+#endif
+
+#ifndef CVMCCM_HAVE_PLATFORM_SPECIFIC_PUTFIELD_64_VOLATILE
+/* Purpose: Performs an atomic 64-bit putfield. */
+/* Type: STATE_NOT_FLUSHED THROWS_NONE */
+void CVMCCMruntimePutfield64Volatile(CVMJavaLong value,
+				     CVMObject *obj,
+				     CVMJavaInt fieldByteOffset)
+{
+    CVMExecEnv *ee = CVMgetEE();
+    void *instanceField = ((CVMUint8*)obj) + fieldByteOffset;
+
+    CVMCCMstatsInc(ee, CVMCCM_STATS_CVMCCMruntimePutfield64Volatile);
+    CVMassert(obj != NULL);
+
+    CVM_ACCESS_VOLATILE_LOCK(ee);
+    CVMmemCopy64(instanceField, (void *)&value);
+    CVM_ACCESS_VOLATILE_UNLOCK(ee);
+}
+#endif
+
+#ifndef CVMCCM_HAVE_PLATFORM_SPECIFIC_GETFIELD_64_VOLATILE
+/* Purpose: Performs an atomic 64-bit getfield. */
+/* Type: STATE_NOT_FLUSHED THROWS_NONE */
+CVMJavaLong CVMCCMruntimeGetfield64Volatile(CVMObject *obj,
+					    CVMJavaInt fieldByteOffset)
+{
+    CVMExecEnv *ee = CVMgetEE();
+    void *instanceField = ((CVMUint8*)obj) + fieldByteOffset;
+    CVMJavaLong result;
+
+    CVMCCMstatsInc(ee, CVMCCM_STATS_CVMCCMruntimeGetfield64Volatile);
+    CVMassert(obj != NULL);
+
+    CVM_ACCESS_VOLATILE_LOCK(ee);
+    CVMmemCopy64((void *)&result, instanceField);
+    CVM_ACCESS_VOLATILE_UNLOCK(ee);
+    return result;
 }
 #endif
 

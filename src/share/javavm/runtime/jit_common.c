@@ -1355,6 +1355,7 @@ const CVMSubOptionEnumData jitTraceOptions[] = {
     { "default",        CVMJIT_DEFAULT_TRACE_OPTIONS },
     { "all",            0xffffffff },
     { "status",         CVM_DEBUGFLAG(TRACE_JITSTATUS) },
+    { "error",          CVM_DEBUGFLAG(TRACE_JITERROR) },
     { "bctoir",         CVM_DEBUGFLAG(TRACE_JITBCTOIR) },
     { "codegen",        CVM_DEBUGFLAG(TRACE_JITCODEGEN) },
     { "stats",          CVM_DEBUGFLAG(TRACE_JITSTATS) },

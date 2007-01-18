@@ -30,6 +30,13 @@
     to operate on some bytecodes which require runtime class initializations,
     and exercises lazy resolution.  This module will test each of those cases
     to see if the desired behavior is executed.
+
+    To run, use:
+    cvm -Xjit:compile=none -cp testclasses.zip DoResolveAndClinit
+
+    NOTE: compile=none is important because this testsuite needs to control
+    which and when methods get compiled.  It also uses the CompilerTest class
+    in testclasses.zip to do the controlled JIT compilation.
 */
 /*
     Cases to test:
@@ -54,7 +61,32 @@ public class DoResolveAndClinit
     static int totalTests = 0;
     static int totalFailures = 0;
 
+    static String usageStr[] = {
+	"=========================================================================",
+	"TestSuite: DoResolveAndClinit",
+	"",
+	"To run, use:",
+	"cvm -Xjit:compile=none -cp testclasses.zip DoResolveAndClinit",
+	"",
+	"NOTE: compile=none is important because this testsuite needs to control",
+	"which and when methods get compiled.  It also uses the CompilerTest class",
+	"in testclasses.zip to do the controlled JIT compilation.",
+	"",
+	"If run successfully, there should be 0 failures reported at the end of",
+	"the run.",
+	"=========================================================================",
+	"",
+    };
+
+    static void printUsage() {
+	for (int i = 0; i < usageStr.length; i++) {
+	    System.out.println(usageStr[i]);
+	}
+    }
+
     public static void main(String[] args) {
+
+	printUsage();
 
         totalTests = 0;
         totalFailures = 0;
@@ -104,6 +136,113 @@ public class DoResolveAndClinit
         }
     }
 
+    public static void reportPassIf(String testName, boolean actual, boolean expected) {
+	boolean success = (actual == expected);
+        System.out.println((success ? "PASSED" : "FAILED") + " Test " +
+                           testName);
+        totalTests++;
+        if (!success) {
+	    System.out.println("  expecting = " + expected +
+			       ", actual = " + actual);
+            totalFailures++;
+        }
+    }
+
+    public static void reportPassIf(String testName, byte actual, byte expected) {
+	boolean success = (actual == expected);
+        System.out.println((success ? "PASSED" : "FAILED") + " Test " +
+                           testName);
+        totalTests++;
+        if (!success) {
+	    System.out.println("  expecting = " + expected +
+			       ", actual = " + actual);
+            totalFailures++;
+        }
+    }
+
+    public static void reportPassIf(String testName, char actual, char expected) {
+	boolean success = (actual == expected);
+        System.out.println((success ? "PASSED" : "FAILED") + " Test " +
+                           testName);
+        totalTests++;
+        if (!success) {
+	    System.out.println("  expecting = " + expected +
+			       ", actual = " + actual);
+            totalFailures++;
+        }
+    }
+
+    public static void reportPassIf(String testName, short actual, short expected) {
+	boolean success = (actual == expected);
+        System.out.println((success ? "PASSED" : "FAILED") + " Test " +
+                           testName);
+        totalTests++;
+        if (!success) {
+	    System.out.println("  expecting = " + expected +
+			       ", actual = " + actual);
+            totalFailures++;
+        }
+    }
+
+    public static void reportPassIf(String testName, int actual, int expected) {
+	boolean success = (actual == expected);
+        System.out.println((success ? "PASSED" : "FAILED") + " Test " +
+                           testName);
+        totalTests++;
+        if (!success) {
+	    System.out.println("  expecting = " + expected +
+			       ", actual = " + actual);
+            totalFailures++;
+        }
+    }
+
+    public static void reportPassIf(String testName, float actual, float expected) {
+	boolean success = (actual == expected);
+        System.out.println((success ? "PASSED" : "FAILED") + " Test " +
+                           testName);
+        totalTests++;
+        if (!success) {
+	    System.out.println("  expecting = " + expected +
+			       ", actual = " + actual);
+            totalFailures++;
+        }
+    }
+
+    public static void reportPassIf(String testName, long actual, long expected) {
+	boolean success = (actual == expected);
+        System.out.println((success ? "PASSED" : "FAILED") + " Test " +
+                           testName);
+        totalTests++;
+        if (!success) {
+	    System.out.println("  expecting = " + expected +
+			       ", actual = " + actual);
+            totalFailures++;
+        }
+    }
+
+    public static void reportPassIf(String testName, double actual, double expected) {
+	boolean success = (actual == expected);
+        System.out.println((success ? "PASSED" : "FAILED") + " Test " +
+                           testName);
+        totalTests++;
+        if (!success) {
+	    System.out.println("  expecting = " + expected +
+			       ", actual = " + actual);
+            totalFailures++;
+        }
+    }
+
+    public static void reportPassIf(String testName, Object actual, Object expected) {
+	boolean success = (actual == expected);
+        System.out.println((success ? "PASSED" : "FAILED") + " Test " +
+                           testName);
+        totalTests++;
+        if (!success) {
+	    System.out.println("  expecting = " + expected +
+			       ", actual = " + actual);
+            totalFailures++;
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -344,84 +483,84 @@ class DoInstanceOf
         // 1. Resolved InstanceOf against a NULL object.
         success = doResolved(null);
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfResolved(NULL)", (success == false));
+	    "InstanceOfResolved(NULL)", success, false);
 
         // 2. Resolved InstanceOf against an invalid object.
         success = doResolved(o);
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfResolved(Invalid)", (success == false));
+	    "InstanceOfResolved(Invalid)", success, false);
 
         // 3. Resolved InstanceOf against a valid object.
         success = doResolved(new DoInstanceOfResolved());
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfResolved(Valid)", (success == true));
+            "InstanceOfResolved(Valid)", success, true);
 
         // 4. Resolved InstanceOf against a valid object w/ guess.
         //    Guess initialized in 3.
         success = doResolved(new DoInstanceOfResolved());
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfResolved(Valid + Guess)", (success == true));
+            "InstanceOfResolved(Valid + Guess)", success, true);
 
         // 5. Resolved InstanceOf against a valid sub-object w/o guess.
         //    Guess initialized in 3.
         success = doResolved(new DoInstanceOfResolved2());
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfResolved(ValidSubClass)", (success == true));
+            "InstanceOfResolved(ValidSubClass)", success, true);
 
         // 6. Resolved InstanceOf against a valid sub-object w/ guess.
         //    Guess initialized in 5.
         success = doResolved(new DoInstanceOfResolved2());
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfResolved(ValidSubClass + Guess)", (success == true));
+            "InstanceOfResolved(ValidSubClass + Guess)", success, true);
 
         // 7. Unresolved InstanceOf against a NULL object.
         //    Not yet resolved ... 1st use.
         success = doUnresolvedNull(null);
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfUnresolvedNull(NULL, unresolved)", (success == false));
+            "InstanceOfUnresolvedNull(NULL, unresolved)", success, false);
 
         // 8. Unresolved InstanceOf against an invalid object.
         //    Not yet resolved.
         success = doUnresolved(o);
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfUnresolved(Invalid, unresolved)", (success == false));
+            "InstanceOfUnresolved(Invalid, unresolved)", success, false);
 
         // 9. Unresolved InstanceOf against a NULL object.
         //    Resolved by step 8.
         success = doUnresolved(null);
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfUnresolved(NULL, resolved)", (success == false));
+            "InstanceOfUnresolved(NULL, resolved)", success, false) ;
 
         // 10. Unresolved InstanceOf against an invalid object.
         //     Resolved by step 8.
         success = doUnresolved(o);
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfUnresolved(Invalid, resolved)", (success == false));
+            "InstanceOfUnresolved(Invalid, resolved)", success, false);
 
         // 11. Unresolved InstanceOf against a valid object.
         //     Resolved by step 8.  Sets Guess.
         success = doUnresolved(new DoInstanceOfUnresolved());
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfUnresolved(Valid, resolved)", (success == true));
+            "InstanceOfUnresolved(Valid, resolved)", success, true);
 
         // 12. Unresolved InstanceOf against a valid object by guess.
         //     Resolved by step 8.  Guess set in step 11.
         success = doUnresolved(new DoInstanceOfUnresolved());
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfUnresolved(Valid + Guess, resolved)", (success == true));
+            "InstanceOfUnresolved(Valid + Guess, resolved)", success, true);
 
         // 13. Unresolved InstanceOf against a valid sub-class.
         //     Resolved by step 8.  Guess set in step 11.
         success = doUnresolved(new DoInstanceOfUnresolved2());
         DoResolveAndClinit.reportPassIf(
-            "InstanceOfUnresolved(ValidSubClass, resolved)", (success == true));
+            "InstanceOfUnresolved(ValidSubClass, resolved)", success, true);
 
         // 14. Unresolved InstanceOf against a valid sub-class.
         //     Resolved by step 8.  Guess set in step 13.
         success = doUnresolved(new DoInstanceOfUnresolved2());
         DoResolveAndClinit.reportPassIf(
             "InstanceOfUnresolved(ValidSubClass + Guess, resolved)",
-            (success == true));
+            success, true);
     }
 
     static boolean doResolved(Object o) {
@@ -1563,9 +1702,199 @@ class DoPutStaticUnresolvedObject {
     }
 }
 
+/* Volatile Boolean: */
+class DoPutStaticResolvedClinitedBooleanVolatile {
+    public static volatile boolean staticField = false;
+    static {
+        System.out.println("\tDoPutStaticResolvedClinitedBooleanVolatile.<clinit>()");
+    }
+}
+
+class DoPutStaticResolvedBooleanVolatile {
+    public static volatile boolean staticField = false;
+    static {
+        System.out.println("\tDoPutStaticResolvedBooleanVolatile.<clinit>()");
+    }
+}
+class DoPutStaticUnresolvedBooleanVolatile {
+    public static volatile boolean staticField = false;
+    static {
+        System.out.println("\tDoPutStaticUnresolvedBooleanVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Byte: */
+class DoPutStaticResolvedClinitedByteVolatile {
+    public static volatile byte staticField = 0;
+    static {
+        System.out.println("\tDoPutStaticResolvedClinitedByteVolatile.<clinit>()");
+    }
+}
+
+class DoPutStaticResolvedByteVolatile {
+    public static volatile byte staticField = 0;
+    static {
+        System.out.println("\tDoPutStaticResolvedByteVolatile.<clinit>()");
+    }
+}
+class DoPutStaticUnresolvedByteVolatile {
+    public static volatile byte staticField = 0;
+    static {
+        System.out.println("\tDoPutStaticUnresolvedByteVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Char: */
+class DoPutStaticResolvedClinitedCharVolatile {
+    public static volatile char staticField = '\0';
+    static {
+        System.out.println("\tDoPutStaticResolvedClinitedCharVolatile.<clinit>()");
+    }
+}
+
+class DoPutStaticResolvedCharVolatile {
+    public static volatile char staticField = '\0';
+    static {
+        System.out.println("\tDoPutStaticResolvedCharVolatile.<clinit>()");
+    }
+}
+class DoPutStaticUnresolvedCharVolatile {
+    public static volatile char staticField = '\0';
+    static {
+        System.out.println("\tDoPutStaticUnresolvedCharVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Short: */
+class DoPutStaticResolvedClinitedShortVolatile {
+    public static volatile short staticField = 0;
+    static {
+        System.out.println("\tDoPutStaticResolvedClinitedShortVolatile.<clinit>()");
+    }
+}
+
+class DoPutStaticResolvedShortVolatile {
+    public static volatile short staticField = 0;
+    static {
+        System.out.println("\tDoPutStaticResolvedShortVolatile.<clinit>()");
+    }
+}
+class DoPutStaticUnresolvedShortVolatile {
+    public static volatile short staticField = 0;
+    static {
+        System.out.println("\tDoPutStaticUnresolvedShortVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Int: */
+class DoPutStaticResolvedClinitedIntVolatile {
+    public static volatile int staticField = 0;
+    static {
+        System.out.println("\tDoPutStaticResolvedClinitedIntVolatile.<clinit>()");
+    }
+}
+
+class DoPutStaticResolvedIntVolatile {
+    public static volatile int staticField = 0;
+    static {
+        System.out.println("\tDoPutStaticResolvedIntVolatile.<clinit>()");
+    }
+}
+class DoPutStaticUnresolvedIntVolatile {
+    public static volatile int staticField = 0;
+    static {
+        System.out.println("\tDoPutStaticUnresolvedIntVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Float: */
+class DoPutStaticResolvedClinitedFloatVolatile {
+    public static volatile float staticField = 0.0f;
+    static {
+        System.out.println("\tDoPutStaticResolvedClinitedFloatVolatile.<clinit>()");
+    }
+}
+
+class DoPutStaticResolvedFloatVolatile {
+    public static volatile float staticField = 0.0f;
+    static {
+        System.out.println("\tDoPutStaticResolvedFloatVolatile.<clinit>()");
+    }
+}
+class DoPutStaticUnresolvedFloatVolatile {
+    public static volatile float staticField = 0.0f;
+    static {
+        System.out.println("\tDoPutStaticUnresolvedFloatVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Long: */
+class DoPutStaticResolvedClinitedLongVolatile {
+    public static volatile long staticField = 0l;
+    static {
+        System.out.println("\tDoPutStaticResolvedClinitedLongVolatile.<clinit>()");
+    }
+}
+
+class DoPutStaticResolvedLongVolatile {
+    public static volatile long staticField = 0l;
+    static {
+        System.out.println("\tDoPutStaticResolvedLongVolatile.<clinit>()");
+    }
+}
+class DoPutStaticUnresolvedLongVolatile {
+    public static volatile long staticField = 0l;
+    static {
+        System.out.println("\tDoPutStaticUnresolvedLongVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Double: */
+class DoPutStaticResolvedClinitedDoubleVolatile {
+    public static volatile double staticField = 0.0d;
+    static {
+        System.out.println("\tDoPutStaticResolvedClinitedDoubleVolatile.<clinit>()");
+    }
+}
+
+class DoPutStaticResolvedDoubleVolatile {
+    public static volatile double staticField = 0.0d;
+    static {
+        System.out.println("\tDoPutStaticResolvedDoubleVolatile.<clinit>()");
+    }
+}
+class DoPutStaticUnresolvedDoubleVolatile {
+    public static volatile double staticField = 0.0d;
+    static {
+        System.out.println("\tDoPutStaticUnresolvedDoubleVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Object: */
+class DoPutStaticResolvedClinitedObjectVolatile {
+    public static volatile Object staticField = null;
+    static {
+        System.out.println("\tDoPutStaticResolvedClinitedObjectVolatile.<clinit>()");
+    }
+}
+
+class DoPutStaticResolvedObjectVolatile {
+    public static volatile Object staticField = null;
+    static {
+        System.out.println("\tDoPutStaticResolvedObjectVolatile.<clinit>()");
+    }
+}
+class DoPutStaticUnresolvedObjectVolatile {
+    public static volatile Object staticField = null;
+    static {
+        System.out.println("\tDoPutStaticUnresolvedObjectVolatile.<clinit>()");
+    }
+}
+
 class DoPutStatic
 {
     static final String[] compileItems = {
+	// Non-Volatile Set:
         "DoPutStatic.doResolvedClinitedBoolean(Z)V",
         "DoPutStatic.doResolvedBoolean(Z)V",
         "DoPutStatic.doUnresolvedBoolean(Z)V",
@@ -1601,11 +1930,50 @@ class DoPutStatic
         "DoPutStatic.doResolvedClinitedObject(Ljava/lang/Object;)V",
         "DoPutStatic.doResolvedObject(Ljava/lang/Object;)V",
         "DoPutStatic.doUnresolvedObject(Ljava/lang/Object;)V",
+
+	// Volatile Set:
+        "DoPutStatic.doResolvedClinitedBooleanVolatile(Z)V",
+        "DoPutStatic.doResolvedBooleanVolatile(Z)V",
+        "DoPutStatic.doUnresolvedBooleanVolatile(Z)V",
+
+        "DoPutStatic.doResolvedClinitedByteVolatile(B)V",
+        "DoPutStatic.doResolvedByteVolatile(B)V",
+        "DoPutStatic.doUnresolvedByteVolatile(B)V",
+
+        "DoPutStatic.doResolvedClinitedCharVolatile(C)V",
+        "DoPutStatic.doResolvedCharVolatile(C)V",
+        "DoPutStatic.doUnresolvedCharVolatile(C)V",
+
+        "DoPutStatic.doResolvedClinitedShortVolatile(S)V",
+        "DoPutStatic.doResolvedShortVolatile(S)V",
+        "DoPutStatic.doUnresolvedShortVolatile(S)V",
+
+        "DoPutStatic.doResolvedClinitedIntVolatile(I)V",
+        "DoPutStatic.doResolvedIntVolatile(I)V",
+        "DoPutStatic.doUnresolvedIntVolatile(I)V",
+
+        "DoPutStatic.doResolvedClinitedFloatVolatile(F)V",
+        "DoPutStatic.doResolvedFloatVolatile(F)V",
+        "DoPutStatic.doUnresolvedFloatVolatile(F)V",
+
+        "DoPutStatic.doResolvedClinitedLongVolatile(J)V",
+        "DoPutStatic.doResolvedLongVolatile(J)V",
+        "DoPutStatic.doUnresolvedLongVolatile(J)V",
+
+        "DoPutStatic.doResolvedClinitedDoubleVolatile(D)V",
+        "DoPutStatic.doResolvedDoubleVolatile(D)V",
+        "DoPutStatic.doUnresolvedDoubleVolatile(D)V",
+
+        "DoPutStatic.doResolvedClinitedObjectVolatile(Ljava/lang/Object;)V",
+        "DoPutStatic.doResolvedObjectVolatile(Ljava/lang/Object;)V",
+        "DoPutStatic.doUnresolvedObjectVolatile(Ljava/lang/Object;)V",
     };
 
     public static void doSetup() {
         // Setup initial conditions:
         Object o = new Object();
+
+	// Non-Volatile Set:
         {
             // Resolve and clinit it:
             boolean i = DoPutStaticResolvedClinitedBoolean.staticField;
@@ -1660,32 +2028,91 @@ class DoPutStatic
             // Resolve but don't clinit it:
             boolean b = o instanceof DoPutStaticResolvedObject;
         }
+
+	// Volatile Set:
+        {
+            // Resolve and clinit it:
+            boolean i = DoPutStaticResolvedClinitedBooleanVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoPutStaticResolvedBooleanVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            byte i = DoPutStaticResolvedClinitedByteVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoPutStaticResolvedByteVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            char i = DoPutStaticResolvedClinitedCharVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoPutStaticResolvedCharVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            short i = DoPutStaticResolvedClinitedShortVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoPutStaticResolvedShortVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            int i = DoPutStaticResolvedClinitedIntVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoPutStaticResolvedIntVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            float i = DoPutStaticResolvedClinitedFloatVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoPutStaticResolvedFloatVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            long i = DoPutStaticResolvedClinitedLongVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoPutStaticResolvedLongVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            double i = DoPutStaticResolvedClinitedDoubleVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoPutStaticResolvedDoubleVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            Object o1 = DoPutStaticResolvedClinitedObjectVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoPutStaticResolvedObjectVolatile;
+        }
+
         // Do compilation:
         CompilerTest.main(compileItems);
     }
 
     public static void doTest() {
 
+	// Non-Volatile Set:
+
         // 1. Resolved & Clinited putstatic:
         {
             doResolvedClinitedBoolean(true);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolvedClinited(boolean)",
-                DoPutStaticResolvedClinitedBoolean.staticField == true);
+                DoPutStaticResolvedClinitedBoolean.staticField, true);
         }
         // 2. Resolved putstatic:
         {
             doResolvedBoolean(true);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolved(boolean)",
-                DoPutStaticResolvedBoolean.staticField == true);
+                DoPutStaticResolvedBoolean.staticField, true);
         }
         // 3. Unresolved putstatic:
         {
             doUnresolvedBoolean(true);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticUnresolved(boolean)",
-                DoPutStaticUnresolvedBoolean.staticField == true);
+                DoPutStaticUnresolvedBoolean.staticField, true);
         }
 
         // 1. Resolved & Clinited putstatic:
@@ -1693,21 +2120,21 @@ class DoPutStatic
             doResolvedClinitedByte((byte)5);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolvedClinited(byte)",
-                DoPutStaticResolvedClinitedByte.staticField == (byte)5);
+                DoPutStaticResolvedClinitedByte.staticField, (byte)5);
         }
         // 2. Resolved putstatic:
         {
             doResolvedByte((byte)50);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolved(byte)",
-                DoPutStaticResolvedByte.staticField == (byte)50);
+                DoPutStaticResolvedByte.staticField, (byte)50);
         }
         // 3. Unresolved putstatic:
         {
             doUnresolvedByte((byte)53);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticUnresolved(byte)",
-                DoPutStaticUnresolvedByte.staticField == (byte)53);
+                DoPutStaticUnresolvedByte.staticField, (byte)53);
         }
 
         // 1. Resolved & Clinited putstatic:
@@ -1715,21 +2142,21 @@ class DoPutStatic
             doResolvedClinitedChar('A');
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolvedClinited(char)",
-                DoPutStaticResolvedClinitedChar.staticField == 'A');
+                DoPutStaticResolvedClinitedChar.staticField, 'A');
         }
         // 2. Resolved putstatic:
         {
             doResolvedChar('B');
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolved(char)",
-                DoPutStaticResolvedChar.staticField == 'B');
+                DoPutStaticResolvedChar.staticField, 'B');
         }
         // 3. Unresolved putstatic:
         {
             doUnresolvedChar('C');
             DoResolveAndClinit.reportPassIf(
                 "PutStaticUnresolved(char)",
-                DoPutStaticUnresolvedChar.staticField == 'C');
+                DoPutStaticUnresolvedChar.staticField, 'C');
         }
 
         // 1. Resolved & Clinited putstatic:
@@ -1737,21 +2164,21 @@ class DoPutStatic
             doResolvedClinitedShort((short)6);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolvedClinited(short)",
-                DoPutStaticResolvedClinitedShort.staticField == (short)6);
+                DoPutStaticResolvedClinitedShort.staticField, (short)6);
         }
         // 2. Resolved putstatic:
         {
             doResolvedShort((short)60);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolved(short)",
-                DoPutStaticResolvedShort.staticField == (short)60);
+                DoPutStaticResolvedShort.staticField, (short)60);
         }
         // 3. Unresolved putstatic:
         {
             doUnresolvedShort((short)600);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticUnresolved(short)",
-                DoPutStaticUnresolvedShort.staticField == (short)600);
+                DoPutStaticUnresolvedShort.staticField, (short)600);
         }
 
         // 1. Resolved & Clinited putstatic:
@@ -1759,21 +2186,21 @@ class DoPutStatic
             doResolvedClinitedInt(7);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolvedClinited(int)",
-                DoPutStaticResolvedClinitedInt.staticField == 7);
+                DoPutStaticResolvedClinitedInt.staticField, 7);
         }
         // 2. Resolved putstatic:
         {
             doResolvedInt(70);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolved(int)",
-                DoPutStaticResolvedInt.staticField == 70);
+                DoPutStaticResolvedInt.staticField, 70);
         }
         // 3. Unresolved putstatic:
         {
             doUnresolvedInt(700);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticUnresolved(int)",
-                DoPutStaticUnresolvedInt.staticField == 700);
+                DoPutStaticUnresolvedInt.staticField, 700);
         }
 
         // 1. Resolved & Clinited putstatic:
@@ -1781,21 +2208,21 @@ class DoPutStatic
             doResolvedClinitedFloat(8.0f);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolvedClinited(float)",
-                DoPutStaticResolvedClinitedFloat.staticField == 8.0f);
+                DoPutStaticResolvedClinitedFloat.staticField, 8.0f);
         }
         // 2. Resolved putstatic:
         {
             doResolvedFloat(80.0f);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolved(float)",
-                DoPutStaticResolvedFloat.staticField == 80.0f);
+                DoPutStaticResolvedFloat.staticField, 80.0f);
         }
         // 3. Unresolved putstatic:
         {
             doUnresolvedFloat(800.0f);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticUnresolved(float)",
-                DoPutStaticUnresolvedFloat.staticField == 800.0f);
+                DoPutStaticUnresolvedFloat.staticField, 800.0f);
         }
 
         // 1. Resolved & Clinited putstatic:
@@ -1803,21 +2230,21 @@ class DoPutStatic
             doResolvedClinitedLong(9l);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolvedClinited(long)",
-                DoPutStaticResolvedClinitedLong.staticField == 9l);
+                DoPutStaticResolvedClinitedLong.staticField, 9l);
         }
         // 2. Resolved putstatic:
         {
             doResolvedLong(90l);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolved(long)",
-                DoPutStaticResolvedLong.staticField == 90l);
+                DoPutStaticResolvedLong.staticField, 90l);
         }
         // 3. Unresolved putstatic:
         {
             doUnresolvedLong(900l);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticUnresolved(long)",
-                DoPutStaticUnresolvedLong.staticField == 900l);
+                DoPutStaticUnresolvedLong.staticField, 900l);
         }
 
         // 1. Resolved & Clinited putstatic:
@@ -1825,21 +2252,21 @@ class DoPutStatic
             doResolvedClinitedDouble(10.0d);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolvedClinited(double)",
-                DoPutStaticResolvedClinitedDouble.staticField == 10.0d);
+                DoPutStaticResolvedClinitedDouble.staticField, 10.0d);
         }
         // 2. Resolved putstatic:
         {
             doResolvedDouble(100.0d);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolved(double)",
-                DoPutStaticResolvedDouble.staticField == 100.0d);
+                DoPutStaticResolvedDouble.staticField, 100.0d);
         }
         // 3. Unresolved putstatic:
         {
             doUnresolvedDouble(1000.0d);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticUnresolved(double)",
-                DoPutStaticUnresolvedDouble.staticField == 1000.0d);
+                DoPutStaticUnresolvedDouble.staticField, 1000.0d);
         }
 
         // 1. Resolved & Clinited putstatic:
@@ -1848,7 +2275,7 @@ class DoPutStatic
             doResolvedClinitedObject(o1);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolvedClinited(object)",
-                DoPutStaticResolvedClinitedObject.staticField == o1);
+                DoPutStaticResolvedClinitedObject.staticField, o1);
         }
         // 2. Resolved putstatic:
         {
@@ -1856,7 +2283,7 @@ class DoPutStatic
             doResolvedObject(o2);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticResolved(object)",
-                DoPutStaticResolvedObject.staticField == o2);
+                DoPutStaticResolvedObject.staticField, o2);
         }
         // 3. Unresolved putstatic:
         {
@@ -1864,7 +2291,212 @@ class DoPutStatic
             doUnresolvedObject(o3);
             DoResolveAndClinit.reportPassIf(
                 "PutStaticUnresolved(object)",
-                DoPutStaticUnresolvedObject.staticField == o3);
+                DoPutStaticUnresolvedObject.staticField, o3);
+        }
+
+	//////////////////////////////////////////////////////////////////////
+	// Volatile field access:
+	//
+
+        // 1. Resolved & Clinited putstatic:
+        {
+            doResolvedClinitedBooleanVolatile(true);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedClinitedVolatile(boolean)",
+                DoPutStaticResolvedClinitedBooleanVolatile.staticField, true);
+        }
+        // 2. Resolved putstatic:
+        {
+            doResolvedBooleanVolatile(true);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedVolatile(boolean)",
+                DoPutStaticResolvedBooleanVolatile.staticField, true);
+        }
+        // 3. Unresolved putstatic:
+        {
+            doUnresolvedBooleanVolatile(true);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticUnresolvedVolatile(boolean)",
+                DoPutStaticUnresolvedBooleanVolatile.staticField, true);
+        }
+
+        // 1. Resolved & Clinited putstatic:
+        {
+            doResolvedClinitedByteVolatile((byte)5);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedClinitedVolatile(byte)",
+                DoPutStaticResolvedClinitedByteVolatile.staticField, (byte)5);
+        }
+        // 2. Resolved putstatic:
+        {
+            doResolvedByteVolatile((byte)50);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedVolatile(byte)",
+                DoPutStaticResolvedByteVolatile.staticField, (byte)50);
+        }
+        // 3. Unresolved putstatic:
+        {
+            doUnresolvedByteVolatile((byte)53);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticUnresolvedVolatile(byte)",
+                DoPutStaticUnresolvedByteVolatile.staticField, (byte)53);
+        }
+
+        // 1. Resolved & Clinited putstatic:
+        {
+            doResolvedClinitedCharVolatile('A');
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedClinitedVolatile(char)",
+                DoPutStaticResolvedClinitedCharVolatile.staticField, 'A');
+        }
+        // 2. Resolved putstatic:
+        {
+            doResolvedCharVolatile('B');
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedVolatile(char)",
+                DoPutStaticResolvedCharVolatile.staticField, 'B');
+        }
+        // 3. Unresolved putstatic:
+        {
+            doUnresolvedCharVolatile('C');
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticUnresolvedVolatile(char)",
+                DoPutStaticUnresolvedCharVolatile.staticField, 'C');
+        }
+
+        // 1. Resolved & Clinited putstatic:
+        {
+            doResolvedClinitedShortVolatile((short)6);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedClinitedVolatile(short)",
+                DoPutStaticResolvedClinitedShortVolatile.staticField, (short)6);
+        }
+        // 2. Resolved putstatic:
+        {
+            doResolvedShortVolatile((short)60);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedVolatile(short)",
+                DoPutStaticResolvedShortVolatile.staticField, (short)60);
+        }
+        // 3. Unresolved putstatic:
+        {
+            doUnresolvedShortVolatile((short)600);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticUnresolvedVolatile(short)",
+                DoPutStaticUnresolvedShortVolatile.staticField, (short)600);
+        }
+
+        // 1. Resolved & Clinited putstatic:
+        {
+            doResolvedClinitedIntVolatile(7);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedClinitedVolatile(int)",
+                DoPutStaticResolvedClinitedIntVolatile.staticField, 7);
+        }
+        // 2. Resolved putstatic:
+        {
+            doResolvedIntVolatile(70);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedVolatile(int)",
+                DoPutStaticResolvedIntVolatile.staticField, 70);
+        }
+        // 3. Unresolved putstatic:
+        {
+            doUnresolvedIntVolatile(700);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticUnresolvedVolatile(int)",
+                DoPutStaticUnresolvedIntVolatile.staticField, 700);
+        }
+
+        // 1. Resolved & Clinited putstatic:
+        {
+            doResolvedClinitedFloatVolatile(8.0f);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedClinitedVolatile(float)",
+                DoPutStaticResolvedClinitedFloatVolatile.staticField, 8.0f);
+        }
+        // 2. Resolved putstatic:
+        {
+            doResolvedFloatVolatile(80.0f);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedVolatile(float)",
+                DoPutStaticResolvedFloatVolatile.staticField, 80.0f);
+        }
+        // 3. Unresolved putstatic:
+        {
+            doUnresolvedFloatVolatile(800.0f);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticUnresolvedVolatile(float)",
+                DoPutStaticUnresolvedFloatVolatile.staticField, 800.0f);
+        }
+
+        // 1. Resolved & Clinited putstatic:
+        {
+            doResolvedClinitedLongVolatile(9l);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedClinitedVolatile(long)",
+                DoPutStaticResolvedClinitedLongVolatile.staticField, 9l);
+        }
+        // 2. Resolved putstatic:
+        {
+            doResolvedLongVolatile(90l);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedVolatile(long)",
+                DoPutStaticResolvedLongVolatile.staticField, 90l);
+        }
+        // 3. Unresolved putstatic:
+        {
+            doUnresolvedLongVolatile(900l);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticUnresolvedVolatile(long)",
+                DoPutStaticUnresolvedLongVolatile.staticField, 900l);
+        }
+
+        // 1. Resolved & Clinited putstatic:
+        {
+            doResolvedClinitedDoubleVolatile(10.0d);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedClinitedVolatile(double)",
+                DoPutStaticResolvedClinitedDoubleVolatile.staticField, 10.0d);
+        }
+        // 2. Resolved putstatic:
+        {
+            doResolvedDoubleVolatile(100.0d);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedVolatile(double)",
+                DoPutStaticResolvedDoubleVolatile.staticField, 100.0d);
+        }
+        // 3. Unresolved putstatic:
+        {
+            doUnresolvedDoubleVolatile(1000.0d);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticUnresolvedVolatile(double)",
+                DoPutStaticUnresolvedDoubleVolatile.staticField, 1000.0d);
+        }
+
+        // 1. Resolved & Clinited putstatic:
+        {
+            Object o1 = new Object();
+            doResolvedClinitedObjectVolatile(o1);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedClinitedVolatile(object)",
+                DoPutStaticResolvedClinitedObjectVolatile.staticField, o1);
+        }
+        // 2. Resolved putstatic:
+        {
+            Object o2 = new Object();
+            doResolvedObjectVolatile(o2);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticResolvedVolatile(object)",
+                DoPutStaticResolvedObjectVolatile.staticField, o2);
+        }
+        // 3. Unresolved putstatic:
+        {
+            Object o3 = new Object();
+            doUnresolvedObjectVolatile(o3);
+            DoResolveAndClinit.reportPassIf(
+                "PutStaticUnresolvedVolatile(object)",
+                DoPutStaticUnresolvedObjectVolatile.staticField, o3);
         }
 
     }
@@ -1949,6 +2581,92 @@ class DoPutStatic
     }
     static void doUnresolvedObject(Object value) {
         DoPutStaticUnresolvedObject.staticField = value;
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    // Volatile field access:
+    //
+
+    static void doResolvedClinitedBooleanVolatile(boolean value) {
+        DoPutStaticResolvedClinitedBooleanVolatile.staticField = value;
+    }
+    static void doResolvedBooleanVolatile(boolean value) {
+        DoPutStaticResolvedBooleanVolatile.staticField = value;
+    }
+    static void doUnresolvedBooleanVolatile(boolean value) {
+        DoPutStaticUnresolvedBooleanVolatile.staticField = value;
+    }
+    static void doResolvedClinitedByteVolatile(byte value) {
+        DoPutStaticResolvedClinitedByteVolatile.staticField = value;
+    }
+    static void doResolvedByteVolatile(byte value) {
+        DoPutStaticResolvedByteVolatile.staticField = value;
+    }
+    static void doUnresolvedByteVolatile(byte value) {
+        DoPutStaticUnresolvedByteVolatile.staticField = value;
+    }
+    static void doResolvedClinitedCharVolatile(char value) {
+        DoPutStaticResolvedClinitedCharVolatile.staticField = value;
+    }
+    static void doResolvedCharVolatile(char value) {
+        DoPutStaticResolvedCharVolatile.staticField = value;
+    }
+    static void doUnresolvedCharVolatile(char value) {
+        DoPutStaticUnresolvedCharVolatile.staticField = value;
+    }
+    static void doResolvedClinitedShortVolatile(short value) {
+        DoPutStaticResolvedClinitedShortVolatile.staticField = value;
+    }
+    static void doResolvedShortVolatile(short value) {
+        DoPutStaticResolvedShortVolatile.staticField = value;
+    }
+    static void doUnresolvedShortVolatile(short value) {
+        DoPutStaticUnresolvedShortVolatile.staticField = value;
+    }
+    static void doResolvedClinitedIntVolatile(int value) {
+        DoPutStaticResolvedClinitedIntVolatile.staticField = value;
+    }
+    static void doResolvedIntVolatile(int value) {
+        DoPutStaticResolvedIntVolatile.staticField = value;
+    }
+    static void doUnresolvedIntVolatile(int value) {
+        DoPutStaticUnresolvedIntVolatile.staticField = value;
+    }
+    static void doResolvedClinitedFloatVolatile(float value) {
+        DoPutStaticResolvedClinitedFloatVolatile.staticField = value;
+    }
+    static void doResolvedFloatVolatile(float value) {
+        DoPutStaticResolvedFloatVolatile.staticField = value;
+    }
+    static void doUnresolvedFloatVolatile(float value) {
+        DoPutStaticUnresolvedFloatVolatile.staticField = value;
+    }
+    static void doResolvedClinitedLongVolatile(long value) {
+        DoPutStaticResolvedClinitedLongVolatile.staticField = value;
+    }
+    static void doResolvedLongVolatile(long value) {
+        DoPutStaticResolvedLongVolatile.staticField = value;
+    }
+    static void doUnresolvedLongVolatile(long value) {
+        DoPutStaticUnresolvedLongVolatile.staticField = value;
+    }
+    static void doResolvedClinitedDoubleVolatile(double value) {
+        DoPutStaticResolvedClinitedDoubleVolatile.staticField = value;
+    }
+    static void doResolvedDoubleVolatile(double value) {
+        DoPutStaticResolvedDoubleVolatile.staticField = value;
+    }
+    static void doUnresolvedDoubleVolatile(double value) {
+        DoPutStaticUnresolvedDoubleVolatile.staticField = value;
+    }
+    static void doResolvedClinitedObjectVolatile(Object value) {
+        DoPutStaticResolvedClinitedObjectVolatile.staticField = value;
+    }
+    static void doResolvedObjectVolatile(Object value) {
+        DoPutStaticResolvedObjectVolatile.staticField = value;
+    }
+    static void doUnresolvedObjectVolatile(Object value) {
+        DoPutStaticUnresolvedObjectVolatile.staticField = value;
     }
 }
 
@@ -2145,6 +2863,200 @@ class DoGetStaticUnresolvedObject {
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////
+// Volatile GetStatic:
+//
+
+/* VolatileBoolean: */
+class DoGetStaticResolvedClinitedBooleanVolatile {
+    public static volatile boolean staticField = false;
+    static {
+        System.out.println("\tDoGetStaticResolvedClinitedBooleanVolatile.<clinit>()");
+    }
+}
+
+class DoGetStaticResolvedBooleanVolatile {
+    public static volatile boolean staticField = false;
+    static {
+        System.out.println("\tDoGetStaticResolvedBooleanVolatile.<clinit>()");
+    }
+}
+class DoGetStaticUnresolvedBooleanVolatile {
+    public static volatile boolean staticField = false;
+    static {
+        System.out.println("\tDoGetStaticUnresolvedBooleanVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Byte: */
+class DoGetStaticResolvedClinitedByteVolatile {
+    public static volatile byte staticField = 0;
+    static {
+        System.out.println("\tDoGetStaticResolvedClinitedByteVolatile.<clinit>()");
+    }
+}
+
+class DoGetStaticResolvedByteVolatile {
+    public static volatile byte staticField = 0;
+    static {
+        System.out.println("\tDoGetStaticResolvedByteVolatile.<clinit>()");
+    }
+}
+class DoGetStaticUnresolvedByteVolatile {
+    public static volatile byte staticField = 0;
+    static {
+        System.out.println("\tDoGetStaticUnresolvedByteVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Char: */
+class DoGetStaticResolvedClinitedCharVolatile {
+    public static volatile char staticField = '\0';
+    static {
+        System.out.println("\tDoGetStaticResolvedClinitedCharVolatile.<clinit>()");
+    }
+}
+
+class DoGetStaticResolvedCharVolatile {
+    public static volatile char staticField = '\0';
+    static {
+        System.out.println("\tDoGetStaticResolvedCharVolatile.<clinit>()");
+    }
+}
+class DoGetStaticUnresolvedCharVolatile {
+    public static volatile char staticField = '\0';
+    static {
+        System.out.println("\tDoGetStaticUnresolvedCharVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Short: */
+class DoGetStaticResolvedClinitedShortVolatile {
+    public static volatile short staticField = 0;
+    static {
+        System.out.println("\tDoGetStaticResolvedClinitedShortVolatile.<clinit>()");
+    }
+}
+
+class DoGetStaticResolvedShortVolatile {
+    public static volatile short staticField = 0;
+    static {
+        System.out.println("\tDoGetStaticResolvedShortVolatile.<clinit>()");
+    }
+}
+class DoGetStaticUnresolvedShortVolatile {
+    public static volatile short staticField = 0;
+    static {
+        System.out.println("\tDoGetStaticUnresolvedShortVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Int: */
+class DoGetStaticResolvedClinitedIntVolatile {
+    public static volatile int staticField = 0;
+    static {
+        System.out.println("\tDoGetStaticResolvedClinitedIntVolatile.<clinit>()");
+    }
+}
+
+class DoGetStaticResolvedIntVolatile {
+    public static volatile int staticField = 0;
+    static {
+        System.out.println("\tDoGetStaticResolvedIntVolatile.<clinit>()");
+    }
+}
+class DoGetStaticUnresolvedIntVolatile {
+    public static volatile int staticField = 0;
+    static {
+        System.out.println("\tDoGetStaticUnresolvedIntVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Float: */
+class DoGetStaticResolvedClinitedFloatVolatile {
+    public static volatile float staticField = 0.0f;
+    static {
+        System.out.println("\tDoGetStaticResolvedClinitedFloatVolatile.<clinit>()");
+    }
+}
+
+class DoGetStaticResolvedFloatVolatile {
+    public static volatile float staticField = 0.0f;
+    static {
+        System.out.println("\tDoGetStaticResolvedFloatVolatile.<clinit>()");
+    }
+}
+class DoGetStaticUnresolvedFloatVolatile {
+    public static volatile float staticField = 0.0f;
+    static {
+        System.out.println("\tDoGetStaticUnresolvedFloatVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Long: */
+class DoGetStaticResolvedClinitedLongVolatile {
+    public static volatile long staticField = 0l;
+    static {
+        System.out.println("\tDoGetStaticResolvedClinitedLongVolatile.<clinit>()");
+    }
+}
+
+class DoGetStaticResolvedLongVolatile {
+    public static volatile long staticField = 0l;
+    static {
+        System.out.println("\tDoGetStaticResolvedLongVolatile.<clinit>()");
+    }
+}
+class DoGetStaticUnresolvedLongVolatile {
+    public static volatile long staticField = 0l;
+    static {
+        System.out.println("\tDoGetStaticUnresolvedLongVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Double: */
+class DoGetStaticResolvedClinitedDoubleVolatile {
+    public static volatile double staticField = 0.0d;
+    static {
+        System.out.println("\tDoGetStaticResolvedClinitedDoubleVolatile.<clinit>()");
+    }
+}
+
+class DoGetStaticResolvedDoubleVolatile {
+    public static volatile double staticField = 0.0d;
+    static {
+        System.out.println("\tDoGetStaticResolvedDoubleVolatile.<clinit>()");
+    }
+}
+class DoGetStaticUnresolvedDoubleVolatile {
+    public static volatile double staticField = 0.0d;
+    static {
+        System.out.println("\tDoGetStaticUnresolvedDoubleVolatile.<clinit>()");
+    }
+}
+
+/* Volatile Object: */
+class DoGetStaticResolvedClinitedObjectVolatile {
+    public static volatile Object staticField = null;
+    static {
+        System.out.println("\tDoGetStaticResolvedClinitedObjectVolatile.<clinit>()");
+    }
+}
+
+class DoGetStaticResolvedObjectVolatile {
+    public static volatile Object staticField = null;
+    static {
+        System.out.println("\tDoGetStaticResolvedObjectVolatile.<clinit>()");
+    }
+}
+class DoGetStaticUnresolvedObjectVolatile {
+    public static volatile Object staticField = null;
+    static {
+        System.out.println("\tDoGetStaticUnresolvedObjectVolatile.<clinit>()");
+    }
+}
+
+
 class DoGetStatic
 {
     static final String[] compileItems = {
@@ -2183,6 +3095,43 @@ class DoGetStatic
         "DoGetStatic.doResolvedClinitedObject()Ljava/lang/Object;",
         "DoGetStatic.doResolvedObject()Ljava/lang/Object;",
         "DoGetStatic.doUnresolvedObject()Ljava/lang/Object;",
+
+	// Volatile set:
+        "DoGetStatic.doResolvedClinitedBooleanVolatile()Z",
+        "DoGetStatic.doResolvedBooleanVolatile()Z",
+        "DoGetStatic.doUnresolvedBooleanVolatile()Z",
+
+        "DoGetStatic.doResolvedClinitedByteVolatile()B",
+        "DoGetStatic.doResolvedByteVolatile()B",
+        "DoGetStatic.doUnresolvedByteVolatile()B",
+
+        "DoGetStatic.doResolvedClinitedCharVolatile()C",
+        "DoGetStatic.doResolvedCharVolatile()C",
+        "DoGetStatic.doUnresolvedCharVolatile()C",
+
+        "DoGetStatic.doResolvedClinitedShortVolatile()S",
+        "DoGetStatic.doResolvedShortVolatile()S",
+        "DoGetStatic.doUnresolvedShortVolatile()S",
+
+        "DoGetStatic.doResolvedClinitedIntVolatile()I",
+        "DoGetStatic.doResolvedIntVolatile()I",
+        "DoGetStatic.doUnresolvedIntVolatile()I",
+
+        "DoGetStatic.doResolvedClinitedFloatVolatile()F",
+        "DoGetStatic.doResolvedFloatVolatile()F",
+        "DoGetStatic.doUnresolvedFloatVolatile()F",
+
+        "DoGetStatic.doResolvedClinitedLongVolatile()J",
+        "DoGetStatic.doResolvedLongVolatile()J",
+        "DoGetStatic.doUnresolvedLongVolatile()J",
+
+        "DoGetStatic.doResolvedClinitedDoubleVolatile()D",
+        "DoGetStatic.doResolvedDoubleVolatile()D",
+        "DoGetStatic.doUnresolvedDoubleVolatile()D",
+
+        "DoGetStatic.doResolvedClinitedObjectVolatile()Ljava/lang/Object;",
+        "DoGetStatic.doResolvedObjectVolatile()Ljava/lang/Object;",
+        "DoGetStatic.doUnresolvedObjectVolatile()Ljava/lang/Object;",
     };
 
     public static void doSetup() {
@@ -2242,6 +3191,63 @@ class DoGetStatic
             // Resolve but don't clinit it:
             boolean b = o instanceof DoGetStaticResolvedObject;
         }
+
+        // Setup initial conditions for Volatile set:
+        {
+            // Resolve and clinit it:
+            boolean i = DoGetStaticResolvedClinitedBooleanVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoGetStaticResolvedBooleanVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            byte i = DoGetStaticResolvedClinitedByteVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoGetStaticResolvedByteVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            char i = DoGetStaticResolvedClinitedCharVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoGetStaticResolvedCharVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            short i = DoGetStaticResolvedClinitedShortVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoGetStaticResolvedShortVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            int i = DoGetStaticResolvedClinitedIntVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoGetStaticResolvedIntVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            float i = DoGetStaticResolvedClinitedFloatVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoGetStaticResolvedFloatVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            long i = DoGetStaticResolvedClinitedLongVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoGetStaticResolvedLongVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            double i = DoGetStaticResolvedClinitedDoubleVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoGetStaticResolvedDoubleVolatile;
+        }
+        {
+            // Resolve and clinit it:
+            Object o1 = DoGetStaticResolvedClinitedObjectVolatile.staticField;
+            // Resolve but don't clinit it:
+            boolean b = o instanceof DoGetStaticResolvedObjectVolatile;
+        }
+
         // Do compilation:
         CompilerTest.main(compileItems);
     }
@@ -2253,21 +3259,21 @@ class DoGetStatic
             DoGetStaticResolvedClinitedBoolean.staticField = true;
             boolean value = doResolvedClinitedBoolean();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolvedClinited(boolean)", value == true);
+                "GetStaticResolvedClinited(boolean)", value, true);
         }
         // 2. Resolved getstatic:
         {
             DoGetStaticResolvedBoolean.staticField = true;
             boolean value = doResolvedBoolean();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolved(boolean)", value == true);
+                "GetStaticResolved(boolean)", value, true);
         }
         // 3. Unresolved getstatic:
         {
             DoGetStaticUnresolvedBoolean.staticField = true;
             boolean value = doUnresolvedBoolean();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticUnresolved(boolean)", value == true);
+                "GetStaticUnresolved(boolean)", value, true);
         }
 
         // 1. Resolved & Clinited getstatic:
@@ -2275,21 +3281,21 @@ class DoGetStatic
             DoGetStaticResolvedClinitedByte.staticField = (byte)5;
             byte value = doResolvedClinitedByte();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolvedClinited(byte)", value == (byte)5);
+                "GetStaticResolvedClinited(byte)", value, (byte)5);
         }
         // 2. Resolved getstatic:
         {
             DoGetStaticResolvedByte.staticField = (byte)50;
             byte value = doResolvedByte();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolved(byte)", value == (byte)50);
+                "GetStaticResolved(byte)", value, (byte)50);
         }
         // 3. Unresolved getstatic:
         {
             DoGetStaticUnresolvedByte.staticField = (byte)53;
             byte value = doUnresolvedByte();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticUnresolved(byte)", value == (byte)53);
+                "GetStaticUnresolved(byte)", value, (byte)53);
         }
 
         // 1. Resolved & Clinited getstatic:
@@ -2297,21 +3303,21 @@ class DoGetStatic
             DoGetStaticResolvedClinitedChar.staticField = 'A';
             char value = doResolvedClinitedChar();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolvedClinited(char)", value == 'A');
+                "GetStaticResolvedClinited(char)", value, 'A');
         }
         // 2. Resolved getstatic:
         {
             DoGetStaticResolvedChar.staticField = 'B';
             char value = doResolvedChar();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolved(char)", value == 'B');
+                "GetStaticResolved(char)", value, 'B');
         }
         // 3. Unresolved getstatic:
         {
             DoGetStaticUnresolvedChar.staticField = 'C';
             char value = doUnresolvedChar();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticUnresolved(char)", value == 'C');
+                "GetStaticUnresolved(char)", value, 'C');
         }
 
         // 1. Resolved & Clinited getstatic:
@@ -2319,21 +3325,21 @@ class DoGetStatic
             DoGetStaticResolvedClinitedShort.staticField = (short)6;
             short value = doResolvedClinitedShort();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolvedClinited(short)", value == (short)6);
+                "GetStaticResolvedClinited(short)", value, (short)6);
         }
         // 2. Resolved getstatic:
         {
             DoGetStaticResolvedShort.staticField = (short)60;
             short value = doResolvedShort();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolved(short)", value == (short)60);
+                "GetStaticResolved(short)", value, (short)60);
         }
         // 3. Unresolved getstatic:
         {
             DoGetStaticUnresolvedShort.staticField = (short)600;
             short value = doUnresolvedShort();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticUnresolved(short)", value == (short)600);
+                "GetStaticUnresolved(short)", value, (short)600);
         }
 
         // 1. Resolved & Clinited getstatic:
@@ -2341,21 +3347,21 @@ class DoGetStatic
             DoGetStaticResolvedClinitedInt.staticField = 7;
             int value = doResolvedClinitedInt();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolvedClinited(int)", value == 7);
+                "GetStaticResolvedClinited(int)", value, 7);
         }
         // 2. Resolved getstatic:
         {
             DoGetStaticResolvedInt.staticField = 70;
             int value = doResolvedInt();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolved(int)", value == 70);
+                "GetStaticResolved(int)", value, 70);
         }
         // 3. Unresolved getstatic:
         {
             DoGetStaticUnresolvedInt.staticField = 700;
             int value = doUnresolvedInt();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticUnresolved(int)", value == 700);
+                "GetStaticUnresolved(int)", value, 700);
         }
 
         // 1. Resolved & Clinited getstatic:
@@ -2363,21 +3369,21 @@ class DoGetStatic
             DoGetStaticResolvedClinitedFloat.staticField = 8.0f;
             float value = doResolvedClinitedFloat();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolvedClinited(float)", value == 8.0f);
+                "GetStaticResolvedClinited(float)", value, 8.0f);
         }
         // 2. Resolved getstatic:
         {
             DoGetStaticResolvedFloat.staticField = 80.0f;
             float value = doResolvedFloat();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolved(float)", value == 80.0f);
+                "GetStaticResolved(float)", value, 80.0f);
         }
         // 3. Unresolved getstatic:
         {
             DoGetStaticUnresolvedFloat.staticField = 800.0f;
             float value = doUnresolvedFloat();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticUnresolved(float)", value == 800.0f);
+                "GetStaticUnresolved(float)", value, 800.0f);
         }
 
         // 1. Resolved & Clinited getstatic:
@@ -2385,21 +3391,21 @@ class DoGetStatic
             DoGetStaticResolvedClinitedLong.staticField = 9l;
             long value = doResolvedClinitedLong();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolvedClinited(long)", value == 9l);
+                "GetStaticResolvedClinited(long)", value, 9l);
         }
         // 2. Resolved getstatic:
         {
             DoGetStaticResolvedLong.staticField = 90l;
             long value = doResolvedLong();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolved(long)", value == 90l);
+                "GetStaticResolved(long)", value, 90l);
         }
         // 3. Unresolved getstatic:
         {
             DoGetStaticUnresolvedLong.staticField = 900l;
             long value = doUnresolvedLong();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticUnresolved(long)", value == 900l);
+                "GetStaticUnresolved(long)", value, 900l);
         }
 
         // 1. Resolved & Clinited getstatic:
@@ -2407,21 +3413,21 @@ class DoGetStatic
             DoGetStaticResolvedClinitedDouble.staticField = 10.0d;
             double value = doResolvedClinitedDouble();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolvedClinited(double)", value == 10.0d);
+                "GetStaticResolvedClinited(double)", value, 10.0d);
         }
         // 2. Resolved getstatic:
         {
             DoGetStaticResolvedDouble.staticField = 100.0d;
             double value = doResolvedDouble();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolved(double)", value == 100.0d);
+                "GetStaticResolved(double)", value, 100.0d);
         }
         // 3. Unresolved getstatic:
         {
             DoGetStaticUnresolvedDouble.staticField = 1000.0d;
             double value = doUnresolvedDouble();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticUnresolved(double)", value == 1000.0d);
+                "GetStaticUnresolved(double)", value, 1000.0d);
         }
 
         // 1. Resolved & Clinited getstatic:
@@ -2430,7 +3436,7 @@ class DoGetStatic
             DoGetStaticResolvedClinitedObject.staticField = o1;
             Object value = doResolvedClinitedObject();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolvedClinited(object)", value == o1);
+                "GetStaticResolvedClinited(object)", value, o1);
         }
         // 2. Resolved getstatic:
         {
@@ -2438,7 +3444,7 @@ class DoGetStatic
             DoGetStaticResolvedObject.staticField = o2;
             Object value = doResolvedObject();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticResolved(object)", value == o2);
+                "GetStaticResolved(object)", value, o2);
         }
         // 3. Unresolved getstatic:
         {
@@ -2446,7 +3452,211 @@ class DoGetStatic
             DoGetStaticUnresolvedObject.staticField = o3;
             Object value = doUnresolvedObject();
             DoResolveAndClinit.reportPassIf(
-                "GetStaticUnresolved(object)", value == o3);
+                "GetStaticUnresolved(object)", value, o3);
+        }
+
+	///////////////////////////////////////////////////////////////
+	// Volatile Set:
+
+        // 1. Resolved & Clinited getstatic:
+        {
+            DoGetStaticResolvedClinitedBooleanVolatile.staticField = true;
+            boolean value = doResolvedClinitedBooleanVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedClinitedVolatile(boolean)", value, true);
+        }
+        // 2. Resolved getstatic:
+        {
+            DoGetStaticResolvedBooleanVolatile.staticField = true;
+            boolean value = doResolvedBooleanVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedVolatile(boolean)", value, true);
+        }
+        // 3. Unresolved getstatic:
+        {
+            DoGetStaticUnresolvedBooleanVolatile.staticField = true;
+            boolean value = doUnresolvedBooleanVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticUnresolvedVolatile(boolean)", value, true);
+        }
+
+        // 1. Resolved & Clinited getstatic:
+        {
+            DoGetStaticResolvedClinitedByteVolatile.staticField = (byte)5;
+            byte value = doResolvedClinitedByteVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedClinitedVolatile(byte)", value, (byte)5);
+        }
+        // 2. Resolved getstatic:
+        {
+            DoGetStaticResolvedByteVolatile.staticField = (byte)50;
+            byte value = doResolvedByteVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedVolatile(byte)", value, (byte)50);
+        }
+        // 3. Unresolved getstatic:
+        {
+            DoGetStaticUnresolvedByteVolatile.staticField = (byte)53;
+            byte value = doUnresolvedByteVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticUnresolvedVolatile(byte)", value, (byte)53);
+        }
+
+        // 1. Resolved & Clinited getstatic:
+        {
+            DoGetStaticResolvedClinitedCharVolatile.staticField = 'A';
+            char value = doResolvedClinitedCharVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedClinitedVolatile(char)", value, 'A');
+        }
+        // 2. Resolved getstatic:
+        {
+            DoGetStaticResolvedCharVolatile.staticField = 'B';
+            char value = doResolvedCharVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedVolatile(char)", value, 'B');
+        }
+        // 3. Unresolved getstatic:
+        {
+            DoGetStaticUnresolvedCharVolatile.staticField = 'C';
+            char value = doUnresolvedCharVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticUnresolvedVolatile(char)", value, 'C');
+        }
+
+        // 1. Resolved & Clinited getstatic:
+        {
+            DoGetStaticResolvedClinitedShortVolatile.staticField = (short)6;
+            short value = doResolvedClinitedShortVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedClinitedVolatile(short)", value, (short)6);
+        }
+        // 2. Resolved getstatic:
+        {
+            DoGetStaticResolvedShortVolatile.staticField = (short)60;
+            short value = doResolvedShortVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedVolatile(short)", value, (short)60);
+        }
+        // 3. Unresolved getstatic:
+        {
+            DoGetStaticUnresolvedShortVolatile.staticField = (short)600;
+            short value = doUnresolvedShortVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticUnresolvedVolatile(short)", value, (short)600);
+        }
+
+        // 1. Resolved & Clinited getstatic:
+        {
+            DoGetStaticResolvedClinitedIntVolatile.staticField = 7;
+            int value = doResolvedClinitedIntVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedClinitedVolatile(int)", value, 7);
+        }
+        // 2. Resolved getstatic:
+        {
+            DoGetStaticResolvedIntVolatile.staticField = 70;
+            int value = doResolvedIntVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedVolatile(int)", value, 70);
+        }
+        // 3. Unresolved getstatic:
+        {
+            DoGetStaticUnresolvedIntVolatile.staticField = 700;
+            int value = doUnresolvedIntVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticUnresolvedVolatile(int)", value, 700);
+        }
+
+        // 1. Resolved & Clinited getstatic:
+        {
+            DoGetStaticResolvedClinitedFloatVolatile.staticField = 8.0f;
+            float value = doResolvedClinitedFloatVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedClinitedVolatile(float)", value, 8.0f);
+        }
+        // 2. Resolved getstatic:
+        {
+            DoGetStaticResolvedFloatVolatile.staticField = 80.0f;
+            float value = doResolvedFloatVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedVolatile(float)", value, 80.0f);
+        }
+        // 3. Unresolved getstatic:
+        {
+            DoGetStaticUnresolvedFloatVolatile.staticField = 800.0f;
+            float value = doUnresolvedFloatVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticUnresolvedVolatile(float)", value, 800.0f);
+        }
+
+        // 1. Resolved & Clinited getstatic:
+        {
+            DoGetStaticResolvedClinitedLongVolatile.staticField = 9l;
+            long value = doResolvedClinitedLongVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedClinitedVolatile(long)", value, 9l);
+        }
+        // 2. Resolved getstatic:
+        {
+            DoGetStaticResolvedLongVolatile.staticField = 90l;
+            long value = doResolvedLongVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedVolatile(long)", value, 90l);
+        }
+        // 3. Unresolved getstatic:
+        {
+            DoGetStaticUnresolvedLongVolatile.staticField = 900l;
+            long value = doUnresolvedLongVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticUnresolvedVolatile(long)", value, 900l);
+        }
+
+        // 1. Resolved & Clinited getstatic:
+        {
+            DoGetStaticResolvedClinitedDoubleVolatile.staticField = 10.0d;
+            double value = doResolvedClinitedDoubleVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedClinitedVolatile(double)", value, 10.0d);
+        }
+        // 2. Resolved getstatic:
+        {
+            DoGetStaticResolvedDoubleVolatile.staticField = 100.0d;
+            double value = doResolvedDoubleVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedVolatile(double)", value, 100.0d);
+        }
+        // 3. Unresolved getstatic:
+        {
+            DoGetStaticUnresolvedDoubleVolatile.staticField = 1000.0d;
+            double value = doUnresolvedDoubleVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticUnresolvedVolatile(double)", value, 1000.0d);
+        }
+
+        // 1. Resolved & Clinited getstatic:
+        {
+            Object o1 = new Object();
+            DoGetStaticResolvedClinitedObjectVolatile.staticField = o1;
+            Object value = doResolvedClinitedObjectVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedClinitedVolatile(object)", value, o1);
+        }
+        // 2. Resolved getstatic:
+        {
+            Object o2 = new Object();
+            DoGetStaticResolvedObjectVolatile.staticField = o2;
+            Object value = doResolvedObjectVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticResolvedVolatile(object)", value, o2);
+        }
+        // 3. Unresolved getstatic:
+        {
+            Object o3 = new Object();
+            DoGetStaticUnresolvedObjectVolatile.staticField = o3;
+            Object value = doUnresolvedObjectVolatile();
+            DoResolveAndClinit.reportPassIf(
+                "GetStaticUnresolvedVolatile(object)", value, o3);
         }
 
     }
@@ -2532,6 +3742,91 @@ class DoGetStatic
     static Object doUnresolvedObject() {
         return DoGetStaticUnresolvedObject.staticField;
     }
+
+    ////////////////////////////////////////////////////////////////////
+    // Volatile Set:
+
+    static boolean doResolvedClinitedBooleanVolatile() {
+        return DoGetStaticResolvedClinitedBooleanVolatile.staticField;
+    }
+    static boolean doResolvedBooleanVolatile() {
+        return DoGetStaticResolvedBooleanVolatile.staticField;
+    }
+    static boolean doUnresolvedBooleanVolatile() {
+        return DoGetStaticUnresolvedBooleanVolatile.staticField;
+    }
+    static byte doResolvedClinitedByteVolatile() {
+        return DoGetStaticResolvedClinitedByteVolatile.staticField;
+    }
+    static byte doResolvedByteVolatile() {
+        return DoGetStaticResolvedByteVolatile.staticField;
+    }
+    static byte doUnresolvedByteVolatile() {
+        return DoGetStaticUnresolvedByteVolatile.staticField;
+    }
+    static char doResolvedClinitedCharVolatile() {
+        return DoGetStaticResolvedClinitedCharVolatile.staticField;
+    }
+    static char doResolvedCharVolatile() {
+        return DoGetStaticResolvedCharVolatile.staticField;
+    }
+    static char doUnresolvedCharVolatile() {
+        return DoGetStaticUnresolvedCharVolatile.staticField;
+    }
+    static short doResolvedClinitedShortVolatile() {
+        return DoGetStaticResolvedClinitedShortVolatile.staticField;
+    }
+    static short doResolvedShortVolatile() {
+        return DoGetStaticResolvedShortVolatile.staticField;
+    }
+    static short doUnresolvedShortVolatile() {
+        return DoGetStaticUnresolvedShortVolatile.staticField;
+    }
+    static int doResolvedClinitedIntVolatile() {
+        return DoGetStaticResolvedClinitedIntVolatile.staticField;
+    }
+    static int doResolvedIntVolatile() {
+        return DoGetStaticResolvedIntVolatile.staticField;
+    }
+    static int doUnresolvedIntVolatile() {
+        return DoGetStaticUnresolvedIntVolatile.staticField;
+    }
+    static float doResolvedClinitedFloatVolatile() {
+        return DoGetStaticResolvedClinitedFloatVolatile.staticField;
+    }
+    static float doResolvedFloatVolatile() {
+        return DoGetStaticResolvedFloatVolatile.staticField;
+    }
+    static float doUnresolvedFloatVolatile() {
+        return DoGetStaticUnresolvedFloatVolatile.staticField;
+    }
+    static long doResolvedClinitedLongVolatile() {
+        return DoGetStaticResolvedClinitedLongVolatile.staticField;
+    }
+    static long doResolvedLongVolatile() {
+        return DoGetStaticResolvedLongVolatile.staticField;
+    }
+    static long doUnresolvedLongVolatile() {
+        return DoGetStaticUnresolvedLongVolatile.staticField;
+    }
+    static double doResolvedClinitedDoubleVolatile() {
+        return DoGetStaticResolvedClinitedDoubleVolatile.staticField;
+    }
+    static double doResolvedDoubleVolatile() {
+        return DoGetStaticResolvedDoubleVolatile.staticField;
+    }
+    static double doUnresolvedDoubleVolatile() {
+        return DoGetStaticUnresolvedDoubleVolatile.staticField;
+    }
+    static Object doResolvedClinitedObjectVolatile() {
+        return DoGetStaticResolvedClinitedObjectVolatile.staticField;
+    }
+    static Object doResolvedObjectVolatile() {
+        return DoGetStaticResolvedObjectVolatile.staticField;
+    }
+    static Object doUnresolvedObjectVolatile() {
+        return DoGetStaticUnresolvedObjectVolatile.staticField;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2610,6 +3905,81 @@ class DoPutFieldUnresolvedObject {
     public Object field = null;
 }
 
+// Volatile Set:
+
+/* Volatile Boolean: */
+class DoPutFieldResolvedBooleanVolatile {
+    public volatile boolean field = false;
+}
+class DoPutFieldUnresolvedBooleanVolatile {
+    public volatile boolean field = false;
+}
+
+/* Volatile Byte: */
+class DoPutFieldResolvedByteVolatile {
+    public volatile byte field = 0;
+}
+class DoPutFieldUnresolvedByteVolatile {
+    public volatile byte field = 0;
+}
+
+/* Volatile Char: */
+class DoPutFieldResolvedCharVolatile {
+    public volatile char field = '\0';
+}
+class DoPutFieldUnresolvedCharVolatile {
+    public volatile char field = '\0';
+}
+
+/* Volatile Short: */
+class DoPutFieldResolvedShortVolatile {
+    public volatile short field = 0;
+}
+class DoPutFieldUnresolvedShortVolatile {
+    public volatile short field = 0;
+}
+
+/* Volatile Int: */
+class DoPutFieldResolvedIntVolatile {
+    public volatile int field = 0;
+}
+class DoPutFieldUnresolvedIntVolatile {
+    public volatile int field = 0;
+}
+
+/* Volatile Float: */
+class DoPutFieldResolvedFloatVolatile {
+    public volatile float field = 0.0f;
+}
+class DoPutFieldUnresolvedFloatVolatile {
+    public volatile float field = 0.0f;
+}
+
+/* Volatile Long: */
+class DoPutFieldResolvedLongVolatile {
+    public volatile long field = 0l;
+}
+class DoPutFieldUnresolvedLongVolatile {
+    public volatile long field = 0l;
+}
+
+/* Volatile Double: */
+class DoPutFieldResolvedDoubleVolatile {
+    public volatile double field = 0.0d;
+}
+class DoPutFieldUnresolvedDoubleVolatile {
+    public volatile double field = 0.0d;
+}
+
+/* Volatile Object: */
+class DoPutFieldResolvedObjectVolatile {
+    public volatile Object field = null;
+}
+class DoPutFieldUnresolvedObjectVolatile {
+    public volatile Object field = null;
+}
+
+
 class DoPutField
 {
     static final String[] compileItems = {
@@ -2639,6 +4009,34 @@ class DoPutField
 
         "DoPutField.doResolvedObject(LDoPutFieldResolvedObject;Ljava/lang/Object;)V",
         "DoPutField.doUnresolvedObject(LDoPutFieldUnresolvedObject;Ljava/lang/Object;)V",
+
+	// Volatile Set:
+        "DoPutField.doResolvedBooleanVolatile(LDoPutFieldResolvedBooleanVolatile;Z)V",
+        "DoPutField.doUnresolvedBooleanVolatile(LDoPutFieldUnresolvedBooleanVolatile;Z)V",
+
+        "DoPutField.doResolvedByteVolatile(LDoPutFieldResolvedByteVolatile;B)V",
+        "DoPutField.doUnresolvedByteVolatile(LDoPutFieldUnresolvedByteVolatile;B)V",
+
+        "DoPutField.doResolvedCharVolatile(LDoPutFieldResolvedCharVolatile;C)V",
+        "DoPutField.doUnresolvedCharVolatile(LDoPutFieldUnresolvedCharVolatile;C)V",
+
+        "DoPutField.doResolvedShortVolatile(LDoPutFieldResolvedShortVolatile;S)V",
+        "DoPutField.doUnresolvedShortVolatile(LDoPutFieldUnresolvedShortVolatile;S)V",
+
+        "DoPutField.doResolvedIntVolatile(LDoPutFieldResolvedIntVolatile;I)V",
+        "DoPutField.doUnresolvedIntVolatile(LDoPutFieldUnresolvedIntVolatile;I)V",
+
+        "DoPutField.doResolvedFloatVolatile(LDoPutFieldResolvedFloatVolatile;F)V",
+        "DoPutField.doUnresolvedFloatVolatile(LDoPutFieldUnresolvedFloatVolatile;F)V",
+
+        "DoPutField.doResolvedLongVolatile(LDoPutFieldResolvedLongVolatile;J)V",
+        "DoPutField.doUnresolvedLongVolatile(LDoPutFieldUnresolvedLongVolatile;J)V",
+
+        "DoPutField.doResolvedDoubleVolatile(LDoPutFieldResolvedDoubleVolatile;D)V",
+        "DoPutField.doUnresolvedDoubleVolatile(LDoPutFieldUnresolvedDoubleVolatile;D)V",
+
+        "DoPutField.doResolvedObjectVolatile(LDoPutFieldResolvedObjectVolatile;Ljava/lang/Object;)V",
+        "DoPutField.doUnresolvedObjectVolatile(LDoPutFieldUnresolvedObjectVolatile;Ljava/lang/Object;)V",
     };
 
     public static void doSetup() {
@@ -2680,25 +4078,67 @@ class DoPutField
             // Resolve it:
             Object o1 = new DoPutFieldResolvedObject().field;
         }
+
+	// Volatile Set:
+        {
+            // Resolve it:
+            boolean i = new DoPutFieldResolvedBooleanVolatile().field;
+        }
+        {
+            // Resolve it:
+            byte i = new DoPutFieldResolvedByteVolatile().field;
+        }
+        {
+            // Resolve it:
+            char i = new DoPutFieldResolvedCharVolatile().field;
+        }
+        {
+            // Resolve it:
+            short i = new DoPutFieldResolvedShortVolatile().field;
+        }
+        {
+            // Resolve it:
+            int i = new DoPutFieldResolvedIntVolatile().field;
+        }
+        {
+            // Resolve it:
+            float i = new DoPutFieldResolvedFloatVolatile().field;
+        }
+        {
+            // Resolve it:
+            long i = new DoPutFieldResolvedLongVolatile().field;
+        }
+        {
+            // Resolve it:
+            double i = new DoPutFieldResolvedDoubleVolatile().field;
+        }
+        {
+            // Resolve it:
+            Object o1 = new DoPutFieldResolvedObjectVolatile().field;
+        }
+
         // Do compilation:
         CompilerTest.main(compileItems);
     }
 
     public static void doTest() {
 
+	////////////////////////////////////////////////////////////////
+	// Non-Volatile Set:
+
         // 1. Resolved putfield:
         {
             DoPutFieldResolvedBoolean pf = new DoPutFieldResolvedBoolean();
             doResolvedBoolean(pf, true);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldResolved(boolean)", pf.field == true);
+                "PutFieldResolved(boolean)", pf.field, true);
         }
         // 2. Unresolved putfield:
         {
             DoPutFieldUnresolvedBoolean pf = new DoPutFieldUnresolvedBoolean();
             doUnresolvedBoolean(pf, true);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldUnresolved(boolean)", pf.field == true);
+                "PutFieldUnresolved(boolean)", pf.field, true);
         }
 
         // 1. Resolved putfield:
@@ -2706,14 +4146,14 @@ class DoPutField
             DoPutFieldResolvedByte pf = new DoPutFieldResolvedByte();
             doResolvedByte(pf, (byte)50);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldResolved(byte)", pf.field == (byte)50);
+                "PutFieldResolved(byte)", pf.field, (byte)50);
         }
         // 2. Unresolved putfield:
         {
             DoPutFieldUnresolvedByte pf = new DoPutFieldUnresolvedByte();
             doUnresolvedByte(pf, (byte)53);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldUnresolved(byte)", pf.field == (byte)53);
+                "PutFieldUnresolved(byte)", pf.field, (byte)53);
         }
 
         // 1. Resolved putfield:
@@ -2721,14 +4161,14 @@ class DoPutField
             DoPutFieldResolvedChar pf = new DoPutFieldResolvedChar();
             doResolvedChar(pf, 'B');
             DoResolveAndClinit.reportPassIf(
-                "PutFieldResolved(char)", pf.field == 'B');
+                "PutFieldResolved(char)", pf.field, 'B');
         }
         // 2. Unresolved putfield:
         {
             DoPutFieldUnresolvedChar pf = new DoPutFieldUnresolvedChar();
             doUnresolvedChar(pf, 'C');
             DoResolveAndClinit.reportPassIf(
-                "PutFieldUnresolved(char)", pf.field == 'C');
+                "PutFieldUnresolved(char)", pf.field, 'C');
         }
 
         // 1. Resolved putfield:
@@ -2736,14 +4176,14 @@ class DoPutField
             DoPutFieldResolvedShort pf = new DoPutFieldResolvedShort();
             doResolvedShort(pf, (short)60);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldResolved(short)", pf.field == (short)60);
+                "PutFieldResolved(short)", pf.field, (short)60);
         }
         // 2. Unresolved putfield:
         {
             DoPutFieldUnresolvedShort pf = new DoPutFieldUnresolvedShort();
             doUnresolvedShort(pf, (short)600);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldUnresolved(short)", pf.field == (short)600);
+                "PutFieldUnresolved(short)", pf.field, (short)600);
         }
 
         // 1. Resolved putfield:
@@ -2751,14 +4191,14 @@ class DoPutField
             DoPutFieldResolvedInt pf = new DoPutFieldResolvedInt();
             doResolvedInt(pf, 70);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldResolved(int)", pf.field == 70);
+                "PutFieldResolved(int)", pf.field, 70);
         }
         // 2. Unresolved putfield:
         {
             DoPutFieldUnresolvedInt pf = new DoPutFieldUnresolvedInt();
             doUnresolvedInt(pf, 700);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldUnresolved(int)", pf.field == 700);
+                "PutFieldUnresolved(int)", pf.field, 700);
         }
 
         // 1. Resolved putfield:
@@ -2766,14 +4206,14 @@ class DoPutField
             DoPutFieldResolvedFloat pf = new DoPutFieldResolvedFloat();
             doResolvedFloat(pf, 80.0f);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldResolved(float)", pf.field == 80.0f);
+                "PutFieldResolved(float)", pf.field, 80.0f);
         }
         // 2. Unresolved putfield:
         {
             DoPutFieldUnresolvedFloat pf = new DoPutFieldUnresolvedFloat();
             doUnresolvedFloat(pf, 800.0f);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldUnresolved(float)", pf.field == 800.0f);
+                "PutFieldUnresolved(float)", pf.field, 800.0f);
         }
 
         // 1. Resolved putfield:
@@ -2781,14 +4221,14 @@ class DoPutField
             DoPutFieldResolvedLong pf = new DoPutFieldResolvedLong();
             doResolvedLong(pf, 90l);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldResolved(long)", pf.field == 90l);
+		"PutFieldResolved(long)", pf.field, 90l);
         }
         // 2. Unresolved putfield:
         {
             DoPutFieldUnresolvedLong pf = new DoPutFieldUnresolvedLong();
             doUnresolvedLong(pf, 900l);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldUnresolved(long)", pf.field == 900l);
+	        "PutFieldUnresolved(long)", pf.field, 900l);
         }
 
         // 1. Resolved putfield:
@@ -2796,14 +4236,14 @@ class DoPutField
             DoPutFieldResolvedDouble pf = new DoPutFieldResolvedDouble();
             doResolvedDouble(pf, 100.0d);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldResolved(double)", pf.field == 100.0d);
+	        "PutFieldResolved(double)", pf.field, 100.0d);
         }
         // 2. Unresolved putfield:
         {
             DoPutFieldUnresolvedDouble pf = new DoPutFieldUnresolvedDouble();
             doUnresolvedDouble(pf, 1000.0d);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldUnresolved(double)", pf.field == 1000.0d);
+		"PutFieldUnresolved(double)", pf.field, 1000.0d);
         }
 
         // 1. Resolved putfield:
@@ -2812,7 +4252,7 @@ class DoPutField
             DoPutFieldResolvedObject pf = new DoPutFieldResolvedObject();
             doResolvedObject(pf, o2);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldResolved(object)", pf.field == o2);
+                "PutFieldResolved(object)", pf.field, o2);
         }
         // 2. Unresolved putfield:
         {
@@ -2820,7 +4260,571 @@ class DoPutField
             DoPutFieldUnresolvedObject pf = new DoPutFieldUnresolvedObject();
             doUnresolvedObject(pf, o3);
             DoResolveAndClinit.reportPassIf(
-                "PutFieldUnresolved(object)", pf.field == o3);
+                "PutFieldUnresolved(object)", pf.field, o3);
+        }
+
+	////////////////////////////////////////////////////////////////
+	// Volatile Set:
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedBooleanVolatile pf = new DoPutFieldResolvedBooleanVolatile();
+            doResolvedBooleanVolatile(pf, true);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldResolvedVolatile(boolean)", pf.field, true);
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedBooleanVolatile pf = new DoPutFieldUnresolvedBooleanVolatile();
+            doUnresolvedBooleanVolatile(pf, true);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldUnresolvedVolatile(boolean)", pf.field, true);
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedByteVolatile pf = new DoPutFieldResolvedByteVolatile();
+            doResolvedByteVolatile(pf, (byte)50);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldResolvedVolatile(byte)", pf.field, (byte)50);
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedByteVolatile pf = new DoPutFieldUnresolvedByteVolatile();
+            doUnresolvedByteVolatile(pf, (byte)53);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldUnresolvedVolatile(byte)", pf.field, (byte)53);
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedCharVolatile pf = new DoPutFieldResolvedCharVolatile();
+            doResolvedCharVolatile(pf, 'B');
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldResolvedVolatile(char)", pf.field, 'B');
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedCharVolatile pf = new DoPutFieldUnresolvedCharVolatile();
+            doUnresolvedCharVolatile(pf, 'C');
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldUnresolvedVolatile(char)", pf.field, 'C');
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedShortVolatile pf = new DoPutFieldResolvedShortVolatile();
+            doResolvedShortVolatile(pf, (short)60);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldResolvedVolatile(short)", pf.field, (short)60);
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedShortVolatile pf = new DoPutFieldUnresolvedShortVolatile();
+            doUnresolvedShortVolatile(pf, (short)600);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldUnresolvedVolatile(short)", pf.field, (short)600);
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedIntVolatile pf = new DoPutFieldResolvedIntVolatile();
+            doResolvedIntVolatile(pf, 70);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldResolvedVolatile(int)", pf.field, 70);
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedIntVolatile pf = new DoPutFieldUnresolvedIntVolatile();
+            doUnresolvedIntVolatile(pf, 700);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldUnresolvedVolatile(int)", pf.field, 700);
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedFloatVolatile pf = new DoPutFieldResolvedFloatVolatile();
+            doResolvedFloatVolatile(pf, 80.0f);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldResolvedVolatile(float)", pf.field, 80.0f);
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedFloatVolatile pf = new DoPutFieldUnresolvedFloatVolatile();
+            doUnresolvedFloatVolatile(pf, 800.0f);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldUnresolvedVolatile(float)", pf.field, 800.0f);
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedLongVolatile pf = new DoPutFieldResolvedLongVolatile();
+            doResolvedLongVolatile(pf, 90l);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldResolvedVolatile(long)", pf.field, 90l);
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedLongVolatile pf = new DoPutFieldUnresolvedLongVolatile();
+            doUnresolvedLongVolatile(pf, 900l);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldUnresolvedVolatile(long)", pf.field, 900l);
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedDoubleVolatile pf = new DoPutFieldResolvedDoubleVolatile();
+            doResolvedDoubleVolatile(pf, 100.0d);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldResolvedVolatile(double)", pf.field, 100.0d);
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedDoubleVolatile pf = new DoPutFieldUnresolvedDoubleVolatile();
+            doUnresolvedDoubleVolatile(pf, 1000.0d);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldUnresolvedVolatile(double)", pf.field, 1000.0d);
+        }
+
+        // 1. Resolved putfield:
+        {
+            Object o2 = new Object();
+            DoPutFieldResolvedObjectVolatile pf = new DoPutFieldResolvedObjectVolatile();
+            doResolvedObjectVolatile(pf, o2);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldResolvedVolatile(object)", pf.field, o2);
+        }
+        // 2. Unresolved putfield:
+        {
+            Object o3 = new Object();
+            DoPutFieldUnresolvedObjectVolatile pf = new DoPutFieldUnresolvedObjectVolatile();
+            doUnresolvedObjectVolatile(pf, o3);
+            DoResolveAndClinit.reportPassIf(
+                "PutFieldUnresolvedVolatile(object)", pf.field, o3);
+        }
+
+	////////////////////////////////////////////////////////////////
+	// Non-Volatile Set w/ NULL Check:
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedBoolean pf = null;
+	    try {
+		doResolvedBoolean(pf, true);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedNullCheck(boolean)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedBoolean pf = null;
+	    try {
+		doUnresolvedBoolean(pf, true);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+		    "PutFieldUnresolvedNullCheck(boolean)",
+		    (t instanceof NullPointerException));
+	    }
+	}
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedByte pf = null;
+	    try {
+		doResolvedByte(pf, (byte)50);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedNullCheck(byte)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedByte pf = null;
+	    try {
+		doUnresolvedByte(pf, (byte)53);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedNullCheck(byte)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedChar pf = null;
+	    try {
+		doResolvedChar(pf, 'B');
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedNullCheck(char)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedChar pf = null;
+	    try {
+		doUnresolvedChar(pf, 'C');
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedNullCheck(char)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedShort pf = null;
+	    try {
+		doResolvedShort(pf, (short)60);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedNullCheck(short)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedShort pf = null;
+	    try {
+		doUnresolvedShort(pf, (short)600);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedNullCheck(short)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedInt pf = null;
+	    try {
+		doResolvedInt(pf, 70);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedNullCheck(int)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedInt pf = null;
+	    try {
+		doUnresolvedInt(pf, 700);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedNullCheck(int)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedFloat pf = null;
+	    try {
+		doResolvedFloat(pf, 80.0f);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedNullCheck(float)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedFloat pf = null;
+	    try {
+		doUnresolvedFloat(pf, 800.0f);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedNullCheck(float)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedLong pf = null;
+	    try {
+		doResolvedLong(pf, 90l);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+	            "PutFieldResolvedNullCheck(long)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedLong pf = null;
+	    try {
+		doUnresolvedLong(pf, 900l);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+	            "PutFieldUnresolvedNullCheck(long)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedDouble pf = null;
+	    try {
+		doResolvedDouble(pf, 100.0d);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+	            "PutFieldResolvedNullCheck(double)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedDouble pf = null;
+	    try {
+		doUnresolvedDouble(pf, 1000.0d);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+		    "PutFieldUnresolvedNullCheck(double)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            Object o2 = new Object();
+            DoPutFieldResolvedObject pf = null;
+	    try {
+		doResolvedObject(pf, o2);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedNullCheck(object)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            Object o3 = new Object();
+            DoPutFieldUnresolvedObject pf = null;
+	    try {
+		doUnresolvedObject(pf, o3);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedNullCheck(object)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+	////////////////////////////////////////////////////////////////
+	// Volatile Set w/ NULL Check:
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedBooleanVolatile pf = null;
+	    try {
+		doResolvedBooleanVolatile(pf, true);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedVolatileNullCheck(boolean)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedBooleanVolatile pf = null;
+	    try {
+		doUnresolvedBooleanVolatile(pf, true);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedVolatileNullCheck(boolean)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedByteVolatile pf = null;
+	    try {
+		doResolvedByteVolatile(pf, (byte)50);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedVolatileNullCheck(byte)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedByteVolatile pf = null;
+	    try {
+		doUnresolvedByteVolatile(pf, (byte)53);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedVolatileNullCheck(byte)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedCharVolatile pf = null;
+	    try {
+		doResolvedCharVolatile(pf, 'B');
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedVolatileNullCheck(char)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedCharVolatile pf = null;
+	    try {
+		doUnresolvedCharVolatile(pf, 'C');
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedVolatileNullCheck(char)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedShortVolatile pf = null;
+	    try {
+		doResolvedShortVolatile(pf, (short)60);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedVolatileNullCheck(short)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedShortVolatile pf = null;
+	    try {
+		doUnresolvedShortVolatile(pf, (short)600);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedVolatileNullCheck(short)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedIntVolatile pf = null;
+	    try {
+		doResolvedIntVolatile(pf, 70);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedVolatileNullCheck(int)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedIntVolatile pf = null;
+	    try {
+		doUnresolvedIntVolatile(pf, 700);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedVolatileNullCheck(int)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedFloatVolatile pf = null;
+	    try {
+		doResolvedFloatVolatile(pf, 80.0f);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                     "PutFieldResolvedVolatileNullCheck(float)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedFloatVolatile pf = null;
+	    try {
+		doUnresolvedFloatVolatile(pf, 800.0f);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedVolatileNullCheck(float)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedLongVolatile pf = null;
+	    try {
+		doResolvedLongVolatile(pf, 90l);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedVolatileNullCheck(long)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedLongVolatile pf = null;
+	    try {
+		doUnresolvedLongVolatile(pf, 900l);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedVolatileNullCheck(long)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            DoPutFieldResolvedDoubleVolatile pf = null;
+	    try {
+		doResolvedDoubleVolatile(pf, 100.0d);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedVolatileNullCheck(double)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            DoPutFieldUnresolvedDoubleVolatile pf = null;
+	    try {
+		doUnresolvedDoubleVolatile(pf, 1000.0d);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedVolatileNullCheck(double)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved putfield:
+        {
+            Object o2 = new Object();
+            DoPutFieldResolvedObjectVolatile pf = null;
+	    try {
+		doResolvedObjectVolatile(pf, o2);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldResolvedVolatileNullCheck(object)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved putfield:
+        {
+            Object o3 = new Object();
+            DoPutFieldUnresolvedObjectVolatile pf = null;
+	    try {
+		doUnresolvedObjectVolatile(pf, o3);
+	    } catch (Throwable t) {
+                DoResolveAndClinit.reportPassIf(
+                    "PutFieldUnresolvedVolatileNullCheck(object)",
+		    (t instanceof NullPointerException));
+	    }
         }
 
     }
@@ -2905,6 +4909,88 @@ class DoPutField
     doUnresolvedObject(DoPutFieldUnresolvedObject pf, Object value) {
         pf.field = value;
     }
+
+    // Volatile Set:
+    static void
+    doResolvedBooleanVolatile(DoPutFieldResolvedBooleanVolatile pf, boolean value) {
+        pf.field = value;
+    }
+    static void
+    doUnresolvedBooleanVolatile(DoPutFieldUnresolvedBooleanVolatile pf, boolean value) {
+        pf.field = value;
+    }
+
+    static void
+    doResolvedByteVolatile(DoPutFieldResolvedByteVolatile pf, byte value) {
+        pf.field = value;
+    }
+    static void
+    doUnresolvedByteVolatile(DoPutFieldUnresolvedByteVolatile pf, byte value) {
+        pf.field = value;
+    }
+
+    static void
+    doResolvedCharVolatile(DoPutFieldResolvedCharVolatile pf, char value) {
+        pf.field = value;
+    }
+    static void
+    doUnresolvedCharVolatile(DoPutFieldUnresolvedCharVolatile pf, char value) {
+        pf.field = value;
+    }
+
+    static void
+    doResolvedShortVolatile(DoPutFieldResolvedShortVolatile pf, short value) {
+        pf.field = value;
+    }
+    static void
+    doUnresolvedShortVolatile(DoPutFieldUnresolvedShortVolatile pf, short value) {
+        pf.field = value;
+    }
+
+    static void
+    doResolvedIntVolatile(DoPutFieldResolvedIntVolatile pf, int value) {
+        pf.field = value;
+    }
+    static void
+    doUnresolvedIntVolatile(DoPutFieldUnresolvedIntVolatile pf, int value) {
+        pf.field = value;
+    }
+
+    static void
+    doResolvedFloatVolatile(DoPutFieldResolvedFloatVolatile pf, float value) {
+        pf.field = value;
+    }
+    static void
+    doUnresolvedFloatVolatile(DoPutFieldUnresolvedFloatVolatile pf, float value) {
+        pf.field = value;
+    }
+
+    static void
+    doResolvedLongVolatile(DoPutFieldResolvedLongVolatile pf, long value) {
+        pf.field = value;
+    }
+    static void
+    doUnresolvedLongVolatile(DoPutFieldUnresolvedLongVolatile pf, long value) {
+        pf.field = value;
+    }
+
+    static void
+    doResolvedDoubleVolatile(DoPutFieldResolvedDoubleVolatile pf, double value) {
+        pf.field = value;
+    }
+    static void
+    doUnresolvedDoubleVolatile(DoPutFieldUnresolvedDoubleVolatile pf, double value) {
+        pf.field = value;
+    }
+
+    static void
+    doResolvedObjectVolatile(DoPutFieldResolvedObjectVolatile pf, Object value) {
+        pf.field = value;
+    }
+    static void
+    doUnresolvedObjectVolatile(DoPutFieldUnresolvedObjectVolatile pf, Object value) {
+        pf.field = value;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2983,6 +5069,81 @@ class DoGetFieldUnresolvedObject {
     public Object field = null;
 }
 
+// Volatile Set:
+
+/* Volatile Boolean: */
+class DoGetFieldResolvedBooleanVolatile {
+    public volatile boolean field = false;
+}
+class DoGetFieldUnresolvedBooleanVolatile {
+    public volatile boolean field = false;
+}
+
+/* Volatile Byte: */
+class DoGetFieldResolvedByteVolatile {
+    public volatile byte field = 0;
+}
+class DoGetFieldUnresolvedByteVolatile {
+    public volatile byte field = 0;
+}
+
+/* Volatile Char: */
+class DoGetFieldResolvedCharVolatile {
+    public volatile char field = '\0';
+}
+class DoGetFieldUnresolvedCharVolatile {
+    public volatile char field = '\0';
+}
+
+/* Volatile Short: */
+class DoGetFieldResolvedShortVolatile {
+    public volatile short field = 0;
+}
+class DoGetFieldUnresolvedShortVolatile {
+    public volatile short field = 0;
+}
+
+/* Volatile Int: */
+class DoGetFieldResolvedIntVolatile {
+    public volatile int field = 0;
+}
+class DoGetFieldUnresolvedIntVolatile {
+    public volatile int field = 0;
+}
+
+/* Volatile Float: */
+class DoGetFieldResolvedFloatVolatile {
+    public volatile float field = 0.0f;
+}
+class DoGetFieldUnresolvedFloatVolatile {
+    public volatile float field = 0.0f;
+}
+
+/* Volatile Long: */
+class DoGetFieldResolvedLongVolatile {
+    public volatile long field = 0l;
+}
+class DoGetFieldUnresolvedLongVolatile {
+    public volatile long field = 0l;
+}
+
+/* Volatile Double: */
+class DoGetFieldResolvedDoubleVolatile {
+    public volatile double field = 0.0d;
+}
+class DoGetFieldUnresolvedDoubleVolatile {
+    public volatile double field = 0.0d;
+}
+
+/* Volatile Object: */
+class DoGetFieldResolvedObjectVolatile {
+    public volatile Object field = null;
+}
+class DoGetFieldUnresolvedObjectVolatile {
+    public volatile Object field = null;
+}
+
+
 class DoGetField
 {
     static final String[] compileItems = {
@@ -3012,6 +5173,34 @@ class DoGetField
 
         "DoGetField.doResolvedObject(LDoGetFieldResolvedObject;)Ljava/lang/Object;",
         "DoGetField.doUnresolvedObject(LDoGetFieldUnresolvedObject;)Ljava/lang/Object;",
+
+	// Volatile Set:
+        "DoGetField.doResolvedBooleanVolatile(LDoGetFieldResolvedBooleanVolatile;)Z",
+        "DoGetField.doUnresolvedBooleanVolatile(LDoGetFieldUnresolvedBooleanVolatile;)Z",
+
+        "DoGetField.doResolvedByteVolatile(LDoGetFieldResolvedByteVolatile;)B",
+        "DoGetField.doUnresolvedByteVolatile(LDoGetFieldUnresolvedByteVolatile;)B",
+
+        "DoGetField.doResolvedCharVolatile(LDoGetFieldResolvedCharVolatile;)C",
+        "DoGetField.doUnresolvedCharVolatile(LDoGetFieldUnresolvedCharVolatile;)C",
+
+        "DoGetField.doResolvedShortVolatile(LDoGetFieldResolvedShortVolatile;)S",
+        "DoGetField.doUnresolvedShortVolatile(LDoGetFieldUnresolvedShortVolatile;)S",
+
+        "DoGetField.doResolvedIntVolatile(LDoGetFieldResolvedIntVolatile;)I",
+        "DoGetField.doUnresolvedIntVolatile(LDoGetFieldUnresolvedIntVolatile;)I",
+
+        "DoGetField.doResolvedFloatVolatile(LDoGetFieldResolvedFloatVolatile;)F",
+        "DoGetField.doUnresolvedFloatVolatile(LDoGetFieldUnresolvedFloatVolatile;)F",
+
+        "DoGetField.doResolvedLongVolatile(LDoGetFieldResolvedLongVolatile;)J",
+        "DoGetField.doUnresolvedLongVolatile(LDoGetFieldUnresolvedLongVolatile;)J",
+
+        "DoGetField.doResolvedDoubleVolatile(LDoGetFieldResolvedDoubleVolatile;)D",
+        "DoGetField.doUnresolvedDoubleVolatile(LDoGetFieldUnresolvedDoubleVolatile;)D",
+
+        "DoGetField.doResolvedObjectVolatile(LDoGetFieldResolvedObjectVolatile;)Ljava/lang/Object;",
+        "DoGetField.doUnresolvedObjectVolatile(LDoGetFieldUnresolvedObjectVolatile;)Ljava/lang/Object;",
     };
 
     public static void doSetup() {
@@ -3053,11 +5242,55 @@ class DoGetField
             // Resolve it:
             Object o1 = new DoGetFieldResolvedObject().field;
         }
+
+	// Volatile Set:
+        {
+            // Resolve it:
+            boolean i = new DoGetFieldResolvedBooleanVolatile().field;
+        }
+        {
+            // Resolve it:
+            byte i = new DoGetFieldResolvedByteVolatile().field;
+        }
+        {
+            // Resolve it:
+            char i = new DoGetFieldResolvedCharVolatile().field;
+        }
+        {
+            // Resolve it:
+            short i = new DoGetFieldResolvedShortVolatile().field;
+        }
+        {
+            // Resolve it:
+            int i = new DoGetFieldResolvedIntVolatile().field;
+        }
+        {
+            // Resolve it:
+            float i = new DoGetFieldResolvedFloatVolatile().field;
+        }
+        {
+            // Resolve it:
+            long i = new DoGetFieldResolvedLongVolatile().field;
+        }
+        {
+            // Resolve it:
+            double i = new DoGetFieldResolvedDoubleVolatile().field;
+        }
+        {
+            // Resolve it:
+            Object o1 = new DoGetFieldResolvedObjectVolatile().field;
+        }
+
+
         // Do compilation:
         CompilerTest.main(compileItems);
     }
 
     public static void doTest() {
+
+	//////////////////////////////////////////////////////////////////////
+	// Non-Volatile Set:
+	//
 
         // 1. Resolved getfield:
         {
@@ -3065,7 +5298,7 @@ class DoGetField
             gf.field = true;
             boolean value = doResolvedBoolean(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldResolved(boolean)", value == true);
+                "GetFieldResolved(boolean)", value, true);
         }
         // 2. Unresolved getfield:
         {
@@ -3073,7 +5306,7 @@ class DoGetField
             gf.field = true;
             boolean value = doUnresolvedBoolean(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldUnresolved(boolean)", value == true);
+                "GetFieldUnresolved(boolean)", value, true);
         }
 
         // 1. Resolved getfield:
@@ -3082,7 +5315,7 @@ class DoGetField
             gf.field = (byte)50;
             byte value = doResolvedByte(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldResolved(byte)", value == (byte)50);
+                "GetFieldResolved(byte)", value, (byte)50);
         }
         // 2. Unresolved getfield:
         {
@@ -3090,7 +5323,7 @@ class DoGetField
             gf.field = (byte)53;
             byte value = doUnresolvedByte(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldUnresolved(byte)", value == (byte)53);
+                "GetFieldUnresolved(byte)", value, (byte)53);
         }
 
         // 1. Resolved getfield:
@@ -3099,7 +5332,7 @@ class DoGetField
             gf.field = 'B';
             char value = doResolvedChar(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldResolved(char)", value == 'B');
+                "GetFieldResolved(char)", value, 'B');
         }
         // 2. Unresolved getfield:
         {
@@ -3107,7 +5340,7 @@ class DoGetField
             gf.field = 'C';
             char value = doUnresolvedChar(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldUnresolved(char)", value == 'C');
+                "GetFieldUnresolved(char)", value, 'C');
         }
 
         // 1. Resolved getfield:
@@ -3116,7 +5349,7 @@ class DoGetField
             gf.field = (short)60;
             short value = doResolvedShort(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldResolved(short)", value == (short)60);
+                "GetFieldResolved(short)", value, (short)60);
         }
         // 2. Unresolved getfield:
         {
@@ -3124,7 +5357,7 @@ class DoGetField
             gf.field = (short)600;
             short value = doUnresolvedShort(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldUnresolved(short)", value == (short)600);
+                "GetFieldUnresolved(short)", value, (short)600);
         }
 
         // 1. Resolved getfield:
@@ -3133,7 +5366,7 @@ class DoGetField
             gf.field = 70;
             int value = doResolvedInt(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldResolved(int)", value == 70);
+                "GetFieldResolved(int)", value, 70);
         }
         // 2. Unresolved getfield:
         {
@@ -3141,7 +5374,7 @@ class DoGetField
             gf.field = 700;
             int value = doUnresolvedInt(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldUnresolved(int)", value == 700);
+                "GetFieldUnresolved(int)", value, 700);
         }
 
         // 1. Resolved getfield:
@@ -3150,7 +5383,7 @@ class DoGetField
             gf.field = 80.0f;
             float value = doResolvedFloat(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldResolved(float)", value == 80.0f);
+                "GetFieldResolved(float)", value, 80.0f);
         }
         // 2. Unresolved getfield:
         {
@@ -3158,7 +5391,7 @@ class DoGetField
             gf.field = 800.0f;
             float value = doUnresolvedFloat(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldUnresolved(float)", value == 800.0f);
+                "GetFieldUnresolved(float)", value, 800.0f);
         }
 
         // 1. Resolved getfield:
@@ -3167,7 +5400,7 @@ class DoGetField
             gf.field = 90l;
             long value = doResolvedLong(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldResolved(long)", value == 90l);
+                "GetFieldResolved(long)", value, 90l);
         }
         // 2. Unresolved getfield:
         {
@@ -3175,7 +5408,7 @@ class DoGetField
             gf.field = 900l;
             long value = doUnresolvedLong(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldUnresolved(long)", value == 900l);
+                "GetFieldUnresolved(long)", value, 900l);
         }
 
         // 1. Resolved getfield:
@@ -3184,7 +5417,7 @@ class DoGetField
             gf.field = 100.0d;
             double value = doResolvedDouble(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldResolved(double)", value == 100.0d);
+                "GetFieldResolved(double)", value, 100.0d);
         }
         // 2. Unresolved getfield:
         {
@@ -3192,7 +5425,7 @@ class DoGetField
             gf.field = 1000.0d;
             double value = doUnresolvedDouble(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldUnresolved(double)", value == 1000.0d);
+                "GetFieldUnresolved(double)", value, 1000.0d);
         }
 
         // 1. Resolved getfield:
@@ -3202,7 +5435,7 @@ class DoGetField
             gf.field = o2;
             Object value = doResolvedObject(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldResolved(object)", value == o2);
+                "GetFieldResolved(object)", value, o2);
         }
         // 2. Unresolved getfield:
         {
@@ -3211,7 +5444,588 @@ class DoGetField
             gf.field = o3;
             Object value = doUnresolvedObject(gf);
             DoResolveAndClinit.reportPassIf(
-                "GetFieldUnresolved(object)", value == o3);
+                "GetFieldUnresolved(object)", value, o3);
+        }
+
+	//////////////////////////////////////////////////////////////////////
+	// Volatile Set:
+	//
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedBooleanVolatile gf = new DoGetFieldResolvedBooleanVolatile();
+            gf.field = true;
+            boolean value = doResolvedBooleanVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldResolvedVolatile(boolean)", value, true);
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedBooleanVolatile gf = new DoGetFieldUnresolvedBooleanVolatile();
+            gf.field = true;
+            boolean value = doUnresolvedBooleanVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldUnresolvedVolatile(boolean)", value, true);
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedByteVolatile gf = new DoGetFieldResolvedByteVolatile();
+            gf.field = (byte)50;
+            byte value = doResolvedByteVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldResolvedVolatile(byte)", value, (byte)50);
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedByteVolatile gf = new DoGetFieldUnresolvedByteVolatile();
+            gf.field = (byte)53;
+            byte value = doUnresolvedByteVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldUnresolvedVolatile(byte)", value, (byte)53);
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedCharVolatile gf = new DoGetFieldResolvedCharVolatile();
+            gf.field = 'B';
+            char value = doResolvedCharVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldResolvedVolatile(char)", value, 'B');
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedCharVolatile gf = new DoGetFieldUnresolvedCharVolatile();
+            gf.field = 'C';
+            char value = doUnresolvedCharVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldUnresolvedVolatile(char)", value, 'C');
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedShortVolatile gf = new DoGetFieldResolvedShortVolatile();
+            gf.field = (short)60;
+            short value = doResolvedShortVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldResolvedVolatile(short)", value, (short)60);
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedShortVolatile gf = new DoGetFieldUnresolvedShortVolatile();
+            gf.field = (short)600;
+            short value = doUnresolvedShortVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldUnresolvedVolatile(short)", value, (short)600);
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedIntVolatile gf = new DoGetFieldResolvedIntVolatile();
+            gf.field = 70;
+            int value = doResolvedIntVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldResolvedVolatile(int)", value, 70);
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedIntVolatile gf = new DoGetFieldUnresolvedIntVolatile();
+            gf.field = 700;
+            int value = doUnresolvedIntVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldUnresolvedVolatile(int)", value, 700);
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedFloatVolatile gf = new DoGetFieldResolvedFloatVolatile();
+            gf.field = 80.0f;
+            float value = doResolvedFloatVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldResolvedVolatile(float)", value, 80.0f);
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedFloatVolatile gf = new DoGetFieldUnresolvedFloatVolatile();
+            gf.field = 800.0f;
+            float value = doUnresolvedFloatVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldUnresolvedVolatile(float)", value, 800.0f);
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedLongVolatile gf = new DoGetFieldResolvedLongVolatile();
+            gf.field = 90l;
+            long value = doResolvedLongVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldResolvedVolatile(long)", value, 90l);
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedLongVolatile gf = new DoGetFieldUnresolvedLongVolatile();
+            gf.field = 900l;
+            long value = doUnresolvedLongVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldUnresolvedVolatile(long)", value, 900l);
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedDoubleVolatile gf = new DoGetFieldResolvedDoubleVolatile();
+            gf.field = 100.0d;
+            double value = doResolvedDoubleVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldResolvedVolatile(double)", value, 100.0d);
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedDoubleVolatile gf = new DoGetFieldUnresolvedDoubleVolatile();
+            gf.field = 1000.0d;
+            double value = doUnresolvedDoubleVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldUnresolvedVolatile(double)", value, 1000.0d);
+        }
+
+        // 1. Resolved getfield:
+        {
+            Object o2 = new Object();
+            DoGetFieldResolvedObjectVolatile gf = new DoGetFieldResolvedObjectVolatile();
+            gf.field = o2;
+            Object value = doResolvedObjectVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldResolvedVolatile(object)", value, o2);
+        }
+        // 2. Unresolved getfield:
+        {
+            Object o3 = new Object();
+            DoGetFieldUnresolvedObjectVolatile gf = new DoGetFieldUnresolvedObjectVolatile();
+            gf.field = o3;
+            Object value = doUnresolvedObjectVolatile(gf);
+            DoResolveAndClinit.reportPassIf(
+                "GetFieldUnresolvedVolatile(object)", value, o3);
+        }
+
+	//////////////////////////////////////////////////////////////////////
+	// Non-Volatile Set w/ Null Check:
+	//
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedBoolean gf = null;
+	    try {
+		boolean value = doResolvedBoolean(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolved(boolean)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedBoolean gf = null;
+	    try {
+		boolean value = doUnresolvedBoolean(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolved(boolean)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedByte gf = null;
+	    try {
+		byte value = doResolvedByte(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolved(byte)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedByte gf = null;
+	    try {
+		byte value = doUnresolvedByte(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolved(byte)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedChar gf = null;
+	    try {
+		char value = doResolvedChar(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolved(char)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedChar gf = null;
+	    try {
+		char value = doUnresolvedChar(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolved(char)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedShort gf = null;
+	    try {
+		short value = doResolvedShort(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolved(short)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedShort gf = null;
+	    try {
+		short value = doUnresolvedShort(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolved(short)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedInt gf = null;
+	    try {
+		int value = doResolvedInt(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolved(int)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedInt gf = null;
+	    try {
+		int value = doUnresolvedInt(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolved(int)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedFloat gf = null;
+	    try {
+		float value = doResolvedFloat(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolved(float)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedFloat gf = null;
+	    try {
+		float value = doUnresolvedFloat(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolved(float)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedLong gf = null;
+	    try {
+		long value = doResolvedLong(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolved(long)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedLong gf = null;
+	    try {
+		long value = doUnresolvedLong(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolved(long)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedDouble gf = null;
+	    try {
+		double value = doResolvedDouble(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolved(double)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedDouble gf = null;
+	    try {
+		double value = doUnresolvedDouble(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolved(double)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedObject gf = null;
+	    try {
+		Object value = doResolvedObject(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolved(object)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedObject gf = null;
+	    try {
+		Object value = doUnresolvedObject(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolved(object)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+	//////////////////////////////////////////////////////////////////////
+	// Volatile Set w/ Null Check:
+	//
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedBooleanVolatile gf = null;
+	    try {
+		boolean value = doResolvedBooleanVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolvedVolatile(boolean)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedBooleanVolatile gf = null;
+	    try {
+		boolean value = doUnresolvedBooleanVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolvedVolatile(boolean)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedByteVolatile gf = null;
+	    try {
+		byte value = doResolvedByteVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolvedVolatile(byte)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedByteVolatile gf = null;
+	    try {
+		byte value = doUnresolvedByteVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolvedVolatile(byte)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedCharVolatile gf = null;
+	    try {
+		char value = doResolvedCharVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolvedVolatile(char)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedCharVolatile gf = null;
+	    try {
+		char value = doUnresolvedCharVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolvedVolatile(char)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedShortVolatile gf = null;
+	    try {
+		short value = doResolvedShortVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolvedVolatile(short)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedShortVolatile gf = null;
+	    try {
+		short value = doUnresolvedShortVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolvedVolatile(short)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedIntVolatile gf = null;
+	    try {
+		int value = doResolvedIntVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolvedVolatile(int)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedIntVolatile gf = null;
+	    try {
+		int value = doUnresolvedIntVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolvedVolatile(int)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedFloatVolatile gf = null;
+	    try {
+		float value = doResolvedFloatVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolvedVolatile(float)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedFloatVolatile gf = null;
+	    try {
+		float value = doUnresolvedFloatVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolvedVolatile(float)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedLongVolatile gf = null;
+	    try {
+		long value = doResolvedLongVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolvedVolatile(long)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedLongVolatile gf = null;
+	    try {
+		long value = doUnresolvedLongVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolvedVolatile(long)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedDoubleVolatile gf = null;
+	    try {
+		double value = doResolvedDoubleVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolvedVolatile(double)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedDoubleVolatile gf = null;
+	    try {
+		double value = doUnresolvedDoubleVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolvedVolatile(double)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+
+        // 1. Resolved getfield:
+        {
+            DoGetFieldResolvedObjectVolatile gf = null;
+	    try {
+		Object value = doResolvedObjectVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldResolvedVolatile(object)",
+		    (t instanceof NullPointerException));
+	    }
+        }
+        // 2. Unresolved getfield:
+        {
+            DoGetFieldUnresolvedObjectVolatile gf = null;
+	    try {
+		Object value = doUnresolvedObjectVolatile(gf);
+	    } catch (Throwable t) {
+		DoResolveAndClinit.reportPassIf(
+                    "GetFieldUnresolvedVolatile(object)",
+		    (t instanceof NullPointerException));
+	    }
         }
 
     }
@@ -3276,6 +6090,70 @@ class DoGetField
         return gf.field;
     }
     static Object doUnresolvedObject(DoGetFieldUnresolvedObject gf) {
+        return gf.field;
+    }
+
+    // Volatile Set:
+    static boolean doResolvedBooleanVolatile(DoGetFieldResolvedBooleanVolatile gf) {
+        return gf.field;
+    }
+    static boolean doUnresolvedBooleanVolatile(DoGetFieldUnresolvedBooleanVolatile gf) {
+        return gf.field;
+    }
+
+    static byte doResolvedByteVolatile(DoGetFieldResolvedByteVolatile gf) {
+        return gf.field;
+    }
+    static byte doUnresolvedByteVolatile(DoGetFieldUnresolvedByteVolatile gf) {
+        return gf.field;
+    }
+
+    static char doResolvedCharVolatile(DoGetFieldResolvedCharVolatile gf) {
+        return gf.field;
+    }
+    static char doUnresolvedCharVolatile(DoGetFieldUnresolvedCharVolatile gf) {
+        return gf.field;
+    }
+
+    static short doResolvedShortVolatile(DoGetFieldResolvedShortVolatile gf) {
+        return gf.field;
+    }
+    static short doUnresolvedShortVolatile(DoGetFieldUnresolvedShortVolatile gf) {
+        return gf.field;
+    }
+
+    static int doResolvedIntVolatile(DoGetFieldResolvedIntVolatile gf) {
+        return gf.field;
+    }
+    static int doUnresolvedIntVolatile(DoGetFieldUnresolvedIntVolatile gf) {
+        return gf.field;
+    }
+
+    static float doResolvedFloatVolatile(DoGetFieldResolvedFloatVolatile gf) {
+        return gf.field;
+    }
+    static float doUnresolvedFloatVolatile(DoGetFieldUnresolvedFloatVolatile gf) {
+        return gf.field;
+    }
+
+    static long doResolvedLongVolatile(DoGetFieldResolvedLongVolatile gf) {
+        return gf.field;
+    }
+    static long doUnresolvedLongVolatile(DoGetFieldUnresolvedLongVolatile gf) {
+        return gf.field;
+    }
+
+    static double doResolvedDoubleVolatile(DoGetFieldResolvedDoubleVolatile gf) {
+        return gf.field;
+    }
+    static double doUnresolvedDoubleVolatile(DoGetFieldUnresolvedDoubleVolatile gf) {
+        return gf.field;
+    }
+
+    static Object doResolvedObjectVolatile(DoGetFieldResolvedObjectVolatile gf) {
+        return gf.field;
+    }
+    static Object doUnresolvedObjectVolatile(DoGetFieldUnresolvedObjectVolatile gf) {
         return gf.field;
     }
 }
