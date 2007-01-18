@@ -1482,6 +1482,21 @@ public abstract class Installer {
         HttpUrl parsedUrl = new HttpUrl(url);
         String path = parsedUrl.path;
 
+        /*
+           IMPL_NOTE: In current implementation of HttpUrl
+               the absolute path always begins with '/' which
+               would make getUrlPath() produce the win32
+               paths in the form "/C:/path/to/file" that is
+               rejected by the filesystem.
+               The initial '/' in 'path' is currently the only
+               flag which allows to distinguish between absolute
+               and relative url.
+               Probably there should be a special flag in HttpUrl
+               to distinguish between absolute and relative urls.
+               Moreover it seems necessary to have platform-dependent
+               conversion procedure from url path to filesystem path.
+        */
+
         if (path != null) {
             if (path.charAt(0) == '/') {
                 path = path.substring (1, path.length ());
