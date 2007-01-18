@@ -362,7 +362,7 @@ ifeq ($(CVM_INCLUDE_MIDP),true)
 endif # CVM_INCLUDE_MIDP
 
 # need setup "all" rule before pulling in any JSR makefiles with rules
-all:: printconfig $(J2ME_CLASSLIB) tools
+all:: printconfig checkconfig $(J2ME_CLASSLIB) tools
 
 # Include TARGET top.mk
 include ../$(TARGET_OS)/top.mk

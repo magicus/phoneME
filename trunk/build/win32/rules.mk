@@ -34,10 +34,48 @@ endif
 # Windows specific make rules
 printconfig::
 	@echo "SDK_DIR             = $(call CHKWINPATH,$(SDK_DIR))"
-	@echo "VC_PATH		   = `ls -d \"$(VC_PATH)\" 2>&1`"
+	@echo "VC_PATH	           = `ls -d \"$(VC_PATH)\" 2>&1`"
 	@echo "PLATFORM_SDK_DIR    = $(call CHKWINPATH,$(PLATFORM_SDK_DIR))"
 	@echo "PLATFORM_TOOLS_PATH = `ls -d \"$(PLATFORM_TOOLS_PATH)\" 2>&1`"
 	@echo "COMMON_TOOLS_PATH   = `ls -d \"$(COMMON_TOOLS_PATH)\" 2>&1`"
+
+#
+# Check for compiler compatiblity
+#
+
+# Get the supported CPU from the compiler
+COMPILER_CPU0 := $(shell  \
+	$(TARGET_CC) 2>&1 | \
+	grep " for " | \
+	sed -e 's/.* for \(.*\)/\1/')
+
+# Translate to match the CPU that we would expect
+COMPILER_CPU := $(subst 80x86,x86,$(COMPILER_CPU0))
+COMPILER_CPU := $(subst ARM,arm,$(COMPILER_CPU))
+COMPILER_CPU := $(subst PowerPC,powerpc,$(COMPILER_CPU))
+COMPILER_CPU := $(patsubst MIPS%,mips,$(COMPILER_CPU))
+
+# Make sure the compiler supports the TARGET_CPU_FAMILY
+ifneq ($(findstring $(TARGET_CPU_FAMILY),$(COMPILER_CPU)),$(TARGET_CPU_FAMILY))
+CVM_COMPILER_INCOMPATIBLE ?= true
+endif
+checkconfig::
+ifeq ($(CVM_COMPILER_INCOMPATIBLE),true)
+	@echo "Target tools not properly specified. The target compiler"
+	@echo "specified by TARGET_CC does not agree with the target cpu. You"
+	@echo "probably need to fix TARGET_CC, SDK_DIR, VS_DIR, VC_PATH,"
+	@echo "PLATFORM, or PLATFORM_OS. Fix these in the GNUmakefile or on "
+	@echo "the make command line. If you want to turn off this check, set"
+	@echo "CVM_COMPILER_INCOMPATIBLE=false on the make command line"
+	@echo "or in the GNUmakefile""
+	@echo "   TARGET_CPU_FAMILY: $(TARGET_CPU_FAMILY)"
+	@echo "   TARGET_CC CPU:     $(COMPILER_CPU0)"
+	exit 2
+endif
+
+#
+# clean
+#
 
 clean:: win32-clean
 

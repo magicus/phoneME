@@ -110,6 +110,47 @@ endif
 	@echo "CCFLAGS_FDLIB  = $(CCFLAGS_FDLIB)"
 	@echo "JAVAC_OPTIONS  = $(JAVAC_OPTIONS)"
 	@echo "CVM_DEFINES    = $(CVM_DEFINES)"
+
+#
+# Determine if the target compiler is really meant for the device
+# we are targetting as specified by $(TARGET_CPU_FAMILY) and $(TARGET_OS),
+# which are determined by the build directory.
+#
+# This compiler check is really gcc specific, and relies on the -dumpmachine
+# output. For other platforms you can override them. Simply setting
+# CVM_COMPILER_INCOMPATIBLE=false in a porting makefile, including
+# in the GNUmakefile, will prevent this check and avoid any incorrect
+# error reporting.
+#
+
+ifeq ($(CVM_DISABLE_COMPILER_CHECK),true)
+CVM_COMPILER_INCOMPATIBLE ?= false
+else
+CVM_COMPILER_TARGET ?= $(shell $(TARGET_CC) -dumpmachine 2>&1)
+# tranform things like i686 into x86
+CVM_COMPILER_TARGET := \
+    $(shell echo $(CVM_COMPILER_TARGET) | sed -e 's/.*86\(-.*-.*\)/x86\1/')
+ifneq ($(findstring $(TARGET_OS),$(CVM_COMPILER_TARGET)),$(TARGET_OS))
+CVM_COMPILER_INCOMPATIBLE ?= true
+endif
+ifneq ($(findstring $(TARGET_CPU_FAMILY),$(CVM_COMPILER_TARGET)),$(TARGET_CPU_FAMILY))
+CVM_COMPILER_INCOMPATIBLE ?= true
+endif
+endif  # CVM_DISABLE_COMPILER_CHECK == false
+
+checkconfig::
+ifeq ($(CVM_COMPILER_INCOMPATIBLE),true)
+	@echo "Target tools not properly specified. The gcc -dumpmachine"
+	@echo "output does not agree with CVM_TARGET. The OS and CPU portions"
+	@echo "must match for compatibility. If this is a cross compile, you"
+	@echo "probably forgot to set CVM_TARGET_TOOLS_PREFIX. If you want to"
+	@echo "to turn off this check, set CVM_COMPILER_INCOMPATIBLE=false"
+	@echo "on the make command line or in the GNUmakefile"
+	@echo "   CVM_TARGET:      $(CVM_TARGET)"
+	@echo "   compiler target: $(CVM_COMPILER_TARGET)"
+	exit 2
+endif
+
 #########################
 # Compiling .java files.
 ##########################
