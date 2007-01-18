@@ -673,9 +673,6 @@ blitPTSrc888(Renderer *rdr, jint height) {
 
     jbyte *a, *am;
 
-    jint denom = rdr->_MAX_AA_ALPHA * 255;
-    jint denom2 = denom / 2;
-
     jint* paint = rdr->_paint;
 
     for (j = 0; j < height; j++) {
@@ -882,9 +879,6 @@ blitPTSrc565(Renderer *rdr, jint height) {
 
     jbyte *a, *am;
 
-    jint denom = rdr->_MAX_AA_ALPHA * 255;
-    jint denom2 = denom / 2;
-
     jint* paint = rdr->_paint;
 
     for (j = 0; j < height; j++) {
@@ -950,9 +944,6 @@ blitPTSrc8(Renderer *rdr, jint height) {
     jint aaAlphaShift = rdr->_AA_ALPHA_SHIFT;
 
     jbyte *a, *am;
-
-    jint denom = rdr->_MAX_AA_ALPHA * 255;
-    jint denom2 = denom / 2;
 
     jint* paint = (jint *)rdr->_paint;
 
