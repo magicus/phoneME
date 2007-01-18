@@ -31,6 +31,17 @@ JAVACALL_PLATFORM=win32
 include ../../utils/build/common.gmk
 
 
+# Extra settings for JSR 238 implementation
+
+# Avoiding using local digits in number formatting (required for TCK tests passing)
+#
+JSR_238_FORMATTER_DO_NOT_USE_NATIVE_DIGITS = TRUE
+
+# Placing negative sign after the number will cause TCK to fail
+#
+JSR_238_FORMATTER_NEGATIVE_SIGN_ALWAYS_FIRST = TRUE
+
+
 local_win32: $(JAVACALL_OUTPUT_LIB_DIR)/emulator.res $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
 
 vpath
@@ -89,7 +100,7 @@ PORTING_OBJECTS= \
 	mi18n_collation.obj \
 	mi18n_format.obj \
 	mi18n_resources.obj \
-	mi18n_common.obj
+	mi18n_locales.obj
 
 UTILITY_OBJECTS = \
         javautil_jad_parser.obj \
@@ -122,7 +133,6 @@ vpath %.obj $(JAVACALL_OUTPUT_OBJ_DIR)
 LOCAL_CFLAGS_debug = -Gm -GX -Zi -Od -D_DEBUG -D_MBCS -D_LIB -YX -FD -GZ -W3
 LOCAL_CFLAGS=-ML -GX -O2 -D_MBCS -D_LIB /YX -FD -W3  
 
-
 ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
     define fixcygpath_m
     echo $(1)
@@ -142,6 +152,14 @@ CPPFLAGS+= -I$(MIDP_IMPL_INCLUDE_DIR)
 CPPFLAGS+= $(addprefix -I, $(ADDITIONAL_INCLUDE_DIRS))
 CPPFLAGS+= -DWIN32
 CPPFLAGS+= $(HIDDEN_DEP_FEATURES_DEF)
+
+ifeq ($(JSR_238_FORMATTER_DO_NOT_USE_NATIVE_DIGITS), TRUE)
+CPPFLAGS += -DNOT_USE_NATIVE_DIGITS=1 
+endif
+
+ifeq ($(JSR_238_FORMATTER_NEGATIVE_SIGN_ALWAYS_FIRST), TRUE)
+CPPFLAGS += -DMINUS_ALWAYS_INFRONT=1 
+endif
 
 AR=lib.exe 
 ARFLAGS=-nologo -MACHINE:X86

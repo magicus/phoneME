@@ -27,7 +27,7 @@
 
 /**
  * @defgroup JSR238 JSR238 Mobile Internationalization API (MI18N)
- * @ingroup stack
+ * @ingroup MSA
  * 
  * Porting interface for native implementation Mobile Internationalization API.
  * 
@@ -59,21 +59,38 @@ extern "C" {
 /**
  * Gets the number of supported locales for data formatting.
  *
- * @return the number of supported locales or 0 if something is wrong.
+ * @param count_out pointer to integer that recieves
+ *					the number of supported locales
+ * @return JAVACALL_OK if all done successfuly, 
+ *         error code otherwise
  */
-int javacall_mi18n_get_format_locales_count();
+javacall_result javacall_mi18n_get_format_locales_count(/*OUT*/int* count_out);
 
 
 /**
- * Gets locale name for data formatting with the given index.
+ * Gets a locale name for formatter for the index.
  *
- * @param loc    buffer for the locale.
- * @param len    buffer length
- * @param index  index of the locale.
+ * @param locale_index  index of the locale.
+ * @param locale_name_out  buffer for the locale.
+ * @param plen	pointer to integer initially containing the buffer length
+ *				and receiving length of result string in javacall_utf16 including terminating zero, 
  * @return JAVACALL_OK if all done successfuly, 
- *         JAVACALL_FAIL otherwise
+ *         error code otherwise
+ * @note Zero index (neutral locale) must return name - empty string
  */
-javacall_result javacall_mi18n_get_format_locale(char* loc, int len, int index);
+javacall_result javacall_mi18n_get_format_locale_name(int locale_index, javacall_utf16* locale_name_out, /*IN|OUT*/int* plen);
+
+
+/**
+ * Gets locale index used for date/number formatting by the given miroedition.locale name.
+ *
+ * @param loc    utf16 string containing requested locale name or null for neutral locale
+ * @param index_out	pointer to integer receiving index of requested locale,
+ * @return JAVACALL_OK if all done successfuly, 
+ *         error code otherwise
+ * @note Neutral (empty string) locale must be supported. It must have index 0
+ */
+javacall_result javacall_mi18n_get_format_locale_index(const javacall_utf16* locale, /*OUT*/int* index_out);
 
 typedef enum {
 	SHORTDATE = 0,
@@ -82,7 +99,7 @@ typedef enum {
 	LONGTIME,
 	SHORTDATETIME,
 	LONGDATETIME	
-}JAVACALL_MI18N_DATETIME_FORMAT_STYLE;
+} JAVACALL_MI18N_DATETIME_FORMAT_STYLE;
 
 /**
  * Formats a date as a date string for a specified locale.
@@ -90,93 +107,131 @@ typedef enum {
  * @param locale index of locale to select.
  * @param year Year
  * @param month Month
- * @param dow Day of the week
+ * @param dow Day of the week - optional parameter can be ignored by implementation
  * @param dom Day of the month
  * @param hour Hours
  * @param min Minutes
  * @param sec Seconds
+ * @param style formatting style
  * @param buffer the buffer to store formatted  utf16 encoded string
- * @param buffer_len the length of buffer, in javacall_utf16 chars, to store string
- * @return the length, in javacall_utf16 chars, of formatted string or zero in case of error
- * @note If <code>buffer_len</code> is zero, the function returns the number 
- *       of javacall_utf16 characters required to hold the formatted currency string,
- *       and the buffer is not used
+ * @param plen	pointer to integer initially containing the buffer length in javacall_utf16 characters
+ *				and receiving length of result string in javacall_utf16 characters including terminating zero, 
+ * @return JAVACALL_OK if all done successfuly, 
+ *         error code otherwise
+ * @note If <code>plen</code> points to zero, the function returns the number 
+ *       of javacall_utf16 characters required to hold the formatted date/time string,
+ *       and the value of buffer is ignored
+ *       Not all date-time parameter shoud be filled in.
+ *       Pass zero if some parameters are not used for given formatting style.
  */
-int javacall_mi18n_format_date_time(int locale, int year, int month, 
-                                    int dow, int dom, 
+javacall_result javacall_mi18n_format_date_time(int locale,
+									int year, int month,int dow, int dom, 
                                     int hour, int min, int sec, 
-                                    int style, char* buffer, int buffer_len);
+                                    JAVACALL_MI18N_DATETIME_FORMAT_STYLE style,
+									javacall_utf16* buffer, /*IN|OUT*/int* plen);
+
+
+
+/**
+ * Convert double value to a null terminating ascii string containing only decimal digits,
+ * The position of the decimal point and the sign of value can be obtained from decimal and sign after the function call
+ * @param d				double to convert
+ * @param digits		number of digits to be stored
+ * @param decimal		pointer to stored decimal-point position 
+ * @param sign			pointer to stored sign indicator 
+ * @param pbuffer_out	pointer to variable that receves pointer to static buffer
+						used to keep each function call result
+ * @return JAVACALL_OK if all done successfuly, 
+ *         error code otherwise
+ */
+javacall_result javacall_mi18n_double_to_ascii(double d, int digits, int* decimal, int* sign, /*OUT*/char** pbuffer_out);
+
+
+/**
+ * Convert an unsigned long integer to an ascii string containing only decimal digits from '0' to '9'
+ * @param l unsigned long integer to convert
+ * @param pbuffer_out	pointer to variable that receves pointer to static buffer
+						used to keep each function call result
+ * @return JAVACALL_OK if all done successfuly, 
+ *         error code otherwise
+ */
+javacall_result javacall_mi18n_long_to_ascii(unsigned long l, /*OUT*/char** pbuffer_out);
+
+
 /**
  * Formats a number string for a specified locale.
  * 
  * @param locale index of locale to select.
- * @param s1 pointer to a null-terminated  utf16 encoded string containing
- *        the number string to format. 
- *        This string can only contain the following characters: 
- * <ul>
- *     <li> Characters '0' through '9'. 
- *     <li> One decimal point (dot) if the number is a floating-point value. 
- *     <li> A minus sign in the first character position if the number 
- *          is a negative value. 
- * </ul>
- *        All other characters are invalid.
- * @param decimals the number of fractional digits
- * @param res the buffer to store formatted  utf16 encoded string
- * @param res_len the length of buffer, in javacall_utf16 chars, to store string
- * @return the length, in javacall_utf16 chars, of formatted string  or zero in case of error
- * @note If <code>res_len</code> is zero, the function returns the number 
+ * @param s pointer to a null-terminated ASCII string containing meaning digits of the number string to format. 
+ *        This string can only contain the characters '0' through '9' All other characters are invalid.
+ * @param dotposition the virtual position of the decimal point in number string,
+ *        a zero or negative value means that decimal point lies to the left of the first digit
+ * @param isnegative non zero value if number is negtive or zero if positive
+ * @param decimals the number of fractional digits in result, if decimals is set to -1 number of decimal is taken by default for given locale
+ * @param res_buffer the buffer to store formatted  utf16 encoded string
+ * @param plen	pointer to integer initially containing the buffer length in javacall_utf16 characters
+ *				and receiving length of result string in javacall_utf16 characters including terminating zero, 
+ * @return JAVACALL_OK if all done successfuly, 
+ *         error code otherwise
+ * @note If <code>plen</code> points to zero, the function returns the number 
  *       of javacall_utf16 characters required to hold the formatted currency string,
  *       and the buffer is not used
  */
-int javacall_mi18n_format_number(int locale, char* s1, int decimals, char *res, int res_len);
+javacall_result javacall_mi18n_format_number(int locale, const char* s, int dotposition, int isnegative, int decimals,
+											 /*OUT*/javacall_utf16 *res_buffer, /*IN|OUT*/int* plen); 
+
 
 /**
  * Formats a number string as a currency string for a specified locale.
  * 
  * @param locale index of locale to select.
- * @param s1 pointer to a null-terminated  utf16 encoded string containing
- *        the number string to format. 
- *        This string can only contain the following characters: 
- * <ul>
- *     <li> Characters '0' through '9'. 
- *     <li> One decimal point (dot) if the number is a floating-point value. 
- *     <li> A minus sign in the first character position if the number 
- *          is a negative value. 
- * </ul>
+ * @param s pointer to a null-terminated ASCII string containing meaning digits of the number string to format. 
+ *        This string can only contain the digits.
  *        All other characters are invalid.
- * @param s2  the ISO 4217 currency code to use (null-terminated utf16 encoded string)
- * @param res the buffer to store formatted  utf16 encoded string
- * @param res_len the length of buffer, in javacall_utf16 chars, to store string
- * @return the length, in javacall_utf16 chars, of formatted string or zero in case of error
- * @note If <code>res_len</code> is zero, the function returns the number 
+ * @param code  the ISO 4217 currency code to use (null-terminated utf16 encoded string)
+ * @param dotposition the virtual position of the decimal point in number string,
+ *        a zero or negative value means that decimal point lies to the left of the first digit
+ * @param isnegative non zero value if number is negtive or zero if positive
+ * @param res_buffer the buffer to store formatted  utf16 encoded string
+
+ * @param plen	pointer to integer initially containing the buffer length in javacall_utf16 characters
+ *				and receiving length of result string in javacall_utf16 characters including terminating zero, 
+ * @return JAVACALL_OK if all done successfuly, 
+ *         error code otherwise
+ * @note If <code>plen</code> points to zero, the function returns the number 
  *       of javacall_utf16 characters required to hold the formatted currency string,
  *       and the buffer is not used
- */
-int javacall_mi18n_format_currency(int locale, char* s1, char* s2, char *res, int res_len);
+ **/
+javacall_result javacall_mi18n_format_currency(int locale, const char* s, int dotposition, int isnegative,
+											   const javacall_utf16 *code,
+											   /*OUT*/javacall_utf16 *res_buffer, /*IN|OUT*/int* plen);
+
 
 /**
  * Formats a number string as a percentage string customized for a specified locale.
  * 
- * @param locale_index index of locale to select.
- * @param s1 pointer to a null-terminated  utf16 encoded string containing
- *        the number string to format. 
- *        This string can only contain the following characters: 
- * <ul>
- *     <li> Characters '0' through '9'. 
- *     <li> One decimal point (dot) if the number is a floating-point value. 
- *     <li> A minus sign in the first character position if the number 
- *          is a negative value. 
- * </ul>
+ * @param locale index of locale to select.
+ * @param s pointer to a null-terminated ASCII string containing meaning digits of the number string to format. 
+ *        This string can only contain the digits.
  *        All other characters are invalid.
- * @param decimals the number of fractional digits
- * @param res the buffer to store formatted utf16 encoded string 
- * @param res_len the length of buffer, in javacall_utf16 chars, to store string
- * @return the length, in javacall_utf16 chars, of formatted string or zero in case of error
- * @note If <code>res_len</code> is zero, the function returns the number 
- *       of javacall_utf16 characters required to hold the formatted currency string,
+ * @param dotposition the virtual position of the decimal point in number string,
+ *        a zero or negative value means that decimal point lies to the left of the first digit
+ * @param isnegative non zero value if number is negtive or zero if positive
+ * @param decimals the number of fractional digits in result, if decimals is set to -1 number of decimal is taken by default for given locale
+ * @param res_buffer the buffer to store formatted  utf16 encoded string
+ * @param buffer_len the length of buffer, in javacall_utf16 chars, to store string
+ * @return the length, in javacall_utf16 chars including terminating zero of formatted string or -1 in case of error
+ * @return JAVACALL_OK if all done successfuly, 
+ *         error code otherwise
+ * @note If <code>plen</code> points to zero, the function returns the number 
+ *       of javacall_utf16 characters required to hold the formatted number string,
  *       and the buffer is not used
+ *		 This function should not perform any rounding operations with number constaining in input string s,
+ *		 all such operation must be copleted before function call when s is formed.
+ *       All spare digits must be truncated if needed
  */
-int javacall_mi18n_format_percentage(int locale_index, char* s1, int decimals, char* res, int res_len);
+javacall_result javacall_mi18n_format_percentage(int locale, const char* s, int dotposition, int isnegative, int decimals,
+												 /*OUT*/javacall_utf16 *res_buffer, /*IN|OUT*/int* plen);
 
 /** @} */
 

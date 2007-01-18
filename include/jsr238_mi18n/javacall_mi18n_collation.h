@@ -26,7 +26,7 @@
 #define __javacall_mi18n_collation_h
 /**
  * @defgroup JSR238 JSR238 Mobile Internationalization API (MI18N)
- * @ingroup stack
+ * @ingroup MSA
  * 
  * Porting interface for native implementation Mobile Internationalization API.
  * 
@@ -45,6 +45,9 @@ extern "C" {
 #endif
 
 #include "javacall_defs.h" 
+
+#define NEUTRAL_LOCALE_INDEX 0
+#define COMPARE_ERROR -1000
 
 /**
  * @defgroup jsrMandatoryCollation Low-level collation porting API
@@ -80,36 +83,68 @@ extern "C" {
 
 /**
  * Gets the number of supported locales for string collation.
- *
- * @return the number of supported locales or 0 if something is wrong.
+ * @param count_out pointer to integer that recieves
+ *					the number of supported locales
+ * @return JAVACALL_OK if all done successfuly, 
+ *         error code otherwise
  */
-int javacall_mi18n_get_collation_locales_count();
+javacall_result javacall_mi18n_get_collation_locales_count(/*OUT*/int* count_out);
+
 
 /**
- * Gets a locale name for string collation for the index.
+ * Gets a locale name for collation for the index.
  *
- * @param loc    buffer for the locale.
- * @param len    buffer length
- * @param index  index of the locale.
+ * @param locale_index  index of the locale.
+ * @param locale_name_out  buffer for the locale.
+ * @param plen	pointer to integer initially containing the buffer length
+ *				and receiving length of result string in wchars including terminating zero, 
  * @return JAVACALL_OK if all done successfuly, 
- *         JAVACALL_FAIL otherwise
+ *         error code otherwise
+ * @note Zero index (neutral locale) must return name - empty string
  */
-javacall_result javacall_mi18n_get_collation_locale(char* loc, int len, int index);
+javacall_result javacall_mi18n_get_collation_locale_name(int locale_index, javacall_utf16* locale_name_out,
+														 /*IN|OUT*/int* plen);
+
+
+/**
+ * Gets locale index used for collation formatting by the given miroedition.locale name.
+ *
+ * @param locale    utf16 string containing requested locale name or null for neutral locale
+ * @param index_out	pointer to integer receiving index of requested locale,
+ * @return JAVACALL_OK if all done successfuly, 
+ *         error code otherwise
+ * @note Neutral (empty string) locale must be supported. It must have index 0
+ */
+javacall_result javacall_mi18n_get_collation_locale_index(const javacall_utf16* locale, /*OUT*/int* index_out);
+
+
 
 /**
  * Compare two strings.
  *
- * @param s1            first unicode string to compare.
- * @param len1          length of the the first string.
- * @param s2            second unicode string to compare.
- * @param len2          length of the second string.
  * @param locale_index  index of the locale.
- * @param level         level of collation.
- * @return negative if s1 belongs before s2, 0 if the strings are equal, 
- *         positive if s1 belongs after s2.
+ *						NEUTRAL_LOCALE_INDEX (0) for neutral locale
+ * @param s1            first utf16 string to compare.
+ * @param len1          length of the the first string.
+ * @param s2            second utf16 string to compare.
+ * @param len2          length of the second string.
+ * @param level         level of collation:
+ *							1. alphabetic ordering
+ *							2. diacritic ordering
+ *							3. case ordering
+ *							15. identical comparision
+ * @param result_out	pointer to integer receiving comparision result: 
+						negative if s1 belongs before s2,
+						0 if the strings are equal, 
+ *						positive if s1 belongs after s2.
+ * @return JAVACALL_OK if all done successfuly, 
+ *         error code otherwise
  */
-int javacall_mi18n_compare_strings(char* s1, int len1, char* s2, 
-                                   int len2, int locale_index, int level);
+javacall_result javacall_mi18n_compare_strings(int locale_index, 
+								   const javacall_utf16* s1, int len1,
+								   const javacall_utf16* s2, int len2,
+								   int level,
+								   /*OUT*/int* result_out);
 
 /** @} */
 
