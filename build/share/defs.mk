@@ -216,14 +216,17 @@ CVM_GPROF_NO_CALLGRAPH  ?= true
 CVM_GCOV		?= false
 CVM_USE_CVM_MEMALIGN    ?= false
 
-# CVM_USE_NATIVE_TOOLS is no longer settable on the command line
+# CVM_USE_NATIVE_TOOLS is no longer settable by the user. Note that we
+# don't give a warning if it was set in a file, because this does
+# in fact happen when doing a make clean. It gets set when
+# .previous.build.flags is included.
 ifneq ($(CVM_USE_NATIVE_TOOLS),)
     ifneq ($(origin CVM_USE_NATIVE_TOOLS),file)
     $(warning Setting CVM_USE_NATIVE_TOOLS is no longer supported. \
 	      Any value set will be overridden.)
-    override CVM_USE_NATIVE_TOOLS = true
     endif
 endif
+override CVM_USE_NATIVE_TOOLS = true
 
 ifeq ($(CVM_DEBUG), true)
 CVM_OPTIMIZED		?= false
