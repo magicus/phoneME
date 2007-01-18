@@ -146,9 +146,11 @@ extern void midp_waitWhileSuspended();
  * and then removed from the system.
  *
  * For java stack, SR_INVALID means that suspend/resume system is not
- * initialized.
+ * initialized. SR_SUSPENDING state identifies that java stack is being
+ * suspended currently. 
  */
 typedef enum _SRState {
+    SR_SUSPENDING,
     SR_SUSPENDED,
     SR_ACTIVE,
     SR_INVALID
@@ -158,7 +160,8 @@ typedef enum _SRState {
  * Current state of java stack from suspend/resume point of view.
  * @return SR_INVALID if suspend/resume system is not initialized,
  *         SR_ACTIVE if java stack is active,
- *         SR_SUSPENDED if java stack is suspended.
+ *         SR_SUSPENDED if java stack is suspended,
+ *         SR_SUSPENDING if java stack suspension routines are in process.
  */
 extern SRState midp_getSRState();
 
