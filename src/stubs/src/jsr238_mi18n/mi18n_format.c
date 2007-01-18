@@ -142,7 +142,7 @@ javacall_result javacall_mi18n_format_date_time(int locale,
  *       and the buffer is not used
  */
 
-javacall_result javacall_mi18n_format_number(int locale, char* s, int dotposition, int isnegative, int decimals,
+javacall_result javacall_mi18n_format_number(int locale, const char* s, int dotposition, int isnegative, int decimals,
 											 /*OUT*/javacall_utf16 *res_buffer, /*IN|OUT*/int* plen)
 { 
 	(void)locale;
@@ -176,7 +176,7 @@ javacall_result javacall_mi18n_format_number(int locale, char* s, int dotpositio
  *       of javacall_utf16 characters required to hold the formatted currency string,
  *       and the buffer is not used
  **/
-javacall_result javacall_mi18n_format_currency(int locale, char* s, int dotposition, int isnegative,
+javacall_result javacall_mi18n_format_currency(int locale, const char* s, int dotposition, int isnegative,
 											   const javacall_utf16 *code,
 											   /*OUT*/javacall_utf16 *res_buffer, /*IN|OUT*/int* plen)
 {
@@ -212,7 +212,7 @@ javacall_result javacall_mi18n_format_currency(int locale, char* s, int dotposit
  *       of javacall_utf16 characters required to hold the formatted number string,
  *       and the buffer is not used
  */
-javacall_result javacall_mi18n_format_percentage(int locale, char* s, int dotposition, int isnegative, int decimals,
+javacall_result javacall_mi18n_format_percentage(int locale, const char* s, int dotposition, int isnegative, int decimals,
 												 /*OUT*/javacall_utf16 *res_buffer, /*IN|OUT*/int* plen){ 
 	(void)locale;
 	(void)s;
