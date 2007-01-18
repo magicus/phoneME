@@ -388,6 +388,7 @@ CVMJITirdumpIRNodeInternal(CVMJITCompilationContext* con, CVMJITIRNode* node,
                            CVMBool alwaysDump)
 {
     CVMJITIRBlock* bk = NULL;
+    CVMJITIRNodeTag nodeTag;
 
     /* C stack redzone check */
     if (!CVMCstackCheckSize(con->ee, CVM_REDZONE_CVMJITirdumpIRNode,
@@ -416,6 +417,18 @@ CVMJITirdumpIRNodeInternal(CVMJITCompilationContext* con, CVMJITIRNode* node,
   	CVMJITirnodeGetID(node),
         opcodeTagMap[CVMJITgetOpcode(node) >> CVMJIT_SHIFT_OPCODE],
         typeTagMap[CVMJITgetTypeTag(node)]);
+
+    nodeTag = CVMJITgetNodeTag(node) >> CVMJIT_SHIFT_NODETAG;
+    if (nodeTag == CVMJIT_UNARY_NODE) {
+	if (CVMJITirnodeUnaryNodeIs(node, VOLATILE_FIELD)){
+	    CVMconsolePrintf("volatile ");
+	}
+    } else if (nodeTag == CVMJIT_BINARY_NODE) {
+	if (CVMJITirnodeBinaryNodeIs(node, VOLATILE_FIELD)){
+	    CVMconsolePrintf("volatile ");
+	}
+    }
+
 #ifdef CVM_JIT_REGISTER_LOCALS
     switch (node->decorationType) {
         case CVMJIT_ASSIGN_DECORATION: {

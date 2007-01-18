@@ -452,6 +452,13 @@ computeTargetRegs(
 	_SET_TARGET(1, (regset2));			\
 }
 
+/* Set the register targetting information without doing any inheritance work. */
+#define SET_TARGET3_WO_INHERITANCE(thisNode, regset1, regset2, regset3) { \
+	_SET_TARGET(0, (regset1));			\
+	_SET_TARGET(1, (regset2));			\
+	_SET_TARGET(2, (regset3));			\
+}
+
 #define SET_TARGET2_0(thisNode, regset1) {		\
 	DEFAULT_INHERITANCE2(con, (thisNode));		\
 	_SET_TARGET(0, (regset1));			\

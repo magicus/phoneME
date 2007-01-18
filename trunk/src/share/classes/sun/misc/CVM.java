@@ -577,6 +577,7 @@ public final class CVM {
     public static final int DEBUGFLAG_TRACE_JITINLINING = 0x00000020;
     public static final int DEBUGFLAG_TRACE_JITOSR      = 0x00000040;
     public static final int DEBUGFLAG_TRACE_JITREGLOCALS= 0x00000080;
+    public static final int DEBUGFLAG_TRACE_JITERROR    = 0x00000100;
     public static final int DEBUGFLAG_TRACE_JITPATCHEDINVOKES= 0x00000100;
 
     /*

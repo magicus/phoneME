@@ -478,9 +478,7 @@ regObj: invokeObji_result: 20 : : : : {
         forceJavaStackTopValueIntoRegister(con, CVMRM_INT_REGS(con), GET_REGISTER_GOALS);
     };
 
-/
 // The rhs of a object array store
-//
 arrayAssignmentRhsObj: regObj : 0 : : : : ;
 
 

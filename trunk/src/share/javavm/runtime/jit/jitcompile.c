@@ -779,16 +779,6 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
     retVal = con.resultCode;
 
  done:
-    /* If we are going to fail compilation, then print the trace message
-       for it: */
-    if ((retVal != CVMJIT_SUCCESS && retVal < CVMJIT_RETRYABLE) ||
-        (retVal == CVMJIT_DEFINE_USED_NODE_MISMATCH &&
-         con.maxInliningDepth == 0)) {
-	CVMtraceJITStatus(("JS: COMPILATION FAILED: %C.%M\n", 
-			   CVMmbClassBlock(mb), mb));
-	CVMtraceJITStatus(("    Error(%d) Message: \"%s\"\n", 
-			   retVal, con.errorMessage));
-    }
 
 #ifdef CVM_JIT_PATCHED_METHOD_INVOCATIONS
     /* We've probably already added some patchable method invokes to
@@ -816,6 +806,10 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
         case CVMJIT_CANNOT_COMPILE: {
 	    /* Don't try again for as long as possible */
 	    CVMmbInvokeCostSet(mb, CVMJIT_MAX_INVOKE_COST);
+	    CVMtraceJITError(("JE: CANNOT COMPILE %C.%M\n",
+			      CVMmbClassBlock(mb), mb));
+	    CVMtraceJITError(("    Error(%d) Message: \"%s\"\n", 
+			      retVal, con.errorMessage));
 	    break;
 	}
         case CVMJIT_CODEBUFFER_TOO_SMALL: {
@@ -824,7 +818,9 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 	     * again with a larger code buffer. 
 	     */
 
-	    CVMtraceJITStatus(("JS: Code buffer too small - retrying\n"));
+	    CVMtraceJITError(("JE: Code buffer too small - retrying\n"));
+	    CVMtraceJITError(("    Error(%d) Message: \"%s\"\n", 
+			      retVal, con.errorMessage));
 	    if (con.extraStackmapSpace > extraStackmapSpace) {
 		extraStackmapSpace = con.extraStackmapSpace;
 	    }
@@ -853,9 +849,11 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 	    } else {
 		inliningDepthLimit = con.maxInliningDepth - 1;
 	    }
-	    CVMtraceJITStatus(("JS: Inlining too deep (%d) - "
-		"retrying with %d\n", con.inliningDepthLimit,
-		inliningDepthLimit));
+	    CVMtraceJITError(("JE: Inlining too deep (%d) - "
+			      "retrying with %d\n",
+			      con.inliningDepthLimit,inliningDepthLimit));
+	    CVMtraceJITError(("    Error(%d) Message: \"%s\"\n", 
+			      retVal, con.errorMessage));
 	    CVMJITdestroyContext(&con);
 	    needDestroyContext = CVM_FALSE;
 	    goto retry;
@@ -872,7 +870,18 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 
 	/* The following cases are for backing off from compilation */
         case CVMJIT_OUT_OF_MEMORY:
+	    CVMtraceJITError(("JE: OUT OF MEMORY %C.%M\n",
+			      CVMmbClassBlock(mb), mb));
+	    CVMtraceJITError(("    Error(%d) Message: \"%s\"\n", 
+			      retVal, con.errorMessage));
+	    goto doBackOff;
+
         case CVMJIT_CANNOT_COMPILE_NOW:
+	    CVMtraceJITError(("JE: CANNOT COMPILE NOW %C.%M\n",
+			      CVMmbClassBlock(mb), mb));
+	    CVMtraceJITError(("    Error(%d) Message: \"%s\"\n", 
+			      retVal, con.errorMessage));
+doBackOff:
 	    /* We're out of memory, or we have a non-compilable
 	       method. It's less likely for us to emerge from this state
 	       so back off more agressively in this case. */
@@ -884,6 +893,10 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
              * the invokeCost to be half of the compileThreshold.
              */
             CVMmbInvokeCostSet(mb, CVMglobals.jit.compileThreshold / 2);
+	    CVMtraceJITError(("JE: RETRY LATER %s %C.%M\n",
+			      con.errorMessage, CVMmbClassBlock(mb), mb));
+	    CVMtraceJITError(("    Error(%d) Message: \"%s\"\n", 
+			      retVal, con.errorMessage));
             break;
 
         case CVMJIT_DEFINE_USED_NODE_MISMATCH: {
@@ -903,8 +916,10 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
                 inliningDepthLimit = 1;
             }
 	    if (inliningDepthLimit >= 0) {
-                CVMtraceJITStatus(("JS: Defined Used node mismatch - "
-		"retrying with inline depth %d\n", inliningDepthLimit));
+                CVMtraceJITError(("JE: Defined Used node mismatch - "
+		    "retrying with inline depth %d\n", inliningDepthLimit));
+		CVMtraceJITError(("    Error(%d) Message: \"%s\"\n", 
+				  retVal, con.errorMessage));
 	        CVMJITdestroyContext(&con);
 	        needDestroyContext = CVM_FALSE;
 	        goto retry;
@@ -913,11 +928,24 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 	       be compilable in the future, so we just want to
 	       backoff for a while. */
 	    backOff(mb, CVMJIT_DEFAULT_CLIMIT * 2);
+	    CVMtraceJITError(("JE: Defined Used node mismatch - retry later:"
+                " %s %C.%M\n", con.errorMessage, CVMmbClassBlock(mb), mb));
+	    CVMtraceJITError(("    Error(%d) Message: \"%s\"\n", 
+			      retVal, con.errorMessage));
             break;
 	}
 
         default:
 	    CVMassert(CVM_FALSE);
+    }
+
+    /* If we are going to fail compilation, then print the trace message
+       for it: */
+    if (retVal != CVMJIT_SUCCESS) {
+	CVMtraceJITStatus(("JS: COMPILATION FAILED: %C.%M\n", 
+			   CVMmbClassBlock(mb), mb));
+	CVMtraceJITStatus(("    Error(%d) Message: \"%s\"\n", 
+			   retVal, con.errorMessage));
     }
 
     if (needDestroyContext) {
