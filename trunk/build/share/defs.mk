@@ -214,10 +214,16 @@ CVM_THREAD_SUSPENSION   ?= false
 CVM_GPROF		?= false
 CVM_GPROF_NO_CALLGRAPH  ?= true
 CVM_GCOV		?= false
-ifeq ($(CVM_USE_NATIVE_TOOLS), )
-CVM_USE_NATIVE_TOOLS    ?= false
-endif
 CVM_USE_CVM_MEMALIGN    ?= false
+
+# CVM_USE_NATIVE_TOOLS is no longer settable on the command line
+ifneq ($(CVM_USE_NATIVE_TOOLS),)
+    ifneq ($(origin CVM_USE_NATIVE_TOOLS),file)
+    $(warning Setting CVM_USE_NATIVE_TOOLS is no longer supported. \
+	      Any value set will be overridden.)
+    override CVM_USE_NATIVE_TOOLS = true
+    endif
+endif
 
 ifeq ($(CVM_DEBUG), true)
 CVM_OPTIMIZED		?= false
@@ -1090,7 +1096,8 @@ CVM_BUILD_DEFS_H = $(CVM_DERIVEDROOT)/javavm/include/build_defs.h
 CVM_BUILD_DEFS_MK= $(CVM_DERIVEDROOT)/build_defs.mk
 
 # sun.misc.DefaultLoacleList.java
-DEFAULTLOCALELIST_JAVA = $(CVM_DERIVEDROOT)/classes/sun/misc/DefaultLocaleList.java
+DEFAULTLOCALELIST_JAVA = \
+    $(CVM_DERIVEDROOT)/classes/sun/misc/DefaultLocaleList.java
 
 ifeq ($(CVM_TEST_GC), true)
 include ../share/testgc.mk
@@ -1766,12 +1773,12 @@ CVM    = cvm
 # Locate the tools.
 ##############################################################
 
-
-ifneq ($(CVM_USE_NATIVE_TOOLS), true)
-
 # See if the user specified something other than the default
-# for tool locations.
-ifneq ($(CVM_TOOLS_DIR)$(CVM_TARGET_TOOLS_DIR)$(CVM_TARGET_TOOLS_PREFIX),)
+# for target tool locations.
+ifneq ($(CVM_TARGET_TOOLS_PREFIX)$(TARGET_CC),)
+    USER_SPECIFIED_LOCATION = true
+endif
+ifneq ($(CVM_TOOLS_DIR)$(CVM_TARGET_TOOLS_DIR),)
     # don't count if imported from the shell
     ifneq ($(origin CVM_TOOLS_DIR),environment)
         ifneq ($(origin CVM_TARGET_TOOLS_DIR),environment)
@@ -1780,10 +1787,18 @@ ifneq ($(CVM_TOOLS_DIR)$(CVM_TARGET_TOOLS_DIR)$(CVM_TARGET_TOOLS_PREFIX),)
     endif
 endif
 
+# If the user specified the target tools location, then don't use native tools.
+ifeq ($(USER_SPECIFIED_LOCATION),true)
+    override CVM_USE_NATIVE_TOOLS := false
+endif
+
 # Locate the target gnu tools:
 #
 # The goal is to set CVM_TARGET_TOOLS_PREFIX to a value that when 
-# prepended to "gcc", will specify the full path of gcc.
+# prepended to "gcc", will specify the full path of gcc. Note that
+# this is the only path we officially support on the comand line.
+# CVM_TOOLS_DIR, CVM_TARGET_TOOLS_DIR, and CVM_USE_NATIVE_TOOLS
+# should not be set on the command line.
 #
 # Unless we were specifically told to use native tools, the gnu
 # cross compiler is located by using CVM_TOOLS_DIR, CVM_HOST,
@@ -1795,32 +1810,28 @@ endif
 # CVM_TARGET_TOOLS_PREFIX can be overriden, in which case none of
 # the other variables normally used to compute it matter.
 #
-# You can also override CVM_TARGET_TOOLS_DIR, in which case CVM_TOOLS_DIR
-# and CVM_HOST don't matter, but TARGET_CPU_FAMILY, TARGET_DEVICE,
-# and TARGET_OS are still used.
-#
 CVM_TOOLS_DIR ?= /usr/tools
 CVM_TARGET_TOOLS_DIR	?= $(CVM_TOOLS_DIR)/$(CVM_HOST)/gnu/bin
-CVM_TARGET_TOOLS_PREFIX ?= $(CVM_TARGET_TOOLS_DIR)/$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)-$(TARGET_OS)-
-# Unless the user told us where the tools are, make sure the cross compiler
-# exists. Use native tools if not.
+CVM_TARGET_TOOLS_PREFIX ?= \
+    $(CVM_TARGET_TOOLS_DIR)/$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)-$(TARGET_OS)-
+
+# Unless the user told us where the tools are, check if a cross compiler
+# exists in the default location. Use native tools if not.
 ifneq ($(USER_SPECIFIED_LOCATION), true)
 GCC_PATH 		:= $(CVM_TARGET_TOOLS_PREFIX)gcc
-ifneq ($(GCC_PATH), $(shell ls $(GCC_PATH) 2>&1))
+ifneq ($(wildcard $(GCC_PATH)),$(GCC_PATH))
 CVM_TARGET_TOOLS_PREFIX :=
-CVM_USE_NATIVE_TOOLS    := true
+CVM_TARGET_TOOLS_DIR    :=
+else
+override CVM_USE_NATIVE_TOOLS    := false
 endif
 endif
-
-endif  # CVM_USE_NATIVE_TOOLS
 
 #
 # Locate the host tools:
 #
+
 # Find where the native gcc is located (HOST_CC).
-# NOTE: If we decide to use $(CC), we must force
-# evauation of HOST_CC to CC now because CC will be changed to be
-# the target compiler a bit later.
 #
 ifeq ($(CVM_USE_NATIVE_TOOLS), true)
 TEMP_HOST_CC		:= $(CC)
@@ -1837,7 +1848,7 @@ TEMP_HOST_CCC		:= $(CXX)
 endif
 endif
 
-# Using TEMP variables allows HOST_CC and HOST_CC to be set in the
+# Using TEMP variables above allows HOST_CC and HOST_CC to be set in the
 # GNUmakefile and not get overwritten by the above := assignments.
 HOST_CC 	?= $(TEMP_HOST_CC)
 HOST_CCC	?= $(TEMP_HOST_CCC)
