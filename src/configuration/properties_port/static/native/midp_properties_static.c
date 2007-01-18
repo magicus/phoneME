@@ -197,8 +197,7 @@ getProp(Property** propertySet, const char* key) {
     while (p) {
         if (strcmp(key, p->key) == 0) {
             if (NULL == p->value) {
-                /* Cache value for future use; sets p->value */
-                setProp(propertySet, key, doCallout(p->key), KNI_FALSE);
+                return doCallout(p->key); 
             }
             return (p->value);
         }
