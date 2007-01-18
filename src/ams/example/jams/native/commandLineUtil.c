@@ -1,27 +1,27 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <string.h>
@@ -34,7 +34,12 @@
 
 static char dirBuffer[MAX_FILENAME_LENGTH+1];
 
-static char* getCharFileSeparator() {
+/**
+ * Returns a platform-specific file separator represented as a string.
+ *
+ * @return pointer to null-terminated string containing the file separator
+ */
+char* getCharFileSeparator() {
     /*
      * This function is called before the debug heap is initialized.
      * so we can't use midpMalloc.
@@ -89,7 +94,7 @@ char* midpFixMidpHome(char *cmd) {
     }
 
     filesep = getCharFileSeparator();
-    
+
     dirBuffer[sizeof (dirBuffer) - 1] = 0;
     strncpy(dirBuffer, cmd, sizeof (dirBuffer) - 1);
 
@@ -104,11 +109,11 @@ char* midpFixMidpHome(char *cmd) {
             strcpy(dirBuffer, ".");
             strcat(dirBuffer, filesep);
         }
-            
+
         strcat(dirBuffer, "appdb");
 
         i = 0;
-            
+
         /* try to search for "appdb" 3 times only (see above) */
         while (i < 3) {
             memset(&statbuf, 0, sizeof(statbuf));
@@ -118,24 +123,24 @@ char* midpFixMidpHome(char *cmd) {
                 (statbuf.st_mode & S_IFDIR)) {
                 break;
             }
-                
+
             /* strip off "lib" to add 1 more level of ".." */
             *(strrchr(dirBuffer, (int) *filesep)) = '\0';
             strcat(dirBuffer, filesep);
             strcat(dirBuffer, "..");
             strcat(dirBuffer, filesep);
             strcat(dirBuffer, "appdb");
-            
+
             i++;
         }
 
         if (i < 3) {
             break;
         }
-        
+
         j++;
     }
-        
+
     if (j == 2) {
         fprintf(stderr, "Warning: cannot find appdb subdirectory.\n"
                 "Please specify MIDP_HOME environment variable such "

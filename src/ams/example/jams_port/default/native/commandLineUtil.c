@@ -27,15 +27,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <ctype.h>
 
 #include <midpStorage.h>
-#include <pcsl_string.h>
-#include <midp_logging.h>
-#include <javacall_defs.h>
-#include <javacall_dir.h>
+#include <commandLineUtil.h>
 
-#define MAX_PATH_LEN JAVACALL_MAX_ROOT_PATH_LENGTH
+static char dirBuffer[MAX_FILENAME_LENGTH+1];
 
 /**
  * Generates a correct MIDP home directory based on several rules. If
@@ -62,42 +60,80 @@
  *       to call this function before midpInitialize, don't free it
  */
 char* midpFixMidpHome(char *cmd) {
+    int   i;
+    char* filesep = NULL;
+    char* lastsep;
+    char* midp_home;
+    struct stat statbuf;
+    int j = 1;
 
-    static javacall_utf16 path[MAX_PATH_LEN];
-    static char midpRealHome[MAX_PATH_LEN];
-    javacall_result ret;
-    int len = MAX_PATH_LEN - 1;
-    pcsl_string str = PCSL_STRING_NULL_INITIALIZER;
+    /*
+     * If MIDP_HOME is set, just use it. Does not check if MIDP_HOME is
+     * pointing to a directory contain "appdb".
+     */
+    midp_home = getenv("MIDP_HOME");
+    if (midp_home != NULL) {
+        return midp_home;
+    }
 
+    filesep = getCharFileSeparator();
 
-    ret = javacall_dir_get_root_path (path, &len);
+    dirBuffer[sizeof (dirBuffer) - 1] = 0;
+    strncpy(dirBuffer, cmd, sizeof (dirBuffer) - 1);
 
-    if ( ret != JAVACALL_OK ) {
-        REPORT_ERROR(LC_AMS,"midpFixMidpHome() << Root path query failed.");
+    while (j < 2) {
+
+        /* Look for the last slash in the pathanme. */
+        lastsep = strrchr(dirBuffer, (int) *filesep);
+        if (lastsep != 0) {
+            *(lastsep + 1) = '\0';
+        } else {
+            /* no file separator */
+            strcpy(dirBuffer, ".");
+            strcat(dirBuffer, filesep);
+        }
+
+        strcat(dirBuffer, "appdb");
+
+        i = 0;
+
+        /* try to search for "appdb" 3 times only (see above) */
+        while (i < 3) {
+            memset(&statbuf, 0, sizeof(statbuf));
+
+            /* found it and it is a directory */
+            if ((stat(dirBuffer, &statbuf) == 0) &&
+                (statbuf.st_mode & S_IFDIR)) {
+                break;
+            }
+
+            /* strip off "lib" to add 1 more level of ".." */
+            *(strrchr(dirBuffer, (int) *filesep)) = '\0';
+            strcat(dirBuffer, filesep);
+            strcat(dirBuffer, "..");
+            strcat(dirBuffer, filesep);
+            strcat(dirBuffer, "appdb");
+
+            i++;
+        }
+
+        if (i < 3) {
+            break;
+        }
+
+        j++;
+    }
+
+    if (j == 2) {
+        fprintf(stderr, "Warning: cannot find appdb subdirectory.\n"
+                "Please specify MIDP_HOME environment variable such "
+                "that $MIDP_HOME%clib contains the proper configuration "
+                "files.\n", *filesep);
         return NULL;
     }
 
-    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16 (path, len, &str)) {
-        REPORT_ERROR(LC_AMS,"midpFixMidpHome() << pcsl_string conversion operation failed.");
-        return NULL;
-    }
+    /* strip off "appdb" from the path */
+    *(strrchr(dirBuffer, (int) *filesep)) = '\0';
 
-    if (pcsl_string_utf8_length (&str) >= MAX_PATH_LEN) {
-        REPORT_ERROR(LC_AMS,"midpFixMidpHome() << Root path length is too large.");
-        pcsl_string_free (&str);
-        return NULL;
-    }
-
-    if (PCSL_STRING_OK != pcsl_string_convert_to_utf8 (&str,
-                                                       (jbyte *)midpRealHome,
-                                                       MAX_PATH_LEN-1,
-                                                       &len)) {
-        REPORT_ERROR(LC_AMS,"midpFixMidpHome() << pcsl_string conversion operation failed.");
-        pcsl_string_free (&str);
-        return NULL;
-    };
-    pcsl_string_free (&str);
-
-    midpRealHome[len] = 0;
-    return midpRealHome;
+    return dirBuffer;
 }
