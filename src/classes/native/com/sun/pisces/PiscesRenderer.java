@@ -243,6 +243,10 @@ public final class PiscesRenderer extends PathSink
                               gradientTransform);
     }
 
+    public void setTextureOpacity(float opacity) {
+	notImplemented();
+    }
+
     public void setTexture(int imageType,
                            Object imageData, 
                            int width, int height,
