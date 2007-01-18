@@ -171,7 +171,7 @@ public class MIDletProxy implements SuspendDependency {
     /**
      * Sets the ID of the MIDlet's Display.
      *
-     * @param ID of the MIDlet's Display
+     * @param id of the MIDlet's Display
      */
     void setDisplayId(int id) {
         displayId = id;

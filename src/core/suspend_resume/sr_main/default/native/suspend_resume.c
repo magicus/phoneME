@@ -34,6 +34,9 @@
 #include <midpError.h>
 #include <midpNativeThread.h>
 
+/** Suspendable resource that reprsents the VM. */
+VM vm = { KNI_FALSE };
+
 /**  Java stack state from suspend/resume point of view. */
 static jboolean sr_state = SR_INVALID;
 
@@ -101,6 +104,9 @@ void suspend_resources() {
     for (cur = sr_resources; NULL != cur; cur = cur->next) {
         SWITCH_STATE(cur, SR_ACTIVE, cur->suspend, SR_SUSPENDED);
     }
+
+    sr_state = SR_SUSPENDED;
+    REPORT_INFO(LC_LIFECYCLE, "suspend_resources(): suspended");
 }
 
 void resume_resources() {
@@ -126,6 +132,8 @@ void midp_suspend() {
     sr_initSystem();
 
     if (SR_ACTIVE == sr_state) {
+        sr_state = SR_SUSPENDING;
+
         if (getMidpInitLevel() >= VM_LEVEL) {
             MidpEvent event;
             MIDP_EVENT_INITIALIZE(event)
@@ -134,18 +142,19 @@ void midp_suspend() {
         } else {
             suspend_resources();
         }
-
-        sr_state = SR_SUSPENDED;
-        REPORT_INFO(LC_LIFECYCLE, "midp_suspend(): midp suspended");
     }
 }
 
 void midp_resume() {
     REPORT_INFO(LC_LIFECYCLE, "midp_resume()");
 
-    if (SR_SUSPENDED == sr_state) {
+    switch (sr_state) {
+    case SR_SUSPENDED:
         resume_resources();
-
+        /* fallthru to the logic required for both
+         * SR_SUSPENDED and SR_SUSPENDING
+         */
+    case SR_SUSPENDING:
         if (getMidpInitLevel() >= VM_LEVEL) {
             MidpEvent event;
             MIDP_EVENT_INITIALIZE(event);
@@ -155,12 +164,22 @@ void midp_resume() {
 
         sr_state = SR_ACTIVE;
         REPORT_INFO(LC_LIFECYCLE, "midp_resume(): midp resumed");
+        break;
+
+    default:
+        break;
     }
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended0) {
-    suspend_resources();
+    /* Checking that midp_resume() has not been called during suspending
+     * of java side.
+     */
+    if (sr_state == SR_SUSPENDING) {
+        suspend_resources();
+    }
+
     KNI_ReturnVoid();
 }
 
@@ -192,8 +211,6 @@ void sr_unregisterResource(void *resource) {
         }
     }
 }
-
-VM vm = { KNI_FALSE };
 
 void sr_initSystem() {
     if (SR_INVALID == sr_state) {

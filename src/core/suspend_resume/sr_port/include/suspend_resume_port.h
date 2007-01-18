@@ -44,7 +44,7 @@ extern "C" {
  * This function is called from midp_checkAndResume() and requires porting.
  *
  * This function requires porting only if midp_checkAndResume() is used for
- * stack resuming. In case midp_resume is called directly, this function
+ * stack resuming. In case midp_resume() is called directly, this function
  * can be removed from the implementation as well as midp_checkAndResume().
  *
  * @return KNI_TRUE if java stack is requested to resume, KNI_FALSE
