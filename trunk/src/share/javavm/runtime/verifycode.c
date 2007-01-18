@@ -62,6 +62,16 @@
 #define protected XprotectedX
 #endif
 
+/*
+ * The verifier needs to be careful not to read off the end of the
+ * code when determining opcode length and validity, so it needs its
+ * own version of CVMopcodeGetLength() that checks bounds.
+ */
+#define CVMopcodeGetLengthWithBoundsCheck(iStream, iStream_end)	\
+	(CVMopcodeLengths[*(iStream)] ? \
+	 CVMopcodeLengths[*(iStream)] : \
+	 CVMopcodeGetLengthWithBoundsCheckVariable(iStream, iStream_end))
+
 static const unsigned char *
 JVM_GetMethodByteCode(CVMMethodBlock* mb)
 {
@@ -879,6 +889,47 @@ verify_field(context_type *context, CVMClassBlock *cb, CVMFieldBlock *fb)
 }
 
 
+static int
+CVMopcodeGetLengthWithBoundsCheckVariable(const unsigned char* iStream,
+					  const unsigned char* iStream_end)
+{
+    /*
+     * If there is not enough code left to determine the opcode
+     * length, return a value that indicates the opcode extends
+     * past the end of the code.
+     */
+    switch(*iStream) {
+	case opc_tableswitch: {
+	    const unsigned char* lpc =
+		(const unsigned char*)CVMalignWordUp(iStream + 1);
+	    /* Need default, low, high. */
+	    if (iStream_end - lpc < 12) {
+		return 12;
+	    }
+	    break;
+	}
+        case opc_lookupswitch: {
+	    const unsigned char* lpc =
+		(const unsigned char*)CVMalignWordUp(iStream + 1);
+	    /* Need default, npairs. */
+	    if (iStream_end - lpc < 8) {
+		return 8;
+	    }
+	    break;
+	}
+        case opc_wide: {
+	    /* Need opcode. */
+	    if (iStream_end - iStream < 2) {
+		return 2;
+	    }
+	    break;
+	}
+	default:
+	    break;
+    }
+
+    return CVMopcodeGetLengthVariable(iStream);
+}
 
 /* Verify the code of one method */
 
@@ -929,7 +980,8 @@ verify_method(context_type *context, CVMClassBlock *cb, CVMMethodBlock* mb)
     /* Run through the code.  Mark the start of each instruction, and give
      * the instruction a number */
     for (i = 0, offset = 0; offset < code_length; i++) {
-	int length = CVMopcodeGetLength(&code[offset]);
+	int length = CVMopcodeGetLengthWithBoundsCheckVariable(
+	    &code[offset], &code[code_length]);
 	int next_offset = offset + length;
 	if (length <= 0) 
 	    CCerror(context, "Illegal instruction found at offset %d", offset);
