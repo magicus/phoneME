@@ -170,3 +170,8 @@ LINK_CMD	= $(AT)$(TARGET_LINK) $(LINKFLAGS) /out:$(call POSIX2HOST,$@) $^ $(LINK
 
 SO_CC_CMD	= $(AT)$(TARGET_CC) $(SO_CFLAGS) /Fo$(call POSIX2HOST,$@) $(call POSIX2HOST,$<)
 SO_LINK_CMD	= $(AT)$(TARGET_LD) $(SO_LINKFLAGS) /out:$(call POSIX2HOST,$@) $^ $(SO_LINKLIBS)
+
+# Don't let the default compiler compatibility check be done
+# since we are not using gcc
+CVM_DISABLE_COMPILER_CHECK = true
+

@@ -201,3 +201,7 @@ CFLAGS += -xildoff -xprofile=tcov
 LINKFLAGS += -xprofile=tcov
 endif
 endif
+
+# Don't let the default compiler compatibility check be done
+# if we are not using gcc
+CVM_DISABLE_COMPILER_CHECK = $(CVM_USE_NATIVE_TOOLS)
