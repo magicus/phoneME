@@ -94,6 +94,10 @@ int mapKey(QKeyEvent *key) {
         unicode = KEY_SOFT2;
         break;
 
+    case Qt::Key_Context4:
+        unicode = KEY_SCREEN_ROT;
+        break;
+
     case Qt::Key_Back:
         unicode = KEY_BACKSPACE;
         break;
