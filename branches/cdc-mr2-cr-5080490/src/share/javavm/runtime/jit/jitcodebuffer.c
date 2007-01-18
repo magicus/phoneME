@@ -495,7 +495,8 @@ CVMJITcodeCacheCopyCCMCode(CVMExecEnv* ee)
 	con.codeBufEnd    = jgs->codeCacheEnd - sizeof(CVMUint32);
 	
 	if (con.codeEntry + ccmCodeCacheCopySize > con.codeBufEnd) {
-	    CVMJITerror(&con, OUT_OF_MEMORY, NULL);
+	    CVMJITerror(&con, OUT_OF_MEMORY,
+			"Insufficient Code Cache space to copy CCM glue");
 	}
 	memcpy(con.curPhysicalPC, &CVMCCMcodeCacheCopyStart,
 	       ccmCodeCacheCopySize);

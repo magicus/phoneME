@@ -971,9 +971,16 @@ CVMjniGet##elemType_##Field(JNIEnv* env, jobject obj, jfieldID fid)	\
 {									\
     CVMExecEnv* ee  = CVMjniEnv2ExecEnv(env);				\
     jType_ v64;								\
+    CVMFieldBlock* fb = (CVMFieldBlock*)fid;				\
 									\
     CVMjniSanityCheckFieldAccess(env, obj, fid);			\
+    if (CVMfbIs(fb, VOLATILE)) {					\
+	CVM_ACCESS_VOLATILE_LOCK(ee);					\
+    }									\
     CVMID_fieldRead##elemType_(ee, obj, CVMfbOffset(fid), v64);		\
+    if (CVMfbIs(fb, VOLATILE)) {					\
+	CVM_ACCESS_VOLATILE_UNLOCK(ee);					\
+    }									\
     return v64;								\
 }									\
 									\
@@ -982,8 +989,15 @@ CVMjniSet##elemType_##Field(JNIEnv* env, jobject obj, 			\
 			    jfieldID fid, jType_ rhs)			\
 {									\
     CVMExecEnv* ee  = CVMjniEnv2ExecEnv(env);				\
+    CVMFieldBlock* fb = (CVMFieldBlock*)fid;				\
     CVMjniSanityCheckFieldAccess(env, obj, fid);			\
+    if (CVMfbIs(fb, VOLATILE)) {					\
+	CVM_ACCESS_VOLATILE_LOCK(ee);					\
+    }									\
     CVMID_fieldWrite##elemType_(ee, obj, CVMfbOffset(fid), rhs);       	\
+    if (CVMfbIs(fb, VOLATILE)) {					\
+	CVM_ACCESS_VOLATILE_UNLOCK(ee);					\
+    }									\
 }
 
 CVM_DEFINE_JNI_64BIT_FIELD_GETTER_AND_SETTER(jlong,   Long)
@@ -1136,7 +1150,14 @@ CVMjniGetStatic##elemType_##Field(JNIEnv* env, 				\
 									\
     CVMjniSanityCheckStaticFieldAccess(env, clazz, fid);		\
     CVMD_gcUnsafeExec(ee, {						\
+        CVMFieldBlock* fb = (CVMFieldBlock*)fid;			\
+	if (CVMfbIs(fb, VOLATILE)) {				        \
+	    CVM_ACCESS_VOLATILE_LOCK(ee);				\
+	}								\
 	v64 = CVMjvm2##elemType_(&CVMfbStaticField(ee, fid).raw);	\
+	if (CVMfbIs(fb, VOLATILE)) {					\
+	    CVM_ACCESS_VOLATILE_UNLOCK(ee);				\
+	}								\
     });									\
     return v64;								\
 }									\
@@ -1148,7 +1169,14 @@ CVMjniSetStatic##elemType_##Field(JNIEnv* env, jclass clazz,		\
     CVMExecEnv* ee  = CVMjniEnv2ExecEnv(env);				\
     CVMjniSanityCheckStaticFieldAccess(env, clazz, fid);		\
     CVMD_gcUnsafeExec(ee, {						\
+	CVMFieldBlock* fb = (CVMFieldBlock*)fid;			\
+	if (CVMfbIs(fb, VOLATILE)) {				        \
+	    CVM_ACCESS_VOLATILE_LOCK(ee);				\
+	}								\
 	CVM##elemType2_##2Jvm(&CVMfbStaticField(ee, fid).raw, rhs);	\
+	if (CVMfbIs(fb, VOLATILE)) {					\
+	    CVM_ACCESS_VOLATILE_UNLOCK(ee);				\
+	}								\
     });									\
 }
 

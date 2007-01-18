@@ -43,10 +43,19 @@
 #endif
 
 /* CVMJITerror() - Works just like an exception throw */
+#if defined(CVM_DEBUG) || defined(CVM_TRACE_JIT)
 #define CVMJITerror(con, err, message) {  \
-    CVMJITsetErrorMessage(con, message);  \
+    const char *msg = message;		  \
+    if (msg == NULL) {			  \
+	msg = "<unspecified>";		  \
+    }					  \
+    CVMJITsetErrorMessage(con, msg);	  \
     CVMJIThandleError(con, CVMJIT_##err); \
 }
+#else
+#define CVMJITerror(con, err, message)	  \
+    CVMJIThandleError(con, CVMJIT_##err)
+#endif
 
 extern void
 CVMJIThandleError(CVMJITCompilationContext* con, int error);
@@ -175,6 +184,9 @@ CVMJITgarrExpandPrivate(CVMJITCompilationContext* con,
 #define CVMtraceJITStatus(x)     CVMtraceJIT(CVM_DEBUGFLAG(TRACE_JITSTATUS), x)
 #define CVMtraceJITStatusExec(x) \
     CVMtraceJITExec(CVM_DEBUGFLAG(TRACE_JITSTATUS), x)
+#define CVMtraceJITError(x)     CVMtraceJIT(CVM_DEBUGFLAG(TRACE_JITERROR), x)
+#define CVMtraceJITErrorExec(x) \
+    CVMtraceJITExec(CVM_DEBUGFLAG(TRACE_JITERROR), x)
 
 #define CVMtraceJITIROPT(x)     CVMtraceJIT(CVM_DEBUGFLAG(TRACE_JITIROPT), x)
 #define CVMtraceJITIROPTExec(x) \

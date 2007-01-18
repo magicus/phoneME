@@ -2579,8 +2579,7 @@ doInstanceFieldRead(CVMJITCompilationContext* con,
 		    CVMJITIRNode*  fieldOffsetNode,/* can be NULL */
 		    CVMUint16      fieldOffset,    /* Object offset */
 		    CVMUint8       typeTag,        /* 32-bit, 64-bit, or ref */
-		    CVMBool        isVolatile
-		    )
+		    CVMBool        isVolatile)
 {
     CVMJITIRNode* objrefNode;
     CVMJITIRNode* fieldRefNode;
@@ -2623,6 +2622,10 @@ doInstanceFieldRead(CVMJITCompilationContext* con,
 	CVMJITirnodeNewBinaryOp(con, CVMJIT_ENCODE_FIELD_REF(typeTag), 
 				objrefNode, fieldOffsetNode);
 
+    if (isVolatile) {
+	CVMJITirnodeSetBinaryNodeFlag(fieldRefNode, CVMJITBINOP_VOLATILE_FIELD);
+    }
+
     /* Build FETCH node and push it to stack */
     fetchNode =	CVMJITirnodeNewUnaryOp(con, CVMJIT_ENCODE_FETCH(typeTag),
 				       fieldRefNode);
@@ -2651,8 +2654,8 @@ doInstanceFieldWrite(CVMJITCompilationContext* con,
 		     CVMUint16      relPC,
 		     CVMJITIRNode*  fieldOffsetNode,/* can be NULL */
 		     CVMUint16      fieldOffset,    /* Object offset */
-		     CVMUint8       typeTag         /* 32- or 64-bit, or ref */
-		     )
+		     CVMUint8       typeTag,        /* 32-bit, 64-bit, or ref */
+		     CVMBool        isVolatile)
 {
     CVMJITIRNode* valueNode;
     CVMJITIRNode* objrefNode;
@@ -2688,6 +2691,10 @@ doInstanceFieldWrite(CVMJITCompilationContext* con,
     fieldRefNode =
 	CVMJITirnodeNewBinaryOp(con, CVMJIT_ENCODE_FIELD_REF(typeTag), 
 				objrefNode, fieldOffsetNode);
+
+    if (isVolatile) {
+	CVMJITirnodeSetBinaryNodeFlag(fieldRefNode, CVMJITBINOP_VOLATILE_FIELD);
+    }
 
     memWrite(con, currentBlock, fieldRefNode, typeTag, valueNode);
 }
@@ -2768,6 +2775,7 @@ doStaticFieldRef(CVMJITCompilationContext* con,
     CVMUint8        typeTag;
     CVMFieldTypeID  fid;
     CVMJITIRNode*   valueNode = NULL;
+    CVMBool         isVolatile;
 
     /* If we're in the process of emitting an ASSIGN node (which is a root
        node), we need to call the CVMJITirDoSideEffectOperator() to preserve
@@ -2789,10 +2797,7 @@ doStaticFieldRef(CVMJITCompilationContext* con,
          * failure to compile methods that access this type of
          * fields should not have noticeable impact on performance.
          */
-        if (CVMfbIs(fb, VOLATILE) && CVMfbIsDoubleWord(fb)) {
-            CVMJITerror(con, CANNOT_COMPILE,
-                "method access 64-bit volatile field");
-        }
+	isVolatile = CVMfbIs(fb, VOLATILE);
 
 	fid = CVMfbNameAndTypeID(fb);
 
@@ -2882,15 +2887,9 @@ doStaticFieldRef(CVMJITCompilationContext* con,
 #endif
         typeTag = CVMtypeidGetPrimitiveType(fid);
 
-        /* When a field is unresolved, we don't know if it is volatile
-         * or not. In this case, we just refuse to compile any method
-         * access unresolved 64-bit fields.
-         */
-        if (typeTag == CVM_TYPEID_LONG || 
-            typeTag == CVM_TYPEID_DOUBLE) {
-            CVMJITerror(con, RETRY_LATER,
-                "method access unresolved 64-bit field");
-        }
+	/* Since the field is unresolved.  We assume it is volatile just to be
+	   safe. */
+	isVolatile = CVM_TRUE;
 
 	/* Resolution could cause Java class loader code to run. Kill
 	   cached pointers. */
@@ -2912,6 +2911,10 @@ doStaticFieldRef(CVMJITCompilationContext* con,
     staticRefNode = 
 	CVMJITirnodeNewUnaryOp(con, CVMJIT_ENCODE_STATIC_FIELD_REF(typeTag),
 			       fieldAddressNode);
+
+    if (isVolatile) {
+	CVMJITirnodeSetUnaryNodeFlag(staticRefNode, CVMJITUNOP_VOLATILE_FIELD);
+    }
 
     /* Now that we have built the "effective address" it is time to do
        the read or write */
@@ -6719,7 +6722,7 @@ translateRange(CVMJITCompilationContext* con,
 	case opc_aputfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
             doInstanceFieldWrite(con, curbk, pc, NULL, fieldOffset,
-				 CVM_TYPEID_OBJ);
+				 CVM_TYPEID_OBJ, CVM_FALSE);
 	    break;
         }
 
@@ -6728,7 +6731,7 @@ translateRange(CVMJITCompilationContext* con,
         case opc_putfield_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
             doInstanceFieldWrite(con, curbk, pc, NULL, fieldOffset,
-				 CVMJIT_TYPEID_32BITS);
+				 CVMJIT_TYPEID_32BITS, CVM_FALSE);
 	    break;
         }
 
@@ -6736,7 +6739,7 @@ translateRange(CVMJITCompilationContext* con,
         case opc_putfield2_quick: {
 	    CVMUint32 fieldOffset = absPc[1];
             doInstanceFieldWrite(con, curbk, pc, NULL, fieldOffset,
-				 CVMJIT_TYPEID_64BITS);
+				 CVMJIT_TYPEID_64BITS, CVM_FALSE);
 	    break;
         }
 
@@ -6750,22 +6753,12 @@ translateRange(CVMJITCompilationContext* con,
 	    CVMUint32 fieldOffset = CVMfbOffset(fb);
             CVMBool isVolatile  = CVMfbIs(fb, VOLATILE);
 
-            /* If the field is 64-bit volatile type, refuse to compile 
-             * the method. Since 64-bit volatile fields are rare,
-             * failure to compile methods that access this type of
-             * fields should not have noticeable impact on performance.
-             */
-            if (isVolatile && CVMfbIsDoubleWord(fb)) {
-                CVMJITerror(con, CANNOT_COMPILE,
-                    "method access 64-bit volatile field");
-            }
-	    
 	    if (opcode == opc_getfield_quick_w) {
 		doInstanceFieldRead(con, curbk, pc, NULL, 
 				    fieldOffset, typeTag, isVolatile);
 	    } else {
 		doInstanceFieldWrite(con, curbk, pc, NULL, 
-				     fieldOffset, typeTag);
+				     fieldOffset, typeTag, isVolatile);
 	    }
 	    break;
         }
@@ -6793,16 +6786,6 @@ translateRange(CVMJITCompilationContext* con,
 		isVolatile = CVMfbIs(fb, VOLATILE);
                 typeTag = CVMtypeidGetPrimitiveType(fid);
 
-                /* If the field is 64-bit volatile type, refuse to compile 
-                 * the method. Since 64-bit volatile fields are rare,
-                 * failure to compile methods that access this type of
-                 * fields should not have noticeable impact on performance.
-                 */
-                if (isVolatile && CVMfbIsDoubleWord(fb)) {
-                    CVMJITerror(con, CANNOT_COMPILE,
-                        "method access 64-bit volatile field");
-                }
-
 #ifndef CVM_TRUSTED_CLASSLOADERS
                 /* Make sure that both the opcode and the fb agree on whether
                  * or not the field is static. */
@@ -6820,16 +6803,8 @@ translateRange(CVMJITCompilationContext* con,
 #endif
                 typeTag = CVMtypeidGetPrimitiveType(fid);
 
-	        /* When a field is unresolved, we don't know if it is volatile
-                 * or not. In this case, we just refuse to compile any method
-                 * accessing unresolved 64-bit fields.
-                 */
-	        if (typeTag == CVM_TYPEID_LONG || 
-                    typeTag == CVM_TYPEID_DOUBLE) {
-                    CVMJITerror(con, RETRY_LATER,
-                        "method access unresolved 64-bit field");
-                }
-
+		/* Since the field is unresolved.  We assume it is volatile
+		   just to be safe. */
 		isVolatile = CVM_TRUE;
 		
 		/* Resolution could cause Java class loader code to run. Kill
@@ -6854,7 +6829,7 @@ translateRange(CVMJITCompilationContext* con,
 				    typeTag, isVolatile);
 	    } else {
 		doInstanceFieldWrite(con, curbk, pc, constNode, fieldOffset,
-				     typeTag);
+				     typeTag, isVolatile);
 	    }
 	    
 	    break;

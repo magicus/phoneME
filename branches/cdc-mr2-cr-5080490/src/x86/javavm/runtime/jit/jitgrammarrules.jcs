@@ -43,6 +43,7 @@
 %leaf LOCAL64 // Java 2-word local
 %unary STATIC32 // Java 1-word static
 %unary STATIC64 // Java 2-word static
+%unary STATIC64VOL // Java 2-word volatile static
 
 //
 // this represents the first evaluation of a 1-word CSE
@@ -140,6 +141,7 @@
 %binary FIELDREFOBJ     // object ref field of object
 %binary FIELDREF32	// one-word field of object
 %binary FIELDREF64	// two-word field of object
+%binary FIELDREF64VOL	// two-word volatile field of object
 
 %binary ISEQUENCE_R
 %binary LSEQUENCE_R
@@ -1433,6 +1435,28 @@ root: ASSIGN STATIC64 memSpec reg64 : 20 : : : : {
         setStaticField(con, CVMRM_INT_REGS(con), CVMCPU_STR64_OPCODE);
 };
 
+// Purpose: STATIC64VOL(staticFieldSpec) = value64.
+root: ASSIGN STATIC64VOL regAddr reg64 : 90 : SET_AVOID_C_CALL($$); :
+    SET_TARGET2($$, ARG3, ARG1) : : {
+	CVMRMResource* rhs = popResource(con);
+	CVMRMResource* lhs = popResource(con);
+
+	/* Swap the arguments because the runtime helper function will expect
+	   the 64-bit source value to come first followed by the static field
+	   address: */
+	pushResource(con, rhs);
+	pushResource(con, lhs);
+
+        CVMJITprintCodegenComment(("Do volatile putstatic:"));
+        CVMJITaddCodegenComment((con, "call CVMCCMruntimePutstatic64Volatile"));
+        CVMJITsetSymbolName((con, "CVMCCMruntimePutstatic64Volatile"));
+        CVMJITstatsRecordInc(con, CVMJIT_STATS_CVMCCMruntimePutstatic64Volatile);
+
+	/* Call the helper function: */
+        longBinaryHelper2(con, (void*)CVMCCMruntimePutstatic64Volatile, $$,
+			  CVM_FALSE);
+    };
+
 aluRhs: ICONST_32 : 0 : : : :
     pushALURhsConstant(con, CVMJITirnodeGetConstant32($$)->j.i);
 
@@ -1506,7 +1530,7 @@ reg64:  LSEQUENCE_R effect reg64 : 0 : :
 };
 
 // "type-less" sequence. 
-reg32:  VSEQUENCE_R effect reg32 : 0 : : 
+reg32:  VSEQUENCE_R effect reg32 : 1 : : 
 	SEQUENCE_R_INHERITANCE($$, CVMRM_INT_REGS(con)); : : ;
 
 //
@@ -1539,7 +1563,7 @@ reg64:  LSEQUENCE_L reg64 effect : 0 : :
 };
 
 // "type-less" sequence. 
-reg32:  VSEQUENCE_L reg32 effect : 0 : :
+reg32:  VSEQUENCE_L reg32 effect : 1 : :
 	SEQUENCE_L_INHERITANCE($$, CVMRM_INT_REGS(con)); : : ;
 
 root: BEGININLINING ICONST_32: 0 : : : : {
@@ -1961,6 +1985,67 @@ root: ASSIGN FIELDREF64 regObj memSpec reg64 : 10 :
         CVMJITaddCodegenComment((con,
             "putfield(obj, fieldOffset, value{L|D});"));
         setField(con, CVMRM_INT_REGS(con), CVMCPU_STR64_OPCODE);
+    };
+
+// Purpose: Convert the regAddr to a reg32.
+// NOTE: This is needed by FIELDREF64VOL because it takes a reg32 offset that
+//       can either be a constant (a resolved value), or a regAddr (a
+//       unresolved value).  The redAddr is essentially a reg32 anyway.
+//       However, even though the cost of this conversion is essentially 0,
+//       we still give is a minimal cost value.  This is so that it doesn't
+//       create unnecessary ambiguities in the rules matching.
+reg32: regAddr : 10 : : : : ;
+
+// Purpose: ASSIGN(FIELDREF64VOL(obj,fieldOffset), value64)
+root: ASSIGN FIELDREF64VOL regObj reg32 reg64 : 90 :
+    SET_AVOID_C_CALL($$); : PUTFIELD_INHERITANCE(con, $$);
+    SET_TARGET3_WO_INHERITANCE($$, ARG3, ARG4, ARG1); : : {
+
+	CVMRMResource* value = popResource(con);
+	CVMRMResource* fieldOffset = popResource(con);
+	CVMRMResource* obj; /* Leave the obj on the stack for the null check. */
+
+	/* Note: we need to do the NULL check for this object reference because
+	   the CCM helper can't do it: */
+	doNullCheck(con, NULL, ARG3, ARG1|ARG2|ARG4);
+
+	/* Now do the put field: */
+	obj = popResource(con); /* OK, to pop the obj now. */
+
+	value = CVMRMpinResourceSpecific(CVMRM_INT_REGS(con),
+					 value, CVMCPU_ARG1_REG);
+	obj = CVMRMpinResourceSpecific(CVMRM_INT_REGS(con),
+				       obj, CVMCPU_ARG3_REG);
+	fieldOffset = CVMRMpinResourceSpecific(CVMRM_INT_REGS(con),
+					       fieldOffset, CVMCPU_ARG4_REG);
+
+	/* Spill the outgoing registers if necessary: */
+	CVMRMminorSpill(con, ARG1|ARG2|ARG3|ARG4);
+
+#ifdef CVMCPU_HAS_64BIT_REGISTERS
+	/* Shuffle the 64-bit arg first: */
+	CVMCPUemitMoveTo64BitRegister(con, CVMCPU_ARG1_REG, CVMCPU_ARG1_REG);
+	/* Shuffle the remaining 32-bit args: */
+	CVMCPUemitMoveRegister(con, CVMCPU_MOV_OPCODE,
+			       CVMCPU_ARG2_REG, CVMCPU_ARG3_REG,
+			       CVMJIT_NOSETCC);
+	CVMCPUemitMoveRegister(con, CVMCPU_MOV_OPCODE,
+			       CVMCPU_ARG3_REG, CVMCPU_ARG4_REG,
+			       CVMJIT_NOSETCC);
+#endif
+
+        CVMJITprintCodegenComment(("Do volatile putfield:"));
+        CVMJITaddCodegenComment((con, "call CVMCCMruntimePutfield64Volatile"));
+        CVMJITsetSymbolName((con, "CVMCCMruntimePutfield64Volatile"));
+        CVMJITstatsRecordInc(con, CVMJIT_STATS_CVMCCMruntimePutfield64Volatile);
+
+	CVMCPUemitAbsoluteCall(con, (void*)CVMCCMruntimePutfield64Volatile,
+			       CVMJIT_CPDUMPOK, CVMJIT_CPBRANCHOK, 4);
+	
+	/* Release resources and publish the result: */
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), value);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), obj);
+	CVMRMrelinquishResource(CVMRM_INT_REGS(con), fieldOffset);
     };
 
 //
@@ -2543,6 +2628,16 @@ reg64: FETCH64 STATIC64 memSpec : 20 : : : : {
 		       $$, GET_REGISTER_GOALS, CVMCPU_LDR64_OPCODE, 2);
     };
 
+// Purpose: value64 = FETCH64(STATIC64VOL(staticFieldSpec))
+reg64: FETCH64 STATIC64VOL regAddr : 90 : SET_AVOID_C_CALL($$); :
+    SET_TARGET1($$, ARG1); : : {
+        CVMJITprintCodegenComment(("Do volatile getstatic:"));
+        CVMJITaddCodegenComment((con, "call CVMCCMruntimeGetstatic64Volatile"));
+        CVMJITsetSymbolName((con, "CVMCCMruntimeGetstatic64Volatile"));
+        CVMJITstatsRecordInc(con, CVMJIT_STATS_CVMCCMruntimeGetstatic64Volatile);
+        unaryHelper(con, (void*)CVMCCMruntimeGetstatic64Volatile, $$, ARG1, 2);
+    };
+
 // Purpose: valueRef = NEW_ARRAY_REF(elementClassBlock, dimension)
 regObj: NEW_ARRAY_REF regAddr reg32 : 90 : SET_AVOID_C_CALL($$); :
     SET_TARGET2($$, ARG3, ARG2); : : {
@@ -2705,10 +2800,15 @@ effect: MONITOR_EXIT regObj : 90 : : SET_TARGET1($$, ARG3); : : {
 	CVMRMrelinquishResource(CVMRM_INT_REGS(con), src);
     };
 
-// Purpose: Return object after null-checking
-regObj: NULLCHECK regObj : 20 : : : : {
+%{
+
+/* Purpose: Emits code to do a NULL check of an object reference. */
+static void doNullCheck(CVMJITCompilationContext *con,
+			CVMJITIRNodePtr thisNode,
+			CVMRMregset target, CVMRMregset avoid)
+{
 #ifdef CVMJIT_TRAP_BASED_NULL_CHECKS
-    /*
+    /* 
      * The NULL check is performed by doing a fake read using the pointer.
      * If null, we get a trap, which we catch and deal with.
      */
@@ -2717,13 +2817,18 @@ regObj: NULLCHECK regObj : 20 : : : : {
 
 	CVMRMsynchronizeJavaLocals(con);
 
-	/* We are going to load into this register */
-	scratch = CVMRMgetResource(CVMRM_INT_REGS(con),
-				   CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
-        scratch->flags |= CVMRMaddr;
 	/* Get the resource for the object to be NULL-checked */
 	objRes = popResource(con);
-	CVMRMpinResource(CVMRM_INT_REGS(con), objRes, GET_REGISTER_GOALS);
+	CVMRMpinResource(CVMRM_INT_REGS(con), objRes, target, avoid);
+
+	/* We are going to load into this register.
+	   NOTE: We allocate the scratch after pinning the objRes because we
+	         don't want to make sure that the objRes gets targetted to the
+		 desired register first.
+	*/
+	scratch = CVMRMgetResource(CVMRM_INT_REGS(con),
+				   CVMRM_ANY_SET, avoid, 1);
+        scratch->flags |= CVMRMaddr;
 
 	CVMJITaddCodegenComment((con,
 				 trapCheckComments[CVMJITIR_NULL_POINTER]));
@@ -2734,22 +2839,25 @@ regObj: NULLCHECK regObj : 20 : : : : {
             0);
 
 	/* We are done with the NULL check side effect. Pass the object on */
-	CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), objRes, $$);
+	if (thisNode != NULL) {
+	    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), objRes, thisNode);
+	} else {
+	    CVMRMunpinResource(CVMRM_INT_REGS(con), objRes);
+	}
 	CVMRMrelinquishResource(CVMRM_INT_REGS(con), scratch);
 	pushResource(con, objRes);
-#else /* CVMJIT_TRAP_BASED_NULL_CHECKS */
+#else
 	CVMRMResource* objRes;
 
 	CVMRMsynchronizeJavaLocals(con);
-	CVMJITaddCodegenComment((con, "NULL check"));
 
 	/* Get the resource for the object to be NULL-checked */
 	objRes = popResource(con);
-	CVMRMpinResource(CVMRM_INT_REGS(con), objRes, GET_REGISTER_GOALS);
+	CVMRMpinResource(CVMRM_INT_REGS(con), objRes, target, avoid);
 
 	/* Compare to NULL */
-	CVMCPUemitCompare(con, CVMCPU_CMP_OPCODE, CVMCPU_COND_EQ,
-			  CVMRMgetRegisterNumber(objRes), CVMCPUALURhsTokenConstZero);
+        CVMCPUemitCompare(con, CVMCPU_CMP_OPCODE, CVMCPU_COND_EQ,
+	    CVMRMgetRegisterNumber(objRes), CVMCPUALURhsTokenConstZero);
 	CVMJITaddCodegenComment((con,
 	    trapCheckComments[CVMJITIR_NULL_POINTER]));
         CVMCPUemitAbsoluteCallConditional(con, 
@@ -2757,9 +2865,20 @@ regObj: NULLCHECK regObj : 20 : : : : {
             CVMJIT_CPDUMPOK, CVMJIT_CPBRANCHOK, CVMCPU_COND_EQ);
 
 	/* We are done with the NULL check side effect. Pass the object on */
-	CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), objRes, $$);
+	if (thisNode != NULL) {
+	    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), objRes, thisNode);
+	} else {
+	    CVMRMunpinResource(CVMRM_INT_REGS(con), objRes);
+	}
 	pushResource(con, objRes);
-#endif /* CVMJIT_TRAP_BASED_NULL_CHECKS */
+#endif
+}
+
+%}
+
+// Purpose: Return object after null-checking
+regObj: NULLCHECK regObj : 20 : : : : {
+        doNullCheck(con, $$, GET_REGISTER_GOALS);
     };
 
 //--------------- CISC and x86 specific ------------------------------------
@@ -3554,7 +3673,7 @@ reg32: INEG32 reg32 : 10 : : : : {
 reg32: IADD32 reg32 aluRhs : 10 : : : : {
   wordRegRegOp(con, CVMCPU_ADD_OPCODE, $$, GET_REGISTER_GOALS);
 };
-reg32: IADD32 reg32 staticRef32FromMem : 16 : : : : {
+reg32: IADD32 reg32 staticRef32FromMem : 15 : : : : {
     wordRegStaticOp(con, CVMCPU_ADD_OPCODE, $$, GET_REGISTER_GOALS, CVM_TRUE);
 };
 reg32: IADD32 reg32 fieldref32fromMem : 15 : : : : {
@@ -3567,10 +3686,10 @@ reg32: IADD32 reg32 LOCAL32 : 15 : : : : {
 reg32: IADD32 staticRef32FromMem reg32 : 16 : : : : {
   wordRegStaticOp(con, CVMCPU_ADD_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
-reg32: IADD32 fieldref32fromMem reg32 : 15 : : : : {
+reg32: IADD32 fieldref32fromMem reg32 : 16 : : : : {
   wordRegFieldrefOp(con, CVMCPU_ADD_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE); 
 };
-reg32: IADD32 LOCAL32 reg32 : 15 : : : : {
+reg32: IADD32 LOCAL32 reg32 : 16 : : : : {
   wordRegLocalOp(con, CVMCPU_ADD_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
 
@@ -3578,9 +3697,10 @@ staticRef32FromMem: FETCH32 STATIC32 memSpec : 0 : : : : {
   CVMJITprintCodegenComment(("Do getstatic-32-CISC:"));
 };
 
-staticRef64FromMem: FETCH64 STATIC64 memSpec : 0 : : : : {
-  CVMJITprintCodegenComment(("Do getstatic-64-CISC:"));
-};
+// Currently unused.  Retained for future reference:
+//staticRef64FromMem: FETCH64 STATIC64 memSpec : 0 : : : : {
+//  CVMJITprintCodegenComment(("Do getstatic-64-CISC:"));
+//};
 
 // This is just a hook to get register usage propagation right
 // (GETFIELD_SYNTHESIS, GETFIELD_INHERITANCE). 
@@ -3589,12 +3709,13 @@ fieldref32fromMem: FETCH32 FIELDREF32 regObj memSpec : 0 :
   CVMJITprintCodegenComment(("Do getfield-32-CISC:"));
 };
 
-// This is just a hook to get register usage propagation right
-// (GETFIELD_SYNTHESIS, GETFIELD_INHERITANCE). 
-fieldref64fromMem: FETCH64 FIELDREF64 regObj memSpec : 0 :
-  GETFIELD_SYNTHESIS(con, $$); : GETFIELD_INHERITANCE(con, $$); : : {
-  CVMJITprintCodegenComment(("Do getfield-64-CISC:"));
-};
+// Currently unused.  Retained for future reference:
+//// This is just a hook to get register usage propagation right
+//// (GETFIELD_SYNTHESIS, GETFIELD_INHERITANCE). 
+//fieldref64fromMem: FETCH64 FIELDREF64 regObj memSpec : 0 :
+//  GETFIELD_SYNTHESIS(con, $$); : GETFIELD_INHERITANCE(con, $$); : : {
+//  CVMJITprintCodegenComment(("Do getfield-64-CISC:"));
+//};
 
 reg32: ISUB32 reg32 aluRhs : 10 : : : : {
   wordRegRegOp(con, CVMCPU_SUB_OPCODE, $$, GET_REGISTER_GOALS);
@@ -3612,7 +3733,7 @@ reg32: ISUB32 reg32 LOCAL32 : 15 : : : : {
 reg32: AND32 reg32 aluRhs : 10 : : : : {
   wordRegRegOp(con, CVMCPU_AND_OPCODE, $$, GET_REGISTER_GOALS);
 };
-reg32: AND32 reg32 staticRef32FromMem : 16 : : : : {
+reg32: AND32 reg32 staticRef32FromMem : 15 : : : : {
   wordRegStaticOp(con, CVMCPU_AND_OPCODE, $$, GET_REGISTER_GOALS, CVM_TRUE);
 };
 reg32: AND32 reg32 fieldref32fromMem : 15 : : : : {
@@ -3624,17 +3745,17 @@ reg32: AND32 reg32 LOCAL32 : 15 : : : : {
 reg32: AND32 staticRef32FromMem reg32 : 16 : : : : {
   wordRegStaticOp(con, CVMCPU_AND_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
-reg32: AND32 fieldref32fromMem reg32 : 15 : : : : {
+reg32: AND32 fieldref32fromMem reg32 : 16 : : : : {
   wordRegFieldrefOp(con, CVMCPU_AND_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
-reg32: AND32 LOCAL32 reg32 : 15 : : : : {
+reg32: AND32 LOCAL32 reg32 : 16 : : : : {
   wordRegLocalOp(con, CVMCPU_AND_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
 
 reg32: OR32 reg32 aluRhs : 10 : : : : {
   wordRegRegOp(con, CVMCPU_OR_OPCODE, $$, GET_REGISTER_GOALS);
 };
-reg32: OR32 reg32 staticRef32FromMem : 16 : : : : {
+reg32: OR32 reg32 staticRef32FromMem : 15 : : : : {
   wordRegStaticOp(con, CVMCPU_OR_OPCODE, $$, GET_REGISTER_GOALS, CVM_TRUE);
 };
 reg32: OR32 reg32 fieldref32fromMem : 15 : : : : {
@@ -3646,17 +3767,17 @@ reg32: OR32 reg32 LOCAL32 : 15 : : : : {
 reg32: OR32 staticRef32FromMem reg32 : 16 : : : : {
   wordRegStaticOp(con, CVMCPU_OR_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE); 
 };
-reg32: OR32 fieldref32fromMem reg32 : 15 : : : : {
+reg32: OR32 fieldref32fromMem reg32 : 16 : : : : {
   wordRegFieldrefOp(con, CVMCPU_OR_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
-reg32: OR32 LOCAL32 reg32 : 15 : : : : {
+reg32: OR32 LOCAL32 reg32 : 16 : : : : {
   wordRegLocalOp(con, CVMCPU_OR_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
 
 reg32: XOR32 reg32 aluRhs : 10 : : : : {
   wordRegRegOp(con, CVMCPU_XOR_OPCODE, $$, GET_REGISTER_GOALS);
 };
-reg32: XOR32 reg32 staticRef32FromMem : 16 : : : : {
+reg32: XOR32 reg32 staticRef32FromMem : 15 : : : : {
   wordRegStaticOp(con, CVMCPU_XOR_OPCODE, $$, GET_REGISTER_GOALS, CVM_TRUE);
 };
 reg32: XOR32 reg32 fieldref32fromMem : 15 : : : : {
@@ -3668,17 +3789,17 @@ reg32: XOR32 reg32 LOCAL32 : 15 : : : : {
 reg32: XOR32 staticRef32FromMem reg32 : 16 : : : : {
   wordRegStaticOp(con, CVMCPU_XOR_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
-reg32: XOR32 fieldref32fromMem reg32 : 15 : : : : {
+reg32: XOR32 fieldref32fromMem reg32 : 16 : : : : {
   wordRegFieldrefOp(con, CVMCPU_XOR_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
-reg32: XOR32 LOCAL32 reg32 : 15 : : : : {
+reg32: XOR32 LOCAL32 reg32 : 16 : : : : {
   wordRegLocalOp(con, CVMCPU_XOR_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
 
 reg32: IMUL32 reg32 aluRhs : 10 : : : : {
   wordRegRegOp(con, CVMCPU_MULL_OPCODE, $$, GET_REGISTER_GOALS);
 };
-reg32: IMUL32 reg32 staticRef32FromMem : 16 : : : : {
+reg32: IMUL32 reg32 staticRef32FromMem : 15 : : : : {
   wordRegStaticOp(con, CVMCPU_MULL_OPCODE, $$, GET_REGISTER_GOALS, CVM_TRUE);
 };
 reg32: IMUL32 reg32 fieldref32fromMem : 15 : : : : {
@@ -3690,10 +3811,10 @@ reg32: IMUL32 reg32 LOCAL32 : 15 : : : : {
 reg32: IMUL32 staticRef32FromMem reg32 : 16 : : : : {
   wordRegStaticOp(con, CVMCPU_MULL_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
-reg32: IMUL32 fieldref32fromMem reg32 : 15 : : : : {
+reg32: IMUL32 fieldref32fromMem reg32 : 16 : : : : {
   wordRegFieldrefOp(con, CVMCPU_MULL_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
-reg32: IMUL32 LOCAL32 reg32 : 15 : : : : {
+reg32: IMUL32 LOCAL32 reg32 : 16 : : : : {
   wordRegLocalOp(con, CVMCPU_MULL_OPCODE, $$, GET_REGISTER_GOALS, CVM_FALSE);
 };
 
@@ -3759,7 +3880,7 @@ reg64: SRA64 reg64 ICONST_32 : 40 : : : : {
   doLongShiftConst(con, CVMCPU_SRA64_OPCODE, $$, GET_REGISTER_GOALS);
 };
 
-/**************************************************************************/
+// ***************************************************************************
 
 // Purpose: value64 = value64 << value32.
 reg64: SLL64  reg64 reg32 : 90 : SET_AVOID_C_CALL($$); :
@@ -3789,7 +3910,7 @@ reg64: SRL64  reg64 reg32 : 90 : SET_AVOID_C_CALL($$); :
     };
 
 
-/*********************************************************************************/
+// ***************************************************************************
 
 
 reg64: ICONST_64 : 20 : : : : {
@@ -4323,6 +4444,26 @@ reg64: FETCH64 FIELDREF64 regObj memSpec : 10 :
         CVMJITaddCodegenComment((con, "value{L|D}"));
         fetchField(con, CVMRM_INT_REGS(con), $$,
 		   GET_REGISTER_GOALS, CVMCPU_LDR64_OPCODE, 2);
+    };
+
+// Purpose: value = FETCH64(FIELDREF64VOL(obj,fieldOffset))
+reg64: FETCH64 FIELDREF64VOL regObj reg32 : 90 :
+    SET_AVOID_C_CALL($$); : SET_TARGET2($$, ARG1, ARG2); : : {
+	CVMRMResource *fieldOffset;
+
+	/* Note: we need to do the NULL check for this object reference because
+	   the CCM helper can't do it: */
+	fieldOffset = popResource(con); /* Leave the objRes on the stack. */
+	doNullCheck(con, NULL, ARG1, ARG2);
+	pushResource(con, fieldOffset); /* Put back the fieldOffset. */
+
+	/* Now do the get field: */
+        CVMJITprintCodegenComment(("Do volatile getfield:"));
+        CVMJITaddCodegenComment((con, "call CVMCCMruntimeGetfield64Volatile"));
+        CVMJITsetSymbolName((con, "CVMCCMruntimeGetfield64Volatile"));
+        CVMJITstatsRecordInc(con, CVMJIT_STATS_CVMCCMruntimeGetfield64Volatile);
+        binaryHelper(con, (void*)CVMCCMruntimeGetfield64Volatile, $$,
+		     CVM_FALSE, 2, 2);
     };
 
 %{
@@ -5536,11 +5677,11 @@ compare64cc(CVMJITCompilationContext *con, CVMJITIRNodePtr thisNode)
 
 root: BCOND_INT reg32 staticRef32FromMem : 25 : : : :
         compare32_reg_static(con, $$, CVMCPU_CMP_OPCODE, CVM_TRUE);
-root: BCOND_INT staticRef32FromMem reg32 : 25 : : : :
+root: BCOND_INT staticRef32FromMem reg32 : 26 : : : :
         compare32_reg_static(con, $$, CVMCPU_CMP_OPCODE, CVM_FALSE);
 root: BCOND_INT reg32 fieldref32fromMem : 25 : : : :
         compare32_reg_fieldref(con, $$, CVMCPU_CMP_OPCODE, CVM_TRUE);
-root: BCOND_INT fieldref32fromMem reg32 : 25 : : : :
+root: BCOND_INT fieldref32fromMem reg32 : 26 : : : :
         compare32_reg_fieldref(con, $$, CVMCPU_CMP_OPCODE, CVM_FALSE);
 
 %{
