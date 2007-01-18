@@ -280,17 +280,19 @@ void clearScreen() {
  * Call after frame buffer is initialized.
  */
 void resizeScreenBuffer(int width, int height) {
+    if (gxj_resize_screen_buffer(width, height) != ALL_OK) {
+	    fprintf(stderr, "Failed to reallocate screen buffer\n");
+	    exit(1);
+    }
+}
 
-    // check if frame buffer is big enough
+/** Check if screen buffer is not bigger than frame buffer device */
+static void checkScreenBufferSize(int width, int height) {
+    // Check if frame buffer is big enough
     if (fb.width < width || fb.height < height) {
         fprintf(stderr, "Device screen too small. Need %dx%d\n",
             width, height);
         exit(1);
-    }
-    
-    if (gxj_resize_screen_buffer(width, height) != ALL_OK) {
-	    fprintf(stderr, "Failed to reallocate screen buffer\n");
-	    exit(1);
     }
 }
 
@@ -305,6 +307,9 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     // System screen buffer geometry
     int bufWidth = gxj_system_screen_buffer.width;
     int bufHeight = gxj_system_screen_buffer.height;
+
+    // Check if frame buffer is big enough
+    checkScreenBufferSize(bufWidth, bufHeight);    
 
     if (linuxFbDeviceType == LINUX_FB_OMAP730) {
         // Needed by the P2 board
@@ -441,6 +446,9 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     // System screen buffer geometry
     int bufWidth = gxj_system_screen_buffer.width;
     int bufHeight = gxj_system_screen_buffer.height;
+
+    // Check if frame buffer is big enough
+    checkScreenBufferSize(bufHeight, bufWidth);
 
     if (linuxFbDeviceType == LINUX_FB_OMAP730) {
         // Needed by the P2 board
