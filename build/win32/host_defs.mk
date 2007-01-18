@@ -93,8 +93,8 @@ CCFLAGS_SPEED     = $(CCFLAGS) /GB -DNDEBUG
 CCFLAGS_SPACE     = $(CCFLAGS) /GB -DNDEBUG
 else
 #  optimized
-CCFLAGS_SPEED     = $(CCFLAGS) /O2 /Ob2 /Og /Ot -DNDEBUG
-CCFLAGS_SPACE     = $(CCFLAGS) /O1 /Ob1 /Og -DNDEBUG
+CCFLAGS_SPEED     = $(CCFLAGS) /O2 /Ob2 /Ot -DNDEBUG
+CCFLAGS_SPACE     = $(CCFLAGS) /O1 /Ob1 -DNDEBUG
 endif
 # vc debug
 else
@@ -127,7 +127,7 @@ LINKFLAGS	= /implib:$(CVM_IMPL_LIB) $(SO_LINKFLAGS) /export:jio_snprintf \
             /export:CVMexpandStack /export:CVMtimeMillis \
             /export:CVMIDprivate_allocateLocalRootUnsafe /export:CVMglobals \
             /export:CVMsystemPanic /export:CVMcsRendezvous /export:CVMconsolePrintf
-            
+
 ifeq ($(CVM_DEBUG), true)
 LINKFLAGS	+= /export:CVMassertHook /export:CVMdumpStack
 endif
