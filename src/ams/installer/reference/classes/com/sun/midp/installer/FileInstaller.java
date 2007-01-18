@@ -31,7 +31,6 @@ import java.io.IOException;
 import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.io.Connector;
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
-import com.sun.midp.io.HttpUrl;
 
 /**
  * An Installer allowing to install a midlet suite from a file.
@@ -89,33 +88,8 @@ public class FileInstaller extends Installer {
      */
     protected int downloadJAR(String filename) throws IOException {
         int jarSize;
-        HttpUrl parsedUrl;
-        String url;
         RandomAccessStream jarInputStream, jarOutputStream;
-
-        parsedUrl = new HttpUrl(info.jarUrl);
-        if (parsedUrl.authority == null && 
-	    parsedUrl.scheme == null &&
-	    info.jadUrl != null) {
-            // relative URL, add the JAD URL as the base
-            try {
-                parsedUrl.addBaseUrl(info.jadUrl);
-            } catch (IOException e) {
-                postInstallMsgBackToProvider(
-                    OtaNotifier.INVALID_JAD_MSG);
-                throw new InvalidJadException(
-                         InvalidJadException.INVALID_JAR_URL);
-            }
-
-            url = parsedUrl.toString();
-
-            // The JAR URL saved to storage MUST be absolute
-            info.jarUrl = url;
-        } else {
-            url = info.jarUrl;
-        }
-
-        String jarFilename = getUrlPath(url);
+        String jarFilename = getUrlPath(info.jarUrl);
 
         // Open source (jar) file
         jarInputStream = new RandomAccessStream();
