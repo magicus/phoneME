@@ -980,7 +980,7 @@ verify_method(context_type *context, CVMClassBlock *cb, CVMMethodBlock* mb)
     /* Run through the code.  Mark the start of each instruction, and give
      * the instruction a number */
     for (i = 0, offset = 0; offset < code_length; i++) {
-	int length = CVMopcodeGetLengthWithBoundsCheckVariable(
+	int length = CVMopcodeGetLengthWithBoundsCheck(
 	    &code[offset], &code[code_length]);
 	int next_offset = offset + length;
 	if (length <= 0) 
