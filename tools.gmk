@@ -31,12 +31,20 @@ ifndef TOOLS_OUTPUT_DIR
 TOOLS_OUTPUT_DIR=$(TOOLS_DIR)/output
 endif
 
-# Configurator paths and file names
+# JAR command for CDC builds
 #
-CONFIGURATOR_PACKAGE     = com.sun.configurator
-CONFIGURATOR_MAIN_CLASS  = $(CONFIGURATOR_PACKAGE).CodeTransformer
-CONFIGURATOR_JAVA_FILES  = $(TOOLS_DIR)/configurator/classes/$(subst .,/,$(CONFIGURATOR_MAIN_CLASS)).java
-CONFIGURATOR_CLASS_FILES = $(TOOLS_OUTPUT_DIR)/$(subst .,/,$(CONFIGURATOR_MAIN_CLASS)).class
+ifndef JAR_CMD
+JAR_CMD=$(CVM_JAR)
+endif
+
+# CodeTransformer paths and file names
+#
+CODE_TRANSFORMER_DIR           = $(TOOLS_DIR)/code_transformer
+CODE_TRANSFORMER_PACKAGE       = com.sun.xml.transform
+CODE_TRANSFORMER_MAIN_CLASS    = $(CODE_TRANSFORMER_PACKAGE).CodeTransformer
+CODE_TRANSFORMER_JAVA_FILES    = $(CODE_TRANSFORMER_DIR)/classes/$(subst .,/,$(CODE_TRANSFORMER_MAIN_CLASS)).java
+CODE_TRANSFORMER_MANIFEST_FILE = $(TOOLS_OUTPUT_DIR)/CodeTransformer.manifest
+CODE_TRANSFORMER_JAR_FILE      = $(TOOLS_OUTPUT_DIR)/CodeTransformer.jar
 
 JPP_JAVA_FILES  = $(TOOLS_DIR)/jpp/Jpp.java
 JPP_CLASS_FILES = $(TOOLS_OUTPUT_DIR)/Jpp.class
@@ -52,19 +60,27 @@ $(JPP_CLASS_FILES): $(TOOLS_OUTPUT_DIR) $(JPP_JAVA_FILES)
 	@echo " ... building Jpp"
 	@($(JAVAC_CMD) -g -d $(TOOLS_OUTPUT_DIR) $(JPP_JAVA_FILES))
 
-# Configurator build rule
+# CodeTransformer build rules
 #
-$(CONFIGURATOR_CLASS_FILES): $(TOOLS_OUTPUT_DIR) $(CONFIGURATOR_JAVA_FILES)
-	@echo " ... building Configurator"
-	@($(JAVAC_CMD) -g -d $(TOOLS_OUTPUT_DIR) $(CONFIGURATOR_JAVA_FILES))
+$(CODE_TRANSFORMER_JAR_FILE): $(TOOLS_OUTPUT_DIR) $(CODE_TRANSFORMER_JAVA_FILES) $(CODE_TRANSFORMER_MANIFEST_FILE)
+	@echo " ... building CodeTransformer"
+	@($(JAVAC_CMD) -g -d $(TOOLS_OUTPUT_DIR) $(CODE_TRANSFORMER_JAVA_FILES))
+	@echo " ... $@ " $(LOG)
+	@(cd $(TOOLS_OUTPUT_DIR); $(JAR_CMD) cfm $(CODE_TRANSFORMER_JAR_FILE) \
+		$(CODE_TRANSFORMER_MANIFEST_FILE) $(subst .,/,$(CODE_TRANSFORMER_PACKAGE)))
+
+$(CODE_TRANSFORMER_MANIFEST_FILE): $(TOOLS_CLASS_DIR)
+	@echo " ... $@ " $(LOG)
+	@(echo "Main-Class: $(CODE_TRANSFORMER_MAIN_CLASS)" > $@) $(LOG)
+
 
 # Append tools source bundle creation to target
 source_bundle:: tools_source_bundle
 
-# Copy and filter tools source in TOOLS_OUTPUT_DIR/src
+# Copy and filter tools source in TOOLS_OUTPUT_DIR/tools
 tools_source_bundle: $(TOOLS_OUTPUT_DIR)
 	@echo " ... tools source bundle"; \
-	SB_DIR=$(TOOLS_OUTPUT_DIR)/src; \
+	SB_DIR=$(TOOLS_OUTPUT_DIR)/tools; \
 	if [ -d "$(TOOLS_DIR)/.svn" ]; then \
 		svn export --force -q "$(TOOLS_DIR)" $$SB_DIR; \
 	else \
