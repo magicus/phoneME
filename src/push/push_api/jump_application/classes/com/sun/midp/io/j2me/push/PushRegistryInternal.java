@@ -33,7 +33,10 @@ import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.security.SecurityToken;
 
 /**
- * Factored out old Irbis interfaces (to be removed).
+ * Internal push functionality for JUMP stack.
+ *
+ * NOTE: some (if not all) methods might go away as a result of
+ *  sources refactoring
  */
 public final class PushRegistryInternal {
 

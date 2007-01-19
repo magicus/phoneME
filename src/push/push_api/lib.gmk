@@ -77,7 +77,7 @@ ifeq ($(USE_NATIVE_PUSH), true)
 SUBSYSTEM_PUSH_API_JAVA_FILES += \
     $(GENERATED_DIR)/classes/com/sun/midp/io/j2me/push/PushRegistryImpl.java
 else
-    # Add files common for Irbis and Push
+    # Add files common for both stacks
     SUBSYSTEM_PUSH_API_JAVA_FILES += \
         $(SUBSYSTEM_PUSH_DIR)/push_api/$(LIB_PUSH_API_IMPL)/classes/com/sun/midp/io/j2me/push/PushRegistryImpl.java \
         $(SUBSYSTEM_PUSH_DIR)/push_api/$(LIB_PUSH_API_IMPL)/classes/com/sun/midp/io/j2me/push/Connection.java \

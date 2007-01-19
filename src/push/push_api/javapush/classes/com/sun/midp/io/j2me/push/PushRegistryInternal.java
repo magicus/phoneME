@@ -36,7 +36,7 @@ import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
 /**
- * Factored out old Irbis interfaces (to be removed).
+ * Internal push functionality for CLDC stack.
  */
 public final class PushRegistryInternal {
 
