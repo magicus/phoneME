@@ -126,7 +126,7 @@ endif
 #
 $(MIDP_OUTPUT_DIR)/classes.zip::$(GENERATED_JAVA_FILES) \
 				$(PREVERIFY_CMD) \
-                                $(CONFIGURATOR_JAR_FILE) \
+                                $(CODE_TRANSFORMER_JAR_FILE) \
                                 $(UNCOMPRESSED_VM_CLASSES) \
                                 FORCE
 	@if [ '!' -d $(CLASSBINDIR) ]; then \

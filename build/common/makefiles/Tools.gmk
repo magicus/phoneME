@@ -55,10 +55,11 @@ JADTOOL_JAR_FILE      = $(BINDIR)/JadTool.jar
 
 include $(TOOLS_DIR)/tools.gmk
 
-# Configurator jar and manifest file names
+# Localized strings generator settings
 #
-CONFIGURATOR_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/Configurator.manifest
-CONFIGURATOR_JAR_FILE = $(BINDIR)/Configurator.jar
+L10N_GENERATOR_MAIN_CLASS    = com.sun.midp.l10n.generator.LocalizedStringsGenerator
+L10N_GENERATOR_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/l10nGenerator.manifest
+L10N_GENERATOR_JAR_FILE      = $(TOOLS_CLASS_DIR)/l10nGenerator.jar
 
 # Skin romization tool jar and manifest file names
 #
@@ -81,8 +82,8 @@ endef
 # Targets
 #
 all_tools:: keystore $(KEYTOOL_JAR_FILE) $(JADTOOL_JAR_FILE) \
-            $(CONFIGURATOR_JAR_FILE) $(SKINROMIZATION_JAR_FILE) \
-	    $(IMAGE2RAW_JAR_FILE)
+            $(CODE_TRANSFORMER_JAR_FILE) $(SKINROMIZATION_JAR_FILE) \
+	    $(IMAGE2RAW_JAR_FILE) $(L10N_GENERATOR_JAR_FILE)
 
 $(TOOLS_CLASS_DIR):
 	@echo " ... $@ " $(LOG)
@@ -165,21 +166,23 @@ $(JADTOOL_MANIFEST_FILE): $(TOOLS_CLASS_DIR)
 	@echo " ... $@ " $(LOG)
 	@(echo "Main-Class: com.sun.midp.jadtool.JadTool" > $@) $(LOG)
 
-
-# Configurator (jar rules)
-#
-$(CONFIGURATOR_JAR_FILE): $(TOOLS_CLASS_DIR) $(CONFIGURATOR_CLASS_FILES) $(CONFIGURATOR_MANIFEST_FILE)
-	@mkdir -p $(BINDIR) $(LOG)
+$(L10N_GENERATOR_JAR_FILE): $(TOOLS_CLASS_DIR) $(MODULE_TOOL_L10N_GENERATOR_JAVA_FILES) $(L10N_GENERATOR_MANIFEST_FILE)
+	@echo " ... building l10n generator " $(LOG)
+	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_L10N_GENERATOR_JAVA_FILES) $(LOG_ONLY)
+	@($(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_L10N_GENERATOR_JAVA_FILES)) $(LOG)
 	@echo " ... $@ " $(LOG)
-	@echo +++ cd $(TOOLS_OUTPUT_DIR)\; $(JAR_CMD) \
-		cfm $(CONFIGURATOR_JAR_FILE) $(CONFIGURATOR_MANIFEST_FILE) \
-		$(subst .,/,$(CONFIGURATOR_PACKAGE)) $(LOG_ONLY)
-	@(cd $(TOOLS_OUTPUT_DIR); $(JAR_CMD) cfm $(CONFIGURATOR_JAR_FILE) \
-		$(CONFIGURATOR_MANIFEST_FILE) $(subst .,/,$(CONFIGURATOR_PACKAGE))) $(LOG)
+	@echo +++ cd $(TOOLS_CLASS_DIR) \; $(JAR_CMD) cfm $(L10N_GENERATOR_JAR_FILE) \
+		$(L10N_GENERATOR_MANIFEST_FILE) com/sun/midp/l10n/generator $(LOG_ONLY)
+	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(L10N_GENERATOR_JAR_FILE) \
+		$(L10N_GENERATOR_MANIFEST_FILE) com/sun/midp/l10n/generator) $(LOG)
 
-$(CONFIGURATOR_MANIFEST_FILE): $(TOOLS_CLASS_DIR)
+$(L10N_GENERATOR_MANIFEST_FILE): $(TOOLS_CLASS_DIR)
 	@echo " ... $@ " $(LOG)
-	@(echo "Main-Class: $(CONFIGURATOR_MAIN_CLASS)" > $@) $(LOG)
+	@(echo "Main-Class: $(L10N_GENERATOR_MAIN_CLASS)" > $@) $(LOG)
 
 
 # Skin romization tool (jar rules)

@@ -69,7 +69,7 @@ JAVADOCBOTTOM = 'Copyright 1990-2006 Sun Microsystems, Inc.'
 # Search path for tool source
 #
 TOOL_SRCPATH := $(SUBSYSTEM_DIR)/security/common/classes
-TOOL_SRCPATH := $(TOOL_SRCPATH):$(TOOLS_DIR)/configurator/classes
+TOOL_SRCPATH := $(TOOL_SRCPATH):$(CODE_TRANSFORMER_DIR)/classes
 TOOL_SRCPATH := $(TOOL_SRCPATH):$(SUBSYSTEM_DIR)/tool/jadtool/classes
 TOOL_SRCPATH := $(TOOL_SRCPATH):$(SUBSYSTEM_DIR)/tool/mekeytool/classes
 ifeq ($(USE_JSR_120), true)
@@ -85,7 +85,7 @@ TOOLS_PACKAGES = \
 	com.sun.midp.mekeytool \
 	com.sun.midp.jadtool \
         com.sun.wma \
-	$(CONFIGURATOR_PACKAGE)
+	$(CODE_TRANSFORMER_PACKAGE)
 
 MIDP_JAVADOC_ALL += \
 	-group "CLDC Packages" \
