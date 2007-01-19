@@ -62,6 +62,13 @@ public:
      */
     CommandButton(QWidget* parent, int id);
 
+    /**
+    * Update command ID
+    *
+    * @param new command ID
+    */
+    void setCommandId(int cmdId);
+
 protected slots:
   /**
    * Notifies the Java platform that the user has clicked this button.
@@ -121,7 +128,7 @@ class Alert : public QWidget {
     /**
      * Array of abstract commands for this alert
      */
-    CommandButton *buttons[ALERT_NUM_OF_BUTTONS];
+    QPushButton *buttons[ALERT_NUM_OF_BUTTONS];
 
     /**
      * Places on this alert, at the given y position with no more than the
