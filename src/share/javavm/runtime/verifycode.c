@@ -72,6 +72,48 @@
 	 CVMopcodeLengths[*(iStream)] : \
 	 CVMopcodeGetLengthWithBoundsCheckVariable(iStream, iStream_end))
 
+static int
+CVMopcodeGetLengthWithBoundsCheckVariable(const unsigned char* iStream,
+					  const unsigned char* iStream_end)
+{
+    /*
+     * If there is not enough code left to determine the opcode
+     * length, return a value that indicates the opcode extends
+     * past the end of the code.
+     */
+    switch(*iStream) {
+	case opc_tableswitch: {
+	    const unsigned char* lpc =
+		(const unsigned char*)CVMalignWordUp(iStream + 1);
+	    /* Need default, low, high. */
+	    if (iStream_end - lpc < 12) {
+		return 255;
+	    }
+	    break;
+	}
+        case opc_lookupswitch: {
+	    const unsigned char* lpc =
+		(const unsigned char*)CVMalignWordUp(iStream + 1);
+	    /* Need default, npairs. */
+	    if (iStream_end - lpc < 8) {
+		return 255;
+	    }
+	    break;
+	}
+        case opc_wide: {
+	    /* Need opcode. */
+	    if (iStream_end - iStream < 2) {
+		return 255;
+	    }
+	    break;
+	}
+	default:
+	    break;
+    }
+
+    return CVMopcodeGetLengthVariable(iStream);
+}
+
 static const unsigned char *
 JVM_GetMethodByteCode(CVMMethodBlock* mb)
 {
@@ -888,48 +930,6 @@ verify_field(context_type *context, CVMClassBlock *cb, CVMFieldBlock *fb)
     context->fb = 0;
 }
 
-
-static int
-CVMopcodeGetLengthWithBoundsCheckVariable(const unsigned char* iStream,
-					  const unsigned char* iStream_end)
-{
-    /*
-     * If there is not enough code left to determine the opcode
-     * length, return a value that indicates the opcode extends
-     * past the end of the code.
-     */
-    switch(*iStream) {
-	case opc_tableswitch: {
-	    const unsigned char* lpc =
-		(const unsigned char*)CVMalignWordUp(iStream + 1);
-	    /* Need default, low, high. */
-	    if (iStream_end - lpc < 12) {
-		return 12;
-	    }
-	    break;
-	}
-        case opc_lookupswitch: {
-	    const unsigned char* lpc =
-		(const unsigned char*)CVMalignWordUp(iStream + 1);
-	    /* Need default, npairs. */
-	    if (iStream_end - lpc < 8) {
-		return 8;
-	    }
-	    break;
-	}
-        case opc_wide: {
-	    /* Need opcode. */
-	    if (iStream_end - iStream < 2) {
-		return 2;
-	    }
-	    break;
-	}
-	default:
-	    break;
-    }
-
-    return CVMopcodeGetLengthVariable(iStream);
-}
 
 /* Verify the code of one method */
 
