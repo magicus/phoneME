@@ -384,32 +384,28 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      *         otherwise false.
      */
     public boolean keyInput(int type, int keyCode) {
-        // IMPL NOTE: SoftButtonLayer absorbs soft button 
+        // SoftButtonLayer absorbs soft button 
         // event only if corresponding soft button is "active".
         // For further clarification please refer to
         // isSoft1Active() and isSoft2Active() methods.
 
         boolean ret = false;
         if (keyCode == EventConstants.SOFT_BUTTON1) {
-            if (type == EventConstants.PRESSED) {
-                if (isSoft1Active()) {
+            if (isSoft1Active()) {
+                if (type == EventConstants.PRESSED) {
                     setInteractive(true);
                     ret = true;
-                }
-            } else if (type == EventConstants.RELEASED) {
-                if (isSoft1Active()) {
+                } else if (type == EventConstants.RELEASED) {
                     soft1();
                     ret = true;
                 }
             }
         } else if (keyCode == EventConstants.SOFT_BUTTON2) {
-            if (type == EventConstants.PRESSED) {
-                if (isSoft2Active()) {
+            if (isSoft2Active()) {
+                if (type == EventConstants.PRESSED) {
                     setInteractive(true);
                     ret = true;
-                }
-            } else if (type == EventConstants.RELEASED) {
-                if (isSoft2Active()) {
+                } else if (type == EventConstants.RELEASED) {
                     soft2();
                     ret = true;
                 }
@@ -607,20 +603,22 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
 
     /**
      * Determines if soft button 2 will be processed by the layer.
-     * Called by keyInput to determin if the corresponding key event 
+     * Called by keyInput to determine if the corresponding key event 
      * should be absorbed by SoftButtonLayer.
      *
      * @return true if soft2 command can be processed, false otherwise
      */
     protected boolean isSoft2Active() {
-        // IMPL NOTE: when MIDPWindow is not in full screen mode, we absorb
+        // when MIDPWindow is not in full screen mode, we absorb
         // all key events reserved for the delivery of commands
         if (!((MIDPWindow)owner).isInFullScreenMode()) {
             return true;
         }
 
         // for full screen mode we should check if soft key is useful
-        if (soft2 != null) {
+        if (menuUP) {
+            return true;
+        } else if (soft2 != null) {
             if (soft2.length == 1 &&
                 soft2[0] instanceof SubMenuCommand) {
                 return true;
@@ -631,21 +629,19 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                     return true;
                 }
             }
-        } else {
-            return menuUP;
         }
         return false;
     }
 
     /**
      * Determines if soft button 1 will be processed by the layer.
-     * Called by keyInput to determin if the corresponding key event 
+     * Called by keyInput to determine if the corresponding key event 
      * should be absorbed by SoftButtonLayer.
      *
      * @return true if soft1 command can be processed, false otherwise
      */
     protected boolean isSoft1Active() {
-        // IMPL NOTE: when MIDPWindow is not in full screen mode, we absorb
+        // when MIDPWindow is not in full screen mode, we absorb
         // all key events reserved for the delivery of commands
         if (!((MIDPWindow)owner).isInFullScreenMode()) {
             return true;
@@ -672,9 +668,8 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             return false;
         }
 
-        if (isItemCommand(cmd) && (itemListener != null)) {
-            return true;
-        } else if (scrListener != null) {
+        if ((isItemCommand(cmd) && (itemListener != null)) 
+            || (scrListener != null)) {
             return true;
         }
 
