@@ -183,6 +183,11 @@ class MIDPConfig{
     }
 
     public static MIDPImplementationClassLoader
+    getMIDPImplementationClassLoader() {
+	    return midpImplCL;
+    }
+
+    public static MIDPImplementationClassLoader
     newMIDPImplementationClassLoader(File files[]){
         /* The MIDPImplementationClassLoader already exist. Throw an
          * exception.
