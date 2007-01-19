@@ -141,7 +141,7 @@ public final class PushRegistryInternal {
                     "Interrupted while trying to ask the user permission");
             }
 
-            PushRegistryImpl.checkMidlet(midletSuite, midlet);
+            PushRegistryImpl.checkMidletRegistered(midletSuite, midlet);
 
             ConnectionRegistry.checkRegistration(Connection.parse(connection), midlet, filter);
         }

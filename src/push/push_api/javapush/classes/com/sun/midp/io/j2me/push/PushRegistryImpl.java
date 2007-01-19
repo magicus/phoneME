@@ -58,17 +58,16 @@ public final class PushRegistryImpl {
     }
 
     /**
-     * Checks validity of midlet class name.
+     * Checks that the midlet is registered for the given suite.
      *
      * @param midletSuite host <code>MIDlet suite</code> (MUST be not
      *  <code>null</code>
      *
      * @param midlet Name of <code>MIDlet</code> class to check
      *
-     * @throws ClassNotFoundException if there is no such <code>MIDlet</code>
-     *  in <code>midletSuite</code>
+     * @throws ClassNotFoundException if <code>MIDlet</code> is not registered
      */
-    static void checkMidlet(
+    static void checkMidletRegistered(
             final MIDletSuite midletSuite,
             final String midlet)
             throws ClassNotFoundException {
@@ -80,6 +79,37 @@ public final class PushRegistryImpl {
 
         if (!midletSuite.isRegistered(midlet)) {
             throw new ClassNotFoundException("No MIDlet-<n> registration");
+        }
+    }
+
+    /**
+     * Checks validity of midlet class name.
+     *
+     * @param midletSuite host <code>MIDlet suite</code> (MUST be not
+     *  <code>null</code>
+     *
+     * @param midlet Name of <code>MIDlet</code> class to check
+     *
+     * @throws ClassNotFoundException if <code>MIDlet</code> is invalid
+     */
+    private static void checkMidlet(
+            final MIDletSuite midletSuite,
+            final String midlet)
+            throws ClassNotFoundException {
+        checkMidletRegistered(midletSuite, midlet);
+
+        /*
+         * IMPL_NOTE: strings in MIDlet-<n> attributes (see the check
+         *  above) are not verified to be the names of classes that
+         *  subclass javax.microedition.midlet.MIDlet, therefore we
+         *  need this check
+         */
+        final Class midletCls = Class.forName(midlet);
+        final boolean isMIDlet = javax.microedition.midlet.MIDlet.class
+            .isAssignableFrom(midletCls);
+
+        if (!isMIDlet) {
+            throw new ClassNotFoundException("Not a MIDlet");
         }
     }
 
