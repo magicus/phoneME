@@ -559,7 +559,12 @@ static void setUpOffsets(int fullscreen) {
 
     paintHeight = (DISPLAY_HEIGHT - (topBarHeight + bottomBarHeight));
 
-    y_offset = Y_SCREEN_OFFSET + topBarHeight;
+    if (reverse_orientation) {
+        y_offset = Y_SCREEN_OFFSET;
+    } else {
+        y_offset = Y_SCREEN_OFFSET + topBarHeight;
+    }
+    
 }
 
 /**
@@ -683,7 +688,6 @@ static LRESULT CALLBACK
 WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     static int penDown = JAVACALL_FALSE;
     int x, y;
-//    int ins_x, ins_y;
     int i;
     PAINTSTRUCT ps;
     HDC hdc;
@@ -905,27 +909,18 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
  **  with ENABLE_PEN_EVENT_NOTIFICATION defined, you should also modify constants.xml
  **  in midp workspace in order to pass related tck cases.
  **/
-#define ENABLE_PEN_EVENT_NOTIFICATION 1
-
+#define ENABLE_PEN_EVENT_NOTIFICATION 1    
 #ifdef ENABLE_PEN_EVENT_NOTIFICATION        
         midpScreen_bounds.x = x_offset;
         midpScreen_bounds.y = y_offset;
         midpScreen_bounds.width = VRAM.width;
         midpScreen_bounds.height = (inFullScreenMode? VRAM.height: VRAM.height - TOP_BAR_HEIGHT);
 
-//        if (reverse_orientation) {
-//            ins_x = javacall_lcd_get_screen_width() - y + y_offset;
-//            ins_y = x - x_offset;
-//        } else {
-//            ins_x = x-x_offset;
-            
-//        }
-
         if(iMsg == WM_LBUTTONDOWN && INSIDE(x, y, midpScreen_bounds) ) {
             penAreDragging = JAVACALL_TRUE;
             SetCapture(hwnd);
             if (reverse_orientation) {
-                javanotify_pen_event(javacall_lcd_get_screen_width() - y + y_offset, x - x_offset, JAVACALL_PENPRESSED);                
+                javanotify_pen_event(javacall_lcd_get_screen_width() - y + y_offset, x - x_offset, JAVACALL_PENPRESSED);                                
             } else {
                 javanotify_pen_event(x-x_offset, y-y_offset, JAVACALL_PENPRESSED);
             }
@@ -1744,6 +1739,11 @@ static void RefreshScreenNormal(int x1, int y1, int x2, int y2) {
  
 javacall_bool javacall_lcd_reverse_orientation() {
       reverse_orientation = !reverse_orientation;    
+      if (reverse_orientation) {
+        y_offset = Y_SCREEN_OFFSET;
+      } else {
+        y_offset = Y_SCREEN_OFFSET + topBarHeight;
+      }
       VRAM.width = javacall_lcd_get_screen_width();
       VRAM.height = DISPLAY_HEIGHT;
       return reverse_orientation;
