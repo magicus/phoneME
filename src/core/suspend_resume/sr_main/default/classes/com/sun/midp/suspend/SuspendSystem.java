@@ -57,8 +57,11 @@ public class SuspendSystem extends AbstractSubsystem {
          */
         private MIDPSystem() {
             state = ACTIVE;
-            MIDletProxyList.getMIDletProxyList(classSecurityToken).
-                    addListener(this);
+
+            MIDletProxyList mpl =
+                    MIDletProxyList.getMIDletProxyList(classSecurityToken);
+            mpl.addListener(this);
+            addListener(mpl);
         }
 
         /**
@@ -167,12 +170,12 @@ public class SuspendSystem extends AbstractSubsystem {
 
     /**
      * Checks if there are dependencies that prevent from system suspend,
-     * if there are no ones, and the state is PAUSING sets state to
+     * if there are no ones, and the state is SUSPENDING sets state to
      * SUSPENDED and calls suspended().
      */
     protected void checkSuspended() {
         synchronized (lock) {
-            if (state == PAUSING && 0 == dependencies.size()) {
+            if (state == SUSPENDING && 0 == dependencies.size()) {
                 state = SUSPENDED;
                 suspended();
             }
