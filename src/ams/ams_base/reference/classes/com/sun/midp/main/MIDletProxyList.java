@@ -654,22 +654,19 @@ public class MIDletProxyList
      */
     private void notifyIfMidletActive() {
         MIDletProxy midletProxy;
-        boolean allMidletsPaused = true;
 
         synchronized (midletProxies) {
-            for (int i = midletProxies.size() - 1; i >= 0; i--) {
-                midletProxy = (MIDletProxy)midletProxies.elementAt(i);
-                if (midletProxy.getMidletState() !=
-                        MIDletProxy.MIDLET_PAUSED) {
-                    allMidletsPaused = false;
-                    break;
+            if (allPaused) {
+                for (int i = midletProxies.size() - 1; i >= 0; i--) {
+                    midletProxy = (MIDletProxy)midletProxies.elementAt(i);
+                    if (midletProxy.getMidletState() ==
+                            MIDletProxy.MIDLET_ACTIVE) {
+                        allPaused = false;
+                        notifyResumeAll0();
+                        break;
+                    }
                 }
             }
-        }
-
-        if (!allMidletsPaused) {
-            allPaused = false;
-            notifyResumeAll0();
         }
     }
 
@@ -677,25 +674,28 @@ public class MIDletProxyList
      * Notify the device if all midlets are paused.
      */
     private void notifyIfAllPaused() {
-        boolean allMidletsPaused = false;
+        boolean  allMidletsPaused = false;
+        int midletState;
 
         synchronized (midletProxies) {
-            for (int i = midletProxies.size() - 1; i >= 0; i--) {
-                int midletState = ((MIDletProxy)midletProxies.elementAt(i)).
-                    getMidletState();
+            if (!allPaused) {
+                for (int i = midletProxies.size() - 1; i >= 0; i--) {
+                    midletState = ((MIDletProxy) midletProxies.elementAt(i)).
+                            getMidletState();
 
-                if (MIDletProxy.MIDLET_PAUSED == midletState) {
-                    allMidletsPaused = true;
-                } else if (MIDletProxy.MIDLET_DESTROYED != midletState) {
-                    allMidletsPaused = false;
-                    break;
+                    if (MIDletProxy.MIDLET_PAUSED == midletState) {
+                        allMidletsPaused = true;
+                    } else if (MIDletProxy.MIDLET_DESTROYED != midletState) {
+                        allMidletsPaused = false;
+                        break;
+                    }
+                }
+
+                if (allMidletsPaused) {
+                    allPaused = true;
+                    notifySuspendAll0();
                 }
             }
-        }
-
-        if (allMidletsPaused) {
-            allPaused = true;
-            notifySuspendAll0();
         }
     }
 
