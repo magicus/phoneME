@@ -426,7 +426,7 @@ final class ConnectionRegistry
      *               when new external data is available
      * @param filter a connection URL string indicating which senders
      *               are allowed to cause the MIDlet to be launched
-     * @param registerConnection if true, don't register a connection with a
+     * @param registerConnection if true, register a connection with a
      *         protocol,
      *         used by the installer when redo old connections during an
      *         aborted update
