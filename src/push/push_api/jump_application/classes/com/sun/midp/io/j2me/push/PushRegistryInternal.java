@@ -61,7 +61,6 @@ public final class PushRegistryInternal {
      * This method bypasses the class loader specific checks
      * needed by the <code>Installer</code>.
      *
-     * @param token security token of the calling class, can be null
      * @param midletSuite MIDlet suite for the suite registering,
      *                   the suite only has to implement isRegistered,
      *                   checkForPermission, and getID.
@@ -94,7 +93,6 @@ public final class PushRegistryInternal {
      * @see #unregisterConnection
      */
     public static void registerConnectionInternal(
-            final SecurityToken token,
             final MIDletSuite midletSuite,
             final String connection,
             final String midlet,

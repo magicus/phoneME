@@ -2238,7 +2238,7 @@ public abstract class Installer {
 
             /* Register the new push connection string. */
             try {
-                PushRegistryInternal.registerConnectionInternal(null, state,
+                PushRegistryInternal.registerConnectionInternal(state,
                     conn, midlet, filter, false);
             } catch (Exception e) {
                 /* If already registered, abort the installation. */
@@ -2337,7 +2337,7 @@ public abstract class Installer {
 
             /* Register the new push connection string. */
             try {
-                PushRegistryInternal.registerConnectionInternal(null,
+                PushRegistryInternal.registerConnectionInternal(
                     state, conn, midlet, filter, true);
             } catch (IOException e) {
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {

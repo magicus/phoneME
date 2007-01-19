@@ -83,7 +83,6 @@ public final class PushRegistryInternal {
      * This method bypasses the class loader specific checks
      * needed by the <code>Installer</code>.
      *
-     * @param token security token of the calling class, can be null
      * @param midletSuite MIDlet suite for the suite registering,
      *                   the suite only has to implement isRegistered,
      *                   checkForPermission, and getID.
@@ -115,22 +114,17 @@ public final class PushRegistryInternal {
      *
      * @see #unregisterConnection
      */
-    public static void registerConnectionInternal(SecurityToken token,
-                                                  MIDletSuite midletSuite,
+    public static void registerConnectionInternal(MIDletSuite midletSuite,
                                                   String connection,
                                                   String midlet,
                                                   String filter,
                                                   boolean bypassChecks)
         throws ClassNotFoundException, IOException {
 
+        checkInvocationAllowed();
+
         if (filter == null) {
             throw new IllegalArgumentException("filter is null");
-        }
-
-        if (token == null) {
-            checkInvocationAllowed();
-        } else {
-            token.checkIfPermissionAllowed(Permissions.AMS);
         }
 
         if (!bypassChecks) {
