@@ -49,7 +49,7 @@ import com.sun.midp.log.Logging;
 /**
  * CLDC implementation of ConnectionRegistry.
  */
-public final class ConnectionRegistry
+final class ConnectionRegistry
     implements Runnable, MIDletProxyListListener {
 
     /**

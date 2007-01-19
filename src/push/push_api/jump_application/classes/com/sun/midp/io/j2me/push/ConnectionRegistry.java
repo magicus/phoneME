@@ -32,7 +32,7 @@ import com.sun.midp.midlet.MIDletSuite;
 /**
  * JUMP Implementation of ConnectionRegistry.
  */
-public final class ConnectionRegistry {
+final class ConnectionRegistry {
     /**
      * Hides constructor.
      */
