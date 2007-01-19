@@ -194,7 +194,7 @@ final class ConnectionRegistry
              */
             if (midletProxyList.isMidletInList(id, midlet)) {
                 if (conn != null) {
-                    checkInConnectionInternal(classSecurityToken, conn);
+                    checkInConnectionInternal(conn);
                 }
 
                 return;
@@ -203,7 +203,7 @@ final class ConnectionRegistry
             next = storage.getMIDletSuite(id, false);
             if (next == null) {
                 if (conn != null) {
-                    checkInConnectionInternal(classSecurityToken, conn);
+                    checkInConnectionInternal(conn);
                 }
 
                 return;
@@ -212,7 +212,7 @@ final class ConnectionRegistry
             if ((next.getPushOptions() & PUSH_OPT_WHEN_ONLY_APP) != 0 &&
                     !onlyAppManagerRunning()) {
                 if (conn != null) {
-                    checkInConnectionInternal(classSecurityToken, conn);
+                    checkInConnectionInternal(conn);
                 }
 
                 return;
@@ -221,7 +221,7 @@ final class ConnectionRegistry
             if (!next.permissionToInterrupt(conn)) {
                 // user does not want the interruption
                 if (conn != null) {
-                    checkInConnectionInternal(classSecurityToken, conn);
+                    checkInConnectionInternal(conn);
                 }
 
                 return;
@@ -237,7 +237,7 @@ final class ConnectionRegistry
         } catch (Throwable e) {
             // Could not launch requested push entry
             if (conn != null) {
-                checkInConnectionInternal(classSecurityToken, conn);
+                checkInConnectionInternal(conn);
             }
 
             if (Logging.TRACE_ENABLED) {
@@ -506,7 +506,6 @@ final class ConnectionRegistry
      * For server socket connections this function will close the
      * accepted connection.
      *
-     * @param token security token of the calling class
      * @param connection generic connection <em>protocol</em>, <em>host</em>
      *              and <em>port number</em>
      *              (optional parameters may be included
@@ -519,12 +518,9 @@ final class ConnectionRegistry
      *         <code>false</code> the connection was not registered.
      * @see #unregisterConnection
      */
-    // TBD: remove token (if possible)
-    static boolean checkInConnectionInternal(SecurityToken token,
-                                                    String connection) {
+    static boolean checkInConnectionInternal(final String connection) {
         int ret;
 
-        token.checkIfPermissionAllowed(Permissions.AMS);
         /* Verify that the connection requested is valid. */
         if (connection == null || connection.length() == 0) {
             throw new IllegalArgumentException("Connection missing");

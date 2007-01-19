@@ -227,7 +227,10 @@ public final class PushRegistryInternal {
      */
     public static boolean checkInConnectionInternal(SecurityToken token,
                                                     String connection) {
-        // TBD: rethink security token
-        return ConnectionRegistry.checkInConnectionInternal(token, connection);
+        if (token == null) {
+            throw new SecurityException("This API is for internal use only");
+        }
+        token.checkIfPermissionAllowed(Permissions.AMS);
+        return ConnectionRegistry.checkInConnectionInternal(connection);
     }
 }
