@@ -53,10 +53,23 @@ public final class PushRegistryInternal {
     private PushRegistryInternal() { }
 
     /**
+      * Validates that the method is invoked allowed party.
+      */
+    private static void checkInvocationAllowed() {
+        final MIDletSuite current =
+            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
+
+        if (current != null) {
+            current.checkIfPermissionAllowed(Permissions.AMS);
+        }
+    }
+
+    /**
      * Start listening for push notifications. Will throw a security
      * exception if called by any thing other than the MIDletSuiteLoader.
      */
     public static void startListening() {
+        checkInvocationAllowed();
         ConnectionRegistry.startListening();
     }
 
@@ -115,13 +128,7 @@ public final class PushRegistryInternal {
         }
 
         if (token == null) {
-            // RFC: why we fetch current when we have midletSuite already?
-            MIDletSuite current =
-                MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-
-            if (current != null) {
-                current.checkIfPermissionAllowed(Permissions.AMS);
-            }
+            checkInvocationAllowed();
         } else {
             token.checkIfPermissionAllowed(Permissions.AMS);
         }
@@ -152,6 +159,7 @@ public final class PushRegistryInternal {
      * @param token security token for this class.
      */
     public static void initSecurityToken(SecurityToken token) {
+        checkInvocationAllowed();
         ConnectionRegistry.initSecurityToken(token);
     }
 
@@ -169,7 +177,7 @@ public final class PushRegistryInternal {
      *       <em>host</em> and <em>port number</em> identification
      */
     public static String listConnections(int id, boolean available) {
-
+        checkInvocationAllowed();
         return ConnectionRegistry
                 .listConnections((SecurityToken) null, id, available);
     }
@@ -181,13 +189,7 @@ public final class PushRegistryInternal {
      *               suite
      */
     public static void unregisterConnections(int id) {
-        MIDletSuite current =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-
-        if (current != null) {
-            current.checkIfPermissionAllowed(Permissions.AMS);
-        }
-
+        checkInvocationAllowed();
         ConnectionRegistry.delAllForSuite0(id);
     }
 
@@ -200,15 +202,7 @@ public final class PushRegistryInternal {
      *  launches
      */
     public static void enablePushLaunch(boolean enable) {
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-
-        /* There is no suite running when installing from the command line. */
-        if (midletSuite != null) {
-            midletSuite.checkIfPermissionAllowed(Permissions.AMS);
-        }
-
+        checkInvocationAllowed();
         ConnectionRegistry.pushEnabled = enable;
     }
 
@@ -239,6 +233,7 @@ public final class PushRegistryInternal {
      */
     public static boolean checkInConnectionInternal(SecurityToken token,
                                                     String connection) {
+        // TBD: rethink security token
         return ConnectionRegistry.checkInConnectionInternal(token, connection);
     }
 }

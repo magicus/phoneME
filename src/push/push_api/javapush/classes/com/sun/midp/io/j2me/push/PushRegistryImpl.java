@@ -84,15 +84,6 @@ public final class PushRegistryImpl {
     }
 
     /**
-     * Checks AMS permission.
-     *
-     * @param midletSuite <code>MIDlet</code> suite to check against
-     */
-    private static void checkAMSPermission(final MIDletSuite midletSuite) {
-        ConnectionRegistry.checkAMSPermission(midletSuite);
-    }
-
-    /**
      * Checks Push permission.
      *
      * @param midletSuite <code>MIDlet</code> suite to check against
@@ -171,7 +162,6 @@ public final class PushRegistryImpl {
         /*
          * Check permissions.
          */
-        checkAMSPermission(midletSuite);
         try {
             checkPushPermission(midletSuite);
         } catch (InterruptedException ie) {

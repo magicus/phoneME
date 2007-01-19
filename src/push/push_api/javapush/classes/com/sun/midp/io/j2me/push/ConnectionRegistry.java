@@ -346,15 +346,6 @@ final class ConnectionRegistry
     }
 
     /**
-     * Checks AMS permission.
-     *
-     * @param midletSuite <code>MIDlet</code> suite to check against
-     */
-    static void checkAMSPermission(final MIDletSuite midletSuite) {
-        classSecurityToken.checkIfPermissionAllowed(Permissions.AMS);
-    }
-
-    /**
      * Checks Push permission.
      *
      * @param midletSuite <code>MIDlet</code> suite to check against
