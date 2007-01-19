@@ -483,7 +483,13 @@ CLASSLIB_CLASSES += \
    com.sun.cdc.io.ConnectionBaseInterface \
    com.sun.cdc.i18n.Helper \
    com.sun.cdc.i18n.StreamReader \
-   com.sun.cdc.i18n.StreamWriter
+   com.sun.cdc.i18n.StreamWriter \
+   \
+   com.sun.cdc.config.PropertyProvider \
+   com.sun.cdc.config.PropertyProviderAdapter \
+   com.sun.cdc.config.SystemTunnel \
+   com.sun.cdc.config.SystemProxy \
+   com.sun.cdc.config.PackageManager
 
 ifneq ($(CVM_INCLUDE_JUMP), true)
 CLASSLIB_CLASSES += \
@@ -538,3 +544,8 @@ JAVADOC_CDC_SRCPATH     = $(CVM_SHAREDCLASSES_SRCDIR):$(CVM_CLDCCLASSES_SRCDIR)
 include ../share/defs_zoneinfo.mk
 
 include ../$(TARGET_OS)/defs_cdc.mk
+
+TOOLS_DIR ?= $(CVM_TOP)/../tools
+ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
+$(error TOOLS_DIR must point to shared tools directory)
+endif

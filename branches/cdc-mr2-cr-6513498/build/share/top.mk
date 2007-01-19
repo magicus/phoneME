@@ -378,6 +378,9 @@ endif
 
 -include ../share/top_op.mk
 
+# Include external shared tools
+include $(TOOLS_DIR)/tools.gmk
+
 # Include all rule makefiles. Since variables in rules are expanded
 # eagerly, they must be included after defs makefiles.
 include  ../share/rules.mk
