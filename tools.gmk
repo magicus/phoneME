@@ -77,10 +77,14 @@ $(CODE_TRANSFORMER_MANIFEST_FILE): $(TOOLS_CLASS_DIR)
 # Append tools source bundle creation to target
 source_bundle:: tools_source_bundle
 
-# Copy and filter tools source in TOOLS_OUTPUT_DIR/tools
-tools_source_bundle: $(TOOLS_OUTPUT_DIR)
+# Copy and filter tools source in SOURCE_OUTPUT_DIR/tools
+tools_source_bundle:
 	@echo " ... tools source bundle"; \
-	SB_DIR=$(TOOLS_OUTPUT_DIR)/tools; \
+	SB_DIR=$(SOURCE_OUTPUT_DIR)/tools; \
+	if [ -z "$(SOURCE_OUTPUT_DIR)" ]; then \
+		echo "ERROR: SOURCE_OUTPUT_DIR must be set"; \
+		exit -1; \
+	fi
 	if [ -d "$(TOOLS_DIR)/.svn" ]; then \
 		svn export --force -q "$(TOOLS_DIR)" $$SB_DIR; \
 	else \
@@ -90,3 +94,4 @@ tools_source_bundle: $(TOOLS_OUTPUT_DIR)
 
 clean::
 	@rm -rf $(TOOLS_OUTPUT_DIR)
+
