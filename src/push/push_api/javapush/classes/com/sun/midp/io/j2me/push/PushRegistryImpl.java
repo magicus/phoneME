@@ -224,8 +224,6 @@ public final class PushRegistryImpl {
         if (midletSuite == null) {
             return null;
         }
-        // RFC: do we really need this check here?
-        // checkAMSPermission(midletSuite);
 
         return ConnectionRegistry.listConnections(midletSuite, available);
     }

@@ -410,7 +410,6 @@ final class ConnectionRegistry
                                   String filter)
                                   throws ClassNotFoundException,
                                     ConnectionNotFoundException {
-        // RFC: why midlet argument is needed?
         final String c = connection.getConnection();
         ProtocolPush.getInstance(c).checkRegistration(c, midlet, filter);
     }
