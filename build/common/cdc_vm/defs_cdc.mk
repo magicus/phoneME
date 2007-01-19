@@ -43,6 +43,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.events.NativeEventMonitor \
         com.sun.midp.installer.JarReader \
         com.sun.midp.installer.OtaNotifier \
+	com.sun.midp.io.NetworkConnectionBase \
         com.sun.midp.io.j2me.push.PushRegistryImpl \
         com.sun.midp.io.j2me.storage.File \
         com.sun.midp.io.j2me.storage.RandomAccessStream \
@@ -69,6 +70,10 @@ MIDP_CNI_CLASSES += \
         javax.microedition.lcdui.ImageDataFactory \
         javax.microedition.lcdui.KeyConverter
 
+ifeq ($(CVM_INCLUDE_JUMP), true)
+MIDP_CNI_CLASSES += \
+        com.sun.midp.jump.JumpInit
+endif
 
 # Patterns to be included in the binary bundle.
 MIDP_BINARY_BUNDLE_PATTERNS += \
