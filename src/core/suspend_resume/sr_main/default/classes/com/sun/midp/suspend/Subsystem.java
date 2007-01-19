@@ -34,7 +34,7 @@ public interface Subsystem {
     /**
      * Being suspended state.
      */
-    int PAUSING = 0;
+    int SUSPENDING = 0;
     /**
      * Suspended state.
      */
