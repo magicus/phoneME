@@ -99,7 +99,7 @@ AlphaComposite.SRC_OVER.isRestricted := true
 AWT_LIB_LIBS += -lstdc++
 ifeq ($(QTEMBEDDED), true)
 AWT_LIB_LIBS += -lm
-AWT_LIB_OBJS += QPatchedPixmap.o
+#AWT_LIB_OBJS += QPatchedPixmap.o
 endif
 
 ifeq ($(AWT_QT_DEBUG), true)
