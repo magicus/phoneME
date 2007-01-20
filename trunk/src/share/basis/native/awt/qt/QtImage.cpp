@@ -35,9 +35,11 @@
 #include "QtBackEnd.h"
 #include "QtApplication.h"
 
+/*
 #ifdef QWS
 #include "QPatchedPixmap.h"
 #endif
+*/
 
 extern "C" {
    long getImageDataPtr(JNIEnv *env, jobject qtimage);
@@ -505,11 +507,13 @@ Java_java_awt_QtImage_pGetRGB(JNIEnv *env, jclass cls, jint qtImageDesc, jint x,
 {
     jint pixel = 0 ;
     AWT_QT_LOCK; {
+/*
 #ifdef QWS
 	QImage qi = ((QPatchedPixmap *)QtImageDescPool[qtImageDesc].qpd)->convertToImage();	
 #else
+*/
 	QImage qi = ((QPixmap *)QtImageDescPool[qtImageDesc].qpd)->convertToImage();
-#endif
+//#endif
 	
 	pixel = (jint)qi.pixel(x, y);
     }
@@ -535,11 +539,13 @@ int offset, int scansize)
 	pa += offset;
 
     AWT_QT_LOCK; {
+/*
 #   ifdef QWS
 	QImage qi = ((QPatchedPixmap *)QtImageDescPool[qtImageDesc].qpd)->convertToImage();	
 #   else
+*/
 	QImage qi = ((QPixmap *)QtImageDescPool[qtImageDesc].qpd)->convertToImage();
-#   endif /* QWS */
+//#   endif /* QWS */
 	
     QImage *qip = &qi ;
     QImage qi32bpp ;
@@ -633,11 +639,13 @@ Java_java_awt_QtImage_pSetRGBArray(JNIEnv *env, jclass cls,
     }
     else {
         QImage qi;
+/*
 #ifdef QWS
         qi = ((QPatchedPixmap *)qpd)->convertToImage();	
 #else
+*/
         qi = qpd->convertToImage();
-#endif
+//#endif
 
         if(!qi.isNull()) {	
             pa += scansize * (height - 1);
@@ -831,12 +839,13 @@ Java_java_awt_QtImage_pDrawImageScaled(JNIEnv * env, jclass cls, jint qtGraphDes
 	QImage qidd;
 
 	if(needImage) {	
-
+/*
 #ifdef QWS
 	    QImage qis = ((QPatchedPixmap *)QtImageDescPool[qtImageSrc].qpd)->convertToImage();	
 #else
+*/
 	    QImage qis = ((QPixmap *)QtImageDescPool[qtImageSrc].qpd)->convertToImage();
-#endif
+//#endif
 		
 	    QImage qiss = qis.copy(sx1, sy1, sx2-sx1, sy2-sy1);
 	
