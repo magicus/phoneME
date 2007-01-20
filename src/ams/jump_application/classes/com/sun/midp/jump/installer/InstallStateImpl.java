@@ -42,7 +42,14 @@ import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
 import com.sun.midp.io.j2me.storage.File;
 
-import com.sun.midp.content.CHManager;
+//import com.sun.midp.content.CHManager;
+
+import com.sun.midp.installer.InvalidJadException;
+import com.sun.midp.installer.ManifestProperties;
+import com.sun.midp.installer.VerifierImpl;
+import com.sun.midp.installer.InstallListener;
+import com.sun.midp.installer.InstallState;
+import com.sun.midp.installer.JadProperties;
 
 /**
  * Holds the state of an installation, so it can restarted after it has
@@ -156,7 +163,7 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
     public InstallInfo previousInstallInfo;
 
     /** The ContentHandler installer state. */
-    public CHManager chmanager;
+    //public CHManager chmanager;
 
     /** Constructor. */
     public InstallStateImpl() {

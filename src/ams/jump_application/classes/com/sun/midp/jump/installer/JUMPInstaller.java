@@ -33,7 +33,6 @@ import com.sun.midp.installer.OtaNotifier;
 import com.sun.midp.installer.InstallState;
 import com.sun.midp.installer.VerifierImpl;
 import com.sun.midp.installer.JarReader;
-import com.sun.midp.installer.InstallStateImpl;
 
 import java.util.Vector;
 
@@ -72,7 +71,8 @@ import com.sun.midp.io.j2me.storage.File;
 
 import com.sun.midp.rms.RecordStoreFactory;
 
-import com.sun.midp.content.CHManager;
+//FIXME: sync with cldc installer for CHManager dependency
+//import com.sun.midp.content.CHManager;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -281,7 +281,8 @@ public abstract class JUMPInstaller {
         state.removeRMS = removeRMS;
         state.nextStep = 1;
         state.listener = installListener;
-        state.chmanager = CHManager.getManager(null);
+        //FIXME: sync with cldc installer for CHManager dependency
+        //state.chmanager = CHManager.getManager(null);
         state.storageId = storageId;
 
         return performInstall();
@@ -365,7 +366,7 @@ public abstract class JUMPInstaller {
         state.file = new File();
         state.nextStep = 5;
         state.listener = installListener;
-        state.chmanager = CHManager.getManager(null);
+        //state.chmanager = CHManager.getManager(null);
         state.storageId = storageId;
 
         return performInstall();
@@ -1070,31 +1071,34 @@ public abstract class JUMPInstaller {
             checkConfiguration();
             matchProfile();
 
-            try {
-                state.chmanager.preInstall(this,
-                       (InstallState)state,
-                       (MIDletSuite)state,
-                       (info.authPath == null ?
-                           null : info.authPath[0]));
-            } catch (InvalidJadException jex) {
-                // Post the correct install notify msg back to the server
-                String msg = OtaNotifier.INVALID_CONTENT_HANDLER;
-                if (jex.getReason() ==
-                    InvalidJadException.CONTENT_HANDLER_CONFLICT) {
-                    msg = OtaNotifier.CONTENT_HANDLER_CONFLICT;
-                }
+        //FIXME: sync with cldc installer for CHManager dependency
+         /**
+        *    try {
+        *         state.chmanager.preInstall(this,
+        *                (InstallState)state,
+        *                (MIDletSuite)state,
+        *                (info.authPath == null ?
+        *                    null : info.authPath[0]));
+        *     } catch (InvalidJadException jex) {
+        *         // Post the correct install notify msg back to the server
+        *         String msg = OtaNotifier.INVALID_CONTENT_HANDLER;
+        *         if (jex.getReason() ==
+        *             InvalidJadException.CONTENT_HANDLER_CONFLICT) {
+        *             msg = OtaNotifier.CONTENT_HANDLER_CONFLICT;
+        *         }
 
-                postInstallMsgBackToProvider(msg);
-                throw jex;
-            } catch (SecurityException se) {
-                postInstallMsgBackToProvider(
-                    OtaNotifier.AUTHORIZATION_FAILURE_MSG);
+        *         postInstallMsgBackToProvider(msg);
+        *         throw jex;
+        *     } catch (SecurityException se) {
+        *         postInstallMsgBackToProvider(
+        *             OtaNotifier.AUTHORIZATION_FAILURE_MSG);
 
-                // since our state object put the permission in message
-                throw new InvalidJadException(
-                    InvalidJadException.AUTHORIZATION_FAILURE,
-                    se.getMessage());
-            }
+        *         // since our state object put the permission in message
+        *         throw new InvalidJadException(
+        *             InvalidJadException.AUTHORIZATION_FAILURE,
+        *             se.getMessage());
+        *     }
+        **/
 
             // make sure at least 1 second has passed
             try {
@@ -1126,7 +1130,8 @@ public abstract class JUMPInstaller {
             registerPushConnections();
 
             /** Do the Content Handler registration updates now */
-            state.chmanager.install();
+            //FIXME: sync with cldc installer for CHManager dependency
+            //state.chmanager.install();
 
             /*
              * Store suite will remove the suite including push connections,

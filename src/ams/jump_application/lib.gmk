@@ -54,10 +54,10 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/JarReader.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/ManifestProperties.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/SuiteDownloadInfo.java \
-    $(CDC_AMS_DIR)/classes/com/sun/midp/content/CHManager.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/installer/OtaNotifier.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java \
+    $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/content/CHManager.java \
     $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/JumpInit.java \
     $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/MIDletApplication.java \
     $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/installer/InstallStateImpl.java \
