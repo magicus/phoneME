@@ -1716,7 +1716,7 @@ void CVMCCMruntimePutstatic64Volatile(CVMJavaLong value, void *staticField)
     CVMassert(staticField != NULL);
 
     CVM_ACCESS_VOLATILE_LOCK(ee);
-    CVMmemCopy64(staticField, (void *)&value);
+    CVMmemCopy64((CVMUint32*)staticField, (CVMUint32*)&value);
     CVM_ACCESS_VOLATILE_UNLOCK(ee);
 }
 #endif
@@ -1733,7 +1733,7 @@ CVMJavaLong CVMCCMruntimeGetstatic64Volatile(void *staticField)
     CVMassert(staticField != NULL);
 
     CVM_ACCESS_VOLATILE_LOCK(ee);
-    CVMmemCopy64((void *)&result, staticField);
+    CVMmemCopy64((CVMUint32*)&result, (CVMUint32*)staticField);
     CVM_ACCESS_VOLATILE_UNLOCK(ee);
     return result;
 }
@@ -1753,7 +1753,7 @@ void CVMCCMruntimePutfield64Volatile(CVMJavaLong value,
     CVMassert(obj != NULL);
 
     CVM_ACCESS_VOLATILE_LOCK(ee);
-    CVMmemCopy64(instanceField, (void *)&value);
+    CVMmemCopy64((CVMUint32*)instanceField, (CVMUint32*)&value);
     CVM_ACCESS_VOLATILE_UNLOCK(ee);
 }
 #endif
@@ -1772,7 +1772,7 @@ CVMJavaLong CVMCCMruntimeGetfield64Volatile(CVMObject *obj,
     CVMassert(obj != NULL);
 
     CVM_ACCESS_VOLATILE_LOCK(ee);
-    CVMmemCopy64((void *)&result, instanceField);
+    CVMmemCopy64((CVMUint32*)&result, (CVMUint32*)instanceField);
     CVM_ACCESS_VOLATILE_UNLOCK(ee);
     return result;
 }
