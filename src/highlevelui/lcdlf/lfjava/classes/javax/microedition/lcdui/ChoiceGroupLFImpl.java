@@ -122,10 +122,8 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             if (selectedIndex == -1) {
                 selectedIndex = 0;
                 cg.cgElements[selectedIndex].setSelected(true);
-            } else {
-                if (elementNum <= selectedIndex) {
-                    selectedIndex++;
-                }
+            } else if (elementNum <= selectedIndex) {
+                selectedIndex++;
             }
         }
 
@@ -431,6 +429,11 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                     }
                 }
             } else {
+                if (cg.choiceType == Choice.IMPLICIT &&
+                    pendingIndex == -1) {
+                    pendingIndex = selectedIndex;
+                }
+                
                 newHilightedIndex = pendingIndex != -1 ?
                     pendingIndex :
                     getIndexByPointer(contentBounds[X], dir == Canvas.UP ?
@@ -695,7 +698,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             }
 
             if (hilightedIndex != elementNum &&
-                elementNum > 0 && cg.choiceType == Choice.IMPLICIT) {
+                elementNum >= 0 && cg.choiceType == Choice.IMPLICIT) {
                 hilightedIndex = elementNum;
             }
 
