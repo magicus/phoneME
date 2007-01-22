@@ -574,7 +574,7 @@ final class ConnectionRegistry
      * @param connections Connections to convert
      * @return array of connections
      */
-    static String [] connectionsToArray(String connections) {
+    private static String [] connectionsToArray(String connections) {
         if (connections == null) {
             return new String[0];
         }
