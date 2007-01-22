@@ -163,20 +163,14 @@ SUBSYSTEM_JSR_239_EXTRA_INCLUDES += \
 
 # Additional paths for native code
 #
-ifeq ($(PLATFORM), linux_fb)
-    vpath % $(JSR_239_DIR)/src/cldc-oi/putpixel
-    SUBSYSTEM_JSR_239_NATIVE_FILES += \
-	JSR239-KNIWindow.c
-endif
 ifeq ($(PLATFORM), linux_qte)
-    vpath % $(JSR_239_DIR)/src/cldc-oi/linux_qte
-    SUBSYSTEM_JSR_239_NATIVE_FILES += \
-	JSR239-KNIWindow.cpp
-endif
-ifeq ($(TARGET_OS), win32)
-    vpath % $(JSR_239_DIR)/src/cldc-oi/putpixel
-    SUBSYSTEM_JSR_239_NATIVE_FILES += \
-    	JSR239-KNIWindow.c
+vpath % $(JSR_239_DIR)/src/cldc-oi/linux_qte
+SUBSYSTEM_JSR_239_NATIVE_FILES += \
+    JSR239-KNIWindow.cpp
+else
+vpath % $(JSR_239_DIR)/src/cldc-oi/putpixel
+SUBSYSTEM_JSR_239_NATIVE_FILES += \
+    JSR239-KNIWindow.c
 endif
 
 #

@@ -42,6 +42,13 @@ typedef struct Java_javax_microedition_lcdui_Image java_image;
 #include <stdio.h>
 #endif
 
+/**
+ * Helper function.
+ * Retrieve buffer for the specified graphics.
+ *
+ * @param graphicshandle   A KNI handle to a graphics object.
+ * @return QPixmap that represents the graphics buffer.
+ */
 static QPixmap* getGraphicsBuffer(jobject graphicsHandle) {
     QPixmap* pixmap;
     java_image* image;
@@ -102,7 +109,7 @@ JSR239_getWindowContents(jobject graphicsHandle, JSR239_Pixmap *dst) {
 
         src = (void*)pixmap->scanLine(0);
 
-        // IMPL_NOTE: get clip sizes into account
+        /* IMPL_NOTE: get clip sizes into account. */
         copyFromScreenBuffer(dst, src, 0, 0, dst->width, dst->height);
     }
 
@@ -150,10 +157,10 @@ JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
         printf("  src height = %d\n", src->height);
 #endif
 
-        // IMPL_NOTE: get clip sizes into account
+        /* IMPL_NOTE: get clip sizes into account. */
         copyToScreenBuffer(src, src->width, src->height, flipY);
 
-        // src->screen_buffer is output of copyToScreenBuffer function
+        /* src->screen_buffer is an output of copyToScreenBuffer function. */
         s = (void*)src->screen_buffer;
         d = (void*)pixmap->scanLine(0);
 
@@ -163,7 +170,7 @@ JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
             printf("JSR239: offscreen buffer data is incorrect.\n");
 #endif
         } else {
-            // source data should be in 16bit 565 format
+            /* Source data must be in 16bit 565 format. */
             JSR239_memcpy(
                 d, s, pixmap->width() * pixmap->height() * pixmap->depth()/8);
         }
