@@ -129,7 +129,7 @@ public final class PushRegistryInternal {
 
         if (!bypassChecks) {
             try {
-                ConnectionRegistry.checkPushPermission(midletSuite);
+                midletSuite.checkForPermission(Permissions.PUSH, null);
             } catch (InterruptedException ie) {
                 throw new InterruptedIOException(
                     "Interrupted while trying to ask the user permission");

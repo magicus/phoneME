@@ -346,16 +346,6 @@ final class ConnectionRegistry
     }
 
     /**
-     * Checks Push permission.
-     *
-     * @param midletSuite <code>MIDlet</code> suite to check against
-     */
-    static void checkPushPermission(final MIDletSuite midletSuite) 
-            throws InterruptedException {
-        midletSuite.checkForPermission(Permissions.PUSH, null);
-    }
-
-    /**
      * Register a dynamic connection.
      *
      * @param midletSuite <code>MIDlet</code> suite to register connection for

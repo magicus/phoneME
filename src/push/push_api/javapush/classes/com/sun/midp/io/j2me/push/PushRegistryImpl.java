@@ -114,16 +114,6 @@ public final class PushRegistryImpl {
     }
 
     /**
-     * Checks Push permission.
-     *
-     * @param midletSuite <code>MIDlet</code> suite to check against
-     */
-    private static void checkPushPermission(final MIDletSuite midletSuite) 
-            throws InterruptedException {
-        ConnectionRegistry.checkPushPermission(midletSuite);
-    }
-
-    /**
      * Register a dynamic connection with the
      * application management software. Once registered,
      * the dynamic connection acts just like a
@@ -193,7 +183,7 @@ public final class PushRegistryImpl {
          * Check permissions.
          */
         try {
-            checkPushPermission(midletSuite);
+            midletSuite.checkForPermission(Permissions.PUSH, null);
         } catch (InterruptedException ie) {
             throw new InterruptedIOException(
                 "Interrupted while trying to ask the user permission");
@@ -334,7 +324,7 @@ public final class PushRegistryImpl {
 
         checkMidlet(midletSuite, midlet);
         try {
-            checkPushPermission(midletSuite);
+            midletSuite.checkForPermission(Permissions.PUSH, null);
         } catch (InterruptedException ie) {
             throw new RuntimeException(
                 "Interrupted while trying to ask the user permission");
