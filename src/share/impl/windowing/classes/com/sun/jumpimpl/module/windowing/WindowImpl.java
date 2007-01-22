@@ -52,6 +52,10 @@ public class WindowImpl extends JUMPWindow {
         return (res << 32 | w.isolateId);
     }
 
+    // all known windows
+    // use TreeMap and not HashMap or something similar to enforce use of
+    // custom comparator that ignores WindowImpl#state member field in key
+    // generation
     private static TreeMap windows =
         new TreeMap(
             new Comparator() {
@@ -67,6 +71,7 @@ public class WindowImpl extends JUMPWindow {
                     return 0;
                 }
             });
+    // key to reuse in window look up
     private static WindowImpl key = new WindowImpl(0, 0);
 
     private WindowImpl(int isolateId, int id) {
@@ -76,6 +81,7 @@ public class WindowImpl extends JUMPWindow {
 
     static synchronized WindowImpl
     getWindow(int isolateId, int id) {
+        // don't create key for look up, instead initialize precreated one
         key.id          = id;
         key.isolateId   = isolateId;
 
