@@ -58,10 +58,9 @@
 
 #else // PISCES_JAVA_SURFACE_SUPPORT
 
-#define SURFACE_FROM_RENDERER(surface, surfaceHandle, rendererHandle)     \
-        (surface);                                                        \
-        (surfaceHandle);                                                  \
-        (rendererHandle);
+#define SURFACE_FROM_RENDERER(surface, surfaceHandle, rendererHandle) \
+    (void)(surface); \
+    (void)(surfaceHandle);
 
 #endif // PISCES_JAVA_SURFACE_SUPPORT
 

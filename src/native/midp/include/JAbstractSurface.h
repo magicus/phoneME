@@ -46,19 +46,13 @@ AbstractSurface;
 
 // no need to call release from RELEASE_SURFACE on MIDP
 #define RELEASE_SURFACE(surface, surfaceHandle)                              \
-        (surface);                                                           \
-        (surfaceHandle);                                                     \
         SNI_END_RAW_POINTERS;
 
 #else // PISCES_JAVA_SURFACE_SUPPORT
 
-#define ACQUIRE_SURFACE(surface, surfaceHandle)                              \
-        (surface);                                                           \
-        (surfaceHandle);
+#define ACQUIRE_SURFACE(surface, surfaceHandle) ;
 
-#define RELEASE_SURFACE(surface, surfaceHandle)                              \
-        (surface);                                                           \
-        (surfaceHandle);
+#define RELEASE_SURFACE(surface, surfaceHandle) ;
 
 #endif // PISCES_JAVA_SURFACE_SUPPORT
 

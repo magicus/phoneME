@@ -129,11 +129,17 @@ initializeSurfaceFieldIds(jobject objectHandle) {
 static void
 surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
     // do nothing
+    // IMPL NOTE : to fix warning : unused parameter
+    (void)surface;
+    (void)surfaceHandle;
 }
 
 static void
 surface_release(AbstractSurface* surface, jobject surfaceHandle) {
     // do nothing
+    // IMPL NOTE : to fix warning : unused parameter
+    (void)surface;
+    (void)surfaceHandle;
 }
 
 static void
