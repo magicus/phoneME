@@ -46,7 +46,11 @@ endif
 TARGET_COMPILER		= gcc
 TARGET_VM		= cldc_vm
 ifndef TARGET_DEVICE
+ifeq ($(TARGET_CPU), arm)
+TARGET_DEVICE		= omap730
+else 
 TARGET_DEVICE		= x86
+endif
 endif
 
 # file/directory name separator ( / or \\\\ )
