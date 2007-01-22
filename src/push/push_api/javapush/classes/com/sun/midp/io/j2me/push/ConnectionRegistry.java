@@ -74,7 +74,7 @@ final class ConnectionRegistry
      * mode. In this mode the current MIDlet that is not the application
      * manager should be destroyed before the next MIDlet is started.
      */
-    private static boolean mvmSingleMidletMode;
+    static boolean mvmSingleMidletMode;
 
     /** MIDlet proxy list reference. */
     private MIDletProxyList midletProxyList;
@@ -732,23 +732,6 @@ final class ConnectionRegistry
         return suiteIdToString(midletSuite.getID());
     }
       
-    /**
-     * Sets the flag which indicates that the AMS is operating in MVM
-     * single MIDlet mode.
-     */
-    private static void setMvmSingleMidletMode() {
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-
-        /* There is no suite running when installing from the command line. */
-        if (midletSuite != null) {
-            midletSuite.checkIfPermissionAllowed(Permissions.AMS);
-        }
-
-        mvmSingleMidletMode = true;
-    }
-
     /**
      * Native connection registry add connection function.
      * @param connection string to register

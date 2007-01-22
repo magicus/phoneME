@@ -233,4 +233,13 @@ public final class PushRegistryInternal {
         token.checkIfPermissionAllowed(Permissions.AMS);
         return ConnectionRegistry.checkInConnectionInternal(connection);
     }
+
+    /**
+     * Sets the flag which indicates that the AMS is operating in MVM
+     * single MIDlet mode.
+     */
+    public static void setMvmSingleMidletMode() {
+        checkInvocationAllowed();
+        ConnectionRegistry.mvmSingleMidletMode = true;
+    }
 }
