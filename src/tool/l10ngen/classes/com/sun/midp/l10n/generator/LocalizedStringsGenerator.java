@@ -46,11 +46,11 @@ import org.xml.sax.SAXException;
 
 /**
  *  Driver class with main(). Parses command line arguments and invokes
- *  CodeTransformerImpl instance that does all the transformation work.
+ *  LocalizedStringsGeneratorImpl instance that does all the transformation work.
  */
 public class LocalizedStringsGenerator {
     /** Transformer that does actual transformation */
-    private static CodeTransformerImpl transformer = null;
+    private static LocalizedStringsGeneratorImpl transformer = null;
 
     /** XML file name to apply transformation to */
     public static String xmlFileName = "";
@@ -78,7 +78,7 @@ public class LocalizedStringsGenerator {
                 return;
             }
 
-            transformer = new CodeTransformerImpl(debug);
+            transformer = new LocalizedStringsGeneratorImpl(debug);
             transformer.transform(xmlFileName, outFileName);
         } catch (SAXException e) {
             // error was already reported
@@ -138,7 +138,7 @@ public class LocalizedStringsGenerator {
 /**
  * Perform the transformation
  */
-class CodeTransformerImpl {
+class LocalizedStringsGeneratorImpl {
     /** Factory constructing Transformer objects */
     private TransformerFactory transformerFactory =
         TransformerFactory.newInstance();
@@ -152,7 +152,7 @@ class CodeTransformerImpl {
      *
      * @param dbg print some debug output while running
      */
-    public CodeTransformerImpl(boolean dbg)
+    public LocalizedStringsGeneratorImpl(boolean dbg)
     {
         debug = dbg;
     }
@@ -160,7 +160,7 @@ class CodeTransformerImpl {
     /**
      * Converts errors.
      */
-    class TransformerErrorHandler
+    class GeneratorErrorHandler
         implements ErrorHandler {
 
         /**
@@ -223,7 +223,7 @@ class CodeTransformerImpl {
 
         DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
 
-        domBuilder.setErrorHandler(new TransformerErrorHandler());
+        domBuilder.setErrorHandler(new GeneratorErrorHandler());
         Document doc = domBuilder.parse(new File(xmlFileName));
 
         // make source from it

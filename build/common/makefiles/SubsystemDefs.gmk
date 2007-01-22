@@ -30,13 +30,13 @@
 # (No '-' since subsystem MUST exists)
 include $(JWC_WORK_SPACE)/build/common/makefiles/Subsystems.gmk
 
-# The CodeTransformer generates Java and C files so these definitions
+# The Configurator generates Java and C files so these definitions
 # and rules must occur before any Java and C dependencies for
 # classes.zip
 #
 
-# dependency and rule for generating CodeTransformer tool
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(CODE_TRANSFORMER_JAR_FILE)
+# dependency and rule for generating Configurator tool
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(CONFIGURATOR_JAR_FILE)
 
 # dependency and rule for generating skin romization tool
 $(MIDP_OUTPUT_DIR)/classes.zip:: $(SKINROMIZATION_JAR_FILE)
@@ -55,13 +55,13 @@ $(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	$(romize_skin)
 	$(copy_lcdlf_resources)
 
-# The rule for running the CodeTransformer unconditionally, used by other
+# The rule for running the Configurator unconditionally, used by other
 # things such as docs_html.
 # IMPL NOTE: this should be refactored to remove the
 # need to run this unconditionally; it should always be run based on
 # out-of-date prerequisites.
 #
-run_configurator:: $(CODE_TRANSFORMER_JAR_FILE) $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+run_configurator:: $(CONFIGURATOR_JAR_FILE) $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	$(generate_configuration)
 
 # The rule for running skin romization tool unconditionally
