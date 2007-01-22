@@ -650,7 +650,10 @@ public class MIDletProxyList
     }
 
     /**
-     * Notify the device if one of the midlets is not paused anymore.
+     * Notifies the device if an active MIDlet appeared in the system.
+     * The notification is produced only once when the system runs
+     * out of the state with all the MIDlets being either paused 
+     * or destroyed.
      */
     private void notifyIfMidletActive() {
         MIDletProxy midletProxy;
@@ -671,7 +674,10 @@ public class MIDletProxyList
     }
 
     /**
-     * Notify the device if all midlets are paused.
+     * Notifies the device if all MIDlets considered to be paused, that is
+     * at least one MIDlet is paused and others are either paused or
+     * destroyed. The notification is produced only once when the system
+     * runs to that state.
      */
     private void notifyIfAllPaused() {
         boolean  allMidletsPaused = false;
@@ -1238,7 +1244,7 @@ public class MIDletProxyList
     private native void notifySuspendAll0();
 
     /**
-     * Notify native code that all MIDlets have been resumed.
+     * Notify native code that an active MIDlet appeared in the system.
      */
     private native void notifyResumeAll0();
 }
