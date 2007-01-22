@@ -368,8 +368,9 @@ final class ConnectionRegistry
      * @param filter a connection URL string indicating which senders
      *               are allowed to cause the MIDlet to be launched
      *
-     * @exception ClassNotFoundException RFC (unable to load protocol?
-     *               translate to ConnectionNotFoundException?)
+     * @exception ClassNotFoundException if the <code>MIDlet</code> class
+     *               name can not be found in the current
+     *               <code>MIDlet</code> suite
      * @exception IOException if the connection is already
      *              registered or if there are insufficient resources
      *              to handle the registration request
@@ -392,15 +393,12 @@ final class ConnectionRegistry
      *               are allowed to cause the MIDlet to be launched
      * @exception  IllegalArgumentException if connection or filter is not
      *               valid
-     * @exception ClassNotFoundException RFC (unable to load protocol?
-     *               translate to ConnectionNotFoundException?)
      * @exception ConnectionNotFoundException if PushRegistry doesn't support
      *               this kind of connections
      */
     static void checkRegistration(Connection connection, String midlet,
                                   String filter)
-                                  throws ClassNotFoundException,
-                                    ConnectionNotFoundException {
+                                  throws ConnectionNotFoundException {
         final String c = connection.getConnection();
         ProtocolPush.getInstance(c).checkRegistration(c, midlet, filter);
     }
@@ -431,8 +429,9 @@ final class ConnectionRegistry
      *         used by the installer when redo old connections during an
      *         aborted update
      *
-     * @exception ClassNotFoundException RFC (unable to load protocol?
-     *              translate to ConnectionNotFoundException?)
+     * @exception ClassNotFoundException if the <code>MIDlet</code> class
+     *               name can not be found in the current
+     *               <code>MIDlet</code> suite
      * @exception IOException if the connection is already
      *              registered or if there are insufficient resources
      *              to handle the registration request
