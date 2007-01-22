@@ -821,7 +821,7 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
  * Post native advanced multimedia event to Java event handler
  * 
  * @param type          Event type
- * @param playerId      Player ID that came from javacall_media_create function
+ * @param processorId   Processor ID that came from javacall_media_processor_create 
  * @param data          Data for this event type
  */
 void javanotify_on_amms_notification(javacall_amms_notification_type type,
