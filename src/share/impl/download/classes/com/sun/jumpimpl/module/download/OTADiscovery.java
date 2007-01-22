@@ -30,9 +30,14 @@ import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.io.InputStream;
 
+import javax.xml.parsers.*;
+import org.xml.sax.*;
+import org.xml.sax.helpers.DefaultHandler;
+
 public class OTADiscovery 
 {
     static final String htmlMime = "text/html";
+    static final String xmlMime = "text/xml";
 
     public HashMap discover( String url )
     {
@@ -48,16 +53,29 @@ public class OTADiscovery
                                     conn.getContentType() );
             }
 
-            if (!htmlMime.equalsIgnoreCase( conn.getContentType() ) )
-            {
+            String contentType = conn.getContentType().toLowerCase();
+            // Apache Web server adds encoding type to this field. So we have to look if it contains text/html...
+            if (contentType.indexOf(htmlMime.toLowerCase()) != -1 )
+                return doHTMLDiscovery(url, netUrl, conn);
+            // ... or text/xml
+            else if (contentType.indexOf(xmlMime.toLowerCase()) != -1 )
+                return doXMLDiscovery(conn);
+            else
                 throw new Exception( "Content type for the applist " +
-                                     
-                                     "is not "+ htmlMime );
-            }
+                        "is neither "+ htmlMime +" nor "+ xmlMime);
+        } catch ( Exception e ) {
+            e.printStackTrace();
+        }
+        // Nothing was found. Return empty.
+        return new HashMap();
+    }
 
+    private HashMap doHTMLDiscovery(String url, URL netUrl, URLConnection conn)
+    {
+        try {
             String rst = "";
             InputStream in = conn.getInputStream();
-
+            
             while ( true )
             {
                 byte [] data = new byte[16384];
@@ -130,13 +148,92 @@ public class OTADiscovery
             }
 
             return h;
+            
+        } catch (java.io.IOException e) {
+            System.err.println( "Cannot read html content "+e );
         }
-        catch ( Exception e )
-        {
-            e.printStackTrace();
-        }
-
-        // Nothing was found. Return empty.
         return new HashMap();
     }
+
+
+    private HashMap doXMLDiscovery(URLConnection conn)
+    {
+        try {
+            InputStream in = conn.getInputStream();
+
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            SAXParser parser = factory.newSAXParser();
+            
+            ServerConfXMLHandler handler = new ServerConfXMLHandler();
+            parser.parse(in, handler);
+
+            return handler.getMap();
+        } catch (org.xml.sax.SAXException saxExc) {
+            System.err.println( "Cannot parse xml content "+saxExc );
+        } catch (javax.xml.parsers.ParserConfigurationException parserExc) {
+            System.err.println( "Cannot create an xml parser "+parserExc );
+        } catch (java.io.IOException ioExc) {
+            System.err.println( "Cannot read xml content "+ioExc );
+        }
+        return new HashMap();
+    }
+}
+
+class ServerConfXMLHandler extends DefaultHandler
+{
+    private HashMap hmap;
+    private String state = "";
+    private String path = "";
+    
+    private String targetURI = "";
+    private String targetName = "";
+    
+    private String chars = "";
+
+    public ServerConfXMLHandler() {
+        hmap = new HashMap();
+    }
+    
+    public HashMap getMap() {
+        return hmap;
+    }
+    
+    public void startElement (String uri, String localName,
+                              String qName, Attributes attributes)
+	throws SAXException
+    {
+        // building xml-path of the current tag
+        path = path.concat("/").concat(localName.toLowerCase());
+    }
+    
+    public void endElement (String uri, String localName, String qName)
+        throws SAXException
+    {
+        // if we have got both the name and the uri of the target, put it into the map...
+        if (!"".equals(targetName) && !"".equals(targetURI)) {
+            hmap.put(targetURI, targetName);
+            // ... and clean it
+            targetName = "";
+            targetURI = "";
+        }
+        // if we get reached a name tag, save the name of the target
+        if ("/servercontent/dd:media/product/mediaobject/meta/name".equals(path)) {
+            targetName = chars.trim();
+        }
+        // if we get reached a server tag, save the the uri of the target
+        if ("/servercontent/dd:media/product/mediaobject/objecturi/server".equals(path)) {
+            targetURI = targetURI.concat(chars.trim());
+        }
+        chars = "";
+        
+        // go back with the path
+	path = path.substring(0, path.lastIndexOf("/"));
+    }
+
+    public void characters (char ch[], int start, int length)
+	throws SAXException
+    {
+        chars = chars + new String(ch, start, length);
+    }
+
 }

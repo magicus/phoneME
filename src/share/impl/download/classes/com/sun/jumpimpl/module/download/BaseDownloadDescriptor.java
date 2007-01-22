@@ -69,7 +69,7 @@ public class BaseDownloadDescriptor extends JUMPDownloadDescriptor {
     }
     
     public void setObjectURI(String objectURI) {
-        this.objectURI = objectURI;
+        this.objectURI = getFullURI( objectURI );
     }
     
     public void setInstallNotifyURI(String installNotifyURI) {
@@ -85,7 +85,7 @@ public class BaseDownloadDescriptor extends JUMPDownloadDescriptor {
     }
     
     public void setIconURI(String iconURI) {
-        this.iconURI = iconURI;
+        this.iconURI = getFullURI( iconURI );
     }
     
     public void setSecurityLevel(String securityLevel) {
@@ -178,4 +178,23 @@ public class BaseDownloadDescriptor extends JUMPDownloadDescriptor {
             throw new SyntaxException();
         }
     }
+    
+    private String getFullURI( String targetURI ) {
+        String result = targetURI;
+        // check if the targetURI is relative or absolute.
+        // According to RFC 2396 we may just check if it starts with protocol
+        int protocolLength = getSource().indexOf(':');
+        if (protocolLength >= 0) {
+            String protocol = getSource().substring(0, protocolLength + 1);
+            if (!targetURI.startsWith( protocol )) {
+                int lastSlash = getSource().lastIndexOf('/');
+                if (lastSlash == -1)
+                    result = getSource() + "/" + targetURI;
+                else
+                    result = getSource().substring(0, lastSlash + 1) + targetURI;
+            }
+        }
+        return result;
+    }
+
 }
