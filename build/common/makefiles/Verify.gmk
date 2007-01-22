@@ -387,7 +387,7 @@ JSR_180_DIR:
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_jsr_180_directory) $(LOG)
 
-JSR_184_DIR:
+JSR_184_DIR::
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_jsr_184_directory) $(LOG)
 

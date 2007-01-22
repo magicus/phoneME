@@ -650,52 +650,58 @@ public class MIDletProxyList
     }
 
     /**
-     * Notify the device if one of the midlets is not paused anymore.
+     * Notifies the device if an active MIDlet appeared in the system.
+     * The notification is produced only once when the system runs
+     * out of the state with all the MIDlets being either paused 
+     * or destroyed.
      */
     private void notifyIfMidletActive() {
         MIDletProxy midletProxy;
-        boolean allMidletsPaused = true;
 
         synchronized (midletProxies) {
-            for (int i = midletProxies.size() - 1; i >= 0; i--) {
-                midletProxy = (MIDletProxy)midletProxies.elementAt(i);
-                if (midletProxy.getMidletState() !=
-                        MIDletProxy.MIDLET_PAUSED) {
-                    allMidletsPaused = false;
-                    break;
+            if (allPaused) {
+                for (int i = midletProxies.size() - 1; i >= 0; i--) {
+                    midletProxy = (MIDletProxy)midletProxies.elementAt(i);
+                    if (midletProxy.getMidletState() ==
+                            MIDletProxy.MIDLET_ACTIVE) {
+                        allPaused = false;
+                        notifyResumeAll0();
+                        break;
+                    }
                 }
             }
-        }
-
-        if (!allMidletsPaused) {
-            allPaused = false;
-            notifyResumeAll0();
         }
     }
 
     /**
-     * Notify the device if all midlets are paused.
+     * Notifies the device if all MIDlets considered to be paused, that is
+     * at least one MIDlet is paused and others are either paused or
+     * destroyed. The notification is produced only once when the system
+     * runs to that state.
      */
     private void notifyIfAllPaused() {
-        boolean allMidletsPaused = false;
+        boolean  allMidletsPaused = false;
+        int midletState;
 
         synchronized (midletProxies) {
-            for (int i = midletProxies.size() - 1; i >= 0; i--) {
-                int midletState = ((MIDletProxy)midletProxies.elementAt(i)).
-                    getMidletState();
+            if (!allPaused) {
+                for (int i = midletProxies.size() - 1; i >= 0; i--) {
+                    midletState = ((MIDletProxy) midletProxies.elementAt(i)).
+                            getMidletState();
 
-                if (MIDletProxy.MIDLET_PAUSED == midletState) {
-                    allMidletsPaused = true;
-                } else if (MIDletProxy.MIDLET_DESTROYED != midletState) {
-                    allMidletsPaused = false;
-                    break;
+                    if (MIDletProxy.MIDLET_PAUSED == midletState) {
+                        allMidletsPaused = true;
+                    } else if (MIDletProxy.MIDLET_DESTROYED != midletState) {
+                        allMidletsPaused = false;
+                        break;
+                    }
+                }
+
+                if (allMidletsPaused) {
+                    allPaused = true;
+                    notifySuspendAll0();
                 }
             }
-        }
-
-        if (allMidletsPaused) {
-            allPaused = true;
-            notifySuspendAll0();
         }
     }
 
@@ -1238,7 +1244,7 @@ public class MIDletProxyList
     private native void notifySuspendAll0();
 
     /**
-     * Notify native code that all MIDlets have been resumed.
+     * Notify native code that an active MIDlet appeared in the system.
      */
     private native void notifyResumeAll0();
 }
