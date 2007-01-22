@@ -366,9 +366,12 @@ public class HttpUrl {
             url.append(':');
         }
 
+        if (authority != null || scheme != null) {
+            url.append('/');
+            url.append('/');
+        }
+
         if (authority != null) {
-            url.append('/');
-            url.append('/');
             url.append(authority);
         }
 

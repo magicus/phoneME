@@ -161,23 +161,25 @@ void clearScreen() {
 	sizeof(gxj_pixel_type) * 
 	    hdr->width * hdr->height);
 }
-                                    
+
 /**
  * Resizes system screen buffer to fit the screen dimensions.
  * Call after frame buffer is initialized.
  */
 void resizeScreenBuffer(int width, int height) {
+    if (gxj_resize_screen_buffer(width, height) != ALL_OK) {
+        fprintf(stderr, "Failed to reallocate screen buffer\n");
+	    exit(1);
+    }
+}
 
-    // check if frame buffer is big enough
+/** Check if screen buffer is not bigger than frame buffer device */
+static void checkScreenBufferSize(int width, int height) {
+    // Check if frame buffer is big enough
     if (hdr->width < width || hdr->height < height) {
         fprintf(stderr, "QVFB screen too small. Need %dx%d\n",
             width, height);
         exit(1);
-    }
-    
-    if (gxj_resize_screen_buffer(width, height) != ALL_OK) {
-        fprintf(stderr, "Failed to reallocate screen buffer\n");
-	    exit(1);
     }
 }
 
@@ -199,7 +201,10 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     REPORT_CALL_TRACE4(LC_HIGHUI, "LF:fbapp_refresh(%3d, %3d, %3d, %3d )\n",
                        x1, y1, x2, y2);
 
-    // center the LCD output area
+    // Check if frame buffer is big enough
+    checkScreenBufferSize(bufWidth, bufHeight);
+
+    // Center the LCD output area
     if (hdr->width > bufWidth) {
         dst += (hdr->width - bufWidth) / 2;
     }
@@ -240,9 +245,13 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     int srcInc;
     int dstInc;
 
+    // Check if frame buffer is big enough
+    checkScreenBufferSize(bufHeight, bufWidth);
+
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
 
+    // Center the LCD output area
     if (bufWidth < dstHeight || bufHeight < dstWidth) {
             // We are drawing into a frame buffer that's larger than what MIDP
             // needs. Center it.

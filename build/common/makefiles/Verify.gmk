@@ -526,6 +526,7 @@ display:
 	@echo   "JSR_238_DIR           = ""$(JSR_238_DIR)" $(LOG)
 	@echo   "PROJECT_JSR_238_DIR   = ""$(PROJECT_JSR_238_DIR)" $(LOG)
 	@echo   "JSR_239_DIR           = ""$(JSR_239_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_239_DIR   = ""$(PROJECT_JSR_239_DIR)" $(LOG)
 	@echo   "JC_DIR                = ""$(JC_DIR)" $(LOG)
 	@echo   "RESTRICTED_CRYPTO_DIR = ""$(RESTRICTED_CRYPTO_DIR)" $(LOG)
 	@echo   "CRYPTO_OUTPUT_DIR     = ""$(CRYPTO_OUTPUT_DIR)" $(LOG)

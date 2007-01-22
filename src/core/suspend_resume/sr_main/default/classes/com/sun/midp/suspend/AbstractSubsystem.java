@@ -103,13 +103,13 @@ public abstract class AbstractSubsystem implements Subsystem {
   
     /**
      * If the current state is <code>ACTIVE</code>, changes the state to
-     * <code>PAUSING</code>, performs object-specific suspend
+     * <code>SUSPENDING</code>, performs object-specific suspend
      * operations and then changes the state to <code>SUSPENDED</code>.
      */
     public final void suspend() throws StateTransitionException {
         synchronized (lock) {
             if (state == ACTIVE) {
-                state = PAUSING;
+                state = SUSPENDING;
                 suspendImpl();
                 
                 Enumeration subs = subsystems.elements();
