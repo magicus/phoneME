@@ -53,6 +53,7 @@ public class LifeCycleModuleImpl
     private JUMPExecutive exec;
     private RequestSenderHelper rsh;
     private Object messageRegistration;
+    private static long isolateTimeout = 1000L; // can be overridden by property
     
     LifeCycleModuleImpl() {
 	exec = JUMPExecutive.getInstance();
@@ -90,15 +91,12 @@ public class LifeCycleModuleImpl
 	// Wait until isolate is initialized (it will send us a message
 	// when it is ready)
 	//
-	// FIXME: what's the right timeout value and where is that stored?
-	isolate.waitForState(JUMPIsolateLifecycleRequest.ISOLATE_STATE_INITIALIZED, 1000L);
-
-	//
-	// FIXME!!!! What happens if we time out? We can kill
-	// the isolate and return null? 
-	// Or we can make newIsolate() return some sort of error code
-	// and allow a re-try? Must figure this out
-	//
+	if(!isolate.waitForState
+                (JUMPIsolateLifecycleRequest.ISOLATE_STATE_INITIALIZED,
+                isolateTimeout)) {
+            isolate.kill(true);
+            return null;            
+        }
         return isolate;
     }
     
@@ -132,12 +130,10 @@ public class LifeCycleModuleImpl
      */
     public JUMPIsolateProxy[] getActiveIsolates() {
         Vector activeIsolates = new Vector();
-        Iterator i = isolates.iterator();
+        Iterator i = ((Vector)isolates.clone()).iterator();
 	//
 	// FIXME: what state should this call be looking at?
 	// All created isolates? All initialized isolates? All running?
-	//
-	// FIXME: Need synchronization here on "isolates".
 	//
         while (i.hasNext()) {
             JUMPIsolateProxyImpl isolate = ((JUMPIsolateProxyImpl)i.next());
@@ -158,6 +154,16 @@ public class LifeCycleModuleImpl
     }
     
     public void load(Map config) {
+        String timeoutStr = (String)config.get("cdcams.lifecycle.timeout");
+        if (timeoutStr != null) {
+            try {
+                isolateTimeout = Long.parseLong(timeoutStr);
+                if (isolateTimeout < 0L) {
+                    isolateTimeout = 0L;
+                }
+            } catch (NumberFormatException e) {
+            }
+        }
 	//
 	// Get all lifecycle command messages here.
 	//

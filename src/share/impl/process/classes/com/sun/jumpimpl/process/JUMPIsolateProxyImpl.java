@@ -45,31 +45,26 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
 
     /**
      * Wait for the isolate to reach a target state
-     * FIXME: This should probably return a boolean indicating
-     * whether target state was reached.
+     * Returns a boolean indicating whether target state was reached.
      */
-    public synchronized void waitForState(int targetState, long timeout) 
+    public synchronized boolean waitForState(int targetState, long timeout) 
     {
 	long time = System.currentTimeMillis();
 	
 	while (state < targetState) {
 	    try {
-		// FIXME: This code is unfortunate. There is no
-		// timeout exception in wait(), so we must figure out
-		// if timeout happens or state is reached first.
 		wait(timeout);
-		long time2 = System.currentTimeMillis();
-		long elapsed = time2 - time;
-		if (elapsed > timeout) {
+		if (state < targetState) {
 		    System.err.println("Timed out waiting for "+
 				       "target state="+targetState);
-		    return;
+		    return false;
 		}
 	    } catch (Exception e) {
 		e.printStackTrace();
-		return;
+		return true;
 	    }
 	}
+        return false;
     }
     
     //
