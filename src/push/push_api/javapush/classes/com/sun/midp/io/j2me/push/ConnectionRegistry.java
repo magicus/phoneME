@@ -66,8 +66,6 @@ final class ConnectionRegistry
      * This flag is set to false by the AMS when installing or removing
      * MIDlets, when an interruption could compromise the integrity of
      * the operation.
-     *
-     * TBD: remove when PushRegistryInternal is dropped
      */
     static boolean pushEnabled = true;
 
@@ -846,8 +844,6 @@ final class ConnectionRegistry
     /**
      * Native connection registry delete a suite's connections function.
      * @param id suite's ID
-     *
-     * TBD: make private when PushRegistryInternal is dropped
      */
     static native void delAllForSuite0(int id);
 }
