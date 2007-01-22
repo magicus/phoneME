@@ -317,7 +317,9 @@ void CodeOptimizer::determine_pin_status( OptimizerInstruction* ins,
     //make the jsp modification ins won't be scheduled ahead of 
     //those npe related ins by adding dependency relationship.
     ins->put_result(Assembler::jsp);
+#if ENABLE_NPCE
     ins->_internals._abortable = abort_point;
+#endif
   }
 
   //decoder will take some data of call info as instructions.
