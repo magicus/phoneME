@@ -35,6 +35,10 @@ SUBSYSTEMS += jsr135
 -include $(JSR_135_DIR)/src/config/config.$(TARGET_PLATFORM)
 include $(JSR_135_DIR)/src/config/features.defs
 
+# Include JSR_135 system properties in Configuration
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+        $(JSR_135_DIR)/src/config/properties_mmapi_$(TARGET_PLATFORM).xml
+
 # Specify romizer configuration file for the MMAPI
 # and path where the file is located
 #
@@ -245,3 +249,12 @@ JSR_135_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr135
 jsr_135_source_bundle: JSR_135_DIR SOURCE_OUTPUT_DIR
 	@echo " ... JSR 135 source bundle" $(LOG)
 	@$(call re_src_filter,$(JSR_135_DIR),$(JSR_135_SOURCE_OUTPUT_DIR),src)
+
+# Used to verify supported platform
+JSR_135_DIR:: verify_jsr135_target
+
+verify_jsr135_target:
+	@if [ ! -f "$(JSR_135_DIR)/src/config/properties_mmapi_$(TARGET_PLATFORM).xml" ]; then \
+		echo "ERROR: Platform $(TARGET_PLATFORM) is not supported by JSR-135"; \
+		exit -1; \
+	fi $(LOG)
