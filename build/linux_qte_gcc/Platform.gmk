@@ -36,7 +36,7 @@ HOST_CPU		= i386
 HOST_COMPILER		= gcc
 
 # Definition of platform to run on
-TARGET_PLATFORM		= linux_fb
+TARGET_PLATFORM		= linux_qte
 TARGET_OS		= linux
 ifdef CPU
 TARGET_CPU		= $(CPU)
@@ -57,4 +57,3 @@ endif
 # if the file separator is backslash, double-quoting is needed,
 # that is, you need to write "\\\\" (four backslashes) for "\" (one backslash)
 FN_SEP=/
-
