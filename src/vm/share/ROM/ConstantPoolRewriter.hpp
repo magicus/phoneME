@@ -118,6 +118,7 @@ class ConstantPoolRewriter {
   void rewrite_class_object(InstanceClass *klass JVM_TRAPS);
   void rewrite_method(Method *method JVM_TRAPS);
   void rewrite_method_header(Method *method JVM_TRAPS);
+  void rewrite_exception_table(Method *method, ConstantPool *orig_cp JVM_TRAPS);
 
   bool shall_create_new_method(Method* pMethod JVM_TRAPS);
 
@@ -186,6 +187,12 @@ public:
 private:
   static ConstantPoolRewriter* _current_rewriter;
   static void replace_oop_if_method(OopDesc** addr);
+
+#if ENABLE_ROM_JAVA_DEBUGGER
+  void rewrite_line_number_tables(Method *old_method, 
+                                  Method *new_method,
+                                  bool compress_if_possible JVM_TRAPS);
+#endif
 
 friend class ErrorMethodCounter;
 friend class ErrorMethodRewriter;
