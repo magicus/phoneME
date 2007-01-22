@@ -47,7 +47,7 @@ import com.sun.jump.common.JUMPContent;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.module.installer.JUMPInstallerModuleFactory;
 import com.sun.jump.module.installer.JUMPInstallerModule;
-
+ 
 import java.util.Properties;
 import java.io.IOException;
 import java.io.InputStream;
@@ -104,8 +104,6 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
     public static void main(String[] args) {
 	JUMPExecutiveImpl jei = new JUMPExecutiveImpl();
 
-        System.loadLibrary("jumpmesg");
-
         jei.handleCommandLine(args);
 
 	// Initialize os interface
@@ -117,13 +115,18 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
 
         JUMPFactories.init();
 
-	if (true) {
+try {
+    Class.forName("com.sun.jumpimpl.admin.AppManager$Been").newInstance();
+} catch(Exception e) {
+    e.printStackTrace();
+}
+	if (false) {
 	    // Sample code to create blank isolate upon startup
 	    JUMPLifeCycleModuleFactory lcmf =
 		JUMPLifeCycleModuleFactory.getInstance();
 	    JUMPLifeCycleModule lcm = lcmf.getModule();
-	    JUMPIsolateProxy ip = lcm.newIsolate(JUMPAppModel.MAIN);
-	    System.err.println("New isolate created="+ip);
+//	    JUMPIsolateProxy ip = lcm.newIsolate(JUMPAppModel.MAIN);
+//	    System.err.println("New isolate created="+ip);
 
 	    JUMPInstallerModuleFactory imf = 
 		JUMPInstallerModuleFactory.getInstance();
@@ -134,9 +137,12 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
 		for (int i = 0; i < content.length; i++) {
 		    JUMPApplication app = (JUMPApplication)content[i];
 		    System.err.println("App["+i+"] = "+app);
+
+		   lcm.newIsolate(JUMPAppModel.MAIN).startApp(app, null);
 		}
+/*
 		JUMPApplicationProxy appProxy = ip.startApp((JUMPApplication)content[0], null);
-		System.err.println("Executive started app="+appProxy);
+		System.err.println("Executive started app="+appProxy);*/
 	    } else {
 		System.err.println("No content available");
 		System.exit(1);

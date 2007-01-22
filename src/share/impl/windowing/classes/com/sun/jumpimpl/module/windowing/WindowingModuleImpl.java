@@ -36,6 +36,7 @@ import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.message.JUMPMessageHandler;
 import com.sun.jump.message.JUMPMessageDispatcher;
 import com.sun.jump.message.JUMPMessageDispatcherTypeException;
+import com.sun.jump.command.JUMPIsolateLifecycleRequest;
 import com.sun.jump.command.JUMPExecutiveWindowRequest;
 import com.sun.jump.command.JUMPIsolateWindowRequest;
 import com.sun.jump.command.JUMPResponse;
@@ -118,6 +119,8 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
             JUMPExecutive e = JUMPExecutive.getInstance();
             JUMPMessageDispatcher md = e.getMessageDispatcher();
             md.registerHandler(JUMPIsolateWindowRequest.MESSAGE_TYPE, this);
+            md.registerHandler(
+                JUMPIsolateLifecycleRequest.ID_ISOLATE_DESTROYED, this);
         } catch (JUMPMessageDispatcherTypeException dte) {
             dte.printStackTrace();
             // FIXME: someone else listeneing -- what to do?
@@ -128,12 +131,12 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
     public void
     handleMessage(JUMPMessage message) {
         if(JUMPIsolateWindowRequest.MESSAGE_TYPE.equals(message.getType())) {
-            JUMPIsolateWindowRequest msg =
+            JUMPIsolateWindowRequest cmd =
                 (JUMPIsolateWindowRequest)
                     JUMPIsolateWindowRequest.fromMessage(message);
 
             WindowImpl window =
-                WindowImpl.getWindow(msg.getIsolateId(), msg.getWindowId());
+                WindowImpl.getWindow(cmd.getIsolateId(), cmd.getWindowId());
 
             synchronized(lock) {
                 if(!windows.contains(window)) {
@@ -143,14 +146,43 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
             }
 
             if(JUMPIsolateWindowRequest.ID_REQUEST_FOREGROUND.equals(
-                msg.getCommandId())) {
+                cmd.getCommandId())) {
 
                 setForeground(window, false);
             }
             else if(JUMPIsolateWindowRequest.ID_REQUEST_BACKGROUND.equals(
-                msg.getCommandId())) {
+                cmd.getCommandId())) {
 
                 setBackground(window, false);
+            }
+        }
+        else if(JUMPIsolateLifecycleRequest.MESSAGE_TYPE.equals(
+            message.getType())) {
+
+            JUMPIsolateLifecycleRequest cmd =
+                (JUMPIsolateLifecycleRequest)
+                    JUMPIsolateLifecycleRequest.fromMessage(message);
+
+            int isolateId = cmd.getIsolateId();
+
+            synchronized(lock) {
+                // remove JUMPWindow-s hosted by the destroyed isolate
+                // from the list
+                int idx = 0;
+                while(idx != windows.size()) {
+                    if(((JUMPWindow)windows.elementAt(
+                        idx)).getIsolate().getIsolateId() == isolateId) {
+
+                        windows.remove(idx);
+                        continue;
+                    }
+                    ++idx;
+                }
+
+                // enshure there is one foreground window
+                if(getForeground() == null) {
+                    nextWindow();
+                }
             }
         }
     }

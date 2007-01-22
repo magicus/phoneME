@@ -57,11 +57,15 @@ public class WindowingIsolateModule implements JUMPMessageHandler {
     private ListenerImpl        listener;
     private int                 isolateId;
     private JUMPMessageSender   executive;
-    private boolean             focusEventsSupported;
 
     private class ListenerImpl implements GCIDisplayListener, GCIFocusEventListener {
 
-        private GCIScreenWidget selfContained;
+        private GCIScreenWidget         selfContained;
+        private GCIFocusEventListener   origListener;
+
+        ListenerImpl(GCIFocusEventListener origListener) {
+            this.origListener = origListener;
+        }
 
         void
         setSelfContained(GCIScreenWidget selfContained) {
@@ -71,16 +75,28 @@ public class WindowingIsolateModule implements JUMPMessageHandler {
         public void
         screenWidgetCreated(GCIDisplay source, GCIScreenWidget widget) {
             windows.add(widget);
-
-            // FIXME: should wait for appropriate moment to send this message
-            postRequest(
-                widget, JUMPIsolateWindowRequest.ID_REQUEST_FOREGROUND);
         }
 
         public boolean
         focusEventReceived(GCIFocusEvent event) {
-            // FIXME: how to figure of if it is a background or foreground notification?
-            return true;
+            switch(event.getID()) {
+            case GCIFocusEvent.FOCUS_GOT_FOREGROUND:
+                postRequest(
+                    event.getScreenWidget(),
+                    JUMPIsolateWindowRequest.ID_REQUEST_FOREGROUND);
+                break;
+
+            case GCIFocusEvent.FOCUS_GOT_BACKGROUND:
+                postRequest(
+                    event.getScreenWidget(),
+                    JUMPIsolateWindowRequest.ID_REQUEST_BACKGROUND);
+                break;
+            }
+
+            return
+                (origListener != null)
+                    ? origListener.focusEventReceived(event)
+                    : true;
         }
     }
 
@@ -108,7 +124,6 @@ public class WindowingIsolateModule implements JUMPMessageHandler {
     public WindowingIsolateModule(JUMPIsolateProcess host) {
         windows         = new Vector();
         requestSender   = new RequestSenderHelper(host);
-        listener        = new ListenerImpl();
         isolateId       = host.getIsolateId();
         executive       = host.getExecutiveProcess();
 
@@ -123,15 +138,21 @@ public class WindowingIsolateModule implements JUMPMessageHandler {
         // kick start GCI native library loading
         GraphicsEnvironment.getLocalGraphicsEnvironment();
 
-        // register listener with all available displays
         GCIGraphicsEnvironment gciEnv = GCIGraphicsEnvironment.getInstance();
+
+        listener = new ListenerImpl(gciEnv.getEventManager().getFocusListener());
+
+        // register listener with all available displays and event manager
         for(int i = 0, count = gciEnv.getNumDisplays(); i != count; ++i) {
             gciEnv.getDisplay(i).addListener(listener);
         }
+        gciEnv.getEventManager().setFocusListener(
+            listener, gciEnv.getEventManager().getSupportedFocusIDs());
 
-        focusEventsSupported = gciEnv.getEventManager().supportsFocusEvents();
-        if(focusEventsSupported) {
-            // FIXME: install listener
+        if(!gciEnv.getEventManager().supportsFocusEvents()) {
+            System.err.println(
+                "WARNING: focus events are not supported "
+                + "by the running GCI impl!");
         }
     }
 
@@ -161,14 +182,21 @@ public class WindowingIsolateModule implements JUMPMessageHandler {
 
                     GCIGraphicsEnvironment.getInstance(
                         ).getEventManager().startEventLoop();
+                    widget.requestForeground();
                     widget.suspendRendering(false);
+                    requestSender.sendBooleanResponse(message, true);
                 }
                 else if(JUMPExecutiveWindowRequest.ID_BACKGROUND.equals(
                     msg.getCommandId())) {
 
                     GCIGraphicsEnvironment.getInstance(
                         ).getEventManager().stopEventLoop();
+                    widget.requestBackground();
                     widget.suspendRendering(true);
+                    requestSender.sendBooleanResponse(message, true);
+                }
+                else {
+                    requestSender.sendBooleanResponse(message, false);
                 }
             }
             finally {

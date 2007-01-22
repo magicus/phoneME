@@ -137,11 +137,13 @@ public class RequestSenderHelper {
      * Send boolean response to incoming request
      */
     public void
-    sendBooleanResponse(JUMPMessage incoming,
-			boolean booleanResponse) {
+    sendBooleanResponse(JUMPMessage incoming, boolean value) {
         try {
             JUMPOutgoingMessage m = host.newOutgoingMessage(incoming);
 	    JUMPMessageResponseSender mrs = incoming.getSender();
+
+            m.addUTF(
+                value ? JUMPResponse.ID_SUCCESS : JUMPResponse.ID_FAILURE);
             mrs.sendResponseMessage(m);
         } catch(IOException e) {
             e.printStackTrace();

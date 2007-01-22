@@ -123,7 +123,6 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
      * listener.
      */
     public static void start() {
-        System.loadLibrary("jumpmesg");
 	// Initialize os interface
 	new com.sun.jumpimpl.os.JUMPOSInterfaceImpl();
 
