@@ -54,7 +54,7 @@ information or have any questions.
   <available file="${cdc.dir}/btclasses.zip" type="file"
              property="cdc.classes.available"/>
 
-  <target name="all" depends="build-api, build-impl, javadoc-api"/>
+  <target name="all" depends="build-api, build-impl"/>
 
   <!-- init target -->
   <target name="init" depends="make-dist-dirs, set-properties, set-tools">

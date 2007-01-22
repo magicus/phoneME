@@ -53,8 +53,14 @@ public interface JUMPPreferencesModule extends JUMPModule {
     /**
      * @param prefName   the name of the preference to set
      * @param prefValue  the value to set the preference to
+     * @return value of the preference
      */
     public String setPreference(String prefName, String prefValue);
+
+    /**
+     * @param prefName   the name of the preference to delete
+     */
+    public void deletePreference(String prefName);
 
     /**
      * @return a list of names of preferences.

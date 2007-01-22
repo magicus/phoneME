@@ -116,7 +116,7 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
         JUMPFactories.init();
 
 try {
-    Class.forName("com.sun.jumpimpl.admin.AppManager$Been").newInstance();
+    Class.forName("com.sun.jumpimpl.admin.JUMPAdmin$Been").newInstance();
 } catch(Exception e) {
     e.printStackTrace();
 }

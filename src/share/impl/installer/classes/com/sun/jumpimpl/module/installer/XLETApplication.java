@@ -36,6 +36,16 @@ import java.net.URL;
  */
 public class XLETApplication extends JUMPApplication {
     
+    /**
+     * The file separator character for the system.
+     */
+    private final static String fileSeparator = System.getProperty("file.separator");
+    
+    /**
+     * The name of the directory to hold XLET and Main icons
+     */
+    private final static String REPOSITORY_ICONS_DIRNAME = "./icons";    
+    
     public static final String CLASSPATH_KEY = "XLETApplication_classpath";
     public static final String BUNDLE_KEY = "XLETApplication_bundle";
     public static final String INITIAL_CLASS_KEY = "XLETApplication_initialClass";
@@ -108,5 +118,21 @@ public class XLETApplication extends JUMPApplication {
      */
     public void setInitialClass(String initialClass) {
         addProperty(INITIAL_CLASS_KEY, initialClass);
+    }
+    
+    /**
+     * Get the path to the application's icon.
+     * @return A URL defining the path to the icon in
+     *         the downloaded content.
+     */
+    public URL getIconPath() {
+        String file = repositoryDir + REPOSITORY_ICONS_DIRNAME + fileSeparator + getProperty(ICONPATH_KEY);
+        URL url = null;
+        try {
+            url = new URL("file", null, file);
+        } catch (MalformedURLException ex) {
+            ex.printStackTrace();
+        }
+        return url;
     }
 }
