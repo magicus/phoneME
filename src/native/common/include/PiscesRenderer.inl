@@ -550,7 +550,6 @@ renderer_setCompositeRule(Renderer* rdr, jint compositeRule) {
                                INVALID_COMPOSITE_DEPENDED_ROUTINES;
 
         if ((compositeRule == COMPOSITE_SRC_OVER) ||
-            (compositeRule == COMPOSITE_SRC) && 
                 (rdr->_imageType == TYPE_INT_ARGB ||
                    rdr->_imageType == TYPE_INT_ARGB_PRE)) {
             // need to recalculate the alpha map
@@ -1052,9 +1051,9 @@ updateRendererSurface(Renderer* rdr) {
             surface->pixelStride;
 
     if (rdr->_imageType != surface->imageType) {
-        if ((rdr->_compositeRule == COMPOSITE_SRC) && 
-                (rdr->_imageType == TYPE_INT_ARGB || 
-                    rdr->_imageType == TYPE_INT_ARGB_PRE)) {
+        if ((rdr->_compositeRule != COMPOSITE_SRC_OVER) && 
+                (surface->imageType == TYPE_INT_ARGB || 
+                    surface->imageType == TYPE_INT_ARGB_PRE)) {
             // need to recalculate the alpha map
             // see the implementation of validateAlphaMap
             rdr->_rendererState |= VALIDATE_ALPHA_MAP |
@@ -1203,7 +1202,6 @@ validateAlphaMap(Renderer* rdr) {
         case PAINT_FLAT_COLOR:
             if (rdr->_rendererState & INVALID_COLOR_ALPHA_MAP) {
                 if ((rdr->_compositeRule == COMPOSITE_SRC_OVER) || 
-                        (rdr->_compositeRule == COMPOSITE_SRC) &&
                         (rdr->_imageType == TYPE_INT_ARGB || 
                             rdr->_imageType == TYPE_INT_ARGB_PRE)) {
                     jint i;
