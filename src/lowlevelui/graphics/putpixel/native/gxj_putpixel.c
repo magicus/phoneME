@@ -569,9 +569,9 @@ void
 draw_clipped_line(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     int lineStyle, const jshort *clip, int x1, int y1, int x2, int y2) {
 
-  int incrY, incrX, decision;
+  int incrY = 0, incrX = 0, decision = 0;
   int adjIncX, adjIncY;
-  int xyEnd;
+  int xyEnd = 0;
   int ret;
   int *ptrX, *ptrY;
   dotted_draw_state dds; /* for lineStyle == DOTTED */
@@ -1539,7 +1539,10 @@ drawClippedOutlineArc(gxj_screen_buffer *sbuf, gxj_pixel_type color,
     int xCenter, yCenter;
     int curRatio;
     int evenXOffset, evenYOffset;
-    dotted_draw_state dds[4]; /* used for dotted lines only */
+    dotted_draw_state dds[4] = {START_STROKE,
+                                START_STROKE,
+                                START_STROKE,
+                                START_STROKE}; /* used for dotted lines only */
     int x_point, y_point;
 
     CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
@@ -2238,12 +2241,12 @@ static void
 drawCompleteFilledEllipse(gxj_screen_buffer *sbuf, const jshort *clip,
     gxj_pixel_type color, int x, int y, int width, int height) {
 
-  int     evenXOffset, evenYOffset, a, b;
-  int     xCenter, yCenter, aSquared, bSquared;
-  int     twoAsquared, twoBsquared;
-  int     fourAsquared, fourBsquared;
-  int     xSlope, ySlope;
-  int     aSquaredTwo, bSquaredTwo;
+  int     evenXOffset = 0, evenYOffset = 0, a = 0, b = 0;
+  int     xCenter = 0, yCenter = 0, aSquared = 0, bSquared = 0;
+  int     twoAsquared = 0, twoBsquared = 0;
+  int     fourAsquared = 0, fourBsquared = 0;
+  int     xSlope = 0, ySlope = 0;
+  int     aSquaredTwo = 0, bSquaredTwo = 0;
   int     decision;
   int     ret;
 
@@ -2304,12 +2307,12 @@ static void
 drawCompleteDottedEllipse(gxj_screen_buffer *sbuf, const jshort *clip,
     gxj_pixel_type color, int x, int y, int width, int height) {
 
-  int     evenXOffset, evenYOffset, a, b;
-  int     xCenter, yCenter, aSquared, bSquared;
-  int     twoAsquared, twoBsquared;
-  int     fourAsquared, fourBsquared;
-  int     xSlope, xSlopeInit, ySlope, ySlopeInit;
-  int     aSquaredTwo, bSquaredTwo;
+  int     evenXOffset = 0, evenYOffset = 0, a = 0, b = 0;
+  int     xCenter = 0, yCenter = 0, aSquared = 0, bSquared = 0;
+  int     twoAsquared = 0, twoBsquared = 0;
+  int     fourAsquared = 0, fourBsquared = 0;
+  int     xSlope = 0, xSlopeInit = 0, ySlope = 0, ySlopeInit = 0;
+  int     aSquaredTwo = 0, bSquaredTwo = 0;
   int     decision;
   int     ret;
   int     quadrant;
@@ -2418,12 +2421,12 @@ static void
 drawCompleteOutlineEllipse(gxj_screen_buffer *sbuf, const jshort *clip,
     gxj_pixel_type color, int x, int y, int width, int height) {
 
-  int     evenXOffset, evenYOffset, a, b;
-  int     xCenter, yCenter, aSquared, bSquared;
-  int     twoAsquared, twoBsquared;
-  int     fourAsquared, fourBsquared;
-  int     xSlope, ySlope;
-  int     aSquaredTwo, bSquaredTwo;
+  int     evenXOffset = 0, evenYOffset = 0, a, b = 0;
+  int     xCenter = 0, yCenter = 0, aSquared = 0, bSquared = 0;
+  int     twoAsquared = 0, twoBsquared = 0;
+  int     fourAsquared = 0, fourBsquared = 0;
+  int     xSlope = 0, ySlope = 0;
+  int     aSquaredTwo = 0, bSquaredTwo = 0;
   int     decision;
   int     ret;
 
@@ -2727,11 +2730,11 @@ drawCompleteOutlineRoundRect(gxj_screen_buffer * sbuf, const jshort *clip,
     gxj_pixel_type color, int x, int y, int width, int height,
     int arcWidth, int arcHeight) {
 
-  int     aSquared, bSquared;
-  int     twoAsquared, twoBsquared;
-  int     fourAsquared, fourBsquared;
-  int     xSlope, ySlope;
-  int     aSquaredTwo, bSquaredTwo;
+  int     aSquared = 0, bSquared = 0;
+  int     twoAsquared = 0, twoBsquared = 0;
+  int     fourAsquared = 0, fourBsquared = 0;
+  int     xSlope = 0, ySlope = 0;
+  int     aSquaredTwo = 0, bSquaredTwo = 0;
   int     xOrigin = x;
   int     yOrigin = y;
   int     decision;
@@ -2901,11 +2904,11 @@ drawCompleteDottedRoundRect(gxj_screen_buffer * sbuf, const jshort *clip,
     int arcWidth, int arcHeight) {
 
   dotted_draw_state dds[4];
-  int     aSquared, bSquared;
-  int     twoAsquared, twoBsquared;
-  int     fourAsquared, fourBsquared;
-  int     xSlope, ySlope;
-  int     aSquaredTwo, bSquaredTwo;
+  int     aSquared = 0, bSquared = 0;
+  int     twoAsquared = 0, twoBsquared = 0;
+  int     fourAsquared = 0, fourBsquared = 0;
+  int     xSlope = 0, ySlope = 0;
+  int     aSquaredTwo = 0, bSquaredTwo = 0;
   int     xOrigin = x;
   int     yOrigin = y;
   int     decision;
@@ -2964,11 +2967,11 @@ drawCompleteFilledRoundRect(gxj_screen_buffer * sbuf, const jshort *clip,
     gxj_pixel_type color, int x, int y, int width, int height,
     int arcWidth, int arcHeight) {
 
-  int     aSquared, bSquared;
-  int     twoAsquared, twoBsquared;
-  int     fourAsquared, fourBsquared;
-  int     xSlope, ySlope;
-  int     aSquaredTwo, bSquaredTwo;
+  int     aSquared = 0, bSquared = 0;
+  int     twoAsquared = 0, twoBsquared = 0;
+  int     fourAsquared = 0, fourBsquared = 0;
+  int     xSlope = 0, ySlope = 0;
+  int     aSquaredTwo = 0, bSquaredTwo = 0;
   int     xOrigin = x;
   int     yOrigin = y;
   int     decision;

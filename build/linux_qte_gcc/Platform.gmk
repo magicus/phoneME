@@ -36,7 +36,7 @@ HOST_CPU		= i386
 HOST_COMPILER		= gcc
 
 # Definition of platform to run on
-TARGET_PLATFORM		= linux_fb
+TARGET_PLATFORM		= linux_qte
 TARGET_OS		= linux
 ifdef CPU
 TARGET_CPU		= $(CPU)
@@ -46,15 +46,10 @@ endif
 TARGET_COMPILER		= gcc
 TARGET_VM		= cldc_vm
 ifndef TARGET_DEVICE
-ifeq ($(TARGET_CPU), arm)
-TARGET_DEVICE		= omap730
-else 
 TARGET_DEVICE		= x86
-endif
 endif
 
 # file/directory name separator ( / or \\\\ )
 # if the file separator is backslash, double-quoting is needed,
 # that is, you need to write "\\\\" (four backslashes) for "\" (one backslash)
 FN_SEP=/
-
