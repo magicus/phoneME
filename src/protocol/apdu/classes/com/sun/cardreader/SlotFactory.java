@@ -71,7 +71,10 @@ public class SlotFactory {
              * It is ok to have zero devices in configuration, we'll just 
              * do nothing in this case. 
              */
-            int deviceNum = Configuration.getIntProperty(DEVICE_NUMBER_PROP, 0);
+            //IMPL_NOTE: Change to Properties abstraction
+            //int deviceNum = Configuration.getIntProperty(DEVICE_NUMBER_PROP, 0);
+            int deviceNum = 1;
+
             if (deviceNum < 0) {
                 throw new CardDeviceException("Number of devices must be > 0");
             }
@@ -89,7 +92,9 @@ public class SlotFactory {
                 deviceRecords[i] = new DeviceRecord();
 
                 String pName = DEVICE_CLASS_PROP + Integer.toString(i);
-                deviceRecords[i].className = Configuration.getProperty(pName);
+                //IMPL_NOTE: Change to Properties abstraction
+                //deviceRecords[i].className = Configuration.getProperty(pName);
+                deviceRecords[i].className = "com.sun.cardreader.PlatformCardDevice";
                 if (deviceRecords[i].className == null) {
                     throw new CardDeviceException("Class not found the device "
                                                   + Integer.toString(i));

@@ -9,7 +9,7 @@
 
 <configuration>
 <properties>
-    <property Key="com.sun.midp.io.j2me.apdu.hostsandports"
+    <property Key="com.sun.io.j2me.apdu.hostsandports"
         Value="jcemulhost:9025,jcemulhost:9026"
         Scope="internal"
         Comment="Socket connection ports for JavaCard emulator."/>
