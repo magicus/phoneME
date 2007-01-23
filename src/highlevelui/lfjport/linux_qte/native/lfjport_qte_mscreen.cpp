@@ -96,7 +96,6 @@ void ChameleonMScreen::init() {
   // Set the size of the midlet suites app area
   // @note this will change in full screen mode
   qpixmap.resize(SCREEN_WIDTH, SCREEN_HEIGHT);
-  bufferSize = normalScreenSize;
 
   // IMPL_NOTE:Performance team should benchmark the difference on
   // qpixmap.setOptimization(QPixmap::BestOptim);
@@ -114,17 +113,13 @@ void ChameleonMScreen::init() {
  * Resize the buffer size (either normal or fullscreen)
  */
 void ChameleonMScreen::setBufferSize(BufferSize newSize)
-{
-    if (newSize != bufferSize) {
-
+{    
        if (newSize == fullScreenSize) {
-           qpixmap.resize(DISPLAY_FULLWIDTH, DISPLAY_FULLHEIGHT);
+           qpixmap.resize(getDisplayFullWidth(), getDisplayFullHeight());
        } else {
-           qpixmap.resize(SCREEN_WIDTH, SCREEN_HEIGHT);
+           qpixmap.resize(getDisplayWidth(), getDisplayHeight());
        }
 
-       bufferSize = newSize;
-    }
 }
 
 /**

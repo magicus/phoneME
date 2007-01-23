@@ -82,9 +82,6 @@ PlatformMScreen::PlatformMScreen(QWidget *parent, const char* name) :QScrollView
   // Graphics context
   gc = new QPainter();
 
-  // Always normal size first
-  bufferSize = normalScreenSize;
-
   force_refresh = true;
   last_pen = -1;
   last_brush = -1;
@@ -163,21 +160,15 @@ void PlatformMScreen::init() {
  */
 void PlatformMScreen::setBufferSize(BufferSize newSize)
 {
-    if (newSize != bufferSize) {
-
        if (newSize == fullScreenSize) {
            if (gc->isActive()) {
                gc->end();
            }
-           setFixedSize(getDisplayFullWidth(), getDisplayFullHeight());
            qpixmap.resize(getDisplayFullWidth(), getDisplayFullHeight());
        } else {
-           setFixedSize(getDisplayWidth(), getDisplayHeight());
            qpixmap.resize(getDisplayWidth(), getDisplayHeight());
        }
 
-       bufferSize = newSize;
-    }
 }
 
 /**
