@@ -375,7 +375,7 @@ typedef struct {
 #endif /* IAI_CODE_SCHEDULER_SCORE_BOARD */
     CVMBool  policyTriggeredDecompilations;
     CVMBool  compilingCausesClassLoading;
-    CVMUint32 maxInliningDepth;
+    CVMUint32 maxAllowedInliningDepth;
     CVMUint32 maxInliningCodeLength;
     CVMUint32 minInliningCodeLength;
     CVMUint32 maxWorkingMemorySize;
