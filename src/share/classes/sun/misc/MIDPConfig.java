@@ -45,6 +45,8 @@ public final
 class MIDPConfig{
     /* The MIDP library classloader */
     private static MIDPImplementationClassLoader midpImplCL;
+    /* The MemberFilter */
+    private static MemberFilter memberFilter;
 
     public static String MIDPVersion = "2.0";
     public static String CLDCVersion = "1.1";
@@ -60,6 +62,10 @@ class MIDPConfig{
 	"javax.microedition."
     };
 
+    static {
+        // Create the member filter.
+        memberFilter = newMemberFilter();
+    }
 
     static String permittedSystemClasses[];
 	// filled by reading a file.
@@ -333,7 +339,7 @@ class MIDPConfig{
 	String midPath[], PermissionCollection perms)
     {
         return newMIDletClassLoader(midPath,
-                                    newMemberFilter(),
+                                    memberFilter,
                                     perms,
                                     midpImplCL);
     }
@@ -350,7 +356,7 @@ class MIDPConfig{
 	        "Need to create the parent MIDPImplementationClassLoader first");
         }
 	return newMIDletClassLoader(midPath,
-                                    newMemberFilter(),
+                                    memberFilter,
                                     midletPermissions,
                                     midpImplCL);
     }
