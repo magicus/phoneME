@@ -143,7 +143,7 @@ javacall_result javacall_annunciator_vibrate(javacall_bool enableVibrate) {
     sprintf(print_buffer, "Vibrate %s\n",
             enableVibrate ? "Enabled" : "Disabled");
     javacall_print(print_buffer);
-    return JAVACALL_OK;
+    return JAVACALL_FAIL;
 
 }
 
@@ -163,7 +163,7 @@ javacall_result javacall_annunciator_flash_backlight(javacall_bool enableBacklig
 
     sprintf(print_buffer, "Backlight %s\n", enableBacklight ? "Enabled" : "Disabled");
     javacall_print(print_buffer);
-    return JAVACALL_OK;
+    return JAVACALL_FAIL;
 }
 
 /**
