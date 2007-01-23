@@ -92,7 +92,6 @@ JSR_239_SHARE_JAVA_DIR = $(JSR_239_DIR)/src/share/classes
 #
 MODULE_JSR_239_API_JAVA_FILES = \
     ${JSR_239_SHARE_JAVA_DIR}/java/lang/Comparable.java \
-    ${JSR_239_SHARE_JAVA_DIR}/java/lang/UnsupportedOperationException.java \
     ${JSR_239_SHARE_JAVA_DIR}/java/nio/Buffer.java \
     ${JSR_239_SHARE_JAVA_DIR}/java/nio/BufferOverflowException.java \
     ${JSR_239_SHARE_JAVA_DIR}/java/nio/BufferUnderflowException.java \
@@ -114,6 +113,11 @@ MODULE_JSR_239_API_JAVA_FILES = \
     ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/opengles/GL11Ext.java \
     ${JSR_239_SHARE_JAVA_DIR}/javax/microedition/khronos/opengles/GL11ExtensionPack.java
 
+ifneq ($(USE_JSR_177), true)
+# IMPL_NOTE: temporary fix: remove this class as it is also defined by JSR 177
+MODULE_JSR_239_API_JAVA_FILES += \
+    ${JSR_239_SHARE_JAVA_DIR}/java/lang/UnsupportedOperationException.java
+endif
 
 JSR_239_CLDC_IMPL_JAVA_DIR = $(JSR_239_DIR)/src/cldc/classes
 
