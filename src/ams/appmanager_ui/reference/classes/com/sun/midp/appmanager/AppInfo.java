@@ -236,7 +236,7 @@ public class AppInfo extends Form {
                 }
             }
 
-            temp = PushRegistryImpl.listConnections(
+            temp = PushRegistryInternal.listConnections(
                        midletSuite.getID(), false);
             if (temp != null) {
                 label.setLength(0);
