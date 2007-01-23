@@ -191,9 +191,9 @@ public final class AlarmRegistry {
         final Date date = new Date(time);
         final TimerTask newTask = new TimerTask() {
             public void run() {
+                removeAlarm(midletInfo);
                 lifecycleAdapter.launchMidlet(midletInfo.midletSuiteID,
                         midletInfo.midlet);
-                removeAlarm(midletInfo);
             }
         };
         synchronized (alarms) {
