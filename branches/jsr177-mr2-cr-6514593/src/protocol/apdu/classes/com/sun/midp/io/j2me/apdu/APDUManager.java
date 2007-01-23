@@ -110,7 +110,9 @@ if (false) {
                 freeResources(slot);
                 throw new ConnectionNotFoundException("" + e);
             }
-            String satAPDU = Configuration.getProperty(SAT_APDU_PROP);
+            //IMPL_NOTE: Change to Properties abstraction
+            //String satAPDU = Configuration.getProperty(SAT_APDU_PROP);
+            String satAPDU = "00.a4.04.00.07.a0.00.00.00.62.3.1.7F";
             if (satAPDU != null) {
                 byte[] apdu = new byte[24];
                 boolean ok;

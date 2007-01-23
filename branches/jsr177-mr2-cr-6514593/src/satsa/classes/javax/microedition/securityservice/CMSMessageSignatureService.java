@@ -292,8 +292,10 @@ final public class CMSMessageSignatureService
     private static boolean certSig = false;
 
     static {
-        String signprop  = Configuration
-            .getProperty("com.sun.satsa.certsig");
+        //IMPL_NOTE: Change to Properties abstraction
+        //String signprop  = Configuration
+        //    .getProperty("com.sun.satsa.certsig");
+        String signprop = "true";
         if (signprop != null) {
             certSig = signprop.equals("true");
         }

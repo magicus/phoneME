@@ -50,6 +50,11 @@ public class APDUPermissions extends ACLPermissions {
             return;
         }
 
+        if (type == DISALLOW) {
+            throw new SecurityException("Access denied: " +
+                                        Integer.toHexString(apdu));
+        }
+
         for (int i = 0; i < permissions.size(); i++) {
 
             int[] data = (int[]) permissions.elementAt(i);
