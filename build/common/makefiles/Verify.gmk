@@ -407,11 +407,11 @@ JSR_230_DIR:
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_jsr_230_directory) $(LOG)
 
-JSR_234_DIR::
+JSR_234_DIR:
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_jsr_234_directory) $(LOG)
 
-JSR_135_DIR::
+JSR_135_DIR:
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_jsr_135_directory) $(LOG)
 
