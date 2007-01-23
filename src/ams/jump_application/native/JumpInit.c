@@ -1,13 +1,40 @@
+/*
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ */
 
 #include <kni.h>
 #include <jvm.h>
 #include <midpAMS.h>
 #include <midpStorage.h>
 #include <suitestore_common.h>
-                                                                                   
+
 /**
- * Initializes the native storage.
+ * Initializes the midp storage.
+ *
+ * @param home path to the MIDP working directory.
+ * @returns true if the initialization succeeds, false otherwise
  */
+
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_midp_jump_JumpInit_initMidpNativeStates) {
     jchar jbuff[1024];
@@ -41,16 +68,6 @@ KNIDECL(com_sun_midp_jump_JumpInit_initMidpNativeStates) {
     }
 
     KNI_EndHandles();
-
-    switch(status) {
-        case OUT_OF_MEMORY:
-            KNI_ReturnInt(100);
-            break;
-        case ALL_OK:
-            KNI_ReturnInt(1);
-        default:
-            break;
-    }
 
     if (status != ALL_OK) {
        KNI_ReturnBoolean(KNI_FALSE);

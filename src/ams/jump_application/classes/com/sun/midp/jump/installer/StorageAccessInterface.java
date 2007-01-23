@@ -27,11 +27,38 @@ package com.sun.midp.jump.installer;
 import java.io.IOException;
 import com.sun.jump.common.JUMPContent;
 
+/**
+ * Abstracts out the operation against the midlet repository class,
+ * <code>com.sun.midp.midletsuite.MIDletSuiteStorage</code>, 
+ * needed from the jump code.
+ **/
+
 public interface StorageAccessInterface {
 
+   /**
+    * Gets the list of midlet suite IDs installed in the repository
+    * currently.
+    *
+    * @return The list of installed midlet suites.
+    */
    public int[] getInstalledMIDletSuiteIds();   
 
+   /**
+    * Takes the midlet suite ID and converts it to the 
+    * <code>JUMPContent</code> instances, where each midlet in the suite is 
+    * a separate <code>JUMPContent</code>.
+    *
+    * @param The midlet suite id 
+    * @return The list of <code>JUMPContent</code>, a zero length array if 
+    * the midlet suite is not in the repository.
+    */
    public JUMPContent[] convertToMIDletApplications(int suiteId); 
 
+   /**
+    * Removes the midlet suite from the repository.  Does nothing
+    * if the midlet suite is not installed.
+    * 
+    * @param The midlet suite id to delete.
+    */
    public void remove(int suiteId); 
 }

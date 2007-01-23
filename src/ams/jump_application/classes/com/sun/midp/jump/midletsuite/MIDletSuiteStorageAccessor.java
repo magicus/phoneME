@@ -62,11 +62,14 @@ public class MIDletSuiteStorageAccessor
 	  return currentMIDletSuiteInfo.getMIDletApplications();
 
        } catch (IOException e) { 
-          throw new RuntimeException(e); 
+          System.err.println(e + " thrown while accessing the midlet suite " + suiteId);
+          return new JUMPContent[0];
        } catch (MIDletSuiteLockedException e) { 
-          throw new RuntimeException(e); 
+          System.err.println(e + " thrown while accessing the midlet suite " + suiteId);
+          return new JUMPContent[0];
        } catch (MIDletSuiteCorruptedException e) { 
-          throw new RuntimeException(e); 
+          System.err.println(e + " thrown while accessing the midlet suite " + suiteId);
+          return new JUMPContent[0];
        }
    }	    
 

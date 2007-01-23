@@ -38,10 +38,6 @@ import com.sun.midp.installer.InvalidJadException;
 import com.sun.midp.jump.MIDletApplication;
 import com.sun.midp.jump.JumpInit;
 import com.sun.midp.jump.midletsuite.MIDletSuiteStorageAccessor;
-import com.sun.midp.midletsuite.MIDletInfo;
-import com.sun.midp.midletsuite.MIDletSuiteImpl;
-import com.sun.midp.midletsuite.MIDletSuiteInfo;
-import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 /**
  * <code>JUMPInstallerModule</code> provides the ability to install
@@ -83,17 +79,6 @@ public class MIDLETInstallerImpl implements JUMPInstallerModule {
         suiteStore = new MIDletSuiteStorageAccessor();
     }
 
-    private static Object loadAndInstanciate(ClassLoader loader, 
-		                             String className) {
-	Object target = null;     
-        try { 	      
-            Class clazz = Class.forName(className, true, loader);
-	    target = clazz.newInstance(); 
-        } catch (Exception e) { e.printStackTrace(); }
-
-	return target;  
-    }
-    
     /**
      * Install content specified by the given descriptor and location.
      * @return the installed content
@@ -144,8 +129,8 @@ public class MIDLETInstallerImpl implements JUMPInstallerModule {
               return null;
           }
 
-          // Install succeeded. Gather the installed midlet suite's info from suitestore,
-          // create a new JUMPMIDletSuiteInfo and record it to the installSuites array.
+          // Install succeeded. Gather the installed midlet suite's info 
+	  // from suitestore and convert them to a list of JUMPContents.
 
           JUMPContent[] installed = suiteStore.convertToMIDletApplications(suiteId);
 
