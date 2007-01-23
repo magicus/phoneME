@@ -82,10 +82,10 @@ INT_TRANSFORMER_MAIN_CLASS = com.sun.midp.configurator.CodeTransformer
 # Configurator input files from list file
 INT_XML_FILES_BASE_NAMES := $(shell grep -v ^\# $(INT_FILES_LIST))
 
-#ifneq ($(INT_DEVICE_FILES_LIST), )
+ifneq ($(INT_DEVICE_FILES_LIST), )
 INT_XML_FILES_BASE_NAMES += \
         $(shell grep -v ^\# $(INT_DEVICE_FILES_LIST))
-#endif
+endif
 
 INT_XML_FILES := $(addprefix $(INT_XML_DIR)/, $(INT_XML_FILES_BASE_NAMES))
 
