@@ -170,7 +170,8 @@
 
 /* CVMmemCopy64(CVMUint32* destination, CVMUint32* source) */
 #define CVMmemCopy64(destination, source) \
-    ((destination)[0] = (source)[0], (destination)[1] = (source)[1])
+    (((CVMUint32*)(destination))[0] = ((CVMUint32*)(source))[0], \
+     ((CVMUint32*)(destination))[1] = ((CVMUint32*)(source))[1])
 
 #endif
 
