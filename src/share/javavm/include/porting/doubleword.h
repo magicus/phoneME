@@ -96,7 +96,7 @@ void CVMdouble2Jvm(CVMAddr location[2], CVMJavaDouble val);
  * optimize this into a single 64-bit transfer.
  */
 
-void CVMmemCopy64(CVMAddr to[2], const CVMAddr from[2]);
+void CVMmemCopy64(CVMUint32 *to, const CVMUint32 *from);
 
 /*
  * Java long manipulation.
