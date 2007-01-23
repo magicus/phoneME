@@ -532,8 +532,7 @@ final class ConnectionRegistry
     public static String [] listConnections(MIDletSuite midletSuite,
             boolean available) {
 
-        return connectionsToArray(
-                listConnections(classSecurityToken, midletSuite.getID(),
+        return connectionsToArray(listConnections(midletSuite.getID(),
                                available));
     }
 
@@ -541,8 +540,6 @@ final class ConnectionRegistry
      * Return a list of registered connections for given
      * <code>MIDlet</code> suite. AMS permission is required.
      *
-     * @param token security token of the calling class, or <code>null</code>
-     *        to check the suite
      * @param id identifies the specific <code>MIDlet</code>
      *               suite to be launched
      * @param available if <code>true</code>, only return the list of
@@ -552,8 +549,7 @@ final class ConnectionRegistry
      *       represented by the generic connection <em>protocol</em>,
      *       <em>host</em> and <em>port number</em> identification
      */
-    static String listConnections(SecurityToken token,
-            int id, boolean available) {
+    static String listConnections(int id, boolean available) {
         byte[] nativeID;
         String connections = null;
         byte[] connlist;

@@ -172,8 +172,7 @@ public final class PushRegistryInternal {
      */
     public static String listConnections(int id, boolean available) {
         checkInvocationAllowed();
-        return ConnectionRegistry
-                .listConnections((SecurityToken) null, id, available);
+        return ConnectionRegistry.listConnections(id, available);
     }
 
     /**
