@@ -148,11 +148,25 @@ struct CVMJITCompilationContext {
     CVMUint32                codeLength;
     
     /*
-     * A stack of method contexts, used for inlining
+     * A stack of method contexts, used for inlining.
+     *
+     * NOTE: maxInliningDepth is used to indicate the highest level of inlining
+     * that was actually done so far in the current compilation attempt. 
+     * maxAllowedInliningDepth is used to indicate the cap on how high the
+     * maxInliningDepth can rise.  
+     *
+     * NOTE: maxAllowedInliningDepth is a value that can be reduced after each
+     * compilation attempt if the compilation failed because of a shortage of
+     * memory.  This allows the compilation to be retried with less inlining
+     * (which takes up memory) being attempted.
+     *
+     * NOTE: there is one exceptional case where maxInliningDepth is allowed
+     * to exceed maxAllowedInliningDepth by one.  Normally,
+     * maxInliningDepth must be less or equal to maxAllowedInliningDepth.
      */
     CVMUint32                numInliningInfoEntries;
     CVMInt32                 maxInliningDepth;
-    CVMInt32                 inliningDepthLimit;
+    CVMInt32                 maxAllowedInliningDepth;
     CVMJITMethodContext*     mc; /* top of stack */
     CVMJITMethodContext*     rootMc; /* bottom of stack */
     

@@ -447,7 +447,7 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
     volatile CVMBool needDestroyContext = CVM_FALSE;
     volatile int extraCodeExpansion = 0;
     volatile int extraStackmapSpace = 0;
-    volatile int inliningDepthLimit = CVMglobals.jit.maxInliningDepth;
+    volatile int maxAllowedInliningDepth = CVMglobals.jit.maxAllowedInliningDepth;
 
     /* Cache the ee's noOSRSkip & noOSRStackAdjust in case we recurse into the
        interpreter while compiling: */
@@ -519,7 +519,7 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 
  retry:
 
-    if (!CVMJITinitializeContext(&con, mb, ee, inliningDepthLimit)) {
+    if (!CVMJITinitializeContext(&con, mb, ee, maxAllowedInliningDepth)) {
 	CVMJITsetErrorMessage(&con,
 			      "Could not initialize compilation context");
 	retVal = CVMJIT_OUT_OF_MEMORY;
@@ -835,23 +835,24 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 	     * If we failed to compile because inlining generated too
 	     * much code, then retry with a smaller max inlining depth.
 	     */
-	    CVMassert(con.inliningDepthLimit > 0);
+	    CVMassert(con.maxAllowedInliningDepth > 0);
 	    /*
 	     * We sometimes allow inlining trivial methods beyond
-	     * inliningDepthLimit, which results in con.maxInliningDepth
-	     * being greater than inliningDepthLimit. In this case
-	     * we just decrement inliningDepthLimit. Otherwise we set
-	     * inliningDepthLimit to one less than the depth we were
+	     * maxAllowedInliningDepth, which results in con.maxInliningDepth
+	     * being greater than maAllowedInliningDepth. In this case
+	     * we just decrement maxAllowedInliningDepth. Otherwise we set
+	     * maxAllowedInliningDepth to one less than the depth we were
 	     * at when the failure happened.
 	     */
-	    if (inliningDepthLimit < con.maxInliningDepth) {
-		inliningDepthLimit--;
+	    if (maxAllowedInliningDepth < con.maxInliningDepth) {
+		maxAllowedInliningDepth--;
 	    } else {
-		inliningDepthLimit = con.maxInliningDepth - 1;
+		maxAllowedInliningDepth = con.maxInliningDepth - 1;
 	    }
 	    CVMtraceJITError(("JE: Inlining too deep (%d) - "
 			      "retrying with %d\n",
-			      con.inliningDepthLimit,inliningDepthLimit));
+			      con.maxAllowedInliningDepth,
+			      maxAllowedInliningDepth));
 	    CVMtraceJITError(("    Error(%d) Message: \"%s\"\n", 
 			      retVal, con.errorMessage));
 	    CVMJITdestroyContext(&con);
@@ -911,13 +912,13 @@ doBackOff:
 	     * If we still fail with the same error when the inline depth is 0
              * then, we have to fail compilation.
 	     */
-	    inliningDepthLimit = con.maxInliningDepth - 1;
-	    if (inliningDepthLimit > 1) {
-                inliningDepthLimit = 1;
+	    maxAllowedInliningDepth = con.maxInliningDepth - 1;
+	    if (maxAllowedInliningDepth > 1) {
+                maxAllowedInliningDepth = 1;
             }
-	    if (inliningDepthLimit >= 0) {
+	    if (maxAllowedInliningDepth >= 0) {
                 CVMtraceJITError(("JE: Defined Used node mismatch - "
-		    "retrying with inline depth %d\n", inliningDepthLimit));
+		    "retrying with inline depth %d\n", maxAllowedInliningDepth));
 		CVMtraceJITError(("    Error(%d) Message: \"%s\"\n", 
 				  retVal, con.errorMessage));
 	        CVMJITdestroyContext(&con);
@@ -1076,7 +1077,7 @@ CVMJITneverCompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
  */
 CVMBool
 CVMJITinitializeContext(CVMJITCompilationContext* con, CVMMethodBlock* mb,
-			CVMExecEnv* ee, CVMInt32 inliningDepthLimit)
+			CVMExecEnv* ee, CVMInt32 maxAllowedInliningDepth)
 {
     memset((void*)con, 0, sizeof(CVMJITCompilationContext));
     con->ee = ee;
@@ -1107,7 +1108,7 @@ CVMJITinitializeContext(CVMJITCompilationContext* con, CVMMethodBlock* mb,
 	con->maxCapacity = CVMJIT_MIN_MAX_CAPACITY;
     }
 
-    con->inliningDepthLimit = inliningDepthLimit;
+    con->maxAllowedInliningDepth = maxAllowedInliningDepth;
 
     con->codeLength = CVMjmdCodeLength(con->jmd);
     con->resultCode = CVMJIT_SUCCESS;
@@ -1201,7 +1202,11 @@ CVMJIThandleError(CVMJITCompilationContext* con, int error)
 extern void
 CVMJITlimitExceeded(CVMJITCompilationContext *con, const char *errorStr)
 {
-    if (con->maxInliningDepth > 0) {
+    /* If we have been doing some inlining (i.e. con->maxInliningDepth > 0)
+       and the cap on inlining depth is still not 0 (i.e.
+       con->maxAllowedInliningDepth > 0), then throw an error to allow
+       retrying with a lower inlining depth cap. */
+    if ((con->maxInliningDepth > 0) && (con->maxAllowedInliningDepth > 0)) {
 	/* Try less inlining. */
 	CVMJITerror(con, INLINING_TOO_DEEP, "Inlining is too deep");
     } else {
