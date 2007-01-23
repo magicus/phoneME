@@ -28,10 +28,3 @@ include ../share/id_basis.mk
 
 J2ME_PROFILE_NAME		= Personal Profile
 J2ME_PROFILE_SPEC_VERSION	= 1.1
-
-# NOTE: the build/<os>-<cpu>-<device>/id_personal.mk file can be used
-# to override the following values, which you will want to do for
-# any product that is shipped.
-J2ME_PRODUCT_NAME       := $(subst PBP,PP,$(J2ME_PRODUCT_NAME))
-J2ME_BUILD_VERSION	= 1.1.1-beta
-J2ME_BUILD_STATUS	= beta

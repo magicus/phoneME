@@ -27,17 +27,15 @@
 
 J2ME_PROFILE_NAME		= CDC
 J2ME_PROFILE_SPEC_VERSION	= 1.1
-CVM_BUILD_ID 			= bXX
 
-ifeq ($(CVM_JIT), true)
-  CVM_BUILD_NAME	= CDC HI
-else
-  CVM_BUILD_NAME	= CDC
-endif
+CVM_BUILD_ID 		= bXX
+CVM_BUILD_NAME		= CVM
+CVM_BUILD_VERSION	= phoneme_advanced_mr2
 
-CVM_BUILD_VERSION	= cyclops
-
-J2ME_PRODUCT_NAME	= $(CVM_BUILD_NAME)
+# NOTE: the build/<os>-<cpu>-<device>/id_personal.mk file can be used
+# to override the following values, which you may want to do for
+# any product that is shipped.
+J2ME_PRODUCT_NAME	= phoneME Advanced
 J2ME_BUILD_VERSION	= $(CVM_BUILD_VERSION)
 J2ME_BUILD_ID		= $(CVM_BUILD_ID)
 
