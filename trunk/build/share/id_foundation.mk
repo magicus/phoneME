@@ -28,4 +28,3 @@ include ../share/id_cdc.mk
 
 J2ME_PROFILE_NAME		= Foundation Profile
 J2ME_PROFILE_SPEC_VERSION	= 1.1
-J2ME_PRODUCT_NAME       	:= $(J2ME_PRODUCT_NAME)/FP

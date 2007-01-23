@@ -28,7 +28,3 @@ include ../share/id_foundation.mk
 
 J2ME_PROFILE_NAME		= Personal Basis Profile
 J2ME_PROFILE_SPEC_VERSION	= 1.1
-J2ME_PRODUCT_NAME       	:= $(J2ME_PRODUCT_NAME)/PBP
-
-J2ME_BUILD_VERSION	= 1.1.1-beta
-J2ME_BUILD_STATUS	= beta
