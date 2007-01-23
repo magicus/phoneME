@@ -2985,8 +2985,8 @@ isInlinable(CVMJITCompilationContext* con, CVMMethodBlock* targetMb)
 
     /*
      * If the caller of this method has the CVMJIT_NEEDS_TO_INLINE flag set,
-     * then don't let any of the imposed limits, like con->inliningDepthLimit,
-     * prevent this method from being inlined.
+     * then don't let any of the imposed limits, like
+     * con->maxAllowedInliningDepth, prevent this method from being inlined.
      */
     if ((CVMmbCompileFlags(con->mc->mb) & CVMJIT_NEEDS_TO_INLINE) != 0) {
 	alwaysInline = CVM_TRUE;
@@ -2995,11 +2995,11 @@ isInlinable(CVMJITCompilationContext* con, CVMMethodBlock* targetMb)
     /* Setup maxInliningCodeLength based on the current compilation depth */
     {
 	float inlineDepthRatio; /* % of max inline depth we are at */
-	if (con->inliningDepthLimit == 0) {
+	if (con->maxAllowedInliningDepth == 0) {
 	    inlineDepthRatio = 0;
 	} else {
 	    inlineDepthRatio = (float)con->mc->compilationDepth / 
-		(float)jgs->maxInliningDepth;
+		(float)jgs->maxAllowedInliningDepth;
 	}
 	maxInliningCodeLength = jgs->maxInliningCodeLength -
 	    jgs->maxInliningCodeLength * inlineDepthRatio;
@@ -3043,19 +3043,19 @@ isInlinable(CVMJITCompilationContext* con, CVMMethodBlock* targetMb)
 
 always_inline_short_methods:
     if (alwaysInline &&
-	con->mc->compilationDepth > jgs->maxInliningDepth) {
+	con->mc->compilationDepth > jgs->maxAllowedInliningDepth) {
 	/* Normally alwaysInline will allow us to ignore the
 	 * compilationDepth (see check immediately below), but we
-	 * don't want to allow it to exceed jgs->maxInliningDepth. In
-	 * this case we want to retry with less inlining, which should
+	 * don't want to allow it to exceed jgs->maxAllowedInliningDepth.
+	 * In this case we want to retry with less inlining, which should
 	 * prevent the caller of this method from being inlined.
 	 */
-	CVMJITlimitExceeded(con, "global maxInliningDepth exceeded.");
+	CVMJITlimitExceeded(con, "global maxAllowedInliningDepth exceeded.");
     }
 
     /* don't exceed max compilation depth */
     if (!alwaysInline &&
-	con->mc->compilationDepth >= con->inliningDepthLimit)
+	con->mc->compilationDepth >= con->maxAllowedInliningDepth)
     {
 	CVMtraceJITInlining(("NOT INLINABLE: Target method %C.%M "
 			     "is too deep in the call chain (depth=%d)\n",
@@ -3192,7 +3192,7 @@ always_inline_short_methods:
      * inlining a method that isn't capable of inlining simple getter
      * and setter methods.
      */
-    if (con->mc->compilationDepth == con->inliningDepthLimit - 1) {
+    if (con->mc->compilationDepth == con->maxAllowedInliningDepth - 1) {
 	allowedInvokes = 0;
     }
 
@@ -3717,14 +3717,14 @@ doInvokeKnownMB(CVMJITCompilationContext* con,
 
 	{
 	    /*
-	     * If this method is inlineable at the maxInliningDepth,
+	     * If this method is inlineable at the maxAllowedInliningDepth,
 	     * then mark so the threshold will be ignored in the
 	     * future, and reset the invokeCost so it won't likely be
 	     * compiled. This reduces the amount of code compiled
 	     * without hurting performance.
 	     */
 	    CVMJITGlobalState* jgs = &CVMglobals.jit;
-	    if (jgs->inliningThresholds[jgs->maxInliningDepth-1] >
+	    if (jgs->inliningThresholds[jgs->maxAllowedInliningDepth-1] >
 		CVMmbInvokeCost(newTargetMb))
 	    {
 		CVMmbInvokeCostSet(newTargetMb, jgs->inliningThresholds[0]);
@@ -4114,16 +4114,16 @@ doInvokeVirtualOrInterface(CVMJITCompilationContext* con,
 
 	    {
 		/*
-		 * If this method is inlineable at the maxInliningDepth, then
-		 * mark it so the threshold will be ignored in the future, and
-		 * reset the invokeCost so it won't likely be compiled. This
-		 * reduces the amount of code compiled without hurting
+		 * If this method is inlineable at the maxAllowedInliningDepth,
+		 * then mark it so the threshold will be ignored in the future,
+		 * and reset the invokeCost so it won't likely be compiled.
+		 * This reduces the amount of code compiled without hurting
 		 * performance. It also results in better invokevirtual
 		 * guesses if the method has an invokevirtual since it
 		 * will continue to be interpreted.
 		 */
 		CVMJITGlobalState* jgs = &CVMglobals.jit;
-		if (jgs->inliningThresholds[jgs->maxInliningDepth-1] >
+		if (jgs->inliningThresholds[jgs->maxAllowedInliningDepth-1] >
 		    CVMmbInvokeCost(candidateMb))
 		{
 		    CVMmbInvokeCostSet(candidateMb,

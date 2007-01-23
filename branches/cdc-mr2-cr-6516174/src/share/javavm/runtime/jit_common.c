@@ -1406,7 +1406,7 @@ static const CVMSubOptionData knownJitSubOptions[] = {
     {"maxInliningDepth", "Max Inlining Depth", 
      CVM_INTEGER_OPTION, 
      {{0, 1000, CVMJIT_DEFAULT_MAX_INLINE_DEPTH}},
-     &CVMglobals.jit.maxInliningDepth},
+     &CVMglobals.jit.maxAllowedInliningDepth},
 
     {"maxInliningCodeLength", "Max Inlining Code Length", 
      CVM_INTEGER_OPTION, 
@@ -1572,7 +1572,7 @@ CVMBool
 CVMjitSetInliningThresholds(CVMExecEnv* ee, CVMJITGlobalState* jgs)
 {
     /* Set up the inlining threshold table: */
-    CVMInt32 depth = jgs->maxInliningDepth;
+    CVMInt32 depth = jgs->maxAllowedInliningDepth;
     CVMInt32 thresholdLimit;
     CVMInt32 *costTable;
     CVMInt32 i;
