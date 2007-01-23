@@ -3,25 +3,25 @@
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -65,13 +65,13 @@ static char urlAddress[BINARY_BUFFER_MAX_LEN];
 static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
 
 /**
- * A helper function to 
+ * A helper function to
  * @param event a pointer to midp_javacall_event_union
  * @return javacall_event_send() operation result
  */
 static javacall_result
 midp_jc_event_send(midp_jc_event_union *event) {
-    return 
+    return
         javacall_event_send(
                             (unsigned char *)event,
                             sizeof(midp_jc_event_union)
@@ -102,7 +102,7 @@ void javanotify_key_event(javacall_key key, javacall_keypress_type type) {
 }
 
 /**
-* The notification function to be called by platform for pen 
+* The notification function to be called by platform for pen
 * press/release/drag occurences.
 * The platfrom will invoke the call back in platform context for
 * each pen press, pen release and pen dragg occurence
@@ -131,20 +131,21 @@ void javanotify_pen_event(int x, int y, javacall_penevent_type type) {
  */
 void javanotify_start(void) {
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO(LC_CORE,"javanotify_start() >>\n");
 
-    e.eventType = MIDP_JC_EVENT_START_MIDLET;
-    e.data.startMidletEvent.suiteID = "internal";
-    e.data.startMidletEvent.classname = 
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] =
 #if ENABLE_MULTIPLE_ISOLATES
     "com.sun.midp.appmanager.MVMManager";
 #else
     "com.sun.midp.appmanager.Manager";
 #endif
-    e.data.startMidletEvent.arg0 = NULL;
-    e.data.startMidletEvent.arg1 = NULL;
-    e.data.startMidletEvent.arg2 = NULL;
 
     midp_jc_event_send(&e);
 }
@@ -161,21 +162,39 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
 
     int length;
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO2(LC_CORE,"javanotify_start_tck() >> tckUrl=%s, domain_type=%d \n",tckUrl,domain_type);
 
-    e.eventType = MIDP_JC_EVENT_START_TCK;
-    length = strlen(tckUrl);
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
-    if (length < BINARY_BUFFER_MAX_LEN) {
-        memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
-        memcpy(urlAddress, tckUrl, length);
-        e.data.startTckEvent.urlAddress = urlAddress;
-        e.data.startTckEvent.domain = domain_type;
-	midp_jc_event_send(&e);
-    } else {
-        /* IMPL_NOTE: decide what to do in case of an error */
-    }
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.installer.AutoTester";
+
+    length = strlen(tckUrl);
+    if (length >= BINARY_BUFFER_MAX_LEN)
+        return;
+
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    memcpy(urlAddress, tckUrl, length);
+    if(strcmp(urlAddress, "none") != 0)
+        data->argv[data->argc++] = urlAddress;
+
+
+    if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
+        data->argv[data->argc++] = "untrusted";
+    } else if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
+        data->argv[data->argc++] = "trusted";
+    } else if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
+        data->argv[data->argc++] = "minimum";
+    } else if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
+        data->argv[data->argc++] = "maximum";
+    } else
+        return;
+
+    midp_jc_event_send(&e);
 }
 
 /**
@@ -189,15 +208,21 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
  */
 void javanotify_start_i3test(char* arg1, char* arg2) {
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO2(LC_CORE,"javanotify_start_i3test() >> %s %s\n",arg1,arg2);
 
-    e.eventType = MIDP_JC_EVENT_START_MIDLET;
-    e.data.startMidletEvent.suiteID = "internal";
-    e.data.startMidletEvent.classname = "com.sun.midp.i3test.Framework";
-    e.data.startMidletEvent.arg0 = arg1;
-    e.data.startMidletEvent.arg1 = arg2;
-    e.data.startMidletEvent.arg1 = NULL;
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.i3test.Framework";
+    if (NULL != arg1) {
+        data->argv[data->argc++] = arg1;
+        if (NULL != arg2)
+            data->argv[data->argc++] = arg2;
+    }
 
     midp_jc_event_send(&e);
 }
@@ -214,16 +239,25 @@ void javanotify_start_i3test(char* arg1, char* arg2) {
  */
 void javanotify_start_handler(char* handlerID, char* url, char* action) {
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
-	REPORT_INFO3(LC_CORE,"javanotify_start_handler() >> %s %s %s\n", 
-	                                                handlerID, url, action);
+    REPORT_INFO3(LC_CORE,"javanotify_start_handler() >> %s %s %s\n",
+		 handlerID, url, action);
 
-    e.eventType = MIDP_JC_EVENT_START_MIDLET;
-    e.data.startMidletEvent.suiteID = "internal";
-    e.data.startMidletEvent.classname = "com.sun.midp.content.Invoker";
-    e.data.startMidletEvent.arg0 = handlerID;
-    e.data.startMidletEvent.arg1 = url;
-    e.data.startMidletEvent.arg2 = action;
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.content.Invoker";
+    if (NULL != handlerID) {
+        data->argv[data->argc++] = handlerID;
+        if (NULL != url) {
+            data->argv[data->argc++] = url;
+            if (NULL != action)
+                data->argv[data->argc++] = action;
+        }
+    }
 
     midp_jc_event_send(&e);
 }
@@ -231,39 +265,47 @@ void javanotify_start_handler(char* handlerID, char* url, char* action) {
 /**
  * A notification function for telling Java to perform installation of
  * a MIDletl,
- * 
- * 
+ *
+ *
  * If the given url is of the form http://www.sun.com/a/b/c/d.jad then
  * java will start a graphical installer will download the MIDlet
  * fom the internet.
  * If the given url is a file url (see below, file:///a/b/c/d.jar or
- * file:///a/b/c/d/jad) installation will be performed 
+ * file:///a/b/c/d/jad) installation will be performed
  * in the backgroudn without launching the graphic installer application
- * 
+ *
  *
  * @param url of MIDlet to install, can be either one of the following
  *   1. A full path to the jar file, of the following form file:///a/b/c/d.jar
  *   2. A full path to the JAD file, of the following form file:///a/b/c/d.jad
  *   3. An http url of jad file, of the following form,
  *      http://www.sun.com/a/b/c/d.jad
- * 
+ *
  */
 void javanotify_install_midlet(const char *httpUrl) {
     int length;
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO1(LC_CORE,"javanotify_install_midlet() >> httpUrl=%s\n",httpUrl);
 
-    e.eventType = MIDP_JC_EVENT_START_INSTALL;
-    e.data.lifecycleEvent.silentInstall = 0;
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.installer.GraphicalInstaller";
+    data->argv[data->argc++] = "I";
 
     length = strlen(httpUrl);
-    if (length < BINARY_BUFFER_MAX_LEN) {
-        memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
-        memcpy(urlAddress, httpUrl, length);
-        e.data.lifecycleEvent.urlAddress = urlAddress;
-	midp_jc_event_send(&e);
-    }
+    if (length >= BINARY_BUFFER_MAX_LEN)
+        return;
+
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    memcpy(urlAddress, httpUrl, length);
+    data->argv[data->argc++] = urlAddress;
+
+    midp_jc_event_send(&e);
 }
 
 /**
@@ -288,18 +330,26 @@ void javanotify_install_midlet(const char *httpUrl) {
 void javanotify_install_midlet_from_filesystem(const javacall_utf16 * jadFilePath,
                                                int jadFilePathLen, int userWasAsked) {
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO(LC_CORE,"javanotify_install_midlet_from_filesystem() >>\n");
 
-    e.eventType = MIDP_JC_EVENT_START_INSTALL;
-    e.data.lifecycleEvent.silentInstall = userWasAsked;
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
-    if (jadFilePathLen < BINARY_BUFFER_MAX_LEN) {
-        memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
-        unicodeToNative(jadFilePath, jadFilePathLen, (unsigned char *) urlAddress, BINARY_BUFFER_MAX_LEN);
-        e.data.lifecycleEvent.urlAddress = urlAddress;
-	midp_jc_event_send(&e);
-    }
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.scriptutil.CommandLineInstaller";
+    data->argv[data->argc++] = "I";
+
+    if (jadFilePathLen >= BINARY_BUFFER_MAX_LEN)
+        return;
+
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    unicodeToNative(jadFilePath, jadFilePathLen, (unsigned char *) urlAddress, BINARY_BUFFER_MAX_LEN);
+    data->argv[data->argc++] = urlAddress;
+
+    midp_jc_event_send(&e);
 }
 
 /**
@@ -316,7 +366,7 @@ void javanotify_install_midlet_from_filesystem(const javacall_utf16 * jadFilePat
 void javanotify_start_java_with_arbitrary_args(int argc, char* argv[])
 {
     midp_jc_event_union e;
-    
+
     REPORT_INFO(LC_CORE,"javanotify_start_java_with_arbitrary_args() >>\n");
 
     if (argc > MIDP_RUNMIDLET_MAXIMUM_ARGS)
@@ -370,7 +420,7 @@ void javanotify_resume(void) {
 }
 
 /**
- * The platfrom should invoke this function in platform context 
+ * The platfrom should invoke this function in platform context
  * to switch the current foreground midlet to background midlet.
  * Task Manger may be foreground after this call.
  */
@@ -445,21 +495,21 @@ void javanotify_network_event(javacall_network_event netEvent) {
 #endif
 
 /**
- * callback that needs to be called by platform to handover an incoming SMS intended for Java 
+ * callback that needs to be called by platform to handover an incoming SMS intended for Java
  *
  * After this function is called, the SMS message should be removed from platform inbox
- * 
+ *
  * @param msgType JAVACALL_SMS_MSG_TYPE_ASCII, or JAVACALL_SMS_MSG_TYPE_BINARY or JAVACALL_SMS_MSG_TYPE_UNICODE_UCS2  1002
- * @param sourceAddress the source SMS address for the message.  The format of the address  parameter  
- *                is  expected to be compliant with MSIDN, for example,. +123456789 
- * @param msgBuffer payload of incoming sms 
- *        if msgType is JAVACALL_SMS_MSG_TYPE_ASCII then this is a 
- *        pointer to char* ASCII string. 
+ * @param sourceAddress the source SMS address for the message.  The format of the address  parameter
+ *                is  expected to be compliant with MSIDN, for example,. +123456789
+ * @param msgBuffer payload of incoming sms
+ *        if msgType is JAVACALL_SMS_MSG_TYPE_ASCII then this is a
+ *        pointer to char* ASCII string.
  *        if msgType is JAVACALL_SMS_MSG_TYPE_UNICODE_UCS2, then this
- *        is a pointer to javacall_utf16 UCS-2 string. 
- *        if msgType is JAVACALL_SMS_MSG_TYPE_BINARY, then this is a 
- *        pointer to binary octet buffer. 
- * @param msgBufferLen payload len of incoming sms 
+ *        is a pointer to javacall_utf16 UCS-2 string.
+ *        if msgType is JAVACALL_SMS_MSG_TYPE_BINARY, then this is a
+ *        pointer to binary octet buffer.
+ * @param msgBufferLen payload len of incoming sms
  * @param sourcePortNum the port number that the message originated from
  * @param destPortNum the port number that the message was sent to
  * @param timeStamp SMS service center timestamp
@@ -508,20 +558,20 @@ void javanotify_incoming_mms_singlecall(
 }
 
 /**
- * callback that needs to be called by platform to handover an incoming CBS intended for Java 
+ * callback that needs to be called by platform to handover an incoming CBS intended for Java
  *
  * After this function is called, the CBS message should be removed from platform inbox
- * 
+ *
  * @param msgType JAVACALL_CBS_MSG_TYPE_ASCII, or JAVACALL_CBS_MSG_TYPE_BINARY or JAVACALL_CBS_MSG_TYPE_UNICODE_UCS2
  * @param msgID message ID
- * @param msgBuffer payload of incoming cbs 
- *        if msgType is JAVACALL_CBS_MSG_TYPE_ASCII then this is a 
- *        pointer to char* ASCII string. 
+ * @param msgBuffer payload of incoming cbs
+ *        if msgType is JAVACALL_CBS_MSG_TYPE_ASCII then this is a
+ *        pointer to char* ASCII string.
  *        if msgType is JAVACALL_CBS_MSG_TYPE_UNICODE_UCS2, then this
- *        is a pointer to javacall_utf16 UCS-2 string. 
- *        if msgType is JAVACALL_CBS_MSG_TYPE_BINARY, then this is a 
- *        pointer to binary octet buffer. 
- * @param msgBufferLen payload len of incoming cbs 
+ *        is a pointer to javacall_utf16 UCS-2 string.
+ *        if msgType is JAVACALL_CBS_MSG_TYPE_BINARY, then this is a
+ *        pointer to binary octet buffer.
+ * @param msgBufferLen payload len of incoming cbs
  */
 void javanotify_incoming_cbs(
         javacall_cbs_encoding  msgType,
@@ -540,14 +590,14 @@ void javanotify_incoming_cbs(
 
     midp_jc_event_send(&e);
 #endif
-    return;    
+    return;
 }
 
 /**
- * A callback function to be called by platform to notify that an SMS 
+ * A callback function to be called by platform to notify that an SMS
  * has completed sending operation.
  * The platfrom will invoke the call back in platform context for
- * each sms sending completion. 
+ * each sms sending completion.
  *
  * @param result indication of send completed status result: Either
  *         <tt>JAVACALL_SMS_CALLBACK_SEND_SUCCESSFULLY</tt> on success,
@@ -570,10 +620,10 @@ void javanotify_sms_send_completed(javacall_sms_sending_result result,
 }
 
 /**
- * A callback function to be called by platform to notify that an MMS 
+ * A callback function to be called by platform to notify that an MMS
  * has completed sending operation.
  * The platform will invoke the call back in platform context for
- * each mms sending completion. 
+ * each mms sending completion.
  *
  * @param result indication of send completed status result: Either
  *         <tt>JAVACALL_MMS_CALLBACK_SEND_SUCCESSFULLY</tt> on success,
@@ -597,8 +647,8 @@ void javanotify_mms_send_completed(javacall_mms_sending_result result,
 
 #ifdef ENABLE_JSR_177
 /**
- * 
- */ 
+ *
+ */
 void javanotify_carddevice_event(javacall_carddevice_event event,
                                  void *context) {
     midp_jc_event_union e;
@@ -627,12 +677,12 @@ void javanotify_carddevice_event(javacall_carddevice_event event,
 #endif /* ENABLE_JSR_177 */
 
 /**
- * A callback function to be called for notification of non-blocking 
- * client/server socket related events, such as a socket completing opening or , 
- * closing socket remotely, disconnected by peer or data arrived on 
+ * A callback function to be called for notification of non-blocking
+ * client/server socket related events, such as a socket completing opening or ,
+ * closing socket remotely, disconnected by peer or data arrived on
  * the socket indication.
  * The platform will invoke the call back in platform context for
- * each socket related occurrence. 
+ * each socket related occurrence.
  *
  * @param type type of indication: Either
  *          - JAVACALL_EVENT_SOCKET_OPEN_COMPLETED
@@ -640,10 +690,10 @@ void javanotify_carddevice_event(javacall_carddevice_event event,
  *          - JAVACALL_EVENT_SOCKET_RECEIVE
  *          - JAVACALL_EVENT_SOCKET_SEND
  *          - JAVACALL_EVENT_SOCKET_REMOTE_DISCONNECTED
- *          - JAVACALL_EVENT_NETWORK_GETHOSTBYNAME_COMPLETED  
+ *          - JAVACALL_EVENT_NETWORK_GETHOSTBYNAME_COMPLETED
  * @param socket_handle handle of socket related to the notification
- * @param operation_result <tt>JAVACALL_OK</tt> if operation 
- *        completed successfully, 
+ * @param operation_result <tt>JAVACALL_OK</tt> if operation
+ *        completed successfully,
  *        <tt>JAVACALL_FAIL</tt> or negative value on failure
  */
 void javanotify_socket_event(javacall_socket_callback_type type,
@@ -677,7 +727,7 @@ void javanotify_socket_event(javacall_socket_callback_type type,
 
         case JAVACALL_EVENT_SOCKET_REMOTE_DISCONNECTED:
             e.data.socketEvent.waitingFor = NETWORK_EXCEPTION_SIGNAL;
-            break;                 
+            break;
 
         default:
             /* IMPL_NOTE: decide what to do */
@@ -691,23 +741,23 @@ void javanotify_socket_event(javacall_socket_callback_type type,
 }
 
 /**
- * A callback function to be called for notification of non-blocking 
+ * A callback function to be called for notification of non-blocking
  * server socket only related events, such as a accept completion.
  * The platform will invoke the call back in platform context for
- * each socket related occurrence. 
+ * each socket related occurrence.
  *
  * @param type type of indication: Either
  *          JAVACALL_EVENT_SERVER_SOCKET_ACCEPT_COMPLETED
  * @param socket_handle handle of socket related to the notification.
- *                          If the platform is not able to provide the socket 
+ *                          If the platform is not able to provide the socket
  *                          handle in the callback, it should pass 0 as the new_socket_handle
  *                          and the implementation will call javacall_server_socket_accept_finish
  *                          to retrieve the handle for the accepted connection.
- * @param new_socket_handle in case of accept the socket handle for the 
+ * @param new_socket_handle in case of accept the socket handle for the
  *                          newly created connection
- *               
- * @param operation_result <tt>JAVACALL_OK</tt> if operation 
- *        completed successfully, 
+ *
+ * @param operation_result <tt>JAVACALL_OK</tt> if operation
+ *        completed successfully,
  *        <tt>JAVACALL_FAIL</tt> or negative value on failure
  */
 void /* OPTIONAL */ javanotify_server_socket_event(javacall_server_socket_callback_type type,
@@ -742,19 +792,19 @@ void /* OPTIONAL */ javanotify_server_socket_event(javacall_server_socket_callba
 }
 
 /**
- * A callback function to be called for notification of non-blocking 
- * client/server socket related events, such as a socket completing opening or , 
- * closing socket remotely, disconnected by peer or data arrived on 
+ * A callback function to be called for notification of non-blocking
+ * client/server socket related events, such as a socket completing opening or ,
+ * closing socket remotely, disconnected by peer or data arrived on
  * the socket indication.
  * The platform will invoke the call back in platform context for
- * each socket related occurrence. 
+ * each socket related occurrence.
  *
  * @param type type of indication: Either
  *     - JAVACALL_EVENT_DATAGRAM_RECVFROM_COMPLETED
  *     - JAVACALL_EVENT_DATAGRAM_SENDTO_COMPLETED
  * @param handle handle of datagram related to the notification
- * @param operation_result <tt>JAVACALL_OK</tt> if operation 
- *        completed successfully, 
+ * @param operation_result <tt>JAVACALL_OK</tt> if operation
+ *        completed successfully,
  *        <tt>JAVACALL_FAIL</tt> or negative value on failure
  */
 void javanotify_datagram_event(javacall_datagram_callback_type type,
@@ -787,7 +837,7 @@ void javanotify_datagram_event(javacall_datagram_callback_type type,
 
 /**
  * Post native media event to Java event handler
- * 
+ *
  * @param type          Event type
  * @param playerId      Player ID that came from javacall_media_create function
  * @param data          Data for this event type
@@ -853,10 +903,10 @@ void javanotify_fileconnection_root_changed(void) {
 
 #ifdef ENABLE_JSR_179
 /**
- * A callback function to be called for notification of non-blocking 
+ * A callback function to be called for notification of non-blocking
  * location related events.
  * The platform will invoke the call back in platform context for
- * each provider related occurrence. 
+ * each provider related occurrence.
  *
  * @param type type of indication: Either
  *          - JAVACALL_EVENT_LOCATION_OPEN_COMPLETED
@@ -865,9 +915,9 @@ void javanotify_fileconnection_root_changed(void) {
  *          - JAVACALL_EVENT_LOCATION_UPDATE_ONCE
  * @param handle handle of provider related to the notification
  * @param operation_result operation result: Either
- *      - JAVACALL_OK if operation completed successfully, 
- *      - JAVACALL_LOCATION_RESULT_CANCELED if operation is canceled 
- *      - JAVACALL_LOCATION_RESULT_TIMEOUT  if operation is timeout 
+ *      - JAVACALL_OK if operation completed successfully,
+ *      - JAVACALL_LOCATION_RESULT_CANCELED if operation is canceled
+ *      - JAVACALL_LOCATION_RESULT_TIMEOUT  if operation is timeout
  *      - JAVACALL_LOCATION_RESULT_OUT_OF_SERVICE if provider is out of service
  *      - JAVACALL_LOCATION_RESULT_TEMPORARILY_UNAVAILABLE if provider is temporarily unavailable
  *      - otherwise, JAVACALL_FAIL
@@ -890,7 +940,7 @@ void javanotify_location_event(
 /**
  * The platform calls this callback notify function when the permission dialog
  * is dismissed. The platform will invoke the callback in platform context.
- *  
+ *
  * @param userPermssion the permission level the user chose
  */
 void javanotify_security_permission_dialog_finish(
@@ -911,27 +961,27 @@ void javanotify_security_permission_dialog_finish(
  * has already been downloaded and resides somewhere on the file system.
  * The function also requires the full URL that was used to download the
  * file.
- * 
+ *
  * The given URL should be of the form http://www.sun.com/a/b/c/d.jad
- * or http://www.sun.com/a/b/c/d.gcd.  
+ * or http://www.sun.com/a/b/c/d.gcd.
  * Java will start a graphical installer which will download the content
  * fom the Internet.
  *
- * @param httpUrl null-terminated http URL string of the content 
+ * @param httpUrl null-terminated http URL string of the content
  *        descriptor. The URL is of the following form:
  *        http://www.website.com/a/b/c/d.jad
- * @param descFilePath full path of the descriptor file which is of the 
+ * @param descFilePath full path of the descriptor file which is of the
  *        form:
  *        /a/b/c/d.jad  or /a/b/c/d.gcd
  * @param descFilePathLen length of the file path
  * @param isJadFile set to TRUE if the mime type of of the downloaded
- *        descriptor file is <tt>text/vnd.sun.j2me.app-descriptor</tt>. If 
- *        the mime type is anything else (e.g., <tt>text/x-pcs-gcd</tt>), 
+ *        descriptor file is <tt>text/vnd.sun.j2me.app-descriptor</tt>. If
+ *        the mime type is anything else (e.g., <tt>text/x-pcs-gcd</tt>),
  *        this must be set to FALSE.
  * @param isSilent set to TRUE if the content is to be installed silently,
  *        without intervention from the user. (e.g., in the case of SL
  *        or SI messages)
- * 
+ *
  */
 void javanotify_install_content(const char * httpUrl,
                                 const javacall_utf16* descFilePath,
@@ -943,7 +993,7 @@ void javanotify_install_content(const char * httpUrl,
 
     midp_jc_event_union e;
     int httpUrlLength, dscFileOffset;
-        
+
 
     if ((httpUrl == NULL) || (httpUrl == NULL)) {
         return; /* mandatory parameter is NULL */
@@ -977,7 +1027,7 @@ void javanotify_install_content(const char * httpUrl,
 /*
  * See javacall_vscl.h for description
  */
-void javanotify_vscl_incoming_event(javacall_vscl_event_type type, 
+void javanotify_vscl_incoming_event(javacall_vscl_event_type type,
                                     javacall_utf16* str1,
                                     javacall_utf16* str2) {
     midp_jc_event_union e;
@@ -985,11 +1035,11 @@ void javanotify_vscl_incoming_event(javacall_vscl_event_type type,
     switch (type) {
     case JAVACALL_VSCL_INCOMING_CALL:
         e.eventType = MIDP_JC_EVENT_VSCL_INCOMING_CALL;
-                REPORT_INFO(LC_VSCL,"javanotify_vscl_incoming_event() got EVENT=INCOMING_CALL\n");        
+                REPORT_INFO(LC_VSCL,"javanotify_vscl_incoming_event() got EVENT=INCOMING_CALL\n");
         break;
     case JAVACALL_VSCL_CALL_DROPPED:
         e.eventType = MIDP_JC_EVENT_VSCL_CALL_DROPPED;
-                REPORT_INFO(LC_VSCL,"javanotify_vscl_incoming_event() got EVENT=CALL_DROPPED\n");        
+                REPORT_INFO(LC_VSCL,"javanotify_vscl_incoming_event() got EVENT=CALL_DROPPED\n");
         break;
     case JAVACALL_VSCL_INCOMING_MAIL_CBS:
     case JAVACALL_VSCL_INCOMING_MAIL_DELIVERY_CONF:
@@ -997,7 +1047,7 @@ void javanotify_vscl_incoming_event(javacall_vscl_event_type type,
     case JAVACALL_VSCL_INCOMING_MAIL_SMS:
     case JAVACALL_VSCL_INCOMING_MAIL_WAP_PUSH:
     case JAVACALL_VSCL_SCHEDULED_ALARM:
-                REPORT_INFO1(LC_VSCL,"javanotify_vscl_incoming_event() EVENT=%d NOT IMPLEMENTED!\n", (int)type);        
+                REPORT_INFO1(LC_VSCL,"javanotify_vscl_incoming_event() EVENT=%d NOT IMPLEMENTED!\n", (int)type);
         return;
     case JAVACALL_VSCL_FLIP_OPEN:
                 REPORT_INFO(LC_VSCL,"javanotify_vscl_incoming_event() got EVENT=FLIP_OPEN\n");
@@ -1008,7 +1058,7 @@ void javanotify_vscl_incoming_event(javacall_vscl_event_type type,
         e.eventType = MIDP_JC_EVENT_VSCL_FLIP_CLOSED;
         break;
     default:
-                REPORT_INFO1(LC_VSCL,"javanotify_vscl_incoming_event() EVENT=%d NOT IMPLEMENTED!\n", (int)type);       
+                REPORT_INFO1(LC_VSCL,"javanotify_vscl_incoming_event() EVENT=%d NOT IMPLEMENTED!\n", (int)type);
         return;
     }
 
@@ -1018,7 +1068,7 @@ void javanotify_vscl_incoming_event(javacall_vscl_event_type type,
 
 /**
  * Notify Java that the user has made a selection
- * 
+ *
  * @param phoneNumber a string representing the phone number the user selected.
  *                    The string will be copied so it can be freed after this
  *                    function call returns.
@@ -1049,7 +1099,7 @@ void /* OPTIONAL */ javanotify_textfield_phonenumber_selection(char* phoneNumber
 void /* OPTIONAL */ javanotify_rotation() {
      midp_jc_event_union e;
      int length;
-  
-     e.eventType = MIDP_JC_EVENT_ROTATION;    
+
+     e.eventType = MIDP_JC_EVENT_ROTATION;
      midp_jc_event_send(&e);
 }
