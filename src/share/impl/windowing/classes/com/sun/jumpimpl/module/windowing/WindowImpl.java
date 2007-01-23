@@ -31,11 +31,68 @@ import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPIsolate;
 import com.sun.jump.common.JUMPWindow;
 
+import java.util.TreeMap;
+import java.util.Comparator;
+
 
 public class WindowImpl extends JUMPWindow {
     private String      state;
     private int         id;
     private int         isolateId;
+
+    private static long
+    getKey(Object o) {
+        if(o == null || !(o instanceof WindowImpl)) {
+            return 0;
+        }
+
+        WindowImpl w = (WindowImpl)o;
+
+        long res = w.id;
+        return (res << 32 | w.isolateId);
+    }
+
+    // all known windows
+    // use TreeMap and not HashMap or something similar to enforce use of
+    // custom comparator that ignores WindowImpl#state member field in key
+    // generation
+    private static TreeMap windows =
+        new TreeMap(
+            new Comparator() {
+                public int
+                compare(Object o1, Object o2) {
+                    long res = (getKey(o1) - getKey(o2));
+                    if(res < 0) {
+                        return -1;
+                    }
+                    if(res > 0) {
+                        return 1;
+                    }
+                    return 0;
+                }
+            });
+    // key to reuse in window look up
+    private static WindowImpl key = new WindowImpl(0, 0);
+
+    private WindowImpl(int isolateId, int id) {
+        this.id         = id;
+        this.isolateId  = isolateId;
+    }
+
+    static synchronized WindowImpl
+    getWindow(int isolateId, int id) {
+        // don't create key for look up, instead initialize precreated one
+        key.id          = id;
+        key.isolateId   = isolateId;
+
+        WindowImpl w = (WindowImpl)windows.get(key);
+        if(w == null) {
+            w = new WindowImpl(isolateId, id);
+            windows.put(w, w);
+        }
+
+        return w;
+    }
 
     void
     setState(String state) {
@@ -47,7 +104,7 @@ public class WindowImpl extends JUMPWindow {
         return this.state;
     }
 
-    public long
+    public int
     getId() {
         return this.id;
     }

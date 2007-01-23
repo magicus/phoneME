@@ -27,8 +27,13 @@ information or have any questions.
     <available
         file="com/sun/me/gci/windowsystem/GCIGraphicsEnvironment.class"
         type="file"
-        filepath="${cdc.dir}/basis_classes"
-        property="gci.classes.available"/>
+        property="gci.classes.available">
+
+        <filepath>
+            <pathelement location="${cdc.dir}/basis_classes"/>
+            <pathelement location="${cdc.dir}/btclasses"/>
+        </filepath>
+    </available>
 
     <target name="make-excludes" unless="gci.classes.available">
         <echo message="WARNING: GCI classes are not available, windowing module will not work!"/>

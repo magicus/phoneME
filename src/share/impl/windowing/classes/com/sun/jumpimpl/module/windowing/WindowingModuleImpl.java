@@ -36,6 +36,7 @@ import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.message.JUMPMessageHandler;
 import com.sun.jump.message.JUMPMessageDispatcher;
 import com.sun.jump.message.JUMPMessageDispatcherTypeException;
+import com.sun.jump.command.JUMPIsolateLifecycleRequest;
 import com.sun.jump.command.JUMPExecutiveWindowRequest;
 import com.sun.jump.command.JUMPIsolateWindowRequest;
 import com.sun.jump.command.JUMPResponse;
@@ -52,6 +53,63 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
     private Vector              windows;
     private RequestSenderHelper requestSender;
 
+
+    private void
+    setForeground(JUMPWindow window, boolean notifyIsolate) {
+        if(window == null) {
+            throw new IllegalArgumentException();
+        }
+
+        WindowImpl oldFgWindow = (WindowImpl)getForeground();
+        if(oldFgWindow != window && oldFgWindow != null) {
+            setBackground(oldFgWindow, notifyIsolate);
+        }
+
+        if(notifyIsolate) {
+            JUMPResponse response =
+                requestSender.sendRequest(
+                    (JUMPIsolateProxy)window.getIsolate(),
+                    new JUMPExecutiveWindowRequest(
+                        JUMPExecutiveWindowRequest.ID_FOREGROUND, window));
+            if(!requestSender.handleBooleanResponse(response)) {
+                return;
+            }
+        }
+
+        synchronized(lock) {
+            if(windows.contains(window)) {
+                ((WindowImpl)window).setState(JUMPWindow.FOREGROUND_STATE);
+                windows.remove(window);
+                windows.add(window);
+            }
+        }
+    }
+
+    private void
+    setBackground(JUMPWindow window, boolean notifyIsolate) {
+        if(window == null) {
+            throw new IllegalArgumentException();
+        }
+
+        if(notifyIsolate) {
+            JUMPResponse response =
+                requestSender.sendRequest(
+                    (JUMPIsolateProxy)window.getIsolate(),
+                    new JUMPExecutiveWindowRequest(
+                        JUMPExecutiveWindowRequest.ID_BACKGROUND, window));
+            if(!requestSender.handleBooleanResponse(response)) {
+                return;
+            }
+        }
+
+        synchronized(lock) {
+            if(windows.contains(window) && (windows.size() > 1)) {
+                ((WindowImpl)window).setState(JUMPWindow.BACKGROUND_STATE);
+            }
+        }
+    }
+
+
     WindowingModuleImpl() {
         requestSender   =
             new RequestSenderHelper(JUMPExecutive.getInstance());
@@ -61,14 +119,72 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
             JUMPExecutive e = JUMPExecutive.getInstance();
             JUMPMessageDispatcher md = e.getMessageDispatcher();
             md.registerHandler(JUMPIsolateWindowRequest.MESSAGE_TYPE, this);
+            md.registerHandler(
+                JUMPIsolateLifecycleRequest.ID_ISOLATE_DESTROYED, this);
         } catch (JUMPMessageDispatcherTypeException dte) {
             dte.printStackTrace();
             // FIXME: someone else listeneing -- what to do?
         }
     }
 
+
     public void
     handleMessage(JUMPMessage message) {
+        if(JUMPIsolateWindowRequest.MESSAGE_TYPE.equals(message.getType())) {
+            JUMPIsolateWindowRequest cmd =
+                (JUMPIsolateWindowRequest)
+                    JUMPIsolateWindowRequest.fromMessage(message);
+
+            WindowImpl window =
+                WindowImpl.getWindow(cmd.getIsolateId(), cmd.getWindowId());
+
+            synchronized(lock) {
+                if(!windows.contains(window)) {
+                    window.setState(JUMPWindow.BACKGROUND_STATE);
+                    windows.add(0, window);
+                }
+            }
+
+            if(JUMPIsolateWindowRequest.ID_REQUEST_FOREGROUND.equals(
+                cmd.getCommandId())) {
+
+                setForeground(window, false);
+            }
+            else if(JUMPIsolateWindowRequest.ID_REQUEST_BACKGROUND.equals(
+                cmd.getCommandId())) {
+
+                setBackground(window, false);
+            }
+        }
+        else if(JUMPIsolateLifecycleRequest.MESSAGE_TYPE.equals(
+            message.getType())) {
+
+            JUMPIsolateLifecycleRequest cmd =
+                (JUMPIsolateLifecycleRequest)
+                    JUMPIsolateLifecycleRequest.fromMessage(message);
+
+            int isolateId = cmd.getIsolateId();
+
+            synchronized(lock) {
+                // remove JUMPWindow-s hosted by the destroyed isolate
+                // from the list
+                int idx = 0;
+                while(idx != windows.size()) {
+                    if(((JUMPWindow)windows.elementAt(
+                        idx)).getIsolate().getIsolateId() == isolateId) {
+
+                        windows.remove(idx);
+                        continue;
+                    }
+                    ++idx;
+                }
+
+                // enshure there is one foreground window
+                if(getForeground() == null) {
+                    nextWindow();
+                }
+            }
+        }
     }
 
     public void
@@ -107,59 +223,12 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
 
     public void
     setForeground(JUMPWindow window) {
-        if(window == null) {
-            throw new IllegalArgumentException();
-        }
-
-        JUMPResponse response =
-            requestSender.sendRequest(
-                (JUMPIsolateProxy)window.getIsolate(),
-                new JUMPExecutiveWindowRequest(
-                    JUMPExecutiveWindowRequest.ID_FOREGROUND, window));
-        if(!requestSender.handleBooleanResponse(response)) {
-            return;
-        }
-
-        synchronized(lock) {
-            if(windows.contains(window)) {
-                WindowImpl oldFgWindow = (WindowImpl)getForeground();
-                if(oldFgWindow != window) {
-                    ((WindowImpl)window).setState(
-                        JUMPWindow.FOREGROUND_STATE);
-                    oldFgWindow.setState(JUMPWindow.BACKGROUND_STATE);
-                    windows.remove(window);
-                    windows.add(window);
-
-                    setBackground(oldFgWindow);
-                }
-            }
-        }
+        setForeground(window, true);
     }
 
     public void
     setBackground(JUMPWindow window) {
-        if(window == null) {
-            throw new IllegalArgumentException();
-        }
-
-        JUMPResponse response =
-            requestSender.sendRequest(
-                (JUMPIsolateProxy)window.getIsolate(),
-                new JUMPExecutiveWindowRequest(
-                    JUMPExecutiveWindowRequest.ID_BACKGROUND, window));
-        if(!requestSender.handleBooleanResponse(response)) {
-            return;
-        }
-
-        synchronized(lock) {
-            if(windows.contains(window) && (windows.size() > 1)) {
-                ((WindowImpl)window).setState(JUMPWindow.BACKGROUND_STATE);
-                if(windows.lastElement() == window) {
-                    setForeground(
-                        (WindowImpl)windows.elementAt(windows.size() - 2));
-                }
-            }
-        }
+        setBackground(window, true);
     }
 
     public JUMPWindow

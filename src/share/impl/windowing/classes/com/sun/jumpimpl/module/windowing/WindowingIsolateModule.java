@@ -27,6 +27,7 @@
 package com.sun.jumpimpl.module.windowing;
 
 import com.sun.jump.message.JUMPMessage;
+import com.sun.jump.message.JUMPMessageSender;
 import com.sun.jump.message.JUMPMessageHandler;
 import com.sun.jump.message.JUMPMessageDispatcher;
 import com.sun.jump.message.JUMPMessageDispatcherTypeException;
@@ -37,56 +38,170 @@ import com.sun.jump.command.JUMPResponse;
 
 import com.sun.jumpimpl.process.RequestSenderHelper;
 
+import com.sun.me.gci.windowsystem.GCIDisplay;
 import com.sun.me.gci.windowsystem.GCIScreenWidget;
+import com.sun.me.gci.windowsystem.GCIDisplayListener;
+import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
+import com.sun.me.gci.windowsystem.event.GCIFocusEvent;
+import com.sun.me.gci.windowsystem.event.GCIFocusEventListener;
+
+import java.awt.GraphicsEnvironment;
+
+import java.util.Vector;
 
 
 public class WindowingIsolateModule implements JUMPMessageHandler {
 
+    private Vector              windows;
     private RequestSenderHelper requestSender;
+    private ListenerImpl        listener;
+    private int                 isolateId;
+    private JUMPMessageSender   executive;
 
+    private class ListenerImpl implements GCIDisplayListener, GCIFocusEventListener {
 
-    WindowingIsolateModule(JUMPIsolateProcess host) {
-        requestSender = new RequestSenderHelper(host);
+        private GCIScreenWidget         selfContained;
+        private GCIFocusEventListener   origListener;
+
+        ListenerImpl(GCIFocusEventListener origListener) {
+            this.origListener = origListener;
+        }
+
+        void
+        setSelfContained(GCIScreenWidget selfContained) {
+            this.selfContained = selfContained;
+        }
+
+        public void
+        screenWidgetCreated(GCIDisplay source, GCIScreenWidget widget) {
+            windows.add(widget);
+        }
+
+        public boolean
+        focusEventReceived(GCIFocusEvent event) {
+            switch(event.getID()) {
+            case GCIFocusEvent.FOCUS_GOT_FOREGROUND:
+                postRequest(
+                    event.getScreenWidget(),
+                    JUMPIsolateWindowRequest.ID_REQUEST_FOREGROUND);
+                break;
+
+            case GCIFocusEvent.FOCUS_GOT_BACKGROUND:
+                postRequest(
+                    event.getScreenWidget(),
+                    JUMPIsolateWindowRequest.ID_REQUEST_BACKGROUND);
+                break;
+            }
+
+            return
+                (origListener != null)
+                    ? origListener.focusEventReceived(event)
+                    : true;
+        }
+    }
+
+    private void
+    postRequest(GCIScreenWidget widget, String requestId) {
+        int winId = -1;
+        synchronized(windows) {
+            for(int i = 0, size = windows.size(); i != size; ++i) {
+                if(windows.get(i) == widget) {
+                    winId = i;
+                    break;
+                }
+            }
+        }
+
+        if(winId != -1) {
+            requestSender.sendRequestAsync(
+                executive,
+                new JUMPIsolateWindowRequest(
+                    requestId, winId, isolateId));
+        }
+
+    }
+
+    public WindowingIsolateModule(JUMPIsolateProcess host) {
+        windows         = new Vector();
+        requestSender   = new RequestSenderHelper(host);
+        isolateId       = host.getIsolateId();
+        executive       = host.getExecutiveProcess();
 
         try {
             JUMPMessageDispatcher md = host.getMessageDispatcher();
-            md.registerHandler(JUMPIsolateWindowRequest.MESSAGE_TYPE, this);
+            md.registerHandler(JUMPExecutiveWindowRequest.MESSAGE_TYPE, this);
         } catch (JUMPMessageDispatcherTypeException dte) {
             dte.printStackTrace();
             throw new IllegalStateException();
         }
 
-        GraphicsEnvironment.install();
-        GraphicsEnvironment.getInstalledInstance().setListener(
-            new GraphicsEnvironment.Listener() {
+        // kick start GCI native library loading
+        GraphicsEnvironment.getLocalGraphicsEnvironment();
 
-                public void
-                windowCreated(GCIScreenWidget widget) {
-                }
+        GCIGraphicsEnvironment gciEnv = GCIGraphicsEnvironment.getInstance();
 
-                public boolean
-                canStartEventLoop() {
-                    return true;
-                }
+        listener = new ListenerImpl(gciEnv.getEventManager().getFocusListener());
 
-                public boolean
-                canStopEventLoop() {
-                    return true;
-                }
+        // register listener with all available displays and event manager
+        for(int i = 0, count = gciEnv.getNumDisplays(); i != count; ++i) {
+            gciEnv.getDisplay(i).addListener(listener);
+        }
+        gciEnv.getEventManager().setFocusListener(
+            listener, gciEnv.getEventManager().getSupportedFocusIDs());
 
-                public boolean
-                canStartRendering() {
-                    return true;
-                }
-
-                public boolean
-                canStopRendering() {
-                    return true;
-                }
-            });
+        if(!gciEnv.getEventManager().supportsFocusEvents()) {
+            System.err.println(
+                "WARNING: focus events are not supported "
+                + "by the running GCI impl!");
+        }
     }
 
     public void
     handleMessage(JUMPMessage message) {
+        if(JUMPExecutiveWindowRequest.MESSAGE_TYPE.equals(message.getType())) {
+            JUMPExecutiveWindowRequest msg =
+                (JUMPExecutiveWindowRequest)
+                    JUMPExecutiveWindowRequest.fromMessage(message);
+
+            int winId = msg.getWindowId();
+            GCIScreenWidget widget = null;
+            synchronized(windows) {
+                if(winId < windows.size()) {
+                    widget = (GCIScreenWidget)windows.elementAt(winId);
+                }
+            }
+
+            if(widget == null) {
+                return;
+            }
+
+            try {
+                listener.setSelfContained(widget);
+                if(JUMPExecutiveWindowRequest.ID_FOREGROUND.equals(
+                    msg.getCommandId())) {
+
+                    GCIGraphicsEnvironment.getInstance(
+                        ).getEventManager().startEventLoop();
+                    widget.requestForeground();
+                    widget.suspendRendering(false);
+                    requestSender.sendBooleanResponse(message, true);
+                }
+                else if(JUMPExecutiveWindowRequest.ID_BACKGROUND.equals(
+                    msg.getCommandId())) {
+
+                    GCIGraphicsEnvironment.getInstance(
+                        ).getEventManager().stopEventLoop();
+                    widget.requestBackground();
+                    widget.suspendRendering(true);
+                    requestSender.sendBooleanResponse(message, true);
+                }
+                else {
+                    requestSender.sendBooleanResponse(message, false);
+                }
+            }
+            finally {
+                listener.setSelfContained(null);
+            }
+        }
     }
 }
