@@ -68,7 +68,7 @@ CVMJITneverCompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb);
 
 extern CVMBool
 CVMJITinitializeContext(CVMJITCompilationContext* con, CVMMethodBlock* mb,
-			CVMExecEnv* ee, CVMInt32 inliningDepthLimit);
+			CVMExecEnv* ee, CVMInt32 maxAllowedInliningDepth);
 
 extern void
 CVMJITinitializeCompilation(CVMJITCompilationContext* con);
