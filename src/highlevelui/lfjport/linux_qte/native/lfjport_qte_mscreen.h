@@ -244,10 +244,6 @@ private:
     void paintEvent( QPaintEvent * );
 
     /**
-     * IMPL_NOTE:Document buffersize
-     */
-     BufferSize bufferSize;
-    /**
      * Document qpixmap
      */
     QPixmap qpixmap; /* double buffering of suite's screen */
