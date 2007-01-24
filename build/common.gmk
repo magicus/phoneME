@@ -1,0 +1,84 @@
+#
+# Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+# SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+#
+
+ifeq ($(JAVACALL_DIR),)
+$(error JAVACALL_DIR is not set.)
+endif
+
+include $(JAVACALL_DIR)/build/list.gmk
+
+.PHONY: javacall_common create_output_dirs copy_include_files clean
+
+javacall_common: create_output_dirs copy_include_files
+
+PREFIX_true=1
+
+#Form list of objects
+VPATH+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr)_JC)), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)))
+PORTING_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr)_JC)), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.c))))
+
+
+#From list of header files
+JAVACALL_INCLUDE_DIR_SET_LOCAL=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr)_JC)), $($(jsr)_JC_DIR)))
+JAVACALL_INCLUDE_DIR_SET=$(addprefix $(JAVACALL_DIR)/interface/,$(JAVACALL_INCLUDE_DIR_SET_LOCAL))
+JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach dir,$(JAVACALL_INCLUDE_DIR_SET),$(wildcard $(dir)/*.h))
+
+
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/interface/javacall_defs.h
+
+ifneq ($(UTILITIES)x, x)
+VPATH+=$(JAVACALL_DIR)/implementation/utils
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(foreach util,$(UTILITIES),$(JAVACALL_DIR)/implementation/utils/inc/$(util).h)
+endif
+
+# In case using of the javacall functions wrappers, set the USE_JAVACALL_WRAPPERS variable
+ifeq ($(USE_JAVACALL_WRAPPERS),true)
+UTILITIES+= wrappers
+CFLAGS += -DUSE_JAVACALL_WRAPPERS
+ifeq ($(UTILITIES)x, x)
+VPATH+=$(JAVACALL_DIR)/implementation/utils
+endif
+endif
+
+ifeq ($(USE_DEBUG),true)
+BUILD=debug
+endif
+
+BUILD_EXT_debug=_g
+BUILD_EXT=$(BUILD_EXT_$(BUILD))
+
+ifeq ($(JAVACALL_OUTPUT_DIR),)
+JAVACALL_OUTPUT_DIR:=output
+endif
+
+# The JAVACALL_OUTPUT_DIR has a fixed structure, it should contain:
+#   - inc directory, which contains all the headers copied
+#   - lib directory, which contains javacall(_g) library and other files
+#     required for final linking
+#   - obj(_g) directory (optional), which contains all intermediate obj files
+#   - ext_lib directory (optional), which contains external libraries
+JAVACALL_OUTPUT_INCLUDE_DIR:=$(JAVACALL_OUTPUT_DIR)/inc
+JAVACALL_OUTPUT_OBJ_DIR:=$(JAVACALL_OUTPUT_DIR)/obj$(BUILD_EXT)
+JAVACALL_OUTPUT_LIB_DIR:=$(JAVACALL_OUTPUT_DIR)/lib
+JAVACALL_OUTPUT_EXT_LIB_DIR:=$(JAVACALL_OUTPUT_DIR)/ext_lib
+
+JAVACALL_INCLUDE_TARGET_FILES_SET:=$(foreach file,$(JAVACALL_INCLUDE_SOURCE_FILES_SET),$(JAVACALL_OUTPUT_INCLUDE_DIR)/$(notdir $(file)))
+
+$(JAVACALL_INCLUDE_TARGET_FILES_SET): $(JAVACALL_INCLUDE_SOURCE_FILES_SET)
+	@echo Copying include files...
+	@cp --target-directory=$(JAVACALL_OUTPUT_INCLUDE_DIR) -f $^
+
+$(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) $(JAVACALL_OUTPUT_OBJ_DIR) $(JAVACALL_OUTPUT_LIB_DIR) $(JAVACALL_OUTPUT_EXT_LIB_DIR):
+	@echo Creating $@...
+	@mkdir -p $@
+
+create_output_dirs: $(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) $(JAVACALL_OUTPUT_LIB_DIR) $(JAVACALL_OUTPUT_OBJ_DIR) $(JAVACALL_OUTPUT_EXT_LIB_DIR)
+
+copy_include_files: $(JAVACALL_INCLUDE_TARGET_FILES_SET)
+
+clean:
+	@rm -rf $(JAVACALL_OUTPUT_DIR)
+	@rm -rf $(MIDP_JC_IMPL_PATH)/midp/moc_lcd_qte.cpp

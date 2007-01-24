@@ -1,0 +1,69 @@
+#
+# Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+# SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+#
+
+.PHONY: all pre_target local_vc post_target
+
+all: pre_target javacall_common local_vc post_target 
+
+ifeq ($(JAVACALL_DIR),)
+$(error JAVACALL_DIR is not set.)
+endif
+
+include $(JAVACALL_DIR)/build/common.gmk
+
+TEMP=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
+ifneq ($(FILTER_OBJECTS)x,x)
+PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP))
+else # ifneq ($(FILTER_OBJECTS)x,x)
+PORTING_OBJECTS+=$(TEMP)
+endif # ifneq ($(FILTER_OBJECTS)x,x)
+
+ifneq ($(UTILITIES)x, x)
+UTILITY_OBJECTS=$(addsuffix .obj,$(UTILITIES))
+endif
+
+local_vc: $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
+
+CC=cl.exe
+CXX=cl.exe
+RC=rc.exe
+
+LOCAL_CFLAGS_debug = -Gm -GX -Zi -Od -D_DEBUG -D_MBCS -D_LIB -YX -FD -GZ -W3
+LOCAL_CFLAGS=-ML -GX -O2 -D_MBCS -D_LIB /YX -FD -W3  
+
+IS_CYGWIN_Cygwin=1
+
+CXXFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
+CFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
+CPPFLAGS+= $(if $(IS_CYGWIN_$(shell uname -o)), -I$(shell cygpath -m $(JAVACALL_OUTPUT_INCLUDE_DIR)), -I$(JAVACALL_OUTPUT_INCLUDE_DIR))
+CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
+
+AR=lib.exe 
+ARFLAGS=-nologo -MACHINE:X86
+
+OUTPUT_OPTION=$(if $(IS_CYGWIN_$(shell uname -o)), -Fo$(shell cygpath -m $@), -Fo$@)  \
+              -Fp$(JAVACALL_OUTPUT_OBJ_DIR)/javacall \
+              -Fd$(JAVACALL_OUTPUT_OBJ_DIR)/javacall
+
+$(JAVACALL_OUTPUT_LIB_DIR)/%.res: %.rc
+	@echo "...compiling resources ... "
+	@$(RC) /l 0x409 /d "NDEBUG" $(if $(IS_CYGWIN_$(shell uname -o)), /fo"$(shell cygpath -m $@)", /fo"$@") \
+	$(if $(IS_CYGWIN_$(shell uname -o)), $(shell cygpath -m $<), $<)
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.cpp
+	@echo -n "...compiling: "
+	@$(COMPILE.cc) $(OUTPUT_OPTION) $(if $(IS_CYGWIN_$(shell uname -o)), $(shell cygpath -m $<), $<)
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
+	@echo -n "...compiling: "
+	@$(COMPILE.c) $(OUTPUT_OPTION) $(if $(IS_CYGWIN_$(shell uname -o)), $(shell cygpath -m $<), $<)	
+
+$(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
+	$(SPECIFIC_OBJECTS)
+	@echo "...Generating Library: $@"
+	$(if $(IS_CYGWIN_$(shell uname -o)), @$(AR) -out:$(shell cygpath -m $@) $(ARFLAGS) `cygpath -m $^`, \
+	@$(AR) -out:$@ $(ARFLAGS) $^)

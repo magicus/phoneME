@@ -1,0 +1,15 @@
+#
+# Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+# SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+#
+
+#List of possible JSRs
+JSR_LIST=MIDP JSR_120 JSR_135 JSR_177 JSR_211
+         
+#JSR folders for source and include files
+MIDP_JC_DIR=midp
+JSR_120_JC_DIR=jsr120_wma
+JSR_135_JC_DIR=jsr135_mmapi
+JSR_177_JC_DIR=jsr177_satsa
+JSR_211_JC_DIR=jsr211_chapi
+
