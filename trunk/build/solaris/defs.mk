@@ -105,16 +105,11 @@ override CVM_INCLUDE_JUMP = true
 endif
 
 ifeq ($(CVM_MTASK), true)
-CVM_SRCDIRS += \
-	$(CVM_SHAREROOT)/native/sun/mtask
+CLASSLIB_CLASSES += \
+       sun.mtask.Warmup
 CVM_DEFINES   += -DCVM_MTASK
 CVM_SHAREOBJS_SPACE += \
-	mtask.o \
-	Listener.o
-CLASSLIB_CLASSES += \
-	sun.mtask.Warmup \
-	sun.mtask.AppModelManager \
-	sun.mtask.Listener
+	mtask.o 
 endif
 
 ifeq ($(CVM_JIT), true)
