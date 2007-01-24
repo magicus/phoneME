@@ -149,6 +149,7 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 	}
 	JUMPIsolateProcessImpl ipi = 
 	    (JUMPIsolateProcessImpl)JUMPIsolateProcess.getInstance();
+
 	ipi.initialize(appModel);
 	
 	do {
@@ -162,8 +163,9 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
     public void initialize(JUMPAppModel appModel) {
 	System.err.println("Setting app model to "+appModel);
 	this.appModel = appModel;
-	// FIXME: Create container for 'appModel'
-	this.appContainer = null;
+	// FIXME: need to call AppContainerFactoryImpl.load(Map) to init it,
+	// and get the container only after that.
+	this.appContainer = new AppContainerFactoryImpl().getAppContainer(appModel);
     }
 
     private void createListenerThread()
@@ -203,8 +205,7 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 	    String[] args = elr.getArgs();
 	    System.err.println("START_APP("+app+")");
 	    // The message is telling us to start an application
-	    // int appId = appContainer.startApp(app, args);
-	    int appId = 1234;
+	    int appId = appContainer.startApp(app, args);
 	    // Now wrap this appid in a message and return it
 	    JUMPResponseInteger resp;
 	    if (appId != -1) {
@@ -220,6 +221,41 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 	    // Now convert JUMPResponse to a message in response
 	    // to the incoming message
 	    //
+	    responseMessage = resp.toMessageInResponseTo(in, this);
+	} else if (id.equals(JUMPExecutiveLifecycleRequest.ID_PAUSE_APP)) {
+            JUMPExecutiveLifecycleRequest elr = (JUMPExecutiveLifecycleRequest)
+                    JUMPExecutiveLifecycleRequest.fromMessage(in);
+	    String[] args = elr.getArgs();
+	    int appID = Integer.parseInt(args[0]);
+	    System.err.println("PAUSE_APP("+appID+")");
+	    appContainer.pauseApp(appID);
+
+	    JUMPResponse resp = new JUMPResponse(in.getType(), 
+			                         JUMPResponseInteger.ID_SUCCESS);
+	    responseMessage = resp.toMessageInResponseTo(in, this);
+	} else if (id.equals(JUMPExecutiveLifecycleRequest.ID_RESUME_APP)) {
+            JUMPExecutiveLifecycleRequest elr = (JUMPExecutiveLifecycleRequest)
+                    JUMPExecutiveLifecycleRequest.fromMessage(in);
+	    String[] args = elr.getArgs();
+	    int appID = Integer.parseInt(args[0]);
+	    System.err.println("RESUME_APP("+appID+")");
+	    appContainer.resumeApp(appID);
+
+	    JUMPResponse resp = new JUMPResponse(in.getType(), 
+			                         JUMPResponseInteger.ID_SUCCESS);
+	    responseMessage = resp.toMessageInResponseTo(in, this);
+	} else if (id.equals(JUMPExecutiveLifecycleRequest.ID_DESTROY_APP)) {
+		
+            JUMPExecutiveLifecycleRequest elr = (JUMPExecutiveLifecycleRequest)
+                    JUMPExecutiveLifecycleRequest.fromMessage(in);
+	    String[] args = elr.getArgs();
+	    int appID = Integer.parseInt(args[0]);
+	    boolean unconditional = Boolean.getBoolean(args[1]);
+	    System.err.println("DESTROY_APP("+appID+")");
+	    appContainer.destroyApp(appID, unconditional);
+
+	    JUMPResponse resp = new JUMPResponse(in.getType(), 
+			                         JUMPResponseInteger.ID_SUCCESS);
 	    responseMessage = resp.toMessageInResponseTo(in, this);
 	} else {
 	    // Assumption of default message

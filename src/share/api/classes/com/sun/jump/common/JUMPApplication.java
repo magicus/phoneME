@@ -171,6 +171,8 @@ public class JUMPApplication
     public URL getIconPath() {
         String file = getProperty(ICONPATH_KEY);
         URL url = null;
+	if (file == null) return null;
+
         try {
             url = new URL("file", null, file);
         } catch (MalformedURLException ex) {
