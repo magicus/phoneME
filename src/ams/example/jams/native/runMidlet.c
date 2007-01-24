@@ -34,6 +34,7 @@
 #include <findMidlet.h>
 #include <midpUtilKni.h>
 #include <suitestore_task_manager.h>
+#include <commandLineUtil.h>
 
 #if ENABLE_MULTIPLE_ISOLATES
 #define MIDP_HEAP_REQUIREMENT (MAX_ISOLATES * 1024 * 1024)
@@ -43,12 +44,6 @@
 
 /** Maximum number of command line arguments. */
 #define RUNMIDLET_MAX_ARGS 128
-
-extern char* midpRemoveCommandOption(char* pszFlag, char* apszArgs[],
-                                     int* pArgc);
-extern char* midpRemoveOptionFlag(char* pszFlag, char* apszArgs[],
-                  int* pArgc);
-extern char* midpFixMidpHome(char *cmd);
 
 /** Usage text for the run MIDlet executable. */
 static const char* const runUsageText =
@@ -68,6 +63,14 @@ static const char* const runUsageText =
 "  listMidlets command, and <suite ID> is the unique ID a suite is \n"
 "  referenced by\n\n";
 
+/*
+void midpReportError(char* pErrorMsg) {
+    REPORT_ERROR1(LC_AMS, "Out of Memory, error %d.",err);
+    JVMSPI_PrintRaw("Out Of Memory\n");
+}
+*/
+
+
 /**
  * Runs a MIDlet from an installed MIDlet suite. This is an example of
  * how to use the public MIDP API.
@@ -82,7 +85,7 @@ static const char* const runUsageText =
  *       they should remain as printf calls
  */
 int
-main(int argc, char** commandlineArgs) {
+runMidlet(int argc, char** commandlineArgs) {
     int status = -1;
     SuiteIdType suiteId   = UNUSED_SUITE_ID;
     pcsl_string classname = PCSL_STRING_NULL;
