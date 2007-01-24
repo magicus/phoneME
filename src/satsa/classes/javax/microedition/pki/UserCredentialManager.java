@@ -225,11 +225,9 @@ final public class UserCredentialManager
     private static boolean keygen = false;
 
     static  {
-	//IMPL_NOTE: Change to Properties abstraction
-    //String generation  = Configuration
-	//    .getProperty("com.sun.satsa.keygen");
-    String generation = "true";
-	if (generation != null) {
+	String generation  = Configuration
+	    .getProperty("com.sun.satsa.keygen");
+    if (generation != null) {
 	    keygen = generation.equals("true");
 	}
     }

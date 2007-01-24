@@ -292,9 +292,9 @@ endif
 ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
     ifeq ($(JSR_177_APDU_PLATFORM_API),real)
         ifeq ($(TARGET_OS),win32)
-            LINKLIBS += $(JSR_177_DIR)/src/protocol/apdu/driver_lib/$(JSR_177_APDU_PLATFORM_API).lib
+            LINKLIBS += $(JSR_177_DIR)/src/protocol/apdu/driver_lib/carddevice.lib
         else
-            LINKLIBS += -L$(JSR_177_DIR)/src/protocol/apdu/driver_lib -lgemplus
+            LINKLIBS += -L$(JSR_177_DIR)/src/protocol/apdu/driver_lib -lcarddevice
         endif
     endif
 endif
