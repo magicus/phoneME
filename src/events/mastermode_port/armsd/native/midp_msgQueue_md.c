@@ -30,8 +30,6 @@
 
 #include <armsdapp_ui.h>
 
-#define MD_KEY_HOME (KEY_MACHINE_DEP)
-
 /*
  * This function is called by the VM periodically. It has to check if
  * system has sent a signal to MIDP and return the result in the
@@ -56,13 +54,15 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     }
 
     do {
-        // There's no easy way in ARMulator to suspend the CPU until
-        // an event is fired from the keypad. However, the profiler
-        // knows about this and does not count the time spent inside
-        // this function.
+        /* 
+         * There's no easy way in ARMulator to suspend the CPU until
+         * an event is fired from the keypad. However, the profiler
+         * knows about this and does not count the time spent inside
+         * this function. 
+         */
         int key;
-        int eventCHR = *EVENT_CHAR_REG;   // This must be read first
-        int eventType = *EVENT_TYPE_REG;  // This must be read last
+        int eventCHR = *EVENT_CHAR_REG;   /* This must be read first */
+        int eventType = *EVENT_TYPE_REG;  /* This must be read last */
 
         switch (eventType) {
         case ADS_keyDownKVMEvent:
@@ -70,50 +70,50 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
             switch (eventCHR) {
             case ADS_KEY_CLEAR:
                 pNewMidpEvent->type = SELECT_FOREGROUND_EVENT;
-                pNewSignal->waitingFor = AMS_SIGNAL;		    
+                pNewSignal->waitingFor = AMS_SIGNAL;                
                 break;
             case ADS_KEY_POWER:
                 pNewMidpEvent->type = SHUTDOWN_EVENT;
                 pNewSignal->waitingFor = AMS_SIGNAL;
-                break;		    
+                break;              
             default:
                 pNewMidpEvent->type = MIDP_KEY_EVENT;
                 pNewMidpEvent->ACTION = (eventType == ADS_keyDownKVMEvent) ?
-                                        PRESSED : RELEASED;
+                    KEYMAP_STATE_ PRESSED : KEYMAP_STATE_RELEASED;
 
                 switch (eventCHR) {
-                case ADS_KEY_0:        key = KEY_0;         break;
-                case ADS_KEY_1:        key = KEY_1;         break;
-                case ADS_KEY_2:        key = KEY_2;         break;
-                case ADS_KEY_3:        key = KEY_3;         break;
-                case ADS_KEY_4:        key = KEY_4;         break;
-                case ADS_KEY_5:        key = KEY_5;         break;
-                case ADS_KEY_6:        key = KEY_6;         break;
-                case ADS_KEY_7:        key = KEY_7;         break;
-                case ADS_KEY_8:        key = KEY_8;         break;
-                case ADS_KEY_9:        key = KEY_9;         break;
+                case ADS_KEY_0:        key = KEYMAP_KEY_0;         break;
+                case ADS_KEY_1:        key = KEYMAP_KEY_1;         break;
+                case ADS_KEY_2:        key = KEYMAP_KEY_2;         break;
+                case ADS_KEY_3:        key = KEYMAP_KEY_3;         break;
+                case ADS_KEY_4:        key = KEYMAP_KEY_4;         break;
+                case ADS_KEY_5:        key = KEYMAP_KEY_5;         break;
+                case ADS_KEY_6:        key = KEYMAP_KEY_6;         break;
+                case ADS_KEY_7:        key = KEYMAP_KEY_7;         break;
+                case ADS_KEY_8:        key = KEYMAP_KEY_8;         break;
+                case ADS_KEY_9:        key = KEYMAP_KEY_9;         break;
 
-                case ADS_KEY_ASTERISK: key = KEY_ASTERISK;  break;
-                case ADS_KEY_POUND:    key = KEY_POUND;     break;
+                case ADS_KEY_ASTERISK: key = KEYMAP_KEY_ASTERISK;  break;
+                case ADS_KEY_POUND:    key = KEYMAP_KEY_POUND;     break;
 
-                case ADS_KEY_UP:       key = KEY_UP;        break;
-                case ADS_KEY_DOWN:     key = KEY_DOWN;      break;
-                case ADS_KEY_LEFT:     key = KEY_LEFT;      break;
-                case ADS_KEY_RIGHT:    key = KEY_RIGHT;     break;
-                case ADS_KEY_SELECT:   key = KEY_SELECT;    break;
+                case ADS_KEY_UP:       key = KEYMAP_KEY_UP;        break;
+                case ADS_KEY_DOWN:     key = KEYMAP_KEY_DOWN;      break;
+                case ADS_KEY_LEFT:     key = KEYMAP_KEY_LEFT;      break;
+                case ADS_KEY_RIGHT:    key = KEYMAP_KEY_RIGHT;     break;
+                case ADS_KEY_SELECT:   key = KEYMAP_KEY_SELECT;    break;
 
-                case ADS_KEY_SOFT1:    key = KEY_SOFT1;     break;
-                case ADS_KEY_SOFT2:    key = KEY_SOFT2;     break;
-                case ADS_KEY_CLEAR:    key = KEY_BACKSPACE; break;
+                case ADS_KEY_SOFT1:    key = KEYMAP_KEY_SOFT1;     break;
+                case ADS_KEY_SOFT2:    key = KEYMAP_KEY_SOFT2;     break;
+                case ADS_KEY_CLEAR:    key = KEYMAP_KEY_BACKSPACE; break;
 
-                case ADS_KEY_SEND:     key = KEY_SEND;      break;
-                case ADS_KEY_END:      key = KEY_END;       break;
-                default:               key = KEY_INVALID;
+                case ADS_KEY_SEND:     key = KEYMAP_KEY_SEND;      break;
+                case ADS_KEY_END:      key = KEYMAP_KEY_END;       break;
+                default:               key = KEYMAP_KEY_INVALID;
                 }
                 pNewMidpEvent->CHR = key;
                 pNewSignal->waitingFor = UI_SIGNAL;
-	    }
-            return; // Received one key. Let's process it.
+            }
+            return; /* Received one key. Let's process it. */
         default:
             break;
         }
