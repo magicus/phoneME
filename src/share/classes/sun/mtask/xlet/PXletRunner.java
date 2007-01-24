@@ -65,26 +65,6 @@ public class PXletRunner {
         return false;
     }
        
-    //
-    // Instantiate a CDCAmsClient object.
-    // Not being able to do so is a fatal error.
-    //
-    private static void cdcamsClient(String[] paths) throws Throwable
-    {
-	try {
-	    Class cc = 
-		Class.forName("com.sun.appmanager.impl.client.CDCAmsClient");
-	    cc.newInstance();
-	} catch (Throwable e) {
-	    // This had better succeed; we can't go on if this does
-	    // not succeed.
-            if (verbose) {
-	        System.err.println("Cannot instantiate com.sun.appmanager.impl.client.CDCAmsClient");
-            }
-	    throw e;
-	}
-    }
-    
     public static void main(String[] args) {
         if (args.length < 2) 
             printErrorAndExit();
@@ -172,11 +152,6 @@ public class PXletRunner {
 	// the Xlet Manager.
 
 	try {
-	    //
-	    // Mark ourselves as a cdcams client if we can
-	    //
-	    cdcamsClient(paths);
-	    
             if (verbose) {
 	        System.out.println("@@PXletRunner starting Xlet " + name);
             }
@@ -188,7 +163,7 @@ public class PXletRunner {
 	    
 	    // First, tell the system to recognize us as the
 	    // singleton xlet.
-	    handler.register();
+	    //handler.register();
 
             if (!isLoadOnly) {
 	       // Call a method so the xlet is initialized. 

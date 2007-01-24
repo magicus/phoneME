@@ -32,7 +32,6 @@ import java.awt.Frame;
 import java.awt.BorderLayout;
 import java.awt.Insets;
 
-import sun.awt.SunToolkit;
 import java.awt.Toolkit;
 
 import sun.mtask.xlet.PXletManager;
@@ -52,8 +51,8 @@ class XletFrame extends Frame
     private static int hOffset;
     private static boolean initialized = false;
 
-    private static boolean verbose = (System.getProperty("cdcams.verbose") != null) &&
-        (System.getProperty("cdcams.verbose").toLowerCase().equals("true"));
+    private static boolean verbose = (System.getProperty("xletframe.verbose") != null) &&
+        (System.getProperty("xletframe.verbose").toLowerCase().equals("true"));
     
     private boolean doDecorations;
     
@@ -61,11 +60,12 @@ class XletFrame extends Frame
     {
 	super(name);
 	if (!XletFrame.initialized) {
-	    throw new Error("FATAL ERROR: Did not initialize "+
-			    "xlet frame dimensions");
+//throw new Error("FATAL ERROR: Did not initialize "+
+//			    "xlet frame dimensions");
+           main(new String[] {"0","0","240","320","0","0"});
 	}
 	
-        String decorations = System.getProperty("cdcams.decorations");
+        String decorations = System.getProperty("xletframe.decorations");
 	if (decorations == null) {
 	    doDecorations = true;
 	} else {
@@ -141,18 +141,6 @@ class XletFrame extends Frame
         if (verbose) {
 	    System.err.println("LOOK AND FEEL CHANGE NOT SUPPORTED");
         }
-    }
-
-    public void activate()
-    {
-        SunToolkit tk = (SunToolkit) Toolkit.getDefaultToolkit();
-        tk.activate(this);
-    }
-    
-    public void deactivate()
-    {
-        SunToolkit tk = (SunToolkit) Toolkit.getDefaultToolkit();
-        tk.deactivate(this);
     }
 
     public static void setFrameDimensions(int dimX, int dimY, 

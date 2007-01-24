@@ -46,6 +46,7 @@ import java.awt.event.WindowEvent;
 
 // Utility classes for saving information about xlets.
 import java.util.Hashtable;
+import java.util.Vector;
 
 //For loading xlets.
 import java.io.IOException;
@@ -61,9 +62,6 @@ import java.security.PrivilegedExceptionAction;
 import java.security.PrivilegedActionException;
 
 import com.sun.xlet.XletLifecycleHandler;
-
-import sun.mtask.AppModelManager;
-import sun.mtask.Listener;
 
 /*
  * Xlet Manager implementation.
@@ -81,7 +79,7 @@ import sun.mtask.Listener;
  * XletManager that the xlet already changed its state).
  */
 
-public class PXletManager implements XletLifecycleHandler, AppModelManager {
+public class PXletManager implements XletLifecycleHandler {
     private static final int DEFAULT_XLET_WIDTH = 300;
     private static final int DEFAULT_XLET_HEIGHT = 300;
     
@@ -115,8 +113,8 @@ public class PXletManager implements XletLifecycleHandler, AppModelManager {
     // from unloaded to loaded.
     private XletState currentState = XletState.UNLOADED;
 
-    private static boolean verbose = (System.getProperty("cdcams.verbose") != null) &&
-        (System.getProperty("cdcams.verbose").toLowerCase().equals("true"));
+    private static boolean verbose = (System.getProperty("pxletmanager.verbose") != null) &&
+        (System.getProperty("pxletmanager.verbose").toLowerCase().equals("true"));
 
     // Load the xlet class instance with a ClassLoader.
     // mainClass is the main class of the Xlet.
@@ -128,22 +126,6 @@ public class PXletManager implements XletLifecycleHandler, AppModelManager {
 			   String mainClass,
 			   String[] args) throws ClassNotFoundException {
 
-       /**
-        *  For now, confine the loading to the caller's ProtectionDomain
-       final String className = mainClass;
-       final ClassLoader finalClassLoader = xletClassLoader;
-       try {
-          xletClass = (Class) AccessController.doPrivileged(
-             new PrivilegedExceptionAction() {
-                public Object run() throws ClassNotFoundException{
-                   return finalClassLoader.loadClass(className);
-                }
-             }
-          );
-       } catch (PrivilegedActionException e) {
-          throw (ClassNotFoundException) e.getException();
-       }
-       **/
        xletClass = xletClassLoader.loadClass(mainClass);
          
        if (xletClass == null || (!(Xlet.class).isAssignableFrom(xletClass))) {
@@ -162,37 +144,11 @@ public class PXletManager implements XletLifecycleHandler, AppModelManager {
        xletFrame = new XletFrame("Xlet Frame: " + mainClass, this,
 				 laf, lafTheme); 
        
-       // realize the first peer with the system thread
-       //xletFrame.addNotify();
-
        // Create a thread group that all the threads used by this xlet
        // would be a part of. This is necessary for providing a separate
        // EventQueue per xlet.
        threadGroup = new ThreadGroup(Thread.currentThread().getThreadGroup(),
 				     "Xlet Thread Group ");
-       
-       //
-       // Is this necessary?
-       //
-       if (false) {
-	   // start a lifecycle thread
-	   final Thread t = new Thread(threadGroup,
-				       new Runnable() {
-					   public void run() {
-					       //manageLifecycle();
-					   }
-				       }, "Xlet lifecycle for " + mainClass);
-	   
-	   final ClassLoader finalLoader = xletClassLoader;
-	   AccessController.doPrivileged(new PrivilegedAction() {
-		   public Object run() {
-		       t.setContextClassLoader(finalLoader);
-		       return null;
-		   }
-	       });
-	   //t.setContextClassLoader(xletClassLoader);
-	   t.start();
-       }
        
        // Create a state queue that holds this xlet’s state change requests.
        xletQueue = new PXletStateQueue(this);
@@ -208,85 +164,7 @@ public class PXletManager implements XletLifecycleHandler, AppModelManager {
 	return xletFrame.getContainer();
     }
 
-    private Listener listener = null;
-
-    //
-    // AppModelManager
-    // 
-    // Currently the AppModelManager is very minimal. If new app
-    // models are introduced, there might be sharing possible here.
-    // One sensible option is to create a superclass that has a default
-    // implementation of register() so we don't have to repeat register()
-    // for every application model.
-    //
-    public void register()
-    {
-	Listener.setAppModelManager(this);
-	listener = Listener.getListener();
-    }
-
-    public boolean processMessage(String s, String messageId)
-    {
-	if (!s.startsWith("XLET_")) {
-	    return false;
-	}
-	
-	s = s.substring(5); // Drop XLET_ prefix
-        if (verbose) {
-	    System.err.println("XLET MESSAGE=\""+s+"\"");
-        }
-	if (s.equals("INITIALIZE")) {			    
-	    postInitXlet();
-	} else if (s.equals("PAUSE")) {			    
-	    postPauseXlet();
-	} else if (s.equals("START")) {
-	    postStartXlet();
-	} else if (s.equals("DESTROY")) {
-	    // This destroy has unconditional==false
-	    postDestroyXlet(true);
-	} else if (s.equals("DESTROY_COND")) {
-	    // This destroy has unconditional==false
-	    postDestroyXlet(false);
-	} else if (s.equals("GET_STATE")) {
-	    listener.sendResponse(getXletState().toString(), messageId);
-	} else if (s.startsWith("UPDATE_LAF_THEME_")) {
-	    String themeName = s.substring(17);
-	    changeLookAndFeelTheme(themeName);
-	} else if (s.startsWith("UPDATE_LOOK_AND_FEEL_")) {
-	    String lafName = s.substring(21);
-	    changeLookAndFeel(lafName);
-	} else if (s.startsWith("ACTIVATE")) {
-	    activate();
-	} else if (s.startsWith("DEACTIVATE")) {
-	    deactivate();
-	} else {
-	    // Unrecognized message
-	    return false;
-	}
-	return true; // Processing succeeded
-    }
-    
-    private void changeLookAndFeel(String lafName)
-    {
-	xletFrame.changeLookAndFeel(lafName);
-    }
-    
-    private void changeLookAndFeelTheme(String themeName)
-    {
-	xletFrame.changeLookAndFeelTheme(themeName);
-    }
-    
-    public void activate()
-    {
-	xletFrame.activate();
-	postStartXlet();
-    }
-    
-    public void deactivate()
-    {
-	postPauseXlet(); // Synchronization done via the state queue
-	xletFrame.deactivate();
-    }
+    //private Listener listener = null;
     
     // The following four methods are implementations of XletLifecycleHandler
     // methods. They allow a third party to request an xlet state change.
@@ -378,20 +256,14 @@ public class PXletManager implements XletLifecycleHandler, AppModelManager {
                     Class[] types = new Class[0];
                     Constructor m = xletClass.getConstructor(types);
                     xlet = (Xlet) m.newInstance(new Object[0]);
-		    //
-		    // Initialization done
-		    //
-		    listener.notifyInitialized();
+
                 } else if (desiredState == DesiredXletState.INITIALIZE) {
                     if (currentState != XletState.LOADED) 
                         return;
                     targetState = XletState.PAUSED;
                     try {
                         xlet.initXlet(context);
-			//
-			// Initialization done
-			//
-			//listener.notifyInitialized();
+
                     } catch (XletStateChangeException xsce) {
                         targetState = XletState.DESTROYED;
 			//
@@ -487,15 +359,18 @@ public class PXletManager implements XletLifecycleHandler, AppModelManager {
 					  String[] paths,
 					  String[] args)
         throws IOException {
-        java.util.Vector v = new java.util.Vector();
-        int index = 0;
+ 
+        Vector v = new Vector();		 
         for (int i = 0; i < paths.length; i++) {
            URL url = parseURL(paths[i]);
            if (url != null) {
               v.add(url);
            }
         }
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
+
+        PXletClassLoader cl = new PXletClassLoader((URL[])v.toArray(new URL[0]), 
+			      ClassLoader.getSystemClassLoader());
+
         try {
             return new PXletManager(cl, laf, lafTheme, mainClass, args);
         } catch (ClassNotFoundException e) {
@@ -546,5 +421,10 @@ public class PXletManager implements XletLifecycleHandler, AppModelManager {
         }
         return u;
     }
+}
 
+class PXletClassLoader extends URLClassLoader {
+    public PXletClassLoader(URL[] urls, ClassLoader parent) {
+       super(urls, parent);
+    }
 }

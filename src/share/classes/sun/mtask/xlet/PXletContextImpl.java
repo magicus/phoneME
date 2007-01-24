@@ -86,7 +86,6 @@ public class PXletContextImpl implements XletContext {
                     manager.handleRequest(XletState.ACTIVE);
                 }
             }, "ResumeRequest Thread").start();
-        //manager.startXlet(manager);    
     }
 
     // Notification from the xlet that it is in the paused state.
@@ -106,7 +105,6 @@ public class PXletContextImpl implements XletContext {
      * classloader as its ancestor.
      */
     public java.lang.ClassLoader getClassLoader() {
-	//
 	// In mtask, each xlet is confined to its own VM instance,
 	// using the system class loader in that instance
 	//
