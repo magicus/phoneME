@@ -799,7 +799,9 @@ public abstract class Canvas extends Displayable {
      */
     public final void repaint(int x, int y, int width, int height) {
         synchronized (Display.LCDUILock) {
-            canvasLF.lRepaint(x, y, width, height, null);
+            if (width > 0 && height > 0) {
+                canvasLF.lRepaint(x, y, width, height, null);
+            }
         }
     }
 
