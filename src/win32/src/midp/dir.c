@@ -260,12 +260,109 @@ javacall_int64 javacall_dir_get_free_space_for_java(void) {
  */
 javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
                                            int* /*IN | OUT*/ rootPathLen) {
-    if ( _wgetcwd( rootPath, *rootPathLen ) == NULL) {
+    wchar_t dirBuffer[JAVACALL_MAX_ROOT_PATH_LENGTH + 1];
+    wchar_t currDir[JAVACALL_MAX_ROOT_PATH_LENGTH + 1];
+    wchar_t* midpHome;
+
+    if (rootPath == NULL || rootPathLen == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    /*
+     * If MIDP_HOME is set, just use it. Does not check if MIDP_HOME is
+     * pointing to a directory contain "appdb".
+     */
+    midpHome = _wgetenv(L"MIDP_HOME");
+    if (midpHome != NULL) {
+        int len = (int) wcslen(midpHome);
+        if (len >= *rootPathLen) {
+            * rootPathLen = 0;
+            javacall_print("javacall_dir_get_root_path: MIDP_HOME "
+                           "is too long.");
+            return JAVACALL_FAIL;
+        }
+
+        wcscpy(rootPath, midpHome);
+        * rootPathLen = len;
+        return JAVACALL_OK;
+    }
+
+	/*
+	 * Look for "appdb" until it is found in the following places:
+	 * - current directory;
+	 * - the parent directory of the midp executable;
+	 * - the grandparent directory of the midp executable.
+	 */
+    if ( _wgetcwd( currDir, sizeof(currDir)/sizeof(wchar_t) ) == NULL) {
         * rootPathLen = 0;
-        javacall_print("javacall_dir_get_root_path:  _wgetcwd failed");
+        javacall_print("javacall_dir_get_root_path: _wgetcwd failed");
         return JAVACALL_FAIL;
     } else {
+        wchar_t* lastsep;
+        struct _stat statbuf;
+        int i, j = 1;
+		wchar_t chSep = javacall_get_file_separator();
+		wchar_t filesep[2] = {chSep, (wchar_t)0};
+
+        dirBuffer[sizeof(dirBuffer)/sizeof(wchar_t) - 1] = (wchar_t)0;
+        wcsncpy(dirBuffer, currDir, sizeof(dirBuffer)/sizeof(wchar_t) - 1);
+
+        while (j < 2) {
+            /* Look for the last slash in the pathname. */
+            lastsep = wcsrchr(dirBuffer, *filesep);
+            if (lastsep != NULL) {
+                *(lastsep + 1) = (wchar_t)'\0';
+            } else {
+                /* no file separator */
+                wcscpy(dirBuffer, L".");
+                wcscat(dirBuffer, filesep);
+            }
+
+            wcscat(dirBuffer, filesep);
+            wcscat(dirBuffer, L"appdb");
+            i = 0;
+
+            /* try to search for "appdb" 3 times only (see above) */
+            while (i < 3) {
+                memset(&statbuf, 0, sizeof(statbuf));
+
+                /* found it and it is a directory */
+                if ((_wstat(dirBuffer, &statbuf) == 0) &&
+                    (statbuf.st_mode & S_IFDIR)) {
+                    break;
+                }
+
+                /* strip off "appdb" to add 1 more level of ".." */
+                *(wcsrchr(dirBuffer, *filesep)) = (wchar_t)'\0';
+                wcscat(dirBuffer, filesep);
+                wcscat(dirBuffer, L"..");
+                wcscat(dirBuffer, filesep);
+                wcscat(dirBuffer, L"appdb");
+
+                i++;
+            } /* end while (i < 3) */
+
+            if (i < 3) {
+                break;
+            }
+
+            j++;
+        } /* end while (j < 2) */
+
+        if (j == 2) {
+            javacall_print("Warning: cannot find appdb subdirectory.\n"
+                "Please specify MIDP_HOME environment variable such "
+                "that $MIDP_HOME\\lib contains the proper configuration "
+                "files.\n");
+            return JAVACALL_FAIL;
+        }
+
+        /* strip off "appdb" from the path */
+        *(wcsrchr(dirBuffer, *filesep)) = (wchar_t)'\0';
+
+		wcscpy(rootPath, dirBuffer);
         * rootPathLen = wcslen(rootPath);
+
         return JAVACALL_OK;
     }
 }
