@@ -1,0 +1,60 @@
+#
+# Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+# SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+#
+
+#Flag USE_JSR_XX_JC means that JSR_XX will be included to the javacall library if the flag
+#is set to 'true' (example: USE_JSR_XX_JC=true). JSR_XX will not be included to the javacall
+#library if the flag USE_JSR_XX_JC is not 'true' (example: USE_JSR_XX_JC=false). 
+#
+#For each used JSR path to its particular implementation shall be specified explicitly as javacall
+#library can be formed from JSRs taken from different locations
+#JSR_XX_JC_IMPL_PATH varibale sets path to implementation 
+#
+#For 'midp' USE_MIDP_JC and MIDP_JC_IMPL_PATH variables are used
+#For 'nams' USE_NATIVE_AMS_JC and NATIVE_AMS_JC_IMPL_PATH variables are used
+
+
+MIDP_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
+
+JSR_120_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
+
+JSR_135_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
+
+JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
+
+JSR_211_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
+
+
+
+#Specify list of utility objects necessary for the build
+UTILITIES =                 \
+        javautil_jad_parser \
+        javautil_string
+
+#Compile options that are not common for all configurations can be specified in
+#SPECIFIC_DEFINITIONS variable
+SPECIFIC_DEFINITIONS+=-I$(MIDP_JC_IMPL_PATH)/midp/
+SPECIFIC_DEFINITIONS+=-DWIN32
+
+#Specific directories with source files that are used in the project can be specified 
+#explicitly via vpath directive
+vpath %.rc $(MIDP_JC_IMPL_PATH)/midp/res
+
+# This is a hidden dependencies workaround (ti762)
+# NEED REVISIT: provide pure solution without hidden dependencies
+ifeq ($(ENABLE_HIDDEN_DEP_FEATURES),true)
+SPECIFIC_DEFINITIONS+=-DENABLE_HIDDEN_DEP_FEATURES
+endif # ifeq ($(ENABLE_HIDDEN_DEP_FEATURES),true)
+
+#Porting objects that are added to PORTING_OBJECTS by default rules can be excluded
+#from the javacall library by setting FILTER_OBJECTS variable
+ifdef SUBSYSTEM_EVENTS_MODULES
+   ifeq ($(SUBSYSTEM_EVENTS_MODULES), slave_mode)
+      FILTER_OBJECTS=events.obj
+   else
+      FILTER_OBJECTS=events_slave_mode.obj
+   endif
+else
+   FILTER_OBJECTS=events_slave_mode.obj
+endif
