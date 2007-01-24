@@ -419,6 +419,15 @@ public class MIDPWindow extends CWindow {
     }
 
     /**
+     * Determines if window is in full screen mode.
+     * 
+     * @return true if in full screen mode
+     */
+    public boolean isInFullScreenMode() {
+        return screenMode == FULL_SCR_MODE;
+    }
+
+    /**
      * Called to paint a wash over the background of this window.
      * Used by SoftButtonLayer when the system menu pops up, and
      * internally when an Alert is shown.

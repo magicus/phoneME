@@ -165,7 +165,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 viewable[Y] = itemLF.bounds[Y];
                 
                 if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
-                    viewable[Y] = viewable[HEIGHT] - viewable[HEIGHT];
+                    viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
                 }
             }
             
@@ -188,7 +188,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 viewable[Y] = itemLF.bounds[Y];
                 
                 if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
-                    viewable[Y] = viewable[HEIGHT] - viewable[HEIGHT];
+                    viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
                 }
             }
         }

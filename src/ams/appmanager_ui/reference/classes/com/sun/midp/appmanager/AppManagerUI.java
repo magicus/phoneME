@@ -34,7 +34,7 @@ import com.sun.midp.installer.*;
 import com.sun.midp.main.*;
 import com.sun.midp.midletsuite.*;
 import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.io.j2me.push.PushRegistryImpl;
+import com.sun.midp.io.j2me.push.PushRegistryInternal;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
@@ -941,7 +941,7 @@ class AppManagerUI extends Form
                     try {
                         if (suiteInfo != null) {
                             midletSuiteStorage.remove(suiteInfo.suiteId);
-                            PushRegistryImpl.unregisterConnections(
+                            PushRegistryInternal.unregisterConnections(
                                 suiteInfo.suiteId);
                         }
                     } catch (Throwable t) {

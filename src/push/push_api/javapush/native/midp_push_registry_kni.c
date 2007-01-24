@@ -27,7 +27,7 @@
 /**
  * @file
  *
- * Implementation of Java native methods for the <tt>PushRegistryImpl</tt>
+ * Implementation of Java native methods for the <tt>ConnectionRegistry</tt>
  * class.
  */
 
@@ -61,7 +61,7 @@
  *         MIDlet suite.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_del0() {
+KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_del0) {
     char *szConn = NULL;
     int connLen;
     char *szStore = NULL;
@@ -117,7 +117,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_del0() {
  *         otherwise <tt>-1</tt> if connection was not found
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_checkInByName0() {
+KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_checkInByName0) {
     char *szConn = NULL;
     int connLen;
     int ret = -1;
@@ -156,7 +156,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_checkInByName0() {
  * to check in to the push registry
  */
 KNIEXPORT void
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_checkInByHandle0() {
+KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_checkInByHandle0) {
     jint handle;
 
     handle = KNI_GetParameterAsInt(1);
@@ -177,7 +177,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_checkInByHandle0() {
  *                  array
  */
 KNIEXPORT void
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_checkInByMidlet0() {
+KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_checkInByMidlet0) {
     SuiteIdType suiteId;
 
     KNI_StartHandles(1);
@@ -209,7 +209,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_checkInByMidlet0() {
  *         <tt>-1</tt> if connection already exists
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_add0() {
+KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_add0) {
 
     char *szConn = NULL;
     int connLen;
@@ -253,7 +253,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_add0() {
  *         previosly registered alarm.
  */
 KNIEXPORT KNI_RETURNTYPE_LONG
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_addAlarm0() {
+KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_addAlarm0) {
 
     char *szConn = NULL;
     int connLen;
@@ -308,7 +308,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_addAlarm0() {
  *                                 too long.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_list0() {
+KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_list0) {
     char *midletName = NULL;
     int available;
     int connsize;
@@ -363,7 +363,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_list0() {
  * @return A handle to the first pending, inbound connection
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_poll0() {
+KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_poll0) {
     jlong ret = (jlong) pushpoll();
 
     /*if (ret == -1) {
@@ -390,7 +390,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_poll0() {
  * @return <tt>0</tt> if successful, otherwise <tt>-1</tt>
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_getMIDlet0() {
+KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_getMIDlet0) {
     int   midletNameLength;
     char* regentry;
     int   regentryLength;
@@ -437,7 +437,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_getMIDlet0() {
  * @throw IOException if the registry entry is too long.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_getEntry0() {
+KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_getEntry0) {
     int midletsize;
     char *regentry;
     int regsize ;
@@ -492,7 +492,7 @@ Java_com_sun_midp_io_j2me_push_PushRegistryImpl_getEntry0() {
  * @param suiteID The MIDlet Suite ID.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_io_j2me_push_PushRegistryImpl_delAllForSuite0() {
+KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_delAllForSuite0) {
     SuiteIdType suiteId;
 
     suiteId = KNI_GetParameterAsInt(1);
