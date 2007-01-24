@@ -97,8 +97,8 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
         int repeat;
     } qvfbKeyEvent;
 
-    // IMPL_NOTE: We don't handle repeats, but this seems OK. When you hold
-    // down a key, QVFB passes a stream of simulated keyups an keydowns
+    /* IMPL_NOTE: We don't handle repeats, but this seems OK. When you hold */
+    /* down a key, QVFB passes a stream of simulated keyups an keydowns */
 
     read(fbapp_get_keyboard_fd(), &qvfbKeyEvent, sizeof(qvfbKeyEvent));
     midpKeyCode = map_raw_keycode(qvfbKeyEvent.unicode);
@@ -144,14 +144,14 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
 	    mouseIdx += n;
     } while ( n > 0 );
 
-    // mouse package dump
-    //    for (n = 0; n < mouseIdx; n++) {
-    //        printf("%02x ", mouseBuf[n]);
-    //        fflush(stdout);
-    //    }
-    //    printf("\n");
+    /* mouse package dump */
+    /*    for (n = 0; n < mouseIdx; n++) { */
+    /*        printf("%02x ", mouseBuf[n]); */
+    /*        fflush(stdout); */
+    /*    } */
+    /*    printf("\n"); */
 
-    // unexpected data size.  Broken package, no handling - just return
+    /* unexpected data size.  Broken package, no handling - just return */
     if (mouseIdx < mouseBufSize)
         return;
 
@@ -190,10 +190,10 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
         pNewSignal->waitingFor = UI_SIGNAL;
     }
         
-    //    printf("mouse event: pNewMidpEvent->X_POS =%d  pNewMidpEvent->Y_POS =%d pNewMidpEvent->ACTION = %d\n",
-    //           pNewMidpEvent->X_POS, pNewMidpEvent->Y_POS, pNewMidpEvent->ACTION);
+    /*    printf("mouse event: pNewMidpEvent->X_POS =%d  pNewMidpEvent->Y_POS =%d pNewMidpEvent->ACTION = %d\n", */
+    /*           pNewMidpEvent->X_POS, pNewMidpEvent->Y_POS, pNewMidpEvent->ACTION); */
     
-    // keep the previous coordinates to detect dragged event
+    /* keep the previous coordinates to detect dragged event */
     pointer.x = pNewMidpEvent->X_POS;
     pointer.y = pNewMidpEvent->Y_POS;
 }

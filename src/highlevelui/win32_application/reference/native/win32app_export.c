@@ -49,7 +49,7 @@
 #include <gxj_putpixel.h>
 #include <midp_foreground_id.h>
 
-//#include "staticGraphics.h"
+/*#include "staticGraphics.h" */
 #include "midpStubsKeymapping.h"
 
 #define NUMBEROF(x) (sizeof(x)/sizeof(x[0]))
@@ -334,8 +334,8 @@ static void win32app_refresh_rotate(int x1, int y1, int x2, int y2) {
 
 
     bi.bmiHeader.biSize          = sizeof(bi.bmiHeader);
-    bi.bmiHeader.biWidth         = height; //width;
-    bi.bmiHeader.biHeight        = -width; //-height;
+    bi.bmiHeader.biWidth         = height; /* width; */
+    bi.bmiHeader.biHeight        = -width; /* -height; */
     bi.bmiHeader.biPlanes        = 1;
     bi.bmiHeader.biBitCount      = sizeof (long) * 8;
     bi.bmiHeader.biCompression   = BI_RGB;
@@ -701,11 +701,11 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         return 0;
 
     case WM_TIMER:
-        // Stop the timer from repeating the WM_TIMER message.
+        /* Stop the timer from repeating the WM_TIMER message. */
         KillTimer(hwnd, wParam);
 
         if (wParam != EVENT_TIMER_ID) {
-            // This is a push alarm
+            /* This is a push alarm */
             pSignalResult->waitingFor = PUSH_ALARM_SIGNAL;
             pSignalResult->descriptor = (int)wParam;
         }
@@ -963,7 +963,7 @@ static void resizeScreenBuffer() {
         if (newScreenSize != sizeof(gxj_pixel_type) 
                 * gxj_system_screen_buffer.width 
                 * gxj_system_screen_buffer.height) {
-            // free screen buffer
+            /* free screen buffer */
             midpFree(gxj_system_screen_buffer.pixelData);
             gxj_system_screen_buffer.pixelData = NULL;
         }
@@ -1030,8 +1030,8 @@ static void CreateEmulatorWindow() {
     static WORD graybits[] = {0xaaaa, 0x5555, 0xaaaa, 0x5555,
                               0xaaaa, 0x5555, 0xaaaa, 0x5555};
 
-    unsigned int width ;// = EMULATOR_WIDTH;
-    unsigned int height; // = EMULATOR_HEIGHT;
+    unsigned int width ; /* = EMULATOR_WIDTH; */
+    unsigned int height; /* = EMULATOR_HEIGHT; */
     static char caption[32];
 
     hPhoneBitmap = loadBitmap("phone.bmp",&width,&height);

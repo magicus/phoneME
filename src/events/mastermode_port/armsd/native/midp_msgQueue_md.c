@@ -54,13 +54,15 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     }
 
     do {
-        // There's no easy way in ARMulator to suspend the CPU until
-        // an event is fired from the keypad. However, the profiler
-        // knows about this and does not count the time spent inside
-        // this function.
+        /* 
+         * There's no easy way in ARMulator to suspend the CPU until
+         * an event is fired from the keypad. However, the profiler
+         * knows about this and does not count the time spent inside
+         * this function. 
+         */
         int key;
-        int eventCHR = *EVENT_CHAR_REG;   // This must be read first
-        int eventType = *EVENT_TYPE_REG;  // This must be read last
+        int eventCHR = *EVENT_CHAR_REG;   /* This must be read first */
+        int eventType = *EVENT_TYPE_REG;  /* This must be read last */
 
         switch (eventType) {
         case ADS_keyDownKVMEvent:
@@ -111,7 +113,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
                 pNewMidpEvent->CHR = key;
                 pNewSignal->waitingFor = UI_SIGNAL;
             }
-            return; // Received one key. Let's process it.
+            return; /* Received one key. Let's process it. */
         default:
             break;
         }

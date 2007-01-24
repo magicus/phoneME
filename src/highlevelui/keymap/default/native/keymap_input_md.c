@@ -104,31 +104,31 @@ keymap_get_key_code(int gameAction)
     REPORT_CALL_TRACE1(LC_LOWUI, "LF:keymap_get_key_code(%d)\n", gameAction);
 
     switch (gameAction) {
-    case  1: // Canvas.UP
+    case  1: /* Canvas.UP */
         return KEYMAP_KEY_UP;
 
-    case  6: // Canvas.DOWN
+    case  6: /* Canvas.DOWN */
         return KEYMAP_KEY_DOWN;
 
-    case  2: // Canvas.LEFT
+    case  2: /* Canvas.LEFT */
         return KEYMAP_KEY_LEFT;
 
-    case  5: // Canvas.RIGHT
+    case  5: /* Canvas.RIGHT */
         return KEYMAP_KEY_RIGHT;
 
-    case  8: // Canvas.FIRE
+    case  8: /* Canvas.FIRE */
         return KEYMAP_KEY_SELECT;
 
-    case  9: // Canvas.GAME_A
+    case  9: /* Canvas.GAME_A */
         return KEYMAP_KEY_GAMEA;
 
-    case 10: // Canvas.GAME_B
+    case 10: /* Canvas.GAME_B */
         return KEYMAP_KEY_GAMEB;
 
-    case 11: // Canvas.GAME_C
+    case 11: /* Canvas.GAME_C */
         return KEYMAP_KEY_GAMEC;
 
-    case 12: // Canvas.GAME_D
+    case 12: /* Canvas.GAME_D */
         return KEYMAP_KEY_GAMED;
 
     default: return 0;
@@ -149,48 +149,48 @@ keymap_get_game_action(int keyCode)
     
     switch (keyCode) {
     case KEYMAP_KEY_UP:
-    case KEYMAP_KEY_GAME_UP: // Customitem Game UP
-        return 1; // Canvas.UP
+    case KEYMAP_KEY_GAME_UP: /* Customitem Game UP */
+        return 1; /* Canvas.UP */
 
     case KEYMAP_KEY_DOWN:
-    case KEYMAP_KEY_GAME_DOWN:// Customitem Game DOWN
-        return 6; // Canvas.DOWN
+    case KEYMAP_KEY_GAME_DOWN:/* Customitem Game DOWN */
+        return 6; /* Canvas.DOWN */
 
     case KEYMAP_KEY_LEFT:
-    case KEYMAP_KEY_GAME_LEFT:// Customitem Game LEFT
-        return 2; // Canvas.LEFT
+    case KEYMAP_KEY_GAME_LEFT:/* Customitem Game LEFT */
+        return 2; /* Canvas.LEFT */
 
     case KEYMAP_KEY_RIGHT:
-    case KEYMAP_KEY_GAME_RIGHT:// Customitem Game RIGHT
-        return 5; // Canvas.RIGHT
+    case KEYMAP_KEY_GAME_RIGHT:/* Customitem Game RIGHT */
+        return 5; /* Canvas.RIGHT */
 
     case KEYMAP_KEY_SELECT:
-        return 8; // Canvas.FIRE
+        return 8; /* Canvas.FIRE */
 
     case KEYMAP_KEY_GAMEA:
     case KEYMAP_KEY_1:
-        return 9;  // Canvas.GAME_A
+        return 9;  /* Canvas.GAME_A */
 
     case KEYMAP_KEY_GAMEB:
     case KEYMAP_KEY_3:
-        return 10; // Canvas.GAME_B
+        return 10; /* Canvas.GAME_B */
 
     case KEYMAP_KEY_GAMEC:
     case KEYMAP_KEY_7:
-        return 11; // Canvas.GAME_C
+        return 11; /* Canvas.GAME_C */
 
     case KEYMAP_KEY_GAMED:
     case KEYMAP_KEY_9:
-        return 12; // Canvas.GAME_D
+        return 12; /* Canvas.GAME_D */
 
     default:
 
         if(keymap_is_invalid_key_code(keyCode)) {
-            //Invalid key code
+            /* Invalid key code */
             return -1;
         }
 
-        // No game action available for this key
+        /* No game action available for this key */
         return 0;
     }
 }
@@ -275,8 +275,10 @@ keymap_is_invalid_key_code(int keyCode)
     REPORT_CALL_TRACE1(LC_LOWUI, "LF:keymap_is_invalid_key_code(%d)\n", 
                        keyCode);
 
-    // Valid within UNICODE and not 0x0 and 0xffff
-    // since they are defined to be invalid
+    /* 
+     * Valid within UNICODE and not 0x0 and 0xffff 
+     * since they are defined to be invalid
+     */
     if ((keyCode <= 0x0) || (keyCode >= 0xFFFF) ) {
         return KNI_TRUE;
     }

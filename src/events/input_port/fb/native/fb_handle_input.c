@@ -127,8 +127,7 @@ static void init_key_device() {
             break;
         }
 #ifdef DIRECTFB
-        // DirectFB provides generic function
-        // to read input key events
+        /* DirectFB provides generic function to read input key events */
         readKeyEvent = read_directfb_key_event;
 #endif
     }
@@ -142,29 +141,29 @@ static void init_key_device() {
 static void find_raw_key_mapping() {
     int down = 0;
 
-    // cache a few state fields for brewity
+    /* cache a few state fields for brewity */
     unsigned changedBits = keyState.changedBits;
     unsigned key = keyState.key;
     KeyMapping *km;
 
-    // find MIDP key code corresponding to native key
+    /* find MIDP key code corresponding to native key */
     if (bitscale_mode) {
-        // key is bit-mask, seach for mapping entry
+        /* key is bit-mask, seach for mapping entry */
         for (km = keyState.km; km->midp_keycode != KEYMAP_KEY_INVALID &&
                 ((changedBits & km->raw_keydown) == 0); km++)
-            // break at the first newly pressed/released key
+            /* break at the first newly pressed/released key */
             ;
 
-        // check if found the corresponding entry
+        /* check if found the corresponding entry */
         if (km->midp_keycode != KEYMAP_KEY_INVALID) {
             down = key & km->raw_keydown;
             changedBits &= ~km->raw_keydown;
         } else {
-            // no entry found, reset search
+            /* no entry found, reset search */
             changedBits = 0;
         }
     } else {
-        // key is key code
+        /* key is key code */
         for (km = mapping; km->midp_keycode != KEYMAP_KEY_INVALID; km++) {
             if (km->raw_keydown == key) {
                 down = 1;
@@ -176,12 +175,12 @@ static void find_raw_key_mapping() {
         }
     }
 
-    // update keys state 
+    /* update keys state */
     keyState.km = km;
     keyState.changedBits = changedBits;
     keyState.hasPendingKeySignal = (changedBits != 0);
 
-    // down key state could be set by read function
+    /* down key state could be set by read function */
     if (keyState.down < 0) {
         keyState.down = down;
     }

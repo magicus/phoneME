@@ -52,32 +52,32 @@ KeyMapping versatile_integrator_keys[] = {
     {KEYMAP_KEY_8,                 9,   137},
 
     {KEYMAP_KEY_UP,              103,   231},
-    {KEYMAP_KEY_UP,               72,   200},   // *** Integrator-CP
+    {KEYMAP_KEY_UP,               72,   200},   /* Integrator-CP */
     {KEYMAP_KEY_DOWN,            108,   236},
-    {KEYMAP_KEY_DOWN,             80,   208},   // *** Integrator-CP
+    {KEYMAP_KEY_DOWN,             80,   208},   /* Integrator-CP */
     {KEYMAP_KEY_LEFT,            105,   233},
-    {KEYMAP_KEY_LEFT,             75,   203},   // *** Integrator-CP
+    {KEYMAP_KEY_LEFT,             75,   203},   /* Integrator-CP */
     {KEYMAP_KEY_RIGHT,           106,   234},
-    {KEYMAP_KEY_RIGHT,            77,   205},   // *** Integrator-CP
+    {KEYMAP_KEY_RIGHT,            77,   205},   /* Integrator-CP */
 
-    {KEYMAP_KEY_SELECT,           28,   156},   // Enter key
-    {KEYMAP_KEY_SELECT,           57,   185},   // Space key
+    {KEYMAP_KEY_SELECT,           28,   156},   /* Enter key */
+    {KEYMAP_KEY_SELECT,           57,   185},   /* Space key */
 
-    {KEYMAP_KEY_SOFT1,            59,   187},   // F1 key
-    {KEYMAP_KEY_SOFT2,            60,   188},   // F2 key
+    {KEYMAP_KEY_SOFT1,            59,   187},   /* F1 key */
+    {KEYMAP_KEY_SOFT2,            60,   188},   /* F2 key */
 
-    {KEYMAP_KEY_POWER,            25,   153},   // P key
+    {KEYMAP_KEY_POWER,            25,   153},   /* P key */
 
-    {KEYMAP_KEY_SEND,             31,   159},   // S key
+    {KEYMAP_KEY_SEND,             31,   159},   /* S key */
 
-    {KEYMAP_KEY_END,              18,   146},   // P key
-    {KEYMAP_KEY_END,              16,   144},   // Q key
-    {KEYMAP_KEY_END,               1,   129},   // Escape key
+    {KEYMAP_KEY_END,              18,   146},   /* P key */
+    {KEYMAP_KEY_END,              16,   144},   /* Q key */
+    {KEYMAP_KEY_END,               1,   129},   /* Escape key */
 
-    {KEYMAP_KEY_CLEAR,            46,   174},   // C key
-    {KEYMAP_KEY_CLEAR,            14,   142},   // Backspace key
+    {KEYMAP_KEY_CLEAR,            46,   174},   /* C key */
+    {KEYMAP_KEY_CLEAR,            14,   142},   /* Backspace key */
 
-    {KEYMAP_KEY_INVALID,           0,     0},   // end of table
+    {KEYMAP_KEY_INVALID,           0,     0},   /* end of table */
 };
 
 /* Keyboard info for the Sharp Zaurus SL5500 */
@@ -101,7 +101,7 @@ KeyMapping zaurus_sl5500_keys[] = {
     {'j',                       0x0a,   0x8a},
     {'k',                       0x0b,   0x8b},
     {'l',                       0x0c,   0x8c},
-    {KEYMAP_KEY_CLEAR,          0x1f,   0x9f},  // backspace on keyboard
+    {KEYMAP_KEY_CLEAR,          0x1f,   0x9f},  /* backspace on keyboard */
     {'z',                       0x1a,   0x9a},
     {'x',                       0x18,   0x98},
     {'c',                       0x03,   0x83},
@@ -116,25 +116,25 @@ KeyMapping zaurus_sl5500_keys[] = {
     {'.',                       0x46,   0xc6},
     {'\n',                      0x40,   0xc0},
 
-    {KEYMAP_KEY_SOFT1,          0x58,   0xd8},  // note button
-    {KEYMAP_KEY_SOFT1,          0x59,   0xd9},  // contact button
+    {KEYMAP_KEY_SOFT1,          0x58,   0xd8},  /* note button */
+    {KEYMAP_KEY_SOFT1,          0x59,   0xd9},  /* contact button */
 
-    {KEYMAP_MD_KEY_HOME,        0x28,   0xa8},  // home button
+    {KEYMAP_MD_KEY_HOME,        0x28,   0xa8},  /* home button */
 
-    {KEYMAP_KEY_SOFT2,          0x1d,   0x9d},  // schedule button
-    {KEYMAP_KEY_SOFT2,          0x5a,   0xda},  // mail button
+    {KEYMAP_KEY_SOFT2,          0x1d,   0x9d},  /* schedule button */
+    {KEYMAP_KEY_SOFT2,          0x5a,   0xda},  /* mail button */
 
-    {KEYMAP_KEY_END,            0x22,   0xa2},  // Cancel button
+    {KEYMAP_KEY_END,            0x22,   0xa2},  /* Cancel button */
 
-    {KEYMAP_KEY_UP,             0x24,   0xa4},  // up button
-    {KEYMAP_KEY_DOWN,           0x25,   0xa5},  // down button
-    {KEYMAP_KEY_LEFT,           0x23,   0xa3},  // left button
-    {KEYMAP_KEY_RIGHT,          0x26,   0xa6},  // right button
-    {KEYMAP_KEY_SELECT,         0x5b,   0xdb},  // Middle button
+    {KEYMAP_KEY_UP,             0x24,   0xa4},  /* up button */
+    {KEYMAP_KEY_DOWN,           0x25,   0xa5},  /* down button */
+    {KEYMAP_KEY_LEFT,           0x23,   0xa3},  /* left button */
+    {KEYMAP_KEY_RIGHT,          0x26,   0xa6},  /* right button */
+    {KEYMAP_KEY_SELECT,         0x5b,   0xdb},  /* Middle button */
 
-    {KEYMAP_KEY_SELECT,         0x27,   0xa7},  // OK button
+    {KEYMAP_KEY_SELECT,         0x27,   0xa7},  /* OK button */
 
-    {KEYMAP_KEY_INVALID,           0,      0},  // end of table
+    {KEYMAP_KEY_INVALID,           0,      0},  /* end of table */
 };
 
 /*
@@ -148,13 +148,13 @@ KeyMapping omap_730_keys[] = {
     {KEYMAP_KEY_LEFT,              4,   0},
     {KEYMAP_KEY_DOWN,              8,   0},
     {KEYMAP_KEY_SELECT,           16,   0},
-    {KEYMAP_KEY_SOFT2,            64,   0},    // Right button
-    {KEYMAP_KEY_SOFT1,          4096,   0},    // Left button
-    {KEYMAP_KEY_SEND,            128,   0},    // Call button
+    {KEYMAP_KEY_SOFT2,            64,   0},    /* Right button */
+    {KEYMAP_KEY_SOFT1,          4096,   0},    /* Left button */
+    {KEYMAP_KEY_SEND,            128,   0},    /* Call button */
     {KEYMAP_KEY_POWER,           128,   0},
-    {KEYMAP_KEY_END,             256,   0},    // Hangup button
-    {KEYMAP_MD_KEY_HOME,    16777216,   0},    // Home button
-    {KEYMAP_KEY_BACKSPACE,    262144,   0},    // Enter button
+    {KEYMAP_KEY_END,             256,   0},    /* Hangup button */
+    {KEYMAP_MD_KEY_HOME,    16777216,   0},    /* Home button */
+    {KEYMAP_KEY_BACKSPACE,    262144,   0},    /* Enter button */
     {KEYMAP_KEY_0,           4194304,   0},
     {KEYMAP_KEY_1,          33554432,   0},
     {KEYMAP_KEY_2,            524288,   0},
@@ -167,8 +167,8 @@ KeyMapping omap_730_keys[] = {
     {KEYMAP_KEY_9,             32768,   0},
     {KEYMAP_KEY_ASTERISK,  268435456,   0},
     {KEYMAP_KEY_POUND,         65536,   0},
-    {KEYMAP_KEY_SCREEN_ROT,      512,   0},    // Left side down button
-    {KEYMAP_MD_KEY_SWITCH_APP,  2048,   0},    // Right side button
-    {KEYMAP_KEY_INVALID,        1024,   0},    // Left side up button
-    {KEYMAP_KEY_INVALID,           0,   0},    // end of table
+    {KEYMAP_KEY_SCREEN_ROT,      512,   0},    /* Left side down button */
+    {KEYMAP_MD_KEY_SWITCH_APP,  2048,   0},    /* Right side button */
+    {KEYMAP_KEY_INVALID,        1024,   0},    /* Left side up button */
+    {KEYMAP_KEY_INVALID,           0,   0},    /* end of table */
 };

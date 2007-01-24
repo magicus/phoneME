@@ -45,14 +45,14 @@
 /* IMPL_NOTE - CDC declarations */
 CVMInt64 CVMtimeMillis(void);
 
-static int controlPipe[2]; // [0] for read, [1] for write
+static int controlPipe[2]; /* [0] for read, [1] for write */
 
 static void initCDCEvents();
 
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
 
-// in midp_msgQueue_md.c
+/* in midp_msgQueue_md.c */
 void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent);
 
 KNIEXPORT KNI_RETURNTYPE_LONG
@@ -132,9 +132,11 @@ KNIDECL(com_sun_midp_main_MIDletSuiteLoader_vmEndStartUp) {
  */
 static int
 midpInitializeUI(void) {
-    //if (InitializeEvents() != 0) {
-    //    return -1;
-    //}
+    /*
+    if (InitializeEvents() != 0) {
+        return -1;
+    }
+    */
 
     /*
      * Porting consideration:
@@ -154,7 +156,7 @@ midpInitializeUI(void) {
         JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY, reserved);
 
         if (limit <= 0) {
-            limit = 0x7FFFFFFF;  // MAX_INT
+            limit = 0x7FFFFFFF;  /* MAX_INT */
         } else {
             limit = limit * 1024;
         }
@@ -175,9 +177,11 @@ midpInitializeUI(void) {
     }
 #endif
 
-    // IMPL_NOTE if (pushopen() != 0) {
-    //    return -1;
-    //}
+    /* 
+        IMPL_NOTE if (pushopen() != 0) {
+            return -1;
+        }
+    */
 
     lcdlf_ui_init();
     return 0;
@@ -190,20 +194,22 @@ static void
 midpFinalizeUI(void) {
     lcdlf_ui_finalize();
 
-    //IMPL_NOTE: pushclose();
+    /*
+       IMPL_NOTE: pushclose();
 
-    //FinalizeEvents();
+       FinalizeEvents();
 
-    // Porting consideration:
-    // Here is a good place to put I18N finalization
-    // function. e.g. finalizeLocaleMethod();
+       Porting consideration:
+       Here is a good place to put I18N finalization
+       function. e.g. finalizeLocaleMethod();
+    */
 
     /*
      * Note: the AMS isolate will have been registered by a native method
      * call, so there is no corresponding midpRegisterAmsIsolateId in the
      * midpInitializeUI() function.
      */
-    //midpUnregisterAmsIsolateId();
+    /* midpUnregisterAmsIsolateId(); */
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
@@ -344,7 +350,7 @@ static void readControlStringField(KNIDECLARGS jobject objectHandle,
             jchar dummy;
             read(controlPipe[0], &dummy, sizeof(jchar));
         }
-        len = 0; // IMPL_NOTE: throw out of memory
+        len = 0; /* IMPL_NOTE: throw out of memory */
     }
 
     KNI_StartHandles(1);
@@ -369,7 +375,7 @@ static void sendControlStringField(KNIDECLARGS jobject objectHandle,
     if (len > 0) {
         data = (jchar*)midpMalloc(len * sizeof(jchar));
         if (data == NULL) {
-            len = 0; // IMPL_NOTE: throw out of memory
+            len = 0; /* IMPL_NOTE: throw out of memory */
         } else {
             KNI_GetStringRegion(stringObj, 0, len, data);
         }
@@ -728,7 +734,7 @@ KNIDECL(com_sun_midp_events_EventQueue_sendShutdownEvent) {
 #ifdef CVM_DEBUG
     printf("EventQueue_sendShutdownEvent\n");
 #endif
-    //CVMdumpAllThreads();
+    /* CVMdumpAllThreads(); */
 #if ENABLE_DEBUG
     CVMdumpStack(&_ee->interpreterStack, 0, 0, 0);
 #endif

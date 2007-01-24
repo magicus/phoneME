@@ -223,7 +223,7 @@ void fbapp_map_keycode_to_event(
             pNewMidpEvent->intParam1 = 0;
             pNewSignal->waitingFor = AMS_SIGNAL;
         } else {
-            // ignore it
+            /* ignore it */
         }
         break;
 
@@ -233,7 +233,7 @@ void fbapp_map_keycode_to_event(
             pNewMidpEvent->intParam1 = 1;
             pNewSignal->waitingFor = AMS_SIGNAL;
         } else {
-            // ignore it
+            /* ignore it */
         }
         break;
 
@@ -242,7 +242,7 @@ void fbapp_map_keycode_to_event(
             pNewMidpEvent->type = ROTATION_EVENT;
             pNewSignal->waitingFor = UI_SIGNAL;
         } else {
-            // ignore it
+            /* ignore it */
         }
         break;
 
@@ -258,12 +258,12 @@ void fbapp_map_keycode_to_event(
             pNewMidpEvent->type = DESTROY_MIDLET_EVENT;
 #endif
         } else {
-            // ignore it
+            /* ignore it */
         }
         break;
 
     case KEYMAP_KEY_INVALID:
-        // ignore it
+        /* ignore it */
         break;
 
     default:
