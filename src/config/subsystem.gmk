@@ -32,11 +32,7 @@
 
 SUBSYSTEMS += jsr135
 
-ifeq ($(TARGET_PLATFORM), javacall)
-JSR_135_CONFIG_DIR = $(JSR_135_DIR)/src/config/$(TARGET_PLATFORM)/$(JAVACALL_PLATFORM)
-else
 JSR_135_CONFIG_DIR = $(JSR_135_DIR)/src/config/$(TARGET_PLATFORM)
-endif
 
 include $(JSR_135_CONFIG_DIR)/config.gmk
 include $(JSR_135_DIR)/src/config/features.defs
