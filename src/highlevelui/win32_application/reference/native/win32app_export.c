@@ -67,10 +67,10 @@
 /*
  * Defines Java code paintable region
  */
-#define DISPLAY_WIDTH  	CHAM_WIDTH
-#define DISPLAY_HEIGHT 	CHAM_FULLHEIGHT
-#define DISPLAY_X	X_SCREEN_OFFSET
-#define DISPLAY_Y	(Y_SCREEN_OFFSET + TOP_BAR_HEIGHT)
+#define DISPLAY_WIDTH   CHAM_WIDTH
+#define DISPLAY_HEIGHT  CHAM_FULLHEIGHT
+#define DISPLAY_X       X_SCREEN_OFFSET
+#define DISPLAY_Y       (Y_SCREEN_OFFSET + TOP_BAR_HEIGHT)
 
 #define UNTRANSLATED_SCREEN_BITMAP (void*)0xffffffff
 
@@ -79,8 +79,8 @@
 #define ASSERT(expr) (expr) ? (void)0 : (void)fprintf(stderr, \
     "%s:%d: (%s)is NOT true\n", __FILE__, __LINE__, #expr)
 
-#define MD_KEY_HOME (KEY_MACHINE_DEP)
-#define MD_KEY_SWITCH_APP (KEY_MACHINE_DEP - 1)
+#define KEYMAP_MD_KEY_HOME (KEYMAP_KEY_MACHINE_DEP)
+#define KEYMAP_MD_KEY_SWITCH_APP (KEYMAP_KEY_MACHINE_DEP - 1)
 
 static HBITMAP getBitmapDCtmp = NULL;
 
@@ -189,10 +189,10 @@ static void win32app_refresh_normal(int x1, int y1, int x2, int y2) {
     unsigned char *destBits;
     unsigned char *destPtr;
 
-    HDC		   hdcMem;
-    HBITMAP	   destHBmp;
-    BITMAPINFO	   bi;
-    HGDIOBJ	   oobj;
+    HDC            hdcMem;
+    HBITMAP        destHBmp;
+    BITMAPINFO     bi;
+    HGDIOBJ        oobj;
     HDC hdc;
 
     REPORT_CALL_TRACE4(LC_HIGHUI,
@@ -224,18 +224,18 @@ static void win32app_refresh_normal(int x1, int y1, int x2, int y2) {
     width = x2 - x1;
     height = y2 - y1;
 
-    bi.bmiHeader.biSize		 = sizeof(bi.bmiHeader);
-    bi.bmiHeader.biWidth	 = width;
-    bi.bmiHeader.biHeight	 = -height;
-    bi.bmiHeader.biPlanes	 = 1;
-    bi.bmiHeader.biBitCount	 = sizeof (long) * 8;
-    bi.bmiHeader.biCompression	 = BI_RGB;
-    bi.bmiHeader.biSizeImage	 = width * height * sizeof (long);
+    bi.bmiHeader.biSize          = sizeof(bi.bmiHeader);
+    bi.bmiHeader.biWidth         = width;
+    bi.bmiHeader.biHeight        = -height;
+    bi.bmiHeader.biPlanes        = 1;
+    bi.bmiHeader.biBitCount      = sizeof (long) * 8;
+    bi.bmiHeader.biCompression   = BI_RGB;
+    bi.bmiHeader.biSizeImage     = width * height * sizeof (long);
     bi.bmiHeader.biXPelsPerMeter = 0;
     bi.bmiHeader.biYPelsPerMeter = 0;
-    bi.bmiHeader.biClrUsed	 = 0;
-    bi.bmiHeader.biClrImportant	 = 0;
-	
+    bi.bmiHeader.biClrUsed       = 0;
+    bi.bmiHeader.biClrImportant  = 0;
+        
     hdc = getBitmapDC(NULL);
 
     hdcMem = CreateCompatibleDC(hdc);
@@ -244,7 +244,7 @@ static void win32app_refresh_normal(int x1, int y1, int x2, int y2) {
                                  NULL, 0);
 
     if (destBits != NULL) {
-	oobj = SelectObject(hdcMem, destHBmp);
+        oobj = SelectObject(hdcMem, destHBmp);
 
         SelectObject(hdcMem, oobj);
 
@@ -297,10 +297,10 @@ static void win32app_refresh_rotate(int x1, int y1, int x2, int y2) {
     unsigned char *destBits;
     unsigned char *destPtr;
 
-    HDC		   hdcMem;
-    HBITMAP	   destHBmp;
-    BITMAPINFO	   bi;
-    HGDIOBJ	   oobj;
+    HDC            hdcMem;
+    HBITMAP        destHBmp;
+    BITMAPINFO     bi;
+    HGDIOBJ        oobj;
     HDC hdc;
     
     REPORT_CALL_TRACE4(LC_HIGHUI,
@@ -333,17 +333,17 @@ static void win32app_refresh_rotate(int x1, int y1, int x2, int y2) {
     height = y2 - y1;
 
 
-    bi.bmiHeader.biSize		 = sizeof(bi.bmiHeader);
-    bi.bmiHeader.biWidth	 = height; //width;
-    bi.bmiHeader.biHeight	 = -width; //-height;
-    bi.bmiHeader.biPlanes	 = 1;
-    bi.bmiHeader.biBitCount	 = sizeof (long) * 8;
-    bi.bmiHeader.biCompression	 = BI_RGB;
-    bi.bmiHeader.biSizeImage	 = width * height * sizeof (long);
+    bi.bmiHeader.biSize          = sizeof(bi.bmiHeader);
+    bi.bmiHeader.biWidth         = height; //width;
+    bi.bmiHeader.biHeight        = -width; //-height;
+    bi.bmiHeader.biPlanes        = 1;
+    bi.bmiHeader.biBitCount      = sizeof (long) * 8;
+    bi.bmiHeader.biCompression   = BI_RGB;
+    bi.bmiHeader.biSizeImage     = width * height * sizeof (long);
     bi.bmiHeader.biXPelsPerMeter = 0;
     bi.bmiHeader.biYPelsPerMeter = 0;
-    bi.bmiHeader.biClrUsed	 = 0;
-    bi.bmiHeader.biClrImportant	 = 0;
+    bi.bmiHeader.biClrUsed       = 0;
+    bi.bmiHeader.biClrImportant  = 0;
 
     hdc = getBitmapDC(NULL);
 
@@ -353,7 +353,7 @@ static void win32app_refresh_rotate(int x1, int y1, int x2, int y2) {
                                  NULL, 0);
 
     if (destBits != NULL) {
-	oobj = SelectObject(hdcMem, destHBmp);
+        oobj = SelectObject(hdcMem, destHBmp);
 
         SelectObject(hdcMem, oobj);
 
@@ -506,41 +506,41 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
 
     switch (wParam) {
     case VK_F1:
-        return KEY_SOFT1;
+        return KEYMAP_KEY_SOFT1;
 
     case VK_F2:
-        return KEY_SOFT2;
+        return KEYMAP_KEY_SOFT2;
 
      case VK_F3:
-        return KEY_SCREEN_ROT;
+        return KEYMAP_KEY_SCREEN_ROT;
 
     case VK_F9:
-        return KEY_GAMEA;
+        return KEYMAP_KEY_GAMEA;
 
     case VK_F4:
-        return MD_KEY_SWITCH_APP;
+        return KEYMAP_MD_KEY_SWITCH_APP;
 
     case VK_F10:
-        return KEY_GAMEB;
+        return KEYMAP_KEY_GAMEB;
 
     case VK_F11:
-        return KEY_GAMEC;
+        return KEYMAP_KEY_GAMEC;
 
     case VK_F12:
-        return KEY_GAMED;
+        return KEYMAP_KEY_GAMED;
         break;
 
     case VK_UP:
-        return KEY_UP;
+        return KEYMAP_KEY_UP;
 
     case VK_DOWN:
-        return KEY_DOWN;
+        return KEYMAP_KEY_DOWN;
 
     case VK_LEFT:
-        return KEY_LEFT;
+        return KEYMAP_KEY_LEFT;
 
     case VK_RIGHT:
-        return KEY_RIGHT;
+        return KEYMAP_KEY_RIGHT;
         
     /*
      * Map VK_SPACE here, but in the
@@ -550,13 +550,13 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
      */
     case VK_SPACE:
     case VK_RETURN:
-        return KEY_SELECT;
+        return KEYMAP_KEY_SELECT;
 
     case VK_BACK:
-        return KEY_BACKSPACE;
+        return KEYMAP_KEY_BACKSPACE;
 
     case VK_HOME:
-        return MD_KEY_HOME;
+        return KEYMAP_MD_KEY_HOME;
     
     default:
         break;
@@ -572,7 +572,7 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
         return temp[0];
     }
 
-    return KEY_INVALID;
+    return KEYMAP_KEY_INVALID;
 }
 
 #if ENABLE_NATIVE_AMS
@@ -652,10 +652,10 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         key = mapKey(wParam, lParam);
 
         switch (key) {
-        case KEY_INVALID:
+        case KEYMAP_KEY_INVALID:
             return 0;
 
-        case MD_KEY_SWITCH_APP:
+        case KEYMAP_MD_KEY_SWITCH_APP:
             if (iMsg == WM_KEYDOWN) {
                 return 0;
             }
@@ -664,14 +664,14 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
             pSignalResult->waitingFor = AMS_SIGNAL;
             return 0;
 
-    	case KEY_SCREEN_ROT:
-	        if (iMsg == WM_KEYDOWN) {
-	            return 0;
+        case KEYMAP_KEY_SCREEN_ROT:
+                if (iMsg == WM_KEYDOWN) {
+                    return 0;
             }
             pMidpEventResult->type = ROTATION_EVENT;
-	        pSignalResult->waitingFor = UI_SIGNAL;
+            pSignalResult->waitingFor = UI_SIGNAL;
             return 0;
-        case MD_KEY_HOME:
+        case KEYMAP_MD_KEY_HOME:
             if (iMsg == WM_KEYDOWN) {
                 return 0;
             }
@@ -689,11 +689,11 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         pMidpEventResult->CHR = key;
 
         if (iMsg == WM_KEYUP) {
-            pMidpEventResult->ACTION = RELEASED;
+            pMidpEventResult->ACTION = KEYMAP_STATE_RELEASED;
         } else if (lParam & 0x40000000) {
-            pMidpEventResult->ACTION = REPEATED;
+            pMidpEventResult->ACTION = KEYMAP_STATE_REPEATED;
         } else {
-            pMidpEventResult->ACTION = PRESSED;
+            pMidpEventResult->ACTION = KEYMAP_STATE_PRESSED;
         }
 
         pSignalResult->waitingFor = UI_SIGNAL;
@@ -760,19 +760,19 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 SetCapture(hwnd);
                 penDown = KNI_TRUE;
                 pMidpEventResult->type = MIDP_PEN_EVENT;
-                pMidpEventResult->ACTION = PRESSED;
+                pMidpEventResult->ACTION = KEYMAP_STATE_PRESSED;
                 return 0;
 
             case WM_LBUTTONUP:
                 ReleaseCapture();
                 penDown = KNI_FALSE;
                 pMidpEventResult->type = MIDP_PEN_EVENT;
-                pMidpEventResult->ACTION = RELEASED;
+                pMidpEventResult->ACTION = KEYMAP_STATE_RELEASED;
                 return 0;
 
             default: /* WM_MOUSEMOVE */
                 pMidpEventResult->type = MIDP_PEN_EVENT;
-                pMidpEventResult->ACTION = DRAGGED;
+                pMidpEventResult->ACTION = KEYMAP_STATE_DRAGGED;
                 return 0;
             }
         }
@@ -797,7 +797,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
             }
 #endif
             switch (Keys[i].button) {
-            case KEY_POWER:
+            case KEYMAP_KEY_POWER:
                 if (iMsg == WM_LBUTTONUP) {
                     return 0;
                 }
@@ -806,7 +806,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 pSignalResult->waitingFor = AMS_SIGNAL;
                 return 0;
 
-            case KEY_END:
+            case KEYMAP_KEY_END:
                 if (iMsg == WM_LBUTTONUP) {
                     return 0;
                 }
@@ -832,12 +832,12 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 switch (iMsg) {
                 case WM_LBUTTONDOWN:
                     pMidpEventResult->type = MIDP_KEY_EVENT;
-                    pMidpEventResult->ACTION = PRESSED;
+                    pMidpEventResult->ACTION = KEYMAP_STATE_PRESSED;
                     return 0;
 
                 case WM_LBUTTONUP:
                     pMidpEventResult->type = MIDP_KEY_EVENT;
-                    pMidpEventResult->ACTION = RELEASED;
+                    pMidpEventResult->ACTION = KEYMAP_STATE_RELEASED;
                     return 0;
                     
                 default:
@@ -916,7 +916,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 
 #if ENABLE_NATIVE_AMS
     case WM_TEST:
-	nams_process_command(wParam, lParam);
+        nams_process_command(wParam, lParam);
 
         appManagerRequestWaiting = 1;
         return 0;

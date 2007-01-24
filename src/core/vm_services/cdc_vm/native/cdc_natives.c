@@ -487,7 +487,8 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
 
 #ifdef CVM_DEBUG
                     printf("Got key%s: %d\n",
-                           (newMidpEvent.ACTION == PRESSED) ? "down" : "up",
+                           (newMidpEvent.ACTION == KEYMAP_STATE_PRESSED) ? 
+                           "down" : "up",
                            newMidpEvent.CHR);
 #endif
                     done = 1;

@@ -217,7 +217,7 @@ void fbapp_map_keycode_to_event(
         int midpKeyCode, jboolean isPressed, jboolean repeatedKeySupport) {
 
     switch(midpKeyCode) {
-    case MD_KEY_HOME:
+    case KEYMAP_MD_KEY_HOME:
         if (isPressed) {
             pNewMidpEvent->type = SELECT_FOREGROUND_EVENT;
             pNewMidpEvent->intParam1 = 0;
@@ -227,7 +227,7 @@ void fbapp_map_keycode_to_event(
         }
         break;
 
-    case MD_KEY_SWITCH_APP:
+    case KEYMAP_MD_KEY_SWITCH_APP:
         if (isPressed) {
             pNewMidpEvent->type = SELECT_FOREGROUND_EVENT;
             pNewMidpEvent->intParam1 = 1;
@@ -237,7 +237,7 @@ void fbapp_map_keycode_to_event(
         }
         break;
 
-    case KEY_SCREEN_ROT:
+    case KEYMAP_KEY_SCREEN_ROT:
         if (isPressed) {
             pNewMidpEvent->type = ROTATION_EVENT;
             pNewSignal->waitingFor = UI_SIGNAL;
@@ -246,7 +246,7 @@ void fbapp_map_keycode_to_event(
         }
         break;
 
-    case KEY_END:
+    case KEYMAP_KEY_END:
         if (isPressed) {
 #if ENABLE_MULTIPLE_ISOLATES
             pNewSignal->waitingFor = AMS_SIGNAL;
@@ -262,7 +262,7 @@ void fbapp_map_keycode_to_event(
         }
         break;
 
-    case KEY_INVALID:
+    case KEYMAP_KEY_INVALID:
         // ignore it
         break;
 
@@ -270,7 +270,8 @@ void fbapp_map_keycode_to_event(
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type = MIDP_KEY_EVENT;
         pNewMidpEvent->CHR = midpKeyCode;
-        pNewMidpEvent->ACTION = isPressed ? PRESSED : RELEASED;
+        pNewMidpEvent->ACTION = isPressed ? 
+            KEYMAP_STATE_PRESSED : KEYMAP_STATE_RELEASED;
         if (repeatedKeySupport) {
             handle_repeated_key_port(midpKeyCode, isPressed);
         }

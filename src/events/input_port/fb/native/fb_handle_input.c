@@ -70,7 +70,7 @@ static void handle_repeat_key_timer_alarm(TimerHandle *timer) {
 
         newMidpEvent.type = MIDP_KEY_EVENT;
         newMidpEvent.CHR = midp_keycode;
-        newMidpEvent.ACTION = REPEATED;
+        newMidpEvent.ACTION = KEYMAP_STATE_REPEATED;
 
         midpStoreEventAndSignalForeground(newMidpEvent);
 
@@ -150,13 +150,13 @@ static void find_raw_key_mapping() {
     // find MIDP key code corresponding to native key
     if (bitscale_mode) {
         // key is bit-mask, seach for mapping entry
-        for (km = keyState.km; km->midp_keycode != KEY_INVALID &&
+        for (km = keyState.km; km->midp_keycode != KEYMAP_KEY_INVALID &&
                 ((changedBits & km->raw_keydown) == 0); km++)
             // break at the first newly pressed/released key
             ;
 
         // check if found the corresponding entry
-        if (km->midp_keycode != KEY_INVALID) {
+        if (km->midp_keycode != KEYMAP_KEY_INVALID) {
             down = key & km->raw_keydown;
             changedBits &= ~km->raw_keydown;
         } else {
@@ -165,7 +165,7 @@ static void find_raw_key_mapping() {
         }
     } else {
         // key is key code
-        for (km = mapping; km->midp_keycode != KEY_INVALID; km++) {
+        for (km = mapping; km->midp_keycode != KEYMAP_KEY_INVALID; km++) {
             if (km->raw_keydown == key) {
                 down = 1;
                 break;
