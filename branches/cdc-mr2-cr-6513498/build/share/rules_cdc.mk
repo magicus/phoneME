@@ -30,11 +30,11 @@ $(CVM_DERIVEDROOT)/classes/java/util/CurrencyData.java: $(CVM_MISC_TOOLS_SRCDIR)
 		< $(CVM_SHAREDCLASSES_SRCDIR)/java/util/CurrencyData.properties > $@
 
 # This rule is temporary. It should be removed when real PackageManager is implemented.
-$(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java: $(CODE_TRANSFORMER_JAR_FILE)
+$(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java: $(CONFIGURATOR_JAR_FILE)
 	@echo ... generating PackageManager.java
-	$(AT)$(CVM_JAVA) -jar $(CODE_TRANSFORMER_JAR_FILE) \
-	-xml $(CVM_MISC_TOOLS_SRCDIR)/xsl/empty.xml \
-	-xsl $(CVM_MISC_TOOLS_SRCDIR)/xsl/propertiesInit.xsl \
+	$(AT)$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
+	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesInit.xsl \
 	-params propertyInitializers '$(PROPERTY_INITIALIZER_LIST)' \
 	-out $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java
 
