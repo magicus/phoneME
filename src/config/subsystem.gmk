@@ -32,8 +32,14 @@
 
 SUBSYSTEMS += jsr135
 
--include $(JSR_135_DIR)/src/config/config.$(TARGET_PLATFORM)
+JSR_135_CONFIG_DIR = $(JSR_135_DIR)/src/config/$(TARGET_PLATFORM)
+
+include $(JSR_135_CONFIG_DIR)/config.gmk
 include $(JSR_135_DIR)/src/config/features.defs
+
+# Include JSR_135 system properties in Configuration
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+        $(JSR_135_CONFIG_DIR)/properties_jsr135.xml
 
 # Specify romizer configuration file for the MMAPI
 # and path where the file is located
