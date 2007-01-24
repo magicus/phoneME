@@ -26,9 +26,9 @@
  */
 
 /**
- * Transforms a XML file according given XSL file.
+ * Generates localized string data from source XML file.
  */
-package com.sun.midp.configurator;
+package com.sun.midp.l10n.generator;
 
 import java.io.*;
 import java.util.*;
@@ -43,40 +43,20 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.SAXException;
 
-/**
- * Represents transformation
- */
-class Transformation {
-    /** XML file name to apply transformation to */
-    public String xmlFileName = "";
-
-    /** XSL files to be applied */
-    public String xslFileName = null;
-
-    /** Transformation parameters: names */
-    public Vector xslParamNames = new Vector();
-
-    /** Transformation parameters: values */
-    public Vector xslparamValues = new Vector();
-
-    /** Output file name */
-    public String outFileName = "";
-
-    /** Do input file validation */
-    public boolean validate = false;
-}
-
 
 /**
  *  Driver class with main(). Parses command line arguments and invokes
- *  CodeTransformerImpl instance that does all the transformation work.
+ *  LocalizedStringsGeneratorImpl instance that does all the transformation work.
  */
-public class CodeTransformer {
+public class LocalizedStringsGenerator {
     /** Transformer that does actual transformation */
-    private static CodeTransformerImpl transformer = null;
+    private static LocalizedStringsGeneratorImpl transformer = null;
 
-    /** Transformations to perform */
-    private static Vector transformations = new Vector();
+    /** XML file name to apply transformation to */
+    public static String xmlFileName = "";
+
+    /** Output file name */
+    public static String outFileName = "";
 
     /** Print debug output while running */
     private static boolean debug = false;
@@ -98,12 +78,8 @@ public class CodeTransformer {
                 return;
             }
 
-            transformer = new CodeTransformerImpl(debug);
-            for (int i = 0; i < transformations.size(); ++i) {
-                Transformation tr =
-                    (Transformation)transformations.elementAt(i);
-                transformer.transform(tr);
-            }
+            transformer = new LocalizedStringsGeneratorImpl(debug);
+            transformer.transform(xmlFileName, outFileName);
         } catch (SAXException e) {
             // error was already reported
             e.printStackTrace();
@@ -116,50 +92,25 @@ public class CodeTransformer {
 
     /**
      * Parse command line arguments, adding Transformation objects to
-     * <tt>transformations</tt> vector for each trnasformation specified.
+     * <tt>transformations</tt> vector for each transformation specified.
      *
      * @param args command line arguments
      */
     private static void parseArgs(String[] args)
     {
-        Transformation tr = new Transformation();
         for (int i = 0; i < args.length; ++i) {
             String arg = args[i];
             if (debug) {
                 System.err.println("arg: " + arg);
             }
             if (arg.equals("-xml")) {
-                tr.xmlFileName = args[++i];
-            } else if (arg.equals("-xsl")) {
-                tr.xslFileName = args[++i];
-            } else if (arg.equals("-params")) {
-                int j = i + 1;
-                for (; j < args.length; j += 2)  {
-                    if ('-' == args[j].charAt(0)) {
-                        break;
-                    }
-                    if (debug) {
-                       System.err.println("pname : " + (String)args[j]);
-                       System.err.println("pvalue: " + (String)args[j + 1]);
-                    }
-                    tr.xslParamNames.add(args[j]);
-                    tr.xslparamValues.add(args[j + 1]);
-                }
-                i = j - 1;
-            } else if (arg.equals("-validate")) {
-                tr.validate = true;
+                xmlFileName = args[++i];
             } else if (arg.equals("-out")) {
-                tr.outFileName = args[++i];
-                // -out ends current transformation arguments,
-                // i.e all agruments coming after it belongs
-                // to next transformation(s)
-                transformations.add(tr);
-                tr = new Transformation();
+                outFileName = args[++i];
             } else if (arg.equals("-debug")) {
                 debug = true;
             } else {
-                throw new IllegalArgumentException("invalid option \""
-                        + args[i] + "\"");
+                printHelp = true;
             }
         }
     }
@@ -170,29 +121,14 @@ public class CodeTransformer {
     private static void printHelp() {
         /**
          * Following options are recognized:
-         * -validate:   Do validation of input XML file.
-         * -xml:        XML file to transform.
-         * -xsl:        XSL file to apply to given XML file.
+         * -xml:        Source XML file.
          * -out:        Output file. If empty, output will be to stdout.
-         * -params:     Transformations parameters in form of "Name"
-   *              "Value" pairs.
          * -help:       Print usage information
          * -debug:      Be verbose: print some debug info while running.
-         *
-         * In order to improve performance, CodeTransformer is capable of
-         * doing multiple transformations per invokation. -out option marks
-         * the end of arguments for single transformation. All arguments
-         * after it belongs to next transformation(s).
          */
-        System.err.println("Usage: java -jar "
-            + "com.sun.midp.configurator.CodeTransformer "
-            + "[-validate] "
+        System.err.println("Usage: java -jar <l10n_generator_jar_file>"
             + "-xml <localXMLFile> "
-            + "-xsl <localXSLFile> "
-            + "-params <paramName> <paramValue>... "
             + "-out <localOutputFile> "
-            + "-xml <localXMLFile> "
-            + "... "
             + "[-debug] "
             + "[-help]");
     }
@@ -202,22 +138,10 @@ public class CodeTransformer {
 /**
  * Perform the transformation
  */
-class CodeTransformerImpl {
+class LocalizedStringsGeneratorImpl {
     /** Factory constructing Transformer objects */
     private TransformerFactory transformerFactory =
         TransformerFactory.newInstance();
-
-    /**
-     * Since most of transformations are applied to the same XML file,
-     * we don't want to load it on each transformation, so we cache last
-     * used XML file as DOMSource
-     */
-    /** Last source used */
-    private DOMSource lastSource = null;
-    /** Last document used */
-    private Document lastDoc = null;
-    /** File name of the last used source */
-    private String lastSourceFileName = null;
 
     /** Be verbose: print some debug info while running */
     private boolean debug = false;
@@ -228,7 +152,7 @@ class CodeTransformerImpl {
      *
      * @param dbg print some debug output while running
      */
-    public CodeTransformerImpl(boolean dbg)
+    public LocalizedStringsGeneratorImpl(boolean dbg)
     {
         debug = dbg;
     }
@@ -236,13 +160,13 @@ class CodeTransformerImpl {
     /**
      * Converts errors.
      */
-    class TransformerErrorHandler
+    class GeneratorErrorHandler
         implements ErrorHandler {
 
-  /**
-   * Handles errors.
-   * @param e the parsing exception
-   */
+        /**
+         * Handles errors.
+         * @param e the parsing exception
+         */
         public void error(SAXParseException e)
             throws SAXParseException {
             reportError(e);
@@ -250,26 +174,26 @@ class CodeTransformerImpl {
             throw e;
         }
 
-  /**
-   * Handles fatal errors.
-   * @param e the parsing exception
-   */
-  public void fatalError(SAXParseException e) {
+        /**
+         * Handles fatal errors.
+         * @param e the parsing exception
+         */
+        public void fatalError(SAXParseException e) {
             reportError(e);
         }
 
-  /**
-   * Handles warnings.
-   * @param e the parsing exception
-   */
+        /**
+         * Handles warnings.
+         * @param e the parsing exception
+         */
         public void warning(SAXParseException e) {
             reportError(e);
         }
 
-  /**
-   * Outputs diagnostic messages.
-   * @param e the parsing exception
-   */
+        /**
+         * Outputs diagnostic messages.
+         * @param e the parsing exception
+         */
         private void reportError(SAXParseException e) {
             String msg = e.getMessage();
             String location = e.getSystemId();
@@ -285,87 +209,27 @@ class CodeTransformerImpl {
      *
      * @param tr transformation to perform
      */
-    public void transform(Transformation tr)
+    public void transform(String xmlFileName, String outFileName)
         throws Exception {
 
         if (debug) {
-            System.err.println("xml file: " + tr.xmlFileName);
-            System.err.println("out file: " + tr.outFileName);
-            System.err.println("prev xml: " + lastSourceFileName);
+            System.err.println("xml file: " + xmlFileName);
+            System.err.println("out file: " + outFileName);
         }
 
-        // source XML file
-        DOMSource source = null;
-        Document doc;
-        if (lastSource != null &&
-                lastSourceFileName.equals(tr.xmlFileName)) {
-            source = lastSource;
-            doc = lastDoc;
-        } else {
-            // load XML file as DOM tree
-            DocumentBuilderFactory domFactory =
-                DocumentBuilderFactory.newInstance();
+        // load XML file as DOM tree
+        DocumentBuilderFactory domFactory =
+            DocumentBuilderFactory.newInstance();
 
-            if (tr.validate) {
-                domFactory.setValidating(true);
-            }
-            DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
+        DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
 
-            domBuilder.setErrorHandler(new TransformerErrorHandler());
-            doc = domBuilder.parse(new File(tr.xmlFileName));
+        domBuilder.setErrorHandler(new GeneratorErrorHandler());
+        Document doc = domBuilder.parse(new File(xmlFileName));
 
-            // make source from it
-            source = new DOMSource(doc);
-        }
+        // make source from it
+        DOMSource source = new DOMSource(doc);
 
-        // if output and input files are the same,
-        // we can't reuse cached input file since
-        // it's going to change
-        if ((tr.xmlFileName).equals(tr.outFileName)) {
-            lastSource = null;
-            lastDoc = null;
-            lastSourceFileName = null;
-        } else {
-            lastSource = source;
-            lastDoc = doc;
-            lastSourceFileName = tr.xmlFileName;
-        }
-
-        // apply XSL stylesheet
-        if (debug) {
-            System.err.println("xsl file: " + tr.xslFileName);
-        }
-
-        if (tr.xslFileName.equals("custom-localized-strings")) {
-            generateLocalizedStrings(doc, tr.outFileName);
-        } else {
-            // output file
-            StreamResult outStream = null;
-            if (tr.outFileName.length() == 0) {
-                // send transformed output to the stdout
-                outStream = new StreamResult(System.out);
-            } else  {
-                // send transformed output to the file
-                makeDirectoryTree(tr.outFileName);
-                outStream = new StreamResult(new File(tr.outFileName));
-            }
-
-            // create Transformer that will aply stylesheet
-            StreamSource xslFile = new
-                StreamSource(new File(tr.xslFileName));
-            Transformer transformer =
-                transformerFactory.newTransformer(xslFile);
-
-            // pass parameters to Transformer
-            for (int j = 0; j < tr.xslParamNames.size(); ++j) {
-                transformer.setParameter(
-                    (String)tr.xslParamNames.elementAt(j),
-                    tr.xslparamValues.elementAt(j));
-            }
-
-            // finally, apply the stylesheet
-            transformer.transform(source, outStream);
-        }
+        generateLocalizedStrings(doc, outFileName);
     }
 
     /**
@@ -460,7 +324,7 @@ class CodeTransformerImpl {
     Hashtable locales = new Hashtable();
 
     /**
-     * Add one <localized_string> Element to the LocalizedStringSet of
+     * Add one <localized_string> element to the LocalizedStringSet of
      * the enclosing <localized_strings>.
      * @param className the locales handler
      * @param valueIndex key for this entry
@@ -481,7 +345,7 @@ class CodeTransformerImpl {
 
 
 /**
- * Records all localized strings in for the locale represented by
+ * Records all localized strings for the locale represented by
  * a given Java class.
  */
 class LocalizedStringSet {
@@ -568,17 +432,17 @@ class CSourceWriter {
             list.add(strings[i]);
         }
 
-  /**
-   * Sorting function.
-   */
+        /**
+         * Sorting function.
+         */
         Collections.sort(list, new Comparator() {
-    /**
-     * Comparison method.
-     * @param o1 left hand operand
-     * @param o2 right hand operand
-     * @return positive value if o2 is greater than o1,
-     * negative is o1 is less than o2 and zero if the same
-     */
+            /**
+             * Comparison method.
+             * @param o1 left hand operand
+             * @param o2 right hand operand
+             * @return positive value if o2 is greater than o1,
+             * negative is o2 is less than o1
+             */
             public int compare(Object o1, Object o2) {
                 LocalizedString r1 = (LocalizedString)o1;
                 LocalizedString r2 = (LocalizedString)o2;
@@ -590,7 +454,7 @@ class CSourceWriter {
     }
 
     /**
-     * Write the C source file that stores the local string data in a
+     * Writes the C source file that stores the local string data in a
      * compact data structure
      * @param locale the target locale for comparison purposes
      * @param filename the source for processing
@@ -656,15 +520,15 @@ class CSourceWriter {
     }
 
     /**
-     * Short-hand for printint a line into the output file
-      * @param s the string to output
-    */
+     * Short-hand for printing a line to the output file
+     * @param s the string to output
+     */
     void pl(String s) {
         writer.println(s);
     }
 
     /**
-     * Short-hand for printint a string  the output file (with a 12-space
+     * Short-hand for printing a line to the output file (with a 12-space
      * prefix)
      * @param s the string to output
      */
@@ -674,7 +538,7 @@ class CSourceWriter {
     }
 
     /**
-     * Short-hand for printint a string into the output file
+     * Short-hand for printing a string into the output file
      * @param s the string to output
      */
     void p(String s) {
@@ -727,7 +591,7 @@ class CSourceWriter {
     }
 
     /**
-     * Tell which one of UT8 or UNICODE is smaller
+     * Tell which one of UTF8 or UNICODE is smaller
      * @param sbuf the string data to be processed
      * @return the storage type
      */
@@ -844,7 +708,7 @@ class CSourceWriter {
      * @param needle the item to be found
      * @param haystack the data to be searched
      * @param end the limit of the search
-     * @return theindex of the found data or -1 if not found
+     * @return index of the found data or -1 if not found
      */
     int search(byte needle[], byte haystack[], int end) {
         int needleLen = needle.length;
@@ -871,7 +735,7 @@ class CSourceWriter {
     }
 
     /**
-     * Write a table of the offset of each localized string
+     * Write a table of localized string offsets
      */
     void writeOffsetTable() {
         int maxOffset = 0, maxLen = 0;

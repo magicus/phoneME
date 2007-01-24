@@ -33,20 +33,10 @@
 #include <midpStorage.h>
 #include <midpString.h>
 
+/* for getCharFileSeparator()   */
+/* #include <commandLineUtil.h> */
+
 static char dirBuffer[MAX_FILENAME_LENGTH+1];
-
-static char* getCharFileSeparator() {
-    /*
-     * This function is called before the debug heap is initialized.
-     * so we can't use midpMalloc.
-     */
-    static char fsep[2];
-
-    fsep[0] = (char)storageGetFileSeparator();
-    fsep[1] = 0;
-
-    return fsep;
-}
 
 /**
  * Generates a correct MIDP home directory based on several rules. If
@@ -163,75 +153,4 @@ char* midpFixMidpHome(char *cmd) {
 
     return dirBuffer;
 #endif
-}
-
-/**
- * Removes the flag and value for a given option from command line argument
- * array.
- *
- * @param pszFlag flag for the option
- * @param apszArgs array of arguments
- * @param pArgc pointer to the count of arguments in the array, it
- * will updated with the length
- *
- * @return value of the option or NULL if it does not exist
- */
-char* midpRemoveCommandOption(char* pszFlag, char* apszArgs[], int* pArgc) {
-    int i;
-    int len = *pArgc;
-    char* result = NULL;
-
-    for (i = 0; i < (len - 1); i++) {
-        if (strcmp(pszFlag, apszArgs[i]) == 0) {
-            result = apszArgs[i + 1];
-      break;
-        }
-    }
-
-    if (result == NULL) {
-        return NULL;
-    }
-
-    /* Remove the flag and value of the option. */
-    for (; i < (len - 2); i++) {
-        apszArgs[i] = apszArgs[i + 2];
-    }
-
-    *pArgc = len - 2;
-    return result;
-}
-
-/**
- * Removes a given option flag from command line argument
- *
- * @param pszFlag flag for the option
- * @param apszArgs array of arguments
- * @param pArgc pointer to the count of arguments in the array, it
- * will updated with the length
- *
- * @return value of the flag or NULL if it does not exist
- */
-char* midpRemoveOptionFlag(char* pszFlag, char* apszArgs[], int* pArgc) {
-    int i;
-    int len = *pArgc;
-    char* result = NULL;
-
-    for (i = 0; i < len; i++) {
-        if (strcmp(pszFlag, apszArgs[i]) == 0) {
-            result = apszArgs[i];
-      break;
-        }
-    }
-
-    if (result == NULL) {
-        return NULL;
-    }
-
-    /* Remove the flag */
-    for (; i < (len - 1); i++) {
-        apszArgs[i] = apszArgs[i + 1];
-    }
-
-    *pArgc = len - 1;
-    return result;
 }

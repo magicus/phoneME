@@ -39,17 +39,17 @@ SUBSYSTEMS += tool
 
 # This specifies the option you choose for this build 
 #
-SUBSYSTEM_TOOL_MODULES = keytool jadtool configurator imageutil skinromization
+SUBSYSTEM_TOOL_MODULES = keytool jadtool imageutil skinromization l10n_generator
 
 INT_KEYTOOL_DIR = $(SUBSYSTEM_DIR)/tool/mekeytool/classes/com/sun/midp/mekeytool
 INT_KEYSTORE_DIR = $(SUBSYSTEM_DIR)/security/publickeystore/reference/classes/com/sun/midp/publickeystore
 INT_JADTOOL_DIR = $(SUBSYSTEM_DIR)/tool/jadtool/classes/com/sun/midp/jadtool
-INT_CONFIGURATOR_DIR = $(SUBSYSTEM_DIR)/tool/configurator/classes/com/sun/midp/configurator
 INT_AMS_DIR = $(SUBSYSTEM_DIR)/ams/installer/reference/classes
 INT_JAVAUTIL_DIR = $(SUBSYSTEM_DIR)/core/javautil/reference/classes
 INT_IMAGEUTIL_DIR = $(SUBSYSTEM_DIR)/tool/imageutil/classes/com/sun/midp/imageutil
 INT_SKINROMIZATION_DIR = $(SUBSYSTEM_DIR)/tool/chameleon/classes/com/sun/midp/skinromization
 INT_LCDLF_J_DIR = $(SUBSYSTEM_DIR)/highlevelui/lcdlf/lfjava/classes
+INT_L10N_GENERATOR_DIR = $(SUBSYSTEM_DIR)/tool/l10ngen/classes/com/sun/midp/l10n/generator
 
 # Java files for the ( mekeytool ) module
 #
@@ -77,11 +77,6 @@ MODULE_TOOL_JADTOOL_JAVA_FILES = \
 	$(INT_AMS_DIR)/com/sun/midp/installer/InvalidJadException.java
 
 
-# Java files for the ( configurator ) module
-#
-MODULE_TOOL_CONFIGURATOR_JAVA_FILES = \
-	$(INT_CONFIGURATOR_DIR)/CodeTransformer.java
-
 # Java files for the ( image to raw converter tool ) module
 #
 MODULE_TOOL_IMAGE2RAW_JAVA_FILES = \
@@ -96,3 +91,8 @@ MODULE_TOOL_SKINROMIZATION_JAVA_FILES = \
     $(INT_LCDLF_J_DIR)/com/sun/midp/chameleon/skins/resources/FontResourcesConstants.java \
     $(INT_LCDLF_J_DIR)/com/sun/midp/chameleon/skins/resources/SkinResourcesConstants.java \
     $(INT_LCDLF_J_DIR)/com/sun/midp/chameleon/skins/resources/ScrollIndResourcesConstants.java
+
+# Java files for the ( l10n generator ) module
+#
+MODULE_TOOL_L10N_GENERATOR_JAVA_FILES = \
+	$(INT_L10N_GENERATOR_DIR)/LocalizedStringsGenerator.java

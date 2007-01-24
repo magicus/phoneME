@@ -37,5 +37,6 @@ extern char* midpRemoveCommandOption(char* pszFlag, char* apszArgs[],
                                      int* pArgc);
 extern char* midpRemoveOptionFlag(char* pszFlag, char* apszArgs[],
                   int* pArgc);
+extern char* getCharFileSeparator();
 
 #endif /* _COMMAND_LINE_UTIL_H_ */
