@@ -522,6 +522,12 @@ class PopupBody : public QPushButton {
   /** button width to track resizing and redo truncation when necessary */
   int oldWidth;
 
+  /** popup list */
+  QListBox *qPopup;
+
+  /** if list is popped up */
+  bool poppedUp;
+
  public:
   /**
    * PopupBody constructor.
@@ -548,9 +554,24 @@ class PopupBody : public QPushButton {
   void setText(const QString & newText);
 
  /**
+  * Set popup list variable
+  */
+  void setList(QListBox *list);
+ 
+ /**
+  * Get popup list variable
+  */
+  QListBox* getList();
+ 
+ /**
   * Override drawButton to support text truncation
   */
  virtual void drawButton( QPainter * p );
+
+    /**
+     * Pops down (removes) the combo box popup list box.
+     */
+    void popDownList();
 
  protected:
   /**
@@ -564,12 +585,18 @@ class PopupBody : public QPushButton {
   void focusInEvent(QFocusEvent *event);
 
   /**
-   * Override to patch a feature in Qt that shows popup menu at 
-   * (0, 0) if triggered by key press, instead of mouse click.
+   * Override to show popup list 
    *
    * @param keyEvent key event to handle
    */
   void keyPressEvent(QKeyEvent *keyEvent);
+
+  /**
+   * Override to show popup list
+   *
+   * @param e pointer event to handle
+   */
+  void mousePressEvent( QMouseEvent *e);
 
   /**
    * Override QPushButton to notify Java peer of traversal out.
@@ -577,6 +604,24 @@ class PopupBody : public QPushButton {
    * @param keyEvent key event to handle
    */
   void keyReleaseEvent(QKeyEvent *keyEvent);
+
+  /**
+   * The event filter steals events from the listbox when it is
+   * popped up. 
+   */
+  bool eventFilter(QObject *object, QEvent *event);
+
+  /**
+   * Calculates the listbox height needed to contain all items, or as
+   * many as the list box is supposed to contain.
+   */
+  int listHeight( QListBox *l, int sl );
+
+  /**
+   * Popups the popup list.
+   * If the list is empty, no selections appear.
+   */
+  void popupList();
 
 };
 
@@ -978,7 +1023,8 @@ class Popup : public Choice {
   /**
    * The popup menu with all choices.
    */
-  PatchedQPopupMenu *qPopup;
+  //PatchedQPopupMenu *qPopup;
+  QListBox *qPopup;
 
   /**
    * Index of the currently selected element, using zero-based
@@ -990,7 +1036,7 @@ class Popup : public Choice {
    * List of all PopupElement inserted in this Popup in the correct
    * order
    */
-  QList<QCustomMenuItem> *elements;
+  //QList<QCustomMenuItem> *elements;
 
  protected:
 
@@ -1231,7 +1277,26 @@ class ListElement : public QListBoxItem {
      *
      * @param f new font
      */
-    void setFont(QFont *f);
+    void setFont(QFont *f);    
+
+    /**
+    * Returns the pixmap that corresponds to this popup element.
+    *
+    * @return pixmap of this element
+    */
+    QPixmap *pixmap() {
+    return pix;
+    }
+
+    /**
+     * Returns the font that corresponds to this popup element.
+     *
+     * @return font of this element
+     */
+
+    QFont *getFont() {
+        return font;
+    }
 
 
  private:
