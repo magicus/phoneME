@@ -25,29 +25,19 @@
  */
 
 #include <kni.h>
+#include <jsrop_exceptions.h>
 #include <sni.h>
-#include <commonKNIMacros.h>
-#include <kni_globals.h>
 #include <midpServices.h>
 #include <midp_thread.h>
-#include <midpError.h>
-#include <midp_properties_port.h>
-#include <midpMalloc.h>
 
-#include "carddevice.h"
-
-
-/**
- * Device locking flag
- */
-static jboolean locked = KNI_FALSE;
+#include <javacall_carddevice.h>
 
 /** Configuration exception */
-static char midpCardDeviceException[] = 
+static char cardDeviceException[] = 
     "com/sun/cardreader/CardDeviceException";
 
 /** Configuration property name */
-static char hostsandports[] = "com.sun.midp.io.j2me.apdu.hostsandports";
+static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
 
 /**
  * Initializes the device.
@@ -59,52 +49,65 @@ static char hostsandports[] = "com.sun.midp.io.j2me.apdu.hostsandports";
  * @throws CardDeviceException If configuration failed.
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-Java_com_sun_cardreader_PlatformCardDevice_init0() {
+KNIDECL (com_sun_cardreader_PlatformCardDevice_init0) {
     jboolean retcode = KNI_FALSE;
-    JSR177_STATUSCODE status;
-    jbyte *err_msg;
-    const jbyte *prop_value;
+    javacall_result status;
+    char *err_msg;
+    char *buffer;
+    const char *prop_value;
     
-    prop_value = getInternalProp(hostsandports);
+    /* IMPL_NOTE: Change to Properties abstraction */
+//    prop_value = getInternalProp(hostsandports);
+    prop_value = NULL;
     if (prop_value != NULL) {
-        status = jsr177_set_property(hostsandports, prop_value);
-        if (status == JSR177_STATUSCODE_NOT_IMPLEMENTED) {
-            if (jsr177_get_error(gKNIBuffer, KNI_BUFFER_SIZE)) {
-                err_msg = gKNIBuffer;
-            } else {
-                err_msg = "Required property not supported";
-            }
-            KNI_ThrowNew(midpCardDeviceException, err_msg);
-            goto end;
-        }
-        if (status == JSR177_STATUSCODE_OUT_OF_MEMORY) {
-            if (jsr177_get_error(gKNIBuffer, KNI_BUFFER_SIZE)) {
-                err_msg = gKNIBuffer;
-            } else {
+        status = javacall_carddevice_set_property(hostsandports, prop_value);
+        if (status != JAVACALL_OK) {
+#define BUFFER_SIZE 128
+            buffer = malloc(BUFFER_SIZE);
+            if (buffer == NULL) {
                 err_msg = "init0()";
+                KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
+                goto end;
             }
-            KNI_ThrowNew(midpOutOfMemoryError, err_msg);
-            goto end;
-        }
-        if (status != JSR177_STATUSCODE_OK) {
-            if (jsr177_get_error(gKNIBuffer, KNI_BUFFER_SIZE)) {
-                err_msg = gKNIBuffer;
-            } else {
-                err_msg = "Invalid 'hostsandports' property";
+
+            switch (status) {
+            case JAVACALL_NOT_IMPLEMENTED:
+                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
+                    err_msg = buffer;
+                } else {
+                    err_msg = "Required property not supported";
+                }
+                KNI_ThrowNew(cardDeviceException, err_msg);
+                break;
+            case JAVACALL_OUT_OF_MEMORY:
+                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
+                    err_msg = buffer;
+                } else {
+                    err_msg = "init0()";
+                }
+                KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
+                break;
+            default:
+                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
+                    err_msg = buffer;
+                } else {
+                    err_msg = "Invalid 'hostsandports' property";
+                }
+                KNI_ThrowNew(cardDeviceException, err_msg);
+                break;
             }
-            KNI_ThrowNew(midpCardDeviceException, err_msg);
+            free(buffer);
             goto end;
         }
     }
-    if ((status = jsr177_init()) == JSR177_STATUSCODE_OK) {
-        locked = KNI_FALSE;
-        jsr177_clear_error();
+    if ((status = javacall_carddevice_init()) == JAVACALL_OK) {
+        javacall_carddevice_clear_error();
         retcode = KNI_TRUE;
     } else
-    if (status == JSR177_STATUSCODE_NOT_IMPLEMENTED) {
+    if (status == JAVACALL_NOT_IMPLEMENTED) {
         
         /* We throw special exception to tell i3tests to skip real testing*/
-        KNI_ThrowNew(midpCardDeviceException, "stub");
+        KNI_ThrowNew(cardDeviceException, "stub");
         retcode = KNI_TRUE;
     }
 end:
@@ -119,13 +122,18 @@ end:
  * </pre>
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_cardreader_PlatformCardDevice_finalize0() {
-    locked = KNI_FALSE;
-    jsr177_finalize();
+KNIDECL(com_sun_cardreader_PlatformCardDevice_finalize0) {
+    javacall_carddevice_finalize();
     KNI_ReturnVoid();
 }
 
-/* This constant is used only in jsr177_lock and jsr177_unlock functions. */
+/* This constant is used only in javacall_carddevice_reset_start and javacall_carddevice_reset_finish functions. */
+#define SIGNAL_RESET    0x7781
+
+/* This constant is used only in javacall_carddevice_xfer_data_start and javacall_carddevice_xfer_data_finish functions. */
+#define SIGNAL_XFER     0x7782
+
+/* This constant is used only in javacall_carddevice_lock and javacall_carddevice_unlock functions. */
 #define SIGNAL_LOCK     0x7783
 
 /**
@@ -137,20 +145,20 @@ Java_com_sun_cardreader_PlatformCardDevice_finalize0() {
  * @return KNI_TRUE in case of success, else KNI_FALSE 
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-Java_com_sun_cardreader_PlatformCardDevice_lock0() {
-    JSR177_STATUSCODE lock_retcode = JSR177_STATUSCODE_OK;
+KNIDECL(com_sun_cardreader_PlatformCardDevice_lock0) {
+    javacall_result lock_retcode = JAVACALL_OK;
     jboolean retcode = KNI_FALSE;
     
-    if (!locked  &&  ((lock_retcode=jsr177_lock()) == JSR177_STATUSCODE_OK)) {
-        locked = KNI_TRUE;
-        jsr177_clear_error();
+    if ((lock_retcode=javacall_carddevice_lock()) == JAVACALL_OK) {
+        javacall_carddevice_clear_error();        
         retcode = KNI_TRUE;
-    } else 
-    if (!locked  &&  (lock_retcode != JSR177_STATUSCODE_WOULD_BLOCK)) {
-        retcode = KNI_FALSE;
-    } else {
-        midp_thread_wait(CARD_READER_DATA_SIGNAL, SIGNAL_LOCK, NULL); 
     }
+    else {
+        if (lock_retcode == JAVACALL_WOULD_BLOCK) {
+            midp_thread_wait(CARD_READER_DATA_SIGNAL, SIGNAL_LOCK, NULL); 
+        }
+    }
+
     KNI_ReturnInt(retcode);
 }
 
@@ -163,13 +171,12 @@ Java_com_sun_cardreader_PlatformCardDevice_lock0() {
  * @return KNI_TRUE in case of success, else KNI_FALSE 
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-Java_com_sun_cardreader_PlatformCardDevice_unlock0() {
+KNIDECL(com_sun_cardreader_PlatformCardDevice_unlock0) {
     jboolean retcode = KNI_FALSE;
     
-    if (locked  &&  (jsr177_unlock() == JSR177_STATUSCODE_OK)) {
-        locked = KNI_FALSE;
+    if (javacall_carddevice_unlock() == JAVACALL_OK) {
         midp_thread_signal(CARD_READER_DATA_SIGNAL, SIGNAL_LOCK, 0);
-        jsr177_clear_error();
+        javacall_carddevice_clear_error();
         retcode = KNI_TRUE;
     }
     
@@ -186,16 +193,12 @@ Java_com_sun_cardreader_PlatformCardDevice_unlock0() {
  * @return KNI_TRUE in case of success, else KNI_FALSE 
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-Java_com_sun_cardreader_PlatformCardDevice_selectSlot0() {
+KNIDECL(com_sun_cardreader_PlatformCardDevice_selectSlot0) {
     jint slotIndex;
     jboolean retcode;
     
-    if (!locked) {
-        jsr177_set_error("Device not locked");
-        KNI_ReturnInt(KNI_FALSE);
-    }
     slotIndex = KNI_GetParameterAsInt(1);
-    if (jsr177_select_slot(slotIndex) != JSR177_STATUSCODE_OK)
+    if (javacall_carddevice_select_slot(slotIndex) != JAVACALL_OK)
         retcode = KNI_FALSE;
     else
         retcode = KNI_TRUE;
@@ -212,10 +215,10 @@ Java_com_sun_cardreader_PlatformCardDevice_selectSlot0() {
  * returns 0.
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-Java_com_sun_cardreader_PlatformCardDevice_getSlotCount0() {
+KNIDECL(com_sun_cardreader_PlatformCardDevice_getSlotCount0) {
     jint retcode;
-    jint num;
-    if (jsr177_get_slot_count(&num) == JSR177_STATUSCODE_OK) {
+    javacall_int32 num;
+    if (javacall_carddevice_get_slot_count(&num) == JAVACALL_OK) {
         if (num > 0) {
             retcode = num;
         } else {
@@ -239,12 +242,12 @@ Java_com_sun_cardreader_PlatformCardDevice_getSlotCount0() {
  *         <code>-1</code> if any error occured
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-Java_com_sun_cardreader_PlatformCardDevice_isSatSlot0() {
+KNIDECL(com_sun_cardreader_PlatformCardDevice_isSatSlot0) {
     jint retcode;
-    jboolean result;
+    javacall_bool result;
     int slotIndex = KNI_GetParameterAsInt(1);
-    if (jsr177_is_sat(slotIndex, &result) == JSR177_STATUSCODE_OK) {
-        if (result == PCSL_FALSE) {
+    if (javacall_carddevice_is_sat(slotIndex, &result) == JAVACALL_OK) {
+        if (result == JAVACALL_FALSE) {
             retcode = 0;
         } else {
             retcode = 1;
@@ -265,24 +268,18 @@ Java_com_sun_cardreader_PlatformCardDevice_isSatSlot0() {
  * @return Length of ATR in case of success, else -1 
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-Java_com_sun_cardreader_PlatformCardDevice_reset0() {
+KNIDECL(com_sun_cardreader_PlatformCardDevice_reset0) {
     jint retcode;
-    jsize atr_length;
-    jbyte *atr_buffer;
+    javacall_int32 atr_length;
+    char *atr_buffer;
     MidpReentryData* info;
     void *context = NULL;
-    JSR177_STATUSCODE status_code;
+    javacall_result status_code;
     
     KNI_StartHandles(1);
     KNI_DeclareHandle(atr_handle);
-    
-    if (!locked) {
-        jsr177_set_error("Device not locked");
-        retcode = -1;
-        goto end;
-    }
+
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
-    
     KNI_GetParameterAsObject(1, atr_handle);
     if (KNI_IsNullHandle(atr_handle)) {
         atr_buffer = NULL;
@@ -291,18 +288,20 @@ Java_com_sun_cardreader_PlatformCardDevice_reset0() {
         atr_length = KNI_GetArrayLength(atr_handle);
         atr_buffer = SNI_GetRawArrayPointer(atr_handle);
     }
-    
+
     if (info == NULL) {
-        status_code = jsr177_reset_start(atr_buffer, &atr_length, &context);
+        status_code = javacall_carddevice_reset_start(atr_buffer, &atr_length, &context);
     } else {
         context = info->pResult;
-        status_code = jsr177_reset_finish(atr_buffer, &atr_length, context);
+        status_code = javacall_carddevice_reset_finish(atr_buffer, &atr_length, context);
     }
-    if (status_code == JSR177_STATUSCODE_WOULD_BLOCK) {
+
+    if (status_code == JAVACALL_WOULD_BLOCK) {
         midp_thread_wait(CARD_READER_DATA_SIGNAL, SIGNAL_RESET, context);
         goto end;
     }
-    if (status_code != JSR177_STATUSCODE_OK) {
+
+    if (status_code != JAVACALL_OK) {
         retcode = -1;
     } else {
         retcode = atr_length;
@@ -323,25 +322,20 @@ end:
  * @return Length of response in case of success, else -1
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-Java_com_sun_cardreader_PlatformCardDevice_cmdXfer0() {
+KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
     jint retcode;
-    jsize tx_length, rx_length;
-    jbyte *tx_buffer, *rx_buffer;
+    javacall_int32 tx_length, rx_length;
+    char *tx_buffer, *rx_buffer;
     MidpReentryData* info;
     void *context = NULL;
-    JSR177_STATUSCODE status_code;
+    javacall_result status_code;
     
     KNI_StartHandles(2);
     KNI_DeclareHandle(request_handle);
     KNI_DeclareHandle(response_handle);
     
-    if (!locked) {
-        jsr177_set_error("Device not locked");
-        retcode = -1;
-        goto end;
-    }
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
-    
+
     KNI_GetParameterAsObject(1, request_handle);
     if (KNI_IsNullHandle(request_handle)) {
         tx_buffer = NULL;
@@ -356,7 +350,7 @@ Java_com_sun_cardreader_PlatformCardDevice_cmdXfer0() {
     KNI_GetParameterAsObject(2, response_handle);
     if (KNI_IsNullHandle(response_handle)) {
         rx_buffer = NULL;
-        rx_buffer = 0;
+        rx_length = 0;
         retcode = -1;
         goto end;
     } else {
@@ -372,22 +366,24 @@ Java_com_sun_cardreader_PlatformCardDevice_cmdXfer0() {
     }
 
     if (info == NULL) {
-        status_code = jsr177_xfer_data_start(tx_buffer, 
-                                             tx_length, 
-                                             rx_buffer, 
-                                             &rx_length, &context);
+        status_code = javacall_carddevice_xfer_data_start(tx_buffer, 
+                                                          tx_length, 
+                                                          rx_buffer, 
+                                                          &rx_length, &context);
     } else {
         context = info->pResult;
-        status_code = jsr177_xfer_data_finish(tx_buffer, 
-                                              tx_length, 
-                                              rx_buffer, 
-                                              &rx_length, context);
+        status_code = javacall_carddevice_xfer_data_finish(tx_buffer, 
+                                                           tx_length, 
+                                                           rx_buffer, 
+                                                           &rx_length, context);
     }
-    if (status_code == JSR177_STATUSCODE_WOULD_BLOCK) {
+
+    if (status_code == JAVACALL_WOULD_BLOCK) {
         midp_thread_wait(CARD_READER_DATA_SIGNAL, SIGNAL_XFER, context);
         goto end;
     }
-    if (status_code != JSR177_STATUSCODE_OK) {
+
+    if (status_code != JAVACALL_OK) {
         retcode = -1;
     } else {
         retcode = rx_length;
@@ -407,13 +403,13 @@ end:
  * @return Error message string
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_cardreader_PlatformCardDevice_getErrorMessage0() {
+KNIDECL(com_sun_cardreader_PlatformCardDevice_getErrorMessage0) {
     jbyte err_msg[1024];
     
     KNI_StartHandles(1);
     KNI_DeclareHandle(err_msg_handle);
     
-    if (jsr177_get_error(err_msg, (jsize)sizeof err_msg) == PCSL_TRUE) {
+    if (javacall_carddevice_get_error(err_msg, sizeof err_msg) == JAVACALL_TRUE) {
         KNI_NewStringUTF(err_msg, err_msg_handle);
     }
     
@@ -432,11 +428,11 @@ Java_com_sun_cardreader_PlatformCardDevice_getErrorMessage0() {
  *         < 0 if an error occured.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_cardreader_PlatformCardDevice_checkCardMovement0() {
-    JSR177_CARD_MOVEMENT mv = 0;
-    jint retcode = jsr177_card_movement_events(&mv);
-    if (retcode == JSR177_STATUSCODE_OK) {
-        retcode = (mv & JSR177_CARD_MOVEMENT_MASK);
+KNIDECL(com_sun_cardreader_PlatformCardDevice_checkCardMovement0) {
+    JAVACALL_CARD_MOVEMENT mv = 0;
+    jint retcode = javacall_carddevice_card_movement_events(&mv);
+    if (retcode == JAVACALL_OK) {
+        retcode = (mv & JAVACALL_CARD_MOVEMENT_MASK);
     }
     KNI_ReturnInt(retcode);
 }

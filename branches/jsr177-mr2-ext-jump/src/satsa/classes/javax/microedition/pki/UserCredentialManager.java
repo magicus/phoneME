@@ -227,7 +227,7 @@ final public class UserCredentialManager
     static  {
 	String generation  = Configuration
 	    .getProperty("com.sun.satsa.keygen");
-	if (generation != null) {
+    if (generation != null) {
 	    keygen = generation.equals("true");
 	}
     }

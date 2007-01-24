@@ -42,7 +42,7 @@ import java.io.PrintStream;
 public class Utils {
 
     /** UTF-8 encoding name. */
-    public static final String utf8 = "UTF_8";
+    public static final String utf8 = "UTF-8";
 
     /** Hexadecimal digits. */
     private static char[] hc = {

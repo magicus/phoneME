@@ -26,8 +26,6 @@
 
 package com.sun.midp.io.j2me.apdu;
 
-import com.sun.midp.security.SecurityToken;
-
 /**
  * This class represents a slot for APDU connection.
  */

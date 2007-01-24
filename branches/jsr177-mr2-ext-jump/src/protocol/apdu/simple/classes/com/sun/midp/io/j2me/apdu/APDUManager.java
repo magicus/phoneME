@@ -26,9 +26,9 @@
 
 package com.sun.midp.io.j2me.apdu;
 
-import com.sun.midp.security.SecurityToken;
+//import com.sun.midp.security.SecurityToken;
 import javax.microedition.io.*;
-import com.sun.midp.main.Configuration;
+import com.sun.j2me.main.Configuration;
 
 import java.io.*;
 
@@ -70,7 +70,8 @@ public class APDUManager {
      * @exception IOException when SIM is not present or
      * connection cannot be established with the card.
      */
-    static Handle openSATConnection(int slot, SecurityToken securityToken)
+//    static Handle openSATConnection(int slot, SecurityToken securityToken)
+    static Handle openSATConnection(int slot)
         throws IOException {
         
         Handle h = null;
@@ -105,14 +106,16 @@ public class APDUManager {
             }
 
             if (ok) {
-                h = selectApplication(true, apdu, slot, securityToken);
+//                h = selectApplication(true, apdu, slot, securityToken);
+                h = selectApplication(true, apdu, slot);
             }
         }
         if (h == null) {
             if (!isAlive(cardSlot)) {
                 throw new ConnectionNotFoundException("SIM not found");
             }
-            h = new Handle(slot, 0, securityToken);
+//            h = new Handle(slot, 0, securityToken);
+            h = new Handle(slot, 0);
         }
         return h;
     }
@@ -131,12 +134,14 @@ public class APDUManager {
      * @exception IOException when a card is not present or
      * connection cannot be established with the card.
      */
-    public static Handle openACLConnection(byte[] apdu, int slot, 
-                SecurityToken securityToken)
+//    public static Handle openACLConnection(byte[] apdu, int slot, 
+//                SecurityToken securityToken)
+    public static Handle openACLConnection(byte[] apdu, int slot)
         throws IOException {
         
         checkSlotNumber(slot);
-        return selectApplication(true, apdu, slot, securityToken);
+//        return selectApplication(true, apdu, slot, securityToken);
+        return selectApplication(true, apdu, slot);
     }
     
     /**
@@ -145,7 +150,8 @@ public class APDUManager {
      * @param slot The slot number
      * @param securityToken Security token for this class
      */
-    public static void initACL(int slot, SecurityToken securityToken) {
+//    public static void initACL(int slot, SecurityToken securityToken) {
+    public static void initACL(int slot) {
         
         try {
             checkSlotNumber(slot);
@@ -293,10 +299,13 @@ public class APDUManager {
      * @return new connection handle
      * @exception IOException when selection is not successful
      */
-    public static Handle selectApplication(byte[] selectAPDU, int slot,
-                  SecurityToken securityToken) throws IOException {
+//    public static Handle selectApplication(byte[] selectAPDU, int slot,
+//                  SecurityToken securityToken) throws IOException {
+    public static Handle selectApplication(byte[] selectAPDU, int slot)
+                  throws IOException {
         checkSlotNumber(slot);
-        return selectApplication(false, selectAPDU, slot, securityToken);
+//        return selectApplication(false, selectAPDU, slot, securityToken);
+        return selectApplication(false, selectAPDU, slot);
     }
      
     /**
@@ -314,9 +323,11 @@ public class APDUManager {
      * @return new connection handle
      * @exception IOException when selection is not successful
      */
+//    private static Handle selectApplication(boolean forSAT,
+//                  byte[] selectAPDU, int slot,
+//                  SecurityToken securityToken) throws IOException {
     private static Handle selectApplication(boolean forSAT,
-                  byte[] selectAPDU, int slot,
-                  SecurityToken securityToken) throws IOException {
+                  byte[] selectAPDU, int slot) throws IOException {
 
         int channel;
         
@@ -353,7 +364,8 @@ public class APDUManager {
                     "Card application selection failed");
         }
         cardSlot.FCI = result;
-        return new Handle(slot, channel, securityToken);
+//        return new Handle(slot, channel, securityToken);
+        return new Handle(slot, channel);
     }
 
     /**
