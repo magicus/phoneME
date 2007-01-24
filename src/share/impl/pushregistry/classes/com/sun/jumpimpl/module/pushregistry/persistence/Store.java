@@ -221,7 +221,8 @@ public final class Store {
          * Lists app suite alarms.
          *
          * @param suiteId app suite ID
-         * @param alarms app suite alatms
+         * @param alarms alarms mappings from <code>MIDlet</code> class name
+         *  to the scheduled time
          */
         void consume(int suiteId, Map alarms);
     }
