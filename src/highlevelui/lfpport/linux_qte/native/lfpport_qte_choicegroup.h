@@ -384,9 +384,8 @@ class ChoiceButton : public QButton {
   /**
    * Notify Java peer that its selection state has changed.
    *
-   * @param QButton::On if selected
    */
-  void notifyStateChanged(int state);
+  void notifyStateChanged();
 
   /**
    * Change text wrapping policy.
