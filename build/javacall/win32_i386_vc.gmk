@@ -50,4 +50,4 @@ EXTRA_CPPFLAGS += /Zm400
 LD_FLAGS+=-nodefaultlib:libcmt.lib
 LIBS += $(JAVACALL_LIB_DIR)/javacall$(g).lib 
 LIBS += $(JAVACALL_LIB_DIR)/emulator.res 
-LIBS += Comdlg32.lib shell32.lib dsound.lib advapi32.lib 
+LIBS += Comdlg32.lib shell32.lib advapi32.lib 
