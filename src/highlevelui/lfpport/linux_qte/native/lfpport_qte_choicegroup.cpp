@@ -249,7 +249,7 @@ void ChoiceButton::mouseReleaseEvent(QMouseEvent *mouseEvent) {
   // Notify Java of a state change if the state changed 
   // after user interaction
   if (curState != QButton::isOn()) {
-    notifyStateChanged(QButton::isOn());
+    notifyStateChanged();
   }
 }
 
@@ -269,12 +269,12 @@ void ChoiceButton::keyPressEvent(QKeyEvent *keyEvent) {
                 int id = qGroup->id(this);
                 if (id != -1) {
                     qGroup->setButton(id);
-                    notifyStateChanged(QButton::isOn());
+                    notifyStateChanged();
                 }
             }
         } else { // check box
             QButton::setOn(!QButton::isOn());
-            notifyStateChanged(QButton::isOn());
+            notifyStateChanged();
         }
     }
     break;
@@ -337,23 +337,13 @@ void ChoiceButton::keyReleaseEvent(QKeyEvent *keyEvent) {
 
 /**
  * Notify Form that selection in a Choice element has changed.
- * For a Choice button that is part of an exclusive group, 
- * Form will only be notified if the new state is On.
- * For non-exclusive button, form will always be notified.
+ * For a Choice button that is part of an exclusive group. 
  *
- * @param state new state of the toggled button
  */
-void ChoiceButton::notifyStateChanged(int state) {
-  QButtonGroup *qGroup = (QButtonGroup *)parent(); 
-  if (isExclusive) { // radio button
-    if (state == QButton::On) {
-      MidpFormItemPeerStateChanged(((ChoiceButtonBox *)qGroup)->parent(), 
-				    qGroup->id(this));
-    }
-  } else { // check box
-      MidpFormItemPeerStateChanged(((ChoiceButtonBox *)qGroup)->parent(), 
-                                   qGroup->id(this));
-  }
+void ChoiceButton::notifyStateChanged() {
+  QButtonGroup *qGroup = (QButtonGroup *)parent();
+  MidpFormItemPeerStateChanged(((ChoiceButtonBox *)qGroup)->parent(),
+                                qGroup->id(this));
 }
 
 /**
