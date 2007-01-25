@@ -1,6 +1,4 @@
 /*
- *  
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -26,17 +24,7 @@
 
 package javax.microedition.io;
 
-import java.lang.ClassNotFoundException;
-import java.lang.IllegalStateException;
-import java.lang.IllegalArgumentException;
-import java.lang.String;
 import java.io.IOException;
-import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import com.sun.midp.io.Util;
-import com.sun.midp.io.j2me.push.PushRegistryImpl;
 
 /**
  * The <code>PushRegistry</code> maintains a list of inbound
@@ -595,6 +583,10 @@ import com.sun.midp.io.j2me.push.PushRegistryImpl;
  */
 
 public class PushRegistry {
+    /*
+     * Currently stubbed just to make TCK signature test
+     * pass and NAMS build configuration fine
+     */
 
     /** Prevent instantiation of the push registry. */
     private PushRegistry() { };
@@ -649,9 +641,6 @@ public class PushRegistry {
 					   String filter)
 	throws ClassNotFoundException,
 	        IOException {
-
-	PushRegistryImpl
-	    .registerConnection(connection, midlet, filter);
     }
 
     /**
@@ -668,8 +657,7 @@ public class PushRegistry {
      * @see #registerConnection
      */
     public static boolean unregisterConnection(String connection) {
-
-	return PushRegistryImpl.unregisterConnection(connection);
+        return false;
     }
 
     /**
@@ -685,37 +673,7 @@ public class PushRegistry {
      *       <em>host</em> and <em>port number</em> identification
      */
     public static String[] listConnections(boolean available) {
-        String connections = PushRegistryImpl.listConnections(available);
-
-        if (connections == null) {
-            return new String[0];
-        }
-
-        /* Count the commas in the returned string */
-        int count = 0;
-        int offset = 0;
-		
-        do {
-            offset = connections.indexOf(',', offset + 1);
-            count ++;
-        } while (offset > 0); 
-		
-        /* Now parse out the connections for easier access by caller. */
-        String[] ret = new String[count];
-        int start = 0;
-        for (int i = 0; i < count; i++) {
-            offset = connections.indexOf(',', start);
-            if (offset > 0) {
-                /* Up to the next comma */
-                ret[i] = connections.substring(start, offset);
-            } else {
-                /* From the last comma to the end of the string. */
-                ret[i] = connections.substring(start);
-            }		
-            start = offset + 1;
-        }
-
-        return ret;
+        return null;
     }
 
     /**
@@ -733,8 +691,7 @@ public class PushRegistry {
      * @see #registerConnection
      */
     public static String getMIDlet(String connection) {
-	// Delegate to implementation class for native lookup
-	return 	PushRegistryImpl.getMIDlet(connection);
+        return null;
     }
 
     /**
@@ -752,8 +709,7 @@ public class PushRegistry {
      * @see #registerConnection
      */
     public static String getFilter(String connection) {
-	// Delegate to implementation class for native lookup
-	return 	PushRegistryImpl.getFilter(connection);
+        return null;
     }
 
     /**
@@ -796,10 +752,7 @@ public class PushRegistry {
      */
     public static long registerAlarm(String midlet, long time)
 	 throws ClassNotFoundException, ConnectionNotFoundException {
-	// Delegate to implementation class for native registration
-	return 	PushRegistryImpl.registerAlarm(midlet, time);
+        // IMPL_NOTE: intentionally return mad value
+        return -1L;
     }
- 
 }
-
-

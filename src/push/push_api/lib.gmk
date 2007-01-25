@@ -59,24 +59,21 @@ MIDP_JAVADOC_ALL += \
 #
 vpath % $(SUBSYSTEM_PUSH_DIR)/push_api/$(LIB_PUSH_API_IMPL)/native
 
-# Jpp files that need pre-processing
-#
-ifeq ($(USE_NATIVE_PUSH), true)
-
-$(GENERATED_DIR)/classes/com/sun/midp/io/j2me/push/PushRegistryImpl.java: \
-       $(SUBSYSTEM_PUSH_DIR)/push_api/$(LIB_PUSH_API_IMPL)/classes/com/sun/midp/io/j2me/push/PushRegistryImpl.jpp
-	@$(call runjpp,$^,$@)
-endif
-
 # Java files for the ( push ) subsystem
 #
 SUBSYSTEM_PUSH_API_JAVA_FILES = \
     $(SUBSYSTEM_PUSH_DIR)/push_api/$(LIB_PUSH_API_IMPL)/classes/javax/microedition/io/PushRegistry.java
 
 ifeq ($(USE_NATIVE_PUSH), true)
-SUBSYSTEM_PUSH_API_JAVA_FILES += \
-    $(GENERATED_DIR)/classes/com/sun/midp/io/j2me/push/PushRegistryImpl.java
+    # NOTE: as currently NAMS push is stubbed there is no native files to build
+    SUBSYSTEM_PUSH_API_NATIVE_FILES =
+    
+    SUBSYSTEM_PUSH_API_JAVA_FILES += \
+        $(SUBSYSTEM_PUSH_DIR)/push_api/$(LIB_PUSH_API_IMPL)/classes/com/sun/midp/io/j2me/push/PushRegistryInternal.java
 else
+    SUBSYSTEM_PUSH_API_NATIVE_FILES = \
+        midp_push_registry_kni.c
+
     # Add files common for both stacks
     SUBSYSTEM_PUSH_API_JAVA_FILES += \
         $(SUBSYSTEM_PUSH_DIR)/push_api/$(LIB_PUSH_API_IMPL)/classes/com/sun/midp/io/j2me/push/PushRegistryImpl.java \
@@ -89,7 +86,7 @@ else
             $(SUBSYSTEM_PUSH_DIR)/push_api/$(LIB_PUSH_API_IMPL)/classes/com/sun/midp/io/j2me/push/PushRegistryInternal.java
     else 
         ifneq ($(TARGET_VM), cdc_vm)
-            $(error"Unknown target VM")
+            $(error "Unknown target VM")
         endif
 
         ifeq ($(CVM_INCLUDE_JUMP), true)
@@ -104,10 +101,6 @@ else
     endif
 endif
 
-SUBSYSTEM_PUSH_API_NATIVE_FILES = \
-    midp_push_registry_kni.c
-
 ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_PUSH_API_I3TEST_JAVA_FILES =
 endif
-
