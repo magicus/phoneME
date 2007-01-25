@@ -2027,3 +2027,10 @@ MPOSIX2HOST = $(foreach element,$(1),$(call POSIX2HOST,$(element)))
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)/defs.mk
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs.mk
 
+TOOLS_DIR ?= $(CVM_TOP)/../tools
+ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
+$(error TOOLS_DIR must point to shared tools directory)
+endif
+
+# Include external shared tools
+include $(TOOLS_DIR)/tools.gmk

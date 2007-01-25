@@ -544,8 +544,3 @@ JAVADOC_CDC_SRCPATH     = $(CVM_SHAREDCLASSES_SRCDIR):$(CVM_CLDCCLASSES_SRCDIR)
 include ../share/defs_zoneinfo.mk
 
 include ../$(TARGET_OS)/defs_cdc.mk
-
-TOOLS_DIR ?= $(CVM_TOP)/../tools
-ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
-$(error TOOLS_DIR must point to shared tools directory)
-endif
