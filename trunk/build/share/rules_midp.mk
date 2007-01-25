@@ -92,7 +92,9 @@ $(RUNMIDLET): force_midp_build
 	             PCSL_PLATFORM=$(PCSL_PLATFORM) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
 	             -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
+ifneq ($(CVM_INCLUDE_JUMP), true)
 	$(AT)cp $@ $(CVM_BINDIR)
+endif
 ifneq ($(CVM_PRELOAD_LIB), true)
 	$(AT)cp $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/libmidp$(LIB_POSTFIX) $(CVM_LIBDIR)
 endif
