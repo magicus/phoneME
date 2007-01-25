@@ -1,0 +1,655 @@
+/*
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
+ */
+package com.sun.mmedia;
+
+import javax.microedition.media.Manager;
+import com.sun.j2me.log.Logging;
+import com.sun.j2me.log.LogChannels;
+
+/**
+ *  The default configuration module for an MMAPI.
+ *  implementation supporting the http and
+ *  device protocols as well as the following
+ *  content types:
+ *
+ *      Tones,
+ *      Tone Sequences,
+ *      AMR Narrowband
+ *      AMR Wideband.
+ *      GIF.
+ *
+ *  Please note:
+ *
+ *  Tone Sequences are supported over http in tone sequence
+ *  file format (.jts).
+ *
+ *  Both single tones and tone sequence are also supported
+ *  over the device protocol.
+ *
+ */
+public class DefaultConfiguration extends Configuration {
+
+    // #ifdef ENABLE_DEBUG [
+    private boolean debug = true;
+    // #else ][
+    private boolean debug = false;
+    // #endif ]
+
+    /**
+     * Tone sequence mime type.
+     */
+    public final static String MIME_AUDIO_TONE = "audio/x-tone-seq";
+
+    /**
+     * MIME_AUDI_AMR NB mime type.
+     */
+    public final static String MIME_AUDIO_WAV = "audio/x-wav";
+    public final static String MIME_AUDIO_WAV_2 = "audio/wav";    
+
+    /**
+     * MIME_AUDI_AMR WB mime type.
+     */
+    public final static String MIME_AUDIO_AMR_WB = "audio/amr-wb";
+
+    /**
+     * MIME_AUDI_AMR mime type
+     */
+    public final static String MIME_AUDIO_AMR = "audio/amr";
+
+    /**
+     * GIF mime type.
+     */
+    public final static String MIME_IMAGE_GIF = "image/gif";
+
+    /**
+     * PNG mime type.
+     */
+    public final static String MIME_IMAGE_PNG = "image/png";
+
+    /**
+     * JPEG mime type.
+     */
+    public final static String MIME_IMAGE_JPEG = "image/jpeg";
+
+    /**
+     * Raw image mime type.
+     */
+    public final static String MIME_IMAGE_RAW = "image/raw";
+
+    /**
+     * MIME_AUDIO_MIDI mime type.
+     */
+    public final static String MIME_AUDIO_MIDI = "audio/midi";
+    public final static String MIME_AUDIO_MIDI_2 = "audio/mid";
+
+    /**
+     * SP-MIME_AUDIO_MIDI mime type.
+     */
+    public static final String MIME_AUDIO_SP_MIDI = "audio/sp-midi";
+
+    /**
+     * MIME_AUDIO_MP3 mime type
+     */
+    public final static String MIME_AUDIO_MP3 = "audio/mpeg";
+    public final static String MIME_AUDIO_MP3_2 = "audio/mp3";
+
+    /**
+     * MP4 audio type
+     */
+    public final static String MIME_AUDIO_MP4 = "audio/mp4";
+    public final static String MIME_AUDIO_MP4_2 = "audio/mp4a-latm";
+
+    /**
+     * MIME_AUDIO_AAC audio type
+     */
+    public final static String MIME_AUDIO_AAC = "audio/aac";
+
+    /**
+     * MIME_AUDIO_QCELP audio type
+     */
+    public final static String MIME_AUDIO_QCELP = "audio/qcelp";
+    public final static String MIME_AUDIO_QCELP_2 = "audio/vnd.qcelp";
+
+    /**
+     * 3GPP video mime type
+     */
+    public final static String MIME_VIDEO_3GPP = "video/3gpp";
+    public final static String MIME_VIDEO_3GPP_2 = "video/3gpp2";
+
+    /**
+     * MPEG video mime type
+     */
+    public final static String MIME_VIDEO_MPEG = "video/mpeg";
+
+    /**
+     * MPEG4 video mime type
+     */
+    public final static String MIME_VIDEO_MPEG4 = "video/mp4";
+
+    public final static String maps[][] = {
+        {Manager.TONE_DEVICE_LOCATOR, "com.sun.mmedia.DirectTone"},
+    // #ifdef MIDI_CONTROL [
+        {Manager.MIDI_DEVICE_LOCATOR, "com.sun.mmedia.DirectMIDI"},
+    // #endif ]
+        {MIME_AUDIO_TONE, "com.sun.mmedia.DirectTone"},
+        {MIME_AUDIO_AMR, "com.sun.mmedia.DirectPlayer"},
+        {MIME_AUDIO_WAV, "com.sun.mmedia.DirectPlayer"},
+        {MIME_AUDIO_WAV_2, "com.sun.mmedia.DirectPlayer"},
+        {MIME_AUDIO_MIDI, "com.sun.mmedia.DirectPlayer"},
+        {MIME_AUDIO_MIDI_2, "com.sun.mmedia.DirectPlayer"},
+    // #ifndef ABB [
+        {MIME_AUDIO_MP3, "com.sun.mmedia.DirectPlayer"},
+        {MIME_AUDIO_MP3_2, "com.sun.mmedia.DirectPlayer"},
+        {MIME_AUDIO_MP4, "com.sun.mmedia.DirectPlayer"},
+        {MIME_AUDIO_MP4_2, "com.sun.mmedia.DirectPlayer"},
+        {MIME_AUDIO_AAC, "com.sun.mmedia.DirectPlayer"},
+        {MIME_AUDIO_QCELP, "com.sun.mmedia.DirectPlayer"},
+        {MIME_AUDIO_QCELP_2, "com.sun.mmedia.DirectPlayer"},
+        {MIME_VIDEO_3GPP, "com.sun.mmedia.DirectVideo"},
+        {MIME_VIDEO_3GPP_2, "com.sun.mmedia.DirectVideo"},
+        {MIME_VIDEO_MPEG, "com.sun.mmedia.DirectVideo"},
+        {MIME_VIDEO_MPEG4, "com.sun.mmedia.DirectVideo"},
+// #ifdef ENABLE_INDIRECT_VIDEO [        
+        {MIME_IMAGE_GIF, "com.sun.mmedia.GIFPlayer"},
+// #endif ]        
+        {VIDEO_CAPTURE_LOCATOR, "com.sun.mmedia.DirectCamera"},
+        {AUDIO_CAPTURE_LOCATOR, "com.sun.mmedia.DirectPlayer"},
+        //{"device://midi", "com.sun.mmedia.DirectMIDI"},
+    // #endif ]
+    };
+
+// #ifdef ENABLE_INDIRECT_VIDEO [
+    /**
+     *  Handle for the Image Access Environment...
+     */
+    private static ImageAccess imageAccessor;
+// #endif ]
+
+    /**
+     *Constructor for the DefaultConfiguration object
+     */
+    public DefaultConfiguration() {
+        super();
+
+        // Protocol handlers.
+        handlers.put("http", "com.sun.mmedia.protocol.CommonDS");
+    // #ifdef USE_FILE_CONNECTION [
+        handlers.put("file", "com.sun.mmedia.protocol.CommonDS");
+    // #endif
+        handlers.put("rtsp", "com.sun.mmedia.protocol.CommonDS");
+
+        // Content handlers.
+        for (int i = 0; i < maps.length; ++i) {
+            handlers.put(maps[i][0], maps[i][1]);
+        }
+
+        // Mime types
+        mimeTypes.put("jts", MIME_AUDIO_TONE);
+        mimeTypes.put("mid", MIME_AUDIO_MIDI);
+        mimeTypes.put("midi", MIME_AUDIO_MIDI);
+        mimeTypes.put("kar", MIME_AUDIO_MIDI);
+        mimeTypes.put("wav", MIME_AUDIO_WAV);
+        mimeTypes.put("mp3", MIME_AUDIO_MP3);
+        mimeTypes.put("m4a", MIME_AUDIO_MP4);
+        mimeTypes.put("qcp", MIME_AUDIO_QCELP);
+        mimeTypes.put("aac", MIME_AUDIO_AAC);
+        mimeTypes.put("amr", MIME_AUDIO_AMR);
+        mimeTypes.put("3gp", MIME_VIDEO_3GPP);
+        mimeTypes.put("mpg", MIME_VIDEO_MPEG);
+        mimeTypes.put("mp4", MIME_VIDEO_MPEG4);
+        mimeTypes.put("gif", MIME_IMAGE_GIF);
+
+        // for converting
+        mimeTypes.put("audio/tone", MIME_AUDIO_TONE);
+
+    // #ifdef ENABLE_AMMS [
+        // for Image Access we need to init some environment values...
+        //imageAccessor = (ImageAccess)createInstanceOf("com.sun.mmedia.ImageAccess");
+        imageAccessor = new MIDPImageAccessor();
+    // #endif ]
+        
+    }
+
+
+    /**
+     *  Gets the supportedContentTypes attribute of the DefaultConfiguration object
+     *
+     * @param  protocol  Description of the Parameter
+     * @return           The supportedContentTypes value
+     */
+    public String[] getSupportedContentTypes(String protocol) {
+        if (protocol == null) {
+            return new String[]{
+            // Mandatory support
+                MIME_AUDIO_TONE,
+            // Optional formats
+                MIME_AUDIO_AMR,
+                MIME_AUDIO_MIDI,
+                MIME_AUDIO_MIDI_2,
+                MIME_AUDIO_WAV,
+                MIME_AUDIO_WAV_2,
+                MIME_AUDIO_MP3,
+                MIME_AUDIO_MP3_2,
+                MIME_AUDIO_MP4,
+                MIME_AUDIO_MP4_2,
+                MIME_AUDIO_QCELP,
+                MIME_AUDIO_QCELP_2,
+                MIME_AUDIO_AAC,
+                MIME_IMAGE_JPEG,
+                MIME_VIDEO_3GPP,
+                MIME_VIDEO_3GPP_2,
+                MIME_VIDEO_MPEG,
+                MIME_VIDEO_MPEG4,
+                MIME_IMAGE_GIF
+            };
+        }
+
+        if (protocol.equals("device")) {
+            return new String[]{
+            // Mandatory support
+                MIME_AUDIO_TONE,
+            // Optional formats
+                };
+        }
+
+        if (protocol.equals("http")) {
+            return new String[]{
+                MIME_AUDIO_TONE,
+                MIME_AUDIO_AMR,
+                MIME_AUDIO_MIDI,
+                MIME_AUDIO_MIDI_2,
+                MIME_AUDIO_WAV,
+                MIME_AUDIO_WAV_2,
+                MIME_AUDIO_MP3,
+                MIME_AUDIO_MP3_2,
+                MIME_AUDIO_MP4,
+                MIME_AUDIO_MP4_2,
+                MIME_AUDIO_QCELP,
+                MIME_AUDIO_QCELP_2,
+                MIME_AUDIO_AAC,
+                MIME_VIDEO_3GPP,
+                MIME_VIDEO_3GPP_2,
+                MIME_VIDEO_MPEG,
+                MIME_VIDEO_MPEG4,
+                MIME_IMAGE_GIF
+            };
+        }
+
+    // #ifdef USE_FILE_CONNECTION [
+        if (protocol.equals("file")) {
+            return new String[]{
+                MIME_AUDIO_TONE,
+                MIME_AUDIO_AMR,
+                MIME_AUDIO_MIDI,
+                MIME_AUDIO_MIDI_2,
+                MIME_AUDIO_WAV,
+                MIME_AUDIO_WAV_2,
+                MIME_AUDIO_MP3,
+                MIME_AUDIO_MP3_2,
+                MIME_AUDIO_MP4,
+                MIME_AUDIO_MP4_2,
+                MIME_AUDIO_QCELP,
+                MIME_AUDIO_QCELP_2,
+                MIME_AUDIO_AAC,
+                MIME_VIDEO_3GPP,
+                MIME_VIDEO_3GPP_2,
+                MIME_VIDEO_MPEG,
+                MIME_VIDEO_MPEG4,
+                MIME_IMAGE_GIF
+                };
+        }
+    // #endif ]
+
+        if (protocol.equals("rtsp")) {
+            return new String[]{
+                MIME_AUDIO_AMR,
+                MIME_AUDIO_MP3,
+                MIME_AUDIO_MP3_2,
+                MIME_AUDIO_MP4,
+                MIME_AUDIO_MP4_2,
+                MIME_AUDIO_AAC,
+                MIME_VIDEO_3GPP,
+                MIME_VIDEO_3GPP_2,
+                MIME_VIDEO_MPEG,
+                MIME_VIDEO_MPEG4
+                };
+        }        
+
+        if (protocol.equals("capture")) {
+            return new String[]{
+                MIME_AUDIO_WAV,
+                MIME_IMAGE_JPEG
+            };
+        }
+
+        return new String[0];
+    }
+
+    /**
+     * Get content type helper function
+     */
+    public static String getContentType(String locator) {
+        if (locator != null) {
+            // device://tone
+            if (locator.equals(Manager.TONE_DEVICE_LOCATOR)) {
+                return DefaultConfiguration.MIME_AUDIO_TONE;
+            // device://midi
+            } else if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
+                return DefaultConfiguration.MIME_AUDIO_MIDI;
+            // capture://audio
+            } else if (locator.equals(Configuration.AUDIO_CAPTURE_LOCATOR)) {
+                return DefaultConfiguration.MIME_AUDIO_WAV;
+            // capture://video
+            } else if (locator.equals(Configuration.VIDEO_CAPTURE_LOCATOR)) {
+                return DefaultConfiguration.MIME_IMAGE_JPEG;
+            }
+        }    
+
+        return "";
+    }
+
+    /**
+     *  Gets the supportedProtocols attribute of the DefaultConfiguration object
+     *
+     * @param  content_type  Description of the Parameter
+     * @return               The supportedProtocols value
+     */
+    public String[] getSupportedProtocols(String content_type) {
+        if (debug) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
+                "getSupportedProtocols : " + content_type);
+        }
+
+        if (content_type == null) {
+            return new String[]{
+                "device",
+            // #ifdef DIRECT_CAMERA_PLAYER [   
+                "capture",
+            // #endif ]
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                };
+        }
+
+        if (content_type.equals(MIME_AUDIO_TONE)) {
+            return new String[]{
+                "device",
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                };
+        }
+
+        if (content_type.equals(MIME_AUDIO_AMR)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                "rtsp",                
+                };
+        }
+
+        if (content_type.equals(MIME_AUDIO_MIDI)) {
+            return new String[]{
+                "device",
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                };
+        }
+
+        if (content_type.equals(MIME_AUDIO_MIDI_2)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                };
+        }
+
+        if (content_type.equals(MIME_AUDIO_WAV) || 
+            content_type.equals(MIME_AUDIO_WAV_2)) {
+            return new String[]{
+                "capture",
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                };
+        }
+
+        if (content_type.equals(MIME_AUDIO_MP3) ||
+            content_type.equals(MIME_AUDIO_MP3_2)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+            };
+        }
+
+        if (content_type.equals(MIME_AUDIO_MP4)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                "rtsp",
+            };
+        }
+
+        if (content_type.equals(MIME_AUDIO_MP4_2)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                "rtsp",
+            };        
+        }
+
+        if (content_type.equals(MIME_AUDIO_QCELP)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+            };
+        }
+
+        if (content_type.equals(MIME_AUDIO_QCELP_2)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+            };
+        }
+
+        if (content_type.equals(MIME_AUDIO_AAC)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                "rtsp",
+            };
+        }
+
+        if (content_type.equals(MIME_IMAGE_JPEG)) {
+            return new String[]{
+                "capture",
+            };        
+        }
+
+        if (content_type.equals(MIME_VIDEO_3GPP)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                "rtsp",
+            };
+        }
+
+        if (content_type.equals(MIME_VIDEO_3GPP_2)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                "rtsp",
+            };
+        }
+
+        if (content_type.equals(MIME_VIDEO_MPEG)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                "rtsp",
+            };
+        }
+
+        if (content_type.equals(MIME_VIDEO_MPEG4)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                "rtsp",
+            };
+        }
+
+        if (content_type.equals(MIME_IMAGE_GIF)) {
+            return new String[]{
+                "http",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+            };
+        }        
+
+        return new String[0];
+    }
+
+    // #ifdef ENABLE_INDIRECT_VIDEO [
+    public ImageAccess getImageAccessor() {
+        return imageAccessor;
+    }
+    // #endif ]
+
+// #ifdef ENABLE_AMMS [
+    public String[] getSupportedMediaProcessorInputTypes() {
+        return new String[] {MIME_IMAGE_PNG, MIME_IMAGE_JPEG, MIME_IMAGE_RAW};
+    }
+
+    public String[] getSupportedSoundSource3DPlayerTypes() {
+        return new String[] {MIME_AUDIO_WAV};
+    }
+
+    /**
+     * Gets the audio renderer.
+     *
+     * @return The audio renderer
+     */
+    public BasicAudioOut getAudioRenderer() {
+        return (BasicAudioOut)createInstanceOf("com.sun.mmedia.BasicAudioOut");
+    }
+
+    /**
+     * Checks if audio renderer supports StopTimeControl.
+     * This is a temporary function to bypass feature in QSound:
+     * QsoundPCMOut is not able to support StopTimeControl, 
+     * MapPCMOut is able ...
+     *
+     * @return The true if StopTimeCotrol is supported by audio renderer
+     */
+    public boolean isStoppingAudioRenderer() {
+        /*
+         * in AMMS QSound renderer is used with no StopTimeControl support
+         * in pure MMAPI Map renderer is used, it has StopTimeControl support
+         */
+        return !needAMMS;
+    }
+
+// #endif ]    
+
+    /**
+     * Gets the video renderer.
+     *
+     * @return The video renderer
+     */
+    public VideoRenderer getVideoRenderer(BasicPlayer player, 
+                                          int sourceWidth, 
+                                          int sourceHeight) {
+    // #ifdef ENABLE_INDIRECT_VIDEO [ 
+    return ModelVideoRenderer.getVideoRenderer(player, sourceWidth, sourceHeight);                                         
+    // #else ][
+        return null;
+    // #endif ]
+    }
+
+    /**
+     *  Gets the tonePlayer attribute of the DefaultConfiguration object
+     *
+     * @return    The tonePlayer value
+     */
+    public TonePlayer getTonePlayer() {
+        return new NativeTonePlayer();
+    }
+    
+    //public MIDIRenderer getMIDIRenderer() 
+    //{
+    //    return null;
+    //}
+
+    public String getProperty(String key) {
+        String value = (String) properties.get(key);
+        
+        return value;
+    } 
+
+    public void setProperty(String key, String value) {
+        properties.put(key, value);
+    }       
+
+    private Object createInstanceOf(String propertyName) {
+        try {
+            String propertyValue = getProperty(propertyName);
+            Class propertyClass = Class.forName(propertyValue);
+            Object propertyInstance = propertyClass.newInstance();
+            return propertyInstance;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+}
