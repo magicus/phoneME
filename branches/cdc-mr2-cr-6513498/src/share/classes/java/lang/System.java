@@ -578,15 +578,17 @@ public final class System {
              */
             allProps = (Properties)props.clone();
             Object[] providers = new HashSet(propProviders.values()).toArray();
+            Hashtable provCached = new Hashtable();
             for (int i = 0; i < providers.length; i++) {
-                ((PropertyProvider)providers[i]).cacheProperties();
+                PropertyProvider pp = (PropertyProvider)providers[i];
+                provCached.put(pp, new Boolean(pp.cacheProperties()));
             }
 
             Enumeration provKeys = propProviders.keys();
             while (provKeys.hasMoreElements()) {
                 String key = (String)provKeys.nextElement();
                 PropertyProvider prov = (PropertyProvider)propProviders.get(key);
-                allProps.put(key, prov.getValue(key, true));
+                allProps.put(key, prov.getValue(key, ((Boolean)provCached.get(prov)).booleanValue()));
             }
         }
 

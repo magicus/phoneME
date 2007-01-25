@@ -51,7 +51,11 @@ public abstract class PropertyProviderAdapter implements PropertyProvider {
      * Tells underlying implementation to cache values of all the properties
      * corresponding to this particular class. This call can be ignored if
      * property caching is not supported.
-     * Ignored by this adapter.
+     * Always returns <code>false</code> in this adapter.
+     *
+     * @return <code>true</code> on success, <code>false</code> otherwise
      */
-    public void cacheProperties() { }
+    public boolean cacheProperties() {
+        return false;
+    }
 }

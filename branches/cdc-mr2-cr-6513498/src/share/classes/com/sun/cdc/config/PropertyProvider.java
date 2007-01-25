@@ -53,6 +53,8 @@ public interface PropertyProvider {
      * Tells underlying implementation to cache values of all the properties
      * corresponding to this particular class. This call can be ignored if
      * property caching is not supported.
+     *
+     * @return <code>true</code> on success, <code>false</code> otherwise
      */
-    public void cacheProperties();
+    public boolean cacheProperties();
 }
