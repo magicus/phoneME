@@ -65,10 +65,6 @@ import java.util.zip.ZipEntry;
  */
 public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstallerModule {
     /**
-     * The file separator character for the system.
-     */
-    private final static String fileSeparator = System.getProperty("file.separator");
-    /**
      * The filename extention for application descriptor files.
      */
     private final static String APP_DESCRIPTOR_EXTENSION = ".app";
@@ -148,12 +144,12 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         }
         if (repositoryDir != null) {
             // remove any ending /'s'
-            if (!repositoryDir.endsWith(fileSeparator)) {
-                repositoryDir = repositoryDir.concat(fileSeparator);
+            if (!repositoryDir.endsWith("/")) {
+                repositoryDir = repositoryDir.concat("/");
             }
         } else {
             // default to the current directory
-            repositoryDir = '.' + fileSeparator;
+            repositoryDir = "./";
         }
         
         // Get the store handle from the JUMPContentStoreSubClass.
@@ -218,7 +214,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         bundleName = bundleName.replace(' ', '_');
         
         trace(getString("Installing") + bundleName);
-        String jarPath = REPOSITORY_APPS_DIRNAME + fileSeparator + bundleName + fileSeparator + bundleName + ".jar";
+        String jarPath = REPOSITORY_APPS_DIRNAME + '/' + bundleName + '/' + bundleName + ".jar";
         
         // createUniquePathName ensures that we don't overwrite an existing file by
         // retrieving a unique name for saving.  If there exists a file of the same
@@ -234,7 +230,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         // not CasinoGames.  Again, this is only in the rare case of duplicates.
         // This should be changed if the policy is to overwrite existing filenames.
         int dotindex = jarPath.lastIndexOf('.');
-        int fileSeparatorIndex = jarPath.lastIndexOf(fileSeparator);
+        int fileSeparatorIndex = jarPath.lastIndexOf('/');
         if (dotindex == -1 || fileSeparatorIndex == -1) {
             return null;
         }
@@ -323,7 +319,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             // create an app descriptor file in the menu/ directory for
             // the new app so that the appmanager can recognize it.
             // make sure the descriptor pathname is uniqe and doesn't exist.
-            String appDescriptorPath = createUniquePathName(REPOSITORY_DESCRIPTORS_DIRNAME + fileSeparator + app.getProperty("JUMPApplication_title") + APP_DESCRIPTOR_EXTENSION);
+            String appDescriptorPath = createUniquePathName(REPOSITORY_DESCRIPTORS_DIRNAME + '/' + app.getProperty("JUMPApplication_title") + APP_DESCRIPTOR_EXTENSION);
             if (appDescriptorPath == null) {
                 return null;
             }
@@ -334,7 +330,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             // basename of the app descriptor to determine the title of the app.
             // In other words, detect if we have something like CasinoGames(2).
             dotindex = appDescriptorPath.lastIndexOf('.');
-            int slashindex = appDescriptorPath.lastIndexOf(fileSeparator);
+            int slashindex = appDescriptorPath.lastIndexOf('/');
             if (dotindex == -1 || slashindex == -1) {
                 return null;
             }
@@ -555,7 +551,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             return null;
         }
         
-        int index = iconFile.lastIndexOf(fileSeparator);
+        int index = iconFile.lastIndexOf('/');
         if (index != -1) {
             iconFileName = iconFile.substring(index + 1,
                     iconFile.length());
@@ -565,7 +561,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         
         // make a unique file name if we don't want to overwrite
         // current contents with the same name.
-        iconFilePath = createUniquePathName(repositoryDir + REPOSITORY_ICONS_DIRNAME + fileSeparator + iconFileName);
+        iconFilePath = createUniquePathName(repositoryDir + REPOSITORY_ICONS_DIRNAME + '/' + iconFileName);
         
         try {
             
@@ -617,7 +613,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         String extention = original.substring(dotindex);
         
         // Get the file name minus the extention
-        int fileSeparatorIndex = original.lastIndexOf(fileSeparator);
+        int fileSeparatorIndex = original.lastIndexOf('/');
         String fileName = null;
         if (fileSeparatorIndex != -1) {
             fileName = original.substring(fileSeparatorIndex + 1, dotindex);
@@ -836,7 +832,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
      * @return boolean value indicating success or failure
      */
     private boolean removeAppDescriptor(String applicationName) {
-        String uri = REPOSITORY_DESCRIPTORS_DIRNAME + fileSeparator + applicationName + APP_DESCRIPTOR_EXTENSION;
+        String uri = REPOSITORY_DESCRIPTORS_DIRNAME + '/' + applicationName + APP_DESCRIPTOR_EXTENSION;
         storeHandle = openStore(true);
         if (storeHandle == null) {
             return false;
@@ -856,7 +852,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
      * @return boolean value indicating success or failure
      */
     private boolean removeIcon(URL iconURL) {
-        String iconFileName = repositoryDir + REPOSITORY_ICONS_DIRNAME + fileSeparator + iconURL.getFile();
+        String iconFileName = repositoryDir + REPOSITORY_ICONS_DIRNAME + '/' + iconURL.getFile();
         File iconFile = new File(iconFileName);
         if (iconFile != null && iconFile.exists()) {
             try {

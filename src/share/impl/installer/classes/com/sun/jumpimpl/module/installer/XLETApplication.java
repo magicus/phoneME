@@ -35,12 +35,7 @@ import java.net.URL;
  * Representation of an XLET application.
  */
 public class XLETApplication extends JUMPApplication {
-    
-    /**
-     * The file separator character for the system.
-     */
-    private final static String fileSeparator = System.getProperty("file.separator");
-    
+       
     /**
      * The name of the directory to hold XLET and Main icons
      */
@@ -126,7 +121,7 @@ public class XLETApplication extends JUMPApplication {
      *         the downloaded content.
      */
     public URL getIconPath() {
-        String file = repositoryDir + REPOSITORY_ICONS_DIRNAME + fileSeparator + getProperty(ICONPATH_KEY);
+        String file = repositoryDir + REPOSITORY_ICONS_DIRNAME + '/' + getProperty(ICONPATH_KEY);
         URL url = null;
         try {
             url = new URL("file", null, file);
