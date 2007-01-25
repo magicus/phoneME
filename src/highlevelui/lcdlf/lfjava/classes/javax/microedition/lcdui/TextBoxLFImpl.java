@@ -193,6 +193,24 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
     	setConstraintsCommon(false);
         
         setVerticalScroll();
+        
+        // reset cursor position if needed
+        if (editable && myInfo != null) {
+            int pos = cursor.y / ScreenSkin.FONT_INPUT_TEXT.getHeight();
+            int newPos = pos;
+            if (pos <= myInfo.topVis) {
+                newPos = myInfo.topVis + 1;
+            } else if (pos > myInfo.topVis + myInfo.visLines) {
+                newPos = myInfo.topVis + myInfo.visLines;
+            }
+            if (newPos != pos) {
+                cursor.y = newPos  * ScreenSkin.FONT_INPUT_TEXT.getHeight();
+                cursor.option = Text.PAINT_GET_CURSOR_INDEX;
+                myInfo.isModified = myInfo.scrollY = true;
+                updateTextInfo();
+            }
+        }
+        
         lRequestPaint();
     }
 
