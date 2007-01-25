@@ -136,7 +136,7 @@ public class SMMManager extends MIDlet
             new SMMDisplayController(midletProxyList,
                 MIDletSuite.INTERNAL_SUITE_ID, this.getClass().getName()));
 
-        PushRegistryImpl.setMvmSingleMidletMode();
+        PushRegistryInternal.setMvmSingleMidletMode();
 
         GraphicalInstaller.initSettings();
 

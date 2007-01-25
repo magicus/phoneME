@@ -944,14 +944,17 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 
                
                 if (bufferedTheSameAsDisplayed(tf.constraints)) {
-                    tf.delete(0, tf.buffer.length());
-                    tf.insert(in.toString(), 0);
-                    setCaretPosition(newCursor.index);
+                    if (lValidate(in, tf.constraints)) {
+                        tf.delete(0, tf.buffer.length());
+                        tf.insert(in.toString(), 0);
+                        setCaretPosition(newCursor.index);
+                        tf.notifyStateChanged();
+                    }
                 } else if (tf.buffer.length() < tf.getMaxSize()) {
                     tf.insert(input, cursor.index);
+                    tf.notifyStateChanged();
                 }
             } catch (Exception ignore) { }
-            tf.notifyStateChanged();
         }
     }
 

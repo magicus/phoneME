@@ -125,6 +125,10 @@ ifeq ($(SUBSYSTEM_AMS_MODULES), jams)
 include $(SUBSYSTEM_AMS_DIR)/example/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
 endif
 endif
+
+ifeq ($(SUBSYSTEM_AMS_MODULES), jams)
+include $(SUBSYSTEM_AMS_DIR)/example/$(SUBSYSTEM_AMS_MODULES)_port/lib.gmk
+endif
 endif
 
 # CDC specific files

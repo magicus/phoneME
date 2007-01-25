@@ -46,7 +46,7 @@ $(MIDP_OUTPUT_DIR)/classes.zip:: $(SKINROMIZATION_JAR_FILE)
 $(SUBSYSTEM_CONFIGURATION_MERGED_FILE): $(SUBSYSTEM_CONFIGURATION_DEP_FILES)
 	$(merge_configurations)
 
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	$(generate_configuration)
 
 # rules for generating romized skin files
@@ -55,13 +55,13 @@ $(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	$(romize_skin)
 	$(copy_lcdlf_resources)
 
-# The rule for running the configurator unconditionally, used by other
+# The rule for running the Configurator unconditionally, used by other
 # things such as docs_html.
 # IMPL NOTE: this should be refactored to remove the
 # need to run this unconditionally; it should always be run based on
 # out-of-date prerequisites.
 #
-run_configurator:: $(CONFIGURATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+run_configurator:: $(CONFIGURATOR_JAR_FILE) $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	$(generate_configuration)
 
 # The rule for running skin romization tool unconditionally

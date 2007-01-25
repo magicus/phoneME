@@ -387,7 +387,7 @@ JSR_180_DIR:
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_jsr_180_directory) $(LOG)
 
-JSR_184_DIR:
+JSR_184_DIR::
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_jsr_184_directory) $(LOG)
 
@@ -454,6 +454,10 @@ CLDC_DIST_DIR:
 	@$(verify_directory) $(LOG)
 	@$(verify_cldc) $(LOG)
 
+TOOLS_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_directory) $(LOG)
+
 # Target for ensuring that /tmp directory exists in cygwin build,
 # which may be not the case if Sun's cyg4me package is used
 ifeq ($(USE_CYGWIN),true)
@@ -464,7 +468,7 @@ else
 CYGWIN_TMP_DIR: ;
 endif
 
-verify: $(BOOLEAN_OPTIONS) CYGWIN_TMP_DIR MIDP_DIR JDK_DIR CRYPTO_OUTPUT_DIR \
+verify: $(BOOLEAN_OPTIONS) CYGWIN_TMP_DIR MIDP_DIR JDK_DIR CRYPTO_OUTPUT_DIR TOOLS_DIR \
 	RESTRICTED_CRYPTO_DIR JPEG_DIR JSR_177_DIR PCSL_OUTPUT_DIR CLDC_DIST_DIR \
 	JSR_75_DIR JSR_82_DIR JSR_172_DIR JSR_226_DIR PISCES_DIR JSR_179_DIR \
 	JSR_180_DIR JSR_184_DIR JSR_205_DIR JSR_211_DIR JSR_229_DIR \
@@ -526,6 +530,7 @@ display:
 	@echo   "JSR_238_DIR           = ""$(JSR_238_DIR)" $(LOG)
 	@echo   "PROJECT_JSR_238_DIR   = ""$(PROJECT_JSR_238_DIR)" $(LOG)
 	@echo   "JSR_239_DIR           = ""$(JSR_239_DIR)" $(LOG)
+	@echo   "PROJECT_JSR_239_DIR   = ""$(PROJECT_JSR_239_DIR)" $(LOG)
 	@echo   "JC_DIR                = ""$(JC_DIR)" $(LOG)
 	@echo   "RESTRICTED_CRYPTO_DIR = ""$(RESTRICTED_CRYPTO_DIR)" $(LOG)
 	@echo   "CRYPTO_OUTPUT_DIR     = ""$(CRYPTO_OUTPUT_DIR)" $(LOG)

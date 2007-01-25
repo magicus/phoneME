@@ -384,24 +384,34 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      *         otherwise false.
      */
     public boolean keyInput(int type, int keyCode) {
-        // SoftButtonLayer absorbs all soft button events,
-        // but only functions on a 'press' event
+        // SoftButtonLayer absorbs soft button 
+        // event only if corresponding soft button is "active".
+        // For further clarification please refer to
+        // isSoft1Active() and isSoft2Active() methods.
+
+        boolean ret = false;
         if (keyCode == EventConstants.SOFT_BUTTON1) {
-            if (type == EventConstants.PRESSED) {
-                setInteractive(soft1 != null);
-            } else if (type == EventConstants.RELEASED) {
-                soft1();
+            if (isSoft1Active()) {
+                if (type == EventConstants.PRESSED) {
+                    setInteractive(true);
+                    ret = true;
+                } else if (type == EventConstants.RELEASED) {
+                    soft1();
+                    ret = true;
+                }
             }
-            return true;
         } else if (keyCode == EventConstants.SOFT_BUTTON2) {
-            if (type == EventConstants.PRESSED) {
-                setInteractive((soft2 != null) || menuUP);
-            } else if (type == EventConstants.RELEASED) {
-                soft2();
+            if (isSoft2Active()) {
+                if (type == EventConstants.PRESSED) {
+                    setInteractive(true);
+                    ret = true;
+                } else if (type == EventConstants.RELEASED) {
+                    soft2();
+                    ret = true;
+                }
             }
-            return true;
         }
-        return false;
+        return ret;
     }
 
     /**
@@ -457,7 +467,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             return;
         }
         dismissMenu();
-        commandAction(cmd);
+        processCommand(cmd);
     }
 
     /**
@@ -540,7 +550,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             setButtonLabels();
             setInteractive(false);
         } else {
-            commandAction(soft1);
+            processCommand(soft1);
         }
     }
 
@@ -583,19 +593,95 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                 }
                 
                 requestRepaint();
+
             } else if (soft2.length == 1) {
                 // command action
-                commandAction(soft2[0]);
+                processCommand(soft2[0]);
             }
         }
     }
 
     /**
-     * Command action callback for submenu commands.
+     * Determines if soft button 2 will be processed by the layer.
+     * Called by keyInput to determine if the corresponding key event 
+     * should be absorbed by SoftButtonLayer.
+     *
+     * @return true if soft2 command can be processed, false otherwise
+     */
+    protected boolean isSoft2Active() {
+        // when MIDPWindow is not in full screen mode, we absorb
+        // all key events reserved for the delivery of commands
+        if (!((MIDPWindow)owner).isInFullScreenMode()) {
+            return true;
+        }
+
+        // for full screen mode we should check if soft key is useful
+        if (menuUP) {
+            return true;
+        } else if (soft2 != null) {
+            if (soft2.length == 1 &&
+                soft2[0] instanceof SubMenuCommand) {
+                return true;
+            }
+            // search for at least one active command
+            for (int i = 0; i < soft2.length; i++) {
+                if (isCommandActive(soft2[i])) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Determines if soft button 1 will be processed by the layer.
+     * Called by keyInput to determine if the corresponding key event 
+     * should be absorbed by SoftButtonLayer.
+     *
+     * @return true if soft1 command can be processed, false otherwise
+     */
+    protected boolean isSoft1Active() {
+        // when MIDPWindow is not in full screen mode, we absorb
+        // all key events reserved for the delivery of commands
+        if (!((MIDPWindow)owner).isInFullScreenMode()) {
+            return true;
+        }
+
+        // for full screen mode we should check if soft key is useful
+        if (menuUP) {
+            return true;
+        } else {
+            return isCommandActive(soft1);
+        }
+
+    }
+
+    /**
+     * Determines if it is possible to process the command.
+     *
+     * @param cmd the command to check
+     * @return true if command can be processed, false otherwise
+     */
+    protected boolean isCommandActive(Command cmd) {
+
+        if (tunnel == null || cmd == null) {
+            return false;
+        }
+
+        if ((isItemCommand(cmd) && (itemListener != null)) 
+            || (scrListener != null)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Processes commands.
      *
      * @param cmd the selected command
      */
-    protected void commandAction(Command cmd) {
+    protected void processCommand(Command cmd) {
 
         setInteractive(false);
 

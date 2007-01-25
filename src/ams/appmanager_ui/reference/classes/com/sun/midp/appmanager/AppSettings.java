@@ -257,7 +257,7 @@ public class AppSettings extends Form
             }
 
             if ((pushOptions &
-                PushRegistryImpl.PUSH_OPT_WHEN_ONLY_APP) != 0) {
+                PushRegistryInternal.PUSH_OPT_WHEN_ONLY_APP) != 0) {
                 interruptSetting = PUSH_OPTION_1_ID;
             } else {
                 interruptSetting = pushInterruptSetting;
@@ -454,7 +454,7 @@ public class AppSettings extends Form
                 }
 
                 if (interruptSetting == PUSH_OPTION_1_ID) {
-                    pushOptions = PushRegistryImpl.PUSH_OPT_WHEN_ONLY_APP;
+                    pushOptions = PushRegistryInternal.PUSH_OPT_WHEN_ONLY_APP;
                     pushInterruptSetting = maxInterruptSetting;
                 } else {
                     pushOptions = 0;

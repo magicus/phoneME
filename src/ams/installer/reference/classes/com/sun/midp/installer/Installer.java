@@ -57,7 +57,7 @@ import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.Util;
 
-import com.sun.midp.io.j2me.push.PushRegistryImpl;
+import com.sun.midp.io.j2me.push.PushRegistryInternal;
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
 import com.sun.midp.io.j2me.storage.File;
 
@@ -368,7 +368,7 @@ public abstract class Installer {
         state.midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
         /* Disable push interruptions during install. */
-        PushRegistryImpl.enablePushLaunch(false);
+        PushRegistryInternal.enablePushLaunch(false);
 
         try {
             state.startTime = System.currentTimeMillis();
@@ -456,7 +456,7 @@ public abstract class Installer {
                 }
             }
 
-            PushRegistryImpl.enablePushLaunch(true);
+            PushRegistryInternal.enablePushLaunch(true);
         }
 
         return info.id;
@@ -1489,7 +1489,30 @@ public abstract class Installer {
 
         /* this will parse any kind of URL, not only Http */
         HttpUrl parsedUrl = new HttpUrl(url);
-        return parsedUrl.path;
+        String path = parsedUrl.path;
+
+        /*
+           IMPL_NOTE: In current implementation of HttpUrl
+               the absolute path always begins with '/' which
+               would make getUrlPath() produce the win32
+               paths in the form "/C:/path/to/file" that is
+               rejected by the filesystem.
+               The initial '/' in 'path' is currently the only
+               flag which allows to distinguish between absolute
+               and relative url.
+               Probably there should be a special flag in HttpUrl
+               to distinguish between absolute and relative urls.
+               Moreover it seems necessary to have platform-dependent
+               conversion procedure from url path to filesystem path.
+        */
+
+        if (path != null) {
+            if (path.charAt(0) == '/') {
+                path = path.substring (1, path.length ());
+            }
+        }
+
+        return path;
     }
 
     /**
@@ -2214,7 +2237,7 @@ public abstract class Installer {
         byte[] curLevels = settings.getPermissions();
 
         if (state.isPreviousVersion) {
-            PushRegistryImpl.unregisterConnections(info.id);
+            PushRegistryInternal.unregisterConnections(info.id);
         }
 
         for (int i = 1; ; i++) {
@@ -2238,11 +2261,11 @@ public abstract class Installer {
 
             /* Register the new push connection string. */
             try {
-                PushRegistryImpl.registerConnectionInternal(null, state,
+                PushRegistryInternal.registerConnectionInternal(state,
                     conn, midlet, filter, false);
             } catch (Exception e) {
                 /* If already registered, abort the installation. */
-                PushRegistryImpl.unregisterConnections(info.id);
+                PushRegistryInternal.unregisterConnections(info.id);
 
                 if (state.isPreviousVersion) {
                     // put back the old ones, removed above
@@ -2337,7 +2360,7 @@ public abstract class Installer {
 
             /* Register the new push connection string. */
             try {
-                PushRegistryImpl.registerConnectionInternal(null,
+                PushRegistryInternal.registerConnectionInternal(
                     state, conn, midlet, filter, true);
             } catch (IOException e) {
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {

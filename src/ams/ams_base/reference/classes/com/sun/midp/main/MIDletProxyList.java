@@ -40,6 +40,7 @@ import com.sun.midp.security.SecurityInitializer;
 
 import com.sun.midp.suspend.SuspendTimer;
 import com.sun.midp.suspend.SuspendSystem;
+import com.sun.midp.suspend.SuspendSystemListener;
 
 /**
  * Manages a list of MIDlet proxies, each proxy representing a running MIDlet
@@ -57,7 +58,8 @@ import com.sun.midp.suspend.SuspendSystem;
  * to enable the method be used by native code.
  *
  */
-public class MIDletProxyList implements MIDletControllerEventConsumer {
+public class MIDletProxyList
+        implements MIDletControllerEventConsumer, SuspendSystemListener {
 
     /** MIDletProxy added constant. */
     static final int PROXY_ADDED = 0;
@@ -567,15 +569,15 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
      *
      */
     public void handleActivateAllEvent() {
-        if (allPaused) {
-            synchronized (midletProxies) {
-                MIDletProxy current;
+        SuspendSystem.getInstance(classSecurityToken).resume();
 
-                for (int i = midletProxies.size() - 1; i >= 0; i--) {
-                    current = (MIDletProxy)midletProxies.elementAt(i);
+        synchronized (midletProxies) {
+            MIDletProxy current;
 
-                    current.activateMidlet();
-                }
+            for (int i = midletProxies.size() - 1; i >= 0; i--) {
+                current = (MIDletProxy)midletProxies.elementAt(i);
+
+                current.activateMidlet();
             }
         }
     }
@@ -588,16 +590,14 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     public void handlePauseAllEvent() {
         SuspendTimer.start(this);
 
-        if (!allPaused) {
-            synchronized (midletProxies) {
-                MIDletProxy current;
+        synchronized (midletProxies) {
+            MIDletProxy current;
 
-                for (int i = midletProxies.size() - 1; i >= 0; i--) {
-                    current = (MIDletProxy)midletProxies.elementAt(i);
-                    SuspendSystem.getInstance(classSecurityToken).
-                    addSuspendDependency(current);
-                    current.pauseMidlet();
-                }
+            for (int i = midletProxies.size() - 1; i >= 0; i--) {
+                current = (MIDletProxy)midletProxies.elementAt(i);
+                SuspendSystem.getInstance(classSecurityToken).
+                        addSuspendDependency(current);
+                current.pauseMidlet();
             }
         }
 
@@ -650,52 +650,58 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     }
 
     /**
-     * Notify the device if one of the midlets is not paused anymore.
+     * Notifies the device if an active MIDlet appeared in the system.
+     * The notification is produced only once when the system runs
+     * out of the state with all the MIDlets being either paused 
+     * or destroyed.
      */
     private void notifyIfMidletActive() {
         MIDletProxy midletProxy;
-        boolean allMidletsPaused = true;
 
         synchronized (midletProxies) {
-            for (int i = midletProxies.size() - 1; i >= 0; i--) {
-                midletProxy = (MIDletProxy)midletProxies.elementAt(i);
-                if (midletProxy.getMidletState() !=
-                        MIDletProxy.MIDLET_PAUSED) {
-                    allMidletsPaused = false;
-                    break;
+            if (allPaused) {
+                for (int i = midletProxies.size() - 1; i >= 0; i--) {
+                    midletProxy = (MIDletProxy)midletProxies.elementAt(i);
+                    if (midletProxy.getMidletState() ==
+                            MIDletProxy.MIDLET_ACTIVE) {
+                        allPaused = false;
+                        notifyResumeAll0();
+                        break;
+                    }
                 }
             }
-        }
-
-        if (!allMidletsPaused) {
-            allPaused = false;
-            notifyResumeAll0();
         }
     }
 
     /**
-     * Notify the device if all midlets are paused.
+     * Notifies the device if all MIDlets considered to be paused, that is
+     * at least one MIDlet is paused and others are either paused or
+     * destroyed. The notification is produced only once when the system
+     * runs to that state.
      */
     private void notifyIfAllPaused() {
-        MIDletProxy midletProxy;
-        boolean allMidletsPaused = false;
+        boolean  allMidletsPaused = false;
+        int midletState;
 
         synchronized (midletProxies) {
-            for (int i = midletProxies.size() - 1; i >= 0; i--) {
-                midletProxy = (MIDletProxy)midletProxies.elementAt(i);
-                if (midletProxy.getMidletState() ==
-                        MIDletProxy.MIDLET_PAUSED) {
-                    allMidletsPaused = true;
-                } else {
-                    allMidletsPaused = false;
-                    break;
+            if (!allPaused) {
+                for (int i = midletProxies.size() - 1; i >= 0; i--) {
+                    midletState = ((MIDletProxy) midletProxies.elementAt(i)).
+                            getMidletState();
+
+                    if (MIDletProxy.MIDLET_PAUSED == midletState) {
+                        allMidletsPaused = true;
+                    } else if (MIDletProxy.MIDLET_DESTROYED != midletState) {
+                        allMidletsPaused = false;
+                        break;
+                    }
+                }
+
+                if (allMidletsPaused) {
+                    allPaused = true;
+                    notifySuspendAll0();
                 }
             }
-        }
-
-        if (allMidletsPaused) {
-            allPaused = true;
-            notifySuspendAll0();
         }
     }
 
@@ -1014,7 +1020,8 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     public void setForegroundMIDlet(MIDletProxy newForeground) {
         if (newForeground != null &&
             (newForeground.getMidletState() == MIDletProxy.MIDLET_DESTROYED ||
-            newForeground == foregroundMidlet)) {
+            newForeground == foregroundMidlet ||
+            newForeground.noDisplay())) {
             return;
         }
 
@@ -1211,6 +1218,18 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     }
 
     /**
+     * Called to notify that java side of MIDP system has been suspended.
+     */
+    public void midpSuspended() {
+        notifyIfAllPaused();
+    }
+
+    /**
+     * Called to notify that java side of MIDP system has been resumed.
+     */
+    public void midpResumed() {}
+
+    /**
      * Set foreground midletProxy in the native midletProxy list state.
      *
      * @param isolateId Isolate ID
@@ -1225,7 +1244,7 @@ public class MIDletProxyList implements MIDletControllerEventConsumer {
     private native void notifySuspendAll0();
 
     /**
-     * Notify native code that all MIDlets have been resumed.
+     * Notify native code that an active MIDlet appeared in the system.
      */
     private native void notifyResumeAll0();
 }

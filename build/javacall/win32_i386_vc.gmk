@@ -39,6 +39,7 @@ HOST_COMPILER		= vc
 TARGET_PLATFORM		= javacall
 TARGET_OS		= javacall
 TARGET_CPU		= i386
+TARGET_DEVICE		= x86
 TARGET_COMPILER		= vc
 TARGET_VM		= cldc_vm
 

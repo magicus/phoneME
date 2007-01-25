@@ -52,5 +52,5 @@ else
 not_yet_implemented:: serial_port_not_yet_implemented
 
 serial_port_not_yet_implemented:
-	echo "Serial port communication is not implemented yet for OS $(TARGET_OS)"
+	@echo "Serial port communication is not implemented yet for OS $(TARGET_OS)"
 endif

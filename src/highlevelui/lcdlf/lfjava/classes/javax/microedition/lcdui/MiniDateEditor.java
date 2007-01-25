@@ -55,7 +55,6 @@ class MiniDateEditor extends DateEditor {
      */
     public MiniDateEditor(DateFieldLFImpl lf) {
         super(lf);
-        
         timeComponentsOffset = 0;
     }      
     
