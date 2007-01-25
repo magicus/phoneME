@@ -513,12 +513,16 @@ public class HttpInstaller extends Installer {
      */
     private void checkIfBasicAuthSupported(String wwwAuthField)
             throws InvalidJadException {
-        wwwAuthField = wwwAuthField.trim();
+        if (wwwAuthField != null) {
+            wwwAuthField = wwwAuthField.trim();
 
-        if (!wwwAuthField.regionMatches(true, 0, BASIC_TAG, 0,
-                                        BASIC_TAG.length())) {
-            throw new InvalidJadException(InvalidJadException.CANNOT_AUTH);
+            if (wwwAuthField.regionMatches(true, 0, BASIC_TAG, 0,
+                                           BASIC_TAG.length())) {
+                return;
+            }
         }
+
+        throw new InvalidJadException(InvalidJadException.CANNOT_AUTH);
     }
 
     /**
