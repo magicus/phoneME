@@ -367,27 +367,21 @@ void ConstantPoolRewriter::rewrite_class_object(InstanceClass *klass JVM_TRAPS) 
   info().set_constants(&_merged_pool);
 }
 
-void ConstantPoolRewriter::rewrite_method(Method *method JVM_TRAPS) {
-  Method new_method;
-  if (method->is_abstract() || method->is_native() || 
-      method->code_size() == 0) {
-    rewrite_method_header(method JVM_CHECK);
-    // The method is not really replaced, but we enter it into the hash
-    // table anyway so that replace_method_references() has to do less work.
-    record_method_replacement(method, method);
-  } else {
-    new_method = create_method_replacement(method JVM_CHECK);
-    record_method_replacement(method, &new_method);
-  }
 #if ENABLE_ROM_JAVA_DEBUGGER
+void ConstantPoolRewriter::rewrite_line_number_tables(Method *old_method, 
+                                                      Method *new_method,
+                                                      bool compress_if_possible JVM_TRAPS) {
+  
+  GUARANTEE(old_method != NULL && new_method != NULL, "Sanity");
+
   // compress and fix line number table based on new offsets possibly
   // created when we rewrote the method bytecodes
-  if (MakeROMDebuggable && !new_method.is_null()) {
+  if (MakeROMDebuggable && !new_method->is_null()) {
     UsingFastOops fast_oops;
-    LineVarTable::Fast line_var_table = method->line_var_table();
+    LineVarTable::Fast line_var_table = old_method->line_var_table();
     LineNumberTable::Fast line_num_table;
     LocalVariableTable::Fast local_var_table;
-    bool can_compress = true;
+    bool can_compress = compress_if_possible;
     bool need_table = false;
     if (!line_var_table.is_null()) {
       line_num_table = line_var_table().line_number_table();
@@ -426,13 +420,13 @@ void ConstantPoolRewriter::rewrite_method(Method *method JVM_TRAPS) {
     if (!line_var_table.is_null()) {
       local_var_table = line_var_table().local_variable_table();
     }
-    can_compress = true;
+    can_compress = compress_if_possible;
     need_table = false;
     if (!line_var_table.is_null() && !local_var_table.is_null()) {
       int i;
       int num_entries = local_var_table().count();
-      jushort new_code_size = new_method.code_size();
-      jushort old_code_size = method->code_size();
+      jushort new_code_size = new_method->code_size();
+      jushort old_code_size = old_method->code_size();
       jushort start_pc, code_length, new_code_length, new_pc;
       for (i = 0; i < num_entries; i++) {
         start_pc = local_var_table().start_pc(i);
@@ -483,9 +477,65 @@ void ConstantPoolRewriter::rewrite_method(Method *method JVM_TRAPS) {
     }
   } else {
     Oop::Raw null_oop;
-    method->set_line_var_table(&null_oop);
+    old_method->set_line_var_table(&null_oop);
   }
+}
 #endif
+
+void ConstantPoolRewriter::rewrite_method(Method *method JVM_TRAPS) {
+  Method new_method;
+  if (method->is_abstract() || method->is_native() || 
+      method->code_size() == 0) {
+    rewrite_method_header(method JVM_CHECK);
+    // The method is not really replaced, but we enter it into the hash
+    // table anyway so that replace_method_references() has to do less work.
+    record_method_replacement(method, method);
+  } else {
+    new_method = create_method_replacement(method JVM_CHECK);
+    record_method_replacement(method, &new_method);
+  }
+
+#if ENABLE_ROM_JAVA_DEBUGGER
+  rewrite_line_number_tables(method, &new_method, true JVM_CHECK);
+#endif
+}
+
+void ConstantPoolRewriter::rewrite_exception_table(Method *method, 
+                                                   ConstantPool *orig_cp 
+                                                   JVM_TRAPS) {
+  UsingFastOops level1;
+
+  TypeArray::Fast exception_table = method->exception_table();
+  TypeArray::Fast new_exception_table;
+  if (!exception_table.is_null() && exception_table().length() > 0) {
+    // 4-tuples of ints [start_pc, end_pc, handler_pc, catch_type index]
+    GUARANTEE(!method->is_abstract() && !method->is_native(), "sanity");
+    int len = exception_table().length();
+    new_exception_table = Universe::new_short_array(len JVM_CHECK);
+
+    for (int i=0; i<len; i+=4) {
+      jushort start_pc   = exception_table().ushort_at(i + 0);
+      jushort end_pc     = exception_table().ushort_at(i + 1);
+      jushort handler_pc = exception_table().ushort_at(i + 2);
+      jushort type_index = exception_table().ushort_at(i + 3);
+
+      start_pc   = _new_bytecode_address.ushort_at(start_pc);
+      end_pc     = _new_bytecode_address.ushort_at(end_pc);
+      handler_pc = _new_bytecode_address.ushort_at(handler_pc);
+
+      if (type_index != 0 && orig_cp != NULL) { // 0 means "any type"
+        type_index = get_merged_pool_entry(orig_cp, type_index JVM_CHECK);
+        GUARANTEE(_merged_pool.tag_at(type_index).is_resolved_klass(),
+                  "sanity");
+      }
+
+      new_exception_table().ushort_at_put(i + 0, start_pc);
+      new_exception_table().ushort_at_put(i + 1, end_pc);
+      new_exception_table().ushort_at_put(i + 2, handler_pc);
+      new_exception_table().ushort_at_put(i + 3, type_index);
+    }
+    method->set_exception_table(&new_exception_table);
+  }
 }
 
 void ConstantPoolRewriter::rewrite_method_header(Method *method JVM_TRAPS) {
@@ -512,37 +562,7 @@ void ConstantPoolRewriter::rewrite_method_header(Method *method JVM_TRAPS) {
 
   method->set_constants(&_merged_pool);
 
-  TypeArray::Fast exception_table = method->exception_table();
-  TypeArray::Fast new_exception_table;
-  if (!exception_table.is_null() && exception_table().length() > 0) {
-    // 4-tuples of ints [start_pc, end_pc, handler_pc, catch_type index]
-    GUARANTEE(!method->is_abstract() && !method->is_native(), "sanity");
-    int len = exception_table().length();
-    new_exception_table = Universe::new_short_array(len JVM_CHECK);
-
-    for (int i=0; i<len; i+=4) {
-      jushort start_pc   = exception_table().ushort_at(i + 0);
-      jushort end_pc     = exception_table().ushort_at(i + 1);
-      jushort handler_pc = exception_table().ushort_at(i + 2);
-      jushort type_index = exception_table().ushort_at(i + 3);
-
-      start_pc   = _new_bytecode_address.ushort_at(start_pc);
-      end_pc     = _new_bytecode_address.ushort_at(end_pc);
-      handler_pc = _new_bytecode_address.ushort_at(handler_pc);
-
-      if (type_index != 0) { // 0 means "any type"
-        type_index = get_merged_pool_entry(&orig_cp, type_index JVM_CHECK);
-        GUARANTEE(_merged_pool.tag_at(type_index).is_resolved_klass(),
-                  "sanity");
-      }
-
-      new_exception_table().ushort_at_put(i + 0, start_pc);
-      new_exception_table().ushort_at_put(i + 1, end_pc);
-      new_exception_table().ushort_at_put(i + 2, handler_pc);
-      new_exception_table().ushort_at_put(i + 3, type_index);
-    }
-    method->set_exception_table(&new_exception_table);
-  }
+  rewrite_exception_table(method, &orig_cp JVM_CHECK);
 
 #if ENABLE_REFLECTION
   TypeArray::Fast thrown_exceptions = method->thrown_exceptions();
@@ -567,10 +587,21 @@ ConstantPoolRewriter::create_method_replacement(Method *method JVM_TRAPS) {
     optimized_method = _bytecode_optimizer.optimize_bytecodes(method JVM_CHECK_0);
     int new_method_length = optimized_method().code_size() + 1;
     if (new_method_length > _new_bytecode_address.length()) {
-      _new_bytecode_address = Universe::new_short_array(new_method_length JVM_CHECK_0);    
+      _new_bytecode_address = Universe::new_short_array(new_method_length JVM_CHECK_0);
     }
   }
 #endif
+  
+  // The first step of bytecode optimization is made, bytecode indices changed.
+  // Exception table and line number table should be updated.
+  // shall_create_new_method rewrites _new_bytecode_address so we 
+  // should rewrite the tables right now.
+  rewrite_exception_table(method, NULL JVM_CHECK_0);
+#if ENABLE_ROM_JAVA_DEBUGGER
+  rewrite_line_number_tables(method, &optimized_method, false /*don't compress*/ 
+                             JVM_CHECK_0);
+#endif
+
   // (1) determine the size of the new method
   int new_size;
   bool create_new_method = shall_create_new_method(&optimized_method, &new_size JVM_CHECK_0);
