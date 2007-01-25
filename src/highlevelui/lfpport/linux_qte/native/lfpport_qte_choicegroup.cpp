@@ -1215,6 +1215,24 @@ void ListElement::setFont(QFont *f) {
 }
 
 /**
+ * Returns the pixmap that corresponds to this popup element.
+ *
+ * @return pixmap of this element
+ */
+QPixmap* ListElement::pixmap() {
+    return pix;
+}
+
+/**
+ * Returns the font that corresponds to this popup element.
+ *
+ * @return font of this element
+ */
+QFont* ListElement::getFont() {
+    return font;
+}
+
+/**
  * Construct the body widget for an implicit List.
  *
  * @param parent parent widget pointer
@@ -1800,53 +1818,35 @@ bool PopupBody::eventFilter(QObject *object, QEvent *event) {
                object == qPopup->viewport()) {
         QMouseEvent *e = (QMouseEvent*)event;
         switch(event->type()) {
-        case QEvent::MouseButtonRelease:
-            if (qPopup->rect().contains(e->pos()) ) {
-                QMouseEvent tmp(QEvent::MouseButtonDblClick,
-                        e->pos(), e->button(), e->state()) ;
-                // will hide popup
-                QApplication::sendEvent(object, &tmp);
-                return TRUE;
-            }
-            break;
-        case QEvent::MouseButtonDblClick:
-        case QEvent::MouseButtonPress:
-            if (!qPopup->rect().contains(e->pos())) {
-                if (poppedUp) {
-                    popDownList();
+            case QEvent::MouseButtonRelease:
+                if (qPopup->rect().contains(e->pos())) {
+                    // emulate Double Click to get selected event
+                    QMouseEvent tmp(QEvent::MouseButtonDblClick,
+                            e->pos(), e->button(), e->state()) ;
+                    QApplication::sendEvent(object, &tmp);
+                    return TRUE;
                 }
-                return TRUE;
-            }
-            break;
-        case QEvent::KeyPress:
-            switch(((QKeyEvent *)event)->key()) {
-            case Key_Up:
-            case Key_Down:
-            if (!(((QKeyEvent *)event)->state() & AltButton))
                 break;
-            case Key_F4:
-            case Key_Escape:
-    #ifdef QT_KEYPAD_MODE
-            case Key_Back:
-            case Key_No:
-    #endif
-            if (poppedUp) {
-                popDownList();
-                return TRUE;
-            }
-            break;
-    #ifdef QT_KEYPAD_MODE
-            case Key_Select:
-    #endif
-            case Key_Enter:
-            case Key_Return:
-            // work around QDialog's enter handling
-            return FALSE;
+            case QEvent::MouseButtonPress:
+                if (!qPopup->rect().contains(e->pos())) {
+                    popDownList();
+                    return TRUE;
+                }
+                break;
+    
+            case QEvent::KeyPress:
+                switch(((QKeyEvent *)event)->key()) {
+                    case Key_Escape:
+            #ifdef QT_KEYPAD_MODE
+                    case Key_Back:
+                    case Key_No:
+            #endif
+                        popDownList();
+                        return TRUE;
+                    break;
+                }
             default:
-            break;
-            }
-        default:
-            break;
+                break;
         }
     }
     return QWidget::eventFilter(object, event);
@@ -1894,19 +1894,6 @@ QListBox* PopupBody::getList() {
 }
 
 /**
- *  Calculates the listbox height needed to contain all items, or as
- *  many as the list box is supposed to contain.
- */
-int PopupBody::listHeight(QListBox *l, int sl)
-{
-    if (l->count() > 0) {
-        return QMIN(l->count(), (uint)sl) * l->item(0)->height(l);
-    } else {
-        return l->sizeHint().height();
-    }
-}
-
-/**
  * Popups the popup list.
  * If the list is empty, no selections appear.
  */
@@ -1914,48 +1901,33 @@ void PopupBody::popupList() {
     if (!qPopup->count()) {
         return;
     }
-
-    // Send all listbox events to eventFilter():
+    // Send all listbox events to PopupBody eventFilter
     qPopup->installEventFilter(this);
     qPopup->viewport()->installEventFilter(this);
-    qPopup->resize(width(),
-                listHeight(qPopup, 10) +
-                qPopup->frameWidth() * 2);
-    QWidget *desktop = QApplication::desktop();
-    int sw = desktop->width();          // screen width
-    int sh = desktop->height();         // screen height
-    QPoint pos = mapToGlobal(QPoint(0,height()));
 
-    // Similar code is in QPopupMenu
-    int x = pos.x();
-    int y = pos.y();
-    int w = qPopup->width();
-    int h = qPopup->height();
-
-    // the complete widget must be visible
-    if (x + w > sw) {
-        x = sw - w;
-    } else if (x < 0) {
-        x = 0;
-    }
-
-    if (y + h > sh) {
-        if (sh - y > y) {
-            qPopup->resize(w, sh - y);
+    // define size and position for popup
+    // following calculations in parent' coordinate system
+    int winH = qteapp_get_mscreen()->getDisplayFullHeight();
+    int bodyY = y();
+    int pX = x();
+    int pY = bodyY + height();
+    int pW = width();
+    int pH = qPopup->sizeHint().height();
+    if ((pY + pH) > winH) {
+        //select the highest part of the widget
+        if ((winH - pY) > bodyY) {
+            pH = winH - pY;
         } else {
-            if (y - h - height() >= 0) {
-                y = y - h - height();
-            } else {
-                qPopup->resize(w, y);
-                y = 0;
-            }
+            pY = 0;
+            pH = bodyY;
         }
     }
 
-    qPopup->move(x,y);
+    QPoint pos = mapToGlobal(mapFromParent(QPoint(pX, pY)));
+    qPopup->resize(pW, pH);
+    qPopup->move(pos.x(), pos.y());
     qPopup->raise();
     qPopup->setAutoScrollBar(TRUE);
-
     qPopup->show();
 
     poppedUp = TRUE;
@@ -2007,7 +1979,7 @@ Popup::Popup(QWidget *parent, const QString &label,
 
   } else {
     qButton = new PopupBody(this);
-    qPopup = new QListBox(qButton, "in-combo", WType_Popup);
+    qPopup = new QListBox(qButton, "", WType_Popup);
     qButton->setList(qPopup);
   }
 

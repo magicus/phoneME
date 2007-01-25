@@ -606,16 +606,10 @@ class PopupBody : public QPushButton {
   void keyReleaseEvent(QKeyEvent *keyEvent);
 
   /**
-   * The event filter steals events from the listbox when it is
+   * The event filter receives events from the listbox when it is
    * popped up. 
    */
   bool eventFilter(QObject *object, QEvent *event);
-
-  /**
-   * Calculates the listbox height needed to contain all items, or as
-   * many as the list box is supposed to contain.
-   */
-  int listHeight( QListBox *l, int sl );
 
   /**
    * Popups the popup list.
@@ -1023,7 +1017,6 @@ class Popup : public Choice {
   /**
    * The popup menu with all choices.
    */
-  //PatchedQPopupMenu *qPopup;
   QListBox *qPopup;
 
   /**
@@ -1031,12 +1024,6 @@ class Popup : public Choice {
    * counting.
    */
   int selectedIndex;
-
-  /**
-   * List of all PopupElement inserted in this Popup in the correct
-   * order
-   */
-  //QList<QCustomMenuItem> *elements;
 
  protected:
 
@@ -1284,19 +1271,14 @@ class ListElement : public QListBoxItem {
     *
     * @return pixmap of this element
     */
-    QPixmap *pixmap() {
-    return pix;
-    }
+    QPixmap* pixmap();
 
     /**
      * Returns the font that corresponds to this popup element.
      *
      * @return font of this element
      */
-
-    QFont *getFont() {
-        return font;
-    }
+    QFont* getFont();
 
 
  private:
