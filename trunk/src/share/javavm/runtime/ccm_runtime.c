@@ -647,6 +647,16 @@ void CVMCCMruntimeCheckCast(CVMCCExecEnv *ccee,
     /* Only write back the objCb for methods above codeCacheDecompileStart.
      * If CVM_AOT is enabled, make sure we don't write into the AOT code. 
      */
+    /* Make sure cachedCbPtr is in the codecache */
+#ifdef CVM_AOT
+    CVMassert(((CVMUint8*)cachedCbPtr >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedCbPtr < CVMglobals.jit.codeCacheEnd) ||
+              ((CVMUint8*)cachedCbPtr >= CVMglobals.jit.codeCacheAOTStart &&
+	       (CVMUint8*)cachedCbPtr < CVMglobals.jit.codeCacheAOTEnd));
+#else
+    CVMassert(((CVMUint8*)cachedCbPtr >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedCbPtr < CVMglobals.jit.codeCacheEnd));
+#endif
     if ((CVMUint8*)cachedCbPtr > CVMglobals.jit.codeCacheDecompileStart
 #ifdef CVM_AOT
 	&& !((CVMUint8*)cachedCbPtr >= CVMglobals.jit.codeCacheAOTStart &&
@@ -737,6 +747,16 @@ CVMJavaInt CVMCCMruntimeInstanceOf(CVMCCExecEnv *ccee,
     /* Only write back the objCb for methods above codeCacheDecompileStart.
      * If CVM_AOT is enabled, make sure we don't write into the AOT code.
      */
+    /* Make sure cachedCbPtr is in the codecache */
+#ifdef CVM_AOT
+    CVMassert(((CVMUint8*)cachedCbPtr >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedCbPtr < CVMglobals.jit.codeCacheEnd) ||
+              ((CVMUint8*)cachedCbPtr >= CVMglobals.jit.codeCacheAOTStart &&
+	       (CVMUint8*)cachedCbPtr < CVMglobals.jit.codeCacheAOTEnd));
+#else
+    CVMassert(((CVMUint8*)cachedCbPtr >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedCbPtr < CVMglobals.jit.codeCacheEnd));
+#endif
     if (success && 
         (CVMUint8*)cachedCbPtr > CVMglobals.jit.codeCacheDecompileStart
 #ifdef CVM_AOT
@@ -815,6 +835,16 @@ CVMCCMruntimeLookupInterfaceMB(CVMCCExecEnv *ccee, CVMClassBlock *ocb,
          * codeCacheDecompileStart. If CVM_AOT is enabled,
          * make sure we don't write into the AOT code.
          */
+        /* Make sure guessPtr is in the codecache */
+#ifdef CVM_AOT
+        CVMassert(((CVMUint8*)guessPtr >= CVMglobals.jit.codeCacheStart &&
+                   (CVMUint8*)guessPtr < CVMglobals.jit.codeCacheEnd) ||
+                  ((CVMUint8*)guessPtr >= CVMglobals.jit.codeCacheAOTStart &&
+	           (CVMUint8*)guessPtr < CVMglobals.jit.codeCacheAOTEnd));
+#else
+        CVMassert(((CVMUint8*)guessPtr >= CVMglobals.jit.codeCacheStart &&
+                   (CVMUint8*)guessPtr < CVMglobals.jit.codeCacheEnd));
+#endif
         if (CVMcbInterfacecb(ocb, guess) == icb &&
             (CVMUint8*)guessPtr > CVMglobals.jit.codeCacheDecompileStart
 #ifdef CVM_AOT
@@ -1172,15 +1202,18 @@ CVMCCMruntimeResolveClassBlock(CVMCCExecEnv *ccee, CVMExecEnv *ee,
     cb = CVMcpGetCb(cp, cpIndex);
 
     CVMassert(cachedConstant != NULL);
-    if ((CVMUint8*)cachedConstant > CVMglobals.jit.codeCacheDecompileStart
-#ifdef CVM_AOT
-	&& !((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheAOTStart &&
-            (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheAOTEnd)
-#endif
-       )
-    {
-        *cachedConstant = cb;
-    }
+    /* Make sure cachedConstant is in the codecache */
+    CVMassert(((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheEnd));
+
+    /*
+     * AOT only supports ROMized classes, whose cp are always resolved.
+     * CVMCCMruntimeResolveClassBlock should never called for AOT code.
+     * The above assertion covers that.
+     */
+
+    *cachedConstant = cb;
+
     return CVM_TRUE; /* no class initialization needed */
 }
 #endif
@@ -1217,15 +1250,18 @@ CVMCCMruntimeResolveArrayClassBlock(CVMCCExecEnv *ccee, CVMExecEnv *ee,
     }
 
     CVMassert(cachedConstant != NULL);
-    if ((CVMUint8*)cachedConstant > CVMglobals.jit.codeCacheDecompileStart
-#ifdef CVM_AOT
-	&& !((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheAOTStart &&
-            (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheAOTEnd)
-#endif
-       )
-    {
-        *cachedConstant = arrCb;
-    }
+    /* Make sure cachedConstant is in the codecache */
+    CVMassert(((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheEnd));
+
+    /*
+     * AOT only supports ROMized classes, whose cp are always resolved.
+     * CVMCCMruntimeResolveArrayClassBlock should never called for AOT code.
+     * The above assertion covers that.
+     */
+
+    *cachedConstant = arrCb;
+
     return CVM_TRUE; /* no class initialization needed */
 }
 #endif
@@ -1271,15 +1307,18 @@ CVMCCMruntimeResolveFieldOffset(CVMCCExecEnv *ccee, CVMExecEnv *ee,
     }
 #endif
     CVMassert(cachedConstant != NULL);
-    if ((CVMUint8*)cachedConstant > CVMglobals.jit.codeCacheDecompileStart
-#ifdef CVM_AOT
-	&& !((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheAOTStart &&
-            (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheAOTEnd)
-#endif
-       )
-    {
-        *cachedConstant = offset;
-    }
+    /* Make sure cachedConstant is in the codecache */
+    CVMassert(((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheEnd));
+
+    /*
+     * AOT only supports ROMized classes, whose cp are always resolved.
+     * CVMCCMruntimeResolveFieldOffset should never called for AOT code.
+     * The above assertion covers that.
+     */
+
+    *cachedConstant = offset;
+
     return CVM_TRUE; /* no class initialization needed */
 }
 #endif
@@ -1344,15 +1383,18 @@ CVMCCMruntimeResolveMethodBlock(CVMCCExecEnv *ccee, CVMExecEnv *ee,
     mb = CVMcpGetMb(cp, cpIndex);
 
     CVMassert(cachedConstant != NULL);
-    if ((CVMUint8*)cachedConstant > CVMglobals.jit.codeCacheDecompileStart
-#ifdef CVM_AOT
-	&& !((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheAOTStart &&
-            (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheAOTEnd)
-#endif
-       )
-    {
-        *cachedConstant = mb;
-    }
+    /* Make sure cachedConstant is in the codecache */
+    CVMassert(((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheEnd));
+
+    /*
+     * AOT only supports ROMized classes, whose cp are always resolved.
+     * CVMCCMruntimeResolveMethodBlock should never called for AOT code.
+     * The above assertion covers that.
+     */
+
+    *cachedConstant = mb;
+
     return CVM_TRUE; /* no class initialization needed */
 }
 #endif
@@ -1419,15 +1461,18 @@ CVMCCMruntimeResolveSpecialMethodBlock(CVMCCExecEnv *ccee, CVMExecEnv *ee,
     }
 
     CVMassert(cachedConstant != NULL);
-    if ((CVMUint8*)cachedConstant > CVMglobals.jit.codeCacheDecompileStart
-#ifdef CVM_AOT
-	&& !((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheAOTStart &&
-            (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheAOTEnd)
-#endif
-       )
-    {
-        *cachedConstant = mb;
-    }
+    /* Make sure cachedConstant is in the codecache */
+    CVMassert(((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheEnd));
+
+    /*
+     * AOT only supports ROMized classes, whose cp are always resolved.
+     * CVMCCMruntimeResolveSpecialMethodBlock should never called for AOT code.
+     * The above assertion covers that.
+     */
+
+    *cachedConstant = mb;
+
     return CVM_TRUE; /* no class initialization needed */
 }
 #endif
@@ -1473,15 +1518,18 @@ CVMCCMruntimeResolveMethodTableOffset(CVMCCExecEnv *ccee, CVMExecEnv *ee,
     offset = CVMmbMethodTableIndex(mb) * sizeof(CVMMethodBlock *);
 
     CVMassert(cachedConstant != NULL);
-    if ((CVMUint8*)cachedConstant > CVMglobals.jit.codeCacheDecompileStart
-#ifdef CVM_AOT
-	&& !((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheAOTStart &&
-            (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheAOTEnd)
-#endif
-    )
-    {
-        *cachedConstant = offset;
-    }
+    /* Make sure cachedConstant is in the codecache */
+    CVMassert(((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheEnd));
+
+    /*
+     * AOT only supports ROMized classes, whose cp are always resolved.
+     * CVMCCMruntimeResolveMethodTableOffset should never called for AOT code.
+     * The above assertion covers that.
+     */
+ 
+    *cachedConstant = offset;
+
     return (CVMMethodBlock*)NULL; /* vtbl entry entered in cache word */
 }
 #endif
@@ -1499,15 +1547,18 @@ CVMCCMruntimeResolveNewClassBlockAndClinit(CVMCCExecEnv *ccee,
                                            CVMUint16 cpIndex,
                                            CVMClassBlock **cachedConstant)
 {
+    CVMConstantPool *cp = CVMeeGetCurrentFrameCp(ee);
     CVMClassBlock *cb;
 
     CVMCCMstatsInc(ee,
                    CVMCCM_STATS_CVMCCMruntimeResolveNewClassBlockAndClinit);
 
-    /* NOTE: CVMCCMruntimeResolveClassBlock() won't return if an exception was
-       thrown.  It will bypass all this and turn control over to the VM's
-       exception handling mechanism. */
-    CVMCCMruntimeResolveClassBlock(ccee, ee, cpIndex, &cb);
+    /* NOTE: CVMCCMruntimeResolveConstantPoolEntry won't return if an 
+       exception was thrown.  It will bypass all this and turn control 
+       over to the VM's exception handling mechanism. */
+    CVMCCMruntimeResolveConstantPoolEntry(ccee, ee, cpIndex, cp);
+    cb = CVMcpGetCb(cp, cpIndex);
+
 #ifndef CVM_TRUSTED_CLASSLOADERS
     CVMCCMruntimeLazyFixups(ee);
     /* Make sure it is OK to instantiate the specified class: */
@@ -1517,15 +1568,17 @@ CVMCCMruntimeResolveNewClassBlockAndClinit(CVMCCExecEnv *ccee,
 #endif
 
     CVMassert(cachedConstant != NULL);
-    if ((CVMUint8*)cachedConstant > CVMglobals.jit.codeCacheDecompileStart
-#ifdef CVM_AOT
-	&& !((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheAOTStart &&
-            (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheAOTEnd)
-#endif
-       )
-    {
-        *cachedConstant = cb;
-    }
+    /* Make sure cachedConstant is in the codecache */
+    CVMassert(((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheEnd));
+
+    /*
+     * AOT only supports ROMized classes, whose cp are always resolved.
+     * CVMCCMruntimeResolveNewClassBlockAndClinit should never called for 
+     * AOT code. The above assertion covers that.
+     */
+
+    *cachedConstant = cb;
 
     /* Do static initialization if necessary: */
     /* NOTE: CVMCCMruntimeRunClassInitializer() won't return if it needs to
@@ -1590,15 +1643,17 @@ CVMCCMruntimeResolveStaticFieldBlockAndClinit(CVMCCExecEnv *ccee,
        or not. */
     addressOfStaticField = &CVMfbStaticField(ee, fb);
     CVMassert(cachedConstant != NULL);
-    if ((CVMUint8*)cachedConstant > CVMglobals.jit.codeCacheDecompileStart
-#ifdef CVM_AOT
-	&& !((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheAOTStart &&
-            (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheAOTEnd)
-#endif
-       )
-    {
-        *cachedConstant = addressOfStaticField;
-    }
+    /* Make sure cachedConstant is in the codecache */
+    CVMassert(((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheEnd));
+
+    /*
+     * AOT only supports ROMized classes, whose cp are always resolved.
+     * CVMCCMruntimeResolveStaticFieldBlockAndClinit should never called
+     * for AOT code. The above assertion covers that.
+     */
+
+    *cachedConstant = addressOfStaticField;
 
     /* Do static initialization if necessary: */
     /* NOTE: CVMCCMruntimeRunClassInitializer() won't return if it needs to
@@ -1686,15 +1741,17 @@ CVMCCMruntimeResolveStaticMethodBlockAndClinit(CVMCCExecEnv *ccee,
 #endif
     
     CVMassert(cachedConstant != NULL);
-    if ((CVMUint8*)cachedConstant > CVMglobals.jit.codeCacheDecompileStart
-#ifdef CVM_AOT
-	&& !((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheAOTStart &&
-            (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheAOTEnd)
-#endif
-       )
-    {
-        *cachedConstant = mb;
-    }
+    /* Make sure cachedConstant is in the codecache */
+    CVMassert(((CVMUint8*)cachedConstant >= CVMglobals.jit.codeCacheStart &&
+               (CVMUint8*)cachedConstant < CVMglobals.jit.codeCacheEnd));
+
+    /*
+     * AOT only supports ROMized classes, whose cp are always resolved.
+     * CVMCCMruntimeResolveStaticMethodBlockAndClinit should never called
+     * for AOT code. The above assertion covers that.
+     */
+
+    *cachedConstant = mb;
 
     /* Do static initialization if necessary: */
     /* NOTE: CVMCCMruntimeRunClassInitializer() won't return if it needs to
