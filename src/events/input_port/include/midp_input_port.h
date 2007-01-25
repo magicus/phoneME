@@ -41,8 +41,8 @@ extern "C" {
 #include <midpEvents.h>
 #include <keymap_input.h> 
 
-#define MD_KEY_HOME       (KEY_MACHINE_DEP)
-#define MD_KEY_SWITCH_APP (KEY_MACHINE_DEP - 1)
+#define KEYMAP_MD_KEY_HOME       (KEYMAP_KEY_MACHINE_DEP)
+#define KEYMAP_MD_KEY_SWITCH_APP (KEYMAP_KEY_MACHINE_DEP - 1)
 
 /**
  * Handle received keyboard/keypad signals

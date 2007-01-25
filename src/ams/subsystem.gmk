@@ -84,11 +84,14 @@ endif
 
 include $(SUBSYSTEM_AMS_DIR)/ams_api/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/ams_base/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
+
+ifneq ($(CVM_INCLUDE_JUMP), true)
+   include $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk
+   include $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk
+endif
 
 ifeq ($(TARGET_VM), cldc_vm)
 include $(SUBSYSTEM_AMS_DIR)/ams_util/lib.gmk
@@ -104,7 +107,6 @@ ifeq ($(USE_NATIVE_AMS), false)
     include $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk
 endif
 
-
 # Add VM mode specific common files
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
 include $(SUBSYSTEM_AMS_DIR)/mvm/lib.gmk
@@ -115,6 +117,7 @@ include $(SUBSYSTEM_AMS_DIR)/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
 endif
 
 # Examples
+ifneq ($(CVM_INCLUDE_JUMP), true)
 ifneq ($(TARGET_PLATFORM), stubs)
 include $(SUBSYSTEM_AMS_DIR)/example/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
 else
@@ -126,7 +129,14 @@ endif
 ifeq ($(SUBSYSTEM_AMS_MODULES), jams)
 include $(SUBSYSTEM_AMS_DIR)/example/$(SUBSYSTEM_AMS_MODULES)_port/lib.gmk
 endif
-
-ifeq ($(TARGET_VM), cdc_vm)
-include $(SUBSYSTEM_AMS_DIR)/cdc_application/lib.gmk
 endif
+
+# CDC specific files
+ifeq ($(TARGET_VM), cdc_vm)
+   ifeq ($(CVM_INCLUDE_JUMP), true)
+      include $(SUBSYSTEM_AMS_DIR)/jump_application/lib.gmk
+   else
+      include $(SUBSYSTEM_AMS_DIR)/cdc_application/lib.gmk
+   endif
+endif
+

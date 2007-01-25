@@ -216,7 +216,7 @@ void PlatformMScreen::viewportMousePressEvent(QMouseEvent *mouse)
     MIDP_EVENT_INITIALIZE(evt);
 
     evt.type = MIDP_PEN_EVENT;
-    evt.ACTION = PRESSED;
+    evt.ACTION = KEYMAP_STATE_PRESSED;
     evt.X_POS = mouse->x();
     evt.Y_POS = mouse->y();
 
@@ -236,7 +236,7 @@ void PlatformMScreen::viewportMouseMoveEvent(QMouseEvent *mouse)
     MIDP_EVENT_INITIALIZE(evt);
 
     evt.type = MIDP_PEN_EVENT;
-    evt.ACTION = DRAGGED;
+    evt.ACTION = KEYMAP_STATE_DRAGGED;
     evt.X_POS = mouse->x();
     evt.Y_POS = mouse->y();
 
@@ -256,7 +256,7 @@ void PlatformMScreen::viewportMouseReleaseEvent(QMouseEvent *mouse)
 
 
     evt.type = MIDP_PEN_EVENT;
-    evt.ACTION = RELEASED;
+    evt.ACTION = KEYMAP_STATE_RELEASED;
     evt.X_POS = mouse->x();
     evt.Y_POS = mouse->y();
 
@@ -307,13 +307,14 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
     else {
         MidpEvent evt;
         MIDP_EVENT_INITIALIZE(evt);
-        if ((evt.CHR = mapKey(key)) != KEY_INVALID) {
-            if (evt.CHR == KEY_SCREEN_ROT) {
-                evt.type   =  ROTATION_EVENT;
+        if ((evt.CHR = mapKey(key)) != KEYMAP_KEY_INVALID) {
+            if (evt.CHR == KEYMAP_KEY_SCREEN_ROT) {
+                evt.type = ROTATION_EVENT;
             } else {
-                evt.type   = MIDP_KEY_EVENT;
+                evt.type = MIDP_KEY_EVENT;
             }
-            evt.ACTION = key->isAutoRepeat() ? REPEATED : PRESSED;
+            evt.ACTION = key->isAutoRepeat() ? 
+                KEYMAP_STATE_REPEATED : KEYMAP_STATE_PRESSED;
             handleKeyEvent(evt);
         }
     }
@@ -366,9 +367,9 @@ void PlatformMScreen::keyReleaseEvent(QKeyEvent *key)
 
     MIDP_EVENT_INITIALIZE(evt);
 
-    if ((evt.CHR = mapKey(key)) != KEY_INVALID) {
+    if ((evt.CHR = mapKey(key)) != KEYMAP_KEY_INVALID) {
         evt.type = MIDP_KEY_EVENT;
-        evt.ACTION = RELEASED;
+        evt.ACTION = KEYMAP_STATE_RELEASED;
         handleKeyEvent(evt);
     }
 

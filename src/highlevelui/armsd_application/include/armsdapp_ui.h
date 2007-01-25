@@ -122,7 +122,7 @@ typedef enum {
     ADS_KEY_END      = -11,
     ADS_KEY_POWER    = -12, 
     ADS_KEY_INVALID  = 0
-} ADS_KeyType;
+} ADS_KeyCode;
 
 
 #define DISPLAY_WIDTH           128

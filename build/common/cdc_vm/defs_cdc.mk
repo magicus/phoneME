@@ -70,6 +70,10 @@ MIDP_CNI_CLASSES += \
         javax.microedition.lcdui.ImageDataFactory \
         javax.microedition.lcdui.KeyConverter
 
+ifeq ($(CVM_INCLUDE_JUMP), true)
+MIDP_CNI_CLASSES += \
+        com.sun.midp.jump.JumpInit
+endif
 
 # Patterns to be included in the binary bundle.
 MIDP_BINARY_BUNDLE_PATTERNS += \

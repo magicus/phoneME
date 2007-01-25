@@ -142,45 +142,45 @@ static void updateEditorForRotation();
 static LRESULT CALLBACK
 myTextProc(HWND hwnd, WNDPROC oldproc, UINT msg, WPARAM wp, LPARAM lp,
            int isMultiLine) {
-    int c = KEY_INVALID;
+    int c = KEYMAP_KEY_INVALID;
     lastUserInputTick = GetTickCount();
 
     switch (msg) {
     case WM_KEYDOWN:
     case WM_KEYUP:
         switch (wp) {
-        case VK_UP:     c = KEY_UP;    break;
-        case VK_DOWN:   c = KEY_DOWN;  break;
-        case VK_LEFT:   c = KEY_LEFT;  break;
-        case VK_RIGHT:  c = KEY_RIGHT; break;
+        case VK_UP:     c = KEYMAP_KEY_UP;    break;
+        case VK_DOWN:   c = KEYMAP_KEY_DOWN;  break;
+        case VK_LEFT:   c = KEYMAP_KEY_LEFT;  break;
+        case VK_RIGHT:  c = KEYMAP_KEY_RIGHT; break;
         default:
             break;
         }
     }
 
-    if (c == KEY_LEFT) {
+    if (c == KEYMAP_KEY_LEFT) {
         /* Don't send the key to MIDP unless we are at the first character  */
         WORD w = (WORD)SendMessage(hwnd, EM_GETSEL, 0, 0L);
         int caret = LOWORD(w);
         if (caret != 0) {
-            c = KEY_INVALID;
+            c = KEYMAP_KEY_INVALID;
         }
-    } else if (c == KEY_RIGHT) {
+    } else if (c == KEYMAP_KEY_RIGHT) {
         /* Don't send the key to MIDP unless we are at the last character  */
         WORD w = (WORD)SendMessage(hwnd, EM_GETSEL, 0, 0L);
         int strLen = GetWindowTextLength(hwnd);
         int caret = LOWORD(w);
         if (caret < strLen) {
-            c = KEY_INVALID;
+            c = KEYMAP_KEY_INVALID;
         }
     }
 
     if (isMultiLine) {
         switch (c) {
-        case KEY_UP:
-        case KEY_DOWN:
-        case KEY_LEFT:
-        case KEY_RIGHT:
+        case KEYMAP_KEY_UP:
+        case KEYMAP_KEY_DOWN:
+        case KEYMAP_KEY_LEFT:
+        case KEYMAP_KEY_RIGHT:
             /**
              * TODO: currenrly MIDP doesn't support Forms with multi-line
              * widgets, so we don't need to do anything special.
@@ -189,14 +189,15 @@ myTextProc(HWND hwnd, WNDPROC oldproc, UINT msg, WPARAM wp, LPARAM lp,
              * text box, we need to see if, e.g.: caret is at top line in the
              * editor and user presses UP.
              */
-            c = KEY_INVALID;
+            c = KEYMAP_KEY_INVALID;
         }
     }
 
-    if (c != KEY_INVALID) {
+    if (c != KEYMAP_KEY_INVALID) {
         pMidpEventResult->type = MIDP_KEY_EVENT;
         pMidpEventResult->CHR = c;
-        pMidpEventResult->ACTION = (msg == WM_KEYDOWN) ? PRESSED:RELEASED;
+        pMidpEventResult->ACTION = (msg == WM_KEYDOWN) ? 
+            KEYMAP_STATE_PRESSED:KEYMAP_STATE_RELEASED;
         pSignalResult->waitingFor = UI_SIGNAL;
         pMidpEventResult->DISPLAY = gForegroundDisplayId;
         sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
@@ -378,22 +379,22 @@ void winceapp_init() {
 
 static jint mapKey(WPARAM wParam, LPARAM lParam) {
     switch (wParam) {
-    case VK_F9:  return KEY_GAMEA; /* In PPC emulator only  */
-    case VK_F10: return KEY_GAMEB; /* In PPC emulator only */
-    case VK_F11: return KEY_GAMEC; /* In PPC emulator only */
-    case VK_F12: return KEY_GAMED; /* In PPC emulator only */
+    case VK_F9:  return KEYMAP_KEY_GAMEA; /* In PPC emulator only  */
+    case VK_F10: return KEYMAP_KEY_GAMEB; /* In PPC emulator only */
+    case VK_F11: return KEYMAP_KEY_GAMEC; /* In PPC emulator only */
+    case VK_F12: return KEYMAP_KEY_GAMED; /* In PPC emulator only */
 
-    case VK_UP:    return KEY_UP;
-    case VK_DOWN:  return KEY_DOWN;
-    case VK_LEFT:  return KEY_LEFT;
-    case VK_RIGHT: return KEY_RIGHT;
+    case VK_UP:    return KEYMAP_KEY_UP;
+    case VK_DOWN:  return KEYMAP_KEY_DOWN;
+    case VK_LEFT:  return KEYMAP_KEY_LEFT;
+    case VK_RIGHT: return KEYMAP_KEY_RIGHT;
 
     case VK_SPACE:
     case VK_RETURN:
-        return KEY_SELECT;
+        return KEYMAP_KEY_SELECT;
 
     case VK_BACK:
-        return KEY_BACKSPACE;
+        return KEYMAP_KEY_BACKSPACE;
 
     }
 
@@ -402,7 +403,7 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
         return (jint)wParam;
     }
 
-    return KEY_INVALID;
+    return KEYMAP_KEY_INVALID;
 }
 
 static void disablePaint() {
@@ -583,8 +584,9 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         case IDM_SOFTBTN_0:
         case IDM_SOFTBTN_1:
             pMidpEventResult->type = MIDP_KEY_EVENT;
-            pMidpEventResult->CHR = (cmd==IDM_SOFTBTN_0) ? KEY_SOFT1:KEY_SOFT2;
-            pMidpEventResult->ACTION = RELEASED;
+            pMidpEventResult->CHR = (cmd==IDM_SOFTBTN_0) ? 
+                KEYMAP_KEY_SOFT1:KEYMAP_KEY_SOFT2;
+            pMidpEventResult->ACTION = KEYMAP_STATE_RELEASED;
             pSignalResult->waitingFor = UI_SIGNAL;             
             pMidpEventResult->DISPLAY = gForegroundDisplayId;
             sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
@@ -602,8 +604,8 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             if (cmd >= ID_DYNAMIC_MENU) {
                 pMidpEventResult->type = MIDP_KEY_EVENT;
                 pMidpEventResult->CHR = ((cmd - ID_DYNAMIC_MENU)==IDM_SOFTBTN_0)
-                                           ? KEY_SOFT1:KEY_SOFT2;
-                pMidpEventResult->ACTION = RELEASED;
+                                           ? KEYMAP_KEY_SOFT1:KEYMAP_KEY_SOFT2;
+                pMidpEventResult->ACTION = KEYMAP_STATE_RELEASED;
                 pSignalResult->waitingFor = UI_SIGNAL;
                 pMidpEventResult->DISPLAY = gForegroundDisplayId;
                 sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
@@ -682,11 +684,11 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 
             POINT pen_position ={LOWORD(lp), HIWORD(lp)};
             if (msg == WM_MOUSEMOVE) {
-                pMidpEventResult->ACTION = DRAGGED;
+                pMidpEventResult->ACTION = KEYMAP_STATE_DRAGGED;
             } else if (msg == WM_LBUTTONUP) {
-                pMidpEventResult->ACTION = RELEASED;
+                pMidpEventResult->ACTION = KEYMAP_STATE_RELEASED;
             } else {
-                pMidpEventResult->ACTION = PRESSED;
+                pMidpEventResult->ACTION = KEYMAP_STATE_PRESSED;
             }
             pMidpEventResult->type = MIDP_PEN_EVENT;
             pMidpEventResult->X_POS = pen_position.x;
@@ -712,18 +714,18 @@ static LRESULT process_key(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     lastUserInputTick = GetTickCount();
 
     switch (key = mapKey(wp, lp)) {
-    case KEY_INVALID:
+    case KEYMAP_KEY_INVALID:
         break;
     default:
         pMidpEventResult->type = MIDP_KEY_EVENT;
         pMidpEventResult->CHR = key;
 
         if (msg == WM_KEYUP) {
-            pMidpEventResult->ACTION = RELEASED;
+            pMidpEventResult->ACTION = KEYMAP_STATE_RELEASED;
         } else if (lp & 0x40000000) {
-            pMidpEventResult->ACTION = REPEATED;
+            pMidpEventResult->ACTION = KEYMAP_STATE_REPEATED;
         } else {
-            pMidpEventResult->ACTION = PRESSED;
+            pMidpEventResult->ACTION = KEYMAP_STATE_PRESSED;
         }
         pSignalResult->waitingFor = UI_SIGNAL;
         pMidpEventResult->DISPLAY = gForegroundDisplayId;
