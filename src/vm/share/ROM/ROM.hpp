@@ -640,17 +640,25 @@ public:
 #endif /* USE_BINARY_IMAGE_LOADER */
 
 #if USE_BINARY_IMAGE_GENERATOR || USE_BINARY_IMAGE_LOADER
-public:
-  static OopDesc**     _romized_heap_marker;
+private:
+  static OopDesc* _romized_heap_marker;
 
+public:
   static OopDesc* romized_heap_marker() {
-    return (OopDesc*)_romized_heap_marker;
+    return _romized_heap_marker;
+  }
+
+  static void set_romized_heap_marker(JVM_SINGLE_ARG_TRAPS) {
+    const int task = ObjectHeap::start_system_allocation();
+    _romized_heap_marker =
+      Universe::new_instance(Universe::object_class() JVM_NO_CHECK);
+    ObjectHeap::finish_system_allocation(task);
   }
 
 #if ENABLE_MONET_DEBUG_DUMP
   static char * getNameForAddress(address addr);
 #endif
-#endif
+#endif // USE_BINARY_IMAGE_GENERATOR || USE_BINARY_IMAGE_LOADER
 
 /*====================================================================
  * Debug (non-product) operations start here.

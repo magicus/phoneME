@@ -43,7 +43,7 @@ public:
   virtual void do_obj(Oop* obj) {
     if (obj->is_string()) {
 #if USE_BINARY_IMAGE_GENERATOR
-      if (obj->obj() >= ROM::romized_heap_marker())
+      if (obj->obj() > ROM::romized_heap_marker())
 #endif
         _num_strings ++;
     }
@@ -71,7 +71,7 @@ public:
   virtual void do_obj(Oop* obj) {
     if (obj->is_string()) {
 #if USE_BINARY_IMAGE_GENERATOR
-      if (obj->obj() >= ROM::romized_heap_marker()) 
+      if (obj->obj() > ROM::romized_heap_marker()) 
 #endif
       {
         _strings->add_no_expand(obj);

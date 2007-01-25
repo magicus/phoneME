@@ -56,7 +56,7 @@ void Task::link_dynamic(JVM_SINGLE_ARG_TRAPS) {
       break;
     }
   }
-  ROM::_romized_heap_marker = _inline_allocation_top;
+  ROM::set_romized_heap_marker(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
 #else //!ENABLE_LIB_IMAGES
   if( path().length() > 0 ) {
     path0 = path().obj_at(0);
@@ -458,13 +458,6 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
     Synchronizer::release_locks_for_task(id);
 
     Verifier::flush_cache();
-
-    //we are marking _romized_heap_marker during GC
-    //but this object MUST belong to terminating task
-    // so it mustn't be marked.
-#if ENABLE_MONET
-    ROM::_romized_heap_marker = NULL;
-#endif
 
 #ifdef AZZERT
     // At this point there should be no root that will reference

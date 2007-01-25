@@ -919,7 +919,7 @@ void ROMOptimizer::quicken_methods(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_LIB_IMAGES && ENABLE_MONET
       OopDesc* method_ptr = methods().obj_at(i);
       if (ROM::in_any_loaded_bundle( method_ptr ) || 
-          (ObjectHeap::contains(method_ptr) && method_ptr < ROM::romized_heap_marker())) {
+          (ObjectHeap::contains(method_ptr) && method_ptr <= ROM::romized_heap_marker())) {
         continue;
       }
 #endif
@@ -2132,7 +2132,7 @@ void ROMOptimizer::replace_empty_arrays() {
   for (SystemClassStream st; st.has_next(false, true/*we need fake classes here*/);) {
     InstanceClass::Raw klass = st.next();
 #if ENABLE_MONET && ENABLE_LIB_IMAGES
-    if (ROM::in_any_loaded_bundle(klass.obj()) || (klass.obj() < ROM::romized_heap_marker())) {
+    if (ROM::in_any_loaded_bundle(klass.obj()) || (klass.obj() <= ROM::romized_heap_marker())) {
       continue;
     }
 #endif

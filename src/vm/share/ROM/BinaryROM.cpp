@@ -672,17 +672,18 @@ inline ROMBundle* ROMBundle::load( const int /*task_id*/,
   { Task *t = Task::current(); if (t->not_null()) {
 #define ENDEACH_TASK }}
 
-#else
+#else // ENABLE_ISOLATES
 
 #define FOREACH_TASK(t) \
-  { UsingFastOops fast_oops; Task::Fast _task; Task *t = &_task; \
+  if (Universe::task_list()->not_null()) { \
+    UsingFastOops fast_oops; Task::Fast _task; Task *t = &_task; \
     for (int _i=0; _i < MAX_TASKS; _i++) { \
       _task = Universe::task_from_id(_i); \
       if (_task.not_null()) {
 
 #define ENDEACH_TASK }}}
 
-#endif
+#endif // ENABLE_ISOLATES
         
 void ROM::dispose_binary_images() {
   // This function is called when VM is shutting down. There's needed only

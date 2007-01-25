@@ -361,7 +361,7 @@ void BinaryROMWriter::write_all_objects_of_type(BlockType type
     }
 
     if ((type == ROMWriter::HEAP_BLOCK) &&
-        object.obj() < (OopDesc *)ROM::romized_heap_marker()) {
+        object.obj() <= ROM::romized_heap_marker()) {
 #if ENABLE_ISOLATES && !ENABLE_LIB_IMAGES
       GUARANTEE(ObjectHeap::owner_task_id(object.obj()) != romizer_task_id(),
                 "Missed heap object");
@@ -679,7 +679,7 @@ void BinaryROMWriter::calculate_layout(JVM_SINGLE_ARG_TRAPS) {
   ObjArray::Fast raw_infos   = visited_object_infos()->raw_array();
   int text_offset = 0;
   int heap_offset = 0;
-  OopDesc *marker = (OopDesc *)ROM::romized_heap_marker();
+  OopDesc *marker = ROM::romized_heap_marker();
 
   // We create separate symbol and string tables that contain only symbols and
   // strings referenced from the application. This is to avoid writing all the
@@ -726,7 +726,7 @@ void BinaryROMWriter::calculate_layout(JVM_SINGLE_ARG_TRAPS) {
             }
           }
           else if (type == ROMWriter::HEAP_BLOCK) {
-            if (obj >= marker) {
+            if (obj > marker) {
 #if ENABLE_ISOLATES && !ENABLE_LIB_IMAGES
               GUARANTEE(ObjectHeap::owner_task_id(obj) == romizer_task_id(),
                         "Streaming heap object from wrong task");

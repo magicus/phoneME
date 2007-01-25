@@ -53,7 +53,7 @@ void ConstantPoolRewriter::rewrite(JVM_SINGLE_ARG_TRAPS) {
   for (SystemClassStream st; st.has_next();) {
     klass = st.next();    
 #if ENABLE_LIB_IMAGES && ENABLE_MONET
-    if (ROM::in_any_loaded_bundle(klass.obj()) || (klass.obj() < ROM::romized_heap_marker())) {
+    if (ROM::in_any_loaded_bundle(klass.obj()) || (klass.obj() <= ROM::romized_heap_marker())) {
       continue;
     }
 #endif

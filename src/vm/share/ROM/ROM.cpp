@@ -206,7 +206,7 @@ const int* rom_linkcheck_mffd = &_ROM_LINKCHECK_MFFD;
 #endif
 
 #if USE_BINARY_IMAGE_GENERATOR
-OopDesc** ROM::_romized_heap_marker;
+OopDesc* ROM::_romized_heap_marker;
 #endif
 OopDesc** _romized_heap_top;
 
@@ -301,7 +301,8 @@ bool ROM::link_static(OopDesc** ram_persistent_handles, int num_handles) {
   ObjectHeap::rom_init_heap_bounds(_inline_allocation_top, permanent_top);
 
 #if USE_BINARY_IMAGE_GENERATOR
-  _romized_heap_marker = _inline_allocation_top;
+  SETUP_ERROR_CHECKER_ARG;
+  ROM::set_romized_heap_marker(JVM_SINGLE_ARG_MUST_SUCCEED);
 #endif
 
   // (3) Relocate pointers inside the objects newly loaded into the heap.
@@ -702,15 +703,8 @@ void ROM::oops_do(void do_oop(OopDesc**), bool do_all_data_objects,
 #endif
 
 #if USE_BINARY_IMAGE_GENERATOR
-  //this condition means that the task is terminating, so may  
-  //remove _romized_heap_marker, cause it MUST belong to terminating task!
-  if (_romized_heap_marker != NULL) {
-#if ENABLE_LIB_IMAGES
-    //IMPL_NOTE: this condition might always be better enabled?!
-    if (_romized_heap_marker != _inline_allocation_top) 
-#endif
-       do_oop((OopDesc**)&_romized_heap_marker);
-  }
+  GUARANTEE(_romized_heap_marker != NULL, "Sanity");
+  do_oop(&_romized_heap_marker);
 #endif
 
 #if ENABLE_PERFORMANCE_COUNTERS

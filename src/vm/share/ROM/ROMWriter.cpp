@@ -933,7 +933,7 @@ void ROMWriter::visit_object(Oop *object, OopDesc *info JVM_TRAPS) {
  {
    BlockType type = (BlockType)entry.type();
    if ((type == ROMWriter::HEAP_BLOCK) &&
-       object->obj() < (OopDesc *)ROM::romized_heap_marker()) {
+       object->obj() <= ROM::romized_heap_marker()) {
 #if ENABLE_ISOLATES && !ENABLE_LIB_IMAGES
       GUARANTEE(ObjectHeap::owner_task_id(object->obj()) != romizer_task_id(),
                 "Missed heap object");

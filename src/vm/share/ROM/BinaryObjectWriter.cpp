@@ -72,7 +72,7 @@ void BinaryObjectWriter::begin_object(Oop *object JVM_TRAPS) {
     dumpit = false;
   }
   if (type == ROMWriter::HEAP_BLOCK &&
-      object->obj() < (OopDesc *)ROM::romized_heap_marker()) {
+      object->obj() <= ROM::romized_heap_marker()) {
     dumpit = false;
   }
   if (dumpit) {
@@ -146,7 +146,7 @@ void BinaryObjectWriter::put_reference(Oop *owner, int offset, Oop *object
       break;
 
     case ROMWriter::HEAP_BLOCK: {
-        if (object->obj() >= (OopDesc *)ROM::romized_heap_marker()) {
+        if (object->obj() > ROM::romized_heap_marker()) {
           // A reference to another objects in the binary ROM HEAP block
           GUARANTEE(oop_offset != -1, "Offset not set");
           writer()->writebinary_int_ref(writer()->binary_heap_block_addr() +
