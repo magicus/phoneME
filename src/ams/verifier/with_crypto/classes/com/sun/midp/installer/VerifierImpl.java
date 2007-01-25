@@ -156,6 +156,9 @@ public class VerifierImpl implements Verifier {
      * Set the lastCA field to name of the CA. Set the cpCert field to the
      * provider certificate.
      *
+     * IMPL_NOTE: in the case of erroneous certificate chains the first
+     *            chain error will be thrown.
+     *
      * @exception InvalidJadException if the JAR is not valid or the
      *   provider certificate is missing or a general certificate error
      */
@@ -173,7 +176,9 @@ public class VerifierImpl implements Verifier {
                 // the next chain exists, it should also be verified;
                 // the first valid chain should be used for the jar
                 // verification.
-                pendingException = ije;
+                if (pendingException == null) {
+                    pendingException = ije;
+                }
                 continue;
             }
 
@@ -208,9 +213,6 @@ public class VerifierImpl implements Verifier {
      * CA. Set the authPath field to names of the auth chain in any case.
      * Authenticate the chain and set the cpCert field to the provider's
      * certificate if the CA is known.
-     *
-     * IMPL_NOTE: in the case of erroneous certificate chains the last
-     *            chain error will be thrown.
      *
      * @param chainNum the number of the chain
      *

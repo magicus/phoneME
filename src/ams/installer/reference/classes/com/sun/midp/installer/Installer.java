@@ -181,6 +181,13 @@ public abstract class Installer {
         Permissions.UNIDENTIFIED_DOMAIN_BINDING;
 
     /**
+     * Include this permissions into the list of permissions
+     * given in MIDlet-Permissions jad attribute for unsigned
+     * suites.
+     */
+    protected String additionalPermissions;
+
+    /**
      * Constructor of the Installer.
      */
     Installer() {
@@ -934,6 +941,58 @@ public abstract class Installer {
     }
 
     /**
+     * If some additional (i.e. that are not listed in jad) permissions must
+     * be allowed, add them to the value of MIDlet-Permissions attribute.
+     */
+    private void applyExtraPermissions() {
+        if (additionalPermissions != null) {
+            String newPermissions = state.jadProps.getProperty(
+                MIDletSuite.PERMISSIONS_PROP);
+
+            if (newPermissions != null && newPermissions.length() > 0) {
+                newPermissions += ",";
+            }
+
+            if ("all".equals(additionalPermissions)) {
+                int i;
+                byte[] domainPermissions = Permissions.forDomain(
+                    info.domain)[Permissions.MAX_LEVELS];
+
+                newPermissions = "";
+
+                for (i = 0; i < Permissions.NUMBER_OF_PERMISSIONS - 1; i++) {
+                    if (domainPermissions[i] != Permissions.NEVER) {
+                        newPermissions += Permissions.getName(i) + ",";
+                    }
+                }
+
+                // the same for the last permission, but without ","
+                if (domainPermissions[i] != Permissions.NEVER) {
+                    newPermissions += Permissions.getName(i);
+                }
+            } else {
+                newPermissions += additionalPermissions;
+            }
+
+            state.jadProps.setProperty(MIDletSuite.PERMISSIONS_PROP,
+                        newPermissions);
+
+            /*
+             * If the Midlet-Permissions attribute presents in there
+             * manifest, it must be the same as in jad because the suite
+             * is trusted.
+             */
+            String jarPermissions = state.jarProps.getProperty(
+                MIDletSuite.PERMISSIONS_PROP);
+
+            if (jarPermissions != null) {
+                state.jarProps.setProperty(MIDletSuite.PERMISSIONS_PROP,
+                                           newPermissions);
+            }
+        }
+    }
+
+    /**
      * Checks the permissions and store the suite.
      *
      * @exception IOException is thrown, if an I/O error occurs during
@@ -967,9 +1026,16 @@ public abstract class Installer {
                 postInstallMsgBackToProvider(
                     OtaNotifier.AUTHORIZATION_FAILURE_MSG);
 
+                /*
+                 * state.previousInstallInfo.authPath can be null in the case
+                 * if the previously installed suite was not signed but its
+                 * domain was set to some trusted one by AutoTester using
+                 * setUnsignedSecurityDomain().
+                 */
                 throw new InvalidJadException(
                     InvalidJadException.TRUSTED_OVERWRITE_FAILURE,
-                        state.previousInstallInfo.authPath[0]);
+                        state.previousInstallInfo.authPath != null ?
+                            state.previousInstallInfo.authPath[0] : "");
             }
 
             /*
@@ -998,6 +1064,12 @@ public abstract class Installer {
                 if (info.jadUrl != null) {
                     checkForJadManifestMismatches();
                 }
+
+                /*
+                 * This is needed by the AutoTester: sometimes it is required
+                 * to allow some permissions even if they are not listed in jad.
+                 */
+                applyExtraPermissions();
 
                 settings.setPermissions(getInitialPermissions(info.domain));
             }
@@ -1795,12 +1867,10 @@ public abstract class Installer {
     }
 
     /**
-     * Sets security domain for unsigned suites. The default is untrusted.
-     * Can only be called by JAM for testing.
-     *
-     * @param domain name of a security domain
+     * Checks if the calling suite has Permissions.MIDP permission.
+     * If not, the SecurityException is thrown.
      */
-    public void setUnsignedSecurityDomain(String domain) {
+    private void checkMidpPermission() {
         MIDletSuite midletSuite = MIDletStateHandler.
             getMidletStateHandler().getMIDletSuite();
 
@@ -1808,8 +1878,32 @@ public abstract class Installer {
         if (midletSuite != null) {
             midletSuite.checkIfPermissionAllowed(Permissions.MIDP);
         }
+    }
 
+    /**
+     * Sets security domain for unsigned suites. The default is untrusted.
+     * Can only be called by JAM for testing.
+     *
+     * @param domain name of a security domain
+     * @param allowedPermissions list of permissions that must be allowed even
+     * if they are absent from the jad file; "all" to allow all permissions
+     */
+    public void setUnsignedSecurityDomain(String domain) {
+        checkMidpPermission();
         unsignedSecurityDomain = domain;
+    }
+
+    /**
+     * Sets the permissions that must be allowed not depending on their
+     * presence in the application descriptor file.
+     * Can only be called by JAM for testing.
+     *
+     * @param extraPermissions list of permissions that must be allowed even
+     * if they are absent from the jad file; "all" to allow all permissions
+     */
+    public void setExtraPermissions(String extraPermissions) {
+        checkMidpPermission();
+        additionalPermissions = extraPermissions;
     }
 
     /**
