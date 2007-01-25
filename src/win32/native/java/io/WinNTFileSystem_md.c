@@ -337,7 +337,7 @@ removeFileOrDirectory(const jchar *path)
 }
 
 JNIEXPORT jboolean JNICALL
-Java_java_io_WinNTFileSystem_delete(JNIEnv *env, jobject this, jobject file)
+Java_java_io_WinNTFileSystem_delete0(JNIEnv *env, jobject this, jobject file)
 {
     jboolean rv = JNI_FALSE;
     WCHAR *pathbuf = NULL;
@@ -565,10 +565,9 @@ Java_java_io_WinNTFileSystem_createDirectory(JNIEnv *env, jobject this,
         
     return JNI_TRUE;
 }
-
-
+									 
 JNIEXPORT jboolean JNICALL
-Java_java_io_WinNTFileSystem_rename(JNIEnv *env, jobject this, jobject from, 
+Java_java_io_WinNTFileSystem_rename0(JNIEnv *env, jobject this, jobject from, 
                                     jobject to) 
 {
 

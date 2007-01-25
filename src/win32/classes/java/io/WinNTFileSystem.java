@@ -52,11 +52,11 @@ class WinNTFileSystem extends Win32FileSystem {
 
     public native boolean createFileExclusively(String path)
 	                                       throws IOException;
-    public native boolean delete0(File f);
+    protected native boolean delete0(File f);
     public synchronized native boolean deleteOnExit(File f);
     public native String[] list(File f);
     public native boolean createDirectory(File f);
-    public native boolean rename0(File f1, File f2);
+    protected native boolean rename0(File f1, File f2);
     public native boolean setLastModifiedTime(File f, long time);
     public native boolean setReadOnly(File f);
     protected native String getDriveDirectory(int drive);
