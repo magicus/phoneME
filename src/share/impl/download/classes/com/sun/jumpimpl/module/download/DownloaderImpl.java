@@ -37,8 +37,6 @@ import java.util.Vector;
 
 class DownloaderImpl implements JUMPDownloader {
 
-    static int downloadContent = 1;
-
     JUMPDownloadDescriptor descriptor;
     boolean isCancelled = false;
 
@@ -78,19 +76,20 @@ class DownloaderImpl implements JUMPDownloader {
                                        descriptor.getSize(),  
                                        destination);
 
-        String outputFile = "/tmp/" + (downloadContent++);
+	String fileExtension = null;
+
         if (descriptor.getType() == JUMPDownloadDescriptor.TYPE_APPLICATION) {
-            outputFile = outputFile + ".jar";
+            fileExtension = ".jar";
         }
 
         if (downloadSucceeded) {
             try {
-                File f = new File( outputFile );
-                FileOutputStream fos = new FileOutputStream( f );
+                File jarFile = File.createTempFile("content", fileExtension);
+                FileOutputStream fos = new FileOutputStream( jarFile );
                 fos.write( ((DownloadDestinationImpl)destination).getBuffer() );
                 fos.close();
 
-                return new File(outputFile).toURI().toURL();
+                return jarFile.toURI().toURL();
             } catch ( Exception e ) {
                 e.printStackTrace();
                 throw new JUMPDownloadException(e.toString());

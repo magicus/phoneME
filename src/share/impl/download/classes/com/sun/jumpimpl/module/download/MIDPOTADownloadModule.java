@@ -32,6 +32,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.OutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -45,8 +49,7 @@ import java.util.Vector;
 public class MIDPOTADownloadModule 
 implements JUMPDownloadModule
 {
-
-    //From the JUMPModule interface.  Do initialization and uninitialization here.
+    //From the JUMPModule interface.  
     public void load(Map config) {}
     public void unload() {}
 
@@ -56,7 +59,7 @@ implements JUMPDownloadModule
     public JUMPDownloader createDownloader(
         JUMPDownloadDescriptor descriptor)
         throws JUMPDownloadException {
-                                                                                     
+
         return new DownloaderImpl(descriptor);
     }
 
@@ -91,9 +94,30 @@ implements JUMPDownloadModule
                                       "is not " + jadMime + "\n" + url );
             }
 
+	    /**
+	     * First, write out the .jad as a temp file.
+	     * The installer may use the stored jad data to perform
+	     * additional content verificiation.
+	     */
+	    
             InputStream in = conn.getInputStream();
             LineNumberReader pr =
               new LineNumberReader( new InputStreamReader( in ) );
+
+	    File jadFile = File.createTempFile("midlet", ".jad");
+	    PrintWriter outputStream = 
+		     new PrintWriter(new FileWriter(jadFile));
+
+            String l;
+	    while ((l = pr.readLine()) != null) {
+	       outputStream.println(l);
+            }
+
+	    pr.close();
+	    outputStream.close();
+
+	    // Now, let's read back the data. 
+            pr = new LineNumberReader(new FileReader(jadFile));
 
             Hashtable missed = new Hashtable();
 
@@ -151,6 +175,9 @@ implements JUMPDownloadModule
                 }
             }
 
+	    // Done with parsing.  Close the jad file.  
+	    pr.close();
+
             int no = 1;
 
             Vector applications = new Vector();
@@ -181,6 +208,7 @@ implements JUMPDownloadModule
                 props.setProperty(JUMPApplication.TITLE_KEY, title);
                 props.setProperty(JUMPApplication.ICONPATH_KEY, iconpath);
                 props.setProperty(JUMPApplication.APPMODEL_KEY, JUMPAppModel.MIDLET.getName());                
+                props.setProperty("JUMPApplication_localJadUrl", jadFile.getCanonicalPath());                
 
                 applications.add( props );
                 

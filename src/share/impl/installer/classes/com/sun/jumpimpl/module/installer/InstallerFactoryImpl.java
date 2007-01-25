@@ -32,10 +32,14 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+import java.io.File;
+import java.lang.reflect.Method;
+
 /**
  * Factory implementation methods for the installer module
  */
 public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
+
     private JUMPInstallerModule mainInstaller;
     private JUMPInstallerModule xletInstaller;
     private JUMPInstallerModule midletInstaller;
@@ -63,18 +67,85 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
 	}
     }
 	
+    static boolean midletInstallerInitialized = false;
     private JUMPInstallerModule getMidletInstaller() 
     {
 	synchronized(InstallerFactoryImpl.class) {
-	    if (midletInstaller == null) {
-		midletInstaller = new MIDLETInstallerImpl();
-		midletInstaller.load(configMap);
+
+	    if (midletInstaller == null && !midletInstallerInitialized) {
+
+              /** 
+              * The MIDLET installer is part of the MIDP library, which
+              * is only accessible through the MIDPImplementationClassLoader.
+              * Hence the installer needs to be loaded by the midp implementation
+              * classloader via reflection. Otherwise, the full midp-cdc-jump
+              * rommization fails as well as runtime requiring midp classes to
+              * be in the same path as jump classes. 
+              **/   
+
+               try {
+                  Class midpConfigClass = Class.forName("sun.misc.MIDPConfig"); 
+                  Method method = midpConfigClass.getMethod(
+                                      "getMIDPImplementationClassLoader", 
+                                       null);
+
+                  ClassLoader midpImplementationClassLoader = 
+   		      (ClassLoader) method.invoke(null, null);
+   
+   	          if (midpImplementationClassLoader == null) {
+   
+	             /**		   
+	              *	Noone had a need to load midp classes yet.
+		      *	Create the classloader using the
+		      *	default location in which sun.misc.MIDPLauncher
+		      *	normally uses.
+		      **/
+
+                     String javahome = System.getProperty("java.home", "."); 
+   		     String sep = File.separator;
+   		     String midpClasses = javahome + sep + "midp" + sep + "midp_fb" + sep + "classes.zip";
+                     
+   	             File[] midpFile = new File[]{ new File(midpClasses) };
+                     method = midpConfigClass.getMethod(
+                                   "newMIDPImplementationClassLoader", 
+                                   new Class[]{ midpFile.getClass() });
+
+                     midpImplementationClassLoader =
+   	                (ClassLoader)method.invoke(null, new Object[] { midpFile });
+   	          }   
+                  
+   	          midletInstaller = (JUMPInstallerModule) 
+   	             loadAndInstantiate(midpImplementationClassLoader,
+   			          "com.sun.midp.jump.installer.MIDLETInstallerImpl"); 	
+                  if (midletInstaller != null) {
+		      midletInstaller.load(configMap);
+                  }
+
+               } catch (ClassNotFoundException e) {
+                  // MIDPConfig not found, not a duel stack platform.
+               } catch (Exception e) { 
+                  // Other unexpected error? Let's report it.
+                  e.printStackTrace();
+               }
+               midletInstallerInitialized = true;
 	    }
+	    
 	    return midletInstaller;
 	}
     }
-	
-    
+
+
+    private static Object loadAndInstantiate(ClassLoader loader,
+                                           String className) {
+        Object target = null;
+        try {
+            Class clazz = Class.forName(className, true, loader);
+            target = clazz.newInstance();
+        } catch (Exception e) { e.printStackTrace(); }
+
+        return target;
+    }
+
     /**
      * resource bundle for the installer module
      */
@@ -110,7 +181,11 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
         }
         
         if (appModel == JUMPAppModel.MIDLET) {
-            return getMidletInstaller();
+            JUMPInstallerModule module = getMidletInstaller();
+            if (module == null)
+               throw new IllegalArgumentException("Can't find MIDLET installer");
+
+            return module;
         }
         
         throw new IllegalArgumentException("Illegal app model for installer.");
