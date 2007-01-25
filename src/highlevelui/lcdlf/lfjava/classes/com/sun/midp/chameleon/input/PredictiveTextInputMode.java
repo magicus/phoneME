@@ -369,20 +369,22 @@ public class PredictiveTextInputMode implements InputMode {
      */
     private String modifyCaps(String str) {
         // log("[handleCaps] capsMode=" + CAPS_MODES_LABELS[capsMode]);
-        String ret = str; 
-        switch (CAPS_MODES[capsMode]) { 
-        case  CAPS_OFF: 
-            ret = str.toLowerCase(); 
-            break; 
-        case  CAPS_ON: 
-            ret = str.toUpperCase(); 
-            break; 
-        case  CAPS_SENTENCE: 
-            str = str.toLowerCase(); 
-            char[] chars = str.toCharArray();  
-            chars[0] = Character.toUpperCase(chars[0]); 
-            ret = new String(chars); 
-            break; 
+        String ret = str;
+        if (str != null && str.length() > 0) { 
+            switch (CAPS_MODES[capsMode]) { 
+            case  CAPS_OFF: 
+                ret = str.toLowerCase(); 
+                break; 
+            case  CAPS_ON: 
+                ret = str.toUpperCase(); 
+                break; 
+            case  CAPS_SENTENCE: 
+                str = str.toLowerCase(); 
+                char[] chars = str.toCharArray();  
+                chars[0] = Character.toUpperCase(chars[0]); 
+                ret = new String(chars); 
+                break; 
+            }
         }
         return ret; 
     }
