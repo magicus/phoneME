@@ -25,15 +25,13 @@
 
 #include <string.h>
 #include "KNICommon.h"
-#include "javavm/include/porting/sync.h"
 
-#include <jsr135_jumpdriver.h>
+#include "jsrop_exceptions.h"
+#include "jsr135_sync.h"
 
 /* Global Variables ************************************************************************/
 
 javacall_int64 g_currentPlayer = -1;
-CVMMutex        nAudioMutex;
-javacall_bool   nMutexCreated = JAVACALL_FALSE;
 
 /* Externs **********************************************************************************/
 
@@ -107,11 +105,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nInit) {
     KNI_GetParameterAsObject(3, mimeType);
     KNI_GetParameterAsObject(4, URI);
 
-    if (!nMutexCreated) {
-        CVMmutexInit(&nAudioMutex);
-        nMutexCreated = JAVACALL_TRUE;
-    }
-    
     /* Get mime type java string */
     mimeLength = KNI_GetStringLength(mimeType);
     pszMimeType = MMP_MALLOC(mimeLength * sizeof(jchar));
@@ -129,7 +122,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nInit) {
         }
     }
     pKniInfo = (KNIPlayerInfo*)MMP_MALLOC(sizeof(KNIPlayerInfo));
-CVMmutexLock(&nAudioMutex);
+LockAudioMutex();
     if (pKniInfo && pszMimeType /* && pszURI */) {
 
         /* prepare kni internal information */
@@ -140,9 +133,11 @@ CVMmutexLock(&nAudioMutex);
         pKniInfo->isDirectFile = JAVACALL_FALSE;
         pKniInfo->isForeground = -1;
         pKniInfo->recordState = RECORD_CLOSE;
+printf("javacall_media_create %d %d %s %s\n", isolateId, playerId, pszMimeType, pszURI);
         pKniInfo->pNativeHandle = 
             javacall_media_create(isolateId, playerId, pszMimeType, mimeLength, pszURI, URILength, (long)contentLength); 
         if (NULL == pKniInfo->pNativeHandle) {
+printf("javacall_media_create return NULL\n");
             MMP_FREE(pKniInfo);
         } else {
             returnValue = (int)pKniInfo;
@@ -150,7 +145,7 @@ CVMmutexLock(&nAudioMutex);
     } else {
         if (pKniInfo) { MMP_FREE(pKniInfo); }
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 
     if (pszMimeType) { MMP_FREE(pszMimeType); }
     if (pszURI)      { MMP_FREE(pszURI); }
@@ -176,14 +171,14 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nTerm) {
     /* Get this object instance and clazz */
     KNI_GetThisPointer(instance);
     KNI_GetObjectClass(instance, clazz);
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
  
     if (pKniInfo && pKniInfo->pNativeHandle) {
         if (JAVACALL_FAIL == javacall_media_close(pKniInfo->pNativeHandle)) {
             returnValue = 0;
         }
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 
     if (pKniInfo) {
         MMP_FREE(pKniInfo);
@@ -216,12 +211,12 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nAcquireDevice) {
 
     MMP_DEBUG_STR("+nAcquireDevice\n");
 
-CVMmutexLock(&nAudioMutex);
+LockAudioMutex();
     if (pKniInfo && JAVACALL_OK == javacall_media_acquire_device(pKniInfo->pNativeHandle)) {
         pKniInfo->isAcquire = JAVACALL_TRUE;
         returnValue = KNI_TRUE;
     }
-CVMmutexUnlock(&nAudioMutex);
+UnlockAudioMutex();
     KNI_ReturnBoolean(returnValue);
 }
 
@@ -234,12 +229,12 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nReleaseDevice) {
 
     MMP_DEBUG_STR("+nReleaseDevice\n");
 
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     if (pKniInfo) {
         javacall_media_release_device(pKniInfo->pNativeHandle);
         pKniInfo->isAcquire = JAVACALL_FALSE;
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 
     KNI_ReturnVoid();
 }
@@ -257,7 +252,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nBuffering) {
     KNI_DeclareHandle(bufferHandle);
     KNI_GetParameterAsObject(2, bufferHandle);
     
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle && length > 0) {
         int ret;
         jbyte *tmpArray = MMP_MALLOC(length);
@@ -273,13 +268,13 @@ CVMmutexLock(&nAudioMutex);
             }
         } else {
             REPORT_ERROR(LC_MMAPI, "[kni_player] nBuffering allocation fail\n");                
-            KNI_ThrowNew(OutOfMemoryError, NULL);
+            KNI_ThrowNew(jsropOutOfMemoryError, NULL);
         }
     } else if (pKniInfo && pKniInfo->pNativeHandle) {
         /* Indicate end of buffering by using NULL buffer */
         returnValue = javacall_media_do_buffering(pKniInfo->pNativeHandle, NULL, -1, -1);
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 
     KNI_EndHandles();
     KNI_ReturnInt(returnValue);
@@ -293,7 +288,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nFlushBuffer) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jboolean returnValue = KNI_FALSE;
 
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     /* If it is not temp buffer just return true */
     if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISTEMP)) {
         if (JAVACALL_OK == javacall_media_clear_buffer(pKniInfo->pNativeHandle)) {
@@ -305,7 +300,7 @@ CVMmutexLock(&nAudioMutex);
     } else {
         REPORT_ERROR(LC_MMAPI, "nFlushBuffer fail cause we are not using temp buffer");
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 
     KNI_ReturnBoolean(returnValue);
 }
@@ -320,12 +315,12 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
     
     MMP_DEBUG_STR("+nStart\n");
     
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle && JAVACALL_OK == javacall_media_start(pKniInfo->pNativeHandle)) {
         g_currentPlayer = pKniInfo->uniqueId;    /* set the current player */
         returnValue = KNI_TRUE;
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 
     KNI_ReturnBoolean(returnValue);
 }
@@ -340,7 +335,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStop) {
 
     MMP_DEBUG_STR("+nStop\n");
 
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
         if (JAVACALL_OK == javacall_media_stop(pKniInfo->pNativeHandle)) {
             returnValue = KNI_TRUE;
@@ -348,7 +343,7 @@ CVMmutexLock(&nAudioMutex);
     } else {
         REPORT_ERROR(LC_MMAPI, "nStop fail cause we are not in playing\n");
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
     
     KNI_ReturnBoolean(returnValue);
 }
@@ -360,11 +355,11 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetMediaTime) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jint returnValue = -1;
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
         returnValue = javacall_media_get_time(pKniInfo->pNativeHandle);
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 
     MMP_DEBUG_STR1("-nGetMediaTime time=%d\n", returnValue);
 
@@ -382,13 +377,13 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetMediaTime) {
 
     MMP_DEBUG_STR("+nSetMediaTime\n");
 
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
         returnValue = javacall_media_set_time(pKniInfo->pNativeHandle, (int)ms);
     } else {
         REPORT_ERROR(LC_MMAPI, "nSetMediaTime fail\n");
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 
     KNI_ReturnInt(returnValue);
 }
@@ -401,11 +396,11 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetDuration) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jint returnValue = -1;
 
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
         returnValue = javacall_media_get_duration(pKniInfo->pNativeHandle);
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 
     MMP_DEBUG_STR1("-nGetDuration duration=%d\n", returnValue);
 
@@ -422,7 +417,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPause) {
 
     MMP_DEBUG_STR("+nPause\n");  
 
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
         if (JAVACALL_OK == javacall_media_pause(pKniInfo->pNativeHandle)) {
             returnValue = KNI_TRUE;
@@ -430,7 +425,7 @@ CVMmutexLock(&nAudioMutex);
     } else {
         REPORT_ERROR(LC_MMAPI, "nPause fail cause is not in playing\n");    
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 
     KNI_ReturnBoolean(returnValue);
 }
@@ -445,7 +440,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nResume) {
 
     MMP_DEBUG_STR("+nResume\n");  
 
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
         if (JAVACALL_OK == javacall_media_resume(pKniInfo->pNativeHandle)) {
             returnValue = KNI_TRUE;
@@ -453,7 +448,7 @@ CVMmutexLock(&nAudioMutex);
     } else {
         REPORT_ERROR(LC_MMAPI, "nResume fail cause is not in playing\n");    
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 
     KNI_ReturnBoolean(returnValue);
 }
@@ -465,13 +460,13 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nIsNeedBuffering) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jboolean returnValue = KNI_TRUE;
 
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     /* Is buffering handled by device side? */
     if (pKniInfo && pKniInfo->pNativeHandle &&
 		JAVACALL_OK == javacall_media_protocol_handled_by_device(pKniInfo->pNativeHandle)) {
         returnValue = KNI_FALSE;
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 
     KNI_ReturnBoolean(returnValue);
 }
@@ -489,7 +484,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSwitchToForeground) {
 
     MMP_DEBUG_STR2("nSwitchToForeground %d %d\n", pKniInfo, options);
 
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
         if (1 != pKniInfo->isForeground) {
             pKniInfo->isForeground = 1;
@@ -501,7 +496,7 @@ CVMmutexLock(&nAudioMutex);
             returnValue = KNI_TRUE;
         }
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 #endif
     KNI_ReturnBoolean(returnValue);
 }
@@ -517,7 +512,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSwitchToBackground) {
 
     MMP_DEBUG_STR2("nSwitchToBackground %d %d\n", pKniInfo, options);
 
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
         if (0 != pKniInfo->isForeground) {
             pKniInfo->isForeground = 0;
@@ -529,7 +524,7 @@ CVMmutexLock(&nAudioMutex);
             returnValue = KNI_TRUE;
         }
     }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 #endif
     KNI_ReturnBoolean(returnValue);
 }
@@ -538,7 +533,7 @@ CVMmutexUnlock(&nAudioMutex);
 
 /* Native finalizer */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_mmedia_DirectPlayer_nFinalize) {
+KNIDECL(com_sun_mmedia_DirectPlayer_finalize) {
     jint handle;
     jint state;
     KNIPlayerInfo* pKniInfo;
@@ -571,7 +566,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nFinalize) {
         KNI_GetObjectField(instance, 
                        KNI_GetFieldID(clazz, "recordControl", "Lcom/sun/mmedia/DirectRecord;"), 
                        record_instance);
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
         if (KNI_FALSE == KNI_IsNullHandle(record_instance)) {
             MMP_DEBUG_STR1("stop recording by finalizer recordState=%d\n", pKniInfo->recordState);
             switch(pKniInfo->recordState) {
@@ -590,10 +585,10 @@ CVMmutexLock(&nAudioMutex);
             pKniInfo->recordState = RECORD_CLOSE;
             //KNI_SetBooleanField(record_instance, KNI_GetFieldID(clazz, "recording", "Z"), KNI_FALSE);
         }
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
 #endif
         /* Stop playing, delete cache, release device and terminate library */ 
-CVMmutexLock(&nAudioMutex);            
+LockAudioMutex();            
         if (STARTED == state) {
             MMP_DEBUG_STR("stopped by finalizer\n");
             javacall_media_stop(pKniInfo->pNativeHandle);
@@ -601,7 +596,7 @@ CVMmutexLock(&nAudioMutex);
         }
         javacall_media_release_device(pKniInfo->pNativeHandle);
         javacall_media_close(pKniInfo->pNativeHandle);
-CVMmutexUnlock(&nAudioMutex);            
+UnlockAudioMutex();            
         javacall_media_destroy(pKniInfo->pNativeHandle);
 
         KNI_SetIntField(instance, KNI_GetFieldID(clazz, "hNative", "I"), 0);

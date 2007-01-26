@@ -23,19 +23,47 @@
  * information or have any questions. 
  */
 package com.sun.mmedia;
+import javax.microedition.media.Player;
+import com.sun.j2me.app.AppModel;
+import java.lang.*;
+import java.lang.reflect.*;
 
 /**
- * Abstraction for the video renderer for the particular implementation (pure CDC)
+ * Abstraction for the video renderer for the particular application model
  */
 public class ModelVideoRenderer{
      
     /** Guard from 'new' operator */
-    private ModelVideoRenderer() {
+    private ModelVideoRenderer()
+    {
     }
     
     public static VideoRenderer getVideoRenderer(BasicPlayer player, 
                                           int sourceWidth, 
                                           int sourceHeight) {
-            return new AWTVideoRenderer(player, sourceWidth, sourceHeight);
+        int appModel = AppModel.getAppModel();
+        String className;
+        VideoRenderer ret = null;
+
+        if (appModel == AppModel.XLET)
+        {
+            className = "com.sun.midp.AWTVideoRenderer";
+        } else if (appModel == AppModel.MIDLET) {
+            className = "com.sun.midp.MIDPVideoRenderer";
+        } else {
+            return null;
+        }
+        try {
+            Class clazz = Class.forName(className);
+            Constructor constructor = clazz.getConstructor(
+                                            new Class[] {Player.class, Integer.class, Integer.class});
+            ret = (VideoRenderer)constructor.newInstance( 
+                                            new Object[] {player, new Integer(sourceWidth), new Integer(sourceHeight)});
+        } catch ( Exception ex ) {
+            ex.printStackTrace();
+            return null;
+        }
+        return ret;
     }
-}
+
+ }

@@ -25,8 +25,6 @@ package com.sun.mmedia;
 
 import java.util.Hashtable;
 import javax.microedition.media.Control;
-import java.security.AccessControlException;
-
 
 /**
  *  The configuration module for MMAPI.
@@ -132,7 +130,7 @@ public abstract class Configuration {
 
     /**
      * Checks if audio renderer supports StopTimeControl.
-     * This is a temporary function to bypass bug in QSound:
+     * This is a temporary function to bypass feature in QSound:
      * QsoundPCMOut is not able to support StopTimeControl, 
      * MapPCMOut is able ...
      *
@@ -217,24 +215,7 @@ public abstract class Configuration {
     public static Configuration getConfiguration() {
         if (config != null) return config;
 
-	// Note: remove this code in brackets
-	// we have problems with permissions for "mmapi-configuration" property
-	// cause it doesn't exist in policies
-	// thus we get the AccessControlException in case of running Xlet
-	// in case of Midlet it's ok and we get NULL property
-	// for meantime we do the same for Xlet w/out trying to get property
-
-		String className;
-		try {
-			// ... try and instantiate the configuration class ...
-			className = System.getProperty("mmapi-configuration");
-		}
-		catch (AccessControlException e)
-		{
-//			System.out.println("Configuration.getConfiguration(): caught AccessControlException()");
-			config = new DefaultConfiguration();
-			return config;
-		}
+        String className = System.getProperty("mmapi-configuration");
        
         if (className != null) {        
             try {

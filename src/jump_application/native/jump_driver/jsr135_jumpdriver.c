@@ -60,9 +60,8 @@
 #include <string.h>
 
 #include <kni.h>
-//#include <app_package.h>
 
-#include <JUMPMessages.h>
+#include <jump_messaging.h>
 #define JSR135_KNI_LAYER
 #include <jsr135_jumpdriver.h>
 #include <shared_memory.h>
@@ -78,37 +77,26 @@
 #define ALIGN(ptr_)                 ((ptr_) = (ALIGN_IS_ALIGNED((int)ptr_) ? (ptr_) : ((ptr_) + ALIGN_SHIFT((int)ptr_))))
 
 #define START_INTERFACE()   \
-void jsr135_jumpdriver_listener(JUMPMessage *m__, jmpMessageQueue queue__, void *context__) { \
-    int offset__ = 0; \
-    int id__; \
-    unsigned char par_buf__[2 * JUMP_MSG_MAX_LENGTH]; \
-    unsigned char *par_buf_ptr__ = par_buf__; \
-    unsigned char buf__[JUMP_MSG_MAX_LENGTH]; \
-    JUMPMessage *mm__ = jumpMessageResponseInBuffer(m__, buf__, sizeof buf__); \
-    if (mm__ == NULL) { \
-        goto nomem_err; \
-    } \
-    if (jumpMessageReadInt(m__, &offset__, &id__) < 0) { \
-        goto err; \
-    } \
-    ALIGN(par_buf_ptr__); \
-    (void)queue__; \
-    (void)context__; \
-    switch (id__) {
-
+void jsr135_jumpdriver_listener(JUMPMessage *in) { \
+    JUMPOutgoingMessage returnMessage; \
+    JUMPMessageReader r;               \
+    JUMPMessageStatusCode code;        \
+    int id;                            \
+    jumpMessageReaderInit(&r, *in);     \
+    id = jumpMessageGetInt(&r); \
+    returnMessage = jumpMessageNewOutgoingByRequest(*in); \
+    switch (id) {
+        
 #define END_INTERFACE() \
     default: \
         goto err; \
         break; \
     } \
-    jumpMessageSend(m__->senderProcessId, mm__); \
-    return; \
-nomem_err: \
+    jumpMessageSendAsyncResponse(returnMessage, &code); \
     return; \
 err: \
-    offset__ = 0; \
-    jumpMessageWriteByte(mm__, &offset__, IFACE_STATUS_FAIL); \
-    jumpMessageSend(m__->senderProcessId, mm__); \
+    jumpMessageAddByte(returnMessage, (int8)IFACE_STATUS_FAIL); \
+    jumpMessageSendAsyncResponse(returnMessage, &code); \
 }
 
 #define START(type_, name_, args_)   \
@@ -118,19 +106,15 @@ err: \
     case ID_##name_: {
 
 #define ARG(type_, arg_)    \
-    if (jumpMessageRead##type_(m__, &offset__, &arg_) < 0) { \
-        goto err; \
-    }
+    arg_ = jumpMessageGet##type_(&r);
 
 #define INVOKE(result_, function_, args_) \
     result_ = function_ args_; \
-    offset__ = 0; \
-    jumpMessageWriteByte(mm__, &offset__, IFACE_STATUS_OK);
+    jumpMessageAddByte(returnMessage, (int8)IFACE_STATUS_OK);
 
 #define INVOKE_VOID(function_, args_) \
     function_ args_; \
-    offset__ = 0; \
-    jumpMessageWriteByte(mm__, &offset__, IFACE_STATUS_OK);
+    jumpMessageAddByte(returnMessage, (int8)IFACE_STATUS_OK);
 
 #define DECL_ARG(type_, arg_) \
     type_ arg_;
@@ -142,8 +126,7 @@ err: \
     DECL_LOCAL(int, status)
 
 #define OUT_ARG(type_, arg_)    {\
-    type##type_ tmp_arg__ = (type##type_)arg_; \
-    jumpMessageWrite##type_(mm__, &offset__, tmp_arg__); \
+    jumpMessageAdd##type_(returnMessage, arg_); \
 }
 
 #define OUT_LOCAL(type_, ptr_)    \

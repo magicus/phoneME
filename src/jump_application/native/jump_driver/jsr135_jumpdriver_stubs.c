@@ -60,14 +60,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <JUMPMessages.h>
+#include <jump_messaging.h>
 #define JSR135_KNI_LAYER
 #include <jsr135_jumpdriver.h>
 #include <shared_memory.h>
 #include <javacall_multimedia.h>
 #include <jsr135_jumpdriver_impl.h>
 
-static int driver = -1;
+static JUMPAddress driver={0};
 
 #define ALIGN_BITS                  64
 #define ALIGN_BYTES                 (ALIGN_BITS >> 3)
@@ -80,45 +80,45 @@ static int driver = -1;
 #define START_INTERFACE()
 #define END_INTERFACE()
 
+
+#define MM_DRIVER_PID 100
+
 #define START(type_, name_, args_)   \
 type_ D##name_ args_ { \
-    unsigned char buf[JUMP_MSG_MAX_LENGTH]; \
-    JUMPMessage *mm__ = jumpMessageCreateInBuffer("mm/jsr135", buf, sizeof buf); \
-    int offset__ = 0; \
-    jumpMessageWriteInt(mm__, &offset__, ID_##name_); \
+    JUMPOutgoingMessage outMessage = jumpMessageNewOutgoingByType((JUMPPlatformCString)"mm/jsr135"); \
+    JUMPMessageReader r;          \
+    jumpMessageAddInt(outMessage, (int32)ID_##name_); \
     {
-
-#define START_VOID(name_, args_)   \
-void D##name_ args_ { \
-    unsigned char buf[JUMP_MSG_MAX_LENGTH]; \
-    JUMPMessage *mm__ = jumpMessageCreateInBuffer("mm/jsr135", buf, sizeof buf); \
-    int offset__ = 0; \
-    jumpMessageWriteInt(mm__, &offset__, ID_##name_); \
-    {
-
+        
 #define ARG(type_, arg_)    \
-    jumpMessageWrite##type_(mm__, &offset__, arg_);
+    jumpMessageAdd##type_(outMessage, arg_);
 
 #define INVOKE(result_, function_, arg_)   \
     INVOKE_VOID(function_, arg_) 
 
+// temporary solution to start driver from isolate
 #define INVOKE_VOID(function_, arg_) {\
-    unsigned char iface_result__; \
-    if (driver == -1) { \
-        driver = jumpMessageQueueOpen("MMDRIVER"); \
-        if (driver == -1) { \
-            goto err; \
+    JUMPMessage responseMessage;  \
+    JUMPMessageStatusCode stcode; \
+    if (driver.processId == 0) { \
+        driver.processId = fork(); \
+        if (driver.processId == 0) { \
+            mm_driver(0, NULL); \
+            exit(0); \
+        } else { \
+            CVMthreadYield(); \
+            sleep(1); \		
+            if (driver.processId == -1) { \
+                goto err; \
+            } \
         } \
     } \
-    mm__ = jumpMessageSendAndWaitForResponse(driver, mm__); \
-    if (mm__ == NULL) { \
+    responseMessage = jumpMessageSendSync(driver, outMessage, 0, &stcode); \
+    if (responseMessage == NULL) { \
         goto err; \
     } \
-    offset__ = 0; \
-    if (jumpMessageReadByte(mm__, &offset__, &iface_result__) < 0) { \
-        goto err; \
-    } \
-    if (iface_result__ != IFACE_STATUS_OK) { \
+    jumpMessageReaderInit(&r, responseMessage); \
+    if (jumpMessageGetByte(&r) < 0) { \
         goto err; \
     } \
 }
@@ -133,11 +133,7 @@ void D##name_ args_ { \
     type_ name_;
 
 #define OUT_ARG(type_, arg_)    { \
-    type##type_ tmp_arg__; \
-    if (jumpMessageRead##type_(mm__, &offset__, &tmp_arg__) < 0) { \
-        goto err; \
-    } \
-    *(arg_) = tmp_arg__; \
+    *(arg_) = jumpMessageGet##type_(&r); \
 }
 
 #define OUT_LOCAL(type_, arg_)    \
@@ -158,6 +154,7 @@ err: \
 
 #define END_STATUS() \
     OUT_LOCAL(Int, status)    \
+    jumpMessageQueueDestroy(jumpMessageGetReturnTypeName()); \
     END(status, -1)
 
 #define DECL_FREE_FUNCTION(function_, type_) \

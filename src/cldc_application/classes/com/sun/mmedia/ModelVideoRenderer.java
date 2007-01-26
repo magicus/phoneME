@@ -38,19 +38,7 @@ public class ModelVideoRenderer{
     public static VideoRenderer getVideoRenderer(BasicPlayer player, 
                                           int sourceWidth, 
                                           int sourceHeight) {
-        int appModel = AppModel.getAppModel();
-        if (appModel == AppModel.XLET)
-        {
-            System.out.println(" DEBUG: ModelVideoRenderer(): create a AWTVideoRenderer");
-            return new AWTVideoRenderer(player, sourceWidth, sourceHeight);
-        }
-        else
-            if (appModel == AppModel.MIDLET)
-            {
-                System.out.println(" DEBUG: ModelVideoRenderer(): create a MIDPVideoRenderer");
-                return new MIDPVideoRenderer(player, sourceWidth, sourceHeight);
-            }
-        return null;
+        return new MIDPVideoRenderer(player, sourceWidth, sourceHeight);
     }
 
  }

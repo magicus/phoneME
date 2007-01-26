@@ -1,5 +1,4 @@
 /*
- * @(#)PNGEncoder.c	1.2 04/02/11
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 

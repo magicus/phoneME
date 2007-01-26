@@ -47,7 +47,7 @@ import com.sun.j2me.log.LogChannels;
  * it implements VideoControl
  */
 public class DirectVideo extends DirectPlayer implements 
-    VideoControl, MIDPVideoPainter, ImplicitlyTrustedClass {
+    VideoControl, MIDPVideoPainter {
 
     private final int SCREEN_WIDTH = nGetScreenWidth();
     private final int SCREEN_HEIGHT = nGetScreenHeight();
@@ -88,9 +88,6 @@ public class DirectVideo extends DirectPlayer implements
     // Lock
     private Object boundLock = new Object();
 
-    /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken;
-    
     // native functions /////////////////////////////////////////////
 
     // Get video width
@@ -116,27 +113,14 @@ public class DirectVideo extends DirectPlayer implements
     }
     
     /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class.
-     */
-    public final void initSecurityToken(SecurityToken token) {
-        if (classSecurityToken != null) {
-            return;
-        }
-        classSecurityToken = token;
-    }
-
-    /**
      * Check for the multimedia record permission.
      *
      * @exception SecurityException if the permission is not
      *            allowed by this token
      */
-    private static void checkPermission() {
+    void checkPermission() {
     	try {
-            PermissionAccessor.checkPermissions(getLocator(), PermissionAccessor.PERMISSION_SNAPHOT);
+            PermissionAccessor.checkPermissions(getLocator(), PermissionAccessor.PERMISSION_SNAPSHOT);
     	} catch (InterruptedException e) {
     	    throw new SecurityException("Interrupted while trying to ask the user permission");
     	}

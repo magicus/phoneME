@@ -39,8 +39,6 @@ import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.*;
 import com.sun.mmedia.DefaultConfiguration;
 
-import com.sun.j2me.app.AppIsolate;
-
 // #ifndef ABB [
 import javax.microedition.media.protocol.*;
 // #endif ]

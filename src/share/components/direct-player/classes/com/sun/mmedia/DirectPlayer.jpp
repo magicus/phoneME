@@ -148,7 +148,11 @@ public class DirectPlayer extends BasicPlayer
     // Switch to background
     private native boolean nSwitchToBackground(int hNative, int options);
     // native finalizer 
-    private native void nFinalize();
+// #ifdef ENABLE_CDC [    
+    protected native void finalize();
+    // #else ][
+    private native void finalize();
+// #endif ]    
     // Ask for PcmAudio support
     private native boolean nPcmAudioPlayback(int hNative);
     
@@ -753,10 +757,6 @@ public class DirectPlayer extends BasicPlayer
     }
 
     // #endif ]
-
-    protected void finalize() {
-        nFinalize();
-    }
 }
 
 

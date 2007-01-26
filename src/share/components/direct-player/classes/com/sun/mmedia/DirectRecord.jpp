@@ -62,8 +62,11 @@ public final class DirectRecord implements RecordControl, DirectControls {
     private native int nGetRecordedSize(int handle);
     private native int nGetRecordedData(int handle, int offset, int size, byte[] buffer);
     private native String nGetRecordedType(int handle);
-    private native void nFinalize();
-    
+// #ifdef ENABLE_CDC [    
+    protected native void finalize();
+    // #else ][
+    private native void finalize();
+// #endif ]    
     ///////////////////////////////////////////////////////////////
 
     public DirectRecord(DirectPlayer player) {
@@ -482,10 +485,6 @@ public final class DirectRecord implements RecordControl, DirectControls {
     	    throw new SecurityException("Interrupted while trying to ask the user permission");
     	}
     }
-
-    protected void finalize() {
-        nFinalize();
-    }    
 
     ///////////////////////////////////////////////////////////////
 

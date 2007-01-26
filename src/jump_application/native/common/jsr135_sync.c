@@ -1,5 +1,5 @@
 /*
- *
+ * 
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -23,33 +23,23 @@
  * information or have any questions. 
  */
 
-package com.sun.mmedia;
 
-import javax.microedition.lcdui.*;
+#include "jsr135_sync.h"
+#include "javacall_defs.h"
+#include "javavm/include/porting/sync.h"
 
-/**
- * This is a helper interface to communicate between the LCDUI <code>Canvas
- * </code> and
- * the MMAPI video players. It has methods to register and unregister
- * <code>MIDPVideoPainter</code>s with an LCDUI Canvas.
- */
-public interface MMHelper {
+static CVMMutex        nAudioMutex;
+static javacall_bool   nAudioMutexCreated = JAVACALL_FALSE;
 
-    /**
-     * Registers a video control (which implements MIDPVideoPainter) with
-     * the corresponding Canvas where the video is to show up.
-     */
-    void registerPlayer(Canvas c, MIDPVideoPainter vp);
-
-    /**
-     * Unregisters a video control so that it doesn't get paint callbacks
-     * anymore after the player is closed. This also reduces load on the
-     * Canvas repaint mechanism.
-     */
-    void unregisterPlayer(Canvas c, MIDPVideoPainter vp);
-
-    /**
-     * Get Display being used for Item painting. Platform-dependent.
-     */
-    Display getItemDisplay(Item item);
+void LockAudioMutex() {
+    if(!nAudioMutexCreated) {
+        CVMmutexInit(&nAudioMutex);
+        nAudioMutexCreated = JAVACALL_TRUE;
+    }
+    CVMmutexLock(&nAudioMutex);
 }
+
+void UnlockAudioMutex() {
+    CVMmutexUnlock(&nAudioMutex);
+}
+

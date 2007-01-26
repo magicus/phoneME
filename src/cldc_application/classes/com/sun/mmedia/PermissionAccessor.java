@@ -71,7 +71,7 @@ public final class PermissionAccessor {
      * @param thePermission - one of PERMISSION_* constants that 
      *        define permissions in an product-independent form.
      */
-    public static void checkPermissions(String locator, int thePermission) throws SecurityException {
+    public static void checkPermissions(String locator, int thePermission) throws SecurityException, InterruptedException {
         try {
             /* 
              * Map between PermissionAccessor.* permission constants

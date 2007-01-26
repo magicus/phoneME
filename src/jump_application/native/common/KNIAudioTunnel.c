@@ -39,6 +39,8 @@
 #include <sys/ioctl.h>
 #include <pthread.h>
 
+
+#include <jump_messaging.h>
 #include <shared_memory.h>
 #include <jsr135_jumpdriver_impl.h>
 
@@ -47,8 +49,6 @@
 
 int jsr135_create_tunnel(int isolateId);
 void jsr135_destroy_tunnel(int isolateId);
-
-extern CVMMutex        nAudioMutex;
 
 static JSR135TunnelDescr tunnelDescr;
 static int pcm_channels;
@@ -85,6 +85,7 @@ static void my_sleep(CVMExecEnv *ee, long millis) {
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_AudioTunnel_nInit) {
     isolateId = KNI_GetParameterAsInt(1);
+    jumpMessageStart();
     jsr135_create_tunnel(isolateId);
     jsr135_get_pcmctl(&pcm_channels, &pcm_bits, &pcm_rate);
     KNI_ReturnInt(0);
@@ -102,7 +103,7 @@ CNIcom_sun_mmedia_AudioTunnel_nPlayBack(CVMExecEnv* ee, CVMStackVal32 *arguments
         CVMsharedMemLock(tunnelDescr.shMem);
         while (*tunnelDescr.playSize >= tunnelDescr.size) {
             CVMsharedMemUnlock(tunnelDescr.shMem);
-            CVMD_gcUnsafeExec(ee, {
+            CVMD_gcSafeExec(ee, {
                 my_sleep(ee, sampletime((*tunnelDescr.playSize)/2));
             })
             CVMsharedMemLock(tunnelDescr.shMem);
@@ -126,10 +127,10 @@ CNIcom_sun_mmedia_AudioTunnel_nPlayBack(CVMExecEnv* ee, CVMStackVal32 *arguments
         
         /* get Playback data */
         CVMsharedMemUnlock(tunnelDescr.shMem);
-        CVMD_gcUnsafeExec(ee, {
-            CVMmutexLock(&nAudioMutex);
+        CVMD_gcSafeExec(ee, {
+            LockAudioMutex();
             len = javacall_media_get_pcmaudio(isolateId, tunnelDescr.memPtr+(*tunnelDescr.writePtr), free_len);
-            CVMmutexUnlock(&nAudioMutex);
+            UnlockAudioMutex();
         })
                 
         if (len > 0) {
@@ -141,11 +142,11 @@ CNIcom_sun_mmedia_AudioTunnel_nPlayBack(CVMExecEnv* ee, CVMStackVal32 *arguments
             }
             CVMsharedMemUnlock(tunnelDescr.shMem);
         }
-        CVMD_gcUnsafeExec(ee, {
+        CVMD_gcSafeExec(ee, {
             CVMthreadYield();
         })
         if ((len == 0) && (playSize > 0)) {
-            CVMD_gcUnsafeExec(ee, {
+            CVMD_gcSafeExec(ee, {
                 my_sleep(ee, sampletime(playSize/2));
             })
         }
@@ -159,6 +160,7 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_AudioTunnel_nStop) {
     isolateId = KNI_GetParameterAsInt(1);
     jsr135_destroy_tunnel(isolateId);
+    jumpMessageShutdown();
     KNI_ReturnInt(0);
 }
 

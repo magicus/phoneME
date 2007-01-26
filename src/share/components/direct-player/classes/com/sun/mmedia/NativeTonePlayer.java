@@ -37,14 +37,13 @@ public class NativeTonePlayer implements TonePlayer {
     /**
      * The native implementation method to play a tone.
      *
-     * @param  note  Defines the tone of the note.
-     * @param  dur   The duration of the tone in milli-seconds.
-     * @param  vol   Audio volume range from 0 to 100.
-     * @return       the tone player handle, or 0 if it failed to play the tone
+     * @param  note     Defines the tone of the note.
+     * @param  duration The duration of the tone in milli-seconds.
+     * @param  volume   Audio volume range from 0 to 100.
+     * @return          the tone player handle, or 0 if it failed to play the tone
      */
-    private native boolean nPlayTone(int note, int dur, int vol);
+    private native boolean nPlayTone(int note, int duration, int volume);
     private native boolean nStopTone();
-    private static AudioTunnel audioTunnel;
     
     public void playTone(int note, int duration, int volume)
          throws MediaException {
@@ -56,7 +55,7 @@ public class NativeTonePlayer implements TonePlayer {
         if (false == nPlayTone(note, duration, volume)) {
             throw new MediaException("can't play tone");
         }
-    }    
+    }
 
     /**
      * Stop current tone playing

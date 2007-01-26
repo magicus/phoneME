@@ -1,4 +1,5 @@
 /*
+ * 
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -19,34 +20,13 @@
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions.
+ * information or have any questions. 
  */
 
-#include <stdio.h> // NULL, fprintf()
-#include <string.h> // strcmp()
-#include <jump_messaging.h>
-#include "javavm/include/porting/threads.h"
+#ifndef __jsr135_sync_H__
+#define __jsr135_sync_H__
 
-void jsr135_jumpdriver_listener(JUMPMessage *in);
+void LockAudioMutex();
+void UnlockAudioMutex();
 
-int close_driver = 0;
-int mm_driver(int argc, const char **argv) {
-
-    JUMPMessage in;
-    int ret;
-    
-    ret = jumpMessageStart();
-    
-    do {
-        in = jumpMessageWaitFor((JUMPPlatformCString)"mm/jsr135", 0);
-        jsr135_jumpdriver_listener(&in);
-    } while (0 == close_driver);
-
-    sleep(1);
-    
-    jumpMessageShutdown();
-
-    return 0;
-}
-
-
+#endif

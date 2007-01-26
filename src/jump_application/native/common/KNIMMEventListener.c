@@ -53,11 +53,10 @@ CVMCondVar      nCondVar;
 CNIResultCode
 CNIcom_sun_mmedia_MMEventListener_nativeEventInit(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb) {
-    jboolean ret;
     (void)p_mb;
-CVMD_gcUnsafeExec(ee, {
-    ret = CVMmutexInit(&nEventMutex);
-    ret = CVMcondvarInit(&nCondVar,&nEventMutex);
+CVMD_gcSafeExec(ee, {
+    CVMmutexInit(&nEventMutex);
+    CVMcondvarInit(&nCondVar,&nEventMutex);
 })
     arguments[0].j.i = 0;
     return CNI_SINGLE;
@@ -68,10 +67,11 @@ CNIResultCode
 CNIcom_sun_mmedia_MMEventListener_nativeEventDestroy(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb) {
     (void)p_mb;
-CVMD_gcUnsafeExec(ee, {
-    CVMcondvarDestroy(&nCondVar);
-    CVMmutexDestroy(&nEventMutex);
-})
+    CVMD_gcSafeExec(ee, {
+        CVMcondvarDestroy(&nCondVar);
+        CVMmutexDestroy(&nEventMutex);
+    })
+
     arguments[0].j.i = 0;
     return CNI_SINGLE;
 }
@@ -82,19 +82,19 @@ CNIcom_sun_mmedia_MMEventListener_waitEventFromNative(CVMExecEnv* ee, CVMStackVa
 			       CVMMethodBlock **p_mb) {
     jboolean ret = CVM_FALSE;
     (void)p_mb;
-CVMD_gcUnsafeExec(ee, {
-    CVMmutexLock(&nEventMutex);
-})
-//CVMD_gcUnsafeExec(ee, {
+    CVMD_gcSafeExec(ee, {
+           CVMmutexLock(&nEventMutex);
+    }) 
+CVMD_gcSafeExec(ee, {
     CVMthreadYield();
     while(qhead == qtail) {
         ret = CVMcondvarWait(&nCondVar, &nEventMutex, 0);
     }        
-//})
+})
     if(qhead != qtail) {
         ret = CVM_TRUE;
     }
-CVMD_gcUnsafeExec(ee, {
+CVMD_gcSafeExec(ee, {
     CVMmutexUnlock(&nEventMutex);
     CVMthreadYield();
 })        

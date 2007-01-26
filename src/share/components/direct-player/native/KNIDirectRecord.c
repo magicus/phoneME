@@ -24,6 +24,7 @@
  */
 
 #include "KNICommon.h"
+#include "jsrop_exceptions.h"
 
 /*  protected native boolean nIsSupportRecording ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
@@ -315,7 +316,7 @@ KNIDECL(com_sun_mmedia_DirectRecord_nGetRecordedData) {
         MMP_FREE(dataBuffer);
     } else {
         REPORT_ERROR(LC_MMAPI, "[kni_record] nGetRecordedData : buffer allocation failed\n");                
-        KNI_ThrowNew(OutOfMemoryError, NULL);
+        KNI_ThrowNew(jsropOutOfMemoryError, NULL);
     }
 
     KNI_EndHandles();
@@ -348,7 +349,7 @@ KNIDECL(com_sun_mmedia_DirectRecord_nGetRecordedType)
                 MMP_FREE(pString);
             } else {
                 REPORT_ERROR(LC_MMAPI, "[kni_record] Record content type buffer allocation fail\n");                
-                KNI_ThrowNew(OutOfMemoryError, NULL);
+                KNI_ThrowNew(jsropOutOfMemoryError, NULL);
             }
         } else {
             KNI_ReleaseHandle(contentType);
@@ -361,7 +362,7 @@ KNIDECL(com_sun_mmedia_DirectRecord_nGetRecordedType)
 
 /*  private native void finalize () ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_mmedia_DirectRecord_nFinalize) 
+KNIDECL(com_sun_mmedia_DirectRecord_finalize) 
 {
     jint handle = (jint)NULL;
     KNIPlayerInfo* pKniInfo;

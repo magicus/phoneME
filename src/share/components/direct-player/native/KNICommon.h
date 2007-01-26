@@ -28,7 +28,8 @@
 
 #include <kni.h>
 #include <jsrop_memory.h>
-#include <javavm/include/utils.h>
+#include <jsrop_logging.h>
+
 #include "javacall_defs.h"
 #include "javacall_multimedia.h"
 
@@ -39,23 +40,15 @@
 #define MMP_GET_FREE_SPACE()    (0)
 
 #define MMP_DEBUG_STR(_x_) \
-    CVMdebugPrintf(("MMAPI: %s \n", _x_))
+    REPORT_INFO(LC_MMAPI, (_x_))
 #define MMP_DEBUG_STR1(_x_, _p1_) \
-    CVMdebugPrintf(("MMAPI: %s %d\n", _x_, _p1_))
+    REPORT_INFO1(LC_MMAPI, (_x_), (_p1_))
 #define MMP_DEBUG_STR2(_x_, _p1_, _p2_) \
-    CVMdebugPrintf(("MMAPI: %s %d %d\n", _x_, _p1_, _p2_))
+    REPORT_INFO2(LC_MMAPI, (_x_), (_p1_), (_p2_))
 #define MMP_DEBUG_STR3(_x_, _p1_, _p2_, _p3_) \
-    CVMdebugPrintf(("MMAPI: %s %d %d %d\n", _x_, _p1_, _p2_, _p3_))
+    REPORT_INFO3(LC_MMAPI, (_x_), (_p1_), (_p2_), (_p3_))
 #define MMP_DEBUG_STR4(_x_, _p1_, _p2_, _p3_, _p4_) \
-    CVMdebugPrintf(("MMAPI: %s %d %d %d %d\n", _x_, _p1_, _p2_, _p3_, p4_))
-
-#define REPORT_ERROR(_p_ ,_x_) \
-    CVMconsolePrintf("MMAPI ERROR: %s", _x_)
-#define REPORT_ERROR1(_p_ ,_x_, _p1_) \
-    CVMconsolePrintf("MMAPI ERROR: %s %d", _x_, _p1_)
-
-#define OutOfMemoryError "java.lang.OutOfMemoryError"
-
+    REPORT_INFO4(LC_MMAPI, (_x_), (_p1_), (_p2_), (_p3_), (_p4_))
 
 /* Java MMAPI Player Status */
 #define UNREALIZED  100
@@ -94,8 +87,5 @@ typedef struct _KNIPlayerInfo {
     void* hBuffer;          /* Handle of buffer */
     void* pNativeHandle;    /* OEM can use this field to extend handle */
 } KNIPlayerInfo;
-
-// Logging Channel for MMAPI feature
-#define LC_MMAPI 100
 
 #endif

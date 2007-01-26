@@ -22,10 +22,6 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
 
-PROFILE = javacall
-OS = javacall
-COMPONENT1 = direct
-
 #
 # Not ABB. Full MMAPI.
 #
@@ -39,13 +35,13 @@ DIRECT_PLAYER = true
 #
 # If you want to support VideoControl, turn on DIRECT_VIDEO_PLAYER option
 #
-DIRECT_VIDEO_PLAYER = false
+DIRECT_VIDEO_PLAYER = true
 INDIRECT_VIDEO_PLAYER = true
 
 #
 # If you want to support "capture://video, turn on DIRECT_CAMERA_PLAYER option
 #
-DIRECT_CAMERA_PLAYER = false
+DIRECT_CAMERA_PLAYER = true
 
 #
 # if you want to support interactive MIDI or MIDIControl, 

@@ -114,6 +114,8 @@ int jsr135_open_tunnel(int isolateId) {
     return ret;
 }
 
+extern int close_driver;
+
 int jsr135_close_tunnel(int isolateId) {
 
     int idx = MAX_SUPPORTED_ISOLATES;
@@ -142,6 +144,7 @@ int jsr135_close_tunnel(int isolateId) {
     
     UNLOCK_MIXER_MUTEX
 
+    close_driver = 1;
     return ret;
 }
 
@@ -202,7 +205,6 @@ int jsr135_mixer_start(int isolateId) {
                     }
                 }
                 CVMmutexUnlock(&PlaybackMutex);
-//                CVMthreadResume(&MixerThreadId);
                 ret = 0;
             }
             break;
