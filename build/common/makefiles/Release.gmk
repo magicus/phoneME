@@ -65,10 +65,7 @@ define re_src_filter2
                 fi; \
 	else \
 		mkdir -p $(3); \
-		(cd $(1); \
-		find $(4) -type f | grep SCCS/s. | grep -v Codemgr_wsdata/ \
-		| sed -e 's,SCCS/s.,,' \
-		| tar cf - -T -) | tar xf - -C $(3) ; \
+		(for i in $(4); do cp -rp $(1)/$$i $(3)/$$i; done); \
 	fi
 endef
 
