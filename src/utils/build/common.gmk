@@ -68,6 +68,14 @@ create_output_dirs: $(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) $(JAVA
 
 copy_include_files: create_output_dirs $(JAVACALL_INCLUDE_TARGET_FILES_SET)
 
+# Verify source output directory is set
+SOURCE_OUTPUT_DIR:
+	@if [ -z "$($@)" ]; then \
+	    echo "ERROR: $@ must be set"; \
+	    exit -1; \
+	fi; \
+	mkdir -p "$($@)"
+
 # Default filter rule for source release :
 # Copy files from specified sub directories that are under svn controlled.
 # Usage: re_src_filter(src_dir, output_dir, sub_dir_list)
@@ -83,9 +91,9 @@ define re_src_filter
 	fi
 endef
 
-source_bundle:: $(JAVACALL_OUTPUT_DIR)
+source_bundle:: SOURCE_OUTPUT_DIR
 	@echo  ... javacall source bundle;
-	@$(call re_src_filter,$(JAVACALL_INCLUDE_DIR)/..,$(JAVACALL_OUTPUT_DIR),include src)
+	@$(call re_src_filter,$(JAVACALL_INCLUDE_DIR)/..,$(SOURCE_OUTPUT_DIR)/javacall,include src)
 
 clean:
 	@rm -rf $(JAVACALL_OUTPUT_DIR)
