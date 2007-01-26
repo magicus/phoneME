@@ -84,12 +84,12 @@ tools_source_bundle:
 	if [ -z "$(SOURCE_OUTPUT_DIR)" ]; then \
 		echo "ERROR: SOURCE_OUTPUT_DIR must be set"; \
 		exit -1; \
-	fi
+	fi; \
+	mkdir -p $$SB_DIR; \
 	if [ -d "$(TOOLS_DIR)/.svn" ]; then \
 		svn export --force -q "$(TOOLS_DIR)" $$SB_DIR; \
 	else \
-		mkdir -p $$SB_DIR; \
-		cp -rp "$(TOOLS_DIR)/*" $$SB_DIR; \
+		cp -rp "$(TOOLS_DIR)/." $$SB_DIR; \
 	fi
 
 clean::
