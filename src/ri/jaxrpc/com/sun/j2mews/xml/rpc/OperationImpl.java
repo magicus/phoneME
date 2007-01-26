@@ -34,8 +34,7 @@ import java.rmi.ServerException;
 import java.io.*;
 import javax.microedition.io.*;
 
-// midp private base64 encoder
-import com.sun.midp.io.Base64;
+import com.sun.j2me.io.Base64;
 
 /**
  * The <code>OperationImpl</code> class is an implementation
@@ -248,7 +247,8 @@ public class OperationImpl extends Operation {
         Object result = null;
         int attempts = 0;
         // Maximal number of "Object moved" http responses that we will handle
-        final int maxAttempts = Constants.MAX_REDIRECT_ATTEMPTS;
+//        final int maxAttempts = Constants.MAX_REDIRECT_ATTEMPTS;
+        final int maxAttempts = 10;
 
         try {
             do {

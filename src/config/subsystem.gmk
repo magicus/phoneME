@@ -78,24 +78,62 @@ SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 # ri_jaxp 
 #
 INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES := \
-       	$(shell (find $(INTERNAL_JSR_172_RI_DIR)/jaxp -name '*.java' | egrep -v 'SCCS'))
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/helpers/DefaultHandler.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/InputSource.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/SAXNotSupportedException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/Locator.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/SAXNotRecognizedException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/SAXParseException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/Attributes.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/SAXException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/javax/xml/parsers/SAXParserFactory.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/javax/xml/parsers/ParserConfigurationException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/javax/xml/parsers/SAXParser.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/javax/xml/parsers/FactoryConfigurationError.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Input.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ParserFactory.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ReaderUTF16.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ReaderUTF8.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Pair.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Parser.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Attrs.java
 
 # ri_jaxrpc
 #
 INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES := \
-       	$(shell (find $(INTERNAL_JSR_172_RI_DIR)/jaxrpc -name '*.java' | egrep -v 'SCCS')) \
-	$(GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPDecoder.java \
-	$(GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPEncoder.java
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/xml/rpc/JAXRPCException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/xml/rpc/NamespaceConstants.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/xml/rpc/Stub.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/xml/namespace/QName.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/Operation.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/Type.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/Element.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/ComplexType.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/FaultDetailHandler.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/FaultDetailException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/com/sun/j2mews/xml/rpc/OperationImpl.java \
+        $(GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPDecoder.java \
+        $(GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPEncoder.java
 
 # rmi (for ri_jaxrpc)
 INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES := \
-       	$(shell (find $(INTERNAL_JSR_172_RI_DIR)/rmi -name '*.java' | egrep -v 'SCCS'))
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/ServerException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/MarshalException.java
+
+ifeq ("$(filter basis personal, $(J2ME_CLASSLIB))", "")
+INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/RemoteException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/Remote.java
+endif
 
 # All of them together to provide to main makefile
 SUBSYSTEM_JSR_172_JAVA_FILES = \
-    $(INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES) \
     $(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) \
     $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES)
+
+ifneq ($(CVM_INCLUDE_JUMP), true)
+    SUBSYSTEM_JSR_172_JAVA_FILES += $(INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES)
+endif
 
 # Append JSR 172 source bundle creation to target
 source_bundle:: jsr_172_source_bundle
