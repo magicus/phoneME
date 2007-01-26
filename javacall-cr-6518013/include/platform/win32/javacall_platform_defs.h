@@ -49,6 +49,12 @@ extern "C" {
 typedef unsigned short javacall_utf16;
 
 /**
+ * @typedef javacall_int32
+ * @brief 32 bit interger type
+ */
+typedef __int32 javacall_int32;
+
+/**
  * @typedef javacall_int64
  * @brief 64 bit interger type
  */
