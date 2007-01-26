@@ -26,11 +26,9 @@ package com.sun.midp.io.j2me.push;
 
 import java.io.IOException;
 
-import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.Permissions;
 
 /**
  * Stubbed implementation for NAMS variant of CLDC stack
@@ -41,7 +39,7 @@ public final class PushRegistryInternal {
      * Push option to only launch this suite when not other applications
      * are running.
      */
-    public static final int PUSH_OPT_WHEN_ONLY_APP = -1;
+    public static final int PUSH_OPT_WHEN_ONLY_APP = 1;
 
     /**
      * Hides the default constructor.
@@ -49,23 +47,10 @@ public final class PushRegistryInternal {
     private PushRegistryInternal() { }
 
     /**
-      * Validates that the method is invoked allowed party.
-      */
-    private static void checkInvocationAllowed() {
-        final MIDletSuite current =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-
-        if (current != null) {
-            current.checkIfPermissionAllowed(Permissions.AMS);
-        }
-    }
-
-    /**
      * Start listening for push notifications. Will throw a security
      * exception if called by any thing other than the MIDletSuiteLoader.
      */
     public static void startListening() {
-        checkInvocationAllowed();
     }
 
     /**
@@ -115,7 +100,6 @@ public final class PushRegistryInternal {
                                                   String filter,
                                                   boolean bypassChecks)
             throws ClassNotFoundException, IOException {
-        checkInvocationAllowed();
     }
 
     /**
@@ -125,7 +109,6 @@ public final class PushRegistryInternal {
      * @param token security token for this class.
      */
     public static void initSecurityToken(SecurityToken token) {
-        checkInvocationAllowed();
     }
 
     /**
@@ -142,7 +125,6 @@ public final class PushRegistryInternal {
      *       <em>host</em> and <em>port number</em> identification
      */
     public static String listConnections(int id, boolean available) {
-        checkInvocationAllowed();
         return null;
     }
 
@@ -153,7 +135,6 @@ public final class PushRegistryInternal {
      *               suite
      */
     public static void unregisterConnections(int id) {
-        checkInvocationAllowed();
     }
 
     /**
@@ -165,7 +146,6 @@ public final class PushRegistryInternal {
      *  launches
      */
     public static void enablePushLaunch(boolean enable) {
-        checkInvocationAllowed();
     }
 
     /**
@@ -195,7 +175,6 @@ public final class PushRegistryInternal {
      */
     public static boolean checkInConnectionInternal(SecurityToken token,
                                                     String connection) {
-        checkInvocationAllowed();
         return false;
     }
 
@@ -204,6 +183,5 @@ public final class PushRegistryInternal {
      * single MIDlet mode.
      */
     public static void setMvmSingleMidletMode() {
-        checkInvocationAllowed();
     }
 }
