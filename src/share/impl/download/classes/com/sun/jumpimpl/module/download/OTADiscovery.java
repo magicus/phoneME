@@ -59,7 +59,7 @@ public class OTADiscovery
                 return doHTMLDiscovery(url, netUrl, conn);
             // ... or text/xml
             else if (contentType.indexOf(xmlMime.toLowerCase()) != -1 )
-                return doXMLDiscovery(conn);
+                return doXMLDiscovery(url, netUrl, conn);
             else
                 throw new Exception( "Content type for the applist " +
                         "is neither "+ htmlMime +" nor "+ xmlMime);
@@ -70,7 +70,7 @@ public class OTADiscovery
         return new HashMap();
     }
 
-    private HashMap doHTMLDiscovery(String url, URL netUrl, URLConnection conn)
+    private static HashMap doHTMLDiscovery(String url, URL netUrl, URLConnection conn)
     {
         try {
             String rst = "";
@@ -123,19 +123,9 @@ public class OTADiscovery
                     // but we only will until first '<'
                     idx = rst.indexOf( '<' );
                     String name = rst.substring( 0, idx );
-
-                    if ( ref.startsWith( "/") ) 
-                    {
-                        // relative to the hostname
-                        ref = netUrl.getProtocol() + "://" +
-                            netUrl.getHost() + ":" + netUrl.getPort() + ref;
-                    }
-
-                    if ( ref.indexOf(':') < 0 )
-                    {
-                        // relative to current directory
-                        ref = url.substring( 0, url.lastIndexOf( '/' ) + 1 ) + ref;
-                    }
+                    
+                    // let's use one helper function to get full URI
+                    ref = ServerConfXMLHandler.getFullURI(netUrl, url, ref);
 
                     h.put( ref, name );
                 }
@@ -156,7 +146,7 @@ public class OTADiscovery
     }
 
 
-    private HashMap doXMLDiscovery(URLConnection conn)
+    private static HashMap doXMLDiscovery(String url, URL netUrl, URLConnection conn)
     {
         try {
             InputStream in = conn.getInputStream();
@@ -164,7 +154,7 @@ public class OTADiscovery
             SAXParserFactory factory = SAXParserFactory.newInstance();
             SAXParser parser = factory.newSAXParser();
             
-            ServerConfXMLHandler handler = new ServerConfXMLHandler();
+            ServerConfXMLHandler handler = new ServerConfXMLHandler(url, netUrl);
             parser.parse(in, handler);
 
             return handler.getMap();
@@ -189,8 +179,12 @@ class ServerConfXMLHandler extends DefaultHandler
     private String targetName = "";
     
     private String chars = "";
+    private String url = "";
+    private URL netUrl;
 
-    public ServerConfXMLHandler() {
+    public ServerConfXMLHandler(String url, URL netUrl) {
+        this.url = url;
+        this.netUrl = netUrl;
         hmap = new HashMap();
     }
     
@@ -203,7 +197,7 @@ class ServerConfXMLHandler extends DefaultHandler
 	throws SAXException
     {
         // building xml-path of the current tag
-        path = path.concat("/").concat(localName.toLowerCase());
+        path = path.concat("/").concat(qName.toLowerCase());
     }
     
     public void endElement (String uri, String localName, String qName)
@@ -222,7 +216,8 @@ class ServerConfXMLHandler extends DefaultHandler
         }
         // if we get reached a server tag, save the the uri of the target
         if ("/servercontent/dd:media/product/mediaobject/objecturi/server".equals(path)) {
-            targetURI = targetURI.concat(chars.trim());
+            String ref = targetURI.concat(chars.trim());
+            targetURI = getFullURI(netUrl, url, ref);
         }
         chars = "";
         
@@ -236,4 +231,27 @@ class ServerConfXMLHandler extends DefaultHandler
         chars = chars + new String(ch, start, length);
     }
 
+    /**
+     * Returns an absolute URI of the target object based on descriptor request URL.
+     * @param netUrl the URL of descriptor request.
+     * @param url the string representation of descriptor request.
+     * @param ref target object reference.
+     * @return a full URI of the target object
+     */
+    public static String getFullURI(URL netUrl, String url, String ref) {
+        if ( ref.startsWith( "/") ) {
+            // relative to the hostname
+            String base = netUrl.getProtocol() + "://" + netUrl.getHost();
+            if (netUrl.getPort() < 0)
+                ref = base + ref;
+            else
+                ref = base + ":" + netUrl.getPort() + ref;
+        }
+        
+        if ( ref.indexOf(':') < 0 ) {
+            // relative to current directory
+            ref = url.substring( 0, url.lastIndexOf( '/' ) + 1 ) + ref;
+        }
+        return ref;
+    }
 }

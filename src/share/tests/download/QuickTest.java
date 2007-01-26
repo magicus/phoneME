@@ -98,11 +98,9 @@ public class QuickTest {
 
        System.out.println("Starting the test run for protocol " + protocol);
 
-       if (protocol == JUMPDownloadModuleFactory.PROTOCOL_OMA_OTA) {
-
-          applist = new OTADiscovery().discover(discoveryUrl + "/" + omaSubDirectory);
-       } else if (protocol == JUMPDownloadModuleFactory.PROTOCOL_MIDP_OTA) {
-          applist = new OTADiscovery().discover(discoveryUrl + "/" + midpSubDirectory);
+       if (protocol == JUMPDownloadModuleFactory.PROTOCOL_OMA_OTA ||
+           protocol == JUMPDownloadModuleFactory.PROTOCOL_MIDP_OTA ) {
+          applist = new OTADiscovery().discover(discoveryUrl);
        } else {
           System.out.println("Unknown protocol, aborting");
           return;
