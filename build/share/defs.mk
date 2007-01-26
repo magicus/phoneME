@@ -1046,7 +1046,7 @@ INSTALLDIR	= $(CVM_TOP)/install
 # Full path name for Binary Bundle
 #
 TM = (TM)
-BUNDLE_PRODUCT_NAME0 = $(subst $(space),_,$(J2ME_PRODUCT_NAME))
+BUNDLE_PRODUCT_NAME0 = $(subst $(space),_,$(J2ME_PROFILE_NAME))
 BUNDLE_PRODUCT_NAME1 = $(subst /,_,$(BUNDLE_PRODUCT_NAME0))
 BUNDLE_PRODUCT_NAME  = $(subst $(TM),$(empty),$(BUNDLE_PRODUCT_NAME1))
 
@@ -1070,8 +1070,10 @@ else
 REVISION_NUMBER = \
      $(shell svn info | grep "Revision:" | sed -e 's/Revision: \(.*\)/\1/')
 endif
-override BINARY_BUNDLE_NAME := $(BINARY_BUNDLE_NAME)-rev$(REVISION_NUMBER)
+# We need to set BINARY_BUNDLE_DIRNAME first since it usually depends on
+# BINARY_BUNDLE_NAME, and we don't want the revision number in there twice.
 override BINARY_BUNDLE_DIRNAME := $(BINARY_BUNDLE_DIRNAME)-rev$(REVISION_NUMBER)
+override BINARY_BUNDLE_NAME := $(BINARY_BUNDLE_NAME)-rev$(REVISION_NUMBER)
 endif
 
 
