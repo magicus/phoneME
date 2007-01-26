@@ -34,7 +34,7 @@ SUBSYSTEMS += jsr135
 
 JSR_135_CONFIG_DIR = $(JSR_135_DIR)/src/config/$(TARGET_PLATFORM)
 
-include $(JSR_135_CONFIG_DIR)/config.gmk
+-include $(JSR_135_CONFIG_DIR)/config.gmk
 include $(JSR_135_DIR)/src/config/features.defs
 
 # Include JSR_135 system properties in Configuration
