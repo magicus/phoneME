@@ -127,6 +127,26 @@ typedef void* javacall_handle;
 typedef javacall_utf16* javacall_utf16_string;
 
 /**
+ * @typedef javacall_const_utf16_string
+ * @brief general constant utf16 string type, this type is constant null
+ * terminated string
+ */
+typedef const javacall_utf16* javacall_const_utf16_string;
+
+/**
+ * @typedef javacall_utf8_string
+ * @brief general utf8 string type, this type is null terminated string
+ */
+typedef unsigned char* javacall_utf8_string;
+
+/**
+ * @typedef javacall_const_utf8_string
+ * @brief general constant utf8 string type, this type is constant null
+ * terminated string
+ */
+typedef const unsigned char* javacall_const_utf8_string;
+
+/**
  * @}
  */
 #ifdef __cplusplus

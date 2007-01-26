@@ -22,7 +22,7 @@
 # information or have any questions. 
 #
 
-.PHONY: javacall_common create_output_dirs copy_include_files clean
+.PHONY: javacall_common create_output_dirs copy_include_files source_bundle clean
 
 javacall_common: create_output_dirs copy_include_files
 
@@ -52,6 +52,8 @@ JAVACALL_OUTPUT_INCLUDE_DIR:=$(JAVACALL_OUTPUT_DIR)/inc
 JAVACALL_OUTPUT_OBJ_DIR:=$(JAVACALL_OUTPUT_DIR)/obj$(BUILD_EXT)
 JAVACALL_OUTPUT_LIB_DIR:=$(JAVACALL_OUTPUT_DIR)/lib
 
+JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach util,$(UTILITIES_LIST),$(JAVACALL_UTIL_DIR)/inc/$(util).h)
+
 JAVACALL_INCLUDE_TARGET_FILES_SET:=$(foreach file,$(JAVACALL_INCLUDE_SOURCE_FILES_SET),$(JAVACALL_OUTPUT_INCLUDE_DIR)/$(notdir $(file)))
 
 $(JAVACALL_INCLUDE_TARGET_FILES_SET): $(JAVACALL_INCLUDE_SOURCE_FILES_SET)
@@ -66,16 +68,25 @@ create_output_dirs: $(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) $(JAVA
 
 copy_include_files: create_output_dirs $(JAVACALL_INCLUDE_TARGET_FILES_SET)
 
-source_bundle: $(JAVACALL_OUTPUT_DIR)
-	@echo  ... javacall source bundle; \
-	SB_DIR=$(JAVACALL_OUTPUT_DIR)/javacall; \
-	if [ -d "$(JAVACALL_INCLUDE_DIR)/../.svn" ]; then \
-		svn export --force -q "$(JAVACALL_INCLUDE_DIR)/../." $$SB_DIR; \
+# Default filter rule for source release :
+# Copy files from specified sub directories that are under svn controlled.
+# Usage: re_src_filter(src_dir, output_dir, sub_dir_list)
+define re_src_filter
+	if [ -d "$(1)/.svn" ]; then \
+		(for i in $(3); do mkdir -p $(2)/$$i; svn export --force -q $(1)/$$i $(2)/$$i; done); \
 	else \
-		mkdir -p $$SB_DIR; \
-		cp -rp "$(JAVACALL_INCLUDE_DIR)/../src" $$SB_DIR; \
-		cp -rp "$(JAVACALL_INCLUDE_DIR)/../include" $$SB_DIR; \
+		mkdir -p $(2); \
+		(cd $(1); \
+		find $(3) -type f | grep SCCS/s. | grep -v Codemgr_wsdata/ \
+		| sed -e 's,SCCS/s.,,' \
+		| tar cf - -T -) | tar xf - -C $(2) ; \
 	fi
+endef
+
+source_bundle:: $(JAVACALL_OUTPUT_DIR)
+	@echo  ... javacall source bundle;
+	@$(call re_src_filter,$(JAVACALL_INCLUDE_DIR)/..,$(JAVACALL_OUTPUT_DIR),include src)
 
 clean:
 	@rm -rf $(JAVACALL_OUTPUT_DIR)
+ 

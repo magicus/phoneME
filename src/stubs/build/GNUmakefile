@@ -52,7 +52,14 @@ else
   endif
 endif
 
-include ../../utils/build/common.gmk
+#Specify list of utility objects necessary for the build
+UTILITIES_LIST :=           \
+        javautil_jad_parser \
+        javautil_string     \
+        javautil_unicode
+
+JAVACALL_UTIL_DIR := ../../utils
+include $(JAVACALL_UTIL_DIR)/build/common.gmk
 
 local_stubs: $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib 
 
@@ -108,15 +115,12 @@ PORTING_OBJECTS= \
 	carddevice_simu.obj \
 	mi18n_collation.obj \
 	mi18n_format.obj \
-	mi18n_resources.obj
+	mi18n_resources.obj \
+	$(foreach util,$(UTILITIES_LIST),$(util).obj)
 
-
-UTILITY_OBJECTS = \
-        javautil_jad_parser.obj \
-        javautil_string.obj
-
-include $(JAVACALL_INCLUDE_DIR)/include.gmk
-  JAVAUTIL_INCLUDE_DIR = ../../utils/inc
+ifneq ($(UTILITIES_LIST)x, x)
+VPATH+=$(JAVACALL_UTIL_DIR)
+endif
 
 ifeq ($(USE_DEBUG),true)
 ifeq ($(CC),armcc)
@@ -131,7 +135,7 @@ BUILD_EXT=$(BUILD_EXT_$(BUILD))
 
 vpath %.obj $(JAVACALL_OUTPUT_OBJ_DIR)
 
-CFLAGS+= -I$(JAVACALL_OUTPUT_INCLUDE_DIR) -I$(JAVAUTIL_INCLUDE_DIR) -I../../include
+CFLAGS+= -I$(JAVACALL_OUTPUT_INCLUDE_DIR) 
 
 $(PORTING_OBJECTS): local_defs.h
 
@@ -143,8 +147,7 @@ else
 endif
 	@$(CC) $(CFLAGS) $(OUTPUT_OPTION) $<
 
-$(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
-                              $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS))
+$(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) 
 	@echo "...Generating Library: $@"
 	@$(AR) $(ARFLAGS) $^
 
