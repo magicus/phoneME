@@ -34,7 +34,6 @@ import java.rmi.ServerException;
 import java.io.*;
 import javax.microedition.io.*;
 
-// midp private base64 encoder
 import com.sun.j2me.io.Base64;
 
 /**
