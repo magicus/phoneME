@@ -50,6 +50,17 @@ vpath % $(NAMS_EXAMPLES_DIR)/native/$(TARGET_OS)
 # This is needed to include API provided by findMidlet.c
 vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native
 vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native/$(TARGET_PLATFORM)
+
+ifeq ($(TARGET_PLATFORM), javacall)
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native
+else
+ifeq ($(TARGET_PLATFORM), wince)
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native
+else
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/default/native
+endif
+endif
+	    
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
 	-I$(SUBSYSTEM_AMS_DIR)/example/jams/native/inc \
 	-I$(NAMS_EXAMPLES_DIR)/native/inc
@@ -60,18 +71,21 @@ AMS_START_MT_MIDP_NATIVE_FILES = \
 	runNams.c \
 	runNams_md.c \
 	commandLineUtil.c \
+	commandLineUtil_md.c \
 	findMidlet.c
 
 AMS_REMOVEMIDLET_NATIVE_FILES = \
 	removeMidlet.c \
 	nams_command_stub.c \
 	commandLineUtil.c \
+	commandLineUtil_md.c \
 	findMidlet.c
 
 AMS_LISTMIDLET_NATIVE_FILES = \
 	listMidlets.c \
 	nams_command_stub.c \
 	commandLineUtil.c \
+	commandLineUtil_md.c \
 	findMidlet.c
 
 AMS_FILEINSTALLER_NATIVE_FILES = \
@@ -81,6 +95,7 @@ AMS_FILEINSTALLER_NATIVE_FILES = \
 	manifestParser.c \
 	nams_command_stub.c \
 	commandLineUtil.c \
+	commandLineUtil_md.c \
 	findMidlet.c
 
 
