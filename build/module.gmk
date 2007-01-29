@@ -1,0 +1,125 @@
+#
+#   
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+# dirs containing native source files
+JSROP_ABSTRACTS_SRCDIRS = \
+	$(JSROP_ABSTRACTS_DIR)/src/cdc/native/share \
+  	$(JSROP_ABSTRACTS_DIR)/src/cdc/native/$(TARGET_PLATFORM)
+
+# names of native source files (like 'file.c')
+JSROP_ABSTRACTS_NATIVES = \
+	KNIAppIsolate.c \
+	native_crypto.c \
+	exceptions.c \
+	bnlib.c
+
+# extra libraries needed (like '-lpthread' or '-lm')
+JSROP_ABSTRACTS_LINKLIBS = 
+
+# dirs containing hative header files (.h)
+JSROP_ABSTRACTS_INCLUDES = \
+    -I$(JSROP_ABSTRACTS_DIR)/src/include \
+    -I$(JSROP_ABSTRACTS_DIR)/src/cdc/native/$(TARGET_PLATFORM)
+
+# start dirs for java source trees
+JSROP_ABSTRACTS_JAVASRCDIRS = \
+        $(JSROP_ABSTRACTS_DIR)/src/cdc/classes
+
+# classes
+JSROP_ABSTRACTS_CLASSES = \
+    com.sun.j2me.app.AppPackage \
+    com.sun.j2me.app.AppIsolate \
+    com.sun.j2me.app.AppModel \
+    com.sun.j2me.log.LogChannels \
+    com.sun.j2me.log.Logging \
+    com.sun.j2me.main.Configuration \
+    com.sun.j2me.security.PIMPermission \
+    com.sun.j2me.security.Permission \
+    com.sun.j2me.security.FileConnectionPermission \
+    com.sun.j2me.security.SatsaPermission \
+    com.sun.j2me.io.ConnectionBaseInterface \
+    com.sun.j2me.io.ConnectionBaseAdapter \
+    com.sun.j2me.io.FileAccess \
+    com.sun.j2me.io.PrivilegedConnector \
+    com.sun.j2me.i18n.Resource \
+    com.sun.j2me.i18n.ResourceConstants \
+    com.sun.j2me.dialog.Dialog \
+    com.sun.j2me.dialog.MessageDialog\
+    com.sun.j2me.crypto.Cipher \
+    com.sun.j2me.crypto.NoSuchPaddingException \
+    com.sun.j2me.crypto.NoSuchAlgorithmException \
+    com.sun.j2me.crypto.InvalidKeyException \
+    com.sun.j2me.crypto.InvalidAlgorithmParameterException \
+    com.sun.j2me.crypto.ShortBufferException \
+    com.sun.j2me.crypto.BadPaddingException \
+    com.sun.j2me.crypto.IllegalBlockSizeException \
+    com.sun.j2me.crypto.DES \
+    com.sun.j2me.crypto.AES_ECB \
+    com.sun.j2me.crypto.DES_ECB \
+    com.sun.j2me.crypto.ARC4 \
+    com.sun.j2me.crypto.DES_CBC \
+    com.sun.j2me.crypto.RSA \
+    com.sun.j2me.crypto.RSAKey \
+    com.sun.j2me.crypto.RSAPrivateKey \
+    com.sun.j2me.crypto.RSAPublicKey \
+    com.sun.j2me.crypto.SecretKey \
+    com.sun.j2me.crypto.BlockCipherBase \
+    com.sun.j2me.crypto.DESEDE \
+    com.sun.j2me.crypto.AES \
+    com.sun.j2me.crypto.AES_CBC \
+    com.sun.j2me.crypto.Padder \
+    com.sun.j2me.crypto.PKCS5Padding \
+    com.sun.j2me.crypto.IvParameter \
+    com.sun.j2me.crypto.CryptoParameter \
+    com.sun.j2me.crypto.Util \
+    com.sun.j2me.crypto.Util \
+    com.sun.j2me.crypto.PRand \
+    com.sun.j2me.crypto.SecureRandom \
+
+ifeq ($(USE_JUMP_SHARED_MEMORY), true)
+JSROP_ABSTRACTS_NATIVES += \
+    shared_memory.c \
+    shared_memory_md.c
+endif
+ifeq ($(USE_JUMP_EVENTS), true)
+JSROP_ABSTRACTS_NATIVES += \
+    jump_events_impl.c
+endif
+
+#####################################################
+CVM_SRCDIRS += $(JSROP_ABSTRACTS_SRCDIRS)
+CVM_OBJECTS += $(patsubst %.c,$(CVM_OBJDIR)/%.o,$(JSROP_ABSTRACTS_NATIVES))
+LINKLIBS += $(JSROP_ABSTRACTS_LINKLIBS)
+CVM_INCLUDES += $(JSROP_ABSTRACTS_INCLUDES)
+JAVA_SRCDIRS += $(JSROP_ABSTRACTS_JAVASRCDIRS)
+CVM_BUILDTIME_CLASSES += $(JSROP_ABSTRACTS_CLASSES)
+
+printconfig::
+	@echo "**************************************************************************"
+	@echo "JSROP_ABSTRACTS_DIR      = $(JSROP_ABSTRACTS_DIR)"
+	@echo "JSROP_ABSTRACTS_INCLUDES = $(JSROP_ABSTRACTS_INCLUDES)"
+	@echo "**************************************************************************"
+
