@@ -641,6 +641,7 @@ public class PushRegistry {
 					   String filter)
 	throws ClassNotFoundException,
 	        IOException {
+        throw new ConnectionNotFoundException("not supported");
     }
 
     /**
@@ -673,7 +674,7 @@ public class PushRegistry {
      *       <em>host</em> and <em>port number</em> identification
      */
     public static String[] listConnections(boolean available) {
-        return null;
+        return new String [0];
     }
 
     /**
@@ -752,7 +753,6 @@ public class PushRegistry {
      */
     public static long registerAlarm(String midlet, long time)
 	 throws ClassNotFoundException, ConnectionNotFoundException {
-        // IMPL_NOTE: intentionally return mad value
-        return -1L;
+        throw new ConnectionNotFoundException("not supported");
     }
 }

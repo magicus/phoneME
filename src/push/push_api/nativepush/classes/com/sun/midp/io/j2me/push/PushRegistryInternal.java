@@ -26,6 +26,8 @@ package com.sun.midp.io.j2me.push;
 
 import java.io.IOException;
 
+import javax.microedition.io.ConnectionNotFoundException;
+
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.SecurityToken;
@@ -100,6 +102,7 @@ public final class PushRegistryInternal {
                                                   String filter,
                                                   boolean bypassChecks)
             throws ClassNotFoundException, IOException {
+        throw new ConnectionNotFoundException("not supported");
     }
 
     /**
@@ -120,12 +123,13 @@ public final class PushRegistryInternal {
      * @param available if <code>true</code>, only return the list of
      *      connections with input available
      *
-     * @return array of connection strings, where each connection is
-     *       represented by the generic connection <em>protocol</em>,
-     *       <em>host</em> and <em>port number</em> identification
+     * @return string representing an array of connection strings,
+     *       where each connection is represented by the generic connection
+     *       <em>protocol</em>, <em>host</em> and <em>port number</em>
+     *       identification
      */
     public static String listConnections(int id, boolean available) {
-        return null;
+        return "";
     }
 
     /**
