@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -27,15 +25,17 @@
 package com.sun.midp.io.j2me.push;
 
 import java.io.IOException;
+
 import javax.microedition.io.ConnectionNotFoundException;
 
 import com.sun.midp.midlet.MIDletSuite;
+
 import com.sun.midp.security.SecurityToken;
 
 /**
- * Internal push functionality for JUMP stack.
+ * Stubbed implementation for CDC without JUMP variant of stack
  *
- * NOTE: some (if not all) methods might go away as a result of
+ * IMPL_NOTE: some (if not all) methods might go away as a result of
  *  sources refactoring
  */
 public final class PushRegistryInternal {
@@ -98,8 +98,8 @@ public final class PushRegistryInternal {
             final String midlet,
             final String filter,
             final boolean bypassChecks)
-            throws ClassNotFoundException, IOException {
-        throw new ConnectionNotFoundException();
+                throws ClassNotFoundException, IOException {
+        throw new ConnectionNotFoundException("not supported");
     }
 
     /**
@@ -108,7 +108,8 @@ public final class PushRegistryInternal {
      *
      * @param token security token for this class.
      */
-    public static void initSecurityToken(final SecurityToken token) { }
+    public static void initSecurityToken(final SecurityToken token) {
+    }
 
     /**
      * Return a list of registered connections for given
@@ -119,14 +120,15 @@ public final class PushRegistryInternal {
      * @param available if <code>true</code>, only return the list of
      *      connections with input available
      *
-     * @return array of connection strings, where each connection is
-     *       represented by the generic connection <em>protocol</em>,
-     *       <em>host</em> and <em>port number</em> identification
+     * @return string representing an array of connection strings,
+     *       where each connection is represented by the generic connection
+     *       <em>protocol</em>, <em>host</em> and <em>port number</em>
+     *       identification
      */
     public static String listConnections(
             final int id,
             final boolean available) {
-        return null;
+        return "";
     }
 
     /**
@@ -135,7 +137,8 @@ public final class PushRegistryInternal {
      * @param id identifies the specific <code>MIDlet</code>
      *               suite
      */
-    public static void unregisterConnections(final int id) { }
+    public static void unregisterConnections(final int id) {
+    }
 
     /**
      * Sets the flag which enables push launches to take place.
@@ -145,5 +148,6 @@ public final class PushRegistryInternal {
      *  events, otherwise set to <code>false</code> to disable
      *  launches
      */
-    public static void enablePushLaunch(final boolean enable) { }
+    public static void enablePushLaunch(final boolean enable) {
+    }
 }
