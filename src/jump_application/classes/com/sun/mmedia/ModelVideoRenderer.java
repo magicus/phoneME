@@ -47,18 +47,22 @@ public class ModelVideoRenderer{
 
         if (appModel == AppModel.XLET)
         {
-            className = "com.sun.midp.AWTVideoRenderer";
+            className = "com.sun.mmedia.AWTVideoRenderer";
         } else if (appModel == AppModel.MIDLET) {
-            className = "com.sun.midp.MIDPVideoRenderer";
+            className = "com.sun.mmedia.MIDPVideoRenderer";
         } else {
             return null;
         }
         try {
             Class clazz = Class.forName(className);
-            Constructor constructor = clazz.getConstructor(
-                                            new Class[] {Player.class, Integer.class, Integer.class});
-            ret = (VideoRenderer)constructor.newInstance( 
-                                            new Object[] {player, new Integer(sourceWidth), new Integer(sourceHeight)});
+            Integer w = new Integer(sourceWidth);            
+            Integer h = new Integer(sourceHeight);            
+            /*
+            Constructor constructor = clazz.getConstructor(new Class[] {Player.class, int.class, int.class} );
+            ret = (VideoRenderer)constructor.newInstance( new Object[] {player, w, h});
+             */
+            Constructor constructor[] = clazz.getConstructors();
+            ret = (VideoRenderer)constructor[0].newInstance( new Object[] {player, w, h});
         } catch ( Exception ex ) {
             ex.printStackTrace();
             return null;
