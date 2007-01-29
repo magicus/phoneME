@@ -366,7 +366,7 @@ SUBSYSTEM_SATSA_JAVA_FILES   = $(MODULE_SATSA_COMMON_JAVA_FILES) \
 			       $(MODULE_SATSA_CRYPTO_JAVA_FILES)
 
 # JSR 177 internal paths
-INTERNAL_JSR_177_CONFIG_DIR = $(JSR_177_DIR)/src/config
+INTERNAL_JSR_177_CONFIG_DIR = $(JSR_177_DIR)/src/share/config
 
 # Include jsr 177 common properties in Configuration
 #
@@ -466,7 +466,7 @@ JPP_DEFS += -DENABLE_JSR_177
 # Specify romizer configuration file for the jsr
 # and path where the file is located
 #
-ROMGEN_INCLUDE_PATHS += $(JSR_177_DIR)/src/config
+ROMGEN_INCLUDE_PATHS += $(JSR_177_DIR)/src/share/config
 ROMGEN_CFG_FILES     += satsa_rom.cfg
 
 # Native documentation to include in porting interfaces
