@@ -240,6 +240,7 @@ BUNDLE_INCLUDE_LIST += \
 	build/share/jcc.mk \
 	src/share/tools/GenerateCurrencyData \
 	src/share/tools/javazic \
+	src/share/tools/xml \
 	src/share/lib/security \
 	$(foreach os,$(BUNDLE_OS_PORTS), \
 		src/$(os)/bin) \
