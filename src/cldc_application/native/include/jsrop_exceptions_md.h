@@ -21,24 +21,30 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-#ifndef __JSROP_LOGGING_H
-#define __JSROP_LOGGING_H
+#ifndef __JSROP_EXCEPTIONS_MD_H
+#define __JSROP_EXCEPTIONS_MD_H
 
-/** 
- *  The following macroses are defined in the <platform>/native/include/jsrop_logging_md.h file
- *  #define REPORT_INFO(ch, msg)
- *  #define REPORT_INFO1(ch, msg, p1)
- *  #define REPORT_INFO2(ch, msg, p1, p2)
- *  #define REPORT_INFO3(ch, msg, p1, p2, p3)
- *  #define REPORT_INFO4(ch, msg, p1, p2, p3, p4)
- *  #define REPORT_ERROR(ch, msg)
- *  #define REPORT_ERROR1(ch, msg, p1)
- *  #define REPORT_ERROR2(ch, msg, p1, p2)
- *  #define REPORT_ERROR3(ch, msg, p1, p2, p3)
- *  #define REPORT_ERROR4(ch, msg, p1, p2, p3, p4)
- *  Logging channels 
- */
-#include <jsrop_logging_md.h>
+#include <midpError.h>
 
-#endif /* __JSROP_LOGGING_H */
+#if defined __cplusplus 
+extern "C" { 
+#endif /* __cplusplus */
+
+/** 'C' string for java.lang.OutOfMemoryError */
+#define jsropOutOfMemoryError midpOutOfMemoryError
+/** 'C' string for java.lang.RuntimeException */
+#define jsropRuntimeException midpRuntimeException
+/** 'C' string for java.lang.NullPointerException */
+#define jsropNullPointerException midpNullPointerException
+/** 'C' string for java.lang.IllegalArgumentException */
+#define jsropIllegalArgumentException midpIllegalArgumentException
+/** 'C' string for java.io.IOException */
+#define jsropIOException midpIOException
+/** 'C' string for java.io.InterruptedIOException */
+#define jsropInterruptedIOException midpInterruptedIOException
+
+#if defined __cplusplus 
+} 
+#endif /* __cplusplus */
+#endif /* __JSROP_MEMORY_H */
 

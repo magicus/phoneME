@@ -96,7 +96,7 @@ void CVMsharedMemClose(CVMSharedMemory hdlr) {
 */
 void CVMsharedMemDestroy(CVMSharedMemory hdlr) {
     CVMassert(hdlr != NULL); 
-    sharedMemory_close((SharedMemory_md *)hdlr);
+    sharedMemory_destroy((SharedMemory_md *)hdlr);
 }
 
 /* Purpose: Lock shared memory access. 

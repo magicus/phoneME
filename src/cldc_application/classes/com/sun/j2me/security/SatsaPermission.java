@@ -21,24 +21,33 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-#ifndef __JSROP_LOGGING_H
-#define __JSROP_LOGGING_H
 
-/** 
- *  The following macroses are defined in the <platform>/native/include/jsrop_logging_md.h file
- *  #define REPORT_INFO(ch, msg)
- *  #define REPORT_INFO1(ch, msg, p1)
- *  #define REPORT_INFO2(ch, msg, p1, p2)
- *  #define REPORT_INFO3(ch, msg, p1, p2, p3)
- *  #define REPORT_INFO4(ch, msg, p1, p2, p3, p4)
- *  #define REPORT_ERROR(ch, msg)
- *  #define REPORT_ERROR1(ch, msg, p1)
- *  #define REPORT_ERROR2(ch, msg, p1, p2)
- *  #define REPORT_ERROR3(ch, msg, p1, p2, p3)
- *  #define REPORT_ERROR4(ch, msg, p1, p2, p3, p4)
- *  Logging channels 
+package com.sun.j2me.security;
+
+/**
+ * Satsa access permissions.
  */
-#include <jsrop_logging_md.h>
+public class SatsaPermission extends Permission {
+    
+    static String APDU_OPEN       = "apdu:open";
+    static String APDU_SAT_OPEN   = "apdu:satopen";
 
-#endif /* __JSROP_LOGGING_H */
+    static String APDU_CHANNEL0   = "javax.microedition.apdu.channel0#";
+    static String APDU_CONNECTION = "javax.microedition.apdu.connection#";
 
+    static public SatsaPermission APDU_CHANNEL0_SAT_OPEN =
+        new SatsaPermission(APDU_CHANNEL0 + APDU_SAT_OPEN, null);
+    
+    static public SatsaPermission APDU_CONNECTION_OPEN =
+        new SatsaPermission(APDU_CONNECTION + APDU_OPEN, null);
+
+    static public SatsaPermission JCRMI_CONNECTION = 
+        new SatsaPermission("javax.microedition.jcrmi.connection", null);
+
+    static public SatsaPermission SIGN_SERVICE =
+        new SatsaPermission("javax.microedition.pki.signservice", null);
+    
+    public SatsaPermission(String permission, String resource) {
+        super(permission, resource);
+    }
+}

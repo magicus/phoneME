@@ -21,24 +21,28 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-#ifndef __JSROP_LOGGING_H
-#define __JSROP_LOGGING_H
+#ifndef __JSROP_EXCEPTIONS_MD_H
+#define __JSROP_EXCEPTIONS_MD_H
 
-/** 
- *  The following macroses are defined in the <platform>/native/include/jsrop_logging_md.h file
- *  #define REPORT_INFO(ch, msg)
- *  #define REPORT_INFO1(ch, msg, p1)
- *  #define REPORT_INFO2(ch, msg, p1, p2)
- *  #define REPORT_INFO3(ch, msg, p1, p2, p3)
- *  #define REPORT_INFO4(ch, msg, p1, p2, p3, p4)
- *  #define REPORT_ERROR(ch, msg)
- *  #define REPORT_ERROR1(ch, msg, p1)
- *  #define REPORT_ERROR2(ch, msg, p1, p2)
- *  #define REPORT_ERROR3(ch, msg, p1, p2, p3)
- *  #define REPORT_ERROR4(ch, msg, p1, p2, p3, p4)
- *  Logging channels 
- */
-#include <jsrop_logging_md.h>
+#if defined __cplusplus 
+extern "C" { 
+#endif /* __cplusplus */
 
-#endif /* __JSROP_LOGGING_H */
+/** 'C' string for java.lang.OutOfMemoryError */
+extern const char* const jsropOutOfMemoryError;
+/** 'C' string for java.lang.RuntimeException */
+extern const char* const jsropRuntimeException;
+/** 'C' string for java.lang.NullPointerException */
+extern const char* const jsropNullPointerException;
+/** 'C' string for java.lang.IllegalArgumentException */
+extern const char* const jsropIllegalArgumentException;
+/** 'C' string for java.io.IOException */
+extern const char* const jsropIOException;
+/** 'C' string for java.io.InterruptedIOException */
+extern const char* const jsropInterruptedIOException;
+
+#if defined __cplusplus 
+} 
+#endif /* __cplusplus */
+#endif /* __JSROP_EXCEPTIONS_MD_H */
 

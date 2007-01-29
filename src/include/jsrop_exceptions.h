@@ -24,25 +24,16 @@
 #ifndef __JSROP_EXCEPTIONS_H
 #define __JSROP_EXCEPTIONS_H
 
-#if defined __cplusplus 
-extern "C" { 
-#endif /* __cplusplus */
+/** 
+ *  The following constants are defined in the <platform>/native/include/jsrop_exceptions_md.h file
+ *  const char* const jsropOutOfMemoryError;
+ *  const char* const jsropRuntimeException;
+ *  const char* const jsropNullPointerException;
+ *  const char* const jsropIllegalArgumentException;
+ *  const char* const jsropIOException;
+ *  const char* const jsropInterruptedIOException;
+ */
+#include <jsrop_exceptions_md.h>
 
-/** 'C' string for java.lang.OutOfMemoryError */
-extern const char* const jsropOutOfMemoryError;
-/** 'C' string for java.lang.RuntimeException */
-extern const char* const jsropRuntimeException;
-/** 'C' string for java.lang.NullPointerException */
-extern const char* const jsropNullPointerException;
-/** 'C' string for java.lang.IllegalArgumentException */
-extern const char* const jsropIllegalArgumentException;
-/** 'C' string for java.io.IOException */
-extern const char* const jsropIOException;
-/** 'C' string for java.io.InterruptedIOException */
-extern const char* const jsropInterruptedIOException;
-
-#if defined __cplusplus 
-} 
-#endif /* __cplusplus */
 #endif /* __JSROP_EXCEPTIONS_H */
 

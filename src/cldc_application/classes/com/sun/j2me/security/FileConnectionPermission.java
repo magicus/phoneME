@@ -21,24 +21,24 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-#ifndef __JSROP_LOGGING_H
-#define __JSROP_LOGGING_H
 
-/** 
- *  The following macroses are defined in the <platform>/native/include/jsrop_logging_md.h file
- *  #define REPORT_INFO(ch, msg)
- *  #define REPORT_INFO1(ch, msg, p1)
- *  #define REPORT_INFO2(ch, msg, p1, p2)
- *  #define REPORT_INFO3(ch, msg, p1, p2, p3)
- *  #define REPORT_INFO4(ch, msg, p1, p2, p3, p4)
- *  #define REPORT_ERROR(ch, msg)
- *  #define REPORT_ERROR1(ch, msg, p1)
- *  #define REPORT_ERROR2(ch, msg, p1, p2)
- *  #define REPORT_ERROR3(ch, msg, p1, p2, p3)
- *  #define REPORT_ERROR4(ch, msg, p1, p2, p3, p4)
- *  Logging channels 
+package com.sun.j2me.security;
+
+/**
+ * FileConnection access permissions.
  */
-#include <jsrop_logging_md.h>
+public class FileConnectionPermission extends Permission {
+    static String ACCESS_READ  = "read";
+    static String ACCESS_WRITE = "write";
 
-#endif /* __JSROP_LOGGING_H */
+    static String FILE_CONNECTION = "javax.microedition.io.file.FileConnection#";
 
+    static public FileConnectionPermission READ =
+        new FileConnectionPermission(FILE_CONNECTION + ACCESS_READ, null);
+    static public FileConnectionPermission WRITE =
+        new FileConnectionPermission(FILE_CONNECTION + ACCESS_WRITE, null);
+
+    public FileConnectionPermission(String name, String resource) {
+        super(name, resource);
+    }
+}

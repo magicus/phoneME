@@ -1,0 +1,84 @@
+#
+#   
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+# dirs containing native source files
+vpath % $(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/share
+vpath % $(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/$(TARGET_PLATFORM)
+
+# names of native source files (like 'file.c')
+JSROP_ABSTRACTS_NATIVES = 
+
+# extra libraries needed (like '-lpthread' or '-lm')
+JSROP_ABSTRACTS_LINKLIBS = 
+
+# dirs containing hative header files (.h)
+JSROP_ABSTRACTS_INCLUDES = \
+    -I$(JSROP_ABSTRACTS_DIR)/src/include \
+    -I$(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/include \
+    -I$(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/$(TARGET_PLATFORM)
+
+# start dirs for java source trees
+JSROP_ABSTRACTS_JAVASRCDIRS = \
+        $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes
+
+# classes
+JSROP_ABSTRACTS_JAVA_FILES = \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/app/AppPackage.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/app/AppIsolate.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/app/AppModel.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/log/LogChannels.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/log/Logging.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/main/Configuration.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/PIMPermission.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/Permission.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/FileConnectionPermission.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/SatsaPermission.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/ConnectionBaseInterface.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/ConnectionBaseAdapter.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/FileAccess.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/PrivilegedConnector.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/i18n/Resource.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/i18n/ResourceConstants.java
+
+#####################################################
+JTWI_NATIVE_FILES  += $(JSROP_ABSTRACTS_NATIVES)
+EXTRA_INCLUDES	   += $(JSROP_ABSTRACTS_INCLUDES)
+
+source_bundle:: abstrats_source_bundle
+
+# Create ABSTRACTS source in subdir 'abstracts/'
+ABSTRACTS_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/abstracts
+
+# Copy and filter abstracts source in ABSTRACTS_SOURCE_OUTPUT_DIR
+abstracts_source_bundle: SOURCE_OUTPUT_DIR
+	@echo " ... ABSTRACTS source bundle" $(LOG)
+	@$(call re_src_filter,$(JSROP_ABSTRACTS_DIR),$(ABSTRACTS_SOURCE_OUTPUT_DIR),src)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(JSROP_ABSTRACTS_JAVA_FILES)
+	$(appendjavafiles)
+
+
+

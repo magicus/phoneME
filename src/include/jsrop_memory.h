@@ -24,17 +24,12 @@
 #ifndef __JSROP_MEMORY_H
 #define __JSROP_MEMORY_H
 
-#include "javavm/include/porting/memory.h"
+/** 
+ *  The following macroses are defined in the <platform>/native/include/jsrop_memory_md.h file
+ *  #define MALLOC(size)
+ *  #define FREE(addr)
+ */
+#include <jsrop_memory_md.h>
 
-#if defined __cplusplus 
-extern "C" { 
-#endif /* __cplusplus */
-
-#define MALLOC(size) ((void *)CVMmemalignAlloc(sizeof(int), (size_t)size))
-#define FREE(addr)   CVMmemalignFree(addr)
-
-#if defined __cplusplus 
-} 
-#endif /* __cplusplus */
 #endif /* __JSROP_MEMORY_H */
 

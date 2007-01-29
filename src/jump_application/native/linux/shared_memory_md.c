@@ -43,7 +43,6 @@ static char *sharedMemory_createFullName(char* name) {
     strcpy(shmem_key_name, tempDirLocation);
     strcat(shmem_key_name, shmemPrefix);
     strcat(shmem_key_name, name);
-printf("Lock NAME : %s \n", shmem_key_name);    
     return shmem_key_name;
 }
 static void sharedMemory_destroyFullName(char* name) {
