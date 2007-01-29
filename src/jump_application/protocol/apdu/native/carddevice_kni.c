@@ -371,6 +371,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
         }
     }
 
+    cardReaderEvent = jumpEventCreate();
     status_code = javacall_carddevice_xfer_data_start(tx_buffer, 
                                                       tx_length, 
                                                       rx_buffer, 
