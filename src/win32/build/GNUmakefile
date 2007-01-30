@@ -29,14 +29,8 @@ all: javacall_common local_win32
 
 JAVACALL_PLATFORM=win32
 
-#Specify list of utility objects necessary for the build
-UTILITIES_LIST :=           \
-        javautil_jad_parser \
-        javautil_string     \
-        javautil_unicode
-
 JAVACALL_UTIL_DIR := ../../utils
-include $(JAVACALL_UTIL_DIR)/build/common.gmk
+include $(JAVACALL_UTIL_DIR)/build/base.gmk
 
 # Extra settings for JSR 238 implementation
 
@@ -107,9 +101,16 @@ PORTING_OBJECTS = \
 	mi18n_collation.obj \
 	mi18n_format.obj \
 	mi18n_resources.obj \
-	mi18n_locales.obj \
-	$(foreach util,$(UTILITIES_LIST),$(util).obj)
+	mi18n_locales.obj
 
+#Specify list of utility objects necessary for the build
+UTILITIES_LIST :=           \
+        javautil_jad_parser \
+        javautil_string     \
+        javautil_unicode
+
+PORTING_OBJECTS += $(foreach util,$(UTILITIES_LIST),$(util).obj)
+JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach util,$(UTILITIES_LIST),$(JAVACALL_UTIL_DIR)/inc/$(util).h)
 
 ifneq ($(UTILITIES_LIST)x, x)
 VPATH+=$(JAVACALL_UTIL_DIR)
@@ -124,10 +125,10 @@ include $(PROJECT_JSR_135_DIR)/javacall_impl.gmk
 endif
 
 ifeq ($(USE_JSR_234),true)
-JSR_234_DIR ?= ../src/jsr234_amms
-PROJECT_JSR_234_DIR ?= $(JSR_234_DIR)
 include $(PROJECT_JSR_234_DIR)/javacall_impl.gmk
 endif
+
+include $(JAVACALL_UTIL_DIR)/build/common.gmk
 
 # This is a hidden dependencies workaround (ti762)
 # NEED REVISIT: provide pure solution without hidden dependencies

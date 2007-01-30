@@ -27,6 +27,9 @@
 
 all: javacall_common local_stubs
 
+JAVACALL_UTIL_DIR := ../../utils
+include $(JAVACALL_UTIL_DIR)/build/base.gmk
+
 ifeq ($(CC),armcc)
   CFLAGS= -c
   AR=armar.exe 
@@ -51,15 +54,6 @@ else
     JAVACALL_PLATFORM=win32
   endif
 endif
-
-#Specify list of utility objects necessary for the build
-UTILITIES_LIST :=           \
-        javautil_jad_parser \
-        javautil_string     \
-        javautil_unicode
-
-JAVACALL_UTIL_DIR := ../../utils
-include $(JAVACALL_UTIL_DIR)/build/common.gmk
 
 local_stubs: $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib 
 
@@ -115,12 +109,22 @@ PORTING_OBJECTS= \
 	carddevice_simu.obj \
 	mi18n_collation.obj \
 	mi18n_format.obj \
-	mi18n_resources.obj \
-	$(foreach util,$(UTILITIES_LIST),$(util).obj)
+	mi18n_resources.obj
+
+#Specify list of utility objects necessary for the build
+UTILITIES_LIST :=           \
+        javautil_jad_parser \
+        javautil_string     \
+        javautil_unicode
+
+PORTING_OBJECTS += $(foreach util,$(UTILITIES_LIST),$(util).obj)
+JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach util,$(UTILITIES_LIST),$(JAVACALL_UTIL_DIR)/inc/$(util).h)
 
 ifneq ($(UTILITIES_LIST)x, x)
 VPATH+=$(JAVACALL_UTIL_DIR)
 endif
+
+include $(JAVACALL_UTIL_DIR)/build/common.gmk
 
 ifeq ($(USE_DEBUG),true)
 ifeq ($(CC),armcc)
