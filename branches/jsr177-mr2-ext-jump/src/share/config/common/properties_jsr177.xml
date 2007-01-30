@@ -14,7 +14,7 @@
         Scope="system"
         Comment="Smart card slot identifiers."/>
 
-    <property Key="com.sun.midp.io.j2me.apdu.satselectapdu"
+    <property Key="com.sun.io.j2me.apdu.satselectapdu"
         Value="00.a4.04.00.07.a0.00.00.00.62.3.1.7F"
         Scope="internal"
         Comment="APDU command for selecting SIM application."/>

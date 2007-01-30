@@ -39,9 +39,9 @@ public final class SecurityInitializer {
 
     /** List of the trusted subsystem classes that can request for token */
     final static private String[] trustedClasses = new String[] {
-        "com.sun.midp.io.j2me.apdu.Protocol$SecurityTrusted",
+        "com.sun.io.j2me.apdu.Protocol$SecurityTrusted",
         "com.sun.satsa.acl.ACSlot$SecurityTrusted",
-        "com.sun.midp.io.j2me.jcrmi.Protocol$SecurityTrusted",
+        "com.sun.io.j2me.jcrmi.Protocol$SecurityTrusted",
         "com.sun.satsa.pki.PKIManager$SecurityTrusted"
     };
 
