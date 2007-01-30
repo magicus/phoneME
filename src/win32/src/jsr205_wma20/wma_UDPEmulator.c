@@ -280,5 +280,5 @@ javacall_result try_process_wma_emulator(javacall_handle handle) {
         process_UDPEmulator_cbs_incoming(handle);
         return JAVACALL_OK;
     }
-    return JAVACALL_FALSE;
+    return JAVACALL_FAIL;
 }
