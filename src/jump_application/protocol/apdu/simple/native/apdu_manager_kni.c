@@ -377,7 +377,7 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0) {
         
         KNI_GetObjectClass(connection_handle, handle);
         KNI_GetObjectField(connection_handle, 
-            KNI_GetFieldID(handle, "cardSlot", "Lcom/sun/midp/io/j2me/apdu/Slot;"),
+            KNI_GetFieldID(handle, "cardSlot", "Lcom/sun/io/j2me/apdu/Slot;"),
             slot_handle);
         
         if (slot_handle == NULL) {

@@ -26,8 +26,8 @@
 
 package com.sun.satsa.acl;
 
-import com.sun.midp.ssl.MessageDigest;
-import com.sun.midp.io.j2me.apdu.APDUManager;
+import java.security.MessageDigest;
+import com.sun.io.j2me.apdu.APDUManager;
 
 /**
  * This class represents access control information manager.
@@ -87,14 +87,14 @@ public class AccessControlManager {
 
             try {
                 if (sha == null) {
-                    sha = MessageDigest.getInstance(MessageDigest.ALG_SHA,
-                            false);
+                    sha = MessageDigest.getInstance("SHA-1");
                 }
-                sha.reset();
                 byte[] hash = new byte[20];
-                sha.doFinal(inBuf, inOff, inLen, hash, 0);
+                sha.update(inBuf, inOff, inLen);
+                sha.digest(hash, 0, hash.length);
                 return hash;
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 e.printStackTrace();
                 return null;
             }
