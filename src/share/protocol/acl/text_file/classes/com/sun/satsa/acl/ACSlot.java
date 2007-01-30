@@ -30,12 +30,10 @@ import java.util.Vector;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import com.sun.midp.io.j2me.storage.RandomAccessStream;
-import com.sun.midp.io.j2me.storage.File;
-import com.sun.midp.security.ImplicitlyTrustedClass;
-import com.sun.midp.security.SecurityToken;
-import com.sun.satsa.security.SecurityInitializer;
-import com.sun.midp.configurator.Constants;
+import com.sun.j2me.io.FileAccess;
+//import com.sun.midp.security.ImplicitlyTrustedClass;
+//import com.sun.midp.security.SecurityToken;
+//import com.sun.satsa.security.SecurityInitializer;
 
 import javax.microedition.io.Connector;
 
@@ -49,12 +47,12 @@ public class ACSlot{
      * Inner class to request security token from SecurityInitializer.
      * SecurityInitializer should be able to check this inner class name.
      */
-    static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
+//    static private class SecurityTrusted
+//        implements ImplicitlyTrustedClass {};
 
     /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken =
-        SecurityInitializer.requestToken(new SecurityTrusted());
+//    private static SecurityToken classSecurityToken =
+//        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * Constructs an instance of an access control file object.
@@ -70,13 +68,14 @@ public class ACSlot{
      */
     public static ACSlot load(int slotNum) {
 
-        RandomAccessStream storage;
+        FileAccess storage;
         InputStream permIS;
 
         try {
-            storage = new RandomAccessStream(classSecurityToken);
-            storage.connect(File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
-	        "acl_" + slotNum, Connector.READ);
+            String storeName = FileAccess.getStorageRoot(FileAccess.INTERNAL_STORAGE_ID) +
+	        "acl_" + slotNum;
+            storage = FileAccess.getInstance(storeName);
+            storage.connect(Connector.READ);
             permIS = storage.openInputStream();
         } catch (IOException e) {
             return null;
