@@ -423,6 +423,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
      * @param h the new height of the item's content area
      */
     void uCallSizeChanged(int w, int h) {
+        super.uCallSizeChanged(w,h);
         synchronized (Display.LCDUILock) {
             editor.setSizeChanged();
 
