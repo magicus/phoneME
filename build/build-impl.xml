@@ -24,7 +24,9 @@ information or have any questions.
 -->
 <project name="Build implementation classes" basedir=".">
 
-  <target name="build-impl" depends="build-api, build-impl-modules">
+<import file="build-impl-pmode.xml"/>
+
+  <target name="build-impl" depends="build-api, build-impl-modules, build-impl-pmode">
      <jar destfile="${d.lib.dir}/${impl.jar}" update="true"
          basedir="${d.classes.dir}"
          includes="com/sun/jumpimpl/**/*.class,
