@@ -334,7 +334,7 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
      * @param h the new height of the item's content area
      */
     void uCallSizeChanged(int w, int h) {
-
+        super.uCallSizeChanged(w,h);
         int prefH = customItem.uGetContentSize(CustomItem.SIZE_PREF_HEIGHT, w);
         int prefW = customItem.uGetContentSize(CustomItem.SIZE_PREF_WIDTH, h);
 
