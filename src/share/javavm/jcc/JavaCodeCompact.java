@@ -51,7 +51,7 @@ public class JavaCodeCompact extends LinkerUtil {
     Set		 undefinedClassNames;
     ClassFileFinder  searchPath;
     String	 firstFileName;
-    String	 outName;
+    static String   outName;
 
     boolean	classDebug = false;
     boolean	outSet   = false;
@@ -70,6 +70,9 @@ public class JavaCodeCompact extends LinkerUtil {
     ClassnameFilterList extraHeaders = new ClassnameFilterList();
     int		maxSegmentSize = -1;
     boolean	firstTimeOnly = true;
+
+    /* arguments for JavaAPILister */
+    static String      APIListerArgs = null;
 
     private void
     fileFound( String fname ){
@@ -107,6 +110,12 @@ public class JavaCodeCompact extends LinkerUtil {
 	    return false;
 	}
 	return true;
+    }
+
+    /* Return the outName string. */
+    public static String getOutName()
+    {
+        return outName;
     }
 
     /*
@@ -257,7 +266,10 @@ public class JavaCodeCompact extends LinkerUtil {
 		}
 		ClassLoader l = new components.ClassLoader(name, parent);
 		ClassTable.setClassLoader(l);
+            } else if (clist[i].startsWith("-listapi:")) {
+                APIListerArgs = clist[i];
 	    } else {
+	        /* Read in classes that need to be ROMized. */ 
 		classesThisRead.clear();
 		if (!readFile( clist[i], classesThisRead )){
 		    success = false;
@@ -398,7 +410,12 @@ public class JavaCodeCompact extends LinkerUtil {
 
 	good = writeROMFile( outName, c, romAttributes, doWrite );
 
-	ClassClass.destroyClassVector();
+        /* Don't destroy class vector. The JavaAPILister
+         * needs to access class typeids, which come
+         * from CVMClass and CVMClass come from the class
+         * vector.
+         */
+	//ClassClass.destroyClassVector();
 
 	return good;
     }
@@ -412,6 +429,15 @@ public class JavaCodeCompact extends LinkerUtil {
 		if (jcc.processOptions( clist )){
 		    success = jcc.process(true);
 		}
+
+                /* We are done with processing ROMized classes. Now run 
+                 * JavaAPILister, which need to access some of the data
+                 * such as class and member typeid that we created during
+                 * Romizing classes.
+                 */
+                if (APIListerArgs != null) {
+                    new JavaAPILister().process(APIListerArgs);
+                }
 	    }finally{
 		System.out.flush();
 		System.err.flush();

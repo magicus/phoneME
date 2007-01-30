@@ -217,20 +217,22 @@ class  MemberFilterConfig{
 
     public MemberFilter
     parseFile(){
-	try{
-	    while(true){
-		parseClass();
+        if (!filter.findROMFilterData()) {
+	    try{
+	        while(true){
+		    parseClass();
+	        }
+	    }catch(EOFException e){
+	        // normal termination. do nothing
+	    }catch(IOException e){
+	        printExceptionInfo(e, "IO error");
+	        return null;
+	    }catch(Exception e){
+	        printExceptionInfo(e, "syntax error");
+	        return null;
 	    }
-	}catch(EOFException e){
-	    // normal termination. do nothing
-	}catch(IOException e){
-	    printExceptionInfo(e, "IO error");
-	    return null;
-	}catch(Exception e){
-	    printExceptionInfo(e, "syntax error");
-	    return null;
-	}
-	filter.doneAddingRestrictions();
+	    filter.doneAddingRestrictions();
+        }
 	return filter;
     }
 }

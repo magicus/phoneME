@@ -162,9 +162,18 @@ class ClassTable
 	return success;
     }
 
-    public static vm.PrimitiveClassInfo
-    lookupPrimitiveClass(char sig){
-	return (vm.PrimitiveClassInfo)sigToPrimitive.get(new Character(sig));
+    /* Enter classes associated with a specific classloader.
+     * The classes are not added to 'allClass' like the 
+     * other enterClasses() methods do. Also note, this
+     * is not intended for array classes.
+     */
+    public static boolean
+    enterClasses(Enumeration e, ClassLoader l){
+	while(e.hasMoreElements()){
+	    ClassInfo c = (ClassInfo)(e.nextElement());
+            l.enterClass(c);
+	}
+	return true;
     }
 
     public static boolean
@@ -179,6 +188,11 @@ class ClassTable
 	    }
 	}
 	return true;
+    }
+
+    public static vm.PrimitiveClassInfo
+    lookupPrimitiveClass(char sig){
+	return (vm.PrimitiveClassInfo)sigToPrimitive.get(new Character(sig));
     }
 
     public static ClassInfo
