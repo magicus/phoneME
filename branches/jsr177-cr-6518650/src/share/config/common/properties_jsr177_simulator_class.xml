@@ -15,7 +15,7 @@
         Comment="Total number of card reader devices in the system."/>
 
    <property Key="com.sun.cardreader.deviceClass0"
-        Value="com.sun.midp.io.j2me.apdu.Simulator"
+        Value="com.sun.io.j2me.apdu.Simulator"
         Scope="internal"
         Comment="Class name for the device 0"/>
 </properties>
