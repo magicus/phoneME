@@ -22,37 +22,9 @@
 # information or have any questions. 
 #
 
-.PHONY: javacall_common create_output_dirs copy_include_files source_bundle clean
+.PHONY: javacall_common create_output_dirs copy_include_files source_bundle SOURCE_OUTPUT_DIR clean 
 
 javacall_common: create_output_dirs copy_include_files
-
-ifeq ($(JAVACALL_INCLUDE_DIR),)
-$(error JAVACALL_INCLUDE_DIR is not set.)
-endif
-
-include $(JAVACALL_INCLUDE_DIR)/include.gmk
-
-ifeq ($(USE_DEBUG),true)
-BUILD=debug
-endif
-
-BUILD_EXT_debug=_g
-BUILD_EXT=$(BUILD_EXT_$(BUILD))
-
-ifeq ($(JAVACALL_OUTPUT_DIR),)
-JAVACALL_OUTPUT_DIR:=$(shell pwd)/output
-endif
-
-# The JAVACALL_OUTPUT_DIR has a fixed structure, it should contain:
-#   - inc directory, which contains all the headers copied
-#   - lib directory, which contains javacall(_g) library and other files
-#     required for final linking
-#   - obj(_g) directory (optional), which contains all intermediate obj files
-JAVACALL_OUTPUT_INCLUDE_DIR:=$(JAVACALL_OUTPUT_DIR)/inc
-JAVACALL_OUTPUT_OBJ_DIR:=$(JAVACALL_OUTPUT_DIR)/obj$(BUILD_EXT)
-JAVACALL_OUTPUT_LIB_DIR:=$(JAVACALL_OUTPUT_DIR)/lib
-
-JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach util,$(UTILITIES_LIST),$(JAVACALL_UTIL_DIR)/inc/$(util).h)
 
 JAVACALL_INCLUDE_TARGET_FILES_SET:=$(foreach file,$(JAVACALL_INCLUDE_SOURCE_FILES_SET),$(JAVACALL_OUTPUT_INCLUDE_DIR)/$(notdir $(file)))
 
@@ -94,4 +66,4 @@ source_bundle:: SOURCE_OUTPUT_DIR
 
 clean:
 	@rm -rf $(JAVACALL_OUTPUT_DIR)
- 
+
