@@ -53,7 +53,7 @@ JADTOOL_MAIN_CLASS    = com.sun.midp.jadtool.JadTool
 JADTOOL_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/JadTool.manifest
 JADTOOL_JAR_FILE      = $(BINDIR)/JadTool.jar
 
-include $(TOOLS_DIR)/tools.gmk
+-include $(TOOLS_DIR)/tools.gmk
 
 # Localized strings generator settings
 #
