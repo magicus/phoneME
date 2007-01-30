@@ -34,6 +34,7 @@ import java.util.ResourceBundle;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.Vector;
 
 /**
  * Factory implementation methods for the installer module
@@ -212,16 +213,21 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
      * @return a list of all registered installers in the system for all types
      * of content.
      */
-    public JUMPInstallerModule[] getAllInstallers() {
-        
-        // We support XLET, MAIN, AND MIDLET
-        JUMPInstallerModule modules[] = new JUMPInstallerModule[3];
-        
-        modules[0] = getMainInstaller();
-        modules[1] = getXletInstaller();
-        modules[2] = getMidletInstaller();
-        
-        return modules;
+    public JUMPInstallerModule[] getAllInstallers() {        
+        Vector vector = new Vector();
+        JUMPInstallerModule mainModule = getMainInstaller();
+        if (mainModule != null) {
+            vector.add(mainModule);
+        }
+        JUMPInstallerModule xletModule = getXletInstaller();
+        if (xletModule != null) {
+            vector.add(xletModule);
+        }
+        JUMPInstallerModule midletModule = getMidletInstaller();
+        if (midletModule != null) {
+            vector.add(midletModule);
+        }
+        return (JUMPInstallerModule[]) vector.toArray(new JUMPInstallerModule[]{});
     };
     
     /*
