@@ -60,6 +60,12 @@ MemberFilter
     public MemberFilter(){}
 
     /*
+     * Find ROMized filter data. If exists, set 'fullData' field
+     * and return true. Otherwise, return false.
+     */
+    public native boolean findROMFilterData();
+
+    /*
      * the name of a class and arrays of all the fields and methods
      * -- including type signatures -- which are allowed.
      * Separate names from signatures using a colon :

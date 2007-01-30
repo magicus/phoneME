@@ -35,35 +35,35 @@
 #include "jvm.h"
 #include "javavm/include/classes.h"
 #include "javavm/include/interpreter.h"
+#include "javavm/include/dualstack_impl.h"
 
-/*
- * This is the linked-list representation of our internal data
- */
-struct linkedClassRestriction {
-    struct linkedClassRestriction*	next;
-    CVMClassTypeID		 	thisClass;
-    int					nMethods;
-    int					nFields;
-    CVMMethodTypeID*			methods;
-    CVMFieldTypeID*			fields;
-};
-
-/*
- * This is the array-element representation
- */
-typedef struct ClassRestrictionElement {
-    CVMClassTypeID		 	thisClass;
-    int					nMethods;
-    int					nFields;
-    CVMUint32*				methods;
-    CVMUint32*				fields;
-} ClassRestrictionElement;
-
-typedef struct ClassRestrictions{
-    int					nElements;
-    struct ClassRestrictionElement	restriction[1]; /* nElements of them. */
-} ClassRestrictions;
-
+JNIEXPORT jboolean JNICALL
+Java_sun_misc_MemberFilter_findROMFilterData(JNIEnv* env,
+                                             jobject thisObject)
+{
+#ifdef CVM_PRELOAD_LIB
+    /*
+     * The CVMdualStackMemberFilter data is derived from a
+     * fully ROMized bulid. The data contains typeids created
+     * by the ROMizer. Therefore, it is only safe to use
+     * CVMdualStackMemberFilter when CVM_PRELOAD_LIB is defined.
+     * If CVM_PRELOAD_LIB is not define, we need to create
+     * the member filter by reading in the configuration
+     * file.
+     */
+    if (CVMdualStackMemberFilter.nElements != 0) {
+        jclass thisClass;
+        jfieldID fullDataField;
+        thisClass = (*env)->GetObjectClass(env, thisObject);
+        fullDataField = (*env)->GetFieldID(env, thisClass, "fullData", "I");
+        (*env)->SetIntField(env, thisObject, fullDataField,
+                            (jint)&CVMdualStackMemberFilter);
+        return JNI_TRUE;
+    }
+#endif
+    return JNI_FALSE;
+}
+					     
 
 static CVMUint32*
 parseMemberList(
@@ -164,6 +164,7 @@ Java_sun_misc_MemberFilter_doneAddingRestrictions(
      */
     struct linkedClassRestriction* lcrp, *listroot;
     struct ClassRestrictions* crp;
+    struct ClassRestrictionElement *creep;
     jclass thisClass;
     jfieldID partialDataField;
     jfieldID fullDataField;
@@ -181,17 +182,20 @@ Java_sun_misc_MemberFilter_doneAddingRestrictions(
 	nentries += 1;
     /* allocate */
     crp = (struct ClassRestrictions*)calloc(1,
-	   sizeof(struct ClassRestrictions) 
-	   + (nentries-1)*sizeof(struct ClassRestrictionElement ));
+                sizeof(struct ClassRestrictions));
+    creep = (struct ClassRestrictionElement*)calloc(1,
+                nentries*sizeof(struct ClassRestrictionElement ));
     /* copy */
     crp->nElements = nentries;
+    crp->restriction = creep;
     for (i=0, lcrp=listroot; i<nentries; i++, lcrp = lcrp->next){
-	struct ClassRestrictionElement *creep = &(crp->restriction[i]);
+      /*struct ClassRestrictionElement *creep = &(crp->restriction[i]);*/
         creep->thisClass = lcrp->thisClass;
 	creep->nMethods = lcrp->nMethods;
 	creep->nFields = lcrp->nFields;
 	creep->methods = lcrp->methods;
 	creep->fields  = lcrp->fields;
+        creep++;
     }
     /* set partialData field to null */
     (*env)->SetIntField(env, thisObject, partialDataField, 0);

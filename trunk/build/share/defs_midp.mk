@@ -110,11 +110,21 @@ LINKLIBS 		+= $(MIDP_LIBS)
 endif
 
 -include $(MIDP_DEFS_JCC_MK)
-# Add MIDP classes to JCC input list so they can be romized.
 ifeq ($(CVM_PRELOAD_LIB), true)
+# Add MIDP classes to JCC input list so they can be romized.
 CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSESZIP)
 
+# Add MIDP CNI classes to CVM_CNI_CLASSES
 CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
+
+#
+# JavaAPILister related defs for generating dualstack
+# filter
+#
+ifneq ($(CVM_MIDPFILTERINPUT),)
+CVM_JCC_INPUT	+= -listapi:include=java/*,include=javax/*,input=$(CVM_MIDPFILTERINPUT),mout=$(CVM_MIDPFILTERCONFIG),cout=$(CVM_MIDPCLASSLIST)
+endif
+
 endif
 
 endif
