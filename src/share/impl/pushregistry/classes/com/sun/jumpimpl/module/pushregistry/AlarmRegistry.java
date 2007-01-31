@@ -52,6 +52,17 @@ public final class AlarmRegistry {
          * invocations of the method can be performed in parallel.
          * </p>
          *
+         * <p>
+         * NOTE: this method can be invoked for already running
+         * <code>MIDlets</code>.
+         * </p>
+         *
+         * <p>
+         * NOTE: as long as this method executes, the timer thread
+         * is blocked and thus alarms won't be fired.  Therefore
+         * this method should return as soon as possible.
+         * </p>
+         *
          * @param midletSuiteID <code>MIDlet suite</code> ID
          * @param midlet <code>MIDlet</code> class name
          */
@@ -93,7 +104,7 @@ public final class AlarmRegistry {
      * method.
      * </p>
      */
-    public void readAlarms() {
+    public synchronized void readAlarms() {
         store.listAlarms(new Store.AlarmsConsumer() {
             public void consume(final int midletSuiteID, final Map suiteAlarms) {
                 for (Iterator it = suiteAlarms.entrySet().iterator(); it.hasNext();) {
@@ -119,13 +130,13 @@ public final class AlarmRegistry {
      *
      * @return previous alarm time or 0 if none
      */
-    public long registerAlarm(
+    public synchronized long registerAlarm(
             final int midletSuiteID,
             final String midlet,
             final long time) throws ConnectionNotFoundException {
         final MIDletInfo midletInfo = new MIDletInfo(midletSuiteID, midlet);
 
-        final TimerTask oldTask = (TimerTask) alarms.get(midletInfo);
+        final AlarmTask oldTask = (AlarmTask) alarms.get(midletInfo);
         long oldTime = 0L;
         if (oldTask != null) {
             oldTime = oldTask.scheduledExecutionTime();
@@ -152,16 +163,14 @@ public final class AlarmRegistry {
      *
      * @param midletSuiteID ID of the suite to remove alarms for
      */
-    public void removeSuiteAlarms(final int midletSuiteID) {
-        synchronized (alarms) {
-            for (Iterator it = alarms.entrySet().iterator(); it.hasNext();) {
-                final Map.Entry entry = (Map.Entry) it.next();
-                final MIDletInfo midletInfo = (MIDletInfo) entry.getKey();
-                if (midletInfo.midletSuiteID == midletSuiteID) {
-                    // No need to care about retval
-                    ((TimerTask) entry.getValue()).cancel();
-                    removeAlarm(midletInfo);
-                }
+    public synchronized void removeSuiteAlarms(final int midletSuiteID) {
+        for (Iterator it = alarms.entrySet().iterator(); it.hasNext();) {
+            final Map.Entry entry = (Map.Entry) it.next();
+            final MIDletInfo midletInfo = (MIDletInfo) entry.getKey();
+            if (midletInfo.midletSuiteID == midletSuiteID) {
+                // No need to care about retval
+                ((AlarmTask) entry.getValue()).cancel();
+                removeAlarm(midletInfo);
             }
         }
     }
@@ -174,10 +183,45 @@ public final class AlarmRegistry {
      * which would prevent the app from exit.
      * </p>
      */
-    public void dispose() {
+    public synchronized void dispose() {
         timer.cancel();
-        synchronized (alarms) {
-            alarms.clear();
+        alarms.clear();
+    }
+    
+    /**
+     * Special class that supports guaranteed canceling of TimerTasks.
+     */
+    private class AlarmTask extends TimerTask {
+        /** <code>MIDlet</code> to run. */
+        final MIDletInfo midletInfo;
+
+        /** Cancelation status. */
+        boolean canceled = false;
+
+        /**
+         * Creates a new instance, originally not canceled.
+         */
+        AlarmTask(final MIDletInfo midletInfo) {
+            this.midletInfo = midletInfo;
+        }
+
+        /** Implements interface's method. */
+        public void run() {
+            synchronized (AlarmRegistry.this) {
+                if (canceled) {
+                    return;
+                }
+
+                lifecycleAdapter.launchMidlet(midletInfo.midletSuiteID,
+                        midletInfo.midlet);
+                removeAlarm(midletInfo);
+            }
+        }
+
+        /** Overrides canceling. */
+        public boolean cancel() {
+            canceled = true;
+            return super.cancel();
         }
     }
 
@@ -189,16 +233,8 @@ public final class AlarmRegistry {
      */
     private void scheduleAlarm(final MIDletInfo midletInfo, final long time) {
         final Date date = new Date(time);
-        final TimerTask newTask = new TimerTask() {
-            public void run() {
-                lifecycleAdapter.launchMidlet(midletInfo.midletSuiteID,
-                        midletInfo.midlet);
-                removeAlarm(midletInfo);
-            }
-        };
-        synchronized (alarms) {
-            alarms.put(midletInfo, newTask);
-        }
+        final AlarmTask newTask = new AlarmTask(midletInfo);
+        alarms.put(midletInfo, newTask);
         timer.schedule(newTask, date);
         /*
          * RFC: according to <code>Timer</code> spec, <quote>if the time is in
@@ -213,9 +249,7 @@ public final class AlarmRegistry {
      * @param midletInfo defines <code>MIDlet</code> to remove alarm for
      */
     private void removeAlarm(final MIDletInfo midletInfo) {
-        synchronized (alarms) {
-            alarms.remove(midletInfo);
-        }
+        alarms.remove(midletInfo);
         try {
             store.removeAlarm(midletInfo.midletSuiteID, midletInfo.midlet);
         } catch (IOException _) {
