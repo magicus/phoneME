@@ -1181,6 +1181,29 @@ final class RomizedImageFactory {
 }
 
 /**
+ * Binary output stream capable of writing data 
+ * in big/little endian format.
+ */
+final class BinaryOutputStream extends DataOutputStream {
+    private boolean isBigEndian = false;
+
+    BinaryOutputStream(OutputStream out, boolean isBigEndian) {
+        super(out);
+        this.isBigEndian = isBigEndian;
+    }
+
+    public void writeShort(int value) {
+        if (isBigEndian) {
+            writeByte(value & 0xFF);
+            writeByte(((value >> 8) & 0xFF));
+        } else { 
+            writeByte(((value >> 8) & 0xFF));
+            writeByte(value & 0xFF);
+        }       
+    }
+}
+
+/**
  * Perform the romization
  */
 class SkinRomizer {
@@ -1221,7 +1244,7 @@ class SkinRomizer {
     PrintWriter writer = null;
 
     /** Binary output file stream */
-    DataOutputStream outputStream = null;
+    BinaryOutputStream outputStream = null;
     
     /** raw image file format */
     int rawFormat = ImageToRawConverter.FORMAT_INVALID;
@@ -1337,7 +1360,8 @@ class SkinRomizer {
 
         FileOutputStream out = new FileOutputStream(
                 romizationJob.outBinFileName);
-        outputStream = new DataOutputStream(out);
+        outputStream = new BinaryOutputStream(out,
+                endianFormat == ImageToRawConverter.INT_FORMAT_BIG_ENDIAN);
 
         writeBinHeader();
         writeRomizedProperties();

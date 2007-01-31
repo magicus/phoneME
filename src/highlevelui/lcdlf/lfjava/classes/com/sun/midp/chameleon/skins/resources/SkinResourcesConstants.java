@@ -37,7 +37,7 @@ public class SkinResourcesConstants {
     /**
      * Expected (current) version of Chameleon binary skin file format
      */
-    public static final int CHAM_BIN_FORMAT_VERSION = 0x0001;
+    public static final int CHAM_BIN_FORMAT_VERSION = 0x0002;
 
     /**
      * Constant for centering skin element horizontally
