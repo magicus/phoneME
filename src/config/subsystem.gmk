@@ -37,6 +37,9 @@ JSR_135_CONFIG_DIR = $(JSR_135_DIR)/src/config/$(TARGET_PLATFORM)
 -include $(JSR_135_CONFIG_DIR)/config.gmk
 include $(JSR_135_DIR)/src/config/features.defs
 
+EXTRA_CFLAGS  += -DENABLE_JSR_135=1
+JPP_DEFS      += -DENABLE_JSR_135
+
 # Include JSR_135 system properties in Configuration
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
         $(JSR_135_CONFIG_DIR)/properties_jsr135.xml
@@ -210,10 +213,7 @@ endif
 # Native
 #
 
-vpath % $(JSR_135_DIR)/src/components/common/png
 vpath % $(JSR_135_DIR)/src/components/direct-player/native
-
-SUBSYSTEM_JSR_135_NATIVE_FILES += PNGEncoder.c
 
 #
 # Native KNI files

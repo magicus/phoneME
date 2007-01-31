@@ -110,7 +110,7 @@ public abstract class Configuration {
      */
     public abstract String[] getSupportedProtocols(String content_types);
 
-// #ifdef ENABLE_AMMS [
+// #ifdef ENABLE_JSR_234 [
     public abstract String[] getSupportedMediaProcessorInputTypes();
 
     public abstract String[] getSupportedSoundSource3DPlayerTypes();
@@ -120,7 +120,7 @@ public abstract class Configuration {
 
     public abstract void setProperty(String key, String value);
 
-// #ifdef ENABLE_AMMS [
+// #ifdef ENABLE_JSR_234 [
     /**
      * Gets the audio renderer.
      *
