@@ -220,7 +220,6 @@ EXCLUDE_PATTERNS += \
 endif
 
 EXCLUDE_PATTERNS +=		\
-	*/JavaAPILister.java	\
 	*/mem_mgr*
 
 BUILDDIR_PATTERNS += \
