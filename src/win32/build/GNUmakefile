@@ -28,8 +28,9 @@
 all: javacall_common local_win32
 
 JAVACALL_PLATFORM=win32
-include ../../utils/build/common.gmk
 
+JAVACALL_UTIL_DIR := ../../utils
+include $(JAVACALL_UTIL_DIR)/build/base.gmk
 
 # Extra settings for JSR 238 implementation
 
@@ -67,7 +68,7 @@ else
    EVENTS_OBJ=events.obj
 endif
 
-PORTING_OBJECTS= \
+PORTING_OBJECTS = \
 	annunciator.obj	\
 	dir.obj         \
 	file.obj	\
@@ -102,18 +103,32 @@ PORTING_OBJECTS= \
 	mi18n_resources.obj \
 	mi18n_locales.obj
 
-UTILITY_OBJECTS = \
-        javautil_jad_parser.obj \
-        javautil_string.obj
+#Specify list of utility objects necessary for the build
+UTILITIES_LIST :=           \
+        javautil_jad_parser \
+        javautil_string     \
+        javautil_unicode
 
-JAVAUTIL_INCLUDE_DIR = ../../utils/inc
+PORTING_OBJECTS += $(foreach util,$(UTILITIES_LIST),$(util).obj)
+JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach util,$(UTILITIES_LIST),$(JAVACALL_UTIL_DIR)/inc/$(util).h)
+
+ifneq ($(UTILITIES_LIST)x, x)
+VPATH+=$(JAVACALL_UTIL_DIR)
+endif
+
 MIDP_IMPL_INCLUDE_DIR = ../src/midp
 
 ifeq ($(USE_JSR_135),true)
+JSR_135_DIR ?= ../src/jsr135_mmapi
 PROJECT_JSR_135_DIR ?= $(JSR_135_DIR)
 include $(PROJECT_JSR_135_DIR)/javacall_impl.gmk
 endif
 
+ifeq ($(USE_JSR_234),true)
+include $(PROJECT_JSR_234_DIR)/javacall_impl.gmk
+endif
+
+include $(JAVACALL_UTIL_DIR)/build/common.gmk
 
 # This is a hidden dependencies workaround (ti762)
 # NEED REVISIT: provide pure solution without hidden dependencies
@@ -147,7 +162,6 @@ endif
 CXXFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
 CFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
 CPPFLAGS+= -I$(JAVACALL_OUTPUT_INCLUDE_DIR)
-CPPFLAGS+= -I$(JAVAUTIL_INCLUDE_DIR)
 CPPFLAGS+= -I$(MIDP_IMPL_INCLUDE_DIR) 
 CPPFLAGS+= $(addprefix -I, $(ADDITIONAL_INCLUDE_DIRS))
 CPPFLAGS+= -DWIN32
@@ -183,9 +197,7 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 	@$(COMPILE.c) $(OUTPUT_OPTION) $<
 
 $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
-	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
-	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(IMPL_OBJECTS)) \
-	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS))
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) 
 	@echo "...Generating Library: $@"
 	@$(AR) -out:`$(call fixcygpath_m, $@)` $(ARFLAGS) `$(call fixcygpath_m, $^)` $(ADDITIONAL_LIBS)
 
