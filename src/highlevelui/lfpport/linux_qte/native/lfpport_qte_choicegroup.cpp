@@ -1205,6 +1205,24 @@ void ListElement::setFont(QFont *f) {
 }
 
 /**
+ * Returns the pixmap that corresponds to this popup element.
+ *
+ * @return pixmap of this element
+ */
+QPixmap* ListElement::pixmap() {
+    return pix;
+}
+
+/**
+ * Returns the font that corresponds to this popup element.
+ *
+ * @return font of this element
+ */
+QFont* ListElement::getFont() {
+    return font;
+}
+
+/**
  * Construct the body widget for an implicit List.
  *
  * @param parent parent widget pointer
@@ -1692,6 +1710,7 @@ QFont *PopupElement::font() {
 PopupBody::PopupBody(QWidget *parent) : QPushButton(parent) {
   setFocusPolicy(QWidget::StrongFocus);
   oldWidth = -1;
+  poppedUp = FALSE;
 }
 
 /** Destruct a popup choicegroup body widget */
@@ -1721,26 +1740,39 @@ void PopupBody::focusInEvent(QFocusEvent *event) {
  * @param keyEvent key event to handle
  */
 void PopupBody::keyPressEvent(QKeyEvent *keyEvent) {
-    QPopupMenu *menu = QPushButton::popup();
     switch(keyEvent->key()) {
     case Key_Return:
-        if (menu != NULL) {
-            menu->show();
+        if (!poppedUp) {
+            popupList();
         }
         break;
     case Key_Up:
     case Key_Left:
     case Key_Right:
     case Key_Down:
-        if (menu != NULL && !(menu->isVisible())) {
+        if (!poppedUp) {
             PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
             mscreen->keyPressEvent(keyEvent);
             break;
-        } 
+        }
     default:
         QPushButton::keyPressEvent(keyEvent);
         break;
     }   
+}
+
+/**
+ * Override to show popup list
+ *
+ * @param e pointer event to handle
+ */
+void PopupBody::mousePressEvent(QMouseEvent *e) {
+    (void)e;
+    if (!poppedUp) {
+        popupList();
+    } else {
+        QPushButton::mousePressEvent(e);
+    }
 }
 
 /**
@@ -1749,13 +1781,12 @@ void PopupBody::keyPressEvent(QKeyEvent *keyEvent) {
  * @param keyEvent key event to handle
  */
 void PopupBody::keyReleaseEvent(QKeyEvent *keyEvent) {
-    QPopupMenu *menu = QPushButton::popup();
     switch(keyEvent->key()) {
     case Key_Up:
     case Key_Left:
     case Key_Right:
     case Key_Down:
-        if (menu != NULL && !(menu->isVisible())) {
+        if (!poppedUp) {
             PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
             mscreen->keyReleaseEvent(keyEvent);
             break;
@@ -1767,13 +1798,59 @@ void PopupBody::keyReleaseEvent(QKeyEvent *keyEvent) {
 }
 
 /**
+ * The event filter steals events from the listbox when it is
+ * popped up. 
+ */
+bool PopupBody::eventFilter(QObject *object, QEvent *event) {
+    if (!event) {
+        return TRUE;
+    } else if (object == qPopup ||
+               object == qPopup->viewport()) {
+        QMouseEvent *e = (QMouseEvent*)event;
+        switch(event->type()) {
+            case QEvent::MouseButtonRelease:
+                if (qPopup->rect().contains(e->pos())) {
+                    // emulate Double Click to get selected event
+                    QMouseEvent tmp(QEvent::MouseButtonDblClick,
+                            e->pos(), e->button(), e->state()) ;
+                    QApplication::sendEvent(object, &tmp);
+                    return TRUE;
+                }
+                break;
+            case QEvent::MouseButtonPress:
+                if (!qPopup->rect().contains(e->pos())) {
+                    popDownList();
+                    return TRUE;
+                }
+                break;
+    
+            case QEvent::KeyPress:
+                switch(((QKeyEvent *)event)->key()) {
+                    case Key_Escape:
+            #ifdef QT_KEYPAD_MODE
+                    case Key_Back:
+                    case Key_No:
+            #endif
+                        popDownList();
+                        return TRUE;
+                    break;
+                }
+            default:
+                break;
+        }
+    }
+    return QWidget::eventFilter(object, event);
+}
+
+
+/**
  * Override QButton to the calculations based on other
  * elements in the popup
  */
 QSize PopupBody::sizeHint() const {
   QSize size = QPushButton::sizeHint();
 
-  int w = popup()->sizeHint().width() +  style().buttonMargin() +
+  int w = qPopup->sizeHint().width() +  style().buttonMargin() +
           style().menuButtonIndicatorWidth(size.height());
   if (w > qteapp_get_mscreen()->getScreenWidth() - ITEM_BOUND_PAD - ITEM_BOUND_PAD) {
     w = qteapp_get_mscreen()->getScreenWidth() - ITEM_BOUND_PAD - ITEM_BOUND_PAD;
@@ -1785,11 +1862,75 @@ QSize PopupBody::sizeHint() const {
 
 /**
  * Override setText to support text truncation
-*/
+ */
 void PopupBody::setText(const QString &newText) {
     QPushButton::setText(newText);
     longText = shortText = newText;
     oldWidth = -1;
+}
+
+/**
+ * Set popup list variable
+ */
+void PopupBody::setList(QListBox *list) {
+    qPopup = list;
+}
+
+/**
+ * Get popup list variable
+ */
+QListBox* PopupBody::getList() {
+    return qPopup;
+}
+
+/**
+ * Popups the popup list.
+ * If the list is empty, no selections appear.
+ */
+void PopupBody::popupList() {
+    if (!qPopup->count()) {
+        return;
+    }
+    // Send all listbox events to PopupBody eventFilter
+    qPopup->installEventFilter(this);
+    qPopup->viewport()->installEventFilter(this);
+
+    // define size and position for popup
+    // following calculations in parent' coordinate system
+    int winH = qteapp_get_mscreen()->getDisplayFullHeight();
+    int bodyY = y();
+    int pX = x();
+    int pY = bodyY + height();
+    int pW = width();
+    int pH = qPopup->sizeHint().height();
+    if ((pY + pH) > winH) {
+        //select the highest part of the widget
+        if ((winH - pY) > bodyY) {
+            pH = winH - pY;
+        } else {
+            pY = 0;
+            pH = bodyY;
+        }
+    }
+
+    QPoint pos = mapToGlobal(mapFromParent(QPoint(pX, pY)));
+    qPopup->resize(pW, pH);
+    qPopup->move(pos.x(), pos.y());
+    qPopup->raise();
+    qPopup->setAutoScrollBar(TRUE);
+    qPopup->show();
+
+    poppedUp = TRUE;
+}
+
+/**
+ * Pops down (removes) the combo box popup list box.
+ */
+void PopupBody::popDownList() {
+    qPopup->removeEventFilter(this);
+    qPopup->viewport()->removeEventFilter(this);
+    qPopup->hide();
+    poppedUp = FALSE;
 }
 
 /**
@@ -1823,13 +1964,13 @@ Popup::Popup(QWidget *parent, const QString &label,
 
     cachedPopupBody->reparent(this, newpos, FALSE);
     qButton = cachedPopupBody;
-    qPopup  = (PatchedQPopupMenu *)cachedPopupBody->popup();
+    qPopup  = cachedPopupBody->getList();
     cachedPopupBody = NULL;
 
   } else {
     qButton = new PopupBody(this);
-    qPopup = new PatchedQPopupMenu(qButton);
-    qButton->setPopup(qPopup);
+    qPopup = new QListBox(qButton, "", WType_Popup);
+    qButton->setList(qPopup);
   }
 
   selectedIndex = -1;
@@ -1837,28 +1978,24 @@ Popup::Popup(QWidget *parent, const QString &label,
   // Delegate focus to PopupBody
   setFocusProxy(qButton);
 
-  elements = new QList<QCustomMenuItem>();
-
-  connect(qPopup, SIGNAL(activated(int)), this, SLOT(elementSelected(int)));
+  connect(qPopup, SIGNAL(selected(int)), this, SLOT(elementSelected(int)));
 }
 
 /** Destruct a popup widget */
 Popup::~Popup() {
-    elements->clear();
-
     // Special handling for currently active popup menu
     // We cannot delete it because it is actively dispatching Qt event
     // Instead, we cache it for later use
     if (qteapp_get_application()->activePopupWidget() == qPopup) {
         PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-	QPoint newpos;
-
-	qPopup->hide(); // Hide popup menu
-	qButton->hide(); // Hide the push button
-	disconnect(qPopup, SIGNAL(activated(int)), this, SLOT(elementSelected(int)));
-	qPopup->clear(); // Empty contents of the popup
-	qButton->reparent(mscreen, newpos, FALSE); // Reparent to mscreen
-	cachedPopupBody = qButton;
+	    QPoint newpos;
+    
+	    qPopup->hide(); // Hide popup menu
+	    qButton->hide(); // Hide the push button
+        disconnect(qPopup, SIGNAL(selected(int)), this, SLOT(elementSelected(int)));
+	    qPopup->clear(); // Empty contents of the popup
+	    qButton->reparent(mscreen, newpos, FALSE); // Reparent to mscreen
+	    cachedPopupBody = qButton;
     }
 }
 
@@ -1892,7 +2029,7 @@ void Popup::bodyRelocate(int x, int y) {
  * @return body widget height
  */
 int Popup::bodyHeightForWidth(int *takenWidth, int w) {
-  int h = qButton->sizeHint().height();
+    int h = qButton->sizeHint().height();
 
   *takenWidth = calculateMaxElementWidth(w, false) +
                 style().buttonMargin() + 
@@ -1931,12 +2068,8 @@ int Popup::bodyWidthForHeight(int *takenHeight, int h) {
 MidpError Popup::insert(int elementNum, 
 			const QString &str, QPixmap* img, 
 			jboolean selected) {
-
-  PopupElement *popupElement = 
-    new PopupElement(this, str, img, NULL);
-
-  qPopup->insertItem(popupElement, -1, elementNum);
-  elements->insert(elementNum, popupElement);
+  qPopup->insertItem(new ListElement(str, img, NULL), 
+            elementNum);
 
   setSelectedIndex(elementNum, selected);
 
@@ -1953,10 +2086,7 @@ MidpError Popup::insert(int elementNum,
  */
 MidpError Popup::deleteElement(int elementNum, int selIndex) {
 
-  // It is important to remove from elements list first because
-  // Qt will delete the menu item as a result of removeItemAt call
-  elements->remove(elementNum);
-  qPopup->removeItemAt(elementNum);
+  qPopup->removeItem(elementNum);
 
   if (selIndex != -1) {
     setSelectedIndex(selIndex, true);
@@ -1973,7 +2103,6 @@ MidpError Popup::deleteElement(int elementNum, int selIndex) {
  * @return status of this call
  */
 MidpError Popup::deleteAll() {
-  elements->clear();
   qPopup->clear();
 
   selectedIndex = -1;
@@ -1992,17 +2121,11 @@ MidpError Popup::deleteAll() {
 MidpError Popup::set(int elementNum, const QString &str, QPixmap* img, 
 		     jboolean selected) {
 
-  PopupElement *popupElement = new PopupElement(this, str, img, NULL);
-
-  elements->remove(elementNum);
-  qPopup->removeItemAt(elementNum);
-
-  qPopup->insertItem(popupElement, -1, elementNum);
-  elements->insert(elementNum, popupElement);
-
-  setSelectedIndex(elementNum, selected);
+    qPopup->removeItem(elementNum);
+    qPopup->insertItem(new ListElement(str, img, NULL), elementNum);
+    setSelectedIndex(elementNum, selected);
  
-  return KNI_OK;
+    return KNI_OK;
 }
 
 /**
@@ -2013,15 +2136,15 @@ MidpError Popup::set(int elementNum, const QString &str, QPixmap* img,
  * @return status of this call
  */
 MidpError Popup::setSelectedIndex(int elementNum, jboolean selected) {
-  if (selected) {
-    PopupElement *popupElement = (PopupElement *)elements->at(elementNum);
-    if (popupElement != NULL) {
-      qButton->setText(popupElement->text());
-      qPopup->setActiveItem(elementNum);
-      selectedIndex = elementNum;
+    qPopup->setSelected(elementNum, selected);
+
+    if (selected) {
+        qButton->setText(qPopup->text(elementNum));
+        qPopup->setCurrentItem(elementNum);
+        selectedIndex = elementNum;
     }
-  }
-  return KNI_OK;
+
+    return KNI_OK;
 }
 
 /**
@@ -2118,11 +2241,11 @@ MidpError Popup::setFitPolicy(int fitPolicy) {
  * @return status of this call
  */
 MidpError Popup::setFont(int elementNum, QFont *font) {
-    PopupElement *popupElement = (PopupElement *)elements->at(elementNum);
-    if (popupElement != NULL) {
-      popupElement->setFont(font);
-    }
+  ListElement *le = (ListElement *)qPopup->item(elementNum);
+  if (le) {
+    le->setFont(font);
     qPopup->repaint();
+  }
 
     return KNI_OK;
 }
@@ -2133,19 +2256,10 @@ MidpError Popup::setFont(int elementNum, QFont *font) {
  * @param id index of the element
  */ 
 void Popup::elementSelected(int id) {
-  PopupElement *popupElement;
-  int i, n = qPopup->count();
-  for (i = 0; i < n; i++) {
-    if (qPopup->idAt(i) == id) {
-      popupElement = (PopupElement *)elements->at(i);
-      if (popupElement != NULL) {
-        selectedIndex = i;
-        MidpFormItemPeerStateChanged(this, selectedIndex);
-        qButton->setText(popupElement->text());
-      }
-      break;
-    }
-  }
+    qButton->popDownList();
+    selectedIndex = id;
+    MidpFormItemPeerStateChanged(this, selectedIndex);
+    qButton->setText(qPopup->text(selectedIndex));
 }
 
 /**
@@ -2157,18 +2271,18 @@ void Popup::elementSelected(int id) {
  * @return the width of the widest element in the popup
  */
 int Popup::calculateMaxElementWidth(int width, bool withImage) {
-  PopupElement *popupElement;
-  int maxWidth =0;
+    ListElement *popupElement;
+    int maxWidth =0;
 
   // In calculating the maximum width we use TEXT_WRAP_OFF policy.
   // Once maxWidth is larger or equal than the passed in
   // width no more calculations are needed
-  for (int w = 0, i = 0, n = elements->count(); i < n; i++) {
-    popupElement = (PopupElement *)elements->at(i);
+  for (int w = 0, i = 0, n = qPopup->count(); i < n; i++) {
+    popupElement = (ListElement *)qPopup->item(i);
     w = sizeElement(popupElement->text(), 
 		    withImage ? popupElement->pixmap() : NULL, 
-		    popupElement->font() == NULL ? 
-		     qPopup->font() : *(popupElement->font()),
+		    popupElement->getFont() == NULL ? 
+		     qPopup->font() : *(popupElement->getFont()),
 		    TEXT_WRAP_OFF, width,
 		    6, 2).width();
 
@@ -2180,7 +2294,6 @@ int Popup::calculateMaxElementWidth(int width, bool withImage) {
       maxWidth = w;
     }
   }
-
   return maxWidth;
 }
 
