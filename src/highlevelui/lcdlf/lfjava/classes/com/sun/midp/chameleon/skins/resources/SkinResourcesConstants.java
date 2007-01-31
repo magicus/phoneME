@@ -30,6 +30,11 @@ package com.sun.midp.chameleon.skins.resources;
 
 public class SkinResourcesConstants {
     /**
+     * Skin binary file name
+     */
+    public static final String SKIN_BINARY_FILE_NAME = "skin.bin";
+
+    /**
      * Magic sequence identifying Chameleon skin binary file
      */
     public static final short[] CHAM_BIN_MAGIC = { 0x89, 'C', 'H', 'A', 'M'};
@@ -37,7 +42,7 @@ public class SkinResourcesConstants {
     /**
      * Expected (current) version of Chameleon binary skin file format
      */
-    public static final int CHAM_BIN_FORMAT_VERSION = 0x0002;
+    public static final int CHAM_BIN_FORMAT_VERSION = 0x00000002;
 
     /**
      * Constant for centering skin element horizontally

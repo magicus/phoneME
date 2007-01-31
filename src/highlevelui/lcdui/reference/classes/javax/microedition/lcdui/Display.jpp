@@ -575,7 +575,7 @@ public class Display {
         } catch (IOException e) {
             if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
                 Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI,
-                        "IOException while loading skin");
+                        "IOException while loading skin: " + e.getMessage());
             }
 
             throw new RuntimeException("IOException while loading skin");

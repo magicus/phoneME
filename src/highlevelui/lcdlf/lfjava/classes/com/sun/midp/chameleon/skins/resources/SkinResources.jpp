@@ -32,6 +32,8 @@ import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.lcdui.DisplayAccess;
+import com.sun.midp.io.j2me.storage.File;
+
 
 // #ifndef ENABLE_CDC
 import com.sun.midp.main.MIDletSuiteUtils;
@@ -169,18 +171,11 @@ public class SkinResources {
             resources = new LoadedSkinResources();
 
             skinData = new LoadedSkinData();
-            byte[] res = ResourceHandler.getSystemResource(
-                    secureToken, "skin.bin");
-            if (res == null) {
-                if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
-                    Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI, 
-                            "Skin data file is not found");
-                }
-                throw new IOException("Skin data file is not found");
-            }
+            String fileName = 
+                File.getConfigRoot(Constants.INTERNAL_STORAGE_ID) + 
+                SkinResourcesConstants.SKIN_BINARY_FILE_NAME;
 
-            ByteArrayInputStream bs = new ByteArrayInputStream(res);
-            skinData.readFromStream(bs);
+            skinData.readFromFile(fileName);
 
             resources.fonts = new Font[skinData.fontValues.length];
             resources.images = new Image[skinData.imageValues.length];
@@ -685,7 +680,7 @@ final class LoadedSkinData {
      * @param stream stream to read data from
      * @throws IllegalStateException if stream fails some checks
      */
-    void readFromStream(InputStream stream) 
+    void readFromFile(String fileName) 
         throws IOException, 
                IllegalStateException {
 
@@ -696,28 +691,38 @@ final class LoadedSkinData {
         String[] imageValues;
         int[] romizedImageIndexes;
 
-        DataInputStream ds = new DataInputStream(stream);
+        try {
+            openSkinFile(fileName);
 
-        // check stream validity
-        checkMagicSequence(ds);
-        checkVersion(ds);
+            // check stream validity
+            checkMagicSequence();
+            checkVersion();
 
-        // read data
-        properties = readIntArray(ds);
-        intSeqValues = readIntArray(ds);
-        stringValues = readStringArray(ds);
-        fontValues = readIntArray(ds);
-        imageValues = readStringArray(ds);
+            // read data
+            properties = readIntArray();
+            intSeqValues = readIntArray();
+            stringValues = readStringArray();
+            fontValues = readIntArray();
+            imageValues = readStringArray();
 
-        romizedImageIndexes = readIntArray(ds);
+            romizedImageIndexes = readIntArray();
 
-        this.properties = properties;
-        this.intSeqValues = intSeqValues;
-        this.stringValues = stringValues;
-        this.fontValues = fontValues;
-        this.imageValues = imageValues;
-        this.romizedImageIndexes = romizedImageIndexes;
+            this.properties = properties;
+            this.intSeqValues = intSeqValues;
+            this.stringValues = stringValues;
+            this.fontValues = fontValues;
+            this.imageValues = imageValues;
+            this.romizedImageIndexes = romizedImageIndexes;
+        } finally {
+            closeSkinFile();
+        }
     }
+
+    private native static void openSkinFile(String fileName)
+        throws IOException;
+
+    private native static byte[] readByteArray(int length)
+        throws IOException;
 
     /**
      * Reads integer array from stream
@@ -725,19 +730,8 @@ final class LoadedSkinData {
      * @param ds DataInputStream to read array from
      * @return int[] array read
      */
-    private int[] readIntArray(DataInputStream ds) 
-        throws IOException {
-
-        int[] arr = null;
-
-        int sz = ds.readInt();
-        arr = new int[sz];
-        for (int i = 0; i < sz; ++i) {
-            arr[i] = ds.readInt();
-        }
-
-        return arr;
-    }
+    private native static int[] readIntArray()
+        throws IOException;
 
     /**
      * Reads String array from stream
@@ -745,19 +739,12 @@ final class LoadedSkinData {
      * @param ds DataInputStream to read array from
      * @return String[] array read
      */
-    private String[] readStringArray(DataInputStream ds) 
-        throws IOException {
+    private native static String[] readStringArray() 
+        throws IOException;
 
-        String[] arr = null;
 
-        int sz = ds.readInt();
-        arr = new String[sz];
-        for (int i = 0; i < sz; ++i) {
-            arr[i] = ds.readUTF();
-        }
-
-        return arr;
-    }
+    private native static int closeSkinFile()
+        throws IOException;
 
     /**
      * Checks if stream contains valid magic sequence
@@ -765,19 +752,18 @@ final class LoadedSkinData {
      * @param ds stream to read sequence from
      * @throws IllegalStateException if magic sequence is invalid
      */
-    private void checkMagicSequence(DataInputStream ds) 
+    private void checkMagicSequence() 
         throws IllegalStateException, IOException {
 
         int magicLength = SkinResourcesConstants.CHAM_BIN_MAGIC.length;
-        for (int i = 0; i < magicLength; ++i) {
-            byte read = ds.readByte();
-            byte expected = (byte)
-                (SkinResourcesConstants.CHAM_BIN_MAGIC[i] & 0xFF);
+        byte[] supposedMagic = readByteArray(magicLength);
 
-            if (read != expected) {
+        for (int i = 0; i < magicLength; ++i) {
+            byte expected = (byte)SkinResourcesConstants.CHAM_BIN_MAGIC[i];
+            if (supposedMagic[i] != expected) {
                 if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
                     Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI,
-                        "Skin data stream has invalid magic sequence");
+                        "Skin data file has invalid magic sequence");
                 }
                 throw new IllegalStateException();
             }
@@ -790,16 +776,19 @@ final class LoadedSkinData {
      * @param ds stream to read version number from
      * @throws IllegalStateException if version number is invalid
      */
-    private void checkVersion(DataInputStream ds) 
+    private void checkVersion() 
         throws IllegalStateException, IOException {
 
-        int ver = ds.readShort();
-        if (ver != SkinResourcesConstants.CHAM_BIN_FORMAT_VERSION) {
+        int[] ver = readIntArray();
+        if (ver.length != 1 ||
+            ver[0] != SkinResourcesConstants.CHAM_BIN_FORMAT_VERSION) {
+
             if (Logging.REPORT_LEVEL <= Logging.CRITICAL) {
                 Logging.report(Logging.CRITICAL, LogChannels.LC_HIGHUI,
-                        "Skin data stream has invalid format version: " + ver);
+                    "Skin data stream has invalid format version: " + ver[0]);
             }
             throw new IllegalStateException();
         }
     }
+
 }

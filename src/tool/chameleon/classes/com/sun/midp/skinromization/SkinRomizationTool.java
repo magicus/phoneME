@@ -123,7 +123,8 @@ public class SkinRomizationTool {
             if (arg.equals("-xml")) {
                 romizationJob.skinXMLFileName = args[++i];
             } else if (arg.equals("-outbin")) {
-                romizationJob.outBinFileName = args[++i];
+                romizationJob.outBinFileName = 
+                    args[++i] + SkinResourcesConstants.SKIN_BINARY_FILE_NAME;
             } else if (arg.equals("-imagedir")) {
                 romizationJob.skinImagesDirName = args[++i];
             } else if (arg.equals("-outc")) {
@@ -1199,18 +1200,6 @@ final class BinaryOutputStream {
         outputStream.writeByte(value);
     }
 
-    public void writeShort(int value) 
-        throws java.io.IOException {
-
-        if (isBigEndian) {
-            outputStream.writeByte(((value >> 8) & 0xFF));
-            outputStream.writeByte(value & 0xFF);
-        } else { 
-            outputStream.writeByte(value & 0xFF);
-            outputStream.writeByte((value >> 8) & 0xFF);
-        }       
-    }
-
     public void writeInt(int value) 
         throws java.io.IOException {
 
@@ -1231,9 +1220,21 @@ final class BinaryOutputStream {
         throws java.io.IOException {
 
         byte[] chars = value.getBytes("ISO-8859-1");
+        int length = chars.length;
+        if (length > 254) {
+            throw new IllegalArgumentException(
+                    "String length exceeds 254 chars");
+        }
+
+        // write offset to the end of string
+        outputStream.writeByte((byte)((length + 1) & 0xFF));
+
+        // write string chars
         for (int i = 0; i < chars.length; ++i) {
             outputStream.writeByte(chars[i]);
         }
+
+        // write '\0' termination char
         outputStream.writeByte(0);
     }
 
@@ -1717,8 +1718,9 @@ class SkinRomizer {
             outputStream.writeByte(b);
         }
 
-        // write version info
-        outputStream.writeShort(SkinResourcesConstants.CHAM_BIN_FORMAT_VERSION);
+        // write version info as an array 
+        outputStream.writeInt(1); // array size
+        outputStream.writeInt(SkinResourcesConstants.CHAM_BIN_FORMAT_VERSION);
     }
 
     /**
