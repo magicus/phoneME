@@ -115,6 +115,7 @@ public class MIDletSuiteUtils {
 
         SystemAlert alert = new SystemAlert(
             handler, "Exception", exceptionMsg, null, AlertType.ERROR);
+        alert.run();
         alert.waitForUser();
     }
 

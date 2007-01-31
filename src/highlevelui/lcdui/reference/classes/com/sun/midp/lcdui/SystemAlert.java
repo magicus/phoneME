@@ -36,13 +36,22 @@ import com.sun.midp.log.LogChannels;
  * Display a preempting alert and wait for the user to acknowledge it.
  */
 public class SystemAlert extends Alert
-    implements CommandListener {
+    implements CommandListener, Runnable {
 
     /** Preempt token for displaying errors. */
     private Object preemptToken;
 
     /** The display event handler for displaying errors. */
     private DisplayEventHandler displayEventHandler;
+
+    /** Explicit command lstener for this alert, null if not set. */
+    private CommandListener explicitListener;
+
+    /** Synchronization lock for setting explicit command listener. */
+    private final Object listenerLock = new Object();
+
+    /** Flag to identify if the alert is being displayed currently. */
+    private boolean shown = false;
 
     /**
      * Construct an <code>SystemAlert</code>.
@@ -61,25 +70,16 @@ public class SystemAlert extends Alert
 
         setTimeout(Alert.FOREVER);
 
-        setCommandListener(this);
+        super.setCommandListener(this);
 
         this.displayEventHandler = displayEventHandler;
 
-        try {
-            preemptToken =
-                displayEventHandler.preemptDisplay(this, true);
-        } catch (Throwable e) {
-            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                Logging.report(Logging.WARNING, LogChannels.LC_CORE,
-                              "Throwable while preempting Display");
-            }
-        }
     }
 
     /** Waits for the user to acknowledge the alert. */
     public void waitForUser() {
         synchronized (this) {
-            if (preemptToken == null) {
+            if (!shown) {
                 return;
             }
 
@@ -105,15 +105,73 @@ public class SystemAlert extends Alert
         notify(); // wait up waitForUser() thread
         displayEventHandler.donePreempting(preemptToken);
         preemptToken = null;
+        shown = false;
     }
 
     /**
-     * Respond to a command issued on security question form.
+     * Respond to a command issued on this alert.
      *
      * @param c command activated by the user
      * @param s the Displayable the command was on.
      */
     public void commandAction(Command c, Displayable s) {
+        synchronized (listenerLock) {
+            if (null != explicitListener) {
+                explicitListener.commandAction(c, s);
+            }
+        }
+
         dismiss();
+    }
+
+    /**
+     * Assigns explicit command listener to this alert. It substitutes any
+     * other explicitly defined listener but does not substitute the default
+     * listener which is the alert itself. If an non-null explcit listener
+     * is defined by this method, its commandAction() method is called prior
+     * to default this.commandAction().
+     *
+     * @param cl expilict command listener, null to remove any explicit
+     *          listener
+     */
+    public void setCommandListener(CommandListener cl) {
+        synchronized (listenerLock) {
+            explicitListener = cl;
+        }
+    }
+
+    /**
+     * Displays this alert. Since alert displaying may be blocking, it is
+     * not allowed in the event dispatching thread. Nothing is done when
+     * the method is called from the dispatching thread, to produce a
+     * system alert from ituse runInNewThread(). Nothing is done if the
+     * alert is being displayed currently.
+     */
+    public synchronized void run() {
+        shown = true;
+
+        if (preemptToken != null) {
+            return;
+        }
+
+        try {
+            preemptToken =
+                displayEventHandler.preemptDisplay(this, true);
+        } catch (Throwable e) {
+            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                Logging.report(Logging.WARNING, LogChannels.LC_CORE,
+                              "Throwable while preempting Display");
+            }
+        }
+    }
+
+    /**
+     * Launches a new thread and displays this alert from it. Use this method
+     * to avoid blocking a thread that produces the alert. Makes nothing if
+     * the alert is being displayed currently.
+     */
+    public synchronized void runInNewThread() {
+        shown = true;
+        new Thread(this).start();
     }
 }
