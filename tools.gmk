@@ -49,30 +49,35 @@ CONFIGURATOR_JAR_FILE      = $(TOOLS_OUTPUT_DIR)/Configurator.jar
 JPP_JAVA_FILES  = $(TOOLS_DIR)/jpp/Jpp.java
 JPP_CLASS_FILES = $(TOOLS_OUTPUT_DIR)/Jpp.class
 
-# Directory for tools class files
+# Guarantee existence of the directory for tools class files
 #
-$(TOOLS_OUTPUT_DIR):
-	@mkdir -p $@
+define verify_tools_output_directory
+    @if [ '!' -d $(TOOLS_OUTPUT_DIR) ]; then \
+       mkdir -p $(TOOLS_OUTPUT_DIR); \
+    fi
+endef
 
 # Java pre-processor build rule
 #
-$(JPP_CLASS_FILES): $(TOOLS_OUTPUT_DIR) $(JPP_JAVA_FILES)
+$(JPP_CLASS_FILES): $(JPP_JAVA_FILES)
 	@echo " ... building Jpp"
+	@$(verify_tools_output_directory) $(LOG)
 	@($(JAVAC_CMD) -g -d $(TOOLS_OUTPUT_DIR) $(JPP_JAVA_FILES))
 
 # CodeTransformer build rules
 #
-$(CONFIGURATOR_JAR_FILE): $(TOOLS_OUTPUT_DIR) $(CONFIGURATOR_JAVA_FILES) $(CONFIGURATOR_MANIFEST_FILE)
+$(CONFIGURATOR_JAR_FILE): $(CONFIGURATOR_JAVA_FILES) $(CONFIGURATOR_MANIFEST_FILE)
 	@echo " ... building CodeTransformer"
+	@$(verify_tools_output_directory) $(LOG)
 	@($(JAVAC_CMD) -g -d $(TOOLS_OUTPUT_DIR) $(CONFIGURATOR_JAVA_FILES))
 	@echo " ... $@ " $(LOG)
 	@(cd $(TOOLS_OUTPUT_DIR); $(JAR_CMD) cfm $(CONFIGURATOR_JAR_FILE) \
 		$(CONFIGURATOR_MANIFEST_FILE) $(subst .,/,$(CONFIGURATOR_PACKAGE)))
 
-$(CONFIGURATOR_MANIFEST_FILE): $(TOOLS_CLASS_DIR)
+$(CONFIGURATOR_MANIFEST_FILE):
 	@echo " ... $@ " $(LOG)
+	@$(verify_tools_output_directory) $(LOG)
 	@(echo "Main-Class: $(CONFIGURATOR_MAIN_CLASS)" > $@) $(LOG)
-
 
 # Append tools source bundle creation to target
 source_bundle:: tools_source_bundle
