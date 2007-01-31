@@ -29,7 +29,14 @@ package com.sun.midp.suspend;
 import com.sun.midp.main.*;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
+import com.sun.midp.lcdui.DisplayEventHandlerFactory;
+import com.sun.midp.lcdui.DisplayEventHandler;
+import com.sun.midp.lcdui.SystemAlert;
 
+import com.sun.midp.i18n.Resource;
+import com.sun.midp.i18n.ResourceConstants;
+
+import javax.microedition.lcdui.*;
 import java.util.Vector;
 
 /**
@@ -43,7 +50,7 @@ public class SuspendSystem extends AbstractSubsystem {
     /**
      * Listeners interested in suspend/resume operations.
      */
-    private Vector listeners = new Vector(1, 2);
+    private final Vector listeners = new Vector(1, 2);
 
     /**
      * Main subsystem that implements suspend actions for
@@ -52,6 +59,18 @@ public class SuspendSystem extends AbstractSubsystem {
      */
     private static class MIDPSystem extends SuspendSystem
             implements MIDletProxyListListener {
+        /**
+         * A flag to determine if at least one MIDlet has been
+         * destroyed during last suspend processing.
+         */
+        private boolean midletKilled;
+
+        /**
+         * A flag to determine if at least one MIDlet has been
+         * succesfully paused during last suspend processing.
+         */
+        private boolean midletPaused;
+
         /**
          * Constructs the only instance.
          */
@@ -65,18 +84,46 @@ public class SuspendSystem extends AbstractSubsystem {
         }
 
         /**
+         * Performs MIDPSystem-specific suspend operations.
+         */
+        protected synchronized void suspendImpl() {
+            midletKilled = false;
+            midletPaused = false;
+        }
+
+        /**
+         * Performs MIDPSystem-specific resume operations.
+         */
+        protected synchronized void resumeImpl() {
+            if (midletKilled && !midletPaused) {
+                String title = Resource.getString(
+                    ResourceConstants.SR_ALL_KILLED_ALERT_TITLE, null);
+                String msg = Resource.getString(
+                    ResourceConstants.SR_ALL_KILLED_ALERT_MSG, null);
+                DisplayEventHandler disp = DisplayEventHandlerFactory.
+                        getDisplayEventHandler(classSecurityToken);
+                SystemAlert alert = new SystemAlert(disp, title, msg,
+                        null, AlertType.WARNING);
+
+                alert.runInNewThread();
+            }
+        }
+
+        /**
          * Notifies of system suspend.
          */
         protected void suspended() {
             super.suspended();
-            suspended0();
+            suspended0(midletKilled && !midletPaused);
         }
 
         /**
          * Notifies native functionality that MIDP activities in java
          * have been suspended.
+         * @param allMidletsKilled boolean value that determines if all
+         *        MIDlets were destroyed by suspend routines.
          */
-        protected native void suspended0();
+        protected native void suspended0(boolean allMidletsKilled);
 
         /**
          * Recieves notifications on MIDlet updates and removes corresponding
@@ -86,6 +133,9 @@ public class SuspendSystem extends AbstractSubsystem {
          */
         public void midletUpdated(MIDletProxy midlet, int reason) {
             if (reason == MIDletProxyListListener.RESOURCES_SUSPENDED) {
+                if (MIDletSuiteUtils.getIsolateId() != midlet.getIsolateId()) {
+                    midletPaused = true;
+                }
                 removeSuspendDependency(midlet);
             }
         }
@@ -96,6 +146,7 @@ public class SuspendSystem extends AbstractSubsystem {
          * @param midlet MIDletProxy that represents the MIDlet removed
          */
         public void midletRemoved(MIDletProxy midlet) {
+            midletKilled = true;
             removeSuspendDependency(midlet);
         }
 
