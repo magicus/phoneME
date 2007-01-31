@@ -92,4 +92,7 @@ run-unittests::
 	$(check_JUNIT_JAR)
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(RUN_UNITTEST_ANT_OPTIONS) -f build/build.xml only-run-unittests)
 
+source_bundle::
+	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build-src-bundle.xml source_bundle)
+
 endif
