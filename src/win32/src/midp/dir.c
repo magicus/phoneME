@@ -318,7 +318,6 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
                 wcscat(dirBuffer, filesep);
             }
 
-            wcscat(dirBuffer, filesep);
             wcscat(dirBuffer, L"appdb");
             i = 0;
 
@@ -360,7 +359,7 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
         /* strip off "appdb" from the path */
         *(wcsrchr(dirBuffer, *filesep)) = (wchar_t)'\0';
 
-		wcscpy(rootPath, dirBuffer);
+        wcscpy(rootPath, dirBuffer);
         * rootPathLen = wcslen(rootPath);
 
         return JAVACALL_OK;
