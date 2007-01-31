@@ -12,6 +12,6 @@
 <rawimage
   Format="Putpixel" 
   Colors="565" 
-  Endian="Big"
+  Endian="Little"
 />
 </configuration>

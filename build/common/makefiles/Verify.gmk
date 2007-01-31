@@ -190,6 +190,14 @@ define verify_jpeg_directory
     fi
 endef
 
+define verify_tools_directory
+    $(verify_directory) ; \
+    if [ ! -f "$(TOOLS_DIR)/tools.gmk" ]; then \
+        echo "ERROR: $@ ($($@)) does not contain tools.gmk"; \
+        exit -1; \
+    fi
+endef
+
 define verify_boolean
     if [ "$($@)" != "true" -a "$($@)" != "false" ]; then \
         echo "ERROR: $@ ($($@)) is not set to a boolean value"; \
@@ -456,7 +464,7 @@ CLDC_DIST_DIR:
 
 TOOLS_DIR:
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
-	@$(verify_directory) $(LOG)
+	@$(verify_tools_directory) $(LOG)
 
 # Target for ensuring that /tmp directory exists in cygwin build,
 # which may be not the case if Sun's cyg4me package is used
@@ -503,6 +511,7 @@ display:
 	@echo   "MIDP_DIR              = ""$(MIDP_DIR)" $(LOG)
 	@echo   "PROJECT_MIDP_DIR      = ""$(PROJECT_MIDP_DIR)" $(LOG)
 	@echo   "CLDC_DIST_DIR         = ""$(CLDC_DIST_DIR)" $(LOG)
+	@echo   "TOOLS_DIR             = ""$(TOOLS_DIR)" $(LOG)
 	@echo   "JSR_75_DIR            = ""$(JSR_75_DIR)" $(LOG)
 	@echo   "PROJECT_JSR_75_DIR    = ""$(PROJECT_JSR_75_DIR)" $(LOG)
 	@echo   "JSR_82_DIR            = ""$(JSR_82_DIR)" $(LOG)
