@@ -177,6 +177,7 @@ public class TestDisplayPreempt extends TestCase {
         sleep(500);
         // create modal dialog - midlet w/o screens exists
         A[0][1] = new SystemAlert(deHandler, "A_0_1", "Alert with MIDlet", null, AlertType.INFO);
+        A[0][1].run();
         A[0][1].setTimeout(1500);
         // preempt = deHandler.preemptingDisplay.getDisplay();
         sleep(500);
@@ -211,6 +212,7 @@ public class TestDisplayPreempt extends TestCase {
         sleep(500);
         // create modal dialog - midlet with screens exists
         A[1][1] = new SystemAlert(deHandler, "A_1_1", "Alert with MIDlet", null, AlertType.INFO);
+        A[1][1].run();
         A[1][1].setTimeout(1500);
         // preempt = deHandler.preemptingDisplay.getDisplay();
         sleep(500);
@@ -245,6 +247,7 @@ public class TestDisplayPreempt extends TestCase {
         
         // create modal dialog (no midlets exist)
         A[0][0] = new SystemAlert(deHandler, "A_0_0", "Alert w/o MIDlet", null, AlertType.WARNING);
+        A[0][0].run();
         A[0][0].setTimeout(1000);
         // preempt = deHandler.preemptingDisplay.getDisplay();
         sleep(500);

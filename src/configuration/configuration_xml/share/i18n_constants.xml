@@ -1033,11 +1033,17 @@
   <constant Type="int"
             Name="PAYMENT_UPDATE_DLG_QUESTION"
             Comment="JSR229 Payment Process"/>
-    <constant Type="int"
-              Name="TRUNCATION_MARK"
-              Comment="truncation indicator, gets appended to a truncated
-              string; only the 1st character is used.
-              The initial value \u2026 = &#8230; is ellipsis (...)."/>
+  <constant Type="int"
+            Name="TRUNCATION_MARK"
+            Comment="truncation indicator, gets appended to a truncated
+            string; only the 1st character is used.
+            The initial value \u2026 = &#8230; is ellipsis (...)."/>
+  <constant Type="int"
+            Name="SR_ALL_KILLED_ALERT_TITLE"
+            Comment="Suspend/resume: com.sun.midp.suspend.SuspendSystem"/>
+  <constant Type="int"
+            Name="SR_ALL_KILLED_ALERT_MSG"
+            Comment="Suspend/resume: com.sun.midp.suspend.SuspendSystem"/>
 </constant_class>
 </constants>
 </configuration>

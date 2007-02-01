@@ -2181,6 +2181,8 @@ public class Display {
           Resource.getString(ResourceConstants.AMS_PROJECT_NAME) + "\n\n"
           + Resource.getString(ResourceConstants.AMS_COPYRIGHT_LONG),
                                null, null);
+
+        about.run();
     }
 
     // #ifdef ENABLE_CHAMELEON
