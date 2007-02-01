@@ -1,0 +1,69 @@
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+.PHONY: javacall_common create_output_dirs copy_include_files source_bundle SOURCE_OUTPUT_DIR clean 
+
+javacall_common: create_output_dirs copy_include_files
+
+JAVACALL_INCLUDE_TARGET_FILES_SET:=$(foreach file,$(JAVACALL_INCLUDE_SOURCE_FILES_SET),$(JAVACALL_OUTPUT_INCLUDE_DIR)/$(notdir $(file)))
+
+$(JAVACALL_INCLUDE_TARGET_FILES_SET): $(JAVACALL_INCLUDE_SOURCE_FILES_SET)
+	@echo Copying include files...
+	@cp -f $^ $(JAVACALL_OUTPUT_INCLUDE_DIR)
+
+$(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) $(JAVACALL_OUTPUT_OBJ_DIR) $(JAVACALL_OUTPUT_LIB_DIR):
+	@echo Creating $@...
+	@mkdir -p $@
+
+create_output_dirs: $(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) $(JAVACALL_OUTPUT_LIB_DIR) $(JAVACALL_OUTPUT_OBJ_DIR)
+
+copy_include_files: create_output_dirs $(JAVACALL_INCLUDE_TARGET_FILES_SET)
+
+# Verify source output directory is set
+SOURCE_OUTPUT_DIR:
+	@if [ -z "$($@)" ]; then \
+	    echo "ERROR: $@ must be set"; \
+	    exit -1; \
+	fi; \
+	mkdir -p "$($@)"
+
+# Default filter rule for source release :
+# Copy files from specified sub directories that are under svn controlled.
+# Usage: re_src_filter(src_dir, output_dir, sub_dir_list)
+define re_src_filter
+	if [ -d "$(1)/.svn" ]; then \
+		(for i in $(3); do mkdir -p $(2)/$$i; svn export --force -q $(1)/$$i $(2)/$$i; done); \
+	else \
+		mkdir -p $(2); \
+		(for i in $(3); do cp -rp $(1)/$$i $(2)/$$i; done); \
+	fi
+endef
+
+source_bundle:: SOURCE_OUTPUT_DIR
+	@echo  ... javacall source bundle;
+	@$(call re_src_filter,$(JAVACALL_INCLUDE_DIR)/..,$(SOURCE_OUTPUT_DIR)/javacall,include src)
+
+clean:
+	@rm -rf $(JAVACALL_OUTPUT_DIR)
+
