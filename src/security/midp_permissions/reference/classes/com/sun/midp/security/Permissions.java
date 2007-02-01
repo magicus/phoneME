@@ -404,7 +404,7 @@ public final class Permissions {
             "javax.microedition.securityservice.CMSMessageSignatureService",
             AUTHENTICATION_GROUP),
         new PermissionSpec("javax.microedition.apdu.sat",
-            NEVER_GROUP),
+            SMART_CARD_GROUP),
         new PermissionSpec("javax.microedition.content.ContentHandler",
             AUTO_INVOCATION_GROUP),
         new PermissionSpec("javax.microedition.pim.ContactList.read",

@@ -78,7 +78,7 @@ else
 
     ifeq ($(TARGET_VM), cldc_vm)
         SUBSYSTEM_PUSH_API_NATIVE_FILES = \
-            midp_push_registry_kni.c
+            midp_connection_registry_kni.c
 
         SUBSYSTEM_PUSH_API_JAVA_FILES += $(SHARED_JAVA_FILES) \
             $(SUBSYSTEM_PUSH_DIR)/push_api/javapush/classes/com/sun/midp/io/j2me/push/ConnectionRegistry.java \
