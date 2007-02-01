@@ -1473,13 +1473,6 @@ static int mapKey(WPARAM wParam, LPARAM lParam) {
     case VK_RIGHT:
         return JAVACALL_KEY_RIGHT;
 
-    /*
-     * Map VK_SPACE here, but in the
-     * high level Java code, we have to
-     * test for special case since "space"
-     * should be used for textbox's as space.
-     */
-    case VK_SPACE:
     case VK_RETURN:
         return JAVACALL_KEY_SELECT;
 
@@ -1499,7 +1492,7 @@ static int mapKey(WPARAM wParam, LPARAM lParam) {
     ToAscii((UINT)wParam, (UINT)lParam, keyStates, temp, (UINT)0);
 
     /* At this point only return printable characters. */
-    if(temp[0] >= ' ' && temp[0] <= 127) {
+    if(temp[0] >= ' ' && temp[0] < 127) {
         return temp[0];
     }
 
