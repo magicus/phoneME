@@ -36,9 +36,6 @@ JSROP_ABSTRACTS_NATIVES = \
 	exceptions.c \
 	bnlib.c
 
-# extra libraries needed (like '-lpthread' or '-lm')
-JSROP_ABSTRACTS_LINKLIBS = 
-
 # dirs containing hative header files (.h)
 JSROP_ABSTRACTS_INCLUDES = \
     -I$(JSROP_ABSTRACTS_DIR)/src/include \
@@ -51,55 +48,53 @@ JSROP_ABSTRACTS_JAVASRCDIRS = \
 
 # classes
 JSROP_ABSTRACTS_CLASSES = \
-    com.sun.j2me.app.AppPackage \
-    com.sun.j2me.app.AppIsolate \
-    com.sun.j2me.app.AppModel \
-    com.sun.j2me.log.LogChannels \
-    com.sun.j2me.log.Logging \
-    com.sun.j2me.main.Configuration \
-    com.sun.j2me.security.PIMPermission \
-    com.sun.j2me.security.Permission \
-    com.sun.j2me.security.FileConnectionPermission \
-    com.sun.j2me.security.SatsaPermission \
-    com.sun.j2me.io.Base64 \
-    com.sun.j2me.io.ConnectionBaseInterface \
-    com.sun.j2me.io.ConnectionBaseAdapter \
-    com.sun.j2me.io.FileAccess \
-    com.sun.j2me.io.PrivilegedConnector \
-    com.sun.j2me.i18n.Resource \
-    com.sun.j2me.i18n.ResourceConstants \
-    com.sun.j2me.dialog.Dialog \
-    com.sun.j2me.dialog.MessageDialog\
-    com.sun.j2me.crypto.Cipher \
-    com.sun.j2me.crypto.NoSuchPaddingException \
-    com.sun.j2me.crypto.NoSuchAlgorithmException \
-    com.sun.j2me.crypto.InvalidKeyException \
-    com.sun.j2me.crypto.InvalidAlgorithmParameterException \
-    com.sun.j2me.crypto.ShortBufferException \
-    com.sun.j2me.crypto.BadPaddingException \
-    com.sun.j2me.crypto.IllegalBlockSizeException \
-    com.sun.j2me.crypto.DES \
-    com.sun.j2me.crypto.AES_ECB \
-    com.sun.j2me.crypto.DES_ECB \
-    com.sun.j2me.crypto.ARC4 \
-    com.sun.j2me.crypto.DES_CBC \
-    com.sun.j2me.crypto.RSA \
-    com.sun.j2me.crypto.RSAKey \
-    com.sun.j2me.crypto.RSAPrivateKey \
-    com.sun.j2me.crypto.RSAPublicKey \
-    com.sun.j2me.crypto.SecretKey \
-    com.sun.j2me.crypto.BlockCipherBase \
-    com.sun.j2me.crypto.DESEDE \
-    com.sun.j2me.crypto.AES \
-    com.sun.j2me.crypto.AES_CBC \
-    com.sun.j2me.crypto.Padder \
-    com.sun.j2me.crypto.PKCS5Padding \
-    com.sun.j2me.crypto.IvParameter \
-    com.sun.j2me.crypto.CryptoParameter \
-    com.sun.j2me.crypto.Util \
-    com.sun.j2me.crypto.Util \
-    com.sun.j2me.crypto.PRand \
-    com.sun.j2me.crypto.SecureRandom \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppPackage.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppIsolate.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppModel.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/log/LogChannels.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/log/Logging.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/main/Configuration.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/PIMPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/Permission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/FileConnectionPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/SatsaPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/FileAccess.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Cipher.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchPaddingException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchAlgorithmException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidKeyException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidAlgorithmParameterException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/ShortBufferException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/BadPaddingException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/IllegalBlockSizeException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/DES.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/AES_ECB.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/DES_ECB.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/ARC4.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/DES_CBC.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/RSA.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/RSAKey.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/RSAPrivateKey.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/RSAPublicKey.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/SecretKey.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/BlockCipherBase.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/DESEDE.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/AES.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/AES_CBC.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Padder.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/PKCS5Padding.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/IvParameter.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/CryptoParameter.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Util.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/PRand.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/SecureRandom.java \
 
 ifeq ($(USE_JUMP_SHARED_MEMORY), true)
 JSROP_ABSTRACTS_NATIVES += \
@@ -112,16 +107,42 @@ JSROP_ABSTRACTS_NATIVES += \
 endif
 
 #####################################################
-CVM_SRCDIRS += $(JSROP_ABSTRACTS_SRCDIRS)
-CVM_OBJECTS += $(patsubst %.c,$(CVM_OBJDIR)/%.o,$(JSROP_ABSTRACTS_NATIVES))
-LINKLIBS += $(JSROP_ABSTRACTS_LINKLIBS)
+JSROP_ABSTRACTS_NATIVE_OBJS     = $(patsubst %.c,$(CVM_OBJDIR)/%.o,$(JSROP_ABSTRACTS_NATIVES))
+JSROP_ABSTRACTS_CLASSDIR        = $(CVM_BUILD_TOP)/abstracts_classes
+JSROP_ABSTRACTS_JAR             = $(CVM_LIBDIR)/abstractions.jar
+JSROP_ABSTRACTS_NATIVE_LIBRARY  = $(CVM_LIBDIR)/$(LIB_PREFIX)jsropabstr$(LIB_POSTFIX)
+
 CVM_INCLUDES += $(JSROP_ABSTRACTS_INCLUDES)
-JAVA_SRCDIRS += $(JSROP_ABSTRACTS_JAVASRCDIRS)
-CVM_BUILDTIME_CLASSES += $(JSROP_ABSTRACTS_CLASSES)
+CVM_SRCDIRS  += $(JSROP_ABSTRACTS_SRCDIRS)
+
+ifeq ($(CVM_PRELOAD_LIB), true)
+JSROP_NATIVE_OBJS += $(JSROP_ABSTRACTS_NATIVE_OBJS)
+else
+JSROP_NATIVE_LIBS += $(JSROP_ABSTRACTS_NATIVE_LIBRARY)
+endif
+
+CVM_CNI_CLASSES += com.sun.j2me.crypto.ARC4 \
+                   com.sun.j2me.crypto.RSA
+
+$(JSROP_ABSTRACTS_JAR): $(JSROP_ABSTRACTS_CLASSDIR) .compile.jsrop.abstracts
+	$(AT)$(CVM_JAR) cf $@ -C $(JSROP_ABSTRACTS_CLASSDIR) .
+
+$(JSROP_ABSTRACTS_CLASSDIR):
+	$(AT)mkdir -p $(JSROP_ABSTRACTS_CLASSDIR)
+    
+.compile.jsrop.abstracts: $(JSROP_ABSTRACTS_CLASSES)
+	$(AT)echo "Compiling JSROP abstractions classes...";			\
+	$(JAVAC_CMD)						\
+		-d $(JSROP_ABSTRACTS_CLASSDIR)			\
+		-bootclasspath $(CVM_BUILDTIME_CLASSESDIR) 	\
+		-classpath $(JAVACLASSES_CLASSPATH)	\
+		$(JSROP_ABSTRACTS_CLASSES)
+
+$(JSROP_ABSTRACTS_NATIVE_LIBRARY) :: $(JSROP_ABSTRACTS_NATIVE_OBJS)
+	@echo "Linking $@"
+	$(SO_LINK_CMD)
 
 printconfig::
-	@echo "**************************************************************************"
 	@echo "JSROP_ABSTRACTS_DIR      = $(JSROP_ABSTRACTS_DIR)"
 	@echo "JSROP_ABSTRACTS_INCLUDES = $(JSROP_ABSTRACTS_INCLUDES)"
-	@echo "**************************************************************************"
 
