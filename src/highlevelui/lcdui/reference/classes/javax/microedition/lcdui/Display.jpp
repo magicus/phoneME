@@ -2182,7 +2182,7 @@ public class Display {
           + Resource.getString(ResourceConstants.AMS_COPYRIGHT_LONG),
                                null, null);
 
-        about.runInNewThread();
+        about.run();
     }
 
     // #ifdef ENABLE_CHAMELEON
