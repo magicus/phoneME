@@ -53,7 +53,7 @@ public class JumpInit {
         String home = System.getProperty("sun.midp.home.path", userdir);
         String profile = System.getProperty("microedition.profiles");
 	if (profile == null) 
-            System.setProperty("microedition.profiles", "MIDP-2.0");
+            System.setProperty("microedition.profiles", "MIDP-2.1");
 
         if (!initMidpNativeStates(home)) {
            throw new RuntimeException("MIDP native initialization failed");

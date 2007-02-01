@@ -137,7 +137,7 @@
 		Scope="system"
 		Comment="Configuration information."/>
   <property Key="microedition.profiles" 
-		Value="MIDP-2.0" 
+		Value="MIDP-2.1" 
 		Scope="system"
 		Comment="Profile information."/>
   <property Key="microedition.locale" 

@@ -64,7 +64,7 @@ public class MIDLETInstallerImpl implements JUMPInstallerModule {
 
         String profilename = System.getProperty(midpProfileKey);
         if (profilename == null) {
-            System.setProperty(midpProfileKey, "MIDP-2.0");
+            System.setProperty(midpProfileKey, "MIDP-2.1");
         }
 
         String homeDir = System.getProperty(midpHomeKey);
