@@ -45,7 +45,7 @@ PROJECT_JSR_120_DIR=$(JSR_120_DIR)
 endif
 
 # Javadoc source path
-JSR_120_SOURCEPATH = $(JSR_120_DIR)/src/core/common/classes$(PATHSEP)$(JSR_120_DIR)/src/protocol/cbs/classes$(PATHSEP)$(JSR_120_DIR)/src/protocol/sms/classes
+JSR_120_SOURCEPATH = $(JSR_120_DIR)/src/share/core/common/classes$(PATHSEP)$(JSR_120_DIR)/src/share/protocol/cbs/classes$(PATHSEP)$(JSR_120_DIR)/src/share/protocol/sms/classes
 
 JSR_120_PACKAGES = \
     com.sun.midp.io.j2me.cbs \
@@ -73,40 +73,40 @@ SUBSYSTEM_PROTOCOL_MODULES += sms cbs
 # Jpp files that need pre-processing
 #
 $(GENERATED_DIR)/classes/javax/wireless/messaging/MessageConnection.java: \
-        $(JSR_120_DIR)/src/core/common/classes/javax/wireless/messaging/MessageConnection.jpp
+        $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/MessageConnection.jpp
 	@$(call runjpp,$^,$@)
 
 $(GENERATED_DIR)/classes/com/sun/wma/TCKTest.java: \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/wma/TCKTest.jpp
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/wma/TCKTest.jpp
 	@$(call runjpp,$^,$@)
 
 $(GENERATED_DIR)/classes/com/sun/tck/wma/MessageConnector.java: \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/MessageConnector.jpp
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/MessageConnector.jpp
 	@$(call runjpp,$^,$@)
 
 # Java files for the ( jsr_120 ) module
 #
 MODULE_JSR_120_COMMON_JAVA_FILES = \
-    $(JSR_120_DIR)/src/core/common/classes/javax/wireless/messaging/MessageListener.java \
+    $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/MessageListener.java \
     $(GENERATED_DIR)/classes/javax/wireless/messaging/MessageConnection.java \
-    $(JSR_120_DIR)/src/core/common/classes/javax/wireless/messaging/Message.java \
-    $(JSR_120_DIR)/src/core/common/classes/javax/wireless/messaging/BinaryMessage.java \
-    $(JSR_120_DIR)/src/core/common/classes/javax/wireless/messaging/TextMessage.java 
+    $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/Message.java \
+    $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/BinaryMessage.java \
+    $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/TextMessage.java 
     
 # test
-MODULE_JSR_120_COMMON_JAVA_FILES += \
-    $(JSR_120_DIR)/src/test/classes/com/sun/midp/wma/test/JumpDriverTest.java
+#MODULE_JSR_120_COMMON_JAVA_FILES += \
+#    $(JSR_120_DIR)/src/share/test/classes/com/sun/midp/wma/test/JumpDriverTest.java
 
-vpath % $(JSR_120_DIR)/src/test/native
+vpath % $(JSR_120_DIR)/src/share/test/native
 
-SUBSYSTEM_JSR_120_NATIVE_FILES += \
-    jump_driver_test.c
+#SUBSYSTEM_JSR_120_NATIVE_FILES += \
+#    jump_driver_test.c
 #
 
 ifneq ($(USE_NATIVE_AMS), true)
 ifneq ($(NO_PUSH), true)
 MODULE_JSR_120_COMMON_JAVA_FILES += \
-    $(JSR_120_DIR)/src/core/common/classes/com/sun/midp/wma/ProtocolPushImpl.java
+    $(JSR_120_DIR)/src/share/core/common/classes/com/sun/midp/wma/ProtocolPushImpl.java
 endif
 endif
 
@@ -117,7 +117,7 @@ ifeq ($(DELETE_WMA_MSGS), true)
 # that will do so.
 #
 MODULE_JSR_120_COMMON_JAVA_FILES += \
-    $(JSR_120_DIR)/src/core/common/classes/com/sun/midp/wma/WMACleanupMonitor.java
+    $(JSR_120_DIR)/src/share/core/common/classes/com/sun/midp/wma/WMACleanupMonitor.java
 else
 #
 # If message are not to be deleted, then include a stubbed implementation of
@@ -132,56 +132,57 @@ endif
 
 
 MODULE_JSR_120_SMS_JAVA_FILES = \
-    $(JSR_120_DIR)/src/protocol/share/com/sun/midp/io/j2me/ProtocolBase.java \
-    $(JSR_120_DIR)/src/protocol/sms/classes/com/sun/midp/io/j2me/sms/BinaryObject.java \
-    $(JSR_120_DIR)/src/protocol/sms/classes/com/sun/midp/io/j2me/sms/Protocol.java \
-    $(JSR_120_DIR)/src/protocol/sms/classes/com/sun/midp/io/j2me/sms/MessageObject.java \
-    $(JSR_120_DIR)/src/protocol/sms/classes/com/sun/midp/io/j2me/sms/TextEncoder.java \
-    $(JSR_120_DIR)/src/protocol/sms/classes/com/sun/midp/io/j2me/sms/TextObject.java
+    $(JSR_120_DIR)/src/share/protocol/share/com/sun/midp/io/j2me/ProtocolBase.java \
+    $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/BinaryObject.java \
+    $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/Protocol.java \
+    $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/MessageObject.java \
+    $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/TextEncoder.java \
+    $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/TextObject.java
 
 MODULE_JSR_120_CBS_JAVA_FILES = \
-    $(JSR_120_DIR)/src/protocol/cbs/classes/com/sun/midp/io/j2me/cbs/Protocol.java \
-    $(JSR_120_DIR)/src/protocol/cbs/classes/com/sun/midp/io/j2me/cbs/BinaryObject.java \
-    $(JSR_120_DIR)/src/protocol/cbs/classes/com/sun/midp/io/j2me/cbs/TextObject.java
+    $(JSR_120_DIR)/src/share/protocol/cbs/classes/com/sun/midp/io/j2me/cbs/Protocol.java \
+    $(JSR_120_DIR)/src/share/protocol/cbs/classes/com/sun/midp/io/j2me/cbs/BinaryObject.java \
+    $(JSR_120_DIR)/src/share/protocol/cbs/classes/com/sun/midp/io/j2me/cbs/TextObject.java
 
 # Java files for the (wmatool) module
 #
 MODULE_TOOL_WMATOOL_JAVA_FILES = \
     $(GENERATED_DIR)/classes/com/sun/wma/TCKTest.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/wma/api/server/CBSServer.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/BinaryMessage.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/Connector.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/Message.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/MessageConnection.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/wma/api/server/CBSServer.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/BinaryMessage.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/Connector.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/Message.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/MessageConnection.java \
     $(GENERATED_DIR)/classes/com/sun/tck/wma/MessageConnector.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/MessageTransportConstants.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/TextMessage.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/PropLoader.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/sms/BinaryObject.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/sms/MessageObject.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/sms/MessagePacket.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/sms/SMSMessageConnection.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/sms/SMSPacket.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/sms/TextObject.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/cbs/CBSMessageConnection.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/cbs/CBSTestServer.java \
-    $(JSR_120_DIR)/src/tool/wmatool/classes/com/sun/tck/wma/cbs/CBSPacket.java \
-    $(JSR_120_DIR)/src/protocol/sms/classes/com/sun/midp/io/j2me/sms/TextEncoder.java
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/MessageTransportConstants.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/TextMessage.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/PropLoader.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/sms/BinaryObject.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/sms/MessageObject.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/sms/MessagePacket.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/sms/SMSMessageConnection.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/sms/SMSPacket.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/sms/TextObject.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/cbs/CBSMessageConnection.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/cbs/CBSTestServer.java \
+    $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/cbs/CBSPacket.java \
+    $(JSR_120_DIR)/src/share/protocol/sms/classes/com/sun/midp/io/j2me/sms/TextEncoder.java
 
 #
 # Native files for JSR 120 subsystem
-vpath % $(JSR_120_DIR)/src/protocol/sms/native/share
-vpath % $(JSR_120_DIR)/src/protocol/cbs/native/share
-vpath % $(JSR_120_DIR)/src/core/common/native/share
+vpath % $(JSR_120_DIR)/src/share/protocol/sms/native/share
+vpath % $(JSR_120_DIR)/src/share/protocol/cbs/native/share
+vpath % $(JSR_120_DIR)/src/share/core/common/native/share
 
 ifeq ($(ENABLE_JUMP), true)
-vpath % $(JSR_120_DIR)/src/core/common/native/jump_driver
+#vpath % $(JSR_120_DIR)/src/jump_application/core/common/native/jump_driver
+vpath % $(JSR_120_DIR)/src/jump_application/core/common/native/
 endif
 
 SUBSYSTEM_JSR_120_EXTRA_INCLUDES = \
-    -I$(JSR_120_DIR)/src/protocol/sms/native/share/inc \
-    -I$(JSR_120_DIR)/src/protocol/cbs/native/share/inc \
-    -I$(JSR_120_DIR)/src/core/common/native/share/inc
+    -I$(JSR_120_DIR)/src/share/protocol/sms/native/share/inc \
+    -I$(JSR_120_DIR)/src/share/protocol/cbs/native/share/inc \
+    -I$(JSR_120_DIR)/src/share/core/common/native/share/inc
 
 SUBSYSTEM_JSR_120_NATIVE_FILES += \
     bytePackUnpack.c \
@@ -207,13 +208,13 @@ endif
 # Specify romizer configuration file for the jsr
 # and path where the file is located
 #
-ROMGEN_INCLUDE_PATHS += $(JSR_120_DIR)/src/config/common
+ROMGEN_INCLUDE_PATHS += $(JSR_120_DIR)/src/share/config/common
 ROMGEN_CFG_FILES     += jsr120_rom.cfg
 
 # Platform
 #
-#include $(JSR_120_DIR)/src/config/$(PLATFORM).gmk
-include $(JSR_120_DIR)/src/config/javacall.gmk
+#include $(JSR_120_DIR)/src/share/config/$(PLATFORM).gmk
+include $(JSR_120_DIR)/build/config/javacall.gmk
 
 # Determines what option we have made and set it
 # to some variable that global makefile recognize
@@ -231,10 +232,10 @@ ifeq ($(USE_I3_TEST), true)
 EXTRA_CFLAGS += -DENABLE_WMA_LOOPBACK=1
 
 MODULE_SMS_I3TEST_JAVA_FILES += \
-    $(JSR_120_DIR)/src/protocol/sms/i3test/com/sun/midp/io/j2me/sms/TestSMSOpenClose.java
+    $(JSR_120_DIR)/src/share/protocol/sms/i3test/com/sun/midp/io/j2me/sms/TestSMSOpenClose.java
 
 MODULE_CBS_I3TEST_JAVA_FILES += \
-    $(JSR_120_DIR)/src/protocol/cbs/i3test/com/sun/midp/io/j2me/cbs/TestCBSOpenClose.java
+    $(JSR_120_DIR)/src/share/protocol/cbs/i3test/com/sun/midp/io/j2me/cbs/TestCBSOpenClose.java
 
 SUBSYSTEM_JSR_120_I3TEST_JAVA_FILES += \
     $(MODULE_SMS_I3TEST_JAVA_FILES) \
@@ -250,7 +251,7 @@ $(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_120_JAVA_FILES)
 
 # Internal paths for jsr 120 module
 #
-INTERNAL_JSR_120_CONFIG_DIR= $(JSR_120_DIR)/src/config
+INTERNAL_JSR_120_CONFIG_DIR= $(JSR_120_DIR)/src/share/config
 
 ifneq ($(USE_JSR_205), true)
 # Include JSR 120 common properties in Configuration
@@ -322,9 +323,9 @@ jsr_120_source_bundle: SOURCE_OUTPUT_DIR
 	@$(call re_src_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),src)
 
 DOXYGEN_INPUT_LIST += \
-	$(JSR_120_DIR)/src/protocol/cbs/native/share/inc/jsr120_cbs_protocol.h \
-	$(JSR_120_DIR)/src/core/common/native/share/inc/jsr120_cbs_pool.h \
-	$(JSR_120_DIR)/src/protocol/sms/native/share/inc/jsr120_sms_protocol.h \
-	$(JSR_120_DIR)/src/core/common/native/share/inc/jsr120_sms_pool.h
+	$(JSR_120_DIR)/src/share/protocol/cbs/native/share/inc/jsr120_cbs_protocol.h \
+	$(JSR_120_DIR)/src/share/core/common/native/share/inc/jsr120_cbs_pool.h \
+	$(JSR_120_DIR)/src/share/protocol/sms/native/share/inc/jsr120_sms_protocol.h \
+	$(JSR_120_DIR)/src/share/core/common/native/share/inc/jsr120_sms_pool.h
  
 
