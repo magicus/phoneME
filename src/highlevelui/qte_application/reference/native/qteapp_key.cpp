@@ -156,7 +156,7 @@ int mapKey(QKeyEvent *key) {
         break;
 
     // Mail key
-    case Qt::Key_F13:
+    case Qt::Key_F12:
         unicode = KEYMAP_KEY_GAMED;
         break;
 
