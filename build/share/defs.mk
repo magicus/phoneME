@@ -2051,3 +2051,7 @@ endif
 
 # Include external shared tools
 include $(TOOLS_DIR)/tools.gmk
+
+# Include JSROP defines
+-include ../share/defs_jsrop.mk
+

@@ -67,6 +67,7 @@ $(MIDP_CLASSESZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE) \
 	             PCSL_PLATFORM=$(PCSL_PLATFORM) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
+	             $(MIDP_JSROP_USE_FLAGS) \
 	             rom -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 
 #
@@ -91,6 +92,7 @@ $(RUNMIDLET): force_midp_build
 	             USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE) \
 	             PCSL_PLATFORM=$(PCSL_PLATFORM) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
+	             $(MIDP_JSROP_USE_FLAGS) \
 	             -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 ifneq ($(CVM_INCLUDE_JUMP), true)
 	$(AT)cp $@ $(CVM_BINDIR)
