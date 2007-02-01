@@ -836,8 +836,13 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         if(wParam != VK_F10) {
             break;
         }
-
-    /* fall through */
+        // patch for VK_F10
+        if (WM_SYSKEYUP == iMsg) {
+            iMsg = WM_KEYUP;
+        } else if (WM_SYSKEYDOWN == iMsg) {
+            iMsg = WM_KEYDOWN;
+        }
+        /* fall through */
     case WM_KEYDOWN:
         {
         /* Impl note: to send pause and resume notifications */
