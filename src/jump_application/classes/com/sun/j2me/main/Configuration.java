@@ -24,10 +24,15 @@
 
 package com.sun.j2me.main;
 
+import java.util.Properties;
+
 /**
  * Intermediate class for getting system properties
  */
 public class Configuration {
+
+    /** List of all internal properties */
+    private static Properties props = new Properties();
 
     /** Don't let anyone instantiate this class */
     private Configuration() {
@@ -39,7 +44,16 @@ public class Configuration {
      * @return property value
      */
     public static String getProperty(String key) {
-        return System.getProperty(key);
+        return props.getProperty(key);
+    }
+
+    /*
+     * Sets system property value by key
+     * @param key property key
+     * @param value property value
+     */
+    public static void setProperty(String key, String value) {
+        props.setProperty(key, value);
     }
 
     /**
