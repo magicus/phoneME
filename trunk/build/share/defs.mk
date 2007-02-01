@@ -154,6 +154,11 @@ endif
 CVM_HOST 	?= $(HOST_CPU_FAMILY)-$(HOST_DEVICE)-$(HOST_OS)
 CVM_TARGET	= $(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)
 
+# COMPONENTS_DIR is the directory that all the components are located in,
+# such as midp, pcsl, and jump. It is used for providing default locations
+# for directories like MIDP_DIR and JUMP_DIR.
+COMPONENTS_DIR     ?= $(call POSIX2HOST,$(shell cd ../../..; echo `pwd`))
+
 # Set overriding values:
 
 # Figure out if this is a CDC 1.0 source base or not
@@ -2044,9 +2049,9 @@ MPOSIX2HOST = $(foreach element,$(1),$(call POSIX2HOST,$(element)))
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)/defs.mk
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs.mk
 
-TOOLS_DIR ?= $(CVM_TOP)/../tools
+export TOOLS_DIR ?= $(COMPONENTS_DIR)/tools
 ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
-$(error TOOLS_DIR must point to shared tools directory)
+$(error TOOLS_DIR must point to the shared tools directory: $(TOOLS_DIR))
 endif
 
 # Include external shared tools
