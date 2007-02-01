@@ -32,11 +32,10 @@ import com.sun.midp.security.Permissions;
 import com.sun.midp.lcdui.DisplayEventHandlerFactory;
 import com.sun.midp.lcdui.DisplayEventHandler;
 import com.sun.midp.lcdui.SystemAlert;
-
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
-import javax.microedition.lcdui.*;
+import javax.microedition.lcdui.AlertType;
 import java.util.Vector;
 
 /**
@@ -114,16 +113,14 @@ public class SuspendSystem extends AbstractSubsystem {
          */
         protected void suspended() {
             super.suspended();
-            suspended0(midletKilled && !midletPaused);
+            suspended0();
         }
 
         /**
          * Notifies native functionality that MIDP activities in java
          * have been suspended.
-         * @param allMidletsKilled boolean value that determines if all
-         *        MIDlets were destroyed by suspend routines.
          */
-        protected native void suspended0(boolean allMidletsKilled);
+        protected native void suspended0();
 
         /**
          * Recieves notifications on MIDlet updates and removes corresponding
@@ -133,7 +130,7 @@ public class SuspendSystem extends AbstractSubsystem {
          */
         public void midletUpdated(MIDletProxy midlet, int reason) {
             if (reason == MIDletProxyListListener.RESOURCES_SUSPENDED) {
-                if (MIDletSuiteUtils.getIsolateId() != midlet.getIsolateId()) {
+                if (MIDletSuiteUtils.getAmsIsolateId() != midlet.getIsolateId()) {
                     midletPaused = true;
                 }
                 removeSuspendDependency(midlet);

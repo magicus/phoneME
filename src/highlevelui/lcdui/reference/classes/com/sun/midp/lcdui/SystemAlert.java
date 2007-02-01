@@ -77,25 +77,23 @@ public class SystemAlert extends Alert
     }
 
     /** Waits for the user to acknowledge the alert. */
-    public void waitForUser() {
-        synchronized (this) {
-            if (!shown) {
-                return;
-            }
+    public synchronized void waitForUser() {
+        if (!shown) {
+            return;
+        }
 
-            if (EventQueue.isDispatchThread()) {
-                // Developer programming error
-                throw new RuntimeException(
-                    "Blocking call performed in the event thread");
-            }
+        if (EventQueue.isDispatchThread()) {
+            // Developer programming error
+            throw new RuntimeException(
+                "Blocking call performed in the event thread");
+        }
 
-            try {
-                wait();
-            } catch (Throwable t) {
-                if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                    Logging.report(Logging.WARNING, LogChannels.LC_CORE,
-                                  "Throwable while SystemAlert.waitForUser");
-                }
+        try {
+            wait();
+        } catch (Throwable t) {
+            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                Logging.report(Logging.WARNING, LogChannels.LC_CORE,
+                              "Throwable while SystemAlert.waitForUser");
             }
         }
     }

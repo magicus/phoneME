@@ -42,12 +42,6 @@ VM vm = { KNI_FALSE };
 static int sr_state = SR_INVALID;
 
 /**
- * A flag to determine if all MIDlets were destroed during last
- * suspend processing.
- */
-static jboolean allMidletsKilled = KNI_FALSE;
-
-/**
  * Resources list record for a resource to  be processed by
  * suspend/resume system. Nature of the resouce is unknown to
  * the suspend/resume system, only its state and suspend/resume
@@ -190,8 +184,6 @@ void midp_resume() {
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended0) {
-    allMidletsKilled = KNI_GetParameterAsBoolean(1);
-
     /* Checking that midp_resume() has not been called during suspending
      * of java side.
      */
