@@ -136,8 +136,7 @@ bool ChameleonMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
     if (e->type() == QEvent::KeyPress) {
         QKeyEvent *ke = (QKeyEvent *) e;
 
-        if (ke->key() == Qt::Key_F12 ||
-	    ke->key() == Qt::Key_Home) {
+        if (ke->key() == Qt::Key_Home) {
             mscreen->keyPressEvent(ke);
             ke->ignore();
             return TRUE;
