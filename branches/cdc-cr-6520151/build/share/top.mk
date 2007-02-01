@@ -376,7 +376,7 @@ ifneq ($(OPT_PKGS_DEFS_FILES),)
 include $(OPT_PKGS_DEFS_FILES)
 endif
 
--include ../share/top_op.mk
+#-include ../share/top_op.mk
 
 # Include all rule makefiles. Since variables in rules are expanded
 # eagerly, they must be included after defs makefiles.
