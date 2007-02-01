@@ -53,7 +53,7 @@ KeyMapping qvfb_keys[] = {
     {KEYMAP_KEY_GAMEA,         0x1038},    /* F9 key */
     {KEYMAP_KEY_GAMEB,         0x1039},    /* F10 key */
     {KEYMAP_KEY_GAMEC,         0x103a},    /* F11 key */
-    {KEYMAP_KEY_GAMEC,         0x103b},    /* F12 key */
+    {KEYMAP_KEY_GAMED,         0x103b},    /* F12 key */
     {KEYMAP_KEY_LEFT,          0x1012},    /* LEFT key */
     {KEYMAP_KEY_UP,            0x1013},    /* UP key */
     {KEYMAP_KEY_RIGHT,         0x1014},    /* RIGHT key */

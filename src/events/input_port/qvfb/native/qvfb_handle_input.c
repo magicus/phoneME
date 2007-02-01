@@ -72,7 +72,7 @@ static int map_raw_keycode(unsigned int unicode) {
     } else {
         key = search_raw_keycode(code);
         /* letter keys have no mapping, the code is returned instead */
-        if (key == KEYMAP_KEY_INVALID && code >= ' ' && code <= 127) {
+        if (key == KEYMAP_KEY_INVALID && code >= ' ' && code < 127) {
             key = code;
         }
     }

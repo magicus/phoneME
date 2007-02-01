@@ -4,7 +4,7 @@
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/or
+ * This program is free software; you can redistribute it and/DEor
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation. 
  * 
@@ -116,26 +116,10 @@ int mapKey(QKeyEvent *key) {
 #endif
 
     // Select
-    // Map Key_Space here, but in the
-    // high level Java code, we have to
-    // test for special case since "space"
-    // should be used for textbox's as space.
     case Qt::Key_Return:
     case Qt::Key_F33:
     case Qt::Key_Enter:
         unicode = KEYMAP_KEY_SELECT;
-        break;
-
-    case Qt::Key_Space:
-#if REPORT_LEVEL < LOG_DISABLED
-        if (key->state() == Qt::ShiftButton) {
-            unicode = KEYMAP_KEY_DEBUG_TRACE1;
-        } else {
-            unicode = KEYMAP_KEY_SELECT;
-        }
-#else
-        unicode = KEYMAP_KEY_SELECT;
-#endif
         break;
 
     // The cancel key
@@ -184,6 +168,7 @@ int mapKey(QKeyEvent *key) {
     case Qt::Key_NumLock:
     case Qt::Key_F35:          // (Press and hold)
     case Qt::Key_F14:          // (Press and hold)
+    case Qt::Key_Delete:
         unicode = KEYMAP_KEY_INVALID;
         key->ignore();
         break;
