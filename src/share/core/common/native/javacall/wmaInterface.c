@@ -49,6 +49,7 @@
  * No need in current implementation.
  */
 WMA_STATUS init_jsr120() {
+    javacall_wma_init();
     return WMA_NET_SUCCESS;
 }
 
@@ -57,6 +58,7 @@ WMA_STATUS init_jsr120() {
  * No need in current implementation.
  */
 void finalize_jsr120() {
+    javacall_wma_close();
 }
 
 // see below
