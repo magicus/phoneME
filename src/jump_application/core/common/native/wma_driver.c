@@ -58,6 +58,9 @@ int wma_driver(int argc, const char **argv) {
     JUMPMessageFlag readyFlag;
     unsigned char buf[NMSG_MAX_LENGTH];
     
+    //temporary call. Should be called from cdc/midp.  
+    init_jsr120();
+
     if (context == NULL || jumpMessageQueueCreate() < 0) {
         fprintf(stderr, "Cannot create queue!!\n");
         return -1;
