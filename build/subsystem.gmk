@@ -59,6 +59,14 @@ include $(JSR_135_DIR)/build/$(JSROP_PLATFORM)/features.defs
 ROMGEN_INCLUDE_PATHS += $(JSR_135_DIR)/build/$(JSROP_PLATFORM)
 ROMGEN_CFG_FILES     += jsr135_rom.cfg
 
+# Include JSR_135 system properties in Configuration
+JSR_135_PROPERTY_FILES = \
+    $(JSR_135_DIR)/build/$(JSROP_PLATFORM)/javacall/properties_jsr135.xml
+
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+    $(JSR_135_PROPERTY_FILES)
+
+
 # Jpp files that need pre-processing
 #
 $(GENERATED_DIR)/classes/javax/microedition/media/Player.java: \
