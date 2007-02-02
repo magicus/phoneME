@@ -31,9 +31,9 @@
  * 
  */
 static javacall_handle video_create(javacall_int64 playerId, 
-									javacall_media_type mediaType, 
-									const javacall_utf16* URI, 
-									long contentLength)
+                                    javacall_media_type mediaType, 
+                                    const javacall_utf16* URI, 
+                                    long contentLength)
 {
     return (javacall_handle)1;
 }
@@ -143,7 +143,8 @@ static long video_get_duration(javacall_handle handle)
 /**
  * 
  */
-static javacall_result video_get_video_size(javacall_handle handle, long* width, long* height)
+static javacall_result video_get_video_size(javacall_handle handle, 
+                                            long* width, long* height)
 {
     *width = 100;
     *height = 100;
@@ -153,7 +154,8 @@ static javacall_result video_get_video_size(javacall_handle handle, long* width,
 /**
  * 
  */
-static javacall_result video_set_video_visible(javacall_handle handle, javacall_bool visible)
+static javacall_result video_set_video_visible(javacall_handle handle, 
+                                               javacall_bool visible)
 {
     return JAVACALL_OK;
 }
@@ -161,7 +163,8 @@ static javacall_result video_set_video_visible(javacall_handle handle, javacall_
 /**
  * 
  */
-static javacall_result video_set_video_location(javacall_handle handle, long x, long y, long w, long h)
+static javacall_result video_set_video_location(javacall_handle handle, 
+                                                long x, long y, long w, long h)
 {
     return JAVACALL_OK;
 }
@@ -172,7 +175,8 @@ static javacall_result video_set_video_location(javacall_handle handle, long x, 
  * 
  */
 static javacall_result video_start_video_snapshot(javacall_handle handle, 
-                                                  const javacall_utf16* imageType, long length)
+                                                  const javacall_utf16* imageType, 
+                                                  long length)
 {
     return JAVACALL_OK;
 }
@@ -180,7 +184,8 @@ static javacall_result video_start_video_snapshot(javacall_handle handle,
 /**
  * 
  */
-static javacall_result video_get_video_snapshot_data_size(javacall_handle handle, long* size)
+static javacall_result video_get_video_snapshot_data_size(javacall_handle handle, 
+                                                          long* size)
 {
     return JAVACALL_OK;
 }
@@ -188,7 +193,8 @@ static javacall_result video_get_video_snapshot_data_size(javacall_handle handle
 /**
  * 
  */
-static javacall_result video_get_video_snapshot_data(javacall_handle handle, char* buffer, long size)
+static javacall_result video_get_video_snapshot_data(javacall_handle handle, 
+                                                     char* buffer, long size)
 {
     return JAVACALL_OK;
 }

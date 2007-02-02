@@ -37,3 +37,4 @@ PORTING_OBJECTS += mmaudio.obj
 PORTING_OBJECTS += mmrecord.obj
 PORTING_OBJECTS += multimedia.obj
 PORTING_OBJECTS += mmtone.obj
+PORTING_OBJECTS += mmmididev.obj

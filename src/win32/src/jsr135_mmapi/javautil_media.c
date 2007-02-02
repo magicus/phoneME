@@ -39,8 +39,8 @@ static unsigned char png_magic[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 static int one = 1;
 static char *littleEndian = (char *) &one;
 
-#define BITS		8
-#define ROWS_PER_GROUP	1
+#define BITS            8
+#define ROWS_PER_GROUP  1
 
 /* 
  * Table of CRC-32's of all single-byte values
@@ -106,20 +106,20 @@ static unsigned long crc_table[256] = {
 #define DOCRC8(buf)  DOCRC4(buf); DOCRC4(buf);
 
 static unsigned long crc32(unsigned long crc, unsigned char *buf,
-		    int len)
+            int len)
 {
     if (buf == NULL)
-	return 0L;
+    return 0L;
     
     crc = crc ^ 0xFFFFFFFFL;
     
     while (len >= 8) {
-	DOCRC8(buf);
-	len -= 8;
+    DOCRC8(buf);
+    len -= 8;
     }
     
     if (len) do {
-	DOCRC1(buf);
+    DOCRC1(buf);
     } while (--len);
     
     return crc ^ 0xFFFFFFFFL;
@@ -148,11 +148,11 @@ static unsigned long adler32(unsigned long adler,
     if (buf == NULL) return 1L;
     
     while (len > 0) {
-	s1 += *buf++;
-	s2 += s1;
-	len--;
-	s1 %= BASE;
-	s2 %= BASE;
+    s1 += *buf++;
+    s2 += s1;
+    len--;
+    s1 %= BASE;
+    s2 %= BASE;
     }
     return (s2 << 16) | s1;
 }
@@ -167,15 +167,15 @@ static void writelong(PNGEnc *enc,
     c = (unsigned char *)&num;
     
     if (*littleEndian) {
-	enc->outBuf[enc->offset++] = *(c+3);
-	enc->outBuf[enc->offset++] = *(c+2);
-	enc->outBuf[enc->offset++] = *(c+1);
-	enc->outBuf[enc->offset++] = *(c+0);
+    enc->outBuf[enc->offset++] = *(c+3);
+    enc->outBuf[enc->offset++] = *(c+2);
+    enc->outBuf[enc->offset++] = *(c+1);
+    enc->outBuf[enc->offset++] = *(c+0);
     } else {
-	enc->outBuf[enc->offset++] = *(c+0);
-	enc->outBuf[enc->offset++] = *(c+1);
-	enc->outBuf[enc->offset++] = *(c+2);
-	enc->outBuf[enc->offset++] = *(c+3);
+    enc->outBuf[enc->offset++] = *(c+0);
+    enc->outBuf[enc->offset++] = *(c+1);
+    enc->outBuf[enc->offset++] = *(c+2);
+    enc->outBuf[enc->offset++] = *(c+3);
     }
 }
 
@@ -184,23 +184,23 @@ static void writelongcrc(PNGEnc *enc, int num) {
     c = (unsigned char *)&num;
 
     if (*littleEndian) {
-	enc->crc = crc32(enc->crc, c+3, 1);
-	enc->outBuf[enc->offset++] = *(c+3);
-	enc->crc = crc32(enc->crc, c+2, 1);
-	enc->outBuf[enc->offset++] = *(c+2);
-	enc->crc = crc32(enc->crc, c+1, 1);
-	enc->outBuf[enc->offset++] = *(c+1);
-	enc->crc = crc32(enc->crc, c+0, 1);
-	enc->outBuf[enc->offset++] = *(c+0);
+    enc->crc = crc32(enc->crc, c+3, 1);
+    enc->outBuf[enc->offset++] = *(c+3);
+    enc->crc = crc32(enc->crc, c+2, 1);
+    enc->outBuf[enc->offset++] = *(c+2);
+    enc->crc = crc32(enc->crc, c+1, 1);
+    enc->outBuf[enc->offset++] = *(c+1);
+    enc->crc = crc32(enc->crc, c+0, 1);
+    enc->outBuf[enc->offset++] = *(c+0);
     } else {
-	enc->crc = crc32(enc->crc, c+0, 1);
-	enc->outBuf[enc->offset++] = *(c+0);
-	enc->crc = crc32(enc->crc, c+1, 1);
-	enc->outBuf[enc->offset++] = *(c+1);
-	enc->crc = crc32(enc->crc, c+2, 1);
-	enc->outBuf[enc->offset++] = *(c+2);
-	enc->crc = crc32(enc->crc, c+3, 1);
-	enc->outBuf[enc->offset++] = *(c+3);
+    enc->crc = crc32(enc->crc, c+0, 1);
+    enc->outBuf[enc->offset++] = *(c+0);
+    enc->crc = crc32(enc->crc, c+1, 1);
+    enc->outBuf[enc->offset++] = *(c+1);
+    enc->crc = crc32(enc->crc, c+2, 1);
+    enc->outBuf[enc->offset++] = *(c+2);
+    enc->crc = crc32(enc->crc, c+3, 1);
+    enc->outBuf[enc->offset++] = *(c+3);
     }
 }
 
@@ -210,15 +210,15 @@ static void writewordrevcrc(PNGEnc *enc, short num){
     c = (unsigned char *)&num;
     
     if (*littleEndian) {
-	enc->crc = crc32(enc->crc, c+0, 1);
-	enc->outBuf[enc->offset++] = *(c+0);
-	enc->crc = crc32(enc->crc, c+1, 1);
-	enc->outBuf[enc->offset++] = *(c+1);
+    enc->crc = crc32(enc->crc, c+0, 1);
+    enc->outBuf[enc->offset++] = *(c+0);
+    enc->crc = crc32(enc->crc, c+1, 1);
+    enc->outBuf[enc->offset++] = *(c+1);
     } else {
-	enc->crc = crc32(enc->crc, c+1, 1);
-	enc->outBuf[enc->offset++] = *(c+1);
-	enc->crc = crc32(enc->crc, c+0, 1);
-	enc->outBuf[enc->offset++] = *(c+0);
+    enc->crc = crc32(enc->crc, c+1, 1);
+    enc->outBuf[enc->offset++] = *(c+1);
+    enc->crc = crc32(enc->crc, c+0, 1);
+    enc->outBuf[enc->offset++] = *(c+0);
     }
 }
 
@@ -226,15 +226,15 @@ static void writewordcrc(PNGEnc *enc, short s){
     unsigned char *c;
     c = (unsigned char *)&s;
     if (*littleEndian) {
-	enc->crc = crc32(enc->crc, c+1, 1);
-	enc->outBuf[enc->offset++] = *(c+1);
-	enc->crc = crc32(enc->crc, c+0, 1);
-	enc->outBuf[enc->offset++] = *(c+0);
+    enc->crc = crc32(enc->crc, c+1, 1);
+    enc->outBuf[enc->offset++] = *(c+1);
+    enc->crc = crc32(enc->crc, c+0, 1);
+    enc->outBuf[enc->offset++] = *(c+0);
     } else {
-	enc->crc = crc32(enc->crc, c+0, 1);
-	enc->outBuf[enc->offset++] = *(c+0);
-	enc->crc = crc32(enc->crc, c+1, 1);
-	enc->outBuf[enc->offset++] = *(c+1);
+    enc->crc = crc32(enc->crc, c+0, 1);
+    enc->outBuf[enc->offset++] = *(c+0);
+    enc->crc = crc32(enc->crc, c+1, 1);
+    enc->outBuf[enc->offset++] = *(c+1);
     }
 }
 
@@ -302,52 +302,53 @@ int javautil_media_rgb_to_png(unsigned char *input,
     resetcrc(&enc);
     /* Write the magic number */
     for (i = 0; i < sizeof(png_magic); i++)
-	enc.outBuf[enc.offset++] = png_magic[i];
+    enc.outBuf[enc.offset++] = png_magic[i];
 
     beginchunk(&enc, "IHDR", 0x0d);
-    writelongcrc(&enc, width);	/* width */
-    writelongcrc(&enc, height);	/* height */
-    writebytecrc(&enc, BITS);	/* bit depth */
-    writebytecrc(&enc, 2);	/* color type : true color*/
-    writebytecrc(&enc, 0);	/* compression */
-    writebytecrc(&enc, 0);	/* filter */
-    writebytecrc(&enc, 0);	/* interlace */
+    writelongcrc(&enc, width);  /* width */
+    writelongcrc(&enc, height); /* height */
+    writebytecrc(&enc, BITS);   /* bit depth */
+    writebytecrc(&enc, 2);      /* color type : true color*/
+    writebytecrc(&enc, 0);      /* compression */
+    writebytecrc(&enc, 0);      /* filter */
+    writebytecrc(&enc, 0);      /* interlace */
     endchunk(&enc);
 
     beginchunk(&enc, "IDAT", (GROUPS * (GROUP_BYTES + 4 + 1)) + 4 + 2);
-    writewordcrc(&enc, ((0x0800 + 30) / 31) * 31 );	/* compression method */
+    writewordcrc(&enc, ((0x0800 + 30) / 31) * 31 ); /* compression method */
 
     zcrc = 1L;
     for (i = 0; i < GROUPS; i++) {
-	writebytecrc(&enc, (unsigned char)(i == (GROUPS-1) ? 0x01 : 0)); /* not compressed */
-	writewordrevcrc(&enc, (short) GROUP_BYTES);
-	writewordrevcrc(&enc, (short) ~GROUP_BYTES);
+    writebytecrc(&enc, (unsigned char)(i == (GROUPS-1) ? 0x01 : 0)); 
+    /* not compressed */
+    writewordrevcrc(&enc, (short) GROUP_BYTES);
+    writewordrevcrc(&enc, (short) ~GROUP_BYTES);
 
-	for (j = 0; j < ROWS_PER_GROUP; j++) {
-	    /* write PNG row filter - 0 = unfiltered */
-	    zcrc = adler32(zcrc, &filter, 1);
-	    writebytecrc(&enc, filter);
-	    
-	    /* write pixels */
-	    for (k = 0; k < width; k++) {
-    		if (*littleEndian) {
-    		    zcrc = adler32(zcrc, &(input[2]), 1);
-    		    writebytecrc(&enc, input[2]);
-    		    zcrc = adler32(zcrc, &(input[1]), 1);
-    		    writebytecrc(&enc, input[1]);
-    		    zcrc = adler32(zcrc, &(input[0]), 1);
-    		    writebytecrc(&enc, input[0]);
-    		} else {
-    		    zcrc = adler32(zcrc, &(input[1]), 1);
-    		    writebytecrc(&enc, input[1]);
-    		    zcrc = adler32(zcrc, &(input[2]), 1);
-    		    writebytecrc(&enc, input[2]);
-    		    zcrc = adler32(zcrc, &(input[3]), 1);
-    		    writebytecrc(&enc, input[3]);
-    		}
-    		input += 3;
-	    }
-	}
+    for (j = 0; j < ROWS_PER_GROUP; j++) {
+        /* write PNG row filter - 0 = unfiltered */
+        zcrc = adler32(zcrc, &filter, 1);
+        writebytecrc(&enc, filter);
+        
+        /* write pixels */
+        for (k = 0; k < width; k++) {
+            if (*littleEndian) {
+                zcrc = adler32(zcrc, &(input[2]), 1);
+                writebytecrc(&enc, input[2]);
+                zcrc = adler32(zcrc, &(input[1]), 1);
+                writebytecrc(&enc, input[1]);
+                zcrc = adler32(zcrc, &(input[0]), 1);
+                writebytecrc(&enc, input[0]);
+            } else {
+                zcrc = adler32(zcrc, &(input[1]), 1);
+                writebytecrc(&enc, input[1]);
+                zcrc = adler32(zcrc, &(input[2]), 1);
+                writebytecrc(&enc, input[2]);
+                zcrc = adler32(zcrc, &(input[3]), 1);
+                writebytecrc(&enc, input[3]);
+            }
+            input += 3;
+        }
+    }
     }
     
     writelongcrc(&enc, zcrc);
