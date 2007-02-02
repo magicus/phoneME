@@ -21,37 +21,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
- */ 
-
+ */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "javacall_multimedia.h" 
-
-/**
- * Call this function when VM starts
- * Perform global initialization operation
- * 
- * @retval JOK      success
- * @retval JFAIL    fail
- */
-javacall_result javacall_media_initialize(void) {
-    return JAVACALL_NOT_IMPLEMENTED;
-}
-
-
-/**
- * Call this function when VM ends 
- * Perfrom global free operaiton
- * 
- * @retval JOK      success
- * @retval JFAIL    fail 
- */
-javacall_result javacall_media_finalize(void) {
-    return JAVACALL_NOT_IMPLEMENTED;
-}
 
 /**
  * Java MMAPI call this function to create native media handler.

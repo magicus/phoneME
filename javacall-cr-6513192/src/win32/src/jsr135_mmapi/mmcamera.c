@@ -38,7 +38,7 @@
 /* Debugging purpose flag to save encoded PNG data to file */
 #undef SNAPSHOT_PNG_ENCODING_TO_FILE
 
-/**********************************************************************************/
+/******************************************************************************/
 
 /* Default camera preview x, y, w and h constants */
 #define DEFAULT_PREVIEW_X   0
@@ -79,7 +79,8 @@ typedef struct {
  * Parse imageTtpe string and return encoding format, width and height information
  */
 static javacall_result camera_parse_image_type(const javacall_utf16* imageType, 
-                                               long length, /*OUT*/ image_type* parsedType)
+                                               long length, 
+                                               /*OUT*/ image_type* parsedType)
 {
 #define DEFAULT_ENCODING_W (160)
 #define DEFAULT_ENCODING_H (120)
@@ -88,7 +89,6 @@ static javacall_result camera_parse_image_type(const javacall_utf16* imageType,
     char* pEncoding = NULL;
     char* pWidth = NULL;
     char* pHeight = NULL;
-    char* ret;
 
     /**
      * There is no encoding format. Use default.
@@ -105,7 +105,8 @@ static javacall_result camera_parse_image_type(const javacall_utf16* imageType,
         return JAVACALL_FAIL;
     }
 
-    if (0 == WideCharToMultiByte(CP_ACP, 0, imageType, length, pStr, length + 1, NULL, NULL)) {
+    if (0 == WideCharToMultiByte(
+                CP_ACP, 0, imageType, length, pStr, length + 1, NULL, NULL)) {
         FREE(pStr);
         return JAVACALL_FAIL;
     }
@@ -147,18 +148,17 @@ static javacall_result camera_parse_image_type(const javacall_utf16* imageType,
     return JAVACALL_OK;
 }
 
-/**********************************************************************************/
+/*******************************************************************************/
 
 /**
  * VFW frame grab callback function
  */
-LRESULT PASCAL camera_grabber_callback(HWND hWnd, LPVIDEOHDR lpVHdr)
+static LRESULT PASCAL camera_grabber_callback(HWND hWnd, LPVIDEOHDR lpVHdr)
 {
 #define PNG_HEADER_SIZE (1000)
     int i;
     char* pOutput;
     int copyLineBytes;
-    int pngOverhead;
 
     /* Free previous frame buffer */
     if (NULL != _pFrameBuffer) {
@@ -177,7 +177,8 @@ LRESULT PASCAL camera_grabber_callback(HWND hWnd, LPVIDEOHDR lpVHdr)
         copyLineBytes = (_grabWidth * 3);
         
         _pFrameBuffer = MALLOC(lpVHdr->dwBytesUsed);
-        _pEncodingBuffer = MALLOC(javautil_media_get_png_size(_grabWidth, _grabHeight));
+        _pEncodingBuffer = 
+            MALLOC(javautil_media_get_png_size(_grabWidth, _grabHeight));
         
         if (_pFrameBuffer && _pEncodingBuffer) {
             pOutput = _pFrameBuffer;
@@ -187,8 +188,8 @@ LRESULT PASCAL camera_grabber_callback(HWND hWnd, LPVIDEOHDR lpVHdr)
                 pOutput += copyLineBytes;
             }
 
-            _encodingDataSize = javautil_media_rgb_to_png(_pFrameBuffer, _pEncodingBuffer, 
-                                                          _grabWidth, _grabHeight);
+            _encodingDataSize = javautil_media_rgb_to_png(
+                _pFrameBuffer, _pEncodingBuffer, _grabWidth, _grabHeight);
             javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED,
                                              _playerId, 0);
 
@@ -215,8 +216,8 @@ LRESULT PASCAL camera_grabber_callback(HWND hWnd, LPVIDEOHDR lpVHdr)
 static void camera_destroy_window(camera_handle* pHandle)
 {
     if (pHandle->hCapWnd) {
-    	capSetCallbackOnFrame(pHandle->hCapWnd, NULL);
-    	capDriverDisconnect(pHandle->hCapWnd);
+        capSetCallbackOnFrame(pHandle->hCapWnd, NULL);
+        capDriverDisconnect(pHandle->hCapWnd);
         DestroyWindow(pHandle->hCapWnd);
         pHandle->hCapWnd = NULL;
     }
@@ -225,10 +226,13 @@ static void camera_destroy_window(camera_handle* pHandle)
 /**
  * Set camera preview window
  */
-static HWND camera_set_preview_window(javacall_handle handle, int x, int y, int w, int h, BOOL visible)
+static HWND camera_set_preview_window(javacall_handle handle, 
+
+                                      int x, int y, int w, int h, BOOL visible)
 {
 #define DEFAULT_CAPTURE_DRIVER  0   
-#define DEFAULT_PREVIEW_RATE    150 /* ms unit => Increase this value to optimize performance */
+#define DEFAULT_PREVIEW_RATE    150 
+    /* ms unit => Increase this value to optimize performance */
     
     BOOL ret;
     camera_handle* pHandle = (camera_handle*)handle;
@@ -240,14 +244,16 @@ static HWND camera_set_preview_window(javacall_handle handle, int x, int y, int 
 
     pHandle->hCapWnd = capCreateCaptureWindow(_T("Sun_Java_Cap_Window"), 
                    wsVisible | WS_CHILD | WS_CLIPSIBLINGS, 
-                   x + X_SCREEN_OFFSET, y + Y_SCREEN_OFFSET, w, h, GET_MCIWND_HWND(), 0xffff);
+                   x + X_SCREEN_OFFSET, y + Y_SCREEN_OFFSET + TOP_BAR_HEIGHT, 
+                   w, h, GET_MCIWND_HWND(), 0xffff);
 
     JAVA_DEBUG_PRINT1("[camera] capCreateCaptureWindow %d\n", pHandle->hCapWnd);
 
     if (pHandle->hCapWnd) {
         ret = capDriverConnect(pHandle->hCapWnd, DEFAULT_CAPTURE_DRIVER);
         if (FALSE == ret) {
-            JAVA_DEBUG_PRINT("[camera] capDriverConnect fail - is there camera attached?\n");
+            JAVA_DEBUG_PRINT(
+                "[camera] capDriverConnect fail - is there camera attached?\n");
             DestroyWindow(pHandle->hCapWnd);
             pHandle->hCapWnd = NULL;
             return NULL;
@@ -260,15 +266,15 @@ static HWND camera_set_preview_window(javacall_handle handle, int x, int y, int 
     return pHandle->hCapWnd;
 }
 
-/**********************************************************************************/
+/******************************************************************************/
 
 /**
  * Create camera native handle
  */
 static javacall_handle camera_create(javacall_int64 playerId, 
-									 javacall_media_type mediaType, 
-									 const javacall_utf16* URI, 
-									 long contentLength)
+                                     javacall_media_type mediaType, 
+                                     const javacall_utf16* URI, 
+                                     long contentLength)
 {
     camera_handle* pHandle = MALLOC(sizeof(camera_handle));
     if (NULL == pHandle) return NULL;
@@ -291,18 +297,18 @@ static javacall_result camera_destroy(javacall_handle handle)
 }
 
 /**
- * Close camera native handle (and destory preview window)
+ * Close camera native handle (and destroy preview window)
  */
 static javacall_result camera_close(javacall_handle handle)
 {
     camera_handle* pHandle = (camera_handle*)handle;
 
     if (pHandle->hCapWnd) {
-    	capSetCallbackOnFrame(pHandle->hCapWnd, NULL);
-    	capDriverDisconnect(pHandle->hCapWnd);
+        capSetCallbackOnFrame(pHandle->hCapWnd, NULL);
+        capDriverDisconnect(pHandle->hCapWnd);
         DestroyWindow(pHandle->hCapWnd);
         pHandle->hCapWnd = NULL;
-	}
+    }
 
     FREE(pHandle);
 
@@ -350,7 +356,8 @@ static javacall_result camera_start(javacall_handle handle)
 {
     camera_handle* pHandle = (camera_handle*)handle;
 
-    JAVA_DEBUG_PRINT2("[camera] camera_start %d %d\n", pHandle->hCapWnd, pHandle->visible);
+    JAVA_DEBUG_PRINT2("[camera] camera_start %d %d\n", 
+        pHandle->hCapWnd, pHandle->visible);
 
     /* Preview start only if there is preview window and visible is TRUE */
     if (NULL != pHandle->hCapWnd && JAVACALL_TRUE == pHandle->visible) {
@@ -359,7 +366,8 @@ static javacall_result camera_start(javacall_handle handle)
         else
             return JAVACALL_FAIL;
     } else if (NULL == pHandle->hCapWnd) {
-        /* If there is no camera preview window, create it with default position and size */
+        /* If there is no camera preview window, 
+        * create it with default position and size */
         HWND hCapWnd = camera_set_preview_window(
             handle, pHandle->x, pHandle->y, pHandle->w, pHandle->h, FALSE);
         if (NULL == hCapWnd) 
@@ -426,17 +434,18 @@ static long camera_get_duration(javacall_handle handle)
     return -1;
 }
 
-/**********************************************************************************/
+/*******************************************************************************/
 
-#define	IMAGEWIDTH(lpd)     ((LPBITMAPINFOHEADER)lpd)->biWidth
-#define	IMAGEHEIGHT(lpd)    ((LPBITMAPINFOHEADER)lpd)->biHeight
-#define	IMAGEBITS(lpd)      ((LPBITMAPINFOHEADER)lpd)->biBitCount
-#define	IMAGEBICLRUSED(lpd) ((LPBITMAPINFOHEADER)lpd)->biClrUsed
+#define IMAGEWIDTH(lpd)     ((LPBITMAPINFOHEADER)lpd)->biWidth
+#define IMAGEHEIGHT(lpd)    ((LPBITMAPINFOHEADER)lpd)->biHeight
+#define IMAGEBITS(lpd)      ((LPBITMAPINFOHEADER)lpd)->biBitCount
+#define IMAGEBICLRUSED(lpd) ((LPBITMAPINFOHEADER)lpd)->biClrUsed
 
 /**
  * Set camera snapshot size
  */
-static javacall_result camera_set_video_size(javacall_handle handle, long width, long height)
+static javacall_result camera_set_video_size(javacall_handle handle, 
+                                             long width, long height)
 {
     camera_handle* pHandle = (camera_handle*)handle;
     javacall_result ret = JAVACALL_FAIL;
@@ -479,7 +488,8 @@ static javacall_result camera_set_video_size(javacall_handle handle, long width,
 /**
  * Get original size of camera capture source
  */
-static javacall_result camera_get_video_size(javacall_handle handle, long* width, long* height)
+static javacall_result camera_get_video_size(javacall_handle handle, 
+                                             long* width, long* height)
 {
     camera_handle* pHandle = (camera_handle*)handle;
     javacall_result ret = JAVACALL_FAIL;
@@ -516,11 +526,13 @@ static javacall_result camera_get_video_size(javacall_handle handle, long* width
 /**
  * Set camera preview position and size
  */
-static javacall_result camera_set_video_location(javacall_handle handle, long x, long y, long w, long h)
+static javacall_result camera_set_video_location(javacall_handle handle, 
+                                                 long x, long y, long w, long h)
 {
     camera_handle* pHandle = (camera_handle*)handle;
 
-    JAVA_DEBUG_PRINT4("[camera] camera_set_video_location %d %d %d %d\n", x, y, w, h);
+    JAVA_DEBUG_PRINT4(
+        "[camera] camera_set_video_location %d %d %d %d\n", x, y, w, h);
 
     pHandle->x = x;
     pHandle->y = y;
@@ -536,7 +548,8 @@ static javacall_result camera_set_video_location(javacall_handle handle, long x,
 /**
  * Show or hide camera capture preview
  */
-static javacall_result camera_set_video_visible(javacall_handle handle, javacall_bool visible)
+static javacall_result camera_set_video_visible(javacall_handle handle, 
+                                                javacall_bool visible)
 {
     camera_handle* pHandle = (camera_handle*)handle;
     
@@ -545,10 +558,12 @@ static javacall_result camera_set_video_visible(javacall_handle handle, javacall
     /* Store visible state to cache */
     pHandle->visible = visible;
 
-    /* If there is no camera preview window, create it with default position and size */
+    /* If there is no camera preview window, 
+    create it with default position and size */
     if (NULL == pHandle->hCapWnd) {
         HWND hCapWnd = camera_set_preview_window(
-            handle, pHandle->x, pHandle->y, pHandle->w, pHandle->h, JAVACALL_TRUE == visible ? TRUE : FALSE);
+            handle, pHandle->x, pHandle->y, pHandle->w, pHandle->h, 
+            (JAVACALL_TRUE == visible) ? TRUE : FALSE);
         if (NULL == hCapWnd) return JAVACALL_FAIL;
     }
 
@@ -587,7 +602,8 @@ static void camera_init_snapshot_context()
  * Start snapshot
  */
 static javacall_result camera_start_video_snapshot(javacall_handle handle, 
-                                                   const javacall_utf16* imageType, long length)
+                                                   const javacall_utf16* imageType,
+                                                   long length)
 {
     camera_handle* pHandle = (camera_handle*)handle;
     long width;
@@ -607,7 +623,8 @@ static javacall_result camera_start_video_snapshot(javacall_handle handle,
 
     /* IMPL_NOTE - If there is no capture window, create it with non-visible state */
     if (NULL == pHandle->hCapWnd) {
-        camera_set_preview_window(handle, pHandle->x, pHandle->y, pHandle->w, pHandle->h, FALSE);
+        camera_set_preview_window(handle, 
+            pHandle->x, pHandle->y, pHandle->w, pHandle->h, FALSE);
     }
 
     /* Set frame size */
@@ -653,7 +670,8 @@ static javacall_result camera_start_video_snapshot(javacall_handle handle,
 /**
  * Get snapshot encoded data size
  */
-static javacall_result camera_get_video_snapshot_data_size(javacall_handle handle, long* size)
+static javacall_result camera_get_video_snapshot_data_size(javacall_handle handle, 
+                                                           long* size)
 {
     *size = _encodingDataSize;
     return JAVACALL_OK;
@@ -662,7 +680,8 @@ static javacall_result camera_get_video_snapshot_data_size(javacall_handle handl
 /**
  * Copy encoded snapshot data to buffer
  */
-static javacall_result camera_get_video_snapshot_data(javacall_handle handle, char* buffer, long size)
+static javacall_result camera_get_video_snapshot_data(javacall_handle handle, 
+                                                      char* buffer, long size)
 {
     if (size < _encodingDataSize) {
         return JAVACALL_OUT_OF_MEMORY;
@@ -670,14 +689,15 @@ static javacall_result camera_get_video_snapshot_data(javacall_handle handle, ch
 
     if (_pEncodingBuffer) {
         memcpy(buffer, _pEncodingBuffer, _encodingDataSize);
-        camera_init_snapshot_context(); /* Destroy old data to prepare new snapshot */
+        camera_init_snapshot_context(); 
+        /* Destroy old data to prepare new snapshot */
         return JAVACALL_OK;
     }
 
     return JAVACALL_FAIL;
 }
 
-/**********************************************************************************/
+/*******************************************************************************/
 
 /**
  * Camera basic javacall function interface
@@ -717,7 +737,7 @@ static media_snapshot_interface _camera_snapshot_itf = {
     camera_get_video_snapshot_data
 };
 
-/**********************************************************************************/
+/******************************************************************************/
  
 /* Global camera interface */
 media_interface g_camera_itf = {
