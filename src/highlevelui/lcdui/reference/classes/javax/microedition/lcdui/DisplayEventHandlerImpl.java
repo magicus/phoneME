@@ -209,16 +209,34 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
                 foregroundController.stopPreempting(
                     preemptingDisplay.getDisplayId());
 
+            }
+        }
+    }
+
+    /**
+     * Called by Display to notify DisplayEventHandler that
+     * Display has been sent to the background to finish
+     * preempt process if any.
+     *
+     * @param displayId id of Display
+     */
+    public void onDisplayBackgroundProcessed(int displayId) {
+
+        synchronized (this) {
+            if (preemptingDisplay != null &&
+                preemptingDisplay.getDisplayId() == displayId) {
+
                 displayContainer.removeDisplay(
                     preemptingDisplay.getNameOfOwner());
-
+    
                 preemptingDisplay = null;
-
+    
                 // A midlet may be waiting to preempt
                 this.notify();
             }
         }
     }
+
 
     /**
      * Get the Image of the trusted icon for this Display.

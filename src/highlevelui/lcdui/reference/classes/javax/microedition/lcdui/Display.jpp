@@ -3063,6 +3063,7 @@ public class Display {
                 // #endif ENABLE_CHAMELEON
                 currentCopy.uCallFreeze();
             }
+            displayEventHandlerImpl.onDisplayBackgroundProcessed(displayId);
         }
     } // END ForegroundEventConsumerImpl Class
 

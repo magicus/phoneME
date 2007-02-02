@@ -67,6 +67,15 @@ public interface DisplayEventHandler {
     public void donePreempting(Object preemptToken);
 
     /**
+     * Called by Display to notify DisplayEventHandler that
+     * Display has been sent to the background to finish
+     * preempt process if any.
+     *
+     * @param displayId id of Display
+     */
+    public void onDisplayBackgroundProcessed(int displayId);
+
+    /**
      * Initialize Display Event Handler
      *
      * @param theEventQueue the event queue

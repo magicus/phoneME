@@ -410,15 +410,12 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      * and sets this DisplayableLF to FROZEN state.
      */
     public void uCallFreeze() {
- //       uCallHide();
-
         synchronized (Display.LCDUILock) {
             // Delete native resources and update ticker
             lCallHide();
             // set state
             state = FROZEN;
         }
-
     }
 
     /**
