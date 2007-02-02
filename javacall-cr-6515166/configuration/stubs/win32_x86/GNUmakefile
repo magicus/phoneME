@@ -36,7 +36,7 @@ include environment.gmk
 
 #For each project location for basic definitions shall be specified
 #(location of the used javacall_platform_defs.h)
-JAVACALL_PLATFORM_DEFS_DIR=$(JAVACALL_DIR)/implementation/win32
+JAVACALL_PLATFORM_DEFS_DIR=$(JAVACALL_DIR)/implementation/stubs
 
 #For each project specified toolchain shall be selected
 include $(JAVACALL_DIR)/build/vc/rules.gmk
@@ -44,4 +44,4 @@ include $(JAVACALL_DIR)/build/vc/rules.gmk
 #Specific targets can be achieved before and after achievement of common targets
 #Specify these targets after including 'rules.gmk' file.
 pre_target:
-post_target: $(JAVACALL_OUTPUT_LIB_DIR)/emulator.res
+post_target:

@@ -36,12 +36,12 @@ javacall_common: create_output_dirs copy_include_files
 PREFIX_true=1
 
 #Form list of objects
-VPATH+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr)_JC)), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)))
-PORTING_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr)_JC)), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.c))))
+VPATH+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)))
+PORTING_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.c))))
 
 
 #From list of header files
-JAVACALL_INCLUDE_DIR_SET_LOCAL=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr)_JC)), $($(jsr)_JC_DIR)))
+JAVACALL_INCLUDE_DIR_SET_LOCAL=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_DIR)))
 JAVACALL_INCLUDE_DIR_SET=$(addprefix $(JAVACALL_DIR)/interface/,$(JAVACALL_INCLUDE_DIR_SET_LOCAL))
 JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach dir,$(JAVACALL_INCLUDE_DIR_SET),$(wildcard $(dir)/*.h))
 
@@ -89,7 +89,7 @@ JAVACALL_INCLUDE_TARGET_FILES_SET:=$(foreach file,$(JAVACALL_INCLUDE_SOURCE_FILE
 
 $(JAVACALL_INCLUDE_TARGET_FILES_SET): $(JAVACALL_INCLUDE_SOURCE_FILES_SET)
 	@echo Copying include files...
-	@cp --target-directory=$(JAVACALL_OUTPUT_INCLUDE_DIR) -f $^
+	@cp -f $^ $(JAVACALL_OUTPUT_INCLUDE_DIR)
 
 $(JAVACALL_OUTPUT_DIR) $(JAVACALL_OUTPUT_INCLUDE_DIR) $(JAVACALL_OUTPUT_OBJ_DIR) $(JAVACALL_OUTPUT_LIB_DIR) $(JAVACALL_OUTPUT_EXT_LIB_DIR):
 	@echo Creating $@...
@@ -101,4 +101,3 @@ copy_include_files: $(JAVACALL_INCLUDE_TARGET_FILES_SET)
 
 clean:
 	@rm -rf $(JAVACALL_OUTPUT_DIR)
-	@rm -rf $(MIDP_JC_IMPL_PATH)/midp/moc_lcd_qte.cpp
