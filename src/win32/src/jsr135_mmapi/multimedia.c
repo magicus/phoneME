@@ -162,8 +162,8 @@ static media_interface* _itfTable[] = {
 /**
  * Checks, that second string contains first as prefix
  */
-static int check_prefix(javacall_const_utf16_string left,
-                        javacall_const_utf16_string right)
+static int check_prefix(const char* left,
+                        const char* right)
 {
     int length = strlen(left);
     return strncmp(left, right, length);
