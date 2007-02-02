@@ -24,8 +24,6 @@
  * information or have any questions. 
  */
 
-#include <unistd.h>
-
 #include <kni.h>
 #include <keymap_input.h>
 #include <midp_logging.h>
@@ -241,7 +239,7 @@ keymap_get_key_name(int keyCode)
             return map->name;
         }
     }
-    return NULL;
+    return 0;
 }
 
 /**
