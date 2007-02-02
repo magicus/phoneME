@@ -59,11 +59,6 @@
 #include <midpUtilKni.h>
 #include <push_server_export.h>
 
-#if (ENABLE_JSR_135)
-extern javacall_media_initialize();
-extern javacall_media_finalize();
-#endif
-
 /**
  * @file
  *
@@ -502,9 +497,6 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
         return MIDP_ERROR_STATUS;
     }
 #endif
-#if (ENABLE_JSR_135)
-    javacall_media_initialize();
-#endif
 
     commandState = midpGetCommandState();
 
@@ -708,9 +700,6 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
 
 #if (ENABLE_JSR_120 || ENABLE_JSR_205)
     finalize_jsr120();
-#endif
-#if (ENABLE_JSR_135)
-    javacall_media_finalize();
 #endif
 
     return vmStatus;
