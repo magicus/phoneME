@@ -438,7 +438,7 @@ public final class Permissions {
         new PermissionSpec("javax.microedition.location.Location",
             LOCATION_GROUP),
         new PermissionSpec("javax.microedition.location.Orientation",
-            ALLOWED_GROUP),
+            LOCATION_GROUP),
         new PermissionSpec("javax.microedition.location.ProximityListener",
             LOCATION_GROUP),
         new PermissionSpec("javax.microedition.location.LandmarkStore.read",
