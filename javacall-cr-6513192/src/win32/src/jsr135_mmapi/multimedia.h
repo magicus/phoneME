@@ -48,6 +48,16 @@ extern "C" {
 #define JAVA_DEBUG_PRINT3(x, a, b, c)    printf((x), (a), (b), (c))
 #define JAVA_DEBUG_PRINT4(x, a, b, c, d) printf((x), (a), (b), (c), (d))
 
+/*
+ * - From midp_lcdui_md.c file -
+ * This (x,y) coordinate pair refers to the offset of the upper
+ * left corner of the display screen within the MIDP phone handset
+ * graphic window
+ */ 
+#define TOP_BAR_HEIGHT      (11)
+#define X_SCREEN_OFFSET     (30)
+#define Y_SCREEN_OFFSET     (131 + TOP_BAR_HEIGHT)
+
 #define MALLOC(_size_)            malloc((_size_))
 #define REALLOC(_ptr_, _size_)    realloc((_ptr_), (_size_))
 #define FREE(_ptr_)               free((_ptr_))
