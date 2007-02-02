@@ -218,7 +218,7 @@ jumpMessageQueueDestroy(JUMPPlatformCString type)
     return 0;
 }
 
-JUMPMessageQueueHandle 
+JUMPMessageQueueHandle  
 jumpMessageQueueOpen(int processId, JUMPPlatformCString type) 
 {
     int mqid;
@@ -228,7 +228,7 @@ jumpMessageQueueOpen(int processId, JUMPPlatformCString type)
     if (mqid == -1) {
 	return NULL;
     } else {
-	return (JUMPMessageQueueHandle)mqid;
+	return (JUMPMessageQueueHandle)(mqid + 1);
     }
 }
 
@@ -251,7 +251,7 @@ jumpMessageQueueSend(JUMPMessageQueueHandle handle,
 		     char *buffer,
 		     int messageDataSize)
 {
-    int mqid = (int)handle;
+    int mqid = (int)handle - 1;
     struct msgbuf* message = (struct msgbuf *)buffer;
     int mlen = messageDataSize;
     int status;

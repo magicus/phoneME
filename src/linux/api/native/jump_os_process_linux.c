@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include "porting/JUMPProcess.h"
@@ -144,6 +145,52 @@ jumpProcessCreate(int argc, char** argv)
     dumpMessage(outMessage, "Outgoing message:");
 
     /* Time to send outgoing message */
+    targetAddress.processId = serverPid;
+    response = jumpMessageSendSync(targetAddress, outMessage, 0, &code);
+    dumpMessage(response, "Command response:");
+    return getChildPid(response);
+}
+
+int 
+jumpProcessRunDriver(char *driver_name) {
+    int argc = 1;
+    char *argv[2];
+    
+    argv[0] = driver_name;
+    argv[1] = NULL;
+    return jumpProcessNativeCreate(argc, argv);
+}
+
+int 
+jumpProcessNativeCreate(int argc, char** argv)
+{
+    JUMPPlatformCString type = "mvm/server";
+    JUMPOutgoingMessage outMessage;
+    JUMPMessage response;
+    JUMPMessageMark mark;
+    JUMPAddress targetAddress;
+    JUMPMessageStatusCode code;
+    int numWords = 0;
+    int i;
+    
+    outMessage = jumpMessageNewOutgoingByType(type);
+    jumpMessageMarkSet(&mark, outMessage);
+    jumpMessageAddInt(outMessage, numWords);
+    
+    jumpMessageAddString(outMessage, "JNATIVE");
+    numWords += 1;
+    
+    for (i = 0; i < argc; i++) {
+        jumpMessageAddString(outMessage, (char*)argv[i]);
+    }
+    numWords += argc;
+
+    jumpMessageMarkResetTo(&mark, outMessage);
+    jumpMessageAddInt(outMessage, numWords);
+    
+    jumpMessageMarkResetTo(&mark, outMessage);
+    dumpMessage(outMessage, "Outgoing message:");
+
     targetAddress.processId = serverPid;
     response = jumpMessageSendSync(targetAddress, outMessage, 0, &code);
     dumpMessage(response, "Command response:");
