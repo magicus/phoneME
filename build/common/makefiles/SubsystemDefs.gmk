@@ -24,12 +24,6 @@
 # information or have any questions. 
 #
 
-# Subsystems.gmk may populate file list, so it has to included
-# after the "remove_filelist" above.
-# Global Module definitions
-# (No '-' since subsystem MUST exists)
-include $(JWC_WORK_SPACE)/build/common/makefiles/Subsystems.gmk
-
 # The Configurator generates Java and C files so these definitions
 # and rules must occur before any Java and C dependencies for
 # classes.zip
@@ -367,3 +361,15 @@ EXTRA_CFLAGS		+= $(SUBSYSTEM_MEDIA_EXTRA_CFLAGS)
 endif
 endif
 endif
+
+# Subsystems.gmk may populate file list, so it has to included
+# after the "remove_filelist" above.
+# Global Module definitions
+# (No '-' since subsystem MUST exists)
+
+# IMPL_NOTE:  
+#   It is important to compose proper JTWI_NATIVE_FILES value
+#   prior to include "make" rules for libraries and executables
+#   dependent of native source files.
+
+include $(JWC_WORK_SPACE)/build/common/makefiles/Subsystems.gmk
