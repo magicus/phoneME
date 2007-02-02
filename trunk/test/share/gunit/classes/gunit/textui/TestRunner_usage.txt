@@ -1,6 +1,6 @@
 # @(#)TestRunner_usage.txt	1.6 06/10/25
 #
-# Copyright 2006 Sun Microsystems, Inc. All rights reserved
+# Copyright  2006 Sun Microsystems, Inc. All rights reserved.
 #
 
 Usage : java gunit.textui.TestRunner [<options>] <testcase-class> |
