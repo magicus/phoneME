@@ -256,37 +256,6 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
 /**********************************************************************************/
 
 /**
- * @defgroup MediaMandatoryInitFunctions          Mandatory Media library initilization functions
- * @ingroup JSR135
- *
- * @brief Intialize multimedia javacall library
- * 
- * @{
- */
-
-/**
- * Call this function when VM starts
- * Perform global initialization operation
- * 
- * @retval JAVACALL_OK      success
- * @retval JAVACALL_FAIL    fail
- */
-javacall_result javacall_media_initialize(void);
-
-/**
- * Call this function when VM ends 
- * Perfrom global free operaiton
- * 
- * @retval JAVACALL_OK      success
- * @retval JAVACALL_FAIL    fail 
- */
-javacall_result javacall_media_finalize(void);
- 
-/** @} */
-
-/**********************************************************************************/
-
-/**
  * @defgroup MediaMandatoryConfiguration     Mandatory Configuration API
  * @ingroup JSR135
  *
@@ -301,7 +270,7 @@ javacall_result javacall_media_finalize(void);
  * The last item of javacall_media_caps array should hold NULL mimeType value
  * Java layer will use this NULL value as a end of item mark
  */
-javacall_media_caps* javacall_media_get_caps(void);
+const javacall_media_caps* javacall_media_get_caps(void);
 
 /** @} */ 
 
@@ -401,7 +370,7 @@ javacall_result javacall_media_protocol_handled_by_device(javacall_handle handle
  * Java MMAPI call this function to send media data to this library
  * This function can be called multiple time to send large media data
  * Native library could implement buffering by using any method (for example: file, heap and etc...)
- * And, buffering occured in sequentially. not randomly.
+ * And, buffering occurred in sequentially. not randomly.
  * 
  * When there is no more data, Java indicates end of buffering by setting buffer to NULL and length to -1.
  * OEM should care about this case.
@@ -484,7 +453,7 @@ long javacall_media_get_time(javacall_handle handle);
 
 /**
  * Seek to specified time.
- * This function can be called during play staus or stop status
+ * This function can be called during play status or stop status
  * 
  * @param handle    Handle to the library
  * @param ms        Seek position as ms time
@@ -495,7 +464,7 @@ long javacall_media_set_time(javacall_handle handle, long ms);
  
 /**
  * Get whole media time in ms.
- * This function can be called during play staus or stop status.
+ * This function can be called during play status or stop status.
  * 
  * @param handle    Handle to the library
  * 
@@ -666,7 +635,7 @@ javacall_result javacall_media_set_video_visible(javacall_handle handle, javacal
     
 /**
  * Start get current snapshot of video data
- * When snapshot operation doen, call callback function to provide snapshot image data to Java.
+ * When snapshot operation done, call callback function to provide snapshot image data to Java.
  *
  * @param handle            Handle to the library
  * @param imageType         Snapshot image type format as unicode string. 
@@ -1369,7 +1338,7 @@ int javacall_media_get_record_content_type_length(javacall_handle handle);
  *
  * @param handle                Handle of native player
  * @param contentTypeBuf        Buffer to return content type unicode string
- * @param contentTypeBufLength  Lenght of contentTypeBuf buffer (in unicode metrics)
+ * @param contentTypeBufLength  Length of contentTypeBuf buffer (in unicode metrics)
  *
  * @return  Length of content type string stored in contentTypeBuf
  */
@@ -1419,7 +1388,7 @@ javacall_result javacall_media_close_recording(javacall_handle handle);
  * @param handle    Handle to the native player
  * @param option    MVM options. Check about javacall_media_mvm_option type definition.
  * 
- * @retval JAVACALL_OK      Somthing happened
+ * @retval JAVACALL_OK      Something happened
  * @retval JAVACALL_FAIL    Nothing happened. JVM ignore this return value now.
  */
 javacall_result javacall_media_to_foreground(javacall_handle handle,
@@ -1438,7 +1407,7 @@ javacall_result javacall_media_to_foreground(javacall_handle handle,
  * @param handle    Handle to the native player
  * @param option    MVM options. Check about javacall_media_mvm_option type definition.
  * 
- * @retval JAVACALL_OK      Somthing happened
+ * @retval JAVACALL_OK      Something happened
  * @retval JAVACALL_FAIL    Nothing happened. JVM ignore this return value now.
  */
 javacall_result javacall_media_to_background(javacall_handle handle,

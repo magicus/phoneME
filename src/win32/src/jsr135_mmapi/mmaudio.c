@@ -30,15 +30,12 @@
 
 #define TIMER_CALLBACK_DURATION 500
 
-extern void java_reset_midi_out();
-extern CRITICAL_SECTION g_critSection;
-
 /* Native porting layer context */
 typedef struct {
     HWND                hWnd;
     javacall_int64      playerId;
     UINT                timerId;
-	long				duration;
+    long                duration;
     long                curTime;
     long                offset;
     javacall_media_type mediaType;
@@ -77,15 +74,16 @@ static void CALLBACK audio_timer_callback(UINT uID, UINT uMsg,
                                           DWORD dwUser, 
                                           DWORD dw1, 
                                           DWORD dw2) {
-	audio_handle* pHandle = (audio_handle*)dwUser;
+    audio_handle* pHandle = (audio_handle*)dwUser;
 
     if (pHandle->hWnd) {
-		if (-1 == pHandle->duration) {
-			pHandle->duration = MCIWndGetLength(pHandle->hWnd);
-			JAVA_DEBUG_PRINT1("[jc_media] audio_timer_callback %d\n", pHandle->duration);
-		}
+        if (-1 == pHandle->duration) {
+            pHandle->duration = MCIWndGetLength(pHandle->hWnd);
+            JAVA_DEBUG_PRINT1("[jc_media] audio_timer_callback %d\n", 
+                pHandle->duration);
+        }
 
-		pHandle->offset = MCIWndGetPosition(pHandle->hWnd);
+        pHandle->offset = MCIWndGetPosition(pHandle->hWnd);
         pHandle->curTime = pHandle->offset;
         
         /* Is end of media reached? */
@@ -94,9 +92,11 @@ static void CALLBACK audio_timer_callback(UINT uID, UINT uMsg,
             pHandle->timerId = 0;
             pHandle->offset = 0;
             timeKillEvent(uID);
-            JAVA_DEBUG_PRINT1("[jc_media] javanotify_on_media_notification %d\n", pHandle->playerId);
-            javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA, pHandle->playerId, 
-                                             (void*)pHandle->duration);
+            JAVA_DEBUG_PRINT1("[jc_media] javanotify_on_media_notification %d\n", 
+                pHandle->playerId);
+
+            javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA, 
+                pHandle->playerId, (void*)pHandle->duration);
         }
     }
 
@@ -138,7 +138,7 @@ static int audio_get_temp_file_name(javacall_media_type mediaType,
 
 }
 
-/**********************************************************************************/
+/*******************************************************************************/
 
 /**
  * 
@@ -162,8 +162,8 @@ static javacall_handle audio_create(javacall_int64 playerId,
 
     pHandle->hWnd = NULL;
     pHandle->offset = 0;
-	pHandle->duration = -1;
-	pHandle->curTime = 0;
+    pHandle->duration = -1;
+    pHandle->curTime = 0;
     pHandle->playerId = playerId;
     pHandle->timerId = 0;
     pHandle->isForeground = JAVACALL_TRUE;
@@ -182,7 +182,7 @@ static javacall_result audio_close(javacall_handle handle){
     if (NULL != pHandle->hWnd) {
         MCIWndClose(pHandle->hWnd);
         MCIWndDestroy(pHandle->hWnd);
-		pHandle->hWnd = NULL;
+        pHandle->hWnd = NULL;
     }
 
     if (handle) {
@@ -216,7 +216,7 @@ static javacall_result audio_release_device(javacall_handle handle){
 /**
  * Store media data to temp file (except JTS type)
  */
-long audio_do_buffering(javacall_handle handle, const void* buffer, 
+static long audio_do_buffering(javacall_handle handle, const void* buffer, 
                         long length, long offset){
 
     audio_handle* pHandle = (audio_handle*)handle;
@@ -247,7 +247,7 @@ long audio_do_buffering(javacall_handle handle, const void* buffer,
 /**
  * Delete temp file
  */
-javacall_result audio_clear_buffer(javacall_handle hLIB){
+static javacall_result audio_clear_buffer(javacall_handle hLIB){
 
     audio_handle* pHandle = (audio_handle*)hLIB;
 
@@ -284,19 +284,13 @@ static javacall_result audio_start(javacall_handle handle){
         pHandle->curTime = 0;
     }
 
-    /* IMPL_NOTE - Close all MIDI out temporary to play MIDI file sequence */
-    if (JAVACALL_AUDIO_MIDI == pHandle->mediaType) {
-        EnterCriticalSection(&g_critSection);
-        java_close_midi_out();
-        LeaveCriticalSection(&g_critSection);
-    }
-
     /* Start play */
     if (pHandle->hWnd && 0 == MCIWndPlay(pHandle->hWnd)) {
         JAVA_DEBUG_PRINT("[jc_media] - javacall_media_start OK\n");
         pHandle->duration = MCIWndGetLength(pHandle->hWnd);
         pHandle->timerId = 
-            (UINT)timeSetEvent(TIMER_CALLBACK_DURATION, 100, audio_timer_callback,(DWORD)pHandle, TIME_PERIODIC);
+            (UINT)timeSetEvent(TIMER_CALLBACK_DURATION, 100, 
+            audio_timer_callback,(DWORD)pHandle, TIME_PERIODIC);
         return JAVACALL_OK;
     }
 
@@ -311,7 +305,7 @@ static javacall_result audio_stop(javacall_handle handle){
     audio_handle* pHandle = (audio_handle*)handle;
     audio_prepare_MCIWnd(pHandle);
 
-	if (pHandle->hWnd) {
+    if (pHandle->hWnd) {
         /* Get stopped position for later use */
         pHandle->offset = MCIWndGetPosition(pHandle->hWnd);
         if (pHandle->offset >= MCIWndGetLength(pHandle->hWnd)) {
@@ -357,7 +351,8 @@ static javacall_result audio_resume(javacall_handle handle){
     audio_prepare_MCIWnd(pHandle);
 
     if (pHandle->hWnd) {
-        pHandle->timerId = (UINT)timeSetEvent(500, 100, audio_timer_callback,(DWORD)pHandle, TIME_PERIODIC);
+        pHandle->timerId = (UINT)timeSetEvent(500, 100, 
+            audio_timer_callback,(DWORD)pHandle, TIME_PERIODIC);
         MCIWndResume(pHandle->hWnd);
     }
 
@@ -386,10 +381,10 @@ static long audio_set_time(javacall_handle handle, long ms){
     audio_handle* pHandle = (audio_handle*)handle;
     audio_prepare_MCIWnd(pHandle);
 
-	if (pHandle->hWnd) {
+    if (pHandle->hWnd) {
         long real_ms = MCIWndSeek(pHandle->hWnd, ms);
         pHandle->offset = ms;
-	    return ms;
+        return ms;
     }
 
     return -1;
@@ -399,14 +394,15 @@ static long audio_set_time(javacall_handle handle, long ms){
  * 
  */
 static long audio_get_duration(javacall_handle handle) {
-	audio_handle* pHandle = (audio_handle*)handle;
+    audio_handle* pHandle = (audio_handle*)handle;
     return pHandle->duration;
 }
 
 /**
  * Now, switch to foreground
  */
-static javacall_result audio_switch_to_foreground(javacall_handle handle, int options) {
+static javacall_result audio_switch_to_foreground(javacall_handle handle, 
+                                                  int options) {
     audio_handle* pHandle = (audio_handle*)handle;
     pHandle->isForeground = JAVACALL_TRUE;
 
@@ -416,7 +412,8 @@ static javacall_result audio_switch_to_foreground(javacall_handle handle, int op
 /**
  * Now, switch to background
  */
-static javacall_result audio_switch_to_background(javacall_handle handle, int options) {
+static javacall_result audio_switch_to_background(javacall_handle handle, 
+                                                  int options) {
     audio_handle* pHandle = (audio_handle*)handle;
     pHandle->isForeground = JAVACALL_FALSE;
 
@@ -464,7 +461,7 @@ static javacall_result audio_set_mute(javacall_handle handle,
     return JAVACALL_TRUE;
 }
 
-/**********************************************************************************/
+/*******************************************************************************/
 
 /**
  * Audio basic javacall function interface
@@ -499,7 +496,7 @@ static media_volume_interface _audio_volume_itf = {
     audio_set_mute
 };
 
-/**********************************************************************************/
+/*******************************************************************************/
  
 /* Global audio interface */
 media_interface g_audio_itf = {
