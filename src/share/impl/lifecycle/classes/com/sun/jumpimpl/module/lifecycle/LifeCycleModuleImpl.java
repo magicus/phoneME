@@ -53,6 +53,7 @@ public class LifeCycleModuleImpl
     private JUMPExecutive exec;
     private RequestSenderHelper rsh;
     private Object messageRegistration;
+    private String defaultVMArgs;
     
     LifeCycleModuleImpl() {
 	exec = JUMPExecutive.getInstance();
@@ -61,12 +62,21 @@ public class LifeCycleModuleImpl
 	processes = new Vector();
 	isolates = new Vector();
     }
-    
+
     /**
-     * Create new isolate conforming to <code>model</code>
+     * Create new isolate conforming to <code>model</code>,
+     * and with additional VM arugments.
      */
-    public JUMPIsolateProxy newIsolate(JUMPAppModel model) {
-	String[] args = new String[] { model.getName() };
+    public JUMPIsolateProxy newIsolate(JUMPAppModel model, String vmArgs) {
+        String vmArgs0 = "";       
+        if (defaultVMArgs != null && !defaultVMArgs.equals("")) {
+            vmArgs0 = defaultVMArgs.trim() + " ";
+        }
+        if (vmArgs != null) {
+            vmArgs0 = vmArgs0 + vmArgs.trim();
+        }
+        String args[] = new String[] { vmArgs0, model.getName() };
+
 	// The following is inherently racy, but it is handled properly.
 	// 
 	// 1) The process is created
@@ -101,7 +111,15 @@ public class LifeCycleModuleImpl
 	//
         return isolate;
     }
-    
+
+
+    /**
+     * Create new isolate conforming to <code>model</code>
+     */
+    public JUMPIsolateProxy newIsolate(JUMPAppModel model) {
+        return newIsolate(model, null);
+    }
+
     /**
      * Create new native process
      */
@@ -158,6 +176,11 @@ public class LifeCycleModuleImpl
     }
     
     public void load(Map config) {
+        //
+        // Get the default VM arguments from config
+        //
+        defaultVMArgs = (String)config.get("vm.args");
+
 	//
 	// Get all lifecycle command messages here.
 	//

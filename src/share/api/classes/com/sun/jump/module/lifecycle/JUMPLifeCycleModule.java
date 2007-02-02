@@ -41,6 +41,12 @@ public interface JUMPLifeCycleModule extends JUMPModule {
      */
     public JUMPIsolateProxy newIsolate(JUMPAppModel model);
 
+    /**
+     * Create new isolate conforming to <code>model</code>,
+     * with additional VM arguments.
+     */
+    public JUMPIsolateProxy newIsolate(JUMPAppModel model, String vmArgs);
+
     /** 
      * Create new native process
      */
