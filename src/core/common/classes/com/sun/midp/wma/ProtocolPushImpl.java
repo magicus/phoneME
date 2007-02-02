@@ -69,6 +69,33 @@ public class ProtocolPushImpl extends ProtocolPush {
      */
     public void checkRegistration(String connection, String midlet,
                                   String filter) {
+        // for cbs: protocol, the filter is ignored
+        if (connection.startsWith("cbs://")) {
+            return;
+        }
+
+        if (filter == null || filter.length() == 0) {
+            throw new IllegalArgumentException("NULL of empty filter");
+        }
+
+        /*
+         * for sms: the filter is compared against MSISDN field of the push message
+         *
+         * msisdn ::== "+" digits | digits
+         * digit ::== "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+         * digits ::== digit | digit digits
+         *
+         * '*' and '?' are allowed according to the MIDP spec.
+         */
+        for (int i = (filter.charAt(0) == '+') ? 1 : 0;
+                i < filter.length(); i++) {
+            char ch = filter.charAt(i);
+            if ((ch >= '0'  && ch <= '9') || ch == '*' || ch == '?') {
+                continue;
+            }
+            throw new IllegalArgumentException("Invalid filter: " + filter);
+        }
+           
     }
 
     /**
