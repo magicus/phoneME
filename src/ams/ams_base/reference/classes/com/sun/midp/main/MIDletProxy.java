@@ -375,15 +375,6 @@ public class MIDletProxy implements SuspendDependency {
     }
 
     /**
-     * Terminates ther MIDlet if it is neither paused nor destroyed.
-     */
-    public void terminateNotPausedMidlet() {
-        if (midletState != MIDLET_DESTROYED && midletState != MIDLET_PAUSED) {
-            MIDletProxyUtils.terminateMIDletIsolate(this, parent);
-        }
-    }
-
-    /**
      * Asynchronously change the MIDlet's state to destroyed.
      *
      * This method does NOT change the state in the proxy, but

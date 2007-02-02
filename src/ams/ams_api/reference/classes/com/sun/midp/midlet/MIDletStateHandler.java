@@ -114,6 +114,8 @@ public class MIDletStateHandler {
     /** New MIDlet peer waiting for the next MIDlet created to claim it. */
     private static MIDletPeer newMidletPeer;
 
+    /** Flag to identify forced destroying. */
+    private boolean forceDestroying;
 
     /**
      * Construct a new MIDletStateHandler object.
@@ -520,25 +522,26 @@ public class MIDletStateHandler {
                     break;
 
                 case MIDletPeer.DESTROY_PENDING:
-                    // If the MIDlet is in the DESTROY_PENDING state
-                    // call its destroyApp method to clean it up.
-                    try {
-                        // Tell the MIDlet to cleanup.
-                        curr.destroyApp(true);
-                    } catch (MIDletStateChangeException ex) {
-                        if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                            Logging.report(Logging.WARNING,
-                                           LogChannels.LC_AMS,
-                                           "destroyApp  threw a " +
-                                           "MIDletStateChangeException");
+                    if (!forceDestroying) {
+                        try {
+                            // Tell the MIDlet to cleanup.
+                            curr.destroyApp(true);
+                        } catch (MIDletStateChangeException ex) {
+                            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                                Logging.report(Logging.WARNING,
+                                               LogChannels.LC_AMS,
+                                               "destroyApp  threw a " +
+                                               "MIDletStateChangeException");
+                            }
+                            exceptionHandler.handleException(ex);
+                        } catch (Throwable ex) {
+                            if (Logging.TRACE_ENABLED) {
+                                Logging.trace(ex, "destroyApp threw an Exception");
+                            }
+                            exceptionHandler.handleException(ex);
                         }
-                        exceptionHandler.handleException(ex);
-                    } catch (Throwable ex) {
-                        if (Logging.TRACE_ENABLED) {
-                            Logging.trace(ex, "destroyApp threw an Exception");
-                        }
-                        exceptionHandler.handleException(ex);
                     }
+                    
                     break;
 
                 case MIDletPeer.DESTROYED:
@@ -570,6 +573,15 @@ public class MIDletStateHandler {
 
             this.notify();
         }
+    }
+
+    /**
+     * Destroyes the suite in forced manner, that is without calling
+     * distroyApp() methods of MIDlets.
+     */
+    public synchronized void forceDestroySuite() {
+        forceDestroying = true;
+        destroySuite();
     }
 
     /**

@@ -34,8 +34,12 @@ import com.sun.midp.lcdui.DisplayEventHandler;
 import com.sun.midp.lcdui.SystemAlert;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
+import com.sun.midp.midlet.MIDletStateHandler;
 
 import javax.microedition.lcdui.AlertType;
+import javax.microedition.lcdui.CommandListener;
+import javax.microedition.lcdui.Command;
+import javax.microedition.lcdui.Displayable;
 import java.util.Vector;
 
 /**
@@ -95,16 +99,7 @@ public class SuspendSystem extends AbstractSubsystem {
          */
         protected synchronized void resumeImpl() {
             if (midletKilled && !midletPaused) {
-                String title = Resource.getString(
-                    ResourceConstants.SR_ALL_KILLED_ALERT_TITLE, null);
-                String msg = Resource.getString(
-                    ResourceConstants.SR_ALL_KILLED_ALERT_MSG, null);
-                DisplayEventHandler disp = DisplayEventHandlerFactory.
-                        getDisplayEventHandler(classSecurityToken);
-                SystemAlert alert = new SystemAlert(disp, title, msg,
-                        null, AlertType.WARNING);
-
-                alert.runInNewThread();
+                CollapseHandler.process(classSecurityToken);
             }
         }
 
@@ -265,6 +260,51 @@ public class SuspendSystem extends AbstractSubsystem {
                         (SuspendSystemListener)listeners.elementAt(i);
                 listener.midpResumed();
             }
+        }
+    }
+}
+
+/**
+ * Class for processing a case when all user MIDlets
+ * were destroyed during last system suspend operation.
+ */
+class CollapseHandler implements CommandListener {
+    private static SecurityToken securityToken;
+    private CollapseHandler() {};
+
+    /**
+     * Handles the collapse case: shows collapse alert and registers
+     * a listener, which finishes processing ater user's confirmation.
+     * @param st security token for accessing restricted API's
+     */
+    static void process(SecurityToken st) {
+        securityToken = st;
+
+        String title = Resource.getString(
+            ResourceConstants.SR_ALL_KILLED_ALERT_TITLE, null);
+        String msg = Resource.getString(
+            ResourceConstants.SR_ALL_KILLED_ALERT_MSG, null);
+
+        DisplayEventHandler disp = DisplayEventHandlerFactory.
+                getDisplayEventHandler(securityToken);
+        SystemAlert alert = new SystemAlert(disp, title, msg,
+                null, AlertType.WARNING);
+
+        alert.setCommandListener(new CollapseHandler());
+        alert.runInNewThread();
+    }
+
+    /**
+     * Processes user action to collapse alert.
+     * @param c command received, it is always the same
+     * @param d always the collapse alert
+     */
+    public void commandAction(Command c, Displayable d) {
+        MIDletProxyList mpl =
+                MIDletProxyList.getMIDletProxyList(securityToken);
+
+        if (!mpl.getMIDlets().hasMoreElements()) {
+            MIDletStateHandler.getMidletStateHandler().forceDestroySuite();
         }
     }
 }

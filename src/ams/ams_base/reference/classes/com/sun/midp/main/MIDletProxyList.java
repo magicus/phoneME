@@ -615,10 +615,15 @@ public class MIDletProxyList
 
             for (int i = midletProxies.size() - 1; i >= 0; i--) {
                 current = (MIDletProxy)midletProxies.elementAt(i);
+                int state = current.getMidletState();
 
-                current.terminateNotPausedMidlet();
+                if (MIDletProxy.MIDLET_DESTROYED != state &&
+                            MIDletProxy.MIDLET_PAUSED != state) {
+                    MIDletProxyUtils.terminateMIDletIsolate(current, this);
+                    current.destroyedNotification();
+                    removeMidletProxy(current);
+                }
             }
-
         }
     }
 
