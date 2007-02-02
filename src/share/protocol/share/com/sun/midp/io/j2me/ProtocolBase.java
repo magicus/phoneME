@@ -447,5 +447,9 @@ public abstract class ProtocolBase implements MessageConnection,
                                throws IOException;
 
     public abstract Connection openPrim(String name, int mode, boolean timeouts) throws IOException;
-    public abstract void close() throws IOException;    
+    public abstract void close() throws IOException;
+    public abstract DataInputStream openDataInputStream() throws IOException;
+    public abstract DataOutputStream openDataOutputStream() throws IOException;
+    public abstract InputStream openInputStream() throws IOException;
+    public abstract OutputStream openOutputStream() throws IOException;
 }
