@@ -37,7 +37,7 @@ static void wma_handler(JUMPMessage *m, jmpMessageQueue queue, void *context) {
     unsigned char buf[JUMP_MSG_MAX_LENGTH];
 
     (void)queue; (void)context;
-    if (m->messageType != NULL && !strcmp(m->messageType, "wma/test")) {
+    if (m->messageType != NULL && !strcmp(m->messageType, "wma/jsr120")) {
         JUMPMessage *mm = jumpMessageResponseInBuffer(m, buf, sizeof buf);
         int offset = 0;
         jumpMessageWriteString(mm, &offset, "Hello");
