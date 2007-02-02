@@ -55,6 +55,7 @@
 #include "porting/JUMPProcess.h"
 
 #include "zip_util.h"
+#include "native_process.h"
 
 /*
  * Free (argc, argv[]) set
@@ -994,6 +995,85 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    if (!strcmp(argv[0], "JDETACH")) {
 		amExecutive = CVM_TRUE;
 	    }
+        if (!strcmp(argv[0], "JNATIVE")) {
+            TaskRec* task;
+            ProcessRec* process;
+#define JNATIVE_USAGE   "Usage: JNATIVE <proc_name>[ <proc_args>...]"
+            if (argc < 2) {
+jnative_usage:
+                respondWith(command, JNATIVE_USAGE);
+                freeArgs(argc, argv);
+                argc = 0;
+                argv = NULL;
+                jumpMessageFree(command);
+                command = readRequestMessage();
+                continue;
+            }
+            for (task = taskList; task != NULL; task = task->next) {
+                int len = strlen(argv[1]);
+                if (!strncmp(task->command, "JNATIVE ", 8) &&
+                    !strncmp(task->command+8, argv[1], len) &&
+                    (task->command[8+len] == '\0' ||
+                        task->command[8+len] == ' ')) {
+                    break;
+                }
+            }
+            if (task != NULL) {
+                respondWith2(command, "CHILD PID=%d", task->pid);
+                freeArgs(argc, argv);
+                argc = 0;
+                argv = NULL;
+                jumpMessageFree(command);
+                command = readRequestMessage();
+                continue;
+            }
+            
+            for (process = nativeProcessList; 
+                        process->procName != NULL; process++) {
+                if (!strcmp(process->procName, argv[1])) {
+                    break;
+                }
+            }
+            if (process->proc == NULL) {
+                goto jnative_usage;
+            }
+            pid = fork();
+            if (pid == -1) {
+                amExecutive = CVM_FALSE;
+                perror("fork()");
+                goto jnative_usage;
+            }
+            if (pid == 0) {
+#define MSGPREFIX_NATIVE "native"
+                int mypid = getpid();
+                JUMPMessageQueueStatusCode code = 0;
+                unsigned char *type = 
+                    malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
+                
+                assert(type != NULL);
+                
+                strcpy(type, MSGPREFIX_NATIVE);
+                strcat(type, "/");
+                strcat(type, argv[1]);
+                jumpMessageQueueCreate(type, &code);
+                
+                /* FIXME: return error code if creation fails */
+                assert(code == JUMP_MQ_SUCCESS);
+                free(type);
+                
+                jumpProcessSetExecutiveId(executivePid);
+                respondWith2(command, "CHILD PID=%d", mypid);
+                
+                jumpMessageFree(command);
+                (*process->proc)(argc, argv);
+                exit(0);
+            }
+            addTask(env, state, pid, oneString(command));
+            jumpMessageFree(command);
+            freeArgs(argc, argv);
+            command = readRequestMessage();
+            continue;
+        }
 #if 0
 	    /* How to do sync? */
 	    if (!strcmp(argv[0], "JSYNC")) {
@@ -1062,7 +1142,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		    dup2(connfd, 2);
 		}
 #endif
-		
+        
 		/* First, make sure that the child PID is communicated
 		   to the client connection. */
 		respondWith2(command, "CHILD PID=%d", mypid);
@@ -1166,7 +1246,7 @@ MTASKnextRequest(ServerState *state)
 	    /* We are the executive -- don't try to act like an isolate */
 	    return 1;
 	}
-	
+
 	listenerClass = (*env)->FindClass(env, "com/sun/jumpimpl/isolate/jvmprocess/JUMPIsolateProcessImpl");
 
 	if ((listenerClass == NULL) ||
