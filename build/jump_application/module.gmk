@@ -58,6 +58,7 @@ JSROP_ABSTRACTS_CLASSES = \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/Permission.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/FileConnectionPermission.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/SatsaPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/Base64.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/FileAccess.java \
