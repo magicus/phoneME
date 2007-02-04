@@ -130,9 +130,15 @@ static void child(int sig);
 /*
  * Task management 
  */
+typedef enum _ProcType {
+    PROCTYPE_JAVA = 1,
+    PROCTYPE_NATIVE
+} ProcType;
 typedef struct _TaskRec {
     int pid;
     char* command;
+    
+    ProcType procType;
 
     /* testing mode specific snapshot of prefix */
     char* testingModeFilePrefixSnapshot;
@@ -470,7 +476,7 @@ reapChildren(ServerState* state)
  * A new task has been created 
  */
 static int
-addTask(JNIEnv* env, ServerState* state, int taskPid, char* command)
+addTask(JNIEnv* env, ServerState* state, int taskPid, char* command, ProcType type)
 {
     TaskRec* task;
 
@@ -480,6 +486,7 @@ addTask(JNIEnv* env, ServerState* state, int taskPid, char* command)
     }
     task->pid = taskPid;
     task->command = command;
+    task->procType = type;
     /* Take a snapshot of the testing mode prefix here */
     if (state->isTestingMode) {
 	task->testingModeFilePrefixSnapshot =
@@ -573,7 +580,7 @@ numberOfTasks()
  * return message.
  */
 static void
-dumpTasksAsResponse(JUMPMessage command)
+dumpTasksAsResponse(JUMPMessage command, int all)
 {
     JUMPOutgoingMessage m;
     JUMPMessageStatusCode code;
@@ -588,8 +595,10 @@ dumpTasksAsResponse(JUMPMessage command)
     jumpMessageAddInt(m, numTasks);
     
     for (task = taskList; task != NULL; task = task->next) {
-	dumpTaskIntoMessage(m, task);   /* Brief printout to caller */
-	dumpTaskOne(task);                    /* Verbose printout to console */
+        if (all || task->procType == PROCTYPE_JAVA) {
+            dumpTaskIntoMessage(m, task);   /* Brief printout to caller */
+            dumpTaskOne(task);              /* Verbose printout to console */
+        }
     }
 
     jumpMessageSendAsyncResponse(m, &code);
@@ -787,6 +796,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	   connection */
 	command = readRequestMessage();
 	while (command != NULL) {
+        ProcessRec* nativeProcess = NULL;
 	    tokenizeArgs(command, &argc, &argv);
 	    /*
 	     * Check for children to reap before each command
@@ -871,7 +881,17 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		/* Make sure */
 		argc = 0;
 		argv = NULL;
-		dumpTasksAsResponse(command);
+		dumpTasksAsResponse(command, 0);
+		jumpMessageFree(command);
+		command = readRequestMessage();
+		continue;
+	    } else if (!strcmp(argv[0], "LISTALL")) {
+		/* Don't forget to free up all the (argc, argv[]) mem. */
+		freeArgs(argc, argv);
+		/* Make sure */
+		argc = 0;
+		argv = NULL;
+		dumpTasksAsResponse(command, 1);
 		jumpMessageFree(command);
 		command = readRequestMessage();
 		continue;
@@ -997,7 +1017,6 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    }
         if (!strcmp(argv[0], "JNATIVE")) {
             TaskRec* task;
-            ProcessRec* process;
 #define JNATIVE_USAGE   "Usage: JNATIVE <proc_name>[ <proc_args>...]"
             if (argc < 2) {
 jnative_usage:
@@ -1011,8 +1030,9 @@ jnative_usage:
             }
             for (task = taskList; task != NULL; task = task->next) {
                 int len = strlen(argv[1]);
-                if (!strncmp(task->command, "JNATIVE ", 8) &&
-                    !strncmp(task->command+8, argv[1], len) &&
+                if (task->procType == PROCTYPE_NATIVE &&
+                        !strncmp(task->command, "JNATIVE ", 8) &&
+                        !strncmp(task->command+8, argv[1], len) &&
                     (task->command[8+len] == '\0' ||
                         task->command[8+len] == ' ')) {
                     break;
@@ -1028,51 +1048,16 @@ jnative_usage:
                 continue;
             }
             
-            for (process = nativeProcessList; 
-                        process->procName != NULL; process++) {
-                if (!strcmp(process->procName, argv[1])) {
+            for (nativeProcess = nativeProcessList; 
+                        nativeProcess->procName != NULL; nativeProcess++) {
+                if (!strcmp(nativeProcess->procName, argv[1])) {
                     break;
                 }
             }
-            if (process->proc == NULL) {
+            if (nativeProcess->proc == NULL) {
+                nativeProcess = NULL;
                 goto jnative_usage;
             }
-            pid = fork();
-            if (pid == -1) {
-                amExecutive = CVM_FALSE;
-                perror("fork()");
-                goto jnative_usage;
-            }
-            if (pid == 0) {
-#define MSGPREFIX_NATIVE "native"
-                int mypid = getpid();
-                JUMPMessageQueueStatusCode code = 0;
-                unsigned char *type = 
-                    malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
-                
-                assert(type != NULL);
-                
-                strcpy(type, MSGPREFIX_NATIVE);
-                strcat(type, "/");
-                strcat(type, argv[1]);
-                jumpMessageQueueCreate(type, &code);
-                
-                /* FIXME: return error code if creation fails */
-                assert(code == JUMP_MQ_SUCCESS);
-                free(type);
-                
-                jumpProcessSetExecutiveId(executivePid);
-                respondWith2(command, "CHILD PID=%d", mypid);
-                
-                jumpMessageFree(command);
-                (*process->proc)(argc, argv);
-                exit(0);
-            }
-            addTask(env, state, pid, oneString(command));
-            jumpMessageFree(command);
-            freeArgs(argc, argv);
-            command = readRequestMessage();
-            continue;
         }
 #if 0
 	    /* How to do sync? */
@@ -1143,6 +1128,24 @@ jnative_usage:
 		}
 #endif
         
+		if (nativeProcess != NULL) {
+#define MSGPREFIX_NATIVE "native"
+            JUMPMessageQueueStatusCode code = 0;
+            unsigned char *type = 
+                malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
+            
+            assert(type != NULL);
+            
+            strcpy(type, MSGPREFIX_NATIVE);
+            strcat(type, "/");
+            strcat(type, argv[1]);
+            jumpMessageQueueCreate(type, &code);
+            
+            /* FIXME: return error code if creation fails */
+            assert(code == JUMP_MQ_SUCCESS);
+            free(type);
+        }
+
 		/* First, make sure that the child PID is communicated
 		   to the client connection. */
 		respondWith2(command, "CHILD PID=%d", mypid);
@@ -1154,7 +1157,12 @@ jnative_usage:
 		if (!restartSystemThreads(env, state)) {
 		    exit(1);
 		}
-		
+
+		if (nativeProcess != NULL) {
+            (*nativeProcess->proc)(argc, argv);
+            freeArgs(argc, argv);
+            exit(0);
+        }
 		/* In the child process, setup request and return to caller */
 		setupRequest(env, argc, argv, mypid);
 		/* Make sure */
@@ -1179,7 +1187,8 @@ jnative_usage:
 			    strdup(state->testingModeFilePrefix);
 		    }
 		} else {
-		    addTask(env, state, pid, oneString(command));
+		    addTask(env, state, pid, oneString(command), 
+                (nativeProcess == NULL ? PROCTYPE_JAVA : PROCTYPE_NATIVE));
 		}
 		jumpMessageFree(command);
 		/* The child is executing this command. The parent
