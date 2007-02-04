@@ -195,12 +195,8 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_reserve(
     jumpMessageQueueCreate(type, &code);
 }
 
-JNIEXPORT int JNICALL
-Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcess(
-    JNIEnv *env, 
-    jobject thisObj,
-    jobjectArray arguments)
-{
+static int
+create_process(JNIEnv *env, jobject thisObj, jobjectArray arguments, int isNative) {
     int argc;
     char** argv;
     int i;
@@ -208,31 +204,53 @@ Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcess(
     int isCopy;
     
     if (arguments == NULL) {
-	argc = 0;
-	argv = NULL;
+        argc = 0;
+        argv = NULL;
     } else {
-	argc = (*env)->GetArrayLength(env, arguments);
-	argv = calloc(argc, sizeof(char*));
-	if (argv == NULL) {
-	    return -1;
-	}
-	
-	for (i = 0; i < argc; i++) {
-	    jobject argObj = (*env)->GetObjectArrayElement(env, arguments, i);
-	    const char* arg = (*env)->GetStringUTFChars(env, argObj, &isCopy);
-	    argv[i] = arg;
-	}
+        argc = (*env)->GetArrayLength(env, arguments);
+        argv = calloc(argc, sizeof(char*));
+        if (argv == NULL) {
+            return -1;
+        }
+        
+        for (i = 0; i < argc; i++) {
+            jobject argObj = (*env)->GetObjectArrayElement(env, arguments, i);
+            const char* arg = (*env)->GetStringUTFChars(env, argObj, &isCopy);
+            argv[i] = arg;
+        }
     }
     
-    retVal = jumpProcessCreate(argc, argv);
+    if (isNative) {
+        retVal = jumpProcessNativeCreate(argc, argv);
+    } else {
+        retVal = jumpProcessCreate(argc, argv);
+    }
     if (argv != NULL) {
-	if (isCopy) {
-	    for (i = 0; i < argc; i++) {
-		free(argv[i]);
-	    }
-	}
-	free(argv);
+        if (isCopy) {
+            for (i = 0; i < argc; i++) {
+                free(argv[i]);
+            }
+        }
+        free(argv);
     }
     return retVal;
+}
+
+JNIEXPORT int JNICALL
+Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcess(
+    JNIEnv *env, 
+    jobject thisObj,
+    jobjectArray arguments)
+{
+    return create_process(env, thisObj, arguments, 0);
+}
+
+JNIEXPORT int JNICALL
+Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcessNative(
+    JNIEnv *env, 
+    jobject thisObj,
+    jobjectArray arguments)
+{
+    return create_process(env, thisObj, arguments, 1);
 }
 

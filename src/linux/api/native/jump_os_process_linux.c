@@ -104,9 +104,8 @@ getChildPid(struct _JUMPMessage* mptr)
  * to a server to clone itself, and then we message it. That is layered
  * on top of the messaging system
  */
-int 
-jumpProcessCreate(int argc, char** argv)
-{
+static int 
+create_process(char **cmd_args, int argc, char** argv) {
     JUMPPlatformCString type = "mvm/server";
     JUMPOutgoingMessage outMessage;
     JUMPMessage response;
@@ -116,6 +115,10 @@ jumpProcessCreate(int argc, char** argv)
     int numWords = 0;
     int i;
     
+    if ((void*)cmd_args == NULL && *cmd_args != NULL) {
+        /* Nothing to do */
+        return -1;
+    }
     outMessage = jumpMessageNewOutgoingByType(type);
     jumpMessageMarkSet(&mark, outMessage);
     /*
@@ -123,16 +126,19 @@ jumpProcessCreate(int argc, char** argv)
      * put in a placeholder for now. We marked the spot with &mark.
      */
     jumpMessageAddInt(outMessage, numWords);
-    
-    jumpMessageAddString(outMessage, "JAPP");
-    jumpMessageAddString(outMessage, "com.sun.jumpimpl.isolate.jvmprocess.JUMPIsolateProcessImpl");
-    numWords += 2;
+
+    /* Start with the command. It should be JAPP or JNATIVE */
+    while (*cmd_args != NULL) {
+        jumpMessageAddString(outMessage, *cmd_args);
+        numWords ++;
+        cmd_args ++;
+    }
     
     /* 
      * If we do argc, argv[] for main(), this is how we would put those in
      */
     for (i = 0; i < argc; i++) {
-	jumpMessageAddString(outMessage, (char*)argv[i]);
+        jumpMessageAddString(outMessage, (char*)argv[i]);
     }
     numWords += argc;
 
@@ -152,6 +158,16 @@ jumpProcessCreate(int argc, char** argv)
 }
 
 int 
+jumpProcessCreate(int argc, char** argv)
+{
+    char *cmd_args[3];
+    cmd_args[0] = "JAPP";
+    cmd_args[1] = "com.sun.jumpimpl.isolate.jvmprocess.JUMPIsolateProcessImpl";
+    cmd_args[2] = NULL;
+    return create_process(cmd_args, argc, argv);
+}
+
+int 
 jumpProcessRunDriver(char *driver_name) {
     int argc = 1;
     char *argv[2];
@@ -164,37 +180,10 @@ jumpProcessRunDriver(char *driver_name) {
 int 
 jumpProcessNativeCreate(int argc, char** argv)
 {
-    JUMPPlatformCString type = "mvm/server";
-    JUMPOutgoingMessage outMessage;
-    JUMPMessage response;
-    JUMPMessageMark mark;
-    JUMPAddress targetAddress;
-    JUMPMessageStatusCode code;
-    int numWords = 0;
-    int i;
-    
-    outMessage = jumpMessageNewOutgoingByType(type);
-    jumpMessageMarkSet(&mark, outMessage);
-    jumpMessageAddInt(outMessage, numWords);
-    
-    jumpMessageAddString(outMessage, "JNATIVE");
-    numWords += 1;
-    
-    for (i = 0; i < argc; i++) {
-        jumpMessageAddString(outMessage, (char*)argv[i]);
-    }
-    numWords += argc;
-
-    jumpMessageMarkResetTo(&mark, outMessage);
-    jumpMessageAddInt(outMessage, numWords);
-    
-    jumpMessageMarkResetTo(&mark, outMessage);
-    dumpMessage(outMessage, "Outgoing message:");
-
-    targetAddress.processId = serverPid;
-    response = jumpMessageSendSync(targetAddress, outMessage, 0, &code);
-    dumpMessage(response, "Command response:");
-    return getChildPid(response);
+    char *cmd_args[2];
+    cmd_args[0] = "JNATIVE";
+    cmd_args[1] = NULL;
+    return create_process(cmd_args, argc, argv);
 }
 
 /*

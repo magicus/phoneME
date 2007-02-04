@@ -171,6 +171,7 @@ getMQId(pid_t pid, JUMPPlatformCString type, int doCreate)
     
     mqhandle = msgget(qkey, mqflags);
     if (mqhandle == -1) {
+        printf("[%d] failed to open %s\n", getpid(), type);
 	perror(msggetError);
 #ifdef MESSAGE_QUEUE_DEBUG
 	printf("(pid=%d type=%s doCreate=%d qkey=0x%x)\n", 
