@@ -1155,41 +1155,7 @@ MTASKnextRequest(ServerState *state)
 	if (!restartSystemThreads(env, state)) {
 	    return 0;
 	}
-    } else {
-	/* In child */
-	/* We first have to see if we are launched by JDETACH */
-	/* If so, we don't call JUMPIsolateProcessImpl.start() */
-	jmethodID createListenerID;
-	jclass listenerClass;
-	if (amExecutive) {
-	    printf("In the executive, NOT launching JUMPIsolateProcessImpl\n");
-	    /* We are the executive -- don't try to act like an isolate */
-	    return 1;
-	}
-	
-	listenerClass = (*env)->FindClass(env, "com/sun/jumpimpl/isolate/jvmprocess/JUMPIsolateProcessImpl");
-
-	if ((listenerClass == NULL) ||
-	    (*env)->ExceptionOccurred(env)) {
-	    return 0;
-	}
-	createListenerID =
-	    (*env)->GetStaticMethodID(env, listenerClass,
-				      "start",
-				      "()V");
-	assert(createListenerID != NULL);
-	
-	if (createListenerID == NULL) {
-	    (*env)->DeleteLocalRef(env, listenerClass);
-	    return 0;
-	}
-	
-	(*env)->CallStaticVoidMethod(env, listenerClass, createListenerID);
-	(*env)->DeleteLocalRef(env, listenerClass);
-	if ((*env)->ExceptionOccurred(env)) {
-	    (*env)->ExceptionDescribe(env);
-	}
-    }
+    } 
     return 1;
 }
 
