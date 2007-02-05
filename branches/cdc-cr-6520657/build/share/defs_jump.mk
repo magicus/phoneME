@@ -111,8 +111,10 @@ CLASSLIB_DEPS += $(JUMP_NATIVE_LIBRARY_PATHNAME)
 # Name of the generated list of native processes
 #
 CVM_NATIVE_PROCESS_DIR = $(CVM_DERIVEDROOT)/nativeProcessList
-CVM_NATIVE_PROCESS_LST = nativeProcessList.c
-JUMP_OBJECTS          += $(patsubst %.c,%.o,$(CVM_NATIVE_PROCESS_LST))
+CVM_NATIVE_PROCESS_LST = nativeProcessList.lst
+CVM_NATIVE_PROCESS_TBL = nativeProcessList.c
+CVM_NATIVE_PROCESSES   = $(CVM_NATIVE_PROCESS_DIR)/$(CVM_NATIVE_PROCESS_LST)
+JUMP_OBJECTS          += $(patsubst %.c,%.o,$(CVM_NATIVE_PROCESS_TBL))
 CVM_SRCDIRS           += $(CVM_NATIVE_PROCESS_DIR)
 #
 # Finally modify CVM variables w/ all the JUMP items
