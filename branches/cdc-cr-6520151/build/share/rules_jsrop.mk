@@ -49,18 +49,3 @@ define compileJSRClasses
 	$(call makeJSROPJar,$(JSR_$(1)_JAR),$(JSR_$(1)_BUILD_DIR)/classes)
 endef
 
-# JSR 75 rules
-ifeq ($(USE_JSR_75), true)
-
-$(JSR_75_JAR):  $(SUBSYSTEM_JSR_75_JAVA_FILES)
-	$(call compileJSRClasses,75)
-
-ifneq ($(CVM_PRELOAD_LIB), true)
-$(JSR_75_NATIVE_LIB): $(JSR_75_NATIVE_LIB_OBJS)
-	@echo "Linking $@"
-	$(SO_LINK_CMD)
-
-endif
-
-endif
-
