@@ -55,6 +55,47 @@ LIB_MAKE_FILE             = lib.gmk
 
 include $(SUBSYSTEM_DIR)/configuration/$(SUBSYSTEM_MAKE_FILE)
 
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_CONFIGURATION_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_CONFIGURATION_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES  	+= $(SUBSYSTEM_CONFIGURATION_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_CONFIGURATION_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_CONFIGURATION_EXTRA_CFLAGS)
+
+
+# The Configurator generates Java and C files so these definitions
+# and rules must occur before any Java and C dependencies for
+# classes.zip
+#
+
+# dependency and rule for generating constants/properties
+#
+$(SUBSYSTEM_CONFIGURATION_MERGED_FILE): $(CONFIGURATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_DEP_FILES)
+	$(merge_configurations)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+	$(generate_configuration)
+
+# rules for generating romized skin files
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SKINROMIZATION_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+	$(romize_skin)
+	$(copy_lcdlf_resources)
+
+# The rule for running the Configurator unconditionally, used by other
+# things such as docs_html.
+# IMPL NOTE: this should be refactored to remove the
+# need to run this unconditionally; it should always be run based on
+# out-of-date prerequisites.
+#
+run_configurator:: $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+	$(generate_configuration)
+
+# The rule for running skin romization tool unconditionally
+run_skinromizer:: $(SKINROMIZATION_JAR_FILE) run_configurator
+	$(romize_skin)
+	$(copy_lcdlf_resources)
 
 #####################################################################
 # Core Group
@@ -64,6 +105,15 @@ include $(SUBSYSTEM_DIR)/configuration/$(SUBSYSTEM_MAKE_FILE)
 
 include $(SUBSYSTEM_DIR)/core/$(SUBSYSTEM_MAKE_FILE)
 
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_CORE_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_CORE_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_CORE_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_CORE_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_CORE_EXTRA_CFLAGS)
+
+
 #####################################################################
 # I18N Subsystem
 # Description: It is the converter (native or Java)
@@ -72,6 +122,14 @@ include $(SUBSYSTEM_DIR)/core/$(SUBSYSTEM_MAKE_FILE)
 
 include $(SUBSYSTEM_DIR)/i18n/$(SUBSYSTEM_MAKE_FILE)
 
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_I18N_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_I18N_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_I18N_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_I18N_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_I18N_EXTRA_CFLAGS)
+
 #####################################################################
 # Hightlevel ui Subsystem
 # Description: Look and Feel
@@ -79,6 +137,13 @@ include $(SUBSYSTEM_DIR)/i18n/$(SUBSYSTEM_MAKE_FILE)
 
 include $(SUBSYSTEM_DIR)/highlevelui/$(SUBSYSTEM_MAKE_FILE)
 
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_HIGHUI_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_HIGHUI_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_HIGHUI_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_HIGHUI_EXTRA_CFLAGS)
 
 #####################################################################
 # Low level ui Subsystem
@@ -87,6 +152,14 @@ include $(SUBSYSTEM_DIR)/highlevelui/$(SUBSYSTEM_MAKE_FILE)
 
 include $(SUBSYSTEM_DIR)/lowlevelui/$(SUBSYSTEM_MAKE_FILE)
 
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_LOWLEVELUI_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_LOWLEVELUI_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_LOWLEVELUI_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_LOWLEVELUI_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_LOWLEVELUI_EXTRA_CFLAGS)
+
 #####################################################################
 # RMS Subsystem
 # Description: Record Management System
@@ -94,12 +167,28 @@ include $(SUBSYSTEM_DIR)/lowlevelui/$(SUBSYSTEM_MAKE_FILE)
 
 include $(SUBSYSTEM_DIR)/rms/$(SUBSYSTEM_MAKE_FILE)
 
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_RMS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_RMS_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_RMS_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_RMS_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_RMS_EXTRA_CFLAGS)
+
 #####################################################################
 # Exportable Security Subsystems
 # Description: Security
 #####################################################################
 
 include $(SUBSYSTEM_DIR)/security/$(SUBSYSTEM_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_SECURITY_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_SECURITY_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_SECURITY_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_SECURITY_EXTRA_CFLAGS)
 
 #####################################################################
 # Protocol Subsystem
@@ -109,6 +198,15 @@ include $(SUBSYSTEM_DIR)/security/$(SUBSYSTEM_MAKE_FILE)
 
 include $(SUBSYSTEM_DIR)/protocol/$(SUBSYSTEM_MAKE_FILE)
 
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PROTOCOL_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PROTOCOL_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_PROTOCOL_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_PROTOCOL_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_PROTOCOL_EXTRA_CFLAGS)
+
+
 #####################################################################
 # Push Subsystem
 # Description: Push Registry, Push Listener, Push db and resource
@@ -117,6 +215,14 @@ include $(SUBSYSTEM_DIR)/protocol/$(SUBSYSTEM_MAKE_FILE)
 
 include $(SUBSYSTEM_DIR)/push/$(SUBSYSTEM_MAKE_FILE)
 
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PUSH_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PUSH_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_PUSH_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_PUSH_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_PUSH_EXTRA_CFLAGS)
+
 #####################################################################
 # Events Subsystem
 # Description: Modules that are shared among other sub-systems
@@ -124,6 +230,13 @@ include $(SUBSYSTEM_DIR)/push/$(SUBSYSTEM_MAKE_FILE)
 
 include $(SUBSYSTEM_DIR)/events/$(SUBSYSTEM_MAKE_FILE)
 
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_EVENTS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_EVENTS_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_EVENTS_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_EVENTS_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_EVENTS_EXTRA_CFLAGS)
 
 #####################################################################
 # Tool Subsystem
@@ -146,7 +259,6 @@ include $(SUBSYSTEM_DIR)/mmapi/$(SUBSYSTEM_MAKE_FILE)
 endif
 endif
 
-
 #####################################################################
 # EXTRA
 #####################################################################
@@ -158,8 +270,11 @@ endif
 
 ifeq ($(USE_NUTS_FRAMEWORK), true)
 include $(SUBSYSTEM_DIR)/nuts/$(LIB_MAKE_FILE)
-endif
 
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_NUTS_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_NUTS_EXTRA_INCLUDES)
+
+endif
 
 #####################################################################
 # (Extra) Automation API Library
@@ -177,6 +292,13 @@ endif
 
 ifeq ($(USE_I3_TEST), true)
 include $(SUBSYSTEM_DIR)/test/$(SUBSYSTEM_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_TEST_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_TEST_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES += $(SUBSYSTEM_TEST_NATIVE_FILES)
+
 endif
 
 #####################################################################
@@ -198,6 +320,14 @@ endif
 ifeq ($(USE_JSR_75), true)
 JPP_DEFS += -DENABLE_JSR_75
 include $(JSR_75_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_75_JAVA_FILES)
+	$(appendjavafiles)
+
+ JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_75_I3TEST_JAVA_FILES)
+ JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_75_NATIVE_FILES)
+ EXTRA_INCLUDES		+= $(SUBSYSTEM_JSR_75_EXTRA_INCLUDES)
+
 endif
 
 #####################################################################
@@ -217,6 +347,13 @@ endif
 
 ifeq ($(USE_QA_TESTS), true)
 include $(QA_TESTS_DIR)/portingsupportimpl/$(SUBSYSTEM_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PORTABILITY_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_PORTABILITY_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_PORTABILITY_EXTRA_INCLUDES)
+
 endif
 
 #####################################################################
@@ -226,6 +363,12 @@ endif
 
 ifeq ($(USE_ROMIZED_DEMOS), true)
 include $(SUBSYSTEM_DIR)/demos/$(SUBSYSTEM_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_DEMOS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_DEMOS_I3TEST_JAVA_FILES)
+
 endif
 
 #####################################################################
@@ -244,6 +387,13 @@ endif
 ifeq ($(USE_JSR_172), true)
 JPP_DEFS += -DENABLE_JSR_172
 include $(JSR_172_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_172_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_172_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_172_NATIVE_FILES)
+
 endif
 
 #####################################################################
@@ -254,6 +404,13 @@ ifeq ($(USE_JSR_226), true)
 JPP_DEFS += -DENABLE_JSR_226
 include $(JSR_226_DIR)/perseus2/platform.releases/midp20/resources/build/$(SUBSYSTEM_MAKE_FILE)
 USE_PISCES=true
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_226_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_226_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_226_NATIVE_FILES)
+
 endif
 
 #####################################################################
@@ -262,6 +419,13 @@ endif
 #####################################################################
 ifeq ($(USE_PISCES), true)
 include $(PISCES_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PISCES_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PISCES_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_PISCES_NATIVE_FILES)
+EXTRA_INCLUDES          += $(SUBSYSTEM_PISCES_INCLUDES)
 endif
 
 #####################################################################
@@ -271,6 +435,13 @@ endif
 ifeq ($(USE_JSR_177), true)
 JPP_DEFS += -DENABLE_JSR_177
 include $(JSR_177_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_SATSA_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_SATSA_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_SATSA_NATIVE_FILES)
+
 endif
 
 #####################################################################
@@ -313,6 +484,14 @@ endif
 ifeq ($(USE_JSR_211), true)
 JPP_DEFS += -DENABLE_JSR211
 -include $(JSR_211_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_211_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_211_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_211_NATIVE_FILES)
+EXTRA_INCLUDES          += $(SUBSYSTEM_JSR_211_EXTRA_INCLUDES)
+
 endif
 
 #####################################################################
@@ -348,6 +527,10 @@ endif
 ifeq ($(USE_JSR_135), true)
 JPP_DEFS += -DENABLE_JSR_135
 include $(JSR_135_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_135_JAVA_FILES)
+	$(appendjavafiles)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_135_NATIVE_FILES)
 endif
 
 #####################################################################
@@ -357,6 +540,16 @@ endif
 ifeq ($(MIDP_USE_ABB), true)
 include $(JSR_234_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
 endif
+
+# JSR 135/234/ABB Multimedia
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR234_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR234_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR234_NATIVE_FILES)
+LD_FLAGS		+= $(SUBSYSTEM_JSR234_LD_FLAGS)
+LIBS			+= $(SUBSYSTEM_JSR234_LIBS)
 
 #####################################################################
 # (Extra) Mobile I18N Subsystem
@@ -382,6 +575,12 @@ endif
 #####################################################################
 ifeq ($(USE_PORTING_DEMOS), true)
 include $(SUBSYSTEM_DIR)/porting_demos/$(SUBSYSTEM_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PORTING_DEMOS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PORTING_DEMOS_I3TEST_JAVA_FILES)
+
 endif
 
 #####################################################################
@@ -394,6 +593,15 @@ ifneq ($(USE_JSR_234), true)
 ifneq ($(USE_JSR_135), true)
 ifneq ($(MIDP_USE_ABB), true)
 include $(SUBSYSTEM_DIR)/media/$(LIB_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_MEDIA_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_MEDIA_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_MEDIA_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_MEDIA_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_MEDIA_EXTRA_CFLAGS)
+
 endif
 endif
 endif
@@ -421,3 +629,11 @@ endif
 #   order of the rules and variable assignments does matter.
 
 include $(SUBSYSTEM_DIR)/ams/$(SUBSYSTEM_MAKE_FILE)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_AMS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_AMS_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_AMS_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_AMS_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_AMS_EXTRA_CFLAGS)

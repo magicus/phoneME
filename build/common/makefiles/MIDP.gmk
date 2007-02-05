@@ -64,7 +64,7 @@ $(MIDP_OUTPUT_DIR)/classes.zip::
 
 # Additional configuration settings, by each subsystem
 #
-include $(MIDP_DIR)/build/common/makefiles/SubsystemDefs.gmk
+include $(MIDP_DIR)/build/common/makefiles/Subsystems.gmk
 
 # I3 tests.
 #
