@@ -84,6 +84,12 @@ public final class AlarmRegistry {
     /**
      * Constructs an alarm registry.
      *
+     * <p>
+     * NOTE: both <code>store</code> and <code>lifecycleAdapter</code>
+     * MUST be not <code>null</code>.  There is no checks and passing
+     * <code>null</code> leads to undefined behaviour.
+     * </p>
+     *
      * @param store persistent store to save alarm info into
      * @param lifecycleAdapter adapter to launch <code>MIDlet</code>
      */
@@ -121,12 +127,21 @@ public final class AlarmRegistry {
     /**
      * Registers an alarm.
      *
+     * <p>
+     * NOTE: <code>midletSuiteID</code> parameter should refer to a valid
+     *  <code>MIDlet</code> suite and <code>midlet</code> should refer to
+     *  valid <code>MIDlet</code> from the given suite. <code>timer</code>
+     *  parameters is the same as for corresponding <code>Date</code>
+     *  constructor.  No checks are performed and no guarantees are
+     *  given if parameters are invalid.
+     * </p>
+     *
      * @param midletSuiteID <code>MIDlet suite</code> ID
      * @param midlet <code>MIDlet</code> class name
      * @param time alarm time
      *
      * @throws ConnectionNotFoundException if for any reason alarm cannot be
-     *  scheduled
+     *  registered
      *
      * @return previous alarm time or 0 if none
      */
@@ -161,6 +176,12 @@ public final class AlarmRegistry {
     /**
      * Removes alarms for the given suite.
      *
+     * <p>
+     * NOTE: <code>midletSuiteID</code> must refer to valid installed
+     *  <code>MIDlet</code> suite.  However, it might refer to the
+     *  suite without alarms.
+     * </p>
+     *
      * @param midletSuiteID ID of the suite to remove alarms for
      */
     public synchronized void removeSuiteAlarms(final int midletSuiteID) {
@@ -179,15 +200,20 @@ public final class AlarmRegistry {
      * Disposes an alarm registry.
      *
      * <p>
-     * This method is needed as <code>Timer</code> creates non daemon thread
+     * NOTE: This method is needed as <code>Timer</code> creates non daemon thread
      * which would prevent the app from exit.
+     * </p>
+     *
+     * <p>
+     * NOTE: after <code>AlarmRegistry</code> is disposed, attempt to perform
+     *  any alarms related activity on it leads to undefined behaviour.
      * </p>
      */
     public synchronized void dispose() {
         timer.cancel();
         alarms.clear();
     }
-    
+
     /**
      * Special class that supports guaranteed canceling of TimerTasks.
      */
