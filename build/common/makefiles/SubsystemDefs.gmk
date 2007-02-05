@@ -24,6 +24,12 @@
 # information or have any questions. 
 #
 
+# Subsystems.gmk may populate file list, so it has to included
+# after the "remove_filelist" above.
+# Global Module definitions
+# (No '-' since subsystem MUST exists)
+include $(JWC_WORK_SPACE)/build/common/makefiles/Subsystems.gmk
+
 # The Configurator generates Java and C files so these definitions
 # and rules must occur before any Java and C dependencies for
 # classes.zip
@@ -112,9 +118,9 @@ $(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_AMS_JAVA_FILES)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_AMS_I3TEST_JAVA_FILES)
 JTWI_NATIVE_FILES	+= $(SUBSYSTEM_AMS_NATIVE_FILES)
+JTWI_LAZY_RULES		+= $(SUBSYSTEM_AMS_LAZY_RULES)
 EXTRA_INCLUDES		+= $(SUBSYSTEM_AMS_EXTRA_INCLUDES)
 EXTRA_CFLAGS		+= $(SUBSYSTEM_AMS_EXTRA_CFLAGS)
-
 
 #######################################################################
 # PUSH
@@ -362,14 +368,10 @@ endif
 endif
 endif
 
-# Subsystems.gmk may populate file list, so it has to included
-# after the "remove_filelist" above.
-# Global Module definitions
-# (No '-' since subsystem MUST exists)
+#####################################################################
+# Evaluate lazy subsystem rules dependent on each other, it is
+# important the rules are evaluated after all subsystem make files
+# are included and all global variables received their final values
+#####################################################################
+$(eval $(JTWI_LAZY_RULES))
 
-# IMPL_NOTE:  
-#   It is important to compose proper JTWI_NATIVE_FILES value
-#   prior to include "make" rules for libraries and executables
-#   dependent of native source files.
-
-include $(JWC_WORK_SPACE)/build/common/makefiles/Subsystems.gmk
