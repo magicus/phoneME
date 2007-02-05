@@ -1874,6 +1874,9 @@ void PopupBody::setText(const QString &newText) {
  */
 void PopupBody::setList(QListBox *list) {
     qPopup = list;
+    qPopup->setAutoScrollBar(FALSE);
+    qPopup->setBottomScrollBar(FALSE);
+    qPopup->setSelectionMode(QListBox::Single);
 }
 
 /**
@@ -1896,26 +1899,28 @@ void PopupBody::popupList() {
     qPopup->viewport()->installEventFilter(this);
 
     // define size and position for popup
-    // following calculations in parent' coordinate system
+    QPoint pos = mapToGlobal(QPoint(0, 0));
     int winH = qteapp_get_mscreen()->getDisplayFullHeight();
-    int bodyY = y();
-    int pX = x();
+    int bodyY = pos.y();
+    int pX = pos.x();
     int pY = bodyY + height();
+    QSize sizeP = qPopup->sizeHint();
     int pW = width();
-    int pH = qPopup->sizeHint().height();
+    int pH = sizeP.height();
     if ((pY + pH) > winH) {
         //select the highest part of the widget
         if ((winH - pY) > bodyY) {
             pH = winH - pY;
+        } else if (pH < bodyY) {
+            pY = bodyY - pH;
         } else {
             pY = 0;
             pH = bodyY;
         }
     }
 
-    QPoint pos = mapToGlobal(mapFromParent(QPoint(pX, pY)));
     qPopup->resize(pW, pH);
-    qPopup->move(pos.x(), pos.y());
+    qPopup->move(pX, pY);
     qPopup->raise();
     qPopup->setAutoScrollBar(TRUE);
     qPopup->show();
