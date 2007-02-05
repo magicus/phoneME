@@ -78,7 +78,7 @@ SUBSYSTEM_SECURITY_EXTRA_INCLUDES += \
 
 else
 # Copy images to /lib at the end of MIDP build
-MIDP_DEPS += ref_permission_dialog_resources
+MIDP_RESOURCES += ref_permission_dialog_resources
 
 ref_permission_dialog_resources: $(LIBDIR)
 	@mkdir -p $(LIBDIR)
