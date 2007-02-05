@@ -345,7 +345,7 @@ int  jumpProcessCreate(int argc, char** argv){
     int argsBufferSize = 0;
     int i = 0;
     char*  argsBuffer;
-    char* command = "vm-internal.exe com.sun.jump.isolate.jvmprocess.win32.JUMPWin32IsolateProcessImpl ";
+    char* command = "vm-internal.exe com.sun.jumpimpl.isolate.jvmprocess.JUMPIsolateProcessImpl ";
     char * commandLine;
     char * path = ""; //FIXME add lime call to get the full path of the emulator bin directory
     char space = ' ';

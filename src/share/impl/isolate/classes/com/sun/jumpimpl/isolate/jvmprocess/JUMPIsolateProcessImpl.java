@@ -127,12 +127,16 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
         throw new UnsupportedOperationException();
     }
 
-    /*
-     * Kick start this isolate.
-     * This is the entry point for the isolate process, creating the message
-     * listener.
-     */
-    public static void start() {
+    //
+    // The message handlers do the job.
+    // The message processor thread keeps the JVM alive.
+    //
+    public static void main(String[] args) 
+    {
+        if(args.length > 1 && args[1] != null) {
+            JUMPModulesConfig.overrideDefaultConfig(args[1]);
+        }
+
 	// Initialize os interface
 	new com.sun.jumpimpl.os.JUMPOSInterfaceImpl();
 
@@ -141,38 +145,17 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 
 	// Create message processor thread.
 	ipi.createListenerThread();
-    }
-
-    //
-    // Main program sleeps forever. The message handlers do the job.
-    // FIXME: This can initialize the system more.
-    // We can also potentially combine main() and start() into one.
-    // Finally, if we can find a way the dispatcher thread for mvm/client 
-    // can keep the vm alive, we might not need a main() that sleeps forever.
-    //
-    public static void main(String[] args) 
-    {
+	
 	JUMPAppModel appModel = JUMPAppModel.fromName(args[0]);
 	if (appModel == null) {
 	    // Unknown app model
 	    throw new RuntimeException("Unknown app model "+args[0]);
 	}
 
-        if(args.length > 1 && args[1] != null) {
-            JUMPModulesConfig.overrideDefaultConfig(args[1]);
-        }
-
-	JUMPIsolateProcessImpl ipi = 
-	    (JUMPIsolateProcessImpl)JUMPIsolateProcess.getInstance();
-
 	ipi.initialize(appModel);
 
-	do {
-	    try {
-		Thread.sleep(0L);
-	    } catch (Throwable e) {
-	    }
-	} while(true);
+	// Now we are ready. Drop off and let the message listener thread
+	// keep this JVM alive.
     }
     
     public void initialize(JUMPAppModel appModel) {
@@ -201,16 +184,11 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 
     private void createListenerThread()
     {
-	ThreadGroup tg = Thread.currentThread().getThreadGroup();
-	for (ThreadGroup tgn = tg;
-	     tgn != null;
-	     tg = tgn, tgn = tg.getParent());
-	Thread lthread = new ListenerThread(tg, "mvm client listener");
+	Thread lthread = new ListenerThread("mvm client listener");
 	/* If there were a special system-only priority greater than
 	 * MAX_PRIORITY, it would be used here
 	 */
 	lthread.setPriority(Thread.MAX_PRIORITY);
-	lthread.setDaemon(true);
 	lthread.start();
     }
     
@@ -220,7 +198,7 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
     // Eventually, we should handle generic messages here, and pass on
     // anything we don't know about to the container to process.
     //
-    void processMessage(JUMPMessage in) 
+    private void processMessage(JUMPMessage in) 
     {
 	JUMPOutgoingMessage responseMessage;
 	JUMPMessageResponseSender returnTo = in.getSender();
@@ -322,10 +300,10 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 	rsh.sendRequestAsync(e, req);
     }
     
-    class ListenerThread extends Thread {
+    private class ListenerThread extends Thread {
 	
-	ListenerThread(ThreadGroup g, String name) {
-	    super(g, name);
+	ListenerThread(String name) {
+	    super(name);
 	}
 
 	public void run() {
