@@ -154,6 +154,7 @@ static jboolean pisces_drawRGB(jobject graphicsHandle,
     jboolean retVal = KNI_FALSE; //assume failure
     jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
+    GXAPI_TRANSLATE(graphicsHandle, x, y);
     GXAPI_GET_CLIP(graphicsHandle, clip);
 
     if (opacity < 1.0) {
@@ -177,8 +178,8 @@ static jboolean pisces_drawRGB(jobject graphicsHandle,
                         tempArray,
                         0,
                         scanLength,
-                        x + GXAPI_GET_GRAPHICS_PTR(graphicsHandle)->transX,
-                        y + GXAPI_GET_GRAPHICS_PTR(graphicsHandle)->transY,
+                        x,
+                        y,
                         width, height,
                         KNI_TRUE);
 
@@ -193,8 +194,8 @@ static jboolean pisces_drawRGB(jobject graphicsHandle,
                     argb,
                     0,
                     scanLength,
-                    x + GXAPI_GET_GRAPHICS_PTR(graphicsHandle)->transX,
-                    y + GXAPI_GET_GRAPHICS_PTR(graphicsHandle)->transY,
+                    x,
+                    y,
                     width, height,
                     KNI_TRUE);
 
