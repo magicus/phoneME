@@ -70,21 +70,6 @@ typedef struct Java_javax_microedition_lcdui_Image      _MidpImage;
  */
 #define GET_IMAGE_PTR(handle)          (unhand(_MidpImage,(handle)))
 
-
-/**
- * Translate the pixel location according to the translation of
- * the given graphics object.
- *
- * @param G handle to the <tt>Graphics</tt> object
- * @param X variable representing the <tt>x</tt> coordinate to be translated;
- *        this macro sets the value of X
- * @param Y variable representing the <tt>y</tt> coordinate to be translated;
- *        this macro sets the value of Y
- */
-#define TRANSLATE(G, X, Y)  \
-    (X) += GXAPI_GET_GRAPHICS_PTR((G))->transX, \
-    (Y) += GXAPI_GET_GRAPHICS_PTR((G))->transY
-
 /**
  * Gets the line style of the given graphics object.
  *

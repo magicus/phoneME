@@ -185,7 +185,7 @@ KNIDECL(javax_microedition_lcdui_Image_render) {
 	        const java_imagedata * dstMutableImageDataPtr = 
 		  GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
 
-                TRANSLATE(g, x, y);
+                GXAPI_TRANSLATE(g, x, y);
 		GXAPI_GET_CLIP(g, clip);
 
 		gx_render_image(srcImageDataPtr, dstMutableImageDataPtr,
@@ -268,7 +268,7 @@ KNIDECL(javax_microedition_lcdui_Image_renderRegion) {
 	  const java_imagedata * dstMutableImageDataPtr = 
 	    GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
 
-	  TRANSLATE(g, x_dest, y_dest);
+	  GXAPI_TRANSLATE(g, x_dest, y_dest);
 	  GXAPI_GET_CLIP(g, clip);
 
 	  gx_render_imageregion(srcImageDataPtr, dstMutableImageDataPtr,
