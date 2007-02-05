@@ -62,19 +62,34 @@ static BOOL event_initialized = FALSE;
 HANDLE           events_mutex     =NULL;
 HANDLE           events_handle    =NULL;
 EventMessage*    head             =NULL;
-HANDLE           events_sharefile =NULL;
-EventSharedList* events_shared    =NULL;
-javacall_bool    events_secondary =JAVACALL_FALSE;
 
-#define EVENT_SHARED_NAME    "Meadlet_SharedSpacE"
 #define EVENT_MUTEX_NAME     "Meadlet_EventListMuteX"
 #define EVENT_EVENT_NAME     "Meadlet_EventNewEvenT"
 
 #define EVENT_QUEUE_ACQUIRE  (WaitForSingleObject(events_mutex, 300) == WAIT_OBJECT_0)
 #define EVENT_QUEUE_RELEASE  ReleaseMutex(events_mutex)
 
+#if !ENABLE_MULTIPLE_INSTANCES
+
+/*
+ * Data objects used for interprocess communication
+ */
+HANDLE           events_sharefile =NULL;
+EventSharedList* events_shared    =NULL;
+javacall_bool    events_secondary =JAVACALL_FALSE;
+
+#define EVENT_SHARED_NAME    "Meadlet_SharedSpacE"
+
+#endif
+
 javacall_bool javacall_events_init(void) {
 
+#if !ENABLE_MULTIPLE_INSTANCES
+    /*
+     * In single-instance mode external control is possible. I.e. any
+     * second instance of runMidlet will pass it's argument to instance already running
+     * and exit immediately. Arguments are passed through this shared memory
+     */
     if (events_sharefile==NULL) {
         events_sharefile = CreateFileMapping(
             INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
@@ -94,7 +109,7 @@ javacall_bool javacall_events_init(void) {
             events_shared->data[0] = 0;
         }
     }
-
+#endif
 
     if (events_mutex==NULL) {
         events_mutex=CreateMutex(
@@ -114,12 +129,16 @@ javacall_bool javacall_events_init(void) {
 
     event_initialized = TRUE;
 
-    return (events_mutex != NULL) && (events_handle != NULL) &&
-        (events_sharefile != NULL) && (events_shared != NULL);
+    return (events_mutex != NULL) && (events_handle != NULL)
+#if !ENABLE_MULTIPLE_INSTANCES
+        && (events_sharefile != NULL) && (events_shared != NULL)
+#endif
+        ;
 }
 
 javacall_bool javacall_events_finalize(void) {
 
+#if !ENABLE_MULTIPLE_INSTANCES
     if (events_shared!=NULL) {
         UnmapViewOfFile(events_shared);
         events_shared=NULL;
@@ -128,6 +147,7 @@ javacall_bool javacall_events_finalize(void) {
         CloseHandle(events_sharefile);
         events_sharefile=NULL;
     }
+#endif
     if (events_mutex!=NULL) {
         CloseHandle(events_mutex);
         events_mutex=NULL;
@@ -141,6 +161,8 @@ javacall_bool javacall_events_finalize(void) {
 
 	return JAVACALL_OK;
 }
+
+#if !ENABLE_MULTIPLE_INSTANCES
 
 javacall_bool isSecondaryInstance(void)
 {
@@ -195,6 +217,8 @@ int dequeueInterprocessMessage(char*** argv)
     return argc;
 }
 
+#endif
+
 void enqueueEventMessage(unsigned char* data,int dataLen)
 {
     EventMessage** iter;
@@ -230,6 +254,7 @@ static javacall_bool checkForEvents(long timeout) {
     unsigned long before = 0;
     unsigned long after  = 0;
     javacall_bool forever = JAVACALL_FALSE;
+    HANDLE handles[] = { events_handle };
 
     if (timeout > 0) {
         before = (unsigned long)GetTickCount();
@@ -238,20 +263,27 @@ static javacall_bool checkForEvents(long timeout) {
     }
 
     do {
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-            /* Dispatching the message will call WndProc below. */
-            if (msg.message == WM_QUIT) {
-                return JAVACALL_FALSE;
-            }
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
+        switch (MsgWaitForMultipleObjects(1, handles, FALSE, timeout, QS_ALLINPUT)) {
 
-        if (WaitForSingleObject(events_handle, 0)==WAIT_OBJECT_0) {
+        case WAIT_OBJECT_0:
             /* We got signal to unblock a Java thread. */
             return JAVACALL_TRUE;
-        }
 
+        case WAIT_OBJECT_0+1:
+            if (PeekMessage(&msg, NULL, 0, 0, TRUE)) {
+                /* Dispatching the message will call WndProc below. */
+                if (msg.message == WM_QUIT) {
+                    return JAVACALL_FALSE;
+                }
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+            break;
+
+        case WAIT_TIMEOUT:
+            return JAVACALL_FALSE; /* time out */
+        }
+        
         if (timeout > 0) {
             after = (unsigned long)GetTickCount();
             if (after >= before) {
@@ -263,13 +295,6 @@ static javacall_bool checkForEvents(long timeout) {
         }
 
         before = after;
-
-        /* IMPL_NOTE - Decrease CPU usage */
-        /*  negative values mean "INFINITE", so check for less than zero
-        */
-        if ((timeout > 50) || (timeout < 0)) {
-            Sleep(10);
-        }
 
     } while ( (timeout > 0) || (forever == JAVACALL_TRUE) );
 
