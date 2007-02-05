@@ -1015,11 +1015,11 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    if (!strcmp(argv[0], "JDETACH")) {
 		amExecutive = CVM_TRUE;
 	    }
-        if (!strcmp(argv[0], "JNATIVE")) {
+        if (!strcmp(argv[0], "JNATIVE")) { /* Run native process (driver) */
             TaskRec* task;
 #define JNATIVE_USAGE   "Usage: JNATIVE <proc_name>[ <proc_args>...]"
             if (argc < 2) {
-jnative_usage:
+jnative_usage:  /* bad usage */
                 respondWith(command, JNATIVE_USAGE);
                 freeArgs(argc, argv);
                 argc = 0;
@@ -1028,6 +1028,10 @@ jnative_usage:
                 command = readRequestMessage();
                 continue;
             }
+            
+            /* try to figure out if the process is already run.
+             * The command of task should start from "JNATIVE <procName>"
+             */
             for (task = taskList; task != NULL; task = task->next) {
                 int len = strlen(argv[1]);
                 if (task->procType == PROCTYPE_NATIVE &&
@@ -1039,6 +1043,9 @@ jnative_usage:
                 }
             }
             if (task != NULL) {
+                /* process has been found in the taskList
+                 * We don't have to run it
+                 */
                 respondWith2(command, "CHILD PID=%d", task->pid);
                 freeArgs(argc, argv);
                 argc = 0;
@@ -1048,13 +1055,18 @@ jnative_usage:
                 continue;
             }
             
+            /* is argv[1] a valid name of a native process?
+             * nativeProcessList is created at build time.
+             * See build/share/defs_jump.mk and build/share/rules_jump.mk
+             */
             for (nativeProcess = nativeProcessList; 
-                        nativeProcess->procName != NULL; nativeProcess++) {
+                    nativeProcess->procName != NULL; nativeProcess++) {
                 if (!strcmp(nativeProcess->procName, argv[1])) {
                     break;
                 }
             }
             if (nativeProcess->proc == NULL) {
+                /* we didn't find given name. Return error */
                 nativeProcess = NULL;
                 goto jnative_usage;
             }
@@ -1128,17 +1140,23 @@ jnative_usage:
 		}
 #endif
         
-		if (nativeProcess != NULL) {
+		if (nativeProcess != NULL) { /* we are launching a native process */
 #define MSGPREFIX_NATIVE "native"
+            /* creating the message queue for our process.
+             * It must be created before the launcher received 
+             * successful result
+             */
             JUMPMessageQueueStatusCode code = 0;
+            /* allocate memory for queue's name */
             unsigned char *type = 
                 malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
-            
+            /* FIXME: make sure that the string is allocated */
             assert(type != NULL);
             
             strcpy(type, MSGPREFIX_NATIVE);
             strcat(type, "/");
-            strcat(type, argv[1]);
+            strcat(type, argv[1]); /* cat the name of process */
+            /* we trying to create a queue named "native/<processName>" */
             jumpMessageQueueCreate(type, &code);
             
             /* FIXME: return error code if creation fails */
@@ -1159,9 +1177,13 @@ jnative_usage:
 		}
 
 		if (nativeProcess != NULL) {
+            /* call 'main' of the native process */
             (*nativeProcess->proc)(argc, argv);
+            /* free anything after the process finished */
             freeArgs(argc, argv);
-            exit(0);
+            argc = 0;
+            argv = NULL;
+            exit(0); /* return from the native process */
         }
 		/* In the child process, setup request and return to caller */
 		setupRequest(env, argc, argv, mypid);
