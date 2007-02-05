@@ -42,6 +42,12 @@ JSR_238_FORMATTER_DO_NOT_USE_NATIVE_DIGITS = TRUE
 #
 JSR_238_FORMATTER_NEGATIVE_SIGN_ALWAYS_FIRST = TRUE
 
+# Enable multiple runMidlet instances running on the same machine
+# Setting this to TRUE disables remote control of running runMidlet instance
+# implemented vie interprocess communication
+#
+USE_MULTIPLE_INSTANCES = TRUE
+
 
 local_win32: $(JAVACALL_OUTPUT_LIB_DIR)/emulator.res $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
 
@@ -173,6 +179,10 @@ endif
 
 ifeq ($(JSR_238_FORMATTER_NEGATIVE_SIGN_ALWAYS_FIRST), TRUE)
 CPPFLAGS += -DMINUS_ALWAYS_INFRONT=1 
+endif
+
+ifeq ($(USE_MULTIPLE_INSTANCES), TRUE)
+CPPFLAGS += -DENABLE_MULTIPLE_INSTANCES=1
 endif
 
 AR=lib.exe 
