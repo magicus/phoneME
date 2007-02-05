@@ -260,7 +260,7 @@ void ChoiceButton::mouseReleaseEvent(QMouseEvent *mouseEvent) {
  */
 void ChoiceButton::keyPressEvent(QKeyEvent *keyEvent) {
     ChoiceButtonBoxBody *qGroup = (ChoiceButtonBoxBody *)QButton::parentWidget();
-    
+
     switch(keyEvent->key()) {
     case Key_Return:
     {
@@ -457,7 +457,7 @@ void ChoiceButton::drawButton( QPainter *paint )
     // the rest is content
     QRect focusRect(x - 3, y - 1, w + 3, h + 2);
 
-    if (img != NULL) { 
+    if (img != NULL) {
       style().drawItem( paint, x, y, imgSize.width(), imgSize.height(),
 			AlignLeft|AlignTop, colorGroup(), isEnabled(),
 			img, NULL);
@@ -1936,7 +1936,7 @@ void PopupBody::popDownList() {
 /**
  * Override drawButton to support text truncation
 */
-void PopupBody::drawButton( QPainter * p ) {
+void PopupBody::drawButton( QPainter * p ) {    
     if(oldWidth != width()) {
         shortText = longText;
         truncateQString(shortText, font(), width()-PAD_CHOICE_POPUP_BUTTON);
@@ -2031,7 +2031,7 @@ void Popup::bodyRelocate(int x, int y) {
 int Popup::bodyHeightForWidth(int *takenWidth, int w) {
     int h = qButton->sizeHint().height();
 
-  *takenWidth = calculateMaxElementWidth(w, false) +
+  *takenWidth = calculateMaxElementWidth(w) +
                 style().buttonMargin() + 
                 style().menuButtonIndicatorWidth(h);
 
@@ -2052,7 +2052,7 @@ int Popup::bodyWidthForHeight(int *takenHeight, int h) {
 
   *takenHeight = qButton->sizeHint().height();
 
-  return calculateMaxElementWidth(qteapp_get_mscreen()->getScreenWidth() - 2*ITEM_BOUND_PAD, false) +
+  return calculateMaxElementWidth(qteapp_get_mscreen()->getScreenWidth() - 2*ITEM_BOUND_PAD) +
          style().buttonMargin() + style().menuButtonIndicatorWidth(h);
 }
 
@@ -2136,10 +2136,17 @@ MidpError Popup::set(int elementNum, const QString &str, QPixmap* img,
  * @return status of this call
  */
 MidpError Popup::setSelectedIndex(int elementNum, jboolean selected) {
+    const QPixmap* pixmap;
     qPopup->setSelected(elementNum, selected);
 
     if (selected) {
         qButton->setText(qPopup->text(elementNum));
+        pixmap  = ((ListElement*)qPopup->item(elementNum))->pixmap();
+        if (pixmap != NULL) {
+            qButton->setIconSet(QIconSet(*pixmap,QIconSet::Automatic));
+        } else {
+            qButton->setIconSet(QIconSet());
+        }
         qPopup->setCurrentItem(elementNum);
         selectedIndex = elementNum;
     }
@@ -2256,10 +2263,18 @@ MidpError Popup::setFont(int elementNum, QFont *font) {
  * @param id index of the element
  */ 
 void Popup::elementSelected(int id) {
+    const QPixmap* pixmap;
     qButton->popDownList();
     selectedIndex = id;
     MidpFormItemPeerStateChanged(this, selectedIndex);
     qButton->setText(qPopup->text(selectedIndex));
+
+    pixmap  = ((ListElement*)qPopup->item(selectedIndex))->pixmap();
+    if (pixmap != NULL) {
+        qButton->setIconSet(QIconSet(*pixmap,QIconSet::Automatic));
+    } else {
+        qButton->setIconSet(QIconSet());
+    }
 }
 
 /**
@@ -2270,7 +2285,7 @@ void Popup::elementSelected(int id) {
  *        calculations
  * @return the width of the widest element in the popup
  */
-int Popup::calculateMaxElementWidth(int width, bool withImage) {
+int Popup::calculateMaxElementWidth(int width) {
     ListElement *popupElement;
     int maxWidth =0;
 
@@ -2280,7 +2295,7 @@ int Popup::calculateMaxElementWidth(int width, bool withImage) {
   for (int w = 0, i = 0, n = qPopup->count(); i < n; i++) {
     popupElement = (ListElement *)qPopup->item(i);
     w = sizeElement(popupElement->text(), 
-		    withImage ? popupElement->pixmap() : NULL, 
+		    popupElement->pixmap(),
 		    popupElement->getFont() == NULL ? 
 		     qPopup->font() : *(popupElement->getFont()),
 		    TEXT_WRAP_OFF, width,
