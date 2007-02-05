@@ -53,6 +53,7 @@ public class LifeCycleModuleImpl
     private JUMPExecutive exec;
     private RequestSenderHelper rsh;
     private Object messageRegistration;
+    private String isolateExtraArg;
     private String defaultVMArgs;
     
     LifeCycleModuleImpl() {
@@ -75,7 +76,13 @@ public class LifeCycleModuleImpl
         if (vmArgs != null) {
             vmArgs0 = vmArgs0 + vmArgs.trim();
         }
-        String args[] = new String[] { vmArgs0, model.getName() };
+
+        String args[];
+        if(isolateExtraArg == null) {
+            args = new String[] { vmArgs0, model.getName() };
+        } else {
+            args = new String[] { vmArgs0, model.getName(), isolateExtraArg };
+        }
 
 	// The following is inherently racy, but it is handled properly.
 	// 
@@ -191,6 +198,8 @@ public class LifeCycleModuleImpl
 	    e.printStackTrace();
 	    throw new RuntimeException("Lifecycle module initialization failed");
 	}
+
+        isolateExtraArg = (String)config.get("runtime-properties-file");
     }
     
     public void unload() {

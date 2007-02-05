@@ -40,6 +40,7 @@ import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.message.JUMPMessageResponseSender;
 import com.sun.jump.message.JUMPMessageReader;
 import com.sun.jump.os.JUMPOSInterface;
+import com.sun.jumpimpl.process.JUMPModulesConfig;
 import com.sun.jumpimpl.process.JUMPProcessProxyImpl;
 import com.sun.jumpimpl.process.RequestSenderHelper;
 import com.sun.jump.command.JUMPIsolateLifecycleRequest;
@@ -50,6 +51,10 @@ import com.sun.jump.command.JUMPResponse;
 import com.sun.jump.command.JUMPResponseInteger;
 
 import sun.misc.ThreadRegistry;
+
+import java.util.Map;
+import java.util.StringTokenizer;
+
 
 public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
     private JUMPProcessProxyImpl    pp;
@@ -79,6 +84,11 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
     public int
     getProcessId() {
         return os.getProcessID();
+    }
+
+    public Map
+    getConfig() {
+        return JUMPModulesConfig.getProperties();
     }
 
     /**
@@ -147,11 +157,16 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 	    // Unknown app model
 	    throw new RuntimeException("Unknown app model "+args[0]);
 	}
+
+        if(args.length > 1 && args[1] != null) {
+            JUMPModulesConfig.overrideDefaultConfig(args[1]);
+        }
+
 	JUMPIsolateProcessImpl ipi = 
 	    (JUMPIsolateProcessImpl)JUMPIsolateProcess.getInstance();
 
 	ipi.initialize(appModel);
-	
+
 	do {
 	    try {
 		Thread.sleep(0L);
@@ -163,9 +178,25 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
     public void initialize(JUMPAppModel appModel) {
 	System.err.println("Setting app model to "+appModel);
 	this.appModel = appModel;
-	// FIXME: need to call AppContainerFactoryImpl.load(Map) to init it,
-	// and get the container only after that.
-	this.appContainer = new AppContainerFactoryImpl().getAppContainer(appModel);
+
+        AppContainerFactoryImpl factory = new AppContainerFactoryImpl();
+	this.appContainer = factory.getAppContainer(appModel);
+
+        System.err.println(
+            this + " config: " + JUMPModulesConfig.getProperties());
+
+        String classes = (String)getConfig().get("isolate-init-classes");
+        if(classes != null) {
+            StringTokenizer st = new StringTokenizer(classes, ",");
+            while(st.hasMoreTokens()) {
+                try {
+                    Class.forName(st.nextToken()).newInstance();
+                } catch(Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("Initialization failed");
+                }
+            }
+        }
     }
 
     private void createListenerThread()

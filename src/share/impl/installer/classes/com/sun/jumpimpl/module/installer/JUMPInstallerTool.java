@@ -68,9 +68,9 @@ import java.util.Vector;
  *        -ProvisioningServerURL <url of provisioning server>
  *
  * Ex:
- *   cvm -Dinstaller.repository=/my/repository -cp $JUMP_LIBDIR/jump-api.jar:$JUMP_LIBDIR/jump-impl.jar com.sun.jumpimpl.module.installer.JUMPInstallerTool -command list
- *   cvm -Dinstaller.repository=/my/repository -cp $JUMP_LIBDIR/jump-api.jar:$JUMP_LIBDIR/jump-impl.jar com.sun.jumpimpl.module.installer.JUMPInstallerTool -command install
- *   cvm -Dinstaller.repository=/my/repository -cp $JUMP_LIBDIR/jump-api.jar:$JUMP_LIBDIR/jump-impl.jar com.sun.jumpimpl.module.installer.JUMPInstallerTool -command uninstall
+ *   cvm -Dinstaller.repository=/my/repository -cp $JUMP_JARS com.sun.jumpimpl.module.installer.JUMPInstallerTool -command list
+ *   cvm -Dinstaller.repository=/my/repository -cp $JUMP_JARS com.sun.jumpimpl.module.installer.JUMPInstallerTool -command install
+ *   cvm -Dinstaller.repository=/my/repository -cp $JUMP_JARS com.sun.jumpimpl.module.installer.JUMPInstallerTool -command uninstall
  *
  */
 public class JUMPInstallerTool {
@@ -159,7 +159,7 @@ public class JUMPInstallerTool {
         System.out.println("Available commands that can be used are:  list, install, uninstall");
         System.out.println("");
         System.out.println("Ex:");
-        System.out.println("  cvm -Dinstaller.repository=/my/repository -cp $JUMP_LIBDIR/jump-api.jar:$JUMP_LIBDIR/jump-impl.jar com.sun.jumpimpl.module.installer.JUMPInstallerTool -command list");
+        System.out.println("  cvm -Dinstaller.repository=/my/repository -cp $JUMP_JARS com.sun.jumpimpl.module.installer.JUMPInstallerTool -command list");
         System.out.println("");
     }
     

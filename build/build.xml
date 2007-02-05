@@ -45,8 +45,19 @@ information or have any questions.
   <property name="d.doc.dir" value="${dist.dir}/doc"/>
   <property name="d.apidoc.dir" value="${d.doc.dir}/api"/>
 
-  <property name="api.jar" value="jump-api.jar"/>
-  <property name="impl.jar" value="jump-impl.jar"/>
+  <property name="api.jar.suffix" value="-jump-api.jar"/>
+  <property name="impl.jar.suffix" value="-jump-impl.jar"/>
+
+  <!-- 
+      JUMP classes that should be in the bootclasspath of a mvm server.
+  -->
+  <property name="jump.jar" value="${d.lib.dir}/jump.jar"/>
+  <!--
+      JUMP classes that should be in the bootclasspath 
+      of a cvmc command launching executive.
+  -->
+  <property name="executive-jump.jar" value="${d.lib.dir}/executive-jump.jar"/>
+
 
   <property name="debug" value="true"/>
 
@@ -97,5 +108,85 @@ information or have any questions.
   <target name="clean">
       <delete dir="${dist.dir}"/>
   </target>
+
+
+    <!--
+        The target to build impl or api set of jars in one pass.
+
+        The target builds 3 jars: shared, client, executive.
+         - "shared" jar includes classes that executive and isolates can access;
+         - "executive" jar includes classes that only executive can access;
+         - "client" jar includes classes that only isolates can access;
+
+        As the single base directory specified with "d.classes.dir" property is
+        used to store all compiled classes pattern rules are used to select
+        classes subset that go into specific jar. All patterns are
+        defined in "jars.properties" file.
+    -->
+    <target name="make-jars">
+        <property name="is-api" value="true"/>
+
+        <condition 
+            property="jar-suffix" 
+            value="${api.jar.suffix}" else="${impl.jar.suffix}">
+            <equals arg1="true" arg2="${is-api}"/>
+        </condition>
+        <condition property="jar-pattern-prefix" value="api" else="impl">
+            <equals arg1="true" arg2="${is-api}"/>
+        </condition>
+
+        <loadproperties srcfile="jar-patterns.properties">
+            <filterchain>
+                <linecontainsregexp>
+                    <regexp pattern="^\s*${jar-pattern-prefix}-"/>
+                </linecontainsregexp>
+            </filterchain>
+        </loadproperties>
+
+        <!-- shared -->
+        <antcall target="make-jar-impl">
+            <param name="jar-basename" value="shared"/>
+        </antcall>
+
+         <!-- client -->
+        <antcall target="make-jar-impl">
+            <param name="jar-basename" value="client"/>
+        </antcall>
+
+        <!-- executive -->
+        <antcall target="make-jar-impl">
+            <param name="jar-basename" value="executive"/>
+        </antcall>
+    </target>
+
+    <target name="make-jar-impl">
+        <property name="jar-basename" value=""/>
+        <propertyset id="includes-propertyset">
+            <propertyref prefix="${jar-pattern-prefix}-${jar-basename}-include"/>
+        </propertyset>
+        <property name="jar-includes.raw" refid="includes-propertyset"/>
+
+        <pathconvert property="jar-includes" pathsep=",">
+            <path>
+                <pathelement path="@ ${jar-includes.raw}"/>
+            </path>
+            <mapper>
+                <filtermapper>
+                    <tokenfilter>
+                        <!-- strip away ${basedir} value ant adds silently -->
+                        <replaceregex pattern="^[^@]*@" replace=""/>
+                        <!-- remove property name followed by '=' -->
+                        <replaceregex pattern="${jar-pattern-prefix}-${jar-basename}-include\.[^=]*=" replace="" flags="g"/>
+                        <!-- strip away spaces -->
+                        <replaceregex pattern="\s" replace="" flags="g"/>
+                    </tokenfilter>
+                </filtermapper>
+            </mapper>
+        </pathconvert>
+
+        <jar destfile="${d.lib.dir}/${jar-basename}${jar-suffix}" update="true"
+            basedir="${d.classes.dir}"
+            includes="${jar-includes}"/>
+    </target>
 
 </project>

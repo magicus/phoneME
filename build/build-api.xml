@@ -30,12 +30,9 @@ information or have any questions.
 -->
 
   <target name="build-api" depends="init">
-      <jump.javac
-             srcdir="${s.share.api.dir}/classes"/>
-
-     <jar destfile="${d.lib.dir}/${api.jar}" update="true"
-         basedir="${d.classes.dir}"
-         includes="com/sun/jump/**/*.class"/>
+      <jump.javac srcdir="${s.share.api.dir}/classes"/>
+      <!-- create 3 api jars -->
+      <antcall target="make-jars"/>
   </target>
 
   <target name="javadoc-api" depends="build-api">

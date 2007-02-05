@@ -41,6 +41,7 @@ import com.sun.jump.module.lifecycle.JUMPLifeCycleModuleFactory;
 import com.sun.jump.module.lifecycle.JUMPLifeCycleModule;
 
 import com.sun.jumpimpl.process.JUMPProcessProxyImpl;
+import com.sun.jumpimpl.process.JUMPModulesConfig;
 
 import com.sun.jump.os.JUMPOSInterface;
 
@@ -59,38 +60,29 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
     private JUMPProcessProxyImpl pp;
     private JUMPOSInterface os;
     
-    private static void
-            overrideDefaultConfig(String fname) {
-        Properties props = new Properties();
-        
-        InputStream in = null;
-        try {
-            in = new BufferedInputStream(new FileInputStream(fname));
-            props.load(in);
-        } catch(IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if(in != null) {
-                    in.close();
-                }
-            } catch(IOException e) {
-                e.printStackTrace();
-            }
-        }
-        
-        JUMPFactories.getDefaultConfig().putAll(props);
-    }
-    
+    // name of a propoerty which points to name of a propoerty file which
+    // overrides default modules configuration
+    private final static String PROPERTY_FILE_NAME_PROP 
+        = "runtime-properties-file";
+
     private void
-            handleCommandLine(String[] args) {
+    handleCommandLine(String[] args) {
+        // remove default value (if any)
+        JUMPModulesConfig.getProperties().remove(PROPERTY_FILE_NAME_PROP);
+
         for(int i = 0; i < args.length; ++i) {
             if("--config-file".equals(args[i])) {
-                if(!(++i < args.length)) {
+                if(!(++i < args.length) || args[i] == null) {
                     throw new IllegalArgumentException(
-                            "configuration file not specified");
+                        "configuration file not specified");
                 }
-                overrideDefaultConfig(args[i]);
+                JUMPModulesConfig.overrideDefaultConfig(args[i]);
+
+                // put name of a property file overriding default properties
+                // in the configuration map hopeing JUMPLifeCycleModule 
+                // implementation will hook it up
+                JUMPModulesConfig.getProperties().put(
+                    PROPERTY_FILE_NAME_PROP, args[i]);
             }
         }
     }
@@ -114,7 +106,7 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
         jei.os = JUMPOSInterface.getInstance();
         jei.pp = JUMPProcessProxyImpl.createProcessProxyImpl(jei.os.getProcessID());
         
-        JUMPFactories.init();
+        JUMPFactories.init(JUMPModulesConfig.getProperties());
         
         if (false) {
             // Sample code to create blank isolate upon startup
@@ -155,7 +147,7 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
     
     public static JUMPLauncher getLauncher() {
         JUMPLauncher launcher = null;
-        String launcherClass = (String)JUMPFactories.getDefaultConfig().get("jump.launcher");
+        String launcherClass = (String)JUMPModulesConfig.getProperties().get("jump.launcher");
         if (launcherClass != null) {
             try {
                 Class c = Class.forName(launcherClass);
