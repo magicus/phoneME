@@ -445,7 +445,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * @param height The height available for the Item's content
      */
     void lPaintContent(Graphics g, int width, int height) {
-        //        System.out.println(" width=" + width +  " height =" + height);
         // Draw the TextField background region 
         if (editable) {
             if (TextFieldSkin.IMAGE_BG != null) {
@@ -1485,7 +1484,13 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 ret = true;
             }            
         }
-        
+
+        // item has to be visible completelly
+        visRect_inout[X] = 0;
+        visRect_inout[Y] = 0;
+        visRect_inout[WIDTH] = bounds[WIDTH];
+        visRect_inout[HEIGHT] = bounds[HEIGHT];
+            
         return ret;
     }
 

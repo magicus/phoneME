@@ -1281,6 +1281,9 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
             if (traverseIndexCopy != -1) {
                 itemsCopy[traverseIndexCopy].uCallTraverseOut();
+                synchronized (Display.LCDUILock) {
+                    itemsCopy[traverseIndexCopy].lRequestPaint();
+                }
             }
             
             /*
@@ -1305,7 +1308,15 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             if (traverseIndexCopy != -1) {
                 // We then need to traverse to the next item
                 itemTraverse = 
-                        uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+                    uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+                
+                if (scrollForBounds(dir, visRect)) {
+                    uRequestPaint(); // request to paint contents area
+                } else {
+                    synchronized (Display.LCDUILock) {
+                        itemsCopy[traverseIndexCopy].lRequestPaint();
+                    }
+                }
             }
             
             int scrollPos = getScrollPosition0();
@@ -1328,6 +1339,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                     if (scrollPos > itemsCopy[traverseIndexCopy].bounds[Y]) {
                         scrollPos = itemsCopy[traverseIndexCopy].bounds[Y];
                     }
+                    uRequestPaint();
                 }
             }
             
@@ -1349,12 +1361,11 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                             itemsCopy[traverseIndexCopy].bounds[HEIGHT] -
                             viewportHeight;
                     }
+                    uRequestPaint();
                 }
             }
             setScrollPosition0(scrollPos);
             updateCommandSet();
-            uRequestPaint();
-            
         } else {                      
             
             // There is no more interactive items wholly visible on
