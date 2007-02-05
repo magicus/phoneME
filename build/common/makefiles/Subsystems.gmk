@@ -55,6 +55,12 @@ LIB_MAKE_FILE             = lib.gmk
 
 include $(SUBSYSTEM_DIR)/configuration/$(SUBSYSTEM_MAKE_FILE)
 
+#####################################################################
+# AMS Subsystem
+# Description: Application Manager System
+#####################################################################
+
+include $(SUBSYSTEM_DIR)/ams/$(SUBSYSTEM_MAKE_FILE)
 
 #####################################################################
 # Core Group
@@ -405,19 +411,3 @@ endif
 ifeq ($(USE_JPEG), true)
 include $(JPEG_DIR)/$(SUBSYSTEM_MAKE_FILE)
 endif
-
-#####################################################################
-# AMS Subsystem
-# Description: Application Manager System
-#####################################################################
-#
-# IMPL_NOTE: The AMS subsystem should be included as late as possible,
-#   since it produces the executables that depend on most object and 
-#   library files of the other subsystems. Names of the objects and 
-#   libraries are accumulated to variables used as prerequisites for 
-#   "make" rules of the executables. The key point is that the variables 
-#   within rule prerequisites are expanded at the moment of the rule 
-#   parsing, not when the rule is checked for remaking. So, textual 
-#   order of the rules and variable assignments does matter.
-
-include $(SUBSYSTEM_DIR)/ams/$(SUBSYSTEM_MAKE_FILE)
