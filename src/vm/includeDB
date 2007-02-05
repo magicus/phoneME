@@ -2447,6 +2447,7 @@ ROMOptimizer.cpp                 StackmapGenerator.hpp
 ROMOptimizer.cpp                 Signature.hpp 
 ROMOptimizer.cpp                 ROMWriter.hpp
 ROMOptimizer.cpp                 JavaClassObj.hpp
+ROMOptimizer.cpp                 JavaVTable.hpp
 
 SourceROMOptimizer.cpp           ROMOptimizer.hpp
 SourceROMOptimizer.cpp           OopDesc.inline.hpp

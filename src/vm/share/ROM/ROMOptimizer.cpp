@@ -1434,7 +1434,7 @@ void ROMOptimizer::remove_dead_methods(JVM_SINGLE_ARG_TRAPS) {
         if (vindex > -1) {
           clean_vtables(&klass, &method, vindex);
           if (ci().is_interface()) {
-            clean_itables(&klass, vindex-3);
+            clean_itables(&klass, vindex - JavaVTable::base_vtable_size());
           }
         }
         methods().obj_at_clear(i);
