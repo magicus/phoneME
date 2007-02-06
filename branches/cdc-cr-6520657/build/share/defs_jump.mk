@@ -108,15 +108,6 @@ CLASSLIB_DEPS += $(JUMP_NATIVE_LIBRARY_PATHNAME)
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_jump.mk
 
 #
-# Name of the generated list of native processes
-#
-CVM_NATIVE_PROCESS_DIR = $(CVM_DERIVEDROOT)/nativeProcessList
-CVM_NATIVE_PROCESS_LST = nativeProcessList.lst
-CVM_NATIVE_PROCESS_TBL = nativeProcessList.c
-CVM_NATIVE_PROCESSES   = $(CVM_NATIVE_PROCESS_DIR)/$(CVM_NATIVE_PROCESS_LST)
-JUMP_OBJECTS          += $(patsubst %.c,%.o,$(CVM_NATIVE_PROCESS_TBL))
-CVM_SRCDIRS           += $(CVM_NATIVE_PROCESS_DIR)
-#
 # Finally modify CVM variables w/ all the JUMP items
 #
 JUMP_NATIVE_LIB_OBJS     = $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(JUMP_NATIVE_LIBRARY_OBJECTS))
