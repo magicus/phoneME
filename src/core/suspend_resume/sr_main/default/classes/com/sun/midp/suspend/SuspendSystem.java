@@ -134,9 +134,9 @@ public class SuspendSystem extends AbstractSubsystem {
 
         /**
          * Detrmines if at least one of preceding suspension operations
-         * killed all user MIDlets and  the condition has not benn checked
+         * killed all user MIDlets and  the condition has not been checked
          * since that time.
-         * @return true if a suspension operatio killed all user MIDlets
+         * @return true if a suspension operation killed all user MIDlets
          *         and the condition has not been checked yet, false
          *         otherwise. This method returns true only once for one
          *         event.
