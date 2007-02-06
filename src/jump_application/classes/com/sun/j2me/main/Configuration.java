@@ -25,35 +25,65 @@
 package com.sun.j2me.main;
 
 import java.util.Properties;
+import java.util.Hashtable;
 
 /**
  * Intermediate class for getting system properties
  */
 public class Configuration {
 
-    /** List of all internal properties */
+    /** List of all internal properties. */
     private static Properties props = new Properties();
 
-    /** Don't let anyone instantiate this class */
+    /** List of native pointers to internal property values. */
+    private static Hashtable nativeProps = new Hashtable();
+
+    /** Static native initialization. */
+    static {
+        initialize();
+    }
+
+    /** Don't let anyone instantiate this class. */
     private Configuration() {
     }
 
-    /*
-     * Returns system property value by key
-     * @param key property key
-     * @return property value
+    /**
+     * Returns internal property value by key.
+     *
+     * @param key property key.
+     * @return property value.
      */
     public static String getProperty(String key) {
         return props.getProperty(key);
     }
 
-    /*
-     * Sets system property value by key
-     * @param key property key
-     * @param value property value
+    /**
+     * Returns native pointer to internal property value.
+     *
+     * @param key property key.
+     * @return native pointer to property value.
+     */
+    public static long getNativeProperty(String key) {
+        Object ptr = nativeProps.get(key);
+        if (ptr != null) {
+            return ((Long)ptr).longValue();
+        }
+
+        return 0;
+    }
+
+    /**
+     * Sets internal property value by key.
+     *
+     * @param key property key.
+     * @param value property value.
      */
     public static void setProperty(String key, String value) {
-        props.setProperty(key, value);
+        Object prevValue = props.setProperty(key, value);
+        Object prevPtr = nativeProps.put(key, new Long(getNativeString(value)));
+        if (prevPtr != null) {
+            releaseNativeString((String)prevValue, ((Long)prevPtr).longValue());
+        }
     }
 
     /**
@@ -88,4 +118,25 @@ public class Configuration {
 
         return def;
     }
+
+    /**
+     * Performs native initialization necessary for this class.
+     */
+    private static native void initialize();
+
+    /**
+     * Allocates native string and returns native pointer to it.
+     *
+     * @param value string to be stored in native.
+     * @return native pointer to string.
+     */
+    private static native long getNativeString(String value);
+
+    /**
+     * Releases native string at the given pointer.
+     *
+     * @param value string that was stored in native.
+     * @param ptr native pointer to string.
+     */
+    private static native void releaseNativeString(String value, long ptr);
 }
