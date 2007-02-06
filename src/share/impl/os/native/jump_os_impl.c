@@ -196,7 +196,12 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_reserve(
 }
 
 static int
-create_process(JNIEnv *env, jobject thisObj, jobjectArray arguments, int isNative) {
+create_process(
+    JNIEnv *env, 
+    jobject thisObj,
+    jobjectArray arguments,
+    int isNative)
+{
     int argc;
     char** argv;
     int i;
