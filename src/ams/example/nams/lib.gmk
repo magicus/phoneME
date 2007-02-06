@@ -166,23 +166,8 @@ $(INTERNAL_NAMS_COMMON_SCRIPT_FILES): $(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/shell/%
 	@cp -f $< $@
 	@chmod +x $@
 
-# Define AMS executables
-#
-$(BINDIR)/runNams$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_START_MT_MIDP_OBJ_FILES)
-	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_START_MT_MIDP_OBJ_FILES) $(LIBS))` $(LOG)
-
-$(BINDIR)/removeMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_REMOVEMIDLET_OBJ_FILES)
-	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_REMOVEMIDLET_OBJ_FILES) $(LIBS))` $(LOG)
-
-$(BINDIR)/listMidlets$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_LISTMIDLET_OBJ_FILES)
-	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_LISTMIDLET_OBJ_FILES) $(LIBS))` $(LOG)
-
-$(BINDIR)/fileInstaller$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_FILEINSTALLER_OBJ_FILES)
-	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_FILEINSTALLER_OBJ_FILES) $(LIBS))` $(LOG)
+SUBSYSTEM_AMS_LAZY_MAKEFILES += \
+	$(NAMS_EXAMPLES_DIR)/executables.gmk
 
 SUBSYSTEM_AMS_EXECUTABLES = \
 	$(BINDIR)/runNams$(g)$(p)$(EXE) \
@@ -191,12 +176,6 @@ SUBSYSTEM_AMS_EXECUTABLES = \
 	$(BINDIR)/fileInstaller$(g)$(p)$(EXE)
 
 ifeq ($(TARGET_PLATFORM), win32)
-$(BINDIR)/postTestMsg.exe: $(OBJ_DIR)/postTestMsg.o
-	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) \
-		$(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_DIR)/postTestMsg.o \
-		$(LIBS))` $(LOG)
-
 SUBSYSTEM_AMS_EXECUTABLES += $(BINDIR)/postTestMsg.exe
 endif
 
