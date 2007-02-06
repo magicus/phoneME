@@ -590,7 +590,7 @@ sendAsyncOfType(JUMPAddress target, JUMPOutgoingMessage m,
     int targetpid = target.processId;
     JUMPMessageQueueHandle targetMq;
     
-    assert(jumpMessagingInitialized != 0); 
+    assert(jumpMessagingInitialized != 0);
     targetMq = jumpMessageQueueOpen(targetpid, type);
     if (targetMq == NULL) {
 	/* FIXME: set error code */
