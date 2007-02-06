@@ -396,8 +396,8 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
 
         int[] avalibleBounds = sLF.lGetCurrentDisplay().getBodyLayerBounds();
 
-        int x = bounds[X] + contentBounds[X] + DateFieldSkin.PAD_V;
-        int y = bounds[Y] + contentBounds[Y];        
+        int x = bounds[X] + contentBounds[X] + DateFieldSkin.PAD_V - sLF.viewable[X];
+        int y = bounds[Y] + contentBounds[Y] - sLF.viewable[Y];
 
         if (y - DateEditorSkin.HEIGHT >= 0) {
             // can fit above
