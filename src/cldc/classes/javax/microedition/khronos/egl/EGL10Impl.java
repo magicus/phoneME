@@ -416,7 +416,8 @@ class EGL10Impl implements EGL10 {
 	    surface = EGLSurfaceImpl.getInstance(surf, width, height);
 	    surface.setPixmapPointer(pixmapPointer);
 	} else if (strategy == STRATEGY_USE_PBUFFER) {
-	    int[] new_attrib_list = new int[attrib_list.length + 4];
+            int attrib_size = (attrib_list != null) ? attrib_list.length : 0;
+            int[] new_attrib_list = new int[attrib_size + 5];
 
 	    int sidx = 0;
 	    int didx = 0;
@@ -842,7 +843,8 @@ class EGL10Impl implements EGL10 {
 
         EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurface();
 
-        if (currentDrawSurface != null) {
+        if (currentDrawSurface != null && 
+            currentDrawSurface.getPixmapPointer() != 0) {
             _putWindowContents(currentDrawSurface.getTarget(),
                                currentDrawSurface.getPixmapPointer());
         } else {
@@ -858,7 +860,8 @@ class EGL10Impl implements EGL10 {
         if (cimpl != null) {
             EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurface();
 
-            if (currentDrawSurface != null) {
+            if (currentDrawSurface != null &&
+                currentDrawSurface.getPixmapPointer() != 0) {
                 _getWindowContents(currentDrawSurface.getTarget(),
                                    currentDrawSurface.getPixmapPointer());
             } else {

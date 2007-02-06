@@ -54,7 +54,7 @@ static int contexts = 0;
 static int surfaces = 0;
 #endif
 
-#define ALL_WINDOWS_ARE_PIXMAPS
+// #define ALL_WINDOWS_ARE_PIXMAPS
 
 /* Called at VM startup to initialize the engine. */
 void

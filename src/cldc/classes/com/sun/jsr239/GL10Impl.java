@@ -832,7 +832,7 @@ public class GL10Impl implements GL10, GL10Ext {
 
     void checkThread() {
         Thread boundThread = (Thread)boundThreadByContext.get(context);
-        if (Thread.currentThread() != boundThread) {
+        if (boundThread != null && Thread.currentThread() != boundThread) {
             throw new IllegalStateException("GL call from improper thread");
         }
     }
@@ -1401,11 +1401,6 @@ public class GL10Impl implements GL10, GL10Ext {
             type == GL_UNSIGNED_SHORT) {
             int nbytes = (type == GL_UNSIGNED_BYTE) ? 1 : 2;
 
-            if (count*nbytes > indices.remaining()) {
-                throw new ArrayIndexOutOfBoundsException(
-                                                        Errors.VBO_OFFSET_OOB);
-            }
-            
             if (DEBUG_MEM) {
                 System.out.print("glDrawElements: Allocating bufferData " +
                                  count*nbytes);
