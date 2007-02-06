@@ -51,11 +51,14 @@
 #include <dirent.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#ifdef CVM_DYNAMIC_LINKING
+#include "javavm/include/porting/linker.h"
+#include <dlfcn.h>
+#endif
 #include "porting/JUMPMessageQueue.h"
 #include "porting/JUMPProcess.h"
 
 #include "zip_util.h"
-#include "native_process.h"
 
 /*
  * Free (argc, argv[]) set
@@ -578,6 +581,7 @@ numberOfTasks()
 /*
  * multi-string response to caller, packaged as
  * return message.
+ * all == 0 if only Java tasks is being listed
  */
 static void
 dumpTasksAsResponse(JUMPMessage command, int all)
@@ -796,7 +800,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	   connection */
 	command = readRequestMessage();
 	while (command != NULL) {
-        ProcessRec* nativeProcess = NULL;
+        void (*nativeMain)(int argc, char **argv) = NULL;
 	    tokenizeArgs(command, &argc, &argv);
 	    /*
 	     * Check for children to reap before each command
@@ -1019,7 +1023,6 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
             TaskRec* task;
 #define JNATIVE_USAGE   "Usage: JNATIVE <proc_name>[ <proc_args>...]"
             if (argc < 2) {
-jnative_usage:  /* bad usage */
                 respondWith(command, JNATIVE_USAGE);
                 freeArgs(argc, argv);
                 argc = 0;
@@ -1053,22 +1056,6 @@ jnative_usage:  /* bad usage */
                 jumpMessageFree(command);
                 command = readRequestMessage();
                 continue;
-            }
-            
-            /* is argv[1] a valid name of a native process?
-             * nativeProcessList is created at build time.
-             * See build/share/defs_jump.mk and build/share/rules_jump.mk
-             */
-            for (nativeProcess = nativeProcessList; 
-                    nativeProcess->procName != NULL; nativeProcess++) {
-                if (!strcmp(nativeProcess->procName, argv[1])) {
-                    break;
-                }
-            }
-            if (nativeProcess->proc == NULL) {
-                /* we didn't find given name. Return error */
-                nativeProcess = NULL;
-                goto jnative_usage;
             }
         }
 #if 0
@@ -1140,28 +1127,41 @@ jnative_usage:  /* bad usage */
 		}
 #endif
         
-		if (nativeProcess != NULL) { /* we are launching a native process */
+		if (!strcmp(argv[0], "JNATIVE")) { /* we are launching a native process */
+            /* trying to find native method */
+#ifdef CVM_DYNAMIC_LINKING
+            nativeMain = CVMdynlinkSym(RTLD_DEFAULT, argv[1]);
+#endif
+            if (nativeMain == NULL) { /* method hasn't been found */
+                respondWith(command, JNATIVE_USAGE);
+                jumpMessageFree(command);
+                freeArgs(argc, argv);
+                argc = 0;
+                argv = NULL;
+                exit(1); /* return from the native process */
+            } else {
 #define MSGPREFIX_NATIVE "native"
-            /* creating the message queue for our process.
-             * It must be created before the launcher received 
-             * successful result
-             */
-            JUMPMessageQueueStatusCode code = 0;
-            /* allocate memory for queue's name */
-            unsigned char *type = 
-                malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
-            /* FIXME: make sure that the string is allocated */
-            assert(type != NULL);
-            
-            strcpy(type, MSGPREFIX_NATIVE);
-            strcat(type, "/");
-            strcat(type, argv[1]); /* cat the name of process */
-            /* we trying to create a queue named "native/<processName>" */
-            jumpMessageQueueCreate(type, &code);
-            
-            /* FIXME: return error code if creation fails */
-            assert(code == JUMP_MQ_SUCCESS);
-            free(type);
+                /* creating the message queue for our process.
+                 * It must be created before the launcher received 
+                 * successful result
+                 */
+                JUMPMessageQueueStatusCode code = 0;
+                /* allocate memory for queue's name */
+                unsigned char *type = 
+                    malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
+                /* FIXME: make sure that the string is allocated */
+                assert(type != NULL);
+                
+                strcpy((char*)type, (char*)MSGPREFIX_NATIVE);
+                strcat((char*)type, "/");
+                strcat((char*)type, argv[1]); /* cat the name of process */
+                /* we trying to create a queue named "native/<processName>" */
+                jumpMessageQueueCreate(type, &code);
+                
+                /* FIXME: return error code if creation fails */
+                assert(code == JUMP_MQ_SUCCESS);
+                free(type);
+            }
         }
 
 		/* First, make sure that the child PID is communicated
@@ -1176,9 +1176,9 @@ jnative_usage:  /* bad usage */
 		    exit(1);
 		}
 
-		if (nativeProcess != NULL) {
+		if (nativeMain != NULL) {
             /* call 'main' of the native process */
-            (*nativeProcess->proc)(argc, argv);
+            (*nativeMain)(argc, argv);
             /* free anything after the process finished */
             freeArgs(argc, argv);
             argc = 0;
@@ -1209,8 +1209,10 @@ jnative_usage:  /* bad usage */
 			    strdup(state->testingModeFilePrefix);
 		    }
 		} else {
+            /* add task to the task list */
 		    addTask(env, state, pid, oneString(command), 
-                (nativeProcess == NULL ? PROCTYPE_JAVA : PROCTYPE_NATIVE));
+                (strcmp(argv[0], "JNATIVE") ? 
+                    PROCTYPE_JAVA : PROCTYPE_NATIVE));
 		}
 		jumpMessageFree(command);
 		/* The child is executing this command. The parent

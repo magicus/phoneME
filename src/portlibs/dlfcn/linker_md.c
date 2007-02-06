@@ -82,7 +82,7 @@ CVMdynlinkOpen(const void *absolutePathName)
 void *
 CVMdynlinkSym(void *dsoHandle, const void *name)
 {
-    assert(dsoHandle != NULL);
+    //assert(dsoHandle != NULL);
     /*
      * Some platforms (namely bsd) require that you prepend the
      * symbol with an underscore.
