@@ -44,7 +44,7 @@
 static void
 usage(const char* execName) 
 {
-    fprintf(stderr, "Usage: %s -target <targetpid> [-type <messagetype>] [-help] [-childrenexited] [-killall] [-killserver] [-warmup [-initClasses <classesList>] [-precompileMethods <methodsList>]] [-command <launchCommand>] [-testingmode <testprefix>] [... cvm options ...]\n",
+    fprintf(stderr, "Usage: %s -target <targetpid> [-type <messagetype>] [-help] [-childrenexited] [-killall] [-killserver] [-warmup [-initClasses <classesList>] [-precompileMethods <methodsList>]] [-command <launchCommand>] [-testingmode <testprefix>] [-setenv <Key=value>]  [... cvm options ...]\n",
 	    execName);
     jumpMessageShutdown();
     exit(1);
@@ -164,6 +164,12 @@ main(int argc, const char** argv)
 		usage(execName);
 	    }
 	    methodsList = argv[j++];
+	} else if (!strcmp(argv[j], "-setenv")) {
+	    j++;
+	    if ((j >= argc) || (argv[j][0] == '-')) {
+		usage(execName);
+	    }
+	    launchCommand = "SETENV";
 	} else {
 	    /* Done parsing options */
 	    break;
