@@ -34,8 +34,6 @@ import javax.microedition.midlet.MIDletStateChangeException;
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
-import com.sun.midp.log.Logging;
-import com.sun.midp.log.LogChannels;
 
 /**
  * MIDletPeer maintains the current state of the MIDlet and forwards updates

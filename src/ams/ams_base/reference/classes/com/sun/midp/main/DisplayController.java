@@ -431,7 +431,7 @@ class DisplayController {
      * concurrently. In SVM mode the display controller returns
      * foreground MIDlet.
      *
-     * @param onlyFromLaunched true if midlet should
+     * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
      *        if false then possibility to launch midlet is needed.
      * @return Proxy of the next foreground MIDlet, may be the foreground

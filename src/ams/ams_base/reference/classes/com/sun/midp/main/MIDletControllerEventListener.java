@@ -26,8 +26,6 @@
 
 package com.sun.midp.main;
 
-import java.util.*;
-
 import com.sun.midp.events.EventQueue;
 import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.Event;

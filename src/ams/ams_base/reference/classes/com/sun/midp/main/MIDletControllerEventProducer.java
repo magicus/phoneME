@@ -30,11 +30,6 @@ import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.NativeEvent;
 import com.sun.midp.events.EventQueue;
 
-//for createXXX(void) method
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.main.MIDletSuiteLoader;
-
 
 /**
  * This class provides methods to send events of types

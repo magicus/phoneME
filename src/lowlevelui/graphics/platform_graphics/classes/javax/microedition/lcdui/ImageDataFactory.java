@@ -649,7 +649,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
      *
      * @param data the ImageData object
      * @param imageDataArrayPtr native pointer to image data as Java int
-     * @param imageDataArrayLength length of image data array
+     * @param imageDataArrayPtrLength length of image data array
      * @return true if the imaged data loading was successful,
      *         otherwise it returns false
      */

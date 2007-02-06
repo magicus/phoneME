@@ -42,9 +42,9 @@ class CldcForegroundController implements ForegroundController {
      * @param theMIDletControllerEventProducer event producer
      */
     CldcForegroundController(
-        MIDletControllerEventProducer theMidletControllerEventProducer) {
+        MIDletControllerEventProducer theMIDletControllerEventProducer) {
 
-        midletControllerEventProducer = theMidletControllerEventProducer;
+        midletControllerEventProducer = theMIDletControllerEventProducer;
     }
 
     /**

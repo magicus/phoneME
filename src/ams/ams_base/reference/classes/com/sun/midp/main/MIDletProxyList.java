@@ -178,8 +178,7 @@ public class MIDletProxyList
         displayController = new DisplayController(this);
 
         /* register event listener for events processed by MIDletProxyList */
-        new MIDletControllerEventListener(eventQueue,
-            (MIDletControllerEventConsumer)this);
+        new MIDletControllerEventListener(eventQueue, this);
     }
 
     /**
@@ -1167,7 +1166,7 @@ public class MIDletProxyList
     /**
      * Removes a MidletProxy from the MidletProxyList
      *
-     * @param midletProxy
+     * @param midletProxy the MIDletProxy to be removed.
      */
     void removeMidletProxy(MIDletProxy midletProxy) {
         MIDletProxy preempting;

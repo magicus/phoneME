@@ -28,8 +28,6 @@ import javax.microedition.midlet.*;
 
 import com.sun.midp.midlet.*;
 
-import com.sun.midp.midletsuite.*;
-
 import com.sun.midp.security.SecurityToken;
 
 /**
@@ -46,7 +44,7 @@ class CldcMIDletLoader implements MIDletLoader {
      */
     CldcMIDletLoader(SecurityToken token) {
         classSecurityToken = token;
-    };
+    }
 
     /**
      * Loads a MIDlet from a suite's JAR.
