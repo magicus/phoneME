@@ -23,8 +23,10 @@
 # information or have any questions. 
 #
 
-#List of possible JSRs
-JSR_LIST=MIDP JSR_120 JSR_135 JSR_177 JSR_211
+#List of possible JSRs that use common build rules
+#Please set the list in your configuration
+#example:
+#JSR_LIST=MIDP JSR_120 JSR_135 JSR_177 JSR_211
          
 #JSR folders for source and include files
 MIDP_JC_DIR=midp
