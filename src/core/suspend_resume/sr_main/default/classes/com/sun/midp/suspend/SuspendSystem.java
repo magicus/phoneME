@@ -94,7 +94,15 @@ public class SuspendSystem extends AbstractSubsystem {
          * Performs MIDPSystem-specific resume operations.
          */
         protected synchronized void resumeImpl() {
-            if (midletKilled && !midletPaused) {
+            alertIfAllMidletsKilled();
+        }
+
+        /**
+         * Shows proper alert if all user midlets were killed by a preceding
+         * suspend operation, and the event is not reported yet.
+         */
+        private void alertIfAllMidletsKilled() {
+            if (allMidletsKilled()) {
                 String title = Resource.getString(
                     ResourceConstants.SR_ALL_KILLED_ALERT_TITLE, null);
                 String msg = Resource.getString(
@@ -113,14 +121,27 @@ public class SuspendSystem extends AbstractSubsystem {
          */
         protected void suspended() {
             super.suspended();
-            suspended0();
+            suspended0(!midletPaused && midletKilled);
         }
 
         /**
          * Notifies native functionality that MIDP activities in java
          * have been suspended.
+         * @param allMidletsKilled true to indicate that all user MIDlets
+         *        were killed by suspend routines.
          */
-        protected native void suspended0();
+        protected native void suspended0(boolean allMidletsKilled);
+
+        /**
+         * Detrmines if at least one of preceding suspension operations
+         * killed all user MIDlets and  the condition has not benn checked
+         * since that time.
+         * @return true if a suspension operatio killed all user MIDlets
+         *         and the condition has not been checked yet, false
+         *         otherwise. This method returns true only once for one
+         *         event.
+         */
+        protected native boolean allMidletsKilled();
 
         /**
          * Recieves notifications on MIDlet updates and removes corresponding
@@ -150,7 +171,12 @@ public class SuspendSystem extends AbstractSubsystem {
         /**
          * Not used. MIDletProxyListListener interface method;
          */
-        public void midletAdded(MIDletProxy midlet) {}
+        public void midletAdded(MIDletProxy midlet) {
+            if (MIDletSuiteUtils.getAmsIsolateId() == midlet.getIsolateId()) {
+                alertIfAllMidletsKilled();
+            }
+        }
+
         /**
          * Not used. MIDletProxyListListener interface method;
          */

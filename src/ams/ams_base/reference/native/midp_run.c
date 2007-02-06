@@ -59,6 +59,10 @@
 #include <midpUtilKni.h>
 #include <push_server_export.h>
 
+#if !ENABLE_CDC
+#include <suspend_resume.h>
+#endif
+
 /**
  * @file
  *
@@ -610,6 +614,10 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
          * for faster startup of a preverified MIDlet suite.
          */
         JVM_SetUseVerifier(classVerifier);
+#endif
+
+#if !ENABLE_CDC
+        sr_repairSystem();
 #endif
 
         /*

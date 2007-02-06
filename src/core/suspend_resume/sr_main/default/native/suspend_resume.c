@@ -41,6 +41,9 @@ VM vm = { KNI_FALSE };
 /** Java stack state from suspend/resume point of view. */
 static int sr_state = SR_INVALID;
 
+/** Flag to determine if a suspend operation killed all users MIDlets. */
+static jboolean allMidletsKilled = KNI_FALSE;
+
 /**
  * Resources list record for a resource to  be processed by
  * suspend/resume system. Nature of the resouce is unknown to
@@ -184,6 +187,8 @@ void midp_resume() {
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended0) {
+    allMidletsKilled = KNI_GetParameterAsBoolean(1);
+
     /* Checking that midp_resume() has not been called during suspending
      * of java side.
      */
@@ -195,6 +200,13 @@ KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended0) {
     }
 
     KNI_ReturnVoid();
+}
+
+KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_allMidletsKilled) {
+    jboolean ret = allMidletsKilled;
+    allMidletsKilled = KNI_FALSE;
+    KNI_ReturnBoolean(ret);
 }
 
 void sr_registerResource(
@@ -233,9 +245,27 @@ void sr_initSystem() {
     }
 }
 
+void sr_repairSystem() {
+    REPORT_INFO(LC_LIFECYCLE, "sr_repairSystem()");
+
+    switch (sr_state) {
+    case SR_RESUMING:
+        sr_state = SR_ACTIVE;
+        break ;
+    case SR_SUSPENDING:
+        suspend_resources();
+        allMidletsKilled = KNI_TRUE;
+        break;
+    default:
+        break;
+    }
+}
+
 void sr_finalizeSystem() {
     SuspendableResource *cur;
     SuspendableResource *next;
+
+    REPORT_INFO(LC_LIFECYCLE, "sr_finalizeSystem()");
 
     for (cur = sr_resources; NULL != cur; cur = next) {
         next = cur->next;
@@ -248,6 +278,9 @@ void sr_finalizeSystem() {
 
 jboolean midp_checkAndResume() {
     jboolean res = KNI_FALSE;
+
+    REPORT_INFO(LC_LIFECYCLE, "midp_checkAndResume()");
+
     if (SR_SUSPENDED == sr_state && midp_checkResumeRequest()) {
         midp_resume();
         res = KNI_TRUE;
