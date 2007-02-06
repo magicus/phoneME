@@ -141,6 +141,7 @@ typedef struct _TaskRec {
     int pid;
     char* command;
     
+    /* is it a native process or Java?*/
     ProcType procType;
 
     /* testing mode specific snapshot of prefix */
@@ -479,7 +480,8 @@ reapChildren(ServerState* state)
  * A new task has been created 
  */
 static int
-addTask(JNIEnv* env, ServerState* state, int taskPid, char* command, ProcType type)
+addTask(JNIEnv* env, ServerState* state, int taskPid, char* command, 
+        ProcType type)
 {
     TaskRec* task;
 
@@ -800,6 +802,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	   connection */
 	command = readRequestMessage();
 	while (command != NULL) {
+        /* local variable that will keep pointer to native's main() */
         void (*nativeMain)(int argc, char **argv) = NULL;
 	    tokenizeArgs(command, &argc, &argv);
 	    /*
@@ -885,7 +888,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		/* Make sure */
 		argc = 0;
 		argv = NULL;
-		dumpTasksAsResponse(command, 0);
+		dumpTasksAsResponse(command, 0); /* only Java tasks will be listed */
 		jumpMessageFree(command);
 		command = readRequestMessage();
 		continue;
@@ -895,7 +898,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		/* Make sure */
 		argc = 0;
 		argv = NULL;
-		dumpTasksAsResponse(command, 1);
+		dumpTasksAsResponse(command, 1); /* all tasks will be listed */
 		jumpMessageFree(command);
 		command = readRequestMessage();
 		continue;
@@ -1033,10 +1036,10 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
             }
             
             /* try to figure out if the process is already run.
-             * The command of task should start from "JNATIVE <procName>"
+             * The task command should start with "JNATIVE <procName>..."
              */
             for (task = taskList; task != NULL; task = task->next) {
-                int len = strlen(argv[1]);
+                int len = strlen(argv[1]); /* argv[1] == procName */
                 if (task->procType == PROCTYPE_NATIVE &&
                         !strncmp(task->command, "JNATIVE ", 8) &&
                         !strncmp(task->command+8, argv[1], len) &&
@@ -1138,7 +1141,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
                 freeArgs(argc, argv);
                 argc = 0;
                 argv = NULL;
-                exit(1); /* return from the native process */
+                exit(1);
             } else {
 #define MSGPREFIX_NATIVE "native"
                 /* creating the message queue for our process.
@@ -1176,9 +1179,11 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		    exit(1);
 		}
 
-		if (nativeMain != NULL) {
+        if (nativeMain != NULL) {
+            
             /* call 'main' of the native process */
             (*nativeMain)(argc, argv);
+            
             /* free anything after the process finished */
             freeArgs(argc, argv);
             argc = 0;
@@ -1209,10 +1214,10 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 			    strdup(state->testingModeFilePrefix);
 		    }
 		} else {
-            /* add task to the task list */
+		    /* add task to the task list */
 		    addTask(env, state, pid, oneString(command), 
-                (strcmp(argv[0], "JNATIVE") ? 
-                    PROCTYPE_JAVA : PROCTYPE_NATIVE));
+		        (strcmp(argv[0], "JNATIVE") ? 
+		            PROCTYPE_JAVA : PROCTYPE_NATIVE));
 		}
 		jumpMessageFree(command);
 		/* The child is executing this command. The parent
