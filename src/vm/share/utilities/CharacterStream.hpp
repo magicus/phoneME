@@ -126,21 +126,74 @@ class UTF8Stream : public CharacterStream {
   jint _utf8_length;
   friend class CharacterStream;
   friend class SymbolStream;
+  friend class LiteralStream;
 };
 
 class LiteralStream : public UTF8Stream {
  private:
+  jbyte byte_at_quick(jint index) { return (jbyte) _str[index]; }
   virtual jbyte byte_at(jint index) { return (jbyte) _str[index]; }
   virtual void byte_at_put(int index, jbyte value) { _str[index] = value;  }
   char* _str;
 
  public:
-  LiteralStream(const char* str, jint utf8_start, jint uft8_length) : UTF8Stream(utf8_start, uft8_length) {
+  LiteralStream(const char* str, jint utf8_start, jint utf8_length) : UTF8Stream(utf8_start, utf8_length) {
     _str = (char*)str;
   }
   LiteralStream(const char* str) : UTF8Stream(0, jvm_strlen(str)) {
     _str = (char*)str;
   }
+
+  // This is a quicker implementation than CharacterStream one
+  // by avoiding the virtual method call to byte_at().
+  jint get_next_jchar_from_utf8(int index, jchar* value) {
+    if (index < _utf8_start || index >= _utf8_start + _utf8_length) {
+       return UTF8_ERROR;
+    }
+    unsigned char ch1 = byte_at_quick(index);
+    index++;
+    if (ch1 == '\0') {
+      return UTF8_ERROR;
+    }
+    if (ch1 >= 128) {
+      return get_next_jchar_slow(index, ch1, value);
+    } else {
+      *value = ch1;
+      return index;
+    }
+  }
+
+  // This is a special case for use in Universe::new_string(const char*, int)
+  // to make it run faster, so as to improve KNI_NewStringUTF() speed.
+  jchar read_quick() {
+    jchar value;
+    jint index = get_next_jchar_from_utf8(_utf8_index, &value);
+    if (index == UTF8_ERROR) {
+      _utf8_index = _utf8_index + 1; // make progress somehow
+    } else {
+      _utf8_index = index;
+    }
+    return value;
+  }
+
+  // This is a special case for use in Universe::new_string(const char*, int)
+  // to make it run faster, so as to improve KNI_NewStringUTF() speed.
+  jint length_quick() {
+    int result = 0;
+    jchar value;
+    int index = _utf8_start;
+    while (index < _utf8_start + _utf8_length) {
+      index = get_next_jchar_from_utf8(index, &value);
+      if (index == UTF8_ERROR) {
+        return UTF8_ERROR;
+      }
+      result++;
+    }
+    return result;
+  }
+
+  friend class UTF8Stream;
+  friend class CharacterStream;
 };
 
 // UFT8ByteStream is over TypeArray[jbyte]

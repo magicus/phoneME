@@ -1620,7 +1620,18 @@ ReturnOop Universe::interned_string_for(String *string JVM_TRAPS) {
 
 ReturnOop Universe::new_string(const char* name, int length JVM_TRAPS) {
   LiteralStream ls((char*) name, 0, length);
-  return new_string(&ls JVM_NO_CHECK_AT_BOTTOM);
+
+  UsingFastOops fast_oops;
+  String::Fast s = new_instance(string_class() JVM_CHECK_0);
+  jint ulength = ls.length_quick();
+  s().set_offset(0);
+  s().set_count(ulength);
+  TypeArray::Fast t = new_char_array(ulength JVM_CHECK_0);
+  s().set_value(&t);
+  for (int index = 0; index < ulength; index++) {
+    t().char_at_put(index, ls.read_quick());
+  }
+  return s;
 }
 
 ReturnOop Universe::new_string(Symbol* symbol JVM_TRAPS) {
