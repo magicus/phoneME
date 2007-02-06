@@ -279,6 +279,9 @@ class AppManagerUI extends Form
     /** MIDlet to be removed after confirmation screen was accepted */
     private RunningMIDletSuiteInfo removeMsi;
 
+    /** last Item that was selected */
+    private RunningMIDletSuiteInfo lastSelectedMsi;
+
     /**
      * There are several Application Manager
      * midlets from the same "internal" midlet suite
@@ -386,18 +389,12 @@ class AppManagerUI extends Form
     }
 
     /**
-     * Called to determine MidletSuiteInfo of the selected Item.
+     * Called to determine MidletSuiteInfo of the last selected Item.
      *
-     * @return currently selected MidletSuiteInfo
+     * @return last selected MidletSuiteInfo
      */
     public RunningMIDletSuiteInfo getSelectedMIDletSuiteInfo() {
-        for (int i = 0; i < size(); i++) {
-            MidletCustomItem ci = (MidletCustomItem)get(i);
-            if (ci.hasFocus) {
-                return ci.msi;
-            }
-        }
-        return null;
+        return lastSelectedMsi;
     }
 
     /**
@@ -1500,6 +1497,7 @@ class AppManagerUI extends Form
 
             } else {
                 hasFocus = true;
+                lastSelectedMsi = this.msi;
             }
 
             visRect_inout[0] = 0;
