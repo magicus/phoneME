@@ -151,7 +151,7 @@ public class JavaAPILister extends LinkerUtil {
         /*
          * The options should look like:
          *
-         *     -listapi:include=java/*,include=javax/*,input=jarfile,mout=<mout>
+         *   -listapi:include=java/*,include=javax/*,input=<jar1>:<jar2>,mout=<mout>
          */
         boolean success = true;
         Vector classesThisRead = new Vector();
@@ -167,12 +167,20 @@ public class JavaAPILister extends LinkerUtil {
 	    } else if (s.startsWith("include=")) {
                 addToIncludes(s.substring(8));
 	    } else if (s.startsWith("input=")) {
-                classesThisRead.clear();
-                if (!readFile(s.substring(6), classesThisRead)) {
-                    success = false;
+                String separator = System.getProperty("path.separator", ":");
+                StringTokenizer st = new StringTokenizer(s.substring(6), separator);
+                int numOfInput = st.countTokens();
+
+                for (int j = 0; j < numOfInput; j++) {
+                    String f = st.nextToken();
+                    classesThisRead.clear();
+                    if (!readFile(f, classesThisRead)) {
+                        success = false;
+		    }
+                    classesProcessed.addAll(classesThisRead);
+                    ClassTable.enterClasses(
+                        classesThisRead.elements(), apiloader);
 		}
-                classesProcessed.addAll(classesThisRead);
-                ClassTable.enterClasses(classesThisRead.elements(), apiloader);
 	    } else if (s.startsWith("mout=")) {
                 memberOut = openOutputFile(s.substring(5));
                 if (memberOut == null) {
