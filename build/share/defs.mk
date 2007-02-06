@@ -1001,12 +1001,20 @@ endif
 # Object and data files needed for dual stack support
 #
 ifeq ($(CVM_DUAL_STACK), true)
-    CVM_SHAREOBJS_SPACE += \
-	MemberFilter.o     \
-	romjavaMemberFilterData.o
-    CVM_MIDPFILTERCONFIG = $(CVM_LIBDIR)/MIDPFilterConfig.txt
-    CVM_MIDPCLASSLIST    = $(CVM_LIBDIR)/MIDPPermittedClasses.txt
-    CVM_MIDPDIR          = $(CVM_TOP)/src/share/lib
+ifeq ($(CVM_INCLUDE_MIDP), true)
+    CVM_MIDPDIR           = $(CVM_TOP)/src/share/lib/dualstack/midp
+    # The MIDP version include all CLDC classes plus 8 additional
+    # javax/micro/microeditional/io/* classes.
+    CVM_ROM_MEMBER_FILTER = romjavaMIDPMemberFilterData.o
+else
+    CVM_MIDPDIR           = $(CVM_TOP)/src/share/lib/dualstack/cldc
+    CVM_ROM_MEMBER_FILTER = romjavaCLDCMemberFilterData.o
+endif
+    CVM_SHAREOBJS_SPACE  += \
+	MemberFilter.o      \
+	$(CVM_ROM_MEMBER_FILTER)
+    CVM_MIDPFILTERCONFIG  = $(CVM_LIBDIR)/MIDPFilterConfig.txt
+    CVM_MIDPCLASSLIST     = $(CVM_LIBDIR)/MIDPPermittedClasses.txt
 endif
 
 #
