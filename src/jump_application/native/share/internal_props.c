@@ -29,7 +29,7 @@
 
 static JavaVM *jvm = NULL;
 
-const char* getInternalProp(const char* key) {
+const char* jumpGetInternalProp(const char* key) {
     JNIEnv *env;
     jstring propname;
     jclass clazz;

@@ -24,12 +24,14 @@
 #ifndef __JSROP_EXCEPTIONS_MD_H
 #define __JSROP_EXCEPTIONS_MD_H
 
+#define getInternalProp(k) jumpGetInternalProp(k)
+
 #if defined __cplusplus 
 extern "C" { 
 #endif /* __cplusplus */
 
 /* Native counterpart for com.sun.j2me.main.Configuration.getProperty() */
-const char* getInternalProp(const char* key);
+const char* jumpGetInternalProp(const char* key);
 
 #if defined __cplusplus 
 } 
