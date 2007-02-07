@@ -21,20 +21,18 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-#ifndef __JSROP_EXCEPTIONS_MD_H
-#define __JSROP_EXCEPTIONS_MD_H
-
-#define getInternalProp(k) jumpGetInternalProp(k)
+#ifndef __INTERNAL_PROPS_H
+#define __INTERNAL_PROPS_H
 
 #if defined __cplusplus 
 extern "C" { 
 #endif /* __cplusplus */
 
 /* Native counterpart for com.sun.j2me.main.Configuration.getProperty() */
-const char* jumpGetInternalProp(const char* key);
+const char* getInternalProp(const char* key, char* buffer, int length);
 
 #if defined __cplusplus 
 } 
 #endif /* __cplusplus */
-#endif /* __JSROP_EXCEPTIONS_MD_H */
+#endif /* __INTERNAL_PROPS_H */
 

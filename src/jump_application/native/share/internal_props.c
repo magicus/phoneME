@@ -29,12 +29,13 @@
 
 static JavaVM *jvm = NULL;
 
-const char* jumpGetInternalProp(const char* key) {
+const char* getInternalProp(const char* key, char* buffer, int length) {
     JNIEnv *env;
     jstring propname;
     jclass clazz;
     jmethodID methodID;
-    jlong prop;
+    jstring prop;
+    jsize len;
 
     if (NULL == jvm) {
         return NULL;
@@ -44,20 +45,35 @@ const char* jumpGetInternalProp(const char* key) {
         return NULL;
     }
 
-    if ((*env)->EnsureLocalCapacity(env, 2) < 0) {
+    if ((*env)->EnsureLocalCapacity(env, 3) < 0) {
         return NULL;
     }
 
     propname = (*env)->NewStringUTF(env, key);
     clazz = (*env)->FindClass(env, "com/sun/j2me/main/Configuration");
-    methodID = (*env)->GetStaticMethodID(env, clazz, "getNativeProperty",
-                                         "(Ljava/lang/String;)J");
-    prop = (*env)->CallStaticLongMethod(env, clazz, methodID, propname);
+    methodID = (*env)->GetStaticMethodID(env, clazz, "getProperty",
+                                    "(Ljava/lang/String;)Ljava/lang/String;");
+    prop = (jstring)(*env)->CallStaticObjectMethod(env, clazz, methodID,
+                                                   propname);
+    (*env)->DeleteLocalRef(env, (jobject)propname);
+    (*env)->DeleteLocalRef(env, (jobject)clazz);
 
-    (*env)->DeleteLocalRef(env, (jobject) propname);
-    (*env)->DeleteLocalRef(env, (jobject) clazz);
+    if (JNU_IsNull(env, prop)) {
+        (*env)->DeleteLocalRef(env, (jobject)prop);
+        return NULL;
+    }
 
-    return (const char*)(unsigned long)prop;
+    len = (*env)->GetStringUTFLength(env, prop);
+    if (len >= length) {
+        (*env)->DeleteLocalRef(env, (jobject)prop);
+        return NULL;
+    }
+
+    (*env)->GetStringUTFRegion(env, prop, 0, len, buffer);
+    buffer[len] = 0;
+    (*env)->DeleteLocalRef(env, (jobject)prop);
+
+    return (const char*)buffer;
 }
 
 JNIEXPORT void JNICALL
@@ -66,21 +82,4 @@ Java_com_sun_j2me_main_Configuration_initialize(JNIEnv *env, jclass cls) {
         JNU_ThrowByName(env, "java/lang/RuntimeException",
                         "cannot get Java VM interface");
     }
-}
-
-JNIEXPORT jlong JNICALL
-Java_com_sun_j2me_main_Configuration_getNativeString(JNIEnv *env, jclass cls,
-                                                     jstring value) {
-    jboolean isCopy;
-    const char *ptr = (*env)->GetStringUTFChars(env, value, &isCopy);
-
-    return (jlong)(unsigned long)ptr;
-}
-
-JNIEXPORT void JNICALL
-Java_com_sun_j2me_main_Configuration_releaseNativeString(JNIEnv *env,
-                                                         jclass cls,
-                                                         jstring value,
-                                                         jlong ptr) {
-    (*env)->ReleaseStringUTFChars(env, value, (const char*)(unsigned long)ptr);
 }

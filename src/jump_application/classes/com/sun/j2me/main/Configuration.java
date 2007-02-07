@@ -35,9 +35,6 @@ public class Configuration {
     /** List of all internal properties. */
     private static Properties props = new Properties();
 
-    /** List of native pointers to internal property values. */
-    private static Hashtable nativeProps = new Hashtable();
-
     /** Static native initialization. */
     static {
         initialize();
@@ -58,32 +55,13 @@ public class Configuration {
     }
 
     /**
-     * Returns native pointer to internal property value.
-     *
-     * @param key property key.
-     * @return native pointer to property value.
-     */
-    public static long getNativeProperty(String key) {
-        Object ptr = nativeProps.get(key);
-        if (ptr != null) {
-            return ((Long)ptr).longValue();
-        }
-
-        return 0;
-    }
-
-    /**
      * Sets internal property value by key.
      *
      * @param key property key.
      * @param value property value.
      */
     public static void setProperty(String key, String value) {
-        Object prevValue = props.setProperty(key, value);
-        Object prevPtr = nativeProps.put(key, new Long(getNativeString(value)));
-        if (prevPtr != null) {
-            releaseNativeString((String)prevValue, ((Long)prevPtr).longValue());
-        }
+        props.setProperty(key, value);
     }
 
     /**
@@ -123,20 +101,4 @@ public class Configuration {
      * Performs native initialization necessary for this class.
      */
     private static native void initialize();
-
-    /**
-     * Allocates native string and returns native pointer to it.
-     *
-     * @param value string to be stored in native.
-     * @return native pointer to string.
-     */
-    private static native long getNativeString(String value);
-
-    /**
-     * Releases native string at the given pointer.
-     *
-     * @param value string that was stored in native.
-     * @param ptr native pointer to string.
-     */
-    private static native void releaseNativeString(String value, long ptr);
 }
