@@ -155,7 +155,7 @@ surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(dataHandle);
 
-    KNI_GetObjectField(surfaceHandle, jSurface->javaArrayFieldID, dataHandle);
+    KNI_GetObjectField(surfaceHandle, ((JavaSurface *) surface)->javaArrayFieldID, dataHandle);
     switch(((JavaSurface*)surface)->javaArrayFieldSize) {
         case sizeof(jint):
             surface->super.data = JavaIntArray(dataHandle);
@@ -168,6 +168,7 @@ surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
             break;
         default:
             //shouldn't happen        
+            break;
     }
     KNI_EndHandles();
 }
