@@ -28,6 +28,8 @@ package com.sun.midp.main;
 
 import javax.microedition.io.ConnectionNotFoundException;
 
+import javax.microedition.lcdui.Displayable;
+
 import com.sun.midp.log.*;
 
 import com.sun.midp.configurator.Constants;
@@ -405,9 +407,13 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      *
      * @param displayId ID of the Display
      * @param ownerClassName Class name of the  that owns the display
+     *
+     * @return a place holder displayable to used when "getCurrent()==null",
+     *         if null is returned an empty form is used
      */
-    public void registerDisplay(int displayId, String ownerClassName) {
+    public Displayable registerDisplay(int displayId, String ownerClassName) {
         currentDisplayId = displayId;
+        return null;
     }
 
     /**

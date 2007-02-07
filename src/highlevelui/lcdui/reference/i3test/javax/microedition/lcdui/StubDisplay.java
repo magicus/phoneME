@@ -39,6 +39,7 @@ public class StubDisplay extends Display {
      */
     public StubDisplay(String ownerName) {
         super(ownerName);
+        foregroundController = new StubController();
         foregroundConsumer.handleDisplayForegroundNotifyEvent();
     }
 
@@ -49,9 +50,7 @@ public class StubDisplay extends Display {
      * event queue with foreground-change requests.
      */
     public StubDisplay() {
-        super("StubDisplay");
-        foregroundController = new StubController();
-        foregroundConsumer.handleDisplayForegroundNotifyEvent();
+        this("StubDisplay");
     }
 
     /**
@@ -63,7 +62,9 @@ public class StubDisplay extends Display {
         StubController() {
         }
 
-        public void registerDisplay(int displayId, String ownerClassName) {
+        public Displayable registerDisplay(int displayId,
+                                           String ownerClassName) {
+            return null;
         }
 
         public void requestForeground(int displayId, boolean isAlert) {

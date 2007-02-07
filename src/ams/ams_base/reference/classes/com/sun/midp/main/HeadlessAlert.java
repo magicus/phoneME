@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.appmanager;
+package com.sun.midp.main;
 
 import javax.microedition.lcdui.*;
 
@@ -33,8 +33,6 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
-import com.sun.midp.main.MIDletProxy;
-
 /**
  * HeadlessAlert is shown when a user selects a MIDlet to bring to the
  * foreground that has not requested the foreground at least once by
@@ -42,39 +40,41 @@ import com.sun.midp.main.MIDletProxy;
  */
 class HeadlessAlert extends Alert implements CommandListener {
 
-    /** The display instance to be used to display error alerts */
-    private Display display;
+    /** Cached reference to the MIDletControllerEventProducer. */
+    private MIDletControllerEventProducer midletControllerEventProducer;
 
-    /** Reference to the previous current displayable. */
-    private Displayable previousCurrent;
+    /** ID of the parent display */
+    private int displayId;
 
-    /** Command to bring a headless midlet into the background state */
-    private Command okCommand;
+    /** Command to bring a headless midlet into the background */
+    private Command backgroundCommand;
 
     /** Command to terminate a headless midlet */
     private Command exitCommand;
 
-    /** Proxy to the headless MIDlet. */
-    private MIDletProxy midlet;
-
     /**
      * Initialize this headless alert.
      *
-     * @param theDisplay the Display instance where this alerts
-     *        will be shown
+     * @param theDisplayId ID of the parent display
+     * @param theMidletControllerEventProducer reference to an event producer
      */
-    HeadlessAlert(Display theDisplay) {
+    HeadlessAlert(int theDisplayId,
+            MIDletControllerEventProducer theMidletControllerEventProducer) {
         super(null,
               Resource.getString(ResourceConstants.LCDUI_DISPLAY_HEADLESS),
               null, AlertType.INFO);
 
-        display = theDisplay;
+        displayId = theDisplayId;
+        midletControllerEventProducer  = theMidletControllerEventProducer;
 
         setTimeout(Alert.FOREVER);
 
-        okCommand = new Command(Resource.getString(ResourceConstants.OK),
-                                Command.OK, 2);
-        addCommand(okCommand);
+        // Don't put the background command on the main display's alert
+        if (!MIDletSuiteUtils.isAmsIsolate()) {
+            backgroundCommand = new Command(Resource.getString(
+                                ResourceConstants.OK), Command.OK, 2);
+            addCommand(backgroundCommand);
+        }
 
         exitCommand = new Command(Resource.getString(ResourceConstants.EXIT),
                                   Command.EXIT, 1);
@@ -82,20 +82,6 @@ class HeadlessAlert extends Alert implements CommandListener {
         addCommand(exitCommand);
 
         setCommandListener(this);
-    }
-
-
-    /**
-     * Display the Alert.
-     *
-     * @param proxy proxy to the headless MIDlet
-     */
-    void show(MIDletProxy proxy) {
-        midlet = proxy;
-
-        previousCurrent = display.getCurrent();
-
-        display.setCurrent(this);
     }
 
     /**
@@ -107,10 +93,18 @@ class HeadlessAlert extends Alert implements CommandListener {
      */
     public void commandAction(Command c, Displayable d) {
         if (c == exitCommand) {
-            midlet.destroyMidlet();
-            display.setCurrent(previousCurrent);
-        } else if (c == okCommand) {
-            display.setCurrent(previousCurrent);
+            /**
+             * We need to destroy current midlet -
+             * the owner of this alert:
+             * to generate MIDLET_DESTROY_REQUEST
+             * event for a given midlet to MIDlet Controller
+             * in AMS Isolate.
+             */
+            midletControllerEventProducer.sendMIDletDestroyRequestEvent(
+                displayId);
+        } else if (c == backgroundCommand) {
+            midletControllerEventProducer.sendDisplayBackgroundRequestEvent(
+                displayId);
         }
     }
 }
