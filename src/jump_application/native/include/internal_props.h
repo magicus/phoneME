@@ -24,12 +24,14 @@
 #ifndef __INTERNAL_PROPS_H
 #define __INTERNAL_PROPS_H
 
+#define getInternalProp(a,b,c) jumpGetInternalProp(a,b,c)
+
 #if defined __cplusplus 
 extern "C" { 
 #endif /* __cplusplus */
 
 /* Native counterpart for com.sun.j2me.main.Configuration.getProperty() */
-const char* getInternalProp(const char* key, char* buffer, int length);
+const char* jumpGetInternalProp(const char* key, char* buffer, int length);
 
 #if defined __cplusplus 
 } 
