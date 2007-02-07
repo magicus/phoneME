@@ -60,6 +60,13 @@ public abstract class AbstractSubsystem implements Subsystem {
     private final Vector subsystems = new Vector();
 
     /**
+     * A set of suspend dependencies. System is considered to be suspended
+     * when all the subsystems are suspended and all the dependencies
+     * removed.
+     */
+    private final Vector dependencies = new Vector(4, 2);
+
+    /**
      * Returns the current state.
      * @return current state if the subsystem
      */
@@ -103,35 +110,65 @@ public abstract class AbstractSubsystem implements Subsystem {
   
     /**
      * If the current state is <code>ACTIVE</code>, changes the state to
-     * <code>SUSPENDING</code>, performs object-specific suspend
-     * operations and then changes the state to <code>SUSPENDED</code>.
+     * <code>SUSPENDING</code>, and initiates suspend routine. The suspend
+     * routine is pstponed until all suspend dependences are removed.
+     * If there are no dependencies currently, the suspend routine is
+     * invoked immediately.
      */
     public final void suspend() throws StateTransitionException {
         synchronized (lock) {
             if (state == ACTIVE) {
                 state = SUSPENDING;
-                suspendImpl();
-                
-                Enumeration subs = subsystems.elements();
-                while (subs.hasMoreElements()) {
-                    ((Subsystem)subs.nextElement()).suspend();
-                }
-            
-                checkSuspended();
+                updateSuspendStatus();
             }
         }
     }
 
     /**
-     * Checks if all the suspend conditions are satisfied, if they are,
-     * sets subsystem state to SUSPENDED and calls suspended().
+     * Adds a dependency that prevents from system suspend.
+     * @param dep dependency to add
      */
-    void checkSuspended() {
+    public void addSuspendDependency(SuspendDependency dep) {
         synchronized (lock) {
-            state = SUSPENDED;
-            suspended();
+            if (!dependencies.contains(dep)) {
+                dependencies.addElement(dep);
+            }
         }
 
+    }
+
+    /**
+     * Removes dependency that does not prevent from system suspend any more.
+     * Then invokes suspend notification if there are no dependencies left.
+     * @param dep dependency to remove
+     */
+    public void removeSuspendDependency(SuspendDependency dep) {
+        synchronized (lock) {
+            dependencies.removeElement(dep);
+            updateSuspendStatus();
+        }
+    }
+
+    /**
+     * Checks if there are dependencies that prevent from system suspend,
+     * if there are no ones, and the state is SUSPENDING suspend routine.
+     * The suspend routine performs first object-specific ations then
+     * invokes suspend() methods for all registered subsytems.
+     */
+    protected void updateSuspendStatus() {
+        synchronized (lock) {
+            if (state == SUSPENDING && 0 == dependencies.size()) {
+                suspendImpl();
+
+                Enumeration subs = subsystems.elements();
+                while (subs.hasMoreElements()) {
+                    ((Subsystem)subs.nextElement()).suspend();
+                }
+
+                state = SUSPENDED;
+                suspended();
+            }
+        }
     }
 
     /**
