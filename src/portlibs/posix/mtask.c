@@ -53,7 +53,6 @@
 #include <sys/msg.h>
 #ifdef CVM_DYNAMIC_LINKING
 #include "javavm/include/porting/linker.h"
-#include <dlfcn.h>
 #endif
 #include "porting/JUMPMessageQueue.h"
 #include "porting/JUMPProcess.h"
@@ -1130,10 +1129,16 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		}
 #endif
         
-		if (!strcmp(argv[0], "JNATIVE")) { /* we are launching a native process */
+        if (!strcmp(argv[0], "JNATIVE")) { /* we are launching 
+                                              a native process */
             /* trying to find native method */
 #ifdef CVM_DYNAMIC_LINKING
-            nativeMain = CVMdynlinkSym(RTLD_DEFAULT, argv[1]);
+            void *dso_handle = CVMdynlinkOpen(NULL); /* get handle 
+                                                        of loaded binary */
+            if (dso_handle != NULL) {
+                nativeMain = CVMdynlinkSym(dso_handle, argv[1]);
+                CVMdynlinkClose(dso_handle);
+            }
 #endif
             if (nativeMain == NULL) { /* method hasn't been found */
                 respondWith(command, JNATIVE_USAGE);
