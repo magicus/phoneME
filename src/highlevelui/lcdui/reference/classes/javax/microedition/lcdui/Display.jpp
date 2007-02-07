@@ -34,8 +34,10 @@ import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 
+// #ifndef ENABLE_CDC
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
+// #endif ENABLE_CDC
 
 import com.sun.midp.lcdui.*;
 import com.sun.midp.log.Logging;
@@ -468,8 +470,10 @@ public class Display {
     /** Cached reference to Active Displays Container. */
     private static DisplayContainer displayContainer;
 
+    // #ifndef ENABLE_CDC
     /** About abstract command. */
     private static Command aboutCommand;
+    // #endif ENABLE_CDC
 
     /** Device <code>Graphics</code> associated with this Display. */
     private Graphics screenGraphics;
@@ -494,8 +498,13 @@ public class Display {
     private int wantsForeground = WANTS_BACKGROUND;
 
     /**
-     * The actual current DisplayableLF instance. This will be null initially.
+     * Reference to the initial displayable of this display. Whenever the
+     * current displayable is set to this displayable, a call
+     * to getCurrent() should return null.
      */
+    private DisplayableLF initialDisplayable;
+
+    /** The actual current DisplayableLF instance.*/
     private DisplayableLF current;
 
     /**
@@ -589,9 +598,11 @@ public class Display {
                                    displayEventHandlerImpl);
         deviceAccess = new DisplayDeviceAccess();
 
+        // #ifndef ENABLE_CDC
         aboutCommand = new Command(Resource.getString(ResourceConstants.ABOUT),
                                    Command.HELP, 3);
         aboutCommand.setInternalID(EventConstants.ABOUT_REQUESTED);
+        // #endif ENABLE_CDC
     }
 
 
@@ -630,13 +641,17 @@ public class Display {
          */
         displayContainer.addDisplay(accessor);
 
-        foregroundController.registerDisplay(displayId, nameOfOwner);
+        Displayable temp = foregroundController.registerDisplay(displayId,
+                                                                nameOfOwner);
+        if (temp == null) {
+            initialDisplayable = new Form(null).displayableLF;
+        } else {
+            initialDisplayable = temp.displayableLF;
+        }
 
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     WIDTH,
                                                     HEIGHT);
-
-        drawTrustedIcon0(displayId, drawSuiteTrustedIcon);
 
         // #ifdef ENABLE_CHAMELEON
         graphicsQ = new CGraphicsQ();
@@ -644,6 +659,12 @@ public class Display {
         window = new MIDPWindow(cham_tunnel);
         region = new int[4];
         // #endif ENABLE_CHAMELEON
+
+        drawTrustedIcon0(displayId, drawSuiteTrustedIcon);
+
+        current = initialDisplayable;
+        current.lSetDisplay(Display.this);
+        pendingCurrent = initialDisplayable;
     }
 
     /**
@@ -653,6 +674,7 @@ public class Display {
      * @param theForegroundController producer for midlet events
      * @param theDisplayEventProducer producer for display events
      * @param theRepaintEventProducer producer for repaint events
+     * @param theDisplayContainer container for displays
      */
     static void initClass(
         ForegroundController theForegroundController,
@@ -836,15 +858,19 @@ public class Display {
      */
     public Displayable getCurrent() {
         synchronized (LCDUILock) {
-            if (current != null) {
-                return current.lGetDisplayable();
+            if (current == null) {
+                if (transitionCurrent == null) {
+                    return null;
+                } else {
+                    return transitionCurrent.lGetDisplayable();
+                }
+            } else {
+                if (current == initialDisplayable) {
+                    return null;
+                } else {
+                    return current.lGetDisplayable();
+                }
             }
-
-            if (transitionCurrent != null) {
-                return transitionCurrent.lGetDisplayable();
-            }
-
-            return null;
         }
     }
 
@@ -971,24 +997,25 @@ public class Display {
                 /*
                  * This implicitly goes back to the current screen, or to a
                  * pending screen, if there is one. We disallow stacking of
-                 * alerts by throwing IAE.
+                 * alerts by throwing IAE. Exceptions to this rule: if this
+                 * alert is the same one that is pending, or if the
+                 * pending screen is the initial displayable.
                  *
                  * Existing midlets may be intolerant of the rule that throws
                  * IAE if alerts are stacked. One approach that would allow
                  * this is to have the second alert inherit the return screen
                  * from the first alert.
                  */
-                if (pendingCurrent != null) {
-                    if (nextDisplayable != pendingCurrent.lGetDisplayable()) {
-                        Displayable returnScreen =
-                            pendingCurrent.lGetDisplayable();
+                if (nextDisplayable != pendingCurrent.lGetDisplayable()) {
+                    Displayable returnScreen =
+                        pendingCurrent.lGetDisplayable();
 
-                        if (returnScreen instanceof Alert) {
-                            throw new IllegalArgumentException();
-                        }
-
-                        ((Alert)nextDisplayable).setReturnScreen(returnScreen);
+                    if (pendingCurrent != initialDisplayable &&
+                            returnScreen instanceof Alert) {
+                        throw new IllegalArgumentException();
                     }
+
+                    ((Alert)nextDisplayable).setReturnScreen(returnScreen);
                 }
             }
 
@@ -2028,6 +2055,7 @@ public class Display {
             screenCommands[i].setInternalID(i);
         }
 
+        // #ifndef ENABLE_CDC
         // Piggy back AboutBox command to all Displayable except Alert
         if (!(d instanceof Alert)) {
             if (screenCommands == null) {
@@ -2041,6 +2069,7 @@ public class Display {
             screenCommands[screenComCount] = aboutCommand;
             screenComCount++;
         }
+        // #endif ENABLE_CDC
 
         // Item commands
         Item curItem = (current instanceof FormLF)
@@ -2170,6 +2199,7 @@ public class Display {
         q.removeAllElements();
     }
 
+    // #ifndef ENABLE_CDC
     /**
      * Show about box as a preempting alert.
      */
@@ -2184,6 +2214,7 @@ public class Display {
 
         about.run();
     }
+    // #endif ENABLE_CDC
 
     // #ifdef ENABLE_CHAMELEON
     /**
@@ -2745,11 +2776,13 @@ public class Display {
             Displayable currentDisplayable = null;
             Item curItem = null;
 
+            // #ifndef ENABLE_CDC
             // Check for About box command
             if (cmdId == EventConstants.ABOUT_REQUESTED) {
                 showAboutBox();
                 return;
             }
+            // #endif ENABLE_CDC
 
             synchronized (LCDUILock) {
                 if (current == null) {
@@ -2980,7 +3013,7 @@ public class Display {
                 // #ifndef ENABLE_CHAMELEON
                 // NOTE: Chameleon does not need to do any screen erasing
                 // because its paint engine will automatically clear
-                // the screen (assuming there is a displayable to show).
+                // the screen (using the initialDisplayable if needed).
                 /*
                  * Clear the screen, because the last display
                  * could have a displayable smaller than
