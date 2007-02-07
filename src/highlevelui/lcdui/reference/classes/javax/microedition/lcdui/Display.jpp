@@ -2453,6 +2453,17 @@ public class Display {
           return Display.HEIGHT;
         }
 
+        /** Called to get the display to request the foreground. */
+        public void requestForeground() {
+            synchronized (LCDUILock) {
+                if (wantsForeground == WANTS_BACKGROUND) {
+                    wantsForeground = WANTS_FOREGROUND;
+
+                    foregroundController.requestForeground(displayId, false);
+                }
+            }
+        }
+
         /**
          * Called to get key mask of all the keys that were pressed.
          * DisplayAccess I/F method.

@@ -344,9 +344,9 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      * This implementation does nothing.
      *
      * @param suite reference to the loaded suite
-     * @param className class name of the MIDlet
+     * @param midlet reference to the MIDlet
      */
-    public void midletActivated(MIDletSuite suite, String className) {
+    public void midletActivated(MIDletSuite suite, MIDlet midlet) {
     }
 
     /**
