@@ -114,8 +114,8 @@ create_process(char **cmd_args, int argc, char** argv) {
     JUMPMessageStatusCode code;
     int numWords = 0;
     int i;
-    
-    if ((void*)cmd_args == NULL || *cmd_args != NULL) {
+
+    if ((void*)cmd_args == NULL || *cmd_args == NULL) {
         /* Nothing to do */
         return -1;
     }
