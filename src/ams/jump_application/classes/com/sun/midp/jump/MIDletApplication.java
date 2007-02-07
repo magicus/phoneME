@@ -46,12 +46,12 @@ public class MIDletApplication extends JUMPApplication {
      * @param classname the MIDlet class name.
      */
     public MIDletApplication( String title, URL iconPath, int suiteID, 
-		              int classname  ) {
+		              String classname  ) {
         
         super(title, iconPath, JUMPAppModel.MIDLET);
 
         addProperty(SUITE_KEY, Integer.toString(suiteID)); 	 
-        addProperty(CLASSNAME_KEY, Integer.toString(classname)); 	 
+        addProperty(CLASSNAME_KEY, classname); 	 
 
     }
 
@@ -64,7 +64,7 @@ public class MIDletApplication extends JUMPApplication {
     }
 
     public String toString() {
-        return ( super.toString() + " MIDletSuiteID(" + suiteID + ")" );
+        return ( super.toString() + " MIDletSuiteID(" + getMIDletSuiteID() + ")" );
     }
     
 }
