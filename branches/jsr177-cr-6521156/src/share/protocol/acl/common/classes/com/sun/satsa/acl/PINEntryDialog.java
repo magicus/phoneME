@@ -28,65 +28,21 @@ package com.sun.satsa.acl;
 
 import com.sun.j2me.i18n.Resource;
 import com.sun.j2me.i18n.ResourceConstants;
-
-//import com.sun.midp.lcdui.DisplayEventHandler;
-//import com.sun.midp.lcdui.DisplayEventHandlerFactory;
-//import com.sun.midp.security.SecurityToken;
-//
-//import com.sun.midp.i18n.Resource;
-//import com.sun.midp.i18n.ResourceConstants;
-//
-//import com.sun.midp.midlet.MIDletEventConsumer;
-//import com.sun.midp.midlet.MIDletPeer;
-//
-//import javax.microedition.lcdui.*;
-
+import com.sun.j2me.dialog.MessageDialog;
 
 /** Implements PIN entry dialog. */
-public class PINEntryDialog /*implements CommandListener */{
+public class PINEntryDialog {
 
-    /** Answer that indicates that the dialog was cancelled. */
-    private static final int CANCELLED = -1;
-    /** Answer that indicates successful completion. */
-    private static final int CONFIRMED = 1;
-
-//    /** Caches the display manager reference. */
-//    private DisplayEventHandler displayEventHandler;
-//
-//    /** Command object for "OK" command. */
-//    private Command okCmd = 
-//	new Command(Resource.getString(ResourceConstants.OK),
-//		    Command.OK, 1);
-//
-//    /** Command object for "Cancel" command. */
-//    private Command cancelCmd =
-//	new Command(Resource.getString(ResourceConstants.CANCEL),
-//		    Command.CANCEL, 1);
-
-    /** Holds the preempt token so the form can end. */
-    private Object preemptToken;
-
-    /** Holds the answer to the security question. */
-    private int answer = CANCELLED;
-
-//    /** PIN entry text field. */
-//    private TextField tf1;
-//    /** PIN entry text field. */
-//    private TextField tf2;
     /** Attributes of the 1st PIN. */
     private PINAttributes pin1;
     /** Attributes of the 2nd PIN. */
     private PINAttributes pin2;
-    /** 1st PIN data. */
-    private byte[] data1;
-    /** 2nd PIN data. */
-    private byte[] data2;
+    /** PIN data. */
+    private Object[] data;    
 
     /**
      * Construct PIN dialog.
      *
-     * @param token security token with the permission to peempt the
-     *        foreground display
      * @param action PIN entry operation identifier.
      * @param attr1 1st PIN attributes.
      * @param attr2 2nd PIN attributes.
@@ -149,114 +105,20 @@ public class PINEntryDialog /*implements CommandListener */{
             }
         }
 
-//        Form form = new Form(title);
-//
-//        int flags = TextField.PASSWORD;
-//        if (pin1.isNumeric()) {
-//            flags |= TextField.NUMERIC;
-//        }
-//        tf1  = new TextField(label1, "", pin1.getMaxLength(), flags);
-//        form.append(tf1);
-//
-//        if (pin2 != null) {
-//
-//            flags = TextField.SENSITIVE | TextField.NON_PREDICTIVE;
-//            if (pin2.isNumeric()) {
-//                flags |= TextField.NUMERIC;
-//            }
-//            tf2  = new TextField(label2, "", pin2.getMaxLength(), flags);
-//            form.append(tf2);
-//
-//        }
-//
-//        form.addCommand(cancelCmd);
-//        form.addCommand(okCmd);
-//        form.setCommandListener(this);
-//	if (displayEventHandler  == null) {
-//	    displayEventHandler = DisplayEventHandlerFactory
-//		.getDisplayEventHandler(token);
-//	}
-//        preemptToken = displayEventHandler.preemptDisplay(form, true);
-    }
-
-    /**
-     * Waits for the user's answer.
-     * @return user's answer
-     */
-    public int waitForAnswer() {
-        synchronized (this) {
-            if (preemptToken == null) {
-                return CANCELLED;
-            }
-
-            try {
-                wait();
-            } catch (Throwable t) {
-                return CANCELLED;
-            }
-
-            return answer;
+        int pin2Length;
+        boolean pin2IsNumeric;
+        if (pin2 == null) {
+            pin2Length = 0;
+            pin2IsNumeric = false;
         }
-    }
-
-    /**
-     * Sets the user's answer and notifies waitForAnswer and
-     * ends the form.
-     * @param theAnswer user's answer or CANCEL if system cancelled the
-     *        screen
-     */
-    private void setAnswer(int theAnswer) {
-        synchronized (this) {
-            answer = theAnswer;
-//            displayEventHandler.donePreempting(preemptToken);
-            notify();
+        else {
+            pin2Length = pin2.getMaxLength();
+            pin2IsNumeric = pin2.isNumeric();
         }
 
-    }
-
-//    /**
-//     * Respond to a command issued on form.
-//     * @param c command activiated by the user
-//     * @param s the Displayable the command was on.
-//     */
-//    public void commandAction(Command c, Displayable s) {
-//        if (c == okCmd) {
-//            if (! checkInput()) {
-//                return;
-//            }
-//            setAnswer(CONFIRMED);
-//        } else {
-//            setAnswer(CANCELLED);
-//        }
-//
-//    }
-
-    /**
-     * Verifies that the values entered are acceptable.
-     * @return true if the values entered are acceptable.
-     */
-    private boolean checkInput() {
-
-//        if (tf1.getString().trim().equals("")) {
-//            return false;
-//        }
-//
-//        data1 = pin1.transform(tf1.getString());
-        if (data1 == null) {
-            // PIN can't be formatted, pass empty PIN to update counter
-            data1 = new byte[8];
-        }
-
-        if (pin2 != null) {
-//            data2 = pin2.transform(tf2.getString());
-            if (data2 == null) {
-//                tf2.setString("");
-                return false;
-            }
-        } else {
-            data2 = null;
-        }
-        return true;
+        data = MessageDialog.enterPins(title,
+                                       label1, pin1.isNumeric(), pin1.getMaxLength(),
+                                       label2, pin2IsNumeric, pin2Length);
     }
 
     /**
@@ -266,14 +128,29 @@ public class PINEntryDialog /*implements CommandListener */{
      */
     public Object[] getPINs() {
 
-        if (answer == CANCELLED) {
+        if (data == null) {
             return null;
         }
 
-        if (pin2 == null) {
-            return new Object[] {data1};
+        byte[] data1 = pin1.transform((String)data[0]);
+        if (data1 == null) {
+            // PIN can't be formatted, pass empty PIN to update counter
+            data1 = new byte[8];
         }
 
-        return new Object[] {data1, data2};
+        byte[] data2;
+        if (pin2 != null) {
+            data2 = pin2.transform((data.length == 2) ? (String)data[1] : null);
+        }
+        else {
+            data2 = null;
+        }
+
+        if (data2 != null) {
+            return new Object[] { data1, data2 };
+        }
+        else {
+            return new Object[] { data1 };
+        }
     }
 }

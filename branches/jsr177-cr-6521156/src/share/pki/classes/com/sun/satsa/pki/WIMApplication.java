@@ -768,8 +768,6 @@ class WIMApplication {
                 return PIN_CANCELLED;
             }
 
-            dialog.waitForAnswer();
-
             Object[] pins = dialog.getPINs();
 
             if (pins == null) {
