@@ -26,14 +26,27 @@ SUBSYSTEM_MAKE_FILE       = subsystem.gmk
 
 JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239
 
+# Directory which JSRs *.jar and *.so files are put to
 JSROP_LIB_DIR   = $(CVM_LIBDIR)
+
+# Directory where JSRs build subdirectories are created
 JSROP_BUILD_DIR = $(CDC_DIST_DIR)
+
+# Directory which JSRs object files are put to
 JSROP_OBJ_DIR   = $(CVM_OBJDIR)
 
+# Variable containing JSRs *.jar files and their build flags; example:
+# <dist_dir>/lib/jsrXXX.jar=true <dist_dir>/lib/jsrYYY.jar=false
 JSROP_JARS_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar=$(USE_JSR_$(jsr_number)))
+
+# Variable containing JSRs *.jar files which are built
 JSROP_BUILD_JARS = $(patsubst %=true,%,$(filter %true, $(JSROP_JARS_FLAGS)))
+
+# Variable which is passed to MIDP and blocks JSRs building from MIDP; looks like:
+# USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
 MIDP_JSROP_USE_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),USE_JSR_$(jsr_number)=false)
 
+# If any JSR is built include JSROP abstractions and Javacall building
 ifneq ($(JSROP_BUILD_JARS),)
 JAVACALL_TARGET=$(TARGET_OS)-$(TARGET_CPU_FAMILY)
 include $(JAVACALL_DIR)/module.gmk
@@ -43,7 +56,152 @@ endif
 
 # Include JSR 75
 ifeq ($(USE_JSR_75), true)
-include $(JSR_75_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+export JSR_75_DIR ?= $(COMPONENTS_DIR)/jsr75
+JSR_75_MAKE_FILE = $(JSR_75_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_75_MAKE_FILE)),)
+$(error JSR_75_DIR must point to a directory containing JSR 75 sources)
+endif
+include $(JSR_75_MAKE_FILE)
+endif
+
+# Include JSR 82
+ifeq ($(USE_JSR_82), true)
+export JSR_82_DIR ?= $(COMPONENTS_DIR)/jsr82
+JSR_82_MAKE_FILE = $(JSR_82_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_82_MAKE_FILE)),)
+$(error JSR_82_DIR must point to a directory containing JSR 82 sources)
+endif
+include $(JSR_82_MAKE_FILE)
+endif
+
+# Include JSR 120
+ifeq ($(USE_JSR_120), true)
+export JSR_120_DIR ?= $(COMPONENTS_DIR)/jsr120
+JSR_120_MAKE_FILE = $(JSR_120_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_120_MAKE_FILE)),)
+$(error JSR_120_DIR must point to a directory containing JSR 120 sources)
+endif
+include $(JSR_120_MAKE_FILE)
+endif
+
+# Include JSR 135
+ifeq ($(USE_JSR_135), true)
+export JSR_135_DIR ?= $(COMPONENTS_DIR)/jsr135
+JSR_135_MAKE_FILE = $(JSR_135_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_135_MAKE_FILE)),)
+$(error JSR_135_DIR must point to a directory containing JSR 135 sources)
+endif
+include $(JSR_135_MAKE_FILE)
+endif
+
+# Include JSR 172
+ifeq ($(USE_JSR_172), true)
+export JSR_172_DIR ?= $(COMPONENTS_DIR)/jsr172
+JSR_172_MAKE_FILE = $(JSR_172_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_172_MAKE_FILE)),)
+$(error JSR_172_DIR must point to a directory containing JSR 172 sources)
+endif
+include $(JSR_172_MAKE_FILE)
+endif
+
+# Include JSR 177
+ifeq ($(USE_JSR_177), true)
+export JSR_177_DIR ?= $(COMPONENTS_DIR)/jsr177
+JSR_177_MAKE_FILE = $(JSR_177_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_177_MAKE_FILE)),)
+$(error JSR_177_DIR must point to a directory containing JSR 177 sources)
+endif
+include $(JSR_177_MAKE_FILE)
+endif
+
+# Include JSR 179
+ifeq ($(USE_JSR_179), true)
+export JSR_179_DIR ?= $(COMPONENTS_DIR)/jsr179
+JSR_179_MAKE_FILE = $(JSR_179_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_179_MAKE_FILE)),)
+$(error JSR_179_DIR must point to a directory containing JSR 179 sources)
+endif
+include $(JSR_179_MAKE_FILE)
+endif
+
+# Include JSR 180
+ifeq ($(USE_JSR_180), true)
+export JSR_180_DIR ?= $(COMPONENTS_DIR)/jsr180
+JSR_180_MAKE_FILE = $(JSR_180_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_180_MAKE_FILE)),)
+$(error JSR_180_DIR must point to a directory containing JSR 180 sources)
+endif
+include $(JSR_180_MAKE_FILE)
+endif
+
+# Include JSR 184
+ifeq ($(USE_JSR_184), true)
+export JSR_184_DIR ?= $(COMPONENTS_DIR)/jsr184
+JSR_184_MAKE_FILE = $(JSR_184_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_184_MAKE_FILE)),)
+$(error JSR_184_DIR must point to a directory containing JSR 184 sources)
+endif
+include $(JSR_184_MAKE_FILE)
+endif
+
+# Include JSR 205
+ifeq ($(USE_JSR_205), true)
+export JSR_205_DIR ?= $(COMPONENTS_DIR)/jsr205
+JSR_205_MAKE_FILE = $(JSR_205_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_205_MAKE_FILE)),)
+$(error JSR_205_DIR must point to a directory containing JSR 205 sources)
+endif
+include $(JSR_205_MAKE_FILE)
+endif
+
+# Include JSR 211
+ifeq ($(USE_JSR_211), true)
+export JSR_211_DIR ?= $(COMPONENTS_DIR)/jsr211
+JSR_211_MAKE_FILE = $(JSR_211_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_211_MAKE_FILE)),)
+$(error JSR_211_DIR must point to a directory containing JSR 211 sources)
+endif
+include $(JSR_211_MAKE_FILE)
+endif
+
+# Include JSR 229
+ifeq ($(USE_JSR_229), true)
+export JSR_229_DIR ?= $(COMPONENTS_DIR)/jsr229
+JSR_229_MAKE_FILE = $(JSR_229_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_229_MAKE_FILE)),)
+$(error JSR_229_DIR must point to a directory containing JSR 229 sources)
+endif
+include $(JSR_229_MAKE_FILE)
+endif
+
+# Include JSR 234
+ifeq ($(USE_JSR_234), true)
+export JSR_234_DIR ?= $(COMPONENTS_DIR)/jsr234
+JSR_234_MAKE_FILE = $(JSR_234_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_234_MAKE_FILE)),)
+$(error JSR_234_DIR must point to a directory containing JSR 234 sources)
+endif
+include $(JSR_234_MAKE_FILE)
+endif
+
+# Include JSR 238
+ifeq ($(USE_JSR_238), true)
+export JSR_238_DIR ?= $(COMPONENTS_DIR)/jsr238
+JSR_238_MAKE_FILE = $(JSR_238_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_238_MAKE_FILE)),)
+$(error JSR_238_DIR must point to a directory containing JSR 238 sources)
+endif
+include $(JSR_238_MAKE_FILE)
+endif
+
+# Include JSR 239
+ifeq ($(USE_JSR_239), true)
+export JSR_239_DIR ?= $(COMPONENTS_DIR)/jsr239
+JSR_239_MAKE_FILE = $(JSR_239_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_239_MAKE_FILE)),)
+$(error JSR_239_DIR must point to a directory containing JSR 239 sources)
+endif
+include $(JSR_239_MAKE_FILE)
 endif
 
 CVM_INCLUDES    += $(JSROP_EXTRA_INCLUDES)
