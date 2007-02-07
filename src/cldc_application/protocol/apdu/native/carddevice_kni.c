@@ -29,6 +29,7 @@
 #include <sni.h>
 #include <midpServices.h>
 #include <midp_thread.h>
+#include <midp_properties_port.h>
 
 #include <javacall_carddevice.h>
 
@@ -56,8 +57,7 @@ KNIDECL (com_sun_cardreader_PlatformCardDevice_init0) {
     char *buffer;
     const char *prop_value;
     
-    /* IMPL_NOTE: Change to Properties abstraction */
-//    prop_value = getInternalProp(hostsandports);
+    prop_value = getInternalProp(hostsandports);
     prop_value = NULL;
     if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);

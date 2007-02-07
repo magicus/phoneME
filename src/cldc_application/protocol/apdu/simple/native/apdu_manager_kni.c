@@ -29,6 +29,7 @@
 #include <jsrop_exceptions.h>
 #include <midpServices.h>
 #include <midp_thread.h>
+#include <midp_properties_port.h>
 
 #include <javacall_carddevice.h>
 
@@ -61,8 +62,7 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_init0) {
     char *buffer;
     const char *prop_value;
 
-    /* IMPL_NOTE: Change to Properties abstraction */
-//    prop_value = getInternalProp(hostsandports);
+    prop_value = getInternalProp(hostsandports);
     prop_value = NULL;
     if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);

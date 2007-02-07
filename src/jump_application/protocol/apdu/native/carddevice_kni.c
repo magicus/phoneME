@@ -29,6 +29,7 @@
 #include <JUMPEvents.h>
 #include "javavm/include/porting/sync.h"
 #include <javacall_carddevice.h>
+#include <internal_props.h>
 
 /** Configuration exception */
 static char cardDeviceException[] = 
@@ -36,6 +37,8 @@ static char cardDeviceException[] =
 
 /** Configuration property name */
 static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
+
+#define PROP_BUF_SIZE 128
 
 /**
  * Initializes the device.
@@ -52,10 +55,10 @@ KNIDECL (com_sun_cardreader_PlatformCardDevice_init0) {
     javacall_result status;
     char *err_msg;
     char *buffer;
+    char prop_buf[PROP_BUF_SIZE];
     const char *prop_value;
     
-    /* IMPL_NOTE: Change to Properties abstraction */
-//    prop_value = getInternalProp(hostsandports);
+    prop_value = getInternalProp(hostsandports, prop_buf, PROP_BUF_SIZE);
     prop_value = NULL;
     if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);
