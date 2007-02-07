@@ -510,7 +510,7 @@ void PlatformMScreen::setNextVMTimeSlice(int millis) {
         if (vm_slicer.isActive()) {
             vm_slicer.stop();
         }
-    } else if (!vm_suspended){
+    } else {
         if (vm_slicer.isActive()) {
             vm_slicer.changeInterval(millis);
         } else {
