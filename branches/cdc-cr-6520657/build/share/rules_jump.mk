@@ -91,4 +91,5 @@ run-unittests::
 	$(AT)echo "Running jump unit-tests ..."
 	$(check_JUNIT_JAR)
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(RUN_UNITTEST_ANT_OPTIONS) -f build/build.xml only-run-unittests)
+endif
 
