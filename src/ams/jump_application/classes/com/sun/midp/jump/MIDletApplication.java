@@ -34,25 +34,33 @@ import com.sun.jump.common.JUMPApplication;
  */
 public class MIDletApplication extends JUMPApplication {
 
-    private int suiteID;
+    public static final String SUITE_KEY = "MIDletApplication_suiteid";
+    public static final String CLASSNAME_KEY = "MIDletApplication_classname";
 
     /**
      * Create an instance of an application.
      *
      * @param title The application's title, can be null
      * @param iconPath The location of the application's icon in, can be null
-     * @param suiteInfo the MIDlet suite info which this midlet belongs to.
+     * @param suiteID the MIDlet suite id which this midlet belongs to.
+     * @param classname the MIDlet class name.
      */
-    public MIDletApplication( String title, URL iconPath, int suiteID  ) {
+    public MIDletApplication( String title, URL iconPath, int suiteID, 
+		              int classname  ) {
         
         super(title, iconPath, JUMPAppModel.MIDLET);
 
-        this.suiteID = suiteID;
+        addProperty(SUITE_KEY, Integer.toString(suiteID)); 	 
+        addProperty(CLASSNAME_KEY, Integer.toString(classname)); 	 
 
     }
 
     public int getMIDletSuiteID() {
-        return suiteID;
+        return Integer.parseInt(getProperty(SUITE_KEY));
+    }
+
+    public String getMIDletClassName() {
+        return getProperty(CLASSNAME_KEY);
     }
 
     public String toString() {

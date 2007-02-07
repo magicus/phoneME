@@ -111,9 +111,8 @@ public class MIDletSuiteStorageAccessor
 
            midletApplications = new ArrayList(midletInfos.length);
            for (int i = 0; i < midletInfos.length; i++) {
-               MIDletApplication app = new MIDletApplication(midletInfos[i].classname,
-                          null, suiteInfo.suiteId);
-                          //midletInfos[i].icon, suiteInfo);
+               MIDletApplication app = new MIDletApplication(midletInfos[i].name,
+                          null, suiteInfo.suiteId, midletInfos[i].classname );
                midletApplications.add(i, app);
            }
 
