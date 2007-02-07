@@ -27,21 +27,14 @@
 package com.sun.midp.main;
 
 import javax.microedition.io.ConnectionNotFoundException;
-
 import javax.microedition.lcdui.Displayable;
-
+import javax.microedition.midlet.MIDlet;
 import com.sun.midp.log.*;
-
 import com.sun.midp.configurator.Constants;
-
 import com.sun.midp.installer.InternalMIDletSuiteImpl;
-
 import com.sun.midp.lcdui.*;
-
 import com.sun.midp.midlet.*;
-
 import com.sun.midp.midletsuite.*;
-
 
 /**
  * The first class loaded in VM by midp_run_midlet_with_args to initialize
