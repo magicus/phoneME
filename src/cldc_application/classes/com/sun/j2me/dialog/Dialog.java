@@ -60,6 +60,7 @@ public class Dialog implements CommandListener {
     static private class SecurityTrusted
         implements ImplicitlyTrustedClass { };
 
+    /** This class has a different security domain than the Application */
     static private SecurityToken token = SecurityInitializer
         .requestToken(new SecurityTrusted());
 
@@ -113,12 +114,6 @@ public class Dialog implements CommandListener {
      * @param token security token.
      * @return user's answer
      * @throws InterruptedException if interrupted
-     * 
-     *      * @exception InterruptedException if another thread interrupts the
-     *   calling thread while this method is waiting to preempt the
-     *   display.
-
-     * 
      */
     public int waitForAnswer() throws InterruptedException {
         if (displayEventHandler == null) {
@@ -133,8 +128,7 @@ public class Dialog implements CommandListener {
 
             try {
                 wait();
-            }
-            catch (Throwable t) {
+            } catch (Throwable t) {
                 return CANCELLED;
             }
 
