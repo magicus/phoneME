@@ -158,16 +158,6 @@ public class SuspendSystem extends AbstractSubsystem {
                                      String className, int error) {}
     }
 
-    // IMPL_NOTE: the dependecies are now processed after suspend routines.
-    // It may have sense first wait for all dependencies resolution, then
-    // suspend system and subsystems.
-    /**
-     * A set of suspend dependencies. System is considered to be suspended
-     * when all the subsystems are suspended and all the dependencies
-     * removed.
-     */
-    protected final Vector dependencies = new Vector(4, 2);
-
     /**
      * The singleton instance.
      */
@@ -190,45 +180,6 @@ public class SuspendSystem extends AbstractSubsystem {
      * Constructs an instance.
      */
     private SuspendSystem() {}
-
-    /**
-     * Adds a dependency that prevents from system suspend.
-     * @param dep dependency to add
-     */
-    public void addSuspendDependency(SuspendDependency dep) {
-        synchronized (lock) {
-            if (!dependencies.contains(dep)) {
-                dependencies.addElement(dep);
-            }
-        }
-
-    }
-
-    /**
-     * Removes dependency that does not prevent from system suspend any more.
-     * Then invokes suspend notification if there are no dependencies left.
-     * @param dep dependency to remove
-     */
-    public void removeSuspendDependency(SuspendDependency dep) {
-        synchronized (lock) {
-            dependencies.removeElement(dep);
-            checkSuspended();
-        }
-    }
-
-    /**
-     * Checks if there are dependencies that prevent from system suspend,
-     * if there are no ones, and the state is SUSPENDING sets state to
-     * SUSPENDED and calls suspended().
-     */
-    protected void checkSuspended() {
-        synchronized (lock) {
-            if (state == SUSPENDING && 0 == dependencies.size()) {
-                state = SUSPENDED;
-                suspended();
-            }
-        }
-    }
 
     /**
      * Registers a lisener interested in system suspend/resume operations.
