@@ -1878,9 +1878,6 @@ void PopupBody::setText(const QString &newText) {
  */
 void PopupBody::setList(QListBox *list) {
     qPopup = list;
-    qPopup->setAutoScrollBar(FALSE);
-    qPopup->setBottomScrollBar(FALSE);
-    qPopup->setSelectionMode(QListBox::Single);
 }
 
 /**
