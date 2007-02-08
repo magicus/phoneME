@@ -1146,13 +1146,12 @@ void ListElement::paint(QPainter *p) {
           - 2*lb->frameWidth()
           - (lb->verticalScrollBar()->sizeHint()).width();
 
-  int fitPolicy = ((List *)lb->parent())->getFitPolicy();
+  int fitPolicy = ((Choice *)lb->parent())->getFitPolicy();
   if (s.width() < w || fitPolicy == TEXT_WRAP_OFF) {
     w = s.width();
   }
   drawElement(p, 0, 0, w, s.height(), 6, 2,
-	      text(), pix, font == NULL ? lb->font() : *font, 
-	      ((List *)((ListBody *)lb)->parent())->getFitPolicy());
+	      text(), pix, font == NULL ? lb->font() : *font, fitPolicy);
 }
 
 /**
@@ -1171,7 +1170,7 @@ int ListElement::width(const QListBox *lb) const {
           - (lb->verticalScrollBar()->sizeHint()).width();
 
   return sizeElement(text(), pix, font == NULL ? lb->font() : *font, 
-		     ((List *)lb->parent())->getFitPolicy(), 
+		     ((Choice *)lb->parent())->getFitPolicy(), 
 		     w, 6, 2).width();
 } 
 
@@ -1191,7 +1190,7 @@ int ListElement::height(const QListBox *lb) const {
           - (lb->verticalScrollBar()->sizeHint()).width();
 
   return sizeElement(text(), pix, font == NULL ? lb->font() : *font, 
-		     ((List *)lb->parent())->getFitPolicy(), 
+		     ((Choice *)lb->parent())->getFitPolicy(), 
 		     w, 6, 2).height();
 }
 
@@ -1741,23 +1740,28 @@ void PopupBody::focusInEvent(QFocusEvent *event) {
  */
 void PopupBody::keyPressEvent(QKeyEvent *keyEvent) {
     switch(keyEvent->key()) {
-    case Key_Return:
-        if (!poppedUp) {
-            popupList();
-        }
-        break;
-    case Key_Up:
-    case Key_Left:
-    case Key_Right:
-    case Key_Down:
-        if (!poppedUp) {
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyPressEvent(keyEvent);
+        case Key_Space:
+        case Key_Enter:
+        case Key_Return:
+#ifdef QT_KEYPAD_MODE
+        case Key_Select:
+#endif
+            if (!poppedUp) {
+                popupList();
+            }
             break;
-        }
-    default:
-        QPushButton::keyPressEvent(keyEvent);
-        break;
+        case Key_Up:
+        case Key_Left:
+        case Key_Right:
+        case Key_Down:
+            if (!poppedUp) {
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyPressEvent(keyEvent);
+                break;
+            }
+        default:
+            QPushButton::keyPressEvent(keyEvent);
+            break;
     }   
 }
 
@@ -1894,30 +1898,38 @@ void PopupBody::popupList() {
     // Send all listbox events to PopupBody eventFilter
     qPopup->installEventFilter(this);
     qPopup->viewport()->installEventFilter(this);
+    PlatformMScreen* mscreen = PlatformMScreen::getMScreen();
 
     // define size and position for popup
-    // following calculations in parent' coordinate system
-    int winH = qteapp_get_mscreen()->getDisplayFullHeight();
-    int bodyY = y();
-    int pX = x();
+    QPoint pos = mapToGlobal(QPoint(0, 0));
+    int winH = mscreen->height();
+    int bodyY = pos.y();
+    int pX = pos.x();
     int pY = bodyY + height();
+    QSize sizeP = qPopup->sizeHint();
     int pW = width();
-    int pH = qPopup->sizeHint().height();
-    if ((pY + pH) > winH) {
+    int pH = sizeP.height();
+    pos = mscreen->mapToGlobal(QPoint(0, 0));
+    int headerH = pos.y();
+
+    int lowerPartH = winH + headerH - pY;
+    int upperPartH = bodyY - headerH;
+    if (pH > lowerPartH) {
         //select the highest part of the widget
-        if ((winH - pY) > bodyY) {
-            pH = winH - pY;
+        if (lowerPartH > upperPartH) {
+            pH = lowerPartH;
+        } else if (pH < upperPartH) {
+            pY = bodyY - pH;
         } else {
-            pY = 0;
-            pH = bodyY;
+            pY = headerH;
+            pH = upperPartH;
         }
     }
 
-    QPoint pos = mapToGlobal(mapFromParent(QPoint(pX, pY)));
     qPopup->resize(pW, pH);
-    qPopup->move(pos.x(), pos.y());
+    qPopup->move(pX, pY);
     qPopup->raise();
-    qPopup->setAutoScrollBar(TRUE);
+    qPopup->setVScrollBarMode(QScrollView::Auto);
     qPopup->show();
 
     poppedUp = TRUE;
@@ -1965,11 +1977,12 @@ Popup::Popup(QWidget *parent, const QString &label,
     cachedPopupBody->reparent(this, newpos, FALSE);
     qButton = cachedPopupBody;
     qPopup  = cachedPopupBody->getList();
+    qPopup->reparent(this, newpos, FALSE);
     cachedPopupBody = NULL;
 
   } else {
     qButton = new PopupBody(this);
-    qPopup = new QListBox(qButton, "", WType_Popup);
+    qPopup = new QListBox(this, "", WType_Popup);
     qButton->setList(qPopup);
   }
 
