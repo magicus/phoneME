@@ -65,7 +65,7 @@ public class PresentationModuleFactoryImpl extends JUMPPresentationModuleFactory
     private JUMPPresentationModule getSimpleBasisAMS() {
         synchronized(PresentationModuleFactoryImpl.class) {
             if (simpleBasisAMS == null) {
-                simpleBasisAMS = new com.sun.jumpimpl.presentation.simplebasis.SimpleBasisAMS();
+                simpleBasisAMS = (JUMPPresentationModule)new com.sun.jumpimpl.presentation.simplebasis.SimpleBasisAMS();
                 simpleBasisAMS.load(configMap);
             }
             return simpleBasisAMS;
