@@ -39,7 +39,7 @@
 #include <jump_messaging.h>
 #include "porting/JUMPProcess.h"
 
-#define JPORT_NUM 7777
+#define TIMEOUT 5000
 
 static void
 usage(const char* execName) 
@@ -196,7 +196,13 @@ main(int argc, const char** argv)
 	jumpMessageAddInt(outMessage, 2);
 	jumpMessageAddString(outMessage, "TESTING_MODE");
 	jumpMessageAddString(outMessage, (char*)testingprefix);
-	response = jumpMessageSendSync(targetAddress, outMessage, 0, &code);
+	response = jumpMessageSendSync(targetAddress, outMessage, TIMEOUT, 
+				       &code);
+	if (response == NULL) {
+	    fprintf(stderr, "send message failed\n");
+	    return;
+	}
+	
 	dumpMessage(response, "Testing mode response:");
 	jumpMessageFreeOutgoing(outMessage);
     }
@@ -247,7 +253,12 @@ main(int argc, const char** argv)
     dumpMessage(outMessage, "Outgoing message:");
 
     /* Time to send outgoing message */
-    response = jumpMessageSendSync(targetAddress, outMessage, 0, &code);
+    response = jumpMessageSendSync(targetAddress, outMessage, TIMEOUT, &code);
+    if (response == NULL) {
+	fprintf(stderr, "send message failed\n");
+	return;
+    }
+	
     dumpMessage(response, "Command response:");
 
 #if 0
