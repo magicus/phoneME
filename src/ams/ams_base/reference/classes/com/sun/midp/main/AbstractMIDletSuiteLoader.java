@@ -206,7 +206,6 @@ abstract class AbstractMIDletSuiteLoader
          * has been run and then hook up its objects.
          */
         displayEventHandler.initDisplayEventHandler(
-            eventQueue,
             displayEventProducer,
             foregroundController,
             repaintEventProducer,
