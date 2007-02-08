@@ -25,8 +25,8 @@
 #
 
 ifeq ($(TARGET_VM), cldc_vm)
-include $(JSROP_ABSTRACTS_DIR)/build/cldc_application/module.gmk
+include $(ABSTRACTIONS_DIR)/build/cldc_application/module.gmk
 else 
-include $(JSROP_ABSTRACTS_DIR)/build/jump_application/module.gmk
+include $(ABSTRACTIONS_DIR)/build/jump_application/module.gmk
 endif
 
