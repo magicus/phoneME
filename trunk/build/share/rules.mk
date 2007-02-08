@@ -216,6 +216,7 @@ $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
 #$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_SATSA_JAVA_FILES)
 #	$(appendjavafiles)
 
+# Include Optional packages rules
 -include ../share/rules_op.mk
 
 # Test classes
@@ -419,6 +420,7 @@ $(J2ME_CLASSLIB):: democlasses $(CVM_DEMO_CLASSESJAR)
 ifeq ($(CVM_INCLUDE_JUMP), true)
 $(J2ME_CLASSLIB):: jumptargets
 endif
+$(J2ME_CLASSLIB):: $(JSROP_JARS)
 $(J2ME_CLASSLIB):: headers $(CVM_ROMJAVA_LIST)
 $(J2ME_CLASSLIB):: $(CLASSLIB_DEPS)
 $(J2ME_CLASSLIB):: aotdeps
