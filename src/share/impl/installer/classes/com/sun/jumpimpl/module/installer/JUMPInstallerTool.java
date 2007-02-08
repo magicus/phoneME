@@ -146,6 +146,11 @@ public class JUMPInstallerTool {
         this.ContentURL = (String)hash.get("ContentURL");
         this.DescriptorURI = (String)hash.get("DescriptorURI");
         this.Protocol = (String)hash.get("Protocol");
+        
+        System.out.println("ContentURL: " + ContentURL);
+        System.out.println("DescriptorURI: " + DescriptorURI);
+        System.out.println("Protocol: " + Protocol);
+        
         if (!setup()) {
             System.exit(-1);
         };
@@ -216,19 +221,16 @@ public class JUMPInstallerTool {
             return null;
         }
         
-        // These three lines below should have happened in the executive setup,
-        // but for the testing purpose, emulating load() call here.
-        if (JUMPExecutive.getInstance() == null) {
-            HashMap map = new HashMap();
-            map.put(repositoryProperty, repository);
-            module.load(map);
-        }
         return module;
     }
     
     private void doCommand() {
         if (Command.equals("install")) {
-            doInstall();
+            if (ContentURL != null && DescriptorURI != null && Protocol != null) {
+                doInstall(ContentURL, DescriptorURI, Protocol);
+            } else {
+                doInstall();
+            }
         } else if (Command.equals("list")) {
             doList();
         } else if (Command.equals("uninstall")) {
@@ -241,10 +243,16 @@ public class JUMPInstallerTool {
     }
     
     private void doInstall(String url, String uri, String protocol) {
+        JUMPDownloadModule module = null;
         
-        JUMPDownloadModule module =
-                JUMPDownloadModuleFactory.getInstance().getModule(protocol);
-        if (module == null) {
+        // This one line should be called by the executive in real impl
+        new com.sun.jumpimpl.module.download.DownloadModuleFactoryImpl();
+        
+        if (protocol.equals(JUMPDownloadModuleFactory.PROTOCOL_MIDP_OTA)) {
+            module = JUMPDownloadModuleFactory.getInstance().getModule(JUMPDownloadModuleFactory.PROTOCOL_MIDP_OTA);
+        } else if (protocol.equals(JUMPDownloadModuleFactory.PROTOCOL_OMA_OTA)) {
+            module = JUMPDownloadModuleFactory.getInstance().getModule(JUMPDownloadModuleFactory.PROTOCOL_OMA_OTA);
+        } else {
             trace("doInstall - Unknown protocol: " + protocol);
             error();
             return;
@@ -322,13 +330,6 @@ public class JUMPInstallerTool {
         
         // Get all of the apps
         for (int i = 0, totalApps = 0; i < installers.length; i++) {
-            
-            // These three lines below should have happened in the executive setup,
-            // but for the testing purpose, emulating load() call here.
-            HashMap map = new HashMap();
-            map.put(repositoryProperty, repository);
-            installers[i].load(map);
-            
             JUMPContent[] content = installers[i].getInstalled();
             if (content != null) {
                 for(int j = 0; j < content.length; j++) {

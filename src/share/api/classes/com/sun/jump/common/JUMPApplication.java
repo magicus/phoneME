@@ -46,16 +46,30 @@ public class JUMPApplication
     public static final String ICONPATH_KEY = "JUMPApplication_iconPath";
     public static final String TITLE_KEY = "JUMPApplication_title";
     public static final String APPMODEL_KEY = "JUMPApplication_appModel";
+    public static final String ID_KEY = "JUMPApplication_id";
     
     /**
      * Create an instance of an application.
      * @param title The application's title, can be null
      * @param iconPath The location of the application's icon in, can be null
      * @param type The application's type
-     */
+     */    
     public JUMPApplication(String title, URL iconPath, JUMPAppModel type) {
-                
-        addProperty(TITLE_KEY, title);
+        this(title, iconPath, type, -1);        
+    }
+    
+    /**
+     * Create an instance of an application.
+     * @param title The application's title, can be null
+     * @param iconPath The location of the application's icon in, can be null
+     * @param type The application's type
+     * @param id The installation id of the application
+     */
+    public JUMPApplication(String title, URL iconPath, JUMPAppModel type, int id) {
+        
+        if (title != null) {
+            addProperty(TITLE_KEY, title);
+        }
         
         if (iconPath != null) {
             addProperty(ICONPATH_KEY, iconPath.getFile());
@@ -64,6 +78,8 @@ public class JUMPApplication
         if (type != null) {
             addProperty(APPMODEL_KEY, type.getName());
         }
+        
+        addProperty(ID_KEY, Integer.toString(id));        
     }
     
     /**
@@ -71,38 +87,36 @@ public class JUMPApplication
      * @param props The properties that correspond to this application
      */
     private JUMPApplication(Properties props) {
-	this.props = props;
+        this.props = props;
     }
     
     /**
      * Create a binary representation of this JUMPApplication object
      */
-    public byte[] toByteArray() 
-    {
-	try {
-	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	    props.store(baos, "");
-	    return baos.toByteArray();
-	} catch (Throwable e) {
-	    e.printStackTrace();
-	    return null;
-	}
+    public byte[] toByteArray() {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            props.store(baos, "");
+            return baos.toByteArray();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return null;
+        }
     }
     
     /**
      * Create a JUMPApplication from its binary representation
      */
-    public static JUMPApplication fromByteArray(byte[] propBytes) 
-    {
-	try {
-	    Properties p = new Properties();
-	    ByteArrayInputStream bais = new ByteArrayInputStream(propBytes);
-	    p.load(bais);
-	    return new JUMPApplication(p);
-	} catch (Throwable e) {
-	    e.printStackTrace();
-	    return null;
-	}
+    public static JUMPApplication fromByteArray(byte[] propBytes) {
+        try {
+            Properties p = new Properties();
+            ByteArrayInputStream bais = new ByteArrayInputStream(propBytes);
+            p.load(bais);
+            return new JUMPApplication(p);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return null;
+        }
     }
     
     public String toString() {
@@ -127,7 +141,7 @@ public class JUMPApplication
         }
         return sb.toString();
     }
-
+    
     /**
      * Determine the type of this application.
      *
@@ -164,6 +178,22 @@ public class JUMPApplication
     }
     
     /**
+     * Obtain the installed application id for this object.
+     * @return The installed application id.
+     */
+    public int getId() {
+        return Integer.parseInt(getProperty(ID_KEY));
+    }
+    
+    /**
+     * Set the installed application id for this object.
+     * @param id The installed application id.
+     */
+    public void setId(String id) {
+        addProperty(ID_KEY, id);
+    }
+    
+    /**
      * Get the path to the application's icon.
      * @return A URL defining the path to the icon in
      *         the downloaded content.
@@ -171,8 +201,8 @@ public class JUMPApplication
     public URL getIconPath() {
         String file = getProperty(ICONPATH_KEY);
         URL url = null;
-	if (file == null) return null;
-
+        if (file == null) return null;
+        
         try {
             url = new URL("file", null, file);
         } catch (MalformedURLException ex) {

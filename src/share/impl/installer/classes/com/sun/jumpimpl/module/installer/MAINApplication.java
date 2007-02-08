@@ -51,9 +51,9 @@ public class MAINApplication extends JUMPApplication {
      * @param iconPath The location of the application's icon in, can be null
      */
     public MAINApplication(String repositoryDir, String bundle, String clazz, URL classpath, String title,
-            URL iconPath ) {
+            URL iconPath, int id ) {
         
-        super(title, iconPath, JUMPAppModel.MAIN);
+        super(title, iconPath, JUMPAppModel.MAIN, id);
         this.repositoryDir = repositoryDir;
         addProperty(INITIAL_CLASS_KEY, clazz);
         if (classpath != null) {

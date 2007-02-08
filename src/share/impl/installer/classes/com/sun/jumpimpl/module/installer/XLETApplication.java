@@ -1,6 +1,4 @@
 /*
- * %W% %E%
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -56,9 +54,9 @@ public class XLETApplication extends JUMPApplication {
      * @param iconPath The location of the application's icon in, can be null
      */
     public XLETApplication(String repositoryDir, String bundle, String clazz, URL classpath, String title,
-            URL iconPath ) {
+            URL iconPath, int id) {
         
-        super(title, iconPath, JUMPAppModel.XLET);
+        super(title, iconPath, JUMPAppModel.XLET, id);
         this.repositoryDir = repositoryDir;
         addProperty(INITIAL_CLASS_KEY, clazz);
         if (classpath != null) {
