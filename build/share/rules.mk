@@ -855,6 +855,7 @@ $(CVM_MIMEDATAFILE): $(CVM_MIMEDIR)/content-types.properties
 # Only do this for dual stack support
 #####################################
 
+ifeq ($(CVM_DUAL_STACK), true)
 ifneq ($(CVM_MIDPFILTERCONFIG), )
 $(CVM_MIDPFILTERCONFIG): $(CVM_MIDPDIR)/MIDPFilterConfig.txt
 	@echo "Updating MIDPFilterConfig...";
@@ -865,6 +866,18 @@ $(CVM_MIDPCLASSLIST): $(CVM_MIDPDIR)/MIDPPermittedClasses.txt
 	@echo "Updating MIDPPermittedClasses...";
 	@cp -f $< $@;
 	@echo "<<<Finished copying $@";
+endif
+
+###############################################
+# Rule for generating dual-stack member filter
+###############################################
+gen_member_filter:: initbuild btclasses $(CVM_BUILDTIME_CLASSESZIP) 
+gen_member_filter:: $(J2ME_CLASSLIB)classes $(LIB_CLASSESJAR) $(CVM_ROMJAVA_LIST)
+ifeq ($(CVM_MIDPFILTERINPUT),)
+	$(error Need to set CVM_MIDPFILTERINPUT to a valid jar file)
+else
+	@echo "generating dual-stack member filter ..."
+endif
 endif
 
 ################################################

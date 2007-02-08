@@ -103,15 +103,4 @@ endif
 
 force_midp_build:
 
-###############################################
-# Rule for generate dual-stack member filter
-###############################################
-gen_member_filter:: initbuild btclasses $(CVM_BUILDTIME_CLASSESZIP) 
-gen_member_filter:: $(J2ME_CLASSLIB)classes $(LIB_CLASSESJAR) $(CVM_ROMJAVA_LIST)
-ifeq ($(CVM_MIDPFILTERINPUT),)
-	$(error Need to set CVM_MIDPFILTERINPUT to a valid jar file)
-else
-	@echo "generating dual-stack member filter ..."
-endif
-
 endif

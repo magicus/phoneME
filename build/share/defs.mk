@@ -1015,6 +1015,14 @@ endif
 	$(CVM_ROM_MEMBER_FILTER)
     CVM_MIDPFILTERCONFIG  = $(CVM_LIBDIR)/MIDPFilterConfig.txt
     CVM_MIDPCLASSLIST     = $(CVM_LIBDIR)/MIDPPermittedClasses.txt
+
+#
+# JavaAPILister related defs for generating dualstack
+# filter
+#
+ifneq ($(CVM_MIDPFILTERINPUT),)
+CVM_JCC_INPUT	+= -listapi:include=java/*,include=javax/*,input=$(CVM_MIDPFILTERINPUT),mout=$(CVM_MIDPFILTERCONFIG),cout=$(CVM_MIDPCLASSLIST)
+endif
 endif
 
 #
