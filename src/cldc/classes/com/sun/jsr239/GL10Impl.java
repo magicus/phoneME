@@ -31,7 +31,7 @@ import java.util.Hashtable;
 
 public class GL10Impl implements GL10, GL10Ext {
 
-    static final boolean debugQueue = false;
+    static final boolean debugQueue = false; 
 
     static final boolean DEBUG_MEM = false;
 
@@ -1057,7 +1057,7 @@ public class GL10Impl implements GL10, GL10Ext {
         if (!isDirect(pointer)) {
             throwIAE(Errors.GL_NOT_DIRECT);
         }
-
+/*
         // Only record details if this is a legal operation
         if ((size == 4) && 
             (type == GL_UNSIGNED_BYTE ||
@@ -1075,7 +1075,7 @@ public class GL10Impl implements GL10, GL10Ext {
             pointerRemaining[COLOR_POINTER] = pointer.remaining()*nbytes;
             pointerOffset[COLOR_POINTER] = 0;
         }
-
+*/
         q(CMD_COLOR_POINTER, 4);
         q(size);
         q(type);
@@ -1319,7 +1319,7 @@ public class GL10Impl implements GL10, GL10Ext {
     public synchronized void glDrawArrays(int mode, int first, int count) {
         checkThread();
 
-        checkBounds(first + count - 1);
+        // checkBounds(first + count - 1);
 
         q(CMD_DRAW_ARRAYS, 3);
         q(mode);
@@ -1395,7 +1395,7 @@ public class GL10Impl implements GL10, GL10Ext {
             indices = createDirectCopy(indices);
             isReadOnly = true;
         }
-
+/*
         // No need to bounds check if there will be a type error
         if (type == GL_UNSIGNED_BYTE ||
             type == GL_UNSIGNED_SHORT) {
@@ -1437,7 +1437,7 @@ public class GL10Impl implements GL10, GL10Ext {
 
             checkIndices(indexArray);
         }
-
+*/
         q(CMD_DRAW_ELEMENTSB, 4);
         q(mode);
         q(count);
@@ -2600,7 +2600,7 @@ public class GL10Impl implements GL10, GL10Ext {
         if (!isDirect(pointer)) {
             throwIAE(Errors.GL_NOT_DIRECT);
         }
-
+/*
         if ((size >= 2 && size <= 4) && 
             (type == GL_BYTE ||
              type == GL_SHORT ||
@@ -2618,7 +2618,7 @@ public class GL10Impl implements GL10, GL10Ext {
             pointerRemaining[TEX_COORD_POINTER] = pointer.remaining()*nbytes;
             pointerOffset[TEX_COORD_POINTER] = 0;
         }
-
+*/
         q(CMD_TEX_COORD_POINTER, 4);
         q(size);
         q(type);
@@ -3034,7 +3034,7 @@ public class GL10Impl implements GL10, GL10Ext {
         if (!isDirect(pointer)) {
             throwIAE(Errors.GL_NOT_DIRECT);
         }
-
+/*
         // Only record details if this is a legal operation
         if ((size >= 2 && size <= 4) && 
             (type == GL_BYTE ||
@@ -3053,7 +3053,7 @@ public class GL10Impl implements GL10, GL10Ext {
             pointerRemaining[VERTEX_POINTER] = pointer.remaining()*nbytes;
             pointerOffset[VERTEX_POINTER] = 0;
         }
-
+*/
         q(CMD_VERTEX_POINTER, 4);
         q(size);
         q(type);
