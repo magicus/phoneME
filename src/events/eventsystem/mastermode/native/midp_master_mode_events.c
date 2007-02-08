@@ -169,11 +169,14 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         break;
 #if (ENABLE_JSR_135 || ENABLE_JSR_234)
     case MEDIA_EVENT_SIGNAL:
-        if (MM_VOLUME_CHANGED_EVENT == newMidpEvent.type) {
+        if (-1 == newMidpEvent.MM_ISOLATE) {
             StoreMIDPEventInAllVmThreads(newMidpEvent);
         } else {
-            StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.ISOLATE);
+            StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.MM_ISOLATE);
         }
+        eventUnblockJavaThread(blocked_threads, blocked_threads_count,
+                MEDIA_EVENT_SIGNAL, newSignal.descriptor, 
+                newSignal.status);
         break;
     case MEDIA_SNAPSHOT_SIGNAL:
         eventUnblockJavaThread(blocked_threads, blocked_threads_count,

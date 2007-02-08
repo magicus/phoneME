@@ -80,8 +80,6 @@ public class MMEventHandler {
 	listener = l;
 	
 	EventQueue evtq = EventQueue.getEventQueue(classSecurityToken);
-	evtq.registerEventListener(EventTypes.MM_EOM_EVENT, listener);
-	evtq.registerEventListener(EventTypes.MM_SAT_EVENT, listener);
-	evtq.registerEventListener(EventTypes.MM_TONEEOM_EVENT, listener);
+	evtq.registerEventListener(EventTypes.MMAPI_EVENT, listener);
     }
 }

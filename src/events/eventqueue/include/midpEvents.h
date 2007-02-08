@@ -101,42 +101,32 @@ extern "C" {
 #define EVENT_QUEUE_SHUTDOWN            31
 #define FATAL_ERROR_NOTIFICATION        32
 
-/* JSR-135 events */
-#define MM_EOM_EVENT                    33
-#define MM_SAT_EVENT                    34
-#define MM_TONEEOM_EVENT                35
+/* JSR-135 event */
+#define MMAPI_EVENT                     33
 
 /* JSR-75 events */
-#define FC_DISKS_CHANGED_EVENT          36
+#define FC_DISKS_CHANGED_EVENT          34
 
-#define TEST_EVENT                      37
+#define TEST_EVENT                      35
 
-#define MIDLET_RESUME_REQUEST           38
+#define MIDLET_RESUME_REQUEST           36
 
-#define NATIVE_MIDLET_EXECUTE_REQUEST   39
-#define NATIVE_MIDLET_RESUME_REQUEST    40
-#define NATIVE_MIDLET_PAUSE_REQUEST     41
-#define NATIVE_MIDLET_DESTROY_REQUEST   42
-#define NATIVE_SET_FOREGROUND_REQUEST   43
+#define NATIVE_MIDLET_EXECUTE_REQUEST   37
+#define NATIVE_MIDLET_RESUME_REQUEST    38
+#define NATIVE_MIDLET_PAUSE_REQUEST     39
+#define NATIVE_MIDLET_DESTROY_REQUEST   40
+#define NATIVE_SET_FOREGROUND_REQUEST   41
 
 /* Automation API events */
-#define SET_FOREGROUND_BY_NAME_REQUEST  44
+#define SET_FOREGROUND_BY_NAME_REQUEST  42
 
-#define ROTATION_EVENT                  45
+#define ROTATION_EVENT                  43
 
 /* MIDlet resources paused notification */
-#define MIDLET_RS_PAUSED_NOTIFICATION   46
+#define MIDLET_RS_PAUSED_NOTIFICATION   44
 
-#define MM_DURATION_EVENT               47
-#define MM_VOLUME_CHANGED_EVENT         48
-#define MM_RECORD_LIMIT_EVENT           49
-#define MM_RECORD_ERROR_EVENT           50
-#define MM_BUFFERING_START_EVENT        51
-#define MM_BUFFERING_STOP_EVENT         52
-#define MM_GENERAL_ERROR_EVENT          53
-/** JSR-234 events */ 
-#define AMMS_MP_COMPLETED_EVENT         54
-#define AMMS_MP_ACTION_ERROR_EVENT      55
+/** JSR-234 event */ 
+#define AMMS_EVENT                      45
 
 /** @} */
 
@@ -147,16 +137,18 @@ extern "C" {
  * @see MidpEvent
  * @{
  */
-#define ACTION intParam1
-#define CHR intParam2
-#define X_POS intParam2
-#define Y_POS intParam3
-#define COMMAND intParam1
+#define ACTION          intParam1
+#define CHR             intParam2
+#define X_POS           intParam2
+#define Y_POS           intParam3
+#define COMMAND         intParam1
 #define SYSTEM_EVENT_ID intParam1
-#define DISPLAY intParam4
-#define MM_PLAYER_ID intParam1
-#define ISOLATE      intParam3
-#define MM_DATA      intParam2
+#define DISPLAY         intParam4
+
+#define MM_PLAYER_ID    intParam1
+#define MM_DATA         intParam2
+#define MM_ISOLATE      intParam3
+#define MM_EVT_TYPE     intParam4
 /** @} */
 
 /**

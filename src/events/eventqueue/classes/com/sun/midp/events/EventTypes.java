@@ -236,58 +236,48 @@ public final class EventTypes {
     public static final int FATAL_ERROR_NOTIFICATION = 32;
 
     /**
-     * Major ID for a MM EOM event.
+     * Major ID for a MMAPI event.
      */
-    public static final int MM_EOM_EVENT = 33;
+    public static final int MMAPI_EVENT = 33;
 
-    /**
-     * Major ID for a MM SAT event.
-     */
-    public static final int MM_SAT_EVENT = 34;
-
-    /**
-     * Major ID for a MM TONEEOM event.
-     */
-    public static final int MM_TONEEOM_EVENT = 35;
-    
     /**
      * Major ID for a JSR 75 FileConnection disks changed event.
      */
-    public static final int FC_DISKS_CHANGED_EVENT = 36;
+    public static final int FC_DISKS_CHANGED_EVENT = 34;
 
     /** Reserved for testing. */
-    public static final int TEST_EVENT = 37;
+    public static final int TEST_EVENT = 35;
 
     /**
      * Sent to the AMS isolate when a paused MIDlet is requesting to be
      * moved to active state.
      */
-    public static final int MIDLET_RESUME_REQUEST = 38;
+    public static final int MIDLET_RESUME_REQUEST = 36;
 
     /**
      * Sent by the native system to request a MIDlet be created and started.
      */
-    public static final int NATIVE_MIDLET_EXECUTE_REQUEST = 39;
+    public static final int NATIVE_MIDLET_EXECUTE_REQUEST = 37;
 
     /**
      * Sent by the native system to request a paused MIDlet be resumed.
      */
-    public static final int NATIVE_MIDLET_RESUME_REQUEST = 40;
+    public static final int NATIVE_MIDLET_RESUME_REQUEST = 38;
 
     /**
      * Sent by the native system to request a MIDlet be paused.
      */
-    public static final int NATIVE_MIDLET_PAUSE_REQUEST = 41;
+    public static final int NATIVE_MIDLET_PAUSE_REQUEST = 39;
 
     /**
      * Sent by the native system to request a MIDlet be destroyed.
      */
-    public static final int NATIVE_MIDLET_DESTROY_REQUEST = 42;
+    public static final int NATIVE_MIDLET_DESTROY_REQUEST = 40;
 
     /**
      * Sent by the native system to request a MIDlet be in the foreground.
      */
-    public static final int NATIVE_SET_FOREGROUND_REQUEST = 43;
+    public static final int NATIVE_SET_FOREGROUND_REQUEST = 41;
 
     
     /**
@@ -299,45 +289,19 @@ public final class EventTypes {
      * <li>stringParam2 = MIDlet's class name
      * </ul>
      */
-    public static final int SET_FOREGROUND_BY_NAME_REQUEST = 44;
+    public static final int SET_FOREGROUND_BY_NAME_REQUEST = 42;
 
     /*
      * Sent to request screen rotation
      */
-    public static final int ROTATION_EVENT = 45;
+    public static final int ROTATION_EVENT = 43;
 
     /**
      * MIDlet resources paused notification 
      */
-    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 46;
+    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 44;
     
-    /**
-     * Major ID for a MM DURATION UPDATED event. (Multimedia Event Extension)
-     */
-    public static final int MM_DURATION_EVENT = 47;
-
-    /* External Volume Changed */
-    public static final int MM_VOLUME_CHANGED_EVENT = 48;
-    
-    /**
-     * Multimedia Extended Events
-     * 
-     * 2. Recorder reach to size limit
-     * 3. Recorder error
-     * 4. Streaming buffering started
-     * 5. Streaming buffering stopped
-     * 6. General media error
-     */
-    public static final int MM_RECORD_LIMIT_EVENT = 49;
-    public static final int MM_RECORD_ERROR_EVENT = 50;
-    public static final int MM_BUFFERING_START_EVENT = 51;
-    public static final int MM_BUFFERING_STOP_EVENT = 52;
-    public static final int MM_GENERAL_ERROR_EVENT = 53;
-    
-    /** Sent by native, when media processor completed processing */ 
-    public static final int AMMS_MP_COMPLETED_EVENT  = 54;
-    /** Sent by native, when media processor stopped because of error */ 
-    public static final int AMMS_MP_ACTION_ERROR_EVENT  = 55;
-    
+    /** Major ID for AMMS event */ 
+    public static final int AMMS_EVENT  = 45;
     
 }

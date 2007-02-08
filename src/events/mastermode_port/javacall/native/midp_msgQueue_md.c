@@ -139,49 +139,24 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     case MIDP_JC_EVENT_MULTIMEDIA:
 #if ENABLE_JSR_135
         pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
-        pNewSignal->status = JAVACALL_OK;
+        pNewSignal->status     = JAVACALL_OK;
+
+        pNewMidpEvent->type         = MMAPI_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
-        pNewMidpEvent->MM_DATA = event->data.multimediaEvent.data;
-        pNewMidpEvent->ISOLATE = event->data.multimediaEvent.isolateId;
+        pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
+        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.isolateId;
+        pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
         if (-1 == event->data.multimediaEvent.isolateId) {
             event->data.multimediaEvent.isolateId = 0;
         }
+
         switch(event->data.multimediaEvent.mediaType) {
-            case JAVACALL_EVENT_MEDIA_END_OF_MEDIA:
-                pNewMidpEvent->type = MM_EOM_EVENT;
-                break;
-
-            case JAVACALL_EVENT_MEDIA_RECORD_SIZE_LIMIT:
-                pNewMidpEvent->type = MM_RECORD_LIMIT_EVENT;
-                break;
-
-            case JAVACALL_EVENT_MEDIA_RECORD_ERROR:
-                pNewMidpEvent->type = MM_RECORD_ERROR_EVENT;
-                break;
-
-            case JAVACALL_EVENT_MEDIA_BUFFERING_STARTED:
-                pNewMidpEvent->type = MM_BUFFERING_START_EVENT;
-                break;
-
-            case JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED:
-                pNewMidpEvent->type = MM_BUFFERING_STOP_EVENT;
-                break;
-
-            case JAVACALL_EVENT_MEDIA_DURATION_UPDATED:
-                pNewMidpEvent->type = MM_DURATION_EVENT;
-                break;
-    
             case JAVACALL_EVENT_MEDIA_VOLUME_CHANGED:
-                pNewMidpEvent->type = MM_VOLUME_CHANGED_EVENT;
                 /* Set to current isolate ID and special player ID to 
                    send this event to all of players in this isolate */
-                pNewMidpEvent->MM_PLAYER_ID = -2; //playerId
-                pNewMidpEvent->ISOLATE = -1; //isolateId
-                break;
-
-            case JAVACALL_EVENT_MEDIA_ERROR:
-                pNewMidpEvent->type = MM_GENERAL_ERROR_EVENT;
+                pNewMidpEvent->MM_PLAYER_ID = -2; 
+                pNewMidpEvent->MM_ISOLATE   = -1; /* event will be sent to all isolates by StoreMIDPEventInAllVmThreads() */
                 break;
 
                 /* Unblock blocked Java thread by calling snapshot method */
@@ -195,6 +170,8 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
                 pNewSignal->status = JAVACALL_OK;
                 REPORT_CALL_TRACE1(LC_NONE, "[media event] JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED %d\n", pNewSignal->descriptor);
                 break;
+            default:
+                break;
         }
 
         REPORT_CALL_TRACE4(LC_NONE, "[media event] External event recevied %d %d %d %d\n",
@@ -204,22 +181,16 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
                 pNewMidpEvent->MM_DATA);
 #endif
         break;
-#if ENABLE_JSR_234
+#ifdef ENABLE_JSR_234
     case MIDP_JC_EVENT_ADVANCED_MULTIMEDIA:
         pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
-        pNewSignal->status = JAVACALL_OK;
-        pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
-        pNewMidpEvent->MM_DATA = event->data.multimediaEvent.data;
-        pNewMidpEvent->ISOLATE = event->data.multimediaEvent.isolateId;
+        pNewSignal->status     = JAVACALL_OK;
 
-        switch(event->data.multimediaEvent.mediaType) {
-            case JAVACALL_EVENT_AMMS_MEDIA_PROCESSOR_COMPLETED:
-                pNewMidpEvent->type = AMMS_MP_COMPLETED_EVENT; 
-            break;
-            case JAVACALL_EVENT_AMMS_MEDIA_PROCESSOR_ERROR:
-                pNewMidpEvent->type = AMMS_MP_ACTION_ERROR_EVENT;
-            break;
-        }
+        pNewMidpEvent->type         = AMMS_EVENT;
+        pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
+        pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
+        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.isolateId;
+        pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
         REPORT_CALL_TRACE4(LC_NONE, "[jsr234 event] External event recevied %d %d %d %d\n",
             pNewMidpEvent->type, 
