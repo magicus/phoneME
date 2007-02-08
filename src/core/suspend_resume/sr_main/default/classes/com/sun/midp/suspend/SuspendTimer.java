@@ -28,9 +28,6 @@ package com.sun.midp.suspend;
 
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.Configuration;
-import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.Permissions;
-
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -38,7 +35,7 @@ import java.util.TimerTask;
  * Timer for terminating MIDlets that have not completed
  * their pase routines within suspend timeout.
  */
-public class SuspendTimer extends Timer {
+class SuspendTimer extends Timer {
     /**
      * The timeout within which MIDlets have chance to complete.
      */
@@ -46,45 +43,41 @@ public class SuspendTimer extends Timer {
             Configuration.getIntProperty("suspendAppTimeout", 2000);
 
     /**
-     * The only instance if suspend timer.
+     * The only instance of suspend timer.
      */
-    private static SuspendTimer timer;
+    private static SuspendTimer timer = new SuspendTimer();
 
     /**
-     * MIDlet proxy list.
+     * Current timer task.
      */
-    private static MIDletProxyList midletList;
+    private static TimerTask task;
 
-    /** Constructs an instance. */
+    /**
+     * Constructs an instance.
+     */
     private SuspendTimer() {}
 
     /**
-     * Retrieves the timer.
-     * @return token security token to guard this restricted API.
+     * Schedules standard MIDlets termination task to sandard timeout.
+     * @param midletList the MIDlet proxy list
      */
-    public static synchronized SuspendTimer getInstance(SecurityToken token) {
-        token.checkIfPermissionAllowed(Permissions.AMS);
+    static synchronized void start(final MIDletProxyList midletList) {
+        if (null == task) {
+            task = new TimerTask() {
+                public void run() {
+                    midletList.terminatePauseAll();
+                }
+            };
 
-        if (null == timer) {
-            midletList = MIDletProxyList.getMIDletProxyList(token);
-            timer = new SuspendTimer();
+            timer.schedule(task, TIMEOUT);
         }
-
-        return timer;
     }
 
     /**
-     * Schedules standard MIDlets termination task to sandard timeout.
+     * Cancels the timer.
      */
-    public void start() {
-
-        TimerTask task = new TimerTask() {
-            public void run() {
-                midletList.terminatePauseAll();
-                cancel();
-            }
-        };
-
-        schedule(task, TIMEOUT);
+    static synchronized void stop() {
+        task.cancel();
+        task = null;
     }
 }

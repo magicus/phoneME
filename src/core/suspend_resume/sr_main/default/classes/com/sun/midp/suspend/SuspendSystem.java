@@ -66,9 +66,15 @@ public class SuspendSystem extends AbstractSubsystem {
 
         /**
          * A flag to determine if at least one MIDlet has been
-         * succesfully paused during last suspend processing.
+         * successfully paused during last suspend processing.
          */
         private boolean midletPaused = false;
+
+        /**
+         * The MIDlet proxy list.
+         */
+        MIDletProxyList mpl =
+                MIDletProxyList.getMIDletProxyList(classSecurityToken);
 
         /**
          * Constructs the only instance.
@@ -76,17 +82,23 @@ public class SuspendSystem extends AbstractSubsystem {
         private MIDPSystem() {
             state = ACTIVE;
 
-            MIDletProxyList mpl =
-                    MIDletProxyList.getMIDletProxyList(classSecurityToken);
             mpl.addListener(this);
             addListener(mpl);
+        }
+
+        /**
+         * Initiates MIDPSystem suspend operations.
+         */
+        public synchronized void suspend() {
+            SuspendTimer.start(mpl);
+            super.suspend();
         }
 
         /**
          * Performs MIDPSystem-specific suspend operations.
          */
         protected synchronized void suspendImpl() {
-            SuspendTimer.getInstance(classSecurityToken).cancel();        
+            SuspendTimer.stop();
         }
 
         /**
@@ -134,7 +146,7 @@ public class SuspendSystem extends AbstractSubsystem {
         protected native void suspended0(boolean allMidletsKilled);
 
         /**
-         * Detrmines if at least one of preceding suspension operations
+         * Determines if at least one of preceding suspension operations
          * killed all user MIDlets and  the condition has not been checked
          * since that time.
          * @return true if a suspension operation killed all user MIDlets
@@ -145,7 +157,7 @@ public class SuspendSystem extends AbstractSubsystem {
         protected native boolean allMidletsKilled();
 
         /**
-         * Recieves notifications on MIDlet updates and removes corresponding
+         * Receives notifications on MIDlet updates and removes corresponding
          * MIDlet proxy from suspend dependencies if required.
          * @param midlet MIDletProxy that represents the MIDlet updated
          * @param reason kind of changes that took place, see
@@ -170,7 +182,7 @@ public class SuspendSystem extends AbstractSubsystem {
         }
 
         /**
-         * Not used. MIDletProxyListListener interface method;
+         * Called from the proxy list to notify of new MIDlet appearance.
          */
         public void midletAdded(MIDletProxy midlet) {
             if (MIDletSuiteUtils.getAmsIsolateId() == midlet.getIsolateId()) {
@@ -179,7 +191,7 @@ public class SuspendSystem extends AbstractSubsystem {
         }
 
         /**
-         * Not used. MIDletProxyListListener interface method;
+         * Not used. MIDletProxyListListener interface method.
          */
         public void midletStartError(int externalAppId, int suiteId,
                                      String className, int error) {}
@@ -209,7 +221,7 @@ public class SuspendSystem extends AbstractSubsystem {
     private SuspendSystem() {}
 
     /**
-     * Registers a lisener interested in system suspend/resume operations.
+     * Registers a listener interested in system suspend/resume operations.
      * IMPL_NOTE: method for removing listeners is not needed currently.
      *
      * @param listener the listener to be added

@@ -38,7 +38,6 @@ import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 import com.sun.midp.security.SecurityInitializer;
 
-import com.sun.midp.suspend.SuspendTimer;
 import com.sun.midp.suspend.SuspendSystem;
 import com.sun.midp.suspend.SuspendSystemListener;
 
@@ -587,8 +586,6 @@ public class MIDletProxyList
      * MIDletControllerEventConsumer I/F method.
      */
     public void handlePauseAllEvent() {
-        SuspendTimer.getInstance(classSecurityToken).start();
-
         synchronized (midletProxies) {
             MIDletProxy current;
 
