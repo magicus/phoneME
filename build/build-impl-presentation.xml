@@ -31,13 +31,11 @@ information or have any questions.
     
     <target name="compile-presentation-module">
         <jump.javac 
-            srcdir="${s.share.impl.dir}/presentation/classes">
-            <include name="com/sun/jumpimpl/module/presentation/*.java" />
+            srcdir="${s.share.impl.dir}/presentation/classes:${s.share.impl.dir}/presentation/simplebasis/classes">
+
+            <include name="com/sun/jumpimpl/module/presentation/*.java,
+                           com/sun/jumpimpl/presentation/simplebasis/**/*.java"/>        
         </jump.javac>    
-        
-        <jump.javac
-            srcdir="${s.share.impl.dir}/presentation/simplebasis/classes"
-            includes="com/sun/jumpimpl/presentation/simplebasis/**/*.java"/>        
     </target>
     
     
