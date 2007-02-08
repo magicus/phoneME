@@ -134,7 +134,7 @@ extern "C" {
 #define MM_BUFFERING_START_EVENT        51
 #define MM_BUFFERING_STOP_EVENT         52
 #define MM_GENERAL_ERROR_EVENT          53
-/** JSR-234 javacall events */ 
+/** JSR-234 events */ 
 #define AMMS_MP_COMPLETED_EVENT         54
 #define AMMS_MP_ACTION_ERROR_EVENT      55
 
@@ -160,10 +160,11 @@ extern "C" {
 /** @} */
 
 /**
- *  Store MIDP event to all of VM threads
+ * Store MIDP event to all of VM threads
+ *
+ * @param event The event to enqueue.
  */ 
-void
-StoreMIDPEventInAllVmThread(MidpEvent event);
+void StoreMIDPEventInAllVmThreads(MidpEvent event);
 
 /**
  * Store an event to post to the Java platform event queue

@@ -316,13 +316,14 @@ midp_resetEvents(void) {
 }
 
 /**
- *  Store MIDP event to all of VM threads
+ * Store MIDP event to all of VM threads
+ *
+ * @param event The event to enqueue.
  */ 
-void
-StoreMIDPEventInAllVmThread(MidpEvent event) {
+void StoreMIDPEventInAllVmThreads(MidpEvent event) {
     int isolateId;
 
-    for (isolateId = 0;isolateId < MAX_ISOLATES; ++isolateId) {
+    for (isolateId = 0; isolateId < MAX_ISOLATES; ++isolateId) {
         StoreMIDPEventInVmThread(event, isolateId);
     }
 }   
