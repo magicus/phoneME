@@ -2064,3 +2064,7 @@ endif
 
 # Include external shared tools
 include $(TOOLS_DIR)/tools.gmk
+
+# Include Optional packages defines
+-include ../share/defs_op.mk
+
