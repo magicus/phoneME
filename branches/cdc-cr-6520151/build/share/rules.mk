@@ -216,8 +216,8 @@ $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
 #$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_SATSA_JAVA_FILES)
 #	$(appendjavafiles)
 
-# Include JSROP rules
--include ../share/rules_jsrop.mk
+# Include Optional packages rules
+-include ../share/rules_op.mk
 
 # Test classes
 $(CVM_TEST_CLASSESDIR)/%.class: %.java
