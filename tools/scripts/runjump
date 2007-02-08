@@ -45,7 +45,7 @@
 #       be set before running when developing and running within the workspace.
 #       The remaining variables will be derived from this set:
 #
-#   CYCLOPS_DIR
+#   PHONEME_DIR
 #   PCSL_DIR
 #   MIDP_DIR
 #   CDC_SUBDIR
@@ -54,26 +54,26 @@
 #       the following is the minimum set of variables that should be set before
 #       running.  The remaining variables will be derived from this set:
 #
-#   CYCLOPS_DIST
+#   PHONEME_DIST
 #
 # For explanation on all possible variables that can be used with this script,
 # please read below:
 #
 ########################### VARIABLE EXPLANATION ################################
 #
-# Name:  CYCLOPS_DIR
-# Desc:  Location of the root of the cyclops workspace.  This should only be used for
+# Name:  PHONEME_DIR
+# Desc:  Location of the root of the phoneme workspace.  This should only be used for
 #        linux-86-suse or linux-arm-zaurus builds which are run from within a
 #        development workspace.
-# Dflt:  /home/$WHOAMI/cyclops
+# Dflt:  /home/$WHOAMI/phoneme
 #
-# Name:  CYCLOPS_DIST
-# Desc:  Location of the cyclops build
-# Dflt:  On linux-x86-suse, default is $CYCLOPS_DIR/build/linux-x86-suse/$CDC_SUBDIR
+# Name:  PHONEME_DIST
+# Desc:  Location of the phoneme build
+# Dflt:  On linux-x86-suse, default is $PHONEME_DIR/build/linux-x86-suse/$CDC_SUBDIR
 #        On linux-arm-zaurus, default is /home/cdcams.
 #
 # Name:  CDC_SUBDIR
-# Desc:  Subdirectory name of cyclops build, only necessary for non-jmp_install builds
+# Desc:  Subdirectory name of phoneme build, only necessary for non-jmp_install builds
 #        whcih are run from within a development workspace.
 # Dflt:  jump
 #
@@ -103,20 +103,20 @@ if [ -z "$CVM_DEBUG" ] ; then
   CVM_DEBUG=false
 fi
 
-CYCLOPS_PLATFORM=`uname -a | cut -d ' ' -f 12`
-if [ "$CYCLOPS_PLATFORM" = "unknown" ] ; then
-  CYCLOPS_PLATFORM=`uname -a | cut -d ' ' -f 11`
+PHONEME_PLATFORM=`uname -a | cut -d ' ' -f 12`
+if [ "$PHONEME_PLATFORM" = "unknown" ] ; then
+  PHONEME_PLATFORM=`uname -a | cut -d ' ' -f 11`
 fi
 
-# CYCLOPS_DIR is primarily used when running from a build within your workspace.
-# It sets CYCLOPS_DIST, which is the important variable for determining the location
-# of the build.  CYCLOPS_DIR is strategically used to determine CYCLOPS_DIST.
-# Note: CYCLOPS_DIR is not used on packaged jmp_install builds.
-if [ -z "$CYCLOPS_DIR" ] ; then
-    export CYCLOPS_DIR=/home/$WHOAMI/cyclops
+# PHONEME_DIR is primarily used when running from a build within your workspace.
+# It sets PHONEME_DIST, which is the important variable for determining the location
+# of the build.  PHONEME_DIR is strategically used to determine PHONEME_DIST.
+# Note: PHONEME_DIR is not used on packaged jmp_install builds.
+if [ -z "$PHONEME_DIR" ] ; then
+    export PHONEME_DIR=/home/$WHOAMI/phoneme
 fi
 
-# Subdirectory name used in Cyclops build
+# Subdirectory name used in Phoneme build
 # Note: CDC_SUBDIR is not used on packaged jmp_install builds
 if [ -z "$CDC_SUBDIR" ] ; then
     export CDC_SUBDIR=jump
@@ -147,30 +147,30 @@ if [ -z "$PBP_SCREEN_BOUNDS" ] ; then
   PBP_SCREEN_BOUNDS=0,50-640x392
 fi
 ################# ZAURUS SECTION ########################
-if [ "$CYCLOPS_PLATFORM" = "armv5tel" ] ; then
-   if [ -z "$CYCLOPS_DIST" ] ; then
-       export CYCLOPS_DIST=/home/cdcams    
+if [ "$PHONEME_PLATFORM" = "armv5tel" ] ; then
+   if [ -z "$PHONEME_DIST" ] ; then
+       export PHONEME_DIST=/home/cdcams    
    fi
    export USE_JIT=true
    export LOGNAME=$WHOAMI
    export QTDIR=/home/QtPalmtop
    export USE_QVFB=false
-   MIDP_CLASSES_ZIP=$CYCLOPS_DIST/midp/midp_fb/classes.zip
-   MIDP_PROPERTIES="-Dsun.midp.home.path=$CYCLOPS_DIST/midp/midp_fb -Xbootclasspath/a:$MIDP_CLASSES_ZIP"
+   MIDP_CLASSES_ZIP=$PHONEME_DIST/midp/midp_fb/classes.zip
+   MIDP_PROPERTIES="-Dsun.midp.home.path=$PHONEME_DIST/midp/midp_fb -Xbootclasspath/a:$MIDP_CLASSES_ZIP"
 ################ LINUX X86 SECTION ######################
-elif [ "$CYCLOPS_PLATFORM" = "i686" ] ; then
-   if [ -z "$CYCLOPS_DIST" ] ; then
-       export CYCLOPS_DIST=$CYCLOPS_DIR/build/linux-x86-suse/$CDC_SUBDIR
+elif [ "$PHONEME_PLATFORM" = "i686" ] ; then
+   if [ -z "$PHONEME_DIST" ] ; then
+       export PHONEME_DIST=$PHONEME_DIR/build/linux-x86-suse/$CDC_SUBDIR
    fi
-   MIDP_CLASSES_ZIP=$CYCLOPS_DIST/midp/midp_fb/classes.zip
-   MIDP_PROPERTIES="-Dsun.midp.home.path=$CYCLOPS_DIST/midp/midp_fb -Xbootclasspath/a:$MIDP_CLASSES_ZIP"
+   MIDP_CLASSES_ZIP=$PHONEME_DIST/midp/midp_fb/classes.zip
+   MIDP_PROPERTIES="-Dsun.midp.home.path=$PHONEME_DIST/midp/midp_fb -Xbootclasspath/a:$MIDP_CLASSES_ZIP"
    EXECUTIVE_PROPERTIES="-Dinstaller.repository=$JUMP_CONTENT_STORE_DIR"
 fi
  
 SYSTEM_PROPERTIES="-Dinstaller.repository=$JUMP_CONTENT_STORE_DIR"
-SERVER_JARFILE=$CYCLOPS_DIST/jump/lib/jump.jar
-EXECUTIVE_JARFILE=$CYCLOPS_DIST/jump/lib/executive-jump.jar
-CVMC=$CYCLOPS_DIST/bin/cvmc
+SERVER_JARFILE=$PHONEME_DIST/jump/lib/jump.jar
+EXECUTIVE_JARFILE=$PHONEME_DIST/jump/lib/executive-jump.jar
+CVMC=$PHONEME_DIST/bin/cvmc
 
 ##### End: Possible Variables Needing Modification #####
 
@@ -213,7 +213,7 @@ elif [ "$1" = "" ] ; then
     DO_SERVER=true
     DO_EXECUTIVE=true
 elif [ "$1" = "debug" ] ; then
-    DEBUG_OPTIONS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=$CDC_DEBUG_PORT -Dsun.boot.library.path=$CYCLOPS_DIST/lib"
+    DEBUG_OPTIONS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=$CDC_DEBUG_PORT -Dsun.boot.library.path=$PHONEME_DIST/lib"
     DO_CLEANUP=true
     DO_SERVER=true
     DO_EXECUTIVE=true
@@ -249,10 +249,10 @@ if [ "$USE_QVFB" = "true" ]; then
     if [ -z "$QVFB_HEIGHT" ] ; then
         export QVFB_HEIGHT=442
     fi
-    export LD_LIBRARY_PATH=$QTDIR/lib:$CYCLOPS_DIST/lib
+    export LD_LIBRARY_PATH=$QTDIR/lib:$PHONEME_DIST/lib
 else
     # TBD just keeping old stuff, this line might need to be removed (and in this case the whole if should be simplified into then part)
-    export LD_LIBRARY_PATH=$CYCLOPS_DIST/lib:$QTDIR:$LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=$PHONEME_DIST/lib:$QTDIR:$LD_LIBRARY_PATH
 fi
  
 ############# Output log files
@@ -266,7 +266,7 @@ CVMC_LOGFILE=/tmp/jump_cvmc_$WHOAMI
 
 ################################################################################
 
-cd $CYCLOPS_DIST
+cd $PHONEME_DIST
 
 if [ "$DO_SETTINGS" = "true" ] ; then
 
@@ -274,14 +274,14 @@ if [ "$DO_SETTINGS" = "true" ] ; then
   touch $SETTINGS_LOGFILE
 ####### Write out user JMP settings to shell & output file #############
   echo "************** JMP Settings *******************" >> $SETTINGS_LOGFILE
-  echo "CYCLOPS_DIR:            $CYCLOPS_DIR" >> $SETTINGS_LOGFILE
-  echo "CYCLOPS_DIST:           $CYCLOPS_DIST" >> $SETTINGS_LOGFILE
-  echo "CYCLOPS_PLATFORM:       $CYCLOPS_PLATFORM" >> $SETTINGS_LOGFILE
+  echo "PHONEME_DIR:            $PHONEME_DIR" >> $SETTINGS_LOGFILE
+  echo "PHONEME_DIST:           $PHONEME_DIST" >> $SETTINGS_LOGFILE
+  echo "PHONEME_PLATFORM:       $PHONEME_PLATFORM" >> $SETTINGS_LOGFILE
   echo "CDC_SUBDIR:             $CDC_SUBDIR" >> $SETTINGS_LOGFILE
   echo "CDC_DEBUG_PORT:         $CDC_DEBUG_PORT" >> $SETTINGS_LOGFILE
   echo "USE_QVFB:               $USE_QVFB" >> $SETTINGS_LOGFILE
   echo "JUMP_CONTENT_STORE_DIR  $JUMP_CONTENT_STORE_DIR" >> $SETTINGS_LOGFILE
-  if [ "$CYCLOPS_PLATFORM" != "armv5tel" ] ; then
+  if [ "$PHONEME_PLATFORM" != "armv5tel" ] ; then
       echo "QWS_DISPLAY:            $QWS_DISPLAY" >> $SETTINGS_LOGFILE
   fi
   echo "***********************************************"  >> $SETTINGS_LOGFILE
@@ -361,14 +361,14 @@ if [ "$DO_SERVER" = "true" ] ; then
        sleep 1
     fi
    
-    CYCLOPS_SERVER_OPTIONS="-Xbootclasspath/a=$SERVER_JARFILE $MIDP_PROPERTIES -Xserver"
+    PHONEME_SERVER_OPTIONS="-Xbootclasspath/a=$SERVER_JARFILE $MIDP_PROPERTIES -Xserver"
     if [ "$USE_JIT" = "true" ]; then
-       CYCLOPS_SERVER_OPTIONS="$CYCLOPS_SERVER_OPTIONS -Xjit:codeCacheSize=1300K"
+       PHONEME_SERVER_OPTIONS="$PHONEME_SERVER_OPTIONS -Xjit:codeCacheSize=1300K"
     fi  
 
-    CYCLOPS_SERVER_COMMAND="$CYCLOPS_DIST/bin/cvm $CYCLOPS_SERVER_OPTIONS"
-    echo "Server Command: $CYCLOPS_SERVER_COMMAND"
-    $CYCLOPS_SERVER_COMMAND >> $SERVER_LOGFILE 2>&1 &
+    PHONEME_SERVER_COMMAND="$PHONEME_DIST/bin/cvm $PHONEME_SERVER_OPTIONS"
+    echo "Server Command: $PHONEME_SERVER_COMMAND"
+    $PHONEME_SERVER_COMMAND >> $SERVER_LOGFILE 2>&1 &
 
     ### We need to wait until the server is done being launched.  Wait here until
     ### the server ouput file SERVER_LOGFILE prints out the message about server status.
@@ -394,11 +394,11 @@ if [ "$DO_SERVER" = "true" ] ; then
 
     echo ""
     
-    CYCLOPS_SERVER_PID=`echo $output | awk '{ print $5 }' | sed 's/pid=//'`
-    if [ "$CYCLOPS_SERVER_PID" != "" ] ; then
+    PHONEME_SERVER_PID=`echo $output | awk '{ print $5 }' | sed 's/pid=//'`
+    if [ "$PHONEME_SERVER_PID" != "" ] ; then
         rm -f $SERVER_PID_LOGFILE
-        echo $CYCLOPS_SERVER_PID > $SERVER_PID_LOGFILE    
-        echo "JUMP Server running with pid: $CYCLOPS_SERVER_PID"
+        echo $PHONEME_SERVER_PID > $SERVER_PID_LOGFILE    
+        echo "JUMP Server running with pid: $PHONEME_SERVER_PID"
     else
         echo "JUMP Server could not be launched successfully."
         exit 0       
