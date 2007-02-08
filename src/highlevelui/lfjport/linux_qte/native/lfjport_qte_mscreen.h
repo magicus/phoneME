@@ -178,16 +178,6 @@ public:
     QWidget * asWidget() { return this; }
 
     /**
-     * Makes a request to make all midlets active.
-     */
-    void activateAll();
- 
-    /**
-     * Makes a request to pause all midlets.
-     */
-    void pauseAll();
-
-    /**
      * Size of a normal screen.
      */
     int getDisplayWidth() const;
@@ -304,11 +294,6 @@ private:
     int SCREEN_Y;
     int SCREEN_WIDTH;
     int SCREEN_HEIGHT;
-
-    /**
-     * boolean to toggle Home button for pause and resume.
-     */
-    bool allPaused;
 
     static jboolean r_orientation;
 

@@ -27,6 +27,7 @@
  */
 
 #include <qteapp_mscreen.h>
+#include <suspend_resume.h>
 
 MScreen::MScreen() {
     vm_suspended = false;
@@ -50,4 +51,19 @@ void MScreen::resumeVM() {
         vm_suspended = false;
         setNextVMTimeSlice(0);
     }
+}
+
+/**
+ * Requests MIDP system (including java applications, VM and resources)
+ * to suspend.
+ */
+void MScreen::pauseAll() {
+    midp_suspend();
+}
+
+/**
+ * Requests MIDP system to resume.
+ */
+void MScreen::activateAll() {
+    midp_resume();
 }

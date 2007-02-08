@@ -587,7 +587,7 @@ public class MIDletProxyList
      * MIDletControllerEventConsumer I/F method.
      */
     public void handlePauseAllEvent() {
-        SuspendTimer.start(this);
+        SuspendTimer.getInstance(classSecurityToken).start();
 
         synchronized (midletProxies) {
             MIDletProxy current;

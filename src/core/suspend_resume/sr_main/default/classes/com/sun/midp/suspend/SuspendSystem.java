@@ -62,13 +62,13 @@ public class SuspendSystem extends AbstractSubsystem {
          * A flag to determine if at least one MIDlet has been
          * destroyed during last suspend processing.
          */
-        private boolean midletKilled;
+        private boolean midletKilled = false;
 
         /**
          * A flag to determine if at least one MIDlet has been
          * succesfully paused during last suspend processing.
          */
-        private boolean midletPaused;
+        private boolean midletPaused = false;
 
         /**
          * Constructs the only instance.
@@ -86,14 +86,15 @@ public class SuspendSystem extends AbstractSubsystem {
          * Performs MIDPSystem-specific suspend operations.
          */
         protected synchronized void suspendImpl() {
-            midletKilled = false;
-            midletPaused = false;
+            SuspendTimer.getInstance(classSecurityToken).cancel();        
         }
 
         /**
          * Performs MIDPSystem-specific resume operations.
          */
         protected synchronized void resumeImpl() {
+            midletKilled = false;
+            midletPaused = false;
             alertIfAllMidletsKilled();
         }
 

@@ -28,6 +28,8 @@ package com.sun.midp.suspend;
 
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.Configuration;
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.Permissions;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -46,17 +48,35 @@ public class SuspendTimer extends Timer {
     /**
      * The only instance if suspend timer.
      */
-    private static SuspendTimer timer = new  SuspendTimer();
+    private static SuspendTimer timer;
+
+    /**
+     * MIDlet proxy list.
+     */
+    private static MIDletProxyList midletList;
 
     /** Constructs an instance. */
     private SuspendTimer() {}
 
     /**
-     * Schedules standard MIDlets termination task to sandard timeout.
-     * @param midletList the MIDlet proxy list, passed since required by
-     *        the timer task.
+     * Retrieves the timer.
+     * @return token security token to guard this restricted API.
      */
-    public static void start(final MIDletProxyList midletList) {
+    public static synchronized SuspendTimer getInstance(SecurityToken token) {
+        token.checkIfPermissionAllowed(Permissions.AMS);
+
+        if (null == timer) {
+            midletList = MIDletProxyList.getMIDletProxyList(token);
+            timer = new SuspendTimer();
+        }
+
+        return timer;
+    }
+
+    /**
+     * Schedules standard MIDlets termination task to sandard timeout.
+     */
+    public void start() {
 
         TimerTask task = new TimerTask() {
             public void run() {
@@ -65,6 +85,6 @@ public class SuspendTimer extends Timer {
             }
         };
 
-        timer.schedule(task, TIMEOUT);
+        schedule(task, TIMEOUT);
     }
 }
