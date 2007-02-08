@@ -38,6 +38,11 @@
 #include <gx_image.h>
 #include <midpUtilKni.h>
 
+#include <stdio.h>
+
+#include <pcsl_file.h>
+#include <pcsl_directory.h>
+
 /**
  * @file
  *
@@ -106,6 +111,23 @@ static int storeImageToCache(SuiteIdType suiteId,
                              const pcsl_string * resName,
                              unsigned char *bufPtr, int len);
 
+/* Forward declaration */
+static int storeResourceToCache(SuiteIdType suiteId,
+                             StorageIdType storageId,
+                             const pcsl_string * resName,
+                             unsigned char *bufPtr, int len);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(CLASS_EXT)
+    {'.', 'c', 'l', 'a', 's', 's', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(CLASS_EXT);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(MF_EXT)
+    {'.', 'M', 'F', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(MF_EXT);
+
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(SLASH)
+    {'/', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(SLASH);
 
 /**
  * Tests if JAR entry is a PNG image, by name extension
@@ -119,6 +141,7 @@ static jboolean png_filter(const pcsl_string * entry) {
 
     return KNI_FALSE;
 }
+
 
 /**
  * Loads PNG image from JAR, decodes it and writes as native
@@ -162,6 +185,59 @@ static jboolean png_action(const pcsl_string * entry) {
 
     return status;
 }
+
+/**
+ * Tests if JAR entry is not Java class or manifest by name extension
+ */
+static jboolean resource_filter(const pcsl_string * entry) {
+
+    if (pcsl_string_ends_with(entry, &CLASS_EXT) ||
+        pcsl_string_ends_with(entry, &MF_EXT) || 
+        pcsl_string_ends_with(entry, &SLASH)) {
+        return KNI_FALSE;
+    }
+
+    return KNI_TRUE;
+}
+
+/**
+ * Loads resources from JAR, decodes it and writes into storage
+ */
+static jboolean resource_action(const pcsl_string *entry) {
+
+    unsigned char *resBufPtr = NULL;
+    unsigned int resBufLen = 0;
+    jboolean status = KNI_FALSE;
+
+    do {
+        resBufLen = midpGetJarEntry(handle, entry, &resBufPtr);
+
+        /* Check if we can store this file in the remaining storage space */
+        /*
+        if (remainingSpace - IMAGE_CACHE_THRESHOLD < (long)resBufLen) {
+            PRINTF_PCSL_STRING("No space to store %s\n", entry);
+            break;
+        }
+        */
+
+        /* write native buffer to persistent store */
+        status = storeResourceToCache(globalSuiteId, globalStorageId, entry,
+                                   resBufPtr, resBufLen);
+
+    } while (0);
+
+    if (status == 1) {
+        remainingSpace -= resBufLen;
+    }
+
+    if (resBufPtr != NULL) {
+        midpFree(resBufPtr);
+    }
+
+    return status;
+}
+
+
 
 /**
  * Iterates over all images in a jar, and tries to load and cached them.
@@ -297,6 +373,19 @@ void createImageCache(SuiteIdType suiteId, StorageIdType storageId) {
         deleteImageCache(suiteId, storageId);
     }
 
+    result = loadAndCacheJarFileEntries(&jarFileName,
+        (jboolean (*)(const pcsl_string *))&resource_filter,
+        (jboolean (*)(const pcsl_string *))&resource_action);
+
+    /* If something went wrong then clean up anything that was created */
+    if (result != 1) {
+        REPORT_WARN1(LC_LOWUI,
+            "Warning: resource cache could not be created; Error: %d\n",
+            result);
+        /* Delete resource cache here */            
+    }
+
+
     pcsl_string_free(&jarFileName);
 
 }
@@ -359,6 +448,108 @@ static int storeImageToCache(SuiteIdType suiteId, StorageIdType storageId,
     return status;
 }
 
+/**
+ * Store a native resource to cache.
+ *
+ * @param suiteId    The suite id
+ * @param storageId ID of the storage where to create the cache
+ * @param resName    The resource name
+ * @param bufPtr     The buffer with the resource data
+ * @param len        The length of the buffer
+ * @return           1 if successful, 0 if not
+ */
+static int storeResourceToCache(SuiteIdType suiteId, StorageIdType storageId,
+                             const pcsl_string *resName,
+                             unsigned char *bufPtr, int len) {
+
+    int to;
+    int from = 0;
+    pcsl_string subDir = PCSL_STRING_NULL;
+    pcsl_string resFileName = PCSL_STRING_NULL;
+    pcsl_string fullResPath = PCSL_STRING_NULL;
+    const pcsl_string* storageRoot = storage_get_root(storageId);
+    jint suiteIdLen = GET_SUITE_ID_LEN(suiteId);
+
+    (void)suiteId;
+
+    /* performance hint: predict buffer capacity */
+    pcsl_string_predict_size(&fullResPath,
+        pcsl_string_length(storageRoot) + suiteIdLen + 1 +
+            pcsl_string_length(resName));
+
+    if (pcsl_string_append(&fullResPath, storageRoot) != PCSL_STRING_OK
+        /* IMPL_NOTE: Uncomment it to create the directory for suite
+        || pcsl_string_append(&fullResPath, midp_suiteid2pcsl_string(suiteId)) != PCSL_STRING_OK
+        */
+        ) {
+        return OUT_OF_MEMORY;
+    }
+
+    pcsl_file_mkdir(&fullResPath);
+
+    while((to = pcsl_string_index_of_from(
+            resName, pcsl_file_getfileseparator(), from)) != -1) {
+
+        if (pcsl_string_substring(resName, from, to, &subDir) != PCSL_STRING_OK) {
+	        PRINTF_PCSL_STRING(
+	            "Internal error during subdirectory parsing for %s\n", resName);
+	        return 0;
+        }
+
+        if (pcsl_string_append_char(&fullResPath,
+                pcsl_file_getfileseparator()) != PCSL_STRING_OK ||
+                pcsl_string_append(&fullResPath, &subDir) != PCSL_STRING_OK) {
+            pcsl_string_free(&fullResPath);
+            return 0;
+        }
+        pcsl_file_mkdir(&fullResPath);
+        from = to + 1;
+    }
+
+
+    // Append resource file name to the path
+    if (pcsl_string_substring(
+            resName, from, pcsl_string_length(resName),
+                &resFileName) != PCSL_STRING_OK) {
+        PRINTF_PCSL_STRING(
+            "Internal error during resource name parsing for %s\n", resName);
+        return 0;
+    }
+
+    if (pcsl_string_append_char(&fullResPath,
+            pcsl_file_getfileseparator()) != PCSL_STRING_OK ||
+            pcsl_string_append(&fullResPath, &resFileName) != PCSL_STRING_OK) {
+        pcsl_string_free(&fullResPath);
+        return 0;
+    }
+
+    PRINTF_PCSL_STRING("Full path: %s\n", &fullResPath);
+
+{
+    void *handle;
+    int openStatus;
+    openStatus = pcsl_file_open(
+        &fullResPath, PCSL_FILE_O_CREAT | PCSL_FILE_O_RDWR, &handle);
+    if (-1 == openStatus) {
+        PRINTF_PCSL_STRING(
+            "Failed to create cached resource file %s\n", resName);
+        return 0;
+    }
+
+    if (pcsl_file_write(handle, bufPtr, len) != len) {
+        PRINTF_PCSL_STRING(
+            "Failed to write cached resource file %s\n", resName);
+        return 0;
+    }
+
+    if (pcsl_file_close(handle) != 0) {
+        PRINTF_PCSL_STRING(
+            "Failed to close cached resource file %s\n", resName);
+        return 0;
+    }
+    return 1;
+}
+}
 
 /**
  * Loads a native image from cache, if present.

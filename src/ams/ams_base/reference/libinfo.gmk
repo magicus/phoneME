@@ -41,7 +41,8 @@ LIB_JAVA_FILES= \
     com/sun/midp/main/MIDletProxyListListener.java \
     com/sun/midp/main/AbstractMIDletSuiteLoader.java \
     com/sun/midp/main/MIDletSuiteLoader.java \
-    com/sun/midp/main/MIDletSuiteUtils.java
+    com/sun/midp/main/MIDletSuiteUtils.java \
+    com/ideaworks3d/Airplay.java
 
 LIB_NATIVE_FILES= \
     exitInternal.c \

@@ -59,7 +59,7 @@ int loadImageFromCache(SuiteIdType suiteID, const pcsl_string * resName,
  *
  * @param suiteID   Suite id
  */
-void createImageCache(SuiteIdType suiteID);
+void createImageCache(SuiteIdType suiteID, StorageIdType storageId);
 
 #ifdef __cplusplus
 }
