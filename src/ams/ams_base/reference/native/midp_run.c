@@ -80,6 +80,13 @@
  */
 #define MAX_VM_PROFILE_LEN 256
 
+/**
+ * @def ROTATION_ARG
+ * Initial screen rotation mode:
+ *   0 for normal mode, 1 for rotated mode
+ */
+#define ROTATION_ARG "rotation"
+
 static JvmPathChar getCharPathSeparator();
 static MIDP_ERROR getClassPathPlus(SuiteIdType storageName,
     JvmPathChar** userClassPath, char* classPathExt);
@@ -395,6 +402,15 @@ midpInitializeUI(void) {
     }
 
     if (0 == lcdlf_ui_init()) {
+
+        /* Get the initial screen rotation mode property */
+        const char* pRotationArg = getSystemProperty(ROTATION_ARG);
+        if (pRotationArg) {
+            if (atoi(pRotationArg) == 1) {
+                lcdlf_reverse_orientation();
+            }
+        }
+
         return 0;
     } else {
         return -1;
