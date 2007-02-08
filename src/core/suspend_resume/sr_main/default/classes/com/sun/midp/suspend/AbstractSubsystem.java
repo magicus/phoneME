@@ -115,7 +115,7 @@ public abstract class AbstractSubsystem implements Subsystem {
      * If there are no dependencies currently, the suspend routine is
      * invoked immediately.
      */
-    public final void suspend() throws StateTransitionException {
+    public void suspend() throws StateTransitionException {
         synchronized (lock) {
             if (state == ACTIVE) {
                 state = SUSPENDING;

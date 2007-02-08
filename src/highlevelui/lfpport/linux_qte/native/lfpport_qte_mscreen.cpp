@@ -320,33 +320,6 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
     }
 }
 
-void PlatformMScreen::pauseAll() {
-
-  //  if (!allPaused) {
-      MidpEvent evt;
-
-      MIDP_EVENT_INITIALIZE(evt);
-
-      evt.type = PAUSE_ALL_EVENT;
-      midpStoreEventAndSignalAms(evt);
-      allPaused = true;
-  //  }
-}
-
-void PlatformMScreen::activateAll() {
-
-  if (allPaused) {
-    MidpEvent evt;
-
-    MIDP_EVENT_INITIALIZE(evt);
-
-    evt.type = ACTIVATE_ALL_EVENT;
-    midpStoreEventAndSignalAms(evt);
-    allPaused = false;
-  }
-}
-
-
 /**
  * Handle key release event
  *

@@ -197,16 +197,6 @@ public:
     QWidget * asWidget() { return this; }
 
     /**
-     * Makes a request to make all midlets active.
-     */
-    void activateAll();
-
-    /**
-     * Makes a request to pause all midlets.
-     */
-    void pauseAll();
-
-    /**
      * Size of a normal screen.
      */
     int getDisplayWidth() const;
@@ -324,7 +314,6 @@ private:
      */
     int SCREEN_WIDTH;
     int SCREEN_HEIGHT;
-    bool allPaused;
 
     static jboolean r_orientation;
 };
