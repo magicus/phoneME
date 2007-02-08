@@ -144,8 +144,8 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
             } else {
                 System.err.println("A JUMP presentation module will not be run.");
             }
-            Thread.sleep(0L);
         } catch(Throwable e) {
+	    e.printStackTrace();
         }
     }
     

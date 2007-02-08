@@ -100,6 +100,8 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageSync(
     m = jumpMessageNewOutgoingFromBuffer(raw, isResponse);
     target.processId = pid;
     r = jumpMessageSendSync(target, m, (int32)timeout, &code);
+    /* FIXME: Examine returned error code to figure out which exception
+       to throw */
     
     retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
     returnInterior = (*env)->GetPrimitiveArrayCritical(env, retVal, &isCopy);
@@ -128,6 +130,8 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_receiveMessage(
     ensureInitialized();
 
     r = jumpMessageWaitFor((JUMPPlatformCString)type, (int32)timeout);
+    /* FIXME: Examine returned error code to figure out which exception
+       to throw. Return an error code!! */
     retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
     returnInterior = (*env)->GetPrimitiveArrayCritical(env, retVal, &isCopy);
     memcpy(returnInterior, jumpMessageGetData(r), MESSAGE_BUFFER_SIZE);
@@ -192,7 +196,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_reserve(
     const char* type = (*env)->GetStringUTFChars(env, messageType, &isCopy);
     JUMPMessageQueueStatusCode code;
     
-    jumpMessageQueueCreate(type, &code);
+    jumpMessageQueueCreate((JUMPPlatformCString)type, &code);
 }
 
 JNIEXPORT int JNICALL
@@ -205,7 +209,7 @@ Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcess(
     char** argv;
     int i;
     int retVal;
-    int isCopy;
+    jboolean isCopy;
     
     if (arguments == NULL) {
 	argc = 0;
@@ -219,7 +223,7 @@ Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcess(
 	
 	for (i = 0; i < argc; i++) {
 	    jobject argObj = (*env)->GetObjectArrayElement(env, arguments, i);
-	    const char* arg = (*env)->GetStringUTFChars(env, argObj, &isCopy);
+	    char* arg = (char*)(*env)->GetStringUTFChars(env, argObj, &isCopy);
 	    argv[i] = arg;
 	}
     }

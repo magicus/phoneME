@@ -168,7 +168,9 @@ jumpProcessCreate(int argc, char** argv)
 
     /* Time to send outgoing message */
     targetAddress.processId = serverPid;
-    response = jumpMessageSendSync(targetAddress, outMessage, 0, &code);
+    /* FIXME: Must have central location for timeout values */
+#define TIMEOUT 10000
+    response = jumpMessageSendSync(targetAddress, outMessage, TIMEOUT, &code);
     dumpMessage(response, "Command response:");
     return getChildPid(response);
 }
