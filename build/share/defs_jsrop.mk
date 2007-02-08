@@ -35,22 +35,52 @@ JSROP_BUILD_DIR = $(CDC_DIST_DIR)
 # Directory which JSRs object files are put to
 JSROP_OBJ_DIR   = $(CVM_OBJDIR)
 
-# Variable containing JSRs *.jar files and their build flags; example:
-# <dist_dir>/lib/jsrXXX.jar=true <dist_dir>/lib/jsrYYY.jar=false
-JSROP_JARS_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar=$(USE_JSR_$(jsr_number)))
+# Make a list of all JSR flags and their settings. It will look something like:
+#  USR_JSR_75=true USE_JSR_82=false USE_JSR_120=true ...
+JSROP_OP_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),\
+          USE_JSR_$(jsr_number)=$(USE_JSR_$(jsr_number)))
 
-# Variable containing JSRs *.jar files which are built
-JSROP_BUILD_JARS = $(patsubst %=true,%,$(filter %true, $(JSROP_JARS_FLAGS)))
+# Convert JSROP_OP_FLAGS into a list of JSR numbers that are enabled.
+# This will give you a list something like:
+#   75 120 184 ...
+INCLUDED_JSROP_NUMBERS = $(patsubst USE_JSR_%=true,%,\
+              $(filter %true, $(JSROP_OP_FLAGS)))
+
+# Create a list of a JSR jar files we want to build.
+JSROP_BUILD_JARS = $(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
+           $(JSROP_LIB_DIR)/jsr$(jsr_number).jar)
 
 # Variable which is passed to MIDP and blocks JSRs building from MIDP; looks like:
 # USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
 MIDP_JSROP_USE_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),USE_JSR_$(jsr_number)=false)
 
+# SecOP - CDC/FP Security Optional Package
+ifeq ($(USE_SECOP),true)
+SECOP_DIR ?= $(COMPONENTS_DIR)/secop
+ifeq ($(wildcard $(SECOP_DIR)/build/share/$(SUBSYSTEM_MAKE_FILE)),)
+$(error SECOP_DIR must point to the SecOP source directory: $(SECOP_DIR))
+endif
+include $(SECOP_DIR)/build/share/$(SUBSYSTEM_MAKE_FILE)
+endif
+
 # If any JSR is built include JSROP abstractions and Javacall building
 ifneq ($(JSROP_BUILD_JARS),)
 JAVACALL_TARGET=$(TARGET_OS)-$(TARGET_CPU_FAMILY)
-include $(JAVACALL_DIR)/module.gmk
-include $(JSROP_ABSTRACTS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+# Check javacall makefile and include it
+export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
+JAVACALL_MAKE_FILE = $(JAVACALL_DIR)/module.gmk
+ifeq ($(wildcard $(JAVACALL_MAKE_FILE)),)
+$(error JAVACALL_DIR must point to a directory containing javacall implementation sources)
+endif
+include $(JAVACALL_MAKE_FILE)
+
+export JSROP_ABSTRACTS_DIR ?= $(COMPONENTS_DIR)/abstractions
+JSROP_ABSTRACTS_MAKE_FILE = $(JSROP_ABSTRACTS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSROP_ABSTRACTS_MAKE_FILE)),)
+$(error JSROP_ABSTRACTS_DIR must point to a directory containing JSROP abstractions sources)
+endif
+include $(JSROP_ABSTRACTS_MAKE_FILE)
+
 JSROP_JARS=$(JSROP_ABSTRACTS_JAR) $(JSROP_BUILD_JARS)
 endif
 
