@@ -75,14 +75,12 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
      * Initialize Display Event Handler.
      * DisplayEventHandler I/F method.
      *
-     * @param theEventQueue the event queue
      * @param theDisplayEventProducer producer for display events
      * @param theForegroundController controls which display has the foreground
      * @param theRepaintEventProducer producer for repaint events events
      * @param theDisplayContainer container for display objects
      */
     public void initDisplayEventHandler(
-        EventQueue theEventQueue,
         DisplayEventProducer theDisplayEventProducer,
         ForegroundController theForegroundController,
         RepaintEventProducer theRepaintEventProducer,
