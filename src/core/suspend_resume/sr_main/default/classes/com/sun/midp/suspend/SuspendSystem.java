@@ -91,6 +91,7 @@ public class SuspendSystem extends AbstractSubsystem {
          */
         public synchronized void suspend() {
             SuspendTimer.start(mpl);
+            SuspendSystemUI.showProgressAlert(classSecurityToken);
             super.suspend();
         }
 
@@ -116,16 +117,7 @@ public class SuspendSystem extends AbstractSubsystem {
          */
         private void alertIfAllMidletsKilled() {
             if (allMidletsKilled()) {
-                String title = Resource.getString(
-                    ResourceConstants.SR_ALL_KILLED_ALERT_TITLE, null);
-                String msg = Resource.getString(
-                    ResourceConstants.SR_ALL_KILLED_ALERT_MSG, null);
-                DisplayEventHandler disp = DisplayEventHandlerFactory.
-                        getDisplayEventHandler(classSecurityToken);
-                SystemAlert alert = new SystemAlert(disp, title, msg,
-                        null, AlertType.WARNING);
-
-                alert.runInNewThread();
+                SuspendSystemUI.showAllKilledAlert(classSecurityToken);
             }
         }
 
@@ -256,5 +248,44 @@ public class SuspendSystem extends AbstractSubsystem {
                 listener.midpResumed();
             }
         }
+    }
+}
+
+class SuspendSystemUI {
+
+    private static SuspendSystemUI instance;
+    private SecurityToken token;
+    private SystemAlert inProgress;
+
+    static synchronized SuspendSystemUI getUI(SecurityToken token) {
+        if (null == instance) {
+            instance = new SuspendSystemUI();
+            instance.token = token;
+        }
+
+        return instance;
+    }
+
+    static void showProgressAlert(SecurityToken token) {
+        System.out.println("Showing in-progress Alert");
+        showAlert(token, "Suspending...", "System suspend is in progress");
+    }
+
+    static void showAllKilledAlert(SecurityToken token) {
+        String title = Resource.getString(
+            ResourceConstants.SR_ALL_KILLED_ALERT_TITLE, null);
+        String message = Resource.getString(
+            ResourceConstants.SR_ALL_KILLED_ALERT_MSG, null);
+
+        System.out.println("Showing all-killed Alert");
+        showAlert(token, title, message);
+    }
+
+    static void showAlert(SecurityToken token, String title, String message) {
+        DisplayEventHandler disp = DisplayEventHandlerFactory.
+                getDisplayEventHandler(token);
+        SystemAlert alert = new SystemAlert(disp, title, message, null,
+                AlertType.WARNING);
+        alert.runInNewThread();
     }
 }
