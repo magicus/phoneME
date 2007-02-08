@@ -309,7 +309,7 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
         MIDP_EVENT_INITIALIZE(evt);
         if ((evt.CHR = mapKey(key)) != KEYMAP_KEY_INVALID) {
             if (evt.CHR == KEYMAP_KEY_SCREEN_ROT) {
-                evt.type = ROTATION_EVENT;
+                evt.type = NATIVE_ROTATION_EVENT;
             } else {
                 evt.type = MIDP_KEY_EVENT;
             }

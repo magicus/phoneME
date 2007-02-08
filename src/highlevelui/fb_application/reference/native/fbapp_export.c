@@ -239,7 +239,7 @@ void fbapp_map_keycode_to_event(
 
     case KEYMAP_KEY_SCREEN_ROT:
         if (isPressed) {
-            pNewMidpEvent->type = ROTATION_EVENT;
+            pNewMidpEvent->type = NATIVE_ROTATION_EVENT;
             pNewSignal->waitingFor = UI_SIGNAL;
         } else {
             /* ignore it */

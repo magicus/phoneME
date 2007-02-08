@@ -304,20 +304,26 @@ public final class EventTypes {
     /*
      * Sent to request screen rotation
      */
-    public static final int ROTATION_EVENT = 45;
+    public static final int NATIVE_ROTATION_EVENT = 45;
+
+    /*
+     * Sent to request screen rotation
+     */
+    public static final int JAVA_ROTATION_EVENT = 46;
+
 
     /**
      * MIDlet resources paused notification 
      */
-    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 46;
+    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 47;
     
     /**
      * Major ID for a MM DURATION UPDATED event. (Multimedia Event Extension)
      */
-    public static final int MM_DURATION_EVENT = 47;
+    public static final int MM_DURATION_EVENT = 48;
 
     /* External Volume Changed */
-    public static final int MM_VOLUME_CHANGED_EVENT = 48;
+    public static final int MM_VOLUME_CHANGED_EVENT = 49;
     
     /**
      * Multimedia Extended Events
@@ -328,12 +334,9 @@ public final class EventTypes {
      * 5. Streaming buffering stopped
      * 6. General media error
      */
-    public static final int MM_RECORD_LIMIT_EVENT = 49;
-    public static final int MM_RECORD_ERROR_EVENT = 50;
-    public static final int MM_BUFFERING_START_EVENT = 51;
-    public static final int MM_BUFFERING_STOP_EVENT = 52;
-    public static final int MM_GENERAL_ERROR_EVENT = 53;
-    
-    
-    
+    public static final int MM_RECORD_LIMIT_EVENT = 50;
+    public static final int MM_RECORD_ERROR_EVENT = 51;
+    public static final int MM_BUFFERING_START_EVENT = 52;
+    public static final int MM_BUFFERING_STOP_EVENT = 53;
+    public static final int MM_GENERAL_ERROR_EVENT = 54;
 }

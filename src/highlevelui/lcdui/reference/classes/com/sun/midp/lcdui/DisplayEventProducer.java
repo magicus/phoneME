@@ -28,15 +28,10 @@ package com.sun.midp.lcdui;
 
 import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.EventQueue;
-import com.sun.midp.events.NativeEvent;
 
-import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Item;
 import javax.microedition.lcdui.CustomItem;
-
-import com.sun.midp.security.Permissions;
-import com.sun.midp.security.SecurityToken;
 
 /**
  * This class provides methods to send events of types 
@@ -124,6 +119,17 @@ public class DisplayEventProducer {
     public void sendScreenChangeEvent(
             DisplayEventConsumer parent, Displayable d) {
         eventQueue.post(LCDUIEvent.createScreenChangeEvent(parent, d));
+    }
+
+    /**
+     * Called to schedule a screen rotation for the given Display 
+     * as soon as possible
+     *
+     * @param d The Display
+     */
+    public void sendScreenRotationEvent(DisplayEventConsumer d) {
+        eventQueue.post(LCDUIEvent
+    			.createBasicEvent(d, EventTypes.JAVA_ROTATION_EVENT));
     }
 
     /**

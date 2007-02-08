@@ -106,7 +106,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         break;
     case MIDP_JC_EVENT_ROTATION:
         pNewSignal->waitingFor = UI_SIGNAL;
-        pNewMidpEvent->type    = ROTATION_EVENT;
+        pNewMidpEvent->type    = NATIVE_ROTATION_EVENT;
         break;
 
 #ifdef ENABLE_JSR_75

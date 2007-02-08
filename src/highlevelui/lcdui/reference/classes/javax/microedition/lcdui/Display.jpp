@@ -644,6 +644,16 @@ public class Display {
         window = new MIDPWindow(cham_tunnel);
         region = new int[4];
         // #endif ENABLE_CHAMELEON
+
+
+        // Regard global property to use rotated screen
+        // from the very begining 
+        if (!wantRotation) {
+            String rotation = System.getProperty("rotation");
+            if (rotation != null && Integer.parseInt(rotation) == 1) {
+                displayEventProducer.sendScreenRotationEvent(consumer);
+            }
+        }
     }
 
     /**

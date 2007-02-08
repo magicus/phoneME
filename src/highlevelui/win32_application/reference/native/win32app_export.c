@@ -668,7 +668,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 if (iMsg == WM_KEYDOWN) {
                     return 0;
             }
-            pMidpEventResult->type = ROTATION_EVENT;
+            pMidpEventResult->type = NATIVE_ROTATION_EVENT;
             pSignalResult->waitingFor = UI_SIGNAL;
             return 0;
         case KEYMAP_MD_KEY_HOME:

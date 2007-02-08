@@ -122,10 +122,10 @@ extern "C" {
 /* Automation API events */
 #define SET_FOREGROUND_BY_NAME_REQUEST  44
 
-#define ROTATION_EVENT       45
+#define NATIVE_ROTATION_EVENT           45
 
 /* MIDlet resources paused notification */
-#define MIDLET_RS_PAUSED_NOTIFICATION   46
+#define MIDLET_RS_PAUSED_NOTIFICATION   47
 
 /** @} */
 

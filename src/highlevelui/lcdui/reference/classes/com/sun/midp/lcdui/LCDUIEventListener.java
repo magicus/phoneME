@@ -76,6 +76,7 @@ public class LCDUIEventListener implements EventListener {
         eventQueue.registerEventListener(EventTypes.INVALIDATE_EVENT, this);
         eventQueue.registerEventListener(EventTypes.ITEM_EVENT, this);
         eventQueue.registerEventListener(EventTypes.CALL_SERIALLY_EVENT, this);
+        eventQueue.registerEventListener(EventTypes.JAVA_ROTATION_EVENT, this);
     }
 
 // ------- Public Methods -------- //
@@ -146,6 +147,15 @@ public class LCDUIEventListener implements EventListener {
              * Assumed that target consumer is not null.
              */
             lcduiEvent.display.handleCallSeriallyEvent();
+            return;
+
+        case EventTypes.JAVA_ROTATION_EVENT:
+            /*
+             * Target DisplayEventConsumer is obtained directly
+             * from event field.
+             * Assumed that target consumer is not null.
+             */
+            lcduiEvent.display.handleRotationEvent();
             return;
             
         default:

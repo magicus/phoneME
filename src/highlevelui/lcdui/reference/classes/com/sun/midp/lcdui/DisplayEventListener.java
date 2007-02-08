@@ -34,11 +34,6 @@ import com.sun.midp.events.EventQueue;
 import com.sun.midp.events.EventListener;
 import com.sun.midp.events.NativeEvent;
 
-import com.sun.midp.lcdui.EventConstants;
-import com.sun.midp.lcdui.DisplayContainer;
-import com.sun.midp.lcdui.DisplayEventConsumer;
-import com.sun.midp.lcdui.DisplayAccess;
-
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
@@ -77,7 +72,7 @@ public class DisplayEventListener implements EventListener {
         eventQueue.registerEventListener(EventTypes.PEN_EVENT, this);
         eventQueue.registerEventListener(EventTypes.COMMAND_EVENT, this);
         eventQueue.registerEventListener(EventTypes.PEER_CHANGED_EVENT, this);
-        eventQueue.registerEventListener(EventTypes.ROTATION_EVENT,this);
+        eventQueue.registerEventListener(EventTypes.NATIVE_ROTATION_EVENT,this);
     }
 
     /**
@@ -149,7 +144,7 @@ public class DisplayEventListener implements EventListener {
 
                 return;
 
-            case EventTypes.ROTATION_EVENT:
+            case EventTypes.NATIVE_ROTATION_EVENT:
                 dc.handleRotationEvent();
                 return;
 
