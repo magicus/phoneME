@@ -24,9 +24,7 @@ information or have any questions.
 -->
 <project name="Build implementation classes" basedir=".">
 
-<import file="build-impl-pmode.xml"/>
-
-    <target name="build-impl-jars" depends="build-api, build-impl-modules, build-impl-pmode">
+    <target name="build-impl-jars" depends="build-api, build-impl-modules">
         <!-- create 3 impl jars -->
         <antcall target="make-jars">
             <param name="is-api" value="false"/>

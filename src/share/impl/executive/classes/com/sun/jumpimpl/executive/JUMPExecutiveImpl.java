@@ -26,6 +26,8 @@
 
 package com.sun.jumpimpl.executive;
 
+import com.sun.jump.module.presentation.JUMPPresentationModule;
+import com.sun.jump.module.presentation.JUMPPresentationModuleFactory;
 import com.sun.jump.presentation.JUMPLauncher;
 import com.sun.jump.executive.JUMPExecutive;
 import com.sun.jump.executive.JUMPUserInputManager;
@@ -62,27 +64,27 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
     
     // name of a propoerty which points to name of a propoerty file which
     // overrides default modules configuration
-    private final static String PROPERTY_FILE_NAME_PROP 
-        = "runtime-properties-file";
-
+    private final static String PROPERTY_FILE_NAME_PROP
+            = "runtime-properties-file";
+    
     private void
-    handleCommandLine(String[] args) {
+            handleCommandLine(String[] args) {
         // remove default value (if any)
         JUMPModulesConfig.getProperties().remove(PROPERTY_FILE_NAME_PROP);
-
+        
         for(int i = 0; i < args.length; ++i) {
             if("--config-file".equals(args[i])) {
                 if(!(++i < args.length) || args[i] == null) {
                     throw new IllegalArgumentException(
-                        "configuration file not specified");
+                            "configuration file not specified");
                 }
                 JUMPModulesConfig.overrideDefaultConfig(args[i]);
-
+                
                 // put name of a property file overriding default properties
-                // in the configuration map hopeing JUMPLifeCycleModule 
+                // in the configuration map hopeing JUMPLifeCycleModule
                 // implementation will hook it up
                 JUMPModulesConfig.getProperties().put(
-                    PROPERTY_FILE_NAME_PROP, args[i]);
+                        PROPERTY_FILE_NAME_PROP, args[i]);
             }
         }
     }
@@ -136,32 +138,25 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
         
         // Take it away, someone -- presentation mode?
         try {
-            JUMPLauncher l = getLauncher();
-            if (l != null) {
-                l.start();
+            JUMPPresentationModule pm = getPresentation();
+            if (pm != null) {
+                pm.start();
+            } else {
+                System.err.println("A JUMP presentation module will not be run.");
             }
             Thread.sleep(0L);
         } catch(Throwable e) {
         }
     }
     
-    public static JUMPLauncher getLauncher() {
-        JUMPLauncher launcher = null;
-        String launcherClass = (String)JUMPModulesConfig.getProperties().get("jump.launcher");
-        if (launcherClass != null) {
-            try {
-                Class c = Class.forName(launcherClass);
-                Object obj = c.newInstance();
-                if (obj instanceof com.sun.jump.presentation.JUMPLauncher) {
-                    launcher = (JUMPLauncher) c.newInstance();
-                } else {
-                    System.err.println("Could not instantiate jump.launcher class: " + launcherClass);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+    public static JUMPPresentationModule getPresentation() {
+        String presentationMode = (String)JUMPModulesConfig.getProperties().get("jump.presentation");       
+        JUMPPresentationModuleFactory pmf = JUMPPresentationModuleFactory.getInstance();
+        if (pmf != null) {
+            return pmf.getModule(presentationMode);
+        } else {
+            return null;
         }
-        return launcher;
     }
     
     public int

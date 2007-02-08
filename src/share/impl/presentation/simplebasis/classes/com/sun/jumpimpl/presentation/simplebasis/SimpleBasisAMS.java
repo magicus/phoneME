@@ -24,6 +24,7 @@
 
 package com.sun.jumpimpl.presentation.simplebasis;
 
+import com.sun.jump.module.presentation.JUMPPresentationModule;
 import com.sun.jump.presentation.JUMPLauncher;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPContent;
@@ -45,12 +46,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 /**
  * A simple JUMP launcher that uses Personal Basis components.
  */
-public class SimpleBasisAMS implements JUMPLauncher {
+public class SimpleBasisAMS implements JUMPPresentationModule {
     
     /**
      * The property name holding the root of content store
@@ -69,6 +71,19 @@ public class SimpleBasisAMS implements JUMPLauncher {
      */
     public SimpleBasisAMS() {
     }
+    
+    /**
+     * load the presentation module
+     * @param map the configuration data required for loading this module.
+     */
+    public void load(Map map) {        
+    }
+    
+    public void stop() {
+    }
+
+    public void unload() {
+    }    
     
     private boolean setup() {
         repository = System.getProperty(repositoryProperty);
