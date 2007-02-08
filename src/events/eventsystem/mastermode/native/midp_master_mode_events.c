@@ -41,6 +41,10 @@
 #include <wmaInterface.h>
 #endif
 
+#if ENABLE_JSR_135
+#include <javacall_multimedia.h>
+#endif
+
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
 
@@ -167,6 +171,15 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         }
 
         break;
+#if (ENABLE_JSR_135 || ENABLE_JSR_234)
+    case MEDIA_EVENT_SIGNAL:
+        if (MM_VOLUME_CHANGED_EVENT == newMidpEvent.type) {
+            StoreMIDPEventInAllVmThread(newMidpEvent);
+        } else {
+            StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.ISOLATE);
+        }
+        break;
+#endif
 #ifdef ENABLE_JSR_179
     case JSR179_LOCATION_SIGNAL:
         midp_thread_signal_list(blocked_threads,
