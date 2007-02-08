@@ -82,8 +82,9 @@
 
 /**
  * @def ROTATION_ARG
- * Initial screen rotation mode:
- *   0 for normal mode, 1 for rotated mode
+ * Name of the system property with initial screen rotation mode.
+ * The property can be set to 1 for rotated mode, any other value
+ * is ignored and normal screen mode is used.
  */
 #define ROTATION_ARG "rotation"
 
