@@ -140,6 +140,20 @@ class ClassInfo
 	return false;
     }
 
+    // Is this class an interface?
+    public boolean isInterface() {
+	return ((this.access & Const.ACC_INTERFACE) != 0);
+    }
+
+    // Is this class the java.lang.Object class?
+    public boolean isJavaLangObject() {
+	ClassInfo c = this;
+	if ((c != null) && c.className.equals("java/lang/Object")) {
+	    return true;
+	}
+	return false;
+    }
+
     // This will be overridden by subclasses
     protected String createGenericNativeName() { 
         return Util.convertToClassName(className );

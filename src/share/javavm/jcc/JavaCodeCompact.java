@@ -299,6 +299,12 @@ public class JavaCodeCompact extends LinkerUtil {
 	    }
 	}
 	ClassFileFinder searchPath = cl.getSearchPath();
+	if (searchPath == null) {
+	    // If the search path is empty, then there is no place else
+	    // to look for the class.  So, fail:
+	    return false;
+	}
+
 	int nfound = rdr.readClass(classname, searchPath, oneClass);
 
 	if (nfound == 1) {
@@ -334,14 +340,15 @@ public class JavaCodeCompact extends LinkerUtil {
 		    return false;
 		}
 	    }
-	    if ( nfound == 0 ){
-		// the list now contains things which could
-		// not ever be resolved.  Print it out for
-		// information and continue processing, in
-		// case unresolvedOk is set.
-		unresolved = unresolvedClassNames(); // recalculate
-		break; // Give up trying to resolve.
+
+	    // If we have gone through an iteration when we weren't able to
+	    // resolve any more classes, then we have resolved everything
+	    // we can.  Hence, break out of here.
+	    if (processedThisTime.isEmpty()) {
+		break;
 	    }
+
+	    // Otherwise, continue to resolve the new classes that we've found.
 	    classesProcessed.addAll(processedThisTime);
 	}
 	return true;
