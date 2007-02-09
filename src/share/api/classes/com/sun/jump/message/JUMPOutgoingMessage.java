@@ -134,13 +134,9 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
 
     private byte[] getBytes(String s) {
 	char[] val = s.toCharArray();
-        int n = val.length;
-	byte[] dst = new byte[n+1]; // Leave room for null termination
-        int i = 0;
-        int j = 0;
-
-        while (i < n) {
-            dst[j++] = (byte)val[i++];
+	byte[] dst = new byte[val.length + 1]; // Leave room for null termination
+	for (int i = 0; i < val.length; i++) {
+            dst[i] = (byte)val[i];
         }
 	return dst;
     }
