@@ -118,7 +118,7 @@ static void initLinuxFbDeviceType() {
 }
 
 /** Inits keyboard device */
-static void initKeyboard() {
+void initKeyboard() {
     struct vt_stat vtStat;
     char dev[30];
 

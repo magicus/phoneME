@@ -41,6 +41,9 @@ extern "C" {
 /** Initialize frame buffer video device */
 extern void connectFrameBuffer();
 
+/** Initialize keyboard */
+extern void initKeyboard();
+
 /** Allocate system screen buffer according to the screen geometry */
 extern void initScreenBuffer(int width, int height);
 

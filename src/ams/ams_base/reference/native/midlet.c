@@ -35,6 +35,11 @@
 
 #include <kni.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#include <fbport_export.h>
 #include <midlet.h>
 #include <midpMalloc.h>
 #include <midpError.h>
@@ -128,7 +133,15 @@ KNIDECL(com_sun_airplay_Airplay_RunS3E_1) {
         sprintf(dir, "../../appdb/%s", c_suite_dir);
         chdir(dir);
         chmod(c_system_call, S_IRWXU);
+
+        // close the keyboard device descriptor
+        close(getKeyboardFd());
+
+        // make the system call
         system(c_system_call);
+
+        // reinit the keyboard
+        initKeyboard();
     }
     KNI_EndHandles();
     

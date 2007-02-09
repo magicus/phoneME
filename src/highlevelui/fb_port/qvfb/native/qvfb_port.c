@@ -67,6 +67,9 @@ int getMouseFd() {
     return mouseFd;
 }
 
+void initKeyboard() {
+}
+
 /** QVFb header data */
 static QVFbHeader *hdr = NULL;
 /** QVFb video buffer for direct drawing */

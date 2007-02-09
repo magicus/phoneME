@@ -46,6 +46,9 @@ int getMouseFd() {
     return -1;
 }
 
+void initKeyboard() {
+}
+
 /** Initializes the fbapp_ native resources */
 void initScreenBuffer(int width, int height) {
     gxj_system_screen_buffer.width = width;
