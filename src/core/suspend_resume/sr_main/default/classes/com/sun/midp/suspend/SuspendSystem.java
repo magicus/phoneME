@@ -252,20 +252,6 @@ public class SuspendSystem extends AbstractSubsystem {
 }
 
 class SuspendSystemUI {
-
-    private static SuspendSystemUI instance;
-    private SecurityToken token;
-    private SystemAlert inProgress;
-
-    static synchronized SuspendSystemUI getUI(SecurityToken token) {
-        if (null == instance) {
-            instance = new SuspendSystemUI();
-            instance.token = token;
-        }
-
-        return instance;
-    }
-
     static void showProgressAlert(SecurityToken token) {
         System.out.println("Showing in-progress Alert");
         showAlert(token, "Suspending...", "System suspend is in progress");
