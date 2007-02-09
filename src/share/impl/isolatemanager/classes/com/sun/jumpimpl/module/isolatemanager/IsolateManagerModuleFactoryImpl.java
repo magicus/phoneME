@@ -24,31 +24,31 @@
  * information or have any questions. 
  */
 
-package com.sun.jumpimpl.module.lifecycle;
+package com.sun.jumpimpl.module.isolatemanager;
 
 import java.util.Map;
-import com.sun.jump.module.lifecycle.JUMPLifeCycleModule;
-import com.sun.jump.module.lifecycle.JUMPLifeCycleModuleFactory;
+import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModule;
+import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
 
 /**
  *
  */
-public class LifeCycleModuleFactoryImpl extends JUMPLifeCycleModuleFactory {
-    private JUMPLifeCycleModule MODULE;
+public class IsolateManagerModuleFactoryImpl extends JUMPIsolateManagerModuleFactory {
+    private JUMPIsolateManagerModule MODULE;
     
     /** 
-     * Creates a new instance of LifeCycleModuleFactoryImpl 
+     * Creates a new instance of IsolateManagerModuleFactoryImpl 
      */
-    public LifeCycleModuleFactoryImpl() {
+    public IsolateManagerModuleFactoryImpl() {
 	super();
     }
     
     /** 
-     * Get the singleton lifecycle module for this address space
+     * Get the singleton isolatemanager module for this address space
      */
-    public synchronized JUMPLifeCycleModule getModule() {
+    public synchronized JUMPIsolateManagerModule getModule() {
 	if (MODULE == null) {
-	    MODULE = new LifeCycleModuleImpl();
+	    MODULE = new IsolateManagerModuleImpl();
 	}
 	return MODULE;
     }

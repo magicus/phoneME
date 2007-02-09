@@ -32,8 +32,8 @@ import com.sun.jump.executive.JUMPApplicationProxy;
 import com.sun.jump.executive.JUMPIsolateProxy;
 import com.sun.jump.module.installer.JUMPInstallerModule;
 import com.sun.jump.module.installer.JUMPInstallerModuleFactory;
-import com.sun.jump.module.lifecycle.JUMPLifeCycleModule;
-import com.sun.jump.module.lifecycle.JUMPLifeCycleModuleFactory;
+import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModule;
+import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
@@ -305,9 +305,9 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
     }
     
     private JUMPApplicationProxy launchApp(JUMPApplication app) {
-        JUMPLifeCycleModuleFactory lcmf =
-                JUMPLifeCycleModuleFactory.getInstance();
-        JUMPLifeCycleModule lcm = lcmf.getModule();
+        JUMPIsolateManagerModuleFactory lcmf =
+                JUMPIsolateManagerModuleFactory.getInstance();
+        JUMPIsolateManagerModule lcm = lcmf.getModule();
         JUMPIsolateProxy ip = lcm.newIsolate(app.getAppType());
         System.err.println("*** New isolate created="+ip);
         System.err.println("*** Isolate trying to launch: " + app.getTitle() + "...");
@@ -344,9 +344,9 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
     
     private JUMPApplication[] getRunningApps() {
         
-        JUMPLifeCycleModuleFactory lcmf =
-                JUMPLifeCycleModuleFactory.getInstance();
-        JUMPLifeCycleModule lcm = lcmf.getModule();
+        JUMPIsolateManagerModuleFactory lcmf =
+                JUMPIsolateManagerModuleFactory.getInstance();
+        JUMPIsolateManagerModule lcm = lcmf.getModule();
         JUMPIsolateProxy[] ips = lcm.getActiveIsolates();
         Vector appsVector = new Vector();
         for (int i = 0; i < ips.length; i++) {

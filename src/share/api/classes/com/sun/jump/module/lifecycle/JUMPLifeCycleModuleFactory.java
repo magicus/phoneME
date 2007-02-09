@@ -24,31 +24,31 @@
  * information or have any questions. 
  */
 
-package com.sun.jump.module.lifecycle;
+package com.sun.jump.module.isolatemanager;
 
 import com.sun.jump.module.JUMPModuleFactory;
 
 /**
- * <code>JUMPLifeCycleModuleFactory</code> is a factory for 
- * <code>JUMPLifeCycleModule</code>
+ * <code>JUMPIsolateManagerModuleFactory</code> is a factory for 
+ * <code>JUMPIsolateManagerModule</code>
  */
-public abstract class JUMPLifeCycleModuleFactory extends JUMPModuleFactory {
-    private static JUMPLifeCycleModuleFactory INSTANCE = null;
+public abstract class JUMPIsolateManagerModuleFactory extends JUMPModuleFactory {
+    private static JUMPIsolateManagerModuleFactory INSTANCE = null;
     
-    public static JUMPLifeCycleModuleFactory getInstance() {
+    public static JUMPIsolateManagerModuleFactory getInstance() {
         return INSTANCE;
     }
     
     /**
-     * Creates a new instance of JUMPLifeCycleModuleFactory
+     * Creates a new instance of JUMPIsolateManagerModuleFactory
      */
-    protected JUMPLifeCycleModuleFactory() {
-        synchronized (JUMPLifeCycleModuleFactory.class){
+    protected JUMPIsolateManagerModuleFactory() {
+        synchronized (JUMPIsolateManagerModuleFactory.class){
             if ( INSTANCE == null ) {
                 INSTANCE = this;
             }
         }
     }
     
-    public abstract JUMPLifeCycleModule getModule();
+    public abstract JUMPIsolateManagerModule getModule();
 }

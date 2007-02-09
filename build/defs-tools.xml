@@ -109,7 +109,7 @@ information or have any questions.
             <arg line="com.sun.jump.module.contentstore" />
             <arg line="com.sun.jump.module.download" />
             <arg line="com.sun.jump.module.installer" />
-            <arg line="com.sun.jump.module.lifecycle" />
+            <arg line="com.sun.jump.module.isolatemanager" />
             <arg line="com.sun.jump.module.preferences" />
             <arg line="com.sun.jump.module.pushregistry" />
             <arg line="com.sun.jump.module.pushregistry.MIDP" />

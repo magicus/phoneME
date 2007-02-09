@@ -35,7 +35,7 @@ public abstract class JUMPOSInterface {
     }
     
     /**
-     * Creates a new instance of JUMPLifeCycleModuleFactory
+     * Creates a new instance of JUMPIsolateManagerModuleFactory
      */
     protected JUMPOSInterface() {
         synchronized (JUMPOSInterface.class){

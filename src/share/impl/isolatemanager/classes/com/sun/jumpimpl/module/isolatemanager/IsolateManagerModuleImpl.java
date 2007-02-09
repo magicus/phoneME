@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-package com.sun.jumpimpl.module.lifecycle;
+package com.sun.jumpimpl.module.isolatemanager;
 
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -37,15 +37,15 @@ import com.sun.jump.common.JUMPProcessProxy;
 import com.sun.jump.executive.*;
 import com.sun.jump.message.*;
 import com.sun.jump.module.JUMPModule;
-import com.sun.jump.module.lifecycle.*;
+import com.sun.jump.module.isolatemanager.*;
 import com.sun.jump.os.JUMPOSInterface;
 
 import com.sun.jumpimpl.process.JUMPIsolateProxyImpl;
 import com.sun.jumpimpl.process.JUMPProcessProxyImpl;
 import com.sun.jumpimpl.process.RequestSenderHelper;
 
-public class LifeCycleModuleImpl
-        implements JUMPLifeCycleModule, JUMPMessageHandler {
+public class IsolateManagerModuleImpl
+        implements JUMPIsolateManagerModule, JUMPMessageHandler {
     
     private Vector processes;
     private Vector isolates;
@@ -56,7 +56,7 @@ public class LifeCycleModuleImpl
     private String isolateExtraArg;
     private String defaultVMArgs;
     
-    LifeCycleModuleImpl() {
+    IsolateManagerModuleImpl() {
 	exec = JUMPExecutive.getInstance();
         dispatcher = exec.getMessageDispatcher();
 	rsh = new RequestSenderHelper(exec);
@@ -131,7 +131,7 @@ public class LifeCycleModuleImpl
      * Create new native process
      */
     public JUMPProcessProxy newProcess() {
-        System.err.println("***LifeCycleModuleImpl newProcess() unimplemented**");
+        System.err.println("***IsolateManagerModuleImpl newProcess() unimplemented**");
         return null;
     }
     
@@ -189,7 +189,7 @@ public class LifeCycleModuleImpl
         defaultVMArgs = (String)config.get("vm.args");
 
 	//
-	// Get all lifecycle command messages here.
+	// Get all isolatemanager command messages here.
 	//
 	try {
 	    String type = JUMPIsolateLifecycleRequest.MESSAGE_TYPE;
