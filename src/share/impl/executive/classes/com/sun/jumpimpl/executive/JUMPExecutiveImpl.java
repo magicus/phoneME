@@ -28,7 +28,6 @@ package com.sun.jumpimpl.executive;
 
 import com.sun.jump.module.presentation.JUMPPresentationModule;
 import com.sun.jump.module.presentation.JUMPPresentationModuleFactory;
-import com.sun.jump.presentation.JUMPLauncher;
 import com.sun.jump.executive.JUMPExecutive;
 import com.sun.jump.executive.JUMPUserInputManager;
 import com.sun.jump.executive.JUMPIsolateProxy;
