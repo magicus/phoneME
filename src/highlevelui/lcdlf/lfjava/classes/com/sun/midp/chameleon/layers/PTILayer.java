@@ -28,13 +28,8 @@ package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
-import javax.microedition.lcdui.game.Sprite;
-import java.util.*;
-import com.sun.midp.lcdui.Text;
 import com.sun.midp.chameleon.skins.PTISkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
-import com.sun.midp.chameleon.skins.SoftButtonSkin;
-import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.input.*;
@@ -134,7 +129,7 @@ public class PTILayer extends PopupLayer {
         visible = (list != null && list.length > 1);
         // IMPL_NOTE: has to be set externally as parameter 
         selId = 0;
-        dirty = true;
+        setDirty();
     }
 
     /**

@@ -30,10 +30,8 @@ import javax.microedition.lcdui.*;
 
 import com.sun.midp.chameleon.ChamDisplayTunnel;
 import com.sun.midp.chameleon.CLayer;
-import com.sun.midp.chameleon.layers.BodyLayer;
 
 import com.sun.midp.chameleon.skins.*;
-import com.sun.midp.lcdui.Text;
 
 /**
  * AlertLayer 
@@ -63,7 +61,7 @@ public class AlertLayer extends BodyLayer {
      */
     public void setAlert(boolean alertVisible, Alert alert, int height) {
         this.alert = alert;
-        dirty = true;
+        setDirty();
         setVisible(alertVisible);
     }
     

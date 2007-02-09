@@ -28,7 +28,6 @@ package com.sun.midp.chameleon.layers;
 
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
-import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 
@@ -142,14 +141,14 @@ public class BodyLayer extends CLayer
      * Chameleon repaint when only the application area needs updating.
      */    
     public void setDirty() {
-        this.dirty = true;
+        setDirtyButNotNotifyOwner();
     }
     
     /**
      * Scrolling the contents according to the scrolling parameters.
      * @param scrollType  can be SCROLL_LINEUP, SCROLL_LINEDOWN, SCROLL_PAGEUP,
      *                SCROLL_PAGEDOWN or SCROLL_THUMBTRACK
-     * @thumbPosition only valid when scrollType is SCROLL_THUMBTRACK
+     * @param thumbPosition only valid when scrollType is SCROLL_THUMBTRACK
      * 
      */
     public void scrollContent(int scrollType, int thumbPosition) {
