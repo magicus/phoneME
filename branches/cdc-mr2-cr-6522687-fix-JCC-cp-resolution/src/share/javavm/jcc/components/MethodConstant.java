@@ -56,7 +56,7 @@ class MethodConstant extends FMIrefConstant {
 
     public MethodInfo find(){
 	if ( ! didLookup ){
-	    theMethod = (MethodInfo)super.find(true);
+	    theMethod = (MethodInfo)super.find(tag);
 	    didLookup = true;
 	}
 	return theMethod;
