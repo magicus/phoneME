@@ -32,10 +32,9 @@ import java.io.IOException;
  * <code>JUMPMessageReader</code> is used to read data from a message.
  */
 public class JUMPMessageReader {
+    private final byte[] messageDataBytes;
+    private final int messageMarkOffset;
     int messageDataOffset;  // Package private access for JUMPMessage
-    private int messageMarkOffset;
-    private byte[] messageDataBytes;
-    private int MESSAGE_DATA_OFFSET;
 
     /**
      * Creates a new instance of JUMPMessageReader for message m
@@ -49,11 +48,10 @@ public class JUMPMessageReader {
      * start reading from.
      */
     JUMPMessageReader(JUMPMessage m, int offset) {
-	this.MESSAGE_DATA_OFFSET = m.MESSAGE_DATA_OFFSET;
 	this.messageDataBytes    = m.messageDataBytes;
 	// Context starts from user data offset, past the header
-	this.messageDataOffset   = offset;
 	this.messageMarkOffset   = offset;
+	this.messageDataOffset   = offset;
     }
     
     public int getInt() {
