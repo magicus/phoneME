@@ -176,8 +176,8 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/InputModeLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/PTILayer.java
 
-# romized skin files
-SUBSYSTEM_LCDLF_ROMIZED_SKIN_BIN_FILE = $(GENERATED_DIR)/lib/skin.bin
+# romized skin files 
+SUBSYSTEM_LCDLF_ROMIZED_SKIN_BIN_FILE = $(GENERATED_DIR)/lib/skin.bin 
 
 
 # Command for invoking skin romization tool
