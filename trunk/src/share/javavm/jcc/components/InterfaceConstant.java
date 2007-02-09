@@ -52,32 +52,4 @@ class InterfaceConstant extends MethodConstant
 	mc.read( in );
 	return mc;
     }
-
-    public MethodInfo find() {
-        theMethod = (MethodInfo)super.find();
-        if (theMethod != null) {
-            return theMethod;
-        }
-
-        /* look at super interfaces for the method */
-        int thisMethodID = this.getID();
-        ClassInfo c = clas.find();
-        /* make sure we build the allInterfaces table first */
-        c.findAllInterfaces();
-        Vector allInterfaces = c.allInterfaces;
-        
-        for (int i = 0; i < allInterfaces.size(); i++) {
-            ClassInfo superInterface = (ClassInfo)(allInterfaces.elementAt(i));
-            ClassMemberInfo mtable[] = (ClassMemberInfo[])superInterface.methods;
-            for (int j = 0; j < mtable.length; j++) {
-                if (thisMethodID == mtable[j].getID()) {
-                    theMethod = (MethodInfo)mtable[j];
-                    return theMethod;
-                }
-            } 
-        }
-        return null;
-    }
-
-    public boolean isResolved(){ return find() != null; }
 }

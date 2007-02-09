@@ -56,7 +56,7 @@ class FieldConstant extends FMIrefConstant
 
     public FieldInfo find(){
 	if ( ! didLookup ){
-	    theField = (FieldInfo)super.find(false);
+	    theField = (FieldInfo)super.find(tag);
 	    didLookup = true;
 	}
 	return theField;
