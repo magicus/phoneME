@@ -101,11 +101,7 @@ public class MIDletSuiteStorageAccessor
        }	   
    }
 
-   private int getApplicationID(int suiteId, int midletNumber) {  
-       return ((short)suiteId << 16 | (short) midletNumber); 
-   }
-
-    class JUMPMIDletSuiteInfo {
+   class JUMPMIDletSuiteInfo {
   
         MIDletSuiteInfo suiteInfo; 
         ArrayList midletApplications;
@@ -115,10 +111,8 @@ public class MIDletSuiteStorageAccessor
 
            midletApplications = new ArrayList(midletInfos.length);
            for (int i = 0; i < midletInfos.length; i++) {
-               int applicationID = getApplicationID(suiteInfo.suiteId, (i+1));
                MIDletApplication app = new MIDletApplication(midletInfos[i].name,
-                          null, suiteInfo.suiteId, midletInfos[i].classname, 
-			  applicationID );
+                          null, suiteInfo.suiteId, midletInfos[i].classname, (i+1)); 
                midletApplications.add(i, app);
            }
 
