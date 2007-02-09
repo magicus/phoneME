@@ -125,20 +125,18 @@ endif
 CVM_CNI_CLASSES += com.sun.j2me.crypto.ARC4 \
                    com.sun.j2me.crypto.RSA
 
-$(ABSTRACTIONS_JAR): $(ABSTRACTIONS_CLASSDIR) .compile.jsrop.abstracts
-	$(AT)$(CVM_JAR) cf $@ -C $(ABSTRACTIONS_CLASSDIR) .
-
-$(ABSTRACTIONS_CLASSDIR):
-	$(AT)mkdir -p $(ABSTRACTIONS_CLASSDIR)
-    
-.compile.jsrop.abstracts: $(ABSTRACTIONS_CLASSES)
-	$(AT)echo "Compiling JSROP abstractions classes...";			\
+$(ABSTRACTIONS_JAR): $(ABSTRACTIONS_CLASSDIR) $(ABSTRACTIONS_CLASSES)
+	@echo "Compiling JSROP abstractions classes..."
 	$(JAVAC_CMD)						\
 		-d $(ABSTRACTIONS_CLASSDIR)			\
 		-bootclasspath $(CVM_BUILDTIME_CLASSESDIR) 	\
 		-classpath $(JAVACLASSES_CLASSPATH)	\
 		$(ABSTRACTIONS_CLASSES)
+	$(AT)$(CVM_JAR) cf $@ -C $(ABSTRACTIONS_CLASSDIR) .
 
+$(ABSTRACTIONS_CLASSDIR):
+	$(AT)mkdir -p $(ABSTRACTIONS_CLASSDIR)
+    
 $(ABSTRACTIONS_NATIVE_LIBRARY) :: $(ABSTRACTIONS_NATIVE_OBJS)
 	@echo "Linking $@"
 	$(SO_LINK_CMD)
