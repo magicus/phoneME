@@ -154,7 +154,7 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
 
     public void addByteArray(byte[] barr) {
 	if (barr == null) {
-	    addInt(0);
+	    addInt(-1);
 	    return;
 	}
 	addInt(barr.length);
@@ -166,7 +166,7 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
 
     public void addUTFArray(String[] arr) {
 	if (arr == null) {
-	    addInt(0);
+	    addInt(-1);
 	    return;
 	}
 	addInt(arr.length);

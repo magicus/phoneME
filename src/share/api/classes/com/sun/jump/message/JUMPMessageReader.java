@@ -109,7 +109,7 @@ public class JUMPMessageReader {
 
     public byte[] getByteArray() {
 	int len = getInt();
-	if (len == 0) {
+	if (len == -1) {
 	    return null;
 	}
 	byte[] b = new byte[len];
@@ -120,7 +120,7 @@ public class JUMPMessageReader {
 
     public String[] getUTFArray() {
 	int len = getInt();
-	if (len == 0) {
+	if (len == -1) {
 	    return null;
 	}
 	String[] s = new String[len];
