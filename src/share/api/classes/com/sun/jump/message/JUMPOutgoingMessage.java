@@ -104,24 +104,24 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
     public void addInt(int i) {
 	ensureCapacity(4);
 	// Add int at messageDataOffset, big endian
-	messageDataBytes[messageDataOffset]   = (byte)((i >>> 24) & 0xFF);
-	messageDataBytes[messageDataOffset+1] = (byte)((i >>> 16) & 0xFF);
-	messageDataBytes[messageDataOffset+2] = (byte)((i >>>  8) & 0xFF);
-	messageDataBytes[messageDataOffset+3] = (byte)((i >>>  0) & 0xFF);
+	messageDataBytes[messageDataOffset+0] = (byte)(i >>> 24);
+	messageDataBytes[messageDataOffset+1] = (byte)(i >>> 16);
+	messageDataBytes[messageDataOffset+2] = (byte)(i >>>  8);
+	messageDataBytes[messageDataOffset+3] = (byte)(i >>>  0);
 	messageDataOffset += 4;
     }
 
     public void addLong(long l) {
 	ensureCapacity(8);
 	// Add int at messageDataOffset, big endian
-	messageDataBytes[messageDataOffset+0]   = (byte)(l >>> 56);
-	messageDataBytes[messageDataOffset+1]   = (byte)(l >>> 48);
-	messageDataBytes[messageDataOffset+2]   = (byte)(l >>> 40);
-	messageDataBytes[messageDataOffset+3]   = (byte)(l >>> 32);
-	messageDataBytes[messageDataOffset+4]   = (byte)(l >>> 24);
-	messageDataBytes[messageDataOffset+5]   = (byte)(l >>> 16);
-	messageDataBytes[messageDataOffset+6]   = (byte)(l >>> 8);
-	messageDataBytes[messageDataOffset+7]   = (byte)(l >>> 0);
+	messageDataBytes[messageDataOffset+0] = (byte)(l >>> 56);
+	messageDataBytes[messageDataOffset+1] = (byte)(l >>> 48);
+	messageDataBytes[messageDataOffset+2] = (byte)(l >>> 40);
+	messageDataBytes[messageDataOffset+3] = (byte)(l >>> 32);
+	messageDataBytes[messageDataOffset+4] = (byte)(l >>> 24);
+	messageDataBytes[messageDataOffset+5] = (byte)(l >>> 16);
+	messageDataBytes[messageDataOffset+6] = (byte)(l >>> 8);
+	messageDataBytes[messageDataOffset+7] = (byte)(l >>> 0);
 	messageDataOffset += 8;
     }
 
