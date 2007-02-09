@@ -1109,8 +1109,6 @@ stroker_computeOffset(Pipeline* pipeline, jint x0, jint y0,
         jdouble dlx = x1 - x0;
         jdouble dly = y1 - y0;
 
-        jdouble det = (jdouble)pipeline->stroker_m00*pipeline->stroker_m11 -
-                      (jdouble)pipeline->stroker_m01*pipeline->stroker_m10;
         jdouble a = dly*pipeline->stroker_m00 - dlx*pipeline->stroker_m10;
         jdouble b = dly*pipeline->stroker_m01 - dlx*pipeline->stroker_m11;
         jdouble dh = piscesmath_dhypot(a, b);
