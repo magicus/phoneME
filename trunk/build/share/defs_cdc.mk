@@ -509,6 +509,7 @@ ifeq ($(CVM_DUAL_STACK), true)
 	sun.misc.MIDPImplementationClassLoader \
 	sun.misc.MIDPConfig \
 	sun.misc.MIDletClassLoader \
+	sun.misc.MIDPInternalConnectorImpl \
 	sun.misc.MIDPLauncher
 endif
 
