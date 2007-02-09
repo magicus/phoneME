@@ -22,6 +22,20 @@
 # information or have any questions. 
 #
 
+# generatePropertyInitializer(xmlFiles,generatedDir,initializerPackage,outputFile)
+define generatePropertyInitializer
+	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE)           \
+	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml         \
+	-xsl $(CONFIGURATOR_DIR)/xsl/share/merge.xsl        \
+	-params filesList '$(1)'                            \
+	-out $(2)/properties_merged.xml                     \
+	-xml $(2)/properties_merged.xml                     \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesJava.xsl \
+	-params packageName $(3)                            \
+	-out $(4)
+endef
+
+
 # compileJSROP(dir,JSROPDIR,FILES)
 define compileJSROP
 	@echo "Compiling "$(1)" classes...";			\
