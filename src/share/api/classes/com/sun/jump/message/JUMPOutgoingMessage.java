@@ -34,8 +34,8 @@ import com.sun.jump.os.JUMPOSInterface;
  * with data.
  */
 public abstract class JUMPOutgoingMessage extends JUMPMessage {
+    private static final int MESSAGE_DATA_INITIAL_SIZE = 512;
     protected JUMPMessagable sender;
-    private int MESSAGE_DATA_INITIAL_SIZE = 512;
     /* offset just past header in message, for sanity checking by native
        side */
     protected int headerOffset;
