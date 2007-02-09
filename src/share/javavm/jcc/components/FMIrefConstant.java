@@ -161,7 +161,69 @@ class FMIrefConstant extends ConstantObject
         return null;
     }
 
-    public ClassComponent find( boolean isMethod ){
+    // Recursively looks up a method (specified by thisID) in the interfaces
+    // that class c implements and their superinterfaces.
+    private ClassComponent findMethodInSuperInterfaces(ClassInfo c, int thisID) {
+        ClassComponent m;
+        ClassMemberInfo t[];
+
+	// Fail if no interfaces to check:
+	if (c.interfaces == null) {
+	    return null;
+	}
+
+	// Search direct superinterfaces:
+	for (int j = 0; j < c.interfaces.length; j++) {
+	    ClassInfo itf = (c.interfaces[j]).find();
+	    if (itf != null) {
+		t = (ClassMemberInfo[])itf.methods;
+		m = findMember(t, thisID);
+		if (m != null) {
+		    return m;
+		} else {
+		    // Search superinterface's superface:
+		    m = findMethodInSuperInterfaces(itf, thisID);
+		    if (m != null) {
+			return m;
+		    }
+		}
+	    }
+	}
+	return null;
+    }
+
+    // Recursively looks up a field (specified by thisID) in the interfaces
+    // that class c implements and their superinterfaces.
+    private ClassComponent findFieldInSuperInterfaces(ClassInfo c, int thisID) {
+        ClassComponent m;
+        ClassMemberInfo t[];
+
+	// Fail if no interfaces to check:
+	if (c.interfaces == null) {
+	    return null;
+	}
+
+	// Search direct superinterfaces:
+	for (int j = 0; j < c.interfaces.length; j++) {
+	    ClassInfo itf = (c.interfaces[j]).find();
+	    if (itf != null) {
+		t = (ClassMemberInfo[])itf.fields;
+		m = findMember(t, thisID);
+		if (m != null) {
+		    return m;
+		} else {
+		    // Search superinterface's superface:
+		    m = findFieldInSuperInterfaces(itf, thisID);
+		    if (m != null) {
+			return m;
+		    }
+		}
+	    }
+	}
+	return null;
+    }
+
+    public ClassComponent find (int tag) {
 	if ( ! computedID ){
 	    ID = Str2ID.sigHash.getID( sig.name, sig.type );
 	    computedID = true;
@@ -177,55 +239,145 @@ class FMIrefConstant extends ConstantObject
 	    return null;
 	}
 
-        if (isMethod) {
-	    while ( c != null ){
-	        t = (ClassMemberInfo[])c.methods;
-                m = findMember(t, thisID);
-                if (m != null) {
-                    return m;
-                }
+        if (tag == Const.CONSTANT_METHOD) {
+	    ClassInfo origClass = c;
+
+	    // Verify some assertions:
+	    if (c.isInterface()) {
+		System.err.println(Localizer.getString(
+		    "fmirefconstant.class_should_be_a_class", c));
+		return null;
+	    }
+
+	    // Method resolution follows the lookup order specified in the
+	    // VM spec ($5.4.3.3).
+	    //
+	    // 1. Look up method in the current class.
+	    // 2. Look up method in the superclasses recursively.
+	    // 3. If not found, look up method in superinterfaces
+	    //    recursively.
+
+	    // 1. Lookup method in the current class, and
+	    // 2. Lookup method in the superclasses:
+	    while (c != null) {
+		// First, search for the method in the current class:
+		t = (ClassMemberInfo[])c.methods;
+		m = findMember(t, thisID);
+		if (m != null) {
+		    return m;
+		}
+
+		// If not found, try again with the superclass:
+		c = c.superClassInfo;
+	    }
+
+	    // 3. Lookup method in the superinterfaces:
+	    c = origClass;
+	    while (c != null) {
+		// First, search for the method in the implemented interfaces
+		// and their superinterfaces:
+		m = findMethodInSuperInterfaces(c, thisID);
+		if (m != null) {
+		    return m;
+		}
+
+		// If not found, repeat for interface methods in superclass:
 	        c = c.superClassInfo;
 	    }
+
+            // 4. If still not found, method/interfacemethod lookup fails.
+
+        } else if (tag == Const.CONSTANT_INTERFACEMETHOD) {
+
+	    ClassInfo origClass = c;
+
+	    // Verify some assertions:
+	    if (!c.isInterface()) {
+		System.err.println(Localizer.getString(
+		    "fmirefconstant.class_should_be_an_interface", c));
+		return null;
+	    }
+
+	    // NOTE: In the case of Const.CONSTANT_INTERFACEMETHOD, then
+	    // there can only be one superclass i.e. java.lang.Object.
+	    ClassInfo cSuper = c.superClassInfo;
+	    if (!cSuper.isJavaLangObject()) {
+		System.err.println(Localizer.getString(
+                    "fmirefconstant.interface_super_should_be_java_lang_object",
+		    c, cSuper));
+		return null;
+	    }	
+
+	    // InterfaceMethod resolution follows the lookup order specifed
+	    // in the VM spec ($5.4.3.4).
+	    //
+	    // 1. Look up method in the current interface.
+	    // 2. If not found, look up method in superclass
+	    //    java.lang.Object (including its interfaces).
+
+	    // 1. Lookup method in the current class:
+	    t = (ClassMemberInfo[])c.methods;
+	    m = findMember(t, thisID);
+	    if (m != null) {
+		return m;
+	    }
+
+	    //    Lookup method in the implemented interfaces and their
+	    //    superinterfaces:
+	    m = findMethodInSuperInterfaces(c, thisID);
+	    if (m != null) {
+		return m;
+	    }
+
+	    // 2. Lookup method in the super class:
+	    t = (ClassMemberInfo[])cSuper.methods;
+	    m = findMember(t, thisID);
+	    if (m != null) {
+		return m;
+	    }
+
+	    //    Lookup method in the implemented interfaces and their
+	    //    superinterfaces:
+	    m = findMethodInSuperInterfaces(cSuper, thisID);
+	    if (m != null) {
+		return m;
+	    }
+
+            // 3. If still not found, method/interfacemethod lookup fails.
+
         } else {
-            ClassInfo thisCl = c;
+	    // tag should be Const.CONSTANT_FIELD.
 
-	    /* It's a field. Field resolution follows the lookup order specified
-	     * in the VM spec. */
+	    // Field resolution follows the lookup order specified in the
+	    // VM spec ($5.4.3.2).
+	    //
+	    // 1. Look up field in current class.
+	    // 2. If not found, look up field in implemented interfaces
+	    //    and their super-interfaces.
+	    // 3. If not found, recurse into the superclass of the current
+	    //    class and repeat steps 1, 2, and 3 as necessary.
 
-            /* 1. Search the field's class or interface, 'C' first. */
-            t = (ClassMemberInfo[])c.fields;
-            m = findMember(t, thisID);
-            if (m != null) {
-                return m;
-            }
+	    while (c != null) {
 
-            /* 2. Otherwise, field lookup is applied recursively to the direct
-             *    superinterfaces of 'C'. */
-            for (int j = 0; j < thisCl.interfaces.length; j++) {
-                c = (thisCl.interfaces[j]).find();
-                if (c != null) {
-                    t = (ClassMemberInfo[])c.fields;
-                    m = findMember(t, thisID);
-                    if (m != null) {
-                        return m;
-                    }
-                }
-            }
+		// 1. Lookup field in the current class:
+		t = (ClassMemberInfo[])c.fields;
+		m = findMember(t, thisID);
+		if (m != null) {
+		    return m;
+		}
 
-            /* 3. Otherwise, field lookup is applied recursively to the
-             *    superclasses of 'C'. */
-            c = thisCl.superClassInfo;
-            while (c != null) {
-                t = (ClassMemberInfo[])c.fields;
-                m = findMember(t, thisID);
-                if (m != null) {
-                    return m;
-                }
-                c = c.superClassInfo;
-            }
+		// 2. Lookup field in implemented interfaces and recursively
+		//    in their implemented superinterfaces:
+		m = findFieldInSuperInterfaces(c, thisID);
+		if (m != null) {
+		    return m;
+		}
 
-            /* 4. Otherwise, field lookup fails. */
+		// 3. Otherwise, repeat with superclass: */
+		c = c.superClassInfo;
+	    }
 
+            // 4. If still not found, field lookup fails.
         }
 
 	return null;
@@ -237,5 +389,5 @@ class FMIrefConstant extends ConstantObject
      * of a reference from this entry.
      */
 
-    public boolean isResolved(){ return find( tag!=Const.CONSTANT_FIELD ) != null; }
+    public boolean isResolved(){ return find(tag) != null; }
 }
