@@ -104,11 +104,24 @@ include $(MIDP_DIR)/build/common/makefiles/Docs.gmk
 include $(MIDP_DIR)/build/common/makefiles/Release.gmk
 
 
-# export of makefile variable values
-ifdef DO_NOT_USE
-# disable temporarily as it seem to cause build crash on select environment
+# Export of makefile variable values
+#
+# the target 'varexport' is temporarily disabled for cygwin/win32:
+# it causes segment violation in sh on some versions of cygwin
+#
+# you may override the below choices specifying USE_VAREXPORT=true or false
+# from the command line
+#
+ifneq ($(HOST_OS), win32)
+USE_VAREXPORT=true
+else
+USE_VAREXPORT=false
+endif
+#
+ifeq ($(USE_VAREXPORT), true)
 include $(MIDP_DIR)/build/common/makefiles/varexport.gmk
 endif
+
 
 # Build AMS executables after everything else ae built
 # This additional build targets must be defined after all includes
