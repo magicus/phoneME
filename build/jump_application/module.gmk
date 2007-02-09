@@ -27,7 +27,7 @@
 # dirs containing native source files
 ABSTRACTIONS_SRCDIRS = \
 	$(ABSTRACTIONS_DIR)/src/jump_application/native/share \
-  	$(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_PLATFORM)
+  	$(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
 
 # names of native source files (like 'file.c')
 ABSTRACTIONS_NATIVES = \
@@ -40,7 +40,7 @@ ABSTRACTIONS_NATIVES = \
 ABSTRACTIONS_INCLUDES = \
     -I$(ABSTRACTIONS_DIR)/src/include \
     -I$(ABSTRACTIONS_DIR)/src/jump_application/native/include \
-    -I$(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_PLATFORM)
+    -I$(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
 
 # start dirs for java source trees
 ABSTRACTIONS_JAVASRCDIRS = \
