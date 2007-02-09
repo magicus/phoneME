@@ -608,7 +608,7 @@ if [ "$DO_XLET" = "true" ] ; then
         exit 0
     fi
 
-    XLET_COMMAND="$CVMC -target $SERVER_PID -cp $JARFILE sun.mtask.xlet.PXletRunner -name XLETCLASS -path $JARFILE $*"
+    XLET_COMMAND="$CVMC -target $SERVER_PID -cp $JARFILE sun.mtask.xlet.PXletRunner -name $XLETCLASS -path $JARFILE $*"
 
     echo "Executing XLET launch command: $XLET_COMMAND"
     echo ""
