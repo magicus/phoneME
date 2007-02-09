@@ -170,7 +170,6 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
 	    return;
 	}
 	addInt(arr.length);
-	ensureCapacity(arr.length); // the bytes+length
 	for (int i = 0; i < arr.length; i++) {
 	    addUTF(arr[i]);
 	}
