@@ -22,12 +22,12 @@ Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 Clara, CA 95054 or visit www.sun.com if you need additional
 information or have any questions.
 -->
-<project basedir="." default="compile-lifecycle" name="jump-impl-lifecycle">
+<project basedir="." default="compile-isolatemanager" name="jump-impl-isolatemanager">
 
-  <target name="compile-lifecycle">
+  <target name="compile-isolatemanager">
       <jump.javac
-             srcdir="${s.share.impl.dir}/lifecycle/classes">
-           <include name="com/sun/jumpimpl/module/lifecycle/*.java" />
+             srcdir="${s.share.impl.dir}/isolatemanager/classes">
+           <include name="com/sun/jumpimpl/module/isolatemanager/*.java" />
       </jump.javac>
   </target>
 
