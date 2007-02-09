@@ -67,6 +67,9 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
     /** The preempting display. */
     private DisplayAccess preemptingDisplay;
 
+    /** If request to end preemption was called */
+    private boolean preemptionDoneCalled = false;
+
     /** Package private constructor restrict creation to LCDUI package. */
     DisplayEventHandlerImpl() {
     }
@@ -204,6 +207,8 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
             if (preemptingDisplay != null &&
                 (preemptToken == preemptingDisplay || preemptToken == null)) {
 
+                preemptionDoneCalled = true;
+
                 foregroundController.stopPreempting(
                     preemptingDisplay.getDisplayId());
 
@@ -221,13 +226,15 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
     public void onDisplayBackgroundProcessed(int displayId) {
 
         synchronized (this) {
-            if (preemptingDisplay != null &&
+            if (preemptionDoneCalled && preemptingDisplay != null &&
                 preemptingDisplay.getDisplayId() == displayId) {
 
                 displayContainer.removeDisplay(
                     preemptingDisplay.getNameOfOwner());
     
                 preemptingDisplay = null;
+
+                preemptionDoneCalled = false;
     
                 // A midlet may be waiting to preempt
                 this.notify();
