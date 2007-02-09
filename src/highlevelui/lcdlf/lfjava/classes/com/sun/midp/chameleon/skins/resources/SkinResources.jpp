@@ -662,9 +662,12 @@ final class LoadedSkinData {
     /**
      * For accessing constant values from native code
      */
+
+    /** US ASCII string encoding */
     static byte STRING_ENCODING_USASCII = 
         SkinResourcesConstants.STRING_ENCODING_USASCII;
 
+    /** UTF8 string encoding */
     static byte STRING_ENCODING_UTF8 = 
         SkinResourcesConstants.STRING_ENCODING_UTF8;
 
@@ -701,19 +704,19 @@ final class LoadedSkinData {
         int[] romizedImageIndexes;
 
         try {
-            openSkinFile(fileName);
+            // prepare for reading data from skin file
+            beginReadingSkinFile(fileName);
 
-            // check stream validity
+            // check file validity
             checkMagicSequence();
             checkVersion();
 
-            // read data
+            // read actual data
             properties = readIntArray();
             intSeqValues = readIntArray();
             stringValues = readStringArray();
             fontValues = readIntArray();
             imageValues = readStringArray();
-
             romizedImageIndexes = readIntArray();
 
             this.properties = properties;
@@ -723,14 +726,15 @@ final class LoadedSkinData {
             this.imageValues = imageValues;
             this.romizedImageIndexes = romizedImageIndexes;
         } finally {
-            closeSkinFile();
+            // cleanup after reading skin file
+            finishReadingSkinFile();
         }
     }
 
     /**
-     * Opens skin data file
+     * Prepares for reading data from skin file
      */
-    private native static void openSkinFile(String fileName)
+    private native static void beginReadingSkinFile(String fileName)
         throws IOException;
 
     /**
@@ -760,15 +764,14 @@ final class LoadedSkinData {
 
 
     /**
-     * Closes skin file
+     * Cleanups after reading data from skin file
      */
-    private native static int closeSkinFile()
+    private native static int finishReadingSkinFile()
         throws IOException;
 
     /**
-     * Checks if stream contains valid magic sequence
+     * Checks if file contains valid magic sequence
      *
-     * @param ds stream to read sequence from
      * @throws IllegalStateException if magic sequence is invalid
      */
     private void checkMagicSequence() 
@@ -790,9 +793,8 @@ final class LoadedSkinData {
     }
 
     /**
-     * Checks if stream contains valid format version number
+     * Checks if file contains valid format version number
      *
-     * @param ds stream to read version number from
      * @throws IllegalStateException if version number is invalid
      */
     private void checkVersion() 

@@ -221,7 +221,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_getRomizedImageData
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_openSkinFile) {
+KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_beginReadingSkinFile) {
     char* errorStr = NULL;
     int fileHandle = -1;
     int fileSize;
@@ -308,7 +308,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_openSkinFile) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_closeSkinFile) {
+KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_finishReadingSkinFile) {
 
     /* free memory allocated for skin data file */
     midpFree(gsSkinFileDataStart);

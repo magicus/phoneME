@@ -123,8 +123,7 @@ public class SkinRomizationTool {
             if (arg.equals("-xml")) {
                 romizationJob.skinXMLFileName = args[++i];
             } else if (arg.equals("-outbin")) {
-                romizationJob.outBinFileName = 
-                    args[++i] + SkinResourcesConstants.SKIN_BINARY_FILE_NAME;
+                romizationJob.outBinFileName = args[++i];
             } else if (arg.equals("-imagedir")) {
                 romizationJob.skinImagesDirName = args[++i];
             } else if (arg.equals("-outc")) {
