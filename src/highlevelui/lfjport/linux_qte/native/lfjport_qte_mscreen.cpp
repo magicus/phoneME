@@ -256,32 +256,6 @@ void ChameleonMScreen::keyPressEvent(QKeyEvent *key)
     }
 }
 
-void ChameleonMScreen::pauseAll() {
-
-  /* if (!allPaused) { */
-      MidpEvent evt;
-
-      MIDP_EVENT_INITIALIZE(evt);
-
-      evt.type = PAUSE_ALL_EVENT;
-      midpStoreEventAndSignalAms(evt);
-      allPaused = true;
- /* } */
-}
-
-void ChameleonMScreen::activateAll() {
-
-  if (allPaused) {
-    MidpEvent evt;
-
-    MIDP_EVENT_INITIALIZE(evt);
-
-    evt.type = ACTIVATE_ALL_EVENT;
-    midpStoreEventAndSignalAms(evt);
-    allPaused = false;
-  }
-}
-
 void ChameleonMScreen::keyReleaseEvent(QKeyEvent *key)
 {
     if (!seen_key_press || key->isAutoRepeat()) {
@@ -422,7 +396,7 @@ void ChameleonMScreen::setNextVMTimeSlice(int millis) {
         if (vm_slicer.isActive()) {
             vm_slicer.stop();
         }
-    } else if (!vm_suspended) {
+    } else {
         if (vm_slicer.isActive()) {
             vm_slicer.changeInterval(millis);
         } else {

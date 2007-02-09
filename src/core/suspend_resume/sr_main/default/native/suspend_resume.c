@@ -33,12 +33,16 @@
 #include <midpMalloc.h>
 #include <midpError.h>
 #include <midpNativeThread.h>
+#include <midpPauseResume.h>
 
 /** Suspendable resource that reprsents the VM. */
 VM vm = { KNI_FALSE };
 
-/**  Java stack state from suspend/resume point of view. */
-static jboolean sr_state = SR_INVALID;
+/** Java stack state from suspend/resume point of view. */
+static int sr_state = SR_INVALID;
+
+/** Flag to determine if a suspend operation killed all users MIDlets. */
+static jboolean allMidletsKilled = KNI_FALSE;
 
 /**
  * Resources list record for a resource to  be processed by
@@ -131,7 +135,8 @@ void midp_suspend() {
     /* suspend request may arrive while system is not initialized */
     sr_initSystem();
 
-    if (SR_ACTIVE == sr_state) {
+    switch (sr_state) {
+    case SR_ACTIVE:
         sr_state = SR_SUSPENDING;
 
         if (getMidpInitLevel() >= VM_LEVEL) {
@@ -142,7 +147,25 @@ void midp_suspend() {
         } else {
             suspend_resources();
         }
+        break;
+    case SR_RESUMING:
+        sr_state = SR_SUSPENDING;
+        break;
+    default:
+        break;
     }
+}
+
+void resume_java() {
+    if (getMidpInitLevel() >= VM_LEVEL) {
+        MidpEvent event;
+        MIDP_EVENT_INITIALIZE(event);
+        event.type = ACTIVATE_ALL_EVENT;
+        midpStoreEventAndSignalAms(event);
+    }
+
+    sr_state = SR_ACTIVE;
+    REPORT_INFO(LC_LIFECYCLE, "midp_resume(): midp resumed");
 }
 
 void midp_resume() {
@@ -151,19 +174,10 @@ void midp_resume() {
     switch (sr_state) {
     case SR_SUSPENDED:
         resume_resources();
-        /* fallthru to the logic required for both
-         * SR_SUSPENDED and SR_SUSPENDING
-         */
+        resume_java();
+        break;
     case SR_SUSPENDING:
-        if (getMidpInitLevel() >= VM_LEVEL) {
-            MidpEvent event;
-            MIDP_EVENT_INITIALIZE(event);
-            event.type = ACTIVATE_ALL_EVENT;
-            midpStoreEventAndSignalAms(event);
-        }
-
-        sr_state = SR_ACTIVE;
-        REPORT_INFO(LC_LIFECYCLE, "midp_resume(): midp resumed");
+        sr_state = SR_RESUMING;
         break;
 
     default:
@@ -173,14 +187,26 @@ void midp_resume() {
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended0) {
+    allMidletsKilled = KNI_GetParameterAsBoolean(1);
+
     /* Checking that midp_resume() has not been called during suspending
      * of java side.
      */
     if (sr_state == SR_SUSPENDING) {
         suspend_resources();
+    } else {
+        /* the sate is SR_RESUMING - pending for safe resume. */
+        resume_java();
     }
 
     KNI_ReturnVoid();
+}
+
+KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_allMidletsKilled) {
+    jboolean ret = allMidletsKilled;
+    allMidletsKilled = KNI_FALSE;
+    KNI_ReturnBoolean(ret);
 }
 
 void sr_registerResource(
@@ -219,9 +245,27 @@ void sr_initSystem() {
     }
 }
 
+void sr_repairSystem() {
+    REPORT_INFO(LC_LIFECYCLE, "sr_repairSystem()");
+
+    switch (sr_state) {
+    case SR_RESUMING:
+        sr_state = SR_ACTIVE;
+        break ;
+    case SR_SUSPENDING:
+        suspend_resources();
+        allMidletsKilled = KNI_TRUE;
+        break;
+    default:
+        break;
+    }
+}
+
 void sr_finalizeSystem() {
     SuspendableResource *cur;
     SuspendableResource *next;
+
+    REPORT_INFO(LC_LIFECYCLE, "sr_finalizeSystem()");
 
     for (cur = sr_resources; NULL != cur; cur = next) {
         next = cur->next;
@@ -234,6 +278,9 @@ void sr_finalizeSystem() {
 
 jboolean midp_checkAndResume() {
     jboolean res = KNI_FALSE;
+
+    REPORT_INFO(LC_LIFECYCLE, "midp_checkAndResume()");
+
     if (SR_SUSPENDED == sr_state && midp_checkResumeRequest()) {
         midp_resume();
         res = KNI_TRUE;

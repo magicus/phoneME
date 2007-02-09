@@ -38,9 +38,6 @@ import com.sun.midp.io.Util;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
-import com.sun.midp.main.Configuration;
-import com.sun.midp.main.MIDletSuiteUtils;
-
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midlet.PlatformRequest;
 

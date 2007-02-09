@@ -24,6 +24,8 @@
 
 package com.sun.midp.main;
 
+import javax.microedition.lcdui.Display;
+
 import javax.microedition.midlet.*;
 
 import com.sun.midp.content.CHManager;
@@ -33,8 +35,6 @@ import com.sun.midp.installer.OtaNotifier;
 import com.sun.midp.lcdui.DisplayContainer;
 
 import com.sun.midp.midlet.*;
-
-import com.sun.midp.midletsuite.*;
 
 import com.sun.midp.suspend.SuspendSystem;
 
@@ -56,6 +56,9 @@ class CldcMIDletStateListener implements MIDletStateListener {
     /** Indicates if the VM is in MIDlet start mode. */
     private boolean vmInMidletStartMode;
 
+    /** Indicate if a MIDlet has been active before. */
+    private boolean previouslyActive;
+
     /**
      * Initializes this object.
      *
@@ -69,7 +72,7 @@ class CldcMIDletStateListener implements MIDletStateListener {
         classSecurityToken = token;
         displayContainer = theDisplayContainer;
         midletControllerEventProducer = theMIDletControllerEventProducer;
-    };
+    }
 
     /**
      * Called before a MIDlet is created.
@@ -134,9 +137,27 @@ class CldcMIDletStateListener implements MIDletStateListener {
      * the startApp method is called.
      *
      * @param suite reference to the loaded suite
-     * @param className class name of the MIDlet
+     * @param midlet reference to the MIDlet
      */
-    public void midletActivated(MIDletSuite suite, String className) {
+    public void midletActivated(MIDletSuite suite, MIDlet midlet) {
+        String className = midlet.getClass().getName();
+
+        /*
+         * JAMS UE feature: If a MIDlet has not set a current displayable
+         * in its display by the time it has returned from startApp,
+         * display the headless alert. The headless alert has been
+         * set as the initial displayable but for the display but the
+         * foreground has not been requested, to avoid displaying the
+         * alert for MIDlet that do set a current displayable.
+         */
+        if (!previouslyActive) {
+            previouslyActive = true;
+
+            if (Display.getDisplay(midlet).getCurrent() == null) {
+                displayContainer.requestForegroundForDisplay(className);
+            }
+        }
+
         midletControllerEventProducer.sendMIDletActiveNotifyEvent(
             suite.getID(), className);
     }

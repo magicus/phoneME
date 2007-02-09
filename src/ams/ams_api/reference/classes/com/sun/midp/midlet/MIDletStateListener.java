@@ -24,6 +24,8 @@
 
 package com.sun.midp.midlet;
 
+import javax.microedition.midlet.MIDlet;
+
 /**
  * The interface decouples the MIDlet state handler for the VM.
  */
@@ -59,9 +61,9 @@ public interface MIDletStateListener {
      * the startApp method is called.
      *
      * @param suite reference to the loaded suite
-     * @param className class name of the MIDlet
+     * @param midlet reference to the MIDlet
      */
-    void midletActivated(MIDletSuite suite, String className);
+    void midletActivated(MIDletSuite suite, MIDlet midlet);
 
     /**
      * Called after a MIDlet is successfully paused.

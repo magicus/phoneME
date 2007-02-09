@@ -73,8 +73,8 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawLine) {
     if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
         jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-        TRANSLATE(thisObject, x1, y1);
-        TRANSLATE(thisObject, x2, y2);
+        GXAPI_TRANSLATE(thisObject, x1, y1);
+        GXAPI_TRANSLATE(thisObject, x2, y2);
 
         GXAPI_GET_CLIP(thisObject, clip);
 
@@ -125,7 +125,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRect) {
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            TRANSLATE(thisObject, x, y);
+            GXAPI_TRANSLATE(thisObject, x, y);
           
             GXAPI_GET_CLIP(thisObject, clip);
 
@@ -178,7 +178,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillRect) {
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            TRANSLATE(thisObject, x, y);
+            GXAPI_TRANSLATE(thisObject, x, y);
 
             GXAPI_GET_CLIP(thisObject, clip);
 
@@ -235,7 +235,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRoundRect) {
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            TRANSLATE(thisObject, x, y);
+            GXAPI_TRANSLATE(thisObject, x, y);
 
             GXAPI_GET_CLIP(thisObject, clip);
 
@@ -291,7 +291,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillRoundRect) {
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            TRANSLATE(thisObject, x, y);
+            GXAPI_TRANSLATE(thisObject, x, y);
 
             GXAPI_GET_CLIP(thisObject, clip);
 
@@ -351,7 +351,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawArc) {
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {        
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            TRANSLATE(thisObject, x, y);
+            GXAPI_TRANSLATE(thisObject, x, y);
         
 #ifdef PLATFORM_SUPPORT_CCW_ARC_ONLY
             /* this block transfer any negative number of
@@ -426,7 +426,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillArc) {
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            TRANSLATE(thisObject, x, y);
+            GXAPI_TRANSLATE(thisObject, x, y);
         
 #ifdef PLATFORM_SUPPORT_CCW_ARC_ONLY
             /* Please see above for explanation */
@@ -485,9 +485,9 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillTriangle) {
     if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
         jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-        TRANSLATE(thisObject, x1, y1);
-        TRANSLATE(thisObject, x2, y2);
-        TRANSLATE(thisObject, x3, y3);
+        GXAPI_TRANSLATE(thisObject, x1, y1);
+        GXAPI_TRANSLATE(thisObject, x2, y2);
+        GXAPI_TRANSLATE(thisObject, x3, y3);
       
         GXAPI_GET_CLIP(thisObject, clip);
 
@@ -546,7 +546,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawString) {
         
             DECLARE_FONT_PARAMS(font);
         
-            TRANSLATE(thisObject, x, y);
+            GXAPI_TRANSLATE(thisObject, x, y);
         
             jstr = GET_STRING_PTR(str);
         
@@ -623,7 +623,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawSubstring) {
         
             DECLARE_FONT_PARAMS(font);
         
-            TRANSLATE(thisObject, x, y);
+            GXAPI_TRANSLATE(thisObject, x, y);
         
             jstr = GET_STRING_PTR(str);
         
@@ -680,7 +680,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChar) {
 
             DECLARE_FONT_PARAMS(font);
 
-            TRANSLATE(thisObject, x, y);
+            GXAPI_TRANSLATE(thisObject, x, y);
 
             GXAPI_GET_CLIP(thisObject, clip);
 
@@ -750,7 +750,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChars) {
         
             DECLARE_FONT_PARAMS(font);
         
-            TRANSLATE(thisObject, x, y);
+            GXAPI_TRANSLATE(thisObject, x, y);
         
             GXAPI_GET_CLIP(thisObject, clip);
       
@@ -859,7 +859,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRGB) {
             
                     rgbBuffer = JavaIntArray(rgbData);
             
-                    TRANSLATE(thisObject, x, y);
+                    GXAPI_TRANSLATE(thisObject, x, y);
 
                     GXAPI_GET_CLIP(thisObject, clip);
             
@@ -920,14 +920,14 @@ KNIDECL(javax_microedition_lcdui_Graphics_doCopyArea) {
         gfx_width  = (int)GXAPI_GET_GRAPHICS_PTR(thisObject)->maxWidth;
         gfx_height = (int)GXAPI_GET_GRAPHICS_PTR(thisObject)->maxHeight;
 
-        TRANSLATE(thisObject, x_src, y_src); 
+        GXAPI_TRANSLATE(thisObject, x_src, y_src); 
       
         if((height < 0) || (width < 0) || (x_src < 0) || (y_src < 0) ||
            ((x_src + width) > gfx_width) || ((y_src + height) > gfx_height)) {
             KNI_ThrowNew(midpIllegalArgumentException, NULL);
         } else {
 	
-            TRANSLATE(thisObject, x_dest, y_dest);
+            GXAPI_TRANSLATE(thisObject, x_dest, y_dest);
 	
             if (gxutl_normalize_anchor(&x_dest, &y_dest, 
                                        width, height, anchor)) {

@@ -26,6 +26,8 @@
 
 package com.sun.midp.main;
 
+import javax.microedition.lcdui.Displayable;
+
 import com.sun.midp.lcdui.ForegroundController;
 
 /**
@@ -42,9 +44,9 @@ class CldcForegroundController implements ForegroundController {
      * @param theMIDletControllerEventProducer event producer
      */
     CldcForegroundController(
-        MIDletControllerEventProducer theMidletControllerEventProducer) {
+        MIDletControllerEventProducer theMIDletControllerEventProducer) {
 
-        midletControllerEventProducer = theMidletControllerEventProducer;
+        midletControllerEventProducer = theMIDletControllerEventProducer;
     }
 
     /**
@@ -53,10 +55,15 @@ class CldcForegroundController implements ForegroundController {
      *
      * @param displayId ID of the Display
      * @param ownerClassName Class name of the  that owns the display
+     *
+     * @return a place holder displayable to used when "getCurrent()==null",
+     *         if null is returned an empty form is used
      */
-    public void registerDisplay(int displayId, String ownerClassName) {
+    public Displayable registerDisplay(int displayId, String ownerClassName) {
         midletControllerEventProducer.
             sendDisplayCreateNotifyEvent(displayId, ownerClassName);
+
+        return new HeadlessAlert(displayId, midletControllerEventProducer);
     }
 
     /**

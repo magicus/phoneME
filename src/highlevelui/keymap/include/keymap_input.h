@@ -82,6 +82,7 @@ typedef enum {
     KEYMAP_KEY_7            = '7',
     KEYMAP_KEY_8            = '8',
     KEYMAP_KEY_9            = '9',
+    KEYMAP_KEY_SPACE        = ' ',
 
     KEYMAP_KEY_UP           = -1,
     KEYMAP_KEY_DOWN         = -2,

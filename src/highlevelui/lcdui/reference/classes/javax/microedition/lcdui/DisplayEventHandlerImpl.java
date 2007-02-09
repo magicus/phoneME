@@ -75,14 +75,12 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
      * Initialize Display Event Handler.
      * DisplayEventHandler I/F method.
      *
-     * @param theEventQueue the event queue
      * @param theDisplayEventProducer producer for display events
      * @param theForegroundController controls which display has the foreground
      * @param theRepaintEventProducer producer for repaint events events
      * @param theDisplayContainer container for display objects
      */
     public void initDisplayEventHandler(
-        EventQueue theEventQueue,
         DisplayEventProducer theDisplayEventProducer,
         ForegroundController theForegroundController,
         RepaintEventProducer theRepaintEventProducer,
@@ -209,16 +207,34 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
                 foregroundController.stopPreempting(
                     preemptingDisplay.getDisplayId());
 
+            }
+        }
+    }
+
+    /**
+     * Called by Display to notify DisplayEventHandler that
+     * Display has been sent to the background to finish
+     * preempt process if any.
+     *
+     * @param displayId id of Display
+     */
+    public void onDisplayBackgroundProcessed(int displayId) {
+
+        synchronized (this) {
+            if (preemptingDisplay != null &&
+                preemptingDisplay.getDisplayId() == displayId) {
+
                 displayContainer.removeDisplay(
                     preemptingDisplay.getNameOfOwner());
-
+    
                 preemptingDisplay = null;
-
+    
                 // A midlet may be waiting to preempt
                 this.notify();
             }
         }
     }
+
 
     /**
      * Get the Image of the trusted icon for this Display.

@@ -69,6 +69,7 @@ static const Key Keys[] = {
     {KEYMAP_KEY_GAMEB,      "Addressbook"   }, /* 24 */
     {KEYMAP_KEY_GAMEC,      "Menu"          }, /* 25 */
     {KEYMAP_KEY_GAMED,      "Mail"          }, /* 26 */
+    {KEYMAP_KEY_SPACE,      "Space"         }, /* 27 */
 };
 
 /**
@@ -239,6 +240,7 @@ keymap_get_key_name(int keyCode)
     case KEYMAP_KEY_GAMEB:    return Keys[24].name;
     case KEYMAP_KEY_GAMEC:    return Keys[25].name;
     case KEYMAP_KEY_GAMED:    return Keys[26].name;
+    case KEYMAP_KEY_SPACE:    return Keys[27].name;
     }
 
     return 0;

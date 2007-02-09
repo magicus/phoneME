@@ -27,7 +27,6 @@
 package javax.microedition.midlet;
 
 import com.sun.midp.midlet.MIDletPeer;
-import com.sun.midp.midlet.MIDletTunnel;
 import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.security.SecurityToken;
@@ -73,7 +72,7 @@ public abstract class MIDlet {
      * SecurityInitializer should be able to check this inner class name.
      */
     static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
+        implements ImplicitlyTrustedClass {}
 
     /** Security token to allow access to implementation APIs */
     private static SecurityToken classSecurityToken =

@@ -38,7 +38,6 @@ import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 import com.sun.midp.security.SecurityInitializer;
 
-import com.sun.midp.suspend.SuspendTimer;
 import com.sun.midp.suspend.SuspendSystem;
 import com.sun.midp.suspend.SuspendSystemListener;
 
@@ -178,8 +177,7 @@ public class MIDletProxyList
         displayController = new DisplayController(this);
 
         /* register event listener for events processed by MIDletProxyList */
-        new MIDletControllerEventListener(eventQueue,
-            (MIDletControllerEventConsumer)this);
+        new MIDletControllerEventListener(eventQueue, this);
     }
 
     /**
@@ -588,8 +586,6 @@ public class MIDletProxyList
      * MIDletControllerEventConsumer I/F method.
      */
     public void handlePauseAllEvent() {
-        SuspendTimer.start(this);
-
         synchronized (midletProxies) {
             MIDletProxy current;
 
@@ -1167,7 +1163,7 @@ public class MIDletProxyList
     /**
      * Removes a MidletProxy from the MidletProxyList
      *
-     * @param midletProxy
+     * @param midletProxy the MIDletProxy to be removed.
      */
     void removeMidletProxy(MIDletProxy midletProxy) {
         MIDletProxy preempting;

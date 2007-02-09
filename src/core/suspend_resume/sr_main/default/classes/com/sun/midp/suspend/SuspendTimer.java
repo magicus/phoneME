@@ -28,7 +28,6 @@ package com.sun.midp.suspend;
 
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.Configuration;
-
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -36,7 +35,7 @@ import java.util.TimerTask;
  * Timer for terminating MIDlets that have not completed
  * their pase routines within suspend timeout.
  */
-public class SuspendTimer extends Timer {
+class SuspendTimer extends Timer {
     /**
      * The timeout within which MIDlets have chance to complete.
      */
@@ -44,27 +43,41 @@ public class SuspendTimer extends Timer {
             Configuration.getIntProperty("suspendAppTimeout", 2000);
 
     /**
-     * The only instance if suspend timer.
+     * The only instance of suspend timer.
      */
-    private static SuspendTimer timer = new  SuspendTimer();
+    private static SuspendTimer timer = new SuspendTimer();
 
-    /** Constructs an instance. */
+    /**
+     * Current timer task.
+     */
+    private static TimerTask task;
+
+    /**
+     * Constructs an instance.
+     */
     private SuspendTimer() {}
 
     /**
      * Schedules standard MIDlets termination task to sandard timeout.
-     * @param midletList the MIDlet proxy list, passed since required by
-     *        the timer task.
+     * @param midletList the MIDlet proxy list
      */
-    public static void start(final MIDletProxyList midletList) {
+    static synchronized void start(final MIDletProxyList midletList) {
+        if (null == task) {
+            task = new TimerTask() {
+                public void run() {
+                    midletList.terminatePauseAll();
+                }
+            };
 
-        TimerTask task = new TimerTask() {
-            public void run() {
-                midletList.terminatePauseAll();
-                cancel();
-            }
-        };
+            timer.schedule(task, TIMEOUT);
+        }
+    }
 
-        timer.schedule(task, TIMEOUT);
+    /**
+     * Cancels the timer.
+     */
+    static synchronized void stop() {
+        task.cancel();
+        task = null;
     }
 }

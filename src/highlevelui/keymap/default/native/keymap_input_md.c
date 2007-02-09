@@ -69,6 +69,8 @@ static const KeymapKey Keys[] = {
     {KEYMAP_KEY_GAMEB,      "Addressbook"   }, /* 24 */
     {KEYMAP_KEY_GAMEC,      "Menu"          }, /* 25 */
     {KEYMAP_KEY_GAMED,      "Mail"          }, /* 26 */
+    {KEYMAP_KEY_SPACE,      "Space"         }, /* 27 */
+    {KEYMAP_KEY_BACKSPACE,  "BackSpace"     }, /* 28 */
 
 
     /**
@@ -82,13 +84,15 @@ static const KeymapKey Keys[] = {
      */
 
     /* GAME KEY_UP CustomItem KEY_UP */
-    {KEYMAP_KEY_GAME_UP,    "SHIFT_UP"      }, /* 27 */
+    {KEYMAP_KEY_GAME_UP,    "SHIFT_UP"      }, /* 29 */
     /* GAME KEY_DOWN CustomItem KEY_DOWN */
-    {KEYMAP_KEY_GAME_DOWN,  "SHIFT_DOWN"    }, /* 28 */
+    {KEYMAP_KEY_GAME_DOWN,  "SHIFT_DOWN"    }, /* 30 */
     /* GAME KEY_LEFT CustomItem KEY_LEFT */
-    {KEYMAP_KEY_GAME_LEFT,  "SHIFT_LEFT"    }, /* 29 */
+    {KEYMAP_KEY_GAME_LEFT,  "SHIFT_LEFT"    }, /* 31 */
     /* GAME KEY_RIGHT CustomItem KEY_RIGHT */
-    {KEYMAP_KEY_GAME_RIGHT, "SHIFT_RIGHT"   }, /* 30 */    
+    {KEYMAP_KEY_GAME_RIGHT, "SHIFT_RIGHT"   }, /* 32 */    
+    /* Indicator of end of table */
+    {KEYMAP_KEY_INVALID,    ""              }, /* 33 */
 };
 
 /**
@@ -228,38 +232,13 @@ keymap_get_system_key(int keyCode)
 char *
 keymap_get_key_name(int keyCode)
 {
+    KeymapKey *map;
     REPORT_CALL_TRACE1(LC_LOWUI, "LF:keymap_get_key_name(%d)\n", keyCode);
-
-    switch (keyCode) {
-    case KEYMAP_KEY_POWER:    return Keys[0].name;
-    case KEYMAP_KEY_SEND:     return Keys[8].name;
-    case KEYMAP_KEY_END:      return Keys[9].name;
-    case KEYMAP_KEY_CLEAR:    return Keys[10].name;
-    case KEYMAP_KEY_SOFT1:    return Keys[1].name; 
-    case KEYMAP_KEY_SOFT2:    return Keys[2].name;
-    case KEYMAP_KEY_UP:       return Keys[3].name;
-    case KEYMAP_KEY_DOWN:     return Keys[4].name;
-    case KEYMAP_KEY_LEFT:     return Keys[5].name;
-    case KEYMAP_KEY_RIGHT:    return Keys[6].name;
-    case KEYMAP_KEY_SELECT:   return Keys[7].name;
-    case KEYMAP_KEY_1:        return Keys[11].name;
-    case KEYMAP_KEY_2:        return Keys[12].name;
-    case KEYMAP_KEY_3:        return Keys[13].name;
-    case KEYMAP_KEY_4:        return Keys[14].name;
-    case KEYMAP_KEY_5:        return Keys[15].name;
-    case KEYMAP_KEY_6:        return Keys[16].name;
-    case KEYMAP_KEY_7:        return Keys[17].name;
-    case KEYMAP_KEY_8:        return Keys[18].name;
-    case KEYMAP_KEY_9:        return Keys[19].name;
-    case KEYMAP_KEY_0:        return Keys[21].name;
-    case KEYMAP_KEY_ASTERISK: return Keys[20].name;
-    case KEYMAP_KEY_POUND:    return Keys[22].name;
-    case KEYMAP_KEY_GAMEA:    return Keys[23].name;
-    case KEYMAP_KEY_GAMEB:    return Keys[24].name;
-    case KEYMAP_KEY_GAMEC:    return Keys[25].name;
-    case KEYMAP_KEY_GAMED:    return Keys[26].name;
+    for (map = (KeymapKey *)Keys; map->keyCode != KEYMAP_KEY_INVALID; map++) {
+        if (map->keyCode == keyCode) {
+            return map->name;
+        }
     }
-
     return 0;
 }
 

@@ -320,33 +320,6 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
     }
 }
 
-void PlatformMScreen::pauseAll() {
-
-  //  if (!allPaused) {
-      MidpEvent evt;
-
-      MIDP_EVENT_INITIALIZE(evt);
-
-      evt.type = PAUSE_ALL_EVENT;
-      midpStoreEventAndSignalAms(evt);
-      allPaused = true;
-  //  }
-}
-
-void PlatformMScreen::activateAll() {
-
-  if (allPaused) {
-    MidpEvent evt;
-
-    MIDP_EVENT_INITIALIZE(evt);
-
-    evt.type = ACTIVATE_ALL_EVENT;
-    midpStoreEventAndSignalAms(evt);
-    allPaused = false;
-  }
-}
-
-
 /**
  * Handle key release event
  *
@@ -510,7 +483,7 @@ void PlatformMScreen::setNextVMTimeSlice(int millis) {
         if (vm_slicer.isActive()) {
             vm_slicer.stop();
         }
-    } else if (!vm_suspended){
+    } else {
         if (vm_slicer.isActive()) {
             vm_slicer.changeInterval(millis);
         } else {

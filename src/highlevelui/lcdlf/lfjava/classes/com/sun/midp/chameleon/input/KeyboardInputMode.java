@@ -131,12 +131,10 @@ public class KeyboardInputMode implements InputMode {
     public int processKey(int keyCode, boolean longPress) {
         int ret = KEYCODE_NONE;
         validateState(true);
-        if ((mediator != null && !mediator.isClearKey(keyCode)) && 
-            keyCode != Canvas.RIGHT &&
-            keyCode != Canvas.UP &&
-            keyCode != Canvas.DOWN &&
-            keyCode != Canvas.LEFT &&
-            !longPress) {
+        // if the key is printable one 
+        if (mediator != null &&
+            !longPress &&
+            keyCode >= ' ' && keyCode < 127) {
             mediator.commit("" + (char)keyCode);
         }
         return ret;

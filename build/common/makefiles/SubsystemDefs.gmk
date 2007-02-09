@@ -35,15 +35,9 @@ include $(JWC_WORK_SPACE)/build/common/makefiles/Subsystems.gmk
 # classes.zip
 #
 
-# dependency and rule for generating Configurator tool
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(CONFIGURATOR_JAR_FILE)
-
-# dependency and rule for generating skin romization tool
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SKINROMIZATION_JAR_FILE)
-
 # dependency and rule for generating constants/properties
 #
-$(SUBSYSTEM_CONFIGURATION_MERGED_FILE): $(SUBSYSTEM_CONFIGURATION_DEP_FILES)
+$(SUBSYSTEM_CONFIGURATION_MERGED_FILE): $(CONFIGURATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_DEP_FILES)
 	$(merge_configurations)
 
 $(MIDP_OUTPUT_DIR)/classes.zip:: $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
@@ -51,7 +45,7 @@ $(MIDP_OUTPUT_DIR)/classes.zip:: $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGUR
 
 # rules for generating romized skin files
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SKINROMIZATION_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	$(romize_skin)
 	$(copy_lcdlf_resources)
 
@@ -61,7 +55,7 @@ $(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 # need to run this unconditionally; it should always be run based on
 # out-of-date prerequisites.
 #
-run_configurator:: $(CONFIGURATOR_JAR_FILE) $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+run_configurator:: $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	$(generate_configuration)
 
 # The rule for running skin romization tool unconditionally
@@ -124,9 +118,9 @@ $(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_AMS_JAVA_FILES)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_AMS_I3TEST_JAVA_FILES)
 JTWI_NATIVE_FILES	+= $(SUBSYSTEM_AMS_NATIVE_FILES)
+JTWI_LAZY_MAKEFILES	+= $(SUBSYSTEM_AMS_LAZY_MAKEFILES)
 EXTRA_INCLUDES		+= $(SUBSYSTEM_AMS_EXTRA_INCLUDES)
 EXTRA_CFLAGS		+= $(SUBSYSTEM_AMS_EXTRA_CFLAGS)
-
 
 #######################################################################
 # PUSH
@@ -373,3 +367,13 @@ EXTRA_CFLAGS		+= $(SUBSYSTEM_MEDIA_EXTRA_CFLAGS)
 endif
 endif
 endif
+
+#####################################################################
+# Include subsystem makefiles with "lazy" rules to be parsed after
+# other subsystem makefile have been included and global variables
+# received their final values. It is critical for targets dependent
+# on global variable prerequisites, e.g. rules for executables
+# dependent on object files collected across the system. 
+# "Lazy" makefiles MUST not change global variable values.
+#####################################################################
+include $(JTWI_LAZY_MAKEFILES)

@@ -224,8 +224,7 @@ PlatformMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
     // Forward Home key presses to mscreen to resume apps
     if (e->type() == QEvent::KeyPress || e->type() == QEvent::Accel) {
         QKeyEvent *ke = (QKeyEvent *) e;
-        if (ke->key() == Qt::Key_F12 ||
-            ke->key() == Qt::Key_Home) {
+        if (ke->key() == Qt::Key_Home) {
             mscreen->keyPressEvent(ke);
             ke->ignore();
             return TRUE;

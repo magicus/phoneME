@@ -95,21 +95,14 @@ class DisplayController {
     }
 
     /**
-     * If the last MIDlet create has not requested the foreground,
-     * give the foreground to a MIDlet at creation time.
-     *
      * Called when a MIDlet is move to active state.
      *
-     * @param midlet The proxy of the MIDlet being created
+     * @param midlet The proxy of the MIDlet being activated
      *
      * @return Proxy of the next foreground MIDlet, may be the foreground
      *         MIDlet if the foreground should not change
      */
     MIDletProxy midletActive(MIDletProxy midlet) {
-        if (midlet == lastMidletCreated) {
-            return midlet;
-        }
-
         return midletProxyList.getForegroundMIDlet();
     }
 
@@ -431,7 +424,7 @@ class DisplayController {
      * concurrently. In SVM mode the display controller returns
      * foreground MIDlet.
      *
-     * @param onlyFromLaunched true if midlet should
+     * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
      *        if false then possibility to launch midlet is needed.
      * @return Proxy of the next foreground MIDlet, may be the foreground

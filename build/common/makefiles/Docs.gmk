@@ -96,13 +96,15 @@ GROUP_DOC_ALL += $(MIDP_JAVADOC_ALL)
 
 GROUP_TOOLS = -group "Tools Packages" 'com.sun*'
 
+X_MIDP_JAVADOC_SOURCEPATH =`echo $(MIDP_JAVADOC_SOURCEPATH)|tr -s [\ ] $(PATHSEP)`
+
 JAVADOC_FLAGS = \
 	-d $(JAVADOC_HTML_DIR) \
 	-bootclasspath "" \
 	-classpath $(CLDC_OUTPUT_DIR)/classes.zip \
 	-private -use \
         -J-mx180m  \
-	-sourcepath $(MIDP_JAVADOC_SOURCEPATH)$(PATHSEP)$(CLDC_JAVADOC_SOURCEPATH) \
+	-sourcepath $(X_MIDP_JAVADOC_SOURCEPATH)$(PATHSEP)$(CLDC_JAVADOC_SOURCEPATH) \
         -doctitle $(JAVADOCTITLE) \
         -windowtitle $(JAVADOCWINDOWTITLE) \
         -header $(JAVADOCHEADER) \
@@ -192,25 +194,25 @@ $(DOXYGEN_CONFIG_FILE): $(DOXYGEN_DIR) $(DOXYGEN_CFG)
 	< $(DOXYGEN_CFG) > $@) $(LOG)
 
 docs_doxy: VERIFY_DOXYGEN_CMD $(DOXYGEN_DIR) $(DOXYGEN_CONFIG_FILE) $(DOXYGEN_SUPPORT_LIST) $(PROJECT_DOXYGEN_SUPPORT_LIST)
-	@echo +++ $(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE) $(LOG_ONLY)
+	$(A)echo +++ $(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE) $(LOG_ONLY)
 	-@($(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE)) $(LOG)
 
 docs_javadoc: $(JAVADOC_HTML_DIR) run_configurator jpp $(JTWI_JAVA_FILES) $(MIDP_OUTPUT_DIR)/classes.zip
-	@echo +++ $(JAVADOC_CMD) $(JAVADOC_FLAGS) $(MIDP_JAVADOC_PACKAGES) $(JTWI_JAVA_FILES) $(LOG_ONLY)
-	@$(JAVADOC_CMD) $(JAVADOC_FLAGS) $(MIDP_JAVADOC_PACKAGES) $(JTWI_JAVA_FILES) $(LOG)
-	@$(remove_filelist) $(LOG)
-	@$(remove_generatedlist) $(LOG)
+	$(A)echo +++ $(JAVADOC_CMD) $(JAVADOC_FLAGS) $(MIDP_JAVADOC_PACKAGES) $(JTWI_JAVA_FILES) $(LOG_ONLY)
+	$(A)$(JAVADOC_CMD) $(JAVADOC_FLAGS) $(MIDP_JAVADOC_PACKAGES) $(JTWI_JAVA_FILES) $(LOG)
+	$(A)$(remove_filelist) $(LOG)
+	$(A)$(remove_generatedlist) $(LOG)
 
 docs_javadoc_all: $(JAVADOC_HTML_ALL_DIR) run_configurator jpp $(JTWI_JAVA_FILES) $(MIDP_OUTPUT_DIR)/classes.zip
-	@echo +++ $(JAVADOC_CMD) $(JAVADOC_ALL_FLAGS) $(JAVADOC_ALL_PACKAGES) $(JTWI_JAVA_FILES) $(LOG_ONLY)
-	@$(JAVADOC_CMD) $(JAVADOC_ALL_FLAGS) $(JAVADOC_ALL_PACKAGES) $(JTWI_JAVA_FILES) $(LOG)
-	@$(remove_filelist) $(LOG)
-	@$(remove_generatedlist) $(LOG)
+	$(A)echo +++ $(JAVADOC_CMD) $(JAVADOC_ALL_FLAGS) $(JAVADOC_ALL_PACKAGES) $(JTWI_JAVA_FILES) $(LOG_ONLY)
+	$(A)$(JAVADOC_CMD) $(JAVADOC_ALL_FLAGS) $(JAVADOC_ALL_PACKAGES) $(JTWI_JAVA_FILES) $(LOG)
+	$(A)$(remove_filelist) $(LOG)
+	$(A)$(remove_generatedlist) $(LOG)
 
 docs_html: verify docs_doxy # docs_javadoc is disabled
 
 docs_tools: $(JAVADOC_TOOLS_DIR)
-	@echo +++ env CLASSPATH=$(CLASSBIN) \
+	$(A)echo +++ env CLASSPATH=$(CLASSBIN) \
 		$(JAVADOC_CMD) $(JAVADOC_TOOLS_FLAGS) $(TOOLS_PACKAGES) $(LOG_ONLY)
 	-@env CLASSPATH=$(CLASSBIN) \
 		$(JAVADOC_CMD) $(JAVADOC_TOOLS_FLAGS) $(TOOLS_PACKAGES) $(LOG)

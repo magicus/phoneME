@@ -30,8 +30,6 @@ import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.NativeEvent;
 import com.sun.midp.events.EventQueue;
 
-import com.sun.midp.security.Permissions;
-import com.sun.midp.security.SecurityToken;
 
 /**
  * This class provides methods to send events of types 

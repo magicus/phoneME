@@ -25,8 +25,6 @@
 package com.sun.midp.main;
 
 import com.sun.midp.midlet.*;
-import com.sun.midp.security.*;
-import com.sun.midp.events.EventQueue;
 import com.sun.midp.lcdui.*;
 import com.sun.midp.midletsuite.*;
 import com.sun.midp.configurator.Constants;

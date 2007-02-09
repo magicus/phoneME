@@ -26,7 +26,6 @@
 
 package com.sun.midp.payment;
 
-import java.io.IOException;
 /**
  * Stub interface to handle MIDlet Payment functionality.
  */

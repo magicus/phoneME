@@ -74,7 +74,18 @@ public class DisplayContainer {
     }
     
     /**
-     * Removes dsplay object from the container.
+     * Get a display to request the foreground on behalf of the MIDlet.
+     *
+     * @param nameOfOwner class name of the MIDlet that owns this display
+     */
+    public void requestForegroundForDisplay(String nameOfOwner) {
+        DisplayAccess da = findDisplayByOwner(nameOfOwner);
+
+        da.requestForeground();
+    }
+
+    /**
+     * Removes display object from the container.
      *
      * @param nameOfOwner class name of the MIDlet that owns this display
      *

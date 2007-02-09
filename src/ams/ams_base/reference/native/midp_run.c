@@ -59,6 +59,10 @@
 #include <midpUtilKni.h>
 #include <push_server_export.h>
 
+#if !ENABLE_CDC
+#include <suspend_resume.h>
+#endif
+
 /**
  * @file
  *
@@ -75,6 +79,14 @@
  * Maximal length of the VM profile name.
  */
 #define MAX_VM_PROFILE_LEN 256
+
+/**
+ * @def ROTATION_ARG
+ * Name of the system property with initial screen rotation mode.
+ * The property can be set to 1 for rotated mode, any other value
+ * is ignored and normal screen mode is used.
+ */
+#define ROTATION_ARG "rotation"
 
 static JvmPathChar getCharPathSeparator();
 static MIDP_ERROR getClassPathPlus(SuiteIdType storageName,
@@ -391,6 +403,15 @@ midpInitializeUI(void) {
     }
 
     if (0 == lcdlf_ui_init()) {
+
+        /* Get the initial screen rotation mode property */
+        const char* pRotationArg = getSystemProperty(ROTATION_ARG);
+        if (pRotationArg) {
+            if (atoi(pRotationArg) == 1) {
+                lcdlf_reverse_orientation();
+            }
+        }
+
         return 0;
     } else {
         return -1;
@@ -610,6 +631,10 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
          * for faster startup of a preverified MIDlet suite.
          */
         JVM_SetUseVerifier(classVerifier);
+#endif
+
+#if !ENABLE_CDC
+        sr_repairSystem();
 #endif
 
         /*

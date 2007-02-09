@@ -494,7 +494,7 @@ public class MIDletStateHandler {
                      * But any notifications done after startApp call.
                      */
                     listener.midletActivated(getMIDletSuite(),
-                        curr.getMIDlet().getClass().getName());
+                        curr.getMIDlet());
                     break;
 
                 case MIDletPeer.PAUSE_PENDING:
