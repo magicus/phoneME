@@ -465,6 +465,7 @@ class ChoiceButtonBoxBody : public QVButtonGroup {
  */
 class ListBody : public QListBox {
  public:
+    
   /**
    * Override QListBox to notify Java peer of traversal out.
    *
@@ -491,7 +492,15 @@ class ListBody : public QListBox {
   virtual ~ListBody();
 
  protected:
-
+  /**
+   * This is the patch for qt 2.3.9: The focus is moved out while the list in
+   * non-modal state.
+   * Overload method of multiple line editor. The method always returns false
+   * The implementation needs to be removed if the fix is done for the later
+   * version of qt
+   */ 
+  bool focusNextPrevChild( bool next );
+  
   /**
    * Makes this item have focus, enabling any item-specific commands; in
    * addition, if the given event was caused by a user action, notifies the

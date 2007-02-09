@@ -1235,6 +1235,18 @@ ListBody::~ListBody() {
 }
 
 /**
+ * This is the patch for qt 2.3.9: The focus is moved out while the list in
+ * non-modal state.
+ * Overload method of multiple line editor. The method always returns false
+ * The implementation needs to be removed if the fix is done for the later
+ * version of qt
+ */ 
+bool ListBody::focusNextPrevChild( bool next ) {
+    (void)next;
+    return FALSE;
+}
+
+/**
  * Override to notify Form focus change.
  *
  * @param event the focus event to handle
@@ -1255,29 +1267,37 @@ void ListBody::focusInEvent(QFocusEvent *event) {
  * @param keyEvent key event
  */
 void ListBody::keyPressEvent(QKeyEvent *keyEvent) {
-    switch(keyEvent->key()) {
-    case Key_Up:
-    case Key_Left:
-        if (item(0)->current()) {
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyPressEvent(keyEvent);
-        } else {
-            QListBox::keyPressEvent(keyEvent);
-        }
-        break;
-    case Key_Down:
-    case Key_Right:
-        if (item(count() - 1)->current()) {
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyPressEvent(keyEvent);
-        } else {
-            QListBox::keyPressEvent(keyEvent);
-        }
-        break;
-    default:
+    // always handle select event because it switches between the modal and non-modal modes
+    if (keyEvent->key() == Key_Select) {
         QListBox::keyPressEvent(keyEvent);
-        break;
-    }   
+    } else if (isModalEditing()) {
+        switch(keyEvent->key()) {
+        case Key_Up:
+        case Key_Left:
+            if (item(0)->current()) {
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyPressEvent(keyEvent);
+            } else {
+                QListBox::keyPressEvent(keyEvent);
+            }
+            break;
+        case Key_Down:
+        case Key_Right:
+            if (item(count() - 1)->current()) {
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyPressEvent(keyEvent);
+            } else {
+                QListBox::keyPressEvent(keyEvent);
+            }
+            break;
+        default:
+            QListBox::keyPressEvent(keyEvent);
+            break;
+        }
+    } else {
+        // not handle events while it's in not modal state
+        keyEvent->ignore();
+    }
 }
 
 /**
@@ -1285,29 +1305,37 @@ void ListBody::keyPressEvent(QKeyEvent *keyEvent) {
  *
  * @param keyEvent key event
  */
-void ListBody::keyReleaseEvent(QKeyEvent *keyEvent) {
-    switch(keyEvent->key()) {
-    case Key_Up:
-    case Key_Left:
-        if (item(0)->current()) {
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyReleaseEvent(keyEvent);
-        } else {
-            QListBox::keyReleaseEvent(keyEvent);
-        }
-        break;
-    case Key_Down:
-    case Key_Right:
-        if (item(count() - 1)->current()) {
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyReleaseEvent(keyEvent);
-        } else {
-            QListBox::keyReleaseEvent(keyEvent);
-        }
-        break;
-    default:
+void ListBody::keyReleaseEvent(QKeyEvent *keyEvent) { 
+    // always handle select event because it switches between the modal and non-modal modes
+    if (keyEvent->key() == Key_Select) {
         QListBox::keyReleaseEvent(keyEvent);
-        break;
+    } else if (isModalEditing()) {
+        switch(keyEvent->key()) {
+        case Key_Up:
+        case Key_Left:
+            if (item(0)->current()) {
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyReleaseEvent(keyEvent);
+            } else {
+                QListBox::keyReleaseEvent(keyEvent);
+            }
+            break;
+        case Key_Down:
+        case Key_Right:
+            if (item(count() - 1)->current()) {
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyReleaseEvent(keyEvent);
+            } else {
+                QListBox::keyReleaseEvent(keyEvent);
+            }
+            break;
+        default:
+            QListBox::keyReleaseEvent(keyEvent);
+            break;
+        }
+    } else {
+        // not handle events while it's in not modal state
+        keyEvent->ignore();
     }   
 }
 
