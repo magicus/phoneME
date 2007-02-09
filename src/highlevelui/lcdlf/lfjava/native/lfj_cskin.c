@@ -43,7 +43,9 @@
 #include <midpStorage.h>
 #include <midpUtilKni.h>
 #include <commonKNIMacros.h>
+#include <kni_globals.h>
 #include <midpMalloc.h>
+#include <midp_logging.h>
 
 #include <lfj_image_rom.h>
 #include <lcdlf_export.h>
@@ -55,10 +57,25 @@ static int resourcePool = -1;
 static int skinProperties = -1;
 #endif
 
-/* Binary skin file data pointers */
-static char* skinFileDataStart = NULL;
-static char* skinFileDataEnd = NULL;
-static char* skinFileDataPos = NULL;
+/* String encoding constants from SkinResourcesConstants */
+static unsigned char STRING_ENCODING_USASCII;
+static unsigned char STRING_ENCODING_UTF8;
+
+/* Binary skin file data array pointers */
+static unsigned char* gsSkinFileDataStart = NULL;
+static unsigned char* gsSkinFileDataEnd = NULL;
+static unsigned char* gsSkinFileDataPos = NULL;
+
+/*
+ * Macro to ensure that we aren't reading past
+ * the end of skin data
+ */
+#define ENSURE_SKIN_DATA_AVAILABILITY(size) \
+    if (gsSkinFileDataPos + (size) > gsSkinFileDataEnd) { \
+        KNI_ThrowNew(midpIllegalStateException, \
+                "Unexpected end of skin data file"); \
+        break; \
+    }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_chameleon_skins_resources_SkinResources_shareResourcePool) {
@@ -207,10 +224,23 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_openSkinFile) {
     char* errorStr = NULL;
     int fileHandle = -1;
-    int fileSize = 0;
-    int bytesRead = 0;
+    int fileSize;
+    int bytesRead;
+    jfieldID fid;
 
-    KNI_StartHandles(1);
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(classHandle);
+
+    KNI_GetClassPointer(classHandle); 
+
+    fid = KNI_GetStaticFieldID(classHandle, "STRING_ENCODING_USASCII", "B"); 
+    STRING_ENCODING_USASCII = (unsigned char)
+        KNI_GetStaticByteField(classHandle, fid);
+
+    fid = KNI_GetStaticFieldID(classHandle, "STRING_ENCODING_UTF8", "B"); 
+    STRING_ENCODING_UTF8 = (unsigned char)
+        KNI_GetStaticByteField(classHandle, fid);
+        
     GET_PARAMETER_AS_PCSL_STRING(1, fileName);
 
     do {
@@ -234,39 +264,41 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_openSkinFile) {
             break;
         }
 
-        /**
-         * Read whole file into memory
+        /*
+         * Read whole file into heap memory
          */
-        skinFileDataStart = (char*)midpMalloc(fileSize);
-        if (skinFileDataStart == NULL) {
+        gsSkinFileDataStart = (unsigned char*)midpMalloc(fileSize);
+        if (gsSkinFileDataStart == NULL) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
             break;
         }
 
         bytesRead = storageRead(&errorStr, fileHandle, 
-                skinFileDataStart, fileSize);
+                gsSkinFileDataStart, fileSize);
         if (errorStr != NULL) {
             KNI_ThrowNew(midpIOException, errorStr);
             storageFreeError(errorStr);
-            midpFree(skinFileDataStart);
-            skinFileDataStart = NULL;
+            midpFree(gsSkinFileDataStart);
+            gsSkinFileDataStart = NULL;
             break;
         }
         if (bytesRead != fileSize) {
             KNI_ThrowNew(midpIOException, "Failed to read whole file");
-            midpFree(skinFileDataStart);
-            skinFileDataStart = NULL;
-
+            midpFree(gsSkinFileDataStart);
+            gsSkinFileDataStart = NULL;
             break;
         }
 
-        skinFileDataPos = skinFileDataStart;
-        skinFileDataEnd = skinFileDataStart + fileSize;
+        gsSkinFileDataPos = gsSkinFileDataStart;
+        gsSkinFileDataEnd = gsSkinFileDataStart + fileSize;
 
     } while (0);
 
     RELEASE_PCSL_STRING_PARAMETER;
 
+    /*
+     * Close skin file
+     */
     if (fileHandle != -1) {
         storageClose(&errorStr, fileHandle);
     }
@@ -277,11 +309,13 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_openSkinFile) {
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_closeSkinFile) {
-    midpFree(skinFileDataStart);
 
-    skinFileDataStart = NULL;
-    skinFileDataPos = NULL;
-    skinFileDataEnd = NULL;
+    /* free memory allocated for skin data file */
+    midpFree(gsSkinFileDataStart);
+
+    gsSkinFileDataStart = NULL;
+    gsSkinFileDataPos = NULL;
+    gsSkinFileDataEnd = NULL;
 
     KNI_ReturnVoid();
 }
@@ -294,19 +328,16 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_readByteArray) {
     KNI_DeclareHandle(returnArray);
 
     do {
+        ENSURE_SKIN_DATA_AVAILABILITY(arrayLength);
+
         SNI_NewArray(SNI_BYTE_ARRAY, arrayLength, returnArray);
         if (KNI_IsNullHandle(returnArray)) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
             break;
         }
 
-        if (skinFileDataPos + arrayLength > skinFileDataEnd) {
-            KNI_ThrowNew(midpIOException, "Unexpected end of file");
-            break;
-        }
-
-        KNI_SetRawArrayRegion(returnArray, 0, arrayLength, skinFileDataPos);
-        skinFileDataPos += arrayLength;
+        KNI_SetRawArrayRegion(returnArray, 0, arrayLength, gsSkinFileDataPos);
+        gsSkinFileDataPos += arrayLength;
 
     } while (0);
 
@@ -315,8 +346,8 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_readByteArray) {
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_readIntArray) {
-    int arrayLength = 0;
-    int totalBytes = 0;
+    int arrayLength;
+    int totalBytes;
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(returnArray);
@@ -325,22 +356,15 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_readIntArray) {
         /*
          * First, read array length
          */
-        if (skinFileDataPos + sizeof(jint) > skinFileDataEnd) {
-            KNI_ThrowNew(midpIOException, "Unexpected end of file");
-            break;
-        }
-
-        memcpy((void*)&arrayLength, (void*)skinFileDataPos, sizeof(jint));
-        skinFileDataPos += sizeof(jint);
+        ENSURE_SKIN_DATA_AVAILABILITY(sizeof(jint));
+        memcpy((void*)&arrayLength, (void*)gsSkinFileDataPos, sizeof(jint));
+        gsSkinFileDataPos += sizeof(jint);
 
         /*
          * Then create array
          */
         totalBytes = arrayLength * sizeof(jint);
-        if (skinFileDataPos +  totalBytes > skinFileDataEnd) {
-            KNI_ThrowNew(midpIOException, "Unexpected end of file");
-            break;
-        }
+        ENSURE_SKIN_DATA_AVAILABILITY(totalBytes);
 
         SNI_NewArray(SNI_INT_ARRAY, arrayLength, returnArray);
         if (KNI_IsNullHandle(returnArray)) {
@@ -349,10 +373,10 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_readIntArray) {
         }
 
         /*
-         * And finally read array's data into it
+         * And finally read data into it
          */
-        KNI_SetRawArrayRegion(returnArray, 0, totalBytes, skinFileDataPos);
-        skinFileDataPos += totalBytes;
+        KNI_SetRawArrayRegion(returnArray, 0, totalBytes, gsSkinFileDataPos);
+        gsSkinFileDataPos += totalBytes;
 
     } while (0);
 
@@ -361,7 +385,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_readIntArray) {
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_readStringArray) {
-    int arrayLength = 0;
+    int arrayLength;
     int i;
 
     KNI_StartHandles(2);
@@ -372,13 +396,9 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_readStringArray) {
         /*
          * First, read array length
          */
-        if (skinFileDataPos + sizeof(jint) > skinFileDataEnd) {
-            KNI_ThrowNew(midpIOException, "Unexpected end of file");
-            break;
-        }
-
-        memcpy((void*)&arrayLength, (void*)skinFileDataPos, sizeof(jint));
-        skinFileDataPos += sizeof(jint);
+        ENSURE_SKIN_DATA_AVAILABILITY(sizeof(jint));
+        memcpy((void*)&arrayLength, (void*)gsSkinFileDataPos, sizeof(jint));
+        gsSkinFileDataPos += sizeof(jint);
 
 
         /*
@@ -391,25 +411,64 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_readStringArray) {
         }
 
         /*
-         * And finally read array's data into it
+         * And finally populate it with strings
          */
         for (i = 0; i < arrayLength; ++i) {
-            /* offset to the end of this string */
-            int stringOffset = 0;
+            unsigned char dataLength;
+            unsigned char encoding;
 
-            /* string offset is just one byte */
-            if (skinFileDataPos + 1 > skinFileDataEnd) {
-                KNI_ThrowNew(midpIOException, "Unexpected end of file");
+            /* read data length */
+            ENSURE_SKIN_DATA_AVAILABILITY(sizeof(char));
+            dataLength = *((unsigned char*)gsSkinFileDataPos);
+            gsSkinFileDataPos += 1;
+
+            /* read encoding */
+            ENSURE_SKIN_DATA_AVAILABILITY(sizeof(char));
+            encoding = *((unsigned char*)gsSkinFileDataPos);
+            gsSkinFileDataPos += 1;
+
+            ENSURE_SKIN_DATA_AVAILABILITY(dataLength * sizeof(char));
+
+            if (encoding == STRING_ENCODING_USASCII) {    
+                int j;
+
+                /* 
+                 * In case of USASCII encoding, each byte of 
+                 * string data corresponds to one string char
+                 */
+                int stringLength = dataLength;
+
+                /* use gKNIBuffer for storing string chars */
+                jchar* stringChars = (jchar*)gKNIBuffer;
+                
+                /* 
+                 * Safety measure to prevent gKNIBuffer overflow 
+                 * (which should never happens unless something is broken) 
+                 */
+                if (stringLength > (int)(KNI_BUFFER_SIZE/sizeof(jchar))) {
+                    stringLength = (int)(KNI_BUFFER_SIZE/sizeof(jchar));
+                    REPORT_WARN(LC_HIGHUI, 
+                            "gKNIBuffer is too small for skin string");
+                }
+
+                /* fill string chars array */
+                for (j = 0; j < stringLength; ++j) {
+                    stringChars[j] = gsSkinFileDataPos[j];
+                }
+
+                /* and create string from it */
+                KNI_NewString(stringChars, stringLength, stringHandle);
+            } else if (encoding == STRING_ENCODING_UTF8) {
+                KNI_NewStringUTF(gsSkinFileDataPos, stringHandle);
+            } else {
+                KNI_ThrowNew(midpIllegalStateException, 
+                        "Illegal skin string encoding");
                 break;
             }
-
-            stringOffset = *((unsigned char*)skinFileDataPos);
-            skinFileDataPos += 1;
-
-            KNI_NewStringUTF(skinFileDataPos, stringHandle);
+            
             KNI_SetObjectArrayElement(returnArray, i, stringHandle);
 
-            skinFileDataPos += stringOffset;
+            gsSkinFileDataPos += dataLength;
         }
 
     } while (0);

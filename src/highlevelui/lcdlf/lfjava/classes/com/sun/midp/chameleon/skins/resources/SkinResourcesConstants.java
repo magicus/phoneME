@@ -29,20 +29,21 @@ package com.sun.midp.chameleon.skins.resources;
  */
 
 public class SkinResourcesConstants {
-    /**
-     * Skin binary file name
+
+    /** 
+     * Skin binary file name 
      */
     public static final String SKIN_BINARY_FILE_NAME = "skin.bin";
 
-    /**
-     * Magic sequence identifying Chameleon skin binary file
+    /** 
+     * Magic sequence identifying Chameleon skin binary file 
      */
     public static final short[] CHAM_BIN_MAGIC = { 0x89, 'C', 'H', 'A', 'M'};
 
-    /**
-     * Expected (current) version of Chameleon binary skin file format
+    /** 
+     * Expected (current) version of Chameleon binary skin file format 
      */
-    public static final int CHAM_BIN_FORMAT_VERSION = 0x00000002;
+    public static final int CHAM_BIN_FORMAT_VERSION = 0x00000003;
 
     /**
      * Constant for centering skin element horizontally
@@ -89,4 +90,14 @@ public class SkinResourcesConstants {
      * Constant for the dotted stroke style.
      */
     public static final int DOTTED = 1;
+
+    /** 
+     * UTF8 string encoding 
+     */
+    public static final byte STRING_ENCODING_USASCII = 0;
+
+    /** 
+     * US ASCII string encoding 
+     */
+    public static final byte STRING_ENCODING_UTF8 = 1;
 }

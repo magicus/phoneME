@@ -1186,20 +1186,39 @@ final class RomizedImageFactory {
  * in big/little endian format.
  */
 final class BinaryOutputStream {
+    /** Underlying stream for writing bytes into */ 
     private DataOutputStream outputStream = null;
+
+    /** true for big endian format, false for little */
     private boolean isBigEndian = false;
 
+    /**
+     * Constructor
+     *
+     * @param out underlying output stream for writing bytes into
+     * @param isBigEndian true for big endian format, false for little
+     */
     BinaryOutputStream(OutputStream out, boolean isBigEndian) {
         this.outputStream = new DataOutputStream(out);
         this.isBigEndian = isBigEndian;
     }
 
+    /**
+     * Writes byte value into stream
+     *
+     * @param value byte value to write
+     */
     public void writeByte(int value) 
         throws java.io.IOException {
 
         outputStream.writeByte(value);
     }
 
+    /**
+     * Writes integer value into stream
+     *
+     * @param value integer value to write
+     */
     public void writeInt(int value) 
         throws java.io.IOException {
 
@@ -1216,28 +1235,64 @@ final class BinaryOutputStream {
         }
     }
 
+    /**
+     * Writes string into stream. The string data is written 
+     * in follwoing order:
+     * - Number of bytes for string chars
+     * - Encoding (US ASCII or UTF8)
+     * - String chars as bytes
+     * 
+     * The number of bytes for string chars is written as 
+     * single byte, so it can't exceed 255.
+     *
+     * @param value String value to write into stream
+     */
     public void writeString(String value) 
         throws java.io.IOException {
 
-        byte[] chars = value.getBytes("ISO-8859-1");
+        byte[] chars = value.getBytes("UTF8");
         int length = chars.length;
-        if (length > 254) {
+
+        // determine what encoding to use
+        int encoding = SkinResourcesConstants.STRING_ENCODING_USASCII;
+        for (int i = 0; i < length; ++i) {
+            int ch = chars[i] & 0xFF;
+            if (ch >= 128) {
+                encoding = SkinResourcesConstants.STRING_ENCODING_UTF8;
+                break;
+            }
+        }
+
+        if (encoding == SkinResourcesConstants.STRING_ENCODING_UTF8) {
+            System.err.println("UTF8: " + value);
+            // for '\0' at the end of the string
+            length += 1;
+        }
+
+        // write string data length
+        if (length > 255) {
             throw new IllegalArgumentException(
-                    "String length exceeds 254 chars");
+                    "String data length exceeds 255 bytes");
         }
+        outputStream.writeByte(length);
 
-        // write offset to the end of string
-        outputStream.writeByte((byte)((length + 1) & 0xFF));
+        // write string encoding
+        outputStream.writeByte(encoding);
 
-        // write string chars
+        // write string data
         for (int i = 0; i < chars.length; ++i) {
-            outputStream.writeByte(chars[i]);
+            outputStream.writeByte(chars[i] & 0xFF);
         }
 
-        // write '\0' termination char
-        outputStream.writeByte(0);
+        if (encoding == SkinResourcesConstants.STRING_ENCODING_UTF8) {
+            // '\0' at the end of the string
+            outputStream.writeByte(0);
+        }
     }
 
+    /**
+     * Closes stream
+     */
     public void close() 
         throws java.io.IOException {
 

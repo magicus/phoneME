@@ -659,6 +659,15 @@ final class LoadedSkinData {
      */
     int[] romizedImageIndexes;
 
+    /**
+     * For accessing constant values from native code
+     */
+    static byte STRING_ENCODING_USASCII = 
+        SkinResourcesConstants.STRING_ENCODING_USASCII;
+
+    static byte STRING_ENCODING_UTF8 = 
+        SkinResourcesConstants.STRING_ENCODING_UTF8;
+
 // #ifdef ENABLE_CDC
     protected native void finalize();
 // #else
@@ -675,10 +684,10 @@ final class LoadedSkinData {
     }
 
     /**
-     * Reads skin data from stream.
+     * Reads skin data from file.
      *
-     * @param stream stream to read data from
-     * @throws IllegalStateException if stream fails some checks
+     * @param fileName name of the file to read data from
+     * @throws IllegalStateException if file fails some checks
      */
     void readFromFile(String fileName) 
         throws IOException, 
@@ -718,31 +727,41 @@ final class LoadedSkinData {
         }
     }
 
+    /**
+     * Opens skin data file
+     */
     private native static void openSkinFile(String fileName)
         throws IOException;
 
+    /**
+     * Reads byte array from skin file
+     *
+     * @param length array length
+     * @return int[] array read
+     */
     private native static byte[] readByteArray(int length)
         throws IOException;
 
     /**
-     * Reads integer array from stream
+     * Reads integer array from skin file
      *
-     * @param ds DataInputStream to read array from
      * @return int[] array read
      */
     private native static int[] readIntArray()
         throws IOException;
 
     /**
-     * Reads String array from stream
+     * Reads String array from skin file
      *
-     * @param ds DataInputStream to read array from
      * @return String[] array read
      */
     private native static String[] readStringArray() 
         throws IOException;
 
 
+    /**
+     * Closes skin file
+     */
     private native static int closeSkinFile()
         throws IOException;
 
