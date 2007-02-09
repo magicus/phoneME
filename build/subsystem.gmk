@@ -232,6 +232,9 @@ MODULE_SATSA_APDU_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/SlotFactory.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardDeviceException.java
 
+SUBSYSTEM_SATSA_CNI_CLASSES += \
+    com.sun.io.j2me.apdu.APDUManager
+
 # JSR_177_APDU_MANAGER=carddevice & JSR_177_APDU_CARDDEVICE=simulator
 ifeq ($(JSR_177_APDU_CARDDEVICE),simulator)
 MODULE_SATSA_APDU_JAVA_FILES += \
@@ -244,6 +247,8 @@ MODULE_SATSA_APDU_JAVA_FILES += \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/PlatformCardDevice.java
 MODULE_SATSA_APDU_NATIVE_FILES += \
 	carddevice_kni.c
+SUBSYSTEM_SATSA_CNI_CLASSES += \
+    com.sun.cardreader.PlatformCardDevice
 else
 # error - bad JSR_177_APDU_CARDDEVICE
 JSR_177_ERRORS += \
@@ -537,6 +542,26 @@ $(JAVACARD_CLASSES):
 $(STUBS_PATH): $(JAVACARD_CLASSES)
 	@echo " ... creating directories" $@
 	@mkdir -p $@
+
+JSR_177_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr177
+JSR_177_JAR             = $(JSROP_LIB_DIR)/jsr177.jar
+JSR_177_NATIVE_LIB      = $(JSROP_LIB_DIR)/$(LIB_PREFIX)jsr177$(LIB_POSTFIX)
+JSR_177_NATIVE_OBJS     = $(patsubst %.c,$(JSROP_OBJ_DIR)/%.o,$(SUBSYSTEM_SATSA_NATIVE_FILES))
+
+SUBSYSTEM_JSR_177_JAVA_FILES = $(SUBSYSTEM_SATSA_JAVA_FILES)
+
+JPP_DEFS             += -DENABLE_JSR_177
+JSROP_NATIVE_OBJS    += $(JSR_177_NATIVE_OBJS)
+JSROP_CNI_CLASSES    += $(SUBSYSTEM_SATSA_CNI_CLASSES)
+JSROP_NATIVE_LIBS    += $(JSR_177_NATIVE_LIB)
+JSROP_EXTRA_INCLUDES += $(SUBSYSTEM_SATSA_EXTRA_INCLUDES)
+
+$(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES)
+	$(call compileJSRClasses,177)
+
+$(JSR_177_NATIVE_LIB): $(JSR_177_NATIVE_OBJS)
+	@echo "Linking $@"
+	$(SO_LINK_CMD)
 
 # Append SATSA source bundle creation to target
 source_bundle:: satsa_source_bundle
