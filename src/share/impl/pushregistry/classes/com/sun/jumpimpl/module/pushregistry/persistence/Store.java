@@ -51,7 +51,7 @@ import java.util.Vector;
  */
 public final class Store {
     /** PushRegistry root dir. */
-    private static final String ROOT_DIR = "./PushRegistry/";
+    private static final String ROOT_DIR = "./push/";
 
     /** Dir to store connections. */
     static final String CONNECTIONS_DIR = ROOT_DIR + "connections";
