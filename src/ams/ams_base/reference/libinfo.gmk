@@ -42,7 +42,7 @@ LIB_JAVA_FILES= \
     com/sun/midp/main/AbstractMIDletSuiteLoader.java \
     com/sun/midp/main/MIDletSuiteLoader.java \
     com/sun/midp/main/MIDletSuiteUtils.java \
-    com/ideaworks3d/Airplay.java
+    com/sun/airplay/Airplay.java
 
 LIB_NATIVE_FILES= \
     exitInternal.c \

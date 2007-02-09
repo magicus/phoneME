@@ -95,7 +95,7 @@ ifeq ($(TARGET_VM), cldc_vm)
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/MIDletProxyListListener.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/MIDletSuiteLoader.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/MIDletSuiteUtils.java \
-    $(AMS_BASE_DIR)/classes/com/ideaworks3d/Airplay.java
+    $(AMS_BASE_DIR)/classes/com/sun/airplay/Airplay.java
 
   SUBSYSTEM_AMS_NATIVE_FILES += \
     exitInternal.c \

@@ -104,7 +104,7 @@ KNIDECL(com_sun_midp_main_CldcPlatformRequest_dispatchPlatformRequest) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_ideaworks3d_Airplay_RunS3E) {    
+KNIDECL(com_sun_airplay_Airplay_RunS3E) {    
 
     pcsl_string v_system_call = PCSL_STRING_NULL_INITIALIZER;
     pcsl_string *const system_call = &v_system_call;
