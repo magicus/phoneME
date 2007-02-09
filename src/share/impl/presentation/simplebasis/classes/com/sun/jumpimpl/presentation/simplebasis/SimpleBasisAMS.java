@@ -25,7 +25,6 @@
 package com.sun.jumpimpl.presentation.simplebasis;
 
 import com.sun.jump.module.presentation.JUMPPresentationModule;
-import com.sun.jump.presentation.JUMPLauncher;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPContent;
 import com.sun.jump.executive.JUMPApplicationProxy;
@@ -44,7 +43,6 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -53,13 +51,6 @@ import java.util.Vector;
  * A simple JUMP launcher that uses Personal Basis components.
  */
 public class SimpleBasisAMS implements JUMPPresentationModule {
-    
-    /**
-     * The property name holding the root of content store
-     */
-    private static final String repositoryProperty = "installer.repository";
-    
-    private String repository = null;
     
     private Frame frame = null;
     private Container commandContainer = null;
@@ -76,29 +67,16 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
      * load the presentation module
      * @param map the configuration data required for loading this module.
      */
-    public void load(Map map) {        
+    public void load(Map map) {
     }
     
     public void stop() {
     }
-
+    
     public void unload() {
-    }    
+    }
     
     private boolean setup() {
-        repository = System.getProperty(repositoryProperty);
-        if (repository == null) {
-            System.out.println("ERROR: The property installer.repository is not set.");
-            return false;
-        }
-        
-        // test setup, make a repository root
-        File file = new File(repository);
-        if (!file.exists()) {
-            System.out.println("ERROR: " + repository + " directory not found");
-            return false;
-        }
-        
         frame = new Frame();
         frame.setLayout(new BorderLayout());
         
@@ -109,8 +87,8 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
         };
         
         commandContainer.setLayout(new GridLayout(1, 3));
-        addCommandButton("Applications", new ApplicationsScreenActionListener());
-        addCommandButton("Switch To", new SwitchToScreenActionListener());
+        addCommandButton("Apps", new ApplicationsScreenActionListener());
+        addCommandButton("Switch", new SwitchToScreenActionListener());
         addCommandButton("Kill", new KillScreenActionListener());
         
         screenContainer = new Container();
@@ -118,11 +96,11 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
         
         frame.add(commandContainer, BorderLayout.NORTH);
         frame.add(screenContainer, BorderLayout.CENTER);
-                
+        
         appToProxyHash = new HashMap();
         
         return true;
-    }    
+    }
     
     /**
      * Display the screen containing application icons.
@@ -139,7 +117,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
     
     
     /**
-     * Display the switch-to screen, consisting of icons 
+     * Display the switch-to screen, consisting of icons
      * pertaining to currently running applications.
      */
     public void doSwitchToScreen() {
@@ -334,11 +312,11 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
     private void switchToApp(JUMPApplication app) {
         if (app == null) {
             return;
-        }        
+        }
         JUMPApplicationProxy appProxy = (JUMPApplicationProxy)appToProxyHash.get(app);
         if (appProxy == null) {
             return;
-        }        
+        }
         appProxy.resumeApp();
     }
     
@@ -355,12 +333,12 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
             for (int j = 0; j < appProxy.length; j++) {
                 appsVector.add(appProxy[j].getApplication());
             }
-        }        
-
-        return (JUMPApplication[]) appsVector.toArray(new JUMPApplication[]{}); 
+        }
+        
+        return (JUMPApplication[]) appsVector.toArray(new JUMPApplication[]{});
     }
     
-    private JUMPApplication[] getInstalledApps() {       
+    private JUMPApplication[] getInstalledApps() {
         JUMPInstallerModule installers[] = JUMPInstallerModuleFactory.getInstance().getAllInstallers();
         Vector appsVector = new Vector();
         for (int i = 0; i < installers.length; i++) {
@@ -371,8 +349,8 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
                 }
             }
         }
-               
-       return (JUMPApplication[]) appsVector.toArray(new JUMPApplication[]{});        
+        
+        return (JUMPApplication[]) appsVector.toArray(new JUMPApplication[]{});
     }
     
     void trace(String str) {
@@ -393,6 +371,6 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
             }
         } else {
             System.err.println("*** Setup of SimpleBasisAMS failed. ***");
-        }        
+        }
     }
 }
