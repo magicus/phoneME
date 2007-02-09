@@ -191,7 +191,8 @@ public final class AlarmRegistry {
             if (midletInfo.midletSuiteID == midletSuiteID) {
                 // No need to care about retval
                 ((AlarmTask) entry.getValue()).cancel();
-                removeAlarm(midletInfo);
+                removeAlarmFromStore(midletInfo);
+                it.remove();
             }
         }
     }
@@ -211,6 +212,10 @@ public final class AlarmRegistry {
      */
     public synchronized void dispose() {
         timer.cancel();
+        for (Iterator it = alarms.values().iterator(); it.hasNext();) {
+            final AlarmTask task = (AlarmTask) it.next();
+            task.cancel();
+        }
         alarms.clear();
     }
 
@@ -276,6 +281,15 @@ public final class AlarmRegistry {
      */
     private void removeAlarm(final MIDletInfo midletInfo) {
         alarms.remove(midletInfo);
+        removeAlarmFromStore(midletInfo);
+    }
+
+    /**
+     * Removes an alarm from persistent store.
+     *
+     * @param midletInfo defines <code>MIDlet</code> to remove alarm for
+     */
+    private void removeAlarmFromStore(final MIDletInfo midletInfo) {
         try {
             store.removeAlarm(midletInfo.midletSuiteID, midletInfo.midlet);
         } catch (IOException _) {
