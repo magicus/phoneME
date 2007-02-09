@@ -1020,13 +1020,13 @@ public final class System {
      */
     private static void initializeSystemClass() {
 	props = new Properties();
+        propProviders = new Hashtable();
 	initProperties(props);
         midpProps = new Properties();
         initCldcMidpProperties(midpProps);
 
         // dynamic properties initialization (should be moved to more
         // appropriate place when we have dynamic package loading implemented)
-        propProviders = new Hashtable();
         String[] mainClasses = PackageManager.listComponents();
         for (int i = 0; i < mainClasses.length; i++) {
             try {
