@@ -82,11 +82,18 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
     // Make sure we can accommodate n more bytes.
     //
     private void ensureCapacity(int n) {
-	if (messageDataOffset + n >= messageDataBytes.length) {
-	    // must expand
-	    byte[] newData = new byte[messageDataBytes.length * 2];
+	// NOTE: This assumes that requiredCapacity and newCapacity
+	// will not overflow an int, which should be reasonable.
+	int requiredCapacity = messageDataOffset + n;
+	if (requiredCapacity > messageDataBytes.length) {
+	    int newCapacity = messageDataBytes.length * 2;
+	    if (newCapacity < requiredCapacity) {
+		newCapacity = requiredCapacity;
+	    }
+
+	    byte[] newData = new byte[newCapacity];
 	    System.arraycopy(messageDataBytes, 0,
-			     newData, 0, messageDataBytes.length);
+			     newData, 0, messageDataOffset);
 	    messageDataBytes = newData;
 	}
     }
