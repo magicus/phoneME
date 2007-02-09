@@ -54,7 +54,7 @@ CVMvolatileStoreImpl(CVMAddr new_value, volatile CVMAddr *addr)
         "ldr %0, [%2]"
         : "=r" (scratch)
         : "r" (new_value), "r" (addr)
-        /* clobber? */);
+        : "memory");
 #else
     __asm
     {    
@@ -77,9 +77,9 @@ CVMatomicSwapImpl(CVMAddr new_value, volatile CVMAddr *addr)
     asm volatile (
         "swp %0, %2, [%3];"
         "ldr %1, [%3]"
-        : "=&r" (old_value), "=&r" (scratch)
+        : "=&r" (old_value), "=r" (scratch)
         : "r" (new_value), "r" (addr)
-        /* clobber? */);
+        : "memory");
 #else
     __asm 
     {
