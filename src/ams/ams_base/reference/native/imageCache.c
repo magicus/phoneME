@@ -477,11 +477,8 @@ static int storeResourceToCache(SuiteIdType suiteId, StorageIdType storageId,
         pcsl_string_length(storageRoot) + suiteIdLen + 1 +
             pcsl_string_length(resName));
 
-    if (pcsl_string_append(&fullResPath, storageRoot) != PCSL_STRING_OK
-        /* IMPL_NOTE: Uncomment it to create the directory for suite
-        || pcsl_string_append(&fullResPath, midp_suiteid2pcsl_string(suiteId)) != PCSL_STRING_OK
-        */
-        ) {
+    if (pcsl_string_append(&fullResPath, storageRoot) != PCSL_STRING_OK || 
+        pcsl_string_append(&fullResPath, midp_suiteid2pcsl_string(suiteId)) != PCSL_STRING_OK) {
         return OUT_OF_MEMORY;
     }
 

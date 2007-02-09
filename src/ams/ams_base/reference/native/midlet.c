@@ -27,6 +27,8 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <stdio.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -38,6 +40,7 @@
 #include <midpError.h>
 #include <midpServices.h>
 #include <midpUtilKni.h>
+#include <suitestore_common.h>
 
 /**
  * @file 
@@ -104,7 +107,7 @@ KNIDECL(com_sun_midp_main_CldcPlatformRequest_dispatchPlatformRequest) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_airplay_Airplay_RunS3E) {    
+KNIDECL(com_sun_airplay_Airplay_RunS3E_1) {    
 
     pcsl_string v_system_call = PCSL_STRING_NULL_INITIALIZER;
     pcsl_string *const system_call = &v_system_call;
@@ -112,8 +115,18 @@ KNIDECL(com_sun_airplay_Airplay_RunS3E) {
     KNI_DeclareHandle(systemCall);
     KNI_GetParameterAsObject(1, systemCall);
 
+    jint suite_id = KNI_GetParameterAsInt(2);
+
     if(PCSL_STRING_OK == midp_jstring_to_pcsl_string(systemCall, system_call)) {
+        // IMPL_NOTE: proper conversion required
         const char* c_system_call = pcsl_string_get_utf8_data(system_call);
+        const char* c_suite_dir = midp_suiteid2chars(suite_id);
+        // IMPL_NOTE: this is just temporary dirty solution, the appropriate MIDP
+        //            string processing functions should be used.
+        char dir[255];
+        // IMPL_NOTE: the paths should not be hardcoded
+        sprintf(dir, "../../appdb/%s", c_suite_dir);
+        chdir(dir);
         chmod(c_system_call, S_IRWXU);
         system(c_system_call);
     }
