@@ -187,22 +187,23 @@ XSETVARLIST = $(foreach X,$(VARLIST),$(X)=$($(X)))
 XSETPATHVARLIST = $(foreach X,$(PATHVARLIST),$(X)=$($(X)))
 
 varexport: $(MIDP_OUTPUT_DIR)
-	@echo exporting patameter values to $(VLF)
-	@echo ======================================================
+	@echo exporting parameter values to $(VLF) ...
+	@#echo ======================================================
 	$(A)echo >$(VLF)
 	$(A)echo "# Build settings. Generated file." >>$(VLF)
-	#
-	#
-	for I in $(XOPTIONVARLIST); do echo $$I >>$(VLF); done
+	$(A)#
+	$(A)#
+	$(A)for I in $(XOPTIONVARLIST); do echo $$I >>$(VLF); done
 	$(A)echo "# =====================================================" >>$(VLF)
-	#
-	#
-	for I in $(XSETVARLIST); do N=`echo $$I | sed "s/\([^\=]*\).*/\1/"`; echo ifdef $$N >>$(VLF); echo $$I >>$(VLF); echo endif >>$(VLF); done
+	$(A)#
+	$(A)#
+	$(A)for I in $(XSETVARLIST); do N=`echo $$I | sed "s/\([^\=]*\).*/\1/"`; echo ifdef $$N >>$(VLF); echo $$I >>$(VLF); echo endif >>$(VLF); done
 	$(A)echo "# =====================================================" >>$(VLF)
-	#
-	#
-	for I in $(XSETPATHVARLIST); do N=`echo $$I | sed "s/\([^\=]*\).*/\1/"`; P=`echo $$I | sed "s/\([^\=]*\)=\(.*\)/\2/"`; echo ifdef $$N >>$(VLF); echo $$N=`$(RELDIR) $$P - $(MIDP_DIR) $(LIMITDIR) $(FN_SEP) MIDP_DIR` >>$(VLF); echo endif >>$(VLF); done
-	@echo ======================================================
+	$(A)#
+	$(A)#
+	$(A)for I in $(XSETPATHVARLIST); do N=`echo $$I | sed "s/\([^\=]*\).*/\1/"`; P=`echo $$I | sed "s/\([^\=]*\)=\(.*\)/\2/"`; echo ifdef $$N >>$(VLF); echo $$N=`$(RELDIR) $$P - $(MIDP_DIR) $(LIMITDIR) $(FN_SEP) MIDP_DIR` >>$(VLF); echo endif >>$(VLF); done
+	@echo created $(VLF)
+	@#echo ======================================================
 
 all:: varexport
 
