@@ -55,6 +55,9 @@ public interface DisplayAccess {
      */
     public int getDisplayHeight();
 
+    /** Called to get the display to request the foreground. */
+    public void requestForeground();
+
     // API's for accessing Display from Games Package
 
     /**

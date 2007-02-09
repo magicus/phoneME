@@ -86,6 +86,12 @@ extern void sr_initSystem();
 extern void sr_finalizeSystem();
 
 /**
+ * Corrects state of suspend/resume system in case VM is terminated
+ * while the system is waiting for java side response.
+ */
+extern void sr_repairSystem();
+
+/**
  * Suspend/resume routine for resources that should not be processed during
  * either suspend or resume.
  */
@@ -106,15 +112,6 @@ extern void midp_suspend();
  * where possible.
  */
 extern void midp_resume();
-
-/**
- * Checks if there is a request for java stack to resume normal operation.
- * This function is called from midp_checkAndResume() and requires porting.
- *
- * @return KNI_TRUE if java stack is requested to resume, KNI_FALSE if it is
- * not.
- */
-extern jboolean midp_checkResumeRequest();
 
 /**
  * Checks if there is active request for java stack to resume and invokes

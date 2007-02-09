@@ -26,7 +26,7 @@
 package com.sun.midp.main;
 
 /**
- * Utilities for the MIDletProxy.  Does nothing is SVM mode.
+ * Utilities for the MIDletProxy.
  */
 public class MIDletProxyUtils {
 
@@ -55,10 +55,20 @@ public class MIDletProxyUtils {
     }
 
     /**
-     * Makes nothing in case of SVM.
-     * @param mp not used
-     * @param mpl not used
+     * Removes current MIDlet form the proxy list and reqests VM to stop.
+     * This results in terminating current applicaton and further re-launching
+     * VM with an AMS MIDlet (if the latter is scheduled in the main MIDP
+     * running loop).
+     *
+     * @param mp the only MIDlet proxy presenting in the system
+     * @param mpl the MIDlet proxy list
      */
     static void terminateMIDletIsolate(MIDletProxy mp, MIDletProxyList mpl) {
+        requestVMStop();
     }
+
+    /**
+     * Requests VM to stop.
+     */
+    private static native void requestVMStop();
 }

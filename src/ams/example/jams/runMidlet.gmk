@@ -24,35 +24,28 @@
 # information or have any questions. 
 #
 ######################################################################
+# Makefile with "lazy" rules that should be included after other
+# subsystem makefile's are included and global variable values are
+# collected across the system.
 #
-# AMS Util Library
-#
+# IMPORTNAT: No global variables should be changed here.
 ######################################################################
 
-# Name of the library
-AMS_UTIL_SVM_NAME = ams_util/svm
-AMS_UTIL_SVM_DIR = $(SUBSYSTEM_AMS_DIR)/$(AMS_UTIL_SVM_NAME)
-
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(AMS_UTIL_SVM_DIR)/classes
-
-#AMS_UTIL_SVM_PACKAGES = \
-#    com.sun.midp.main
-
-#MIDP_JAVADOC_PACKAGES += $(AMS_UTIL_SVM_PACKAGES)
-#MIDP_JAVADOC_ALL += \
-#        -group "AMS Util" \
-#	 $(shell echo $(AMS_UTIL_SVM_PACKAGES) |tr ' ' $(PATHSEP))
-
-# Java files for the library
+# Define AMS executables
 #
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(AMS_UTIL_SVM_DIR)/classes/com/sun/midp/main/AmsUtil.java \
-    $(AMS_UTIL_SVM_DIR)/classes/com/sun/midp/main/MIDletProxyUtils.java \
-    $(AMS_UTIL_SVM_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java
-
-# Native files for the library
+# IMPL_NOTE: AMS executables are dependent on all object files of
+#   the system, that's why this rule should be parsed after all object
+#   names are collected and prerequisite variables have correct values.
 #
-vpath % $(AMS_UTIL_SVM_DIR)/native
-SUBSYSTEM_AMS_NATIVE_FILES += \
-    MIDletProxyUtils.c
+$(BINDIR)/runMidlet$(g)$(p)$(EXE): \
+    $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
+	@echo " ... linking $@ " $(LOG)
+ifeq ($(USE_CYGWIN), true)
+	@echo $(shell rm -f $(OBJ_DIR)/commandfile)
+	@echo $(foreach path, $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES) $(LIBS), \
+		$(eval $(shell echo `$(call fixcygpath,$(path))` >> $(OBJ_DIR)/commandfile)))
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@)` @$(OBJ_DIR)/commandfile $(LOG)
+else
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+	  $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES) $(LIBS))` $(LOG)
+endif
