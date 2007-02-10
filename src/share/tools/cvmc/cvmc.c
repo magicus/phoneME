@@ -200,7 +200,7 @@ main(int argc, const char** argv)
 				       &code);
 	if (response == NULL) {
 	    fprintf(stderr, "send message failed\n");
-	    return;
+	    return 1;
 	}
 	
 	dumpMessage(response, "Testing mode response:");
@@ -256,7 +256,7 @@ main(int argc, const char** argv)
     response = jumpMessageSendSync(targetAddress, outMessage, TIMEOUT, &code);
     if (response == NULL) {
 	fprintf(stderr, "send message failed\n");
-	return;
+	return 1;
     }
 	
     dumpMessage(response, "Command response:");

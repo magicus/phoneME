@@ -331,25 +331,6 @@ cleanMessageQueuesOf(int cpid)
 	    snprintf(filename, 60, "/tmp/%s", ptr->d_name);
 	    printf("Exiting process %d has message queue %s\n",
 		   cpid, filename);
-	    if ((k = ftok(filename, 'Q')) == -1) {
-		perror("ftok");
-		continue;
-	    } else {
-		printf("  key=%d\n", k);
-	    }
-	    if ((mq = msgget(k, 0)) == -1) {
-		perror("msgget");
-		continue;
-	    } else {
-		printf("  mq=%d\n", mq);
-	    }
-	    if (msgctl(mq, IPC_RMID, NULL) == -1) {
-		perror("mq remove");
-		continue;
-	    } else {
-		printf("  removed mq %d\n", mq);
-	    }
-	    
 	    if (remove(filename) == -1) {
 		perror("mq file delete");
 		continue;
