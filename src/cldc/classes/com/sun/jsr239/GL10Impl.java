@@ -581,7 +581,7 @@ public class GL10Impl implements GL10, GL10Ext {
         index = 0;
 
         // Check for orphaned Buffer contents
-        BufferManager.gc();
+        // BufferManager.gc();
 
         // Ensure GL does not starve other threads
         Thread.yield();
@@ -1438,6 +1438,7 @@ public class GL10Impl implements GL10, GL10Ext {
             checkIndices(indexArray);
         }
 */
+
         q(CMD_DRAW_ELEMENTSB, 4);
         q(mode);
         q(count);
