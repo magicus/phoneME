@@ -53,16 +53,6 @@ public class JUMPApplication
      * @param title The application's title, can be null
      * @param iconPath The location of the application's icon in, can be null
      * @param type The application's type
-     */    
-    public JUMPApplication(String title, URL iconPath, JUMPAppModel type) {
-        this(title, iconPath, type, -1);        
-    }
-    
-    /**
-     * Create an instance of an application.
-     * @param title The application's title, can be null
-     * @param iconPath The location of the application's icon in, can be null
-     * @param type The application's type
      * @param id The installation id of the application
      */
     public JUMPApplication(String title, URL iconPath, JUMPAppModel type, int id) {
@@ -80,6 +70,7 @@ public class JUMPApplication
         }
         
         addProperty(ID_KEY, Integer.toString(id));        
+
     }
     
     /**
