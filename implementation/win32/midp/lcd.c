@@ -653,9 +653,11 @@ int handleNetworkDatagramEvents(WPARAM wParam,LPARAM lParam) {
 #endif
         return 0;
     case FD_READ:
+#ifdef ENABLE_JSR_120
         if (JAVACALL_OK == try_process_wma_emulator((javacall_handle)wParam)) {
             return 0;
         }
+#endif
 
         javanotify_datagram_event(
                                  JAVACALL_EVENT_DATAGRAM_RECVFROM_COMPLETED,
