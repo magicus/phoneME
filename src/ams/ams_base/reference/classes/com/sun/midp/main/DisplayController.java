@@ -295,6 +295,7 @@ class DisplayController {
      */
     MIDletProxy startPreempting(MIDletProxy preempting) {
         MIDletProxy foreground;
+        
         foreground = midletProxyList.getForegroundMIDlet();
         if (foreground != null) {
             preempting.setPreemptedMidlet(foreground);
