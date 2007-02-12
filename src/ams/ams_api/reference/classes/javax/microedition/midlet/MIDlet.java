@@ -33,6 +33,8 @@ import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 
+import javax.microedition.lcdui.Display;
+
 /**
  * A <code>MIDlet</code> is a MID Profile application.
  * The application must extend this class to allow the
@@ -110,6 +112,9 @@ public abstract class MIDlet {
      */
     protected MIDlet() {
         peer = MIDletStateHandler.newMIDletPeer(classSecurityToken, this);
+
+        // Ensure that a display for this midlet is created
+        Display d = Display.getDisplay(this);
     }
 
     /**
@@ -214,7 +219,7 @@ public abstract class MIDlet {
      *
      */
     public final void notifyDestroyed() {
-	peer.notifyDestroyed();
+        peer.notifyDestroyed();
     }
 
     /**
@@ -236,7 +241,7 @@ public abstract class MIDlet {
      * <code>active</code> state.
      */
     public final void notifyPaused() {
-	peer.notifyPaused();
+        peer.notifyPaused();
     }
 
     /**
@@ -260,7 +265,7 @@ public abstract class MIDlet {
      * if key is <code>null</code>.
      */
     public final String getAppProperty(String key) {
-	return peer.getMIDletSuite().getProperty(key);
+        return peer.getMIDletSuite().getProperty(key);
     }
 
     /**
@@ -276,7 +281,7 @@ public abstract class MIDlet {
      * such as timers or callbacks.
      */
     public final void resumeRequest() {
-	peer.resumeRequest();
+        peer.resumeRequest();
     }
 
     /**
@@ -373,6 +378,6 @@ public abstract class MIDlet {
      *
      */
     public final int checkPermission(String permission) {
-	return peer.checkPermission(permission);
+        return peer.checkPermission(permission);
     }
 }
