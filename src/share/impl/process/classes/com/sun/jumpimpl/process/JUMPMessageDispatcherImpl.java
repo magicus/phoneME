@@ -210,6 +210,9 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 
 		JUMPMessageReceiveQueue wrappedQueue =
 		    new JUMPMessageReceiveQueue () {
+			private final Object closeLock = new Object();
+			private boolean closed = false;
+
 			public JUMPMessage receiveMessage(long timeout)
 			    throws JUMPTimedOutException, IOException
 			{
@@ -218,6 +221,14 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 
 			public void close()
 			{
+			    synchronized (closeLock) {
+				if (closed) {
+				    return;
+				}
+				else {
+				    closed = true;
+				}
+			    }
 			    queue.close();
 			    synchronized(lock) {
 				listeners.remove(messageType);
