@@ -263,27 +263,20 @@ static javacall_bool checkForEvents(long timeout) {
     }
 
     do {
-        switch (MsgWaitForMultipleObjects(1, handles, FALSE, timeout, QS_ALLINPUT)) {
-
-        case WAIT_OBJECT_0:
-            /* We got signal to unblock a Java thread. */
-            return JAVACALL_TRUE;
-
-        case WAIT_OBJECT_0+1:
-            if (PeekMessage(&msg, NULL, 0, 0, TRUE)) {
-                /* Dispatching the message will call WndProc below. */
-                if (msg.message == WM_QUIT) {
-                    return JAVACALL_FALSE;
-                }
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
+        /*
+         * Process any pending messages regardless of being seen or not
+         */
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            if (msg.message == WM_QUIT) {
+                return JAVACALL_FALSE;
             }
-            break;
-
-        case WAIT_TIMEOUT:
-            return JAVACALL_FALSE; /* time out */
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
         }
-        
+
+        /*
+         * Check if timed out when processing messages.
+         */
         if (timeout > 0) {
             after = (unsigned long)GetTickCount();
             if (after >= before) {
@@ -296,6 +289,32 @@ static javacall_bool checkForEvents(long timeout) {
 
         before = after;
 
+        if (timeout > 0) {
+            /*
+             * Wait for events, new messages or timeout
+             */
+            switch (MsgWaitForMultipleObjects(1, handles, FALSE, timeout, QS_ALLEVENTS)) {
+
+            case WAIT_OBJECT_0:
+                /*
+                 * We got signal to unblock a Java thread.
+                 */
+                return JAVACALL_TRUE;
+
+            case WAIT_OBJECT_0+1:
+                /*
+                 * New message, fallback to PeekMessage.
+                 */
+                break;
+
+            case WAIT_TIMEOUT:
+                /*
+                 * Timed out.
+                 */
+                return JAVACALL_FALSE;
+            }
+        }
+        
     } while ( (timeout > 0) || (forever == JAVACALL_TRUE) );
 
     return JAVACALL_FALSE; /* time out */
