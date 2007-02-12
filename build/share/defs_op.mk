@@ -59,7 +59,7 @@ MIDP_JSROP_USE_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),USE_JSR_$(jsr_numbe
 # Jump API classpath
 EMPTY =
 ONESPACE = $(EMPTY) $(EMPTY)
-JSROP_JUMP_API = $(subst $(ONESPACE),$(PS),$(JUMP_API_CLASSESZIP))
+JSROP_JUMP_API = $(subst $(ONESPACE),$(PS),$(JUMP_API_CLASSESZIP) $(JUMP_IMPL_CLASSESZIP))
 
 # SecOP - CDC/FP Security Optional Package
 ifeq ($(USE_SECOP),true)
@@ -72,6 +72,10 @@ endif
 
 # If any JSR is built include JSROP abstractions and Javacall building
 ifneq ($(JSROP_BUILD_JARS),)
+# Check Jump building
+ifneq ($(CVM_INCLUDE_JUMP), true)
+$(error JSR optional packages require Jump to be supported; CVM_INCLUDE_JUMP must be true) 
+endif
 JAVACALL_TARGET=$(TARGET_OS)-$(TARGET_CPU_FAMILY)
 # Check javacall makefile and include it
 export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
