@@ -30,7 +30,8 @@ ifeq ($(CVM_INCLUDE_JUMP),true)
 printconfig::
 	@echo "JUMP_DIR           = $(JUMP_DIR)"
 
-jumptargets: $(JUMP_API_CLASSESZIP) $(JUMP_IMPL_CLASSESZIP)
+.PHONY: jumptargets force_jump_build
+jumptargets: force_jump_build
 
 $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo updating $@ [from rules_jump.mk]
@@ -43,27 +44,24 @@ $(CVM_BUILD_DEFS_MK)::
 # that force it to be rebuilt. But list $(JUMP_DEPENDENCIES) anyway just to
 # make things explicit
 #
-$(JUMP_API_CLASSESZIP): $(JUMP_DEPENDENCIES) force_jump_build
-	$(AT)echo "Building jump api's ..."
-	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml build-api)
-	$(AT)cp $@ $(CVM_LIBDIR)
+force_jump_build: $(JUMP_DEPENDENCIES)
+	$(AT)echo "Building jump api's and implementation ..."
+	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml all)
+	$(AT)cp $(JUMP_API_CLASSESZIP) \
+                $(JUMP_IMPL_CLASSESZIP) \
+                $(JUMP_SHARED_BOOTCLASSESZIP) \
+                $(JUMP_EXECUTIVE_BOOTCLASSESZIP) \
+                $(CVM_LIBDIR)
 
 .PHONY: javadoc-api
 javadoc-api:
 	$(AT)echo "Building Javadoc for jump api's ..."
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml javadoc-api)
 
-$(JUMP_IMPL_CLASSESZIP): $(JUMP_API_CLASSESZIP) $(MIDP_CLASSESZIP) force_jump_build
-	$(AT)echo "Building jump implementation ..."
-	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml build-impl)
-	$(AT)cp $@ $(CVM_LIBDIR)
-
 $(JUMP_NATIVE_LIBRARY_PATHNAME) :: $(JUMP_NATIVE_LIB_OBJS)
 	@echo "Linking $@"
 	$(SO_LINK_CMD)
 	$(AT)cp $@ $(CVM_LIBDIR)
-
-force_jump_build:
 
 #
 # JUMP unit testing
