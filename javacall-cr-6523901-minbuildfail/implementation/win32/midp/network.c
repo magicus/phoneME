@@ -705,7 +705,9 @@ javacall_result javacall_network_init_start(void) {
         netinit = 1;
     }
 
+#ifdef ENABLE_JSR_120
     init_wma_emulator();
+#endif
 #ifdef ENABLE_NETWORK_TRACING
     javacall_print("network_init_start\n");
 #endif
@@ -734,7 +736,9 @@ javacall_result javacall_network_init_finish() {
  */
 javacall_result javacall_network_finalize_start(void)
 {
+#ifdef ENABLE_JSR_120
     finalize_wma_emulator();
+#endif
 #ifdef ENABLE_NETWORK_TRACING
     javacall_print("network_finalize_start\n");
 #endif
