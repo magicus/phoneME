@@ -36,14 +36,20 @@ define generatePropertyInitializer
 endef
 
 
-# compileJSROP(dir,JSROPDIR,FILES)
+# Macro to pre-process Jpp file into Java file
+# runjpp(<input_jpp_file>, <output_java_file>)
+define runjpp
+    $(CVM_JAVA) -classpath $(TOOLS_OUTPUT_DIR) Jpp $(JPP_DEFS) -o $(2) $(1)
+endef
+
+# compileJSROP(dir,JSROPDIR,FILES,EXTRA_CLASSPATH)
 define compileJSROP
 	@echo "Compiling "$(1)" classes...";			\
 	mkdir -p $(2)/classes;			\
 	$(JAVAC_CMD)						\
 		-d $(2)/classes \
 		-bootclasspath $(CVM_BUILDTIME_CLASSESDIR) 	\
-		-classpath $(JAVACLASSES_CLASSPATH)$(PS)$(JSROP_JUMP_API)$(PS)$(ABSTRACTIONS_JAR)$(MIDP_API_CLASSPATH)$(DEPS_CLASSPATH) \
+		-classpath $(JAVACLASSES_CLASSPATH)$(PS)$(JSROP_JUMP_API)$(PS)$(ABSTRACTIONS_JAR)$(PS)$(MIDP_CLASSESZIP)$(4) \
 		$(3)
 endef
 
@@ -53,13 +59,13 @@ define makeJSROPJar
 	$(CVM_JAR) cf $(1) -C $(2) .;
 endef
 
-# compileJSRClasses(jsrNumber)
+# compileJSRClasses(jsrNumber,additionalClasspath)
 # The following variables MUST BE defined
 # JSR_#_BUILD_DIR            - path to JSR's build directory
 # SUBSYSTEM_JSR_#_JAVA_FILES - list of JSR's java sources paths
 # JSR_#_JAR                  - JSR's jar file path
 define compileJSRClasses
-	$(call compileJSROP,jsr$(1),$(JSR_$(1)_BUILD_DIR),$(SUBSYSTEM_JSR_$(1)_JAVA_FILES))
+	$(call compileJSROP,jsr$(1),$(JSR_$(1)_BUILD_DIR),$(SUBSYSTEM_JSR_$(1)_JAVA_FILES),$(2))
 	$(call makeJSROPJar,$(JSR_$(1)_JAR),$(JSR_$(1)_BUILD_DIR)/classes)
 endef
 
