@@ -396,6 +396,11 @@ int loadImageFromCache(SuiteIdType suiteId, const pcsl_string * resName,
     }
 
     do {
+        /*
+         * IMPL_NOTE: here is assumed that the image cache is located in
+         * the same storage as the midlet suite. This may not be true.
+         */
+
         /* Build path */
         StorageIdType storageId;
         errorCode = midp_suite_get_suite_storage(suiteId, &storageId);
