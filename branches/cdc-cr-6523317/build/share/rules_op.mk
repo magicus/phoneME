@@ -28,7 +28,7 @@ define runjpp
     $(CVM_JAVA) -classpath $(TOOLS_OUTPUT_DIR) Jpp $(JPP_DEFS) -o $(2) $(1)
 endef
 
-# compileJSROP(dir,JSROPDIR,FILES)
+# compileJSROP(dir,JSROPDIR,FILES,EXTRA_CLASSPATH)
 define compileJSROP
 	@echo "Compiling "$(1)" classes...";			\
 	mkdir -p $(2)/classes;			\
