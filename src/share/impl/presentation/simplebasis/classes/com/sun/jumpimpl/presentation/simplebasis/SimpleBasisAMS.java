@@ -43,6 +43,7 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -217,8 +218,14 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
     }
     
     private Image getIconImage(JUMPApplication app) {
-        trace("Icon Path: " + app.getIconPath().getFile());
-        return Toolkit.getDefaultToolkit().createImage(app.getIconPath());
+        //trace("Icon Path: " + app.getIconPath().getFile());
+        URL iconPath = app.getIconPath();
+        trace("Icon Path: " + iconPath);
+        if (iconPath != null) {
+            return Toolkit.getDefaultToolkit().createImage(iconPath);
+        } else {
+            return null;
+        }
     }
     
     private SimpleBasisAMSImageButton addCommandButton(String label, ActionListener action) {
@@ -255,7 +262,13 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
     }
     
     private SimpleBasisAMSImageButton addScreenButton(JUMPApplication app, ActionListener action, Color color) {
-        SimpleBasisAMSImageButton button = new SimpleBasisAMSImageButton(getIconImage(app));
+        Image image = getIconImage(app);
+        SimpleBasisAMSImageButton button = null;
+        if (image != null) {
+            button = new SimpleBasisAMSImageButton(getIconImage(app));
+        } else {
+            button = new SimpleBasisAMSImageButton();
+        }
         if (button == null) {
             return null;
         }
