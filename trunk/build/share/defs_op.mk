@@ -23,6 +23,8 @@
 #
 
 SUBSYSTEM_MAKE_FILE       = subsystem.gmk
+PROP_INIT_PACKAGE         = com.sun.cdc.config
+PROP_INIT_CLASS           = PropertyInitializer
 
 JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239
 
@@ -30,7 +32,7 @@ JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239
 JSROP_LIB_DIR   = $(CVM_LIBDIR)
 
 # Directory where JSRs build subdirectories are created
-JSROP_BUILD_DIR = $(CDC_DIST_DIR)
+JSROP_BUILD_DIR = $(CVM_BUILD_TOP)
 
 # Directory which JSRs object files are put to
 JSROP_OBJ_DIR   = $(CVM_OBJDIR)
