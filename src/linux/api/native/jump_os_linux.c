@@ -498,7 +498,7 @@ jumpMessageQueueClose(JUMPMessageQueueHandle handle)
 }
 
 int 
-jumpMessageQueueDataOffset() 
+jumpMessageQueueDataOffset(void) 
 {
     return 0;
 }
@@ -787,7 +787,7 @@ jumpMessageQueueReceive(JUMPPlatformCString type,
  * count.
  */
 void
-jumpMessageQueueInterfaceDestroy()
+jumpMessageQueueInterfaceDestroy(void)
 {
     struct jump_message_queue *p;
 
@@ -809,7 +809,7 @@ jumpMessageQueueInterfaceDestroy()
  * The thread porting layer
  */
 int
-jumpThreadGetId()
+jumpThreadGetId(void)
 {
     return (int)pthread_self();
 }

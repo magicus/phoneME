@@ -33,7 +33,7 @@
  * Process implementation
  */
 int 
-jumpProcessGetId()
+jumpProcessGetId(void)
 {
     return getpid();
 }
@@ -54,7 +54,7 @@ jumpProcessSetServerPid(int sPid)
 }
 
 int 
-jumpProcessGetExecutiveId()
+jumpProcessGetExecutiveId(void)
 {
     return executivePid;
 }

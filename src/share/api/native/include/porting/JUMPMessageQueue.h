@@ -83,7 +83,7 @@ extern void jumpMessageQueueClose(JUMPMessageQueueHandle handle);
  * then this should return the offset where the message data should be 
  * copied by the caller.
  */
-extern int jumpMessageQueueDataOffset();
+extern int jumpMessageQueueDataOffset(void);
 
 /**
  * Send the message data to the message queue. This call does not block
@@ -129,7 +129,7 @@ extern int jumpMessageQueueReceive(JUMPPlatformCString messageType,
 /*
  * Close and destroy all message queues created by the process.
  */
-extern void jumpMessageQueueInterfaceDestroy();
+extern void jumpMessageQueueInterfaceDestroy(void);
     
 #if defined __cplusplus 
 }
