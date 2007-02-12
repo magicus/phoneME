@@ -32,6 +32,12 @@
 #
 SUBSYSTEMS += jsr_172
 
+JSR_172_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr172
+JSR_172_GENERATED_DIR   = $(JSR_172_BUILD_DIR)/generated
+JSR_172_JAR             = $(JSROP_LIB_DIR)/jsr172.jar
+
+JPP_DEFS             += -DENABLE_JSR_172
+
 # Javadoc source path
 SUBSYSTEM_JSR172_SOURCEPATH += $(JSR_172_DIR)/src/ri/jaxp$(PATHSEP)$(JSR_172_DIR)/src/ri/jaxrpc$(PATHSEP)$(JSR_172_DIR)/src/ri/sg
 
@@ -64,10 +70,7 @@ INTERNAL_JSR_172_CONFIG_DIR = $(JSR_172_DIR)/src/config
 
 # Jpp files that need preprocessing
 #
-$(GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPDecoder.java: $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/com/sun/j2mews/xml/rpc/SOAPDecoder.jpp
-	@$(call runjpp,$^,$@)
-
-$(GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPEncoder.java: $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/com/sun/j2mews/xml/rpc/SOAPEncoder.jpp
+$(JSR_172_GENERATED_DIR)/classes/%.java: $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/%.jpp
 	@$(call runjpp,$^,$@)
 
 # Include JSR_172 system properties in Configuration
@@ -112,8 +115,8 @@ INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES := \
         $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/FaultDetailHandler.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/FaultDetailException.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/com/sun/j2mews/xml/rpc/OperationImpl.java \
-        $(GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPDecoder.java \
-        $(GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPEncoder.java
+        $(JSR_172_GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPDecoder.java \
+        $(JSR_172_GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPEncoder.java \
 
 # rmi (for ri_jaxrpc)
 INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES := \
@@ -134,6 +137,9 @@ SUBSYSTEM_JSR_172_JAVA_FILES = \
 ifneq ($(CVM_INCLUDE_JUMP), true)
     SUBSYSTEM_JSR_172_JAVA_FILES += $(INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES)
 endif
+
+$(JSR_172_JAR): $(SUBSYSTEM_JSR_172_JAVA_FILES)
+	$(call compileJSRClasses,172)
 
 # Append JSR 172 source bundle creation to target
 source_bundle:: jsr_172_source_bundle
