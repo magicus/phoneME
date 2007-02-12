@@ -38,8 +38,8 @@
 
 #include <PiscesSysutils.h>
 
-#define DEFAULT_SUBPIXEL_LG_POSITIONS_X 3
-#define DEFAULT_SUBPIXEL_LG_POSITIONS_Y 3
+#define DEFAULT_SUBPIXEL_LG_POSITIONS_X 1
+#define DEFAULT_SUBPIXEL_LG_POSITIONS_Y 1
 
 #define PISCES_ACV (jlong)(65536.0 * 0.22385762508460333)
 
@@ -326,11 +326,16 @@ renderer_endRendering(Renderer* rdr) {
  */  
 static INLINE void
 renderer_setAntialiasing(Renderer* rdr, jboolean antialiasingOn) {
-    jint samples;
+    jint samplesX, samplesY;
 
-    samples = antialiasingOn ? 3 : 0;
+	if (antialiasingOn) {
+		samplesX = DEFAULT_SUBPIXEL_LG_POSITIONS_X;
+		samplesY = DEFAULT_SUBPIXEL_LG_POSITIONS_Y;
+	} else {
+		samplesX = samplesY = 0;
+	}
     rdr->_antialiasingOn = antialiasingOn;
-    setAntialiasing(rdr, samples, samples);
+    setAntialiasing(rdr, samplesX, samplesY);
     // TODO: invalidate(); ??
 }
 /**
