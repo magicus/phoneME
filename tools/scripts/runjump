@@ -192,8 +192,8 @@ elif [ "$PHONEME_PLATFORM" = "i686" ] ; then
 fi
  
 SYSTEM_PROPERTIES="-Dinstaller.repository=$JUMP_CONTENT_STORE_DIR"
-SERVER_JARFILE=$PHONEME_DIST/lib/jump.jar
-EXECUTIVE_JARFILE=$PHONEME_DIST/lib/executive-jump.jar
+SERVER_JARFILE=$PHONEME_DIST/jump/lib/jump.jar
+EXECUTIVE_JARFILE=$PHONEME_DIST/jump/lib/executive-jump.jar
 CVMC=$PHONEME_DIST/bin/cvmc
 
 ##### End: Possible Variables Needing Modification #####
