@@ -26,9 +26,7 @@
 
 package com.sun.midp.chameleon.layers;
 
-import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
-import com.sun.midp.chameleon.skins.*;
 
 /**
  * The InputModeLayer is a very simple overlay that displays to
