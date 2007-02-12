@@ -52,7 +52,7 @@ public class LifeCycleModuleImpl
     private JUMPMessageDispatcher dispatcher;
     private JUMPExecutive exec;
     private RequestSenderHelper rsh;
-    private Object messageRegistration;
+    private JUMPMessageRegistration messageRegistration;
     private String isolateExtraArg;
     private String defaultVMArgs;
     
@@ -203,7 +203,7 @@ public class LifeCycleModuleImpl
     }
     
     public void unload() {
-	dispatcher.cancelRegistration(messageRegistration);
+	messageRegistration.cancelRegistration();
     }
 
     public void handleMessage(JUMPMessage m) {

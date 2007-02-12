@@ -45,20 +45,10 @@ public interface JUMPMessageDispatcher {
      * @throws JUMPMessageDispatcherTypeException if there is already an
      * existing handler registration for the message type.
      */
-    public Object registerDirect(String messageType) 
+    JUMPMessageReceiveQueue createJUMPMessageReceiveQueue(String messageType) 
 	throws JUMPMessageDispatcherTypeException;
     
 
-    /**
-     * Blocks and waits for a message of type <code>messageType</code>.
-     * 
-     * @throws JUMPMessageDispatcherTypeException if there is already
-     * an existing handler registration for the message type, or if it has not
-     * been registered via <code>registerDirect()</code>.
-     */
-    public JUMPMessage waitForMessage(String messageType, long timeout)
-	throws JUMPMessageDispatcherTypeException, JUMPTimedOutException, IOException;
-    
     /**
      * Registers the message handler for the message type.
      *
@@ -70,14 +60,7 @@ public interface JUMPMessageDispatcher {
      * @throws JUMPMessageDispatcherTypeException if the message type was
      * registered via <code>registerDirect()</code>.
      */
-    public Object registerHandler(String messageType,
-				  JUMPMessageHandler handler) 
+    JUMPMessageRegistration registerHandler(
+	String messageType, JUMPMessageHandler handler) 
 	throws JUMPMessageDispatcherTypeException;
-    
-
-    /**
-     * Removes the registration for the message type. This applies to
-     * direct registrations as well as handler registrations.
-     */
-    public void cancelRegistration(Object registrationToken);
 }
