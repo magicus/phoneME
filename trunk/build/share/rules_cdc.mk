@@ -38,5 +38,18 @@ $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java: $(CONFIGURATO
 	-params propertyInitializers '$(PROPERTY_INITIALIZER_LIST)' \
 	-out $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java
 
+build-unittests::
+	$(AT)echo "Building CDC unit-tests ..."
+	$(check_JUNIT_JAR)
+	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(BUILD_UNITTEST_ANT_OPTIONS) -f build/build.xml only-build-unittests)
+
+
+run-unittests::
+	$(AT)echo "Running CDC unit-tests ..."
+	$(check_JUNIT_JAR)
+	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(RUN_UNITTEST_ANT_OPTIONS) -f build/build.xml only-run-unittests) 
+
+
+
 -include ../share/rules_cdc-commercial.mk
 include ../share/rules_zoneinfo.mk

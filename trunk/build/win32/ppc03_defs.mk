@@ -18,7 +18,8 @@
 # 02110-1301 USA 
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
-# Clara, CA 95054 or visit www.sun.com 
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
 #
 # @(#)ppc03_defs.mk	1.2 06/10/10
 #
