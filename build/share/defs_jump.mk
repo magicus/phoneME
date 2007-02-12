@@ -59,12 +59,14 @@ ifneq ($(CVM_PRELOAD_LIB), true)
 JUMP_DEPENDENCIES   += $(LIB_CLASSESJAR)
 endif
 
-JUMP_API_CLASSESZIP := \
+JUMP_API_CLASSESZIP             := \
     $(addprefix $(JUMP_OUTPUT_DIR)/,\
         shared-jump-api.jar client-jump-api.jar executive-jump-api.jar)
-JUMP_IMPL_CLASSESZIP:= \
+JUMP_IMPL_CLASSESZIP            := \
     $(addprefix $(JUMP_OUTPUT_DIR)/,\
         shared-jump-impl.jar client-jump-impl.jar executive-jump-impl.jar)
+JUMP_SHARED_BOOTCLASSESZIP      := $(JUMP_OUTPUT_DIR)/jump.jar
+JUMP_EXECUTIVE_BOOTCLASSESZIP   := $(JUMP_OUTPUT_DIR)/executive-jump.jar
 
 JUMP_SRCDIRS           += \
 	$(JUMP_SRCDIR)/share/api/native \
