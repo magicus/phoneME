@@ -34,7 +34,6 @@ import java.util.*;
 import com.sun.midp.chameleon.skins.TickerSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.SoftButtonSkin;
-import com.sun.midp.util.ResourceHandler;
 
 /**
  *
@@ -91,7 +90,7 @@ public class TickerLayer extends CLayer {
 
     /**
      * Set the ticker of this ticker layer.
-     * @param text
+     * @param text the text to be displayed on the ticker
      * @return * @return true if visability of layer was changed
      */
     public boolean setText(String text) {
@@ -101,7 +100,7 @@ public class TickerLayer extends CLayer {
             super.visible = (text != null && text.trim().length() > 0);
             textLoc = bounds[X] + bounds[W];
             textLen = (text == null) ? 0 : TickerSkin.FONT.stringWidth(text);
-            this.dirty = true;
+            setDirty();
         }
         return (oldVisable != super.visible);
     }

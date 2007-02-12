@@ -324,7 +324,7 @@ class DateEditor extends PopupLayer implements CommandListener {
         int o = DateEditorSkin.IMAGE_CAL_BG.getWidth() / 7;
         int rowH = 11;
         //variable o, rowH, h is same as in paintCalendar()
-        int h = (int)(DateEditorSkin.IMAGE_DATES.getHeight() / 31); 
+        int h = DateEditorSkin.IMAGE_DATES.getHeight() / 31;
         
         if (transX >= 0 && transX <= calendar_bounds[W] &&
             transY >= 0 && transY <= calendar_bounds[H] &&
@@ -520,7 +520,6 @@ class DateEditor extends PopupLayer implements CommandListener {
         int selectedIndex = 0;
         
         // populate HOURS[]
-        int endIndex;
         String[] hours;
         if (lf.CLOCK_USES_AM_PM) {
             HOURS = new int[12];
@@ -737,9 +736,8 @@ class DateEditor extends PopupLayer implements CommandListener {
         g.translate(2, 0);
         
         int o = DateEditorSkin.IMAGE_CAL_BG.getWidth() / 7;
-        int rem = DateEditorSkin.IMAGE_CAL_BG.getWidth() % 7;
         int rowH = 11;
-        int h = (int)(DateEditorSkin.IMAGE_DATES.getHeight() / 31);         
+        int h = DateEditorSkin.IMAGE_DATES.getHeight() / 31;
         int w = DateEditorSkin.IMAGE_DATES.getWidth();
         
         // draw calendar
@@ -815,7 +813,7 @@ class DateEditor extends PopupLayer implements CommandListener {
                 }
                 
                 if (DateEditorSkin.IMAGE_AMPM != null) {
-                    int w = (int)(DateEditorSkin.IMAGE_AMPM.getWidth() / 2);
+                    int w = DateEditorSkin.IMAGE_AMPM.getWidth() / 2;
                     g.drawRegion(DateEditorSkin.IMAGE_AMPM,
                                  0, 0, 
                                  w, DateEditorSkin.IMAGE_AMPM.getHeight(),
@@ -847,7 +845,7 @@ class DateEditor extends PopupLayer implements CommandListener {
                 }
                 
                 if (DateEditorSkin.IMAGE_AMPM != null) {
-                    int w = (int)(DateEditorSkin.IMAGE_AMPM.getWidth() / 2);
+                    int w = DateEditorSkin.IMAGE_AMPM.getWidth() / 2;
                     g.drawRegion(DateEditorSkin.IMAGE_AMPM,
                                  (DateEditorSkin.IMAGE_AMPM.getWidth() / 2), 0, 
                                  w, DateEditorSkin.IMAGE_AMPM.getHeight(),

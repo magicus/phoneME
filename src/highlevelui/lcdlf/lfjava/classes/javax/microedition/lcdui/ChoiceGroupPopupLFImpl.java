@@ -137,7 +137,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             int yOffset = height -
                 ChoiceGroupSkin.IMAGE_BUTTON_ICON.getHeight();
             if (yOffset > 0) {
-                yOffset = (int)(yOffset / 2);
+                yOffset = yOffset / 2;
             } else {
                 yOffset = 0;
             }
@@ -201,7 +201,6 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      */
     void uCallTraverseOut() {
         super.uCallTraverseOut();
-        Form form = null;
         
         synchronized (Display.LCDUILock) {
             if (popupLayer.isPopupOpen()) {
@@ -813,7 +812,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
         /**
          * Perform a scrolling at the given position.
-         * @param context position
+         * @param position
          */
         void uScrollAt(int position) {
             int newY = (viewable[HEIGHT] - viewport[HEIGHT]) * position / 100;
@@ -946,7 +945,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
         /**
          *  Set sizeChanged flag
-         * @param true if size change iccurs
+         * @param sizeChanged true if size change occurs
          */
         public void setSizeChanged(boolean sizeChanged) {
             this.sizeChanged = sizeChanged;
@@ -962,7 +961,6 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
         /**
          *  Set popup Layer flag
-         * @param true if popup Layer is shown
          */
         public void setPopupOpen() {
             this.popUpOpen = true;

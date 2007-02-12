@@ -32,7 +32,6 @@ import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
-import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.lcdui.EventConstants;
 
 /**

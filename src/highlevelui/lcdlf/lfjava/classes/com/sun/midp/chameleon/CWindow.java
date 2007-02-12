@@ -29,7 +29,6 @@ package com.sun.midp.chameleon;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.layers.BackgroundLayer;
 import javax.microedition.lcdui.*;
-import java.util.Vector;
 
 /**
  * This class is a top-level "window" in Chameleon. A window is
@@ -290,7 +289,7 @@ public abstract class CWindow {
         for(CLayerElement le2 = le.getLower();
                 le2 != null; le2 = le2.getLower()) {
             CLayer l2 = le2.getLayer();
-            if (l2.dirty) {
+            if (l2.isDirty()) {
                 l2.subDirtyRegion(
                     l.bounds[X] - l2.bounds[X],
                     l.bounds[Y] - l2.bounds[Y],
@@ -331,7 +330,7 @@ public abstract class CWindow {
         int dx = l.bounds[X];
         int dy = l.bounds[Y];
         int dh, dw;
-        if (l.dirtyBounds[X] == -1) {
+        if (l.isEmptyDirtyRegions()) {
             dw = l.bounds[W];
             dh = l.bounds[H];
         } else {
@@ -421,7 +420,7 @@ public abstract class CWindow {
 
             // The dirty layer can be invisible, that means it
             // has been hidden since the previous paint.
-            if (l.dirty) {
+            if (l.isDirty()) {
                 // In the case higher layer was changed we need to
                 // restart all the algorithm from the changed layer
                 changed = sweepAndMarkDirtyLayer(le, !l.visible);
@@ -457,7 +456,7 @@ public abstract class CWindow {
         for (CLayerElement le = layers.getBottom();
                 le != null; le = le.getUpper()) {
             l = le.getLayer();
-            if (l.visible && l.dirty) {
+            if (l.visible && l.isDirty()) {
 
                 // Prepare relative dirty region coordinates
                 // of the current layer
