@@ -39,9 +39,13 @@
 extern "C" {
 #endif
 
+#ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
-#include <javacall_mms.h>
 #include <javacall_cbs.h>
+#endif
+#ifdef ENABLE_JSR_205
+#include <javacall_mms.h>
+#endif
 #include <javacall_events.h>
 #include <javacall_time.h>
 #include <javacall_socket.h>
@@ -51,7 +55,9 @@ extern "C" {
 #endif
 #include <javacall_network.h>
 
+#ifdef ENABLE_JSR_135
 #include <javacall_multimedia.h>
+#endif
 #include <javacall_keypress.h>
 #include <javacall_penevent.h>
 #include <javacall_input.h>
@@ -172,12 +178,14 @@ typedef struct {
     int stub;
 } midp_jc_event_cbs_incoming;
 
+#ifdef ENABLE_JSR_135
 typedef struct {
     javacall_media_notification_type mediaType;
     int isolateId;
     int playerId;
     long data;
 } midp_jc_event_multimedia;
+#endif
 
 typedef struct {
     javacall_textfield_status status;
@@ -244,7 +252,9 @@ typedef struct {
         midp_jc_event_sms_incoming         smsIncomingEvent;
         midp_jc_event_mms_incoming         mmsIncomingEvent;
         midp_jc_event_cbs_incoming         cbsIncomingEvent;
+#ifdef ENABLE_JSR_135
         midp_jc_event_multimedia           multimediaEvent;
+#endif
         midp_jc_event_textfield            textFieldEvent;
         midp_jc_event_image_decoder        imageDecoderEvent;
 #ifdef ENABLE_JSR_179

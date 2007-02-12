@@ -39,9 +39,13 @@
 #include <javacall_keypress.h>
 #include <javacall_penevent.h>
 #include <javacall_lifecycle.h>
+#ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
-#include <javacall_mms.h>
 #include <javacall_cbs.h>
+#endif
+#ifdef ENABLE_JSR_205
+#include <javacall_mms.h>
+#endif
 #include <javacall_events.h>
 #include <javacall_time.h>
 #include <javacall_socket.h>
@@ -494,6 +498,7 @@ void javanotify_network_event(javacall_network_event netEvent) {
     #include <jsr205_mms_pool.h>
 #endif
 
+#ifdef ENABLE_JSR_120
 /**
  * callback that needs to be called by platform to handover an incoming SMS intended for Java 
  *
@@ -535,7 +540,9 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
 #endif
     return;
 }
+#endif
 
+#ifdef ENABLE_JSR_205
 /*
  * See javacall_mms.h for description
  */
@@ -556,7 +563,9 @@ void javanotify_incoming_mms_singlecall(
 #endif
     return;
 }
+#endif
 
+#ifdef ENABLE_JSR_120
 /**
  * callback that needs to be called by platform to handover an incoming CBS intended for Java 
  *
@@ -618,7 +627,9 @@ void javanotify_sms_send_completed(javacall_sms_sending_result result,
 #endif
     return;
 }
+#endif
 
+#ifdef ENABLE_JSR_205
 /**
  * A callback function to be called by platform to notify that an MMS 
  * has completed sending operation.
@@ -644,6 +655,7 @@ void javanotify_mms_send_completed(javacall_mms_sending_result result,
 #endif
     return;
 }
+#endif
 
 #ifdef ENABLE_JSR_177
 /**
@@ -835,6 +847,7 @@ void javanotify_datagram_event(javacall_datagram_callback_type type,
     midp_jc_event_send(&e);
 }
 
+#ifdef ENABLE_JSR_135
 /**
  * Post native media event to Java event handler
  * 
@@ -865,6 +878,7 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
     midp_jc_event_send(&e);
 #endif
 }
+#endif
 
 /**
  * The implementation call this callback notify function when image decode done
