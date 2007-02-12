@@ -217,6 +217,8 @@ MODULE_SATSA_APDU_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/cardreader/CardDeviceException.java
 MODULE_SATSA_APDU_NATIVE_FILES += \
 	apdu_manager_kni.c 
+SUBSYSTEM_SATSA_CNI_CLASSES += \
+    com.sun.cardreader.PlatformCardDevice
 else
 
 # JSR_177_APDU_MANAGER=carddevice
@@ -247,8 +249,6 @@ MODULE_SATSA_APDU_JAVA_FILES += \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/PlatformCardDevice.java
 MODULE_SATSA_APDU_NATIVE_FILES += \
 	carddevice_kni.c
-SUBSYSTEM_SATSA_CNI_CLASSES += \
-    com.sun.cardreader.PlatformCardDevice
 else
 # error - bad JSR_177_APDU_CARDDEVICE
 JSR_177_ERRORS += \
