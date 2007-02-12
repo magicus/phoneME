@@ -295,7 +295,7 @@ class MiniDateEditor extends DateEditor {
                 }
                 
                 if (DateEditorSkin.IMAGE_AMPM != null) {
-                    int w = (int)(DateEditorSkin.IMAGE_AMPM.getWidth() / 2);
+                    int w = DateEditorSkin.IMAGE_AMPM.getWidth() / 2;
                     g.drawRegion(DateEditorSkin.IMAGE_AMPM,
                                  0, 0, 
                                  w, DateEditorSkin.IMAGE_AMPM.getHeight(),
@@ -323,7 +323,7 @@ class MiniDateEditor extends DateEditor {
                 }
                 
                 if (DateEditorSkin.IMAGE_AMPM != null) {
-                    int w = (int)(DateEditorSkin.IMAGE_AMPM.getWidth() / 2);
+                    int w = DateEditorSkin.IMAGE_AMPM.getWidth() / 2;
                     g.drawRegion(DateEditorSkin.IMAGE_AMPM,
                                  (DateEditorSkin.IMAGE_AMPM.getWidth() / 2), 0, 
                                  w, DateEditorSkin.IMAGE_AMPM.getHeight(),

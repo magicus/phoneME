@@ -36,7 +36,7 @@ PATHSEP                = \;
 EXE            = .exe
 BAT            = .bat
 
-EXTRA_CFLAGS   = -nologo -DWIN32 -D_WINDOWS 
+EXTRA_CFLAGS   += -nologo -DWIN32 -D_WINDOWS 
 
 # Whoami from Cygwin
 USE_CYGWIN     = true

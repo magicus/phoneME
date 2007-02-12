@@ -28,7 +28,6 @@ package com.sun.midp.chameleon;
 
 import com.sun.midp.chameleon.layers.*;
 import com.sun.midp.chameleon.skins.*;
-import com.sun.midp.chameleon.skins.resources.*;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
@@ -283,7 +282,7 @@ public class MIDPWindow extends CWindow {
 
         if (added && layer instanceof PopupLayer) {
             PopupLayer popup = (PopupLayer)layer;
-            popup.dirty = true;
+            popup.setDirty();
             popup.visible = true;
 
             Command[] cmds = popup.getCommands();
@@ -295,7 +294,7 @@ public class MIDPWindow extends CWindow {
         }
 
         if (added && layer instanceof PTILayer) {
-            mainLayers[PTI_LAYER] = (PTILayer)layer;
+            mainLayers[PTI_LAYER] = layer;
             resize();
         }
 
@@ -624,8 +623,8 @@ public class MIDPWindow extends CWindow {
         // Thus, for the first one, the clip can be set and then translated,
         // but in the second case, the translate must be done first and then
         // the clip set.
-        if (bodyLayer.dirty) {
-            if (bodyLayer.dirtyBounds[X] == -1) {
+        if (bodyLayer.isDirty()) {
+            if (bodyLayer.isEmptyDirtyRegions()) {
                 g.setClip(bodyLayer.bounds[X], bodyLayer.bounds[Y],
                           bodyLayer.bounds[W], bodyLayer.bounds[H]);
                 g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);

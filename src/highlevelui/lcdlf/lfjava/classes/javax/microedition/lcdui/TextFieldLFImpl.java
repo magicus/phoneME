@@ -45,6 +45,7 @@ import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.TextFieldSkin;
 import com.sun.midp.chameleon.skins.resources.TextFieldResources;
 import com.sun.midp.chameleon.skins.resources.PTIResources;
+import com.sun.midp.configurator.Constants;
 
 
 import java.util.*;
@@ -1064,6 +1065,12 @@ class TextFieldLFImpl extends ItemLFImpl implements
     void uCallPointerReleased(int x, int y) {
         // don't call super method because text field does not have the option 
         // to activate the command assigned to this item by the pointer
+
+        // accept the word if the PTI is currently enabled
+        if (hasPTI()) {
+            inputSession.processKey(Constants.KEYCODE_SELECT, false);
+        }
+        
         if (pressedIn) {
             int newId = getIndexAt(x, y);
             if (newId >= 0 &&
