@@ -89,26 +89,8 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
         midpJar.c \
         JumpInit.c
 
+SUBSYSTEM_AMS_LAZY_MAKEFILES += \
+    $(JUMP_INSTALLER_DIR)/runMidlet.gmk
+
 SUBSYSTEM_AMS_EXECUTABLES = \
 	$(BINDIR)/runMidlet$(g)$(p)$(EXE)
-
-ifeq ($(CVM_PRELOAD_LIB), true)
-#
-# This is a ROMized build. MIDP natives are linked into CVM executable. No
-# need to create a separate libmidp.so.
-
-$(BINDIR)/runMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
-
-else
-#
-# Create a libmidp.so for non-ROMized build.
-#
-$(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES) 
-	@echo " ... linking $@ " $(LOG)
-	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES) $(LIBS))` $(LOG) 
-
-# Todo: need to uncomment and create JUMP specific runMidlet at some point
-$(BINDIR)/runMidlet$(g)$(p)$(EXE): $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
-#	@echo " ... creating script $@ " $(LOG)
-
-endif
