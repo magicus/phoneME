@@ -47,13 +47,10 @@ SUBSYSTEM_AMS_EXTRA_INCLUDES += \
 # Native files for the ( example ) module
 #
 ifeq ($(TARGET_VM), cldc_vm)
-  AMS_RUNMIDLET_NATIVE_FILES = \
+  SUBSYSTEM_AMS_NATIVE_FILES += \
     runMidlet.c \
     commandLineUtil.c \
     findMidlet.c
-
-  AMS_RUNMIDLET_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,\
-    $(AMS_RUNMIDLET_NATIVE_FILES))
 endif
 
 ifeq ($(USE_MULTIPLE_ISOLATES), true)

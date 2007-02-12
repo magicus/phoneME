@@ -98,7 +98,6 @@ AMS_FILEINSTALLER_NATIVE_FILES = \
 	commandLineUtil_md.c \
 	findMidlet.c
 
-
 # I3test files
 #
 ifeq ($(USE_I3_TEST), true)
