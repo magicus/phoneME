@@ -82,11 +82,15 @@ typedef enum {
     MIDP_JC_EVENT_NETWORK              ,
     MIDP_JC_EVENT_TIMER                ,
     MIDP_JC_EVENT_PUSH                 ,
+#ifdef ENABLE_JSR_120
     MIDP_JC_EVENT_SMS_SENDING_RESULT   ,
-    MIDP_JC_EVENT_MMS_SENDING_RESULT   ,
     MIDP_JC_EVENT_SMS_INCOMING         ,
-    MIDP_JC_EVENT_MMS_INCOMING         ,
     MIDP_JC_EVENT_CBS_INCOMING         ,
+#endif
+#ifdef ENABLE_JSR_205
+    MIDP_JC_EVENT_MMS_SENDING_RESULT   ,
+    MIDP_JC_EVENT_MMS_INCOMING         ,
+#endif
     MIDP_JC_EVENT_MULTIMEDIA           ,
     MIDP_JC_EVENT_PAUSE                ,
     MIDP_JC_EVENT_RESUME               ,
@@ -156,15 +160,11 @@ typedef struct {
     int            alarmHandle;
 } midp_jc_event_push;
 
+#ifdef ENABLE_JSR_120
 typedef struct {
     javacall_handle         handle;
     javacall_result result;
 } midp_jc_event_sms_sending_result;
-
-typedef struct {
-    javacall_handle         handle;
-    javacall_result result;
-} midp_jc_event_mms_sending_result;
 
 typedef struct {
     int stub;
@@ -172,11 +172,19 @@ typedef struct {
 
 typedef struct {
     int stub;
-} midp_jc_event_mms_incoming;
+} midp_jc_event_cbs_incoming;
+#endif
+
+#ifdef ENABLE_JSR_205
+typedef struct {
+    javacall_handle         handle;
+    javacall_result result;
+} midp_jc_event_mms_sending_result;
 
 typedef struct {
     int stub;
-} midp_jc_event_cbs_incoming;
+} midp_jc_event_mms_incoming;
+#endif
 
 #ifdef ENABLE_JSR_135
 typedef struct {
@@ -247,11 +255,15 @@ typedef struct {
         midp_jc_event_network              networkEvent;
         midp_jc_event_timer                timerEvent;
         midp_jc_event_push                 pushEvent;
+#ifdef ENABLE_JSR_120
         midp_jc_event_sms_sending_result   smsSendingResultEvent;
-        midp_jc_event_mms_sending_result   mmsSendingResultEvent;
         midp_jc_event_sms_incoming         smsIncomingEvent;
-        midp_jc_event_mms_incoming         mmsIncomingEvent;
         midp_jc_event_cbs_incoming         cbsIncomingEvent;
+#endif
+#ifdef ENABLE_JSR_205
+        midp_jc_event_mms_sending_result   mmsSendingResultEvent;
+        midp_jc_event_mms_incoming         mmsIncomingEvent;
+#endif
 #ifdef ENABLE_JSR_135
         midp_jc_event_multimedia           multimediaEvent;
 #endif
