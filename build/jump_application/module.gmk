@@ -27,7 +27,7 @@
 # dirs containing native source files
 ABSTRACTIONS_SRCDIRS = \
 	$(ABSTRACTIONS_DIR)/src/jump_application/native/share \
-  	$(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_PLATFORM)
+  	$(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
 
 # names of native source files (like 'file.c')
 ABSTRACTIONS_NATIVES = \
@@ -40,7 +40,7 @@ ABSTRACTIONS_NATIVES = \
 ABSTRACTIONS_INCLUDES = \
     -I$(ABSTRACTIONS_DIR)/src/include \
     -I$(ABSTRACTIONS_DIR)/src/jump_application/native/include \
-    -I$(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_PLATFORM)
+    -I$(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
 
 # start dirs for java source trees
 ABSTRACTIONS_JAVASRCDIRS = \
@@ -125,19 +125,15 @@ endif
 CVM_CNI_CLASSES += com.sun.j2me.crypto.ARC4 \
                    com.sun.j2me.crypto.RSA
 
-$(ABSTRACTIONS_JAR): $(ABSTRACTIONS_CLASSDIR) .compile.jsrop.abstracts
-	$(AT)$(CVM_JAR) cf $@ -C $(ABSTRACTIONS_CLASSDIR) .
-
-$(ABSTRACTIONS_CLASSDIR):
+$(ABSTRACTIONS_JAR): $(ABSTRACTIONS_CLASSES)
+	@echo "Compiling JSROP abstractions classes..."
 	$(AT)mkdir -p $(ABSTRACTIONS_CLASSDIR)
-    
-.compile.jsrop.abstracts: $(ABSTRACTIONS_CLASSES)
-	$(AT)echo "Compiling JSROP abstractions classes...";			\
-	$(JAVAC_CMD)						\
+	$(AT)$(JAVAC_CMD)						\
 		-d $(ABSTRACTIONS_CLASSDIR)			\
 		-bootclasspath $(CVM_BUILDTIME_CLASSESDIR) 	\
 		-classpath $(JAVACLASSES_CLASSPATH)	\
 		$(ABSTRACTIONS_CLASSES)
+	$(AT)$(CVM_JAR) cf $@ -C $(ABSTRACTIONS_CLASSDIR) .
 
 $(ABSTRACTIONS_NATIVE_LIBRARY) :: $(ABSTRACTIONS_NATIVE_OBJS)
 	@echo "Linking $@"
