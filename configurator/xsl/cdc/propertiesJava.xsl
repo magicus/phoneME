@@ -36,7 +36,7 @@ package </xsl:text>
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import com.sun.cdc.config.SystemProxy;
+import com.sun.cdc.config.DynamicProperties;
 import com.sun.j2me.main.Configuration;
 
 public class PropertyInitializer {
@@ -65,7 +65,7 @@ public class PropertyInitializer {
         </xsl:if>
         <xsl:for-each select="property[@Scope = 'system' and @Callout]">
             <xsl:sort select="@Key"/>
-            <xsl:text>        SystemProxy.setPropertyProvider("</xsl:text>
+            <xsl:text>        DynamicProperties.put("</xsl:text>
             <xsl:value-of select="@Key"/>
             <xsl:text>", </xsl:text>
             <xsl:value-of select="@Callout"/>
