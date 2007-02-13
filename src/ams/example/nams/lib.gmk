@@ -67,36 +67,29 @@ SUBSYSTEM_AMS_EXTRA_INCLUDES += \
 
 # Native files for the ( example ) module
 #
-AMS_START_MT_MIDP_NATIVE_FILES = \
-	runNams.c \
-	runNams_md.c \
+SUBSYSTEM_AMS_NATIVE_FILES += \
 	commandLineUtil.c \
 	commandLineUtil_md.c \
 	findMidlet.c
+
+AMS_RUNNAMS_NATIVE_FILES = \
+	runNams.c \
+	runNams_md.c
 
 AMS_REMOVEMIDLET_NATIVE_FILES = \
 	removeMidlet.c \
-	nams_command_stub.c \
-	commandLineUtil.c \
-	commandLineUtil_md.c \
-	findMidlet.c
+	nams_command_stub.c
 
 AMS_LISTMIDLET_NATIVE_FILES = \
 	listMidlets.c \
-	nams_command_stub.c \
-	commandLineUtil.c \
-	commandLineUtil_md.c \
-	findMidlet.c
+	nams_command_stub.c
 
 AMS_FILEINSTALLER_NATIVE_FILES = \
 	fileInstallerShared.c \
 	fileInstaller.c \
 	jadParser.c \
 	manifestParser.c \
-	nams_command_stub.c \
-	commandLineUtil.c \
-	commandLineUtil_md.c \
-	findMidlet.c
+    nams_command_stub.c	
 
 # I3test files
 #
@@ -129,7 +122,7 @@ vpath % \
 
 else
 
-AMS_START_MT_MIDP_NATIVE_FILES += \
+AMS_RUNNAMS_NATIVE_FILES += \
 	midpNamsTestService.c \
 	midpNamsTestEventProducer.c
 
@@ -142,7 +135,7 @@ endif
 AMS_FILEINSTALLER_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,$(AMS_FILEINSTALLER_NATIVE_FILES))
 AMS_REMOVEMIDLET_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,$(AMS_REMOVEMIDLET_NATIVE_FILES))
 AMS_LISTMIDLET_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,$(AMS_LISTMIDLET_NATIVE_FILES))
-AMS_START_MT_MIDP_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,$(AMS_START_MT_MIDP_NATIVE_FILES))
+AMS_RUNNAMS_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,$(AMS_RUNNAMS_NATIVE_FILES))
 
 # Don't include exe files to MIDP source file list
 # since we want to link different obj files for different exe

@@ -37,9 +37,9 @@
 #   the system, that's why this rule should be parsed after all object
 #   names are collected and prerequisite variables have correct values.
 #
-$(BINDIR)/runNams$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_START_MT_MIDP_OBJ_FILES)
+$(BINDIR)/runNams$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNNAMS_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_START_MT_MIDP_OBJ_FILES) $(LIBS))` $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_RUNNAMS_OBJ_FILES) $(LIBS))` $(LOG)
 
 $(BINDIR)/removeMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_REMOVEMIDLET_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
