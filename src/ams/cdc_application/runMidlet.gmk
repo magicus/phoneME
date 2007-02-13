@@ -32,34 +32,41 @@
 # other def. (like VPATH)
 ############################################################
 
-# Local module directory
-CDC_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/cdc_application
+ifeq ($(CVM_PRELOAD_LIB), true)
+#
+# This is a ROMized build. MIDP natives are linked into CVM executable. No
+# need to create a separate libmidp.so.
+#
+$(BINDIR)/runMidlet: \
+  $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
+	@rm -f $@
+	@echo " ... creating script  " $@ $(LOG)
+	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
+	-Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
+	-Dmicroedition.profiles=MIDP-2.0 \
+	-Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader \
+	sun.misc.MIDPLauncher \
+	'$$*' > $@
+	$(A)chmod a+x $@
+else
+#
+# Create a libmidp.so for non-ROMized build.
+#
+$(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX): \
+    $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
+	@echo " ... linking $@ " $(LOG)
+	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+	  $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES) $(LIBS))` $(LOG)
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(CDC_AMS_DIR)/classes
-
-# Java files for the sub-system
-SUBSYSTEM_AMS_JAVA_FILES += \
-    $(CDC_AMS_DIR)/classes/com/sun/midp/content/CHManager.java \
-    $(CDC_AMS_DIR)/classes/com/sun/midp/installer/OtaNotifier.java \
-    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CDCInit.java \
-    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletLoader.java \
-    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletSuiteLoader.java \
-    $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java \
-    $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java
-
-vpath % $(CDC_AMS_DIR)/native
-
-SUBSYSTEM_AMS_NATIVE_FILES += \
-   CdcMIDletSuiteLoader.c
-
-ifdef INCLUDE_SHELL_SCRIPTS
-  SUBSYSTEM_AMS_LAZY_MAKEFILES += \
-    $(CDC_AMS_DIR)/runMidlet.gmk
-
-  SUBSYSTEM_AMS_EXECUTABLES += \
-    $(BINDIR)/runMidlet \
-    $(BINDIR)/autotest.sh \
-    $(BINDIR)/installMidlet
+$(BINDIR)/runMidlet: $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
+	@rm -f $@
+	@echo " ... creating script $@ " $(LOG)
+	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
+	-Dsun.midp.library.name=midp$(p) \
+	-Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
+	-Dmicroedition.profiles=MIDP-2.0 \
+	-Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader \
+	sun.misc.MIDPLauncher -midppath ${MIDP_OUTPUT_DIR}/classes.zip \
+	'$$*' > $@
+	$(A)chmod a+x $@
 endif
-

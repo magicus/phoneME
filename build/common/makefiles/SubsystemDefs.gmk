@@ -389,4 +389,6 @@ endif
 # dependent on object files collected across the system. 
 # "Lazy" makefiles MUST not change global variable values.
 #####################################################################
+ifneq ($(strip $(JTWI_LAZY_MAKEFILES)),)
 include $(JTWI_LAZY_MAKEFILES)
+endif
