@@ -29,9 +29,6 @@ package java.lang;
 
 import java.io.*;
 import java.util.Properties;
-import java.util.Hashtable;
-import java.util.HashSet;
-import java.util.Enumeration;
 import java.util.PropertyPermission;
 import java.util.StringTokenizer;
 import java.security.AccessController;
