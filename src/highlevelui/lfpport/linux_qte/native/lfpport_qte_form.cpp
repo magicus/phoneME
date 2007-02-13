@@ -163,7 +163,7 @@ lfpport_form_set_current_item(MidpItem* itemPtr, int yOffset) {
     PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
     QWidget* itemWidgetPtr = (QWidget *)itemPtr->widgetPtr;
     // Make it visible
-    mscreen->ensureVisible(itemWidgetPtr->x(), itemWidgetPtr->y() + yOffset);
+    mscreen->ensureVisible(itemWidgetPtr->x(), itemWidgetPtr->y() + yOffset, 0, 0);
     // Give focus to it
     itemWidgetPtr->setFocus();
 
