@@ -101,29 +101,29 @@ extern "C" {
 #define EVENT_QUEUE_SHUTDOWN            31
 #define FATAL_ERROR_NOTIFICATION        32
 
-/* JSR-135 event */
-#define MMAPI_EVENT                     33
-
 /* JSR-75 events */
-#define FC_DISKS_CHANGED_EVENT          34
+#define FC_DISKS_CHANGED_EVENT          33
 
-#define TEST_EVENT                      35
+#define TEST_EVENT                      34
 
-#define MIDLET_RESUME_REQUEST           36
+#define MIDLET_RESUME_REQUEST           35
 
-#define NATIVE_MIDLET_EXECUTE_REQUEST   37
-#define NATIVE_MIDLET_RESUME_REQUEST    38
-#define NATIVE_MIDLET_PAUSE_REQUEST     39
-#define NATIVE_MIDLET_DESTROY_REQUEST   40
-#define NATIVE_SET_FOREGROUND_REQUEST   41
+#define NATIVE_MIDLET_EXECUTE_REQUEST   36
+#define NATIVE_MIDLET_RESUME_REQUEST    37
+#define NATIVE_MIDLET_PAUSE_REQUEST     38
+#define NATIVE_MIDLET_DESTROY_REQUEST   39
+#define NATIVE_SET_FOREGROUND_REQUEST   40
 
 /* Automation API events */
-#define SET_FOREGROUND_BY_NAME_REQUEST  42
+#define SET_FOREGROUND_BY_NAME_REQUEST  41
 
-#define ROTATION_EVENT                  43
+#define ROTATION_EVENT                  42
 
 /* MIDlet resources paused notification */
-#define MIDLET_RS_PAUSED_NOTIFICATION   44
+#define MIDLET_RS_PAUSED_NOTIFICATION   43
+
+/* JSR-135 event */
+#define MMAPI_EVENT                     44
 
 /** JSR-234 event */ 
 #define AMMS_EVENT                      45
@@ -152,20 +152,14 @@ extern "C" {
 /** @} */
 
 /**
- * Store MIDP event to all of VM threads
- *
- * @param event The event to enqueue.
- */ 
-void StoreMIDPEventInAllVmThreads(MidpEvent event);
-
-/**
- * Store an event to post to the Java platform event queue
- * if in VM thread. Usage:
+ * Enqueues an event to be processed by the Java event thread for a given
+ * Isolate, or all isolates if isolateId is -1.
+ * Only safe to call from VM thread.
+ * Any other threads should call StoreMIDPEvent. 
  *
  *   MidpEvent event;
  *
  *   MIDP_EVENT_INITIALIZE(event);
- *
  *
  *   event.type = COOL_NEW_EVENT;  // this constant is in midpEvents.h
  *   event.intParam1 = x;
@@ -173,8 +167,11 @@ void StoreMIDPEventInAllVmThreads(MidpEvent event);
  *
  *   StoreMIDPEventInVmThread(event, 0);
  *
- * @param event The event to enqueue.
- * @param isolateId ID of an Isolate or 0 for SMV mode
+ * @param event      The event to enqueue.
+ *
+ * @param isolateId  ID of an Isolate 
+ *                   -1 for broadcast to all isolates
+ *                   0 for SVM mode
  */
 void StoreMIDPEventInVmThread(MidpEvent event, int isolateId);
 

@@ -138,8 +138,19 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 
     case MIDP_JC_EVENT_MULTIMEDIA:
 #if ENABLE_JSR_135
-        pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
-        pNewSignal->status     = JAVACALL_OK;
+
+        if( JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED == event->data.multimediaEvent.mediaType ) {
+            pNewSignal->waitingFor = MEDIA_SNAPSHOT_SIGNAL;
+            pNewSignal->descriptor = (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16) 
+                                     | (event->data.multimediaEvent.playerId & 0xFFFF));
+
+            REPORT_CALL_TRACE1(LC_NONE, "[media event] JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED %d\n",
+                               pNewSignal->descriptor);
+        } else {
+            pNewSignal->waitingFor = MEDIA_EVENT_SIGNAL;
+        }
+
+        pNewSignal->status = JAVACALL_OK;
 
         pNewMidpEvent->type         = MMAPI_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
@@ -147,32 +158,10 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.isolateId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
-        if (-1 == event->data.multimediaEvent.isolateId) {
-            event->data.multimediaEvent.isolateId = 0;
-        }
-
-        switch(event->data.multimediaEvent.mediaType) {
-            case JAVACALL_EVENT_MEDIA_VOLUME_CHANGED:
-                /* Set to current isolate ID and special player ID to 
-                   send this event to all of players in this isolate */
-                pNewMidpEvent->MM_PLAYER_ID = -2; 
-                pNewMidpEvent->MM_ISOLATE   = -1; /* event will be sent to all isolates by StoreMIDPEventInAllVmThreads() */
-                break;
-
-                /* Unblock blocked Java thread by calling snapshot method */
-            case JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED:
-                /* Compose 16 bit of isolate ID and 16 bit of player ID 
-                   to generate descriptor */
-                pNewSignal->waitingFor = MEDIA_SNAPSHOT_SIGNAL;
-                pNewSignal->descriptor = 
-                    (((event->data.multimediaEvent.isolateId & 0xFFFF) << 16) 
-                     | (event->data.multimediaEvent.playerId & 0xFFFF));
-                pNewSignal->status = JAVACALL_OK;
-                REPORT_CALL_TRACE1(LC_NONE, "[media event] JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED %d\n", pNewSignal->descriptor);
-                break;
-            default:
-                break;
-        }
+        /* VOLUME_CHANGED event must be sent to all players.             */
+        /* MM_ISOLATE = -1 causes bradcast by StoreMIDPEventInVmThread() */
+        if( JAVACALL_EVENT_MEDIA_VOLUME_CHANGED == event->data.multimediaEvent.mediaType )
+            pNewMidpEvent->MM_ISOLATE = -1; 
 
         REPORT_CALL_TRACE4(LC_NONE, "[media event] External event recevied %d %d %d %d\n",
                 pNewMidpEvent->type, 

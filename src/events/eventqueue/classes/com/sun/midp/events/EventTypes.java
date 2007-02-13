@@ -236,48 +236,42 @@ public final class EventTypes {
     public static final int FATAL_ERROR_NOTIFICATION = 32;
 
     /**
-     * Major ID for a MMAPI event.
-     */
-    public static final int MMAPI_EVENT = 33;
-
-    /**
      * Major ID for a JSR 75 FileConnection disks changed event.
      */
-    public static final int FC_DISKS_CHANGED_EVENT = 34;
+    public static final int FC_DISKS_CHANGED_EVENT = 33;
 
     /** Reserved for testing. */
-    public static final int TEST_EVENT = 35;
+    public static final int TEST_EVENT = 34;
 
     /**
      * Sent to the AMS isolate when a paused MIDlet is requesting to be
      * moved to active state.
      */
-    public static final int MIDLET_RESUME_REQUEST = 36;
+    public static final int MIDLET_RESUME_REQUEST = 35;
 
     /**
      * Sent by the native system to request a MIDlet be created and started.
      */
-    public static final int NATIVE_MIDLET_EXECUTE_REQUEST = 37;
+    public static final int NATIVE_MIDLET_EXECUTE_REQUEST = 36;
 
     /**
      * Sent by the native system to request a paused MIDlet be resumed.
      */
-    public static final int NATIVE_MIDLET_RESUME_REQUEST = 38;
+    public static final int NATIVE_MIDLET_RESUME_REQUEST = 37;
 
     /**
      * Sent by the native system to request a MIDlet be paused.
      */
-    public static final int NATIVE_MIDLET_PAUSE_REQUEST = 39;
+    public static final int NATIVE_MIDLET_PAUSE_REQUEST = 38;
 
     /**
      * Sent by the native system to request a MIDlet be destroyed.
      */
-    public static final int NATIVE_MIDLET_DESTROY_REQUEST = 40;
-
+    public static final int NATIVE_MIDLET_DESTROY_REQUEST = 39;
     /**
      * Sent by the native system to request a MIDlet be in the foreground.
      */
-    public static final int NATIVE_SET_FOREGROUND_REQUEST = 41;
+    public static final int NATIVE_SET_FOREGROUND_REQUEST = 40;
 
     
     /**
@@ -289,19 +283,22 @@ public final class EventTypes {
      * <li>stringParam2 = MIDlet's class name
      * </ul>
      */
-    public static final int SET_FOREGROUND_BY_NAME_REQUEST = 42;
+    public static final int SET_FOREGROUND_BY_NAME_REQUEST = 41;
 
     /*
      * Sent to request screen rotation
      */
-    public static final int ROTATION_EVENT = 43;
+    public static final int ROTATION_EVENT = 42;
 
     /**
      * MIDlet resources paused notification 
      */
-    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 44;
-    
-    /** Major ID for AMMS event */ 
+    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 43;
+
+    /** Major ID for MMAPI event */
+    public static final int MMAPI_EVENT = 44;
+
+    /** Major ID for AMMS  event */ 
     public static final int AMMS_EVENT  = 45;
     
 }

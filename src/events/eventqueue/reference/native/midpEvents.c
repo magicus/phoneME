@@ -316,29 +316,14 @@ midp_resetEvents(void) {
 }
 
 /**
- * Store MIDP event to all of VM threads
- *
- * @param event The event to enqueue.
- */ 
-void StoreMIDPEventInAllVmThreads(MidpEvent event) {
-    int isolateId;
+ * Helper function used by StoreMIDPEventInVmThread
+ * Enqueues an event to be processed by the
+ * Java event thread for a given Isolate
 
-    for (isolateId = 0; isolateId < MAX_ISOLATES; ++isolateId) {
-        StoreMIDPEventInVmThread(event, isolateId);
-    }
-}   
 
-/**
- * Enqueues an event to be processed by the Java event thread for a given
- * Isolate, but is only safe to call in the VM thread. Any other threads
- * should call StoreMIDPEvent. 
- *
- * @param event The event to enqueue.
- *
- * @param isolateId ID of an Isolate or 0 for SVM mode
  */
-void
-StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
+
+static void StoreMIDPEventInVmThreadImp(MidpEvent event, int isolateId) {
     EventQueue* pEventQueue;
     JVMSPI_ThreadID thread;
 
@@ -386,6 +371,29 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
     }
 
     midp_unlockEventQueue();
+}
+
+
+/**
+ * Enqueues an event to be processed by the Java event thread for a given
+ * Isolate, or all isolates if isolateId is -1.
+ * Only safe to call from VM thread.
+ * Any other threads should call StoreMIDPEvent. 
+ *
+ * @param event      The event to enqueue.
+ *
+ * @param isolateId  ID of an Isolate 
+ *                   -1 for broadcast to all isolates
+ *                   0 for SVM mode
+ */
+void
+StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
+    if( -1 != isolateId ) {
+        StoreMIDPEventInVmThreadImp(event, isolateId);
+    } else {
+        for (isolateId = 0; isolateId < MAX_ISOLATES; ++isolateId)
+            StoreMIDPEventInVmThreadImp(event, isolateId);
+    }
 }
 
 /**
