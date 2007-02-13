@@ -75,13 +75,16 @@ void TextFieldBody::setCursorPosition(int position) {
 void TextFieldBody::keyPressEvent(QKeyEvent *key)
 {
     int k = key->key();
-    // always handle select event because it switches between the modal and non-modal modes
-    if (k == Key_Select) {
+    // always handle select event because it switches 
+    // between the modal and non-modal modes
+#ifdef QT_KEYPAD_MODE
+    if (k == Qt::Key_Select) {
         QMultiLineEdit::keyPressEvent(key);
     } else if (isModalEditing()) {
+#endif
         if (isReadOnly()) {
-            if ((k == Key_Up && rowIsVisible(0))
-                || (k == Key_Down && rowIsVisible(numRows() - 1)))  {
+            if ((k == Qt::Key_Up && rowIsVisible(0))
+                || (k == Qt::Key_Down && rowIsVisible(numRows() - 1)))  {
                 
                 PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
                 mscreen->keyPressEvent(key);
@@ -93,8 +96,8 @@ void TextFieldBody::keyPressEvent(QKeyEvent *key)
             int line;
             int col;
             QMultiLineEdit::getCursorPosition(&line, &col);
-            if ((k == Key_Up && line == 0)  
-                || (k == Key_Down && (line == numLines() - 1))){
+            if ((k == Qt::Key_Up && line == 0)  
+                || (k == Qt::Key_Down && (line == numLines() - 1))){
                 
                 PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
                 mscreen->keyPressEvent(key);
@@ -103,10 +106,12 @@ void TextFieldBody::keyPressEvent(QKeyEvent *key)
                 QMultiLineEdit::keyPressEvent(key);
             }
         }
+#ifdef QT_KEYPAD_MODE
     } else {
         // not handle events while it's in not modal state
         key->ignore();
     }
+#endif
 }
 
 /**
@@ -129,26 +134,31 @@ bool TextFieldBody::focusNextPrevChild( bool next ) {
 void TextFieldBody::keyReleaseEvent(QKeyEvent *key)
 {
     int k = key->key();
-    // always handle select event because it switches between the modal and non-modal modes
-    if (k == Key_Select) {
+    // always handle select event because it switches 
+    // between the modal and non-modal modes
+#ifdef QT_KEYPAD_MODE
+    if (k == Qt::Key_Select) {
         QMultiLineEdit::keyReleaseEvent(key);
     } else if (isModalEditing()) {
+#endif
         int line;
         int col;
         QMultiLineEdit::getCursorPosition(&line, &col);
-        if (k == Key_Up && line == 0)  {
+        if (k == Qt::Key_Up && line == 0)  {
             PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
             mscreen->keyReleaseEvent(key);
-        } else if (k == Key_Down && line == numLines() - 1) {
+        } else if (k == Qt::Key_Down && line == numLines() - 1) {
             PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
             mscreen->keyReleaseEvent(key);
         } else {
             QMultiLineEdit::keyReleaseEvent(key);
         }
+#ifdef QT_KEYPAD_MODE
     } else {
         // not handle events while it's in not modal state
         key->ignore();
     }
+#endif
 }
 
 

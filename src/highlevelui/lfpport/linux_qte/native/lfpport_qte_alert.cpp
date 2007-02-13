@@ -109,9 +109,9 @@ bool TextViewer::needScrolling() {
 void TextViewer::keyPressEvent(QKeyEvent *key)
 {
     int k = key->key();
-    if ((k == Key_Up && rowIsVisible(0))
-        || (k == Key_Down && rowIsVisible(numRows() - 1))
-        || (k == Key_Tab))  {
+    if ((k == Qt::Key_Up && rowIsVisible(0))
+        || (k == Qt::Key_Down && rowIsVisible(numRows() - 1))
+        || (k == Qt::Key_Tab))  {
         parentWidget()->setFocus();
     } else {
         QMultiLineEdit::keyPressEvent(key);
@@ -183,7 +183,7 @@ bool Alert::close(bool alsoDelete) {
  * @param key ptr to key event
  */
 void Alert::keyReleaseEvent(QKeyEvent *key) {
-  if (key->key() == Key_Escape) {
+  if (key->key() == Qt::Key_Escape) {
     MidpCommandSelected(closeCommandId);
   } else {
     QWidget::keyReleaseEvent(key);  
