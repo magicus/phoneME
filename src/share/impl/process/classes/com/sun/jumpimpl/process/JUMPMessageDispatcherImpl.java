@@ -361,7 +361,7 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 	{
 	    synchronized (lock) {
 		useCount--;
-		if (useCount != 0) {
+		if (useCount == 0) {
 		    close();
 		    directRegistrations.remove(messageType);
 		}
