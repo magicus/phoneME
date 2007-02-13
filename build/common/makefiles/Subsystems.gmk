@@ -343,7 +343,6 @@ endif
 # Description: JSR 234
 #####################################################################
 ifeq ($(USE_JSR_234), true)
-JPP_DEFS += -DENABLE_JSR_234
 include $(JSR_234_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
 endif
 
@@ -352,7 +351,6 @@ endif
 # Description: JSR 135
 #####################################################################
 ifeq ($(USE_JSR_135), true)
-JPP_DEFS += -DENABLE_JSR_135
 include $(JSR_135_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
 endif
 

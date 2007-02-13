@@ -489,7 +489,7 @@ class CSourceWriter {
             pl("    if (index >= 0 && index <= max_index) {");
             pl("        int offset = (int)offset_data[index * 2 + 0];");
             pl("        int length = (int)offset_data[index * 2 + 1];");
-            pl("        if (offset > 0) {");
+            pl("        if (offset >= 0) {");
             if (type == UNICODE) {
                 plx("KNI_NewString(string_data+offset, length, string);");
             } else {

@@ -187,6 +187,10 @@ public final class SecurityInitializer {
         "com.sun.midp.jsr082.SecurityInitializer$SecurityTrusted",
         // #endif ENABLE_JSR_82
 
+        // #ifdef ENABLE_JSR_234
+        "com.sun.amms.AMMSMPEventListener$SecurityTrusted",
+        // #endif ENABLE_JSR_234
+
         // #ifdef ENABLE_JSR_238
         "com.sun.midp.jsr238.SecurityInitializer$SecurityTrusted",
         // #endif ENABLE_JSR_238
