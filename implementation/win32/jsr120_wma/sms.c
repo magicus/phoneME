@@ -34,13 +34,14 @@
 #include "javacall_datagram.h"
 #include "javacall_network.h"
 
-#include <stdlib.h> //getenv
-
 extern char* encodeSmsBuffer(
     int encodingType, int destPortNum, javacall_int64 timeStamp, 
     const char* recipientPhone, const char* senderPhone, int msgLength, const char* msg,
     int* out_encode_sms_buffer_length);
 extern char* getIPBytes_nonblock(char *hostname);
+
+extern char* getProp(const char* propName, char* defaultValue);
+extern int getIntProp(const char* propName, int defaultValue);
 
 /**
  * send an SMS message
@@ -61,9 +62,6 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
                         unsigned short          sourcePort, 
                         unsigned short          destPort) {
 
-    //JSR205Tool listens on 11101 port, but sends to 11100 port
-    #define smsRemotePortNumber 11101
-
     javacall_handle datagramHandle;
     javacall_result ok;
     int pBytesWritten = 0;
@@ -76,8 +74,10 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
     int encodedSMSLength;
     char* encodedSMS;
 
-    char* IP_text = getenv("JSR_205_DATAGRAM_HOST");
-    IP_text = IP_text ? IP_text : "127.0.0.1";
+    char* IP_text = getProp("JSR_205_DATAGRAM_HOST", "127.0.0.1");
+    //JSR205Tool listens on 11101 port, but sends to 11100 port
+    int smsRemotePortNumber = getIntProp("JSR_205_SMS_OUT_PORT", 11101);
+
     javacall_network_init_start();
     pAddress = getIPBytes_nonblock(IP_text);
 
