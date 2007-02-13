@@ -518,6 +518,7 @@ display:
 	@echo   "PROJECT_JSR_82_DIR    = ""$(PROJECT_JSR_82_DIR)" $(LOG)
 	@echo   "JSR_120_DIR           = ""$(JSR_120_DIR)" $(LOG)
 	@echo   "PROJECT_JSR_120_DIR   = ""$(PROJECT_JSR_120_DIR)" $(LOG)
+	@echo   "JSR_135_DIR           = ""$(JSR_135_DIR)" $(LOG)
 	@echo   "JSR_172_DIR           = ""$(JSR_172_DIR)" $(LOG)
 	@echo   "PROJECT_JSR_172_DIR   = ""$(PROJECT_JSR_172_DIR)" $(LOG)
 	@echo   "JSR_226_DIR           = ""$(JSR_226_DIR)" $(LOG)

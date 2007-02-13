@@ -167,6 +167,19 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         }
 
         break;
+#if (ENABLE_JSR_135 || ENABLE_JSR_234)
+    case MEDIA_EVENT_SIGNAL:
+        StoreMIDPEventInVmThread(newMidpEvent, newMidpEvent.MM_ISOLATE);
+        eventUnblockJavaThread(blocked_threads, blocked_threads_count,
+                MEDIA_EVENT_SIGNAL, newSignal.descriptor, 
+                newSignal.status);
+        break;
+    case MEDIA_SNAPSHOT_SIGNAL:
+        eventUnblockJavaThread(blocked_threads, blocked_threads_count,
+                MEDIA_SNAPSHOT_SIGNAL, newSignal.descriptor, 
+                newSignal.status);
+        break;
+#endif
 #ifdef ENABLE_JSR_179
     case JSR179_LOCATION_SIGNAL:
         midp_thread_signal_list(blocked_threads,

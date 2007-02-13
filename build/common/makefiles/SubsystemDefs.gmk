@@ -263,17 +263,22 @@ JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PORTING_DEMOS_I3TEST_JAVA_FILES)
 endif
 
 #######################################################################
+# internal mmapi package (used in absence of jsr135, jsr234 or abb)
+#######################################################################
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_MMAPI_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_MMAPI_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_MMAPI_NATIVE_FILES)
+LD_FLAGS		+= $(SUBSYSTEM_MMAPI_LD_FLAGS)
+LIBS			+= $(SUBSYSTEM_MMAPI_LIBS)
+
+#######################################################################
 # JSRs
 #######################################################################
 # JSR 135/234/ABB Multimedia
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR234_JAVA_FILES)
-	$(appendjavafiles)
-
-JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR234_I3TEST_JAVA_FILES)
-JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR234_NATIVE_FILES)
-LD_FLAGS		+= $(SUBSYSTEM_JSR234_LD_FLAGS)
-LIBS			+= $(SUBSYSTEM_JSR234_LIBS)
 
 ifeq ($(USE_JSR_177), true)
 # JSR 177 SATSA
@@ -345,6 +350,14 @@ ifeq ($(USE_JSR_135), true)
 $(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_135_JAVA_FILES)
 	$(appendjavafiles)
 JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_135_NATIVE_FILES)
+endif
+
+ifeq ($(USE_JSR_234), true)
+# JSR 234 AMMS
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_234_JAVA_FILES)
+	$(appendjavafiles)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_234_NATIVE_FILES)
 endif
 
 
