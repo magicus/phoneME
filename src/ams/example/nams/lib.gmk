@@ -89,7 +89,7 @@ AMS_FILEINSTALLER_NATIVE_FILES = \
 	fileInstaller.c \
 	jadParser.c \
 	manifestParser.c \
-    nams_command_stub.c	
+	nams_command_stub.c	
 
 # I3test files
 #
