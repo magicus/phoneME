@@ -39,7 +39,6 @@ import com.sun.jump.message.JUMPOutgoingMessage;
 import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.message.JUMPMessageResponseSender;
 import com.sun.jump.message.JUMPMessageReader;
-import com.sun.jump.message.JUMPMessageReceiveQueue;
 import com.sun.jump.os.JUMPOSInterface;
 import com.sun.jumpimpl.process.JUMPModulesConfig;
 import com.sun.jumpimpl.process.JUMPProcessProxyImpl;
@@ -301,7 +300,6 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 	rsh.sendRequestAsync(e, req);
     }
     
-    // XXX Why not just use JUMPMessageDispatcher.addHandler("mvm/client", ...)?
     private class ListenerThread extends Thread {
 	
 	ListenerThread(String name) {
@@ -309,11 +307,9 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 	}
 
 	public void run() {
-	    JUMPMessageReceiveQueue queue;
+	    JUMPMessageDispatcher d = getMessageDispatcher();
 	    try {
-		JUMPMessageDispatcher dispatcher =
-		    getMessageDispatcher();
-		queue = dispatcher.createJUMPMessageReceiveQueue("mvm/client");
+		d.registerDirect("mvm/client");
 	    } catch (Throwable e) {
 		e.printStackTrace();
 		return;
@@ -325,7 +321,7 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 	    reportIsolateInitialized();
 	    while (!ThreadRegistry.exitRequested()) {
 		try {
-		    JUMPMessage m = queue.receiveMessage(0L);
+		    JUMPMessage m = d.waitForMessage("mvm/client", 0L);
 		    processMessage(m);
 		} catch (Throwable e) {
 		    e.printStackTrace();

@@ -199,6 +199,24 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_reserve(
     jumpMessageQueueCreate((JUMPPlatformCString)type, &code);
 }
 
+JNIEXPORT void JNICALL
+Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_unreserve(
+    JNIEnv *env, 
+    jobject thisObj, 
+    jstring messageType)
+{
+    const char* type;
+
+    type = (*env)->GetStringUTFChars(env, messageType, NULL);
+    if (type == NULL) {
+	return;
+    }
+
+    jumpMessageQueueDestroy((JUMPPlatformCString)type);
+
+    (*env)->ReleaseStringUTFChars(env, messageType, type);
+}
+
 JNIEXPORT int JNICALL
 Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcess(
     JNIEnv *env, 

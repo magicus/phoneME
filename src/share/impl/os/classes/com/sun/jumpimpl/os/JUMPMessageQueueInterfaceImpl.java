@@ -81,4 +81,9 @@ public class JUMPMessageQueueInterfaceImpl extends JUMPMessageQueueInterface {
      * are listening to, before we start listening.
      */
     public native void reserve(String messageType);
+
+    /**
+     * Free low-level structures when we're done listening.
+     */
+    public native void unreserve(String messageType);
 }

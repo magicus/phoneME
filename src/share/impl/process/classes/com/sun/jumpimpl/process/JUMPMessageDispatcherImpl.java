@@ -30,8 +30,6 @@ import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.message.JUMPMessageHandler;
 import com.sun.jump.message.JUMPMessageDispatcher;
 import com.sun.jump.message.JUMPMessageDispatcherTypeException;
-import com.sun.jump.message.JUMPMessageReceiveQueue;
-import com.sun.jump.message.JUMPMessageRegistration;
 import com.sun.jump.message.JUMPTimedOutException;
 
 import com.sun.jump.os.JUMPOSInterface;
@@ -44,9 +42,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
- * A generic JUMPMessageDispatcher implementation.  It can be
- * configured for different underlying messaging implementations
- * by constructing it with the proper JUMPMessageReceiveQueueFactory.
+ * A generic JUMPMessageDispatcher implementation.
  */
 public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 {
@@ -57,7 +53,7 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
     // JUMPMessageDispatcherImpl.register() creates Listeners on
     // demand and adds them to listeners.  Listeners are not removed
     // by cancelRegistration(); instead, Listeners remove themselves
-    // and exit some time after all their handlers have been cancelled
+    // and exit some time after all their handlers have been canceled
     // and no other handlers have been registered.  This ensures that
     // at most one thread is ever listening for any messageType, and
     // that no message that has a registered handler will be dropped
@@ -70,41 +66,133 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
     // simpler.  We never block while holding lock and there shouldn't
     // be much if any contention for it.
 
+    // A JUMPMessageDispatcherImpl has one DirectRegistration for each
+    // messageType with at least one outstanding registration.  We
+    // must be careful to unreserve a messageType only when it is no
+    // longer in use and can no longer be used, otherwise the
+    // low-level code could use memory that it has freed, which would
+    // be very un-Java.  With the messageType -> DirectRegistration
+    // required by the API, we need to keep a use count and do other
+    // gymnastics to ensure this.
+
+    private static final JUMPMessageQueueInterfaceImpl
+	jumpMessageQueueInterfaceImpl = (JUMPMessageQueueInterfaceImpl)
+	JUMPOSInterface.getInstance().getQueueInterface();
+
     private static JUMPMessageDispatcherImpl INSTANCE = null;
+
+    // directRegistrations maps String messageType to DirectRegistration.
+    // Guarded by lock.
+    // Invariant: If there is a mapping from messageType to a
+    // DirectRegistration, then at least one registration is still
+    // outstanding for the messageType, otherwise no registrations
+    // are outstanding.
+
+    private final Map directRegistrations = new HashMap();
 
     // listeners maps String messageType to Listener.
     // Guarded by lock.
     // Invariant: If there is a mapping from messageType to a Listener,
-    // then there is a viable listener with a thread running.  If there
-    // is a mapping from messageType to null, then the messageType
-    // was passed to createJUMPMessageReceiveQueue and the returned
-    // JUMPMessageReceiveQueue has not yet been closed.  If there is
-    // no mapping, then the messageType is not in use.
-    private final Map listeners = new HashMap();
-    private final Object lock = new Object();
+    // then the Listener is active, otherwise there is no Listener.
 
-    private final JUMPMessageReceiveQueueFactory
-	jumpMessageReceiveQueueFactory;
+    private final Map listeners = new HashMap();
+
+    // lock guards both directRegistrations and listeners.  We need
+    // one lock so we can tell whether a messageType is registered one
+    // way or the other without races.
+
+    private final Object lock = new Object();
 
     public static synchronized JUMPMessageDispatcherImpl getInstance() 
     {
 	if (INSTANCE == null) {
-	    INSTANCE = new JUMPMessageDispatcherImpl(
-		JUMPMessageReceiveQueueImpl.createFactory());
+	    INSTANCE = new JUMPMessageDispatcherImpl();
 	}
 	return INSTANCE;
     }
 
     /**
-     * Constructs a JUMPMessageDispatcherImpl which can be configured
-     * for different underlying messaging implementations by constructing
-     * it with the proper factories.  Currently private until it needs
-     * to be made public.
+     * Construction allowed only by getInstance().
      */
-    private JUMPMessageDispatcherImpl (
-	JUMPMessageReceiveQueueFactory jumpMessageReceiveQueueFactory)
+    private JUMPMessageDispatcherImpl ()
     {
-	this.jumpMessageReceiveQueueFactory = jumpMessageReceiveQueueFactory;
+    }
+
+    public Object registerDirect(String messageType)
+	throws JUMPMessageDispatcherTypeException
+    {
+	DirectRegistration directRegistration;
+	synchronized (lock) {
+	    if (listeners.containsKey(messageType)) {
+		throw new JUMPMessageDispatcherTypeException(
+		    "Type " + messageType +
+		    " already registered with handlers");
+	    }
+
+	    directRegistration = getDirectRegistration(messageType);
+	    directRegistration.incrementUseCount();
+	}
+
+	return new DirectRegistrationToken(directRegistration);
+    }
+
+    // Externally synchronized on lock.
+    private DirectRegistration getDirectRegistration (String messageType)
+    {
+	DirectRegistration directRegistration =
+	    (DirectRegistration) directRegistrations.get(messageType);
+
+	if (directRegistration == null) {
+	    directRegistration = new DirectRegistration(messageType);
+
+	    // Be careful to maintain our invariant (and free
+	    // resources) even on OutOfMemoryError, etc.
+
+	    boolean success = false;
+	    try {
+		directRegistrations.put(messageType, directRegistration);
+		success = true;
+	    }
+	    finally {
+		if (!success) {
+		    // Free OS resources.
+		    directRegistration.close();
+		}
+	    }
+	}
+
+	return directRegistration;
+    }
+
+    public JUMPMessage waitForMessage(String messageType, long timeout)
+        throws JUMPMessageDispatcherTypeException, JUMPTimedOutException, IOException
+    {
+	DirectRegistration directRegistration;
+	synchronized (lock) {
+	    directRegistration =
+		(DirectRegistration) directRegistrations.get(messageType);
+	    if (directRegistration == null) {
+		throw new JUMPMessageDispatcherTypeException(
+		    "Type " + messageType +
+		    " not registered for direct listening");
+	    }
+	    directRegistration.incrementUseCount();
+	}
+
+	try {
+	    return doWaitForMessage(messageType, timeout);
+	}
+	finally {
+	    directRegistration.decrementUseCountMaybeClose();
+	}
+    }
+
+    private JUMPMessage doWaitForMessage(String messageType, long timeout)
+        throws JUMPTimedOutException, IOException 
+    {
+	byte[] raw = jumpMessageQueueInterfaceImpl.receiveMessage(
+	    messageType, timeout);
+	return new MessageImpl.Message(raw);
     }
 
     /**
@@ -112,9 +200,9 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
      * appropriate synchronization.  Handlers may be called in an
      * arbitrary order.  If a handler is registered multiple times, it
      * will be called a corresponding number of times for each
-     * message, and must be cancelled a corresponding number of times.
+     * message, and must be canceled a corresponding number of times.
      */
-    public JUMPMessageRegistration
+    public Object
     registerHandler(String messageType, JUMPMessageHandler handler)
 	throws JUMPMessageDispatcherTypeException
     {
@@ -127,33 +215,35 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 
 	Listener listener;
 	synchronized (lock) {
+	    if (directRegistrations.containsKey(messageType)) {
+		throw new JUMPMessageDispatcherTypeException(
+		    "Type " + messageType +
+		    " already registered for direct listening");
+	    }
+
 	    listener = getListener(messageType);
+
 	    // Add the handler while synchronized on lock so that a
 	    // new Listener won't exit before the handler is added.
 	    // If this fails its ok, the Listener will exit soon if no
 	    // other handlers are registered for it.
+
 	    listener.addHandler(handler);
 	}
 
-	return new JUMPMessageRegistrationImpl(listener, handler);
+	return new HandlerRegistrationToken(listener, handler);
     }
 
     // Externally synchronized on lock.
     private Listener getListener (String messageType)
-	throws JUMPMessageDispatcherTypeException
     {
 	Listener listener = (Listener) listeners.get(messageType);
 	if (listener == null) {
-	    if (listeners.containsKey(messageType)) {
-		throw new JUMPMessageDispatcherTypeException(
-		    "messageType " + messageType +
-		    " is already in direct use.");
-	    }
-
 	    listener = new Listener(messageType);
 
 	    // Be careful to maintain our invariant (and free
 	    // resources) even on OutOfMemoryError, etc.
+
 	    boolean success = false;
 	    try {
 		listeners.put(messageType, listener);
@@ -173,99 +263,26 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 	return listener;
     }
 
-    public JUMPMessageReceiveQueue createJUMPMessageReceiveQueue(
-	final String messageType)
-	throws JUMPMessageDispatcherTypeException
+    public void cancelRegistration(Object registrationToken)
     {
-	synchronized (lock) {
-	    if (listeners.containsKey(messageType)) {
-		if (listeners.get(messageType) != null) {
-		    throw new JUMPMessageDispatcherTypeException(
-			"messageType " + messageType +
-			" already as a handler registered.");
-		}
-		else {
-		    // This would work fine, but it's disallowed anyway.
-		    throw new JUMPMessageDispatcherTypeException(
-			"messageType " + messageType +
-			" is already in direct use.");
-		}
-	    }
-
-	    final JUMPMessageReceiveQueue queue =
-		createJUMPMessageReceiveQueueInternal(messageType);
-
-	    // Be careful to maintain our invariant (and free
-	    // resources) even on OutOfMemoryError, etc.
-
-	    boolean success = false;
-	    try {
-		// Add a null entry to listeners to indicate this
-		// messageType is in use.
-
-		listeners.put(messageType, null);
-
-		// Wrap queue in a JUMPMessageReceiveQueue which will
-		// remove the Map entry on close.
-
-		JUMPMessageReceiveQueue wrappedQueue =
-		    new JUMPMessageReceiveQueue () {
-			private final Object closeLock = new Object();
-			private boolean closed = false;
-
-			public JUMPMessage receiveMessage(long timeout)
-			    throws JUMPTimedOutException, IOException
-			{
-			    return queue.receiveMessage(timeout);
-			}
-
-			public void close()
-			{
-			    synchronized (closeLock) {
-				if (closed) {
-				    return;
-				}
-				else {
-				    closed = true;
-				}
-			    }
-			    queue.close();
-			    synchronized(lock) {
-				listeners.remove(messageType);
-			    }
-			}
-		    };
-
-		success = true;
-
-		return wrappedQueue;
-	    }
-	    finally {
-		if (!success) {
-		    // Free OS resources.
-		    queue.close();
-		    // Remove null entry from the Map.  This is ok
-		    // even if it was never added.
-		    listeners.remove(messageType);
-		}
-	    }
-	}
+	((RegistrationToken)registrationToken).cancelRegistration();
     }
 
-    private JUMPMessageReceiveQueue createJUMPMessageReceiveQueueInternal(
-	String messageType) 
+    private interface RegistrationToken
     {
-	return jumpMessageReceiveQueueFactory.
-	    createJUMPMessageReceiveQueue(messageType);
+	void cancelRegistration();
     }
 
-    private static class JUMPMessageRegistrationImpl
-	implements JUMPMessageRegistration
+    private static class HandlerRegistrationToken
+	implements RegistrationToken
     {
         private final Listener listener;
         private final JUMPMessageHandler handler;
 
-        public JUMPMessageRegistrationImpl (
+	// Don't allow cancelRegistration() to be called twice.
+	private boolean canceled = false;
+
+        public HandlerRegistrationToken (
 	    Listener listener, JUMPMessageHandler handler)
 	{
 	    this.listener = listener;
@@ -274,7 +291,87 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 
 	public void cancelRegistration ()
 	{
+	    synchronized (this) {
+		if (canceled) {
+		    throw new IllegalStateException(
+			"Registration has already been canceled.");
+		}
+		canceled = true;
+	    }
+
 	    listener.removeHandler(handler);
+	}
+    }
+
+    private static class DirectRegistrationToken
+	implements RegistrationToken
+    {
+	private final DirectRegistration directRegistration;
+
+	// Don't allow cancelRegistration() to be called twice.
+	private boolean canceled = false;
+
+        public DirectRegistrationToken (DirectRegistration directRegistration)
+	{
+	    this.directRegistration = directRegistration;
+	}
+
+	public void cancelRegistration ()
+	{
+	    synchronized (this) {
+		if (canceled) {
+		    throw new IllegalStateException(
+			"Registration has already been canceled.");
+		}
+		canceled = true;
+	    }
+	    directRegistration.decrementUseCountMaybeClose();
+	}
+    }
+
+    private class DirectRegistration
+    {
+	private final String messageType;
+
+	// useCount is incremented for every direct registration of
+	// messageType and when a message receive begins, and
+	// decremented when the registration is canceled or a message
+	// read is finished.  When the count falls to zero, the
+	// low-level resources are freed, and the directRegistrations
+	// mapping is removed, therefore this DirectRegistration can
+	// never be used again to access the (freed) low-level
+	// resources.
+
+	private int useCount = 0;
+
+	public DirectRegistration (String messageType)
+	{
+	    this.messageType = messageType;
+	    // Make sure we've got a receive queue for the messageType.
+	    jumpMessageQueueInterfaceImpl.reserve(messageType);
+	}
+
+	// Externally synchronized on lock.
+	public void incrementUseCount ()
+	{
+	    useCount++;
+	}
+
+	public void decrementUseCountMaybeClose ()
+	{
+	    synchronized (lock) {
+		useCount--;
+		if (useCount != 0) {
+		    close();
+		    directRegistrations.remove(messageType);
+		}
+	    }
+	}
+
+	public void close ()
+	{
+	    // Tell the low-level code we're done with the message queue.
+	    jumpMessageQueueInterfaceImpl.unreserve(messageType);
 	}
     }
 
@@ -310,12 +407,12 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 	private final List handlers = new ArrayList();
 
 	private final String messageType;
-	private final JUMPMessageReceiveQueue queue;
 
 	public Listener (String messageType)
 	{
 	    this.messageType = messageType;
-	    queue = createJUMPMessageReceiveQueueInternal(messageType);
+	    // Make sure we've got a receive queue for the messageType.
+	    jumpMessageQueueInterfaceImpl.reserve(messageType);
 	}
 
 	// Externally synchronized on lock.
@@ -351,7 +448,8 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 
 	public void close ()
 	{
-	    queue.close();
+	    // Tell the low-level code we're done with the message queue.
+	    jumpMessageQueueInterfaceImpl.unreserve(messageType);
 	}
 
 	private void listen ()
@@ -360,7 +458,7 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 	    // and continue, or cleanup and make sure they're thrown.
 	    while (true) {
 		try {
-		    JUMPMessage msg = queue.receiveMessage(2000L);
+		    JUMPMessage msg = doWaitForMessage(messageType, 2000L);
 		    dispatchMessage(msg);
 		} catch(JUMPTimedOutException e) {
 		    // This is normal.  It's time to check for exit.
