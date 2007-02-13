@@ -37,7 +37,8 @@ ifeq ($(CVM_PRELOAD_LIB), true)
 # This is a ROMized build. MIDP natives are linked into CVM executable. No
 # need to create a separate libmidp.so.
 #
-$(BINDIR)/runMidlet: $(MIDP_DEPS) $(OBJ_FILES)
+$(BINDIR)/runMidlet: \
+  $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
 	@rm -f $@
 	@echo " ... creating script  " $@ $(LOG)
 	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
@@ -51,10 +52,11 @@ else
 #
 # Create a libmidp.so for non-ROMized build.
 #
-$(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX): $(MIDP_DEPS) $(OBJ_FILES)
+$(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX): \
+    $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
 	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
-	  $(OBJ_FILES) $(LIBS))` $(LOG)
+	  $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES) $(LIBS))` $(LOG)
 
 $(BINDIR)/runMidlet: $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
 	@rm -f $@
