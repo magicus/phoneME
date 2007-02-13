@@ -720,7 +720,7 @@ public class Display {
         if (da != null) {
             return da.getDisplay();
         }
-       
+
         Display display = new Display(owner);
 
         return display;

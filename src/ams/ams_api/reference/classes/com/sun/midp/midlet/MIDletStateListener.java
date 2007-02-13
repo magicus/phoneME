@@ -45,8 +45,7 @@ public interface MIDletStateListener {
      * @param className Class name of the MIDlet
      * @param externalAppId ID of given by an external application manager
      */
-    void midletCreated(MIDletSuite suite, String className,
-                              int externalAppId);
+    void midletCreated(MIDletSuite suite, String className, int externalAppId);
 
     /**
      * Called before a MIDlet is activated.

@@ -99,15 +99,15 @@ class CldcMIDletStateListener implements MIDletStateListener {
      * Called after a MIDlet is successfully created.
      *
      * @param suite reference to the loaded suite
-     * @param className Class name of the MIDlet
+     * @param className class name of the MIDlet
      * @param externalAppId ID of given by an external application manager
      */
     public void midletCreated(MIDletSuite suite, String className,
                               int externalAppId) {
-
+        
         midletControllerEventProducer.sendMIDletCreateNotifyEvent(
-            suite.getID(), className,  externalAppId,
-            suite.getMIDletName(className));
+            suite.getID(), className, externalAppId,
+                suite.getMIDletName(className));
 
         OtaNotifier.retryInstallNotification(classSecurityToken, suite);
 
