@@ -124,6 +124,16 @@ extern int get_screen_width();
  */ 
 extern int get_screen_height();
 
+/**
+ * Query frame buffer device for screen x
+ */ 
+extern int get_screen_x();
+
+/**
+ * Query frame buffer device for screen y
+ */ 
+extern int get_screen_y();
+
 #ifdef __cplusplus
 }
 #endif
