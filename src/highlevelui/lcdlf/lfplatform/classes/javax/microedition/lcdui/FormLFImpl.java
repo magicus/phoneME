@@ -1895,16 +1895,11 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         if (index != traverseIndex) {
             // Ensure the item is visible
             if (!itemCompletelyVisible(itemLF)) {
-                // We'll initially position at the bottom of the form,
-                // then adjust upward to the top corner of the item
-                // if necessary
-                if (itemLF.bounds[Y] > getScrollPosition0()) {
-                    int scrollPos = viewable[HEIGHT] - viewportHeight;
-                    if (itemLF.bounds[Y] < scrollPos) {
-                        scrollPos = itemLF.bounds[Y];
-                    }
-                    setScrollPosition0(scrollPos);
+                int scrollPos = itemLF.bounds[Y];
+                if (scrollPos + viewportHeight > viewable[HEIGHT]) {
+                    scrollPos = viewable[HEIGHT] - viewportHeight;
                 }
+                setScrollPosition0(scrollPos);
             }
 
             // We record the present traverseItem because if it
@@ -1923,13 +1918,11 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         } else {
             // Ensure the item is visible
             if (!itemPartiallyVisible(itemLF)) {
-                if (itemLF.bounds[Y] > getScrollPosition0()) {
-                    int scrollPos = viewable[HEIGHT] - viewportHeight;
-                    if (itemLF.bounds[Y] < scrollPos) {
-                        scrollPos = itemLF.bounds[Y];
-                    }
-                    setScrollPosition0(scrollPos);
+                int scrollPos = itemLF.bounds[Y];
+                if (scrollPos + viewportHeight > viewable[HEIGHT]) {
+                    scrollPos = viewable[HEIGHT] - viewportHeight;
                 }
+                setScrollPosition0(scrollPos);
             }
         }
     }
