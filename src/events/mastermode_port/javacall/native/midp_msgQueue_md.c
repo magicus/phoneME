@@ -115,14 +115,10 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         break;
 #endif
 
-#if (ENABLE_JSR_120 || ENABLE_JSR_205)
+#if ENABLE_JSR_120
     case MIDP_JC_EVENT_SMS_INCOMING:
         pNewSignal->waitingFor = WMA_SMS_READ_SIGNAL;
         pNewSignal->descriptor = event->data.smsIncomingEvent.stub;
-        break;
-    case MIDP_JC_EVENT_MMS_INCOMING:
-        pNewSignal->waitingFor = WMA_MMS_READ_SIGNAL;
-        pNewSignal->descriptor = event->data.mmsIncomingEvent.stub;
         break;
     case MIDP_JC_EVENT_CBS_INCOMING:
         pNewSignal->waitingFor = WMA_CBS_READ_SIGNAL;
@@ -130,6 +126,12 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         break;
     case MIDP_JC_EVENT_SMS_SENDING_RESULT:
         pNewSignal->waitingFor = WMA_SMS_WRITE_SIGNAL;
+        break;
+#endif
+#if ENABLE_JSR_205
+    case MIDP_JC_EVENT_MMS_INCOMING:
+        pNewSignal->waitingFor = WMA_MMS_READ_SIGNAL;
+        pNewSignal->descriptor = event->data.mmsIncomingEvent.stub;
         break;
     case MIDP_JC_EVENT_MMS_SENDING_RESULT:
         pNewSignal->waitingFor = WMA_MMS_WRITE_SIGNAL;
