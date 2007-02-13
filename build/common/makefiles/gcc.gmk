@@ -96,8 +96,16 @@ LD		= $(GNU_TOOLS_BINDIR)g++$(GCC_VERSION)
 LINKER_OUTPUT	= -o
 LIBS		= -lpthread -lm -lnsl
 
-CREATE_LIB	= $(GNU_TOOLS_BINDIR)ar -rcs
+AR		= $(GNU_TOOLS_BINDIR)ar
+CREATE_LIB	= $(AR) -rcs
 LIB_OUTPUT      =
+RANLIB  = $(GNU_TOOLS_BINDIR)ranlib
+
+# commands for AR mri script
+MRI_ADD = 'ADDMOD '
+MRI_CREATE = 'CREATE '
+MRI_SAVE = 'SAVE'
+MRI_OPT = -M <
 
 ASM		= $(GNU_TOOLS_BINDIR)as
 ASM_FLAGS	= -W

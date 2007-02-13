@@ -57,6 +57,15 @@ LD_FLAGS 	+= -nologo -subsystem:console -machine:i386 -MAP \
 CREATE_LIB      = lib
 LIB_OUTPUT      = /OUT:
 
+AR = lib
+# commands for AR (lib) script
+MRI_ADD = 
+MRI_CREATE = /OUT:
+MRI_SAVE = 
+MRI_OPT = @
+
+RANLIB = ranlib
+
 ASM		= "$(_MASM_DIR$(MASM_DIR))$(MASM_DIR)/ml"
 ASM_FLAGS	+= /nologo /c /coff /Zi
 ASM_OUTPUT	= -Fo

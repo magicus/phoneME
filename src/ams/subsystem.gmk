@@ -113,6 +113,7 @@ include $(SUBSYSTEM_AMS_DIR)/mvm/lib.gmk
 endif
 
 # Defines for (jams/nams) module
+include $(SUBSYSTEM_AMS_DIR)/objlib.gmk
 include $(SUBSYSTEM_AMS_DIR)/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
 endif
 
