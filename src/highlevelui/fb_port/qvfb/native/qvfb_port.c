@@ -183,6 +183,29 @@ static void checkScreenBufferSize(int width, int height) {
     }
 }
 
+/** Get x-coordinate of screen origin */
+int getScreenX(int screenRotated) {
+    // System screen buffer geometry
+    int bufWidth = gxj_system_screen_buffer.width;
+    int x = 0;
+    int LCDwidth = screenRotated ? hdr->height : hdr->width;
+    if (LCDwidth > bufWidth) {
+        x = (LCDwidth - bufWidth) / 2;
+    }
+    return x;
+}
+
+/** Get y-coordinate of screen origin */
+int getScreenY(int screenRotated) {
+    int bufHeight = gxj_system_screen_buffer.height;
+    int y = 0;
+    int LCDheight = screenRotated ? hdr->width : hdr->height;
+    if (LCDheight > bufHeight) {
+        y = (LCDheight - bufHeight) / 2;
+    }
+    return y;
+}
+
 /** Refresh screen with offscreen bufer content */
 void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     // QVFB feature: a number of bytes per line can be different from

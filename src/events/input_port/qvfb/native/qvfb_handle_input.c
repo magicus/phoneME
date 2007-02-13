@@ -125,7 +125,7 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
  * @param pNewMidpEvent     a native MIDP event to be stored to Java event queue
  */
 void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
-    int maxX, maxY;
+    int maxX, maxY, screenX, screenY, d1, d2;
     int n;
     static const int mouseBufSize = 12;
     unsigned char mouseBuf[mouseBufSize];
@@ -157,15 +157,29 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
 
     pNewMidpEvent->type = MIDP_PEN_EVENT;
 
+    screenX = get_screen_x();
+    screenY = get_screen_y();
     maxX = get_screen_width();
     maxY = get_screen_height();
+
+    d1 = (((int)mouseBuf[3]) << 24) +
+        (((int)mouseBuf[2]) << 16) +
+        (((int)mouseBuf[1]) << 8) +
+        (int)mouseBuf[0];
+
+    d2 = (((int)mouseBuf[7]) << 24) +
+        (((int)mouseBuf[6]) << 16) +
+        (((int)mouseBuf[5]) << 8) +
+        (int)mouseBuf[4];
+    
     if (fbapp_get_reverse_orientation()) {
-        pNewMidpEvent->X_POS = min(maxX - (int)mouseBuf[4], maxX);
-        pNewMidpEvent->Y_POS = min((int)mouseBuf[0], maxY);
+        pNewMidpEvent->X_POS = min(maxX - d2, maxX) + screenX;
+        pNewMidpEvent->Y_POS = min(d1 - screenY, maxY);
     } else {
-        pNewMidpEvent->X_POS = min((int)mouseBuf[0], maxX);
-        pNewMidpEvent->Y_POS = min((int)mouseBuf[4], maxY);
+        pNewMidpEvent->X_POS = min(d1 - screenX, maxX);
+        pNewMidpEvent->Y_POS = min(d2 - screenY, maxY);
     }
+
     if (pNewMidpEvent->X_POS < 0) {
         pNewMidpEvent->X_POS = 0;
     }
@@ -175,6 +189,7 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
         pNewMidpEvent->Y_POS = 0;
     }
 
+        
     pressed = mouseBuf[8]  ||
         mouseBuf[9]  ||
         mouseBuf[10] ||

@@ -160,6 +160,16 @@ int get_screen_height() {
     }
 }
 
+/** Return screen x */
+int get_screen_x() {
+    return getScreenX(reverse_orientation);
+}
+
+/** Return screen x */
+int get_screen_y() {
+    return getScreenY(reverse_orientation);
+}
+
 /** Return screen orientation flag */
 jboolean fbapp_get_reverse_orientation() {
     return reverse_orientation;
