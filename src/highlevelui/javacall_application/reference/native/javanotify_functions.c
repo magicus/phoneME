@@ -490,7 +490,7 @@ void javanotify_network_event(javacall_network_event netEvent) {
     midp_jc_event_send(&e);
 }
 
-#if ENABLE_JSR_120 || ENABLE_JSR_205
+#if ENABLE_JSR_120
     #include <jsr120_sms_pool.h>
     #include <jsr120_cbs_pool.h>
 #endif
@@ -526,7 +526,6 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
                         unsigned short sourcePortNum,
                         unsigned short destPortNum,
                         javacall_int64 timeStamp) {
-#if (ENABLE_JSR_120 || ENABLE_JSR_205)
     midp_jc_event_union e;
         SmsMessage* sms;
 
@@ -537,7 +536,6 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
         e.data.smsIncomingEvent.stub = (int)sms;
 
     midp_jc_event_send(&e);
-#endif
     return;
 }
 #endif
@@ -549,7 +547,6 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
 void javanotify_incoming_mms_singlecall(
                 char* fromAddress, char* appID, char* replyToAppID,
         int bodyLen, unsigned char* body) {
-#if ENABLE_JSR_205
     midp_jc_event_union e;
         MmsMessage* mms;
 
@@ -560,7 +557,6 @@ void javanotify_incoming_mms_singlecall(
         e.data.mmsIncomingEvent.stub = (int)mms;
 
     midp_jc_event_send(&e);
-#endif
     return;
 }
 #endif
@@ -587,7 +583,6 @@ void javanotify_incoming_cbs(
         unsigned short         msgID,
         unsigned char*         msgBuffer,
         int                    msgBufferLen) {
-#if (ENABLE_JSR_120 || ENABLE_JSR_205)
     midp_jc_event_union e;
         CbsMessage* cbs;
 
@@ -595,13 +590,14 @@ void javanotify_incoming_cbs(
 
     cbs = jsr120_cbs_new_msg(msgType, msgID, msgBufferLen, msgBuffer);
 
-        e.data.mmsIncomingEvent.stub = (int)cbs;
+    e.data.cbsIncomingEvent.stub = (int)cbs;
 
     midp_jc_event_send(&e);
-#endif
     return;    
 }
+#endif
 
+#ifdef ENABLE_JSR_120
 /**
  * A callback function to be called by platform to notify that an SMS 
  * has completed sending operation.
@@ -615,7 +611,6 @@ void javanotify_incoming_cbs(
  */
 void javanotify_sms_send_completed(javacall_sms_sending_result result,
                                    int handle) {
-#if (ENABLE_JSR_120 || ENABLE_JSR_205)
     midp_jc_event_union e;
 
     e.eventType = MIDP_JC_EVENT_SMS_SENDING_RESULT;
@@ -624,7 +619,6 @@ void javanotify_sms_send_completed(javacall_sms_sending_result result,
         = JAVACALL_SMS_SENDING_RESULT_SUCCESS == result ? 0 : -1;
 
     midp_jc_event_send(&e);
-#endif
     return;
 }
 #endif
@@ -643,7 +637,6 @@ void javanotify_sms_send_completed(javacall_sms_sending_result result,
  */
 void javanotify_mms_send_completed(javacall_mms_sending_result result,
                                    javacall_handle handle) {
-#if ENABLE_JSR_205
     midp_jc_event_union e;
 
     e.eventType = MIDP_JC_EVENT_MMS_SENDING_RESULT;
@@ -652,7 +645,6 @@ void javanotify_mms_send_completed(javacall_mms_sending_result result,
         = JAVACALL_MMS_SENDING_RESULT_SUCCESS == result ? 0 : -1;
 
     midp_jc_event_send(&e);
-#endif
     return;
 }
 #endif
