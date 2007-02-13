@@ -887,6 +887,7 @@ abstract class ItemLFImpl implements ItemLF {
     void uCallSizeChanged(int w, int h) {
         synchronized (Display.LCDUILock) {
             layoutDone = false;
+            item.lUpdateLockedSize();
         }
     }
     

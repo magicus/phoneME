@@ -659,7 +659,11 @@ abstract class ItemLFImpl implements ItemLF {
      * @param w the new width of the item's content area
      * @param h the new height of the item's content area
      */
-    void uCallSizeChanged(int w, int h) { }
+    void uCallSizeChanged(int w, int h) {
+        synchronized (Display.LCDUILock) {
+            item.lUpdateLockedSize();
+        }
+ }
     
     /**
      * Called to commit any pending user interaction for the item.
