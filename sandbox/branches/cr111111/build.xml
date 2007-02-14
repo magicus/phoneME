@@ -22,6 +22,11 @@ Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 Clara, CA 95054 or visit www.sun.com if you need additional
 information or have any questions. 
 -->
+
+<!-- My fix 14Feb2007 
+-->
+
+
 <project name="AppManager" default="compile-linux-x86" basedir=".">
     <description>
          Builds CDC on either Linux/x86 or Linux/ARM (*** in hinkmond sandbox).
