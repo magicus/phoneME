@@ -30,10 +30,10 @@
 
 POOL_IMPL_DIR = ram_pool
 
-vpath % $(JSR_120_DIR)/src/core/common/native/$(POOL_IMPL_DIR)
-vpath % $(JSR_120_DIR)/src/core/common/native/javacall
-vpath % $(JSR_120_DIR)/src/protocol/sms/native/javacall
-vpath % $(JSR_120_DIR)/src/protocol/cbs/native/javacall
+vpath % $(JSR_120_DIR)/src/share/core/common/native/$(POOL_IMPL_DIR)
+vpath % $(JSR_120_DIR)/src/share/core/common/native/javacall
+vpath % $(JSR_120_DIR)/src/share/protocol/sms/native/javacall
+vpath % $(JSR_120_DIR)/src/share/protocol/cbs/native/javacall
 
 SUBSYSTEM_JSR_120_NATIVE_FILES += \
 	jsr120_sms_pool.c \
@@ -43,9 +43,9 @@ SUBSYSTEM_JSR_120_NATIVE_FILES += \
 	wmaInterface.c
 
 SUBSYSTEM_JSR_120_EXTRA_INCLUDES += \
-    -I$(JSR_120_DIR)/src/core/common/native/share/inc \
-    -I$(JSR_120_DIR)/src/protocol/sms/native/share/inc \
-    -I$(JSR_120_DIR)/src/protocol/cbs/native/share/inc
+    -I$(JSR_120_DIR)/src/share/core/common/native/share/inc \
+    -I$(JSR_120_DIR)/src/share/protocol/sms/native/share/inc \
+    -I$(JSR_120_DIR)/src/share/protocol/cbs/native/share/inc
 
 # TEMPORARY SOLUTION: javacall
 #vpath % $(JSR_120_DIR)/../wma_javacall

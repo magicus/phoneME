@@ -31,9 +31,9 @@
 
 POOL_IMPL_DIR = stubs
 
-vpath % $(JSR_205_DIR)/src/core/common/native/$(POOL_IMPL_DIR)
-vpath % $(JSR_205_DIR)/src/protocol/sms/native/stubs
-vpath % $(JSR_205_DIR)/src/protocol/cbs/native/stubs
+vpath % $(JSR_205_DIR)/src/share/core/common/native/$(POOL_IMPL_DIR)
+vpath % $(JSR_205_DIR)/src/share/protocol/sms/native/stubs
+vpath % $(JSR_205_DIR)/src/share/protocol/cbs/native/stubs
 
 #
 SUBSYSTEM_JSR_205_NATIVE_FILES += \
@@ -43,9 +43,9 @@ SUBSYSTEM_JSR_205_NATIVE_FILES += \
 	cbsProtocol_stubs.c \
 #
 SUBSYSTEM_JSR_205_EXTRA_INCLUDES += \
-    -I$(JSR_205_DIR)/src/core/common/native/share/inc \
-    -I$(JSR_205_DIR)/src/protocol/sms/native/share/inc \
-    -I$(JSR_205_DIR)/src/protocol/cbs/native/share/inc \
-    -I$(JSR_205_DIR)/src/core/common/native/stubs/inc
+    -I$(JSR_205_DIR)/src/share/core/common/native/share/inc \
+    -I$(JSR_205_DIR)/src/share/protocol/sms/native/share/inc \
+    -I$(JSR_205_DIR)/src/share/protocol/cbs/native/share/inc \
+    -I$(JSR_205_DIR)/src/share/core/common/native/stubs/inc
 
 
