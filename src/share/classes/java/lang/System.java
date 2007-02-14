@@ -29,9 +29,6 @@ package java.lang;
 
 import java.io.*;
 import java.util.Properties;
-import java.util.Hashtable;
-import java.util.HashSet;
-import java.util.Enumeration;
 import java.util.PropertyPermission;
 import java.util.StringTokenizer;
 import java.security.AccessController;
@@ -41,8 +38,7 @@ import sun.net.InetAddressCachePolicy;
 //import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 import com.sun.cdc.config.PackageManager;
-import com.sun.cdc.config.SystemProxy;
-import com.sun.cdc.config.SystemTunnel;
+import com.sun.cdc.config.DynamicProperties;
 import com.sun.cdc.config.PropertyProvider;
 
 /**
@@ -68,32 +64,6 @@ public final class System {
         registerNatives();
     }
     */
-
-    /**
-     * This class is used for providing external access to private
-     * <code>setPropertyProvider()</code> method of class <code>System</code>.
-     */
-    private static class SystemTunnelImpl implements SystemTunnel {
-        /**
-         * Sets the specified <code>PropertyProvider</code> object to be called
-         * for dynamic property resolution.
-         *
-         * @param key key for the dynamic property
-         * @param provider an object that will be used to resolve the dynamic
-         * property with the specified key
-         */
-        public void setPropertyProvider(String key, PropertyProvider provider) {
-            System.setPropertyProvider(key, provider);
-        }
-    }
-
-    /*
-     * Initialize tunnel for accessing setPropertyProvider()
-     * method from other packages.
-     */
-    static {
-        SystemProxy.setSystemTunnel(new SystemTunnelImpl());
-    }
 
     /** Don't let anyone instantiate this class */
     private System() {
@@ -567,32 +537,13 @@ public final class System {
 	    security.checkPropertiesAccess();
 	}
 
-        Properties allProps;
-        if (propProviders.isEmpty()) {
-            /* There are no dynamic properties defined */
-            allProps = props;
-        } else {
-            /*
-             * There are dynamic properties, resolve them all and
-             * add to the returned properties
-             */
-            allProps = (Properties)props.clone();
-            Object[] providers = new HashSet(propProviders.values()).toArray();
-            Hashtable provCached = new Hashtable();
-            for (int i = 0; i < providers.length; i++) {
-                PropertyProvider pp = (PropertyProvider)providers[i];
-                provCached.put(pp, new Boolean(pp.cacheProperties()));
-            }
+        /*
+         * If there are dynamic properties, resolve them all and
+         * add to the returned properties.
+         */
+        DynamicProperties.addSnapshot(props);
 
-            Enumeration provKeys = propProviders.keys();
-            while (provKeys.hasMoreElements()) {
-                String key = (String)provKeys.nextElement();
-                PropertyProvider prov = (PropertyProvider)propProviders.get(key);
-                allProps.put(key, prov.getValue(key, ((Boolean)provCached.get(prov)).booleanValue()));
-            }
-        }
-
-        return allProps;
+        return props;
     }
 
     /**
@@ -666,9 +617,9 @@ public final class System {
 	}
 
         /* Check for the property provider first */
-        Object provider = propProviders.get(key);
+        PropertyProvider provider = DynamicProperties.get(key);
         if (provider != null) {
-            return ((PropertyProvider)provider).getValue(key, false);
+            return provider.getValue(key, false);
         }
 
         /* MIDP Property Support
@@ -724,9 +675,9 @@ public final class System {
 	}
 
         /* Check for the property provider first */
-        Object provider = propProviders.get(key);
+        PropertyProvider provider = DynamicProperties.get(key);
         if (provider != null) {
-            String value = ((PropertyProvider)provider).getValue(key, false);
+            String value = provider.getValue(key, false);
             if (value == null) {
                 return def;
             }
@@ -983,20 +934,6 @@ public final class System {
      */
     public static native String mapLibraryName(String libname);
 
-    private static Hashtable propProviders;
-
-    /**
-     * This method sets property provider for a dynamic property.
-     * It is used at the time of properties initialization.
-     *
-     * @param key key for the dynamic property
-     * @param provider an object that will be used to resolve the dynamic
-     * property with the specified key
-     */
-    private static void setPropertyProvider(String key, PropertyProvider provider) {
-        propProviders.put(key, provider);
-    }
-
     /**
      * The following two methods exist because in, out, and err must be
      * initialized to null.  The compiler, however, cannot be permitted to
@@ -1020,7 +957,6 @@ public final class System {
      */
     private static void initializeSystemClass() {
 	props = new Properties();
-        propProviders = new Hashtable();
 	initProperties(props);
         midpProps = new Properties();
         initCldcMidpProperties(midpProps);
