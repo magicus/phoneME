@@ -55,7 +55,3 @@ UTILITIES =
 #Compile options that are not common for all configurations can be specified in
 #SPECIFIC_DEFINITIONS variable
 
-ifeq ($(USE_JSR_135),true)
-SPECIFIC_DEFINITIONS+=-I$(JSR_135_JC_IMPL_PATH)/$(JSR_135_JC_DIR)/
-endif
-

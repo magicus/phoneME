@@ -26,7 +26,6 @@
 .PHONY: all pre_target javacall_so post_target
 
 all: pre_target javacall_common javacall_so post_target
-	echo KJLKJLKJLKJ
 
 ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
@@ -58,5 +57,5 @@ $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).so: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
-	@$(CC) $(LDFLAGS) -shared -o $@ $<
+	@$(LD) $(LDFLAGS) -shared -o $@ $<
 
