@@ -99,11 +99,13 @@ public class SystemAlert extends Alert
     }
 
     /** Dismiss the alert */
-    private synchronized void dismiss() {
-        notify(); // wait up waitForUser() thread
-        displayEventHandler.donePreempting(preemptToken);
-        preemptToken = null;
-        shown = false;
+    public synchronized void dismiss() {
+        if (shown) {
+            notify(); // wait up waitForUser() thread
+            displayEventHandler.donePreempting(preemptToken);
+            preemptToken = null;
+            shown = false;
+        }
     }
 
     /**
@@ -116,18 +118,17 @@ public class SystemAlert extends Alert
         synchronized (listenerLock) {
             if (null != explicitListener) {
                 explicitListener.commandAction(c, s);
+            } else {
+                dismiss();
             }
         }
 
-        dismiss();
     }
 
     /**
-     * Assigns explicit command listener to this alert. It substitutes any
-     * other explicitly defined listener but does not substitute the default
-     * listener which is the alert itself. If an non-null explcit listener
-     * is defined by this method, its commandAction() method is called prior
-     * to default this.commandAction().
+     * Assigns explicit command listener to this alert. If an non-null
+     * explcit listener its commandAction() method is called to process
+     * a command, otherwise default dismiss() action is used.
      *
      * @param cl expilict command listener, null to remove any explicit
      *          listener

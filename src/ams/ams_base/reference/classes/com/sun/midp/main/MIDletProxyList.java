@@ -88,6 +88,12 @@ public class MIDletProxyList
     private boolean allPaused; // = false
 
     /**
+     * MIDlet proxy whose peer application runs in the AMS isolate. Should
+     * be accessed through findAmsProxy(), may be invalid otherwise.
+     */
+    private MIDletProxy amsProxy;
+
+    /**
      * Class registered in SecurityInitializer that identifies this
      * implementation permissions for accessing restricted API's
      */
@@ -341,6 +347,27 @@ public class MIDletProxyList
         }
 
         return null;
+    }
+
+    /**
+     * Retireves proxy whose peer application runs in the AMS isolate.
+     * The proxy is identified by isolate ID since only one application
+     * can run in the AMS solate.
+     * @return the proxy or null if one cannot be found
+     */
+    public MIDletProxy findAmsProxy() {
+        if (null == amsProxy) {
+            for (int i = midletProxies.size() - 1; i >= 0; i--) {
+                MIDletProxy current = (MIDletProxy)midletProxies.elementAt(i);
+
+                if (current.getIsolateId() == MIDletSuiteUtils.getAmsIsolateId()) {
+                    amsProxy = current;
+                    break;
+                }
+            }
+        }
+
+        return amsProxy;
     }
 
     /**
