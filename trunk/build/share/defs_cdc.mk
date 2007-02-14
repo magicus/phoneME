@@ -375,8 +375,7 @@ CVM_BUILDTIME_CLASSES += \
    \
    com.sun.cdc.config.PropertyProvider \
    com.sun.cdc.config.PropertyProviderAdapter \
-   com.sun.cdc.config.SystemTunnel \
-   com.sun.cdc.config.SystemProxy \
+   com.sun.cdc.config.DynamicProperties \
    com.sun.cdc.config.PackageManager
 
 ifeq ($(CVM_REFLECT), true)
