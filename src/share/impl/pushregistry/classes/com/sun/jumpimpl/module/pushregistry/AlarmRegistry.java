@@ -38,6 +38,13 @@ import javax.microedition.io.ConnectionNotFoundException;
  * Registry that manages alarms.
  *
  * <p>
+ * IMPORTANT_NOTE:  As this class uses <code>Store</code> to keep
+ *  alarms data in persistent store, the clients of this class must ensure
+ *  that the underlying content store can be exclusively locked when public
+ *  methods of this class get invoked.
+ * <p>
+ *
+ * <p>
  * NOTE: this class is not thread-safe and should be guarded
  * </p>
  */

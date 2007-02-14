@@ -25,17 +25,32 @@
 package com.sun.jumpimpl.module.pushregistry.persistence;
 
 import com.sun.jump.module.contentstore.InMemoryContentStore;
+import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import java.io.IOException;
 
 public final class StoreUtils {
     /** Hides default constructor: it's utility class. */
     private StoreUtils() { }
-    
+
+    public static StoreOperationManager createInMemoryManager(
+            final String [] dirs) throws IOException {
+        final StoreOperationManager storeManager =
+                new StoreOperationManager(new InMemoryContentStore());
+        storeManager.doOperation(true, new StoreOperationManager.Operation() {
+            public Object perform(final JUMPStoreHandle storeHandle)
+                    throws IOException {
+                InMemoryContentStore.initStore(storeHandle, dirs);
+                return null;
+            }
+        });
+        return storeManager;
+    }
+
     public static Store createInMemoryPushStore() throws IOException {
         final String [] DIRS = {
             Store.CONNECTIONS_DIR, Store.ALARMS_DIR
         };
-        final Store store = new Store(InMemoryContentStore.createStore(DIRS));
+        final Store store = new Store(createInMemoryManager(DIRS));
         store.readData();
         return store;
     }

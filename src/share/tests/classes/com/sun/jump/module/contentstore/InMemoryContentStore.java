@@ -24,11 +24,14 @@
 
 package com.sun.jump.module.contentstore;
 
+import com.sun.jumpimpl.module.pushregistry.persistence.StoreOperationManager;
 import java.io.IOException;
 import java.util.Map;
 
 /** In memory version of <code>JUMPContentStore</code>. */
-public final class InMemoryContentStore extends JUMPContentStore {
+public final class InMemoryContentStore
+        extends JUMPContentStore
+        implements StoreOperationManager.ContentStore {
     /** Store. */
     private final InMemoryStore store;
 
@@ -74,7 +77,27 @@ public final class InMemoryContentStore extends JUMPContentStore {
     }
 
     /**
-     * Creates a store handle with some prebuild dirs.
+     * Opens content store for exclusive access.
+     *
+     * @return store handle
+     *
+     * @thorws IOException if IO fails
+     */
+    public JUMPStoreHandle open(final boolean accessExclusive) {
+        return openStore(accessExclusive);
+    }
+
+    /**
+     * Closes exclusively opened content store handle.
+     *
+     * @param storeHandle handle to close
+     */
+    public void close(final JUMPStoreHandle storeHandle) {
+        closeStore(storeHandle);
+    }
+
+    /**
+     * Populates a store handle with some prebuild dirs.
      *
      * @param dirs directories to create
      *
@@ -82,13 +105,11 @@ public final class InMemoryContentStore extends JUMPContentStore {
      *
      * @throws IOException if IO failed
      */
-    public static JUMPStoreHandle createStore(final String [] dirs)
-            throws IOException {
-        final JUMPStoreHandle storeHandle =
-                new InMemoryContentStore().openStore(true);
+    public static void initStore(
+            final JUMPStoreHandle storeHandle, final String [] dirs)
+                throws IOException {
         for (int i = 0; i < dirs.length; i++) {
             storeHandle.createNode(dirs[i]);
         }
-        return storeHandle;
     }
 }
