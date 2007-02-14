@@ -29,13 +29,6 @@ package com.sun.midp.suspend;
 import com.sun.midp.main.*;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
-import com.sun.midp.lcdui.DisplayEventHandlerFactory;
-import com.sun.midp.lcdui.DisplayEventHandler;
-import com.sun.midp.lcdui.SystemAlert;
-import com.sun.midp.i18n.Resource;
-import com.sun.midp.i18n.ResourceConstants;
-
-import javax.microedition.lcdui.AlertType;
 import java.util.Vector;
 
 /**
@@ -90,8 +83,11 @@ public class SuspendSystem extends AbstractSubsystem {
          * Initiates MIDPSystem suspend operations.
          */
         public synchronized void suspend() {
-            SuspendTimer.start(mpl);
-            super.suspend();
+            if (ACTIVE == state) {
+                SuspendTimer.start(mpl);
+                SuspendResumeUI.showSuspendAlert(classSecurityToken);
+                super.suspend();
+            }
         }
 
         /**
@@ -107,6 +103,8 @@ public class SuspendSystem extends AbstractSubsystem {
         protected synchronized void resumeImpl() {
             midletKilled = false;
             midletPaused = false;
+
+            SuspendResumeUI.dismissSuspendAlert();
             alertIfAllMidletsKilled();
         }
 
@@ -116,16 +114,7 @@ public class SuspendSystem extends AbstractSubsystem {
          */
         private void alertIfAllMidletsKilled() {
             if (allMidletsKilled()) {
-                String title = Resource.getString(
-                    ResourceConstants.SR_ALL_KILLED_ALERT_TITLE, null);
-                String msg = Resource.getString(
-                    ResourceConstants.SR_ALL_KILLED_ALERT_MSG, null);
-                DisplayEventHandler disp = DisplayEventHandlerFactory.
-                        getDisplayEventHandler(classSecurityToken);
-                SystemAlert alert = new SystemAlert(disp, title, msg,
-                        null, AlertType.WARNING);
-
-                alert.runInNewThread();
+                SuspendResumeUI.showAllKilledAlert(classSecurityToken);
             }
         }
 
@@ -212,6 +201,15 @@ public class SuspendSystem extends AbstractSubsystem {
      */
     public static SuspendSystem getInstance(SecurityToken token) {
         token.checkIfPermissionAllowed(Permissions.MIDP);
+        return instance;
+    }
+
+    /**
+     * Retrieves the singleton instance. The metod is only available from
+     * this restricted package.
+     * @return the singleton instance
+     */
+    static SuspendSystem getInstance() {
         return instance;
     }
 
