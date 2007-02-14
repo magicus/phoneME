@@ -77,7 +77,11 @@ public final class InMemoryContentStore
     }
 
     /**
-     * Opens content store for exclusive access.
+     * Opens content store.
+     *
+     * As requested by #StoreOperationManager.ContentStore interface
+     *
+     * @param accessExclusive access type
      *
      * @return store handle
      *
@@ -88,7 +92,9 @@ public final class InMemoryContentStore
     }
 
     /**
-     * Closes exclusively opened content store handle.
+     * Closes opened content store handle.
+     *
+     * As requested by #StoreOperationManager.ContentStore interface
      *
      * @param storeHandle handle to close
      */
@@ -99,9 +105,8 @@ public final class InMemoryContentStore
     /**
      * Populates a store handle with some prebuild dirs.
      *
+     * @param storeHandle handle to the store to operate on
      * @param dirs directories to create
-     *
-     * @return store handle
      *
      * @throws IOException if IO failed
      */

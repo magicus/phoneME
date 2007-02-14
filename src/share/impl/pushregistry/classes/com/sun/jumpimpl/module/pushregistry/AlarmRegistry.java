@@ -43,10 +43,6 @@ import javax.microedition.io.ConnectionNotFoundException;
  *  that the underlying content store can be exclusively locked when public
  *  methods of this class get invoked.
  * <p>
- *
- * <p>
- * NOTE: this class is not thread-safe and should be guarded
- * </p>
  */
 public final class AlarmRegistry {
     /** Lifecycle management adapter interface. */
@@ -238,6 +234,8 @@ public final class AlarmRegistry {
 
         /**
          * Creates a new instance, originally not canceled.
+         *
+         * @param midletInfo <code>MIDlet</code> to create task for
          */
         AlarmTask(final MIDletInfo midletInfo) {
             this.midletInfo = midletInfo;
