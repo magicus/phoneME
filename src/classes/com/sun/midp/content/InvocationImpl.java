@@ -518,15 +518,7 @@ public final class InvocationImpl {
 
                 // can't process this invocation - remove it
                 invoc.setStatus(DISPOSE);
-            }
-            tid = invoc.tid;
-        }
-
-        // Look for a recently queued response to deliver
-        tid = 0;
-        while ((invoc = InvocationStore.getByTid(tid, -1)) != null) {
-            if (invoc.status >= Invocation.OK &&
-                invoc.status <= Invocation.INITIATED) {
+            } else if (invoc.status == Invocation.ERROR) {
                 AppProxy.getCurrent().logInfo("invokeNext has response: " +
                                               invoc);
                 if (invoc.suiteId != MIDletSuite.UNUSED_SUITE_ID &&
