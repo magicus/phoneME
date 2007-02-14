@@ -45,6 +45,10 @@ import java.util.TimerTask;
  * User interface utilities for suspend/resume subsystem.
  */
 class SuspendResumeUI {
+    /**
+     * Alert notifying user of system suspension. It is null if the alert
+     * is not being shown currently.
+     */
     private static SystemAlert suspendAlert;
 
     /**
@@ -52,7 +56,7 @@ class SuspendResumeUI {
      * @param token security token for accessing restricted API
      */
     static synchronized void showSuspendAlert(final SecurityToken token) {
-        if (null == suspendAlert) {
+        if (null == suspendAlert && AlertTimer.shouldShow()) {
             String title = Resource.getString(
                 ResourceConstants.SR_SUSPEND_ALERT_TITLE, null);
             String message = Resource.getString(
@@ -65,7 +69,7 @@ class SuspendResumeUI {
                 public void commandAction(Command c, Displayable d) {}
             };
 
-            suspendAlert = new SystemAlert(prepareDisp(token), title,
+            suspendAlert = new SystemAlert(getDisp(token), title,
                 message, null, AlertType.WARNING);
             suspendAlert.setCommandListener(ignoring);
 
@@ -94,17 +98,23 @@ class SuspendResumeUI {
         String message = Resource.getString(
             ResourceConstants.SR_ALL_KILLED_ALERT_MSG, null);
 
-        SystemAlert alert = new SystemAlert(prepareDisp(token), title,
+        SystemAlert alert = new SystemAlert(getDisp(token), title,
                 message, null, AlertType.WARNING);
         alert.runInNewThread();
     }
 
     /**
-     * Moves AMS to foreground and retrieves proper display handler.
+     * Retrieves a display handler that guarantees exposition of a
+     * system alert.
      * @param token security token for accessing restricted API
      * @return DisplayEventHandler instance for alert exposition
      */
-    static DisplayEventHandler prepareDisp(SecurityToken token) {
+    private static DisplayEventHandler getDisp(SecurityToken token) {
+        /* IMPL_NOTE: Due to current implementation of display preempting,
+         * alert is shown immediately only if launched from the isolate
+         * that has foreground. Moving AMS isolate to foreground to
+         * get display preemption.
+         */
         MIDletProxyList proxyList = MIDletProxyList.getMIDletProxyList(token);
         proxyList.setForegroundMIDlet(proxyList.findAmsProxy());
 
@@ -113,12 +123,22 @@ class SuspendResumeUI {
 }
 
 /**
- * Alert timer that guarantees exposition of supend alert.
+ * Alert timer that guarantees exposition of suspend alert.
  */
 class AlertTimer extends Timer implements SuspendDependency {
     /** The timeout. The alert is not shown if this timeout is 0. */
     private static final long TIMEOUT =
             Configuration.getIntProperty("suspendAlertTime", 0);
+
+    /**
+     * Determines whether the suspend alert should be shown at all,
+     * zero timeout means that it should not.
+     * @return true if timeout is configured for showing the alert,
+     *         false if the alert should not be shown.
+     */
+    static boolean shouldShow() {
+        return 0 != TIMEOUT;
+    }
 
     /**
      * Starts the timer that prevents system from suspension. When timeout

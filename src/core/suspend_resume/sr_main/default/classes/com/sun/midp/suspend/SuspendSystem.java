@@ -33,7 +33,7 @@ import java.util.Vector;
 
 /**
  * Main system of the current isolate that contains all 
- * pausable subsystems in current isolate. 
+ * suspendable subsystems in current isolate.
  * There is a singleton instance in each isolate. The 
  * instance kept in the AMS isolate is a special one and 
  * belongs to <code>MIDPSystem</code> subtype.
@@ -112,7 +112,7 @@ public class SuspendSystem extends AbstractSubsystem {
          * Shows proper alert if all user midlets were killed by a preceding
          * suspend operation, and the event is not reported yet.
          */
-        private void alertIfAllMidletsKilled() {
+        private synchronized void alertIfAllMidletsKilled() {
             if (allMidletsKilled()) {
                 SuspendResumeUI.showAllKilledAlert(classSecurityToken);
             }
@@ -205,7 +205,7 @@ public class SuspendSystem extends AbstractSubsystem {
     }
 
     /**
-     * Retrieves the singleton instance. The metod is only available from
+     * Retrieves the singleton instance. The method is only available from
      * this restricted package.
      * @return the singleton instance
      */
