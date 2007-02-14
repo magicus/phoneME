@@ -81,6 +81,7 @@ include $(SUBSYSTEM_HIGHUI_DIR)/lcdlf/lib.gmk
 ifeq ($(SUBSYSTEM_LCDUI_MODULES), platform_widget)
     include $(SUBSYSTEM_HIGHUI_DIR)/lfpport/lib.gmk
 else
+
     include $(SUBSYSTEM_HIGHUI_DIR)/lfjport/lib.gmk
 
     ####################################################
@@ -100,10 +101,11 @@ else
 
     ifeq ($(USE_NATIVE_PTI), true)
        include $(SUBSYSTEM_HIGHUI_DIR)/nativepti_port/lib.gmk
-    endif
 
+    endif
     # nim -- Native Input Mode support
     include $(SUBSYSTEM_HIGHUI_DIR)/nim_port/lib.gmk
+
 endif
 
 #####################################################################
@@ -112,11 +114,11 @@ endif
 #####################################################################
 
 ifeq ($(PLATFORM), linux_fb)
-    ifeq ($(USE_DIRECTFB), true)
+   ifeq ($(USE_DIRECTFB), true)
 	include $(SUBSYSTEM_HIGHUI_DIR)/directfb_application/lib.gmk
-    endif
-    include $(SUBSYSTEM_HIGHUI_DIR)/fb_application/lib.gmk
-    include $(SUBSYSTEM_HIGHUI_DIR)/fb_port/lib.gmk
+   endif
+   include $(SUBSYSTEM_HIGHUI_DIR)/fb_application/lib.gmk
+   include $(SUBSYSTEM_HIGHUI_DIR)/fb_port/lib.gmk
 else 
 
     ifeq ($(PLATFORM), armsd)
@@ -231,5 +233,3 @@ endif
 #
 SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_APP_NATIVE_FILES)
 SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_APP_EXTRA_INCLUDES)
-
-

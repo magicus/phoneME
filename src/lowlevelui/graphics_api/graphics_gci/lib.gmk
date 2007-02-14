@@ -32,27 +32,15 @@
 # other def. (like VPATH)
 ############################################################
 
-GRAPHICS_API_LIB = graphics_api
-LIB_SET += $(GRAPHICS_API_LIB)
+# Local module dir
+GRAPHICS_API_MODULE_DIR = $(GRAPHICS_API_DIR)/graphics_gci
 
-# Local module directory
-GRAPHICS_API_DIR = $(SUBSYSTEM_LOWUI_DIR)/$(GRAPHICS_API_LIB)
 
-# Include path for the sub-system
+# Java files for the library
 #
-SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES += \
-    -I$(GRAPHICS_API_DIR)/include
-
-ifeq ($(PLATFORM), wince)
-
-SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/putpixel/native
-endif
-
-# Include platform specific module
-#
-ifeq ($(PLATFORM), gci)
-  include $(GRAPHICS_API_DIR)/graphics_gci/$(LIB_MAKE_FILE)
-else
-  include $(GRAPHICS_API_DIR)/reference/$(LIB_MAKE_FILE)
-endif
+SUBSYSTEM_GRAPHICSAPI_JAVA_FILES += \
+    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Font.java \
+    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Graphics.java \
+    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Image.java \
+    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/game/Sprite.java \
+    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/game/TiledLayer.java

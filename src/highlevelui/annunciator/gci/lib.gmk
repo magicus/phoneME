@@ -1,4 +1,5 @@
-#  
+#
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -22,37 +23,30 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
 #
-
-############################################################
-# Module's Component Configuration file
+######################################################################
 #
-# Remember: It is up to the module itself to impose rules of
-# how to compile the options. All the global Makefile needs
-# is the final def. of Java and native file lists and some
-# other def. (like VPATH)
-############################################################
-
-GRAPHICS_API_LIB = graphics_api
-LIB_SET += $(GRAPHICS_API_LIB)
-
-# Local module directory
-GRAPHICS_API_DIR = $(SUBSYSTEM_LOWUI_DIR)/$(GRAPHICS_API_LIB)
-
-# Include path for the sub-system
+# Library Makefile
 #
-SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES += \
-    -I$(GRAPHICS_API_DIR)/include
+######################################################################
 
-ifeq ($(PLATFORM), wince)
+# Name of the library
+ANC_STUB_NAME = highlevelui/annunciator/gci
+ANC_STUB_DIR = $(SUBSYSTEM_DIR)/$(ANC_STUB_NAME)
 
-SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/putpixel/native
-endif
+# Add to library set for this build
+LIB_SET += $(ANC_STUB_NAME)
 
-# Include platform specific module
+# Export include files
+# SUBSYSTEM_ANNUNCIATOR_EXTRA_INCLUDES += -I$(ANC_STUB_DIR)/include
+
+# Native files for the library
 #
-ifeq ($(PLATFORM), gci)
-  include $(GRAPHICS_API_DIR)/graphics_gci/$(LIB_MAKE_FILE)
-else
-  include $(GRAPHICS_API_DIR)/reference/$(LIB_MAKE_FILE)
-endif
+SUBSYSTEM_ANNUNCIATOR_NATIVE_FILES += \
+    anc_gci_audio.c \
+    anc_gci_indicator.c \
+    anc_gci_pauseresume.c \
+    anc_gci_vibrate.c
+
+# Source code path for the library
+#
+vpath % $(ANC_STUB_DIR)/native

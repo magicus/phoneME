@@ -236,3 +236,7 @@ $(OBJ_DIR)/lfj_image_rom.o: $(GENERATED_DIR)/lfj_image_rom.c
 
 # Define Jpp
 JPP_DEFS += -DENABLE_CHAMELEON
+
+ifeq ($(PLATFORM), gci)
+  JPP_DEFS += -DENABLE_GCI
+endif

@@ -1,5 +1,5 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,50 +23,40 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
-#ifndef _MIDP_MASTERMODE_PORT_H
-#define _MIDP_MASTERMODE_PORT_H
-
-
-/**
- * @defgroup events_master Master Mode Specific Porting Interface
- * @ingroup events
- */
-
-/**
- * @file
- * @ingroup events_master
- * @brief Porting interface for platform specific event handling in master mode.
- */ 
 
 #include <kni.h>
-#include <jvm.h>
-#include <sni.h>
+#include <midp_logging.h>
+#include <midp_mastermode_port.h>
 
-#include <midpEvents.h>
-#include <midpServices.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-/**
+/*
  * This function is called by the VM periodically. It has to check if
  * system has sent a signal to MIDP and return the result in the
  * structs given.
  *
- * Values for the <timeout> parameter:
+ * Values for the <timeout> paramater:
  *  >0 = Block until a signal sent to MIDP, or until <timeout> milliseconds
  *       has elapsed.
  *   0 = Check the system for a signal but do not block. Return to the
  *       caller immediately regardless of the if a signal was sent.
  *  -1 = Do not timeout. Block until a signal is sent to MIDP.
  */
-extern void checkForSystemSignal(MidpReentryData* pNewSignal,
-                                 MidpEvent* pNewMidpEvent,
-                                 jlong timeout);
+void checkForSystemSignal(MidpReentryData* pNewSignal,
+                          MidpEvent* pNewMidpEvent,
+                          jlong timeout) {
 
-#ifdef __cplusplus
+    REPORT_CALL_TRACE(LC_HIGHUI, "LF:STUB:checkForSystemSignal()\n");
 }
-#endif
 
-#endif /* _MIDP_MASTERMODE_PORT_H */
+/**
+ * Free the event result. Called when no waiting Java thread was found to
+ * receive the result. This may be empty on some systems.
+ *
+ * @param waitingFor what signal the result is for
+ * @param pResult the result set by checkForSystemSignal
+ */
+void midpFreeEventResult(int waitingFor, void* pResult) {
+    (void)waitingFor;
+    (void)pResult;
+}
