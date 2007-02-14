@@ -138,7 +138,8 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_open0) {
              * Register the port with the message pool, only if this
              * is a server connection (NULL host name.).
              */
-            if (!KNI_IsNullHandle(javaStringHost) && KNI_GetStringLength(javaStringHost) > 0) {
+//          if (!KNI_IsNullHandle(javaStringHost) && KNI_GetStringLength(javaStringHost) > 0) {
+            if (KNI_IsNullHandle(javaStringHost)) {
 
                 /* register SMS port with SMS pool */
                 if (jsr120_is_sms_midlet_port_registered((jchar)port) == WMA_ERR) {
