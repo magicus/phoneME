@@ -1,7 +1,7 @@
 #
 #   
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -37,6 +37,9 @@
 #   the system, that's why this rule should be parsed after all object
 #   names are collected and prerequisite variables have correct values.
 #
+# $(OBJLIB) mentioned twice in $(LD) command line due to ld
+#   - is single-pass
+#   - collects functions from obj files and libs different ways
 
 $(BINDIR)/runMidlet$(g)$(p)$(EXE): \
     $(MIDP_DEPS) $(OBJLIB) $(AMS_RUNMIDLET_OBJ_FILES)

@@ -1,7 +1,7 @@
 #
 #
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
 # This program is free software; you can redistribute it and/or
@@ -37,9 +37,13 @@
 #   the system, that's why this rule should be parsed after all object
 #   names are collected and prerequisite variables have correct values.
 #
+# $(OBJLIB) mentioned twice in $(LD) command line due to ld
+#   - is single-pass
+#   - collects functions from obj files and libs different ways
+
 $(BINDIR)/runNams$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_START_MT_MIDP_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_START_MT_MIDP_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_START_MT_MIDP_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
 
 $(BINDIR)/removeMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_REMOVEMIDLET_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
