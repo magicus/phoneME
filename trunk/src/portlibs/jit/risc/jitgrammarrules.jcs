@@ -6271,12 +6271,15 @@ CVMJITcheckGC(CVMJITCompilationContext* con, CVMJITIRBlock *b)
      * Generate code to do a gc rendezvous inline if one has been requested.
      */
     CVMBool spilledPhis;
-    CVMJITcsSetEmitInPlace(con);
-    CVMRMResource* scratch =
-	CVMRMgetResource(CVMRM_INT_REGS(con),
-			 CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
-    int scratchReg = CVMRMgetRegisterNumber(scratch);
+    CVMRMResource* scratch;
+    int scratchReg;
     int cvmGlobalsReg;
+
+    CVMJITcsSetEmitInPlace(con);
+
+    scratch = CVMRMgetResource(CVMRM_INT_REGS(con),
+			       CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+    scratchReg = CVMRMgetRegisterNumber(scratch);
     
     /* This is where branches to the block will branch to. */
     CVMtraceJITCodegen(("\tL%d:\t%d:\t@ entry point for branches\n",
