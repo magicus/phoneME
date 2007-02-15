@@ -38,11 +38,8 @@
 # Native files under vm_services/cldc_hi module
 ############################################################
 
-ifeq ($(TARGET_OS), wince)
-vpath % $(VM_SERVICES_DIR)/cdc_vm/native/wince
-else
-vpath % $(VM_SERVICES_DIR)/cdc_vm/native
-endif
+vpath % $(VM_SERVICES_DIR)/cdc_vm/$(PLATFORM)/native
+
 
 SUBSYSTEM_VMSERVICES_NATIVE_FILES += \
   cdc_natives.c

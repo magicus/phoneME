@@ -87,6 +87,17 @@ void resizeScreenBuffer(int width, int height) {
     (void)width; (void)height;
 }
 
+/** Get x-coordinate of screen origin */
+int getScreenX(int rotatedScreen) {
+    (void)rotatedScreen;
+    return 0;
+}
+
+/** Get y-coordinate of screen origin */
+int getScreenY(int rotatedScreen) {
+    (void)rotatedScreen;
+    return 0;
+}
 
 /** Refresh screen with offscreen buffer content */
 void refreshScreenNormal(int x1, int y1, int x2, int y2) {

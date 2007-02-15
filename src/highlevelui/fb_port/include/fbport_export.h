@@ -74,6 +74,13 @@ extern int getMouseFd();
 /** Clear screen device */
 extern void clearScreen();
 
+/** Get x-coordinate of screen origin */
+extern int getScreenX(int screenRotated);
+
+/** Get y-coordinate of screen origin */
+extern int getScreenY(int screenRotated);
+
+
 #ifdef __cplusplus
 }
 #endif

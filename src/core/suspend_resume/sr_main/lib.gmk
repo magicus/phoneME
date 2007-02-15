@@ -54,7 +54,8 @@ SUBSYSTEM_SUSPEND_RESUME_JAVA_FILES += \
     $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/SuspendDependency.java \
     $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/StateTransitionException.java \
     $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/SuspendTimer.java \
-    $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/NetworkSubsystem.java
+    $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/NetworkSubsystem.java \
+    $(SR_MAIN_DIR)/default/classes/com/sun/midp/suspend/SuspendResumeUI.java
 
 ifeq ($(USE_I3_TEST), true)
     vpath % $(SR_MAIN_DIR)/default/i3test/com/sun/midp/suspend

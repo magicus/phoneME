@@ -41,9 +41,9 @@
 #   - is single-pass
 #   - collects functions from obj files and libs different ways
 
-$(BINDIR)/runNams$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_START_MT_MIDP_OBJ_FILES)
+$(BINDIR)/runNams$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_RUNNAMS_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_START_MT_MIDP_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_RUNNAMS_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
 
 $(BINDIR)/removeMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_REMOVEMIDLET_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
