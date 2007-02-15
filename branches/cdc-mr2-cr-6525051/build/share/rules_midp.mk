@@ -30,6 +30,7 @@ ifeq ($(CVM_INCLUDE_MIDP),true)
 printconfig::
 	@echo "MIDP_DIR           = $(MIDP_DIR)"
 	@echo "PCSL_DIR           = $(PCSL_DIR)"
+        @echo "MIDP_PLATFORM      = $(MIDP_PLATFORM)"
 
 # Build PCSL before MIDP.
 initbuild_profile::
