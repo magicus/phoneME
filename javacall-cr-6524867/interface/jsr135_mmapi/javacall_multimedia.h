@@ -565,7 +565,8 @@ long javacall_media_pcmaudio_playback(void* buffer, long length);
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_FAIL    Fail
  */
-javacall_result javacall_media_get_pcmctl(int *channels, int* bits, int* rate);
+javacall_result javacall_media_get_pcmctl(int *channels,
+                                        int* /*OUT*/ bits, int* /*OUT*/ rate);
 
 /** @} */
 
