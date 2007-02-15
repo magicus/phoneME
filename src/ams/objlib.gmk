@@ -1,6 +1,4 @@
 #
-#   
-#
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -24,25 +22,21 @@
 # information or have any questions. 
 #
 ######################################################################
-# Makefile with "lazy" rules that should be included after other
-# subsystem makefile's are included and global variable values are
-# collected across the system.
-#
-# IMPORTNAT: No global variables should be changed here.
-######################################################################
 
-# Define AMS executables
+# Create library from object files
 #
-# IMPL_NOTE: AMS executables are dependent on all object files of
-#   the system, that's why this rule should be parsed after all object
-#   names are collected and prerequisite variables have correct values.
+# IMPL_NOTE: win32 platform has limitation of environment (32K),
+#   so too long command lines (especially for linker) are truncated.
+#   To avoid it object files are put to a library.
 #
-# $(OBJLIB) mentioned twice in $(LD) command line due to ld
-#   - is single-pass
-#   - collects functions from obj files and libs different ways
 
-$(BINDIR)/runMidlet$(g)$(p)$(EXE): \
-    $(MIDP_DEPS) $(OBJLIB) $(AMS_RUNMIDLET_OBJ_FILES)
-	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
-	  $(AMS_RUNMIDLET_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
+OBJLIB = $(OBJ_DIR)/libobj$(LIB_SUFFIX)
+OBJLIB_SCRIPT = $(OBJLIB)-list
+
+$(OBJLIB): $(OBJ_FILES)
+	@true at least one shell command shall be here
+	$(shell echo $(MRI_CREATE)$(OBJLIB) > $(OBJLIB_SCRIPT))
+	$(foreach path, $(OBJ_FILES), $(shell echo $(MRI_ADD)`$(call fixcygpath,$(path))` >> $(OBJLIB_SCRIPT)))
+	$(shell echo $(MRI_SAVE) >> $(OBJLIB_SCRIPT))
+	$(shell $(AR) $(MRI_OPT)$(OBJLIB_SCRIPT))
+	$(shell $(RANLIB) $(OBJLIB))
