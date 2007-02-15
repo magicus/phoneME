@@ -64,10 +64,10 @@ ChameleonMScreen::ChameleonMScreen(QWidget *parent, const char* name) : QWidget(
 {
     vm_stopped = false;
 
-    // Graphics context
+    /* Graphics context */
     gc = new QPainter();
 
-    // Slots
+    /* Slots */
     connect(&vm_slicer, SIGNAL(timeout()), this, SLOT(slotTimeout()));
 }
 
@@ -77,34 +77,39 @@ ChameleonMScreen::ChameleonMScreen(QWidget *parent, const char* name) : QWidget(
  */
 void ChameleonMScreen::init() {
 
-  // Normal screen height and width
+  /* Normal screen height and width */
   DISPLAY_WIDTH  = width();
   DISPLAY_HEIGHT = height();
 
-  // Full screen mode
-  // -Height
-  // -Width
+  /* 
+   * Full screen mode 
+   * -Height 
+   * -Width 
+   */
   DISPLAY_FULLHEIGHT = CHAM_FULLHEIGHT;
   DISPLAY_FULLWIDTH  = CHAM_FULLWIDTH;
 
-  // Set up coordinate for the whole screen
-  // SCREEN excludes the scroll bar
+  /* Set up coordinate for the whole screen */
+  /* SCREEN excludes the scroll bar */
   SCREEN_X       = SCREEN_Y = 0;
   SCREEN_WIDTH   = DISPLAY_WIDTH;
   SCREEN_HEIGHT  = DISPLAY_HEIGHT;
 
-  // Set the size of the midlet suites app area
-  // @note this will change in full screen mode
+  /* 
+   * Set the size of the midlet suites app area
+   * @note this will change in full screen mode
+   */
   qpixmap.resize(SCREEN_WIDTH, SCREEN_HEIGHT);
-  bufferSize = normalScreenSize;
 
-  // IMPL_NOTE:Performance team should benchmark the difference on
-  // qpixmap.setOptimization(QPixmap::BestOptim);
+  /* 
+   * IMPL_NOTE:Performance team should benchmark the difference on
+   * qpixmap.setOptimization(QPixmap::BestOptim);
+   */
 
-  // The widget accepts focus by both tabbing and clicking
+  /* The widget accepts focus by both tabbing and clicking */
   setFocusPolicy(QWidget::StrongFocus);
 
-  // Clean up GC related parameters
+  /* Clean up GC related parameters */
   force_refresh = true;
   last_pen = last_brush = -1;
   last_dotted = 0;
@@ -114,17 +119,13 @@ void ChameleonMScreen::init() {
  * Resize the buffer size (either normal or fullscreen)
  */
 void ChameleonMScreen::setBufferSize(BufferSize newSize)
-{
-    if (newSize != bufferSize) {
-
+{    
        if (newSize == fullScreenSize) {
-           qpixmap.resize(DISPLAY_FULLWIDTH, DISPLAY_FULLHEIGHT);
+           qpixmap.resize(getDisplayFullWidth(), getDisplayFullHeight());
        } else {
-           qpixmap.resize(SCREEN_WIDTH, SCREEN_HEIGHT);
+           qpixmap.resize(getDisplayWidth(), getDisplayHeight());
        }
 
-       bufferSize = newSize;
-    }
 }
 
 /**
@@ -133,7 +134,7 @@ void ChameleonMScreen::setBufferSize(BufferSize newSize)
 void ChameleonMScreen::startVM() {
     vm_stopped = false;
 
-    // Setup next VM time slice to happen immediately
+    /* Setup next VM time slice to happen immediately */
     midp_resetEvents();
 
     seen_key_press  = KNI_FALSE;
@@ -147,7 +148,7 @@ void ChameleonMScreen::startVM() {
  * Stop VM by stopping requests for VM time slice.
  */
 void ChameleonMScreen::stopVM() {
-    // Stop any further VM time slice
+    /* Stop any further VM time slice */
     setNextVMTimeSlice(-1);
 }
 
@@ -165,7 +166,7 @@ void ChameleonMScreen::mousePressEvent(QMouseEvent *mouse)
     MIDP_EVENT_INITIALIZE(evt);
 
     evt.type = MIDP_PEN_EVENT;
-    evt.ACTION = PRESSED;
+    evt.ACTION = KEYMAP_STATE_PRESSED;
     evt.X_POS = mouse->x();
     evt.Y_POS = mouse->y();
 
@@ -179,7 +180,7 @@ void ChameleonMScreen::mouseMoveEvent( QMouseEvent *mouse)
     MIDP_EVENT_INITIALIZE(evt);
 
     evt.type = MIDP_PEN_EVENT;
-    evt.ACTION = DRAGGED;
+    evt.ACTION = KEYMAP_STATE_DRAGGED;
     evt.X_POS = mouse->x();
     evt.Y_POS = mouse->y();
 
@@ -194,7 +195,7 @@ void ChameleonMScreen::mouseReleaseEvent( QMouseEvent *mouse)
 
 
     evt.type = MIDP_PEN_EVENT;
-    evt.ACTION = RELEASED;
+    evt.ACTION = KEYMAP_STATE_RELEASED;
     evt.X_POS = mouse->x();
     evt.Y_POS = mouse->y();
 
@@ -209,7 +210,7 @@ void ChameleonMScreen::keyPressEvent(QKeyEvent *key)
 #if ENABLE_MULTIPLE_ISOLATES
     if (key->key() == Qt::Key_F12||
         key->key() == Qt::Key_Home) {
-        // F12 to display the foreground selector
+        /* F12 to display the foreground selector */
         if (!key->isAutoRepeat()) {
             MidpEvent evt;
             MIDP_EVENT_INITIALIZE(evt);
@@ -231,7 +232,7 @@ void ChameleonMScreen::keyPressEvent(QKeyEvent *key)
         }
     }
 #else
-    // F12 pause or activate all Java apps
+    /* F12 pause or activate all Java apps */
     if ((key->key() == Qt::Key_F12 || key->key() == Qt::Key_Home) &&
         !key->isAutoRepeat()) {
         pauseAll();
@@ -242,49 +243,26 @@ void ChameleonMScreen::keyPressEvent(QKeyEvent *key)
         MidpEvent evt;
         MIDP_EVENT_INITIALIZE(evt);
 
-        if ((evt.CHR = mapKey(key)) != KEY_INVALID) {
-          if (evt.CHR == KEY_SCREEN_ROT) {
-            evt.type   =  ROTATION_EVENT;
-          } else {
-            evt.type   = MIDP_KEY_EVENT;
-          }
-          evt.ACTION = key->isAutoRepeat() ? REPEATED : PRESSED;
-          midpStoreEventAndSignalForeground(evt);
+        if ((evt.CHR = mapKey(key)) != KEYMAP_KEY_INVALID) {
+            if (evt.CHR == KEYMAP_KEY_SCREEN_ROT) {
+                evt.type = ROTATION_EVENT;
+            } else {
+                evt.type = MIDP_KEY_EVENT;
+            }
+            evt.ACTION = key->isAutoRepeat() ? 
+                KEYMAP_STATE_REPEATED : KEYMAP_STATE_PRESSED;
+            midpStoreEventAndSignalForeground(evt);
         }
     }
-}
-
-void ChameleonMScreen::pauseAll() {
-
-  // if (!allPaused) {
-      MidpEvent evt;
-
-      MIDP_EVENT_INITIALIZE(evt);
-
-      evt.type = PAUSE_ALL_EVENT;
-      midpStoreEventAndSignalAms(evt);
-      allPaused = true;
- // }
-}
-
-void ChameleonMScreen::activateAll() {
-
-  if (allPaused) {
-    MidpEvent evt;
-
-    MIDP_EVENT_INITIALIZE(evt);
-
-    evt.type = ACTIVATE_ALL_EVENT;
-    midpStoreEventAndSignalAms(evt);
-    allPaused = false;
-  }
 }
 
 void ChameleonMScreen::keyReleaseEvent(QKeyEvent *key)
 {
     if (!seen_key_press || key->isAutoRepeat()) {
-        // We may have a left-over keyReleaseEvent from a previous
-        // invocation of the VM!
+        /* 
+         * We may have a left-over keyReleaseEvent from a previous
+         * invocation of the VM!
+         */
         return;
     }
 
@@ -292,19 +270,18 @@ void ChameleonMScreen::keyReleaseEvent(QKeyEvent *key)
 
     MIDP_EVENT_INITIALIZE(evt);
 
-    if ((evt.CHR = mapKey(key)) != KEY_INVALID) {
+    if ((evt.CHR = mapKey(key)) != KEYMAP_KEY_INVALID) {
         evt.type = MIDP_KEY_EVENT;
-        evt.ACTION = RELEASED;
+        evt.ACTION = KEYMAP_STATE_RELEASED;
         midpStoreEventAndSignalForeground(evt);
     }
 }
 
 void ChameleonMScreen::resizeEvent(QResizeEvent *event) {
-    // We simply ignore it as we don't support resize
+    /* We simply ignore it as we don't support resize */
 
-  /* Suppress unused-parameter warning */
-  (void)event;
-
+    /* Suppress unused-parameter warning */
+    (void)event;
 }
 
 void ChameleonMScreen::paintEvent(QPaintEvent *e)
@@ -379,7 +356,7 @@ QPainter
         last_dotted = dotted;
     }
 
-    // check if pen parameters changed
+    /* check if pen parameters changed */
     if (((dev != dst)            ||
          (last_brush != pixel_brush)   ||
          force_refresh)) {
@@ -392,7 +369,7 @@ QPainter
 
     }
 
-    // check if clipping region changed
+    /* check if clipping region changed */
     if (clip != NULL &&
         ((dev != dst)            ||
          force_refresh           ||
@@ -406,7 +383,7 @@ QPainter
         gc->setClipRect(uclip);
     }
 
-    // drop force_refresh flag after all
+    /* drop force_refresh flag after all */
     force_refresh = false;
 
     return gc;
@@ -415,11 +392,11 @@ QPainter
 
 void ChameleonMScreen::setNextVMTimeSlice(int millis) {
     if (millis < 0) {
-        // A negative time means we should stop any active timer.
+        /* A negative time means we should stop any active timer. */
         if (vm_slicer.isActive()) {
             vm_slicer.stop();
         }
-    } else if (!vm_suspended) {
+    } else {
         if (vm_slicer.isActive()) {
             vm_slicer.changeInterval(millis);
         } else {
@@ -435,7 +412,7 @@ void ChameleonMScreen::slotTimeout() {
         return;
     }
 
-    // check and align stack suspend/resume state
+    /* check and align stack suspend/resume state */
     midp_checkAndResume();
 
     ms = vm_suspended ? SR_RESUME_CHECK_TIMEOUT : JVM_TimeSlice();
@@ -449,8 +426,10 @@ void ChameleonMScreen::slotTimeout() {
         vm_stopped = true;
         qteapp_get_application()->exit_loop();
     } else if (ms == -1) {
-        /* Wait forever -- we probably have a thread blocked on IO or GUI.
-         * No need to set up timer from here */
+        /* 
+         * Wait forever -- we probably have a thread blocked on IO or GUI.
+         * No need to set up timer from here
+         */
     } else {
         if (ms > 0x7fffffff) {
             vm_slicer.start(0x7fffffff, TRUE);

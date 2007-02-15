@@ -43,7 +43,6 @@
  */
 
 #include <kni.h>
-#include <jvmspi.h>
 
 #include <midpString.h>
 
@@ -84,7 +83,8 @@ typedef enum midp_SignalType {
     LINK_READY_SIGNAL,
     LINK_PORTAL_SIGNAL,
     JSR179_LOCATION_SIGNAL,
-    MEDIA_SNAPSHOT_SIGNAL,
+    MEDIA_EVENT_SIGNAL,
+    MEDIA_SNAPSHOT_SIGNAL  /* sent when snapshot acquisition is complete */
 } midpSignalType;
 
 

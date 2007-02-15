@@ -299,7 +299,7 @@ public class ImageToRawConverter {
     private static void storeValue(byte [] data, int offset, 
                                    int value, int endian)
     {
-        if (endian == INT_FORMAT_LITTLE_ENDIAN) {
+        if (endian == INT_FORMAT_BIG_ENDIAN) {
             data[offset + 0] = (byte)((value >> 24) & 0xFF);
             data[offset + 1] = (byte)((value >> 16) & 0xFF);
             data[offset + 2] = (byte)((value >> 8) & 0xFF);
@@ -324,7 +324,7 @@ public class ImageToRawConverter {
     private static void storeValue(byte [] data, int offset, 
                                    short value, int endian)
     {
-        if (endian == INT_FORMAT_LITTLE_ENDIAN) {
+        if (endian == INT_FORMAT_BIG_ENDIAN) {
             data[offset + 0] = (byte)((value >> 8) & 0xFF);
             data[offset + 1] = (byte)(value & 0xFF);
         } else { 

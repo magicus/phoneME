@@ -64,6 +64,14 @@
 #include <fbapp_export.h>
 #include "fb_port.h"
 
+/**
+ * By default use fast copying of rotated pixel data.
+ * The assumptions required by fast copying implementation are supposed.
+ */
+#ifndef ENABLE_FAST_COPY_ROTATED
+#define ENABLE_FAST_COPY_ROTATED    1
+#endif
+
 /** @def PERROR Prints diagnostic message. */
 #define PERROR(msg) REPORT_ERROR2(0, "%s: %s", msg, strerror(errno))
 
@@ -272,18 +280,44 @@ void clearScreen() {
  * Call after frame buffer is initialized.
  */
 void resizeScreenBuffer(int width, int height) {
+    if (gxj_resize_screen_buffer(width, height) != ALL_OK) {
+	    fprintf(stderr, "Failed to reallocate screen buffer\n");
+	    exit(1);
+    }
+}
 
-    // check if frame buffer is big enough
+/** Check if screen buffer is not bigger than frame buffer device */
+static void checkScreenBufferSize(int width, int height) {
+    // Check if frame buffer is big enough
     if (fb.width < width || fb.height < height) {
         fprintf(stderr, "Device screen too small. Need %dx%d\n",
             width, height);
         exit(1);
     }
-    
-    if (gxj_resize_screen_buffer(width, height) != ALL_OK) {
-	    fprintf(stderr, "Failed to reallocate screen buffer\n");
-	    exit(1);
+}
+
+
+/** Get x-coordinate of screen origin */
+int getScreenX(int screenRotated) {
+    // System screen buffer geometry
+    int bufWidth = gxj_system_screen_buffer.width;
+    int x = 0;
+    int LCDwidth = screenRotated ? fb.height : fb.width;
+    if (LCDwidth > bufWidth) {
+        x = (LCDwidth - bufWidth) / 2;
     }
+    return x;
+}
+
+/** Get y-coordinate of screen origin */
+int getScreenY(int screenRotated) {
+    int bufHeight = gxj_system_screen_buffer.height;
+    int y = 0;
+    int LCDheight = screenRotated ? fb.width : fb.height;
+    if (LCDheight > bufHeight) {
+        y = (LCDheight - bufHeight) / 2;
+    }
+    return y;
 }
 
 /** Refresh screen from offscreen buffer */
@@ -295,30 +329,30 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     int dstHeight = fb.height;
 
     // System screen buffer geometry
-    int sysWidth = gxj_system_screen_buffer.width;
-    int sysHeight = gxj_system_screen_buffer.height;
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
+
+    // Check if frame buffer is big enough
+    checkScreenBufferSize(bufWidth, bufHeight);    
 
     if (linuxFbDeviceType == LINUX_FB_OMAP730) {
         // Needed by the P2 board
         // Max screen size is 176x220 but can only display 176x208
-        dstHeight = sysHeight;
+        dstHeight = bufHeight;
     }
 
     // Make sure the copied lines are 4-byte aligned for faster memcpy
-    if ((x1 & 2) == 1) {
-        x1 -= 1;
-    }
-    if ((x2 & 2) == 1) {
-        x2 += 1;
-    }
+    if ((x1 & 1) == 1) x1 -= 1;
+    if ((x2 & 1) == 1) x2 += 1;
+    
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
 
-    if (sysWidth < dstWidth || sysHeight < dstHeight) {
+    if (bufWidth < dstWidth || bufHeight < dstHeight) {
         // We are drawing into a frame buffer that's larger than what MIDP
         // needs. Center it.
-        dst += ((dstHeight - sysHeight) / 2) * dstWidth;
-        dst += (dstWidth - sysWidth) / 2;
+        dst += ((dstHeight - bufHeight) / 2) * dstWidth;
+        dst += (dstWidth - bufWidth) / 2;
     }
 
     if (srcWidth == dstWidth && srcHeight == dstHeight &&
@@ -326,52 +360,158 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
         // copy the entire screen with one memcpy
         memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type) * srcHeight);
     } else {
-        src += y1 * sysWidth + x1;
+        src += y1 * bufWidth + x1;
         dst += y1 * dstWidth + x1;
 
         for (; y1 < y2; y1++) {
             memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
-            src += sysWidth;
+            src += bufWidth;
             dst += dstWidth;
         }
     }
 }
 
+#if ENABLE_FAST_COPY_ROTATED
+/**
+ * Fast rotated copying of screen buffer area to the screen memory.
+ * The copying is optimized for 32bit architecture with read caching
+ * to copy 16bit pixel data with 90 CCW rotation.
+ *
+ * The data is copied by 2x2 pixel blocks to operate with machine words.
+ * Source data is traversed by lines to benefit from read caching.
+ *
+ * IMPL_NOTE ASSUMPTIONS:
+ * 1) Source and target buffers are word aligned
+ * 2) Source and target widths are even, so column pixels are equally aligned
+ *
+ * @param src pointer to source pixel data to start copying from
+ * @param dst pointer to destination pixel data to start copying to
+ * @param x1 x-coordinate of the left upper corner of the copied area
+ * @param y1 y-coordinate of the left upper corner of the copied area
+ * @param x2 x-coordinate of the right lower corner of the copied area
+ * @param y2 y-coordinate of the right lower corner of the copied area
+ * @param bufWidth width of the source screen buffer
+ * @param dstWidth width of the screen
+ * @param srcInc source pointer increment at the end of source row
+ * @param dstInc dest pointer increment at the end of source row
+ */
+static void fast_copy_rotated(short *src, short *dst, int x1, int y1, int x2, int y2,
+        int bufWidth, int dstWidth, int srcInc, int dstInc) {
+
+  int x;
+  unsigned a, b;
+  while(y1 < y2) {
+    y1 += 2;
+    for (x = x1; x < x2; x += 2) {
+      a = *(unsigned*)src;
+      b = *(unsigned*)(src + bufWidth);
+      src += 2;
+      
+      *(unsigned*)dst = (b << 16) | (a & 0x0000ffff);
+      dst -= dstWidth;
+      *(unsigned*)dst = (b & 0xffff0000) | (a >> 16);
+      dst -= dstWidth;
+    }
+    dst += dstInc + 1;
+    src += srcInc + bufWidth;
+  }
+}
+
+#else /* ENABLE_FAST_COPY_ROTATED */
+/**
+ * Simple rotated copying of screen buffer area to the screen memory.
+ * Source data is traversed by lines to benefit from read caching,
+ * the target data is rotated by 90 CCW.
+ *
+ * IMPL_NOTE:
+ *   The method can be used if IMPL_NOTE ASSUMPTIONS for fast copy
+ *   routine can not be satisfied. On ARM 201MHz fast copying is about
+ *   2x better than the simple one.
+ *
+ * @param src pointer to source pixel data to start copying from
+ * @param dst pointer to destination pixel data to start copying to
+ * @param x1 x-coordinate of the left upper corner of the copied area
+ * @param y1 y-coordinate of the left upper corner of the copied area
+ * @param x2 x-coordinate of the right lower corner of the copied area
+ * @param y2 y-coordinate of the right lower corner of the copied area
+ * @param bufWidth width of the source screen buffer
+ * @param dstWidth width of the screen
+ * @param srcInc source pointer increment at the end of source row
+ * @param dstInc dest pointer increment at the end of source row
+ */
+static void simple_copy_rotated(short *src, short *dst, int x1, int y1, int x2, int y2,
+		int bufWidth, int dstWidth, int srcInc, int dstInc) {
+
+    int x;
+    (void)bufWidth;
+    while(y1++ < y2) {
+        for (x = x1; x < x2; x++) {
+            *dst = *src++;
+            dst -= dstWidth;
+         }
+         dst += dstInc;
+         src += srcInc;
+    }
+}
+#endif /* ENABLE_FAST_COPY_ROTATED */
+
 /** Refresh rotated screen with offscreen buffer content */
 void refreshScreenRotated(int x1, int y1, int x2, int y2) {
+
     gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
     gxj_pixel_type *dst = (gxj_pixel_type*)fb.data;
     int srcWidth, srcHeight;
     int dstWidth = fb.width;
     int dstHeight = fb.height;
 
+    int srcInc;
+    int dstInc;
+
     // System screen buffer geometry
-    int sysWidth = gxj_system_screen_buffer.width;
-    int sysHeight = gxj_system_screen_buffer.height;
+    int bufWidth = gxj_system_screen_buffer.width;
+    int bufHeight = gxj_system_screen_buffer.height;
+
+    // Check if frame buffer is big enough
+    checkScreenBufferSize(bufHeight, bufWidth);
+
+    if (linuxFbDeviceType == LINUX_FB_OMAP730) {
+        // Needed by the P2 board
+        // Max screen size is 176x220 but can only display 176x208
+        // Since the rotated refresh is started from the left lower
+        // corner of the screen, we need to skip two bottom lines
+        dstHeight = bufWidth;
+        dst -= dstWidth * 2;
+    }
+
+    // Make sure the copied lines are 4-byte aligned for faster memcpy
+    if ((x1 & 1) == 1) x1 -= 1;
+    if ((x2 & 1) == 1) x2 += 1;
+    if ((y1 & 1) == 1) y1 -= 1;
+    if ((y2 & 1) == 1) y2 += 1;
 
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
 
-    if (sysWidth < dstHeight || sysHeight < dstWidth) {
+    if (bufWidth < dstHeight || bufHeight < dstWidth) {
             // We are drawing into a frame buffer that's larger than what MIDP
             // needs. Center it.
-            dst += (dstHeight - sysWidth) / 2 * dstWidth;
-            dst += ((dstWidth - sysHeight) / 2);
+            dst += (dstHeight - bufWidth) / 2 * dstWidth;
+            dst += ((dstWidth - bufHeight) / 2);
         }
 
-    dst += y1 + (sysWidth - x2 - 1) * dstWidth;
-    src += x2-1 + y1 * sysWidth;
+    src += x1 + y1 * bufWidth;
+    dst += y1 + (bufWidth - x1) * dstWidth;
 
-    while( x2-- > x1) {
-        int y;
-        for (y = y1; y < y2; y++) {
-            *dst++ = *src;
-            src += sysWidth;
-         }
+    srcInc = bufWidth - srcWidth;      // increment for src pointer at the end of row
+    dstInc = srcWidth * dstWidth + 1;  // increment for dst pointer at the end of column
 
-         dst += dstWidth - srcHeight;
-         src += -1 - srcHeight * sysWidth;
-    }
+#if ENABLE_FAST_COPY_ROTATED
+    fast_copy_rotated(src, dst, x1, y1, x2, y2,
+        bufWidth, dstWidth, srcInc, dstInc);
+#else
+    simple_copy_rotated(src, dst, x1, y1, x2, y2,
+        bufWidth, dstWidth, srcInc, dstInc);
+#endif
 }
 
 /** Frees allocated resources and restore system state */

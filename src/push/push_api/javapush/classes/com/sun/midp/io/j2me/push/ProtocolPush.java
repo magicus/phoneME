@@ -51,15 +51,11 @@ public abstract class ProtocolPush {
      * @return class instance
      * @exception  IllegalArgumentException if the connection string is not
      *               valid
-     * @exception ClassNotFoundException if the <code>MIDlet</code> class
-     *               name can not be found in the current
-     *               <code>MIDlet</code> suite
      * @exception  ConnectionNotFoundException if the protocol is not
      *               supported or invalid
      */
     public static ProtocolPush getInstance(String connection) 
-        throws ClassNotFoundException, IllegalArgumentException, 
-            ConnectionNotFoundException {
+        throws IllegalArgumentException, ConnectionNotFoundException {
 
         /* Verify that the connection requested is valid. */
         if (connection == null || connection.length() == 0) {
@@ -82,10 +78,17 @@ public abstract class ProtocolPush {
         try {
             ProtocolPush cl = (ProtocolPush)Class.forName(className).newInstance();
             return cl.getInstance();
+        } catch (ClassNotFoundException exc) {
+            throw new ConnectionNotFoundException("Protocol is not supported");
+        } catch (ClassCastException exc) {
+            throw new RuntimeException(
+                    "System error loading class " + className + ": " + exc);
         } catch (IllegalAccessException exc) {
-            throw new IllegalArgumentException("Protocol is not supported");
+            throw new RuntimeException(
+                    "System error loading class " + className + ": " + exc);
         } catch (InstantiationException exc) {
-            throw new IllegalArgumentException("Protocol is not supported");
+            throw new RuntimeException(
+                    "System error loading class " + className + ": " + exc);
         }
     }
 

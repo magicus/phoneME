@@ -87,4 +87,18 @@ typedef struct Java_javax_microedition_lcdui_ImageData java_imagedata;
     ARRAY[2] = GXAPI_GET_GRAPHICS_PTR(G)->clipX2, \
     ARRAY[3] = GXAPI_GET_GRAPHICS_PTR(G)->clipY2
 
+/**
+ * Translate the pixel location according to the translation of
+ * the given graphics object.
+ *
+ * @param G handle to the <tt>Graphics</tt> object
+ * @param X variable representing the <tt>x</tt> coordinate to be translated;
+ *        this macro sets the value of X
+ * @param Y variable representing the <tt>y</tt> coordinate to be translated;
+ *        this macro sets the value of Y
+ */
+#define GXAPI_TRANSLATE(G, X, Y)  \
+    (X) += GXAPI_GET_GRAPHICS_PTR((G))->transX, \
+    (Y) += GXAPI_GET_GRAPHICS_PTR((G))->transY
+
 #endif /* _GXAPI_GRAPHICS_H_ */

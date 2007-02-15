@@ -160,6 +160,16 @@ int get_screen_height() {
     }
 }
 
+/** Return screen x */
+int get_screen_x() {
+    return getScreenX(reverse_orientation);
+}
+
+/** Return screen x */
+int get_screen_y() {
+    return getScreenY(reverse_orientation);
+}
+
 /** Return screen orientation flag */
 jboolean fbapp_get_reverse_orientation() {
     return reverse_orientation;
@@ -188,29 +198,11 @@ static void clipRect(int *x1, int *y1, int *x2, int *y2) {
  * @param y2 bottom-right y coordinate of the area to refresh
  */
 void fbapp_refresh(int x1, int y1, int x2, int y2) {
-
     clipRect(&x1, &y1, &x2, &y2);
-
-    /* TODO: No branching is needed indeed, it is
-     *   enough to regard rotation state and call
-     *   ported implementations of screen refresh
-     */
-
-    switch (linuxFbDeviceType) {
-    case LINUX_FB_ZAURUS:
-#if 0
+    if (!reverse_orientation) {
+        refreshScreenNormal(x1, y1, x2, y2);
+    } else {
         refreshScreenRotated(x1, y1, x2, y2);
-#endif
-        break;
-    case LINUX_FB_INTEL_MAINSTONE:
-    case LINUX_FB_VERSATILE_INTEGRATOR:
-    case LINUX_FB_OMAP730:
-    default:
-         if (reverse_orientation) {
-            refreshScreenRotated(x1, y1, x2, y2);
-         } else {
-            refreshScreenNormal(x1, y1, x2, y2);
-         }
     }
 }
 
@@ -235,36 +227,36 @@ void fbapp_map_keycode_to_event(
         int midpKeyCode, jboolean isPressed, jboolean repeatedKeySupport) {
 
     switch(midpKeyCode) {
-    case MD_KEY_HOME:
+    case KEYMAP_MD_KEY_HOME:
         if (isPressed) {
             pNewMidpEvent->type = SELECT_FOREGROUND_EVENT;
             pNewMidpEvent->intParam1 = 0;
             pNewSignal->waitingFor = AMS_SIGNAL;
         } else {
-            // ignore it
+            /* ignore it */
         }
         break;
 
-    case MD_KEY_SWITCH_APP:
+    case KEYMAP_MD_KEY_SWITCH_APP:
         if (isPressed) {
             pNewMidpEvent->type = SELECT_FOREGROUND_EVENT;
             pNewMidpEvent->intParam1 = 1;
             pNewSignal->waitingFor = AMS_SIGNAL;
         } else {
-            // ignore it
+            /* ignore it */
         }
         break;
 
-    case KEY_SCREEN_ROT:
+    case KEYMAP_KEY_SCREEN_ROT:
         if (isPressed) {
             pNewMidpEvent->type = ROTATION_EVENT;
             pNewSignal->waitingFor = UI_SIGNAL;
         } else {
-            // ignore it
+            /* ignore it */
         }
         break;
 
-    case KEY_END:
+    case KEYMAP_KEY_END:
         if (isPressed) {
 #if ENABLE_MULTIPLE_ISOLATES
             pNewSignal->waitingFor = AMS_SIGNAL;
@@ -276,19 +268,20 @@ void fbapp_map_keycode_to_event(
             pNewMidpEvent->type = DESTROY_MIDLET_EVENT;
 #endif
         } else {
-            // ignore it
+            /* ignore it */
         }
         break;
 
-    case KEY_INVALID:
-        // ignore it
+    case KEYMAP_KEY_INVALID:
+        /* ignore it */
         break;
 
     default:
         pNewSignal->waitingFor = UI_SIGNAL;
         pNewMidpEvent->type = MIDP_KEY_EVENT;
         pNewMidpEvent->CHR = midpKeyCode;
-        pNewMidpEvent->ACTION = isPressed ? PRESSED : RELEASED;
+        pNewMidpEvent->ACTION = isPressed ? 
+            KEYMAP_STATE_PRESSED : KEYMAP_STATE_RELEASED;
         if (repeatedKeySupport) {
             handle_repeated_key_port(midpKeyCode, isPressed);
         }

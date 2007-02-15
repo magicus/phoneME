@@ -27,7 +27,6 @@
 package com.sun.midp.main;
 
 import com.sun.cldc.isolate.Util;
-import com.sun.cldc.isolate.Isolate;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 import java.io.IOException;

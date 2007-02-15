@@ -28,7 +28,6 @@ package com.sun.midp.chameleon;
 
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.*;
-import com.sun.midp.util.ResourceHandler;
 
 /**
  * This class represents a "layer". A layer is an element used to comprise
@@ -38,19 +37,19 @@ import com.sun.midp.util.ResourceHandler;
  */
 public class CLayer {
     
-    /** Flag indicating this layer is in need of repainting */
-    protected boolean dirty;
+    /** Flag indicating this layer is in need of repainting. */
+    private boolean dirty;
     
-    /** Array holding a bounding rectangle of an area needing repainting */
+    /** Array holding a bounding rectangle of an area needing repainting. */
     protected int[] dirtyBounds;
     
-    /** Flag indicating if this layer has a transparent background or not */
+    /** Flag indicating if this layer has a transparent background or not. */
     protected boolean transparent;
     
-    /** Flag indicating the current visibility state of this layer */
+    /** Flag indicating the current visibility state of this layer. */
     protected boolean visible;
     
-    /** Flag indicating the ability of this layer to support key/pen input */
+    /** Flag indicating the ability of this layer to support key/pen input. */
     protected boolean supportsInput;
 
     /** 
@@ -201,7 +200,7 @@ public class CLayer {
         bounds[H] = ScreenSkin.HEIGHT;
         
         dirtyBounds = new int[4];
-        dirtyBounds[X] = dirtyBounds[Y] = dirtyBounds[W] = dirtyBounds[H] = -1;
+        cleanDirtyRegions();
         
         // IMPL_NOTE : center the background image by default
     }
@@ -351,21 +350,45 @@ public class CLayer {
     }
     
     /**
-     * Mark this layer as being dirty. By default, this will also mark the
-     * containing window (if there is one) as being dirty as well.
+     * Mark this layer as being dirty.
+     * By default, this will also mark the containing window (if there is one)
+     * as being dirty as well.
      */    
     protected void setDirty() {
-        this.dirty = true;
+        setDirtyButNotNotifyOwner();
         if (owner != null) {
             owner.setDirty();
         }
     }
 
-    /** Clean any dirty regions of the layer and mark layer as not dirty */
-    protected void cleanDirty() {
-        dirty = false;
+    /**
+     * Mark this layer as being dirty
+     * but don't mark the containing window.
+     */
+    protected void setDirtyButNotNotifyOwner() {
+        this.dirty = true;
+    }
+
+    /** Clean any dirty regions of the layer. */
+    protected void cleanDirtyRegions() {
         dirtyBounds[X] = dirtyBounds[Y]
             = dirtyBounds[W] = dirtyBounds[H] = -1;
+    }
+
+    /**
+     * Determines whether dirty regions are empty.
+     *
+     * @return true if dirty regions are not set,
+     *         false otherwise
+     */
+    protected boolean isEmptyDirtyRegions() {
+        return dirtyBounds[X] == -1;
+    }
+
+    /** Clean any dirty regions of the layer and mark layer as not dirty. */
+    protected void cleanDirty() {
+        dirty = false;
+        cleanDirtyRegions();
     }
 
     /**
@@ -388,15 +411,18 @@ public class CLayer {
     }
 
     /**
-     * Handle input from a pen tap. Parameters describe
-     * the type of pen event and the x,y location in the
-     * layer at which the event occurred. Important : the
-     * x,y location of the pen tap will already be translated
+     * Handle input from a pen tap.
+     *
+     * Parameters describe the type of pen event and the x,y location in the
+     * layer at which the event occurred.
+     *
+     * Important: the x,y location of the pen tap will already be translated
      * into the coordinate space of the layer.
      *
      * @param type the type of pen event
      * @param x the x coordinate of the event
      * @param y the y coordinate of the event
+     * @return
      */
     public boolean pointerInput(int type, int x, int y) {
         return false;
@@ -410,6 +436,7 @@ public class CLayer {
      *
      * @param type the type of key event
      * @param code the numeric code assigned to the key
+     * @return
      */
     public boolean keyInput(int type, int code) {
         return false;
@@ -421,6 +448,7 @@ public class CLayer {
      * such as T9, or a phonebook lookup, etc.
      *
      * @param str the text to handle as direct input
+     * @return
      */
     public boolean methodInput(String str) {
         return false;
@@ -465,8 +493,7 @@ public class CLayer {
             System.err.println("Layer " + layerID() + ":");
             System.err.println("\tMarking entire layer dirty");
         }
-        dirtyBounds[X] = dirtyBounds[Y]
-            = dirtyBounds[W] = dirtyBounds[H] = -1;
+        cleanDirtyRegions();
         setDirty();
     }
     
@@ -491,7 +518,7 @@ public class CLayer {
         }
 
         // The whole layer is dirty already
-        if (dirty && dirtyBounds[X] == -1) {
+        if (isDirty() && isEmptyDirtyRegions()) {
             if (CGraphicsQ.DEBUG) {
                 System.err.println(
                     "\tWhole layer is dirty already");
@@ -516,7 +543,7 @@ public class CLayer {
 
         boolean res = false;
         int dx, dy, dx2, dy2;
-        if (dirtyBounds[X] == -1) {
+        if (isEmptyDirtyRegions()) {
             dx = x; dy = y;
             dx2 = x2; dy2 = y2;
         } else {
@@ -543,8 +570,7 @@ public class CLayer {
         if (dirtyBounds[W] != dw || dirtyBounds[H] != dh) {
             if (dw == bw && dh == bh) {
                 // The entire layer is dirty now
-                dirtyBounds[X] = dirtyBounds[Y] =
-                    dirtyBounds[W] = dirtyBounds[H] = -1;
+                cleanDirtyRegions();
 
                 if (CGraphicsQ.DEBUG) {
                     System.err.println(
@@ -585,7 +611,9 @@ public class CLayer {
      *         false otherwise
      */
     boolean subDirtyRegion(int x, int y, int w, int h) {
-        if (!dirty) return false;
+        if (!isDirty()) {
+            return false;
+        }
 
         if (CGraphicsQ.DEBUG) {
             System.err.println("Layer " + this + ":");
@@ -597,7 +625,7 @@ public class CLayer {
         int y2 = y + h;
         boolean res = false;
         int dx, dy, dx2, dy2;
-        if (dirtyBounds[X] == -1) {
+        if (isEmptyDirtyRegions()) {
             dx = 0; dy = 0;
             dx2 = bounds[W];
             dy2 = bounds[H];
@@ -740,8 +768,7 @@ public class CLayer {
             g.setFont(graphicsFont);
             
             // We reset our dirty bounds region
-            dirtyBounds[X] = dirtyBounds[Y] = 
-                dirtyBounds[W] = dirtyBounds[H] = -1;
+            cleanDirtyRegions();
             
         } catch (Throwable t) {
             t.printStackTrace();
@@ -825,9 +852,9 @@ public class CLayer {
             bounds[X] + ", " + bounds[Y] + ", " +
             bounds[W] + ", " + bounds[H] + "]";
 
-        if (dirty) {
+        if (isDirty()) {
             res += ", dirty";
-            if (dirtyBounds[X] != -1) {
+            if (!isEmptyDirtyRegions()) {
                 res += " (" +
                     dirtyBounds[X] + ", " + dirtyBounds[Y] + ", " +
                     dirtyBounds[W] + ", " + dirtyBounds[H] + ")";

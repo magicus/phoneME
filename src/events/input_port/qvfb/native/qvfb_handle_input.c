@@ -47,22 +47,23 @@
  * Search raw keycode in the mapping table,
  *
  * @param key raw keycode to search mapping for
- * @return MIDP keycode if the mapping is possible, KEY_INVALID otherwise
+ * @return MIDP keycode if the mapping is possible, 
+ * KEYMAP_KEY_INVALID otherwise
  */
 static int search_raw_keycode(unsigned key) {
     KeyMapping *km;
-    for (km = mapping; km->midp_keycode != KEY_INVALID; km++) {
+    for (km = mapping; km->midp_keycode != KEYMAP_KEY_INVALID; km++) {
         if (km->raw_keycode == key) {
             return km->midp_keycode;
         }
     }
-    return KEY_INVALID;
+    return KEYMAP_KEY_INVALID;
 }
 
 /** Map raw QVFb keycode to a proper MIDP key constant */
 static int map_raw_keycode(unsigned int unicode) {
     int code = (int)(unicode & 0xffff);
-    int key = KEY_INVALID;
+    int key = KEYMAP_KEY_INVALID;
 
     if (code == 0) {
         /* This is function or arrow keys */
@@ -71,7 +72,7 @@ static int map_raw_keycode(unsigned int unicode) {
     } else {
         key = search_raw_keycode(code);
         /* letter keys have no mapping, the code is returned instead */
-        if (key == KEY_INVALID && code >= ' ' && code <= 127) {
+        if (key == KEYMAP_KEY_INVALID && code >= ' ' && code < 127) {
             key = code;
         }
     }
@@ -96,8 +97,8 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
         int repeat;
     } qvfbKeyEvent;
 
-    // IMPL_NOTE: We don't handle repeats, but this seems OK. When you hold
-    // down a key, QVFB passes a stream of simulated keyups an keydowns
+    /* IMPL_NOTE: We don't handle repeats, but this seems OK. When you hold */
+    /* down a key, QVFB passes a stream of simulated keyups an keydowns */
 
     read(fbapp_get_keyboard_fd(), &qvfbKeyEvent, sizeof(qvfbKeyEvent));
     midpKeyCode = map_raw_keycode(qvfbKeyEvent.unicode);
@@ -124,7 +125,7 @@ void handle_key_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
  * @param pNewMidpEvent     a native MIDP event to be stored to Java event queue
  */
 void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
-    int maxX, maxY;
+    int maxX, maxY, screenX, screenY, d1, d2;
     int n;
     static const int mouseBufSize = 12;
     unsigned char mouseBuf[mouseBufSize];
@@ -137,33 +138,48 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
     } pointer;
 
     do {
-        n = read(fbapp_get_mouse_fd(), mouseBuf + mouseIdx, mouseBufSize - mouseIdx);
+        n = read(fbapp_get_mouse_fd(), mouseBuf + mouseIdx, 
+                mouseBufSize - mouseIdx);
 	if ( n > 0 )
 	    mouseIdx += n;
     } while ( n > 0 );
 
-    // mouse package dump
-    //    for (n = 0; n < mouseIdx; n++) {
-    //        printf("%02x ", mouseBuf[n]);
-    //        fflush(stdout);
-    //    }
-    //    printf("\n");
+    /* mouse package dump */
+    /*    for (n = 0; n < mouseIdx; n++) { */
+    /*        printf("%02x ", mouseBuf[n]); */
+    /*        fflush(stdout); */
+    /*    } */
+    /*    printf("\n"); */
 
-    // unexpected data size.  Broken package, no handling - just return
+    /* unexpected data size.  Broken package, no handling - just return */
     if (mouseIdx < mouseBufSize)
         return;
 
     pNewMidpEvent->type = MIDP_PEN_EVENT;
 
+    screenX = get_screen_x();
+    screenY = get_screen_y();
     maxX = get_screen_width();
     maxY = get_screen_height();
+
+    d1 = (((int)mouseBuf[3]) << 24) +
+        (((int)mouseBuf[2]) << 16) +
+        (((int)mouseBuf[1]) << 8) +
+        (int)mouseBuf[0];
+
+    d2 = (((int)mouseBuf[7]) << 24) +
+        (((int)mouseBuf[6]) << 16) +
+        (((int)mouseBuf[5]) << 8) +
+        (int)mouseBuf[4];
+    
     if (fbapp_get_reverse_orientation()) {
-        pNewMidpEvent->X_POS = min(maxX - (int)mouseBuf[4], maxX);
-        pNewMidpEvent->Y_POS = min((int)mouseBuf[0], maxY);
+        pNewMidpEvent->X_POS = min(maxX - d2, maxX) + screenX;
+        pNewMidpEvent->Y_POS = min(d1 - screenY, maxY);
     } else {
-        pNewMidpEvent->X_POS = min((int)mouseBuf[0], maxX);
-        pNewMidpEvent->Y_POS = min((int)mouseBuf[4], maxY);
+        pNewMidpEvent->X_POS = min(d1 - screenX, maxX);
+        pNewMidpEvent->Y_POS = min(d2 - screenY, maxY);
     }
+
     if (pNewMidpEvent->X_POS < 0) {
         pNewMidpEvent->X_POS = 0;
     }
@@ -173,6 +189,7 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
         pNewMidpEvent->Y_POS = 0;
     }
 
+        
     pressed = mouseBuf[8]  ||
         mouseBuf[9]  ||
         mouseBuf[10] ||
@@ -181,17 +198,17 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
     pNewMidpEvent->ACTION = 
         ( pointer.x != pNewMidpEvent->X_POS ||
           pointer.y != pNewMidpEvent->Y_POS ) ?
-        ( pressed ? DRAGGED : -1 ) :
-        ( pressed ? PRESSED : RELEASED );
+        ( pressed ? KEYMAP_STATE_DRAGGED : -1 ) :
+        ( pressed ? KEYMAP_STATE_PRESSED : KEYMAP_STATE_RELEASED );
 
     if ( pNewMidpEvent->ACTION != -1 ) {
         pNewSignal->waitingFor = UI_SIGNAL;
     }
         
-    //    printf("mouse event: pNewMidpEvent->X_POS =%d  pNewMidpEvent->Y_POS =%d pNewMidpEvent->ACTION = %d\n",
-    //           pNewMidpEvent->X_POS, pNewMidpEvent->Y_POS, pNewMidpEvent->ACTION);
+    /*    printf("mouse event: pNewMidpEvent->X_POS =%d  pNewMidpEvent->Y_POS =%d pNewMidpEvent->ACTION = %d\n", */
+    /*           pNewMidpEvent->X_POS, pNewMidpEvent->Y_POS, pNewMidpEvent->ACTION); */
     
-    // keep the previous coordinates to detect dragged event
+    /* keep the previous coordinates to detect dragged event */
     pointer.x = pNewMidpEvent->X_POS;
     pointer.y = pNewMidpEvent->Y_POS;
 }

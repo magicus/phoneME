@@ -57,7 +57,7 @@ import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.Util;
 
-import com.sun.midp.io.j2me.push.PushRegistryImpl;
+import com.sun.midp.io.j2me.push.PushRegistryInternal;
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
 import com.sun.midp.io.j2me.storage.File;
 
@@ -179,6 +179,13 @@ public abstract class Installer {
     /** Use this to be the security domain for unsigned suites. */
     protected String unsignedSecurityDomain =
         Permissions.UNIDENTIFIED_DOMAIN_BINDING;
+
+    /**
+     * Include this permissions into the list of permissions
+     * given in MIDlet-Permissions jad attribute for unsigned
+     * suites.
+     */
+    protected String additionalPermissions;
 
     /**
      * Constructor of the Installer.
@@ -368,7 +375,7 @@ public abstract class Installer {
         state.midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
         /* Disable push interruptions during install. */
-        PushRegistryImpl.enablePushLaunch(false);
+        PushRegistryInternal.enablePushLaunch(false);
 
         try {
             state.startTime = System.currentTimeMillis();
@@ -456,7 +463,7 @@ public abstract class Installer {
                 }
             }
 
-            PushRegistryImpl.enablePushLaunch(true);
+            PushRegistryInternal.enablePushLaunch(true);
         }
 
         return info.id;
@@ -934,6 +941,58 @@ public abstract class Installer {
     }
 
     /**
+     * If some additional (i.e. that are not listed in jad) permissions must
+     * be allowed, add them to the value of MIDlet-Permissions attribute.
+     */
+    private void applyExtraPermissions() {
+        if (additionalPermissions != null) {
+            String newPermissions = state.jadProps.getProperty(
+                MIDletSuite.PERMISSIONS_PROP);
+
+            if (newPermissions != null && newPermissions.length() > 0) {
+                newPermissions += ",";
+            }
+
+            if ("all".equals(additionalPermissions)) {
+                int i;
+                byte[] domainPermissions = Permissions.forDomain(
+                    info.domain)[Permissions.MAX_LEVELS];
+
+                newPermissions = "";
+
+                for (i = 0; i < Permissions.NUMBER_OF_PERMISSIONS - 1; i++) {
+                    if (domainPermissions[i] != Permissions.NEVER) {
+                        newPermissions += Permissions.getName(i) + ",";
+                    }
+                }
+
+                // the same for the last permission, but without ","
+                if (domainPermissions[i] != Permissions.NEVER) {
+                    newPermissions += Permissions.getName(i);
+                }
+            } else {
+                newPermissions += additionalPermissions;
+            }
+
+            state.jadProps.setProperty(MIDletSuite.PERMISSIONS_PROP,
+                        newPermissions);
+
+            /*
+             * If the Midlet-Permissions attribute presents in there
+             * manifest, it must be the same as in jad because the suite
+             * is trusted.
+             */
+            String jarPermissions = state.jarProps.getProperty(
+                MIDletSuite.PERMISSIONS_PROP);
+
+            if (jarPermissions != null) {
+                state.jarProps.setProperty(MIDletSuite.PERMISSIONS_PROP,
+                                           newPermissions);
+            }
+        }
+    }
+
+    /**
      * Checks the permissions and store the suite.
      *
      * @exception IOException is thrown, if an I/O error occurs during
@@ -967,9 +1026,16 @@ public abstract class Installer {
                 postInstallMsgBackToProvider(
                     OtaNotifier.AUTHORIZATION_FAILURE_MSG);
 
+                /*
+                 * state.previousInstallInfo.authPath can be null in the case
+                 * if the previously installed suite was not signed but its
+                 * domain was set to some trusted one by AutoTester using
+                 * setUnsignedSecurityDomain().
+                 */
                 throw new InvalidJadException(
                     InvalidJadException.TRUSTED_OVERWRITE_FAILURE,
-                        state.previousInstallInfo.authPath[0]);
+                        state.previousInstallInfo.authPath != null ?
+                            state.previousInstallInfo.authPath[0] : "");
             }
 
             /*
@@ -998,6 +1064,12 @@ public abstract class Installer {
                 if (info.jadUrl != null) {
                     checkForJadManifestMismatches();
                 }
+
+                /*
+                 * This is needed by the AutoTester: sometimes it is required
+                 * to allow some permissions even if they are not listed in jad.
+                 */
+                applyExtraPermissions();
 
                 settings.setPermissions(getInitialPermissions(info.domain));
             }
@@ -1088,12 +1160,21 @@ public abstract class Installer {
              * if there an error, but may not remove the temp jar file.
              */
             MIDletInfo midletInfo = state.getMidletInfo();
-            String midletClassNameToRun = null, iconName = null;
+            String midletClassNameToRun = null, iconName;
             MIDletSuiteInfo msi;
+
+            iconName = state.getAppProperty("MIDlet-Icon");
+            if (iconName != null) {
+                iconName.trim();
+            }
 
             if (midletInfo != null) {
                 midletClassNameToRun = midletInfo.classname;
-                iconName = midletInfo.icon;
+                if (iconName == null) {
+                    // If an icon for the suite is not specified,
+                    // use the first midlet's icon.
+                    iconName = midletInfo.icon;
+                }
             }
 
             msi = new MIDletSuiteInfo(info.id);
@@ -1480,7 +1561,30 @@ public abstract class Installer {
 
         /* this will parse any kind of URL, not only Http */
         HttpUrl parsedUrl = new HttpUrl(url);
-        return parsedUrl.path;
+        String path = parsedUrl.path;
+
+        /*
+           IMPL_NOTE: In current implementation of HttpUrl
+               the absolute path always begins with '/' which
+               would make getUrlPath() produce the win32
+               paths in the form "/C:/path/to/file" that is
+               rejected by the filesystem.
+               The initial '/' in 'path' is currently the only
+               flag which allows to distinguish between absolute
+               and relative url.
+               Probably there should be a special flag in HttpUrl
+               to distinguish between absolute and relative urls.
+               Moreover it seems necessary to have platform-dependent
+               conversion procedure from url path to filesystem path.
+        */
+
+        if (path != null) {
+            if (path.charAt(0) == '/') {
+                path = path.substring (1, path.length ());
+            }
+        }
+
+        return path;
     }
 
     /**
@@ -1763,12 +1867,10 @@ public abstract class Installer {
     }
 
     /**
-     * Sets security domain for unsigned suites. The default is untrusted.
-     * Can only be called by JAM for testing.
-     *
-     * @param domain name of a security domain
+     * Checks if the calling suite has Permissions.MIDP permission.
+     * If not, the SecurityException is thrown.
      */
-    public void setUnsignedSecurityDomain(String domain) {
+    private void checkMidpPermission() {
         MIDletSuite midletSuite = MIDletStateHandler.
             getMidletStateHandler().getMIDletSuite();
 
@@ -1776,8 +1878,32 @@ public abstract class Installer {
         if (midletSuite != null) {
             midletSuite.checkIfPermissionAllowed(Permissions.MIDP);
         }
+    }
 
+    /**
+     * Sets security domain for unsigned suites. The default is untrusted.
+     * Can only be called by JAM for testing.
+     *
+     * @param domain name of a security domain
+     * @param allowedPermissions list of permissions that must be allowed even
+     * if they are absent from the jad file; "all" to allow all permissions
+     */
+    public void setUnsignedSecurityDomain(String domain) {
+        checkMidpPermission();
         unsignedSecurityDomain = domain;
+    }
+
+    /**
+     * Sets the permissions that must be allowed not depending on their
+     * presence in the application descriptor file.
+     * Can only be called by JAM for testing.
+     *
+     * @param extraPermissions list of permissions that must be allowed even
+     * if they are absent from the jad file; "all" to allow all permissions
+     */
+    public void setExtraPermissions(String extraPermissions) {
+        checkMidpPermission();
+        additionalPermissions = extraPermissions;
     }
 
     /**
@@ -2205,7 +2331,7 @@ public abstract class Installer {
         byte[] curLevels = settings.getPermissions();
 
         if (state.isPreviousVersion) {
-            PushRegistryImpl.unregisterConnections(info.id);
+            PushRegistryInternal.unregisterConnections(info.id);
         }
 
         for (int i = 1; ; i++) {
@@ -2229,11 +2355,11 @@ public abstract class Installer {
 
             /* Register the new push connection string. */
             try {
-                PushRegistryImpl.registerConnectionInternal(null, state,
+                PushRegistryInternal.registerConnectionInternal(state,
                     conn, midlet, filter, false);
             } catch (Exception e) {
                 /* If already registered, abort the installation. */
-                PushRegistryImpl.unregisterConnections(info.id);
+                PushRegistryInternal.unregisterConnections(info.id);
 
                 if (state.isPreviousVersion) {
                     // put back the old ones, removed above
@@ -2328,7 +2454,7 @@ public abstract class Installer {
 
             /* Register the new push connection string. */
             try {
-                PushRegistryImpl.registerConnectionInternal(null,
+                PushRegistryInternal.registerConnectionInternal(
                     state, conn, midlet, filter, true);
             } catch (IOException e) {
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {

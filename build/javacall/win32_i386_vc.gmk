@@ -39,6 +39,7 @@ HOST_COMPILER		= vc
 TARGET_PLATFORM		= javacall
 TARGET_OS		= javacall
 TARGET_CPU		= i386
+TARGET_DEVICE		= x86
 TARGET_COMPILER		= vc
 TARGET_VM		= cldc_vm
 
@@ -49,4 +50,6 @@ EXTRA_CPPFLAGS += /Zm400
 LD_FLAGS+=-nodefaultlib:libcmt.lib
 LIBS += $(JAVACALL_LIB_DIR)/javacall$(g).lib 
 LIBS += $(JAVACALL_LIB_DIR)/emulator.res 
-LIBS += Comdlg32.lib shell32.lib dsound.lib advapi32.lib 
+LIBS += Comdlg32.lib shell32.lib advapi32.lib 
+
+USE_CYGWIN = true

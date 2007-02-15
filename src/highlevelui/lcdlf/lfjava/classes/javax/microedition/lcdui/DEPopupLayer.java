@@ -75,9 +75,8 @@ class DEPopupLayer extends ScrollablePopupLayer {
         if (newElements != null) {
             numElements = newElements.length;
             elements = new String[numElements];
-            for (int i = 0; i < numElements; i++) {
-                elements[i] = newElements[i];
-            }
+            System.arraycopy(newElements, 0, elements, 0, numElements);
+
             this.selectedIndex = selectedIndex;
             hilightedIndex = selectedIndex;
         }
@@ -497,6 +496,7 @@ class DEPopupLayer extends ScrollablePopupLayer {
      */
     public void updateScrollIndicator() {
         if (scrollInd != null) {
+            scrollInd.update(null);
             if (sbVisible) {
                 scrollInd.setVerticalScroll(
                                             startIndex * 100 / (numElements - elementsToFit),

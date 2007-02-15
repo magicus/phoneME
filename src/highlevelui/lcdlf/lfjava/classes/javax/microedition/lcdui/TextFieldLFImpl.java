@@ -45,6 +45,7 @@ import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.TextFieldSkin;
 import com.sun.midp.chameleon.skins.resources.TextFieldResources;
 import com.sun.midp.chameleon.skins.resources.PTIResources;
+import com.sun.midp.configurator.Constants;
 
 
 import java.util.*;
@@ -445,7 +446,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * @param height The height available for the Item's content
      */
     void lPaintContent(Graphics g, int width, int height) {
-        //        System.out.println(" width=" + width +  " height =" + height);
         // Draw the TextField background region 
         if (editable) {
             if (TextFieldSkin.IMAGE_BG != null) {
@@ -944,14 +944,17 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 
                
                 if (bufferedTheSameAsDisplayed(tf.constraints)) {
-                    tf.delete(0, tf.buffer.length());
-                    tf.insert(in.toString(), 0);
-                    setCaretPosition(newCursor.index);
+                    if (lValidate(in, tf.constraints)) {
+                        tf.delete(0, tf.buffer.length());
+                        tf.insert(in.toString(), 0);
+                        setCaretPosition(newCursor.index);
+                        tf.notifyStateChanged();
+                    }
                 } else if (tf.buffer.length() < tf.getMaxSize()) {
                     tf.insert(input, cursor.index);
+                    tf.notifyStateChanged();
                 }
             } catch (Exception ignore) { }
-            tf.notifyStateChanged();
         }
     }
 
@@ -1062,6 +1065,12 @@ class TextFieldLFImpl extends ItemLFImpl implements
     void uCallPointerReleased(int x, int y) {
         // don't call super method because text field does not have the option 
         // to activate the command assigned to this item by the pointer
+
+        // accept the word if the PTI is currently enabled
+        if (hasPTI()) {
+            inputSession.processKey(Constants.KEYCODE_SELECT, false);
+        }
+        
         if (pressedIn) {
             int newId = getIndexAt(x, y);
             if (newId >= 0 &&
@@ -1482,7 +1491,13 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 ret = true;
             }            
         }
-        
+
+        // item has to be visible completelly
+        visRect_inout[X] = 0;
+        visRect_inout[Y] = 0;
+        visRect_inout[WIDTH] = bounds[WIDTH];
+        visRect_inout[HEIGHT] = bounds[HEIGHT];
+            
         return ret;
     }
 

@@ -35,7 +35,7 @@ public interface DisplayControllerListener {
      * Called when going to select midlet to
      * bring it to foreground.
      *
-     * @param onlyFromLaunched true if midlet should
+     * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
      *        if false then possibility to launch midlet is needed.
      */

@@ -384,9 +384,8 @@ class ChoiceButton : public QButton {
   /**
    * Notify Java peer that its selection state has changed.
    *
-   * @param QButton::On if selected
    */
-  void notifyStateChanged(int state);
+  void notifyStateChanged();
 
   /**
    * Change text wrapping policy.
@@ -466,6 +465,7 @@ class ChoiceButtonBoxBody : public QVButtonGroup {
  */
 class ListBody : public QListBox {
  public:
+    
   /**
    * Override QListBox to notify Java peer of traversal out.
    *
@@ -492,7 +492,15 @@ class ListBody : public QListBox {
   virtual ~ListBody();
 
  protected:
-
+  /**
+   * This is the patch for qt 2.3.9: The focus is moved out while the list in
+   * non-modal state.
+   * Overload method of multiple line editor. The method always returns false
+   * The implementation needs to be removed if the fix is done for the later
+   * version of qt
+   */ 
+  bool focusNextPrevChild( bool next );
+  
   /**
    * Makes this item have focus, enabling any item-specific commands; in
    * addition, if the given event was caused by a user action, notifies the
@@ -522,6 +530,12 @@ class PopupBody : public QPushButton {
   /** button width to track resizing and redo truncation when necessary */
   int oldWidth;
 
+  /** popup list */
+  QListBox *qPopup;
+
+  /** if list is popped up */
+  bool poppedUp;
+
  public:
   /**
    * PopupBody constructor.
@@ -548,9 +562,24 @@ class PopupBody : public QPushButton {
   void setText(const QString & newText);
 
  /**
+  * Set popup list variable
+  */
+  void setList(QListBox *list);
+ 
+ /**
+  * Get popup list variable
+  */
+  QListBox* getList();
+ 
+ /**
   * Override drawButton to support text truncation
   */
  virtual void drawButton( QPainter * p );
+
+    /**
+     * Pops down (removes) the combo box popup list box.
+     */
+    void popDownList();
 
  protected:
   /**
@@ -564,12 +593,18 @@ class PopupBody : public QPushButton {
   void focusInEvent(QFocusEvent *event);
 
   /**
-   * Override to patch a feature in Qt that shows popup menu at 
-   * (0, 0) if triggered by key press, instead of mouse click.
+   * Override to show popup list 
    *
    * @param keyEvent key event to handle
    */
   void keyPressEvent(QKeyEvent *keyEvent);
+
+  /**
+   * Override to show popup list
+   *
+   * @param e pointer event to handle
+   */
+  void mousePressEvent( QMouseEvent *e);
 
   /**
    * Override QPushButton to notify Java peer of traversal out.
@@ -577,6 +612,18 @@ class PopupBody : public QPushButton {
    * @param keyEvent key event to handle
    */
   void keyReleaseEvent(QKeyEvent *keyEvent);
+
+  /**
+   * The event filter receives events from the listbox when it is
+   * popped up. 
+   */
+  bool eventFilter(QObject *object, QEvent *event);
+
+  /**
+   * Popups the popup list.
+   * If the list is empty, no selections appear.
+   */
+  void popupList();
 
 };
 
@@ -978,19 +1025,13 @@ class Popup : public Choice {
   /**
    * The popup menu with all choices.
    */
-  PatchedQPopupMenu *qPopup;
+  QListBox *qPopup;
 
   /**
    * Index of the currently selected element, using zero-based
    * counting.
    */
   int selectedIndex;
-
-  /**
-   * List of all PopupElement inserted in this Popup in the correct
-   * order
-   */
-  QList<QCustomMenuItem> *elements;
 
  protected:
 
@@ -1231,7 +1272,21 @@ class ListElement : public QListBoxItem {
      *
      * @param f new font
      */
-    void setFont(QFont *f);
+    void setFont(QFont *f);    
+
+    /**
+    * Returns the pixmap that corresponds to this popup element.
+    *
+    * @return pixmap of this element
+    */
+    QPixmap* pixmap();
+
+    /**
+     * Returns the font that corresponds to this popup element.
+     *
+     * @return font of this element
+     */
+    QFont* getFont();
 
 
  private:

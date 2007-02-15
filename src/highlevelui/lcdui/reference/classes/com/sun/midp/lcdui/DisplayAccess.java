@@ -43,6 +43,21 @@ public interface DisplayAccess {
      */
     Display getDisplay();
 
+    /**
+     * Called to get current display width.
+     * @return Display width.
+     */
+    public int getDisplayWidth();
+
+    /**
+     * Called to get current display height.
+     * @return Display height.
+     */
+    public int getDisplayHeight();
+
+    /** Called to get the display to request the foreground. */
+    public void requestForeground();
+
     // API's for accessing Display from Games Package
 
     /**

@@ -136,8 +136,7 @@ bool ChameleonMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
     if (e->type() == QEvent::KeyPress) {
         QKeyEvent *ke = (QKeyEvent *) e;
 
-        if (ke->key() == Qt::Key_F12 ||
-	    ke->key() == Qt::Key_Home) {
+        if (ke->key() == Qt::Key_Home) {
             mscreen->keyPressEvent(ke);
             ke->ignore();
             return TRUE;
@@ -165,6 +164,21 @@ void ChameleonMIDPMainWindow::setFullScreen(int fullscn) {
 }
 
 /**
+ * Refresh screen after width or height was changed
+ *
+ * @param fullscn true if fullscreen mode is active, false
+ * when normal screen mode is active.
+ */
+void ChameleonMIDPMainWindow::resizeScreen() {
+
+     if (isFullScreen) {
+        showFullScreen();
+     } else {
+        showNormalScreen();
+     }
+}
+
+/**
  * Show full screen more - in our case, it means no indicator bar.
  */
 void ChameleonMIDPMainWindow::showFullScreen(void) {
@@ -183,7 +197,7 @@ void ChameleonMIDPMainWindow::showFullScreen(void) {
     box->addWidget(mscreen);
 
     setCentralWidget(mwindow);
-    setFixedSize(CHAM_FULLWIDTH, CHAM_FULLHEIGHT);
+    setFixedSize(mscreen->getDisplayFullWidth(), mscreen->getDisplayFullHeight());
     mscreen->setFocus();
 
 }
@@ -192,9 +206,10 @@ void ChameleonMIDPMainWindow::showFullScreen(void) {
  * Restructure the whole layout of this app to
  * show normal screen mode.
  */
-void ChameleonMIDPMainWindow::showNormalScreen(void) {
+void ChameleonMIDPMainWindow::showNormalScreen() {
 
     isFullScreen = FALSE;
+    int screenWidth = mscreen->getDisplayWidth();
 
     // Delete the current layout, a must.
     // otherwise, won't work.
@@ -205,11 +220,12 @@ void ChameleonMIDPMainWindow::showNormalScreen(void) {
     mscreen->setBufferSize(MScreen::normalScreenSize);
     box->addWidget(indicatorBar);
     box->addWidget(mscreen);
+    indicatorBar->setFixedWidth(screenWidth);
     indicatorBar->show();
 
     setCentralWidget(mwindow);
     int indicatorHeight = indicatorBar->height();
-    setFixedSize(CHAM_WIDTH, CHAM_HEIGHT + indicatorHeight);
+    setFixedSize(screenWidth, mscreen->getDisplayHeight() + indicatorHeight);
     mscreen->setFocus();
 }
 

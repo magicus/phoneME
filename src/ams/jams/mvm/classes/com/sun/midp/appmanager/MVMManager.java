@@ -83,9 +83,6 @@ public class MVMManager extends MIDlet
     /** UI to display error alerts. */
     private DisplayError displayError;
 
-    /** UI to display headless MIDlet alerts. */
-    private HeadlessAlert headlessAlert;
-
     /**
      * Create and initialize a new MVMManager MIDlet.
      */
@@ -131,7 +128,6 @@ public class MVMManager extends MIDlet
 
         Display display = Display.getDisplay(this);
         displayError = new DisplayError(display);
-        headlessAlert = new HeadlessAlert(display);
 
         // AppManagerUI will be set to be current at the end of its constructor
         appManagerUI = new AppManagerUI(this, display, displayError, first,
@@ -320,18 +316,13 @@ public class MVMManager extends MIDlet
      */
     public void moveToForeground(RunningMIDletSuiteInfo suiteInfo) {
         try {
-            if (suiteInfo != null) {
-                if (suiteInfo.proxy.noDisplayable()) {
-                    /*
-                     * This MIDlet has not set a displayable,
-                     * but the user is trying to put it in the foreground,
-                     * we don't want put a non-drawing display in the
-                     * foreground, so warn the user.
-                     */
-                    headlessAlert.show(suiteInfo.proxy);
-                    return;
-                }
 
+            if (Constants.MEASURE_STARTUP) {
+                System.err.println("Switch To Foreground Time: Begin at " +
+                    System.currentTimeMillis());
+            }
+
+            if (suiteInfo != null) {
                 midletProxyList.setForegroundMIDlet(suiteInfo.proxy);
             }
 

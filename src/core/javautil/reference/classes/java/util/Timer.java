@@ -82,7 +82,7 @@ public class Timer {
     /**
      * The timer thread.
      */
-    private TimerThread thread = new TimerThread(queue);
+    private TimerThread thread;
 
     /**
      * Creates a new timer.  The associated thread does <i>not</i> run as
@@ -92,7 +92,6 @@ public class Timer {
      * @see #cancel()
      */
     public Timer() {
-        thread.start();
     }
 
     /**
@@ -294,7 +293,7 @@ public class Timer {
             throw new IllegalArgumentException("Illegal execution time.");
         
         synchronized (queue) {
-            if (!thread.newTasksMayBeScheduled) {
+            if (thread != null && !thread.newTasksMayBeScheduled) {
                 throw new IllegalStateException("Timer already cancelled.");
             }
 
@@ -302,7 +301,7 @@ public class Timer {
 	     * If the TimerThread has exited without an error
 	     * it is restarted. See the commentary in TimerThread.run.
 	     */
-	    if (!(thread.isAlive())) {
+	    if (thread == null || !thread.isAlive()) {
 		thread = new TimerThread(queue);
 		thread.start();
 	    }

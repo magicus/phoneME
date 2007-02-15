@@ -1281,6 +1281,9 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
             if (traverseIndexCopy != -1) {
                 itemsCopy[traverseIndexCopy].uCallTraverseOut();
+                synchronized (Display.LCDUILock) {
+                    itemsCopy[traverseIndexCopy].lRequestPaint();
+                }
             }
             
             /*
@@ -1305,7 +1308,15 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             if (traverseIndexCopy != -1) {
                 // We then need to traverse to the next item
                 itemTraverse = 
-                        uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+                    uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+                
+                if (scrollForBounds(dir, visRect)) {
+                    uRequestPaint(); // request to paint contents area
+                } else {
+                    synchronized (Display.LCDUILock) {
+                        itemsCopy[traverseIndexCopy].lRequestPaint();
+                    }
+                }
             }
             
             int scrollPos = getScrollPosition0();
@@ -1328,6 +1339,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                     if (scrollPos > itemsCopy[traverseIndexCopy].bounds[Y]) {
                         scrollPos = itemsCopy[traverseIndexCopy].bounds[Y];
                     }
+                    uRequestPaint();
                 }
             }
             
@@ -1349,12 +1361,11 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                             itemsCopy[traverseIndexCopy].bounds[HEIGHT] -
                             viewportHeight;
                     }
+                    uRequestPaint();
                 }
             }
             setScrollPosition0(scrollPos);
             updateCommandSet();
-            uRequestPaint();
-            
         } else {                      
             
             // There is no more interactive items wholly visible on
@@ -1834,13 +1845,6 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         if (item.uCallTraverse(dir,
                                width, viewportHeight, visRect)) 
         {
-            
-            // Since visRect is sent to the Item in its own coordinate
-            // space, we translate it back into the overall Form's
-            // coordinate space
-            visRect[X] += item.bounds[X];
-            visRect[Y] += item.bounds[Y];
-
             synchronized (Display.LCDUILock) {
                 // It's possible that this newFocus item has
                 // been just removed from this Form since we
@@ -1849,6 +1853,12 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                     setCurrentItem0(nativeId, item.nativeId, visRect[Y]);
                 }
             }
+
+            // Since visRect is sent to the Item in its own coordinate
+            // space, we translate it back into the overall Form's
+            // coordinate space
+            visRect[X] += item.bounds[X];
+            visRect[Y] += item.bounds[Y];
 
             return true;
         }
@@ -1882,20 +1892,16 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
         itemLF = itemLFs[index];
         
-        // Ensure the item is visible
-        if (!itemCompletelyVisible(itemLF)) {
-            // We'll initially position at the bottom of the form,
-            // then adjust upward to the top corner of the item
-            // if necessary
-            if (itemLF.bounds[Y] > getScrollPosition0()) {
-                int scrollPos = viewable[HEIGHT] - viewportHeight;
-                if (itemLF.bounds[Y] < scrollPos) {
-                    scrollPos = itemLF.bounds[Y];
+        if (index != traverseIndex) {
+            // Ensure the item is visible
+            if (!itemCompletelyVisible(itemLF)) {
+                int scrollPos = itemLF.bounds[Y];
+                if (scrollPos + viewportHeight > viewable[HEIGHT]) {
+                    scrollPos = viewable[HEIGHT] - viewportHeight;
                 }
                 setScrollPosition0(scrollPos);
             }
-        }
-        if (index != traverseIndex) {
+
             // We record the present traverseItem because if it
             // is valid, we will have to call traverseOut() on that
             // item when we process the invalidate call.
@@ -1909,6 +1915,15 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             // be traversed to when the invalidate occurs
             traverseIndex = itemLF.item.acceptFocus() ? index : -1;
             lRequestInvalidate();
+        } else {
+            // Ensure the item is visible
+            if (!itemPartiallyVisible(itemLF)) {
+                int scrollPos = itemLF.bounds[Y];
+                if (scrollPos + viewportHeight > viewable[HEIGHT]) {
+                    scrollPos = viewable[HEIGHT] - viewportHeight;
+                }
+                setScrollPosition0(scrollPos);
+            }
         }
     }
     
@@ -1941,10 +1956,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         if (traverseIndexCopy != -1 && dir == CustomItem.NONE) {
             itemTraverse = 
                     uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
-            
-            synchronized (Display.LCDUILock) {
-                lScrollToItem(itemsCopy[traverseIndexCopy].item);
-            }
+
             uRequestPaint(); // request to paint contents area
             return;
         }

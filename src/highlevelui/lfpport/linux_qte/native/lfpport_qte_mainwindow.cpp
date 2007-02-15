@@ -109,7 +109,7 @@ PlatformMIDPMainWindow::PlatformMIDPMainWindow(QWidget *parent,
   setTitleBar(MAINWINDOW_TITLE);
 
   // Fix main window geometry
-  int WINDOW_HEIGHT = mscreen->getDisplayFullHeight() + MENUBAR_HEIGHT;
+  int WINDOW_HEIGHT = mscreen->getDisplayFullHeight();
   setFixedSize(mscreen->getDisplayFullWidth(), WINDOW_HEIGHT);
 
   // Misc set-up
@@ -134,30 +134,6 @@ PlatformMIDPMainWindow::PlatformMIDPMainWindow(QWidget *parent,
 PlatformMIDPMainWindow::~PlatformMIDPMainWindow() {
     finalizeMenus();
     killTimers();
-}
-
-void PlatformMIDPMainWindow::resize() {
-
-    // Delete the current layout, a must.
-    // otherwise, won't work.
-    ticker->hide();
-    delete box;
-
-    box = new QVBoxLayout(mwindow, 1 /* border */, 1 /* space */);
-
-    mscreen->setVScrollBarMode(QScrollView::Auto);
-    if (isFullScreen == TRUE) {
-        mscreen->setBufferSize(MScreen::fullScreenSize);
-    } else {
-        mscreen->setBufferSize(MScreen::normalScreenSize);
-    }
-    box->addWidget(mscreen);
-    box->addWidget(ticker);    
-
-    setCentralWidget(mwindow);
-    setFixedSize(mscreen->getDisplayFullWidth(), mscreen->getDisplayFullHeight() + MENUBAR_HEIGHT);
-    mscreen->setFocus();
-    ticker->show();
 }
 
 /**
@@ -248,8 +224,7 @@ PlatformMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
     // Forward Home key presses to mscreen to resume apps
     if (e->type() == QEvent::KeyPress || e->type() == QEvent::Accel) {
         QKeyEvent *ke = (QKeyEvent *) e;
-        if (ke->key() == Qt::Key_F12 ||
-            ke->key() == Qt::Key_Home) {
+        if (ke->key() == Qt::Key_Home) {
             mscreen->keyPressEvent(ke);
             ke->ignore();
             return TRUE;
@@ -268,11 +243,26 @@ PlatformMIDPMainWindow::eventFilter(QObject *obj, QEvent *e) {
 void PlatformMIDPMainWindow::setFullScreen(int fullscn) {
  
      if (fullscn && !isFullScreen) {
-     showFullScreen();
+        showFullScreen();
      }
 
      if (!fullscn && isFullScreen) {
-         showNormalScreen();
+        showNormalScreen();
+     }
+}
+
+/**
+ * Refresh screen after width or height was changed
+ *
+ * @param fullscn true if fullscreen mode is active, false
+ * when normal screen mode is active.
+ */
+void PlatformMIDPMainWindow::resizeScreen() {
+
+     if (isFullScreen) {
+        showFullScreen();
+     } else {
+        showNormalScreen();
      }
 }
 
@@ -296,6 +286,7 @@ void PlatformMIDPMainWindow::showFullScreen(void) {
     box->addWidget(mscreen);
 
     setCentralWidget(mwindow);
+    setFixedSize(mscreen->getDisplayFullWidth(), mscreen->getDisplayFullHeight() + MENUBAR_HEIGHT);
     mscreen->setFocus();
 
 }
@@ -321,6 +312,7 @@ void PlatformMIDPMainWindow::showNormalScreen(void) {
     ticker->show();
 
     setCentralWidget(mwindow);
+    setFixedSize(mscreen->getDisplayWidth(), mscreen->getDisplayFullHeight() + MENUBAR_HEIGHT);
     mscreen->setFocus();
 }
 

@@ -30,8 +30,6 @@ import com.sun.midp.chameleon.CLayer;
 import com.sun.midp.chameleon.MIDPWindow;
 import com.sun.midp.chameleon.skins.*;
 
-import javax.microedition.lcdui.*;
-
 /**
  *
  */

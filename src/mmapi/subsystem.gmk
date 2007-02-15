@@ -30,12 +30,12 @@
 # other def. (like VPATH)
 ######################################################################
 
-SUBSYSTEM_JSR234_JAVA_FILES = 
+SUBSYSTEM_MMAPI_JAVA_FILES = 
 
 ifneq ($(USE_JSR_234), true)
 ifneq ($(USE_JSR_135), true)
 
-SUBSYSTEM_JSR234_JAVA_FILES = \
+SUBSYSTEM_MMAPI_JAVA_FILES = \
     $(SUBSYSTEM_DIR)/mmapi/classes/javax/microedition/lcdui/MMHelperImpl.java
 
 mmapi:
@@ -43,9 +43,9 @@ mmapi:
 endif
 endif
 
-SUBSYSTEM_JSR234_SOURCEPATH = $(SUBSYSTEM_DIR)/mmapi/classes
+SUBSYSTEM_MMAPI_SOURCEPATH = $(SUBSYSTEM_DIR)/mmapi/classes
 
-MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_JSR234_SOURCEPATH)
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_MMAPI_SOURCEPATH)
 
 ifneq ($(USE_JSR_234), true)
 ifneq ($(USE_JSR_135), true)
@@ -53,17 +53,17 @@ ifneq ($(MIDP_USE_ABB), true)
 
 # if one of USE_JSR_234, USE_JSR_135 or MIDP_USE_ABB is true then com.sun.mmedia
 # is already in Javadoc package list. Otherwise it should be added to the list.
-SUBSYSTEM_JSR234_PACKAGES = \
+SUBSYSTEM_MMAPI_PACKAGES = \
     com.sun.mmedia
-MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_JSR234_PACKAGES)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_MMAPI_PACKAGES)
 
 MIDP_JAVADOC_ALL += \
         -group "Multimedia Package" \
-	$(shell echo $(SUBSYSTEM_JSR234_PACKAGES) | tr ' ' $(PATHSEP))
+	$(shell echo $(SUBSYSTEM_MMAPI_PACKAGES) | tr ' ' $(PATHSEP))
 
 # Java files in MIDP workspace that connects ( mmapi ) subsystem
 #
-SUBSYSTEM_JSR234_JAVA_FILES += \
+SUBSYSTEM_MMAPI_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMEventHandler.java
     
 endif

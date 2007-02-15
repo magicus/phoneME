@@ -114,7 +114,7 @@ static Property * implementationProperties = NULL ;
 /** Profile property name, as defined by the MIDP specification */
 #define PROFILES_PROP_NAME "microedition.profiles"
 /** Default profile, as required by the MIDP specification */
-#define DEFAULT_PROFILE "MIDP-2.0"
+#define DEFAULT_PROFILE "MIDP-2.1"
 
 /**
  * Trims leading and trailing white space from an array of

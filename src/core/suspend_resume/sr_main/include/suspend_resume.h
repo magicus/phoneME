@@ -86,6 +86,12 @@ extern void sr_initSystem();
 extern void sr_finalizeSystem();
 
 /**
+ * Corrects state of suspend/resume system in case VM is terminated
+ * while the system is waiting for java side response.
+ */
+extern void sr_repairSystem();
+
+/**
  * Suspend/resume routine for resources that should not be processed during
  * either suspend or resume.
  */
@@ -106,15 +112,6 @@ extern void midp_suspend();
  * where possible.
  */
 extern void midp_resume();
-
-/**
- * Checks if there is a request for java stack to resume normal operation.
- * This function is called from midp_checkAndResume() and requires porting.
- *
- * @return KNI_TRUE if java stack is requested to resume, KNI_FALSE if it is
- * not.
- */
-extern jboolean midp_checkResumeRequest();
 
 /**
  * Checks if there is active request for java stack to resume and invokes
@@ -146,10 +143,15 @@ extern void midp_waitWhileSuspended();
  * and then removed from the system.
  *
  * For java stack, SR_INVALID means that suspend/resume system is not
- * initialized.
+ * initialized. SR_SUSPENDING state identifies that java stack is being
+ * suspended currently. SR_RESUMING state identifies that java stack
+ * resume routines are postponed to avoid conflicts with currently running
+ * suspend ones.
  */
 typedef enum _SRState {
+    SR_SUSPENDING,
     SR_SUSPENDED,
+    SR_RESUMING,
     SR_ACTIVE,
     SR_INVALID
 } SRState;
@@ -158,7 +160,8 @@ typedef enum _SRState {
  * Current state of java stack from suspend/resume point of view.
  * @return SR_INVALID if suspend/resume system is not initialized,
  *         SR_ACTIVE if java stack is active,
- *         SR_SUSPENDED if java stack is suspended.
+ *         SR_SUSPENDED if java stack is suspended,
+ *         SR_SUSPENDING if java stack suspension routines are in process.
  */
 extern SRState midp_getSRState();
 

@@ -255,7 +255,7 @@ abstract class SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    abstract void outputValue(DataOutput out) 
+    abstract void outputValue(BinaryOutputStream out) 
         throws java.io.IOException;
 
     /**
@@ -546,7 +546,7 @@ class IntSkinProperty extends SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    void outputValue(DataOutput out) 
+    void outputValue(BinaryOutputStream out) 
         throws java.io.IOException {
 
         out.writeInt(value);
@@ -650,7 +650,7 @@ class IntSeqSkinProperty extends SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    void outputValue(DataOutput out) 
+    void outputValue(BinaryOutputStream out) 
         throws java.io.IOException {
 
         // out sequence length
@@ -717,10 +717,10 @@ class StringSkinProperty extends SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    void outputValue(DataOutput out) 
+    void outputValue(BinaryOutputStream out) 
         throws java.io.IOException {
 
-        out.writeUTF(value);
+        out.writeString(value);
     }
 }
 
@@ -785,7 +785,7 @@ class FontSkinProperty extends SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    void outputValue(DataOutput out) 
+    void outputValue(BinaryOutputStream out) 
         throws java.io.IOException {
 
         out.writeInt(value);
@@ -882,10 +882,10 @@ class ImageSkinProperty extends SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    void outputValue(DataOutput out) 
+    void outputValue(BinaryOutputStream out) 
         throws java.io.IOException {
 
-        out.writeUTF(value);
+        out.writeString(value);
     }
 }
 
@@ -1023,12 +1023,12 @@ class CompositeImageSkinProperty extends SkinPropertyBase {
      * @param writer where to print entries
      * @param indent indentation string for each entry
      */
-    void outputValue(DataOutput out) 
+    void outputValue(BinaryOutputStream out) 
         throws java.io.IOException {
 
         // output pieces file names
         for (int i = 0; i < value.length; ++i) {
-            out.writeUTF(value[i]);
+            out.writeString(value[i]);
         }
     }
 }
@@ -1181,6 +1181,125 @@ final class RomizedImageFactory {
 }
 
 /**
+ * Binary output stream capable of writing data 
+ * in big/little endian format.
+ */
+final class BinaryOutputStream {
+    /** Underlying stream for writing bytes into */ 
+    private DataOutputStream outputStream = null;
+
+    /** true for big endian format, false for little */
+    private boolean isBigEndian = false;
+
+    /**
+     * Constructor
+     *
+     * @param out underlying output stream for writing bytes into
+     * @param isBigEndian true for big endian format, false for little
+     */
+    BinaryOutputStream(OutputStream out, boolean isBigEndian) {
+        this.outputStream = new DataOutputStream(out);
+        this.isBigEndian = isBigEndian;
+    }
+
+    /**
+     * Writes byte value into stream
+     *
+     * @param value byte value to write
+     */
+    public void writeByte(int value) 
+        throws java.io.IOException {
+
+        outputStream.writeByte(value);
+    }
+
+    /**
+     * Writes integer value into stream
+     *
+     * @param value integer value to write
+     */
+    public void writeInt(int value) 
+        throws java.io.IOException {
+
+        if (isBigEndian) {
+            outputStream.writeByte((value >> 24) & 0xFF);
+            outputStream.writeByte((value >> 16) & 0xFF);
+            outputStream.writeByte((value >> 8) & 0xFF);
+            outputStream.writeByte(value & 0xFF);
+        } else { 
+            outputStream.writeByte(value & 0xFF);
+            outputStream.writeByte((value >> 8) & 0xFF);
+            outputStream.writeByte((value >> 16) & 0xFF);
+            outputStream.writeByte((value >> 24) & 0xFF);
+        }
+    }
+
+    /**
+     * Writes string into stream. The string data is written 
+     * in follwoing order:
+     * - Number of bytes for string chars
+     * - Encoding (US ASCII or UTF8)
+     * - String chars as bytes
+     * 
+     * The number of bytes for string chars is written as 
+     * single byte, so it can't exceed 255.
+     *
+     * @param value String value to write into stream
+     */
+    public void writeString(String value) 
+        throws java.io.IOException {
+
+        byte[] chars = value.getBytes("UTF8");
+        int length = chars.length;
+
+        // determine what encoding to use
+        int encoding = SkinResourcesConstants.STRING_ENCODING_USASCII;
+        for (int i = 0; i < length; ++i) {
+            int ch = chars[i] & 0xFF;
+            if (ch >= 128) {
+                encoding = SkinResourcesConstants.STRING_ENCODING_UTF8;
+                break;
+            }
+        }
+
+        if (encoding == SkinResourcesConstants.STRING_ENCODING_UTF8) {
+            System.err.println("UTF8: " + value);
+            // for '\0' at the end of the string
+            length += 1;
+        }
+
+        // write string data length
+        if (length > 255) {
+            throw new IllegalArgumentException(
+                    "String data length exceeds 255 bytes");
+        }
+        outputStream.writeByte(length);
+
+        // write string encoding
+        outputStream.writeByte(encoding);
+
+        // write string data
+        for (int i = 0; i < chars.length; ++i) {
+            outputStream.writeByte(chars[i] & 0xFF);
+        }
+
+        if (encoding == SkinResourcesConstants.STRING_ENCODING_UTF8) {
+            // '\0' at the end of the string
+            outputStream.writeByte(0);
+        }
+    }
+
+    /**
+     * Closes stream
+     */
+    public void close() 
+        throws java.io.IOException {
+
+        outputStream.close();
+    }
+}
+
+/**
  * Perform the romization
  */
 class SkinRomizer {
@@ -1221,7 +1340,7 @@ class SkinRomizer {
     PrintWriter writer = null;
 
     /** Binary output file stream */
-    DataOutputStream outputStream = null;
+    BinaryOutputStream outputStream = null;
     
     /** raw image file format */
     int rawFormat = ImageToRawConverter.FORMAT_INVALID;
@@ -1335,9 +1454,10 @@ class SkinRomizer {
         // output generated file
         makeDirectoryTree(romizationJob.outBinFileName);
 
-        FileOutputStream out = new FileOutputStream(
-                romizationJob.outBinFileName);
-        outputStream = new DataOutputStream(out);
+        OutputStream out = new BufferedOutputStream(new FileOutputStream(
+                romizationJob.outBinFileName), 8192);
+        outputStream = new BinaryOutputStream(out,
+                endianFormat == ImageToRawConverter.INT_FORMAT_BIG_ENDIAN);
 
         writeBinHeader();
         writeRomizedProperties();
@@ -1652,8 +1772,9 @@ class SkinRomizer {
             outputStream.writeByte(b);
         }
 
-        // write version info
-        outputStream.writeShort(SkinResourcesConstants.CHAM_BIN_FORMAT_VERSION);
+        // write version info as an array 
+        outputStream.writeInt(1); // array size
+        outputStream.writeInt(SkinResourcesConstants.CHAM_BIN_FORMAT_VERSION);
     }
 
     /**

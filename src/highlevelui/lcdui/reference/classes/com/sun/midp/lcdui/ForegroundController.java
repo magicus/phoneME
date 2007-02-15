@@ -26,19 +26,29 @@
 
 package com.sun.midp.lcdui;
 
+import javax.microedition.lcdui.Displayable;
+
 /**
  * This class provides methods to abstract the central foreground control
  * code from the the LCDUI library.
  */
 public interface ForegroundController {
     /**
-     * Called to register a newly create Display. Must method must
+     * Called to register a newly created Display. Must method must
      * be called before the other methods can be called.
      *
      * @param displayId ID of the Display
-     * @param ownerClassName Class name of the  that owns the display
+     * @param ownerClassName Class name of the that owns the display
+     *
+     * @return a place holder displayable to used when "getCurrent()==null",
+     *         if null is returned an empty form is used
      */
-    void registerDisplay(int displayId, String ownerClassName);
+    /*
+     * Implementation note: If an general customization interface is
+     * created for LCDUI to replace the build time constants based system, the
+     * displayable creation function of the method should be moved to it.
+     */
+    Displayable registerDisplay(int displayId, String ownerClassName);
 
     /**
      * Called to request the foreground.

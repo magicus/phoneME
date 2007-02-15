@@ -136,7 +136,10 @@ public:
    */
   void showFullScreen();
 
-  void resize();
+  /**
+   * Refresh screen after width or height was changed 
+   */
+  void resizeScreen();
 
   /**
    * Return the abstract command widget.

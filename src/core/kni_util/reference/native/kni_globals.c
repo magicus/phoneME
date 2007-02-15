@@ -29,4 +29,4 @@
 /**
  * Global buffers definitions
  */
-char gKNIBuffer[KNI_BUFFER_SIZE];
+unsigned char gKNIBuffer[KNI_BUFFER_SIZE];

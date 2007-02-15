@@ -42,4 +42,5 @@ Java_com_sun_midp_main_CommandState_exitInternal(void) {
     int value = (int)KNI_GetParameterAsInt(1);
 
     midp_exitVM(value);
+    KNI_ReturnVoid();
 }

@@ -145,11 +145,11 @@ abstract class ItemLFImpl implements ItemLF {
         if (labelAndContentOnSameLine(labelBounds[HEIGHT]) &&
             (labelBounds[WIDTH] + getHorizontalPad() + 
              contentBounds[WIDTH] <= w)) {
-            return labelBounds[HEIGHT] < contentBounds[HEIGHT] ? 
+            return labelBounds[HEIGHT] < contentBounds[HEIGHT] ?
                    contentBounds[HEIGHT] : labelBounds[HEIGHT];
         }
 
-        return labelBounds[HEIGHT] + getVerticalPad() + 
+        return labelBounds[HEIGHT] + getVerticalPad() +
                contentBounds[HEIGHT];
     }
 
@@ -884,7 +884,12 @@ abstract class ItemLFImpl implements ItemLF {
      * @param w the new width of the item's content area
      * @param h the new height of the item's content area
      */
-    void uCallSizeChanged(int w, int h) { }
+    void uCallSizeChanged(int w, int h) {
+        synchronized (Display.LCDUILock) {
+            layoutDone = false;
+            item.lUpdateLockedSize();
+        }
+    }
     
     /**
      * Called to commit any pending user interaction for the item

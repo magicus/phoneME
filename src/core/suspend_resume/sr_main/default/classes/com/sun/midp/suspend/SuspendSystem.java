@@ -29,12 +29,11 @@ package com.sun.midp.suspend;
 import com.sun.midp.main.*;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
-
 import java.util.Vector;
 
 /**
  * Main system of the current isolate that contains all 
- * pausable subsystems in current isolate. 
+ * suspendable subsystems in current isolate.
  * There is a singleton instance in each isolate. The 
  * instance kept in the AMS isolate is a special one and 
  * belongs to <code>MIDPSystem</code> subtype.
@@ -43,7 +42,7 @@ public class SuspendSystem extends AbstractSubsystem {
     /**
      * Listeners interested in suspend/resume operations.
      */
-    private Vector listeners = new Vector(1, 2);
+    private final Vector listeners = new Vector(1, 2);
 
     /**
      * Main subsystem that implements suspend actions for
@@ -53,12 +52,70 @@ public class SuspendSystem extends AbstractSubsystem {
     private static class MIDPSystem extends SuspendSystem
             implements MIDletProxyListListener {
         /**
+         * A flag to determine if at least one MIDlet has been
+         * destroyed during last suspend processing.
+         */
+        private boolean midletKilled = false;
+
+        /**
+         * A flag to determine if at least one MIDlet has been
+         * successfully paused during last suspend processing.
+         */
+        private boolean midletPaused = false;
+
+        /**
+         * The MIDlet proxy list.
+         */
+        MIDletProxyList mpl =
+                MIDletProxyList.getMIDletProxyList(classSecurityToken);
+
+        /**
          * Constructs the only instance.
          */
         private MIDPSystem() {
             state = ACTIVE;
-            MIDletProxyList.getMIDletProxyList(classSecurityToken).
-                    addListener(this);
+
+            mpl.addListener(this);
+            addListener(mpl);
+        }
+
+        /**
+         * Initiates MIDPSystem suspend operations.
+         */
+        public synchronized void suspend() {
+            if (ACTIVE == state) {
+                SuspendTimer.start(mpl);
+                SuspendResumeUI.showSuspendAlert(classSecurityToken);
+                super.suspend();
+            }
+        }
+
+        /**
+         * Performs MIDPSystem-specific suspend operations.
+         */
+        protected synchronized void suspendImpl() {
+            SuspendTimer.stop();
+        }
+
+        /**
+         * Performs MIDPSystem-specific resume operations.
+         */
+        protected synchronized void resumeImpl() {
+            midletKilled = false;
+            midletPaused = false;
+
+            SuspendResumeUI.dismissSuspendAlert();
+            alertIfAllMidletsKilled();
+        }
+
+        /**
+         * Shows proper alert if all user midlets were killed by a preceding
+         * suspend operation, and the event is not reported yet.
+         */
+        private synchronized void alertIfAllMidletsKilled() {
+            if (allMidletsKilled()) {
+                SuspendResumeUI.showAllKilledAlert(classSecurityToken);
+            }
         }
 
         /**
@@ -66,23 +123,39 @@ public class SuspendSystem extends AbstractSubsystem {
          */
         protected void suspended() {
             super.suspended();
-            suspended0();
+            suspended0(!midletPaused && midletKilled);
         }
 
         /**
          * Notifies native functionality that MIDP activities in java
          * have been suspended.
+         * @param allMidletsKilled true to indicate that all user MIDlets
+         *        were killed by suspend routines.
          */
-        protected native void suspended0();
+        protected native void suspended0(boolean allMidletsKilled);
 
         /**
-         * Recieves notifications on MIDlet updates and removes corresponding
+         * Determines if at least one of preceding suspension operations
+         * killed all user MIDlets and  the condition has not been checked
+         * since that time.
+         * @return true if a suspension operation killed all user MIDlets
+         *         and the condition has not been checked yet, false
+         *         otherwise. This method returns true only once for one
+         *         event.
+         */
+        protected native boolean allMidletsKilled();
+
+        /**
+         * Receives notifications on MIDlet updates and removes corresponding
          * MIDlet proxy from suspend dependencies if required.
          * @param midlet MIDletProxy that represents the MIDlet updated
          * @param reason kind of changes that took place, see
          */
         public void midletUpdated(MIDletProxy midlet, int reason) {
             if (reason == MIDletProxyListListener.RESOURCES_SUSPENDED) {
+                if (MIDletSuiteUtils.getAmsIsolateId() != midlet.getIsolateId()) {
+                    midletPaused = true;
+                }
                 removeSuspendDependency(midlet);
             }
         }
@@ -93,29 +166,25 @@ public class SuspendSystem extends AbstractSubsystem {
          * @param midlet MIDletProxy that represents the MIDlet removed
          */
         public void midletRemoved(MIDletProxy midlet) {
+            midletKilled = true;
             removeSuspendDependency(midlet);
         }
 
         /**
-         * Not used. MIDletProxyListListener interface method;
+         * Called from the proxy list to notify of new MIDlet appearance.
          */
-        public void midletAdded(MIDletProxy midlet) {}
+        public void midletAdded(MIDletProxy midlet) {
+            if (MIDletSuiteUtils.getAmsIsolateId() == midlet.getIsolateId()) {
+                alertIfAllMidletsKilled();
+            }
+        }
+
         /**
-         * Not used. MIDletProxyListListener interface method;
+         * Not used. MIDletProxyListListener interface method.
          */
         public void midletStartError(int externalAppId, int suiteId,
                                      String className, int error) {}
     }
-
-    // IMPL_NOTE: the dependecies are now processed after suspend routines.
-    // It may have sense first wait for all dependencies resolution, then
-    // suspend system and subsystems.
-    /**
-     * A set of suspend dependencies. System is considered to be suspended
-     * when all the subsystems are suspended and all the dependencies
-     * removed.
-     */
-    protected final Vector dependencies = new Vector(4, 2);
 
     /**
      * The singleton instance.
@@ -136,51 +205,21 @@ public class SuspendSystem extends AbstractSubsystem {
     }
 
     /**
+     * Retrieves the singleton instance. The method is only available from
+     * this restricted package.
+     * @return the singleton instance
+     */
+    static SuspendSystem getInstance() {
+        return instance;
+    }
+
+    /**
      * Constructs an instance.
      */
     private SuspendSystem() {}
 
     /**
-     * Adds a dependency that prevents from system suspend.
-     * @param dep dependency to add
-     */
-    public void addSuspendDependency(SuspendDependency dep) {
-        synchronized (lock) {
-            if (!dependencies.contains(dep)) {
-                dependencies.addElement(dep);
-            }
-        }
-
-    }
-
-    /**
-     * Removes dependency that does not prevent from system suspend any more.
-     * Then invokes suspend notification if there are no dependencies left.
-     * @param dep dependency to remove
-     */
-    public void removeSuspendDependency(SuspendDependency dep) {
-        synchronized (lock) {
-            dependencies.removeElement(dep);
-            checkSuspended();
-        }
-    }
-
-    /**
-     * Checks if there are dependencies that prevent from system suspend,
-     * if there are no ones, and the state is PAUSING sets state to
-     * SUSPENDED and calls suspended().
-     */
-    protected void checkSuspended() {
-        synchronized (lock) {
-            if (state == PAUSING && 0 == dependencies.size()) {
-                state = SUSPENDED;
-                suspended();
-            }
-        }
-    }
-
-    /**
-     * Registers a lisener interested in system suspend/resume operations.
+     * Registers a listener interested in system suspend/resume operations.
      * IMPL_NOTE: method for removing listeners is not needed currently.
      *
      * @param listener the listener to be added

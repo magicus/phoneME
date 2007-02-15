@@ -27,7 +27,6 @@
 
 #include <kni.h>
 #include <jvm.h>
-#include <jvmspi.h>
 #include <sni.h>
 
 #include <midp_logging.h>

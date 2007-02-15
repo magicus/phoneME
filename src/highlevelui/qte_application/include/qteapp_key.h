@@ -52,7 +52,7 @@ extern "C" {
  *
  * @param key native key event
  * @return mapped MIDP key code as defined in keymap_input.h.
- *	KEY_INVALID if the Qt key event should be ignored.
+ * KEYMAP_KEY_INVALID if the Qt key event should be ignored.
  */
 int mapKey(QKeyEvent *key);
 

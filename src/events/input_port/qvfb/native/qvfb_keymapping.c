@@ -46,23 +46,23 @@ KeyMapping *mapping = qvfb_keys;
 
 KeyMapping qvfb_keys[] = {
     /* The keys with meaning code in a higher word of keycode */
-    {KEY_SOFT1,         0x1030},    // F1 key
-    {KEY_SOFT2,         0x1031},    // F2 key
-    {KEY_SCREEN_ROT,    0x1032},    // F3 key
-    {MD_KEY_SWITCH_APP, 0x1033},    // F4 key
-    {KEY_GAMEA,         0x1038},    // F9 key
-    {KEY_GAMEB,         0x1039},    // F10 key
-    {KEY_GAMEC,         0x103a},    // F11 key
-    {KEY_GAMEC,         0x103b},    // F12 key
-    {KEY_LEFT,          0x1012},    // LEFT key
-    {KEY_UP,            0x1013},    // UP key
-    {KEY_RIGHT,         0x1014},    // RIGHT key
-    {KEY_DOWN,          0x1015},    // DOWN key
-    {MD_KEY_HOME,       0x1010},    // HOME key
-    {KEY_END,           0x1010},    // END key
+    {KEYMAP_KEY_SOFT1,         0x1030},    /* F1 key */
+    {KEYMAP_KEY_SOFT2,         0x1031},    /* F2 key */
+    {KEYMAP_KEY_SCREEN_ROT,    0x1032},    /* F3 key */
+    {KEYMAP_MD_KEY_SWITCH_APP, 0x1033},    /* F4 key */
+    {KEYMAP_KEY_GAMEA,         0x1038},    /* F9 key */
+    {KEYMAP_KEY_GAMEB,         0x1039},    /* F10 key */
+    {KEYMAP_KEY_GAMEC,         0x103a},    /* F11 key */
+    {KEYMAP_KEY_GAMED,         0x103b},    /* F12 key */
+    {KEYMAP_KEY_LEFT,          0x1012},    /* LEFT key */
+    {KEYMAP_KEY_UP,            0x1013},    /* UP key */
+    {KEYMAP_KEY_RIGHT,         0x1014},    /* RIGHT key */
+    {KEYMAP_KEY_DOWN,          0x1015},    /* DOWN key */
+    {KEYMAP_MD_KEY_HOME,       0x1010},    /* HOME key */
+    {KEYMAP_KEY_END,           0x1010},    /* END key */
 
     /* The keys with meaning code in a lower word of keycode */
-    {KEY_SELECT,        0x000d},    // ENTER key
-    {KEY_BACKSPACE,     0x0008},    // BACKSPACE key
-    {KEY_INVALID,       0x0000},    // end of table
+    {KEYMAP_KEY_SELECT,        0x000d},    /* ENTER key */
+    {KEYMAP_KEY_BACKSPACE,     0x0008},    /* BACKSPACE key */
+    {KEYMAP_KEY_INVALID,       0x0000},    /* end of table */
 };

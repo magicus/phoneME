@@ -117,8 +117,10 @@ VM_INCLUDES += -I$(QTOPIA_SDK_DIR)/include -I$(QTOPIA_SDK_DIR)/include/qpe
 endif
 
 VM_BOOTCLASSPATH = $(CDC_CLASSES_ZIP)$(PATHSEP)${PROFILE_CLASSES_ZIP}
-ifeq ($(CVM_INCLUDE_JUMP), true)
-    VM_BOOTCLASSPATH := $(VM_BOOTCLASSPATH)$(PATHSEP)$(JUMP_API_CLASSESZIP)
+ifeq ($(CVM_INCLUDE_JUMP), true)    
+    EMPTY :=
+    ONESPACE := $(EMPTY) $(EMPTY)
+    VM_BOOTCLASSPATH := $(subst $(ONESPACE),$(PATHSEP),$(strip $(VM_BOOTCLASSPATH) $(JUMP_API_CLASSESZIP)))
 endif
 
 BTCLASSES     = ${CDC_DIST_DIR}/btclasses
@@ -129,13 +131,17 @@ BTCLASSES_ZIP = ${CDC_DIST_DIR}/btclasses.zip
 MIDP_ROMSTRUCTS_CLASSES += \
 	javax.microedition.lcdui.Graphics \
 	javax.microedition.lcdui.Image \
-	javax.microedition.lcdui.ImageData \
 	javax.microedition.lcdui.Font \
 	java.lang.String \
 	com.sun.midp.rms.RecordStoreFile \
 	com.sun.midp.chameleon.input.NativeInputMode \
 	com.sun.midp.io.j2me.storage.RandomAccessStream \
 	javax.microedition.lcdui.game.GameCanvas
+
+ifneq ($(PLATFORM),gci)
+MIDP_ROMSTRUCTS_CLASSES += \
+	javax.microedition.lcdui.ImageData
+endif
 
 ROMSTRUCTS_H = $(MIDP_OUTPUT_DIR)/ROMStructs.h
 
@@ -160,21 +166,6 @@ oldrom:
 	@echo restoring CVM original btclasses.zip
 	@cd ${BTCLASSES}; jar cvf ${BTCLASSES_ZIP} .
 	@ls -l ${BTCLASSES_ZIP}
-
-JTWI_NATIVE_FILES += cdc_natives.c
-
-SUBSYSTEM_CORE_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/ams/ams_base/reference/classes/com/sun/midp/main/CDCInit.java 
-
-#    $(SUBSYSTEM_DIR)/ams/ota/reference/classes/com/sun/midp/installer/HelloWorld.java
-
-#
-# Include com.sun.mtask.midlet.PMidletManager class if CVM_MTASK is enabled
-#
-ifeq ($(CVM_MTASK), true)
-SUBSYSTEM_CORE_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/ams/ams_base/reference/classes/com/sun/mtask/midlet/PMidletManager.java
-endif
 
 # The CDC build cannot compile the following files yet. 
 cdc_dummies:
