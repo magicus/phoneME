@@ -293,7 +293,7 @@ public class Timer {
             throw new IllegalArgumentException("Illegal execution time.");
         
         synchronized (queue) {
-            if (thread != null && !thread.newTasksMayBeScheduled) {
+            if (!queue.newTasksMayBeScheduled) {
                 throw new IllegalStateException("Timer already cancelled.");
             }
 
@@ -338,7 +338,7 @@ public class Timer {
      */
     public void cancel() {
         synchronized (queue) {
-	    thread.newTasksMayBeScheduled = false;
+            queue.newTasksMayBeScheduled = false;
             queue.clear();
             queue.notify();  // In case queue was already empty.
         }
@@ -358,15 +358,6 @@ public class Timer {
  * in the Timer.sched method above.
  */
 class TimerThread extends Thread {
-    /**
-     * This flag is set to false by the reaper to inform us that there
-     * are no more live references to our Timer object.  Once this flag
-     * is true and there are no more tasks in our queue, there is no
-     * work left for us to do, so we terminate gracefully.  Note that
-     * this field is protected by queue's monitor!
-     */
-    boolean newTasksMayBeScheduled = true;
-
     /**
      * Our Timer's queue.  We store this reference in preference to
      * a reference to the Timer so the reference graph remains acyclic.
@@ -400,7 +391,7 @@ class TimerThread extends Thread {
         } catch (Throwable t) {
             // Someone killed this Thread, behave as if Timer cancelled
             synchronized (queue) {
-                newTasksMayBeScheduled = false;
+                queue.newTasksMayBeScheduled = false;
                 queue.clear();  // Eliminate obsolete references
             }
         }
@@ -416,8 +407,8 @@ class TimerThread extends Thread {
                 boolean taskFired;
                 synchronized (queue) {
                     // Wait for queue to become non-empty
-		    // But no more than timeout value.
-                    while (queue.isEmpty() && newTasksMayBeScheduled) {
+                    // But no more than timeout value.
+                    while (queue.isEmpty() && queue.newTasksMayBeScheduled) {
 			queue.wait(THREAD_TIMEOUT);
 			if (queue.isEmpty()) {
 			    break;
@@ -488,6 +479,14 @@ class TaskQueue {
      * queue[1] up to queue[size]).
      */
     private int size = 0;
+
+    /**
+     * This flag is set to false by the reaper to inform us that there
+     * are no more live references to our Timer object.  Once this flag
+     * is true and there are no more tasks in our queue, there is no
+     * work left for us to do, so we terminate gracefully.
+     */
+    boolean newTasksMayBeScheduled = true;
 
     /**
      * Adds a new task to the priority queue.
