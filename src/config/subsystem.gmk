@@ -60,21 +60,9 @@ GROUP_DOC_ALL += \
 
 # Platform definitions
 #
-ifeq ($(USE_JSR_234), true)
-include $(JSR_234_DIR)/src/config/jsr234.gmk
-else
-ifeq ($(USE_JSR_135), true)
-include $(JSR_234_DIR)/src/config/jsr135.gmk
-else
-ifeq ($(MIDP_USE_ABB), true)
-include $(JSR_234_DIR)/src/config/abb.gmk
-else
-#one of MIDP_USE_ABB, USE_JSR_135, USE_JSR_234 must be defined
-endif
-endif
-endif
+include $(MIDP_ABB_DIR)/src/config/abb.gmk
 
-include $(JSR_234_DIR)/src/config/$(TARGET_OS).gmk
+include $(MIDP_ABB_DIR)/src/config/$(TARGET_OS).gmk
 
 # Determines what option we have made and set it
 # to some variable that global makefile recognize
@@ -95,7 +83,7 @@ JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_234_I3TEST_JAVA_FILES)
     
 # Internal paths for jsr 234 module
 #
-INTERNAL_JSR_234_CONFIG_DIR= $(JSR_234_DIR)/src/config
+INTERNAL_JSR_234_CONFIG_DIR= $(MIDP_ABB_DIR)/src/config
 
 # Include jsr 234 common properties in Configuration
 #

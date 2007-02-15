@@ -31,7 +31,7 @@
 # is the final def. of Java and native file lists and some
 # other def. (like VPATH)
 #
-# JSR_234_DIR = point to the root of this workspace
+# MIDP_ABB_DIR = point to the root of this workspace
 #
 #
 ######################################################################
@@ -40,37 +40,37 @@
 # Java files for the ( jsr234 ) module
 #
 MODULE_JSR_234_JAVA_FILES += \
-    $(JSR_234_DIR)/src/classes/javax/microedition/media/Control.java \
-    $(JSR_234_DIR)/src/classes/javax/microedition/media/Controllable.java \
-    $(JSR_234_DIR)/src/classes/javax/microedition/media/Manager.java \
-    $(JSR_234_DIR)/src/classes/javax/microedition/media/MediaException.java \
-    $(JSR_234_DIR)/src/classes/javax/microedition/media/Player.java \
-    $(JSR_234_DIR)/src/classes/javax/microedition/media/PlayerListener.java \
-    $(JSR_234_DIR)/src/classes/javax/microedition/media/control/ToneControl.java \
-    $(JSR_234_DIR)/src/classes/javax/microedition/media/control/VolumeControl.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/PCMAudioOut.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/Configuration.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/DefaultConfiguration.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/ImageAccess.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/MIDletPauseListener.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/MMEventHandler.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/TonePlayer.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/VideoRenderer.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/Control.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/Controllable.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/Manager.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/MediaException.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/Player.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/PlayerListener.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/control/ToneControl.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/control/VolumeControl.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/PCMAudioOut.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/Configuration.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/DefaultConfiguration.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/ImageAccess.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/MIDletPauseListener.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/MMEventHandler.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/TonePlayer.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/VideoRenderer.java \
 
 
 ifeq ($(JSR_234_USE_QSOUND), true)
 MODULE_JSR_234_JAVA_FILES += \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/QSoundConnectable.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/QSoundGlobalEffectModule.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/QSoundHiddenManager.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/QSoundRenderThread.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/QSoundSynthPerformance.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/QSoundTonePlayer.java 
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundConnectable.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundGlobalEffectModule.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundHiddenManager.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundRenderThread.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundSynthPerformance.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundTonePlayer.java 
 endif
 
-vpath % $(JSR_234_DIR)/src/native
-vpath % $(JSR_234_DIR)/src/native/jpeg
-vpath % $(JSR_234_DIR)/src/native/png
+vpath % $(MIDP_ABB_DIR)/src/native
+vpath % $(MIDP_ABB_DIR)/src/native/jpeg
+vpath % $(MIDP_ABB_DIR)/src/native/png
 
 ifeq ($(JSR_234_USE_QSOUND), true)
 MODULE_JSR_234_NATIVE_FILES += \
@@ -78,11 +78,11 @@ MODULE_JSR_234_NATIVE_FILES += \
 endif
 
 MODULE_JSR_234_EXTRA_INCLUDES += \
-    -I$(JSR_234_DIR)/src/native \
-    -I$(JSR_234_DIR)/src/native/include
+    -I$(MIDP_ABB_DIR)/src/native \
+    -I$(MIDP_ABB_DIR)/src/native/include
 
 # Specify romizer configuration file for mmapi
 # and path where the file is located
 #
-ROMGEN_INCLUDE_PATHS += $(JSR_234_DIR)/src/config
+ROMGEN_INCLUDE_PATHS += $(MIDP_ABB_DIR)/src/config
 ROMGEN_CFG_FILES     += jsr234_rom.config
