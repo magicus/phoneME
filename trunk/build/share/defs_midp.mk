@@ -42,11 +42,8 @@ endif
 
 #
 # Target tools directory for compiling both PCSL and MIDP.
-# GNU_TOOLS_DIR is set by target specific defs_midp.mk.
 #
 ifeq ($(CVM_USE_NATIVE_TOOLS), false)
-GNU_TOOLS_DIR		?=$(CVM_TARGET_TOOLS_DIR)/../$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)-$(TARGET_OS)
-export GNU_TOOLS_DIR
 GNU_TOOLS_BINDIR	?= $(CVM_TARGET_TOOLS_PREFIX)
 endif
 
