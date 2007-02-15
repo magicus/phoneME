@@ -667,7 +667,8 @@ public class Display {
         GCIDisplay gciDisplay = 
             GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
         GCIScreenWidget gciScreenWidget = 
-            gciDisplay.createScreenWidget(0, 0, WIDTH, HEIGHT, this);
+            gciDisplay.createScreenWidget(0, 0, WIDTH, HEIGHT, 
+                                          null, this);
         screenGraphics = Graphics.getScreenGraphics(displayId,
                                                     WIDTH,
                                                     HEIGHT, 
