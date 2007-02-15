@@ -47,6 +47,15 @@ else
 DDOLLAR := $$
 endif
 
+#
+# These are some printconfig variables that other host or targets
+# may want to override.
+#
+TARGET_CC_VERSION ?= $(shell $(TARGET_CC) -dumpversion; $(TARGET_CC) -dumpmachine)
+HOST_CC_VERSION   ?= $(shell $(HOST_CC) -dumpversion; $(HOST_CC) -dumpmachine)
+CVM_JAVA_VERSION  ?= $(shell $(CVM_JAVA) -version 2>&1 | grep version)
+HOST_UNAME        ?= $(shell uname -a)
+
 # The cygwin "which" command doesn't work when a full path is given.
 # The purpose of the following is to break the full path into the dir
 # and tool name components, and then setup $PATH before calling "which"
@@ -80,6 +89,7 @@ BISON_PATH	= $(call TOOL_PATH,BISON)
 endif
 
 printconfig::
+	@echo "MAKEFLAGS  = $(MAKEFLAGS)"
 	@echo "CVM_HOST   = $(CVM_HOST)"
 	@echo "CVM_TARGET = $(CVM_TARGET)"
 	@echo "SHELL      = $(SHELL)"
@@ -110,6 +120,11 @@ endif
 	@echo "CCFLAGS_FDLIB  = $(CCFLAGS_FDLIB)"
 	@echo "JAVAC_OPTIONS  = $(JAVAC_OPTIONS)"
 	@echo "CVM_DEFINES    = $(CVM_DEFINES)"
+	@echo "host uname        = $(HOST_UNAME)"
+	@echo "TARGET_CC version = $(TARGET_CC_VERSION)"
+	@echo "HOST_CC version   = $(HOST_CC_VERSION)"
+	@echo "CVM_JAVA version  = $(CVM_JAVA_VERSION)"
+	@echo "TOOLS_DIR         = $(TOOLS_DIR)"
 
 #
 # Determine if the target compiler is really meant for the device
