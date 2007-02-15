@@ -394,7 +394,9 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
      *    2. Send a message that the thread will see and exit on.
      *       This isn't as easy as it sounds since sending messages
      *       may fail, e.g., if the Listener is processing messages
-     *       slowly and its queue has filled up.
+     *       slowly and its queue has filled up.  But in that case
+     *       it should exit after reading one of the "real" messages
+     *       whether our sentinel is sent/received or not.
      *    3. Periodically time out and check for exit.  We do this,
      *       it's simple and effective and doesn't need any extra low-level
      *       support such as interrupt handling, although it doesn't stop
