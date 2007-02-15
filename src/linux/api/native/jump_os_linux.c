@@ -173,7 +173,8 @@ get_message_queue(const JUMPPlatformCString messageType)
 }
 
 /* Escapes occurences of '/' in name so we can use it as a filename.
-   Returns the clean name (which must be freed), or NULL on failure. */
+   On success returns the clean name (which must be freed).  On
+   failure (out of memory) returns NULL. */
 static char *
 cleanName(const char *name)
 {
@@ -220,9 +221,12 @@ cleanName(const char *name)
 }
 
 /* Constructs a queue (FIFO) name from the pid and messageType.
-   Returns the name (which must be freed), or NULL on failure. */
+   On success returns the name (which must be freed) and sets
+   code to JUMP_MQ_SUCCESS.  On failure returns NULL and sets
+   code to one of JUMP_MQ_OUT_OF_MEMORY or JUMP_MQ_FAILURE. */
 static char *
-makeQueueName(pid_t pid, const JUMPPlatformCString messageType)
+makeQueueName(pid_t pid, const JUMPPlatformCString messageType,
+	      JUMPMessageQueueStatusCode* code)
 {
     char *messageTypeClean = NULL;
     size_t len;
@@ -234,6 +238,7 @@ makeQueueName(pid_t pid, const JUMPPlatformCString messageType)
 
     messageTypeClean = cleanName(messageType);
     if (messageTypeClean == NULL) {
+	*code = JUMP_MQ_OUT_OF_MEMORY;
 	goto error;
     }
 
@@ -244,11 +249,13 @@ makeQueueName(pid_t pid, const JUMPPlatformCString messageType)
 
     name = malloc(len);
     if (name == NULL) {
+	*code = JUMP_MQ_OUT_OF_MEMORY;
 	goto error;
     }
 
     written = snprintf(name, len, JUMP_MQ_PATH_PATTERN, pid, messageTypeClean);
     if (written == -1 || written >= len) {
+	*code = JUMP_MQ_FAILURE;
 	goto error;
     }
 
@@ -261,7 +268,10 @@ makeQueueName(pid_t pid, const JUMPPlatformCString messageType)
     return NULL;
 }
 
-/* Creates/opens a jump_message_queue for reading or writing. */
+/* Creates/opens a jump_message_queue for reading or writing.  On
+   success returns the queue and sets code to JUMP_MQ_SUCCESS.  On
+   failure returns null and sets code to one of JUMP_MQ_OUT_OF_MEMORY
+   or JUMP_MQ_FAILURE on failure. */
 static struct jump_message_queue *
 message_queue_create(pid_t processId,
 		     JUMPPlatformCString messageType,
@@ -273,6 +283,7 @@ message_queue_create(pid_t processId,
 
     jmq = malloc(sizeof(*jmq));
     if (jmq == NULL) {
+	*code = JUMP_MQ_OUT_OF_MEMORY;
 	goto fail;
     }
 
@@ -282,10 +293,11 @@ message_queue_create(pid_t processId,
 
     jmq->messageType = strdup(messageType);
     if (jmq->messageType == NULL) {
+	*code = JUMP_MQ_OUT_OF_MEMORY;
 	goto fail;
     }
 
-    name = makeQueueName(processId, messageType);
+    name = makeQueueName(processId, messageType, code);
     if (name == NULL) {
 	goto fail;
     }
@@ -303,6 +315,7 @@ message_queue_create(pid_t processId,
 	status = mknod(name, S_IFIFO | 0666, 0);
 	if (status == -1) {
 	    if (errno != EEXIST) {
+		*code = JUMP_MQ_FAILURE;
 		goto fail;
 	    }
 	}
@@ -318,6 +331,7 @@ message_queue_create(pid_t processId,
 
 	status = chmod(name, 0666);
 	if (status == -1) {
+	    *code = JUMP_MQ_FAILURE;
 	    goto fail;
 	}
     }
@@ -333,6 +347,7 @@ message_queue_create(pid_t processId,
 
     jmq->fd = open(name, O_RDWR | O_NONBLOCK);
     if (jmq->fd == -1) {
+	*code = JUMP_MQ_FAILURE;
 	goto fail;
     }
 
@@ -345,12 +360,14 @@ message_queue_create(pid_t processId,
 
 	fd_flags = fcntl(jmq->fd, F_GETFD);
 	if (fd_flags == -1) {
+	    *code = JUMP_MQ_FAILURE;
 	    goto fail;
 	}
 
 	fd_flags |= FD_CLOEXEC;
 	status = fcntl(jmq->fd, F_SETFD, fd_flags);
 	if (status == -1) {
+	    *code = JUMP_MQ_FAILURE;
 	    goto fail;
 	}
     }
@@ -380,11 +397,11 @@ message_queue_create(pid_t processId,
 	free(jmq);
     }
     free(name);
-    *code = JUMP_MQ_FAILURE;
     return NULL;
 }
 
-/* Destroys/closes a message queue and cleans up. */
+/* Destroys/closes a message queue and cleans up.  On success returns
+   0.  On failure returns -1, and all cleanup has been attempted. */
 int
 message_queue_destroy(struct jump_message_queue *jmq)
 {
@@ -484,10 +501,11 @@ jumpMessageQueueDestroy(JUMPPlatformCString messageType)
 
 
 JUMPMessageQueueHandle 
-jumpMessageQueueOpen(int processId, JUMPPlatformCString type) 
+jumpMessageQueueOpen(int processId, JUMPPlatformCString type,
+		     JUMPMessageQueueStatusCode* code)
+
 {
-    JUMPMessageQueueStatusCode code;
-    return message_queue_create(processId, type, &code, 0);
+    return message_queue_create(processId, type, code, 0);
 }
 
 void 

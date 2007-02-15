@@ -32,11 +32,23 @@ typedef void * JUMPMessageQueueHandle;
 extern "C" { 
 #endif /* __cplusplus */
 
+/*
+ * Status codes from various JUMPMessageQueue functions.  XXX these
+ * will probably also be passed out of the JUMPMessage functions
+ * without translation, so they should be moved to a separate file ala
+ * errno.h
+ *
+ * JUMP_MQ_FAILURE currently denotes any kind of failure other than
+ * out of memory.  We may need or want to make this more granular, or
+ * make JUMPMessageQueueStatusCode a struct with an optional string
+ * explaining the error.
+ */
 typedef enum {
     JUMP_MQ_TIMEOUT       = 1,
     JUMP_MQ_BUFFER_SMALL  = 2,
     JUMP_MQ_SUCCESS       = 3,
     JUMP_MQ_FAILURE       = 4,
+    JUMP_MQ_OUT_OF_MEMORY = 5
 } JUMPMessageQueueStatusCode;
 
 /**
@@ -69,7 +81,8 @@ extern int jumpMessageQueueDestroy(JUMPPlatformCString messageType);
  *         the specified process cannot be opened.
  */
 extern JUMPMessageQueueHandle 
-jumpMessageQueueOpen(int processId, JUMPPlatformCString type);
+jumpMessageQueueOpen(int processId, JUMPPlatformCString type,
+		     JUMPMessageQueueStatusCode* code);
 
 /**
  * Closes the message queue handle.

@@ -493,9 +493,8 @@ sendAsyncOfType(JUMPAddress target, JUMPOutgoingMessage m,
     JUMPMessageQueueHandle targetMq;
     
     assert(jumpMessagingInitialized != 0);
-    targetMq = jumpMessageQueueOpen(targetpid, type);
+    targetMq = jumpMessageQueueOpen(targetpid, type, code);
     if (targetMq == NULL) {
-	/* FIXME: set error code */
 	return;
     }
     /* FIXME: Error check and propagate */
