@@ -1877,8 +1877,8 @@ endif
 
 # Using TEMP variables above allows HOST_CC and HOST_CC to be set in the
 # GNUmakefile and not get overwritten by the above := assignments.
-HOST_CC 	?= $(TEMP_HOST_CC)
-HOST_CCC	?= $(TEMP_HOST_CCC)
+HOST_CC 	?= $(TEMP_HOST_CC)$(GCC_VERSION)
+HOST_CCC	?= $(TEMP_HOST_CCC)$(GCC_VERSION)
 
 #
 # Locate the JDK tools:
