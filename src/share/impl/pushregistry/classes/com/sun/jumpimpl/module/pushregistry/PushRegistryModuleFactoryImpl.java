@@ -30,30 +30,70 @@ import com.sun.jump.module.contentstore.JUMPContentStore;
 import com.sun.jump.module.contentstore.JUMPStore;
 import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import com.sun.jump.module.contentstore.JUMPStoreFactory;
+import com.sun.jump.module.serviceregistry.JUMPServiceRegistry;
+import com.sun.jump.module.serviceregistry.JUMPServiceRegistryFactory;
 import com.sun.jumpimpl.module.pushregistry.MIDP.MIDPPushRegistry;
 import com.sun.jumpimpl.module.pushregistry.persistence.Store;
 import com.sun.jumpimpl.module.pushregistry.persistence.StoreOperationManager;
 import java.io.IOException;
+import java.rmi.AccessException;
+import java.rmi.AlreadyBoundException;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.Map;
 
 final class PushSystem {
     /** Push-specific view of persistent store. */
     final Store store;
 
+    /** IXC resource URI. */
+    final static private String MIDP_IXC_URI = "push/midp";
+
     /** MIDP container service provider instance. */
     final MIDPPushRegistry midpPushRegistry;
 
-    PushSystem(final StoreOperationManager storeManager) throws IOException {
+    PushSystem(final StoreOperationManager storeManager)
+            throws IOException, RemoteException, AlreadyBoundException {
         store = new Store(storeManager);
         store.ensureStoreStructure(storeManager);
         store.readData();
 
         midpPushRegistry = new MIDPPushRegistry(store);
-        // TBD: register midpPushRegistry IXC
+        getJUMPServiceRegistry().registerService(MIDP_IXC_URI, midpPushRegistry);
         // TBD: installation interface
     }
 
+    /**
+     * Gets a reference to service registry for IXC.
+     *
+     * @return <code>JUMPServiceRegistry</code> instance
+     */
+    private JUMPServiceRegistry getJUMPServiceRegistry() {
+        return JUMPServiceRegistryFactory
+                .getInstance()
+                .getModule(getClass().getClassLoader());
+    }
+
     void close() {
+        // Best effort service unregistration...
+        try {
+            getJUMPServiceRegistry().unregisterService(MIDP_IXC_URI);
+        } catch (AccessException ex) {
+            logError("failed to unbound IXC MIDP interface");
+        } catch (NotBoundException ex) {
+            logError("failed to unbound IXC MIDP interface");
+        }
+    }
+
+    /**
+     * Logs an error message.
+     *
+     * TBD: common logging mechanism.
+     *
+     * @param msg message to log
+     */
+    private static void logError(final String msg) {
+        System.err.println("[error in " + PushSystem.class + "]: " + msg);
     }
 }
 
@@ -91,15 +131,29 @@ final class PushModule implements JUMPModule {
                 new StoreOperationManager(contentStore);
         try {
             pushSystem = new PushSystem(storeOperationManager);
-        } catch (IOException ioex) {
-            // TBD: common logging mechanism
-            System.err.println("Failed to read push persistent data: " + ioex);
+        } catch (AlreadyBoundException ex) {
+            logError("Failed to read push persistent data: " + ex);
+            throw new RuntimeException("Failed to load Push module", ex);
+        } catch (IOException ex) {
+            logError("Failed to read push persistent data: " + ex);
+            throw new RuntimeException("Failed to load Push module", ex);
         }
     }
 
     public void unload() {
         pushSystem.close();
         pushSystem = null;
+    }
+
+    /**
+     * Logs an error message.
+     *
+     * TBD: common logging mechanism.
+     *
+     * @param msg message to log
+     */
+    private static void logError(final String msg) {
+        System.err.println("[error in " + PushModule.class + "]: " + msg);
     }
 }
 

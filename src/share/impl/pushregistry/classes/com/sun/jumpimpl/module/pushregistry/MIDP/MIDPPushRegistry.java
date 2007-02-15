@@ -64,10 +64,12 @@ public final class MIDPPushRegistry implements JUMPPushRegistry {
      * @param connection Connection to unregister
      *
      * @return <code>true</code> if succeed, <code>false</code> otherwise
+     *
+     * @throws RemoteException as requested by RMI spec.
      */
     public boolean unregisterConnection(
             final int midletSuiteId,
-            final JUMPConnectionInfo connection) {
+            final JUMPConnectionInfo connection) throws RemoteException {
         try {
             store.removeConnection(midletSuiteId, connection);
         } catch (IOException _) {
@@ -83,10 +85,12 @@ public final class MIDPPushRegistry implements JUMPPushRegistry {
      * @param connection Connection to register
      *
      * @return <code>true</code> if succeed, <code>false</code> otherwise
+     *
+     * @throws RemoteException as requested by RMI spec.
      */
     public boolean registerConnection(
             final int midletSuiteId,
-            final JUMPConnectionInfo connection) {
+            final JUMPConnectionInfo connection) throws RemoteException {
         try {
             store.addConnection(midletSuiteId, connection);
         } catch (IOException _) {
