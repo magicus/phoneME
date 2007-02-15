@@ -43,8 +43,10 @@ endif
 JUMP_OUTPUT_DIR         = $(CVM_JUMP_BUILDDIR)/lib
 JUMP_SRCDIR             = $(JUMP_DIR)/src
 
-ifeq ($(CVM_TERSEOUTPUT), false)
+ifeq ($(USE_VERBOSE_MAKE), true)
 CVM_ANT_OPTIONS         += -v
+else
+CVM_ANT_OPTIONS		+= -q
 endif
 ifneq ($(CVM_DEBUG), true)
 CVM_ANT_OPTIONS         += -Ddebug=false

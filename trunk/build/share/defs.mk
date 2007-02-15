@@ -243,8 +243,17 @@ CVM_PRELOAD_TEST        ?= false
 CVM_PRELOAD_LIB         ?= $(CVM_PRELOAD_TEST)
 CVM_STATICLINK_LIBS	= $(CVM_PRELOAD_LIB)
 CVM_SYMBOLS             ?= $(CVM_DEBUG)
-CVM_TERSEOUTPUT         ?= true
 CVM_PRODUCT             ?= premium
+
+# CVM_TERSEOUTPUT is now deprecated in favor of USE_VERBOSE_MAKE.
+# They have opposite meanings. We look at CVM_TERSEOUTPUT here to set
+# USE_VERBOSE_MAKE properly for backwards compatibility. This is the
+# only place where CVM_TERSEOUTPUT can be checked
+ifeq ($(CVM_TERSEOUTPUT),false)
+USE_VERBOSE_MAKE	?= true
+else
+USE_VERBOSE_MAKE	?= false
+endif
 
 # %begin lvm
 CVM_LVM                 ?= false
@@ -559,8 +568,9 @@ endif
 ifeq ($(CVM_DYNAMIC_LINKING), true)
 	CVM_DEFINES      += -DCVM_DYNAMIC_LINKING
 endif
-ifeq ($(CVM_TERSEOUTPUT), true)
+ifeq ($(USE_VERBOSE_MAKE), false)
 	AT=@
+	MAKE_NO_PRINT_DIRECTORY=--no-print-directory
 else
 	AT=
 endif

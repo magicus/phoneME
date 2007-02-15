@@ -85,9 +85,6 @@ USE_DIRECTFB		?= false
 # The MIDP makefiles should be fixed to not require CLDC_DIST_DIR for CDC build.
 export CLDC_DIST_DIR	= $(CDC_DIST_DIR)
 USE_CONFIGURATOR	?= true
-ifeq ($(CVM_TERSEOUTPUT), false)
-USE_VERBOSE_MAKE	?= true
-endif
 
 ifeq ($(CVM_DEBUG), true)
 USE_DEBUG		= true

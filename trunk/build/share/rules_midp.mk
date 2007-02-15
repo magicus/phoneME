@@ -34,7 +34,8 @@ printconfig::
 # Build PCSL before MIDP.
 initbuild_profile::
 	$(AT)echo "Building pcsl ..."
-	$(AT)$(MAKE) PCSL_PLATFORM=$(PCSL_PLATFORM) \
+	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
+		     PCSL_PLATFORM=$(PCSL_PLATFORM) \
 	             NETWORK_MODULE=$(NETWORK_MODULE) \
 	             PCSL_OUTPUT_DIR=$(PCSL_OUTPUT_DIR) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
@@ -56,7 +57,8 @@ $(CVM_ROMJAVA_LIST): $(MIDP_CLASSESZIP)
 
 $(MIDP_CLASSESZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	$(AT)echo "Building MIDP classes ..."
-	$(AT)$(MAKE) JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
+	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
+		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
 	             TARGET_CPU=$(TARGET_CPU) USE_DEBUG=$(USE_DEBUG) \
 	             USE_SSL=$(USE_SSL) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
@@ -81,7 +83,8 @@ endif
 
 $(RUNMIDLET): force_midp_build
 	$(AT)echo "Building MIDP native ..."
-	$(AT)$(MAKE) JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
+	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
+		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
 	             TARGET_CPU=$(TARGET_CPU) USE_DEBUG=$(USE_DEBUG) \
 	             USE_SSL=$(USE_SSL) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
