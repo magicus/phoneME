@@ -52,13 +52,22 @@ typedef enum {
 } JUMPMessageQueueStatusCode;
 
 /**
- * Creates the message queue for a message type.
+ * Creates the receiving message queue for a message type.
  *
  * Implementations can choose whether to have a centralized queue for all
  * incoming messages, or to have separate queues for each message type.
  *
- * @return 0 if the message queue has been successfully created and non-zero
- *         if the message queue cannot be created.
+ * A message queue can be created multiple times.  It is not destroyed
+ * until it has been destroyed the same number of times.
+ *
+ * Message queues are thread-safe and may be read from concurrently by
+ * multiple threads, however, each message will delivered to only one
+ * thread.  XXX What about destroy?
+ *
+ * @return If the message queue has been successfully created, or
+ *   already exists due to a previous call to jumpMessageQueueCreate,
+ *   then *code is set to JUMP_MQ_SUCCESS.  Otherwise *code is set
+ *   to one of JUMP_MQ_FAILURE or JUMP_MQ_OUT_OF_MEMORY.
  *
  * @see jumpMessageQueueDestroy
  */
@@ -66,26 +75,41 @@ extern void jumpMessageQueueCreate(JUMPPlatformCString messageType,
 				   JUMPMessageQueueStatusCode* code);
 
 /**
- * Destroys the message queue created for this process
+ * Destroys the receiving message queue created for a message type.
+ *
+ * A message queue can be created multiple times.  It is not destroyed
+ * until it has been destroyed the same number of times.
  *
  * @see jumpMessageQueueCreate
- * @return 0 if the message queue has been successfully destroyed and non-zero
- *         if the message queue cannot be destroyed
+ * @return 0 if the the message queue has been successfully destroyed
+ *   or if the queue still exists because the queue has been created
+ *   more times than it has been destroyed.  Non-zero if the
+ *   queue does not exist or destroying the queue fails.
  */
 extern int jumpMessageQueueDestroy(JUMPPlatformCString messageType);
 
 /**
- * Opens the message queue associated with the process (id), and message type.
+ * Opens message queue for sending to the process (id), and message type.
+ * A message queue may be opened more than once, in which case the
+ * same handle or a different handle may be returned.  Closing a handle
+ * more times than it has been returned is undefined.
  *
- * @return a non-null handle on success and NULL if the message queue for
- *         the specified process cannot be opened.
+ * Message queues are thread-safe and may be written to concurrently from
+ * multiple threads.
+ *
+ * @return On success returns a non-NULL handle and sets *code to
+ *   JUMP_MQ_SUCCESS.  On failure retuns NULL and sets *code to
+ *   one of JUMP_MQ_OUT_OF_MEMORY or JUMP_MQ_FAILURE.
  */
 extern JUMPMessageQueueHandle 
 jumpMessageQueueOpen(int processId, JUMPPlatformCString type,
 		     JUMPMessageQueueStatusCode* code);
 
 /**
- * Closes the message queue handle.
+ * Closes a sending message queue handle.
+ *
+ * Closing a handle more times than it has been returned from
+ * jumpMessageQueueOpen is undefined.
  */
 extern void jumpMessageQueueClose(JUMPMessageQueueHandle handle);
 
@@ -99,7 +123,7 @@ extern void jumpMessageQueueClose(JUMPMessageQueueHandle handle);
 extern int jumpMessageQueueDataOffset(void);
 
 /**
- * Send the message data to the message queue. This call does not block
+ * Sends the message data to the message queue. This call does not block
  * and returns with an error if the message cannot be sent.
  *
  * @param buffer buffer that has space for the message header (if any) and
@@ -117,7 +141,7 @@ extern int jumpMessageQueueSend(JUMPMessageQueueHandle handle,
     int messageDataSize);
 
 /**
- * Wait till a message is availabe in this process message queue. This
+ * Waits till a message is availabe in this process message queue. This
  * call will <b>BLOCK</b> till there is a message available or a
  * timeout happens after 'timeout' seconds.
  *
