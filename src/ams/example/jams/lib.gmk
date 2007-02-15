@@ -87,6 +87,10 @@ ifeq ($(PLATFORM), javacall)
   INCLUDE_SHELL_SCRIPTS = true
 endif
 
+ifeq ($(PLATFORM), gci)
+  INCLUDE_SHELL_SCRIPTS = true
+endif
+
 ifdef INCLUDE_SHELL_SCRIPTS
   $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/example/jams/shell/%
 	@echo " ... installing $@"
