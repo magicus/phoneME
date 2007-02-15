@@ -24,8 +24,6 @@
 #ifndef __INTERNAL_PROPS_H
 #define __INTERNAL_PROPS_H
 
-#define getInternalProp(a,b,c) jumpGetInternalProp(a,b,c)
-
 #if defined __cplusplus 
 extern "C" { 
 #endif /* __cplusplus */
