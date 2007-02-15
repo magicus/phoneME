@@ -50,12 +50,14 @@ SUBSYSTEM_LOWUI_DIR = $(SUBSYSTEM_DIR)/lowlevelui
 ifeq ($(PLATFORM), linux_qte)
     SUBSYSTEM_GRAPHICS_MODULES = platform_graphics
 else
-    ifeq ($(PLATFORM), stubs)
-        ifndef SUBSYSTEM_GRAPHICS_MODULES
-            SUBSYSTEM_GRAPHICS_MODULES = platform_graphics
-        endif
-    else
-        SUBSYSTEM_GRAPHICS_MODULES = putpixel
+    ifneq ($(PLATFORM), gci)
+      ifeq ($(PLATFORM), stubs)
+          ifndef SUBSYSTEM_GRAPHICS_MODULES
+              SUBSYSTEM_GRAPHICS_MODULES = platform_graphics
+          endif
+      else
+          SUBSYSTEM_GRAPHICS_MODULES = putpixel
+      endif
     endif
 endif
 
@@ -65,7 +67,9 @@ endif
 # Description: graphics utility functions
 #####################################################################
 
+ifneq ($(PLATFORM), gci)
 include $(SUBSYSTEM_LOWUI_DIR)/graphics_util/$(LIB_MAKE_FILE)
+
 
 #####################################################################
 # Platform graphics port  Subsystem
@@ -83,6 +87,7 @@ endif
 #####################################################################
 
 include $(SUBSYSTEM_LOWUI_DIR)/graphics/$(LIB_MAKE_FILE)
+endif
 
 #####################################################################
 # Graphics api Subsystem

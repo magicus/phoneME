@@ -34,7 +34,6 @@
 
 #include <jvmconfig.h>
 #include <kni.h>
-#include <jvmspi.h>
 #include <jvm.h>
 #include <sni.h>
 #include <midpError.h>

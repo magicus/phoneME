@@ -43,7 +43,6 @@
  */
 
 #include <kni.h>
-#include <jvmspi.h>
 
 #include <midpString.h>
 
