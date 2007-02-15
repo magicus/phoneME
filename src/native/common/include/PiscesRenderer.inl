@@ -326,11 +326,19 @@ renderer_endRendering(Renderer* rdr) {
  */  
 static INLINE void
 renderer_setAntialiasing(Renderer* rdr, jboolean antialiasingOn) {
-    jint samples;
+    jint samplesX;
+    jint samplesY;
 
-    samples = antialiasingOn ? 3 : 0;
+    if (antialiasingOn) {
+        samplesX = DEFAULT_SUBPIXEL_LG_POSITIONS_X;
+        samplesY = DEFAULT_SUBPIXEL_LG_POSITIONS_Y;
+    } else {
+        samplesX = 0;
+        samplesY = 0;
+    }
+    
     rdr->_antialiasingOn = antialiasingOn;
-    setAntialiasing(rdr, samples, samples);
+    setAntialiasing(rdr, samplesX, samplesY);
     // TODO: invalidate(); ??
 }
 /**
