@@ -30,7 +30,18 @@
 extern "C" { 
 #endif /* __cplusplus */
 
-/* Native counterpart for com.sun.j2me.main.Configuration.getProperty() */
+/**
+ * Native counterpart for
+ * <code>com.sun.j2me.main.Configuration.getProperty()</code>.
+ * Puts requested property value in UTF-8 format into the provided buffer
+ * and returns pointer to it.
+ *
+ * @param key property key.
+ * @param buffer pre-allocated buffer where property value will be stored.
+ * @param length buffer size in bytes.
+ * @return pointer to the filled buffer on success,
+ *         <code>NULL</code> otherwise.
+ */
 const char* jumpGetInternalProp(const char* key, char* buffer, int length);
 
 #if defined __cplusplus 

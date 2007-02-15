@@ -29,6 +29,18 @@
 
 static JavaVM *jvm = NULL;
 
+/**
+ * Native counterpart for
+ * <code>com.sun.j2me.main.Configuration.getProperty()</code>.
+ * Puts requested property value in UTF-8 format into the provided buffer
+ * and returns pointer to it.
+ *
+ * @param key property key.
+ * @param buffer pre-allocated buffer where property value will be stored.
+ * @param length buffer size in bytes.
+ * @return pointer to the filled buffer on success,
+ *         <code>NULL</code> otherwise.
+ */
 const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
     JNIEnv *env;
     jstring propname;
@@ -76,6 +88,9 @@ const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
     return (const char*)buffer;
 }
 
+/**
+ * Stores <code>JavaVM</code> instance in a static variable for later use.
+ */
 JNIEXPORT void JNICALL
 Java_com_sun_j2me_main_Configuration_initialize(JNIEnv *env, jclass cls) {
     if ((*env)->GetJavaVM(env, &jvm) != 0) {
