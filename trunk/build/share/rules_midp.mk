@@ -33,13 +33,14 @@ printconfig::
 
 # Build PCSL before MIDP.
 initbuild_profile::
-	$(AT)echo "Building pcsl ..."
+	@echo "====> start pcsl build"
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     PCSL_PLATFORM=$(PCSL_PLATFORM) \
 	             NETWORK_MODULE=$(NETWORK_MODULE) \
 	             PCSL_OUTPUT_DIR=$(PCSL_OUTPUT_DIR) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
 	             -C $(PCSL_DIR) $(PCSL_MAKE_OPTIONS)
+	@echo "<==== end pcsl build"
 
 #
 # Invoke MIDP build process. Build MIDP classes first. If 
@@ -56,7 +57,7 @@ initbuild_profile::
 $(CVM_ROMJAVA_LIST): $(MIDP_CLASSESZIP)
 
 $(MIDP_CLASSESZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
-	$(AT)echo "Building MIDP classes ..."
+	@echo "====> start building MIDP classes"
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
 	             TARGET_CPU=$(TARGET_CPU) USE_DEBUG=$(USE_DEBUG) \
@@ -71,6 +72,7 @@ $(MIDP_CLASSESZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
 	             $(MIDP_JSROP_USE_FLAGS) \
 	             rom -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
+	@echo "<==== end building MIDP classes"
 
 #
 # Now build MIDP natives. MIDP natives are linked into CVM binary.
@@ -82,7 +84,7 @@ $(CVM_BINDIR)/$(CVM):: $(RUNMIDLET)
 endif
 
 $(RUNMIDLET): force_midp_build
-	$(AT)echo "Building MIDP native ..."
+	@echo "====> start building MIDP natives"
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
 	             TARGET_CPU=$(TARGET_CPU) USE_DEBUG=$(USE_DEBUG) \
@@ -103,6 +105,7 @@ endif
 ifneq ($(CVM_PRELOAD_LIB), true)
 	$(AT)cp $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/libmidp$(LIB_POSTFIX) $(CVM_LIBDIR)
 endif
+	@echo "<==== end building MIDP natives"
 
 force_midp_build:
 
