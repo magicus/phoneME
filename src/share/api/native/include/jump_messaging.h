@@ -136,6 +136,9 @@ extern void
 jumpMessageAddByte(JUMPOutgoingMessage m, int8 value);
 
 extern void
+jumpMessageAddBytesFrom(JUMPOutgoingMessage m, int8* values, int length);
+
+extern void
 jumpMessageAddByteArray(JUMPOutgoingMessage m, int8* values, int length);
 
 extern void
@@ -143,6 +146,9 @@ jumpMessageAddShort(JUMPOutgoingMessage m, int16 value);
 
 extern void
 jumpMessageAddInt(JUMPOutgoingMessage m, int32 value);
+
+extern void
+jumpMessageAddLong(JUMPOutgoingMessage m, int64 value);
 
 extern void
 jumpMessageAddString(JUMPOutgoingMessage m, JUMPPlatformCString str);
@@ -166,6 +172,9 @@ jumpMessageReaderInit(JUMPMessageReader* r, JUMPMessage m);
 extern int8
 jumpMessageGetByte(JUMPMessageReader* r);
 
+extern int8*
+jumpMessageGetBytesInto(JUMPMessageReader* r, int8* buffer, uint32 length);
+
 /*
  * The caller should call free() on the return value once it is done
  */
@@ -178,6 +187,8 @@ jumpMessageGetShort(JUMPMessageReader* r);
 extern int32
 jumpMessageGetInt(JUMPMessageReader* r);
 
+extern int64
+jumpMessageGetLong(JUMPMessageReader* r);
 /*
  * The caller should call free() on the return value once it is done
  */
@@ -195,6 +206,9 @@ jumpMessageGetStringArray(JUMPMessageReader* r, uint32* length);
  */
 extern JUMPPlatformCString
 jumpMessageGetType(JUMPMessage m);
+
+extern JUMPAddress*
+jumpMessageGetSender(JUMPMessage m);
 
 /*
  * Message send api's.
