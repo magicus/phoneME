@@ -74,7 +74,7 @@ endif
 ifneq ($(JSROP_BUILD_JARS),)
 # Check Jump building
 ifneq ($(CVM_INCLUDE_JUMP), true)
-$(error JSR optional packages require Jump to be supported; CVM_INCLUDE_JUMP must be true) 
+$(error JSR optional packages require Jump to be supported. CVM_INCLUDE_JUMP must be true.)
 endif
 JAVACALL_TARGET=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
 # Check javacall makefile and include it
