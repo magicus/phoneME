@@ -143,7 +143,8 @@ extern int jumpMessageQueueSend(JUMPMessageQueueHandle handle,
 /**
  * Waits till a message is availabe in this process message queue. This
  * call will <b>BLOCK</b> till there is a message available or a
- * timeout happens after 'timeout' seconds.
+ * timeout happens after 'timeout' milliseconds.  A timeout of
+ * 0 means wait forever.
  *
  * @return 0 if there is available data, and non-zero on error
  */
