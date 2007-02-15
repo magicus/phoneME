@@ -83,6 +83,8 @@ extern HWND midpGetWindowHandle();
 
 #define EXMENU_TEXT_DEBUG_LEVELS	    "Debug"
 
+#if !ENABLE_MULTIPLE_INSTANCES
+
 /*
  *    The function returns JAVACALL_OK if current instance
  *    is second (another one already exist).
@@ -103,6 +105,8 @@ void enqueueInterprocessMessage(int argc, char *argv[]);
  *    Returns the number of arguments.
  */
 int dequeueInterprocessMessage(char*** argv);
+
+#endif
 
 /*
  *    The function processes windows messages

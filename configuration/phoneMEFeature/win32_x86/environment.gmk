@@ -54,6 +54,12 @@ SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h jav
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEFeature/win32_x86 javacall/configuration/phoneMEFeature
 SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) javacall/implementation/win32))
 
+# Enable multiple runMidlet instances running on the same machine
+# Setting this to TRUE disables remote control of running runMidlet instance
+# implemented vie interprocess communication
+#
+USE_MULTIPLE_INSTANCES=true
+
 #Specify list of utility objects necessary for the build
 UTILITIES =                 \
         javautil_jad_parser \
@@ -67,6 +73,10 @@ SPECIFIC_DEFINITIONS+=-DWIN32
 
 ifeq ($(USE_JSR_135),true)
 SPECIFIC_DEFINITIONS+=-I$(JSR_135_JC_IMPL_PATH)/$(JSR_135_JC_DIR)/
+endif
+
+ifeq ($(USE_MULTIPLE_INSTANCES),true)
+SPECIFIC_DEFINITIONS+=-DENABLE_MULTIPLE_INSTANCES=1
 endif
 
 #Specific directories with source files that are used in the project can be specified 
