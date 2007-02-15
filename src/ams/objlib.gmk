@@ -23,6 +23,13 @@
 #
 ######################################################################
 
+# Create library from object files
+#
+# IMPL_NOTE: win32 platform has limitation of environment (32K),
+#   so too long command lines (especially for linker) are truncated.
+#   To avoid it object files are put to a library.
+#
+
 OBJLIB = $(OBJ_DIR)/libobj$(LIB_SUFFIX)
 OBJLIB_SCRIPT = $(OBJLIB)-list
 
