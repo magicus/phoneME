@@ -76,10 +76,10 @@ ifneq ($(JSROP_BUILD_JARS),)
 ifneq ($(CVM_INCLUDE_JUMP), true)
 $(error JSR optional packages require Jump to be supported; CVM_INCLUDE_JUMP must be true) 
 endif
-JAVACALL_TARGET=$(TARGET_OS)-$(TARGET_CPU_FAMILY)
+JAVACALL_TARGET=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
 # Check javacall makefile and include it
 export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
-JAVACALL_MAKE_FILE = $(JAVACALL_DIR)/module.gmk
+JAVACALL_MAKE_FILE = $(JAVACALL_DIR)/configuration/phoneMEAdvanced/$(JAVACALL_TARGET)/module.gmk
 ifeq ($(wildcard $(JAVACALL_MAKE_FILE)),)
 $(error JAVACALL_DIR must point to a directory containing javacall implementation sources)
 endif
