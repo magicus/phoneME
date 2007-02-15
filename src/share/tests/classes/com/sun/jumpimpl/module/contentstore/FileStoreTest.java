@@ -39,6 +39,7 @@ import com.sun.jump.executive.JUMPExecutive;
 public class FileStoreTest extends TestCase {
 
    FileStoreTestInternal actualClass;
+   boolean verbose = false;
 
    public FileStoreTest(String testName) { 
       super(testName);
@@ -90,9 +91,17 @@ public class FileStoreTest extends TestCase {
           if (JUMPExecutive.getInstance() == null) {
              JUMPStoreFactory factory = new com.sun.jumpimpl.module.contentstore.StoreFactoryImpl();
    	     factory.load(com.sun.jumpimpl.process.JUMPModulesConfig.getProperties());
+
           }
 
-          // Done with the setup.
+          // The setup for the repository root, hopefully can go away later.
+          File file = new File(System.getProperty("java.home") + File.separator + "repository");
+          if (!file.exists()) {
+               file.mkdir(); 
+               file.deleteOnExit();
+          }
+
+          System.setProperty("installer.repository", file.getPath());
        }
    
    
@@ -100,12 +109,12 @@ public class FileStoreTest extends TestCase {
 
           boolean testFailed = false;
    
-          System.out.println("Starting the test run");
+          trace("Starting the test run");
    
           // Get the store handle from the JUMPContentStoreSubClass. 
           JUMPStoreHandle storeHandle = openStore(true);
    
-          System.out.println("Got a type of JUMPStore: " + storeHandle);
+          trace("Got a type of JUMPStore: " + storeHandle);
    
           try {
               // first, try to create list nodes.
@@ -119,49 +128,43 @@ public class FileStoreTest extends TestCase {
               }
    
               // get back all the data nodes we just created and check the data content.
-              System.out.println("All data created, testing equality");
+              trace("All data created, testing equality");
               for (int i = 0; i < sampleDataUris.length; i++) {
                  JUMPData data = ((JUMPNode.Data)storeHandle.getNode(sampleDataUris[i])).getData();
-                 if (!data.equals(datas[i])) {
-                    System.out.println("node mismatch: " + data + "," + datas[i]);
-                    testFailed = true;
-		 }    
+                 assertTrue(data.equals(datas[i]));
               }
    
               // get the listing of all nodes starting at the root.
               JUMPNode.List dirnode = (JUMPNode.List) storeHandle.getNode(".");
    
-              System.out.println("List of storeHandle content");
+              trace("List of storeHandle content");
               printChildren(dirnode, "   ");
    
               // try updating a node content.
-              System.out.println("Testing update of storeHandle content");
+              trace("Testing update of storeHandle content");
               storeHandle.updateDataNode(sampleDataUris[0], datas[1]);
               JUMPData data = ((JUMPNode.Data)storeHandle.getNode(sampleDataUris[0])).getData();
-              if (!data.equals(datas[1])) {
-                 System.out.println("update failed : " + data + "," + datas[1]);
-                 testFailed = true;
-              }
+              assertTrue(data.equals(datas[1])); 
    
               // now, delete all list nodes.
-              System.out.println("Delete all");
+              trace("Delete all");
               for (int i = 0; i < sampleListUris.length; i++) {
                   storeHandle.deleteNode(sampleListUris[i]);
               }
    
-              //System.out.println("List of storeHandle content");
+              //trace("List of storeHandle content");
               //printChildren(dirnode, "   ");
           }
           catch (IOException ioe) {
-              System.out.println("IOException was thrown!");
+              trace("IOException was thrown!");
               ioe.printStackTrace(System.out);
               testFailed = true;
           }
    
-          System.out.println("Closing the store");
+          trace("Closing the store");
           closeStore(storeHandle);
    
-          System.out.println("Done.");
+          trace("Done.");
 
 	  assertTrue(!testFailed);
        }
@@ -169,7 +172,7 @@ public class FileStoreTest extends TestCase {
        // Recursively print all the nodes in the tree.
        void printChildren(JUMPNode jumpNode, String tab) {
           if (jumpNode != null) {
-             System.out.println(tab + jumpNode);
+             trace(tab + jumpNode);
              if (jumpNode instanceof JUMPNode.List) {
                 JUMPNode.List list = (JUMPNode.List) jumpNode;
                 for (Iterator itn = list.getChildren(); itn.hasNext(); ) {
@@ -178,6 +181,11 @@ public class FileStoreTest extends TestCase {
                 }
              }
           }
+       }
+
+       void trace(String output) {
+         if (verbose)
+            System.out.println(output);
        }
    }
    
