@@ -56,9 +56,9 @@
 
 
 #ifdef QT_KEYPAD_MODE
-#define MOVE_FOCUS  Key_Context1
+#define MOVE_FOCUS  Qt::Key_Context1
 #else
-#define MOVE_FOCUS  Key_F1
+#define MOVE_FOCUS  Qt::Key_F1
 #endif
 
 /**

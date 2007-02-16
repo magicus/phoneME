@@ -14,6 +14,6 @@
 <rawimage
   Format="ARGB" 
   Colors="888" 
-  Endian="Big"
+  Endian="Little"
 />
 </configuration>

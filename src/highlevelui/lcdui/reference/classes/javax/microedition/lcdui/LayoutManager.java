@@ -329,6 +329,9 @@ class LayoutManager {
         // SYNC NOTE: layout() is always called from within a hold
         // on LCDUILock
 
+        int oldWidth = viewable[WIDTH];
+        int oldHeight = viewable[HEIGHT];
+
         // If we don't have any Items, just return
         if (numOfLFs == 0) {
 
@@ -600,10 +603,10 @@ class LayoutManager {
             // If the Item is changing size, set the flag so that callPaint()
             // will call the Item's sizeChanged() method before painting
 
-            if (itemLFs[index].bounds[WIDTH] != pW ||
-                itemLFs[index].bounds[HEIGHT] != pH) {
+            if (oldWidth != viewportWidth || oldHeight != viewportHeight ||
+                itemLFs[index].bounds[WIDTH] != pW || itemLFs[index].bounds[HEIGHT] != pH) { 
                 itemLFs[index].sizeChanged = true;
-             }
+            }
             
             if (!fullLayout && (index > invalidIndex)) {
                 

@@ -158,24 +158,17 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
 
         itemLF = itemLFs[index];
 
-        // Ensure the item is visible
-         boolean C1 = itemLF.bounds[Y] < viewable[Y];
-         boolean C2 = itemLF.bounds[Y] + itemLF.bounds[HEIGHT] > viewable[Y] + viewport[HEIGHT];
-         if ( C1 && !C2) {
-             viewable[Y] = itemLF.bounds[Y];
-         } else if ( C2 && !C1) {
-             viewable[Y] = itemLF.bounds[Y] + itemLF.bounds[HEIGHT] - viewport[HEIGHT];
-         }
-
-         if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
-             viewable[Y] = viewable[HEIGHT] - viewable[HEIGHT];
-         }
-
-         if (viewable[Y] < 0) {
-             viewable[Y] = 0;
-         }
-
         if (index != traverseIndex) {
+        
+            // Ensure the item is visible
+            if (!itemCompletelyVisible(itemLF)) {
+                viewable[Y] = itemLF.bounds[Y];
+                
+                if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
+                    viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
+                }
+            }
+            
             // We record the present traverseItem because if it
             // is valid, we will have to call traverseOut() on that
             // item when we process the invalidate call.
@@ -189,6 +182,15 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             // be traversed to when the invalidate occurs
             traverseIndex = itemLF.shouldSkipTraverse() ? -1 : index;
             lRequestInvalidate();
+        } else {
+            // Ensure the item is visible
+            if (!itemPartiallyVisible(itemLF)) {
+                viewable[Y] = itemLF.bounds[Y];
+                
+                if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
+                    viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
+                }
+            }
         }
     }
 
@@ -1196,7 +1198,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         if (super.state == HIDDEN) {
             return false;
         }
-        
         return !(item.bounds[Y] > viewable[Y] + viewport[HEIGHT] ||
                  item.bounds[Y] + item.bounds[HEIGHT] < viewable[Y]);
     }
@@ -1473,9 +1474,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         // Whether the item performs an internal traversal or not,
         // it has the current input focus
         item.hasFocus = true;
-
         setVisRect(item, visRect);
-            
         // Call traverse() outside LCDUILock
         if (item.uCallTraverse(dir,
                                viewport[WIDTH], viewport[HEIGHT], visRect)) {
@@ -1558,7 +1557,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 return;
             }
         } 
-                     
+
         // We are done with the traversal of the current item, so
         // we look to see if another interactive item is available on
         // current page
@@ -1582,6 +1581,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
 
             if (traverseIndexCopy != -1) {
                 itemsCopy[traverseIndexCopy].uCallTraverseOut();
+                itemsCopy[traverseIndexCopy].uRequestPaint();
             }
             
             /*
@@ -1606,6 +1606,13 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 // We then need to traverse to the next item
                 itemTraverse = 
                         uCallItemTraverse(itemsCopy[traverseIndexCopy], dir);
+
+                if (scrollForBounds(dir, visRect)) {
+                    uHideShowItems(itemsCopy);
+                    uRequestPaint(); // request to paint contents area
+                } else {
+                    itemsCopy[traverseIndexCopy].uRequestPaint();
+                }
             }
             
             // There is a special case when traversing to the very last
@@ -1629,6 +1636,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                         viewable[Y] = itemsCopy[traverseIndexCopy].bounds[Y];
                     }
                     uHideShowItems(itemsCopy);
+                    uRequestPaint();
                 }
             }
             
@@ -1651,12 +1659,12 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                             viewport[HEIGHT];
                     }
                     uHideShowItems(itemsCopy);
+                    uRequestPaint();
                 }
             }
+
             setupScroll();
             updateCommandSet();
-            uRequestPaint();
-            
         } else {                      
             
             // There is no more interactive items wholly visible on
@@ -1827,7 +1835,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         if (bounds == null || bounds[0] == -1) {
             return false;
         }
-        
+
         // There is a special case whereby the CustomItem
         // spec mandates the upper left corner of the internal
         // traversal rect be visible if the rect is larger than
@@ -1869,7 +1877,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 return true;
             default:
                 // for safety/completeness, don't scroll.
-                Logging.report(Logging.ERROR, 
+                Logging.report(Logging.WARNING, 
                     LogChannels.LC_HIGHUI_FORM_LAYOUT,
                     "FormLFImpl: bounds, dir=" + dir);
                 break;

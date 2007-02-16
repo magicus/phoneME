@@ -39,8 +39,6 @@ public class DisplayEventHandlerFactory {
     /** The real implementation of the display event handler. */
     private static DisplayEventHandler managerImpl;
 
-    /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken displayClassSecurityToken;
     /**
      * Set the implementation of the display manager, if one
      * is not already set.
@@ -56,7 +54,6 @@ public class DisplayEventHandlerFactory {
         }
 
         managerImpl = dm;
-	managerImpl.initSecurityToken(displayClassSecurityToken);
     };
 
     /**
@@ -90,18 +87,4 @@ public class DisplayEventHandlerFactory {
 
         return managerImpl;
     };
-
-    /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class.
-     */
-    public static void initSecurityToken(SecurityToken token) {
-	if (displayClassSecurityToken != null) {
-	    return;
-	}
-	
-	displayClassSecurityToken = token;
-    }
 }

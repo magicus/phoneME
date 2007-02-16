@@ -109,7 +109,7 @@ jboolean lfpport_reverse_orientation()
     jboolean res = qteapp_get_mscreen()->reverse_orientation();
     PlatformMIDPMainWindow * mainWindow =
         PlatformMIDPMainWindow::getMainWindow();
-    mainWindow->resize();
+    mainWindow->resizeScreen();
     return res;
 }
 

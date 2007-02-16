@@ -37,6 +37,11 @@ import com.sun.midp.io.HttpUrl;
 public abstract class ProtocolPush {
 
     /**
+     * Number of delimiter characters in IP v4 address
+     */
+    protected static final int IP4_DELIMITER_COUNT = 3;
+
+    /**
      * Get instance of this class.
      * @return class instance
      */
@@ -51,15 +56,11 @@ public abstract class ProtocolPush {
      * @return class instance
      * @exception  IllegalArgumentException if the connection string is not
      *               valid
-     * @exception ClassNotFoundException if the <code>MIDlet</code> class
-     *               name can not be found in the current
-     *               <code>MIDlet</code> suite
      * @exception  ConnectionNotFoundException if the protocol is not
      *               supported or invalid
      */
     public static ProtocolPush getInstance(String connection) 
-        throws ClassNotFoundException, IllegalArgumentException, 
-            ConnectionNotFoundException {
+        throws IllegalArgumentException, ConnectionNotFoundException {
 
         /* Verify that the connection requested is valid. */
         if (connection == null || connection.length() == 0) {
@@ -82,10 +83,17 @@ public abstract class ProtocolPush {
         try {
             ProtocolPush cl = (ProtocolPush)Class.forName(className).newInstance();
             return cl.getInstance();
+        } catch (ClassNotFoundException exc) {
+            throw new ConnectionNotFoundException("Protocol is not supported");
+        } catch (ClassCastException exc) {
+            throw new RuntimeException(
+                    "System error loading class " + className + ": " + exc);
         } catch (IllegalAccessException exc) {
-            throw new IllegalArgumentException("Protocol is not supported");
+            throw new RuntimeException(
+                    "System error loading class " + className + ": " + exc);
         } catch (InstantiationException exc) {
-            throw new IllegalArgumentException("Protocol is not supported");
+            throw new RuntimeException(
+                    "System error loading class " + className + ": " + exc);
         }
     }
 
@@ -170,12 +178,38 @@ public abstract class ProtocolPush {
     protected void checkIIPFilter(String filter) 
         throws IllegalArgumentException {
         int len = filter.length();
+        int dotCount = 0;
+        boolean dotUnexpected = true;
+        boolean failed = false;
+
         /* IP address characters only for other connections. */
-        for (int i = 0; i < len; i++) {
-            char c = filter.charAt(i);
-            if (!(c == '?' || c == '*' || c == '.' ||
-                  ('0' <= c && c <= '9'))) {
-                throw new IllegalArgumentException("IP Filter invalid");
+        /* Check for special case - single * char. This is valid filter. */
+        if (!"*".equals(filter)) {
+            /* All other filters shall be in IPv4 format. */
+            for (int i = 0; i < len && !failed; i++) {
+                char c = filter.charAt(i);
+
+                if (c == '.') {
+                    if (dotUnexpected || i == len-1) {
+                        failed = true;
+                    } else {
+                        dotCount++;
+                        if (dotCount > IP4_DELIMITER_COUNT) {
+                            failed = true;
+                        }
+                        dotUnexpected = true;
+                    }
+                } else
+                    if (c != '?' && c != '*' && !('0' <= c && c <= '9')) {
+                        /* The only acceptable characters are [*?0-9] */
+                        failed = true;
+                    } else {
+                        dotUnexpected = false;
+                    }
+            }
+
+            if (failed || dotCount < IP4_DELIMITER_COUNT) {
+                throw new IllegalArgumentException("IP Filter \"" + filter + "\" is invalid");
             }
         }
     }

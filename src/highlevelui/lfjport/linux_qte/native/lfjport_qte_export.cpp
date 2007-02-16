@@ -113,7 +113,11 @@ void lfjport_set_fullscreen_mode(jboolean mode) {
 
 jboolean lfjport_reverse_orientation()
 {
-   return qteapp_get_mscreen()->reverse_orientation();
+   ChameleonMIDPMainWindow * mainWindow =
+    ChameleonMIDPMainWindow::getMainWindow();
+   jboolean r = qteapp_get_mscreen()->reverse_orientation();
+   mainWindow->resizeScreen();
+   return r;
 }
 
 jboolean lfjport_get_reverse_orientation()

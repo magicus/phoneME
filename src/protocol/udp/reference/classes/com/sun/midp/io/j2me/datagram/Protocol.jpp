@@ -44,7 +44,7 @@ import com.sun.midp.io.NetworkConnectionBase;
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.Util;
 
-import com.sun.midp.io.j2me.push.PushRegistryImpl;
+import com.sun.midp.io.j2me.push.PushRegistryInternal;
 
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midlet.MIDletStateHandler;
@@ -168,7 +168,7 @@ public class Protocol implements UDPDatagramConnection,
                 }
             } catch (SecurityException e) {
                 // Give back the connection to AMS
-                PushRegistryImpl.checkInConnectionInternal(
+                PushRegistryInternal.checkInConnectionInternal(
                     classSecurityToken, "datagram:" + name);
 
                 throw e;

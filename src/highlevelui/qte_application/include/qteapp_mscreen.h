@@ -149,14 +149,15 @@ public:
     virtual void gainedForeground() = 0;
 
     /**
-     * Makes a request to make all midlets active.
+     * Requests MIDP system to resume.
      */
-    virtual void activateAll() = 0;
+    virtual void activateAll();
 
     /**
-     * Makes a request to pause all midlets.
+     * Requests MIDP system (including java applications, VM and resources)
+     * to suspend.
      */
-    virtual void pauseAll() = 0;
+    virtual void pauseAll();
 
     /**
      * Returns QWidget representation of this MScreen instance.

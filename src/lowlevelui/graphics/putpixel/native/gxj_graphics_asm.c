@@ -403,7 +403,7 @@ void unclipped_blit(unsigned short *dstRaster, int dstSpan,
       }
     } else {
       /* single memcpy optimization */
-      if ((width == srcSpan) && (srcSpan == dstSpan)) {
+      if (((width>>1) == srcSpan) && (srcSpan == dstSpan)) {
         width = (dstSpan<<1) * height;
         height = 1;
       }

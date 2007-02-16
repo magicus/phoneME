@@ -39,9 +39,13 @@
 #include <javacall_keypress.h>
 #include <javacall_penevent.h>
 #include <javacall_lifecycle.h>
+#ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
-#include <javacall_mms.h>
 #include <javacall_cbs.h>
+#endif
+#ifdef ENABLE_JSR_205
+#include <javacall_mms.h>
+#endif
 #include <javacall_events.h>
 #include <javacall_time.h>
 #include <javacall_socket.h>
@@ -131,20 +135,21 @@ void javanotify_pen_event(int x, int y, javacall_penevent_type type) {
  */
 void javanotify_start(void) {
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO(LC_CORE,"javanotify_start() >>\n");
 
-    e.eventType = MIDP_JC_EVENT_START_MIDLET;
-    e.data.startMidletEvent.suiteID = "internal";
-    e.data.startMidletEvent.classname = 
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = 
 #if ENABLE_MULTIPLE_ISOLATES
     "com.sun.midp.appmanager.MVMManager";
 #else
     "com.sun.midp.appmanager.Manager";
 #endif
-    e.data.startMidletEvent.arg0 = NULL;
-    e.data.startMidletEvent.arg1 = NULL;
-    e.data.startMidletEvent.arg2 = NULL;
 
     midp_jc_event_send(&e);
 }
@@ -161,21 +166,39 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
 
     int length;
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO2(LC_CORE,"javanotify_start_tck() >> tckUrl=%s, domain_type=%d \n",tckUrl,domain_type);
 
-    e.eventType = MIDP_JC_EVENT_START_TCK;
-    length = strlen(tckUrl);
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
-    if (length < BINARY_BUFFER_MAX_LEN) {
-        memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
-        memcpy(urlAddress, tckUrl, length);
-        e.data.startTckEvent.urlAddress = urlAddress;
-        e.data.startTckEvent.domain = domain_type;
-	midp_jc_event_send(&e);
-    } else {
-        /* IMPL_NOTE: decide what to do in case of an error */
-    }
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.installer.AutoTester";
+
+    length = strlen(tckUrl);
+    if (length >= BINARY_BUFFER_MAX_LEN)
+        return;
+    
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    memcpy(urlAddress, tckUrl, length);
+    if(strcmp(urlAddress, "none") != 0)
+        data->argv[data->argc++] = urlAddress;
+
+
+    if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
+        data->argv[data->argc++] = "untrusted";
+    } else if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
+        data->argv[data->argc++] = "trusted";
+    } else if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
+        data->argv[data->argc++] = "minimum";
+    } else if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
+        data->argv[data->argc++] = "maximum";
+    } else
+        return;
+
+    midp_jc_event_send(&e);
 }
 
 /**
@@ -189,15 +212,21 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
  */
 void javanotify_start_i3test(char* arg1, char* arg2) {
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO2(LC_CORE,"javanotify_start_i3test() >> %s %s\n",arg1,arg2);
 
-    e.eventType = MIDP_JC_EVENT_START_MIDLET;
-    e.data.startMidletEvent.suiteID = "internal";
-    e.data.startMidletEvent.classname = "com.sun.midp.i3test.Framework";
-    e.data.startMidletEvent.arg0 = arg1;
-    e.data.startMidletEvent.arg1 = arg2;
-    e.data.startMidletEvent.arg1 = NULL;
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.i3test.Framework";
+    if (NULL != arg1) {
+        data->argv[data->argc++] = arg1;
+        if (NULL != arg2)
+            data->argv[data->argc++] = arg2;
+    }
 
     midp_jc_event_send(&e);
 }
@@ -214,16 +243,25 @@ void javanotify_start_i3test(char* arg1, char* arg2) {
  */
 void javanotify_start_handler(char* handlerID, char* url, char* action) {
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
-	REPORT_INFO3(LC_CORE,"javanotify_start_handler() >> %s %s %s\n", 
-	                                                handlerID, url, action);
+    REPORT_INFO3(LC_CORE,"javanotify_start_handler() >> %s %s %s\n", 
+		 handlerID, url, action);
 
-    e.eventType = MIDP_JC_EVENT_START_MIDLET;
-    e.data.startMidletEvent.suiteID = "internal";
-    e.data.startMidletEvent.classname = "com.sun.midp.content.Invoker";
-    e.data.startMidletEvent.arg0 = handlerID;
-    e.data.startMidletEvent.arg1 = url;
-    e.data.startMidletEvent.arg2 = action;
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.content.Invoker";
+    if (NULL != handlerID) {
+        data->argv[data->argc++] = handlerID;
+        if (NULL != url) {
+            data->argv[data->argc++] = url;
+            if (NULL != action)
+                data->argv[data->argc++] = action;
+        }
+    }
 
     midp_jc_event_send(&e);
 }
@@ -251,19 +289,27 @@ void javanotify_start_handler(char* handlerID, char* url, char* action) {
 void javanotify_install_midlet(const char *httpUrl) {
     int length;
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO1(LC_CORE,"javanotify_install_midlet() >> httpUrl=%s\n",httpUrl);
 
-    e.eventType = MIDP_JC_EVENT_START_INSTALL;
-    e.data.lifecycleEvent.silentInstall = 0;
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.installer.GraphicalInstaller";
+    data->argv[data->argc++] = "I";
 
     length = strlen(httpUrl);
-    if (length < BINARY_BUFFER_MAX_LEN) {
-        memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
-        memcpy(urlAddress, httpUrl, length);
-        e.data.lifecycleEvent.urlAddress = urlAddress;
-	midp_jc_event_send(&e);
-    }
+    if (length >= BINARY_BUFFER_MAX_LEN)
+        return;
+
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    memcpy(urlAddress, httpUrl, length);
+    data->argv[data->argc++] = urlAddress;
+
+    midp_jc_event_send(&e);
 }
 
 /**
@@ -288,18 +334,26 @@ void javanotify_install_midlet(const char *httpUrl) {
 void javanotify_install_midlet_from_filesystem(const javacall_utf16 * jadFilePath,
                                                int jadFilePathLen, int userWasAsked) {
     midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO(LC_CORE,"javanotify_install_midlet_from_filesystem() >>\n");
 
-    e.eventType = MIDP_JC_EVENT_START_INSTALL;
-    e.data.lifecycleEvent.silentInstall = userWasAsked;
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
-    if (jadFilePathLen < BINARY_BUFFER_MAX_LEN) {
-        memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
-        unicodeToNative(jadFilePath, jadFilePathLen, (unsigned char *) urlAddress, BINARY_BUFFER_MAX_LEN);
-        e.data.lifecycleEvent.urlAddress = urlAddress;
-	midp_jc_event_send(&e);
-    }
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.scriptutil.CommandLineInstaller";
+    data->argv[data->argc++] = "I";
+
+    if (jadFilePathLen >= BINARY_BUFFER_MAX_LEN)
+        return;
+
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    unicodeToNative(jadFilePath, jadFilePathLen, (unsigned char *) urlAddress, BINARY_BUFFER_MAX_LEN);
+    data->argv[data->argc++] = urlAddress;
+
+    midp_jc_event_send(&e);
 }
 
 /**
@@ -436,7 +490,7 @@ void javanotify_network_event(javacall_network_event netEvent) {
     midp_jc_event_send(&e);
 }
 
-#if ENABLE_JSR_120 || ENABLE_JSR_205
+#if ENABLE_JSR_120
     #include <jsr120_sms_pool.h>
     #include <jsr120_cbs_pool.h>
 #endif
@@ -444,6 +498,7 @@ void javanotify_network_event(javacall_network_event netEvent) {
     #include <jsr205_mms_pool.h>
 #endif
 
+#ifdef ENABLE_JSR_120
 /**
  * callback that needs to be called by platform to handover an incoming SMS intended for Java 
  *
@@ -471,7 +526,6 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
                         unsigned short sourcePortNum,
                         unsigned short destPortNum,
                         javacall_int64 timeStamp) {
-#if (ENABLE_JSR_120 || ENABLE_JSR_205)
     midp_jc_event_union e;
         SmsMessage* sms;
 
@@ -482,17 +536,17 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
         e.data.smsIncomingEvent.stub = (int)sms;
 
     midp_jc_event_send(&e);
-#endif
     return;
 }
+#endif
 
+#ifdef ENABLE_JSR_205
 /*
  * See javacall_mms.h for description
  */
 void javanotify_incoming_mms_singlecall(
                 char* fromAddress, char* appID, char* replyToAppID,
         int bodyLen, unsigned char* body) {
-#if ENABLE_JSR_205
     midp_jc_event_union e;
         MmsMessage* mms;
 
@@ -503,10 +557,11 @@ void javanotify_incoming_mms_singlecall(
         e.data.mmsIncomingEvent.stub = (int)mms;
 
     midp_jc_event_send(&e);
-#endif
     return;
 }
+#endif
 
+#ifdef ENABLE_JSR_120
 /**
  * callback that needs to be called by platform to handover an incoming CBS intended for Java 
  *
@@ -528,7 +583,6 @@ void javanotify_incoming_cbs(
         unsigned short         msgID,
         unsigned char*         msgBuffer,
         int                    msgBufferLen) {
-#if (ENABLE_JSR_120 || ENABLE_JSR_205)
     midp_jc_event_union e;
         CbsMessage* cbs;
 
@@ -536,13 +590,14 @@ void javanotify_incoming_cbs(
 
     cbs = jsr120_cbs_new_msg(msgType, msgID, msgBufferLen, msgBuffer);
 
-        e.data.mmsIncomingEvent.stub = (int)cbs;
+    e.data.cbsIncomingEvent.stub = (int)cbs;
 
     midp_jc_event_send(&e);
-#endif
     return;    
 }
+#endif
 
+#ifdef ENABLE_JSR_120
 /**
  * A callback function to be called by platform to notify that an SMS 
  * has completed sending operation.
@@ -556,7 +611,6 @@ void javanotify_incoming_cbs(
  */
 void javanotify_sms_send_completed(javacall_sms_sending_result result,
                                    int handle) {
-#if (ENABLE_JSR_120 || ENABLE_JSR_205)
     midp_jc_event_union e;
 
     e.eventType = MIDP_JC_EVENT_SMS_SENDING_RESULT;
@@ -565,10 +619,11 @@ void javanotify_sms_send_completed(javacall_sms_sending_result result,
         = JAVACALL_SMS_SENDING_RESULT_SUCCESS == result ? 0 : -1;
 
     midp_jc_event_send(&e);
-#endif
     return;
 }
+#endif
 
+#ifdef ENABLE_JSR_205
 /**
  * A callback function to be called by platform to notify that an MMS 
  * has completed sending operation.
@@ -582,7 +637,6 @@ void javanotify_sms_send_completed(javacall_sms_sending_result result,
  */
 void javanotify_mms_send_completed(javacall_mms_sending_result result,
                                    javacall_handle handle) {
-#if ENABLE_JSR_205
     midp_jc_event_union e;
 
     e.eventType = MIDP_JC_EVENT_MMS_SENDING_RESULT;
@@ -591,9 +645,9 @@ void javanotify_mms_send_completed(javacall_mms_sending_result result,
         = JAVACALL_MMS_SENDING_RESULT_SUCCESS == result ? 0 : -1;
 
     midp_jc_event_send(&e);
-#endif
     return;
 }
+#endif
 
 #ifdef ENABLE_JSR_177
 /**
@@ -785,6 +839,7 @@ void javanotify_datagram_event(javacall_datagram_callback_type type,
     midp_jc_event_send(&e);
 }
 
+#ifdef ENABLE_JSR_135
 /**
  * Post native media event to Java event handler
  * 
@@ -795,7 +850,7 @@ void javanotify_datagram_event(javacall_datagram_callback_type type,
 void javanotify_on_media_notification(javacall_media_notification_type type,
                                       javacall_int64 playerId,
                                       void *data) {
-#if ENABLE_MMAPI
+#if ENABLE_JSR_135
     extern int g_currentPlayer;
 
     midp_jc_event_union e;
@@ -815,6 +870,33 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
     midp_jc_event_send(&e);
 #endif
 }
+#endif
+
+#if ENABLE_JSR_234
+/**
+ * Post native advanced multimedia event to Java event handler
+ * 
+ * @param type          Event type
+ * @param processorId   Processor ID that came from javacall_media_processor_create 
+ * @param data          Data for this event type
+ */
+void javanotify_on_amms_notification(javacall_amms_notification_type type,
+                                     javacall_int64 processorId,
+                                     void *data) {
+    midp_jc_event_union e;
+
+    e.eventType = MIDP_JC_EVENT_ADVANCED_MULTIMEDIA;
+    e.data.multimediaEvent.mediaType = type;
+    e.data.multimediaEvent.isolateId = (int)((processorId >> 32) & 0xFFFF);
+    e.data.multimediaEvent.playerId = (int)(processorId & 0xFFFF);
+    e.data.multimediaEvent.data = (int) data;
+
+    REPORT_INFO1(LC_NONE, 
+            "[javanotify_on_amms_notification] type=%d\n", type);
+
+    midp_jc_event_send(&e);
+}
+#endif
 
 /**
  * The implementation call this callback notify function when image decode done

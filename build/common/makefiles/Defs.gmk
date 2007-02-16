@@ -132,9 +132,9 @@ ifeq ($(USE_VERBOSE_MAKE),true)
 	status=$$?; \
 	cat $(MIDP_OUTPUT_DIR)/makelog.out | tee -a $(LOG_FILE); \
 	if [ $$status -ne 0 ]; then \
-	    /bin/false; \
+	    false; \
 	else \
-	    /bin/true; \
+	    true; \
 	fi
     endef
     A          =

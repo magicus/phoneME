@@ -50,14 +50,14 @@ interface ApplicationManager {
      * @param suiteInfo information for suite to launch
      * @param midletToRun class name of the MIDlet to launch
      */
-    void launchSuite(MIDletSuiteInfo suiteInfo, String midletToRun);
+    void launchSuite(RunningMIDletSuiteInfo suiteInfo, String midletToRun);
 
     /**
      * Update a suite.
      *
      * @param suiteInfo information for suite to update
      */
-    void updateSuite(MIDletSuiteInfo suiteInfo);
+    void updateSuite(RunningMIDletSuiteInfo suiteInfo);
 
     /**
      * Shut downt the system
@@ -70,13 +70,12 @@ interface ApplicationManager {
      * 
      * @param suiteInfo information for the midlet to be put to foreground
      */
-    void moveToForeground(MIDletSuiteInfo suiteInfo);
+    void moveToForeground(RunningMIDletSuiteInfo suiteInfo);
     
     /**
      * Exit the midlet with the passed in midlet suite info.
      * 
      * @param suiteInfo information for the midlet to be terminated
      */
-    void exitMidlet(MIDletSuiteInfo suiteInfo);
-
+    void exitMidlet(RunningMIDletSuiteInfo suiteInfo);
 }

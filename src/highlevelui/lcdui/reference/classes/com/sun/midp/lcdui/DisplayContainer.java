@@ -51,46 +51,50 @@ public class DisplayContainer {
      *
      * @param token security token for initilaization
      * @param isolateId id of the Isolate this instance is created in
-     *
      */ 
     public DisplayContainer(SecurityToken token, int isolateId) {
         token.checkIfPermissionAllowed(Permissions.MIDP);
 	this.isolateId = isolateId;
     }
-    
+
     /**
-     * Adds display object to the container and creats a display Id for it
-     * as a single atomic operation.
-     * Intended to be called form Display constructor.
+     * Adds a display object to the container and sets a the display's ID to
+     * new unique value for this isolate, as a single atomic operation.
+     * <p>
+     * Intended to be called from Display constructor.
      *
      * @param da display object to add
-     *
-     * @return Id of display being added to the container. 
-     *         If display already exists in the container, 
-     *         returns existing Id.
-     *
      */
-    public synchronized int addDisplay(DisplayAccess da) {
+    public synchronized void addDisplay(DisplayAccess da) {
         if (displays.indexOf(da) == -1) {
             int newId = createDisplayId();
             da.setDisplayId(newId);
             displays.addElement(da);
-            return newId;
-        } else {
-            // do not allow duplicates
-            return da.getDisplayId();
         }
     }
     
     /**
-     * Removes dsplay object from the container.
+     * Get a display to request the foreground on behalf of the MIDlet.
      *
-     * @param da display object to remove
+     * @param nameOfOwner class name of the MIDlet that owns this display
+     */
+    public void requestForegroundForDisplay(String nameOfOwner) {
+        DisplayAccess da = findDisplayByOwner(nameOfOwner);
+
+        da.requestForeground();
+    }
+
+    /**
+     * Removes display object from the container.
+     *
+     * @param nameOfOwner class name of the MIDlet that owns this display
      *
      * @return true if display has been succcessfully removed, 
      *         false, if display object has not been found in the container.
      */
-    public synchronized boolean removeDisplay(DisplayAccess da) {
+    public synchronized boolean removeDisplay(String nameOfOwner) {
+        DisplayAccess da = findDisplayByOwner(nameOfOwner);
+
         return displays.removeElement(da);
     }
     
@@ -101,7 +105,7 @@ public class DisplayContainer {
      *
      * @return a display access object or null if not found
      */
-    public synchronized DisplayAccess findDisplayById(int displayId) {
+    synchronized DisplayAccess findDisplayById(int displayId) {
         int size = displays.size();
 
         for (int i = 0; i < size; i++) {
@@ -116,30 +120,59 @@ public class DisplayContainer {
     }
 
     /**
-     * Checks if container storage size is 1 or not.
+     * Find a display by owner.
      *
-     * This method is temporary and is added only to fix 
-     * synchronization problem in creation of preempting displays.
-     * 
-     * Code, that creates a preempting display, explicitely 
-     * distinguishes situation where new added display is the only display
-     * in the isolate, in other words if no midlets exists 
-     * in the current isolate.
-     * Moreover this method needs to be called in the same synchronization
-     * block with Display constructor. 
-     * This is achieved by explicit synchronization in 
-     * DisplayEventHandlerImpl.preempDisplay() method.
+     * @param nameOfOwner class name of the MIDlet that owns this display
      *
-     * DO NOT USE THIS METHOD IN OTHER OPERATIONS !
-     *
-     * When preemption will be reorganized and simplified, 
-     * this method will go away ! 
-     *
-     * @return true if display container storae contain exactly one display, 
-     *         false otherwise.  
+     * @return a display access object or null if not found
      */
-    public synchronized boolean isOneElementInContainer() {
-        return (displays.size() == 1);
+    public synchronized DisplayAccess findDisplayByOwner(String nameOfOwner) {
+        int size = displays.size();
+
+        for (int i = 0; i < size; i++) {
+            DisplayAccess current = (DisplayAccess)displays.elementAt(i);
+
+            if (current.getNameOfOwner().equals(nameOfOwner)) {
+                return current;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Find a display event consumer by ID.
+     *
+     * @param displayId ID of the display
+     *
+     * @return a display event consumer object or null if not found
+     */
+    public DisplayEventConsumer findDisplayEventConsumer(int displayId) {
+        DisplayAccess da = findDisplayById(displayId);
+
+        if (da == null) {
+            return null;
+        }
+
+        return da.getDisplayEventConsumer();
+    }
+
+
+    /**
+     * Find a foreground event consumer by ID.
+     *
+     * @param displayId ID of the display
+     *
+     * @return a foreground event consumer object or null if not found
+     */
+    public ForegroundEventConsumer findForegroundEventConsumer(int displayId) {
+        DisplayAccess da = findDisplayById(displayId);
+
+        if (da == null) {
+            return null;
+        }
+
+        return da.getForegroundEventConsumer();
     }
 
     /**

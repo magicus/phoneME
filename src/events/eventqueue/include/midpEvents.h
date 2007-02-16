@@ -78,52 +78,55 @@ extern "C" {
 #define MIDP_PEER_CHANGED_EVENT         8
 #define MIDP_CALL_SERIALLY_EVENT        9
 #define FOREGROUND_NOTIFY_EVENT         10
-#define ACTIVATE_MIDLET_EVENT           11
-#define PAUSE_MIDLET_EVENT              12
-#define DESTROY_MIDLET_EVENT            13
-#define SHUTDOWN_EVENT                  14
-#define ACTIVATE_ALL_EVENT              15
-#define PAUSE_ALL_EVENT                 16
-#define MIDLET_CREATED_NOTIFICATION     17
-#define MIDLET_ACTIVE_NOTIFICATION      18
-#define MIDLET_PAUSED_NOTIFICATION      19
-#define MIDLET_DESTROYED_NOTIFICATION   20
-#define FOREGROUND_REQUEST_EVENT        21
-#define BACKGROUND_REQUEST_EVENT        22
-#define SELECT_FOREGROUND_EVENT         23
-#define PREEMPT_EVENT                   24
-#define MIDLET_START_ERROR_EVENT        25
-#define EXECUTE_MIDLET_EVENT            26
-#define MIDLET_DESTROY_REQUEST_EVENT    27
-#define FOREGROUND_TRANSFER_EVENT       28
-#define EVENT_QUEUE_SHUTDOWN            29
-#define FATAL_ERROR_NOTIFICATION        30
-
-/* JSR-135 events */
-#define MM_EOM_EVENT                    31
-#define MM_SAT_EVENT                    32
-#define MM_TONEEOM_EVENT                33
+#define BACKGROUND_NOTIFY_EVENT         11
+#define ACTIVATE_MIDLET_EVENT           12
+#define PAUSE_MIDLET_EVENT              13
+#define DESTROY_MIDLET_EVENT            14
+#define SHUTDOWN_EVENT                  15
+#define ACTIVATE_ALL_EVENT              16
+#define PAUSE_ALL_EVENT                 17
+#define MIDLET_CREATED_NOTIFICATION     18
+#define MIDLET_ACTIVE_NOTIFICATION      19
+#define MIDLET_PAUSED_NOTIFICATION      20
+#define MIDLET_DESTROYED_NOTIFICATION   21
+#define DISPLAY_CREATED_NOTIFICATION    22
+#define FOREGROUND_REQUEST_EVENT        23
+#define BACKGROUND_REQUEST_EVENT        24
+#define SELECT_FOREGROUND_EVENT         25
+#define PREEMPT_EVENT                   26
+#define MIDLET_START_ERROR_EVENT        27
+#define EXECUTE_MIDLET_EVENT            28
+#define MIDLET_DESTROY_REQUEST_EVENT    29
+#define FOREGROUND_TRANSFER_EVENT       30
+#define EVENT_QUEUE_SHUTDOWN            31
+#define FATAL_ERROR_NOTIFICATION        32
 
 /* JSR-75 events */
-#define FC_DISKS_CHANGED_EVENT          34
+#define FC_DISKS_CHANGED_EVENT          33
 
-#define TEST_EVENT                      35
+#define TEST_EVENT                      34
 
-#define MIDLET_RESUME_REQUEST           36
+#define MIDLET_RESUME_REQUEST           35
 
-#define NATIVE_MIDLET_EXECUTE_REQUEST   37
-#define NATIVE_MIDLET_RESUME_REQUEST    38
-#define NATIVE_MIDLET_PAUSE_REQUEST     40
-#define NATIVE_MIDLET_DESTROY_REQUEST   41
-#define NATIVE_SET_FOREGROUND_REQUEST   42
+#define NATIVE_MIDLET_EXECUTE_REQUEST   36
+#define NATIVE_MIDLET_RESUME_REQUEST    37
+#define NATIVE_MIDLET_PAUSE_REQUEST     38
+#define NATIVE_MIDLET_DESTROY_REQUEST   39
+#define NATIVE_SET_FOREGROUND_REQUEST   40
 
 /* Automation API events */
-#define SET_FOREGROUND_BY_NAME_REQUEST  43
+#define SET_FOREGROUND_BY_NAME_REQUEST  41
 
-#define ROTATION_EVENT       44
+#define ROTATION_EVENT                  42
 
 /* MIDlet resources paused notification */
-#define MIDLET_RS_PAUSED_NOTIFICATION   45
+#define MIDLET_RS_PAUSED_NOTIFICATION   43
+
+/* JSR-135 event */
+#define MMAPI_EVENT                     44
+
+/** JSR-234 event */ 
+#define AMMS_EVENT                      45
 
 /** @} */
 
@@ -134,23 +137,29 @@ extern "C" {
  * @see MidpEvent
  * @{
  */
-#define ACTION intParam1
-#define CHR intParam2
-#define X_POS intParam2
-#define Y_POS intParam3
-#define COMMAND intParam1
+#define ACTION          intParam1
+#define CHR             intParam2
+#define X_POS           intParam2
+#define Y_POS           intParam3
+#define COMMAND         intParam1
 #define SYSTEM_EVENT_ID intParam1
-#define DISPLAY intParam4
+#define DISPLAY         intParam4
+
+#define MM_PLAYER_ID    intParam1
+#define MM_DATA         intParam2
+#define MM_ISOLATE      intParam3
+#define MM_EVT_TYPE     intParam4
 /** @} */
 
 /**
- * Store an event to post to the Java platform event queue
- * if in VM thread. Usage:
+ * Enqueues an event to be processed by the Java event thread for a given
+ * Isolate, or all isolates if isolateId is -1.
+ * Only safe to call from VM thread.
+ * Any other threads should call StoreMIDPEvent. 
  *
  *   MidpEvent event;
  *
  *   MIDP_EVENT_INITIALIZE(event);
- *
  *
  *   event.type = COOL_NEW_EVENT;  // this constant is in midpEvents.h
  *   event.intParam1 = x;
@@ -158,8 +167,11 @@ extern "C" {
  *
  *   StoreMIDPEventInVmThread(event, 0);
  *
- * @param event The event to enqueue.
- * @param isolateId ID of an Isolate or 0 for SMV mode
+ * @param event      The event to enqueue.
+ *
+ * @param isolateId  ID of an Isolate 
+ *                   -1 for broadcast to all isolates
+ *                   0 for SVM mode
  */
 void StoreMIDPEventInVmThread(MidpEvent event, int isolateId);
 

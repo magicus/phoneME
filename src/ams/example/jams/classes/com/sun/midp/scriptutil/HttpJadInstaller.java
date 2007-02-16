@@ -3,25 +3,25 @@
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.scriptutil;
@@ -49,7 +49,12 @@ import com.sun.midp.midletsuite.*;
  *   <li>arg-0: URL for the suite
  *   <li>arg-1: Used to override the default domain used when installing
  *    an unsigned suite. The default is maximum to allow the runtime API tests
- *    be performed automatically without tester interaction.
+ *    be performed automatically without tester interaction. The domain name
+ *    may be followed by a colon and a list of permissions that must be allowed
+ *    even if they are not listed in the MIDlet-Permissions attribute in the
+ *    application descriptor file. Instead of the list a keyword "all" can be
+ *    specified indicating that all permissions must be allowed, for example:
+ *    operator:all.
  * </ol>
  */
 public class HttpJadInstaller extends MIDlet implements Runnable {
@@ -78,7 +83,17 @@ public class HttpJadInstaller extends MIDlet implements Runnable {
         // URL given as a argument, look for a domain arg and then start
         String domain = getAppProperty("arg-1");
         if (domain != null) {
+            String additionalPermissions = null;
+            int index = domain.indexOf(":");
+            int len = domain.length();
+
+            if (index > 0 && index + 1 < len) {
+                additionalPermissions = domain.substring(index + 1, len);
+                domain = domain.substring(0, index);
+            }
+
             installer.setUnsignedSecurityDomain(domain);
+            installer.setExtraPermissions(additionalPermissions);
         }
 
         new Thread(this).start();
@@ -132,7 +147,6 @@ public class HttpJadInstaller extends MIDlet implements Runnable {
      * suite.
      *
      * @param suiteId ID of the MIDlet Suite
-     * @param midletSuiteStorage MIDlet suite storage to look up properties
      *
      * @return an object with the class name and display name of
      * the suite's MIDlet-1 property

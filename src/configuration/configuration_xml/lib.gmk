@@ -43,10 +43,12 @@ LIB_SET += $(INT_SUBSYSTEM_CONFIGURATION_NAME)
 # (all names listed there are relative to this file directory)
 SUBSYSTEM_CONFIGURATION_FILES_LIST = files.lst
 
+SUBSYSTEM_CONFIGURATION_DEVICE_FILES_LIST = files_$(TARGET_DEVICE).lst
+
 # directory containing XSL files used to transform XML files 
 # into .c, .h, and .java files
 INT_XSL_DIR = \
-	$(SUBSYSTEM_DIR)/tool/configurator/xsl
+	$(CONFIGURATOR_DIR)/xsl
 
 # directory containing XML files listed in SUBSYSTEM_CONFIGURATION_FILES_LIST 
 INT_XML_DIR = \
@@ -71,13 +73,16 @@ INT_CHAMROM_LIST_FILE = $(GENERATED_DIR)/chamrom.lst
 
 # path to XML files list
 INT_FILES_LIST = $(INT_XML_DIR)/$(SUBSYSTEM_CONFIGURATION_FILES_LIST)
-
-# These are the main class of these tools
-#
-INT_TRANSFORMER_MAIN_CLASS = com.sun.midp.configurator.CodeTransformer
+INT_DEVICE_FILES_LIST = $(wildcard $(INT_XML_DIR)/$(SUBSYSTEM_CONFIGURATION_DEVICE_FILES_LIST))
 
 # Configurator input files from list file
 INT_XML_FILES_BASE_NAMES := $(shell grep -v ^\# $(INT_FILES_LIST))
+
+ifneq ($(INT_DEVICE_FILES_LIST), )
+INT_XML_FILES_BASE_NAMES += \
+        $(shell grep -v ^\# $(INT_DEVICE_FILES_LIST))
+endif
+
 INT_XML_FILES := $(addprefix $(INT_XML_DIR)/, $(INT_XML_FILES_BASE_NAMES))
 
 # Input files common for all platfroms
@@ -120,8 +125,11 @@ INT_XML_FILES += $(INT_XML_DIR)/skin.xml
 
 # Command for invoking transformer
 INT_INVOKE_TRANSFORMER = \
-	$(JAVA_CMD) -classpath $(TOOLS_CLASSPATH) \
-	$(INT_TRANSFORMER_MAIN_CLASS)
+	$(JAVA_CMD) -jar $(CONFIGURATOR_JAR_FILE)
+
+# Command for invoking localized strings generator
+INT_INVOKE_L10N_GENERATOR = \
+	$(JAVA_CMD) -jar $(L10N_GENERATOR_JAR_FILE)
 
 
 # Generating configuration consists of following steps:
@@ -141,8 +149,8 @@ INT_INPUT_FILES_FIXED = \
 ifdef CONFIGURATION_OVERRIDE
 GENERATE_OVERRIDES_FILE = \
 	$(INT_INVOKE_TRANSFORMER) \
-	-xml $(INT_XSL_DIR)/generateOverrides.xsl \
-	-xsl $(INT_XSL_DIR)/generateOverrides.xsl \
+	-xml $(INT_XSL_DIR)/cldc/generateOverrides.xsl \
+	-xsl $(INT_XSL_DIR)/cldc/generateOverrides.xsl \
 	-params constantsList '$(CONFIGURATION_OVERRIDE)' \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/overrides.xml)`
 
@@ -172,25 +180,25 @@ define merge_configurations
 	$(foreach inputFile, $(INT_INPUT_FILES_FIXED),\
 		-validate \
 		-xml '$(inputFile)' \
-		-xsl $(INT_XSL_DIR)/validate.xsl \
+		-xsl $(INT_XSL_DIR)/share/validate.xsl \
 		-out '') \
 	\
 	-xml $(INT_COMMON_XML_DIR)/empty.xml \
-	-xsl $(INT_XSL_DIR)/merge.xsl \
+	-xsl $(INT_XSL_DIR)/share/merge.xsl \
 	-params filesList '$(INT_INPUT_FILES_FIXED)' \
 	-out `$(call fixcygpath, $(INT_MERGED_XML_FILE))` \
 	\
 	-xml $(INT_MERGED_XML_FILE) \
-	-xsl $(INT_XSL_DIR)/listPackages.xsl \
+	-xsl $(INT_XSL_DIR)/cldc/listPackages.xsl \
 	-out `$(call fixcygpath, $(INT_PACKAGES_LIST_FILE))` \
 	\
 	-xml $(INT_MERGED_XML_FILE) \
-	-xsl $(INT_XSL_DIR)/listRomizedChamImages.xsl \
+	-xsl $(INT_XSL_DIR)/cldc/listRomizedChamImages.xsl \
 	-out `$(call fixcygpath, $(INT_CHAMROM_LIST_FILE))` \
 	\
 	$(foreach overrideFile, $(CONFIGURATION_OVERRIDE_FILE),\
 		-xml $(INT_MERGED_XML_FILE) \
-		-xsl $(INT_XSL_DIR)/override.xsl \
+		-xsl $(INT_XSL_DIR)/cldc/override.xsl \
 		-params overrideFile `$(call fixcygpath, $(overrideFile))` \
 		-out `$(call fixcygpath, $(INT_MERGED_XML_FILE))`)
 endef
@@ -210,13 +218,13 @@ endef
 # transformation for generating .h file with constants
 GENERATE_CONSTANTS_H = \
 	-xml $(INT_MERGED_XML_FILE) \
-	-xsl $(INT_XSL_DIR)/constantsNative.xsl \
+	-xsl $(INT_XSL_DIR)/cldc/constantsNative.xsl \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/midp_constants_data.h)`
 
 # transformation for generating .c file with String constants
 GENERATE_CONSTANTS_C = \
 	-xml $(INT_MERGED_XML_FILE) \
-	-xsl $(INT_XSL_DIR)/stringConstantsNative.xsl \
+	-xsl $(INT_XSL_DIR)/cldc/stringConstantsNative.xsl \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/midp_constants_data.c)`
 
 # transformation for generating Java files with constants
@@ -224,19 +232,19 @@ INT_PACKAGES_NAMES = $(shell cat $(INT_PACKAGES_LIST_FILE))
 GENERATE_CONSTANTS_JAVA = \
 	$(foreach package,$(INT_PACKAGES_NAMES),\
 		-xml $(INT_MERGED_XML_FILE) \
-		-xsl $(INT_XSL_DIR)/constantsJava.xsl \
+		-xsl $(INT_XSL_DIR)/cldc/constantsJava.xsl \
 		-params packageName $(package) \
 		-out `$(call fixcygpath, $(GENERATED_DIR)/classes/$(subst .,/,$(package)).java)`)
 
 # transformation for generating .config files with properties
 GENERATE_PROPERTIES_CONFIGS = \
 	-xml $(INT_MERGED_XML_FILE) \
-	-xsl $(INT_XSL_DIR)/propertiesConfig.xsl \
+	-xsl $(INT_XSL_DIR)/cldc/propertiesConfig.xsl \
 	-params propsScope internal \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/lib/internal.config)` \
 	\
 	-xml $(INT_MERGED_XML_FILE) \
-	-xsl $(INT_XSL_DIR)/propertiesConfig.xsl \
+	-xsl $(INT_XSL_DIR)/cldc/propertiesConfig.xsl \
 	-params propsScope system \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/lib/system.config)`
 
@@ -244,7 +252,7 @@ GENERATE_PROPERTIES_CONFIGS = \
 ifeq ($(USE_STATIC_PROPERTIES), true)
 GENERATE_PROPERTIES_H = \
 	-xml $(INT_MERGED_XML_FILE) \
-	-xsl $(INT_XSL_DIR)/propertiesNative.xsl \
+	-xsl $(INT_XSL_DIR)/cldc/propertiesNative.xsl \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/midp_properties_static_data.h)`
 else
 GENERATE_PROPERTIES_H =
@@ -253,7 +261,6 @@ endif
 # transformation for genrating the i18n tables (both Java and C files).
 GENERATE_L10N_STRINGS = \
 	-xml $(INT_MERGED_XML_FILE) \
-	-xsl custom-localized-strings \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/l10n)`
 
 define generate_configuration
@@ -263,7 +270,9 @@ define generate_configuration
 		$(GENERATE_CONSTANTS_C) \
 		$(GENERATE_CONSTANTS_JAVA) \
 		$(GENERATE_PROPERTIES_CONFIGS) \
-		$(GENERATE_PROPERTIES_H) \
+		$(GENERATE_PROPERTIES_H)
+	@echo " ... generating localized strings"
+	@$(INT_INVOKE_L10N_GENERATOR) \
 		$(GENERATE_L10N_STRINGS)
 	@echo $(foreach package, $(INT_PACKAGES_NAMES),\
 		"$(GENERATED_DIR)/classes/$(subst .,/,$(package)).java") \
@@ -308,10 +317,10 @@ SUBSYSTEM_CONFIGURATION_CONFIG_FILES = \
 	$(INT_CONFIGURATION_CONFIG_FILES)
 
 SUBSYSTEM_CONFIGURATION_DEP_FILES += \
-	$(INT_XSL_DIR)/merge.xsl \
-	$(INT_XSL_DIR)/constantsNative.xsl \
-	$(INT_XSL_DIR)/constantsJava.xsl \
-	$(INT_XSL_DIR)/propertiesNative.xsl \
-	$(INT_XSL_DIR)/propertiesConfig.xsl
+	$(INT_XSL_DIR)/share/merge.xsl \
+	$(INT_XSL_DIR)/cldc/constantsNative.xsl \
+	$(INT_XSL_DIR)/cldc/constantsJava.xsl \
+	$(INT_XSL_DIR)/cldc/propertiesNative.xsl \
+	$(INT_XSL_DIR)/cldc/propertiesConfig.xsl
 SUBSYSTEM_CONFIGURATION_DEP_FILES += $(INT_FILES_LIST)
 SUBSYSTEM_CONFIGURATION_DEP_FILES += $(INT_XML_FILES)

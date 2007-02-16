@@ -54,12 +54,16 @@ extern "C" {
 int loadImageFromCache(SuiteIdType suiteID, const pcsl_string * resName,
                        unsigned char **bufPtr);
 
+
 /**
- * Create cache of images in the jar file associated with the suiteID
+ * Creates a cache of natives images by iterating over all png images in the jar
+ * file, loading each one, decoding it into native, and caching it persistent
+ * store.
  *
- * @param suiteID   Suite id
+ * @param suiteId The suite ID
+ * @param storageId ID of the storage where to create the cache
  */
-void createImageCache(SuiteIdType suiteID);
+void createImageCache(SuiteIdType suiteID, StorageIdType storageId);
 
 #ifdef __cplusplus
 }

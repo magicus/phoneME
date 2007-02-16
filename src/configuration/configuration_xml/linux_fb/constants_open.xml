@@ -12,7 +12,7 @@
 <constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public">
   <constant Type="int"
             Name="MAX_ISOLATES"
-            Value="8"
+            Value="4"
             Comment="MAX_ISOLATES"/>
 
   <constant Type="int"

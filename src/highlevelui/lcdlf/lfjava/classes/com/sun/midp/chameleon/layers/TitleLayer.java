@@ -84,7 +84,7 @@ public class TitleLayer extends CLayer {
         boolean oldVisible = this.visible;
         this.title = title;
 
-        this.dirty = true;
+        setDirty();
         this.visible = (title != null);
 
         // force a re-calc of the text anchor location

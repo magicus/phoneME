@@ -122,10 +122,8 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             if (selectedIndex == -1) {
                 selectedIndex = 0;
                 cg.cgElements[selectedIndex].setSelected(true);
-            } else {
-                if (elementNum <= selectedIndex) {
-                    selectedIndex++;
-                }
+            } else if (elementNum <= selectedIndex) {
+                selectedIndex++;
             }
         }
 
@@ -367,16 +365,21 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         boolean ret = super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
         // all choice items are out of viewport.
         // Probably justr the label (if it's present) is visible on the screen
-        if (contentBounds[Y] > visRect[Y] + visRect[HEIGHT] ||
-            contentBounds[Y] + contentBounds[HEIGHT] < visRect[Y]) {
+        int contentY = contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS;
+        int contentH = contentBounds[HEIGHT] - 2 * ScreenSkin.PAD_FORM_ITEMS;
+
+
+        if (contentY > visRect[Y] + visRect[HEIGHT] ||
+            contentY + contentH < visRect[Y]) {
             return ret;
         }
 
         // If we have no elements - just return false
+        
         if (cg.numOfEls > 0) {
             int newHeight = visRect[HEIGHT];
             int newHilightedIndex = hilightedIndex;
-            int newY = contentBounds[Y];
+            int newY = contentY;
             boolean resetVisRect = false;
 
             if (traversedIn) {
@@ -388,9 +391,11 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 // highlighted index is out of visible rect
                 // move highlight to the best place
                 if (newY + newHeight > visRect[Y] + visRect[HEIGHT]) {
-                    newHilightedIndex = getIndexByPointer(visRect[X], visRect[Y] + visRect[HEIGHT]);
+                    newHilightedIndex =
+                        getIndexByPointer(visRect[X],
+                                          visRect[Y] + visRect[HEIGHT] - 1);
                 } else if (newY < visRect[Y]) {
-                    newHilightedIndex = getIndexByPointer(visRect[X], visRect[Y]);
+                    newHilightedIndex = getIndexByPointer(visRect[X], visRect[Y] + 1);
                 }
 
                 resetVisRect = ret = (newHilightedIndex != hilightedIndex);
@@ -424,12 +429,16 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                     }
                 }
             } else {
+                if (cg.choiceType == Choice.IMPLICIT &&
+                    pendingIndex == -1) {
+                    pendingIndex = selectedIndex;
+                }
+                
                 newHilightedIndex = pendingIndex != -1 ?
                     pendingIndex :
-                    getIndexByPointer(contentBounds[X],
-                                      dir == Canvas.UP ?
-                                      contentBounds[Y] + contentBounds[HEIGHT] -1:
-                                      contentBounds[Y]);
+                    getIndexByPointer(contentBounds[X], dir == Canvas.UP ?
+                                      contentY + contentH - 1 :
+                                      contentY);
                 pendingIndex = -1;
                 if (newHilightedIndex != -1) {
                     traversedIn = true;
@@ -441,7 +450,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 newHilightedIndex != -1) {
 
                 if (resetVisRect) {
-                    newY = contentBounds[Y];
+                    newY = contentY;
                     for (int i = 0; i < newHilightedIndex; i++) {
                         newY += elHeights[i];
                     }
@@ -495,13 +504,12 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 x <= contentBounds[X] + contentBounds[WIDTH] &&
                 contentBounds[Y] <= y &&
                 y <= contentBounds[Y] + contentBounds[HEIGHT]) { 
-                int visY = contentBounds[Y];
-                for (int i = 0; i < cg.numOfEls; i++) {
-                    if (visY <= y && y < visY + elHeights[i]) {
+                int visY = contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS;
+                for (int i = 0; i < cg.numOfEls; i++) { 
+                    visY += elHeights[i];
+                    if (visY >= y) {
                         id = i;
                         break;
-                    } else {
-                        visY += elHeights[i];
                     }
                 }
             }
@@ -690,7 +698,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             }
 
             if (hilightedIndex != elementNum &&
-                elementNum > 0 && cg.choiceType == Choice.IMPLICIT) {
+                elementNum >= 0 && cg.choiceType == Choice.IMPLICIT) {
                 hilightedIndex = elementNum;
             }
 
@@ -745,7 +753,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                     (Text.NORMAL | Text.TRUNCATE) : Text.NORMAL;
 
         int offSetX = ChoiceGroupSkin.PAD_H;
-        
+
         // start for
         for (int iX, iY, iW, iH, i = 0; i < cg.numOfEls; i++) {
 

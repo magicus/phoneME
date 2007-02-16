@@ -530,7 +530,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
         }
 
 #if ENABLE_IMAGE_CACHE
-        createImageCache(suiteId);
+        createImageCache(suiteId, pMsd->storageId);
 #endif
     } while (0);
 

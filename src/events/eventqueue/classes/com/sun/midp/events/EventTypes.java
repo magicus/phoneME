@@ -82,61 +82,74 @@ public final class EventTypes {
     /**
      * Major ID for a foreground notify event.
      * <ul>
-     * <li>intParam1 = 1 = has foreground, 0 - background
      * <li>intParam4 = displayID
      * </ul>
      */
     public static final int FOREGROUND_NOTIFY_EVENT = 10;
 
     /**
+     * Major ID for a background notify event.
+     * <ul>
+     * <li>intParam4 = displayID
+     * </ul>
+     */
+    public static final int BACKGROUND_NOTIFY_EVENT = 11;
+
+    /**
      * Major ID for a activate MIDlet event.
      */
-    public static final int ACTIVATE_MIDLET_EVENT  =  11;
+    public static final int ACTIVATE_MIDLET_EVENT  =  12;
 
     /**
      * Major ID for a pause MIDlet event.
      */
-    public static final int PAUSE_MIDLET_EVENT  =  12;
+    public static final int PAUSE_MIDLET_EVENT  =  13;
 
     /**
      * Major ID for a destroy MIDlet event.
      */
-    public static final int DESTROY_MIDLET_EVENT  =  13;
+    public static final int DESTROY_MIDLET_EVENT  =  14;
 
     /**
      * Major ID for a shutdown event.
      */
-    public static final int SHUTDOWN_EVENT  =  14;
+    public static final int SHUTDOWN_EVENT  =  15;
 
     /**
      * Major ID for a pause all event.
      */
-    public static final int ACTIVATE_ALL_EVENT  =  15;
+    public static final int ACTIVATE_ALL_EVENT  =  16;
 
     /**
      * Major ID for a pause all event.
      */
-    public static final int PAUSE_ALL_EVENT  =  16;
+    public static final int PAUSE_ALL_EVENT  =  17;
 
     /**
      * Major ID for a MIDlet created notification.
      */
-    public static final int MIDLET_CREATED_NOTIFICATION  =  17;
+    public static final int MIDLET_CREATED_NOTIFICATION  =  18;
 
     /**
      * Major ID for a MIDlet active notification.
      */
-    public static final int MIDLET_ACTIVE_NOTIFICATION  =  18;
+    public static final int MIDLET_ACTIVE_NOTIFICATION  =  19;
 
     /**
      * Major ID for a MIDlet paused notification.
      */
-    public static final int MIDLET_PAUSED_NOTIFICATION  =  19;
+    public static final int MIDLET_PAUSED_NOTIFICATION  =  20;
 
     /**
      * Major ID for a MIDlet destroyed notification.
      */
-    public static final int MIDLET_DESTROYED_NOTIFICATION  =  20;
+    public static final int MIDLET_DESTROYED_NOTIFICATION  =  21;
+
+
+    /**
+     * Major ID for a Display created notification.
+     */
+    public static final int DISPLAY_CREATED_NOTIFICATION  =  22;
 
     /**
      * Major ID for a foreground request event.
@@ -146,7 +159,7 @@ public final class EventTypes {
      * </ul>
      * @see com.sun.midp.main.MIDletProxyList#foregroundRequestEvent
      */
-    public static final int FOREGROUND_REQUEST_EVENT  =  21;
+    public static final int FOREGROUND_REQUEST_EVENT  =  23;
 
     /**
      * Major ID for a background request event.
@@ -156,7 +169,7 @@ public final class EventTypes {
      * </ul>
      * @see com.sun.midp.main.MIDletProxyList#backgroundRequestEvent
      */
-    public static final int BACKGROUND_REQUEST_EVENT  =  22;
+    public static final int BACKGROUND_REQUEST_EVENT  =  24;
 
     /**
      * User request to show the midlet selection screen, if any.
@@ -166,17 +179,17 @@ public final class EventTypes {
      * </ul>
      * @see com.sun.midp.main.MIDletProxyList#selectForegroundEvent
      */
-    public static final int SELECT_FOREGROUND_EVENT  =  23;
+    public static final int SELECT_FOREGROUND_EVENT  =  25;
 
     /**
      * Major ID for a preempt event.
      */
-    public static final int PREEMPT_EVENT = 24;
+    public static final int PREEMPT_EVENT = 26;
 
     /**
      * Major ID for a MIDlet start error event.
      */
-    public static final int MIDLET_START_ERROR_EVENT = 25;
+    public static final int MIDLET_START_ERROR_EVENT = 27;
 
     /**
      * Major ID for a execute MIDlet event.
@@ -189,13 +202,13 @@ public final class EventTypes {
      * <li> stringParam6 = arg2;
      * </ul>
      */
-    public static final int EXECUTE_MIDLET_EVENT  =  26;
+    public static final int EXECUTE_MIDLET_EVENT  =  28;
 
     /**
      * Major ID for a request to destroy  a MIDlet event.
      * @see com.sun.midp.main.MIDletProxyList#midletDestroyRequestEvent
      */
-    public static final int MIDLET_DESTROY_REQUEST_EVENT  =  27;
+    public static final int MIDLET_DESTROY_REQUEST_EVENT  =  29;
 
     /**
      * Major ID for an foreground handoff event.
@@ -210,71 +223,55 @@ public final class EventTypes {
      * </ul>
      * @see com.sun.midp.main.MIDletProxyList#foregroundTransferEvent
      */
-    public static final int FOREGROUND_TRANSFER_EVENT = 28;
+    public static final int FOREGROUND_TRANSFER_EVENT = 30;
 
 
     /** The event will shutdown the event queue when processed. */
-    public static final int EVENT_QUEUE_SHUTDOWN = 29;
+    public static final int EVENT_QUEUE_SHUTDOWN = 31;
 
     /**
      * This is sent to the AMS isolate when an application isolate
      * has fatal error.
      */
-    public static final int FATAL_ERROR_NOTIFICATION = 30;
+    public static final int FATAL_ERROR_NOTIFICATION = 32;
 
-    /**
-     * Major ID for a MM EOM event.
-     */
-    public static final int MM_EOM_EVENT = 31;
-
-    /**
-     * Major ID for a MM SAT event.
-     */
-    public static final int MM_SAT_EVENT = 32;
-
-    /**
-     * Major ID for a MM TONEEOM event.
-     */
-    public static final int MM_TONEEOM_EVENT = 33;
-    
     /**
      * Major ID for a JSR 75 FileConnection disks changed event.
      */
-    public static final int FC_DISKS_CHANGED_EVENT = 34;
+    public static final int FC_DISKS_CHANGED_EVENT = 33;
 
     /** Reserved for testing. */
-    public static final int TEST_EVENT = 35;
+    public static final int TEST_EVENT = 34;
 
     /**
      * Sent to the AMS isolate when a paused MIDlet is requesting to be
      * moved to active state.
      */
-    public static final int MIDLET_RESUME_REQUEST = 36;
+    public static final int MIDLET_RESUME_REQUEST = 35;
 
     /**
      * Sent by the native system to request a MIDlet be created and started.
      */
-    public static final int NATIVE_MIDLET_EXECUTE_REQUEST = 37;
+    public static final int NATIVE_MIDLET_EXECUTE_REQUEST = 36;
 
     /**
      * Sent by the native system to request a paused MIDlet be resumed.
      */
-    public static final int NATIVE_MIDLET_RESUME_REQUEST = 38;
+    public static final int NATIVE_MIDLET_RESUME_REQUEST = 37;
 
     /**
      * Sent by the native system to request a MIDlet be paused.
      */
-    public static final int NATIVE_MIDLET_PAUSE_REQUEST = 40;
+    public static final int NATIVE_MIDLET_PAUSE_REQUEST = 38;
 
     /**
      * Sent by the native system to request a MIDlet be destroyed.
      */
-    public static final int NATIVE_MIDLET_DESTROY_REQUEST = 41;
-
+    public static final int NATIVE_MIDLET_DESTROY_REQUEST = 39;
     /**
      * Sent by the native system to request a MIDlet be in the foreground.
      */
-    public static final int NATIVE_SET_FOREGROUND_REQUEST = 42;
+    public static final int NATIVE_SET_FOREGROUND_REQUEST = 40;
 
     
     /**
@@ -286,39 +283,22 @@ public final class EventTypes {
      * <li>stringParam2 = MIDlet's class name
      * </ul>
      */
-    public static final int SET_FOREGROUND_BY_NAME_REQUEST = 43;
+    public static final int SET_FOREGROUND_BY_NAME_REQUEST = 41;
 
     /*
      * Sent to request screen rotation
      */
-    public static final int ROTATION_EVENT = 44;
+    public static final int ROTATION_EVENT = 42;
 
     /**
      * MIDlet resources paused notification 
      */
-    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 45;
-    
-    /**
-     * Major ID for a MM DURATION UPDATED event. (Multimedia Event Extension)
-     */
-    public static final int MM_DURATION_EVENT = 46;
+    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 43;
 
-    /* External Volume Changed */
-    public static final int MM_VOLUME_CHANGED_EVENT = 47;
-    
-    /**
-     * Multimedia Extended Events
-     * 
-     * 2. Recorder reach to size limit
-     * 3. Recorder error
-     * 4. Streaming buffering started
-     * 5. Streaming buffering stopped
-     * 6. General media error
-     */
-    public static final int MM_RECORD_LIMIT_EVENT = 48;
-    public static final int MM_RECORD_ERROR_EVENT = 49;
-    public static final int MM_BUFFERING_START_EVENT = 50;
-    public static final int MM_BUFFERING_STOP_EVENT = 51;
-    public static final int MM_GENERAL_ERROR_EVENT = 52;
+    /** Major ID for MMAPI event */
+    public static final int MMAPI_EVENT = 44;
+
+    /** Major ID for AMMS  event */ 
+    public static final int AMMS_EVENT  = 45;
     
 }

@@ -419,7 +419,7 @@ void MySlider::focusInEvent(QFocusEvent *event) {
 void MySlider::keyPressEvent(QKeyEvent *key)
 {
     int k = key->key();
-    if (k == Key_Up || k == Key_Down)  {
+    if (k == Qt::Key_Up || k == Qt::Key_Down)  {
         PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
         mscreen->keyPressEvent(key);
     } else {
@@ -435,7 +435,7 @@ void MySlider::keyPressEvent(QKeyEvent *key)
 void MySlider::keyReleaseEvent(QKeyEvent *key)
 {
     int k = key->key();
-    if (k == Key_Up || k == Key_Down)  {
+    if (k == Qt::Key_Up || k == Qt::Key_Down)  {
         PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
         mscreen->keyReleaseEvent(key);
     } else {

@@ -32,12 +32,6 @@ import javax.microedition.lcdui.Image;
 
 import com.sun.midp.events.EventQueue;
 
-import com.sun.midp.midlet.MIDletEventConsumer;
-import com.sun.midp.midlet.MIDletPeer;
-import com.sun.midp.main.MIDletControllerEventProducer;
-
-import com.sun.midp.security.SecurityToken;
-
 /**
  * This class works around the fact that public classes can not
  * be added to a javax package by an implementation.
@@ -47,10 +41,7 @@ public interface DisplayEventHandler {
     /**
      * Preempt the current displayable with
      * the given displayable until donePreempting is called.
-     * The preemptor should stop preempting when a destroyMIDlet event occurs.
-     * The event will have a null MIDlet parameter.
      *
-     * @param l object to notify with the destroy MIDlet event.
      * @param d displayable to show the user
      * @param waitForDisplay if true this method will wait if the
      *        screen is being preempted by another thread.
@@ -64,8 +55,8 @@ public interface DisplayEventHandler {
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public Object preemptDisplay(MIDletEventConsumer l,
-        Displayable d, boolean waitForDisplay) throws InterruptedException;
+    public Object preemptDisplay(Displayable d, boolean waitForDisplay)
+        throws InterruptedException;
 
     /**
      * Display the displayable that was being displayed before
@@ -76,31 +67,36 @@ public interface DisplayEventHandler {
     public void donePreempting(Object preemptToken);
 
     /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
+     * Called by Display to notify DisplayEventHandler that
+     * Display has been sent to the background to finish
+     * preempt process if any.
      *
-     * @param token security token for this class.
+     * @param displayId id of Display
      */
-    public void initSecurityToken(SecurityToken token);
+    public void onDisplayBackgroundProcessed(int displayId);
 
     /**
      * Initialize Display Event Handler
      *
-     * @param token security token for initilaization
-     * @param theEventQueue the event queue
      * @param theDisplayEventProducer producer for display events
-     * @param theMIDletControllerEventProducer producer for midlet events
+     * @param theForegroundController controls which display has the foreground
      * @param theRepaintEventProducer producer for repaint events events
      * @param theDisplayContainer container for display objects
      */
     public void initDisplayEventHandler(
-        SecurityToken token,
-        EventQueue theEventQueue,
         DisplayEventProducer theDisplayEventProducer,
-        MIDletControllerEventProducer theMIDletControllerEventProducer,
+        ForegroundController theForegroundController,
         RepaintEventProducer theRepaintEventProducer,
         DisplayContainer theDisplayContainer);
     
+    /**
+     * Initialize per suite data of the display event handler.
+     *
+     * @param drawTrustedIcon true, to draw the trusted icon in the upper
+     *                status bar for every display of this suite
+     */
+    void initSuiteData(boolean drawTrustedIcon);
+
     /**
      * Get the Image of the trusted icon for this Display.
      * Only callers with the internal AMS permission can use this method.
@@ -111,18 +107,4 @@ public interface DisplayEventHandler {
      * the AMS permission
      */
     public Image getTrustedMIDletIcon();
-
-    /**
-     * Create a display and return its internal access object.
-     *
-     * @param token security token for the calling class
-     * @param midlet peer of the MIDlet that will own this display
-     *
-     * @return new display's access object
-     *
-     * @exception SecurityException if the caller does not have permission
-     *   the internal MIDP permission.
-     */
-    public DisplayAccess createDisplay(SecurityToken token,
-                                       MIDletPeer midlet);
 }

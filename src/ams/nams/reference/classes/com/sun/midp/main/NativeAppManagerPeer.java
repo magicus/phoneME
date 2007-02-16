@@ -28,6 +28,8 @@ package com.sun.midp.main;
 
 import com.sun.midp.events.*;
 
+import com.sun.midp.lcdui.ForegroundEventProducer;
+
 import com.sun.midp.midlet.*;
 
 import com.sun.midp.security.*;
@@ -138,21 +140,20 @@ public class NativeAppManagerPeer
 
         // create all needed event-related objects but not initialize ...
         MIDletEventProducer midletEventProducer =
-            new MIDletEventProducer(
-                internalSecurityToken,
-                eventQueue);
+            new MIDletEventProducer(eventQueue);
 
         MIDletControllerEventProducer midletControllerEventProducer =
-            new MIDletControllerEventProducer(
-                internalSecurityToken,
-                eventQueue,
-                amsIsolateId,
-                currentIsolateId);
+            new MIDletControllerEventProducer(eventQueue,
+                                              amsIsolateId,
+                                              currentIsolateId);
+
+        ForegroundEventProducer foregroundEventProducer =
+            new ForegroundEventProducer(eventQueue);
 
         midletProxyList = new MIDletProxyList(eventQueue);
 
         // do all initialization for already created event-related objects ...
-        MIDletProxy.initClass(midletEventProducer);
+        MIDletProxy.initClass(foregroundEventProducer, midletEventProducer);
         MIDletProxyList.initClass(midletProxyList);
 
         AmsUtil.initClass(midletProxyList, midletControllerEventProducer);

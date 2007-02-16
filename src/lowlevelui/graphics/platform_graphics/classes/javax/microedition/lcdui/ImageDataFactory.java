@@ -28,7 +28,6 @@ package javax.microedition.lcdui;
 
 import java.io.InputStream;
 import java.io.IOException;
-import javax.microedition.lcdui.game.Sprite;
 
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midlet.MIDletStateHandler;
@@ -650,7 +649,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
      *
      * @param data the ImageData object
      * @param imageDataArrayPtr native pointer to image data as Java int
-     * @param imageDataArrayLength length of image data array
+     * @param imageDataArrayPtrLength length of image data array
      * @return true if the imaged data loading was successful,
      *         otherwise it returns false
      */

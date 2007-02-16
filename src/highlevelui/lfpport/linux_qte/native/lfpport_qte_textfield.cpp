@@ -34,7 +34,7 @@
 #include "lfpport_qte_mscreen.h"
 
 #include <qregexp.h>
-
+#include <stdio.h>
 
 /** The number of visible lines of a long ANY TextField */
 #define LONG_ANY_TEXTFIELD_LINES	6
@@ -75,30 +75,55 @@ void TextFieldBody::setCursorPosition(int position) {
 void TextFieldBody::keyPressEvent(QKeyEvent *key)
 {
     int k = key->key();
-    if (isReadOnly()) {
-        if ((k == Key_Up && rowIsVisible(0))
-            || (k == Key_Down && rowIsVisible(numRows() - 1)))  {
-    
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyPressEvent(key);
-
+    // always handle select event because it switches 
+    // between the modal and non-modal modes
+#ifdef QT_KEYPAD_MODE
+    if (k == Qt::Key_Select) {
+        QMultiLineEdit::keyPressEvent(key);
+    } else if (isModalEditing()) {
+#endif
+        if (isReadOnly()) {
+            if ((k == Qt::Key_Up && rowIsVisible(0))
+                || (k == Qt::Key_Down && rowIsVisible(numRows() - 1)))  {
+                
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyPressEvent(key);
+                
+            } else {
+                QMultiLineEdit::keyPressEvent(key);
+            }
         } else {
-            QMultiLineEdit::keyPressEvent(key);
+            int line;
+            int col;
+            QMultiLineEdit::getCursorPosition(&line, &col);
+            if ((k == Qt::Key_Up && line == 0)  
+                || (k == Qt::Key_Down && (line == numLines() - 1))){
+                
+                PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+                mscreen->keyPressEvent(key);
+                
+            } else {
+                QMultiLineEdit::keyPressEvent(key);
+            }
         }
+#ifdef QT_KEYPAD_MODE
     } else {
-        int line;
-        int col;
-        QMultiLineEdit::getCursorPosition(&line, &col);
-        if ((k == Key_Up && line == 0)  
-            || (k == Key_Down && (line == numLines() - 1))){
-
-            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-            mscreen->keyPressEvent(key);
-
-        } else {
-            QMultiLineEdit::keyPressEvent(key);
-        }
+        // not handle events while it's in not modal state
+        key->ignore();
     }
+#endif
+}
+
+/**
+ * This is the patch for qt 2.3.9: The focus is moved out if only one item is
+ * present in the form. 
+ * Overload method of multiple line editor. The method always returns false
+ * The implementation needs to be removed if the fix is done for the later
+ * version of qt
+ */ 
+bool TextFieldBody::focusNextPrevChild( bool next ) {
+    (void)next;
+    return FALSE;
 }
 
 /**
@@ -109,18 +134,31 @@ void TextFieldBody::keyPressEvent(QKeyEvent *key)
 void TextFieldBody::keyReleaseEvent(QKeyEvent *key)
 {
     int k = key->key();
-    int line;
-    int col;
-    QMultiLineEdit::getCursorPosition(&line, &col);
-    if (k == Key_Up && line == 0)  {
-        PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-        mscreen->keyReleaseEvent(key);
-    } else if (k == Key_Down && line == numLines() - 1) {
-        PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
-        mscreen->keyReleaseEvent(key);
-    } else {
+    // always handle select event because it switches 
+    // between the modal and non-modal modes
+#ifdef QT_KEYPAD_MODE
+    if (k == Qt::Key_Select) {
         QMultiLineEdit::keyReleaseEvent(key);
+    } else if (isModalEditing()) {
+#endif
+        int line;
+        int col;
+        QMultiLineEdit::getCursorPosition(&line, &col);
+        if (k == Qt::Key_Up && line == 0)  {
+            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+            mscreen->keyReleaseEvent(key);
+        } else if (k == Qt::Key_Down && line == numLines() - 1) {
+            PlatformMScreen * mscreen = PlatformMScreen::getMScreen();
+            mscreen->keyReleaseEvent(key);
+        } else {
+            QMultiLineEdit::keyReleaseEvent(key);
+        }
+#ifdef QT_KEYPAD_MODE
+    } else {
+        // not handle events while it's in not modal state
+        key->ignore();
     }
+#endif
 }
 
 

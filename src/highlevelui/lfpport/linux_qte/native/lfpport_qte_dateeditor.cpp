@@ -962,18 +962,21 @@ void DatePicker::mouseDoubleClickEvent(QMouseEvent *) {
 void DatePicker::keyPressEvent(QKeyEvent *event) {
     QDate day = currentDay;
     switch (event->key()) {
-        case Key_Left:      day = currentDay.addDays(-1); break;
-        case Key_Right:     day = currentDay.addDays(1); break;
-        case Key_Up:        day = currentDay.addDays(-COLUMNS); break;
-        case Key_Down:      day = currentDay.addDays(COLUMNS); break;
-        case Key_PageUp:    day = addMonths(currentDay, -1); break;
-        case Key_PageDown:  day = addMonths(currentDay, 1); break;
-        case Key_Home:      day = addYears(currentDay, -1); break;
-        case Key_End:       day = addYears(currentDay, 1); break;
-        case Key_Escape:    currentDay = startDay; accept(); break;
-        case Key_Space:
-        case Key_Enter:
-        case Key_Return:    acceptDay(); return;
+        case Qt::Key_Left:      day = currentDay.addDays(-1); break;
+        case Qt::Key_Right:     day = currentDay.addDays(1); break;
+        case Qt::Key_Up:        day = currentDay.addDays(-COLUMNS); break;
+        case Qt::Key_Down:      day = currentDay.addDays(COLUMNS); break;
+        case Qt::Key_PageUp:    day = addMonths(currentDay, -1); break;
+        case Qt::Key_PageDown:  day = addMonths(currentDay, 1); break;
+        case Qt::Key_Home:      day = addYears(currentDay, -1); break;
+        case Qt::Key_End:       day = addYears(currentDay, 1); break;
+        case Qt::Key_Escape:    currentDay = startDay; accept(); break;
+#ifdef QT_KEYPAD_MODE
+        case Qt::Key_Select:
+#endif
+        case Qt::Key_Space:
+        case Qt::Key_Enter:
+        case Qt::Key_Return:    acceptDay(); return;
         default:            QDialog::keyPressEvent(event); return;
     }
     if (day != currentDay) {

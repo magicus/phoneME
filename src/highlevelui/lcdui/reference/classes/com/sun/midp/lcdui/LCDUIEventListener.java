@@ -26,14 +26,8 @@
 
 package com.sun.midp.lcdui;
 
-import java.io.*;
 import com.sun.midp.events.*;
-import com.sun.midp.lcdui.EventConstants;
 import javax.microedition.lcdui.CustomItem;
-import javax.microedition.lcdui.Display;
-import javax.microedition.lcdui.Displayable;
-import javax.microedition.lcdui.Item;
-import com.sun.midp.main.MIDletSuiteLoader;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;

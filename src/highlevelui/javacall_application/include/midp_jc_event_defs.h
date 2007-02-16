@@ -39,9 +39,13 @@
 extern "C" {
 #endif
 
+#ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
-#include <javacall_mms.h>
 #include <javacall_cbs.h>
+#endif
+#ifdef ENABLE_JSR_205
+#include <javacall_mms.h>
+#endif
 #include <javacall_events.h>
 #include <javacall_time.h>
 #include <javacall_socket.h>
@@ -51,7 +55,9 @@ extern "C" {
 #endif
 #include <javacall_network.h>
 
+#ifdef ENABLE_JSR_135
 #include <javacall_multimedia.h>
+#endif
 #include <javacall_keypress.h>
 #include <javacall_penevent.h>
 #include <javacall_input.h>
@@ -62,6 +68,9 @@ extern "C" {
 #ifdef ENABLE_JSR_179
 #include "javacall_location.h"
 #endif /* ENABLE_JSR_179 */
+#if ENABLE_JSR_234
+#include <javacall_multimedia_advanced.h>
+#endif /* ENABLE_JSR_234 */
 #include <javacall_security.h>
 
 
@@ -69,10 +78,6 @@ extern "C" {
 
 typedef enum {
     MIDP_JC_EVENT_KEY                  =100,
-    MIDP_JC_EVENT_START                ,
-    MIDP_JC_EVENT_START_TCK            ,
-    MIDP_JC_EVENT_START_INSTALL        ,
-    MIDP_JC_EVENT_START_MIDLET         ,
     MIDP_JC_EVENT_START_ARBITRARY_ARG  ,
     MIDP_JC_EVENT_END                  ,
     MIDP_JC_EVENT_KILL                 ,
@@ -80,11 +85,15 @@ typedef enum {
     MIDP_JC_EVENT_NETWORK              ,
     MIDP_JC_EVENT_TIMER                ,
     MIDP_JC_EVENT_PUSH                 ,
+#ifdef ENABLE_JSR_120
     MIDP_JC_EVENT_SMS_SENDING_RESULT   ,
-    MIDP_JC_EVENT_MMS_SENDING_RESULT   ,
     MIDP_JC_EVENT_SMS_INCOMING         ,
-    MIDP_JC_EVENT_MMS_INCOMING         ,
     MIDP_JC_EVENT_CBS_INCOMING         ,
+#endif
+#ifdef ENABLE_JSR_205
+    MIDP_JC_EVENT_MMS_SENDING_RESULT   ,
+    MIDP_JC_EVENT_MMS_INCOMING         ,
+#endif
     MIDP_JC_EVENT_MULTIMEDIA           ,
     MIDP_JC_EVENT_PAUSE                ,
     MIDP_JC_EVENT_RESUME               ,
@@ -108,6 +117,9 @@ typedef enum {
 #if ENABLE_MULTIPLE_ISOLATES
     MIDP_JC_EVENT_SWITCH_FOREGOUND     ,
 #endif /*ENABLE_MULTIPLE_ISOLATES*/
+#if ENABLE_JSR_234
+    MIDP_JC_EVENT_ADVANCED_MULTIMEDIA  ,
+#endif /*ENABLE_JSR_234*/
     JSR75_FC_JC_EVENT_ROOTCHANGED      , 
     MIDP_JC_EVENT_ROTATION
 } midp_jc_event_type;
@@ -129,24 +141,6 @@ typedef struct {
     javacall_key             key; /* '0'-'9','*','# */
     javacall_keypress_type  keyEventType; /* presed, released, repeated ... */
 } midp_jc_event_key;
-
-typedef struct {
-    char* urlAddress;
-    int silentInstall;
-} midp_jc_event_lifecycle;  /* start, end, kill, pause, resume, install */
-
-typedef struct {
-    char* urlAddress;
-    javacall_lifecycle_tck_domain  domain;
-} midp_jc_event_start_tck;
-
-typedef struct {
-    char* suiteID;
-    char* classname;
-    char* arg0;
-    char* arg1;
-    char *arg2;
-} midp_jc_event_start_midlet;
 
 typedef struct {
     int   argc;
@@ -172,15 +166,11 @@ typedef struct {
     int            alarmHandle;
 } midp_jc_event_push;
 
+#ifdef ENABLE_JSR_120
 typedef struct {
     javacall_handle         handle;
     javacall_result result;
 } midp_jc_event_sms_sending_result;
-
-typedef struct {
-    javacall_handle         handle;
-    javacall_result result;
-} midp_jc_event_mms_sending_result;
 
 typedef struct {
     int stub;
@@ -188,18 +178,28 @@ typedef struct {
 
 typedef struct {
     int stub;
-} midp_jc_event_mms_incoming;
+} midp_jc_event_cbs_incoming;
+#endif
+
+#ifdef ENABLE_JSR_205
+typedef struct {
+    javacall_handle         handle;
+    javacall_result result;
+} midp_jc_event_mms_sending_result;
 
 typedef struct {
     int stub;
-} midp_jc_event_cbs_incoming;
+} midp_jc_event_mms_incoming;
+#endif
 
+#ifdef ENABLE_JSR_135
 typedef struct {
     javacall_media_notification_type mediaType;
     int isolateId;
     int playerId;
     long data;
 } midp_jc_event_multimedia;
+#endif
 
 typedef struct {
     javacall_textfield_status status;
@@ -256,20 +256,23 @@ typedef struct {
     midp_jc_event_type                     eventType;
     union {
         midp_jc_event_key                  keyEvent;
-        midp_jc_event_lifecycle            lifecycleEvent;
-        midp_jc_event_start_tck            startTckEvent;
-        midp_jc_event_start_midlet         startMidletEvent;
         midp_jc_event_start_arbitrary_arg  startMidletArbitraryArgEvent;
         midp_jc_event_socket               socketEvent;
         midp_jc_event_network              networkEvent;
         midp_jc_event_timer                timerEvent;
         midp_jc_event_push                 pushEvent;
+#ifdef ENABLE_JSR_120
         midp_jc_event_sms_sending_result   smsSendingResultEvent;
-        midp_jc_event_mms_sending_result   mmsSendingResultEvent;
         midp_jc_event_sms_incoming         smsIncomingEvent;
-        midp_jc_event_mms_incoming         mmsIncomingEvent;
         midp_jc_event_cbs_incoming         cbsIncomingEvent;
+#endif
+#ifdef ENABLE_JSR_205
+        midp_jc_event_mms_sending_result   mmsSendingResultEvent;
+        midp_jc_event_mms_incoming         mmsIncomingEvent;
+#endif
+#ifdef ENABLE_JSR_135
         midp_jc_event_multimedia           multimediaEvent;
+#endif
         midp_jc_event_textfield            textFieldEvent;
         midp_jc_event_image_decoder        imageDecoderEvent;
 #ifdef ENABLE_JSR_179

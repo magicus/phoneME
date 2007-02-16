@@ -67,6 +67,15 @@ CommandButton::CommandButton(QWidget* parent, int cmdId)
     connect(this, SIGNAL(clicked()), SLOT(buttonActivated()));
 }
 
+/**
+ * Update command ID
+ *
+ * @param new command ID
+ */
+void CommandButton::setCommandId(int cmdId) {
+    id = cmdId;
+}
+
 /** Notify button is clicked */
 void
 CommandButton::buttonActivated() {
@@ -100,9 +109,9 @@ bool TextViewer::needScrolling() {
 void TextViewer::keyPressEvent(QKeyEvent *key)
 {
     int k = key->key();
-    if ((k == Key_Up && rowIsVisible(0))
-        || (k == Key_Down && rowIsVisible(numRows() - 1))
-        || (k == Key_Tab))  {
+    if ((k == Qt::Key_Up && rowIsVisible(0))
+        || (k == Qt::Key_Down && rowIsVisible(numRows() - 1))
+        || (k == Qt::Key_Tab))  {
         parentWidget()->setFocus();
     } else {
         QMultiLineEdit::keyPressEvent(key);
@@ -174,8 +183,10 @@ bool Alert::close(bool alsoDelete) {
  * @param key ptr to key event
  */
 void Alert::keyReleaseEvent(QKeyEvent *key) {
-  if (key->key() == Key_Escape) {
+  if (key->key() == Qt::Key_Escape) {
     MidpCommandSelected(closeCommandId);
+  } else {
+    QWidget::keyReleaseEvent(key);  
   }
 }
 
@@ -371,48 +382,66 @@ Alert::setCommands(MidpCommand* cmds, int numOfCmds) {
     // Setup push buttons
     for (i = 0; i < ALERT_NUM_OF_BUTTONS; i++) {
 
-	x += hspace; // x coordinate of this button
+        x += hspace; // x coordinate of this button
 
-	if (i < numOfCmds) {
-        // Map this push button to a command
-        if (buttons[i] == NULL) {
-            buttons[i] = new CommandButton(this, cmds[i].id);
-            if (buttons[i] == NULL) {
-                return KNI_ENOMEM;
-            }
-            buttons[i]->show();
-            buttons[i]->setFocusPolicy(QWidget::StrongFocus);
-        }
-
-        // Set geometry
-        buttons[i]->setGeometry(x, y,
-            ALERT_BUTTON_WIDTH, ALERT_BUTTON_HEIGHT);
-
-        // Set label and command id
-        if (i < ALERT_NUM_OF_BUTTONS-1
-        || numOfCmds == ALERT_NUM_OF_BUTTONS) {
-            pcsl_string* short_label = &cmds[i].shortLabel_str;
-            GET_PCSL_STRING_DATA_AND_LENGTH(short_label) {
-                if(PCSL_STRING_PARAMETER_ERROR(short_label)) {
-                    REPORT_ERROR(LC_HIGHUI, "out-of-memory error"
-                                 " in Alert::setCommands - set label");
-                } else {
-                    label.setUnicodeCodes(short_label_data,
-                                          short_label_len);
-                    buttons[i]->setText(label);
+	    if (i < numOfCmds) {
+            if (i < ALERT_NUM_OF_BUTTONS-1
+            || numOfCmds == ALERT_NUM_OF_BUTTONS) {
+                if (buttons[i] == NULL) {
+                // Create new command button and map to command
+                buttons[i] = new CommandButton(this, cmds[i].id);
+                if (buttons[i] == NULL) {
+                    return KNI_ENOMEM;
                 }
-            } RELEASE_PCSL_STRING_DATA_AND_LENGTH
-        } else {
-            buttons[i]->setText("More...");
-            break; // break out to use popup list
-        }
-	} else if (buttons[i] != NULL) {
-	    // This button is no longer needed, delete it
-	    delete buttons[i];
-	    buttons[i] = NULL;
-	}
+                } else {
+                // Update command ID
+                ((CommandButton*)buttons[i])->setCommandId(cmds[i].id);
+                }
+                // Set lable
+                pcsl_string* short_label = &cmds[i].shortLabel_str;
+                GET_PCSL_STRING_DATA_AND_LENGTH(short_label) {
+                    if(PCSL_STRING_PARAMETER_ERROR(short_label)) {
+                        REPORT_ERROR(LC_HIGHUI, "out-of-memory error"
+                                    " in Alert::setCommands - set label");
+                    } else {
+                        label.setUnicodeCodes(short_label_data,
+                                            short_label_len);
+                        buttons[i]->setText(label);
+                    }
+                } RELEASE_PCSL_STRING_DATA_AND_LENGTH
+    
+                buttons[i]->show();
+                buttons[i]->setFocusPolicy(QWidget::StrongFocus);
+                // Set geometry
+                buttons[i]->setGeometry(x, y,
+                    ALERT_BUTTON_WIDTH, ALERT_BUTTON_HEIGHT);
+    
+            } else {
+                if (buttons[i] == NULL) {
+                // Create new push button
+                buttons[i] = new QPushButton(this);
+                if (buttons[i] == NULL) {
+                    return KNI_ENOMEM;
+                }
+                }
+                // Set lable
+                buttons[i]->setText("More...");
+    
+                buttons[i]->show();
+                buttons[i]->setFocusPolicy(QWidget::StrongFocus);
+                // Set geometry
+                buttons[i]->setGeometry(x, y,
+                    ALERT_BUTTON_WIDTH, ALERT_BUTTON_HEIGHT);
+    
+                break; // break out to use popup list
+            }
+	    } else if (buttons[i] != NULL) {
+	        // This button is no longer needed, delete it
+	        delete buttons[i];
+	        buttons[i] = NULL;
+	    }
 
-	x += ALERT_BUTTON_WIDTH; // x coordinate of next button
+	    x += ALERT_BUTTON_WIDTH; // x coordinate of next button
     }
 
     // Setup popup list

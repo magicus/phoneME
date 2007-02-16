@@ -30,6 +30,14 @@
 #
 ######################################################################
 
+# Guarantee existence of the directory for tools classes
+#
+define verify_tools_class_directory
+    @if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
+	mkdir -p $(TOOLS_CLASS_DIR); \
+    fi
+endef
+
 TOOL_DIR = $(SUBSYSTEM_DIR)/tool
 KEYTOOL_KEYSTORE_FILE = \
     $(TOOL_DIR)/mekeytool/classes/com/sun/midp/mekeytool/j2se_test_keystore.bin
@@ -53,11 +61,13 @@ JADTOOL_MAIN_CLASS    = com.sun.midp.jadtool.JadTool
 JADTOOL_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/JadTool.manifest
 JADTOOL_JAR_FILE      = $(BINDIR)/JadTool.jar
 
-# Configurator jar and manifest file names
+-include $(TOOLS_DIR)/tools.gmk
+
+# Localized strings generator settings
 #
-CONFIGURATOR_MAIN_CLASS    = com.sun.midp.configurator.CodeTransformer
-CONFIGURATOR_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/Configurator.manifest
-CONFIGURATOR_JAR_FILE = $(BINDIR)/Configurator.jar
+L10N_GENERATOR_MAIN_CLASS    = com.sun.midp.l10n.generator.LocalizedStringsGenerator
+L10N_GENERATOR_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/l10nGenerator.manifest
+L10N_GENERATOR_JAR_FILE      = $(TOOLS_CLASS_DIR)/l10nGenerator.jar
 
 # Skin romization tool jar and manifest file names
 #
@@ -71,31 +81,21 @@ IMAGE2RAW_MAIN_CLASS    = com.sun.midp.imageutil.ImageToRawTool
 IMAGE2RAW_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/ImageToRawTool.manifest
 IMAGE2RAW_JAR_FILE = $(BINDIR)/ImageToRawTool.jar
 
-# Java Pre-Processor
-#
-JPP_JAVA_FILE		= $(TOOL_DIR)/jpp/Jpp.java
-
 # Macro to pre-process Jpp file into Java file
 # runjpp(<input_jpp_file>, <output_java_file>)
 define runjpp
-    $(JAVA_CMD) -classpath $(TOOLS_CLASSPATH) Jpp $(JPP_DEFS) -o `$(call fixcygpath,$(2))` `$(call fixcygpath,$(1))`
+    $(JAVA_CMD) -classpath $(TOOLS_OUTPUT_DIR) Jpp $(JPP_DEFS) -o `$(call fixcygpath,$(2))` `$(call fixcygpath,$(1))`
 endef
 
 # Targets
 #
 all_tools:: keystore $(KEYTOOL_JAR_FILE) $(JADTOOL_JAR_FILE) \
             $(CONFIGURATOR_JAR_FILE) $(SKINROMIZATION_JAR_FILE) \
-	    $(IMAGE2RAW_JAR_FILE)
-
-$(TOOLS_CLASS_DIR):
-	@echo " ... $@ " $(LOG)
-	@(mkdir -p $(TOOLS_CLASS_DIR)) $(LOG)
+	    $(IMAGE2RAW_JAR_FILE) $(L10N_GENERATOR_JAR_FILE)
 
 $(KEYTOOL_JAR_FILE): $(MODULE_TOOL_KEYTOOL_JAVA_FILES) $(KEYTOOL_MANIFEST_FILE)
-	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
-		mkdir -p $(TOOLS_CLASS_DIR); \
-	fi
 	@echo " ... building MEKeyTool " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
 	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
 		-classpath "$(TOOLS_CLASSPATH)" \
 		$(MODULE_TOOL_KEYTOOL_JAVA_FILES) $(LOG_ONLY)
@@ -112,8 +112,9 @@ $(KEYTOOL_JAR_FILE): $(MODULE_TOOL_KEYTOOL_JAVA_FILES) $(KEYTOOL_MANIFEST_FILE)
 		com/sun/midp/publickeystore com/sun/midp/mekeytool) $(LOG)
 	@(cp -f $(TOOLS_CLASS_DIR)/MEKeyTool.jar $(KEYTOOL_JAR_FILE)) $(LOG)
 
-$(KEYTOOL_MANIFEST_FILE): 
+$(KEYTOOL_MANIFEST_FILE):
 	@echo " ... $@ " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
 	@(echo "Main-Class: com.sun.midp.mekeytool.MEKeyTool" > $@) $(LOG)
 
 keystore: $(KEYTOOL_JAR_FILE) $(STORAGEDIR) $(CA_KEYSTORE) $(BINDIR)/j2se_test_keystore.bin
@@ -150,10 +151,8 @@ $(BINDIR)/j2se_test_keystore.bin: $(KEYTOOL_KEYSTORE_FILE)
 	@(cp -f $(KEYTOOL_README_FILE) $(BINDIR)) $(LOG)
 
 $(JADTOOL_JAR_FILE): $(MODULE_TOOL_JADTOOL_JAVA_FILES) $(JADTOOL_MANIFEST_FILE)
-	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
-		mkdir -p $(TOOLS_CLASS_DIR); \
-	fi
 	@echo " ... building JadTool " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
 	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
 		-classpath "$(TOOLS_CLASSPATH)" \
 		$(MODULE_TOOL_JADTOOL_JAVA_FILES) $(LOG_ONLY)
@@ -170,45 +169,37 @@ $(JADTOOL_JAR_FILE): $(MODULE_TOOL_JADTOOL_JAVA_FILES) $(JADTOOL_MANIFEST_FILE)
 		com/sun/midp/util/Properties.class com/sun/midp/jadtool) $(LOG)
 	@(cp -f $(TOOLS_CLASS_DIR)/JadTool.jar $(JADTOOL_JAR_FILE)) $(LOG)
 
-$(JADTOOL_MANIFEST_FILE): 
-	@mkdir -p $(TOOLS_CLASS_DIR) $(LOG)
+$(JADTOOL_MANIFEST_FILE):
 	@echo " ... $@ " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
 	@(echo "Main-Class: com.sun.midp.jadtool.JadTool" > $@) $(LOG)
 
-
-# Configurator (jar rules)
-#
-$(CONFIGURATOR_JAR_FILE): $(MODULE_TOOL_CONFIGURATOR_JAVA_FILES) $(CONFIGURATOR_MANIFEST_FILE)
-	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
-		mkdir -p $(TOOLS_CLASS_DIR); \
-	fi
-	@echo " ... building Configurator " $(LOG)
-	@mkdir -p $(BINDIR) $(LOG)
+$(L10N_GENERATOR_JAR_FILE): $(MODULE_TOOL_L10N_GENERATOR_JAVA_FILES) $(L10N_GENERATOR_MANIFEST_FILE)
+	@echo " ... building l10n generator " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
 	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
 		-classpath "$(TOOLS_CLASSPATH)" \
-		$(MODULE_TOOL_CONFIGURATOR_JAVA_FILES) $(LOG_ONLY)
+		$(MODULE_TOOL_L10N_GENERATOR_JAVA_FILES) $(LOG_ONLY)
 	@($(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
 		-classpath "$(TOOLS_CLASSPATH)" \
-		$(MODULE_TOOL_CONFIGURATOR_JAVA_FILES)) $(LOG)
+		$(MODULE_TOOL_L10N_GENERATOR_JAVA_FILES)) $(LOG)
 	@echo " ... $@ " $(LOG)
-	@echo +++ cd $(TOOLS_CLASS_DIR)\; $(JAR_CMD) \
-		cfm $(CONFIGURATOR_JAR_FILE) $(CONFIGURATOR_MANIFEST_FILE) \
-		com/sun/midp/configurator $(LOG_ONLY)
-	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(CONFIGURATOR_JAR_FILE) \
-		$(CONFIGURATOR_MANIFEST_FILE) com/sun/midp/configurator) $(LOG)
+	@echo +++ cd $(TOOLS_CLASS_DIR) \; $(JAR_CMD) cfm $(L10N_GENERATOR_JAR_FILE) \
+		$(L10N_GENERATOR_MANIFEST_FILE) com/sun/midp/l10n/generator $(LOG_ONLY)
+	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(L10N_GENERATOR_JAR_FILE) \
+		$(L10N_GENERATOR_MANIFEST_FILE) com/sun/midp/l10n/generator) $(LOG)
 
-$(CONFIGURATOR_MANIFEST_FILE): 
+$(L10N_GENERATOR_MANIFEST_FILE):
 	@echo " ... $@ " $(LOG)
-	@(echo "Main-Class: com.sun.midp.configurator.CodeTransformer" > $@) $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@(echo "Main-Class: $(L10N_GENERATOR_MAIN_CLASS)" > $@) $(LOG)
 
 
 # Skin romization tool (jar rules)
 #
 $(SKINROMIZATION_JAR_FILE): $(MODULE_TOOL_SKINROMIZATION_JAVA_FILES) $(SKINROMIZATION_MANIFEST_FILE)
-	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
-		mkdir -p $(TOOLS_CLASS_DIR); \
-	fi
 	@echo " ... building SkinRomizationTool " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
 	@mkdir -p $(BINDIR) $(LOG)
 	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
 		-classpath "$(TOOLS_CLASSPATH)" \
@@ -223,18 +214,16 @@ $(SKINROMIZATION_JAR_FILE): $(MODULE_TOOL_SKINROMIZATION_JAVA_FILES) $(SKINROMIZ
 	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(SKINROMIZATION_JAR_FILE) \
 		$(SKINROMIZATION_MANIFEST_FILE) com/sun/midp/skinromization) $(LOG)
 
-$(SKINROMIZATION_MANIFEST_FILE): 
+$(SKINROMIZATION_MANIFEST_FILE):
 	@echo " ... $@ " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
 	@(echo "Main-Class: com.sun.midp.skinromization.SkinRomizer" > $@) $(LOG)
-
 
 # Image to raw converter (jar rules)
 #
 $(IMAGE2RAW_JAR_FILE): $(MODULE_TOOL_IMAGE2RAW_JAVA_FILES) $(IMAGE2RAW_MANIFEST_FILE)
-	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
-		mkdir -p $(TOOLS_CLASS_DIR); \
-	fi
 	@echo " ... building ImageToRawTool " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
 	@mkdir -p $(BINDIR) $(LOG)
 	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
 		-classpath "$(TOOLS_CLASSPATH)" \
@@ -251,9 +240,9 @@ $(IMAGE2RAW_JAR_FILE): $(MODULE_TOOL_IMAGE2RAW_JAVA_FILES) $(IMAGE2RAW_MANIFEST_
 		ImageToRawTool.manifest \
 		com/sun/midp/imageutil) $(LOG)
 
-$(IMAGE2RAW_MANIFEST_FILE): 
-	@mkdir -p $(TOOLS_CLASS_DIR) $(LOG)
+$(IMAGE2RAW_MANIFEST_FILE):
 	@echo " ... $@ " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
 	@(echo "Main-Class: com.sun.midp.imageutil.ImageToRawTool" > $@) $(LOG)
 
 # Macro for converting PNG images into raw format
@@ -269,14 +258,7 @@ endef
     
 # Java Pre-processor
 #
-jpp:	$(TOOLS_CLASS_DIR) $(TOOLS_CLASS_DIR)/Jpp.class
-
-$(TOOLS_CLASS_DIR)/Jpp.class: $(JPP_JAVA_FILE)
-	@if [ '!' -d $(TOOLS_CLASS_DIR) ]; then \
-		mkdir -p $(TOOLS_CLASS_DIR); \
-	fi
-	@echo " ... building Jpp" $(LOG)
-	@$(JAVAC_CMD) -d $(TOOLS_CLASS_DIR) $^ $(LOG)
+jpp: $(JPP_CLASS_FILES)
 
 # For Cygwin
 #

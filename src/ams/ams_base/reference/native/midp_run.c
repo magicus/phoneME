@@ -3,25 +3,25 @@
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <string.h>
@@ -59,6 +59,10 @@
 #include <midpUtilKni.h>
 #include <push_server_export.h>
 
+#if !ENABLE_CDC
+#include <suspend_resume.h>
+#endif
+
 /**
  * @file
  *
@@ -75,6 +79,14 @@
  * Maximal length of the VM profile name.
  */
 #define MAX_VM_PROFILE_LEN 256
+
+/**
+ * @def ROTATION_ARG
+ * Name of the system property with initial screen rotation mode.
+ * The property can be set to 1 for rotated mode, any other value
+ * is ignored and normal screen mode is used.
+ */
+#define ROTATION_ARG "rotation"
 
 static JvmPathChar getCharPathSeparator();
 static MIDP_ERROR getClassPathPlus(SuiteIdType storageName,
@@ -390,10 +402,20 @@ midpInitializeUI(void) {
         return -1;
     }
 
-    if (0 == lcdlf_ui_init())
+    if (0 == lcdlf_ui_init()) {
+
+        /* Get the initial screen rotation mode property */
+        const char* pRotationArg = getSystemProperty(ROTATION_ARG);
+        if (pRotationArg) {
+            if (atoi(pRotationArg) == 1) {
+                lcdlf_reverse_orientation();
+            }
+        }
+
         return 0;
-    else
+    } else {
         return -1;
+    }
 }
 
 /**
@@ -418,6 +440,29 @@ midpFinalizeUI(void) {
      * midpInitializeUI() function.
      */
     midpUnregisterAmsIsolateId();
+}
+
+/**
+ * Sets the the system property "classpathext" to the given value.
+ *
+ * @param classPathExt the new value of the "classpath" system property
+ */
+static void
+putClassPathExtToSysProperty(char* classPathExt) {
+    /* store class path as system variable for another isolates */
+    if (NULL != classPathExt) {
+        char* argv[1];
+        const char prefix[] = "-Dclasspathext=";
+        argv[0] = midpMalloc(sizeof(prefix) + strlen(classPathExt));
+        if (NULL != argv[0]) {
+            memcpy(argv[0], prefix, sizeof(prefix));
+            /* copy extention + trailing zero */
+            memcpy(argv[0] + sizeof(prefix) - 1, classPathExt,
+                   strlen(classPathExt) + 1);
+            (void)JVM_ParseOneArg(1, argv);
+            midpFree(argv[0]);
+        }
+    }
 }
 
 /**
@@ -534,6 +579,8 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
     (void)debugOption;
 #endif
 
+    putClassPathExtToSysProperty(classPathExt);
+
     do {
         MIDP_ERROR status = MIDP_ERROR_NONE;
 
@@ -584,6 +631,10 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
          * for faster startup of a preverified MIDlet suite.
          */
         JVM_SetUseVerifier(classVerifier);
+#endif
+
+#if !ENABLE_CDC
+        sr_repairSystem();
 #endif
 
         /*

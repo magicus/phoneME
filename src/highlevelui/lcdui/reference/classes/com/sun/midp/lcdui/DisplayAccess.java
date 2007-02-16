@@ -30,10 +30,6 @@ import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Displayable;
 
-import com.sun.midp.midlet.MIDletEventConsumer;
-
-import com.sun.midp.security.SecurityToken;
-
 /**
  * Public interface for an object that is used to provide internal access
  * to a Display object, across package boundaries.  The object implements
@@ -46,6 +42,21 @@ public interface DisplayAccess {
      * @return Display The Display object.
      */
     Display getDisplay();
+
+    /**
+     * Called to get current display width.
+     * @return Display width.
+     */
+    public int getDisplayWidth();
+
+    /**
+     * Called to get current display height.
+     * @return Display height.
+     */
+    public int getDisplayHeight();
+
+    /** Called to get the display to request the foreground. */
+    public void requestForeground();
 
     // API's for accessing Display from Games Package
 
@@ -66,18 +77,6 @@ public interface DisplayAccess {
      */
     void flush(Displayable screen, Image offscreen_buffer,
 	       int x, int y, int width, int height);
-
-    /**
-     * Set the trusted icon for this Display. When ever this display is in
-     * the foreground the given icon will be displayed in the area reserved for
-     * the trusted icon. Setting the icon to null will clear the trusted
-     * icon. Only callers with the internal MIDP permission can use this method.
-     *
-     * @param token security token of the call that has internal MIDP
-     *              permission
-     * @param drawTrusted true to draw the trusted icon
-     */
-    void setTrustedIcon(SecurityToken token, boolean drawTrusted);
 
     /**
      * Called when the system needs to temporarily prevent the application
@@ -102,6 +101,14 @@ public interface DisplayAccess {
     // void resumePainting();
 
     /**
+     * Get the class name of the MIDlet that owns this display.
+     * DisplayAccess I/F method.
+     *
+     * @return name of the MIDlet that owns this Display
+     */
+    public String getNameOfOwner();
+
+    /**
      * Get the ID of this display.
      *
      * @return Display ID
@@ -118,16 +125,16 @@ public interface DisplayAccess {
     public void setDisplayId(int newId);
 
     /**
-     * Get the MIDletEventConsumer associated with this display.
-     *
-     * @return Consumer of midlet events that go through this display
-     */
-    public MIDletEventConsumer getMIDletEventConsumer();
-
-    /**
      * Get the DisplayEventConsumer associated with this display.
      *
      * @return Consumer of midlet events that go through this display
      */
     public DisplayEventConsumer getDisplayEventConsumer();
+
+    /**
+     * Get the ForegroundEventConsumer associated with this display.
+     *
+     * @return Consumer of foreground events that go through this display
+     */
+    public ForegroundEventConsumer getForegroundEventConsumer();
 }

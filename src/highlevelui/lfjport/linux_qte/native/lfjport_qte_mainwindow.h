@@ -89,6 +89,11 @@ public:
     */
     void showFullScreen();
 
+    /**
+     * Refresh screen after width or height was changed
+     */
+    void resizeScreen();
+
    /**
     * Returns a pointer to the single ChameleonMIDPMainWindow instance,
     * or NULL if it has not been created yet.

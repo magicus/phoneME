@@ -26,14 +26,9 @@
 
 package com.sun.midp.chameleon.layers;
 
-import com.sun.midp.chameleon.skins.SoftButtonSkin;
-import com.sun.midp.chameleon.skins.ScreenSkin;
-import com.sun.midp.chameleon.skins.resources.*;
 import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
-import com.sun.midp.util.ResourceHandler;
-import com.sun.midp.chameleon.skins.*;
 import com.sun.midp.lcdui.EventConstants;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -194,7 +189,6 @@ public class ScrollBarLayer extends ScrollIndLayer {
      * @param g the graphics context to paint in
      */
     protected void paintBody(Graphics g) {
-        int x = 0;
         int arrowSignHeight = 4;
         int arrowSignWidth = 7;
 
@@ -393,13 +387,7 @@ public class ScrollBarLayer extends ScrollIndLayer {
      *                supports input.
      */
     public void setVisible(boolean visible) {
-        boolean oldVisible = isVisible();
         super.setVisible(visible);
-        if (oldVisible != visible && scrollable != null) {
-            int[] newBounds = scrollable.getBounds();
-            newBounds[W] += visible ? -bounds[W] : bounds[W];
-            scrollable.setBounds(newBounds[X], newBounds[Y], newBounds[W], newBounds[H]);
-        }
     }
     
     /**

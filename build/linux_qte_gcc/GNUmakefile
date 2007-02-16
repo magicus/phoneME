@@ -31,22 +31,7 @@
 #
 ######################################################################
 
-# Definition of platform to build on
-HOST_PLATFORM		= linux
-HOST_OS			= linux
-HOST_CPU		= i386
-HOST_COMPILER		= gcc
-
-# Definition of platform to run on
-TARGET_PLATFORM		= linux_qte
-TARGET_OS		= linux
-ifdef CPU
-TARGET_CPU		= $(CPU)
-else
-TARGET_CPU		= i386
-endif
-TARGET_COMPILER		= gcc
-TARGET_VM		= cldc_vm
+include Platform.gmk
 
 # Workspace directory
 MIDP_DIR		= $(CURDIR)/../..

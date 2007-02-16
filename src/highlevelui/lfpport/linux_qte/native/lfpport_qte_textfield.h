@@ -54,7 +54,7 @@ protected:
      * @param col column number of the insertion point
      * @return true if this insertion is allowed by current input constraints
      */
-    bool TextFieldBody::validate(const QString &s, int line, int col);
+    bool validate(const QString &s, int line, int col);
 
    /**
     * Makes this item have focus, enabling any item-specific commands; in
@@ -66,6 +66,15 @@ protected:
     */
     void focusInEvent(QFocusEvent *event);
 
+    /**
+     * This is the patch for qt 2.3.9: The focus is moved out if only one item is
+     * present in the form. 
+     * Overload method of multiple line editor. The method always returns false
+     * The implementation needs to be removed if the fix is done for the later
+     * version of qt
+     */ 
+    bool focusNextPrevChild( bool next );
+    
 protected slots:
     /**
      * Listens for text changes to this form item, and notifies the Java

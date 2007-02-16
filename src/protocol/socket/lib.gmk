@@ -83,6 +83,7 @@ SUBSYSTEM_SOCKET_EXTRA_INCLUDES += \
 ifeq ($(USE_I3_TEST), true)
 
 SUBSYSTEM_SOCKET_I3TEST_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/protocol/socket/reference/i3test/com/sun/midp/io/j2me/socket/TestInterruptedIO.java
+    $(SUBSYSTEM_DIR)/protocol/socket/reference/i3test/com/sun/midp/io/j2me/socket/TestInterruptedIO.java \
+    $(SUBSYSTEM_DIR)/protocol/socket/reference/i3test/com/sun/midp/io/j2me/socket/TestPushRegistry.java
 
 endif

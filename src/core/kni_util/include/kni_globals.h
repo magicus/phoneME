@@ -38,7 +38,7 @@
  * The size of gKNIBuffer
  * @see gKNIBuffer
  */
-#define KNI_BUFFER_SIZE 128
+#define KNI_BUFFER_SIZE 512
 
 /**
  * Internal utility buffer for use in KNI functions.
@@ -49,7 +49,7 @@
  *
  * This buffer is not used to pass data from one function to another.
  */
-extern char gKNIBuffer[KNI_BUFFER_SIZE];
+extern unsigned char gKNIBuffer[KNI_BUFFER_SIZE];
     
 #endif /* KNI_GLOBALS_H */
 

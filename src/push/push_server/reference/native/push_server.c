@@ -3,25 +3,25 @@
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -569,6 +569,7 @@ int pushadd(char *str) {
             break;
         }
     }
+
     /* Check if the entry already exists? */
     for (pe = pushlist; pe != NULL ; pe = pe->next) {
         if (strncmp (str, pe->value, comma) == 0) {
@@ -836,6 +837,7 @@ int pushcheckout(char* protocol, int port, char * store) {
 #if ENABLE_JSR_82
     bt_bool_t is_bluetooth = bt_is_bluetooth_url(protocol);
 #endif
+
     /* Find the entry to pass off the open file descriptor. */
     for (p = pushlist; p != NULL ; p = p->next) {
 #if ENABLE_JSR_82
@@ -847,22 +849,25 @@ int pushcheckout(char* protocol, int port, char * store) {
             return 0;
         }
 #endif
+
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
-        wmaProtocol = isWmaProtocol(p->port, p->value, p->storagename, port, store);
+        wmaProtocol = isWmaProtocol(p->port, p->value,
+                                    p->storagename, port, store);
 #endif
 
 #if ENABLE_JSR_180
-    /*
-     * A registered 'sip' connection matches physical 'datagram'
-     * connection.
-     */
-        standardProtocol = (p->port == port
-                            && (strncmp(p->value, protocol, strlen(protocol)) == 0
-                                || (strncmp(p->value, "sip", 3) == 0
-                                    && strncmp("datagram",
-                                               protocol, strlen(protocol)) == 0)));
+        /*
+         * A registered 'sip' connection matches physical 'datagram'
+         * connection.
+         */
+        standardProtocol = (p->port == port &&
+            (strncmp(p->value, protocol, strlen(protocol)) == 0 ||
+                (strncmp(p->value, "sip", 3) == 0 &&
+                 strncmp("datagram", protocol, strlen(protocol)) == 0)
+            )
+        );
 #else
-    /* Port and protocl must match before other checks are done. */
+        /* Port and protocol must match before other checks are done. */
         standardProtocol = (p->port == port &&
                             strncmp(p->value, protocol, strlen(protocol)) == 0);
 #endif
@@ -873,7 +878,7 @@ int pushcheckout(char* protocol, int port, char * store) {
             }
             fd = p->fd;
 
-            // The push system should stop monitoring this connection
+            /* The push system should stop monitoring this connection. */
             if (strncmp(p->value, "socket://:", 10) == 0) {
                 pcsl_remove_network_notifier((void*)fd, PCSL_NET_CHECK_ACCEPT);
             } else if (strncmp(p->value, "datagram://:",12) == 0) {
@@ -885,6 +890,7 @@ int pushcheckout(char* protocol, int port, char * store) {
             return fd;
         }
     }
+
     return -1;
 }
 
@@ -1344,7 +1350,7 @@ char *pushfindfd(int fd) {
 
               if (midp_strcasecmp((char *)required_type,
                     (char*)acceptcontact_type) ==0) {
-                    
+
               REPORT_INFO2(LC_PROTOCOL,
                     "SIP Push Message Media Type Matched: %s == %s",
                     required_type,acceptcontact_type);
@@ -1865,8 +1871,8 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
                          * indication of an error
                          */
                         midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
-                                      "IOError in push::serversocket::open = %d\n",
-                                      pcsl_network_error(handle));
+                            "IOError in push::serversocket::open = %d\n",
+                            pcsl_network_error(handle));
                         REPORT_INFO1(LC_PROTOCOL, "%s\n", gKNIBuffer);
                         exception = (char *)midpIOException;
                     }
@@ -2669,7 +2675,7 @@ int wildComp(const char *pattern, const char *str) {
                 break;
         } /* end if switch */
 
-        if ((*p1 == 0) && (*p2 != 0)) { 
+        if ((*p1 == 0) && (*p2 != 0)) {
             if (posStar == NULL) { /* end of pattern */
                 return 0;
             } else {

@@ -69,6 +69,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      * @param width The width available for this Item
      */
     public void lGetContentSize(int size[], int width) {
+
         // no label and empty popup => nothing is drawn
         // no elements => only label is drawn
         if (cg.numOfEls == 0) {
@@ -124,7 +125,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 ChoiceGroupSkin.COLOR_BG);
         }
 
-        if (hasFocus && !popUpOpen) {
+        if (hasFocus && !popupLayer.isPopupOpen()) {
             // hilight the background
             g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
             g.fillRect(2, 2, width - 3, height - 3);
@@ -136,7 +137,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             int yOffset = height -
                 ChoiceGroupSkin.IMAGE_BUTTON_ICON.getHeight();
             if (yOffset > 0) {
-                yOffset = (int)(yOffset / 2);
+                yOffset = yOffset / 2;
             } else {
                 yOffset = 0;
             }
@@ -177,17 +178,20 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 ChoiceGroupSkin.PAD_H;
         }
 
+        g.translate(textOffset, 0);
         Text.drawTruncString(g,
                         cg.cgElements[s].stringEl,
                         cg.cgElements[s].getFont(),
                         (hasFocus) ? ScreenSkin.COLOR_FG_HL :
                             ChoiceGroupSkin.COLOR_FG,
                         width);
+        g.translate(-textOffset, 0);
+        
         g.translate(-ChoiceGroupSkin.PAD_H, -ChoiceGroupSkin.PAD_V);
 
-        if (refreshNeeded && cachedWidth != INVALID_SIZE) {
+        if (popupLayer.isSizeChanged() && cachedWidth != INVALID_SIZE) {
             popupLayer.refresh();
-            refreshNeeded = false;
+            popupLayer.setSizeChanged(false);
         }
     }
 
@@ -197,10 +201,9 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      */
     void uCallTraverseOut() {
         super.uCallTraverseOut();
-        Form form = null;
         
         synchronized (Display.LCDUILock) {
-            if (popUpOpen) {
+            if (popupLayer.isPopupOpen()) {
                 hilightedIndex = 0;
                 popupLayer.hide();
             }
@@ -227,7 +230,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             // If we are a closed popup, don't bother with the visRect
             // and return true on the initial traverse, false on subsequent
             // traverses
-            if (popUpOpen) {
+            if (popupLayer.isPopupOpen()) {
                 ret = super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
             }
         }
@@ -244,7 +247,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      */
     boolean traverseInPopup(int dir, int viewportWidth, int viewportHeight) {
         boolean ret = false;
-        if (popUpOpen) {
+        if (popupLayer.isPopupOpen()) {
             if (cg.numOfEls > 1) {
                 int prevIndex = hilightedIndex;
                 int hilightY = 0;
@@ -300,7 +303,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 return;
             }
             
-            if (!popUpOpen) {
+            if (!popupLayer.isPopupOpen()) {
                 if (keyCode != Constants.KEYCODE_SELECT) {
                     return;
                 }
@@ -354,7 +357,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      * @return true if the item contains the pointer, otherwise - false
      */
     boolean itemContainsPointer(int x, int y) {
-        if (!popUpOpen) {
+        if (!popupLayer.isPopupOpen()) {
             return super.itemContainsPointer(x, y);
         } else {
             // We grab the whole screen, so consider all clicks contained
@@ -409,7 +412,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
     void uCallPointerPressed(int x, int y) {
         itemWasPressed = true;
         itemSelectedWhenPressed = false;
-        if (popUpOpen) {
+        if (popupLayer.isPopupOpen()) {
             // popupLayer.
             int i = getIndexByPointer(x, y);
             if (i >= 0) {
@@ -438,7 +441,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         if (!itemWasPressed)
             return;
         
-        if (popUpOpen) {
+        if (popupLayer.isPopupOpen()) {
             // do not dismiss the popup until a new selection is made.
             int i = getIndexByPointer(x, y);
             if ( (i >= 0 && hilightedIndex == i && itemSelectedWhenPressed) ||
@@ -466,19 +469,14 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
      */
     void uCallSizeChanged(int w, int h) {
         super.uCallSizeChanged(w,h);
-        refreshNeeded = true;
+        synchronized (Display.LCDUILock) {
+            popupLayer.setSizeChanged(true);
+        }
     }
 
     // *****************************************************
     //  Private methods
-    // *****************************************************
-
-    /** The state of the popup ChoiceGroup (false by default) */
-    private boolean popUpOpen; // = false;
-
-    // True if size of screen was changed
-    private boolean refreshNeeded;
-
+    // *****************************************************        
 
     /** pressed on a valid item in popup layer **/
     private boolean itemSelectedWhenPressed = false;
@@ -814,7 +812,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
 
         /**
          * Perform a scrolling at the given position.
-         * @param context position
+         * @param position
          */
         void uScrollAt(int position) {
             int newY = (viewable[HEIGHT] - viewport[HEIGHT]) * position / 100;
@@ -937,6 +935,36 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             }
         }
 
+        /**
+         *  Return sizeChanged flag
+         * @return true if size change iccurs
+         */
+        public boolean isSizeChanged() {
+            return sizeChanged;
+        }
+
+        /**
+         *  Set sizeChanged flag
+         * @param sizeChanged true if size change occurs
+         */
+        public void setSizeChanged(boolean sizeChanged) {
+            this.sizeChanged = sizeChanged;
+        }
+
+        /**
+         *  Return Popup layer flag
+         * @return true if popup Layer is shown
+         */
+        public boolean isPopupOpen() {
+            return popUpOpen;
+        }
+
+        /**
+         *  Set popup Layer flag
+         */
+        public void setPopupOpen() {
+            this.popUpOpen = true;
+        }
 
         /** The ChoiceGroupPopupLFImpl associated with this popup */
         ChoiceGroupPopupLFImpl lf; // = null;
@@ -953,12 +981,18 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
         /** True if sb is present in the Popup layer, false - otherwise */
         private boolean sbVisible; // = false;
 
+        // True if size of screen was changed
+        private boolean sizeChanged;
+
+        /** The state of the popup ChoiceGroup (false by default) */
+        private boolean popUpOpen; // = false;
+
         /**
          * This is the number of pixels left from the previous "page"
          * when a page up or down occurs
          */
         static final int PIXELS_LEFT_ON_PAGE = 15;
-        
+
     }
 
 }

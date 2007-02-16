@@ -34,6 +34,14 @@
 #
 ######################################################################
 
+ifeq ($(USE_NATIVE_AMS), true)
+  USE_NATIVE_PUSH=true
+endif
+
+ifeq ($(TARGET_VM), cdc_vm)
+  USE_NATIVE_PUSH=false
+endif
+
 # Adds to global SUBSYSTEMS list
 #
 PUSH_SUBSYSTEM = push
@@ -54,7 +62,7 @@ include $(SUBSYSTEM_PUSH_DIR)/push_api/lib.gmk
 # Description: Push Registry and Listener
 #####################################################################
 
-ifeq ($(USE_NATIVE_AMS), true)
+ifeq ($(USE_NATIVE_PUSH), true)
 include $(SUBSYSTEM_PUSH_DIR)/nativepush_port/lib.gmk
 endif
 

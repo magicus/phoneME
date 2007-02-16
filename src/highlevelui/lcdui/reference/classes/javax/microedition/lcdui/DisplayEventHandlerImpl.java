@@ -26,24 +26,15 @@
 
 package javax.microedition.lcdui;
 
-import com.sun.midp.midlet.MIDletEventConsumer;
-import com.sun.midp.midlet.MIDletPeer;
-import com.sun.midp.midlet.MIDletSuite;
-
-import com.sun.midp.main.MIDletControllerEventProducer;
-
 import com.sun.midp.events.EventQueue;
-import com.sun.midp.lcdui.EventConstants;
 
 import com.sun.midp.lcdui.DisplayContainer;
 import com.sun.midp.lcdui.DisplayAccess;
 import com.sun.midp.lcdui.DisplayEventHandler;
 import com.sun.midp.lcdui.DisplayEventProducer;
+import com.sun.midp.lcdui.ForegroundController;
 import com.sun.midp.lcdui.RepaintEventProducer;
 import com.sun.midp.lcdui.ItemEventConsumer;
-
-import com.sun.midp.security.Permissions;
-import com.sun.midp.security.SecurityToken;
 
 /**
  * This class has dual functiopnality:
@@ -67,66 +58,38 @@ import com.sun.midp.security.SecurityToken;
 class DisplayEventHandlerImpl implements DisplayEventHandler,
         ItemEventConsumer {
 
-    /** This class has a different security domain than the MIDlet suite. */
-    private static SecurityToken classSecurityToken;
-
     /** Cached reference to Active Displays Container. */
     private DisplayContainer displayContainer;
 
-    /** Cached reference to the MIDletControllerEventProducer. */
-    private MIDletControllerEventProducer midletControllerEventProducer;
+    /** Cached reference to the ForegroundController. */
+    private ForegroundController foregroundController;
 
     /** The preempting display. */
     private DisplayAccess preemptingDisplay;
 
-    /**
-     * True to signal to send a MIDlet destroyed event instead of a
-     * end preempt event.
-     */
-    private boolean destroyPreemptingDisplay;
+    /** If request to end preemption was called */
+    private boolean preemptionDoneCalled = false;
 
-    /** Package private constructor restrict creation to LCDUI package */
+    /** Package private constructor restrict creation to LCDUI package. */
     DisplayEventHandlerImpl() {
-        if (classSecurityToken != null) {
-            throw new SecurityException("singleton violation");
-        }
-    }
-
-    /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     * DisplayEventHandler I/F method.
-     *
-     * @param token security token for this class.
-     */
-    public void initSecurityToken(SecurityToken token) {
-        if (classSecurityToken == null) {
-            classSecurityToken = token;
-        }
     }
 
     /**
      * Initialize Display Event Handler.
      * DisplayEventHandler I/F method.
      *
-     * @param token security token for initilaization
-     * @param theEventQueue the event queue
      * @param theDisplayEventProducer producer for display events
-     * @param theMIDletControllerEventProducer producer for midlet events
+     * @param theForegroundController controls which display has the foreground
      * @param theRepaintEventProducer producer for repaint events events
      * @param theDisplayContainer container for display objects
      */
     public void initDisplayEventHandler(
-        SecurityToken token,
-        EventQueue theEventQueue,
         DisplayEventProducer theDisplayEventProducer,
-        MIDletControllerEventProducer theMIDletControllerEventProducer,
+        ForegroundController theForegroundController,
         RepaintEventProducer theRepaintEventProducer,
         DisplayContainer theDisplayContainer) {
 
-        token.checkIfPermissionAllowed(Permissions.MIDP);
-
-        midletControllerEventProducer = theMIDletControllerEventProducer;
+        foregroundController = theForegroundController;
 
         displayContainer = theDisplayContainer;
 
@@ -140,27 +103,30 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
          * Display.initClass() from itsinitDisplayClass() method ?
          */
         Display.initClass(
-            theMIDletControllerEventProducer,
+            theForegroundController,
             theDisplayEventProducer,
             theRepaintEventProducer,
             theDisplayContainer);
+    }
 
-        /** create DisplayEventListener & initialize it */
-        new DisplayEventListener(
-            theEventQueue,
-            theDisplayContainer);
+    /**
+     * Initialize per suite data of the display event handler.
+     * DisplayEventHandler I/F method.
+     *
+     * @param drawTrustedIcon true, to draw the trusted icon in the upper
+     *                status bar for every display of this suite
+     */
+    public void initSuiteData(boolean drawTrustedIcon) {
+        Display.initSuiteData(drawTrustedIcon);
     }
 
     /**
      * Preempt the current displayable with
      * the given displayable until donePreempting is called.
-     * The preemptor should stop preempting when a destroyMIDlet event
-     * occurs. The event will have a null MIDlet parameter. To avoid
-     * dead locking the event thread his method
+     * To avoid dead locking the event thread his method
      * MUST NOT be called in the event thread.
      * DisplayEventHandler I/F method.
      *
-     * @param l object to notify with the destroy MIDlet event.
      * @param d displayable to show the user
      * @param waitForDisplay if true this method will wait if the
      *        screen is being preempted by another thread, however
@@ -175,8 +141,7 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
-    public Object preemptDisplay(MIDletEventConsumer l, Displayable d,
-                                 boolean waitForDisplay)
+    public Object preemptDisplay(Displayable d, boolean waitForDisplay)
             throws InterruptedException {
         Display tempDisplay;
         String title;
@@ -203,53 +168,26 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
          * preemptingDisplay and destroyPreemptingDisplay.
          */
         synchronized (this) {
-            /**
-             * ATTENTION !
-             * The synchronization below is essential for atomic creation of
-             * preempting Displays:
-             * "create display Id" and "add the display in the container"
-             * (see "new Display(...)") shall be synchronized with
-             * check if other displays exist in the container
-             * (see "isOneElementInContainer()").
-             * This check is needed to distinguish the situation when
-             * no midlets exist in current isolate yet.
-             *
-             * This code is suspicious, in future preemption will definitely
-             * be reworked and simplified, but until that this synchronization
-             * on an external object is needed.
-             */
-            synchronized (displayContainer) {
-                if (preemptingDisplay != null) {
+            if (preemptingDisplay != null) {
 
-                    if (!waitForDisplay) {
-                        return null;
-                    }
-
-                    this.wait();
+                if (!waitForDisplay) {
+                    return null;
                 }
 
-                tempDisplay = new Display(l);
-                tempDisplay.setCurrent(d);
-                preemptingDisplay = tempDisplay.accessor;
+                this.wait();
+            }
 
-                if (displayContainer.isOneElementInContainer()) {
-                    // No applications, so this preempt is like a new MIDlet.
-                    midletControllerEventProducer.sendMIDletCreateNotifyEvent(
-                        0, tempDisplay.displayId, MIDletSuite.UNUSED_SUITE_ID,
-                            "preempt", title);
+            // This class will own the display.
+            tempDisplay =
+                new Display("com.sun.midp.lcdui.DisplayEventHandlerImpl");
 
-                    midletControllerEventProducer.
-                        sendDisplayForegroundRequestEvent(
-                            tempDisplay.displayId, true);
-                    destroyPreemptingDisplay = true;
-                } else {
-                    midletControllerEventProducer.sendDisplayPreemptStartEvent(
-                        tempDisplay.displayId);
-                    destroyPreemptingDisplay = false;
-                }
+            foregroundController.startPreempting(tempDisplay.displayId);
 
-                return preemptingDisplay;
-            } // end "synchronized (displayContainer)"
+            tempDisplay.setCurrent(d);
+
+            preemptingDisplay = tempDisplay.accessor;
+
+            return preemptingDisplay;
         }
     }
 
@@ -269,45 +207,41 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
             if (preemptingDisplay != null &&
                 (preemptToken == preemptingDisplay || preemptToken == null)) {
 
-                if (destroyPreemptingDisplay) {
-                    // No applications, so this preempt is like a new MIDlet.
-                    midletControllerEventProducer.sendMIDletDestroyNotifyEvent(
-                        preemptingDisplay.getDisplayId());
+                preemptionDoneCalled = true;
 
-                } else {
-                    midletControllerEventProducer.sendDisplayPreemptStopEvent(
-                        preemptingDisplay.getDisplayId());
+                foregroundController.stopPreempting(
+                    preemptingDisplay.getDisplayId());
 
-                }
+            }
+        }
+    }
 
+    /**
+     * Called by Display to notify DisplayEventHandler that
+     * Display has been sent to the background to finish
+     * preempt process if any.
+     *
+     * @param displayId id of Display
+     */
+    public void onDisplayBackgroundProcessed(int displayId) {
+
+        synchronized (this) {
+            if (preemptionDoneCalled && preemptingDisplay != null &&
+                preemptingDisplay.getDisplayId() == displayId) {
+
+                displayContainer.removeDisplay(
+                    preemptingDisplay.getNameOfOwner());
+    
                 preemptingDisplay = null;
 
-                displayContainer.removeDisplay(preemptingDisplay);
-
+                preemptionDoneCalled = false;
+    
                 // A midlet may be waiting to preempt
                 this.notify();
             }
         }
     }
 
-    /**
-     * Create a display and return its internal access object.
-     * DisplayEventHandler I/F method.
-     *
-     * @param token security token for the calling class
-     * @param midlet peer of the MIDlet that will own this display
-     *
-     * @return new display's access object
-     *
-     * @exception SecurityException if the caller does not have permission
-     *   the internal MIDP permission.
-     */
-    public DisplayAccess createDisplay(SecurityToken token,
-                                       MIDletPeer midlet) {
-        token.checkIfPermissionAllowed(Permissions.MIDP);
-
-        return new Display((MIDletEventConsumer)midlet).accessor;
-    }
 
     /**
      * Get the Image of the trusted icon for this Display.

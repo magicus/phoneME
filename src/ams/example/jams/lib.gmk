@@ -35,16 +35,14 @@
 # vpath for ( example ) module
 #
 
-ifeq ($(PLATFORM), javacall)
-    # IMPL_NOTE: javacall implementation should be unified with the code
-    #            for other platforms
-    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native/$(PLATFORM)
-endif
-
 vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native
 
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
     -I$(SUBSYSTEM_AMS_DIR)/example/jams/native/inc
+
+# Don't include exe files to MIDP source file list
+# since we want to link different obj files for different exe
+#
 
 # Native files for the ( example ) module
 #
@@ -54,182 +52,74 @@ ifeq ($(TARGET_VM), cldc_vm)
     commandLineUtil.c \
     findMidlet.c
 
-  AMS_RUNMIDLET_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,$(AMS_RUNMIDLET_NATIVE_FILES))
-
+  AMS_RUNMIDLET_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,\
+    $(AMS_RUNMIDLET_NATIVE_FILES))
 endif
 
-# Don't include exe files to MIDP source file list
-# since we want to link different obj files for different exe
-
-MODULE_AMS_EXAMPLE_SCRIPT_FILES = \
-    $(SUBSYSTEM_DIR)/ams/example/jams/shell/autotest$(g) \
-    $(SUBSYSTEM_DIR)/ams/example/jams/shell/i3test$(g) \
-    $(SUBSYSTEM_DIR)/ams/example/jams/shell/installMidlet$(g)
-
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
-VM_MODE = mvm
-MODULE_AMS_VM_MODE_SCRIPT_FILES = \
-    $(SUBSYSTEM_DIR)/ams/jams/$(VM_MODE)/shell/autotestm$(g)
+  VM_MODE = mvm
 else
-VM_MODE = svm
-MODULE_AMS_VM_MODE_SCRIPT_FILES =
-endif
-    
-MODULE_AMS_VM_MODE_SCRIPT_FILES += \
-    $(SUBSYSTEM_DIR)/ams/jams/$(VM_MODE)/shell/usertest$(g)
-
-    
-INTERNAL_AMS_COMMON_SCRIPT_FILES = $(patsubst $(SUBSYSTEM_AMS_DIR)/example/jams/shell/%,$(BINDIR)/%,$(MODULE_AMS_EXAMPLE_SCRIPT_FILES))
-
-$(INTERNAL_AMS_COMMON_SCRIPT_FILES): $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/example/jams/shell/%
-	@echo " ... installing $@"
-	@cp -f $< $@
-	@chmod +x $@
-
-$(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/example/jams/scripts/%
-	@echo " ... installing $@"
-	@cp -f $< $@
-	@chmod +x $@
-
-INTERNAL_AMS_VM_MODE_SCRIPT_FILES = $(patsubst $(SUBSYSTEM_AMS_DIR)/jams/$(VM_MODE)/shell/%,$(BINDIR)/%,$(MODULE_AMS_VM_MODE_SCRIPT_FILES))
-
-$(INTERNAL_AMS_VM_MODE_SCRIPT_FILES): $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/jams/$(VM_MODE)/shell/%
-	@cp -f $< $@
-	@chmod +x $@
-
-MODULE_AMS_EXAMPLE_BAT_FILES = \
-    $(SUBSYSTEM_DIR)/ams/example/jams/batch/autotest$(g).bat \
-    $(SUBSYSTEM_DIR)/ams/example/jams/batch/i3test$(g).bat \
-    $(SUBSYSTEM_DIR)/ams/example/jams/batch/installMidlet$(g).bat
-    
-MODULE_AMS_VM_MODE_BAT_FILES = \
-    $(SUBSYSTEM_DIR)/ams/jams/$(VM_MODE)/batch/usertest$(g).bat
-
-ifeq ($(USE_MULTIPLE_ISOLATES), true)
-MODULE_AMS_VM_MODE_BAT_FILES += \
-    $(SUBSYSTEM_DIR)/ams/jams/$(VM_MODE)/batch/autotestm$(g).bat
-endif	
-    
-INTERNAL_AMS_COMMON_BAT_FILES = $(patsubst $(SUBSYSTEM_AMS_DIR)/example/jams/batch/%,$(BINDIR)/%,$(MODULE_AMS_EXAMPLE_BAT_FILES))
-
-$(INTERNAL_AMS_COMMON_BAT_FILES): $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/example/jams/batch/%
-	@cp -f $< $@ 
-	@chmod +x $@
-
-INTERNAL_AMS_VM_MODE_BAT_FILES = $(patsubst $(SUBSYSTEM_AMS_DIR)/jams/$(VM_MODE)/batch/%,$(BINDIR)/%,$(MODULE_AMS_VM_MODE_BAT_FILES))
-
-$(INTERNAL_AMS_VM_MODE_BAT_FILES): $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/jams/$(VM_MODE)/batch/%
-	@cp -f $< $@
-	@chmod +x $@
-
-ifeq ($(TARGET_PLATFORM), wince)
-
-ifeq ($(USE_MULTIPLE_ISOLATES), true)
-RC_DEFS += -DENABLE_MULTIPLE_ISOLATES=1
-endif
-
-CEDIR = $(MIDP_DIR)/src/highlevelui/wince_application/resources
-
-OBJ_FILES   += $(OBJ_DIR)/resources.res
-
-ifeq ($(TARGET_CPU), arm)
-  OBJ_FILES   += $(OBJ_DIR)/gxj_graphics_asm_wince.o
-endif
-
-$(OBJ_DIR)/resources.res: $(CEDIR)/resources.rc $(CEDIR)/resources.h
-	@echo " ... $@" $(LOG)
-	$(A)$(RC) -D_WIN32_WCE=$(CEVersion) /I"${EVC_INCLUDE_PATH}" \
-                /I"${MIDP_OUTPUT_DIR}/generated" /I"$(PCSL_OUTPUT_DIR)/$(TARGET_PLATFORM)_$(TARGET_CPU)/inc" $(RC_DEFS) \
-		-DUNDER_CE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /fo`$(call fixcygpath,$@ $(CEDIR)/resources.rc)`
-		
-
-$(OBJ_DIR)/gxj_graphics_asm_wince.o: \
-	$(MIDP_DIR)/src/lowlevelui/graphics/putpixel/native/gxj_graphics_asm_wince.s
-	$(ASM) -o $@ $<
-
+  VM_MODE = svm
 endif
 
 ifeq ($(TARGET_VM), cldc_vm)
+  SUBSYSTEM_AMS_LAZY_MAKEFILES += \
+    $(SUBSYSTEM_AMS_DIR)/example/jams/runMidlet.gmk
 
-# Define AMS executables
-#
-$(BINDIR)/runMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
-	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES) $(LIBS))` $(LOG)
-
-SUBSYSTEM_AMS_EXECUTABLES = \
+  SUBSYSTEM_AMS_EXECUTABLES = \
     $(BINDIR)/runMidlet$(g)$(p)$(EXE)
-
-endif
-
-ifeq ($(TARGET_VM), cdc_vm)
-
-CVM_BOOTCLASSPATH=-Xbootclasspath/a:${MIDP_OUTPUT_DIR}/classes.zip
-
-ifeq ($(CVM_PRELOAD_LIB), true)
-#
-# This is a ROMized build. MIDP natives are linked into CVM executable. No
-# need to create a separate libmidp.so.
-#
-
-$(BINDIR)/runMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
-	@rm -f $@
-	@echo " ... creating script $@ " $(LOG)
-	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
-	$(CVM_BOOTCLASSPATH) \
-        -Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
-        -Dmicroedition.profiles=MIDP-2.0 \
-        '$$VMARGS' \
-        com.sun.midp.main.MIDletSuiteLoader '$$*' > $@
-	$(A)chmod a+x $@
-
-else
-#
-# Create a libmidp.so for non-ROMized build.
-#
-
-$(BINDIR)/libmidp$(g)$(p).so: $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
-	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) -shared $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES) $(LIBS))` $(LOG)
-
-$(BINDIR)/runMidlet$(g)$(p)$(EXE): $(BINDIR)/libmidp$(g)$(p).so
-	@rm -f $@
-	@echo " ... creating script $@ " $(LOG)
-	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
-	$(CVM_BOOTCLASSPATH) \
-	-Dsun.midp.library.name=midp$(p) \
-        -Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
-        -Dmicroedition.profiles=MIDP-2.0 \
-        '$$VMARGS' \
-        com.sun.midp.main.MIDletSuiteLoader '$$*' > $@
-	$(A)chmod a+x $@
-endif
 endif
 
 # Other platforms like stubs don't need scripts
 ifeq ($(PLATFORM), linux_qte)
-INCLUDE_SHELL_SCRIPTS = true
+  INCLUDE_SHELL_SCRIPTS = true
 endif
 
 ifeq ($(PLATFORM), linux_fb)
-INCLUDE_SHELL_SCRIPTS = true
+  INCLUDE_SHELL_SCRIPTS = true
 endif
 
 ifeq ($(PLATFORM), win32)
-INCLUDE_SHELL_SCRIPTS = true
+  INCLUDE_SHELL_SCRIPTS = true
 endif
 
-SUBSYSTEM_AMS_EXECUTABLES = \
-    $(BINDIR)/runMidlet$(g)$(p)$(EXE)
+ifeq ($(PLATFORM), javacall)
+  INCLUDE_SHELL_SCRIPTS = true
+endif
 
 ifdef INCLUDE_SHELL_SCRIPTS
+  $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/example/jams/shell/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
+  $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/example/jams/scripts/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
+  $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/jams/$(VM_MODE)/shell/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
+  $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/jams/$(VM_MODE)/batch/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
+  $(BINDIR)/%: $(SUBSYSTEM_AMS_DIR)/example/jams/batch/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+	    
   SUBSYSTEM_AMS_EXECUTABLES += \
     $(BINDIR)/listMidlets.sh \
-    $(BINDIR)/removeMidlet.sh \
-    $(BINDIR)/installMidlet$(g)$(BAT)
+    $(BINDIR)/removeMidlet.sh
 
   ifeq ($(TARGET_VM), cldc_vm)
     SUBSYSTEM_AMS_EXECUTABLES += \
+      $(BINDIR)/installMidlet$(g)$(BAT) \
       $(BINDIR)/usertest$(g)$(BAT) \
       $(BINDIR)/autotest$(g)$(BAT)
   
@@ -240,11 +130,6 @@ ifdef INCLUDE_SHELL_SCRIPTS
   endif
 
   USE_SCRIPT_UTILS = true
-
-  ifeq ($(TARGET_VM), cdc_vm)
-    SUBSYSTEM_AMS_EXECUTABLES += \
-      $(BINDIR)/autotest.sh
-  endif
 
   ifeq ($(USE_I3_TEST), true)
     SUBSYSTEM_AMS_EXECUTABLES += $(BINDIR)/i3test$(g)$(BAT)

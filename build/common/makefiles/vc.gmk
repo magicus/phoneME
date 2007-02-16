@@ -1,7 +1,7 @@
 #
 #  
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@ _VC_GMK_	=
 
 # Suffix
 LIB_SUFFIX      = .lib
+SHARED_LIB_SUFFIX = .dll
 OBJ_SUFFIX      = obj
 
 # GCC 
@@ -55,6 +56,15 @@ LD_FLAGS 	+= -nologo -subsystem:console -machine:i386 -MAP \
 
 CREATE_LIB      = lib
 LIB_OUTPUT      = /OUT:
+
+AR = lib
+# commands for AR (lib) script
+MRI_ADD = 
+MRI_CREATE = /OUT:
+MRI_SAVE = 
+MRI_OPT = /NOLOGO @
+
+RANLIB = ranlib
 
 ASM		= "$(_MASM_DIR$(MASM_DIR))$(MASM_DIR)/ml"
 ASM_FLAGS	+= /nologo /c /coff /Zi

@@ -33,7 +33,7 @@ import com.sun.midp.security.Permissions;
  * The first class loaded in an application Isolate by the MIDP AMS to
  * initialize internal security and start a MIDlet suite.
  */
-public class AppIsolateMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
+public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
 
     /** Guards against multiple use in an Isolate. */
     protected static boolean inUse;
@@ -68,8 +68,8 @@ public class AppIsolateMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
      * Extends base class implementation with
      * creation of additional event producers
      */
-    protected void createSuiteEnvionment() {
-        super.createSuiteEnvionment();
+    protected void createSuiteEnvironment() {
+        super.createSuiteEnvironment();
 
         // Create event producer to execute other MIDlets
         // from non-AMS tasks
@@ -120,7 +120,7 @@ public class AppIsolateMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
      */
     protected void reportError(int errorCode, String details) {
         midletControllerEventProducer.sendMIDletStartErrorEvent(
-            externalAppId, suiteId, midletClassName,
+            suiteId, midletClassName, externalAppId,
             errorCode);
     }
 
@@ -133,9 +133,8 @@ public class AppIsolateMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
      * Called for isolates other than the initial one.
      * Initializes internal security, and starts the MIDlet.
      *
-     * @param args arg[0] the suite ID, arg[1] the class name of the MIDlet
-     *             (can be null), arg[2] the name of the MIDlet to display
-     *             to the user (can be null if arg[1] null),
+     * @param args arg[0] the suite ID, arg[1] the class name of the MIDlet,
+     *              arg[2] the name of the MIDlet to display,
      *             arg[3] optional MIDlet arg 0, arg[4] optional MIDlet arg 1,
      *             arg[5] optional MIDlet arg 2
      */

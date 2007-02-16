@@ -86,7 +86,7 @@ public class ScrollablePopupLayer extends PopupLayer
      * Scrolling the contents according to the scrolling parameters.
      * @param scrollType  can be SCROLL_LINEUP, SCROLL_LINEDOWN, SCROLL_PAGEUP,
      *                SCROLL_PAGEDOWN or SCROLL_THUMBTRACK
-     * @thumbPosition only valid when scrollType is SCROLL_THUMBTRACK
+     * @param thumbPosition only valid when scrollType is SCROLL_THUMBTRACK
      * 
      */
     public void scrollContent(int scrollType, int thumbPosition) {

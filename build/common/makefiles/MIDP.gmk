@@ -162,8 +162,10 @@ endif
 endif
 endif
 
+MIDP_RESOURCES += ams_resources
 MIDP_DEPS += $(ROM_DEPS) $(MMAPI_TARGET) $(OBJ_FILES) $(KDP_CMD) \
-             ams_resources all_tools not_yet_implemented
+             all_tools not_yet_implemented
+
 
 not_yet_implemented::
 
@@ -233,7 +235,7 @@ clean::
 	    rm -rf "$(MIDP_OUTPUT_DIR)"; \
 	 fi $(LOG)
 
-midp: $(MIDP_DEPS)
+midp: $(MIDP_DEPS) $(MIDP_RESOURCES)
 
 
 # Phonies to avoid accidents.

@@ -28,7 +28,6 @@ package com.sun.midp.chameleon;
 
 import com.sun.midp.chameleon.layers.*;
 import com.sun.midp.chameleon.skins.*;
-import com.sun.midp.chameleon.skins.resources.*;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
@@ -283,7 +282,7 @@ public class MIDPWindow extends CWindow {
 
         if (added && layer instanceof PopupLayer) {
             PopupLayer popup = (PopupLayer)layer;
-            popup.dirty = true;
+            popup.setDirty();
             popup.visible = true;
 
             Command[] cmds = popup.getCommands();
@@ -295,7 +294,7 @@ public class MIDPWindow extends CWindow {
         }
 
         if (added && layer instanceof PTILayer) {
-            mainLayers[PTI_LAYER] = (PTILayer)layer;
+            mainLayers[PTI_LAYER] = layer;
             resize();
         }
 
@@ -338,6 +337,17 @@ public class MIDPWindow extends CWindow {
             return true;
         } // removeLayer
         return false;
+    }
+
+    /**
+     * Return bounds of BodyLayer currently
+     * @return array of bounds
+     */
+    public int[] getBodyLayerBounds() {
+        int[] innerBounds = new int[4];
+        System.arraycopy(((BodyLayer)mainLayers[BODY_LAYER]).bounds,0,innerBounds,0,4);
+        return innerBounds;
+
     }
 
     /**
@@ -405,6 +415,15 @@ public class MIDPWindow extends CWindow {
     private void setMode(int mode) {
         screenMode = mode;
         updateLayout();
+    }
+
+    /**
+     * Determines if window is in full screen mode.
+     * 
+     * @return true if in full screen mode
+     */
+    public boolean isInFullScreenMode() {
+        return screenMode == FULL_SCR_MODE;
     }
 
     /**
@@ -584,7 +603,16 @@ public class MIDPWindow extends CWindow {
      *         canvas can be rendered directly.
      */
     public boolean setGraphicsForCanvas(Graphics g) {
-        if (super.dirty || !mainLayers[BODY_LAYER].opaque) {
+        // Cache body layer instance for faster access
+        CLayer bodyLayer = mainLayers[BODY_LAYER];
+
+        // IMPL_NOTE: Only Canvas painting specially doesn't change
+        // dirty state of the owner window, however it is not enough
+        // to bypass the Chameleon paint engine. Body layer holding
+        // the Canvas should be opaque and be not overlapped with
+        // any visible higher layer also. The check for overlapping
+        // is to be added later.
+        if (super.dirty || !bodyLayer.opaque) {
             return false;
         }
 
@@ -595,16 +623,24 @@ public class MIDPWindow extends CWindow {
         // Thus, for the first one, the clip can be set and then translated,
         // but in the second case, the translate must be done first and then
         // the clip set.
-        if (mainLayers[BODY_LAYER].dirtyBounds[X] == -1) {
-            g.setClip(mainLayers[BODY_LAYER].bounds[X], mainLayers[BODY_LAYER].bounds[Y],
-                      mainLayers[BODY_LAYER].bounds[W], mainLayers[BODY_LAYER].bounds[H]);
-            g.translate(mainLayers[BODY_LAYER].bounds[X], mainLayers[BODY_LAYER].bounds[Y]);
+        if (bodyLayer.isDirty()) {
+            if (bodyLayer.isEmptyDirtyRegions()) {
+                g.setClip(bodyLayer.bounds[X], bodyLayer.bounds[Y],
+                          bodyLayer.bounds[W], bodyLayer.bounds[H]);
+                g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
+
+            } else {
+                g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
+                g.setClip(bodyLayer.dirtyBounds[X], bodyLayer.dirtyBounds[Y],
+                          bodyLayer.dirtyBounds[W], bodyLayer.dirtyBounds[H]);
+            }
+            bodyLayer.cleanDirty();
         } else {
-            g.translate(mainLayers[BODY_LAYER].bounds[X], mainLayers[BODY_LAYER].bounds[Y]);
-            g.setClip(mainLayers[BODY_LAYER].dirtyBounds[X], mainLayers[BODY_LAYER].dirtyBounds[Y],
-                      mainLayers[BODY_LAYER].dirtyBounds[W], mainLayers[BODY_LAYER].dirtyBounds[H]);
+            // NOTE: the layer can be not dirty, e.g. in the case an empty
+            // area was requested for repaint, set empty clip area then.
+            g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
+            g.setClip(0, 0, 0, 0);
         }
-        mainLayers[BODY_LAYER].cleanDirty();
 
         return true;
     }
