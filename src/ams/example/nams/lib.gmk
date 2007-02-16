@@ -48,8 +48,7 @@ vpath % $(NAMS_EXAMPLES_DIR)/native
 vpath % $(NAMS_EXAMPLES_DIR)/native/$(TARGET_OS)
 
 # This is needed to include API provided by findMidlet.c
-vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native
-vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native/$(TARGET_PLATFORM)
+vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common/native
 
 ifeq ($(TARGET_PLATFORM), javacall)
     vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native

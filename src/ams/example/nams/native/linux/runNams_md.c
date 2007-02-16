@@ -41,15 +41,10 @@
 /**
  * @file
  *
- * Example of how the public MIDP API can be used to list installed
- * MIDlet Suite. This file contains platform specific thread routine.
+ * This file contains platform specific thread routine.
  */
 
-#if ENABLE_NATIVE_AMS
-void nams_process_command(int command, int param);
-#endif
-
-#if ENABLE_NATIVE_AMS && ENABLE_I3_TEST
+extern void nams_process_command(int command, int param);
 
 void* midlet_starter_routine(midp_ThreadRoutineParameter param) {
     /* 
@@ -69,6 +64,4 @@ void* midlet_starter_routine(midp_ThreadRoutineParameter param) {
 
     return NULL;
 }
-
-#endif
 

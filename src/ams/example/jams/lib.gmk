@@ -35,9 +35,11 @@
 # vpath for ( example ) module
 #
 
+vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common/native
 vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native
 
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_AMS_DIR)/example/ams_common/include \
     -I$(SUBSYSTEM_AMS_DIR)/example/jams/native/inc
 
 # Don't include exe files to MIDP source file list

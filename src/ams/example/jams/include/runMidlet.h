@@ -24,19 +24,18 @@
  * information or have any questions. 
  */
 
+#ifndef _RUN_MIDLET_H_
+#define _RUN_MIDLET_H_
 
-#ifndef _COMMAND_LINE_UTIL_H_
-#define _COMMAND_LINE_UTIL_H_
-
-/*
- * Library internal functions declarations
+/**
+ * Runs a MIDlet from an installed MIDlet suite. This is an example of
+ * how to use the public MIDP API.
+ *
+ * @param argc The total number of arguments
+ * @param argv An array of 'C' strings containing the arguments
+ *
+ * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  */
+int runMidlet(int argc, char** commandlineArgs);
 
-extern char* midpFixMidpHome(char *cmd);
-extern char* midpRemoveCommandOption(char* pszFlag, char* apszArgs[],
-                                     int* pArgc);
-extern char* midpRemoveOptionFlag(char* pszFlag, char* apszArgs[],
-                  int* pArgc);
-extern char* getCharFileSeparator();
-
-#endif /* _COMMAND_LINE_UTIL_H_ */
+#endif /* _RUN_MIDLET_H_ */
