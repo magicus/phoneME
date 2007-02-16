@@ -83,8 +83,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      * with user.
      */
     public boolean lIsShown() {
-        return (currentDisplay == null) ? false
-                                        : currentDisplay.isShown(this);
+        return (currentDisplay != null) && currentDisplay.isShown(this);
     }
 
     /**
@@ -298,32 +297,32 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      * then call lCallShow.
      */
     public void uCallShow() {
-        int widthCopy, heightCopy;
+
+        boolean copyDefferedSizeChange;
 
         synchronized (Display.LCDUILock) {
 
             // Assure correct screen mode
             currentDisplay.lSetFullScreen(owner.isInFullScreenMode);
+            copyDefferedSizeChange = defferedSizeChange;
+            defferedSizeChange = false;
 
-            if (sizeChangeOccurred) {
-                widthCopy = width;
-                heightCopy = height;
-            } else {
-                widthCopy = heightCopy = -1; // Some invalid value
-            }
-
-            // Do the internal show preparation
-            lCallShow();
         }
 
-        // This may call into app code, so do it outside LCDUILock
-        if (widthCopy >= 0) {
-            uCallSizeChanged(widthCopy, heightCopy);
-        } else {
-            synchronized (Display.LCDUILock) {
-                if (pendingInvalidate) {
-                    lRequestInvalidate();
+            if (copyDefferedSizeChange) {
+                synchronized (Display.calloutLock) {
+                    try {
+                        owner.sizeChanged(width, height);
+                    } catch (Throwable t) {
+                        Display.handleThrowable(t);
+                    }
                 }
+            }
+        synchronized (Display.LCDUILock) {
+            // Do the internal show preparation
+            lCallShow();
+            if (pendingInvalidate || copyDefferedSizeChange) {
+                lRequestInvalidate();
             }
         }
     }
@@ -493,11 +492,15 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      *
      */
     public void uCallSizeChanged(int w, int h) {
+
+        boolean copyDefferedSizeChange;
+
         synchronized (Display.LCDUILock) {
             // If there is no Display, or if this Displayable is not
             // currently visible, we simply record the fact that the
             // size has changed
-            sizeChangeOccurred = (state != SHOWN);
+            defferedSizeChange = (state != SHOWN);
+            copyDefferedSizeChange = defferedSizeChange;
             /*
              * sizeChangeOccurred is a boolean which (when true) indicates
              * that sizeChanged() will be called at a later time. So, if it
@@ -508,14 +511,18 @@ abstract class DisplayableLFImpl implements DisplayableLF {
             width = Display.getScreenWidth0();
             height = Display.getScreenHeight0();
 
-            if (!sizeChangeOccurred) {
+            if (!defferedSizeChange) {
                 lRequestInvalidate();
-                synchronized (Display.calloutLock) {
-                    try {
-                        owner.sizeChanged(w, h);
-                    } catch (Throwable t) {
-                        Display.handleThrowable(t);
-                    }
+            }
+
+        }
+
+        if (!copyDefferedSizeChange) {
+            synchronized (Display.calloutLock) {
+                try {
+                    owner.sizeChanged(w, h);
+                } catch (Throwable t) {
+                    Display.handleThrowable(t);
                 }
             }
         }
@@ -995,7 +1002,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      * <code>Displayable</code> should be notified that its size has 
      * changed via uCallSizeChanged().
      */
-    boolean sizeChangeOccurred;
+    boolean defferedSizeChange = true;
     
     /**
      * The owner of this view.
