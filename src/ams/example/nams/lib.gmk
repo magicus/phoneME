@@ -51,17 +51,18 @@ vpath % $(NAMS_EXAMPLES_DIR)/native/$(TARGET_OS)
 vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common/native
 
 ifeq ($(TARGET_PLATFORM), javacall)
-    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/$(TARGET_PLATFORM)/native
 else
 ifeq ($(TARGET_PLATFORM), wince)
-    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/$(TARGET_PLATFORM)/native
 else
-    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/default/native
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/default/native
 endif
 endif
 	    
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-	-I$(SUBSYSTEM_AMS_DIR)/example/jams/native/inc \
+	-I$(SUBSYSTEM_AMS_DIR)/example/ams_common/include \
+	-I$(SUBSYSTEM_AMS_DIR)/example/ams_common_port/include \
 	-I$(NAMS_EXAMPLES_DIR)/native/inc
 
 # Native files for the ( example ) module
