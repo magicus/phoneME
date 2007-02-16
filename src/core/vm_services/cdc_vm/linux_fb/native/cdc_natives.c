@@ -52,7 +52,7 @@ static void initCDCEvents();
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
 
-/* in midp_msgQueue_md.c */
+/* in mastermode_handle_signal.c */
 void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent);
 
 KNIEXPORT KNI_RETURNTYPE_LONG

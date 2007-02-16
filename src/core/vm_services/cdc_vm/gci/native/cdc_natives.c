@@ -46,8 +46,15 @@ static void initCDCEvents();
 static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
 
-/* in midp_msgQueue_md.c */
-void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent);
+/* in mastermode_handle_signal.c */
+void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) {
+}
+
+/* used by imageCache.c */
+MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
+				unsigned int length,
+				unsigned char** ret_dataBuffer,
+				unsigned int* ret_length) {}
 
 KNIEXPORT KNI_RETURNTYPE_LONG
 JVM_JavaMilliSeconds() {

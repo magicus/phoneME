@@ -54,11 +54,12 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
    CdcMIDletSuiteLoader.c
 
 ifdef INCLUDE_SHELL_SCRIPTS
+ 
   SUBSYSTEM_AMS_LAZY_MAKEFILES += \
     $(CDC_AMS_DIR)/runMidlet.gmk
 
   SUBSYSTEM_AMS_EXECUTABLES += \
-    $(BINDIR)/runMidlet \
+    $(BINDIR)/runMidlet$(g)$(p)$(EXE) \
     $(BINDIR)/autotest.sh \
     $(BINDIR)/installMidlet
 endif
