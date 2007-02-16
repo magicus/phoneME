@@ -47,6 +47,12 @@ public class JUMPApplication
     public static final String TITLE_KEY = "JUMPApplication_title";
     public static final String APPMODEL_KEY = "JUMPApplication_appModel";
     public static final String ID_KEY = "JUMPApplication_id";
+    /**
+     * A hint to the WindowingModule regarding the area of the screen 
+     * this JUMPApplication requires. 
+     * The value should be in the syntax of "x,y-wxh", for example "0,50-640x430".
+     **/
+    public static final String ID_SCREEN_BOUNDS = "JUMPApplication_screenBounds";
     
     /**
      * Create an instance of an application.
