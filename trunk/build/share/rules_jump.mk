@@ -101,4 +101,7 @@ source_bundle::
 	      		-Denv.SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR) \
 	      		-f build/build-source-bundle.xml source-bundle)
 
+clean::
+	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml clean)
+
 endif
