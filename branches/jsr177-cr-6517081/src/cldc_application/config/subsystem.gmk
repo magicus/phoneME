@@ -76,3 +76,10 @@ MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/security/spec/InvalidKeySpecException.java \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/security/spec/X509EncodedKeySpec.java \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/security/spec/AlgorithmParameterSpec.java
+    
+JAVACARD_CLASSES = $(MIDP_OUTPUT_DIR)/javacard_classes
+
+ifeq ($(USE_JSR_177_EMULATOR), true)
+JAVAC ?= JAVAC_CMD
+endif
+
