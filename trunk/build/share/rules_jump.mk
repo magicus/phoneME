@@ -95,6 +95,10 @@ run-unittests::
 	@echo "<==== end running jump unit-tests"
 
 source_bundle::
-	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build-src-bundle.xml source_bundle)
+	@echo " ... jump source bundle"
+	$(AT)(cd $(JUMP_DIR); \
+	      $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) \
+	      		-Denv.SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR) \
+	      		-f build/build-source-bundle.xml source-bundle)
 
 endif
