@@ -1076,7 +1076,7 @@ export CDC_DIR	:= $(shell cd $(CDC_CUR_DIR)/../../; echo `pwd`)
 # directory where cdc build is located.
 export CDC_DIST_DIR	= $(CDC_CUR_DIR)/$(CVM_BUILD_SUBDIR_NAME)
 # Directory where javadocs, source bundles, and binary bundle get installed.
-INSTALLDIR	= $(CVM_TOP)/install
+INSTALLDIR	= $(CDC_DIR)/install
 
 #
 # Full path name for Binary Bundle
@@ -1970,6 +1970,7 @@ FLEX		?= $(CVM_HOST_TOOLS_PREFIX)flex
 endif
 BISON		?= $(CVM_HOST_TOOLS_PREFIX)bison
 ZIP             ?= zip
+UNZIP           ?= unzip
 
 #######################################################################
 # Build tool options:

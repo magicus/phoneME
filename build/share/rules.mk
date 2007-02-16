@@ -48,7 +48,7 @@ DDOLLAR := $$
 endif
 
 #
-# These are some printconfig variables that other host or targets
+# These are some printconfig variables that other hosts or targets
 # may want to override.
 #
 TARGET_CC_VERSION ?= $(shell $(TARGET_CC) -dumpversion; $(TARGET_CC) -dumpmachine)
@@ -1123,4 +1123,70 @@ $(BUILDFLAGS_JAVA):
 	$(AT) rm .BuildFlags.java
 
 endif
+
+#############################
+# Source directory
+############################
+
+#
+# This is a bit different than just building the source bundle like
+# bundle.mk does. We actually need to copy the sources to the directory
+# specified by SOURCE_OUTPUT_DIR. However, we still use the bundle.mk
+# support to get all the needed files into a zip bundle first.
+#
+
+# The following can all be set on the make command line
+SOURCE_OUTPUT_DIR	=  $(INSTALLDIR)/phoneme_advanced
+
+SOURCE_OUTPUT_SUBDIR	= cdc
+INCLUDE_JIT		= $(CVM_JIT)
+INCLUDE_MTASK		= $(CVM_MTASK)
+INCLUDE_DUALSTACK	= $(CVM_DUAL_STACK)
+BUNDLE_PORTS 		= "$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)"
+#BUNDLE_PORTS 		= "linux-x86-* linux-arm-*"
+
+# The following are meant for internal use only
+SRC_BUNDLE_NAME		= $(SOURCE_OUTPUT_SUBDIR)
+SRC_BUNDLE_DIRNAME	= $(SRC_BUNDLE_NAME)
+SRC_BUNDLE_APPEND_REVISION = false
+
+# flags we need to pass to bundle.mk
+BUNDLE_FLAGS += J2ME_CLASSLIB=$(J2ME_CLASSLIB)
+BUNDLE_FLAGS += INCLUDE_JIT=$(INCLUDE_JIT)
+BUNDLE_FLAGS += INCLUDE_MTASK=$(INCLUDE_MTASK)
+BUNDLE_FLAGS += INCLUDE_DUALSTACK=$(INCLUDE_DUALSTACK)
+BUNDLE_FLAGS += BUNDLE_PORTS=$(BUNDLE_PORTS)
+BUNDLE_FLAGS += SRC_BUNDLE_NAME=$(SRC_BUNDLE_NAME)
+BUNDLE_FLAGS += SRC_BUNDLE_DIRNAME=$(SRC_BUNDLE_DIRNAME)
+BUNDLE_FLAGS += SRC_BUNDLE_APPEND_REVISION=$(SRC_BUNDLE_APPEND_REVISION)
+BUNDLE_FLAGS += SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)
+BUNDLE_FLAGS += JAVAME_LEGAL_DIR=$(JAVAME_LEGAL_DIR)
+BUNDLE_FLAGS += USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE)
+BUNDLE_FLAGS += AT=$(AT)
+
+# Build the cdc source bundle
+source_bundle::
+	@echo " ... cdc source bundle"
+	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
+		     -f $(CVM_TOP)/build/share/bundle.mk $(BUNDLE_FLAGS)
+	$(AT)$(UNZIP) -q $(INSTALLDIR)/$(SOURCE_OUTPUT_SUBDIR).zip \
+	      -d $(SOURCE_OUTPUT_DIR)
+	$(AT)rm $(INSTALLDIR)/$(SOURCE_OUTPUT_SUBDIR).zip
+
+# Note only trigger source_bundle rules, but also setup the legal
+# directory properly, and zip it all up.
+source_bundles::  clean_source_bundles source_bundle_dir source_bundle
+	@echo " ... moving legal docs to source bundle root"
+	$(AT)mv $(SOURCE_OUTPUT_DIR)/cdc/legal $(SOURCE_OUTPUT_DIR)/legal
+	@echo " ... creating $(SOURCE_OUTPUT_DIR).zip"
+	$(AT)rm -rf $(SOURCE_OUTPUT_DIR).zip
+	$(AT)(cd $(SOURCE_OUTPUT_DIR)/..; $(ZIP) -r -q $(notdir $(SOURCE_OUTPUT_DIR)).zip $(notdir $(SOURCE_OUTPUT_DIR)))
+
+source_bundle_dir:
+	@echo " ... creating $(SOURCE_OUTPUT_DIR)"
+	$(AT)mkdir -p $(SOURCE_OUTPUT_DIR)
+
+clean_source_bundles:
+	@echo " ... removing $(SOURCE_OUTPUT_DIR)"
+	$(AT)rm -rf $(SOURCE_OUTPUT_DIR)
 
