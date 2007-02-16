@@ -34,9 +34,9 @@ OBJLIB = $(OBJ_DIR)/libobj$(LIB_SUFFIX)
 OBJLIB_SCRIPT = $(OBJLIB)-list
 
 $(OBJLIB): $(OBJ_FILES)
-	@true at least one shell command shall be here
 	$(shell echo $(MRI_CREATE)$(OBJLIB) > $(OBJLIB_SCRIPT))
 	$(foreach path, $(OBJ_FILES), $(shell echo $(MRI_ADD)`$(call fixcygpath,$(path))` >> $(OBJLIB_SCRIPT)))
 	$(shell echo $(MRI_SAVE) >> $(OBJLIB_SCRIPT))
 	$(shell $(AR) $(MRI_OPT)$(OBJLIB_SCRIPT))
 	$(shell $(RANLIB) $(OBJLIB))
+	head $(OBJLIB_SCRIPT)
