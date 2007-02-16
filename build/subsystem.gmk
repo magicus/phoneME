@@ -570,9 +570,9 @@ source_bundle:: satsa_source_bundle
 SATSA_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr177
 
 # Copy and filter SATSA source in SATSA_SOURCE_OUTPUT_DIR
-satsa_source_bundle: JSR_177_DIR SOURCE_OUTPUT_DIR
+satsa_source_bundle: $(JSR_177_DIR)
 	@echo " ... JSR 177 source bundle" $(LOG)
-	@$(call re_src_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR),src)
+	@$(call source_bundle_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR),build src)
 
 # Subsystem verify rules
 #
