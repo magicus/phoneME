@@ -148,6 +148,6 @@ source_bundle:: jsr_172_source_bundle
 JSR_172_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr172
 
 # Copy and filter JSR 172 source in WMA_SOURCE_OUTPUT_DIR
-jsr_172_source_bundle: JSR_172_DIR SOURCE_OUTPUT_DIR
+jsr_172_source_bundle: $(JSR_172_DIR)
 	@echo " ... JSR 172 source bundle" $(LOG)
-	@$(call re_src_filter,$(JSR_172_DIR),$(JSR_172_SOURCE_OUTPUT_DIR),src)
+	@$(call source_bundle_filter,$(JSR_172_DIR),$(JSR_172_SOURCE_OUTPUT_DIR),build src)
