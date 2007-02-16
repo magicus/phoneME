@@ -289,11 +289,12 @@ static javacall_bool checkForEvents(long timeout) {
 
         before = after;
 
-        if (timeout > 0) {
+        if (timeout > 0 || forever) {
             /*
              * Wait for events, new messages or timeout
              */
-            switch (MsgWaitForMultipleObjects(1, handles, FALSE, timeout, QS_ALLEVENTS)) {
+            switch (MsgWaitForMultipleObjects(
+                        1, handles, FALSE, forever ? INFINITE : timeout, QS_ALLEVENTS)) {
 
             case WAIT_OBJECT_0:
                 /*
@@ -315,7 +316,7 @@ static javacall_bool checkForEvents(long timeout) {
             }
         }
         
-    } while ( (timeout > 0) || (forever == JAVACALL_TRUE) );
+    } while ( (timeout > 0) || forever );
 
     return JAVACALL_FALSE; /* time out */
 }
