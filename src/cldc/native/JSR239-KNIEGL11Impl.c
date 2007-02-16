@@ -328,7 +328,7 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1eglChooseConfig() {
 #endif
 
     /* Copy configs back to Java */
-    if (returnValue == EGL_TRUE) {
+    if (returnValue == EGL_TRUE && !KNI_IsNullHandle(configsHandle)) {
 	KNI_SetRawArrayRegion(configsHandle, 0, config_size*sizeof(EGLint),
 			      (const jbyte *)configs);
     }
