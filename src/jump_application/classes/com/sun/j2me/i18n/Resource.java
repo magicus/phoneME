@@ -38,6 +38,6 @@ public class Resource {
      * @return the requested localized resource string.
      */
     public static String getString(int key) {
-        return null;
+        return "Temp";
     }
 }

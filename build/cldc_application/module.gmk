@@ -61,7 +61,10 @@ JSROP_ABSTRACTS_JAVA_FILES = \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/FileAccess.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/PrivilegedConnector.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/i18n/Resource.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/i18n/ResourceConstants.java
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/i18n/ResourceConstants.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/dialog/Dialog.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/dialog/MessageDialog.java
+
 
 #####################################################
 JTWI_NATIVE_FILES  += $(JSROP_ABSTRACTS_NATIVES)

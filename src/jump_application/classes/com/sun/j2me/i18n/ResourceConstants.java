@@ -26,35 +26,176 @@ package com.sun.j2me.i18n;
 
 public class ResourceConstants {
     
-    public static int JSR177_CERTIFICATE_SUBJECT;
-    public static int JSR177_CERTIFICATE_ISSUER;
-    public static int JSR177_CERTIFICATE_SN;
-    public static int JSR177_CERTIFICATE_VALIDFROM;
-    public static int JSR177_CERTIFICATE_VALIDTILL;
-    public static int JSR177_PINDIALOG_TITLE_VERIFY;
-    public static int JSR177_PINDIALOG_TITLE_CHANGE;
-    public static int JSR177_PINDIALOG_ENTERPIN;
-    public static int JSR177_PINDIALOG_TITLE_DISABLE;
-    public static int JSR177_PINDIALOG_TITLE_ENABLE;
-    public static int JSR177_PINDIALOG_TITLE_UNBLOCK;
-    public static int JSR177_PINDIALOG_NEWVALUE;
-    public static int JSR177_WIM_NOT_FOUND;
+    /**
+     * Abstract Commands and other general strings
+     */
+    public final static int OK = 5;
+
+    /**
+     * Abstract Commands and other general strings
+     */
+    public final static int CANCEL = 12;
+
     public static int AMS_CONFIRMATION;
-    public static int JSR177_CERTIFICATE_STORED;
-    public static int JSR177_CERTIFICATE_LABEL;
-    public static int JSR177_CONFIRM_SIGNATURE;
-    public static int JSR177_STRING_TO_SIGN;
     public static int ERROR;
-    public static int JSR177_WIM_PIN_BLOCKED;
-    public static int JSR177_WIM_PIN_NOT_VERIFIED;
-    public static int JSR177_CERTIFICATE_GENERATED;
-    public static int JSR177_CERTIFICATE_KEYUSAGE;
-    public static int JSR177_CERTIFICATE_KEYUSAGE_AUTH;
-    public static int JSR177_CERTIFICATE_KEYUSAGE_NR;
-    public static int JSR177_CERTIFICATE_ALGORITHM;
-    public static int JSR177_CERTIFICATE_KEYLENGTH;
-    public static int JSR177_CERTIFICATE_DELETED;
-    public static int JSR177_CERTIFICATE_USED;
-    public static int JSR177_SELECT_CERTIFICATE;
-    public static int JSR177_CERTIFICATES_AVAILABLE;
+
+    /**
+     * SATSA: com.sun.satsa.pki.PKIManager
+     */
+    public final static int JSR177_WIM_NOT_FOUND = 340;
+
+    /**
+     * SATSA: com.sun.satsa.pki.PKIManager
+     */
+    public final static int JSR177_CONFIRM_SIGNATURE = 341;
+
+    /**
+     * SATSA: com.sun.satsa.pki.PKIManager
+     */
+    public final static int JSR177_STRING_TO_SIGN = 342;
+
+    /**
+     * SATSA: com.sun.satsa.pki.WIMApplication
+     */
+    public final static int JSR177_WIM_PIN_BLOCKED = 343;
+
+    /**
+     * SATSA: com.sun.satsa.pki.WIMApplication
+     */
+    public final static int JSR177_WIM_PIN_NOT_VERIFIED = 344;
+
+    /**
+     * SATSA: com.sun.satsa.pki.WIMApplication
+     */
+    public final static int JSR177_CERTIFICATE_USED = 345;
+
+    /**
+     * SATSA: com.sun.satsa.pki.WIMApplication
+     */
+    public final static int JSR177_SELECT_CERTIFICATE = 346;
+
+    /**
+     * SATSA: com.sun.satsa.pki.WIMApplication
+     */
+    public final static int JSR177_CERTIFICATES_AVAILABLE = 347;
+
+    /**
+     * SATSA: com.sun.satsa.pki.WIMApplication
+     */
+    public final static int JSR177_CERTIFICATE_GENERATED = 348;
+
+    /**
+     * SATSA: com.sun.satsa.pki.WIMApplication
+     */
+    public final static int JSR177_CERTIFICATE_STORED = 349;
+
+    /**
+     * SATSA: com.sun.satsa.pki.WIMApplication
+     */
+    public final static int JSR177_CERTIFICATE_DELETED = 350;
+
+    /**
+     * SATSA: com.sun.satsa.pki.Certificate
+     */
+    public final static int JSR177_CERTIFICATE_SUBJECT = 351;
+
+    /**
+     * SATSA: com.sun.satsa.pki.Certificate
+     */
+    public final static int JSR177_CERTIFICATE_KEYUSAGE = 352;
+
+    /**
+     * SATSA: com.sun.satsa.pki.Certificate
+     */
+    public final static int JSR177_CERTIFICATE_KEYUSAGE_AUTH = 353;
+
+    /**
+     * SATSA: com.sun.satsa.pki.Certificate
+     */
+    public final static int JSR177_CERTIFICATE_KEYUSAGE_NR = 354;
+
+    /**
+     * SATSA: com.sun.satsa.pki.Certificate
+     */
+    public final static int JSR177_CERTIFICATE_ALGORITHM = 355;
+
+    /**
+     * SATSA: com.sun.satsa.pki.Certificate
+     */
+    public final static int JSR177_CERTIFICATE_KEYLENGTH = 356;
+
+    /**
+     * SATSA: com.sun.satsa.pki.Certificate
+     */
+    public final static int JSR177_CERTIFICATE_LABEL = 357;
+
+    /**
+     * SATSA: com.sun.satsa.pki.Certificate
+     */
+    public final static int JSR177_CERTIFICATE_ISSUER = 358;
+
+    /**
+     * SATSA: com.sun.satsa.pki.Certificate
+     */
+    public final static int JSR177_CERTIFICATE_SN = 359;
+
+    /**
+     * SATSA: com.sun.satsa.pki.Certificate
+     */
+    public final static int JSR177_CERTIFICATE_VALIDFROM = 360;
+
+    /**
+     * SATSA: com.sun.satsa.pki.Certificate
+     */
+    public final static int JSR177_CERTIFICATE_VALIDTILL = 361;
+
+    /**
+     * SATSA: com.sun.satsa.pki.MessageDialog
+     */
+    public final static int JSR177_PINDIALOG_TITLE_NEWPIN = 362;
+
+    /**
+     * SATSA: com.sun.satsa.pki.MessageDialog
+     */
+    public final static int JSR177_PINDIALOG_LABEL = 363;
+
+    /**
+     * SATSA: com.sun.satsa.pki.MessageDialog
+     */
+    public final static int JSR177_PINDIALOG_ENTERPIN = 364;
+
+    /**
+     * SATSA: com.sun.satsa.pki.MessageDialog
+     */
+    public final static int JSR177_PINDIALOG_CONFIRMPIN = 365;
+
+    /**
+     * SATSA: com.sun.satsa.acl.PINDialog
+     */
+    public final static int JSR177_PINDIALOG_TITLE_VERIFY = 366;
+
+    /**
+     * SATSA: com.sun.satsa.acl.PINDialog
+     */
+    public final static int JSR177_PINDIALOG_TITLE_CHANGE = 367;
+
+    /**
+     * SATSA: com.sun.satsa.acl.PINDialog
+     */
+    public final static int JSR177_PINDIALOG_TITLE_DISABLE = 368;
+
+    /**
+     * SATSA: com.sun.satsa.acl.PINDialog
+     */
+    public final static int JSR177_PINDIALOG_TITLE_ENABLE = 369;
+
+    /**
+     * SATSA: com.sun.satsa.acl.PINDialog
+     */
+    public final static int JSR177_PINDIALOG_TITLE_UNBLOCK = 370;
+
+    /**
+     * SATSA: com.sun.satsa.acl.PINDialog
+     */
+    public final static int JSR177_PINDIALOG_NEWVALUE = 371;
 }

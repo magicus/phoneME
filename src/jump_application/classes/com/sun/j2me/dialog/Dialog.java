@@ -26,41 +26,57 @@
 
 package com.sun.j2me.dialog;
 
-//import com.sun.midp.midlet.MIDletEventConsumer;
-//import com.sun.midp.lcdui.DisplayEventHandler;
-//import com.sun.midp.lcdui.DisplayEventHandlerFactory;
-//import com.sun.midp.i18n.Resource;
-//import com.sun.midp.i18n.ResourceConstants;
-//import com.sun.midp.security.SecurityToken;
-//
-//import com.sun.midp.midlet.MIDletPeer;
-//
-//import javax.microedition.lcdui.*;
+import com.sun.j2me.i18n.Resource;
+import com.sun.j2me.i18n.ResourceConstants;
+
+/** MIDP dependencies - public API */
+import javax.microedition.lcdui.Command;
+import javax.microedition.lcdui.Form;
+import javax.microedition.lcdui.Item;
+import javax.microedition.lcdui.Displayable;
+import javax.microedition.lcdui.CommandListener;
+
+/** MIDP dependencies - internal API */
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.lcdui.DisplayEventHandler;
+import com.sun.midp.lcdui.DisplayEventHandlerFactory;
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.ImplicitlyTrustedClass;
 
 /**
  * This class represents simple dialog form.
  */
-public class Dialog /*implements CommandListener, MIDletEventConsumer */{
+public class Dialog implements CommandListener {
 
     /** Answer that indicates that the dialog was cancelled. */
     public static final int CANCELLED = -1;
     /** Answer that indicates successful completion. */
     public static final int CONFIRMED = 1;
 
-    /** Caches the display manager reference. */
-//    private DisplayEventHandler displayEventHandler;
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+    */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass { };
 
-//    /** Command object for "OK" command. */
-//    private Command okCmd = new Command(Resource
-//					.getString(ResourceConstants.OK),
-//					Command.OK, 1);
-//
-//    /** Command object for "Cancel" command. */
-//    private Command cancelCmd = 
-//	new Command(Resource
-//		    .getString(ResourceConstants.CANCEL),
-//		    Command.CANCEL, 1);
+    /** This class has a different security domain than the Application */
+    static private SecurityToken token = SecurityInitializer
+        .requestToken(new SecurityTrusted());
+
+    /** Caches the display manager reference. */
+    private DisplayEventHandler displayEventHandler;
+
+    /* Command object for "OK" command. */
+    private Command okCmd = new Command(Resource
+                .getString(ResourceConstants.OK),
+                Command.OK, 1);
     
+    /* Command object for "Cancel" command. */
+    private Command cancelCmd = new Command(Resource
+    		    .getString(ResourceConstants.CANCEL),
+                Command.CANCEL, 1);
+
     /** Holds the preempt token so the form can end. */
     private Object preemptToken;
 
@@ -68,7 +84,7 @@ public class Dialog /*implements CommandListener, MIDletEventConsumer */{
     private int answer = CANCELLED;
 
     /** Form object for this dialog. */
-//    private Form form;
+    private Form form;
 
     /**
      * Construct message dialog for informational message or
@@ -77,22 +93,21 @@ public class Dialog /*implements CommandListener, MIDletEventConsumer */{
      * @param withCancel show Cancel button
      */
     public Dialog(String title, boolean withCancel) {
-
-//        form = new Form(title);
-//        form.addCommand(okCmd);
+        form = new Form(title);
+        form.addCommand(okCmd);
         if (withCancel) {
-//            form.addCommand(cancelCmd);
+            form.addCommand(cancelCmd);
         }
-//        form.setCommandListener(this);
+        form.setCommandListener(this);
     }
 
-//    /**
-//     * Adds an Item into the Form.
-//     * @param item the Item to be added
-//     */
-//    void append(Item item) {
-//        form.append(item);
-//    }
+    /**
+     * Adds an Item into the Form.
+     * @param item the Item to be added
+     */
+    void append(Item item) {
+        form.append(item);
+    }
 
     /**
      * Waits for the user's answer.
@@ -100,13 +115,11 @@ public class Dialog /*implements CommandListener, MIDletEventConsumer */{
      * @return user's answer
      * @throws InterruptedException if interrupted
      */
-    public int waitForAnswer() 
-	throws InterruptedException {
-//	if (displayEventHandler == null) {
-//	    displayEventHandler  = DisplayEventHandlerFactory
-//		.getDisplayEventHandler(token);
-//	}
-//        preemptToken = displayEventHandler.preemptDisplay(this, form, true);
+    public int waitForAnswer() throws InterruptedException {
+        if (displayEventHandler == null) {
+            displayEventHandler = DisplayEventHandlerFactory.getDisplayEventHandler(token);
+        }
+        preemptToken = displayEventHandler.preemptDisplay(form, true);
 
         synchronized (this) {
             if (preemptToken == null) {
@@ -123,55 +136,18 @@ public class Dialog /*implements CommandListener, MIDletEventConsumer */{
         }
     }
 
-//    /**
-//     * Respond to a command issued on form.
-//     * Sets the user's answer and notifies waitForAnswer and
-//     * ends the form.
-//     * @param c command activiated by the user
-//     * @param s the Displayable the command was on.
-//     */
-//    public void commandAction(Command c, Displayable s) {
-//        synchronized (this) {
-//            answer = c == okCmd ? CONFIRMED : CANCELLED;
-//            displayEventHandler.donePreempting(preemptToken);
-//            notify();
-//        }
-//    }
-
-//    /**
-//     * Start the currently suspended state. This is not apply to
-//     * this dialog.
-//     *
-//     * @param midlet midlet that the event applies to
-//     */
-//    public void startMIDlet(MIDletPeer midlet) {}
-
     /**
-     * Pause the current foreground MIDlet and return to the
-     * AMS or "selector" to possibly run another MIDlet in the
-     * currently active suite.
-     * <p>
-     * This is not apply to this dialog.
-     *
-     * MIDletEventConsumer I/F method.
+     * Respond to a command issued on form.
+     * Sets the user's answer and notifies waitForAnswer and
+     * ends the form.
+     * @param c command activiated by the user
+     * @param s the Displayable the command was on.
      */
-    public void handleMIDletPauseEvent() {}
-
-    /**
-     * Destroy the MIDlet given midlet.
-     * <p>
-     * This is not apply to this dialog.
-     *
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletDestroyEvent() {}
-
-    /**
-     * Activate a MIDlet.
-     *
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletActivateEvent() {
-	/* RFC - not needed for Dialog interaction. */
+    public void commandAction(Command c, Displayable s) {
+        synchronized (this) {
+            answer = c == okCmd ? CONFIRMED : CANCELLED;
+            displayEventHandler.donePreempting(preemptToken);
+            notify();
+        }
     }
 }
