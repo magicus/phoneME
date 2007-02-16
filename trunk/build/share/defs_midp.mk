@@ -24,9 +24,6 @@
 # information or have any questions. 
 #
 
-CDC_CUR_DIR		= $(shell pwd)
-export CDC_DIR		= $(CDC_CUR_DIR)/../../
-export CDC_DIST_DIR	= $(CDC_CUR_DIR)/$(CVM_BUILD_SUBDIR_NAME)
 CVM_MIDP_BUILDDIR	= $(CDC_DIST_DIR)/midp
 
 ifeq ($(CVM_INCLUDE_MIDP),true)
@@ -83,7 +80,6 @@ VERIFY_BUILD_ENV	?=
 USE_QT_FB		?= false
 USE_DIRECTFB		?= false
 # The MIDP makefiles should be fixed to not require CLDC_DIST_DIR for CDC build.
-export CLDC_DIST_DIR	= $(CDC_DIST_DIR)
 USE_CONFIGURATOR	?= true
 
 ifeq ($(CVM_DEBUG), true)
