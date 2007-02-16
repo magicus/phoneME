@@ -57,6 +57,18 @@ define verify_tools_output_directory
     fi
 endef
 
+# Default filter rule for source release :
+# Copy files from specified sub directories that are under svn controlled.
+# Usage: source_bundle_filter(src_dir, output_dir, sub_dir_list)
+define source_bundle_filter
+	if [ -d "$(1)/.svn" ]; then \
+		(for i in $(3); do mkdir -p $(2)/$$i; svn export --force -q $(1)/$$i $(2)/$$i; done); \
+	else \
+		mkdir -p $(2); \
+		(for i in $(3); do cp -rp $(1)/$$i $(2)/$$i; done); \
+	fi
+endef
+
 # Java pre-processor build rule
 #
 $(JPP_CLASS_FILES): $(JPP_JAVA_FILES)
@@ -82,20 +94,16 @@ $(CONFIGURATOR_MANIFEST_FILE):
 # Append tools source bundle creation to target
 source_bundle:: tools_source_bundle
 
+TOOLS_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/tools
+
 # Copy and filter tools source in SOURCE_OUTPUT_DIR/tools
 tools_source_bundle:
 	@echo " ... tools source bundle"; \
-	SB_DIR=$(SOURCE_OUTPUT_DIR)/tools; \
 	if [ -z "$(SOURCE_OUTPUT_DIR)" ]; then \
 		echo "ERROR: SOURCE_OUTPUT_DIR must be set"; \
 		exit -1; \
-	fi; \
-	mkdir -p $$SB_DIR; \
-	if [ -d "$(TOOLS_DIR)/.svn" ]; then \
-		svn export --force -q "$(TOOLS_DIR)" $$SB_DIR; \
-	else \
-		cp -rp "$(TOOLS_DIR)/." $$SB_DIR; \
-	fi
+	fi;
+	@$(call source_bundle_filter,$(TOOLS_DIR),$(TOOLS_SOURCE_OUTPUT_DIR),.)
 
 clean::
 	@rm -rf $(TOOLS_OUTPUT_DIR)
