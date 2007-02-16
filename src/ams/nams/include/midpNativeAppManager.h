@@ -61,10 +61,10 @@
 #define MIDP_NAMS_EVENT_STATE_CHANGED 1
 
 /**
- * @def MIDP_NAMS_EVENT_OPERATION_COMPLETE 2
+ * @def MIDP_NAMS_EVENT_OPERATION_COMPLETED 2
  * previously initiated asynchronous operation has completed
  */
-#define MIDP_NAMS_EVENT_OPERATION_COMPLETE 2
+#define MIDP_NAMS_EVENT_OPERATION_COMPLETED 2
 
 /**
  * @def MIDP_NAMS_EVENT_ERROR 3
@@ -328,9 +328,9 @@ MIDPError midp_midlet_set_foreground(jint appId);
  *
  * @return error code: ALL_OK if successful,
  *                     NOT_FOUND if the application was not found,
- *                     BAD_PARAMS if both pRuntimeInfo and pSuiteData are null
+ *                     BAD_PARAMS if pSuiteData is null
  */
-MIDPError midp_midlet_get_suite_info(jint appId);
+MIDPError midp_midlet_get_suite_info(jint appId, MidletSuiteData* pSuiteData);
 
 /**
  * Gets runtime information about the specified MIDlet.
@@ -344,7 +344,7 @@ MIDPError midp_midlet_get_suite_info(jint appId);
  *                     NOT_FOUND if the application was not found,
  *                     BAD_PARAMS if pRuntimeInfo is null
  */
-MIDPError midp_midlet_get_info(jint appId);
+MIDPError midp_midlet_get_runtime_info(jint appId);
 
 /* ------------------- API to control listeners ------------------- */
 

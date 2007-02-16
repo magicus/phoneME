@@ -230,10 +230,11 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
                 state.arg1 = MIDletSuiteUtils.arg1ForNextMidlet;
                 state.arg2 = MIDletSuiteUtils.arg2ForNextMidlet;
 
-                state.memoryReserved = MIDletSuiteUtils.memoryReserved;
-                state.memoryTotal    = MIDletSuiteUtils.memoryTotal;
-                state.priority       = MIDletSuiteUtils.priority;
-                state.profileName    = MIDletSuiteUtils.profileName;
+                state.runtimeInfo.memoryReserved =
+                    MIDletSuiteUtils.memoryReserved;
+                state.runtimeInfo.memoryTotal = MIDletSuiteUtils.memoryTotal;
+                state.runtimeInfo.priority    = MIDletSuiteUtils.priority;
+                state.runtimeInfo.profileName = MIDletSuiteUtils.profileName;
 
             } else if (state.lastSuiteId !=
                     MIDletSuite.UNUSED_SUITE_ID) {
