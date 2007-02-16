@@ -1069,9 +1069,13 @@ CVM_TEST_CLASSESDIR      = $(CVM_BUILD_TOP)/testclasses
 CVM_DEMO_CLASSESDIR	 = $(CVM_BUILD_TOP)/democlasses
 CVM_SHAREROOT  		 = $(CVM_TOP)/src/share
 
-#
+# Full path for current build directory
+CDC_CUR_DIR	:= $(shell pwd)
+# Full path for the cdc component directory
+export CDC_DIR	:= $(shell cd $(CDC_CUR_DIR)/../../; echo `pwd`)
+# directory where cdc build is located.
+export CDC_DIST_DIR	= $(CDC_CUR_DIR)/$(CVM_BUILD_SUBDIR_NAME)
 # Directory where javadocs, source bundles, and binary bundle get installed.
-#
 INSTALLDIR	= $(CVM_TOP)/install
 
 #

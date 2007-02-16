@@ -24,8 +24,6 @@
 
 # Is there a better, centralized location to put the ant tool location?
 CVM_ANT 	        ?= ant
-CDC_CUR_DIR		= $(shell pwd)
-CDC_DIST_DIR     	= $(CDC_CUR_DIR)/$(CVM_BUILD_SUBDIR_NAME)
 CVM_JUMP_BUILDDIR	= $(CDC_DIST_DIR)/jump
 
 ifeq ($(CVM_INCLUDE_JUMP),true)
