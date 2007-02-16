@@ -67,15 +67,9 @@ SUBSYSTEM_AMS_EXTRA_INCLUDES += \
 
 # Native files for the ( example ) module
 #
-SUBSYSTEM_AMS_NATIVE_FILES += \
-	commandLineUtil.c \
-	commandLineUtil_md.c \
-	findMidlet.c
-
-AMS_RUNNAMS_NATIVE_FILES = \
-	runNams.c \
-	runNams_md.c
-
+AMS_RUNNAMS_NATIVE_FILES += \
+	runNams.c
+	
 AMS_REMOVEMIDLET_NATIVE_FILES = \
 	removeMidlet.c \
 	nams_command_stub.c
@@ -94,6 +88,9 @@ AMS_FILEINSTALLER_NATIVE_FILES = \
 # I3test files
 #
 ifeq ($(USE_I3_TEST), true)
+
+AMS_RUNNAMS_NATIVE_FILES += \
+	runNams_md.c
 
 SUBSYSTEM_AMS_I3TEST_JAVA_FILES += \
 	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/events/EventCopyStorage.java \
