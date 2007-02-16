@@ -175,7 +175,12 @@ endif
 
 ifdef INCLUDE_SHELL_SCRIPTS
 SUBSYSTEM_AMS_EXECUTABLES += \
-	$(BINDIR)/i3test$(g)$(BAT) \
 	$(BINDIR)/autotest$(g)$(BAT) \
 	$(BINDIR)/installMidlet$(g)$(BAT)
+
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_AMS_EXECUTABLES += \
+	$(BINDIR)/i3test$(g)$(BAT)
+endif
+	
 endif
