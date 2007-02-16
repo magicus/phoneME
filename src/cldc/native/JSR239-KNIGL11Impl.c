@@ -2872,7 +2872,7 @@ Java_com_sun_jsr239_GL10Impl__1glQueryMatrixxOES() {
     KNI_DeclareHandle(exponentHandle);
 
     KNI_GetParameterAsObject(1, mantissaHandle);
-    KNI_GetParameterAsObject(2, exponentHandle);
+    KNI_GetParameterAsObject(3, exponentHandle);
 
 #ifdef GL_OES_query_matrix
     glQueryMatrixxOES(&mantissa[0], &exponent[0]);
