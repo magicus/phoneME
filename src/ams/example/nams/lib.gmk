@@ -59,7 +59,7 @@ else
     vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/default/native
 endif
 endif
-	    
+
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
 	-I$(SUBSYSTEM_AMS_DIR)/example/ams_common/include \
 	-I$(SUBSYSTEM_AMS_DIR)/example/ams_common_port/include \
@@ -88,6 +88,8 @@ AMS_FILEINSTALLER_NATIVE_FILES = \
 # I3test files
 #
 ifeq ($(USE_I3_TEST), true)
+
+vpath % $(NAMS_EXAMPLES_DIR)/i3test/native/$(TARGET_OS)
 
 AMS_RUNNAMS_NATIVE_FILES += \
 	runNams_md.c

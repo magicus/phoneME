@@ -106,6 +106,7 @@ MIDPError midp_system_start(void) {
 
     vmStatus = midpRunMainClass(NULL, APP_MANAGER_PEER, 0, NULL);
 
+    eventData.event  = MIDP_NAMS_EVENT_STATE_CHANGED;
     eventData.state = MIDP_SYSTEM_STATE_STOPPED;
     nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
 
@@ -377,6 +378,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifySystemStartError(void) {
     NamsEventData eventData;
     memset((char*)&eventData, 0, sizeof(NamsEventData));
 
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;
     eventData.state = MIDP_SYSTEM_STATE_ERROR;
     nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
 
@@ -391,6 +393,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifySystemStart(void) {
     NamsEventData eventData;
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.state = MIDP_SYSTEM_STATE_STARTED;
     nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
 
@@ -405,6 +408,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifySystemSuspended(void) {
     NamsEventData eventData;
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.state = MIDP_SYSTEM_STATE_SUSPENDED;
     nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
 
@@ -426,6 +430,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletStartError(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.appId = externalAppId;
     eventData.state = MIDP_MIDLET_STATE_ERROR;
     eventData.reason = error;
@@ -450,6 +455,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletCreated(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.appId = externalAppId;
     eventData.state = MIDP_MIDLET_STATE_PAUSED;
     msd.suiteId = UNUSED_SUITE_ID;
@@ -472,6 +478,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletActive(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.appId = externalAppId;
     eventData.state = MIDP_MIDLET_STATE_STARTED;
     msd.suiteId = UNUSED_SUITE_ID;
@@ -495,6 +502,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletPaused(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.appId = externalAppId;
     eventData.state = MIDP_MIDLET_STATE_PAUSED;
     msd.suiteId = UNUSED_SUITE_ID;
@@ -518,6 +526,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletDestroyed(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;
     eventData.appId = externalAppId;
     eventData.state = MIDP_MIDLET_STATE_DESTROYED;
     eventData.reason = MIDP_REASON_EXIT;
@@ -543,6 +552,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifySuiteTerminated(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.state = MIDP_MIDLET_STATE_DESTROYED;
     eventData.reason = MIDP_REASON_TERMINATED;
     msd.suiteId = suiteId;
