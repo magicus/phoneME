@@ -344,19 +344,18 @@ $(JSR_135_NATIVE_LIB): $(JAVACALL_LIBRARY) $(JSR_135_NATIVE_OBJS) $(JSROP_LINKLI
 	$(SO_LINK_CMD)
 
 # Append JSR 135 source bundle creation to target
-ifeq ($(TARGET_VM),cldc_vm)
-
-EXTRA_INCLUDES		+= $(SUBSYSTEM_JSR_135_EXTRA_INCLUDES)
-
 source_bundle:: jsr_135_source_bundle
 
 # Create JSR 135 source in subdir 'jsr135/'
 JSR_135_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr135
 
 # Copy and filter JSR 135 source in JSR_135_SOURCE_OUTPUT_DIR
-jsr_135_source_bundle: JSR_135_DIR SOURCE_OUTPUT_DIR
+jsr_135_source_bundle: $(JSR_135_DIR)
 	@echo " ... JSR 135 source bundle" $(LOG)
-	@$(call re_src_filter,$(JSR_135_DIR),$(JSR_135_SOURCE_OUTPUT_DIR),src)
+	@$(call source_bundle_filter,$(JSR_135_DIR),$(JSR_135_SOURCE_OUTPUT_DIR),src build)
+
+ifeq ($(TARGET_VM),cldc_vm)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_JSR_135_EXTRA_INCLUDES)
 else
 # jump version
 SUBSYSTEM_JSR234_JAVA_FILES = $(SUBSYSTEM_JSR_135_JAVA_FILES)
