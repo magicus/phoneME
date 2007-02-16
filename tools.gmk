@@ -57,6 +57,18 @@ define verify_tools_output_directory
     fi
 endef
 
+# Default filter rule for source release :
+# Copy files from specified sub directories that are under svn controlled.
+# Usage: source_bundle_filter(src_dir, output_dir, sub_dir_list)
+define source_bundle_filter
+	if [ -d "$(1)/.svn" ]; then \
+		(for i in $(3); do mkdir -p $(2)/$$i; svn export --force -q $(1)/$$i $(2)/$$i; done); \
+	else \
+		mkdir -p $(2); \
+		(for i in $(3); do cp -rp $(1)/$$i $(2)/$$i; done); \
+	fi
+endef
+
 # Java pre-processor build rule
 #
 $(JPP_CLASS_FILES): $(JPP_JAVA_FILES)
