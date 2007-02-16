@@ -597,7 +597,6 @@ void Scheduler::wake_up_terminated_sleepers(int task_id JVM_TRAPS) {
     // Is this being called too often??
     check_blocked_threads(0);
   }
-
   UsingFastOops fast_oops;
   // Wake up all sleeping threads that run on behalf of the terminated task.
   Oop::Fast termination_signal = Task::get_termination_object();
@@ -629,14 +628,23 @@ void Scheduler::wake_up_terminated_sleepers(int task_id JVM_TRAPS) {
     }
     this_waiting = next_waiting;
   }
-
   if (_async_count > 0) {
     wake_up_async_threads(task_id);
   }
-
   if (Universe::suspend_task_queue()->not_null()) {
     resume_threads(task_id);
   }
+
+#if ENABLE_JAVA_DEBUGGER
+  Thread::Fast thread = Universe::global_threadlist();
+  while (thread.not_null()) {
+    if (thread().task_id() == task_id) {      
+      thread().set_suspend_count(0);
+      thread().clear_dbg_suspended();      
+    }
+    thread = thread().global_next();
+  }
+#endif
 }
 #endif
 
