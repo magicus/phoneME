@@ -73,7 +73,7 @@ information or have any questions.
     </target>
     
     <target name="filter-sources">
-        <property name="includes" value="src/**/*.java, build/**, doc/**"/>
+        <property name="includes" value="src/**, build/**, doc/**"/>
         <property name="excludes" value="**/.svn/**"/>
     </target>
     
