@@ -173,6 +173,11 @@ final class AutoMIDletStateController
 
                 }
 
+                String details = info.startErrorDetails;
+                if (details != null) {
+                    errorMsg += " (" + details + ")";
+                }
+
                 throw new RuntimeException(errorMsg);
             } else {
                 midlet = new AutoMIDletImpl(midletDescriptor);
@@ -291,10 +296,11 @@ final class AutoMIDletStateController
      * @param externalAppID ID assigned by the external application manager
      * @param suiteID Suite ID of the MIDlet
      * @param className Class name of the MIDlet
-     * @param error start error code
+     * @param errorCode start error code
+     * @param errorDetails start error details
      */
     public void midletStartError(int externalAppID, int suiteID,
-            String className, int error) {
+            String className, int errorCode, String errorDetails) {
 
         synchronized (midletsInfo) {
             AutoMIDletInfo info =
@@ -303,7 +309,8 @@ final class AutoMIDletStateController
             if (info != null) {
                 // set error flag and notify waiter
                 info.startError = true;
-                info.startErrorCode = error;
+                info.startErrorCode = errorCode;
+                info.startErrorDetails = errorDetails;
                 midletsInfo.notify();
             }
         }

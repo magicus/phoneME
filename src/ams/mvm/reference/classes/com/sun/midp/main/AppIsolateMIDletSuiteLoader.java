@@ -121,7 +121,7 @@ public class AppIsolateMIDletSuiteLoader extends CldcMIDletSuiteLoader {
     protected void reportError(int errorCode, String details) {
         midletControllerEventProducer.sendMIDletStartErrorEvent(
             suiteId, midletClassName, externalAppId,
-            errorCode);
+            errorCode, details);
     }
 
     /** Exits suite loader Isolate with proper exit code. */

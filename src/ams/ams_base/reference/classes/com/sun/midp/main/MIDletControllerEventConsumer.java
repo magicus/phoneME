@@ -63,13 +63,15 @@ public interface MIDletControllerEventConsumer {
      * @param midletClassName Class name of the MIDlet
      * @param midletExternalAppId ID of given by an external application
      *                            manager
-     * @param error start error code
+     * @param errorCode start error code
+     * @param errorDetails start error details
      */
     public void handleMIDletStartErrorEvent(
         int midletSuiteId,
         String midletClassName,
         int midletExternalAppId,
-        int error);
+        int errorCode,
+        String errorDetails);
 
     /**
      * Processes MIDLET_CREATED_NOTIFICATION event,
