@@ -58,10 +58,6 @@ ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
 vpath % $(JSR_177_DIR)/src/cldc_application/protocol/apdu/native
 endif
 
-MODULE_SATSA_PKI_JAVA_FILES += \
-    $(JSR_177_DIR)/src/cldc_application/pki/classes/com/sun/satsa/pki/Dialog.java \
-    $(JSR_177_DIR)/src/cldc_application/pki/classes/com/sun/satsa/pki/MessageDialog.java
-
 MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/security/Signature.java \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/security/Key.java \

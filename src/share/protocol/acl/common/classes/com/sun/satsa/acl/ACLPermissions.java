@@ -158,16 +158,13 @@ public class ACLPermissions {
      * byte array(s) with PIN value(s).
      */
     public Object[] enterPIN(int action) {
-
         PINEntryDialog dialog;
+
         try {
-            dialog = new PINEntryDialog(action, attr1,
-                                        attr2);
+            dialog = new PINEntryDialog(action, attr1, attr2);
         } catch (InterruptedException e) {
             throw new SecurityException("Interrupted");
         }
-
-        dialog.waitForAnswer();
 
         return dialog.getPINs();
     }
