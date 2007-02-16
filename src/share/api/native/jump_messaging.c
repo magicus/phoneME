@@ -328,6 +328,18 @@ jumpMessageAddByte(JUMPOutgoingMessage m, int8 value)
 }
 
 void
+jumpMessageAddBytesFrom(JUMPOutgoingMessage m, int8* values, int length)
+{
+    assert(jumpMessagingInitialized != 0);
+    /* FIXME: capacity check! */
+    if ((values == NULL) || (length == 0)) {
+	return;
+    }
+    memcpy(m->dataPtr, values, length);
+    m->dataPtr += length;
+}
+
+void
 jumpMessageAddByteArray(JUMPOutgoingMessage m, int8* values, int length)
 {
     assert(jumpMessagingInitialized != 0);
@@ -359,6 +371,50 @@ jumpMessageAddInt(JUMPOutgoingMessage m, int32 value)
 	   m->dataPtr[3]);
 #endif
     m->dataPtr += 4;
+}
+
+void
+jumpMessageAddShort(JUMPOutgoingMessage m, int16 value) {
+    uint16 v;
+    assert(jumpMessagingInitialized != 0);
+    v = (uint16)value;
+    m->dataPtr[0] = (v >>  8) & 0xff;
+    m->dataPtr[1] = (v >>  0) & 0xff;
+#if 0
+    printf("Encoded %d as [%d,%d]\n", value,
+	   m->dataPtr[0],
+	   m->dataPtr[1]);
+#endif
+    m->dataPtr += 2;
+}
+
+void
+jumpMessageAddLong(JUMPOutgoingMessage m, int64 value)
+{
+    uint64 v;
+    assert(jumpMessagingInitialized != 0);
+    v = (uint64)value;
+    m->dataPtr[0] = (v >> 56) & 0xff;
+    m->dataPtr[1] = (v >> 48) & 0xff;
+    m->dataPtr[2] = (v >> 40) & 0xff;
+    m->dataPtr[3] = (v >> 32) & 0xff;
+    m->dataPtr[4] = (v >> 24) & 0xff;
+    m->dataPtr[5] = (v >> 16) & 0xff;
+    m->dataPtr[6] = (v >>  8) & 0xff;
+    m->dataPtr[7] = (v >>  0) & 0xff;
+#if 0
+    printf("Encoded %d%d as [%d,%d,%d,%d,%d,%d,%d,%d]\n", 
+       value/(1<<32), value%(1<<32),
+	   m->dataPtr[0],
+	   m->dataPtr[1],
+	   m->dataPtr[2],
+	   m->dataPtr[3],
+	   m->dataPtr[4],
+	   m->dataPtr[5],
+	   m->dataPtr[6],
+	   m->dataPtr[7]);
+#endif
+    m->dataPtr += 8;
 }
 
 void
@@ -410,6 +466,14 @@ jumpMessageGetByte(JUMPMessageReader* r)
 }
 
 int8*
+jumpMessageGetBytesInto(JUMPMessageReader* r, int8* buffer, uint32 length) {
+    memcpy(buffer, r->ptr, length);
+    r->ptr += length;
+    
+    return buffer;
+}
+
+int8*
 jumpMessageGetByteArray(JUMPMessageReader* r, uint32* lengthPtr)
 {
     int8* bytearray;
@@ -441,6 +505,34 @@ jumpMessageGetInt(JUMPMessageReader* r)
 	  (uint8)r->ptr[3]);
     assert(jumpMessagingInitialized != 0);
     r->ptr += 4;
+    return i;
+}
+
+int16
+jumpMessageGetShort(JUMPMessageReader* r)
+{
+    int16 i = (int16)
+	(((uint8)r->ptr[0] << 8) | 
+	  (uint8)r->ptr[1]);
+    assert(jumpMessagingInitialized != 0);
+    r->ptr += 2;
+    return i;
+}
+
+int64
+jumpMessageGetLong(JUMPMessageReader* r)
+{
+    int64 i = (int64)
+	(((uint64)r->ptr[0] << 56) | 
+	 ((uint64)r->ptr[1] << 48) | 
+	 ((uint64)r->ptr[2] << 40) | 
+	 ((uint64)r->ptr[3] << 32) |
+     ((uint64)r->ptr[4] << 24) | 
+	 ((uint64)r->ptr[5] << 16) | 
+	 ((uint64)r->ptr[6] <<  8) | 
+	  (uint64)r->ptr[7]);
+    assert(jumpMessagingInitialized != 0);
+    r->ptr += 8;
     return i;
 }
 
@@ -484,6 +576,12 @@ jumpMessageGetType(JUMPMessage m)
     return m->header.type;
 }
 
+JUMPAddress*
+jumpMessageGetSender(JUMPMessage m) {
+    assert(jumpMessagingInitialized != 0);
+    return &m->header.sender.address;
+}
+
 static void
 sendAsyncOfType(JUMPAddress target, JUMPOutgoingMessage m, 
 		JUMPPlatformCString type,
@@ -496,10 +594,12 @@ sendAsyncOfType(JUMPAddress target, JUMPOutgoingMessage m,
     targetMq = jumpMessageQueueOpen(targetpid, type);
     if (targetMq == NULL) {
 	/* FIXME: set error code */
+        *code = JUMP_TARGET_NONEXISTENT;
 	return;
     }
     /* FIXME: Error check and propagate */
     jumpMessageQueueSend(targetMq, m->data, m->dataBufferLen);
+    *code = 0;
 }
 
 void
