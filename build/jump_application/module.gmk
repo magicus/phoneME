@@ -145,3 +145,15 @@ printconfig::
 	@echo "ABSTRACTIONS_DIR      = $(ABSTRACTIONS_DIR)"
 	@echo "ABSTRACTIONS_INCLUDES = $(ABSTRACTIONS_INCLUDES)"
 
+# Append abstractions source bundle creation to target
+source_bundle:: abstractions_source_bundle
+
+# Create abstractions source in subdir
+ABSTRACTIONS_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/abstractions
+
+# Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
+abstractions_source_bundle: $(ABSTRACTIONS_DIR)
+	@echo " ... abstractions source bundle" $(LOG)
+	@$(call source_bundle_filter,$(ABSTRACTIONS_DIR),$(ABSTRACTIONS_SOURCE_OUTPUT_DIR),src build)
+
+
