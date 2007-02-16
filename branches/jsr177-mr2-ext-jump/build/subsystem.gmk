@@ -59,7 +59,7 @@ endif
 
 # APDUManager={carddevice|simple}
 ifeq ($(JSR_177_APDU_MANAGER),)
-JSR_177_APDU_MANAGER=simple
+JSR_177_APDU_MANAGER=carddevice
 endif
 
 # CardDevice={simulator|platformcarddevice}
