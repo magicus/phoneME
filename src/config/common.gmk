@@ -58,7 +58,6 @@ MODULE_JSR_234_JAVA_FILES += \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/VideoRenderer.java \
 
 
-ifeq ($(JSR_234_USE_QSOUND), true)
 MODULE_JSR_234_JAVA_FILES += \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundConnectable.java \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundGlobalEffectModule.java \
@@ -66,16 +65,13 @@ MODULE_JSR_234_JAVA_FILES += \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundRenderThread.java \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundSynthPerformance.java \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundTonePlayer.java 
-endif
 
 vpath % $(MIDP_ABB_DIR)/src/native
 vpath % $(MIDP_ABB_DIR)/src/native/jpeg
 vpath % $(MIDP_ABB_DIR)/src/native/png
 
-ifeq ($(JSR_234_USE_QSOUND), true)
 MODULE_JSR_234_NATIVE_FILES += \
     qsoundnative.c 
-endif
 
 MODULE_JSR_234_EXTRA_INCLUDES += \
     -I$(MIDP_ABB_DIR)/src/native \

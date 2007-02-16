@@ -42,7 +42,6 @@ include $(MIDP_ABB_DIR)/src/config/common.gmk
 MODULE_JSR_234_JAVA_FILES += \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/ABBBasicPlayer.java
 
-ifeq ($(JSR_234_USE_QSOUND), true)
 MODULE_JSR_234_JAVA_FILES += \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/CougarQSoundAbbConfig.java \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundABBToneSequencePlayer.java \
@@ -50,4 +49,3 @@ MODULE_JSR_234_JAVA_FILES += \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundABBVolumeCtrl.java \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundMIDIPlayBase.java \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundABBMIDIPlayControl.java
-endif
