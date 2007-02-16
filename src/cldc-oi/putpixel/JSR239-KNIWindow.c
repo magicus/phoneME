@@ -27,6 +27,7 @@
 #include <string.h>
 #include <gxj_putpixel.h>
 #include <midp_constants_data.h>
+#include <lcdlf_export.h>
 
 #undef DEBUG
 
@@ -135,7 +136,8 @@ JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
         s = (void*)src->screen_buffer;
         d = (void*)getGraphicsBuffer(graphicsHandle);
 
-        if ((src->width > CHAM_WIDTH) || (src->height > CHAM_HEIGHT) ||
+        if ((src->width  > lcdlf_get_screen_width()) || 
+            (src->height > lcdlf_get_screen_height())||
             (sizeof(gxj_pixel_type) != 2)) {
 #ifdef DEBUG
         printf("JSR239: offscreen buffer data is incorrect.\n");
