@@ -480,7 +480,9 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyOperationCompleted(void) {
 
     if (retCode == 0) {
         eventData.state = ALL_OK;
-        eventData.pRuntimeInfo = &g_runtimeInfoBuf;
+        if (eventData.reason == NATIVE_MIDLET_GETINFO_REQUEST) {
+            eventData.pRuntimeInfo = &g_runtimeInfoBuf;
+        }
     } else {
         eventData.state = BAD_PARAMS;
     }
