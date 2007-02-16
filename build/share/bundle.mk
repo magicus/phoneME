@@ -282,7 +282,7 @@ endif
 ifeq ($(INCLUDE_DUALSTACK), true)
 
 BUNDLE_INCLUDE_LIST += \
-	src/share/lib/MIDP*
+	src/share/lib/dualstack
 
 BUILDDIR_PATTERNS += \
        *_midp.mk

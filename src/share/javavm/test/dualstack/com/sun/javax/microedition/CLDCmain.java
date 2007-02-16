@@ -162,13 +162,10 @@ public class CLDCmain{
 	
 	MIDPImplementationClassLoader midpImpl = 
 		MIDPConfig.newMIDPImplementationClassLoader(midImplPath);
-	MemberFilter mf =
-		MIDPConfig.newMemberFilter();
 	MIDletClassLoader midpSuiteLoader;
 	Class testClass;
 
-	midpSuiteLoader = MIDPConfig.newMIDletClassLoader(suitePath, mf,
-							  midpImpl);
+        midpSuiteLoader = MIDPConfig.newMIDletClassLoader(suitePath);
 	if (midpSuiteLoader == null){
 	    System.err.println("Could not instantiate MIDletClassLoader");
 	    return;

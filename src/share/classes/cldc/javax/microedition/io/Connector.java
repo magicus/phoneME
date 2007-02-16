@@ -142,34 +142,34 @@ public class Connector {
      */
     private static String classRoot;
 
+    private static InternalConnector ic = null;
+
     /**
      * Class initializer.
      */
     static {
-        
-        String platformTemp = null;
-        
+        String profileTemp = null;
         try {
-
-            /* Find out if we are running on a J2ME system */
-            if (System.getProperty("microedition.configuration") != null) {
-                j2me = true;
+            /* Find out if we are running on a MIDP system */
+            profileTemp = System.getProperty("microedition.profiles") ;
+            if (profileTemp != null) {
+                if (profileTemp.indexOf("MIDP") != -1) {
+                    ic = (InternalConnector)(Class.forName("sun.misc.MIDPInternalConnectorImpl")).newInstance();
+                }
+            } 
+        } catch (InstantiationException x) {
+            //throw new IOException(x.toString());
+        } catch (IllegalAccessException x) {
+            //throw new IOException(x.toString());
+        } catch (ClassCastException x) {
+            //throw new IOException(x.toString());
+        } catch (ClassNotFoundException x) {
+            //throw new IOException(x.toString());
+        }  finally {
+            if (ic == null) {
+                ic = new InternalConnectorImpl();
             }
-
-            /* Set up the library class root path */
-            /* This may vary from one CLDC implementation to another */
-            classRoot = System.getProperty("javax.microedition.io.Connector.protocolpath");
-            if (classRoot == null) {
-                    classRoot = "com.sun.cdc.io";
-            }
-
-        } catch (java.security.AccessControlException e) {
-            // If running with SecurityManager, set these defaults
-            j2me = true;
-            platform = DEFAULT_PLATFORM;
-            classRoot = "com.sun.cdc.io";
-        }
-
+        } 
     }
 
     /**
@@ -240,49 +240,7 @@ public class Connector {
         if (mode != READ && mode != WRITE && mode != READ_WRITE) {
           throw new IllegalArgumentException("illegal access mode: "+mode);
         }
-
-        /* If the "microedition.platform" property is defined,    */
-        /* use that as the platform name for opening a connection */
-        if (platform != null) {
-            try {
-                return openPrim(name, mode, timeouts, platform);
-            } catch (ClassNotFoundException x) {
-            }
-        }
-
-        /* If the "microedition.platform" property is not defined, */
-        /* use one of the default values */
-        try {
-            return openPrim(name, mode, timeouts, j2me ? "j2me" : "j2se");
-        } catch (ClassNotFoundException x) {
-        }
-
-        throw new ConnectionNotFoundException(
-                  "The requested protocol does not exist " + name);
-    }
-
-    /**
-     * Create and open a Connection.
-     *
-     * @param string           The URL for the connection
-     * @param mode             The access mode
-     * @param timeouts         A flag to indicate that the caller
-     *                         wants timeout exceptions
-     * @param platform         Platform name
-     * @return                 A new Connection object
-     *
-     * @exception ClassNotFoundException  If the protocol cannot be found.
-     * @exception IllegalArgumentException If a parameter is invalid.
-     * @exception ConnectionNotFoundException If the target of the
-     *   name cannot be found, or if the requested protocol type
-     *   is not supported.
-     * @exception IOException If some other kind of I/O error occurs.
-     * @exception IllegalArgumentException If a parameter is invalid.
-     */
-    private static Connection openPrim(String name, int mode,
-        boolean timeouts, String platform)
-        throws IOException, ClassNotFoundException {
-
+        
         /* Test for null argument */
         if (name == null) {
             throw new IllegalArgumentException("Null URL");
@@ -290,48 +248,7 @@ public class Connector {
 
         /* Look for : as in "http:", "file:", or whatever */
         int colon = name.indexOf(':');
-
-        /* Test for null argument */
-        if (colon < 1) {
-            throw new IllegalArgumentException("no ':' in URL");
-        }
-
-        try {
-            String protocol;
-
-            /* Strip off the protocol name */
-            protocol = name.substring(0, colon);
-
-            /* Strip off the rest of the string */
-            name = name.substring(colon+1);
-
-            /* Convert all the '-' characters in the protocol */
-            /* name to '_' characters (dashes are not allowed */
-            /* in class names).  This operation creates garbage */
-            /* only if the protocol name actually contains dashes */
-            protocol = protocol.replace('-', '_');
-
-            /* Use the platform and protocol names to look up */
-            /* a class to implement the connection */
-            Class clazz =
-                Class.forName(classRoot +
-                              "." + platform +
-                              "." + protocol + ".Protocol");
-
-            /* Construct a new instance of the protocol */
-            ConnectionBaseInterface uc =
-                (ConnectionBaseInterface)clazz.newInstance();
-
-            /* Open the connection, and return it */
-            return uc.openPrim(name, mode, timeouts);
-
-        } catch (InstantiationException x) {
-            throw new IOException(x.toString());
-        } catch (IllegalAccessException x) {
-            throw new IOException(x.toString());
-        } catch (ClassCastException x) {
-            throw new IOException(x.toString());
-        }
+        return ic.open(name, mode, timeouts);
     }
 
     /**

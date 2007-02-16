@@ -42,11 +42,8 @@ endif
 
 #
 # Target tools directory for compiling both PCSL and MIDP.
-# GNU_TOOLS_DIR is set by target specific defs_midp.mk.
 #
 ifeq ($(CVM_USE_NATIVE_TOOLS), false)
-GNU_TOOLS_DIR		?=$(CVM_TARGET_TOOLS_DIR)/../$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)-$(TARGET_OS)
-export GNU_TOOLS_DIR
 GNU_TOOLS_BINDIR	?= $(CVM_TARGET_TOOLS_PREFIX)
 endif
 
@@ -88,9 +85,6 @@ USE_DIRECTFB		?= false
 # The MIDP makefiles should be fixed to not require CLDC_DIST_DIR for CDC build.
 export CLDC_DIST_DIR	= $(CDC_DIST_DIR)
 USE_CONFIGURATOR	?= true
-ifeq ($(CVM_TERSEOUTPUT), false)
-USE_VERBOSE_MAKE	?= true
-endif
 
 ifeq ($(CVM_DEBUG), true)
 USE_DEBUG		= true
@@ -116,14 +110,6 @@ CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSESZIP)
 
 # Add MIDP CNI classes to CVM_CNI_CLASSES
 CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
-
-#
-# JavaAPILister related defs for generating dualstack
-# filter
-#
-ifneq ($(CVM_MIDPFILTERINPUT),)
-CVM_JCC_INPUT	+= -listapi:include=java/*,include=javax/*,input=$(CVM_MIDPFILTERINPUT),mout=$(CVM_MIDPFILTERCONFIG),cout=$(CVM_MIDPCLASSLIST)
-endif
 
 endif
 

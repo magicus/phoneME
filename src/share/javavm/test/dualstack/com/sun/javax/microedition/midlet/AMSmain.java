@@ -52,7 +52,7 @@ filenameToURL(String filename){
     } catch (IOException e ){
 	throw new Error("IOException");
     }
-    return "file://".concat(longname);
+    return longname;
 }
 
 /*

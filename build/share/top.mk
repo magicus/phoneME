@@ -129,8 +129,10 @@
 #     Include debugging and symbol information for C code even if the build is
 #     optimized.
 #
-# CVM_TERSEOUTPUT default: true
-#     Avoid printing detailed messages that show each build step.
+# USE_VERBOSE_MAKE default: false
+#     Avoid printing detailed messages that show each build step. Has the
+#     opposite meaning as CVM_TERSEOUTPUT, which can be used instead, but
+#     is now deprecated..
 #
 # CVM_TRACE default: $(CVM_DEBUG)
 #     Include support for tracing VM events to stderr. The events that are
@@ -361,7 +363,7 @@ ifeq ($(CVM_INCLUDE_MIDP),true)
    endif
 endif # CVM_INCLUDE_MIDP
 
-# need setup "all" rule before pulling in any JSR makefiles with rules
+# The "all" rule below must come before pulling in any makefiles with rules
 all:: printconfig checkconfig $(J2ME_CLASSLIB) tools
 
 # Include TARGET top.mk
@@ -372,11 +374,10 @@ include  ../share/defs.mk
 -include ../share/defs_midp.mk
 -include ../share/defs_jump.mk
 include ../share/defs_$(J2ME_CLASSLIB).mk
+-include ../share/defs_op.mk
 ifneq ($(OPT_PKGS_DEFS_FILES),)
 include $(OPT_PKGS_DEFS_FILES)
 endif
-
--include ../share/top_op.mk
 
 # Include all rule makefiles. Since variables in rules are expanded
 # eagerly, they must be included after defs makefiles.

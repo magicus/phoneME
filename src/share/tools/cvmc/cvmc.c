@@ -39,12 +39,12 @@
 #include <jump_messaging.h>
 #include "porting/JUMPProcess.h"
 
-#define JPORT_NUM 7777
+#define TIMEOUT 5000
 
 static void
 usage(const char* execName) 
 {
-    fprintf(stderr, "Usage: %s -target <targetpid> [-type <messagetype>] [-help] [-childrenexited] [-killall] [-killserver] [-warmup [-initClasses <classesList>] [-precompileMethods <methodsList>]] [-command <launchCommand>] [-testingmode <testprefix>] [... cvm options ...]\n",
+    fprintf(stderr, "Usage: %s -target <targetpid> [-type <messagetype>] [-help] [-childrenexited] [-killall] [-killserver] [-warmup [-initClasses <classesList>] [-precompileMethods <methodsList>]] [-command <launchCommand>] [-testingmode <testprefix>] [-setenv <Key=value>]  [... cvm options ...]\n",
 	    execName);
     jumpMessageShutdown();
     exit(1);
@@ -164,6 +164,12 @@ main(int argc, const char** argv)
 		usage(execName);
 	    }
 	    methodsList = argv[j++];
+	} else if (!strcmp(argv[j], "-setenv")) {
+	    j++;
+	    if ((j >= argc) || (argv[j][0] == '-')) {
+		usage(execName);
+	    }
+	    launchCommand = "SETENV";
 	} else {
 	    /* Done parsing options */
 	    break;
@@ -190,7 +196,13 @@ main(int argc, const char** argv)
 	jumpMessageAddInt(outMessage, 2);
 	jumpMessageAddString(outMessage, "TESTING_MODE");
 	jumpMessageAddString(outMessage, (char*)testingprefix);
-	response = jumpMessageSendSync(targetAddress, outMessage, 0, &code);
+	response = jumpMessageSendSync(targetAddress, outMessage, TIMEOUT, 
+				       &code);
+	if (response == NULL) {
+	    fprintf(stderr, "send message failed\n");
+	    return 1;
+	}
+	
 	dumpMessage(response, "Testing mode response:");
 	jumpMessageFreeOutgoing(outMessage);
     }
@@ -241,7 +253,12 @@ main(int argc, const char** argv)
     dumpMessage(outMessage, "Outgoing message:");
 
     /* Time to send outgoing message */
-    response = jumpMessageSendSync(targetAddress, outMessage, 0, &code);
+    response = jumpMessageSendSync(targetAddress, outMessage, TIMEOUT, &code);
+    if (response == NULL) {
+	fprintf(stderr, "send message failed\n");
+	return 1;
+    }
+	
     dumpMessage(response, "Command response:");
 
 #if 0

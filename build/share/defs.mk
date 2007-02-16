@@ -243,8 +243,17 @@ CVM_PRELOAD_TEST        ?= false
 CVM_PRELOAD_LIB         ?= $(CVM_PRELOAD_TEST)
 CVM_STATICLINK_LIBS	= $(CVM_PRELOAD_LIB)
 CVM_SYMBOLS             ?= $(CVM_DEBUG)
-CVM_TERSEOUTPUT         ?= true
 CVM_PRODUCT             ?= premium
+
+# CVM_TERSEOUTPUT is now deprecated in favor of USE_VERBOSE_MAKE.
+# They have opposite meanings. We look at CVM_TERSEOUTPUT here to set
+# USE_VERBOSE_MAKE properly for backwards compatibility. This is the
+# only place where CVM_TERSEOUTPUT can be checked
+ifeq ($(CVM_TERSEOUTPUT),false)
+USE_VERBOSE_MAKE	?= true
+else
+USE_VERBOSE_MAKE	?= false
+endif
 
 # %begin lvm
 CVM_LVM                 ?= false
@@ -559,8 +568,9 @@ endif
 ifeq ($(CVM_DYNAMIC_LINKING), true)
 	CVM_DEFINES      += -DCVM_DYNAMIC_LINKING
 endif
-ifeq ($(CVM_TERSEOUTPUT), true)
+ifeq ($(USE_VERBOSE_MAKE), false)
 	AT=@
+	MAKE_NO_PRINT_DIRECTORY=--no-print-directory
 else
 	AT=
 endif
@@ -1001,12 +1011,28 @@ endif
 # Object and data files needed for dual stack support
 #
 ifeq ($(CVM_DUAL_STACK), true)
-    CVM_SHAREOBJS_SPACE += \
-	MemberFilter.o     \
-	romjavaMemberFilterData.o
-    CVM_MIDPFILTERCONFIG = $(CVM_LIBDIR)/MIDPFilterConfig.txt
-    CVM_MIDPCLASSLIST    = $(CVM_LIBDIR)/MIDPPermittedClasses.txt
-    CVM_MIDPDIR          = $(CVM_TOP)/src/share/lib
+ifeq ($(CVM_INCLUDE_MIDP), true)
+    CVM_MIDPDIR           = $(CVM_TOP)/src/share/lib/dualstack/midp
+    # The MIDP version include all CLDC classes plus 8 additional
+    # javax/micro/microeditional/io/* classes.
+    CVM_ROM_MEMBER_FILTER = romjavaMIDPMemberFilterData.o
+else
+    CVM_MIDPDIR           = $(CVM_TOP)/src/share/lib/dualstack/cldc
+    CVM_ROM_MEMBER_FILTER = romjavaCLDCMemberFilterData.o
+endif
+    CVM_SHAREOBJS_SPACE  += \
+	MemberFilter.o      \
+	$(CVM_ROM_MEMBER_FILTER)
+    CVM_MIDPFILTERCONFIG  = $(CVM_LIBDIR)/MIDPFilterConfig.txt
+    CVM_MIDPCLASSLIST     = $(CVM_LIBDIR)/MIDPPermittedClasses.txt
+
+#
+# JavaAPILister related defs for generating dualstack
+# filter
+#
+ifneq ($(CVM_MIDPFILTERINPUT),)
+CVM_JCC_INPUT	+= -listapi:include=java/*,include=javax/*,input=$(CVM_MIDPFILTERINPUT),mout=$(CVM_MIDPFILTERCONFIG),cout=$(CVM_MIDPCLASSLIST)
+endif
 endif
 
 #
@@ -1861,8 +1887,8 @@ endif
 
 # Using TEMP variables above allows HOST_CC and HOST_CC to be set in the
 # GNUmakefile and not get overwritten by the above := assignments.
-HOST_CC 	?= $(TEMP_HOST_CC)
-HOST_CCC	?= $(TEMP_HOST_CCC)
+HOST_CC 	?= $(TEMP_HOST_CC)$(GCC_VERSION)
+HOST_CCC	?= $(TEMP_HOST_CCC)$(GCC_VERSION)
 
 #
 # Locate the JDK tools:
@@ -2056,3 +2082,4 @@ endif
 
 # Include external shared tools
 include $(TOOLS_DIR)/tools.gmk
+

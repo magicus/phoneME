@@ -47,6 +47,15 @@ else
 DDOLLAR := $$
 endif
 
+#
+# These are some printconfig variables that other host or targets
+# may want to override.
+#
+TARGET_CC_VERSION ?= $(shell $(TARGET_CC) -dumpversion; $(TARGET_CC) -dumpmachine)
+HOST_CC_VERSION   ?= $(shell $(HOST_CC) -dumpversion; $(HOST_CC) -dumpmachine)
+CVM_JAVA_VERSION  ?= $(shell $(CVM_JAVA) -version 2>&1 | grep version)
+HOST_UNAME        ?= $(shell uname -a)
+
 # The cygwin "which" command doesn't work when a full path is given.
 # The purpose of the following is to break the full path into the dir
 # and tool name components, and then setup $PATH before calling "which"
@@ -80,6 +89,7 @@ BISON_PATH	= $(call TOOL_PATH,BISON)
 endif
 
 printconfig::
+	@echo "MAKEFLAGS  = $(MAKEFLAGS)"
 	@echo "CVM_HOST   = $(CVM_HOST)"
 	@echo "CVM_TARGET = $(CVM_TARGET)"
 	@echo "SHELL      = $(SHELL)"
@@ -110,6 +120,11 @@ endif
 	@echo "CCFLAGS_FDLIB  = $(CCFLAGS_FDLIB)"
 	@echo "JAVAC_OPTIONS  = $(JAVAC_OPTIONS)"
 	@echo "CVM_DEFINES    = $(CVM_DEFINES)"
+	@echo "host uname        = $(HOST_UNAME)"
+	@echo "TARGET_CC version = $(TARGET_CC_VERSION)"
+	@echo "HOST_CC version   = $(HOST_CC_VERSION)"
+	@echo "CVM_JAVA version  = $(CVM_JAVA_VERSION)"
+	@echo "TOOLS_DIR         = $(TOOLS_DIR)"
 
 #
 # Determine if the target compiler is really meant for the device
@@ -216,6 +231,7 @@ $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
 #$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_SATSA_JAVA_FILES)
 #	$(appendjavafiles)
 
+# Include Optional packages rules
 -include ../share/rules_op.mk
 
 # Test classes
@@ -419,6 +435,7 @@ $(J2ME_CLASSLIB):: democlasses $(CVM_DEMO_CLASSESJAR)
 ifeq ($(CVM_INCLUDE_JUMP), true)
 $(J2ME_CLASSLIB):: jumptargets
 endif
+$(J2ME_CLASSLIB):: $(JSROP_JARS)
 $(J2ME_CLASSLIB):: headers $(CVM_ROMJAVA_LIST)
 $(J2ME_CLASSLIB):: $(CLASSLIB_DEPS)
 $(J2ME_CLASSLIB):: aotdeps
@@ -853,6 +870,7 @@ $(CVM_MIMEDATAFILE): $(CVM_MIMEDIR)/content-types.properties
 # Only do this for dual stack support
 #####################################
 
+ifeq ($(CVM_DUAL_STACK), true)
 ifneq ($(CVM_MIDPFILTERCONFIG), )
 $(CVM_MIDPFILTERCONFIG): $(CVM_MIDPDIR)/MIDPFilterConfig.txt
 	@echo "Updating MIDPFilterConfig...";
@@ -863,6 +881,18 @@ $(CVM_MIDPCLASSLIST): $(CVM_MIDPDIR)/MIDPPermittedClasses.txt
 	@echo "Updating MIDPPermittedClasses...";
 	@cp -f $< $@;
 	@echo "<<<Finished copying $@";
+endif
+
+###############################################
+# Rule for generating dual-stack member filter
+###############################################
+gen_member_filter:: initbuild btclasses $(CVM_BUILDTIME_CLASSESZIP) 
+gen_member_filter:: $(J2ME_CLASSLIB)classes $(LIB_CLASSESJAR) $(CVM_ROMJAVA_LIST)
+ifeq ($(CVM_MIDPFILTERINPUT),)
+	$(error Need to set CVM_MIDPFILTERINPUT to a valid jar file)
+else
+	@echo "generating dual-stack member filter ..."
+endif
 endif
 
 ################################################

@@ -60,7 +60,6 @@ class AMS implements MidletAMS {
  * These are used by all midlet suites
  */
     static MIDPImplementationClassLoader midpImpl;
-    static MemberFilter		  	 mf;
     static boolean			 setup = false;
 
 /*
@@ -97,7 +96,7 @@ class AMS implements MidletAMS {
 	} catch (IOException e ){
 	    throw new Error("IOException");
 	}
-	return "file://".concat(longname);
+        return longname;
     }
 
 /*
@@ -204,11 +203,7 @@ class AMS implements MidletAMS {
 	    System.out.println("MIDPImplementationClassLoader is null");
 	    return false;
 	}
-	mf = f;
-	if (mf == null){
-	    System.out.println("MemberFilter is null");
-	    return false;
-	}
+
 	/*
 	 * Make sure that a security manager is installed.
 	 */
@@ -251,8 +246,7 @@ class AMS implements MidletAMS {
 	    return false;
 	}
 	formToc(m);
-	midpSuiteLoader = MIDPConfig.newMIDletClassLoader(new String[]{midpURL}, mf,
-							  midpImpl);
+        midpSuiteLoader = MIDPConfig.newMIDletClassLoader(new String[]{midpURL});
 	if (midpSuiteLoader == null){
 	    System.err.println("Could not instantiate MIDletClassLoader");
 	    return false;

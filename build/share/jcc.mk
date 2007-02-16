@@ -212,8 +212,9 @@ $(CVM_OBJDIR)/$(CVM_ROMJAVA_O): $(CVM_ROMJAVA_LIST) \
 		target=`basename $${NAME} .c`.o ; \
 		object=$(CVM_OBJDIR)/$${target} ; \
 		echo cc  $$target ;\
-		$(MAKE) GENERATEMAKEFILES=false $$object ;\
-		namelist="$${namelist} $${object}" ; \
+		$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
+			GENERATEMAKEFILES=false $$object ;\
+			namelist="$${namelist} $${object}" ; \
 	done; \
 	$(ROMJAVA_AR_CMD)
 

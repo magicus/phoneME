@@ -33,17 +33,20 @@ ifeq ($(CVM_INCLUDE_JUMP),true)
 # JUMP defs
 #
 export JAVA_HOME	= $(JDK_HOME)
-JUMP_ANT_OPTIONS        += -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) -Dcdc.dir=$(call POSIX2HOST,${CDC_DIST_DIR})
+JUMP_ANT_OPTIONS += -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) 	\
+		    -Dcdc.dir=$(call POSIX2HOST,$(CDC_DIST_DIR))
 # The default JUMP component location
-JUMP_DIR		?= $(CVM_TOP)/../jump/trunk
+JUMP_DIR		?= $(COMPONENTS_DIR)/jump
 ifeq ($(wildcard $(JUMP_DIR)/build/build.xml),)
-$(error JUMP_DIR must point to a JUMP directory)
+$(error JUMP_DIR must point to the JUMP directory: $(JUMP_DIR))
 endif
 JUMP_OUTPUT_DIR         = $(CVM_JUMP_BUILDDIR)/lib
 JUMP_SRCDIR             = $(JUMP_DIR)/src
 
-ifeq ($(CVM_TERSEOUTPUT), false)
+ifeq ($(USE_VERBOSE_MAKE), true)
 CVM_ANT_OPTIONS         += -v
+else
+CVM_ANT_OPTIONS		+= -q
 endif
 ifneq ($(CVM_DEBUG), true)
 CVM_ANT_OPTIONS         += -Ddebug=false
@@ -58,8 +61,14 @@ ifneq ($(CVM_PRELOAD_LIB), true)
 JUMP_DEPENDENCIES   += $(LIB_CLASSESJAR)
 endif
 
-JUMP_API_CLASSESZIP	= $(JUMP_OUTPUT_DIR)/jump-api.jar
-JUMP_IMPL_CLASSESZIP	= $(JUMP_OUTPUT_DIR)/jump-impl.jar
+JUMP_API_CLASSESZIP             := \
+    $(addprefix $(JUMP_OUTPUT_DIR)/,\
+        shared-jump-api.jar client-jump-api.jar executive-jump-api.jar)
+JUMP_IMPL_CLASSESZIP            := \
+    $(addprefix $(JUMP_OUTPUT_DIR)/,\
+        shared-jump-impl.jar client-jump-impl.jar executive-jump-impl.jar)
+JUMP_SHARED_BOOTCLASSESZIP      := $(JUMP_OUTPUT_DIR)/jump.jar
+JUMP_EXECUTIVE_BOOTCLASSESZIP   := $(JUMP_OUTPUT_DIR)/executive-jump.jar
 
 JUMP_SRCDIRS           += \
 	$(JUMP_SRCDIR)/share/api/native \

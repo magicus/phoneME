@@ -1,6 +1,4 @@
 #
-# @(#)rules_op.mk	1.3 06/10/10
-# 
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -24,53 +22,50 @@
 # information or have any questions. 
 #
 
-ifeq ($(JSR_CLASSES),)
-.compile.jsrclasses:
-else
-.compile.jsrclasses: .compile.jsr177 .compile.jsr172
-endif
+# generatePropertyInitializer(xmlFiles,generatedDir,initializerPackage,outputFile)
+define generatePropertyInitializer
+	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE)           \
+	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml         \
+	-xsl $(CONFIGURATOR_DIR)/xsl/share/merge.xsl        \
+	-params filesList '$(1)'                            \
+	-out $(2)/properties_merged.xml                     \
+	-xml $(2)/properties_merged.xml                     \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesJava.xsl \
+	-params packageName $(3)                            \
+	-out $(4)
+endef
 
-# compileJSR(dir,SOURCEPATH,FILES)
-define compileJSR
-	echo "Compiling "$(1)" classes...";			\
-	mkdir -p $(CVM_JSR_CLASSESDIR)/$(1);			\
+
+# Macro to pre-process Jpp file into Java file
+# runjpp(<input_jpp_file>, <output_java_file>)
+define runjpp
+    $(CVM_JAVA) -classpath $(TOOLS_OUTPUT_DIR) Jpp $(JPP_DEFS) -o $(2) $(1)
+endef
+
+# compileJSROP(dir,JSROPDIR,FILES,EXTRA_CLASSPATH)
+define compileJSROP
+	@echo "Compiling "$(1)" classes...";			\
+	mkdir -p $(2)/classes;			\
 	$(JAVAC_CMD)						\
-		-d $(CVM_JSR_CLASSESDIR)/$(1)			\
+		-d $(2)/classes \
 		-bootclasspath $(CVM_BUILDTIME_CLASSESDIR) 	\
-		-classpath $(JAVACLASSES_CLASSPATH)$(PS)$(CVM_JSR_CLASSESDIR)		\
-		-sourcepath $(2)	\
+		-classpath $(JAVACLASSES_CLASSPATH)$(PS)$(JSROP_JUMP_API)$(PS)$(ABSTRACTIONS_JAR)$(PS)$(MIDP_CLASSESZIP)$(4) \
 		$(3)
 endef
 
-# parseManifest(dir,jarFileName,manifestFileName,buildID)
-define parseManifest
-	@echo ...$(2); \
-if [ -r $(3) ]; then \
-	mkdir -p $(CVM_JSR_CLASSESDIR)/META-INF;\
-	sed -e "s/PLACEHOLDER/$(4)/" $(3) > $(CVM_JSR_CLASSESDIR)/META-INF/MANIFEST.MF; \
-	cd $(CVM_JSR_CLASSESDIR)/$(1); $(CVM_JAR) cmf ../META-INF/MANIFEST.MF ../../lib/$(2) *; \
-else \
-	cd $(CVM_JSR_CLASSESDIR)/$(1); $(CVM_JAR) cf ../../lib/$(2) *; \
-fi
+# makeJSROPJar(jarFileName,jsrDir)
+define makeJSROPJar
+	@echo ...$(1);     \
+	$(CVM_JAR) cf $(1) -C $(2) .;
 endef
 
-.compile.jsr177:
-ifeq ($(USE_JSR_177), true)
-	@echo $(SUBSYSTEM_SATSA_SOURCEPATH):
-	$(call compileJSR,jsr177,$(SUBSYSTEM_SATSA_SOURCEPATH),$(SUBSYSTEM_SATSA_JAVA_FILES))
-	$(call parseManifest,jsr177,$(JSR177_JAR_FILENAME),$(OP_MANIFEST_FILENAME),$(SATSA_BUILD_ID))
-endif
-
-.compile.jsr172:
-ifeq ($(USE_JSR_172), true)
-	@echo $(SUBSYSTEM_WEBSERVICES_SOURCEPATH):
-	$(call compileJSR,jsr172,$(SUBSYSTEM_WEBSERVICES_SOURCEPATH),$(SUBSYSTEM_WEBSERVICES_JAVA_FILES))
-	$(call parseManifest,jsr172,$(JSR172_JAR_FILENAME),$(JSR172_MANIFEST_FILENAME),$(WEBSERVICES_BUILD_ID))
-endif
-
-
-
-$(JSR177_JAR_FILENAME): .compile.jsr177
-	
-$(JSR172_JAR_FILENAME): .compile.jsr172
+# compileJSRClasses(jsrNumber,additionalClasspath)
+# The following variables MUST BE defined
+# JSR_#_BUILD_DIR            - path to JSR's build directory
+# SUBSYSTEM_JSR_#_JAVA_FILES - list of JSR's java sources paths
+# JSR_#_JAR                  - JSR's jar file path
+define compileJSRClasses
+	$(call compileJSROP,jsr$(1),$(JSR_$(1)_BUILD_DIR),$(SUBSYSTEM_JSR_$(1)_JAVA_FILES),$(2))
+	$(call makeJSROPJar,$(JSR_$(1)_JAR),$(JSR_$(1)_BUILD_DIR)/classes)
+endef
 

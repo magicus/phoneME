@@ -33,12 +33,14 @@ printconfig::
 
 # Build PCSL before MIDP.
 initbuild_profile::
-	$(AT)echo "Building pcsl ..."
-	$(AT)$(MAKE) PCSL_PLATFORM=$(PCSL_PLATFORM) \
+	@echo "====> start pcsl build"
+	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
+		     PCSL_PLATFORM=$(PCSL_PLATFORM) \
 	             NETWORK_MODULE=$(NETWORK_MODULE) \
 	             PCSL_OUTPUT_DIR=$(PCSL_OUTPUT_DIR) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
 	             -C $(PCSL_DIR) $(PCSL_MAKE_OPTIONS)
+	@echo "<==== end pcsl build"
 
 #
 # Invoke MIDP build process. Build MIDP classes first. If 
@@ -55,8 +57,9 @@ initbuild_profile::
 $(CVM_ROMJAVA_LIST): $(MIDP_CLASSESZIP)
 
 $(MIDP_CLASSESZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
-	$(AT)echo "Building MIDP classes ..."
-	$(AT)$(MAKE) JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
+	@echo "====> start building MIDP classes"
+	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
+		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
 	             TARGET_CPU=$(TARGET_CPU) USE_DEBUG=$(USE_DEBUG) \
 	             USE_SSL=$(USE_SSL) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
@@ -67,7 +70,9 @@ $(MIDP_CLASSESZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE) \
 	             PCSL_PLATFORM=$(PCSL_PLATFORM) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
+	             $(MIDP_JSROP_USE_FLAGS) \
 	             rom -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
+	@echo "<==== end building MIDP classes"
 
 #
 # Now build MIDP natives. MIDP natives are linked into CVM binary.
@@ -79,8 +84,9 @@ $(CVM_BINDIR)/$(CVM):: $(RUNMIDLET)
 endif
 
 $(RUNMIDLET): force_midp_build
-	$(AT)echo "Building MIDP native ..."
-	$(AT)$(MAKE) JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
+	@echo "====> start building MIDP natives"
+	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
+		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
 	             TARGET_CPU=$(TARGET_CPU) USE_DEBUG=$(USE_DEBUG) \
 	             USE_SSL=$(USE_SSL) \
 	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
@@ -91,6 +97,7 @@ $(RUNMIDLET): force_midp_build
 	             USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE) \
 	             PCSL_PLATFORM=$(PCSL_PLATFORM) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
+	             $(MIDP_JSROP_USE_FLAGS) \
 	             -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 ifneq ($(CVM_INCLUDE_JUMP), true)
 	$(AT)cp $@ $(CVM_BINDIR)
@@ -98,18 +105,8 @@ endif
 ifneq ($(CVM_PRELOAD_LIB), true)
 	$(AT)cp $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/libmidp$(LIB_POSTFIX) $(CVM_LIBDIR)
 endif
+	@echo "<==== end building MIDP natives"
 
 force_midp_build:
-
-###############################################
-# Rule for generate dual-stack member filter
-###############################################
-gen_member_filter:: initbuild btclasses $(CVM_BUILDTIME_CLASSESZIP) 
-gen_member_filter:: $(J2ME_CLASSLIB)classes $(LIB_CLASSESJAR) $(CVM_ROMJAVA_LIST)
-ifeq ($(CVM_MIDPFILTERINPUT),)
-	$(error Need to set CVM_MIDPFILTERINPUT to a valid jar file)
-else
-	@echo "generating dual-stack member filter ..."
-endif
 
 endif
