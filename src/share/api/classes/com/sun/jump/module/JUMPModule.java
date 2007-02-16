@@ -29,7 +29,7 @@ package com.sun.jump.module;
 import java.util.Map;
 
 /**
- * <code>JUMPModule</code> defines the lifecycle methods for a module
+ * <code>JUMPModule</code> defines the methods for a module
  * that resides in the JUMP executive. Every module implementation will be 
  * specified using a Java <b>interface</b> or an <b>abstract class</b>
  * which will serve as the service contract. 

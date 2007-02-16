@@ -40,6 +40,7 @@ import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.message.JUMPMessageResponseSender;
 import com.sun.jump.message.JUMPMessageReader;
 import com.sun.jump.os.JUMPOSInterface;
+import com.sun.jumpimpl.process.JUMPModulesConfig;
 import com.sun.jumpimpl.process.JUMPProcessProxyImpl;
 import com.sun.jumpimpl.process.RequestSenderHelper;
 import com.sun.jump.command.JUMPIsolateLifecycleRequest;
@@ -48,10 +49,17 @@ import com.sun.jump.command.JUMPCommand;
 import com.sun.jump.command.JUMPRequest;
 import com.sun.jump.command.JUMPResponse;
 import com.sun.jump.command.JUMPResponseInteger;
+import com.sun.jump.message.JUMPMessageHandler;
 
 import sun.misc.ThreadRegistry;
 
-public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
+import java.util.Map;
+import java.util.StringTokenizer;
+
+
+public class JUMPIsolateProcessImpl 
+    extends JUMPIsolateProcess implements JUMPMessageHandler
+{
     private JUMPProcessProxyImpl    pp;
     private JUMPOSInterface         os;
     private int                     isolateId;
@@ -79,6 +87,11 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
     public int
     getProcessId() {
         return os.getProcessID();
+    }
+
+    public Map
+    getConfig() {
+        return JUMPModulesConfig.getProperties();
     }
 
     /**
@@ -117,85 +130,87 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
         throw new UnsupportedOperationException();
     }
 
-    /*
-     * Kick start this isolate.
-     * This is the entry point for the isolate process, creating the message
-     * listener.
-     */
-    public static void start() {
+    //
+    // The message handlers do the job.
+    // The message processor thread keeps the JVM alive.
+    //
+    public static void main(String[] args) 
+    {
+        if(args.length > 1 && args[1] != null) {
+            JUMPModulesConfig.overrideDefaultConfig(args[1]);
+        }
+
 	// Initialize os interface
 	new com.sun.jumpimpl.os.JUMPOSInterfaceImpl();
 
 	// Create and register the singleton isolate process
 	JUMPIsolateProcessImpl ipi = new JUMPIsolateProcessImpl();
 
-	// Create message processor thread.
-	ipi.createListenerThread();
-    }
+	JUMPMessageDispatcher d = ipi.getMessageDispatcher();
+	try {
+	    d.registerHandler("mvm/client", ipi);
+	} catch (Throwable e) {
+	    e.printStackTrace();
+	    return;
+	}
 
-    //
-    // Main program sleeps forever. The message handlers do the job.
-    // FIXME: This can initialize the system more.
-    // We can also potentially combine main() and start() into one.
-    // Finally, if we can find a way the dispatcher thread for mvm/client 
-    // can keep the vm alive, we might not need a main() that sleeps forever.
-    //
-    public static void main(String[] args) 
-    {
 	JUMPAppModel appModel = JUMPAppModel.fromName(args[0]);
 	if (appModel == null) {
 	    // Unknown app model
 	    throw new RuntimeException("Unknown app model "+args[0]);
 	}
-	JUMPIsolateProcessImpl ipi = 
-	    (JUMPIsolateProcessImpl)JUMPIsolateProcess.getInstance();
 
 	ipi.initialize(appModel);
-	
-	do {
-	    try {
-		Thread.sleep(0L);
-	    } catch (Throwable e) {
-	    }
-	} while(true);
+
+	//
+	// Once registerDirect() completes with success,
+	// we know we can receive messages. Report.
+	//
+	ipi.reportIsolateInitialized();
+
+	// Now we are ready. Drop off and let the message listener thread
+	// keep this JVM alive.
     }
     
     public void initialize(JUMPAppModel appModel) {
 	System.err.println("Setting app model to "+appModel);
 	this.appModel = appModel;
-	// FIXME: need to call AppContainerFactoryImpl.load(Map) to init it,
-	// and get the container only after that.
-	this.appContainer = new AppContainerFactoryImpl().getAppContainer(appModel);
+
+        AppContainerFactoryImpl factory = new AppContainerFactoryImpl();
+	this.appContainer = factory.getAppContainer(appModel);
+
+        System.err.println(
+            this + " config: " + JUMPModulesConfig.getProperties());
+
+        String classes = (String)getConfig().get("isolate-init-classes");
+        if(classes != null) {
+            StringTokenizer st = new StringTokenizer(classes, ",");
+            while(st.hasMoreTokens()) {
+                try {
+                    Class.forName(st.nextToken()).newInstance();
+                } catch(Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("Initialization failed");
+                }
+            }
+        }
     }
 
-    private void createListenerThread()
-    {
-	ThreadGroup tg = Thread.currentThread().getThreadGroup();
-	for (ThreadGroup tgn = tg;
-	     tgn != null;
-	     tg = tgn, tgn = tg.getParent());
-	Thread lthread = new ListenerThread(tg, "mvm client listener");
-	/* If there were a special system-only priority greater than
-	 * MAX_PRIORITY, it would be used here
-	 */
-	lthread.setPriority(Thread.MAX_PRIORITY);
-	lthread.setDaemon(true);
-	lthread.start();
-    }
-    
     //
     // Messages to this VM processed here
     // For now, all we do is report receipt, send back a success code
     // Eventually, we should handle generic messages here, and pass on
     // anything we don't know about to the container to process.
     //
-    void processMessage(JUMPMessage in) 
+    public void handleMessage(JUMPMessage in) 
     {
 	JUMPOutgoingMessage responseMessage;
 	JUMPMessageResponseSender returnTo = in.getSender();
 	
 	JUMPCommand raw = JUMPRequest.fromMessage(in);
 	String id = raw.getCommandId();
+	System.err.println("RECEIVED MESSAGE TYPE "+id);
+	
 	// Now let's figure out the type
 	if (id.equals(JUMPExecutiveLifecycleRequest.ID_START_APP)) {
 	    JUMPExecutiveLifecycleRequest elr = (JUMPExecutiveLifecycleRequest)
@@ -291,33 +306,4 @@ public class JUMPIsolateProcessImpl extends JUMPIsolateProcess {
 	rsh.sendRequestAsync(e, req);
     }
     
-    class ListenerThread extends Thread {
-	
-	ListenerThread(ThreadGroup g, String name) {
-	    super(g, name);
-	}
-
-	public void run() {
-	    JUMPMessageDispatcher d = getMessageDispatcher();
-	    try {
-		d.registerDirect("mvm/client");
-	    } catch (Throwable e) {
-		e.printStackTrace();
-		return;
-	    }
-	    //
-	    // Once registerDirect() completes with success,
-	    // we know we can receive messages. Report.
-	    //
-	    reportIsolateInitialized();
-	    while (!ThreadRegistry.exitRequested()) {
-		try {
-		    JUMPMessage m = d.waitForMessage("mvm/client", 0L);
-		    processMessage(m);
-		} catch (Throwable e) {
-		    e.printStackTrace();
-		}
-	    }
-	}
-    }
 }

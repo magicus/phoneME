@@ -23,7 +23,6 @@
  */
 package com.sun.jumpimpl.module.pushregistry.persistence;
 
-import com.sun.jump.module.contentstore.InMemoryContentStore;
 import com.sun.jump.module.pushregistry.JUMPConnectionInfo;
 import java.io.IOException;
 import java.util.Arrays;
@@ -44,12 +43,7 @@ public final class StoreTest extends TestCase {
     };
 
     private static Store createStore() throws IOException {
-        final String [] DIRS = {
-            Store.CONNECTIONS_DIR, Store.ALARMS_DIR
-        };
-        final Store store = new Store(InMemoryContentStore.createStore(DIRS));
-        store.readData();
-        return store;
+        return StoreUtils.createInMemoryPushStore();
     }
 
     private static JUMPConnectionInfo createConnectionInfo(final int index) {

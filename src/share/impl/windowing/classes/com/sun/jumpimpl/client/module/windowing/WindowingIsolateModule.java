@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-package com.sun.jumpimpl.module.windowing;
+package com.sun.jumpimpl.client.module.windowing;
 
 import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.message.JUMPMessageSender;
@@ -121,7 +121,9 @@ public class WindowingIsolateModule implements JUMPMessageHandler {
 
     }
 
-    public WindowingIsolateModule(JUMPIsolateProcess host) {
+    public WindowingIsolateModule() {
+        JUMPIsolateProcess  host = JUMPIsolateProcess.getInstance();
+
         windows         = new Vector();
         requestSender   = new RequestSenderHelper(host);
         isolateId       = host.getIsolateId();

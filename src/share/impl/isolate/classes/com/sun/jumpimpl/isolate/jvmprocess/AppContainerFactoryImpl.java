@@ -27,21 +27,14 @@ package com.sun.jumpimpl.isolate.jvmprocess;
 import com.sun.jump.common.JUMPAppModel;
 import com.sun.jump.isolate.jvmprocess.JUMPIsolateProcess;
 import com.sun.jump.isolate.jvmprocess.JUMPAppContainer;
-import com.sun.jump.module.JUMPModule;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-public class AppContainerFactoryImpl implements JUMPModule {
+public class AppContainerFactoryImpl {
 
-   private Map config;
-
-   public void load(Map config) {
-      this.config = config;
-   }
-
-   public void unload() {} 
+   private Map config = JUMPIsolateProcess.getInstance().getConfig();
 
    private static String PREFIX = "com.sun.jumpimpl.isolate.jvmprocess";
    private static String CONTAINER_CLASSNAME   = "AppContainerImpl";

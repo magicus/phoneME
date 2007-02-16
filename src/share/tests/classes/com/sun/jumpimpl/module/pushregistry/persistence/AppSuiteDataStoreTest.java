@@ -25,14 +25,13 @@ package com.sun.jumpimpl.module.pushregistry.persistence;
 
 import com.sun.jump.module.contentstore.InMemoryContentStore;
 import junit.framework.*;
-import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 
 public final class AppSuiteDataStoreTest extends TestCase {
-    
+
     public AppSuiteDataStoreTest(String testName) {
         super(testName);
     }
@@ -61,14 +60,14 @@ public final class AppSuiteDataStoreTest extends TestCase {
                     return s;
                 }
     };
-    
+
     /**
      * Creates a handle for <code>JUMPStore</code>.
      *
      * @returns a handle
      */
-    private static JUMPStoreHandle createStoreHandle() throws IOException {
-        return new InMemoryContentStore().openStore(true);
+    private static StoreOperationManager createStoreManager() throws IOException {
+        return new StoreOperationManager(new InMemoryContentStore());
     }
 
     /**
@@ -78,20 +77,22 @@ public final class AppSuiteDataStoreTest extends TestCase {
      */
     private static AppSuiteDataStore createAppSuiteDataStore()
             throws IOException {
+        final StoreOperationManager storeManager =
+                StoreUtils.createInMemoryManager(new String [] {DIR});
+
         final AppSuiteDataStore store = new AppSuiteDataStore(
-                InMemoryContentStore.createStore(new String [] {DIR}),
-                DIR, DATA_CONVERTER);
+                storeManager, DIR, DATA_CONVERTER);
         store.readData();
         return store;
     }
 
     private void _testCtorThrowsIllegalArgumentException(
-            final JUMPStoreHandle storeHandle,
+            final StoreOperationManager storeManager,
             final String dir,
             final AppSuiteDataStore.DataConverter dataConverter,
             final String paramName) {
         try {
-            new AppSuiteDataStore(storeHandle, dir, dataConverter);
+            new AppSuiteDataStore(storeManager, dir, dataConverter);
             fail("AppSuiteDataStore.<init> doesn't throw"
                     + " IllegalArgumentException for null "
                     + paramName);
@@ -114,7 +115,7 @@ public final class AppSuiteDataStoreTest extends TestCase {
      */
     public void testCtorNullDir() throws IOException {
         _testCtorThrowsIllegalArgumentException(
-                createStoreHandle(), null, DATA_CONVERTER, "dir");
+                createStoreManager(), null, DATA_CONVERTER, "dir");
     }
 
     /**
@@ -123,7 +124,7 @@ public final class AppSuiteDataStoreTest extends TestCase {
      */
     public void testCtorNullDataConverter() throws IOException {
         _testCtorThrowsIllegalArgumentException(
-                createStoreHandle(), DIR, null, "data converter");
+                createStoreManager(), DIR, null, "data converter");
     }
 
     /**
@@ -155,7 +156,7 @@ public final class AppSuiteDataStoreTest extends TestCase {
                 store.removeSuiteData(suiteId);
             }
         }
-        
+
         static void updateStore(
                 final AppSuiteDataStore store,
                 final SuiteData [] dataToUpdate) throws IOException {
@@ -190,7 +191,7 @@ public final class AppSuiteDataStoreTest extends TestCase {
 
         assertEquals(e, actual);
     }
-    
+
     private void checkTestData(
             final SuiteData [] dataToUpdate,
             final SuiteData [] expected) throws IOException {
@@ -239,7 +240,7 @@ public final class AppSuiteDataStoreTest extends TestCase {
         new SuiteData(17, "foo"),
         new SuiteData(17, "bar")
     };
-     
+
     public void testGetSuiteDataNO_UPDATES() throws IOException {
         checkGetSuiteData(NO_UPDATES);
     }

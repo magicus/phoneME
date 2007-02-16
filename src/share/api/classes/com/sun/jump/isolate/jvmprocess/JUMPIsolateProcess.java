@@ -32,6 +32,7 @@ import com.sun.jump.common.JUMPIsolate;
 import com.sun.jump.common.JUMPProcessProxy;
 import com.sun.jump.message.JUMPMessagingService;
 //import java.rmi.Remote;
+import java.util.Map;
 
 /**
  * <code>JVMIsolateVM</code> encapsulates an isolate that is implemented
@@ -72,6 +73,11 @@ public abstract class JUMPIsolateProcess
     public int getIsolateId() {
         return this.getProcessId();
     }
+
+    /**
+     * Returns configuration parameters associated with the isolate.
+     */
+    public abstract Map getConfig();
 
     /**
      * Get app model running in this isolate process

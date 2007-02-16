@@ -35,7 +35,7 @@ public abstract class JUMPOSInterface {
     }
     
     /**
-     * Creates a new instance of JUMPLifeCycleModuleFactory
+     * Creates a new instance of JUMPOSInterface
      */
     protected JUMPOSInterface() {
         synchronized (JUMPOSInterface.class){
@@ -50,11 +50,6 @@ public abstract class JUMPOSInterface {
      */
     public abstract int createProcess(String[] args);
 
-    /**
-     * Create a native process and return a unique integer ID designating it.
-     */
-    public abstract int createProcessNative(String[] args);
-    
     /**
      * Return the current process ID.
      */

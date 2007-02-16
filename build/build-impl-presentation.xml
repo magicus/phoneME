@@ -22,16 +22,19 @@ Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 Clara, CA 95054 or visit www.sun.com if you need additional
 information or have any questions. 
 -->
-<project name="Build presentation mode classes" basedir=".">
-
+<project name="presentation module classes" basedir="." default="compile-presentation-module">
+    
     <!-- It may be possible to follow the format below to include
          additional presentation modes. A presentation mode is
          considered the UI application running in the executive
-         process which uses JUMP APIs to define behavior -->
-         
-    <import file="build-impl-pmode-simplebasis.xml"/>
+         process which uses JUMP APIs to define behavior -->            
     
-    <target name="build-impl-pmode" depends="build-pmode-simplebasis">
+    <target name="compile-presentation-module">
+        <jump.javac 
+            srcdir="${s.share.impl.dir}/presentation/classes:${s.share.impl.dir}/presentation/simplebasis/classes"            
+            includes="com/sun/jumpimpl/module/presentation/*.java,com/sun/jumpimpl/presentation/simplebasis/*.java"
+        />    
     </target>
-        
+    
+    
 </project>

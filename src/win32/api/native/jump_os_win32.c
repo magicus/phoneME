@@ -340,31 +340,12 @@ int jumpThreadGetId(){
     return GetCurrentThreadId();
 }
 
-/**
- * Stub implementation
- */
-int 
-jumpProcessRunDriver(char *driver_name) {
-    (void)driver_name;
-    return -1;
-}
-
-/**
- * Stub implementation
- */
-int 
-jumpProcessNativeCreate(int argc, char** argv) {
-    (void)argc;
-    (void)argv;
-    return -1;
-}
-
 int  jumpProcessCreate(int argc, char** argv){
     BOOL b;
     int argsBufferSize = 0;
     int i = 0;
     char*  argsBuffer;
-    char* command = "vm-internal.exe com.sun.jump.isolate.jvmprocess.win32.JUMPWin32IsolateProcessImpl ";
+    char* command = "vm-internal.exe com.sun.jumpimpl.isolate.jvmprocess.JUMPIsolateProcessImpl ";
     char * commandLine;
     char * path = ""; //FIXME add lime call to get the full path of the emulator bin directory
     char space = ' ';

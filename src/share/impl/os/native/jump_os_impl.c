@@ -100,6 +100,8 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageSync(
     m = jumpMessageNewOutgoingFromBuffer(raw, isResponse);
     target.processId = pid;
     r = jumpMessageSendSync(target, m, (int32)timeout, &code);
+    /* FIXME: Examine returned error code to figure out which exception
+       to throw */
     
     retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
     returnInterior = (*env)->GetPrimitiveArrayCritical(env, retVal, &isCopy);
@@ -128,6 +130,8 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_receiveMessage(
     ensureInitialized();
 
     r = jumpMessageWaitFor((JUMPPlatformCString)type, (int32)timeout);
+    /* FIXME: Examine returned error code to figure out which exception
+       to throw. Return an error code!! */
     retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
     returnInterior = (*env)->GetPrimitiveArrayCritical(env, retVal, &isCopy);
     memcpy(returnInterior, jumpMessageGetData(r), MESSAGE_BUFFER_SIZE);
@@ -192,53 +196,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_reserve(
     const char* type = (*env)->GetStringUTFChars(env, messageType, &isCopy);
     JUMPMessageQueueStatusCode code;
     
-    jumpMessageQueueCreate(type, &code);
-}
-
-static int
-create_process(
-    JNIEnv *env, 
-    jobject thisObj,
-    jobjectArray arguments,
-    int isNative)
-{
-    int argc;
-    char** argv;
-    int i;
-    int retVal;
-    int isCopy;
-    
-    if (arguments == NULL) {
-        argc = 0;
-        argv = NULL;
-    } else {
-        argc = (*env)->GetArrayLength(env, arguments);
-        argv = calloc(argc, sizeof(char*));
-        if (argv == NULL) {
-            return -1;
-        }
-        
-        for (i = 0; i < argc; i++) {
-            jobject argObj = (*env)->GetObjectArrayElement(env, arguments, i);
-            const char* arg = (*env)->GetStringUTFChars(env, argObj, &isCopy);
-            argv[i] = arg;
-        }
-    }
-    
-    if (isNative) {
-        retVal = jumpProcessNativeCreate(argc, argv);
-    } else {
-        retVal = jumpProcessCreate(argc, argv);
-    }
-    if (argv != NULL) {
-        if (isCopy) {
-            for (i = 0; i < argc; i++) {
-                free(argv[i]);
-            }
-        }
-        free(argv);
-    }
-    return retVal;
+    jumpMessageQueueCreate((JUMPPlatformCString)type, &code);
 }
 
 JNIEXPORT int JNICALL
@@ -247,15 +205,38 @@ Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcess(
     jobject thisObj,
     jobjectArray arguments)
 {
-    return create_process(env, thisObj, arguments, 0);
-}
-
-JNIEXPORT int JNICALL
-Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcessNative(
-    JNIEnv *env, 
-    jobject thisObj,
-    jobjectArray arguments)
-{
-    return create_process(env, thisObj, arguments, 1);
+    int argc;
+    char** argv;
+    int i;
+    int retVal;
+    jboolean isCopy;
+    
+    if (arguments == NULL) {
+	argc = 0;
+	argv = NULL;
+    } else {
+	argc = (*env)->GetArrayLength(env, arguments);
+	argv = calloc(argc, sizeof(char*));
+	if (argv == NULL) {
+	    return -1;
+	}
+	
+	for (i = 0; i < argc; i++) {
+	    jobject argObj = (*env)->GetObjectArrayElement(env, arguments, i);
+	    char* arg = (char*)(*env)->GetStringUTFChars(env, argObj, &isCopy);
+	    argv[i] = arg;
+	}
+    }
+    
+    retVal = jumpProcessCreate(argc, argv);
+    if (argv != NULL) {
+	if (isCopy) {
+	    for (i = 0; i < argc; i++) {
+		free(argv[i]);
+	    }
+	}
+	free(argv);
+    }
+    return retVal;
 }
 

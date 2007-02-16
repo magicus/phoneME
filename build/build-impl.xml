@@ -24,18 +24,61 @@ information or have any questions.
 -->
 <project name="Build implementation classes" basedir=".">
 
-<import file="build-impl-pmode.xml"/>
+    <target name="build-impl-jars" depends="build-api, build-impl-modules">
+        <!-- create 3 impl jars -->
+        <antcall target="make-jars">
+            <param name="is-api" value="false"/>
+        </antcall>
 
-  <target name="build-impl" depends="build-api, build-impl-modules, build-impl-pmode">
-     <jar destfile="${d.lib.dir}/${impl.jar}" update="true"
-         basedir="${d.classes.dir}"
-         includes="com/sun/jumpimpl/**/*.class,
-         com/sun/jumpimpl/**/resources/**,
-         com/sun/ukit/jaxp/**/*.class, 
-         javax/xml/parsers/**/*.class, 
-         org/xml/sax/**/*.class" 
-         />
-  </target>
+        <uptodate property="jump.jar.uptodate" targetfile="${jump.jar}">
+            <srcfiles dir= "${d.lib.dir}">
+                <include name="shared*.jar"/>
+                <include name="client*.jar"/>
+            </srcfiles>
+        </uptodate>
+        <uptodate property="executive-jump.jar.uptodate" targetfile="${executive-jump.jar}">
+            <srcfiles dir= "${d.lib.dir}">
+                <include name="executive*.jar"/>
+            </srcfiles>
+        </uptodate>
+    </target>
+
+    <target name="build-jump.jar" depends="build-impl-jars" unless="jump.jar.uptodate">
+        <!-- shared api+impl -->
+        <unjar 
+            src="${d.lib.dir}/shared${api.jar.suffix}" 
+            dest="${d.gen.dir}/jump.jar.files"/>
+        <unjar 
+            src="${d.lib.dir}/shared${impl.jar.suffix}" 
+            dest="${d.gen.dir}/jump.jar.files"/>
+        <!-- client api+impl -->
+        <unjar 
+            src="${d.lib.dir}/client${api.jar.suffix}" 
+            dest="${d.gen.dir}/jump.jar.files"/>
+        <unjar 
+            src="${d.lib.dir}/client${impl.jar.suffix}" 
+            dest="${d.gen.dir}/jump.jar.files"/>
+
+        <jar destfile="${jump.jar}" update="true"
+            basedir="${d.gen.dir}/jump.jar.files" includes="**/*"/>
+        <delete dir="${d.gen.dir}/jump.jar.files"/>
+    </target>
+
+    <target name="build-executive-jump.jar" depends="build-impl-jars" unless="executive-jump.jar.uptodate">
+        <!-- executive api+impl -->
+        <unjar 
+            src="${d.lib.dir}/executive${api.jar.suffix}" 
+            dest="${d.gen.dir}/executive-jump.jar.files"/>
+        <unjar 
+            src="${d.lib.dir}/executive${impl.jar.suffix}" 
+            dest="${d.gen.dir}/executive-jump.jar.files"/>
+
+        <jar destfile="${executive-jump.jar}" update="true"
+            basedir="${d.gen.dir}/executive-jump.jar.files" includes="**/*"/>
+        <delete dir="${d.gen.dir}/executive-jump.jar.files"/>
+    </target>
+
+  <target name="build-impl" depends="build-jump.jar,build-executive-jump.jar"/>
 
   <target name="build-impl-modules" if="modules">
      <pathconvert property="modules.antfiles">

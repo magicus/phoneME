@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.jump.module.lifecycle;
+package com.sun.jump.module.isolatemanager;
 
 import com.sun.jump.executive.JUMPIsolateProxy;
 import com.sun.jump.module.JUMPModule;
@@ -32,14 +32,20 @@ import com.sun.jump.common.JUMPAppModel;
 import com.sun.jump.common.JUMPProcessProxy;
 
 /**
- * <code>JUMPLifeCycleModule</code> is an executive module that performs
- * application lifecycle operations.
+ * <code>JUMPIsolateManagerModule</code> is an executive module that performs
+ * application isolatemanager operations.
  */
-public interface JUMPLifeCycleModule extends JUMPModule {
+public interface JUMPIsolateManagerModule extends JUMPModule {
     /**
      * Create new isolate conforming to <code>model</code>
      */
     public JUMPIsolateProxy newIsolate(JUMPAppModel model);
+
+    /**
+     * Create new isolate conforming to <code>model</code>,
+     * with additional VM arguments.
+     */
+    public JUMPIsolateProxy newIsolate(JUMPAppModel model, String vmArgs);
 
     /** 
      * Create new native process

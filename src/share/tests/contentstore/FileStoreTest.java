@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Properties;
  
 import com.sun.jump.module.contentstore.*;
+import com.sun.jump.executive.JUMPExecutive;
 
 public class FileStoreTest extends JUMPContentStoreSubClass {
 
@@ -77,8 +78,11 @@ public class FileStoreTest extends JUMPContentStoreSubClass {
 
     void setupTest() { 
 
-       // This one line should be called by the executive in real impl
-       new com.sun.jumpimpl.module.contentstore.StoreFactoryImpl();
+       // For the standalone test run, emulate the executive setup
+       if (JUMPExecutive.getInstance() == null) {
+          JUMPStoreFactory factory = new com.sun.jumpimpl.module.contentstore.StoreFactoryImpl();
+	  factory.load(com.sun.jumpimpl.process.JUMPModulesConfig.getProperties());
+       }
 
        // test setup, make a repository root if it doesn't exist
        File file = new File(repositoryRoot);
@@ -176,13 +180,6 @@ class JUMPContentStoreSubClass extends JUMPContentStore {
    protected JUMPStore getStore() {
       JUMPStore store = JUMPStoreFactory.getInstance().getModule(
                                  JUMPStoreFactory.TYPE_FILE);
-                                                                                  
-      // These three lines below should have happened in the executive setup,
-      // but for the testing purpose, emulating load() call here.
-      HashMap map = new HashMap();
-      map.put("installer.repository", "repository");
-      store.load(map);
-      // end of store setup.
                                                                                   
       return store;
    }

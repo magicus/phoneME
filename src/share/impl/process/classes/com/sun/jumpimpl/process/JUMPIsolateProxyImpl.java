@@ -36,7 +36,8 @@ import com.sun.jump.command.JUMPIsolateLifecycleRequest;
 import java.util.HashMap;
 
 public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIsolateProxy {
-    private static final long DEFAULT_TIMEOUT = 0L;
+    // FIXME: Timeout values should be centralized somewhere
+    private static final long DEFAULT_TIMEOUT = 5000L;
     private int                     isolateId;
     private RequestSenderHelper     requestSender;
     private HashMap                 appIDHash = null;
@@ -56,13 +57,8 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
 	
 	while (state < targetState) {
 	    try {
-		// FIXME: This code is unfortunate. There is no
-		// timeout exception in wait(), so we must figure out
-		// if timeout happens or state is reached first.
 		wait(timeout);
-		long time2 = System.currentTimeMillis();
-		long elapsed = time2 - time;
-		if (elapsed > timeout) {
+		if (state < targetState) {
 		    System.err.println("Timed out waiting for "+
 				       "target state="+targetState);
 		    return;

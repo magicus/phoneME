@@ -25,6 +25,9 @@
 package com.sun.jump.module.pushregistry.MIDP;
 
 import com.sun.jump.module.pushregistry.JUMPConnectionInfo;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import javax.microedition.io.ConnectionNotFoundException;
 
 /**
  * PushRegistry system interface for MIDP system.
@@ -35,9 +38,9 @@ import com.sun.jump.module.pushregistry.JUMPConnectionInfo;
  * hide behind the scene all IPC.
  * </p>
  */
-public interface JUMPPushRegistry {
+public interface JUMPPushRegistry extends Remote {
     /**
-     * Register new PushRegistry connection.
+     * Registers new PushRegistry connection.
      *
      * <p>
      * Informs executive on registration of new PushRegistry connection
@@ -61,12 +64,14 @@ public interface JUMPPushRegistry {
      *
      * @return <code>true</code> if connection has been registered,
      * <code>false</code> otherwise.
+     *
+     * @throws RemoteException as requested by RMI spec.
      */
     boolean registerConnection(int midletSuiteId,
-            JUMPConnectionInfo connection);
+            JUMPConnectionInfo connection) throws RemoteException;
 
     /**
-     * Unregister PushRegistry connection.
+     * Unregisters PushRegistry connection.
      *
      * <p>
      * It's way to inform executive on unregistration of PushRegistry connection
@@ -90,7 +95,38 @@ public interface JUMPPushRegistry {
      *
      * @return <code>true</code> if connection has been unregistered,
      * <code>false</code> otherwise.
+     *
+     * @throws RemoteException as requested by RMI spec.
      */
     boolean unregisterConnection(int midletSuiteId,
-            JUMPConnectionInfo connection);
+            JUMPConnectionInfo connection) throws RemoteException;
+
+    /**
+     * Registers an alarm.
+     *
+     * This method is an internal counterpart of <code>PushRegistry.registerAlarm</code>
+     * method.
+     *
+     * <p>
+     * NOTE: <code>midletSuiteId</code> and <code>midlet</code> parameters should
+     *  refer to valid entities (that is, e.g., <code>midlet</code> should be the name
+     *  of the <code>MIDlet</code> from the <code>midletSuiteId</code> suite).
+     *  No checks are performed and incorrect values would lead to undefined
+     *  behaviour.
+     * </p>
+     *
+     * @param midletSuiteId ID of <code>MIDlet suite</code> to unregister
+     *  connection for
+     *
+     * @param midlet <code>MIDlet</code> class name
+     *
+     * @param time alarm time
+     *
+     * @return time of previous registered (but not fired) alarm or 0
+     *
+     * @throws RemoteException as requested by RMI spec.
+     * @throws ConnectionNotFoundException if it's impossible to register alarm
+     */
+    long registerAlarm(int midletSuiteId, String midlet, long time)
+        throws RemoteException, ConnectionNotFoundException;
 }

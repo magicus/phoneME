@@ -38,8 +38,11 @@ import javax.microedition.io.ConnectionNotFoundException;
  * Registry that manages alarms.
  *
  * <p>
- * NOTE: this class is not thread-safe and should be guarded
- * </p>
+ * IMPORTANT_NOTE:  As this class uses <code>Store</code> to keep
+ *  alarms data in persistent store, the clients of this class must ensure
+ *  that the underlying content store can be exclusively locked when public
+ *  methods of this class get invoked.
+ * <p>
  */
 public final class AlarmRegistry {
     /** Lifecycle management adapter interface. */
@@ -84,6 +87,12 @@ public final class AlarmRegistry {
     /**
      * Constructs an alarm registry.
      *
+     * <p>
+     * NOTE: both <code>store</code> and <code>lifecycleAdapter</code>
+     * MUST be not <code>null</code>.  There is no checks and passing
+     * <code>null</code> leads to undefined behaviour.
+     * </p>
+     *
      * @param store persistent store to save alarm info into
      * @param lifecycleAdapter adapter to launch <code>MIDlet</code>
      */
@@ -121,12 +130,21 @@ public final class AlarmRegistry {
     /**
      * Registers an alarm.
      *
+     * <p>
+     * NOTE: <code>midletSuiteID</code> parameter should refer to a valid
+     *  <code>MIDlet</code> suite and <code>midlet</code> should refer to
+     *  valid <code>MIDlet</code> from the given suite. <code>timer</code>
+     *  parameters is the same as for corresponding <code>Date</code>
+     *  constructor.  No checks are performed and no guarantees are
+     *  given if parameters are invalid.
+     * </p>
+     *
      * @param midletSuiteID <code>MIDlet suite</code> ID
      * @param midlet <code>MIDlet</code> class name
      * @param time alarm time
      *
      * @throws ConnectionNotFoundException if for any reason alarm cannot be
-     *  scheduled
+     *  registered
      *
      * @return previous alarm time or 0 if none
      */
@@ -161,6 +179,12 @@ public final class AlarmRegistry {
     /**
      * Removes alarms for the given suite.
      *
+     * <p>
+     * NOTE: <code>midletSuiteID</code> must refer to valid installed
+     *  <code>MIDlet</code> suite.  However, it might refer to the
+     *  suite without alarms.
+     * </p>
+     *
      * @param midletSuiteID ID of the suite to remove alarms for
      */
     public synchronized void removeSuiteAlarms(final int midletSuiteID) {
@@ -170,7 +194,8 @@ public final class AlarmRegistry {
             if (midletInfo.midletSuiteID == midletSuiteID) {
                 // No need to care about retval
                 ((AlarmTask) entry.getValue()).cancel();
-                removeAlarm(midletInfo);
+                removeAlarmFromStore(midletInfo);
+                it.remove();
             }
         }
     }
@@ -179,15 +204,24 @@ public final class AlarmRegistry {
      * Disposes an alarm registry.
      *
      * <p>
-     * This method is needed as <code>Timer</code> creates non daemon thread
+     * NOTE: This method is needed as <code>Timer</code> creates non daemon thread
      * which would prevent the app from exit.
+     * </p>
+     *
+     * <p>
+     * NOTE: after <code>AlarmRegistry</code> is disposed, attempt to perform
+     *  any alarms related activity on it leads to undefined behaviour.
      * </p>
      */
     public synchronized void dispose() {
         timer.cancel();
+        for (Iterator it = alarms.values().iterator(); it.hasNext();) {
+            final AlarmTask task = (AlarmTask) it.next();
+            task.cancel();
+        }
         alarms.clear();
     }
-    
+
     /**
      * Special class that supports guaranteed canceling of TimerTasks.
      */
@@ -200,6 +234,8 @@ public final class AlarmRegistry {
 
         /**
          * Creates a new instance, originally not canceled.
+         *
+         * @param midletInfo <code>MIDlet</code> to create task for
          */
         AlarmTask(final MIDletInfo midletInfo) {
             this.midletInfo = midletInfo;
@@ -250,6 +286,15 @@ public final class AlarmRegistry {
      */
     private void removeAlarm(final MIDletInfo midletInfo) {
         alarms.remove(midletInfo);
+        removeAlarmFromStore(midletInfo);
+    }
+
+    /**
+     * Removes an alarm from persistent store.
+     *
+     * @param midletInfo defines <code>MIDlet</code> to remove alarm for
+     */
+    private void removeAlarmFromStore(final MIDletInfo midletInfo) {
         try {
             store.removeAlarm(midletInfo.midletSuiteID, midletInfo.midlet);
         } catch (IOException _) {

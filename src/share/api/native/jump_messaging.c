@@ -629,8 +629,7 @@ doWaitFor(JUMPPlatformCString type, int32 timeout)
 {
     int status;
 
-    /* Now wait for response with a timeout.FIXME: How to implement timeout? */
-    /* Must do a SIGALRM to interrupt receive. */
+    /* Now wait for response with a timeout. */
     status = jumpMessageQueueWaitForMessage(type, timeout);
     if (status == 0) {
 	uint8* buffer = (uint8*)calloc(1, MESSAGE_BUFFER_SIZE);
@@ -643,6 +642,9 @@ doWaitFor(JUMPPlatformCString type, int32 timeout)
 	incoming = newMessageFromReceivedBuffer(buffer, MESSAGE_BUFFER_SIZE);
 	return (JUMPMessage)incoming;
     } else {
+	/* Timed out, or in error. Must indicate to caller so it can decide
+	   which exception to throw (in case of Java), or what error code
+	   to handle (in case of native). */
 	return NULL;
     }    
 }
@@ -667,9 +669,8 @@ jumpMessageSendSync(JUMPAddress target, JUMPOutgoingMessage m, int32 timeout,
 
     /* Get a response. Discard any that don't match outgoing request id */
     do {
-	/* FIXME: timeout accounting! We have to keep track of how
-	   long the wait was, and make sure to not wait longer than
-	   the incoming timeout above. */
+	/* FIXME: The FIFO based code seems to be handling interruption
+	   so it appears maybe this layer does not have to. Check. */
 	r = doWaitFor(m->header.sender.returnType, timeout);
     } while (r->header.requestId != m->header.requestId);
     /* sanity? */
@@ -687,7 +688,7 @@ jumpMessageRegisterDirect(JUMPPlatformCString type)
 /*
  * Block and wait for incoming message of a given type
  */
-extern JUMPMessage
+JUMPMessage
 jumpMessageWaitFor(JUMPPlatformCString type,
 		   int32 timeout)
 {

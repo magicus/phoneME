@@ -39,7 +39,8 @@ import com.sun.jump.command.JUMPResponseInteger;
  * Helper class to handle request/response exchange.
  */
 public class RequestSenderHelper {
-    private static final long DEFAULT_TIMEOUT = 0L;
+    // FIXME: Timeout values should be centralized somewhere
+    private static final long DEFAULT_TIMEOUT = 5000L;
 
     private JUMPMessagingService host; // either isolate or executive
 

@@ -1,25 +1,49 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation.
- *
+ * 2 only, as published by the Free Software Foundation. 
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt).
- *
+ * included at /legal/license.txt). 
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
- *
+ * 02110-1301 USA 
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
+ */
+
+/**
+ * Copyright(c) 1997 DTAI, Incorporated (http://www.dtai.com)
+ *
+ *                        All rights reserved
+ *
+ * Permission to use, copy, modify and distribute this material for
+ * any purpose and without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies, and that the name of DTAI, Incorporated not be used in
+ * advertising or publicity pertaining to this material without the
+ * specific, prior written permission of an authorized representative of
+ * DTAI, Incorporated.
+ *
+ * DTAI, INCORPORATED MAKES NO REPRESENTATIONS AND EXTENDS NO WARRANTIES,
+ * EXPRESS OR IMPLIED, WITH RESPECT TO THE SOFTWARE, INCLUDING, BUT
+ * NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR ANY PARTICULAR PURPOSE, AND THE WARRANTY AGAINST
+ * INFRINGEMENT OF PATENTS OR OTHER INTELLECTUAL PROPERTY RIGHTS.  THE
+ * SOFTWARE IS PROVIDED "AS IS", AND IN NO EVENT SHALL DTAI, INCORPORATED OR
+ * ANY OF ITS AFFILIATES BE LIABLE FOR ANY DAMAGES, INCLUDING ANY
+ * LOST PROFITS OR OTHER INCIDENTAL OR CONSEQUENTIAL DAMAGES RELATING
+ * TO THE SOFTWARE.
  */
 
 package com.sun.jumpimpl.presentation.simplebasis;
