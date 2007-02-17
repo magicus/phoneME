@@ -196,13 +196,14 @@ jumpProcessCreate(int argc, char** argv)
 }
 
 int 
-jumpProcessRunDriver(char *driver_name)
+jumpProcessRunDriver(char *driver_name, char *lib_name)
 {
-    int argc = 1;
-    char *argv[2];
+    int argc = 2;
+    char *argv[3];
     
     argv[0] = driver_name;
-    argv[1] = NULL;
+    argv[1] = lib_name;
+    argv[2] = NULL;
     return jumpProcessNativeCreate(argc, argv);
 }
 
