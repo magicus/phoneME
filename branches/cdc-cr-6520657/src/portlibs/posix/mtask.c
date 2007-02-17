@@ -568,22 +568,25 @@ dumpTasksAsResponse(JUMPMessage command, int all)
 {
     JUMPOutgoingMessage m;
     JUMPMessageStatusCode code;
+    JUMPMessageMark mark;
     
     TaskRec* task;
-    int numTasks;
+    int numTasks = 0;
     
     m = jumpMessageNewOutgoingByRequest(command);
 
-    numTasks = numberOfTasks();
-
+    jumpMessageMarkSet(&mark, m);
     jumpMessageAddInt(m, numTasks);
     
     for (task = taskList; task != NULL; task = task->next) {
 	if (all || task->procType == PROCTYPE_JAVA) {
 	    dumpTaskIntoMessage(m, task);   /* Brief printout to caller */
 	    dumpTaskOne(task);              /* Verbose printout to console */
+	    numTasks ++;
 	}
     }
+    jumpMessageMarkResetTo(&mark, m);
+    jumpMessageAddInt(m, numTasks);
 
     jumpMessageSendAsyncResponse(m, &code);
 }
@@ -1003,8 +1006,8 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    }
 	    if (!strcmp(argv[0], "JNATIVE")) { /* Run native process (driver) */
 		TaskRec* task;
-#define JNATIVE_USAGE   "Usage: JNATIVE <proc_name>[ <proc_args>...]"
-		if (argc < 2) {
+#define JNATIVE_USAGE   "Usage: JNATIVE <proc_name> <lib_name> [<proc_args>...]"
+		if (argc < 3) {
 		    respondWith(command, JNATIVE_USAGE);
 		    freeArgs(argc, argv);
 		    argc = 0;
@@ -1111,37 +1114,75 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		if (!strcmp(argv[0], "JNATIVE")) { /* we are launching 
 						      a native process */
 		    /* trying to find native method */
-		    nativeMain = dlsym(RTLD_DEFAULT, argv[1]);
+		    void *dsoHandle;
+		    char *libName;
+
+		    /*
+		     * If the lib name is "main" then
+		     * we have to look for the symbol
+		     * in the main binary module.
+		     */
+		    if (strcmp(argv[2], "main")) {
+			libName = malloc(strlen(argv[2]) + 
+			    3 /*lib*/ + 3 /*.so*/ +
+#ifdef CVM_DEBUG
+			    2 /*_g*/ +
+#endif
+			    1 /*'\0'*/);
+			assert(libName != NULL);
+			strcpy(libName, "lib");
+			strcat(libName, argv[2]);
+#ifdef CVM_DEBUG
+			strcat(libName, "_g");
+#endif
+			strcat(libName, ".so");
+			dsoHandle = dlopen(libName, RTLD_LAZY);
+			free(libName);
+		    } else {
+			dsoHandle = dlopen(NULL, 0);
+		    }
+
+		    if (dsoHandle != NULL) {
+			nativeMain = dlsym(dsoHandle, argv[1]);
+			/*
+			 * FIXME: Somewhere we must do "dlclose()".
+			 * The KILL command cannot do that because 
+			 * it has to know "dso_handle".
+			 */
+		    } else {
+			fprintf(stderr, "MTASK: Cannot find lib: %s\n", argv[2]);
+		    }
 		    if (nativeMain == NULL) { /* method hasn't been found */
+                        fprintf(stderr, 
+			    "MTASK: Cannot find symbol '%s' in library %s\n", argv[1], argv[2]);
 			respondWith(command, JNATIVE_USAGE);
 			jumpMessageFree(command);
 			freeArgs(argc, argv);
 			argc = 0;
 			argv = NULL;
 			exit(1);
-		    } else {
-#define MSGPREFIX_NATIVE "native"
-			/* creating the message queue for our process.
- 			 * It must be created before the launcher received 
- 			 * successful result
- 			 */
-			JUMPMessageQueueStatusCode code = 0;
-			/* allocate memory for queue's name */
-			unsigned char *type = 
-			    malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
-			/* FIXME: make sure that the string is allocated */
-			assert(type != NULL);
-
-			strcpy((char*)type, (char*)MSGPREFIX_NATIVE);
-			strcat((char*)type, "/");
-			strcat((char*)type, argv[1]); /* cat the name of process */
-			/* we trying to create a queue named "native/<processName>" */
-			jumpMessageQueueCreate(type, &code);
-
-			/* FIXME: return error code if creation fails */
-			assert(code == JUMP_MQ_SUCCESS);
-			free(type);
 		    }
+#define MSGPREFIX_NATIVE "native"
+		    /* creating the message queue for our process.
+		     * It must be created before the launcher received 
+		     * successful result
+		     */
+		    JUMPMessageQueueStatusCode code = 0;
+		    /* allocate memory for queue's name */
+		    unsigned char *type = 
+		        malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
+		    /* FIXME: make sure that the string is allocated */
+		    assert(type != NULL);
+
+		    strcpy((char*)type, (char*)MSGPREFIX_NATIVE);
+		    strcat((char*)type, "/");
+		    strcat((char*)type, argv[1]); /* cat the name of process */
+		    /* we trying to create a queue named "native/<processName>" */
+		    jumpMessageQueueCreate(type, &code);
+
+		    /* FIXME: return error code if creation fails */
+		    assert(code == JUMP_MQ_SUCCESS);
+		    free(type);
 		}
 		
 		/* First, make sure that the child PID is communicated
