@@ -79,7 +79,7 @@ endif
 JAVACALL_TARGET=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
 # Check javacall makefile and include it
 export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
-JAVACALL_MAKE_FILE = $(JAVACALL_DIR)/configuration/phoneMEAdvanced/$(JAVACALL_TARGET)/module.gmk
+JAVACALL_MAKE_FILE = $(JAVACALL_DIR)/module.gmk
 ifeq ($(wildcard $(JAVACALL_MAKE_FILE)),)
 $(error JAVACALL_DIR must point to a directory containing javacall implementation sources)
 endif
@@ -118,7 +118,7 @@ endif
 # Include JSR 120
 ifeq ($(USE_JSR_120), true)
 export JSR_120_DIR ?= $(COMPONENTS_DIR)/jsr120
-JSR_120_MAKE_FILE = $(JSR_120_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+JSR_120_MAKE_FILE = $(JSR_120_DIR)/build/config/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(JSR_120_MAKE_FILE)),)
 $(error JSR_120_DIR must point to a directory containing JSR 120 sources)
 endif
