@@ -213,6 +213,10 @@ public class DefaultConfiguration extends Configuration {
 	}
 	
 	private void addProtocolContentPair(String protocol, String contentType) {
+	// #ifndef ENABLE_FILE_CONNECTION_SUPPORT
+		if (protocol.equals("file"))
+			return;
+	// #endif		
 		addPairToHash(protocolsOfContent, contentType, protocol);
 		addPairToHash(contentsOfProtocol, protocol, contentType);
 	}
@@ -239,9 +243,17 @@ public class DefaultConfiguration extends Configuration {
 		if (protocolsOfContent == null) {
 			protocolsOfContent = new Hashtable();
 			contentsOfProtocol = new Hashtable();
-		// #ifdef USE_NATIVE_CONFIG
 			
+		// #ifdef USE_NATIVE_CONFIG
+			String[][] res = nGetMediaCaps();
+			if (res != null) {
+				for (int i = 0; i < res.length; i++) {
+					for (int j = 1; j < res[i].length; j++)
+						addProtocolContentPair(res[i][j], res[i][0]);
+				}
+			}
 		// #endif
+		
 			addProtocolContentPair(MIME_IMAGE_GIF, "file");
 			addProtocolContentPair(MIME_IMAGE_GIF, "http");
 		

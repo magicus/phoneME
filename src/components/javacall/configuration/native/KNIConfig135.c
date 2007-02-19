@@ -31,7 +31,7 @@
 
 static javacall_result 
     createStringArray(javacall_const_utf8_string header,
-        javacall_const_utf8_string* pStrings, int number, 
+        const javacall_const_utf8_string* pStrings, int number, 
         jobject jStrings) 
 {
     javacall_result crResult = JAVACALL_OK;
