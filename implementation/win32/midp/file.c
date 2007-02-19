@@ -197,9 +197,9 @@ javacall_result javacall_file_open(const javacall_utf16*  unicodeFileName,
 
     if (fd == -1) {
         *handle = NULL;
-        javacall_print("javacall_file_open: _wopen failed for: ");
-        javacall_print(unicode_to_char(wOsFilename));
-        javacall_print("\n");
+/*         javacall_print("javacall_file_open: _wopen failed for: "); */
+/*         javacall_print(unicode_to_char(wOsFilename)); */
+/*         javacall_print("\n"); */
         return JAVACALL_FAIL;
     }
 
