@@ -289,9 +289,11 @@ jboolean midp_checkAndResume() {
     return res;
 }
 
-void midp_waitWhileSuspended() {
+jboolean midp_waitWhileSuspended() {
+    jboolean ret = KNI_FALSE;
+
     while (SR_SUSPENDED == midp_getSRState()) {
-        midp_checkAndResume();
+        ret = midp_checkAndResume();
         if (!vm.isSuspended) {
             break;
         }
@@ -303,4 +305,6 @@ void midp_waitWhileSuspended() {
          */
         midp_sleepNativeThread(1);
     }
+
+    return ret;
 }
