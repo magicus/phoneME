@@ -83,3 +83,7 @@ ifeq ($(USE_JSR_177_EMULATOR), true)
 JAVAC ?= JAVAC_CMD
 endif
 
+# Include jsr 177 properties in Configuration
+#
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += $(JSR_177_PROPERTY_FILES)
+
