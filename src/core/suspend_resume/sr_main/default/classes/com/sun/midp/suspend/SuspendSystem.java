@@ -183,7 +183,8 @@ public class SuspendSystem extends AbstractSubsystem {
          * Not used. MIDletProxyListListener interface method.
          */
         public void midletStartError(int externalAppId, int suiteId,
-                                     String className, int error) {}
+                                     String className, int errorCode,
+                                     String errorDetails) {}
     }
 
     /**

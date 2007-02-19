@@ -673,13 +673,15 @@ class AppManagerUI extends Form
      *
      * @param suiteId suite ID of the MIDlet
      * @param className class name of the MIDlet
-     * @param error error code
+     * @param errorCode error code
+     * @param errorDetails error code details
      */
-    void notifyMidletStartError(int suiteId, String className, int error) {
+    void notifyMidletStartError(int suiteId, String className, int errorCode,
+                                String errorDetails) {
         Alert a;
         String errorMsg;
 
-        switch (error) {
+        switch (errorCode) {
         case Constants.MIDLET_SUITE_NOT_FOUND:
             errorMsg = Resource.getString(
                 ResourceConstants.AMS_MIDLETSUITELDR_MIDLETSUITE_NOTFOUND);
@@ -732,6 +734,10 @@ class AppManagerUI extends Form
         default:
             errorMsg = Resource.getString(
                 ResourceConstants.AMS_MIDLETSUITELDR_UNEXPECTEDLY_QUIT);
+        }
+
+        if (errorDetails != null) {
+             errorMsg += "\n\n" + errorDetails;
         }
 
         displayError.showErrorAlert(null, null,

@@ -27,10 +27,7 @@
 package com.sun.midp.main;
 
 import com.sun.midp.events.EventQueue;
-import com.sun.midp.events.Event;
-import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.ListenerTestEventQueue;
-import com.sun.midp.events.NativeEvent;
 
 import com.sun.midp.i3test.TestCase;
 
@@ -58,6 +55,7 @@ public class TestMIDletControllerEventProducer extends TestCase
     static final String DISPLAY_NAME = "the display-name of the midlet";
     static final int TARGET_SUITE_ID = 10001;
     static final String TARGET_CLASS_NAME = "the target midlet's class name";
+    static final String ERROR_DETAILES = "the error details";
 
     // The following instance variables comprise the test fixture.
     // They are freshly initialized before each test is run.
@@ -154,7 +152,7 @@ public class TestMIDletControllerEventProducer extends TestCase
      */
     void testMIDletStartErrorEvent() {
         producer.sendMIDletStartErrorEvent(SUITE_ID, CLASS_NAME, externalId,
-                                           errorCode);
+                                           errorCode, ERROR_DETAILES);
     }
 
     /**
@@ -250,17 +248,20 @@ public class TestMIDletControllerEventProducer extends TestCase
      * @param midletExternalAppId ID of given by an external application
      *                            manager
      * @param error start error code
+     * @param details start error details
      */
     public void handleMIDletStartErrorEvent(
         int midletSuiteId,
         String midletClassName,
         int midletExternalAppId,
-        int error) {
+        int error,
+        String details) {
 
         assertEquals(SUITE_ID, midletSuiteId);
         assertEquals(CLASS_NAME, midletClassName);
         assertEquals(externalId, midletExternalAppId);
         assertEquals(errorCode, error);
+        assertEquals(ERROR_DETAILES, details);
     }
 
     /**

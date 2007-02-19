@@ -146,21 +146,23 @@ public class MIDletControllerEventProducer {
      *                            manager
      * @param midletSuiteId ID of the MIDlet suite
      * @param midletClassName Class name of the MIDlet
-     * @param error start error code
+     * @param errorCode start error code
      */
     public void sendMIDletStartErrorEvent(
         int midletSuiteId,
         String midletClassName,
         int midletExternalAppId,
-        int error) {
+        int errorCode,
+        String errorDetails) {
 
         synchronized (startErrorEvent) {
-            // use pre-created event to work in case of hadling out of memory
+            // use pre-created event to work in case of handling out of memory
             startErrorEvent.intParam1 = midletSuiteId;
             startErrorEvent.intParam2 = midletExternalAppId;
-            startErrorEvent.intParam3 = error;
+            startErrorEvent.intParam3 = errorCode;
 
             startErrorEvent.stringParam1 = midletClassName;
+            startErrorEvent.stringParam2 = errorDetails; 
 
             eventQueue.sendNativeEventToIsolate(startErrorEvent, amsIsolateId);
         }

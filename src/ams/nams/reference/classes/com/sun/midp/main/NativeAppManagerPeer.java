@@ -64,7 +64,7 @@ public class NativeAppManagerPeer
      * SecurityInitializer should be able to check this inner class name.
      */
     static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
+        implements ImplicitlyTrustedClass {}
 
     /**
      * Called at the initial start of the VM.
@@ -243,11 +243,13 @@ public class NativeAppManagerPeer
      * @param externalAppId ID assigned by the external application manager
      * @param suiteId Suite ID of the MIDlet
      * @param className Class name of the MIDlet
-     * @param error start error code
+     * @param errorCode start error code
+     * @param errorDetails start error details
      */
     public void midletStartError(int externalAppId, int suiteId,
-                                 String className, int error) {
-        notifyMidletStartError(externalAppId, error);
+                                 String className, int errorCode,
+                                 String errorDetails) {
+        notifyMidletStartError(externalAppId, errorCode);
     }
 
     // ------ End implementation of the MIDletProxyListListener interface
