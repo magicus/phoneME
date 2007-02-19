@@ -53,24 +53,16 @@ JSR_177_ERRORS :=
 # Default values for options
 #
 # ACL from another implementation text files={true|false}
-ifeq ($(USE_JSR_177_ACL_TEXT),)
-USE_JSR_177_ACL_TEXT = false
-endif
+USE_JSR_177_ACL_TEXT ?= false
 
 # APDUManager={carddevice|simple}
-ifeq ($(JSR_177_APDU_MANAGER),)
-JSR_177_APDU_MANAGER=carddevice
-endif
+JSR_177_APDU_MANAGER ?= carddevice
 
 # CardDevice={simulator|platformcarddevice}
-ifeq ($(JSR_177_APDU_CARDDEVICE),)
-JSR_177_APDU_CARDDEVICE=simulator
-endif
+JSR_177_APDU_CARDDEVICE ?= simulator
 
 # PlatformAPI={simulator|stubs|real}
-ifeq ($(JSR_177_APDU_PLATFORM_API),)
-JSR_177_APDU_PLATFORM_API=simulator
-endif
+JSR_177_APDU_PLATFORM_API ?= simulator
 
 # Build CAPs and eprom images for CREF?
 ifeq ($(JSR_177_APDU_CARDDEVICE),simulator)
@@ -502,54 +494,54 @@ endif
 
 jcrmic: $(JAVACARD_CLASSES) $(BINDIR)
 	@echo " ..." $@
-	@$(JAVAC_CMD) -d $(JAVACARD_CLASSES) $(JCRMIC_SOURCES)
-	@cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_PROPERTIES) $(JAVACARD_CLASSES)/$(JCRMIC_PROPERTIES)
-	@cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_MANIFEST_FILE) $(JAVACARD_CLASSES)/$(JCRMIC_MANIFEST_FILE)
-	@(cd $(JAVACARD_CLASSES) ; $(JAR_CMD) cfm $(JCRMIC_ARCHIVE) $(JCRMIC_MANIFEST_FILE) com/sun/satsa/jcrmic )
-	@mv $(JAVACARD_CLASSES)/$(JCRMIC_ARCHIVE) $(BINDIR)/$(JCRMIC_ARCHIVE)
+	$(AT)$(JAVAC_CMD) -d $(JAVACARD_CLASSES) $(JCRMIC_SOURCES)
+	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_PROPERTIES) $(JAVACARD_CLASSES)/$(JCRMIC_PROPERTIES)
+	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_MANIFEST_FILE) $(JAVACARD_CLASSES)/$(JCRMIC_MANIFEST_FILE)
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAR_CMD) cfm $(JCRMIC_ARCHIVE) $(JCRMIC_MANIFEST_FILE) com/sun/satsa/jcrmic )
+	$(AT)mv $(JAVACARD_CLASSES)/$(JCRMIC_ARCHIVE) $(BINDIR)/$(JCRMIC_ARCHIVE)
 
 ifeq ($(USE_JSR_177_EMULATOR), true)
 sim: $(JAVACARD_CLASSES)
 	@echo " ..." $@
 	@echo " ... compiling SIM Toolkit"
-	@$(JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JC_API) $(SIM_TOOLKIT_SOURCES)
+	$(AT)$(JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JC_API) $(SIM_TOOLKIT_SOURCES)
 	@echo " ... compiling applets"
-	@$(JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(JC_SAT_APPLET_SOURCES)
-	@$(JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JC_API) $(JC_PKI_APPLET_SOURCES)
-	@$(JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JC_API) $(JC_ACL_APPLET_SOURCES)
-	@cp -f $(JSR_177_DIR)/src/share/tool/javacard/*.opt $(JAVACARD_CLASSES)/
-	@cp -f $(JSR_177_DIR)/src/share/tool/javacard/*.scr $(JAVACARD_CLASSES)/
-	@cp -r -f $(JC_DIR)/api_export_files $(JAVACARD_CLASSES)/
+	$(AT)$(JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(JC_SAT_APPLET_SOURCES)
+	$(AT)$(JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JC_API) $(JC_PKI_APPLET_SOURCES)
+	$(AT)$(JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JC_API) $(JC_ACL_APPLET_SOURCES)
+	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/javacard/*.opt $(JAVACARD_CLASSES)/
+	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/javacard/*.scr $(JAVACARD_CLASSES)/
+	$(AT)cp -r -f $(JC_DIR)/api_export_files $(JAVACARD_CLASSES)/
 	@echo " ... preparing SIM Toolkit"
-	@(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config simtoolkit.opt )
-	@mkdir -p $(JAVACARD_CLASSES)/api_export_files/sim/toolkit/javacard/
-	@cp $(JAVACARD_CLASSES)/sim/toolkit/javacard/toolkit.exp $(JAVACARD_CLASSES)/api_export_files/sim/toolkit/javacard/
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config simtoolkit.opt )
+	$(AT)mkdir -p $(JAVACARD_CLASSES)/api_export_files/sim/toolkit/javacard/
+	$(AT)cp $(JAVACARD_CLASSES)/sim/toolkit/javacard/toolkit.exp $(JAVACARD_CLASSES)/api_export_files/sim/toolkit/javacard/
 	@echo " ... preparing applets"
-	@(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config gsmapplet.opt )
-	@(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config satapplet.opt )
-	@(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config pkiapplet.opt )
-	@(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config aclapplet.opt )
-	@(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o toolkit.scr -nobanner sim/toolkit/javacard/toolkit.cap )
-	@(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o gsmapplet.scr -nobanner com/sun/satsa/gsmapplet/javacard/gsmapplet.cap )
-	@(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o satapplet.scr -nobanner com/sun/satsa/satapplet/javacard/satapplet.cap )
-	@(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o pkiapplet.scr -nobanner com/sun/satsa/pkiapplet/javacard/pkiapplet.cap )
-	@(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o aclapplet.scr -nobanner com/sun/satsa/aclapplet/javacard/aclapplet.cap )
-	@(cd $(JAVACARD_CLASSES) ; cat header.scr toolkit.scr gsmapplet.scr satapplet.scr pkiapplet.scr aclapplet.scr footer.scr > satsimulator.scr)
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config gsmapplet.opt )
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config satapplet.opt )
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config pkiapplet.opt )
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config aclapplet.opt )
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o toolkit.scr -nobanner sim/toolkit/javacard/toolkit.cap )
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o gsmapplet.scr -nobanner com/sun/satsa/gsmapplet/javacard/gsmapplet.cap )
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o satapplet.scr -nobanner com/sun/satsa/satapplet/javacard/satapplet.cap )
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o pkiapplet.scr -nobanner com/sun/satsa/pkiapplet/javacard/pkiapplet.cap )
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o aclapplet.scr -nobanner com/sun/satsa/aclapplet/javacard/aclapplet.cap )
+	$(AT)(cd $(JAVACARD_CLASSES) ; cat header.scr toolkit.scr gsmapplet.scr satapplet.scr pkiapplet.scr aclapplet.scr footer.scr > satsimulator.scr)
 	@echo " ... loading applets (be patient)"
-	@$(JC_DIR)/bin/cref -o $(JC_EEPROM_IMAGE) -nobanner -nomeminfo -s &
-	-@sleep 1
-	@(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_APDUTOOL_CLASSPATH) com.sun.javacard.apdutool.Main -h 127.0.0.1 -nobanner satsimulator.scr)
-	@(cd $(JAVACARD_CLASSES) ; mkdir -p jc_script ; mv -f satsimulator.scr jc_script/ ; rm -f *.opt ; rm -f *.scr ; rm -fr api_export_files)
+	$(AT)$(JC_DIR)/bin/cref -o $(JC_EEPROM_IMAGE) -nobanner -nomeminfo -s &
+	-$(AT)sleep 1
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_APDUTOOL_CLASSPATH) com.sun.javacard.apdutool.Main -h 127.0.0.1 -nobanner satsimulator.scr)
+	$(AT)(cd $(JAVACARD_CLASSES) ; mkdir -p jc_script ; mv -f satsimulator.scr jc_script/ ; rm -f *.opt ; rm -f *.scr ; rm -fr api_export_files)
 	@echo " ..." $@ " done"
 endif
 
 $(JAVACARD_CLASSES):
 	@echo " ... creating directories" $@
-	@mkdir -p $@
+	$(AT)mkdir -p $@
 
 $(STUBS_PATH): $(JAVACARD_CLASSES)
 	@echo " ... creating directories" $@
-	@mkdir -p $@
+	$(AT)mkdir -p $@
 
 $(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) all_tools
 	$(call compileJSRClasses,177)
@@ -567,7 +559,7 @@ SATSA_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr177
 # Copy and filter SATSA source in SATSA_SOURCE_OUTPUT_DIR
 satsa_source_bundle: JSR_177_DIR SOURCE_OUTPUT_DIR
 	@echo " ... JSR 177 source bundle" $(LOG)
-	@$(call re_src_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR),src)
+	$(AT)$(call re_src_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR),src)
 
 # Subsystem verify rules
 #
@@ -576,7 +568,7 @@ jsr177_verify:
 else
 jsr177_verify:
 	@$(JSR_177_ERRORS)
-	@exit -1
+	$(AT)exit -1
 endif
 
 # Display subsystem information

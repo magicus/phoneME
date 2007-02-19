@@ -57,4 +57,4 @@ endif
 BINDIR=$(JSR_177_BUILD_DIR)/bin
 $(BINDIR):
 	@echo " ... creating directories" $@
-	@mkdir -p $@
+	$(AT)mkdir -p $@
