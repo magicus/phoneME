@@ -42,17 +42,7 @@ EXTRA_CFLAGS += -DMMAPI_USE_SOFTWARE_MIXER -DMMAPI_WRITE_TO_AUDIO_DEVICE
 #
 # Remove "-Werror" from $(CFLAGS) for native 234 files
 #
-$(OBJ_DIR)/%.o: $(JSR_234_DIR)/src/native/%.c
-	@echo " ... $@" $(LOG)
-	@echo +++ $(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG_ONLY)
-	@$(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
-
-$(OBJ_DIR)/%.o: $(JSR_234_DIR)/src/native/jpeg/%.c
-	@echo " ... $@" $(LOG)
-	@echo +++ $(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG_ONLY)
-	@$(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
-
-$(OBJ_DIR)/%.o: $(JSR_234_DIR)/src/native/png/%.c
+$(OBJ_DIR)/%.o: $(MIDP_ABB_DIR)/src/native/%.c
 	@echo " ... $@" $(LOG)
 	@echo +++ $(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG_ONLY)
 	@$(CC) $(subst -Werror,,$(CFLAGS)) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)
