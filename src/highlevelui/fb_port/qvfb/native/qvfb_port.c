@@ -211,7 +211,7 @@ void refreshScreenNormal(int x1, int y1, int x2, int y2) {
     // QVFB feature: a number of bytes per line can be different from
     // screenWidth * pixelSize, so lineStep should be used instead.
     int lineStep = hdr->lineStep / sizeof(gxj_pixel_type);
-    int dstWidth =  hdr->lineStep / sizeof(gxj_pixel_type);//, dstHeight = hdr->height;
+    int dstWidth =  hdr->lineStep / sizeof(gxj_pixel_type);
     gxj_pixel_type *dst  = (gxj_pixel_type *)qvfbPixels;
     gxj_pixel_type *src  = gxj_system_screen_buffer.pixelData;
 
@@ -257,8 +257,7 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
     gxj_pixel_type *dst = (gxj_pixel_type *)qvfbPixels;
     int srcWidth, srcHeight;
-    int dstWidth =  hdr->lineStep / sizeof(gxj_pixel_type);
-    int dstHeight = hdr->height;
+    int lineStep =  hdr->lineStep / sizeof(gxj_pixel_type);
 
     // System screen buffer geometry
     int bufWidth = gxj_system_screen_buffer.width;
@@ -275,23 +274,23 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
     srcHeight = y2 - y1;
 
     // Center the LCD output area
-    if (bufWidth < dstHeight || bufHeight < dstWidth) {
-            // We are drawing into a frame buffer that's larger than what MIDP
-            // needs. Center it.
-            dst += (dstHeight - bufWidth) / 2 * dstWidth;
-            dst += ((dstWidth - bufHeight) / 2);
-        }
+    if (bufWidth < hdr->height) {
+        dst += (hdr->height - bufWidth) / 2 * lineStep;
+    }
+    if (bufHeight < hdr->width) {
+        dst += ((hdr->width - bufHeight) / 2);
+    }
 
     src += x1 + y1 * bufWidth;
-    dst += y1 + (bufWidth - x1) * dstWidth;
+    dst += y1 + (bufWidth - x1 - 1) * lineStep;
 
     srcInc = bufWidth - srcWidth;      // increment for src pointer at the end of row
-    dstInc = srcWidth * dstWidth + 1;  // increment for dst pointer at the end of column
+    dstInc = srcWidth * lineStep + 1;  // increment for dst pointer at the end of column
 
     while(y1++ < y2) {
         for (x = x1; x < x2; x++) {
             *dst = *src++;
-            dst -= dstWidth;
+            dst -= lineStep;
          }
          dst += dstInc;
          src += srcInc;
