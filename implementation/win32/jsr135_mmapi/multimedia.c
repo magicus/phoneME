@@ -86,14 +86,15 @@
  * <mime string>, <protocol count>, <protocol strings>
  */
 static const javacall_media_caps _media_caps[] = {
-    {JAVACALL_AUDIO_TONE_MIME,      2, {"device", "http"}},
-    {JAVACALL_AUDIO_MIDI_MIME,      1, {"http"}},
-    {JAVACALL_AUDIO_MIDI_MIME_2,    1, {"http"}},
-    {JAVACALL_AUDIO_WAV_MIME,       1, {"http"}},
-    {JAVACALL_AUDIO_MP3_MIME,       1, {"http"}},
-    {JAVACALL_AUDIO_MP3_MIME_2,     1, {"http"}},
-    {JAVACALL_AUDIO_QCELP_MIME,     2, {"capture", "http"}},
-    {JAVACALL_AUDIO_QCELP_MIME_2,   2, {"capture", "http"}},
+    {JAVACALL_AUDIO_TONE_MIME,      3, {"device", "http", "file"}},
+    {JAVACALL_AUDIO_MIDI_MIME,      2, {"http", "file"}},
+    {JAVACALL_AUDIO_MIDI_MIME_2,    2, {"http", "file"}},
+    {JAVACALL_AUDIO_WAV_MIME,       3, {"capture", "http", "file"}},
+    {JAVACALL_AUDIO_MP3_MIME,       2, {"http", "file"}},
+    {JAVACALL_AUDIO_MP3_MIME_2,     2, {"http", "file"}},
+    {JAVACALL_AUDIO_QCELP_MIME,     3, {"capture", "http", "file"}},
+    {JAVACALL_AUDIO_QCELP_MIME_2,   3, {"capture", "http", "file"}},
+    {JAVACALL_IMAGE_PNG_MIME,       1, {"capture"}},
 
     /* End of caps => mimeType should be NULL and list all of 
        protocols from here ! */ 
