@@ -34,6 +34,8 @@
 #
 ######################################################################
 
+# Source files for the ( satsa ) module
+#
 MODULE_SATSA_COMMON_JAVA_FILES += \
     $(JSR_177_COMMON)/classes/com/sun/satsa/security/SecurityInitializer.java \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/lang/UnsupportedOperationException.java
@@ -44,18 +46,6 @@ ifneq ($(USE_JSR_172), true)
 MODULE_SATSA_COMMON_JAVA_FILES += \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/rmi/Remote.java \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/rmi/RemoteException.java
-endif
-
-# Define APDU sources which depend on options
-#
-# JSR_177_APDU_MANAGER=simple
-ifeq ($(JSR_177_APDU_MANAGER),simple)
-vpath % $(JSR_177_DIR)/src/cldc_application/protocol/apdu/simple/native
-endif
-
-# JSR_177_APDU_MANAGER=carddevice & JSR_177_APDU_CARDDEVICE=platformcarddevice
-ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
-vpath % $(JSR_177_DIR)/src/cldc_application/protocol/apdu/native
 endif
 
 MODULE_SATSA_CRYPTO_JAVA_FILES += \
@@ -77,6 +67,26 @@ MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/security/spec/X509EncodedKeySpec.java \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/security/spec/AlgorithmParameterSpec.java
     
+MODULE_SATSA_JCRMI_JAVA_FILES += \
+    $(JSR_177_DIR)/src/cldc_application/protocol/jcrmi/classes/com/sun/midp/io/j2me/jcrmi/Protocol.java
+
+MODULE_SATSA_APDU_JAVA_FILES += \
+    $(JSR_177_DIR)/src/cldc_application/protocol/apdu/classes/com/sun/midp/io/j2me/apdu/Protocol.java
+
+# Define APDU sources which depend on options
+#
+# JSR_177_APDU_MANAGER=simple
+ifeq ($(JSR_177_APDU_MANAGER),simple)
+vpath % $(JSR_177_DIR)/src/cldc_application/protocol/apdu/simple/native
+endif
+
+# JSR_177_APDU_MANAGER=carddevice & JSR_177_APDU_CARDDEVICE=platformcarddevice
+ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
+vpath % $(JSR_177_DIR)/src/cldc_application/protocol/apdu/native
+endif
+
+# Java card constants
+#
 JAVACARD_CLASSES = $(MIDP_OUTPUT_DIR)/javacard_classes
 
 ifeq ($(USE_JSR_177_EMULATOR), true)
