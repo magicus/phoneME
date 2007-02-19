@@ -67,8 +67,6 @@ MODULE_JSR_234_JAVA_FILES += \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundTonePlayer.java 
 
 vpath % $(MIDP_ABB_DIR)/src/native
-vpath % $(MIDP_ABB_DIR)/src/native/jpeg
-vpath % $(MIDP_ABB_DIR)/src/native/png
 
 MODULE_JSR_234_NATIVE_FILES += \
     qsoundnative.c 
