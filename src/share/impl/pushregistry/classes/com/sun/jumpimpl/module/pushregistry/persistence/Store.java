@@ -73,11 +73,19 @@ public final class Store {
     private final AppSuiteDataStore alarmsStore;
 
     /**
-     * Constructor.
+     * Constructs a Store and reads the data.
      *
      * @param storeManager JUMP content store manager to use
+     *
+     * @throws IOException if IO fails
      */
-    public Store(final StoreOperationManager storeManager) {
+    public Store(final StoreOperationManager storeManager) throws IOException {
+        if (storeManager == null) {
+            throw new IllegalArgumentException("storeManager is null");
+        }
+
+        ensureStoreStructure(storeManager);
+
         connectionsStore = new AppSuiteDataStore(
                 storeManager, CONNECTIONS_DIR, CONNECTIONS_CONVERTER);
 
@@ -89,13 +97,11 @@ public final class Store {
      * Ensures presence of store layout requested for the
      *  store to function correctly.
      *
-     * TBD: move everything under constructor
-     *
      * @param storeManager JUMP content store manager to use
      *
      * @throws IOException in case of IO errors
      */
-    public static void ensureStoreStructure(
+    private static void ensureStoreStructure(
             final StoreOperationManager storeManager)
             throws IOException {
         storeManager.doOperation(true, new StoreOperationManager.Operation() {
@@ -136,16 +142,6 @@ public final class Store {
     private static void logWarning(final String msg) {
         // TBD: use common logging
         System.out.println("[warning] " + Store.class + ": " + msg);
-    }
-
-    /**
-     * Reads all the data.
-     *
-     * @throws IOException if the content store failed
-     */
-    public void readData() throws IOException {
-        connectionsStore.readData();
-        alarmsStore.readData();
     }
 
     /** Connections consumer. */

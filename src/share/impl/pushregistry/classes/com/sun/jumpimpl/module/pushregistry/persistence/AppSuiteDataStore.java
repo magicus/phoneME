@@ -86,16 +86,18 @@ final class AppSuiteDataStore {
     private Map data;
 
     /**
-     * Creats an app data store.
+     * Creats an app data store and reads the data.
      *
      * @param storeManager JUMP content store manager to use
      * @param dir dir to store data in
      * @param dataConverter data converter to use
+     *
+     * @throws IOException if IO fails
      */
     AppSuiteDataStore(
             final StoreOperationManager storeManager,
             final String dir,
-            final DataConverter dataConverter) {
+            final DataConverter dataConverter) throws IOException {
         if (storeManager == null) {
             throw new IllegalArgumentException("storeManager is null");
         }
@@ -112,6 +114,8 @@ final class AppSuiteDataStore {
         this.dir = dir;
 
         this.data = null;
+
+        readData();
     }
 
     /**
@@ -119,7 +123,7 @@ final class AppSuiteDataStore {
      *
      * @throws IOException if the content store failed
      */
-    void readData() throws IOException {
+    private void readData() throws IOException {
         data = new HashMap();
 
         final JUMPNode.List dataDir = (JUMPNode.List) storeManager.getNode(dir);

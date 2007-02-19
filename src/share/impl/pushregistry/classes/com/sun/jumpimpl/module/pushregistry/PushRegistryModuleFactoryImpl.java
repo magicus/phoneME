@@ -55,8 +55,6 @@ final class PushSystem {
     PushSystem(final StoreOperationManager storeManager)
             throws IOException, RemoteException, AlreadyBoundException {
         store = new Store(storeManager);
-        store.ensureStoreStructure(storeManager);
-        store.readData();
 
         midpPushRegistry = new MIDPPushRegistry(store);
         getJUMPServiceRegistry().registerService(MIDP_IXC_URI, midpPushRegistry);

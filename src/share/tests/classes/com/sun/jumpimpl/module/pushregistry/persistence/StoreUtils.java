@@ -50,8 +50,6 @@ public final class StoreUtils {
         final String [] DIRS = {
             Store.CONNECTIONS_DIR, Store.ALARMS_DIR
         };
-        final Store store = new Store(createInMemoryManager(DIRS));
-        store.readData();
-        return store;
+        return new Store(createInMemoryManager(DIRS));
     }
 }

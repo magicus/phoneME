@@ -107,11 +107,6 @@ public final class AlarmRegistry {
 
     /**
      * Reads alarms from the persistent store and registers them.
-     *
-     * <p>
-     * NOTE: the store should be initialized with <code>readStore</code>
-     * method.
-     * </p>
      */
     public synchronized void readAlarms() {
         store.listAlarms(new Store.AlarmsConsumer() {
