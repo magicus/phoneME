@@ -217,7 +217,7 @@ vpath % $(JSR_135_DIR)/src/components/direct-player/native
 
 ifeq ($(USE_NATIVE_CONFIG),true)
 	vpath % $(JSR_135_DIR)/src/components/$(TARGET_PLATFORM)/configuration/native
-	SUBSYSTEM_JSR_135_NATIVE_FILES += kniconfig135.c
+	SUBSYSTEM_JSR_135_NATIVE_FILES += KNIConfig135.c
 endif
 
 

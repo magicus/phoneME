@@ -230,3 +230,7 @@ endif
 ifeq ($(NATIVE_TS_PLAYER),true)
 JPP_DEFS += -DNATIVE_TS_PLAYER
 endif
+
+ifeq ($(USE_NATIVE_CONFIG),true)
+JPP_DEFS += -DUSE_NATIVE_CONFIG
+endif

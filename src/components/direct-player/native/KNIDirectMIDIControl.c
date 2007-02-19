@@ -518,7 +518,6 @@ Java_com_sun_mmedia_DirectMIDIControl_nGetProgram() {
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
 
-        jboolean custom;
         long *p;
         int channel;
         KNI_StartHandles(1);
