@@ -45,3 +45,16 @@ endif
 ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
 vpath % $(JSR_177_DIR)/src/jump_application/protocol/apdu/native
 endif
+
+JAVACARD_CLASSES = $(JSR_177_BUILD_DIR)/javacard_classes
+
+ifeq ($(USE_JSR_177_EMULATOR), true)
+PATHSEP ?= $(PS)
+JAVA_CMD ?= $(CVM_JAVA)
+JAVAC ?= $(CVM_JAVAC)
+endif
+
+BINDIR=$(JSR_177_BUILD_DIR)/bin
+$(BINDIR):
+	@echo " ... creating directories" $@
+	$(AT)mkdir -p $@
