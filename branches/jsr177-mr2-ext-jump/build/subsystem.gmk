@@ -367,22 +367,22 @@ INTERNAL_JSR_177_CONFIG_DIR = $(JSR_177_DIR)/src/share/config
 
 # Include jsr 177 common properties in Configuration
 #
-SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+JSR_177_PROPERTY_FILES += \
 	$(INTERNAL_JSR_177_CONFIG_DIR)/common/i18n_constants_jsr177.xml \
 	$(INTERNAL_JSR_177_CONFIG_DIR)/common/l10n/en-US_jsr177.xml
 
 # Include properties that depend on build options
 ifeq ($(JSR_177_APDU_MANAGER),carddevice)
     ifeq ($(JSR_177_APDU_CARDDEVICE),simulator)
-        SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+        JSR_177_PROPERTY_FILES += \
             $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator_class.xml \
             $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
     else
         ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
-            SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+            JSR_177_PROPERTY_FILES += \
                 $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_platform.xml
             ifeq ($(JSR_177_APDU_PLATFORM_API),simulator)
-                SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+                JSR_177_PROPERTY_FILES += \
                     $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
             endif
         endif
@@ -390,18 +390,18 @@ ifeq ($(JSR_177_APDU_MANAGER),carddevice)
 else
     ifeq ($(JSR_177_APDU_MANAGER),simple)
         ifeq ($(JSR_177_APDU_PLATFORM_API),simulator)
-            SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+            JSR_177_PROPERTY_FILES += \
                 $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
         endif
         ifeq ($(JSR_177_APDU_PLATFORM_API),javacall)
-            SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+            JSR_177_PROPERTY_FILES += \
                 $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
         endif
     endif
 endif
 
 # Include common properties
-SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+JSR_177_PROPERTY_FILES += \
 	$(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177.xml
 
 # Java card constants
