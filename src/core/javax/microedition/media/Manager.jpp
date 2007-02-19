@@ -564,7 +564,6 @@ public final class Manager {
      * @return               The list of supported protocols for the given content type.
      */
     public static String[] getSupportedProtocols(String content_type) {
-        System.out.println("in getSupportedProtocols: " + config);
         return config.getSupportedProtocols(content_type);
     }
 

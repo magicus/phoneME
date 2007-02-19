@@ -55,8 +55,10 @@ DIRECT_MIDI_CONTROL = true
 DIRECT_RECORD = true
 
 #
-# If you want to support file:// protocol, turn on USE_FILE_CONNECTION option
+# If you want to support file:// protocol, turn on ENABLE_FILE_CONNECTION_SUPPORT option
 #
-USE_FILE_CONNECTION = false
+ENABLE_FILE_CONNECTION_SUPPORT = false
 
 USE_STATIC_LIB = true
+
+USE_NATIVE_CONFIG = true

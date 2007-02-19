@@ -30,7 +30,7 @@ import javax.microedition.media.*;
 import javax.microedition.media.MediaException.*;
 import javax.microedition.media.control.*;
 import javax.microedition.io.*;
-// #ifdef USE_FILE_CONNECTION [
+// #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
 import javax.microedition.io.file.*;
 // #endif ]
 
@@ -124,7 +124,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
         if (-1 == ret) {
             throw new MediaException("setRecordLocation: invalid locator " + locator);
         } else if (0 == ret) {
-        // #ifdef USE_FILE_CONNECTION [
+        // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
             if (!(locator.startsWith("file:") || locator.startsWith("http:"))) {
                 throw new MediaException("Unsupported protocol");
             }
@@ -148,7 +148,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
         	    stream = httpCon.openOutputStream();
             }
 
-        // #ifdef USE_FILE_CONNECTION [
+        // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
             if (locator.startsWith("file:")) {
                 String fileName = locator.substring(colonIndex + 1);
     	        if (fileName.length() <= 0) // Note: length can never be less than zero
@@ -453,7 +453,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
         } catch(Exception e) {
         }
             
-        // #ifdef USE_FILE_CONNECTION [
+        // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
         try {
             if (fileCon != null) {
                 fileCon.close();
@@ -463,7 +463,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
         // #endif ]
         stream = null;
         httpCon = null;
-    // #ifdef USE_FILE_CONNECTION [    
+    // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [    
         fileCon = null;
     // #endif ]
     }
@@ -503,7 +503,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
     /* Recording data buffer */
     private byte[] dataBuffer;
 
-// #ifdef USE_FILE_CONNECTION [
+// #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
     private FileConnection fileCon;
 // #endif ]
     private HttpConnection httpCon;

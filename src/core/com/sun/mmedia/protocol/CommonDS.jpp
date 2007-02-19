@@ -31,7 +31,7 @@ import javax.microedition.media.*;
 // #ifndef ABB [
 import javax.microedition.media.protocol.*;
 // #endif ]
-// #ifdef USE_FILE_CONNECTION
+// #ifdef ENABLE_FILE_CONNECTION_SUPPORT
 import javax.microedition.io.file.*;
 // #endif
 import java.util.Hashtable;
@@ -131,7 +131,7 @@ public class CommonDS extends BasicDS implements SourceStream {
                     goodurl = true;
                 }
             } else if (locator.startsWith("file:")) {
-                // #ifdef USE_FILE_CONNECTION [
+                // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 FileConnection fileCon = 
                                 (FileConnection)Connector.open(locator);
                 if (fileCon.exists() && !fileCon.isDirectory() &&

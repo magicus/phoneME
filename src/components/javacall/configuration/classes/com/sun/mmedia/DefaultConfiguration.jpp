@@ -195,7 +195,7 @@ public class DefaultConfiguration extends Configuration {
 
         // Protocol handlers.
         handlers.put("http", "com.sun.mmedia.protocol.CommonDS");
-    // #ifdef USE_FILE_CONNECTION [
+    // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
         handlers.put("file", "com.sun.mmedia.protocol.CommonDS");
     // #endif
         handlers.put("rtsp", "com.sun.mmedia.protocol.CommonDS");
@@ -302,7 +302,7 @@ public class DefaultConfiguration extends Configuration {
             };
         }
 
-    // #ifdef USE_FILE_CONNECTION [
+    // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
         if (protocol.equals("file")) {
             return new String[]{
                 MIME_AUDIO_TONE,
@@ -391,7 +391,7 @@ public class DefaultConfiguration extends Configuration {
                 "capture",
             // #endif ]
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 };
@@ -401,7 +401,7 @@ public class DefaultConfiguration extends Configuration {
             return new String[]{
                 "device",
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 };
@@ -410,7 +410,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_AUDIO_AMR)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 "rtsp",                
@@ -421,7 +421,7 @@ public class DefaultConfiguration extends Configuration {
             return new String[]{
                 "device",
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 };
@@ -430,7 +430,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_AUDIO_MIDI_2)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 };
@@ -441,7 +441,7 @@ public class DefaultConfiguration extends Configuration {
             return new String[]{
                 "capture",
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 };
@@ -451,7 +451,7 @@ public class DefaultConfiguration extends Configuration {
             content_type.equals(MIME_AUDIO_MP3_2)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
             };
@@ -460,7 +460,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_AUDIO_MP4)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 "rtsp",
@@ -470,7 +470,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_AUDIO_MP4_2)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 "rtsp",
@@ -480,7 +480,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_AUDIO_QCELP)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
             };
@@ -489,7 +489,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_AUDIO_QCELP_2)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
             };
@@ -498,7 +498,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_AUDIO_AAC)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 "rtsp",
@@ -514,7 +514,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_VIDEO_3GPP)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 "rtsp",
@@ -524,7 +524,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_VIDEO_3GPP_2)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 "rtsp",
@@ -534,7 +534,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_VIDEO_MPEG)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 "rtsp",
@@ -544,7 +544,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_VIDEO_MPEG4)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
                 "rtsp",
@@ -554,7 +554,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_IMAGE_GIF)) {
             return new String[]{
                 "http",
-            // #ifdef USE_FILE_CONNECTION [
+            // #ifdef ENABLE_FILE_CONNECTION_SUPPORT [
                 "file",
             // #endif ]
             };
