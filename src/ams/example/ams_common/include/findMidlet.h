@@ -30,6 +30,10 @@
 #include <midpString.h>
 #include <suitestore_common.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Find a class name of a MIDlet in suite by number.
  *
@@ -41,6 +45,10 @@
  * NULL_LEN if not found
  * OUT_OF_MEM_LEN if out of memory
  */
-extern int find_midlet_class(SuiteIdType id, int midletNumber, pcsl_string* res);
+int find_midlet_class(SuiteIdType id, int midletNumber, pcsl_string* res);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FIND_MIDLET_H_ */

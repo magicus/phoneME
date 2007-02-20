@@ -28,14 +28,48 @@
 #ifndef _COMMAND_LINE_UTIL_H_
 #define _COMMAND_LINE_UTIL_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Declarations of platform-independent functions common for NAMS and JAMS.
  */
 
-extern char* midpRemoveCommandOption(char* pszFlag, char* apszArgs[],
-                                     int* pArgc);
-extern char* midpRemoveOptionFlag(char* pszFlag, char* apszArgs[],
-                                  int* pArgc);
-extern char* getCharFileSeparator();
+/**
+ * Returns a platform-specific file separator represented as a string.
+ *
+ * @return pointer to null-terminated string containing the file separator
+ */
+char* getCharFileSeparator();
+
+/**
+ * Removes the flag and value for a given option from command line argument
+ * array.
+ *
+ * @param pszFlag flag for the option
+ * @param apszArgs array of arguments
+ * @param pArgc pointer to the count of arguments in the array, it
+ * will updated with the length
+ *
+ * @return value of the option or NULL if it does not exist
+ */
+char* midpRemoveCommandOption(char* pszFlag, char* apszArgs[], int* pArgc);
+
+/**
+ * Removes a given option flag from command line argument
+ *
+ * @param pszFlag flag for the option
+ * @param apszArgs array of arguments
+ * @param pArgc pointer to the count of arguments in the array, it
+ * will updated with the length
+ *
+ * @return value of the flag or NULL if it does not exist
+ */
+char* midpRemoveOptionFlag(char* pszFlag, char* apszArgs[], int* pArgc);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _COMMAND_LINE_UTIL_H_ */

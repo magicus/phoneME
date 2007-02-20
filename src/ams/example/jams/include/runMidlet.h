@@ -27,6 +27,11 @@
 #ifndef _RUN_MIDLET_H_
 #define _RUN_MIDLET_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * Runs a MIDlet from an installed MIDlet suite. This is an example of
  * how to use the public MIDP API.
@@ -37,5 +42,9 @@
  * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  */
 int runMidlet(int argc, char** commandlineArgs);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _RUN_MIDLET_H_ */

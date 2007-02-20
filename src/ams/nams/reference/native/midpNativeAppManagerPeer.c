@@ -406,10 +406,9 @@ MIDPError midp_midlet_get_suite_info(jint appId, MidletSuiteData* pSuiteData) {
  * @param appId The ID used to identify the application
  *
  * @return error code: ALL_OK if successful (operation started),
- *                     NOT_FOUND if the application was not found,
- *                     BAD_PARAMS if pRuntimeInfo is null
+ *                     NOT_FOUND if the application was not found
  */
-MIDPError midp_midlet_get_runtime_info(jint appId) {
+MIDPError midp_midlet_request_runtime_info(jint appId) {
     MidpEvent evt;
 
     MIDP_EVENT_INITIALIZE(evt);
