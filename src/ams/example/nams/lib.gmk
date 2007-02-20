@@ -70,10 +70,6 @@ SUBSYSTEM_AMS_EXTRA_INCLUDES += \
 AMS_RUNNAMS_NATIVE_FILES += \
 	runNams.c
 
-ifeq ($(USE_I3_TEST), true)
-AMS_RUNNAMS_NATIVE_FILES += runNams_md.c
-endif
-
 AMS_REMOVEMIDLET_NATIVE_FILES = \
 	removeMidlet.c \
 	nams_command_stub.c
