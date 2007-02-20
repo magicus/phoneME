@@ -58,22 +58,8 @@ USE_JSR_177_ACL_TEXT ?= false
 # APDUManager={carddevice|simple}
 JSR_177_APDU_MANAGER ?= carddevice
 
-# CardDevice={simulator|platformcarddevice}
-JSR_177_APDU_CARDDEVICE ?= simulator
-
 # PlatformAPI={simulator|stubs|real}
 JSR_177_APDU_PLATFORM_API ?= simulator
-
-# Build CAPs and eprom images for CREF?
-ifeq ($(JSR_177_APDU_CARDDEVICE),simulator)
-USE_JSR_177_EMULATOR = true
-else
-ifeq ($(JSR_177_APDU_PLATFORM_API),simulator)
-USE_JSR_177_EMULATOR = true
-else
-USE_JSR_177_EMULATOR = false
-endif
-endif
 
 # Javadoc source path
 #
@@ -224,31 +210,12 @@ MODULE_SATSA_APDU_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardDevice.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardSlot.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/SlotFactory.java \
-    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardDeviceException.java
-
-# JSR_177_APDU_MANAGER=carddevice & JSR_177_APDU_CARDDEVICE=simulator
-ifeq ($(JSR_177_APDU_CARDDEVICE),simulator)
-MODULE_SATSA_APDU_JAVA_FILES += \
-    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/io/j2me/apdu/Simulator.java
-else
-
-# JSR_177_APDU_MANAGER=carddevice & JSR_177_APDU_CARDDEVICE=platformcarddevice
-ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
-MODULE_SATSA_APDU_JAVA_FILES += \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardDeviceException.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/PlatformCardDevice.java
 MODULE_SATSA_APDU_NATIVE_FILES += \
 	carddevice_kni.c
 SUBSYSTEM_SATSA_CNI_CLASSES += \
     com.sun.io.j2me.apdu.PlatformCardDevice
-else
-# error - bad JSR_177_APDU_CARDDEVICE
-JSR_177_ERRORS += \
-    (echo "ERROR: JSR_177_APDU_CARDDEVICE is not properly set ($(JSR_177_APDU_CARDDEVICE))") $(LOG);
-
-# end of JSR_177_APDU_CARDDEVICE platformcarddevice
-endif
-# end of JSR_177_APDU_CARDDEVICE simulator
-endif
 else
 # error - bad JSR_177_APDU_MANAGER
 JSR_177_ERRORS += \
@@ -261,13 +228,11 @@ endif
 # END OF Define APDU sources
 
 # Add device driver
-ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
-    ifeq ($(JSR_177_APDU_PLATFORM_API),real)
-        ifeq ($(TARGET_OS),win32)
-            LINKLIBS += $(JSR_177_DIR)/src/share/protocol/apdu/driver_lib/carddevice.lib
-        else
-            LINKLIBS += -L$(JSR_177_DIR)/src/share/protocol/apdu/driver_lib -lcarddevice
-        endif
+ifeq ($(JSR_177_APDU_PLATFORM_API),real)
+    ifeq ($(TARGET_OS),win32)
+        LINKLIBS += $(JSR_177_DIR)/src/share/protocol/apdu/driver_lib/carddevice.lib
+    else
+        LINKLIBS += -L$(JSR_177_DIR)/src/share/protocol/apdu/driver_lib -lcarddevice
     endif
 endif
 
@@ -368,40 +333,19 @@ INTERNAL_JSR_177_CONFIG_DIR = $(JSR_177_DIR)/src/share/config
 #
 JSR_177_PROPERTY_FILES += \
 	$(INTERNAL_JSR_177_CONFIG_DIR)/common/i18n_constants_jsr177.xml \
-	$(INTERNAL_JSR_177_CONFIG_DIR)/common/l10n/en-US_jsr177.xml
-
+	$(INTERNAL_JSR_177_CONFIG_DIR)/common/l10n/en-US_jsr177.xml \
+	$(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177.xml
+	
 # Include properties that depend on build options
-ifeq ($(JSR_177_APDU_MANAGER),carddevice)
-    ifeq ($(JSR_177_APDU_CARDDEVICE),simulator)
-        JSR_177_PROPERTY_FILES += \
-            $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator_class.xml \
-            $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
-    else
-        ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
-            JSR_177_PROPERTY_FILES += \
-                $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_platform.xml
-            ifeq ($(JSR_177_APDU_PLATFORM_API),simulator)
-                JSR_177_PROPERTY_FILES += \
-                    $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
-            endif
-        endif
-    endif
-else
-    ifeq ($(JSR_177_APDU_MANAGER),simple)
-        ifeq ($(JSR_177_APDU_PLATFORM_API),simulator)
-            JSR_177_PROPERTY_FILES += \
-                $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
-        endif
-        ifeq ($(JSR_177_APDU_PLATFORM_API),javacall)
-            JSR_177_PROPERTY_FILES += \
-                $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
-        endif
-    endif
+ifeq ($(JSR_177_APDU_PLATFORM_API),simulator)
+    JSR_177_PROPERTY_FILES += \
+        $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
 endif
 
-# Include common properties
-JSR_177_PROPERTY_FILES += \
-	$(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177.xml
+ifeq ($(JSR_177_APDU_MANAGER),carddevice)
+    JSR_177_PROPERTY_FILES += \
+        $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_platform.xml    
+endif
 
 # Java card constants
 #
@@ -430,18 +374,14 @@ ifeq ($(USE_RESTRICTED_CRYPTO), true)
 SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
 	$(JSR_177_DIR)/src/share/test/i3test/com/sun/satsa/crypto/TestRC4.java 
 endif
-ifeq ($(USE_JSR_177_EMULATOR), false)
+ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
 SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
 	$(JSR_177_DIR)/src/share/test/i3test/com/sun/satsa/pki/TestPKI.java
 ifeq ($(JSR_177_APDU_MANAGER),carddevice)
 SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
 	$(JSR_177_DIR)/src/share/test/i3test/com/sun/io/j2me/apdu/TestCad.java \
-	$(JSR_177_DIR)/src/share/test/i3test/com/sun/cardreader/TestSlotFactory.java
-
-ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
-SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
+	$(JSR_177_DIR)/src/share/test/i3test/com/sun/cardreader/TestSlotFactory.java \
 	$(JSR_177_DIR)/src/share/test/i3test/com/sun/cardreader/TestGemplus1.java
-endif
 endif
 endif
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES)
@@ -476,7 +416,7 @@ endif
 
 # Tools and applets
 #
-ifeq ($(USE_JSR_177_EMULATOR), true)
+ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
 all_tools :: jcrmic sim
 else
 all_tools :: jcrmic
@@ -490,7 +430,7 @@ jcrmic: $(JAVACARD_CLASSES) $(BINDIR)
 	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAR_CMD) cfm $(JCRMIC_ARCHIVE) $(JCRMIC_MANIFEST_FILE) com/sun/satsa/jcrmic )
 	$(AT)mv $(JAVACARD_CLASSES)/$(JCRMIC_ARCHIVE) $(BINDIR)/$(JCRMIC_ARCHIVE)
 
-ifeq ($(USE_JSR_177_EMULATOR), true)
+ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
 sim: $(JAVACARD_CLASSES)
 	@echo " ..." $@
 	@echo " ... compiling SIM Toolkit"
@@ -587,7 +527,6 @@ jsr177_display:
 	@echo   "JC_DIR                      = ""$(JC_DIR)" $(LOG)
 	@echo   "USE_JSR_177_ACL_TEXT        = ""$(USE_JSR_177_ACL_TEXT)" $(LOG)
 	@echo   "JSR_177_APDU_MANAGER        = ""$(JSR_177_APDU_MANAGER)" $(LOG)
-	@echo   "JSR_177_APDU_CARDDEVICE     = ""$(JSR_177_APDU_CARDDEVICE)" $(LOG)
 	@echo   "JSR_177_APDU_PLATFORM_API   = ""$(JSR_177_APDU_PLATFORM_API)" $(LOG)
 	@echo   "" $(LOG)
 

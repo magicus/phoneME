@@ -89,7 +89,7 @@ endif
 #
 JAVACARD_CLASSES = $(MIDP_OUTPUT_DIR)/javacard_classes
 
-ifeq ($(USE_JSR_177_EMULATOR), true)
+ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
 JAVAC ?= JAVAC_CMD
 endif
 
