@@ -317,13 +317,17 @@ void javacall_schedule_vm_timeslice(void);
  */
 javacall_int64 javanotify_vm_timeslice(void); 
 
+/**
+ * The platfrom should invoke this function in platform context 
+ * to bring application switcher to foreground.
+ */
+void javanotify_switchforeground(void);
 
 /**
  * The platfrom should invoke this function in platform context 
- * to switch the current foreground midlet to background midlet.
- * Task Manger may be foreground after this call.
+ * to switch the current foreground midlet to Task Manager.
  */
-void javanotify_switchforeground(void);
+void javanotify_selectapp(void);
 
 /** @} */
 
