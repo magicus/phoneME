@@ -1,7 +1,7 @@
 #
 #   
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -210,7 +210,7 @@ MODULE_SATSA_APDU_JAVA_FILES = \
 MODULE_SATSA_APDU_NATIVE_FILES += \
 	apdu_manager_kni.c 
 SUBSYSTEM_SATSA_CNI_CLASSES += \
-    com.sun.cardreader.PlatformCardDevice
+    com.sun.cardreader.APDUManager
 else
 
 # JSR_177_APDU_MANAGER=carddevice
@@ -226,9 +226,6 @@ MODULE_SATSA_APDU_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/SlotFactory.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardDeviceException.java
 
-SUBSYSTEM_SATSA_CNI_CLASSES += \
-    com.sun.io.j2me.apdu.APDUManager
-
 # JSR_177_APDU_MANAGER=carddevice & JSR_177_APDU_CARDDEVICE=simulator
 ifeq ($(JSR_177_APDU_CARDDEVICE),simulator)
 MODULE_SATSA_APDU_JAVA_FILES += \
@@ -241,6 +238,8 @@ MODULE_SATSA_APDU_JAVA_FILES += \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/PlatformCardDevice.java
 MODULE_SATSA_APDU_NATIVE_FILES += \
 	carddevice_kni.c
+SUBSYSTEM_SATSA_CNI_CLASSES += \
+    com.sun.io.j2me.apdu.PlatformCardDevice
 else
 # error - bad JSR_177_APDU_CARDDEVICE
 JSR_177_ERRORS += \
@@ -549,9 +548,10 @@ JSROP_EXTRA_INCLUDES += $(SUBSYSTEM_SATSA_EXTRA_INCLUDES)
 $(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) all_tools
 	$(call compileJSRClasses,177)
 
-$(JSR_177_NATIVE_LIB): $(JSR_177_NATIVE_OBJS)
+$(JSR_177_NATIVE_LIB): $(JAVACALL_LIBRARY) $(JSR_177_NATIVE_OBJS)
 	@echo "Linking $@"
-	$(SO_LINK_CMD)
+	$(AT)$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(JSR_177_NATIVE_OBJS) \
+	-L$(JSROP_LIB_DIR) -ljavacall$(DEBUG_POSTFIX) -ljsropabstr$(DEBUG_POSTFIX)	
 
 # Append SATSA source bundle creation to target
 source_bundle:: satsa_source_bundle
