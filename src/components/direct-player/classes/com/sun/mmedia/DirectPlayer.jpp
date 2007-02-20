@@ -522,6 +522,9 @@ public class DirectPlayer extends BasicPlayer
      * @return the duration in microseconds or <code>TIME_UNKNOWN</code>
      */
     protected long doGetDuration() {
+                                       // for MIDI_DEVICE_LOCATOR and
+        if( !hasDataSource ) return 0; // TONE_DEVICE_LOCATOR
+        
         int ret = nGetDuration(hNative);
         if (ret != TIME_UNKNOWN) {
             return (ret * 1000);    

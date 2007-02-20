@@ -357,8 +357,11 @@ public class DefaultConfiguration extends Configuration {
      */
     public static String getContentType(String locator) {
         if (locator != null) {
+            // device://midi
+            if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
+                return DefaultConfiguration.MIME_AUDIO_MIDI;
             // device://tone
-            if (locator.equals(Manager.TONE_DEVICE_LOCATOR)) {
+            } else if (locator.equals(Manager.TONE_DEVICE_LOCATOR)) {
                 return DefaultConfiguration.MIME_AUDIO_TONE;
             // capture://audio
             } else if (locator.equals(Configuration.AUDIO_CAPTURE_LOCATOR)) {
