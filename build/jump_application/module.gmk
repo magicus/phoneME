@@ -33,6 +33,7 @@ ABSTRACTIONS_SRCDIRS = \
 ABSTRACTIONS_NATIVES = \
 	KNIAppIsolate.c \
 	native_crypto.c \
+	internal_props.c \
 	exceptions.c \
 	bnlib.c
 

@@ -25,32 +25,40 @@
 package com.sun.j2me.main;
 
 import java.util.Properties;
+import java.util.Hashtable;
 
 /**
  * Intermediate class for getting system properties
  */
 public class Configuration {
 
-    /** List of all internal properties */
+    /** List of all internal properties. */
     private static Properties props = new Properties();
 
-    /** Don't let anyone instantiate this class */
+    /** Static native initialization. */
+    static {
+        initialize();
+    }
+
+    /** Don't let anyone instantiate this class. */
     private Configuration() {
     }
 
-    /*
-     * Returns system property value by key
-     * @param key property key
-     * @return property value
+    /**
+     * Returns internal property value by key.
+     *
+     * @param key property key.
+     * @return property value.
      */
     public static String getProperty(String key) {
         return props.getProperty(key);
     }
 
-    /*
-     * Sets system property value by key
-     * @param key property key
-     * @param value property value
+    /**
+     * Sets internal property value by key.
+     *
+     * @param key property key.
+     * @param value property value.
      */
     public static void setProperty(String key, String value) {
         props.setProperty(key, value);
@@ -88,4 +96,9 @@ public class Configuration {
 
         return def;
     }
+
+    /**
+     * Performs native initialization necessary for this class.
+     */
+    private static native void initialize();
 }
