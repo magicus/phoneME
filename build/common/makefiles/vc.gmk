@@ -64,7 +64,10 @@ MRI_CREATE = /OUT:
 MRI_SAVE = 
 MRI_OPT = /NOLOGO @
 
-RANLIB = ranlib
+# IMPORTANT: the following line does not mean what it could look like from first sight
+# actually it is substitution of unnecessary call t ranlib with true which effectively
+# does nothing
+RANLIB = true
 
 ASM		= "$(_MASM_DIR$(MASM_DIR))$(MASM_DIR)/ml"
 ASM_FLAGS	+= /nologo /c /coff /Zi
