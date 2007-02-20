@@ -849,7 +849,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         {
         /* Impl note: to send pause and resume notifications */
             static int isPaused;
-            if(VK_F4 == wParam) {
+            if(VK_F5 == wParam) {
                 if(!isPaused) {
                     javanotify_pause();
                 } else {
@@ -857,8 +857,10 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 } 
                 isPaused =!isPaused;
                 break;
-        /* HOME key is used for switching tasks. */
             } else if(VK_HOME == wParam) {
+                javanotify_selectapp();
+                break;
+            } else if(VK_F4 == wParam) {
                 javanotify_switchforeground();
                 break;
             /* F3 key used for rotation. */ 
