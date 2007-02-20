@@ -216,12 +216,15 @@ public class SMMManager extends MIDlet
      * @param externalAppId ID assigned by the external application manager
      * @param suiteId Suite ID of the MIDlet
      * @param className Class name of the MIDlet
-     * @param error start error code
+     * @param errorCode start error code
+     * @param errorDetails start error code
      */
     public void midletStartError(int externalAppId, int suiteId,
-                                 String className, int error) {
+                                 String className, int errorCode,
+                                 String errorDetails) {
         allowMidletLaunch = true;
-        appManagerUI.notifyMidletStartError(suiteId, className, error);
+        appManagerUI.notifyMidletStartError(suiteId, className,
+                errorCode, errorDetails);
     }
 
 

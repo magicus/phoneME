@@ -1,7 +1,7 @@
 #
 #
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
 # This program is free software; you can redistribute it and/or
@@ -37,27 +37,25 @@
 #   the system, that's why this rule should be parsed after all object
 #   names are collected and prerequisite variables have correct values.
 #
-$(BINDIR)/runNams$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNNAMS_OBJ_FILES)
-	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_RUNNAMS_OBJ_FILES) $(LIBS))` $(LOG)
+# $(OBJLIB) mentioned twice in $(LD) command line due to ld
+#   - is single-pass
+#   - collects functions from obj files and libs different ways
 
-$(BINDIR)/removeMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_REMOVEMIDLET_OBJ_FILES)
+$(BINDIR)/runNams$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_RUNNAMS_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_REMOVEMIDLET_OBJ_FILES) $(LIBS))` $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_RUNNAMS_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
 
-$(BINDIR)/listMidlets$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_LISTMIDLET_OBJ_FILES)
+$(BINDIR)/removeMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_REMOVEMIDLET_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_LISTMIDLET_OBJ_FILES) $(LIBS))` $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_REMOVEMIDLET_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
 
-$(BINDIR)/fileInstaller$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJ_FILES) $(AMS_FILEINSTALLER_OBJ_FILES)
+$(BINDIR)/listMidlets$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_LISTMIDLET_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_FILES) $(AMS_FILEINSTALLER_OBJ_FILES) $(LIBS))` $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_LISTMIDLET_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
 
-SUBSYSTEM_AMS_EXECUTABLES = \
-	$(BINDIR)/runNams$(g)$(p)$(EXE) \
-	$(BINDIR)/listMidlets$(g)$(p)$(EXE) \
-	$(BINDIR)/removeMidlet$(g)$(p)$(EXE) \
-	$(BINDIR)/fileInstaller$(g)$(p)$(EXE)
+$(BINDIR)/fileInstaller$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_FILEINSTALLER_OBJ_FILES)
+	@echo " ... linking $@ " $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_FILEINSTALLER_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
 
 ifeq ($(TARGET_PLATFORM), win32)
 $(BINDIR)/postTestMsg.exe: $(OBJ_DIR)/postTestMsg.o

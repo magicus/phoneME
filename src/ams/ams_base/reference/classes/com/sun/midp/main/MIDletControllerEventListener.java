@@ -275,7 +275,8 @@ class MIDletControllerEventListener implements EventListener {
                     nativeEvent.intParam1,
                     nativeEvent.stringParam1,
                     nativeEvent.intParam2,
-                    nativeEvent.intParam3);
+                    nativeEvent.intParam3,
+                    nativeEvent.stringParam2);
                 return;
 
             case EventTypes.MIDLET_DESTROY_REQUEST_EVENT:

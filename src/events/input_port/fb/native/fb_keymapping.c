@@ -50,6 +50,7 @@ KeyMapping versatile_integrator_keys[] = {
     {KEYMAP_KEY_6,                 7,   135},
     {KEYMAP_KEY_7,                 8,   136},
     {KEYMAP_KEY_8,                 9,   137},
+    {KEYMAP_KEY_9,                10,   138},
 
     {KEYMAP_KEY_UP,              103,   231},
     {KEYMAP_KEY_UP,               72,   200},   /* Integrator-CP */

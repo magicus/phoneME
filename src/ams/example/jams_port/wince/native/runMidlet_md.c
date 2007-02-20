@@ -36,6 +36,8 @@
 #include <midpMalloc.h>
 #include <jvm.h>
 #include <findMidlet.h>
+#include <commandLineUtil.h>
+#include <commandLineUtil_md.h>
 #include <winceapp_export.h>
 
 #if ENABLE_MULTIPLE_ISOLATES
@@ -60,12 +62,6 @@ static HWND        _hwndMain     = NULL;
 static char*       _argv[RUNMIDLET_MAX_ARGS];
 static int         _argc;
 int                quit_now     = 0; /* used by VM to quit immediately. */
-
-extern char* midpRemoveCommandOption(char* pszFlag, char* apszArgs[],
-                                     int* pArgc);
-extern char* midpRemoveOptionFlag(char* pszFlag, char* apszArgs[],
-                  int* pArgc);
-extern char* midpFixMidpHome(char *cmd);
 
 /** Usage text for the run MIDlet executable. */
 static const char* const runUsageText =

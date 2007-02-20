@@ -1,7 +1,7 @@
 #
 #
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
 # This program is free software; you can redistribute it and/or
@@ -48,33 +48,27 @@ vpath % $(NAMS_EXAMPLES_DIR)/native
 vpath % $(NAMS_EXAMPLES_DIR)/native/$(TARGET_OS)
 
 # This is needed to include API provided by findMidlet.c
-vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native
-vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native/$(TARGET_PLATFORM)
+vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common/native
 
 ifeq ($(TARGET_PLATFORM), javacall)
-    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/$(TARGET_PLATFORM)/native
 else
 ifeq ($(TARGET_PLATFORM), wince)
-    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/$(TARGET_PLATFORM)/native
 else
-    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/default/native
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/default/native
 endif
 endif
-	    
+
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-	-I$(SUBSYSTEM_AMS_DIR)/example/jams/native/inc \
+	-I$(SUBSYSTEM_AMS_DIR)/example/ams_common/include \
+	-I$(SUBSYSTEM_AMS_DIR)/example/ams_common_port/include \
 	-I$(NAMS_EXAMPLES_DIR)/native/inc
 
 # Native files for the ( example ) module
 #
-SUBSYSTEM_AMS_NATIVE_FILES += \
-	commandLineUtil.c \
-	commandLineUtil_md.c \
-	findMidlet.c
-
-AMS_RUNNAMS_NATIVE_FILES = \
-	runNams.c \
-	runNams_md.c
+AMS_RUNNAMS_NATIVE_FILES += \
+	runNams.c
 
 AMS_REMOVEMIDLET_NATIVE_FILES = \
 	removeMidlet.c \
@@ -94,6 +88,11 @@ AMS_FILEINSTALLER_NATIVE_FILES = \
 # I3test files
 #
 ifeq ($(USE_I3_TEST), true)
+
+vpath % $(NAMS_EXAMPLES_DIR)/i3test/native/$(TARGET_OS)
+
+AMS_RUNNAMS_NATIVE_FILES += \
+	runNams_md.c
 
 SUBSYSTEM_AMS_I3TEST_JAVA_FILES += \
 	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/events/EventCopyStorage.java \
@@ -178,7 +177,12 @@ endif
 
 ifdef INCLUDE_SHELL_SCRIPTS
 SUBSYSTEM_AMS_EXECUTABLES += \
-	$(BINDIR)/i3test$(g)$(BAT) \
 	$(BINDIR)/autotest$(g)$(BAT) \
 	$(BINDIR)/installMidlet$(g)$(BAT)
+
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_AMS_EXECUTABLES += \
+	$(BINDIR)/i3test$(g)$(BAT)
+endif
+	
 endif
