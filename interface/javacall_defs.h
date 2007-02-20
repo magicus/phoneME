@@ -129,6 +129,10 @@ typedef enum {
     JAVACALL_TRUE  = 1
 } javacall_bool;
 
+/**
+ * @brief suite unique ID
+ */
+typedef int javacall_suite_id;
 
 /**
  * @typedef javacall_handle
