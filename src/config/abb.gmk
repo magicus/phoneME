@@ -31,23 +31,21 @@
 # is the final def. of Java and native file lists and some
 # other def. (like VPATH)
 #
-# JSR_234_DIR = point to the root of this workspace
+# MIDP_ABB_DIR = point to the root of this workspace
 #
 #
 ######################################################################
 
 # include files common to ABB, JSR 135 and 234
-include $(JSR_234_DIR)/src/config/common.gmk
+include $(MIDP_ABB_DIR)/src/config/common.gmk
 
 MODULE_JSR_234_JAVA_FILES += \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/ABBBasicPlayer.java
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/ABBBasicPlayer.java
 
-ifeq ($(JSR_234_USE_QSOUND), true)
 MODULE_JSR_234_JAVA_FILES += \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/CougarQSoundAbbConfig.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/QSoundABBToneSequencePlayer.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/QSoundABBToneCtrl.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/QSoundABBVolumeCtrl.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/QSoundMIDIPlayBase.java \
-    $(JSR_234_DIR)/src/classes/com/sun/mmedia/QSoundABBMIDIPlayControl.java
-endif
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/CougarQSoundAbbConfig.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundABBToneSequencePlayer.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundABBToneCtrl.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundABBVolumeCtrl.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundMIDIPlayBase.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundABBMIDIPlayControl.java
