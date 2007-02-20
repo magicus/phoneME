@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -38,14 +38,23 @@ javacall_result javacall_carddevice_init() {
 
 /** 
  * Finalizes the driver.
- * @return JAVACALL_OK if all done successfuly, 
-           JAVACALL_FAIL otherwise
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_finalize() {
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
 
+/** 
+ * Sets property value. If the property is used during the initialization
+ * process then this method must be called before <code>javacall_carddevice_init()</code>
+ * @return JAVACALL_OK if all done successfuly, 
+ *         JAVACALL_NOT_IMPLEMENTED when this property is not supported
+ *         JAVACALL_OUT_OF_MEMORY if there is no enough memory
+ *         JAVACALL_FAIL otherwise
+ */
 javacall_result javacall_carddevice_set_property(const char *prop_name, 
                                       const char *prop_value) {
     return JAVACALL_NOT_IMPLEMENTED;
@@ -53,20 +62,24 @@ javacall_result javacall_carddevice_set_property(const char *prop_name,
 
 /** 
  * Selects specified slot (if possible).
- * @return JAVACALL_OK if all done successfuly, 
-           JAVACALL_FAIL otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_select_slot(int slot_index) {
+    (void)slot_index;
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /** 
  * Returns number of slots which available for selection.
  * @param slot_cnt Buffer for number of slots.
- * @return JAVACALL_OK if all done successfuly, 
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_get_slot_count(int *slot_cnt) {
+    *slot_cnt = 1;
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
@@ -75,38 +88,69 @@ javacall_result javacall_carddevice_get_slot_count(int *slot_cnt) {
  * @param slot Slot number.
  * @param result <code>JAVACALL_TRUE</code> if the slot is dedicated for SAT,
  *               <code>JAVACALL_FALSE</code> otherwise
- * @return JAVACALL_OK if all done successfuly, 
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_is_sat(int slot, javacall_bool *result) {
-    return JAVACALL_NOT_IMPLEMENTED;
+    if (slot == 0) {
+        *result = JAVACALL_TRUE;
+    } else {
+        *result = JAVACALL_FALSE;
+    }return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /** 
- * Sends 'RESET' ('POWER UP') command to device and gets ATR 
- * into specified buffer.
+ * Sends 'RESET' command to device and gets ATR into specified buffer.
  * @param atr Buffer to store ATR.
  * @param atr_size Before call: size of provided buffer
- *                 After call: length of received ATR.
- * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise
+ *                 After call: size of received ATR.
+ * @param context the context saved during asynchronous operation.
+ * @retval JAVACALL_OK if all done successfuly
+ * @retval JAVACALL_WOULD_BLOCK caller must call 
+           the javacall_carddevice_reset_finish function to complete 
+           the operation
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
-static javacall_result javacall_carddevice_reset(char *atr, int *atr_size) {
+javacall_result javacall_carddevice_reset_start(char *atr, int *atr_size, 
+                                                void **context) {
+    (void)atr;
+    (void)atr_size;
+    (void)context;
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /** 
- * Sends 'POWER DOWN' command to device.
- * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise
+ * Finished 'RESET' command on device and gets ATR into specified buffer.
+ * Must be called after CARD_READER_DATA_SIGNAL with SIGNAL_RESET parameter is
+ * received.
+ * @param atr Buffer to store ATR.
+ * @param atr_size Before call: size of provided buffer
+ *                 After call: size of received ATR.
+ * @param context the context saved during asynchronous operation.
+ * @retval JAVACALL_OK if all done successfuly
+ * @retval JAVACALL_WOULD_BLOCK caller must call 
+           this function again to complete the operation
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_power_down() {
+javacall_result javacall_carddevice_reset_finish(char *atr, int *atr_size, 
+                                                 void *context) {
+    (void)atr;
+    (void)atr_size;
+    (void)context;
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /** 
- * Performs platform lock of the device. 
+ * Performs platform lock of the device. This is intended to make
+ * sure that no other native application
+ * uses the same device during a transaction.
  * @return JAVACALL_OK if all done successfuly, 
            JAVACALL_WOULD_BLOCK if the device is locked by the other
- *         JAVACALL_FAIL if error occured
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_lock() {
     return JAVACALL_NOT_IMPLEMENTED;
@@ -114,8 +158,9 @@ javacall_result javacall_carddevice_lock() {
 
 /** 
  * Unlocks the device.
- * @return JAVACALL_OK if all done successfuly, 
- * JAVACALL_FAIL otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_unlock() {
     return JAVACALL_NOT_IMPLEMENTED;
@@ -128,52 +173,84 @@ javacall_result javacall_carddevice_unlock() {
  * Enum JAVACALL_CARD_MOVEMENT should be used to specify type of movement.
  * Clears the slot event state.
  * @param mask Movements retrived.
- * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise.
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_card_movement_events(JAVACALL_CARD_MOVEMENT *events) {
+javacall_result javacall_carddevice_card_movement_events(JAVACALL_CARD_MOVEMENT *mask) {
+    *mask = 0;
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
-/**
+/** 
+ * Transfers APDU data to the device and receives response from the device.
+ * @param tx_buffer Buffer with APDU to be sent.
+ * @param tx_size Size of APDU.
+ * @param rx_buffer Buffer to store the response.
+ * @param rx_size Before call: size of <tt>rx_buffer</tt>
+ *                 After call: size of received response.
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_reset_start(char *rx_buffer, 
-                                                int *rx_length,
-                                                void **context) {
+javacall_result javacall_carddevice_xfer_data_start(char *tx_buffer, int tx_size,
+                                                    char *rx_buffer, int *rx_size, void **context) {
+    (void)tx_buffer;
+    (void)tx_size;
+    (void)rx_buffer;
+    (void)rx_size;
+    (void)context;
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
-javacall_result javacall_carddevice_reset_finish(char *rx_buffer, int *rx_length,
-                                      void *context) {
+/** 
+ * Transfers APDU data to the device and receives response from the device.
+ * @param tx_buffer Buffer with APDU to be sent.
+ * @param tx_size Size of APDU.
+ * @param rx_buffer Buffer to store the response.
+ * @param rx_size Before call: size of <tt>rx_buffer</tt>
+ *                 After call: size of received response.
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
+ */
+javacall_result javacall_carddevice_xfer_data_finish(char *tx_buffer, int tx_size,
+                                                     char *rx_buffer, int *rx_size, void *context) {
+    (void)tx_buffer;
+    (void)tx_size;
+    (void)rx_buffer;
+    (void)rx_size;
+    (void)context;
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
-
-javacall_result javacall_carddevice_xfer_data_start(char *tx_buffer, 
-                                         int tx_length,
-                                         char *rx_buffer, int *rx_length,
-                                         void **context) {
-    return JAVACALL_NOT_IMPLEMENTED;
+/** 
+ * Clears error state.
+ */
+void javacall_carddevice_clear_error() {
 }
 
-javacall_result javacall_carddevice_xfer_data_finish(char *tx_buffer, 
-                                                     int tx_length,
-                                                     char *rx_buffer, 
-                                                     int *rx_length,
-                                                     void *context) {
-    return JAVACALL_NOT_IMPLEMENTED;
-}
-
-void javacall_carddevice_clear_error() { // empty
-}
-
+/** 
+ * Sets error state and stores message (like printf).
+ * @param fmt printf-like format string
+ */
 void javacall_carddevice_set_error(const char *fmt, ...) {
+    (void)fmt;
 }
 
 int javacall_carddevice_vsnprintf(char *buffer, int len, const char *fmt, va_list ap) {
     return 0;
 }
 
+/** 
+ * Retrieves error message into the provided buffer and clears state.
+ * @param buf Buffer to store message
+ * @param buf_size Size of the buffer in bytes
+ * @return JAVACALL_TRUE if error messages were returned, JAVACALL_FALSE otherwise
+ */
 javacall_bool javacall_carddevice_get_error(char *buf, int buf_size) {
+    (void)buf;
+    (void)buf_size;
     return JAVACALL_FALSE;
 }
 
