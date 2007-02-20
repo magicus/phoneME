@@ -1,6 +1,6 @@
 #   
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -33,11 +33,13 @@
 #
 #For 'midp' USE_MIDP and MIDP_JC_IMPL_PATH variables are used
 
-JSR_LIST = JSR_135
+JSR_LIST = JSR_135 JSR_177
 
 USE_MIDP=false
 
 JSR_135_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/linux_x86_cdc
+
+JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/linux_x86_cdc_simu
 
 #For each project location for basic definitions shall be specified
 #(location of the used javacall_platform_defs.h)
