@@ -1,5 +1,5 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,51 +24,27 @@
  * information or have any questions. 
  */
 
-#include <string.h>
-#include <stdio.h>
+#ifndef _RUN_MIDLET_H_
+#define _RUN_MIDLET_H_
 
-#include <kni.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include <midpInit.h>
-#include <midpMalloc.h>
-
-#include <midpStorage.h>
-#include <midpString.h>
-#include <midpServices.h>
-#include <midpNativeThread.h>
-#include <midpNativeAppManager.h>
 
 /**
- * @file
+ * Runs a MIDlet from an installed MIDlet suite. This is an example of
+ * how to use the public MIDP API.
  *
- * Example of how the public MIDP API can be used to list installed
- * MIDlet Suite. This file contains platform specific thread routine.
+ * @param argc The total number of arguments
+ * @param argv An array of 'C' strings containing the arguments
+ *
+ * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  */
+int runMidlet(int argc, char** commandlineArgs);
 
-#if ENABLE_NATIVE_AMS
-void nams_process_command(int command, int param);
-#endif
-
-#if ENABLE_NATIVE_AMS && ENABLE_I3_TEST
-
-void* midlet_starter_routine(midp_ThreadRoutineParameter param) {
-    /* 
-     * this routine's signature is platform specific - 
-     * see midp_ThreadRoutine declaration 
-     */
-
-    int* cmd = (int*)param; 
-    /*
-    printf("DEBUG: thread routine: cmd = %i, param = %i\n", cmd[0], cmd[1]);
-    */
-
-    /* sleep for a few seconds to let java subsystem to be initialized */
-    midp_sleepNativeThread(5);
-    
-    nams_process_command(cmd[0], cmd[1]);
-
-    return NULL;
+#ifdef __cplusplus
 }
-
 #endif
 
+#endif /* _RUN_MIDLET_H_ */

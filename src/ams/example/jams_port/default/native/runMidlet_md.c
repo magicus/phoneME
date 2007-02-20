@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-extern int runMidlet(int argc, char** commandlineArgs);
+#include <runMidlet.h>
 
 /**
  * Runs a MIDlet from an installed MIDlet suite. This is an example of

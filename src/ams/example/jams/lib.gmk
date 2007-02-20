@@ -35,10 +35,14 @@
 # vpath for ( example ) module
 #
 
+vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common/native
+vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/native
 vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native
 
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_AMS_DIR)/example/jams/native/inc
+    -I$(SUBSYSTEM_AMS_DIR)/example/ams_common/include \
+    -I$(SUBSYSTEM_AMS_DIR)/example/ams_common_port/include \
+    -I$(SUBSYSTEM_AMS_DIR)/example/jams/include
 
 # Don't include exe files to MIDP source file list
 # since we want to link different obj files for different exe
@@ -48,9 +52,7 @@ SUBSYSTEM_AMS_EXTRA_INCLUDES += \
 #
 ifeq ($(TARGET_VM), cldc_vm)
   AMS_RUNMIDLET_NATIVE_FILES = \
-    runMidlet.c \
-    commandLineUtil.c \
-    findMidlet.c
+    runMidlet.c
 
   AMS_RUNMIDLET_OBJ_FILES = $(patsubst %.c,$(OBJ_DIR)/%.o,\
     $(AMS_RUNMIDLET_NATIVE_FILES))

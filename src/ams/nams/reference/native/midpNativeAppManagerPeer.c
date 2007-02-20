@@ -32,6 +32,7 @@
 
 #include <midpAMS.h>
 #include <suitestore_common.h>
+#include <suitestore_kni_util.h>
 #include <midpEvents.h>
 #include <midpServices.h>
 #include <midpMidletSuiteUtils.h>
@@ -42,9 +43,13 @@
 #include <midpString.h>
 #include <midpError.h>
 #include <midpUtilKni.h>
+#include <midp_runtime_info.h>
 
 /** The name of the native application manager peer internal class. */
 #define APP_MANAGER_PEER "com.sun.midp.main.NativeAppManagerPeer"
+
+/** Static buffer where to save the runtime information passed from Java. */
+static MidletRuntimeInfo g_runtimeInfoBuf;
 
 /**
  * Notifies the registered listeners about the given event.
@@ -106,6 +111,7 @@ MIDPError midp_system_start(void) {
 
     vmStatus = midpRunMainClass(NULL, APP_MANAGER_PEER, 0, NULL);
 
+    eventData.event  = MIDP_NAMS_EVENT_STATE_CHANGED;
     eventData.state = MIDP_SYSTEM_STATE_STOPPED;
     nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
 
@@ -370,6 +376,122 @@ MIDPError midp_midlet_destroy(jint appId) {
 }
 
 /**
+ * Gets information about the suite containing the specified running MIDlet.
+ * This call is synchronous.
+ *
+ * @param appId The ID used to identify the application
+ *
+ * @param pSuiteData [out] pointer to a structure where static information
+ *                         about the midlet will be stored
+ *
+ * @return error code: ALL_OK if successful,
+ *                     NOT_FOUND if the application was not found,
+ *                     BAD_PARAMS if pSuiteData is null
+ */
+MIDPError midp_midlet_get_suite_info(jint appId, MidletSuiteData* pSuiteData) {
+    (void)appId; /* not finished */
+    if (pSuiteData == NULL) {
+        return BAD_PARAMS;
+    }
+
+    return ALL_OK;
+}
+
+/**
+ * Gets runtime information about the specified MIDlet.
+ *
+ * This call is asynchronous, the result will be reported later through
+ * passing a MIDLET_INFO_READY_EVENT event to SYSTEM_EVENT_LISTENER.
+ *
+ * @param appId The ID used to identify the application
+ *
+ * @return error code: ALL_OK if successful (operation started),
+ *                     NOT_FOUND if the application was not found
+ */
+MIDPError midp_midlet_request_runtime_info(jint appId) {
+    MidpEvent evt;
+
+    MIDP_EVENT_INITIALIZE(evt);
+
+    evt.type = NATIVE_MIDLET_GETINFO_REQUEST;
+    evt.intParam1 = appId;
+
+    midpStoreEventAndSignalAms(evt);
+    return ALL_OK;
+}
+
+/**
+ * Saves runtime information from the given structure
+ * into the native buffer.
+ *
+ * @param runtimeInfo structure holding the information to save
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_midp_main_NativeAppManagerPeer_saveRuntimeInfoInNative(void) {
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(runtimeInfo);
+    KNI_DeclareHandle(clazz);
+    /* KNI_DeclareHandle(string); */
+
+    KNI_GetParameterAsObject(1, runtimeInfo);
+    KNI_GetObjectClass(runtimeInfo, clazz);
+
+    KNI_SAVE_INT_FIELD(runtimeInfo, clazz, "memoryReserved",
+                       g_runtimeInfoBuf.memoryReserved);
+    KNI_SAVE_INT_FIELD(runtimeInfo, clazz, "memoryTotal",
+                       g_runtimeInfoBuf.memoryTotal);
+    KNI_SAVE_INT_FIELD(runtimeInfo, clazz, "usedMemory",
+                       g_runtimeInfoBuf.usedMemory);
+    KNI_SAVE_INT_FIELD(runtimeInfo, clazz, "priority",
+                       g_runtimeInfoBuf.priority);
+
+    g_runtimeInfoBuf.profileName    = NULL;
+    g_runtimeInfoBuf.profileNameLen = 0;
+    /*
+    do {
+        KNI_SAVE_PCSL_STRING_FIELD(runtimeInfo, clazz, "profileName",
+                                   &g_runtimeInfoBuf.profileName, string);
+    } while (0);
+    */
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
+/**
+ * Notify the native application manager that the system has completed
+ * the requested operation and the result (if any) is available.
+ *
+ * @param operation code of the operation that has completed
+ * @param externalAppId ID assigned by the external application manager
+ * @param retCode completion code (0 if OK)
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_midp_main_NativeAppManagerPeer_notifyOperationCompleted(void) {
+    NamsEventData eventData;
+    int retCode = KNI_GetParameterAsInt(3);
+
+    memset((char*)&eventData, 0, sizeof(NamsEventData));
+
+    eventData.event  = MIDP_NAMS_EVENT_OPERATION_COMPLETED;
+    eventData.reason = KNI_GetParameterAsInt(1);
+    eventData.appId = KNI_GetParameterAsInt(2);
+
+    if (retCode == 0) {
+        eventData.state = ALL_OK;
+        if (eventData.reason == NATIVE_MIDLET_GETINFO_REQUEST) {
+            eventData.pRuntimeInfo = &g_runtimeInfoBuf;
+        }
+    } else {
+        eventData.state = BAD_PARAMS;
+    }
+    
+    nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
+
+    KNI_ReturnVoid();
+}
+
+/**
  * Notify the native application manager that the system had an error starting.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
@@ -377,6 +499,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifySystemStartError(void) {
     NamsEventData eventData;
     memset((char*)&eventData, 0, sizeof(NamsEventData));
 
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;
     eventData.state = MIDP_SYSTEM_STATE_ERROR;
     nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
 
@@ -391,6 +514,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifySystemStart(void) {
     NamsEventData eventData;
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.state = MIDP_SYSTEM_STATE_STARTED;
     nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
 
@@ -405,6 +529,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifySystemSuspended(void) {
     NamsEventData eventData;
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.state = MIDP_SYSTEM_STATE_SUSPENDED;
     nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
 
@@ -426,6 +551,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletStartError(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.appId = externalAppId;
     eventData.state = MIDP_MIDLET_STATE_ERROR;
     eventData.reason = error;
@@ -450,6 +576,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletCreated(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.appId = externalAppId;
     eventData.state = MIDP_MIDLET_STATE_PAUSED;
     msd.suiteId = UNUSED_SUITE_ID;
@@ -472,6 +599,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletActive(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.appId = externalAppId;
     eventData.state = MIDP_MIDLET_STATE_STARTED;
     msd.suiteId = UNUSED_SUITE_ID;
@@ -495,6 +623,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletPaused(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.appId = externalAppId;
     eventData.state = MIDP_MIDLET_STATE_PAUSED;
     msd.suiteId = UNUSED_SUITE_ID;
@@ -518,6 +647,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletDestroyed(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;
     eventData.appId = externalAppId;
     eventData.state = MIDP_MIDLET_STATE_DESTROYED;
     eventData.reason = MIDP_REASON_EXIT;
@@ -543,6 +673,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifySuiteTerminated(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
+    eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.state = MIDP_MIDLET_STATE_DESTROYED;
     eventData.reason = MIDP_REASON_TERMINATED;
     msd.suiteId = suiteId;

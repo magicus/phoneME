@@ -83,6 +83,7 @@ ifeq ($(TARGET_VM), cldc_vm)
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/CldcMIDletSuiteLoader.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/CldcPlatformRequest.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/CommandState.java \
+    $(AMS_BASE_DIR)/classes/com/sun/midp/main/RuntimeInfo.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/ExecuteMIDletEventListener.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/DisplayController.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/DisplayControllerListener.java \

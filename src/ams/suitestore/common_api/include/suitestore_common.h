@@ -195,12 +195,16 @@ typedef struct _midletSuiteData {
     /** True if it was checked that this suite is not corrupted. */
     jboolean isChecked;
 
+    /** Application ID assigned by the external application manager. */
+    jint externalAppId;
+
     /** Pointer to the next entry in the linked list. */
     struct _midletSuiteData* nextEntry;
 } MidletSuiteData;
 
 #define MIDLET_SUITE_DATA_SIZE (sizeof(MidletSuiteData) - \
-    sizeof(VariableLenSuiteData) - sizeof(jboolean)  - sizeof(MidletSuiteData*))
+    sizeof(VariableLenSuiteData) - sizeof(jboolean) - \
+        sizeof(jint) - sizeof(MidletSuiteData*))
 
 /**
  * Initializes the SuiteStore subsystem.

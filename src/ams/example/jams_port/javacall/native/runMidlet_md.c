@@ -42,10 +42,9 @@
 #include <midpStorage.h>
 #include <suitestore_task_manager.h>
 #include <commandLineUtil.h>
+#include <runMidlet.h>
 
 unsigned char enable_java_debugger = 0;
-
-extern int runMidlet(int argc, char** commandlineArgs);
 
 static javacall_result
 midpHandleStartArbitraryArgEvent(midp_jc_event_start_arbitrary_arg startArbitraryArgEvent);
