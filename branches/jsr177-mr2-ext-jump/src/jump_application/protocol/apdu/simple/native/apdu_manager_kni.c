@@ -29,6 +29,7 @@
 #include <jsrop_exceptions.h>
 #include <JUMPEvents.h>
 #include "javavm/include/porting/sync.h"
+#include <internal_props.h>
 
 #include <javacall_carddevice.h>
 
@@ -42,6 +43,7 @@ static char cardDeviceException[] =
 static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
 
 #define BUFFER_SIZE 128
+#define PROP_BUF_SIZE 128
 
 /**
  * Initializes the device.
@@ -59,11 +61,10 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_init0) {
     javacall_result status;
     char *err_msg;
     char *buffer;
+    char prop_buf[PROP_BUF_SIZE];
     const char *prop_value;
 
-    /* IMPL_NOTE: Change to Properties abstraction */
-//    prop_value = getInternalProp(hostsandports);
-    prop_value = NULL;
+    prop_value = jumpGetInternalProp(hostsandports, prop_buf, PROP_BUF_SIZE);
     if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);
         if (status != JAVACALL_OK) {
