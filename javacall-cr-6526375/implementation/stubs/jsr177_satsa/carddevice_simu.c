@@ -106,10 +106,10 @@ javacall_result javacall_carddevice_is_sat(int slot, javacall_bool *result) {
  * @param atr_size Before call: size of provided buffer
  *                 After call: size of received ATR.
  * @param context the context saved during asynchronous operation.
- * @retval JAVACALL_OK if all done successfuly
- * @retval JAVACALL_WOULD_BLOCK caller must call 
-           the javacall_carddevice_reset_finish function to complete 
-           the operation
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         the javacall_carddevice_reset_finish function to complete 
+ *         the operation
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
@@ -129,9 +129,9 @@ javacall_result javacall_carddevice_reset_start(char *atr, int *atr_size,
  * @param atr_size Before call: size of provided buffer
  *                 After call: size of received ATR.
  * @param context the context saved during asynchronous operation.
- * @retval JAVACALL_OK if all done successfuly
- * @retval JAVACALL_WOULD_BLOCK caller must call 
-           this function again to complete the operation
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         this function again to complete the operation
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
@@ -148,7 +148,7 @@ javacall_result javacall_carddevice_reset_finish(char *atr, int *atr_size,
  * sure that no other native application
  * uses the same device during a transaction.
  * @return JAVACALL_OK if all done successfuly, 
-           JAVACALL_WOULD_BLOCK if the device is locked by the other
+ *         JAVACALL_WOULD_BLOCK if the device is locked by the other
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
