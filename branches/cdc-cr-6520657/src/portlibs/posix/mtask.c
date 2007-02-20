@@ -569,6 +569,7 @@ dumpTasksAsResponse(JUMPMessage command, int all)
     JUMPOutgoingMessage m;
     JUMPMessageStatusCode code;
     JUMPMessageMark mark;
+    JUMPMessageMark eom;
     
     TaskRec* task;
     int numTasks = 0;
@@ -585,8 +586,10 @@ dumpTasksAsResponse(JUMPMessage command, int all)
 	    numTasks ++;
 	}
     }
+    jumpMessageMarkSet(&eom, m);
     jumpMessageMarkResetTo(&mark, m);
     jumpMessageAddInt(m, numTasks);
+    jumpMessageMarkResetTo(&eom, m);
 
     jumpMessageSendAsyncResponse(m, &code);
 }
@@ -1138,20 +1141,16 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 			strcat(libName, ".so");
 			dsoHandle = dlopen(libName, RTLD_LAZY);
 			free(libName);
+			if (dsoHandle != NULL) {
+			    nativeMain = dlsym(dsoHandle, argv[1]);
+			    /* FIXME: should we do "dlclose()" somewhere? */
+			} else {
+			    fprintf(stderr, "MTASK: Cannot find lib: %s\n", argv[2]);
+			}
 		    } else {
-			dsoHandle = dlopen(NULL, 0);
+			nativeMain = dlsym(RTLD_DEFAULT, argv[1]);
 		    }
 
-		    if (dsoHandle != NULL) {
-			nativeMain = dlsym(dsoHandle, argv[1]);
-			/*
-			 * FIXME: Somewhere we must do "dlclose()".
-			 * The KILL command cannot do that because 
-			 * it has to know "dso_handle".
-			 */
-		    } else {
-			fprintf(stderr, "MTASK: Cannot find lib: %s\n", argv[2]);
-		    }
 		    if (nativeMain == NULL) { /* method hasn't been found */
                         fprintf(stderr, 
 			    "MTASK: Cannot find symbol '%s' in library %s\n", argv[1], argv[2]);
