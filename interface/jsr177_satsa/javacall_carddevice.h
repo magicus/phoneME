@@ -117,7 +117,9 @@ javacall_result javacall_carddevice_init();
 
 /** 
  * Finalizes the driver.
- * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_finalize();
 
@@ -134,14 +136,18 @@ javacall_result javacall_carddevice_set_property(const char *prop_name,
 
 /** 
  * Selects specified slot (if possible).
- * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_select_slot(javacall_int32 slot_index);
 
 /** 
  * Returns number of slots which available for selection.
  * @param slot_cnt Buffer for number of slots.
- * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_get_slot_count(javacall_int32 *slot_cnt);
 
@@ -150,7 +156,9 @@ javacall_result javacall_carddevice_get_slot_count(javacall_int32 *slot_cnt);
  * @param slot Slot number.
  * @param result <code>JAVACALL_TRUE</code> if the slot is dedicated for SAT,
  *               <code>JAVACALL_FALSE</code> otherwise
- * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_is_sat(javacall_int32 slot, javacall_bool *result);
 
@@ -191,14 +199,17 @@ javacall_result javacall_carddevice_reset_finish(char *atr, javacall_int32 *atr_
  * sure that no other native application
  * uses the same device during a transaction.
  * @return JAVACALL_OK if all done successfuly, 
-           JAVACALL_WOULD_BLOCK if the device is locked by the other
- *         JAVACALL_FAIL if error occured
+ *         JAVACALL_WOULD_BLOCK if the device is locked by the other
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_lock();
 
 /** 
  * Unlocks the device.
- * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_unlock();
 
@@ -209,7 +220,9 @@ javacall_result javacall_carddevice_unlock();
  * Enum JAVACALL_CARD_MOVEMENT should be used to specify type of movement.
  * Clears the slot event state.
  * @param mask Movements retrived.
- * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise.
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_card_movement_events(JAVACALL_CARD_MOVEMENT *mask);
 

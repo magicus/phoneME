@@ -190,6 +190,9 @@ javacall_result javacall_carddevice_card_movement_events(JAVACALL_CARD_MOVEMENT 
  * @param rx_size Before call: size of <tt>rx_buffer</tt>
  *                 After call: size of received response.
  * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         the javacall_carddevice_xfer_data_finish function to complete 
+ *         the operation
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
@@ -212,6 +215,8 @@ javacall_result javacall_carddevice_xfer_data_start(char *tx_buffer, int tx_size
  *                 After call: size of received response.
  * @return JAVACALL_OK if all done successfuly
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         this function again to complete the operation
  *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_xfer_data_finish(char *tx_buffer, int tx_size,
