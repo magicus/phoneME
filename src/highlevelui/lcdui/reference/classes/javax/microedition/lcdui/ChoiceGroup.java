@@ -870,8 +870,12 @@ public class ChoiceGroup extends Item implements Choice {
                 imageEl = img;
                 mutableImageEl = null;
             }
+
+            if (imageEl != null) {
+              imageDataEl = imageEl.getImageData();
+            }
         }
-        
+
         /**
          * Set the selection.
          * @param sel the selection
@@ -919,6 +923,8 @@ public class ChoiceGroup extends Item implements Choice {
         /** Image portion of this ChoiceGroup element (if mutable) */
         Image mutableImageEl; // = null;
 
+        /** ImageData portion of this ChoiceGroup element (non-mutable) */
+        private ImageData imageDataEl;        // = null;
 
         /** Selected state of this ChoiceGroup element */
         boolean selected;     // = false;
