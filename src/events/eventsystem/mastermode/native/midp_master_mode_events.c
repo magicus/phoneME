@@ -96,7 +96,13 @@ eventUnblockJavaThread(
 void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 		       int blocked_threads_count,
 		       jlong timeout) {
-    midp_waitWhileSuspended();
+    if (midp_waitWhileSuspended()) {
+        /* System has been requested to resume. Returning control to VM
+         * to perform java-side resume routines. Timeout may be too long
+         * here or even -1, thus do not check other events this time.
+         */
+        return;
+    }
 
     newSignal.waitingFor = 0;
     newSignal.pResult = NULL;

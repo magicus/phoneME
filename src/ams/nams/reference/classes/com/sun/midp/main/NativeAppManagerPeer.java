@@ -40,6 +40,8 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.suspend.SuspendSystemListener;
 import com.sun.midp.suspend.SuspendSystem;
 
+import com.sun.cldc.isolate.Isolate;
+
 /**
  * This is an implementation of the native application manager peer
  * for the MVM mode of VM capable of running with
@@ -174,6 +176,8 @@ public class NativeAppManagerPeer
             EventTypes.NATIVE_MIDLET_PAUSE_REQUEST, this);
         eventQueue.registerEventListener(
             EventTypes.NATIVE_MIDLET_DESTROY_REQUEST, this);
+        eventQueue.registerEventListener(
+            EventTypes.NATIVE_MIDLET_GETINFO_REQUEST, this);
         eventQueue.registerEventListener(
             EventTypes.NATIVE_SET_FOREGROUND_REQUEST, this);
 
@@ -351,6 +355,36 @@ public class NativeAppManagerPeer
             }
             break;
 
+        case EventTypes.NATIVE_MIDLET_GETINFO_REQUEST:
+            int isolateId = midlet.getIsolateId();
+            Isolate task = null;
+            Isolate[] allTasks = Isolate.getIsolates();
+
+            for (int i = 0; i < allTasks.length; i++) {
+                if (allTasks[i].id() == isolateId) {
+                    task = allTasks[i];
+                    break;
+                }
+            }
+
+            if (task != null) {
+                /* Structure to hold run time information about a midlet. */
+                RuntimeInfo runtimeInfo = new RuntimeInfo();
+
+                runtimeInfo.memoryTotal    = task.totalMemory();
+                runtimeInfo.memoryReserved = task.reservedMemory();
+                runtimeInfo.usedMemory     = task.usedMemory();
+                runtimeInfo.priority       = task.getPriority();
+                // there is no Isolate API now
+                runtimeInfo.profileName    = null;
+
+                saveRuntimeInfoInNative(runtimeInfo);
+            }
+
+            notifyOperationCompleted(EventTypes.NATIVE_MIDLET_GETINFO_REQUEST,
+                nativeEvent.intParam1, (task == null) ? 1 : 0);
+            break;
+
         case EventTypes.NATIVE_SET_FOREGROUND_REQUEST:
             // Allow Nams to explicitly set nothing to be in the foreground
             // with special AppId 0
@@ -402,6 +436,26 @@ public class NativeAppManagerPeer
 
     // ------ End implementation of the Listener interface
     // ==============================================================
+
+    /**
+     * Saves runtime information from the given structure
+     * into the native buffer.
+     *
+     * @param runtimeInfo structure holding the information to save
+     */
+    private static native void saveRuntimeInfoInNative(RuntimeInfo runtimeInfo);
+
+    /**
+     * Notify the native application manager that the system has completed
+     * the requested operation and the result (if any) is available.
+     *
+     * @param operation code of the operation that has completed
+     * @param externalAppId ID assigned by the external application manager
+     * @param retCode completion code (0 if OK)
+     */
+    private static native void notifyOperationCompleted(int operation,
+                                                        int externalAppId,
+                                                        int retCode);
 
     /**
      * Notify the native application manager that the system had an error

@@ -462,10 +462,12 @@ KNIDECL(com_sun_midp_main_NamsManager_initNamsManager) {
 
     /* request foreground for NamsManager */
     midp_midlet_set_foreground(0);
+    
+    KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_main_NamsManager_findNextEmptyMIDlet() {
+KNIDECL(com_sun_midp_main_NamsManager_findNextEmptyMIDlet) {
     jint appId = KNI_GetParameterAsInt(1);
 
      KNI_ReturnInt(findNextEmptyMIDlet(appId));

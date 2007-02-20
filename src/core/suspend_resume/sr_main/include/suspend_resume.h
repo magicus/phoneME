@@ -126,13 +126,16 @@ extern jboolean midp_checkAndResume();
 
 /**
  * Waits while java stack stays suspended then calls midp_resume().
- * If java stack is not currently suspened, returns immediately.
+ * If java stack is not currently suspened, returns false immediately.
  * Otherwise calls midp_checkAndResume() in cycle until it detects
  * resume request and performs resuming routines.
  *
  * Used in VM maser mode only.
+ *
+ * @retrun KNI_TRUE if java stack was suspended and resume request
+ *         was detected within this call, KNI_FALSE otherwise
  */
-extern void midp_waitWhileSuspended();
+extern jboolean midp_waitWhileSuspended();
 
 /**
  * Possible states of suspendable resources and java stack.

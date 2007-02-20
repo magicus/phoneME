@@ -1,5 +1,5 @@
 /*
- *
+ *   
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,19 +24,44 @@
  * information or have any questions. 
  */
 
+#include <string.h>
+#include <stdio.h>
 
-#ifndef _COMMAND_LINE_UTIL_H_
-#define _COMMAND_LINE_UTIL_H_
+#include <kni.h>
 
-/*
- * Library internal functions declarations
+#include <midpInit.h>
+#include <midpMalloc.h>
+
+#include <midpStorage.h>
+#include <midpString.h>
+#include <midpServices.h>
+#include <midpNativeThread.h>
+#include <midpNativeAppManager.h>
+
+/**
+ * @file
+ *
+ * This file contains platform specific thread routine.
  */
 
-extern char* midpFixMidpHome(char *cmd);
-extern char* midpRemoveCommandOption(char* pszFlag, char* apszArgs[],
-                                     int* pArgc);
-extern char* midpRemoveOptionFlag(char* pszFlag, char* apszArgs[],
-                  int* pArgc);
-extern char* getCharFileSeparator();
+extern void nams_process_command(int command, int param);
 
-#endif /* _COMMAND_LINE_UTIL_H_ */
+DWORD WINAPI midlet_starter_routine(midp_ThreadRoutineParameter param) {
+    /* 
+     * this routine's signature is platform specific - 
+     * see midp_ThreadRoutine declaration 
+     */
+
+    int* cmd = (int*)param; 
+    /*
+    printf("DEBUG: thread routine: cmd = %i, param = %i\n", cmd[0], cmd[1]);
+    */
+
+    /* sleep for a few seconds to let java subsystem to be initialized */
+    midp_sleepNativeThread(5);
+    
+    nams_process_command(cmd[0], cmd[1]);
+
+    return 0;
+}
+

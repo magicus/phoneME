@@ -268,10 +268,16 @@ public final class EventTypes {
      * Sent by the native system to request a MIDlet be destroyed.
      */
     public static final int NATIVE_MIDLET_DESTROY_REQUEST = 39;
+
+    /**
+     * Sent by the native system to request a MIDlet be destroyed.
+     */
+    public static final int NATIVE_MIDLET_GETINFO_REQUEST = 40;
+
     /**
      * Sent by the native system to request a MIDlet be in the foreground.
      */
-    public static final int NATIVE_SET_FOREGROUND_REQUEST = 40;
+    public static final int NATIVE_SET_FOREGROUND_REQUEST = 41;
 
     
     /**
@@ -283,22 +289,22 @@ public final class EventTypes {
      * <li>stringParam2 = MIDlet's class name
      * </ul>
      */
-    public static final int SET_FOREGROUND_BY_NAME_REQUEST = 41;
+    public static final int SET_FOREGROUND_BY_NAME_REQUEST = 42;
 
     /*
      * Sent to request screen rotation
      */
-    public static final int ROTATION_EVENT = 42;
+    public static final int ROTATION_EVENT = 43;
 
     /**
      * MIDlet resources paused notification 
      */
-    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 43;
+    public static final int MIDLET_RS_PAUSED_NOTIFICATION = 44;
 
     /** Major ID for MMAPI event */
-    public static final int MMAPI_EVENT = 44;
+    public static final int MMAPI_EVENT = 45;
 
     /** Major ID for AMMS  event */ 
-    public static final int AMMS_EVENT  = 45;
+    public static final int AMMS_EVENT  = 46;
     
 }

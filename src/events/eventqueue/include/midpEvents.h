@@ -112,21 +112,22 @@ extern "C" {
 #define NATIVE_MIDLET_RESUME_REQUEST    37
 #define NATIVE_MIDLET_PAUSE_REQUEST     38
 #define NATIVE_MIDLET_DESTROY_REQUEST   39
-#define NATIVE_SET_FOREGROUND_REQUEST   40
+#define NATIVE_MIDLET_GETINFO_REQUEST   40
+#define NATIVE_SET_FOREGROUND_REQUEST   41
 
 /* Automation API events */
-#define SET_FOREGROUND_BY_NAME_REQUEST  41
+#define SET_FOREGROUND_BY_NAME_REQUEST  42
 
-#define ROTATION_EVENT                  42
+#define ROTATION_EVENT                  43
 
 /* MIDlet resources paused notification */
-#define MIDLET_RS_PAUSED_NOTIFICATION   43
+#define MIDLET_RS_PAUSED_NOTIFICATION   44
 
 /* JSR-135 event */
-#define MMAPI_EVENT                     44
+#define MMAPI_EVENT                     45
 
 /** JSR-234 event */ 
-#define AMMS_EVENT                      45
+#define AMMS_EVENT                      46
 
 /** @} */
 

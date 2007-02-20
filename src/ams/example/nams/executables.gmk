@@ -57,12 +57,6 @@ $(BINDIR)/fileInstaller$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_FILEINSTALLE
 	@echo " ... linking $@ " $(LOG)
 	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_FILEINSTALLER_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
 
-SUBSYSTEM_AMS_EXECUTABLES = \
-	$(BINDIR)/runNams$(g)$(p)$(EXE) \
-	$(BINDIR)/listMidlets$(g)$(p)$(EXE) \
-	$(BINDIR)/removeMidlet$(g)$(p)$(EXE) \
-	$(BINDIR)/fileInstaller$(g)$(p)$(EXE)
-
 ifeq ($(TARGET_PLATFORM), win32)
 $(BINDIR)/postTestMsg.exe: $(OBJ_DIR)/postTestMsg.o
 	@echo " ... linking $@ " $(LOG)
