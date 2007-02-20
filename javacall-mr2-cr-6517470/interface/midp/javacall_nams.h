@@ -284,9 +284,107 @@ typedef struct _javacall_ams_permission_set {
 } javacall_ams_permission_set;
 
 /**
- * @brief suite unique ID
+ * A structure containing variable-length information (such as
+ * a suite name and vendor name)about the installed midlet suites.
  */
-typedef int javacall_suite_id;
+typedef struct _javacall_ams_variable_len_suite_data {
+    /** Hash value (currently MD5) of the suite's jar file. */
+    unsigned char* pJarHash;
+
+    /**
+     * jint (length) + UTF16 string
+     * Class name of the midlet in single-midlet suite.
+     * Not used (length field is 0) if the suite contains several midlets.
+     */
+    javacall_utf16_string midletClassName;
+
+    /**
+     * jint (length) + UTF16 string
+     * A name that will be displayed in the Application Manager.
+     */
+    javacall_utf16_string displayName;
+
+    /**
+     * jint (length) + UTF16 string
+     * Icon's name for this suite.
+     */
+    javacall_utf16_string iconName;
+
+    /**
+     * jint (length) + UTF16 string
+     * Vendor of the midlet suite.
+     */
+    javacall_utf16_string suiteVendor;
+
+    /**
+     * jint (length) + UTF16 string
+     * Name of the midlet suite.
+     */
+    javacall_utf16_string suiteName;
+
+    /**
+     * jint (length) + UTF16 string
+     * Full path to suite's jar file.
+     */
+    javacall_utf16_string pathToJar;
+
+    /**
+     * jint (length) + UTF16 string
+     * Full path to the settings files.
+     */
+    javacall_utf16_string pathToSettings;
+} javacall_ams_variable_len_suite_data;
+
+/**
+ * @brief Holds all permssion set
+ */
+typedef struct _javacall_ams_suite_data {
+    /**
+     * Unique ID of the midlet suite
+     * (0 means that this entry was removed).
+     */
+    javacall_suite_id suiteId;
+
+    /**
+     * ID of the storage (INTERNAL_STORAGE_ID for the internal storage
+     * or another value for external storages).
+     */
+    jint storageId;
+
+    /** True if the suite enabled, false otherwise. */
+    jboolean isEnabled;
+
+    /** True if the suite is trusted, false otherwise. */
+    jboolean isTrusted;
+
+    /** Number of midlets in this suite. */
+    jint numberOfMidlets;
+
+    /** Installation time (timestamp). */
+    long installTime;
+
+    /** Size of the midlet suite's jad file. */
+    jint jadSize;
+
+    /** Size of the midlet suite's jar file. */
+    jint jarSize;
+
+    /** Size of the jar file hash. If it is 0, pJarHash field is empty. */
+    jint jarHashLen;
+
+    /**
+     * True if this midlet suite is preinstalled (and thus should be
+     * prevented from being removed.
+     */
+    jboolean isPreinstalled;
+
+    /** A structure with string-represented information about the suite. */
+    javacall_ams_variable_len_suite_data varSuiteData;
+} javacall_ams_suite_data;
+
+/**
+ * @brief running midlet unique ID
+ */
 typedef int javacall_app_id;
 
 /**
@@ -410,7 +508,7 @@ javacall_result javanotify_ams_midlet_resume(const javacall_app_id appID);
  */
 javacall_result
 javanotify_ams_midlet_get_suite_info(const javacall_app_id appID,
-                                     MidletSuiteData* pSuiteData);
+                                     javacall_ams_suite_data* pSuiteData);
 
 /**
  * Platform invokes this function to get runtime information
