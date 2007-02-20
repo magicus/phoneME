@@ -37,25 +37,26 @@
 #   the system, that's why this rule should be parsed after all object
 #   names are collected and prerequisite variables have correct values.
 #
-# $(OBJLIB) mentioned twice in $(LD) command line due to ld
-#   - is single-pass
-#   - collects functions from obj files and libs different ways
 
 $(BINDIR)/runNams$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_RUNNAMS_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_RUNNAMS_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+		$(LD_START_GROUP) $(AMS_RUNNAMS_OBJ_FILES) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
 
 $(BINDIR)/removeMidlet$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_REMOVEMIDLET_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_REMOVEMIDLET_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+		$(LD_START_GROUP) $(AMS_REMOVEMIDLET_OBJ_FILES) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
 
 $(BINDIR)/listMidlets$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_LISTMIDLET_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_LISTMIDLET_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+		$(LD_START_GROUP) $(AMS_LISTMIDLET_OBJ_FILES) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
 
 $(BINDIR)/fileInstaller$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_FILEINSTALLER_OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
-	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_FILEINSTALLER_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
+	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+		$(LD_START_GROUP) $(AMS_FILEINSTALLER_OBJ_FILES) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
 
 ifeq ($(TARGET_PLATFORM), win32)
 $(BINDIR)/postTestMsg.exe: $(OBJ_DIR)/postTestMsg.o
