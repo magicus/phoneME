@@ -915,6 +915,7 @@ static QDate addYears(const QDate &date, int nyears) {
 void DatePicker::acceptDay() {
     if (de != NULL) {
       de->setDate(currentDay);
+      de->setFocus();
     }
     accept();
   }
