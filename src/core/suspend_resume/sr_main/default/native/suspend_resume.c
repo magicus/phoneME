@@ -293,7 +293,13 @@ jboolean midp_waitWhileSuspended() {
     jboolean ret = KNI_FALSE;
 
     while (SR_SUSPENDED == midp_getSRState()) {
-        ret = midp_checkAndResume();
+        ret = KNI_TRUE;
+        midp_checkAndResume();
+
+        /* IMPL_NOTE: condition here is not midp_checkAndResume() to
+         * support special testing scenario when system is suspended
+         * but VM continues working.
+         */
         if (!vm.isSuspended) {
             break;
         }
