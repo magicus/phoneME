@@ -238,6 +238,7 @@ BUNDLE_INCLUDE_LIST += \
 	src/portlibs \
 	build/portlibs/* \
 	build/share/jcc.mk \
+	build/share/*_op.mk \
 	src/share/tools/GenerateCurrencyData \
 	src/share/tools/javazic \
 	src/share/tools/xml \
@@ -352,8 +353,7 @@ BUNDLE_INCLUDE_LIST += \
 	src/share/tools/cvmc  
 
 BUILDDIR_PATTERNS += \
-       *_jump.mk \
-       *_op.mk 
+       *_jump.mk
 
 # Add every build/<os>/cvmc.mk file
 BUNDLE_INCLUDE_LIST += \
