@@ -51,6 +51,7 @@
 #include <dirent.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <dlfcn.h>
 #include "porting/JUMPMessageQueue.h"
 #include "porting/JUMPProcess.h"
 
@@ -129,9 +130,16 @@ static void child(int sig);
 /*
  * Task management 
  */
+typedef enum _ProcType {
+    PROCTYPE_JAVA = 1,
+    PROCTYPE_NATIVE
+} ProcType;
 typedef struct _TaskRec {
     int pid;
     char* command;
+
+    /* is it a native process or JVM? */
+    ProcType procType;
 
     /* testing mode specific snapshot of prefix */
     char* testingModeFilePrefixSnapshot;
@@ -450,7 +458,8 @@ reapChildren(ServerState* state)
  * A new task has been created 
  */
 static int
-addTask(JNIEnv* env, ServerState* state, int taskPid, char* command)
+addTask(JNIEnv* env, ServerState* state, int taskPid, char* command,
+        ProcType type)
 {
     TaskRec* task;
 
@@ -460,6 +469,7 @@ addTask(JNIEnv* env, ServerState* state, int taskPid, char* command)
     }
     task->pid = taskPid;
     task->command = command;
+    task->procType = type;
     /* Take a snapshot of the testing mode prefix here */
     if (state->isTestingMode) {
 	task->testingModeFilePrefixSnapshot =
@@ -551,26 +561,35 @@ numberOfTasks()
 /*
  * multi-string response to caller, packaged as
  * return message.
+ * all == 0 if only Java tasks is being listed
  */
 static void
-dumpTasksAsResponse(JUMPMessage command)
+dumpTasksAsResponse(JUMPMessage command, int all)
 {
     JUMPOutgoingMessage m;
     JUMPMessageStatusCode code;
+    JUMPMessageMark mark;
+    JUMPMessageMark eom;
     
     TaskRec* task;
-    int numTasks;
+    int numTasks = 0;
     
     m = jumpMessageNewOutgoingByRequest(command);
 
-    numTasks = numberOfTasks();
-
+    jumpMessageMarkSet(&mark, m);
     jumpMessageAddInt(m, numTasks);
     
     for (task = taskList; task != NULL; task = task->next) {
-	dumpTaskIntoMessage(m, task);   /* Brief printout to caller */
-	dumpTaskOne(task);                    /* Verbose printout to console */
+	if (all || task->procType == PROCTYPE_JAVA) {
+	    dumpTaskIntoMessage(m, task);   /* Brief printout to caller */
+	    dumpTaskOne(task);              /* Verbose printout to console */
+	    numTasks ++;
+	}
     }
+    jumpMessageMarkSet(&eom, m);
+    jumpMessageMarkResetTo(&mark, m);
+    jumpMessageAddInt(m, numTasks);
+    jumpMessageMarkResetTo(&eom, m);
 
     jumpMessageSendAsyncResponse(m, &code);
 }
@@ -767,6 +786,9 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	   connection */
 	command = readRequestMessage();
 	while (command != NULL) {
+	    /* local variable that will keep pointer to native's main() */
+	    void (*nativeMain)(int argc, char **argv) = NULL;
+
 	    tokenizeArgs(command, &argc, &argv);
 	    /*
 	     * Check for children to reap before each command
@@ -851,7 +873,17 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		/* Make sure */
 		argc = 0;
 		argv = NULL;
-		dumpTasksAsResponse(command);
+		dumpTasksAsResponse(command, 0); /* only Java tasks will be listed */
+		jumpMessageFree(command);
+		command = readRequestMessage();
+		continue;
+	    } else if (!strcmp(argv[0], "LISTALL")) {
+		/* Don't forget to free up all the (argc, argv[]) mem. */
+		freeArgs(argc, argv);
+		/* Make sure */
+		argc = 0;
+		argv = NULL;
+		dumpTasksAsResponse(command, 1); /* all tasks will be listed */
 		jumpMessageFree(command);
 		command = readRequestMessage();
 		continue;
@@ -975,6 +1007,45 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    if (!strcmp(argv[0], "JDETACH")) {
 		amExecutive = CVM_TRUE;
 	    }
+	    if (!strcmp(argv[0], "JNATIVE")) { /* Run native process (driver) */
+		TaskRec* task;
+#define JNATIVE_USAGE   "Usage: JNATIVE <proc_name> <lib_name> [<proc_args>...]"
+		if (argc < 3) {
+		    respondWith(command, JNATIVE_USAGE);
+		    freeArgs(argc, argv);
+		    argc = 0;
+		    argv = NULL;
+		    jumpMessageFree(command);
+		    command = readRequestMessage();
+		    continue;
+		}
+
+		/* try to figure out if the process is already run.
+		 * The task command should start with "JNATIVE <procName>..."
+		 */
+		for (task = taskList; task != NULL; task = task->next) {
+		    int len = strlen(argv[1]); /* argv[1] == procName */
+		    if (task->procType == PROCTYPE_NATIVE &&
+			    !strncmp(task->command, "JNATIVE ", 8) &&
+			    !strncmp(task->command+8, argv[1], len) &&
+			    (task->command[8+len] == '\0' ||
+			     task->command[8+len] == ' ')) {
+			break;
+		    }
+		}
+		if (task != NULL) {
+		    /* process has been found in the taskList
+		     * We don't have to run it
+		     */
+		    respondWith2(command, "CHILD PID=%d", task->pid);
+		    freeArgs(argc, argv);
+		    argc = 0;
+		    argv = NULL;
+		    jumpMessageFree(command);
+		    command = readRequestMessage();
+		    continue;
+		}
+	    }
 #if 0
 	    /* How to do sync? */
 	    if (!strcmp(argv[0], "JSYNC")) {
@@ -1042,7 +1113,76 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		    dup2(connfd, 1);
 		    dup2(connfd, 2);
 		}
+#endif               
+		if (!strcmp(argv[0], "JNATIVE")) { /* we are launching 
+						      a native process */
+		    /* trying to find native method */
+		    void *dsoHandle;
+		    char *libName;
+
+		    /*
+		     * If the lib name is "main" then
+		     * we have to look for the symbol
+		     * in the main binary module.
+		     */
+		    if (strcmp(argv[2], "main")) {
+			libName = malloc(strlen(argv[2]) + 
+			    3 /*lib*/ + 3 /*.so*/ +
+#ifdef CVM_DEBUG
+			    2 /*_g*/ +
 #endif
+			    1 /*'\0'*/);
+			assert(libName != NULL);
+			strcpy(libName, "lib");
+			strcat(libName, argv[2]);
+#ifdef CVM_DEBUG
+			strcat(libName, "_g");
+#endif
+			strcat(libName, ".so");
+			dsoHandle = dlopen(libName, RTLD_LAZY);
+			free(libName);
+			if (dsoHandle != NULL) {
+			    nativeMain = dlsym(dsoHandle, argv[1]);
+			    /* FIXME: should we do "dlclose()" somewhere? */
+			} else {
+			    fprintf(stderr, "MTASK: Cannot find lib: %s\n", argv[2]);
+			}
+		    } else {
+			nativeMain = dlsym(RTLD_DEFAULT, argv[1]);
+		    }
+
+		    if (nativeMain == NULL) { /* method hasn't been found */
+                        fprintf(stderr, 
+			    "MTASK: Cannot find symbol '%s' in library %s\n", argv[1], argv[2]);
+			respondWith(command, JNATIVE_USAGE);
+			jumpMessageFree(command);
+			freeArgs(argc, argv);
+			argc = 0;
+			argv = NULL;
+			exit(1);
+		    }
+#define MSGPREFIX_NATIVE "native"
+		    /* creating the message queue for our process.
+		     * It must be created before the launcher received 
+		     * successful result
+		     */
+		    JUMPMessageQueueStatusCode code = 0;
+		    /* allocate memory for queue's name */
+		    unsigned char *type = 
+		        malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
+		    /* FIXME: make sure that the string is allocated */
+		    assert(type != NULL);
+
+		    strcpy((char*)type, (char*)MSGPREFIX_NATIVE);
+		    strcat((char*)type, "/");
+		    strcat((char*)type, argv[1]); /* cat the name of process */
+		    /* we trying to create a queue named "native/<processName>" */
+		    jumpMessageQueueCreate(type, &code);
+
+		    /* FIXME: return error code if creation fails */
+		    assert(code == JUMP_MQ_SUCCESS);
+		    free(type);
+		}
 		
 		/* First, make sure that the child PID is communicated
 		   to the client connection. */
@@ -1051,6 +1191,17 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		/* No need for the connections in the child */
 		jumpMessageFree(command);
 		
+		if (nativeMain != NULL) {
+		    /* call 'main' of the native process */
+		    (*nativeMain)(argc, argv);
+
+		    /* free anything after the process finished */
+		    freeArgs(argc, argv);
+		    argc = 0;
+		    argv = NULL;
+		    exit(0); /* return from the native process */
+		}
+
 		/* We need these threads in the child */
 		if (!restartSystemThreads(env, state)) {
 		    exit(1);
@@ -1080,7 +1231,10 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 			    strdup(state->testingModeFilePrefix);
 		    }
 		} else {
-		    addTask(env, state, pid, oneString(command));
+		    /* add task to the task list */
+		    addTask(env, state, pid, oneString(command),
+			(strcmp(argv[0], "JNATIVE") ? 
+			    PROCTYPE_JAVA : PROCTYPE_NATIVE));
 		}
 		jumpMessageFree(command);
 		/* The child is executing this command. The parent
