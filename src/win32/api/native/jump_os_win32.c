@@ -344,8 +344,9 @@ int jumpThreadGetId(){
  * FIXME: Stub implementation
  */
 int 
-jumpProcessRunDriver(char *driver_name) {
-    (void)driver_name;
+jumpProcessRunDriver(char *driverName, char *libName) {
+    (void)driverName;
+    (void)libName;
     return -1;
 }
 
