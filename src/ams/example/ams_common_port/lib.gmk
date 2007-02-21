@@ -54,4 +54,9 @@ SUBSYSTEM_AMS_EXTRA_INCLUDES += \
 ifeq ($(TARGET_VM), cldc_vm)
 SUBSYSTEM_AMS_NATIVE_FILES += \
     commandLineUtil_md.c
+
+ifeq ($(TARGET_PLATFORM), javacall)
+SUBSYSTEM_AMS_NATIVE_FILES += \
+    javaTask.c
+endif
 endif
