@@ -1,6 +1,6 @@
 /*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -71,6 +71,19 @@ typedef long long javacall_int64;
  * Maximal number of illegal chars
  */
 #define JAVACALL_MAX_ILLEGAL_FILE_NAME_CHARS  128
+
+/**
+ * @def JAVACALL_MAX_ROOTS_LIST_LENGTH
+ * Maximal length of a list of file system roots
+ */
+#define JAVACALL_MAX_ROOTS_LIST_LENGTH  512
+
+/**
+ * @def JAVACALL_MAX_ROOT_PATH_LENGTH
+ * Maximal length of a file system root path
+ */
+#define JAVACALL_MAX_ROOT_PATH_LENGTH   128
+
 /**
  * @}
  */

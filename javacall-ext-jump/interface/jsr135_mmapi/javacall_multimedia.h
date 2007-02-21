@@ -26,7 +26,7 @@
 #ifndef __JAVACALL_MULTIMEDIA_H
 #define __JAVACALL_MULTIMEDIA_H
 
-#include "javacall_lcd.h"
+#include "javacall_defs.h"
 
 /**
  * @file javacall_multimedia.h
