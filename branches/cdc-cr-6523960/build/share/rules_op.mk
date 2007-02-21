@@ -69,3 +69,14 @@ define compileJSRClasses
 	$(call makeJSROPJar,$(JSR_$(1)_JAR),$(JSR_$(1)_BUILD_DIR)/classes)
 endef
 
+#Command for building shared libraries
+define makeSharedLibrary
+	$(TARGET_LD) $(LDFLAGS) -shared -o $@ $(1) $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
+endef
+
+ifeq ($(CVM_INCLUDE_JAVACALL), true)
+javacall_lib: $(JAVACALL_LIBRARY)
+else
+javacall_lib:
+endif
+
