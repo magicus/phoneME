@@ -42,6 +42,9 @@ else
     vpath % $(SUBSYSTEM_AMS_DIR)/example/nams_port/default/native
 endif
 
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_AMS_DIR)/example/nams/include
+	
 # Don't include exe files to MIDP source file list
 # since we want to link different obj files for different exe
 #
@@ -53,7 +56,7 @@ ifeq ($(TARGET_VM), cldc_vm)
 #    runNams_md.c
 
 AMS_RUNNAMS_NATIVE_FILES += \
-    runNams.c
+    runNams_md.c
 	
 AMS_REMOVEMIDLET_NATIVE_FILES += \
     removeMidlet_md.c

@@ -24,12 +24,22 @@
  * information or have any questions.
  */
 
-#include <fileInstaller.h>
+#include <removeMidlet.h>
 
 /**
- * This file needed to create a fileInstaller executable
+ * Deletes an installed MIDlet suite. This is an example of how to use
+ * the public MIDP API.
+ *
+ * @param argc The total number of arguments
+ * @param argv An array of 'C' strings containing the arguments
+ *
+ * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
+ *
+ * IMPL_NOTE: determine if it is desirable for user targeted output
+ *       messages to be sent via the log/trace service, or if
+ *       they should remain as printf calls
  */
 int
 main(int argc, char* argv[]){
-    return fileInstaller(argc, argv);
+    return removeMidlet(argc, argv);
 }

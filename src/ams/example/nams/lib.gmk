@@ -84,7 +84,6 @@ AMS_LISTMIDLET_NATIVE_FILES += \
 
 AMS_FILEINSTALLER_NATIVE_FILES += \
 	fileInstallerShared.c \
-	fileInstaller.c \
 	jadParser.c \
 	manifestParser.c \
 	nams_command_stub.c	

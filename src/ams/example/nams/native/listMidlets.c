@@ -91,7 +91,7 @@ printProperty(char* pszLabel, const pcsl_string * key, MidpProperties props) {
  *       they should remain as printf calls
  */
 int
-main(int argc, char* argv[]) {
+listMidlets(int argc, char* argv[]) {
     int   status = -1;
     int   i;
     long  size;

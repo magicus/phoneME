@@ -668,8 +668,7 @@ static MIDPError runMainClass(int argc, char* argv[]) {
  *
  * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  */
-int
-main(int argc, char* argv[]) {
+int runNams(int argc, char* argv[]) {
     MIDPError status;
     char* midpHome;
     int used;

@@ -795,15 +795,21 @@ pcsl_string_status createRelativeURL(const pcsl_string * in,
     }
 
     return rc;
-}/* end of createRelativeURL */
+} /* end of createRelativeURL */
 
 /**************************************************************************/
 /**
- * fileInstaller could be launched as executable or as a function call
+ * Installs a midlet suite from a file. This is an example of how to use
+ * the public MIDP API.
+ *
+ * fileInstaller could be launched as executable or as a function call.
+ *
+ * @param argc The total number of arguments
+ * @param argv An array of 'C' strings containing the arguments
+ *
+ * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  */
-int
-fileInstaller(int argc, char* argv[]) {
-
+int fileInstaller(int argc, char* argv[]) {
     /* temporary variable to contain return results */
     int     res                    = 0;
     /* pointer to the manifest extracted from the jar */
