@@ -54,9 +54,6 @@ void javacall_ams_midlet_stateChanged(javacall_midlet_state state,
     int appIndex = 0;
 
     switch (state) {
-        case JAVACALL_MIDLET_STATE_FOREGROUND:
-            javacall_print("[NAMS] Midlet state change to foreground\n");
-            break;
         case JAVACALL_MIDLET_STATE_PAUSED:
             if (nams_if_midlet_exist(appID) != JAVACALL_OK) {
                 /* New started midlet */
@@ -66,9 +63,6 @@ void javacall_ams_midlet_stateChanged(javacall_midlet_state state,
             } else {
                 javacall_print("[NAMS] Midlet state change to paused\n");
             }
-            break;
-        case JAVACALL_MIDLET_STATE_BACKGROUND:
-            javacall_print("[NAMS] Midlet state change to background\n");
             break;
         case JAVACALL_MIDLET_STATE_DESTROYED:
             if (nams_remove_midlet(appID) != JAVACALL_OK) {
@@ -105,7 +99,7 @@ void javacall_ams_midlet_stateChanged(javacall_midlet_state state,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_ui_stateChanged(javacall_ui_state state,
+void javacall_ams_ui_stateChanged(javacall_midlet_ui_state state,
                                   const javacall_app_id appID,
                                   javacall_change_reason reason) {
     int appIndex = 0;
@@ -281,7 +275,7 @@ javacall_ams_getSuiteProperty(const javacall_suite_id suiteID,
     if (nams_string_to_utf16(jad, strlen(jad), &uJad, strlen(jad)) !=
             JAVACALL_OK) {
         javacall_print("[NAMS] javacall_ams_getSuiteProperty "
-                       ""nams_string_to_utf16 error\n");
+                       "nams_string_to_utf16 error\n");
         return JAVACALL_FAIL;
     }
 
