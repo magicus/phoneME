@@ -169,12 +169,6 @@ typedef unsigned char* javacall_utf8_string;
 typedef const unsigned char* javacall_const_utf8_string;
 
 /**
- * @typedef javacall_pixel
- * @brief Pixel type for LCD graphics
- */
-typedef unsigned short javacall_pixel;
-
-/**
  * @}
  */
 #ifdef __cplusplus

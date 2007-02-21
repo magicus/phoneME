@@ -56,6 +56,12 @@ extern "C" {
  */
 
 /**
+ * @typedef javacall_pixel
+ * @brief Pixel type for LCD graphics
+ */
+typedef unsigned short javacall_pixel;
+
+/**
  * @def RGB2PIXELTYPE
  *
  * Conversion between 3 RGB octets to a pixel type is defined for the following
