@@ -1234,17 +1234,6 @@ ListBody::ListBody(QWidget *parent) : QListBox(parent) {
 ListBody::~ListBody() {
 }
 
-/**
- * This is the patch for qt 2.3.9: The focus is moved out while the list in
- * non-modal state.
- * Overload method of multiple line editor. The method always returns false
- * The implementation needs to be removed if the fix is done for the later
- * version of qt
- */ 
-bool ListBody::focusNextPrevChild( bool next ) {
-    (void)next;
-    return FALSE;
-}
 
 /**
  * Override to notify Form focus change.
