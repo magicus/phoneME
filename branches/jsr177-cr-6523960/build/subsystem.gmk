@@ -545,13 +545,14 @@ JSROP_CNI_CLASSES    += $(SUBSYSTEM_SATSA_CNI_CLASSES)
 JSROP_NATIVE_LIBS    += $(JSR_177_NATIVE_LIB)
 JSROP_EXTRA_INCLUDES += $(SUBSYSTEM_SATSA_EXTRA_INCLUDES)
 
+CVM_INCLUDE_JAVACALL  = true
+
 $(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) all_tools
 	$(call compileJSRClasses,177)
 
-$(JSR_177_NATIVE_LIB): $(JAVACALL_LIBRARY) $(JSR_177_NATIVE_OBJS)
+$(JSR_177_NATIVE_LIB): javacall_lib $(JSR_177_NATIVE_OBJS) $(ABSTRACTIONS_NATIVE_LIBRARY)
 	@echo "Linking $@"
-	$(AT)$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(JSR_177_NATIVE_OBJS) \
-	-L$(JSROP_LIB_DIR) -ljavacall$(DEBUG_POSTFIX) -ljsropabstr$(DEBUG_POSTFIX)	
+	$(AT)$(call makeSharedLibrary, $(JSR_177_NATIVE_OBJS))	
 
 # Append SATSA source bundle creation to target
 source_bundle:: satsa_source_bundle
