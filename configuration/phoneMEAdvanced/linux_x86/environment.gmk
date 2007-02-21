@@ -37,7 +37,7 @@ JSR_LIST = JSR_135 JSR_177
 
 USE_MIDP=false
 
-JSR_135_JC_IMPL_PATH ?= $(JAVACALL_DIR)/implementation/linux_x86_cdc
+JSR_135_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/linux_x86_cdc
 
 JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/linux_x86_cdc_simu
 
@@ -49,8 +49,10 @@ SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h jav
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEAdvanced/linux_x86 javacall/configuration/phoneMEAdvanced
 SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) javacall/implementation/linux_x86_cdc))
 
+JAVACALL_INCLUDE_SOURCE_FILES_SET += $(JAVACALL_DIR)/interface/midp/javacall_lcd.h
+
 #Specify list of utility objects necessary for the build
-UTILITIES += 
+UTILITIES = 
 
 #Compile options that are not common for all configurations can be specified in
 #SPECIFIC_DEFINITIONS variable
