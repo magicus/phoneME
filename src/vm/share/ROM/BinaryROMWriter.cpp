@@ -87,13 +87,27 @@ void BinaryROMWriter::start(FilePath *input, FilePath* output, int flags
     Throw::error(too_many_romizations JVM_THROW);
   }
 
-#if !ENABLE_LIB_IMAGES
-  if (Universe::number_of_java_classes() != ROM::number_of_system_classes()) {
+  int number_of_romized_classes = ROM::number_of_system_classes();
+#if ENABLE_LIB_IMAGES
+  ObjArray::Raw binary_images = Task::current()->binary_images();
+  if (binary_images.not_null()) {    
+    for(int i = 0; i< binary_images().length(); i++) {
+      ROMBundle* bun = (ROMBundle*)binary_images().obj_at(i);
+      if (bun == NULL) {
+        break; 
+      }
+      GUARANTEE(number_of_romized_classes < bun->number_of_java_classes(), 
+        "bundles in the list are in order");
+      number_of_romized_classes = bun->number_of_java_classes();
+    }    
+  }
+#endif
+  if (Universe::number_of_java_classes() != number_of_romized_classes) {
     // We cannot load any user classes (in this task) before running the
     // binary romizer.
     Throw::error(romization_requires_fresh_vm JVM_THROW);
   }
-#endif
+
   if (!cancelled()) {
     start0(input, output, flags JVM_NO_CHECK);
   }
