@@ -1,0 +1,379 @@
+#
+#  
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+# Subsystems.gmk may populate file list, so it has to included
+# after the "remove_filelist" above.
+# Global Module definitions
+# (No '-' since subsystem MUST exists)
+include $(JWC_WORK_SPACE)/build/common/makefiles/Subsystems.gmk
+
+# The Configurator generates Java and C files so these definitions
+# and rules must occur before any Java and C dependencies for
+# classes.zip
+#
+
+# dependency and rule for generating constants/properties
+#
+$(SUBSYSTEM_CONFIGURATION_MERGED_FILE): $(CONFIGURATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_DEP_FILES)
+	$(merge_configurations)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+	$(generate_configuration)
+
+# rules for generating romized skin files
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SKINROMIZATION_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+	$(romize_skin)
+	$(copy_lcdlf_resources)
+
+# The rule for running the Configurator unconditionally, used by other
+# things such as docs_html.
+# IMPL NOTE: this should be refactored to remove the
+# need to run this unconditionally; it should always be run based on
+# out-of-date prerequisites.
+#
+run_configurator:: $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+	$(generate_configuration)
+
+# The rule for running skin romization tool unconditionally
+run_skinromizer:: $(SKINROMIZATION_JAR_FILE) run_configurator
+	$(romize_skin)
+	$(copy_lcdlf_resources)
+
+# ================================================================
+# Java-Source-Dependency-Search, by each subsystem
+#
+
+#######################################################################
+# CONFIGURATION
+#######################################################################
+# Configuration
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_CONFIGURATION_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_CONFIGURATION_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES  	+= $(SUBSYSTEM_CONFIGURATION_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_CONFIGURATION_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_CONFIGURATION_EXTRA_CFLAGS)
+
+#######################################################################
+# CORE
+#######################################################################
+# Core group
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_CORE_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_CORE_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_CORE_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_CORE_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_CORE_EXTRA_CFLAGS)
+
+#######################################################################
+# EVENTS
+#######################################################################
+
+# Events
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_EVENTS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_EVENTS_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_EVENTS_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_EVENTS_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_EVENTS_EXTRA_CFLAGS)
+
+
+#######################################################################
+# AMS
+#######################################################################
+# AMS
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_AMS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_AMS_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_AMS_NATIVE_FILES)
+JTWI_LAZY_MAKEFILES	+= $(SUBSYSTEM_AMS_LAZY_MAKEFILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_AMS_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_AMS_EXTRA_CFLAGS)
+
+#######################################################################
+# PUSH
+#######################################################################
+# Push
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PUSH_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PUSH_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_PUSH_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_PUSH_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_PUSH_EXTRA_CFLAGS)
+
+
+#######################################################################
+# I18N
+#######################################################################
+# I18N
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_I18N_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_I18N_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_I18N_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_I18N_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_I18N_EXTRA_CFLAGS)
+
+#######################################################################
+# HIGHLEVEL UI
+#######################################################################
+
+# Hightlevel ui
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_HIGHUI_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_HIGHUI_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_HIGHUI_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_HIGHUI_EXTRA_CFLAGS)
+
+#######################################################################
+# GRAPHICS
+#######################################################################
+# Low level ui
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_LOWLEVELUI_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_LOWLEVELUI_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_LOWLEVELUI_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_LOWLEVELUI_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_LOWLEVELUI_EXTRA_CFLAGS)
+
+
+#######################################################################
+# RMS
+#######################################################################
+# RMS
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_RMS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_RMS_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_RMS_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_RMS_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_RMS_EXTRA_CFLAGS)
+
+######################################################################
+# Security
+######################################################################
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_SECURITY_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_SECURITY_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_SECURITY_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_SECURITY_EXTRA_CFLAGS)
+
+#######################################################################
+# PROTOCOL
+#######################################################################
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PROTOCOL_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PROTOCOL_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_PROTOCOL_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_PROTOCOL_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_PROTOCOL_EXTRA_CFLAGS)
+
+#######################################################################
+# TESTS
+#######################################################################
+
+ifeq ($(USE_NUTS_FRAMEWORK), true)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_NUTS_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_NUTS_EXTRA_INCLUDES)
+endif
+
+ifeq ($(USE_QA_TESTS), true)
+# QA TESTS: portability etc.
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PORTABILITY_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_PORTABILITY_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_PORTABILITY_EXTRA_INCLUDES)
+endif
+
+ifeq ($(USE_I3_TEST), true)
+# I3 tests
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_TEST_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_TEST_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES += $(SUBSYSTEM_TEST_NATIVE_FILES)
+endif
+
+#######################################################################
+# DEMOS
+#######################################################################
+ifeq ($(USE_ROMIZED_DEMOS), true)
+# Demos
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_DEMOS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_DEMOS_I3TEST_JAVA_FILES)
+endif
+
+ifeq ($(USE_PORTING_DEMOS), true)
+# Porting Demos
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PORTING_DEMOS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PORTING_DEMOS_I3TEST_JAVA_FILES)
+endif
+
+#######################################################################
+# JSRs
+#######################################################################
+# JSR 135/234/ABB Multimedia
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR234_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR234_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR234_NATIVE_FILES)
+LD_FLAGS		+= $(SUBSYSTEM_JSR234_LD_FLAGS)
+LIBS			+= $(SUBSYSTEM_JSR234_LIBS)
+
+ifeq ($(USE_JSR_177), true)
+# JSR 177 SATSA
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_SATSA_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_SATSA_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_SATSA_NATIVE_FILES)
+endif
+
+ifeq ($(USE_JSR_172), true)
+# JSR 172 WSS
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_172_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_172_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_172_NATIVE_FILES)
+endif
+
+ifeq ($(USE_JSR_226), true)
+# JSR 226 SVG
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_226_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_226_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_226_NATIVE_FILES)
+endif
+
+ifeq ($(USE_PISCES), true)
+# Pisces 2D Renderer
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PISCES_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PISCES_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_PISCES_NATIVE_FILES)
+EXTRA_INCLUDES          += $(SUBSYSTEM_PISCES_INCLUDES)
+endif
+
+ifeq ($(USE_JSR_75), true)
+# JSR 75 PDA
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_75_JAVA_FILES)
+	$(appendjavafiles)
+
+ JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_75_I3TEST_JAVA_FILES)
+ JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_75_NATIVE_FILES)
+ EXTRA_INCLUDES		+= $(SUBSYSTEM_JSR_75_EXTRA_INCLUDES)
+endif
+
+
+ifeq ($(USE_JSR_211), true)
+# JSR 211 CHAPI
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_211_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_211_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_211_NATIVE_FILES)
+EXTRA_INCLUDES          += $(SUBSYSTEM_JSR_211_EXTRA_INCLUDES)
+endif
+
+ifeq ($(USE_JSR_135), true)
+# JSR 135 MMAPI
+#
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_135_JAVA_FILES)
+	$(appendjavafiles)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_135_NATIVE_FILES)
+endif
+
+
+
+# Media stuff, included if no external mmapi-pp bundle is used,
+# i.e. none of MIDP_USE_ABB,USE_JSR_135,USE_JSR_234 is set.
+#
+ifneq ($(USE_JSR_234), true)
+ifneq ($(USE_JSR_135), true)
+ifneq ($(MIDP_USE_ABB), true)
+
+$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_MEDIA_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_MEDIA_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_MEDIA_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_MEDIA_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_MEDIA_EXTRA_CFLAGS)
+
+endif
+endif
+endif
+
+#####################################################################
+# Include subsystem makefiles with "lazy" rules to be parsed after
+# other subsystem makefile have been included and global variables
+# received their final values. It is critical for targets dependent
+# on global variable prerequisites, e.g. rules for executables
+# dependent on object files collected across the system. 
+# "Lazy" makefiles MUST not change global variable values.
+#####################################################################
+include $(JTWI_LAZY_MAKEFILES)
