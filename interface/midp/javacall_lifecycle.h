@@ -65,36 +65,36 @@ extern "C" {
  */ 
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * Java.
  */
 void javanotify_start(void);
 
 /**
- * The platfrom should invoke this function in platform context to pause
+ * The platform should invoke this function in platform context to pause
  * Java.
  */
 void javanotify_pause(void);
 
 /**
- * The platfrom should invoke this function in platform context to end pause
+ * The platform should invoke this function in platform context to end pause
  * and resume Java.
  */
 void javanotify_resume(void);
 /**
- * The platfrom should invoke this function in platform context to pause
+ * The platform should invoke this function in platform context to pause
  * Java bytecode execution (without invoking pauseApp)
  */
 void javanotify_internal_pause(void);
 
 /**
- * The platfrom should invoke this function in platform context to end
+ * The platform should invoke this function in platform context to end
  * an internal pause and resume Java bytecode processing
  */
 void javanotify_internal_resume(void);
 
 /**
- * The platfrom should invoke this function in platform context to end Java.
+ * The platform should invoke this function in platform context to end Java.
  */
 void javanotify_shutdown(void);
 
@@ -148,7 +148,7 @@ typedef enum {
 } javacall_lifecycle_tck_domain;
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * the Java VM and run TCK.
  *
  * @param url the http location of the TCK server
@@ -158,7 +158,7 @@ typedef enum {
 void javanotify_start_tck(char* url, javacall_lifecycle_tck_domain domain);
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * the Java VM and run i3test framework.
  *
  * @param arg1 optional argument 1
@@ -169,7 +169,7 @@ void javanotify_start_tck(char* url, javacall_lifecycle_tck_domain domain);
 void javanotify_start_i3test(char* arg1, char* arg2);
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * the Java VM and run installed Java Content Handler.
  *
  * @param handlerID launched Content Handler ID
@@ -181,7 +181,7 @@ void javanotify_start_i3test(char* arg1, char* arg2);
 void javanotify_start_handler(char* handlerID, char* url, char* action);
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * the Java VM with arbitrary arguments.
  *
  * @param argc number of command-line arguments
@@ -318,16 +318,16 @@ void javacall_schedule_vm_timeslice(void);
 javacall_int64 javanotify_vm_timeslice(void); 
 
 /**
- * The platfrom should invoke this function in platform context 
- * to bring application switcher to foreground.
+ * The platform should invoke this function in platform context 
+ * to select another running application to be the foreground.
  */
-void javanotify_switchforeground(void);
+void javanotify_select_foreground_app(void);
 
 /**
- * The platfrom should invoke this function in platform context 
- * to switch the current foreground midlet to Task Manager.
+ * The platform should invoke this function in platform context 
+ * to bring the Application Manager Screen to foreground.
  */
-void javanotify_selectapp(void);
+void javanotify_switch_to_ams(void);
 
 /** @} */
 
