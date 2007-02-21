@@ -89,8 +89,13 @@ endif
 #
 JAVACARD_CLASSES = $(MIDP_OUTPUT_DIR)/javacard_classes
 
+# Tools and applets
+#
 ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
+all_tools :: $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(SIM_TOOL)
 JAVAC ?= JAVAC_CMD
+else
+all_tools :: $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL)
 endif
 
 # Include jsr 177 properties in Configuration
