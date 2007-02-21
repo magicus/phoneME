@@ -127,7 +127,11 @@ public class PINAttributes {
         t = t.next;         // CommonAuthenticationObjectAttributes
         id = t.child.getId();
 
-        t = t.next.child;   // PinAttributes.pinFlags
+        t = t.next;
+        if (t.type != ACEntry.CONTEXT_CONSTRUCTED_1) {
+            throw new TLVException("Incomplete PIN record");
+        }
+        t = t.child.child;   // PinAttributes.pinFlags
         byte[] buf = t.getValue();
         int mask = 0;
         for (int i = 0; i < buf[0]; i++) {
