@@ -62,6 +62,7 @@ public class DefaultConfiguration extends Configuration {
 
 	private Hashtable protocolsOfContent;
 	private Hashtable contentsOfProtocol;
+	private Hashtable mimetypeOfLocator;
 	
     /**
      * Tone sequence mime type.
@@ -161,12 +162,20 @@ public class DefaultConfiguration extends Configuration {
 	protected final static String DIRECT_CAMERA_CLASS = "com.sun.mmedia.DirectCamera";
 	protected final static String GIFPLAYER_CLASS = "com.sun.mmedia.GIFPlayer";
 	
+    public final static String TONE_DEVICE_LOCATOR = javax.microedition.media.Manager.TONE_DEVICE_LOCATOR; //"device://tone";
+    public final static String MIDI_DEVICE_LOCATOR = javax.microedition.media.Manager.MIDI_DEVICE_LOCATOR; //"device://midi";
+    public final static String RADIO_CAPTURE_LOCATOR = "capture://radio";
+    public final static String AUDIO_CAPTURE_LOCATOR = "capture://audio";
+    public final static String VIDEO_CAPTURE_LOCATOR = "capture://video";
+    public final static String TONE_DEVICE_LOCATOR = "device://tone";
+    public final static String MIDI_DEVICE_LOCATOR = "device://midi";
+        	
     protected final static String maps[][] = {
         {Manager.TONE_DEVICE_LOCATOR, DIRECT_TONE_CLASS},
     // #ifdef MIDI_CONTROL [
         {Manager.MIDI_DEVICE_LOCATOR, DIRECT_MIDI_CLASS},
     // #endif ]
-        {MIME_AUDIO_TONE, DIRECT_TONE_CLASS},
+        {MIME_AUDIO_TONE, DIRECT_PLAYER_CLASS},
         {MIME_AUDIO_AMR, DIRECT_PLAYER_CLASS},
         {MIME_AUDIO_WAV, DIRECT_PLAYER_CLASS},
         {MIME_AUDIO_WAV_2, DIRECT_PLAYER_CLASS},
@@ -189,7 +198,6 @@ public class DefaultConfiguration extends Configuration {
 // #endif ]        
         {VIDEO_CAPTURE_LOCATOR, DIRECT_CAMERA_CLASS},
         {AUDIO_CAPTURE_LOCATOR, DIRECT_PLAYER_CLASS},
-        //{"device://midi", DIRECT_MIDI_CLASS},
     // #endif ]
     };
 
@@ -243,6 +251,7 @@ public class DefaultConfiguration extends Configuration {
 		if (protocolsOfContent == null) {
 			protocolsOfContent = new Hashtable();
 			contentsOfProtocol = new Hashtable();
+			mimetypeOfLocator = new Hashtable();
 			
 		// #ifdef USE_NATIVE_CONFIG
 			String[][] res = nGetMediaCaps();
@@ -252,6 +261,15 @@ public class DefaultConfiguration extends Configuration {
 						addProtocolContentPair(res[i][j], res[i][0]);
 				}
 			}
+			
+			mimetypeOfLocator.add(Manager.TONE_DEVICE_LOCATOR, 
+				DefaultConfiguration.MIME_AUDIO_TONE);
+			mimetypeOfLocator.add(Manager.MIDI_DEVICE_LOCATOR, 
+				DefaultConfiguration.MIME_AUDIO_TONE);
+			mimetypeOfLocator.add(Configuration.AUDIO_CAPTURE_LOCATOR, 
+				DefaultConfiguration.MIME_AUDIO_WAV);
+			mimetypeOfLocator.add(Configuration.VIDEO_CAPTURE_LOCATOR, 
+				DefaultConfiguration.MIME_IMAGE_PNG);
 		// #endif
 		
 			addProtocolContentPair(MIME_IMAGE_GIF, "file");
@@ -350,19 +368,11 @@ public class DefaultConfiguration extends Configuration {
      * Get content type helper function
      */
     public static String getContentType(String locator) {
-        if (locator != null) {
-            // device://tone
-            if (locator.equals(Manager.TONE_DEVICE_LOCATOR)) {
-                return DefaultConfiguration.MIME_AUDIO_TONE;
-            // capture://audio
-            } else if (locator.equals(Configuration.AUDIO_CAPTURE_LOCATOR)) {
-                return DefaultConfiguration.MIME_AUDIO_WAV;
-            // capture://video
-            } else if (locator.equals(Configuration.VIDEO_CAPTURE_LOCATOR)) {
-                return DefaultConfiguration.MIME_IMAGE_PNG;
-            }
-        }    
-
+        if ((locator != null) && (mimetypeOfLocator != null)) {
+			String val = (String) mimetypeOfLocator.get(locator);
+			return val;
+        }
+        
         return "";
     }
 

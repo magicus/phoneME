@@ -623,7 +623,7 @@ public final class Manager {
                 locStr = locStr.substring(0, encInd);
                 /* 
                  * TBD: check case when '?' is the last Locator symbol:
-                 *Will encStr be == "", or it will be == null ?
+                 * Will encStr be == "", or it will be == null ?
                  */
             } else {
                 /*
@@ -648,28 +648,29 @@ public final class Manager {
                 throw new MediaException("Failed to create Player: " + e.getMessage());
             }
         } else {
-            // not in the list of predefined locators, 
-            // find handler by extension
-        String theProtocol = null;
-            int idx = locStr.indexOf(':');
+            // not in the list of predefined locators,
+            // check the protocol by media type which found by extension
+			String theProtocol = null;
+			int idx = locStr.indexOf(':');
 
-        if (idx != -1) {
-                theProtocol = locStr.substring(0, idx);
-        } else {
-                throw new MediaException("Malformed locator");
-        }
+			if (idx != -1) {
+					theProtocol = locStr.substring(0, idx);
+			} else {
+					throw new MediaException("Malformed locator");
+			}
 
-            String[] supported = getSupportedProtocols(config.ext2Mime(locStr));
-        boolean found = false;
-        for (int i = 0; i < supported.length; i++) {
-            if (theProtocol.equals(supported[i])) {
-                found = true;
-                break;
-            }
-        }
+			String[] supported = getSupportedProtocols(config.ext2Mime(locStr));
+			
+			boolean found = false;
+			for (int i = 0; i < supported.length; i++) {
+				if (theProtocol.equals(supported[i])) {
+					found = true;
+					break;
+				}
+			}
 
-        if (!found) {
-                throw new MediaException("Player cannot be created for " + locator);
+			if (!found) {
+					throw new MediaException("Player cannot be created for " + locator);
         }
 
         DataSource ds = createDataSource(locator);
@@ -686,8 +687,8 @@ public final class Manager {
         }
 
         return pp;
-    }
-    }
+	}
+}
 
 
     /**
