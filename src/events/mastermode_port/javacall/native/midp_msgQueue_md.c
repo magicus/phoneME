@@ -84,7 +84,7 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
 	break;
     case MIDP_JC_EVENT_SOCKET:
         pNewSignal->waitingFor = event->data.socketEvent.waitingFor;
-            pNewSignal->descriptor = (int)event->data.socketEvent.handle;
+        pNewSignal->descriptor = (int)event->data.socketEvent.handle;
         pNewSignal->status     = event->data.socketEvent.status;
         pNewSignal->pResult    = (void *) event->data.socketEvent.extraData;
         break;
@@ -231,6 +231,12 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
     case MIDP_JC_EVENT_SWITCH_FOREGROUND:
         pNewSignal->waitingFor = AMS_SIGNAL;
         pNewMidpEvent->type    = SELECT_FOREGROUND_EVENT;
+        pNewMidpEvent->intParam1 = 1;
+        break;
+    case MIDP_JC_EVENT_SELECT_APP:
+        pNewSignal->waitingFor = AMS_SIGNAL;
+        pNewMidpEvent->type    = SELECT_FOREGROUND_EVENT;
+        pNewMidpEvent->intParam1 = 0;
         break;
 #endif /* ENABLE_MULTIPLE_ISOLATES */
     default:

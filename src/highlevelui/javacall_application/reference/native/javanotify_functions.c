@@ -85,7 +85,7 @@ midp_jc_event_send(midp_jc_event_union *event) {
 /**
  * The notification function to be called by platform for keypress
  * occurences.
- * The platfrom will invoke the call back in platform context for
+ * The platform will invoke the call back in platform context for
  * each key press, key release and key repeat occurence
  * @param key the key that was pressed
  * @param type <tt>JAVACALL_KEYPRESSED</tt> when key was pressed
@@ -108,7 +108,7 @@ void javanotify_key_event(javacall_key key, javacall_keypress_type type) {
 /**
 * The notification function to be called by platform for pen 
 * press/release/drag occurences.
-* The platfrom will invoke the call back in platform context for
+* The platform will invoke the call back in platform context for
 * each pen press, pen release and pen dragg occurence
 * @param x the x positoin when the pen was pressed/released/dragged
 * @param y the y positoin when the pen was pressed/released/dragged
@@ -130,7 +130,7 @@ void javanotify_pen_event(int x, int y, javacall_penevent_type type) {
 }
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * Java.
  */
 void javanotify_start(void) {
@@ -155,7 +155,7 @@ void javanotify_start(void) {
 }
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * the Java VM and run TCK.
  *
  * @param url the http location of the TCK server
@@ -202,7 +202,7 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
 }
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * the Java VM and run i3test framework.
  *
  * @param arg1 optional argument 1
@@ -232,7 +232,7 @@ void javanotify_start_i3test(char* arg1, char* arg2) {
 }
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * the Java VM and run installed Java Content Handler.
  *
  * @param handlerID launched Content Handler ID
@@ -357,7 +357,7 @@ void javanotify_install_midlet_from_filesystem(const javacall_utf16 * jadFilePat
 }
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * the Java VM with arbitrary arguments.
  *
  * @param argc number of command-line arguments
@@ -383,7 +383,7 @@ void javanotify_start_java_with_arbitrary_args(int argc, char* argv[])
 }
 
 /**
- * The platfrom should invoke this function in platform context to end Java.
+ * The platform should invoke this function in platform context to end Java.
  */
 void javanotify_shutdown(void) {
     midp_jc_event_union e;
@@ -396,7 +396,7 @@ void javanotify_shutdown(void) {
 }
 
 /**
- * The platfrom should invoke this function in platform context to pause
+ * The platform should invoke this function in platform context to pause
  * Java.
  */
 void javanotify_pause(void) {
@@ -410,7 +410,7 @@ void javanotify_pause(void) {
 }
 
 /**
- * The platfrom should invoke this function in platform context to end pause
+ * The platform should invoke this function in platform context to end pause
  * and resume Java.
  */
 void javanotify_resume(void) {
@@ -424,11 +424,10 @@ void javanotify_resume(void) {
 }
 
 /**
- * The platfrom should invoke this function in platform context 
- * to switch the current foreground midlet to background midlet.
- * Task Manger may be foreground after this call.
+ * The platform should invoke this function in platform context 
+ * to select another running application to be the foreground.
  */
-void javanotify_switchforeground(void) {
+void javanotify_select_foreground_app(void) {
 #if ENABLE_MULTIPLE_ISOLATES
     midp_jc_event_union e;
 
@@ -441,7 +440,23 @@ void javanotify_switchforeground(void) {
 }
 
 /**
- * The platfrom should invoke this function in platform context to pause
+ * The platform should invoke this function in platform context 
+ * to bring the Application Manager Screen to foreground.
+ */
+void javanotify_switch_to_ams(void) {
+#if ENABLE_MULTIPLE_ISOLATES
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_selectapp() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_SELECT_APP;
+
+    midp_jc_event_send(&e);
+#endif /* ENABLE_MULTIPLE_ISOLATES */
+}
+
+/**
+ * The platform should invoke this function in platform context to pause
  * Java bytecode execution (without invoking pauseApp)
  */
 void javanotify_internal_pause(void) {
@@ -455,7 +470,7 @@ void javanotify_internal_pause(void) {
 }
 
 /**
- * The platfrom should invoke this function in platform context to end
+ * The platform should invoke this function in platform context to end
  * an internal pause and resume Java bytecode processing
  */
 void javanotify_internal_resume(void) {
@@ -601,7 +616,7 @@ void javanotify_incoming_cbs(
 /**
  * A callback function to be called by platform to notify that an SMS 
  * has completed sending operation.
- * The platfrom will invoke the call back in platform context for
+ * The platform will invoke the call back in platform context for
  * each sms sending completion. 
  *
  * @param result indication of send completed status result: Either
@@ -920,7 +935,7 @@ void javanotify_on_image_decode_end(javacall_handle handle, javacall_result resu
 }
 
 /**
- * A callback function to be called by the platfrom in order to notify
+ * A callback function to be called by the platform in order to notify
  * about changes in the available file system roots (new root was added/
  * a root on removed).
  */
