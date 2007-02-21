@@ -25,11 +25,8 @@
  */
 
 #include <midp_jc_event_defs.h>
-/* #include <javacall_events.h> */
 #include <javacall_lifecycle.h>
 #include <runMidlet.h>
-
-/* unsigned char enable_java_debugger = 0; */
 
 javacall_result
 midpHandleStartArbitraryArgEvent(

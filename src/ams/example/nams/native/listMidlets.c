@@ -33,6 +33,7 @@
 #include <midpUtilKni.h>
 #include <suitestore_installer.h>
 #include <suitestore_task_manager.h>
+#include <commandLineUtil_md.h>
 
 /**
  * @file
@@ -40,8 +41,6 @@
  * Example of how the public MIDP API can be used to list installed
  * MIDlet Suite.
  */
-
-extern char* midpFixMidpHome(char *cmd);
 
 /* Dummy implementations of functions needed to run in NamsTestService mode. */
 #if !ENABLE_I3_TEST

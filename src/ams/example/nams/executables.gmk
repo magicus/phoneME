@@ -57,10 +57,12 @@ $(BINDIR)/fileInstaller$(g)$(p)$(EXE): $(MIDP_DEPS) $(OBJLIB) $(AMS_FILEINSTALLE
 	@echo " ... linking $@ " $(LOG)
 	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ $(AMS_FILEINSTALLER_OBJ_FILES) $(OBJLIB) $(LIBS) $(OBJLIB))` $(LOG)
 
-ifeq ($(TARGET_PLATFORM), win32)
+ifeq ($(TARGET_PLATFORM), javacall)
+ifeq ($(JAVACALL_PLATFORM), win32_i386_vc)
 $(BINDIR)/postTestMsg.exe: $(OBJ_DIR)/postTestMsg.o
 	@echo " ... linking $@ " $(LOG)
 	$(A)$(LD) $(LD_FLAGS) \
 		$(LINKER_OUTPUT)`$(call fixcygpath,$@ $(OBJ_DIR)/postTestMsg.o \
 		$(LIBS))` $(LOG)
+endif
 endif

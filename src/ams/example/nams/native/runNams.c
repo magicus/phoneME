@@ -42,6 +42,7 @@
 #include <midpNativeAppManager.h>
 #include <midpUtilKni.h>
 #include <suitestore_task_manager.h>
+#include <commandLineUtil_md.h>
 
 /**
  * @file
@@ -49,8 +50,6 @@
  * Example of how the public MIDP API can be used to run an installed
  * MIDlet Suite.
  */
-
-extern char* midpFixMidpHome(char *cmd);
 
 #if ENABLE_I3_TEST
 extern void initNams(void);
