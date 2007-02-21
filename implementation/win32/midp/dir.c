@@ -40,6 +40,7 @@ extern "C" {
 #include "javacall_dir.h"
 #include "javacall_file.h"
 #include "javacall_logging.h"
+#include "local_defs.h"
 
 static unsigned short FILESEP = '\\';
 static unsigned short PATHSEP = ';';
@@ -261,8 +262,12 @@ javacall_int64 javacall_dir_get_free_space_for_java(void) {
 javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
                                            int* /*IN | OUT*/ rootPathLen) {
     wchar_t dirBuffer[JAVACALL_MAX_ROOT_PATH_LENGTH + 1];
-    wchar_t currDir[JAVACALL_MAX_ROOT_PATH_LENGTH + 1];
     wchar_t* midpHome;
+    wchar_t* lastsep;
+    struct _stat statbuf;
+    int i;
+    wchar_t chSep = javacall_get_file_separator();
+    wchar_t filesep[2] = {chSep, (wchar_t)0};
 
     if (rootPath == NULL || rootPathLen == NULL) {
         return JAVACALL_FAIL;
@@ -287,83 +292,57 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
         return JAVACALL_OK;
     }
 
-	/*
-	 * Look for "appdb" until it is found in the following places:
-	 * - current directory;
-	 * - the parent directory of the midp executable;
-	 * - the grandparent directory of the midp executable.
-	 */
-    if ( _wgetcwd( currDir, sizeof(currDir)/sizeof(wchar_t) ) == NULL) {
-        * rootPathLen = 0;
-        javacall_print("javacall_dir_get_root_path: _wgetcwd failed");
-        return JAVACALL_FAIL;
+    /*
+     * Look for "appdb" until it is found in the following places:
+     * - the parent directory of the midp executable;
+     * - the grandparent directory of the midp executable.
+     */
+    dirBuffer[sizeof(dirBuffer)/sizeof(wchar_t) - 1] = (wchar_t)0;
+    mbstowcs(dirBuffer, _argv0, sizeof(dirBuffer)/sizeof(wchar_t) - 1);
+
+    /* Look for the last slash in the pathname. */
+    lastsep = wcsrchr(dirBuffer, *filesep);
+    if (lastsep != NULL) {
+        lastsep[1] = (wchar_t)'\0';
     } else {
-        wchar_t* lastsep;
-        struct _stat statbuf;
-        int i, j = 1;
-		wchar_t chSep = javacall_get_file_separator();
-		wchar_t filesep[2] = {chSep, (wchar_t)0};
+        /* no file separator */
+        wcscpy(dirBuffer, L".");
+        wcscat(dirBuffer, filesep);
+    }
 
-        dirBuffer[sizeof(dirBuffer)/sizeof(wchar_t) - 1] = (wchar_t)0;
-        wcsncpy(dirBuffer, currDir, sizeof(dirBuffer)/sizeof(wchar_t) - 1);
+    /* try to search for "appdb" 3 times only (see above) */
+    for (i = 0; i < 3; i++) {
+        wcscat(dirBuffer, L"appdb");
 
-        while (j < 2) {
-            /* Look for the last slash in the pathname. */
-            lastsep = wcsrchr(dirBuffer, *filesep);
-            if (lastsep != NULL) {
-                *(lastsep + 1) = (wchar_t)'\0';
-            } else {
-                /* no file separator */
-                wcscpy(dirBuffer, L".");
-                wcscat(dirBuffer, filesep);
-            }
+        memset(&statbuf, 0, sizeof(statbuf));
 
-            wcscat(dirBuffer, L"appdb");
-            i = 0;
-
-            /* try to search for "appdb" 3 times only (see above) */
-            while (i < 3) {
-                memset(&statbuf, 0, sizeof(statbuf));
-
-                /* found it and it is a directory */
-                if ((_wstat(dirBuffer, &statbuf) == 0) &&
-                    (statbuf.st_mode & S_IFDIR)) {
-                    break;
-                }
-
-                /* strip off "appdb" to add 1 more level of ".." */
-                *(wcsrchr(dirBuffer, *filesep)) = (wchar_t)'\0';
-                wcscat(dirBuffer, filesep);
-                wcscat(dirBuffer, L"..");
-                wcscat(dirBuffer, filesep);
-                wcscat(dirBuffer, L"appdb");
-
-                i++;
-            } /* end while (i < 3) */
-
-            if (i < 3) {
-                break;
-            }
-
-            j++;
-        } /* end while (j < 2) */
-
-        if (j == 2) {
-            javacall_print("Warning: cannot find appdb subdirectory.\n"
-                "Please specify MIDP_HOME environment variable such "
-                "that $MIDP_HOME\\lib contains the proper configuration "
-                "files.\n");
-            return JAVACALL_FAIL;
+        /* found it and it is a directory */
+        if ((_wstat(dirBuffer, &statbuf) == 0) &&
+            (statbuf.st_mode & S_IFDIR)) {
+            break;
         }
 
-        /* strip off "appdb" from the path */
-        *(wcsrchr(dirBuffer, *filesep)) = (wchar_t)'\0';
+        /* strip off "appdb" to add 1 more level of ".." */
+        (wcsrchr(dirBuffer, *filesep))[1] = (wchar_t)'\0';
+        wcscat(dirBuffer, L"..");
+        wcscat(dirBuffer, filesep);
+    } /* end while (i < 3) */
 
-        wcscpy(rootPath, dirBuffer);
-        * rootPathLen = wcslen(rootPath);
-
-        return JAVACALL_OK;
+    if (i == 3) {
+        javacall_print("Warning: cannot find appdb subdirectory.\n"
+                       "Please specify MIDP_HOME environment variable such "
+                       "that $MIDP_HOME\\lib contains the proper configuration "
+                       "files.\n");
+        return JAVACALL_FAIL;
     }
+
+    /* strip off "appdb" from the path */
+    *(wcsrchr(dirBuffer, *filesep)) = (wchar_t)'\0';
+
+    wcscpy(rootPath, dirBuffer);
+    * rootPathLen = wcslen(rootPath);
+
+    return JAVACALL_OK;
 }
 
 /**

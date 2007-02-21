@@ -275,6 +275,7 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
 //extern int destinationPort, localPort;
 //extern unsigned short defaultDestinationPort, defaultLocalPort;
 int _phonenum;
+char* _argv0;
 
 #define MAIN_ARGS_MAX  14
 char  maindlg_args[4096]; /* buffer to recieve all arguments */
@@ -288,6 +289,7 @@ int main(int argc, char *main_argv[]) {
     char** argv = main_argv;
 
     _phonenum = _getpid();
+    _argv0 = main_argv[0];
 
     if ((argc == 2) && (0 == strcmp(argv[1], "dlg"))) {
         /* show UI modal dialog box to request main arguments */

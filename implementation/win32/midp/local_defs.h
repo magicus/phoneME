@@ -37,4 +37,6 @@
 
 extern char print_buffer[];
 
+extern char *_argv0;
+
 #endif /* __LOCAL_DEFS_H */
