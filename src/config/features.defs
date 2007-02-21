@@ -103,8 +103,8 @@ ifeq ($(MMX_PLAYER),true)
 JPP_DEFS += -DMMX_PLAYER
 endif
 
-ifeq ($(WAVE_CAPTURE),true)
-JPP_DEFS += -DWAVE_CAPTURE -DCAPTURE
+ifeq ($(AUDIO_CAPTURE),true)
+JPP_DEFS += -DAUDIO_CAPTURE -DCAPTURE
 endif
 
 ifeq ($(MPA_PLAYER),true)
@@ -121,6 +121,7 @@ endif
 
 ifeq ($(VIDEO_CAPTURE),true)
 JPP_DEFS += -DVIDEO_CAPTURE -DCAPTURE
+DIRECT_CAMERA_PLAYER=true
 endif
 
 ifeq ($(RTP_MPA),true)

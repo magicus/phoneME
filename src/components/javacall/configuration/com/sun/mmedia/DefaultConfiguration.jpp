@@ -153,7 +153,7 @@ public class DefaultConfiguration extends Configuration {
     // #ifdef MIDI_CONTROL [
         {Manager.MIDI_DEVICE_LOCATOR, "com.sun.mmedia.DirectMIDI"},
     // #endif ]
-        {MIME_AUDIO_TONE, "com.sun.mmedia.DirectTone"},
+        {MIME_AUDIO_TONE, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_AMR, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_WAV, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_WAV_2, "com.sun.mmedia.DirectPlayer"},
@@ -174,9 +174,12 @@ public class DefaultConfiguration extends Configuration {
 // #ifdef ENABLE_INDIRECT_VIDEO [        
         {MIME_IMAGE_GIF, "com.sun.mmedia.GIFPlayer"},
 // #endif ]        
+// #ifdef VIDEO_CAPTURE [
         {VIDEO_CAPTURE_LOCATOR, "com.sun.mmedia.DirectCamera"},
+// #endif ]
+// #ifdef AUDIO_CAPTURE [
         {AUDIO_CAPTURE_LOCATOR, "com.sun.mmedia.DirectPlayer"},
-        //{"device://midi", "com.sun.mmedia.DirectMIDI"},
+// #endif ]
     // #endif ]
     };
 
@@ -251,22 +254,23 @@ public class DefaultConfiguration extends Configuration {
                 MIME_AUDIO_TONE,
             // Optional formats
                 MIME_AUDIO_AMR,
+                MIME_AUDIO_AMR_WB,
                 MIME_AUDIO_MIDI,
                 MIME_AUDIO_MIDI_2,
                 MIME_AUDIO_WAV,
                 MIME_AUDIO_WAV_2,
                 MIME_AUDIO_MP3,
                 MIME_AUDIO_MP3_2,
-                MIME_AUDIO_MP4,
-                MIME_AUDIO_MP4_2,
-                MIME_AUDIO_QCELP,
-                MIME_AUDIO_QCELP_2,
-                MIME_AUDIO_AAC,
-                MIME_IMAGE_JPEG,
-                MIME_VIDEO_3GPP,
-                MIME_VIDEO_3GPP_2,
-                MIME_VIDEO_MPEG,
-                MIME_VIDEO_MPEG4,
+//                MIME_AUDIO_QCELP,
+//                MIME_AUDIO_QCELP_2,
+//                MIME_AUDIO_MP4,
+//                MIME_AUDIO_MP4_2,
+//                MIME_AUDIO_AAC,
+//                MIME_IMAGE_JPEG,
+//                MIME_VIDEO_3GPP,
+//                MIME_VIDEO_3GPP_2,
+//                MIME_VIDEO_MPEG,
+//                MIME_VIDEO_MPEG4,
                 MIME_IMAGE_GIF
             };
         }
@@ -276,28 +280,30 @@ public class DefaultConfiguration extends Configuration {
             // Mandatory support
                 MIME_AUDIO_TONE,
             // Optional formats
-                };
+                MIME_AUDIO_MIDI
+            };
         }
 
         if (protocol.equals("http")) {
             return new String[]{
                 MIME_AUDIO_TONE,
                 MIME_AUDIO_AMR,
+                MIME_AUDIO_AMR_WB,
                 MIME_AUDIO_MIDI,
                 MIME_AUDIO_MIDI_2,
                 MIME_AUDIO_WAV,
                 MIME_AUDIO_WAV_2,
                 MIME_AUDIO_MP3,
                 MIME_AUDIO_MP3_2,
-                MIME_AUDIO_MP4,
-                MIME_AUDIO_MP4_2,
-                MIME_AUDIO_QCELP,
-                MIME_AUDIO_QCELP_2,
-                MIME_AUDIO_AAC,
-                MIME_VIDEO_3GPP,
-                MIME_VIDEO_3GPP_2,
-                MIME_VIDEO_MPEG,
-                MIME_VIDEO_MPEG4,
+//                MIME_AUDIO_QCELP,
+//                MIME_AUDIO_QCELP_2,
+//                MIME_AUDIO_MP4,
+//                MIME_AUDIO_MP4_2,
+//                MIME_AUDIO_AAC,
+//                MIME_VIDEO_3GPP,
+//                MIME_VIDEO_3GPP_2,
+//                MIME_VIDEO_MPEG,
+//                MIME_VIDEO_MPEG4,
                 MIME_IMAGE_GIF
             };
         }
@@ -307,21 +313,22 @@ public class DefaultConfiguration extends Configuration {
             return new String[]{
                 MIME_AUDIO_TONE,
                 MIME_AUDIO_AMR,
+                MIME_AUDIO_AMR_WB,                
                 MIME_AUDIO_MIDI,
                 MIME_AUDIO_MIDI_2,
                 MIME_AUDIO_WAV,
                 MIME_AUDIO_WAV_2,
                 MIME_AUDIO_MP3,
                 MIME_AUDIO_MP3_2,
-                MIME_AUDIO_MP4,
-                MIME_AUDIO_MP4_2,
-                MIME_AUDIO_QCELP,
-                MIME_AUDIO_QCELP_2,
-                MIME_AUDIO_AAC,
-                MIME_VIDEO_3GPP,
-                MIME_VIDEO_3GPP_2,
-                MIME_VIDEO_MPEG,
-                MIME_VIDEO_MPEG4,
+//                MIME_AUDIO_QCELP,
+//                MIME_AUDIO_QCELP_2,
+//                MIME_AUDIO_MP4,
+//                MIME_AUDIO_MP4_2,
+//                MIME_AUDIO_AAC,
+//                MIME_VIDEO_3GPP,
+//                MIME_VIDEO_3GPP_2,
+//                MIME_VIDEO_MPEG,
+//                MIME_VIDEO_MPEG4,
                 MIME_IMAGE_GIF
                 };
         }
@@ -330,22 +337,27 @@ public class DefaultConfiguration extends Configuration {
         if (protocol.equals("rtsp")) {
             return new String[]{
                 MIME_AUDIO_AMR,
+                MIME_AUDIO_AMR_WB,                
                 MIME_AUDIO_MP3,
                 MIME_AUDIO_MP3_2,
-                MIME_AUDIO_MP4,
-                MIME_AUDIO_MP4_2,
-                MIME_AUDIO_AAC,
-                MIME_VIDEO_3GPP,
-                MIME_VIDEO_3GPP_2,
-                MIME_VIDEO_MPEG,
-                MIME_VIDEO_MPEG4
+//                MIME_AUDIO_MP4,
+//                MIME_AUDIO_MP4_2,
+//                MIME_AUDIO_AAC,
+//                MIME_VIDEO_3GPP,
+//                MIME_VIDEO_3GPP_2,
+//                MIME_VIDEO_MPEG,
+//                MIME_VIDEO_MPEG4
                 };
         }        
 
         if (protocol.equals("capture")) {
             return new String[]{
+    // #ifdef AUDIO_CAPTURE [
                 MIME_AUDIO_WAV,
-                MIME_IMAGE_JPEG
+	// #endif ]
+    // #ifdef VIDEO_CAPTURE [
+                MIME_IMAGE_PNG
+	// #endif ]
             };
         }
 
@@ -368,7 +380,7 @@ public class DefaultConfiguration extends Configuration {
                 return DefaultConfiguration.MIME_AUDIO_WAV;
             // capture://video
             } else if (locator.equals(Configuration.VIDEO_CAPTURE_LOCATOR)) {
-                return DefaultConfiguration.MIME_IMAGE_JPEG;
+                return DefaultConfiguration.MIME_IMAGE_PNG;
             }
         }    
 
@@ -390,7 +402,7 @@ public class DefaultConfiguration extends Configuration {
         if (content_type == null) {
             return new String[]{
                 "device",
-            // #ifdef DIRECT_CAMERA_PLAYER [   
+            // #ifdef CAPTURE [   
                 "capture",
             // #endif ]
                 "http",
@@ -410,7 +422,8 @@ public class DefaultConfiguration extends Configuration {
                 };
         }
 
-        if (content_type.equals(MIME_AUDIO_AMR)) {
+        if (content_type.equals(MIME_AUDIO_AMR) ||
+            content_type.equals(MIME_AUDIO_AMR_WB)) {
             return new String[]{
                 "http",
             // #ifdef USE_FILE_CONNECTION [
@@ -442,7 +455,9 @@ public class DefaultConfiguration extends Configuration {
         if (content_type.equals(MIME_AUDIO_WAV) || 
             content_type.equals(MIME_AUDIO_WAV_2)) {
             return new String[]{
+    		// #ifdef AUDIO_CAPTURE [
                 "capture",
+			// #endif
                 "http",
             // #ifdef USE_FILE_CONNECTION [
                 "file",
@@ -459,7 +474,7 @@ public class DefaultConfiguration extends Configuration {
             // #endif ]
             };
         }
-
+/*
         if (content_type.equals(MIME_AUDIO_MP4)) {
             return new String[]{
                 "http",
@@ -507,13 +522,17 @@ public class DefaultConfiguration extends Configuration {
                 "rtsp",
             };
         }
+*/
 
-        if (content_type.equals(MIME_IMAGE_JPEG)) {
+    // #ifdef VIDEO_CAPTURE [
+        if (content_type.equals(MIME_IMAGE_PNG)) {
             return new String[]{
                 "capture",
             };        
         }
+	// #endif
 
+/*
         if (content_type.equals(MIME_VIDEO_3GPP)) {
             return new String[]{
                 "http",
@@ -553,7 +572,7 @@ public class DefaultConfiguration extends Configuration {
                 "rtsp",
             };
         }
-
+*/
         if (content_type.equals(MIME_IMAGE_GIF)) {
             return new String[]{
                 "http",
