@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "configuration.dtd">
+<!--
+  
+  Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+  
+-->
+<!-- pisces properties -->
+<configuration>
+  <properties>
+    <!-- SYSTEM PROPERTIES -->
+    <!-- Visible from System.getProperty() -->
+
+    <!-- INTERNAL PROPERTIES -->
+    <!-- Visible from Configuration.getProperty() -->
+    
+    <property Key="pisces.stroke.xbias"
+      Value="32768"
+      Scope="internal"
+      Comment="Pisces pixel offset by 0.5 pixels"/>
+
+    <property Key="pisces.stroke.ybias"
+      Value="32768"
+      Scope="internal"
+      Comment="Pisces pixel offset by 0.5 pixels"/>
+
+  </properties>
+</configuration>
