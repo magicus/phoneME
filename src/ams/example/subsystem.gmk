@@ -49,5 +49,7 @@ endif
 # Defines for (jams/nams) module
 include $(SUBSYSTEM_EXAMPLE_DIR)/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
 
+ifeq ($(TARGET_VM), cldc_vm)
 include $(SUBSYSTEM_EXAMPLE_DIR)/ams_common/lib.gmk
 include $(SUBSYSTEM_EXAMPLE_DIR)/ams_common_port/lib.gmk
+endif
