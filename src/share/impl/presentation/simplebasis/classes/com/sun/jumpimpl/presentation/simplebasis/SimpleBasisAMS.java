@@ -27,12 +27,15 @@ package com.sun.jumpimpl.presentation.simplebasis;
 import com.sun.jump.module.presentation.JUMPPresentationModule;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPContent;
+import com.sun.jump.common.JUMPWindow;
 import com.sun.jump.executive.JUMPApplicationProxy;
 import com.sun.jump.executive.JUMPIsolateProxy;
 import com.sun.jump.module.installer.JUMPInstallerModule;
 import com.sun.jump.module.installer.JUMPInstallerModuleFactory;
 import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModule;
 import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
+import com.sun.jump.module.windowing.JUMPWindowingModule;
+import com.sun.jump.module.windowing.JUMPWindowingModuleFactory;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
@@ -331,6 +334,22 @@ public class SimpleBasisAMS implements JUMPPresentationModule {
             return;
         }
         appProxy.resumeApp();
+
+        System.out.println("switchToAppd: " + app);
+
+        JUMPWindowingModuleFactory wmf =
+            JUMPWindowingModuleFactory.getInstance();
+        JUMPWindowingModule wm = wmf.getModule();
+        JUMPWindow windows[] = wm.getWindows();
+        System.out.println("WINDOWS: " + windows.length);
+        for(int i = 0; i != windows.length; ++i) {
+            System.out.println("windows[i].getApplication()=" + windows[i].getApplication());
+            if(windows[i].getApplication().equals(app)) {
+                System.out.println("Setting foreground: " + windows[i]);
+                wm.setForeground(windows[i]);
+                break;
+            }
+        }
     }
     
     private JUMPApplication[] getRunningApps() {
