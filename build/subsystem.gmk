@@ -298,11 +298,6 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	KNIDirectVideo.c
 endif
 
-ifeq ($(DIRECT_RECORD), true)
-SUBSYSTEM_JSR_135_NATIVE_FILES += \
-	KNIDirectRecord.c
-endif
-
 ifeq ($(DIRECT_MIDI_CONTROL), true)
 SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	KNIDirectMIDIControl.c
@@ -332,6 +327,8 @@ JSROP_CNI_CLASSES    += $(SUBSYSTEM_JSR_135_CNI_CLASSES)
 JSROP_NATIVE_LIBS    += $(JSR_135_NATIVE_LIB)
 JSROP_EXTRA_INCLUDES += $(SUBSYSTEM_JSR_135_EXTRA_INCLUDES)
 
+CVM_INCLUDE_JAVACALL  = true
+
 ifeq ($(USE_JSR_75), true)
 JSR_135_DEPS = $(PS)$(JSR_75_JAR)
 endif
@@ -339,9 +336,9 @@ endif
 $(JSR_135_JAR): $(JPP_CLASS_FILES) $(SUBSYSTEM_JSR_135_JAVA_FILES) $(MIDP_CLASSESZIP)
 	$(call compileJSRClasses,135,$(JSR_135_DEPS))
 
-$(JSR_135_NATIVE_LIB): $(JAVACALL_LIBRARY) $(JSR_135_NATIVE_OBJS) $(JSROP_LINKLIBS)
+$(JSR_135_NATIVE_LIB): javacall_lib $(JSR_135_NATIVE_OBJS) $(ABSTRACTIONS_NATIVE_LIBRARY)
 	@echo "Linking $@"
-	$(SO_LINK_CMD)
+	$(AT)$(call makeSharedLibrary, $(JSR_135_NATIVE_OBJS))
 
 # Append JSR 135 source bundle creation to target
 source_bundle:: jsr_135_source_bundle
