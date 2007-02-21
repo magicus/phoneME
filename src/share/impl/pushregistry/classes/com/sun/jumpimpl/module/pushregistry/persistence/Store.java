@@ -23,6 +23,7 @@
  */
 package com.sun.jumpimpl.module.pushregistry.persistence;
 
+import com.sun.jump.module.contentstore.JUMPNode;
 import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import com.sun.jump.module.pushregistry.JUMPConnectionInfo;
 import java.io.IOException;
@@ -34,6 +35,12 @@ import java.util.Vector;
 
 /**
  * Persistent store class for <code>PushRegistry</code> module.
+ *
+ * <p>
+ * IMPORTANT_NOTE:  The clients of this class should ensure that content store
+ *  manager passed into the constructor doesn't have exclusive lock when
+ *  methods are invoked.  Otherwise we'll face deadlocks.
+ * <p>
  *
  * <p><strong>NB</strong>: method <code>getConnections</code> guarantees
  * that <code>MIDlet suite</code> without connections won't be listed,
@@ -51,7 +58,7 @@ import java.util.Vector;
  */
 public final class Store {
     /** PushRegistry root dir. */
-    private static final String ROOT_DIR = "./PushRegistry/";
+    private static final String ROOT_DIR = "./push/";
 
     /** Dir to store connections. */
     static final String CONNECTIONS_DIR = ROOT_DIR + "connections";
@@ -66,26 +73,75 @@ public final class Store {
     private final AppSuiteDataStore alarmsStore;
 
     /**
-     * Constructor.
+     * Constructs a Store and reads the data.
      *
-     * @param storeHandle JUMP store to use
+     * @param storeManager JUMP content store manager to use
+     *
+     * @throws IOException if IO fails
      */
-    public Store(final JUMPStoreHandle storeHandle) {
+    public Store(final StoreOperationManager storeManager) throws IOException {
+        if (storeManager == null) {
+            throw new IllegalArgumentException("storeManager is null");
+        }
+
+        ensureStoreStructure(storeManager);
+
         connectionsStore = new AppSuiteDataStore(
-                storeHandle, CONNECTIONS_DIR, CONNECTIONS_CONVERTER);
+                storeManager, CONNECTIONS_DIR, CONNECTIONS_CONVERTER);
 
         alarmsStore = new AppSuiteDataStore(
-                storeHandle, ALARMS_DIR, ALARMS_CONVERTER);
+                storeManager, ALARMS_DIR, ALARMS_CONVERTER);
     }
 
     /**
-     * Reads all the data.
+     * Ensures presence of store layout requested for the
+     *  store to function correctly.
      *
-     * @throws IOException if the content store failed
+     * @param storeManager JUMP content store manager to use
+     *
+     * @throws IOException in case of IO errors
      */
-    public void readData() throws IOException {
-        connectionsStore.readData();
-        alarmsStore.readData();
+    private static void ensureStoreStructure(
+            final StoreOperationManager storeManager)
+            throws IOException {
+        storeManager.doOperation(true, new StoreOperationManager.Operation() {
+            public Object perform(final JUMPStoreHandle storeHandle)
+                    throws IOException {
+                ensureDir(storeHandle, CONNECTIONS_DIR);
+                ensureDir(storeHandle, ALARMS_DIR);
+                return null;
+            }
+        });
+    }
+
+    /**
+     * Ensures presence of the given dir.
+     *
+     * @param storeHandle handle to content store to use
+     * @param dir name of directory to check
+     *
+     * @throws IOException in case of IO troubles
+     */
+    private static void ensureDir(
+            final JUMPStoreHandle storeHandle,
+            final String dir) throws IOException {
+        final JUMPNode node = storeHandle.getNode(dir);
+        if (node == null) {
+            logWarning("Directory " + dir + " is missing: recreating");
+            storeHandle.createNode(dir);
+            return;
+        }
+        if (!(node instanceof JUMPNode.List)) {
+            logWarning("Node " + dir + " is a data node: trying to erase and recreate");
+            storeHandle.deleteNode(dir);
+            storeHandle.createNode(dir);
+            return;
+        }
+    }
+
+    private static void logWarning(final String msg) {
+        // TBD: use common logging
+        System.out.println("[warning] " + Store.class + ": " + msg);
     }
 
     /** Connections consumer. */
@@ -221,7 +277,8 @@ public final class Store {
          * Lists app suite alarms.
          *
          * @param suiteId app suite ID
-         * @param alarms app suite alatms
+         * @param alarms alarms mappings from <code>MIDlet</code> class name
+         *  to the scheduled time
          */
         void consume(int suiteId, Map alarms);
     }

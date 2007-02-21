@@ -54,7 +54,7 @@ information or have any questions.
     correctly build unittests and components
   -->
   <target name="only-run-unittests">
-    <junit showoutput="true">
+    <junit showoutput="true" fork="true" jvm="${cdc.dir}/bin/cvm">
       <classpath path="${d.classes.dir}"/>
       <formatter  usefile="false" type="brief"/>
       <batchtest>

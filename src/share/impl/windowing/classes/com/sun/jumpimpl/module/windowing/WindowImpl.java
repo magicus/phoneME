@@ -26,19 +26,26 @@
 
 package com.sun.jumpimpl.module.windowing;
 
-import com.sun.jump.module.lifecycle.JUMPLifeCycleModuleFactory;
+import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPIsolate;
 import com.sun.jump.common.JUMPWindow;
+import com.sun.jump.command.JUMPResponseApplication;
+import com.sun.jump.command.JUMPExecutiveWindowRequest;
+import com.sun.jump.executive.JUMPExecutive;
+import com.sun.jump.executive.JUMPIsolateProxy;
+
+import com.sun.jumpimpl.process.RequestSenderHelper;
 
 import java.util.TreeMap;
 import java.util.Comparator;
 
 
 public class WindowImpl extends JUMPWindow {
-    private String      state;
-    private int         id;
-    private int         isolateId;
+    private String          state;
+    private JUMPApplication app;
+    private int             id;
+    private int             isolateId;
 
     private static long
     getKey(Object o) {
@@ -111,12 +118,25 @@ public class WindowImpl extends JUMPWindow {
 
     public JUMPIsolate
     getIsolate() {
-        return JUMPLifeCycleModuleFactory.getInstance(
+        return JUMPIsolateManagerModuleFactory.getInstance(
             ).getModule().getIsolate(isolateId);
     }
 
     public JUMPApplication
     getApplication() {
-        throw new UnsupportedOperationException();
+        if(app == null) {
+            RequestSenderHelper requestSender = 
+                new RequestSenderHelper(JUMPExecutive.getInstance());
+
+            JUMPResponseApplication response =
+                (JUMPResponseApplication)requestSender.sendRequest(
+                    (JUMPIsolateProxy)getIsolate(),
+                    new JUMPExecutiveWindowRequest(
+                        JUMPExecutiveWindowRequest.ID_GET_APPLICATION, this),
+                    JUMPResponseApplication.class);
+
+            app = response.getApp();
+        }
+        return app;
     }
 }

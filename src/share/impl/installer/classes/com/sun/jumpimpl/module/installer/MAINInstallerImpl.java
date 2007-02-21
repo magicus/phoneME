@@ -37,6 +37,7 @@ import java.util.Vector;
  * current expected behavior of main application installation.
  */
 public class MAINInstallerImpl extends XLETInstallerImpl implements JUMPInstallerModule {
+    protected final static String DESCRIPTOR_INITIALCLASS_KEY = "mainClass";
     
     /**
      *
@@ -49,8 +50,8 @@ public class MAINInstallerImpl extends XLETInstallerImpl implements JUMPInstalle
      * @return application object
      */
     protected JUMPApplication createJUMPApplicationObject(String bundle,
-            String clazz, URL classPathURL, String title, URL iconPathURL) {
-        return new MAINApplication(repositoryDir, bundle, clazz, classPathURL, title, iconPathURL);
+            String clazz, URL classPathURL, String title, URL iconPathURL, int id) {
+        return new MAINApplication(repositoryDir, bundle, clazz, classPathURL, title, iconPathURL, id);
     }
     
     /**

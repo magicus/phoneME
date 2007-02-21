@@ -25,6 +25,7 @@
 import com.sun.jump.common.JUMPAppModel;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPContent;
+import com.sun.jump.executive.JUMPExecutive;
 import com.sun.jump.module.download.JUMPDownloadDescriptor;
 import com.sun.jump.module.download.JUMPDownloadDestination;
 import com.sun.jump.module.download.JUMPDownloadException;
@@ -66,11 +67,13 @@ public class InstallerTests {
             return false;
         }
         
-        // This one line should be called by the executive, but doing it here for time being.
-        new com.sun.jumpimpl.module.installer.InstallerFactoryImpl();
-        
-        // This one line should be called by the executive, but doing it here for time being.
-        new com.sun.jumpimpl.module.contentstore.StoreFactoryImpl();
+        if (JUMPExecutive.getInstance() == null) {
+            // This one line should be called by the executive, but doing it here for time being.
+            new com.sun.jumpimpl.module.installer.InstallerFactoryImpl();
+            
+            // This one line should be called by the executive, but doing it here for time being.
+            new com.sun.jumpimpl.module.contentstore.StoreFactoryImpl();
+        }
         
         // test setup, make a repository root
         File file = new File(repository);
@@ -103,16 +106,9 @@ public class InstallerTests {
         } else if (type == JUMPAppModel.MIDLET) {
             module = JUMPInstallerModuleFactory.getInstance().getModule(JUMPAppModel.MIDLET);
         }
-        
         if (module == null)  {
             return null;
         }
-        
-        // These three lines below should have happened in the executive setup,
-        // but for the testing purpose, emulating load() call here.
-        HashMap map = new HashMap();
-        map.put("installer.repository", repository);
-        module.load(map);
         return module;
     }
     
@@ -151,7 +147,7 @@ public class InstallerTests {
             return true;
         }
         return false;
-    }
+    } 
     
     /**
      * Class representing a tool that contacts and downloads from a JSR 124 server

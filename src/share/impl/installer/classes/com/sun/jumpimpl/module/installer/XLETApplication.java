@@ -1,6 +1,4 @@
 /*
- * %W% %E%
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -35,12 +33,7 @@ import java.net.URL;
  * Representation of an XLET application.
  */
 public class XLETApplication extends JUMPApplication {
-    
-    /**
-     * The file separator character for the system.
-     */
-    private final static String fileSeparator = System.getProperty("file.separator");
-    
+       
     /**
      * The name of the directory to hold XLET and Main icons
      */
@@ -61,9 +54,9 @@ public class XLETApplication extends JUMPApplication {
      * @param iconPath The location of the application's icon in, can be null
      */
     public XLETApplication(String repositoryDir, String bundle, String clazz, URL classpath, String title,
-            URL iconPath ) {
+            URL iconPath, int id) {
         
-        super(title, iconPath, JUMPAppModel.XLET);
+        super(title, iconPath, JUMPAppModel.XLET, id);
         this.repositoryDir = repositoryDir;
         addProperty(INITIAL_CLASS_KEY, clazz);
         if (classpath != null) {
@@ -126,7 +119,7 @@ public class XLETApplication extends JUMPApplication {
      *         the downloaded content.
      */
     public URL getIconPath() {
-        String file = repositoryDir + REPOSITORY_ICONS_DIRNAME + fileSeparator + getProperty(ICONPATH_KEY);
+        String file = repositoryDir + REPOSITORY_ICONS_DIRNAME + '/' + getProperty(ICONPATH_KEY);
         URL url = null;
         try {
             url = new URL("file", null, file);

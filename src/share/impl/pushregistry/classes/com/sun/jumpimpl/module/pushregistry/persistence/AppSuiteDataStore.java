@@ -26,7 +26,6 @@ package com.sun.jumpimpl.module.pushregistry.persistence;
 
 import com.sun.jump.module.contentstore.JUMPData;
 import com.sun.jump.module.contentstore.JUMPNode;
-import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -36,6 +35,12 @@ import java.util.Map;
  * Manages storing information associated with an application suite.
  *
  * <p>The class is <em>not</em> thread-safe.</p>
+ *
+ * <p>
+ * IMPORTANT_NOTE:  The clients of this class should ensure that content store
+ *  manager passed into the constructor doesn't have exclusive lock when
+ *  methods are invoked.  Otherwise we'll face deadlocks.
+ * <p>
  */
 final class AppSuiteDataStore {
     /*
@@ -68,8 +73,8 @@ final class AppSuiteDataStore {
         Object stringToData(String s);
     }
 
-    /** Reference to the JUMP store to use. */
-    private final JUMPStoreHandle store;
+    /** JUMP content store manager to use. */
+    private final StoreOperationManager storeManager;
 
     /** Dir to store data in. */
     private final String dir;
@@ -81,20 +86,22 @@ final class AppSuiteDataStore {
     private Map data;
 
     /**
-     * Creats an app data store.
+     * Creats an app data store and reads the data.
      *
-     * @param store JUMP store to use
+     * @param storeManager JUMP content store manager to use
      * @param dir dir to store data in
      * @param dataConverter data converter to use
+     *
+     * @throws IOException if IO fails
      */
     AppSuiteDataStore(
-            final JUMPStoreHandle store,
+            final StoreOperationManager storeManager,
             final String dir,
-            final DataConverter dataConverter) {
-        if (store == null) {
-            throw new IllegalArgumentException("store is null");
+            final DataConverter dataConverter) throws IOException {
+        if (storeManager == null) {
+            throw new IllegalArgumentException("storeManager is null");
         }
-        this.store = store;
+        this.storeManager = storeManager;
 
         if (dataConverter == null) {
             throw new IllegalArgumentException("dataConverter is null");
@@ -107,6 +114,8 @@ final class AppSuiteDataStore {
         this.dir = dir;
 
         this.data = null;
+
+        readData();
     }
 
     /**
@@ -114,13 +123,14 @@ final class AppSuiteDataStore {
      *
      * @throws IOException if the content store failed
      */
-    void readData() throws IOException {
+    private void readData() throws IOException {
         data = new HashMap();
 
-        final JUMPNode.List dataDir = (JUMPNode.List) store.getNode(dir);
-
-        // TBD: if it's impossible to ensure at deployment time existance of
-        //  the dir, I should create one lazily
+        final JUMPNode.List dataDir = (JUMPNode.List) storeManager.getNode(dir);
+        /*
+         * IMPL_NOTE: the presence of the corresponding dir must be ensured
+         * before
+         */
         // assert dataDir != null : "application suite data dir is missing";
         for (Iterator it = dataDir.getChildren(); it.hasNext();) {
             final JUMPNode.Data elem = (JUMPNode.Data) it.next();
@@ -187,18 +197,11 @@ final class AppSuiteDataStore {
         }
 
         final String nodeUri = makeURI(suiteId);
-        final JUMPNode.Data node = (JUMPNode.Data) store.getNode(nodeUri);
-        final boolean doesNodeExist = (node != null);
         final Integer key = new Integer(suiteId);
-
         final JUMPData jumpData = new JUMPData(
                 dataConverter.dataToString(suiteData));
 
-        if (doesNodeExist) {
-            store.updateDataNode(nodeUri, jumpData);
-        } else {
-            store.createDataNode(nodeUri, jumpData);
-        }
+        storeManager.safelyUpdateDataNode(nodeUri, jumpData);
         data.put(key, suiteData);
     }
 
@@ -211,10 +214,7 @@ final class AppSuiteDataStore {
      */
     void removeSuiteData(final int suiteId) throws IOException {
         final String nodeUri = makeURI(suiteId);
-        final JUMPNode.Data node = (JUMPNode.Data) store.getNode(nodeUri);
-        if (node != null) {
-            store.deleteNode(nodeUri);
-        }
+        storeManager.safelyDeleteDataNode(nodeUri);
         data.remove(new Integer(suiteId));
     }
 

@@ -41,6 +41,11 @@ public class JUMPOSInterfaceImpl extends JUMPOSInterface {
     public native int createProcess(String[] args);
 
     /**
+     * Create a native process and return a unique integer ID designating it.
+     */
+    public native int createProcessNative(String[] args);
+
+    /**
      * Return the current process ID.
      */
     public native int getProcessID();

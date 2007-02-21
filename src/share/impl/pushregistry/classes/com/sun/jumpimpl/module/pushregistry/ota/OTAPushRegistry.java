@@ -26,54 +26,26 @@ package com.sun.jumpimpl.module.pushregistry.ota;
 
 import com.sun.jump.module.pushregistry.JUMPConnectionInfo;
 import com.sun.jump.module.pushregistry.ota.JUMPPushRegistry;
-import com.sun.jumpimpl.module.pushregistry.PushServer;
 import com.sun.jumpimpl.module.pushregistry.persistence.Store;
-import java.io.IOException;
 
 final class OTAPushRegistry implements JUMPPushRegistry {
-    private final PushServer pushServer;
     private final Store store;
 
-    OTAPushRegistry(final PushServer pushServer, final Store store) {
-        this.pushServer = pushServer;
+    OTAPushRegistry(final Store store) {
         this.store = store;
     }
 
     public boolean installConnections(
             final int midletSuiteId,
             final JUMPConnectionInfo[] connections) {
-        if (!pushServer.installConnections(midletSuiteId, connections)) {
-            return false;
-        }
-
-        try {
-            store.addConnections(midletSuiteId, connections);
-        } catch (IOException _) {
-            /*
-             * Best effort to cleanup the store, therefore no
-             * checks for return value
-             */
-            uninstallConnections(midletSuiteId);
-            return false;
-        }
-
-        return true;
+        return false;
     }
 
     public boolean uninstallConnections(final int midletSuiteId) {
-        /*
-         * Maybe should throw IOException
-         */
-        pushServer.uninstallConnections(midletSuiteId);
-        try {
-            store.removeConnections(midletSuiteId);
-        } catch (IOException _) {
-            return false;
-        }
-        return true;
+        return false;
     }
 
     public boolean enableConnections(final int midletSuiteId) {
-        return pushServer.enableConnections(midletSuiteId);
+        return false;
     }
 }

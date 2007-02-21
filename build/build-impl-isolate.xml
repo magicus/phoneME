@@ -27,7 +27,7 @@ information or have any questions.
   <target name="compile-isolate">
       <jump.javac
              srcdir="${s.share.impl.dir}/isolate/classes">
-           <include name="com/sun/jumpimpl/isolate/jvmprocess/*.java" />
+           <include name="com/sun/jumpimpl/isolate/jvmprocess/**/*.java" />
       </jump.javac>
   </target>
 

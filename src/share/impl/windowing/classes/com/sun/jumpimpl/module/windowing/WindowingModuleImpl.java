@@ -119,8 +119,7 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
             JUMPExecutive e = JUMPExecutive.getInstance();
             JUMPMessageDispatcher md = e.getMessageDispatcher();
             md.registerHandler(JUMPIsolateWindowRequest.MESSAGE_TYPE, this);
-            md.registerHandler(
-                JUMPIsolateLifecycleRequest.ID_ISOLATE_DESTROYED, this);
+            md.registerHandler(JUMPIsolateLifecycleRequest.MESSAGE_TYPE, this);
         } catch (JUMPMessageDispatcherTypeException dte) {
             dte.printStackTrace();
             // FIXME: someone else listeneing -- what to do?
@@ -163,25 +162,29 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
                 (JUMPIsolateLifecycleRequest)
                     JUMPIsolateLifecycleRequest.fromMessage(message);
 
-            int isolateId = cmd.getIsolateId();
+            if(JUMPIsolateLifecycleRequest.ID_ISOLATE_DESTROYED.equals(
+                cmd.getCommandId())) {
 
-            synchronized(lock) {
-                // remove JUMPWindow-s hosted by the destroyed isolate
-                // from the list
-                int idx = 0;
-                while(idx != windows.size()) {
-                    if(((JUMPWindow)windows.elementAt(
-                        idx)).getIsolate().getIsolateId() == isolateId) {
+                int isolateId = cmd.getIsolateId();
 
-                        windows.remove(idx);
-                        continue;
+                synchronized(lock) {
+                    // remove JUMPWindow-s hosted by the destroyed isolate
+                    // from the list
+                    int idx = 0;
+                    while(idx != windows.size()) {
+                        if(((JUMPWindow)windows.elementAt(
+                            idx)).getIsolate().getIsolateId() == isolateId) {
+
+                            windows.remove(idx);
+                            continue;
+                        }
+                        ++idx;
                     }
-                    ++idx;
-                }
 
-                // enshure there is one foreground window
-                if(getForeground() == null) {
-                    nextWindow();
+                    // enshure there is one foreground window
+                    if(getForeground() == null) {
+                        nextWindow();
+                    }
                 }
             }
         }

@@ -68,6 +68,16 @@ public class JUMPExecutiveWindowRequest extends JUMPRequest {
      */
     public static final String ID_BACKGROUND = "Background";
 
+    /**
+     * Command to get the application that created the Isolate's window.
+     * <ol>
+     *   <li>args[0] - Window Id</li>
+     * </ol>
+     * Synchronous request. expects a
+     * {@link com.sun.jump.common.JUMPApplication}
+     */
+    public static final String ID_GET_APPLICATION = "GetApplication";
+
     private JUMPExecutiveWindowRequest(String id, String[] args) {
 	super(MESSAGE_TYPE, id, args);
     }

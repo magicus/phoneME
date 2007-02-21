@@ -40,7 +40,6 @@ information or have any questions.
 
         <patternset id="excludes">
             <exclude name="**/WindowingIsolateModule.java"/>
-            <exclude name="**/GraphicsEnvironment.java"/>
         </patternset>
     </target>
     <target name="no-excludes" if="gci.classes.available">
@@ -49,7 +48,7 @@ information or have any questions.
 
     <target name="compile-windowing-module" depends="make-excludes,no-excludes">
         <jump.javac srcdir="${s.share.impl.dir}/windowing/classes">
-            <include name="com/sun/jumpimpl/module/windowing/*.java"/>
+            <include name="com/sun/jumpimpl/**/*.java"/>
             <patternset refid="excludes"/>
         </jump.javac>
     </target>

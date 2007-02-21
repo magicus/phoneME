@@ -69,9 +69,11 @@ public class FileStoreImpl extends JUMPStore {
       writeToFile(file, jumpData);
    }
 
-   public void createNode(String uri) {
+   public void createNode(String uri) throws IOException {
       File file = uriToListFile(uri);
       file.mkdirs();
+      if (!file.exists())
+         throw new IOException("Could not create: " + file);
    }                  
 
    public JUMPNode getNode(String uri) throws IOException {
@@ -243,6 +245,9 @@ public class FileStoreImpl extends JUMPStore {
     }
 
     private boolean isDataUri(String uri) {
+
+       if (!uri.startsWith("."))
+          return false;
 
        String absolutePath = convertToAbsolutePath(uri, false);
 
