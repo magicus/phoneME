@@ -28,6 +28,7 @@
 extern "C" {
 #endif
 
+#include "javacall_defs.h" 
 #include "javacall_multimedia.h" 
 
 /**
