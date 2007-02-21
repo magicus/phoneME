@@ -88,6 +88,7 @@ javacall_result nams_get_midlet_domain(int index, javacall_ams_domain* domain);
 int nams_get_current_midlet_count();
 javacall_result nams_get_midlet_classname(int index, contentList* className);
 char* nams_trans_state(javacall_midlet_state state);
+char* nams_trans_ui_state(javacall_midlet_state state);
 void nams_set_midlet_request_foreground(int index);
 javacall_result nams_if_midlet_exist(int index);
 void nams_set_midlet_static_info(int appID, MidletNode* pInfo);

@@ -349,34 +349,34 @@ typedef struct _javacall_ams_suite_data {
      * ID of the storage (INTERNAL_STORAGE_ID for the internal storage
      * or another value for external storages).
      */
-    jint storageId;
+    javacall_int32 storageId;
 
     /** True if the suite enabled, false otherwise. */
-    jboolean isEnabled;
+    javacall_bool isEnabled;
 
     /** True if the suite is trusted, false otherwise. */
-    jboolean isTrusted;
+    javacall_bool isTrusted;
 
     /** Number of midlets in this suite. */
-    jint numberOfMidlets;
+    javacall_int32 numberOfMidlets;
 
     /** Installation time (timestamp). */
     long installTime;
 
     /** Size of the midlet suite's jad file. */
-    jint jadSize;
-
+    javacall_int32 jadSize;
+    
     /** Size of the midlet suite's jar file. */
-    jint jarSize;
+    javacall_int32 jarSize;
 
     /** Size of the jar file hash. If it is 0, pJarHash field is empty. */
-    jint jarHashLen;
+    javacall_int32 jarHashLen;
 
     /**
      * True if this midlet suite is preinstalled (and thus should be
      * prevented from being removed.
      */
-    jboolean isPreinstalled;
+    javacall_bool isPreinstalled;
 
     /** A structure with string-represented information about the suite. */
     javacall_ams_variable_len_suite_data varSuiteData;
@@ -556,7 +556,7 @@ void javacall_ams_midlet_stateChanged(javacall_midlet_state state,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_ui_stateChanged(javacall_ui_state state,
+void javacall_ams_ui_stateChanged(javacall_midlet_ui_state state,
                                   const javacall_app_id appID,
                                   javacall_change_reason reason);
 

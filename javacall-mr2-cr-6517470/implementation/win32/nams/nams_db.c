@@ -27,13 +27,16 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "nams.h"
-#include "file.h"
-#include "javacall_logging.h"
 #include "javacall_file.h"
+#include "javacall_logging.h"
+/* #include "javacall_file.h" */
 #include "javautil_jad_parser.h"
 #include "javautil_string.h"
 #include "javacall_memory.h"
 #include "javacall_nams.h"
+
+extern char* unicode_to_char(unsigned short* str);
+extern unsigned short* char_to_unicode(char* str);
 
 static char NAMS_DB_FILE[]=".\\nams.db";
 static char NAMS_DB_HOME[]=".\\";

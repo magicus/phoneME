@@ -303,6 +303,15 @@ char* nams_trans_state(javacall_midlet_state state)
         return "destoryed";
     case JAVACALL_MIDLET_STATE_ERROR:
         return "error";
+    default:
+        return "error";
+    }
+}
+
+char* nams_trans_ui_state(javacall_midlet_ui_state state)
+{
+    switch (state)
+    {
     case JAVACALL_MIDLET_STATE_FOREGROUND:
         return "foreground";
     case JAVACALL_MIDLET_STATE_BACKGROUND:
