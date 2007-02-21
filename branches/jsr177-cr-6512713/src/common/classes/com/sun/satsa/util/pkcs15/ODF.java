@@ -141,7 +141,7 @@ public class ODF extends PKCS15File {
 
         for (int i = 0; i < ODF.size(); i++) {
             TLV t = (TLV) ODF.elementAt(i);
-            Location l = files.pathToLocation(t.child);
+            Location l = files.pathToLocation(t.child.child);
             switch (t.type) {
                 case ODFTAG_PRIVATE_KEYS: {
                     prkdfPath.addElement(l);
