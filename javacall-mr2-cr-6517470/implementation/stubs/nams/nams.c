@@ -56,7 +56,7 @@ void javacall_ams_midlet_stateChanged(javacall_midlet_state state,
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_ui_stateChanged(javacall_ui_state state,
+void javacall_ams_ui_stateChanged(javacall_midlet_ui_state state,
                                   const javacall_app_id appID,
                                   javacall_change_reason reason) {
 }
