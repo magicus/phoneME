@@ -101,8 +101,8 @@ PlatformMScreen::PlatformMScreen(QWidget *parent, const char* name) :QScrollView
 void PlatformMScreen::init() {
     TRACE_MSC(  PlatformMScreen::init..);
 
-    setFocusPolicy(QWidget::StrongFocus);
-
+    setFocusPolicy(QWidget::ClickFocus);
+    
     // Always ...
     setHScrollBarMode(QScrollView::AlwaysOff);
 
