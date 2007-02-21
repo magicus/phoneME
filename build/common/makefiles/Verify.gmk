@@ -153,7 +153,7 @@ define verify_jsr_234_directory
 endef
 
 define verify_midp_abb_directory
-    if [ "$(MIDP_USE_ABB)" = "true" ]; then \
+    if [ "$(USE_MIDP_ABB)" = "true" ]; then \
         $(verify_directory) ; \
     fi
 endef
@@ -310,7 +310,7 @@ BOOLEAN_OPTIONS = \
 	USE_NETWORK_INDICATOR \
 	USE_NUTS_FRAMEWORK \
 	USE_RMS_TREE_INDEX \
-	MIDP_USE_ABB \
+	USE_MIDP_ABB \
 	USE_JSR_177 \
 	USE_JSR_75 \
 	USE_JSR_82 \
@@ -331,7 +331,7 @@ BOOLEAN_OPTIONS = \
 	USE_JSR_239 \
 	USE_VERBOSE_MAKE \
 	USE_CONTROL_ARGS_FROM_JAD \
-        USE_JPEG \
+	USE_JPEG \
 	USE_NATIVE_PTI \
 	USE_VERIFY_ONCE \
 	USE_VM_PROFILES \

@@ -49,9 +49,9 @@ MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_MMAPI_SOURCEPATH)
 
 ifneq ($(USE_JSR_234), true)
 ifneq ($(USE_JSR_135), true)
-ifneq ($(MIDP_USE_ABB), true)
+ifneq ($(USE_MIDP_ABB), true)
 
-# if one of USE_JSR_234, USE_JSR_135 or MIDP_USE_ABB is true then com.sun.mmedia
+# if one of USE_JSR_234, USE_JSR_135 or USE_MIDP_ABB is true then com.sun.mmedia
 # is already in Javadoc package list. Otherwise it should be added to the list.
 SUBSYSTEM_MMAPI_PACKAGES = \
     com.sun.mmedia
