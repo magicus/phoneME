@@ -1,0 +1,665 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<!--  
+     Copyright  2006 Sun Microsystems, Inc. All rights reserved.
+-->
+<HTML>
+  <HEAD>
+    <!-- Changed  30-Mar-2005 -->
+  </HEAD>
+<BODY>
+
+<P>The Content Handler API and execution model allow an application to
+  invoke registered J2ME and non-Java applications by URL, by content
+  type, or by content handler ID.  Content handlers can
+  chain to other content handlers to respond to invocations.
+  The classes of the API are shown below:
+
+<IMG SRC="doc-files/chapi-hier.gif"
+     NAME="chapi-arch" BORDER=1 width=767 height=584>
+
+<p>The functions of content handler classes are:
+</p>
+<ul>
+  <li>{@link javax.microedition.content.Registry} &nbsp; - 
+    invokes, registers, unregisters and queries content handlers</li>
+  <li>{@link javax.microedition.content.ContentHandler} &nbsp; - 
+    provides the details 
+    of a registration and to handle requests to an application </li>
+  <li>{@link javax.microedition.content.Invocation} &nbsp; - 
+    contains the parameters passed to and returned from a content
+    handler and used to select a content handler to invoke</li>
+  <li> {@link javax.microedition.content.ContentHandlerServer} &nbsp; - 
+    processes requests to handle content</li>
+  <li>{@link javax.microedition.content.RequestListener} &nbsp; - 
+    notifies the content handler of pending requests</li>
+  <li>{@link javax.microedition.content.ResponseListener} &nbsp; - 
+    notifies the application of pending responses</li>
+  <li> {@link javax.microedition.content.ActionNameMap} &nbsp; - 
+    maps actions to action names</li>
+  <li>{@link javax.microedition.content.ContentHandlerException} &nbsp; - 
+    reports content handler errors</li>
+</ul>
+
+<p>Applications use CHAPI in two ways, as an invoking application or as
+  a content handler application.  The invoking application is primarily
+  concerned with the functions of the
+  {@link javax.microedition.content.Registry Registry} and
+  {@link javax.microedition.content.Invocation Invocation} classes.
+
+  As a client, the application makes requests to display or act on
+  some content.  The application makes a request by supplying
+  parameters that identifies the content by URL or the content
+  type, or the ID of the content handler, and possibly an
+  action to perform. 
+  If the application needs to know when a request is complete or to get
+  a result it can require a response from the content handler.
+
+  The application creates an <code>Invocation</code> instance and
+  initializes it with the parameters.  The application calls the
+  <code>Registry.invoke</code> method to start the request.
+  Only if the invoking application is expecting a result does it need
+  to retrieve the response using <code>Registry.getResponse</code>.
+  The application can register a listener with
+  <code>Registry.setListener</code> to be notified when the response
+  is available. 
+
+<p>A more advanced client application may want to use the
+  detailed information about content handlers stored in 
+  {@link javax.microedition.content.ContentHandler ContentHandler}
+  objects including the types, suffixes, and actions, or information
+  about the content handler application including its authorization,
+  application name and version, and content handler ID.
+  If the application allows the user to choose the action 
+  to be performed, it should use the handler's 
+  {@link javax.microedition.content.ActionNameMap}s to get
+  locale appropriate action names.
+
+<p>As a server, the content handler application responds to invocation
+  requests from clients.
+  The content handler application uses the methods of 
+  {@link javax.microedition.content.ContentHandlerServer ContentHandlerServer}
+  and {@link javax.microedition.content.Invocation}.
+  New requests are retrieved from the
+  <code>ContentHandlerServer.getRequest</code> method.
+  The content handler can register a listener with
+  <code>ContentHandlerServer.setListener</code> to be notified when new
+  requests are available.  The content handler uses the parameters in
+  the <code>Invocation</code> to process the request. If a URL was
+  supplied, the content can be retrieved with the
+  <code>Invocation.open</code> method using the Generic Connection
+  Framework.  The content handler uses the URL, type, and action
+  to determine how it should act on the content.  When the content
+  handler is done with each request it returns updated parameters and
+  arguments and a status with the
+  <code>ContentHandlerServer.finish</code> method.
+
+<p>A more advanced content handler application can both be a
+  client and a server. Methods on the
+  {@link javax.microedition.content.Registry Registry} are used for
+  the advanced functions.
+  New requests can be chained to previous requests with
+  the <code>invoke</code> method.
+  The content handler may restrict access and visibility to itself
+  during registration.
+  An detailed example is provided in Appendix A.
+</p>
+
+<H2>Implementation Requirements</H2>
+<ul>
+  <li> The system property <code>microedition.chapi.version</code> can be
+    used to determine whether   
+    CHAPI is implemented, and if it is, the version number.
+    If this specification  
+    is implemented in a Java runtime environment, the property
+    <code>microedition.chapi.version</code> MUST  
+    have the value <tt>"1.0"</tt> as returned from the
+    <code>java.lang.System.getProperty</code> method. </li>
+
+  <li>Support is required for the URL scheme "<code>http</code>",
+    the <code>javax.microedition.io.HttpConnection</code> interface and
+    corresponding protocol.</li>
+
+  <li>The {@link javax.microedition.content.Invocation} class and 
+    invocation mechanism MUST support passing and returning arguments
+    and data totaling at least 16384 bytes. 
+    Each character of a String is counted as two bytes.
+    It must be able to pass and return at least 10 arguments in the
+    arguments array.
+  </li>
+
+  <li>
+    Content handler registrations that are successful MUST be preserved
+    across soft and hard restarts of the device software including
+    unexpected power interruptions.</li>
+
+  <li>
+    The security policy of the Java runtime environment MUST be used
+    to enforce limitations on access to content using CHAPI. 
+    For MIDP, permissions and access control must be the same
+    as though <code>Connector.open</code> were used to access the content.
+  </li>
+</ul>
+
+<H2><a name="provisioning">Installing Content Handlers</a> </H2>
+<P>Content handlers may be installed on the device either before they are needed 
+  or when they are needed. The content handler API can be used to trigger the 
+  installation process to install the content handlers on the device. For at least 
+  one downloadable application packaging type supported by the device, the CHAPI implementation 
+  MUST provide and register a content handler to perform the installation. Typically, 
+  this includes <code>application/java-archive</code>.</p>
+
+<p>An application can invoke CHAPI with the URL of an application
+  package.
+  The appropriate installation process for the device MUST be used to
+  attempt to install the content handler.
+  The installation MUST include all of the required security 
+  and user prompts as specified in the appropriate profile and
+  download specification. 
+  If the installation process fails for any reason,
+  including the user's decision to cancel the installation, 
+  then the Invocation will fail with the Invocation.CANCELLED status. 
+  The status response must be delivered to the invoking application,
+  if required in the request. </p>
+
+<h2>Interacting with the Application Life Cycle</h2>
+<p> Content handlers are applications and are subject to the same
+  security, integrity, installation, upgrade, and other requirements
+  as any other application in the applicable Java runtime
+  environment. Authentication of applications and application classes  
+  MUST conform to the requirements of the applicable Java runtime
+  environment.
+</p> 
+<p> Each Java runtime environment has its own application packaging
+  and runtime requirements.  
+  Each content handler application MUST conform to these requirements.
+  Each Java runtime specifies how applications are uniquely identified,
+  for example, by a classname of the application class.
+  For the MIDP Profile, a content handler MUST be packaged as a MIDlet
+  suite and each content handler MUST implement the MIDlet life
+  cycle.
+  It is NOT necessary for the content handler to be registered as a
+  user visible MIDlet with a <code>MIDlet-&lt;n&gt;</code> attribute.
+  If the content handler MIDlet should be selectable by the user then 
+  the <code>MIDlet-&lt;n&gt;</code> attribute must be supplied.
+</p>
+<p> Installation and removal of content handlers utilizes the normal
+  mechanisms of the Java runtime environment.
+  During installation, any content handlers MUST be registered 
+  using the attributes defined in the application packaging.
+  Typically, they will be present in an application descriptor or JAR
+  manifest. When a content handler  
+  application is removed, all of the static and dynamic registrations
+  of the content handler application MUST be released.</p> 
+
+<h2>Handling Display Transitions - Foreground and Background</h2>
+
+<p> A goal of the Content Handler API is to promote a smooth or
+  seamless user experience between the invoking application and
+  content handler. Typically, if the invoking application has a user
+  interface, one of its screens will be displayed to the user (that
+  is, it will be in the foreground). If a user action causes an
+  Invocation then the next screen the user sees should be the
+  content handler for that invocation.
+
+  If a foreground content handler finishes with an invocation that
+  requires a response to the calling application that had the
+  foreground immediately before the content handler was invoked, and
+  there are no other requests buffered or being processed from the
+  same calling application, then the foreground is returned to the
+  calling application.
+
+<p>If there is a conflict between foreground transitions and
+  external events or explicit user actions, then the external events
+  or user actions should take precedence.
+
+<h2>Static Registration of Content Handlers</h2>
+
+<P> Content handler registration can, and generally should, be handled
+  during the installation of the application. The following attributes
+  can be included in the JAR manifest of the application.
+  Each Java runtime environment may define their own application
+  packaging extensions. For MIDP, the attributes can be included in
+  the Java Application Descriptor (JAD).
+
+  If the attributes are present, they MUST be used by the installation
+  process to register the content handlers.  If the application is
+  being upgraded from a previous version then static registrations
+  that are not replaced by new registrations are removed.
+
+  See the <A href="#jad">Example of MIDlet Suite Java
+  Application Descriptor</A> section. </P>
+
+<p>
+  Each content handler is uniquely identified by an ID.
+  Content handler and application IDs MUST NOT contain control
+  characters (U+0000 thru U+001F) or spaces (U+00020).
+  The ID for content handlers is supplied in the
+  <CODE>MicroEdition-Handler-&lt;n&gt;-ID</code> attribute.
+  If an ID is not supplied then a
+  default ID MUST be generated by the implementation.
+  The ID MUST NOT be equal to any other registered handler
+  ID. Every other ID MUST NOT be a prefix of this ID.
+  The ID MUST NOT be a prefix of any other registered ID.
+  If the ID conflicts with another ID the installation MUST fail.</p>
+
+<p>
+  Each static content handler registration contains the following
+  information. Fields are separated using Unicode comma ("," = U+002C).
+  Whitespace is deleted from the beginning and end of each value where
+  whitespace consists of sequences of one or more Unicode
+  horizontal tab (HT = U+0009) or space (" " = U+0020) characters.
+  Each registration consists of information from a
+  <code>MicroEdition-Handler-&lt;n&gt;</code> attribute and optional
+  attributes 
+  <code>MicroEdition-Handler-&lt;n&gt;-&lt;locale&gt;</code>,
+  <code>MicroEdition-Handler-&lt;n&gt;-ID: &lt;ID&gt;</code>, and
+  <code>MicroEdition-Handler-&lt;n&gt;-Access</code>.
+  All of the attributes for a registration have the same value of 
+  <code>&lt;n&gt;</code>.
+
+  The numeric value for <code>&lt;n&gt;</code> starts at 1 and MUST
+  use consecutive ordinal numbers for additional entries. 
+  The attributes are:
+  <code>
+    <pre>
+MicroEdition-Handler-&lt;n&gt;: &lt;classname&gt;, &lt;type(s)&gt;, &lt;suffix(es)&gt;, &lt;action(s)&gt;, &lt;locale(s)&gt;
+MicroEdition-Handler-&lt;n&gt;-&lt;locale&gt;: &lt;localized action names&gt;
+MicroEdition-Handler-&lt;n&gt;-ID: &lt;ID&gt;
+MicroEdition-Handler-&lt;n&gt;-Access: &lt;ID(s)&gt;
+    </pre>
+  </code>
+  where:
+  <UL>
+    <LI>
+    <P> <code>MicroEdition-Handler-&lt;n&gt;</code> - Attribute for
+      registrations.  
+      Multiple registrations can be provided in an application.
+      The numeric value for <code>&lt;n&gt;</code> starts at 1 and
+      MUST use consecutive ordinal numbers for additional entries.
+      The first missing entry terminates the list.
+      Any additional entries are ignored. </P>
+    </LI>
+    <LI>
+      
+    <P> <code>MicroEdition-Handler-&lt;n&gt;-&lt;locale&gt;</code> -
+      Attribute to define the action names appropriate for the actions
+      of the n<sup>th</sup> content handler for the indicated
+      locale.
+      The locale string should be properly formatted as defined in
+      class {@link javax.microedition.content.ContentHandler}.
+       
+      If the corresponding <code>MicroEdition-Handler-&lt;n&gt;</code>
+      attribute references this locale attribute then 
+      there MUST be an action name for each action in the
+      corresponding <code>MicroEdition-Handler-&lt;n&gt;</code> 
+      attribute.
+      If the number of action names does not match the number of
+      actions, then the installation MUST fail.
+      If there are multiple action names, separate them with a comma 
+      ("," = U+002C). Action names may contain embedded whitespace.
+      Leading and trailing whitespace is deleted from each action. 
+      If a locale attribute is present but is not referenced by a
+      <code>MicroEdition-Handler-&lt;n&gt;</code> attribute then it is
+      not used for the registration.
+    </P>
+    </LI>
+      
+    <LI>
+      <P><code>MicroEdition-Handler-&lt;n&gt;-ID</code> - Attribute to
+	declare the unique ID for this content handler.
+	The content handler ID is set during installation and 
+	returned from the method
+	{@link javax.microedition.content.ContentHandler#getID
+	ContentHandler.getID}.
+	If not provided, a unique value MUST be provided by the implementation.
+      </P>
+    </LI>
+
+    <LI>
+    <P> <code>MicroEdition-Handler-&lt;n&gt;-Access</code> - Attribute
+      to control the access and visibility of the content handler.
+      It contains a list of the IDs of content handlers or applications
+      that are allowed access and visibility
+      to the content handler.
+      If omitted, all applications will be allowed access and visibility 
+      to the content handler. If there are multiple IDs, separate them 
+      with a space (" " = U+0020). IDs MUST NOT contain whitespace.
+      Leading and trailing whitespace is deleted from each ID. </P>
+    </LI>
+
+    <LI>
+      <P>
+	<code>classname</code> - Application
+	that is responsible for handling the content.
+	Leading and trailing whitespace is deleted.
+      </P>
+    </LI>
+
+    <LI>
+      <P>
+	<code>type(s)</code> - Content type(s). If there are multiple types, 
+	separate them with a space (" " = U+0020).
+	Types MUST NOT contain a space.
+	Leading and trailing whitespace is deleted from each type. </P>
+    </LI>
+
+    <LI>
+      <P>
+	<code>suffix(es)</code> - Zero or more suffix strings.
+	If there are multiple suffixes,
+	separate them with space (" " = U+0020).
+	Suffixes MUST NOT contain a space.
+	Leading and trailing whitespace is deleted from each suffix.
+      </P>
+    </LI>
+      
+    <LI>
+    <P> <code>action(s)</code> - Zero or more actions. If there are multiple 
+      actions, separate them with a space (" " = U+0020).
+      Actions MUST NOT contain a space.
+      Leading and trailing whitespace is deleted from each action. 
+    </P>
+    </LI>
+      
+    <LI>
+    <P> <code>locale(s)</code> - Zero or more locales. If there are
+      multiple locales, separate them with a space (" " = U+0020).
+      Locales MUST NOT contain a space.
+      Leading and trailing whitespace is deleted from each locale string.
+      Each locale string is used to identify the
+      <code>MicroEdition-Handler-&lt;n&gt;-&lt;locale&gt;</code>
+      attribute that contains the action names.
+    </P>
+    </LI>
+
+    <LI>
+      <P>
+	<code>ID</code> - Content handler or application ID.
+	Leading and trailing whitespace is deleted.
+      </P>
+    </LI>
+  </UL>
+
+  <H3>BNF syntax for parsing attribute values</H3>
+  The values of the attributes are parsed according to the BNF below. 
+  Whitespace (WSP) may be present around delimiters and is deleted from 
+  the beginning and end of each value.
+  <BLOCKQUOTE><PRE><CODE>
+; Syntax of the MicroEdition-Handler-&lt;n&gt; attribute
+handler-value = classname ["," types [ "," suffixes ["," actions ["," locales]]]]
+&nbsp;
+classname =  value-chars
+&nbsp;
+types =  *type / type WSP types
+type = value-chars
+&nbsp;
+suffixes = *suffix / suffix WSP suffixes
+suffix = value-chars
+&nbsp;
+actions =  *action / action WSP actions
+action = value-chars
+&nbsp;
+locales =  *locale / locale WSP locales
+locale = value-chars
+&nbsp;
+value-chars = 1*(&lt;any Unicode character except CTLs or WSP or COMMA&gt;)
+&nbsp;
+; Syntax of the MicroEdition-Handler-&lt;n&gt;-locale attribute
+action-names =  action-name / (action-name "," action-names)
+action-name = value-chars / (value-chars WSP action-name)
+&nbsp;
+; Syntax of the MicroEdition-Handler-&lt;n&gt;-ID attribute
+id-value =  1*(value-chars / COMMA)
+&nbsp;
+; Syntax of the MicroEdition-Handler-&lt;n&gt;-Access attribute
+access-values = id-value / (id-value WSP access-values)
+&nbsp;
+; Delimiters
+HT = %x09        ; Horizontal tab
+SP = %x20        ; Space
+COMMA = %x2C     ; Comma
+WSP = *(SP / HT) ; Whitespace
+CTLs = *(%x00 - %x1F)
+</CODE></PRE></BLOCKQUOTE>
+
+<h3>Using the parsed values to register</h3>
+<P> The values parsed from the attributes are used to register the
+  content handler.
+  If there are multiple types, suffixes, actions, or locales, the
+  order is significant; the values must appear in the same order 
+  when passed to the <tt>Registry.register</tt> method.
+  Each locale string and the sequence of actions and action names in each
+  <code>MicroEdition-Handler-&lt;n&gt;-&lt;locale&gt</code> attribute
+  are used to make a new
+  {@link javax.microedition.content.ActionNameMap ActionNameMap}.
+  The arrays of types, suffixes, actions, action name maps, ID, and
+  access controls are used to
+  {@link javax.microedition.content.Registry#register register} the
+  classname as a content handler.
+
+<h3>Access Restrictions  and Application IDs</h3>
+<p>Content Handlers can control whether they are visible to and can be
+  invoked by other applications and content handlers.  The ID of the
+  invoking application is matched against the list of IDs that are
+  allowed access to the handler.
+<p>Note that the invoking application or content handler provides its
+  own ID. The veracity of the ID can be cross checked with the
+  authority information that provided for content handlers and invoking
+  applications.  If there is no authority information then the ID
+  cannot be trusted.
+
+<p>Each Java runtime environment MUST
+  provide a mechanism to associate an ID with each application.
+  If an ID is not provided, then a default value must be provided.
+  For MIDP, the default value is defined below. 
+
+<h3>Content Handlers and the Mobile Information Device Profile </h3>
+<p>
+  For the MIDP Profile, the implementation MUST support download
+  and installation of MIDlet suites that include content handlers.
+  The implementation MUST provide and register content handler(s) to
+  perform the installation for the type 
+  <code>text/vnd.sun.j2me.app-descriptor</code> and may support the type
+  <code>application/java-archive</code> for JAR-only installation.
+
+<p>During the installation of a MIDlet suite, each content handler
+  MUST be registered using the attributes defined in the Java
+  Application Descriptor and/or in the Manifest.  
+  For untrusted application, attributes in the JAD override
+  corresponding attributes in the Manifest.
+
+  For trusted applications, according to the MIDP specification, if
+  attributes appear in both the JAD and manifest then the
+  corresponding attribute values MUST be equal.</p>
+
+<p>Content handlers MUST be installable using the MIDP OTA installation
+  mechanism.
+  Any failure related to content handler registration attributes
+  or incorrect or invalid information related to the MIDlet suite
+  must cause the installation to fail.
+  If the <code>MIDlet-Install-Notify</code> attribute defined by MIDP OTA
+  is present, then an installation status report MUST be sent. The
+  installation notifications are:
+  <ul>
+    <li><code>938 Content handler conflicts with other
+	   handlers</code><br>
+      This CHAPI specific notification is sent
+      if there is a conflict between the ID of any handler in the MIDlet
+      suite being installed and handlers of existing MIDlet suites so
+      the required content handler registrations cannot be
+      performed, then the installation MUST fail.  
+    </li>
+
+    <li><code>939 Content handler install failed</code> <br>
+      This CHAPI specific notification is sent
+      if any of the content handler specific attributes are missing or
+      cannot be parsed correctly or have values that are not valid to
+      register the content handler then the installation must fail.
+      This includes at least the values for types, suffixes, IDs, and
+      actions.
+    </li>
+    <li><code>910 Application authorization failure</code><br>
+      This MIDP OTA defined notification is sent
+      if there are static registration attributes present but the
+      permission <code>javax.microedition.content.ContentHandler</code> 
+      is not requested or not granted.
+    </li>
+    <li><code>905 Attribute Mismatch</code><br>
+      This MIDP OTA defined notification is sent if an attribute
+      value in the application descriptor is not equal to the value of
+      the corresponding attribute in the manifest.
+    </li>
+  </ul>
+
+
+<p>
+  If the content handler or application ID is not provided by the
+  application then the implementation is required to provide a value.
+  The default ID value is formed as the concatenation of the value of
+  the <code>MIDlet-Vendor</code> attribute followed by a hyphen ("-" =
+  U+002D) and the value of the <code>MIDlet-Name</code> attribute
+  followed by a hyphen ("-" = U+002D) and the <code>classname</code>.
+  All spaces (" " = U+0020) must be translated
+  to underscore ("_" = U+005F).</p>
+
+<p>
+  The <code>MicroEdition-Handler-&lt;n&gt;-ID</code> attribute contains the
+  content handler ID.
+  If the MIDlet suite is trusted, then this attribute and value must be 
+  present in both the manifest and application descriptor and
+  the values must be the equal or it must not appear at all.
+  If not present in the application descriptor or manifest, the
+  implementation MUST supply a default ID as defined above
+  using the classname from the <code>MicroEdition-Handler-&lt;n&gt;</code>
+  attribute.
+
+<p>
+  MIDP applications that do not register as content handlers
+  need an application ID to be allowed access to restricted content
+  handlers.
+  The <code>MIDlet-&lt;n&gt;-ID</code> attribute contains the
+  application ID for the MIDlet registered with the 
+  <code>MIDlet-&lt;n&gt;</code> attribute.
+  When the application has gained access to the Registry the ID is
+  available using the
+  {@link javax.microedition.content.Registry#getID Registry.getID} method.
+  If the MIDlet suite is trusted, then this attribute and value must be 
+  present in both the manifest and application descriptor and
+  the values must be the equal or it must not appear at all.
+  If an ID is not provided, the implementation MUST supply a default ID
+  as defined above using the <code>classname</code> in the
+  <code>MIDlet-&lt;n&gt;</code> attribute.</p>
+
+<p>The user friendly application name MUST be provided by 
+  {@link javax.microedition.content.ContentHandler#getAppName
+  ContentHandler.getAppName}.
+  If the content handler's classname is also registered as a 
+  MIDlet using a 
+  <tt>MIDlet-&lt;n&gt;</tt> attribute then the application name is the 
+  <tt>name</tt> (first) value of the attribute, otherwise, the
+  application name is the value of the <tt>MIDlet-Name</tt> attribute.
+
+<p>Updates to content handlers are treated the same as updates to any
+  MIDlet suite.  The updated content handlers MUST be successfully
+  registered.  If there are any dynamic registrations, then they MUST
+  be retained across the upgrade unless superceded by a new static
+  registration for the same classname.</p>
+
+<p>A trusted MIDlet suite MUST request and be granted the
+  <tt>javax.microedition.content.ContentHandler</tt> 
+  permission to perform either static or dynamic registrations
+  consistent with the device's security policy.
+  The <code>Registry.register</code> 
+  method MUST throw a <code>java.lang.SecurityException</code>
+  if the permission is not granted.</p>
+  The permission, <tt>javax.microedition.content.ContentHandler</tt>,
+  for registering content handlers SHOULD be included in the 
+  <tt>auto-invocation</tt>
+  function group as defined in the MIDP Recommended Security
+  Policy. The policy allows an untrusted application to register
+  handlers with a user prompt each time (oneshot). For trusted
+  applications, the user can also choose blanket and session
+  interaction modes.
+
+<p>The MIDP specification defines the concept of a Trusted MIDlet
+  suite in which 
+  the AMS is able to authenticate the application. The mechanism
+  defined as "Trusted MIDlet Suites Using X.509 PKI" is one mechanism
+  for authenticating a MIDlet suite. When the AMS can authenticate the
+  MIDlet suite, it MUST be considered authenticated for the purposes
+  of this API. The authority for a signed MIDlet suite is the value of
+  the Subject field of the signing certificate.
+  An application gets the authority using the 
+  {@link javax.microedition.content.ContentHandler#getAuthority
+  ContentHandler.getAuthority} method.
+  The format of the authority for X.509 certificates is defined
+  by the MIDP Printable Representation of X.509 Distinguished
+  Names as defined in class
+  <code>javax.microedition.pki.Certificate</code>. </p>
+
+<h3><A NAME="jad">
+      Example of MIDlet Suite Java Application Descriptor (JAD)</A></h3>
+<p>A JAD file is a text file that you can create with any text editor.
+  Its lines have this syntax:</p>
+  <p><i>attribute</i><tt>:</tt><i>value</i></p>
+<p>The following is an example of the contents of a MIDlet suite Java application
+  descriptor file.
+  The <b>bold</b> text indicates additions to support content
+  handlers. </p>
+<pre><code>MIDlet-1: Image Viewer,, example.imageviewer.ImageViewer
+<b>MicroEdition-Handler-1: example.imageviewer.ImageViewer, image/png, .png, open, en-US fr fi-FI</b>
+<b>MicroEdition-Handler-1-en-US: Open</b>
+<b>MicroEdition-Handler-1-fr: Voir</b>
+<b>MicroEdition-Handler-1-fi-FI: Avaa</b>
+<b>MicroEdition-Handler-1-ID: com.sun.example.imageviewer</b>
+<b>MicroEdition-Handler-1-Access: com.sun.example</b>
+<b>MicroEdition-Handler-2: example.Browser, text/html, .html, open, en-US</b>
+<b>MicroEdition-Handler-2-en-US: Open</b>
+<b>MIDlet-Permissions: javax.microedition.io.Connector.http,javax.microedition.content.ContentHandler</b>
+MIDlet-Jar-Size: 2751
+MIDlet-Jar-URL: imageviewer.jar
+MIDlet-Name: Image Viewer
+MIDlet-Vendor: Sun Microsystems, Inc.
+MIDlet-Version: 1.0
+MicroEdition-Configuration: CLDC-1.0
+MicroEdition-Profile: MIDP-2.0
+     </code></pre>
+<p>The JAD file has these attributes:</p>
+<ul>
+  <li> <tt>MIDlet-</tt><i>n</i> - 
+    Comma-separated list of the n<sup>th</sup> MIDlet&#146;s
+    name, icon, and class where <i>n</i> is the n<sup>th</sup> MIDlet in the JAR file.
+    The lowest value of <i>n</i> is one (1), and <i>n</i> increments
+    by one for each consecutive MIDlet. 
+    Supplying an icon is optional. </li>
+  <li><b><tt>MicroEdition-Handler-</tt><i>n</i></b> - 
+    A content handler registration for this MIDlet suite.</li>
+  <li><b><tt>MicroEdition-Handler-&lt;<i>n</i>&gt;-&lt;locale&gt;</tt></b>  -  
+    The localized names of actions.
+  <li><b><tt>MicroEdition-Handler-&lt;n&gt;-ID</tt></b> - 
+    The ID of the content handler application. </li>
+  <li><b><tt>MicroEdition-Handler-&lt;n&gt;-Access</tt></b> - 
+    The IDs of applications that are allowed access and visibility 
+    to the content handlers.
+  <li><tt>MIDlet-Jar-Size</tt> - Number of bytes in the JAR file.</li>
+  <li><tt>MIDlet-Jar-URL</tt> - Location of the JAR file.</li>
+  <li><tt>MIDlet-Name</tt> - Name of the MIDlet that will be presented to the
+    user.</li>
+  <li><tt>MIDlet-Vendor</tt> - Creator of the MIDlet.</li>
+  <li><tt>MIDlet-Version</tt> - Version number of the MIDlet in the <i>major</i>.<i>minor</i>.<i>micro</i>
+    format described in the Java Product Versioning Specification at
+    <a href="http://java.sun.com/j2se/1.4.2/docs/guide/versioning/index.html">
+      http://java.sun.com/j2se/1.4.2/docs/guide/versioning/index.html</a>.
+</li>
+  <li><tt>MicroEdition-Configuration</tt> - J2ME platform
+    configuration that
+    the MIDlet requires. For MIDP, the value should be
+    <tt>CLDC-1.0</tt> or a later version.</li>
+  <li><tt>MicroEdition-Profile</tt> - Comma-separated list of J2ME platform 
+    profiles that the MIDlet requires. For MIDP, the value should be <tt>MIDP-2.0</tt>.</li>
+</ul>
+
+  @since CHAPI 1.0
+
+  </BODY>
+</HTML>
