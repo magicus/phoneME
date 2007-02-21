@@ -484,7 +484,7 @@ $(SIM_TOOL): $(SIM_TOOLKIT_SOURCES)
 	$(AT)$(JC_DIR)/bin/cref -o $(JC_EEPROM_IMAGE) -nobanner -nomeminfo -s &
 	-$(AT)sleep 1
 	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_APDUTOOL_CLASSPATH) com.sun.javacard.apdutool.Main -h 127.0.0.1 -nobanner satsimulator.scr)
-	$(AT)(cd $(JAVACARD_CLASSES) ; mkdir -p jc_script ; mv -f satsimulator.scr jc_script/ ; rm -f *.opt ; rm -f *.scr ; rm -fr api_export_files)
+	$(AT)(cd $(JAVACARD_CLASSES) ; mkdir -p $(SAT_SCRIPT_PATH) ; mv -f satsimulator.scr $(SAT_SCRIPT_PATH)/ ; rm -f *.opt ; rm -f *.scr ; rm -fr api_export_files)
 	@echo " ..." $@ " done"
 endif
 
