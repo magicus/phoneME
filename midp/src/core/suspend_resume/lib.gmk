@@ -1,0 +1,84 @@
+#
+#
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+SUSPEND_RESUME_LIB = suspend_resume
+LIB_SET += $(SUSPEND_RESUME_LIB)
+
+SUSPEND_RESUME_DIR = $(SUBSYSTEM_CORE_DIR)/$(SUSPEND_RESUME_LIB)
+
+
+############################################################
+# Native files under SUSPEND_RESUME subsystem
+############################################################
+
+SUBSYSTEM_SUSPEND_RESUME_EXTRA_INCLUDES += \
+    -I$(SUSPEND_RESUME_DIR)/include \
+    -I$(SUSPEND_RESUME_DIR)/reference/native/share
+
+vpath % $(SUSPEND_RESUME_DIR)/reference/native/share
+
+#IMPL_NOTE: does not meet subsystem decoupling concepts
+ifeq ($(PLATFORM), linux_qte)
+    vpath % $(SUSPEND_RESUME_DIR)/reference/native/slavemode
+else
+    vpath % $(SUSPEND_RESUME_DIR)/reference/native/mastermode
+endif
+
+SUBSYSTEM_SUSPEND_RESUME_NATIVE_FILES += \
+    suspend_resume.c \
+    suspend_resume_vm.cpp
+
+SUBSYSTEM_SUSPEND_RESUME_JAVA_FILES += \
+    $(SUSPEND_RESUME_DIR)/reference/classes/com/sun/midp/suspend/Subsystem.java \
+    $(SUSPEND_RESUME_DIR)/reference/classes/com/sun/midp/suspend/AbstractSubsystem.java \
+    $(SUSPEND_RESUME_DIR)/reference/classes/com/sun/midp/suspend/SuspendSystem.java \
+    $(SUSPEND_RESUME_DIR)/reference/classes/com/sun/midp/suspend/SuspendDependency.java \
+    $(SUSPEND_RESUME_DIR)/reference/classes/com/sun/midp/suspend/StateTransitionException.java \
+    $(SUSPEND_RESUME_DIR)/reference/classes/com/sun/midp/suspend/SuspendTimer.java \
+    $(SUSPEND_RESUME_DIR)/reference/classes/com/sun/midp/suspend/NetworkSubsystem.java
+
+ifeq ($(USE_I3_TEST), true)
+    vpath % $(SUSPEND_RESUME_DIR)/reference/i3test/com/sun/midp/suspend
+    SUBSYSTEM_SUSPEND_RESUME_NATIVE_FILES += \
+        native.c
+
+    SUBSYSTEM_SUSPEND_RESUME_JAVA_FILES += \
+        $(SUSPEND_RESUME_DIR)/reference/i3test/com/sun/midp/suspend/test/TestUtil.java
+
+    SUBSYSTEM_SUSPEND_RESUME_I3TEST_JAVA_FILES += \
+        $(SUSPEND_RESUME_DIR)/reference/i3test/com/sun/midp/suspend/TestDummy.java \
+        $(SUSPEND_RESUME_DIR)/reference/i3test/com/sun/midp/suspend/TestConnectionSuspend.java
+endif
+
