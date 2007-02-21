@@ -102,7 +102,7 @@ void PlatformMScreen::init() {
     TRACE_MSC(  PlatformMScreen::init..);
 
     setFocusPolicy(QWidget::ClickFocus);
-
+    
     // Always ...
     setHScrollBarMode(QScrollView::AlwaysOff);
 

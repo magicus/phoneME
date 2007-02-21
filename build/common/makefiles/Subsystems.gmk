@@ -359,7 +359,8 @@ endif
 # Description: ABB
 #####################################################################
 ifeq ($(MIDP_USE_ABB), true)
-include $(JSR_234_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+PROJECT_MIDP_ABB_DIR ?= $(MIDP_ABB_DIR)
+include $(PROJECT_MIDP_ABB_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
