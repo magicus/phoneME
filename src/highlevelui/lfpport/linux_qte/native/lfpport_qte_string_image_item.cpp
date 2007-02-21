@@ -170,11 +170,15 @@ void StringBody::drawButtonLabel(QPainter *painter) {
 }
 
 void StringBody::drawButton(QPainter *painter) {
-  if (appearance == HYPERLINK) {
-    drawButtonLabel(painter);
-  } else {
-    QPushButton::drawButton(painter);
-  }
+    if (appearance == HYPERLINK) {
+      drawButtonLabel(painter);
+      if (hasFocus()) {
+        style().drawFocusRect(
+            painter, rect(), colorGroup(), &colorGroup().button());
+      }
+    } else {
+      QPushButton::drawButton(painter);
+    }
 }
 
 int StringBody::heightForWidth(int *takenWidth, int w) {
@@ -231,7 +235,7 @@ void StringBody::setAppearance(int appearance) {
   case HYPERLINK:
     setFlat(true);
     setEnabled(true);
-    PAD = 0;
+    PAD = 2;
     break;
 
   case BUTTON:
