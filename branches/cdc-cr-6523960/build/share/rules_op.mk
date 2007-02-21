@@ -22,6 +22,8 @@
 # information or have any questions. 
 #
 
+.PHONY: javacall_lib
+
 # generatePropertyInitializer(xmlFiles,generatedDir,initializerPackage,outputFile)
 define generatePropertyInitializer
 	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE)           \

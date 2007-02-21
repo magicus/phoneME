@@ -22,8 +22,6 @@
 # information or have any questions. 
 #
 
-.PHONY: javacall_lib
-
 SUBSYSTEM_MAKE_FILE       = subsystem.gmk
 PROP_INIT_PACKAGE         = com.sun.cdc.config
 PROP_INIT_CLASS           = PropertyInitializer
