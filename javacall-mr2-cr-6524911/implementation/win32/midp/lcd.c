@@ -858,10 +858,10 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 isPaused =!isPaused;
                 break;
             } else if(VK_HOME == wParam) {
-                javanotify_selectapp();
+                javanotify_switch_to_ams();
                 break;
             } else if(VK_F4 == wParam) {
-                javanotify_switchforeground();
+                javanotify_select_foreground_app();
                 break;
             /* F3 key used for rotation. */ 
             } else if(VK_F3 == wParam) {                 
