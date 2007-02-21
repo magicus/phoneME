@@ -86,7 +86,7 @@ printProperty(char* pszLabel, const pcsl_string * key, MidpProperties props) {
  *
  * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  *
- * IMPL_NOTE:determine if it is desirable for user targeted output
+ * IMPL_NOTE: determine if it is desirable for user targeted output
  *       messages to be sent via the log/trace service, or if
  *       they should remain as printf calls
  */

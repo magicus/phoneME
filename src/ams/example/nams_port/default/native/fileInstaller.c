@@ -24,16 +24,12 @@
  * information or have any questions.
  */
 
-#include <fileInstallerInternal.h>
-
-extern int fileInstaller(int argc, char* argv[]);
+#include <fileInstaller.h>
 
 /**
  * This file needed to create a fileInstaller executable
  */
 int
 main(int argc, char* argv[]){
-    int res = ALL_OK;
-    res = fileInstaller(argc, argv);
-    return res;
+    return fileInstaller(argc, argv);
 }

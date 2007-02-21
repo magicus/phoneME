@@ -74,15 +74,15 @@ ifeq ($(USE_I3_TEST), true)
 AMS_RUNNAMS_NATIVE_FILES += runNams_md.c
 endif
 
-AMS_REMOVEMIDLET_NATIVE_FILES = \
+AMS_REMOVEMIDLET_NATIVE_FILES += \
 	removeMidlet.c \
 	nams_command_stub.c
 
-AMS_LISTMIDLET_NATIVE_FILES = \
+AMS_LISTMIDLET_NATIVE_FILES += \
 	listMidlets.c \
 	nams_command_stub.c
 
-AMS_FILEINSTALLER_NATIVE_FILES = \
+AMS_FILEINSTALLER_NATIVE_FILES += \
 	fileInstallerShared.c \
 	fileInstaller.c \
 	jadParser.c \
