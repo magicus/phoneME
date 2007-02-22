@@ -168,7 +168,10 @@ extern int8
 jumpMessageGetByte(JUMPMessageReader* r);
 
 /*
- * The caller should call free() on the return value once it is done
+ * The caller should call free() on the return value once it is done.
+ * Sets *length to the number of bytes in the array, or -1 if the array
+ * was NULL.  A NULL return value with *length != -1 indicates out
+ * of memory.
  */
 extern int8*
 jumpMessageGetByteArray(JUMPMessageReader* r, uint32* length);
@@ -187,6 +190,9 @@ jumpMessageGetString(JUMPMessageReader* r);
 
 /*
  * The caller should call free() on the return value once it is done
+ * Sets *length to the number of strings in the array, or -1 if the array
+ * was NULL.  A NULL return value with *length != -1 indicates out
+ * of memory.
  */
 extern JUMPPlatformCString*
 jumpMessageGetStringArray(JUMPMessageReader* r, uint32* length);
