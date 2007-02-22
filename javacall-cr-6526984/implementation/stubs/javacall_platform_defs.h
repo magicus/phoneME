@@ -1,9 +1,26 @@
 /*
- * $LastChangedDate: 2006-08-10 18:32:51 +0400 (Thu, 10 Aug 2006) $ 
  *
- * Copyright (c) 2005 Sun Microsystems, Inc.  All rights reserved.
- * PROPRIETARY/CONFIDENTIAL
- * Use is subject to license terms.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation. 
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt). 
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA 
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions. 
  */ 
 #ifndef __JAVACALL_PLATFORM_DEFINE_H_
 #define __JAVACALL_PLATFORM_DEFINE_H_
@@ -35,6 +52,19 @@ typedef signed int javacall_int32;
  * @brief 64 bit interger type
  */
 typedef __int64 javacall_int64;  // This type shall be redefined for non MSC compiler!!
+
+/**
+ * @typedef javacall_platform_string
+ * @brief general platform string type, this type is null terminated string
+ */
+typedef javacall_utf16* javacall_platform_string;
+
+/**
+ * @typedef javacall_const_platform_string
+ * @brief general constant platform string type, this type is constant null
+ * terminated string
+ */
+typedef const javacall_utf16* javacall_const_platform_string;
 
 /**
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
