@@ -106,7 +106,10 @@ class MMEventListener implements EventListener {
             break;
 
         case EVENT_MEDIA_RECORD_SIZE_LIMIT:
-            // Need revisit
+            p = BasicPlayer.get(nevt.intParam1);
+            if(p != null) {
+                p.doReceiveRSL();
+			}	
             break;
         
         case EVENT_MEDIA_RECORD_ERROR:
@@ -468,6 +471,10 @@ public abstract class BasicPlayer implements Player
     protected void doSetLoopCount(int count) {
     }
 
+	protected void doReceiveRSL()
+	{
+		System.out.println( "[basic] received RSL" );
+	}
 
     /**
      * Constructs portions of the <code>Player</code> without
