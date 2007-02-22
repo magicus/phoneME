@@ -262,7 +262,6 @@ Java_com_sun_mmedia_DirectRecord_nSetSizeLimit() {
         ret = javacall_media_set_recordsize_limit(pKniInfo->pNativeHandle, (long*)&size);
         if (JAVACALL_FAIL == ret) {
             size = 0;
-        } else {
             REPORT_ERROR1(LC_MMAPI, "[kni_record] Set record size limit fail handle=%d\n", 
                 pKniInfo->pNativeHandle);
         }

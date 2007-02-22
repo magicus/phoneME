@@ -307,6 +307,18 @@ public class DirectPlayer extends BasicPlayer
     /**
      * Overrides from BasicPlayer
      */
+
+    // #ifdef RECORD [
+	protected void doReceiveRSL()
+	{
+		System.out.println( "[direct] received RSL" );
+		
+        if (recordControl != null) {
+            recordControl.recordSizeLimitReached();
+        }
+	}
+    // #endif ]
+	
     protected void doPostStart() {
         if (vc != null) {
             vc.setToThisPlayerLevel();     /* set to this player's volume level */

@@ -204,6 +204,8 @@ public final class DirectRecord implements RecordControl, DirectControls {
             } else {
                 player.sendEvent(PlayerListener.RECORD_ERROR, new String("Can't start recording"));
             }
+        } else {
+            suspended = true;
         }
 	}
 
@@ -378,6 +380,18 @@ public final class DirectRecord implements RecordControl, DirectControls {
     
     ///////////////////////////////////////////////////////////////
 
+	public synchronized void recordSizeLimitReached()
+	{
+		System.out.println( "[drecord] received RSL" );
+		try
+		{
+			commit();
+		}
+		catch( java.io.IOException e )
+		{
+		}
+	}
+
     // Is recording suspended by player?
     private boolean suspended = false;
 
@@ -388,11 +402,18 @@ public final class DirectRecord implements RecordControl, DirectControls {
         if (debug) System.out.println("[drecord] playerStarted " + recordRequested + "," + recording);
 
         // Automatically resume recording from Player
-        if (true == suspended) {
-            startRecord();
+        if (suspended) {
+            if (1 == nStart(player.hNative)) {
+                recording = true;
+                player.sendEvent(PlayerListener.RECORD_STARTED, new Long(player.getMediaTime()));
+            } else {
+                player.sendEvent(PlayerListener.RECORD_ERROR, new String("Can't start recording"));
+            }
+            
             suspended = false;
+            
             if (debug)
-                System.out.println("[drecord] Recording resuemd by player start");
+                System.out.println("[drecord] Recording resumed by player start");
             return;
         }
 
