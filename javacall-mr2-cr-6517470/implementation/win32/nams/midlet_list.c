@@ -32,7 +32,7 @@
 MidletNode* MidletList[MAX_MIDLET_NUM];
 int current_midlet_count;
 
-// Pending midlet info for recording by javacall_ams_midlet_stateChanged()
+/* Pending midlet info for recording by javacall_ams_midlet_state_changed() */
 static MidletNode pendingMidletInfo;
 static javacall_bool pending;
  
@@ -76,8 +76,8 @@ void nams_set_midlet_static_info(int appID, MidletNode* pInfo)
 
     nams_string_to_utf16(key, strlen(key), &uKey, strlen(key));
 
-    if (javacall_ams_getSuiteProperty(appID, uKey, uValue, MAX_VALUE_NAME_LEN) 
-        == JAVACALL_OK)
+    if (javacall_ams_get_suite_property(appID, uKey, uValue,
+            MAX_VALUE_NAME_LEN) == JAVACALL_OK)
     {
         pendingMidletInfo.domain = JAVACALL_AMS_DOMAIN_TRUSTED;
     }
@@ -312,10 +312,14 @@ char* nams_trans_ui_state(javacall_midlet_ui_state state)
 {
     switch (state)
     {
-    case JAVACALL_MIDLET_STATE_FOREGROUND:
+    case JAVACALL_MIDLET_UI_STATE_FOREGROUND:
         return "foreground";
-    case JAVACALL_MIDLET_STATE_BACKGROUND:
+    case JAVACALL_MIDLET_UI_STATE_BACKGROUND:
         return "background";
+    case JAVACALL_MIDLET_UI_STATE_FOREGROUND_REQUEST:
+        return "requesting foreground";
+    case JAVACALL_MIDLET_UI_STATE_BACKGROUND_REQUEST:
+        return "requesting background";
     default:
         return "error";
     }
