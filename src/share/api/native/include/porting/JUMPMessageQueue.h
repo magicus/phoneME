@@ -62,7 +62,7 @@ typedef enum {
  *
  * Message queues are thread-safe and may be read from concurrently by
  * multiple threads, however, each message will delivered to only one
- * thread.  XXX What about destroy?
+ * thread.
  *
  * @return If the message queue has been successfully created, or
  *   already exists due to a previous call to jumpMessageQueueCreate,
