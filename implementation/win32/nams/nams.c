@@ -182,16 +182,16 @@ javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID,
 
 /**
  * Get domain information of the suite.
- * @param suiteID Unique ID of the MIDlet suite
- * @param domain Pointer to a javacall_ext_ams_domain to contain returned
+ * @param suiteID Unique ID of the MIDlet suite.
+ * @param pDomain Pointer to a javacall_ext_ams_domain to contain returned
  *                domain information. Only Trusted or Untrusted domain is
  *                required to be returned.
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result javacall_ams_get_domain(javacall_suite_id suiteID,
-                                        javacall_ams_domain* domain) {
-    if (nams_get_midlet_domain(suiteID, domain) != JAVACALL_OK) {
+                                        javacall_ams_domain* pDomain) {
+    if (nams_get_midlet_domain(suiteID, pDomain) != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
     return JAVACALL_OK;
@@ -199,16 +199,16 @@ javacall_result javacall_ams_get_domain(javacall_suite_id suiteID,
 
 /**
  * Get permission set of the suite.
- * @param suiteID      Unique ID of the MIDlet suite
- * @param permissions  Pointer to a javacall_ext_ams_permission_set structure
- *                     to contain returned permission setttings
+ * @param suiteID       Unique ID of the MIDlet suite
+ * @param pPermissions  Pointer to a javacall_ext_ams_permission_set structure
+ *                      to contain returned permission setttings
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
 javacall_ams_get_permissions(javacall_suite_id suiteID,
-                             javacall_ams_permission_set* permissions) {
-    if (nams_get_midlet_permissions(suiteID, permissions) != JAVACALL_OK) {
+                             javacall_ams_permission_set* pPermissions) {
+    if (nams_get_midlet_permissions(suiteID, pPermissions) != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
     return JAVACALL_OK;
@@ -216,7 +216,7 @@ javacall_ams_get_permissions(javacall_suite_id suiteID,
 
 /**
  * Set single permission of the suite when user changed it.
- * @param suiteID     Unique ID of the MIDlet suite
+ * @param suiteID     unique ID of the MIDlet suite
  * @param permission  permission be set
  * @param value       new value of permssion
  * @return <tt>JAVACALL_OK</tt> on success, 
@@ -234,20 +234,20 @@ javacall_ams_set_permission(javacall_suite_id suiteID,
 
 /**
  * Set permission set of the suite.
- * @param suiteID      Unique ID of the MIDlet suite
- * @param permissions  Pointer to a javacall_ext_ams_permission_set structure
- *                     to contain returned permission setttings
+ * @param suiteID       Unique ID of the MIDlet suite
+ * @param pPermissions  Pointer to a javacall_ext_ams_permission_set structure
+ *                      to contain returned permission setttings
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
 javacall_ams_set_permissions(javacall_suite_id suiteID,
-                             javacall_ams_permission_set* permissions) {
+                             javacall_ams_permission_set* pPermissions) {
     int i;
     for (i = JAVACALL_AMS_PERMISSION_HTTP;
             i < JAVACALL_AMS_PERMISSION_LAST; i ++) {
         if (nams_set_midlet_permission(suiteID, (javacall_ams_permission)i,
-            permissions->permission[i]) != JAVACALL_OK) {
+            pPermissions->permission[i]) != JAVACALL_OK) {
             return JAVACALL_FAIL;
         }
     }
@@ -291,7 +291,7 @@ javacall_ams_get_suite_property(const javacall_suite_id suiteID,
 
     if (nams_string_to_utf16(jad, strlen(jad), &uJad, strlen(jad)) !=
             JAVACALL_OK) {
-        javacall_print("[NAMS] javacall_ams_getSuiteProperty "
+        javacall_print("[NAMS] javacall_ams_get_suite_property "
                        "nams_string_to_utf16 error\n");
         return JAVACALL_FAIL;
     }
@@ -402,8 +402,8 @@ javacall_ams_get_suite_property(const javacall_suite_id suiteID,
 /**
  * Get suite id by vendor and suite name.
  * @param vendorName  vendor name
- * @param suiteName   Suite name
- * @param suiteID     return suiteID
+ * @param suiteName   suite name
+ * @param pSuiteID    return suiteID
  *
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
@@ -411,7 +411,7 @@ javacall_ams_get_suite_property(const javacall_suite_id suiteID,
 javacall_result
 javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
                           const javacall_utf16_string suiteName,
-                          javacall_suite_id *suiteID) {
+                          javacall_suite_id *pSuiteID) {
     int index;
     char key1[] = "MIDlet-Vendor";
     char key2[] = "MIDlet-Name";
@@ -443,8 +443,8 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
                         cSuiteName, MAX_VALUE_NAME_LEN, NULL, NULL);
 
     for (index = 1; index < MAX_MIDLET_NUM; index ++) {
-        if (javacall_ams_getSuiteProperty(index, uKey1, value,
-                                          MAX_VALUE_NAME_LEN) != JAVACALL_OK) {
+        if (javacall_ams_get_suite_property(index, uKey1, value,
+                MAX_VALUE_NAME_LEN) != JAVACALL_OK) {
             continue;
         }
 
@@ -455,8 +455,8 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
             continue;
         }
 
-        if (javacall_ams_getSuiteProperty(index, uKey2, value,
-                                          MAX_VALUE_NAME_LEN) != JAVACALL_OK) {
+        if (javacall_ams_get_suite_property(index, uKey2, value,
+                MAX_VALUE_NAME_LEN) != JAVACALL_OK) {
             WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, value, -1,
                                 cValue, MAX_VALUE_NAME_LEN, NULL, NULL);
         }
@@ -469,7 +469,7 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
         javacall_free(uKey2);
 
         /* found and return */
-        *suiteID = index;
+        *pSuiteID = index;
         break;
     }
 
@@ -482,8 +482,8 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
 
 /**
  * VM invokes this function to get the image cache path.
- * @param suiteID   Unique ID of the MIDlet suite
- * @param cachePath buffer for Platform store the image cache path.
+ * @param suiteID   unique ID of the MIDlet suite
+ * @param cachePath buffer for Platform store the image cache path
  * @param cachePathLen the length of cachePath
  *
  * @return <tt>JAVACALL_OK</tt> on success, 
