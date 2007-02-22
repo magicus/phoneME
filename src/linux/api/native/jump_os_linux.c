@@ -88,13 +88,17 @@
 
 struct jump_message_queue {
 #ifdef JUMP_MQ_THREADSAFE
-    /* Accesses to prev, next, and count must be serialized with
+    /* Accesses to prev, next, and useCount must be serialized with
        queue_list_mutex. */
 #endif
     struct jump_message_queue *prev;
     struct jump_message_queue *next;
-    int count;			/* How many times this queue has been
-				   created. */
+    /* useCount is incremented for each call to jumpMessageQueueCreate
+       and decremented for each call to jumpMessageQueueDestroy.  It
+       is also incremented while waiting for or reading from the
+       queue.  When the count falls to zero the queue is freed.  This
+       prevents it from being freed while it is in use. */
+    int useCount;
 
     char *messageType;
     char *name;			/* Name of FIFO to unlink on destroy,
@@ -402,7 +406,7 @@ message_queue_create(pid_t processId,
 
 /* Destroys/closes a message queue and cleans up.  On success returns
    0.  On failure returns -1, and all cleanup has been attempted. */
-int
+static int
 message_queue_destroy(struct jump_message_queue *jmq)
 {
     int ret = 0;
@@ -432,6 +436,23 @@ message_queue_destroy(struct jump_message_queue *jmq)
     return ret;
 }
 
+/* This must be called with queue_list_mutex locked. */
+static int
+decrement_usecount_maybe_free(struct jump_message_queue *jmq)
+{
+    jmq->useCount--;
+
+    /* If somebody still needs the queue, then don't destroy it. */
+
+    if (jmq->useCount > 0) {
+	return 0;
+    }
+
+    remove_message_queue(jmq);
+
+    return message_queue_destroy(jmq);
+}
+
 /*
  * The message queue porting layer
  */
@@ -446,7 +467,7 @@ jumpMessageQueueCreate(JUMPPlatformCString messageType,
     jmq = get_message_queue(messageType);
 
     if (jmq != NULL) {
-	jmq->count++;
+	jmq->useCount++;
 	*code = JUMP_MQ_SUCCESS;
     }
     else {
@@ -454,7 +475,7 @@ jumpMessageQueueCreate(JUMPPlatformCString messageType,
 	   process have the same pid. */
 	jmq = message_queue_create(getpid(), messageType, code, 1);
 	if (jmq != NULL) {
-	    jmq->count = 0;
+	    jmq->useCount = 1;
 	    put_message_queue(jmq);
 	}
     }
@@ -473,26 +494,10 @@ jumpMessageQueueDestroy(JUMPPlatformCString messageType)
     jmq = get_message_queue(messageType);
     if (jmq == NULL) {
 	ret = -1;
-	goto out;
     }
-
-    /* Decrement the use count. */
-
-    jmq->count--;
-
-    /* If somebody still needs the queue open, then don't destroy it. */
-
-    if (jmq->count > 0) {
-	ret = 0;
-	goto out;
+    else {
+	ret = decrement_usecount_maybe_free(jmq);
     }
-
-    /* Calls to create and destroy are now balanced.  Remove the
-       message from the list then destroy it. */
-
-    remove_message_queue(jmq);
-
-    ret = message_queue_destroy(jmq);
 
   out:
     mutex_unlock(&queue_list_mutex);
@@ -586,6 +591,7 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis,
 {
     struct timeval deadline;
     struct jump_message_queue *jmq;
+    int ret;
 
     /* If we're using a timeout, calculate deadline = absolute timeout time. */
 
@@ -609,11 +615,10 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis,
     mutex_lock(&queue_list_mutex);
 
     jmq = get_message_queue(type);
-
-    /* At this point, *jmq is known to be valid.  After the unlock it
-       may destroyed and freed, and its fd may be reused.  It's the
-       caller's responsibility to ensure a jump_message_queue is not
-       used after it's destroyed. */
+    if (jmq != NULL) {
+	/* Increment useCount so jmq won't be freed while we're using it. */
+	jmq->useCount++;
+    }
 
     mutex_unlock(&queue_list_mutex);
 
@@ -623,10 +628,11 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis,
     }
 
     /* NOTE: for JUMP_MQ_THREADSAFE we may read a stale false value
-       for jmq->error, but that won't hurt anything. */
+       for jmq->error since we're not locking jmq->read_mutex, but
+       that won't hurt anything. */
     if (jmq->error) {
 	*code = JUMP_MQ_FAILURE;
-	return -1;
+	goto fail;
     }
 
     /* Wait for the fd to become readable, or for timeout. */
@@ -644,7 +650,7 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis,
 
 	    if (gettimeofday(&timeout, NULL) == -1) {
 		*code = JUMP_MQ_FAILURE;
-		return -1;
+		goto fail;
 	    }
 
 	    timeout.tv_usec = deadline.tv_usec - timeout.tv_usec;
@@ -656,7 +662,7 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis,
 	    if (timeout.tv_sec < 0) {
 		/* Timed out. */
 		*code = JUMP_MQ_TIMEOUT;
-		return -1;
+		goto fail;
 	    }
 	}
 
@@ -666,11 +672,11 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis,
 	  case 1:
 	    /* Ready to read. */
 	    *code = JUMP_MQ_SUCCESS;
-	    return 0;
+	    goto succeed;
 	  case 0:
 	    /* Timed out. */
 	    *code = JUMP_MQ_TIMEOUT;
-	    return -1;
+	    goto fail;
 	  case -1:
 	    if (errno == EINTR) {
 		/* Try again. */
@@ -684,8 +690,19 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis,
 	/* Some error. */
 
 	*code = JUMP_MQ_FAILURE;
-	return -1;
+	goto fail;
     }
+
+  fail:
+    ret = -1;
+    goto out;
+  succeed:
+    ret = 0;
+  out:
+    mutex_lock(&queue_list_mutex);
+    decrement_usecount_maybe_free(jmq);
+    mutex_unlock(&queue_list_mutex);
+    return ret;
 }
 
 /* Returns 1 for success, 0 for would block, -1 for error. */
@@ -740,11 +757,10 @@ jumpMessageQueueReceive(JUMPPlatformCString type,
     mutex_lock(&queue_list_mutex);
 
     jmq = get_message_queue(type);
-
-    /* At this point, *jmq is known to be valid.  After the unlock it
-       may destroyed and freed, and its fd may be reused.  It's the
-       caller's responsibility to ensure a jump_message_queue is not
-       used after it's destroyed. */
+    if (jmq != NULL) {
+	/* Increment useCount so jmq won't be freed while we're using it. */
+	jmq->useCount++;
+    }
 
     mutex_unlock(&queue_list_mutex);
 
@@ -824,14 +840,20 @@ jumpMessageQueueReceive(JUMPPlatformCString type,
     *code = JUMP_MQ_FAILURE;
   recoverable_error:
     ret = -1;
+
   out:
     mutex_unlock(&jmq->read_mutex);
+
+    mutex_lock(&queue_list_mutex);
+    decrement_usecount_maybe_free(jmq);
+    mutex_unlock(&queue_list_mutex);
+
     return ret;
 }
 
 /*
  * Destroy all message queues created by this process, regardless of
- * count.
+ * useCount.
  */
 void
 jumpMessageQueueInterfaceDestroy(void)
