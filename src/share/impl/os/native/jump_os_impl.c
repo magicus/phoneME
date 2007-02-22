@@ -126,10 +126,11 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_receiveMessage(
     jbyte* returnInterior;
 
     JUMPMessage r;
+    JUMPMessageStatusCode code;
 
     ensureInitialized();
 
-    r = jumpMessageWaitFor((JUMPPlatformCString)type, (int32)timeout);
+    r = jumpMessageWaitFor((JUMPPlatformCString)type, (int32)timeout, &code);
     /* FIXME: Examine returned error code to figure out which exception
        to throw. Return an error code!! */
     retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);

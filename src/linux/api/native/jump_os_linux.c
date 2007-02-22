@@ -524,12 +524,14 @@ jumpMessageQueueDataOffset(void)
 int 
 jumpMessageQueueSend(JUMPMessageQueueHandle handle,
 		     char *buffer,
-		     int messageDataSize)
+		     int messageDataSize,
+		     JUMPMessageQueueStatusCode* code)
 {
     struct jump_message_queue *jmq = (struct jump_message_queue *) handle;
     struct iovec iovec[2];
 
     if (messageDataSize < 0) {
+	*code = JUMP_MQ_BAD_MESSAGE_SIZE;
 	return -1;
     }
 
@@ -538,6 +540,7 @@ jumpMessageQueueSend(JUMPMessageQueueHandle handle,
        processes. */
 
     if (sizeof(messageDataSize) + messageDataSize > PIPE_BUF) {
+	*code = JUMP_MQ_BAD_MESSAGE_SIZE;
 	return -1;
     }
 
@@ -557,6 +560,7 @@ jumpMessageQueueSend(JUMPMessageQueueHandle handle,
 	ssize_t status = writev(jmq->fd, iovec, 2);
 	if (status != -1) {
 	    /* All data written successfully. */
+	    *code = JUMP_MQ_SUCCESS;
 	    return 0;
 	}
 	if (errno == EINTR) {
@@ -564,6 +568,12 @@ jumpMessageQueueSend(JUMPMessageQueueHandle handle,
 	    continue;
 	}
 	/* write failed or would block. */
+	if (errno == EAGAIN) {
+	    *code = JUMP_MQ_WOULD_BLOCK;
+	}
+	else {
+	    *code = JUMP_MQ_FAILURE;
+	}
 	return -1;
     }
 }
@@ -571,7 +581,8 @@ jumpMessageQueueSend(JUMPMessageQueueHandle handle,
 /* NOTE: if this is called from multiple threads, only one thread will
    be able to actually read the message after this returns. */
 int
-jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis)
+jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis,
+			       JUMPMessageQueueStatusCode* code)
 {
     struct timeval deadline;
     struct jump_message_queue *jmq;
@@ -583,6 +594,7 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis)
 	int timeout_sec  = timeout_millis / 1000;
 
 	if (gettimeofday(&deadline, NULL) == -1) {
+	    *code = JUMP_MQ_FAILURE;
 	    return -1;
 	}
 
@@ -605,9 +617,15 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis)
 
     mutex_unlock(&queue_list_mutex);
 
+    if (jmq == NULL) {
+	*code = JUMP_MQ_NO_SUCH_QUEUE;
+	return -1;
+    }
+
     /* NOTE: for JUMP_MQ_THREADSAFE we may read a stale false value
        for jmq->error, but that won't hurt anything. */
-    if (jmq == NULL || jmq->error) {
+    if (jmq->error) {
+	*code = JUMP_MQ_FAILURE;
 	return -1;
     }
 
@@ -625,6 +643,7 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis)
 	    /* Calculate the timeout time = deadline - current time. */
 
 	    if (gettimeofday(&timeout, NULL) == -1) {
+		*code = JUMP_MQ_FAILURE;
 		return -1;
 	    }
 
@@ -636,7 +655,8 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis)
 	    timeout.tv_sec = deadline.tv_sec - timeout.tv_sec;
 	    if (timeout.tv_sec < 0) {
 		/* Timed out. */
-		return 1;
+		*code = JUMP_MQ_TIMEOUT;
+		return -1;
 	    }
 	}
 
@@ -645,10 +665,12 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis)
 	switch (status) {
 	  case 1:
 	    /* Ready to read. */
+	    *code = JUMP_MQ_SUCCESS;
 	    return 0;
 	  case 0:
 	    /* Timed out. */
-	    return 1;
+	    *code = JUMP_MQ_TIMEOUT;
+	    return -1;
 	  case -1:
 	    if (errno == EINTR) {
 		/* Try again. */
@@ -661,6 +683,7 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis)
 
 	/* Some error. */
 
+	*code = JUMP_MQ_FAILURE;
 	return -1;
     }
 }
@@ -706,7 +729,8 @@ read_fully(int fd, void *buf, size_t count)
 
 int 
 jumpMessageQueueReceive(JUMPPlatformCString type,
-			char *buffer, int bufferLength)
+			char *buffer, int bufferLength,
+			JUMPMessageQueueStatusCode* code)
 {
     struct jump_message_queue *jmq;
     int messageDataSize;
@@ -725,6 +749,7 @@ jumpMessageQueueReceive(JUMPPlatformCString type,
     mutex_unlock(&queue_list_mutex);
 
     if (jmq == NULL) {
+	*code = JUMP_MQ_NO_SUCH_QUEUE;
 	return -1;
     }
 
@@ -751,6 +776,7 @@ jumpMessageQueueReceive(JUMPPlatformCString type,
     else if (status == 0) {
 	/* read_fully would block, so there is no message after all.
 	   The jump_message_queue is ok, just fail. */
+	*code = JUMP_MQ_WOULD_BLOCK;
 	goto recoverable_error;
     }
 
@@ -778,6 +804,7 @@ jumpMessageQueueReceive(JUMPPlatformCString type,
 	    }
 	    messageDataSize -= size;
 	}
+	*code = JUMP_MQ_BUFFER_SMALL;
 	goto recoverable_error;
     }
 
@@ -789,10 +816,12 @@ jumpMessageQueueReceive(JUMPPlatformCString type,
     }
 
     ret = messageDataSize;
+    *code = JUMP_MQ_SUCCESS;
     goto out;
 
   unrecoverable_error:
     jmq->error = 1;
+    *code = JUMP_MQ_FAILURE;
   recoverable_error:
     ret = -1;
   out:

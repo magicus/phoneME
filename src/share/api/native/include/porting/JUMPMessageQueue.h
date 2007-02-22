@@ -38,17 +38,20 @@ extern "C" {
  * without translation, so they should be moved to a separate file ala
  * errno.h
  *
- * JUMP_MQ_FAILURE currently denotes any kind of failure other than
- * out of memory.  We may need or want to make this more granular, or
- * make JUMPMessageQueueStatusCode a struct with an optional string
- * explaining the error.
+ * JUMP_MQ_FAILURE currently denotes any kind of failure that is not
+ * one of the more specific failures.  We may need or want to make
+ * this more granular, or make JUMPMessageQueueStatusCode a struct
+ * with an optional string explaining the error.
  */
 typedef enum {
     JUMP_MQ_TIMEOUT       = 1,
     JUMP_MQ_BUFFER_SMALL  = 2,
     JUMP_MQ_SUCCESS       = 3,
     JUMP_MQ_FAILURE       = 4,
-    JUMP_MQ_OUT_OF_MEMORY = 5
+    JUMP_MQ_OUT_OF_MEMORY = 5,
+    JUMP_MQ_BAD_MESSAGE_SIZE = 6,
+    JUMP_MQ_WOULD_BLOCK   = 7,
+    JUMP_MQ_NO_SUCH_QUEUE = 8
 } JUMPMessageQueueStatusCode;
 
 /**
@@ -133,36 +136,49 @@ extern int jumpMessageQueueDataOffset(void);
  *        <b>buffer</b>
  * @param messageDataSize the message data size.
  *
- * @return 0 if the message has been successfully sent to the message queue
- *         associated with the handle or a non-zero value in case of an error
+ * @return If the message has been successfully sent to the message queue
+ *         associated with the handle, returns 0 and sets *code to
+ *         JUMP_MQ_SUCCESS.  Otherwise returns non-zero and sets *code
+ *         to one of JUMP_MQ_BAD_MESSAGE_SIZE, JUMP_MQ_WOULD_BLOCK, or
+ *         JUMP_MQ_FAILURE.
  */
 extern int jumpMessageQueueSend(JUMPMessageQueueHandle handle,
     char *buffer,
-    int messageDataSize);
+    int messageDataSize,
+    JUMPMessageQueueStatusCode* code);
 
 /**
- * Waits till a message is availabe in this process message queue. This
+ * Waits till a message is available in this process message queue. This
  * call will <b>BLOCK</b> till there is a message available or a
  * timeout happens after 'timeout' milliseconds.  A timeout of
- * 0 means wait forever.
+ * 0 means wait forever.  Even though this function returns successfully,
+ * a subsequent call to jumpMessageQueueReceive may return JUMP_MQ_WOULD_BLOCK
+ * if another thread reads the message first, or if there was actually
+ * no message.
  *
- * @return 0 if there is available data, and non-zero on error
+ * @return If a message is available, returns 0 and sets *code to
+ *         JUMP_MQ_SUCCESS.  Otherwise returns non-zero and sets *code
+ *         to one of JUMP_MQ_NO_SUCH_QUEUE, JUMP_MQ_TIMEOUT, or
+ *         JUMP_MQ_FAILURE.
  */
 extern int jumpMessageQueueWaitForMessage(JUMPPlatformCString messageType,
-					  int32 timeout);
+					  int32 timeout,
+					  JUMPMessageQueueStatusCode* code);
 
 /**
  * Retrieves a message from this process message queue and copies the 
  * message data to the buffer passed. This method does not block if 
- * there is no message in the queue.
+ * there is no message in the queue. If the buffer is not large enough,
+ * the message is discarded.
  * 
- * @return the message data size. -1 If the message data is greater than the 
- * <code>bufferLength</code> passed and the message is
- * not retrieved from the queue. The caller is expected to pass a bigger
- * buffer. 
+ * @return If a message is read, returns 0 and sets *code to
+ *         JUMP_MQ_SUCCESS.  Otherwise returns non-zero and sets *code
+ *         to one of JUMP_MQ_NO_SUCH_QUEUE, JUMP_MQ_WOULD_BLOCK,
+ *         JUMP_MQ_BUFFER_SMALL, or JUMP_MQ_FAILURE.
  */
 extern int jumpMessageQueueReceive(JUMPPlatformCString messageType,
-				   char *buffer, int bufferLength);
+				   char *buffer, int bufferLength,
+				   JUMPMessageQueueStatusCode* code);
 
 /*
  * Close and destroy all message queues created by the process.
