@@ -24,36 +24,21 @@
  * information or have any questions. 
  */
 
+#ifndef _EXE_ENTRY_POINT_MD_H_
+#define _EXE_ENTRY_POINT_MD_H_
 
-#ifndef _JAVA_TASK_H_
-#define _JAVA_TASK_H_
-
-#ifdef __cplusplus
-extern "C" {
+#if !defined _EXE_ENTRY_POINT_MD_H_
+# error "Never include <exe_entry_point_md.h> directly; use <exe_entry_point.h> instead."
 #endif
 
-/*
- * This interface is javacall-specific.
- */
- 
-#include <midp_jc_event_defs.h>
-/* #include <javacall_events.h> */
-#include <javacall_lifecycle.h>
-
 /**
- * An entry point of a thread devoted to run java.
+ * Entry point of the executable.
+ *
+ * @param argc number of arguments (1 means no arguments)
+ * @param argv the arguments, argv[0] is the executable's name
+ *
+ * @return the exit value
  */
-void JavaTask(void);
+int main(int argc, char* argv[]);
 
-/**
- * This function is IMPORTED by the library.
- */
-javacall_result
-midpHandleStartArbitraryArgEvent(
-        midp_jc_event_start_arbitrary_arg startArbitraryArgEvent);
-	
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* _JAVA_TASK_H_ */
+#endif /* _EXE_ENTRY_POINT_MD_H_ */

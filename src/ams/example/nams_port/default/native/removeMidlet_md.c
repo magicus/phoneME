@@ -40,6 +40,6 @@
  *       they should remain as printf calls
  */
 int
-main(int argc, char* argv[]){
+main(int argc, char* argv[]) {
     return removeMidlet(argc, argv);
 }

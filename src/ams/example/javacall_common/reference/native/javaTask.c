@@ -43,6 +43,7 @@
 #include <suitestore_task_manager.h>
 #include <commandLineUtil.h>
 #include <javaTask.h>
+#include <exe_entry_point.h>
 
 /**
  * An entry point of a thread devoted to run java
@@ -82,7 +83,7 @@ void JavaTask(void) {
             REPORT_INFO(LC_CORE,"JavaTask() MIDP_JC_EVENT_START_ARBITRARY_ARG>> \n");
             javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED,
                                              JAVACALL_OK);
-            midpHandleStartArbitraryArgEvent(event->data.startMidletArbitraryArgEvent);
+            JavaTaskImpl(event->data.startMidletArbitraryArgEvent);
 
             JavaTaskIsGoOn = JAVACALL_FALSE;
             break;

@@ -37,6 +37,6 @@
  * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  */
 int
-main(int argc, char* argv[]){
+main(int argc, char* argv[]) {
     return runNams(argc, argv);
 }
