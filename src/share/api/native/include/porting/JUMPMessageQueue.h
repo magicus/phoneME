@@ -48,7 +48,8 @@ typedef enum {
     JUMP_MQ_OUT_OF_MEMORY = 5,
     JUMP_MQ_BAD_MESSAGE_SIZE = 6,
     JUMP_MQ_WOULD_BLOCK   = 7,
-    JUMP_MQ_NO_SUCH_QUEUE = 8
+    JUMP_MQ_NO_SUCH_QUEUE = 8,
+    JUMP_MQ_UNBLOCKED     = 9
 } JUMPMessageQueueStatusCode;
 
 /**
@@ -171,11 +172,26 @@ extern int jumpMessageQueueWaitForMessage(JUMPPlatformCString messageType,
  * @return If a message is read, returns 0 and sets *code to
  *         JUMP_MQ_SUCCESS.  Otherwise returns non-zero and sets *code
  *         to one of JUMP_MQ_NO_SUCH_QUEUE, JUMP_MQ_WOULD_BLOCK,
- *         JUMP_MQ_BUFFER_SMALL, or JUMP_MQ_FAILURE.
+ *         JUMP_MQ_BUFFER_SMALL, JUMP_MQ_UNBLOCKED, or JUMP_MQ_FAILURE.
  */
 extern int jumpMessageQueueReceive(JUMPPlatformCString messageType,
 				   char *buffer, int bufferLength,
 				   JUMPMessageQueueStatusCode* code);
+
+/**
+ * Unblocks one thread waiting in, or about to call,
+ * jumpMessageQueueWaitForMessage.  jumpMessageQueueWaitForMessage
+ * will return successfully, and a subsequent call to
+ * jumpMessageQueueReceive will fail with JUMP_MQ_UNBLOCKED.  This is
+ * used to unblock listening threads so they can exit when they are no
+ * longer needed.
+ * 
+ * @return On success, set *code to JUMP_MQ_SUCCESS.  Otherwise
+ *         sets *code to one of JUMP_MQ_NO_SUCH_QUEUE or
+ *         JUMP_MQ_FAILURE.
+ */
+extern void jumpMessageQueueUnblock(JUMPPlatformCString messageType,
+				    JUMPMessageQueueStatusCode* code);
 
 /*
  * Close and destroy all message queues created by the process.

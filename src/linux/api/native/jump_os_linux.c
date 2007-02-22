@@ -807,6 +807,13 @@ jumpMessageQueueReceive(JUMPPlatformCString type,
 	goto recoverable_error;
     }
 
+    /* Check for "unblock" message. */
+
+    if (messageDataSize == -1) {
+	*code = JUMP_MQ_UNBLOCKED;
+	goto recoverable_error;
+    }
+
     /* Sanity check. */
 
     if (messageDataSize < 0 ||
@@ -856,6 +863,52 @@ jumpMessageQueueReceive(JUMPPlatformCString type,
     mutex_unlock(&jmq->read_mutex);
     lock_and_release_message_queue(jmq);
     return ret;
+}
+
+void
+jumpMessageQueueUnblock(JUMPPlatformCString messageType,
+			JUMPMessageQueueStatusCode* code)
+{
+    /* The reader is unblocked by sending it a message of length -1,
+       which it checks for. */
+
+    struct jump_message_queue *jmq;
+
+    /* Use the read queue's fd.  This avoids out of memory problems
+       which could happen if we tried to create a new write queue and
+       use its fd. */
+
+    jmq = lock_and_acquire_message_queue(messageType);
+    if (jmq == NULL) {
+	*code = JUMP_MQ_NO_SUCH_QUEUE;
+	return;
+    }
+
+    while (1) {
+	int length = -1;
+
+	/* This is a non-blocking atomic write. */
+	ssize_t status = write(jmq->fd, &length, sizeof(length));
+	if (status != -1) {
+	    *code = JUMP_MQ_SUCCESS;
+	    break;
+	}
+	if (errno == EINTR) {
+	    /* Interrupted before data was written, retry. */
+	    continue;
+	}
+	/* If write would block consider it a success, since it means
+	   the reader has something to read and will unblock. */
+	if (errno == EAGAIN) {
+	    *code = JUMP_MQ_SUCCESS;
+	    break;
+	}
+	/* write failed. */
+	*code = JUMP_MQ_FAILURE;
+	break;
+    }
+
+    lock_and_release_message_queue(jmq);
 }
 
 /*
