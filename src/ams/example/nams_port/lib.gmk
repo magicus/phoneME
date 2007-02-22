@@ -37,9 +37,16 @@
 
 ifeq ($(TARGET_PLATFORM), javacall)
     vpath % $(SUBSYSTEM_AMS_DIR)/example/nams_port/$(TARGET_PLATFORM)/native
+
+    SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+        -I$(SUBSYSTEM_AMS_DIR)/example/nams_port/$(TARGET_PLATFORM)/native
+
     AMS_RUNNAMS_NATIVE_FILES += nams.c
 else
     vpath % $(SUBSYSTEM_AMS_DIR)/example/nams_port/default/native
+
+    SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+        -I$(SUBSYSTEM_AMS_DIR)/example/nams_port/$(TARGET_PLATFORM)/native
 endif
 
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \

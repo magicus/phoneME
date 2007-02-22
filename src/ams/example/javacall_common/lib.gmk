@@ -40,6 +40,18 @@ vpath % $(SUBSYSTEM_AMS_DIR)/example/javacall_common/reference/native
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
     -I$(SUBSYSTEM_AMS_DIR)/example/javacall_common/include
 
+ifeq ($(USE_NATIVE_AMS), true)
+SUBSYSTEM_AMS_MODULES = nams
+else
+SUBSYSTEM_AMS_MODULES = jams
+endif
+
+# Actually, there is no difference between the interfaces provided by
+# JAMS and NAMS versions of exe_entry_point.h.
+#
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_AMS_DIR)/example/$(SUBSYSTEM_AMS_MODULES)_port/include
+
 # Native files for the ( javacall_common ) module
 #
 SUBSYSTEM_AMS_NATIVE_FILES += \

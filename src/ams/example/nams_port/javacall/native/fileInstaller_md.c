@@ -35,7 +35,7 @@
  *
  * @return the exit value (1 if OK)
  */
-javacall_result JavaTaskImpl(int argc, char* argv) {
+javacall_result JavaTaskImpl(int argc, char* argv[]) {
     javacall_result res = fileInstaller(argc, argv);
 
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,

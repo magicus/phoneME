@@ -83,7 +83,8 @@ void JavaTask(void) {
             REPORT_INFO(LC_CORE,"JavaTask() MIDP_JC_EVENT_START_ARBITRARY_ARG>> \n");
             javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED,
                                              JAVACALL_OK);
-            JavaTaskImpl(event->data.startMidletArbitraryArgEvent);
+            JavaTaskImpl(event->data.startMidletArbitraryArgEvent.argc,
+                         event->data.startMidletArbitraryArgEvent.argv);
 
             JavaTaskIsGoOn = JAVACALL_FALSE;
             break;
