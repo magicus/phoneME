@@ -28,16 +28,21 @@
 #ifndef _LINUX_ENDIANNESS_ARCH_H
 #define _LINUX_ENDIANNESS_ARCH_H
 
-#ifdef __ARMEB__
-#define CVM_ENDIANNESS CVM_BIG_ENDIAN
-#else
-#define CVM_ENDIANNESS CVM_LITTLE_ENDIAN
+#ifndef __RVCT__
+#error "Only ARM RVCT is supported for Symbian ARM."
 #endif
 
-#ifdef __VFP_FP__
-#define CVM_DOUBLE_ENDIANNESS CVM_ENDIANNESS
-#else
+/*
+ * The RVCT armcc predefines __BIG_ENDIAN macro if --bi
+ * option is specified. The macro is not predefined if --li
+ * option is specified (which is also the default).
+ */
+#ifdef __BIG_ENDIAN
+#define CVM_ENDIANNESS CVM_BIG_ENDIAN
 #define CVM_DOUBLE_ENDIANNESS CVM_BIG_ENDIAN
+#else
+#define CVM_ENDIANNESS CVM_LITTLE_ENDIAN
+#define CVM_DOUBLE_ENDIANNESS CVM_LITTLE_ENDIAN
 #endif
 
 #endif /* _LINUX_ENDIANNESS_ARCH_H */
