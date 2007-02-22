@@ -38,7 +38,8 @@ extern "C" {
  * @brief Javacall interfaces for nams
  */
 
-/** @defgroup MandatoryNAMS Native AMS APIs
+/**
+ * @defgroup MandatoryNAMS Native AMS APIs
  * @ingroup JTWI
  *
  *
@@ -47,10 +48,15 @@ extern "C" {
 
 /**
  * @enum javacall_midlet_state
+ *
+ * IMPL_NOTE: currently a number of MIDP structures and constants
+ *            (most of the bellowing) are duplicated in javacall.
+ *            A possibility to avoid it via using some synchronization
+ *            mechanism like Configurator tool should be considered.
  */
 typedef enum {
     /** MIDlet active */
-    JAVACALL_MIDLET_STATE_STARTED,
+    JAVACALL_MIDLET_STATE_ACTIVE,
     /** MIDlet paused */
     JAVACALL_MIDLET_STATE_PAUSED,
     /** MIDlet destroyed */
@@ -64,10 +70,22 @@ typedef enum {
  */
 typedef enum {
     /** MIDlet being in foreground */
-    JAVACALL_MIDLET_STATE_FOREGROUND,
+    JAVACALL_MIDLET_UI_STATE_FOREGROUND,
     /** MIDlet being in background */
-    JAVACALL_MIDLET_STATE_BACKGROUND
+    JAVACALL_MIDLET_UI_STATE_BACKGROUND,
+    /** MIDlet is requesting foreground */
+    JAVACALL_MIDLET_UI_STATE_FOREGROUND_REQUEST,
+    /** MIDlet is requesting background */
+    JAVACALL_MIDLET_UI_STATE_BACKGROUND_REQUEST
 } javacall_midlet_ui_state;
+
+/**
+ * @enum javacall_opcode
+ */
+typedef enum {
+    /** Request of run-time information on an application */
+    JAVACALL_REQUEST_RUNTIME_INFO
+} javacall_opcode;
 
 /**
  * @enum javacall_change_reason
@@ -284,6 +302,42 @@ typedef struct _javacall_ams_permission_set {
 } javacall_ams_permission_set;
 
 /**
+ * Structure where run time information about the midlet will be placed.
+ */
+typedef struct _javacall_midlet_runtime_info {
+    /**
+     * The minimum amount of memory guaranteed to be available to the isolate
+     * at any time. Used to pass a parameter to midlet_create_start(),
+     * < 0 if not used.
+     */
+    javacall_int32 memoryReserved;
+
+    /**
+     * The total amount of memory that the isolate can reserve.
+     * Used to pass a parameter to midlet_create_start(), < 0 if not used.
+     */
+    javacall_int32 memoryTotal;
+
+    /**
+     * The approximate amount of object heap memory currently
+     * used by the isolate.
+     */
+    javacall_int32 usedMemory;
+
+    /**
+     * Priority of the isolate (< 0 if not set).
+     */
+    javacall_int32 priority;
+
+    /**
+     * Name of the VM profile that should be used for the new isolate.
+     * Used (1) to pass a parameter to midlet_create_start();
+     * (2) to get a profile's name of the given isolate in run time.
+     */
+    javacall_utf16_string profileName;
+} javacall_midlet_runtime_info;
+
+/**
  * A structure containing variable-length information (such as
  * a suite name and vendor name)about the installed midlet suites.
  */
@@ -391,10 +445,11 @@ typedef int javacall_app_id;
  * Platform invokes this function to inform VM to start a specific MIDlet
  * suite. 
  *
- * @param suiteID     ID of the suite to start
- * @param appID       ID of runtime midlet, ID must not be Zero
- * @param jarName     The path to JAR file
- * @param className   Fully qualified name of the MIDlet class
+ * @param suiteID      ID of the suite to start
+ * @param appID        ID of runtime midlet, ID must not be Zero
+ * @param jarName      The path to JAR file
+ * @param className    Fully qualified name of the MIDlet class
+ * @param pRuntimeInfo Quotas and profile to set for the new application
  * @return <tt>JAVACALL_OK</tt> if all parameter are valid,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note this function just checks the parameters accuracy,
@@ -405,7 +460,8 @@ javacall_result
 javanotify_ams_midlet_start(const javacall_suite_id suiteID,
                             const javacall_app_id appID,
                             const javacall_utf16_string jarName,
-                            const javacall_utf16_string className);
+                            const javacall_utf16_string className,
+                            const javacall_midlet_runtime_info* pRuntimeInfo);
 
 /**
  * Platform invokes this function to inform VM to start a specific MIDlet
@@ -418,6 +474,7 @@ javanotify_ams_midlet_start(const javacall_suite_id suiteID,
  * @param args         An array containning up to 3 arguments for
  *                     the MIDlet to be run
  * @param argsNum      Number of arguments
+ * @param pRuntimeInfo Quotas and profile to set for the new application
  * @return <tt>JAVACALL_OK</tt> if all parameter are valid,
  *         <tt>JAVACALL_FAIL</tt> otherwise
  * @note  this function just checks the parameters accuracy, 
@@ -430,11 +487,14 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
                                       const javacall_utf16_string jarName,
                                       const javacall_utf16_string className,
                                       const javacall_utf16_string *args,
-                                      int argsNum);
+                                      int argsNum,
+                                      const javacall_midlet_runtime_info*
+                                          pRuntimeInfo);
 
 /**
- * Platform invokes this function to inform VM to shutdown a specific MIDlet
- * suite. 
+ * Platform invokes this function to inform VM to shutdown a specific
+ * running MIDlet. If it doesn't exit in the specified amount of milliseconds,
+ * it will be forcefully terminated.
  *
  * @param appID appID of the suite to shutdown
  * @param timeoutMillSecond shutdown the suite in timeout millseconds
@@ -459,7 +519,7 @@ javanotify_ams_midlet_shutdown(const javacall_app_id appID,
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
 javacall_result
-javanotify_ams_midlet_switchForeground(const javacall_app_id appID);
+javanotify_ams_midlet_switch_foreground(const javacall_app_id appID);
 
 /**
  * Platform invokes this function to inform VM to switch current MIDlet
@@ -470,7 +530,7 @@ javanotify_ams_midlet_switchForeground(const javacall_app_id appID);
  * @note the real status of operation will be notified by
  *       <link>javacall_ams_midlet_stateChanged</link>
  */
-javacall_result javanotify_ams_midlet_switchBackground();
+javacall_result javanotify_ams_midlet_switch_background();
 
 /**
  * Platform invokes this function to inform VM to pause a specific MIDlet
@@ -517,13 +577,24 @@ javanotify_ams_midlet_get_suite_info(const javacall_app_id appID,
  * This call is asynchronous, the result will be reported later through
  * passing a MIDLET_INFO_READY_EVENT event to SYSTEM_EVENT_LISTENER.
  *
- * @param appId The ID used to identify the application
+ * @param appID The ID used to identify the application
  *
  * @return error code: <tt>JAVACALL_OK<tt> if successful (operation started),
  *                     <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result
 javanotify_ams_midlet_request_runtime_info(const javacall_app_id appID);
+
+/**
+ * Inform on completion of the previously requested operation.
+ *
+ * @param appID The ID used to identify the application
+ * @param pResult Pointer to a static buffer containing
+ *                operation-dependent result
+ */
+void javacall_ams_operation_completed(javacall_opcode operation,
+                                      const javacall_app_id appID,
+                                      void* pResult);
 
 /**
  * Inform on change of the specific MIDlet's lifecycle status.
@@ -540,10 +611,10 @@ javanotify_ams_midlet_request_runtime_info(const javacall_app_id appID);
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_midlet_stateChanged(javacall_midlet_state state,
-                                      const javacall_app_id appID,
-                                      javacall_change_reason reason);
-                                      
+void javacall_ams_midlet_state_changed(javacall_midlet_state state,
+                                       const javacall_app_id appID,
+                                       javacall_change_reason reason);
+
 /**
  * Inform on change of the specific MIDlet's lifecycle status.
  *
@@ -551,21 +622,16 @@ void javacall_ams_midlet_stateChanged(javacall_midlet_state state,
  * to foreground or background.
  *
  * @param state new state of the running MIDlet. Can be either
- *        <tt>JAVACALL_MIDLET_STATE_FOREGROUND</tt> or
- *        <tt>JAVACALL_MIDLET_STATE_BACKGROUND</tt>
+ *        <tt>JAVACALL_MIDLET_UI_STATE_FOREGROUND</tt>,
+ *        <tt>JAVACALL_MIDLET_UI_STATE_BACKGROUND</tt>
+ *        <tt>JAVACALL_MIDLET_UI_STATE_FOREGROUND_REQUEST</tt>,
+ *        <tt>JAVACALL_MIDLET_UI_STATE_BACKGROUND_REQUEST</tt>
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_ui_stateChanged(javacall_midlet_ui_state state,
-                                  const javacall_app_id appID,
-                                  javacall_change_reason reason);
-
-/**
- * Inform NAMS that specific MIDlet suite wants to be FOREGROUND.
- *
- * @param appID unique ID of the runtime MIDlet 
- */
-void javacall_ams_midlet_requestForeground(const javacall_app_id appID);
+void javacall_ams_ui_state_changed(javacall_midlet_ui_state state,
+                                   const javacall_app_id appID,
+                                   javacall_change_reason reason);
 
 /**
  * Get path name of the directory which holds suite's RMS files 
@@ -576,9 +642,9 @@ void javacall_ams_midlet_requestForeground(const javacall_app_id appID);
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result javacall_ams_getRMSPath(javacall_suite_id suiteID, 
-                                        javacall_utf16_string szPath, 
-                                        int maxPath);
+javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID, 
+                                          javacall_utf16_string szPath, 
+                                          int maxPath);
 
 /**
  * Get domain information of the suite
@@ -589,8 +655,8 @@ javacall_result javacall_ams_getRMSPath(javacall_suite_id suiteID,
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result javacall_ams_getDomain(javacall_suite_id suiteID,
-                                       javacall_ams_domain* domain);
+javacall_result javacall_ams_get_domain(javacall_suite_id suiteID,
+                                        javacall_ams_domain* domain);
 
 /**
  * Get permission set of the suite
@@ -601,8 +667,8 @@ javacall_result javacall_ams_getDomain(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_getPermissions(javacall_suite_id suiteID,
-                            javacall_ams_permission_set* permissions);
+javacall_ams_get_permissions(javacall_suite_id suiteID,
+                             javacall_ams_permission_set* permissions);
 
 /**
  * Set single permission of the suite when user changed it.
@@ -613,9 +679,9 @@ javacall_ams_getPermissions(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_setPermission(javacall_suite_id suiteID,
-                           javacall_ams_permission permission,
-                           javacall_ams_permission_val value);
+javacall_ams_set_permission(javacall_suite_id suiteID,
+                            javacall_ams_permission permission,
+                            javacall_ams_permission_val value);
 
 /**
  * Set permission set of the suite
@@ -626,8 +692,8 @@ javacall_ams_setPermission(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_setPermissions(javacall_suite_id suiteID,
-                            javacall_ams_permission_set* permissions);
+javacall_ams_set_permissions(javacall_suite_id suiteID,
+                             javacall_ams_permission_set* permissions);
 
 /**
  * Get specified property value of the suite.
@@ -639,10 +705,10 @@ javacall_ams_setPermissions(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_getSuiteProperty(const javacall_suite_id suiteID,
-                              const javacall_utf16_string key,
-                              javacall_utf16_string value,
-                              int maxValue);
+javacall_ams_get_suite_property(const javacall_suite_id suiteID,
+                                const javacall_utf16_string key,
+                                javacall_utf16_string value,
+                                int maxValue);
 
 /**
  * Get suite id by vendor and suite name.
@@ -654,9 +720,9 @@ javacall_ams_getSuiteProperty(const javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_getSuiteID(const javacall_utf16_string vendorName,
-                        const javacall_utf16_string suiteName,
-                        javacall_suite_id *suiteID);
+javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
+                          const javacall_utf16_string suiteName,
+                          javacall_suite_id *suiteID);
 
 
 /**
@@ -677,11 +743,11 @@ javacall_ams_getSuiteID(const javacall_utf16_string vendorName,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javanotify_ams_createResourceCache(const javacall_suite_id suiteID,
-                                   const javacall_utf16_string jarName);
+javanotify_ams_create_resource_cache(const javacall_suite_id suiteID,
+                                     const javacall_utf16_string jarName);
 
 /**
- * Java invoke this function to get the image cache path.
+ * VM invokes this function to get the image cache path.
  * @param suiteID   Unique ID of the MIDlet suite
  * @param cachePath buffer for Platform store the image cache path.
  * @param cachePathLen the length of cachePath
@@ -690,9 +756,9 @@ javanotify_ams_createResourceCache(const javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_getResourceCachePath(const javacall_suite_id suiteID,
-                                  javacall_utf16_string cachePath,
-                                  int cachePathLen);
+javacall_ams_get_resource_cache_path(const javacall_suite_id suiteID,
+                                     javacall_utf16_string cachePath,
+                                     int cachePathLen);
 
 /** @} */
 /** @} */
