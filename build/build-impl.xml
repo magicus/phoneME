@@ -98,7 +98,7 @@ information or have any questions.
           </mapper>
      </pathconvert>
 
-      <subant inheritAll="true">
+      <subant inheritAll="true" inheritrefs="true">
          <filelist dir="." files="${modules.antfiles}"/>
       </subant>
   </target>
