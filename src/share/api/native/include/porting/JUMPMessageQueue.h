@@ -33,10 +33,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 /*
- * Status codes from various JUMPMessageQueue functions.  XXX these
- * will probably also be passed out of the JUMPMessage functions
- * without translation, so they should be moved to a separate file ala
- * errno.h
+ * Status codes from various JUMPMessageQueue functions
  *
  * JUMP_MQ_FAILURE currently denotes any kind of failure that is not
  * one of the more specific failures.  We may need or want to make
