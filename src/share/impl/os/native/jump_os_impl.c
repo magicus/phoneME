@@ -28,18 +28,8 @@
 #include "porting/JUMPProcess.h"
 #include "jump_messaging.h"
 
-static jboolean messaging_started = JNI_FALSE;
 static void ensureInitialized() 
 {
-    /*
-     * FIXME:
-     * This is really for stand-alone execution.
-     * We should really make this part of JVM initialization. 
-     */
-    if (!messaging_started) {
-	jumpMessageStart();
-	messaging_started = JNI_TRUE;
-    }
 }
 
 JNIEXPORT jint JNICALL

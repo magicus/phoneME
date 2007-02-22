@@ -45,9 +45,8 @@ struct _JUMPMessageHeader {
     JUMPPlatformCString type;
 };
 
-/* XXX not thread-safe */
-static int MESSAGE_DATA_OFFSET;
-static int jumpMessagingInitialized;
+
+#define jumpMessagingInitialized (1)
 
 /*
  * @brief variable sized encapsulation of a message
@@ -178,7 +177,7 @@ newMessageFromBuffer(uint8* buffer, uint32 len)
     }
     message->data = buffer;
     message->dataBufferLen = len;
-    message->dataPtr = buffer + MESSAGE_DATA_OFFSET;
+    message->dataPtr = buffer + jumpMessageQueueDataOffset();
     return message;
 }
 
@@ -729,29 +728,18 @@ jumpMessageShutdown(void)
      * Destroy all my message queues
      */
     jumpMessageQueueInterfaceDestroy();
-    /*
-     * Disallow calls 
-     */
-    /* XXX thread safety */
-    jumpMessagingInitialized = 0;
-    
     return JUMP_SUCCESS;
 }
 
-/* XXX thread safety */
 JUMPMessageStatusCode
 jumpMessageStart(void)
 {
-    MESSAGE_DATA_OFFSET = jumpMessageQueueDataOffset();
-    jumpMessagingInitialized = 1;
     return JUMP_SUCCESS;
 }
 
-/* XXX thread safety */
 JUMPMessageStatusCode
 jumpMessageRestart(void)
 {
-    jumpMessagingInitialized = 1;
     return JUMP_SUCCESS;
 }
 
