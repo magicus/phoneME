@@ -270,7 +270,7 @@ makeQueueName(pid_t pid, const JUMPPlatformCString messageType,
 
 /* Creates/opens a jump_message_queue for reading or writing.  On
    success returns the queue and sets code to JUMP_MQ_SUCCESS.  On
-   failure returns null and sets code to one of JUMP_MQ_OUT_OF_MEMORY
+   failure returns NULL and sets code to one of JUMP_MQ_OUT_OF_MEMORY
    or JUMP_MQ_FAILURE on failure. */
 static struct jump_message_queue *
 message_queue_create(pid_t processId,
@@ -450,7 +450,7 @@ jumpMessageQueueCreate(JUMPPlatformCString messageType,
 	*code = JUMP_MQ_SUCCESS;
     }
     else {
-	/* NOTE: using getpid() assumes NPTL, i.e., all threads in the
+	/* FIXME: using getpid() assumes NPTL, i.e., all threads in the
 	   process have the same pid. */
 	jmq = message_queue_create(getpid(), messageType, code, 1);
 	if (jmq != NULL) {
@@ -552,9 +552,9 @@ jumpMessageQueueSend(JUMPMessageQueueHandle handle,
     iovec[1].iov_base = buffer;
     iovec[1].iov_len = messageDataSize;
 
-    /* This write is non-blocking.  If it would block, we just
-       consider it a failure like any other failure.  It's atomic, so
-       there are no issues with partial writes. */
+    /* This write is non-blocking.  If it would block, we return
+       JUMP_MQ_WOULD_BLOCK.  It's atomic, so there are no issues with
+       partial writes. */
 
     while (1) {
 	ssize_t status = writev(jmq->fd, iovec, 2);
