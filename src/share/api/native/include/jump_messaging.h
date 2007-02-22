@@ -133,22 +133,31 @@ jumpMessageMarkResetTo(JUMPMessageMark* mmark, struct _JUMPMessage* m);
 /*
  * Message data write api's
  */
-extern void
+
+/*
+ * Bits representing the return value of the jumpMessageAdd...()
+ * functions.
+ */
+enum {
+    JUMP_ADD_OVERRUN = 1
+};
+
+extern int
 jumpMessageAddByte(JUMPOutgoingMessage m, int8 value);
 
-extern void
+extern int
 jumpMessageAddByteArray(JUMPOutgoingMessage m, const int8* values, int length);
 
-extern void
+extern int
 jumpMessageAddShort(JUMPOutgoingMessage m, int16 value);
 
-extern void
+extern int
 jumpMessageAddInt(JUMPOutgoingMessage m, int32 value);
 
-extern void
+extern int
 jumpMessageAddString(JUMPOutgoingMessage m, JUMPPlatformCString str);
 
-extern void
+extern int
 jumpMessageAddStringArray(JUMPOutgoingMessage m,
 			  JUMPPlatformCString* strs,
 			  uint32 length);

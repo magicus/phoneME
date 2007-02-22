@@ -53,12 +53,14 @@ struct _JUMPMessageHeader {
  */
 struct _JUMPMessage {
     struct _JUMPMessageHeader header;
-    /* Length of the data buffer */
-    uint32 dataBufferLen;
-    /* Current location of the data pointer */
-    uint8* dataPtr;
-    /* And the data */
+    /* The message's data */
     uint8* data;
+    /* The length of the data */
+    int dataBufferLen;
+    /* The byte after the message's data */
+    const uint8* dataEnd;
+    /* Current location of the data pointer, for adding to the message */
+    uint8* dataPtr;
 };
 
 /*
@@ -177,6 +179,7 @@ newMessageFromBuffer(uint8* buffer, uint32 len)
     }
     message->data = buffer;
     message->dataBufferLen = len;
+    message->dataEnd = buffer + len;
     message->dataPtr = buffer + jumpMessageQueueDataOffset();
     return message;
 }
@@ -208,16 +211,19 @@ newMessage(void)
  * Take the 'header' struct in a JUMPMessage, and "serialize" it into
  * the message data area.
  */
-static void
+static int
 putHeaderInMessage(struct _JUMPMessage* m)
 {
     struct _JUMPMessageHeader* hdr = &m->header;
+    int result = 0;
     
-    jumpMessageAddInt((JUMPOutgoingMessage)m, hdr->messageId);
-    jumpMessageAddInt((JUMPOutgoingMessage)m, hdr->requestId);
-    jumpMessageAddInt((JUMPOutgoingMessage)m, hdr->sender.address.processId);
-    jumpMessageAddString((JUMPOutgoingMessage)m, hdr->sender.returnType);
-    jumpMessageAddString((JUMPOutgoingMessage)m, hdr->type);
+    result |= jumpMessageAddInt((JUMPOutgoingMessage)m, hdr->messageId);
+    result |= jumpMessageAddInt((JUMPOutgoingMessage)m, hdr->requestId);
+    result |= jumpMessageAddInt((JUMPOutgoingMessage)m, hdr->sender.address.processId);
+    result |= jumpMessageAddString((JUMPOutgoingMessage)m, hdr->sender.returnType);
+    result |= jumpMessageAddString((JUMPOutgoingMessage)m, hdr->type);
+
+    return result;
 }
 
 /*
@@ -278,6 +284,8 @@ jumpMessageNewOutgoingFromBuffer(uint8* buffer, int isResponse)
     }
 
     jumpMessageMarkSet(&mmarkBeforeHeader, message);
+    /* FIXME: we're assuming this works.  If this works, the following
+       adds will work. */
     getHeaderFromMessage(message);
     jumpMessageMarkSet(&mmarkAfterHeader, message);
     
@@ -291,8 +299,8 @@ jumpMessageNewOutgoingFromBuffer(uint8* buffer, int isResponse)
     if (!isResponse) {
 	int32 requestId;
 	requestId = thisProcessRequestId++;
-	message->header.requestId = requestId;
 	jumpMessageAddInt(message, requestId);
+	message->header.requestId = requestId;
     }
     
     /* Remember where we left the header */
@@ -330,6 +338,7 @@ newOutgoingMessage(JUMPPlatformCString type, uint32 requestId,
     message->header.requestId = requestId;
     message->header.sender = addr;
     message->header.type = type;
+    /* FIXME: we're assuming there is enough room for the header. */
     putHeaderInMessage(message);
     return (JUMPOutgoingMessage)message;
 }
@@ -365,33 +374,46 @@ jumpMessageMarkResetTo(JUMPMessageMark* mmark, struct _JUMPMessage* m)
     m->dataPtr = mmark->ptr;
 }
 
-void
+int
 jumpMessageAddByte(JUMPOutgoingMessage m, int8 value)
 {
     assert(jumpMessagingInitialized != 0);
+    if (m->dataPtr + 1 > m->dataEnd) {
+	return JUMP_ADD_OVERRUN;
+    }
     m->dataPtr[0] = value;
     m->dataPtr += 1;
+    return 0;
 }
 
-void
+int
 jumpMessageAddByteArray(JUMPOutgoingMessage m, const int8* values, int length)
 {
     assert(jumpMessagingInitialized != 0);
-    /* FIXME: capacity check! */
+    int result;
     if (values == NULL) {
-	jumpMessageAddInt(m, -1);
-	return;
+	return jumpMessageAddInt(m, -1);
     }
-    jumpMessageAddInt(m, length);
+    result = jumpMessageAddInt(m, length);
+    if (result != 0) {
+	return result;
+    }
+    if (m->dataPtr + length > m->dataEnd) {
+	return JUMP_ADD_OVERRUN;
+    }
     memcpy(m->dataPtr, values, length);
     m->dataPtr += length;
+    return 0;
 }
 
-void
+int
 jumpMessageAddInt(JUMPOutgoingMessage m, int32 value)
 {
     uint32 v;
     assert(jumpMessagingInitialized != 0);
+    if (m->dataPtr + 4 > m->dataEnd) {
+	return JUMP_ADD_OVERRUN;
+    }
     v = (uint32)value;
     m->dataPtr[0] = (v >> 24) & 0xff;
     m->dataPtr[1] = (v >> 16) & 0xff;
@@ -405,35 +427,35 @@ jumpMessageAddInt(JUMPOutgoingMessage m, int32 value)
 	   m->dataPtr[3]);
 #endif
     m->dataPtr += 4;
+    return 0;
 }
 
-void
+int
 jumpMessageAddString(JUMPOutgoingMessage m, JUMPPlatformCString str)
 {
     assert(jumpMessagingInitialized != 0);
-    /* FIXME: capacity check! */
     /* FIXME: ASCII assumption for now */
     /* By the ascii assumption, a string is a byte array of length
        strlen(str) + 1 for the terminating '\0' */
-    jumpMessageAddByteArray(m, (int8*)str, strlen(str) + 1);
+    return jumpMessageAddByteArray(m, (int8*)str, strlen(str) + 1);
 }
 
-void
+int
 jumpMessageAddStringArray(JUMPOutgoingMessage m,
 			  JUMPPlatformCString* strs,
 			  uint32 length)
 {
     uint32 i;
+    int result;
     assert(jumpMessagingInitialized != 0);
-    /* FIXME: capacity check! */
     if (strs == NULL) {
-	jumpMessageAddInt(m, -1);
-	return;
+	return jumpMessageAddInt(m, -1);
     }
-    jumpMessageAddInt(m, length);
+    result = jumpMessageAddInt(m, length);
     for (i = 0; i < length; i++) {
-	jumpMessageAddString(m, strs[i]);
+	result |= jumpMessageAddString(m, strs[i]);
     }
+    return result;
 }
 
 /*
@@ -808,10 +830,15 @@ int doit(void)
     JUMPMessageStatusCode status;
     JUMPAddress executive = jumpMessageGetExecutiveAddress();
     JUMPOutgoingMessage m = jumpMessageNewOutgoingByType("message/test");
+    int result;
 
-    jumpMessageAddInt(m, 5);
-    jumpMessageAddByte(m, 3);
-    jumpMessageAddString(m, "test");
+    result = 0;
+    result |= jumpMessageAddInt(m, 5);
+    result |= jumpMessageAddByte(m, 3);
+    result |= jumpMessageAddString(m, "test");
+    if (result != 0) {
+	return JUMP_FAILURE;
+    }
     jumpMessageSendAsync(executive, m, &status);
     return (status == JUMP_SUCCESS);
 }
