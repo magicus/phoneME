@@ -499,7 +499,6 @@ jumpMessageQueueDestroy(JUMPPlatformCString messageType)
 	ret = decrement_usecount_maybe_free(jmq);
     }
 
-  out:
     mutex_unlock(&queue_list_mutex);
     return ret;
 }
