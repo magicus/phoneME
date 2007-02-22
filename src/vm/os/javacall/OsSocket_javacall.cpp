@@ -32,3 +32,39 @@
 
 #include "incls/_precompiled.incl"
 #include "incls/_OsSocket_javacall.cpp.incl"
+
+extern "C" {
+
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_cldc_io_j2me_socket_Protocol_open0() {
+  KNI_ReturnInt(-1);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_cldc_io_j2me_socket_Protocol_readByte() {
+  KNI_ReturnInt(-1);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_cldc_io_j2me_socket_Protocol_readBuf() {
+  KNI_ReturnInt(-1);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_cldc_io_j2me_socket_Protocol_writeByte() {
+  KNI_ReturnInt(-1);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_com_sun_cldc_io_j2me_socket_Protocol_writeBuf() {
+  KNI_ReturnInt(-1);
+}
+
+jint Java_com_sun_cldc_io_j2me_socket_Protocol_available0(Thread *) {
+  return (jint) 0;
+}
+
+void Java_com_sun_cldc_io_j2me_socket_Protocol_close0(Thread *) {
+}
+
+}
