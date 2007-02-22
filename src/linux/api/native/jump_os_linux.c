@@ -436,7 +436,8 @@ message_queue_destroy(struct jump_message_queue *jmq)
     return ret;
 }
 
-/* This must be called with queue_list_mutex locked. */
+/* Decrements the queue's useCount, destroying it when the useCount
+   falls to zero.  Must be called with queue_list_mutex locked. */
 static int
 decrement_usecount_maybe_free(struct jump_message_queue *jmq)
 {
@@ -451,6 +452,37 @@ decrement_usecount_maybe_free(struct jump_message_queue *jmq)
     remove_message_queue(jmq);
 
     return message_queue_destroy(jmq);
+}
+
+/* Returns the existing jump_message_queue for messageType, or NULL if
+   there is none.  Locks queue_list_mutex and increments the queue's
+   useCount. */
+static struct jump_message_queue *
+lock_and_acquire_message_queue (JUMPPlatformCString messageType)
+{
+    struct jump_message_queue *jmq;
+
+    mutex_lock(&queue_list_mutex);
+
+    jmq = get_message_queue(messageType);
+    if (jmq != NULL) {
+	/* Increment useCount so jmq won't be freed while we're using it. */
+	jmq->useCount++;
+    }
+
+    mutex_unlock(&queue_list_mutex);
+
+    return jmq;
+}
+
+/* Locks queue_list_mutex and decrements the queue's useCount,
+   destroying it when the useCount falls to zero. */
+static void
+lock_and_release_message_queue (struct jump_message_queue *jmq)
+{
+    mutex_lock(&queue_list_mutex);
+    decrement_usecount_maybe_free(jmq);
+    mutex_unlock(&queue_list_mutex);
 }
 
 /*
@@ -611,16 +643,7 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis,
 	deadline.tv_sec += timeout_sec;
     }
 
-    mutex_lock(&queue_list_mutex);
-
-    jmq = get_message_queue(type);
-    if (jmq != NULL) {
-	/* Increment useCount so jmq won't be freed while we're using it. */
-	jmq->useCount++;
-    }
-
-    mutex_unlock(&queue_list_mutex);
-
+    jmq = lock_and_acquire_message_queue(type);
     if (jmq == NULL) {
 	*code = JUMP_MQ_NO_SUCH_QUEUE;
 	return -1;
@@ -698,9 +721,7 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis,
   succeed:
     ret = 0;
   out:
-    mutex_lock(&queue_list_mutex);
-    decrement_usecount_maybe_free(jmq);
-    mutex_unlock(&queue_list_mutex);
+    lock_and_release_message_queue(jmq);
     return ret;
 }
 
@@ -753,16 +774,7 @@ jumpMessageQueueReceive(JUMPPlatformCString type,
     ssize_t status;
     int ret;
 
-    mutex_lock(&queue_list_mutex);
-
-    jmq = get_message_queue(type);
-    if (jmq != NULL) {
-	/* Increment useCount so jmq won't be freed while we're using it. */
-	jmq->useCount++;
-    }
-
-    mutex_unlock(&queue_list_mutex);
-
+    jmq = lock_and_acquire_message_queue(type);
     if (jmq == NULL) {
 	*code = JUMP_MQ_NO_SUCH_QUEUE;
 	return -1;
@@ -842,11 +854,7 @@ jumpMessageQueueReceive(JUMPPlatformCString type,
 
   out:
     mutex_unlock(&jmq->read_mutex);
-
-    mutex_lock(&queue_list_mutex);
-    decrement_usecount_maybe_free(jmq);
-    mutex_unlock(&queue_list_mutex);
-
+    lock_and_release_message_queue(jmq);
     return ret;
 }
 
