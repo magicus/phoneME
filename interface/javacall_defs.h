@@ -130,11 +130,6 @@ typedef enum {
 } javacall_bool;
 
 /**
- * @brief suite unique ID
- */
-typedef int javacall_suite_id;
-
-/**
  * @typedef javacall_handle
  * @brief general handle type
  */
@@ -145,6 +140,11 @@ typedef void* javacall_handle;
  * check JAVACALL_PLATFORM_INC_DIR environment variable
  */
 #include <javacall_platform_defs.h>
+
+/**
+ * @brief suite unique ID
+ */
+typedef javacall_int32 javacall_suite_id;
 
 /**
  * @typedef javacall_utf16_string
