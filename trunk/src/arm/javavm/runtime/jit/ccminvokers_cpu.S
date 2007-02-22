@@ -41,7 +41,14 @@
  */
 
 #ifdef CVM_JIT_COPY_CCMCODE_TO_CODECACHE
-	SET_SECTION_EXEC(ccminvokers_cpu)
+/*
+ * NOTE: Some linker such as the ARM RVCT (v2.2) linker sorts 
+ *	 sections by attributes and section name. To make sure
+ *	 the CCM copied code in the same order as they are included
+ *	 in ccmcodecachecopy_cpu.S, we need to name the sections
+ *	 in alphabetical order.
+ */
+	SET_SECTION_EXEC(s3_ccminvokers_cpu)
 #else
 	SET_SECTION_EXEC_WRITE
 #endif

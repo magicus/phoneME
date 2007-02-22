@@ -40,7 +40,14 @@
 #include "javavm/include/porting/jit/jit.h"
 #include "javavm/include/sync.h"
 
-	SET_SECTION_EXEC(ccmglue_cpu)
+/*
+ * NOTE: Some linker such as the ARM RVCT (v2.2) linker sorts 
+ *	 sections by attributes and section name. To make sure
+ *	 the CCM copied code in the same order as they are included
+ *	 in ccmcodecachecopy_cpu.S, we need to name the sections
+ *	 in alphabetical order.
+ */
+	SET_SECTION_EXEC(s1_ccmglue_cpu)
 
 /*
  * Make a pc-relative branch instruction. Used for patching and instruction
@@ -456,11 +463,14 @@ ENTRY1 ( CVMCCMruntimeResolveGlue )
 #ifdef __RVCT__
 	MACRO
 	res_entry $x
-	ENTRY($x.Glue)
+	LCLS	tmp
+tmp	SETS	"$x.Glue"
+	ENTRY($tmp)
+ENTRY1($tmp)
 	IMPORT  $x
 	ldr     ip, =$x
 	b       CVMCCMruntimeResolveGlue
-	SET_SIZE($x.Glue)
+	SET_SIZE($tmp)
 	MEND
 #define RES_ENTRY(x) res_entry x
 #else
