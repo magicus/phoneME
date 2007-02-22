@@ -35,6 +35,9 @@
 LFPPORT_QTE_NAME = lfpport/linux_qte
 LFPPORT_QTE_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(LFPPORT_QTE_NAME)
 
+# Path to resources dir
+LFPPORT_QTE_RESOURCES_DIR=$(LFPPORT_QTE_DIR)/resource
+
 # Add to library set for this build
 LIB_SET += $(LFPPORT_QTE_NAME)
 
@@ -77,6 +80,12 @@ $(MIDP_OUTPUT_DIR)/moc_%.cpp: $(LFPPORT_QTE_DIR)/native/%.h
 	  $(QTOPIA_SDK_DIR)/bin/moc -i $< -o $@ $(LOG_ONLY)
 	@(cd $(MIDP_OUTPUT_DIR); \
 	  $(QTOPIA_SDK_DIR)/bin/moc -i $< -o $@) $(LOG)
+
+# Copy images to /lib
+define copy_lcdlf_resources
+        @mkdir -p $(LIBDIR)
+        @cp -f $(LFPPORT_QTE_RESOURCES_DIR)/*.png $(LIBDIR) $(LOG)
+endef
 
 $(OBJ_DIR)/lfpport_qte_dateeditor.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_dateeditor.cpp
 $(OBJ_DIR)/lfpport_qte_alert.o: $(MIDP_OUTPUT_DIR)/moc_lfpport_qte_alert.cpp
