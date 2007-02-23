@@ -30,9 +30,14 @@ ifeq ($(CVM_INCLUDE_JUMP),true)
 #
 # JUMP defs
 #
+
 export JAVA_HOME	= $(JDK_HOME)
+
+#JUMP's binary bundle pattern file name
+BINARYBUNDLE_PATTERN_FILENAME=.binary-pattern
 JUMP_ANT_OPTIONS += -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) 	\
-		    -Dcdc.dir=$(call POSIX2HOST,$(CDC_DIST_DIR))
+		    -Dcdc.dir=$(call POSIX2HOST,$(CDC_DIST_DIR)) \
+		    -Dbinary.pattern.file=$(BINARYBUNDLE_PATTERN_FILENAME)  
 # The default JUMP component location
 JUMP_DIR		?= $(COMPONENTS_DIR)/jump
 ifeq ($(wildcard $(JUMP_DIR)/build/build.xml),)
@@ -73,9 +78,9 @@ JUMP_SRCDIRS           += \
 	$(JUMP_SRCDIR)/share/impl/isolate/native \
 	$(JUMP_SRCDIR)/share/impl/os/native
 
+#
 # Add as necessary
 #	$(JUMP_SRCDIR)/share/impl/<component>/native \
-#
 
 JUMP_INCLUDE_DIRS  += \
 	$(JUMP_SRCDIR)/share/api/native/include \
@@ -105,6 +110,17 @@ JUMP_NATIVE_LIBRARY_PATHNAME = $(JUMP_OUTPUT_DIR)/$(LIB_PREFIX)jumpmesg$(LIB_POS
 # Make sure this shared library gets built
 #
 CLASSLIB_DEPS += $(JUMP_NATIVE_LIBRARY_PATHNAME)
+
+# 
+# For the binary bundle 
+#
+# The file $(BINARYBUNDLE_PATTERN_FILENAME) includes an additonal pattern
+# that a jump build needs to include to the binary bundle.
+# See jump's build/build-impl-contentstore.xml, "generate-pattern-file" for 
+# how this pattern file is generated.
+#
+BINARY_BUNDLE_PATTERNS += \
+       $(CVM_BUILD_TOP)/`cat $(CVM_JUMP_BUILDDIR)/generated/$(BINARYBUNDLE_PATTERN_FILENAME)`
 
 #
 # Get any platform specific dependencies of any kind.
