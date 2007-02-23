@@ -319,7 +319,7 @@ void background_listener(const NamsEventData* pEventData) {
            pEventData->appId, pEventData->reason);
 
     for (i = 0; i < numberOfSuiteIds; i++) {
-        if (pSuiteRunState[i] == MIDP_MIDLET_STATE_STARTED &&
+        if (pSuiteRunState[i] == MIDP_MIDLET_STATE_ACTIVE &&
             i+1 != foregroundAppId) {
 
             printf("midp_midlet_set_foreground(suiteId = %d)\n", i+1);

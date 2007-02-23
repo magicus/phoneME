@@ -106,7 +106,7 @@
 /**
  * Defines for MIDlet states
  */
-#define MIDP_MIDLET_STATE_STARTED    1
+#define MIDP_MIDLET_STATE_ACTIVE     1
 #define MIDP_MIDLET_STATE_PAUSED     2
 #define MIDP_MIDLET_STATE_DESTROYED  3
 #define MIDP_MIDLET_STATE_ERROR      4

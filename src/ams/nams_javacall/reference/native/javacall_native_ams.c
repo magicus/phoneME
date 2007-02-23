@@ -26,8 +26,27 @@
 
 #include <javacall_native_ams.h>
 #include <midpNativeAppManager.h>
+#include <midpEvents.h>
 #include <midp_runtime_info.h>
 #include <listeners_intern.h>
+
+/*
+ * Forward declarations.
+ */
+static javacall_opcode midp_operation2javacall(jint midpOpcode);
+
+static javacall_midlet_state
+midp_midlet_state2javacall(jint midpMidletState);
+
+static javacall_midlet_ui_state
+midp_midlet_ui_state2javacall(jint midpMidletUiState);
+
+static javacall_change_reason
+midp_midlet_event_reason2javacall(jint midpEventReason);
+
+void midp_listener_ams_operation_completed(const NamsEventData* pEventData);
+void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData);
+void midp_listener_ams_midlet_ui_state_changed(const NamsEventData* pEventData);
 
 /**
  * Platform invokes this function to start the MIDP system.
@@ -44,9 +63,9 @@ javacall_result javanotify_ams_system_start() {
 
     midp_add_event_listener(midp_listener_ams_operation_completed,
                             SYSTEM_EVENT_LISTENER);
-    midp_add_event_listener(midp_listener_ams_ui_state_changed,
+    midp_add_event_listener(midp_listener_ams_midlet_ui_state_changed,
                             DISPLAY_EVENT_LISTENER);
-    midp_add_event_listener(midp_listener_ams_ui_state_changed,
+    midp_add_event_listener(midp_listener_ams_midlet_state_changed,
                             MIDLET_EVENT_LISTENER);
 
     return midp_system_start();
@@ -106,14 +125,15 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
                                           pRuntimeInfo) {
     MIDPError res;                                          
     MidletRuntimeInfo mri, *pMri = NULL;
-    jchar *pClassName, **args;
-    jint classNameLen, *argsLen;
+    /* IMP_NOTE: fill it! */
+    const jchar *pClassName = NULL, **chArgs = NULL;
+    jint classNameLen = 0, *argsLen = NULL;
 
     if (pRuntimeInfo != NULL) {
-        pRuntimeInfo->memoryReserved = (jint) memoryReserved;
-        pRuntimeInfo->memoryTotal    = (jint) memoryTotal;
-        pRuntimeInfo->usedMemory     = (jint) usedMemory;
-        pRuntimeInfo->priority       = (jint) priority;
+        mri.memoryReserved = (jint) pRuntimeInfo->memoryReserved;
+        mri.memoryTotal    = (jint) pRuntimeInfo->memoryTotal;
+        mri.usedMemory     = (jint) pRuntimeInfo->usedMemory;
+        mri.priority       = (jint) pRuntimeInfo->priority;
 
         //pRuntimeInfo-> =
         //jchar *profileName;
@@ -227,7 +247,7 @@ javanotify_ams_midlet_get_suite_info(const javacall_app_id appID,
         return JAVACALL_FAIL;
     }
 
-    res = midp_midlet_get_suite_info(&midpSuiteData);
+    res = midp_midlet_get_suite_info((jint)appID, &midpSuiteData);
     if (res != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
@@ -307,7 +327,7 @@ void midp_listener_ams_operation_completed(const NamsEventData* pEventData) {
     }
 
     if (pEventData->state == ALL_OK) {
-        if (eventData.reason == NATIVE_MIDLET_GETINFO_REQUEST) {
+        if (pEventData->reason == NATIVE_MIDLET_GETINFO_REQUEST) {
             pResult = pEventData->pRuntimeInfo;
         }
     }
@@ -365,7 +385,8 @@ void midp_listener_ams_ui_state_changed(const NamsEventData* pEventData) {
  *
  * @return Javacall event reason constant corresponding to the given MIDP one
  */
-static javacall_change_reason midp_midlet_reason2javacall(jint midpEventReason) {
+static javacall_change_reason
+midp_midlet_event_reason2javacall(jint midpEventReason) {
     javacall_change_reason jcEventReason;
 
     /*
@@ -434,8 +455,8 @@ static javacall_change_reason midp_midlet_reason2javacall(jint midpEventReason) 
  *
  * @return Javacall opeartion corresponding to the given MIDP one
  */
-static javacall_operation midp_operation2javacall(jint midpOpcode) {
-    javacall_operation jcOperation;
+static javacall_opcode midp_operation2javacall(jint midpOpcode) {
+    javacall_opcode jcOperation;
 
     /*
      * We can't assume that the MIDP and Javacall constants are identical,
@@ -510,7 +531,7 @@ midp_midlet_ui_state2javacall(jint midpMidletUiState) {
      * We can't assume that the MIDP and Javacall constants are identical,
      * so this switch is used.
      */
-    switch (midpMidletState) {
+    switch (midpMidletUiState) {
         case MIDP_DISPLAY_STATE_FOREGROUND: {
             jcMidletUiState = JAVACALL_MIDLET_UI_STATE_FOREGROUND;
             break;

@@ -605,7 +605,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyMidletActive(void) {
     memset((char*)&msd, 0, sizeof(MidletSuiteData));
     eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
     eventData.appId = externalAppId;
-    eventData.state = MIDP_MIDLET_STATE_STARTED;
+    eventData.state = MIDP_MIDLET_STATE_ACTIVE;
     msd.suiteId = UNUSED_SUITE_ID;
     eventData.pSuiteData = &msd;
 
