@@ -1120,6 +1120,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		    void *dsoHandle;
 		    char *libName;
 		    JUMPMessageQueueStatusCode code = 0;
+		    unsigned char *type; 
 
 		    /*
 		     * If the lib name is "main" then
@@ -1168,8 +1169,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		     * successful result
 		     */
 		    /* allocate memory for queue's name */
-		    unsigned char *type = 
-		        malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
+		    type = malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
 		    /* FIXME: make sure that the string is allocated */
 		    assert(type != NULL);
 
