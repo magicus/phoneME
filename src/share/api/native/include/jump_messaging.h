@@ -167,7 +167,6 @@ jumpMessageAddStringArray(JUMPOutgoingMessage m,
  */
 typedef struct {
     uint8* ptr;
-    JUMPMessage m;
 } JUMPMessageReader;
 
 extern void
