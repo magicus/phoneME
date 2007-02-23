@@ -359,11 +359,15 @@ MIDPError midp_midlet_pause(jint appId) {
 /**
  * Stop the specified MIDlet.
  *
+ * If the midlet is not terminated within the given number of milliseconds,
+ * it will be forcefully terminated.
+ *
  * @param appId The application id used to identify the app
+ * @param timeout Timeout in milliseconds
  *
  * @return error code: ALL_OK if the operation was started successfully
  */
-MIDPError midp_midlet_destroy(jint appId) {
+MIDPError midp_midlet_destroy(jint appId, jint timeout) {
     MidpEvent evt;
 
     MIDP_EVENT_INITIALIZE(evt);
@@ -475,7 +479,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifyOperationCompleted(void) {
 
     eventData.event  = MIDP_NAMS_EVENT_OPERATION_COMPLETED;
     eventData.reason = KNI_GetParameterAsInt(1);
-    eventData.appId = KNI_GetParameterAsInt(2);
+    eventData.appId  = KNI_GetParameterAsInt(2);
 
     if (retCode == 0) {
         eventData.state = ALL_OK;
@@ -515,7 +519,7 @@ Java_com_sun_midp_main_NativeAppManagerPeer_notifySystemStart(void) {
 
     memset((char*)&eventData, 0, sizeof(NamsEventData));
     eventData.event = MIDP_NAMS_EVENT_STATE_CHANGED;    
-    eventData.state = MIDP_SYSTEM_STATE_STARTED;
+    eventData.state = MIDP_SYSTEM_STATE_ACTIVE;
     nams_listeners_notify(SYSTEM_EVENT_LISTENER, &eventData);
 
     KNI_ReturnVoid();

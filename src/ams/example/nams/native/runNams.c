@@ -51,6 +51,8 @@
  * MIDlet Suite.
  */
 
+#define MIDLET_DESTROY_DEFAULT_TIMEOUT 5000
+
 #if ENABLE_I3_TEST
 extern void initNams(void);
 extern int findNextEmptyMIDlet(int appId);
@@ -205,7 +207,7 @@ void nams_process_command(int command, int param) {
         break;
 
     case 4:
-        midp_midlet_destroy(param);
+        midp_midlet_destroy(param, MIDLET_DESTROY_DEFAULT_TIMEOUT);
         break;
 
     case 5:
@@ -268,7 +270,7 @@ void system_state_listener(const NamsEventData* pEventData) {
         pEventData->event, pEventData->state);
 
     if (pEventData->event == MIDP_NAMS_EVENT_STATE_CHANGED &&
-            pEventData->state == MIDP_SYSTEM_STATE_STARTED) {
+            pEventData->state == MIDP_SYSTEM_STATE_ACTIVE) {
         int i;
         const jchar *jchArgsForMidlet[3];
         jint  argsLen[3];

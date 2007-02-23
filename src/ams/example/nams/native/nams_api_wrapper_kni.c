@@ -89,11 +89,13 @@ Java_com_sun_midp_main_NamsAPIWrapper_midletPause(void) {
  * Invokes NAMS API method that destroys midlet.
  *
  * @param appId ID assigned by the external application manager
+ * @param timeout timeout in milliseconds
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_main_NamsAPIWrapper_midletDestroy(void) {
-    jint appId = KNI_GetParameterAsInt(1);
-    midp_midlet_destroy(appId);
+    jint appId   = KNI_GetParameterAsInt(1);
+    jint timeout = KNI_GetParameterAsInt(2);
+    midp_midlet_destroy(appId, timeout);
 }
 
 /**
