@@ -1119,6 +1119,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		    /* trying to find native method */
 		    void *dsoHandle;
 		    char *libName;
+		    JUMPMessageQueueStatusCode code = 0;
 
 		    /*
 		     * If the lib name is "main" then
@@ -1166,7 +1167,6 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		     * It must be created before the launcher received 
 		     * successful result
 		     */
-		    JUMPMessageQueueStatusCode code = 0;
 		    /* allocate memory for queue's name */
 		    unsigned char *type = 
 		        malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
