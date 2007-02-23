@@ -378,7 +378,7 @@ int
 jumpMessageAddByte(JUMPOutgoingMessage m, int8 value)
 {
     assert(jumpMessagingInitialized != 0);
-    if (m->dataPtr + 1 > m->dataEnd) {
+    if (m->dataEnd - m->dataPtr < 1) {
 	return JUMP_ADD_OVERRUN;
     }
     m->dataPtr[0] = value;
@@ -394,11 +394,14 @@ jumpMessageAddByteArray(JUMPOutgoingMessage m, const int8* values, int length)
     if (values == NULL) {
 	return jumpMessageAddInt(m, -1);
     }
+    if (length < 0) {
+	return JUMP_ADD_NEGATIVE_ARRAY_LENGTH;
+    }
     result = jumpMessageAddInt(m, length);
     if (result != 0) {
 	return result;
     }
-    if (m->dataPtr + length > m->dataEnd) {
+    if (m->dataEnd - m->dataPtr < length) {
 	return JUMP_ADD_OVERRUN;
     }
     memcpy(m->dataPtr, values, length);
@@ -411,7 +414,7 @@ jumpMessageAddInt(JUMPOutgoingMessage m, int32 value)
 {
     uint32 v;
     assert(jumpMessagingInitialized != 0);
-    if (m->dataPtr + 4 > m->dataEnd) {
+    if (m->dataEnd - m->dataPtr < 4) {
 	return JUMP_ADD_OVERRUN;
     }
     v = (uint32)value;
@@ -450,6 +453,9 @@ jumpMessageAddStringArray(JUMPOutgoingMessage m,
     assert(jumpMessagingInitialized != 0);
     if (strs == NULL) {
 	return jumpMessageAddInt(m, -1);
+    }
+    if (length < 0) {
+	return JUMP_ADD_NEGATIVE_ARRAY_LENGTH;
     }
     result = jumpMessageAddInt(m, length);
     for (i = 0; i < length; i++) {

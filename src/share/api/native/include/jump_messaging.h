@@ -139,7 +139,8 @@ jumpMessageMarkResetTo(JUMPMessageMark* mmark, struct _JUMPMessage* m);
  * functions.
  */
 enum {
-    JUMP_ADD_OVERRUN = 1
+    JUMP_ADD_OVERRUN = 1,
+    JUMP_ADD_NEGATIVE_ARRAY_LENGTH = 2
 };
 
 extern int
