@@ -48,7 +48,8 @@ typedef enum {
     JUMP_OUT_OF_MEMORY = 5,
     JUMP_WOULD_BLOCK = 6,
     JUMP_OVERRUN = 7,
-    JUMP_NEGATIVE_ARRAY_LENGTH = 8
+    JUMP_NEGATIVE_ARRAY_LENGTH = 8,
+    JUMP_UNBLOCKED = 9
 } JUMPMessageStatusCode;
 
 /*
@@ -293,12 +294,28 @@ jumpMessageRegisterDirect(JUMPPlatformCString type,
  * Block and wait for incoming message of a given type
  *
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
- * JUMP_TIMEOUT, or JUMP_FAILURE.
+ * JUMP_TIMEOUT, JUMP_UNBLOCKED, or JUMP_FAILURE.
  */
 extern JUMPMessage
 jumpMessageWaitFor(JUMPPlatformCString type,
 		   int32 timeout,
 		   JUMPMessageStatusCode *code);
+
+/*
+ * Returns a file descriptor for the messageType which may be
+ * select()ed on and will become readable when a message may be
+ * available.  When the file descriptor becomes readable, a subsequent
+ * call to jumpMessageWaitFor will not block (assuming no other thread
+ * has read the message), but may return a failure including
+ * JUMP_UNBLOCKED.  Using the file descriptor for anything other than
+ * select is undefined.  Using the file descriptor after the message
+ * type has been unregistered is undefined.
+ *
+ * Returns the file descriptor, or -1 if the message type is not
+ * registered.
+ */
+extern int
+jumpMessageGetFd(JUMPPlatformCString type);
 
 /*
  * Registration for callback based message handling

@@ -911,6 +911,26 @@ jumpMessageQueueUnblock(JUMPPlatformCString messageType,
     lock_and_release_message_queue(jmq);
 }
 
+int
+jumpMessageQueueGetFd(JUMPPlatformCString messageType)
+{
+    struct jump_message_queue *jmq;
+    int fd;
+
+    jmq = lock_and_acquire_message_queue(messageType);
+
+    if (jmq == NULL) {
+	fd = -1;
+    }
+    else {
+	fd = jmq->fd;
+    }
+
+    lock_and_release_message_queue(jmq);
+
+    return fd;
+}
+
 /*
  * Destroy all message queues created by this process, regardless of
  * useCount.

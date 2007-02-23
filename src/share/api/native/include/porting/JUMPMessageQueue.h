@@ -182,7 +182,7 @@ extern int jumpMessageQueueReceive(JUMPPlatformCString messageType,
  * Unblocks one thread waiting in, or about to call,
  * jumpMessageQueueWaitForMessage.  jumpMessageQueueWaitForMessage
  * will return successfully, and a subsequent call to
- * jumpMessageQueueReceive will fail with JUMP_MQ_UNBLOCKED.  This is
+ * jumpMessageQueueReceive may fail with JUMP_MQ_UNBLOCKED.  This is
  * used to unblock listening threads so they can exit when they are no
  * longer needed.
  * 
@@ -192,6 +192,21 @@ extern int jumpMessageQueueReceive(JUMPPlatformCString messageType,
  */
 extern void jumpMessageQueueUnblock(JUMPPlatformCString messageType,
 				    JUMPMessageQueueStatusCode* code);
+
+/*
+ * Returns a file descriptor for the messageType which may be
+ * select()ed on and will become readable when a message may be
+ * available.  When the file descriptor becomes readable, a subsequent
+ * call to jumpMessageQueueWaitForMessage will not block (assuming no
+ * other thread has read the message).  Using the file descriptor for
+ * anything other than select() is undefined.  Using the file
+ * descriptor after the message queue has been destroyed is undefined.
+ *
+ * Returns the file descriptor, or -1 if there is no queue for the
+ * message type.
+ */
+extern int
+jumpMessageQueueGetFd(JUMPPlatformCString messageType);
 
 /*
  * Close and destroy all message queues created by the process.

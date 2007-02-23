@@ -101,6 +101,9 @@ translateJumpMessageQueueStatusCode(const JUMPMessageQueueStatusCode *mqcode)
       case JUMP_MQ_NO_SUCH_QUEUE:
 	return JUMP_FAILURE;
 
+      case JUMP_MQ_UNBLOCKED:
+	return JUMP_UNBLOCKED;
+
       default:
 	assert(0);
 	return JUMP_FAILURE;
@@ -824,6 +827,12 @@ jumpMessageWaitFor(JUMPPlatformCString type,
     assert(jumpMessagingInitialized != 0);
 
     return doWaitFor(type, timeout, code);
+}
+
+int
+jumpMessageGetFd(JUMPPlatformCString type)
+{
+    return jumpMessageQueueGetFd(type);
 }
 
 JUMPMessageHandlerRegistration
