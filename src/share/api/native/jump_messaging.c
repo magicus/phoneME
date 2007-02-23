@@ -229,7 +229,7 @@ putHeaderInMessage(struct _JUMPMessage* m)
 /*
  * Deserialize header from message to 'header' structure in JUMPMessage.
  */
-static JUMPMessageGetStatus
+static JUMPMessageStatusCode
 getHeaderFromMessage(struct _JUMPMessage* m)
 {
     JUMPMessageReader reader;
@@ -476,7 +476,7 @@ jumpMessageReaderInit(JUMPMessageReader* r, JUMPMessage m)
     assert(jumpMessagingInitialized != 0);
     r->ptr = m->dataPtr;
     r->ptrEnd = m->dataEnd;
-    r->status = 0;
+    r->status = JUMP_SUCCESS;
 }
 
 int8
@@ -486,12 +486,12 @@ jumpMessageGetByte(JUMPMessageReader* r)
 
     assert(jumpMessagingInitialized != 0);
 
-    if (r->status != 0) {
+    if (r->status != JUMP_SUCCESS) {
 	return 0;
     }
 
     if (r->ptrEnd - r->ptr < 1) {
-	r->status |= JUMP_GET_OVERRUN;
+	r->status = JUMP_OVERRUN;
 	return 0;
     }
 
@@ -508,8 +508,12 @@ jumpMessageGetByteArray(JUMPMessageReader* r, uint32* lengthPtr)
     
     assert(jumpMessagingInitialized != 0);
 
+    if (r->status != JUMP_SUCCESS) {
+	return NULL;
+    }
+
     length = jumpMessageGetInt(r);
-    if (r->status != 0) {
+    if (r->status != JUMP_SUCCESS) {
 	return NULL;
     }
 
@@ -521,12 +525,12 @@ jumpMessageGetByteArray(JUMPMessageReader* r, uint32* lengthPtr)
     }
 
     if (length < 0) {
-	r->status |= JUMP_GET_NEGATIVE_ARRAY_LENGTH;
+	r->status = JUMP_NEGATIVE_ARRAY_LENGTH;
 	return NULL;
     }
 
     if (r->ptrEnd - r->ptr < length) {
-	r->status |= JUMP_GET_OVERRUN;
+	r->status = JUMP_OVERRUN;
 	return NULL;
     }
 
@@ -534,7 +538,7 @@ jumpMessageGetByteArray(JUMPMessageReader* r, uint32* lengthPtr)
     if (bytearray == NULL) {
 	/* Caller discards message? Or do we "rewind" to the start of the
 	   length field again? */
-	r->status |= JUMP_GET_OUT_OF_MEMORY;
+	r->status = JUMP_OUT_OF_MEMORY;
 	return NULL;
     }
     
@@ -551,12 +555,12 @@ jumpMessageGetInt(JUMPMessageReader* r)
 
     assert(jumpMessagingInitialized != 0);
 
-    if (r->status != 0) {
+    if (r->status != JUMP_SUCCESS) {
 	return 0;
     }
 
     if (r->ptrEnd - r->ptr < 4) {
-	r->status |= JUMP_GET_OVERRUN;
+	r->status = JUMP_OVERRUN;
 	return 0;
     }
 
@@ -590,8 +594,12 @@ jumpMessageGetStringArray(JUMPMessageReader* r, uint32* lengthPtr)
     
     assert(jumpMessagingInitialized != 0);
 
+    if (r->status != JUMP_SUCCESS) {
+	return NULL;
+    }
+
     length = jumpMessageGetInt(r);
-    if (r->status != 0) {
+    if (r->status != JUMP_SUCCESS) {
 	return NULL;
     }
 
@@ -603,22 +611,19 @@ jumpMessageGetStringArray(JUMPMessageReader* r, uint32* lengthPtr)
     }
 
     if (length < 0) {
-	r->status |= JUMP_GET_NEGATIVE_ARRAY_LENGTH;
+	r->status = JUMP_NEGATIVE_ARRAY_LENGTH;
 	return NULL;
     }
 
     strs = calloc(length, sizeof(JUMPPlatformCString));
     if (strs == NULL) {
-	r->status |= JUMP_GET_OUT_OF_MEMORY;
-    }
-
-    if (r->status != 0) {
+	r->status = JUMP_OUT_OF_MEMORY;
 	return NULL;
     }
 
     for (i = 0; i < length; i++) {
 	strs[i] = jumpMessageGetString(r);
-	if (strs[i] == NULL && r->status != 0) {
+	if (r->status != JUMP_SUCCESS) {
 	    int j;
 	    for (j = 0; j < i; j++) {
 		free(strs[j]);

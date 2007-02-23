@@ -46,7 +46,9 @@ typedef enum {
     JUMP_SUCCESS  = 3,
     JUMP_FAILURE  = 4,
     JUMP_OUT_OF_MEMORY = 5,
-    JUMP_WOULD_BLOCK = 6
+    JUMP_WOULD_BLOCK = 6,
+    JUMP_OVERRUN = 7,
+    JUMP_NEGATIVE_ARRAY_LENGTH = 8
 } JUMPMessageStatusCode;
 
 /*
@@ -167,20 +169,10 @@ jumpMessageAddStringArray(JUMPOutgoingMessage m,
  * Message data read api's
  */
 
-/*
- * Bit values in JUMPMessageReader.status.  These may be or'd into
- * status on each jumpMessageGet...() call.
- */
-typedef enum {
-    JUMP_GET_OVERRUN = 1,
-    JUMP_GET_OUT_OF_MEMORY = 2,
-    JUMP_GET_NEGATIVE_ARRAY_LENGTH = 4
-} JUMPMessageGetStatus;
-
 typedef struct {
     uint8* ptr;
     const uint8* ptrEnd;
-    JUMPMessageGetStatus status;
+    JUMPMessageStatusCode status;
 } JUMPMessageReader;
 
 extern void
