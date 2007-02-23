@@ -24,7 +24,6 @@
  * information or have any questions. 
  */
 
-/* $Id: //bas2/vmc/dev3/src/portlibs/jit/cisc/include/porting/jitarchemitter.h#3 $ */
 #ifndef _INCLUDED_JITARCHEMITTER_H
 #define _INCLUDED_JITARCHEMITTER_H
 

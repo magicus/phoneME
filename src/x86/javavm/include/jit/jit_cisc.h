@@ -65,10 +65,6 @@
 #define CVM_DEBUG_JIT_TRACE_CODEGEN_RULE_EXECUTION
 */
 
-#if !defined(CVM_DEBUG_JIT_TRACE_CODEGEN_RULE_EXECUTION) && \
-    !defined(CVM_JIT_DEBUG)
-#define CVMJITdoStartOfCodegenRuleAction(con, ruleno, description, node)
-#endif
 #if !defined(CVM_DEBUG_ASSERTS)
 #define CVMJITdoEndOfCodegenRuleAction(con)
 #endif
