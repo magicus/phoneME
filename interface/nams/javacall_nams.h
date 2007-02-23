@@ -83,8 +83,10 @@ typedef enum {
  * @enum javacall_opcode
  */
 typedef enum {
+    /** Invalid operation */
+    JAVACALL_OPCODE_INVALID,
     /** Request of run-time information on an application */
-    JAVACALL_REQUEST_RUNTIME_INFO
+    JAVACALL_OPCODE_REQUEST_RUNTIME_INFO
 } javacall_opcode;
 
 /**
@@ -440,6 +442,15 @@ typedef struct _javacall_ams_suite_data {
  * @brief running midlet unique ID
  */
 typedef int javacall_app_id;
+
+/**
+ * Platform invokes this function to start the MIDP system.
+ * It does not return until the system is stopped.
+ *
+ * @return <tt>JAVACALL_OK</tt> if successful,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result javanotify_ams_system_start();
 
 /**
  * Platform invokes this function to inform VM to start a specific MIDlet
