@@ -166,8 +166,21 @@ jumpMessageAddStringArray(JUMPOutgoingMessage m,
 /*
  * Message data read api's
  */
+
+/*
+ * Bit values in JUMPMessageReader.status.  These may be or'd into
+ * status on each jumpMessageGet...() call.
+ */
+typedef enum {
+    JUMP_GET_OVERRUN = 1,
+    JUMP_GET_OUT_OF_MEMORY = 2,
+    JUMP_GET_NEGATIVE_ARRAY_LENGTH = 4
+} JUMPMessageGetStatus;
+
 typedef struct {
     uint8* ptr;
+    const uint8* ptrEnd;
+    JUMPMessageGetStatus status;
 } JUMPMessageReader;
 
 extern void

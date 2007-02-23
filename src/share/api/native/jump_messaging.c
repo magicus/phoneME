@@ -229,7 +229,7 @@ putHeaderInMessage(struct _JUMPMessage* m)
 /*
  * Deserialize header from message to 'header' structure in JUMPMessage.
  */
-static void
+static JUMPMessageGetStatus
 getHeaderFromMessage(struct _JUMPMessage* m)
 {
     JUMPMessageReader reader;
@@ -245,6 +245,8 @@ getHeaderFromMessage(struct _JUMPMessage* m)
 
     /* Make sure the data pointer in the message is now set past the header */
     m->dataPtr = reader.ptr;
+
+    return reader.status;
 }
 
 /*
@@ -259,6 +261,7 @@ newMessageFromReceivedBuffer(uint8* buffer, uint32 len)
 	return NULL;
     }
 
+    /* FIXME: check return code. */
     getHeaderFromMessage(message);
     return message;
 }
@@ -284,7 +287,7 @@ jumpMessageNewOutgoingFromBuffer(uint8* buffer, int isResponse)
     }
 
     jumpMessageMarkSet(&mmarkBeforeHeader, message);
-    /* FIXME: we're assuming this works.  If this works, the following
+    /* FIXME: check return code.  If this works, the following
        adds will work. */
     getHeaderFromMessage(message);
     jumpMessageMarkSet(&mmarkAfterHeader, message);
@@ -472,18 +475,31 @@ jumpMessageReaderInit(JUMPMessageReader* r, JUMPMessage m)
 {
     assert(jumpMessagingInitialized != 0);
     r->ptr = m->dataPtr;
+    r->ptrEnd = m->dataEnd;
+    r->status = 0;
 }
 
 int8
 jumpMessageGetByte(JUMPMessageReader* r)
 {
-    int8 ret = r->ptr[0];
+    int8 ret;
+
     assert(jumpMessagingInitialized != 0);
+
+    if (r->status != 0) {
+	return 0;
+    }
+
+    if (r->ptrEnd - r->ptr < 1) {
+	r->status |= JUMP_GET_OVERRUN;
+	return 0;
+    }
+
+    ret = r->ptr[0];
     r->ptr += 1;
     return ret;
 }
 
-/* NULL array -> NULL return + length == -1. */
 int8*
 jumpMessageGetByteArray(JUMPMessageReader* r, uint32* lengthPtr)
 {
@@ -491,15 +507,34 @@ jumpMessageGetByteArray(JUMPMessageReader* r, uint32* lengthPtr)
     uint32 length;
     
     assert(jumpMessagingInitialized != 0);
+
     length = jumpMessageGetInt(r);
-    *lengthPtr = length;
-    if (length == -1) {
+    if (r->status != 0) {
 	return NULL;
     }
+
+    *lengthPtr = length;
+
+    if (length == -1) {
+	/* NULL array was written, this is ok. */
+	return NULL;
+    }
+
+    if (length < 0) {
+	r->status |= JUMP_GET_NEGATIVE_ARRAY_LENGTH;
+	return NULL;
+    }
+
+    if (r->ptrEnd - r->ptr < length) {
+	r->status |= JUMP_GET_OVERRUN;
+	return NULL;
+    }
+
     bytearray = calloc(1, length);
     if (bytearray == NULL) {
 	/* Caller discards message? Or do we "rewind" to the start of the
 	   length field again? */
+	r->status |= JUMP_GET_OUT_OF_MEMORY;
 	return NULL;
     }
     
@@ -512,17 +547,29 @@ jumpMessageGetByteArray(JUMPMessageReader* r, uint32* lengthPtr)
 int32
 jumpMessageGetInt(JUMPMessageReader* r)
 {
-    int32 i = (int32)
+    int32 i;
+
+    assert(jumpMessagingInitialized != 0);
+
+    if (r->status != 0) {
+	return 0;
+    }
+
+    if (r->ptrEnd - r->ptr < 4) {
+	r->status |= JUMP_GET_OVERRUN;
+	return 0;
+    }
+
+    i = (int32)
 	(((uint8)r->ptr[0] << 24) | 
 	 ((uint8)r->ptr[1] << 16) | 
 	 ((uint8)r->ptr[2] << 8) | 
 	  (uint8)r->ptr[3]);
-    assert(jumpMessagingInitialized != 0);
+
     r->ptr += 4;
     return i;
 }
 
-/* XXX Need to be able to distinguish null string from out of memory. */
 JUMPPlatformCString
 jumpMessageGetString(JUMPMessageReader* r)
 {
@@ -542,21 +589,43 @@ jumpMessageGetStringArray(JUMPMessageReader* r, uint32* lengthPtr)
     JUMPPlatformCString* strs;
     
     assert(jumpMessagingInitialized != 0);
+
     length = jumpMessageGetInt(r);
+    if (r->status != 0) {
+	return NULL;
+    }
+
     *lengthPtr = length;
 
     if (length == -1) {
+	/* NULL array was written, this is ok. */
+	return NULL;
+    }
+
+    if (length < 0) {
+	r->status |= JUMP_GET_NEGATIVE_ARRAY_LENGTH;
 	return NULL;
     }
 
     strs = calloc(length, sizeof(JUMPPlatformCString));
     if (strs == NULL) {
+	r->status |= JUMP_GET_OUT_OF_MEMORY;
+    }
+
+    if (r->status != 0) {
 	return NULL;
     }
-    
+
     for (i = 0; i < length; i++) {
-	/* XXX NULL vs. out of memory. */
 	strs[i] = jumpMessageGetString(r);
+	if (strs[i] == NULL && r->status != 0) {
+	    int j;
+	    for (j = 0; j < i; j++) {
+		free(strs[j]);
+	    }
+	    free(strs);
+	    return NULL;
+	}
     }
     
     return strs;
