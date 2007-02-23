@@ -2469,7 +2469,10 @@ public class Graphics {
 	 * Returns the font object. 
 	 */
 	public GCIFont getGCIFont() {
-	    return currentFont.gciFont;
+            Font f = (currentFont == null ? 
+                      Font.getDefaultFont() :
+                      currentFont); 
+            return f.gciFont;
 	}
 	
     }
