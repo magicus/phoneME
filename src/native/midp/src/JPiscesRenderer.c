@@ -1277,32 +1277,32 @@ Java_com_sun_pisces_PiscesRenderer_setPathData() {
             switch (commands[idx]) {
             case CMD_MOVE_TO:
                 renderer_moveTo(rdr,
-                                (jint)(data[offset] * 65536.0),
-                                (jint)(data[offset + 1] * 65536.0));
+                                (jint)(data[offset] * 65536.0f),
+                                (jint)(data[offset + 1] * 65536.0f));
                 offset += 2;
                 break;
             case CMD_LINE_TO:
                 renderer_lineTo(rdr,
-                                (jint)(data[offset] * 65536.0),
-                                (jint)(data[offset + 1] * 65536.0));
+                                (jint)(data[offset] * 65536.0f),
+                                (jint)(data[offset + 1] * 65536.0f));
                 offset += 2;
                 break;
             case CMD_QUAD_TO:
                 renderer_quadTo(rdr,
-                                (jint)(data[offset] * 65536.0),
-                                (jint)(data[offset + 1] * 65536.0),
-                                (jint)(data[offset + 2] * 65536.0),
-                                (jint)(data[offset + 3] * 65536.0));
+                                (jint)(data[offset] * 65536.0f),
+                                (jint)(data[offset + 1] * 65536.0f),
+                                (jint)(data[offset + 2] * 65536.0f),
+                                (jint)(data[offset + 3] * 65536.0f));
                 offset += 4;
                 break;
             case CMD_CURVE_TO:
                 renderer_cubicTo(rdr,
-                                 (jint)(data[offset] * 65536.0),
-                                 (jint)(data[offset + 1] * 65536.0),
-                                 (jint)(data[offset + 2] * 65536.0),
-                                 (jint)(data[offset + 3] * 65536.0),
-                                 (jint)(data[offset + 4] * 65536.0),
-                                 (jint)(data[offset + 5] * 65536.0));
+                                 (jint)(data[offset] * 65536.0f),
+                                 (jint)(data[offset + 1] * 65536.0f),
+                                 (jint)(data[offset + 2] * 65536.0f),
+                                 (jint)(data[offset + 3] * 65536.0f),
+                                 (jint)(data[offset + 4] * 65536.0f),
+                                 (jint)(data[offset + 5] * 65536.0f));
                 offset += 6;
                 break;
             case CMD_CLOSE:
