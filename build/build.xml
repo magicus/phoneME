@@ -108,7 +108,9 @@ information or have any questions.
   </target>
 
   <target name="clean">
+      <property file="modules-config.properties"/>
       <delete dir="${dist.dir}"/>
+      <delete dir="${cdc.dir}/${contentstore.root}"/>
   </target>
 
 

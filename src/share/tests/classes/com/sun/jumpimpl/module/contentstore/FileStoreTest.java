@@ -93,15 +93,7 @@ public class FileStoreTest extends TestCase {
    	     factory.load(com.sun.jumpimpl.process.JUMPModulesConfig.getProperties());
 
           }
-
-          // The setup for the repository root, hopefully can go away later.
-          File file = new File(System.getProperty("java.home") + File.separator + "repository");
-          if (!file.exists()) {
-               file.mkdir(); 
-               file.deleteOnExit();
-          }
-
-          System.setProperty("installer.repository", file.getPath());
+	  
        }
    
    

@@ -195,9 +195,9 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         }
         
         // the repository directory should be passed in as a system property
-        repositoryDir = System.getProperty("installer.repository");
+        repositoryDir = System.getProperty("contentstore.root");
         if (repositoryDir == null && map != null) {
-            repositoryDir = (String)map.get("installer.repository");
+            repositoryDir = (String)map.get("contentstore.root");
         }
         if (repositoryDir != null) {
             // remove any ending /'s'

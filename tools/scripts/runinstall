@@ -128,14 +128,14 @@ fi
 
 # Set the root of content store
 if [ -z "$JUMP_CONTENT_STORE_DIR" ] ; then
-  JUMP_CONTENT_STORE_DIR=/opt/repository
+  JUMP_CONTENT_STORE_DIR=data
 fi
 
 CVM=$PHONEME_DIST/bin/cvm
 JUMP_LIBDIR=$PHONEME_DIST/jump/lib
 INSTALLER_TOOL_CLASS=com.sun.jumpimpl.module.installer.JUMPInstallerTool
 
-PROPERTIES="-Dinstaller.repository=$JUMP_CONTENT_STORE_DIR"
+PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
 ARGUMENTS="-ProvisioningServerURL $PROVISIONING_SERVER_URL"
 
 cd $PHONEME_DIST

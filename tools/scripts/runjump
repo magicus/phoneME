@@ -163,7 +163,7 @@ fi
 
 # The root of contents tore
 if [ -z "$JUMP_CONTENT_STORE_DIR" ] ; then
-  JUMP_CONTENT_STORE_DIR=/opt/repository
+  JUMP_CONTENT_STORE_DIR=data
 fi
 
 # The root of contents tore
@@ -188,10 +188,10 @@ elif [ "$PHONEME_PLATFORM" = "i686" ] ; then
    fi
    MIDP_CLASSES_ZIP=$PHONEME_DIST/midp/midp_fb/classes.zip
    MIDP_PROPERTIES="-Dsun.midp.home.path=$PHONEME_DIST/midp/midp_fb -Xbootclasspath/a:$MIDP_CLASSES_ZIP"
-   EXECUTIVE_PROPERTIES="-Dinstaller.repository=$JUMP_CONTENT_STORE_DIR"
+   EXECUTIVE_PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
 fi
  
-SYSTEM_PROPERTIES="-Dinstaller.repository=$JUMP_CONTENT_STORE_DIR"
+SYSTEM_PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
 SERVER_JARFILE=$PHONEME_DIST/jump/lib/jump.jar
 EXECUTIVE_JARFILE=$PHONEME_DIST/jump/lib/executive-jump.jar
 CVMC=$PHONEME_DIST/bin/cvmc

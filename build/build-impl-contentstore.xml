@@ -24,11 +24,24 @@ information or have any questions.
 -->
 <project basedir="." default="compile-contentstore-module" name="jump-impl-contentstore">
 
-  <target name="compile-contentstore-module">
+  <target name="compile-contentstore-module" depends="generate-contentstore-root">
       <jump.javac 
              srcdir="${s.share.impl.dir}/contentstore/classes">
            <include name="com/sun/jumpimpl/module/contentstore/*.java" />
       </jump.javac>
+  </target>
+
+  <target name="generate-contentstore-root"> 
+       <property file="modules-config.properties"/>
+
+       <mkdir dir="${cdc.dir}/${contentstore.root}"/>
+
+       <!-- Generate a file to include the content store directory to 
+            the binary bundle.  The content of this file is added to the 
+            BINARY_BUNDLE_PATTERN in the cdc's defs_jump.mk.   -->
+
+       <echo file="${d.gen.dir}/${binary.pattern.file}">${contentstore.root}</echo>     
+
   </target>
 
 </project>

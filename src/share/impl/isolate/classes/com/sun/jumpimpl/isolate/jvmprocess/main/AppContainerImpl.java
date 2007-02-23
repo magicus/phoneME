@@ -72,7 +72,8 @@ public class AppContainerImpl extends JUMPAppContainer {
        try {
 
           String className = app.getProperty(INITIAL_CLASS_KEY);
-          File classPath = new File(app.getProperty(CLASSPATH_KEY)).getCanonicalFile();
+	  File classPath = new File(System.getProperty("java.home") +                                File.separator + app.getProperty(CLASSPATH_KEY));
+
 
 	  URLClassLoader loader = new URLClassLoader(
 			  new URL[] {classPath.toURL()}, 
