@@ -739,27 +739,27 @@ JUMPMessage
 jumpMessageSendSync(JUMPAddress target, JUMPOutgoingMessage m, int32 timeout,
 		    JUMPMessageStatusCode* code)
 {
-    JUMPMessageQueueStatusCode mqcode;
-    JUMPMessage r;
+    JUMPMessageHandlerRegistration registration = NULL;
+    JUMPMessage r = NULL;
 
     assert(jumpMessagingInitialized != 0);
 
-    /* Create the message queue before sending the message to ensure
-       it exists before the recipient sends a message to it. */
-    jumpMessageQueueCreate(m->header.sender.returnType, &mqcode);
-    if (mqcode != JUMP_MQ_SUCCESS) {
-	*code = translateJumpMessageQueueStatusCode(&mqcode);
-	return NULL;
+    /* Register the message type before sending the message to ensure
+       the queue exists before the recipient sends a message to it. */
+
+    registration =
+	jumpMessageRegisterDirect(m->header.sender.returnType, code);
+    if (registration == NULL) {
+	goto out;
     }
 
     jumpMessageSendAsync(target, m, code);
     if (*code != JUMP_SUCCESS) {
-	r = NULL;
 	goto out;
     }
 
     /* Get a response. Discard any that don't match outgoing request id. */
-    /* XXX This is no good, each call to doWaitFor() gets a new timeout.
+    /* FIXME This is no good, each call to doWaitFor() gets a new timeout.
        doWaitFor() should use a deadline, not a timeout. */
     do {
 	r = doWaitFor(m->header.sender.returnType, timeout, code);
@@ -771,7 +771,9 @@ jumpMessageSendSync(JUMPAddress target, JUMPOutgoingMessage m, int32 timeout,
     }
 
   out:
-    jumpMessageQueueDestroy(m->header.sender.returnType);
+    if (registration != NULL) {
+	jumpMessageCancelRegistration(registration);
+    }
     return r;
 }
 
