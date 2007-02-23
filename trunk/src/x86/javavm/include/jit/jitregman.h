@@ -1,4 +1,3 @@
-/* $Id: //bas2/vmc/dev3/src/portlibs/jit/cisc/include/export/jitregman.h#2 $ */
 /*
  * @(#)jitregman.h	1.7 06/10/23
  * 

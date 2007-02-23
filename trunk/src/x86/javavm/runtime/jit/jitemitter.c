@@ -1,4 +1,3 @@
-/* $Id: //bas2/vmc/dev3/src/portlibs/jit/cisc/jitemitter.c#3 $ */
 /*
  * @(#)jitemitter.c	1.5 06/10/23
  * 
