@@ -35,6 +35,7 @@ information or have any questions.
        <property file="modules-config.properties"/>
 
        <mkdir dir="${cdc.dir}/${contentstore.root}"/>
+       <chmod dir="${cdc.dir}/${contentstore.root}" perm="go+w" />
 
        <!-- Generate a file to include the content store directory to 
             the binary bundle.  The content of this file is added to the 
