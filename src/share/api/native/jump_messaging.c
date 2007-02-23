@@ -821,16 +821,8 @@ jumpMessageWaitFor(JUMPPlatformCString type,
 		   int32 timeout,
 		   JUMPMessageStatusCode *code)
 {
-    JUMPMessageQueueStatusCode mqcode;
-    
     assert(jumpMessagingInitialized != 0);
 
-    /* XXX destroy this later?  Or shouldn't this be part of register? */
-    jumpMessageQueueCreate(type, &mqcode);
-    if (mqcode != JUMP_MQ_SUCCESS) {
-	*code = translateJumpMessageQueueStatusCode(&mqcode);
-	return NULL;
-    }
     return doWaitFor(type, timeout, code);
 }
 
