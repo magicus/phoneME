@@ -903,8 +903,8 @@ Java_com_sun_pisces_PiscesRenderer_setPathData(JNIEnv* env,
             switch (commands[idx]) {
             case CMD_MOVE_TO:
                 renderer_moveTo(rdr,
-                                (jint)(data[offset] * 65536.0),
-                                (jint)(data[offset + 1] * 65536.0));
+                                (jint)(data[offset] * 65536.0f),
+                                (jint)(data[offset + 1] * 65536.0f));
                 offset += 2;
                 break;
             case CMD_LINE_TO:
