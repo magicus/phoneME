@@ -380,7 +380,7 @@ void state_change_listener(const NamsEventData* pEventData) {
         printf(" changed state - (%d) \"", pEventData->state);
 
         switch (pEventData->state) {
-            case MIDP_MIDLET_STATE_STARTED: printf("STARTED\""); break;
+            case MIDP_MIDLET_STATE_ACTIVE: printf("ACTIVE\""); break;
             case MIDP_MIDLET_STATE_PAUSED: printf("PAUSED\""); break;
             case MIDP_MIDLET_STATE_DESTROYED:
                 printf("DESTROYED\"");

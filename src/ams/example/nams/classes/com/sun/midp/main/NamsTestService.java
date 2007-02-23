@@ -413,7 +413,7 @@ public class NamsTestService implements EventListener, Runnable {
     private String getStateByValue(int state) {
         /* IMPL_NOTE: see midpNativeAppManager.h for the definitions */
         final String[] stateStrings = {
-            "MIDP_MIDLET_STATE_STARTED",
+            "MIDP_MIDLET_STATE_ACTIVE",
             "MIDP_MIDLET_STATE_PAUSED",
             "MIDP_MIDLET_STATE_DESTROYED",
             "MIDP_MIDLET_STATE_ERROR",
