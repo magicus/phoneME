@@ -276,7 +276,7 @@ jumpMessageSendSync(JUMPAddress target, JUMPOutgoingMessage m, int32 timeout,
  * past the return point of the JUMPMessageHandler.
  */
 typedef void (*JUMPMessageHandler)(JUMPMessage m, void* data);
-typedef void* JUMPMessageHandlerRegistration;
+typedef struct JUMPMessageHandlerRegistration * JUMPMessageHandlerRegistration;
 
 /*
  * Listening to messages directly
@@ -286,7 +286,8 @@ typedef void* JUMPMessageHandlerRegistration;
  * Register 'type' for direct listening
  */
 extern JUMPMessageHandlerRegistration
-jumpMessageRegisterDirect(JUMPPlatformCString type);
+jumpMessageRegisterDirect(JUMPPlatformCString type,
+			  JUMPMessageStatusCode *code);
 
 /*
  * Block and wait for incoming message of a given type

@@ -63,6 +63,11 @@ struct _JUMPMessage {
     uint8* dataPtr;
 };
 
+struct JUMPMessageHandlerRegistration {
+    JUMPPlatformCString messageType;
+};
+
+
 /*
  * This is the api and OS-independent implementation of native
  * messaging in JUMP.
@@ -771,9 +776,38 @@ jumpMessageSendSync(JUMPAddress target, JUMPOutgoingMessage m, int32 timeout,
 }
 
 JUMPMessageHandlerRegistration
-jumpMessageRegisterDirect(JUMPPlatformCString type)
+jumpMessageRegisterDirect(JUMPPlatformCString type,
+			  JUMPMessageStatusCode *code)
 {
-    /* FIXME */
+    JUMPMessageHandlerRegistration registration;
+    JUMPMessageQueueStatusCode mqcode;
+
+    registration = malloc(sizeof(*registration));
+    if (registration == NULL) {
+	*code = JUMP_OUT_OF_MEMORY;
+	goto fail;
+    }
+
+    registration->messageType = strdup(type);
+    if (registration->messageType == NULL) {
+	*code = JUMP_OUT_OF_MEMORY;
+	goto fail;
+    }
+
+    jumpMessageQueueCreate(registration->messageType, &mqcode);
+    if (mqcode != JUMP_MQ_SUCCESS) {
+	*code = translateJumpMessageQueueStatusCode(&mqcode);
+	goto fail;
+    }
+
+    *code = JUMP_SUCCESS;
+    return registration;
+
+  fail:
+    if (registration != NULL) {
+	free(registration->messageType);
+	free(registration);
+    }
     return NULL;
 }
 
@@ -820,6 +854,9 @@ jumpMessageAddHandlerByOutgoingMessage(JUMPOutgoingMessage m,
 void
 jumpMessageCancelRegistration(JUMPMessageHandlerRegistration r)
 {
+    jumpMessageQueueDestroy(r->messageType);
+    free(r->messageType);
+    free(r);
 }
 
 
