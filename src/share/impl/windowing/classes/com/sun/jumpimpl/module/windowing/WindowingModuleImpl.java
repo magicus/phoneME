@@ -259,3 +259,4 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
         return res;
     }
 }
+
