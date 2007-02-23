@@ -33,7 +33,8 @@
  */
 void javacall_ams_operation_completed(javacall_opcode operation,
                                       const javacall_app_id appID,
-                                      void* pResult);
+                                      void* pResult) {
+}
 
 /**
  * Inform on change of the specific MIDlet's lifecycle status.
