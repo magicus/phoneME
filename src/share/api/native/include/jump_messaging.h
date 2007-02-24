@@ -255,7 +255,8 @@ jumpMessageSendAsyncResponse(JUMPOutgoingMessage m,
 
 /*
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
- * JUMP_WOULD_BLOCK, or JUMP_FAILURE.
+ * JUMP_WOULD_BLOCK, JUMP_OVERRUN, JUMP_NEGATIVE_ARRAY_LENGTH, or
+ * JUMP_FAILURE.
  */
 extern JUMPMessage
 jumpMessageSendSync(JUMPAddress target, JUMPOutgoingMessage m, int32 timeout,
@@ -294,7 +295,8 @@ jumpMessageRegisterDirect(JUMPPlatformCString type,
  * Block and wait for incoming message of a given type
  *
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
- * JUMP_TIMEOUT, JUMP_UNBLOCKED, or JUMP_FAILURE.
+ * JUMP_TIMEOUT, JUMP_UNBLOCKED, JUMP_OVERRUN, JUMP_NEGATIVE_ARRAY_LENGTH,
+ * or JUMP_FAILURE.
  */
 extern JUMPMessage
 jumpMessageWaitFor(JUMPPlatformCString type,
@@ -347,10 +349,14 @@ jumpMessageRestart(void);
 
 /* Raw buffer operations */
 /*
- * Create an outgoing message from a buffer that's been filled elsewhere
+ * Create an outgoing message from a buffer that's been filled elsewhere.
+ * On success, returns the JUMPOutgoingMessage and sets *code to
+ * JUMP_SUCCESS.  On failure, returns NULL and sets *code to one
+ * JUMP_OUT_OF_MEMORY, JUMP_OVERRUN, or JUMP_NEGATIVE_ARRAY_LENGTH.
  */
 extern JUMPOutgoingMessage
-jumpMessageNewOutgoingFromBuffer(uint8* buffer, int isResponse);
+jumpMessageNewOutgoingFromBuffer(uint8* buffer, int isResponse,
+				 JUMPMessageStatusCode *code);
 
 /*
  * Get raw buffer of message

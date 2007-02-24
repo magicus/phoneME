@@ -236,6 +236,8 @@ putHeaderInMessage(struct _JUMPMessage* m)
 
 /*
  * Deserialize header from message to 'header' structure in JUMPMessage.
+ * Returns one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY, JUMP_OVERRUN,
+ * or JUMP_NEGATIVE_ARRAY_LENGTH.
  */
 static JUMPMessageStatusCode
 getHeaderFromMessage(struct _JUMPMessage* m)
@@ -260,17 +262,28 @@ getHeaderFromMessage(struct _JUMPMessage* m)
 /*
  * Given a "raw" buffer, allocated or received, make a corresponding
  * JUMPMessage.
+ *
+ * On success the struct _JUMPMessage is returned and *code is set to
+ * JUMP_SUCCESS.  On failure, NULL is returned and *code is set to one
+ * of JUMP_OUT_OF_MEMORY, JUMP_OVERRUN, or JUMP_NEGATIVE_ARRAY_LENGTH.
+ * 
  */
 static struct _JUMPMessage* 
-newMessageFromReceivedBuffer(uint8* buffer, uint32 len)
+newMessageFromReceivedBuffer(uint8* buffer, uint32 len,
+			     JUMPMessageStatusCode *code)
 {
     struct _JUMPMessage* message = newMessageFromBuffer(buffer, len);
     if (message == NULL) {
+	*code = JUMP_OUT_OF_MEMORY;
 	return NULL;
     }
 
-    /* FIXME: check return code. */
-    getHeaderFromMessage(message);
+    *code = getHeaderFromMessage(message);
+    if (*code != JUMP_SUCCESS) {
+	free(message);
+	return NULL;
+    }
+
     return message;
 }
 
@@ -282,7 +295,8 @@ static uint32 thisProcessMessageId;
 static int32 thisProcessRequestId;
 
 JUMPOutgoingMessage
-jumpMessageNewOutgoingFromBuffer(uint8* buffer, int isResponse)
+jumpMessageNewOutgoingFromBuffer(uint8* buffer, int isResponse,
+				 JUMPMessageStatusCode *code)
 {
     struct _JUMPMessage* message;
     JUMPMessageMark mmarkBeforeHeader;
@@ -291,13 +305,17 @@ jumpMessageNewOutgoingFromBuffer(uint8* buffer, int isResponse)
 
     message = newMessageFromBuffer(buffer, MESSAGE_BUFFER_SIZE);
     if (message == NULL) {
+	*code = JUMP_OUT_OF_MEMORY;
 	return NULL;
     }
 
     jumpMessageMarkSet(&mmarkBeforeHeader, message);
-    /* FIXME: check return code.  If this works, the following
-       adds will work. */
-    getHeaderFromMessage(message);
+    /* If this works, the following adds will work. */
+    *code = getHeaderFromMessage(message);
+    if (*code != JUMP_SUCCESS) {
+	free(message);
+	return NULL;
+    }
     jumpMessageMarkSet(&mmarkAfterHeader, message);
     
     /* rewind to beginning of header */
@@ -335,11 +353,12 @@ getReturnAddress(JUMPMessage m)
     return m->header.sender;
 }
 
-JUMPOutgoingMessage
+static JUMPOutgoingMessage
 newOutgoingMessage(JUMPPlatformCString type, uint32 requestId, 
 		   JUMPReturnAddress addr)
 {
     struct _JUMPMessage* message;
+    int status;
     assert(jumpMessagingInitialized != 0);
     message = newMessage();
     if (message == NULL) {
@@ -695,7 +714,8 @@ jumpMessageSendAsyncResponse(JUMPOutgoingMessage m,
 
 /*
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
- * JUMP_TIMEOUT, or JUMP_FAILURE.
+ * JUMP_TIMEOUT, JUMP_OVERRUN, JUMP_NEGATIVE_ARRAY_LENGTH, or
+ * JUMP_FAILURE.
  */
 static JUMPMessage
 doWaitFor(JUMPPlatformCString type, int32 timeout, JUMPMessageStatusCode *code)
@@ -723,15 +743,14 @@ doWaitFor(JUMPPlatformCString type, int32 timeout, JUMPMessageStatusCode *code)
     status = jumpMessageQueueReceive(
 	type, buffer, MESSAGE_BUFFER_SIZE, &mqcode);
     if (status != 0) {
-	free(buffer);
 	*code = translateJumpMessageQueueStatusCode(&mqcode);
+	free(buffer);
 	return NULL;
     }
 
-    incoming = newMessageFromReceivedBuffer(buffer, MESSAGE_BUFFER_SIZE);
+    incoming = newMessageFromReceivedBuffer(buffer, MESSAGE_BUFFER_SIZE, code);
     if (incoming == NULL) {
 	free(buffer);
-	*code = JUMP_OUT_OF_MEMORY;
 	return NULL;
     }
 

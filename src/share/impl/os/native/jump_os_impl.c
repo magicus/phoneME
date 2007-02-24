@@ -87,7 +87,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageSync(
 
     ensureInitialized();
 
-    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse);
+    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse, &code);
     target.processId = pid;
     r = jumpMessageSendSync(target, m, (int32)timeout, &code);
     /* FIXME: Examine returned error code to figure out which exception
@@ -149,7 +149,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageAsync(
 
     ensureInitialized();
 
-    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse);
+    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse, &code);
     target.processId = pid;
     jumpMessageSendAsync(target, m, &code);
     
@@ -171,7 +171,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageResponse(
 
     ensureInitialized();
 
-    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse);
+    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse, &code);
     jumpMessageSendAsyncResponse(m, &code);
     
     free(raw);
