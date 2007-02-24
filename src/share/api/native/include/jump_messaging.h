@@ -87,10 +87,12 @@ jumpMessageGetReturnTypeName(void);
  * Message creation api's
  */
 extern JUMPOutgoingMessage
-jumpMessageNewOutgoingByType(JUMPPlatformCString type);
+jumpMessageNewOutgoingByType(JUMPPlatformCString type,
+			     JUMPMessageStatusCode *code);
 
 extern JUMPOutgoingMessage
-jumpMessageNewOutgoingByRequest(JUMPMessage requestMessage);
+jumpMessageNewOutgoingByRequest(JUMPMessage requestMessage,
+				JUMPMessageStatusCode *code);
 
 /*
  * Free an outgoing message.
@@ -136,32 +138,22 @@ jumpMessageMarkResetTo(JUMPMessageMark* mmark, struct _JUMPMessage* m);
 /*
  * Message data write api's
  */
-
-/*
- * Bits representing the return value of the jumpMessageAdd...()
- * functions.
- */
-enum {
-    JUMP_ADD_OVERRUN = 1,
-    JUMP_ADD_NEGATIVE_ARRAY_LENGTH = 2
-};
-
-extern int
+extern void
 jumpMessageAddByte(JUMPOutgoingMessage m, int8 value);
 
-extern int
+extern void
 jumpMessageAddByteArray(JUMPOutgoingMessage m, const int8* values, int length);
 
-extern int
+extern void
 jumpMessageAddShort(JUMPOutgoingMessage m, int16 value);
 
-extern int
+extern void
 jumpMessageAddInt(JUMPOutgoingMessage m, int32 value);
 
-extern int
+extern void
 jumpMessageAddString(JUMPOutgoingMessage m, JUMPPlatformCString str);
 
-extern int
+extern void
 jumpMessageAddStringArray(JUMPOutgoingMessage m,
 			  JUMPPlatformCString* strs,
 			  uint32 length);

@@ -116,7 +116,7 @@ jumpProcessCreate(int argc, char** argv)
     int i;
     char * vmArgs, *s;
     
-    outMessage = jumpMessageNewOutgoingByType(type);
+    outMessage = jumpMessageNewOutgoingByType(type, &code);
     jumpMessageMarkSet(&mark, outMessage);
     /*
      * We don't yet know how many strings we will be adding in, so
