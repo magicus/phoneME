@@ -61,17 +61,17 @@ typedef signed long javacall_int32;
 typedef long long javacall_int64;
 
 /**
- * @typedef javacall_platform_string
- * @brief general platform string type, this type is null terminated string
+ * @typedef javacall_filename_string
+ * @brief general file name string type, this type is null terminated string
  */
-typedef char* javacall_platform_string;
+typedef char* javacall_filename_string;
 
 /**
- * @typedef javacall_const_platform_string
- * @brief general constant platform string type, this type is constant null
+ * @typedef javacall_const_filename_string
+ * @brief general constant file name string type, this type is constant null
  * terminated string
  */
-typedef const char* javacall_const_platform_string;
+typedef const char* javacall_const_filename_string;
 
 /**
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
