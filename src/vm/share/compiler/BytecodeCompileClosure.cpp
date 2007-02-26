@@ -1633,7 +1633,9 @@ void BytecodeCompileClosure::do_direct_invoke(Method * callee,
   }
   
 #if ENABLE_INLINE
-  {
+  //we cannot call trace_bytecode from inlined method, 
+  //so we must prohibit method inlining in case TraceBytecodesCompiler
+  if (!TraceBytecodesCompiler) { 
     Method::Attributes method_attributes;
     bool can_be_inline = 
       callee->bytecode_inline_prepass(method_attributes JVM_CHECK); 

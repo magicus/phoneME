@@ -313,7 +313,8 @@
     pointer(GP_ASM, interpreter_throw_NullPointerException_tos_cached) \
     pointer(GP_ASM, interpreter_throw_IncompatibleClassChangeError) \
     pointer(GP_ASM, interpreter_grow_stack) \
-    pointer(GP_ASM, interpreter_throw_ArrayIndexOutOfBoundsException)
+    pointer(GP_ASM, interpreter_throw_ArrayIndexOutOfBoundsException) \
+    pointer(GP_ASM, trace_bytecode)
 #else
 #define GP_INTERNAL_SYMBOLS3_DO(pointer, value) \
     pointer(GP_ASM, fixed_interpreter_fast_method_entry_0) \
