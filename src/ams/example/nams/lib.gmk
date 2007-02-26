@@ -45,7 +45,6 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
 # vpath for ( example ) module
 #
 vpath % $(NAMS_EXAMPLES_DIR)/native
-vpath % $(NAMS_EXAMPLES_DIR)/native/$(TARGET_OS)
 
 # This is needed to include API provided by findMidlet.c
 vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common/native
@@ -171,7 +170,13 @@ SUBSYSTEM_AMS_EXECUTABLES = \
 
 ifeq ($(TARGET_PLATFORM), javacall)
 ifeq ($(JAVACALL_PLATFORM), win32_i386_vc)
+
+vpath % $(NAMS_EXAMPLES_DIR)/native/win32
+
 SUBSYSTEM_AMS_EXECUTABLES += $(BINDIR)/postTestMsg.exe
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+	-I$(SUBSYSTEM_HIGHUI_DIR)/win32_application/include
+
 endif
 endif
 
