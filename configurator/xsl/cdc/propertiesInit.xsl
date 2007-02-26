@@ -36,14 +36,12 @@ public class PackageManager {
     static final String[] components = {
 </xsl:text>
 
-    <xsl:element name="configuration">
-        <!-- process propertyInitializers if it isn't empty -->
-        <xsl:if test="boolean($propertyInitializers)">
-            <xsl:call-template name="addClasses">
-                <xsl:with-param name="classesList" select="$propertyInitializers"/>
-            </xsl:call-template>
-        </xsl:if>
-    </xsl:element>
+    <!-- process propertyInitializers if it isn't empty -->
+    <xsl:if test="boolean($propertyInitializers)">
+        <xsl:call-template name="addClasses">
+            <xsl:with-param name="classesList" select="$propertyInitializers"/>
+        </xsl:call-template>
+    </xsl:if>
 
 <xsl:text>    };
 
