@@ -147,18 +147,6 @@ else
 VM_MODE = svm
 endif
 
-MODULE_NAMS_EXAMPLE_SCRIPT_FILES = \
-	$(NAMS_EXAMPLES_DIR)/shell/autotest$(g) \
-	$(NAMS_EXAMPLES_DIR)/shell/i3test$(g) \
-	$(NAMS_EXAMPLES_DIR)/shell/installMidlet$(g)
-
-INTERNAL_NAMS_COMMON_SCRIPT_FILES = $(patsubst $(NAMS_EXAMPLES_DIR)/shell/%,$(BINDIR)/%,$(MODULE_NAMS_EXAMPLE_SCRIPT_FILES))
-
-$(INTERNAL_NAMS_COMMON_SCRIPT_FILES): $(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/shell/%
-	@echo " ... installing $@"
-	@cp -f $< $@
-	@chmod +x $@
-
 SUBSYSTEM_AMS_LAZY_MAKEFILES += \
 	$(NAMS_EXAMPLES_DIR)/executables.gmk
 
@@ -185,7 +173,22 @@ ifeq ($(TARGET_OS), linux)
 INCLUDE_SHELL_SCRIPTS = true
 endif
 
+ifeq ($(TARGET_PLATFORM), javacall)
+INCLUDE_SHELL_SCRIPTS = true
+endif
+
 ifdef INCLUDE_SHELL_SCRIPTS
+
+$(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/shell/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
+$(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/batch/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
 SUBSYSTEM_AMS_EXECUTABLES += \
 	$(BINDIR)/autotest$(g)$(BAT) \
 	$(BINDIR)/installMidlet$(g)$(BAT)
