@@ -57,6 +57,8 @@ public class TestCanvasSizing extends TestCase {
     // case for all implementations. Including both here allows the test
     // to be valid in both circumstances.
     
+    /** Screen width in fullsize mode */ 
+    protected static int FS_WIDTH;
     /** Screen height in fullsize mode */ 
     protected static int FS_HEIGHT;
     
@@ -85,6 +87,7 @@ public class TestCanvasSizing extends TestCase {
         
         STD_WIDTH = ScreenSkin.WIDTH;
         STD_HEIGHT = Constants.CHAM_HEIGHT;
+        FS_WIDTH = Constants.CHAM_FULLWIDTH;
         FS_HEIGHT = Constants.CHAM_FULLHEIGHT;
         TITLE_HEIGHT = TitleSkin.HEIGHT;
         TICKER_HEIGHT = TickerSkin.HEIGHT;
@@ -186,7 +189,7 @@ public class TestCanvasSizing extends TestCase {
 
         // NOTE: In fullscreen mode, the title and ticker shouldn't appear, as
         // per the chameleon UI spec: that area is then used by the canvas
-        checkCanvasSize(canvas, STD_WIDTH, FS_HEIGHT);
+        checkCanvasSize(canvas, FS_WIDTH, FS_HEIGHT);
     }
     
     /**
@@ -202,7 +205,7 @@ public class TestCanvasSizing extends TestCase {
         
         // NOTE: In fullscreen mode, the title and ticker shouldn't appear, as
         // per the chameleon UI spec: that area is then used by the canvas
-        checkCanvasSize(canvas, STD_WIDTH, FS_HEIGHT);
+        checkCanvasSize(canvas, FS_WIDTH, FS_HEIGHT);
     }
     
     /**
@@ -218,7 +221,7 @@ public class TestCanvasSizing extends TestCase {
         
         // NOTE: In fullscreen mode, the title and ticker shouldn't appear, as
         // per the chameleon UI spec: that area is then used by the canvas
-        checkCanvasSize(canvas, STD_WIDTH, FS_HEIGHT);
+        checkCanvasSize(canvas, FS_WIDTH, FS_HEIGHT);
     }
     
     /**
@@ -233,7 +236,7 @@ public class TestCanvasSizing extends TestCase {
         
         // NOTE: In fullscreen mode, the title and ticker shouldn't appear, as
         // per the chameleon UI spec: that area is then used by the canvas
-        checkCanvasSize(canvas, STD_WIDTH, FS_HEIGHT);
+        checkCanvasSize(canvas, FS_WIDTH, FS_HEIGHT);
     }
 
     /**
