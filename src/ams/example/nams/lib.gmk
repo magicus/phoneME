@@ -169,8 +169,10 @@ SUBSYSTEM_AMS_EXECUTABLES = \
 	$(BINDIR)/removeMidlet$(g)$(p)$(EXE) \
 	$(BINDIR)/fileInstaller$(g)$(p)$(EXE)
 
-ifeq ($(TARGET_PLATFORM), win32)
+ifeq ($(TARGET_PLATFORM), javacall)
+ifeq ($(JAVACALL_PLATFORM), win32_i386_vc)
 SUBSYSTEM_AMS_EXECUTABLES += $(BINDIR)/postTestMsg.exe
+endif
 endif
 
 # Other platforms like stubs don't need scripts
