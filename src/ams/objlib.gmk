@@ -29,15 +29,15 @@
 #   so too long command lines (especially for linker) are truncated.
 #   To avoid it object files are put to a library.
 #
+# For compatibility with AR that creates temp lib file addding 'tmp-' prefix
+# to lib name, short name $(OBJLIBNAME) was used
 
-OBJLIB = $(OBJ_DIR)/libobj$(LIB_SUFFIX)
+OBJLIBNAME = libobj$(LIB_SUFFIX)
+OBJLIB = $(OBJ_DIR)/$(OBJLIBNAME)
 OBJLIB_SCRIPT = $(OBJLIB)-list
 
 $(OBJLIB): $(OBJ_FILES)
-	$(shell echo $(MRI_CREATE)$(OBJLIB) > $(OBJLIB_SCRIPT))
+	$(shell echo $(MRI_CREATE)$(OBJLIBNAME) > $(OBJLIB_SCRIPT))
 	$(foreach path, $(OBJ_FILES), $(shell echo $(MRI_ADD)`$(call fixcygpath,$(path))` >> $(OBJLIB_SCRIPT)))
 	$(shell echo $(MRI_SAVE) >> $(OBJLIB_SCRIPT))
-	$(shell $(AR) $(MRI_OPT)$(OBJLIB_SCRIPT))
-	$(shell $(RANLIB) $(OBJLIB))
-	head $(OBJLIB_SCRIPT)
-	echo $(AR) $(MRI_OPT)$(OBJLIB_SCRIPT)
+	$(shell cd $(OBJ_DIR); $(AR) $(MRI_OPT)$(OBJLIB_SCRIPT); $(RANLIB) $(OBJLIBNAME))
