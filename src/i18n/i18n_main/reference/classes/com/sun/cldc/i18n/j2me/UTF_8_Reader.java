@@ -38,10 +38,18 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
     private int[] readAhead;
     /** when reading first of a char byte we need to know if the first read */
     private boolean newRead;
+    /* the number of UTF8 bytes that may encode one character */
+    private static final int READ_AHEAD_SIZE = 4;
+    /**
+     * If non-zero, the last read code point must be represented by two
+     * surrogate code units, and the low surrogate code unit has not yet
+     * been retrieved during the last read operation.
+     */
+    protected int pendingSurrogate = 0;
 
     /** Constructs a UTF-8 reader. */
     public UTF_8_Reader() {
-        readAhead = new int[3];
+        readAhead = new int[READ_AHEAD_SIZE];
     }
 
     public Reader open(InputStream in, String enc)
@@ -72,6 +80,14 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
         if (len == 0) {
             return 0;
         }
+        if (pendingSurrogate != 0) {
+            cbuf[off + count] = (char)pendingSurrogate;
+            count++;
+            pendingSurrogate = 0;
+            if (len == 1) {
+                return 1;
+            }
+        }
 
         newRead = true;
         while (count < len) {
@@ -101,7 +117,15 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
                     extraBytes = 2;
                     currentChar = firstByte & 0x0F;
                     break;
-    
+
+                case 15:
+                    if ((firstByte&0x08)==0) {
+                        /* 21 bits: 1111 0xxx  10xx xxxx  10xx xxxx  10xx xxxx */
+                        extraBytes = 3;
+                        currentChar = firstByte & 0x07;
+                        break;
+                    } // else as default
+
                 default:
                     /* we do replace malformed character with special symbol */
                     extraBytes = 0;
@@ -133,8 +157,28 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
                 currentChar = (currentChar << 6) + (nextByte & 0x3F);
             }
 
-            cbuf[off + count] = (char)currentChar;
-            count++;
+            if (currentChar <= 0xd7ff
+             // d800...d8ff and dc00...dfff are high and low surrogate code
+             // points, they do not represent characters
+             || (0xe000 <= currentChar && currentChar <= 0xffff)) {
+                cbuf[off + count] = (char)currentChar;
+                count++;
+            } else if (0xffff < currentChar && currentChar <= 0x10ffff) {
+                int highSurrogate = 0xd800 | ((currentChar-0x10000) >> 10);
+                int lowSurrogate = 0xdc00 | (currentChar & 0x3ff);
+                cbuf[off + count] = (char)highSurrogate;
+                count++;
+                if (count < len) {
+                    cbuf[off + count] = (char)lowSurrogate;
+                    count++;
+                } else {
+                    pendingSurrogate=lowSurrogate;
+                }
+            } else {
+                currentChar = RC;
+                cbuf[off + count] = (char)currentChar;
+                count++;
+            }
             prepareForNextChar(headByte);
         }
 
@@ -184,8 +228,9 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
      */
     private void prepareForNextChar(int headByte) {
         readAhead[0] = headByte;
-        readAhead[1] = NO_BYTE;
-        readAhead[2] = NO_BYTE;
+        for (int i=1; i<READ_AHEAD_SIZE; i++) {
+            readAhead[i]=NO_BYTE;
+        }
     }
 
     /**
@@ -246,6 +291,7 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
         int extraBytes;
 
         for (endOfArray = offset + length; offset < endOfArray; ) {
+            int oldCount = count;
             count++;
             /* Reduce amount of case-mode comparisons */
             if ((array[offset]&0x80) == 0) {
@@ -253,18 +299,26 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
             } else {
                 switch (((int)array[offset] & 0xff) >> 4) {
                 case 12: case 13:
-                    /* 110x xxxx   10xx xxxx */
+                    /* 11 bits: 110x xxxx   10xx xxxx */
                     extraBytes = 1;
                     break;
     
                 case 14:
-                    /* 1110 xxxx  10xx xxxx  10xx xxxx */
+                    /* 16 bits: 1110 xxxx  10xx xxxx  10xx xxxx */
                     extraBytes = 2;
                     break;
-    
-                default:
+
+                case 15:
+                    if (((int)array[offset] & 0x08)==0) {
+                        /* 21 bits: 1111 0xxx  10xx xxxx  10xx xxxx  10xx xxxx */
+                        // we imply that the 5 high bits are not all zeroes
+                        extraBytes = 3;
+                        count++;
+                        break;
+                    } // else as default
+
+             default:
                     /*
-                     * we do not support characters greater than 16 bits
                      * this byte will be replaced with 'RC'
                      */
                     extraBytes = 0;
@@ -280,7 +334,7 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
                         offset++;
                     }
                 } else {
-                    count--;    // broken sequence detected at tail of array
+                    count = oldCount;    // broken sequence detected at tail of array
                     break;
                 }
             }
