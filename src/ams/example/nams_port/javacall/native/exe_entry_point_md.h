@@ -24,26 +24,23 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.main;
+#ifndef _EXE_ENTRY_POINT_MD_H_
+#define _EXE_ENTRY_POINT_MD_H_
 
-import java.lang.Runnable;
-import java.lang.Thread;
+#if !defined _EXE_ENTRY_POINT_MD_H_
+# error "Never include <exe_entry_point_md.h> directly; use <exe_entry_point.h> instead."
+#endif
+
+#include <javacall_defs.h>
 
 /**
- * A wrapper for NAMS MIDlet API.
+ * Entry point of the Javacall executable.
+ *
+ * @param argc number of arguments (1 means no arguments)
+ * @param argv the arguments, argv[0] is the executable's name
+ *
+ * @return the exit value (1 if OK)
  */
-public class NamsAPIWrapper {
+javacall_result JavaTaskImpl(int argc, char* argv[]);
 
-    static native void midletCreateStart(
-            int suiteId, String className,
-            /* String displayName, String arg0, String arg1, String arg2, */
-            int appId);
-    static native void midletResume(int appId);
-    static native void midletPause(int appId);
-    static native void midletDestroy(int appId, int timeout);
-
-    static native void midletSetForeground(int appId);
-
-    static native void midpSystemStop();
-}
-
+#endif /* _EXE_ENTRY_POINT_MD_H_ */

@@ -42,6 +42,7 @@
 #include <midpNativeAppManager.h>
 #include <midpUtilKni.h>
 #include <suitestore_task_manager.h>
+#include <commandLineUtil_md.h>
 
 /**
  * @file
@@ -50,7 +51,7 @@
  * MIDlet Suite.
  */
 
-extern char* midpFixMidpHome(char *cmd);
+#define MIDLET_DESTROY_DEFAULT_TIMEOUT 5000
 
 #if ENABLE_I3_TEST
 extern void initNams(void);
@@ -206,7 +207,7 @@ void nams_process_command(int command, int param) {
         break;
 
     case 4:
-        midp_midlet_destroy(param);
+        midp_midlet_destroy(param, MIDLET_DESTROY_DEFAULT_TIMEOUT);
         break;
 
     case 5:
@@ -269,7 +270,7 @@ void system_state_listener(const NamsEventData* pEventData) {
         pEventData->event, pEventData->state);
 
     if (pEventData->event == MIDP_NAMS_EVENT_STATE_CHANGED &&
-            pEventData->state == MIDP_SYSTEM_STATE_STARTED) {
+            pEventData->state == MIDP_SYSTEM_STATE_ACTIVE) {
         int i;
         const jchar *jchArgsForMidlet[3];
         jint  argsLen[3];
@@ -318,7 +319,7 @@ void background_listener(const NamsEventData* pEventData) {
            pEventData->appId, pEventData->reason);
 
     for (i = 0; i < numberOfSuiteIds; i++) {
-        if (pSuiteRunState[i] == MIDP_MIDLET_STATE_STARTED &&
+        if (pSuiteRunState[i] == MIDP_MIDLET_STATE_ACTIVE &&
             i+1 != foregroundAppId) {
 
             printf("midp_midlet_set_foreground(suiteId = %d)\n", i+1);
@@ -379,7 +380,7 @@ void state_change_listener(const NamsEventData* pEventData) {
         printf(" changed state - (%d) \"", pEventData->state);
 
         switch (pEventData->state) {
-            case MIDP_MIDLET_STATE_STARTED: printf("STARTED\""); break;
+            case MIDP_MIDLET_STATE_ACTIVE: printf("ACTIVE\""); break;
             case MIDP_MIDLET_STATE_PAUSED: printf("PAUSED\""); break;
             case MIDP_MIDLET_STATE_DESTROYED:
                 printf("DESTROYED\"");
@@ -668,8 +669,7 @@ static MIDPError runMainClass(int argc, char* argv[]) {
  *
  * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  */
-int
-main(int argc, char* argv[]) {
+int runNams(int argc, char* argv[]) {
     MIDPError status;
     char* midpHome;
     int used;

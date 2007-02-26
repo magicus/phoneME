@@ -37,13 +37,20 @@
 
 ifeq ($(TARGET_PLATFORM), javacall)
     vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native
+    SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+        -I$(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native
 else
 ifeq ($(TARGET_PLATFORM), wince)
     vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native
+    SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+        -I$(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native
 else    
     vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/default/native
+    SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+        -I$(SUBSYSTEM_AMS_DIR)/example/jams_port/default/native
 endif
 endif
+
 
 # Don't include exe files to MIDP source file list
 # since we want to link different obj files for different exe

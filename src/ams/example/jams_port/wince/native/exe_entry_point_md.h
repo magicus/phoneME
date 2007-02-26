@@ -24,26 +24,26 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.main;
+#ifndef _EXE_ENTRY_POINT_MD_H_
+#define _EXE_ENTRY_POINT_MD_H_
 
-import java.lang.Runnable;
-import java.lang.Thread;
+#if !defined _EXE_ENTRY_POINT_MD_H_
+# error "Never include <exe_entry_point_md.h> directly; use <exe_entry_point.h> instead."
+#endif
 
 /**
- * A wrapper for NAMS MIDlet API.
+ * Entry point of the executable.
+ *
+ * @param hInstance handle to the current instance of the application.
+ * @param hPrevInstance handle to the previous instance of the application. For a
+ *                      Win32-based application, this parameter is always NULL. 
+ * @param lpCmdLine pointer to a null-terminated string that specifies the command
+ *                  line for the application, excluding the program name.
+ * @param nShowCmd specifies how the window is to be shown.
+ *
+ * @return the exit value
  */
-public class NamsAPIWrapper {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   LPWSTR lpCmdLine, int nShowCmd);
 
-    static native void midletCreateStart(
-            int suiteId, String className,
-            /* String displayName, String arg0, String arg1, String arg2, */
-            int appId);
-    static native void midletResume(int appId);
-    static native void midletPause(int appId);
-    static native void midletDestroy(int appId, int timeout);
-
-    static native void midletSetForeground(int appId);
-
-    static native void midpSystemStop();
-}
-
+#endif /* _EXE_ENTRY_POINT_MD_H_ */

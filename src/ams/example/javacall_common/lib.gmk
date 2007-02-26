@@ -1,5 +1,5 @@
 #
-#  
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -32,12 +32,13 @@
 # other def. (like VPATH)
 ######################################################################
 
-# Adds to local variable and  to global SUBSYSTEMS list
+# vpath for ( javacall_common ) module
 #
-SUBSYSTEM_NAME = example
-SUBSYSTEMS += $(SUBSYSTEM_NAME)
 
-SUBSYSTEM_EXAMPLE_DIR = $(SUBSYSTEM_AMS_DIR)/example
+vpath % $(SUBSYSTEM_AMS_DIR)/example/javacall_common/reference/native
+
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_AMS_DIR)/example/javacall_common/include
 
 ifeq ($(USE_NATIVE_AMS), true)
 SUBSYSTEM_AMS_MODULES = nams
@@ -45,17 +46,13 @@ else
 SUBSYSTEM_AMS_MODULES = jams
 endif
 
-# Defines for (jams/nams) module
-include $(SUBSYSTEM_EXAMPLE_DIR)/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
-include $(SUBSYSTEM_EXAMPLE_DIR)/$(SUBSYSTEM_AMS_MODULES)_port/lib.gmk
+# Actually, there is no difference between the interfaces provided by
+# JAMS and NAMS versions of exe_entry_point.h.
+#
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_AMS_DIR)/example/$(SUBSYSTEM_AMS_MODULES)_port/include
 
-ifeq ($(TARGET_VM), cldc_vm)
-
-include $(SUBSYSTEM_EXAMPLE_DIR)/ams_common/lib.gmk
-include $(SUBSYSTEM_EXAMPLE_DIR)/ams_common_port/lib.gmk
-
-ifeq ($(TARGET_PLATFORM), javacall)
-include $(SUBSYSTEM_EXAMPLE_DIR)/javacall_common/lib.gmk
-endif
-
-endif
+# Native files for the ( javacall_common ) module
+#
+SUBSYSTEM_AMS_NATIVE_FILES += \
+    javaTask.c

@@ -24,26 +24,27 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.main;
+#ifndef _RUN_NAMS_H_
+#define _RUN_NAMS_H_
 
-import java.lang.Runnable;
-import java.lang.Thread;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
- * A wrapper for NAMS MIDlet API.
+ * Start the MT MIDP. Waits until it shuts down, and then exits by default.
+ * If the -restart option is given, and no VM error occurred, MIDP is
+ * restarted.
+ *
+ * @param argc The total number of arguments
+ * @param argv An array of 'C' strings containing the arguments
+ *
+ * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  */
-public class NamsAPIWrapper {
+int runNams(int argc, char* argv[]);
 
-    static native void midletCreateStart(
-            int suiteId, String className,
-            /* String displayName, String arg0, String arg1, String arg2, */
-            int appId);
-    static native void midletResume(int appId);
-    static native void midletPause(int appId);
-    static native void midletDestroy(int appId, int timeout);
-
-    static native void midletSetForeground(int appId);
-
-    static native void midpSystemStop();
+#ifdef __cplusplus
 }
+#endif
 
+#endif /* _RUN_NAMS_H_ */

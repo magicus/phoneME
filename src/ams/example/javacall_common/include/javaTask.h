@@ -24,26 +24,28 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.main;
 
-import java.lang.Runnable;
-import java.lang.Thread;
+#ifndef _JAVA_TASK_H_
+#define _JAVA_TASK_H_
 
-/**
- * A wrapper for NAMS MIDlet API.
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*
+ * This interface is javacall-specific.
  */
-public class NamsAPIWrapper {
+ 
+/**
+ * An entry point of a thread devoted to run java.
+ * Some common tasks are done in this function, then the control
+ * is passed to JavaTaskImpl() which can be considered as the actual
+ * entry point of any midp executable.
+ */
+void JavaTask(void);
 
-    static native void midletCreateStart(
-            int suiteId, String className,
-            /* String displayName, String arg0, String arg1, String arg2, */
-            int appId);
-    static native void midletResume(int appId);
-    static native void midletPause(int appId);
-    static native void midletDestroy(int appId, int timeout);
-
-    static native void midletSetForeground(int appId);
-
-    static native void midpSystemStop();
+#ifdef __cplusplus
 }
+#endif
 
+#endif /* _JAVA_TASK_H_ */

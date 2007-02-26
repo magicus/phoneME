@@ -24,102 +24,22 @@
  * information or have any questions.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <midp_logging.h>
-#include <midpAMS.h>
-#include <suitestore_common.h>
-#include <midpMalloc.h>
-#include <jvm.h>
-#include <jvmspi.h>
-#include <findMidlet.h>
-#include <midpUtilKni.h>
-#include <midp_jc_event_defs.h>
-#include <midp_properties_port.h>
-#include <javacall_events.h>
 #include <javacall_lifecycle.h>
-#include <midpStorage.h>
-#include <suitestore_task_manager.h>
-#include <commandLineUtil.h>
 #include <runMidlet.h>
 
-unsigned char enable_java_debugger = 0;
-
-static javacall_result
-midpHandleStartArbitraryArgEvent(midp_jc_event_start_arbitrary_arg startArbitraryArgEvent);
-
 /**
- * An entry point of a thread devoted to run java
+ * Entry point of the Javacall executable.
+ *
+ * @param argc number of arguments (1 means no arguments)
+ * @param argv the arguments, argv[0] is the executable's name
+ *
+ * @return the exit value (1 if OK)
  */
-void JavaTask(void) {
-    static unsigned long binaryBuffer[BINARY_BUFFER_MAX_LEN/sizeof(long)];
-    midp_jc_event_union *event;
-    javacall_bool res = JAVACALL_OK;
-    javacall_bool JavaTaskIsGoOn = JAVACALL_TRUE;
-    long timeTowaitInMillisec = -1;
-    int binaryBufferMaxLen = BINARY_BUFFER_MAX_LEN;
-    int outEventLen;
-
-    REPORT_CRIT(LC_CORE,"JavaTask() >>\n");
-
-    /* Outer Event Loop */
-    while (JavaTaskIsGoOn) {
-
-        if (midpInitializeMemory(-1) != 0) {
-            REPORT_CRIT(LC_CORE,"JavaTask() >> midpInitializeMemory()  Not enough memory.\n");
-            break;
-        }
-        REPORT_INFO(LC_CORE,"JavaTask() >> memory initialized.\n");
-
-        res = javacall_event_receive(timeTowaitInMillisec,
-            (unsigned char *)binaryBuffer, binaryBufferMaxLen, &outEventLen);
-
-        if (!JAVACALL_SUCCEEDED(res)) {
-            REPORT_ERROR(LC_CORE,"JavaTask() >> Error javacall_event_receive()\n");
-            continue;
-        }
-
-        event = (midp_jc_event_union *) binaryBuffer;
-
-        switch (event->eventType) {
-        case MIDP_JC_EVENT_START_ARBITRARY_ARG:
-            REPORT_INFO(LC_CORE,"JavaTask() MIDP_JC_EVENT_START_ARBITRARY_ARG>> \n");
-            javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED,
-                                             JAVACALL_OK);
-            midpHandleStartArbitraryArgEvent(event->data.startMidletArbitraryArgEvent);
-
-            JavaTaskIsGoOn = JAVACALL_FALSE;
-            break;
-
-        case MIDP_JC_EVENT_END:
-            REPORT_INFO(LC_CORE,"JavaTask() >> MIDP_JC_EVENT_END\n");
-            JavaTaskIsGoOn = JAVACALL_FALSE;
-            break;
-
-        default:
-            REPORT_ERROR(LC_CORE,"Unknown event.\n");
-            break;
-
-        } /* end of switch */
-
-        midpFinalizeMemory();
-
-    }   /* end of while 'JavaTaskIsGoOn' */
-
-        REPORT_CRIT(LC_CORE,"JavaTask() <<\n");
-
-} /* end of JavaTask */
-
-
-static javacall_result
-midpHandleStartArbitraryArgEvent(midp_jc_event_start_arbitrary_arg startArbitraryArgEvent) {
-    javacall_result res;
-
-    res = runMidlet(startArbitraryArgEvent.argc, startArbitraryArgEvent.argv);
+javacall_result JavaTaskImpl(int argc, char* argv) {
+    javacall_result res = runMidlet(argc, argv);
 
     javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_SHUTDOWN,
-                                     (res == 1) ? JAVACALL_OK: JAVACALL_FAIL);
+                                     (res == 1) ? JAVACALL_OK : JAVACALL_FAIL);
 
     return res;
 }

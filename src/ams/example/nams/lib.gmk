@@ -45,7 +45,6 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
 # vpath for ( example ) module
 #
 vpath % $(NAMS_EXAMPLES_DIR)/native
-vpath % $(NAMS_EXAMPLES_DIR)/native/$(TARGET_OS)
 
 # This is needed to include API provided by findMidlet.c
 vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common/native
@@ -70,17 +69,16 @@ SUBSYSTEM_AMS_EXTRA_INCLUDES += \
 AMS_RUNNAMS_NATIVE_FILES += \
 	runNams.c
 
-AMS_REMOVEMIDLET_NATIVE_FILES = \
+AMS_REMOVEMIDLET_NATIVE_FILES += \
 	removeMidlet.c \
 	nams_command_stub.c
 
-AMS_LISTMIDLET_NATIVE_FILES = \
+AMS_LISTMIDLET_NATIVE_FILES += \
 	listMidlets.c \
 	nams_command_stub.c
 
-AMS_FILEINSTALLER_NATIVE_FILES = \
+AMS_FILEINSTALLER_NATIVE_FILES += \
 	fileInstallerShared.c \
-	fileInstaller.c \
 	jadParser.c \
 	manifestParser.c \
 	nams_command_stub.c	
@@ -145,18 +143,6 @@ else
 VM_MODE = svm
 endif
 
-MODULE_NAMS_EXAMPLE_SCRIPT_FILES = \
-	$(NAMS_EXAMPLES_DIR)/shell/autotest$(g) \
-	$(NAMS_EXAMPLES_DIR)/shell/i3test$(g) \
-	$(NAMS_EXAMPLES_DIR)/shell/installMidlet$(g)
-
-INTERNAL_NAMS_COMMON_SCRIPT_FILES = $(patsubst $(NAMS_EXAMPLES_DIR)/shell/%,$(BINDIR)/%,$(MODULE_NAMS_EXAMPLE_SCRIPT_FILES))
-
-$(INTERNAL_NAMS_COMMON_SCRIPT_FILES): $(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/shell/%
-	@echo " ... installing $@"
-	@cp -f $< $@
-	@chmod +x $@
-
 SUBSYSTEM_AMS_LAZY_MAKEFILES += \
 	$(NAMS_EXAMPLES_DIR)/executables.gmk
 
@@ -166,8 +152,16 @@ SUBSYSTEM_AMS_EXECUTABLES = \
 	$(BINDIR)/removeMidlet$(g)$(p)$(EXE) \
 	$(BINDIR)/fileInstaller$(g)$(p)$(EXE)
 
-ifeq ($(TARGET_PLATFORM), win32)
+ifeq ($(TARGET_PLATFORM), javacall)
+ifeq ($(JAVACALL_PLATFORM), win32_i386_vc)
+
+vpath % $(NAMS_EXAMPLES_DIR)/native/win32
+
 SUBSYSTEM_AMS_EXECUTABLES += $(BINDIR)/postTestMsg.exe
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+	-I$(SUBSYSTEM_HIGHUI_DIR)/win32_application/include
+
+endif
 endif
 
 # Other platforms like stubs don't need scripts
@@ -175,7 +169,22 @@ ifeq ($(TARGET_OS), linux)
 INCLUDE_SHELL_SCRIPTS = true
 endif
 
+ifeq ($(TARGET_PLATFORM), javacall)
+INCLUDE_SHELL_SCRIPTS = true
+endif
+
 ifdef INCLUDE_SHELL_SCRIPTS
+
+$(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/shell/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
+$(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/batch/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
 SUBSYSTEM_AMS_EXECUTABLES += \
 	$(BINDIR)/autotest$(g)$(BAT) \
 	$(BINDIR)/installMidlet$(g)$(BAT)

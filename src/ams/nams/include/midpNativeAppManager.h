@@ -80,10 +80,10 @@
  *            otherwise, please change NamsTestService.getStateByValue().
  */
 /**
- * @def MIDP_SYSTEM_STATE_STARTED
+ * @def MIDP_SYSTEM_STATE_ACTIVE
  * when system is started up and ready to serve any MIDlet requests
  */
-#define MIDP_SYSTEM_STATE_STARTED    1
+#define MIDP_SYSTEM_STATE_ACTIVE     1
 
 /**
  * @def MIDP_SYSTEM_STATE_SUSPENDED
@@ -106,7 +106,7 @@
 /**
  * Defines for MIDlet states
  */
-#define MIDP_MIDLET_STATE_STARTED    1
+#define MIDP_MIDLET_STATE_ACTIVE     1
 #define MIDP_MIDLET_STATE_PAUSED     2
 #define MIDP_MIDLET_STATE_DESTROYED  3
 #define MIDP_MIDLET_STATE_ERROR      4
@@ -291,14 +291,18 @@ MIDPError midp_midlet_pause(jint appId);
 /**
  * Stop the specified MIDlet.
  *
+ * If the midlet is not terminated within the given number of milliseconds,
+ * it will be forcefully terminated.
+ *
  * If appId is invalid, this call has no effect, but the MIDlet state change
  * listener will be called anyway.
  *
  * @param appId The ID used to identify the application
+ * @param timeout Timeout in milliseconds
  *
  * @return error code: ALL_OK if the operation was started successfully
  */
-MIDPError midp_midlet_destroy(jint appId);
+MIDPError midp_midlet_destroy(jint appId, jint timeout);
 
 /**
  * Select which running MIDlet should have the foreground.  If appId is a
