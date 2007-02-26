@@ -54,17 +54,17 @@ typedef signed int javacall_int32;
 typedef __int64 javacall_int64;  // This type shall be redefined for non MSC compiler!!
 
 /**
- * @typedef javacall_platform_string
- * @brief general platform string type, this type is null terminated string
+ * @typedef javacall_filename_string
+ * @brief general file name string type, this type is null terminated string
  */
-typedef javacall_utf16* javacall_platform_string;
+typedef javacall_utf16* javacall_filename_string;
 
 /**
- * @typedef javacall_const_platform_string
- * @brief general constant platform string type, this type is constant null
+ * @typedef javacall_const_filename_string
+ * @brief general constant file name string type, this type is constant null
  * terminated string
  */
-typedef const javacall_utf16* javacall_const_platform_string;
+typedef const javacall_utf16* javacall_const_filename_string;
 
 /**
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
