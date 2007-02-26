@@ -458,7 +458,6 @@ javacall_result javanotify_ams_system_start();
  *
  * @param suiteID      ID of the suite to start
  * @param appID        ID of runtime midlet, ID must not be Zero
- * @param jarName      The path to JAR file
  * @param className    Fully qualified name of the MIDlet class
  * @param pRuntimeInfo Quotas and profile to set for the new application
  * @return <tt>JAVACALL_OK</tt> if all parameter are valid,
@@ -470,7 +469,6 @@ javacall_result javanotify_ams_system_start();
 javacall_result
 javanotify_ams_midlet_start(const javacall_suite_id suiteID,
                             const javacall_app_id appID,
-                            const javacall_utf16_string jarName,
                             const javacall_utf16_string className,
                             const javacall_midlet_runtime_info* pRuntimeInfo);
 
@@ -480,7 +478,6 @@ javanotify_ams_midlet_start(const javacall_suite_id suiteID,
  *
  * @param suiteID      ID of the suite to start with
  * @param appID        ID of runtime midlet
- * @param jarName      The path to JAR file
  * @param className    Fully qualified name of the MIDlet class
  * @param args         An array containning up to 3 arguments for
  *                     the MIDlet to be run
@@ -495,7 +492,6 @@ javanotify_ams_midlet_start(const javacall_suite_id suiteID,
 javacall_result
 javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
                                       const javacall_app_id appID,
-                                      const javacall_utf16_string jarName,
                                       const javacall_utf16_string className,
                                       const javacall_utf16_string *args,
                                       int argsNum,
@@ -748,14 +744,12 @@ javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
 /**
  * Platform inform the VM to create the images cache.
  * @param suiteID  unique ID of the MIDlet suite
- * @param jarName  the Jar file name of the MIDlet suite
  *
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javanotify_ams_create_resource_cache(const javacall_suite_id suiteID,
-                                     const javacall_utf16_string jarName);
+javanotify_ams_create_resource_cache(const javacall_suite_id suiteID);
 
 /**
  * VM invokes this function to get the image cache path.
