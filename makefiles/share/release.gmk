@@ -34,10 +34,18 @@
 # Copy files from specified sub directories that are under svn controlled.
 # Usage: re_src_filter2(src_dir, src_dir_override, output_dir, sub_dir_list)
 define re_src_filter2
-	(for i in $(4); do mkdir -p $(3)/$$i; svn export --force -q $(1)/$$i $(3)/$$i; done); \
-	if [ "$(1)" != "$(2)" ]; then \
-		(for i in $(4); do mkdir -p $(3)/$$i; svn export --force -q $(2)/$$i $(3)/$$i; done); \
-    	fi
+	if [ -d "$(1)/.svn" ]; then \
+		(for i in $(4); do mkdir -p $(3)/$$i; svn export --force -q $(1)/$$i $(3)/$$i; done); \
+            if [ "$(1)" != "$(2)" ]; then \
+			    (for i in $(4); do mkdir -p $(3)/$$i; svn export --force -q $(2)/$$i $(3)/$$i; done); \
+                fi; \
+	else \
+		mkdir -p $(3); \
+		(for i in $(4); do cp -rp $(1)/$$i $(3)/$$i; done); \
+            if [ "$(1)" != "$(2)" ]; then \
+			    (for i in $(4); do cp -rp $(2)/$$i $(3)/$$i; done); \
+                fi; \
+	fi
 endef
 
 # Create PCSL source in subdir 'pcsl/'
