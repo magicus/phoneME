@@ -45,6 +45,7 @@
 
 static char usage[] = "\t runMidlet \n"
                       "\t runMidlet help \n"
+                      "\t runMidlet manager \n"
                       "\t runMidlet [debug] loop \n"
                       "\t runMidlet [debug] tck \n"
                       "\t runMidlet [debug] tck <url> \n"
@@ -94,9 +95,13 @@ DWORD WINAPI ThreadProc( LPVOID lpParam ) {
 */
 javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
 
-    if(argc == 1) {
+    if (argc == 1) {
 
-        /* no arguments was passed */
+        /* no arguments */
+        javanotify_start_java_with_arbitrary_args(argc, argv);
+
+    } else if((argc == 2) && (strcmp(argv[1], "manager") == 0)) {
+
         /* appmanager.Manager */
         javacall_print("main() Starting Manager\n");
         javanotify_start();
