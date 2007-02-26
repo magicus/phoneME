@@ -1,6 +1,6 @@
 /*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -59,6 +59,19 @@ typedef __int32 javacall_int32;
  * @brief 64 bit interger type
  */
 typedef __int64 javacall_int64;
+
+/**
+ * @typedef javacall_filename_string
+ * @brief general file name string type, this type is null terminated string
+ */
+typedef javacall_utf16* javacall_filename_string;
+
+/**
+ * @typedef javacall_const_filename_string
+ * @brief general constant file name string type, this type is constant null
+ * terminated string
+ */
+typedef const javacall_utf16* javacall_const_filename_string;
 
 /**
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
