@@ -133,52 +133,51 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
     MidletRuntimeInfo mri, *pMri = NULL;
     javacall_result jcRes;
     javacall_int32 utf16Len;
-    static const jchar pProfileNameBuf[MAX_PROFILE_NAME_LEN];
-    static const jchar pClassName[MAX_CLASS_NAME_LEN];
-    static const jchar chArgs[MAX_SUPPORTED_ARGS][MAX_ARG_LEN] = {
-        {NULL}, {NULL}, {NULL}
-    };
+    static jchar pProfileNameBuf[MAX_PROFILE_NAME_LEN];
+    static jchar pClassName[MAX_CLASS_NAME_LEN];
+    static jchar chArgs[MAX_SUPPORTED_ARGS][MAX_ARG_LEN];
     jint classNameLen = 0, argsLen[MAX_SUPPORTED_ARGS] = {0, 0, 0};
+    int i;
 
     if (className == NULL || argsNum < 0 || (argsNum > 0 && args == NULL) ||
-            (argsNum > MAX_SUPPORTED_ARGS) {
+            (argsNum > MAX_SUPPORTED_ARGS)) {
         return JAVACALL_FAIL;
     }
 
     /* converting the class name from javacall_utf16_string to jchar* */
     jcRes = javautil_unicode_utf16_ulength(className, &utf16Len);
-    if (res != JAVACALL_OK) {
+    if (jcRes != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
 
     jcRes = javautil_unicode_utf16_to_utf8(className, classNameLen,
         (unsigned char*) pClassName, sizeof(pClassName) / sizeof(jchar) - 1,
             (javacall_int32*) &classNameLen);
-    if (res != JAVACALL_OK) {
+    if (jcRes != JAVACALL_OK) {
         return JAVACALL_FAIL;
     }
 
-    pClassName[classNameLen] = NULL;
+    pClassName[classNameLen] = 0;
 
     /* converting the midlet's arguments */
-    for (int i = 0; i < argsNum; i++) {
-        if (args[i] == NULL) {
+    for (i = 0; i < argsNum; i++) {
+        if (args[i] == 0) {
             return JAVACALL_FAIL;
         }
 
-        jcRes = javautil_unicode_utf16_utf8length(args[i], utf16Len);
-        if (res != JAVACALL_OK) {
+        jcRes = javautil_unicode_utf16_utf8length(args[i], &utf16Len);
+        if (jcRes != JAVACALL_OK) {
             return JAVACALL_FAIL;
         }
 
         jcRes = javautil_unicode_utf16_to_utf8(args[i],
             utf16Len, (unsigned char*) chArgs[i],
                 MAX_ARG_LEN - 1, (javacall_int32*) &argsLen[i]);
-        if (res != JAVACALL_OK) {
+        if (jcRes != JAVACALL_OK) {
             return JAVACALL_FAIL;
         }
 
-        chArgs[i][argsLen[i]] = NULL;
+        chArgs[i][argsLen[i]] = 0;
     }
 
     /*
@@ -194,7 +193,7 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
         /* converting profileName from javacall_utf16_string to jchar* */
         jcRes = javautil_unicode_utf16_ulength(pRuntimeInfo->profileName,
             &utf16Len);
-        if (res != JAVACALL_OK) {
+        if (jcRes != JAVACALL_OK) {
             return JAVACALL_FAIL;
         }
 
@@ -205,11 +204,11 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
                 sizeof(pProfileNameBuf) / sizeof(jchar) - 1,
                 (javacall_int32*) &mri.profileNameLen);
 
-            if (res != JAVACALL_OK) {
+            if (jcRes != JAVACALL_OK) {
                 return JAVACALL_FAIL;
             }
 
-            pProfileNameBuf[mri.profileNameLen] = NULL;
+            pProfileNameBuf[mri.profileNameLen] = 0;
             mri.profileName = pProfileNameBuf;
         } else {
             mri.profileNameLen = 0;
@@ -219,8 +218,9 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
         pMri = &mri;
     }
     
-    res = midp_midlet_create_start_with_args((SuiteIdType)suiteID, pClassName,
-        classNameLen, args, argsLen, (jint)argsNum, (jint)appID, pMri);
+    res = midp_midlet_create_start_with_args((SuiteIdType)suiteID,
+        (const jchar*)pClassName, classNameLen, (const jchar**)args, argsLen,
+            (jint)argsNum, (jint)appID, pMri);
     return (res == ALL_OK) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
@@ -430,7 +430,7 @@ void midp_listener_ams_midlet_state_changed(const NamsEventData* pEventData) {
     javacall_ams_midlet_state_changed(
         midp_midlet_state2javacall(pEventData->state),
         (javacall_app_id)pEventData->appId,
-        midp_event_reason2javacall(pEventData->reason));
+        midp_midlet_event_reason2javacall(pEventData->reason));
 }
 
 /**
@@ -447,7 +447,7 @@ void midp_listener_ams_ui_state_changed(const NamsEventData* pEventData) {
     javacall_ams_midlet_state_changed(
         midp_midlet_ui_state2javacall(pEventData->state),
         (javacall_app_id)pEventData->appId,
-        midp_event_reason2javacall(pEventData->reason));
+        midp_midlet_event_reason2javacall(pEventData->reason));
 }
 
 /*
