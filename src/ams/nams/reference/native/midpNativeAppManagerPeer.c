@@ -374,6 +374,7 @@ MIDPError midp_midlet_destroy(jint appId, jint timeout) {
 
     evt.type = NATIVE_MIDLET_DESTROY_REQUEST;
     evt.intParam1 = appId;
+    evt.intParam2 = timeout;
 
     midpStoreEventAndSignalAms(evt);
     return ALL_OK;

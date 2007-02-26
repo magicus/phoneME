@@ -348,6 +348,11 @@ public class NativeAppManagerPeer
             break;
 
         case EventTypes.NATIVE_MIDLET_DESTROY_REQUEST:
+            /*
+             * IMPL_NOTE: nativeEvent.intParam2 is a timeout value which
+             *            should be passed to MIDletProxy.destroyMidlet().
+             *
+             */
             if (midlet != null) {
                 midlet.destroyMidlet();
             } else {
