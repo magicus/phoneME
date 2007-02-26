@@ -78,9 +78,84 @@ javacall_bool javacall_push_show_request_launch_java(
 
 /** @} */
 
+/**
+ * @defgroup PlatformPushDB Platform push database
+ * @ingroup JTWI
+ * @brief Javacall interfaces when platform support push database,
+ * push database support, connection push and alarm push
+ *
+ * @{
+ */
+
+/**
+ * Register push into platform's pushDB.
+ * @param suiteID    unique ID of the MIDlet suite
+ * @param connection connection string pass by
+ *                   javax.microedition.io.PushRegistry.registerConnection.
+ *                   for example, "sms://:12345"
+ * @param midlet  the midlet class name of MIDlet should be launched
+ * @param fillter pass by javax.microedition.io.PushRegistry.registerConnection.
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt>
+ */
+javacall_result
+javacall_push_register(const javacall_suite_id suiteID,
+                       const javacall_utf16_string connection,
+                       const javacall_utf16_string midlet,
+                       const javacall_utf16_string filter);
+
+/**
+ * Unregister push from platform's pushDB.
+ * @param suiteID    unique ID of the MIDlet suite
+ * @param connection connection string pass by
+ *                   javax.microedition.io.PushRegistry.registerConnection.
+ *                   for example, "sms://12345"
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt>
+ */
+javacall_result
+javacall_push_unregister(const javacall_suite_id suiteID,
+                         const javacall_utf16_string connection);
+
+/**
+ * Register alarm into platform's pushDB.
+ * @param suiteID  unique ID of the MIDlet suite
+ * @param midlet   the midlet class name of MIDlet should be launched
+ * @param time     the number of milliseconds since January 1, 1970, 00:00:00 GMT
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt>
+ */
+javacall_result
+javacall_push_alarm_register(const javacall_suite_id suiteID,
+                             const javacall_utf16_string midlet,
+                             javacall_int64 time);
+
+/**
+ * Get registered suite and classname for spefic connection.
+ * @param connect 	the queried connect. for example: sms://:12345
+ * @param suiteID   SuiteId which registery on that port
+ * @param midlet    the midlet class name which registery on that port
+ * @param maxLen    buffer length of value in characters
+ *
+ * @return <tt>JAVACALL_OK</tt>  on success
+ *		   <tt>JAVACALL_INVALID_ARGUMENT</tt> there is not midlet
+ *         register on that port
+ *         <tt>JAVACALL_FAIL</tt> other errors.
+ */
+javacall_result
+javacall_push_getRegisteredSuite(const javacall_utf16_string connection,
+                                 javacall_suite_id* suiteID,
+                                 javacall_utf16_string midlet,
+                                 int maxLen);
+
+/** @} */
+
 
 #ifdef __cplusplus
-} //extern "C"
+} // extern "C"
 #endif
 
 #endif
