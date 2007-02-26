@@ -24,11 +24,17 @@
  * information or have any questions.
  */
 
+#include <javautil_unicode.h>
 #include <javacall_native_ams.h>
 #include <midpNativeAppManager.h>
 #include <midpEvents.h>
 #include <midp_runtime_info.h>
 #include <listeners_intern.h>
+
+#define MAX_CLASS_NAME_LEN   256
+#define MAX_PROFILE_NAME_LEN 64
+#define MAX_SUPPORTED_ARGS   3
+#define MAX_ARG_LEN          256
 
 /*
  * Forward declarations.
@@ -125,19 +131,90 @@ javanotify_ams_midlet_start_with_args(const javacall_suite_id suiteID,
                                           pRuntimeInfo) {
     MIDPError res;                                          
     MidletRuntimeInfo mri, *pMri = NULL;
-    /* IMP_NOTE: fill it! */
-    const jchar *pClassName = NULL, **chArgs = NULL;
-    jint classNameLen = 0, *argsLen = NULL;
+    javacall_result jcRes;
+    javacall_int32 utf16Len;
+    static const jchar pProfileNameBuf[MAX_PROFILE_NAME_LEN];
+    static const jchar pClassName[MAX_CLASS_NAME_LEN];
+    static const jchar chArgs[MAX_SUPPORTED_ARGS][MAX_ARG_LEN] = {
+        {NULL}, {NULL}, {NULL}
+    };
+    jint classNameLen = 0, argsLen[MAX_SUPPORTED_ARGS] = {0, 0, 0};
 
+    if (className == NULL || argsNum < 0 || (argsNum > 0 && args == NULL) ||
+            (argsNum > MAX_SUPPORTED_ARGS) {
+        return JAVACALL_FAIL;
+    }
+
+    /* converting the class name from javacall_utf16_string to jchar* */
+    jcRes = javautil_unicode_utf16_ulength(className, &utf16Len);
+    if (res != JAVACALL_OK) {
+        return JAVACALL_FAIL;
+    }
+
+    jcRes = javautil_unicode_utf16_to_utf8(className, classNameLen,
+        (unsigned char*) pClassName, sizeof(pClassName) / sizeof(jchar) - 1,
+            (javacall_int32*) &classNameLen);
+    if (res != JAVACALL_OK) {
+        return JAVACALL_FAIL;
+    }
+
+    pClassName[classNameLen] = NULL;
+
+    /* converting the midlet's arguments */
+    for (int i = 0; i < argsNum; i++) {
+        if (args[i] == NULL) {
+            return JAVACALL_FAIL;
+        }
+
+        jcRes = javautil_unicode_utf16_utf8length(args[i], utf16Len);
+        if (res != JAVACALL_OK) {
+            return JAVACALL_FAIL;
+        }
+
+        jcRes = javautil_unicode_utf16_to_utf8(args[i],
+            utf16Len, (unsigned char*) chArgs[i],
+                MAX_ARG_LEN - 1, (javacall_int32*) &argsLen[i]);
+        if (res != JAVACALL_OK) {
+            return JAVACALL_FAIL;
+        }
+
+        chArgs[i][argsLen[i]] = NULL;
+    }
+
+    /*
+     * converting the structure with the runtime information from
+     * javacall to MIDP format
+     */
     if (pRuntimeInfo != NULL) {
         mri.memoryReserved = (jint) pRuntimeInfo->memoryReserved;
         mri.memoryTotal    = (jint) pRuntimeInfo->memoryTotal;
         mri.usedMemory     = (jint) pRuntimeInfo->usedMemory;
         mri.priority       = (jint) pRuntimeInfo->priority;
 
-        //pRuntimeInfo-> =
-        //jchar *profileName;
-        //jint profileNameLen;
+        /* converting profileName from javacall_utf16_string to jchar* */
+        jcRes = javautil_unicode_utf16_ulength(pRuntimeInfo->profileName,
+            &utf16Len);
+        if (res != JAVACALL_OK) {
+            return JAVACALL_FAIL;
+        }
+
+        if (utf16Len > 0 && pRuntimeInfo->profileName != NULL) {
+            jcRes = javautil_unicode_utf16_to_utf8(pRuntimeInfo->profileName,
+                (javacall_int32) mri.profileNameLen,
+                (unsigned char*) mri.profileName,
+                sizeof(pProfileNameBuf) / sizeof(jchar) - 1,
+                (javacall_int32*) &mri.profileNameLen);
+
+            if (res != JAVACALL_OK) {
+                return JAVACALL_FAIL;
+            }
+
+            pProfileNameBuf[mri.profileNameLen] = NULL;
+            mri.profileName = pProfileNameBuf;
+        } else {
+            mri.profileNameLen = 0;
+            mri.profileName = NULL;
+        }
 
         pMri = &mri;
     }
