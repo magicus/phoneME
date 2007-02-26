@@ -73,7 +73,7 @@ endef
 
 #Command for building shared libraries
 define makeSharedLibrary
-	$(TARGET_LD) $(LDFLAGS) -shared -o $@ $(1) $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
+	$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(1) $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
 endef
 
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
