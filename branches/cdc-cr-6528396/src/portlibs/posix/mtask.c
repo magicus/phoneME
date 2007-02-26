@@ -1134,7 +1134,10 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 			    2 /*_g*/ +
 #endif
 			    1 /*'\0'*/);
-			assert(libName != NULL);
+			if (libName == NULL) {
+			    fprintf(stderr, "MTASK: No memory for lib name\n");
+			    goto jnative_err;
+			}
 			strcpy(libName, "lib");
 			strcat(libName, argv[2]);
 #ifdef CVM_DEBUG
@@ -1148,14 +1151,17 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 			    /* FIXME: should we do "dlclose()" somewhere? */
 			} else {
 			    fprintf(stderr, "MTASK: Cannot find lib: %s\n", argv[2]);
+			    goto jnative_err;
 			}
 		    } else {
 			nativeMain = dlsym(RTLD_DEFAULT, argv[1]);
 		    }
 
 		    if (nativeMain == NULL) { /* method hasn't been found */
-                        fprintf(stderr, 
-			    "MTASK: Cannot find symbol '%s' in library %s\n", argv[1], argv[2]);
+			fprintf(stderr, 
+			    "MTASK: Cannot find symbol '%s' in library %s\n", 
+			    argv[1], argv[2]);
+		    jnative_err:
 			respondWith(command, JNATIVE_USAGE);
 			jumpMessageFree(command);
 			freeArgs(argc, argv);
@@ -1170,17 +1176,24 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		     */
 		    /* allocate memory for queue's name */
 		    type = malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
-		    /* FIXME: make sure that the string is allocated */
-		    assert(type != NULL);
+		    if (type == NULL) {
+			fprintf(stderr, "MTASK: No memory for queue name\n");
+			goto jnative_err;
+		    }
 
 		    strcpy((char*)type, (char*)MSGPREFIX_NATIVE);
 		    strcat((char*)type, "/");
 		    strcat((char*)type, argv[1]); /* cat the name of process */
+
 		    /* we trying to create a queue named "native/<processName>" */
 		    jumpMessageQueueCreate(type, &code);
+		    if (code != JUMP_MQ_SUCCESS) {
+			fprintf(stderr, 
+			    "MTASK: Can't create message queue %s\n", type);
+			free(type);
+			goto jnative_err;
+		    }
 
-		    /* FIXME: return error code if creation fails */
-		    assert(code == JUMP_MQ_SUCCESS);
 		    free(type);
 		}
 		
