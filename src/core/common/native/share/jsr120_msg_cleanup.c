@@ -56,52 +56,20 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_wma_WMACleanupMonitor_deleteMessages0(void) { 
 
     /** The MIDP String version of the Midlet suite ID. */
-    MidpString msMsid = NULL_MIDP_STRING;
-
-    /* The midlet suite name for this connection. */
-    unsigned char* msid = NULL;
-
-    /* Create handles for all Java objects. */
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(javaStringMsid);
+    SuiteIdType msid = UNUSED_SUITE_ID;
 
     /* Pick up the Midlet Suite ID string. */
-    KNI_GetParameterAsObject(1, javaStringMsid);
+    msid = (SuiteIdType)KNI_GetParameterAsInt(1);
 
-    do {
-        /* Get the Midlet suite name. */
-        if (!KNI_IsNullHandle(javaStringMsid)) {
-
-	    msMsid.len = KNI_GetStringLength(javaStringMsid);
-	    msMsid.data = (jchar*)pcsl_mem_malloc(msMsid.len * sizeof(jchar));
-	    if (msMsid.data == NULL) {
-                /* Couldn't allocate space for the Midlet suite name string. */
-                KNI_ThrowNew(midpOutOfMemoryError, NULL);
-                break;
-	    } else {
-                /* Convert the MIDP string contents to a character array. */
-                KNI_GetStringRegion(javaStringMsid, 0, msMsid.len, msMsid.data);
-                msid = (unsigned char*)midpJcharsToChars(msMsid);
-                pcsl_mem_free(msMsid.data);
-            }
-
-            /*
-             * Invoke a native function that will delete all messages
-             * registered against msid.
-             */
-            jsr120_sms_delete_midlet_suite_msg(msid);
-            jsr120_cbs_delete_midlet_suite_msg(msid);
+    /*
+     * Invoke a native function that will delete all messages
+     * registered against msid.
+     */
+    jsr120_sms_delete_midlet_suite_msg(msid);
+    jsr120_cbs_delete_midlet_suite_msg(msid);
 #if ENABLE_JSR_205
-            jsr205_mms_delete_midlet_suite_msg(msid);
+    jsr205_mms_delete_midlet_suite_msg(msid);
 #endif
-        }
-
-    } while (0);
-
-    /* Memory clean-up (The string can be NULL). */
-    pcsl_mem_free(msid);
-
-    KNI_EndHandles();
 
     KNI_ReturnVoid();
 }
