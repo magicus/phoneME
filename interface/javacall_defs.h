@@ -142,6 +142,7 @@ typedef void* javacall_handle;
 #include <javacall_platform_defs.h>
 
 /**
+ * @typedef javacall_suite_id
  * @brief suite unique ID
  */
 typedef javacall_int32 javacall_suite_id;
