@@ -25,6 +25,18 @@
 #include <javacall_nams.h>
 
 /**
+ * Inform on completion of the previously requested operation.
+ *
+ * @param appID The ID used to identify the application
+ * @param pResult Pointer to a static buffer containing
+ *                operation-dependent result
+ */
+void javacall_ams_operation_completed(javacall_opcode operation,
+                                      const javacall_app_id appID,
+                                      void* pResult) {
+}
+
+/**
  * Inform on change of the specific MIDlet's lifecycle status.
  *
  * Java will invoke this function whenever the lifecycle status of the running
@@ -39,9 +51,9 @@
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_midlet_stateChanged(javacall_midlet_state state,
-                                      const javacall_app_id appID,
-                                      javacall_change_reason reason) {
+void javacall_ams_midlet_state_changed(javacall_midlet_state state,
+                                       const javacall_app_id appID,
+                                       javacall_change_reason reason) {
 }
                                       
 /**
@@ -51,93 +63,87 @@ void javacall_ams_midlet_stateChanged(javacall_midlet_state state,
  * to foreground or background.
  *
  * @param state new state of the running MIDlet. Can be either
- *        <tt>JAVACALL_MIDLET_STATE_FOREGROUND</tt> or
- *        <tt>JAVACALL_MIDLET_STATE_BACKGROUND</tt>
+ *        <tt>JAVACALL_MIDLET_UI_STATE_FOREGROUND</tt>,
+ *        <tt>JAVACALL_MIDLET_UI_STATE_BACKGROUND</tt>,
+ *        <tt>JAVACALL_MIDLET_UI_STATE_FOREGROUND_REQUEST</tt>,
+ *        <tt>JAVACALL_MIDLET_UI_STATE_BACKGROUND_REQUEST</tt>.
  * @param appID The ID of the state-changed suite
  * @param reason The reason why the state change has happened
  */
-void javacall_ams_ui_stateChanged(javacall_midlet_ui_state state,
-                                  const javacall_app_id appID,
-                                  javacall_change_reason reason) {
+void javacall_ams_ui_state_changed(javacall_midlet_ui_state state,
+                                   const javacall_app_id appID,
+                                   javacall_change_reason reason) {
 }
 
 /**
- * Inform NAMS that specific MIDlet suite wants to be FOREGROUND.
- *
- * @param appID unique ID of the runtime MIDlet 
- */
-void javacall_ams_midlet_requestForeground(const javacall_app_id appID) {
-}
-
-/**
- * Get path name of the directory which holds suite's RMS files.
+ * Get path name of the directory which holds suite's RMS files 
  * @param suiteID Unique ID of the MIDlet suite
- * @param szPath  A buffer allocated to contain the returned path name string.
+ * @param path  A buffer allocated to contain the returned path name string.
  *                The returned string must be double-'\0' terminated.
- * @param maxPath Buffer length of szPath
+ * @param maxPath Buffer length of path
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result javacall_ams_getRMSPath(javacall_suite_id suiteID, 
-                                        javacall_utf16_string szPath, 
-                                        int maxPath) {
+javacall_result javacall_ams_get_rms_path(javacall_suite_id suiteID, 
+                                          javacall_utf16_string path, 
+                                          int maxPath) {
     return JAVACALL_OK;
 }
 
 /**
- * Get domain information of the suite.
+ * Get domain information of the suite
  * @param suiteID Unique ID of the MIDlet suite
- * @param domain Pointer to a javacall_ext_ams_domain to contain returned
+ * @param pDomain Pointer to a javacall_ext_ams_domain to contain returned
  *                domain information. Only Trusted or Untrusted domain is
  *                required to be returned.
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
-javacall_result javacall_ams_getDomain(javacall_suite_id suiteID,
-                                       javacall_ams_domain* domain) {
+javacall_result javacall_ams_get_domain(javacall_suite_id suiteID,
+                                        javacall_ams_domain* pDomain) {
     return JAVACALL_OK;
 }
 
 /**
- * Get permission set of the suite.
- * @param suiteID      Unique ID of the MIDlet suite
- * @param permissions  Pointer to a javacall_ext_ams_permission_set structure
- *                     to contain returned permission setttings
+ * Get permission set of the suite
+ * @param suiteID       Unique ID of the MIDlet suite
+ * @param pPermissions  Pointer to a javacall_ext_ams_permission_set structure
+ *                      to contain returned permission setttings
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_getPermissions(javacall_suite_id suiteID,
-                            javacall_ams_permission_set* permissions) {
+javacall_ams_get_permissions(javacall_suite_id suiteID,
+                             javacall_ams_permission_set* pPermissions) {
     return JAVACALL_OK;
 }
 
 /**
  * Set single permission of the suite when user changed it.
- * @param suiteID     Unique ID of the MIDlet suite
+ * @param suiteID     unique ID of the MIDlet suite
  * @param permission  permission be set
  * @param value       new value of permssion
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_setPermission(javacall_suite_id suiteID,
-                           javacall_ams_permission permission,
-                           javacall_ams_permission_val value) {
+javacall_ams_set_permission(javacall_suite_id suiteID,
+                            javacall_ams_permission permission,
+                            javacall_ams_permission_val value) {
     return JAVACALL_OK;
 }
 
 /**
- * Set permission set of the suite.
- * @param suiteID      Unique ID of the MIDlet suite
- * @param permissions  Pointer to a javacall_ext_ams_permission_set structure
- *                     to contain returned permission setttings
+ * Set permission set of the suite
+ * @param suiteID       Unique ID of the MIDlet suite
+ * @param pPermissions  Pointer to a javacall_ext_ams_permission_set structure
+ *                      to contain returned permission setttings
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_setPermissions(javacall_suite_id suiteID,
-                            javacall_ams_permission_set* permissions) {
+javacall_ams_set_permissions(javacall_suite_id suiteID,
+                             javacall_ams_permission_set* pPermissions) {
     return JAVACALL_OK;
 }
 
@@ -151,46 +157,32 @@ javacall_ams_setPermissions(javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_getSuiteProperty(const javacall_suite_id suiteID,
-                              const javacall_utf16_string key,
-                              javacall_utf16_string value,
-                              int maxValue) {
+javacall_ams_get_suite_property(const javacall_suite_id suiteID,
+                                const javacall_utf16_string key,
+                                javacall_utf16_string value,
+                                int maxValue) {
     return JAVACALL_OK;
 }
 
 /**
  * Get suite id by vendor and suite name.
  * @param vendorName  vendor name
- * @param suiteName   Suite name
- * @param suiteID     return suiteID
+ * @param suiteName   suite name
+ * @param pSuiteID    return suiteID
  *
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_getSuiteID(const javacall_utf16_string vendorName,
-                        const javacall_utf16_string suiteName,
-                        javacall_suite_id *suiteID) {
+javacall_ams_get_suite_id(const javacall_utf16_string vendorName,
+                          const javacall_utf16_string suiteName,
+                          javacall_suite_id* pSuiteID) {
     return JAVACALL_OK;
 }
 
 /**
- * Platform inform the VM to create the images cache.
- * @param suiteID  unique ID of the MIDlet suite
- * @param jarName the Jar file name of the MIDlet suite
- *
- * @return <tt>JAVACALL_OK</tt> on success, 
- *         <tt>JAVACALL_FAIL</tt>
- */
-javacall_result
-javanotify_ams_createResourceCache(const javacall_suite_id suiteID,
-                                   const javacall_utf16_string jarName) {
-    return JAVACALL_OK;
-}
-
-/**
- * Java invoke this function to get the image cache path.
- * @param suiteID   Unique ID of the MIDlet suite
+ * VM invokes this function to get the image cache path.
+ * @param suiteID   unique ID of the MIDlet suite
  * @param cachePath buffer for Platform store the image cache path.
  * @param cachePathLen the length of cachePath
  *
@@ -198,8 +190,8 @@ javanotify_ams_createResourceCache(const javacall_suite_id suiteID,
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result
-javacall_ams_getResourceCachePath(const javacall_suite_id suiteID,
-                                  javacall_utf16_string cachePath,
-                                  int cachePathLen) {
+javacall_ams_get_resource_cache_path(const javacall_suite_id suiteID,
+                                     javacall_utf16_string cachePath,
+                                     int cachePathLen) {
     return JAVACALL_OK;
 }
