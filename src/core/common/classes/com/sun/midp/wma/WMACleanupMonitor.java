@@ -49,10 +49,10 @@ public class WMACleanupMonitor implements MIDletProxyListListener {
      * Native function to delete SMS/CBS/MMS messages left
      * unread by the MIDlet suite that is terminating.
      *
-     * @param msid Midlet Suite ID string.
+     * @param msid Midlet Suite ID.
      *
      */
-    private native void deleteMessages0(String msid);
+    private native void deleteMessages0(int msid);
 
     /**
      * Prevents instantiation of this class.
