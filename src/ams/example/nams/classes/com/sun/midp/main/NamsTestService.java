@@ -54,7 +54,6 @@ public class NamsTestService implements EventListener, Runnable {
 
     static final int PORT = 13322;
     static final String PFX = "namstestsvc: ";
-    static final int MIDLET_DESTROY_TIMEOUT = 5000;
 
     /**
      * Prints string s to stdout, prefixed by PFX.
@@ -324,10 +323,16 @@ public class NamsTestService implements EventListener, Runnable {
                 NamsAPIWrapper.midletPause(app.intValue());
             }
         } else if ("destroy".equals(sa[0])) {
-            Integer app = check(sa, 2, 1);
+            Integer app = check(sa, 3, 1);
             if (app != null) {
+                int timeout = -1;
+                try {
+                    timeout = Integer.parseInt(sa[2]);
+                } catch (NumberFormatException nfe) {
+                  // Intentionally ignored
+                }
                 NamsAPIWrapper.midletDestroy(app.intValue(),
-                    MIDLET_DESTROY_TIMEOUT);
+                    timeout);
             }
         } else if ("setfg".equals(sa[0])) {
             Integer app = check(sa, 2, 1);
@@ -350,7 +355,7 @@ public class NamsTestService implements EventListener, Runnable {
      */
     String helpmsg[] = {
         "createstart suite-name class-name app-id",
-        "destroy app-id",
+        "destroy app-id timeout",
         "echo [args ...]",
         "pause app-id",
         "quit",
