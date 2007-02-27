@@ -133,8 +133,16 @@
   pointer(GP_ASM, compiler_throw_ArrayIndexOutOfBoundsException_10)
 #endif
 
+#if ENABLE_COMPILER && (!defined(PRODUCT) || ENABLE_TTY_TRACE)
+#define GP_COMPILER_TTY_TRACE_DO(pointer, value) pointer(GP_ASM, trace_bytecode)
+#else
+#define GP_COMPILER_TTY_TRACE_DO(pointer, value) 
+#endif
+
+
 #define GP_COMPILER_SYMBOLS_DO(pointer, value) \
-        GP_COMPILER_SYMBOLS_DO_GENERIC(pointer, value)
+        GP_COMPILER_SYMBOLS_DO_GENERIC(pointer, value) \
+        GP_COMPILER_TTY_TRACE_DO(pointer, value) 
 
 //----------------------------------------------------------------------
 // Constants that are implemented in C code but need to be statically
@@ -313,8 +321,7 @@
     pointer(GP_ASM, interpreter_throw_NullPointerException_tos_cached) \
     pointer(GP_ASM, interpreter_throw_IncompatibleClassChangeError) \
     pointer(GP_ASM, interpreter_grow_stack) \
-    pointer(GP_ASM, interpreter_throw_ArrayIndexOutOfBoundsException) \
-    pointer(GP_ASM, trace_bytecode)
+    pointer(GP_ASM, interpreter_throw_ArrayIndexOutOfBoundsException)
 #else
 #define GP_INTERNAL_SYMBOLS3_DO(pointer, value) \
     pointer(GP_ASM, fixed_interpreter_fast_method_entry_0) \
