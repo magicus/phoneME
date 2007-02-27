@@ -677,6 +677,10 @@ public class Graphics {
         rgbColor = (red << 16) | (green << 8) | blue;
         gray = grayVal(red, green, blue);
         pixel = getPixel(rgbColor, gray, false);
+
+        gciShapeRenderer.paintModified();
+        gciImageRenderer.paintModified();
+        gciTextRenderer.paintModified();
     }
 
     /**
@@ -726,6 +730,10 @@ public class Graphics {
             gray = value;
             pixel = getPixel(rgbColor, gray, true);
         }
+
+        gciShapeRenderer.paintModified();
+        gciImageRenderer.paintModified();
+        gciTextRenderer.paintModified();
     }
 
     /**
@@ -752,6 +760,10 @@ public class Graphics {
         }
 
         this.style = style;
+
+        gciShapeRenderer.strokeModified();
+        gciImageRenderer.strokeModified();
+        gciTextRenderer.strokeModified();
     }
 
     /**
@@ -951,6 +963,10 @@ public class Graphics {
          * end sanity check 
          */
 
+        gciImageRenderer.clipModified();
+        gciTextRenderer.clipModified();
+        gciShapeRenderer.clipModified();
+
     }
 
     /**
@@ -1058,6 +1074,9 @@ public class Graphics {
          * end sanity check 
          */
 
+        gciImageRenderer.clipModified();
+        gciTextRenderer.clipModified();
+        gciShapeRenderer.clipModified();
     }
 
     /**
@@ -2205,6 +2224,9 @@ public class Graphics {
 	 * <code>null</code> or has length not equal to 4.
 	 */
 	public int[] getClip(int[] clipBounds) {
+            if (clipBounds.length != 4) {
+		throw new IllegalArgumentException();
+	    }
 	    clipBounds[0] = clipX1 - transX;
 	    clipBounds[1] = clipY1 - transY;
 	    clipBounds[2] = clipX2 - clipX1;
