@@ -279,8 +279,8 @@ make_queue_name(pid_t pid, const JUMPPlatformCString messageType,
 
 /* Creates/opens a jump_message_queue for reading or writing.  On
    success returns the queue and sets code to JUMP_MQ_SUCCESS.  On
-   failure returns NULL and sets code to one of JUMP_MQ_OUT_OF_MEMORY
-   or JUMP_MQ_FAILURE on failure. */
+   failure returns NULL and sets code to one of JUMP_MQ_OUT_OF_MEMORY,
+   JUMP_MQ_TARGET_NONEXISTENT, or JUMP_MQ_FAILURE on failure. */
 static struct jump_message_queue *
 message_queue_create(pid_t processId,
 		     JUMPPlatformCString messageType,
@@ -358,7 +358,12 @@ message_queue_create(pid_t processId,
 
     jmq->fd = open(name, O_RDWR | O_NONBLOCK);
     if (jmq->fd == -1) {
-	*code = JUMP_MQ_FAILURE;
+	if (!forRead && errno == ENOENT) {
+	    *code = JUMP_MQ_TARGET_NONEXISTENT;
+	}
+	else {
+	    *code = JUMP_MQ_FAILURE;
+	}
 	goto fail;
     }
 

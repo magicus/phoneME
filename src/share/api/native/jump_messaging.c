@@ -106,6 +106,9 @@ translateJumpMessageQueueStatusCode(const JUMPMessageQueueStatusCode *mqcode)
       case JUMP_MQ_UNBLOCKED:
 	return JUMP_UNBLOCKED;
 
+      case JUMP_MQ_TARGET_NONEXISTENT:
+	return JUMP_TARGET_NONEXISTENT;
+
       default:
 	assert(0);
 	return JUMP_FAILURE;

@@ -49,7 +49,8 @@ typedef enum {
     JUMP_MQ_BAD_MESSAGE_SIZE = 6,
     JUMP_MQ_WOULD_BLOCK   = 7,
     JUMP_MQ_NO_SUCH_QUEUE = 8,
-    JUMP_MQ_UNBLOCKED     = 9
+    JUMP_MQ_UNBLOCKED     = 9,
+    JUMP_MQ_TARGET_NONEXISTENT = 10
 } JUMPMessageQueueStatusCode;
 
 /**
@@ -99,8 +100,9 @@ extern int jumpMessageQueueDestroy(JUMPPlatformCString messageType);
  * multiple threads.
  *
  * @return On success returns a non-NULL handle and sets *code to
- *   JUMP_MQ_SUCCESS.  On failure retuns NULL and sets *code to
- *   one of JUMP_MQ_OUT_OF_MEMORY or JUMP_MQ_FAILURE.
+ * JUMP_MQ_SUCCESS.  On failure retuns NULL and sets *code to one of
+ * JUMP_MQ_OUT_OF_MEMORY, JUMP_MQ_TARGET_NONEXISTENT, or
+ * JUMP_MQ_FAILURE.
  */
 extern JUMPMessageQueueHandle 
 jumpMessageQueueOpen(int processId, JUMPPlatformCString type,

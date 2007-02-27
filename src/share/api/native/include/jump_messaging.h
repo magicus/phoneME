@@ -42,6 +42,7 @@
  * @brief identifies 
  */
 typedef enum {
+    JUMP_TARGET_NONEXISTENT = 1,
     JUMP_TIMEOUT  = 2,
     JUMP_SUCCESS  = 3,
     JUMP_FAILURE  = 4,
@@ -224,7 +225,7 @@ jumpMessageGetType(JUMPMessage m);
  * out, a proper error code is returned immediately.
  *
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
- * JUMP_WOULD_BLOCK, or JUMP_FAILURE.
+ * JUMP_WOULD_BLOCK, JUMP_TARGET_NONEXISTENT, or JUMP_FAILURE.
  */
 extern void
 jumpMessageSendAsync(JUMPAddress target, JUMPOutgoingMessage m,
@@ -239,7 +240,7 @@ jumpMessageSendAsync(JUMPAddress target, JUMPOutgoingMessage m,
  * out, a proper error code is returned immediately.
  *
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
- * JUMP_WOULD_BLOCK, JUMP_TIMEOUT, or JUMP_FAILURE.
+ * JUMP_WOULD_BLOCK, JUMP_TIMEOUT, JUMP_TARGET_NONEXISTENT, or JUMP_FAILURE.
  */
 extern void
 jumpMessageSendAsyncResponse(JUMPOutgoingMessage m,
