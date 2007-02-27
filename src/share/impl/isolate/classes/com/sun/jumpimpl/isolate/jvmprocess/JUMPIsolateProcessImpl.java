@@ -219,8 +219,13 @@ public class JUMPIsolateProcessImpl
 	    JUMPApplication app = JUMPApplication.fromByteArray(barr);
 	    String[] args = elr.getArgs();
 	    System.err.println("START_APP("+app+")");
-	    // The message is telling us to start an application
-	    int appId = appContainer.startApp(app, args);
+	    int appId;
+            if (appContainer == null) {
+               appId = -1; 
+	    } else {
+	       // The message is telling us to start an application
+	       appId = appContainer.startApp(app, args);
+            }
 	    // Now wrap this appid in a message and return it
 	    JUMPResponseInteger resp;
 	    if (appId != -1) {

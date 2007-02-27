@@ -166,8 +166,7 @@ public class IsolateManagerModuleImpl
 	//
         while (i.hasNext()) {
             JUMPIsolateProxyImpl isolate = ((JUMPIsolateProxyImpl)i.next());
-	    // For now, initialized or better is good
-            if (isolate.getIsolateState() > 0) {
+	    if (isolate.isAlive()) {
                 activeIsolates.add(isolate);
 	    }
         }
@@ -209,7 +208,7 @@ public class IsolateManagerModuleImpl
     public void handleMessage(JUMPMessage m) {
 	JUMPCommand raw = JUMPIsolateLifecycleRequest.fromMessage(m);
         JUMPIsolateLifecycleRequest request = (JUMPIsolateLifecycleRequest)raw;
-	
+	 
 	String requestId = request.getCommandId();
         
 	//
@@ -219,6 +218,8 @@ public class IsolateManagerModuleImpl
 	// and the executive side.
 	//
 	String initId = JUMPIsolateLifecycleRequest.ID_ISOLATE_INITIALIZED;
+	String destroyedId = JUMPIsolateLifecycleRequest.ID_ISOLATE_DESTROYED;
+
 	int initState = JUMPIsolateLifecycleRequest.ISOLATE_STATE_INITIALIZED;
 	
         if (requestId.equals(initId)) {
@@ -232,6 +233,15 @@ public class IsolateManagerModuleImpl
 	    //
 	    ipi.setIsolateState(initState);
 	    // No response required on this request.
+        } else if (requestId.equals(destroyedId)) {
+            int pid = request.getIsolateId();
+
+	    JUMPIsolateProxyImpl ipi = 
+		JUMPIsolateProxyImpl.getRegisteredIsolate(pid);
+	    if (ipi != null) {
+                ipi.setStateToDestroyed();
+	        isolates.remove(ipi);
+            }
         }
     }
 }
