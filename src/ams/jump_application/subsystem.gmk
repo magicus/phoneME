@@ -32,17 +32,22 @@
 # other def. (like VPATH)
 ############################################################
 
+include $(SUBSYSTEM_AMS_DIR)/ams_api/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
+include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
+
 CDC_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/cdc_application
 OTA_DIR = $(SUBSYSTEM_AMS_DIR)/ota/reference
 INSTALLER_DIR = $(SUBSYSTEM_AMS_DIR)/installer/reference
-JUMP_INSTALLER_DIR = $(SUBSYSTEM_AMS_DIR)/jump_application
+JUMP_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/jump_application
                                                                                            
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += \
 			$(CDC_AMS_DIR)/classes \
 			$(OTA_DIR)/classes \
 			$(INSTALLER_DIR)/classes \
-			$(JUMP_INSTALLER_DIR)/classes
+			$(JUMP_AMS_DIR)/classes
                                                                                            
 # Java files for the sub-system
 #
@@ -55,42 +60,58 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/ManifestProperties.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/SuiteDownloadInfo.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/installer/OtaNotifier.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CDCInit.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletLoader.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java \
-    $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/content/CHManager.java \
-    $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/JumpInit.java \
-    $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/MIDletApplication.java \
-    $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/installer/InstallStateImpl.java \
-    $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/installer/JUMPFileInstaller.java \
-    $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/installer/JUMPInstaller.java \
-    $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/installer/JUMPInstallerInterface.java \
-    $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/installer/MIDLETInstallerImpl.java \
-    $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/installer/StorageAccessInterface.java \
-    $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/installer/TrustedMIDletSuiteInfo.java \
-    $(JUMP_INSTALLER_DIR)/classes/com/sun/midp/jump/midletsuite/MIDletSuiteStorageAccessor.java 
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/content/CHManager.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/JumpInit.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/MIDletApplication.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/InstallStateImpl.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/JUMPFileInstaller.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/JUMPInstaller.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/JUMPInstallerInterface.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/MIDLETInstallerImpl.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/StorageAccessInterface.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/TrustedMIDletSuiteInfo.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/isolate/MIDletContainer.java \
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/midletsuite/MIDletSuiteStorageAccessor.java 
 
 
 # vpath for sub-system
 #
 vpath % \
+   $(SUBSYSTEM_AMS_DIR)/ams_base/reference/native \
    $(INSTALLER_DIR)/native \
-   $(JUMP_INSTALLER_DIR)/native
+   $(JUMP_AMS_DIR)/native
                                                                                            
 # Include path for the sub-system
 #
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_AMS_DIR)/ams_base/include \
     -I$(INSTALLER_DIR)/../include
                                                                                            
 # Native files for common module
 #
 SUBSYSTEM_AMS_NATIVE_FILES += \
-        jar.c \
-        JarReader.c \
-        midpJar.c \
-        JumpInit.c
+  MIDletContainer.c \
+  listeners_intern.c \
+  imageCache.c \
+  midp_foreground_id.c \
+  midpInflate.c \
+  midpInit.c \
+  jar.c \
+  JarReader.c \
+  midpJar.c \
+  JumpInit.c
 
-SUBSYSTEM_AMS_LAZY_MAKEFILES += \
-    $(JUMP_INSTALLER_DIR)/runMidlet.gmk
-
-SUBSYSTEM_AMS_EXECUTABLES = \
-	$(BINDIR)/runMidlet$(g)$(p)$(EXE)
+ifneq ($(CVM_PRELOAD_LIB), true)
+  #
+  # Create a libmidp.so for non-ROMized build.
+  #
+  $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX): \
+    $(MIDP_DEPS) $(OBJ_FILES)
+	@echo " ... linking $@ " $(LOG)
+	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+	  $(OBJ_FILES) $(LIBS))` $(LOG) 
+endif

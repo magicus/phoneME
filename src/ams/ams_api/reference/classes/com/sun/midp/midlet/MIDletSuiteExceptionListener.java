@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.main;
+package com.sun.midp.midlet;
 
 /**
  * An interface to handle MIDlet suite exceptions.

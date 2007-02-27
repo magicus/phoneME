@@ -82,18 +82,9 @@ endif
 
 # AppManagerUI depends on jams (AppManager)
 
+ifeq ($(TARGET_VM), cldc_vm)
 include $(SUBSYSTEM_AMS_DIR)/ams_api/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/ams_base/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk
-include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
-
-ifneq ($(CVM_INCLUDE_JUMP), true)
-   include $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk
-   include $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk
-endif
-
-ifeq ($(TARGET_VM), cldc_vm)
 
 include $(SUBSYSTEM_AMS_DIR)/ams_util/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/lib.gmk
@@ -101,7 +92,12 @@ include $(SUBSYSTEM_AMS_DIR)/app_image_gen_base/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/app_image_gen/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/autotester_base/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/autotester/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/platform_request/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
+include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
 
 ifeq ($(USE_NATIVE_AMS), false)
     include $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk
@@ -139,9 +135,9 @@ endif
 # CDC specific files
 ifeq ($(TARGET_VM), cdc_vm)
    ifeq ($(CVM_INCLUDE_JUMP), true)
-      include $(SUBSYSTEM_AMS_DIR)/jump_application/lib.gmk
+      include $(SUBSYSTEM_AMS_DIR)/jump_application/subsystem.gmk
    else
-      include $(SUBSYSTEM_AMS_DIR)/cdc_application/lib.gmk
+      include $(SUBSYSTEM_AMS_DIR)/cdc_application/subsystem.gmk
    endif
 endif
 
