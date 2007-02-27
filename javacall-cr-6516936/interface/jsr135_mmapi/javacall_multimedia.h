@@ -92,6 +92,7 @@ extern "C" {
 
 #define JAVACALL_AUDIO_MIDI_MIME     "audio/midi"
 #define JAVACALL_AUDIO_MIDI_MIME_2   "audio/mid"
+#define JAVACALL_AUDIO_SP_MIDI_MIME  "audio/sp-midi"
 #define JAVACALL_AUDIO_WAV_MIME      "audio/x-wav"
 #define JAVACALL_AUDIO_MP3_MIME      "audio/mpeg"
 #define JAVACALL_AUDIO_MP3_MIME_2    "audio/mp3"

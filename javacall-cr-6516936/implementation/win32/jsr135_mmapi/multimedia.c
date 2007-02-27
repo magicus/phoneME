@@ -89,6 +89,7 @@ static const javacall_media_caps _media_caps[] = {
     {JAVACALL_AUDIO_TONE_MIME,      3, {"device", "http", "file"}},
     {JAVACALL_AUDIO_MIDI_MIME,      2, {"http", "file"}},
     {JAVACALL_AUDIO_MIDI_MIME_2,    2, {"http", "file"}},
+    {JAVACALL_AUDIO_SP_MIDI_MIME,   2, {"http", "file"}},
     {JAVACALL_AUDIO_WAV_MIME,       3, {"capture", "http", "file"}},
     {JAVACALL_AUDIO_MP3_MIME,       2, {"http", "file"}},
     {JAVACALL_AUDIO_MP3_MIME_2,     2, {"http", "file"}},
@@ -187,6 +188,10 @@ static javacall_media_type javautil_media_mime_to_type(const javacall_utf16* mim
             JAVA_DEBUG_PRINT1("javautil_media_mime_to_type %s\n", cMime);
 
             if (0 == strcmp(JAVACALL_AUDIO_MIDI_MIME, cMime)) {
+                ret = JAVACALL_AUDIO_MIDI;
+            } else if (0 == strcmp(JAVACALL_AUDIO_MIDI_MIME_2, cMime)) {
+                ret = JAVACALL_AUDIO_MIDI;
+            } else if (0 == strcmp(JAVACALL_AUDIO_SP_MIDI_MIME, cMime)) {
                 ret = JAVACALL_AUDIO_MIDI;
             } else if (0 == strcmp(JAVACALL_AUDIO_WAV_MIME, cMime)) {
                 ret = JAVACALL_AUDIO_WAV;
