@@ -22,6 +22,17 @@
  * information or have any questions. 
  */ 
 
+/*
+ * IMPL_NOTE: this file contains stubs for the functions that
+ * the MIDP system invokes to inform NAMS running on the platform
+ * side about the state changes happend in the MIDP, or to get
+ * some information from the platform (like a domain of the midlet
+ * suite having the given suite ID).
+ *
+ * It will be implemented when a new version of runNams that uses
+ * Javacall NAMS API instead of MIDP NAMS API is created.
+ */
+
 #include <javacall_nams.h>
 
 /**

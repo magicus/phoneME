@@ -27,7 +27,7 @@
 #ifndef _EXE_ENTRY_POINT_MD_H_
 #define _EXE_ENTRY_POINT_MD_H_
 
-#if !defined _EXE_ENTRY_POINT_MD_H_
+#if !defined _EXE_ENTRY_POINT_H_
 # error "Never include <exe_entry_point_md.h> directly; use <exe_entry_point.h> instead."
 #endif
 
