@@ -159,6 +159,7 @@ public class DefaultConfiguration extends Configuration {
         {MIME_AUDIO_WAV_2, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_MIDI, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_MIDI_2, "com.sun.mmedia.DirectPlayer"},
+        {MIME_AUDIO_SP_MIDI, "com.sun.mmedia.DirectPlayer"},
     // #ifndef ABB [
         {MIME_AUDIO_MP3, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_MP3_2, "com.sun.mmedia.DirectPlayer"},
@@ -212,6 +213,7 @@ public class DefaultConfiguration extends Configuration {
         mimeTypes.put("jts", MIME_AUDIO_TONE);
         mimeTypes.put("mid", MIME_AUDIO_MIDI);
         mimeTypes.put("midi", MIME_AUDIO_MIDI);
+        mimeTypes.put("rmi", MIME_AUDIO_MIDI);
         mimeTypes.put("kar", MIME_AUDIO_MIDI);
         mimeTypes.put("wav", MIME_AUDIO_WAV);
         mimeTypes.put("mp3", MIME_AUDIO_MP3);
@@ -257,6 +259,7 @@ public class DefaultConfiguration extends Configuration {
                 MIME_AUDIO_AMR_WB,
                 MIME_AUDIO_MIDI,
                 MIME_AUDIO_MIDI_2,
+                MIME_AUDIO_SP_MIDI,
                 MIME_AUDIO_WAV,
                 MIME_AUDIO_WAV_2,
                 MIME_AUDIO_MP3,
@@ -291,6 +294,7 @@ public class DefaultConfiguration extends Configuration {
                 MIME_AUDIO_AMR_WB,
                 MIME_AUDIO_MIDI,
                 MIME_AUDIO_MIDI_2,
+                MIME_AUDIO_SP_MIDI,
                 MIME_AUDIO_WAV,
                 MIME_AUDIO_WAV_2,
                 MIME_AUDIO_MP3,
@@ -316,6 +320,7 @@ public class DefaultConfiguration extends Configuration {
                 MIME_AUDIO_AMR_WB,                
                 MIME_AUDIO_MIDI,
                 MIME_AUDIO_MIDI_2,
+                MIME_AUDIO_SP_MIDI,
                 MIME_AUDIO_WAV,
                 MIME_AUDIO_WAV_2,
                 MIME_AUDIO_MP3,
@@ -443,7 +448,8 @@ public class DefaultConfiguration extends Configuration {
                 };
         }
 
-        if (content_type.equals(MIME_AUDIO_MIDI_2)) {
+        if (content_type.equals(MIME_AUDIO_MIDI_2) || 
+            content_type.equals(MIME_AUDIO_SP_MIDI)) {
             return new String[]{
                 "http",
             // #ifdef USE_FILE_CONNECTION [
