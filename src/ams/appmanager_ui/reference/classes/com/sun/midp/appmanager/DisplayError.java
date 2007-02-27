@@ -51,7 +51,24 @@ class DisplayError {
         this.display = display;
     }
 
-    
+    /**
+     * Display the Alert with the error message.
+     *
+     * @param appName - name of the application in which the error happen
+     * @param t - throwable that was thrown while performing one
+     *             of the operations on the application
+     * @param alertTitle - if non-null it will be the Alert title, otherwise
+     *        a default value will be used
+     *       (Resource.getString(ResourceConstants.AMS_CANNOT_START))
+     * @param alertMessage - if non-null it will be the Alert message,
+     *        otherwise a default message will be generated using
+     *       (Resource.getString(ResourceConstants.ERROR))
+     */
+    void showErrorAlert(String appName, Throwable t,
+                        String alertTitle, String alertMessage) {
+        showErrorAlert(appName, t, alertTitle, alertMessage, null);    
+    }
+
     /**
      * Display the Alert with the error message.
      *
@@ -64,9 +81,12 @@ class DisplayError {
      * @param alertMessage - if non-null it will be the Alert message, 
      *        otherwise a default message will be generated using
      *       (Resource.getString(ResourceConstants.ERROR))
+     * @param nextDisplayable the Displayable to be shown after
+     *        the error alert is dismissed; can be null
      */
     void showErrorAlert(String appName, Throwable t, 
-                        String alertTitle, String alertMessage) {
+                        String alertTitle, String alertMessage,
+                        Displayable nextDisplayable) {
 
         if (alertMessage == null) {
 
@@ -104,7 +124,12 @@ class DisplayError {
         }
         Alert a = new Alert(alertTitle, alertMessage, null, AlertType.ERROR);
         a.setTimeout(Alert.FOREVER);
-        display.setCurrent(a); // appSelector?
+
+        if (nextDisplayable == null) {
+            display.setCurrent(a);
+        } else {
+            display.setCurrent(a, nextDisplayable);
+        }
     }
 
     /**
