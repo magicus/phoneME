@@ -54,6 +54,41 @@
  * Protocol implementation functions
  *=======================================================================*/
 
+#define DEVICE_PORT_PREFIX "/dev/ttyS"
+#define PORT_NUM_START_POS ((int)sizeof(DEVICE_PORT_PREFIX) - 1)
+
+/**
+ * Converts the given logical port name into the platform-dependent name
+ * of the device to open.
+ * Note that only port with numbers from 1 to 9 are supported.
+ *
+ * @param pLogicalPortName logical name of the port, for example, COM1
+ *
+ * @return pointer to a static buffer containing the platform-specific name
+ *         of the port to open
+ */
+static char*
+logical_port_name2device_port_name(const char* pLogicalPortName) {
+    static char pDevicePortName[] = DEVICE_PORT_PREFIX "xx";
+    int pos = PORT_NUM_START_POS;
+
+    while (*pLogicalPortName && pos < (int)(sizeof(pDevicePortName) - 1)) {
+        char ch = *pLogicalPortName++;
+        if (ch >= '1' && ch <= '9') {
+            pDevicePortName[pos++] = ch - 1;
+            break;
+        }
+    }
+
+    if (pos == PORT_NUM_START_POS) {
+        pDevicePortName[pos++] = '0';
+    }
+
+    pDevicePortName[pos] = 0;
+    return pDevicePortName;
+}
+#undef PORT_NUM_START_POS
+
 /**
  * Configure a serial port optional parameters.
  *
@@ -131,8 +166,9 @@ KNIEXPORT KNI_RETURNTYPE_INT
             }
             szName[nameLen] = 0;
 		
-            status = openPortByNameStart(szName, baud, flags,
-                &hPort, &context);
+            status = openPortByNameStart(
+                logical_port_name2device_port_name(szName),
+                    baud, flags, &hPort, &context);
         }
 
     } else {
