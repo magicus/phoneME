@@ -350,6 +350,26 @@ cleanMessageQueuesOf(int cpid)
     closedir(dir);
 }
 
+ /*
+  * Send executive a lifecycle message indicating that a child has terminated.
+  */
+static void
+notifyTermination(int cpid) {
+    JUMPOutgoingMessage message;
+    JUMPAddress executiveAddr;
+    JUMPMessageStatusCode statusCode;
+
+    message = jumpMessageNewOutgoingByType("mvm/lifecycle");
+    jumpMessageAddString(message, "IsolateDestroyed"); /* ID_ISOLATE_DESTROYED */
+    jumpMessageAddInt(message, 0); /* String[] data length */
+    jumpMessageAddInt(message, cpid); /* isolateId */
+    jumpMessageAddInt(message, 0);    /* appID */
+    executiveAddr.processId = executivePid;
+
+    jumpMessageSendAsync(executiveAddr, message, &statusCode);
+    jumpMessageFreeOutgoing(message);
+}
+
 /*
  * The signal handler indicated there are children to reap. Do it.
  * Return last status reaped.
@@ -365,6 +385,11 @@ doReapChildren(ServerState* state, int options)
     reapChildrenFlag = 0;
     while ((cpid = wait3(&status, options, &ru)) > 0) {
 	int exitcodefd;
+
+        /* Notify the executive about the isolate termination */
+	if (cpid != executivePid) {
+           notifyTermination(cpid);
+	} 
 
 	/* This had better be one of ours */
 	assert((executivePid == cpid) || (findTaskFromPid(cpid) != NULL));
