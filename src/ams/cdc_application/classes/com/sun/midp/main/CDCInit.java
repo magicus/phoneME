@@ -7,24 +7,61 @@
 
 package com.sun.midp.main;
 
+import java.io.File;
+
 /**
  * Initialize the CDC environment for MIDlet execution.
  */
 public class CDCInit {
-    static void init() {
+    /**
+     * Performs CDC API initialization.
+     *
+     * @param midpHome root directory of the MIDP working files
+     * @param nativeLib name of the native shared library, only applies to
+     * non-rommized build
+     */
+    public static void init(String midpHome, String nativeLib) {
         try {
-            String n = System.getProperty("sun.midp.library.name", "midp");
-            // DEBUG: System.err.println("Loading DLL \"" + n + "\" ...");
-            System.loadLibrary(n);
-            // DEBUG: System.err.println("done");
+            if (nativeLib != null) {
+                System.loadLibrary(nativeLib);
+            }
         } catch (UnsatisfiedLinkError err) {
+            /*
+             * Since there is currenly no to determine if the build rommized
+             * the MIDP native methods or not, it is customary to pass in a
+             * default library name even if there is no library to load,
+             * which will cause this exception, so the exception has to be
+             * ignored here. If this is a non-rommized build and library is
+             * not found, the first native method call below will throw an
+             * error.
+             */
         }
 
-	/** Path to MIDP working directory. */
-        String home = System.getProperty("sun.midp.home.path", "");
+        /*
+         * In case the normal system properites configration did not set
+         * the profile set it here.
+         */
+        String profile = System.getProperty("microedition.profiles");
+	if (profile == null) {
+            System.setProperty("microedition.profiles", "MIDP-2.1");
+        }
 
-        initMidpNativeStates(home);
-        // DEBUG: System.err.println("MIDP states initialized");
+        initMidpNativeStates(midpHome);
+    }
+
+    /** Performs CDC API initialization. */
+    public static void init() {
+	/*
+         * Path to MIDP working directory. 
+         * Default is the property "sun.midp.home.path",
+         * the fallback is user.dir.
+         */
+        String userdir = System.getProperty("user.dir", ".");
+        userdir+= File.separator + "midp" + File.separator + "midp_fb";
+        String home = System.getProperty("sun.midp.home.path", userdir);
+        String lib = System.getProperty("sun.midp.library.name", "midp");
+
+        init(home, lib);
     }
 
     /**
