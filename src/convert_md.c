@@ -32,11 +32,14 @@
 #include <iconv.h>
 #include <locale.h>
 #include <stdlib.h>
+#include <errno.h>
 
-#define UTF8 "UTF-8"
+#define UTF8     "UTF-8"
+#define UTF8_LEN 5
 
 static iconv_t
-open_iconv(const char* to, const char* from) {
+open_iconv(const char* to, const char* from)
+{
     iconv_t ic = iconv_open(to, from);
     if (ic == (iconv_t)-1) {
         if (errno == EINVAL) {
@@ -76,16 +79,27 @@ get_langinfo_codeset()
     return name;
 }
 
-int native2utf8(const char* from, char* to, int buflen) {
-    int ret;
-    size_t ileft, oleft;
-    char *langinfo_codeset = get_langinfo_codeset();
+int native2utf8(const char* from, char* to, int buflen)
+{
+    size_t  ret;
+    size_t  ileft, oleft;
     iconv_t ic;
-    if (strncmp(langinfo_codeset, UTF8, 5) == 0) {
+
+    /* since iconv function claims to modify only inbuf pointer itself not
+     * bytes where it points we are safe here
+     */
+    char *inbuf = (char *)from;
+
+    if (strncmp(get_langinfo_codeset(), UTF8, UTF8_LEN) == 0) {
         /* don't invoke 'iconv' functions to do the
          * conversion if it's already in UTF-8 encoding
+         *
+         * Copy correct number of bytes since on many systems even
+         * reading from beyond some boundary in memory can cause core
+         * dump.
          */
-        memcpy(to, from, buflen);
+        int len = strlen(from) + 1;
+        memcpy(to, from, ((len>buflen)?buflen:len));
         return 0;
     }
 
@@ -94,9 +108,9 @@ int native2utf8(const char* from, char* to, int buflen) {
     ileft = strlen(from);
     oleft = buflen;
 
-    ret = iconv(ic, &from, &ileft, &to, &oleft);
+    ret = iconv(ic, &inbuf, &ileft, &to, &oleft);
     if (ret == (size_t)-1) {
-        fprintf(stderr, "native2utf8:Failed to convert (err=%d)\n", ret);
+        fprintf(stderr, "native2utf8:Failed to convert (err=%d)\n", errno);
         exit(1);
     }
     iconv_close(ic);
@@ -104,19 +118,28 @@ int native2utf8(const char* from, char* to, int buflen) {
     return buflen-oleft;
 }
 
-int utf2native(const char* from, char* to, int buflen) {
-    int ret;
-    size_t ileft, oleft;
-
-    char *langinfo_codeset = get_langinfo_codeset();
+int utf2native(const char* from, char* to, int buflen)
+{
+    size_t  ret;
+    size_t  ileft, oleft;
     iconv_t ic;
 
-    if (strncmp(langinfo_codeset, UTF8, 5) == 0) {
+    /* since iconv function claims to modify only inbuf pointer itself not
+     * bytes where it points we are safe here
+     */
+    char *inbuf = (char *)from;
+
+    if (strncmp(get_langinfo_codeset(), UTF8, UTF8_LEN) == 0) {
         /* Don't do the conversion if it's
          * already in UTF-8 encoding
          * Copy over the 'from' to 'to'.
+         *
+         * Copy correct number of bytes since on many systems even
+         * reading from beyond some boundary in memory can cause core
+         * dump.
          */
-        memcpy(to, from, buflen);
+        int len = strlen(from) + 1;
+        memcpy(to, from, ((len>buflen)?buflen:len));
         return 0;
     }
 
@@ -125,9 +148,9 @@ int utf2native(const char* from, char* to, int buflen) {
     ileft = strlen(from);
     oleft = buflen;
 
-    ret = iconv(ic, &from, &ileft, &to, &oleft);
+    ret = iconv(ic, &inbuf, &ileft, &to, &oleft);
     if (ret == (size_t)-1) {
-        fprintf(stderr, "utf2native:Failed to convert (err=%d)\n", ret);
+        fprintf(stderr, "utf2native:Failed to convert (err=%d)\n", errno);
         exit(1);
     }
     iconv_close(ic);
@@ -143,14 +166,17 @@ int utf2native(const char* from, char* to, int buflen) {
 #include "oobj.h"
 #include "utf.h"
 
-int native2utf8(const char* from, char* to, int buflen) {
+int native2utf8(const char* from, char* to, int buflen)
+{
     int len;
     unsigned short unicode[BUFSIZ];
     len = MultiByteToWideChar(CP_ACP, 0, from, -1, &unicode[0], BUFSIZ);
     unicode2utf(&unicode[0], len-1, to, buflen);
     return utfstrlen(to);
 }
-int utf2native(const char* from, char* to, int buflen) {
+
+int utf2native(const char* from, char* to, int buflen)
+{
     int len, len2;
     unsigned short unicode[BUFSIZ];
     utf2unicode((char*)from, &unicode[0], BUFSIZ, &len);
