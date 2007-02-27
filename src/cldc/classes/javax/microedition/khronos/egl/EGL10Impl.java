@@ -286,10 +286,32 @@ class EGL10Impl implements EGL10 {
 	    throwIAE(Errors.EGL_NUM_CONFIG_SHORT);
 	}
 
+	///////////////////////////////////////////////////////////////////
+	    int attrib_size = attrib_list != null ? 0 : attrib_list.length;
+            int[] new_attrib_list = new int[attrib_size + 5];
+
+	    int sidx = 0;
+	    int didx = 0;
+	    while (sidx < attrib_size - 1) {
+		if (attrib_list[sidx] == EGL_DEPTH_SIZE) {
+		    sidx += 2;
+		    continue;
+		} else if (attrib_list[sidx] == EGL_NONE) {
+		    break;
+		}
+
+		new_attrib_list[didx++] = attrib_list[sidx++];
+		new_attrib_list[didx++] = attrib_list[sidx++];
+	    }
+	    new_attrib_list[didx++] = EGL_DEPTH_SIZE;
+	    new_attrib_list[didx++] = 16;
+	    new_attrib_list[didx]   = EGL_NONE;
+	///////////////////////////////////////////////////////////////////
+
 	int[] iconfigs = (configs == null) ? null : new int[config_size];
 	boolean success = EGL_TRUE ==
 	    _eglChooseConfig(((EGLDisplayImpl)display).nativeId(),
-			     attrib_list,
+			     new_attrib_list,
 			     iconfigs,
 			     config_size,
 			     num_config);
@@ -399,11 +421,11 @@ class EGL10Impl implements EGL10 {
 	EGLSurfaceImpl surface;
 	int strategy = _getWindowStrategy(winGraphics);
 	if (strategy == STRATEGY_USE_WINDOW) {
-	    int winId = _getWindowNativeID(winGraphics);
+	    int winId = _getWindowNativeID(winGraphics); 
 	    int surf =
 		_eglCreateWindowSurface(displayId, configId,
 					winId,
-					attrib_list);
+					attrib_list);	    
 	    surface = EGLSurfaceImpl.getInstance(surf, width, height);
 	} else if (strategy == STRATEGY_USE_PIXMAP) {
 	    int pixmapPointer =
@@ -421,7 +443,7 @@ class EGL10Impl implements EGL10 {
 
 	    int sidx = 0;
 	    int didx = 0;
-	    while (sidx < attrib_list.length - 1) {
+	    while (sidx < attrib_size - 1) {
 		if (attrib_list[sidx] == EGL_WIDTH ||
 		    attrib_list[sidx] == EGL_HEIGHT) {
 		    sidx += 2;
@@ -443,6 +465,10 @@ class EGL10Impl implements EGL10 {
 		_eglCreatePbufferSurface(displayId, configId,
 					 new_attrib_list);
 	    surface = EGLSurfaceImpl.getInstance(surf, width, height);
+	    int pixmapPointer =
+                _getWindowPixmap(displayId, configId,
+                                 winGraphics, width, height, transY);
+	    surface.setPixmapPointer(pixmapPointer);
 	} else {
 	    // This should never happen
 	    throw new RuntimeException(Errors.EGL_CANT_HAPPEN);
@@ -549,6 +575,7 @@ class EGL10Impl implements EGL10 {
 
 	    EGLSurfaceImpl surface =
                 EGLSurfaceImpl.getInstance(surf, width, height);
+
 
 	    // Ensure a Java reference to the surface exists	
 	    references.put(surface, surface);
@@ -834,11 +861,11 @@ class EGL10Impl implements EGL10 {
     public synchronized boolean eglWaitGL() {
 	// Ensure all queued commands have been submitted to the GL
 
+        GL10Impl.grabContext();
         EGLContextImpl cimpl = (EGLContextImpl)eglGetCurrentContext();
 	GL currGL = cimpl.getGL();
 	((GL10Impl)currGL).qflush();
 
-        GL10Impl.grabContext();
  	boolean returnValue = EGL_TRUE == _eglWaitGL();
 
         EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurface();
@@ -872,8 +899,8 @@ class EGL10Impl implements EGL10 {
         GL10Impl.grabContext();
         boolean retval = EGL_TRUE == _eglWaitNative(engine);
         return retval;
-    }
-    
+    }     
+
     public synchronized boolean eglSwapBuffers(EGLDisplay display,
                                                EGLSurface surface) {
 	if (display == null) {
