@@ -435,9 +435,8 @@ void CodeGenerator::method_entry(Method* method JVM_TRAPS) {
   }
 
 #if ENABLE_WTK_PROFILER
-  if (UseExactProfiler) {
-    call_vm((address)jprof_record_method_transition, T_VOID JVM_CHECK);
-  }
+  // Generate this always since profiler can be enabled dynamically
+  call_vm((address)jprof_record_method_transition, T_VOID JVM_CHECK);
 #endif
 
 #if ENABLE_PROFILER
@@ -2357,9 +2356,8 @@ void CodeGenerator::invoke(const Method* method,
                              signature().return_type());
 
 #if ENABLE_WTK_PROFILER
-  if (UseExactProfiler) {
-    call_vm((address)jprof_record_method_transition, T_VOID JVM_CHECK);
-  }
+  // Generate this always since profiler can be enabled dynamically
+  call_vm((address)jprof_record_method_transition, T_VOID JVM_CHECK);
 #endif
 }
 
@@ -2398,9 +2396,8 @@ void CodeGenerator::invoke_virtual(Method* method, int vtable_index,
   frame()->adjust_for_invoke(size_of_parameters, return_type);
 
 #if ENABLE_WTK_PROFILER
-  if (UseExactProfiler) {
-    call_vm((address)jprof_record_method_transition, T_VOID JVM_CHECK);
-  }
+  // Generate this always since profiler can be enabled dynamically
+  call_vm((address)jprof_record_method_transition, T_VOID JVM_CHECK);
 #endif
 }
 
@@ -2467,9 +2464,8 @@ void CodeGenerator::invoke_interface(JavaClass* klass, int itable_index,
 
 
 #if ENABLE_WTK_PROFILER
-  if (UseExactProfiler) {
-    call_vm((address)jprof_record_method_transition, T_VOID JVM_CHECK);
-  }
+  // Generate this always since profiler can be enabled dynamically
+  call_vm((address)jprof_record_method_transition, T_VOID JVM_CHECK);
 #endif
 }
 
