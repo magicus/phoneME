@@ -664,15 +664,15 @@ public class Display {
         }
 
         // #ifdef ENABLE_GCI
-        GCIDisplay gciDisplay = 
+        GCIDisplay gciDisplay =
             GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
-        GCIScreenWidget gciScreenWidget = 
-            gciDisplay.createScreenWidget(0, 0, WIDTH, HEIGHT, 
-                                          null, this);
+        gciScreenWidget = gciDisplay.createScreenWidget(0, 0, 
+	                                                WIDTH, HEIGHT, 
+                                                        null, null);
         screenGraphics = Graphics.getScreenGraphics(displayId,
-                                                    WIDTH,
-                                                    HEIGHT, 
-	               gciScreenWidget.getDrawingSurface());
+                                                    WIDTH, HEIGHT, 
+	                      gciScreenWidget.getDrawingSurface());
+
         // #else
 
         screenGraphics = Graphics.getScreenGraphics(displayId,
@@ -3048,6 +3048,12 @@ public class Display {
 
                 gainedForeground0(displayId);
 
+                // #ifdef ENABLE_GCI
+                gciScreenWidget.setPeerEventTarget(currentCopy);
+                gciScreenWidget.show();
+
+                // #endif ENABLE_GCI
+
                 // #ifndef ENABLE_CHAMELEON
                 // NOTE: Chameleon does not need to do any screen erasing
                 // because its paint engine will automatically clear
@@ -3170,4 +3176,3 @@ class ChamImageTunnel implements
     }
 }
 // #endif
-
