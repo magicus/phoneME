@@ -238,10 +238,6 @@ int main(argc, argv)
     char *progname;
     char *argv0 = argv[0];
 
-#ifdef LINUX
-    setenv("LANG", "C", 1);
-#endif
-
     SET_DEFAULT_LOCALE;
 
     if ((progname = strrchr(argv[0], LOCAL_DIR_SEPARATOR)) != 0) {
