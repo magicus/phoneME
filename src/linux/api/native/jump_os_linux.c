@@ -71,19 +71,20 @@
  * by a struct jump_message_queue.
  *
  * For read queues, a messageType is mapped to a jump_message_queue by
- * keeping the jump_message_queues in a doubly-linked list.  The list
- * is self-organizing: get_message_queue moves each jump_message_queue
- * it returns to the front of the list.  The prev/next pointers are
- * built in to struct jump_message_queue to make things simple.
- * FIXME: A hash table would be better, but it's not clear whether
- * hsearch_r is available and I don't want to write one.  FIXME: It
- * would be even better to return a handle instead of using the
- * messageType to find the queue.  We would still need to keep the
- * list (or hash) to support jumpMessageQueueInterfaceDestroy.
+ * keeping a copy of the messageType in the jump_message_queue,
+ * keeping the jump_message_queues in a doubly-linked list, and
+ * searching the list.  The list is self-organizing: get_message_queue
+ * moves each jump_message_queue it returns to the front of the list.
+ * The prev/next pointers are built in to struct jump_message_queue to
+ * make things simple.  FIXME: A hash table would be better, but it's
+ * not clear whether hsearch_r is available and I don't want to write
+ * one.
  *
- * For write queues, only messageType and fd are used, but using
+ * For write queues, only the fd field is used, but using
  * jump_message_queue for both read and write queues allows the
- * create/destroy code to be reused easily.
+ * create/destroy code to be reused easily.  NOTE: there's not much
+ * reuse, so maybe a write queue should just be an fd and the
+ * open/close code should be refactored.
  */
 
 struct jump_message_queue {
@@ -96,8 +97,9 @@ struct jump_message_queue {
     /* useCount is incremented for each call to jumpMessageQueueCreate
        and decremented for each call to jumpMessageQueueDestroy.  It
        is also incremented while waiting for or reading from the
-       queue.  When the count falls to zero the queue is freed.  This
-       prevents it from being freed while it is in use. */
+       queue.  The jump_message_queue will not actually be destroyed
+       until useCount falls to zero, at which point we know it is
+       not in use by any code. */
     int useCount;
 
     char *messageType;
@@ -105,16 +107,19 @@ struct jump_message_queue {
 				   or NULL if no unlink is necessary. */
 
 #ifdef JUMP_MQ_THREADSAFE
-    /* Reads are serialized on read_mutex so they can do two
-       back-to-back reads, and partial reads if any, atomically.  Also
-       serializes access to error. */
+    /* Reads are serialized on read_mutex so jumpMessageQueueReceive
+       can read a message atomically.  Reading a message requires
+       reading the length then the message, and may also require
+       iterating to handle partial reads.  read_mutex also serializes
+       access to error. */
     pthread_mutex_t read_mutex;
 #endif
 
     int fd;			/* FIFO file descriptor. */
 
-    /* If we ever get an error reading, we won't be able to recover.  Set
-       error to fail all future reads. */
+    /* If we ever get an error reading, we won't be able to recover,
+       since we can't know where the message boundaries are.  Set
+       error to fail all future reads without trying them. */
     int error;
 };
 
@@ -180,7 +185,7 @@ get_message_queue(const JUMPPlatformCString messageType)
    On success returns the clean name (which must be freed).  On
    failure (out of memory) returns NULL. */
 static char *
-cleanName(const char *name)
+clean_name(const char *name)
 {
     char *clean_name;
     const char *src;
@@ -229,8 +234,8 @@ cleanName(const char *name)
    code to JUMP_MQ_SUCCESS.  On failure returns NULL and sets
    code to one of JUMP_MQ_OUT_OF_MEMORY or JUMP_MQ_FAILURE. */
 static char *
-makeQueueName(pid_t pid, const JUMPPlatformCString messageType,
-	      JUMPMessageQueueStatusCode* code)
+make_queue_name(pid_t pid, const JUMPPlatformCString messageType,
+		JUMPMessageQueueStatusCode* code)
 {
     char *messageTypeClean = NULL;
     size_t len;
@@ -240,7 +245,7 @@ makeQueueName(pid_t pid, const JUMPPlatformCString messageType,
     /* Get a clean version of the messageType that we can use in
        a filename. */
 
-    messageTypeClean = cleanName(messageType);
+    messageTypeClean = clean_name(messageType);
     if (messageTypeClean == NULL) {
 	*code = JUMP_MQ_OUT_OF_MEMORY;
 	goto error;
@@ -295,13 +300,15 @@ message_queue_create(pid_t processId,
     jmq->name = NULL;
     jmq->fd = -1;
 
-    jmq->messageType = strdup(messageType);
-    if (jmq->messageType == NULL) {
-	*code = JUMP_MQ_OUT_OF_MEMORY;
-	goto fail;
+    if (forRead) {
+	jmq->messageType = strdup(messageType);
+	if (jmq->messageType == NULL) {
+	    *code = JUMP_MQ_OUT_OF_MEMORY;
+	    goto fail;
+	}
     }
 
-    name = makeQueueName(processId, messageType, code);
+    name = make_queue_name(processId, messageType, code);
     if (name == NULL) {
 	goto fail;
     }
@@ -614,8 +621,6 @@ jumpMessageQueueSend(JUMPMessageQueueHandle handle,
     }
 }
 
-/* NOTE: if this is called from multiple threads, only one thread will
-   be able to actually read the message after this returns. */
 int
 jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis,
 			       JUMPMessageQueueStatusCode* code)
@@ -651,7 +656,7 @@ jumpMessageQueueWaitForMessage(JUMPPlatformCString type, int32 timeout_millis,
 
     /* NOTE: for JUMP_MQ_THREADSAFE we may read a stale false value
        for jmq->error since we're not locking jmq->read_mutex, but
-       that won't hurt anything. */
+       that won't hurt anything since we're not actually reading. */
     if (jmq->error) {
 	*code = JUMP_MQ_FAILURE;
 	goto fail;
@@ -792,8 +797,7 @@ jumpMessageQueueReceive(JUMPPlatformCString type,
 	goto unrecoverable_error;
     }
 
-    /* Read the message size, and fail on error (including if the read
-       would block. */
+    /* Read the message size, and fail on error or if the read would block. */
 
     status = read_fully(jmq->fd,
 			&messageDataSize, sizeof(messageDataSize));
