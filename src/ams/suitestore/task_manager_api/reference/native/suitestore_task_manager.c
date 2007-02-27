@@ -306,12 +306,6 @@ midp_remove_suite(SuiteIdType suiteId) {
             break;
         }
 
-        /*
-        if (midpRemoveRecordStoresForSuite(suiteId) == KNI_FALSE) {
-            return SUITE_LOCKED;
-        }
-        */
-
         pushdeletesuite(suiteId);
 
         /*
@@ -374,10 +368,13 @@ midp_remove_suite(SuiteIdType suiteId) {
     suite_listeners_notify(SUITESTORE_LISTENER_TYPE_REMOVE,
         SUITESTORE_OPERATION_END, status, pData);
 
-    (void)remove_from_suite_list_and_save(suiteId);
+    if (status == ALL_OK) {
+        (void)remove_from_suite_list_and_save(suiteId);
+    }
+
     remove_storage_lock(suiteId);
 
-    return ALL_OK;
+    return status;
 }
 
 /**
