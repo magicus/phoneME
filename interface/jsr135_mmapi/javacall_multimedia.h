@@ -89,8 +89,10 @@ extern "C" {
 #define JAVACALL_VIDEO_MPEG4_MIME_2  "video/mp4"
 #define JAVACALL_VIDEO_3GPP_MIME     "video/3gpp"
 #define JAVACALL_VIDEO_3GPP_MIME_2   "video/3gpp2"
+
 #define JAVACALL_AUDIO_MIDI_MIME     "audio/midi"
 #define JAVACALL_AUDIO_MIDI_MIME_2   "audio/mid"
+#define JAVACALL_AUDIO_SP_MIDI_MIME  "audio/sp-midi"
 #define JAVACALL_AUDIO_WAV_MIME      "audio/x-wav"
 #define JAVACALL_AUDIO_MP3_MIME      "audio/mpeg"
 #define JAVACALL_AUDIO_MP3_MIME_2    "audio/mp3"
@@ -101,6 +103,9 @@ extern "C" {
 #define JAVACALL_AUDIO_TONE_MIME     "audio/x-tone-seq"
 #define JAVACALL_AUDIO_QCELP_MIME    "audio/qcelp"
 #define JAVACALL_AUDIO_QCELP_MIME_2  "audio/vnd.qcelp"
+
+#define JAVACALL_IMAGE_JPEG_MIME     "image/jpeg"
+#define JAVACALL_IMAGE_PNG_MIME      "image/png"
 
 #define JAVACALL_DEVICE_TONE_MIME    "device://tone"
 #define JAVACALL_DEVICE_MIDI_MIME    "device://midi"
@@ -204,11 +209,11 @@ typedef enum {
  */
 typedef struct {
     /** Mime type string */
-    const char* mimeType;
+    javacall_const_utf8_string mimeType;
     /** Supported protocol count */
     int         protocolCount;  
     /** Supported protocol strings for this Mime type. Can't exceed JAVACALL_MEDIA_MAX_PROTOCOL_COUNT. */
-    const char* protocols[JAVACALL_MEDIA_MAX_PROTOCOL_COUNT];
+    javacall_const_utf8_string protocols[JAVACALL_MEDIA_MAX_PROTOCOL_COUNT];
 } javacall_media_caps;
 
 /** @} */
