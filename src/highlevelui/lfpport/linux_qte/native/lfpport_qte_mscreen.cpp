@@ -635,3 +635,27 @@ int PlatformMScreen::getScreenHeight() const {
     }
 }
 
+
+/**
+ * Width available for Alert.
+ */
+int PlatformMScreen::getAlertWidth() const {
+    if (r_orientation) {
+        return ALERT_HEIGHT;
+    } else {
+        return ALERT_WIDTH;
+    }
+
+}
+
+/**
+ * Height available for Alert.
+ */
+int PlatformMScreen::getAlertHeight() const {
+    if (r_orientation) {
+        return ALERT_WIDTH;
+    } else {
+        return ALERT_HEIGHT; 
+    }
+}
+
