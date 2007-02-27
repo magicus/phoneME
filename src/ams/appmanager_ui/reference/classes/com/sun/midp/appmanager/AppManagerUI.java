@@ -971,8 +971,8 @@ class AppManagerUI extends Form
                 }
 
                 try {
-                        PushRegistryInternal.unregisterConnections(
-                            suiteInfo.suiteId);
+                    PushRegistryInternal.unregisterConnections(
+                        suiteInfo.suiteId);
                 } catch (Throwable t) {
                     // Intentionally ignored: suite has been removed already,
                     // we can't do anything meaningful at this point.
