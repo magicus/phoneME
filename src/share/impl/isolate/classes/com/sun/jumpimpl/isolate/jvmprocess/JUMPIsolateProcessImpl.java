@@ -136,40 +136,41 @@ public class JUMPIsolateProcessImpl
     //
     public static void main(String[] args) 
     {
-        if(args.length > 1 && args[1] != null) {
-            JUMPModulesConfig.overrideDefaultConfig(args[1]);
-        }
-
-	// Initialize os interface
-	new com.sun.jumpimpl.os.JUMPOSInterfaceImpl();
-
-	// Create and register the singleton isolate process
-	JUMPIsolateProcessImpl ipi = new JUMPIsolateProcessImpl();
-
-	JUMPMessageDispatcher d = ipi.getMessageDispatcher();
 	try {
-	    d.registerHandler("mvm/client", ipi);
+            if(args.length > 1 && args[1] != null) {
+                JUMPModulesConfig.overrideDefaultConfig(args[1]);
+            }
+
+            // Initialize os interface
+            new com.sun.jumpimpl.os.JUMPOSInterfaceImpl();
+
+            // Create and register the singleton isolate process
+            JUMPIsolateProcessImpl ipi = new JUMPIsolateProcessImpl();
+
+            JUMPMessageDispatcher d = ipi.getMessageDispatcher();
+
+            d.registerHandler("mvm/client", ipi);
+
+            JUMPAppModel appModel = JUMPAppModel.fromName(args[0]);
+            if (appModel == null) {
+                // Unknown app model
+                throw new RuntimeException("Unknown app model "+args[0]);
+            }
+
+            ipi.initialize(appModel);
+
+            //
+            // Once registerDirect() completes with success,
+            // we know we can receive messages. Report.
+            //
+            ipi.reportIsolateInitialized();
+
+            // Now we are ready. Drop off and let the message listener thread
+            // keep this JVM alive.
 	} catch (Throwable e) {
 	    e.printStackTrace();
-	    return;
+	    System.exit(-1);
 	}
-
-	JUMPAppModel appModel = JUMPAppModel.fromName(args[0]);
-	if (appModel == null) {
-	    // Unknown app model
-	    throw new RuntimeException("Unknown app model "+args[0]);
-	}
-
-	ipi.initialize(appModel);
-
-	//
-	// Once registerDirect() completes with success,
-	// we know we can receive messages. Report.
-	//
-	ipi.reportIsolateInitialized();
-
-	// Now we are ready. Drop off and let the message listener thread
-	// keep this JVM alive.
     }
     
     public void initialize(JUMPAppModel appModel) {
@@ -272,10 +273,14 @@ public class JUMPIsolateProcessImpl
 	    int appID = Integer.parseInt(args[0]);
 	    boolean unconditional = Boolean.getBoolean(args[1]);
 	    System.err.println("DESTROY_APP("+appID+")");
-	    appContainer.destroyApp(appID, unconditional);
+            String responseCode = JUMPResponseInteger.ID_SUCCESS;
+            try {
+                appContainer.destroyApp(appID, unconditional);
+            } catch (RuntimeException e) {
+                responseCode = JUMPResponseInteger.ID_FAILURE;
+            }
 
-	    JUMPResponse resp = new JUMPResponse(in.getType(), 
-			                         JUMPResponseInteger.ID_SUCCESS);
+            JUMPResponse resp = new JUMPResponse(in.getType(), responseCode);
 	    responseMessage = resp.toMessageInResponseTo(in, this);
 	} else {
 	    // Assumption of default message
