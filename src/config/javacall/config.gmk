@@ -39,9 +39,14 @@ DIRECT_VIDEO_PLAYER = true
 INDIRECT_VIDEO_PLAYER = true
 
 #
-# If you want to support "capture://video, turn on DIRECT_CAMERA_PLAYER option
+# If you want to support "capture://video, turn on VIDEO_CAPTURE option
 #
-DIRECT_CAMERA_PLAYER = true
+VIDEO_CAPTURE = false
+
+#
+# If you want to support "capture://audio, turn on AUDIO_CAPTURE option
+#
+AUDIO_CAPTURE = true
 
 #
 # if you want to support interactive MIDI or MIDIControl, 
@@ -53,6 +58,7 @@ DIRECT_MIDI_CONTROL = true
 # If you want to support RecordControl, turn on DIRECT_RECORD option
 #
 DIRECT_RECORD = true
+
 
 #
 # If you want to support file:// protocol, turn on USE_FILE_CONNECTION option
