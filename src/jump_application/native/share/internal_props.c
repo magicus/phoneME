@@ -57,7 +57,7 @@ const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
         return NULL;
     }
 
-    if ((*env)->EnsureLocalCapacity(env, 3) < 0) {
+    if ((*env)->PushLocalFrame(env, 3) < 0) {
         return NULL;
     }
 
@@ -72,18 +72,22 @@ const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
 
     if (JNU_IsNull(env, prop)) {
         (*env)->DeleteLocalRef(env, (jobject)prop);
+        (*env)->PopLocalFrame(env, NULL);
         return NULL;
     }
 
     len = (*env)->GetStringUTFLength(env, prop);
     if (len >= length) {
         (*env)->DeleteLocalRef(env, (jobject)prop);
+        (*env)->PopLocalFrame(env, NULL);
         return NULL;
     }
 
     (*env)->GetStringUTFRegion(env, prop, 0, len, buffer);
     buffer[len] = 0;
     (*env)->DeleteLocalRef(env, (jobject)prop);
+
+    (*env)->PopLocalFrame(env, NULL);
 
     return (const char*)buffer;
 }
