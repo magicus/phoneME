@@ -781,6 +781,97 @@ tokenizeArgs(JUMPMessage m, int* argc, char*** argv)
 }
 
 /*
+ * Make some preparations for launching a native process:
+ * 1) Load a shared library (if needed).
+ * 2) Find a symbol in the shared library.
+ * 3) Create incoming message queue.
+ * Returns NULL in case of error, the address of the symbol otherwise
+ */
+static void *
+prepareJNative(char *procName, char *soLibName)
+{
+    void *dsoHandle;
+    char *libName;
+    JUMPMessageQueueStatusCode code = 0;
+    unsigned char *type; 
+    void *symbol;
+
+    /*
+     * trying to find native method.
+     * If the lib name is "main" then
+     * we have to look for the symbol
+     * in the main binary module.
+     */
+    if (strcmp(soLibName, "main")) {
+	/* making a library name */
+	libName = malloc(strlen(soLibName) + 
+	    3 /*lib*/ + 3 /*.so*/ +
+#ifdef CVM_DEBUG
+	    2 /*_g*/ +
+#endif
+	    1 /*'\0'*/);
+	if (libName == NULL) {
+	    fprintf(stderr, "MTASK: No memory for lib name\n");
+	    return NULL;
+	}
+	strcpy(libName, "lib");
+	strcat(libName, soLibName);
+#ifdef CVM_DEBUG
+	strcat(libName, "_g");
+#endif
+	strcat(libName, ".so");
+	dsoHandle = dlopen(libName, RTLD_LAZY);
+	free(libName);
+	if (dsoHandle != NULL) {
+	    symbol = dlsym(dsoHandle, procName);
+	    /* FIXME: should we do "dlclose()" somewhere? */
+	} else {
+	    fprintf(stderr, "MTASK: Can't find lib: %s\n", soLibName);
+	    return NULL;
+	}
+    } else {
+	symbol = dlsym(RTLD_DEFAULT, procName);
+    }
+
+    if (symbol == NULL) { /* method hasn't been found */
+	fprintf(stderr, 
+	    "MTASK: Can't find symbol '%s' in library %s\n", 
+	    procName, soLibName);
+	return NULL;
+    }
+#define MSGPREFIX_NATIVE "native"
+    /*
+     * creating the message queue for our process.
+     * It must be created before the launcher received 
+     * successful result
+     */
+
+    /* allocate memory for queue's name */
+    type = malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(procName));
+    if (type == NULL) {
+	fprintf(stderr, "MTASK: No memory for queue name\n");
+	return NULL;
+    }
+
+    /* making queue name */
+    strcpy((char*)type, (char*)MSGPREFIX_NATIVE);
+    strcat((char*)type, "/");
+    strcat((char*)type, procName); 
+
+    /* we trying to create a queue named "native/<procName>" */
+    jumpMessageQueueCreate(type, &code);
+    if (code != JUMP_MQ_SUCCESS) {
+	fprintf(stderr, 
+	    "MTASK: Can't create message queue %s\n", type);
+	free(type);
+	return NULL;
+    }
+
+    free(type);
+    return symbol;
+}
+
+/*
  * A JVM server. Sleep waiting for new requests. As new ones come in,
  * fork off a process to handle each and go back to sleep. 
  *
@@ -1141,46 +1232,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 #endif               
 		if (!strcmp(argv[0], "JNATIVE")) { /* we are launching 
 						      a native process */
-		    /* trying to find native method */
-		    void *dsoHandle;
-		    char *libName;
-		    JUMPMessageQueueStatusCode code = 0;
-		    unsigned char *type; 
-
-		    /*
-		     * If the lib name is "main" then
-		     * we have to look for the symbol
-		     * in the main binary module.
-		     */
-		    if (strcmp(argv[2], "main")) {
-			libName = malloc(strlen(argv[2]) + 
-			    3 /*lib*/ + 3 /*.so*/ +
-#ifdef CVM_DEBUG
-			    2 /*_g*/ +
-#endif
-			    1 /*'\0'*/);
-			assert(libName != NULL);
-			strcpy(libName, "lib");
-			strcat(libName, argv[2]);
-#ifdef CVM_DEBUG
-			strcat(libName, "_g");
-#endif
-			strcat(libName, ".so");
-			dsoHandle = dlopen(libName, RTLD_LAZY);
-			free(libName);
-			if (dsoHandle != NULL) {
-			    nativeMain = dlsym(dsoHandle, argv[1]);
-			    /* FIXME: should we do "dlclose()" somewhere? */
-			} else {
-			    fprintf(stderr, "MTASK: Cannot find lib: %s\n", argv[2]);
-			}
-		    } else {
-			nativeMain = dlsym(RTLD_DEFAULT, argv[1]);
-		    }
-
-		    if (nativeMain == NULL) { /* method hasn't been found */
-                        fprintf(stderr, 
-			    "MTASK: Cannot find symbol '%s' in library %s\n", argv[1], argv[2]);
+		    if ((nativeMain = prepareJNative(argv[1], argv[2])) == NULL) {
 			respondWith(command, JNATIVE_USAGE);
 			jumpMessageFree(command);
 			freeArgs(argc, argv);
@@ -1188,25 +1240,6 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 			argv = NULL;
 			exit(1);
 		    }
-#define MSGPREFIX_NATIVE "native"
-		    /* creating the message queue for our process.
-		     * It must be created before the launcher received 
-		     * successful result
-		     */
-		    /* allocate memory for queue's name */
-		    type = malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
-		    /* FIXME: make sure that the string is allocated */
-		    assert(type != NULL);
-
-		    strcpy((char*)type, (char*)MSGPREFIX_NATIVE);
-		    strcat((char*)type, "/");
-		    strcat((char*)type, argv[1]); /* cat the name of process */
-		    /* we trying to create a queue named "native/<processName>" */
-		    jumpMessageQueueCreate(type, &code);
-
-		    /* FIXME: return error code if creation fails */
-		    assert(code == JUMP_MQ_SUCCESS);
-		    free(type);
 		}
 		
 		/* First, make sure that the child PID is communicated
