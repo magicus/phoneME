@@ -106,11 +106,11 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
   JumpInit.c
 
 ifneq ($(CVM_PRELOAD_LIB), true)
+  MIDP_DEPS += $(BINDIR)/libmidp$(p)$(SHARED_LIB_SUFFIX)
   #
   # Create a libmidp.so for non-ROMized build.
   #
-  $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX): \
-    $(MIDP_DEPS) $(OBJ_FILES)
+  $(BINDIR)/libmidp$(p)$(SHARED_LIB_SUFFIX): $(OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
 	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
 	  $(OBJ_FILES) $(LIBS))` $(LOG) 
