@@ -178,38 +178,66 @@ typedef struct {
     JUMPMessageStatusCode status;
 } JUMPMessageReader;
 
+/*
+ * Initializes the JUMPMessageReader and sets its status to JUMP_SUCCESS.
+ */
 extern void
 jumpMessageReaderInit(JUMPMessageReader* r, JUMPMessage m);
 
+/*
+ * If r->status != JUMP_SUCCESS, returns 0.  Otherwise returns the
+ * next byte from the message or sets r->status to JUMP_OVERRUN on
+ * error.
+ */
 extern int8
 jumpMessageGetByte(JUMPMessageReader* r);
 
 /*
- * The caller should call free() on the return value once it is done.
- * Sets *length to the number of bytes in the array, or -1 if the array
- * was NULL.  A NULL return value with *length != -1 indicates out
- * of memory.
+ * If r->status != JUMP_SUCCESS, returns NULL.  Otherwise returns the
+ * next byte array from the message or sets r->status to one of
+ * JUMP_OVERRUN, JUMP_OUT_OF_MEMORY, or JUMP_NEGATIVE_ARRAY_LENGTH on
+ * error.  The caller should call free() on the return value once it
+ * is done.  Sets *length to the number of bytes in the array, or -1
+ * if the array was NULL.  A NULL return value with *length != -1
+ * indicates out of memory.
  */
 extern int8*
 jumpMessageGetByteArray(JUMPMessageReader* r, uint32* length);
 
+/*
+ * If r->status != JUMP_SUCCESS, returns 0.  Otherwise returns the
+ * next short from the message or sets r->status to JUMP_OVERRUN on
+ * error.
+ */
 extern int16
 jumpMessageGetShort(JUMPMessageReader* r);
 
+/*
+ * If r->status != JUMP_SUCCESS, returns 0.  Otherwise returns the
+ * next int from the message or sets r->status to JUMP_OVERRUN on
+ * error.
+ */
 extern int32
 jumpMessageGetInt(JUMPMessageReader* r);
 
 /*
- * The caller should call free() on the return value once it is done
+ * If r->status != JUMP_SUCCESS, returns NULL.  Otherwise returns the
+ * next string from the message or sets r->status to one of
+ * JUMP_OVERRUN, JUMP_OUT_OF_MEMORY, or JUMP_NEGATIVE_ARRAY_LENGTH on
+ * error. The caller should call free() on the return value once it is
+ * done
  */
 extern JUMPPlatformCString
 jumpMessageGetString(JUMPMessageReader* r);
 
 /*
- * The caller should call free() on the return value once it is done
- * Sets *length to the number of strings in the array, or -1 if the array
- * was NULL.  A NULL return value with *length != -1 indicates out
- * of memory.
+ * If r->status != JUMP_SUCCESS, returns NULL.  Otherwise returns the
+ * next string from the message or sets r->status to one of
+ * JUMP_OVERRUN, JUMP_OUT_OF_MEMORY, or JUMP_NEGATIVE_ARRAY_LENGTH on
+ * error.  The caller should call free() on the return value once it
+ * is done Sets *length to the number of strings in the array, or -1
+ * if the array was NULL.  A NULL return value with *length != -1
+ * indicates out of memory.
  */
 extern JUMPPlatformCString*
 jumpMessageGetStringArray(JUMPMessageReader* r, uint32* length);
