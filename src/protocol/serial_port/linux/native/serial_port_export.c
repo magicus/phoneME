@@ -58,10 +58,45 @@
 
 #include <midp_logging.h>
 
+#define DEVICE_PORT_PREFIX "/dev/ttyS"
+#define PORT_NUM_START_POS ((int)sizeof(DEVICE_PORT_PREFIX) - 1)
+
 /**
- * Open a serial port by system dependent device name.
+ * Converts the given logical port name into the platform-dependent name
+ * of the device to open.
+ * Note that only port with numbers from 1 to 9 are supported.
  *
- * @param pszDeviceName device name of the port
+ * @param pLogicalPortName logical name of the port, for example, COM1
+ *
+ * @return pointer to a static buffer containing the platform-specific name
+ *         of the port to open
+ */
+static char*
+logical_port_name2device_port_name(const char* pLogicalPortName) {
+    static char pDevicePortName[] = DEVICE_PORT_PREFIX "xx";
+    int pos = PORT_NUM_START_POS;
+
+    while (*pLogicalPortName && pos < (int)(sizeof(pDevicePortName) - 1)) {
+        char ch = *pLogicalPortName++;
+        if (ch >= '1' && ch <= '9') {
+            pDevicePortName[pos++] = ch - 1;
+            break;
+        }
+    }
+
+    if (pos == PORT_NUM_START_POS) {
+        pDevicePortName[pos++] = '0';
+    }
+
+    pDevicePortName[pos] = 0;
+    return pDevicePortName;
+}
+#undef PORT_NUM_START_POS
+
+/**
+ * Open a serial port by logical device name.
+ *
+ * @param pszDeviceName logical name of the port (for example, COM1)
  * @param baudRate baud rate to set the port at
  * @param options options for the serial port
  * bit 0: 0 - 1 stop bit, 1 - 2 stop bits 
@@ -88,7 +123,7 @@ int openPortByNameStart(char* pszDeviceName, int baudRate,
     /* do not become the controlling tty */
     openFlags = O_RDWR | O_NOCTTY;
 
-    hPort = open(pszDeviceName, openFlags);
+    hPort = open(logical_port_name2device_port_name(pszDeviceName), openFlags);
     if (hPort < 0) {
         *pHandle = (int)INVALID_HANDLE;
         return PCSL_NET_IOERROR;
