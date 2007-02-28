@@ -123,6 +123,7 @@ mkAddr(int32 pid)
     return addr;
 }
 
+/* Type should be newly allocated. */
 static JUMPReturnAddress
 mkReturnAddr(int32 pid, JUMPPlatformCString type)
 {
@@ -160,16 +161,10 @@ jumpMessageGetReturnTypeName(void)
 static JUMPReturnAddress
 getMyReturnAddress(void)
 {
-    char* name = jumpMessageGetReturnTypeName();
-
     assert(jumpMessagingInitialized != 0);
 
-    if (name == NULL) {
-	return mkReturnAddr(-1, NULL);
-    } else {
-	/* FIXME: Free string in return address */
-	return mkReturnAddr(jumpProcessGetId(), name);
-    }
+    return mkReturnAddr(jumpProcessGetId(),
+			jumpMessageGetReturnTypeName());
 }
 
 JUMPAddress 
@@ -295,7 +290,7 @@ newMessageFromReceivedBuffer(uint8* buffer, uint32 len,
 /*
  * Running counters for message id's and request id's
  */
-/* XXX not thread safe. */
+/* FIXME not thread safe. */
 static uint32 thisProcessMessageId;
 static int32 thisProcessRequestId;
 
@@ -358,6 +353,50 @@ getReturnAddress(JUMPMessage m)
     return m->header.sender;
 }
 
+static JUMPAddress
+cloneJUMPAddress(JUMPAddress address)
+{
+    return address;
+}
+
+static JUMPReturnAddress
+cloneJUMPReturnAddress(JUMPReturnAddress returnAddress)
+{
+    JUMPReturnAddress newReturnAddress;
+    newReturnAddress.address = cloneJUMPAddress(returnAddress.address);
+    newReturnAddress.returnType = strdup(returnAddress.returnType);
+    return newReturnAddress;
+}
+
+static void
+freeJUMPAddress(JUMPAddress address)
+{
+    /* Nothing to do. */
+}
+
+static void
+freeJUMPReturnAddress(JUMPReturnAddress returnAddress)
+{
+    freeJUMPAddress(returnAddress.address);
+    free(returnAddress.returnType);
+}
+
+/*
+ * Free an incoming message.
+ */
+static void
+freeMessage(struct _JUMPMessage* m)
+{
+    /* Free all component allocations, and then the message itself */
+    free(m->data);
+    freeJUMPReturnAddress(m->header.sender);
+    free(m->header.type);
+    /* Make sure the contents are not used accidentally */
+    memset(m, 0, sizeof(struct _JUMPMessage));
+    free(m);
+}
+
+/* type and addr are copied, and freed with the JUMPOutgoingMessage. */
 static JUMPOutgoingMessage
 newOutgoingMessage(JUMPPlatformCString type, uint32 requestId, 
 		   JUMPReturnAddress addr, JUMPMessageStatusCode *code)
@@ -367,18 +406,31 @@ newOutgoingMessage(JUMPPlatformCString type, uint32 requestId,
     message = newMessage();
     if (message == NULL) {
 	*code = JUMP_OUT_OF_MEMORY;
-	return NULL;
+	goto fail;
     }
     message->header.messageId = thisProcessMessageId++;
     message->header.requestId = requestId;
-    message->header.sender = addr;
-    message->header.type = type;
+    message->header.sender = cloneJUMPReturnAddress(addr);
+    if (message->header.sender.returnType == NULL) {
+	*code = JUMP_OUT_OF_MEMORY;
+	goto fail;
+    }
+    message->header.type = strdup(type);
+    if (message->header.type == NULL) {
+	*code = JUMP_OUT_OF_MEMORY;
+	goto fail;
+    }
     *code = putHeaderInMessage(message);
     if (*code != JUMP_SUCCESS) {
-	free(message);
-	return NULL;
+	goto fail;
     }
     return (JUMPOutgoingMessage)message;
+
+  fail:
+    if (message != NULL) {
+	freeMessage(message);
+    }
+    return NULL;
 }
 
 JUMPOutgoingMessage
@@ -386,8 +438,16 @@ jumpMessageNewOutgoingByType(JUMPPlatformCString type,
 			     JUMPMessageStatusCode *code)
 {
     uint32 requestId = thisProcessRequestId++;
+    JUMPReturnAddress myReturnAddress;
+    JUMPOutgoingMessage *message;
+
     assert(jumpMessagingInitialized != 0);
-    return newOutgoingMessage(type, requestId, getMyReturnAddress(), code);
+
+    myReturnAddress = getMyReturnAddress();    
+    message = newOutgoingMessage(type, requestId, myReturnAddress, code);
+    freeJUMPReturnAddress(myReturnAddress);
+
+    return message;
 }
 
 JUMPOutgoingMessage
@@ -933,22 +993,6 @@ JUMPMessageStatusCode
 jumpMessageRestart(void)
 {
     return JUMP_SUCCESS;
-}
-
-/*
- * Free an incoming message.
- */
-static void
-freeMessage(struct _JUMPMessage* m)
-{
-    /* Free all component allocations, and then the message itself */
-    free(m->data);
-    if (m->header.sender.returnType != NULL) {
-	free(m->header.sender.returnType);
-    }
-    /* Make sure the contents are not used accidentally */
-    memset(m, 0, sizeof(struct _JUMPMessage));
-    free(m);
 }
 
 /*
