@@ -59,12 +59,10 @@
  * of these prototypes)    
  *=======================================================================*/
 
-char *getAvailableCommPorts(void);
-
 /**
- * Open a serial port by system dependent device name.
+ * Open a serial port by logical device name.
  *
- * @param pszDeviceName device name of the port
+ * @param pszDeviceName logical name of the port (for example, COM1)
  * @param baudRate baud rate to set the port at
  * @param options options for the serial port
  * bit 0: 0 - 1 stop bit, 1 - 2 stop bits 

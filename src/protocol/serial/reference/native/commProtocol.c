@@ -98,12 +98,12 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIEXPORT KNI_RETURNTYPE_INT
     Java_com_sun_midp_io_j2me_comm_Protocol_native_1openByName() {
 
-    int   flags = (int)KNI_GetParameterAsInt(3);
-    int   baud = (int)KNI_GetParameterAsInt(2);
+    int    flags = (int)KNI_GetParameterAsInt(3);
+    int    baud = (int)KNI_GetParameterAsInt(2);
     int    nameLen;
     char   szName[MAX_NAME_LEN];
     jchar* temp;
-    int   hPort = (int)INVALID_HANDLE;
+    int    hPort = (int)INVALID_HANDLE;
     int    i;
     int status = PCSL_NET_IOERROR;
     void* context = NULL;
@@ -131,10 +131,8 @@ KNIEXPORT KNI_RETURNTYPE_INT
             }
             szName[nameLen] = 0;
 		
-            status = openPortByNameStart(szName, baud, flags,
-                &hPort, &context);
+            status = openPortByNameStart(szName, baud, flags, &hPort, &context);
         }
-
     } else {
         /* reinvocation */
         hPort = info->descriptor;
@@ -144,7 +142,7 @@ KNIEXPORT KNI_RETURNTYPE_INT
 
     switch (status) {
         case PCSL_NET_SUCCESS:			
-            /*do nothing and return normally */
+            /* do nothing and return normally */
             break;
         case PCSL_NET_INTERRUPTED:			
             midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
