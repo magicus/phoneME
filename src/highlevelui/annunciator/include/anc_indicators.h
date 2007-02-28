@@ -60,22 +60,22 @@ extern "C" {
 void anc_show_trusted_indicator(jboolean trusted);
 
 /**
- * Value passed to midpLCDUIShowBacklight to turn the backlight off 
+ * Value passed to anc_show_backlight to turn the backlight off 
  */
 #define BACKLIGHT_OFF 0
 
 /**
- * Value passed to midpLCDUIShowBacklight to turn the backlight on 
+ * Value passed to anc_show_backlight to turn the backlight on 
  */
 #define BACKLIGHT_ON 1
 
 /**
- * Value passed to midpLCDUIShowBacklight to toggle the backlight 
+ * Value passed to anc_show_backlight to toggle the backlight 
  */
 #define BACKLIGHT_TOGGLE 2
 
 /**
- * Value passed to midpLCDUIShowBacklight to determine if the
+ * Value passed to anc_show_backlight to determine if the
  * system supports backlight control without changing the state
  * of the backlight 
  */

@@ -43,11 +43,11 @@
 extern "C" {
 #endif
 
-#define SOUND_INFO         1 /**< Sound for informative alert */
-#define SOUND_WARNING      2 /**< Sound for warning alert */
-#define SOUND_ERROR        3 /**< Sound for error alert */
-#define SOUND_ALARM        4 /**< Sound for alarm alert */
-#define SOUND_CONFIRMATION 5 /**< Sound for confirmation alert */
+#define ANC_SOUND_INFO         1 /**< Sound for informative alert */
+#define ANC_SOUND_WARNING      2 /**< Sound for warning alert */
+#define ANC_SOUND_ERROR        3 /**< Sound for error alert */
+#define ANC_SOUND_ALARM        4 /**< Sound for alarm alert */
+#define ANC_SOUND_CONFIRMATION 5 /**< Sound for confirmation alert */
 
 /**
  * Play a sound of the given type.
