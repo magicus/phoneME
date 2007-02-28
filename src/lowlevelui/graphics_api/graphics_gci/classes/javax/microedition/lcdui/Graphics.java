@@ -706,6 +706,10 @@ public class Graphics {
             rgbColor = RGB & 0x00ffffff;
             gray = grayVal(red, green, blue);
             pixel = getPixel(rgbColor, gray, false);
+
+            gciShapeRenderer.paintModified();
+            gciImageRenderer.paintModified();
+            gciTextRenderer.paintModified();
         }
     }
 
