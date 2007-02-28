@@ -439,7 +439,7 @@ jumpMessageNewOutgoingByType(JUMPPlatformCString type,
 {
     uint32 requestId = thisProcessRequestId++;
     JUMPReturnAddress myReturnAddress;
-    JUMPOutgoingMessage *message;
+    JUMPOutgoingMessage message;
 
     assert(jumpMessagingInitialized != 0);
 
