@@ -733,11 +733,11 @@ public class Graphics {
             rgbColor = (value << 16) | (value << 8) | value;
             gray = value;
             pixel = getPixel(rgbColor, gray, true);
-        }
-
-        gciShapeRenderer.paintModified();
-        gciImageRenderer.paintModified();
-        gciTextRenderer.paintModified();
+       
+	    gciShapeRenderer.paintModified();
+	    gciImageRenderer.paintModified();
+	    gciTextRenderer.paintModified();
+	}
     }
 
     /**
@@ -792,6 +792,7 @@ public class Graphics {
      */
     public synchronized void setFont(Font font) {
         currentFont = (font == null) ? Font.getDefaultFont() : font;
+	gciTextRenderer.fontModified();
     }
   
     /**
@@ -880,6 +881,9 @@ public class Graphics {
         if (width <= 0 || height <= 0) {
             clipX1 = clipY1 = clipX2 = clipY2 = 0;
             clipped = true;
+	    gciImageRenderer.clipModified();
+	    gciTextRenderer.clipModified();
+	    gciShapeRenderer.clipModified();
             return;
         }
 
@@ -900,6 +904,9 @@ public class Graphics {
             // we have no intersection
             clipX1 = clipY1 = clipX2 = clipY2 = 0;
             clipped = true;
+	    gciImageRenderer.clipModified();
+	    gciTextRenderer.clipModified();
+	    gciShapeRenderer.clipModified();
             return;
         }
 
@@ -931,6 +938,9 @@ public class Graphics {
             // we have no intersection
             clipX1 = clipY1 = clipX2 = clipY2 = 0;
             clipped = true;
+            gciImageRenderer.clipModified();
+            gciTextRenderer.clipModified();
+            gciShapeRenderer.clipModified();
             return;
         }
 
@@ -994,6 +1004,9 @@ public class Graphics {
         if ((width <= 0) || (height <= 0)) {
             clipX1 = clipY1 = clipX2 = clipY2 = 0;
             clipped = true;
+	    gciImageRenderer.clipModified();
+	    gciTextRenderer.clipModified();
+	    gciShapeRenderer.clipModified();
             return;
         }
 
@@ -1016,6 +1029,9 @@ public class Graphics {
             || (translatedY1 >= maxHeight)) {
             clipX1 = clipY1 = clipX2 = clipY2 = 0;
             clipped = true;
+	    gciImageRenderer.clipModified();
+	    gciTextRenderer.clipModified();
+	    gciShapeRenderer.clipModified();
             return;
         }
 
@@ -1985,8 +2001,16 @@ public class Graphics {
     void resetGC() {
         currentFont = Font.getDefaultFont();
         style       = SOLID;
+
         rgbColor    = gray = 0;
         pixel       = getPixel(rgbColor, gray, true);
+
+        int attr = GCIRenderContext.ATTRIBUTE_PAINT |
+	           GCIRenderContext.ATTRIBUTE_FONT |
+	           GCIRenderContext.ATTRIBUTE_STROKE;
+	gciImageRenderer.attributesModified(attr);
+        gciTextRenderer.attributesModified(attr);
+        gciShapeRenderer.attributesModified(attr);
     }
 
 
