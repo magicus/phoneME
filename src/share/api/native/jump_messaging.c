@@ -101,7 +101,7 @@ translateJumpMessageQueueStatusCode(const JUMPMessageQueueStatusCode *mqcode)
 	return JUMP_WOULD_BLOCK;
 
       case JUMP_MQ_NO_SUCH_QUEUE:
-	return JUMP_FAILURE;
+	return JUMP_NO_SUCH_QUEUE;
 
       case JUMP_MQ_UNBLOCKED:
 	return JUMP_UNBLOCKED;
@@ -805,8 +805,8 @@ jumpMessageSendAsyncResponse(JUMPOutgoingMessage m,
 
 /*
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
- * JUMP_TIMEOUT, JUMP_OVERRUN, JUMP_NEGATIVE_ARRAY_LENGTH, or
- * JUMP_FAILURE.
+ * JUMP_TIMEOUT, JUMP_OVERRUN, JUMP_NEGATIVE_ARRAY_LENGTH,
+ * JUMP_NO_SUCH_QUEUE, or JUMP_FAILURE.
  */
 static JUMPMessage
 doWaitFor(JUMPPlatformCString type, int32 timeout, JUMPMessageStatusCode *code)

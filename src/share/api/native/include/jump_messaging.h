@@ -50,7 +50,8 @@ typedef enum {
     JUMP_WOULD_BLOCK = 6,
     JUMP_OVERRUN = 7,
     JUMP_NEGATIVE_ARRAY_LENGTH = 8,
-    JUMP_UNBLOCKED = 9
+    JUMP_UNBLOCKED = 9,
+    JUMP_NO_SUCH_QUEUE = 10
 } JUMPMessageStatusCode;
 
 /*
