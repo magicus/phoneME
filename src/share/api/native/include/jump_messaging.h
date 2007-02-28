@@ -42,7 +42,7 @@
  * @brief identifies 
  */
 typedef enum {
-    JUMP_TARGET_NONEXISTENT = 1,
+    JUMP_TARGET_NONEXISTENT    = 1,
     JUMP_TIMEOUT  = 2,
     JUMP_SUCCESS  = 3,
     JUMP_FAILURE  = 4,
