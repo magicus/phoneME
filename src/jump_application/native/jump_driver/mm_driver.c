@@ -33,8 +33,6 @@ int close_driver = 0;
 void jsr135DriverMain(int argc, char **argv) {
     JUMPMessage in;
     int ret;
-    printf("Function name: %s\n", argv[0]);
-    printf("Library name: %s\n", argv[1]);
 
     ret = jumpMessageStart();
     
