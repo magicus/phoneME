@@ -32,14 +32,12 @@
 #include <iconv.h>
 #include <locale.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #define UTF8     "UTF-8"
 #define UTF8_LEN 5
 
 static iconv_t
-open_iconv(const char* to, const char* from)
-{
+open_iconv(const char* to, const char* from) {
     iconv_t ic = iconv_open(to, from);
     if (ic == (iconv_t)-1) {
         if (errno == EINVAL) {
@@ -66,8 +64,7 @@ open_iconv(const char* to, const char* from)
 }
 
 static char*
-get_langinfo_codeset()
-{
+get_langinfo_codeset() {
     static char *name = NULL;
 
     if (name == NULL) {
@@ -79,8 +76,7 @@ get_langinfo_codeset()
     return name;
 }
 
-int native2utf8(const char* from, char* to, int buflen)
-{
+int native2utf8(const char* from, char* to, int buflen) {
     size_t  ret;
     size_t  ileft, oleft;
     iconv_t ic;
@@ -118,8 +114,7 @@ int native2utf8(const char* from, char* to, int buflen)
     return buflen-oleft;
 }
 
-int utf2native(const char* from, char* to, int buflen)
-{
+int utf2native(const char* from, char* to, int buflen) {
     size_t  ret;
     size_t  ileft, oleft;
     iconv_t ic;
@@ -166,8 +161,7 @@ int utf2native(const char* from, char* to, int buflen)
 #include "oobj.h"
 #include "utf.h"
 
-int native2utf8(const char* from, char* to, int buflen)
-{
+int native2utf8(const char* from, char* to, int buflen) {
     int len;
     unsigned short unicode[BUFSIZ];
     len = MultiByteToWideChar(CP_ACP, 0, from, -1, &unicode[0], BUFSIZ);
@@ -175,8 +169,7 @@ int native2utf8(const char* from, char* to, int buflen)
     return utfstrlen(to);
 }
 
-int utf2native(const char* from, char* to, int buflen)
-{
+int utf2native(const char* from, char* to, int buflen) {
     int len, len2;
     unsigned short unicode[BUFSIZ];
     utf2unicode((char*)from, &unicode[0], BUFSIZ, &len);
