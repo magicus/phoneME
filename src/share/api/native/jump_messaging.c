@@ -588,6 +588,12 @@ jumpMessageAddStringArray(JUMPOutgoingMessage m,
     }
 }
 
+JUMPMessageStatusCode
+jumpMessageGetStatus(JUMPOutgoingMessage m)
+{
+    return m->status;
+}
+
 /*
  * An iterator to read off of a message
  */

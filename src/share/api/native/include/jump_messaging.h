@@ -169,6 +169,14 @@ jumpMessageAddStringArray(JUMPOutgoingMessage m,
 			  uint32 length);
 
 /*
+ * Returns the message's status, which will be JUMP_SUCCESS if all
+ * calls to jumpMessageAdd...() have succeeded, otherwise will be one
+ * of JUMP_OVERRUN or JUMP_NEGATIVE_ARRAY_LENGTH.
+ */
+extern JUMPMessageStatusCode
+jumpMessageGetStatus(JUMPOutgoingMessage m);
+
+/*
  * Message data read api's
  */
 
