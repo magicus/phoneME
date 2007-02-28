@@ -38,6 +38,7 @@ import com.sun.mmedia.TonePlayer;
 import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.*;
 import com.sun.mmedia.DefaultConfiguration;
+import com.sun.mmedia.MMNativeLibrary;
 
 // #ifndef ABB [
 import javax.microedition.media.protocol.*;
@@ -500,6 +501,13 @@ public final class Manager {
     
     private static String DS_ERR = "Cannot create a DataSource for: ";
     private static String PL_ERR = "Cannot create a Player for: ";
+    
+    /**
+     * Load Native Library
+     */
+    static {
+        MMNativeLibrary.load();
+    }
 
     /**
      * This private constructor keeps anyone from actually

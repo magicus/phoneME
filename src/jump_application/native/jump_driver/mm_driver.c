@@ -30,11 +30,12 @@
 void jsr135_jumpdriver_listener(JUMPMessage *in);
 
 int close_driver = 0;
-int mm_driver(int argc, const char **argv) {
-
+void jsr135DriverMain(int argc, char **argv) {
     JUMPMessage in;
     int ret;
-    
+    printf("Function name: %s\n", argv[0]);
+    printf("Library name: %s\n", argv[1]);
+
     ret = jumpMessageStart();
     
     do {
@@ -45,8 +46,4 @@ int mm_driver(int argc, const char **argv) {
     sleep(1);
     
     jumpMessageShutdown();
-
-    return 0;
 }
-
-
