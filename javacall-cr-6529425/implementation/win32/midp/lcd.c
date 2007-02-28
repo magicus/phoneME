@@ -50,10 +50,6 @@
 
 #include "res/resource.h"
 
-#ifdef USE_VSCL
-#include "javacall_vscl.h"
-#endif
-
 #define SKINS_MENU_SUPPORTED
 
 #define NUMBEROF(x) (sizeof(x)/sizeof(x[0]))
@@ -707,10 +703,6 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     case WM_COMMAND:
 
         switch(wParam & 0xFFFF) {
-        case EXMENU_ITEM_START:
-            javanotify_start();
-            break;
-
         case EXMENU_ITEM_SHUTDOWN:
             printf("EXMENU_ITEM_SHUTDOWN ...  \n");
             javanotify_shutdown();
@@ -722,60 +714,6 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 
         case EXMENU_ITEM_RESUME:
             javanotify_resume();
-            break;
-
-        case EXMENU_ITEM_INTERNAL_PAUSE:
-
-            javanotify_internal_pause();
-            break;
-
-        case EXMENU_ITEM_INTERNAL_RESUME:
-
-            javanotify_internal_resume();
-            break;
-
-        case EXMENU_ITEM_START_TCK:
-            /* show UI modal dialog box to request user for TCK URL */
-            DialogBox(
-                GetModuleHandle(NULL),
-                MAKEINTRESOURCE(IDD_DIALOG_START_TCK),
-                hwnd,
-                start_tck_dlgproc);
-            break;
-
-#ifdef USE_VSCL
-        /* ADD VSCL COMMANDS HANDLING HERE */
-        case EXMENU_ITEM_FLIP_OPEN:
-            javacall_print("send VSCL_FLIP_OPEN event...\n");
-            javanotify_vscl_incoming_event(JAVACALL_VSCL_FLIP_OPEN, NULL, NULL);
-            break;
-        case EXMENU_ITEM_FLIP_CLOSE:
-            javacall_print("send VSCL_FLIP_CLOSED event...\n");
-            javanotify_vscl_incoming_event(JAVACALL_VSCL_FLIP_CLOSED, NULL, NULL);
-            break;
-        case EXMENU_ITEM_INCOMING_CALL:
-            javacall_print("send VSCL_INCOMING_CALL event...\n");
-            javanotify_vscl_incoming_event(JAVACALL_VSCL_INCOMING_CALL, NULL, NULL);
-            break;
-        case EXMENU_ITEM_CALL_DROPPED:
-            javacall_print("send VSCL_CALL_DROPPED event...\n");
-            javanotify_vscl_incoming_event(JAVACALL_VSCL_INCOMING_CALL, NULL, NULL);
-            break;
-
-#endif /* USE_VSCL */
-        case EXMENU_ITEM_DEBUG_LEVELS:
-            printf("EXMENU_ITEM_DEBUG_LEVELS ...  \n");
-            /* show UI modal dialog box to request user for TCK URL */
-            DialogBox(
-                GetModuleHandle(NULL),
-                MAKEINTRESOURCE(IDD_DIALOG_DEBUG_LEVELS),
-                hwnd,
-                start_debuglevels_dlgproc);
-            break;
-        
-        case EXMENU_ITEM_QUIT:
-            printf("EXMENU_ITEM_QUIT ...  \n");
-            PostMessage(hwnd, WM_CLOSE, 0, 0);
             break;
 
         default:
@@ -1132,14 +1070,12 @@ static void initScreenBuffer(int w, int h) {
 #ifdef SKINS_MENU_SUPPORTED
 static HMENU hMenuExtended = NULL;
 static HMENU hMenuExtendedSub = NULL;
-static HMENU hMenuExtendedVSCLSub = NULL;
 
 HMENU buildSkinsMenu(void) {
     BOOL ok;
 
     hMenuExtended = CreateMenu();
     hMenuExtendedSub = CreateMenu();
-    hMenuExtendedVSCLSub = CreateMenu();
 
     /* Create Life cycle menu list */
 
@@ -1149,48 +1085,6 @@ HMENU buildSkinsMenu(void) {
                      EXMENU_ITEM_RESUME, EXMENU_TEXT_RESUME);
     ok = InsertMenuA(hMenuExtendedSub, 0, MF_BYPOSITION,
                      EXMENU_ITEM_PAUSE, EXMENU_TEXT_PAUSE);
-    ok = InsertMenuA(hMenuExtendedSub, 0, MF_BYPOSITION,
-                     EXMENU_ITEM_INTERNAL_RESUME, EXMENU_TEXT_INTERNAL_RESUME);
-    ok = InsertMenuA(hMenuExtendedSub, 0, MF_BYPOSITION,
-                     EXMENU_ITEM_INTERNAL_PAUSE, EXMENU_TEXT_INTERNAL_PAUSE);
-    ok = InsertMenuA(hMenuExtendedSub, 0, MF_BYPOSITION,
-                     EXMENU_ITEM_START, EXMENU_TEXT_START);
-    ok = InsertMenuA(hMenuExtendedSub, -1, MF_BYPOSITION,
-                     EXMENU_ITEM_START_TCK, EXMENU_TEXT_START_TCK);
-
-    /* Add Quit menu */
-    ok = InsertMenuA(hMenuExtended, 0,
-                     MF_BYPOSITION,
-                     EXMENU_ITEM_QUIT,
-                     EXMENU_TEXT_QUIT);
-
-    /* Add Debug Levels menu */
-    ok = InsertMenuA(hMenuExtended, 0,
-                     MF_BYPOSITION,
-                     EXMENU_ITEM_DEBUG_LEVELS,
-                     EXMENU_TEXT_DEBUG_LEVELS);
-
-#ifdef USE_VSCL
-    /* Create VSCL menu list */
-
-    ok = InsertMenuA(hMenuExtendedVSCLSub, 0, MF_BYPOSITION,
-                     EXMENU_ITEM_CALL_DROPPED, EXMENU_TEXT_CALL_DROPPED);
-
-    ok = InsertMenuA(hMenuExtendedVSCLSub, 0, MF_BYPOSITION,
-                     EXMENU_ITEM_INCOMING_CALL, EXMENU_TEXT_INCOMING_CALL);
-
-    ok = InsertMenuA(hMenuExtendedVSCLSub, 0, MF_BYPOSITION,
-                     EXMENU_ITEM_FLIP_CLOSE, EXMENU_TEXT_FLIP_CLOSE);
-
-    ok = InsertMenuA(hMenuExtendedVSCLSub, 0, MF_BYPOSITION,
-                     EXMENU_ITEM_FLIP_OPEN, EXMENU_TEXT_FLIP_OPEN);
-
-    /* Add VSCL menu */
-    ok = InsertMenuA(hMenuExtended, 0,
-                     MF_BYPOSITION | MF_POPUP,
-                     (UINT) hMenuExtendedVSCLSub,
-                     EXMENU_TEXT_VSCL);
-#endif // #ifdef USE_VSCL
 
     /* Add Life Cycle menu */
     ok = InsertMenuA(hMenuExtended, 0,
@@ -1203,11 +1097,6 @@ HMENU buildSkinsMenu(void) {
 }
 
 static void destroySkinsMenu(void) {
-    if(hMenuExtendedVSCLSub) {
-        DestroyMenu(hMenuExtendedVSCLSub);
-        hMenuExtendedVSCLSub = NULL;
-    }
-
     if(hMenuExtendedSub) {
         DestroyMenu(hMenuExtendedSub);
         hMenuExtendedSub = NULL;
@@ -1775,132 +1664,3 @@ int javacall_lcd_get_screen_width() {
      }
 }
 
-/*
- *    The function processes windows messages
- *    of the UI modal dialog box "Start TCK" to request user for
- *    TCK URL and type (trusted/untrusted) of the domain.
- *    It calls javanotify_start_tck(...) if user clicks OK.
- */
-static int   tck_dialog_Trusted = 0;
-static char  tck_dialog_Url[1024] = "http://";
-
-LRESULT CALLBACK start_tck_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        SendDlgItemMessage(hDlg, IDC_CHECK_TRUSTED, BM_SETCHECK, tck_dialog_Trusted, 0);
-        SendDlgItemMessage(hDlg, IDC_EDIT_TCK_URL, WM_SETTEXT, 0, (LPARAM) tck_dialog_Url);
-        return TRUE;
-
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDCANCEL) {
-            EndDialog(hDlg, 0);
-            return TRUE;
-        }
-        if (LOWORD(wParam) == IDOK) {
-            break;
-        }
-    default:
-        return FALSE;
-    }
-
-    tck_dialog_Trusted = SendDlgItemMessage(hDlg, IDC_CHECK_TRUSTED, BM_GETCHECK, 0, 0) & BST_CHECKED;
-    SendDlgItemMessage(hDlg, IDC_EDIT_TCK_URL, WM_GETTEXT, sizeof(tck_dialog_Url), (LPARAM) tck_dialog_Url);
-
-    javanotify_start_tck(tck_dialog_Url,
-        tck_dialog_Trusted
-        ? JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED
-        : JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED);
-
-    EndDialog(hDlg, 0);
-    return TRUE;
-}
-
-int level_to_control(int module, int first_control) {
-
-/* This is a hidden dependencies workaround (ti762)
-   IMPL_NOTE: provide pure solution without hidden dependencies */
-#ifdef ENABLE_HIDDEN_DEP_FEATURES
-    return first_control + midpLogGetDebugLevel(module);
-#else
-    return first_control;
-#endif
-}
-
-int control_to_level(HWND hDlg, int first_control) {
-    int i;
-    for (i=0; i<5; i++) {
-        if (IsDlgButtonChecked(hDlg, first_control+i))
-            return i;
-    }
-    return 4;
-}
-
-LRESULT CALLBACK start_debuglevels_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        CheckRadioButton(hDlg, IDC_RADIO_INFO, IDC_RADIO_DISABLED, level_to_control(0, IDC_RADIO_INFO));
-        CheckRadioButton(hDlg, IDC_RADIO_INFO2, IDC_RADIO_DISABLED2, level_to_control(1, IDC_RADIO_INFO2));
-        CheckRadioButton(hDlg, IDC_RADIO_INFO3, IDC_RADIO_DISABLED3, level_to_control(2, IDC_RADIO_INFO3));
-        CheckRadioButton(hDlg, IDC_RADIO_INFO4, IDC_RADIO_DISABLED4, level_to_control(3, IDC_RADIO_INFO4));
-        CheckRadioButton(hDlg, IDC_RADIO_INFO5, IDC_RADIO_DISABLED5, level_to_control(4, IDC_RADIO_INFO5));
-        CheckRadioButton(hDlg, IDC_RADIO_INFO6, IDC_RADIO_DISABLED6, level_to_control(5, IDC_RADIO_INFO6));
-        CheckRadioButton(hDlg, IDC_RADIO_INFO7, IDC_RADIO_DISABLED7, level_to_control(6, IDC_RADIO_INFO7));
-        CheckRadioButton(hDlg, IDC_RADIO_INFO8, IDC_RADIO_DISABLED8, level_to_control(7, IDC_RADIO_INFO8));
-        CheckRadioButton(hDlg, IDC_RADIO_INFO9, IDC_RADIO_DISABLED9, level_to_control(8, IDC_RADIO_INFO9));
-        CheckRadioButton(hDlg, IDC_RADIO_INFO10, IDC_RADIO_DISABLED10, level_to_control(9, IDC_RADIO_INFO10));
-        CheckRadioButton(hDlg, IDC_RADIO_INFO11, IDC_RADIO_DISABLED11, level_to_control(10, IDC_RADIO_INFO11));
-        CheckRadioButton(hDlg, IDC_RADIO_INFO12, IDC_RADIO_DISABLED12, level_to_control(11, IDC_RADIO_INFO12));
-        CheckRadioButton(hDlg, IDC_RADIO_INFO13, IDC_RADIO_DISABLED13, level_to_control(12, IDC_RADIO_INFO13));
-        return TRUE;
-
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDCANCEL) {            
-            EndDialog(hDlg, 0);
-            return TRUE;
-        }
-        if (LOWORD(wParam) == IDOK) {
-/* This is a hidden dependencies workaround (ti762)
-   IMPL_NOTE: provide pure solution without hidden dependencies */
-#ifdef ENABLE_HIDDEN_DEP_FEATURES
-            midpLogSetDebugLevel(0, control_to_level(hDlg, IDC_RADIO_INFO));
-            midpLogSetDebugLevel(1, control_to_level(hDlg, IDC_RADIO_INFO2));
-            midpLogSetDebugLevel(2, control_to_level(hDlg, IDC_RADIO_INFO3));
-            midpLogSetDebugLevel(3, control_to_level(hDlg, IDC_RADIO_INFO4));
-            midpLogSetDebugLevel(4, control_to_level(hDlg, IDC_RADIO_INFO5));
-            midpLogSetDebugLevel(5, control_to_level(hDlg, IDC_RADIO_INFO6));
-            midpLogSetDebugLevel(6, control_to_level(hDlg, IDC_RADIO_INFO7));
-            midpLogSetDebugLevel(7, control_to_level(hDlg, IDC_RADIO_INFO8));
-            midpLogSetDebugLevel(8, control_to_level(hDlg, IDC_RADIO_INFO9));
-            midpLogSetDebugLevel(9, control_to_level(hDlg, IDC_RADIO_INFO10));
-            midpLogSetDebugLevel(10, control_to_level(hDlg, IDC_RADIO_INFO11));
-            midpLogSetDebugLevel(11, control_to_level(hDlg, IDC_RADIO_INFO12));
-            midpLogSetDebugLevel(12, control_to_level(hDlg, IDC_RADIO_INFO13));
-#endif
-            break;
-        }
-
-        if (LOWORD(wParam) == IDPSS) {
-/* This is a hidden dependencies workaround (ti762)
-   IMPL_NOTE: provide pure solution without hidden dependencies */
-#ifdef ENABLE_HIDDEN_DEP_FEATURES
-          extern void JVM_Pss();
-          JVM_Pss();
-#endif
-        }
-
-    default:
-        return FALSE;
-    }
-
-    tck_dialog_Trusted = SendDlgItemMessage(hDlg, IDC_CHECK_TRUSTED, BM_GETCHECK, 0, 0) & BST_CHECKED;
-    SendDlgItemMessage(hDlg, IDC_EDIT_TCK_URL, WM_GETTEXT, sizeof(tck_dialog_Url), (LPARAM) tck_dialog_Url);
-
-
-    EndDialog(hDlg, 0);
-    return TRUE;
-}
