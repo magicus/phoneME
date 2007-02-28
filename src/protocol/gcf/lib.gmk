@@ -77,10 +77,10 @@ SUBSYSTEM_GCF_JAVA_FILES += \
 # Native files for the ( gcf ) library
 #
 
-SUBSYSTEM_SOCKET_NATIVE_FILES += \
+SUBSYSTEM_GCF_NATIVE_FILES += \
 	gcf_export.c
 
-SUBSYSTEM_SOCKET_EXTRA_INCLUDES += \
+SUBSYSTEM_GCF_EXTRA_INCLUDES += \
     -I$(SUBSYSTEM_DIR)/protocol/gcf/include
 
 ifeq ($(USE_I3_TEST), true)
