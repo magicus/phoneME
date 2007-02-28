@@ -31,11 +31,17 @@ import com.sun.j2me.security.Permission;
  */
 public class AppPackage {
     
+    /** Unused ID */
+    public static final int UNUSED_APP_ID = -1;
+    
     /** Static instance. Only one package can be run in a isolate */
     private static AppPackage instance = new AppPackage();
     
+    private int id;
+    
     /** Guard from 'new' operator */
     private AppPackage() {
+        id = 0;
     }
     
     public static AppPackage getInstance() {
@@ -43,7 +49,11 @@ public class AppPackage {
     }
     
     public int getId() {
-        return 0;
+        return id;
+    }
+    
+    public int getID() {
+        return id;
     }
     
     /**
@@ -70,6 +80,46 @@ public class AppPackage {
     }    
     
     /**
+     * Check for permission and throw an exception if not allowed.
+     * May block to ask the user a question.
+     *
+     * @param permission ID of the permission to check for,
+     *      the ID must be from
+     *      {@link com.sun.midp.security.Permissions}
+     * @param resource string to insert into the question, can be null if
+     *        no %2 in the question
+     *
+     * @exception SecurityException if the permission is not
+     *            allowed by this token
+     * @exception InterruptedException if another thread interrupts the
+     *   calling thread while this method is waiting to preempt the
+     *   display.
+     */
+    public void checkForPermission(int permission, String resource)
+        throws InterruptedException {}
+
+    /**
+     * Checks for permission and throw an exception if not allowed.
+     * May block to ask the user a question.
+     *
+     * @param permission ID of the permission to check for,
+     *      the ID must be from
+     *      {@link com.sun.midp.security.Permissions}
+     * @param resource string to insert into the question, can be null if
+     *        no %2 in the question
+     * @param extraValue string to insert into the question,
+     *        can be null if no %3 in the question
+     *
+     * @exception SecurityException if the permission is not
+     *            allowed by this token
+     * @exception InterruptedException if another thread interrupts the
+     *   calling thread while this method is waiting to preempt the
+     *   display.
+     */
+    public void checkForPermission(int permission, String resource,
+        String extraValue) throws InterruptedException {}
+    
+    /**
      * Throws an exception if a status for the permission is not allowed
      *
      * @param p a permission to check
@@ -79,7 +129,7 @@ public class AppPackage {
         if (checkPermission(p) != 1) {
             throw new SecurityException();
         }
-    }    
+    }
 
     /**
      * Gets the name of CA that authorized this suite.
