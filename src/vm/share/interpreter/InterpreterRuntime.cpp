@@ -986,8 +986,10 @@ extern "C" {
 
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE
   static long trace_bcs = 0;
+#endif
 
   void trace_bytecode() {
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
     UsingFastOops fast_oops;
     Thread *thread = Thread::current();
     JavaFrame frame(thread);
@@ -1031,8 +1033,8 @@ extern "C" {
 #endif
     }
     trace_bcs++;
-  }
 #endif // !defined(PRODUCT) || ENABLE_TTY_TRACE
+  }
 
 #ifndef PRODUCT
   void verify_stack() {

@@ -133,16 +133,8 @@
   pointer(GP_ASM, compiler_throw_ArrayIndexOutOfBoundsException_10)
 #endif
 
-#if ENABLE_COMPILER && (!defined(PRODUCT) || ENABLE_TTY_TRACE)
-#define GP_COMPILER_TTY_TRACE_DO(pointer, value) pointer(GP_ASM, trace_bytecode)
-#else
-#define GP_COMPILER_TTY_TRACE_DO(pointer, value) 
-#endif
-
-
 #define GP_COMPILER_SYMBOLS_DO(pointer, value) \
-        GP_COMPILER_SYMBOLS_DO_GENERIC(pointer, value) \
-        GP_COMPILER_TTY_TRACE_DO(pointer, value) 
+        GP_COMPILER_SYMBOLS_DO_GENERIC(pointer, value)
 
 //----------------------------------------------------------------------
 // Constants that are implemented in C code but need to be statically
@@ -248,7 +240,8 @@
       GP_COMPILER_SYMBOLS2_MEM_ROUTINES(pointer, value) \
       pointer(GP_C, deoptimize) \
       pointer(GP_C, uncommon_trap) \
-      pointer(GP_C, get_method)      
+      pointer(GP_C, get_method)    \
+      pointer(GP_C, trace_bytecode) 
 #endif
 
 #if !ENABLE_ISOLATES && ENABLE_COMPILER
