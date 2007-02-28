@@ -20,36 +20,7 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 
-#A list of module names to compile, separated by comma.
-#ex. modules=contentstore,isolatemanager,serviceregistry
+# User specific build properties
 
-modules = \
-    os, \
-    process, \
-    isolatemanager, \
-    lifecycle, \
-    contentstore, \
-    executive, \
-    common, \
-    isolate, \
-    download, \
-    pushregistry, \
-    installer, \
-    windowing, \
-    presentation, \
-    serviceregistry, \
-    preferences
-
-
-#A list of module factory names to compile, separated by comma.
-module-factories-configuration = \
-    IsolateManagerModuleFactoryImpl, \
-    ApplicationLifecycleModuleFactoryImpl, \
-    DownloadModuleFactoryImpl, \
-    StoreFactoryImpl, \
-    InstallerFactoryImpl, \
-    WindowingModuleFactoryImpl, \
-    ServiceRegistryFactoryImpl, \
-    PresentationModuleFactoryImpl, \
-    PushRegistryModuleFactoryImpl, \
-    PreferencesModuleFactoryImpl
+# Uncomment/comment the line below to see/hide additional JUnit output
+unittest.verbose=

@@ -46,6 +46,36 @@ information or have any questions.
   </target>
 
   <target name="build-unittests" depends="build-impl, only-build-unittests"/>
+  
+  <presetdef name="jump.junit">
+    <junit showoutput="true" fork="true" jvm="${cdc.dir}/bin/cvm">
+      <classpath path="${d.classes.dir}"/>
+      <batchtest>
+        <fileset dir="${s.share.tests.dir}/classes">
+          <include name = "**/*Test.java"/>
+        </fileset>
+      </batchtest>
+    </junit>
+  </presetdef>
+  
+  <target name="only-run-unittests-verbose" if="unittest.verbose">
+    <jump.junit>
+      <formatter  type="brief"/>
+    </jump.junit>
+    <!-- break through quieted ant: cat test results to output -->
+    <concat>
+        <fileset dir = "." includes = "TEST-*"/>        
+    </concat>
+    <delete >
+        <fileset dir = "." includes = "TEST-*"/>
+    </delete>
+  </target>
+
+  <target name="only-run-unittests-quiet" unless="unittest.verbose">
+    <jump.junit>
+      <formatter usefile="false" type="brief"/>
+    </jump.junit>
+  </target>
 
   <!--
     Warning: this target doesn't build unittests and JUMP: it only
@@ -53,16 +83,7 @@ information or have any questions.
     It should be mostly used from external makefiles which ensure
     correctly build unittests and components
   -->
-  <target name="only-run-unittests">
-    <junit showoutput="true" fork="true" jvm="${cdc.dir}/bin/cvm">
-      <classpath path="${d.classes.dir}"/>
-      <formatter  usefile="false" type="brief"/>
-      <batchtest>
-        <fileset dir="${s.share.tests.dir}/classes">
-          <include name = "**/*Test.java"/>
-        </fileset>
-      </batchtest>
-    </junit>
+  <target name="only-run-unittests" depends="set-properties, only-run-unittests-quiet, only-run-unittests-verbose">
   </target>
 
   <target name="run-unittests" depends="build-unittests, only-run-unittests"/>

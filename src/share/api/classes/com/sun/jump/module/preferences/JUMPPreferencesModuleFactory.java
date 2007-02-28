@@ -34,8 +34,12 @@ import com.sun.jump.module.JUMPModuleFactory;
  * these instances constitute multiple disjoint namespaces of preferences.
  */
 public abstract class JUMPPreferencesModuleFactory extends JUMPModuleFactory {
+
+    //
+    // Currently we only have system preferences, but in the future,
+    //  we can add more namespaces like User / Application preferences.
+    //
     public static final String TYPE_SYSTEM_PREFERENCES  = "system";
-    public static final String TYPE_APPLICATION_PREFERENCES  = "application";
     
     private static JUMPPreferencesModuleFactory INSTANCE = null;
     
@@ -61,7 +65,6 @@ public abstract class JUMPPreferencesModuleFactory extends JUMPModuleFactory {
      * The supported values are
      *        <ul>
      *          <li>{@link #TYPE_SYSTEM_PREFERENCES}</li>
-     *          <li>{@link #TYPE_APPLICATION_PREFERENCES}</li>
      *        </ul>
      * @throws java.lang.IllegalArgumentException if the type is not 
      *         not supported by the factory.
@@ -72,5 +75,5 @@ public abstract class JUMPPreferencesModuleFactory extends JUMPModuleFactory {
      * @return a list of all registered preferences in the system for all
      * namespaces.
      */
-    public abstract JUMPPreferencesModule[] getAllPreferencess();
+    public abstract JUMPPreferencesModule[] getAllPreferences();
 }

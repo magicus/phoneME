@@ -38,29 +38,67 @@ import com.sun.jump.common.JUMPApplication;
  * and hosts the application and handles all the JUMP Isolate related 
  * functionality transparently to the application. It also receives 
  * and processes application model agnostic messages.
- * 
+ * <p>
+ * Unless specified for a method, it is assumed that methods catch all
+ * exceptions (but not fatal errors).
  * <p>
  * This class is extended by AppModel specific containers.
  */
 public abstract class JUMPAppContainer implements JUMPMessageHandler {
     
     /**
-     * Creates a new instance of JUMPAppContainer
+     * Creates a new instance of JUMPAppContainer.
+     * An uncheck exception can be thrown from this method to cause
+     * the isolate to exit.
      */
     protected  JUMPAppContainer() {
     }
     
     /**
      * Start the application specific by the JUMPApplication object.
+     * The method should not return until the application is considered
+     * completely initilized and in a running state according to the profile
+     * of the container.
+     *
+     * @param app properties of the application to start
+     * @param args arguments to pass to the application
+     *
+     * @return non-negative container unique runtime ID to identify the
+     * application in future method calls or -1 if the application can't be
+     * started
      */
     public abstract int startApp(JUMPApplication app, String[] args);
-    
+
+    /**
+     * Pause an application.
+     * The method should not return until the application is has responded
+     * to the action according to the profile of the container.
+     *
+     * @param appId runtime ID of the application assigned by startApp    
+     */
     public abstract void pauseApp(int appId);
     
+    /**
+     * Resume a paused an application.
+     * The method should not return until the application is has responded
+     * to the action according to the profile of the container.
+     *
+     * @param appId runtime ID of the application assigned by startApp    
+     */
     public abstract void resumeApp(int appId);
     
+    /**
+     * Destroy an application.
+     * The method should not return until the application is has responded
+     * to the action according to the profile of the container.
+     * <p>
+     * The method can throw an exception to indicate that the MIDlet
+     * was not destroyed.
+     *
+     * @param appId runtime ID of the application assigned by startApp    
+     */
     public abstract void destroyApp(int appId, boolean force);
-    
+
     public void handleMessage(JUMPMessage message) {
         // call the methods by unpacking the message contents
     }
