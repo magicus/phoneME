@@ -218,7 +218,8 @@ newMessage(void)
 
 /*
  * Take the 'header' struct in a JUMPMessage, and "serialize" it into
- * the message data area.
+ * the message data area.  On success, returns JUMP_SUCCESS.  On failure,
+ * returns JUMP_OVERRUN.
  */
 static JUMPMessageStatusCode
 putHeaderInMessage(struct _JUMPMessage* m)
@@ -396,7 +397,9 @@ freeMessage(struct _JUMPMessage* m)
     free(m);
 }
 
-/* type and addr are copied, and freed with the JUMPOutgoingMessage. */
+/* type and addr are copied, and freed with the JUMPOutgoingMessage.
+   On success, *code is set to JUMP_SUCCESS.  Otherwise it is set
+   to one of JUMP_OUT_OF_MEMORY or JUMP_OVERRUN. */
 static JUMPOutgoingMessage
 newOutgoingMessage(JUMPPlatformCString type, uint32 requestId, 
 		   JUMPReturnAddress addr, JUMPMessageStatusCode *code)

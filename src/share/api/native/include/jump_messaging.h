@@ -88,10 +88,18 @@ jumpMessageGetReturnTypeName(void);
 /*
  * Message creation api's
  */
+/*
+ * On success, *code is set to JUMP_SUCCESS.  Otherwise it is set
+ *   to one of JUMP_OUT_OF_MEMORY or JUMP_OVERRUN.
+ */
 extern JUMPOutgoingMessage
 jumpMessageNewOutgoingByType(JUMPPlatformCString type,
 			     JUMPMessageStatusCode *code);
 
+/*
+ * On success, *code is set to JUMP_SUCCESS.  Otherwise it is set
+ *   to one of JUMP_OUT_OF_MEMORY or JUMP_OVERRUN.
+ */
 extern JUMPOutgoingMessage
 jumpMessageNewOutgoingByRequest(JUMPMessage requestMessage,
 				JUMPMessageStatusCode *code);
@@ -279,7 +287,9 @@ typedef struct JUMPMessageHandlerRegistration * JUMPMessageHandlerRegistration;
  */
 
 /*
- * Register 'type' for direct listening
+ * Register 'type' for direct listening.  On success, *code is set to
+ * JUMP_SUCCESS.  Otherwise it is set to one of JUMP_OUT_OF_MEMORY or
+ * JUMP_FAILURE.
  */
 extern JUMPMessageHandlerRegistration
 jumpMessageRegisterDirect(JUMPPlatformCString type,
@@ -290,7 +300,7 @@ jumpMessageRegisterDirect(JUMPPlatformCString type,
  *
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
  * JUMP_TIMEOUT, JUMP_UNBLOCKED, JUMP_OVERRUN, JUMP_NEGATIVE_ARRAY_LENGTH,
- * or JUMP_FAILURE.
+ * JUMP_NO_SUCH_QUEUE, or JUMP_FAILURE.
  */
 extern JUMPMessage
 jumpMessageWaitFor(JUMPPlatformCString type,
