@@ -70,6 +70,13 @@ const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
     (*env)->DeleteLocalRef(env, (jobject)propname);
     (*env)->DeleteLocalRef(env, (jobject)clazz);
 
+    if ((*env)->ExceptionCheck(env) != JNI_FALSE) {
+        (*env)->ExceptionClear(env);
+        (*env)->DeleteLocalRef(env, (jobject)prop);
+        (*env)->PopLocalFrame(env, NULL);
+        return NULL;
+    }
+
     if (JNU_IsNull(env, prop)) {
         (*env)->DeleteLocalRef(env, (jobject)prop);
         (*env)->PopLocalFrame(env, NULL);
