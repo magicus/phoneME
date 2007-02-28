@@ -44,44 +44,15 @@ extern HWND midpGetWindowHandle();
 /*
     Definitions to create the Lyfe Cycle of the Emulator Window
 */
-#define EXMENU_ITEM_QUIT				1000
+#define EXMENU_ITEM_PAUSE                               1002
+#define EXMENU_ITEM_RESUME                              1003
+#define EXMENU_ITEM_SHUTDOWN                            1004
 
-#define EXMENU_ITEM_START				1001
-#define EXMENU_ITEM_PAUSE				1002
-#define EXMENU_ITEM_RESUME				1003
-#define EXMENU_ITEM_SHUTDOWN			1004
-#define EXMENU_ITEM_START_TCK			1005
-#define EXMENU_ITEM_INTERNAL_PAUSE			1006
-#define EXMENU_ITEM_INTERNAL_RESUME			1007
-/*
-    Definitions to create the VSCL Menu of the Emulator Window
-*/
-#define EXMENU_ITEM_FLIP_OPEN				1008
-#define EXMENU_ITEM_FLIP_CLOSE			    1009
-#define EXMENU_ITEM_INCOMING_CALL   	    1010
-#define EXMENU_ITEM_CALL_DROPPED    	    1011
+#define EXMENU_TEXT_MAIN                                "Life Cycle"
+#define EXMENU_TEXT_SHUTDOWN                            "Send \"Shutdown\" event"
+#define EXMENU_TEXT_PAUSE                               "Send \"Pause\" event"
+#define EXMENU_TEXT_RESUME                              "Send \"Resume\" event"
 
-#define EXMENU_ITEM_DEBUG_LEVELS    	    1012
-
-
-#define EXMENU_TEXT_MAIN				"Life Cycle"
-#define EXMENU_TEXT_START				"Send \"Start\" event..."
-#define EXMENU_TEXT_SHUTDOWN			"Send \"Shutdown\" event..."
-#define EXMENU_TEXT_PAUSE				"Send \"Pause\" event..."
-#define EXMENU_TEXT_RESUME				"Send \"Resume\" event..."
-#define EXMENU_TEXT_START_TCK   		"Start TCK..."
-#define EXMENU_TEXT_INTERNAL_PAUSE			"Send \"Internal Pause\" event..."
-#define EXMENU_TEXT_INTERNAL_RESUME			"Send \"Internal Resume\" event..."
-
-#define EXMENU_TEXT_VSCL				"VSCL"
-#define EXMENU_TEXT_FLIP_OPEN			"Send \"Flip Open\" event..."
-#define EXMENU_TEXT_FLIP_CLOSE			"Send \"Flip Close\" event..."
-#define EXMENU_TEXT_INCOMING_CALL		"Send \"Incoming Call\" event..."
-#define EXMENU_TEXT_CALL_DROPPED		"Send \"Call Dropped\" event..."
-
-#define EXMENU_TEXT_QUIT				"Quit"
-
-#define EXMENU_TEXT_DEBUG_LEVELS	    "Debug"
 
 #if !ENABLE_MULTIPLE_INSTANCES
 
