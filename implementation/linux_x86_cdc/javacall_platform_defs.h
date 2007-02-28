@@ -77,13 +77,13 @@ typedef const char* javacall_const_filename_string;
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
  * Maximal length of filename supported 
  */
-#define JAVACALL_MAX_FILE_NAME_LENGTH         128
+#define JAVACALL_MAX_FILE_NAME_LENGTH         256
 
 /**
  * @def JAVACALL_MAX_ILLEGAL_FILE_NAME_CHARS
  * Maximal number of illegal chars
  */
-#define JAVACALL_MAX_ILLEGAL_FILE_NAME_CHARS  128
+#define JAVACALL_MAX_ILLEGAL_FILE_NAME_CHARS  256
 
 /**
  * @def JAVACALL_MAX_ROOTS_LIST_LENGTH
@@ -95,7 +95,7 @@ typedef const char* javacall_const_filename_string;
  * @def JAVACALL_MAX_ROOT_PATH_LENGTH
  * Maximal length of a file system root path
  */
-#define JAVACALL_MAX_ROOT_PATH_LENGTH   128
+#define JAVACALL_MAX_ROOT_PATH_LENGTH   256
 
 /**
  * @}
