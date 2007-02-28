@@ -515,12 +515,13 @@ public class DirectPlayer extends BasicPlayer
      * @exception MediaException Thrown if the media time cannot be set.
      */
     protected long doSetMediaTime(long now) throws MediaException {
-        if (now <= 0) {
-            now = 0;
-        } else {
-            now /= 1000;
-        }
-        int ret = nSetMediaTime(hNative, now);
+        if (now <= 0) now = 0;
+        
+        long dur = doGetDuration();
+
+		if (TIME_UNKNOWN != dur && now > dur) now = dur;
+        
+        int ret = nSetMediaTime(hNative, now/1000);
         if (ret == -1) {
             throw new MediaException("media time cannot be set");
         }                

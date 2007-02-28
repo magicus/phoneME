@@ -344,7 +344,7 @@ Java_com_sun_mmedia_DirectPlayer_nSetMediaTime() {
 
     MMP_DEBUG_STR("+nSetMediaTime\n");
 
-    if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
+    if (pKniInfo) {
         returnValue = javacall_media_set_time(pKniInfo->pNativeHandle, (int)ms);
     } else {
         REPORT_ERROR(LC_MMAPI, "nSetMediaTime fail\n");
