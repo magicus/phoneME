@@ -139,6 +139,9 @@ public class Protocol extends ProtocolBase {
     /**	 DCS: Unicode UCS-2 */
     protected static final int GSM_UCS2 = 2;
 
+    /** Indicates connection being closed */
+    protected boolean isBeingClosed = false;
+
     /** Creates a message connection protocol handler. */
     public Protocol() {
         super();
@@ -589,7 +592,7 @@ public class Protocol extends ProtocolBase {
      *
      * @exception IOException  if an I/O error occurs
      */
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         /*
          * Set m_iport to 0, in order to quit out of the while loop
          * in the receiver thread.
@@ -598,37 +601,43 @@ public class Protocol extends ProtocolBase {
 
 	m_iport = 0;
 
-        /*
-	 * last connection closing
-         */
-	close0(save_iport, connHandle, 1);
+        System.out.println("Protocol.close()");
 
-        setMessageListener(null);
+        if (!isBeingClosed) {
 
-        /*
-         * Reset handle and other params to default
-         * values. Multiple calls to close() are allowed
-         * by the spec and the resetting would prevent any
-         * strange behaviour.
-         */
-        connHandle = 0;
-	open = false;
-	host = null;
-	m_mode = 0;
+            isBeingClosed = true;
+            /*
+             * last connection closing
+             */
+            close0(save_iport, connHandle, 1);
 
-        /*
-         * Remove this connection from the list of open
-         * connections.
-         */
-        int len = openconnections.size();
-        for (int i = 0; i < len; i++) {
-            if (openconnections.elementAt(i) == this) {
-                openconnections.removeElementAt(i);
-                break;
+            setMessageListener(null);
+
+            /*
+             * Reset handle and other params to default
+             * values. Multiple calls to close() are allowed
+             * by the spec and the resetting would prevent any
+             * strange behaviour.
+             */
+            connHandle = 0;
+            open = false;
+            host = null;
+            m_mode = 0;
+
+            /*
+             * Remove this connection from the list of open
+             * connections.
+             */
+            int len = openconnections.size();
+            for (int i = 0; i < len; i++) {
+                if (openconnections.elementAt(i) == this) {
+                    openconnections.removeElementAt(i);
+                    break;
+                }
             }
-        }
 
-	open_count--;
+            open_count--;
+        }
     }
 
     /*
@@ -891,6 +900,7 @@ public class Protocol extends ProtocolBase {
 	openconnections.addElement(this);
 	url = name;
 
+        System.out.println("Protocol.openPrimInternal()");
 	try {
             connHandle = open0(host, midletSuite.getID(), m_iport);
 	} catch (IOException ioexcep) {
