@@ -373,11 +373,15 @@ JCRMIC_ARCHIVE = jcrmic.jar
 JCRMIC_TOOL = $(BINDIR)/$(JCRMIC_ARCHIVE)
 
 ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
-    ifeq ($(JC_DIR),) 
-        $(error JC_DIR must point to the Java Card development kit directory)
+    ifndef JC_DIR
+        JC_DIR = /java/re/jcdevkit/2.2.1/archive/fcs/binaries/domestic/linux/java_card_kit-2_2_1
     endif
     
     JC_API = $(JC_DIR)/lib/api.jar
+    ifeq ($(wildcard $(JC_API)),)
+        $(error JC_DIR must point to the Java Card development kit directory: $(JC_DIR))
+    endif
+    
     JC_CONVERTER = $(JC_DIR)/lib/converter.jar
     JC_VERIFIER=$(JC_DIR)/lib/offcardverifier.jar
     JC_SCRIPTGEN=$(JC_DIR)/lib/scriptgen.jar
