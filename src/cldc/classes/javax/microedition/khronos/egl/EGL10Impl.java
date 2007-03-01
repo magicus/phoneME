@@ -79,7 +79,7 @@ class EGL10Impl implements EGL10 {
     native int _getGraphicsHeight(Graphics graphics);
     native int _getWindowPixmap(int displayId, int configId,
                                 Graphics winGraphics,
-                                int width, int height, int transY);
+                                int width, int height);
     native int _getImagePixmap(int displayId, int configId,
                                Graphics imageGraphics,
                                int width, int height);
@@ -372,26 +372,22 @@ class EGL10Impl implements EGL10 {
 	}
 
         Graphics winGraphics = (Graphics)win;
-        
-        Object[] result = new Object[1];
-        _getGraphicsSource(winGraphics,result);
-        Object source = result[0];
 
         int width = _getGraphicsWidth(winGraphics);
         int height = _getGraphicsHeight(winGraphics);
 
-        int transY = 0;
-        if (source instanceof GameCanvas) {
-            // If the Graphics is an ImageGraphics, it must be derived
-            // from a GameCanvas.  The backing image always has the
-            // dimensions of the full screen, even though some
-            // scanlines are hidden by status bars.  In this case, we
-            // need to translate the drawing by the difference between
-            // the full screen height and the visible height.
-
-            GameCanvas gc = (GameCanvas)source;
-            transY = height - gc.getHeight();
-        }
+        // TODO: uncomment the following block when MIDP guys add GameGraphics object
+        // TODO: GameGraphics should extend Graphics and have the reference to GameCanvas
+//        if (winGraphics instanceof GameGraphics) {
+//            Object[] result = new Object[1];
+//            _getGraphicsSource(winGraphics,result);
+//            Object source = result[0];
+//
+//            if (source instanceof GameCanvas) {
+//                GameCanvas gameCanvas = (GameCanvas)source;
+//                height = gameCanvas.getHeight();
+//            }
+//        }
 
         int displayId = ((EGLDisplayImpl)display).nativeId();
         int configId = ((EGLConfigImpl)config).nativeId();
@@ -408,7 +404,7 @@ class EGL10Impl implements EGL10 {
 	} else if (strategy == STRATEGY_USE_PIXMAP) {
 	    int pixmapPointer =
                 _getWindowPixmap(displayId, configId,
-                                 winGraphics, width, height, transY);
+                                 winGraphics, width, height);
 	    int surf =
 		_eglCreatePixmapSurface(displayId, configId,
 					pixmapPointer,

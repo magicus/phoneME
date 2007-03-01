@@ -1149,7 +1149,6 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1getWindowPixmap() {
     jint configId = KNI_GetParameterAsInt(2);
     jint width = KNI_GetParameterAsInt(4);
     jint height = KNI_GetParameterAsInt(5);
-    jint transY = KNI_GetParameterAsInt(6);
     JSR239_Pixmap *pixmap;
     jint returnValue;
 
@@ -1173,7 +1172,6 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1getWindowPixmap() {
                                     (jint)greenSize,
                                     (jint)blueSize,
                                     (jint)alphaSize);
-    pixmap->transY = transY;
     returnValue = (jint) pixmap;
 
 #ifdef DEBUG

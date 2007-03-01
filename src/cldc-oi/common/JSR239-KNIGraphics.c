@@ -68,19 +68,21 @@ JSR239_getGraphicsSource(jobject graphicsHandle, jobject resultHandle) {
     printf("JSR239_getGraphicsSource\n");
 #endif
 
-    (void)graphicsHandle;
-
     KNI_StartHandles(1);
     KNI_DeclareHandle(sourceHandle);
 
-    // IMPL_NOTE: retrieve real source handle
-    KNI_ReleaseHandle(sourceHandle);
+    (void)graphicsHandle;
+    (void)resultHandle;
 
-    KNI_SetObjectArrayElement(resultHandle, 0, sourceHandle);
+    // Retrieve the gameCanvas reference from the GameGraphics.
+    // sourceHandle = GXAPI_GET_GAME_GRAPHICS_PTR(graphicsHandle)->gameCanvas;
+
+    // KNI_SetObjectArrayElement(resultHandle, 0, 0/*sourceHandle*/);
 
 #ifdef DEBUG
     printf("getGraphicsWidth: source = 0x%x\n", sourceHandle);
 #endif
 
+    KNI_ReleaseHandle(sourceHandle);
     KNI_EndHandles();
 }
