@@ -503,7 +503,7 @@ jumpMessageAddBytesFrom(JUMPOutgoingMessage m, const int8* values, int length)
     if ((values == NULL) || (length == 0)) {
 	return;
     }
-    if (i < 0) {
+    if (length < 0) {
 	m->status = JUMP_NEGATIVE_ARRAY_LENGTH;
 	return;
     }
