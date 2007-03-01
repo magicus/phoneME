@@ -29,12 +29,6 @@ package com.sun.j2me.dialog;
 import com.sun.j2me.i18n.Resource;
 import com.sun.j2me.i18n.ResourceConstants;
 
-/** MIDP dependencies - public API */
-import javax.microedition.lcdui.TextField;
-import javax.microedition.lcdui.ChoiceGroup;
-import javax.microedition.lcdui.Choice;
-import javax.microedition.lcdui.StringItem;
-
 /**
  * Provides methods for simple messages and requests.
  */
@@ -54,7 +48,7 @@ public class MessageDialog {
             throws InterruptedException {
 
         Dialog d = new Dialog(title, withCancel);
-        d.append(new StringItem(message, null));
+        System.out.println(message);        
         return d.waitForAnswer();
     }
 
@@ -73,11 +67,21 @@ public class MessageDialog {
             throws InterruptedException {
 
         Dialog d = new Dialog(title, true);
-        ChoiceGroup choice =
-                   new ChoiceGroup(label, Choice.EXCLUSIVE, list, null);
-        d.append(choice);
-        return d.waitForAnswer() == Dialog.CANCELLED ?
-                   -1 : choice.getSelectedIndex();
+        while (true) {
+            System.out.println("Choose one of the items");
+            for (int i = 0; i < list.length; i++) {
+                System.out.println(i + ". " + list[i]);
+            }
+            
+            String choice = d.append(); /* User's choice */
+            try {
+                return d.waitForAnswer() == Dialog.CANCELLED ?
+                       -1 : Integer.decode(choice).intValue();
+            }
+            catch (NumberFormatException e) {
+                System.out.println("Value for chosen item is incorrect");
+            }
+        }
     }
 
     /**
@@ -88,54 +92,48 @@ public class MessageDialog {
      */
     public static String[] enterNewPIN()
             throws InterruptedException {
-
+        String label = ""; /* New pin's label */
+        String pin1 = "";  /* New pin's value */
+        String pin2 = "";  /* Confirmation of new pin's value */
+        
         Dialog d = new Dialog(
             // "New PIN", 
             Resource.getString(
                 ResourceConstants.JSR177_PINDIALOG_TITLE_NEWPIN),
             true);
 
-        TextField label = new TextField(
-            // "PIN label ", 
-            Resource.getString(
-                ResourceConstants.JSR177_PINDIALOG_LABEL) + " ",
-            "", 32, 0);
-        TextField pin1 = new TextField(
-            // "Enter PIN ", 
-            Resource.getString(
-                ResourceConstants.JSR177_PINDIALOG_ENTERPIN) + " ",
-            "", 8, TextField.PASSWORD | TextField.NUMERIC);
-        TextField pin2 = new TextField(
-            // "Confirm PIN ", 
-            Resource.getString(
-                ResourceConstants.JSR177_PINDIALOG_CONFIRMPIN) + " ",
-            "", 8, TextField.PASSWORD | TextField.NUMERIC);
-
-        d.append(label);
-        d.append(pin1);
-        d.append(pin2);
-
         while (true) {
+            System.out.println(// "PIN label ", 
+                Resource.getString(
+                    ResourceConstants.JSR177_PINDIALOG_LABEL));
+            label = d.append();
+
+            System.out.println(// "Enter PIN ", 
+                Resource.getString(
+                    ResourceConstants.JSR177_PINDIALOG_ENTERPIN));
+            pin1 = d.append();
+
+            System.out.println(// "Confirm PIN ", 
+                Resource.getString(
+                    ResourceConstants.JSR177_PINDIALOG_CONFIRMPIN));
+            pin2 = d.append();
+
             if (d.waitForAnswer() == Dialog.CANCELLED) {
                 return null;
             }
 
-            String s = label.getString().trim();
-            if (s.equals("")) {
+            if (label.equals("")) {
+                System.out.println("Label is invalid");
                 continue;
             }
 
-            String h1 = pin1.getString().trim();
-            String h2 = pin2.getString().trim();
-
-            if (h1.equals("") ||
-                ! h1.equals(h2) ||
-                h1.length() < 4) {
-                pin1.setString("");
-                pin2.setString("");
+            if (pin1.equals("") ||
+                !pin1.equals(pin2) ||
+                pin1.length() < 4) {
+                System.out.println("Pins' values are invalid");
                 continue;
             }
-            return new String[] {s, h1};
+            return new String[] {label, pin1};
         }
     }
 
@@ -156,44 +154,32 @@ public class MessageDialog {
                       String label1, boolean pin1IsNumeric, int pin1Length,
                       String label2, boolean pin2IsNumeric, int pin2Length)
            throws InterruptedException {
-
+        String data1 = "";  /* First pin to enter */
+        String data2 = "";  /* Second pin to enter */
+        
         Dialog d = new Dialog(title, true);
 
-        int flags = TextField.PASSWORD;
-        if (pin1IsNumeric) {
-            flags |= TextField.NUMERIC;
-        }
-        TextField tf1 = new TextField(label1, "", pin1Length, flags);
-        d.append(tf1);
-
-        TextField tf2 = null;
-        if (pin2Length != 0) {
-
-            flags = TextField.SENSITIVE | TextField.NON_PREDICTIVE;
-            if (pin2IsNumeric) {
-                flags |= TextField.NUMERIC;
-            }
-            tf2 = new TextField(label2, "", pin2Length, flags);
-            d.append(tf2);
-
-        }
-
         while (true) {
+            System.out.println(label1);
+            data1 = d.append();
+
+            if (pin2Length != 0) {
+                System.out.println(label2);
+                data2 = d.append();
+            }
+
             if (d.waitForAnswer() == Dialog.CANCELLED) {
                 return null;
             }
 
-            String data1 = tf1.getString();            
-            if (data1.trim().equals("")) {
-                tf1.setString("");
+            if (data1.equals("")) {
+                System.out.println("Pin1 value is invalid");
                 continue;
             }
 
             if (pin2Length != 0) {
-                String data2 = tf2.getString();
-
-                if (data2.trim().equals("")) {
-                    tf2.setString("");
+                if (data2.equals("")) {
+                    System.out.println("Pin2 value is invalid");
                     continue;
                 }
 
