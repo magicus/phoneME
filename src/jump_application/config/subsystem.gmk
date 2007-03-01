@@ -42,7 +42,7 @@ MODULE_SATSA_JCRMI_JAVA_FILES += \
 MODULE_SATSA_APDU_JAVA_FILES += \
     $(JSR_177_DIR)/src/jump_application/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/Protocol.java
     
-ifeq ($(USE_SECOP),false)
+ifneq ($(USE_SECOP),true)
 MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/BadPaddingException.java \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/Cipher.java \
