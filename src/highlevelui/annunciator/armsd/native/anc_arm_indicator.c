@@ -66,17 +66,17 @@ void anc_set_network_indicator(MIDPNetworkIndicatorState status) {
  *  This function is only valid if QT's COP and QWS is available.
  *
  *  @param mode if <code>mode</code> is:
- *              <code>BACKLIGHT_ON</code> - turn on the backlight  
- *              <code>BACKLIGHT_OFF</code> - turn off the backlight  
- *              <code>BACKLIGHT_TOGGLE</code> - toggle the backlight
- *              <code>BACKLIGHT_IS_SUPPORTED<code> - do nothing  
+ *              <code>ANC_BACKLIGHT_ON</code> - turn on the backlight  
+ *              <code>ANC_BACKLIGHT_OFF</code> - turn off the backlight  
+ *              <code>ANC_BACKLIGHT_TOGGLE</code> - toggle the backlight
+ *              <code>ANC_BACKLIGHT_IS_SUPPORTED<code> - do nothing  
  *              (this is used to determine if backlight control is 
  *              supported on a system without  changing the state of 
  *              the backlight.)
  *  @return <code>KNI_TRUE</code> if the system supports backlight 
  *              control, or <code>KNI_FALSE</code> otherwise.
  */
-jboolean anc_show_backlight(int mode) {
+jboolean anc_show_backlight(AncBacklightState mode) {
     REPORT_WARN(LC_LOWUI, "anc_show_backlight: Stubbed out."); 
     (void)mode;
     return KNI_FALSE;

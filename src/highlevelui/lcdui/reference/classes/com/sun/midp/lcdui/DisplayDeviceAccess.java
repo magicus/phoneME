@@ -48,21 +48,6 @@ public class DisplayDeviceAccess {
     private TimerTask task = null;
 
     /**
-     * mode to turn off the backlight
-     */
-    private static int BACKLIGHT_OFF = 0;
-
-    /**
-     * mode to toggle the backlight
-     */
-    private static int BACKLIGHT_TOGGLE = 2;
-
-    /**
-     * mode to do nothing (see if backlight control is supported
-     */
-    private static int BACKLIGHT_IS_SUPPORTED = 3;
-
-    /**
      * The interval, in microseconds between backlight 
      * toggles (in microseconds)
      */
@@ -97,14 +82,14 @@ public class DisplayDeviceAccess {
             cancelTimer();
             if (isLit) {
                 isLit = !isLit;
-                return showBacklight0(displayId, BACKLIGHT_TOGGLE);
+                return toggleBacklight0(displayId);
             } else {
-                return showBacklight0(displayId, BACKLIGHT_IS_SUPPORTED);
+                return isBacklightSupported0(displayId);
             }
         } else {
             setTimer(displayId, duration);
             isLit = !isLit;
-            return showBacklight0(displayId, BACKLIGHT_TOGGLE);
+            return toggleBacklight0(displayId);
         }
     }
     
@@ -164,11 +149,11 @@ public class DisplayDeviceAccess {
             if (flashCount > 0) {
                 flashCount--;
                 isLit = !isLit;
-                showBacklight0(displayId, BACKLIGHT_TOGGLE);
+                toggleBacklight0(displayId);
             } else {
                 if (isLit) {
                     isLit = !isLit;
-                    showBacklight0(displayId, BACKLIGHT_TOGGLE);
+                    toggleBacklight0(displayId);
                 }
                 this.cancel();
             }
@@ -178,12 +163,19 @@ public class DisplayDeviceAccess {
     }
 
     /**
-     * Show backlight.  Turn it on, turn it off, or toggle it.
+     * Toggles backlight.
      *  
      * @param displayId The display ID associated with the caller Display
-     * @param mode 1 to turn on the backlight, 0 to turn off the backlight,
-     *             or -1 to toggle the backlight.
      * @return true if backlight control is supported, false otherwise        
      */
-    private native boolean showBacklight0(int displayId, int mode);
+    private native boolean toggleBacklight0(int displayId);
+
+    /**
+     * Tests if backlight is supported.
+     *  
+     * @param displayId The display ID associated with the caller Display
+     * @return true if backlight control is supported, false otherwise        
+     */
+    private native boolean isBacklightSupported0(int displayId);
+
 }

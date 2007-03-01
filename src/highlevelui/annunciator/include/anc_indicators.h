@@ -59,27 +59,17 @@ extern "C" {
  */ 
 void anc_show_trusted_indicator(jboolean trusted);
 
-/**
- * Value passed to anc_show_backlight to turn the backlight off 
- */
-#define BACKLIGHT_OFF 0
 
 /**
- * Value passed to anc_show_backlight to turn the backlight on 
+ * Operations with backlight.
+ * The function anc_show_backlight() requires one of these values.
  */
-#define BACKLIGHT_ON 1
-
-/**
- * Value passed to anc_show_backlight to toggle the backlight 
- */
-#define BACKLIGHT_TOGGLE 2
-
-/**
- * Value passed to anc_show_backlight to determine if the
- * system supports backlight control without changing the state
- * of the backlight 
- */
-#define BACKLIGHT_IS_SUPPORTED 3
+typedef enum {
+    ANC_BACKLIGHT_OFF           = 0, /**< Turns off backlight          */
+    ANC_BACKLIGHT_ON            = 1, /**< Turns on backlight           */
+    ANC_BACKLIGHT_TOGGLE        = 2, /**< Toggles the current state    */
+    ANC_BACKLIGHT_IS_SUPPORTED  = 3  /**< Tests if backlight supported */
+} AncBacklightState;
 
 /**
  * Operations on network indicator.
@@ -89,9 +79,9 @@ void anc_show_trusted_indicator(jboolean trusted);
  * ENABLE_NETWORK_INDICATOR set to true.
  */
 typedef enum {
-  NETWORK_INDICATOR_ON     = 1, /**< Turns on indicator        */
-  NETWORK_INDICATOR_OFF    = 2, /**< Turns off indicator       */
-  NETWORK_INDICATOR_TOGGLE = 3  /**< Toggles the current state */
+    NETWORK_INDICATOR_ON     = 1, /**< Turns on indicator        */
+    NETWORK_INDICATOR_OFF    = 2, /**< Turns off indicator       */
+    NETWORK_INDICATOR_TOGGLE = 3  /**< Toggles the current state */
 } MIDPNetworkIndicatorState;
 
 /**
@@ -100,17 +90,18 @@ typedef enum {
  * is supported by the system without changing the light's 
  * state.
  *
- * @param mode BACKLIGHT_ON to turn on the backlight, 
- *             BACKLIGHT_OFF to turn off the backlight,
- *             BACKLIGHT_TOGGLE to toggle the backlight, and
- *             BACKLIGHT_IS_SUPPORTED to see if the system
+ * @param mode One of the constants from AncBacklightState enumeration. 
+ *             ANC_BACKLIGHT_ON to turn on the backlight, 
+ *             ANC_BACKLIGHT_OFF to turn off the backlight,
+ *             ANC_BACKLIGHT_TOGGLE to toggle the backlight, and
+ *             ANC_BACKLIGHT_IS_SUPPORTED to see if the system
  *             supports this function without changing the
  *             state of the backlight.  <code>mode</code>
  *             values not listed above are ignored.
  * @return KNI_TRUE if the device supports backlight
  *         control or KNI_FALSE otherwise
  */
-jboolean anc_show_backlight(int mode);
+jboolean anc_show_backlight(AncBacklightState mode);
 
 /**
  * @name Network Indicator Support
