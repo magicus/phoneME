@@ -43,6 +43,10 @@
 #ifdef CVM_JIT
 #include "javavm/include/porting/jit/ccm.h"
 #endif
+
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
 #ifdef CVM_DEBUG_ASSERTS
 
 static void
@@ -646,6 +650,11 @@ CVMpreloaderDisambiguateAllMethods(CVMExecEnv* ee)
 		if ( CVMjmdFlags(jmd) & CVM_JMD_MAY_NEED_REWRITE ){
 		    switch (CVMstackmapDisambiguate(ee, mb, CVM_TRUE)) {
 			case CVM_MAP_SUCCESS:
+#ifdef CVM_HW
+			    CVMhwFlushCache(CVMmbJavaCode(mb),
+					    CVMmbJavaCode(mb)
+					    + CVMmbCodeLength(mb));
+#endif
 			    break;
 			case CVM_MAP_OUT_OF_MEMORY:
 			    CVMconsolePrintf(

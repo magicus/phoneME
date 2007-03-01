@@ -55,6 +55,10 @@
 #include "javavm/include/jit/jitstats.h"
 #include "javavm/include/jit/jitdebug.h"
 
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
+
 /*#define CVM_DEBUG_RUNTIME_CHECK_ELIMINATION*/
 /*#define LOCALREF_INFO_REFINEMENT_DEBUGGING*/
 
@@ -3430,6 +3434,11 @@ always_inline_short_methods:
             goto not_inlinable;
         }
 
+#ifdef CVM_HW
+#include "include/hw/jitir1.i"
+	    break;
+#endif
+
 	default: break; /* The rest are not an obstacle to inlining */
 	}
 	pc += instrLength;
@@ -5793,6 +5802,11 @@ translateRange(CVMJITCompilationContext* con,
             }/* end of switch */
 	    break;
         }/* end of opc_wide */
+
+#ifdef CVM_HW
+#include "include/hw/jitir2.i"
+	    break;
+#endif
 
        /* negate the value on the top of the stack */
        /* Conversion operations */

@@ -47,6 +47,9 @@
 #ifdef CVM_SPLIT_VERIFY
 #include "javavm/include/split_verify.h"
 #endif
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
 
 static CVMBool
 CVMclassPrepare(CVMExecEnv* ee, CVMClassBlock* cb);
@@ -680,6 +683,12 @@ CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb)
 		    free(jmd);
 		}
 	    }
+
+#ifdef CVM_HW
+	    CVMhwPrepareMethod(mb);
+	    CVMhwFlushCache(CVMmbJavaCode(mb),
+			    CVMmbJavaCode(mb) + CVMmbCodeLength(mb));
+#endif
 	}
 
 	/*
