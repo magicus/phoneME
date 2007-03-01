@@ -34,10 +34,14 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
     private static final int NO_BYTE = -2;
     /** 'replacement character' [Unicode 1.1.0] */ 
     private static final int RC = 0xFFFD; 
-    /** read ahead buffer that to holds part of char from the last read */
+    /** read ahead buffer to hold a part of char from the last read.
+     * The only case this buffer is needed is like following:
+     * after a number of characters (at least one) have been read,
+     * the next character is encoded by 4 bytes, of which only 3 are
+     * already available in the input stream. In this case read()
+     * will finish without waiting for the last byte of the character.
+     */
     private int[] readAhead;
-    /** when reading first of a char byte we need to know if the first read */
-    private boolean newRead;
     /* the number of UTF8 bytes that may encode one character */
     private static final int READ_AHEAD_SIZE = 4;
     /**
@@ -76,7 +80,7 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
         int currentChar = 0;
         int nextByte;
         int headByte = NO_BYTE;
-        
+
         if (len == 0) {
             return 0;
         }
@@ -89,9 +93,11 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
             }
         }
 
-        newRead = true;
         while (count < len) {
-            firstByte = getByteOfCurrentChar(0);
+            // must wait for the first character, and
+            // other characters are read only if they are available
+            final boolean mustBlockTillGetsAChar = (0 == count);
+            firstByte = getByteOfCurrentChar(0, mustBlockTillGetsAChar);
             if (firstByte < 0) {
                 if (firstByte == -1 && count == 0) {
                     // end of stream
@@ -134,7 +140,7 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
             }
 
             for (int j = 1; j <= extraBytes; j++) {
-                nextByte = getByteOfCurrentChar(j);
+                nextByte = getByteOfCurrentChar(j, mustBlockTillGetsAChar);
                 if (nextByte == NO_BYTE) {
                     // done for now, comeback later for the rest of char
                     return count;
@@ -181,41 +187,38 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
             }
             prepareForNextChar(headByte);
         }
-
         return count;
     }
 
     /**
-     * Get one of the raw bytes for the current character to be converted
-     * from look ahead buffer.
+     * Get one of the raw bytes for the current character.
+     * The byte first gets read into the read ahead buffer, unless
+     * it's already there.
      *
-     * @param byteOfChar which raw byte to get 0 for the first, 2 for the last
-     *
+     * @param byteOfChar which raw byte to get 0 for the first, 3 for the last.
+     *                   The bytes must be accessed sequentially, that is,
+     *                   the only possible order of byteOfChar values
+     *                   in a series of calls is 0, 1, 2, 3.
+     * @param allowBlockingRead  false allows returning NO_BYTE if no byte is
+     *                   available in the input stream; true forces reading.
      * @return a byte value, NO_BYTE for no byte available or -1 for end of
      *          stream
      *
      * @exception  IOException   if an I/O error occurs.
      */
-    private int getByteOfCurrentChar(int byteOfChar) throws IOException {
+    private int getByteOfCurrentChar(int byteOfChar, boolean allowBlockingRead) throws IOException {
         if (readAhead[byteOfChar] != NO_BYTE) {
             return readAhead[byteOfChar];
         }
 
         /*
+         * allowBlockingRead will be true for the first character.
          * Our read method must block until it gets one char so don't call
-         * available on the first real stream for each new read().
+         * available() for the first character.
          */
-        if (!newRead && in.available() <= 0) {
-            return NO_BYTE;
+        if (allowBlockingRead || in.available() > 0) {
+            readAhead[byteOfChar] = in.read();
         }
-
-        readAhead[byteOfChar] = in.read();
-
-        /*
-         * since we have read from the input stream,
-         * this not a new read any more
-         */
-        newRead = false;
 
         return readAhead[byteOfChar];
     }
