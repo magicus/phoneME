@@ -26,8 +26,7 @@
 
 #include "jni.h"
 #include "jni_util.h"
-
-static JavaVM *jvm = NULL;
+#include "jni_statics.h"
 
 /**
  * Native counterpart for
@@ -44,11 +43,14 @@ static JavaVM *jvm = NULL;
 const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
     JNIEnv *env;
     jstring propname;
-    jclass clazz;
-    jmethodID methodID;
     jstring prop;
     jsize len;
+    JavaVM* jvm = JNI_STATIC(internal_props, jvm);
 
+    /*
+     * JVM interface should have been stored in JNI statics. If it is
+     * not there, we cannot get properties from Java.
+     */
     if (NULL == jvm) {
         return NULL;
     }
@@ -57,7 +59,14 @@ const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
         return NULL;
     }
 
-    if ((*env)->PushLocalFrame(env, 3) < 0) {
+    /*
+     * This function will be called from KNI methods, so we need a
+     * JNI frame for calling Java method here.
+     * The JNI frame is created for this particular function. This
+     * could be refactored in the future if a general solution for
+     * calling JNI from KNI environment is required.
+     */
+    if ((*env)->PushLocalFrame(env, 1) < 0) {
         return NULL;
     }
 
@@ -66,18 +75,8 @@ const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
         goto _error;
     }
 
-    clazz = (*env)->FindClass(env, "com/sun/j2me/main/Configuration");
-    if (NULL == clazz) {
-        goto _error;
-    }
-
-    methodID = (*env)->GetStaticMethodID(env, clazz, "getProperty",
-                                    "(Ljava/lang/String;)Ljava/lang/String;");
-    if (NULL == methodID) {
-        goto _error;
-    }
-
-    prop = (jstring)(*env)->CallStaticObjectMethod(env, clazz, methodID,
+    prop = (jstring)(*env)->CallStaticObjectMethod(env, JNI_STATIC(internal_props, cls),
+                                                   JNI_STATIC(internal_props, getPropertyID),
                                                    propname);
 
     if ((*env)->ExceptionCheck(env) != JNI_FALSE) {
@@ -97,20 +96,39 @@ const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
     (*env)->GetStringUTFRegion(env, prop, 0, len, buffer);
     buffer[len] = 0;
 
+    /* All done, JNI frame is not needed any more. */
     (*env)->PopLocalFrame(env, NULL);
     return (const char*)buffer;
 
 _error:
+    /* An error has occured, JNI frame is not needed any more. */
     (*env)->PopLocalFrame(env, NULL);
     return NULL;
 }
 
 /**
- * Stores <code>JavaVM</code> instance in a static variable for later use.
+ * Stores <code>JavaVM</code> instance, class reference and method ID for later use.
  */
 JNIEXPORT void JNICALL
 Java_com_sun_j2me_main_Configuration_initialize(JNIEnv *env, jclass cls) {
-    if ((*env)->GetJavaVM(env, &jvm) != 0) {
+    jclass c = (*env)->FindClass(env, "com/sun/j2me/main/Configuration");
+    if (NULL == c) {
+        JNU_ThrowByName(env, "java/lang/RuntimeException",
+                        "cannot find Configuration class");
+        return;
+    }
+    JNI_STATIC(internal_props, cls) = (*env)->NewGlobalRef(env, c);
+
+    JNI_STATIC(internal_props, getPropertyID) =
+        (*env)->GetStaticMethodID(env, c, "getProperty",
+                                  "(Ljava/lang/String;)Ljava/lang/String;");
+    if (NULL == JNI_STATIC(internal_props, getPropertyID)) {
+        JNU_ThrowByName(env, "java/lang/RuntimeException",
+                        "cannot get getProperty() method ID");
+        return;
+    }
+
+    if ((*env)->GetJavaVM(env, &JNI_STATIC(internal_props, jvm)) != 0) {
         JNU_ThrowByName(env, "java/lang/RuntimeException",
                         "cannot get Java VM interface");
     }
