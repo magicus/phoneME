@@ -210,6 +210,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         selectedIndex = hilightedIndex = -1;
         elHeights = new int[ChoiceGroup.GROW_FACTOR]; // initial size
         lRequestInvalidate(true, true);
+        
     }
 
     /**
@@ -433,13 +434,16 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                     pendingIndex == -1) {
                     pendingIndex = selectedIndex;
                 }
-                
-                newHilightedIndex = pendingIndex != -1 ?
-                    pendingIndex :
-                    getIndexByPointer(contentBounds[X], dir == Canvas.UP ?
+
+                if (pendingIndex != -1) {
+                    newHilightedIndex = pendingIndex;
+                    pendingIndex = -1;
+                } else if (newHilightedIndex == -1) {
+                    newHilightedIndex = getIndexByPointer(contentBounds[X], dir == Canvas.UP ?
                                       contentY + contentH - 1 :
                                       contentY);
-                pendingIndex = -1;
+                }
+                
                 if (newHilightedIndex != -1) {
                     traversedIn = true;
                     ret = cg.numOfEls > 1;
@@ -475,6 +479,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
     void lCallTraverseOut() {
         super.lCallTraverseOut();
         traversedIn = false;
+        hilightedIndex = -1;
     }
 
     /**

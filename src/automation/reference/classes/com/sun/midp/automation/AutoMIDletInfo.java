@@ -48,7 +48,10 @@ class AutoMIDletInfo {
     boolean startError;
 
     /** Contains error code in case there was an error */
-    int startErrorCode ;
+    int startErrorCode;
+
+    /** Contains error details in case there was an error */
+    String startErrorDetails;
 
     /**
      * Constructor.
@@ -63,6 +66,7 @@ class AutoMIDletInfo {
         this.midlet = null;
         this.startError = false;
         this.startErrorCode = 0;
+        this.startErrorDetails = null;
     }
 }
 

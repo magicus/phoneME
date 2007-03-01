@@ -133,11 +133,11 @@
 
   <constant Type="int"
             Name="IMAGE_MUT_GLOBAL_LIMIT"
-            Value="1000000"
+            Value="1200000"
             Comment="Global resource limit for mutable images"/>
   <constant Type="int"
             Name="IMAGE_MUT_AMS_RESERVED"
-            Value="0"
+            Value="200000"
             Comment="Per suite resource limit for mutable images"/>
   <constant Type="int"
             Name="IMAGE_MUT_AMS_LIMIT"

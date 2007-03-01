@@ -1,5 +1,5 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,50 +24,16 @@
  * information or have any questions. 
  */
 
-#include <string.h>
-#include <stdio.h>
-
-#include <kni.h>
-
-#include <midpInit.h>
-#include <midpMalloc.h>
-
-#include <midpStorage.h>
-#include <midpString.h>
-#include <midpServices.h>
-#include <midpNativeThread.h>
-#include <midpNativeAppManager.h>
+package com.sun.midp.midlet;
 
 /**
- * @file
- *
- * Example of how the public MIDP API can be used to list installed
- * MIDlet Suite. This file contains platform specific thread routine.
+ * An interface to handle MIDlet suite exceptions.
  */
-
-#if ENABLE_NATIVE_AMS
-void nams_process_command(int command, int param);
-#endif
-
-#if ENABLE_NATIVE_AMS && ENABLE_I3_TEST
-DWORD WINAPI midlet_starter_routine(midp_ThreadRoutineParameter param) {
-    /* 
-     * this routine's signature is platform specific - 
-     * see midp_ThreadRoutine declaration 
-     */
-
-    int* cmd = (int*)param; 
-    /*
-    printf("DEBUG: thread routine: cmd = %i, param = %i\n", cmd[0], cmd[1]);
-    */
-
-    /* sleep for a few seconds to let java subsystem to be initialized */
-    midp_sleepNativeThread(5);
+public interface MIDletSuiteExceptionListener {
     
-    nams_process_command(cmd[0], cmd[1]);
-
-    return 0;
+    /**
+     * Handles exception occurred during MIDlet suite execution.
+     * @param t exception instance
+     */
+    public void handleException(Throwable t);    
 }
-
-#endif
-

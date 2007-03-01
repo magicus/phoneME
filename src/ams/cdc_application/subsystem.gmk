@@ -32,6 +32,14 @@
 # other def. (like VPATH)
 ############################################################
 
+include $(SUBSYSTEM_AMS_DIR)/ams_api/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ams_base/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
+include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
+
 # Local module directory
 CDC_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/cdc_application
 
@@ -54,12 +62,11 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
    CdcMIDletSuiteLoader.c
 
 ifdef INCLUDE_SHELL_SCRIPTS
- 
   SUBSYSTEM_AMS_LAZY_MAKEFILES += \
     $(CDC_AMS_DIR)/runMidlet.gmk
 
   SUBSYSTEM_AMS_EXECUTABLES += \
-    $(BINDIR)/runMidlet$(g)$(p)$(EXE) \
+    $(BINDIR)/runMidlet \
     $(BINDIR)/autotest.sh \
     $(BINDIR)/installMidlet
 endif

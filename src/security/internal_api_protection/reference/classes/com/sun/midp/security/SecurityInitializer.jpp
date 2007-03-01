@@ -134,6 +134,10 @@ public final class SecurityInitializer {
         // initialization over SecurityToken request
         "com.sun.midp.main.AbstractMIDletSuiteLoader$SecurityTrusted",
 
+// #ifdef ENABLE_CDC
+        "com.sun.midp.jump.isolate.MIDletContainer$SecurityTrusted",
+// #endif ENABLE_CDC
+
         // #ifdef ENABLE_NATIVE_AMS
         // The main security token consumer in the case of native AMS
         "com.sun.midp.main.NativeAppManagerPeer$SecurityTrusted",

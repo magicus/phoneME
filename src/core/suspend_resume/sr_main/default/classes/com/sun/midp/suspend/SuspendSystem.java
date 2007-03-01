@@ -64,6 +64,11 @@ public class SuspendSystem extends AbstractSubsystem {
         private boolean midletPaused = false;
 
         /**
+         * Stored foreground MIDlet.
+         */
+        private MIDletProxy lastForeground;
+
+        /**
          * The MIDlet proxy list.
          */
         MIDletProxyList mpl =
@@ -85,6 +90,7 @@ public class SuspendSystem extends AbstractSubsystem {
         public synchronized void suspend() {
             if (ACTIVE == state) {
                 SuspendTimer.start(mpl);
+                lastForeground = mpl.getForegroundMIDlet();
                 SuspendResumeUI.showSuspendAlert(classSecurityToken);
                 super.suspend();
             }
@@ -106,6 +112,11 @@ public class SuspendSystem extends AbstractSubsystem {
 
             SuspendResumeUI.dismissSuspendAlert();
             alertIfAllMidletsKilled();
+
+            if (null != lastForeground) {
+                mpl.setForegroundMIDlet(lastForeground);
+                lastForeground = null;
+            }
         }
 
         /**
@@ -165,9 +176,12 @@ public class SuspendSystem extends AbstractSubsystem {
          * MIDlet proxy from suspend dependencies.
          * @param midlet MIDletProxy that represents the MIDlet removed
          */
-        public void midletRemoved(MIDletProxy midlet) {
+        public synchronized void midletRemoved(MIDletProxy midlet) {
             midletKilled = true;
             removeSuspendDependency(midlet);
+            if (midlet == lastForeground) {
+                lastForeground = null; 
+            }
         }
 
         /**
@@ -183,7 +197,8 @@ public class SuspendSystem extends AbstractSubsystem {
          * Not used. MIDletProxyListListener interface method.
          */
         public void midletStartError(int externalAppId, int suiteId,
-                                     String className, int error) {}
+                                     String className, int errorCode,
+                                     String errorDetails) {}
     }
 
     /**

@@ -24,19 +24,27 @@
  * information or have any questions. 
  */
 
+#ifndef _RUN_NAMS_H_
+#define _RUN_NAMS_H_
 
-#ifndef _COMMAND_LINE_UTIL_H_
-#define _COMMAND_LINE_UTIL_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/*
- * Library internal functions declarations
+/**
+ * Start the MT MIDP. Waits until it shuts down, and then exits by default.
+ * If the -restart option is given, and no VM error occurred, MIDP is
+ * restarted.
+ *
+ * @param argc The total number of arguments
+ * @param argv An array of 'C' strings containing the arguments
+ *
+ * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  */
+int runNams(int argc, char* argv[]);
 
-extern char* midpFixMidpHome(char *cmd);
-extern char* midpRemoveCommandOption(char* pszFlag, char* apszArgs[],
-                                     int* pArgc);
-extern char* midpRemoveOptionFlag(char* pszFlag, char* apszArgs[],
-                  int* pArgc);
-extern char* getCharFileSeparator();
+#ifdef __cplusplus
+}
+#endif
 
-#endif /* _COMMAND_LINE_UTIL_H_ */
+#endif /* _RUN_NAMS_H_ */

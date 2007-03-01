@@ -37,6 +37,14 @@ public class MIDletApplication extends JUMPApplication {
     public static final String SUITE_KEY = "MIDletApplication_suiteid";
     public static final String CLASSNAME_KEY = "MIDletApplication_classname";
 
+    public static int getMIDletSuiteID(JUMPApplication app) {
+        return Integer.parseInt(app.getProperty(SUITE_KEY));
+    }
+
+    public static String getMIDletClassName(JUMPApplication app) {
+        return app.getProperty(CLASSNAME_KEY);
+    }
+
     /**
      * Create an instance of an application.
      *

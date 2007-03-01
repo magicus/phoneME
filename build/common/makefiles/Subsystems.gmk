@@ -146,7 +146,7 @@ include $(SUBSYSTEM_DIR)/tool/$(SUBSYSTEM_MAKE_FILE)
 
 ifneq ($(USE_JSR_234), true)
 ifneq ($(USE_JSR_135), true)
-#ifneq ($(MIDP_USE_ABB), true)
+#ifneq ($(USE_MIDP_ABB), true)
 include $(SUBSYSTEM_DIR)/mmapi/$(SUBSYSTEM_MAKE_FILE)
 #endif
 endif
@@ -358,8 +358,9 @@ endif
 # Multimedia Subsystem
 # Description: ABB
 #####################################################################
-ifeq ($(MIDP_USE_ABB), true)
-include $(JSR_234_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(USE_MIDP_ABB), true)
+PROJECT_MIDP_ABB_DIR ?= $(MIDP_ABB_DIR)
+include $(PROJECT_MIDP_ABB_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -390,13 +391,13 @@ endif
 
 #####################################################################
 # Media stuff, included if no external mmapi-pp bundle is used,
-# i.e. none of MIDP_USE_ABB,USE_JSR_135,USE_JSR_234 is set.
+# i.e. none of USE_MIDP_ABB,USE_JSR_135,USE_JSR_234 is set.
 # Description: Media stuff from ABB,JSR135,JSR234
 #              but necessary to be in MIDP
 #####################################################################
 ifneq ($(USE_JSR_234), true)
 ifneq ($(USE_JSR_135), true)
-ifneq ($(MIDP_USE_ABB), true)
+ifneq ($(USE_MIDP_ABB), true)
 include $(SUBSYSTEM_DIR)/media/$(LIB_MAKE_FILE)
 endif
 endif

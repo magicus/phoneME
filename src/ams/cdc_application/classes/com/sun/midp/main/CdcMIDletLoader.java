@@ -46,7 +46,7 @@ public class CdcMIDletLoader implements MIDletLoader {
      * @param mss the MIDlet suite storage
      *
      */
-    CdcMIDletLoader(MIDletSuiteStorage mss) {
+    public CdcMIDletLoader(MIDletSuiteStorage mss) {
         midletSuiteStorage = mss;
     }
 

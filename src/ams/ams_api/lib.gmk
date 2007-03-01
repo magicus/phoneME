@@ -56,6 +56,7 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletStateHandler.java \
     $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletStateListener.java \
     $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletSuite.java \
+    $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletSuiteExceptionListener.java \
     $(AMS_API_DIR)/classes/com/sun/midp/midlet/MIDletTunnel.java \
     $(AMS_API_DIR)/classes/com/sun/midp/midlet/PlatformRequest.java \
     $(AMS_API_DIR)/classes/com/sun/midp/midlet/Scheduler.java

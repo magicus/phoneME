@@ -35,6 +35,7 @@
 #include <midpUtilKni.h>
 #include <suitestore_task_manager.h>
 #include <commandLineUtil.h>
+#include <commandLineUtil_md.h>
 
 #if ENABLE_MULTIPLE_ISOLATES
 #define MIDP_HEAP_REQUIREMENT (MAX_ISOLATES * 1024 * 1024)

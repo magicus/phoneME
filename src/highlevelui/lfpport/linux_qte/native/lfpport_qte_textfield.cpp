@@ -115,18 +115,6 @@ void TextFieldBody::keyPressEvent(QKeyEvent *key)
 }
 
 /**
- * This is the patch for qt 2.3.9: The focus is moved out if only one item is
- * present in the form. 
- * Overload method of multiple line editor. The method always returns false
- * The implementation needs to be removed if the fix is done for the later
- * version of qt
- */ 
-bool TextFieldBody::focusNextPrevChild( bool next ) {
-    (void)next;
-    return FALSE;
-}
-
-/**
  * Override QMultiLineEdit to notify Java peer of traversal out.
  *
  * @param keyEvent key event to handle

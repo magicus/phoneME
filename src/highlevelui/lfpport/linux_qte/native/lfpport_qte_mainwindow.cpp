@@ -109,7 +109,7 @@ PlatformMIDPMainWindow::PlatformMIDPMainWindow(QWidget *parent,
   setTitleBar(MAINWINDOW_TITLE);
 
   // Fix main window geometry
-  int WINDOW_HEIGHT = mscreen->getDisplayFullHeight();
+  int WINDOW_HEIGHT = mscreen->getDisplayFullHeight() + MENUBAR_HEIGHT;
   setFixedSize(mscreen->getDisplayFullWidth(), WINDOW_HEIGHT);
 
   // Misc set-up

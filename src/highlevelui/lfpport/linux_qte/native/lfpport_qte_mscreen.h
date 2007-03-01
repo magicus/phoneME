@@ -214,6 +214,12 @@ public:
     int getScreenWidth() const;
     int getScreenHeight() const;
 
+    /**
+     * Size available for Alert
+     */
+    int getAlertWidth() const;
+    int getAlertHeight() const;
+
     jboolean reverse_orientation() { r_orientation = ! r_orientation; return r_orientation;}
     jboolean get_reverse_orientation() const { return r_orientation;}
 

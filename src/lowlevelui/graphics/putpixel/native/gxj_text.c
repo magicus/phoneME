@@ -80,8 +80,8 @@ static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
         = selectFontBitmap(c0,pfonts) + FONT_DATA;
     jchar const c = (c0 & 0xff)  - fontbitmap[FONT_CODE_FIRST_LOW-FONT_DATA];
     unsigned long mapLen =
-        ((fontbitmap[FONT_CODE_FIRST_LOW-FONT_DATA]
-        - fontbitmap[FONT_CODE_LAST_LOW-FONT_DATA]
+        ((fontbitmap[FONT_CODE_LAST_LOW-FONT_DATA]
+        - fontbitmap[FONT_CODE_FIRST_LOW-FONT_DATA]
         + 1) * fontWidth * fontHeight + 7) >> 3;
     unsigned long const firstPixelIndex = c * fontHeight * fontWidth;
 

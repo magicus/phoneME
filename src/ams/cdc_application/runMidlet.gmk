@@ -53,10 +53,10 @@ else
 # Create a libmidp.so for non-ROMized build.
 #
 $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX): \
-    $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
+    $(MIDP_DEPS) $(OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
 	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
-	  $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES) $(LIBS))` $(LOG)
+	  $(OBJ_FILES) $(LIBS))` $(LOG)
 
 $(BINDIR)/runMidlet$(g)$(p)$(EXE): $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
 	@rm -f $@

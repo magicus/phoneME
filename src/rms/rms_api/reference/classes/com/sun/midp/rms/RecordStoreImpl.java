@@ -884,18 +884,18 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
         // calculate the size of the block needed
         int blockSize = RecordStoreUtil.calculateBlockSize(numBytes);
         int blockOffset = 0;
+        int freeBlocksSize = RecordStoreUtil.getInt(dbHeader, RS7_FREE_SIZE);
 
         // initialize the block header
         byte[] header = new byte[BLOCK_HEADER_SIZE];
 
         // check if there is the potential for a large enough free block
-        if (RecordStoreUtil.getInt(dbHeader, RS7_FREE_SIZE) >= blockSize) {
+        if (freeBlocksSize >= blockSize) {
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                                "blockSize = " + blockSize +
-                               "free size = " +
-                               RecordStoreUtil.getInt(dbHeader, RS7_FREE_SIZE));
+                               "free size = " + freeBlocksSize);
             }
 
             // initialize the number of bytes and search for an
@@ -922,9 +922,14 @@ public class RecordStoreImpl implements AbstractRecordStoreImpl {
                 Logging.report(Logging.INFORMATION, LogChannels.LC_RMS,
                                "spaceAvailable = "+spaceAvailable);
             }
+
             // Is there room to grow the file?
             if (spaceAvailable < blockSize) {
-                throw new RecordStoreFullException();
+                 // Is there enough room totally: in storage and free blocks?
+                 if (spaceAvailable + freeBlocksSize < blockSize) {
+                     throw new RecordStoreFullException();
+                 }
+                 compactRecords();
             }
 
             blockOffset = getSize();

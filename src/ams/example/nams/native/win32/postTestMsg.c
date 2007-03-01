@@ -51,7 +51,7 @@ static char* USAGE =
 /**
  * Accepts 1 or 2 arguments.
  * The first argument will be the message's wParam, default 0.
- * The second argument will be the message's lParam, default 0/
+ * The second argument will be the message's lParam, default 0.
  *
  * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  */

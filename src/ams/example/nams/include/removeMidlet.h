@@ -24,23 +24,30 @@
  * information or have any questions. 
  */
 
-#ifndef _FIND_MIDLET_H_
-#define _FIND_MIDLET_H_
+#ifndef _REMOVE_MIDLET_H_
+#define _REMOVE_MIDLET_H_
 
-#include <midpString.h>
-#include <suitestore_common.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/*
- * Find a class name of a MIDlet in suite by number.
+/**
+ * Deletes an installed MIDlet suite. This is an example of how to use
+ * the public MIDP API.
  *
- * @param id suite ID of the MIDlet
- * @param midletNumber number of the MIDlet starting at 1
- * @param res [out] receives class name or null string if not found
+ * @param argc The total number of arguments
+ * @param argv An array of 'C' strings containing the arguments
  *
- * @return 0 if ok
- * NULL_LEN if not found
- * OUT_OF_MEM_LEN if out of memory
+ * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
+ *
+ * IMPL_NOTE: determine if it is desirable for user targeted output
+ *       messages to be sent via the log/trace service, or if
+ *       they should remain as printf calls
  */
-extern int find_midlet_class(SuiteIdType id, int midletNumber, pcsl_string* res);
+int removeMidlet(int argc, char* argv[]);
 
-#endif /* _FIND_MIDLET_H_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _REMOVE_MIDLET_H_ */

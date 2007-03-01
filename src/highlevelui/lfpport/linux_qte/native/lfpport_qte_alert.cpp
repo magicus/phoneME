@@ -41,6 +41,7 @@
 #include <lfp_command.h>
 #include "lfpport_qte_alert.h"
 #include "lfpport_qte_displayable.h"
+#include "lfpport_qte_mscreen.h"
 
 #include <midpUtilKni.h>
 
@@ -130,16 +131,18 @@ Alert::Alert(QWidget* parent)
 
     imageHolder = NULL;
     textViewer = NULL;
+    numButtons = 0;
 
     for (int i = 0; i < ALERT_NUM_OF_BUTTONS; i++) {
 	buttons[i] = NULL;
     }
 
+    mscreen = (PlatformMScreen*)qteapp_get_mscreen();
     // Set geometry
     QWidget::setGeometry(
-        (FULLWIDTH - ALERT_WIDTH) / 2,                       // X
-        MENUBAR_HEIGHT + (FULLHEIGHT - ALERT_HEIGHT) / 2,    // Y
-		ALERT_WIDTH, ALERT_HEIGHT);
+        (mscreen->getDisplayFullWidth() - mscreen->getAlertWidth()) / 2,                       // X
+        MENUBAR_HEIGHT + (mscreen->getDisplayFullHeight() - mscreen->getAlertHeight()) / 2,    // Y
+		mscreen->getAlertWidth(), mscreen->getAlertHeight());
 	// Prevents resizing
     QWidget::setFixedSize(QWidget::size());
 }
@@ -176,6 +179,15 @@ bool Alert::close(bool alsoDelete) {
     return FALSE;
 }
 
+void Alert::keyPressEvent(QKeyEvent *key) {
+
+  if (key->key() == Qt::Key_F3) {
+    mscreen->keyPressEvent(key);
+  } else {
+    QWidget::keyPressEvent(key);
+  }
+}
+
 /**
  * Override QWidget::keyReleaseEvent() to grab the "cancel key"
  * event so we can tell MIDP to close the dialog box.
@@ -183,6 +195,7 @@ bool Alert::close(bool alsoDelete) {
  * @param key ptr to key event
  */
 void Alert::keyReleaseEvent(QKeyEvent *key) {
+
   if (key->key() == Qt::Key_Escape) {
     MidpCommandSelected(closeCommandId);
   } else {
@@ -204,9 +217,17 @@ void Alert::keyReleaseEvent(QKeyEvent *key) {
 MidpError
 Alert::setContents(QPixmap* img, int* gaugeBounds, QString text) {
     MidpError err;
-    int y = 0;
 
-    int maxImgHeight = ALERT_HEIGHT
+    int y = 0;
+    int i;
+    int hspace;
+
+    int new_x = 0;
+    int new_y = mscreen->getAlertHeight()
+	    // - ALERT_CELL_SPACING // space to dialog frame
+	    - ALERT_BUTTON_HEIGHT; // button fixed height
+
+    int maxImgHeight = mscreen->getAlertHeight()
 			// - ALERT_CELL_SPACING // button space to frame
 			- ALERT_BUTTON_HEIGHT // buttons
 			- ALERT_CELL_SPACING // text space to buttons
@@ -222,6 +243,19 @@ Alert::setContents(QPixmap* img, int* gaugeBounds, QString text) {
     // Gauge in the middle, centered
     err = setGauge(y, gaugeBounds);
     if (err != KNI_OK) return err;
+
+    hspace = (mscreen->getAlertWidth() - ALERT_BUTTON_WIDTH*numButtons)/(numButtons + 1);
+
+    for (i = 0; i < ALERT_NUM_OF_BUTTONS; i++) {
+
+        if (buttons[i] != NULL) {
+            new_x += hspace;
+            buttons[i]->setGeometry(new_x, new_y,
+                    ALERT_BUTTON_WIDTH, ALERT_BUTTON_HEIGHT);
+            new_x += ALERT_BUTTON_WIDTH;
+        }
+    }
+    
     
     // Text last
     return setText(y, text);
@@ -254,7 +288,8 @@ Alert::setImage(int& y, int maxHeight, QPixmap* img) {
 	// Set imageHolder's geometry
 	int x, w, h;
 	// X
-	x = (ALERT_WIDTH - img->width()) >> 1;
+
+    x = (mscreen->getAlertWidth() - img->width()) >> 1;
 	if (x < 0) {
 	    x = 0;
 	}
@@ -263,7 +298,7 @@ Alert::setImage(int& y, int maxHeight, QPixmap* img) {
 	y += ALERT_CELL_SPACING;
 
 	// W
-	w = (img->width() > ALERT_WIDTH) ? ALERT_WIDTH : img->width();
+	w = (img->width() > mscreen->getAlertWidth()) ? mscreen->getAlertWidth() : img->width();
 
 	// H
 	h = (img->height() > maxHeight) ? maxHeight : img->height();
@@ -290,7 +325,7 @@ Alert::setGauge(int& y, int* gaugeBounds) {
 
     if (gaugeBounds != NULL) {
 	// X
-	gaugeBounds[0] = (ALERT_WIDTH - gaugeBounds[2]) >> 1;
+	gaugeBounds[0] = (mscreen->getAlertWidth() - gaugeBounds[2]) >> 1;
 	
 	// Y
 	y += ALERT_CELL_SPACING;
@@ -312,7 +347,7 @@ Alert::setGauge(int& y, int* gaugeBounds) {
  */
 MidpError
 Alert::setText(int& y, QString text) {
-    
+
     if (text == NULL || text.isNull() || text.isEmpty()) {
 	if (textViewer != NULL) {
 	    delete textViewer;
@@ -332,8 +367,8 @@ Alert::setText(int& y, QString text) {
 
 	textViewer->setGeometry(ALERT_CELL_SPACING, 			// X
 			        y, 					// Y
-			        ALERT_WIDTH - 2*ALERT_CELL_SPACING, 	// W
-			        ALERT_HEIGHT
+			        mscreen->getAlertWidth() - 2*ALERT_CELL_SPACING, 	// W
+			        mscreen->getAlertHeight()
 				// - ALERT_CELL_SPACING // gap buttons and frame
 				- ALERT_BUTTON_HEIGHT // buttons
 				- ALERT_CELL_SPACING // gap text and buttons
@@ -369,11 +404,11 @@ Alert::needScrolling() {
 MidpError
 Alert::setCommands(MidpCommand* cmds, int numOfCmds) {
 
-    int count = (numOfCmds > ALERT_NUM_OF_BUTTONS
+    numButtons = (numOfCmds > ALERT_NUM_OF_BUTTONS
 			? ALERT_NUM_OF_BUTTONS : numOfCmds);
-    int hspace = (ALERT_WIDTH - ALERT_BUTTON_WIDTH*count)/(count + 1);
+    int hspace = (mscreen->getAlertWidth() - ALERT_BUTTON_WIDTH*numButtons)/(numButtons + 1);
     int x = 0;
-    int y = ALERT_HEIGHT
+    int y = mscreen->getAlertHeight()
 	    // - ALERT_CELL_SPACING // space to dialog frame
 	    - ALERT_BUTTON_HEIGHT; // button fixed height
     int i;
@@ -591,11 +626,12 @@ alert_set_title(MidpDisplayable* alertPtr, const pcsl_string* title) {
 extern "C" MidpError
 lfpport_alert_create(MidpDisplayable* alertPtr, const pcsl_string* title,
 		     const pcsl_string*  tickerText, MidpComponentType alertType) {
-    QWidget * mscreen = qteapp_get_mscreen()->asWidget();
 
     /* Suppress unused-parameter warning */
     (void)alertType;
     (void)tickerText;
+
+    PlatformMScreen* mscreen = (PlatformMScreen*)qteapp_get_mscreen();
 
     // Fill in MidpDisplayable structure
     alertPtr->frame.widgetPtr	 = new Alert(mscreen);
@@ -640,7 +676,10 @@ lfpport_alert_set_contents(MidpDisplayable* alertPtr,
     QString qtext;
     pcsl_string2QString(*text, qtext);
 
+    PlatformMScreen* mscreen = (PlatformMScreen*)qteapp_get_mscreen();
+
     Alert* alertWidgetPtr = (Alert *)alertPtr->frame.widgetPtr;
+    alertWidgetPtr->setFixedSize(mscreen->getAlertWidth(), mscreen->getAlertHeight());
     return alertWidgetPtr->setContents(gxpportqt_get_immutableimage_pixmap(
 				           imgPtr),
 				       gaugeBounds, qtext);
@@ -669,5 +708,5 @@ lfpport_alert_need_scrolling(jboolean* needScrolling,
  */
 MidpError lfpport_alert_set_commands(MidpFrame* alertPtr,
 				     MidpCommand* cmds, int numCmds) {
-    return ((Alert *)alertPtr->widgetPtr)->setCommands(cmds, numCmds);   
+    return ((Alert *)alertPtr->widgetPtr)->setCommands(cmds, numCmds);
 }

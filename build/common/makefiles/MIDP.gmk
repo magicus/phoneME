@@ -156,7 +156,7 @@ rom: $(ROM_DEPS)
 
 ifneq ($(USE_JSR_234), true)
 ifneq ($(USE_JSR_135), true)
-ifneq ($(MIDP_USE_ABB), true)
+ifneq ($(USE_MIDP_ABB), true)
 MMAPI_TARGET = mmapi
 endif
 endif
