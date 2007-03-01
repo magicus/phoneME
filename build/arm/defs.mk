@@ -69,3 +69,14 @@ endif
 include  ../portlibs/defs_jit_risc.mk
 
 endif
+
+#
+# Hardware settings.
+#
+
+ifdef HW_DIR
+  ifeq ($(wildcard $(HW_DIR)/build/subsystem.gmk),)
+    $(error HW_DIR must point to a HW directory)
+  endif
+  include $(HW_DIR)/build/subsystem.gmk
+endif

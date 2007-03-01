@@ -40,6 +40,12 @@
 
 #include "javavm/include/bcutils.h"
 
+#ifdef CVM_JVMTI
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
+#endif
+
 #ifdef CVM_DEBUG
 /*
  * A few debugging routines to help out with byte-codes
@@ -80,6 +86,9 @@ getOpcodeLength(CVMExecEnv* ee, CVMUint8* pc)
 	*pc = instr;
 	opLen = CVMopcodeGetLength(pc);
 	*pc = opc_breakpoint;
+#ifdef CVM_HW
+	CVMhwFlushCache(pc, pc + 1);
+#endif
     } else {
 	opLen = CVMopcodeGetLength(pc);
     }
