@@ -59,6 +59,10 @@
 #include "javavm/include/jit_common.h"
 #endif
 
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
+
 /*
  * The following macros are used to define how opcode dispatching is
  * done. The are all described immediately below and defined a bit later
@@ -115,6 +119,15 @@
  */
 #ifdef CVM_USELABELS
 #define CVM_PREFETCH_OPCODE
+#endif
+
+/*
+ * For hardware execution we can't prefetch since we don't know where the
+ * hardware will leave the pc.  And for now, we use a loop instead of labels.
+ */
+#ifdef CVM_HW
+#undef CVM_PREFETCH_OPCODE
+#undef CVM_USELABELS
 #endif
 
 /*
@@ -1367,6 +1380,10 @@ CVMwideHelper(CVMExecEnv* ee, CVMSlotVal32* locals, CVMFrame* frame)
     return needRequestCheck;
 }
 
+#ifdef CVM_HW
+#include "include/hw/executejava_standard1.i"
+#endif
+
 /* 
  * CVMmemCopy64 is used in conjunction with the 'raw' field of struct
  * JavaVal32.  Because the raw field has been changed into type
@@ -1583,6 +1600,9 @@ new_transition:
     while (1)
 #endif
     {
+#ifdef CVM_HW
+	CVMhwExecute(ee, &pc, &topOfStack, locals, cp);
+#endif
 #ifndef CVM_PREFETCH_OPCODE
 	opcode = *pc;
 #endif
@@ -4055,6 +4075,15 @@ handle_jit_osr:
 	    CACHE_TOS();
 	    CONTINUE;
         }
+
+	CASE_ND(opc_prefix)
+	{
+#ifdef CVM_HW
+#include "include/hw/executejava_standard2.i"
+#else
+	    goto unimplemented_opcode;
+#endif
+	}
 
     handle_pending_request:
 	{

@@ -41,7 +41,14 @@
 #ifndef CVM_JIT_CCM_USE_C_HELPER
 #ifndef CVM_JIT_CCM_USE_C_SYNC_HELPER
 
-	SET_SECTION_EXEC(ccmintrinsics_asm_cpu)
+/*
+ * NOTE: Some linker such as the ARM RVCT (v2.2) linker sorts 
+ *	 sections by attributes and section name. To make sure
+ *	 the CCM copied code in the same order as they are included
+ *	 in ccmcodecachecopy_cpu.S, we need to name the sections
+ *	 in alphabetical order.
+ */
+	SET_SECTION_EXEC(s5_ccmintrinsics_asm_cpu)
 
 /* We only support fastlocking with swap/spinlock based microlocks */
 #if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_MICROLOCK && \

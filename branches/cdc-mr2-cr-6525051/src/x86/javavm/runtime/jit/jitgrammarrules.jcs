@@ -4941,19 +4941,7 @@ invokeMethod(CVMJITCompilationContext *con, CVMJITIRNodePtr invokeNode)
     CVMRMrelinquishResource(CVMRM_INT_REGS(con), mbptr);
 
     /* Dump the constant pool here after a method invocation if we need to: */
-    if (CVMJITcpoolNeedDump(con)) {
-        CVMInt32 startPC = CVMJITcbufGetLogicalPC(con);
-        CVMInt32 endPC;
-
-        CVMCPUemitBranch(con, startPC, CVMCPU_COND_AL);
-        CVMJITdumpRuntimeConstantPool(con, CVM_TRUE);
-        endPC = CVMJITcbufGetLogicalPC(con);
-
-        /* Emit branch around the constant pool dump: */
-        CVMJITcbufPushFixup(con, startPC);
-        CVMCPUemitBranch(con, endPC, CVMCPU_COND_AL);
-        CVMJITcbufPop(con);
-    }
+    CVMX86emitConstantPoolDumpWithBranchAroundIfNeeded(con);
 
     /* Bind the result resource to the invokeNode: */
     return CVMSMinvocation(con, invokeNode);

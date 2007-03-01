@@ -59,12 +59,14 @@
  * codegen rule. Usually only enabled when debugging.
  */
 
-#if defined(CVM_DEBUG_JIT_TRACE_CODEGEN_RULE_EXECUTION) || \
-    defined(CVM_JIT_DEBUG)
 void
 CVMJITdoStartOfCodegenRuleAction(CVMJITCompilationContext *con, int ruleno,
                                  const char *description, CVMJITIRNode* node)
 {
+    /* Check to see if we need a constantpool dump.  If so, emit the dump
+       with a branch around it: */
+    CVMRISCemitConstantPoolDumpWithBranchAroundIfNeeded(con);
+
     /* The following is intentionally left here to assist in future codegen
        rules debugging needs if necessary: */
 
@@ -74,7 +76,6 @@ CVMJITdoStartOfCodegenRuleAction(CVMJITCompilationContext *con, int ruleno,
                                CVMJITirnodeGetID(node), description));
 #endif
 }
-#endif /* CVM_DEBUG_JIT_TRACE_CODEGEN_RULE_EXECUTION || CVM_JIT_DEBUG */
 
 #if defined(CVM_DEBUG_ASSERTS)
 void CVMJITdoEndOfCodegenRuleAction(CVMJITCompilationContext *con)

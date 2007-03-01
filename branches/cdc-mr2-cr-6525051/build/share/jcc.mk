@@ -172,7 +172,7 @@ $(CVM_ROMJAVA_LIST): $(CVM_JCC_INPUT_FILES) $(CVM_JCC_DEPEND)
 		$(CVM_JCC_OPTIONS) \
 		-maxSegmentSize $(CVM_ROMJAVA_CLASSES_PER_FILE) \
 		-o $(CVM_ROMJAVA_CPATTERN) $(CVM_JCC_INPUT) \
-		$(CVM_JCC_CL_INPUT)
+		$(CVM_JCC_CL_INPUT) $(CVM_JCC_APILISTER_OPTIONS)
 
 ###########
 # romjava.o  is made by compiling all the .c files and linking the result
@@ -212,8 +212,9 @@ $(CVM_OBJDIR)/$(CVM_ROMJAVA_O): $(CVM_ROMJAVA_LIST) \
 		target=`basename $${NAME} .c`.o ; \
 		object=$(CVM_OBJDIR)/$${target} ; \
 		echo cc  $$target ;\
-		$(MAKE) GENERATEMAKEFILES=false $$object ;\
-		namelist="$${namelist} $${object}" ; \
+		$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
+			GENERATEMAKEFILES=false $$object ;\
+			namelist="$${namelist} $${object}" ; \
 	done; \
 	$(ROMJAVA_AR_CMD)
 

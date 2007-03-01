@@ -42,6 +42,10 @@
 #include "javavm/include/jvmtiExport.h"
 #endif
 
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
+
 /*
  * GET_INDEX - Macro used for getting an unaligned unsigned short from
  * the byte codes.
@@ -554,6 +558,9 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 	    CVM_CODE_LOCK(ee);
 	    CVM_WRITE_CODE_BYTE(pc, 1, operand1);
 	    CVM_WRITE_CODE_BYTE(pc, 2, operand2);
+#ifdef CVM_HW
+	    CVMhwFlushCache(pc + 1, pc + 3);
+#endif
 #ifdef CVM_MP_SAFE
 	    CVMmemoryBarrier();
 #endif
@@ -561,6 +568,9 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 	/* Don't overwrite existing breakpoint opcode */
 	if (*pc != opc_breakpoint) {
 	    CVM_WRITE_CODE_BYTE(pc, 0, newOpcode);
+#ifdef CVM_HW
+	    CVMhwFlushCache(pc, pc + 1);
+#endif
 	} else {
 	    /* notify debugger of new opcode at breakpoint */
 	    CVMjvmtiSetBreakpointOpcode(ee, pc, newOpcode);
@@ -650,6 +660,9 @@ CVMquickenOpcode(CVMExecEnv* ee, CVMUint8* pc, CVMConstantPool* cp,
 #ifndef CVM_JVMTI
         case CVM_QUICKEN_SUCCESS_OPCODE_ONLY: {
 	    CVM_WRITE_CODE_BYTE(pc, 0, newOpcode);
+#ifdef CVM_HW
+	    CVMhwFlushCache(pc, pc + 1);
+#endif
 	    retCode = CVM_QUICKEN_ALREADY_QUICKENED;
 	    break;
 	}
@@ -663,10 +676,16 @@ CVMquickenOpcode(CVMExecEnv* ee, CVMUint8* pc, CVMConstantPool* cp,
 	    CVM_CODE_LOCK(ee);
 	    CVM_WRITE_CODE_BYTE(pc, 1, quickening[1]);
 	    CVM_WRITE_CODE_BYTE(pc, 2, quickening[2]);
+#ifdef CVM_HW
+	    CVMhwFlushCache(pc + 1, pc + 3);
+#endif
 #ifdef CVM_MP_SAFE
 	    CVMmemoryBarrier();
 #endif
 	    CVM_WRITE_CODE_BYTE(pc, 0, newOpcode);
+#ifdef CVM_HW
+	    CVMhwFlushCache(pc, pc + 1);
+#endif
 	    CVM_CODE_UNLOCK(ee);
 	    CVMassert(newOpcode == quickening[0]);
 	    retCode = CVM_QUICKEN_ALREADY_QUICKENED;

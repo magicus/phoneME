@@ -76,14 +76,6 @@ ifneq ($(JSROP_BUILD_JARS),)
 ifneq ($(CVM_INCLUDE_JUMP), true)
 $(error JSR optional packages require Jump to be supported; CVM_INCLUDE_JUMP must be true) 
 endif
-JAVACALL_TARGET=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
-# Check javacall makefile and include it
-export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
-JAVACALL_MAKE_FILE = $(JAVACALL_DIR)/configuration/phoneMEAdvanced/$(JAVACALL_TARGET)/module.gmk
-ifeq ($(wildcard $(JAVACALL_MAKE_FILE)),)
-$(error JAVACALL_DIR must point to a directory containing javacall implementation sources)
-endif
-include $(JAVACALL_MAKE_FILE)
 
 export ABSTRACTIONS_DIR ?= $(COMPONENTS_DIR)/abstractions
 ABSTRACTIONS_MAKE_FILE = $(ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
@@ -243,6 +235,21 @@ ifeq ($(wildcard $(JSR_239_MAKE_FILE)),)
 $(error JSR_239_DIR must point to a directory containing JSR 239 sources)
 endif
 include $(JSR_239_MAKE_FILE)
+endif
+
+ifeq ($(CVM_INCLUDE_JAVACALL), true)
+JAVACALL_TARGET=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
+# Check javacall makefile and include it
+ifeq ($(JAVACALL_PROJECT_DIR),)
+export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
+JAVACALL_MAKE_FILE = $(JAVACALL_DIR)/configuration/phoneMEAdvanced/$(JAVACALL_TARGET)/module.gmk
+else
+JAVACALL_MAKE_FILE = $(JAVACALL_PROJECT_DIR)/configuration/tiburon/$(JAVACALL_TARGET)/module.gmk
+endif
+ifeq ($(wildcard $(JAVACALL_MAKE_FILE)),)
+$(error JAVACALL_DIR must point to a directory containing javacall implementation sources)
+endif
+include $(JAVACALL_MAKE_FILE)
 endif
 
 CVM_INCLUDES    += $(JSROP_EXTRA_INCLUDES)
