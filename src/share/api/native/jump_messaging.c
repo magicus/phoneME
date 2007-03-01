@@ -997,7 +997,7 @@ doWaitFor(JUMPPlatformCString type, int32 timeout, JUMPMessageStatusCode *code)
 
     status = jumpMessageQueueReceive(
 	type, buffer, MESSAGE_BUFFER_SIZE, &mqcode);
-    if (status != 0) {
+    if (status == -1) {
 	*code = translateJumpMessageQueueStatusCode(&mqcode);
 	free(buffer);
 	return NULL;

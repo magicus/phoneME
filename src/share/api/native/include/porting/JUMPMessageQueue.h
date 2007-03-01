@@ -171,8 +171,8 @@ extern int jumpMessageQueueWaitForMessage(JUMPPlatformCString messageType,
  * there is no message in the queue. If the buffer is not large enough,
  * the message is discarded.
  * 
- * @return If a message is read, returns 0 and sets *code to
- *         JUMP_MQ_SUCCESS.  Otherwise returns non-zero and sets *code
+ * @return If a message is read, returns the message length and sets *code
+ *         to JUMP_MQ_SUCCESS.  Otherwise returns -1 and sets *code
  *         to one of JUMP_MQ_NO_SUCH_QUEUE, JUMP_MQ_WOULD_BLOCK,
  *         JUMP_MQ_BUFFER_SMALL, JUMP_MQ_UNBLOCKED, or JUMP_MQ_FAILURE.
  */
