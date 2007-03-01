@@ -65,7 +65,14 @@ MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/security/spec/EncodedKeySpec.java \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/security/spec/InvalidKeySpecException.java \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/security/spec/X509EncodedKeySpec.java \
-    $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/security/spec/AlgorithmParameterSpec.java
+    $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/security/spec/AlgorithmParameterSpec.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/BadPaddingException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/Cipher.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/IllegalBlockSizeException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/NoSuchPaddingException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/ShortBufferException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/SecretKeySpec.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/IvParameterSpec.java
     
 MODULE_SATSA_JCRMI_JAVA_FILES += \
     $(JSR_177_DIR)/src/cldc_application/protocol/jcrmi/classes/com/sun/midp/io/j2me/jcrmi/Protocol.java

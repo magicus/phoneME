@@ -266,13 +266,6 @@ MODULE_SATSA_PKI_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/WIMApplication.java
 
 MODULE_SATSA_CRYPTO_JAVA_FILES += \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/BadPaddingException.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/Cipher.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/IllegalBlockSizeException.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/NoSuchPaddingException.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/ShortBufferException.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/SecretKeySpec.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/IvParameterSpec.java \
     $(JSR_177_DIR)/src/share/crypto/classes/com/sun/satsa/crypto/RSAPublicKey.java
 
 JCRMIC_SOURCES = \
@@ -380,8 +373,8 @@ JCRMIC_ARCHIVE = jcrmic.jar
 JCRMIC_TOOL = $(BINDIR)/$(JCRMIC_ARCHIVE)
 
 ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
-    ifndef JC_DIR
-        JC_DIR = /java/re/jcdevkit/2.2.1/archive/fcs/binaries/domestic/linux/java_card_kit-2_2_1
+    ifeq ($(JC_DIR),) 
+        $(error JC_DIR must point to the Java Card development kit directory)
     endif
     
     JC_API = $(JC_DIR)/lib/api.jar
@@ -541,7 +534,8 @@ $(JC_EEPROM_IMAGE): $(SCRS)
 	$(AT)$(JC_DIR)/bin/cref -o $(JC_EEPROM_IMAGE) -nobanner -nomeminfo -s &
 	-$(AT)sleep 1
 	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_APDUTOOL_CLASSPATH) com.sun.javacard.apdutool.Main -h 127.0.0.1 -nobanner satsimulator.scr)
-	$(AT)(cd $(JAVACARD_CLASSES) ; mkdir -p $(SAT_SCRIPT_PATH) ; mv -f satsimulator.scr $(SAT_SCRIPT_PATH)/ ; rm -f *.opt header.scr footer.scr satsimulator.scr)
+	$(AT)(mkdir -p $(SAT_SCRIPT_PATH) ; mv -f $(JAVACARD_CLASSES)/satsimulator.scr $(SAT_SCRIPT_PATH)/)
+	$(AT)(cd $(JAVACARD_CLASSES) ; rm -f *.opt header.scr footer.scr satsimulator.scr)
 	@echo " ..." $@ " done"
 endif
 
