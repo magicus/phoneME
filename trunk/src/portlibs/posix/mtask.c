@@ -52,6 +52,8 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <dlfcn.h>
+/* FIXME: why is this using porting/JUMPMessageQueue.h instead of
+   jump_messaging.h? */
 #include "porting/JUMPMessageQueue.h"
 #include "porting/JUMPProcess.h"
 
@@ -359,7 +361,7 @@ notifyTermination(int cpid) {
     JUMPAddress executiveAddr;
     JUMPMessageStatusCode statusCode;
 
-    message = jumpMessageNewOutgoingByType("mvm/lifecycle");
+    message = jumpMessageNewOutgoingByType("mvm/lifecycle", &statusCode);
     jumpMessageAddString(message, "IsolateDestroyed"); /* ID_ISOLATE_DESTROYED */
     jumpMessageAddInt(message, 0); /* String[] data length */
     jumpMessageAddInt(message, cpid); /* isolateId */
@@ -599,7 +601,7 @@ dumpTasksAsResponse(JUMPMessage command, int all)
     TaskRec* task;
     int numTasks = 0;
     
-    m = jumpMessageNewOutgoingByRequest(command);
+    m = jumpMessageNewOutgoingByRequest(command, &code);
 
     jumpMessageMarkSet(&mark, m);
     jumpMessageAddInt(m, numTasks);
@@ -726,9 +728,12 @@ static JUMPMessage
 readRequestMessage()
 {
     JUMPMessage in;
+    JUMPMessageStatusCode code;
     
-    in = jumpMessageWaitFor("mvm/server", 0);
-    dumpMessage(in, "Server received:");
+    in = jumpMessageWaitFor("mvm/server", 0, &code);
+    if (in != NULL) {
+	dumpMessage(in, "Server received:");
+    }
     return in;
 }
 
@@ -743,7 +748,7 @@ respondWith(JUMPMessage command, char* str)
     JUMPMessageStatusCode code;
     JUMPPlatformCString strs[1];
     
-    m = jumpMessageNewOutgoingByRequest(command);
+    m = jumpMessageNewOutgoingByRequest(command, &code);
     strs[0] = (JUMPPlatformCString)str;
     jumpMessageAddStringArray(m, strs, 1);
     jumpMessageSendAsyncResponse(m, &code);
@@ -1370,6 +1375,12 @@ MTASKserverInitialize(ServerState* state,
     const char* mlist = CVMgetParsedSubOption(serverOpts, "precompileMethods");
     
     jumpMessageStart();
+
+    {
+	/* FIXME: check the return code. */
+	JUMPMessageStatusCode code;
+	jumpMessageRegisterDirect("mvm/server", &code);
+    }
     
     /*
      * Set these up while server is being initialized.
