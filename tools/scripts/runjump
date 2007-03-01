@@ -97,27 +97,40 @@
 #        On linux-arm-zaurus, default is /home/cdcams.
 #
 # Name:  CDC_SUBDIR
-# Desc:  Subdirectory name of phoneme build, only necessary for non-jmp_install builds
-#        whcih are run from within a development workspace.
+# Desc:  Subdirectory name of phoneme build
 # Dflt:  jump
 #
 # Name:  JUMP_CONTENT_STORE_DIR
 # Desc:  Root of content store
-# Dflt:  /opt/jmp_repository
+# Dflt:  data (default value is determined in modules-config.properties)
 #
-# Name:  QTOPIA_HOME
-# Desc:  Location of Qtopia on a linux x86 machine, for use with linux x86 only.
-#        The qvfb binary is assumed to be located in $QTOPIA_HOME/bin.  
-# Dflt:  /opt/Qtopia
+# Name:  USE_GCI
+# Desc:  Determines if GCI/directfb will be used to display
+# Dflt:  false
 #
 # Name:  USE_QVFB
 # Desc:  Decides if Qtopia's qvfb is used for display purposes, will automatically
 #         start if set to true.
 # Dflt:  false
 #
+# Name:  QTOPIA_HOME
+# Desc:  Location of Qtopia on a linux x86 machine, for use with linux x86 only.
+#        The qvfb binary is assumed to be located in $QTOPIA_HOME/bin.  
+# Dflt:  /opt/Qtopia
+#
 # Name:  QWS_DISPLAY
 # Desc:  For running with Qtopia's qvfb
 # Dflt:  :2
+#
+# Name:  QVFB_WIDTH
+# Desc:  For running with Qtopia's qvfb
+# Dflt:  640
+#
+# Name:  QWS_HEIGHT
+# Desc:  For running with Qtopia's qvfb
+# Dflt:  442
+# Note:  if QVFB_HEIGHT is 480, qvfb fails (reason currently unknown)
+#
 
 WHOAMI=`whoami`
  
@@ -135,13 +148,12 @@ fi
 # PHONEME_DIR is primarily used when running from a build within your workspace.
 # It sets PHONEME_DIST, which is the important variable for determining the location
 # of the build.  PHONEME_DIR is strategically used to determine PHONEME_DIST.
-# Note: PHONEME_DIR is not used on packaged jmp_install builds.
+# Note: PHONEME_DIR is when PHONEME_DIST is set by the user.
 if [ -z "$PHONEME_DIR" ] ; then
     export PHONEME_DIR=/home/$WHOAMI/phoneme
 fi
 
 # Subdirectory name used in Phoneme build
-# Note: CDC_SUBDIR is not used on packaged jmp_install builds
 if [ -z "$CDC_SUBDIR" ] ; then
     export CDC_SUBDIR=jump
 fi
@@ -152,12 +164,12 @@ if [ -z "$CDC_DEBUG_PORT" ] ; then
 fi
 
 # For running with Qtopia's qvfb
-if [ -z "$QWS_DISPLAY" ] ; then
+if [ "$USE_QVFB" = "true" ] && [ -z "$QWS_DISPLAY" ] ; then
   export QWS_DISPLAY=:2
 fi
 
 # Location of Qtopia used for qvfb
-if [ -z "$QTOPIA_HOME" ] ; then
+if [ "$USE_QVFB" = "true" ] && [ -z "$QTOPIA_HOME" ] ; then
   QTOPIA_HOME=/opt/Qtopia
 fi
 
@@ -168,7 +180,21 @@ fi
 
 # The root of contents tore
 if [ -z "$PBP_SCREEN_BOUNDS" ] ; then
-  PBP_SCREEN_BOUNDS=0,50-640x392
+  PBP_SCREEN_BOUNDS=0,50-640x430
+fi
+
+if [ "$USE_QVFB" = "true" ] && [ "$USE_GCI" = "true" ] ; then
+  echo "USE_QVFB and USE_GCI cannot both be true."
+  exit 0
+fi
+
+if [ "$USE_GCI" = "true" ] ; then  
+  echo "Using GCI/DirectFB... Don't forget to modify modules-config.properties"
+  echo " and correctly set the value for isolate-init-classes."
+  if [ "$WHOAMI" != "root" ] ; then
+      echo "ERROR:  You need to run as root when displaying with GCI/DirectFB."
+      exit 0
+  fi
 fi
 ################# ZAURUS SECTION ########################
 if [ "$PHONEME_PLATFORM" = "armv5tel" ] ; then
@@ -190,10 +216,12 @@ elif [ "$PHONEME_PLATFORM" = "i686" ] ; then
    MIDP_PROPERTIES="-Dsun.midp.home.path=$PHONEME_DIST/midp/midp_fb -Xbootclasspath/a:$MIDP_CLASSES_ZIP"
    EXECUTIVE_PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
 fi
- 
-SYSTEM_PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
-SERVER_JARFILE=$PHONEME_DIST/jump/lib/jump.jar
-EXECUTIVE_JARFILE=$PHONEME_DIST/jump/lib/executive-jump.jar
+
+if [ "$JUMP_CONTENT_STORE_DIR" != "" ] ; then
+  SYSTEM_PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
+fi
+SERVER_JARFILE=$PHONEME_DIST/lib/jump.jar
+EXECUTIVE_JARFILE=$PHONEME_DIST/lib/executive-jump.jar
 CVMC=$PHONEME_DIST/bin/cvmc
 
 ##### End: Possible Variables Needing Modification #####
@@ -276,7 +304,7 @@ if [ "$USE_QVFB" = "true" ]; then
     export LD_LIBRARY_PATH=$QTDIR/lib:$PHONEME_DIST/lib
 else
     # TBD just keeping old stuff, this line might need to be removed (and in this case the whole if should be simplified into then part)
-    export LD_LIBRARY_PATH=$PHONEME_DIST/lib:$QTDIR:$LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PHONEME_DIST/lib
 fi
  
 ############# Output log files
@@ -296,17 +324,22 @@ if [ "$DO_SETTINGS" = "true" ] ; then
 
   rm -f $SETTINGS_LOGFILE
   touch $SETTINGS_LOGFILE
-####### Write out user JMP settings to shell & output file #############
-  echo "************** JMP Settings *******************" >> $SETTINGS_LOGFILE
+####### Write out user JUMP settings to shell & output file #############
+  echo "************** JUMP Settings *******************" >> $SETTINGS_LOGFILE
   echo "PHONEME_DIR:            $PHONEME_DIR" >> $SETTINGS_LOGFILE
   echo "PHONEME_DIST:           $PHONEME_DIST" >> $SETTINGS_LOGFILE
   echo "PHONEME_PLATFORM:       $PHONEME_PLATFORM" >> $SETTINGS_LOGFILE
   echo "CDC_SUBDIR:             $CDC_SUBDIR" >> $SETTINGS_LOGFILE
   echo "CDC_DEBUG_PORT:         $CDC_DEBUG_PORT" >> $SETTINGS_LOGFILE
-  echo "USE_QVFB:               $USE_QVFB" >> $SETTINGS_LOGFILE
   echo "JUMP_CONTENT_STORE_DIR  $JUMP_CONTENT_STORE_DIR" >> $SETTINGS_LOGFILE
-  if [ "$PHONEME_PLATFORM" != "armv5tel" ] ; then
+  echo "USE_QVFB:               $USE_QVFB" >> $SETTINGS_LOGFILE
+  echo "USE_GCI:                $USE_GCI" >> $SETTINGS_LOGFILE
+  echo "LD_LIBRARY_PATH         $LD_LIBRARY_PATH" >> $SETTINGS_LOGFILE
+  if [ "$USE_QVFB" = "true" ] ; then
+      echo "QTOPIA_HOME:            $QTOPIA_HOME" >> $SETTINGS_LOGFILE
       echo "QWS_DISPLAY:            $QWS_DISPLAY" >> $SETTINGS_LOGFILE
+      echo "QVFB_WIDTH:             $QVFB_WIDTH" >> $SETTINGS_LOGFILE
+      echo "QVFB_HEIGHT:            $QVFB_HEIGHT" >> $SETTINGS_LOGFILE
   fi
   echo "***********************************************"  >> $SETTINGS_LOGFILE
 
@@ -368,6 +401,8 @@ if [ "$DO_CLEANUP" = "true" ] ; then
   ### Remove output files
   rm -f $SERVER_LOGFILE $WARMUP_LOGFILE $APP_LOGFILE $SETTINGS_LOGFILE $SERVER_PID_LOGFILE $CVMC_LOGFILE
  
+  sleep 2
+
   echo "Done with cleanup."
  
 fi
@@ -472,9 +507,12 @@ if [ "$DO_EXECUTIVE" = "true" ] ; then
   EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -setenv PBP_SCREEN_BOUNDS=$PBP_SCREEN_BOUNDS"
   $EXECUTIVE_COMMAND >> $SERVER_LOGFILE 2>&1 &
 
-  EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -setenv QWS_CLIENT=true"
-  $EXECUTIVE_COMMAND >> $SERVER_LOGFILE 2>&1 &
-  #$EXECUTIVE_COMMAND 2>&1 &
+  if  [ "USE_QVFB" = "true" ] ; then
+    EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -setenv QWS_CLIENT=true"
+    $EXECUTIVE_COMMAND >> $SERVER_LOGFILE 2>&1 &
+    #$EXECUTIVE_COMMAND 2>&1 &
+  fi
+
 fi
 
 ### Server Command
@@ -632,7 +670,7 @@ if [ "$DO_XLET" = "true" ] ; then
         exit 0
     fi
 
-    XLET_COMMAND="$CVMC -target $SERVER_PID -cp $JARFILE sun.mtask.xlet.PXletRunner -name $XLETCLASS -path $JARFILE $*"
+    XLET_COMMAND="$CVMC -target $SERVER_PID -cp $JARFILE sun.mtask.xlet.PXletRunner -name XLETCLASS -path $JARFILE $*"
 
     echo "Executing XLET launch command: $XLET_COMMAND"
     echo ""
