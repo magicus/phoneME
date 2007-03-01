@@ -1,32 +1,33 @@
+/*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /*=========================================================================
  * SYSTEM:    Verifier
- * SUBSYSTEM: main program 
+ * SUBSYSTEM: main program
  * FILE:      main.c
- * OVERVIEW:  Runs the Java class verifier. 
+ * OVERVIEW:  Runs the Java class verifier.
  *=======================================================================*/
 
 /*=========================================================================
@@ -73,14 +74,14 @@ static void usage(char *progname);
  * FUNCTION:      recurse_dir()
  * TYPE:          Handles recursive directories
  * OVERVIEW:      Internal function called by ProcessInputs().
- *   
+ *
  *  This function reads a directory, searching for either another directory,
  *  JAR file or an individual class name that is to be verified.
  *
  * INTERFACE:
- *   parameters:  dirname   name of the directory entry. 
+ *   parameters:  dirname   name of the directory entry.
  *                pkgname   name of the package
- *   returns:     nothing 
+ *   returns:     nothing
  *=======================================================================*/
 static void recurse_dir(char *dirname, char *pkgname)
 {
@@ -108,12 +109,12 @@ static void recurse_dir(char *dirname, char *pkgname)
         }
 
                 if (JAR_DEBUG && verbose)
-                    jio_fprintf(stderr, 
-            "recurse_dir: Reading filename [%s] from directory [%s]\n", 
+                    jio_fprintf(stderr,
+            "recurse_dir: Reading filename [%s] from directory [%s]\n",
                         name, dirname);
 
         strcat(pkgbuf, name);
-        
+
         strcpy(buf, dirname);
         strcat(buf, name);
 
@@ -121,23 +122,23 @@ static void recurse_dir(char *dirname, char *pkgname)
         len = strlen(buf);
 
         if (stat_buf.st_mode & S_IFDIR) {
-            /* handle the recursive directory found */ 
+            /* handle the recursive directory found */
             strcat(buf, "/");
             if (JAR_DEBUG && verbose)
-                jio_fprintf(stderr, 
+                jio_fprintf(stderr,
                    "recurse_dir: Recursive directory found, calling recurse_dir ([%s] [%s])\n",
                        buf, pkgbuf);
             recurse_dir(buf, pkgbuf);
             continue;
         } else if (isJARfile (buf, len)) {
-         
-            /* 
+
+            /*
                      * this directory contains a JAR file which contains
-                     * the classes to be verified 
+                     * the classes to be verified
                      */
 
                     if (JAR_DEBUG && verbose)
-                    jio_fprintf(stderr, 
+                    jio_fprintf(stderr,
                      "recurse_dir: Found JAR file [%s] in dir!\n", buf);
 
                 if (!ProcessJARfile(buf, len)) {
@@ -145,17 +146,17 @@ static void recurse_dir(char *dirname, char *pkgname)
                 fprintf(stderr, "Not a valid JAR file [%s]\n", buf);
                 exit(1);
                 }
-           } 
+           }
 
             /* we just have a class file that needs verification */
 
         len = strlen(pkgbuf);
         if (len > 6 && strcmp(pkgbuf + len - 6, ".class") == 0) {
-            
+
                     pkgbuf[len - 6] = 0;
 
                     if (JAR_DEBUG && verbose)
-                    jio_fprintf(stderr, 
+                    jio_fprintf(stderr,
                 "recurse_dir: Verifying Class [%s] \n", pkgbuf);
             VerifyFile(pkgbuf);
         }
@@ -168,16 +169,16 @@ static void recurse_dir(char *dirname, char *pkgname)
  * FUNCTION:      ProcessInputs()
  * TYPE:          Processes inputs
  * OVERVIEW:      Internal function called by main().
- *   
+ *
  *  This function processes input entries for specifying classes that are to
- *  be verified. The inputs may be in 3 forms: a directory, or nested 
+ *  be verified. The inputs may be in 3 forms: a directory, or nested
  *  directories, one or more JAR files, or one or more individual class files.
- *  If a directory entry is specified, it may also contain one or more JAR 
- *  files, or one or more individual class files. 
+ *  If a directory entry is specified, it may also contain one or more JAR
+ *  files, or one or more individual class files.
  *
  * INTERFACE:
- *   parameters:  argname:  directory, JAR file or an individual class file. 
- *   returns:     nothing 
+ *   parameters:  argname:  directory, JAR file or an individual class file.
+ *   returns:     nothing
  *=======================================================================*/
 
 static void ProcessInputs(char *argname)
@@ -186,12 +187,12 @@ static void ProcessInputs(char *argname)
     struct stat stat_buf;
     int res = stat(argname, &stat_buf);
     int len;
-        
+
 
     strcpy(buf, argname);
     len = strlen(argname);
-    
-    
+
+
     if ((res == 0) && (stat_buf.st_mode & S_IFDIR)) {
         /* Append dir separator if it does not yet exist. */
         if (buf[len - 1] != LOCAL_DIR_SEPARATOR &&
@@ -213,7 +214,7 @@ static void ProcessInputs(char *argname)
         /* Convert all periods in the argname to slashes */
         for (p = buf; ((p = strchr(p, '.')) != 0); *p++ = '/');
             if (JAR_DEBUG && verbose)
-            jio_fprintf(stderr, 
+            jio_fprintf(stderr,
             "ProcessInputs: Verifying file [%s]\n", buf );
         VerifyFile(buf);
     }
@@ -223,23 +224,19 @@ static void ProcessInputs(char *argname)
  * FUNCTION:      main()
  * TYPE:          Runs the verifier.
  * OVERVIEW:      Main function.
- *   
+ *
  *  This is the main function that invokes the Java class verifier.
  *
  * INTERFACE:
  *   parameters:  argc: arg count.
- *                argv: arg value(s) 
- *   returns:     nothing 
+ *                argv: arg value(s)
+ *   returns:     nothing
  *=======================================================================*/
 int main(argc, argv)
     register char **argv;
 {
     char *progname;
     char *argv0 = argv[0];
-
-#ifdef LINUX
-    setenv("LANG", "C", 1);
-#endif
 
     SET_DEFAULT_LOCALE;
 
@@ -343,19 +340,19 @@ int main(argc, argv)
                 /* get the first parameter */
                 token = strtok(buffer, " \0\n\r\t\"");
 
-                /* Search for parameters until none can be found */ 
-                while (token != NULL && !done) { 
+                /* Search for parameters until none can be found */
+                while (token != NULL && !done) {
 
-                    if ((strcmp(token, "\n") == 0) || 
-                        (strcmp(token, "\r") == 0) || 
+                    if ((strcmp(token, "\n") == 0) ||
+                        (strcmp(token, "\r") == 0) ||
                         (strcmp(token, "\t") == 0)) {
                         /* <NL>, <CR> or <TAB> */
                         done = TRUE;
                     } else {
                         /* On Win32, it's possible to have a <CR> <LF>
-                         * appended at the end of the token, which needs 
-                         * to be extracted before restoring the arg 
-                         */ 
+                         * appended at the end of the token, which needs
+                         * to be extracted before restoring the arg
+                         */
                         char *p;
                         /* Convert all <CR> <LF> to NULL */
                         for (p = token; *p != '\0'; p++) {
@@ -366,15 +363,15 @@ int main(argc, argv)
                         /* save the parameter */
                         new_argv[new_argc++] = token;
 
-                        if ((strcmp(token, "-classpath") == 0) || 
+                        if ((strcmp(token, "-classpath") == 0) ||
                             (strcmp(token, "-d")         == 0)) {
                             /* search for the beginning of a string literal */
                             token = strtok(NULL, "\"");
-                         
+
                         } else { /* get the next token */
                             token = strtok(NULL," \0\n\r\t\"");
                         }
-                    } 
+                    }
                 }
 
                 if (DEBUG_READFROMFILE) {
@@ -386,8 +383,8 @@ int main(argc, argv)
 
         fclose(fp);
         main(new_argc, new_argv);
-          
-            if (buffer != NULL) { 
+
+            if (buffer != NULL) {
                 free(buffer);
             }
         argc--; argv++;
@@ -403,7 +400,7 @@ int main(argc, argv)
             /* indicate location of the verified classes only for verbose mode */
             if (verbose) {
                 if (!output_dir) {
-                    fprintf(stderr, "[Output directory for verified classes: output]\n"); 
+                    fprintf(stderr, "[Output directory for verified classes: output]\n");
                 } else {
                     fprintf(stderr, "[Output directory for verified classes: %s]\n",
                         output_dir);
@@ -426,7 +423,7 @@ static void usage(char *progname) {
     fprintf(stderr, "                  Directories in which to look for classes\n");
     fprintf(stderr, "   -d <directory> Directory in which output is written (default is ./output/)\n");
 
-    fprintf(stderr, "   -cldc1.0       Checks for existence of language features prohibited \n"); 
+    fprintf(stderr, "   -cldc1.0       Checks for existence of language features prohibited \n");
     fprintf(stderr, "                  by CLDC 1.0 (native methods, floating point and finalizers)\n");
 
     fprintf(stderr, "   -nofinalize    No finalizers allowed\n");
@@ -438,7 +435,7 @@ static void usage(char *progname) {
 
     fprintf(stderr, "\n");
 }
-    
+
 
 #ifndef O_BINARY
 #define O_BINARY 0
