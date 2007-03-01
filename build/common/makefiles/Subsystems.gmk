@@ -144,9 +144,13 @@ include $(SUBSYSTEM_DIR)/tool/$(SUBSYSTEM_MAKE_FILE)
 #              (include only if USE_JSR_234 = false & JSR_135 = false)
 #####################################################################
 
+ifneq ($(USE_JSR_234), true)
+ifneq ($(USE_JSR_135), true)
 #ifneq ($(USE_MIDP_ABB), true)
 include $(SUBSYSTEM_DIR)/mmapi/$(SUBSYSTEM_MAKE_FILE)
 #endif
+endif
+endif
 
 
 #####################################################################

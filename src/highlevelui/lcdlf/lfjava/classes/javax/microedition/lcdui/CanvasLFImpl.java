@@ -407,6 +407,6 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
     /**
      * The MMHelperImpl instance.
      */
-    private static MMHelper mmHelper = MMHelper.getInstance();
+    private static MMHelperImpl mmHelper = MMHelperImpl.getInstance();
 
 }

@@ -32,9 +32,6 @@
 
 SUBSYSTEM_MMAPI_JAVA_FILES = 
 
-SUBSYSTEM_MMAPI_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/mmapi/classes/javax/microedition/lcdui/MMHelper.java
-
 ifneq ($(USE_JSR_234), true)
 ifneq ($(USE_JSR_135), true)
 

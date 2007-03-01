@@ -282,6 +282,6 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
  */
     static {
         // Instantiate link with MMAPI video player for repaint hooks
-        MMHelper.getInstance();
+        new MMHelperImpl();
     }
 }

@@ -26,21 +26,27 @@
 
 package javax.microedition.lcdui;
 
-import javax.microedition.lcdui.Graphics;
-
 /**
  * This is a helper class to communicate with the MMAPI video players.
  * This is a stub class which will be replaced by an MMAPI version when
  * the video subsystem is enabled.
  */
-final class MMHelperImpl extends MMHelper {
+final class MMHelperImpl {
+
+    /**
+     * Returns the only instance of this class.
+     * @return the instance of this class
+     */
+    static MMHelperImpl getInstance() {
+	return null;
+    }
 
     /**
      * Calls paint on the video players that are drawing to the canvas.
      * @param video The Video painter implementation
      * @param g The Graphics object of the current paint call
      */
-    public void paintVideo(Object video, Graphics g) {
+    void paintVideo(Object video, Graphics g) {
         // Stub
     }
 
@@ -48,7 +54,7 @@ final class MMHelperImpl extends MMHelper {
      * Notify video renderers that canvas becomes visible.
      * @param video The video painter which is shown.
      */
-    public void showVideo(Object video) {
+    void showVideo(Object video) {
         // Stub
     }
 
@@ -56,11 +62,7 @@ final class MMHelperImpl extends MMHelper {
      * Notify video renderers that canvas becomes invisible.
      * @param video The video painter which is hidden.
      */
-    public void hideVideo(Object video) {
+    void hideVideo(Object video) {
         // Stub
-    }
-
-    public Display getItemDisplay(Item item) {
-        return null;
     }
 }
