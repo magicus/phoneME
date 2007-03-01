@@ -62,41 +62,47 @@ const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
     }
 
     propname = (*env)->NewStringUTF(env, key);
+    if (NULL == propname) {
+        goto _error;
+    }
+
     clazz = (*env)->FindClass(env, "com/sun/j2me/main/Configuration");
+    if (NULL == clazz) {
+        goto _error;
+    }
+
     methodID = (*env)->GetStaticMethodID(env, clazz, "getProperty",
                                     "(Ljava/lang/String;)Ljava/lang/String;");
+    if (NULL == methodID) {
+        goto _error;
+    }
+
     prop = (jstring)(*env)->CallStaticObjectMethod(env, clazz, methodID,
                                                    propname);
-    (*env)->DeleteLocalRef(env, (jobject)propname);
-    (*env)->DeleteLocalRef(env, (jobject)clazz);
 
     if ((*env)->ExceptionCheck(env) != JNI_FALSE) {
         (*env)->ExceptionClear(env);
-        (*env)->DeleteLocalRef(env, (jobject)prop);
-        (*env)->PopLocalFrame(env, NULL);
-        return NULL;
+        goto _error;
     }
 
-    if (JNU_IsNull(env, prop)) {
-        (*env)->DeleteLocalRef(env, (jobject)prop);
-        (*env)->PopLocalFrame(env, NULL);
-        return NULL;
+    if (NULL == prop) {
+        goto _error;
     }
 
     len = (*env)->GetStringUTFLength(env, prop);
     if (len >= length) {
-        (*env)->DeleteLocalRef(env, (jobject)prop);
-        (*env)->PopLocalFrame(env, NULL);
-        return NULL;
+        goto _error;
     }
 
     (*env)->GetStringUTFRegion(env, prop, 0, len, buffer);
     buffer[len] = 0;
-    (*env)->DeleteLocalRef(env, (jobject)prop);
 
     (*env)->PopLocalFrame(env, NULL);
-
     return (const char*)buffer;
+
+_error:
+    (*env)->PopLocalFrame(env, NULL);
+    return NULL;
 }
 
 /**
