@@ -52,6 +52,10 @@ INCLUDED_JSROP_NUMBERS = $(patsubst USE_JSR_%=true,%,\
 JSROP_BUILD_JARS = $(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
            $(JSROP_LIB_DIR)/jsr$(jsr_number).jar)
 
+# Variable which is passed to MIDP and blocks JSRs building from MIDP; looks like:
+# USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
+MIDP_JSROP_USE_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),USE_JSR_$(jsr_number)=false)
+
 # Jump API classpath
 EMPTY =
 ONESPACE = $(EMPTY) $(EMPTY)
@@ -79,6 +83,8 @@ ifeq ($(wildcard $(ABSTRACTIONS_MAKE_FILE)),)
 $(error ABSTRACTIONS_DIR must point to a directory containing JSROP abstractions sources)
 endif
 include $(ABSTRACTIONS_MAKE_FILE)
+
+JSROP_JARS=$(ABSTRACTIONS_JAR) $(JSROP_BUILD_JARS)
 endif
 
 # Include JSR 75
@@ -248,11 +254,9 @@ endif
 
 CVM_INCLUDES    += $(JSROP_EXTRA_INCLUDES)
 CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
-JSROP_JARS      += $(JSROP_SHARED_JARS) $(JSROP_MIDP_JARS) $(JSROP_CDC_JARS) 
 
 ifeq ($(CVM_PRELOAD_LIB), true)
-CVM_JCC_INPUT   += $(JSROP_SHARED_JARS) $(JSROP_CDC_JARS)
-CVM_JCC_CL_INPUT+= $(JSROP_MIDP_JARS)
+CVM_JCC_INPUT   += $(JSROP_JARS)
 CVM_CNI_CLASSES += $(JSROP_CNI_CLASSES)
 CVM_OBJECTS     += $(JSROP_NATIVE_OBJS)
 CVM_LINKLIBS    += $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
