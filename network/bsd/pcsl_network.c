@@ -36,6 +36,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
@@ -65,7 +66,8 @@ int lastError; /* For pcsl_network_error use. */
  * See javax.microedition.io.ServerSocketConnection.getLocalAddress()
  */
 static char *pcsl_network_getMainIFName() {
-    return "eth0";
+    char* pName = getenv(ENV_VAR_WITH_NETWORK_IF_NAME);
+    return pName ? pName : "eth0";
 }
 
 /**
