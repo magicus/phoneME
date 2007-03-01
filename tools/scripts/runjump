@@ -178,9 +178,11 @@ if [ -z "$JUMP_CONTENT_STORE_DIR" ] ; then
   JUMP_CONTENT_STORE_DIR=data
 fi
 
-# The root of contents tore
-if [ -z "$PBP_SCREEN_BOUNDS" ] ; then
-  PBP_SCREEN_BOUNDS=0,50-640x430
+# The root of content store
+if [ "$USE_QVFB" = "true" ] ; then
+  if [ -z "$PBP_SCREEN_BOUNDS" ] ; then
+    PBP_SCREEN_BOUNDS=0,50-640x392
+  fi
 fi
 
 if [ "$USE_QVFB" = "true" ] && [ "$USE_GCI" = "true" ] ; then
@@ -189,11 +191,14 @@ if [ "$USE_QVFB" = "true" ] && [ "$USE_GCI" = "true" ] ; then
 fi
 
 if [ "$USE_GCI" = "true" ] ; then  
-  echo "Using GCI/DirectFB... Don't forget to modify modules-config.properties"
-  echo " and correctly set the value for isolate-init-classes."
   if [ "$WHOAMI" != "root" ] ; then
       echo "ERROR:  You need to run as root when displaying with GCI/DirectFB."
       exit 0
+  fi
+  echo "Using GCI/DirectFB... Don't forget to modify modules-config.properties"
+  echo " and correctly set the value for isolate-init-classes."
+  if [ -z "$PBP_SCREEN_BOUNDS" ] ; then
+    PBP_SCREEN_BOUNDS=0,50-640x430
   fi
 fi
 ################# ZAURUS SECTION ########################
@@ -360,12 +365,12 @@ if [ "$DO_CLEANUP" = "true" ] ; then
       CLEANUP_APPLICATIONS_COMMAND="$CVMC -killall"
       $CLEANUP_APPLICATIONS_COMMAND >> $CLEANUP_LOGFILE 2>&1
       
-      sleep 1
+      usleep 1000
 
       CLEANUP_SERVER_COMMAND="$CVMC -childrenexited"
       $CLEANUP_SERVER_COMMAND >> $CLEANUP_LOGFILE 2>&1
 
-      sleep 1
+      usleep 1000
 
       CLEANUP_SERVER_COMMAND="$CVMC -killserver"
       $CLEANUP_SERVER_COMMAND >> $CLEANUP_LOGFILE 2>&1
@@ -401,7 +406,7 @@ if [ "$DO_CLEANUP" = "true" ] ; then
   ### Remove output files
   rm -f $SERVER_LOGFILE $WARMUP_LOGFILE $APP_LOGFILE $SETTINGS_LOGFILE $SERVER_PID_LOGFILE $CVMC_LOGFILE
  
-  sleep 2
+  usleep 2000
 
   echo "Done with cleanup."
  
@@ -417,7 +422,7 @@ if [ "$DO_SERVER" = "true" ] ; then
        QVFB_COMMAND="$QTOPIA_HOME/bin/qvfb -width $QVFB_WIDTH -height $QVFB_HEIGHT -depth 16 -qwsdisplay $QWS_DISPLAY"
        echo $QVFB_COMMAND
        $QVFB_COMMAND >> $SERVER_LOGFILE 2>&1 &
-       sleep 1
+       usleep 1000
     fi
    
     PHONEME_SERVER_OPTIONS="-Xbootclasspath/a=$SERVER_JARFILE $MIDP_PROPERTIES -Xserver"
