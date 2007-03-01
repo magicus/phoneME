@@ -115,6 +115,9 @@ struct _CVMJNIStatics {
     DECL_JNI_STATIC(jmethodID,java_net_Inet4Address, ia4_ctrID);
     DECL_JNI_STATIC(jmethodID,java_net_Inet6Address, ia6_ctrID);
     DECL_JNI_STATIC(jfieldID ,java_net_Inet6Address, ia6_ipaddressID);
+    DECL_JNI_STATIC(JavaVM*  ,internal_props, jvm);
+    DECL_JNI_STATIC(jclass   ,internal_props, cls);
+    DECL_JNI_STATIC(jmethodID,internal_props, getPropertyID);
     /* The platform specific definitions of statics */
     CVMJNIStatics_md  platformStatics;
 };
