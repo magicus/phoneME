@@ -78,6 +78,9 @@
 #include "javavm/include/ccee.h"
 #endif
 
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
 
 #ifdef CVM_TRACE
 #define MAX_TRACE_INDENT_DEPTH  15
@@ -2462,6 +2465,9 @@ CVMopcodeGetLengthVariable(const CVMUint8* iStream)
 		    return -1; /* invalid instruction */
 	    }
 	}
+#ifdef CVM_HW
+#include "include/hw/interpreter.i"
+#endif
     default:
 	return -1; /* I don't know this bytecode! */
     }

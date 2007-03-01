@@ -81,6 +81,7 @@ CVM_TOP 	?= ../..
 INSTALLDIR	= $(CVM_TOP)/install
 ZIP		= zip
 
+USE_VERBOSE_MAKE	= false
 J2ME_CLASSLIB		= cdc
 SRC_BUNDLE_NAME		= $(J2ME_CLASSLIB)-src
 SRC_BUNDLE_DIRNAME 	= $(SRC_BUNDLE_NAME)
@@ -237,6 +238,7 @@ BUNDLE_INCLUDE_LIST += \
 	src/portlibs \
 	build/portlibs/* \
 	build/share/jcc.mk \
+	build/share/*_op.mk \
 	src/share/tools/GenerateCurrencyData \
 	src/share/tools/javazic \
 	src/share/tools/xml \
@@ -351,7 +353,7 @@ BUNDLE_INCLUDE_LIST += \
 	src/share/tools/cvmc  
 
 BUILDDIR_PATTERNS += \
-       *_jump.mk 
+       *_jump.mk
 
 # Add every build/<os>/cvmc.mk file
 BUNDLE_INCLUDE_LIST += \
@@ -525,8 +527,14 @@ FEATURE_LIST += J2ME_CLASSLIB \
 FEATURE_LIST_WITH_VALUES += \
 	$(foreach feature,$(strip $(FEATURE_LIST)), "$(feature)=$($(feature))")
 
+
+ifneq (USE_VERBOSE_MAKE), true)
+SVN_QUIET_CHECKOUT = -q
+endif
+
 lib-src: src.zip
 src.zip::
+ifeq (USE_VERBOSE_MAKE), true)
 	@echo ">>>FLAGS:"
 	@echo "	SRC_BUNDLE_APPEND_REVISION = $(SRC_BUNDLE_APPEND_REVISION)"
 	@echo "	SRC_BUNDLE_NAME		= $(SRC_BUNDLE_NAME)"
@@ -554,24 +562,27 @@ src.zip::
 		formattedF=`echo $$f | sed 's/=/:\t\t/'`; \
 		printf "\t%s\n" "$$formattedF" ; \
 	done
-
-	rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
-	mkdir -p $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
-	ln -ns $(CVM_TOP)/* $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
-	rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip
-
-ifneq ($(JAVAME_LEGAL_DIR),)
-	ln -ns $(JAVAME_LEGAL_DIR) $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
-else
-	svn checkout $(JAVAME_LEGAL_REPOSITORY) $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)/legal
 endif
 
-	(cd $(INSTALLDIR); \
+	$(AT)rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
+	$(AT)mkdir -p $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
+	$(AT)ln -ns $(CVM_TOP)/* $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
+	$(AT)rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip
+
+ifneq ($(JAVAME_LEGAL_DIR),)
+	$(AT)ln -ns $(JAVAME_LEGAL_DIR) $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
+else
+	$(AT)svn checkout $(SVN_QUIET_CHECKOUT) $(JAVAME_LEGAL_REPOSITORY) \
+			  $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)/legal
+endif
+	$(AT)(cd $(INSTALLDIR); \
 	 $(ZIP) -r -q - $(BUNDLE_INCLUDE_LIST) \
 		-x $(EXCLUDE_PATTERNS)) \
 		> $(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip;
-	rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
+	$(AT)rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
+ifeq (USE_VERBOSE_MAKE), true)
 	@echo "<<<Finished "$@" ..." ;
+endif
 
 #######
 # JCOV

@@ -24,9 +24,6 @@
 # information or have any questions. 
 #
 
-CDC_CUR_DIR		= $(shell pwd)
-export CDC_DIR		= $(CDC_CUR_DIR)/../../
-export CDC_DIST_DIR	= $(CDC_CUR_DIR)/$(CVM_BUILD_SUBDIR_NAME)
 CVM_MIDP_BUILDDIR	= $(CDC_DIST_DIR)/midp
 
 ifeq ($(CVM_INCLUDE_MIDP),true)
@@ -50,11 +47,8 @@ endif
 
 #
 # Target tools directory for compiling both PCSL and MIDP.
-# GNU_TOOLS_DIR is set by target specific defs_midp.mk.
 #
 ifeq ($(CVM_USE_NATIVE_TOOLS), false)
-GNU_TOOLS_DIR		?=$(CVM_TARGET_TOOLS_DIR)/../$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)-$(TARGET_OS)
-export GNU_TOOLS_DIR
 GNU_TOOLS_BINDIR	?= $(CVM_TARGET_TOOLS_PREFIX)
 endif
 
@@ -95,11 +89,7 @@ VERIFY_BUILD_ENV	?=
 USE_QT_FB		?= false
 USE_DIRECTFB		?= false
 # The MIDP makefiles should be fixed to not require CLDC_DIST_DIR for CDC build.
-export CLDC_DIST_DIR	= $(CDC_DIST_DIR)
 USE_CONFIGURATOR	?= true
-ifeq ($(CVM_TERSEOUTPUT), false)
-USE_VERBOSE_MAKE	?= true
-endif
 
 ifeq ($(CVM_DEBUG), true)
 USE_DEBUG		= true
@@ -108,7 +98,7 @@ endif
 MIDP_CLASSESZIP_DEPS	=
 MIDP_CLASSESZIP		?= $(MIDP_OUTPUT_DIR)/classes.zip
 
-RUNMIDLET		?= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/runMidlet$(DEBUG_POSTFIX)
+RUNMIDLET		?= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/runMidlet$(g)$(p)$(EXE)
 MIDP_OBJECTS		?= $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/*.o
 ifeq ($(CVM_PRELOAD_LIB), true)
 CVM_OBJECTS		+= $(MIDP_OBJECTS)

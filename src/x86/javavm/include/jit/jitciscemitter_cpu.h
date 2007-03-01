@@ -1,4 +1,3 @@
-/* $Id: //bas2/vmc/dev3/src/x86/javavm/include/jit/jitciscemitter_cpu.h#2 $ */
 /*
  * @(#)jitciscemitter_cpu.h	1.5 06/10/24
  * 
@@ -573,5 +572,10 @@ CVMCPUemitIMUL64(CVMJITCompilationContext *con,
    the emitter of the call will take care of this */
 #define CVMCPUCCALLdestroyArgs(con, callContext, irec, forTargetting) \
     ((void)callContext)
+
+/* Purpose: Emits a constantpool dump with a branch around it if needed. */
+extern void
+CVMX86emitConstantPoolDumpWithBranchAroundIfNeeded(
+    CVMJITCompilationContext* con);
 
 #endif /* INCLUDED_X86_JITCISCEMITTER_CPU_H */

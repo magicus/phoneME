@@ -103,6 +103,10 @@
 #include "javavm/include/hook.h"
 #endif
 
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
+
 #undef MIN
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 
@@ -4097,6 +4101,10 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     *p_jvm = &CVMglobals.javaVM.vector;
     env = CVMexecEnv2JniEnv(ee);
     *p_env = (void *)env;
+
+#ifdef CVM_HW
+    CVMhwInit();
+#endif
 
     /* Run agents */
     /* Agents run before VM is fully initialized */

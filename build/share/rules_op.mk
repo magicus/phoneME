@@ -22,6 +22,8 @@
 # information or have any questions. 
 #
 
+.PHONY: javacall_lib
+
 # generatePropertyInitializer(xmlFiles,generatedDir,initializerPackage,outputFile)
 define generatePropertyInitializer
 	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE)           \
@@ -68,4 +70,15 @@ define compileJSRClasses
 	$(call compileJSROP,jsr$(1),$(JSR_$(1)_BUILD_DIR),$(SUBSYSTEM_JSR_$(1)_JAVA_FILES),$(2))
 	$(call makeJSROPJar,$(JSR_$(1)_JAR),$(JSR_$(1)_BUILD_DIR)/classes)
 endef
+
+#Command for building shared libraries
+define makeSharedLibrary
+	$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(1) $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
+endef
+
+ifeq ($(CVM_INCLUDE_JAVACALL), true)
+javacall_lib: $(JAVACALL_LIBRARY)
+else
+javacall_lib:
+endif
 

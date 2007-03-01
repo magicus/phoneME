@@ -1,4 +1,3 @@
-/* $Id: //bas2/vmc/dev3/src/x86/javavm/include/jit/jit_cpu.h#5 $ */
 /*
  * @(#)jit_cpu.h	1.9 06/10/23
  * 

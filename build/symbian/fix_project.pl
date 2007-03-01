@@ -69,8 +69,24 @@ while ($_ = <IN>) {
     # include path is specified by -J, and user include path is specified
     # by -I. Fix the generated makefile here.
     if (($SYMBIAN_PLATFORM eq "armv5")) {
-        s/-J ..\/..\/src/-I ..\/..\/src/g;
-        s/-J ..\/..\/build/-I ..\/..\/build/g;
+        s/-J (.*\\src\\share)/-I $1/g;
+        s/-J (.*\\src\\share\\javavm\\export)/-I $1/g;
+        s/-J (.*\\src\\share\\native\\common)/-I $1/g;
+        s/-J (.*\\src\\share\\native\\java\\lang)/-I $1/g;
+        s/-J (.*\\src\\share\\native\\java\\lang\\fdlibm\\include)/-I $1/g;
+        s/-J (.*\\src\\share\\native\\java\\net)/-I $1/g;
+        s/-J (.*\\src\\share\\native\\java\\io)/-I $1/g;
+        s/-J (.*\\src\\share\\native\\java\\java\\util\\zip)/-I $1/g;
+        s/-J (.*\\src\\share\\native\\java\\java\\util\\zip\\zlib-1.1.3)/-I $1/g;
+        s/-J (.*\\src\\arm)/-I $1/g;
+        s/-J (.*\\src)/-I $1/g;
+        s/-J (.*\\src\\symbian)/-I $1/g;
+        s/-J (.*\\src\\symbian\\native\\java\\net)/-I $1/g;
+        s/-J (.*\\src\\symbian\\native\\common)/-I $1/g;
+        s/-J (.*\\src\\symbian\\native\\cdc)/-I $1/g;
+        s/-J (.*\\src\\symbian-arm)/-I $1/g;
+        s/-J (.*\\build)/-I $1/g;
+        s/-J (.*\\build.*\\generated\\jni)/-I $1/g;
     }
 
     print OUT $_;
