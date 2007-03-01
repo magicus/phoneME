@@ -43,19 +43,24 @@
 extern "C" {
 #endif
 
-#define ANC_SOUND_INFO         1 /**< Sound for informative alert */
-#define ANC_SOUND_WARNING      2 /**< Sound for warning alert */
-#define ANC_SOUND_ERROR        3 /**< Sound for error alert */
-#define ANC_SOUND_ALARM        4 /**< Sound for alarm alert */
-#define ANC_SOUND_CONFIRMATION 5 /**< Sound for confirmation alert */
+/**
+ * Possible sound types.
+ */
+typedef enum {
+    ANC_SOUND_INFO          = 1, /**< Sound for informative alert */
+    ANC_SOUND_WARNING       = 2, /**< Sound for warning alert */
+    ANC_SOUND_ERROR         = 3, /**< Sound for error alert */
+    ANC_SOUND_ALARM         = 4, /**< Sound for alarm alert */
+    ANC_SOUND_CONFIRMATION  = 5  /**< Sound for confirmation alert */
+} AncSoundType;
 
 /**
  * Play a sound of the given type.
  *
- * @param soundType must be one of the sound types defined in this file
+ * @param type must be one of the constants from AncSoundType enumeration 
  * @return KNI_TRUE if a sound was actually emitted
  */
-jboolean anc_play_sound(int soundType);
+jboolean anc_play_sound(AncSoundType soundType);
 
 #ifdef __cplusplus
 } /* extern "C" */
