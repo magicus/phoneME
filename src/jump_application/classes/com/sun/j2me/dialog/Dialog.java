@@ -68,7 +68,7 @@ public class Dialog {
 
     /**
      * Adds an Item into the Form.
-     * @return result of operation
+     * @return input string
      */
     String append() {
         String strInput = "";
@@ -93,10 +93,18 @@ public class Dialog {
      */
     public int waitForAnswer() {
         if (withCancel) {
-            String strInput = "";
-            System.out.println("Please enter result of operation: " + okCmd + "/" + cancelCmd);
-            strInput = append();
-            return (strInput.indexOf(okCmd) == -1) ? CANCELLED : CONFIRMED;
+            while (true) {
+                String strInput = "";
+                System.out.println("Please enter result of operation: " + okCmd + "/" + cancelCmd);
+                strInput = append();
+                if (strInput.equals(okCmd)) {
+                    return CONFIRMED;
+                }
+                if (strInput.equals(cancelCmd)) {
+                    return CANCELLED;
+                }
+                System.out.println("Result is invalid");
+            }
         }
         else {
             return CONFIRMED;
