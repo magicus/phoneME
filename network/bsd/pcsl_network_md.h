@@ -61,6 +61,13 @@ extern "C" {
  */
 #define MAX_HOST_LENGTH_MD 256
 
+/**
+ * Name of the environment variable that may contain the name of
+ * network interface that should be used for all network operations.
+ * If it is not set, "eth0" will be used by default.
+ */
+#define ENV_VAR_WITH_NETWORK_IF_NAME "MAIN_NETWORK_IF_NAME"
+
 #ifdef __cplusplus
 }
 #endif

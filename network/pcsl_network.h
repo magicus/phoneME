@@ -182,7 +182,6 @@ extern "C" {
  */
 #define MAX_HOST_LENGTH MAX_HOST_LENGTH_MD
 
-
 /**
  * Performs platform-specific initialization of the networking system.
  * 
