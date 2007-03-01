@@ -24,42 +24,31 @@
  * information or have any questions. 
  */
 
-package com.sun.jumpimpl.module.lifecycle;
+package com.sun.jump.module.isolatemanager;
 
-import java.util.Map;
-import com.sun.jump.module.lifecycle.JUMPLifeCycleModule;
-import com.sun.jump.module.lifecycle.JUMPLifeCycleModuleFactory;
+import com.sun.jump.module.JUMPModuleFactory;
 
 /**
- *
+ * <code>JUMPIsolateManagerModuleFactory</code> is a factory for 
+ * <code>JUMPIsolateManagerModule</code>
  */
-public class LifeCycleModuleFactoryImpl extends JUMPLifeCycleModuleFactory {
-    private JUMPLifeCycleModule MODULE;
+public abstract class JUMPIsolateManagerModuleFactory extends JUMPModuleFactory {
+    private static JUMPIsolateManagerModuleFactory INSTANCE = null;
     
-    /** 
-     * Creates a new instance of LifeCycleModuleFactoryImpl 
+    public static JUMPIsolateManagerModuleFactory getInstance() {
+        return INSTANCE;
+    }
+    
+    /**
+     * Creates a new instance of JUMPIsolateManagerModuleFactory
      */
-    public LifeCycleModuleFactoryImpl() {
-	super();
+    protected JUMPIsolateManagerModuleFactory() {
+        synchronized (JUMPIsolateManagerModuleFactory.class){
+            if ( INSTANCE == null ) {
+                INSTANCE = this;
+            }
+        }
     }
     
-    /** 
-     * Get the singleton lifecycle module for this address space
-     */
-    public synchronized JUMPLifeCycleModule getModule() {
-	if (MODULE == null) {
-	    MODULE = new LifeCycleModuleImpl();
-	}
-	return MODULE;
-    }
-        
-    public void load(Map config) {
-	getModule(); // Create our singleton
-	MODULE.load(config);
-    }
-    
-    public void unload() {
-	getModule(); // Create our singleton
-	MODULE.unload();
-    }
+    public abstract JUMPIsolateManagerModule getModule();
 }

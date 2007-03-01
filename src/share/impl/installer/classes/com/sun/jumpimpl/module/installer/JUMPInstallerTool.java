@@ -62,15 +62,15 @@ import java.util.Vector;
  *    list, install, uninstall
  *
  * Usage:
- *   <cvm> -Dinstaller.repository=<repository dir> -cp <classpath> com.sun.jumpimpl.module.installer.JUMPInstallerTool <options> -command <command>
+ *   <cvm> -Dcontentstore.root=<repository dir> -cp <classpath> com.sun.jumpimpl.module.installer.JUMPInstallerTool <options> -command <command>
  *     <command> can currently be list, install, and uninstall
  *     <options> can be none or any of the following:
  *        -ProvisioningServerURL <url of provisioning server>
  *
  * Ex:
- *   cvm -Dinstaller.repository=/my/repository -cp $JUMP_JARS com.sun.jumpimpl.module.installer.JUMPInstallerTool -command list
- *   cvm -Dinstaller.repository=/my/repository -cp $JUMP_JARS com.sun.jumpimpl.module.installer.JUMPInstallerTool -command install
- *   cvm -Dinstaller.repository=/my/repository -cp $JUMP_JARS com.sun.jumpimpl.module.installer.JUMPInstallerTool -command uninstall
+ *   cvm -Dcontentstore.root=myrepository -cp $JUMP_JARS com.sun.jumpimpl.module.installer.JUMPInstallerTool -command list
+ *   cvm -Dcontentstore.root=myrepository -cp $JUMP_JARS com.sun.jumpimpl.module.installer.JUMPInstallerTool -command install
+ *   cvm -Dcontentstore.root=myrepository -cp $JUMP_JARS com.sun.jumpimpl.module.installer.JUMPInstallerTool -command uninstall
  *
  */
 public class JUMPInstallerTool {
@@ -127,7 +127,7 @@ public class JUMPInstallerTool {
     /**
      * The property name holding the root of content store
      */
-    private static final String repositoryProperty = "installer.repository";
+    private static final String repositoryProperty = "contentstore.root";
     
     /**
      * Creates a new instance of JUMPInstallerTool
@@ -160,11 +160,11 @@ public class JUMPInstallerTool {
     
     private void usage() {
         System.out.println("Usage:");
-        System.out.println("  <cvm> -Dinstaller.repository=<repository dir> -cp <classpath> com.sun.jumpimpl.module.installer.JUMPInstallerTool -command <command>");
+        System.out.println("  <cvm> -Dcontentstore.root=<repository dir> -cp <classpath> com.sun.jumpimpl.module.installer.JUMPInstallerTool -command <command>");
         System.out.println("Available commands that can be used are:  list, install, uninstall");
         System.out.println("");
         System.out.println("Ex:");
-        System.out.println("  cvm -Dinstaller.repository=/my/repository -cp $JUMP_JARS com.sun.jumpimpl.module.installer.JUMPInstallerTool -command list");
+        System.out.println("  cvm -Dcontentstore.root=repository -cp $JUMP_JARS com.sun.jumpimpl.module.installer.JUMPInstallerTool -command list");
         System.out.println("");
     }
     
@@ -184,7 +184,7 @@ public class JUMPInstallerTool {
         
         repository = System.getProperty(repositoryProperty);
         if (repository == null) {
-            System.out.println("ERROR: The property installer.repository is not set.");
+            System.out.println("ERROR: The property contentstore.root is not set.");
             return false;
         }
         

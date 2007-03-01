@@ -25,22 +25,15 @@ package com.sun.jumpimpl.module.pushregistry.persistence;
 
 import com.sun.jump.module.contentstore.InMemoryContentStore;
 import junit.framework.*;
-import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 
 public final class AppSuiteDataStoreTest extends TestCase {
-    
+
     public AppSuiteDataStoreTest(String testName) {
         super(testName);
-    }
-
-    protected void setUp() throws Exception {
-    }
-
-    protected void tearDown() throws Exception {
     }
 
     /** Dir for AppSuiteDataStore. */
@@ -61,37 +54,28 @@ public final class AppSuiteDataStoreTest extends TestCase {
                     return s;
                 }
     };
-    
+
     /**
      * Creates a handle for <code>JUMPStore</code>.
      *
      * @returns a handle
      */
-    private static JUMPStoreHandle createStoreHandle() throws IOException {
-        return new InMemoryContentStore().openStore(true);
+    private static StoreOperationManager createStoreManager() throws IOException {
+        return StoreUtils.createInMemoryManager(new String [] {DIR});
     }
 
-    /**
-     * Creats a app suite data store to test.
-     *
-     * @return instance of AppSuiteDataStore
-     */
-    private static AppSuiteDataStore createAppSuiteDataStore()
-            throws IOException {
-        final AppSuiteDataStore store = new AppSuiteDataStore(
-                InMemoryContentStore.createStore(new String [] {DIR}),
-                DIR, DATA_CONVERTER);
-        store.readData();
-        return store;
+    private AppSuiteDataStore createAppSuiteDataStore(
+            final StoreOperationManager storeManager) throws IOException {
+        return new AppSuiteDataStore(storeManager, DIR, DATA_CONVERTER);
     }
 
     private void _testCtorThrowsIllegalArgumentException(
-            final JUMPStoreHandle storeHandle,
+            final StoreOperationManager storeManager,
             final String dir,
             final AppSuiteDataStore.DataConverter dataConverter,
-            final String paramName) {
+            final String paramName) throws IOException {
         try {
-            new AppSuiteDataStore(storeHandle, dir, dataConverter);
+            new AppSuiteDataStore(storeManager, dir, dataConverter);
             fail("AppSuiteDataStore.<init> doesn't throw"
                     + " IllegalArgumentException for null "
                     + paramName);
@@ -103,7 +87,7 @@ public final class AppSuiteDataStoreTest extends TestCase {
      * Tests that AppSuiteDataStore constructor throws an exception
      * when fed with <code>null</code> as store handler.
      */
-    public void testCtorNullStoreHandler() {
+    public void testCtorNullStoreHandler() throws IOException {
         _testCtorThrowsIllegalArgumentException(
                 null, DIR, DATA_CONVERTER, "store handle");
     }
@@ -114,7 +98,7 @@ public final class AppSuiteDataStoreTest extends TestCase {
      */
     public void testCtorNullDir() throws IOException {
         _testCtorThrowsIllegalArgumentException(
-                createStoreHandle(), null, DATA_CONVERTER, "dir");
+                createStoreManager(), null, DATA_CONVERTER, "dir");
     }
 
     /**
@@ -123,7 +107,7 @@ public final class AppSuiteDataStoreTest extends TestCase {
      */
     public void testCtorNullDataConverter() throws IOException {
         _testCtorThrowsIllegalArgumentException(
-                createStoreHandle(), DIR, null, "data converter");
+                createStoreManager(), DIR, null, "data converter");
     }
 
     /**
@@ -132,7 +116,8 @@ public final class AppSuiteDataStoreTest extends TestCase {
      */
     public void testUpdateSuiteDataThrows() throws IOException {
         try {
-            createAppSuiteDataStore().updateSuiteData(0, null);
+            createAppSuiteDataStore(createStoreManager())
+                .updateSuiteData(0, null);
             fail("should throw IllegalArgumentException");
         } catch (IllegalArgumentException _) {
         }
@@ -155,7 +140,7 @@ public final class AppSuiteDataStoreTest extends TestCase {
                 store.removeSuiteData(suiteId);
             }
         }
-        
+
         static void updateStore(
                 final AppSuiteDataStore store,
                 final SuiteData [] dataToUpdate) throws IOException {
@@ -190,16 +175,17 @@ public final class AppSuiteDataStoreTest extends TestCase {
 
         assertEquals(e, actual);
     }
-    
+
     private void checkTestData(
             final SuiteData [] dataToUpdate,
             final SuiteData [] expected) throws IOException {
-        final AppSuiteDataStore store = createAppSuiteDataStore();
+        final StoreOperationManager storeManager = createStoreManager();
+
+        final AppSuiteDataStore store = createAppSuiteDataStore(storeManager);
         SuiteData.updateStore(store, dataToUpdate);
         checkTestData(store, expected);
         // And reread it afresh (to emulate real persistence)
-        store.readData();
-        checkTestData(store, expected);
+        checkTestData(createAppSuiteDataStore(storeManager), expected);
     }
 
     private void checkGetSuiteData(final AppSuiteDataStore store)
@@ -213,12 +199,13 @@ public final class AppSuiteDataStoreTest extends TestCase {
 
     private void checkGetSuiteData(final SuiteData [] dataToUpdate)
             throws IOException {
-        final AppSuiteDataStore store = createAppSuiteDataStore();
+        final StoreOperationManager storeManager = createStoreManager();
+
+        final AppSuiteDataStore store = createAppSuiteDataStore(storeManager);
         SuiteData.updateStore(store, dataToUpdate);
         checkGetSuiteData(store);
         // And reread it afresh (to emulate real persistence)
-        store.readData();
-        checkGetSuiteData(store);
+        checkGetSuiteData(createAppSuiteDataStore(storeManager));
     }
 
     private final static SuiteData [] NO_UPDATES = new SuiteData [] {
@@ -239,7 +226,7 @@ public final class AppSuiteDataStoreTest extends TestCase {
         new SuiteData(17, "foo"),
         new SuiteData(17, "bar")
     };
-     
+
     public void testGetSuiteDataNO_UPDATES() throws IOException {
         checkGetSuiteData(NO_UPDATES);
     }

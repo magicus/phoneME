@@ -152,6 +152,9 @@ extern void
 jumpMessageAddByte(JUMPOutgoingMessage m, int8 value);
 
 extern void
+jumpMessageAddBytesFrom(JUMPOutgoingMessage m, const int8* values, int length);
+
+extern void
 jumpMessageAddByteArray(JUMPOutgoingMessage m, const int8* values, int length);
 
 extern void
@@ -159,6 +162,9 @@ jumpMessageAddShort(JUMPOutgoingMessage m, int16 value);
 
 extern void
 jumpMessageAddInt(JUMPOutgoingMessage m, int32 value);
+
+extern void
+jumpMessageAddLong(JUMPOutgoingMessage m, int64 value);
 
 extern void
 jumpMessageAddString(JUMPOutgoingMessage m, JUMPPlatformCString str);
@@ -201,6 +207,14 @@ extern int8
 jumpMessageGetByte(JUMPMessageReader* r);
 
 /*
+ * If r->status != JUMP_SUCCESS, returns NULL.  Otherwise copies bytes
+ * from the message into the buffer and returns buffer, or sets
+ * r->status to JUMP_OVERRUN on error.
+ */
+extern int8*
+jumpMessageGetBytesInto(JUMPMessageReader* r, int8* buffer, uint32 length);
+
+/*
  * If r->status != JUMP_SUCCESS, returns NULL.  Otherwise returns the
  * next byte array from the message or sets r->status to one of
  * JUMP_OVERRUN, JUMP_OUT_OF_MEMORY, or JUMP_NEGATIVE_ARRAY_LENGTH on
@@ -229,6 +243,14 @@ extern int32
 jumpMessageGetInt(JUMPMessageReader* r);
 
 /*
+ * If r->status != JUMP_SUCCESS, returns 0.  Otherwise returns the
+ * next int from the message or sets r->status to JUMP_OVERRUN on
+ * error.
+ */
+extern int64
+jumpMessageGetLong(JUMPMessageReader* r);
+
+/*
  * If r->status != JUMP_SUCCESS, returns NULL.  Otherwise returns the
  * next string from the message or sets r->status to one of
  * JUMP_OVERRUN, JUMP_OUT_OF_MEMORY, or JUMP_NEGATIVE_ARRAY_LENGTH on
@@ -255,6 +277,9 @@ jumpMessageGetStringArray(JUMPMessageReader* r, uint32* length);
  */
 extern JUMPPlatformCString
 jumpMessageGetType(JUMPMessage m);
+
+extern JUMPAddress*
+jumpMessageGetSender(JUMPMessage m);
 
 /*
  * Message send api's.

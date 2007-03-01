@@ -108,8 +108,8 @@ encapsulates the state of a running isolate and returns an instance of a {@link 
 lifecycle of a corresponding {@link com.sun.jump.common.JUMPApplication} running inside the active isolate.  Each JUMP isolate contains one to many {@link com.sun.jump.common.JUMPApplication} objects.  The JUMP executive can affect application lifecycle using the {@link com.sun.jump.executive.JUMPApplicationProxy#pauseApp} and {@link
 com.sun.jump.executive.JUMPApplicationProxy#resumeApp} methods. The JUMP isolate can also
 request lifecycle changes from the JUMP executive. The lifecycle module (interface {@link
-com.sun.jump.module.lifecycle.JUMPLifeCycleModule} is used to perform
-isolate lifecycle operations. It can create new isolates, and manage
+com.sun.jump.module.isolatemanager.JUMPIsolateManagerModule} is used to perform
+isolate management operations. It can create new isolates, and manage
 currently running isolates.
 
 <p>Each JUMP isolate gets a set of abstractions that allow it to use the JUMP

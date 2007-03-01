@@ -62,7 +62,7 @@ public class InstallerTests {
     }
     
     private boolean setup() {
-        repository = System.getProperty("installer.repository");
+        repository = System.getProperty("contentstore.root");
         if (repository == null) {
             return false;
         }

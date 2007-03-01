@@ -26,26 +26,35 @@ package com.sun.jumpimpl.module.pushregistry.MIDP;
 
 import com.sun.jump.module.pushregistry.JUMPConnectionInfo;
 import com.sun.jump.module.pushregistry.MIDP.JUMPPushRegistry;
+import com.sun.jumpimpl.module.pushregistry.AlarmRegistry;
 import com.sun.jumpimpl.module.pushregistry.persistence.Store;
 import java.io.IOException;
+import java.rmi.RemoteException;
+import javax.microedition.io.ConnectionNotFoundException;
 
 /**
  * Implementation of
  *  <code>com.sun.jump.module.pushregistry.MIDP.JUMPPushRegistry</code>.
  */
-final class MIDPPushRegistry implements JUMPPushRegistry {
-    /**
-     * Reference to a store.
-     */
+public final class MIDPPushRegistry implements JUMPPushRegistry {
+    /** Reference to a store. */
     private final Store store;
+
+    /** Alarm registry to use. */
+    private final AlarmRegistry alarmRegistry;
 
     /**
      * Creats a registry.
      *
      * @param store Store to use
      */
-    MIDPPushRegistry(final Store store) {
+    public MIDPPushRegistry(final Store store) {
         this.store = store;
+        this.alarmRegistry = new AlarmRegistry(store, new AlarmRegistry.LifecycleAdapter() {
+            public void launchMidlet(final int midletSuiteID, final String midlet) {
+                // TBD: implement soft launch
+            }
+        });
     }
 
     /**
@@ -55,10 +64,12 @@ final class MIDPPushRegistry implements JUMPPushRegistry {
      * @param connection Connection to unregister
      *
      * @return <code>true</code> if succeed, <code>false</code> otherwise
+     *
+     * @throws RemoteException as requested by RMI spec.
      */
     public boolean unregisterConnection(
             final int midletSuiteId,
-            final JUMPConnectionInfo connection) {
+            final JUMPConnectionInfo connection) throws RemoteException {
         try {
             store.removeConnection(midletSuiteId, connection);
         } catch (IOException _) {
@@ -74,15 +85,40 @@ final class MIDPPushRegistry implements JUMPPushRegistry {
      * @param connection Connection to register
      *
      * @return <code>true</code> if succeed, <code>false</code> otherwise
+     *
+     * @throws RemoteException as requested by RMI spec.
      */
     public boolean registerConnection(
             final int midletSuiteId,
-            final JUMPConnectionInfo connection) {
+            final JUMPConnectionInfo connection) throws RemoteException {
         try {
             store.addConnection(midletSuiteId, connection);
         } catch (IOException _) {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Implements the corresponding interface method.
+     *
+     * @param midletSuiteId ID of <code>MIDlet suite</code> to unregister
+     *  connection for
+     *
+     * @param midlet <code>MIDlet</code> class name
+     *
+     * @param time alarm time
+     *
+     * @return time of previous registered (but not fired) alarm or 0
+     *
+     * @throws RemoteException as requested by RMI spec.
+     * @throws ConnectionNotFoundException if it's impossible to register alarm
+     */
+    public long registerAlarm(
+            final int midletSuiteId,
+            final String midlet,
+            final long time)
+                throws RemoteException, ConnectionNotFoundException  {
+        return alarmRegistry.registerAlarm(midletSuiteId, midlet, time);
     }
 }

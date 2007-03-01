@@ -84,13 +84,15 @@ public class JUMPApplicationProxyImpl implements JUMPApplicationProxy {
      * <code>JUMPApplicationProxy</code>.
      **/
     public void pauseApp() {
-        JUMPResponse response =
-            requestSender.sendRequest(
-                isolateProxy,
-                new JUMPExecutiveLifecycleRequest(
-                    JUMPExecutiveLifecycleRequest.ID_PAUSE_APP,
-                    new String[] { Integer.toString(applicationId) }));
-        requestSender.handleBooleanResponse(response);
+        if (isolateProxy.isAlive()) {
+           JUMPResponse response =
+               requestSender.sendRequest(
+                   isolateProxy,
+                   new JUMPExecutiveLifecycleRequest(
+                       JUMPExecutiveLifecycleRequest.ID_PAUSE_APP,
+                       new String[] { Integer.toString(applicationId) }));
+           requestSender.handleBooleanResponse(response);
+        }
     }
 
     /**
@@ -98,13 +100,15 @@ public class JUMPApplicationProxyImpl implements JUMPApplicationProxy {
      * <code>JUMPApplicationProxy</code>.
      **/
     public void resumeApp() {
-        JUMPResponse response =
-            requestSender.sendRequest(
-                isolateProxy,
-                new JUMPExecutiveLifecycleRequest(
-                    JUMPExecutiveLifecycleRequest.ID_RESUME_APP,
-                    new String[] { Integer.toString(applicationId) }));
-        requestSender.handleBooleanResponse(response);
+        if (isolateProxy.isAlive()) {
+           JUMPResponse response =
+               requestSender.sendRequest(
+                   isolateProxy,
+                   new JUMPExecutiveLifecycleRequest(
+                       JUMPExecutiveLifecycleRequest.ID_RESUME_APP,
+                       new String[] { Integer.toString(applicationId) }));
+           requestSender.handleBooleanResponse(response);
+        }
     }
 
     /**
@@ -112,6 +116,11 @@ public class JUMPApplicationProxyImpl implements JUMPApplicationProxy {
      * <code>JUMPApplicationProxy</code>.
      **/
     public void destroyApp() {
+
+	// There is only one app in the isolate. 
+	// Let the app state be reflected eagerly to the Isolate Proxy.
+	isolateProxy.setStateToDestroyed();
+
         JUMPResponse response =
             requestSender.sendRequest(
                 isolateProxy,

@@ -35,6 +35,7 @@ import java.util.ResourceBundle;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.Vector;
+import java.util.HashMap;
 
 /**
  * Factory implementation methods for the installer module
@@ -44,7 +45,7 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
     private JUMPInstallerModule mainInstaller;
     private JUMPInstallerModule xletInstaller;
     private JUMPInstallerModule midletInstaller;
-    private Map configMap;
+    private Map configMap = new HashMap();
     
     private JUMPInstallerModule getMainInstaller() 
     {

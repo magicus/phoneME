@@ -23,7 +23,6 @@
  */
 package com.sun.jumpimpl.module.pushregistry.persistence;
 
-import com.sun.jump.module.contentstore.InMemoryContentStore;
 import com.sun.jump.module.pushregistry.JUMPConnectionInfo;
 import java.io.IOException;
 import java.util.Arrays;
@@ -42,15 +41,6 @@ public final class StoreTest extends TestCase {
         new String [] {"socket://:2006", "com.sun.QuuuxMidlet", "*"},
         new String [] {"datagram://:17", "com.sun.QuuuuxMidlet", "12.34"},
     };
-
-    private static Store createStore() throws IOException {
-        final String [] DIRS = {
-            Store.CONNECTIONS_DIR, Store.ALARMS_DIR
-        };
-        final Store store = new Store(InMemoryContentStore.createStore(DIRS));
-        store.readData();
-        return store;
-    }
 
     private static JUMPConnectionInfo createConnectionInfo(final int index) {
         final String [] info = SAMPLE_CONNECTIONS[index];
@@ -100,79 +90,98 @@ public final class StoreTest extends TestCase {
         }
     }
 
-    private void checkConnections(
-            final Store store,
-            final Map expectedConnections) {
-        final Map actual = new HashMap();
+    static private final class Checker {
+        final StoreOperationManager storeManager;
+        final Store store;
 
-        store.listConnections(new Store.ConnectionsConsumer() {
-            public void consume(
-                    final int suiteId,
-                    final JUMPConnectionInfo [] cns) {
-                assertNull("reported twice: " + suiteId,
-                        actual.put(new Integer(suiteId), toSet(cns)));
-            }
-        });
+        Checker() throws IOException {
+            final String [] DIRS = {
+                Store.CONNECTIONS_DIR, Store.ALARMS_DIR
+            };
+            storeManager = StoreUtils.createInMemoryManager(DIRS);
+            store = new Store(storeManager);
+        }
 
-        assertEquals(expectedConnections, actual);
+        private void checkConnections(
+                final Store store,
+                final Map expectedConnections) {
+            final Map actual = new HashMap();
+
+            store.listConnections(new Store.ConnectionsConsumer() {
+                public void consume(
+                        final int suiteId,
+                        final JUMPConnectionInfo [] cns) {
+                    assertNull("reported twice: " + suiteId,
+                            actual.put(new Integer(suiteId), toSet(cns)));
+                }
+            });
+
+            assertEquals(expectedConnections, actual);
+        }
+
+        private void checkAlarms(
+                final Store store,
+                final Map expectedAlarms) {
+            final Map actual = new HashMap();
+
+            store.listAlarms(new Store.AlarmsConsumer() {
+                public void consume(final int suiteId, final Map alarms) {
+                    assertNull("reported twice: " + suiteId,
+                            actual.put(new Integer(suiteId), alarms));
+                }
+            });
+
+            assertEquals(expectedAlarms, actual);
+        }
+
+        void checkStore(
+                final Map expectedConnections,
+                final Map expectedAlarms) throws IOException {
+            checkConnections(store, expectedConnections);
+            checkAlarms(store, expectedAlarms);
+
+            // And check that when the data are reread, we're ok
+            final Store fresh = new Store(storeManager);
+
+            checkConnections(fresh, expectedConnections);
+            checkAlarms(fresh, expectedAlarms);
+        }
+
+        void addConnection(
+                final int suiteId,
+                final int connectionIndex) throws IOException {
+            store.addConnection(suiteId, createConnectionInfo(connectionIndex));
+        }
+
+        void removeConnection(
+                final int suiteId,
+                final int connectionIndex) throws IOException {
+            store.removeConnection(suiteId, createConnectionInfo(connectionIndex));
+        }
+
+        void addConnections(
+                final int suiteId,
+                final int [] connections) throws IOException {
+            store.addConnections(suiteId, createConnectionInfos(connections));
+        }
+
+        void removeConnections(
+                final int suiteId) throws IOException {
+            store.removeConnections(suiteId);
+        }
+
+        void addAlarm(final int suiteId, final String midlet, final long time)
+                throws IOException {
+             store.addAlarm(suiteId, midlet, time);
+        }
+
+        void removeAlarm(final int suiteId, final String midlet)
+                throws IOException {
+            store.removeAlarm(suiteId, midlet);
+        }
     }
 
-    private void checkAlarms(
-            final Store store,
-            final Map expectedAlarms) {
-        final Map actual = new HashMap();
-
-        store.listAlarms(new Store.AlarmsConsumer() {
-            public void consume(final int suiteId, final Map alarms) {
-                assertNull("reported twice: " + suiteId,
-                        actual.put(new Integer(suiteId), alarms));
-            }
-        });
-
-        assertEquals(expectedAlarms, actual);
-    }
-
-    private void checkStore(
-            final Store store,
-            final Map expectedConnections,
-            final Map expectedAlarms) throws IOException {
-        checkConnections(store, expectedConnections);
-        checkAlarms(store, expectedAlarms);
-
-        store.readData();
-
-        checkConnections(store, expectedConnections);
-        checkAlarms(store, expectedAlarms);
-    }
-
-    private static void addConnection(
-            final Store store,
-            final int suiteId,
-            final int connectionIndex) throws IOException {
-        store.addConnection(suiteId, createConnectionInfo(connectionIndex));
-    }
-
-    private static void removeConnection(
-            final Store store,
-            final int suiteId,
-            final int connectionIndex) throws IOException {
-        store.removeConnection(suiteId, createConnectionInfo(connectionIndex));
-    }
-
-    private static void addConnections(
-            final Store store,
-            final int suiteId,
-            final int [] connections) throws IOException {
-        store.addConnections(suiteId, createConnectionInfos(connections));
-    }
-
-    private static void removeConnections(
-            final Store store,
-            final int suiteId) throws IOException {
-        store.removeConnections(suiteId);
-    }
-
-    public void testCtor() {
+    public void testCtor() throws IOException {
         try {
             new Store(null);
             fail("should throw IllegalArgumentException");
@@ -183,27 +192,27 @@ public final class StoreTest extends TestCase {
     private static final Map EMPTY_MAP = new HashMap();
 
     public void testEmptyStore() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
         // No mutations
-        checkStore(store, EMPTY_MAP, EMPTY_MAP);
+        checker.checkStore(EMPTY_MAP, EMPTY_MAP);
     }
 
     public void testAddOneConnection() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
-        addConnection(store, 0, 0);
-        checkStore(store,
+        checker.addConnection(0, 0);
+        checker.checkStore(
                 new ExpectedConnections().add(0, new int [] {0}).map,
                 EMPTY_MAP);
     }
 
     public void testAddAndRemoveConnection() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
-        addConnection(store, 1, 1);
-        removeConnection(store, 1, 1);
+        checker.addConnection(1, 1);
+        checker.removeConnection(1, 1);
 
-        checkStore(store, EMPTY_MAP, EMPTY_MAP);
+        checker.checkStore(EMPTY_MAP, EMPTY_MAP);
     }
 
     private static final int suiteId = 1;
@@ -213,30 +222,30 @@ public final class StoreTest extends TestCase {
         .map;
 
     public void testAddConnections() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
-        addConnections(store, suiteId, cns);
+        checker.addConnections(suiteId, cns);
 
-        checkStore(store, ec, EMPTY_MAP);
+        checker.checkStore(ec, EMPTY_MAP);
     }
 
     public void testRemoveConnectionsCleansUp() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
-        addConnections(store, suiteId, cns);
-        removeConnections(store, suiteId);
+        checker.addConnections(suiteId, cns);
+        checker.removeConnections(suiteId);
 
-        checkStore(store, EMPTY_MAP, EMPTY_MAP);
+        checker.checkStore(EMPTY_MAP, EMPTY_MAP);
     }
 
     public void testReaddConnections() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
-        addConnections(store, suiteId, cns);
-        removeConnections(store, suiteId);
-        addConnections(store, suiteId, cns);
+        checker.addConnections(suiteId, cns);
+        checker.removeConnections(suiteId);
+        checker.addConnections(suiteId, cns);
 
-        checkStore(store, ec, EMPTY_MAP);
+        checker.checkStore(ec, EMPTY_MAP);
     }
 
     private static final int suite0 = 11;
@@ -253,65 +262,65 @@ public final class StoreTest extends TestCase {
         .map;
 
     public void testRealisticOneConnection() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
         // {}, {}, {}, {}, {}
-        addConnection(store, suite0, 0);
+        checker.addConnection(suite0, 0);
         // { 0 }, {}, {}, {}, {}
-        addConnection(store, suite1, 5); // to be removed (1)
+        checker.addConnection(suite1, 5); // to be removed (1)
         // { 0 }, { 5 }, {}, {}, {}
-        addConnection(store, suite2, 6); // to be removed (2)
+        checker.addConnection(suite2, 6); // to be removed (2)
         // { 0 }, { 5 }, { 6 }, {}, {}
-        addConnections(store, suite3, new int [] { 4, 3 });
+        checker.addConnections(suite3, new int [] { 4, 3 });
         // { 0 }, { 5 }, { 6 }, { 3, 4 }, {}
-        addConnection(store, suite0, 2); // to be removed (3)
+        checker.addConnection(suite0, 2); // to be removed (3)
         // { 0, 2 }, { 5 }, { 6 }, { 3, 4 }, {}
-        removeConnection(store, suite0, 2); // see above (3)
+        checker.removeConnection(suite0, 2); // see above (3)
         // { 0 }, { 5 }, { 6 }, { 3, 4 }, {}
-        addConnection(store, suite1, 2);
+        checker.addConnection(suite1, 2);
         // { 0 }, { 2, 5 }, { 6 }, { 3, 4 }, {}
-        removeConnections(store, suite2); // see above (2) suite2 is done
+        checker.removeConnections(suite2); // see above (2) suite2 is done
         // { 0 }, { 2, 5 }, {}, { 3, 4 }, {}
-        removeConnection(store, suite1, 5); // see above (1) suite1 is done
+        checker.removeConnection(suite1, 5); // see above (1) suite1 is done
         // { 0 }, { 2 }, {}, { 3, 4 }, {}
-        addConnection(store, suite0, 1); // suite0 is done
+        checker.addConnection(suite0, 1); // suite0 is done
         // { 0, 1 }, { 2 }, {}, { 3, 4 }, {}
 
-        checkStore(store, ecRealistic, EMPTY_MAP);
+        checker.checkStore(ecRealistic, EMPTY_MAP);
     }
 
     public void testRealisticSeveralConnections() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
         // {}, {}, {}, {}, {}
-        addConnection(store, suite0, 0);
+        checker.addConnection(suite0, 0);
         // { 0 }, {}, {}, {}, {}
-        addConnection(store, suite1, 5); // to be removed (1)
+        checker.addConnection(suite1, 5); // to be removed (1)
         // { 0 }, { 5 }, {}, {}, {}
-        addConnection(store, suite2, 6); // to be removed (2)
+        checker.addConnection(suite2, 6); // to be removed (2)
         // { 0 }, { 5 }, { 6 }, {}, {}
-        addConnection(store, suite3, 4);
+        checker.addConnection(suite3, 4);
         // { 0 }, { 5 }, { 6 }, { 4 }, {}
-        addConnection(store, suite0, 3); // to be removed (3)
+        checker.addConnection(suite0, 3); // to be removed (3)
         // { 0, 3 }, { 5 }, { 6 }, { 4 }, {}
-        removeConnection(store, suite0, 3); // see above (3)
+        checker.removeConnection(suite0, 3); // see above (3)
         // { 0 }, { 5 }, { 6 }, { 4 }, {}
-        addConnection(store, suite1, 2);
+        checker.addConnection(suite1, 2);
         // { 0 }, { 2, 5 }, { 6 }, { 4 }, {}
-        removeConnection(store, suite3, 4); // to be restored (4)
+        checker.removeConnection(suite3, 4); // to be restored (4)
         // { 0 }, { 2, 5 }, { 6 }, {}, {}
-        removeConnection(store, suite2, 6); // see above (2) suite2 is done
+        checker.removeConnection(suite2, 6); // see above (2) suite2 is done
         // { 0 }, { 2, 5 }, {}, {}, {}
-        removeConnection(store, suite1, 5); // see above (1) suite1 is done
+        checker.removeConnection(suite1, 5); // see above (1) suite1 is done
         // { 0 }, { 2 }, {}, {}, {}
-        addConnection(store, suite0, 1); // suite0 is done
+        checker.addConnection(suite0, 1); // suite0 is done
         // { 0, 1 }, { 2 }, {}, {}, {}
-        addConnection(store, suite3, 4);
+        checker.addConnection(suite3, 4);
         // { 0, 1 }, { 2 }, {}, { 4 }, {}
-        addConnection(store, suite3, 3); // suite3 is done
+        checker.addConnection(suite3, 3); // suite3 is done
         // { 0, 1 }, { 2 }, {}, { 3, 4 }, {}
 
-        checkStore(store, ecRealistic, EMPTY_MAP);
+        checker.checkStore(ecRealistic, EMPTY_MAP);
     }
 
     private static final String midlet = "com.sun.foo";
@@ -332,111 +341,111 @@ public final class StoreTest extends TestCase {
         .map;
 
     public void testAddOneAlarm() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
-        store.addAlarm(suiteId, midlet, time);
+        checker.addAlarm(suiteId, midlet, time);
 
-        checkStore(store, EMPTY_MAP, ea);
+        checker.checkStore(EMPTY_MAP, ea);
     }
 
     public void testAddAndRemoveOneAlarm() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
-        store.addAlarm(suiteId, midlet, time);
-        store.removeAlarm(suiteId, midlet);
+        checker.addAlarm(suiteId, midlet, time);
+        checker.removeAlarm(suiteId, midlet);
 
-        checkStore(store, EMPTY_MAP, EMPTY_MAP);
+        checker.checkStore(EMPTY_MAP, EMPTY_MAP);
     }
 
     public void testReaddOneAlarm() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
-        store.addAlarm(suiteId, midlet, time);
-        store.removeAlarm(suiteId, midlet);
-        store.addAlarm(suiteId, midlet, time);
+        checker.addAlarm(suiteId, midlet, time);
+        checker.removeAlarm(suiteId, midlet);
+        checker.addAlarm(suiteId, midlet, time);
 
-        checkStore(store, EMPTY_MAP, ea);
+        checker.checkStore(EMPTY_MAP, ea);
     }
 
     public void testRemoveSecondAlarm() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
-        store.addAlarm(suiteId, midlet2, time);
-        store.addAlarm(suiteId, midlet, time);
-        store.removeAlarm(suiteId, midlet2);
+        checker.addAlarm(suiteId, midlet2, time);
+        checker.addAlarm(suiteId, midlet, time);
+        checker.removeAlarm(suiteId, midlet2);
 
-        checkStore(store, EMPTY_MAP, ea);
+        checker.checkStore(EMPTY_MAP, ea);
     }
 
     public void testRemoveSecondAlarmImmediately() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
-        store.addAlarm(suiteId, midlet, time);
-        store.addAlarm(suiteId, midlet2, time);
-        store.removeAlarm(suiteId, midlet2);
+        checker.addAlarm(suiteId, midlet, time);
+        checker.addAlarm(suiteId, midlet2, time);
+        checker.removeAlarm(suiteId, midlet2);
 
-        checkStore(store, EMPTY_MAP, ea);
+        checker.checkStore(EMPTY_MAP, ea);
     }
 
     public void testAddTwoAlarms() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
-        store.addAlarm(suiteId, midlet, time);
-        store.addAlarm(suiteId, midlet2, time2);
+        checker.addAlarm(suiteId, midlet, time);
+        checker.addAlarm(suiteId, midlet2, time2);
 
         final ExpectedAlarms ea = new ExpectedAlarms()
             .add(suiteId, midlet, time)
             .add(suiteId, midlet2, time2);
 
-        checkStore(store, EMPTY_MAP, ea.map);
+        checker.checkStore(EMPTY_MAP, ea.map);
     }
 
     public void testAddTwoAlarmsWithRemoval() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
-        store.addAlarm(suiteId2, midlet2, time);
-        store.addAlarm(suiteId2, midlet, time2);
-        store.addAlarm(suiteId, midlet2, time3);
-        store.removeAlarm(suiteId2, midlet2);
+        checker.addAlarm(suiteId2, midlet2, time);
+        checker.addAlarm(suiteId2, midlet, time2);
+        checker.addAlarm(suiteId, midlet2, time3);
+        checker.removeAlarm(suiteId2, midlet2);
 
-        checkStore(store, EMPTY_MAP, ea3);
+        checker.checkStore(EMPTY_MAP, ea3);
     }
 
     public void testRealisticAll() throws Exception {
-        final Store store = createStore();
+        final Checker checker = new Checker();
 
         // {}, {}, {}, {}, {}
-        addConnection(store, suite0, 0);
+        checker.addConnection(suite0, 0);
         // { 0 }, {}, {}, {}, {}
-        addConnection(store, suite1, 5); // to be removed (1)
+        checker.addConnection(suite1, 5); // to be removed (1)
         // { 0 }, { 5 }, {}, {}, {}
 
-        store.addAlarm(suiteId2, midlet2, time);
+        checker.addAlarm(suiteId2, midlet2, time);
 
-        addConnection(store, suite2, 6); // to be removed (2)
+        checker.addConnection(suite2, 6); // to be removed (2)
         // { 0 }, { 5 }, { 6 }, {}, {}
-        addConnections(store, suite3, new int [] { 4, 3 });
+        checker.addConnections(suite3, new int [] { 4, 3 });
         // { 0 }, { 5 }, { 6 }, { 3, 4 }, {}
-        addConnection(store, suite0, 2); // to be removed (3)
+        checker.addConnection(suite0, 2); // to be removed (3)
         // { 0, 2 }, { 5 }, { 6 }, { 3, 4 }, {}
-        removeConnection(store, suite0, 2); // see above (3)
+        checker.removeConnection(suite0, 2); // see above (3)
         // { 0 }, { 5 }, { 6 }, { 3, 4 }, {}
 
-        store.addAlarm(suiteId2, midlet, time2);
-        store.addAlarm(suiteId, midlet2, time3);
+        checker.addAlarm(suiteId2, midlet, time2);
+        checker.addAlarm(suiteId, midlet2, time3);
 
-        addConnection(store, suite1, 2);
+        checker.addConnection(suite1, 2);
         // { 0 }, { 2, 5 }, { 6 }, { 3, 4 }, {}
-        removeConnections(store, suite2); // see above (2) suite2 is done
+        checker.removeConnections(suite2); // see above (2) suite2 is done
         // { 0 }, { 2, 5 }, {}, { 3, 4 }, {}
-        removeConnection(store, suite1, 5); // see above (1) suite1 is done
+        checker.removeConnection(suite1, 5); // see above (1) suite1 is done
         // { 0 }, { 2 }, {}, { 3, 4 }, {}
 
-        store.removeAlarm(suiteId2, midlet2);
+        checker.removeAlarm(suiteId2, midlet2);
 
-        addConnection(store, suite0, 1); // suite0 is done
+        checker.addConnection(suite0, 1); // suite0 is done
         // { 0, 1 }, { 2 }, {}, { 3, 4 }, {}
 
-        checkStore(store, ecRealistic, ea3);
+        checker.checkStore(ecRealistic, ea3);
     }
 }

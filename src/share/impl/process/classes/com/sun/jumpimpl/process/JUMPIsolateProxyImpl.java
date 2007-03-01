@@ -134,15 +134,26 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
     }
     
     public JUMPApplicationProxy startApp(JUMPApplication app, String[] args) {
-        int appID = requestSender.sendRequestWithIntegerResponse(
-                this,
-                new JUMPExecutiveLifecycleRequest(
-                    JUMPExecutiveLifecycleRequest.ID_START_APP,
-		    app.toByteArray(),
-		    args));
-        JUMPApplicationProxy appProxy = new JUMPApplicationProxyImpl(app, appID, this);
-        appIDHash.put(new Integer(appID), appProxy);
-        return appProxy;
+        if (isAlive()) {
+           int appID = requestSender.sendRequestWithIntegerResponse(
+                   this,
+                   new JUMPExecutiveLifecycleRequest(
+                       JUMPExecutiveLifecycleRequest.ID_START_APP,
+		       app.toByteArray(),
+		       args));
+
+	   if (appID == -1) { // failure
+	   	return null;
+           } 
+        
+           JUMPApplicationProxy appProxy = new JUMPApplicationProxyImpl(app, appID, this);
+           appIDHash.put(new Integer(appID), appProxy);
+	   setIsolateState(JUMPIsolateLifecycleRequest.ISOLATE_STATE_RUNNING);
+
+           return appProxy;
+        }
+
+	return null;  
     }
 
     public JUMPApplicationProxy[] getApps() {
@@ -162,17 +173,45 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
 
     public void
     kill(boolean force) {
-        JUMPResponse response =
-            requestSender.sendRequest(
-                this,
-                new JUMPExecutiveLifecycleRequest(
-                    JUMPExecutiveLifecycleRequest.ID_DESTROY_ISOLATE,
-                    new String[] { Boolean.toString(force) }));
-        requestSender.handleBooleanResponse(response);
-        appIDHash.clear();
+        if (isAlive()) {
+   	   setStateToDestroyed();
+           JUMPResponse response =
+               requestSender.sendRequest(
+                   this,
+                   new JUMPExecutiveLifecycleRequest(
+                       JUMPExecutiveLifecycleRequest.ID_DESTROY_ISOLATE,
+                       new String[] { Boolean.toString(force) }));
+           requestSender.handleBooleanResponse(response);
+	}   
     }
 
     RequestSenderHelper getRequestSender() {
         return requestSender;
     }
+
+    /**
+     * Sets this IsolateProxy to the destroyed state and 
+     * perform all the data cleanup.
+     */
+    public void
+    setStateToDestroyed() {
+	setIsolateState(JUMPIsolateLifecycleRequest.ISOLATE_STATE_DESTROYED);
+        appIDHash.clear();
+    }
+
+    /**
+     * Return true if this IsolateProxy represents a created and
+     * not yet destroyed Isolate.
+     */
+    public boolean 
+    isAlive() { 
+        int state = getIsolateState();
+        switch(state) {
+	    case JUMPIsolateLifecycleRequest.ISOLATE_STATE_CREATED:
+	    case JUMPIsolateLifecycleRequest.ISOLATE_STATE_INITIALIZED:
+	    case JUMPIsolateLifecycleRequest.ISOLATE_STATE_RUNNING:
+		    return true;
+ 	}
+	return false;
+    }        
 }

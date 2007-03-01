@@ -36,7 +36,7 @@ information or have any questions.
          </javac.base>
      </presetdef>                                                                                           
      <presetdef name="jump.javadoc">
-       <javadoc destdir="${d.apidoc.dir}"
+       <javadoc.base destdir="${d.apidoc.dir}"
                 author="false"
                 version="true"
                 access="private"
@@ -69,7 +69,7 @@ information or have any questions.
           <group title="JUMP Implementation Packages">
              <package name="com.sun.jumpimpl.*" />
           </group>
-        </javadoc>
+        </javadoc.base>
      </presetdef>
    
      <presetdef name="jump.mifdoclet">
@@ -109,7 +109,7 @@ information or have any questions.
             <arg line="com.sun.jump.module.contentstore" />
             <arg line="com.sun.jump.module.download" />
             <arg line="com.sun.jump.module.installer" />
-            <arg line="com.sun.jump.module.lifecycle" />
+            <arg line="com.sun.jump.module.isolatemanager" />
             <arg line="com.sun.jump.module.preferences" />
             <arg line="com.sun.jump.module.pushregistry" />
             <arg line="com.sun.jump.module.pushregistry.MIDP" />

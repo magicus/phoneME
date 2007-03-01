@@ -47,16 +47,12 @@ public class JUMPApplication
     public static final String TITLE_KEY = "JUMPApplication_title";
     public static final String APPMODEL_KEY = "JUMPApplication_appModel";
     public static final String ID_KEY = "JUMPApplication_id";
-    
     /**
-     * Create an instance of an application.
-     * @param title The application's title, can be null
-     * @param iconPath The location of the application's icon in, can be null
-     * @param type The application's type
-     */    
-    public JUMPApplication(String title, URL iconPath, JUMPAppModel type) {
-        this(title, iconPath, type, -1);        
-    }
+     * A hint to the WindowingModule regarding the area of the screen 
+     * this JUMPApplication requires. 
+     * The value should be in the syntax of "x,y-wxh", for example "0,50-640x430".
+     **/
+    public static final String ID_SCREEN_BOUNDS = "JUMPApplication_screenBounds";
     
     /**
      * Create an instance of an application.
@@ -80,6 +76,7 @@ public class JUMPApplication
         }
         
         addProperty(ID_KEY, Integer.toString(id));        
+
     }
     
     /**

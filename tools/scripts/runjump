@@ -1,5 +1,29 @@
 #!/bin/sh
 #
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#  
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+#  
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+#  
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+#  
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+#
 #  Usage:
 #    runjump [ server | executive | system | command |  midlet | xlet | main | cvmc | cleanup | status | output | debug | getpid ]
 #
@@ -139,7 +163,7 @@ fi
 
 # The root of contents tore
 if [ -z "$JUMP_CONTENT_STORE_DIR" ] ; then
-  JUMP_CONTENT_STORE_DIR=/opt/repository
+  JUMP_CONTENT_STORE_DIR=data
 fi
 
 # The root of contents tore
@@ -164,10 +188,10 @@ elif [ "$PHONEME_PLATFORM" = "i686" ] ; then
    fi
    MIDP_CLASSES_ZIP=$PHONEME_DIST/midp/midp_fb/classes.zip
    MIDP_PROPERTIES="-Dsun.midp.home.path=$PHONEME_DIST/midp/midp_fb -Xbootclasspath/a:$MIDP_CLASSES_ZIP"
-   EXECUTIVE_PROPERTIES="-Dinstaller.repository=$JUMP_CONTENT_STORE_DIR"
+   EXECUTIVE_PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
 fi
  
-SYSTEM_PROPERTIES="-Dinstaller.repository=$JUMP_CONTENT_STORE_DIR"
+SYSTEM_PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
 SERVER_JARFILE=$PHONEME_DIST/jump/lib/jump.jar
 EXECUTIVE_JARFILE=$PHONEME_DIST/jump/lib/executive-jump.jar
 CVMC=$PHONEME_DIST/bin/cvmc
@@ -608,7 +632,7 @@ if [ "$DO_XLET" = "true" ] ; then
         exit 0
     fi
 
-    XLET_COMMAND="$CVMC -target $SERVER_PID -cp $JARFILE sun.mtask.xlet.PXletRunner -name XLETCLASS -path $JARFILE $*"
+    XLET_COMMAND="$CVMC -target $SERVER_PID -cp $JARFILE sun.mtask.xlet.PXletRunner -name $XLETCLASS -path $JARFILE $*"
 
     echo "Executing XLET launch command: $XLET_COMMAND"
     echo ""

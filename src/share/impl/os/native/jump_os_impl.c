@@ -208,11 +208,12 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_unreserve(
     (*env)->ReleaseStringUTFChars(env, messageType, type);
 }
 
-JNIEXPORT int JNICALL
-Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcess(
+static int
+create_process(
     JNIEnv *env, 
     jobject thisObj,
-    jobjectArray arguments)
+    jobjectArray arguments,
+    int isNative)
 {
     int argc;
     char** argv;
@@ -237,7 +238,11 @@ Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcess(
 	}
     }
     
-    retVal = jumpProcessCreate(argc, argv);
+    if (isNative) {
+	retVal = jumpProcessNativeCreate(argc, argv);
+    } else {
+	retVal = jumpProcessCreate(argc, argv);
+    }
     if (argv != NULL) {
 	if (isCopy) {
 	    for (i = 0; i < argc; i++) {
@@ -247,5 +252,23 @@ Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcess(
 	free(argv);
     }
     return retVal;
+}
+
+JNIEXPORT int JNICALL
+Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcess(
+    JNIEnv *env, 
+    jobject thisObj,
+    jobjectArray arguments)
+{
+    return create_process(env, thisObj, arguments, 0);
+}
+
+JNIEXPORT int JNICALL
+Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcessNative(
+    JNIEnv *env, 
+    jobject thisObj,
+    jobjectArray arguments)
+{
+    return create_process(env, thisObj, arguments, 1);
 }
 

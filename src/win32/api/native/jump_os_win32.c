@@ -340,6 +340,26 @@ int jumpThreadGetId(void){
     return GetCurrentThreadId();
 }
 
+/**
+ * FIXME: Stub implementation
+ */
+int 
+jumpProcessRunDriver(char *driverName, char *libName) {
+    (void)driverName;
+    (void)libName;
+    return -1;
+}
+
+/**
+ * FIXME: Stub implementation
+ */
+int 
+jumpProcessNativeCreate(int argc, char** argv) {
+    (void)argc;
+    (void)argv;
+    return -1;
+}
+
 int  jumpProcessCreate(int argc, char** argv){
     BOOL b;
     int argsBufferSize = 0;

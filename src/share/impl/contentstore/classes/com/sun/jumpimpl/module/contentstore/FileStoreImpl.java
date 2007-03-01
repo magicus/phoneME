@@ -50,9 +50,9 @@ public class FileStoreImpl extends JUMPStore {
    public void load(Map map) {
 
        Object basedir;
-       if ((basedir = System.getProperty("installer.repository")) != null) { 
+       if ((basedir = System.getProperty("contentstore.root")) != null) { 
           setStoreRoot((String)basedir);
-       } else if (map != null && (basedir = map.get("installer.repository")) != null) {
+       } else if (map != null && (basedir = map.get("contentstore.root")) != null) {
           setStoreRoot((String)basedir);
        } else { 
           setStoreRoot(".");
@@ -69,9 +69,11 @@ public class FileStoreImpl extends JUMPStore {
       writeToFile(file, jumpData);
    }
 
-   public void createNode(String uri) {
+   public void createNode(String uri) throws IOException {
       File file = uriToListFile(uri);
       file.mkdirs();
+      if (!file.exists())
+         throw new IOException("Could not create: " + file);
    }                  
 
    public JUMPNode getNode(String uri) throws IOException {
@@ -140,7 +142,7 @@ public class FileStoreImpl extends JUMPStore {
    String root; // The real path to the store root.
 
    protected void setStoreRoot(String root) {
-      File file = new File(root);
+      File file = new File(System.getProperty("java.home") + File.separator + root);
       if (file.exists()) {
           this.root = file.getAbsolutePath();
           return;
@@ -243,6 +245,9 @@ public class FileStoreImpl extends JUMPStore {
     }
 
     private boolean isDataUri(String uri) {
+
+       if (!uri.startsWith("."))
+          return false;
 
        String absolutePath = convertToAbsolutePath(uri, false);
 

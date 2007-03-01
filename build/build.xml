@@ -61,10 +61,6 @@ information or have any questions.
 
   <property name="debug" value="true"/>
 
-  <!-- Expect the location of CDC build to be provided from outside-->
-  <available file="${cdc.dir}/btclasses.zip" type="file"
-             property="cdc.classes.available"/>
-
   <target name="all" depends="build-api, build-impl"/>
 
   <!-- init target -->
@@ -81,32 +77,40 @@ information or have any questions.
     <mkdir dir="${d.apidoc.dir}"/>
   </target>
 
-  <target name="set-properties" depends="set-bootclasspath-jdk, set-bootclasspath-cdc">
+  <target name="set-properties" depends="define-preset-bases">
      <property file="user.build.properties"/>
      <property file="build.properties"/>
   </target>
 
-  <target name="set-bootclasspath-jdk" unless="cdc.classes.available">
-    <presetdef name="javac.base">
-       <javac/>
-    </presetdef>
-  </target>
+  <target name="define-preset-bases">
+    <!-- Quick check of cdc.dir property -->
+    <available file="${cdc.dir}/btclasses.zip" type="file"
+        property="cdc.dir.ok"/>
+    <fail unless="cdc.dir.ok"
+        message="cdc.dir property (${cdc.dir}) seems to be incorrect (please, provide correct one with -D option)"/>
 
-  <target name="set-bootclasspath-cdc" if="cdc.classes.available">
+    <path id="boot.cp">
+      <fileset dir="${cdc.dir}">
+        <include name="btclasses.zip"/>
+        <include name="lib/*.jar"/>
+      </fileset>
+    </path>
     <presetdef name="javac.base">
-       <javac>
-          <bootclasspath>
-             <fileset dir="${cdc.dir}">
-                  <include name="btclasses.zip"/>
-                  <include name="lib/*.jar"/>
-             </fileset>
-          </bootclasspath>
-       </javac>
+      <javac>
+        <bootclasspath refid="boot.cp"/>
+      </javac>
+    </presetdef>
+    <presetdef name="javadoc.base">
+      <javadoc>
+        <bootclasspath refid="boot.cp"/>
+      </javadoc>
     </presetdef>
   </target>
 
   <target name="clean">
+      <property file="modules-config.properties"/>
       <delete dir="${dist.dir}"/>
+      <delete dir="${cdc.dir}/${contentstore.root}"/>
   </target>
 
 

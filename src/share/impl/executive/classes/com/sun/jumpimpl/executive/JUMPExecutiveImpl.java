@@ -28,7 +28,6 @@ package com.sun.jumpimpl.executive;
 
 import com.sun.jump.module.presentation.JUMPPresentationModule;
 import com.sun.jump.module.presentation.JUMPPresentationModuleFactory;
-import com.sun.jump.presentation.JUMPLauncher;
 import com.sun.jump.executive.JUMPExecutive;
 import com.sun.jump.executive.JUMPUserInputManager;
 import com.sun.jump.executive.JUMPIsolateProxy;
@@ -39,8 +38,8 @@ import com.sun.jump.message.JUMPOutgoingMessage;
 import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.common.JUMPAppModel;
 
-import com.sun.jump.module.lifecycle.JUMPLifeCycleModuleFactory;
-import com.sun.jump.module.lifecycle.JUMPLifeCycleModule;
+import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
+import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModule;
 
 import com.sun.jumpimpl.process.JUMPProcessProxyImpl;
 import com.sun.jumpimpl.process.JUMPModulesConfig;
@@ -81,7 +80,7 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
                 JUMPModulesConfig.overrideDefaultConfig(args[i]);
                 
                 // put name of a property file overriding default properties
-                // in the configuration map hopeing JUMPLifeCycleModule
+                // in the configuration map hopeing JUMPIsolateManagerModule
                 // implementation will hook it up
                 JUMPModulesConfig.getProperties().put(
                         PROPERTY_FILE_NAME_PROP, args[i]);
@@ -112,9 +111,9 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
         
         if (false) {
             // Sample code to create blank isolate upon startup
-            JUMPLifeCycleModuleFactory lcmf =
-                    JUMPLifeCycleModuleFactory.getInstance();
-            JUMPLifeCycleModule lcm = lcmf.getModule();
+            JUMPIsolateManagerModuleFactory lcmf =
+                    JUMPIsolateManagerModuleFactory.getInstance();
+            JUMPIsolateManagerModule lcm = lcmf.getModule();
             JUMPIsolateProxy ip = lcm.newIsolate(JUMPAppModel.XLET);
             System.err.println("New isolate created="+ip);
             
