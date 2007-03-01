@@ -67,6 +67,7 @@
 #include <javacall_multimedia.h>
 #include <jsr135_jumpdriver_impl.h>
 
+int jumpProcessRunDriver(char *drvName, char *libName);
 static JUMPAddress driver={0};
 
 #define ALIGN_BITS                  64
@@ -96,22 +97,15 @@ type_ D##name_ args_ { \
 #define INVOKE(result_, function_, arg_)   \
     INVOKE_VOID(function_, arg_) 
 
-// temporary solution to start driver from isolate
 #define INVOKE_VOID(function_, arg_) {\
     JUMPMessage responseMessage;  \
     JUMPMessageStatusCode stcode; \
     if (driver.processId == 0) { \
-        driver.processId = fork(); \
-        if (driver.processId == 0) { \
-            mm_driver(0, NULL); \
-            exit(0); \
-        } else { \
-            CVMthreadYield(); \
-            sleep(1); \		
-            if (driver.processId == -1) { \
-                goto err; \
-            } \
+        driver.processId = jumpProcessRunDriver("jsr135DriverMain", "jsr135"); \
+        if (driver.processId == -1) { \
+            goto err; \
         } \
+        CVMthreadYield(); \
     } \
     responseMessage = jumpMessageSendSync(driver, outMessage, 0, &stcode); \
     if (responseMessage == NULL) { \

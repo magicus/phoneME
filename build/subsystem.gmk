@@ -135,7 +135,8 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/AudioRenderer.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/TonePlayer.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/LocatorParser.java \
-    $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/MMEventListener.java
+    $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/MMEventListener.java \
+    $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/MMNativeLibrary.java
 
 # Permission verifier
 SUBSYSTEM_JSR_135_JAVA_FILES += \
