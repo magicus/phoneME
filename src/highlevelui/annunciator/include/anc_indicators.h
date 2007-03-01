@@ -68,7 +68,7 @@ typedef enum {
     ANC_BACKLIGHT_OFF           = 0, /**< Turns off backlight          */
     ANC_BACKLIGHT_ON            = 1, /**< Turns on backlight           */
     ANC_BACKLIGHT_TOGGLE        = 2, /**< Toggles the current state    */
-    ANC_BACKLIGHT_IS_SUPPORTED  = 3  /**< Tests if backlight supported */
+    ANC_BACKLIGHT_SUPPORTED     = 3  /**< Tests if backlight supported */
 } AncBacklightState;
 
 /**
@@ -79,10 +79,10 @@ typedef enum {
  * ENABLE_NETWORK_INDICATOR set to true.
  */
 typedef enum {
-    NETWORK_INDICATOR_ON     = 1, /**< Turns on indicator        */
-    NETWORK_INDICATOR_OFF    = 2, /**< Turns off indicator       */
-    NETWORK_INDICATOR_TOGGLE = 3  /**< Toggles the current state */
-} MIDPNetworkIndicatorState;
+    ANC_NETWORK_INDICATOR_ON     = 1, /**< Turns on indicator        */
+    ANC_NETWORK_INDICATOR_OFF    = 2, /**< Turns off indicator       */
+    ANC_NETWORK_INDICATOR_TOGGLE = 3  /**< Toggles the current state */
+} AncNetworkIndicatorState;
 
 /**
  * Control the device's backlight.  Turn it on or off, 
@@ -94,7 +94,7 @@ typedef enum {
  *             ANC_BACKLIGHT_ON to turn on the backlight, 
  *             ANC_BACKLIGHT_OFF to turn off the backlight,
  *             ANC_BACKLIGHT_TOGGLE to toggle the backlight, and
- *             ANC_BACKLIGHT_IS_SUPPORTED to see if the system
+ *             ANC_BACKLIGHT_SUPPORTED to see if the system
  *             supports this function without changing the
  *             state of the backlight.  <code>mode</code>
  *             values not listed above are ignored.
@@ -144,40 +144,38 @@ jboolean anc_show_backlight(AncBacklightState mode);
  *
  * @param status What the status of the indicator should be.
  */
-void anc_set_network_indicator(MIDPNetworkIndicatorState status);
+void anc_set_network_indicator(AncNetworkIndicatorState status);
 
-extern int MIDPNetworkIndicatorCount;
+extern int gAncNetworkIndicatorCount;
 
-extern jboolean enableMIDPNetworkIndicator;
+#define ANC_INIT_NETWORK_INDICATOR    { gAncNetworkIndicatorCount = 0; };
+#define ANC_INC_NETWORK_INDICATOR     { gAncNetworkIndicatorCount++; };
+#define ANC_DEC_NETWORK_INDICATOR     { gAncNetworkIndicatorCount--; };
+#define ANC_FINISH_NETWORK_INDICATOR  { gAncNetworkIndicatorCount = 0; };
 
-#define INIT_NETWORK_INDICATOR    { MIDPNetworkIndicatorCount = 0; };
-#define INC_NETWORK_INDICATOR     { MIDPNetworkIndicatorCount++; };
-#define DEC_NETWORK_INDICATOR     { MIDPNetworkIndicatorCount--; };
-#define FINISH_NETWORK_INDICATOR  { MIDPNetworkIndicatorCount = 0; };
-
-#define START_NETWORK_INDICATOR   { if (MIDPNetworkIndicatorCount > 0) \
-                      anc_set_network_indicator(NETWORK_INDICATOR_ON); }
-#define STOP_NETWORK_INDICATOR    { if (MIDPNetworkIndicatorCount > 0) \
-                      anc_set_network_indicator(NETWORK_INDICATOR_OFF); }
-#define TOGGLE_NETWORK_INDICATOR  { if (MIDPNetworkIndicatorCount > 0) \
-                      anc_set_network_indicator(NETWORK_INDICATOR_TOGGLE); }
+#define ANC_START_NETWORK_INDICATOR   { if (gAncNetworkIndicatorCount > 0) \
+                      anc_set_network_indicator(ANC_NETWORK_INDICATOR_ON); }
+#define ANC_STOP_NETWORK_INDICATOR    { if (gAncNetworkIndicatorCount > 0) \
+                      anc_set_network_indicator(ANC_NETWORK_INDICATOR_OFF); }
+#define ANC_TOGGLE_NETWORK_INDICATOR  { if (gAncNetworkIndicatorCount > 0) \
+                      anc_set_network_indicator(ANC_NETWORK_INDICATOR_TOGGLE); }
 
 #else
 
 /** reset the network indicator count */
-#define INIT_NETWORK_INDICATOR
+#define ANC_INIT_NETWORK_INDICATOR
 /** increment the network indicator count */
-#define INC_NETWORK_INDICATOR
+#define ANC_INC_NETWORK_INDICATOR
 /** decrement the network indicator count */
-#define DEC_NETWORK_INDICATOR
+#define ANC_DEC_NETWORK_INDICATOR
 /** reset the network indicator count */
-#define FINISH_NETWORK_INDICATOR
+#define ANC_FINISH_NETWORK_INDICATOR
 /** show the network indicator */
-#define START_NETWORK_INDICATOR
+#define ANC_START_NETWORK_INDICATOR
 /** hide the network indicator */
-#define STOP_NETWORK_INDICATOR
+#define ANC_STOP_NETWORK_INDICATOR
 /** toggle the network indicator */
-#define TOGGLE_NETWORK_INDICATOR
+#define ANC_TOGGLE_NETWORK_INDICATOR
 
 #endif /* ENABLE_NETWORK_INDICATOR */
 /** @} */

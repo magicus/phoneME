@@ -64,8 +64,8 @@ void anc_show_trusted_indicator(jboolean isTrusted) {
  * ONLY works on device. There is no equivalent in emulator.
  */
 extern "C"
-void anc_set_network_indicator(MIDPNetworkIndicatorState status) {
-    IndicatorBar::setNetworkOn(status == NETWORK_INDICATOR_ON);
+void anc_set_network_indicator(AncNetworkIndicatorState status) {
+    IndicatorBar::setNetworkOn(status == ANC_NETWORK_INDICATOR_ON);
 }
 
 /**
@@ -85,7 +85,7 @@ void anc_toggle_home_icon(jboolean isHomeOn) {
  *              <code>ANC_BACKLIGHT_ON</code> - turn on the backlight
  *              <code>ANC_BACKLIGHT_OFF</code> - turn off the backlight
  *              <code>ANC_BACKLIGHT_TOGGLE</code> - toggle the backlight
- *              <code>ANC_BACKLIGHT_IS_SUPPORTED<code> - do nothing
+ *              <code>ANC_BACKLIGHT_SUPPORTED<code> - do nothing
  *              (this is used to determine if backlight control is
  *              supported on a system without  changing the state of
  *              the backlight.)

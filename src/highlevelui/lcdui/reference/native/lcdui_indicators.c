@@ -111,8 +111,7 @@ KNIDECL(com_sun_midp_lcdui_DisplayDeviceAccess_isBacklightSupported0) {
 
     if (midpHasForeground(displayId)) {
       /* Call the platform dependent to toggle the backlight */ 
-      KNI_ReturnBoolean((jboolean)anc_show_backlight(
-                  ANC_BACKLIGHT_IS_SUPPORTED));
+      KNI_ReturnBoolean((jboolean)anc_show_backlight(ANC_BACKLIGHT_SUPPORTED));
     }
 
     KNI_ReturnBoolean(KNI_FALSE);
@@ -131,7 +130,7 @@ KNIDECL(com_sun_midp_main_IndicatorManager_toggleHomeIcon0) {
 
 #ifdef ENABLE_NETWORK_INDICATOR
 
-int MIDPNetworkIndicatorCount = 0;
+int gAncNetworkIndicatorCount = 0;
 
 #endif
 

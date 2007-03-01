@@ -475,7 +475,7 @@ jboolean drawBackLight(AncBacklightState mode) {
     HDC hdc = GetDC(hMainWindow);
     jboolean result = KNI_FALSE;
 
-    if (mode == ANC_BACKLIGHT_IS_SUPPORTED) {
+    if (mode == ANC_BACKLIGHT_SUPPORTED) {
         result = KNI_TRUE;
     }
     else {

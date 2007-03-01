@@ -53,7 +53,7 @@ void anc_show_trusted_indicator(jboolean isTrusted) {
  * It controls the LED as the network indicator, it
  * ONLY works on device. There is no equivalent in emulator.
  */
-void anc_set_network_indicator(MIDPNetworkIndicatorState status) {
+void anc_set_network_indicator(AncNetworkIndicatorState status) {
     (void) javacall_annunciator_display_network_icon(status);
 }
 
@@ -66,7 +66,7 @@ void anc_set_network_indicator(MIDPNetworkIndicatorState status) {
  *              <code>ANC_BACKLIGHT_ON</code> - turn on the backlight  
  *              <code>ANC_BACKLIGHT_OFF</code> - turn off the backlight  
  *              <code>ANC_BACKLIGHT_TOGGLE</code> - toggle the backlight
- *              <code>ANC_BACKLIGHT_IS_SUPPORTED<code> - do nothing  
+ *              <code>ANC_BACKLIGHT_SUPPORTED<code> - do nothing  
  *              (this is used to determine if backlight control is 
  *              supported on a system without  changing the state of 
  *              the backlight.)
@@ -87,7 +87,7 @@ jboolean anc_show_backlight(AncBacklightState mode) {
         case ANC_BACKLIGHT_TOGGLE:
                 backlightEnabled = backlightEnabled ? 0 : 1;
                 break;
-        case ANC_BACKLIGHT_IS_SUPPORTED:
+        case ANC_BACKLIGHT_SUPPORTED:
                 return KNI_TRUE;
                 break;
         default:

@@ -121,7 +121,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_open0(void) {
             info = (MidpReentryData*)SNI_GetReentryData(NULL);
             if (info == NULL) {
                 /* initial invocation */
-                INC_NETWORK_INDICATOR;
+                ANC_INC_NETWORK_INDICATOR;
                 status = pcsl_datagram_open_start(port, &socketHandle,
                     &context);
             } else {
@@ -138,7 +138,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_open0(void) {
                 }
                 getMidpDatagramProtocolPtr(thisObject)->nativeHandle
                     = (jint)socketHandle;
-                DEC_NETWORK_INDICATOR;
+                ANC_DEC_NETWORK_INDICATOR;
             } else if (status == PCSL_NET_WOULDBLOCK) {
                 midp_thread_wait(NETWORK_WRITE_SIGNAL, (int)socketHandle,
                     context);
@@ -148,7 +148,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_open0(void) {
                     "error code %d", pcsl_network_error(socketHandle));
                 REPORT_INFO1(LC_PROTOCOL, "datagram::open0 %s", gKNIBuffer);
                 KNI_ThrowNew(midpIOException, gKNIBuffer);
-                DEC_NETWORK_INDICATOR;
+                ANC_DEC_NETWORK_INDICATOR;
             }
         }
     }
@@ -213,7 +213,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_send0(void) {
 
         if (info == NULL) {
             /* initial invocation */
-            INC_NETWORK_INDICATOR;
+            ANC_INC_NETWORK_INDICATOR;
             SNI_BEGIN_RAW_POINTERS;
             status = pcsl_datagram_write_start(
                 socketHandle, ipBytes, port,
@@ -237,18 +237,18 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_send0(void) {
         }
 
         if (status == PCSL_NET_SUCCESS) {
-            DEC_NETWORK_INDICATOR;
+            ANC_DEC_NETWORK_INDICATOR;
         } else if (status == PCSL_NET_WOULDBLOCK) {
             midp_thread_wait(NETWORK_WRITE_SIGNAL, (int)socketHandle, context);
         } else if (status == PCSL_NET_INTERRUPTED) {
             KNI_ThrowNew(midpInterruptedIOException, NULL);
-            DEC_NETWORK_INDICATOR;
+            ANC_DEC_NETWORK_INDICATOR;
         } else {
             /* status == PCSL_NET_IOERROR */
             midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
                 "error code %d", pcsl_network_error(socketHandle));
             KNI_ThrowNew(midpIOException, gKNIBuffer);
-            DEC_NETWORK_INDICATOR;
+            ANC_DEC_NETWORK_INDICATOR;
         }
 
     } else {
@@ -258,7 +258,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_send0(void) {
         } else {
             /* reinvocation */
             KNI_ThrowNew(midpInterruptedIOException, NULL);
-            DEC_NETWORK_INDICATOR;
+            ANC_DEC_NETWORK_INDICATOR;
         }
     }
 
@@ -346,7 +346,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_receive0(void) {
 
             if (info == NULL) {
                 /* initial invocation */
-                INC_NETWORK_INDICATOR;
+                ANC_INC_NETWORK_INDICATOR;
                 SNI_BEGIN_RAW_POINTERS;
                 status = pcsl_datagram_read_start(
                            socketHandle, ipBytes, &port,
@@ -372,18 +372,18 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_receive0(void) {
             if (status == PCSL_NET_SUCCESS) {
                 memcpy(&ipAddress, ipBytes, MAX_ADDR_LENGTH);
                 lres = pack_recv_retval(ipAddress, port, bytesReceived);
-                DEC_NETWORK_INDICATOR;
+                ANC_DEC_NETWORK_INDICATOR;
             } else if (status == PCSL_NET_WOULDBLOCK) {
                 midp_thread_wait(NETWORK_READ_SIGNAL, (int)socketHandle, context);
             } else if (status == PCSL_NET_INTERRUPTED) {
                 KNI_ThrowNew(midpInterruptedIOException, NULL);
-                DEC_NETWORK_INDICATOR;
+                ANC_DEC_NETWORK_INDICATOR;
             } else {
                 /* status == PCSL_NET_IOERROR */
                 midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
                     "error code %d", pcsl_network_error(socketHandle));
                 KNI_ThrowNew(midpIOException, gKNIBuffer);
-                DEC_NETWORK_INDICATOR;
+                ANC_DEC_NETWORK_INDICATOR;
             }
         } else {
             /* push gave us a datagram */
@@ -396,7 +396,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_receive0(void) {
         } else {
             /* reinvocation */
             KNI_ThrowNew(midpInterruptedIOException, NULL);
-            DEC_NETWORK_INDICATOR;
+            ANC_DEC_NETWORK_INDICATOR;
         }
     }
 
@@ -439,7 +439,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_close0(void) {
 
             if (info == NULL) {
                 /* first invocation */
-                INC_NETWORK_INDICATOR;
+                ANC_INC_NETWORK_INDICATOR;
                 status = pcsl_datagram_close_start(socketHandle, &context);
 
                 getMidpDatagramProtocolPtr(thisObject)->nativeHandle =
@@ -460,7 +460,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_close0(void) {
                     context);
             } else {
                 /* PCSL_NET_SUCCESS or PCSL_NET_IOERROR */
-                DEC_NETWORK_INDICATOR;
+                ANC_DEC_NETWORK_INDICATOR;
                 if (midpDecResourceCount(RSC_TYPE_UDP, 1) == 0) {
                     REPORT_INFO(LC_PROTOCOL,
                         "datagram::close0 resource limit update error");
@@ -487,7 +487,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_close0(void) {
             /* already closed, do nothing */
         } else {
             /* reinvocation */
-            DEC_NETWORK_INDICATOR;
+            ANC_DEC_NETWORK_INDICATOR;
         }
     }
 
