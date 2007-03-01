@@ -32,7 +32,7 @@ import java.util.Vector;
  * the MMAPI video players. This class replaces the stub class by the
  * same name in the MIDP workspace.
  */
-final class MMHelperImpl implements com.sun.mmedia.MMHelper {
+final public class MMHelperImpl extends MMHelper {
 
     private static MMHelperImpl instance = null;
     
@@ -49,30 +49,22 @@ final class MMHelperImpl implements com.sun.mmedia.MMHelper {
     }
 
     /**
-     * Returns the only instance of this class.
-     * @return the instance of this class
-     */
-    static MMHelperImpl getInstance() {
-        return instance;
-    }
-
-    /**
      * Informs the player to draw into Graphics <code>g</code>
      *
      * @param video The video player which should be repainted.
      * @param g The graphics object to pass to the video player.
      */
-    synchronized void paintVideo(Object video, Graphics g) {
+    public synchronized void paintVideo(Object video, Graphics g) {
         MIDPVideoPainter vp = (MIDPVideoPainter)video;
         vp.paintVideo(g);
     }
     
-    synchronized void showVideo(Object video) {
+    public synchronized void showVideo(Object video) {
         MIDPVideoPainter vp = (MIDPVideoPainter)video;
         vp.showVideo();
     }
 
-    synchronized void hideVideo(Object video) {
+    public synchronized void hideVideo(Object video) {
         MIDPVideoPainter vp = (MIDPVideoPainter)video;
         vp.hideVideo();
     }

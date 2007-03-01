@@ -23,6 +23,8 @@
  */
 package com.sun.mmedia;
 
+import javax.microedition.lcdui.MMHelper;
+
 /**
  * This is a helper class that gets the MMHelper instance from
  * the javax.microedition.lcdui package. It hides the MIDPVideoPainter class

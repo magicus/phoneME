@@ -206,7 +206,7 @@ ifeq ($(INDIRECT_VIDEO_PLAYER), true)
 MMHELPER_PATH = $(JSR_135_DIR)/src/share/components/video-renderer/classes/javax/microedition/lcdui/MMHelperImpl.java
 endif
 
-SUBSYSTEM_JSR_135_JAVA_FILES += $(MMHELPER_PATH)
+SUBSYSTEM_JSR_135_MIDP_JAVA_FILES += $(MMHELPER_PATH)
 endif
 
 # 
@@ -222,18 +222,19 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/ModelVideoRenderer.java
 
 ifeq ($(USE_MIDP), true)
-SUBSYSTEM_JSR_135_JAVA_FILES += \
+SUBSYSTEM_JSR_135_MIDP_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MIDPImageAccessor.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MIDPRendererCanvasBuddy.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MIDPVideoPainter.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MMCustomItem.java \
-    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MMHelper.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MIDPVideoRenderer.java
 endif
 
 ifneq ($(TARGET_VM),cldc_vm)
-SUBSYSTEM_JSR_135_JAVA_FILES += \
+SUBSYSTEM_JSR_135_CDC_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/AWTVideoRenderer.java
+else
+SUBSYSTEM_JSR_135_JAVA_FILES += $(SUBSYSTEM_JSR_135_MIDP_JAVA_FILES)
 endif
 
 endif
@@ -245,7 +246,6 @@ ifeq ($(DIRECT_VIDEO_PLAYER), true)
 ifeq ($(USE_MIDP), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectVideo.java \
-    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MMHelper.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MIDPRendererCanvasBuddy.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MIDPVideoPainter.java
 endif
@@ -263,6 +263,16 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	KNIDirectRecord.c
 endif
 
+
+SUBSYSTEM_JSR_135_CNI_CLASSES += \
+    com.sun.mmedia.AudioTunnel \
+    com.sun.mmedia.DirectMIDIControl \
+    com.sun.mmedia.DirectPlayer \
+    com.sun.mmedia.DirectRecord \
+    com.sun.mmedia.DirectVolume \
+    com.sun.mmedia.MMEventListener \
+    com.sun.mmedia.NativeTonePlayer \
+    
 
 #
 # Native
@@ -319,14 +329,21 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	mm_driver.c 
 endif
 
-JSR_135_JAR             = $(JSROP_LIB_DIR)/jsr135.jar
-JSR_135_NATIVE_LIB      = $(JSROP_LIB_DIR)/$(LIB_PREFIX)jsr135$(LIB_POSTFIX)
-JSR_135_NATIVE_OBJS     = $(patsubst %.c,$(JSROP_OBJ_DIR)/%.o,$(SUBSYSTEM_JSR_135_NATIVE_FILES))
+JSR_135_LIB_NAME      = jsr135
+JSR_135_SHARED_JAR    = $(JSROP_LIB_DIR)/$(JSR_135_LIB_NAME).jar
+JSR_135_JAR_MIDP      = $(JSROP_LIB_DIR)/$(JSR_135_LIB_NAME)_midp.jar
+JSR_135_JAR_CDC       = $(JSROP_LIB_DIR)/$(JSR_135_LIB_NAME)_cdc.jar
+JSR_135_NATIVE_LIB    = $(JSROP_LIB_DIR)/$(LIB_PREFIX)$(JSR_135_LIB_NAME)$(LIB_POSTFIX)
+JSR_135_NATIVE_OBJS   = $(patsubst %.c,$(JSROP_OBJ_DIR)/%.o,$(SUBSYSTEM_JSR_135_NATIVE_FILES))
 
 JSROP_NATIVE_OBJS    += $(JSR_135_NATIVE_OBJS)
 JSROP_CNI_CLASSES    += $(SUBSYSTEM_JSR_135_CNI_CLASSES)
 JSROP_NATIVE_LIBS    += $(JSR_135_NATIVE_LIB)
 JSROP_EXTRA_INCLUDES += $(SUBSYSTEM_JSR_135_EXTRA_INCLUDES)
+JSROP_SHARED_JARS    += $(JSR_135_JAR)
+JSROP_MIDP_JARS      += $(JSR_135_JAR_MIDP)
+JSROP_CDC_JARS       += $(JSR_135_JAR_CDC)
+JSROP_LINKLIBS       += -l$(JSR_135_LIB_NAME)$(DEBUG_POSTFIX)
 
 CVM_INCLUDE_JAVACALL  = true
 
@@ -334,8 +351,16 @@ ifeq ($(USE_JSR_75), true)
 JSR_135_DEPS = $(PS)$(JSR_75_JAR)
 endif
 
-$(JSR_135_JAR): $(JPP_CLASS_FILES) $(SUBSYSTEM_JSR_135_JAVA_FILES) $(MIDP_CLASSESZIP)
-	$(call compileJSRClasses,135,$(JSR_135_DEPS))
+$(JSR_135_JAR): $(JPP_CLASS_FILES) $(SUBSYSTEM_JSR_135_JAVA_FILES)
+	$(call compileJSRClasses,135,,$(SUBSYSTEM_JSR_135_JAVA_FILES),$(JSR_135_DEPS))
+
+$(JSR_135_JAR_MIDP): $(SUBSYSTEM_JSR_135_MIDP_JAVA_FILES) $(MIDP_CLASSESZIP)
+	$(call compileJSROP,$(JSR_135_LIB_NAME)_midp,$(JSR_135_BUILD_DIR)/classes_midp,$(SUBSYSTEM_JSR_135_MIDP_JAVA_FILES),$(PS)$(JSR_135_JAR)$(PS)$(MIDP_CLASSESZIP))
+	$(call makeJSROPJar,$@,$(JSR_135_BUILD_DIR)/classes_midp)
+
+$(JSR_135_JAR_CDC): $(SUBSYSTEM_JSR_135_CDC_JAVA_FILES)
+	$(call compileJSROP,$(JSR_135_LIB_NAME)_cdc,$(JSR_135_BUILD_DIR)/classes_cdc,$(SUBSYSTEM_JSR_135_CDC_JAVA_FILES),$(PS)$(JSR_135_JAR))
+	$(call makeJSROPJar,$@,$(JSR_135_BUILD_DIR)/classes_cdc)
 
 $(JSR_135_NATIVE_LIB): javacall_lib $(JSR_135_NATIVE_OBJS) $(ABSTRACTIONS_NATIVE_LIBRARY)
 	@echo "Linking $@"

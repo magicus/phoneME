@@ -26,7 +26,8 @@ package com.sun.mmedia;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Graphics;
-
+import javax.microedition.lcdui.MMHelper;
+import javax.microedition.lcdui.MMHelperImpl;
 
 import javax.microedition.media.Control;
 import javax.microedition.media.Player;
@@ -150,7 +151,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
             fsmode = false;
             cvis = true;
             canvas = (Canvas) container;
-            mmh.registerPlayer(canvas, this);
+            ((MMHelperImpl)mmh).registerPlayer(canvas, this);
             setVisible(false); // By default video is not shown in USE_DIRECT_VIDEO mode
             return null;
             
@@ -354,7 +355,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
     
     synchronized public void close() {
         if (!closed && canvas != null)
-            mmh.unregisterPlayer(canvas, this);
+            ((MMHelperImpl)mmh).unregisterPlayer(canvas, this);
         rgbData = null;
         scaledRGB = null;
         pngData = null;
