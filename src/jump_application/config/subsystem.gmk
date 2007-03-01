@@ -41,6 +41,17 @@ MODULE_SATSA_JCRMI_JAVA_FILES += \
 
 MODULE_SATSA_APDU_JAVA_FILES += \
     $(JSR_177_DIR)/src/jump_application/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/Protocol.java
+    
+ifeq ($(USE_SECOP),false)
+MODULE_SATSA_CRYPTO_JAVA_FILES += \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/BadPaddingException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/Cipher.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/IllegalBlockSizeException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/NoSuchPaddingException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/ShortBufferException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/SecretKeySpec.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/IvParameterSpec.java
+endif
 
 # Define APDU sources which depend on options
 #
