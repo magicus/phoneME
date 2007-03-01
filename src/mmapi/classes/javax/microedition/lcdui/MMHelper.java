@@ -29,38 +29,49 @@ package javax.microedition.lcdui;
 import javax.microedition.lcdui.Graphics;
 
 /**
- * This is a helper class to communicate with the MMAPI video players.
- * This is a stub class which will be replaced by an MMAPI version when
- * the video subsystem is enabled.
+ *
+ * @author ng159318
  */
-final class MMHelperImpl extends MMHelper {
+public abstract class MMHelper {
+    
+    private static MMHelper mmHelper = null;
+    
+    public static MMHelper getInstance() {
+        if (mmHelper == null) {
+            try {
+                mmHelper = (MMHelper)Class.forName
+                        ("javax.microedition.lcdui.MMHelperImpl").newInstance();
+            }
+            catch (Exception e) {
+            }
+        }
+        return mmHelper;
+    }
+    
+    /**
+     * Notify video renderers that canvas becomes invisible.
+     * 
+     * @param video The video painter which is hidden.
+     */
+    public abstract void hideVideo(Object video);
 
     /**
      * Calls paint on the video players that are drawing to the canvas.
+     * 
      * @param video The Video painter implementation
      * @param g The Graphics object of the current paint call
      */
-    public void paintVideo(Object video, Graphics g) {
-        // Stub
-    }
+    public abstract void paintVideo(Object video, Graphics g);
 
     /**
      * Notify video renderers that canvas becomes visible.
+     * 
      * @param video The video painter which is shown.
      */
-    public void showVideo(Object video) {
-        // Stub
-    }
-
+    public abstract void showVideo(Object video);
+ 
     /**
-     * Notify video renderers that canvas becomes invisible.
-     * @param video The video painter which is hidden.
+     * Get Display being used for Item painting. Platform-dependent.
      */
-    public void hideVideo(Object video) {
-        // Stub
-    }
-
-    public Display getItemDisplay(Item item) {
-        return null;
-    }
+    public abstract Display getItemDisplay(Item item);
 }

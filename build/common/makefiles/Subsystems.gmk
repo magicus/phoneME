@@ -144,13 +144,9 @@ include $(SUBSYSTEM_DIR)/tool/$(SUBSYSTEM_MAKE_FILE)
 #              (include only if USE_JSR_234 = false & JSR_135 = false)
 #####################################################################
 
-ifneq ($(USE_JSR_234), true)
-ifneq ($(USE_JSR_135), true)
 #ifneq ($(USE_MIDP_ABB), true)
 include $(SUBSYSTEM_DIR)/mmapi/$(SUBSYSTEM_MAKE_FILE)
 #endif
-endif
-endif
 
 
 #####################################################################
@@ -196,6 +192,7 @@ include $(SUBSYSTEM_DIR)/links/$(LIB_MAKE_FILE)
 endif
 endif
 
+ifeq ($(TARGET_VM), cldc_vm)
 #####################################################################
 # (Extra) JSR75 Subsystem
 # Description: JSR 75
@@ -214,6 +211,7 @@ endif
 ifeq ($(USE_JSR_82), true)
 JPP_DEFS += -DENABLE_JSR_82
 include $(JSR_82_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+endif
 endif
 
 #####################################################################
@@ -234,6 +232,7 @@ ifeq ($(USE_ROMIZED_DEMOS), true)
 include $(SUBSYSTEM_DIR)/demos/$(SUBSYSTEM_MAKE_FILE)
 endif
 
+ifeq ($(TARGET_VM), cldc_vm)
 #####################################################################
 # (Extra) WMA 1.1 Subsystem
 # Description: JSR 120
@@ -261,6 +260,7 @@ JPP_DEFS += -DENABLE_JSR_226
 include $(JSR_226_DIR)/perseus2/platform.releases/midp20/resources/build/$(SUBSYSTEM_MAKE_FILE)
 USE_PISCES=true
 endif
+endif
 
 #####################################################################
 # (Extra) Pisces 2D Renderer Subsystem
@@ -270,6 +270,7 @@ ifeq ($(USE_PISCES), true)
 include $(PISCES_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
+ifeq ($(TARGET_VM), cldc_vm)
 #####################################################################
 # (Extra) SATSA Subsystem
 # Description: JSR 177
@@ -353,6 +354,7 @@ endif
 ifeq ($(USE_JSR_135), true)
 include $(JSR_135_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
 endif
+endif
 
 #####################################################################
 # Multimedia Subsystem
@@ -363,6 +365,7 @@ PROJECT_MIDP_ABB_DIR ?= $(MIDP_ABB_DIR)
 include $(PROJECT_MIDP_ABB_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
 endif
 
+ifeq ($(TARGET_VM), cldc_vm)
 #####################################################################
 # (Extra) Mobile I18N Subsystem
 # Description: JSR 238
@@ -379,6 +382,7 @@ endif
 ifeq ($(USE_JSR_239), true)
 JPP_DEFS += -DENABLE_JSR_239
 include $(JSR_239_DIR)/src/cldc-oi/config/$(SUBSYSTEM_MAKE_FILE)
+endif
 endif
 
 #####################################################################
