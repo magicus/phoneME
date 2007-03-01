@@ -583,8 +583,18 @@ ConstantPoolRewriter::create_method_replacement(Method *method JVM_TRAPS) {
   UsingFastOops fast;
   Method::Fast optimized_method = method->obj();  
 #if !USE_PRODUCT_BINARY_IMAGE_GENERATOR
-  if (OptimizeBytecodes) {    
+  if (OptimizeBytecodes) {        
     optimized_method = _bytecode_optimizer.optimize_bytecodes(method JVM_CHECK_0);
+    // The first step of bytecode optimization is made, bytecode indices changed.
+    // Exception table and line number table should be updated.
+    // shall_create_new_method rewrites _new_bytecode_address so we 
+    // should rewrite the tables right now.    
+    rewrite_exception_table(method, NULL JVM_CHECK_0);
+#if ENABLE_ROM_JAVA_DEBUGGER
+    rewrite_line_number_tables(method, &optimized_method, false /*don't compress*/ 
+                             JVM_CHECK_0);
+#endif
+
     int new_method_length = optimized_method().code_size() + 1;
     if (new_method_length > _new_bytecode_address.length()) {
       _new_bytecode_address = Universe::new_short_array(new_method_length JVM_CHECK_0);
@@ -592,15 +602,6 @@ ConstantPoolRewriter::create_method_replacement(Method *method JVM_TRAPS) {
   }
 #endif
   
-  // The first step of bytecode optimization is made, bytecode indices changed.
-  // Exception table and line number table should be updated.
-  // shall_create_new_method rewrites _new_bytecode_address so we 
-  // should rewrite the tables right now.
-  rewrite_exception_table(method, NULL JVM_CHECK_0);
-#if ENABLE_ROM_JAVA_DEBUGGER
-  rewrite_line_number_tables(method, &optimized_method, false /*don't compress*/ 
-                             JVM_CHECK_0);
-#endif
 
   // (1) determine the size of the new method
   int new_size;
@@ -1530,7 +1531,7 @@ bool ConstantPoolRewriter::shall_create_new_method(Method *method, int* p_new_si
 #ifdef AZZERT
   void * base = _new_bytecode_address.base_address();
   jvm_memset(base, 0xff, sizeof(jushort) * _new_bytecode_address.length());
-#endif
+#endif  
 
   jushort old_bci, new_bci;
   bool result = false;
