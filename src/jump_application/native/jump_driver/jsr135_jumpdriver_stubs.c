@@ -86,8 +86,12 @@ static JUMPAddress driver={0};
 
 #define START(type_, name_, args_)   \
 type_ D##name_ args_ { \
-    JUMPOutgoingMessage outMessage = jumpMessageNewOutgoingByType((JUMPPlatformCString)"mm/jsr135"); \
+    JUMPMessageStatusCode code;   \
     JUMPMessageReader r;          \
+    JUMPOutgoingMessage outMessage = jumpMessageNewOutgoingByType((JUMPPlatformCString)"native/jsr135DriverMain", &code); \
+    if (code != JUMP_SUCCESS) { \
+        goto err; \
+    } \
     jumpMessageAddInt(outMessage, (int32)ID_##name_); \
     {
         
