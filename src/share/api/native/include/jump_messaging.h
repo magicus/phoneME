@@ -318,8 +318,8 @@ jumpMessageSendAsyncResponse(JUMPOutgoingMessage m,
 
 /*
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
- * JUMP_WOULD_BLOCK, JUMP_OVERRUN, JUMP_NEGATIVE_ARRAY_LENGTH, or
- * JUMP_FAILURE.
+ * JUMP_WOULD_BLOCK, JUMP_TARGET_NONEXISTENT, JUMP_OVERRUN,
+ * JUMP_NEGATIVE_ARRAY_LENGTH, or JUMP_FAILURE.
  */
 extern JUMPMessage
 jumpMessageSendSync(JUMPAddress target, JUMPOutgoingMessage m, int32 timeout,
