@@ -264,6 +264,16 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 endif
 
 
+SUBSYSTEM_JSR_135_CNI_CLASSES += \
+    com.sun.mmedia.AudioTunnel \
+    com.sun.mmedia.DirectMIDIControl \
+    com.sun.mmedia.DirectPlayer \
+    com.sun.mmedia.DirectRecord \
+    com.sun.mmedia.DirectVolume \
+    com.sun.mmedia.MMEventListener \
+    com.sun.mmedia.NativeTonePlayer \
+    
+
 #
 # Native
 #
@@ -319,14 +329,16 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	mm_driver.c 
 endif
 
-JSR_135_JAR             = $(JSROP_LIB_DIR)/jsr135.jar
-JSR_135_NATIVE_LIB      = $(JSROP_LIB_DIR)/$(LIB_PREFIX)jsr135$(LIB_POSTFIX)
-JSR_135_NATIVE_OBJS     = $(patsubst %.c,$(JSROP_OBJ_DIR)/%.o,$(SUBSYSTEM_JSR_135_NATIVE_FILES))
+JSR_135_LIB_NAME      = jsr135
+JSR_135_JAR           = $(JSROP_LIB_DIR)/$(JSR_135_LIB_NAME).jar
+JSR_135_NATIVE_LIB    = $(JSROP_LIB_DIR)/$(LIB_PREFIX)$(JSR_135_LIB_NAME)$(LIB_POSTFIX)
+JSR_135_NATIVE_OBJS   = $(patsubst %.c,$(JSROP_OBJ_DIR)/%.o,$(SUBSYSTEM_JSR_135_NATIVE_FILES))
 
 JSROP_NATIVE_OBJS    += $(JSR_135_NATIVE_OBJS)
 JSROP_CNI_CLASSES    += $(SUBSYSTEM_JSR_135_CNI_CLASSES)
 JSROP_NATIVE_LIBS    += $(JSR_135_NATIVE_LIB)
 JSROP_EXTRA_INCLUDES += $(SUBSYSTEM_JSR_135_EXTRA_INCLUDES)
+JSROP_LINKLIBS       += -l$(JSR_135_LIB_NAME)$(DEBUG_POSTFIX)
 
 CVM_INCLUDE_JAVACALL  = true
 
@@ -334,8 +346,8 @@ ifeq ($(USE_JSR_75), true)
 JSR_135_DEPS = $(PS)$(JSR_75_JAR)
 endif
 
-$(JSR_135_JAR): $(JPP_CLASS_FILES) $(SUBSYSTEM_JSR_135_JAVA_FILES) $(MIDP_CLASSESZIP)
-	$(call compileJSRClasses,135,$(JSR_135_DEPS))
+$(JSR_135_JAR): $(JPP_CLASS_FILES) $(SUBSYSTEM_JSR_135_JAVA_FILES)
+	$(call compileJSRClasses,135,,$(SUBSYSTEM_JSR_135_JAVA_FILES),$(JSR_135_DEPS))
 
 $(JSR_135_NATIVE_LIB): javacall_lib $(JSR_135_NATIVE_OBJS) $(ABSTRACTIONS_NATIVE_LIBRARY)
 	@echo "Linking $@"
