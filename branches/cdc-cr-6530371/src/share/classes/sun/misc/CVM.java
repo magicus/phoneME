@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.io.File;
 import java.util.StringTokenizer;
+import com.sun.cdc.config.PackageManager;
 
 public final class CVM {
     /** WARNING! NO STATIC INITIALIZER IS ALLOWED IN THIS CLASS!
@@ -504,6 +505,16 @@ public final class CVM {
 	}
 
 	{
+            /* Dynamic properties initialization */
+            String[] initClasses = PackageManager.listComponents();
+            for (int i = 0; i < initClasses.length; i++) {
+                try {
+                    Class.forName(initClasses[i]);
+                } catch (ClassNotFoundException e) {
+                    /* ignore silently */
+                }
+            }
+
 	    ClassLoader sys = ClassLoader.getSystemClassLoader();
 	    Class mainClass = sys.loadClass(mainClassName);
 	    Class [] args = {mainArgs.getClass()};
