@@ -37,7 +37,6 @@ import java.security.AllPermission;
 import sun.net.InetAddressCachePolicy;
 //import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
-import com.sun.cdc.config.PackageManager;
 import com.sun.cdc.config.DynamicProperties;
 import com.sun.cdc.config.PropertyProvider;
 
@@ -960,17 +959,6 @@ public final class System {
 	initProperties(props);
         midpProps = new Properties();
         initCldcMidpProperties(midpProps);
-
-        // dynamic properties initialization (should be moved to more
-        // appropriate place when we have dynamic package loading implemented)
-        String[] mainClasses = PackageManager.listComponents();
-        for (int i = 0; i < mainClasses.length; i++) {
-            try {
-                Class.forName(mainClasses[i]);
-            } catch (ClassNotFoundException e) {
-                // ignore silently
-            }
-        }
 
 	sun.misc.Version.init();
 	FileInputStream fdIn = new FileInputStream(FileDescriptor.in);
