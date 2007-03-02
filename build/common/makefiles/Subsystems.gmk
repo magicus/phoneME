@@ -403,10 +403,12 @@ endif
 # Description: Media stuff from ABB,JSR135,JSR234
 #              but necessary to be in MIDP
 #####################################################################
+ifneq ($(TARGET_VM),cdc_vm)
 ifneq ($(USE_JSR_234), true)
 ifneq ($(USE_JSR_135), true)
 ifneq ($(USE_MIDP_ABB), true)
 include $(SUBSYSTEM_DIR)/media/$(LIB_MAKE_FILE)
+endif
 endif
 endif
 endif
