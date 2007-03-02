@@ -310,7 +310,7 @@ jumpMessageSendAsync(JUMPAddress target, JUMPOutgoingMessage m,
  * out, a proper error code is returned immediately.
  *
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
- * JUMP_WOULD_BLOCK, JUMP_TIMEOUT, JUMP_TARGET_NONEXISTENT, or JUMP_FAILURE.
+ * JUMP_WOULD_BLOCK, JUMP_TARGET_NONEXISTENT, or JUMP_FAILURE.
  */
 extern void
 jumpMessageSendAsyncResponse(JUMPOutgoingMessage m,
