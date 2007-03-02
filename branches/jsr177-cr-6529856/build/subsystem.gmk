@@ -377,11 +377,11 @@ ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
         JC_DIR = /java/re/jcdevkit/2.2.1/archive/fcs/binaries/domestic/linux/java_card_kit-2_2_1
     endif
     
-    JC_API = $(JC_DIR)/lib/api.jar
-    ifeq ($(wildcard $(JC_API)),)
-        $(error JC_DIR must point to the Java Card development kit directory: $(JC_DIR))
+    ifeq ($(wildcard $(JC_DIR)/lib/apdutool.jar),)
+        $(error JC_DIR must point to the Java Card Development Kit directory: $(JC_DIR))
     endif
     
+    JC_API = $(JC_DIR)/lib/api.jar
     JC_CONVERTER = $(JC_DIR)/lib/converter.jar
     JC_VERIFIER=$(JC_DIR)/lib/offcardverifier.jar
     JC_SCRIPTGEN=$(JC_DIR)/lib/scriptgen.jar
@@ -390,7 +390,7 @@ ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
     JC_EEPROM_IMAGE = $(BINDIR)/jc_eeprom_image
     SAT_SCRIPT_PATH = $(JAVACARD_CLASSES)/jc_script
     
-    SIM_TOOL = $(APPLETS) $(JC_EEPROM_IMAGE)
+    SIM_TOOL = sim_test $(APPLETS) $(JC_EEPROM_IMAGE)
 endif
 
 # i3test for jsr 177
@@ -517,6 +517,13 @@ define applets
 	$(call simtoolkit,$@,$(AT)mkdir -p $(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/)
 	$(call simtoolkit,$@,$(AT)cp $(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.exp $(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/)
 endef
+ 
+sim_test:
+	@echo " ... Checking Java Card Development Kit"
+	$(if $(shell ($(JC_DIR)/bin/cref -version 2>/dev/null | \
+	              grep "[Vv]ersion" | grep "2\.2\.1" > /dev/null); \
+	             if test $$? -ne 0; then echo "Error"; fi), \
+	    $(error JC_DIR points to wrong Java Card Development Kit directory: $(JC_DIR)))
 
 $(APPLETS): 
 	$(call applets,$@,$^)
