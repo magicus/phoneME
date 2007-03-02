@@ -69,9 +69,9 @@ Java_com_sun_jumpimpl_isolate_jvmprocess_JUMPIsolateProcessImpl_waitForAndEchoMe
     ensureInitialized();
     
     /* Wait for incoming message, echo it, and send a response back */
-    in = jumpMessageWaitFor("mvm/client", 0);
+    in = jumpMessageWaitFor("mvm/client", 0, &code);
     dumpMessage(in, "waitForAndEchoMessage():");
-    returnMessage = jumpMessageNewOutgoingByRequest(in);
+    returnMessage = jumpMessageNewOutgoingByRequest(in, &code);
     messagestrs[0] = "YES";
     jumpMessageAddStringArray(returnMessage, messagestrs, 1);
     jumpMessageSendAsyncResponse(returnMessage, &code);

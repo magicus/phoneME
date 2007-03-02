@@ -43,12 +43,12 @@ extern int jumpProcessIsAlive(int pid);
 /**
  * Returns the process ID of this process.
  */
-extern int jumpProcessGetId();
+extern int jumpProcessGetId(void);
 
 /**
  * Returns the process ID of the executive process.
  */
-extern int jumpProcessGetExecutiveId();
+extern int jumpProcessGetExecutiveId(void);
 
 /**
  * Sets the process ID of the executive process.
