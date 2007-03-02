@@ -71,8 +71,13 @@ public class AppContainerImpl extends JUMPAppContainer {
        try {
 
           String className = app.getProperty(INITIAL_CLASS_KEY);
-          String classPath = (System.getProperty("java.home") +  
-			       File.separator + app.getProperty(CLASSPATH_KEY));
+          String contentStoreDir = System.getProperty("contentstore.root");
+          if (contentStoreDir == null) {
+              contentStoreDir = (String) JUMPIsolateProcess.getInstance().getConfig().get("contentstore.root");
+          }                
+          String classPath = (System.getProperty("java.home") + File.separator + 
+		contentStoreDir + File.separator + app.getProperty(CLASSPATH_KEY));
+
           xletManager = PXletManager.createXlet(className, 
 		       null, null, new String[]{classPath}, args);
 	  xletManager.postInitXlet();
