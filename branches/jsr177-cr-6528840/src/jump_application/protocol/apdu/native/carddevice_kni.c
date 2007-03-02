@@ -128,7 +128,8 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_finalize0) {
     KNI_ReturnVoid();
 }
 
-JUMPEvent cardReaderEvent;
+// JUMPEvent cardReaderEvent;
+static long cardReaderEventHandle = 0;
 
 /**
  * Performs platform lock of the device.
@@ -144,13 +145,17 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_lock0) {
     jboolean retcode = KNI_FALSE;
     
     // Global Lock if native
-    cardReaderEvent = jumpEventCreate();    
+    cardReaderEventHandle = (long)jumpThreadGetId();    
+    if (jumpThreadSyncBegin(cardReaderEventHandle, 0) < 0) {
+        KNI_ThrowNew(jsropRuntimeException, "Cannot start sync block");
+        return KNI_FALSE;
+    }
     do { 
         lock_retcode=javacall_carddevice_lock();
         switch (lock_retcode) {
         case JAVACALL_WOULD_BLOCK:
             CVMD_gcSafeExec(_ee, {
-                jumpEventWait(cardReaderEvent);
+                jumpThreadSyncWait(cardReaderEventHandle, 0);
             });
             break;
         case JAVACALL_OK:
@@ -161,7 +166,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_lock0) {
             break;
         }
     } while (lock_retcode == JAVACALL_WOULD_BLOCK);
-    jumpEventDestroy(cardReaderEvent);
+    jumpThreadSyncEnd(cardReaderEventHandle, 0);
 
     KNI_ReturnInt(retcode);
 }
@@ -293,16 +298,20 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_reset0) {
         KNI_GetRawArrayRegion(atr_handle, 0, atr_length, (jbyte *)atr_buffer);
     }
 
-    cardReaderEvent = jumpEventCreate();
+    cardReaderEventHandle = (long)jumpThreadGetId();
+    if (jumpThreadSyncBegin(cardReaderEventHandle, 0) < 0) {
+        KNI_ThrowNew(jsropRuntimeException, "Cannot start sync block");
+        return -1;
+    }
     status_code = javacall_carddevice_reset_start(atr_buffer, &atr_length, &context);
     while (status_code == JAVACALL_WOULD_BLOCK) {
         CVMD_gcSafeExec(_ee, {
-            if (jumpEventWait(cardReaderEvent) == 0) {
+            if (jumpThreadSyncWait(cardReaderEventHandle, 0) == 0) {
                 status_code = javacall_carddevice_reset_finish(atr_buffer, &atr_length, context);                
             }
         });        
     }
-    jumpEventDestroy(cardReaderEvent);
+    jumpThreadSyncEnd(cardReaderEventHandle, 0);
     KNI_SetRawArrayRegion(atr_handle, 0, atr_length,(jbyte *)atr_buffer);
     free(atr_buffer);
 
@@ -373,7 +382,11 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
         }
     }
 
-    cardReaderEvent = jumpEventCreate();
+    cardReaderEventHandle = (long)jumpThreadGetId();
+    if (jumpThreadSyncBegin(cardReaderEventHandle, 0) < 0) {
+        KNI_ThrowNew(jsropRuntimeException, "Cannot start sync block");
+        return -1;
+    }
     status_code = javacall_carddevice_xfer_data_start(tx_buffer, 
                                                       tx_length, 
                                                       rx_buffer, 
@@ -381,7 +394,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
 
     while (status_code == JAVACALL_WOULD_BLOCK) {
         CVMD_gcSafeExec(_ee, {
-            if (jumpEventWait(cardReaderEvent) == 0) {
+            if (jumpThreadSyncWait(cardReaderEventHandle, 0) == 0) {
                 status_code = javacall_carddevice_xfer_data_finish(tx_buffer, 
                                                                    tx_length, 
                                                                    rx_buffer, 
@@ -389,7 +402,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
             }
         });                
     }
-    jumpEventDestroy(cardReaderEvent);
+    jumpThreadSyncEnd(cardReaderEventHandle, 0);
     KNI_SetRawArrayRegion(request_handle, 0, tx_length,(jbyte *)tx_buffer);
     KNI_SetRawArrayRegion(response_handle, 0, rx_length,(jbyte *)rx_buffer);    
     free(tx_buffer);
@@ -451,6 +464,6 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_checkCardMovement0) {
 
 void javanotify_carddevice_event(javacall_carddevice_event event,
                                  void *context) {
-    jumpEventHappens((JUMPEvent)cardReaderEvent);    
+    jumpThreadSyncNotify(cardReaderEventHandle, 0);    
     return;
 }
