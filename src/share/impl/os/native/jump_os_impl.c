@@ -81,6 +81,8 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_getReturnType(JNIEnv *env
     return ret;
 }
 
+/* On success, returns a new JUMPOutgoingMessage.  On failure, returns
+   NULL and throws an Exception. */
 static JUMPOutgoingMessage
 new_outgoing_message_from_byte_array(
     JNIEnv *env, 
@@ -110,8 +112,19 @@ new_outgoing_message_from_byte_array(
 
     m = jumpMessageNewOutgoingFromBuffer(buffer, isResponse, &code);
     if (m == NULL) {
-	/* FIXME check code */
-	JNU_ThrowOutOfMemoryError(env, "jumpMessageNewOutgoingFromBuffer");
+	switch (code) {
+	    char message[80];
+
+	  case JUMP_OUT_OF_MEMORY:
+	    JNU_ThrowOutOfMemoryError(env, "jumpMessageNewOutgoingFromBuffer");
+	    break;
+
+	  default:
+	    snprintf(message, sizeof(message),
+		     "JUMPMessageStatusCode: %d", code);
+	    JNU_ThrowByName(env, "XXX", message);
+	    break;
+	}
 	goto error;
     }
 
@@ -122,6 +135,8 @@ new_outgoing_message_from_byte_array(
     return NULL;
 }
 
+/* On success, returns a new jbyteArray.  On failure, returns NULL and
+   throws an Exception. */
 static jbyteArray
 new_byte_array_from_message(
     JNIEnv *env,
@@ -129,7 +144,10 @@ new_byte_array_from_message(
 {
     jbyteArray retVal;
 
-    /* FIXME: use the actual message size. */
+    /* FIXME: use the actual message size.  Currently the actual
+       message size will always be MESSAGE_BUFFER_SIZE because of
+       how jump_messaging works, but there is schizophrenia between
+       assuming MESSAGE_BUFFER_SIZE, and passing length around. */
     retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
     if (retVal == NULL) {
 	return NULL;
@@ -137,6 +155,10 @@ new_byte_array_from_message(
 
     (*env)->SetByteArrayRegion(env, retVal, 0, MESSAGE_BUFFER_SIZE,
 			       jumpMessageGetData(message));
+    if ((*env)->ExceptionOccurred(env)) {
+	(*env)->DeleteLocalRef(env, retVal);
+	return NULL;
+    }
 
     return retVal;
 }
@@ -160,15 +182,50 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageSync(
 
     m = new_outgoing_message_from_byte_array(env, messageBytes, isResponse);
     if (m == NULL) {
+	/* Exception already thrown. */
 	goto out;
     }
 
     target.processId = pid;
     r = jumpMessageSendSync(target, m, (int32)timeout, &code);
-    /* FIXME: Examine returned error code to figure out which exception
-       to throw */
+    if (r == NULL) {
+	switch (code) {
+	    char message[80];
+
+	  case JUMP_OUT_OF_MEMORY:
+	    JNU_ThrowOutOfMemoryError(env, "jumpMessageSendSync");
+	    break;
+
+	  case JUMP_TARGET_NONEXISTENT:
+	    JNU_ThrowByName(env, "XXX", message);
+	    break;
+
+	  case JUMP_WOULD_BLOCK:
+	    JNU_ThrowByName(env, "XXX", message);
+	    break;
+
+	  case JUMP_TIMEOUT:
+	    JNU_ThrowByName(env, "XXX", message);
+	    break;
+
+	  case JUMP_UNBLOCKED:
+	    JNU_ThrowByName(env, "XXX", NULL);
+	    break;
+
+	  default:
+	    snprintf(message, sizeof(message),
+		     "JUMPMessageStatusCode: %d", code);
+	    JNU_ThrowByName(env, "XXX", message);
+	    break;
+	}
+	goto out;
+    }
 
     retVal = new_byte_array_from_message(env, r);
+    if (retVal == NULL) {
+	/* Exception already thrown. */
+	goto out;
+    }
 
   out:
     if (r != NULL) {
@@ -201,10 +258,40 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_receiveMessage(
     }
 
     r = jumpMessageWaitFor((JUMPPlatformCString)type, (int32)timeout, &code);
-    /* FIXME: Examine returned error code to figure out which exception
-       to throw. Return an error code!! */
+    if (r == NULL) {
+	switch (code) {
+	    char message[80];
+
+	  case JUMP_OUT_OF_MEMORY:
+	    JNU_ThrowOutOfMemoryError(env, "jumpMessageWaitFor");
+	    break;
+
+	  case JUMP_NO_SUCH_QUEUE:
+	    JNU_ThrowByName(env, "XXX", NULL);
+	    break;
+
+	  case JUMP_TIMEOUT:
+	    JNU_ThrowByName(env, "XXX", NULL);
+	    break;
+
+	  case JUMP_UNBLOCKED:
+	    JNU_ThrowByName(env, "XXX", NULL);
+	    break;
+
+	  default:
+	    snprintf(message, sizeof(message),
+		     "JUMPMessageStatusCode: %d", code);
+	    JNU_ThrowByName(env, "XXX", message);
+	    break;
+	}
+	goto out;
+    }
 
     retVal = new_byte_array_from_message(env, r);
+    if (retVal == NULL) {
+	/* Exception already thrown. */
+	goto out;
+    }
 
   out:
     if (r != NULL) {
@@ -229,12 +316,37 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageAsync(
 
     m = new_outgoing_message_from_byte_array(env, messageBytes, isResponse);
     if (m == NULL) {
+	/* Exception already thrown. */
 	goto out;
     }
 
     target.processId = pid;
     jumpMessageSendAsync(target, m, &code);
-    
+    switch (code) {
+	char message[80];
+
+      case JUMP_SUCCESS:
+	break;
+
+      case JUMP_OUT_OF_MEMORY:
+	JNU_ThrowOutOfMemoryError(env, "jumpMessageSendSync");
+	break;
+
+      case JUMP_TARGET_NONEXISTENT:
+	JNU_ThrowByName(env, "XXX", message);
+	break;
+
+      case JUMP_WOULD_BLOCK:
+	JNU_ThrowByName(env, "XXX", message);
+	break;
+
+      default:
+	snprintf(message, sizeof(message),
+		 "JUMPMessageStatusCode: %d", code);
+	JNU_ThrowByName(env, "XXX", message);
+	break;
+    }
+
   out:
     if (m != NULL) {
 	jumpMessageFreeOutgoing(m);
@@ -255,12 +367,35 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageResponse(
 
     m = new_outgoing_message_from_byte_array(env, messageBytes, isResponse);
     if (m == NULL) {
+	/* Exception already thrown. */
 	goto out;
     }
 
     jumpMessageSendAsyncResponse(m, &code);
-    /* FIXME: Examine returned error code to figure out which exception
-       to throw */
+    switch (code) {
+	char message[80];
+
+      case JUMP_SUCCESS:
+	break;
+
+      case JUMP_OUT_OF_MEMORY:
+	JNU_ThrowOutOfMemoryError(env, "jumpMessageSendSync");
+	break;
+
+      case JUMP_TARGET_NONEXISTENT:
+	JNU_ThrowByName(env, "XXX", message);
+	break;
+
+      case JUMP_WOULD_BLOCK:
+	JNU_ThrowByName(env, "XXX", message);
+	break;
+
+      default:
+	snprintf(message, sizeof(message),
+		 "JUMPMessageStatusCode: %d", code);
+	JNU_ThrowByName(env, "XXX", message);
+	break;
+    }
 
   out:
     if (m != NULL) {
@@ -282,6 +417,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_reserve(
 	return;
     }
 
+    /* FIXME: use jumpMessageRegisterDirect. */
     jumpMessageQueueCreate((JUMPPlatformCString)type, &code);
 
     (*env)->ReleaseStringUTFChars(env, messageType, type);
@@ -300,6 +436,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_unreserve(
 	return;
     }
 
+    /* FIXME: use jumpMessageCancelRegistration. */
     jumpMessageQueueDestroy((JUMPPlatformCString)type);
 
     (*env)->ReleaseStringUTFChars(env, messageType, type);
