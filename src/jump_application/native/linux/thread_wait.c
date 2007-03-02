@@ -30,89 +30,30 @@
 
 struct _THREAD_WAIT_BLOCK {
     long handle;    // an abstract handle
-    int waitFor;    // a type of a signal
-    int waiting;    // number of waiting threads
-    int predicate;  // Boolean variable (0 - wait, 1 - shell go)
-    pthread_cond_t cond;    // a pthread conditional variable
+    int waitFor;    // a type of a signal, "0" for threadId
+    int blockCount; // number of opened sync blocks
+    int state;  // (0 - wait, 1 - shell go, -1 - interrupted)
+    pthread_mutex_t mutex;  // a pthread mutex
+    pthread_cond_t cond;    // a pthread condition variable
     struct _THREAD_WAIT_BLOCK *next; // link to the next block
 };
 
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 static struct _THREAD_WAIT_BLOCK *waiting_list = NULL;
 
-int jumpThreadWaitForSignal(long handle, int waitFor) {
-    struct _THREAD_WAIT_BLOCK *block, *p;
-    int rez;
-    
-    pthread_mutex_lock(&lock);
-    for (p = waiting_list; p != NULL; p = p->next) {
-        if (p->waitFor == waitFor && p->handle == handle) {
-            block = p;
-            block->waiting++;
-            break;
-        }
-    }
-    
-    if (block == NULL) {
-        block = malloc(sizeof block*);
-        if (block == NULL) {
-            pthread_mutex_unlock(&lock);
-            return -1;
-        }
-        block->handle = handle;
-        block->waitFor = waitFor;
-        block->waiting = 1;
-        block->predicate = 0;
-        if (pthread_cond_init(&block->cond, NULL) < 0) {
-            pthread_mutex_unlock(&lock);
-            free(block);
-            return -1;
-        }
-    }
-    block->next = waiting_list;
-    waiting_list = block;
-    
-    do {
-        rez = pthread_cond_wait(&block->cond, &lock);
-    } while (rez >= 0 && block->predicate == 0);
-    if (rez < 0) {
-        fprintf(stderr, "pthread_cond_wait returned %d\n", rez);
-    }
-    if (block->predicate != 0) {
-        int removed = 0;
-        
-        block->waiting--;
-        if (block->waiting == 0) {
-            if (waiting_list == block) {
-                waiting_list = block->next;
-                removed = 1;
-            } else {
-                for (p = waiting_list; p->next != NULL; p = p->next) {
-                    if (p->next == block) {
-                        p->next = block->next;
-                        removed = 1;
-                        break;
-                    }
-                }
-            }
-            assert(removed != 0);
-            free(block);
-        }
-    }
-    pthread_mutex_unlock(&lock);
-    return rez == 0 ? 0 : -1;
+/* Starts a sync block */
+int jumpThreadSyncBegin(long handle, int waitFor) {
 }
 
-int jumpThreadSignal(long handle, int waitFor) {
-    struct _THREAD_WAIT_BLOCK *block, *p;
-    int rez;
-    
-    pthread_mutex_lock(&lock);
-    for (p = waiting_list; p != NULL; p = p->next) {
-        if (p->waitFor == waitFor && p->handle == handle) {
-            block = p;
-            block->waiting++;
-            break;
-        }
-    }
+int jumpThreadSyncEnd(long handle, int waitFor) {
 }
+int jumpThreadSyncNotify(long handle, int waitFor) {
+}
+int jumpThreadSyncNotifyAll(long handle, int waitFor) {
+}
+
+/* return 0 if being notified, -1 when interrupted */
+int jumpThreadSyncWait(long handle, int waitFor) {
+}
+
+
