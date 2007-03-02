@@ -84,7 +84,10 @@ void jsr135_jumpdriver_listener(JUMPMessage *in) { \
     int id;                            \
     jumpMessageReaderInit(&r, *in);     \
     id = jumpMessageGetInt(&r); \
-    returnMessage = jumpMessageNewOutgoingByRequest(*in); \
+    returnMessage = jumpMessageNewOutgoingByRequest(*in, &code); \
+    if (code != JUMP_SUCCESS) { \
+        return; \
+    } \
     switch (id) {
         
 #define END_INTERFACE() \

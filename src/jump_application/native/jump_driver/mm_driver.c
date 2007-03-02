@@ -31,14 +31,19 @@ void jsr135_jumpdriver_listener(JUMPMessage *in);
 
 int close_driver = 0;
 void jsr135DriverMain(int argc, char **argv) {
+    JUMPMessageStatusCode code;
     JUMPMessage in;
     int ret;
 
     ret = jumpMessageStart();
     
     do {
-        in = jumpMessageWaitFor((JUMPPlatformCString)"mm/jsr135", 0);
-        jsr135_jumpdriver_listener(&in);
+        in = jumpMessageWaitFor((JUMPPlatformCString)"native/jsr135DriverMain", 0, &code);
+        if (code == JUMP_SUCCESS) {
+            jsr135_jumpdriver_listener(&in);
+        } else {
+		close_driver = 1;
+        }
     } while (0 == close_driver);
 
     sleep(1);
