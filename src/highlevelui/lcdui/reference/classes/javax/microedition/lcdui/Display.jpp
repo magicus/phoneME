@@ -61,6 +61,8 @@ import com.sun.midp.util.LiveTracer;
 // #endif ENABLE_I3_TEST
 
 // #ifdef ENABLE_GCI
+import java.security.*;
+
 import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
 import com.sun.me.gci.windowsystem.GCIDisplay;
 import com.sun.me.gci.windowsystem.GCIScreenWidget;
@@ -617,6 +619,11 @@ public class Display {
                                    Command.HELP, 3);
         aboutCommand.setInternalID(EventConstants.ABOUT_REQUESTED);
         // #endif ENABLE_CDC
+
+        // #ifdef ENABLE_GCI
+        java.security.AccessController.doPrivileged(
+                 new sun.security.action.LoadLibraryAction("gciawt"));
+        // #endif ENABLE_GCI
     }
 
 
