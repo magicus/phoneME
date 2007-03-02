@@ -337,7 +337,9 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
                         offset++;
                     }
                 } else {
-                    count = oldCount;    // broken sequence detected at tail of array
+                    // broken sequence of bytes detected at the array tail
+                    // the broken char still must be counted
+                    count = oldCount+1;
                     break;
                 }
             }
