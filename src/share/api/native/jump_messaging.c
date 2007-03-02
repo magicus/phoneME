@@ -295,6 +295,7 @@ newMessageFromReceivedBuffer(uint8* buffer, uint32 len,
 static uint32 thisProcessMessageId;
 static int32 thisProcessRequestId;
 
+/* FIXME Assumes buffer is MESSAGE_BUFFER_SIZE. */
 JUMPOutgoingMessage
 jumpMessageNewOutgoingFromBuffer(uint8* buffer, int isResponse,
 				 JUMPMessageStatusCode *code)

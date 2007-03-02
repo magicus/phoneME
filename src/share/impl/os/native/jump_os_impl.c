@@ -27,6 +27,7 @@
 #include "porting/JUMPMessageQueue.h"
 #include "porting/JUMPProcess.h"
 #include "jump_messaging.h"
+#include "jni_util.h"
 
 static void ensureInitialized() 
 {
@@ -60,10 +61,48 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_getReturnType(JNIEnv *env
     ensureInitialized();
     
     name = jumpMessageGetReturnTypeName();
+    if (name == NULL) {
+	JNU_ThrowOutOfMemoryError(env, "jumpMessageGetReturnTypeName");
+	return NULL;
+    }
     ret = (*env)->NewStringUTF(env, name);
     free(name);
 
     return ret;
+}
+
+static JUMPOutgoingMessage
+new_outgoing_message_from_byte_array(
+    JNIEnv *env, 
+    jbyteArray messageBytes,
+    jboolean isResponse)
+{
+    jbyte *buffer;
+    jsize length;
+    JUMPOutgoingMessage m;
+    JUMPMessageStatusCode code;
+
+    buffer = malloc(MESSAGE_BUFFER_SIZE);
+    if (buffer == NULL) {
+	JNU_ThrowOutOfMemoryError(env, "malloc");
+	return NULL;
+    }
+
+    length = (*env)->GetArrayLength(env, messageBytes);
+    if (length > MESSAGE_BUFFER_SIZE) {
+	length = MESSAGE_BUFFER_SIZE;
+    }
+    (*env)->GetByteArrayRegion(env, messageBytes, 0, length, buffer);
+
+    m = jumpMessageNewOutgoingFromBuffer(buffer, isResponse, &code);
+    if (m == NULL) {
+	/* FIXME check code */
+	JNU_ThrowOutOfMemoryError(env, "jumpMessageNewOutgoingFromBuffer");
+	free(buffer);
+	return NULL;
+    }
+
+    return m;
 }
 
 JNIEXPORT jbyteArray JNICALL
@@ -75,31 +114,48 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageSync(
     jboolean isResponse,
     jlong timeout)
 {
+    jbyteArray retVal = NULL;
+    JUMPOutgoingMessage m = NULL;
     JUMPAddress target;
+    JUMPMessage r = NULL;
     JUMPMessageStatusCode code;
-    jboolean isCopy;
-    jbyte* raw = (*env)->GetByteArrayElements(env, messageBytes, &isCopy);
-    jbyteArray retVal;
     jbyte* returnInterior;
-
-    JUMPOutgoingMessage m;
-    JUMPMessage r;
 
     ensureInitialized();
 
-    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse, &code);
+    m = new_outgoing_message_from_byte_array(env, messageBytes, isResponse);
+    if (m == NULL) {
+	goto out;
+    }
+
     target.processId = pid;
     r = jumpMessageSendSync(target, m, (int32)timeout, &code);
     /* FIXME: Examine returned error code to figure out which exception
        to throw */
-    
+
     retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
-    returnInterior = (*env)->GetPrimitiveArrayCritical(env, retVal, &isCopy);
+    if (retVal == NULL) {
+	goto out;
+    }
+
+    returnInterior = (*env)->GetPrimitiveArrayCritical(env, retVal, NULL);
+    if (returnInterior == NULL) {
+	retVal = NULL;
+	goto out;
+    }
+
     memcpy(returnInterior, jumpMessageGetData(r), MESSAGE_BUFFER_SIZE);
     
     (*env)->ReleasePrimitiveArrayCritical(env, retVal, returnInterior, 0);
+
+  out:
+    if (r != NULL) {
+	jumpMessageFree(r);
+    }
+    if (m != NULL) {
+	jumpMessageFreeOutgoing(m);
+    }
     
-    free(raw);
     return retVal;
 }
 
@@ -110,25 +166,41 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_receiveMessage(
     jstring messageType, 
     jlong timeout)
 {
-    jboolean isCopy;
-    const char* type = (*env)->GetStringUTFChars(env, messageType, &isCopy);
-    jbyteArray retVal;
+    const char* type = NULL;
+    JUMPMessage r = NULL;
+    JUMPMessageStatusCode code;
+    jbyteArray retVal = NULL;
     jbyte* returnInterior;
 
-    JUMPMessage r;
-    JUMPMessageStatusCode code;
-
     ensureInitialized();
+
+    type = (*env)->GetStringUTFChars(env, messageType, NULL);
+    if (type == NULL) {
+	goto out;
+    }
 
     r = jumpMessageWaitFor((JUMPPlatformCString)type, (int32)timeout, &code);
     /* FIXME: Examine returned error code to figure out which exception
        to throw. Return an error code!! */
+
     retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
-    returnInterior = (*env)->GetPrimitiveArrayCritical(env, retVal, &isCopy);
+    if (retVal == NULL) {
+	goto out;
+    }
+
+    returnInterior = (*env)->GetPrimitiveArrayCritical(env, retVal, NULL);
+    if (returnInterior == NULL) {
+	retVal = NULL;
+	goto out;
+    }
     memcpy(returnInterior, jumpMessageGetData(r), MESSAGE_BUFFER_SIZE);
     
     (*env)->ReleasePrimitiveArrayCritical(env, retVal, returnInterior, 0);
-    
+
+  out:
+    if (r != NULL) {
+	jumpMessageFree(r);
+    }
     return retVal;
 }
 
@@ -140,20 +212,24 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageAsync(
     jbyteArray messageBytes,
     jboolean isResponse)
 {
+    JUMPOutgoingMessage m = NULL;
     JUMPAddress target;
     JUMPMessageStatusCode code;
-    jboolean isCopy;
-    jbyte* raw = (*env)->GetByteArrayElements(env, messageBytes, &isCopy);
-
-    JUMPOutgoingMessage m;
 
     ensureInitialized();
 
-    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse, &code);
+    m = new_outgoing_message_from_byte_array(env, messageBytes, isResponse);
+    if (m == NULL) {
+	goto out;
+    }
+
     target.processId = pid;
     jumpMessageSendAsync(target, m, &code);
     
-    free(raw);
+  out:
+    if (m != NULL) {
+	jumpMessageFreeOutgoing(m);
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -163,18 +239,24 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageResponse(
     jbyteArray messageBytes,
     jboolean isResponse)
 {
+    JUMPOutgoingMessage m = NULL;
     JUMPMessageStatusCode code;
-    jboolean isCopy;
-    jbyte* raw = (*env)->GetByteArrayElements(env, messageBytes, &isCopy);
-
-    JUMPOutgoingMessage m;
 
     ensureInitialized();
 
-    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse, &code);
+    m = new_outgoing_message_from_byte_array(env, messageBytes, isResponse);
+    if (m == NULL) {
+	goto out;
+    }
+
     jumpMessageSendAsyncResponse(m, &code);
-    
-    free(raw);
+    /* FIXME: Examine returned error code to figure out which exception
+       to throw */
+
+  out:
+    if (m != NULL) {
+	jumpMessageFreeOutgoing(m);
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -183,11 +265,17 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_reserve(
     jobject thisObj, 
     jstring messageType)
 {
-    jboolean isCopy;
-    const char* type = (*env)->GetStringUTFChars(env, messageType, &isCopy);
+    const char* type;
     JUMPMessageQueueStatusCode code;
-    
+
+    type = (*env)->GetStringUTFChars(env, messageType, NULL);
+    if (type == NULL) {
+	return;
+    }
+
     jumpMessageQueueCreate((JUMPPlatformCString)type, &code);
+
+    (*env)->ReleaseStringUTFChars(env, messageType, type);
 }
 
 JNIEXPORT void JNICALL
