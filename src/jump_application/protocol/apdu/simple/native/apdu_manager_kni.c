@@ -179,7 +179,9 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_isSAT) {
     KNI_ReturnInt(result);
 }
 
-JUMPEvent cardReaderEvent;
+// JUMPEvent cardReaderEvent;
+static long cardReaderEventHandle = 0;
+
 /**
  * Performs reset of the card in the slot. This method must be called within
  * <tt>synchronize</tt> block with the Slot object.
