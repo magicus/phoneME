@@ -95,24 +95,31 @@ new_outgoing_message_from_byte_array(
     buffer = malloc(MESSAGE_BUFFER_SIZE);
     if (buffer == NULL) {
 	JNU_ThrowOutOfMemoryError(env, "new_outgoing_message_from_byte_array");
-	return NULL;
+	goto error;
     }
 
     length = (*env)->GetArrayLength(env, messageBytes);
     if (length > MESSAGE_BUFFER_SIZE) {
 	length = MESSAGE_BUFFER_SIZE;
     }
+
     (*env)->GetByteArrayRegion(env, messageBytes, 0, length, buffer);
+    if ((*env)->ExceptionOccurred(env) != NULL) {
+	goto error;
+    }
 
     m = jumpMessageNewOutgoingFromBuffer(buffer, isResponse, &code);
     if (m == NULL) {
 	/* FIXME check code */
 	JNU_ThrowOutOfMemoryError(env, "jumpMessageNewOutgoingFromBuffer");
-	free(buffer);
-	return NULL;
+	goto error;
     }
 
     return m;
+
+  error:
+    free(buffer);
+    return NULL;
 }
 
 static jbyteArray
