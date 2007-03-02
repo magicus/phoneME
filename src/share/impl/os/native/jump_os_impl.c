@@ -29,8 +29,18 @@
 #include "jump_messaging.h"
 #include "jni_util.h"
 
+static jboolean messaging_started = JNI_FALSE;
 static void ensureInitialized() 
 {
+    /*
+     * FIXME:
+     * This is really for stand-alone execution.
+     * We should really make this part of JVM initialization. 
+     */
+    if (!messaging_started) {
+	jumpMessageStart();
+	messaging_started = JNI_TRUE;
+    }
 }
 
 JNIEXPORT jint JNICALL
@@ -84,7 +94,7 @@ new_outgoing_message_from_byte_array(
 
     buffer = malloc(MESSAGE_BUFFER_SIZE);
     if (buffer == NULL) {
-	JNU_ThrowOutOfMemoryError(env, "malloc");
+	JNU_ThrowOutOfMemoryError(env, "new_outgoing_message_from_byte_array");
 	return NULL;
     }
 
@@ -105,6 +115,25 @@ new_outgoing_message_from_byte_array(
     return m;
 }
 
+static jbyteArray
+new_byte_array_from_message(
+    JNIEnv *env,
+    JUMPMessage message)
+{
+    jbyteArray retVal;
+
+    /* FIXME: use the actual message size. */
+    retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
+    if (retVal == NULL) {
+	return NULL;
+    }
+
+    (*env)->SetByteArrayRegion(env, retVal, 0, MESSAGE_BUFFER_SIZE,
+			       jumpMessageGetData(message));
+
+    return retVal;
+}
+
 JNIEXPORT jbyteArray JNICALL
 Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageSync(
     JNIEnv *env, 
@@ -119,7 +148,6 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageSync(
     JUMPAddress target;
     JUMPMessage r = NULL;
     JUMPMessageStatusCode code;
-    jbyte* returnInterior;
 
     ensureInitialized();
 
@@ -133,20 +161,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageSync(
     /* FIXME: Examine returned error code to figure out which exception
        to throw */
 
-    retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
-    if (retVal == NULL) {
-	goto out;
-    }
-
-    returnInterior = (*env)->GetPrimitiveArrayCritical(env, retVal, NULL);
-    if (returnInterior == NULL) {
-	retVal = NULL;
-	goto out;
-    }
-
-    memcpy(returnInterior, jumpMessageGetData(r), MESSAGE_BUFFER_SIZE);
-    
-    (*env)->ReleasePrimitiveArrayCritical(env, retVal, returnInterior, 0);
+    retVal = new_byte_array_from_message(env, r);
 
   out:
     if (r != NULL) {
@@ -170,7 +185,6 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_receiveMessage(
     JUMPMessage r = NULL;
     JUMPMessageStatusCode code;
     jbyteArray retVal = NULL;
-    jbyte* returnInterior;
 
     ensureInitialized();
 
@@ -183,19 +197,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_receiveMessage(
     /* FIXME: Examine returned error code to figure out which exception
        to throw. Return an error code!! */
 
-    retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
-    if (retVal == NULL) {
-	goto out;
-    }
-
-    returnInterior = (*env)->GetPrimitiveArrayCritical(env, retVal, NULL);
-    if (returnInterior == NULL) {
-	retVal = NULL;
-	goto out;
-    }
-    memcpy(returnInterior, jumpMessageGetData(r), MESSAGE_BUFFER_SIZE);
-    
-    (*env)->ReleasePrimitiveArrayCritical(env, retVal, returnInterior, 0);
+    retVal = new_byte_array_from_message(env, r);
 
   out:
     if (r != NULL) {
