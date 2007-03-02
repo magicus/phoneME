@@ -189,7 +189,7 @@ void jumpMessageQueueClose(JUMPMessageQueueHandle handle) {
 
 
 // No message header on windows
-int jumpMessageQueueDataOffset(void) {
+int jumpMessageQueueDataOffset() {
     return 0;
 }
 
@@ -317,18 +317,18 @@ int jumpMessageQueueReceive(JUMPPlatformCString messageType, char *buffer, int b
     return cbBytes; //Success
 }
 
-void jumpMessageQueueInterfaceDestroy(void){
+void jumpMessageQueueInterfaceDestroy(){
     int i;
     for (i = 0; i< numOfhSlots; i++) {
         jumpMessageQueueDestroy(mailslots[i].key);
     }
 }
 
-int jumpProcessGetId(void){
+int jumpProcessGetId(){
     return GetCurrentProcessId();
 }
 
-int jumpProcessGetExecutiveId(void){
+int jumpProcessGetExecutiveId(){
     return executiveProcessId;
 }
 
@@ -336,7 +336,7 @@ void jumpProcessSetExecutiveId(int execPid){
     executiveProcessId = execPid;
 }
 
-int jumpThreadGetId(void){
+int jumpThreadGetId(){
     return GetCurrentThreadId();
 }
 

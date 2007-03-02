@@ -33,7 +33,7 @@
  * Process implementation
  */
 int 
-jumpProcessGetId(void)
+jumpProcessGetId()
 {
     return getpid();
 }
@@ -54,7 +54,7 @@ jumpProcessSetServerPid(int sPid)
 }
 
 int 
-jumpProcessGetExecutiveId(void)
+jumpProcessGetExecutiveId()
 {
     return executivePid;
 }
@@ -120,7 +120,7 @@ create_process(char **cmd_args, int argc, char** argv)
 	/* Nothing to do */
 	return -1;
     }
-    outMessage = jumpMessageNewOutgoingByType(type, &code);
+    outMessage = jumpMessageNewOutgoingByType(type);
     jumpMessageMarkSet(&mark, outMessage);
     /*
      * We don't yet know how many strings we will be adding in, so
