@@ -50,7 +50,7 @@ const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
     jsize len;
 
     /*
-     * JVM interface should have been stored in JNI statics. If it is
+     * JVM interface should have been stored in statics. If it is
      * not there, we cannot get properties from Java.
      */
     if (NULL == jvm) {
@@ -68,7 +68,7 @@ const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
      * could be refactored in the future if a general solution for
      * calling JNI from KNI environment is required.
      */
-    if ((*env)->PushLocalFrame(env, 1) < 0) {
+    if ((*env)->PushLocalFrame(env, 2) < 0) {
         return NULL;
     }
 
