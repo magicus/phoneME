@@ -28,7 +28,12 @@
 #  within a JUMP system
 #
 #  Usage:
-#    runinstall -command <command>, where command is list, install, or uninstall
+#    runinstall <options> -command <command>
+#  
+#   <command> can be:
+#        list, install, install_all, uninstall, or uninstall_all
+#   <options> can be:
+#       -verbose - prints debugging information
 #
 # Example commands:
 #
@@ -38,10 +43,22 @@
 #     Command: runinstall -command install
 #     Action : Download and install an application into the system.
 #     Note   : The user will be prompted for input to specify the application
+#              to be installed
+#
+#     Command: runinstall -command install_all
+#     Action : Download and install all applications available in a provisioning
+#              server
+#     Note   : There is no user interaction in this case.
 #
 #     Command: runinstall -command uninstall
 #     Action : Uninstall an application into the system.
 #     Note   : The user will be prompted for input to specify the application
+#              to be uninstalled.
+#
+#     Command: runinstall -command uninstall_all
+#     Action : Uninstall all applications currently installed
+#     Note   : There is no user interaction in this case.
+#
 #
 ###
 # Note: On linux-x86-suse, the following is the minimum set of variables that should
@@ -83,7 +100,7 @@
 #
 # Name:  JUMP_CONTENT_STORE_DIR
 # Desc:  Root of content store
-# Dflt:  /opt/repository
+# Dflt:  data (default value is determined in modules-config.properties)
 #
 # Name:  PROVISIONING_SERVER_URL
 # Desc:  URL to a provisioning server
@@ -126,16 +143,15 @@ if [ -z "$PHONEME_DIST" ] ; then
     fi
 fi
 
-# Set the root of content store
-if [ -z "$JUMP_CONTENT_STORE_DIR" ] ; then
-  JUMP_CONTENT_STORE_DIR=data
-fi
-
 CVM=$PHONEME_DIST/bin/cvm
 JUMP_LIBDIR=$PHONEME_DIST/jump/lib
 INSTALLER_TOOL_CLASS=com.sun.jumpimpl.module.installer.JUMPInstallerTool
 
-PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
+# Set the root of content store if specified
+if [ "$JUMP_CONTENT_STORE_DIR" != "" ] ; then
+  PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
+fi
+
 ARGUMENTS="-ProvisioningServerURL $PROVISIONING_SERVER_URL"
 
 cd $PHONEME_DIST
