@@ -23,31 +23,32 @@
  */
 package com.sun.mmedia;
 
+import javax.microedition.lcdui.*;
+
 /**
- * This is a helper class that gets the MMHelper instance from
- * the javax.microedition.lcdui package. It hides the MIDPVideoPainter class
- * so that the entire MMAPI classes are not loaded in during MIDlet
- * startup.
+ * This is a helper interface to communicate between the LCDUI <code>Canvas
+ * </code> and
+ * the MMAPI video players. It has methods to register and unregister
+ * <code>MIDPVideoPainter</code>s with an LCDUI Canvas.
  */
-public class MIDPRendererCanvasBuddy {
-    static private MMHelper mmh = null;
+public interface MMHelper {
 
     /**
-     * This is the link to the LCDUI canvas implementation for special
-     * repaint events. This is called by javax.microedition.lcdui.MMHelperImpl.
+     * Registers a video control (which implements MIDPVideoPainter) with
+     * the corresponding Canvas where the video is to show up.
      */
-    public static void setMMHelper(MMHelper mmhelper) {
-        // Safeguard to make sure its called only once
-        if (mmh == null)
-            mmh = mmhelper;
-    }
+    void registerPlayer(Canvas c, MIDPVideoPainter vp);
 
     /**
-     * This method is called by MIDPVideoPainter implementation
-     * to get a hold of the MMHelper...
+     * Unregisters a video control so that it doesn't get paint callbacks
+     * anymore after the player is closed. This also reduces load on the
+     * Canvas repaint mechanism.
      */
-    static MMHelper getMMHelper() {
-        return mmh;
-    }
+    void unregisterPlayer(Canvas c, MIDPVideoPainter vp);
 
+
+    /**
+     * Get Display being used for Item painting. Platform-dependent.
+     */
+    Display getItemDisplay(Item item);
 }
