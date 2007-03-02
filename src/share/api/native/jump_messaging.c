@@ -971,7 +971,7 @@ jumpMessageSendAsyncResponse(JUMPOutgoingMessage m,
 /*
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
  * JUMP_TIMEOUT, JUMP_OVERRUN, JUMP_NEGATIVE_ARRAY_LENGTH,
- * JUMP_NO_SUCH_QUEUE, or JUMP_FAILURE.
+ * JUMP_NO_SUCH_QUEUE, JUMP_UNBLOCKED, or JUMP_FAILURE.
  */
 static JUMPMessage
 doWaitFor(JUMPPlatformCString type, int32 timeout, JUMPMessageStatusCode *code)
