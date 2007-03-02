@@ -605,7 +605,12 @@ public class Image {
 				 int imageDataArrayLength) {
 	// TODO -add impl
 	return null;
+    }
 
+    /**
+     */
+    ImageData getImageData() {
+	return null;
     }
 
     /**
@@ -641,4 +646,7 @@ public class Image {
 								  height,
 					GCIDrawingSurface.FORMAT_ARGB_8888);
     }
+}
+
+class ImageData {
 }
