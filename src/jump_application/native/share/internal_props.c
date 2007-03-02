@@ -26,7 +26,10 @@
 
 #include "jni.h"
 #include "jni_util.h"
-#include "jni_statics.h"
+
+static JavaVM* jvm = NULL;
+static jclass clazz = NULL;
+static jmethodID methodID = NULL;
 
 /**
  * Native counterpart for
@@ -45,7 +48,6 @@ const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
     jstring propname;
     jstring prop;
     jsize len;
-    JavaVM* jvm = JNI_STATIC(internal_props, jvm);
 
     /*
      * JVM interface should have been stored in JNI statics. If it is
@@ -75,8 +77,7 @@ const char* jumpGetInternalProp(const char* key, char* buffer, int length) {
         goto _error;
     }
 
-    prop = (jstring)(*env)->CallStaticObjectMethod(env, JNI_STATIC(internal_props, cls),
-                                                   JNI_STATIC(internal_props, getPropertyID),
+    prop = (jstring)(*env)->CallStaticObjectMethod(env, clazz, methodID,
                                                    propname);
 
     if ((*env)->ExceptionCheck(env) != JNI_FALSE) {
@@ -117,18 +118,17 @@ Java_com_sun_j2me_main_Configuration_initialize(JNIEnv *env, jclass cls) {
                         "cannot find Configuration class");
         return;
     }
-    JNI_STATIC(internal_props, cls) = (*env)->NewGlobalRef(env, c);
+    clazz = (*env)->NewGlobalRef(env, c);
 
-    JNI_STATIC(internal_props, getPropertyID) =
-        (*env)->GetStaticMethodID(env, c, "getProperty",
-                                  "(Ljava/lang/String;)Ljava/lang/String;");
-    if (NULL == JNI_STATIC(internal_props, getPropertyID)) {
+    methodID = (*env)->GetStaticMethodID(env, c, "getProperty",
+                                         "(Ljava/lang/String;)Ljava/lang/String;");
+    if (NULL == methodID) {
         JNU_ThrowByName(env, "java/lang/RuntimeException",
                         "cannot get getProperty() method ID");
         return;
     }
 
-    if ((*env)->GetJavaVM(env, &JNI_STATIC(internal_props, jvm)) != 0) {
+    if ((*env)->GetJavaVM(env, &jvm) != 0) {
         JNU_ThrowByName(env, "java/lang/RuntimeException",
                         "cannot get Java VM interface");
     }
