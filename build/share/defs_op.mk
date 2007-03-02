@@ -70,8 +70,8 @@ endif
 include $(SECOP_DIR)/build/share/$(SUBSYSTEM_MAKE_FILE)
 endif
 
-# If any JSR is built include JSROP abstractions and Javacall building
-ifneq ($(JSROP_BUILD_JARS),)
+# If any JSR is built include JSROP abstractions building
+ifneq ($(INCLUDED_JSROP_NUMBERS),)
 # Check Jump building
 ifneq ($(CVM_INCLUDE_JUMP), true)
 $(error JSR optional packages require Jump to be supported. CVM_INCLUDE_JUMP must be true.)
@@ -253,12 +253,12 @@ include $(JAVACALL_MAKE_FILE)
 endif
 
 CVM_INCLUDES    += $(JSROP_EXTRA_INCLUDES)
+CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
 
 ifeq ($(CVM_PRELOAD_LIB), true)
 CVM_JCC_INPUT   += $(JSROP_JARS)
 CVM_CNI_CLASSES += $(JSROP_CNI_CLASSES)
 CVM_OBJECTS     += $(JSROP_NATIVE_OBJS)
-else
-CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
+LINKLIBS_CVM    += $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
 endif
 
