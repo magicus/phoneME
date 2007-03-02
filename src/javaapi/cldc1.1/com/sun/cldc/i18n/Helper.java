@@ -350,7 +350,12 @@ public class Helper {
 
         try {
             /* Read the input */
-            lastReader.read(outbuf, 0, size);
+            int numread = lastReader.read(outbuf, 0, size);
+            if (numread<size) {
+                // this may happen only if the last character is truncated
+                // (say, it should be of 3 bytes, but there are only 2).
+                lastReader.read(outbuf, numread, size-numread);
+            }
             /* Close the reader */
             lastReader.close();
         } catch(IOException x) {
