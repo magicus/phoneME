@@ -97,7 +97,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageSync(
 
     ensureInitialized();
 
-    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse, &code);
+    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse);
     target.processId = pid;
     r = jumpMessageSendSync(target, m, (int32)timeout, &code);
     /* FIXME: Examine returned error code to figure out which exception
@@ -126,11 +126,10 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_receiveMessage(
     jbyte* returnInterior;
 
     JUMPMessage r;
-    JUMPMessageStatusCode code;
 
     ensureInitialized();
 
-    r = jumpMessageWaitFor((JUMPPlatformCString)type, (int32)timeout, &code);
+    r = jumpMessageWaitFor((JUMPPlatformCString)type, (int32)timeout);
     /* FIXME: Examine returned error code to figure out which exception
        to throw. Return an error code!! */
     retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
@@ -159,7 +158,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageAsync(
 
     ensureInitialized();
 
-    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse, &code);
+    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse);
     target.processId = pid;
     jumpMessageSendAsync(target, m, &code);
     
@@ -181,7 +180,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageResponse(
 
     ensureInitialized();
 
-    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse, &code);
+    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse);
     jumpMessageSendAsyncResponse(m, &code);
     
     free(raw);

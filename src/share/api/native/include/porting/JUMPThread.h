@@ -32,7 +32,7 @@ extern "C" {
  * Returns the thread ID of this thread.
  * This number has to be unique for each thread.
  */
-extern int jumpThreadGetId(void);
+extern int jumpThreadGetId();
 
 #if defined __cplusplus 
 }
