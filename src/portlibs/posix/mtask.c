@@ -41,6 +41,8 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
+#include <sys/select.h>
+#include <errno.h>
 
 #include "javavm/export/jni.h"
 #include "javavm/export/cvm.h"
@@ -58,6 +60,15 @@
 #include "porting/JUMPProcess.h"
 
 #include "zip_util.h"
+
+/* A non-blocking pipe that child() uses to notify the main loop. */
+
+static int child_pipe_write;
+static int child_pipe_read;
+
+/* Fd that main loop messages will arrive on. */
+
+static int message_fd;
 
 /*
  * Free (argc, argv[]) set
@@ -153,7 +164,7 @@ typedef struct _TaskRec {
 /* Single process for the mtask server, so these globals are OK */
 static int numTasks = 0;
 static TaskRec* taskList = NULL;
-static int reapChildrenFlag = 0;
+static volatile int reapChildrenFlag = 0;
 
 static int executivePid = -1;
 static int amExecutive = 0;
@@ -165,9 +176,13 @@ static char* executiveTestingModeFilePrefixSnapshot = NULL;
 static void child(int sig)
 {
     int pid = getpid();
+    char buffer = 'A';
 
     fprintf(stderr, "Received SIGCHLD in PID=%d\n", pid);
     reapChildrenFlag = 1;
+
+    /* Non-blocking write, just ignore any error. */
+    write(child_pipe_write, &buffer, 1);
 }
 
 static void 
@@ -724,17 +739,86 @@ oneString(JUMPMessage m)
     return string;
 }
 
+/* Returns a JUMPMessage when there is a message to process.  There
+   may also be children to deal with.  Returns (JUMPMessage)-1
+   when there is no message but there may be children to deal with.
+   Returns NULL on error. */
 static JUMPMessage
 readRequestMessage()
 {
-    JUMPMessage in;
-    JUMPMessageStatusCode code;
-    
-    in = jumpMessageWaitFor("mvm/server", 0, &code);
-    if (in != NULL) {
-	dumpMessage(in, "Server received:");
+    fd_set readfds;
+
+    /* Wait for a possible message or a child notification, or abort
+       on error. */
+
+    while (1) {
+	int fds;
+	int status;
+
+	FD_ZERO(&readfds);
+	fds = 0;
+
+	FD_SET(message_fd, &readfds);
+	if (message_fd > fds) {
+	    fds = message_fd;
+	}
+
+	FD_SET(child_pipe_read, &readfds);
+	if (child_pipe_read > fds) {
+	    fds = child_pipe_read;
+	}
+
+	status = select(fds + 1, &readfds, NULL, NULL, NULL);
+	if (status == -1) {
+	    if (errno == EINTR) {
+		continue;
+	    }
+	    return NULL;
+	}
+	if (status == 0) {
+	    continue;
+	}
+	break;
     }
-    return in;
+
+    if (FD_ISSET(child_pipe_read, &readfds)) {
+	/* Clear bytes from the pipe. */
+	while (1) {
+	    /* 24 is just a smallish buffer size; there's nothing
+	       special about it.  Since we read in a loop it could be
+	       1, but using a slightly larger buffer allows us to read
+	       multiple bytes at once, should there be any. */
+	    char buffer[24];
+	    int status = read(child_pipe_read, buffer, sizeof(buffer));
+	    if (status == -1) {
+		if (errno == EINTR) {
+		    continue;
+		}
+		if (errno == EAGAIN) {
+		    break;
+		}
+		return NULL;
+	    }
+	    if (status == 0) {
+		/* EOF, this should never happen, something is broken. */
+		return NULL;
+	    }
+	}
+    }
+
+    if (FD_ISSET(message_fd, &readfds)) {
+	JUMPMessage in;
+	JUMPMessageStatusCode code;
+
+	/* There's a message so this should not block. */
+	in = jumpMessageWaitFor("mvm/server", 0, &code);
+	if (in != NULL) {
+	    dumpMessage(in, "Server received:");
+	}
+	return in;
+    }
+
+    return (JUMPMessage) -1;
 }
 
 /*
@@ -910,7 +994,6 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    /* local variable that will keep pointer to native's main() */
 	    void (*nativeMain)(int argc, char **argv) = NULL;
 
-	    tokenizeArgs(command, &argc, &argv);
 	    /*
 	     * Check for children to reap before each command
 	     * is executed 
@@ -920,7 +1003,13 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		childrenExited = 1; 
 		reapChildren(state);
 	    }
-    
+	    if (command == (JUMPMessage) -1) {
+		/* There was no message, just a child notification. */
+		continue;
+	    }
+
+	    tokenizeArgs(command, &argc, &argv);
+
 	    if (!strcmp(argv[0], "JEXIT")) {
 		respondWith(command, "YES");
 		jumpMessageShutdown();
@@ -1380,6 +1469,38 @@ MTASKserverInitialize(ServerState* state,
 	/* FIXME: check the return code. */
 	JUMPMessageStatusCode code;
 	jumpMessageRegisterDirect("mvm/server", &code);
+    }
+
+    /* Create a non-blocking pipe for child() to notify the main loop. */
+    {
+	int pipes[2];
+	int i;
+
+	if (pipe(pipes) == -1) {
+	    goto error;
+	}
+
+	for ( i = 0; i < 2; i++) {
+	    int fl;
+
+	    fl = fcntl(pipes[i], F_GETFL);
+	    if (fl == -1) {
+		goto error;
+	    }
+
+	    fl |= O_NONBLOCK;
+	    if (fcntl(pipes[i], F_SETFL, fl) == -1) {
+		goto error;
+	    }
+	}
+
+	child_pipe_read = pipes[0];
+	child_pipe_write = pipes[1];
+    }
+
+    message_fd = jumpMessageGetFd("mvm/server");
+    if (message_fd == -1) {
+	goto error;
     }
     
     /*
