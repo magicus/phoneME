@@ -43,6 +43,20 @@ static void ensureInitialized()
     }
 }
 
+static void
+throw_JUMPTimedOutException(JNIEnv *env)
+{
+    /* JUMPTimedOutException does not take a String arg, so we
+       can't use JNU_ThrowByName(). */
+    jobject ex =
+	JNU_NewObjectByName(env, "com/sun/jump/message/JUMPTimedOutException",
+			    "()V");
+    if (ex == NULL) {
+	return;
+    }
+    (*env)->Throw(env, ex);
+}
+
 JNIEXPORT jint JNICALL
 Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_getProcessID(JNIEnv *env, jobject thisObj)
 {
@@ -205,7 +219,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageSync(
 	    break;
 
 	  case JUMP_TIMEOUT:
-	    JNU_ThrowByName(env, "XXX", message);
+	    throw_JUMPTimedOutException(env);
 	    break;
 
 	  case JUMP_UNBLOCKED:
@@ -271,7 +285,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_receiveMessage(
 	    break;
 
 	  case JUMP_TIMEOUT:
-	    JNU_ThrowByName(env, "XXX", NULL);
+	    throw_JUMPTimedOutException(env);
 	    break;
 
 	  case JUMP_UNBLOCKED:
