@@ -65,7 +65,8 @@ public class JUMPMessageQueueInterfaceImpl extends JUMPMessageQueueInterface {
     public native byte[] sendMessageSync(int pid,
 					 byte[] message,
 					 boolean isResponse,
-					 long timeout);
+					 long timeout)
+	throws JUMPTimedOutException;
     
     public native byte[] receiveMessage(String messageType,
 					long timeout) 
