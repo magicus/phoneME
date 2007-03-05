@@ -101,8 +101,8 @@ PlatformMScreen::PlatformMScreen(QWidget *parent, const char* name) :QScrollView
 void PlatformMScreen::init() {
     TRACE_MSC(  PlatformMScreen::init..);
 
-    setFocusPolicy(QWidget::StrongFocus);
-
+    setFocusPolicy(QWidget::ClickFocus);
+    
     // Always ...
     setHScrollBarMode(QScrollView::AlwaysOff);
 
@@ -632,6 +632,30 @@ int PlatformMScreen::getScreenHeight() const {
         return SCREEN_WIDTH;
     } else {
         return SCREEN_HEIGHT; 
+    }
+}
+
+
+/**
+ * Width available for Alert.
+ */
+int PlatformMScreen::getAlertWidth() const {
+    if (r_orientation) {
+        return ALERT_HEIGHT;
+    } else {
+        return ALERT_WIDTH;
+    }
+
+}
+
+/**
+ * Height available for Alert.
+ */
+int PlatformMScreen::getAlertHeight() const {
+    if (r_orientation) {
+        return ALERT_WIDTH;
+    } else {
+        return ALERT_HEIGHT; 
     }
 }
 

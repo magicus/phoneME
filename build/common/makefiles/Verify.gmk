@@ -152,6 +152,12 @@ define verify_jsr_234_directory
     fi
 endef
 
+define verify_midp_abb_directory
+    if [ "$(USE_MIDP_ABB)" = "true" ]; then \
+        $(verify_directory) ; \
+    fi
+endef
+
 define verify_jsr_135_directory
     if [ "$(USE_JSR_135)" = "true" ]; then \
         $(verify_directory) ; \
@@ -304,6 +310,7 @@ BOOLEAN_OPTIONS = \
 	USE_NETWORK_INDICATOR \
 	USE_NUTS_FRAMEWORK \
 	USE_RMS_TREE_INDEX \
+	USE_MIDP_ABB \
 	USE_JSR_177 \
 	USE_JSR_75 \
 	USE_JSR_82 \
@@ -324,7 +331,7 @@ BOOLEAN_OPTIONS = \
 	USE_JSR_239 \
 	USE_VERBOSE_MAKE \
 	USE_CONTROL_ARGS_FROM_JAD \
-        USE_JPEG \
+	USE_JPEG \
 	USE_NATIVE_PTI \
 	USE_VERIFY_ONCE \
 	USE_VM_PROFILES \
@@ -423,6 +430,10 @@ JSR_135_DIR:
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_jsr_135_directory) $(LOG)
 
+MIDP_ABB_DIR:
+	@echo +++ Verify option \"$@\" $(LOG_ONLY)
+	@$(verify_midp_abb_directory) $(LOG)
+
 JSR_238_DIR:
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_jsr_238_directory) $(LOG)
@@ -476,11 +487,11 @@ else
 CYGWIN_TMP_DIR: ;
 endif
 
-verify: $(BOOLEAN_OPTIONS) CYGWIN_TMP_DIR MIDP_DIR JDK_DIR CRYPTO_OUTPUT_DIR TOOLS_DIR \
-	RESTRICTED_CRYPTO_DIR JPEG_DIR JSR_177_DIR PCSL_OUTPUT_DIR CLDC_DIST_DIR \
-	JSR_75_DIR JSR_82_DIR JSR_172_DIR JSR_226_DIR PISCES_DIR JSR_179_DIR \
+verify: CYGWIN_TMP_DIR MIDP_DIR JDK_DIR CRYPTO_OUTPUT_DIR TOOLS_DIR \
+	RESTRICTED_CRYPTO_DIR JPEG_DIR MIDP_ABB_DIR JSR_177_DIR PCSL_OUTPUT_DIR CLDC_DIST_DIR \
+	JSR_75_DIR JSR_82_DIR JSR_135_DIR JSR_172_DIR JSR_226_DIR PISCES_DIR JSR_179_DIR \
 	JSR_180_DIR JSR_184_DIR JSR_205_DIR JSR_211_DIR JSR_229_DIR \
-	JSR_230_DIR JSR_234_DIR JSR_238_DIR JSR_239_DIR
+	JSR_230_DIR JSR_234_DIR JSR_238_DIR JSR_239_DIR $(BOOLEAN_OPTIONS)
 
 ######################################################################
 #

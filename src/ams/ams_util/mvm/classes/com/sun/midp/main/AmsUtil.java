@@ -332,7 +332,8 @@ public class AmsUtil {
                 id,
                 midlet,
                 externalAppId,
-                errorCode);
+                errorCode,
+                msg);
 
             throw new RuntimeException(msg);
         }

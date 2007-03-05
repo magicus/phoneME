@@ -247,6 +247,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
     {
         if (opChar != 0) {
             cursor = new TextCursor(cursor);
+            info.isModified = true;            
         }
         
         String str = getDisplayString(dca, opChar, constraints,

@@ -29,8 +29,6 @@ package com.sun.midp.midlet;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
-import com.sun.midp.main.MIDletSuiteExceptionListener;
-
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 

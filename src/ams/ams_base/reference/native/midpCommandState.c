@@ -107,14 +107,19 @@ void finalizeCommandState(void) {
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_main_CommandState_restoreCommandState) {
-    KNI_StartHandles(3);
+    KNI_StartHandles(5);
+    KNI_DeclareHandle(runtimeInfo);
     KNI_DeclareHandle(commandState);
     KNI_DeclareHandle(clazz);
+    KNI_DeclareHandle(rtiClazz);
     KNI_DeclareHandle(string);
 
     KNI_GetParameterAsObject(1, commandState);
-
     KNI_GetObjectClass(commandState, clazz);
+
+    KNI_GetObjectField(commandState, midp_get_field_id(KNIPASSARGS clazz,
+        "runtimeInfo", "Lcom/sun/midp/main/RuntimeInfo;"), runtimeInfo);
+    KNI_GetObjectClass(runtimeInfo, rtiClazz);
 
     KNI_RESTORE_INT_FIELD(commandState, clazz, "status",
                           MidpCommandState.status);
@@ -127,11 +132,11 @@ KNIDECL(com_sun_midp_main_CommandState_restoreCommandState) {
     KNI_RESTORE_INT_FIELD(commandState, clazz, "lastSuiteId",
                           MidpCommandState.lastSuiteId);
 
-    KNI_RESTORE_INT_FIELD(commandState, clazz, "memoryReserved",
+    KNI_RESTORE_INT_FIELD(runtimeInfo, rtiClazz, "memoryReserved",
                           MidpCommandState.runtimeInfo.memoryReserved);
-    KNI_RESTORE_INT_FIELD(commandState, clazz, "memoryTotal",
+    KNI_RESTORE_INT_FIELD(runtimeInfo, rtiClazz, "memoryTotal",
                           MidpCommandState.runtimeInfo.memoryTotal);
-    KNI_RESTORE_INT_FIELD(commandState, clazz, "priority",
+    KNI_RESTORE_INT_FIELD(runtimeInfo, rtiClazz, "priority",
                           MidpCommandState.runtimeInfo.priority);
 
     KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "lastMidletClassName",
@@ -147,7 +152,7 @@ KNIDECL(com_sun_midp_main_CommandState_restoreCommandState) {
                                   &MidpCommandState.arg1, string);
     KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "arg2",
                                   &MidpCommandState.arg2, string);
-    KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "profileName",
+    KNI_RESTORE_PCSL_STRING_FIELD(runtimeInfo, rtiClazz, "profileName",
                                   &MidpCommandState.profileName, string);
 
     KNI_EndHandles();
@@ -164,13 +169,19 @@ KNIDECL(com_sun_midp_main_CommandState_restoreCommandState) {
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_main_CommandState_saveCommandState) {
-    KNI_StartHandles(3);
+    KNI_StartHandles(5);
+    KNI_DeclareHandle(runtimeInfo);
     KNI_DeclareHandle(commandState);
     KNI_DeclareHandle(clazz);
+    KNI_DeclareHandle(rtiClazz);
     KNI_DeclareHandle(string);
 
     KNI_GetParameterAsObject(1, commandState);
     KNI_GetObjectClass(commandState, clazz);
+
+    KNI_GetObjectField(commandState, midp_get_field_id(KNIPASSARGS clazz,
+        "runtimeInfo", "Lcom/sun/midp/main/RuntimeInfo;"), runtimeInfo);
+    KNI_GetObjectClass(runtimeInfo, rtiClazz);
 
     KNI_SAVE_INT_FIELD(commandState, clazz, "status",
                        MidpCommandState.status);
@@ -181,11 +192,11 @@ KNIDECL(com_sun_midp_main_CommandState_saveCommandState) {
     KNI_SAVE_BOOLEAN_FIELD(commandState, clazz, "logoDisplayed",
                            MidpCommandState.logoDisplayed);
 
-    KNI_SAVE_INT_FIELD(commandState, clazz, "memoryReserved",
+    KNI_SAVE_INT_FIELD(runtimeInfo, rtiClazz, "memoryReserved",
                        MidpCommandState.runtimeInfo.memoryReserved);
-    KNI_SAVE_INT_FIELD(commandState, clazz, "memoryTotal",
+    KNI_SAVE_INT_FIELD(runtimeInfo, rtiClazz, "memoryTotal",
                        MidpCommandState.runtimeInfo.memoryTotal);
-    KNI_SAVE_INT_FIELD(commandState, clazz, "priority",
+    KNI_SAVE_INT_FIELD(runtimeInfo, rtiClazz, "priority",
                        MidpCommandState.runtimeInfo.priority);
     /*
      * We need to put these in the do/while block since the SAVE_STRING
@@ -209,7 +220,7 @@ KNIDECL(com_sun_midp_main_CommandState_saveCommandState) {
         KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "arg2",
                                    &MidpCommandState.arg2, string);
 
-        KNI_SAVE_PCSL_STRING_FIELD(commandState, clazz, "profileName",
+        KNI_SAVE_PCSL_STRING_FIELD(runtimeInfo, rtiClazz, "profileName",
                                    &MidpCommandState.profileName, string);
     } while (0);
 

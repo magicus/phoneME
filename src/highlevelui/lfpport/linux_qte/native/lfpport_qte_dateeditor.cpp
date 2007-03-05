@@ -516,7 +516,7 @@ DateTimeEditor::DateTimeEditor(QWidget *parent, int dmode, long initialTime) :
     TRACE_DE(  DateTimeEditor::DateTimeEditor..);
 
     // allows the item to be selected by clicking on the label
-    setFocusPolicy(QWidget::NoFocus);
+    setFocusPolicy(QWidget::StrongFocus);
 
     QVBoxLayout *vb = new QVBoxLayout( this, 5 );
 
@@ -915,6 +915,7 @@ static QDate addYears(const QDate &date, int nyears) {
 void DatePicker::acceptDay() {
     if (de != NULL) {
       de->setDate(currentDay);
+      de->setFocus();
     }
     accept();
   }

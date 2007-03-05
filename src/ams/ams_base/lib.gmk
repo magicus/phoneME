@@ -49,8 +49,7 @@ MIDP_JAVADOC_SOURCEPATH += $(AMS_BASE_DIR)/classes
 #
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/AbstractMIDletSuiteLoader.java \
-    $(AMS_BASE_DIR)/classes/com/sun/midp/main/TrustedMIDletIcon.java \
-    $(AMS_BASE_DIR)/classes/com/sun/midp/main/MIDletSuiteExceptionListener.java
+    $(AMS_BASE_DIR)/classes/com/sun/midp/main/TrustedMIDletIcon.java
 
 # vpath for sub-system
 #
@@ -83,6 +82,7 @@ ifeq ($(TARGET_VM), cldc_vm)
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/CldcMIDletSuiteLoader.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/CldcPlatformRequest.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/CommandState.java \
+    $(AMS_BASE_DIR)/classes/com/sun/midp/main/RuntimeInfo.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/ExecuteMIDletEventListener.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/DisplayController.java \
     $(AMS_BASE_DIR)/classes/com/sun/midp/main/DisplayControllerListener.java \

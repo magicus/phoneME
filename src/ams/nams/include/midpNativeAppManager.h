@@ -52,6 +52,27 @@
 #endif
 
 /*
+ * Definitions of the events that may cause a call of listener.
+ */
+/**
+ * @def MIDP_NAMS_EVENT_STATE_CHANGED 1
+ * state of the MIDP system or of a midlet was changed
+ */
+#define MIDP_NAMS_EVENT_STATE_CHANGED 1
+
+/**
+ * @def MIDP_NAMS_EVENT_OPERATION_COMPLETED 2
+ * previously initiated asynchronous operation has completed
+ */
+#define MIDP_NAMS_EVENT_OPERATION_COMPLETED 2
+
+/**
+ * @def MIDP_NAMS_EVENT_ERROR 3
+ * some error occured
+ */
+#define MIDP_NAMS_EVENT_ERROR 3
+
+/*
  * Defines for Java platform system states.
  *
  * IMPL_NOTE: please note that for NAMS testing it is supposed that
@@ -59,10 +80,10 @@
  *            otherwise, please change NamsTestService.getStateByValue().
  */
 /**
- * @def MIDP_SYSTEM_STATE_STARTED
+ * @def MIDP_SYSTEM_STATE_ACTIVE
  * when system is started up and ready to serve any MIDlet requests
  */
-#define MIDP_SYSTEM_STATE_STARTED    1
+#define MIDP_SYSTEM_STATE_ACTIVE     1
 
 /**
  * @def MIDP_SYSTEM_STATE_SUSPENDED
@@ -85,7 +106,7 @@
 /**
  * Defines for MIDlet states
  */
-#define MIDP_MIDLET_STATE_STARTED    1
+#define MIDP_MIDLET_STATE_ACTIVE     1
 #define MIDP_MIDLET_STATE_PAUSED     2
 #define MIDP_MIDLET_STATE_DESTROYED  3
 #define MIDP_MIDLET_STATE_ERROR      4
@@ -137,6 +158,8 @@ typedef struct _namsEventData {
     jint state;
     /** information about the midlet suite corresponding to this application */
     MidletSuiteData* pSuiteData;
+    /** runtime information about the application */
+    MidletRuntimeInfo* pRuntimeInfo;
 } NamsEventData;
 
 /**
@@ -268,14 +291,18 @@ MIDPError midp_midlet_pause(jint appId);
 /**
  * Stop the specified MIDlet.
  *
+ * If the midlet is not terminated within the given number of milliseconds,
+ * it will be forcefully terminated.
+ *
  * If appId is invalid, this call has no effect, but the MIDlet state change
  * listener will be called anyway.
  *
  * @param appId The ID used to identify the application
+ * @param timeout Timeout in milliseconds
  *
  * @return error code: ALL_OK if the operation was started successfully
  */
-MIDPError midp_midlet_destroy(jint appId);
+MIDPError midp_midlet_destroy(jint appId, jint timeout);
 
 /**
  * Select which running MIDlet should have the foreground.  If appId is a
@@ -295,20 +322,32 @@ MIDPError midp_midlet_destroy(jint appId);
 MIDPError midp_midlet_set_foreground(jint appId);
 
 /**
- * Gets information about the specified MIDlet.
+ * Gets information about the suite containing the specified running MIDlet.
+ * This call is synchronous.
  *
  * @param appId The ID used to identify the application
- * @param pRuntimeInfo [out] pointer to a structure where run-time
- *                           information about the midlet will be stored
+ *
  * @param pSuiteData [out] pointer to a structure where static information
  *                         about the midlet will be stored
  *
  * @return error code: ALL_OK if successful,
  *                     NOT_FOUND if the application was not found,
- *                     BAD_PARAMS if both pRuntimeInfo and pSuiteData are null
+ *                     BAD_PARAMS if pSuiteData is null
  */
-MIDPError midp_midlet_get_info(jint appId, MidletRuntimeInfo* pRuntimeInfo,
-                               MidletSuiteData* pSuiteData);
+MIDPError midp_midlet_get_suite_info(jint appId, MidletSuiteData* pSuiteData);
+
+/**
+ * Gets runtime information about the specified MIDlet.
+ *
+ * This call is asynchronous, the result will be reported later through
+ * passing a MIDLET_INFO_READY_EVENT event to SYSTEM_EVENT_LISTENER.
+ *
+ * @param appId The ID used to identify the application
+ *
+ * @return error code: ALL_OK if successful (operation started),
+ *                     NOT_FOUND if the application was not found
+ */
+MIDPError midp_midlet_request_runtime_info(jint appId);
 
 /* ------------------- API to control listeners ------------------- */
 

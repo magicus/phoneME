@@ -425,6 +425,7 @@ class AppManagerUI extends Form
                                    "Throwable in removeSuitee");
                 }
             }
+            return;
 
         } else if (c == cancelCmd) {
 
@@ -673,13 +674,15 @@ class AppManagerUI extends Form
      *
      * @param suiteId suite ID of the MIDlet
      * @param className class name of the MIDlet
-     * @param error error code
+     * @param errorCode error code
+     * @param errorDetails error code details
      */
-    void notifyMidletStartError(int suiteId, String className, int error) {
+    void notifyMidletStartError(int suiteId, String className, int errorCode,
+                                String errorDetails) {
         Alert a;
         String errorMsg;
 
-        switch (error) {
+        switch (errorCode) {
         case Constants.MIDLET_SUITE_NOT_FOUND:
             errorMsg = Resource.getString(
                 ResourceConstants.AMS_MIDLETSUITELDR_MIDLETSUITE_NOTFOUND);
@@ -732,6 +735,10 @@ class AppManagerUI extends Form
         default:
             errorMsg = Resource.getString(
                 ResourceConstants.AMS_MIDLETSUITELDR_UNEXPECTEDLY_QUIT);
+        }
+
+        if (errorDetails != null) {
+             errorMsg += "\n\n" + errorDetails;
         }
 
         displayError.showErrorAlert(null, null,
@@ -917,7 +924,6 @@ class AppManagerUI extends Form
         ci.setOwner(this);
     }
 
-
     /**
      * Removes a midlet from the App Selector Screen
      *
@@ -926,38 +932,59 @@ class AppManagerUI extends Form
     private void remove(RunningMIDletSuiteInfo suiteInfo) {
         RunningMIDletSuiteInfo msi;
 
+        if (suiteInfo == null) {
+            // Invalid parameter, should not happen.
+            return;
+        }
+
         // the last item in AppSelector is time
         for (int i = 0; i < size(); i++) {
             msi = (RunningMIDletSuiteInfo)((MidletCustomItem)get(i)).msi;
             if (msi == suiteInfo) {
                 PAPICleanUp.removeMissedTransaction(suiteInfo.suiteId);
+
                 if (msi.proxy != null) {
                     msi.proxy.destroyMidlet();
-                } else {
+                }
 
-                    try {
-                        if (suiteInfo != null) {
-                            midletSuiteStorage.remove(suiteInfo.suiteId);
-                            PushRegistryInternal.unregisterConnections(
-                                suiteInfo.suiteId);
-                        }
-                    } catch (Throwable t) {
-                        if (t instanceof MIDletSuiteLockedException) {
-                            displayError.showErrorAlert(suiteInfo.displayName,
-                                                        null,
-                                                        Resource.getString
-                                                    (ResourceConstants.ERROR),
-                                                        Resource.getString
-                                       (ResourceConstants.AMS_CANNOT_START));
-                        }
+                try {
+                    midletSuiteStorage.remove(suiteInfo.suiteId);
+                } catch (Throwable t) {
+                    if (t instanceof MIDletSuiteLockedException) {
+                        String[] val = new String[1];
+                        val[0] = suiteInfo.displayName;
+                        displayError.showErrorAlert(suiteInfo.displayName,
+                            null,
+                            Resource.getString(ResourceConstants.ERROR),
+                            Resource.getString(
+                                ResourceConstants.AMS_MGR_REMOVE_LOCKED_SUITE,
+                                    val),
+                            this);
+                    } else {
+                        displayError.showErrorAlert(suiteInfo.displayName,
+                            t,
+                            Resource.getString(ResourceConstants.ERROR),
+                            null, this);
                     }
 
-                    delete(i);
-                    removeMsi = null;
+                    return;
                 }
-                return;
+
+                try {
+                    PushRegistryInternal.unregisterConnections(
+                        suiteInfo.suiteId);
+                } catch (Throwable t) {
+                    // Intentionally ignored: suite has been removed already,
+                    // we can't do anything meaningful at this point.
+                }
+
+                delete(i);
+                removeMsi = null;
+                break;
             }
         }
+
+        display.setCurrent(this);
     }
 
     /**
@@ -1068,7 +1095,6 @@ class AppManagerUI extends Form
             item = new StringItem("", temp.toString());
             confirmForm.append(item);
         } catch (Throwable t) {
-
             displayError.showErrorAlert(suiteInfo.displayName, t,
                                    Resource.getString
                                    (ResourceConstants.AMS_CANT_ACCESS),

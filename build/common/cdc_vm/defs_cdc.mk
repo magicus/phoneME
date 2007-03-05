@@ -72,7 +72,8 @@ MIDP_CNI_CLASSES += \
 
 ifeq ($(CVM_INCLUDE_JUMP), true)
 MIDP_CNI_CLASSES += \
-        com.sun.midp.jump.JumpInit
+        com.sun.midp.jump.JumpInit \
+        com.sun.midp.jump.isolate.MIDletContainer
 endif
 
 # Patterns to be included in the binary bundle.

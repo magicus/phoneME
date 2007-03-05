@@ -253,7 +253,7 @@ public class NamsManager extends MIDlet implements CommandListener {
         if (NamsStorage.getMIDletStateTrack(appId)) {
             eventCopyStorage.putTail(
                     EventTypes.NATIVE_MIDLET_DESTROY_REQUEST,
-                    appId, 0, 0, 0,
+                    appId, -1, 0, 0,
                     null, null, null, null, null, null);
         }
 

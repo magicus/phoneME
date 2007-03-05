@@ -97,23 +97,8 @@ class CommandState {
     String arg1;
     /** The argument for a MIDlet in the suite, will be app property arg-2. */
     String arg2;
-    /**
-     * The minimum amount of memory guaranteed to be available
-     * to the VM at any time; &lt; 0 if not used.
-     */
-    int memoryReserved;
-    /**
-     * The total amount of memory that the VM can reserve; &lt; 0 if not used.
-     */
-    int memoryTotal;
-    /**
-     * Priority to set after restarting the VM; &lt;= 0 if not used.
-     */
-    int priority;
-    /**
-     * Name of the profile to set after restarting the VM; null if not used.
-     */
-    String profileName;
+    /** Structure containing the run time information about the midlet. */
+    RuntimeInfo runtimeInfo = new RuntimeInfo();
 
     /** Only the factory method can instantiate this class */
     private CommandState() {
@@ -142,9 +127,9 @@ class CommandState {
             "\n  arg 0: " + arg0 +
             "\n  arg 1: " + arg1 +
             "\n  arg 2: " + arg2 +
-            "\n  memory reserved: " + memoryReserved +
-            "\n  memory total: " + memoryTotal +
-            "\n  priority:" + priority +
-            "\n  profile name: " + profileName;
+            "\n  memory reserved: " + runtimeInfo.memoryReserved +
+            "\n  memory total: " + runtimeInfo.memoryTotal +
+            "\n  priority:" + runtimeInfo.priority +
+            "\n  profile name: " + runtimeInfo.profileName;
     }
 }

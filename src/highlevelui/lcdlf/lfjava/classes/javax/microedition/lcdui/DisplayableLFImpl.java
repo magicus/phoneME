@@ -26,16 +26,15 @@
 
 package javax.microedition.lcdui;
 
-import java.util.Timer;
-import java.util.TimerTask;
 import javax.microedition.lcdui.game.GameCanvas;
 import com.sun.midp.lcdui.EventConstants;
-import com.sun.midp.lcdui.Text;
 import com.sun.midp.lcdui.GameMap;
+import com.sun.midp.lcdui.GameCanvasLFImpl;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.*;
+
 
 /**
 * This is the look &amp; feel implementation for Displayable.
@@ -475,9 +474,16 @@ class DisplayableLFImpl implements DisplayableLF {
      * @param h the new height
      *
      */
-    public void uCallSizeChanged(int w, int h) {
+    public void uCallSizeChanged(int w, int h) {        
         
         boolean copyDefferedSizeChange;
+
+        if (owner instanceof GameCanvas) {
+            GameCanvasLFImpl gameCanvasLF = GameMap.getTableElement((GameCanvas)owner);
+            if (gameCanvasLF != null) {
+                gameCanvasLF.uCallSizeChanged(w, h);
+            }
+        }
 
         synchronized (Display.LCDUILock) {
             // If there is no Display, or if this Displayable is not

@@ -131,6 +131,9 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
                 timerTask = null;
             } else {
                 timerTask = new TimeoutTask();
+                if (timeoutTimer == null) {
+                    timeoutTimer = new Timer();
+                }
                 timeoutTimer.schedule(timerTask, timeout);
             }                       
         } catch (Throwable t) {
@@ -188,7 +191,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
      * (3) repaint contents
      */
     public void uCallInvalidate() {
-        boolean wasModal = isLayoutValid && (maxScroll > 0);
+        boolean wasModal = maxScroll > 0 || alert.numCommands > 1;
 
         super.uCallInvalidate();
         
@@ -226,7 +229,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
     public void lAddCommand(Command cmd, int i) {
         super.lAddCommand(cmd, i);
         // make alert Modal
-        if (alert.numCommands == 1) {
+        if (alert.numCommands == 2) {
             lSetTimeout(alert.getTimeout());
         }
     }
@@ -244,7 +247,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
     public void lRemoveCommand(Command cmd, int i) {
         super.lRemoveCommand(cmd, i);
         // remove modality if it was forced by command presence
-        if (alert.numCommands == 0) {
+        if (alert.numCommands == 1) {
             lSetTimeout(alert.getTimeout());
         }
     }
@@ -497,14 +500,7 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
             layout();
         }
 
-        int timeout = alert.getTimeout();
-        if (timeout != Alert.FOREVER) {
-            if (timeoutTimer == null) {
-                timeoutTimer = new Timer();
-            }
-            timerTask = new TimeoutTask();
-            timeoutTimer.schedule(timerTask, timeout);
-        }
+        lSetTimeout(alert.getTimeout());
         
         // We reset any scrolling done in a previous showing
         viewable[Y] = 0;

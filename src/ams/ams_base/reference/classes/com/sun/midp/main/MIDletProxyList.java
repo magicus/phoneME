@@ -1007,20 +1007,22 @@ public class MIDletProxyList
      * @param midletClassName Class name of the MIDlet
      * @param midletExternalAppId ID of given by an external application
      *                            manager
-     * @param error start error code
+     * @param errorCode start error code
+     * @param errorDetails start error details
      */
     public void handleMIDletStartErrorEvent(
         int midletSuiteId,
         String midletClassName,
         int midletExternalAppId,
-        int error) {
+        int errorCode,
+        String errorDetails) {
 
         for (int i = listeners.size() - 1; i >= 0; i--) {
             MIDletProxyListListener listener =
                 (MIDletProxyListListener)listeners.elementAt(i);
 
             listener.midletStartError(midletExternalAppId, midletSuiteId,
-                                      midletClassName, error);
+                                      midletClassName, errorCode, errorDetails);
         }
     }
 

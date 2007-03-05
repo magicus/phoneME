@@ -243,6 +243,7 @@ midp_remove_suite(SuiteIdType suiteId) {
     char* pszError;
     pcsl_string suiteRoot;
     int status;
+    int operationStarted = 0;
     void* fileIteratorHandle = NULL;
     MidpProperties properties;
     pcsl_string* pproperty;
@@ -287,6 +288,7 @@ midp_remove_suite(SuiteIdType suiteId) {
         }
 
         /* notify the listeners that we starting to remove the suite */
+        operationStarted = 1;
         suite_listeners_notify(SUITESTORE_LISTENER_TYPE_REMOVE,
             SUITESTORE_OPERATION_START, ALL_OK, pData);
 
@@ -305,12 +307,6 @@ midp_remove_suite(SuiteIdType suiteId) {
             status = SUITE_LOCKED;
             break;
         }
-
-        /*
-        if (midpRemoveRecordStoresForSuite(suiteId) == KNI_FALSE) {
-            return SUITE_LOCKED;
-        }
-        */
 
         pushdeletesuite(suiteId);
 
@@ -371,13 +367,18 @@ midp_remove_suite(SuiteIdType suiteId) {
      * It should be done before remove_from_suite_list_and_save()
      * call because it frees pData structure.
      */
-    suite_listeners_notify(SUITESTORE_LISTENER_TYPE_REMOVE,
-        SUITESTORE_OPERATION_END, status, pData);
+    if (operationStarted) {
+        suite_listeners_notify(SUITESTORE_LISTENER_TYPE_REMOVE,
+            SUITESTORE_OPERATION_END, status, pData);
+    }
 
-    (void)remove_from_suite_list_and_save(suiteId);
+    if (status == ALL_OK) {
+        (void)remove_from_suite_list_and_save(suiteId);
+    }
+
     remove_storage_lock(suiteId);
 
-    return ALL_OK;
+    return status;
 }
 
 /**

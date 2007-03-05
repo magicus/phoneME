@@ -33,6 +33,7 @@
 #include <midpUtilKni.h>
 #include <suitestore_installer.h>
 #include <suitestore_task_manager.h>
+#include <commandLineUtil_md.h>
 
 /**
  * @file
@@ -40,8 +41,6 @@
  * Example of how the public MIDP API can be used to list installed
  * MIDlet Suite.
  */
-
-extern char* midpFixMidpHome(char *cmd);
 
 /* Dummy implementations of functions needed to run in NamsTestService mode. */
 #if !ENABLE_I3_TEST
@@ -86,12 +85,12 @@ printProperty(char* pszLabel, const pcsl_string * key, MidpProperties props) {
  *
  * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  *
- * IMPL_NOTE:determine if it is desirable for user targeted output
+ * IMPL_NOTE: determine if it is desirable for user targeted output
  *       messages to be sent via the log/trace service, or if
  *       they should remain as printf calls
  */
 int
-main(int argc, char* argv[]) {
+listMidlets(int argc, char* argv[]) {
     int   status = -1;
     int   i;
     long  size;

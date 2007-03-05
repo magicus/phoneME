@@ -1,5 +1,5 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,51 +24,26 @@
  * information or have any questions. 
  */
 
-#include <string.h>
-#include <stdio.h>
+#ifndef _EXE_ENTRY_POINT_MD_H_
+#define _EXE_ENTRY_POINT_MD_H_
 
-#include <kni.h>
-
-#include <midpInit.h>
-#include <midpMalloc.h>
-
-#include <midpStorage.h>
-#include <midpString.h>
-#include <midpServices.h>
-#include <midpNativeThread.h>
-#include <midpNativeAppManager.h>
+#if !defined _EXE_ENTRY_POINT_MD_H_
+# error "Never include <exe_entry_point_md.h> directly; use <exe_entry_point.h> instead."
+#endif
 
 /**
- * @file
+ * Entry point of the executable.
  *
- * Example of how the public MIDP API can be used to list installed
- * MIDlet Suite. This file contains platform specific thread routine.
+ * @param hInstance handle to the current instance of the application.
+ * @param hPrevInstance handle to the previous instance of the application. For a
+ *                      Win32-based application, this parameter is always NULL. 
+ * @param lpCmdLine pointer to a null-terminated string that specifies the command
+ *                  line for the application, excluding the program name.
+ * @param nShowCmd specifies how the window is to be shown.
+ *
+ * @return the exit value
  */
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   LPWSTR lpCmdLine, int nShowCmd);
 
-#if ENABLE_NATIVE_AMS
-void nams_process_command(int command, int param);
-#endif
-
-#if ENABLE_NATIVE_AMS && ENABLE_I3_TEST
-
-void* midlet_starter_routine(midp_ThreadRoutineParameter param) {
-    /* 
-     * this routine's signature is platform specific - 
-     * see midp_ThreadRoutine declaration 
-     */
-
-    int* cmd = (int*)param; 
-    /*
-    printf("DEBUG: thread routine: cmd = %i, param = %i\n", cmd[0], cmd[1]);
-    */
-
-    /* sleep for a few seconds to let java subsystem to be initialized */
-    midp_sleepNativeThread(5);
-    
-    nams_process_command(cmd[0], cmd[1]);
-
-    return NULL;
-}
-
-#endif
-
+#endif /* _EXE_ENTRY_POINT_MD_H_ */

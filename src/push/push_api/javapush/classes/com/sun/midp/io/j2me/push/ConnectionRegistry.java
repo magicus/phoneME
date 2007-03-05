@@ -42,7 +42,6 @@ import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.Permissions;
 
 import com.sun.midp.log.Logging;
 
@@ -292,7 +291,7 @@ final class ConnectionRegistry
      *
      * @param midlet The proxy of the MIDlet being added
      */
-    public void midletAdded(MIDletProxy midlet) {};
+    public void midletAdded(MIDletProxy midlet) {}
 
     /**
      * Called when the state of a MIDlet in the list is updated.
@@ -300,7 +299,7 @@ final class ConnectionRegistry
      * @param midlet The proxy of the MIDlet that was updated
      * @param fieldId code for which field of the proxy was updated
      */
-    public void midletUpdated(MIDletProxy midlet, int fieldId) {};
+    public void midletUpdated(MIDletProxy midlet, int fieldId) {}
 
     /**
      * Called when a MIDlet is removed from the list, the connections
@@ -322,10 +321,12 @@ final class ConnectionRegistry
      * @param externalAppId ID assigned by the external application manager
      * @param suiteId Suite ID of the MIDlet
      * @param className Class name of the MIDlet
-     * @param error start error code
+     * @param errorCode start error code
+     * @param errorDetails start error code
      */
     public void midletStartError(int externalAppId, int suiteId,
-                                 String className, int error) {
+                                 String className, int errorCode,
+                                 String errorDetails) {
         byte[] asciiClassName = Util.toCString(className);
 
         checkInByMidlet0(suiteId, asciiClassName);
@@ -506,7 +507,6 @@ final class ConnectionRegistry
      * @see #unregisterConnection
      */
     static boolean checkInConnectionInternal(final String connection) {
-        int ret;
 
         /* Verify that the connection requested is valid. */
         if (connection == null || connection.length() == 0) {
@@ -709,7 +709,7 @@ final class ConnectionRegistry
     /**
       * Converts <code>MIDlet</code> suite ID into a string.
       *
-      * @param midletSuite <code>MIDlet</code> suite to convert ID of
+      * @param suiteId <code>MIDlet</code> suite to convert ID of
       * @return string representation
       */
     private static String suiteIdToString(final int suiteId) {

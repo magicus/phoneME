@@ -45,51 +45,40 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
 # vpath for ( example ) module
 #
 vpath % $(NAMS_EXAMPLES_DIR)/native
-vpath % $(NAMS_EXAMPLES_DIR)/native/$(TARGET_OS)
 
 # This is needed to include API provided by findMidlet.c
-vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native
-vpath % $(SUBSYSTEM_AMS_DIR)/example/jams/native/$(TARGET_PLATFORM)
+vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common/native
 
 ifeq ($(TARGET_PLATFORM), javacall)
-    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/$(TARGET_PLATFORM)/native
 else
 ifeq ($(TARGET_PLATFORM), wince)
-    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/$(TARGET_PLATFORM)/native
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/$(TARGET_PLATFORM)/native
 else
-    vpath % $(SUBSYSTEM_AMS_DIR)/example/jams_port/default/native
+    vpath % $(SUBSYSTEM_AMS_DIR)/example/ams_common_port/default/native
 endif
 endif
 
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-	-I$(SUBSYSTEM_AMS_DIR)/example/jams/native/inc \
+	-I$(SUBSYSTEM_AMS_DIR)/example/ams_common/include \
+	-I$(SUBSYSTEM_AMS_DIR)/example/ams_common_port/include \
 	-I$(NAMS_EXAMPLES_DIR)/native/inc
 
 # Native files for the ( example ) module
 #
-SUBSYSTEM_AMS_NATIVE_FILES += \
-	commandLineUtil.c \
-	commandLineUtil_md.c \
-	findMidlet.c
-
-AMS_RUNNAMS_NATIVE_FILES = \
+AMS_RUNNAMS_NATIVE_FILES += \
 	runNams.c
 
-ifeq ($(USE_I3_TEST), true)
-AMS_RUNNAMS_NATIVE_FILES += runNams_md.c
-endif
-
-AMS_REMOVEMIDLET_NATIVE_FILES = \
+AMS_REMOVEMIDLET_NATIVE_FILES += \
 	removeMidlet.c \
 	nams_command_stub.c
 
-AMS_LISTMIDLET_NATIVE_FILES = \
+AMS_LISTMIDLET_NATIVE_FILES += \
 	listMidlets.c \
 	nams_command_stub.c
 
-AMS_FILEINSTALLER_NATIVE_FILES = \
+AMS_FILEINSTALLER_NATIVE_FILES += \
 	fileInstallerShared.c \
-	fileInstaller.c \
 	jadParser.c \
 	manifestParser.c \
 	nams_command_stub.c	
@@ -97,6 +86,11 @@ AMS_FILEINSTALLER_NATIVE_FILES = \
 # I3test files
 #
 ifeq ($(USE_I3_TEST), true)
+
+vpath % $(NAMS_EXAMPLES_DIR)/i3test/native/$(TARGET_OS)
+
+AMS_RUNNAMS_NATIVE_FILES += \
+	runNams_md.c
 
 SUBSYSTEM_AMS_I3TEST_JAVA_FILES += \
 	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/events/EventCopyStorage.java \
@@ -149,18 +143,6 @@ else
 VM_MODE = svm
 endif
 
-MODULE_NAMS_EXAMPLE_SCRIPT_FILES = \
-	$(NAMS_EXAMPLES_DIR)/shell/autotest$(g) \
-	$(NAMS_EXAMPLES_DIR)/shell/i3test$(g) \
-	$(NAMS_EXAMPLES_DIR)/shell/installMidlet$(g)
-
-INTERNAL_NAMS_COMMON_SCRIPT_FILES = $(patsubst $(NAMS_EXAMPLES_DIR)/shell/%,$(BINDIR)/%,$(MODULE_NAMS_EXAMPLE_SCRIPT_FILES))
-
-$(INTERNAL_NAMS_COMMON_SCRIPT_FILES): $(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/shell/%
-	@echo " ... installing $@"
-	@cp -f $< $@
-	@chmod +x $@
-
 SUBSYSTEM_AMS_LAZY_MAKEFILES += \
 	$(NAMS_EXAMPLES_DIR)/executables.gmk
 
@@ -170,8 +152,16 @@ SUBSYSTEM_AMS_EXECUTABLES = \
 	$(BINDIR)/removeMidlet$(g)$(p)$(EXE) \
 	$(BINDIR)/fileInstaller$(g)$(p)$(EXE)
 
-ifeq ($(TARGET_PLATFORM), win32)
+ifeq ($(TARGET_PLATFORM), javacall)
+ifeq ($(JAVACALL_PLATFORM), win32_i386_vc)
+
+vpath % $(NAMS_EXAMPLES_DIR)/native/win32
+
 SUBSYSTEM_AMS_EXECUTABLES += $(BINDIR)/postTestMsg.exe
+SUBSYSTEM_AMS_EXTRA_INCLUDES += \
+	-I$(SUBSYSTEM_HIGHUI_DIR)/win32_application/include
+
+endif
 endif
 
 # Other platforms like stubs don't need scripts
@@ -179,9 +169,29 @@ ifeq ($(TARGET_OS), linux)
 INCLUDE_SHELL_SCRIPTS = true
 endif
 
+ifeq ($(TARGET_PLATFORM), javacall)
+INCLUDE_SHELL_SCRIPTS = true
+endif
+
 ifdef INCLUDE_SHELL_SCRIPTS
+
+$(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/shell/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
+$(BINDIR)/%: $(NAMS_EXAMPLES_DIR)/batch/%
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+
 SUBSYSTEM_AMS_EXECUTABLES += \
-	$(BINDIR)/i3test$(g)$(BAT) \
 	$(BINDIR)/autotest$(g)$(BAT) \
 	$(BINDIR)/installMidlet$(g)$(BAT)
+
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_AMS_EXECUTABLES += \
+	$(BINDIR)/i3test$(g)$(BAT)
+endif
+	
 endif

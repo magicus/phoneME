@@ -42,6 +42,7 @@
 #include <midpNativeAppManager.h>
 #include <midpUtilKni.h>
 #include <suitestore_task_manager.h>
+#include <commandLineUtil_md.h>
 
 /**
  * @file
@@ -50,7 +51,7 @@
  * MIDlet Suite.
  */
 
-extern char* midpFixMidpHome(char *cmd);
+#define MIDLET_DESTROY_DEFAULT_TIMEOUT 5000
 
 #if ENABLE_I3_TEST
 extern void initNams(void);
@@ -206,7 +207,7 @@ void nams_process_command(int command, int param) {
         break;
 
     case 4:
-        midp_midlet_destroy(param);
+        midp_midlet_destroy(param, MIDLET_DESTROY_DEFAULT_TIMEOUT);
         break;
 
     case 5:
@@ -265,9 +266,11 @@ void nams_process_command(int command, int param) {
  * @param pEventData
  */
 void system_state_listener(const NamsEventData* pEventData) {
-    printf("--- system_state_listener(%d)\n", pEventData->state);
+    printf("--- system_state_listener(event = %d, state = %d)\n",
+        pEventData->event, pEventData->state);
 
-    if (pEventData->state == MIDP_SYSTEM_STATE_STARTED) {
+    if (pEventData->event == MIDP_NAMS_EVENT_STATE_CHANGED &&
+            pEventData->state == MIDP_SYSTEM_STATE_ACTIVE) {
         int i;
         const jchar *jchArgsForMidlet[3];
         jint  argsLen[3];
@@ -312,14 +315,14 @@ void system_state_listener(const NamsEventData* pEventData) {
  */
 void background_listener(const NamsEventData* pEventData) {
     int i = 0;
-    printf("--- background_listener(%d)\n", pEventData->reason);
+    printf("--- background_listener(appId = %d, reason = %d)\n",
+           pEventData->appId, pEventData->reason);
 
     for (i = 0; i < numberOfSuiteIds; i++) {
-        if (pSuiteRunState[i] == MIDP_MIDLET_STATE_STARTED &&
+        if (pSuiteRunState[i] == MIDP_MIDLET_STATE_ACTIVE &&
             i+1 != foregroundAppId) {
 
-            printf("midp_midlet_set_foreground(%d)  reason = %d\n",
-                   i+1, pEventData->reason);
+            printf("midp_midlet_set_foreground(suiteId = %d)\n", i+1);
             midp_midlet_set_foreground(i+1);
             break;
         }
@@ -333,7 +336,7 @@ void background_listener(const NamsEventData* pEventData) {
  * @param pEventData
  */
 void foreground_listener(const NamsEventData* pEventData) {
-    printf("--- foreground_listener(%d, %d)\n",
+    printf("--- foreground_listener(appId = %d, reason = %d)\n",
            pEventData->appId, pEventData->reason);
 
     foregroundAppId = pEventData->appId;
@@ -356,8 +359,13 @@ void state_change_listener(const NamsEventData* pEventData) {
         return;
     }
 
-    printf("--- state_change_listener(%d, %d, %d)\n",
+    printf("--- state_change_listener(appId = %d, state = %d, reason = %d)\n",
            pEventData->appId, pEventData->state, pEventData->reason);
+
+    if (pEventData->event != MIDP_NAMS_EVENT_STATE_CHANGED) {
+        printf("Dropping event: %d\n", pEventData->event);
+        return;
+    }
 
     if (pEventData->appId > 0) {
         SuiteIdType suiteId = pEventData->pSuiteData->suiteId;
@@ -372,7 +380,7 @@ void state_change_listener(const NamsEventData* pEventData) {
         printf(" changed state - (%d) \"", pEventData->state);
 
         switch (pEventData->state) {
-            case MIDP_MIDLET_STATE_STARTED: printf("STARTED\""); break;
+            case MIDP_MIDLET_STATE_ACTIVE: printf("ACTIVE\""); break;
             case MIDP_MIDLET_STATE_PAUSED: printf("PAUSED\""); break;
             case MIDP_MIDLET_STATE_DESTROYED:
                 printf("DESTROYED\"");
@@ -661,8 +669,7 @@ static MIDPError runMainClass(int argc, char* argv[]) {
  *
  * @return <tt>0</tt> for success, otherwise <tt>-1</tt>
  */
-int
-main(int argc, char* argv[]) {
+int runNams(int argc, char* argv[]) {
     MIDPError status;
     char* midpHome;
     int used;

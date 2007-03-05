@@ -4,7 +4,7 @@
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
- * This program is free software; you can redistribute it and/DEor
+ * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation. 
  * 

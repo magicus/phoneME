@@ -110,7 +110,7 @@ define verify_cldc
     fi; \
     \
     makfile=$(CLDC_DIST_DIR)/lib/cldc_vm$(g)$(r).make; \
-    if grep "VM_arch.*=.*$(TARGET_CPU)" $$makfile > /dev/null; then \
+    if grep "VM_arch.*=.*\($(TARGET_CPU)\|c\)" $$makfile > /dev/null; then \
        true; \
     else \
         echo "ERROR: TARGET_CPU ($(TARGET_CPU)) mismatch with VM_arch in $$makfile"; \

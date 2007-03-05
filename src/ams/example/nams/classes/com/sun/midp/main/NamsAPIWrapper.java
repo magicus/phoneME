@@ -40,7 +40,7 @@ public class NamsAPIWrapper {
             int appId);
     static native void midletResume(int appId);
     static native void midletPause(int appId);
-    static native void midletDestroy(int appId);
+    static native void midletDestroy(int appId, int timeout);
 
     static native void midletSetForeground(int appId);
 

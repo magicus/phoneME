@@ -40,6 +40,8 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.suspend.SuspendSystemListener;
 import com.sun.midp.suspend.SuspendSystem;
 
+import com.sun.cldc.isolate.Isolate;
+
 /**
  * This is an implementation of the native application manager peer
  * for the MVM mode of VM capable of running with
@@ -64,7 +66,7 @@ public class NativeAppManagerPeer
      * SecurityInitializer should be able to check this inner class name.
      */
     static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
+        implements ImplicitlyTrustedClass {}
 
     /**
      * Called at the initial start of the VM.
@@ -175,6 +177,8 @@ public class NativeAppManagerPeer
         eventQueue.registerEventListener(
             EventTypes.NATIVE_MIDLET_DESTROY_REQUEST, this);
         eventQueue.registerEventListener(
+            EventTypes.NATIVE_MIDLET_GETINFO_REQUEST, this);
+        eventQueue.registerEventListener(
             EventTypes.NATIVE_SET_FOREGROUND_REQUEST, this);
 
         IndicatorManager.init(midletProxyList);
@@ -243,11 +247,13 @@ public class NativeAppManagerPeer
      * @param externalAppId ID assigned by the external application manager
      * @param suiteId Suite ID of the MIDlet
      * @param className Class name of the MIDlet
-     * @param error start error code
+     * @param errorCode start error code
+     * @param errorDetails start error details
      */
     public void midletStartError(int externalAppId, int suiteId,
-                                 String className, int error) {
-        notifyMidletStartError(externalAppId, error);
+                                 String className, int errorCode,
+                                 String errorDetails) {
+        notifyMidletStartError(externalAppId, errorCode);
     }
 
     // ------ End implementation of the MIDletProxyListListener interface
@@ -342,11 +348,46 @@ public class NativeAppManagerPeer
             break;
 
         case EventTypes.NATIVE_MIDLET_DESTROY_REQUEST:
+            /*
+             * IMPL_NOTE: nativeEvent.intParam2 is a timeout value which
+             *            should be passed to MIDletProxy.destroyMidlet().
+             *
+             */
             if (midlet != null) {
                 midlet.destroyMidlet();
             } else {
                 errorMsg = "Invalid App Id";
             }
+            break;
+
+        case EventTypes.NATIVE_MIDLET_GETINFO_REQUEST:
+            int isolateId = midlet.getIsolateId();
+            Isolate task = null;
+            Isolate[] allTasks = Isolate.getIsolates();
+
+            for (int i = 0; i < allTasks.length; i++) {
+                if (allTasks[i].id() == isolateId) {
+                    task = allTasks[i];
+                    break;
+                }
+            }
+
+            if (task != null) {
+                /* Structure to hold run time information about a midlet. */
+                RuntimeInfo runtimeInfo = new RuntimeInfo();
+
+                runtimeInfo.memoryTotal    = task.totalMemory();
+                runtimeInfo.memoryReserved = task.reservedMemory();
+                runtimeInfo.usedMemory     = task.usedMemory();
+                runtimeInfo.priority       = task.getPriority();
+                // there is no Isolate API now
+                runtimeInfo.profileName    = null;
+
+                saveRuntimeInfoInNative(runtimeInfo);
+            }
+
+            notifyOperationCompleted(EventTypes.NATIVE_MIDLET_GETINFO_REQUEST,
+                nativeEvent.intParam1, (task == null) ? 1 : 0);
             break;
 
         case EventTypes.NATIVE_SET_FOREGROUND_REQUEST:
@@ -400,6 +441,26 @@ public class NativeAppManagerPeer
 
     // ------ End implementation of the Listener interface
     // ==============================================================
+
+    /**
+     * Saves runtime information from the given structure
+     * into the native buffer.
+     *
+     * @param runtimeInfo structure holding the information to save
+     */
+    private static native void saveRuntimeInfoInNative(RuntimeInfo runtimeInfo);
+
+    /**
+     * Notify the native application manager that the system has completed
+     * the requested operation and the result (if any) is available.
+     *
+     * @param operation code of the operation that has completed
+     * @param externalAppId ID assigned by the external application manager
+     * @param retCode completion code (0 if OK)
+     */
+    private static native void notifyOperationCompleted(int operation,
+                                                        int externalAppId,
+                                                        int retCode);
 
     /**
      * Notify the native application manager that the system had an error
