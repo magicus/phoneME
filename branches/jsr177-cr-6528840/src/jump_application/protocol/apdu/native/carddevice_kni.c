@@ -145,7 +145,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_lock0) {
     jboolean retcode = KNI_FALSE;
     
     // Global Lock if native
-    cardReaderEventHandle = (long)jumpThreadGetId();    
+    cardReaderEventHandle = (long)jumpThreadGetId();
     if (jumpThreadSyncBegin(cardReaderEventHandle, 0) < 0) {
         KNI_ThrowNew(jsropRuntimeException, "Cannot start sync block");
         return KNI_FALSE;
@@ -464,6 +464,9 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_checkCardMovement0) {
 
 void javanotify_carddevice_event(javacall_carddevice_event event,
                                  void *context) {
+    if (jumpThreadSyncBegin(cardReaderEventHandle, 0) < 0) {
+        return;
+    }
     jumpThreadSyncNotify(cardReaderEventHandle, 0);    
-    return;
+    jumpThreadSyncEnd(cardReaderEventHandle, 0);
 }

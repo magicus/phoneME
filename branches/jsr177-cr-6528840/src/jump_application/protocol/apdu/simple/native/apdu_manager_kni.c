@@ -226,13 +226,17 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_reset0) {
     }
     
     atr_length = sizeof atr_buffer;
-    cardReaderEvent = jumpEventCreate();
+    cardReaderEventHandle = (long)jumpThreadGetId();
+    if (jumpThreadSyncBegin(cardReaderEventHandle, 0) < 0) {
+        KNI_ThrowNew(jsropRuntimeException, "Cannot start sync block");
+        goto end;
+    }
     do { 
         status_code=javacall_carddevice_lock();
         switch (status_code) {
         case JAVACALL_WOULD_BLOCK:
             CVMD_gcSafeExec(_ee, {
-                jumpEventWait(cardReaderEvent);
+                jumpThreadSyncWait(cardReaderEventHandle, 0);
             });            
             break;
         case JAVACALL_OK:
@@ -255,7 +259,7 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_reset0) {
     
     while (status_code == JAVACALL_WOULD_BLOCK) {
         CVMD_gcSafeExec(_ee, {
-            if (jumpEventWait(cardReaderEvent) == 0) {
+            if (jumpThreadSyncWait(cardReaderEventHandle, 0) == 0) {
                 status_code = javacall_carddevice_reset_finish(atr_buffer, &atr_length, context);                
             }
         });        
@@ -284,7 +288,7 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_reset0) {
             //GlobalUnlock - if in native !!!
         }
         
-        jumpEventDestroy(cardReaderEvent);
+        jumpThreadSyncEnd(cardReaderEventHandle, 0);
         goto end;
     }
 
@@ -312,7 +316,7 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_reset0) {
     SNI_NewArray(SNI_BYTE_ARRAY, atr_length, atr_handle);
     KNI_SetRawArrayRegion(atr_handle, 0, atr_length, (jbyte*)atr_buffer);
     
-    jumpEventDestroy(cardReaderEvent);
+    jumpThreadSyncEnd(cardReaderEventHandle, 0);
 
 end:
     //GlobalUnlock - if in native !!!
@@ -500,13 +504,17 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0) {
 
     cur = rx_buffer;
 
-    cardReaderEvent = jumpEventCreate();
+    cardReaderEventHandle = (long)jumpThreadGetId();
+    if (jumpThreadSyncBegin(cardReaderEventHandle, 0) < 0) {
+        KNI_ThrowNew(jsropRuntimeException, "Cannot start sync block");
+        goto err;
+    }
     do { 
         status_code=javacall_carddevice_lock();
         switch (status_code) {
         case JAVACALL_WOULD_BLOCK:
             CVMD_gcSafeExec(_ee, {
-                jumpEventWait(cardReaderEvent);
+                 jumpThreadSyncWait(cardReaderEventHandle, 0);
             });            
             break;
         case JAVACALL_OK:
@@ -556,7 +564,7 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0) {
 
         while (status_code == JAVACALL_WOULD_BLOCK) {
             CVMD_gcSafeExec(_ee, {
-                if (jumpEventWait(cardReaderEvent) == 0) {
+                if (jumpThreadSyncWait(cardReaderEventHandle, 0) == 0) {
                     status_code = javacall_carddevice_xfer_data_finish(tx_buffer, 
                                                                        tx_length, 
                                                                        cur, 
@@ -640,7 +648,7 @@ unlock_end:
     }
 
 destroy_end:
-    jumpEventDestroy(cardReaderEvent);
+    jumpThreadSyncEnd(cardReaderEventHandle, 0);
 
 free_end:
     KNI_SetRawArrayRegion(request_handle, 0, tx_length_max,(jbyte *)tx_buffer);
@@ -655,6 +663,9 @@ end:
 
 void javanotify_carddevice_event(javacall_carddevice_event event,
                                  void *context) {
-    jumpEventHappens((JUMPEvent)cardReaderEvent);    
-    return;
+    if (jumpThreadSyncBegin(cardReaderEventHandle, 0) < 0) {
+        return;
+    }
+    jumpThreadSyncNotify(cardReaderEventHandle, 0);    
+    jumpThreadSyncEnd(cardReaderEventHandle, 0);
 }
