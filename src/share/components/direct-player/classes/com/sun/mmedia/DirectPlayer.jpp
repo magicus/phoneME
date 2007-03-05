@@ -48,6 +48,7 @@ import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.Control;
+import javax.microedition.media.protocol.SourceStream;
 
 // #ifndef ABB [
 import javax.microedition.media.control.StopTimeControl;
@@ -90,7 +91,9 @@ public class DirectPlayer extends BasicPlayer
 
     private long remained;      // remained content length
     private boolean needBuffering;
-
+    private boolean rtBuffering;
+    private RTBufferingThread rtBufferingThread;
+    
     // #ifndef ABB [
     private Timer stopTimer;    // To support StopTimeControl
     // #endif ]
@@ -120,6 +123,8 @@ public class DirectPlayer extends BasicPlayer
     protected native boolean nAcquireDevice(int handle);
     // Relase device reference
     protected native void nReleaseDevice(int handle);
+    // Check media data buffer
+    protected native boolean nBufferStarved(int handle);
     // Do buffering of media data
     protected native int nBuffering(int handle, Object buffer, long bytes);
     // Clear buffered data
@@ -272,9 +277,18 @@ public class DirectPlayer extends BasicPlayer
         }
 
         // Do buffering
+        rtBuffering = false;
         if (true == needBuffering && true == nIsNeedBuffering(hNative)) {
-            if (-1 == readAndBuffering(remained)) {
-                throw new MediaException("Unable to realize - buffering fail");
+/*
+            if (stream.getSeekType() == SourceStream.RANDOM_ACCESSIBLE) {
+                if (-1 == readAndBuffering(remained)) {
+                    throw new MediaException("Unable to realize - buffering fail");
+                }
+            } else */
+            {
+                if (-1 == startBuffering(remained)) {
+                    throw new MediaException("Unable to realize - start buffering fail");
+                }
             }
         }
 
@@ -311,6 +325,17 @@ public class DirectPlayer extends BasicPlayer
         }
         if (nPcmAudioPlayback(hNative)) {
             AudioTunnel.start();
+        }
+        if (true == needBuffering && true == nIsNeedBuffering(hNative) && rtBuffering) {
+//            try {
+//                synchronized (rtBufferingThread) {
+System.out.println("doPrefetch() rtBufferingThread.wait() start");
+//                    rtBufferingThread.wait();
+System.out.println("doPrefetch() rtBufferingThread.wait() stop");
+//                }
+//            } catch(InterruptedException ex) {
+//System.out.println("doPrefetch() : " + ex.getMessage());
+//            }
         }
     }
 
@@ -643,6 +668,42 @@ public class DirectPlayer extends BasicPlayer
     }
 
     /**
+     * Read first chunk from stream and do buffering
+     * 
+     * @param   Bytes to read
+     * @return  Actual read bytes or -1 if error occured
+     */
+    private int startBuffering(long length) {
+        if (debug) System.out.println("[direct] DirectPlayer.startBuffering " + length);
+System.out.println("[direct] DirectPlayer.startBuffering " + length);        
+        int readSize = BUFFER_SIZE;
+        int chnkSize = stream.getTransferSize();
+        if ((chnkSize > 0) && (chnkSize < readSize)) {
+            readSize = chnkSize;
+        }
+readSize = BUFFER_SIZE/10;
+        try {
+            // read from source stream
+            readSize = stream.read(buffer, 0, readSize);
+        } catch(IOException e) {
+            if (debug) System.out.println("[direct] readAndBuffering IOException");
+            return -1;
+        }
+System.out.println("startBuffering calls nBuffering readSize=" + readSize);
+        if (-1 == nBuffering(hNative, buffer, (long)readSize)) {
+            if (debug) System.out.println("[direct] nBuffering return -1");
+            return -1;
+        }
+        
+        rtBufferingThread = new RTBufferingThread(stream);
+        rtBufferingThread.start();
+        
+        rtBuffering = true;
+
+        return 0;
+    }
+
+    /**
      * Read bytes from stream and do buffering
      * 
      * @param   Bytes to read
@@ -757,6 +818,79 @@ public class DirectPlayer extends BasicPlayer
     }
 
     // #endif ]
+
+    /**
+     * The thread that's responsible for runtime buffering stream data.
+     */
+    class RTBufferingThread extends Thread {
+        private final static int DEFAULT_CHUNK_SIZE = 1024;
+        private final static int MAX_CHUNKS = 5;
+        private int chunkSize;
+
+        private byte[] buffer;
+
+
+        RTBufferingThread(javax.microedition.media.protocol.SourceStream stream) {
+            chunkSize = stream.getTransferSize();
+            if (chunkSize == -1) {
+                chunkSize = DEFAULT_CHUNK_SIZE;
+            }
+System.out.println("RTBufferingThread chunkSize=" + chunkSize);
+            buffer = new byte[chunkSize*MAX_CHUNKS];
+        }
+
+        /**
+         * buffering loop.
+         */
+        public void run() {
+            int readln = 0;
+            int writeln = 0;
+            int totalReadLn = 0;
+            boolean stop = false;
+
+            try { 
+                do {
+                    synchronized(this) {
+                        if (!stop) {
+                            if ( (totalReadLn + chunkSize) < (chunkSize*MAX_CHUNKS) ) {
+                                readln = stream.read(buffer, totalReadLn, chunkSize);
+                                if (readln > 0) {
+                                    totalReadLn += readln;
+                                }
+                                if (readln == -1) {
+                                    stop = true;
+                                }
+
+                            }
+                        }
+                        if (nBufferStarved(hNative) && (totalReadLn > 0)) {
+                            writeln = nBuffering(hNative, buffer, (long)totalReadLn);
+                            totalReadLn -= writeln;
+                            
+                            if (totalReadLn != writeln) {
+                                int off = totalReadLn;
+                                while(writeln<off) {
+                                    buffer[totalReadLn++] = buffer[writeln++];
+                                }
+                            } else {
+                                totalReadLn = 0;
+                            }
+                        } else {
+                            notifyAll();
+try {
+                            Thread.yield();
+                            Thread.sleep(1000);
+} catch(InterruptedException ex) {}
+                        }
+                    }
+                } while (!stop || totalReadLn > 0);
+
+            } catch (IOException ex) {
+                /* NEED IMPLEMENT: STOP playback */
+
+            }
+
+            nBuffering(hNative, buffer, -1);
+        }
+    }
 }
-
-

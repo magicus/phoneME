@@ -239,6 +239,24 @@ UnlockAudioMutex();
     KNI_ReturnVoid();
 }
 
+/*  protected native int nBufferStarved ( int handle) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nBufferStarved) {
+
+    jint handle = KNI_GetParameterAsInt(1);
+    jboolean returnValue = KNI_FALSE;
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+
+LockAudioMutex();            
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+        /* Check if buffer Starved */
+        returnValue = javacall_media_buffer_starved(pKniInfo->pNativeHandle);
+    }
+UnlockAudioMutex();            
+printf("nBufferStarved returns %d\n", returnValue);
+    KNI_ReturnBoolean(returnValue);
+}
+
 /*  protected native int nBuffering ( int handle , Object buffer, long length ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectPlayer_nBuffering) {
@@ -254,18 +272,13 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nBuffering) {
     
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle && length > 0) {
-        int ret;
         jbyte *tmpArray = MMP_MALLOC(length);
         if (tmpArray != NULL) {
-            MMP_DEBUG_STR2("+nBuffering length=%d offset=%d\n", length, pKniInfo->offset);
+            MMP_DEBUG_STR1("+nBuffering length=%d\n", length);
             KNI_GetRawArrayRegion(bufferHandle, 0, length, (jbyte*)tmpArray);
-            ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
-                (const char*)tmpArray, (int)length, pKniInfo->offset);
+            returnValue = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
+                (const char*)tmpArray, (int)length, pKniInfo->contentLength);
             MMP_FREE(tmpArray);
-            if (ret > 0) {
-                pKniInfo->offset += ret;
-                returnValue = ret;
-            }
         } else {
             REPORT_ERROR(LC_MMAPI, "[kni_player] nBuffering allocation fail\n");                
             KNI_ThrowNew(jsropOutOfMemoryError, NULL);
