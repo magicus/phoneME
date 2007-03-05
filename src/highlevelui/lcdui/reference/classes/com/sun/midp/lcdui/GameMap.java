@@ -48,7 +48,7 @@ public class GameMap {
     /**
      * Map contains pairs of GameCanvas and GameCanvasLFImpl
      */
-    private static Hashtable table = new Hashtable();
+    private static Hashtable gameCanvasImpl = new Hashtable();
 
     /**
      * Lock to ensure synchronized access to the displayable
@@ -62,11 +62,11 @@ public class GameMap {
      * @param c The GameCanvas to store
      * @param d The DisplayAccess associated with the GameCanvas
      */
-    public static void register(Displayable c, DisplayAccess d) {
+    public static void registerDisplayAccess(Displayable c, DisplayAccess d) {
         synchronized (lock) {
-	    displayable = c;
-	    displayAccess = d;
-	}
+	        displayable = c;
+	        displayAccess = d;
+	    }
     }
 
 
@@ -75,13 +75,13 @@ public class GameMap {
      * @param c The Displayable to get the DisplayAccess for
      * @return DisplayAccess The DisplayAccess associated with the MIDlet
      */
-    public static DisplayAccess get(Displayable c) {
+    public static DisplayAccess getDisplayAccess(Displayable c) {
         synchronized (lock) {
-  	    if (c == displayable) {
+  	        if (c == displayable) {
                 return displayAccess;
-  	    } else {
+  	        } else {
                 return null;
-	    }
+	        }
         }
     }
 
@@ -91,11 +91,11 @@ public class GameMap {
      *
      * @param c The GameCanvas to store
      */
-    public static GameCanvasLFImpl registerTableElement(GameCanvas c) {
+    public static GameCanvasLFImpl registerGameCanvas(GameCanvas c) {
         GameCanvasLFImpl gameCanvasLF = new GameCanvasLFImpl(c);
         synchronized(lock) {
-            if (!table.containsKey(c)) {
-                table.put(c, gameCanvasLF);
+            if (!gameCanvasImpl.containsKey(c)) {
+                gameCanvasImpl.put(c, gameCanvasLF);
                 return gameCanvasLF;
             }
         }
@@ -107,10 +107,10 @@ public class GameMap {
      * @param c The GameCanvas to get the GameCanvasLFImpl for
      * @return GameCanvasLFImpl
      */
-    public static GameCanvasLFImpl getTableElement(GameCanvas c) {
+    public static GameCanvasLFImpl getGameCanvasImpl(GameCanvas c) {
         synchronized (lock) {
-            if (table.containsKey(c)) {
-                return (GameCanvasLFImpl)table.get(c);
+            if (gameCanvasImpl.containsKey(c)) {
+                return (GameCanvasLFImpl) gameCanvasImpl.get(c);
             } else {
                 return null;
             }
