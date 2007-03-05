@@ -31,6 +31,7 @@ import java.io.IOException;
 import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.io.Connector;
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
+import com.sun.midp.io.HttpUrl;
 
 /**
  * An Installer allowing to install a midlet suite from a file.
@@ -59,7 +60,8 @@ public class FileInstaller extends Installer {
     protected byte[] downloadJAD() throws IOException {
         RandomAccessStream jadInputStream;
         ByteArrayOutputStream bos = new ByteArrayOutputStream(CHUNK_SIZE);
-        String jadFilename = getUrlPath(info.jadUrl);
+        System.out.println("got url path " + getUrlPath(info.jadUrl));
+        String jadFilename = HttpUrl.unescape(getUrlPath(info.jadUrl), "UTF_8");
 
         state.beginTransferDataStatus = DOWNLOADING_JAD;
         state.transferStatus = DOWNLOADED_1K_OF_JAD;
@@ -89,7 +91,7 @@ public class FileInstaller extends Installer {
     protected int downloadJAR(String filename) throws IOException {
         int jarSize;
         RandomAccessStream jarInputStream, jarOutputStream;
-        String jarFilename = getUrlPath(info.jarUrl);
+        String jarFilename = HttpUrl.unescape(getUrlPath(info.jarUrl), "UTF_8");
 
         // Open source (jar) file
         jarInputStream = new RandomAccessStream();

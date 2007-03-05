@@ -26,9 +26,11 @@
 
 package com.sun.midp.scriptutil;
 
+import java.io.UnsupportedEncodingException;
 import javax.microedition.midlet.MIDlet;
 import com.sun.midp.installer.*;
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.io.HttpUrl;
 
 /**
  * A command-line installer. Allows to install midlet either from
@@ -114,7 +116,16 @@ public class CommandLineInstaller extends MIDlet implements InstallListener,
 
         // If a scheme is omitted, handle the url
         // as a file on the local file system.
-        final String scheme = Installer.getUrlScheme(url, "file");
+        String scheme = Installer.getUrlScheme(url, null);
+        if (scheme == null) {
+            scheme = "file";
+            try {
+                url = scheme + ":" + HttpUrl.escape(url, "UTF_8");
+            }
+            catch (UnsupportedEncodingException cannotHappen) {
+                throw new RuntimeException();
+            }
+        }
 
         for (int i = 0; i < supportedUrlTypes.length << 1; i++, i++) {
             if (supportedUrlTypes[i].equals(scheme)) {

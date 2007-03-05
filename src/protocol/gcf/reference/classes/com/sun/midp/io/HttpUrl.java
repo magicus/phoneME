@@ -27,6 +27,7 @@
 package com.sun.midp.io;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 /**
  * A parsed HTTP (or subclass of) URL. Based on RFC 2396.
@@ -57,6 +58,11 @@ public class HttpUrl {
     public String machine;
     /** Domain of the host or null. */
     public String domain;
+    /** Characters that need to be escaped */
+    public static final String unreservedChars = "qwertyuiopasdfghjklzxcvbnm" +
+        "QWERTYUIOPASDFGHJKLZXCVBNM" +
+        "1234567890" +
+        "-_.!~*'()";
 
     /**
      * Construct a HttpUrl.
@@ -70,6 +76,7 @@ public class HttpUrl {
         int afterScheme = 0;
         int length;
         int endOfScheme;
+        int firstSlash;
 
         if (url == null) {
             return;
@@ -89,10 +96,14 @@ public class HttpUrl {
                 return;
             }
 
-            if (endOfScheme < length - 2 &&
-                    url.charAt(endOfScheme + 1) == '/' &&
-                    url.charAt(endOfScheme + 2) == '/') {
-                // found "://", get the scheme
+            /*
+             * Need to find out if this is relative or absolute URI
+             * Per RFC 2396 if relative URI contains ':' in first segment
+             * it should be precede it with "./". Thus the following methos
+             * is unambigous
+             */
+            firstSlash = url.indexOf('/');
+            if (firstSlash == -1 || endOfScheme < firstSlash) {
                 scheme = url.substring(0, endOfScheme);
                 afterScheme = endOfScheme + 1;
             }
@@ -150,6 +161,9 @@ public class HttpUrl {
         int lastDot;
         int startOfDomain;
 
+        System.out.println("parsing " + url + " in :");
+        (new Exception()).printStackTrace();
+
         if (url.indexOf(' ') != -1 || url.indexOf('\r') != -1 || 
             url.indexOf('\n') != -1 || url.indexOf('\u0007') != -1) {
             throw new IllegalArgumentException("Space character in URL");
@@ -167,6 +181,7 @@ public class HttpUrl {
             // no authority, the path starts at 0 and may not begin with a "/"
             startOfAuthority = afterScheme;
         }
+        System.out.println("startOfAuthority = " + startOfAuthority);
 
         /*
          * Since all of the elements after the authority are optional
@@ -188,6 +203,8 @@ public class HttpUrl {
             if (start < endOfUrl) {
                 fragment = url.substring(start, endOfUrl);
             }
+
+            System.out.println("start(#)  = " + start + " endOfPath = " + endOfPath);
         }
 
         start = url.indexOf('?', startOfAuthority);
@@ -202,6 +219,8 @@ public class HttpUrl {
             if (start < endOfQuery) {
                 query = url.substring(start, endOfQuery);
             }
+
+            System.out.println("start(?) = " + start + " endOfPath = " + endOfPath);
         }
 
         if (startOfAuthority == afterScheme) {
@@ -212,11 +231,14 @@ public class HttpUrl {
             start = url.indexOf('/', startOfAuthority);
         }
 
+        System.out.println("start  = " + start + " endOfPath = " + endOfPath);
         // do not parse an empty path
         if (start != -1 && start < endOfPath) {
             endOfAuthority = start;
 
             path = url.substring(start, endOfPath);
+
+            System.out.println("path = " + path);
         }
 
         if (startOfAuthority >= endOfAuthority) {
@@ -390,5 +412,85 @@ public class HttpUrl {
         }
 
         return url.toString();
+    }
+
+    /**
+     * Converts given text into escaped URI portion using generic rules as defined in RFC 2396
+     *
+     * @param a String to convert
+     * @param encoding Encoding to use when converting to byte array
+     *
+     * @return Given string converted to escaped URI form
+     *
+     * @exception UnsupportedEncodingException If the named encoding is not supported
+     */
+    public static String escape(String a, String encoding)
+        throws UnsupportedEncodingException {
+
+        if (a == null)
+            return null;
+        
+        StringBuffer b = new StringBuffer(a.length());
+        byte[] aData = a.getBytes(encoding);
+        char c;
+        
+        for (int i = 0; i < aData.length; i++) {
+            /* only US-ASCII chars are allowed so conversion is safe */
+            c = (char)(((char)aData[i]) & '\u00ff');
+            if (unreservedChars.indexOf(c) >= 0) {
+                b.append(c);
+            } else {
+                b.append('%');
+                if (c < '\u0010')
+                    b.append('0');
+                b.append(Integer.toHexString(c));
+            }
+        }
+
+        return b.toString();
+    }
+
+    /**
+     * Given escaped portion of URI converts it to original text
+     *
+     * @param a URI portion to convert
+     * @param encoding Encoding to use when converting from byte array
+     *
+     * @return Text obtained from unescaping of given portion of URI
+     *
+     * @exception UnsupportedEncodingException If the named encoding is not supported
+     * @exception IllegalArgumentException If given string cannot be treated as escaped portion of URI
+     */
+    public static String unescape(String b, String encoding)
+        throws IllegalArgumentException, UnsupportedEncodingException {
+
+        if (b == null)
+            return null;
+
+        int lb = b.length();
+        byte[] aData = new byte[lb];
+        int ia, ib;
+        char c;
+        byte d;
+
+        for (ia = ib = 0; ib < lb; ) {
+            c = b.charAt(ib++);
+            if (c == '%') {
+                try {
+                    d = (byte)Integer.parseInt(b.substring(ib, ib+2), 16);
+                    ib += 2;
+                }
+                catch (Exception ex) {
+                    /* Here can be either NumberFormatException or StringIndexOutOfBoundsException */
+                    throw new IllegalArgumentException(ex.toString());
+                }
+            }
+            else {
+                d = (byte)c;
+            }
+            aData[ia++] = d;
+        }
+
+        return new String(aData, encoding);
     }
 }
