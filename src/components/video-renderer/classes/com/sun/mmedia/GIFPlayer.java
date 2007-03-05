@@ -77,6 +77,9 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
     /* minimum wait time */
     private final long MIN_WAIT = 50;
 
+    /* For zero duration GIFs (e.g. non-animated) wait time between STARTED and END_OF_MEDIA */
+    private final long ZERO_DURATION_WAIT = 50;
+
     /* a table of frame durations */    
     private Vector frameTimes;
 
@@ -303,6 +306,13 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
 
             decodeFrame();
 
+            // If duration is 0 prepare the last frame once.
+            if (duration == 0) {
+                while (getFrame())
+                    decodeFrame();
+                renderFrame();
+            }
+
         } catch (IOException e) {
             throw new MediaException("can't seek first frame");
         }
@@ -316,31 +326,42 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
      *            otherwise false.
      */
     protected boolean doStart() {
-        startTime = System.currentTimeMillis(); 
-
-        if (stopped) {
-            // wake up existing play thread
-            stopped = false;
-            
-            synchronized (playLock) {
-                playLock.notifyAll();
-            }
+        if (duration == 0) { // e.g. for non-animated GIFs
+            new Thread(new Runnable() {
+                synchronized public void run() {
+                    try {
+                        wait(ZERO_DURATION_WAIT);
+                    } catch (InterruptedException ie) { }
+                    sendEvent(PlayerListener.END_OF_MEDIA, new Long(0));
+                }
+            }).start();
         } else {
-            displayTime = getFrameInterval(frameCount) / 1000;
+            startTime = System.currentTimeMillis(); 
+
+            if (stopped) {
+                // wake up existing play thread
+                stopped = false;
+            
+                synchronized (playLock) {
+                    playLock.notifyAll();
+                }
+            } else {
+                displayTime = getFrameInterval(frameCount) / 1000;
                 
-            // Ensure that previous thread has finished ... sn162189: Is it really needed ? 
-            playThreadFinished();
+                // Ensure that previous thread has finished
+                playThreadFinished();
 
-            synchronized (playLock) {
-                if (playThread == null) {
-                    // Check for null is a protection against several
-                    // simultaneous doStart()'s trying to create a new thread.
-                    // But if playThreadFinished() failed to terminate
-                    // playThread, we can have a problem ...
+                synchronized (playLock) {
+                    if (playThread == null) {
+                        // Check for null is a protection against several
+                        // simultaneous doStart()'s trying to create a new thread.
+                        // But if playThreadFinished() failed to terminate
+                        // playThread, we can have a problem
 
-                    // create a new play thread
-                    playThread = new Thread(this);
-                    playThread.start();
+                        // create a new play thread
+                        playThread = new Thread(this);
+                        playThread.start();
+                    }
                 }
             }
         }
@@ -603,7 +624,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
        
         if (!stopped) {
             // threshold levels in milliseconds
-            // sn162189: don't understand what is it for.
             // It makes playback falter if frame intervals differ
             //EARLY_THRESHOLD = 250;
             //if (frameInterval > 0 && frameInterval < EARLY_THRESHOLD)
@@ -656,6 +676,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             stream.seek(0);
             parseHeader();
         }
+        imageDecoder.clearImage();
     }
     
     private void decodeFrame() {
@@ -852,7 +873,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             }
 
             imageDecoder.setGlobalPalette(tableDepth, globalColorTable, index);
-            imageDecoder.clearImage();
         }
     
         firstFramePos = stream.tell();

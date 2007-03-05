@@ -68,6 +68,8 @@ class GIFImageDecoder {
             globalPalette[3 * i + 2] = gray;
         }
 
+        backgroundIndex = -1;
+
         curColorDepth = globalColorDepth;
         curPalette = globalPalette;
         
@@ -90,9 +92,11 @@ class GIFImageDecoder {
 
     /// Clear current image to background color
     void clearImage() {
-        int bkg = getColor(backgroundIndex, globalPalette);
-        for (int i = 0; i < width * height; ++i)
-            argb[i] = bkg;
+        if (globalPalette != null && backgroundIndex >= 0) {
+            int bkg = getColor(backgroundIndex, globalPalette);
+            for (int i = 0; i < width * height; ++i)
+                argb[i] = bkg;
+        }
     }
 
     /// Get current image (after undraw)
@@ -163,7 +167,7 @@ class GIFImageDecoder {
             break;
         }
         case UNDRAW_RESTORE_BACKGROUND:
-        {
+        if (globalPalette != null && backgroundIndex >= 0) {
             int pixel = framePosX + framePosY * width;
             int wdif = width - frameWidth;
             int bkg = getColor(backgroundIndex, globalPalette);
