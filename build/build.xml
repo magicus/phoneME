@@ -107,7 +107,7 @@ information or have any questions.
     </presetdef>
   </target>
 
-  <target name="clean">
+  <target name="clean" depends="clean-reports">
       <property file="modules-config.properties"/>
       <delete dir="${dist.dir}"/>
       <delete dir="${cdc.dir}/${contentstore.root}"/>
