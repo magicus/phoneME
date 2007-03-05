@@ -10,14 +10,6 @@
 <constants>
 <constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public">
 
-  <constant Type="int"
-            Name="GAMECANVAS_FULLWIDTH"
-            Value="240"
-            Comment="(Fixed) full display width"/>
-  <constant Type="int"
-            Name="GAMECANVAS_FULLHEIGHT"
-            Value="268" 
-            Comment="(Fixed) full display height"/>
 
   <constant Type="int"
             Name="CHAM_WIDTH"
