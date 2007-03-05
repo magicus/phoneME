@@ -426,6 +426,15 @@ long javacall_media_do_buffering(javacall_handle handle,
                                  const void* buffer, long length, long offset);
 
 /**
+ * Java MMAPI call this function to check if internal buffer is starved.
+ * 
+ * @param handle    Handle to the library
+ * 
+ * @return          If buffer is starved returns JAVACALL_TRUE else return JAVACALL_FALSE
+ */
+javacall_bool javacall_media_buffer_starved(javacall_handle handle);
+
+/**
  * MMAPI call this function to clear(delete) buffered media data
  * You have to clear any resources created from previous buffering
  * 
@@ -567,6 +576,96 @@ long javacall_media_pcmaudio_playback(void* buffer, long length);
  */
 javacall_result javacall_media_get_pcmctl(int *channels,
                                         int* /*OUT*/ bits, int* /*OUT*/ rate);
+/**
+ * struct javacall_media_pcmaudio_ctrl
+ * @brief pcmaudio control info
+ */
+typedef struct {
+    /** Media Type, JAVACALL_END_OF_TYPE if undefined */
+    javacall_media_type mtype;
+    /** Number of channels */
+    int channels;
+    /** Number of bits */
+    int bits;
+    /** Playback Rate */
+    int rate;
+} javacall_media_pcmaudio_ctrl;
+
+/**
+ * struct javacall_media_ctrl
+ * @brief media control info
+ */
+typedef union {
+    /** pcmaudio control info */
+    javacall_media_pcmaudio_ctrl  pcmaudio_ctrl;
+} javacall_media_ctrl;
+
+/**
+ * Start media data decodyng
+ * 
+ * @param in_type       Type of original Media data
+ * @param out_type      Type of decoded Media data
+ * 
+ * @return              Handle of decoder instance. if fail return NULL.
+ * @retval JAVACALL_FAIL    Fail
+ */
+javacall_handle javacall_media_decode_start(javacall_media_type in_type, 
+                                            javacall_media_type out_type);
+
+/**
+ * Original Data decoding
+ * 
+ * @param InData        Media data buffer pointer.
+ * @param lenInData     IN/OUT - IN: Length of media data.
+ *                               OUT: Len of decoded media data.
+ * @param ctrl          OUT - decoded media control info
+ * @param OutData1      OUT - data buffer1 for decoded media
+ * @param lenOutData1   len of data buffer1 for decoded media
+ * @param OutData2      OUT - data buffer2 for decoded media
+ * @param lenOutData2   len of data buffer2 for decoded media
+ * 
+ * @retval JAVACALL_OK      Success
+ * @retval JAVACALL_FAIL    Fail
+ */
+javacall_result javacall_media_decode(javacall_handle, 
+        /*IN*/unsigned char *InData, /*IN/OUT*/long *lenInData,
+        /*OUT*/unsigned char *OutData1, /*IN/OUT*/long *lenOutData1, 
+        /*OUT*/unsigned char *OutData2, /*IN/OUT*/long *lenOutData2);
+
+/**
+ * Start media data decodyng
+ * 
+ * @param InData        Media data buffer pointer.
+ * @param lenInData     IN/OUT - IN: Length of media data.
+ *                               OUT: Len of decoded media data.
+ * @param ctrl          OUT - decoded media control info
+ * @param OutData1      OUT - data buffer1 for decoded media
+ * @param lenOutData1   len of data buffer1 for decoded media
+ * @param OutData2      OUT - data buffer2 for decoded media
+ * @param lenOutData2   len of data buffer2 for decoded media
+ * 
+ * @retval JAVACALL_OK      Success
+ * @retval JAVACALL_FAIL    Fail
+ */
+javacall_result javacall_media_decode_stop(javacall_handle);
+
+/**
+ * Original Data decoding
+ * 
+ * @param InData        Media data buffer pointer.
+ * @param lenInData     IN/OUT - IN: Length of media data.
+ *                               OUT: Len of decoded media data.
+ * @param ctrl          OUT - decoded media control info
+ * @param OutData1      OUT - data buffer1 for decoded media
+ * @param lenOutData1   len of data buffer1 for decoded media
+ * @param OutData2      OUT - data buffer2 for decoded media
+ * @param lenOutData2   len of data buffer2 for decoded media
+ * 
+ * @retval JAVACALL_OK      Success
+ * @retval JAVACALL_FAIL    Fail
+ */
+javacall_result javacall_media_decode_get_ctrl(/*IN*/javacall_handle,
+        /*OUT*/javacall_media_ctrl *ctrl);
 
 /** @} */
 
