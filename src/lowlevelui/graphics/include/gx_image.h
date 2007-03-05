@@ -137,6 +137,18 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
 				unsigned char** ret_dataBuffer,
 				unsigned int* ret_length);
 
+/**
+ * Resize existing image possibly keeping its content clipped
+ * according to the new image geometry
+ *
+ * @param imageDataPtr the image to be resized
+ * @param w new width of the image
+ * @param h new height of the image
+ * @param keepContent keep current image content
+ */
+extern void gx_resize_image(const java_imagedata *imageDataPtr,
+			    jint w, jint h, jboolean keepContent);
+
 #ifdef __cplusplus
 }
 #endif

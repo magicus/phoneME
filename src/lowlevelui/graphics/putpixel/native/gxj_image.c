@@ -41,6 +41,7 @@
 #include "gxj_intern_image.h"
 #include "gxj_intern_putpixel.h"
 #include "gxj_intern_image_decode.h"
+#include "gxj_screen_buffer.h"
 
 #if ENABLE_JPEG
 #include <jpegdecoder.h>
@@ -981,4 +982,36 @@ extern void gx_render_imageregion(const java_imagedata * srcImageDataPtr,
 		     width, height,
 		     x_src, y_src,
 		     transform);
+}
+
+static void resize_image(gxj_screen_buffer *imageSBuf, jint w, jint h,
+        jboolean keepContent) {
+
+    if (!imageSBuf || (imageSBuf->width == w &&
+            imageSBuf->height == h)) {
+        return;
+    }
+
+    if (!keepContent) {
+        gxj_resize_screen_buffer(imageSBuf, w, h);
+        gxj_reset_screen_buffer(imageSBuf);
+        return;                
+    }
+}
+
+/**
+ * Resize existing image possibly keeping its content clipped
+ * according to the new image geometry
+ *
+ * @param imageDataPtr the image to be resized
+ * @param w new width of the image
+ * @param h new height of the image
+ * @param keepContent keep current image content
+ */
+extern void gx_resize_image(const java_imagedata *imageDataPtr,
+			    jint w, jint h, jboolean keepContent) {
+  gxj_screen_buffer imageSBuf;
+  gxj_screen_buffer *pImageSBuf =
+    gxj_get_image_screen_buffer_impl(imageDataPtr, &imageSBuf, NULL);
+  resize_image(pImageSBuf, w, h, keepContent);
 }

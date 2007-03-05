@@ -101,7 +101,7 @@ static struct termios termdata;
 
 /** Allocate system screen buffer according to the screen geometry */
 void initScreenBuffer(int width, int height) {
-    if (gxj_init_screen_buffer(width, height) != ALL_OK) {
+    if (gxj_init_system_screen_buffer(width, height) != ALL_OK) {
         fprintf(stderr, "Failed to allocate screen buffer\n");
 	    exit(1);
     }
@@ -253,7 +253,7 @@ void initFrameBuffer() {
   * depending on the current screen mode 
   */
 void reverseScreenOrientation() {
-    gxj_rotate_screen_buffer();
+    gxj_rotate_system_screen_buffer();
 }
 
 /** Initialize frame buffer video device */
@@ -280,7 +280,7 @@ void clearScreen() {
  * Call after frame buffer is initialized.
  */
 void resizeScreenBuffer(int width, int height) {
-    if (gxj_resize_screen_buffer(width, height) != ALL_OK) {
+    if (gxj_resize_system_screen_buffer(width, height) != ALL_OK) {
 	    fprintf(stderr, "Failed to reallocate screen buffer\n");
 	    exit(1);
     }
@@ -513,6 +513,6 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
 
 /** Frees allocated resources and restore system state */
 void finalizeFrameBuffer() {
-    gxj_free_screen_buffer();
+    gxj_free_system_screen_buffer();
     restoreConsole();
 }

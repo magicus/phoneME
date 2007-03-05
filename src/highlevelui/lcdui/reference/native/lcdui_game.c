@@ -24,7 +24,11 @@
  * information or have any questions. 
  */
 
+#include <stdlib.h>
+
 #include <commonKNIMacros.h>
+#include <midpError.h>
+#include <gx_image.h>
 
 /**
  * Structure representing the <tt>GameCanvas</tt> class.
@@ -59,3 +63,46 @@ KNIDECL(javax_microedition_lcdui_game_GameCanvas_setSuppressKeyEvents) {
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
+
+/** Structure representing the <tt>Image</tt> class. */
+typedef struct Java_javax_microedition_lcdui_Image java_image;
+/** Get a C structure representing the given <tt>Image</tt> class. */
+#define GET_IMAGE_PTR(handle) (unhand(java_image,(handle)))
+
+/**
+  * FUNCTION:      resizeImage(Ljavax/microedition/lcdui/Image;IIZ)V
+  * CLASS:         com.sun.midp.lcdui.GameCanvasLFImpl
+  * TYPE:          virtual native function
+  * OVERVIEW:      Resize image to new dimension
+  * INTERFACE (operand stack manipulation):
+  *   parameters:  image Image instance to resize
+  *                w new width of the image
+  *                h new height of the image
+  *                keepContent if true the original image content will
+  *                  be preserved, though it will be clipped according to
+  *                  the new image geometry
+  *   returns:     <nothing>
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_lcdui_GameCanvasLFImpl_resizeImage) {
+    int w = KNI_GetParameterAsInt(2);
+    int h = KNI_GetParameterAsInt(3);
+    jboolean keepContent = KNI_GetParameterAsBoolean(4);
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(image);
+    KNI_GetParameterAsObject(1, image);
+
+    /* null checking is handled by the Java layer, but test just in case */
+    if (KNI_IsNullHandle(image)) {
+        KNI_ThrowNew(midpNullPointerException, NULL);
+    } else {
+        const java_imagedata *imageDataPtr =
+            GET_IMAGE_PTR(image)->imageData;
+        gx_resize_image(imageDataPtr, w, h, keepContent);
+    }
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
+#undef GET_IMAGE_PTR

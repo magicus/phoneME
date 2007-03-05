@@ -67,10 +67,15 @@ public class GameCanvasLFImpl {
     }
 
     /**
-     * Notify return screen about screen size change
+     * Handle screen size change event to update internal
+     * state of the GameCanvas accordingly
+     *
+     * @param w new screen width
+     * @param h new screen height
      */
     public void lCallSizeChanged(int w, int h) {
-            offscreen_buffer = Image.createImage(w, h);
+        // OutOfMemoryError can be thrown
+        resizeImage(offscreen_buffer, w, h, true);
     }
 
     /**
@@ -83,10 +88,9 @@ public class GameCanvasLFImpl {
         if (offscreen_buffer != null) {
             return offscreen_buffer.getGraphics();
         }
-
-        return null; 
+        
+        return null;
     }
-
 
     /**
      * Render the off-screen buffer content to the Graphics object
@@ -141,5 +145,22 @@ public class GameCanvasLFImpl {
         }
         return 0;
     }
+
+    /**
+     * Resize image to new dimension
+     *
+     * @param image Image instance to resize
+     * @param w new width of the image
+     * @param h new height of the image
+     * @param keepContent if true the original image content will
+     *  be preserved, though it will be clipped according to the
+     *  new image geometry
+     * throws OutOfMemoryError in the case there is not enough
+     *  memory for resizing
+     * @throws IllegalArgumentException
+     *  in the case the image is not muttable or invalid
+     */
+    native void resizeImage(Image image, int w, int h, boolean keepContent)
+        throws OutOfMemoryError, IllegalArgumentException;
 
 }

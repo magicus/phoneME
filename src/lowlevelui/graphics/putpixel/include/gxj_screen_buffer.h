@@ -61,7 +61,7 @@ extern "C" {
  * @return ALL_OK if successful, OUT_OF_MEMORY in the case of
  *   not enough memory to allocate the buffer
  */
-MIDPError gxj_init_screen_buffer(int width, int height);
+MIDPError gxj_init_system_screen_buffer(int width, int height);
 
 /**
  * Resizes screen buffer to fit new screen geometry.
@@ -76,20 +76,30 @@ MIDPError gxj_init_screen_buffer(int width, int height);
  * @return ALL_OK if successful, OUT_OF_MEMORY in the case of
  *   not enough memory to reallocate the buffer
  */
-MIDPError gxj_resize_screen_buffer(int width, int height);
+MIDPError gxj_resize_system_screen_buffer(int width, int height);
 
 /** Reset pixel data of screen buffer to zero */
-void gxj_reset_screen_buffer();
+void gxj_reset_system_screen_buffer();
 
 /**
- * Change screen buffer geometry according to screen rotating
+ * Change system screen buffer geometry according to screen rotating
  * from landscape to portrait mode and vice versa. 
  * No rotation for screen buffer content is done. 
  */
-void gxj_rotate_screen_buffer();
+void gxj_rotate_system_screen_buffer();
 
 /** Free memory allocated for screen buffer */
-void gxj_free_screen_buffer();
+void gxj_free_system_screen_buffer();
+
+/**
+ * Provide the same functionality as for system screen buffer
+ * for any screen buffer specified explicitly 
+ */
+MIDPError gxj_init_screen_buffer(gxj_screen_buffer *sBuf, int width, int height);
+MIDPError gxj_resize_screen_buffer(gxj_screen_buffer *sBuf, int width, int height);
+void gxj_reset_screen_buffer(gxj_screen_buffer *sBuf);
+void gxj_rotate_screen_buffer(gxj_screen_buffer *sBuf);
+void gxj_free_screen_buffer(gxj_screen_buffer *sBuf);
 
 #ifdef __cplusplus
 }

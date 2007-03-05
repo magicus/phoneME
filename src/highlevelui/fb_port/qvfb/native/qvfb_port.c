@@ -77,7 +77,7 @@ gxj_screen_buffer gxj_system_screen_buffer;
 
 /** Allocate system screen buffer */
 void initScreenBuffer(int width, int height) {
-    if (gxj_init_screen_buffer(width, height) != ALL_OK) {
+    if (gxj_init_system_screen_buffer(width, height) != ALL_OK) {
         fprintf(stderr, "Failed to allocate screen buffer\n");
         exit(1);
     }
@@ -88,7 +88,7 @@ void initScreenBuffer(int width, int height) {
   * depending on the current screen mode
   */
 void reverseScreenOrientation() {
-    gxj_rotate_screen_buffer();
+    gxj_rotate_system_screen_buffer();
 }
 
 /** On i386, connect to the QVFB virtual frame buffer */
@@ -167,7 +167,7 @@ void clearScreen() {
  * Call after frame buffer is initialized.
  */
 void resizeScreenBuffer(int width, int height) {
-    if (gxj_resize_screen_buffer(width, height) != ALL_OK) {
+    if (gxj_resize_system_screen_buffer(width, height) != ALL_OK) {
         fprintf(stderr, "Failed to reallocate screen buffer\n");
 	    exit(1);
     }
@@ -305,5 +305,5 @@ void refreshScreenRotated(int x1, int y1, int x2, int y2) {
 
 /** Frees native reources allocated for frame buffer */
 void finalizeFrameBuffer() {
-    gxj_free_screen_buffer();
+    gxj_free_system_screen_buffer();
 }
