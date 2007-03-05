@@ -2105,3 +2105,5 @@ endif
 # Include external shared tools
 include $(TOOLS_DIR)/tools.gmk
 
+# Root directory for unittests reports
+REPORTS_DIR ?= $(call POSIX2HOST,$(CDC_DIST_DIR)/reports)
