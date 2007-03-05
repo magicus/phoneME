@@ -247,8 +247,10 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
         throws IOException, IllegalArgumentException,
         ConnectionNotFoundException {
 
+        System.out.println("HttpsProtocol.openPrim 1 to " + name + " " + this);
         checkForPermission(name);
 
+        System.out.println("HttpsProtocol.openPrim 2 " + this);
         initStreamConnection(mode);
 
         url = new HttpUrl(protocol, name);
@@ -262,6 +264,7 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
         }
 
         hostAndPort = url.host + ":" + url.port;
+        System.out.println("HttpsProtocol.openPrim 3 " + this);
 
         return this;
     }
@@ -346,6 +349,8 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
         InputStream tcpInputStream;
         X509Certificate serverCert;
 
+        System.out.println("HttpsProtocol.connect 1 " + this);
+
         if (!permissionChecked) {
             throw new SecurityException();
         }
@@ -357,6 +362,7 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
             return sc;
         }
 
+        System.out.println("HttpsProtocol.connect 2 " + this);
         // Open socket connection
         tcpConnection =
             new com.sun.midp.io.j2me.socket.Protocol();
@@ -364,19 +370,24 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
         // check to see if a protocol is specified for the tunnel
         httpsTunnel = Configuration.getProperty("com.sun.midp.io.http.proxy");
         if (httpsTunnel != null) {
+            System.out.println("HttpsProtocol.connect 3 " + this);
             // Make the connection to the ssl tunnel
             tcpConnection.openPrim(classSecurityToken, "//" + httpsTunnel);
 
             // Do not delay request since this delays the response.
             tcpConnection.setSocketOption(SocketConnection.DELAY, 0);
 
+            System.out.println("HttpsProtocol.connect 4 " + this);
             tcpOutputStream = tcpConnection.openOutputStream();
             tcpInputStream = tcpConnection.openInputStream();
             
+            System.out.println("HttpsProtocol.connect 5 " + this);
             // Do the handshake with the ssl tunnel
             try {
                 doTunnelHandshake(tcpOutputStream, tcpInputStream);
+                System.out.println("HttpsProtocol.connect 5ok " + this);
             } catch (IOException ioe) {
+                System.out.println("HttpsProtocol.connect 5ioe " + ioe + " " + this);
                 String temp = ioe.getMessage();
 
                 tcpConnection.close();
@@ -390,23 +401,29 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
                 throw ioe;
             }    
         } else {
+            System.out.println("HttpsProtocol.connect 6 " + this);
             tcpConnection.openPrim(classSecurityToken, "//" + hostAndPort);
 
             // Do not delay request since this delays the response.
             tcpConnection.setSocketOption(SocketConnection.DELAY, 0);
 
+            System.out.println("HttpsProtocol.connect 7 " + this);
             tcpOutputStream = tcpConnection.openOutputStream();
             tcpInputStream = tcpConnection.openInputStream();
+            System.out.println("HttpsProtocol.connect 8 " + this);
         }
 
         tcpConnection.close();
+        System.out.println("HttpsProtocol.connect 9 " + this);
 
         try {
             // Get the SSLStreamConnection
             sslConnection = new SSLStreamConnection(url.host, url.port,
                                 tcpInputStream, tcpOutputStream,
                                 WebPublicKeyStore.getTrustedKeyStore());
+            System.out.println("HttpsProtocol.connect 9ok " + this);
         } catch (Exception e) {
+            System.out.println("HttpsProtocol.connect 9e " + e + " " + this);
             try {
                 tcpInputStream.close();
             } catch (Throwable t) {
@@ -427,6 +444,7 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
         }
 
         try {
+            System.out.println("HttpsProtocol.connect 10 " + this);
             serverCert = sslConnection.getServerCertificate();
 
             /*
@@ -436,21 +454,26 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
              */
             if (serverCert.getSubjectAltNameType() ==
                 X509Certificate.TYPE_DNS_NAME) {
+                System.out.println("HttpsProtocol.connect 11 " + this);
                 if (!checkSiteName(url.host,
                         (String)serverCert.getSubjectAltName())) {
+                    System.out.println("HttpsProtocol.connect 11e " + url.host + "!=" + (String)serverCert.getSubjectAltName() + " " + this);
                     throw new CertificateException(
                         "Subject alternative name did not match site name",
                         serverCert, CertificateException.SITENAME_MISMATCH);
                 }
             } else {
+                System.out.println("HttpsProtocol.connect 12 " + this);
                 String cname = getCommonName(serverCert.getSubject());
                 if (cname == null) {
+                    System.out.println("HttpsProtocol.connect 12e " + this);
                     throw new CertificateException(
                         "Common name missing from subject name",
                         serverCert, CertificateException.SITENAME_MISMATCH);
                 }
                 
                 if (!checkSiteName(url.host, cname)) {
+                    System.out.println("HttpsProtocol.connect 13e " + this);
                     throw new CertificateException(serverCert,
                         CertificateException.SITENAME_MISMATCH);
                 }
@@ -458,6 +481,7 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
 
             return sslConnection;
         } catch (Exception e) {
+            System.out.println("HttpsProtocol.connect 14e " + e + " " + this);
             try {
                 sslConnection.close();
             } catch (Throwable t) {

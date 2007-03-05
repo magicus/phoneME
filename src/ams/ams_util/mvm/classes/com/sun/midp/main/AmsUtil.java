@@ -293,7 +293,13 @@ public class AmsUtil {
             }
 
             isolate.setAPIAccess(true);
+            /** Specific isolate debugging */
+//             isolate.setDebug(true);
+            /** */
             isolate.start();
+            /** Specific isolate debugging */
+//             isolate.attachDebugger();
+            /** */
         } catch (Throwable t) {
             int errorCode;
             String msg;

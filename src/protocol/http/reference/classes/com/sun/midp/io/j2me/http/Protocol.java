@@ -331,6 +331,7 @@ public class Protocol extends ConnectionBaseAdapter
             throws IOException, IllegalArgumentException,
             ConnectionNotFoundException {
 
+        System.out.println("HttpsProtocol.openPrim 1 to " + fullUrl + " " + this);
         checkIfPermissionAllowed(token);
         return open(new HttpUrl(fullUrl), Connector.READ_WRITE);
     }
@@ -1528,6 +1529,8 @@ public class Protocol extends ConnectionBaseAdapter
             throws IOException {
         int bytesToRetry;
 
+        System.out.println("Protocol.sendRequest: starting " + this);
+
         if (sendingRequest || requestFinished) {
             return;
         }
@@ -1543,13 +1546,18 @@ public class Protocol extends ConnectionBaseAdapter
             bytesToRetry = bytesToWrite;
 
             try {
+                System.out.println("Protocol.sendRequest: 1 " + this);
                 startRequest();
+                System.out.println("Protocol.sendRequest: 2 " + this);
                 sendRequestBody();
+                System.out.println("Protocol.sendRequest: 3 " + this);
 
                 if (readResponseHeader) {
                     finishRequestGetResponseHeader();
                 }
+                System.out.println("Protocol.sendRequest: 4 " + this);
             } catch (IOException ioe) {
+                System.out.println("Protocol.sendRequest: ioe1" + ioe + " " + this);
                 if (!(streamConnection instanceof StreamConnectionElement)) {
                     /*
                      * This was a connection opened during this transaction.
@@ -1576,12 +1584,16 @@ public class Protocol extends ConnectionBaseAdapter
                 streamOutput = null;
                 bytesToWrite = bytesToRetry;
 
+                System.out.println("Protocol.sendRequest: ioe2 " + this);
                 startRequest();
+                System.out.println("Protocol.sendRequest: ioe3 " + this);
                 sendRequestBody();
+                System.out.println("Protocol.sendRequest: ioe4 " + this);
 
                 if (readResponseHeader) {
                     finishRequestGetResponseHeader();
                 }
+                System.out.println("Protocol.sendRequest: ioe5 " + this);
             }
 
             if (chunkedOut) {
@@ -1590,6 +1602,7 @@ public class Protocol extends ConnectionBaseAdapter
         } finally {
             sendingRequest = false;
         }   
+        System.out.println("Protocol.sendRequest: finished");
     }
 
     /** 
@@ -1791,6 +1804,12 @@ public class Protocol extends ConnectionBaseAdapter
                 reqLine.append(key);
                 reqLine.append(": ");
                 reqLine.append(reqProperties.getValueAt(i));
+                try {
+                    System.out.println("reqLine:|" + reqLine + "|");
+                }
+                catch (Exception ex) {
+                    System.out.println("reqLine cannot dump: " + ex);
+                }
                 reqLine.append("\r\n");
             }
         }

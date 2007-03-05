@@ -237,7 +237,18 @@ clean::
 
 midp: $(MIDP_DEPS) $(MIDP_RESOURCES)
 
+clean_nbproject:
+	-@rm $(MIDP_OUTPUT_DIR)/phoneme.properties
+
+nbproject: $(MIDP_OUTPUT_DIR)/classes.zip clean_nbproject
+	@echo " ... writing list of java source directories" $(LOG)
+	@echo $(foreach path,$(subst ;, ,$(JAVADOC_ALL_SOURCEPATH)),$(shell echo `$(call fixcygpath,$(path))` >> $(MIDP_OUTPUT_DIR)/phoneme.properties))
+	@cat $(MIDP_OUTPUT_DIR)/phoneme.properties | sed s/'\\'/'\\\\'/mg > $(MIDP_OUTPUT_DIR)/phoneme2.properties
+	@awk 'BEGIN {  } /.*/ { print "file.reference.reference-classes" n "=" $$0; n-- }' $(MIDP_OUTPUT_DIR)/phoneme2.properties > $(MIDP_OUTPUT_DIR)/phoneme.properties
+	@awk 'BEGIN {  } /.*/ { print "src.dir" n "=$${file.reference.reference-classes" n "}"; n-- }' $(MIDP_OUTPUT_DIR)/phoneme2.properties >> $(MIDP_OUTPUT_DIR)/phoneme.properties
+	@awk 'BEGIN {  } /.*/ { print "                <root id=\"src.dir" n "\"/>"; n-- }' $(MIDP_OUTPUT_DIR)/phoneme2.properties > $(MIDP_OUTPUT_DIR)/phoneme_project.xml
+
 
 # Phonies to avoid accidents.
 #
-.PHONY: all midp clean run_configurator ams_resources rom FORCE
+.PHONY: all midp clean run_configurator ams_resources rom clean_nbproject nbproject FORCE
