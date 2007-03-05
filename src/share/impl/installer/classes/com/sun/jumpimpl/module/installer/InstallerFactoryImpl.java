@@ -138,14 +138,16 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
 
 
     private static Object loadAndInstantiate(ClassLoader loader,
-                                           String className) {
-        Object target = null;
-        try {
-            Class clazz = Class.forName(className, true, loader);
-            target = clazz.newInstance();
-        } catch (Exception e) { e.printStackTrace(); }
+                       String className) throws ClassNotFoundException {
 
-        return target;
+	try {     
+           Class clazz = Class.forName(className, true, loader);
+           return clazz.newInstance();
+        } catch (InstantiationException e) { e.printStackTrace(); 
+        } catch (IllegalAccessException e) { e.printStackTrace(); 
+	}
+
+	return null;
     }
 
     /**
