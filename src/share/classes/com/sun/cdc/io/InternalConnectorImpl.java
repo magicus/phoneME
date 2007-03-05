@@ -114,12 +114,16 @@ public class InternalConnectorImpl implements InternalConnector {
              */
             protocol = protocol.replace('-', '_');
             
+            String className = System.getProperty("j2me." + protocol +
+               ".Protocol");
             /*
              * Use the platform and protocol names to look up
-                 * a class to implement the connection
-                 */
-            String className = getClassRoot() + "." + "j2me"+ "." + protocol +
-                ".Protocol";
+             * a class to implement the connection
+             */
+            if (className == null) {
+                className = getClassRoot() + "." + "j2me"+ "." + protocol +
+               ".Protocol";
+            }
             Class clazz = Class.forName(className, true, getProtocolClassLoader());
             
             /* Construct a new instance of the protocol */
