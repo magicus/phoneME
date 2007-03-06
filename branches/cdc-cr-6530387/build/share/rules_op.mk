@@ -24,8 +24,9 @@
 
 .PHONY: javacall_lib
 
-# generatePropertyInitializer(xmlFiles,generatedDir,initializerPackage,outputFile)
-define generatePropertyInitializer
+# generateJSRInitializer(xmlFiles,generatedDir,initializerPackage,outputFile,nativeLibs)
+ifeq ($(CVM_PRELOAD_LIB), true)
+define generateJSRInitializer
 	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE)           \
 	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml         \
 	-xsl $(CONFIGURATOR_DIR)/xsl/share/merge.xsl        \
@@ -36,6 +37,19 @@ define generatePropertyInitializer
 	-params packageName $(3)                            \
 	-out $(4)
 endef
+else
+define generateJSRInitializer
+	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE)           \
+	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml         \
+	-xsl $(CONFIGURATOR_DIR)/xsl/share/merge.xsl        \
+	-params filesList '$(1)'                            \
+	-out $(2)/properties_merged.xml                     \
+	-xml $(2)/properties_merged.xml                     \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesJava.xsl \
+	-params packageName $(3) nativeLibs '$(5)'          \
+	-out $(4)
+endef
+endif
 
 
 # Macro to pre-process Jpp file into Java file
