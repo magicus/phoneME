@@ -53,7 +53,6 @@ MODULE_JSR_234_JAVA_FILES += \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/DefaultConfiguration.java \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/ImageAccess.java \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/MIDletPauseListener.java \
-    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/MMEventHandler.java \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/TonePlayer.java \
     $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/VideoRenderer.java \
 
