@@ -12,8 +12,8 @@
     packages is implemented.
 -->
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-<!-- stylesheet parameter: space separated list of property initialization classes -->
-<xsl:param name="propertyInitializers"></xsl:param>
+<!-- stylesheet parameter: space separated list of JSR initialization classes -->
+<xsl:param name="initializers"></xsl:param>
 <xsl:output method="text"/>
 
 
@@ -36,10 +36,10 @@ public class PackageManager {
     static final String[] components = {
 </xsl:text>
 
-    <!-- process propertyInitializers if it isn't empty -->
-    <xsl:if test="boolean($propertyInitializers)">
+    <!-- process initializers if it isn't empty -->
+    <xsl:if test="boolean($initializers)">
         <xsl:call-template name="addClasses">
-            <xsl:with-param name="classesList" select="$propertyInitializers"/>
+            <xsl:with-param name="classesList" select="$initializers"/>
         </xsl:call-template>
     </xsl:if>
 
