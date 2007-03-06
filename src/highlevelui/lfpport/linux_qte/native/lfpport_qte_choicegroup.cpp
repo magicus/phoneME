@@ -42,6 +42,8 @@
 
 #include <moc_lfpport_qte_choicegroup.cpp>
 
+#include <stdio.h>
+
 /**
  * Static pointer to hold active popup button that cannot be deleted.
  * This popup button is a child of mscreen. It will either be
@@ -262,6 +264,9 @@ void ChoiceButton::keyPressEvent(QKeyEvent *keyEvent) {
     ChoiceButtonBoxBody *qGroup = (ChoiceButtonBoxBody *)QButton::parentWidget();
 
     switch(keyEvent->key()) {
+#ifdef QT_KEYPAD_MODE
+        case Qt::Key_Select:
+#endif
     case Qt::Key_Return:
     {
         if (isExclusive) { // radio button
