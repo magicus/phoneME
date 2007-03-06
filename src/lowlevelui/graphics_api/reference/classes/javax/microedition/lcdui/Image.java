@@ -253,17 +253,17 @@ public class Image {
     /**
      * Width of the image in pixels.
      */
-    private final int width;
+    private int width;
 
     /**
      * Height of the image in pixels.
      */
-    private final int height;
+    private int height;
 
     /**
      * <code>ImageData</code> instance associated with this <code>Image</code>.
      */
-    private final ImageData imageData;
+    private ImageData imageData;
     
     /**
      * Valid transforms possible are 0 - 7
@@ -793,12 +793,32 @@ public class Image {
      * Resize Image optionally saving its content clipped according
      * to the new geometry
      *
-     * @param width
-     * @param height
-     * @param keepContent
+     * @param width new width of the Image
+     * @param height new height of the Image
+     * @param keepContent keep current content of the image
+     *   binded to the (0, 0) of the resized image and clipped
+     *   according to the new image dimensions 
      */
-    void resizeImage(int width, int height, boolean keepContent) {
+    void resize(int width, int height, boolean keepContent) {
+        if (!imageData.isMutable() || width <= 0 || height <= 0) {
+            throw new IllegalArgumentException();
+        }
 
+        // IMPL_NOTE: In the case content is not kept it is possible
+        //   to resize the image more efficiently, especially for the
+        //   case of rotation, when the memory reallocation is not needed.
+        //   However, now there are no scenarios when resize is needed 
+        //   without content saving.
+        Image newImage = createImage(width, height);
+        synchronized(this) {
+            if (keepContent) {
+                render(Graphics.getImageGraphics(newImage), 0, 0,
+                    Graphics.TOP | Graphics.LEFT);
+            }
+            this.width = width;
+            this.height = height;
+            imageData = newImage.getImageData();
+        }
     }
 
 }
