@@ -1248,80 +1248,63 @@ Java_com_sun_pisces_PiscesRenderer_setPathData() {
 
     jint idx;
     Renderer* rdr;
-    jint dataSize;
-    jint commandsSize;
-    jfloat* data = NULL;
-    jbyte* commands = NULL;
+    jfloat* data;
+    jbyte* commands;
 
     KNI_GetParameterAsObject(1, dataHandle);
     KNI_GetParameterAsObject(2, commandsHandle);
 
     KNI_GetThisPointer(objectHandle);
     rdr = (Renderer*)JLongToPointer(KNI_GetLongField(objectHandle,
-                                    fieldIds[RENDERER_NATIVE_PTR]));
+                                                     fieldIds[RENDERER_NATIVE_PTR]));
+    
+    jint offset = 0;
 
-    dataSize = KNI_GetArrayLength(dataHandle) * sizeof(jfloat);
-    commandsSize = nCommands * sizeof(jbyte);
-
-    data = (jfloat*)PISCESmalloc(dataSize);
-    commands = (jbyte*)PISCESmalloc(commandsSize);
-
-    if ((data != NULL) && (commands != NULL)) {
-        jint offset = 0;
-
-        KNI_GetRawArrayRegion(dataHandle, 0, dataSize, (jbyte*)data);
-        KNI_GetRawArrayRegion(commandsHandle, 0, commandsSize, 
-                              (jbyte*)commands);
-
-        for (idx = 0; idx < nCommands; ++idx) {
-            switch (commands[idx]) {
-            case CMD_MOVE_TO:
-                renderer_moveTo(rdr,
-                                (jint)(data[offset] * 65536.0f),
-                                (jint)(data[offset + 1] * 65536.0f));
-                offset += 2;
-                break;
-            case CMD_LINE_TO:
-                renderer_lineTo(rdr,
-                                (jint)(data[offset] * 65536.0f),
-                                (jint)(data[offset + 1] * 65536.0f));
-                offset += 2;
-                break;
-            case CMD_QUAD_TO:
-                renderer_quadTo(rdr,
-                                (jint)(data[offset] * 65536.0f),
-                                (jint)(data[offset + 1] * 65536.0f),
-                                (jint)(data[offset + 2] * 65536.0f),
-                                (jint)(data[offset + 3] * 65536.0f));
-                offset += 4;
-                break;
-            case CMD_CURVE_TO:
-                renderer_cubicTo(rdr,
-                                 (jint)(data[offset] * 65536.0f),
-                                 (jint)(data[offset + 1] * 65536.0f),
-                                 (jint)(data[offset + 2] * 65536.0f),
-                                 (jint)(data[offset + 3] * 65536.0f),
-                                 (jint)(data[offset + 4] * 65536.0f),
-                                 (jint)(data[offset + 5] * 65536.0f));
-                offset += 6;
-                break;
-            case CMD_CLOSE:
-            default:
-                renderer_close(rdr);
-                break;
-            }
-        }
-
-        PISCESfree(data);
-        PISCESfree(commands);
-    } else {
-        PISCESfree(data);
-        PISCESfree(commands);
-
-        KNI_ThrowNew("java/lang/OutOfMemoryError", "");
+    SNI_BEGIN_RAW_POINTERS;
+    data = (jfloat *) JavaIntArray(dataHandle);
+    commands = JavaByteArray(commandsHandle);
+    
+    
+    for (idx = 0; idx < nCommands; ++idx) {
+      switch (commands[idx]) {
+      case CMD_MOVE_TO:
+        renderer_moveTo(rdr,
+                        (jint)(data[offset] * 65536.0f),
+                        (jint)(data[offset + 1] * 65536.0f));
+        offset += 2;
+        break;
+      case CMD_LINE_TO:
+        renderer_lineTo(rdr,
+                        (jint)(data[offset] * 65536.0f),
+                        (jint)(data[offset + 1] * 65536.0f));
+        offset += 2;
+        break;
+      case CMD_QUAD_TO:
+        renderer_quadTo(rdr,
+                        (jint)(data[offset] * 65536.0f),
+                        (jint)(data[offset + 1] * 65536.0f),
+                        (jint)(data[offset + 2] * 65536.0f),
+                        (jint)(data[offset + 3] * 65536.0f));
+        offset += 4;
+        break;
+      case CMD_CURVE_TO:
+        renderer_cubicTo(rdr,
+                         (jint)(data[offset] * 65536.0f),
+                         (jint)(data[offset + 1] * 65536.0f),
+                         (jint)(data[offset + 2] * 65536.0f),
+                         (jint)(data[offset + 3] * 65536.0f),
+                         (jint)(data[offset + 4] * 65536.0f),
+                         (jint)(data[offset + 5] * 65536.0f));
+        offset += 6;
+        break;
+      case CMD_CLOSE:
+      default:
+        renderer_close(rdr);
+        break;
+      }
     }
 
-    // don't do anything here (see the throw above)!
+    SNI_END_RAW_POINTERS;
 
     KNI_EndHandles();
     KNI_ReturnVoid();
