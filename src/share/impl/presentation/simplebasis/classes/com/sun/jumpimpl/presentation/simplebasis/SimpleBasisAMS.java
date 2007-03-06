@@ -161,6 +161,59 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
             launchApp(app);
         }
     }
+
+    private JUMPWindow getWindowFromApplication(JUMPApplication app) {
+
+        // TBD: very inefficient way to find relationship between 
+        //      JUMPApplication and JUMPWindow based on assumtion that one 
+        //      isolate can run only one JUMPWindow which may change
+        //      once we support MIDP dialogs
+
+        // find isolate running passed in JUMPApplication
+        // (Note: assume that one JUMPApplication canb run only in one isolate)
+        JUMPIsolateProxy appIsolate = null;
+
+        trace("**************** getWindowFromApplication begin ***********************");
+
+        JUMPIsolateProxy isolates[] = lcm.getActiveIsolates();
+        for(int i = 0; i < isolates.length; ++i) {
+            JUMPIsolateProxy isolate = isolates[i];
+
+            JUMPApplicationProxy apps[] = isolate.getApps();
+
+            for(int j = 0; j < apps.length; ++j) {
+                JUMPApplication tmpApp = apps[j].getApplication();
+                if(tmpApp.getId() == app.getId()) {
+                    i = isolates.length;
+                    appIsolate = isolate;
+                    break;
+                }
+            }
+        }
+
+        trace("appIsolate: " + appIsolate);
+        if(appIsolate == null) {
+            // should never happen
+            trace("**************** getWindowFromApplication failed ***********************");
+            return null;
+        }
+
+        JUMPWindow windows[] = wm.getWindows();
+        
+        trace("Length of wm.getWindows(): " + windows.length);
+        for(int i = 0; i != windows.length; ++i) {
+            JUMPWindow window = windows[i];
+            trace("-> Window: " + i + ": " + window);
+
+            if(appIsolate.equals(window.getIsolate())) {
+                trace("**************** getWindowFromApplication ok ***********************");
+                return window;
+            }
+        }
+
+        trace("**************** getWindowFromApplication headless ***********************");
+        return null;
+    }
     
     public void handleMessage(JUMPMessage message) {
         if (JUMPIsolateWindowRequest.MESSAGE_TYPE.equals(message.getType())) {
@@ -172,20 +225,18 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
             int isolateID = cmd.getIsolateId();
             int windowID = cmd.getWindowId();
             JUMPWindow window = wm.idToWindow(isolateID);
-            if (window != null) {
-                JUMPApplication app = window.getApplication();
-            }
-            if (JUMPIsolateWindowRequest.ID_REQUEST_FOREGROUND.equals
+
+            if (JUMPIsolateWindowRequest.ID_NOTIFY_WINDOW_FOREGROUND.equals
                     (cmd.getCommandId())) {
-                trace("====== COMMAND RECEIVED: JUMPIsolateWindowRequest.ID_REQUEST_FOREGROUND");
+                trace("====== COMMAND RECEIVED: JUMPIsolateWindowRequest.ID_NOTIFY_WINDOW_FOREGROUND");
                 appWindowDisplayState = true;
                 synchronized(timeoutObject) {
                     System.out.println("****** Calling notify() on timout object. ******");
                     timeoutObject.notify();
                 }
-            } else if(JUMPIsolateWindowRequest.ID_REQUEST_BACKGROUND.equals(
+            } else if(JUMPIsolateWindowRequest.ID_NOTIFY_WINDOW_BACKGROUND.equals(
                     cmd.getCommandId())) {
-                trace("====== COMMAND RECEIVED: JUMPIsolateWindowRequest.ID_REQUEST_BACKGROUND");
+                trace("====== COMMAND RECEIVED: JUMPIsolateWindowRequest.ID_NOTIFY_WINDOW_BACKGROUND");
             }
         } else if(JUMPIsolateLifecycleRequest.MESSAGE_TYPE.equals(
                 message.getType())) {
@@ -196,23 +247,34 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
             
             int isolateID = cmd.getIsolateId();
             int appID = cmd.getAppId();
-            JUMPWindow window = wm.idToWindow(isolateID);
-            JUMPApplication app = null;
-            if (window != null) {
-                app = window.getApplication();
-            }
-            
+
             if (JUMPIsolateLifecycleRequest.ID_ISOLATE_DESTROYED.equals
                     (cmd.getCommandId())) {
                 
                 trace("====== COMMAND RECEIVED: JUMPIsolateLifecycleRequest.ID_ISOLATE_DESTROYED");
+
+                JUMPIsolateProxy isolateProxy = lcm.getIsolate(isolateID);
+                JUMPApplicationProxy apps[] = isolateProxy.getApps();
+
+                JUMPApplication app = null;
+                for(int i = 0; i < apps.length; ++i) {
+                    JUMPApplication tmpApp = apps[i].getApplication();
+                    if(tmpApp.getId() == appID) {
+                        app = tmpApp;
+                        break;
+                    }
+                }
+
+                trace("====== killApp( + " + app + ")");
                 
                 // the killApp(app) call below may not be needed and needs
                 // to undergo testing to see if this is necessary.  In fact,
                 // it may be the case that the 'app' value returned by
                 // window application is null.  If killApp(app) is not needed,
                 // then it should be replaced with a "currentApp = null".
-                killApp(app);
+                if(app != null) {
+                    killApp(app);
+                }
             }
         }
     }
@@ -474,21 +536,8 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
             return;
         }
         
-        // find window owned by the application and make it foreground
-        JUMPWindow windows[] = wm.getWindows();
-        trace("**************** bringWindowToFront begin ***********************");
-        trace("Length of wm.getWindows(): " + windows.length);
-        for(int i = 0; i != windows.length; ++i) {
-            trace("-> Window: " + i + ": " + windows[i]);
-            if(windows[i].getApplication().equals(app)) {
-                // make window foreground
-                trace("FOUND Window to bring to front: " + app.getTitle());
-                wm.setForeground(windows[i]);
-                break;
-            }
-        }
-        trace("**************** bringWindowToFront end ***********************");
-        
+        JUMPWindow window = getWindowFromApplication(app);
+        wm.setForeground(window);
     }
     
     private void bringWindowToBack(JUMPApplication app) {
@@ -496,20 +545,8 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
             trace("ERROR:  Cannot do a bringWindowToBack... app is null.");
             return;
         }
-        // find window owned by the application and make it foreground
-        JUMPWindow windows[] = wm.getWindows();
-        trace("************bringWindowToBack begin ***************************");
-        trace("Length of wm.getWindows(): " + windows.length);
-        for(int i = 0; i != windows.length; ++i) {
-            trace("-> Window: " + i + ": " + windows[i]);
-            if(windows[i].getApplication().equals(app)) {
-                // make window foreground
-                trace("FOUND Window to bring to back: " + app.getTitle());
-                wm.setBackground(windows[i]);
-                break;
-            }
-        }
-        trace("************bringWindowToBack end ***************************");
+        JUMPWindow window = getWindowFromApplication(app);
+        wm.setBackground(window);
     }
     
     private void switchToApp(JUMPApplication app) {

@@ -31,8 +31,8 @@ import java.util.Vector;
 import java.util.NoSuchElementException;
 
 import com.sun.jump.executive.JUMPExecutive;
-import com.sun.jump.executive.JUMPIsolateProxy;
 import com.sun.jump.message.JUMPMessage;
+import com.sun.jump.message.JUMPMessageSender;
 import com.sun.jump.message.JUMPMessageHandler;
 import com.sun.jump.message.JUMPMessageDispatcher;
 import com.sun.jump.message.JUMPMessageDispatcherTypeException;
@@ -42,9 +42,11 @@ import com.sun.jump.command.JUMPIsolateWindowRequest;
 import com.sun.jump.command.JUMPResponse;
 import com.sun.jump.module.windowing.JUMPWindowingModule;
 import com.sun.jump.module.JUMPModule;
+import com.sun.jump.common.JUMPIsolate;
 import com.sun.jump.common.JUMPWindow;
 
 import com.sun.jumpimpl.process.RequestSenderHelper;
+import com.sun.jumpimpl.process.JUMPProcessProxyImpl;
 
 
 class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
@@ -52,7 +54,18 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
     private final Object        lock = new Object();
     private Vector              windows;
     private RequestSenderHelper requestSender;
+    private JUMPMessageSender   executiveMessageSender;
 
+
+    private JUMPMessageSender
+    getMessageSender(JUMPWindow window) {
+        JUMPIsolate isolate = window.getIsolate();    
+        if(isolate != null) {
+            return (JUMPMessageSender)isolate;
+        }
+    
+        return executiveMessageSender;
+    }
 
     private void
     setForeground(JUMPWindow window, boolean notifyIsolate) {
@@ -62,13 +75,17 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
 
         WindowImpl oldFgWindow = (WindowImpl)getForeground();
         if(oldFgWindow != window && oldFgWindow != null) {
-            setBackground(oldFgWindow, notifyIsolate);
+// FIXME: comment away by now. reason: directfb window manager takes care about
+//        windows switching. The bad thing about this comment is that without
+//        explicit setting window background GCI continues to eat VM's 
+//        resources trying to handle user input and update screen
+//            setBackground(oldFgWindow, notifyIsolate);
         }
 
         if(notifyIsolate) {
             JUMPResponse response =
                 requestSender.sendRequest(
-                    (JUMPIsolateProxy)window.getIsolate(),
+                    getMessageSender(window),
                     new JUMPExecutiveWindowRequest(
                         JUMPExecutiveWindowRequest.ID_FOREGROUND, window));
             if(!requestSender.handleBooleanResponse(response)) {
@@ -94,7 +111,7 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
         if(notifyIsolate) {
             JUMPResponse response =
                 requestSender.sendRequest(
-                    (JUMPIsolateProxy)window.getIsolate(),
+                    getMessageSender(window),
                     new JUMPExecutiveWindowRequest(
                         JUMPExecutiveWindowRequest.ID_BACKGROUND, window));
             if(!requestSender.handleBooleanResponse(response)) {
@@ -111,16 +128,24 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
 
 
     WindowingModuleImpl() {
-        requestSender   =
-            new RequestSenderHelper(JUMPExecutive.getInstance());
-        windows         = new Vector();
+        // instantiate stuff that will track JUMPWindow-s 
+        // created by presentation if any
+        new WindowingExecutiveClient();
+
+        JUMPExecutive   executive = JUMPExecutive.getInstance();
+        int             isolateId = executive.getProcessId();
+
+        windows                 = new Vector();
+        requestSender           = new RequestSenderHelper(executive);
+        executiveMessageSender  = 
+            JUMPProcessProxyImpl.createProcessProxyImpl(
+                executive.getProcessId());
 
         try {
             JUMPExecutive e = JUMPExecutive.getInstance();
             JUMPMessageDispatcher md = e.getMessageDispatcher();
             md.registerHandler(JUMPIsolateWindowRequest.MESSAGE_TYPE, this);
-            md.registerHandler(
-                JUMPIsolateLifecycleRequest.ID_ISOLATE_DESTROYED, this);
+            md.registerHandler(JUMPIsolateLifecycleRequest.MESSAGE_TYPE, this);
         } catch (JUMPMessageDispatcherTypeException dte) {
             dte.printStackTrace();
             // FIXME: someone else listeneing -- what to do?
@@ -145,43 +170,54 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
                 }
             }
 
-            if(JUMPIsolateWindowRequest.ID_REQUEST_FOREGROUND.equals(
+            if(JUMPIsolateWindowRequest.ID_NOTIFY_WINDOW_FOREGROUND.equals(
                 cmd.getCommandId())) {
 
                 setForeground(window, false);
+                return;
             }
-            else if(JUMPIsolateWindowRequest.ID_REQUEST_BACKGROUND.equals(
+            
+            if(JUMPIsolateWindowRequest.ID_NOTIFY_WINDOW_BACKGROUND.equals(
                 cmd.getCommandId())) {
 
                 setBackground(window, false);
+                return;
             }
+            return;
+            
         }
-        else if(JUMPIsolateLifecycleRequest.MESSAGE_TYPE.equals(
+        
+        if(JUMPIsolateLifecycleRequest.MESSAGE_TYPE.equals(
             message.getType())) {
 
             JUMPIsolateLifecycleRequest cmd =
                 (JUMPIsolateLifecycleRequest)
                     JUMPIsolateLifecycleRequest.fromMessage(message);
 
-            int isolateId = cmd.getIsolateId();
+            if(JUMPIsolateLifecycleRequest.ID_ISOLATE_DESTROYED.equals(
+                cmd.getCommandId())) {
 
-            synchronized(lock) {
-                // remove JUMPWindow-s hosted by the destroyed isolate
-                // from the list
-                int idx = 0;
-                while(idx != windows.size()) {
-                    if(((JUMPWindow)windows.elementAt(
-                        idx)).getIsolate().getIsolateId() == isolateId) {
+                int isolateId = cmd.getIsolateId();
 
-                        windows.remove(idx);
-                        continue;
+                synchronized(lock) {
+                    // remove JUMPWindow-s hosted by the destroyed isolate
+                    // from the list
+                    int idx = 0;
+                    while(idx != windows.size()) {
+                        JUMPIsolate isolate = 
+                            ((JUMPWindow)windows.elementAt(idx)).getIsolate();
+                        if(isolate != null 
+                        && isolate.getIsolateId() == isolateId) {
+                            windows.remove(idx);
+                            continue;
+                        }
+                        ++idx;
                     }
-                    ++idx;
-                }
 
-                // enshure there is one foreground window
-                if(getForeground() == null) {
-                    nextWindow();
+                    // enshure there is one foreground window
+                    if(getForeground() == null) {
+                        nextWindow();
+                    }
                 }
             }
         }

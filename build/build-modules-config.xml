@@ -119,7 +119,6 @@ ${modules-config.raw}${ant-property-separator}
                 file2="${modules-config-file}"/>
         </not>
     </condition>
-<echo message="update-modules-config.file=${update-modules-config.file}"/>
 </target>
 
 <target

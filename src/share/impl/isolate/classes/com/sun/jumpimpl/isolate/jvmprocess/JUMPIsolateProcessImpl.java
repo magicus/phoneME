@@ -50,6 +50,7 @@ import com.sun.jump.command.JUMPRequest;
 import com.sun.jump.command.JUMPResponse;
 import com.sun.jump.command.JUMPResponseInteger;
 import com.sun.jump.message.JUMPMessageHandler;
+import com.sun.jumpimpl.client.module.windowing.WindowingIsolateClient;
 
 import sun.misc.ThreadRegistry;
 
@@ -67,6 +68,7 @@ public class JUMPIsolateProcessImpl
     private JUMPMessageDispatcher   disp;
     private JUMPAppModel            appModel;
     private JUMPAppContainer        appContainer;
+    private WindowingIsolateClient  windowing;
 
     protected JUMPIsolateProcessImpl() {
 	super();
@@ -180,6 +182,8 @@ public class JUMPIsolateProcessImpl
         AppContainerFactoryImpl factory = new AppContainerFactoryImpl();
 	this.appContainer = factory.getAppContainer(appModel);
 
+        this.windowing = new WindowingIsolateClient();
+
         System.err.println(
             this + " config: " + JUMPModulesConfig.getProperties());
 
@@ -225,6 +229,7 @@ public class JUMPIsolateProcessImpl
                appId = -1; 
 	    } else {
 	       // The message is telling us to start an application
+               windowing.onBeforeApplicationStarted(app);
 	       appId = appContainer.startApp(app, args);
             }
 	    // Now wrap this appid in a message and return it
