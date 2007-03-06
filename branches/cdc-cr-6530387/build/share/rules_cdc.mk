@@ -37,7 +37,7 @@ $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java: $(CONFIGURATO
 	$(AT)$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
 	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml \
 	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesInit.xsl \
-	-params propertyInitializers '$(PROPERTY_INITIALIZER_LIST)' \
+	-params initializers '$(JSR_INITIALIZER_LIST)' \
 	-out $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java
 
 build-unittests::
