@@ -30,18 +30,18 @@
 # other def. (like VPATH)
 ######################################################################
 
-SUBSYSTEM_MMAPI_JAVA_FILES = 
-
-ifneq ($(USE_JSR_234), true)
-ifneq ($(USE_JSR_135), true)
-
 SUBSYSTEM_MMAPI_JAVA_FILES = \
-    $(SUBSYSTEM_DIR)/mmapi/classes/javax/microedition/lcdui/MMHelperImpl.java
+    $(SUBSYSTEM_DIR)/mmapi/classes/javax/microedition/lcdui/MMHelperImpl.java \
+    $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMHelper.java \
+    $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MIDPVideoPainter.java
+
+ifeq ($(TARGET_VM),cldc_vm)
+SUBSYSTEM_MMAPI_JAVA_FILES += \
+    $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMEventHandler.java
+endif
 
 mmapi:
 
-endif
-endif
 
 SUBSYSTEM_MMAPI_SOURCEPATH = $(SUBSYSTEM_DIR)/mmapi/classes
 
@@ -61,11 +61,6 @@ MIDP_JAVADOC_ALL += \
         -group "Multimedia Package" \
 	$(shell echo $(SUBSYSTEM_MMAPI_PACKAGES) | tr ' ' $(PATHSEP))
 
-# Java files in MIDP workspace that connects ( mmapi ) subsystem
-#
-SUBSYSTEM_MMAPI_JAVA_FILES += \
-    $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMEventHandler.java
-    
 endif
 endif
 endif
