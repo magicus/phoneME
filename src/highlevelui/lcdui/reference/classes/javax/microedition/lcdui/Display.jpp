@@ -31,7 +31,6 @@ import javax.microedition.midlet.MIDlet;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
-import com.sun.midp.security.Permissions;
 import com.sun.midp.security.ImplicitlyTrustedClass;
 
 // #ifndef ENABLE_CDC
@@ -3191,7 +3190,7 @@ class ImageAccessImpl implements com.sun.midp.lcdui.ImageAccess {
      */
     public void resizeImage(Image image,
             int width, int height, boolean keepContent) {
-        image.resizeImage(width, height, keepContent);
+        image.resize(width, height, keepContent);
     }
     
 
