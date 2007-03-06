@@ -158,13 +158,13 @@ surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
     KNI_GetObjectField(surfaceHandle, jSurface->javaArrayFieldID, dataHandle);
     switch(((JavaSurface*)surface)->javaArrayFieldSize) {
         case sizeof(jint):
-            surface->super.data = JavaIntArray(dataHandle);
+            surface->super.data = JavaIntArray(dataHandle)->elements;
             break;
         case sizeof(jshort):
-            surface->super.data = JavaShortArray(dataHandle);
+            surface->super.data = JavaShortArray(dataHandle)->elements;
             break;
         case sizeof(jbyte):
-            surface->super.data = JavaByteArray(dataHandle);
+            surface->super.data = JavaByteArray(dataHandle)->elements;
             break;
         default:
             //shouldn't happen        

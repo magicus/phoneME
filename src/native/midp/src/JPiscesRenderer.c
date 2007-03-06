@@ -611,7 +611,7 @@ Java_com_sun_pisces_PiscesRenderer_setLinearGradientImpl() {
 
     SNI_BEGIN_RAW_POINTERS;
 
-    ramp = JavaIntArray(rampHandle);
+    ramp = JavaIntArray(rampHandle)->elements;
 
     rdr->_gradient_cycleMethod = cycleMethod;
     renderer_setLinearGradient(rdr, x0, y0, x1, y1,
@@ -653,7 +653,7 @@ Java_com_sun_pisces_PiscesRenderer_setRadialGradientImpl() {
 
     SNI_BEGIN_RAW_POINTERS;
 
-    ramp = JavaIntArray(rampHandle);
+    ramp = JavaIntArray(rampHandle)->elements;
 
     rdr->_gradient_cycleMethod = cycleMethod;
     renderer_setRadialGradient(rdr, cx, cy, fx, fy, radius,
