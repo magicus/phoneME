@@ -1,5 +1,5 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -95,7 +95,7 @@ draw_image(gxj_screen_buffer *imageSBuf,
   const jshort clipX2 = clip[2];
   const jshort clipY2 = clip[3];
 
-  REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:MutableImage_render_Image()\n");
+  REPORT_CALL_TRACE(LC_LOWUI, "LF:draw_image()\n");
 
   CHECK_SBUF_CLIP_BOUNDS(destSBuf, clip);
 
@@ -143,7 +143,7 @@ draw_imageregion(gxj_screen_buffer *imageSBuf,
 		 jint transform) {
   gxj_screen_buffer *dstSBuf = getScreenBuffer(gSBuf);
 
-  REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:MutableImage_render_imageRegion()\n");
+  REPORT_CALL_TRACE(LC_LOWUI, "LF:draw_imageregion()\n");
 
   CHECK_SBUF_CLIP_BOUNDS(dstSBuf, clip);
 
@@ -168,8 +168,7 @@ decode_png
     _imageDstData dstData;
     imageSrcPtr src = NULL;
 
-    REPORT_CALL_TRACE(LC_LOWUI,
-                     "LF:decode_PNG()\n");
+    REPORT_CALL_TRACE(LC_LOWUI, "LF:decode_png()\n");
 
     /* Create the image from the buffered data */
     initImageDst(&dstData);
@@ -208,8 +207,10 @@ static int decode_jpeg_image(char* inData, int inDataLen,
     char* outData, int outDataWidth, int outDataHeight)
 {
     int result = FALSE;
-
     void *info = JPEG_To_RGB_init();
+
+    REPORT_CALL_TRACE(LC_LOWUI, "LF:decode_jpeg_image()\n");
+
     if (info) {
         int width, height;
         if (JPEG_To_RGB_decodeHeader(info, inData, inDataLen,
@@ -256,8 +257,7 @@ decode_jpeg
     _imageDstData dstData;
     imageSrcPtr src = NULL;
 
-    REPORT_CALL_TRACE(LC_LOWUI,
-                     "LF:decodeJPEG()\n");
+    REPORT_CALL_TRACE(LC_LOWUI, "LF:decode_jpeg()\n");
 
     /* Create the image from the buffered data */
     initImageDst(&dstData);
@@ -309,8 +309,7 @@ static void
 setImageColormap(imageDstPtr self, long *map, int length) {
   _imageDstPtr p = (_imageDstPtr)self;
 
-  REPORT_CALL_TRACE(LC_LOWUI,
-                    "LF:STUB:setImageColormap()\n");
+  REPORT_CALL_TRACE(LC_LOWUI, "LF:setImageColormap()\n");
 
   p->hasColorMap = KNI_TRUE;
   memcpy(p->cmap, map, length * sizeof(long));
@@ -338,7 +337,7 @@ setImageTransparencyMap(imageDstPtr self, unsigned char *map,
     _imageDstPtr p = (_imageDstPtr)self;
     int i;
 
-    REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:setImageTransparencyMap()\n");
+    REPORT_CALL_TRACE(LC_LOWUI, "LF:setImageTransparencyMap()\n");
 
     /*
      * The tRNS chunk shall not contain more alpha values than there are
@@ -369,8 +368,7 @@ static void
 setImageSize(imageDstPtr self, int width, int height) {
   _imageDstPtr p = (_imageDstPtr)self;
 
-    REPORT_CALL_TRACE(LC_LOWUI,
-                      "LF:STUB:setImageSize()\n");
+    REPORT_CALL_TRACE(LC_LOWUI, "LF:setImageSize()\n");
 
     if (p->vdc->pixelData == NULL) {
         p->vdc->width = width;
@@ -402,8 +400,7 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
   _imageDstPtr p = (_imageDstPtr)self;
   int x;
 
-  REPORT_CALL_TRACE(LC_LOWUI,
-                    "LF:STUB:sendPixelsColor()\n");
+  REPORT_CALL_TRACE(LC_LOWUI, "LF:sendPixelsColor()\n");
 
   if (p->vdc->pixelData == NULL || p->vdc->alphaData == NULL) {
     return;
@@ -474,10 +471,8 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
  *
  *  @param p pointer to the image destination to initialize
  */
-void
-initImageDst(_imageDstPtr p) {
-  REPORT_CALL_TRACE(LC_LOWUI,
-                    "LF:STUB:initImageDst()\n");
+void initImageDst(_imageDstPtr p) {
+  REPORT_CALL_TRACE(LC_LOWUI, "LF:initImageDst()\n");
 
   p->super.ptr = p;
 
@@ -664,6 +659,7 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
 		jint x_dest, jint y_dest,
                 jint width, jint height, jint x_src, jint y_src,
                 jint transform) {
+
     int clipX1 = clip[0];
     int clipY1 = clip[1];
     int clipX2 = clip[2];
@@ -992,10 +988,25 @@ static void resize_image(gxj_screen_buffer *imageSBuf, jint w, jint h,
         return;
     }
 
+    REPORT_CALL_TRACE(LC_LOWUI, "LF:resize_image()\n");
+
     if (!keepContent) {
         gxj_resize_screen_buffer(imageSBuf, w, h);
         gxj_reset_screen_buffer(imageSBuf);
         return;                
+    }
+
+    // Copy original image content to the new screen buffer
+    // and reconnect image buffer to the resized memory
+    gxj_screen_buffer newSBuf;
+    if (gxj_init_screen_buffer(&newSBuf, w, h) == ALL_OK) {
+        const jshort clip[4] = {0, 0, w, h};
+        draw_image(imageSBuf, &newSBuf, clip, 0, 0);
+        gxj_free_screen_buffer(imageSBuf);
+        imageSBuf->width = w;
+        imageSBuf->height = h;
+        imageSBuf->alphaData = newSBuf.alphaData;
+        imageSBuf->pixelData = newSBuf.pixelData;
     }
 }
 

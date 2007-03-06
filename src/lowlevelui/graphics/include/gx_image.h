@@ -138,7 +138,7 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
 				unsigned int* ret_length);
 
 /**
- * Resize existing image possibly keeping its content clipped
+ * Resize existing image optionally keeping its content clipped
  * according to the new image geometry
  *
  * @param imageDataPtr the image to be resized

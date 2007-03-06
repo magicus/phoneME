@@ -114,6 +114,8 @@ void gxj_rotate_screen_buffer(gxj_screen_buffer *sBuf) {
 
 /** Free memory allocated for screen buffer */
 void gxj_free_screen_buffer(gxj_screen_buffer *sBuf) {
+    sBuf->width = 0;
+    sBuf->height = 0;
     if (sBuf->pixelData != NULL) {
         midpFree(sBuf->pixelData);
         sBuf->pixelData = NULL;
