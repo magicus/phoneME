@@ -75,7 +75,8 @@ public class GameCanvasLFImpl {
      */
     public void lCallSizeChanged(int w, int h) {
         // OutOfMemoryError can be thrown
-        resizeImage(offscreen_buffer, w, h, true);
+        GameMap.getImageAccess().resizeImage(
+            offscreen_buffer, w, h, true);
     }
 
     /**
@@ -145,22 +146,4 @@ public class GameCanvasLFImpl {
         }
         return 0;
     }
-
-    /**
-     * Resize image to new dimension
-     *
-     * @param image Image instance to resize
-     * @param w new width of the image
-     * @param h new height of the image
-     * @param keepContent if true the original image content will
-     *  be preserved, though it will be clipped according to the
-     *  new image geometry
-     * throws OutOfMemoryError in the case there is not enough
-     *  memory for resizing
-     * @throws IllegalArgumentException
-     *  in the case the image is not muttable or invalid
-     */
-    native void resizeImage(Image image, int w, int h, boolean keepContent)
-        throws OutOfMemoryError, IllegalArgumentException;
-
 }

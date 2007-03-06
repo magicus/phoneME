@@ -48,8 +48,8 @@ import com.sun.midp.util.ResourceHandler;
 // #ifdef ENABLE_CHAMELEON
 import com.sun.midp.chameleon.MIDPWindow;
 import com.sun.midp.chameleon.CGraphicsQ;
-import com.sun.midp.chameleon.layers.PopupLayer;
 import com.sun.midp.chameleon.ChamDisplayTunnel;
+import com.sun.midp.chameleon.layers.PopupLayer;
 import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
@@ -447,7 +447,7 @@ public class Display {
     ForegroundController foregroundController;
 
     /** Display event handler with private methods. */
-    /* private */ static DisplayEventHandlerImpl displayEventHandlerImpl;
+    static DisplayEventHandlerImpl displayEventHandlerImpl;
 
     /**
      * <code>true</code>, if the <code>Display</code> is the foreground
@@ -539,10 +539,10 @@ public class Display {
 
     /** Chameleon graphics queue */
     private CGraphicsQ graphicsQ;
-
-    /** Chameleon tunnel to romized Image constructor */
-    private static ChamImageTunnel chamImageTunnel;
     // #endif ENABLE_CHAMELEON
+
+    /** Accessor to extended Image API needed for Chameleon and GameCanvas */
+    private static ImageAccessImpl imageAccessor;
 
     /**
      * <code>True</code> if a system screen, like menu, is up.
@@ -584,10 +584,11 @@ public class Display {
         WIDTH               = getScreenWidth0();
         HEIGHT              = getScreenHeight0();
 
+        imageAccessor = new ImageAccessImpl();
+        GameMap.registerImageAccess(imageAccessor);
+    
         // #ifdef ENABLE_CHAMELEON
-
-        chamImageTunnel = new ChamImageTunnel();
-        SkinResources.initImageTunnel(chamImageTunnel);
+        SkinResources.initImageAccess(imageAccessor);
         SkinResources.setScreenSize(WIDTH, HEIGHT);
 
         // IMPL_NOTE: In the MVM mode it's important to do the first
@@ -3155,18 +3156,43 @@ public class Display {
     // #endif ENABLE_I3_TEST
 }
 
-// #ifdef ENABLE_CHAMELEON
 /**
- * ************* Class for Chameleon Image access
+ * Class to access extended Image functionality needed to Chameleon,
+ * GameCanvas or to some other clients not satisified with public API of
+ * the Image class
  */
-class ChamImageTunnel implements
-    com.sun.midp.chameleon.skins.resources.ImageTunnel
-{
+class ImageAccessImpl implements com.sun.midp.lcdui.ImageAccess {
 
+    // #ifdef ENABLE_CHAMELEON
+    /**
+     * Return a romized image resource based on the identifier.
+     *
+     * @param imageDataArrayPtr native pointer to image data as Java int
+     * @param imageDataArrayLength length of image data array
+     * @return the romized Image, null if the identifier was invalid
+     *         or the Image did not exist.
+     */
     public Image getRomizedImage(int imageDataArrayPtr,
             int imageDataArrayLength) {
-        return Image.getRomizedImage(imageDataArrayPtr, imageDataArrayLength);
+        
+        return Image.getRomizedImage(
+            imageDataArrayPtr, imageDataArrayLength);
     }
-}
-// #endif
+    // #endif
 
+    /**
+     * Resize Image optionally saving its content clipped according
+     * to the new geometry
+     *
+     * @param image image to resize
+     * @param width new image width
+     * @param height new image height
+     * @param keepContent true of image content should be kept
+     */
+    public void resizeImage(Image image,
+            int width, int height, boolean keepContent) {
+        image.resizeImage(width, height, keepContent);
+    }
+    
+
+}

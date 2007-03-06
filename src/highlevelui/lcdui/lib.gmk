@@ -59,10 +59,14 @@ SUBSYSTEM_LCDUI_NATIVE_FILES += \
 $(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java: $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Display.jpp
 	@$(call runjpp,$^,$@)
 
+$(GENERATED_DIR)/classes/com/sun/midp/lcdui/ImageAccess.java: $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ImageAccess.jpp
+	@$(call runjpp,$^,$@)
+
 # Java files for the library
 #
 SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/lcdui/ImageAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameMap.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/CommandAccess.java \

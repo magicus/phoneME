@@ -46,6 +46,12 @@ public class GameMap {
     static private DisplayAccess displayAccess;
 
     /**
+     * The ImageAccess instance handed out from
+     * javax.microedition.lcdui package 
+     */
+    static private ImageAccess imageAccess;
+
+    /**
      * Map contains pairs of GameCanvas and GameCanvasLFImpl
      */
     private static Hashtable gameCanvasImpl = new Hashtable();
@@ -56,7 +62,7 @@ public class GameMap {
     static final private Object lock = new Object();
 
     /**
-     * Associate the given Displayable and DisplayAccess.  This is a
+     * Associates the given Displayable and DisplayAccess.  This is a
      * one-way association.
      *
      * @param c The GameCanvas to store
@@ -69,9 +75,8 @@ public class GameMap {
 	    }
     }
 
-
     /**
-     * Get the DisplayAccess object for this Displayable.
+     * Gets the DisplayAccess object for this Displayable.
      * @param c The Displayable to get the DisplayAccess for
      * @return DisplayAccess The DisplayAccess associated with the MIDlet
      */
@@ -85,9 +90,8 @@ public class GameMap {
         }
     }
 
-
     /**
-     * Associate the given GameCanvas and GameCanvasLFImpl.
+     * Associates the given GameCanvas and GameCanvasLFImpl.
      *
      * @param c The GameCanvas to store
      */
@@ -103,7 +107,7 @@ public class GameMap {
     }
 
     /**
-     * Get the GameCanvasLFImpl object for this GameCanvas.
+     * Gets the GameCanvasLFImpl object for this GameCanvas.
      * @param c The GameCanvas to get the GameCanvasLFImpl for
      * @return GameCanvasLFImpl
      */
@@ -117,4 +121,25 @@ public class GameMap {
         }
     }
 
+    /**
+     * Sets Image accessor instance from javax.microedition.lcdui package
+     * to use extended package-private Image API
+     *
+     * @param imageAccess image accessor tunnel
+     */
+    public static void registerImageAccess(ImageAccess imageAccess) {
+        synchronized (lock) {
+            GameMap.imageAccess = imageAccess;
+        }
+    }
+
+    /**
+     * Gets ImageAccess instance needed to access extende Image API
+     * @return ImageAccess tunnel instance
+     */
+    public static ImageAccess getImageAccess() {
+        synchronized (lock) {
+            return imageAccess;
+        }
+    }
 }

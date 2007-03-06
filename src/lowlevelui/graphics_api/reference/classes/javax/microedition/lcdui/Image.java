@@ -708,7 +708,6 @@ public class Image {
         return imageData;
     }
 
-
     /**
      * Renders this Image onto the provided Graphics object.
      *
@@ -789,4 +788,17 @@ public class Image {
         this.width     = imageData.getWidth();
         this.height    = imageData.getHeight();
     }
+
+    /**
+     * Resize Image optionally saving its content clipped according
+     * to the new geometry
+     *
+     * @param width
+     * @param height
+     * @param keepContent
+     */
+    void resizeImage(int width, int height, boolean keepContent) {
+
+    }
+
 }
