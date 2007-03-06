@@ -110,19 +110,6 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/core/com/sun/mmedia/TonePlayer.java \
     $(JSR_135_DIR)/src/core/com/sun/mmedia/protocol/LocatorParser.java
 
-MMHELPER_PATH = $(SUBSYSTEM_DIR)/reference/classes/javax/microedition/lcdui/MMHelperImpl.java
-
-ifeq ($(DIRECT_VIDEO_PLAYER),true)
-MMHELPER_PATH = $(JSR_135_DIR)/src/components/video-renderer/classes/javax/microedition/lcdui/MMHelperImpl.java
-endif
-
-ifeq ($(INDIRECT_VIDEO_PLAYER), true)
-MMHELPER_PATH = $(JSR_135_DIR)/src/components/video-renderer/classes/javax/microedition/lcdui/MMHelperImpl.java
-endif
-
-SUBSYSTEM_JSR_135_JAVA_FILES += $(MMHELPER_PATH)
-
-SUBSYSTEM_JSR_135_JAVA_FILES += $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMEventHandler.java 
 SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_DIR)/src/components/mmevent/classes/com/sun/mmedia/MediaEventConsumer.java
 SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_DIR)/src/components/mmevent/classes/com/sun/mmedia/MediaTunnel.java
 
@@ -179,11 +166,8 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/GIFImageDecoder.java \
     $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/ImageAccess.java \
     $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/MIDPImageAccessor.java \
-    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/MIDPRendererCanvasBuddy.java \
-    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/MIDPVideoPainter.java \
     $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/MIDPVideoRenderer.java \
     $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/MMCustomItem.java \
-    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/MMHelper.java \
     $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/PermissionAccessor.java
 endif
     
@@ -192,10 +176,7 @@ endif
 #
 ifeq ($(DIRECT_VIDEO_PLAYER), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectVideo.java \
-    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/MMHelper.java \
-    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/MIDPRendererCanvasBuddy.java \
-    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/MIDPVideoPainter.java
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectVideo.java 
 endif
 
 ifeq ($(DIRECT_CAMERA_PLAYER), true)

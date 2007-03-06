@@ -61,7 +61,7 @@ public abstract class MMCustomItem extends CustomItem {
         }
 
         if (display == null) {
-            MMHelper mmh = MIDPRendererCanvasBuddy.getMMHelper();
+            MMHelper mmh = MMHelper.getMMHelper();
             if (mmh == null)
                 return null;
 
