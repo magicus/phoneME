@@ -1250,6 +1250,7 @@ Java_com_sun_pisces_PiscesRenderer_setPathData() {
     Renderer* rdr;
     jfloat* data;
     jbyte* commands;
+    jint offset = 0;
 
     KNI_GetParameterAsObject(1, dataHandle);
     KNI_GetParameterAsObject(2, commandsHandle);
@@ -1257,12 +1258,10 @@ Java_com_sun_pisces_PiscesRenderer_setPathData() {
     KNI_GetThisPointer(objectHandle);
     rdr = (Renderer*)JLongToPointer(KNI_GetLongField(objectHandle,
                                                      fieldIds[RENDERER_NATIVE_PTR]));
-    
-    jint offset = 0;
 
     SNI_BEGIN_RAW_POINTERS;
-    data = (jfloat *) JavaIntArray(dataHandle);
-    commands = JavaByteArray(commandsHandle);
+    data = (jfloat *) JavaIntArray(dataHandle)->elements;
+    commands = JavaByteArray(commandsHandle)->elements;
     
     
     for (idx = 0; idx < nCommands; ++idx) {
