@@ -32,7 +32,7 @@
 #include "gxj_screen_buffer.h"
 
 /**
- * Initialize screen buffer with specified demension,
+ * Initialize screen buffer for a screen with specified demension,
  * allocate memory for pixel data.
  *
  * @param width width of the screen to initialize buffer for
@@ -40,19 +40,17 @@
  * @return ALL_OK if successful, OUT_OF_MEMORY in the case of
  *   not enough memory to allocate the buffer
  */
-MIDPError gxj_init_screen_buffer(gxj_screen_buffer *sBuf,
-        int width, int height) {
-
+MIDPError gxj_init_screen_buffer(int width, int height) {
     MIDPError stat = ALL_OK;
     int size = sizeof(gxj_pixel_type) * width * height;
-    sBuf->width = width;
-    sBuf->height = height;
-    sBuf->alphaData = NULL;
+    gxj_system_screen_buffer.width = width;
+    gxj_system_screen_buffer.height = height;
+    gxj_system_screen_buffer.alphaData = NULL;
 
-    sBuf->pixelData =
+    gxj_system_screen_buffer.pixelData =
         (gxj_pixel_type *)midpMalloc(size);
-    if (sBuf->pixelData != NULL) {
-        memset(sBuf->pixelData, 0, size);
+    if (gxj_system_screen_buffer.pixelData != NULL) {
+        memset(gxj_system_screen_buffer.pixelData, 0, size);
     } else {
         stat = OUT_OF_MEMORY;
     }
@@ -61,7 +59,7 @@ MIDPError gxj_init_screen_buffer(gxj_screen_buffer *sBuf,
 }
 
 /**
- * Resizes screen buffer to fit new geometry.
+ * Resizes screen buffer to fit new screen geometry.
  * Call on screen change events like rotation. 
  *
  * @param width new width of the screen buffer
@@ -69,14 +67,13 @@ MIDPError gxj_init_screen_buffer(gxj_screen_buffer *sBuf,
  * @return ALL_OK if successful, OUT_OF_MEMORY in the case of
  *   not enough memory to reallocate the buffer
  */
-MIDPError gxj_resize_screen_buffer(gxj_screen_buffer *sBuf,
-        int width, int height) {
+MIDPError gxj_resize_screen_buffer(int width, int height) {
 
-    if (sBuf->pixelData != NULL) {
-        if (sBuf->width == width &&
-        	sBuf->height == height) {
+    if (gxj_system_screen_buffer.pixelData != NULL) {
+        if (gxj_system_screen_buffer.width == width &&
+        	gxj_system_screen_buffer.height == height) {
 
-	    gxj_reset_screen_buffer(sBuf);
+	    gxj_reset_screen_buffer();
             // no need to reallocate buffer, return
             return ALL_OK;
 
@@ -87,18 +84,21 @@ MIDPError gxj_resize_screen_buffer(gxj_screen_buffer *sBuf,
     	    //   content on resizing
 
             // free screen buffer
-            gxj_free_screen_buffer(sBuf);
+            gxj_free_screen_buffer();
         }
     }
     // allocate resized screen buffer
-    return gxj_init_screen_buffer(sBuf, width, height);
+    return gxj_init_screen_buffer(width, height);
 }
 
 /** Reset pixel data of screen buffer to zero */
-void gxj_reset_screen_buffer(gxj_screen_buffer *sBuf) {
-    if (sBuf->pixelData != NULL) {
-    	int size = sizeof(gxj_pixel_type) * sBuf->width * sBuf->height;
-	    memset(sBuf->pixelData, 0, size);
+void gxj_reset_screen_buffer() {
+    if (gxj_system_screen_buffer.pixelData != NULL) {
+	int size = sizeof(gxj_pixel_type) *
+	    gxj_system_screen_buffer.width *
+    	    gxj_system_screen_buffer.height;
+
+	memset(gxj_system_screen_buffer.pixelData, 0, size);
     }
 }
 
@@ -106,39 +106,20 @@ void gxj_reset_screen_buffer(gxj_screen_buffer *sBuf) {
  * Change screen buffer geometry according to screen rotation from
  * landscape to portrait mode and vice versa.
  */
-void gxj_rotate_screen_buffer(gxj_screen_buffer *sBuf) {
-    int width = sBuf->width;
-    sBuf->width = sBuf->height;
-    sBuf->height = width;
+void gxj_rotate_screen_buffer() {
+    int width = gxj_system_screen_buffer.width;
+    gxj_system_screen_buffer.width = gxj_system_screen_buffer.height;
+    gxj_system_screen_buffer.height = width;
 }
 
 /** Free memory allocated for screen buffer */
-void gxj_free_screen_buffer(gxj_screen_buffer *sBuf) {
-    sBuf->width = 0;
-    sBuf->height = 0;
-    if (sBuf->pixelData != NULL) {
-        midpFree(sBuf->pixelData);
-        sBuf->pixelData = NULL;
+void gxj_free_screen_buffer() {
+    if (gxj_system_screen_buffer.pixelData != NULL) {
+        midpFree(gxj_system_screen_buffer.pixelData);
+        gxj_system_screen_buffer.pixelData = NULL;
     }
-    if (sBuf->alphaData != NULL) {
-        midpFree(sBuf->alphaData);
-        sBuf->alphaData = NULL;
+    if (gxj_system_screen_buffer.alphaData != NULL) {
+        midpFree(gxj_system_screen_buffer.alphaData);
+        gxj_system_screen_buffer.alphaData = NULL;
     }
-}
-
-/** Provide the above functionality for the system screen buffer */
-MIDPError gxj_init_system_screen_buffer(int width, int height) {
-    return gxj_init_screen_buffer(&gxj_system_screen_buffer, width, height);
-}     
-MIDPError gxj_resize_system_screen_buffer(int width, int height) {
-    return gxj_resize_screen_buffer(&gxj_system_screen_buffer, width, height);
-}    
-void gxj_reset_system_screen_buffer() {
-    gxj_reset_screen_buffer(&gxj_system_screen_buffer);
-}
-void gxj_rotate_system_screen_buffer() {
-    gxj_rotate_screen_buffer(&gxj_system_screen_buffer);
-}
-void gxj_free_system_screen_buffer() {
-    gxj_free_screen_buffer(&gxj_system_screen_buffer);
 }
