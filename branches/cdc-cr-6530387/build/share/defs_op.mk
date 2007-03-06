@@ -22,9 +22,9 @@
 # information or have any questions. 
 #
 
-SUBSYSTEM_MAKE_FILE       = subsystem.gmk
-PROP_INIT_PACKAGE         = com.sun.cdc.config
-PROP_INIT_CLASS           = PropertyInitializer
+SUBSYSTEM_MAKE_FILE      = subsystem.gmk
+JSR_INIT_PACKAGE         = com.sun.cdc.config
+JSR_INIT_CLASS           = Initializer
 
 JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239
 
