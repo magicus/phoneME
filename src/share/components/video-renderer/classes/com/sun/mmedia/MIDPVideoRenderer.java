@@ -140,7 +140,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
                     "container needs to be a Canvas for USE_DIRECT_VIDEO mode");
             
             if (mmh == null) {
-                mmh = MIDPRendererCanvasBuddy.getMMHelper();
+                mmh = MMHelper.getMMHelper();
                 if (mmh == null)
                     throw new IllegalArgumentException(
                             "unable to set USE_DIRECT_VIDEO mode");
