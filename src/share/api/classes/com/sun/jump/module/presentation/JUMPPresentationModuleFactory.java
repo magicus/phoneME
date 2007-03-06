@@ -31,7 +31,6 @@ import com.sun.jump.module.JUMPModuleFactory;
  * <code>JUMPPresentationModule</code>
  */
 public abstract class JUMPPresentationModuleFactory extends JUMPModuleFactory {
-    public static String SIMPLE_BASIS_AMS = "SimpleBasisAMS";
     
     private static JUMPPresentationModuleFactory INSTANCE = null;
     
@@ -51,10 +50,14 @@ public abstract class JUMPPresentationModuleFactory extends JUMPModuleFactory {
     }
     
     /**
-     * Returns a <code>JUMPPresentationModule</code> for the app model specified
+     * Returns a <code>JUMPPresentationModule</code> 
      * 
-     * @param presentation the presentation module for the specified 
-     *   presentation type.  
+     * @param presentation A fully qualified presentation module class name.
+     * @return  a newly created <code>JUMPPresentationModule</code>, or
+     *  an already created <code>JUMPPresentationModule</code> 
+     *  corresponding to the class name if it's found.  
+     *  Null if class cannot be instanciated.
      */
-    public abstract JUMPPresentationModule getModule(String presentation);    
+    public abstract JUMPPresentationModule getModule(String presentation);
+
 }
