@@ -6,12 +6,11 @@
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 -->
 <!--
-    This stylesheet outputs C source file with functions definitions
-    for getting/setting properties values during runtime. 
+    This stylesheet outputs Java initializer class for an optional JSR.
 -->
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <!--
-    Stylesheet parameter: name of Java package where PropertyInitializer
+    Stylesheet parameter: name of Java package where initializer
     belongs to.
 -->
 <xsl:param name="packageName"></xsl:param>
@@ -43,7 +42,7 @@ import java.security.PrivilegedAction;
 import com.sun.cdc.config.DynamicProperties;
 import com.sun.j2me.main.Configuration;
 
-public class PropertyInitializer {
+public class Initializer {
     static {
 </xsl:text>
 <xsl:text>        AccessController.doPrivileged(
