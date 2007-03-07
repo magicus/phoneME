@@ -73,7 +73,7 @@ MIDPError gxj_resize_screen_buffer(int width, int height) {
         if (gxj_system_screen_buffer.width == width &&
         	gxj_system_screen_buffer.height == height) {
 
-	    gxj_reset_screen_buffer();
+	        gxj_reset_screen_buffer();
             // no need to reallocate buffer, return
             return ALL_OK;
 
@@ -103,13 +103,65 @@ void gxj_reset_screen_buffer() {
 }
 
 /**
+ * Format screen buffer content regarding rotated screen geometry
+ * clipping the content by the minimal of screen dimensions.
+ * It is important for plain array to contain screen lines of
+ * proper scan length.
+ */
+static void gxj_rotate_buffer_content() {
+    int i;
+    int width = gxj_system_screen_buffer.width;
+    int height = gxj_system_screen_buffer.height;
+    gxj_pixel_type *data = gxj_system_screen_buffer.pixelData;
+    gxj_pixel_type *srcp, *dstp;
+
+    if (width < height) {
+        gxj_pixel_type buf[width];
+        srcp = data + (width-1) * width;
+        dstp = data + (width-1) * height;
+        for (i = width; i > 0 ; i--) {
+            // prevent intersected memory copying 
+            if (dstp < srcp + width) {
+                memcpy(buf, srcp, width * sizeof(gxj_pixel_type));
+                memcpy(dstp, buf, width * sizeof(gxj_pixel_type));
+            } else {
+                memcpy(dstp, srcp, width * sizeof(gxj_pixel_type));
+            }
+
+            memset(dstp + width, 0,
+                (height - width) * sizeof(gxj_pixel_type));
+            srcp -= width;
+            dstp -= height;
+        }
+    } else if (width > height) {
+        srcp = dstp = data;
+        for (i = 0; i < height; i++) {
+            memcpy(dstp, srcp, height * sizeof(gxj_pixel_type));
+            srcp += width;
+            dstp += height;
+        }
+        memset(dstp, 0, (width - height) * 
+            height * sizeof(gxj_pixel_type));
+    }
+}
+
+/**
  * Change screen buffer geometry according to screen rotation from
  * landscape to portrait mode and vice versa.
+ *
+ * @param keepContent true to preserve screen buffer content
+ *    clipped according to the new buffer geometry
  */
-void gxj_rotate_screen_buffer() {
-    int width = gxj_system_screen_buffer.width;
-    gxj_system_screen_buffer.width = gxj_system_screen_buffer.height;
-    gxj_system_screen_buffer.height = width;
+void gxj_rotate_screen_buffer(jboolean keepContent) {
+    int height;
+
+    if (keepContent)
+        gxj_rotate_buffer_content();
+    else gxj_reset_screen_buffer();
+
+    height = gxj_system_screen_buffer.height;
+    gxj_system_screen_buffer.height = gxj_system_screen_buffer.width;
+    gxj_system_screen_buffer.width = height;
 }
 
 /** Free memory allocated for screen buffer */

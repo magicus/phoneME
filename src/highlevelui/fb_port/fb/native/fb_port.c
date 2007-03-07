@@ -253,7 +253,7 @@ void initFrameBuffer() {
   * depending on the current screen mode 
   */
 void reverseScreenOrientation() {
-    gxj_rotate_screen_buffer();
+    gxj_rotate_screen_buffer(KNI_TRUE);
 }
 
 /** Initialize frame buffer video device */
