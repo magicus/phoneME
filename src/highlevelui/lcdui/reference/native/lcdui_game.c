@@ -24,11 +24,7 @@
  * information or have any questions. 
  */
 
-#include <stdlib.h>
-
 #include <commonKNIMacros.h>
-#include <midpError.h>
-#include <gx_image.h>
 
 /**
  * Structure representing the <tt>GameCanvas</tt> class.
