@@ -50,9 +50,10 @@ Usage: checkreports [options] [dir]
 Options:
   -h, --help         show this usage message
   -v, --verbose      verbosity
-  -r, --run-tests    run tests first (launch '\$MAKE_CMD run-unittests' from the current directory)
+  -r, --run-tests    run tests first (launch '\$MAKE_CMD run-unittests'
+                     from the current directory)
 
-  dir    path to root directory of the reports. (Default: '\$CDC_BUILD/reports')
+  dir    path to the root directory of the reports. Default: \$REPORTS_DIR.
 
 Report bugs to jump-eng@sun.com
 EOM
@@ -69,7 +70,6 @@ func_checkArgs()
 
     RUN_TESTS=false
     VERBOSE=false
-    REPORT_DIR=$CDC_BUILD/reports
     
     for A in $*
     do
@@ -81,7 +81,7 @@ func_checkArgs()
             RUN_TESTS=true
         elif [ -d "$A" ]
         then
-            REPORT_DIR=$A
+            REPORTS_DIR=$A
         elif [ $A = "-h" -o $A = "--help" ]
         then
             func_showHelp; exit 0
@@ -91,34 +91,36 @@ func_checkArgs()
         fi
     done
     
-    if [ ! -d "$REPORT_DIR" ]
+    if [ ! -d "$REPORTS_DIR" ]
     then
-        echo "Invalid reports dir: '$REPORT_DIR'" >&2
+        echo "Invalid reports dir: '$REPORTS_DIR'" >&2
+        func_showHelp
         exit 1
     fi
 }
 
 func_generateBriefSum()
 {
-    BRIEF_SUMMARY=$REPORT_DIR/brief_summary.txt
+    BRIEF_SUMMARY="$REPORTS_DIR/brief_summary.txt"
 
     # Cleanup old summary if exist
-    [ -w "$BRIEF_SUMMARY" ] && rm $BRIEF_SUMMARY
+    [ -w "$BRIEF_SUMMARY" ] && rm "$BRIEF_SUMMARY"
 
-    touch $BRIEF_SUMMARY
     # For each report file get first 3 lines and append BRIEF_SUMMARY file.
-    for REPORT in `find $REPORT_DIR -name "TEST*.txt"`
+    for REPORT in `find "$REPORTS_DIR" -name "TEST*.txt"`
     do
-        head -n 3 $REPORT >>$BRIEF_SUMMARY
+        head -n 3 "$REPORT" >>"$BRIEF_SUMMARY"
     done
+    [ -f "$BRIEF_SUMMARY" ] || func_log "Warning: there were no reports found"
 
-    $VERBOSE && cat $BRIEF_SUMMARY
+    touch "$BRIEF_SUMMARY"
+    $VERBOSE && cat "$BRIEF_SUMMARY"
 }
 
 # Search for failures and errors in BRIEF_SUMMARY file
 func_checkResults()
 {
-    if ( grep "^Tests run:" $BRIEF_SUMMARY \
+    if ( grep "^Tests run:" "$BRIEF_SUMMARY" \
         | sed "s/.*Failures: \([0-9]\+\), Errors: \([0-9]\+\).*/\1 \2/g" \
         | grep -v "0 0" >>/dev/null )
     then
