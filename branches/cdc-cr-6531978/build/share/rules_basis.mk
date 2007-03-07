@@ -34,11 +34,55 @@ include ../share/rules_foundation.mk
 printconfig::
 	@echo "AWT_LIB_LIBS       = $(AWT_LIB_LIBS)"
 	@echo "AWT_IMPLEMENTATION = $(AWT_IMPLEMENTATION)"
+	@echo "JPEG_LIB_NAME = $(JPEG_LIB_NAME)"
+	@echo "JPEG_LIB_PATHNAME = $(JPEG_LIB_PATHNAME)"
+
+ifneq ($(CVM_INCLUDE_GCI), true)
+#
+# Non-GCI build, using previous AWT_IMPLEMENTATION way
+#
 
 #
 # Include AWT implementation rules.
 #
 include $(AWT_IMPLEMENTATION_DIR)/build/share/rules_$(J2ME_CLASSLIB)_$(AWT_IMPLEMENTATION).mk
+
+#
+# Build awt shared library if not statically linked
+#
+ifneq ($(CVM_STATICLINK_LIBS), true)
+AWT_LIB_OBJECTS += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(AWT_LIB_OBJS))
+$(AWT_LIB_PATHNAME) :: $(AWT_LIB_OBJECTS)
+	@echo "Linking $@"
+	$(SO_LINK_CMD) $(AWT_LIB_LIBS)
+endif
+
+#
+# If we are preloading or statically linking the profile, then we must link
+# against the libraries that the profile requires (like X11 or QT libraries).
+#
+ifeq ($(CVM_PRELOAD_LIB), true)
+LINKLIBS += $(AWT_LIB_LIBS)
+else
+ifeq ($(CVM_STATICLINK_LIBS), true)
+LINKLIBS += $(AWT_LIB_LIBS)
+endif
+endif
+
+#
+# If we are not statically linking the profile, then we must link the profile
+# shared libraries with the CVM executable if we are romizing.
+#
+ifeq ($(CVM_PRELOAD_LIB), true)
+ifneq ($(CVM_STATICLINK_LIBS), true)
+LINKLIBS += \
+	-l$(AWT_LIB_NAME)$(DEBUG_POSTFIX) \
+
+endif
+endif
+
+endif # CVM_INCLUDE_GCI
+
 
 # Include profile specific gunit rules, if it exists
 ifeq ($(CVM_GUNIT_TESTS), true)
@@ -58,16 +102,6 @@ javadoc-basis:
 	@echo ""
 
 #
-# Build awt shared library if not statically linked
-#
-ifneq ($(CVM_STATICLINK_LIBS), true)
-AWT_LIB_OBJECTS += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(AWT_LIB_OBJS))
-$(AWT_LIB_PATHNAME) :: $(AWT_LIB_OBJECTS)
-	@echo "Linking $@"
-	$(SO_LINK_CMD) $(AWT_LIB_LIBS)
-endif
-
-#
 # Build jpeg shared library if not statically linked
 #
 ifneq ($(CVM_STATICLINK_LIBS), true)
@@ -82,10 +116,10 @@ endif
 # against the libraries that the profile requires (like X11 or QT libraries).
 #
 ifeq ($(CVM_PRELOAD_LIB), true)
-LINKLIBS += $(AWT_LIB_LIBS) $(JPEG_LIB_LIBS)
+LINKLIBS += $(JPEG_LIB_LIBS)
 else
 ifeq ($(CVM_STATICLINK_LIBS), true)
-LINKLIBS += $(AWT_LIB_LIBS) $(JPEG_LIB_LIBS)
+LINKLIBS += $(JPEG_LIB_LIBS)
 endif
 endif
 
@@ -97,7 +131,7 @@ ifeq ($(CVM_PRELOAD_LIB), true)
 ifneq ($(CVM_STATICLINK_LIBS), true)
 LINKLIBS += \
 	-L$(CVM_LIBDIR) \
-	-l$(AWT_LIB_NAME)$(DEBUG_POSTFIX) \
 	-l$(JPEG_LIB_NAME)$(DEBUG_POSTFIX)
 endif
 endif
+

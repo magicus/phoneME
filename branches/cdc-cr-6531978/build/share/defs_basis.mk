@@ -30,6 +30,17 @@
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_basis.mk
 
 #
+# Shared libraries, by default, go into CVM_LIBDIR. This may have
+# been changed, so use AWT_LIBDIR instead.
+#
+AWT_LIBDIR	?= $(CVM_LIBDIR)
+
+ifneq ($(CVM_INCLUDE_GCI), true)
+#
+# Non-GCI build, using previous AWT_IMPLEMENTATION way
+#
+
+#
 # Assume we are building a qt based implementation of AWT for
 # basis by default. The target makefiles may change this. Don't
 # override anything that defs_personal.mk may have set.  Wait until after we
@@ -44,25 +55,12 @@ AWT_IMPLEMENTATION_DIR ?= ../..
 include $(AWT_IMPLEMENTATION_DIR)/build/share/defs_$(J2ME_CLASSLIB)_$(AWT_IMPLEMENTATION).mk
 
 #
-# JPEG_LIB_LIBS. Don't override it if the target defs_basis.mk set it.
-#
-JPEG_LIB_LIBS ?= -lm
-
-#
 # Determine native library name for the awt implementation.
 # This is assumed to the the AWT implementation name followed by "awt"
 # (e.g. libmicrowindowsawt.so). Don't override anything that may have
 # been setup by defs_personal.mk, which will use $(AWT_PEERSET)awt instead.
 #
 AWT_LIB_NAME	?= $(AWT_IMPLEMENTATION)awt
-
-JPEG_LIB_NAME	?= awtjpeg
-
-#
-# Shared libraries, by default, go into CVM_LIBDIR. This may have
-# been changed, so use AWT_LIBDIR instead.
-#
-AWT_LIBDIR	?= $(CVM_LIBDIR)
 
 #
 # Full path names of the shared libraries we build. Do not
@@ -71,14 +69,13 @@ AWT_LIBDIR	?= $(CVM_LIBDIR)
 #
 ifneq ($(CVM_STATICLINK_LIBS), true)
 AWT_LIB_PATHNAME  = $(AWT_LIBDIR)/$(LIB_PREFIX)$(AWT_LIB_NAME)$(LIB_POSTFIX)
-JPEG_LIB_PATHNAME = $(AWT_LIBDIR)/$(LIB_PREFIX)$(JPEG_LIB_NAME)$(LIB_POSTFIX)
 endif
 
 #
 # Make the build depend on the following shared libraries
 #
 ifneq ($(CVM_STATICLINK_LIBS), true)
-CLASSLIB_DEPS += $(AWT_LIB_PATHNAME) $(JPEG_LIB_PATHNAME)
+CLASSLIB_DEPS += $(AWT_LIB_PATHNAME)
 endif
 
 #
@@ -87,7 +84,6 @@ endif
 #
 ifeq ($(CVM_STATICLINK_LIBS), true)
 CVM_OBJECTS += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(AWT_LIB_OBJS))
-CVM_OBJECTS += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(JPEG_LIB_OBJS))
 endif
 
 #
@@ -95,17 +91,10 @@ endif
 # libraries that are built in, so loadLibrary() is not called on them.
 #
 ifeq ($(CVM_STATICLINK_LIBS), true)
-BUILTIN_LIBS += $(AWT_LIB_NAME) $(JPEG_LIB_NAME)
+BUILTIN_LIBS += $(AWT_LIB_NAME)
 endif
 
-# by default we don't want to exclude the xlet runner
-EXCLUDE_XLET_RUNNER ?= false
-
-#
-# All the build flags we need to keep track of in case they are toggled.
-#
 CVM_FLAGS += \
-	EXCLUDE_XLET_RUNNER \
 	AWT_IMPLEMENTATION \
 
 #
@@ -117,6 +106,64 @@ ifeq ($(CVM_PRELOAD_LIB),true)
 AWT_IMPLEMENTATION_CLEANUP_ACTION += \
 	btclasses*
 endif
+
+#
+# Shared Native code
+#
+AWT_LIB_OBJS += \
+	gifdecoder.o \
+
+endif # CVM_INCLUDE_GCI
+
+
+#
+# JPEG_LIB_LIBS. Don't override it if the target defs_basis.mk set it.
+#
+JPEG_LIB_LIBS ?= -lm
+
+JPEG_LIB_NAME	?= awtjpeg
+
+#
+# Full path names of the shared libraries we build. Do not
+# override any previous setting, which could vary based
+# on target OS or architecture.
+#
+ifneq ($(CVM_STATICLINK_LIBS), true)
+JPEG_LIB_PATHNAME = $(AWT_LIBDIR)/$(LIB_PREFIX)$(JPEG_LIB_NAME)$(LIB_POSTFIX)
+endif
+
+#
+# Make the build depend on the following shared libraries
+#
+ifneq ($(CVM_STATICLINK_LIBS), true)
+CLASSLIB_DEPS += $(JPEG_LIB_PATHNAME)
+endif
+
+#
+# If we are statically linking the profile, then we must link the profile
+# objects with the CVM executable.
+#
+ifeq ($(CVM_STATICLINK_LIBS), true)
+CVM_OBJECTS += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(JPEG_LIB_OBJS))
+endif
+
+#
+# If statically linking the profile libraries, then list the profile
+# libraries that are built in, so loadLibrary() is not called on them.
+#
+ifeq ($(CVM_STATICLINK_LIBS), true)
+BUILTIN_LIBS += $(JPEG_LIB_NAME)
+endif
+
+# by default we don't want to exclude the xlet runner
+EXCLUDE_XLET_RUNNER ?= false
+
+#
+# All the build flags we need to keep track of in case they are toggled.
+#
+CVM_FLAGS += \
+	EXCLUDE_XLET_RUNNER \
+
 
 EXCLUDE_XLET_RUNNER_CLEANUP_ACTION = \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
@@ -139,12 +186,6 @@ PROFILE_INCLUDE_DIRS += \
 
 PROFILE_SRCDIRS += \
 	$(CVM_SHAREROOT)/basis/classes/common
-
-#
-# Shared Native code
-#
-AWT_LIB_OBJS += \
-	gifdecoder.o \
 
 
 JPEG_LIB_OBJS += \
