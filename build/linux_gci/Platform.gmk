@@ -1,5 +1,5 @@
 #
-#
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,12 +25,27 @@
 #
 ######################################################################
 #
-# LFJPORT Java Look and Feel Porting
+# Makefile for building and packaging.
 #
 ######################################################################
 
-vpath % $(SUBSYSTEM_LFJPORT_DIR)/gci/native
+# Definition of platform to build on
+HOST_PLATFORM		= linux
+HOST_OS			= linux
+HOST_CPU		= i386
+HOST_COMPILER		= gcc
 
-SUBSYSTEM_LCDLF_NATIVE_FILES += \
-    lfjport_gci_export.c
+# Definition of platform to run on
+TARGET_PLATFORM		= linux_gci
+TARGET_OS		= linux
+TARGET_CPU		= i386
+TARGET_COMPILER		= gcc
+TARGET_VM		= cdc_vm
+TARGET_DEVICE		= x86
+
+
+# file/directory name separator ( / or \\\\ )
+# if the file separator is backslash, double-quoting is needed,
+# that is, you need to write "\\\\" (four backslashes) for "\" (one backslash)
+FN_SEP=/
 

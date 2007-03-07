@@ -89,7 +89,7 @@ ifeq ($(PLATFORM), javacall)
   INCLUDE_SHELL_SCRIPTS = true
 endif
 
-ifeq ($(PLATFORM), gci)
+ifeq ($(PLATFORM), linux_gci)
   INCLUDE_SHELL_SCRIPTS = true
 endif
 
