@@ -34,7 +34,7 @@
  *
  * Native code to handle indicator status.
  */
-extern jboolean drawBackLight(int mode);
+extern jboolean drawBackLight(AncBacklightState mode);
 
 /**
  * Platform handling code for turning off or on
@@ -46,10 +46,10 @@ extern jboolean drawBackLight(int mode);
  */
 void anc_show_trusted_indicator(jboolean isTrusted) {
     REPORT_WARN(LC_LOWUI, "anc_show_trusted_indicator: Stubbed out.");
-   /* @todo implement security indicator and remove
-    * the temporary workaround for warning removal.
-    */
-   (void)isTrusted;
+    /* @todo implement security indicator and remove
+     * the temporary workaround for warning removal.
+     */
+    (void)isTrusted;
 }
 
 /**
@@ -57,10 +57,10 @@ void anc_show_trusted_indicator(jboolean isTrusted) {
  * It controls the LED as the network indicator, it
  * ONLY works on device. There is no equivalent in emulator.
  */
-void anc_set_network_indicator(MIDPNetworkIndicatorState status) {
+void anc_set_network_indicator(AncNetworkIndicatorState status) {
     REPORT_WARN(LC_LOWUI, "anc_set_network_indicator: Stubbed out.");
-  /* Work around for compiler warning */
-  (void) status;
+    /* Work around for compiler warning */
+    (void)status;
 }
 
 /**
@@ -69,17 +69,17 @@ void anc_set_network_indicator(MIDPNetworkIndicatorState status) {
  *  This function is only valid if QT's COP and QWS is available.
  *
  *  @param mode if <code>mode</code> is:
- *              <code>BACKLIGHT_ON</code> - turn on the backlight
- *              <code>BACKLIGHT_OFF</code> - turn off the backlight
- *              <code>BACKLIGHT_TOGGLE</code> - toggle the backlight
- *              <code>BACKLIGHT_IS_SUPPORTED<code> - do nothing
+ *              <code>ANC_BACKLIGHT_ON</code> - turn on the backlight
+ *              <code>ANC_BACKLIGHT_OFF</code> - turn off the backlight
+ *              <code>ANC_BACKLIGHT_TOGGLE</code> - toggle the backlight
+ *              <code>ANC_BACKLIGHT_SUPPORTED<code> - do nothing
  *              (this is used to determine if backlight control is
  *              supported on a system without  changing the state of
  *              the backlight.)
  *  @return <code>KNI_TRUE</code> if the system supports backlight
  *              control, or <code>KNI_FALSE</code> otherwise.
  */
-jboolean anc_show_backlight(int mode) {
+jboolean anc_show_backlight(AncBacklightState mode) {
     return drawBackLight(mode);
 }
 

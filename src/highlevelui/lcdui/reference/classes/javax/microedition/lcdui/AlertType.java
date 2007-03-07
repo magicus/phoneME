@@ -26,6 +26,8 @@
 
 package javax.microedition.lcdui;
 
+import com.sun.midp.configurator.AlertTypeConstants;
+
 /**
  * The <code>AlertType</code> provides an indication of the nature
  * of alerts.
@@ -48,27 +50,6 @@ package javax.microedition.lcdui;
  * @since MIDP 1.0
  */
 public class AlertType {
-
-    /**
-     * Information Alert identifier
-     */
-    static final int ALERT_INFO = 1;
-    /**
-     * Warning Alert identifier
-     */
-    static final int ALERT_WARN = 2;
-    /**
-     * Error Alert identifier
-     */
-    static final int ALERT_ERR  = 3;
-    /**
-     * Alarm Alert identifier
-     */
-    static final int ALERT_ALRM = 4;
-    /**
-     * Confirmation Alert identifier
-     */
-    static final int ALERT_CFM  = 5;
   
     /**
      * An <code>INFO</code> <code>AlertType</code> typically
@@ -76,7 +57,8 @@ public class AlertType {
      * user. For example, a simple splash screen might be an
      * <code>INFO</code> <code>AlertType</code>.
      */
-    public static final AlertType INFO = new AlertType(ALERT_INFO);
+    public static final AlertType INFO = new AlertType(
+            AlertTypeConstants.LCDUI_ALERT_TYPE_INFO);
 
     /**
      * A <code>WARNING</code> <code>AlertType</code> is a hint
@@ -85,7 +67,8 @@ public class AlertType {
      * For example, the warning message may contain the message, &quot;Warning:
      * this operation will erase your data.&quot;
      */
-    public static final AlertType WARNING = new AlertType(ALERT_WARN);
+    public static final AlertType WARNING = new AlertType(
+            AlertTypeConstants.LCDUI_ALERT_TYPE_WARNING);
 
     /**
      * An <code>ERROR</code> <code>AlertType</code> is a hint
@@ -93,7 +76,8 @@ public class AlertType {
      * For example, an error alert might show the message,
      * &quot;There is not enough room to install the application.&quot;
      */
-    public static final AlertType ERROR = new AlertType(ALERT_ERR);
+    public static final AlertType ERROR = new AlertType(
+            AlertTypeConstants.LCDUI_ALERT_TYPE_ERROR);
 
     /**
      * An <code>ALARM</code> <code>AlertType</code> is a hint
@@ -102,7 +86,8 @@ public class AlertType {
      * For example, the message might say, &quot;Staff meeting in five
      * minutes.&quot;
      */
-    public static final AlertType ALARM = new AlertType(ALERT_ALRM);
+    public static final AlertType ALARM = new AlertType(
+            AlertTypeConstants.LCDUI_ALERT_TYPE_ALARM);
 
     /**
      * A <code>CONFIRMATION</code> <code>AlertType</code> is a
@@ -110,7 +95,8 @@ public class AlertType {
      * For example, &quot;Saved!&quot; might be shown to indicate that a Save 
      * operation has completed.
      */
-    public static final AlertType CONFIRMATION = new AlertType(ALERT_CFM);
+    public static final AlertType CONFIRMATION = new AlertType(
+            AlertTypeConstants.LCDUI_ALERT_TYPE_CONFIRMATION);
 
     /**
      * Protected constructor for subclasses.

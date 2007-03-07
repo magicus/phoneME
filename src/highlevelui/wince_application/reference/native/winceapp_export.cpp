@@ -1165,8 +1165,9 @@ HWND win32app_get_window_handle() {
  * bIf 'active' is KNI_TRUE, the BackLight is drawn.
  * If 'active' is KNI_FALSE, the BackLight is erased.
  */
-jboolean drawBackLight(int mode) {
-    return 0;
+jboolean drawBackLight(AncBacklightState mode) {
+    (void)mode;
+    return KNI_FALSE;
 }
 
 /**
