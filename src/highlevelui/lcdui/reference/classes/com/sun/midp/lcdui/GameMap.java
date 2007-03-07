@@ -1,7 +1,7 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 package com.sun.midp.lcdui;
 
 import javax.microedition.lcdui.Displayable;
+import javax.microedition.lcdui.game.GameCanvas;
+import java.util.Hashtable;
 
 /**
  * A class that maps between DisplayAccess objects and Displayable, GameCanvas.
@@ -42,6 +44,11 @@ public class GameMap {
      * The DisplayAccess associated with the GameCanvas
      */
     static private DisplayAccess displayAccess;
+
+    /**
+     * Map contains pairs of GameCanvas and GameCanvasLFImpl
+     */
+    private static Hashtable table = new Hashtable();
 
     /**
      * Lock to ensure synchronized access to the displayable
@@ -75,6 +82,38 @@ public class GameMap {
   	    } else {
                 return null;
 	    }
+        }
+    }
+
+
+    /**
+     * Associate the given GameCanvas and GameCanvasLFImpl.
+     *
+     * @param c The GameCanvas to store
+     */
+    public static GameCanvasLFImpl registerTableElement(GameCanvas c) {
+        GameCanvasLFImpl gameCanvasLF = new GameCanvasLFImpl(c);
+        synchronized(lock) {
+            if (!table.containsKey(c)) {
+                table.put(c, gameCanvasLF);
+                return gameCanvasLF;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the GameCanvasLFImpl object for this GameCanvas.
+     * @param c The GameCanvas to get the GameCanvasLFImpl for
+     * @return GameCanvasLFImpl
+     */
+    public static GameCanvasLFImpl getTableElement(GameCanvas c) {
+        synchronized (lock) {
+            if (table.containsKey(c)) {
+                return (GameCanvasLFImpl)table.get(c);
+            } else {
+                return null;
+            }
         }
     }
 

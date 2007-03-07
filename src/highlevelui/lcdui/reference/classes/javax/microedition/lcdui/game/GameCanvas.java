@@ -26,12 +26,11 @@
 
 package javax.microedition.lcdui.game;
 
-import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Canvas;
-import com.sun.midp.lcdui.DisplayAccess;
 import com.sun.midp.lcdui.GameMap;
-import com.sun.midp.configurator.Constants;
+import com.sun.midp.lcdui.GameCanvasLFImpl;
+
 
 /**
  * The GameCanvas class provides the basis for a game user interface.  In
@@ -91,6 +90,8 @@ import com.sun.midp.configurator.Constants;
 
 public abstract class GameCanvas extends Canvas
 {
+
+    private GameCanvasLFImpl gameCanvasLF;
     /**
      * The bit representing the UP key.  This constant has a value of 
      * <code>0x0002</code> (1 << Canvas.UP).
@@ -149,13 +150,7 @@ public abstract class GameCanvas extends Canvas
      */
     public static final int GAME_D_PRESSED = 1 << Canvas.GAME_D;
 
-    /** 
-     * currently every GameCanvas has one offscreen buffer
-     * can be optimized so that we put a limit on no of offscreen buffers
-     * an application can have
-     */
-    private Image offscreen_buffer;
-
+    
     /**
      * Creates a new instance of a GameCanvas.  A new buffer is also created
      * for the GameCanvas and is initially filled with white pixels.
@@ -188,13 +183,11 @@ public abstract class GameCanvas extends Canvas
 	// Create and offscreen Image object that 
 	// acts as the offscreen buffer to which we draw to.
 	// the contents of this buffer are flushed to the display 
-        // only when flushGraphics() has been called.
+    // only when flushGraphics() has been called.
+        super();
+        setSuppressKeyEvents((Canvas)this, suppressKeyEvents);
 
-	offscreen_buffer = 
-	    Image.createImage(Constants.GAMECANVAS_FULLWIDTH,
-                              Constants.GAMECANVAS_FULLHEIGHT);
-
-	setSuppressKeyEvents((Canvas)this, suppressKeyEvents);
+        gameCanvasLF = GameMap.registerTableElement(this); 
     }
     
 
@@ -233,7 +226,7 @@ public abstract class GameCanvas extends Canvas
      * @see #flushGraphics(int, int, int, int)	 
      */
     protected Graphics getGraphics() {
-	return offscreen_buffer.getGraphics();
+        return gameCanvasLF.getGraphics();
     }
 
     /**
@@ -292,11 +285,7 @@ public abstract class GameCanvas extends Canvas
      * key), or 0 if the GameCanvas is not currently shown.
      */
     public int getKeyStates() {
-        DisplayAccess displayAccess = GameMap.get(this);
-	if (displayAccess != null) {
-	    return displayAccess.getKeyMask();
-	} 
-	return 0;
+        return gameCanvasLF.getKeyStates();
     }
 
     /**
@@ -308,8 +297,7 @@ public abstract class GameCanvas extends Canvas
      * @throws NullPointerException if <code>g</code> is <code>null</code>
      */
     public void paint(Graphics g) {
-        // NullPointerException will be thrown in drawImage if g == null
-	g.drawImage(offscreen_buffer, 0, 0, Graphics.TOP|Graphics.LEFT);
+        gameCanvasLF.drawImage(g);
     }
 
     /**
@@ -335,15 +323,7 @@ public abstract class GameCanvas extends Canvas
      */
     public void flushGraphics(int x, int y, 
     					int width, int height) {
-	if (width < 1 || height < 1) {
-	    return;
-	}
-
-        DisplayAccess displayAccess = GameMap.get(this);
-        if (displayAccess != null) {
-            displayAccess.flush(this, offscreen_buffer, 
-    			  x, y,	width, height);
-        }
+	    gameCanvasLF.flushGraphics(x, y, width, height);
     }
 
     /**
@@ -361,12 +341,7 @@ public abstract class GameCanvas extends Canvas
      * @see #flushGraphics(int,int,int,int)	  
      */
     public void flushGraphics() {
-
-        DisplayAccess displayAccess = GameMap.get(this);
-        if (displayAccess != null) {
-	    displayAccess.flush(this, offscreen_buffer,
-			      0, 0, getWidth(), getHeight());
-        }
+        gameCanvasLF.flushGraphics();
     }
 
     /**
