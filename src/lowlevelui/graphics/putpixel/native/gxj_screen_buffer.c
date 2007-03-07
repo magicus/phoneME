@@ -103,45 +103,75 @@ void gxj_reset_screen_buffer() {
 }
 
 /**
+ * The plain array contains the data for screen with width x height
+ * geometry. In the case the screen is rotated to height x width and
+ * we want to preserve its content, we should reformat plain data
+ * with proper clipping to new geometry. The method reformats the
+ * data in place.
+ *
+ *  @param data pointer to the plain array with screen data
+ *  @param width the width in pixels before rotation
+ *  @param height the height in pixels before rotation
+ *  @param elem_bytes size in bytes of the data per screen pixel 
+ */
+static void reformat_plain_data(
+    void *data, int width, int height, size_t elem_bytes) {
+
+    int i;
+    char *src, *dst;
+    int width_bytes = width * elem_bytes;
+    int height_bytes = height * elem_bytes;
+    src = dst = data;
+
+    if (width < height) {
+        char buf[width_bytes];
+        src += (width-1) * width_bytes;
+        dst += (width-1) * height_bytes;
+        for (i = width; i > 0 ; i--) {
+            // prevent intersected memory copying
+            if (dst < src + width_bytes) {
+                memcpy(buf, src, width_bytes);
+                memcpy(dst, buf, width_bytes);
+            } else {
+                memcpy(dst, src, width_bytes);
+            }
+
+            memset(dst + width_bytes, 0,
+                (height-width) * elem_bytes);
+            src -= width_bytes;
+            dst -= height_bytes;
+        }
+    } else if (width > height) {
+        for (i = 0; i < height; i++) {
+            memcpy(dst, src, height_bytes);
+            src += width_bytes;
+            dst += height_bytes;
+        }
+        memset(dst, 0,
+            (width-height) * height_bytes);
+    }
+}
+
+/**
  * Format screen buffer content regarding rotated screen geometry
  * clipping the content by the minimal of screen dimensions.
  * It is important for plain array to contain screen lines of
  * proper scan length.
  */
 static void gxj_rotate_buffer_content() {
-    int i;
-    int width = gxj_system_screen_buffer.width;
-    int height = gxj_system_screen_buffer.height;
-    gxj_pixel_type *data = gxj_system_screen_buffer.pixelData;
-    gxj_pixel_type *srcp, *dstp;
-
-    if (width < height) {
-        gxj_pixel_type buf[width];
-        srcp = data + (width-1) * width;
-        dstp = data + (width-1) * height;
-        for (i = width; i > 0 ; i--) {
-            // prevent intersected memory copying 
-            if (dstp < srcp + width) {
-                memcpy(buf, srcp, width * sizeof(gxj_pixel_type));
-                memcpy(dstp, buf, width * sizeof(gxj_pixel_type));
-            } else {
-                memcpy(dstp, srcp, width * sizeof(gxj_pixel_type));
-            }
-
-            memset(dstp + width, 0,
-                (height - width) * sizeof(gxj_pixel_type));
-            srcp -= width;
-            dstp -= height;
-        }
-    } else if (width > height) {
-        srcp = dstp = data;
-        for (i = 0; i < height; i++) {
-            memcpy(dstp, srcp, height * sizeof(gxj_pixel_type));
-            srcp += width;
-            dstp += height;
-        }
-        memset(dstp, 0, (width - height) * 
-            height * sizeof(gxj_pixel_type));
+    if (gxj_system_screen_buffer.pixelData != NULL) {
+        reformat_plain_data(
+            gxj_system_screen_buffer.pixelData,
+            gxj_system_screen_buffer.width,
+            gxj_system_screen_buffer.height,
+            sizeof(gxj_pixel_type));
+    }
+    if (gxj_system_screen_buffer.alphaData != NULL) {
+        reformat_plain_data(
+            gxj_system_screen_buffer.alphaData,
+            gxj_system_screen_buffer.width,
+            gxj_system_screen_buffer.height,
+            sizeof(gxj_alpha_type));
     }
 }
 
