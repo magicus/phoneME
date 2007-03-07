@@ -50,7 +50,7 @@ Usage: checkreports [options] [dir]
 Options:
   -h, --help         show this usage message
   -v, --verbose      verbosity
-  -r, --run-tests    run tests first (launch '$MAKE_CMD run-unittests' from the current directory)
+  -r, --run-tests    run tests first (launch '\$MAKE_CMD run-unittests' from the current directory)
 
   dir    path to root directory of the reports. (Default: '\$CDC_BUILD/reports')
 
