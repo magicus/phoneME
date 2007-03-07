@@ -42,8 +42,6 @@
 
 #include <moc_lfpport_qte_choicegroup.cpp>
 
-#include <stdio.h>
-
 /**
  * Static pointer to hold active popup button that cannot be deleted.
  * This popup button is a child of mscreen. It will either be
