@@ -88,7 +88,7 @@ void initScreenBuffer(int width, int height) {
   * depending on the current screen mode
   */
 void reverseScreenOrientation() {
-    gxj_rotate_screen_buffer(KNI_TRUE);
+    gxj_rotate_screen_buffer(KNI_FALSE);
 }
 
 /** On i386, connect to the QVFB virtual frame buffer */
