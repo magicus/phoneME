@@ -72,6 +72,11 @@ public abstract class ProtocolPush {
             throw new IllegalArgumentException("Protocol field is omitted");
         }
 
+        int index1 = connection.indexOf("//");
+        if (index1 == -1) {
+            throw new ConnectionNotFoundException("Net_path field is omitted");
+        }
+
         String className = Configuration.getProperty
             (connection.substring(0, index).toLowerCase());
 
