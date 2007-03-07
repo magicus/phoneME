@@ -2260,8 +2260,8 @@ public class Graphics {
             if (clipBounds.length != 4) {
                 throw new IllegalArgumentException();
             }
-            clipBounds[0] = clipX1 - transX;
-            clipBounds[1] = clipY1 - transY;
+            clipBounds[0] = clipX1;
+            clipBounds[1] = clipY1;
             clipBounds[2] = clipX2 - clipX1;
             clipBounds[3] = clipY2 - clipY1;
 
