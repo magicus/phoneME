@@ -203,12 +203,14 @@
 <xsl:key name="keysUsersNodes"
     match="/configuration/localized_strings/child::* | 
            /configuration/skin/skin_properties/child::*"
-    use="concat(../@KeysClass,'.',@Key)"/>
+    use="concat(../@Package,'.',../@Name,':',../@KeysClass,'.',@Key)"/>
 
 <xsl:template match="node()[@KeysClass != '']" 
     mode="assignKeysValues">
 
     <xsl:variable name="nodeName" select="name(.)"/>
+    <xsl:variable name="nodePackage" select="./@Package"/>
+    <xsl:variable name="nodeClass" select="./@Name"/>
 
     <!-- name of the constants class that provides keys values -->
     <xsl:variable name="keysClassName" select="@KeysClass"/>
@@ -230,7 +232,8 @@
         <xsl:variable name="keyName" select="concat($keysClassName,'.',@Name)"/>
         
         <!-- nodes that use this key (refer to it) -->
-        <xsl:variable name="keyUsersNodes" select="key('keysUsersNodes', $keyName)"/>
+        <xsl:variable name="keyUsersNodes" 
+        select="key('keysUsersNodes', concat($nodePackage,'.',$nodeClass,':',$keyName))"/>
     
         <!-- error: this key is not used -->
         <xsl:if test="count($keyUsersNodes)=0">
@@ -244,7 +247,7 @@ is unused in '<xsl:value-of select="$nodeName"/>'
         <xsl:if test="count($keyUsersNodes)>1">
             <xsl:message terminate="yes">
 Merging error: Key '<xsl:value-of select="$keyName"/>' 
-is used in '<xsl:value-of select="$nodeName"/>'
+is used more than once in '<xsl:value-of select="$nodeName"/>'
             </xsl:message>
         </xsl:if>           
     </xsl:for-each>
