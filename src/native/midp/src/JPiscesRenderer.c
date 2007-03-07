@@ -69,6 +69,7 @@ static jfieldID fieldIds[RENDERER_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
 
 static jboolean initializeRendererFieldIds(jobject objectHandle);
+static int toPiscesCoords(unsigned int ff);
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_PiscesRenderer_staticInitialize() {
@@ -1248,59 +1249,62 @@ Java_com_sun_pisces_PiscesRenderer_setPathData() {
 
     jint idx;
     Renderer* rdr;
-    jfloat* data;
+
+    unsigned int* data;
     jbyte* commands;
-    jint offset = 0;
+
+    int x1, x2, x3;
+    int y1, y2, y3;
 
     KNI_GetParameterAsObject(1, dataHandle);
     KNI_GetParameterAsObject(2, commandsHandle);
 
     KNI_GetThisPointer(objectHandle);
-    rdr = (Renderer*)JLongToPointer(KNI_GetLongField(objectHandle,
-                                                     fieldIds[RENDERER_NATIVE_PTR]));
+    rdr = (Renderer*)JLongToPointer(
+            KNI_GetLongField(objectHandle, fieldIds[RENDERER_NATIVE_PTR]));
 
     SNI_BEGIN_RAW_POINTERS;
-    data = (jfloat *) JavaIntArray(dataHandle)->elements;
+
+    data = (unsigned int*)JavaIntArray(dataHandle)->elements;
     commands = JavaByteArray(commandsHandle)->elements;
-    
-    
-    for (idx = 0; idx < nCommands; ++idx) {
-      switch (commands[idx]) {
-      case CMD_MOVE_TO:
-        renderer_moveTo(rdr,
-                        (jint)(data[offset] * 65536.0f),
-                        (jint)(data[offset + 1] * 65536.0f));
-        offset += 2;
-        break;
-      case CMD_LINE_TO:
-        renderer_lineTo(rdr,
-                        (jint)(data[offset] * 65536.0f),
-                        (jint)(data[offset + 1] * 65536.0f));
-        offset += 2;
-        break;
-      case CMD_QUAD_TO:
-        renderer_quadTo(rdr,
-                        (jint)(data[offset] * 65536.0f),
-                        (jint)(data[offset + 1] * 65536.0f),
-                        (jint)(data[offset + 2] * 65536.0f),
-                        (jint)(data[offset + 3] * 65536.0f));
-        offset += 4;
-        break;
-      case CMD_CURVE_TO:
-        renderer_cubicTo(rdr,
-                         (jint)(data[offset] * 65536.0f),
-                         (jint)(data[offset + 1] * 65536.0f),
-                         (jint)(data[offset + 2] * 65536.0f),
-                         (jint)(data[offset + 3] * 65536.0f),
-                         (jint)(data[offset + 4] * 65536.0f),
-                         (jint)(data[offset + 5] * 65536.0f));
-        offset += 6;
-        break;
-      case CMD_CLOSE:
-      default:
-        renderer_close(rdr);
-        break;
-      }
+
+    for (idx = nCommands; idx; --idx) {
+        switch (*commands++) {
+            case CMD_MOVE_TO:
+                x1 = toPiscesCoords(*data++);
+                y1 = toPiscesCoords(*data++);
+                
+                renderer_moveTo(rdr, x1, y1);
+                break;
+            case CMD_LINE_TO:
+                x1 = toPiscesCoords(*data++);
+                y1 = toPiscesCoords(*data++);
+
+                renderer_lineTo(rdr, x1, y1);
+                break;
+            case CMD_QUAD_TO:
+                x1 = toPiscesCoords(*data++);
+                y1 = toPiscesCoords(*data++);
+                x2 = toPiscesCoords(*data++);
+                y2 = toPiscesCoords(*data++);
+
+                renderer_quadTo(rdr, x1, y1, x2, y2);
+                break;
+            case CMD_CURVE_TO:
+                x1 = toPiscesCoords(*data++);
+                y1 = toPiscesCoords(*data++);
+                x2 = toPiscesCoords(*data++);
+                y2 = toPiscesCoords(*data++);
+                x3 = toPiscesCoords(*data++);
+                y3 = toPiscesCoords(*data++);
+
+                renderer_cubicTo(rdr, x1, y1, x2, y2, x3, y3);
+                break;
+            case CMD_CLOSE:
+            default:
+                renderer_close(rdr);
+                break;
+        }
     }
 
     SNI_END_RAW_POINTERS;
@@ -1361,4 +1365,31 @@ initializeRendererFieldIds(jobject objectHandle) {
 
     KNI_EndHandles();
     return retVal;
+}
+
+/**
+ * Converts floating point number into S15.16 format
+ * [= (int)(f * 65536.0f)]. Doesn't correctly handle INF, NaN and -0.
+ * 
+ * @param ff number encoded as sign [1 bit], exponent + 127 [8 bits], mantisa
+ *           without the implicit 1 at the beginning [23 bits] 
+ * @return ff in S15.16 format
+ */ 
+static int 
+toPiscesCoords(unsigned int ff) {
+    int shift;
+    unsigned int gg;
+
+    /* get mantisa */
+	gg = ((ff & 0xffffff) | 0x800000);
+	/* calculate shift from exponent */
+	shift = 134 - ((ff >> 23) & 0xff);
+	/* do left or right shift to get value to S15.16 format */
+	gg = (shift < 0) ? (gg << -shift) : (gg >> shift);
+	/* fix sign */
+	gg = (gg ^ -(int)(ff >> 31)) + (ff >> 31);
+	/* handle zero */
+	gg &= -(ff != 0);
+
+    return (int)gg;
 }
