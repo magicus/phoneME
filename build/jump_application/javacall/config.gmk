@@ -36,7 +36,7 @@ DIRECT_PLAYER = true
 # If you want to support VideoControl, turn on DIRECT_VIDEO_PLAYER option
 #
 DIRECT_VIDEO_PLAYER = false
-INDIRECT_VIDEO_PLAYER = false
+INDIRECT_VIDEO_PLAYER = true
 
 #
 # If you want to support "capture://video, turn on DIRECT_CAMERA_PLAYER option

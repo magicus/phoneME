@@ -348,7 +348,7 @@ public class DirectVideo extends DirectPlayer implements
         if (mode == USE_DIRECT_VIDEO) {
             canvas = (Canvas)container;
             if (mmh == null) {
-                mmh = MIDPRendererCanvasBuddy.getMMHelper();
+                mmh = MMHelper.getMMHelper();
                 if (mmh == null) {
                     throw new RuntimeException("initDisplayMode: unable to set the display mode");
                 }
