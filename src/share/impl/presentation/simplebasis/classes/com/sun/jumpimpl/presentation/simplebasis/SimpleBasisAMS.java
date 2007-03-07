@@ -55,6 +55,7 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
 import java.util.Vector;
@@ -143,6 +144,8 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
             md.registerHandler(JUMPIsolateWindowRequest.MESSAGE_TYPE, this);
             md.registerHandler(JUMPIsolateLifecycleRequest.MESSAGE_TYPE, this);
         } catch (JUMPMessageDispatcherTypeException ex) {
+            ex.printStackTrace();
+        } catch (IOException ex) {
             ex.printStackTrace();
         }
         

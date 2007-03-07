@@ -31,6 +31,7 @@ import com.sun.jump.message.JUMPMessageHandler;
 import com.sun.jump.message.JUMPMessageDispatcher;
 import com.sun.jump.message.JUMPMessageDispatcherTypeException;
 import com.sun.jump.message.JUMPTimedOutException;
+import com.sun.jump.message.JUMPUnblockedException;
 
 import com.sun.jump.os.JUMPOSInterface;
 import com.sun.jumpimpl.os.JUMPMessageQueueInterfaceImpl;
@@ -119,7 +120,7 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
     }
 
     public Object registerDirect(String messageType)
-	throws JUMPMessageDispatcherTypeException
+	throws JUMPMessageDispatcherTypeException, IOException
     {
 	DirectRegistration directRegistration;
 	synchronized (lock) {
@@ -138,6 +139,7 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 
     // Externally synchronized on lock.
     private DirectRegistration getDirectRegistration (String messageType)
+	throws IOException
     {
 	DirectRegistration directRegistration =
 	    (DirectRegistration) directRegistrations.get(messageType);
@@ -187,6 +189,11 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 	}
     }
 
+    /**
+     * @throws JUMPTimedOutException
+     * @throws JUMPUnblockedException
+     * @throws IOException
+     */
     private JUMPMessage doWaitForMessage(String messageType, long timeout)
         throws JUMPTimedOutException, IOException 
     {
@@ -204,7 +211,7 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
      */
     public Object
     registerHandler(String messageType, JUMPMessageHandler handler)
-	throws JUMPMessageDispatcherTypeException
+	throws JUMPMessageDispatcherTypeException, IOException
     {
         if (messageType == null) {
             throw new NullPointerException("messageType can't be null");
@@ -236,6 +243,7 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 
     // Externally synchronized on lock.
     private Listener getListener (String messageType)
+	throws IOException
     {
 	Listener listener = (Listener) listeners.get(messageType);
 	if (listener == null) {
@@ -264,13 +272,14 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
     }
 
     public void cancelRegistration(Object registrationToken)
+	throws IOException
     {
 	((RegistrationToken)registrationToken).cancelRegistration();
     }
 
     private interface RegistrationToken
     {
-	void cancelRegistration();
+	void cancelRegistration() throws IOException;
     }
 
     private static class HandlerRegistrationToken
@@ -290,6 +299,7 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 	}
 
 	public void cancelRegistration ()
+	    throws IOException
 	{
 	    synchronized (this) {
 		if (canceled) {
@@ -345,6 +355,7 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 	private int useCount = 0;
 
 	public DirectRegistration (String messageType)
+	    throws IOException
 	{
 	    this.messageType = messageType;
 	    // Make sure we've got a receive queue for the messageType.
@@ -411,6 +422,7 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 	private final String messageType;
 
 	public Listener (String messageType)
+	    throws IOException
 	{
 	    this.messageType = messageType;
 	    // Make sure we've got a receive queue for the messageType.
@@ -424,9 +436,15 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 	}
 
 	public void removeHandler (JUMPMessageHandler handler)
+	    throws IOException
 	{
 	    synchronized (lock) {
 		handlers.remove(handler);
+		if (handlers.isEmpty()) {
+		    // Wake up the listening thread so it can exit if
+		    // it finds handlers is still empty.
+		    jumpMessageQueueInterfaceImpl.unblock(messageType);
+		}
 	    }
 	}
 
@@ -456,15 +474,18 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 
 	private void listen ()
 	{
-	    // XXX We should either log Errors and RuntimeExceptions
+	    // FIXME We should either log Errors and RuntimeExceptions
 	    // and continue, or cleanup and make sure they're thrown.
 	    while (true) {
 		try {
-		    JUMPMessage msg = doWaitForMessage(messageType, 2000L);
+		    JUMPMessage msg = doWaitForMessage(messageType, 0L);
 		    dispatchMessage(msg);
-		} catch(JUMPTimedOutException e) {
+		} catch (JUMPUnblockedException e) {
 		    // This is normal.  It's time to check for exit.
-		} catch(IOException e) {
+		} catch (JUMPTimedOutException e) {
+		    // This shouldn't happen.  Handle like IOException.
+		} catch (IOException e) {
+		    // Unexpected exception.
 		    e.printStackTrace();
 		}
 		synchronized (lock) {

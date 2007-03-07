@@ -1,7 +1,7 @@
 /*
  * %W% %E%
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -24,40 +24,16 @@
  * information or have any questions. 
  */
 
-package com.sun.jump.os;
+package com.sun.jump.message;
 
 import java.io.IOException;
 
-import com.sun.jump.message.JUMPMessagable;
-import com.sun.jump.message.JUMPTimedOutException;
-import com.sun.jump.message.JUMPUnblockedException;
-
 /**
- * <code>JUMPMessageQueue</code> abstracts the communication channels between
- * the system executive and the isolates. This is a low-level porting
- * interface and is used by the implementation and not directly by modules.
+ * <code>JUMPUnblockedException</code> Thrown when a thread is
+ * blocking in JUMPMessageDispatcher.waitForMessage() and another
+ * thread calls com.sun.jumpimpl.os.JUMPMessageQueueInterfaceImpl.unblock().
  */
-public abstract class JUMPMessageQueueInterface {
-    
-    /**
-     * Creates a new instance of JUMPMessageQueue
-     */
-    protected JUMPMessageQueueInterface() {
+public class JUMPUnblockedException extends IOException {
+    public JUMPUnblockedException() {
     }
-    
-    /**
-     * Get offset of non-OS data in message buffer 
-     */
-    public abstract int getDataOffset();
-
-    /** 
-     * Must have exception interface
-     *
-     * @throws JUMPTimedOutException
-     * @throws JUMPUnblockedException
-     * @throws IOException
-     */
-    public abstract byte[] receiveMessage(String type, long timeout)
-	throws JUMPTimedOutException, IOException;
-
 }

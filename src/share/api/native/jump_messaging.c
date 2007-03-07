@@ -1104,6 +1104,19 @@ jumpMessageWaitFor(JUMPPlatformCString type,
     return doWaitFor(type, timeout, code);
 }
 
+void
+jumpMessageUnblock(JUMPPlatformCString messageType,
+		   JUMPMessageStatusCode* code)
+{
+    assert(jumpMessagingInitialized != 0);
+
+    JUMPMessageQueueStatusCode mqcode;
+
+    jumpMessageQueueUnblock(messageType, &mqcode);
+    *code = translateJumpMessageQueueStatusCode(&mqcode);
+}
+
+
 int
 jumpMessageGetFd(JUMPPlatformCString type)
 {

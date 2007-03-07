@@ -368,6 +368,20 @@ jumpMessageWaitFor(JUMPPlatformCString type,
 		   int32 timeout,
 		   JUMPMessageStatusCode *code);
 
+/**
+ * Unblocks one thread blocking in, or about to call,
+ * jumpMessageWaitFor (or jumpMessageSendSync, although this is not
+ * intended to be used with threads blocking in jumpMessageSendSync
+ * since they should be using a timeout).  The thread may return with
+ * JUMP_UNBLOCKED.  This is used to unblock listening threads so they
+ * can exit when they are no longer needed.
+ * 
+ * @return On success, set *code to JUMP_SUCCESS.  Otherwise
+ *         sets *code to one of JUMP_NO_SUCH_QUEUE or JUMP_FAILURE.
+ */
+extern void jumpMessageUnblock(JUMPPlatformCString messageType,
+			       JUMPMessageStatusCode* code);
+
 /*
  * Returns a file descriptor for the messageType which may be
  * select()ed on and will become readable when a message may be

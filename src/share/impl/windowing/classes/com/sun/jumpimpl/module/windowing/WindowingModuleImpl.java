@@ -26,6 +26,7 @@
 
 package com.sun.jumpimpl.module.windowing;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Vector;
 import java.util.NoSuchElementException;
@@ -124,6 +125,9 @@ class WindowingModuleImpl implements JUMPWindowingModule, JUMPMessageHandler {
         } catch (JUMPMessageDispatcherTypeException dte) {
             dte.printStackTrace();
             // FIXME: someone else listeneing -- what to do?
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            // FIXME: can't register, what to do?
         }
     }
 

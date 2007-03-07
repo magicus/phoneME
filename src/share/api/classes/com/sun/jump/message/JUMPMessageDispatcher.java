@@ -44,9 +44,11 @@ public interface JUMPMessageDispatcher {
      * {@link #cancelRegistration(Object)}
      * @throws JUMPMessageDispatcherTypeException if there is already an
      * existing handler registration for the message type.
+     * @throws IOException if there is a problem registering for the
+     * message type.
      */
     public Object registerDirect(String messageType) 
-	throws JUMPMessageDispatcherTypeException;
+	throws JUMPMessageDispatcherTypeException, IOException;
     
 
     /**
@@ -55,6 +57,10 @@ public interface JUMPMessageDispatcher {
      * @throws JUMPMessageDispatcherTypeException if there is already
      * an existing handler registration for the message type, or if it has not
      * been registered via <code>registerDirect()</code>.
+     *
+     * @throws JUMPTimedOutException
+     * @throws JUMPUnblockedException
+     * @throws IOException
      */
     public JUMPMessage waitForMessage(String messageType, long timeout)
 	throws JUMPMessageDispatcherTypeException, JUMPTimedOutException, IOException;
@@ -69,15 +75,23 @@ public interface JUMPMessageDispatcher {
      *
      * @throws JUMPMessageDispatcherTypeException if the message type was
      * registered via <code>registerDirect()</code>.
+     * @throws IOException if there is a problem registering for the
+     * message type.
      */
     public Object registerHandler(String messageType,
 				  JUMPMessageHandler handler) 
-	throws JUMPMessageDispatcherTypeException;
+	throws JUMPMessageDispatcherTypeException, IOException;
     
 
     /**
      * Removes the registration for the message type. This applies to
      * direct registrations as well as handler registrations.
+     *
+     * @throws IOException if there is a problem canceling the
+     * registration.
+     * @throws IllegalStateException if the registrationToken
+     * has already been canceled.
      */
-    public void cancelRegistration(Object registrationToken);
+    public void cancelRegistration(Object registrationToken)
+	throws IOException;
 }

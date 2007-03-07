@@ -43,18 +43,83 @@ static void ensureInitialized()
     }
 }
 
+/* Throws exceptions with no-arg constructors, for which we can't
+   use JNU_ThrowByName which constructs with a String arg. */
 static void
-throw_JUMPTimedOutException(JNIEnv *env)
+throw_by_name(JNIEnv *env, const char *class_name)
 {
-    /* JUMPTimedOutException does not take a String arg, so we
-       can't use JNU_ThrowByName(). */
     jobject ex =
-	JNU_NewObjectByName(env, "com/sun/jump/message/JUMPTimedOutException",
-			    "()V");
+	JNU_NewObjectByName(env, class_name, "()V");
     if (ex == NULL) {
 	return;
     }
     (*env)->Throw(env, ex);
+    (*env)->DeleteLocalRef(env, ex);
+}
+
+static void
+throw_with_messagetype(JNIEnv *env, const char *class_name, const char *type)
+{
+    char message[80];
+    int len = sizeof(message) - 30;
+
+    snprintf(message, sizeof(message),
+	     "messageType type=%.*s%s",
+	     len, type, strlen(type) > len ? "..." : "");
+
+    JNU_ThrowByName(env, class_name, message);
+}
+
+
+static const char *
+code_to_string(JUMPMessageStatusCode code)
+{
+    switch (code) {
+      case JUMP_TARGET_NONEXISTENT:
+	return "JUMP_TARGET_NONEXISTENT";
+      case JUMP_TIMEOUT:
+	return "JUMP_TIMEOUT";
+      case JUMP_SUCCESS:
+	return "JUMP_SUCCESS";
+      case JUMP_FAILURE:
+	return "JUMP_FAILURE";
+      case JUMP_OUT_OF_MEMORY:
+	return "JUMP_OUT_OF_MEMORY";
+      case JUMP_WOULD_BLOCK:
+	return "JUMP_WOULD_BLOCK";
+      case JUMP_OVERRUN:
+	return "JUMP_OVERRUN";
+      case JUMP_NEGATIVE_ARRAY_LENGTH:
+	return "JUMP_NEGATIVE_ARRAY_LENGTH";
+      case JUMP_UNBLOCKED:
+	return "JUMP_UNBLOCKED";
+      case JUMP_NO_SUCH_QUEUE:
+	return "JUMP_NO_SUCH_QUEUE";
+      default:
+	return NULL;
+    }
+}
+
+/* Throws a generic IOException with a message like
+   "JUMPMessageStatusCode: N".  This is for exceptions we're not
+   expecting or exceptions that don't need specific reporting. */
+static void
+throw_IOException(JNIEnv *env, JUMPMessageStatusCode code)
+{
+    const char *code_string;
+    char code_string_buf[16];
+    char message[80];
+
+    code_string = code_to_string(code);
+    if (code_string == NULL) {
+	snprintf(code_string_buf, sizeof(code_string_buf), "%d", code);
+	code_string = code_string_buf;
+    }
+
+    snprintf(message, sizeof(message), "JUMPMessageStatusCode: %s",
+	     code_string);
+
+    JNU_ThrowByName(env, "java/io/IOException", message);
 }
 
 JNIEXPORT jint JNICALL
@@ -86,7 +151,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_getReturnType(JNIEnv *env
     
     name = jumpMessageGetReturnTypeName();
     if (name == NULL) {
-	JNU_ThrowOutOfMemoryError(env, "jumpMessageGetReturnTypeName");
+	JNU_ThrowOutOfMemoryError(env, "in jumpMessageGetReturnTypeName");
 	return NULL;
     }
     ret = (*env)->NewStringUTF(env, name);
@@ -96,7 +161,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_getReturnType(JNIEnv *env
 }
 
 /* On success, returns a new JUMPOutgoingMessage.  On failure, returns
-   NULL and throws an Exception. */
+   NULL and throws an OutOfMemoryError or IOException. */
 static JUMPOutgoingMessage
 new_outgoing_message_from_byte_array(
     JNIEnv *env, 
@@ -110,7 +175,7 @@ new_outgoing_message_from_byte_array(
 
     buffer = malloc(MESSAGE_BUFFER_SIZE);
     if (buffer == NULL) {
-	JNU_ThrowOutOfMemoryError(env, "new_outgoing_message_from_byte_array");
+	JNU_ThrowOutOfMemoryError(env, "in new_outgoing_message_from_byte_array");
 	goto error;
     }
 
@@ -127,16 +192,12 @@ new_outgoing_message_from_byte_array(
     m = jumpMessageNewOutgoingFromBuffer(buffer, isResponse, &code);
     if (m == NULL) {
 	switch (code) {
-	    char message[80];
-
 	  case JUMP_OUT_OF_MEMORY:
-	    JNU_ThrowOutOfMemoryError(env, "jumpMessageNewOutgoingFromBuffer");
+	    JNU_ThrowOutOfMemoryError(env, "in jumpMessageNewOutgoingFromBuffer");
 	    break;
 
 	  default:
-	    snprintf(message, sizeof(message),
-		     "JUMPMessageStatusCode: %d", code);
-	    JNU_ThrowByName(env, "XXX", message);
+	    throw_IOException(env, code);
 	    break;
 	}
 	goto error;
@@ -204,32 +265,32 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageSync(
     r = jumpMessageSendSync(target, m, (int32)timeout, &code);
     if (r == NULL) {
 	switch (code) {
-	    char message[80];
-
 	  case JUMP_OUT_OF_MEMORY:
-	    JNU_ThrowOutOfMemoryError(env, "jumpMessageSendSync");
+	    JNU_ThrowOutOfMemoryError(env, "in jumpMessageSendSync");
 	    break;
 
 	  case JUMP_TARGET_NONEXISTENT:
-	    JNU_ThrowByName(env, "XXX", message);
+	    throw_with_messagetype(
+		env, "com/sun/jump/message/JUMPTargetNonexistentException",
+		jumpMessageGetType(m));
 	    break;
 
 	  case JUMP_WOULD_BLOCK:
-	    JNU_ThrowByName(env, "XXX", message);
+	    throw_with_messagetype(
+		env, "com/sun/jump/message/JUMPWouldBlockException",
+		jumpMessageGetType(m));
 	    break;
 
 	  case JUMP_TIMEOUT:
-	    throw_JUMPTimedOutException(env);
+	    throw_by_name(env, "com/sun/jump/message/JUMPTimedOutException");
 	    break;
 
 	  case JUMP_UNBLOCKED:
-	    JNU_ThrowByName(env, "XXX", NULL);
-	    break;
-
+	    // This shouldn't happen here, unblocked is only for message
+	    // queues with registered handlers.
+	    // Fall through to default.
 	  default:
-	    snprintf(message, sizeof(message),
-		     "JUMPMessageStatusCode: %d", code);
-	    JNU_ThrowByName(env, "XXX", message);
+	    throw_IOException(env, code);
 	    break;
 	}
 	goto out;
@@ -274,28 +335,23 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_receiveMessage(
     r = jumpMessageWaitFor((JUMPPlatformCString)type, (int32)timeout, &code);
     if (r == NULL) {
 	switch (code) {
-	    char message[80];
-
 	  case JUMP_OUT_OF_MEMORY:
-	    JNU_ThrowOutOfMemoryError(env, "jumpMessageWaitFor");
-	    break;
-
-	  case JUMP_NO_SUCH_QUEUE:
-	    JNU_ThrowByName(env, "XXX", NULL);
+	    JNU_ThrowOutOfMemoryError(env, "in jumpMessageWaitFor");
 	    break;
 
 	  case JUMP_TIMEOUT:
-	    throw_JUMPTimedOutException(env);
+	    throw_by_name(env, "com/sun/jump/message/JUMPTimedOutException");
 	    break;
 
 	  case JUMP_UNBLOCKED:
-	    JNU_ThrowByName(env, "XXX", NULL);
+	    throw_by_name(env, "com/sun/jump/message/JUMPUnblockedException");
 	    break;
 
+	  case JUMP_NO_SUCH_QUEUE:
+	    // The design of the Java code should not allow this.
+	    // Fall through to default.
 	  default:
-	    snprintf(message, sizeof(message),
-		     "JUMPMessageStatusCode: %d", code);
-	    JNU_ThrowByName(env, "XXX", message);
+	    throw_IOException(env, code);
 	    break;
 	}
 	goto out;
@@ -337,27 +393,27 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageAsync(
     target.processId = pid;
     jumpMessageSendAsync(target, m, &code);
     switch (code) {
-	char message[80];
-
       case JUMP_SUCCESS:
 	break;
 
       case JUMP_OUT_OF_MEMORY:
-	JNU_ThrowOutOfMemoryError(env, "jumpMessageSendSync");
+	JNU_ThrowOutOfMemoryError(env, "in jumpMessageSendSync");
 	break;
 
       case JUMP_TARGET_NONEXISTENT:
-	JNU_ThrowByName(env, "XXX", message);
+	throw_with_messagetype(
+	    env, "com/sun/jump/message/JUMPTargetNonexistentException",
+	    jumpMessageGetType(m));
 	break;
 
       case JUMP_WOULD_BLOCK:
-	JNU_ThrowByName(env, "XXX", message);
+	throw_with_messagetype(
+	    env, "com/sun/jump/message/JUMPWouldBlockException",
+	    jumpMessageGetType(m));
 	break;
 
       default:
-	snprintf(message, sizeof(message),
-		 "JUMPMessageStatusCode: %d", code);
-	JNU_ThrowByName(env, "XXX", message);
+	throw_IOException(env, code);
 	break;
     }
 
@@ -387,27 +443,27 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageResponse(
 
     jumpMessageSendAsyncResponse(m, &code);
     switch (code) {
-	char message[80];
-
       case JUMP_SUCCESS:
 	break;
 
       case JUMP_OUT_OF_MEMORY:
-	JNU_ThrowOutOfMemoryError(env, "jumpMessageSendSync");
+	JNU_ThrowOutOfMemoryError(env, "in jumpMessageSendSync");
 	break;
 
       case JUMP_TARGET_NONEXISTENT:
-	JNU_ThrowByName(env, "XXX", message);
+	throw_with_messagetype(
+	    env, "com/sun/jump/message/JUMPTargetNonexistentException",
+	    jumpMessageGetType(m));
 	break;
 
       case JUMP_WOULD_BLOCK:
-	JNU_ThrowByName(env, "XXX", message);
+	throw_with_messagetype(
+	    env, "com/sun/jump/message/JUMPWouldBlockException",
+	    jumpMessageGetType(m));
 	break;
 
       default:
-	snprintf(message, sizeof(message),
-		 "JUMPMessageStatusCode: %d", code);
-	JNU_ThrowByName(env, "XXX", message);
+	throw_IOException(env, code);
 	break;
     }
 
@@ -424,7 +480,7 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_reserve(
     jstring messageType)
 {
     const char* type;
-    JUMPMessageQueueStatusCode code;
+    JUMPMessageQueueStatusCode mqcode;
 
     type = (*env)->GetStringUTFChars(env, messageType, NULL);
     if (type == NULL) {
@@ -432,7 +488,19 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_reserve(
     }
 
     /* FIXME: use jumpMessageRegisterDirect. */
-    jumpMessageQueueCreate((JUMPPlatformCString)type, &code);
+    jumpMessageQueueCreate((JUMPPlatformCString)type, &mqcode);
+    switch (mqcode) {
+      case JUMP_MQ_SUCCESS:
+	break;
+
+      case JUMP_MQ_OUT_OF_MEMORY:
+	JNU_ThrowOutOfMemoryError(env, "in jumpMessageQueueCreate");
+	break;
+
+      default:
+	throw_IOException(env, JUMP_FAILURE);
+	break;
+    }
 
     (*env)->ReleaseStringUTFChars(env, messageType, type);
 }
@@ -452,6 +520,36 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_unreserve(
 
     /* FIXME: use jumpMessageCancelRegistration. */
     jumpMessageQueueDestroy((JUMPPlatformCString)type);
+
+    (*env)->ReleaseStringUTFChars(env, messageType, type);
+}
+
+JNIEXPORT void JNICALL
+Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_unblock(
+    JNIEnv *env, 
+    jobject thisObj, 
+    jstring messageType)
+{
+    const char* type;
+    JUMPMessageStatusCode code;
+
+    type = (*env)->GetStringUTFChars(env, messageType, NULL);
+    if (type == NULL) {
+	return;
+    }
+
+    jumpMessageUnblock((JUMPPlatformCString)type, &code);
+    switch (code) {
+      case JUMP_SUCCESS:
+	break;
+
+      case JUMP_NO_SUCH_QUEUE:
+	// The design of the Java code should not allow this.
+	// Fall through to default.
+      default:
+	throw_IOException(env, code);
+	break;
+    }
 
     (*env)->ReleaseStringUTFChars(env, messageType, type);
 }

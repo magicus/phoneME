@@ -26,6 +26,7 @@
 
 package com.sun.jumpimpl.module.isolatemanager;
 
+import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
@@ -202,7 +203,11 @@ public class IsolateManagerModuleImpl
     }
     
     public void unload() {
-	dispatcher.cancelRegistration(messageRegistration);
+	try {
+	    dispatcher.cancelRegistration(messageRegistration);
+	} catch (IOException ex) {
+	    // FIXME
+	}
     }
 
     public void handleMessage(JUMPMessage m) {
