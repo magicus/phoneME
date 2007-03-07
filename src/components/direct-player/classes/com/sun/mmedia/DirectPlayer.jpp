@@ -334,8 +334,9 @@ public class DirectPlayer extends BasicPlayer
             if (stopTimer != null) {
                 stopTimer.cancel();
             }
+            long currentTime = doGetMediaTime();
             stopTimer = new Timer();
-            stopTimer.schedule(new StopTimeController(), stopTime / 1000);
+            stopTimer.schedule(new StopTimeController(), stopTime / 1000 - currentTime / 1000 );
         }
         // #endif ]
 
@@ -704,6 +705,25 @@ public class DirectPlayer extends BasicPlayer
                         "Exception during set time by stop timer");
                 }
 */
+                /* IMPL_NOTE: Timer used to execute this code uses system time,
+                              which is not exactly in sync with media time, both
+                              may change in relatively large increments. That's 
+                              why we must wait here for media time to actually pass
+                              stop-time point.
+                */
+
+				long mt  = doGetMediaTime();
+				long dur = doGetDuration();
+	            
+	            while( mt < stopTime && mt < dur ) {
+					try	{
+						java.lang.Thread.sleep( 10 );
+					} catch( InterruptedException e ) {
+						// just skip it
+					}
+					
+					mt = doGetMediaTime();
+				}
 
                 try {
                     doPreStop();
