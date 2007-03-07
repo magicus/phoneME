@@ -37,6 +37,7 @@
 extern char* encodeSmsBuffer(
     int encodingType, int destPortNum, javacall_int64 timeStamp, 
     const char* recipientPhone, const char* senderPhone, int msgLength, const char* msg,
+    int sourcePortNum,
     int* out_encode_sms_buffer_length);
 extern char* getIPBytes_nonblock(char *hostname);
 
@@ -82,7 +83,7 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
     pAddress = getIPBytes_nonblock(IP_text);
 
     encodedSMS = encodeSmsBuffer(msgType, destPort, timeStamp, recipientPhone, senderPhone, 
-        msgBufferLen, msgBuffer, &encodedSMSLength);
+        msgBufferLen, msgBuffer, sourcePort, &encodedSMSLength);
 
     ok = javacall_datagram_open(0, &datagramHandle);
     if (ok == JAVACALL_OK) {
@@ -121,6 +122,7 @@ javacall_result javacall_sms_add_listening_port(unsigned short portNum){
         }
     }
 
+    //printf("javacall_sms_add_listening_port %i", portNum);
     if (free == -1) {
         javacall_print("ports amount exceeded");
         return JAVACALL_FAIL;
