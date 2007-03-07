@@ -35,9 +35,9 @@
 /**
  * Simple sound playing implementation for Alert.
  * On most of the ports, play a beeping sound for types:
- * SOUND_WARNING, SOUND_ERROR and SOUND_ALARM.
+ * ANC_SOUND_WARNING, ANC_SOUND_ERROR and ANC_SOUND_ALARM.
  */
-jboolean anc_play_sound(int soundType)
+jboolean anc_play_sound(AncSoundType soundType)
 {
     REPORT_CALL_TRACE1(LC_HIGHUI, "LF:STUB:anc_play_sound(%d)\n", soundType);
 

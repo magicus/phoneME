@@ -19,16 +19,6 @@
             Name="IMAGE_CACHE_THRESHOLD"
             Value="(100*1024)"
             Comment="Threshold for image cache storage"/>
-<!-- Package javax.microedition.lcdui.game -->
-  <constant Type="int"
-            Name="GAMECANVAS_FULLWIDTH"
-            Value="176"
-            Comment="(Fixed) full display width"/>
-  <constant Type="int"
-            Name="GAMECANVAS_FULLHEIGHT"
-            Value="210" 
-            Comment="(Fixed) full display height"/>
-
 <!-- Package javax.microedition.lcdui -->
   <constant Type="boolean"
             Name="CHAM_USE_IMAGES"

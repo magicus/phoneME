@@ -11,15 +11,6 @@
 <constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public">
 
   <constant Type="int"
-            Name="GAMECANVAS_FULLWIDTH"
-            Value="480"
-            Comment="(Fixed) full display width"/>
-  <constant Type="int"
-            Name="GAMECANVAS_FULLHEIGHT"
-            Value="536" 
-            Comment="(Fixed) full display height"/>
-
-  <constant Type="int"
             Name="CHAM_WIDTH"
             Value="480"
             Comment="(Chameleon Only) display width (QVA PocketPC)"/>

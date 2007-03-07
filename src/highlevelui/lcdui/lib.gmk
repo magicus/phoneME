@@ -64,6 +64,7 @@ $(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java: $(LCDUI_CLASSES_
 SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameMap.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/CommandAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/TextPolicy.java \

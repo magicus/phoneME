@@ -32,6 +32,7 @@
 
 #include <anc_audio.h>
 #include <midpEventUtil.h>
+#include <midp_constants_data.h>
 
 /**
  * Calls platform specific function to play a sound.
@@ -52,9 +53,35 @@ KNIDECL(javax_microedition_lcdui_Display_playAlertSound0) {
     int alertType = KNI_GetParameterAsInt(2);
     int displayId = KNI_GetParameterAsInt(1);
 
+    AncSoundType soundType;
+    
     if (midpHasForeground(displayId)) {
-      /* Alert type happens to be the same as sound type */
-      KNI_ReturnBoolean(anc_play_sound(alertType));
+        switch (alertType) {
+            case LCDUI_ALERT_TYPE_INFO:
+                soundType = ANC_SOUND_INFO;
+                break;
+
+            case LCDUI_ALERT_TYPE_WARNING:
+                soundType = ANC_SOUND_WARNING;
+                break;
+
+            case LCDUI_ALERT_TYPE_ERROR:
+                soundType = ANC_SOUND_ERROR;
+                break;
+
+            case LCDUI_ALERT_TYPE_ALARM:
+                soundType = ANC_SOUND_ALARM;
+                break;
+
+            case LCDUI_ALERT_TYPE_CONFIRMATION:
+                soundType = ANC_SOUND_CONFIRMATION;
+                break;
+
+            default:
+                KNI_ReturnBoolean(KNI_FALSE);
+        }
+
+        KNI_ReturnBoolean(anc_play_sound(soundType));
     }
     
     KNI_ReturnBoolean(KNI_FALSE);
