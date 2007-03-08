@@ -35,7 +35,7 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.net.URLClassLoader;
+import sun.misc.CDCAppClassLoader;
 
 /*
  * Application Container for the main(String[]) app model.
@@ -81,9 +81,8 @@ public class AppContainerImpl extends JUMPAppContainer {
                   File.separator + app.getProperty(CLASSPATH_KEY));
 
 
-	  URLClassLoader loader = new URLClassLoader(
-			  new URL[] {classPath.toURL()}, 
-			  ClassLoader.getSystemClassLoader());
+	  CDCAppClassLoader loader = new CDCAppClassLoader(
+			  new URL[] {classPath.toURL()}, null);
 
 	  try {
 	     Class [] args1 = {new String[0].getClass()};
