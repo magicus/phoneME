@@ -85,6 +85,11 @@ public class JUMPApplication
      */
     private JUMPApplication(Properties props) {
         this.props = props;
+
+	if (props.getProperty(ID_KEY) == null ||
+	    props.getProperty(APPMODEL_KEY) == null)
+		throw new IllegalArgumentException("Properties do not include " + 
+				APPMODEL_KEY + " or " + ID_KEY);
     }
     
     /**
@@ -92,12 +97,13 @@ public class JUMPApplication
      */
     public byte[] toByteArray() {
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            props.store(baos, "");
-            return baos.toByteArray();
-        } catch (Throwable e) {
-            e.printStackTrace();
-            return null;
+           ByteArrayOutputStream baos = new ByteArrayOutputStream();
+           props.store(baos, "");
+           return baos.toByteArray();
+        } catch (java.io.IOException e) {
+           System.err.println("Error serializing this JUMPApplication object");
+           e.printStackTrace();
+	   return null;
         }
     }
     
@@ -105,14 +111,15 @@ public class JUMPApplication
      * Create a JUMPApplication from its binary representation
      */
     public static JUMPApplication fromByteArray(byte[] propBytes) {
-        try {
+         try {
             Properties p = new Properties();
             ByteArrayInputStream bais = new ByteArrayInputStream(propBytes);
             p.load(bais);
             return new JUMPApplication(p);
-        } catch (Throwable e) {
-            e.printStackTrace();
-            return null;
+         } catch (java.io.IOException e) {
+           System.err.println("Error deserializing an JUMPApplication object");
+           e.printStackTrace();
+	   return null;
         }
     }
     
@@ -269,6 +276,24 @@ public class JUMPApplication
     public String getContentType() {
         return "Application";
     }
-    
+
+    /**
+     * Returns true if two JUMPApplications' APPMODEL_KEY and
+     * ID_KEY properties hold the same value.
+     */
+    public boolean equals(Object obj) {
+        if (!(obj instanceof JUMPApplication)) return false;
+
+	JUMPApplication other = (JUMPApplication) obj;
+	return (getProperty(APPMODEL_KEY).equals(other.getProperty(APPMODEL_KEY))
+               && getProperty(ID_KEY).equals(other.getProperty(ID_KEY)));	
+    }
+
+    /**
+     * Returns the value of ID_KEY property.
+     */
+    public int hashCode() {
+        return Integer.parseInt(getProperty(ID_KEY));
+    }
 }
 

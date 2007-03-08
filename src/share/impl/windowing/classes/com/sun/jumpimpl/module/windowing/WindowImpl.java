@@ -27,7 +27,7 @@
 package com.sun.jumpimpl.module.windowing;
 
 import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
-import com.sun.jump.common.JUMPApplication;
+import com.sun.jump.executive.JUMPExecutive;
 import com.sun.jump.common.JUMPIsolate;
 import com.sun.jump.common.JUMPWindow;
 
@@ -36,6 +36,8 @@ import java.util.Comparator;
 
 
 public class WindowImpl extends JUMPWindow {
+    public static int executiveId = JUMPExecutive.getInstance().getProcessId(); 
+
     private String      state;
     private int         id;
     private int         isolateId;
@@ -111,12 +113,12 @@ public class WindowImpl extends JUMPWindow {
 
     public JUMPIsolate
     getIsolate() {
+        if(isolateId == executiveId) {
+            // this WindowImpl was created in executive's VM
+            return null;
+        }
+
         return JUMPIsolateManagerModuleFactory.getInstance(
             ).getModule().getIsolate(isolateId);
-    }
-
-    public JUMPApplication
-    getApplication() {
-        throw new UnsupportedOperationException();
     }
 }

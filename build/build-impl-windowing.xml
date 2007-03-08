@@ -35,21 +35,22 @@ information or have any questions.
         </filepath>
     </available>
 
-    <target name="make-excludes" unless="gci.classes.available">
+    <target name="with-gci" unless="gci.classes.available">
         <echo message="WARNING: GCI classes are not available, windowing module will not work!"/>
 
-        <patternset id="excludes">
-            <exclude name="**/WindowingIsolateModule.java"/>
+        <patternset id="select-rules">
+            <exclude name="classes/com/sun/jumpimpl/**/WindowingClient.java"/>
+            <include name="stub_classes/com/sun/jumpimpl/**/*"/>
         </patternset>
     </target>
-    <target name="no-excludes" if="gci.classes.available">
-        <patternset id="excludes"/>
+    <target name="without-gci" if="gci.classes.available">
+        <patternset id="select-rules"/>
     </target>
 
-    <target name="compile-windowing-module" depends="make-excludes,no-excludes">
-        <jump.javac srcdir="${s.share.impl.dir}/windowing/classes">
-            <include name="com/sun/jumpimpl/**/*.java"/>
-            <patternset refid="excludes"/>
+    <target name="compile-windowing-module" depends="with-gci,without-gci">
+        <jump.javac srcdir="${s.share.impl.dir}/windowing">
+            <include name="classes/com/sun/jumpimpl/**/*.java"/>
+            <patternset refid="select-rules"/>
         </jump.javac>
     </target>
 

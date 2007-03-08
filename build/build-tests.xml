@@ -47,34 +47,30 @@ information or have any questions.
 
   <target name="build-unittests" depends="build-impl, only-build-unittests"/>
   
-  <presetdef name="jump.junit">
+  <property name="reports.dir" value="${cdc.dir}/reports/jump"/>
+
+  <target name="only-run-unittests-anyway" depends="clean-reports">
+    <mkdir dir="${reports.dir}"/>
     <junit showoutput="true" fork="true" jvm="${cdc.dir}/bin/cvm">
-      <classpath path="${d.classes.dir}"/>
-      <batchtest>
+      <classpath>
+        <pathelement path="${d.classes.dir}"/>
+        <pathelement path="${ant.library.dir}/xercesImpl.jar"/>
+        <pathelement path="${ant.library.dir}/xml-apis.jar"/>
+      </classpath>
+      <formatter usefile="true" type="xml" />
+      <formatter usefile="true" type="brief" />
+      <batchtest todir="${reports.dir}">
         <fileset dir="${s.share.tests.dir}/classes">
           <include name = "**/*Test.java"/>
         </fileset>
       </batchtest>
     </junit>
-  </presetdef>
-  
-  <target name="only-run-unittests-verbose" if="unittest.verbose">
-    <jump.junit>
-      <formatter  type="brief"/>
-    </jump.junit>
-    <!-- break through quieted ant: cat test results to output -->
-    <concat>
-        <fileset dir = "." includes = "TEST-*"/>        
-    </concat>
-    <delete >
-        <fileset dir = "." includes = "TEST-*"/>
-    </delete>
   </target>
-
-  <target name="only-run-unittests-quiet" unless="unittest.verbose">
-    <jump.junit>
-      <formatter usefile="false" type="brief"/>
-    </jump.junit>
+  
+  <target name="print-unittests-result" if="unittest.verbose" depends="only-run-unittests-anyway">
+    <concat>
+        <fileset dir="${reports.dir}" includes="TEST-*.txt"/>
+    </concat>
   </target>
 
   <!--
@@ -83,9 +79,13 @@ information or have any questions.
     It should be mostly used from external makefiles which ensure
     correctly build unittests and components
   -->
-  <target name="only-run-unittests" depends="set-properties, only-run-unittests-quiet, only-run-unittests-verbose">
-  </target>
+  <target name="only-run-unittests"
+    depends="set-properties, only-run-unittests-anyway, print-unittests-result"/>
 
   <target name="run-unittests" depends="build-unittests, only-run-unittests"/>
+
+  <target name="clean-reports">
+    <delete dir="${reports.dir}"/>
+  </target>
 
 </project>

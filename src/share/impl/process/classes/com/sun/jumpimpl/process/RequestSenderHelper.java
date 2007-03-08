@@ -31,6 +31,7 @@ import com.sun.jump.message.JUMPMessageSender;
 import com.sun.jump.message.JUMPMessagingService;
 import com.sun.jump.message.JUMPTimedOutException;
 import java.io.IOException;
+import com.sun.jump.command.JUMPCommand;
 import com.sun.jump.command.JUMPRequest;
 import com.sun.jump.command.JUMPResponse;
 import com.sun.jump.command.JUMPResponseInteger;
@@ -97,14 +98,25 @@ public class RequestSenderHelper {
     /**
      * Send outgoing request and get a response
      */
-    public JUMPResponse
-    sendRequest(JUMPMessageSender target, JUMPRequest request) {
+    public JUMPCommand
+    sendRequest(
+        JUMPMessageSender target, JUMPRequest request, Class responseClass) {
+        
 	JUMPMessage r = sendRequestWork(target, request);
 	if (r == null) {
 	    return null;
 	}
-	return JUMPResponse.fromMessage(r);
+	return JUMPCommand.fromMessage(r, responseClass);
     }
+    
+     /**
+     * Send outgoing request and get a response
+     */
+    public JUMPResponse
+    sendRequest(JUMPMessageSender target, JUMPRequest request) {
+	return (JUMPResponse)sendRequest(target, request, JUMPResponse.class);
+    }
+
 
     /**
      * Send outgoing request and get a response
@@ -151,4 +163,18 @@ public class RequestSenderHelper {
         }
     }
 
+    /**
+     * Send response to incoming request
+     */
+    public void
+    sendResponse(JUMPMessage incoming, JUMPResponse value) {
+        try {
+            JUMPOutgoingMessage m = value.toMessageInResponseTo(incoming, host);
+	    JUMPMessageResponseSender mrs = incoming.getSender();
+
+            mrs.sendResponseMessage(m);
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

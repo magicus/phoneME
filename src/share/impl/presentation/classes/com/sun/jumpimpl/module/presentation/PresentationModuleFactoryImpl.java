@@ -28,10 +28,11 @@ import com.sun.jump.module.presentation.JUMPPresentationModule;
 import com.sun.jump.module.presentation.JUMPPresentationModuleFactory;
 
 import java.util.Map;
+import java.util.HashMap;
 
 public class PresentationModuleFactoryImpl extends JUMPPresentationModuleFactory {
-    private JUMPPresentationModule simpleBasisAMS = null;
     private Map configMap;
+    private HashMap presentationToModule;
     
     /**
      * load this module with the given properties
@@ -49,27 +50,31 @@ public class PresentationModuleFactoryImpl extends JUMPPresentationModuleFactory
     /**
      * Returns a <code>JUMPPresentationModule</code> for the specified
      *   presentation mode.
-     * @param presentation the application model for which an appropriate
-     *        installer module should be returned.
-     * @return installer module object
      */
-    public JUMPPresentationModule getModule(String presentation) {
+    public synchronized JUMPPresentationModule getModule(String presentation) {
         
-        if (presentation.equals(JUMPPresentationModuleFactory.SIMPLE_BASIS_AMS)) {
-            return getSimpleBasisAMS();
-        } else {
-            throw new IllegalArgumentException("Illegal JUMP Presentation Mode: " + presentation);
+        if (presentationToModule == null) {
+  	   presentationToModule = new HashMap();
         }
+
+	JUMPPresentationModule module = (JUMPPresentationModule) presentationToModule.get(presentation);
+
+	if (module == null) {
+
+	   try {
+	      Class moduleClass = Class.forName(presentation);
+              module = (JUMPPresentationModule) moduleClass.newInstance();
+
+	      module.load(configMap);
+	      presentationToModule.put(presentation, module);
+           } catch (Exception e) { 
+              e.printStackTrace();
+           }
+
+        }
+
+	return module;
     }
     
-    private JUMPPresentationModule getSimpleBasisAMS() {
-        synchronized(PresentationModuleFactoryImpl.class) {
-            if (simpleBasisAMS == null) {
-                simpleBasisAMS = (JUMPPresentationModule)new com.sun.jumpimpl.presentation.simplebasis.SimpleBasisAMS();
-                simpleBasisAMS.load(configMap);
-            }
-            return simpleBasisAMS;
-        }
-    }
 }
 

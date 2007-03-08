@@ -365,12 +365,12 @@ if [ "$DO_CLEANUP" = "true" ] ; then
       CLEANUP_APPLICATIONS_COMMAND="$CVMC -killall"
       $CLEANUP_APPLICATIONS_COMMAND >> $CLEANUP_LOGFILE 2>&1
       
-      usleep 1000
+      sleep 1
 
       CLEANUP_SERVER_COMMAND="$CVMC -childrenexited"
       $CLEANUP_SERVER_COMMAND >> $CLEANUP_LOGFILE 2>&1
 
-      usleep 1000
+      sleep 1
 
       CLEANUP_SERVER_COMMAND="$CVMC -killserver"
       $CLEANUP_SERVER_COMMAND >> $CLEANUP_LOGFILE 2>&1
@@ -406,7 +406,7 @@ if [ "$DO_CLEANUP" = "true" ] ; then
   ### Remove output files
   rm -f $SERVER_LOGFILE $WARMUP_LOGFILE $APP_LOGFILE $SETTINGS_LOGFILE $SERVER_PID_LOGFILE $CVMC_LOGFILE
  
-  usleep 2000
+  sleep 2
 
   echo "Done with cleanup."
  
@@ -422,7 +422,7 @@ if [ "$DO_SERVER" = "true" ] ; then
        QVFB_COMMAND="$QTOPIA_HOME/bin/qvfb -width $QVFB_WIDTH -height $QVFB_HEIGHT -depth 16 -qwsdisplay $QWS_DISPLAY"
        echo $QVFB_COMMAND
        $QVFB_COMMAND >> $SERVER_LOGFILE 2>&1 &
-       usleep 1000
+       sleep 1
     fi
    
     PHONEME_SERVER_OPTIONS="-Xbootclasspath/a=$SERVER_JARFILE $MIDP_PROPERTIES -Xserver"
@@ -442,7 +442,7 @@ if [ "$DO_SERVER" = "true" ] ; then
       if [ ! -f $SERVER_LOGFILE ] ; then
         numAttempts=`expr $numAttempts + 1`
         echo -n "."
-        usleep 1000
+        sleep 1
       else
         output=`cat $SERVER_LOGFILE | grep "Starting mTASK server at pid=" | grep "done"`
         if [ ! "$output" = "" ] ; then
@@ -451,7 +451,7 @@ if [ "$DO_SERVER" = "true" ] ; then
         else
           numAttempts=`expr $numAttempts + 1`
           echo -n "."
-          usleep 1000
+          sleep 1
         fi
       fi
     done
@@ -631,12 +631,12 @@ if [ "$DO_MIDLET" = "true" ] ; then
     shift
     shift
     shift
-    if [ "$JARFILE" == "" ] ; then
+    if [ "$JARFILE" = "" ] ; then
         echo "Illegal MIDLET command.  Please try again."
         exit 0
     fi
 
-    if [ "$MIDLETCLASS" == "" ] ; then
+    if [ "$MIDLETCLASS" = "" ] ; then
         echo "Illegal MIDLET command.  Please try again."
         exit 0
     fi
@@ -665,12 +665,12 @@ if [ "$DO_XLET" = "true" ] ; then
     XLETCLASS=$3
     shift
     shift
-    if [ "$JARFILE" == "" ] ; then
+    if [ "$JARFILE" = "" ] ; then
         echo "Illegal XLET command.  Please try again."
         exit 0
     fi
 
-    if [ "$XLETCLASS" == "" ] ; then
+    if [ "$XLETCLASS" = "" ] ; then
         echo "Illegal XLET command.  Please try again."
         exit 0
     fi
@@ -701,12 +701,12 @@ if [ "$DO_MAIN" = "true" ] ; then
     shift
     shift
 
-    if [ "$JARFILE" == "" ] ; then
+    if [ "$JARFILE" = "" ] ; then
         echo "Illegal XLET command.  Please try again."
         exit 0
     fi
 
-    if [ "$MAINCLASS" == "" ] ; then
+    if [ "$MAINCLASS" = "" ] ; then
         echo "Illegal MAIN command.  Please try again."
         exit 0
     fi

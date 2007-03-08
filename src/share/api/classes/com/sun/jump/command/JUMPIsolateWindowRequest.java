@@ -47,7 +47,7 @@ public class JUMPIsolateWindowRequest extends JUMPRequest {
     public static final String MESSAGE_TYPE = "isolate/window";
 
     /**
-     * Isolate requesting the executive to raise the window to the
+     * Isolate notifying the executive that the window is raised to the
      * foreground.
      * <ol>
      *   <li>args[0] - Isolate Id</li>
@@ -55,10 +55,10 @@ public class JUMPIsolateWindowRequest extends JUMPRequest {
      * </ol>
      * Asynchronous request. No <code>JUMPResponse</code> required.
      */
-    public static final String ID_REQUEST_FOREGROUND= "RequestFg";
+    public static final String ID_NOTIFY_WINDOW_FOREGROUND = "NotifyFg";
 
     /**
-     * Isolate requesting the executive to lower the window to the
+     * Isolate notifying the executive that the window is lowered to the
      * background.
      * <ol>
      *   <li>args[0] - Isolate Id</li>
@@ -66,7 +66,7 @@ public class JUMPIsolateWindowRequest extends JUMPRequest {
      * </ol>
      * Asynchronous request. No <code>JUMPResponse</code> required.
      */
-    public static final String ID_REQUEST_BACKGROUND = "RequestBg";
+    public static final String ID_NOTIFY_WINDOW_BACKGROUND = "NotifyBg";
 
     private JUMPIsolateWindowRequest(String id, String[] args) {
 	super(MESSAGE_TYPE, id, args);

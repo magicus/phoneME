@@ -107,12 +107,23 @@ information or have any questions.
     </presetdef>
   </target>
 
-  <target name="clean">
+  <target name="clean" depends="clean-reports">
       <property file="modules-config.properties"/>
+      <property name="data.dir" value="${cdc.dir}/${contentstore.root}"/>
+
       <delete dir="${dist.dir}"/>
-      <delete dir="${cdc.dir}/${contentstore.root}"/>
+      <delete quiet="true" dir="${data.dir}"/>
+      <available file="${data.dir}" type="dir" property="deletion.failed"/>
+      <antcall target="delete-as-root">
+          <param name="data.dir" value="${data.dir}"/>
+      </antcall>
   </target>
 
+  <target name="delete-as-root" if="deletion.failed">
+      <exec executable="sudo">
+         <arg line="rm -rf ${data.dir}"/>
+      </exec>
+  </target>
 
     <!--
         The target to build impl or api set of jars in one pass.
