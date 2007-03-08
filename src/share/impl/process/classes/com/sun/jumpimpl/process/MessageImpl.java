@@ -30,16 +30,10 @@ import com.sun.jump.message.JUMPMessagable;
 import com.sun.jump.message.JUMPOutgoingMessage;
 import com.sun.jump.message.JUMPTimedOutException;
 
-// XXX import com.sun.jump.os.JUMPOSInterface;
-
 /**
  * Process oriented messages, assuming JUMPProcessProxyImpl message peers.
  */
 public class MessageImpl {
-    // XXX delete these.  Make two separate classes.
-    // public static JUMPOSInterface os = JUMPOSInterface.getInstance();
-    // public static int mypid = os.getProcessID();
-
     public static class Message extends JUMPMessage {
 	private int senderPid;
 	
