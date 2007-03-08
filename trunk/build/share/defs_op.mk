@@ -56,6 +56,28 @@ JSROP_BUILD_JARS = $(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
 # USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
 MIDP_JSROP_USE_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),USE_JSR_$(jsr_number)=false)
 
+# Hide all JSROPs from CDC by default
+HIDE_ALL_JSRS ?= true
+
+# Create a list of hidden JSR numbers, which should look like:
+#   75 120 135 ...
+ifeq ($(HIDE_ALL_JSRS),true)
+# All included JSRs are hidden from CDC
+HIDE_JSROP_NUMBERS = $(INCLUDED_JSROP_NUMBERS)
+else
+# Make a list of all JSR HIDE_JSR_<#> setting. It will look something like:
+#   HIDE_JSR_75=true USE_JSR_82= USE_JSR_135=true ...
+HIDE_JSROP_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),\
+                HIDE_JSR_$(jsr_number)=$(HIDE_JSR_$(jsr_number)))
+# Extract the JSR numbers from HIDE_JSROP_FLAGS and form a list
+# of hidden JSR numbers.
+HIDE_JSROP_NUMBERS = $(patsubst HIDE_JSR_%=true,%,\
+                $(filter %true, $(HIDE_JSROP_FLAGS)))
+endif
+
+# The list of JAR jar files we want to hide.
+JSROP_HIDE_JARS = $(subst $(space),:,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
+
 # Jump API classpath
 EMPTY =
 ONESPACE = $(EMPTY) $(EMPTY)
@@ -262,3 +284,4 @@ CVM_OBJECTS     += $(JSROP_NATIVE_OBJS)
 LINKLIBS_CVM    += $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
 endif
 
+CVM_CDCFILTERCONFIG = $(CVM_LIBDIR)/CDCRestrictedClasses.txt
