@@ -34,11 +34,11 @@ $(CVM_DERIVEDROOT)/classes/java/util/CurrencyData.java: $(CVM_MISC_TOOLS_SRCDIR)
 # This rule is temporary. It should be removed when real PackageManager is implemented.
 $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java: $(CONFIGURATOR_JAR_FILE)
 	@echo ... generating PackageManager.java
-	$(AT)$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
+	$(AT)$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
 	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml \
-	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesInit.xsl \
+	-xsl $(call POSIX2HOST,$(CONFIGURATOR_DIR)/xsl/cdc/propertiesInit.xsl)\
 	-params initializers '$(JSR_INITIALIZER_LIST)' \
-	-out $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java
+	-out $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java)
 
 build-unittests::
 	$(AT)echo "Building CDC unit-tests ..."
