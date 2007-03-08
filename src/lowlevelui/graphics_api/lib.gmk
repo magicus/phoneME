@@ -51,7 +51,7 @@ endif
 
 # Include platform specific module
 #
-ifeq ($(PLATFORM), gci)
+ifeq ($(PLATFORM), linux_gci)
   include $(GRAPHICS_API_DIR)/graphics_gci/$(LIB_MAKE_FILE)
 else
   include $(GRAPHICS_API_DIR)/reference/$(LIB_MAKE_FILE)

@@ -47,5 +47,8 @@ SUBSYSTEM_ANNUNCIATOR_EXTRA_INCLUDES += -I$(ANC_DIR)/include
 #
 # vpath $(ANC_DIR)/native
 
-
-include $(ANC_DIR)/$(PLATFORM)/lib.gmk
+ifeq ($(PLATFORM), linux_gci)
+    include $(ANC_DIR)/stubs/lib.gmk
+else
+    include $(ANC_DIR)/$(PLATFORM)/lib.gmk
+endif

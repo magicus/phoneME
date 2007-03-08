@@ -51,7 +51,7 @@ else
    ifeq ($(PLATFORM), linux_fb)
        include $(EVENTQUEUE_PORT_DIR)/stubs/lib.gmk
    else 
-       ifeq ($(PLATFORM), gci)
+       ifeq ($(PLATFORM), linux_gci)
            include $(EVENTQUEUE_PORT_DIR)/stubs/lib.gmk
        else 
            ifeq ($(PLATFORM), javacall)

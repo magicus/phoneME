@@ -66,7 +66,9 @@ include $(SUBSYSTEM_EVENTS_DIR)/eventqueue_port/lib.gmk
 include $(SUBSYSTEM_EVENTS_DIR)/eventsystem/lib.gmk
 
 ifeq ($(SUBSYSTEM_EVENTS_MODULES), master_mode)
-    include $(SUBSYSTEM_EVENTS_DIR)/mastermode_port/lib.gmk
+    ifneq ($(PLATFORM), linux_gci)
+        include $(SUBSYSTEM_EVENTS_DIR)/mastermode_port/lib.gmk
+    endif
     ifeq ($(PLATFORM), linux_fb)
 	include $(SUBSYSTEM_EVENTS_DIR)/input_port/lib.gmk
     endif

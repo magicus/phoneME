@@ -17,6 +17,16 @@
             Name="PORTING_NO_FILESYSTEM"
             Value="false"
             Comment="Whether your platform supports File System. Set to true when File System is not supported; set to false when File System is supported."/>
+<!-- Package javax.microedition.lcdui.game -->
+  <constant Type="int"
+            Name="GAMECANVAS_FULLWIDTH"
+            Value="176"
+            Comment="(Fixed) full display width"/>
+  <constant Type="int"
+            Name="GAMECANVAS_FULLHEIGHT"
+            Value="210"
+            Comment="(Fixed) full display height"/>
+
 <!-- Package javax.microedition.lcdui -->
   <constant Type="boolean"
             Name="CHAM_USE_IMAGES"

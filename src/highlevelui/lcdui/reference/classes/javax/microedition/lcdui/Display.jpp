@@ -61,6 +61,8 @@ import com.sun.midp.util.LiveTracer;
 // #endif ENABLE_I3_TEST
 
 // #ifdef ENABLE_GCI
+import java.security.*;
+
 import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
 import com.sun.me.gci.windowsystem.GCIDisplay;
 import com.sun.me.gci.windowsystem.GCIScreenWidget;
@@ -617,6 +619,11 @@ public class Display {
                                    Command.HELP, 3);
         aboutCommand.setInternalID(EventConstants.ABOUT_REQUESTED);
         // #endif ENABLE_CDC
+
+        // #ifdef ENABLE_GCI
+        java.security.AccessController.doPrivileged(
+                 new sun.security.action.LoadLibraryAction("gciawt"));
+        // #endif ENABLE_GCI
     }
 
 
@@ -664,14 +671,15 @@ public class Display {
         }
 
         // #ifdef ENABLE_GCI
-        GCIDisplay gciDisplay = 
+        GCIDisplay gciDisplay =
             GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
-        GCIScreenWidget gciScreenWidget = 
-            gciDisplay.createScreenWidget(0, 0, WIDTH, HEIGHT, this);
+        gciScreenWidget = gciDisplay.createScreenWidget(0, 0, 
+	                                                WIDTH, HEIGHT, 
+                                                        null, null);
         screenGraphics = Graphics.getScreenGraphics(displayId,
-                                                    WIDTH,
-                                                    HEIGHT, 
-	               gciScreenWidget.getDrawingSurface());
+                                                    WIDTH, HEIGHT, 
+	                      gciScreenWidget.getDrawingSurface());
+
         // #else
 
         screenGraphics = Graphics.getScreenGraphics(displayId,
@@ -3047,6 +3055,12 @@ public class Display {
 
                 gainedForeground0(displayId);
 
+                // #ifdef ENABLE_GCI
+                gciScreenWidget.setPeerEventTarget(currentCopy);
+                gciScreenWidget.show();
+
+                // #endif ENABLE_GCI
+
                 // #ifndef ENABLE_CHAMELEON
                 // NOTE: Chameleon does not need to do any screen erasing
                 // because its paint engine will automatically clear
@@ -3169,4 +3183,3 @@ class ChamImageTunnel implements
     }
 }
 // #endif
-

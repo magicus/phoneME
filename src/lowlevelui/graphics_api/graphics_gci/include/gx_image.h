@@ -24,27 +24,50 @@
  * information or have any questions. 
  */
 
-#include <midpPauseResume.h>
-#include <midp_logging.h>
+#ifndef _GX_IMAGE_H_
+#define _GX_IMAGE_H_
+
+#include <commonKNIMacros.h>
+#include <midpError.h>
 
 /**
  * @file
+ * @ingroup lowui_gx
  *
- * Platform dependent native code to handle VM pause and resume.
+ * @brief Porting api for graphics library
  */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /**
- * Platform handling code for VM pause notification call.
+ * Decodes the given input data into a cache representation that can
+ * be saved and reload quickly. 
+ * The input data should be in a self-identifying format; that is,
+ * the data must contain a description of the decoding process.
+ *
+ * @param srcBuffer input data to be decoded.
+ * @param length length of the input data.
+ * @param ret_dataBuffer pointer to the platform representation data that
+ *         		 be saved.
+ * @param ret_length pointer to the length of the return data. 
+ *
+ * @return one of error codes:
+ *		MIDP_ERROR_NONE,
+ *		MIDP_ERROR_OUT_MEM,
+ *		MIDP_ERROR_UNSUPPORTED,
+ *		MIDP_ERROR_OUT_OF_RESOURCE,
+ *		MIDP_ERROR_IMAGE_CORRUPTED
  */
-void pdMidpNotifySuspendAll() {
-    
-    REPORT_CALL_TRACE(LC_CORE, "LF:STUB:pdMidpNotifySuspendAll()\n");
-}
+MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
+				unsigned int length,
+				unsigned char** ret_dataBuffer,
+				unsigned int* ret_length);
 
-/**
- * Platform handling code for VM resume notification call.
- */
-void pdMidpNotifyResumeAll() {
-
-    REPORT_CALL_TRACE(LC_CORE, "LF:STUB:pdMidpNotifyResumeAll()\n");
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* _GX_IMAGE_H_ */
