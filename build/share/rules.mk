@@ -206,18 +206,22 @@ endif
 # Build various lists of classes to be compiled
 #
 
+# buildClassesList(classesTarget,classesList,class)
+define buildClassesList
+	@echo $(call POSIX2HOST,$(3)) >>$(2)
+	@touch $(1)
+endef
+
 # Non-preloaded classes except for test classes
 ifneq ($(CVM_PRELOAD_LIB), true)
 $(LIB_CLASSESDIR)/%.class: %.java
-	@echo $(call POSIX2HOST,$?) >>$(CVM_BUILD_TOP)/.libclasses.list
 	@echo $(subst /,.,$*) >>$(CVM_BUILD_TOP)/.javahclasses.list
-	@touch $(CVM_BUILD_TOP)/.libclasses 
+	$(call buildClassesList,.libclasses,.libclasses.list,$?)
 endif
 
 # preloaded classes except for test classes
 $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
-	@echo $(call POSIX2HOST,$?) >>$(CVM_BUILD_TOP)/.btclasses.list
-	@touch $(CVM_BUILD_TOP)/.btclasses
+	$(call buildClassesList,.btclasses,.btclasses.list,$?)
 
 # TODO: Build a jsr jar file and have a rule that makes the jar file
 # dependent on all the source files, and builds a list of files to
@@ -236,13 +240,11 @@ $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
 
 # Test classes
 $(CVM_TEST_CLASSESDIR)/%.class: %.java
-	@echo $(call POSIX2HOST,$?) >>$(CVM_BUILD_TOP)/.testclasses.list
-	@touch $(CVM_BUILD_TOP)/.testclasses
+	$(call buildClassesList,.testclasses,.testclasses.list,$?)
 
 # demo classes
 $(CVM_DEMO_CLASSESDIR)/%.class: %.java
-	@echo $(call POSIX2HOST,$?) >>$(CVM_BUILD_TOP)/.democlasses.list
-	@touch $(CVM_BUILD_TOP)/.democlasses
+	$(call buildClassesList,.democlasses,.btcdemoclasseslasses.list,$?)
 
 #
 # Convert the class lists to names of class files so they can be javac'd.
@@ -267,22 +269,26 @@ TEST_CLASS_FILES = \
 DEMO_CLASS0 = $(subst .,/,$(CVM_DEMO_CLASSES))
 DEMO_CLASS_FILES = $(patsubst %,$(CVM_DEMO_CLASSESDIR)/%.class,$(DEMO_CLASS0))
 
-PS := "$(JDK_PATH_SEP)"
-
 # Convert list of Java source directories to colon-separated paths
 JAVACLASSES_SRCPATH = \
-	$(subst $(space),$(PS),$(call MPOSIX2HOST,$(strip $(JAVA_SRCDIRS))))
+	$(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(JAVA_SRCDIRS))))
 TESTCLASSES_SRCPATH = \
-	$(subst $(space),$(PS),$(call MPOSIX2HOST,$(strip $(CVM_TESTCLASSES_SRCDIRS))))
+	$(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(CVM_TESTCLASSES_SRCDIRS))))
 CVM_DEMOCLASSES_SRCPATH = \
-	$(subst $(space),$(PS),$(call MPOSIX2HOST,$(strip $(CVM_DEMOCLASSES_SRCDIRS))))
+	$(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(CVM_DEMOCLASSES_SRCDIRS))))
 
 # Convert list of classpath entries to colon-separated path
 JAVACLASSES_CLASSPATH = $(subst $(space),$(PS),$(strip $(JAVA_CLASSPATH)))
 
 # CR 6214008
 # Convert list of OPT_PKGS classpath entries to colon-separated path
-OPTPKGS_CLASSPATH = $(subst $(space),$(PS),$(strip $(OPT_PKGS_CLASSPATH)))
+# Note, if empty then don't bother, or POSIX2HOST will result in a cygpath
+# error message.
+ifneq ($(OPT_PKGS_CLASSPATH),)
+OPTPKGS_CLASSPATH0 = $(strip $(OPT_PKGS_CLASSPATH))
+OPTPKGS_CLASSPATH1 = $(call POSIX2HOST,$(OPTPKGS_CLASSPATH0))
+OPTPKGS_CLASSPATH  = $(subst $(space),$(PS),$(OPTPKGS_CLASSPATH1))
+endif
 
 # Convert list of jar files to colon-separated path
 TEST_JARFILES = $(subst $(space),$(PS),$(strip $(CVM_TEST_JARFILES)))
@@ -734,10 +740,7 @@ clean::
 ifeq ($(CVM_REBUILD), true)
 clean::
 	rm -rf $(INSTALLDIR)
-	rm -rf $(CVM_BUILD_TOP)/.libclasses
-	rm -rf $(CVM_BUILD_TOP)/.btclasses 
-	rm -rf $(CVM_BUILD_TOP)/.testclasses
-	rm -rf $(CVM_BUILD_TOP)/.democlasses
+	rm -rf $(CVM_BUILD_TOP)/.*classes
 	rm -rf $(CVM_BUILD_TOP)/.*.list
 	rm -rf $(CVM_BUILD_TOP)/.system_properties.c
 	rm -rf .DefaultLocaleList.java
@@ -1136,7 +1139,7 @@ endif
 #
 
 # The following can all be set on the make command line
-SOURCE_OUTPUT_DIR	=  $(INSTALLDIR)/$(J2ME_BUILD_VERSION)
+SOURCE_OUTPUT_DIR	= $(INSTALLDIR)/$(J2ME_BUILD_VERSION)
 CDC_SOURCE_OUTPUT_SUBDIR= cdc
 INCLUDE_JIT		= $(CVM_JIT)
 INCLUDE_MTASK		= $(CVM_MTASK)
