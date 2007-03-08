@@ -359,7 +359,11 @@ endif   # CVM_INCLUDE_JUMP
 # MIDP requires at least foundation
 ifeq ($(CVM_INCLUDE_MIDP),true)
    ifeq ($(J2ME_CLASSLIB), cdc)
+      ifeq ($(AWT_IMPLEMENTATION), gci)
+      override J2ME_CLASSLIB = basis
+      else
       override J2ME_CLASSLIB = foundation
+      endif
    endif
 endif # CVM_INCLUDE_MIDP
 
