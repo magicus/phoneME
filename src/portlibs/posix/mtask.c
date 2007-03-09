@@ -1005,6 +1005,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    }
 	    if (command == (JUMPMessage) -1) {
 		/* There was no message, just a child notification. */
+		command = readRequestMessage();
 		continue;
 	    }
 
