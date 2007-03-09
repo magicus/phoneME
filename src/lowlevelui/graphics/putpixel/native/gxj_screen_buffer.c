@@ -73,7 +73,6 @@ MIDPError gxj_resize_screen_buffer(int width, int height) {
         if (gxj_system_screen_buffer.width == width &&
         	gxj_system_screen_buffer.height == height) {
 
-	        gxj_reset_screen_buffer();
             // no need to reallocate buffer, return
             return ALL_OK;
 
@@ -94,11 +93,11 @@ MIDPError gxj_resize_screen_buffer(int width, int height) {
 /** Reset pixel data of screen buffer to zero */
 void gxj_reset_screen_buffer() {
     if (gxj_system_screen_buffer.pixelData != NULL) {
-	int size = sizeof(gxj_pixel_type) *
-	    gxj_system_screen_buffer.width *
-    	    gxj_system_screen_buffer.height;
+        int size = sizeof(gxj_pixel_type) *
+            gxj_system_screen_buffer.width *
+                gxj_system_screen_buffer.height;
 
-	memset(gxj_system_screen_buffer.pixelData, 0, size);
+        memset(gxj_system_screen_buffer.pixelData, 0, size);
     }
 }
 
