@@ -284,4 +284,10 @@ CVM_OBJECTS     += $(JSROP_NATIVE_OBJS)
 LINKLIBS_CVM    += $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
 endif
 
+# CVM_CDCFILTERCONFIG is a list of JSROP classes 
+# that are hidden from CDC applications.
+ifeq ($(CVM_DUAL_STACK), true)
 CVM_CDCFILTERCONFIG = $(CVM_LIBDIR)/CDCRestrictedClasses.txt
+else
+CVM_CDCFILTERCONFIG =
+endif
