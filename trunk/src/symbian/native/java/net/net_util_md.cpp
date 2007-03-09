@@ -77,7 +77,7 @@ NET_GetFileDescriptorID(JNIEnv *env)
 
 void
 NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port,
-    struct sockaddr *him, int * /*len*/)
+    struct sockaddr *him, int * /*len*/, jboolean isLocalAddr)
 {
     jint family = (*env)->GetIntField(env, iaObj, ia_familyID);
     if (family == IPv4) {

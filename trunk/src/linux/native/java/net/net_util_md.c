@@ -266,8 +266,248 @@ NET_AllocSockaddr(struct sockaddr **him, int *len) {
 	}
 }
 
+#if defined(__linux__) && defined(AF_INET6)
+
+
+/* following code creates a list of addresses from the kernel
+ * routing table that are routed via the loopback address.
+ * We check all destination addresses against this table
+ * and override the scope_id field to use the relevant value for "lo"
+ * in order to work-around the Linux bug that prevents packets destined
+ * for certain local addresses from being sent via a physical interface.
+ */
+
+struct loopback_route {
+    struct in6_addr addr; /* destination address */
+    int plen; /* prefix length */
+};
+
+static struct loopback_route *loRoutes = 0;
+static int nRoutes = 0; /* number of routes */
+static int loRoutes_size = 16; /* initial size */
+static int lo_scope_id = 0;
+
+static void initLoopbackRoutes();
+
+void printAddr (struct in6_addr *addr) {
+    int i;
+    for (i=0; i<16; i++) {
+	printf ("%02x", addr->s6_addr[i]);
+    }
+    printf ("\n");
+}
+
+   
+static void initLoopbackRoutes() {
+    FILE *f;
+    char srcp[8][5];
+    char hopp[8][5];
+    int dest_plen, src_plen, use, refcnt, metric;
+    unsigned long flags;
+    char dest_str[40];
+    struct in6_addr dest_addr;
+    char device[16];
+    jboolean match = JNI_FALSE;
+    
+    if (loRoutes != 0) {
+	free (loRoutes);
+    }
+    loRoutes = calloc (loRoutes_size, sizeof(struct loopback_route));
+    if (loRoutes == 0) {
+	return;
+    }
+    /*
+     * Scan /proc/net/ipv6_route looking for a matching
+     * route.
+     */
+    if ((f = fopen("/proc/net/ipv6_route", "r")) == NULL) {
+	return ;
+    }
+    while (fscanf(f, "%4s%4s%4s%4s%4s%4s%4s%4s %02x "
+                     "%4s%4s%4s%4s%4s%4s%4s%4s %02x "
+                     "%4s%4s%4s%4s%4s%4s%4s%4s "
+                     "%08x %08x %08x %08lx %8s",
+		     dest_str, &dest_str[5], &dest_str[10], &dest_str[15],
+		     &dest_str[20], &dest_str[25], &dest_str[30], &dest_str[35],
+		     &dest_plen,
+		     srcp[0], srcp[1], srcp[2], srcp[3],
+		     srcp[4], srcp[5], srcp[6], srcp[7],
+		     &src_plen,
+		     hopp[0], hopp[1], hopp[2], hopp[3],
+		     hopp[4], hopp[5], hopp[6], hopp[7],
+		     &metric, &use, &refcnt, &flags, device) == 31) {
+
+	/*
+ 	 * Some routes should be ignored
+	 */
+	if ( (dest_plen < 0 || dest_plen > 128)  ||
+	     (src_plen != 0) ||			
+	     (flags & (RTF_POLICY | RTF_FLOW)) ||
+	     ((flags & RTF_REJECT) && dest_plen == 0) ) {
+	    continue;
+	}
+
+	/*
+  	 * Convert the destination address
+	 */
+	dest_str[4] = ':';
+	dest_str[9] = ':';
+	dest_str[14] = ':';
+	dest_str[19] = ':';
+	dest_str[24] = ':';
+	dest_str[29] = ':';
+	dest_str[34] = ':';
+	dest_str[39] = '\0';
+
+	if (inet_pton(AF_INET6, dest_str, &dest_addr) < 0) {
+	    /* not an Ipv6 address */
+	    continue;
+	} 
+	if (strcmp(device, "lo") != 0) {
+	    /* Not a loopback route */
+	    continue;
+	} else {
+	    if (nRoutes == loRoutes_size) {
+		loRoutes = realloc (loRoutes, loRoutes_size * 
+				sizeof (struct loopback_route) * 2);
+		if (loRoutes == 0) {
+		    return ;
+		}
+		loRoutes_size *= 2;
+	    }
+	    memcpy (&loRoutes[nRoutes].addr,&dest_addr,sizeof(struct in6_addr));
+	    loRoutes[nRoutes].plen = dest_plen;
+	    nRoutes ++;
+	}
+    }
+
+    fclose (f);
+    {
+	/* now find the scope_id for "lo" */
+
+        char addr6[40], devname[20];
+        char addr6p[8][5];
+        int plen, scope, dad_status, if_idx;
+
+        if ((f = fopen("/proc/net/if_inet6", "r")) != NULL) {
+            while (fscanf(f, "%4s%4s%4s%4s%4s%4s%4s%4s %02x %02x %02x %02x %20s\n",
+                      addr6p[0], addr6p[1], addr6p[2], addr6p[3],
+                      addr6p[4], addr6p[5], addr6p[6], addr6p[7],
+                  &if_idx, &plen, &scope, &dad_status, devname) == 13) {
+
+		if (strcmp(devname, "lo") == 0) {	
+		    /*
+		     * Found - so just return the index
+		     */
+		    fclose(f);
+		    lo_scope_id = if_idx;
+		    return;
+		}
+	    }
+	    fclose(f);
+        } 
+    }
+}
+
+/*
+ * Following is used for binding to local addresses. Equivalent
+ * to code above, for bind().
+ */
+
+struct localinterface {
+    int index;
+    char localaddr [16];
+};
+
+static struct localinterface *localifs = 0;
+static int localifsSize = 0;	/* size of array */
+static int nifs = 0;		/* number of entries used in array */
+
+/* not thread safe: make sure called once from one thread */
+
+static void initLocalIfs () {
+    FILE *f;
+    unsigned char staddr [16];
+    char ifname [32];
+    struct localinterface *lif=0;
+    int index, x1, x2, x3;
+    unsigned int u0,u1,u2,u3,u4,u5,u6,u7,u8,u9,ua,ub,uc,ud,ue,uf;
+
+    if ((f = fopen("/proc/net/if_inet6", "r")) == NULL) {
+	return ;
+    }
+    while (fscanf (f, "%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x "
+		"%d %x %x %x %s",&u0,&u1,&u2,&u3,&u4,&u5,&u6,&u7,
+		&u8,&u9,&ua,&ub,&uc,&ud,&ue,&uf,
+		&index, &x1, &x2, &x3, ifname) == 21) {
+	staddr[0] = (unsigned char)u0;
+	staddr[1] = (unsigned char)u1; 
+	staddr[2] = (unsigned char)u2;
+	staddr[3] = (unsigned char)u3; 
+	staddr[4] = (unsigned char)u4;
+	staddr[5] = (unsigned char)u5; 
+	staddr[6] = (unsigned char)u6;
+	staddr[7] = (unsigned char)u7; 
+	staddr[8] = (unsigned char)u8;
+	staddr[9] = (unsigned char)u9;
+	staddr[10] = (unsigned char)ua;
+	staddr[11] = (unsigned char)ub; 
+	staddr[12] = (unsigned char)uc;
+	staddr[13] = (unsigned char)ud; 
+	staddr[14] = (unsigned char)ue;
+	staddr[15] = (unsigned char)uf; 
+	nifs ++;
+	if (nifs > localifsSize) {
+	    localifs = (struct localinterface *) realloc (
+			localifs, sizeof (struct localinterface)* (localifsSize+5));
+	    if (localifs == 0) {
+		nifs = 0;
+    		fclose (f);
+		return;
+	    }
+	    lif = localifs + localifsSize;
+	    localifsSize += 5;
+	} else {
+	    lif ++;
+	}
+	memcpy (lif->localaddr, staddr, 16);
+	lif->index = index;
+    }
+    fclose (f);
+}
+	
+/* return the scope_id (interface index) of the
+ * interface corresponding to the given address
+ * returns 0 if no match found
+ */
+	
+static int getLocalScopeID (char *addr) {
+    struct localinterface *lif;
+    int i;
+    if (localifs == 0) {
+	initLocalIfs();
+    }
+    for (i=0, lif=localifs; i<nifs; i++, lif++) {
+	if (memcmp (addr, lif->localaddr, 16) == 0) {
+	    return lif->index;
+	}
+    }
+    return 0;
+}
+    
+void initLocalAddrTable () {
+    initLoopbackRoutes();
+    initLocalIfs();
+}
+
+#else
+
+void initLocalAddrTable () {}
+
+#endif
+
 void
-NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr *him, int *len) {
+NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr *him, int *len, jboolean isLocalAddr) {
 #ifdef AF_INET6
     if (ipv6_available()) {
 	struct sockaddr_in6 *him6 = (struct sockaddr_in6 *)him;
@@ -340,7 +580,11 @@ NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr 
     		if (uname(&sysinfo) == 0) {
     		    sysinfo.release[3] = '\0';
     		    if (strcmp(sysinfo.release, "2.2") != 0) {
-		 	scope_id = getDefaultIPv6Interface( &(him6->sin6_addr) );
+                        if (isLocalAddr) {
+                            scope_id = getLocalScopeID( (char *)&(him6->sin6_addr) );
+                        } else {
+                            scope_id = getDefaultIPv6Interface( &(him6->sin6_addr) );
+                        }
 	                (*env)->SetIntField(env, iaObj, scopeID, scope_id);
 		    }
 		}
