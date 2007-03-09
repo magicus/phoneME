@@ -104,10 +104,12 @@ void
 NET_AllocSockaddr(struct sockaddr **him, int *len);
 
 void
-NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr *him, int *len);
+NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr *him, int *len, jboolean isLocalAddr);
 
 jobject
 NET_SockaddrToInetAddress(JNIEnv *env, struct sockaddr *him, int *port);
+
+void initLocalAddrTable ();
 
 void
 NET_SetTrafficClass(struct sockaddr *him, int trafficClass);

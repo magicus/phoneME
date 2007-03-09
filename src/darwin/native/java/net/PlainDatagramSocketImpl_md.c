@@ -196,7 +196,7 @@ Java_java_net_PlainDatagramSocketImpl_bind(JNIEnv *env, jobject this,
     }
     
     /* bind - pick a port number for local addr*/
-    NET_InetAddressToSockaddr(env, iaObj, localport, (struct sockaddr *)&him, &len);
+    NET_InetAddressToSockaddr(env, iaObj, localport, (struct sockaddr *)&him, &len, JNI_TRUE);
 
     if (NET_Bind(fd, (struct sockaddr *)&him, len) < 0)  {
 	if (errno == EADDRINUSE || errno == EADDRNOTAVAIL ||    
@@ -257,7 +257,7 @@ Java_java_net_PlainDatagramSocketImpl_connect0(JNIEnv *env, jobject this,
 	return;
     }
 
-    NET_InetAddressToSockaddr(env, address, port, (struct sockaddr *)&rmtaddr, &len);
+    NET_InetAddressToSockaddr(env, address, port, (struct sockaddr *)&rmtaddr, &len, JNI_FALSE);
 
 	if (JVM_Connect(fd, (struct sockaddr *)&rmtaddr, len) == -1) {
             NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
@@ -359,7 +359,7 @@ Java_java_net_PlainDatagramSocketImpl_send(JNIEnv *env, jobject this,
 	rmtaddrP = 0;
     } else {
 	packetPort = (*env)->GetIntField(env, packet, JNI_STATIC(java_net_DatagramPacket, dp_portID));
-	NET_InetAddressToSockaddr(env, packetAddress, packetPort, (struct sockaddr *)&rmtaddr, &len);
+	NET_InetAddressToSockaddr(env, packetAddress, packetPort, (struct sockaddr *)&rmtaddr, &len, JNI_FALSE);
     }
 
 
