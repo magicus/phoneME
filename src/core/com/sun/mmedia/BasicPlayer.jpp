@@ -674,6 +674,9 @@ public abstract class BasicPlayer implements Player
 
         state = STARTED;
         sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
+        
+        if( !this.hasDataSource )
+	        sendEvent(PlayerListener.END_OF_MEDIA, new Long(0));
 
         // Finish any pending startup stuff in subclass
         // Typically used to start any threads that might potentially
