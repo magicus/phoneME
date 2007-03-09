@@ -244,7 +244,7 @@ $(CVM_TEST_CLASSESDIR)/%.class: %.java
 
 # demo classes
 $(CVM_DEMO_CLASSESDIR)/%.class: %.java
-	$(call buildClassesList,.democlasses,.btcdemoclasseslasses.list,$?)
+	$(call buildClassesList,.democlasses,.democlasses.list,$?)
 
 #
 # Convert the class lists to names of class files so they can be javac'd.
