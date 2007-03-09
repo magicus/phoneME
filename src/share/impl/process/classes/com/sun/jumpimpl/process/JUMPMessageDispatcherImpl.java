@@ -462,7 +462,7 @@ public class JUMPMessageDispatcherImpl implements JUMPMessageDispatcher
 		    }
 		});
 	    thread.setName(this.getClass().getName() + ": " + messageType);
-	    thread.setDaemon(true);
+	    thread.setDaemon(false);
 	    thread.start();
 	}
 
