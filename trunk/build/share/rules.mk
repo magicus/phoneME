@@ -208,8 +208,8 @@ endif
 
 # buildClassesList(classesTarget,classesList,class)
 define buildClassesList
-	@echo $(call POSIX2HOST,$(3)) >>$(2)
-	@touch $(1)
+	@echo $(call POSIX2HOST,$(3)) >>$(CVM_BUILD_TOP)/$(2)
+	@touch $(CVM_BUILD_TOP)/$(1)
 endef
 
 # Non-preloaded classes except for test classes
