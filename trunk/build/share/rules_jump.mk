@@ -79,7 +79,7 @@ JUNIT_JAR ?= /usr/share/ant/lib/junit.jar
 
 # Quick check of JUNIT_JAR validity
 define check_JUNIT_JAR
-	$(AT)(jar tf $(JUNIT_JAR) &> /dev/null || (echo "JUNIT_JAR appears to be invalid or missing: [$(JUNIT_JAR)]" ; exit -1))
+	$(AT)($(CVM_JAR) tf $(JUNIT_JAR) &> /dev/null || (echo "JUNIT_JAR appears to be invalid or missing: [$(JUNIT_JAR)]" ; exit -1))
 endef
 
 build-unittests::
