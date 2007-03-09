@@ -38,7 +38,7 @@ import java.io.IOException;
 public class MessagePacket {
 
     /** The maximum payload size for a datagram. */
-    private final int DATAGRAM_PACKET_LENGTH = 1500; 
+    private final int DATAGRAM_PACKET_LENGTH = 15000;  
 
     /** The current read-write index into the data buffer (stream). */
     private int index = 0;
