@@ -102,11 +102,11 @@ void gxj_reset_screen_buffer() {
 }
 
 /**
- * The plain array contains the data for screen with width x height
+ * The plain array contains pixel data for screen with width x height
  * geometry. In the case the screen is rotated to height x width and
- * we want to preserve its content, we should reformat plain data
+ * we want to preserve its content, we should reformat the plain data
  * with proper clipping to new geometry. The method reformats the
- * data in place.
+ * data 'in place'.
  *
  *  @param data pointer to the plain array with screen data
  *  @param width the width in pixels before rotation
@@ -123,7 +123,7 @@ static void reformat_plain_data(
     src = dst = data;
 
     if (width < height) {
-        char buf[width_bytes];
+        char *buf = (char *)midpMalloc(width_bytes);
         src += (width-1) * width_bytes;
         dst += (width-1) * height_bytes;
         for (i = width; i > 0 ; i--) {
@@ -140,6 +140,7 @@ static void reformat_plain_data(
             src -= width_bytes;
             dst -= height_bytes;
         }
+        midpFree(buf);
     } else if (width > height) {
         for (i = 0; i < height; i++) {
             memcpy(dst, src, height_bytes);

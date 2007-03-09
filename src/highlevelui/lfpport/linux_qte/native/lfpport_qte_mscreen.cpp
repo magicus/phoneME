@@ -160,15 +160,19 @@ void PlatformMScreen::init() {
  */
 void PlatformMScreen::setBufferSize(BufferSize newSize)
 {
-       if (newSize == fullScreenSize) {
-           if (gc->isActive()) {
-               gc->end();
-           }
-           qpixmap.resize(getDisplayFullWidth(), getDisplayFullHeight());
-       } else {
-           qpixmap.resize(getDisplayWidth(), getDisplayHeight());
-       }
+    if (newSize == fullScreenSize) {
+        if (gc->isActive()) {
+            gc->end();
+        }
+        qpixmap.resize(getDisplayFullWidth(), getDisplayFullHeight());
+    } else {
+        qpixmap.resize(getDisplayWidth(), getDisplayHeight());
+    }
 
+    // Whether current Displayable won't repaint the entire screen on
+    // resize event, the artefacts from the old screen content can appear.
+    // That's why the buffer content is not preserved.
+    qpixmap.fill(); // Qt::white is default
 }
 
 /**
