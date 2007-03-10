@@ -83,10 +83,13 @@ void gxj_reset_screen_buffer();
 
 /**
  * Change screen buffer geometry according to screen rotating
- * from landscape to portrait mode and vice versa. 
- * No rotation for screen buffer content is done. 
+ * from landscape to portrait mode and vice versa.
+ * On demand screen buffer content is rotated with proper
+ * clipping according to new geometry.
+ *
+ * @param keepContent true to preserve current buffer content
  */
-void gxj_rotate_screen_buffer();
+void gxj_rotate_screen_buffer(jboolean keepContent);
 
 /** Free memory allocated for screen buffer */
 void gxj_free_screen_buffer();

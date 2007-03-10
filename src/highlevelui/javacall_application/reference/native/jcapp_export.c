@@ -50,8 +50,18 @@ int jcapp_get_screen_buffer() {
                                   &gxj_system_screen_buffer.height,
                                   &color_encoding);                                
      if (JAVACALL_LCD_COLOR_RGB565 != color_encoding) {        
-	return -2;
+	    return -2;
      };                     
+}
+
+
+/**
+ * Reset screen buffer content.
+ */
+void static jcapp_reset_screen_buffer() {
+    memset (gxj_system_screen_buffer.pixelData, 0,
+        gxj_system_screen_buffer.width * gxj_system_screen_buffer.height *
+            sizeof (gxj_pixel_type));
 }
 
 
@@ -76,10 +86,8 @@ int jcapp_init() {
         REPORT_ERROR(LC_LOWUI, "Screen pixel format is the one different from RGB565!");
         return -2;
     }    
-    
-    memset (gxj_system_screen_buffer.pixelData, 0, 
-            gxj_system_screen_buffer.width * gxj_system_screen_buffer.height 
-            * sizeof (gxj_pixel_type));
+
+    jcapp_reset_screen_buffer();
     return 0;
 }
 
@@ -114,6 +122,7 @@ void jcapp_set_fullscreen_mode(jboolean mode) {
 
     javacall_lcd_set_full_screen_mode(mode);
     jcapp_get_screen_buffer();
+    jcapp_reset_screen_buffer();
 }
 
 /**
@@ -121,10 +130,13 @@ void jcapp_set_fullscreen_mode(jboolean mode) {
  */
 jboolean jcapp_reverse_orientation() {
     jboolean res = javacall_lcd_reverse_orientation(); 
-    jcapp_get_screen_buffer(); 
-    return res; 
-    return KNI_FALSE;
-    return KNI_FALSE;
+    jcapp_get_screen_buffer();
+
+    // Whether current Displayable won't repaint the entire screen on
+    // resize event, the artefacts from the old screen content can appear.
+    // That's why the buffer content is not preserved.
+    jcapp_reset_screen_buffer();
+    return res;
 }
 
 /**

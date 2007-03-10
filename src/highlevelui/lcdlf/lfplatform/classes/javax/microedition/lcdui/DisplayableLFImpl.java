@@ -356,7 +356,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
         // set Game key event flag based on value passed in
         // GameCanvas constructor.
         if (owner instanceof GameCanvas) {
-            GameMap.register(owner, currentDisplay.accessor);
+            GameMap.registerDisplayAccess(owner, currentDisplay.accessor);
             stickyKeyMask = currentKeyMask = 0;
         } else {
             // set the keymask to -1 when
@@ -492,12 +492,13 @@ abstract class DisplayableLFImpl implements DisplayableLF {
         boolean copyDefferedSizeChange;
 
         synchronized (Display.LCDUILock) {
-        if (owner instanceof GameCanvas) {
-            GameCanvasLFImpl gameCanvasLF = GameMap.getTableElement((GameCanvas)owner);
-            if (gameCanvasLF != null) {
-                gameCanvasLF.uCallSizeChanged(w, h);
+            if (owner instanceof GameCanvas) {
+                GameCanvasLFImpl gameCanvasLF =
+                    GameMap.getGameCanvasImpl((GameCanvas)owner);
+                if (gameCanvasLF != null) {
+                    gameCanvasLF.lCallSizeChanged(w, h);
+                }
             }
-        }
 
             // If there is no Display, or if this Displayable is not
             // currently visible, we simply record the fact that the

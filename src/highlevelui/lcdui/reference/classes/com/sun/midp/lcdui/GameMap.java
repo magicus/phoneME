@@ -46,9 +46,15 @@ public class GameMap {
     static private DisplayAccess displayAccess;
 
     /**
+     * The ImageAccess instance handed out from
+     * javax.microedition.lcdui package 
+     */
+    static private ImageAccess imageAccess;
+
+    /**
      * Map contains pairs of GameCanvas and GameCanvasLFImpl
      */
-    private static Hashtable table = new Hashtable();
+    private static Hashtable gameCanvasImpl = new Hashtable();
 
     /**
      * Lock to ensure synchronized access to the displayable
@@ -56,46 +62,44 @@ public class GameMap {
     static final private Object lock = new Object();
 
     /**
-     * Associate the given Displayable and DisplayAccess.  This is a
+     * Associates the given Displayable and DisplayAccess.  This is a
      * one-way association.
      *
      * @param c The GameCanvas to store
      * @param d The DisplayAccess associated with the GameCanvas
      */
-    public static void register(Displayable c, DisplayAccess d) {
+    public static void registerDisplayAccess(Displayable c, DisplayAccess d) {
         synchronized (lock) {
-	    displayable = c;
-	    displayAccess = d;
-	}
+	        displayable = c;
+	        displayAccess = d;
+	    }
     }
 
-
     /**
-     * Get the DisplayAccess object for this Displayable.
+     * Gets the DisplayAccess object for this Displayable.
      * @param c The Displayable to get the DisplayAccess for
      * @return DisplayAccess The DisplayAccess associated with the MIDlet
      */
-    public static DisplayAccess get(Displayable c) {
+    public static DisplayAccess getDisplayAccess(Displayable c) {
         synchronized (lock) {
-  	    if (c == displayable) {
+  	        if (c == displayable) {
                 return displayAccess;
-  	    } else {
+  	        } else {
                 return null;
-	    }
+	        }
         }
     }
 
-
     /**
-     * Associate the given GameCanvas and GameCanvasLFImpl.
+     * Associates the given GameCanvas and GameCanvasLFImpl.
      *
      * @param c The GameCanvas to store
      */
-    public static GameCanvasLFImpl registerTableElement(GameCanvas c) {
+    public static GameCanvasLFImpl registerGameCanvas(GameCanvas c) {
         GameCanvasLFImpl gameCanvasLF = new GameCanvasLFImpl(c);
         synchronized(lock) {
-            if (!table.containsKey(c)) {
-                table.put(c, gameCanvasLF);
+            if (!gameCanvasImpl.containsKey(c)) {
+                gameCanvasImpl.put(c, gameCanvasLF);
                 return gameCanvasLF;
             }
         }
@@ -103,18 +107,39 @@ public class GameMap {
     }
 
     /**
-     * Get the GameCanvasLFImpl object for this GameCanvas.
+     * Gets the GameCanvasLFImpl object for this GameCanvas.
      * @param c The GameCanvas to get the GameCanvasLFImpl for
      * @return GameCanvasLFImpl
      */
-    public static GameCanvasLFImpl getTableElement(GameCanvas c) {
+    public static GameCanvasLFImpl getGameCanvasImpl(GameCanvas c) {
         synchronized (lock) {
-            if (table.containsKey(c)) {
-                return (GameCanvasLFImpl)table.get(c);
+            if (gameCanvasImpl.containsKey(c)) {
+                return (GameCanvasLFImpl) gameCanvasImpl.get(c);
             } else {
                 return null;
             }
         }
     }
 
+    /**
+     * Sets Image accessor instance from javax.microedition.lcdui package
+     * to use extended package-private Image API
+     *
+     * @param imageAccess image accessor tunnel
+     */
+    public static void registerImageAccess(ImageAccess imageAccess) {
+        synchronized (lock) {
+            GameMap.imageAccess = imageAccess;
+        }
+    }
+
+    /**
+     * Gets ImageAccess instance needed to access extende Image API
+     * @return ImageAccess tunnel instance
+     */
+    public static ImageAccess getImageAccess() {
+        synchronized (lock) {
+            return imageAccess;
+        }
+    }
 }
