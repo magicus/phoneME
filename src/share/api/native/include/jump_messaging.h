@@ -310,7 +310,7 @@ jumpMessageSendAsync(JUMPAddress target, JUMPOutgoingMessage m,
  * out, a proper error code is returned immediately.
  *
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
- * JUMP_WOULD_BLOCK, JUMP_TIMEOUT, JUMP_TARGET_NONEXISTENT, or JUMP_FAILURE.
+ * JUMP_WOULD_BLOCK, JUMP_TARGET_NONEXISTENT, or JUMP_FAILURE.
  */
 extern void
 jumpMessageSendAsyncResponse(JUMPOutgoingMessage m,
@@ -318,8 +318,8 @@ jumpMessageSendAsyncResponse(JUMPOutgoingMessage m,
 
 /*
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
- * JUMP_WOULD_BLOCK, JUMP_OVERRUN, JUMP_NEGATIVE_ARRAY_LENGTH, or
- * JUMP_FAILURE.
+ * JUMP_WOULD_BLOCK, JUMP_TARGET_NONEXISTENT, JUMP_TIMEOUT,
+ * JUMP_UNBLOCKED, JUMP_OVERRUN, JUMP_NEGATIVE_ARRAY_LENGTH, or JUMP_FAILURE.
  */
 extern JUMPMessage
 jumpMessageSendSync(JUMPAddress target, JUMPOutgoingMessage m, int32 timeout,
@@ -367,6 +367,20 @@ extern JUMPMessage
 jumpMessageWaitFor(JUMPPlatformCString type,
 		   int32 timeout,
 		   JUMPMessageStatusCode *code);
+
+/**
+ * Unblocks one thread blocking in, or about to call,
+ * jumpMessageWaitFor (or jumpMessageSendSync, although this is not
+ * intended to be used with threads blocking in jumpMessageSendSync
+ * since they should be using a timeout).  The thread may return with
+ * JUMP_UNBLOCKED.  This is used to unblock listening threads so they
+ * can exit when they are no longer needed.
+ * 
+ * @return On success, set *code to JUMP_SUCCESS.  Otherwise
+ *         sets *code to one of JUMP_NO_SUCH_QUEUE or JUMP_FAILURE.
+ */
+extern void jumpMessageUnblock(JUMPPlatformCString messageType,
+			       JUMPMessageStatusCode* code);
 
 /*
  * Returns a file descriptor for the messageType which may be

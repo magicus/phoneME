@@ -44,9 +44,11 @@ public interface JUMPMessageDispatcher {
      * {@link #cancelRegistration(Object)}
      * @throws JUMPMessageDispatcherTypeException if there is already an
      * existing handler registration for the message type.
+     * @throws IOException if there is a problem registering for the
+     * message type.
      */
     public Object registerDirect(String messageType) 
-	throws JUMPMessageDispatcherTypeException;
+	throws JUMPMessageDispatcherTypeException, IOException;
     
 
     /**
@@ -55,12 +57,20 @@ public interface JUMPMessageDispatcher {
      * @throws JUMPMessageDispatcherTypeException if there is already
      * an existing handler registration for the message type, or if it has not
      * been registered via <code>registerDirect()</code>.
+     *
+     * @throws JUMPTimedOutException
+     * @throws JUMPUnblockedException
+     * @throws IOException
      */
     public JUMPMessage waitForMessage(String messageType, long timeout)
 	throws JUMPMessageDispatcherTypeException, JUMPTimedOutException, IOException;
     
     /**
-     * Registers the message handler for the message type.
+     * Registers the message handler for the message type.  This
+     * starts a non-daemon thread which will persist until all
+     * handlers for the message type have been cancelled.  Note that
+     * being a non-daemon thread also ensure the process will not stop
+     * before the thread has had a chance to clean up and exit.
      *
      * @return
      * opaque object that represents the registration. The token can be
@@ -69,15 +79,23 @@ public interface JUMPMessageDispatcher {
      *
      * @throws JUMPMessageDispatcherTypeException if the message type was
      * registered via <code>registerDirect()</code>.
+     * @throws IOException if there is a problem registering for the
+     * message type.
      */
     public Object registerHandler(String messageType,
 				  JUMPMessageHandler handler) 
-	throws JUMPMessageDispatcherTypeException;
+	throws JUMPMessageDispatcherTypeException, IOException;
     
 
     /**
      * Removes the registration for the message type. This applies to
      * direct registrations as well as handler registrations.
+     *
+     * @throws IOException if there is a problem canceling the
+     * registration.
+     * @throws IllegalStateException if the registrationToken
+     * has already been canceled.
      */
-    public void cancelRegistration(Object registrationToken);
+    public void cancelRegistration(Object registrationToken)
+	throws IOException;
 }

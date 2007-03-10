@@ -295,6 +295,7 @@ newMessageFromReceivedBuffer(uint8* buffer, uint32 len,
 static uint32 thisProcessMessageId;
 static int32 thisProcessRequestId;
 
+/* FIXME Assumes buffer is MESSAGE_BUFFER_SIZE. */
 JUMPOutgoingMessage
 jumpMessageNewOutgoingFromBuffer(uint8* buffer, int isResponse,
 				 JUMPMessageStatusCode *code)
@@ -524,8 +525,7 @@ jumpMessageAddByteArray(JUMPOutgoingMessage m, const int8* values, int length)
 	return;
     }
     if (values == NULL) {
-	/* FIXME: use -1 */
-	jumpMessageAddInt(m, 0);
+	jumpMessageAddInt(m, -1);
 	return;
     }
     if (length < 0) {
@@ -650,8 +650,7 @@ jumpMessageAddStringArray(JUMPOutgoingMessage m,
 	return;
     }
     if (strs == NULL) {
-	/* FIXME: use -1 */
-	jumpMessageAddInt(m, 0);
+	jumpMessageAddInt(m, -1);
 	return;
     }
     if (length < 0) {
@@ -745,9 +744,7 @@ jumpMessageGetByteArray(JUMPMessageReader* r, uint32* lengthPtr)
 
     *lengthPtr = length;
 
-    /* FIXME: use -1 */
-    if (length == 0) {
-	*lengthPtr = -1;
+    if (length == -1) {
 	/* NULL array was written, this is ok. */
 	return NULL;
     }
@@ -885,9 +882,7 @@ jumpMessageGetStringArray(JUMPMessageReader* r, uint32* lengthPtr)
 
     *lengthPtr = length;
 
-    /* FIXME: use -1 */
-    if (length == 0) {
-	*lengthPtr = -1;
+    if (length == -1) {
 	/* NULL array was written, this is ok. */
 	return NULL;
     }
@@ -976,7 +971,7 @@ jumpMessageSendAsyncResponse(JUMPOutgoingMessage m,
 /*
  * On return, sets *code to one of JUMP_SUCCESS, JUMP_OUT_OF_MEMORY,
  * JUMP_TIMEOUT, JUMP_OVERRUN, JUMP_NEGATIVE_ARRAY_LENGTH,
- * JUMP_NO_SUCH_QUEUE, or JUMP_FAILURE.
+ * JUMP_NO_SUCH_QUEUE, JUMP_UNBLOCKED, or JUMP_FAILURE.
  */
 static JUMPMessage
 doWaitFor(JUMPPlatformCString type, int32 timeout, JUMPMessageStatusCode *code)
@@ -1108,6 +1103,19 @@ jumpMessageWaitFor(JUMPPlatformCString type,
 
     return doWaitFor(type, timeout, code);
 }
+
+void
+jumpMessageUnblock(JUMPPlatformCString messageType,
+		   JUMPMessageStatusCode* code)
+{
+    assert(jumpMessagingInitialized != 0);
+
+    JUMPMessageQueueStatusCode mqcode;
+
+    jumpMessageQueueUnblock(messageType, &mqcode);
+    *code = translateJumpMessageQueueStatusCode(&mqcode);
+}
+
 
 int
 jumpMessageGetFd(JUMPPlatformCString type)

@@ -27,6 +27,7 @@
 #include "porting/JUMPMessageQueue.h"
 #include "porting/JUMPProcess.h"
 #include "jump_messaging.h"
+#include "jni_util.h"
 
 static jboolean messaging_started = JNI_FALSE;
 static void ensureInitialized() 
@@ -40,6 +41,85 @@ static void ensureInitialized()
 	jumpMessageStart();
 	messaging_started = JNI_TRUE;
     }
+}
+
+/* Throws exceptions with no-arg constructors, for which we can't
+   use JNU_ThrowByName which constructs with a String arg. */
+static void
+throw_by_name(JNIEnv *env, const char *class_name)
+{
+    jobject ex =
+	JNU_NewObjectByName(env, class_name, "()V");
+    if (ex == NULL) {
+	return;
+    }
+    (*env)->Throw(env, ex);
+    (*env)->DeleteLocalRef(env, ex);
+}
+
+static void
+throw_with_messagetype(JNIEnv *env, const char *class_name, const char *type)
+{
+    char message[80];
+    int len = sizeof(message) - 30;
+
+    snprintf(message, sizeof(message),
+	     "messageType type=%.*s%s",
+	     len, type, strlen(type) > len ? "..." : "");
+
+    JNU_ThrowByName(env, class_name, message);
+}
+
+
+static const char *
+code_to_string(JUMPMessageStatusCode code)
+{
+    switch (code) {
+      case JUMP_TARGET_NONEXISTENT:
+	return "JUMP_TARGET_NONEXISTENT";
+      case JUMP_TIMEOUT:
+	return "JUMP_TIMEOUT";
+      case JUMP_SUCCESS:
+	return "JUMP_SUCCESS";
+      case JUMP_FAILURE:
+	return "JUMP_FAILURE";
+      case JUMP_OUT_OF_MEMORY:
+	return "JUMP_OUT_OF_MEMORY";
+      case JUMP_WOULD_BLOCK:
+	return "JUMP_WOULD_BLOCK";
+      case JUMP_OVERRUN:
+	return "JUMP_OVERRUN";
+      case JUMP_NEGATIVE_ARRAY_LENGTH:
+	return "JUMP_NEGATIVE_ARRAY_LENGTH";
+      case JUMP_UNBLOCKED:
+	return "JUMP_UNBLOCKED";
+      case JUMP_NO_SUCH_QUEUE:
+	return "JUMP_NO_SUCH_QUEUE";
+      default:
+	return NULL;
+    }
+}
+
+/* Throws a generic IOException with a message like
+   "JUMPMessageStatusCode: N".  This is for exceptions we're not
+   expecting or exceptions that don't need specific reporting. */
+static void
+throw_IOException(JNIEnv *env, JUMPMessageStatusCode code)
+{
+    const char *code_string;
+    char code_string_buf[16];
+    char message[80];
+
+    code_string = code_to_string(code);
+    if (code_string == NULL) {
+	snprintf(code_string_buf, sizeof(code_string_buf), "%d", code);
+	code_string = code_string_buf;
+    }
+
+    snprintf(message, sizeof(message), "JUMPMessageStatusCode: %s",
+	     code_string);
+
+    JNU_ThrowByName(env, "java/io/IOException", message);
 }
 
 JNIEXPORT jint JNICALL
@@ -70,10 +150,92 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_getReturnType(JNIEnv *env
     ensureInitialized();
     
     name = jumpMessageGetReturnTypeName();
+    if (name == NULL) {
+	JNU_ThrowOutOfMemoryError(env, "in jumpMessageGetReturnTypeName");
+	return NULL;
+    }
     ret = (*env)->NewStringUTF(env, name);
     free(name);
 
     return ret;
+}
+
+/* On success, returns a new JUMPOutgoingMessage.  On failure, returns
+   NULL and throws an OutOfMemoryError or IOException. */
+static JUMPOutgoingMessage
+new_outgoing_message_from_byte_array(
+    JNIEnv *env, 
+    jbyteArray messageBytes,
+    jboolean isResponse)
+{
+    jbyte *buffer;
+    jsize length;
+    JUMPOutgoingMessage m;
+    JUMPMessageStatusCode code;
+
+    buffer = malloc(MESSAGE_BUFFER_SIZE);
+    if (buffer == NULL) {
+	JNU_ThrowOutOfMemoryError(env, "in new_outgoing_message_from_byte_array");
+	goto error;
+    }
+
+    length = (*env)->GetArrayLength(env, messageBytes);
+    if (length > MESSAGE_BUFFER_SIZE) {
+	length = MESSAGE_BUFFER_SIZE;
+    }
+
+    (*env)->GetByteArrayRegion(env, messageBytes, 0, length, buffer);
+    if ((*env)->ExceptionOccurred(env) != NULL) {
+	goto error;
+    }
+
+    m = jumpMessageNewOutgoingFromBuffer(buffer, isResponse, &code);
+    if (m == NULL) {
+	switch (code) {
+	  case JUMP_OUT_OF_MEMORY:
+	    JNU_ThrowOutOfMemoryError(env, "in jumpMessageNewOutgoingFromBuffer");
+	    break;
+
+	  default:
+	    throw_IOException(env, code);
+	    break;
+	}
+	goto error;
+    }
+
+    return m;
+
+  error:
+    free(buffer);
+    return NULL;
+}
+
+/* On success, returns a new jbyteArray.  On failure, returns NULL and
+   throws an Exception. */
+static jbyteArray
+new_byte_array_from_message(
+    JNIEnv *env,
+    JUMPMessage message)
+{
+    jbyteArray retVal;
+
+    /* FIXME: use the actual message size.  Currently the actual
+       message size will always be MESSAGE_BUFFER_SIZE because of
+       how jump_messaging works, but there is schizophrenia between
+       assuming MESSAGE_BUFFER_SIZE, and passing length around. */
+    retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
+    if (retVal == NULL) {
+	return NULL;
+    }
+
+    (*env)->SetByteArrayRegion(env, retVal, 0, MESSAGE_BUFFER_SIZE,
+			       jumpMessageGetData(message));
+    if ((*env)->ExceptionOccurred(env)) {
+	(*env)->DeleteLocalRef(env, retVal);
+	return NULL;
+    }
+
+    return retVal;
 }
 
 JNIEXPORT jbyteArray JNICALL
@@ -85,31 +247,69 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageSync(
     jboolean isResponse,
     jlong timeout)
 {
+    jbyteArray retVal = NULL;
+    JUMPOutgoingMessage m = NULL;
     JUMPAddress target;
+    JUMPMessage r = NULL;
     JUMPMessageStatusCode code;
-    jboolean isCopy;
-    jbyte* raw = (*env)->GetByteArrayElements(env, messageBytes, &isCopy);
-    jbyteArray retVal;
-    jbyte* returnInterior;
-
-    JUMPOutgoingMessage m;
-    JUMPMessage r;
 
     ensureInitialized();
 
-    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse, &code);
+    m = new_outgoing_message_from_byte_array(env, messageBytes, isResponse);
+    if (m == NULL) {
+	/* Exception already thrown. */
+	goto out;
+    }
+
     target.processId = pid;
     r = jumpMessageSendSync(target, m, (int32)timeout, &code);
-    /* FIXME: Examine returned error code to figure out which exception
-       to throw */
+    if (r == NULL) {
+	switch (code) {
+	  case JUMP_OUT_OF_MEMORY:
+	    JNU_ThrowOutOfMemoryError(env, "in jumpMessageSendSync");
+	    break;
+
+	  case JUMP_TARGET_NONEXISTENT:
+	    throw_with_messagetype(
+		env, "com/sun/jump/message/JUMPTargetNonexistentException",
+		jumpMessageGetType(m));
+	    break;
+
+	  case JUMP_WOULD_BLOCK:
+	    throw_with_messagetype(
+		env, "com/sun/jump/message/JUMPWouldBlockException",
+		jumpMessageGetType(m));
+	    break;
+
+	  case JUMP_TIMEOUT:
+	    throw_by_name(env, "com/sun/jump/message/JUMPTimedOutException");
+	    break;
+
+	  case JUMP_UNBLOCKED:
+	    // This shouldn't happen here, unblocked is only for message
+	    // queues with registered handlers.
+	    // Fall through to default.
+	  default:
+	    throw_IOException(env, code);
+	    break;
+	}
+	goto out;
+    }
+
+    retVal = new_byte_array_from_message(env, r);
+    if (retVal == NULL) {
+	/* Exception already thrown. */
+	goto out;
+    }
+
+  out:
+    if (r != NULL) {
+	jumpMessageFree(r);
+    }
+    if (m != NULL) {
+	jumpMessageFreeOutgoing(m);
+    }
     
-    retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
-    returnInterior = (*env)->GetPrimitiveArrayCritical(env, retVal, &isCopy);
-    memcpy(returnInterior, jumpMessageGetData(r), MESSAGE_BUFFER_SIZE);
-    
-    (*env)->ReleasePrimitiveArrayCritical(env, retVal, returnInterior, 0);
-    
-    free(raw);
     return retVal;
 }
 
@@ -120,25 +320,53 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_receiveMessage(
     jstring messageType, 
     jlong timeout)
 {
-    jboolean isCopy;
-    const char* type = (*env)->GetStringUTFChars(env, messageType, &isCopy);
-    jbyteArray retVal;
-    jbyte* returnInterior;
-
-    JUMPMessage r;
+    const char* type = NULL;
+    JUMPMessage r = NULL;
     JUMPMessageStatusCode code;
+    jbyteArray retVal = NULL;
 
     ensureInitialized();
 
+    type = (*env)->GetStringUTFChars(env, messageType, NULL);
+    if (type == NULL) {
+	goto out;
+    }
+
     r = jumpMessageWaitFor((JUMPPlatformCString)type, (int32)timeout, &code);
-    /* FIXME: Examine returned error code to figure out which exception
-       to throw. Return an error code!! */
-    retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
-    returnInterior = (*env)->GetPrimitiveArrayCritical(env, retVal, &isCopy);
-    memcpy(returnInterior, jumpMessageGetData(r), MESSAGE_BUFFER_SIZE);
-    
-    (*env)->ReleasePrimitiveArrayCritical(env, retVal, returnInterior, 0);
-    
+    if (r == NULL) {
+	switch (code) {
+	  case JUMP_OUT_OF_MEMORY:
+	    JNU_ThrowOutOfMemoryError(env, "in jumpMessageWaitFor");
+	    break;
+
+	  case JUMP_TIMEOUT:
+	    throw_by_name(env, "com/sun/jump/message/JUMPTimedOutException");
+	    break;
+
+	  case JUMP_UNBLOCKED:
+	    throw_by_name(env, "com/sun/jump/message/JUMPUnblockedException");
+	    break;
+
+	  case JUMP_NO_SUCH_QUEUE:
+	    // The design of the Java code should not allow this.
+	    // Fall through to default.
+	  default:
+	    throw_IOException(env, code);
+	    break;
+	}
+	goto out;
+    }
+
+    retVal = new_byte_array_from_message(env, r);
+    if (retVal == NULL) {
+	/* Exception already thrown. */
+	goto out;
+    }
+
+  out:
+    if (r != NULL) {
+	jumpMessageFree(r);
+    }
     return retVal;
 }
 
@@ -150,20 +378,49 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageAsync(
     jbyteArray messageBytes,
     jboolean isResponse)
 {
+    JUMPOutgoingMessage m = NULL;
     JUMPAddress target;
     JUMPMessageStatusCode code;
-    jboolean isCopy;
-    jbyte* raw = (*env)->GetByteArrayElements(env, messageBytes, &isCopy);
-
-    JUMPOutgoingMessage m;
 
     ensureInitialized();
 
-    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse, &code);
+    m = new_outgoing_message_from_byte_array(env, messageBytes, isResponse);
+    if (m == NULL) {
+	/* Exception already thrown. */
+	goto out;
+    }
+
     target.processId = pid;
     jumpMessageSendAsync(target, m, &code);
-    
-    free(raw);
+    switch (code) {
+      case JUMP_SUCCESS:
+	break;
+
+      case JUMP_OUT_OF_MEMORY:
+	JNU_ThrowOutOfMemoryError(env, "in jumpMessageSendSync");
+	break;
+
+      case JUMP_TARGET_NONEXISTENT:
+	throw_with_messagetype(
+	    env, "com/sun/jump/message/JUMPTargetNonexistentException",
+	    jumpMessageGetType(m));
+	break;
+
+      case JUMP_WOULD_BLOCK:
+	throw_with_messagetype(
+	    env, "com/sun/jump/message/JUMPWouldBlockException",
+	    jumpMessageGetType(m));
+	break;
+
+      default:
+	throw_IOException(env, code);
+	break;
+    }
+
+  out:
+    if (m != NULL) {
+	jumpMessageFreeOutgoing(m);
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -173,18 +430,47 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_sendMessageResponse(
     jbyteArray messageBytes,
     jboolean isResponse)
 {
+    JUMPOutgoingMessage m = NULL;
     JUMPMessageStatusCode code;
-    jboolean isCopy;
-    jbyte* raw = (*env)->GetByteArrayElements(env, messageBytes, &isCopy);
-
-    JUMPOutgoingMessage m;
 
     ensureInitialized();
 
-    m = jumpMessageNewOutgoingFromBuffer(raw, isResponse, &code);
+    m = new_outgoing_message_from_byte_array(env, messageBytes, isResponse);
+    if (m == NULL) {
+	/* Exception already thrown. */
+	goto out;
+    }
+
     jumpMessageSendAsyncResponse(m, &code);
-    
-    free(raw);
+    switch (code) {
+      case JUMP_SUCCESS:
+	break;
+
+      case JUMP_OUT_OF_MEMORY:
+	JNU_ThrowOutOfMemoryError(env, "in jumpMessageSendSync");
+	break;
+
+      case JUMP_TARGET_NONEXISTENT:
+	throw_with_messagetype(
+	    env, "com/sun/jump/message/JUMPTargetNonexistentException",
+	    jumpMessageGetType(m));
+	break;
+
+      case JUMP_WOULD_BLOCK:
+	throw_with_messagetype(
+	    env, "com/sun/jump/message/JUMPWouldBlockException",
+	    jumpMessageGetType(m));
+	break;
+
+      default:
+	throw_IOException(env, code);
+	break;
+    }
+
+  out:
+    if (m != NULL) {
+	jumpMessageFreeOutgoing(m);
+    }
 }
 
 JNIEXPORT void JNICALL
@@ -193,11 +479,79 @@ Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_reserve(
     jobject thisObj, 
     jstring messageType)
 {
-    jboolean isCopy;
-    const char* type = (*env)->GetStringUTFChars(env, messageType, &isCopy);
-    JUMPMessageQueueStatusCode code;
-    
-    jumpMessageQueueCreate((JUMPPlatformCString)type, &code);
+    const char* type;
+    JUMPMessageQueueStatusCode mqcode;
+
+    type = (*env)->GetStringUTFChars(env, messageType, NULL);
+    if (type == NULL) {
+	return;
+    }
+
+    /* FIXME: use jumpMessageRegisterDirect. */
+    jumpMessageQueueCreate((JUMPPlatformCString)type, &mqcode);
+    switch (mqcode) {
+      case JUMP_MQ_SUCCESS:
+	break;
+
+      case JUMP_MQ_OUT_OF_MEMORY:
+	JNU_ThrowOutOfMemoryError(env, "in jumpMessageQueueCreate");
+	break;
+
+      default:
+	throw_IOException(env, JUMP_FAILURE);
+	break;
+    }
+
+    (*env)->ReleaseStringUTFChars(env, messageType, type);
+}
+
+JNIEXPORT void JNICALL
+Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_unreserve(
+    JNIEnv *env, 
+    jobject thisObj, 
+    jstring messageType)
+{
+    const char* type;
+
+    type = (*env)->GetStringUTFChars(env, messageType, NULL);
+    if (type == NULL) {
+	return;
+    }
+
+    /* FIXME: use jumpMessageCancelRegistration. */
+    jumpMessageQueueDestroy((JUMPPlatformCString)type);
+
+    (*env)->ReleaseStringUTFChars(env, messageType, type);
+}
+
+JNIEXPORT void JNICALL
+Java_com_sun_jumpimpl_os_JUMPMessageQueueInterfaceImpl_unblock(
+    JNIEnv *env, 
+    jobject thisObj, 
+    jstring messageType)
+{
+    const char* type;
+    JUMPMessageStatusCode code;
+
+    type = (*env)->GetStringUTFChars(env, messageType, NULL);
+    if (type == NULL) {
+	return;
+    }
+
+    jumpMessageUnblock((JUMPPlatformCString)type, &code);
+    switch (code) {
+      case JUMP_SUCCESS:
+	break;
+
+      case JUMP_NO_SUCH_QUEUE:
+	// The design of the Java code should not allow this.
+	// Fall through to default.
+      default:
+	throw_IOException(env, code);
+	break;
+    }
+
+    (*env)->ReleaseStringUTFChars(env, messageType, type);
 }
 
 static int

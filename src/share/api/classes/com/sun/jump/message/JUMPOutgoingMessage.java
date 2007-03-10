@@ -34,8 +34,8 @@ import com.sun.jump.os.JUMPOSInterface;
  * with data.
  */
 public abstract class JUMPOutgoingMessage extends JUMPMessage {
+    private static final int MESSAGE_DATA_INITIAL_SIZE = 512;
     protected JUMPMessagable sender;
-    private int MESSAGE_DATA_INITIAL_SIZE = 512;
     /* offset just past header in message, for sanity checking by native
        side */
     protected int headerOffset;
@@ -82,11 +82,18 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
     // Make sure we can accommodate n more bytes.
     //
     private void ensureCapacity(int n) {
-	if (messageDataOffset + n >= messageDataBytes.length) {
-	    // must expand
-	    byte[] newData = new byte[messageDataBytes.length * 2];
+	// NOTE: This assumes that requiredCapacity and newCapacity
+	// will not overflow an int, which should be reasonable.
+	int requiredCapacity = messageDataOffset + n;
+	if (requiredCapacity > messageDataBytes.length) {
+	    int newCapacity = messageDataBytes.length * 2;
+	    if (newCapacity < requiredCapacity) {
+		newCapacity = requiredCapacity;
+	    }
+
+	    byte[] newData = new byte[newCapacity];
 	    System.arraycopy(messageDataBytes, 0,
-			     newData, 0, messageDataBytes.length);
+			     newData, 0, messageDataOffset);
 	    messageDataBytes = newData;
 	}
     }
@@ -97,24 +104,24 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
     public void addInt(int i) {
 	ensureCapacity(4);
 	// Add int at messageDataOffset, big endian
-	messageDataBytes[messageDataOffset]   = (byte)((i >>> 24) & 0xFF);
-	messageDataBytes[messageDataOffset+1] = (byte)((i >>> 16) & 0xFF);
-	messageDataBytes[messageDataOffset+2] = (byte)((i >>>  8) & 0xFF);
-	messageDataBytes[messageDataOffset+3] = (byte)((i >>>  0) & 0xFF);
+	messageDataBytes[messageDataOffset+0] = (byte)(i >>> 24);
+	messageDataBytes[messageDataOffset+1] = (byte)(i >>> 16);
+	messageDataBytes[messageDataOffset+2] = (byte)(i >>>  8);
+	messageDataBytes[messageDataOffset+3] = (byte)(i >>>  0);
 	messageDataOffset += 4;
     }
 
     public void addLong(long l) {
 	ensureCapacity(8);
 	// Add int at messageDataOffset, big endian
-	messageDataBytes[messageDataOffset+0]   = (byte)(l >>> 56);
-	messageDataBytes[messageDataOffset+1]   = (byte)(l >>> 48);
-	messageDataBytes[messageDataOffset+2]   = (byte)(l >>> 40);
-	messageDataBytes[messageDataOffset+3]   = (byte)(l >>> 32);
-	messageDataBytes[messageDataOffset+4]   = (byte)(l >>> 24);
-	messageDataBytes[messageDataOffset+5]   = (byte)(l >>> 16);
-	messageDataBytes[messageDataOffset+6]   = (byte)(l >>> 8);
-	messageDataBytes[messageDataOffset+7]   = (byte)(l >>> 0);
+	messageDataBytes[messageDataOffset+0] = (byte)(l >>> 56);
+	messageDataBytes[messageDataOffset+1] = (byte)(l >>> 48);
+	messageDataBytes[messageDataOffset+2] = (byte)(l >>> 40);
+	messageDataBytes[messageDataOffset+3] = (byte)(l >>> 32);
+	messageDataBytes[messageDataOffset+4] = (byte)(l >>> 24);
+	messageDataBytes[messageDataOffset+5] = (byte)(l >>> 16);
+	messageDataBytes[messageDataOffset+6] = (byte)(l >>> 8);
+	messageDataBytes[messageDataOffset+7] = (byte)(l >>> 0);
 	messageDataOffset += 8;
     }
 
@@ -127,13 +134,9 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
 
     private byte[] getBytes(String s) {
 	char[] val = s.toCharArray();
-        int n = val.length;
-	byte[] dst = new byte[n+1]; // Leave room for null termination
-        int i = 0;
-        int j = 0;
-
-        while (i < n) {
-            dst[j++] = (byte)val[i++];
+	byte[] dst = new byte[val.length + 1]; // Leave room for null termination
+	for (int i = 0; i < val.length; i++) {
+            dst[i] = (byte)val[i];
         }
 	return dst;
     }
@@ -154,7 +157,7 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
 
     public void addByteArray(byte[] barr) {
 	if (barr == null) {
-	    addInt(0);
+	    addInt(-1);
 	    return;
 	}
 	addInt(barr.length);
@@ -166,11 +169,10 @@ public abstract class JUMPOutgoingMessage extends JUMPMessage {
 
     public void addUTFArray(String[] arr) {
 	if (arr == null) {
-	    addInt(0);
+	    addInt(-1);
 	    return;
 	}
 	addInt(arr.length);
-	ensureCapacity(arr.length); // the bytes+length
 	for (int i = 0; i < arr.length; i++) {
 	    addUTF(arr[i]);
 	}
