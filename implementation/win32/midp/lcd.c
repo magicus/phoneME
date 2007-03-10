@@ -405,15 +405,10 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
                                         javacall_lcd_color_encoding_type* colorEncoding) {
     if(JAVACALL_TRUE == initialized) {
         if(screenWidth) {
-            *screenWidth = VRAM.width;
+            *screenWidth = javacall_lcd_get_screen_width();
         }
-
         if(screenHeight) {
-            if(inFullScreenMode) {
-                *screenHeight = VRAM.height;
-            } else {
-                *screenHeight = VRAM.height - TOP_BAR_HEIGHT;
-            }
+            *screenHeight = javacall_lcd_get_screen_height();
         }
         if(colorEncoding) {
             *colorEncoding = JAVACALL_LCD_COLOR_RGB565;
