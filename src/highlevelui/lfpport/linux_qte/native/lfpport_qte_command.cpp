@@ -117,6 +117,9 @@ MidpError CommandManager::setCommands(MidpCommand* cmds, int numOfCmds) {
     goMenu->clear();
     helpMenu->clear();
 
+    // reset state of menu bar when item is active
+    actItem = -1;
+
     // Insert each command to each popup menu basing on its type
     for (i = 0; i < numOfCmds; i++) {
         QString text;
