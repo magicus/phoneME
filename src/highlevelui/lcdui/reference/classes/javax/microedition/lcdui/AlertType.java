@@ -26,6 +26,7 @@
 
 package javax.microedition.lcdui;
 
+import javax.microedition.media.control.ToneControl;
 import com.sun.midp.configurator.AlertTypeConstants;
 
 /**
@@ -137,6 +138,9 @@ public class AlertType {
      */
     AlertType(int type) {
         this.type = type;
+        musical_note = ( byte )( ToneControl.C4 + 9 + 3 * type );
+        sound_duration = 1000;
+        sound_volume = 80;
     }
 
     /**
@@ -149,9 +153,54 @@ public class AlertType {
         return this.type;
     }
 
-
+    /**
+     * Get the musical note used for this AlertType
+     *
+     * @return byte  the musical note used for this AlertType, as described
+     *               in javax.microedition.media.ToneControl
+     */
+     byte getMusicalNote() {
+         return musical_note;
+     }
+    
+    /**
+     * Get the sound duration used for this AlertType
+     *
+     * @return int  the sound duration used for this AlertType, in millisec
+     */
+     int getSoundDuration() {
+         return sound_duration;
+     }
+    
+    /**
+     * Get the sound volume used for this AlertType
+     *
+     * @return int  the sound volume used for this AlertType, from 0
+     *              (silence) to 100 (maximum volume for this audio device)
+     */
+     int getSoundVolume() {
+         return sound_volume;
+     }
+    
     /**
      * The type of this AlertType
      */
     private int type;
+    
+    /**
+     * The musical note used to beep this alert type.
+     * See javax.microedition.control.ToneControl for the note definition.
+     */
+    private byte musical_note;
+    
+    /**
+     * The duration of the alert sound (in milliseconds )
+     */
+    private int sound_duration;
+    
+    /**
+     * The volume of the alert sound.
+     * From 0 (no sound) to 100 (maximal volume)
+     */
+    private int sound_volume;
 }

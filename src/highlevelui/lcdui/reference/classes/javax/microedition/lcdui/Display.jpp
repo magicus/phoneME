@@ -32,6 +32,8 @@ import javax.microedition.midlet.MIDlet;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
+import javax.microedition.media.Manager;
+import javax.microedition.media.MediaException;
 
 // #ifndef ENABLE_CDC
 import com.sun.midp.i18n.Resource;
@@ -1793,9 +1795,19 @@ public class Display {
     boolean playAlertSound(AlertType t) {
 
         if (!paintSuspended && hasForeground) {
-            // SYNC NOTE: playAlertSound is a native method, no locking
-            // necessary
-            return playAlertSound0(displayId, t.getType());
+            // SYNC NOTE: do not forget to enclose this method call
+            // with syncronized( Display.LCDUILock ) {} section
+            try
+            {
+                Manager.playTone( t.getMusicalNote(),
+                                  t.getSoundDuration(),
+                                  t.getSoundVolume() );
+            }
+            catch( MediaException me )
+            {
+                return false;
+            }
+            return true;
         }
 
         return false;
