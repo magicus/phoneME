@@ -587,10 +587,10 @@ $(CVM_BUILDDIRS):
 # vpath
 #
 ifneq ($(CVM_TOOLS_BUILD), true)
-vpath %.c	$(CVM_SRCDIRS)
-vpath %.cc 	$(CVM_SRCDIRS)
-vpath %.cpp 	$(CVM_SRCDIRS)
-vpath %.S 	$(CVM_SRCDIRS)
+vpath %.c	$(CVM_ALL_NATIVE_SRCDIRS)
+vpath %.cc 	$(CVM_ALL_NATIVE_SRCDIRS)
+vpath %.cpp 	$(CVM_ALL_NATIVE_SRCDIRS)
+vpath %.S 	$(CVM_ALL_NATIVE_SRCDIRS)
 endif
 
 #
@@ -622,26 +622,26 @@ $(CVM_OBJECTS_LOOP): COMPILE_FLAVOR = LOOP
 
 ifneq ($(CVM_PROVIDE_TARGET_RULES), true)
 $(CVM_OBJDIR)/%.o: %.cc
-	@echo "c++ $@"
+	@echo "c++ $<"
 	$(CCC_CMD_$(COMPILE_FLAVOR))
 	$(GENERATEMAKEFILES_CMD)
 	$(CSTACKANALYSIS_CMD)
 
 $(CVM_OBJDIR)/%.o: %.cpp
-	@echo "c++ $@"
+	@echo "c++ $<"
 	$(CCC_CMD_$(COMPILE_FLAVOR))
 	$(GENERATEMAKEFILES_CMD)
 	$(CSTACKANALYSIS_CMD)
 
 $(CVM_OBJDIR)/%.o: %.c
-	@echo "cc  $@"
+	@echo "cc  $<"
 	$(CC_CMD_$(COMPILE_FLAVOR))
 	$(GENERATEMAKEFILES_CMD)
 	$(CSTACKANALYSIS_CMD)
 
 
 $(CVM_OBJDIR)/%.o: %.S
-	@echo "as  $@"
+	@echo "as  $<"
 	$(ASM_CMD)
 ifeq ($(GENERATEMAKEFILES), true)
 	@$(TARGET_CC) $(ASM_ARCH_FLAGS) $(CCDEPEND) $(CPPFLAGS) $< \
@@ -662,7 +662,7 @@ CVM_FDLIB	  = $(CVM_OBJDIR)/fdlibm.a
 
 ifneq ($(CVM_PROVIDE_TARGET_RULES), true)
 $(CVM_FDLIB_FILES): $(CVM_OBJDIR)/%.o: $(CVM_FDLIBM_SRCDIR)/%.c
-	@echo "cc  $@"
+	@echo "cc  $<"
 	$(CC_CMD_FDLIB)
 ifeq ($(GENERATEMAKEFILES), true)
 	@$(TARGET_CC) $(CC_ARCH_FLAGS) $(CCDEPEND) $(CPPFLAGS) $< \

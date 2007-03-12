@@ -1207,8 +1207,17 @@ CVM_SRCDIRS += \
 	$(CVM_SHAREROOT)/javavm/runtime/jit
 endif
 
+# This combiles all the native sourcepaths for the vpath search:
+# NOTE: PROFILE_SRCDIRS_NATIVE is for profile specific native source files.
+#       CVM_SRCDIR is for VM specific and base configuration native source
+#       files.
+CVM_ALL_NATIVE_SRCDIRS = \
+    $(PROFILE_SRCDIRS_NATIVE) $(CVM_SRCDIRS)
+
+
 # This is for compatibility with the rmi makefiles,
 # which still use PROFILE_SRCDIR
+# NOTE: PROFILE_SRCDIR is for Java source files.
 PROFILE_SRCDIR = $(PROFILE_SRCDIRS)
 
 #
@@ -1949,10 +1958,12 @@ CVM_JAR			?= $(CVM_JAVA_TOOLS_PREFIX)jar
 
 JAVAC_OPTIONS +=  -J-Xms32m -J-Xmx128m -encoding iso8859-1
 ifeq ($(CDC_10),true)
-JAVAC_OPTIONS += -target 1.3
+JAVAC_SOURCE_TARGET_OPTIONS ?= -target 1.3
 else
-JAVAC_OPTIONS += -source 1.4 -target 1.4
+JAVAC_SOURCE_TARGET_OPTIONS ?= -source 1.4 -target 1.4
 endif
+JAVAC_OPTIONS += $(JAVAC_SOURCE_TARGET_OPTIONS)
+
 #
 # Location of source for scripts and Java source files used during the build
 #
@@ -2032,9 +2043,15 @@ ifeq ($(CVM_GCOV), true)
 CCFLAGS   	+= -fprofile-arcs -ftest-coverage
 endif
 
-# CVM_INCLUDE_DIRS is a list of directories. This list needs to be
-# converted to a list of compiler parameters, with paths in host form:
+# PROFILE_INCLUDE_DIRS is a list of profiles specific directories that defines
+# the profile specific include path.  This path should be searched for include
+# files before searching the base configuration include path.
+# CVM_INCLUDE_DIRS is a list of directories that defines the base configuration
+# include path. 
+# This list needs to be converted to a list of compiler parameters, with paths
+# in host form:
 CVM_INCLUDES    += \
+	$(foreach dir,$(PROFILE_INCLUDE_DIRS),-I$(call POSIX2HOST,$(dir))) \
 	$(foreach dir,$(CVM_INCLUDE_DIRS),-I$(call POSIX2HOST,$(dir)))
 
 CPPFLAGS 	+= $(CVM_DEFINES) $(CVM_INCLUDES)

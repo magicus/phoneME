@@ -541,9 +541,7 @@ endif
 #
 # Stuff to export. Do this before including defs_foundation.mk
 #
-CVM_INCLUDE_DIRS	+= $(PROFILE_INCLUDE_DIRS)
 CVM_INCLUDES 		+= $(PROFILE_INCLUDES)
-CVM_SRCDIRS		+= $(PROFILE_SRCDIRS_NATIVE)
 
 #
 # Unit Tests
