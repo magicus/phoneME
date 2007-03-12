@@ -517,6 +517,7 @@ public abstract class BasicPlayer implements Player
     }
 
     protected boolean hasDataSource = true;
+    protected boolean hasToneSequenceSet = false;
 
     /**
      * Subclasses need to implement this to realize
@@ -675,7 +676,7 @@ public abstract class BasicPlayer implements Player
         state = STARTED;
         sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
         
-        if( !this.hasDataSource )
+        if( !this.hasDataSource && !hasToneSequenceSet )
 	        sendEvent(PlayerListener.END_OF_MEDIA, new Long(0));
 
         // Finish any pending startup stuff in subclass

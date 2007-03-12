@@ -162,5 +162,7 @@ public final class DirectTone extends DirectPlayer implements ToneControl {
         
         if(-1 == nBuffering(hNative, sequence, -1))
             throw new IllegalArgumentException("invalid sequence");
+
+        hasToneSequenceSet = true;
     }
 }
