@@ -164,8 +164,8 @@ JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
         s = (void*)src->screen_buffer;
         d = (void*)pixmap->scanLine(0);
 
-        if ((pixmap->width() < src->width) ||
-            (pixmap->height() < src->height) || (pixmap->depth()/8 != 2)) {
+        if ((pixmap->width() != src->width) ||
+            (pixmap->height() != src->height) || (pixmap->depth()/8 != 2)) {
 #ifdef DEBUG
             printf("JSR239: offscreen buffer data is incorrect.\n");
 #endif
