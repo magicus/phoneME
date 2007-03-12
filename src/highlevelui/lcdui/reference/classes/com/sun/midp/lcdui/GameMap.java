@@ -46,7 +46,7 @@ public class GameMap {
     static private DisplayAccess displayAccess;
 
     /**
-     * The GraphicsAccess instance handed out from
+     * The GraphicsAccess tunnel instance handed out from
      * javax.microedition.lcdui package 
      */
     static private GraphicsAccess graphicsAccess;
@@ -122,8 +122,8 @@ public class GameMap {
     }
 
     /**
-     * Sets Image accessor instance from javax.microedition.lcdui package
-     * to use extended package-private Image API
+     * Sets graphics accessor instance from javax.microedition.lcdui package
+     * to use extended package-private Image and Graphics APIs
      *
      * @param graphicsAccess graphics accessor tunnel
      */
@@ -134,7 +134,9 @@ public class GameMap {
     }
 
     /**
-     * Gets GraphicsAccess instance needed to access extende Image API
+     * Gets GraphicsAccess instance needed to access extended
+     * Image and Graphics APIs
+     * 
      * @return GraphicsAccess tunnel instance
      */
     public static GraphicsAccess getGraphicsAccess() {
