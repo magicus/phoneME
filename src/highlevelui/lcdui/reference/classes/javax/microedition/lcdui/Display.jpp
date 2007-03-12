@@ -543,7 +543,7 @@ public class Display {
     // #endif ENABLE_CHAMELEON
 
     /** Accessor to extended Image API needed for Chameleon and GameCanvas */
-    private static ImageAccessImpl imageAccessor;
+    private static GraphicsAccessImpl graphicsAccessor;
 
     /**
      * <code>True</code> if a system screen, like menu, is up.
@@ -585,11 +585,11 @@ public class Display {
         WIDTH               = getScreenWidth0();
         HEIGHT              = getScreenHeight0();
 
-        imageAccessor = new ImageAccessImpl();
-        GameMap.registerImageAccess(imageAccessor);
+        graphicsAccessor = new GraphicsAccessImpl();
+        GameMap.registerGraphicsAccess(graphicsAccessor);
     
         // #ifdef ENABLE_CHAMELEON
-        SkinResources.initImageAccess(imageAccessor);
+        SkinResources.initGraphicsAccess(graphicsAccessor);
         SkinResources.setScreenSize(WIDTH, HEIGHT);
 
         // IMPL_NOTE: In the MVM mode it's important to do the first
@@ -3170,11 +3170,11 @@ public class Display {
 }
 
 /**
- * Class to access extended Image functionality needed to Chameleon,
- * GameCanvas or to some other clients not satisified with public API of
- * the Image class
+ * Class to access extended Image and Graphics functionality needed to
+ * Chameleon, GameCanvas or to some other clients not satisified with 
+ * public API
  */
-class ImageAccessImpl implements com.sun.midp.lcdui.ImageAccess {
+class GraphicsAccessImpl implements com.sun.midp.lcdui.GraphicsAccess {
 
     // #ifdef ENABLE_CHAMELEON
     /**
@@ -3207,4 +3207,34 @@ class ImageAccessImpl implements com.sun.midp.lcdui.ImageAccess {
         image.resize(width, height, keepContent);
     }
 
+    /**
+     * Creates a new <code>Graphics</code> object that renders to this
+     * image and explicitly sets the Graphics object dimensions.
+     *
+     * @param image The Image to get a Graphics context for
+     * @param width The width of the Graphics context
+     * @param height The height of the Graphics context
+     * @return a <code>Graphics</code> object with this image as its destination
+     */
+    public Graphics getImageGraphics(Image image, int width, int height) {
+        return Graphics.getImageGraphics(image, width, height);
+    }
+
+    /**
+     * Get maximal width of the Graphics context
+     * @param g The Graphics context
+     * @return The width of the Graphics context
+     */
+    public short getGraphicsWidth(Graphics g) {
+        return g.getMaxWidth();
+    }
+
+    /**
+     * Get maximal height of the Graphics context
+     * @param g The Graphics context
+     * @return The height of the Graphics context
+     */
+    public short getGraphicsHeight(Graphics g) {
+        return g.getMaxHeight();
+    }
 }

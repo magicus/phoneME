@@ -26,8 +26,15 @@
 
 package com.sun.midp.lcdui;
 import javax.microedition.lcdui.Image;
+import javax.microedition.lcdui.Graphics;
 
-public interface ImageAccess {
+/**
+ * The GraphicsAccess interface is designed to provide external access
+ * to extended APIs of graphics-related functionality available within
+ * javax.microedition.lcdui package only. In particular the extended
+ * API for Image and Graphics is provided.
+ */
+public interface GraphicsAccess {
 
     // #ifdef ENABLE_CHAMELEON
     /**
@@ -53,4 +60,29 @@ public interface ImageAccess {
      */
     public void resizeImage(Image image,
         int width, int height, boolean keepContent);
+
+    /**
+     * Creates a new <code>Graphics</code> object that renders to this
+     * image and explicitly sets the Graphics object dimensions.
+     *
+     * @param image The Image to get a Graphics context for
+     * @param width The width of the Graphics context
+     * @param height The height of the Graphics context
+     * @return a <code>Graphics</code> object with this image as its destination
+     */
+    public Graphics getImageGraphics(Image image, int width, int height);
+
+    /**
+     * Get maximal width of the Graphics context
+     * @param g The Graphics context
+     * @return The width of the Graphics context
+     */
+    public short getGraphicsWidth(Graphics g);
+
+    /**
+     * Get maximal height of the Graphics context
+     * @param g The Graphics context
+     * @return The height of the Graphics context
+     */
+    public short getGraphicsHeight(Graphics g);
 }
