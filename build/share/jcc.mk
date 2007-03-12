@@ -112,6 +112,11 @@ JCC_EXCLUDES +=
 #  and we are ROM only -- no impure constant pools allowed,
 #  so no constant-pool type-table required.
 # 
+# NOTE: CVM_PROFILE_JCC_OPTIONS are for JCC options that the profile specific
+#       makefiles may wish to add (e.g. profile specific classpaths).  It can
+#       be left empty (i.e. undefined) if the profile does not have any options
+#       to add.
+#
 CVM_GENERATE_OFFSETS	= $(patsubst %,-extraHeaders CVMOffsets %,$(CVM_OFFSETS_CLASSES))
 CVM_GENERATE_NATIVES	= $(patsubst %,-nativesType CNI %,$(CVM_CNI_CLASSES))
 ifeq ($(CVM_JIT), true)
@@ -124,6 +129,7 @@ CVM_JCC_OPTIONS += \
 		  -headersDir JNI $(CVM_DERIVEDROOT)/jni \
 		  -headersDir CVMOffsets $(CVM_DERIVEDROOT)/offsets \
 		  $(JCC_EXCLUDES) \
+		  $(CVM_PROFILE_JCC_OPTIONS) \
 	          $(CVM_GENERATE_OFFSETS)
 
 ifeq ($(CVM_NO_LOSSY_OPCODES), true)
@@ -168,7 +174,7 @@ CVM_JCC_INPUT_FILES = $(filter-out -%,$(CVM_JCC_INPUT))
 
 $(CVM_ROMJAVA_LIST): $(CVM_JCC_INPUT_FILES) $(CVM_JCC_DEPEND)
 	@echo "jcc romjava.c files"
-	$(AT)$(CVM_JAVA) -cp $(CVM_JCC_CLASSPATH) -Xmx128m JavaCodeCompact \
+	$(AT)$(CVM_JAVA) -cp $(CVM_JCC_CLASSPATH) -Xmx256m JavaCodeCompact \
 		$(CVM_JCC_OPTIONS) \
 		-maxSegmentSize $(CVM_ROMJAVA_CLASSES_PER_FILE) \
 		-o $(CVM_ROMJAVA_CPATTERN) \

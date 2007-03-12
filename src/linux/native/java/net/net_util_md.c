@@ -307,7 +307,6 @@ static void initLoopbackRoutes() {
     char dest_str[40];
     struct in6_addr dest_addr;
     char device[16];
-    jboolean match = JNI_FALSE;
     
     if (loRoutes != 0) {
 	free (loRoutes);
@@ -385,7 +384,7 @@ static void initLoopbackRoutes() {
     {
 	/* now find the scope_id for "lo" */
 
-        char addr6[40], devname[20];
+        char devname[20];
         char addr6p[8][5];
         int plen, scope, dad_status, if_idx;
 
