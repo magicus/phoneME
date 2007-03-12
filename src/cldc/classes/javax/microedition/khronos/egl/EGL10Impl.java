@@ -26,6 +26,7 @@ package javax.microedition.khronos.egl;
 
 import javax.microedition.khronos.opengles.*;
 import com.sun.jsr239.*;
+import com.sun.midp.lcdui.GameMap;
 
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.game.GameCanvas;
@@ -75,8 +76,6 @@ class EGL10Impl implements EGL10 {
                                    int[] value);
     native int _getWindowStrategy(Graphics winGraphics);
     native int _getWindowNativeID(Graphics winGraphics);
-    native int _getGraphicsWidth(Graphics graphics);
-    native int _getGraphicsHeight(Graphics graphics);
     native int _getWindowPixmap(int displayId, int configId,
                                 Graphics winGraphics,
                                 int width, int height);
@@ -345,8 +344,6 @@ class EGL10Impl implements EGL10 {
         return retval;
     }
 
-    private native void _getGraphicsSource(Graphics g, Object[] result);
-
     public synchronized EGLSurface eglCreateWindowSurface(EGLDisplay display,
                                                           EGLConfig config,
                                                           Object win,
@@ -373,21 +370,8 @@ class EGL10Impl implements EGL10 {
 
         Graphics winGraphics = (Graphics)win;
 
-        int width = _getGraphicsWidth(winGraphics);
-        int height = _getGraphicsHeight(winGraphics);
-
-        // TODO: uncomment the following block when MIDP guys add GameGraphics object
-        // TODO: GameGraphics should extend Graphics and have the reference to GameCanvas
-//        if (winGraphics instanceof GameGraphics) {
-//            Object[] result = new Object[1];
-//            _getGraphicsSource(winGraphics,result);
-//            Object source = result[0];
-//
-//            if (source instanceof GameCanvas) {
-//                GameCanvas gameCanvas = (GameCanvas)source;
-//                height = gameCanvas.getHeight();
-//            }
-//        }
+        int width = GameMap.getGraphicsAccess().getGraphicsWidth(winGraphics);
+        int height = GameMap.getGraphicsAccess().getGraphicsHeight(winGraphics);
 
         int displayId = ((EGLDisplayImpl)display).nativeId();
         int configId = ((EGLConfigImpl)config).nativeId();
@@ -469,8 +453,8 @@ class EGL10Impl implements EGL10 {
 	}
 
         Graphics imageGraphics = (Graphics)pixmap;
-        int width = _getGraphicsWidth(imageGraphics);
-        int height = _getGraphicsHeight(imageGraphics);
+        int width = GameMap.getGraphicsAccess().getGraphicsWidth(imageGraphics);
+        int height = GameMap.getGraphicsAccess().getGraphicsHeight(imageGraphics);
 
         int displayId = ((EGLDisplayImpl)display).nativeId();
         int configId = ((EGLConfigImpl)config).nativeId();

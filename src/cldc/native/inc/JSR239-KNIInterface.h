@@ -65,12 +65,6 @@ void JSR239_shutdown();
 jint JSR239_getWindowStrategy(jobject winGraphicsHandle);
 jint JSR239_getWindowNativeID(jobject winGraphicsHandle);
 
-/* Graphics */
-
-jint JSR239_getGraphicsWidth(jobject graphicsHandle);
-jint JSR239_getGraphicsHeight(jobject graphicsHandle);
-void JSR239_getGraphicsSource(jobject graphicsHandle, jobject resultHandle);
-
 /* Pixmap */
 
 JSR239_Pixmap *JSR239_getWindowPixmap(jobject winGraphicsHandle,

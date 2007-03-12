@@ -1086,61 +1086,6 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1getWindowNativeID() {
     KNI_ReturnInt(returnValue);
 }
 
-/* private native int getGraphicsWidth( Graphics graphics ) ; */
-KNIEXPORT KNI_RETURNTYPE_INT
-Java_javax_microedition_khronos_egl_EGL10Impl__1getGraphicsWidth() {
-
-    jint returnValue;
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(graphicsHandle);
-    KNI_GetParameterAsObject(1, graphicsHandle);
-
-    returnValue = JSR239_getGraphicsWidth(graphicsHandle);
-#ifdef DEBUG
-    printf("JSR239_getGraphicsWidth(0x%x) = %d\n",
-	   graphicsHandle, returnValue);
-#endif
-
-    KNI_EndHandles();
-    KNI_ReturnInt(returnValue);
-}
-
-/* private native int getGraphicsHeight( Graphics graphics ) ; */
-KNIEXPORT KNI_RETURNTYPE_INT
-Java_javax_microedition_khronos_egl_EGL10Impl__1getGraphicsHeight() {
-
-    jint returnValue;
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(graphicsHandle);
-    KNI_GetParameterAsObject(1, graphicsHandle);
-
-    returnValue = JSR239_getGraphicsHeight(graphicsHandle);
-#ifdef DEBUG
-    printf("JSR239_getGraphicsHeight(0x%x) = %d\n",
-	   graphicsHandle, returnValue);
-#endif
-
-    KNI_EndHandles();
-    KNI_ReturnInt(returnValue);
-}
-
-/* private native void getGraphicsSource( Graphics graphics , Object[] o) ; */
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_khronos_egl_EGL10Impl__1getGraphicsSource() {
-
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(graphicsHandle);
-    KNI_DeclareHandle(resultHandle);
-
-    KNI_GetParameterAsObject(1, graphicsHandle);
-    KNI_GetParameterAsObject(2, resultHandle);
-
-    JSR239_getGraphicsSource(graphicsHandle, resultHandle);
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
-
 /* private native int getWindowPixmap( int displayId , int configId , Graphics winGraphics , int width, int height, int transY ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 Java_javax_microedition_khronos_egl_EGL10Impl__1getWindowPixmap() {

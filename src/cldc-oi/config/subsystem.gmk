@@ -158,9 +158,8 @@ SUBSYSTEM_JSR_239_NATIVE_FILES += \
 	JSR239-KNIEGL11Impl.c \
 	JSR239-KNIGL11Impl.c \
 	JSR239-KNIInterface.c\
-	JSR239-KNIMemory.c \
-	JSR239-KNIGraphics.c
-	
+	JSR239-KNIMemory.c
+
 SUBSYSTEM_JSR_239_EXTRA_INCLUDES += \
    -I$(JSR_239_DIR)/src/cldc/native/inc
 
