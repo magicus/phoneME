@@ -1298,13 +1298,15 @@ public class GL10Impl implements GL10, GL10Ext {
                 final int type = pointerType[ptr];
                 final int offset = pointerOffset[ptr];
                 final int sizeOfType = GLConfiguration.sizeOfType(type);
-                final int stride = pointerStride[ptr] == 0 ? sizeOfType : pointerStride[ptr];
+                final int stride = pointerStride[ptr] == 0 ? sizeOfType :
+                        pointerStride[ptr];
                 final int elementSize = size * sizeOfType;
 
                 final int lastByte = offset + last * stride + elementSize;
 
                 if (lastByte > remaining) {
-                    throw new ArrayIndexOutOfBoundsException(String.valueOf(lastByte));
+                    throw new ArrayIndexOutOfBoundsException(
+                            String.valueOf(lastByte));
                 }
             }
         }
