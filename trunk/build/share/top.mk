@@ -356,17 +356,6 @@ ifeq ($(CVM_INCLUDE_JUMP),true)
    endif
 endif   # CVM_INCLUDE_JUMP
 
-# MIDP requires at least foundation
-ifeq ($(CVM_INCLUDE_MIDP),true)
-   ifeq ($(J2ME_CLASSLIB), cdc)
-      ifeq ($(AWT_IMPLEMENTATION), gci)
-      override J2ME_CLASSLIB = basis
-      else
-      override J2ME_CLASSLIB = foundation
-      endif
-   endif
-endif # CVM_INCLUDE_MIDP
-
 # The "all" rule below must come before pulling in any makefiles with rules
 all:: printconfig checkconfig $(J2ME_CLASSLIB) tools
 
