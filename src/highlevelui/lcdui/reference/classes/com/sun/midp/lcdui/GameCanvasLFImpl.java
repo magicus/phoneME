@@ -49,9 +49,12 @@ public class GameCanvasLFImpl {
      */
     private Image offscreen_buffer;
 
+    /** Cached reference to GraphicsAccess instance */
+    private GraphicsAccess graphicsAccess;
 
     GameCanvasLFImpl(GameCanvas c) {
         owner = c;
+        graphicsAccess = GameMap.getGraphicsAccess();
         offscreen_buffer = Image.createImage(
             owner.getWidth(),owner.getHeight());
     }
@@ -75,7 +78,7 @@ public class GameCanvasLFImpl {
      */
     public void lCallSizeChanged(int w, int h) {
         // OutOfMemoryError can be thrown
-        GameMap.getImageAccess().resizeImage(
+        graphicsAccess.resizeImage(
             offscreen_buffer, w, h, true);
     }
 
@@ -83,11 +86,18 @@ public class GameCanvasLFImpl {
      * Obtains the Graphics object for rendering a GameCanvas.  The returned
      * Graphics object renders to the off-screen buffer belonging to this
      * GameCanvas.
+     *
+     * IMPL_NOTE: The dimensions of the Graphics object are explicitly
+     *   set to GameCanvas size, since off-screen buffer larger than
+     *   GameCanvas can be used, while some JSR clients need to translate
+     *   the coordinates regarding the GameCanvas size. 
+     *
      * @return  the Graphics object that renders to current GameCanvas
      */
     public Graphics getGraphics() {
         if (offscreen_buffer != null) {
-            return offscreen_buffer.getGraphics();
+            return graphicsAccess.getImageGraphics(
+                offscreen_buffer, owner.getWidth(), owner.getHeight());
         }
         
         return null;
