@@ -24,7 +24,7 @@
 
 .PHONY: javacall_lib
 
-ifeq ($(CVM_PRELOAD_LIB), true)
+ifneq ($(CVM_PRELOAD_LIB), true)
 JSR_NATIVE_LIBS = "$(5)"
 else
 JSR_NATIVE_LIBS = ""
