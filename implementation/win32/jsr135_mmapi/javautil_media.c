@@ -36,8 +36,8 @@ typedef struct _PNGenc {
 
 static unsigned char png_magic[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 
-static int one = 1;
-static char *littleEndian = (char *) &one;
+static const int le_one = 1;
+static char *littleEndian = (char *) &le_one;
 
 #define BITS            8
 #define ROWS_PER_GROUP  1
@@ -275,9 +275,9 @@ int javautil_media_get_png_size(int width, int height){
 }
 
 /**
- * Encode RGB888 format data to PNG data format (there is no compression)
+ * Encode rgb888 format data to PNG data format (there is no compression)
  * 
- * @param input     Pointer to RGB565 data
+ * @param input     Pointer to rgb888 data
  * @param output    Pointer to PNG encode buffer
  * @param width     Width of image
  * @param height    Height of image
@@ -339,12 +339,12 @@ int javautil_media_rgb_to_png(unsigned char *input,
                 zcrc = adler32(zcrc, &(input[0]), 1);
                 writebytecrc(&enc, input[0]);
             } else {
+                zcrc = adler32(zcrc, &(input[0]), 1);
+                writebytecrc(&enc, input[0]);
                 zcrc = adler32(zcrc, &(input[1]), 1);
                 writebytecrc(&enc, input[1]);
                 zcrc = adler32(zcrc, &(input[2]), 1);
                 writebytecrc(&enc, input[2]);
-                zcrc = adler32(zcrc, &(input[3]), 1);
-                writebytecrc(&enc, input[3]);
             }
             input += 3;
         }
@@ -363,3 +363,92 @@ int javautil_media_rgb_to_png(unsigned char *input,
     return enc.offset;
 }
  
+
+/**
+ * Encode rgbX888 format data to PNG data format (there is no compression)
+ * 
+ * @param input     Pointer to rgbX888 data
+ * @param output    Pointer to PNG encode buffer
+ * @param width     Width of image
+ * @param height    Height of image
+ * 
+ * @return Byte size of encoded PNG data
+ */
+int javautil_media_rgbX888_to_png(unsigned char *input, 
+                                  unsigned char *output,
+                                  int width, 
+                                  int height) {
+    int i,j,k;
+    unsigned int zcrc;
+    unsigned char zero = 0xF1;
+    unsigned char color = 0;
+    unsigned char filter = 0;
+    int GROUPS = height / ROWS_PER_GROUP;
+    int GROUP_BYTES = (width * 3 + 1) * ROWS_PER_GROUP;
+    PNGEnc enc;
+
+    enc.offset = 0;
+    enc.outBuf = output;
+    resetcrc(&enc);
+    /* Write the magic number */
+    for (i = 0; i < sizeof(png_magic); i++)
+    enc.outBuf[enc.offset++] = png_magic[i];
+
+    beginchunk(&enc, "IHDR", 0x0d);
+    writelongcrc(&enc, width);  /* width */
+    writelongcrc(&enc, height); /* height */
+    writebytecrc(&enc, BITS);   /* bit depth */
+    writebytecrc(&enc, 2);      /* color type : true color*/
+    writebytecrc(&enc, 0);      /* compression */
+    writebytecrc(&enc, 0);      /* filter */
+    writebytecrc(&enc, 0);      /* interlace */
+    endchunk(&enc);
+
+    beginchunk(&enc, "IDAT", (GROUPS * (GROUP_BYTES + 4 + 1)) + 4 + 2);
+    writewordcrc(&enc, ((0x0800 + 30) / 31) * 31 ); /* compression method */
+
+    zcrc = 1L;
+    for (i = 0; i < GROUPS; i++) {
+    writebytecrc(&enc, (unsigned char)(i == (GROUPS-1) ? 0x01 : 0)); 
+    /* not compressed */
+    writewordrevcrc(&enc, (short) GROUP_BYTES);
+    writewordrevcrc(&enc, (short) ~GROUP_BYTES);
+
+    for (j = 0; j < ROWS_PER_GROUP; j++) {
+        /* write PNG row filter - 0 = unfiltered */
+        zcrc = adler32(zcrc, &filter, 1);
+        writebytecrc(&enc, filter);
+        
+        /* write pixels */
+        for (k = 0; k < width; k++) {
+            if (*littleEndian) {
+                zcrc = adler32(zcrc, &(input[2]), 1);
+                writebytecrc(&enc, input[2]);
+                zcrc = adler32(zcrc, &(input[1]), 1);
+                writebytecrc(&enc, input[1]);
+                zcrc = adler32(zcrc, &(input[0]), 1);
+                writebytecrc(&enc, input[0]);
+            } else {
+                zcrc = adler32(zcrc, &(input[1]), 1);
+                writebytecrc(&enc, input[1]);
+                zcrc = adler32(zcrc, &(input[2]), 1);
+                writebytecrc(&enc, input[2]);
+                zcrc = adler32(zcrc, &(input[3]), 1);
+                writebytecrc(&enc, input[3]);
+            }
+            input += 4;
+        }
+    }
+    }
+    
+    writelongcrc(&enc, zcrc);
+
+    endchunk(&enc);
+
+    beginchunk(&enc, "IEND", 0);
+    endchunk(&enc);
+
+    /* Return the length of data written into output buffer */
+
+    return enc.offset;
+}
