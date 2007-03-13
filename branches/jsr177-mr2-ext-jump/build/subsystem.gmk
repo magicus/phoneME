@@ -199,7 +199,7 @@ MODULE_SATSA_APDU_JAVA_FILES = \
 MODULE_SATSA_APDU_NATIVE_FILES += \
 	apdu_manager_kni.c 
 SUBSYSTEM_SATSA_CNI_CLASSES += \
-    com.sun.cardreader.APDUManager
+    com.sun.io.j2me.apdu.APDUManager
 else
 
 # JSR_177_APDU_MANAGER=carddevice
@@ -222,7 +222,7 @@ MODULE_SATSA_APDU_JAVA_FILES += \
 MODULE_SATSA_APDU_NATIVE_FILES += \
 	carddevice_kni.c
 SUBSYSTEM_SATSA_CNI_CLASSES += \
-    com.sun.io.j2me.apdu.PlatformCardDevice
+    com.sun.cardreader.PlatformCardDevice
 else
 # error - bad JSR_177_APDU_CARDDEVICE
 JSR_177_ERRORS += \
@@ -264,9 +264,6 @@ MODULE_SATSA_PKI_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/PublicKey.java \
     $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/WimFileSystem.java \
     $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/WIMApplication.java
-
-MODULE_SATSA_CRYPTO_JAVA_FILES += \
-    $(JSR_177_DIR)/src/share/crypto/classes/com/sun/satsa/crypto/RSAPublicKey.java
 
 JCRMIC_SOURCES = \
     $(JSR_177_DIR)/src/share/tool/jcrmic/com/sun/satsa/jcrmic/classfile/attributes/JAttribute.java \
@@ -571,8 +568,10 @@ CVM_INCLUDE_JAVACALL  = true
 
 $(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) $(TOOLS)
 	$(call compileJSRClasses,177)
-	
-$(JSR_177_NATIVE_LIB): javacall_lib $(JSR_177_NATIVE_OBJS) $(ABSTRACTIONS_NATIVE_LIBRARY)
+
+$(JSR_177_NATIVE_OBJS): javacall_lib
+
+$(JSR_177_NATIVE_LIB): $(JSR_177_NATIVE_OBJS) $(ABSTRACTIONS_NATIVE_LIBRARY)
 	@echo "Linking $@"
 	$(AT)$(call makeSharedLibrary, $(JSR_177_NATIVE_OBJS))	
 
