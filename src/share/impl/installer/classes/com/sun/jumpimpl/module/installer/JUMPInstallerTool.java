@@ -196,16 +196,13 @@ public class JUMPInstallerTool {
         }
         
         repository = System.getProperty(repositoryProperty);
-        if (repository == null) {
-            System.out.println("ERROR: The property contentstore.root is not set.");
-            return false;
-        }
-        
-        // test setup, make a repository root
-        File file = new File(repository);
-        if (!file.exists()) {
-            System.out.println("ERROR: " + repository + " directory not found.");
-            return false;
+        if (repository != null) {
+           // test setup, make a repository root
+           File file = new File(repository);
+           if (!file.exists()) {
+               System.out.println("ERROR: " + repository + " directory not found.");
+               return false;
+           }
         }
         
         if (JUMPExecutive.getInstance() == null) {

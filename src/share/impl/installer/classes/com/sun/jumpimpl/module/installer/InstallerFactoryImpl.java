@@ -103,11 +103,9 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
 		      *	normally uses.
 		      **/
 
-                     String javahome = System.getProperty("java.home", "."); 
-   		     String sep = File.separator;
-   		     String midpClasses = javahome + sep + "midp" + sep + "midp_fb" + sep + "classes.zip";
-                     
-   	             File[] midpFile = new File[]{ new File(midpClasses) };
+                     String midpPath = getMidpPath();
+
+   	             File[] midpFile = new File[]{ new File(midpPath) };
                      method = midpConfigClass.getMethod(
                                    "newMIDPImplementationClassLoader", 
                                    new Class[]{ midpFile.getClass() });
@@ -261,4 +259,27 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
     static int getInt(String key) {
         return Integer.parseInt(getString(key));
     }
+
+    /**
+     * Returns the location of the midp library.
+     * The search order is:
+     * 1. If System property "sun.midp.home.path" is set, use that path.
+     * 2. If the Map config contains "sun.midp.home.path", use that path.
+     * 3. Else, use the default location, which is is ./midp/midp_linux_fb_gcc/classes.zip.
+     */
+    private String getMidpPath() {
+        String midpPath = null;
+	String key = "sun.midp.home.path";
+
+	midpPath = (String) System.getProperty(key, (String) configMap.get(key));
+	if (midpPath == null || midpPath.equals("")) { // use default
+           String javahome = System.getProperty("java.home", ".") + "/midp/midp_linux_fb_gcc"; 
+           midpPath = javahome + "/classes.zip";
+        } else {
+           midpPath = midpPath + "/classes.zip";
+        }
+
+	return midpPath;
+    }
+                     
 }
