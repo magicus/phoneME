@@ -48,8 +48,6 @@ typedef struct {
   void *screen_buffer; /* 565 RGB or 8888 ARGB buffer, used in another implementation */
   int pixelBytes;
   int atab[256], rtab[256], gtab[256], btab[256];
-
-  int transY;
 } JSR239_Pixmap;
 
 
@@ -66,12 +64,6 @@ void JSR239_shutdown();
 
 jint JSR239_getWindowStrategy(jobject winGraphicsHandle);
 jint JSR239_getWindowNativeID(jobject winGraphicsHandle);
-
-/* Graphics */
-
-jint JSR239_getGraphicsWidth(jobject graphicsHandle);
-jint JSR239_getGraphicsHeight(jobject graphicsHandle);
-void JSR239_getGraphicsSource(jobject graphicsHandle, jobject resultHandle);
 
 /* Pixmap */
 
@@ -98,7 +90,7 @@ void JSR239_putWindowContents(jobject winGraphicsHandle, JSR239_Pixmap *src,
 void copyFromScreenBuffer(JSR239_Pixmap *dst, void *sbuffer,
                      int clip_x, int clip_y, int width, int height);
 void
-copyToScreenBuffer(JSR239_Pixmap *src, jint width, jint height, jint flipY);
+copyToScreenBuffer(JSR239_Pixmap *src, jint flipY);
 
 /* Memory management */
 

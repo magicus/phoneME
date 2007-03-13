@@ -166,8 +166,6 @@ JSR239_getWindowPixmap(jobject winHandle, jint width, jint height,
     initPixelExpansionTable(p->btab, p->bSize);
     initPixelExpansionTable(p->atab, p->aSize);
 
-    p->transY = 0;
-
     return p;
 }
 
@@ -291,9 +289,6 @@ copyFromScreenBuffer(JSR239_Pixmap *dst, void *sbuffer,
     dstPtr = (unsigned char *)dst->pixels +
         dst->stride*clip_y + dst->pixelBytes*clip_x;
 
-    dstPtr += dst->stride*dst->transY;
-    height -= dst->transY;
-
     for (y = 0; y < height; y++) {
         for (x = 0; x < width; x++) {
             int argb8888;
@@ -413,7 +408,10 @@ CONVERT_8888_TO_565(jint argb) {
 }
 
 void
-copyToScreenBuffer(JSR239_Pixmap *src, jint width, jint height, jint flipY) {
+copyToScreenBuffer(JSR239_Pixmap *src, jint flipY) {
+
+    jint width = src->width;
+    jint height= src->height;
 
     unsigned char *srcPtr;
 #if PUT_DEPTH == 16
@@ -457,9 +455,6 @@ copyToScreenBuffer(JSR239_Pixmap *src, jint width, jint height, jint flipY) {
     srcPtr = (unsigned char *)src->pixels +
       (flipY ? src->stride*(height - 1) : 0);
     sstride = flipY ? -src->stride : src->stride;
-
-    srcPtr += sstride*src->transY;
-    height -= src->transY;
 
 #if PUT_DEPTH == 16
     dstPtr16 = (jshort *)src->screen_buffer;

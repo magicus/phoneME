@@ -26,6 +26,7 @@ package javax.microedition.khronos.egl;
 
 import javax.microedition.khronos.opengles.*;
 import com.sun.jsr239.*;
+import com.sun.midp.lcdui.GameMap;
 
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.game.GameCanvas;
@@ -75,11 +76,9 @@ class EGL10Impl implements EGL10 {
                                    int[] value);
     native int _getWindowStrategy(Graphics winGraphics);
     native int _getWindowNativeID(Graphics winGraphics);
-    native int _getGraphicsWidth(Graphics graphics);
-    native int _getGraphicsHeight(Graphics graphics);
     native int _getWindowPixmap(int displayId, int configId,
                                 Graphics winGraphics,
-                                int width, int height, int transY);
+                                int width, int height);
     native int _getImagePixmap(int displayId, int configId,
                                Graphics imageGraphics,
                                int width, int height);
@@ -345,8 +344,6 @@ class EGL10Impl implements EGL10 {
         return retval;
     }
 
-    private native void _getGraphicsSource(Graphics g, Object[] result);
-
     public synchronized EGLSurface eglCreateWindowSurface(EGLDisplay display,
                                                           EGLConfig config,
                                                           Object win,
@@ -372,26 +369,9 @@ class EGL10Impl implements EGL10 {
 	}
 
         Graphics winGraphics = (Graphics)win;
-        
-        Object[] result = new Object[1];
-        _getGraphicsSource(winGraphics,result);
-        Object source = result[0];
 
-        int width = _getGraphicsWidth(winGraphics);
-        int height = _getGraphicsHeight(winGraphics);
-
-        int transY = 0;
-        if (source instanceof GameCanvas) {
-            // If the Graphics is an ImageGraphics, it must be derived
-            // from a GameCanvas.  The backing image always has the
-            // dimensions of the full screen, even though some
-            // scanlines are hidden by status bars.  In this case, we
-            // need to translate the drawing by the difference between
-            // the full screen height and the visible height.
-
-            GameCanvas gc = (GameCanvas)source;
-            transY = height - gc.getHeight();
-        }
+        int width = GameMap.getGraphicsAccess().getGraphicsWidth(winGraphics);
+        int height = GameMap.getGraphicsAccess().getGraphicsHeight(winGraphics);
 
         int displayId = ((EGLDisplayImpl)display).nativeId();
         int configId = ((EGLConfigImpl)config).nativeId();
@@ -408,7 +388,7 @@ class EGL10Impl implements EGL10 {
 	} else if (strategy == STRATEGY_USE_PIXMAP) {
 	    int pixmapPointer =
                 _getWindowPixmap(displayId, configId,
-                                 winGraphics, width, height, transY);
+                                 winGraphics, width, height);
 	    int surf =
 		_eglCreatePixmapSurface(displayId, configId,
 					pixmapPointer,
@@ -473,8 +453,8 @@ class EGL10Impl implements EGL10 {
 	}
 
         Graphics imageGraphics = (Graphics)pixmap;
-        int width = _getGraphicsWidth(imageGraphics);
-        int height = _getGraphicsHeight(imageGraphics);
+        int width = GameMap.getGraphicsAccess().getGraphicsWidth(imageGraphics);
+        int height = GameMap.getGraphicsAccess().getGraphicsHeight(imageGraphics);
 
         int displayId = ((EGLDisplayImpl)display).nativeId();
         int configId = ((EGLConfigImpl)config).nativeId();
