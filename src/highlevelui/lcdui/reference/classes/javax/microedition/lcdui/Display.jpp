@@ -1795,8 +1795,8 @@ public class Display {
     boolean playAlertSound(AlertType t) {
 
         if (!paintSuspended && hasForeground) {
-            // SYNC NOTE: do not forget to enclose this method call
-            // with syncronized( Display.LCDUILock ) {} section
+            // SYNC NOTE: playing tones in parallel is okay, no locking
+            // necessary
             try
             {
                 Manager.playTone( t.getMusicalNote(),
@@ -2296,16 +2296,6 @@ public class Display {
     static native int getScreenWidth0();
 
     static native int getScreenHeight0();
-
-    /**
-     * Play an Alert sound.
-     *
-     * @param displayId The display ID associated with this Display
-     * @param alertType type of alert
-     *
-     * @return <code>true</code>, if sound was played.
-     */
-    private native boolean playAlertSound0(int displayId, int alertType);
 
     /**
      * Plays the vibration if this Display is current and in foreground
