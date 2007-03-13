@@ -36,15 +36,16 @@ JSR_135_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr135
 JSR_135_GENERATED_DIR   = $(JSR_135_BUILD_DIR)/generated
 JPP_DEFS             += -DENABLE_JSR_135
 
-# set USE_MIDP flag
+# set USE_LCDUI flag
 ifeq ($(TARGET_VM),cldc_vm)
-USE_MIDP = true
+USE_LCDUI = true
 else 
 JPP_DEFS += -DENABLE_CDC
 ifeq ($(CVM_INCLUDE_MIDP), true)
-USE_MIDP = true
+#USE_LCDUI = true
+USE_LCDUI = false
 else 
-USE_MIDP = false
+USE_LCDUI = false
 endif
 endif
 
@@ -208,7 +209,7 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/ImageAccess.java \
     $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/ModelVideoRenderer.java
 
-ifeq ($(USE_MIDP), true)
+ifeq ($(USE_LCDUI), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MIDPImageAccessor.java \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MMCustomItem.java \
@@ -226,7 +227,7 @@ endif
 # Direct video player
 #
 ifeq ($(DIRECT_VIDEO_PLAYER), true)
-ifeq ($(USE_MIDP), true)
+ifeq ($(USE_LCDUI), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectVideo.java 
 endif
@@ -322,7 +323,9 @@ JSROP_EXTRA_INCLUDES += $(SUBSYSTEM_JSR_135_EXTRA_INCLUDES)
 
 CVM_INCLUDE_JAVACALL  = true
 
+ifeq ($(USE_LCDUI), true)
 JSR_135_DEPS = $(PS)$(MIDP_CLASSESZIP)
+endif
 
 ifeq ($(USE_JSR_75), true)
 JSR_135_DEPS += $(PS)$(JSR_75_JAR)
