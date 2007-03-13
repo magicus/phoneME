@@ -50,7 +50,36 @@ MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/NoSuchPaddingException.java \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/ShortBufferException.java \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/SecretKeySpec.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/IvParameterSpec.java
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/IvParameterSpec.java \
+    $(JSR_177_DIR)/src/share/crypto/classes/com/sun/satsa/crypto/RSAPublicKey.java
+endif
+
+MODULE_SATSA_CRYPTO_JAVA_FILES += \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/MD2.java \
+
+# Source files for security package
+#
+ifneq ($(USE_SECOP),true)
+DO_SECURITY_PROVIDER_FILTERING = true
+CVM_PROPS_SRC = $(JSR_177_DIR)/src/jump_application/satsa/java.security
+
+SECURITY_PROVIDERS += \
+    sun.security.provider.Sun \
+    com.sun.j2me.crypto.SunSATSA
+
+MODULE_SATSA_CRYPTO_JAVA_FILES += \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/SunSATSA.java \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/RSAKeyFactory.java \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/MD5RSASignature.java \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/SHA1RSASignature.java \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/RSASignature.java
+else
+SECURITY_PROVIDERS += \
+    com.sun.satsa.crypto.SunSATSA
+
+MODULE_SATSA_CRYPTO_JAVA_FILES += \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/satsa/crypto/SunSATSA.java
+
 endif
 
 # Define APDU sources which depend on options
@@ -67,16 +96,16 @@ endif
 
 #Generating property initializer
 #
-JSR_177_GENERATED_DIR     = $(JSR_177_BUILD_DIR)/generated
-JSR_177_PROP_INIT_PACKAGE = $(PROP_INIT_PACKAGE).jsr177
-JSR_177_PROP_INITIALIZER  = $(JSR_177_GENERATED_DIR)/classes/$(subst .,/,$(JSR_177_PROP_INIT_PACKAGE))/$(PROP_INIT_CLASS).java
+JSR_177_GENERATED_DIR = $(JSR_177_BUILD_DIR)/generated
+JSR_177_INIT_PACKAGE  = $(JSR_INIT_PACKAGE).jsr177
+JSR_177_INITIALIZER   = $(JSR_177_GENERATED_DIR)/classes/$(subst .,/,$(JSR_177_INIT_PACKAGE))/$(JSR_INIT_CLASS).java
 
-PROPERTY_INITIALIZER_LIST += $(JSR_177_PROP_INIT_PACKAGE).$(PROP_INIT_CLASS)
+JSR_INITIALIZER_LIST += $(JSR_177_INIT_PACKAGE).$(JSR_INIT_CLASS)
 MODULE_SATSA_COMMON_JAVA_FILES += \
-    $(JSR_177_PROP_INITIALIZER)
+    $(JSR_177_INITIALIZER)
 
-$(JSR_177_PROP_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
-	$(call generatePropertyInitializer,$(JSR_177_PROPERTY_FILES),$(JSR_177_GENERATED_DIR),$(JSR_177_PROP_INIT_PACKAGE),$@)
+$(JSR_177_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
+	$(call generateJSRInitializer,$(JSR_177_PROPERTY_FILES),$(JSR_177_GENERATED_DIR),$(JSR_177_INIT_PACKAGE),$@,$(JSR_177_LIB_NAME))
 
 # Java card constants
 #
