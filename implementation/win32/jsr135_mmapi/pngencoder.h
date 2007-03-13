@@ -23,8 +23,8 @@
  * information or have any questions. 
  */
  
-#ifndef __JAVAUTIL_MEDIA_H
-#define __JAVAUTIL_MEDIA_H
+#ifndef __JAVAUTIL_MEDIA_PNG_ENCODER_H
+#define __JAVAUTIL_MEDIA_PNG_ENCODER_H
 
 /**
  * Get PNG buffer size for image that has width and height
@@ -66,4 +66,4 @@ int javautil_media_rgbX888_to_png(unsigned char *input,
                                   int width, 
                                   int height);
 
-#endif  /* __JAVAUTIL_MEDIA_H */
+#endif  /* __JAVAUTIL_MEDIA_PNG_ENCODER_H */
