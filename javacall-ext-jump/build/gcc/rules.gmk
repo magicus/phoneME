@@ -23,9 +23,15 @@
 # information or have any questions. 
 #
 
-.PHONY: all pre_target javacall_so post_target
+.PHONY: all pre_target javacall_lib post_target
 
-all: pre_target javacall_common javacall_so post_target
+all: pre_target javacall_common javacall_lib post_target
+
+ifeq ($(JAVACALL_SHARED_LIB),true)
+LIB_EXTENSION = so
+else
+LIB_EXTENSION = a
+endif
 
 ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
@@ -44,7 +50,9 @@ ifneq ($(UTILITIES)x, x)
 UTILITY_OBJECTS=$(addsuffix .o,$(UTILITIES))
 endif
 
-javacall_so: $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).so
+AR_EXTRACT_VERBOSE = xv
+
+javacall_lib: $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).$(LIB_EXTENSION)
 
 CFLAGS+= -I$(JAVACALL_OUTPUT_INCLUDE_DIR)
 
@@ -58,4 +66,11 @@ $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).so: \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
 	$(CC) $(LDFLAGS) -shared -o $@ $^
+
+$(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).a: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
+	$(SPECIFIC_OBJECTS)
+	@echo "...Generating Library: $@"
+	$(AR) $(ARFLAGS) $@ $^
 
