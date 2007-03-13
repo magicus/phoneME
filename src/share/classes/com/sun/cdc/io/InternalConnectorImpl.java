@@ -26,6 +26,7 @@ package com.sun.cdc.io;
 
 import java.io.*;
 import javax.microedition.io.*;
+import sun.security.action.GetPropertyAction;
 
 public class InternalConnectorImpl implements InternalConnector {
     protected ClassLoader protocolClassLoader;
@@ -43,8 +44,8 @@ public class InternalConnectorImpl implements InternalConnector {
              * Check to see if there is a property override for the dynamic
              * building of class root.
              */
-            classRoot =
-                System.getProperty("javax.microedition.io.Connector.protocolpath");
+            classRoot =(String)java.security.AccessController.doPrivileged( 
+                new GetPropertyAction("javax.microedition.io.Connector.protocolpath"));
         } catch (Throwable t) {
             // do nothing
         }
@@ -114,8 +115,8 @@ public class InternalConnectorImpl implements InternalConnector {
              */
             protocol = protocol.replace('-', '_');
             
-            String className = System.getProperty("j2me." + protocol +
-               ".Protocol");
+            String className = (String)java.security.AccessController.doPrivileged( 
+                new GetPropertyAction("j2me." + protocol + ".Protocol"));
             /*
              * Use the platform and protocol names to look up
              * a class to implement the connection
