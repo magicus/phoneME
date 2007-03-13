@@ -343,12 +343,6 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
             } catch(IOException x) {
                 throw new RuntimeException("IOException in datagram::newDatagram");
             }
-        } else {
-           try {
-             dg.setAddress("datagram://:"+port);
-           } catch(IOException x) {
-             throw new RuntimeException("IOException in datagram::newDatagram");
-           }
         } 
         return dg;
     }
