@@ -47,7 +47,6 @@ vpath % $(LCDUI_DIR)/reference/native
 # Native files for the library
 #
 SUBSYSTEM_LCDUI_NATIVE_FILES += \
-    lcdui_audio.c \
     lcdui_game.c \
     lcdui_indicators.c \
     lcdui_input.c \
