@@ -1277,6 +1277,11 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    if ((pid = fork()) == 0) {
 		int mypid = getpid();
 
+		/* Remember the pid of our process for compatibility
+		   with non-Posix compliant systems on which getpid()
+		   returns a thread id. */
+		jumpProcessSetId(mypid);
+
 		/* Make sure each launched process knows the id of the
 		   executive */
                 if (amExecutive) {
@@ -1463,6 +1468,10 @@ MTASKserverInitialize(ServerState* state,
 {    
     const char* clist = CVMgetParsedSubOption(serverOpts, "initClasses");
     const char* mlist = CVMgetParsedSubOption(serverOpts, "precompileMethods");
+
+    /* Remember the pid of our process for compatibility with
+       non-Posix compliant systems on which getpid() returns a thread id. */
+    jumpProcessSetId(getpid());
     
     jumpMessageStart();
 
