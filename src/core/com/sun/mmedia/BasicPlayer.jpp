@@ -1296,10 +1296,10 @@ public abstract class BasicPlayer implements Player
                 this.hasDataSource = false;
             }
             // #ifndef ABB [
-            else if (locator.equals(Configuration.AUDIO_CAPTURE_LOCATOR)) {
+            else if (locator.startsWith(Configuration.AUDIO_CAPTURE_LOCATOR)) {
                 this.hasDataSource = false;
             }
-            else if (locator.equals(Configuration.VIDEO_CAPTURE_LOCATOR)) {
+            else if (locator.startsWith(Configuration.VIDEO_CAPTURE_LOCATOR)) {
                 this.hasDataSource = false;
             }
             else if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
