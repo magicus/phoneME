@@ -66,7 +66,6 @@ public class DefaultConfiguration extends Configuration {
      * MIME_AUDI_AMR NB mime type.
      */
     public final static String MIME_AUDIO_WAV = "audio/x-wav";
-    public final static String MIME_AUDIO_WAV_2 = "audio/wav";    
 
     /**
      * MIME_AUDI_AMR WB mime type.
@@ -102,7 +101,6 @@ public class DefaultConfiguration extends Configuration {
      * MIME_AUDIO_MIDI mime type.
      */
     public final static String MIME_AUDIO_MIDI = "audio/midi";
-    public final static String MIME_AUDIO_MIDI_2 = "audio/mid";
 
     /**
      * SP-MIME_AUDIO_MIDI mime type.
@@ -113,7 +111,6 @@ public class DefaultConfiguration extends Configuration {
      * MIME_AUDIO_MP3 mime type
      */
     public final static String MIME_AUDIO_MP3 = "audio/mpeg";
-    public final static String MIME_AUDIO_MP3_2 = "audio/mp3";
 
     /**
      * MP4 audio type
@@ -155,14 +152,13 @@ public class DefaultConfiguration extends Configuration {
     // #endif ]
         {MIME_AUDIO_TONE, "com.sun.mmedia.DirectTone"},
         {MIME_AUDIO_AMR, "com.sun.mmedia.DirectPlayer"},
+        {MIME_AUDIO_AMR_WB, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_WAV, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_WAV_2, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_MIDI, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_MIDI_2, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_SP_MIDI, "com.sun.mmedia.DirectPlayer"},
     // #ifndef ABB [
+/*
         {MIME_AUDIO_MP3, "com.sun.mmedia.DirectPlayer"},
-        {MIME_AUDIO_MP3_2, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_MP4, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_MP4_2, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_AAC, "com.sun.mmedia.DirectPlayer"},
@@ -172,6 +168,7 @@ public class DefaultConfiguration extends Configuration {
         {MIME_VIDEO_3GPP_2, "com.sun.mmedia.DirectVideo"},
         {MIME_VIDEO_MPEG, "com.sun.mmedia.DirectVideo"},
         {MIME_VIDEO_MPEG4, "com.sun.mmedia.DirectVideo"},
+*/
 // #ifdef ENABLE_INDIRECT_VIDEO [        
         {MIME_IMAGE_GIF, "com.sun.mmedia.GIFPlayer"},
 // #endif ]        
@@ -221,6 +218,7 @@ public class DefaultConfiguration extends Configuration {
         mimeTypes.put("qcp", MIME_AUDIO_QCELP);
         mimeTypes.put("aac", MIME_AUDIO_AAC);
         mimeTypes.put("amr", MIME_AUDIO_AMR);
+        mimeTypes.put("awb", MIME_AUDIO_AMR_WB);
         mimeTypes.put("3gp", MIME_VIDEO_3GPP);
         mimeTypes.put("mpg", MIME_VIDEO_MPEG);
         mimeTypes.put("mp4", MIME_VIDEO_MPEG4);
@@ -258,12 +256,9 @@ public class DefaultConfiguration extends Configuration {
                 MIME_AUDIO_AMR,
                 MIME_AUDIO_AMR_WB,
                 MIME_AUDIO_MIDI,
-                MIME_AUDIO_MIDI_2,
                 MIME_AUDIO_SP_MIDI,
                 MIME_AUDIO_WAV,
-                MIME_AUDIO_WAV_2,
-                MIME_AUDIO_MP3,
-                MIME_AUDIO_MP3_2,
+//                MIME_AUDIO_MP3,
 //                MIME_AUDIO_QCELP,
 //                MIME_AUDIO_QCELP_2,
 //                MIME_AUDIO_MP4,
@@ -293,12 +288,9 @@ public class DefaultConfiguration extends Configuration {
                 MIME_AUDIO_AMR,
                 MIME_AUDIO_AMR_WB,
                 MIME_AUDIO_MIDI,
-                MIME_AUDIO_MIDI_2,
                 MIME_AUDIO_SP_MIDI,
                 MIME_AUDIO_WAV,
-                MIME_AUDIO_WAV_2,
-                MIME_AUDIO_MP3,
-                MIME_AUDIO_MP3_2,
+//                MIME_AUDIO_MP3,
 //                MIME_AUDIO_QCELP,
 //                MIME_AUDIO_QCELP_2,
 //                MIME_AUDIO_MP4,
@@ -319,12 +311,9 @@ public class DefaultConfiguration extends Configuration {
                 MIME_AUDIO_AMR,
                 MIME_AUDIO_AMR_WB,                
                 MIME_AUDIO_MIDI,
-                MIME_AUDIO_MIDI_2,
                 MIME_AUDIO_SP_MIDI,
                 MIME_AUDIO_WAV,
-                MIME_AUDIO_WAV_2,
-                MIME_AUDIO_MP3,
-                MIME_AUDIO_MP3_2,
+//                MIME_AUDIO_MP3,
 //                MIME_AUDIO_QCELP,
 //                MIME_AUDIO_QCELP_2,
 //                MIME_AUDIO_MP4,
@@ -343,8 +332,7 @@ public class DefaultConfiguration extends Configuration {
             return new String[]{
                 MIME_AUDIO_AMR,
                 MIME_AUDIO_AMR_WB,                
-                MIME_AUDIO_MP3,
-                MIME_AUDIO_MP3_2,
+//                MIME_AUDIO_MP3,
 //                MIME_AUDIO_MP4,
 //                MIME_AUDIO_MP4_2,
 //                MIME_AUDIO_AAC,
@@ -448,8 +436,7 @@ public class DefaultConfiguration extends Configuration {
                 };
         }
 
-        if (content_type.equals(MIME_AUDIO_MIDI_2) || 
-            content_type.equals(MIME_AUDIO_SP_MIDI)) {
+        if (content_type.equals(MIME_AUDIO_SP_MIDI)) {
             return new String[]{
                 "http",
             // #ifdef USE_FILE_CONNECTION [
@@ -458,8 +445,7 @@ public class DefaultConfiguration extends Configuration {
                 };
         }
 
-        if (content_type.equals(MIME_AUDIO_WAV) || 
-            content_type.equals(MIME_AUDIO_WAV_2)) {
+        if (content_type.equals(MIME_AUDIO_WAV)) {
             return new String[]{
     		// #ifdef AUDIO_CAPTURE [
                 "capture",
@@ -471,8 +457,8 @@ public class DefaultConfiguration extends Configuration {
                 };
         }
 
-        if (content_type.equals(MIME_AUDIO_MP3) ||
-            content_type.equals(MIME_AUDIO_MP3_2)) {
+/*
+        if (content_type.equals(MIME_AUDIO_MP3)) {
             return new String[]{
                 "http",
             // #ifdef USE_FILE_CONNECTION [
@@ -480,7 +466,7 @@ public class DefaultConfiguration extends Configuration {
             // #endif ]
             };
         }
-/*
+
         if (content_type.equals(MIME_AUDIO_MP4)) {
             return new String[]{
                 "http",
