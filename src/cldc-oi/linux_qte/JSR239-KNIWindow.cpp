@@ -145,16 +145,24 @@ JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
                "instanceof Graphics!\n");
 #endif
     } else {
+        const jint bytes_for_depth = 2;
+        const jint bits_per_byte = 8;
+        jint min_height;
+
         pixmap = getGraphicsBuffer(graphicsHandle);
+
+        min_height = (pixmap->height() > src->height) ? src->height :
+            pixmap->height();
 
 #ifdef DEBUG
         printf("JSR239_putWindowContent: pixmap=%p\n", pixmap);
-        printf("  pixmap Bpp = %d\n",  pixmap->depth()/8);
+        printf("  pixmap Bpp = %d\n",  pixmap->depth()/bits_per_byte);
         printf("  pixmap width  = %d\n", pixmap->width());
         printf("  pixmap height = %d\n", pixmap->height());
         printf("  src Bpp = %d\n", src->pixelBytes);
         printf("  src width = %d\n", src->width);
         printf("  src height = %d\n", src->height);
+        printf("  min height = %d\n", min_height);
 #endif
 
         /* IMPL_NOTE: get clip sizes into account. */
@@ -165,14 +173,14 @@ JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
         d = (void*)pixmap->scanLine(0);
 
         if ((pixmap->width() != src->width) ||
-            (pixmap->height() != src->height) || (pixmap->depth()/8 != 2)) {
+            (pixmap->depth() != bits_per_byte * bytes_for_depth)) {
 #ifdef DEBUG
             printf("JSR239: offscreen buffer data is incorrect.\n");
 #endif
         } else {
             /* Source data must be in 16bit 565 format. */
             JSR239_memcpy(
-                d, s, pixmap->width() * pixmap->height() * pixmap->depth()/8);
+                d, s, pixmap->width() * min_height * bytes_for_depth);
         }
     }
 

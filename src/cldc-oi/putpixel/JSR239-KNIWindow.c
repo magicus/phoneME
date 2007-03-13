@@ -127,6 +127,9 @@ JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
         // Obtain the dimensions of the destination.
         jint dest_width = lcdlf_get_screen_width();
         jint dest_height = lcdlf_get_screen_height();
+
+        jint min_height = 0;
+        
         gimg = GXJ_GET_GRAPHICS_SCREEN_BUFFER(graphicsHandle, &sbuf);
         if (gimg != NULL) {
             dest_width = gimg->width;
@@ -140,6 +143,7 @@ JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
         printf("  src Bpp    = %d\n", src->pixelBytes);
         printf("  src width  = %d\n", src->width);
         printf("  src height = %d\n", src->height);
+        printf("  min height = %d\n", min_height);
 #endif
 
         /* IMPL_NOTE: get clip sizes into account. */
@@ -149,6 +153,8 @@ JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
         s = (void*)src->screen_buffer;
         d = (void*)getGraphicsBuffer(graphicsHandle);
 
+        min_height = (dest_height > src->height) ? src->height : dest_height;
+
         if ((src->width  != dest_width) ||
             (sizeof(gxj_pixel_type) != 2)) {
 #ifdef DEBUG
@@ -157,7 +163,7 @@ JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
         } else {
             /* Source data must be in 16bit 565 format. */
             JSR239_memcpy(d, s,
-                dest_width * dest_height * sizeof(gxj_pixel_type));
+                dest_width * min_height * sizeof(gxj_pixel_type));
         }
     }
 
